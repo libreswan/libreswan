@@ -277,7 +277,8 @@ $(KVM_FRESH_BOOT_FILE): $(firstword $(wildcard /var/run/rc.log /var/log/boot.log
 
 KVM_HOST_ENTROPY_FILE ?= /proc/sys/kernel/random/entropy_avail
 KVM_HOST_ENTROPY_OK = $(KVM_POOLDIR_PREFIX)entropy.ok
-$(KVM_HOST_ENTROPY_OK): $(KVM_FRESH_BOOT_FILE) | $(KVM_POOLDIR)
+$(KVM_HOST_ENTROPY_OK): $(KVM_FRESH_BOOT_FILE)
+$(KVM_HOST_ENTROPY_OK): | $(KVM_POOLDIR)
 	@if test ! -r $(KVM_HOST_ENTROPY_FILE); then			\
 		echo no entropy to check ;				\
 	elif test $$(cat $(KVM_HOST_ENTROPY_FILE)) -gt 100 ; then	\
@@ -307,7 +308,9 @@ KVM_HOST_OK += $(KVM_HOST_ENTROPY_OK)
 
 KVM_HOST_QEMUDIR ?= /var/lib/libvirt/qemu
 KVM_HOST_QEMUDIR_OK = $(KVM_POOLDIR_PREFIX)qemudir.ok
-$(KVM_HOST_QEMUDIR_OK): $(KVM_FRESH_BOOT_FILE) | $(KVM_POOLDIR)
+$(KVM_HOST_QEMUDIR_OK): $(KVM_FRESH_BOOT_FILE)
+$(KVM_HOST_QEMUDIR_OK): | $(KVM_POOLDIR)
+$(KVM_HOST_QEMUDIR_OK): | $(KVM_POOLDIR)
 	@if ! test -w $(KVM_HOST_QEMUDIR) ; then			\
 		echo ;							\
 		echo "  The directory:" ;				\
@@ -330,7 +333,9 @@ KVM_HOST_OK += $(KVM_HOST_QEMUDIR_OK)
 #
 
 KVM_HOST_NFS_OK = $(KVM_POOLDIR_PREFIX)nfs.ok
-$(KVM_HOST_NFS_OK): testing/libvirt/nfs.sh $(KVM_FRESH_BOOT_FILE) | $(KVM_POOLDIR)
+$(KVM_HOST_NFS_OK): testing/libvirt/nfs.sh
+$(KVM_HOST_NFS_OK): $(KVM_FRESH_BOOT_FILE)
+$(KVM_HOST_NFS_OK): | $(KVM_POOLDIR)
 	sh testing/libvirt/nfs.sh $(KVM_POOLDIR) $(KVM_SOURCEDIR) $(KVM_TESTINGDIR)
 	touch $@
 
@@ -413,7 +418,8 @@ web-pages-disabled:
 
 define kvm-test
 .PHONY: $(1)
-$(1): $(KVM_HOST_OK) kvm-keys-ok
+$(1): $(KVM_HOST_OK)
+$(1): kvm-keys-ok
 	: shutdown all the build domains, kvmrunner shuts down the test domains
 	$$(foreach domain, $$(KVM_BUILD_DOMAINS), $$(call shutdown-os-domain, $$(domain)))
 	@$(MAKE) $$(if $$(WEB_ENABLED), web-test-prep, -s web-pages-disabled)
@@ -496,13 +502,12 @@ kvm-keys:
 	$(MAKE) kvm-clean-keys
 	$(MAKE) $(KVM_KEYS)
 
-$(KVM_KEYS):	$(KVM_TESTINGDIR)/x509/dist_certs.py \
-		$(KVM_TESTINGDIR)/x509/openssl.cnf \
-		$(KVM_TESTINGDIR)/x509/strongswan-ec-gen.sh \
-		$(KVM_TESTINGDIR)/baseconfigs/all/etc/bind/generate-dnssec.sh \
-		| \
-		$(KVM_POOLDIR)/$(KVM_KEYS_DOMAIN) \
-		$(KVM_HOST_OK)
+$(KVM_KEYS): $(KVM_TESTINGDIR)/x509/dist_certs.py
+$(KVM_KEYS): $(KVM_TESTINGDIR)/x509/openssl.cnf
+$(KVM_KEYS): $(KVM_TESTINGDIR)/x509/strongswan-ec-gen.sh
+$(KVM_KEYS): $(KVM_TESTINGDIR)/baseconfigs/all/etc/bind/generate-dnssec.sh
+$(KVM_KEYS): | $(KVM_POOLDIR)/$(KVM_KEYS_DOMAIN)
+$(KVM_KEYS): | $(KVM_HOST_OK)
 	:
 	: disable FIPS
 	:
@@ -614,7 +619,8 @@ KVM_GATEWAY_ADDRESS ?= 192.168.234.1
 
 KVM_GATEWAY_FILE = $(KVM_POOLDIR)/$(KVM_GATEWAY).gw
 
-$(KVM_POOLDIR)/$(KVM_GATEWAY).gw: | testing/libvirt/net/$(KVM_GATEWAY) $(KVM_POOLDIR)
+$(KVM_POOLDIR)/$(KVM_GATEWAY).gw: | testing/libvirt/net/$(KVM_GATEWAY)
+$(KVM_POOLDIR)/$(KVM_GATEWAY).gw: | $(KVM_POOLDIR)
 	$(call destroy-kvm-network, $@)
 	$(call create-kvm-network, testing/libvirt/net/$(KVM_GATEWAY))
 	touch $@
@@ -693,7 +699,8 @@ $(KVM_FREEBSD_ISO): | $(KVM_POOLDIR)
 # (NetBSD-*.iso).
 KVM_NETBSD_INSTALL_ISO ?= $(KVM_POOLDIR)/$(notdir $(KVM_NETBSD_INSTALL_ISO_URL))
 KVM_NETBSD_BOOT_ISO ?= $(basename $(KVM_NETBSD_INSTALL_ISO))-boot.iso
-kvm-iso: $(KVM_NETBSD_BOOT_ISO) $(KVM_NETBSD_INSTALL_ISO)
+kvm-iso: $(KVM_NETBSD_BOOT_ISO)
+kvm-iso: $(KVM_NETBSD_INSTALL_ISO)
 $(KVM_NETBSD_INSTALL_ISO): | $(KVM_POOLDIR)
 	wget --output-document $@.tmp --no-clobber -- $(KVM_NETBSD_INSTALL_ISO_URL)
 	mv $@.tmp $@
@@ -796,7 +803,8 @@ KVM_FEDORA_VIRT_INSTALL_FLAGS = \
 	--initrd-inject=$(KVM_FEDORA_KICKSTART_FILE) \
 	--extra-args="inst.ks=file:/$(notdir $(KVM_FEDORA_KICKSTART_FILE)) console=ttyS0,115200 net.ifnames=0 biosdevname=0"
 
-$(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_ISO) $(KVM_FEDORA_KICKSTART_FILE)
+$(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_ISO)
+$(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_KICKSTART_FILE)
 
 # FreeBSD uses a modified install CD
 
@@ -808,10 +816,9 @@ KVM_FREEBSD_VIRT_INSTALL_FLAGS = \
 
 $(KVM_FREEBSD_BASE_DOMAIN): | $(KVM_FREEBSD_BASE_ISO)
 
-$(KVM_FREEBSD_BASE_ISO): \
-		$(KVM_FREEBSD_ISO) \
-		testing/libvirt/freebsd/loader.conf \
-		testing/libvirt/freebsd/base.conf
+$(KVM_FREEBSD_BASE_ISO): $(KVM_FREEBSD_ISO)
+$(KVM_FREEBSD_BASE_ISO): testing/libvirt/freebsd/loader.conf
+$(KVM_FREEBSD_BASE_ISO): testing/libvirt/freebsd/base.conf
 	cp $(KVM_FREEBSD_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
 		testing/libvirt/freebsd/base.conf \
@@ -832,11 +839,11 @@ KVM_NETBSD_VIRT_INSTALL_FLAGS = \
 	--cdrom=$(KVM_NETBSD_BOOT_ISO) \
 	--disk=path=$(KVM_NETBSD_BASE_ISO),readonly=on,device=cdrom
 
-$(KVM_NETBSD_BASE_DOMAIN): | $(KVM_NETBSD_BOOT_ISO) $(KVM_NETBSD_BASE_ISO)
+$(KVM_NETBSD_BASE_DOMAIN): | $(KVM_NETBSD_BOOT_ISO)
+$(KVM_NETBSD_BASE_DOMAIN): | $(KVM_NETBSD_BASE_ISO)
 
-$(KVM_NETBSD_BASE_ISO): \
-		$(KVM_NETBSD_INSTALL_ISO) \
-		testing/libvirt/netbsd/base.sh
+$(KVM_NETBSD_BASE_ISO): $(KVM_NETBSD_INSTALL_ISO)
+$(KVM_NETBSD_BASE_ISO): testing/libvirt/netbsd/base.sh
 	cp $(KVM_NETBSD_INSTALL_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
 		testing/libvirt/netbsd/base.sh \
@@ -857,11 +864,10 @@ KVM_OPENBSD_VIRT_INSTALL_FLAGS = --cdrom=$(KVM_OPENBSD_BASE_ISO)
 
 $(KVM_OPENBSD_BASE_DOMAIN): | $(KVM_OPENBSD_BASE_ISO)
 
-$(KVM_OPENBSD_BASE_ISO): \
-		$(KVM_OPENBSD_ISO) \
-		testing/libvirt/openbsd/base.conf \
-		testing/libvirt/openbsd/boot.conf \
-		testing/libvirt/openbsd/base.sh
+$(KVM_OPENBSD_BASE_ISO): $(KVM_OPENBSD_ISO)
+$(KVM_OPENBSD_BASE_ISO): testing/libvirt/openbsd/base.conf
+$(KVM_OPENBSD_BASE_ISO): testing/libvirt/openbsd/boot.conf
+$(KVM_OPENBSD_BASE_ISO): testing/libvirt/openbsd/base.sh
 	cp $(KVM_OPENBSD_ISO) $@.tmp
 	$(KVM_TRANSMOGRIFY) \
 		testing/libvirt/openbsd/base.sh \
@@ -1003,7 +1009,7 @@ kvm-%-install: $(KVM_POOLDIR_PREFIX)%
 # domain needs updating.  Instead use the domain-name to indicate that
 # a domain has been created.
 
-.PRECIOUS: $(foreach domain, $(KVM_LOCAL_DOMAINS), $(KVM_LOCALDIR)/$(domain))
+.PRECIOUS: $(KVM_TEST_DOMAINS)
 
 define define-clone-domain
   $(addprefix $(1), $(2)): $(3) | \
@@ -1074,21 +1080,18 @@ kvm-uninstall:
 kvm-clean: kvm-uninstall
 kvm-clean: kvm-clean-keys
 kvm-clean: kvm-clean-check
-kvm-clean:
 	rm -rf $(patsubst %, OBJ.*.%/, $(KVM_PLATFORMS))
 	rm -rf OBJ.*.swanbase
 
 .PHONY: kvm-purge
 kvm-purge: kvm-clean
 kvm-purge: kvm-purge-networks
-kvm-purge:
 	$(foreach platform, $(KVM_PLATFORMS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-upgrade))
 	$(foreach platform, $(KVM_PLATFORMS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)))
 	rm -f $(KVM_HOST_OK)
 
 .PHONY: kvm-demolish
 kvm-demolish: kvm-purge
-kvm-demolish:
 	$(foreach platform, $(KVM_PLATFORMS), $(call undefine-os-domain, $(KVM_POOLDIR_PREFIX)$(platform)-base))
 	: Force a rebuild of the gateway, but do not delete it
 	rm -f $(KVM_GATEWAY_FILE)
@@ -1189,12 +1192,13 @@ $(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_HOST_NAMES)), \
 define kvmsh-DOMAIN
   #(info kvmsh-DOMAIN domain=$(1) make-target=$(2))
   .PHONY: kvmsh-$(1)
-  kvmsh-$(strip $(1)): $(2) | $(KVM_HOST_OK)
+  kvmsh-$(strip $(1)): $(2)
+  kvmsh-$(strip $(1)): | $(KVM_HOST_OK)
 	: kvmsh-DOMAIN domain=$(1) make-target=$(2)
 	$$(KVMSH) $$(KVMSH_FLAGS) $(1) $(KVMSH_COMMAND)
 endef
 
-$(foreach domain, $(KVM_LOCAL_DOMAINS), \
+$(foreach domain, $(KVM_TEST_DOMAIN_NAMES), \
 	$(eval $(call kvmsh-DOMAIN,$(domain),$$(KVM_LOCALDIR)/$(domain))))
 
 $(foreach variant, base upgrade build, \
@@ -1413,7 +1417,7 @@ Standard targets and operations:
 	- for HOST login to the first domain vis:
           $(addprefix $(KVM_FIRST_PREFIX), HOST)
         - if necessary, create and boot the host
-    $(addprefix kvmsh-, $(KVM_LOCAL_DOMAINS))
+    $(addprefix kvmsh-, $(KVM_TEST_DOMAIN_NAMES))
         - login to the specific domain
         - if necessary, create and boot the domain
 
