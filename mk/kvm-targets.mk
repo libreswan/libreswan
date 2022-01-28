@@ -452,8 +452,8 @@ kvm-%: $(KVM_HOST_OK) kvm-keys-ok
 		$(if $(WEB_ENABLED), --publish-hash $(WEB_HASH)) \
 		$(if $(WEB_ENABLED), --publish-results $(WEB_RESULTSDIR)) \
 		$(if $(WEB_ENABLED), --publish-status $(WEB_SUMMARYDIR)/status.json) \
-		 --test-status $(KVM_TEST_STATUS) \
-		$(if $(filter kvm-re%, $@), --skip pass) \
+		 --test-status "$(KVM_TEST_STATUS)" \
+		$(if $(filter kvm-re%, $@), --skip passed) \
 		$(KVMRUNNER_FLAGS) \
 		$(KVM_TEST_FLAGS) \
 		$(STRIPPED_KVM_TESTS)
