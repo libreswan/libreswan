@@ -416,27 +416,6 @@ web-pages-disabled:
 # - need build domains shutdown as, otherwise, test domains can refuse
 #   to boot because the domain they were cloned from is still running.
 
-define kvm-test
-.PHONY: $(1)
-$(1): $(KVM_HOST_OK)
-$(1): kvm-keys-ok
-	: shutdown all the build domains, kvmrunner shuts down the test domains
-	$$(foreach domain, $$(KVM_BUILD_DOMAINS), $$(call shutdown-os-domain, $$(domain)))
-	@$(MAKE) $$(if $$(WEB_ENABLED), web-test-prep, -s web-pages-disabled)
-	: kvm-test target=$(1) param=$(2)
-	: KVM_TESTS=$(STRIPPED_KVM_TESTS)
-	$$(KVMRUNNER) \
-		$(if $(KVM_PIDFILE), --pid-file "$(KVM_PIDFILE)") \
-		$$(foreach prefix,$$(KVM_PREFIXES), --prefix $$(prefix)) \
-		$$(if $$(KVM_WORKERS), --workers $$(KVM_WORKERS)) \
-		$$(if $$(WEB_ENABLED), \
-			--publish-hash $$(WEB_HASH) \
-			--publish-results $$(WEB_RESULTSDIR) \
-			--publish-status $$(WEB_SUMMARYDIR)/status.json) \
-		$(2) $$(KVMRUNNER_FLAGS) $$(KVM_TEST_FLAGS) $$(STRIPPED_KVM_TESTS)
-	@$(MAKE) $$(if $$(WEB_ENABLED), web-test-post, -s web-pages-disabled)
-endef
-
 # XXX: $(file < "x") tries to open '"x"' !!!
 .PHONY: kvm-kill
 kvm-kill:
@@ -445,13 +424,27 @@ kvm-kill:
 kvm-status:
 	test -s "$(KVM_PIDFILE)" && ps $(file < $(KVM_PIDFILE))
 
-# "test" and "check" just runs the entire testsuite.
 KVM_TEST_STATUS ?= good$(if $(KVM_FREEBSD),|freebsd)$(if $(KVM_NETBSD),|netbsd)$(if $(KVM_OPENBSD),|openbsd)
-$(eval $(call kvm-test,kvm-check kvm-test, --test-status "$(KVM_TEST_STATUS)"))
 
-# "retest" and "recheck" re-run the testsuite updating things that
-# didn't pass.
-$(eval $(call kvm-test,kvm-retest kvm-recheck, --test-status "$(KVM_TEST_STATUS)" --skip passed))
+kvm-test kvm-check kvm-retest kvm-recheck: \
+kvm-%: $(KVM_HOST_OK) kvm-keys-ok
+	: shutdown all the build domains, kvmrunner shuts down the test domains
+	$(foreach domain, $(KVM_BUILD_DOMAINS), $(call shutdown-os-domain, $(domain)))
+	@$(MAKE) $(if $(WEB_ENABLED), web-test-prep, -s web-pages-disabled)
+	: KVM_TESTS=$(STRIPPED_KVM_TESTS)
+	$(KVMRUNNER) \
+		$(if $(KVM_PIDFILE), --pid-file "$(KVM_PIDFILE)") \
+		$(foreach prefix,$(KVM_PREFIXES), --prefix $(prefix)) \
+		$(if $(KVM_WORKERS), --workers $(KVM_WORKERS)) \
+		$(if $(WEB_ENABLED), --publish-hash $(WEB_HASH)) \
+		$(if $(WEB_ENABLED), --publish-results $(WEB_RESULTSDIR)) \
+		$(if $(WEB_ENABLED), --publish-status $(WEB_SUMMARYDIR)/status.json) \
+		 --test-status $(KVM_TEST_STATUS) \
+		$(if $(filter kvm-re%, $@), --skip pass) \
+		$(KVMRUNNER_FLAGS) \
+		$(KVM_TEST_FLAGS) \
+		$(STRIPPED_KVM_TESTS)
+	@$(MAKE) $(if $(WEB_ENABLED), web-test-post, -s web-pages-disabled)
 
 # clean up; accept pretty much everything
 KVM_TEST_CLEAN_TARGETS = kvm-clean-check kvm-check-clean kvm-clean-test kvm-test-clean
