@@ -1163,6 +1163,7 @@ kvm-bisect:
 	$(MAKE) kvm-install || exit 125
 	$(MAKE) kvm-test kvm-diffs $(if $(KVM_TESTS),KVM_TESTS="$(KVM_TESTS)")
 
+
 #
 # kvmsh-HOST
 #
@@ -1170,35 +1171,16 @@ kvm-bisect:
 # domains can be done by invoking kvmsh.py directly.
 #
 
-define kvm-HOST-DOMAIN
-  #(info kvm-HOST-DOMAIN rule-prefix=$(1) host=$(2)
-  .PHONY: $$(addprefix $(1), $(2))
-  $$(addprefix $(1), $(2)): \
-		$$(addprefix $(1), $$(addprefix $$(KVM_FIRST_PREFIX), $(2)))
-endef
+$(patsubst %, kvmsh-%, $(filter-out $(KVM_DOMAINS), $(KVM_HOST_NAMES))): \
+kvmsh-%: kvmsh-$(KVM_FIRST_PREFIX)%
 
-$(foreach host, $(filter-out $(KVM_DOMAINS), $(KVM_HOST_NAMES)), \
-	$(eval $(call kvm-HOST-DOMAIN, kvmsh-, $(host))))
+$(patsubst %, kvmsh-%, $(KVM_TEST_DOMAIN_NAMES)) : \
+kvmsh-%: $(KVM_LOCALDIR)/% | $(KVM_HOST_OK)
+	$(KVMSH) $(KVMSH_FLAGS) $* $(KVMSH_COMMAND)
 
-# the base domain only requires the raw image; not upgraded
-
-define kvmsh-DOMAIN
-  #(info kvmsh-DOMAIN domain=$(1) make-target=$(2))
-  .PHONY: kvmsh-$(1)
-  kvmsh-$(strip $(1)): $(2)
-  kvmsh-$(strip $(1)): | $(KVM_HOST_OK)
-	: kvmsh-DOMAIN domain=$(1) make-target=$(2)
-	$$(KVMSH) $$(KVMSH_FLAGS) $(1) $(KVMSH_COMMAND)
-endef
-
-$(foreach domain, $(KVM_TEST_DOMAIN_NAMES), \
-	$(eval $(call kvmsh-DOMAIN,$(domain),$$(KVM_LOCALDIR)/$(domain))))
-
-$(foreach variant, base upgrade build, \
-	$(foreach platform, $(KVM_PLATFORMS), \
-		$(eval $(call kvmsh-DOMAIN, \
-			$(KVM_FIRST_PREFIX)$(platform)-$(variant), \
-			$(KVM_POOLDIR_PREFIX)$(platform)-$(variant)))))
+$(patsubst %, kvmsh-%, $(KVM_BUILD_DOMAIN_NAMES)) : \
+kvmsh-%: $(KVM_POOLDIR)/% | $(KVM_HOST_OK)
+	$(KVMSH) $(KVMSH_FLAGS) $* $(KVMSH_COMMAND)
 
 .PHONY: kvmsh-base
 kvmsh-base: kvmsh-$(KVM_FIRST_PREFIX)fedora-base
