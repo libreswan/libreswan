@@ -62,7 +62,7 @@ class Domain:
     def nest(self, logger, prefix):
         self.logger = logger.nest(prefix + self.domain_name)
         if self._console:
-            self._console.logger = domain.logger
+            self._console.logger = self.logger
         return self.logger
 
     def run_status_output(self, command):
