@@ -13,7 +13,7 @@ initdone
 east #
  # ESP should not show TFC
 east #
- grep "^[^|].*: established Child SA" /tmp/pluto.log
-"tfc" #2: established Child SA using #1; IPsec tunnel [192.0.2.0-192.0.2.255:0-65535 0] -> [192.0.1.0-192.0.1.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ grep "^[^|].* established Child SA" /tmp/pluto.log
+"tfc" #2: responder established Child SA using #1; IPsec tunnel [192.0.2.0-192.0.2.255:0-65535 0] -> [192.0.1.0-192.0.1.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 east #
  

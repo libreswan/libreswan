@@ -155,6 +155,6 @@ Certificate Nickname                                         Trust Attributes
 road #
  # should not show any hits
 road #
- grep -v '^|' /tmp/pluto.log | grep "^[^|].*: established Child SA"
+ grep -v '^|' /tmp/pluto.log | grep "^[^|].* established Child SA"
 road #
  
