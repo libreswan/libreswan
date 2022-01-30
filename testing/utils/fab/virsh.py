@@ -157,10 +157,14 @@ class Domain:
         return self._xml
 
     def console(self, timeout=CONSOLE_TIMEOUT):
-        if self._console or self._console is False:
-            # !None
+        if self._console:
+            self.logger.info("console already open")
+            return self._console
+        if self._console is False:
+            self.logger.info("console already failed")
             return self._console
 
+        # self._console is None
         command = " ".join(_VIRSH + ["console", "--force", self.domain_name])
         self.logger.debug("opening console with: %s", command)
         self._console = shell.Remote(command, self.logger, hostname=self.host_name)
