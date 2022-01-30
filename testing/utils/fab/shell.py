@@ -156,8 +156,8 @@ class Remote:
         # like poll, and give all methods an explicit default of
         # TIMEOUT seconds; leave searchwindowsize set to the infinite
         # default so that expect patterns do not mysteriously fail.
-        self.logger.debug("spawning '%s'", command)
-        self.child = pexpect.spawn(command, timeout=0)
+        self.logger.debug("spawning '%s'", " ".join(command))
+        self.child = pexpect.spawn(command[0], args=command[1:], timeout=0)
         #This crashes inside of pexpect!
         #self.logger.debug("child is '%s'", self.child)
         # route low level output to the logger

@@ -165,9 +165,9 @@ class Domain:
             return self._console
 
         # self._console is None
-        command = " ".join(_VIRSH + ["console", "--force", self.domain_name])
-        self.logger.debug("opening console with: %s", command)
-        self._console = shell.Remote(command, self.logger, hostname=self.host_name)
+        command_args = _VIRSH + ["console", "--force", self.domain_name]
+        self.logger.info("spawning: %s", " ".join(command_args))
+        self._console = shell.Remote(command_args, self.logger, hostname=self.host_name)
         # Give the virsh process a chance set up its control-c
         # handler.  Otherwise something like control-c as the first
         # character sent might kill it.  If the machine is down, it
