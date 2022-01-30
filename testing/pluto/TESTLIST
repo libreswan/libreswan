@@ -477,7 +477,7 @@ kvmplutotest	ikev2-xfrmi-06				good
 kvmplutotest	ikev2-xfrmi-07				good
 kvmplutotest	ikev2-xfrmi-08				good
 kvmplutotest	ikev2-xfrmi-09-systemd-networkd 	good
-kvmplutotest	ikev2-xfrmi-10				wip	github:541
+kvmplutotest	ikev2-xfrmi-10				good	github:541
 kvmplutotest	ikev2-xfrmi-11-default-manual-route	good
 kvmplutotest	ikev2-xfrmi-11-vti-default-route	good
 kvmplutotest	ikev2-xfrmi-11-default-route		good
