@@ -232,9 +232,9 @@ static bool auth_specified = false;
  * @param mess The error message to print when exiting
  * @return NEVER
  */
-static void diag(const char *mess) NEVER_RETURNS;
+static void diagw(const char *mess) NEVER_RETURNS;
 
-static void diag(const char *mess)
+static void diagw(const char *mess)
 {
 	if (mess != NULL) {
 		fprintf(stderr, "whack error: ");
@@ -260,12 +260,12 @@ static void diagq(err_t ugh, const char *this)
 {
 	if (ugh != NULL) {
 		if (this == NULL) {
-			diag(ugh);
+			diagw(ugh);
 		} else {
 			char buf[120];	/* arbitrary limit */
 
 			snprintf(buf, sizeof(buf), "%s \"%s\"", ugh, this);
-			diag(buf);
+			diagw(buf);
 		}
 	}
 }
@@ -934,7 +934,7 @@ static void check_life_time(deltatime_t life, time_t raw_limit,
 			 which,
 			 (long)deltasecs(life),
 			 (long)deltasecs(limit));
-		diag(buf);
+		diagw(buf);
 	}
 	if ((msg->policy & POLICY_DONT_REKEY) == LEMPTY && !deltatime_cmp(mint, <, life)) {
 		char buf[200];	/* arbitrary limit */
@@ -946,7 +946,7 @@ static void check_life_time(deltatime_t life, time_t raw_limit,
 			 (long)deltasecs(msg->sa_rekey_margin),
 			 msg->sa_rekey_fuzz,
 			 (long)deltasecs(mint));
-		diag(buf);
+		diagw(buf);
 	}
 }
 
@@ -954,11 +954,11 @@ static void check_end(struct whack_end *this, struct whack_end *that,
 		      const struct ip_info *haf, const struct ip_info *caf)
 {
 	if (haf != NULL && haf != address_type(&this->host_addr))
-		diag("address family of host inconsistent");
+		diagw("address family of host inconsistent");
 
 	if (this->client.is_set) {
 		if (caf != subnet_type(&this->client))
-			diag("address family of client subnet inconsistent");
+			diagw("address family of client subnet inconsistent");
 	} else {
 		/* fill in anyaddr-anyaddr aka ::/128 as (missing) client subnet */
 		this->client = unset_subnet;
@@ -1223,7 +1223,7 @@ int main(int argc, char **argv)
 		/* diagnostic already printed by getopt_long */
 		case '?' - OPTION_OFFSET:
 			/* print no additional diagnostic, but exit sadly */
-			diag(NULL);
+			diagw(NULL);
 			/* not actually reached */
 			break;
 
@@ -1249,7 +1249,7 @@ int main(int argc, char **argv)
 			if (snprintf(ctl_addr.sun_path,
 				     sizeof(ctl_addr.sun_path),
 				     "%s/pluto.ctl", optarg) == -1)
-				diag("Invalid rundir for sun_addr");
+				diagw("Invalid rundir for sun_addr");
 
 			continue;
 
@@ -1257,7 +1257,7 @@ int main(int argc, char **argv)
 			if (snprintf(ctl_addr.sun_path,
 				     sizeof(ctl_addr.sun_path),
 				     "%s", optarg) == -1)
-				diag("Invalid ctlsocket for sun_addr");
+				diagw("Invalid ctlsocket for sun_addr");
 
 			continue;
 
@@ -1278,7 +1278,7 @@ int main(int argc, char **argv)
 
 		case OPT_IKEBUF:	/* --ike-socket-bufsize <bufsize> */
 			if (opt_whole < 1500) {
-				diag("Ignoring extremely unwise IKE buffer size choice");
+				diagw("Ignoring extremely unwise IKE buffer size choice");
 			} else {
 				msg.ike_buf_size = opt_whole;
 				msg.whack_listen = true;
@@ -1410,7 +1410,7 @@ int main(int argc, char **argv)
 			} else if (streq(optarg, "auto")) {
 				msg.global_redirect = GLOBAL_REDIRECT_AUTO;
 			} else {
-				diag("invalid option argument for --global-redirect (allowed arguments: yes, no, auto)");
+				diagw("invalid option argument for --global-redirect (allowed arguments: yes, no, auto)");
 			}
 			continue;
 
@@ -1651,7 +1651,7 @@ int main(int argc, char **argv)
 				 * user: it will come from the group's file.
 				 */
 				if (LHAS(end_seen, END_CLIENT - END_FIRST))
-					diag("--host %group clashes with --client");
+					diagw("--host %group clashes with --client");
 
 				end_seen |= LELEM(END_CLIENT - END_FIRST);
 			}
@@ -1681,13 +1681,13 @@ int main(int argc, char **argv)
 
 		case END_CERT:	/* --cert <path> */
 			if (msg.right.ckaid != NULL)
-				diag("only one --cert <nickname> or --ckaid <ckaid> allowed");
+				diagw("only one --cert <nickname> or --ckaid <ckaid> allowed");
 			msg.right.cert = optarg;	/* decoded by Pluto */
 			continue;
 
 		case END_CKAID:	/* --ckaid <ckaid> */
 			if (msg.right.cert != NULL)
-				diag("only one --cert <nickname> or --ckaid <ckaid> allowed");
+				diagw("only one --cert <nickname> or --ckaid <ckaid> allowed");
 			/* try parsing it; the error isn't the most specific */
 			const char *ugh = ttodata(optarg, 0, 16, NULL, 0, NULL);
 			diagq(ugh, optarg);
@@ -1740,7 +1740,7 @@ int main(int argc, char **argv)
 				msg.right.authby = AUTHBY_RSASIG;
 			else if (streq(optarg, "ecdsa"))
 				msg.right.authby = AUTHBY_ECDSA;
-			else diag("authby option is not one of psk, ecdsa, rsasig or null");
+			else diagw("authby option is not one of psk, ecdsa, rsasig or null");
 			continue;
 
 		case END_AUTHEAP:
@@ -1748,7 +1748,7 @@ int main(int argc, char **argv)
 				msg.right.eap = IKE_EAP_TLS;
 			else if (streq(optarg, "none"))
 				msg.right.eap = IKE_EAP_NONE;
-			else diag("--autheap option is not one of none, tls");
+			else diagw("--autheap option is not one of none, tls");
 			continue;
 
 		case END_CLIENT:	/* --client <subnet> */
@@ -1779,7 +1779,7 @@ int main(int argc, char **argv)
 		case CD_TO:	/* --to */
 			/* process right end, move it to left, reset it */
 			if (!LHAS(end_seen, END_HOST - END_FIRST))
-				diag("connection missing --host before --to");
+				diagw("connection missing --host before --to");
 
 			msg.left = msg.right;
 			clear_end(&msg.right);
@@ -1792,7 +1792,7 @@ int main(int argc, char **argv)
 		{
 			const enum ike_version ike_version = IKEv1 + c - CD_IKEv1;
 			if (msg.ike_version != 0 && msg.ike_version != ike_version) {
-				diag("connection can no longer have --ikev1 and --ikev2");
+				diagw("connection can no longer have --ikev1 and --ikev2");
 			}
 			msg.ike_version = ike_version;
 			continue;
@@ -1939,7 +1939,7 @@ int main(int argc, char **argv)
 			else if (streq(optarg, "no"))
 				msg.encaps = yna_no;
 			else
-				diag("--encaps options are 'auto', 'yes' or 'no'");
+				diagw("--encaps options are 'auto', 'yes' or 'no'");
 			continue;
 
 		case CD_NIC_OFFLOAD:  /* --nic-offload */
@@ -1950,7 +1950,7 @@ int main(int argc, char **argv)
 			else if (streq(optarg, "auto"))
 				msg.nic_offload = yna_auto;
 			else
-				diag("--nic-offload options are 'no', 'yes' or 'auto'");
+				diagw("--nic-offload options are 'no', 'yes' or 'auto'");
 			continue;
 
 		case CD_NO_NAT_KEEPALIVE:	/* --no-nat_keepalive */
@@ -1967,7 +1967,7 @@ int main(int argc, char **argv)
 			else if (streq(optarg, "none"))
 				msg.ikev1_natt = NATT_NONE;
 			else
-				diag("--ikev1-natt options are 'both', 'rfc' or 'drafts'");
+				diagw("--ikev1-natt options are 'both', 'rfc' or 'drafts'");
 			continue;
 
 		case CD_INITIAL_CONTACT:	/* --initialcontact */
@@ -2017,7 +2017,7 @@ int main(int argc, char **argv)
 			else if (streq(optarg, "auto"))
 				new_policy = LEMPTY;	/* avoid compiler error for no expression */
 			else
-				diag("--send-redirect options are 'yes', 'no' or 'auto'");
+				diagw("--send-redirect options are 'yes', 'no' or 'auto'");
 
 			msg.policy = msg.policy & ~(POLICY_SEND_REDIRECT_MASK);
 			msg.policy |= new_policy;
@@ -2037,7 +2037,7 @@ int main(int argc, char **argv)
 			else if (streq(optarg, "no"))
 				new_policy |= LEMPTY;
 			else
-				diag("--accept-redirect options are 'yes' and 'no'");
+				diagw("--accept-redirect options are 'yes' and 'no'");
 
 			if (new_policy != LEMPTY)
 				msg.policy |= new_policy;
@@ -2083,7 +2083,7 @@ int main(int argc, char **argv)
 			else if (streq(optarg, "fallback"))
 				msg.iketcp = IKE_TCP_FALLBACK;
 			else
-				diag("--tcp-options are 'yes', 'no' or 'fallback'");
+				diagw("--tcp-options are 'yes', 'no' or 'fallback'");
 			continue;
 
 		case CD_LABELED_IPSEC:	/* obsolete --labeledipsec */
@@ -2161,7 +2161,7 @@ int main(int argc, char **argv)
 
 			if (LHAS(cd_seen, CD_CONNIPV6 - CD_FIRST)) {
 				/* i.e., --ipv6 ... --ipv4 */
-				diag("--ipv4 conflicts with --ipv6");
+				diagw("--ipv4 conflicts with --ipv6");
 			}
 
 			if (host_family.used_by != NULL) {
@@ -2193,7 +2193,7 @@ int main(int argc, char **argv)
 
 			if (LHAS(cd_seen, CD_CONNIPV4 - CD_FIRST)) {
 				/* i.e., --ipv4 ... --ipv6 */
-				diag("--ipv6 conflicts with --ipv4");
+				diagw("--ipv6 conflicts with --ipv4");
 			}
 
 			if (host_family.used_by != NULL) {
@@ -2219,7 +2219,7 @@ int main(int argc, char **argv)
 
 		case CD_TUNNELIPV4:	/* --tunnelipv4 */
 			if (LHAS(cd_seen, CD_TUNNELIPV6 - CD_FIRST))
-				diag("--tunnelipv4 conflicts with --tunnelipv6");
+				diagw("--tunnelipv4 conflicts with --tunnelipv6");
 			if (client_family.used_by != NULL)
 				diagq("--tunnelipv4 must precede", client_family.used_by);
 			client_family.used_by = long_opts[long_index].name;
@@ -2228,7 +2228,7 @@ int main(int argc, char **argv)
 
 		case CD_TUNNELIPV6:	/* --tunnelipv6 */
 			if (LHAS(cd_seen, CD_TUNNELIPV4 - CD_FIRST))
-				diag("--tunnelipv6 conflicts with --tunnelipv4");
+				diagw("--tunnelipv6 conflicts with --tunnelipv4");
 			if (client_family.used_by != NULL)
 				diagq("--tunnelipv6 must precede", client_family.used_by);
 			client_family.used_by = long_opts[long_index].name;
@@ -2374,7 +2374,7 @@ int main(int argc, char **argv)
 				snprintf(buf, sizeof(buf),
 					"invalid nflog-group value - range must be 1-65535 \"%s\"",
 					optarg);
-				diag(buf);
+				diagw(buf);
 			}
 			msg.nflog_group = opt_whole;
 			continue;
@@ -2388,7 +2388,7 @@ int main(int argc, char **argv)
 					"invalid reqid value - range must be 1-%u \"%s\"",
 					IPSEC_MANUAL_REQID_MAX,
 					optarg);
-				diag(buf);
+				diagw(buf);
 			}
 
 			msg.sa_reqid = opt_whole;
@@ -2502,13 +2502,13 @@ int main(int argc, char **argv)
 	switch (msg.ike_version) {
 	case IKEv1:
 		if (msg.policy & POLICY_ECDSA)
-			diag("connection cannot specify --ecdsa and --ikev1");
+			diagw("connection cannot specify --ecdsa and --ikev1");
 		/* delete any inherited sighash_poliyc from --rsasig including sha2 */
 		msg.sighash_policy = LEMPTY;
 		break;
 	case IKEv2:
 		if (msg.policy & POLICY_AGGRESSIVE)
-			diag("connection cannot specify --ikev2 and --aggressive");
+			diagw("connection cannot specify --ikev2 and --aggressive");
 		break;
 	}
 
@@ -2547,7 +2547,7 @@ int main(int argc, char **argv)
 	switch (opts1_seen & (LELEM(OPT_OPPO_HERE) | LELEM(OPT_OPPO_THERE))) {
 	case LELEM(OPT_OPPO_HERE):
 	case LELEM(OPT_OPPO_THERE):
-		diag("--oppohere and --oppothere must be used together");
+		diagw("--oppohere and --oppothere must be used together");
 		/*NOTREACHED*/
 	case LELEM(OPT_OPPO_HERE) | LELEM(OPT_OPPO_THERE):
 		msg.whack_oppo_initiate = true;
@@ -2561,20 +2561,20 @@ int main(int argc, char **argv)
 	/* check connection description */
 	if (LHAS(opts1_seen, OPT_CD)) {
 		if (!LHAS(cd_seen, CD_TO - CD_FIRST))
-			diag("connection description option, but no --to");
+			diagw("connection description option, but no --to");
 
 		if (!LHAS(end_seen, END_HOST - END_FIRST))
-			diag("connection missing --host after --to");
+			diagw("connection missing --host after --to");
 
 		if (msg.policy & POLICY_OPPORTUNISTIC) {
 			if ((msg.policy & (POLICY_PSK | POLICY_RSASIG)) !=
 			    POLICY_RSASIG)
-				diag("only RSASIG is supported for opportunism");
+				diagw("only RSASIG is supported for opportunism");
 
 			if ((msg.policy & POLICY_PFS) == 0)
-				diag("PFS required for opportunism");
+				diagw("PFS required for opportunism");
 			if ((msg.policy & POLICY_ENCRYPT) == 0)
-				diag("encryption required for opportunism");
+				diagw("encryption required for opportunism");
 		}
 
 		check_end(&msg.left, &msg.right, host_family.type, client_family.type);
@@ -2582,18 +2582,18 @@ int main(int argc, char **argv)
 
 		if (subnet_type(&msg.left.client) !=
 		    subnet_type(&msg.right.client))
-			diag("endpoints clash: one is IPv4 and the other is IPv6");
+			diagw("endpoints clash: one is IPv4 and the other is IPv6");
 
 		if (msg.policy & POLICY_AUTH_NEVER) {
 			if (msg.prospective_shunt == SHUNT_TRAP ||
 			    msg.prospective_shunt == SHUNT_UNSET) {
-				diag("shunt connection must have shunt policy (eg --pass, --drop or --reject). Is this a non-shunt connection missing an authentication method such as --psk or --rsasig or --auth-null ?");
+				diagw("shunt connection must have shunt policy (eg --pass, --drop or --reject). Is this a non-shunt connection missing an authentication method such as --psk or --rsasig or --auth-null ?");
 			}
 		} else {
 			/* not just a shunt: a real ipsec connection */
 			if ((msg.policy & POLICY_ID_AUTH_MASK) == LEMPTY &&
 				msg.left.authby == AUTHBY_NEVER && msg.right.authby == AUTHBY_NEVER)
-				diag("must specify connection authentication, eg --rsasig, --psk or --auth-null for non-shunt connection");
+				diagw("must specify connection authentication, eg --rsasig, --psk or --auth-null for non-shunt connection");
 			/*
 			 * ??? this test can never fail:
 			 *	!NEVER_NEGOTIATE=>HAS_IPSEC_POLICY
@@ -2601,7 +2601,7 @@ int main(int argc, char **argv)
 			 */
 			if (!HAS_IPSEC_POLICY(msg.policy) &&
 			    (msg.left.client.is_set || msg.right.client.is_set))
-				diag("must not specify clients for ISAKMP-only connection");
+				diagw("must not specify clients for ISAKMP-only connection");
 		}
 
 		msg.whack_connection = true;
@@ -2616,20 +2616,20 @@ int main(int argc, char **argv)
 		       LELEM(OPT_REKEY_IKE) |
 		       LELEM(OPT_REKEY_IPSEC))) {
 		if (!LHAS(opts1_seen, OPT_NAME))
-			diag("missing --name <connection_name>");
+			diagw("missing --name <connection_name>");
 	} else if (msg.whack_options == LEMPTY) {
 		if (LHAS(opts1_seen, OPT_NAME) && !LELEM(OPT_TRAFFIC_STATUS))
-			diag("no reason for --name");
+			diagw("no reason for --name");
 	}
 
 	if (!LDISJOINT(opts1_seen, LELEM(OPT_REMOTE_HOST))) {
 		if (!LHAS(opts1_seen, OPT_INITIATE))
-			diag("--remote-host can only be used with --initiate");
+			diagw("--remote-host can only be used with --initiate");
 	}
 
 	if (!LDISJOINT(opts1_seen, LELEM(OPT_PUBKEYRSA) | LELEM(OPT_ADDKEY))) {
 		if (!LHAS(opts1_seen, OPT_KEYID))
-			diag("--addkey and --pubkeyrsa require --keyid");
+			diagw("--addkey and --pubkeyrsa require --keyid");
 	}
 
 	if (!(msg.whack_connection || msg.whack_key ||
@@ -2649,11 +2649,11 @@ int main(int argc, char **argv)
 	      msg.whack_shutdown || msg.whack_purgeocsp || msg.whack_seccomp_crashtest || msg.whack_show_states ||
 	      msg.whack_rekey_ike || msg.whack_rekey_ipsec ||
 	      msg.whack_listpubkeys || msg.whack_checkpubkeys))
-		diag("no action specified; try --help for hints");
+		diagw("no action specified; try --help for hints");
 
 	if (msg.policy & POLICY_AGGRESSIVE) {
 		if (msg.ike == NULL)
-			diag("cannot specify aggressive mode without ike= to set algorithm");
+			diagw("cannot specify aggressive mode without ike= to set algorithm");
 	}
 
 	/*
@@ -2665,7 +2665,7 @@ int main(int argc, char **argv)
 	 */
 	if (msg.sa_rekey_fuzz > INT_MAX - 100 ||
 	    deltasecs(msg.sa_rekey_margin) > (time_t)(INT_MAX / (100 + msg.sa_rekey_fuzz)))
-		diag("rekeymargin or rekeyfuzz values are so large that they cause overflow");
+		diagw("rekeymargin or rekeyfuzz values are so large that they cause overflow");
 
 	check_life_time(msg.sa_ike_life_seconds, IKE_SA_LIFETIME_MAXIMUM,
 			"ikelifetime", &msg);
@@ -2675,11 +2675,11 @@ int main(int argc, char **argv)
 
 	if (deltasecs(msg.dpd_delay) != 0 &&
 	    deltasecs(msg.dpd_timeout) == 0)
-		diag("dpddelay specified, but dpdtimeout is zero, both should be specified");
+		diagw("dpddelay specified, but dpdtimeout is zero, both should be specified");
 
 	if (deltasecs(msg.dpd_delay) == 0 &&
 	    deltasecs(msg.dpd_timeout) != 0)
-		diag("dpdtimeout specified, but dpddelay is zero, both should be specified");
+		diagw("dpdtimeout specified, but dpddelay is zero, both should be specified");
 
 	switch (msg.dpd_action) {
 	case DPD_ACTION_DISABLED:
@@ -2688,12 +2688,12 @@ int main(int argc, char **argv)
 	case DPD_ACTION_RESTART:
 		break;
 	default:
-		diag("dpdaction can only be \"clear\", \"hold\" or \"restart\"");
+		diagw("dpdaction can only be \"clear\", \"hold\" or \"restart\"");
 	}
 
 	if (msg.remotepeertype != CISCO &&
 	    msg.remotepeertype != NON_CISCO) {
-		diag("remote-peer-type can only be \"CISCO\" or \"NON_CISCO\" - defaulting to non-cisco mode");
+		diagw("remote-peer-type can only be \"CISCO\" or \"NON_CISCO\" - defaulting to non-cisco mode");
 		msg.remotepeertype = NON_CISCO;	/*NON_CISCO=0*/
 	}
 
@@ -2709,7 +2709,7 @@ int main(int argc, char **argv)
 	}
 	ugh = pack_whack_msg(&wp);
 	if (ugh != NULL)
-		diag(ugh);
+		diagw(ugh);
 
 	msg.magic = ((opts1_seen & ~(LELEM(OPT_SHUTDOWN) | LELEM(OPT_STATUS))) |
 		     opts2_seen | lst_seen | cd_seen) != LEMPTY ||
