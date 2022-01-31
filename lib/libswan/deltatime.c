@@ -17,8 +17,10 @@
  */
 
 #include <inttypes.h>		/* for imaxabs() */
+#include <limits.h>		/* for UINT_MAX */
 
 #include "deltatime.h"
+#include "timescale.h"
 #include "lswlog.h"
 
 const deltatime_t deltatime_zero;
@@ -186,4 +188,31 @@ const char *str_deltatime(deltatime_t d, deltatime_buf *out)
 	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
 	jam_deltatime(&buf, d);
 	return out->buf;
+}
+
+diag_t ttodeltatime(const char *t, deltatime_t *d, const struct timescale *default_scale)
+{
+	*d = deltatime_zero;
+
+	uintmax_t time;
+	shunk_t cursor = shunk1(t);
+	err_t err = shunk_to_uintmax(cursor, &cursor, 10/*any-base*/, &time, 0/*ceiling*/);
+	if (err != NULL) {
+		return diag("bad duration value \"%s\": %s", t, err);
+	}
+
+	const struct timescale *scale = ttotimescale(cursor, default_scale);
+	if (scale == NULL) {
+		return diag("unrecognized duration multiplier \""PRI_SHUNK"\"",
+			    pri_shunk(cursor));
+	}
+
+	/* XXX: I guess this works? */
+	if (UINTMAX_MAX / scale->ms < time) {
+		return diag("duration too large: \"%s\" is more than %u seconds",
+			    t, UINT_MAX);
+	}
+
+	*d = deltatime_ms(time * scale->ms);
+	return NULL;
 }

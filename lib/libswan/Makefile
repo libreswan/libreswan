@@ -119,6 +119,7 @@ OBJS += ip_packet.o
 
 OBJS += lmod.o
 OBJS += lset.o
+OBJS += timescale.o
 OBJS += deltatime.o
 OBJS += realtime.o
 OBJS += monotime.o

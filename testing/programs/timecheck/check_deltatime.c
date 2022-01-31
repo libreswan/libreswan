@@ -21,6 +21,7 @@
 #include "timecheck.h"
 #include "lswcdefs.h"		/* for elemsof() */
 #include "constants.h"		/* for bool_str() */
+#include "timescale.h"
 
 struct test_op {
 	intmax_t lms, rms;
@@ -51,6 +52,65 @@ static void check_deltatime_op(const struct test_op *tests, size_t nr_tests,
 		}
 		fprintf(out, "\n");
 	}
+}
+
+static void check_ttodeltatime(void)
+{
+	static const struct test_ttodeltatime {
+		const char *str;
+		intmax_t ms;
+		const struct timescale *scale;
+		bool ok;
+	} test_ttodeltatime[] = {
+		/* scale */
+		{ "1", (uintmax_t)1, &timescale_milliseconds, true, },
+		{ "1", (uintmax_t)1*1000, &timescale_seconds, true, },
+		{ "1", (uintmax_t)1*1000*60, &timescale_minutes, true, },
+		{ "1", (uintmax_t)1*1000*60*60, &timescale_hours, true, },
+		{ "1", (uintmax_t)1*1000*60*60*24, &timescale_days, true, },
+		{ "1", (uintmax_t)1*1000*60*60*24*7, &timescale_weeks, true, },
+		/* suffix */
+		{ "1ms", (uintmax_t)1, &timescale_milliseconds, true, },
+		{ "1s", (uintmax_t)1*1000, &timescale_milliseconds, true, },
+		{ "1m", (uintmax_t)1*1000*60, &timescale_milliseconds, true, },
+		{ "1h", (uintmax_t)1*1000*60*60, &timescale_milliseconds, true, },
+		{ "1d", (uintmax_t)1*1000*60*60*24, &timescale_milliseconds, true, },
+		{ "1w", (uintmax_t)1*1000*60*60*24*7, &timescale_milliseconds, true, },
+		/* error */
+		{ "1x", (uintmax_t)0, &timescale_milliseconds, false, },
+		{ "x1", (uintmax_t)0, &timescale_milliseconds, false, },
+		{ "1mm", (uintmax_t)0, &timescale_milliseconds, false, },
+	};
+
+	for (unsigned i = 0; i < elemsof(test_ttodeltatime); i++) {
+		const struct test_ttodeltatime *t = &test_ttodeltatime[i];
+		fprintf(stdout, "ttodeltatime(%s, "PRI_TIMESCALE") ok=%s\n",
+			t->str, pri_timescale(*t->scale), bool_str(t->ok));
+		deltatime_t d;
+		diag_t diag = ttodeltatime(t->str, &d, t->scale);
+		if (t->ok) {
+			if (diag != NULL) {
+				fprintf(stderr, "FAIL: ttodeltatime(%s, "PRI_TIMESCALE") unexpectedly returned: %s\n",
+					t->str, pri_timescale(*t->scale), str_diag(diag));
+				fails++;
+				return;
+			}
+		} else if (diag == NULL) {
+			fprintf(stderr, "FAIL: ttodeltatime(%s, "PRI_TIMESCALE") unexpectedly succeeded\n",
+				t->str, pri_timescale(*t->scale));
+			fails++;
+			return;
+		} else {
+			pfree_diag(&diag);
+		}
+		if (deltamillisecs(d) != t->ms) {
+			fprintf(stderr, "FAIL: ttodeltatime(%s, "PRI_TIMESCALE") returned %jd, especting %jd\n",
+				t->str, pri_timescale(*t->scale), deltamillisecs(d), t->ms);
+			fails++;
+			return;
+		}
+	}
+
 }
 
 void check_deltatime(void)
@@ -101,5 +161,7 @@ void check_deltatime(void)
 	CHECK_DELTATIME_OP(sub);
 
 	CHECK_TIME_CMP(delta);
+
+	check_ttodeltatime();
 
 }

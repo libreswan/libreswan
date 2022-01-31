@@ -24,7 +24,11 @@
 #include <stdint.h>		/* for intmax_t */
 #include <stdbool.h>		/* for bool */
 
+#include "diag.h"
+#include "shunk.h"
+
 struct jambuf;
+struct timescale;
 
 /*
  * XXX: This value isn't typed so what is it really the max of?
@@ -96,6 +100,8 @@ typedef struct {
 
 const char *str_deltatime(deltatime_t d, deltatime_buf *buf);
 size_t jam_deltatime(struct jambuf *buf, deltatime_t d);
+
+diag_t ttodeltatime(const char *t, deltatime_t *d, const struct timescale *default_scale);
 
 /* primitives used to implement times. */
 
