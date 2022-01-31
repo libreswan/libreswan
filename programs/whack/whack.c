@@ -55,6 +55,7 @@
 #include "whack.h"
 #include "ip_address.h"
 #include "ip_info.h"
+#include "timescale.h"
 
 #include "ipsecconf/confread.h" /* for DEFAULT_UPDOWN */
 #include <net/if.h> /* for IFNAMSIZ */
@@ -443,8 +444,8 @@ enum option_enums {
 	CD_CONNIPV4,
 	CD_CONNIPV6,
 
-	CD_RETRANSMIT_T,
-	CD_RETRANSMIT_I,
+	CD_RETRANSMIT_TIMEOUT_S,
+	CD_RETRANSMIT_INTERVAL_MS,
 	CD_IKELIFETIME,
 	CD_IPSECLIFETIME,
 	CD_RKMARGIN,
@@ -772,8 +773,8 @@ static const struct option long_opts[] = {
 	{ "ipv6", no_argument, NULL, CD_CONNIPV6 + OO },
 	{ "ikelifetime", required_argument, NULL, CD_IKELIFETIME + OO + NUMERIC_ARG },
 	{ "ipseclifetime", required_argument, NULL, CD_IPSECLIFETIME + OO + NUMERIC_ARG },
-	{ "retransmit-timeout", required_argument, NULL, CD_RETRANSMIT_T + OO + NUMERIC_ARG },
-	{ "retransmit-interval", required_argument, NULL, CD_RETRANSMIT_I + OO + NUMERIC_ARG },
+	{ "retransmit-timeout", required_argument, NULL, CD_RETRANSMIT_TIMEOUT_S + OO },
+	{ "retransmit-interval", required_argument, NULL, CD_RETRANSMIT_INTERVAL_MS + OO },
 	{ "rekeymargin", required_argument, NULL, CD_RKMARGIN + OO + NUMERIC_ARG },
 	/* OBSOLETE */
 	{ "rekeywindow", required_argument, NULL, CD_RKMARGIN + OO + NUMERIC_ARG },
@@ -1879,13 +1880,23 @@ int main(int argc, char **argv)
 			msg.failure_shunt = c - CDS_FAILURE;
 			continue;
 
-		case CD_RETRANSMIT_T:	/* --retransmit-timeout <seconds> */
-			msg.retransmit_timeout = deltatime(opt_whole);
+		case CD_RETRANSMIT_TIMEOUT_S:	/* --retransmit-timeout <seconds> */
+		{
+			diag_t diag = ttodeltatime(optarg, &msg.retransmit_timeout, &timescale_seconds);
+			if (diag != NULL) {
+				diagw(str_diag(diag));
+			}
 			continue;
+		}
 
-		case CD_RETRANSMIT_I:	/* --retransmit-interval <msecs> */
-			msg.retransmit_interval = deltatime_ms(opt_whole);
+		case CD_RETRANSMIT_INTERVAL_MS:	/* --retransmit-interval <msecs> */
+		{
+			diag_t diag = ttodeltatime(optarg, &msg.retransmit_interval, &timescale_milliseconds);
+			if (diag != NULL) {
+				diagw(str_diag(diag));
+			}
 			continue;
+		}
 
 		case CD_IKELIFETIME:	/* --ikelifetime <seconds> */
 			msg.sa_ike_life_seconds = deltatime(opt_whole);
