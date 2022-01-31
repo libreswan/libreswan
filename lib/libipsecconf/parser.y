@@ -47,7 +47,7 @@ static char parser_errstring[ERRSTRING_LEN+1];
 static bool save_errors;
 static struct config_parsed *parser_cfg;
 static struct kw_list **parser_kw, *parser_kw_last;
-static void new_parser_kw(struct keyword *keyword, char *string, unsigned int number);	/* forward */
+static void new_parser_kw(struct keyword *keyword, char *string, uintmax_t number);	/* forward */
 static struct starter_comments_list *parser_comments;
 
 /**
@@ -58,7 +58,7 @@ static struct starter_comments_list *parser_comments;
 
 %union {
 	char *s;
-	unsigned int num;
+	uintmax_t num;
 	struct keyword k;
 }
 %token EQUAL FIRST_SPACES EOL CONFIG SETUP CONN INCLUDE VERSION
@@ -149,7 +149,7 @@ statement_kw:
 		const char *value = $3.keydef->keyname;
 
 		char *string = NULL;	/* neutral placeholding value */
-		unsigned int number = 0;	/* neutral placeholding value */
+		uintmax_t number = 0;	/* neutral placeholding value */
 
 		switch (kw.keydef->type) {
 		case kt_list:
@@ -213,7 +213,7 @@ statement_kw:
 		struct keyword kw = $1;
 
 		char *string = NULL;	/* neutral placeholding value */
-		unsigned int number = 0;	/* neutral placeholding value */
+		uintmax_t number = 0;	/* neutral placeholding value */
 
 		switch (kw.keydef->type) {
 		case kt_list:
@@ -459,7 +459,7 @@ void parser_free_conf(struct config_parsed *cfg)
 	}
 }
 
-static void new_parser_kw(struct keyword *keyword, char *string, unsigned int number)
+static void new_parser_kw(struct keyword *keyword, char *string, uintmax_t number)
 {
 	struct kw_list *new = malloc(sizeof(struct kw_list));
 

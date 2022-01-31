@@ -30,6 +30,7 @@
 #define _KEYWORDS_H_
 
 #include <sys/queue.h>		/* for TAILQ_ENTRY() et.al. */
+#include <stdint.h>		/* for uintmax_t */
 
 #include "lset.h"
 
@@ -396,7 +397,7 @@ struct kw_list {
 	struct kw_list *next;
 	struct keyword keyword;
 	char *string;
-	unsigned int number;
+	uintmax_t number;
 };
 
 struct starter_comments {
