@@ -495,16 +495,16 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		msg.dnshostname = conn->right.strings[KSCF_IP];
 
 	msg.nic_offload = conn->options[KNCF_NIC_OFFLOAD];
-	msg.sa_ike_life_seconds = deltatime(conn->options[KNCF_IKELIFETIME]);
-	msg.sa_ipsec_life_seconds = deltatime(conn->options[KNCF_SALIFETIME]);
-	msg.sa_rekey_margin = deltatime(conn->options[KNCF_REKEYMARGIN]);
+	msg.sa_ike_life_seconds = deltatime_ms(conn->options[KNCF_IKELIFETIME_MS]);
+	msg.sa_ipsec_life_seconds = deltatime_ms(conn->options[KNCF_SALIFETIME_MS]);
+	msg.sa_rekey_margin = deltatime_ms(conn->options[KNCF_REKEYMARGIN_MS]);
 	msg.sa_rekey_fuzz = conn->options[KNCF_REKEYFUZZ];
 	msg.sa_keying_tries = conn->options[KNCF_KEYINGTRIES];
 	msg.sa_replay_window = conn->options[KNCF_REPLAY_WINDOW];
 	msg.xfrm_if_id = conn->options[KNCF_XFRM_IF_ID];
 
 	msg.retransmit_interval = deltatime_ms(conn->options[KNCF_RETRANSMIT_INTERVAL_MS]);
-	msg.retransmit_timeout = deltatime(conn->options[KNCF_RETRANSMIT_TIMEOUT]);
+	msg.retransmit_timeout = deltatime_ms(conn->options[KNCF_RETRANSMIT_TIMEOUT_MS]);
 
 	msg.ike_version = conn->ike_version;
 	msg.policy = conn->policy;
@@ -553,10 +553,10 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 
 	/* default to HOLD */
 	msg.dpd_action = DPD_ACTION_HOLD;
-	if (conn->options_set[KNCF_DPDDELAY] &&
-		conn->options_set[KNCF_DPDTIMEOUT]) {
-		msg.dpd_delay = deltatime(conn->options[KNCF_DPDDELAY]);
-		msg.dpd_timeout = deltatime(conn->options[KNCF_DPDTIMEOUT]);
+	if (conn->options_set[KNCF_DPDDELAY_MS] &&
+		conn->options_set[KNCF_DPDTIMEOUT_MS]) {
+		msg.dpd_delay = deltatime_ms(conn->options[KNCF_DPDDELAY_MS]);
+		msg.dpd_timeout = deltatime_ms(conn->options[KNCF_DPDTIMEOUT_MS]);
 		if (conn->options_set[KNCF_DPDACTION])
 			msg.dpd_action = conn->options[KNCF_DPDACTION];
 
@@ -570,8 +570,8 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 			}
 		}
 	} else {
-		if (conn->options_set[KNCF_DPDDELAY]  ||
-			conn->options_set[KNCF_DPDTIMEOUT] ||
+		if (conn->options_set[KNCF_DPDDELAY_MS]  ||
+			conn->options_set[KNCF_DPDTIMEOUT_MS] ||
 			conn->options_set[KNCF_DPDACTION]) {
 			starter_log(LOG_LEVEL_ERR,
 				"conn: \"%s\" warning dpd settings are ignored unless both dpdtimeout= and dpddelay= are set",

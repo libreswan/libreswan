@@ -1237,7 +1237,7 @@ int main(int argc, char **argv)
 
 			crl_strict = cfg->setup.options[KBF_CRL_STRICT];
 
-			pluto_shunt_lifetime = deltatime(cfg->setup.options[KBF_SHUNTLIFETIME]);
+			pluto_shunt_lifetime = deltatime_ms(cfg->setup.options[KBF_SHUNTLIFETIME_MS]);
 
 			ocsp_enable = cfg->setup.options[KBF_OCSP_ENABLE];
 			ocsp_strict = cfg->setup.options[KBF_OCSP_STRICT];
@@ -1245,8 +1245,8 @@ int main(int argc, char **argv)
 			ocsp_method = cfg->setup.options[KBF_OCSP_METHOD];
 			ocsp_post = (ocsp_method == OCSP_METHOD_POST);
 			ocsp_cache_size = cfg->setup.options[KBF_OCSP_CACHE_SIZE];
-			ocsp_cache_min_age = cfg->setup.options[KBF_OCSP_CACHE_MIN];
-			ocsp_cache_max_age = cfg->setup.options[KBF_OCSP_CACHE_MAX];
+			ocsp_cache_min_age = cfg->setup.options[KBF_OCSP_CACHE_MIN_AGE_MS] / 1000;
+			ocsp_cache_max_age = cfg->setup.options[KBF_OCSP_CACHE_MAX_AGE_MS] / 1000;
 
 			set_cfg_string(&ocsp_uri,
 				       cfg->setup.strings[KSF_OCSP_URI]);
@@ -1266,7 +1266,7 @@ int main(int argc, char **argv)
 				llog(RC_LOG, logger, "unknown argument for global-redirect option");
 			}
 
-			crl_check_interval = deltatime(cfg->setup.options[KBF_CRL_CHECKINTERVAL]);
+			crl_check_interval = deltatime_ms(cfg->setup.options[KBF_CRL_CHECKINTERVAL_MS]);
 			uniqueIDs = cfg->setup.options[KBF_UNIQUEIDS];
 #ifdef USE_DNSSEC
 			do_dnssec = cfg->setup.options[KBF_DO_DNSSEC];
@@ -1321,8 +1321,8 @@ int main(int argc, char **argv)
 						       "curl-iface= via --config");
 			}
 
-			if (cfg->setup.options[KBF_CURLTIMEOUT])
-				curl_timeout = cfg->setup.options[KBF_CURLTIMEOUT];
+			if (cfg->setup.options[KBF_CURLTIMEOUT_MS])
+				curl_timeout = cfg->setup.options[KBF_CURLTIMEOUT_MS] / 1000;
 
 			if (cfg->setup.strings[KSF_DUMPDIR]) {
 				pfree(coredir);

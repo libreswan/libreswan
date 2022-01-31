@@ -349,7 +349,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "ikev1-policy",  kv_config,  kt_enum,  KBF_GLOBAL_IKEv1,  kw_global_ikev1_list, NULL, },
   { "interfaces",  kv_config,  kt_string,  KSF_INTERFACES, NULL, NULL, },
   { "curl-iface",  kv_config,  kt_string,  KSF_CURLIFACE, NULL, NULL, },
-  { "curl-timeout",  kv_config,  kt_time,  KBF_CURLTIMEOUT, NULL, NULL, },
+  { "curl-timeout",  kv_config,  kt_time,  KBF_CURLTIMEOUT_MS, NULL, NULL, },
 
   { "myvendorid",  kv_config,  kt_string,  KSF_MYVENDORID, NULL, NULL, },
   { "syslog",  kv_config,  kt_string,  KSF_SYSLOG, NULL, NULL, },
@@ -371,12 +371,12 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "secretsfile",  kv_config,  kt_dirname,  KSF_SECRETSFILE, NULL, NULL, },
   { "statsbin",  kv_config,  kt_dirname,  KSF_STATSBINARY, NULL, NULL, },
   { "uniqueids",  kv_config,  kt_bool,  KBF_UNIQUEIDS, NULL, NULL, },
-  { "shuntlifetime",  kv_config,  kt_time,  KBF_SHUNTLIFETIME, NULL, NULL, },
+  { "shuntlifetime",  kv_config,  kt_time,  KBF_SHUNTLIFETIME_MS, NULL, NULL, },
   { "global-redirect", kv_config, kt_string, KSF_GLOBAL_REDIRECT, NULL, NULL },
   { "global-redirect-to", kv_config, kt_string, KSF_GLOBAL_REDIRECT_TO, NULL, NULL, },
 
   { "crl-strict",  kv_config,  kt_bool,  KBF_CRL_STRICT, NULL, NULL, },
-  { "crlcheckinterval",  kv_config,  kt_time,  KBF_CRL_CHECKINTERVAL, NULL, NULL, },
+  { "crlcheckinterval",  kv_config,  kt_time,  KBF_CRL_CHECKINTERVAL_MS, NULL, NULL, },
 
   { "ocsp-strict",  kv_config,  kt_bool,  KBF_OCSP_STRICT, NULL, NULL, },
   { "ocsp-enable",  kv_config,  kt_bool,  KBF_OCSP_ENABLE, NULL, NULL, },
@@ -384,8 +384,8 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "ocsp-timeout",  kv_config,  kt_number,  KBF_OCSP_TIMEOUT, NULL, NULL, },
   { "ocsp-trustname",  kv_config,  kt_string,  KSF_OCSP_TRUSTNAME, NULL, NULL, },
   { "ocsp-cache-size",  kv_config,  kt_number,  KBF_OCSP_CACHE_SIZE, NULL, NULL, },
-  { "ocsp-cache-min-age",  kv_config,  kt_time,  KBF_OCSP_CACHE_MIN, NULL, NULL, },
-  { "ocsp-cache-max-age",  kv_config,  kt_time,  KBF_OCSP_CACHE_MAX, NULL, NULL, },
+  { "ocsp-cache-min-age",  kv_config,  kt_time,  KBF_OCSP_CACHE_MIN_AGE_MS, NULL, NULL, },
+  { "ocsp-cache-max-age",  kv_config,  kt_time,  KBF_OCSP_CACHE_MAX_AGE_MS, NULL, NULL, },
   { "ocsp-method",  kv_config | kv_processed,  kt_enum,  KBF_OCSP_METHOD,  kw_ocsp_method_list, NULL, },
 
   { "ddos-mode",  kv_config | kv_processed ,  kt_enum,  KBF_DDOS_MODE,  kw_ddos_list, NULL, },
@@ -492,12 +492,12 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "ms-dh-downgrade",  kv_conn,  kt_bool,  KNCF_MSDH_DOWNGRADE, NULL, NULL, },
   { "require-id-on-certificate",  kv_conn,  kt_bool,  KNCF_SAN_ON_CERT, NULL, NULL, },
   { "dns-match-id,",  kv_conn,  kt_bool,  KNCF_DNS_MATCH_ID, NULL, NULL, },
-  { "keylife",  kv_conn | kv_alias,  kt_time,  KNCF_SALIFETIME, NULL, NULL, },
-  { "lifetime",  kv_conn | kv_alias,  kt_time,  KNCF_SALIFETIME, NULL, NULL, },
-  { "salifetime",  kv_conn,  kt_time,  KNCF_SALIFETIME, NULL, NULL, },
+  { "keylife",  kv_conn | kv_alias,  kt_time,  KNCF_SALIFETIME_MS, NULL, NULL, },
+  { "lifetime",  kv_conn | kv_alias,  kt_time,  KNCF_SALIFETIME_MS, NULL, NULL, },
+  { "salifetime",  kv_conn,  kt_time,  KNCF_SALIFETIME_MS, NULL, NULL, },
 
-  { "retransmit-timeout",  kv_conn,  kt_time,  KNCF_RETRANSMIT_TIMEOUT, NULL, NULL, },
-  { "retransmit-interval",  kv_conn,  kt_number,  KNCF_RETRANSMIT_INTERVAL_MS, NULL, NULL, },
+  { "retransmit-timeout",  kv_conn,  kt_time,  KNCF_RETRANSMIT_TIMEOUT_MS, NULL, NULL, },
+  { "retransmit-interval",  kv_conn|kv_milliseconds,  kt_time,  KNCF_RETRANSMIT_INTERVAL_MS, NULL, NULL, },
 
   {"ikepad",  kv_conn,  kt_bool,  KNCF_IKEPAD, NULL, NULL, },
   { "nat-ikev1-method",  kv_conn | kv_processed,  kt_enum,  KNCF_IKEV1_NATT,  kw_ikev1natt_list, NULL, },
@@ -540,11 +540,11 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "overlapip",  kv_conn,  kt_bool,  KNCF_OVERLAPIP, NULL, NULL, },
   { "reauth",  kv_conn,  kt_bool,  KNCF_REAUTH, NULL, NULL, },
   { "rekey",  kv_conn,  kt_bool,  KNCF_REKEY, NULL, NULL, },
-  { "rekeymargin",  kv_conn,  kt_time,  KNCF_REKEYMARGIN, NULL, NULL, },
+  { "rekeymargin",  kv_conn,  kt_time,  KNCF_REKEYMARGIN_MS, NULL, NULL, },
   { "rekeyfuzz",  kv_conn,  kt_percent,  KNCF_REKEYFUZZ, NULL, NULL, },
   { "keyingtries",  kv_conn,  kt_number,  KNCF_KEYINGTRIES, NULL, NULL, },
   { "replay-window",  kv_conn,  kt_number,  KNCF_REPLAY_WINDOW, NULL, NULL, },
-  { "ikelifetime",  kv_conn,  kt_time,  KNCF_IKELIFETIME, NULL, NULL, },
+  { "ikelifetime",  kv_conn,  kt_time,  KNCF_IKELIFETIME_MS, NULL, NULL, },
   { "failureshunt",  kv_conn,  kt_enum,  KNCF_FAILURESHUNT,  kw_failureshunt_list, NULL, },
   { "negotiationshunt",  kv_conn,  kt_enum,  KNCF_NEGOTIATIONSHUNT,  kw_negotiationshunt_list, NULL, },
 
@@ -566,8 +566,8 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "metric",  kv_conn,  kt_number,  KNCF_METRIC, NULL, NULL, },
 
   /* DPD */
-  { "dpddelay",  kv_conn,  kt_time,  KNCF_DPDDELAY, NULL, NULL, },
-  { "dpdtimeout",  kv_conn,  kt_time,  KNCF_DPDTIMEOUT, NULL, NULL, },
+  { "dpddelay",  kv_conn,  kt_time,  KNCF_DPDDELAY_MS, NULL, NULL, },
+  { "dpdtimeout",  kv_conn,  kt_time,  KNCF_DPDTIMEOUT_MS, NULL, NULL, },
   { "dpdaction",  kv_conn,  kt_enum,  KNCF_DPDACTION,  kw_dpdaction_list, NULL, },
 
   { "sendca",      kv_conn,  kt_enum,  KNCF_SEND_CA,  kw_sendca_list, NULL, },

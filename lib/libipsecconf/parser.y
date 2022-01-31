@@ -28,6 +28,9 @@
 #include <errno.h>
 #define YYDEBUG 1
 
+#include "deltatime.h"
+#include "timescale.h"
+
 #include "ipsecconf/keywords.h"
 #include "ipsecconf/parser.h"	/* includes parser.tab.h" */
 #include "ipsecconf/parser-flex.h"
@@ -70,8 +73,6 @@ static struct starter_comments_list *parser_comments;
 %token <k>      BOOLWORD
 %token <k>      PERCENTWORD
 %token <k>      COMMENT
-
-%type <num>	duration
 %%
 
 /*
@@ -266,8 +267,33 @@ statement_kw:
 	| KEYWORD EQUAL INTEGER {
 		new_parser_kw(&$1, NULL, $<num>3);
 	}
-	| TIMEWORD EQUAL duration {
-		new_parser_kw(&$1, NULL, $3);
+	| TIMEWORD EQUAL INTEGER {
+		struct keyword *kw = &$1;
+		deltatime_t d;
+		if (kw->keydef->validity & kv_milliseconds) {
+			d = deltatime_ms($3);
+		} else {
+			d = deltatime($3);
+		}
+		new_parser_kw(kw, NULL, deltamillisecs(d));
+	}
+	| TIMEWORD EQUAL STRING {
+		struct keyword *kw = &$1;
+		const char *const str = $3;
+		const struct timescale *scale;
+		if (kw->keydef->validity & kv_milliseconds) {
+			scale = &timescale_milliseconds;
+		} else {
+			scale = &timescale_seconds;
+		}
+		deltatime_t d;
+		diag_t diag = ttodeltatime(str, &d, scale);
+		if (diag != NULL) {
+			yyerror(str_diag(diag));
+			pfree_diag(&diag);
+		} else {
+			new_parser_kw(kw, NULL, deltamillisecs(d));
+		}
 	}
 	| PERCENTWORD EQUAL STRING {
 		struct keyword kw = $1;
@@ -299,59 +325,6 @@ statement_kw:
 	}
 	| KEYWORD EQUAL { /* this is meaningless, we ignore it */ }
 	;
-
-duration:
-	INTEGER {
-		$$ = $1;
-	}
-	| STRING {
-		const char *const str = $1;
-		/*const*/ char *endptr;
-		char buf[80];
-
-		unsigned long val = (errno = 0, strtoul(str, &endptr, 10));
-		int strtoul_errno = errno;
-
-		if (endptr == str) {
-			snprintf(buf, sizeof(buf), "bad duration value \"%s\"", str);
-			yyerror(buf);
-		} else {
-			bool bad_suffix = false;
-			unsigned scale;
-
-			if (*endptr == '\0') {
-				/* seconds: no scaling */
-				scale = 1;
-			} else if (endptr[1] == '\0') {
-				/* single character suffix */
-				switch (*endptr) {
-				case 's': scale = 1; break;
-				case 'm': scale = secs_per_minute; break;
-				case 'h': scale = secs_per_hour; break;
-				case 'd': scale = secs_per_day; break;
-				case 'w': scale = 7*secs_per_day; break;
-				default:
-					bad_suffix = true;
-				}
-			} else {
-				bad_suffix = true;
-			}
-
-			if (bad_suffix) {
-				snprintf(buf, sizeof(buf),
-					"bad duration multiplier \"%s\" on %s",
-					endptr, str);
-				yyerror(buf);
-			} else if (strtoul_errno != 0 || UINT_MAX / scale < val) {
-				snprintf(buf, sizeof(buf),
-					"duration too large: \"%s\" is more than %u seconds",
-					str, UINT_MAX);
-				yyerror(buf);
-			} else {
-				$$ = val * scale;
-			}
-		}
-	};
 %%
 
 void yyerror(const char *s)
