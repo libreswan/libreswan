@@ -444,11 +444,11 @@ enum option_enums {
 	CD_CONNIPV4,
 	CD_CONNIPV6,
 
-	CD_RETRANSMIT_TIMEOUT_S,
-	CD_RETRANSMIT_INTERVAL_MS,
+	CD_RETRANSMIT_TIMEOUT,
+	CD_RETRANSMIT_INTERVAL,
 	CD_IKELIFETIME,
 	CD_IPSECLIFETIME,
-	CD_RKMARGIN,
+	CD_REKEYMARGIN,
 	CD_RKFUZZ,
 	CD_KTRIES,
 	CD_REPLAY_W,
@@ -730,8 +730,8 @@ static const struct option long_opts[] = {
 	{ "fake-strongswan", no_argument, NULL, CD_FAKE_STRONGSWAN + OO },
 	PS("mobike", MOBIKE),
 
-	{ "dpddelay", required_argument, NULL, CD_DPDDELAY + OO + NUMERIC_ARG },
-	{ "dpdtimeout", required_argument, NULL, CD_DPDTIMEOUT + OO + NUMERIC_ARG },
+	{ "dpddelay", required_argument, NULL, CD_DPDDELAY + OO },
+	{ "dpdtimeout", required_argument, NULL, CD_DPDTIMEOUT + OO },
 	{ "dpdaction", required_argument, NULL, CD_DPDACTION + OO },
 	{ "send-redirect", required_argument, NULL, CD_SEND_REDIRECT + OO },
 	{ "redirect-to", required_argument, NULL, CD_REDIRECT_TO + OO },
@@ -771,13 +771,13 @@ static const struct option long_opts[] = {
 	{ "sendca", required_argument, NULL, CD_SEND_CA + OO },
 	{ "ipv4", no_argument, NULL, CD_CONNIPV4 + OO },
 	{ "ipv6", no_argument, NULL, CD_CONNIPV6 + OO },
-	{ "ikelifetime", required_argument, NULL, CD_IKELIFETIME + OO + NUMERIC_ARG },
-	{ "ipseclifetime", required_argument, NULL, CD_IPSECLIFETIME + OO + NUMERIC_ARG },
-	{ "retransmit-timeout", required_argument, NULL, CD_RETRANSMIT_TIMEOUT_S + OO },
-	{ "retransmit-interval", required_argument, NULL, CD_RETRANSMIT_INTERVAL_MS + OO },
-	{ "rekeymargin", required_argument, NULL, CD_RKMARGIN + OO + NUMERIC_ARG },
+	{ "ikelifetime", required_argument, NULL, CD_IKELIFETIME + OO },
+	{ "ipseclifetime", required_argument, NULL, CD_IPSECLIFETIME + OO },
+	{ "retransmit-timeout", required_argument, NULL, CD_RETRANSMIT_TIMEOUT + OO },
+	{ "retransmit-interval", required_argument, NULL, CD_RETRANSMIT_INTERVAL + OO },
+	{ "rekeymargin", required_argument, NULL, CD_REKEYMARGIN + OO },
 	/* OBSOLETE */
-	{ "rekeywindow", required_argument, NULL, CD_RKMARGIN + OO + NUMERIC_ARG },
+	{ "rekeywindow", required_argument, NULL, CD_REKEYMARGIN + OO + NUMERIC_ARG },
 	{ "rekeyfuzz", required_argument, NULL, CD_RKFUZZ + OO + NUMERIC_ARG },
 	{ "keyingtries", required_argument, NULL, CD_KTRIES + OO + NUMERIC_ARG },
 	{ "replay-window", required_argument, NULL, CD_REPLAY_W + OO + NUMERIC_ARG },
@@ -918,6 +918,14 @@ struct sockaddr_un ctl_addr = {
 	.sun_len = sizeof(struct sockaddr_un),
 #endif
 };
+
+static void optarg_to_deltatime(deltatime_t *deltatime, const struct timescale *timescale)
+{
+	diag_t diag = ttodeltatime(optarg, deltatime, timescale);
+	if (diag != NULL) {
+		diagw(str_diag(diag));
+	}
+}
 
 /* ??? there seems to be no consequence for invalid life_time. */
 static void check_life_time(deltatime_t life, time_t raw_limit,
@@ -1880,34 +1888,24 @@ int main(int argc, char **argv)
 			msg.failure_shunt = c - CDS_FAILURE;
 			continue;
 
-		case CD_RETRANSMIT_TIMEOUT_S:	/* --retransmit-timeout <seconds> */
-		{
-			diag_t diag = ttodeltatime(optarg, &msg.retransmit_timeout, &timescale_seconds);
-			if (diag != NULL) {
-				diagw(str_diag(diag));
-			}
+		case CD_RETRANSMIT_TIMEOUT:	/* --retransmit-timeout <seconds> */
+			optarg_to_deltatime(&msg.retransmit_timeout, &timescale_seconds);
 			continue;
-		}
 
-		case CD_RETRANSMIT_INTERVAL_MS:	/* --retransmit-interval <msecs> */
-		{
-			diag_t diag = ttodeltatime(optarg, &msg.retransmit_interval, &timescale_milliseconds);
-			if (diag != NULL) {
-				diagw(str_diag(diag));
-			}
+		case CD_RETRANSMIT_INTERVAL:	/* --retransmit-interval <milliseconds> (not seconds) */
+			optarg_to_deltatime(&msg.retransmit_interval, &timescale_milliseconds);
 			continue;
-		}
 
 		case CD_IKELIFETIME:	/* --ikelifetime <seconds> */
-			msg.sa_ike_life_seconds = deltatime(opt_whole);
+			optarg_to_deltatime(&msg.sa_ike_life_seconds, &timescale_seconds);
 			continue;
 
 		case CD_IPSECLIFETIME:	/* --ipseclifetime <seconds> */
-			msg.sa_ipsec_life_seconds = deltatime(opt_whole);
+			optarg_to_deltatime(&msg.sa_ipsec_life_seconds, &timescale_seconds);
 			continue;
 
-		case CD_RKMARGIN:	/* --rekeymargin <seconds> */
-			msg.sa_rekey_margin = deltatime(opt_whole);
+		case CD_REKEYMARGIN:	/* --rekeymargin <seconds> */
+			optarg_to_deltatime(&msg.sa_rekey_margin, &timescale_seconds);
 			continue;
 
 		case CD_RKFUZZ:	/* --rekeyfuzz <percentage> */
@@ -1993,12 +1991,12 @@ int main(int argc, char **argv)
 			msg.fake_strongswan = true;
 			continue;
 
-		case CD_DPDDELAY:	/* --dpddelay */
-			msg.dpd_delay = deltatime(opt_whole);
+		case CD_DPDDELAY:	/* --dpddelay <seconds> */
+			optarg_to_deltatime(&msg.dpd_delay, &timescale_seconds);
 			continue;
 
-		case CD_DPDTIMEOUT:	/* --dpdtimeout */
-			msg.dpd_timeout = deltatime(opt_whole);
+		case CD_DPDTIMEOUT:	/* --dpdtimeout <seconds> */
+			optarg_to_deltatime(&msg.dpd_timeout, &timescale_seconds);
 			continue;
 
 		case CD_DPDACTION:	/* --dpdaction */
