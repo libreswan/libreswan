@@ -221,7 +221,8 @@ static ssize_t netlink_query(struct nlmsghdr **nlmsgp, size_t bufsize)
  * See if left->addr or left->next is %defaultroute and change it to IP.
  */
 
-static const char *pa(enum keyword_host type, ip_address address, const char *hostname, address_buf *buf)
+static const char *pa(enum keyword_host type, ip_address address,
+		      const char *hostname, address_buf *buf)
 {
 	switch (type) {
 	case KH_NOTSET: return "<not-set>";
@@ -249,11 +250,11 @@ enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 	const struct ip_info *afi = host->host_family;
 
 	address_buf ab, gb, pb;
-	verbose("resolving src = %s gateway = %s peer %s",
+	verbose("resolving family = %s src = %s gateway = %s peer %s",
+		(afi == NULL ? "<unset>" : afi->ip_name),
 		pa(host->addrtype, host->addr, host->strings[KSCF_IP], &ab),
 		pa(host->nexttype, host->nexthop, host->strings[KSCF_NEXTHOP], &gb),
 		pa(peer->addrtype, peer->addr, peer->strings[KSCF_IP], &pb));
-
 
 	/*
 	 * Can only resolve one at a time.
