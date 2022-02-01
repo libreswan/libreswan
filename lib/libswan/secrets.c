@@ -997,19 +997,27 @@ static void add_secret(struct secret **slist,
 		       struct secret *s,
 		       const char *story)
 {
-	/* if the id list is empty, add two empty ids */
+	/*
+	 * If the ID list is empty, add two empty IDs.
+	 *
+	 * XXX: The below seem to be acting as a sentinal so that
+	 * lsw_find_secret_by_id() always finds something (they act as
+	 * wildcards) in the ID list.
+	 *
+	 * But why are two needed?!?.
+	 */
 	if (s->ids == NULL) {
 		struct id_list *idl = alloc_bytes(sizeof(struct id_list), "id list");
 		idl->next = NULL;
 		idl->id = empty_id;
 		idl->id.kind = ID_NONE;
-		idl->id.ip_addr = ipv4_info.address.any;
+		idl->id.ip_addr = unset_address;
 
 		struct id_list *idl2 = alloc_bytes(sizeof(struct id_list), "id list");
 		idl2->next = idl;
 		idl2->id = empty_id;
 		idl2->id.kind = ID_NONE;
-		idl2->id.ip_addr = ipv4_info.address.any;
+		idl2->id.ip_addr = unset_address;
 
 		s->ids = idl2;
 	}
