@@ -110,6 +110,7 @@ class Domain:
                           timeout=timeout) == 0:
             self.logger.info("domain shutdown after %s", lapsed_time)
             self._console = False
+            self.logger.info("domain state is: %s", self.state())
             return True
 
         self.logger.error("timeout shutting down domain")
