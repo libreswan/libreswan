@@ -63,7 +63,7 @@ end of file /etc/ipsec.conf
 Loading conn road
 starter: left is KH_DEFAULTROUTE
 loading named conns: road
-resolving src = <defaultroute> gateway = <defaultroute> peer east46.testing.libreswan.org
+resolving family = IPv6 src = <defaultroute> gateway = <defaultroute> peer east46.testing.libreswan.org
   seeking gateway
   query getroute +REQUEST +ROOT +MATCH
   add dst 2001:db8:1:2::23 (peer->addr)
@@ -73,14 +73,14 @@ resolving src = <defaultroute> gateway = <defaultroute> peer east46.testing.libr
   src <unset-address> prefsrc <unset-address> gateway fe80::1000:ff:fe32:64ba dst <unset-address> dev eth0 priority 1024 pref 0 table 254 +cacheinfo
   found gateway (host_nexthop): fe80::1000:ff:fe32:64ba
   please-call-again: src = <defaultroute> gateway = fe80::1000:ff:fe32:64ba
-resolving src = <defaultroute> gateway = fe80::1000:ff:fe32:64ba peer east46.testing.libreswan.org
+resolving family = IPv6 src = <defaultroute> gateway = fe80::1000:ff:fe32:64ba peer east46.testing.libreswan.org
   seeking prefsrc
   query getroute +REQUEST
   add dst 2001:db8:1:2::23 (peer->addr)
   src :: prefsrc 2001:db8:1:3::209 gateway fe80::1000:ff:fe32:64ba dst 2001:db8:1:2::23 dev eth0 priority 1024 pref 0 table 254 +cacheinfo
   found prefsrc (host_addr): 2001:db8:1:3::209
   success: src = 2001:db8:1:3::209 gateway = fe80::1000:ff:fe32:64ba
-resolving src = east46.testing.libreswan.org gateway = <not-set> peer 2001:db8:1:3::209
+resolving family = IPv6 src = east46.testing.libreswan.org gateway = <not-set> peer 2001:db8:1:3::209
   seeking nothing
 conn: "road" modecfgdns=<unset>
 conn: "road" modecfgdomains=<unset>
@@ -147,7 +147,7 @@ end of file /etc/ipsec.conf
 Loading conn road
 starter: left is KH_DEFAULTROUTE
 loading named conns: road
-resolving src = <defaultroute> gateway = <defaultroute> peer east46.testing.libreswan.org
+resolving family = IPv6 src = <defaultroute> gateway = <defaultroute> peer east46.testing.libreswan.org
   seeking gateway
   query getroute +REQUEST +ROOT +MATCH
   add dst 2001:db8:1:2::23 (peer->addr)
@@ -159,14 +159,14 @@ resolving src = <defaultroute> gateway = <defaultroute> peer east46.testing.libr
   src <unset-address> prefsrc <unset-address> gateway fe80::1000:ff:fe32:64ba dst <unset-address> dev eth0 priority 1024 pref 0 table 254 +cacheinfo
   found gateway (host_nexthop): fe80::1000:ff:fe32:64ba
   please-call-again: src = <defaultroute> gateway = fe80::1000:ff:fe32:64ba
-resolving src = <defaultroute> gateway = fe80::1000:ff:fe32:64ba peer east46.testing.libreswan.org
+resolving family = IPv6 src = <defaultroute> gateway = fe80::1000:ff:fe32:64ba peer east46.testing.libreswan.org
   seeking prefsrc
   query getroute +REQUEST
   add dst 2001:db8:1:2::23 (peer->addr)
   src :: prefsrc 2001:db8:0:3:1:: gateway fe80::1000:ff:fe32:64ba dst 2001:db8:1:2::23 dev eth0 priority 1024 pref 0 table 254 +cacheinfo
   found prefsrc (host_addr): 2001:db8:0:3:1::
   success: src = 2001:db8:0:3:1:: gateway = fe80::1000:ff:fe32:64ba
-resolving src = east46.testing.libreswan.org gateway = <not-set> peer 2001:db8:0:3:1::
+resolving family = IPv6 src = east46.testing.libreswan.org gateway = <not-set> peer 2001:db8:0:3:1::
   seeking nothing
 conn: "road" modecfgdns=<unset>
 conn: "road" modecfgdomains=<unset>
