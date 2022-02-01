@@ -191,15 +191,15 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	d->sighash_policy =
 		POL_SIGHASH_SHA2_256 | POL_SIGHASH_SHA2_384 | POL_SIGHASH_SHA2_512;
 
-	d->left.host_family = &ipv4_info;
-	d->left.addr = ipv4_info.address.any;
+	d->left.host_family = NULL;
+	d->left.addr = unset_address;
 	d->left.nexttype = KH_NOTSET;
-	d->left.nexthop = ipv4_info.address.any;
+	d->left.nexthop = unset_address;
 
-	d->right.host_family = &ipv4_info;
-	d->right.addr = ipv4_info.address.any;
+	d->right.host_family = NULL;
+	d->right.addr = unset_address;
 	d->right.nexttype = KH_NOTSET;
-	d->right.nexthop = ipv4_info.address.any;
+	d->right.nexthop = unset_address;
 
 	d->xfrm_if_id = UINT32_MAX;
 
@@ -418,24 +418,7 @@ static bool validate_end(struct starter_conn *conn_st,
 	err_t er = NULL;
 	bool err = false;
 
-	/*
-	 * TODO:
-	 * The address family default should come in either via
-	 * a config setup option, or via gai.conf / RFC3484
-	 * For now, %defaultroute and %any means IPv4 only
-	 */
-	const struct ip_info *hostfam = aftoinfo(conn_st->options[KNCF_HOSTADDRFAMILY]);
-	if (hostfam == NULL) {
-		const char *ips = end->strings[KNCF_IP];
-		hostfam = &ipv4_info;
-		if (ips != NULL &&
-		    (strchr(ips, ':') != NULL ||
-		     streq(ips, "%defaultroute6") ||
-		     streq(ips, "%any6"))) {
-			hostfam = &ipv6_info;
-		}
-	}
-	pexpect(hostfam == &ipv4_info || hostfam == &ipv6_info); /* i.e., not NULL */
+	pexpect(end->host_family == &ipv4_info || end->host_family == &ipv6_info); /* i.e., not NULL */
 
 #  define ERR_FOUND(...) { starter_error_append(perrl, __VA_ARGS__); err = true; }
 
@@ -446,7 +429,7 @@ static bool validate_end(struct starter_conn *conn_st,
 	end->addrtype = end->options[KNCF_IP];
 	switch (end->addrtype) {
 	case KH_ANY:
-		end->addr = hostfam->address.any;
+		end->addr = end->host_family->address.any;
 		break;
 
 	case KH_IFACE:
@@ -460,21 +443,23 @@ static bool validate_end(struct starter_conn *conn_st,
 		if (end->strings[KSCF_IP][0] == '%') {
 			pfree(end->iface);
 			end->iface = clone_str(end->strings[KSCF_IP] + 1, "KH_IPADDR end->iface");
-			if (!starter_iface_find(end->iface, hostfam,
-					       &end->addr,
-					       &end->nexthop))
+			if (!starter_iface_find(end->iface,
+						end->host_family,
+						&end->addr,
+						&end->nexthop))
 				conn_st->state = STATE_INVALID;
 			/* not numeric, so set the type to the iface type */
 			end->addrtype = KH_IFACE;
 			break;
 		}
 
-		er = ttoaddress_num(shunk1(end->strings[KNCF_IP]), hostfam, &end->addr);
+		er = ttoaddress_num(shunk1(end->strings[KNCF_IP]),
+				    end->host_family, &end->addr);
 		if (er != NULL) {
 			/* not an IP address, so set the type to the string */
 			end->addrtype = KH_IPHOSTNAME;
 		} else {
-			hostfam = address_type(&end->addr);
+			pexpect(end->host_family == address_type(&end->addr));
 		}
 
 		if (end->id == NULL) {
@@ -511,9 +496,6 @@ static bool validate_end(struct starter_conn *conn_st,
 		/* cannot error out here, it might be a partial also= conn */
 		break;
 	}
-
-	/* now that HOSTFAM has been pined down */
-	end->host_family = hostfam;
 
 	if (end->strings_set[KSCF_VTI_IP]) {
 		const char *value = end->strings[KSCF_VTI_IP];
@@ -560,7 +542,7 @@ static bool validate_end(struct starter_conn *conn_st,
 	 * validate the KSCF_NEXTHOP; set nexthop address to
 	 * something consistent, by default
 	 */
-	end->nexthop = hostfam->address.any;
+	end->nexthop = end->host_family->address.any;
 	if (end->strings_set[KSCF_NEXTHOP]) {
 		char *value = end->strings[KSCF_NEXTHOP];
 
@@ -569,16 +551,20 @@ static bool validate_end(struct starter_conn *conn_st,
 		} else {
 			ip_address nexthop = unset_address;
 #ifdef USE_DNSSEC
-			if (ttoaddress_num(shunk1(value), hostfam, &nexthop) != NULL) {
+			if (ttoaddress_num(shunk1(value),
+					   end->host_family, &nexthop) != NULL) {
 				starter_log(LOG_LEVEL_DEBUG,
 					    "Calling unbound_resolve() for %snexthop value",
 					    leftright);
-				if (!unbound_resolve(value, hostfam, &nexthop, logger))
+				if (!unbound_resolve(value,
+						     end->host_family,
+						     &nexthop, logger))
 					ERR_FOUND("bad value for %snexthop=%s\n",
 						  leftright, value);
 			}
 #else
-			err_t e = ttoaddress_dns(shunk1(value), hostfam, &nexthop);
+			err_t e = ttoaddress_dns(shunk1(value),
+						 end->host_family, &nexthop);
 			if (e != NULL) {
 				ERR_FOUND("bad value for %snexthop=%s [%s]",
 					  leftright, value, e);
@@ -588,7 +574,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			end->nexttype = KH_IPADDR;
 		}
 	} else {
-		end->nexthop = hostfam->address.any;
+		end->nexthop = end->host_family->address.any;
 
 		if (end->addrtype == KH_DEFAULTROUTE) {
 			end->nexttype = KH_DEFAULTROUTE;
@@ -1512,6 +1498,40 @@ static bool load_conn(struct starter_conn *conn,
 				 ~(POLICY_IKE_FRAG_ALLOW |
 				   POLICY_IKE_FRAG_FORCE));
 	}
+
+	/*
+	 * TODO:
+	 * The address family default should come in either via
+	 * a config setup option, or via gai.conf / RFC3484
+	 * For now, %defaultroute and %any means IPv4 only
+	 */
+
+	const struct ip_info *afi = aftoinfo(conn->options[KNCF_HOSTADDRFAMILY]);
+	if (afi == NULL) {
+		FOR_EACH_THING(end, &conn->left, &conn->right) {
+			FOR_EACH_THING(ips,
+				       end->strings[KNCF_IP],
+				       end->strings[KNCF_NEXTHOP]) {
+				if (ips == NULL) {
+					continue;
+				}
+				/* IPv6 like address */
+				if (strchr(ips, ':') != NULL ||
+				    streq(ips, "%defaultroute6") ||
+				    streq(ips, "%any6")) {
+					afi = &ipv6_info;
+					break;
+				}
+			}
+			if (afi != NULL) {
+				break;
+			}
+		}
+	}
+	if (afi == NULL) {
+		afi = &ipv4_info;
+	}
+	conn->left.host_family = conn->right.host_family = afi;
 
 	err |= validate_end(conn, &conn->left, "left", perrl, logger);
 	err |= validate_end(conn, &conn->right, "right", perrl, logger);
