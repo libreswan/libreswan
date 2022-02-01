@@ -36,7 +36,6 @@
 static bool tryhex(shunk_t hex, ip_address *dst);
 static err_t trydotted(shunk_t src, ip_address *);
 static err_t colon(shunk_t src, ip_address *);
-static err_t getpiece(const char **, const char *, unsigned *);
 
 /*
  * ttoaddress_num - convert "numeric" IP address to binary address.
@@ -235,124 +234,74 @@ static err_t trydotted(shunk_t src, ip_address *dst)
  * colon - convert IPv6 "numeric" address
  */
 
-static err_t colon(shunk_t cursor, ip_address *dst)
+static err_t colon(shunk_t src, ip_address *dst)
 {
-	const char *src = cursor.ptr;
-	unsigned srclen = cursor.len;
-	const char *stop = src + srclen;	/* just past end */
-	unsigned piece;
-	int gapat;	/* where was empty piece seen */
-	err_t oops;
-#       define  NPIECES 8
+	shunk_t cursor = src;
 	struct ip_bytes u = unset_bytes;
-	int i;
-	int j;
 #       define  IT      "IPv6 numeric address"
-	int naftergap;
 
-	/* leading or trailing :: becomes single empty field */
-	if (*src == ':') {	/* legal only if leading :: */
-		if (srclen == 1 || *(src + 1) != ':')
-			return "illegal leading `:' in " IT;
+	int gapat = -1;	/* where was empty piece seen */
+	unsigned colon_count = 0;
+	unsigned i = 0;
+	while (i < sizeof(u.byte) && cursor.len > 0) {
 
-		if (srclen == 2) {
-			*dst = ipv6_info.address.any;
-			return NULL;
-		}
-		src++;	/* past first but not second */
-		srclen--;
-	}
-	if (*(stop - 1) == ':') {	/* legal only if trailing :: */
-		if (srclen == 1 || *(stop - 2) != ':')
-			return "illegal trailing `:' in " IT;
+		/* all paths needs to make progress or return */
 
-		srclen--;	/* leave one */
-	}
+		if (shunk_strcaseeat(&cursor, ":")) {
+			colon_count++;
+			if (colon_count > 2) {
+				return "::: in " IT;
+			}
+			if (colon_count == 2) {
+				if (gapat >= 0) {
+					return "more than one :: in " IT;
+				}
+				gapat = i;
+			}
+		} else if (colon_count == 1 && i == 0) {
+			return "single leading `:' in " IT;
+		} else {
 
-	gapat = -1;
-	piece = 0;
-	for (i = 0; i < NPIECES && src < stop; i++) {
-		oops = getpiece(&src, stop, &piece);
-		if (oops != NULL && *oops == ':') {	/* empty field */
-			if (gapat >= 0)
-				return "more than one :: in " IT;
+			/* parsing: NNNN[:...] */
+			colon_count = 0;
+			uintmax_t value;
+			err_t oops = shunk_to_uintmax(cursor, &cursor, 16, &value, 65535);
+			if (oops != NULL) {
+				return oops;
+			}
 
-			gapat = i;
-		} else if (oops != NULL) {
-			return oops;
-		}
-		u.byte[2 * i] = piece >> 8;
-		u.byte[2 * i + 1] = piece & 0xff;
-		if (i < NPIECES - 1) {	/* there should be more input */
-			if (src == stop && gapat < 0)
-				return IT " ends prematurely";
-
-			if (src != stop && *src++ != ':')
-				return "syntax error in " IT;
+			/* network order */
+			u.byte[i++] = value >> 8;
+			u.byte[i++] = value & 0xff;
 		}
 	}
-	if (src != stop)
+
+	if (cursor.len != 0 && hunk_char(cursor, 0) == ':') {
+		/* special, common case */
+		return "trailing `:' in " IT;
+	}
+
+	if (cursor.len != 0) {
 		return "extra garbage on end of " IT;
+	}
 
-	if (gapat < 0 && i < NPIECES)	/* should have been caught earlier */
-		return "incomplete " IT " (internal error)";
+	if (gapat < 0 && i < sizeof(u.byte)) {
+		return "incomplete " IT;
+	}
 
-	if (gapat >= 0 && i == NPIECES)
+	if (gapat >= 0 && i == sizeof(u.byte)) {
 		return "non-abbreviating empty field in " IT;
+	}
 
+	/* shift bytes; fill gap with zeros */
 	if (gapat >= 0) {
-		naftergap = i - (gapat + 1);
-		for (i--, j = NPIECES - 1; naftergap > 0;
-			i--, j--, naftergap--) {
-			u.byte[2 * j] = u.byte[2 * i];
-			u.byte[2 * j + 1] = u.byte[2 * i + 1];
-		}
-		for (; j >= gapat; j--)
-			u.byte[2 * j] = u.byte[2 * j + 1] = 0;
+		int gap = sizeof(u.byte) - i; /* short by ... */
+		/* use memmove(); there definitely an overlap! */
+		memmove(&u.byte[gapat + gap], &u.byte[gapat], i - gapat);
+		memset(&u.byte[gapat], '\0', gap);
 	}
 
 	*dst = address_from_raw(HERE, ipv6_info.ip_version, u);
-	return NULL;
-}
-
-/*
- * getpiece - try to scan one 16-bit piece of an IPv6 address
- *
- * ":" means "empty field seen"
- */
-err_t getpiece(const char **srcp,	/* *srcp is updated */
-	       const char *stop,	/* first untouchable char */
-	       unsigned *retp)	/* return-value pointer */
-{
-	const char *p;
-#       define  NDIG    4
-	int d;
-	unsigned long ret;
-	err_t oops;
-
-	if (*srcp >= stop || **srcp == ':') {	/* empty field */
-		*retp = 0;
-		return ":";
-	}
-
-	p = *srcp;
-	d = 0;
-	while (p < stop && d < NDIG && char_isxdigit(*p)) {
-		p++;
-		d++;
-	}
-	if (d == 0)
-		return "non-hex field in IPv6 numeric address";
-
-	if (p < stop && d == NDIG && char_isxdigit(*p))
-		return "field in IPv6 numeric address longer than 4 hex digits";
-
-	oops = ttoul(*srcp, d, 16, &ret);
-	if (oops != NULL)	/* shouldn't happen, really... */
-		return oops;
-
-	*srcp = p;
-	*retp = ret;
 	return NULL;
 }
 
