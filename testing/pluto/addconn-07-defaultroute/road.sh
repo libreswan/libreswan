@@ -20,6 +20,11 @@ ip -6 route get to 2001:db8:1:2::23
 ipsec addconn --verbose ipv4-src 2>&1 | grep -e '^resolving ' -e '^  [^ ]'
 ipsec addconn --verbose ipv6-src 2>&1 | grep -e '^resolving ' -e '^  [^ ]'
 
+# now with no forced host
+
+ipsec addconn --verbose ipv4-default 2>&1 | grep -e '^resolving ' -e '^  [^ ]'
+ipsec addconn --verbose ipv6-default 2>&1 | grep -e '^resolving ' -e '^  [^ ]'
+
 # newoe case, peer is group (see newoe-20-ipv6)
 
 ipsec addconn --verbose ipv4-src-group 2>&1 | grep -e '^resolving ' -e '^  [^ ]'
