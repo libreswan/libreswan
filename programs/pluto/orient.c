@@ -187,6 +187,19 @@ static bool end_matches_iface_endpoint(const struct end *end,
 	return endpoint_eq_endpoint(host_end, ifp->local_endpoint);
 }
 
+static void DBG_orient_end(const char *thisthat, struct end *end, struct end *other_end)
+{
+	address_buf ab;
+	enum_buf enb;
+	DBG_log("  %s(%s) %s host-address=%s host-port="PRI_HPORT" ikeport=%d encap=%s",
+		end->config->leftright, thisthat,
+		str_enum_short(&keyword_host_names, end->host->config->type, &enb),
+		str_address(&end->host_addr, &ab),
+		pri_hport(end_host_port(end, other_end)),
+		end->host->config->ikeport,
+		bool_str(end->host_encap));
+}
+
 bool orient(struct connection *c, struct logger *logger)
 {
 	if (oriented(c)) {
@@ -194,17 +207,13 @@ bool orient(struct connection *c, struct logger *logger)
 		return true;
 	}
 
-	connection_buf cb;
-	dbg("orienting "PRI_CONNECTION, pri_connection(c, &cb));
-	address_buf ab;
-	dbg("  %s(THIS) host-address=%s host-port="PRI_HPORT" ikeport=%d encap=%s",
-	    c->spd.this.config->leftright, str_address(&c->spd.this.host_addr, &ab),
-	    pri_hport(end_host_port(&c->spd.this, &c->spd.that)),
-	    c->local->host.ikeport, bool_str(c->spd.this.host_encap));
-	dbg("  %s(THAT) host-address=%s host-port="PRI_HPORT" ikeport=%d encap=%s",
-	    c->spd.that.config->leftright, str_address(&c->spd.that.host_addr, &ab),
-	    pri_hport(end_host_port(&c->spd.that, &c->spd.this)),
-	    c->remote->host.ikeport, bool_str(c->spd.that.host_encap));
+	if (DBGP(DBG_BASE)) {
+		connection_buf cb;
+		DBG_log("orienting "PRI_CONNECTION, pri_connection(c, &cb));
+		DBG_orient_end("this", &c->spd.this, &c->spd.that);
+		DBG_orient_end("that", &c->spd.that, &c->spd.this);
+	}
+
 	set_policy_prio(c); /* for updates */
 
 	/*
