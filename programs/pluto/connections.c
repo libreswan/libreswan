@@ -669,13 +669,13 @@ static void jam_end_id(struct jambuf *buf, const struct end *this)
 }
 
 static void jam_end_nexthop(struct jambuf *buf, const struct end *this,
-			    const struct end *that, bool filter_rnh,
+			    const struct end *that, bool skip_next_hop,
 			    enum left_right left_right)
 {
 	/* [---hop] */
-	if (that != NULL &&
-	    !filter_rnh &&
-	    !sameaddr(&this->host_nexthop, &that->host_addr)) {
+	if (!skip_next_hop &&
+	    address_is_specified(this->host_nexthop) &&
+	    !address_eq_address(this->host_nexthop, that->host_addr)) {
 		if (left_right == LEFT_END) {
 			jam_string(buf, "---");
 		}
@@ -687,7 +687,7 @@ static void jam_end_nexthop(struct jambuf *buf, const struct end *this,
 }
 
 void jam_end(struct jambuf *buf, const struct end *this, const struct end *that,
-	     enum left_right left_right, lset_t policy, bool filter_rnh)
+	     enum left_right left_right, lset_t policy, bool skip_next_hop)
 {
 	switch (left_right) {
 	case LEFT_END:
@@ -698,11 +698,11 @@ void jam_end(struct jambuf *buf, const struct end *this, const struct end *that,
 		/* [ID+OPTS] */
 		jam_end_id(buf, this);
 		/* ---NEXTHOP */
-		jam_end_nexthop(buf, this, that, filter_rnh, left_right);
+		jam_end_nexthop(buf, this, that, skip_next_hop, left_right);
 		break;
 	case RIGHT_END:
 		/* HOPNEXT--- */
-		jam_end_nexthop(buf, this, that, filter_rnh, left_right);
+		jam_end_nexthop(buf, this, that, skip_next_hop, left_right);
 		/* HOST */
 		jam_end_host(buf, this, policy);
 		/* [ID+OPTS] */
