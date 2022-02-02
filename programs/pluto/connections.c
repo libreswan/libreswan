@@ -1797,10 +1797,11 @@ static bool extract_connection(const struct whack_message *wm,
 		c->policy |= POLICY_ESN_NO;
 	}
 
+	connection_buf cb;
 	policy_buf pb;
-	dbg("added new %s connection %s with policy %s",
+	dbg("added new %s connection "PRI_CONNECTION" with policy %s",
 	    enum_name(&ike_version_names, c->config->ike_version),
-	    c->name, str_connection_policies(c, &pb));
+	    pri_connection(c, &cb), str_connection_policies(c, &pb));
 
 	if (NEVER_NEGOTIATE(wm->policy)) {
 		/* set default to AUTHBY_NEVER if unset and we do not expect to do IKE */
@@ -1872,7 +1873,9 @@ static bool extract_connection(const struct whack_message *wm,
 			}
 
 			if (c->config->ike_version == IKEv2) {
-				dbg("constructing local IKE proposals for %s", c->name);
+				connection_buf cb;
+				dbg("constructing local IKE proposals for "PRI_CONNECTION,
+				    pri_connection(c, &cb));
 				config->v2_ike_proposals =
 					ikev2_proposals_from_proposals(IKEv2_SEC_PROTO_IKE,
 								       config->ike_proposals.p,
@@ -2110,8 +2113,9 @@ static bool extract_connection(const struct whack_message *wm,
 		       wm->ike_version != IKEv2 ? /*generated later*/0 :
 		       wm->sec_label != NULL ? gen_reqid() :
 		       /*generated later*/0);
-	dbg("%s c->sa_reqid=%d because wm->sa_reqid=%d and sec-label=%s",
-	    c->name, c->sa_reqid, wm->sa_reqid,
+	dbg(PRI_CONNECTION" c->sa_reqid=%d because wm->sa_reqid=%d and sec-label=%s",
+	    pri_connection(c, &cb),
+	    c->sa_reqid, wm->sa_reqid,
 	    (wm->ike_version != IKEv2 ? "not-IKEv2" :
 	     wm->sec_label != NULL ? wm->sec_label :
 	     "n/a"));
@@ -2259,8 +2263,9 @@ static bool extract_connection(const struct whack_message *wm,
 	 * need one. Does CK_TEMPLATE need one?
 	 */
 	c->spd.reqid = c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid;
-	dbg("%s c->spd.reqid=%d because c->sa_reqid=%d",
-	    c->name, c->spd.reqid, c->sa_reqid);
+	dbg(PRI_CONNECTION" c->spd.reqid=%d because c->sa_reqid=%d",
+	    pri_connection(c, &cb),
+	    c->spd.reqid, c->sa_reqid);
 
 	/*
 	 * determine the wild side (the side that likely won't
@@ -3085,8 +3090,9 @@ struct connection *oppo_instantiate(struct connection *c,
 	passert(local_address != NULL);
 	passert(remote_address != NULL);
 	address_buf lb, rb;
-	dbg("oppo instantiating c=\"%s\" with c->routing %s between %s -> %s",
-	    c->name, enum_name(&routing_story, c->spd.routing),
+	connection_buf cb;
+	dbg("oppo instantiating "PRI_CONNECTION" with routing %s between %s -> %s",
+	    pri_connection(c, &cb), enum_name(&routing_story, c->spd.routing),
 	    str_address(local_address, &lb), str_address(remote_address, &rb));
 
 	struct connection *d = instantiate(c, remote_address, remote_id, null_shunk);
@@ -3271,7 +3277,8 @@ struct connection *find_outgoing_opportunistic_template(const ip_packet packet)
 		 */
 		FOR_EACH_HOST_PAIR_CONNECTION(p->ip_dev->id_address, unset_address, c) {
 
-			dbg("checking %s", c->name);
+			connection_buf cb;
+			dbg("checking "PRI_CONNECTION, pri_connection(c, &cb));
 
 #if 0
 			/* REMOTE==%any so d can never be an instance */
@@ -3441,11 +3448,15 @@ struct connection *route_owner(struct connection *c,
 			 * in or out marks differ (after masking).
 			 */
 			if (DBGP(DBG_BASE)) {
-				DBG_log(" conn %s mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32 " vs",
-					c->name, c->sa_marks.in.val, c->sa_marks.in.mask,
+				connection_buf cb;
+				DBG_log(" conn "PRI_CONNECTION" mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32 " vs",
+					pri_connection(c, &cb),
+					c->sa_marks.in.val, c->sa_marks.in.mask,
 					c->sa_marks.out.val, c->sa_marks.out.mask);
-				DBG_log(" conn %s mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32,
-					d->name, d->sa_marks.in.val, d->sa_marks.in.mask,
+				connection_buf db;
+				DBG_log(" conn "PRI_CONNECTION" mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32,
+					pri_connection(d, &db),
+					d->sa_marks.in.val, d->sa_marks.in.mask,
 					d->sa_marks.out.val, d->sa_marks.out.mask);
 			}
 
@@ -3556,19 +3567,18 @@ static void show_one_sr(struct show *s,
 	char topo[CONN_BUF_LEN];
 	ipstr_buf thisipb, thatipb;
 
-	show_comment(s, "\"%s\"%s: %s; %s; eroute owner: #%lu",
-		c->name, instance,
-		format_connection(topo, sizeof(topo), c, sr),
-		enum_name(&routing_story, sr->routing),
-		sr->eroute_owner);
+	show_comment(s, PRI_CONNECTION": %s; %s; eroute owner: #%lu",
+		     c->name, instance,
+		     format_connection(topo, sizeof(topo), c, sr),
+		     enum_name(&routing_story, sr->routing),
+		     sr->eroute_owner);
 
 #define OPT_HOST(h, ipb)  (address_is_specified(h) ? str_address(&h, &ipb) : "unset")
 
 		/* note: this macro generates a pair of arguments */
 #define OPT_PREFIX_STR(pre, s) (s) == NULL ? "" : (pre), (s) == NULL? "" : (s)
 
-	show_comment(s,
-		     "\"%s\"%s:     %s; my_ip=%s; their_ip=%s%s%s%s%s; my_updown=%s;",
+	show_comment(s, PRI_CONNECTION":     %s; my_ip=%s; their_ip=%s%s%s%s%s; my_updown=%s;",
 		     c->name, instance,
 		     oriented(c) ? "oriented" : "unoriented",
 		     OPT_HOST(c->spd.this.host_srcip, thisipb),
@@ -3591,13 +3601,12 @@ static void show_one_sr(struct show *s,
 		((END).CLIENT ? "BOTH??" : "server") : \
 		((END).CLIENT ? "client" : "none"))
 
-	show_comment(s,
-		"\"%s\"%s:   xauth us:%s, xauth them:%s, %s my_username=%s; their_username=%s",
-		c->name, instance,
-		/*
-		 * Both should not be set, but if they are, we want to
-		 * know
-		 */
+	show_comment(s, PRI_CONNECTION":   xauth us:%s, xauth them:%s, %s my_username=%s; their_username=%s",
+		     c->name, instance,
+		     /*
+		      * Both should not be set, but if they are, we
+		      * want to know.
+		      */
 		     COMBO(sr->this, host->config->xauth.server, host->config->xauth.client),
 		     COMBO(sr->that, host->config->xauth.server, host->config->xauth.client),
 		     /* should really be an enum name */
@@ -3614,8 +3623,7 @@ static void show_one_sr(struct show *s,
 		      sr->that.host->config->xauth.username));
 
 	enum_buf auth1, auth2;
-	show_comment(s,
-		     PRI_CONNECTION":   our auth:%s, their auth:%s, our autheap:%s, their autheap:%s;",
+	show_comment(s, PRI_CONNECTION":   our auth:%s, their auth:%s, our autheap:%s, their autheap:%s;",
 		     c->name, instance,
 		     str_enum_short(&keyword_authby_names, sr->this.host->config->authby, &auth1),
 		     str_enum_short(&keyword_authby_names, sr->that.host->config->authby, &auth2),
@@ -3623,22 +3631,21 @@ static void show_one_sr(struct show *s,
 		     sr->that.eap == IKE_EAP_NONE ? "none" : "tls"
 	);
 
-	show_comment(s,
-		"\"%s\"%s:   modecfg info: us:%s, them:%s, modecfg policy:%s, dns:%s, domains:%s, cat:%s;",
-		c->name, instance,
-		COMBO(sr->this, modecfg_server, modecfg_client),
-		COMBO(sr->that, modecfg_server, modecfg_client),
+	show_comment(s, PRI_CONNECTION":   modecfg info: us:%s, them:%s, modecfg policy:%s, dns:%s, domains:%s, cat:%s;",
+		     c->name, instance,
+		     COMBO(sr->this, modecfg_server, modecfg_client),
+		     COMBO(sr->that, modecfg_server, modecfg_client),
 
-		(c->policy & POLICY_MODECFG_PULL) ? "pull" : "push",
-		(c->modecfg_dns == NULL) ? "unset" : c->modecfg_dns,
-		(c->modecfg_domains == NULL) ? "unset" : c->modecfg_domains,
-		sr->this.cat ? "set" : "unset");
+		     (c->policy & POLICY_MODECFG_PULL) ? "pull" : "push",
+		     (c->modecfg_dns == NULL) ? "unset" : c->modecfg_dns,
+		     (c->modecfg_domains == NULL) ? "unset" : c->modecfg_domains,
+		     sr->this.cat ? "set" : "unset");
 
 #undef COMBO
 
 	if (c->modecfg_banner != NULL) {
-		show_comment(s, "\"%s\"%s: banner:%s;",
-		c->name, instance, c->modecfg_banner);
+		show_comment(s, PRI_CONNECTION": banner:%s;",
+			     c->name, instance, c->modecfg_banner);
 	}
 
 	/*
@@ -3651,14 +3658,16 @@ static void show_one_sr(struct show *s,
 	 */
 	if (sr->this.sec_label.len > 0) {
 		/* negotiated (IKEv2) */
-		show_comment(s, "\"%s\"%s:   sec_label:"PRI_SHUNK,
-			     c->name, instance, pri_shunk(sr->this.sec_label));
+		show_comment(s, PRI_CONNECTION":   sec_label:"PRI_SHUNK,
+			     c->name, instance,
+			     pri_shunk(sr->this.sec_label));
 	} else if (c->config->sec_label.len > 0) {
 		/* configured */
 		show_comment(s, "\"%s\"%s:   sec_label:"PRI_SHUNK,
 			     c->name, instance, pri_shunk(c->config->sec_label));
 	} else {
-		show_comment(s, "\"%s\"%s:   sec_label:unset;", c->name, instance);
+		show_comment(s, PRI_CONNECTION":   sec_label:unset;",
+			     c->name, instance);
 	}
 }
 
@@ -3707,48 +3716,40 @@ void show_one_connection(struct show *s,
 	/* Show CAs */
 	if (c->local->host.ca.ptr != NULL || c->remote->host.ca.ptr != NULL) {
 		dn_buf this_ca, that_ca;
-		show_comment(s,
-			  "\"%s\"%s:   CAs: '%s'...'%s'",
-			  c->name,
-			  instance,
-			  str_dn_or_null(c->local->host.ca, "%any", &this_ca),
-			  str_dn_or_null(c->remote->host.ca, "%any", &that_ca));
+		show_comment(s, PRI_CONNECTION":   CAs: '%s'...'%s'",
+			     c->name, instance,
+			     str_dn_or_null(c->local->host.ca, "%any", &this_ca),
+			     str_dn_or_null(c->remote->host.ca, "%any", &that_ca));
 	}
 
-	show_comment(s,
-		"\"%s\"%s:   ike_life: %jds; ipsec_life: %jds; replay_window: %u; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu;",
-		c->name,
-		instance,
-		deltasecs(c->sa_ike_life_seconds),
-		deltasecs(c->sa_ipsec_life_seconds),
-		c->sa_replay_window,
-		deltasecs(c->sa_rekey_margin),
-		c->sa_rekey_fuzz,
-		c->sa_keying_tries);
+	show_comment(s, PRI_CONNECTION":   ike_life: %jds; ipsec_life: %jds; replay_window: %u; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu;",
+		     c->name, instance,
+		     deltasecs(c->sa_ike_life_seconds),
+		     deltasecs(c->sa_ipsec_life_seconds),
+		     c->sa_replay_window,
+		     deltasecs(c->sa_rekey_margin),
+		     c->sa_rekey_fuzz,
+		     c->sa_keying_tries);
 
-	show_comment(s,
-		  "\"%s\"%s:   retransmit-interval: %jdms; retransmit-timeout: %jds; iketcp:%s; iketcp-port:%d;",
-		  c->name,
-		  instance,
-		  deltamillisecs(c->config->retransmit_interval),
-		  deltasecs(c->config->retransmit_timeout),
-		  c->iketcp == IKE_TCP_NO ? "no" : c->iketcp == IKE_TCP_ONLY ? "yes" :
-			c->iketcp == IKE_TCP_FALLBACK ? "fallback" : "<BAD VALUE>",
-		  c->remote_tcpport);
+	show_comment(s, PRI_CONNECTION":   retransmit-interval: %jdms; retransmit-timeout: %jds; iketcp:%s; iketcp-port:%d;",
+		     c->name, instance,
+		     deltamillisecs(c->config->retransmit_interval),
+		     deltasecs(c->config->retransmit_timeout),
+		     c->iketcp == IKE_TCP_NO ? "no" : c->iketcp == IKE_TCP_ONLY ? "yes" :
+		     c->iketcp == IKE_TCP_FALLBACK ? "fallback" : "<BAD VALUE>",
+		     c->remote_tcpport);
 
-	show_comment(s,
-		  "\"%s\"%s:   initial-contact:%s; cisco-unity:%s; fake-strongswan:%s; send-vendorid:%s; send-no-esp-tfc:%s;",
-		  c->name, instance,
-		  bool_str(c->initial_contact),
-		  bool_str(c->cisco_unity),
-		  bool_str(c->fake_strongswan),
-		  bool_str(c->send_vendorid),
-		  bool_str(c->send_no_esp_tfc));
+	show_comment(s, PRI_CONNECTION":   initial-contact:%s; cisco-unity:%s; fake-strongswan:%s; send-vendorid:%s; send-no-esp-tfc:%s;",
+		     c->name, instance,
+		     bool_str(c->initial_contact),
+		     bool_str(c->cisco_unity),
+		     bool_str(c->fake_strongswan),
+		     bool_str(c->send_vendorid),
+		     bool_str(c->send_no_esp_tfc));
 
 	if (c->policy_next != NULL) {
-		show_comment(s,
-			"\"%s\"%s:   policy_next: %s",
-			c->name, instance, c->policy_next->name);
+		show_comment(s, PRI_CONNECTION":   policy_next: %s",
+			     c->name, instance, c->policy_next->name);
 	}
 
 	policy_buf pb;
@@ -3765,8 +3766,9 @@ void show_one_connection(struct show *s,
 		const char *hashstr = str_lset(&sighash_policy_bit_names,
 					       c->config->sighash_policy,
 					       &hashpolbuf);
-		show_comment(s, "\"%s\"%s:   v2-auth-hash-policy: %s;",
-			c->name, instance, hashstr);
+		show_comment(s, PRI_CONNECTION":   v2-auth-hash-policy: %s;",
+			     c->name, instance,
+			     hashstr);
 	}
 
 	if (c->connmtu != 0)
@@ -3785,8 +3787,7 @@ void show_one_connection(struct show *s,
 		strcpy(satfcstr, "none");
 
 	policy_prio_buf prio;
-	show_comment(s,
-		  "\"%s\"%s:   conn_prio: %s; interface: %s; metric: %u; mtu: %s; sa_prio:%s; sa_tfc:%s;",
+	show_comment(s, PRI_CONNECTION":   conn_prio: %s; interface: %s; metric: %u; mtu: %s; sa_prio:%s; sa_tfc:%s;",
 		     c->name, instance,
 		     str_policy_prio(c->policy_prio, &prio),
 		     ifn,
@@ -3806,11 +3807,9 @@ void show_one_connection(struct show *s,
 		strcpy(markstr, "unset");
 	}
 
-	show_comment(s,
-		     "\"%s\"%s:   nflog-group: %s; mark: %s; vti-iface:%s; "
-		     "vti-routing:%s; vti-shared:%s;"
-		     " nic-offload:%s;",
-		     c->name, instance, nflogstr, markstr,
+	show_comment(s, PRI_CONNECTION":   nflog-group: %s; mark: %s; vti-iface:%s; vti-routing:%s; vti-shared:%s; nic-offload:%s;",
+		     c->name, instance,
+		     nflogstr, markstr,
 		     c->vti_iface == NULL ? "unset" : c->vti_iface,
 		     bool_str(c->vti_routing),
 		     bool_str(c->vti_shared),
@@ -3821,42 +3820,39 @@ void show_one_connection(struct show *s,
 		id_buf thisidb;
 		id_buf thatidb;
 
-	show_comment(s,
-		"\"%s\"%s:   our idtype: %s; our id=%s; their idtype: %s; their id=%s",
-		c->name, instance,
-		enum_name(&ike_id_type_names, c->spd.this.id.kind),
-		str_id(&c->spd.this.id, &thisidb),
-		enum_name(&ike_id_type_names, c->spd.that.id.kind),
-		str_id(&c->spd.that.id, &thatidb));
+		show_comment(s, PRI_CONNECTION":   our idtype: %s; our id=%s; their idtype: %s; their id=%s",
+			     c->name, instance,
+			     enum_name(&ike_id_type_names, c->spd.this.id.kind),
+			     str_id(&c->spd.this.id, &thisidb),
+			     enum_name(&ike_id_type_names, c->spd.that.id.kind),
+			     str_id(&c->spd.that.id, &thatidb));
 	}
 
 	/* slightly complicated stuff to avoid extra crap */
-	show_comment(s,
-		"\"%s\"%s:   dpd: %s; delay:%ld; timeout:%ld; nat-t: encaps:%s; nat_keepalive:%s; ikev1_natt:%s",
-		c->name, instance,
-		enum_name(&dpd_action_names, c->dpd_action),
-		(long) deltasecs(c->dpd_delay),
-		(long) deltasecs(c->dpd_timeout),
-		(c->encaps == yna_auto) ? "auto" :
-		    bool_str(c->encaps == yna_yes),
-		bool_str(c->nat_keepalive),
-		(c->ikev1_natt == NATT_BOTH) ? "both" :
-		 (c->ikev1_natt == NATT_RFC) ? "rfc" :
-		 (c->ikev1_natt == NATT_DRAFTS) ? "drafts" : "none"
+	show_comment(s, PRI_CONNECTION":   dpd: %s; delay:%ld; timeout:%ld; nat-t: encaps:%s; nat_keepalive:%s; ikev1_natt:%s",
+		     c->name, instance,
+		     enum_name(&dpd_action_names, c->dpd_action),
+		     (long) deltasecs(c->dpd_delay),
+		     (long) deltasecs(c->dpd_timeout),
+		     (c->encaps == yna_auto) ? "auto" :
+		     bool_str(c->encaps == yna_yes),
+		     bool_str(c->nat_keepalive),
+		     (c->ikev1_natt == NATT_BOTH) ? "both" :
+		     (c->ikev1_natt == NATT_RFC) ? "rfc" :
+		     (c->ikev1_natt == NATT_DRAFTS) ? "drafts" : "none"
 		);
 
 	if (!lmod_empty(c->extra_debugging)) {
 		SHOW_JAMBUF(RC_COMMENT, s, buf) {
-			jam(buf, "\"%s\"%s:   debug: ",
+			jam(buf, PRI_CONNECTION":   debug: ",
 			    c->name, instance);
 			jam_lmod(buf, &debug_names, "+", c->extra_debugging);
 		}
 	}
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		jam(buf, "\"%s\"%s:   newest ISAKMP SA: #%lu; newest IPsec SA: #%lu; conn serial: "PRI_CO"",
-		    c->name,
-		    instance,
+		jam(buf, PRI_CONNECTION":   newest ISAKMP SA: #%lu; newest IPsec SA: #%lu; conn serial: "PRI_CO"",
+		    c->name, instance,
 		    c->newest_ike_sa,
 		    c->newest_ipsec_sa,
 		    pri_co(c->serialno));
@@ -3869,9 +3865,8 @@ void show_one_connection(struct show *s,
 	}
 
 	if (c->connalias != NULL) {
-		show_comment(s, "\"%s\"%s:   aliases: %s",
-			     c->name,
-			     instance,
+		show_comment(s, PRI_CONNECTION":   aliases: %s",
+			     c->name, instance,
 			     c->connalias);
 	}
 
@@ -3940,13 +3935,16 @@ void connection_delete_unused_instance(struct connection **cp,
 	*cp = NULL;
 
 	if (c->kind != CK_INSTANCE) {
-		dbg("connection %s is not an instance, skipping delete-unused", c->name);
+		connection_buf cb;
+		dbg("connection "PRI_CONNECTION" is not an instance, skipping delete-unused",
+		    pri_connection(c, &cb));
 		return;
 	}
 
 	if (connection_is_pending(c)) {
-		dbg("connection instance %s is pending, skipping delete-unused",
-		    c->name);
+		connection_buf cb;
+		dbg("connection "PRI_CONNECTION" is pending, skipping delete-unused",
+		    pri_connection(c, &cb));
 		return;
 	}
 
@@ -3957,8 +3955,9 @@ void connection_delete_unused_instance(struct connection **cp,
 		 * If this connection instance was previously for an
 		 * established sa planning to revive, don't delete.
 		 */
-		dbg("connection instance %s with serial "PRI_CO" is being revived, skipping delete-unused",
-		    c->name, pri_co(c->serialno));
+		connection_buf cb;
+		dbg("connection "PRI_CONNECTION" with serial "PRI_CO" is being revived, skipping delete-unused",
+		    pri_connection(c, &cb), pri_co(c->serialno));
 		return;
 	}
 
@@ -3968,12 +3967,15 @@ void connection_delete_unused_instance(struct connection **cp,
 		.where = HERE,
 	};
 	if (next_state_new2old(&sf)) {
-		dbg("connection instance %s in use by #%lu, skipping delete-unused",
-		    c->name, sf.st->st_serialno);
+		connection_buf cb;
+		dbg("connection "PRI_CONNECTION" in use by #%lu, skipping delete-unused",
+		    pri_connection(c, &cb), sf.st->st_serialno);
 		return;
 	}
 
-	dbg("connection instance %s is not being used, deleting", c->name);
+	connection_buf cb;
+	dbg("connection "PRI_CONNECTION" is not being used, deleting",
+	    pri_connection(c, &cb));
 	/* XXX: something better? */
 	fd_delref(&c->logger->global_whackfd);
 	c->logger->global_whackfd = fd_addref(whackfd);
@@ -4009,7 +4011,9 @@ struct connection *eclipsed(const struct connection *c, struct spd_route **esrp 
 				if (srue->routing == RT_ROUTED_ECLIPSED &&
 				    selector_range_eq_selector_range(src->this.client, srue->this.client) &&
 				    selector_range_eq_selector_range(src->that.client, srue->that.client)) {
-					dbg("%s eclipsed %s", c->name, ue->name);
+					connection_buf cb, ub;
+					dbg(PRI_CONNECTION" eclipsed "PRI_CONNECTION,
+					    pri_connection(c, &cb), pri_connection(ue, &ub));
 					*esrp = srue;
 					return ue;
 				}
