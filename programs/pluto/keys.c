@@ -574,7 +574,7 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
  */
 
 static struct secret *lsw_get_secret(const struct connection *c,
-				     enum PrivateKeyKind kind,
+				     enum private_key_kind kind,
 				     bool asym)
 {
 	/* under certain conditions, override that_id to %ANYADDR */
@@ -616,7 +616,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	    __func__,
 	    str_id(this_id, &this_buf),
 	    str_id(that_id, &that_buf),
-	    enum_name(&pkk_names, kind));
+	    enum_name(&private_key_kind_names, kind));
 
 	return lsw_find_secret_by_id(pluto_secrets, kind,
 				     this_id, that_id, asym);

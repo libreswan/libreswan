@@ -37,6 +37,7 @@
 #include "enum_names.h"
 #include "lswlog.h"
 #include "ip_said.h"		/* for SPI_PASS et.al. */
+#include "secrets.h"		/* for enum privae_key_kind */
 
 const char *bool_str(bool b)
 {
@@ -2166,7 +2167,7 @@ static const char *const pkk_name[] = {
 	"PKK_INVALID",
 };
 
-enum_names pkk_names = {
+enum_names private_key_kind_names = {
 	PKK_PSK,
 	PKK_INVALID,
 	ARRAY_REF(pkk_name),
@@ -2698,7 +2699,7 @@ static const enum_names *en_checklist[] = {
 	&ikev2_trans_type_esn_names,
 	&ikev2_trans_type_names,
 	&ikev2_trans_attr_descs,
-	&pkk_names,
+	&private_key_kind_names,
 	&ikev2_ppk_id_type_names,
 	&ikev2_redirect_gw_names,
 	&ip_protocol_id_names,

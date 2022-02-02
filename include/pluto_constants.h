@@ -1027,20 +1027,6 @@ enum dns_auth_level {
 	DNSSEC_ROOF
 };
 
-/*
- * private key types for keys.h
- */
-enum PrivateKeyKind {
-	/* start at one so accidental 0 will not match */
-	PKK_PSK = 1,
-	PKK_RSA,
-	PKK_XAUTH,
-	PKK_PPK,
-	PKK_ECDSA, /* should not be needed */
-	PKK_NULL,
-	PKK_INVALID,
-};
-
 #define XAUTH_PROMPT_TRIES 3
 #define MAX_XAUTH_USERNAME_LEN 128
 #define XAUTH_MAX_PASS_LENGTH 128

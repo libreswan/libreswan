@@ -74,9 +74,22 @@ err_t unpack_RSA_public_key(struct RSA_public_key *rsa,
 err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa,
 			      keyid_t *keyid, ckaid_t *ckaid, size_t *size,
 			      const chunk_t *pubkey);
+/*
+ * private key types
+ */
+enum private_key_kind {
+	/* start at one so accidental 0 will not match */
+	PKK_PSK = 1,
+	PKK_RSA,
+	PKK_XAUTH,
+	PKK_PPK,
+	PKK_ECDSA, /* should not be needed */
+	PKK_NULL,
+	PKK_INVALID,
+};
 
 struct private_key_stuff {
-	enum PrivateKeyKind kind;
+	enum private_key_kind kind;
 	/*
 	 * This replaced "int lsw_secretlineno()", which assumes only
 	 * one file (no includes) and isn't applicable to NSS.  For
@@ -146,7 +159,7 @@ union pubkey_content {
 struct pubkey_type {
 	const char *name;
 	enum pubkey_alg alg;
-	enum PrivateKeyKind private_key_kind;
+	enum private_key_kind private_key_kind;
 	void (*free_pubkey_content)(union pubkey_content *pkc);
 	err_t (*unpack_pubkey_content)(union pubkey_content *pkc,
 				       keyid_t *keyid, ckaid_t *ckaid, size_t *size,
@@ -237,7 +250,7 @@ extern void lsw_load_preshared_secrets(struct secret **psecrets, const char *sec
 extern void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *logger);
 
 extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
-					    enum PrivateKeyKind kind,
+					    enum private_key_kind kind,
 					    const struct id *my_id,
 					    const struct id *his_id,
 					    bool asym);

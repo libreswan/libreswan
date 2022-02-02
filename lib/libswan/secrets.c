@@ -554,7 +554,7 @@ static struct secret *find_secret_by_pubkey_ckaid_1(struct secret *secrets,
 	for (struct secret *s = secrets; s != NULL; s = s->next) {
 		const struct private_key_stuff *pks = &s->pks;
 		dbg("trying secret %s:%s",
-		    enum_name(&pkk_names, pks->kind),
+		    enum_name(&private_key_kind_names, pks->kind),
 		    str_keyid(pks->keyid));
 		if (type == NULL/*wildcard*/ ||
 		    s->pks.pubkey_type == type) {
@@ -571,7 +571,7 @@ static struct secret *find_secret_by_pubkey_ckaid_1(struct secret *secrets,
 }
 
 struct secret *lsw_find_secret_by_id(struct secret *secrets,
-				     enum PrivateKeyKind kind,
+				     enum private_key_kind kind,
 				     const struct id *local_id,
 				     const struct id *remote_id,
 				     bool asym)
@@ -593,9 +593,9 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 			id_buf idl;
 			DBG_log("line %d: key type %s(%s) to type %s",
 				s->pks.line,
-				enum_name(&pkk_names, kind),
+				enum_name(&private_key_kind_names, kind),
 				str_id(local_id, &idl),
-				enum_name(&pkk_names, s->pks.kind));
+				enum_name(&private_key_kind_names, s->pks.kind));
 		}
 
 		if (s->pks.kind == kind) {
@@ -1193,7 +1193,7 @@ static void process_secret_records(struct file_lex_position *flp,
 					s->ids = i;
 					id_buf b;
 					dbg("id type added to secret(%p) %s: %s",
-					    s, enum_name(&pkk_names, s->pks.kind),
+					    s, enum_name(&private_key_kind_names, s->pks.kind),
 					    str_id(&id, &b));
 				}
 				if (!shift(flp)) {
