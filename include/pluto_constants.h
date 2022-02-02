@@ -999,7 +999,13 @@ extern const struct enum_names sighash_policy_bit_names;
 
 #define NEVER_NEGOTIATE(p)  (LDISJOINT((p), POLICY_ENCRYPT | POLICY_AUTHENTICATE))
 
-/* values for right=/left= */
+/*
+ * values for right=/left=
+ *
+ * LOOSE_ENUM_OTHER is used by the config parser's loose-enum code to
+ * flag that the field didn't match one of the pre-defined "%..."
+ * values.
+ */
 enum keyword_host {
 	KH_NOTSET       = 0,
 	KH_DEFAULTROUTE = 1,

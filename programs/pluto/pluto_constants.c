@@ -244,6 +244,37 @@ enum_names keyword_authby_names = {
 	NULL
 };
 
+static const char *const keyword_host_name_ipaddr[] = {
+	"KH_IPADDR",
+};
+
+static enum_names keyword_host_names_ipaddr = {
+	KH_IPADDR, KH_IPADDR,
+	ARRAY_REF(keyword_host_name_ipaddr),
+	"KH_", /* prefix */
+	NULL
+};
+
+static const char *const keyword_host_name[] = {
+#define P(N) [N] = #N
+	P(KH_NOTSET),
+	P(KH_DEFAULTROUTE),
+	P(KH_ANY),
+	P(KH_IFACE),
+	P(KH_OPPO),
+	P(KH_OPPOGROUP),
+	P(KH_GROUP),
+	P(KH_IPHOSTNAME),
+#undef P
+};
+
+enum_names keyword_host_names = {
+	KH_NOTSET, KH_IPHOSTNAME,
+	ARRAY_REF(keyword_host_name),
+	"KH_", /* prefix */
+	&keyword_host_names_ipaddr,
+};
+
 static const char *const allow_global_redirect_name[] = {
 	"no",
 	"yes",
@@ -397,6 +428,8 @@ static const enum_names *pluto_enum_names_checklist[] = {
 	&sa_policy_bit_names,
 	&kernel_policy_op_names,
 	&shunt_policy_names,
+	&keyword_authby_names,
+	&keyword_host_names,
 };
 
 void init_pluto_constants(void) {
