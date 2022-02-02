@@ -2903,7 +2903,7 @@ IETF registry enum_names:
          short_name 26: IKEv2_INTERNAL_DNSSEC_TA OK
          jam_enum_short 26: IKEv2_INTERNAL_DNSSEC_TA OK
 
-  pkk_names:
+  private_key_kind_names:
     1 -> PKK_PSK
          jam_enum 1: PKK_PSK OK
          search PKK_PSK: OK
