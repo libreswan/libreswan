@@ -1,6 +1,4 @@
-/*
- * interfaces to the secrets.c library functions in libswan.
- * for now, just stupid wrappers!
+/* interfaces to the secrets.c library functions in libswan.
  *
  * Copyright (C) 1998-2001  D. Hugh Redelmeier.
  * Copyright (C) 2003-2008  Michael Richardson <mcr@xelerance.com>
@@ -10,7 +8,7 @@
  * Copyright (C) 2010 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2015 Paul Wouters <pwouters@redhat.com>
- * Copyright (C) 2016, Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016-2022 Andrew Cagney
  * Copyright (C) 2017 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  * Copyright (C) 2018 Sahana Prasad <sahana.prasad07@gmail.com>
  * Copyright (C) 2019 D. Hugh Redelmeier <hugh@mimosa.com>
@@ -579,7 +577,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 {
 	/* under certain conditions, override that_id to %ANYADDR */
 
-	struct id rw_id;
+	struct id rw_id; /* must be at same scope as that_id */
 	const struct id *const this_id = &c->spd.this.id;
 	const struct id *that_id = &c->spd.that.id; /* can change */
 
@@ -587,8 +585,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	    /* case 1: */
 	    ( remote_id_was_instantiated(c) &&
 	      !(c->policy & POLICY_AGGRESSIVE) &&
-	      (address_is_unset(&c->spd.that.host_addr) ||
-	       address_is_any(c->spd.that.host_addr)) ) ||
+	      !address_is_specified(c->spd.that.host_addr) ) ||
 
 	    /* case 2 */
 	    ( (c->policy & POLICY_PSK) &&
@@ -598,17 +595,20 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		( c->kind == CK_INSTANCE &&
 		  id_is_ipaddr(&c->spd.that.id) &&
 		  /* Check if we are a road warrior instantiation, not a vnet: instantiation */
-		  (address_is_unset(&c->spd.that.host_addr) ||
-		   address_is_any(c->spd.that.host_addr)) ) ) )
-		) {
+		  !address_is_specified(c->spd.that.host_addr) ) ) ) ) {
+		/*
+		 * Since the remote host_addr isn't specified it's
+		 * AFI isn't known; but presumably the local end
+		 * is oriented and known.
+		 */
+		pexpect(address_is_specified(c->spd.this.host_addr));
 		/* roadwarrior: replace that with %ANYADDR */
-		rw_id.kind = address_type(&c->spd.that.host_addr)->id_ip_addr;
-		rw_id.ip_addr = address_type(&c->spd.that.host_addr)->address.any;
+		rw_id.kind = address_type(&c->spd.this.host_addr)->id_ip_addr;
+		rw_id.ip_addr = address_type(&c->spd.this.host_addr)->address.any;
 		id_buf old_buf, new_buf;
 		dbg("%s() switching remote roadwarrier ID from %s to %s (%%ANYADDR)",
 		    __func__, str_id(that_id, &old_buf), str_id(&rw_id, &new_buf));
 		that_id = &rw_id;
-
 	}
 
 	id_buf this_buf, that_buf;
