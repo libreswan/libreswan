@@ -530,7 +530,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 							     predecessor->sa.st_v2_accepted_proposal,
 							     larval_child);
 
-	if (!child_rekey_responder_ts_verify(larval_child, md)) {
+	if (!verify_rekey_child_request_ts(larval_child, md)) {
 		record_v2N_response(ike->sa.st_logger, ike, md,
 				    v2N_TS_UNACCEPTABLE, NULL/*no data*/,
 				    ENCRYPTED_PAYLOAD);

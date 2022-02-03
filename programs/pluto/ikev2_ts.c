@@ -21,7 +21,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
 #include "defs.h"
@@ -54,7 +53,8 @@ typedef struct {
  */
 
 struct traffic_selectors {
-	const char *name;
+	const char *ts_name;
+	const char *end_name;
 	bool contains_sec_label;
 	unsigned nr;
 	/* ??? is 16 an undocumented limit - IKEv2 has no limit */
@@ -68,10 +68,12 @@ struct traffic_selector_payloads {
 
 static const struct traffic_selector_payloads empty_traffic_selectors = {
 	.i = {
-		.name = "TSi",
+		.ts_name = "TSi",
+		.end_name = "initiator",
 	},
 	.r = {
-		.name = "TSr",
+		.ts_name = "TSr",
+		.end_name = "responder",
 	},
 };
 
@@ -82,17 +84,26 @@ struct ends {
 
 enum fit {
 	END_EQUALS_TS = 1,
-	END_NARROWS_TS,
-	END_WIDENS_TS,
+	END_NARROWER_THAN_TS,
+	END_WIDER_THAN_TS,
 };
-
 
 static const char *str_end_fit_ts(enum fit fit)
 {
 	switch (fit) {
-	case END_EQUALS_TS: return "EQUALS";
-	case END_NARROWS_TS: return "NARROWS";
-	case END_WIDENS_TS: return "WIDENS";
+	case END_EQUALS_TS: return /*end*/"EQUALS"/*ts*/;
+	case END_NARROWER_THAN_TS: return /*end*/"NARROWER-THAN"/*ts*/;
+	case END_WIDER_THAN_TS: return /*end*/"WIDER-THAN"/*ts*/;
+	default: bad_case(fit);
+	}
+}
+
+static const char *str_fit_story(enum fit fit)
+{
+	switch (fit) {
+	case END_EQUALS_TS: return "must match";
+	case END_NARROWER_THAN_TS: return "use END, but must fit within TS";
+	case END_WIDER_THAN_TS: return "use TS, but must fit within END";
 	default: bad_case(fit);
 	}
 }
@@ -391,19 +402,19 @@ static bool v2_parse_tss(struct payload_digest *const ts_pd,
 			 struct logger *logger)
 {
 	dbg("%s: parsing %u traffic selectors",
-	    tss->name, ts_pd->payload.v2ts.isat_num);
+	    tss->ts_name, ts_pd->payload.v2ts.isat_num);
 
 	if (ts_pd->payload.v2ts.isat_num == 0) {
 		llog(RC_LOG, logger,
 		     "%s payload contains no entries when at least one is expected",
-		     tss->name);
+		     tss->ts_name);
 		return false;
 	}
 
 	if (ts_pd->payload.v2ts.isat_num >= elemsof(tss->ts)) {
 		llog(RC_LOG, logger,
 		     "%s contains %d entries which exceeds hardwired max of %zu",
-		     tss->name, ts_pd->payload.v2ts.isat_num, elemsof(tss->ts));
+		     tss->ts_name, ts_pd->payload.v2ts.isat_num, elemsof(tss->ts));
 		return false;	/* won't fit in array */
 	}
 
@@ -441,7 +452,7 @@ static bool v2_parse_tss(struct payload_digest *const ts_pd,
 			if (ts->startport > ts->endport) {
 				llog(RC_LOG, logger,
 				     "%s traffic selector %d has an invalid port range - ignored",
-				     tss->name, tss->nr);
+				     tss->ts_name, tss->nr);
 				continue;
 			}
 
@@ -527,7 +538,7 @@ static bool v2_parse_tss(struct payload_digest *const ts_pd,
 		tss->nr++;
 	}
 
-	dbg("%s: parsed %d traffic selectors", tss->name, tss->nr);
+	dbg("%s: parsed %d traffic selectors", tss->ts_name, tss->nr);
 	return true;
 }
 
@@ -551,10 +562,10 @@ static bool v2_parse_tsp(const struct msg_digest *md,
  * protocol (ts_proto).
  */
 
-static int fit_protocol(const struct end *end,
-			const struct traffic_selectors *tss,
-			enum fit fit, unsigned index,
-			indent_t indent)
+static int narrow_protocol(const struct end *end,
+			   const struct traffic_selectors *tss,
+			   enum fit fit, unsigned index,
+			   indent_t indent)
 {
 	const struct traffic_selector *ts = &tss->ts[index];
 	int protocol = -1;
@@ -565,13 +576,13 @@ static int fit_protocol(const struct end *end,
 			protocol = end->client.ipproto;
 		}
 		break;
-	case END_NARROWS_TS:
+	case END_NARROWER_THAN_TS:
 		if (ts->ipprotoid == 0 /* wild-card */ ||
 		    ts->ipprotoid == end->client.ipproto) {
 			protocol = end->client.ipproto;
 		}
 		break;
-	case END_WIDENS_TS:
+	case END_WIDER_THAN_TS:
 		if (end->client.ipproto == 0 /* wild-card */ ||
 		    end->client.ipproto == ts->ipprotoid) {
 			protocol = ts->ipprotoid;
@@ -580,11 +591,11 @@ static int fit_protocol(const struct end *end,
 	default:
 		bad_case(fit);
 	}
-	dbg_ts("fit protocol END %s%d %s TS %s[%u]=%s%d ==> %d",
-	       end->client.ipproto == 0 ? "*" : "", end->client.ipproto,
+	dbg_ts("narrow protocol: END %s.client.ipproto=%s%d %s TS %s[%u]=%s%d ==> %d (%s)",
+	       tss->end_name, end->client.ipproto == 0 ? "*" : "", end->client.ipproto,
 	       str_end_fit_ts(fit),
-	       tss->name, index, ts->ipprotoid == 0 ? "*" : "", ts->ipprotoid,
-	       protocol);
+	       tss->ts_name, index, ts->ipprotoid == 0 ? "*" : "", ts->ipprotoid,
+	       protocol, str_fit_story(fit));
 	return protocol;
 }
 
@@ -595,7 +606,7 @@ static int score_protocol_fit(const struct end *end,
 {
 	int f;	/* strength of match */
 
-	int protocol = fit_protocol(end, tss, fit, index, indent);
+	int protocol = narrow_protocol(end, tss, fit, index, indent);
 	if (protocol == 0) {
 		f = 255;	/* ??? odd value */
 	} else if (protocol > 0) {
@@ -605,12 +616,13 @@ static int score_protocol_fit(const struct end *end,
 	}
 
 	const struct traffic_selector *ts = &tss->ts[index];
-	dbg_ts("%s: protocol END client.ipproto=%s%d %s TS %s[%u].ipprotoid=%s%d has fitness %d",
+	dbg_ts("%s: protocol END %s.client.ipproto=%s%d %s TS %s[%u].ipprotoid=%s%d ==> %d has fitness %d",
 	       (f > 0 ? "YES" : "NO"),
-	       end->client.ipproto == 0 ? "*" : "", end->client.ipproto,
+	       tss->end_name, end->client.ipproto == 0 ? "*" : "", end->client.ipproto,
 	       str_end_fit_ts(fit),
-	       tss->name, index, (ts->ipprotoid == 0 ? "*" : ""),
-	       ts->ipprotoid, f);
+	       tss->ts_name, index, (ts->ipprotoid == 0 ? "*" : ""),
+	       ts->ipprotoid,
+	       protocol, f);
 	return f;
 }
 
@@ -619,54 +631,60 @@ static int score_protocol_fit(const struct end *end,
  *
  * Returns 0 (all ports), a specific port number, or -1 (no luck).
  *
- * Since 'struct end' only describes all-ports or a single port; only
- * narrow to that.
+ * Since 'struct end' only describes all-ports or a single port; can
+ * only narrow to that.
  */
 
-static int fit_port(const struct end *end,
-		    const struct traffic_selectors *tss,
-		    enum fit fit, unsigned index,
-		    indent_t indent)
+static int narrow_port(const struct end *end,
+		       const struct traffic_selectors *tss,
+		       enum fit fit, unsigned index,
+		       indent_t indent)
 {
 	passert(index < tss->nr);
 	const struct traffic_selector *ts = &tss->ts[index];
 
 	int end_low = end->client.hport;
 	int end_high = end->client.hport == 0 ? 65535 : end->client.hport;
-	int port = -1;
+	int port_low = -1;
+	int port_high = -1;
 
 	switch (fit) {
 	case END_EQUALS_TS:
 		if (end_low == ts->startport && ts->endport == end_high) {
-			/* end=ts=0-65535 || end=ts=N-N */
-			port = end_low;
+			/* end=ts=[0..65535] || end=ts=[N..N] */
+			port_low = end_low;
+			port_high = end_high;
 		}
 		break;
-	case END_NARROWS_TS:
+	case END_NARROWER_THAN_TS:
 		if (ts->startport <= end_low && end_high <= ts->endport) {
-			/* end=ts=0-65535 || ts=N<=end<=M */
-			port = end_low;
+			/* end=ts=[0..65535] || ts=N<=end<=M */
+			port_low = end_low;
+			port_high = end_high;
 		}
 		break;
-	case END_WIDENS_TS:
+	case END_WIDER_THAN_TS:
 		if (end_low < ts->startport && ts->endport < end_high &&
 		    ts->startport == ts->endport) {
-			/*ts=0<N-N<65535*/
-			port = ts->startport;
+			/*ts=0<[N..N]<65535*/
+			port_low = ts->startport;
+			port_high = ts->endport;
 		} else if (end_low == ts->startport && ts->endport == end_high) {
-			/* end=ts=0-65535 || end=ts=N-N */
-			port = ts->startport;
+			/* end=ts=[0..65535] || end=ts=[N..N] */
+			port_low = ts->startport;
+			port_high = ts->endport;
 		}
 		break;
 	default:
 		bad_case(fit);
 	}
-	dbg_ts("fit port END %u..%u %s TS %s[%u]=%u..%u ==> %d",
-	       end_low, end_high,
+	dbg_ts("narrow port: END %s.client.port=%u..%u %s TS %s[%u]=%u..%u ==> %d..%d(%d) (%s)",
+	       tss->end_name, end_low, end_high,
 	       str_end_fit_ts(fit),
-	       tss->name, index, ts->startport, ts->endport,
-	       port);
-	return port;
+	       tss->ts_name, index, ts->startport, ts->endport,
+	       port_low, port_high, port_low,
+	       str_fit_story(fit));
+	return port_low;
 }
 
 /*
@@ -681,7 +699,7 @@ static int score_port_fit(const struct end *end,
 {
 	int f;	/* strength of match */
 
-	int port = fit_port(end, tss, fit, index, indent);
+	int port = narrow_port(end, tss, fit, index, indent);
 	if (port > 0) {
 		f = 1;
 	} else if (port == 0) {
@@ -689,12 +707,14 @@ static int score_port_fit(const struct end *end,
 	} else {
 		f = 0;
 	}
-	dbg_ts("%s: port END %d..%d %s TS %s[%u] port match has fitness %d",
+
+	const struct traffic_selector *ts = &tss->ts[index];
+	dbg_ts("%s: port END %s.client.port=%d %s TS %s[%u]=%u..%u ==> %d has fitness %d",
 	       f > 0 ? "YES" : "NO",
-	       end->client.hport, (end->client.hport == 0 ? 65535 : end->client.hport),
+	       tss->ts_name, end->client.hport,
 	       str_end_fit_ts(fit),
-	       tss->name, index,
-	       f);
+	       tss->ts_name, index, ts->startport, ts->endport,
+	       port, f);
 	return f;
 }
 
@@ -710,10 +730,10 @@ static int score_port_fit(const struct end *end,
  *       a single CIDR
  */
 
-static int score_address_range(const struct end *end,
-			       const struct traffic_selectors *tss,
-			       enum fit fit, unsigned index,
-			       indent_t indent)
+static int score_selector_fit(const struct end *end,
+			      const struct traffic_selectors *tss,
+			      enum fit fit,
+			      unsigned index, indent_t indent)
 {
 	const struct traffic_selector *ts = &tss->ts[index];
 	/*
@@ -740,12 +760,12 @@ static int score_address_range(const struct end *end,
 			f = fitbits;
 		}
 		break;
-	case END_NARROWS_TS:
+	case END_NARROWER_THAN_TS:
 		if (range_in_range(range, ts->net)) {
 			f = fitbits;
 		}
 		break;
-	case END_WIDENS_TS:
+	case END_WIDER_THAN_TS:
 		if (range_in_range(ts->net, range)) {
 			f = fitbits;
 		}
@@ -767,11 +787,11 @@ static int score_address_range(const struct end *end,
 
 	selector_buf sb;
 	range_buf rb;
-	dbg_ts("%s: address END client=%s %s TS %s[%u]net=%s has fitness %d",
+	dbg_ts("%s: address-range END %s.client.selector=%s %s TS %s[%u]net=%s has fitness %d",
 	       (f > 0 ? "YES" : "NO"),
-	       str_selector_subnet_port(&end->client, &sb),
+	       tss->end_name, str_selector_subnet_port(&end->client, &sb),
 	       str_end_fit_ts(fit),
-	       tss->name, index, str_range(&ts->net, &rb),
+	       tss->ts_name, index, str_range(&ts->net, &rb),
 	       f);
 	return f;
 }
@@ -792,7 +812,8 @@ static struct score score_end(const struct end *end,
 
 	LSWDBGP(DBG_BASE, buf) {
 		jam(buf, TS_INDENT, ts_indent);
-		jam(buf, "score TS %s[%u]", tss->name, index);
+		jam(buf, "score END %s TS: %s[%u]",
+		    str_end_fit_ts(fit), tss->ts_name, index);
 		if (ts->sec_label.len > 0) {
 			jam(buf, " sec_label=");
 			jam_sanitized_hunk(buf, ts->sec_label);
@@ -815,7 +836,7 @@ static struct score score_end(const struct end *end,
 	switch(ts->ts_type) {
 	case IKEv2_TS_IPV4_ADDR_RANGE:
 	case IKEv2_TS_IPV6_ADDR_RANGE:
-		score.address = score_address_range(end, tss, fit, index, indent);
+		score.address = score_selector_fit(end, tss, fit, index, indent);
 		if (score.address <= 0) {
 			return score;
 		}
@@ -909,12 +930,12 @@ static bool check_tss_sec_label(const struct traffic_selectors *tss,
 		if (!sec_label_within_range("Traffic Selector",
 					    ts->sec_label, config_sec_label, logger)) {
 			dbg_ts("%s sec_label="PRI_SHUNK" is not within range connection sec_label="PRI_SHUNK,
-			       tss->name, pri_shunk(ts->sec_label), pri_shunk(config_sec_label));
+			       tss->ts_name, pri_shunk(ts->sec_label), pri_shunk(config_sec_label));
 			continue;
 		}
 
 		dbg_ts("received %s label within range of our security label",
-		    tss->name);
+		    tss->ts_name);
 
 		/* XXX we return the first match.  Should we return the best? */
 		*selected_sec_label = ts->sec_label;	/* first match */
@@ -957,20 +978,20 @@ static bool score_tsp_sec_label(const struct traffic_selector_payloads *tsp,
 	return true;
 }
 
-static struct best_score score_ends_iprange(enum fit fit,
-					    const struct connection *d,
-					    const struct ends *ends,
-					    const struct traffic_selector_payloads *tsp,
-					    indent_t indent)
+static struct best_score score_ends(enum fit fit,
+				    const struct connection *d,
+				    const struct ends *ends,
+				    const struct traffic_selector_payloads *tsp,
+				    indent_t indent)
 {
 	selector_buf ei3;
 	selector_buf er3;
-	dbg_ts("evaluating%s END I=%s:%d/%d R=%s:%d/%d %s TS:",
+	dbg_ts("evaluating%s END %s=%s:%d/%d %s=%s:%d/%d %s TS:",
 	       (is_virtual_connection(d) ? " (virt)" : ""),
-	       str_selector_subnet_port(&ends->i->client, &ei3),
+	       tsp->i.end_name, str_selector_subnet_port(&ends->i->client, &ei3),
 	       ends->i->client.ipproto,
 	       ends->i->client.hport,
-	       str_selector_subnet_port(&ends->r->client, &er3),
+	       tsp->r.end_name, str_selector_subnet_port(&ends->r->client, &er3),
 	       ends->r->client.ipproto,
 	       ends->r->client.hport,
 	       str_end_fit_ts(fit));
@@ -1065,35 +1086,35 @@ struct narrowed_ts {
 	int tsr_protocol;
 };
 
-static struct narrowed_ts fit_ts_request(struct connection *c,
-					 const struct traffic_selector_payloads *tsp,
-					 enum fit fit, indent_t indent)
+static struct narrowed_ts narrow_ts_request(struct connection *c,
+					    const struct traffic_selector_payloads *tsp,
+					    enum fit fit, indent_t indent)
 {
 	struct narrowed_ts n = {
 		.ok = false, /* until proven */
 	};
 
 	passert(tsp->i.nr >= 1);
-	n.tsi_port = fit_port(&c->spd.that, &tsp->i, fit, 0, indent);
+	n.tsi_port = narrow_port(&c->spd.that, &tsp->i, fit, 0, indent);
 	if (n.tsi_port < 0) {
 		dbg_ts("skipping; TSi port too wide");
 		return n;
 	}
 
-	n.tsi_protocol = fit_protocol(&c->spd.that, &tsp->r, fit, 0, indent);
+	n.tsi_protocol = narrow_protocol(&c->spd.that, &tsp->r, fit, 0, indent);
 	if (n.tsi_protocol < 0) {
 		dbg_ts("skipping; TSi protocol too wide");
 		return n;
 	}
 
 	passert(tsp->r.nr >= 1);
-	n.tsr_port = fit_port(&c->spd.this, &tsp->r, fit, 0, indent);
+	n.tsr_port = narrow_port(&c->spd.this, &tsp->r, fit, 0, indent);
 	if (n.tsr_port < 0) {
 		dbg_ts("skipping; TSr port too wide");
 		return n;
 	}
 
-	n.tsr_protocol = fit_protocol(&c->spd.this, &tsp->r, fit, 0, indent);
+	n.tsr_protocol = narrow_protocol(&c->spd.this, &tsp->r, fit, 0, indent);
 	if (n.tsr_protocol < 0) {
 		dbg_ts("skipping; TSr protocol too wide");
 		return n;
@@ -1186,7 +1207,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 	 * - look for any matching local<->* address: aka all TEMPLATEs
 	 *
 	 * If the connection has POLICY_IKEV2_ALLOW_NARROWING then
-	 * score ends using the comparison END_NARROWS_TS (else
+	 * score ends using the comparison END_NARROWER_THAN_TS (else
 	 * equality).
 	 */
 
@@ -1321,9 +1342,8 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			/* responder -- note D! */
 			enum fit responder_fit =
 				(d->policy & POLICY_IKEV2_ALLOW_NARROWING)
-				? END_NARROWS_TS
+				? END_NARROWER_THAN_TS
 				: END_EQUALS_TS;
-			dbg_ts("scoring END %s TS", str_end_fit_ts(responder_fit));
 
 			for (const struct spd_route *sr = &d->spd;
 			     sr != NULL; sr = sr->spd_next) {
@@ -1334,8 +1354,8 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 					.r = &sr->this,
 				};
 
-				struct best_score score = score_ends_iprange(responder_fit, d/*note D*/,
-									     &ends, &tsp, indent);
+				struct best_score score = score_ends(responder_fit, d/*note D*/,
+								     &ends, &tsp, indent);
 				if (!score.ok) {
 					continue;
 				}
@@ -1412,9 +1432,9 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 	}
 
 	/*
-	 * Since the search failed using END_NARROWS_TS, retry
+	 * Since the search failed using END_NARROWER_THAN_TS, retry
 	 * the search looking for a template connection that matches
-	 * END_WIDENS_TS.
+	 * END_WIDER_THAN_TS.
 	 *
 	 * XXX: Why?
 	 *
@@ -1430,9 +1450,9 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 	 *   But isn't that what the first loop above did?
 	 *
 	 *   Not really: the above simply applied
-	 *   END_NARROWS_TS.  This time as well as
-	 *   END_WIDENS_TS, the code is checking that the remote
-	 *   host address is within the connection's client.
+	 *   END_NARROWER_THAN_TS.  This time as well as
+	 *   END_WIDER_THAN_TS, the code is checking that the
+	 *   remote host address is within the connection's client.
 	 *
 	 *   But why?
 	 *
@@ -1538,23 +1558,23 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			}
 
 			/* require a valid narrowed port? */
-			enum fit fit;
+			enum fit responder_fit;
 			switch (c->policy & (POLICY_GROUPINSTANCE |
 					     POLICY_IKEV2_ALLOW_NARROWING)) {
 			case POLICY_GROUPINSTANCE:
 			case POLICY_GROUPINSTANCE | POLICY_IKEV2_ALLOW_NARROWING: /* XXX: true */
 				/* exact match; XXX: 'cos that is what old code did */
-				fit = END_EQUALS_TS;
+				responder_fit = END_EQUALS_TS;
 				break;
 			case POLICY_IKEV2_ALLOW_NARROWING:
 				/* narrow END's port to TS port */
-				fit = END_WIDENS_TS;
+				responder_fit = END_WIDER_THAN_TS;
 				break;
 			default:
 				bad_case(c->policy);
 			}
 
-			struct narrowed_ts n = fit_ts_request(t, &tsp, fit, indent);
+			struct narrowed_ts n = narrow_ts_request(t, &tsp, responder_fit, indent);
 			if (!n.ok) {
 				continue;
 			}
@@ -1606,8 +1626,8 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 		 * Narrow down the connection so that it matches
 		 * traffic selector packet.
 		 */
-		struct narrowed_ts n = fit_ts_request(best.connection, &tsp,
-						      END_WIDENS_TS, indent);
+		struct narrowed_ts n = narrow_ts_request(best.connection, &tsp,
+							 END_WIDER_THAN_TS, indent);
 		if (!n.ok) {
 			llog_sa(RC_LOG_SERIOUS, child, "no IKEv2 connection found with compatible Traffic Selectors");
 			return false;
@@ -1673,10 +1693,14 @@ bool v2_process_ts_response(struct child_sa *child,
 		.i = &sra->this,
 		.r = &sra->that,
 	};
-	enum fit initiator_widening =
-		(c->policy & POLICY_IKEV2_ALLOW_NARROWING)
-		? END_WIDENS_TS
-		: END_EQUALS_TS;
+
+	/*
+	 * When allow narrowing, it's ok for the responders TS to be
+	 * smaller than the END.
+	 */
+	enum fit initiator_fit =
+		((c->policy & POLICY_IKEV2_ALLOW_NARROWING) ? END_WIDER_THAN_TS
+		 : END_EQUALS_TS);
 
 	/* Returns NULL(ok), &null_shunk(skip), memory(ok). */
 	shunk_t selected_sec_label = null_shunk;
@@ -1692,7 +1716,7 @@ bool v2_process_ts_response(struct child_sa *child,
 		return false;
 	}
 
-	struct best_score best = score_ends_iprange(initiator_widening, c, &e, &tsp, indent);
+	struct best_score best = score_ends(initiator_fit, c, &e, &tsp, indent);
 
 	if (!best.ok) {
 		dbg_ts("reject responder TSi/TSr Traffic Selector");
@@ -1731,7 +1755,7 @@ bool v2_process_ts_response(struct child_sa *child,
  *
  * We already matched the right connection by the SPI of v2N_REKEY_SA
  */
-bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *md)
+bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md)
 {
 	indent_t indent = {child->sa.st_logger, 0};
 
@@ -1752,7 +1776,7 @@ bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *
 		.r = &c->spd.this,
 	};
 
-	enum fit fitness = END_NARROWS_TS;
+	enum fit responder_fit = END_NARROWER_THAN_TS;
 
 	/* Returns NULL(ok), &null_shunk(skip), memory(ok). */
 	shunk_t selected_sec_label = null_shunk;
@@ -1770,7 +1794,7 @@ bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *
 		return false;
 	}
 
-	struct best_score score = score_ends_iprange(fitness, c, &ends, &their_tsp, indent);
+	struct best_score score = score_ends(responder_fit, c, &ends, &their_tsp, indent);
 
 	if (!score.ok) {
 		log_state(RC_LOG_SERIOUS, &child->sa,

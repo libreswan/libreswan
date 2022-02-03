@@ -58,6 +58,6 @@ struct traffic_selector traffic_selector_from_end(const struct end *e, const cha
 
 stf_status emit_v2TS_payloads(struct pbs_out *outpbs, const struct child_sa *cst);
 
-bool child_rekey_responder_ts_verify(struct child_sa *child, struct msg_digest *md);
+bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md);
 
 #endif
