@@ -1603,33 +1603,59 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 	}
 
 	/*
-	 * Is best.connection a hybrid template-instance sec_label
-	 * connection?
+	 * Is best.connection is a template:
 	 *
-	 * XXX: If it is then, most likely all the above achieved
-	 * nothing (other than check that this isn't already
-	 * instantiated???, and set best_sec_label).  All that's
-	 * needed here is for the hybrid template-instance to be
-	 * instantiated.
+	 * - a hybrid template-instance sec_label connection
 	 *
-	 * The best was the one that we started with (big circle).
+	 *   XXX:
+	 *
+	 *   If it is then, expect it to be the connection we started
+	 *   with.  All the above achieved nothing (other than check
+	 *   that this isn't already instantiated???, and set
+	 *   best_sec_label).  All that's needed here is for the
+	 *   hybrid template-instance to be instantiated.
+	 *
+	 * - a more straight forward template that needs narrowing
 	 */
 
 	if (best.connection != NULL &&
-	    best.connection->kind == CK_TEMPLATE &&
-	    best.connection->config->sec_label.len > 0 &&
-	    best.selected_sec_label.len > 0) {
-		pexpect(c == best.connection); /* big circle */
-		dbg_ts("instantiating a hybrid sec_label template-instance connection");
+	    best.connection->kind == CK_TEMPLATE) {
+		dbg_ts("instantiating the template connection");
+		indent.level = 2;
+
+
+		enum fit responder_fit;
+		if (best.connection->config->sec_label.len > 0) {
+			pexpect(best.connection == child->sa.st_connection); /* big circle */
+			pexpect(best.selected_sec_label.len > 0);
+			pexpect(best.connection->spd.this.sec_label.len == 0);
+			/* for some reason traffic selectors always allow narrowing? */
+			responder_fit = END_WIDER_THAN_TS;
+		} else {
+			/* check what? */
+			responder_fit =
+				((best.connection->policy & POLICY_IKEV2_ALLOW_NARROWING)
+				 ? END_WIDER_THAN_TS
+				 : END_EQUALS_TS);
+		}
 
 		/*
-		 * Narrow down the connection so that it matches
-		 * traffic selector packet.
+		 * Narrow down the responder's connection so that it
+		 * matches traffic selector packet.
+		 *
+		 * XXX: can this be pre-computed as part of figuring
+		 * out best?
 		 */
 		struct narrowed_ts n = narrow_ts_request(best.connection, &tsp,
-							 END_WIDER_THAN_TS, indent);
+							 responder_fit, indent);
 		if (!n.ok) {
-			llog_sa(RC_LOG_SERIOUS, child, "no IKEv2 connection found with compatible Traffic Selectors");
+			/*
+			 * XXX: is this a can't happen? or an artifact
+			 * of END_NARROWER_THAN_TS being used way
+			 * above?
+			 */
+			llog_sa(RC_LOG_SERIOUS, child,
+				"no IKEv2 connection found with compatible Traffic Selectors");
 			return false;
 		}
 
