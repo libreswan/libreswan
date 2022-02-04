@@ -97,6 +97,9 @@ ip_selector selector_from_subnet_protocol_port(const ip_subnet subnet,
 					       const ip_port port);
 
 ip_selector selector_from_range(const ip_range range);
+ip_selector selector_from_range_protocol_port(const ip_range range,
+					      const struct ip_protocol *protocol,
+					      const ip_port port);
 
 ip_selector selector_from_address_protoport(const ip_address address,
 					    const ip_protoport protoport);

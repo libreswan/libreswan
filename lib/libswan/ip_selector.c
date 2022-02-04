@@ -272,17 +272,6 @@ ip_selector selector_from_subnet(const ip_subnet subnet)
 				 &ip_protocol_all, unset_port);
 }
 
-ip_selector selector_from_range(const ip_range range)
-{
-	if (range_is_unset(&range)) {
-		return unset_selector;
-	}
-
-	ip_subnet subnet;
-	happy(range_to_subnet(range, &subnet));
-	return selector_from_subnet_protocol_port(subnet, &ip_protocol_all, unset_port);
-}
-
 ip_selector selector_from_subnet_protocol_port(const ip_subnet subnet,
 					       const struct ip_protocol *protocol,
 					       const ip_port port)
@@ -291,6 +280,26 @@ ip_selector selector_from_subnet_protocol_port(const ip_subnet subnet,
 		return unset_selector;
 	}
 
+	return selector_from_raw(HERE, subnet.version,
+				 subnet.bytes, subnet.maskbits,
+				 protocol, port);
+}
+
+ip_selector selector_from_range(const ip_range range)
+{
+	return selector_from_range_protocol_port(range, &ip_protocol_all, unset_port);
+}
+
+ip_selector selector_from_range_protocol_port(const ip_range range,
+					      const struct ip_protocol *protocol,
+					      const ip_port port)
+{
+	if (range_is_unset(&range)) {
+		return unset_selector;
+	}
+
+	ip_subnet subnet;
+	happy(range_to_subnet(range, &subnet));
 	return selector_from_raw(HERE, subnet.version,
 				 subnet.bytes, subnet.maskbits,
 				 protocol, port);
