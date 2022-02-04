@@ -75,10 +75,16 @@ static void check_iprange_bits(void)
 		}
 
 		ip_range lo_hi = range_from_raw(HERE, lo.version, lo.bytes, hi.bytes);
-		int lo2hi = range_host_bits(lo_hi);
-		if (t->range != lo2hi) {
+		int host_lo2hi = range_host_len(lo_hi);
+		if (t->range != host_lo2hi) {
 			FAIL("iprange_bits(lo,hi) returned '%d', expected '%d'",
-			     lo2hi, t->range);
+			     host_lo2hi, t->range);
+		}
+		int prefix_lo2hi = range_prefix_len(lo_hi);
+		int t_prefix = afi->mask_cnt - t->range;
+		if (t_prefix != prefix_lo2hi) {
+			FAIL("iprange_bits(lo,hi) returned '%d', expected '%d'",
+			     prefix_lo2hi, t_prefix);
 		}
 	}
 }

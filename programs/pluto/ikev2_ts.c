@@ -740,7 +740,7 @@ static int score_selector_fit(const struct end *end,
 	 * Pre-compute possible fit --- sum of bits gives how good a
 	 * fit this is.
 	 */
-	int ts_range = range_host_bits(ts->net);
+	int ts_range = range_host_len(ts->net);
 	int maskbits = end->client.maskbits;
 	int fitbits = maskbits + ts_range;
 

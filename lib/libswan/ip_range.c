@@ -50,7 +50,20 @@ ip_range range_from_raw(where_t where, enum ip_version version,
  * floor(lg(|high-low| + 1))
  */
 
-int range_host_bits(const ip_range range)
+int range_prefix_len(const ip_range range)
+{
+	const struct ip_info *afi = range_type(&range);
+	if (afi == NULL) {
+		/* NULL+unset+unknown */
+		return -1;
+	}
+
+	struct ip_bytes diff = bytes_sub(afi, range.end, range.start);
+	int fsb = bytes_first_set_bit(afi, diff);
+	return fsb;
+}
+
+int range_host_len(const ip_range range)
 {
 	const struct ip_info *afi = range_type(&range);
 	if (afi == NULL) {

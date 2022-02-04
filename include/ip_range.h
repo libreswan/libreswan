@@ -97,13 +97,14 @@ bool range_in_range(const ip_range inner, const ip_range outer);
 bool range_overlaps_range(const ip_range l, const ip_range r);
 
 /*
- * range_host_bits: Calculate the number of significant bits in the size of the range.
- * floor(log2(|high-low| + 1)).
+ * range_host_len: Calculate the number of significant bits in the
+ * size of the range.  floor(log2(|high-low| + 1)).
  *
  * If RANGE is CIDR then this returns the number of HOST IDENTIFIER
  * bits, otherwise it returns something slightly higher.
  */
-int range_host_bits(const ip_range range);
+int range_host_len(const ip_range range);
+int range_prefix_len(const ip_range range);
 
 /*
  * range_size: the number of IP addresses within an ip_range.
