@@ -1079,44 +1079,54 @@ static bool v2_child_connection_probably_shared(struct child_sa *child,
 }
 
 struct narrowed_ts {
-	bool ok;
-	int tsi_port;
-	int tsi_protocol;
-	int tsr_port;
-	int tsr_protocol;
+	int port;
+	int protocol;
 };
 
-static struct narrowed_ts narrow_ts_request(struct connection *c,
-					    const struct traffic_selector_payloads *tsp,
-					    enum fit fit, indent_t indent)
+struct narrowed_tss {
+	bool ok;
+	struct narrowed_ts i;
+	struct narrowed_ts r;
+};
+
+static bool narrow_ts_end(struct narrowed_ts *n,
+			  const struct end *end,
+			  const struct traffic_selectors *tss,
+			  enum fit fit, unsigned index,
+			  indent_t indent)
 {
-	struct narrowed_ts n = {
+	passert(tss->nr >= 1);
+	n->port = narrow_port(end, tss, fit, index, indent);
+	if (n->port < 0) {
+		dbg_ts("skipping; %s port too wide", tss->ts_name);
+		return false;
+	}
+
+	n->protocol = narrow_protocol(end, tss, fit, index, indent);
+	if (n->protocol < 0) {
+		dbg_ts("skipping; %s protocol too wide", tss->ts_name);
+		return false;
+	}
+
+	return true;
+}
+
+static struct narrowed_tss narrow_tss_ends(struct ends *ends,
+					   const struct traffic_selector_payloads *tsp,
+					   enum fit fit, unsigned index,
+					   indent_t indent)
+{
+	struct narrowed_tss n = {
 		.ok = false, /* until proven */
 	};
 
-	passert(tsp->i.nr >= 1);
-	n.tsi_port = narrow_port(&c->spd.that, &tsp->i, fit, 0, indent);
-	if (n.tsi_port < 0) {
-		dbg_ts("skipping; TSi port too wide");
+	/* Remember: THAT=INITIATOR; THIS=RESPONDER. */
+
+	if (!narrow_ts_end(&n.i, ends->i, &tsp->i, fit, index, indent)) {
 		return n;
 	}
 
-	n.tsi_protocol = narrow_protocol(&c->spd.that, &tsp->i, fit, 0, indent);
-	if (n.tsi_protocol < 0) {
-		dbg_ts("skipping; TSi protocol too wide");
-		return n;
-	}
-
-	passert(tsp->r.nr >= 1);
-	n.tsr_port = narrow_port(&c->spd.this, &tsp->r, fit, 0, indent);
-	if (n.tsr_port < 0) {
-		dbg_ts("skipping; TSr port too wide");
-		return n;
-	}
-
-	n.tsr_protocol = narrow_protocol(&c->spd.this, &tsp->r, fit, 0, indent);
-	if (n.tsr_protocol < 0) {
-		dbg_ts("skipping; TSr protocol too wide");
+	if (!narrow_ts_end(&n.r, ends->r, &tsp->r, fit, index, indent)) {
 		return n;
 	}
 
@@ -1126,7 +1136,7 @@ static struct narrowed_ts narrow_ts_request(struct connection *c,
 
 static void scribble_request_ts_on_connection(struct child_sa *child,
 					      struct connection *c,
-					      struct narrowed_ts n,
+					      struct narrowed_tss n,
 					      indent_t indent)
 {
 	if (c != child->sa.st_connection) {
@@ -1143,10 +1153,10 @@ static void scribble_request_ts_on_connection(struct child_sa *child,
 
 	/* hack */
 	dbg_ts("XXX: updating best connection's ports/protocols");
-	update_selector_hport(&c->spd.this.client, n.tsr_port);
-	update_selector_hport(&c->spd.that.client, n.tsi_port);
-	update_selector_ipproto(&c->spd.this.client, n.tsr_protocol);
-	update_selector_ipproto(&c->spd.that.client, n.tsi_protocol);
+	update_selector_hport(&c->spd.this.client, n.r.port);
+	update_selector_hport(&c->spd.that.client, n.i.port);
+	update_selector_ipproto(&c->spd.this.client, n.r.protocol);
+	update_selector_ipproto(&c->spd.that.client, n.i.protocol);
 }
 
 /*
@@ -1574,7 +1584,15 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 				bad_case(c->policy);
 			}
 
-			struct narrowed_ts n = narrow_ts_request(t, &tsp, responder_fit, indent);
+			/* responder: THIS=RESPONDER; THAT=INITIATOR */
+			struct ends ends = {
+				.i = &t->spd.that,
+				.r = &t->spd.this,
+			};
+
+			struct narrowed_tss n = narrow_tss_ends(&ends, &tsp,
+								responder_fit,
+								0, indent);
 			if (!n.ok) {
 				continue;
 			}
@@ -1646,8 +1664,13 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 		 * XXX: can this be pre-computed as part of figuring
 		 * out best?
 		 */
-		struct narrowed_ts n = narrow_ts_request(best.connection, &tsp,
-							 responder_fit, indent);
+		struct ends ends = {
+			.i = &best.connection->spd.that,
+			.r = &best.connection->spd.this,
+		};
+		struct narrowed_tss n = narrow_tss_ends(&ends, &tsp,
+							responder_fit,
+							0, indent);
 		if (!n.ok) {
 			/*
 			 * XXX: is this a can't happen? or an artifact
