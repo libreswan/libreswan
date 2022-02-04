@@ -657,9 +657,66 @@ static int narrow_port(const struct end *end,
 	return port_low;
 }
 
+/*
+ * Does TS fit inside of END?
+ *
+ * Given other code flips the comparison depending initiator or
+ * responder, is this right?
+ *
+ * NOTE: Our parser/config only allows 1 CIDR, however IKEv2 ranges
+ *       can be non-CIDR for now we really support/limit ourselves to
+ *       a single CIDR
+ */
+
+static ip_range narrow_range(const struct end *end,
+			     const struct traffic_selectors *tss,
+			     enum fit fit,
+			     unsigned index, indent_t indent)
+{
+	/*
+	 * NOTE: Our parser/config only allows 1 CIDR, however IKEv2
+	 *       ranges can be non-CIDR for now we really
+	 *       support/limit ourselves to a single CIDR
+	 *
+	 * XXX: so what is CIDR?
+	 */
+	const struct traffic_selector *ts = &tss->ts[index];
+	ip_range range = unset_range;
+	ip_range client_range = selector_range(end->client);
+	switch (fit) {
+	case END_EQUALS_TS:
+		if (range_eq_range(client_range, ts->net)) {
+			range = client_range;
+		}
+		break;
+	case END_NARROWER_THAN_TS:
+		if (range_in_range(client_range, ts->net)) {
+			range = client_range;
+		}
+		break;
+	case END_WIDER_THAN_TS:
+		if (range_in_range(ts->net, client_range)) {
+			range = ts->net;
+		}
+		break;
+	default:
+		bad_case(fit);
+	}
+
+	selector_buf cb;
+	range_buf tsb, rb;
+	dbg_ts("narrow range: END %s.client.selector=%s %s TS %s[%u]=%s ==> %s (%s)",
+	       tss->end_name, str_selector(&end->client, &cb),
+	       str_end_fit_ts(fit),
+	       tss->ts_name, index, str_range(&ts->net, &tsb),
+	       str_range(&range, &rb), str_fit_story(fit));
+	return range;
+}
+
 struct narrowed_ts {
 	int port;
 	int protocol;
+	ip_range range;
 };
 
 struct narrowed_tss {
@@ -684,6 +741,12 @@ static bool narrow_ts_end(struct narrowed_ts *n,
 	n->protocol = narrow_protocol(end, tss, fit, index, indent);
 	if (n->protocol < 0) {
 		dbg_ts("skipping; %s protocol too wide", tss->ts_name);
+		return false;
+	}
+
+	n->range = narrow_range(end, tss, fit, index, indent);
+	if (range_is_unset(&n->range)) {
+		dbg_ts("skipping; %s range too wide", tss->ts_name);
 		return false;
 	}
 
@@ -771,71 +834,22 @@ static int score_port_fit(const struct end *end,
 	return f;
 }
 
-/*
- * Does TS fit inside of END?
- *
- * Given other code flips the comparison depending initiator or
- * responder, is this right?
- *
- * NOTE: Our parser/config only allows 1 CIDR, however IKEv2 ranges
- *       can be non-CIDR for now we really support/limit ourselves to
- *       a single CIDR
- */
-
-static int score_selector_fit(const struct end *end,
-			      const struct traffic_selectors *tss,
-			      enum fit fit,
-			      unsigned index, indent_t indent)
+static int score_range_fit(const struct end *end,
+			   const struct traffic_selectors *tss,
+			   enum fit fit,
+			   unsigned index, indent_t indent)
 {
 	const struct traffic_selector *ts = &tss->ts[index];
-	/*
-	 * Pre-compute possible fit --- sum of bits gives how good a
-	 * fit this is.
-	 */
-	int ts_range = range_host_len(ts->net);
-	int maskbits = end->client.maskbits;
-	int fitbits = maskbits + ts_range;
 
-	int f = 0;
-
-	/*
-	 * NOTE: Our parser/config only allows 1 CIDR, however IKEv2
-	 *       ranges can be non-CIDR for now we really
-	 *       support/limit ourselves to a single CIDR
-	 *
-	 * XXX: so what is CIDR?
-	 */
-	ip_range range = selector_range(end->client);
-	switch (fit) {
-	case END_EQUALS_TS:
-		if (range_eq_range(range, ts->net)) {
-			f = fitbits;
-		}
-		break;
-	case END_NARROWER_THAN_TS:
-		if (range_in_range(range, ts->net)) {
-			f = fitbits;
-		}
-		break;
-	case END_WIDER_THAN_TS:
-		if (range_in_range(ts->net, range)) {
-			f = fitbits;
-		}
-		break;
-	default:
-		bad_case(fit);
+	ip_range range = narrow_range(end, tss, fit, index, indent);
+	int f;
+	if (range_is_unset(&range)) {
+		f = 0;
+	} else {
+		int ts_range = range_host_len(ts->net);
+		int maskbits = end->client.maskbits;
+		f = maskbits + ts_range;
 	}
-
-	/*
-	 * comparing for ports for finding better local policy
-	 *
-	 * XXX: why do this?
-	 */
-	/* ??? arbitrary modification to objective function */
-	if (end->client.hport != 0 &&
-	    ts->startport == end->client.hport &&
-	    ts->endport == end->client.hport)
-		f = f << 1;
 
 	selector_buf sb;
 	range_buf rb;
@@ -850,7 +864,7 @@ static int score_selector_fit(const struct end *end,
 
 struct score {
 	bool ok;
-	int address;
+	int range;
 	int port;
 	int protocol;
 };
@@ -888,8 +902,8 @@ static struct score score_end(const struct end *end,
 	switch(ts->ts_type) {
 	case IKEv2_TS_IPV4_ADDR_RANGE:
 	case IKEv2_TS_IPV6_ADDR_RANGE:
-		score.address = score_selector_fit(end, tss, fit, index, indent);
-		if (score.address <= 0) {
+		score.range = score_range_fit(end, tss, fit, index, indent);
+		if (score.range <= 0) {
 			return score;
 		}
 		score.port = score_port_fit(end, tss, fit, index, indent);
@@ -910,20 +924,20 @@ static struct score score_end(const struct end *end,
 
 struct best_score {
 	bool ok;
-	int address;
+	int range;
 	int port;
 	int protocol;
 	const struct traffic_selector *tsi;
 	const struct traffic_selector *tsr;
 };
-#define  NO_SCORE { .ok = false, .address = -1, .port = -1, .protocol = -1, }
+#define  NO_SCORE { .ok = false, .range = -1, .port = -1, .protocol = -1, }
 
 static bool score_gt(const struct best_score *score, const struct best_score *best)
 {
-	return (score->address > best->address ||
-		(score->address == best->address &&
+	return (score->range > best->range ||
+		(score->range == best->range &&
 		 score->port > best->port) ||
-		(score->address == best->address &&
+		(score->range == best->range &&
 		 score->port == best->port &&
 		 score->protocol > best->protocol));
 }
@@ -1072,7 +1086,7 @@ static struct best_score score_ends(enum fit fit,
 			struct best_score score = {
 				.ok = true,
 				/* ??? this objective function is odd and arbitrary */
-				.address = (score_i.address << 8) + score_r.address,
+				.range = (score_i.range << 8) + score_r.range,
 				/* ??? arbitrary objective function */
 				.port = score_i.port + score_r.port,
 				/* ??? arbitrary objective function */
@@ -1147,12 +1161,15 @@ static void scribble_request_ts_on_connection(struct child_sa *child,
 		       child->sa.st_serialno, pri_connection(c, &cib));
 	}
 
-	/* hack */
+	/*
+	 * hack
+	 *
+	 * Responder processing a request so THIS==RESPONDER and
+	 * THAT=INITIATOR.
+	 */
 	dbg_ts("XXX: updating best connection's ports/protocols");
-	update_selector_hport(&c->spd.this.client, n.r.port);
-	update_selector_hport(&c->spd.that.client, n.i.port);
-	update_selector_ipproto(&c->spd.this.client, n.r.protocol);
-	update_selector_ipproto(&c->spd.that.client, n.i.protocol);
+	c->spd.this.client = selector_from_range_protocol_port(n.r.range, protocol_by_ipproto(n.r.protocol), ip_hport(n.r.port));
+	c->spd.that.client = selector_from_range_protocol_port(n.i.range, protocol_by_ipproto(n.i.protocol), ip_hport(n.i.port));
 }
 
 /*
