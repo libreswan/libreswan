@@ -713,19 +713,19 @@ static ip_range narrow_range(const struct end *end,
 	return range;
 }
 
-struct narrowed_ts {
+struct narrowed_traffic_selector {
 	int port;
 	int protocol;
 	ip_range range;
 };
 
-struct narrowed_tss {
+struct narrowed_traffic_selectors {
 	bool ok;
-	struct narrowed_ts i;
-	struct narrowed_ts r;
+	struct narrowed_traffic_selector i;
+	struct narrowed_traffic_selector r;
 };
 
-static bool narrow_ts_end(struct narrowed_ts *n,
+static bool narrow_ts_end(struct narrowed_traffic_selector *n,
 			  const struct end *end,
 			  const struct traffic_selectors *tss,
 			  enum fit fit, unsigned index,
@@ -753,12 +753,12 @@ static bool narrow_ts_end(struct narrowed_ts *n,
 	return true;
 }
 
-static struct narrowed_tss narrow_tss_ends(struct ends *ends,
-					   const struct traffic_selector_payloads *tsp,
-					   enum fit fit, unsigned index,
-					   indent_t indent)
+static struct narrowed_traffic_selectors narrow_tss_ends(struct ends *ends,
+							 const struct traffic_selector_payloads *tsp,
+							 enum fit fit, unsigned index,
+							 indent_t indent)
 {
-	struct narrowed_tss n = {
+	struct narrowed_traffic_selectors n = {
 		.ok = false, /* until proven */
 	};
 
@@ -1146,7 +1146,7 @@ static bool v2_child_connection_probably_shared(struct child_sa *child,
 
 static void scribble_request_ts_on_connection(struct child_sa *child,
 					      struct connection *c,
-					      struct narrowed_tss n,
+					      struct narrowed_traffic_selectors n,
 					      indent_t indent)
 {
 	if (c != child->sa.st_connection) {
@@ -1600,9 +1600,9 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 				.r = &t->spd.this,
 			};
 
-			struct narrowed_tss n = narrow_tss_ends(&ends, &tsp,
-								responder_fit,
-								0, indent);
+			struct narrowed_traffic_selectors n = narrow_tss_ends(&ends, &tsp,
+									      responder_fit,
+									      0, indent);
 			if (!n.ok) {
 				continue;
 			}
@@ -1681,9 +1681,9 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			.i = &best.connection->spd.that,
 			.r = &best.connection->spd.this,
 		};
-		struct narrowed_tss n = narrow_tss_ends(&ends, &tsp,
-							responder_fit,
-							0, indent);
+		struct narrowed_traffic_selectors n = narrow_tss_ends(&ends, &tsp,
+								      responder_fit,
+								      0, indent);
 		if (!n.ok) {
 			/*
 			 * XXX: is this a can't happen? or an artifact
