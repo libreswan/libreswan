@@ -47,6 +47,19 @@ typedef struct {
 #define ts_indent indent.level*2, ""
 #define dbg_ts(FORMAT, ...) ldbg(indent.logger, TS_INDENT""FORMAT, ts_indent, ##__VA_ARGS__)
 
+struct narrowed_traffic_selector {
+	const char *name;
+	int port;
+	const struct ip_protocol *protocol;
+	ip_range range;
+};
+
+struct narrowed_traffic_selectors {
+	bool ok;
+	struct narrowed_traffic_selector i;
+	struct narrowed_traffic_selector r;
+};
+
 /*
  * While the RFC seems to suggest that the traffic selectors come in
  * pairs, strongswan, at least, doesn't.
@@ -124,13 +137,14 @@ void dbg_v2_ts(const struct traffic_selector *ts, const char *prefix, ...)
 	}
 }
 
-static void traffic_selector_to_end(const struct traffic_selector *ts, struct end *end,
-				    const char *story)
+static void traffic_selector_to_end(const struct narrowed_traffic_selector *n,
+				    struct end *end, const char *story)
 {
-	dbg_v2_ts(ts, "%s() %s", __func__, story);
-	const ip_protocol *protocol = protocol_by_ipproto(ts->ipprotoid);
-	ip_port port = ip_hport(ts->startport);
-	end->client = selector_from_range_protocol_port(ts->net, protocol, port);
+	range_buf rb;
+	dbg("%s() %s; protocol=%s port=%d range=%s",
+	    __func__, story, n->protocol->name, n->port, str_range(&n->range, &rb));
+	ip_port port = ip_hport(n->port);
+	end->client = selector_from_range_protocol_port(n->range, n->protocol, port);
 	/* redundant? */
 	end->has_client = !selector_eq_address(end->client, end->host_addr);
 }
@@ -715,19 +729,6 @@ static ip_range narrow_range(const struct end *end,
 	return range;
 }
 
-struct narrowed_traffic_selector {
-	const char *name;
-	int port;
-	const struct ip_protocol *protocol;
-	ip_range range;
-};
-
-struct narrowed_traffic_selectors {
-	bool ok;
-	struct narrowed_traffic_selector i;
-	struct narrowed_traffic_selector r;
-};
-
 static bool narrow_ts_end(struct narrowed_traffic_selector *n,
 			  const struct end *end,
 			  const struct traffic_selectors *tss,
@@ -883,23 +884,6 @@ static struct score score_narrowed_ts(const struct narrowed_traffic_selector *ts
 	return score;
 }
 
-struct best_score {
-	bool ok;
-	int range;
-	int port;
-	int protocol;
-	const struct traffic_selector *tsi;
-	const struct traffic_selector *tsr;
-};
-#define  NO_SCORE { .ok = false, .range = -1, .port = -1, .protocol = -1, }
-
-static bool score_gt(const struct best_score *score, const struct best_score *best)
-{
-	return ((score->range > best->range) ||
-		(score->range == best->range && score->port > best->port) ||
-		(score->range == best->range && score->port == best->port && score->protocol > best->protocol));
-}
-
 /*
  * Return true for sec_label expected and good XOR not expected and
  * not present.
@@ -1002,6 +986,22 @@ static bool score_tsp_sec_label(const struct traffic_selector_payloads *tsp,
 	return true;
 }
 
+struct best_score {
+	bool ok;
+	int range;
+	int port;
+	int protocol;
+	struct narrowed_traffic_selectors n;
+};
+#define  NO_SCORE { .ok = false, .range = -1, .port = -1, .protocol = -1, }
+
+static bool score_gt(const struct best_score *score, const struct best_score *best)
+{
+	return ((score->range > best->range) ||
+		(score->range == best->range && score->port > best->port) ||
+		(score->range == best->range && score->port == best->port && score->protocol > best->protocol));
+}
+
 static struct best_score score_ends(enum fit fit,
 				    const struct connection *d,
 				    const struct ends *ends,
@@ -1026,7 +1026,6 @@ static struct best_score score_ends(enum fit fit,
 
 	/* compare tsi/r array to this/that, evaluating how well it fits */
 	for (unsigned tsi_n = 0; tsi_n < tsp->i.nr; tsi_n++) {
-		const struct traffic_selector *tni = &tsp->i.ts[tsi_n];
 
 		struct narrowed_traffic_selector narrowed_tsi;
 		if (!narrow_ts_end(&narrowed_tsi, ends->i, &tsp->i, fit, tsi_n, indent)) {
@@ -1040,7 +1039,6 @@ static struct best_score score_ends(enum fit fit,
 		}
 
 		for (unsigned tsr_n = 0; tsr_n < tsp->r.nr; tsr_n++) {
-			const struct traffic_selector *tnr = &tsp->r.ts[tsr_n];
 
 			struct narrowed_traffic_selector narrowed_tsr;
 			if (!narrow_ts_end(&narrowed_tsr, ends->r, &tsp->r, fit, tsr_n, indent)) {
@@ -1060,7 +1058,11 @@ static struct best_score score_ends(enum fit fit,
 				/* ??? arbitrary objective function */
 				.protocol = score_i.protocol + score_r.protocol,
 				/* which one */
-				.tsi = tni, .tsr = tnr,
+				.n = {
+					.ok = true,
+					.i = narrowed_tsi,
+					.r = narrowed_tsr,
+				},
 			};
 
 			/* score >= best_score? */
@@ -1373,8 +1375,8 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 				}
 				if (score_gt(&score, &best.score)) {
 					connection_buf cb;
-					dbg_ts("protocol fitness found better match "PRI_CONNECTION", TSi[%td],TSr[%td]",
-					       pri_connection(d, &cb), score.tsi - tsp.i.ts, score.tsr - tsp.r.ts);
+					dbg_ts("protocol fitness found better match "PRI_CONNECTION"",
+					       pri_connection(d, &cb));
 					best = (struct best) {
 						.connection = d,
 						.score = score,
@@ -1595,7 +1597,9 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			best = (struct best) {
 				.connection = s,
 				.spd_route = &s->spd,
-				/*.score*/
+				.score = {
+					.n = n,
+				},
 			};
 			break;
 		}
@@ -1623,44 +1627,10 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 		dbg_ts("instantiating the template connection");
 		indent.level = 2;
 
-		enum fit responder_fit;
 		if (best.connection->config->sec_label.len > 0) {
 			pexpect(best.connection == child->sa.st_connection); /* big circle */
 			pexpect(best.selected_sec_label.len > 0);
 			pexpect(best.connection->spd.this.sec_label.len == 0);
-			/* for some reason traffic selectors always allow narrowing? */
-			responder_fit = END_WIDER_THAN_TS;
-		} else {
-			/* check what? */
-			responder_fit =
-				((best.connection->policy & POLICY_IKEV2_ALLOW_NARROWING)
-				 ? END_WIDER_THAN_TS
-				 : END_EQUALS_TS);
-		}
-
-		/*
-		 * Narrow down the responder's connection so that it
-		 * matches traffic selector packet.
-		 *
-		 * XXX: can this be pre-computed as part of figuring
-		 * out best?
-		 */
-		struct ends ends = {
-			.i = &best.connection->spd.that,
-			.r = &best.connection->spd.this,
-		};
-		struct narrowed_traffic_selectors n = narrow_tss_ends(&ends, &tsp,
-								      responder_fit,
-								      0, indent);
-		if (!n.ok) {
-			/*
-			 * XXX: is this a can't happen? or an artifact
-			 * of END_NARROWER_THAN_TS being used way
-			 * above?
-			 */
-			llog_sa(RC_LOG_SERIOUS, child,
-				"no IKEv2 connection found with compatible Traffic Selectors");
-			return false;
 		}
 
 		/*
@@ -1670,7 +1640,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 		struct connection *s = instantiate(best.connection,
 						   &child->sa.st_connection->spd.that.host_addr,
 						   NULL, best.selected_sec_label);
-		scribble_request_ts_on_connection(child, s, n, indent);
+		scribble_request_ts_on_connection(child, s, best.score.n, indent);
 
 		/* switch to instance */
 		best = (struct best) {
@@ -1754,9 +1724,9 @@ bool v2_process_ts_response(struct child_sa *child,
 		return false;
 	}
 
-	traffic_selector_to_end(best.tsi, &c->spd.this,
+	traffic_selector_to_end(&best.n.i, &c->spd.this,
 				"scribble accepted TSi response on initiator's this");
-	traffic_selector_to_end(best.tsr, &c->spd.that,
+	traffic_selector_to_end(&best.n.r, &c->spd.that,
 				"scribble accepted TSr response on initiator's that");
 	rehash_db_spd_route_remote_client(&c->spd);
 
