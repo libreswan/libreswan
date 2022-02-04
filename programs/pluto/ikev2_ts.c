@@ -1350,10 +1350,31 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			}
 
 			/* responder -- note D! */
-			enum fit responder_fit =
-				(d->policy & POLICY_IKEV2_ALLOW_NARROWING)
-				? END_NARROWER_THAN_TS
-				: END_EQUALS_TS;
+			enum fit responder_fit;
+			if (d->policy & POLICY_IKEV2_ALLOW_NARROWING) {
+				if (d->kind == CK_TEMPLATE) {
+					/*
+					 * A template starts wider
+					 * than the TS and then, when
+					 * it is instantiated, gets
+					 * narrowed.
+					 */
+					responder_fit = END_WIDER_THAN_TS;
+				} else {
+					/*
+					 * An existing instance needs
+					 * to just accomodate the
+					 * existing traffic
+					 * selectors?!?
+					 *
+					 * XXX: should this instead
+					 * only allow a strict equals?
+					 */
+					responder_fit = END_NARROWER_THAN_TS;
+				}
+			} else {
+				responder_fit = END_EQUALS_TS;
+			}
 
 			for (const struct spd_route *sr = &d->spd;
 			     sr != NULL; sr = sr->spd_next) {
