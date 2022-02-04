@@ -1463,29 +1463,13 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 	}
 
 	/*
-	 * Since the search failed using END_NARROWER_THAN_TS, retry
-	 * the search looking for a template connection that matches
-	 * END_WIDER_THAN_TS.
 	 *
-	 * XXX: Why?
+	 * Now retry the search looking for group instances:
+	 *
+	 * Why?
 	 *
 	 * Who knows, but I suspect it goes back to the original
 	 * choice made during IKE_SA_INIT where:
-	 *
-	 * - non-OE templates with POLICY_IKEV2_ALLOW_NARROWING
-	 *
-	 *   During IKE_SA_INIT, the first template matching
-	 *   <any>-><local> was chosen, so now it time to check the
-	 *   other <any>-><local> templates
-	 *
-	 *   But isn't that what the first loop above did?
-	 *
-	 *   Not really: the above simply applied
-	 *   END_NARROWER_THAN_TS.  This time as well as
-	 *   END_WIDER_THAN_TS, the code is checking that the
-	 *   remote host address is within the connection's client.
-	 *
-	 *   But why?
 	 *
 	 * - OE templates (group instances?!?) connections
 	 *
@@ -1494,13 +1478,13 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 	 *   was chosen; so now it is looking to see if one of the
 	 *   other OE connections does better
 	 *
-	 * SEC_LABLES connections, by this point, are locked in.
+	 * SEC_LABLES and other connections, by this point, are locked
+	 * in.
 	 */
 
 	if (best.connection == NULL &&
 	    c->config->sec_label.len == 0 &&
-	    ((c->policy & POLICY_GROUPINSTANCE) ||
-	     (c->policy & POLICY_IKEV2_ALLOW_NARROWING))) {
+	    c->policy & POLICY_GROUPINSTANCE) {
 		/*
 		 * Is there something better than the current
 		 * connection?
@@ -1544,38 +1528,43 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			 * group instance, like the old code did; is
 			 * this valid?
 			 */
-			switch (c->policy & (POLICY_GROUPINSTANCE |
-					      POLICY_IKEV2_ALLOW_NARROWING)) {
-			case POLICY_GROUPINSTANCE:
-			case POLICY_GROUPINSTANCE | POLICY_IKEV2_ALLOW_NARROWING: /* XXX: true */
-				/* XXX: why does this matter; does it imply t->foodgroup != NULL? */
-				if (!LIN(POLICY_GROUPINSTANCE, t->policy)) {
-					dbg_ts("skipping; not a group instance");
-					continue;
-				}
-				/* when OE, don't change food groups? */
-				if (!streq(c->foodgroup, t->foodgroup)) {
-					dbg_ts("skipping; wrong foodgroup name");
-					continue;
-				}
-				/* ??? why require current connection->name and t->name to be different */
-				/* XXX: don't re-instantiate the same connection template???? */
-				if (streq(c->name, t->name)) {
-					dbg_ts("skipping; name same as current connection");
-					continue;
-				}
-				break;
-			case POLICY_IKEV2_ALLOW_NARROWING:
-				if (!LIN(POLICY_IKEV2_ALLOW_NARROWING, t->policy)) {
-					dbg_ts("skipping; cannot narrow");
-					continue;
-				}
-				break;
-			default:
-				bad_case(c->policy); /* not quite true */
+
+			/*
+			 * XXX: why does this matter; does it imply
+			 * t->foodgroup != NULL?
+			 */
+			if (!LIN(POLICY_GROUPINSTANCE, t->policy)) {
+				dbg_ts("skipping; not a group instance");
+				continue;
+			}
+			/* when OE, don't change food groups? */
+			if (!streq(c->foodgroup, t->foodgroup)) {
+				dbg_ts("skipping; wrong foodgroup name");
+				continue;
+			}
+			/*
+			 * ??? why require current connection->name
+			 * and t->name to be different.
+			 *
+			 * XXX: don't re-instantiate the same
+			 * connection template????
+			 */
+			if (streq(c->name, t->name)) {
+				dbg_ts("skipping; name same as current connection");
+				continue;
 			}
 
-			/* require initiator's subnet <= T; why? */
+			/*
+			 * Require that the connection instantiated
+			 * during IKE_SA_INIT has a client that falls
+			 * within T.
+			 *
+			 * Why?
+			 *
+			 * Something to do with the IKE_SA_INIT client
+			 * being chosen because it had the narrowest
+			 * client selector?
+			 */
 			if (!selector_in_selector(c->spd.that.client, t->spd.that.client)) {
 				dbg_ts("skipping; current connection's initiator subnet is not <= template");
 				continue;
@@ -1589,21 +1578,8 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			}
 
 			/* require a valid narrowed port? */
-			enum fit responder_fit;
-			switch (c->policy & (POLICY_GROUPINSTANCE |
-					     POLICY_IKEV2_ALLOW_NARROWING)) {
-			case POLICY_GROUPINSTANCE:
-			case POLICY_GROUPINSTANCE | POLICY_IKEV2_ALLOW_NARROWING: /* XXX: true */
-				/* exact match; XXX: 'cos that is what old code did */
-				responder_fit = END_EQUALS_TS;
-				break;
-			case POLICY_IKEV2_ALLOW_NARROWING:
-				/* narrow END's port to TS port */
-				responder_fit = END_WIDER_THAN_TS;
-				break;
-			default:
-				bad_case(c->policy);
-			}
+			/* exact match; XXX: 'cos that is what old code did */
+			enum fit responder_fit = END_EQUALS_TS;
 
 			/* responder: THIS=RESPONDER; THAT=INITIATOR */
 			struct ends ends = {
@@ -1620,6 +1596,10 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 
 			indent.level--;
 
+			/*
+			 * XXX: isn't this a template, or are group
+			 * instances shared?
+			 */
 			struct connection *s;
 			if (v2_child_connection_probably_shared(child, indent)) {
 				/* instantiate it, filling in peer's ID */
@@ -1638,7 +1618,6 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			};
 			break;
 		}
-		indent.level = 1;
 	}
 
 	/*
@@ -1657,11 +1636,11 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 	 * - a more straight forward template that needs narrowing
 	 */
 
+	indent.level = 1;
 	if (best.connection != NULL &&
 	    best.connection->kind == CK_TEMPLATE) {
 		dbg_ts("instantiating the template connection");
 		indent.level = 2;
-
 
 		enum fit responder_fit;
 		if (best.connection->config->sec_label.len > 0) {
