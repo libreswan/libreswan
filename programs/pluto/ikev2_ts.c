@@ -128,12 +128,9 @@ static void traffic_selector_to_end(const struct traffic_selector *ts, struct en
 				    const char *story)
 {
 	dbg_v2_ts(ts, "%s() %s", __func__, story);
-	ip_subnet subnet;
-	happy(range_to_subnet(ts->net, &subnet));
 	const ip_protocol *protocol = protocol_by_ipproto(ts->ipprotoid);
-	/* XXX: check port range valid */
 	ip_port port = ip_hport(ts->startport);
-	end->client = selector_from_subnet_protocol_port(subnet, protocol, port);
+	end->client = selector_from_range_protocol_port(ts->net, protocol, port);
 	/* redundant? */
 	end->has_client = !selector_eq_address(end->client, end->host_addr);
 }
