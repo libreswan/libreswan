@@ -1101,7 +1101,7 @@ static struct narrowed_ts narrow_ts_request(struct connection *c,
 		return n;
 	}
 
-	n.tsi_protocol = narrow_protocol(&c->spd.that, &tsp->r, fit, 0, indent);
+	n.tsi_protocol = narrow_protocol(&c->spd.that, &tsp->i, fit, 0, indent);
 	if (n.tsi_protocol < 0) {
 		dbg_ts("skipping; TSi protocol too wide");
 		return n;
