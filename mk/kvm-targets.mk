@@ -1058,7 +1058,7 @@ kvm-shutdown: $(patsubst %, kvm-shutdown-%, $(KVM_PLATFORM_DOMAIN_NAMES))
 $(patsubst %, kvm-undefine-%, $(KVM_PLATFORM_DOMAIN_NAMES)): \
 kvm-undefine-%:
 	case "$$($(VIRSH) domstate $*)" in \
-	"running" | "in shutdown" ) \
+	"running" | "in shutdown" | "paused" ) \
 		$(VIRSH) destroy $* ; \
 		$(VIRSH) undefine $* \
 		;; \
