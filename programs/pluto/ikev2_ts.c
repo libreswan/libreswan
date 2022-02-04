@@ -559,40 +559,42 @@ static bool v2_parse_tsp(const struct msg_digest *md,
  * protocol (ts_proto).
  */
 
-static int narrow_protocol(const struct end *end,
-			   const struct traffic_selectors *tss,
-			   enum fit fit, unsigned index,
-			   indent_t indent)
+static const struct ip_protocol *narrow_protocol(const struct end *end,
+						 const struct traffic_selectors *tss,
+						 enum fit fit, unsigned index,
+						 indent_t indent)
 {
 	const struct traffic_selector *ts = &tss->ts[index];
-	int protocol = -1;
+	int ipproto = -1;
 
 	switch (fit) {
 	case END_EQUALS_TS:
 		if (end->client.ipproto == ts->ipprotoid) {
-			protocol = end->client.ipproto;
+			ipproto = end->client.ipproto;
 		}
 		break;
 	case END_NARROWER_THAN_TS:
 		if (ts->ipprotoid == 0 /* wild-card */ ||
 		    ts->ipprotoid == end->client.ipproto) {
-			protocol = end->client.ipproto;
+			ipproto = end->client.ipproto;
 		}
 		break;
 	case END_WIDER_THAN_TS:
 		if (end->client.ipproto == 0 /* wild-card */ ||
 		    end->client.ipproto == ts->ipprotoid) {
-			protocol = ts->ipprotoid;
+			ipproto = ts->ipprotoid;
 		}
 		break;
 	default:
 		bad_case(fit);
 	}
-	dbg_ts("narrow protocol: END %s.client.ipproto=%s%d %s TS %s[%u]=%s%d ==> %d (%s)",
+	const struct ip_protocol *protocol = ipproto >= 0 ? protocol_by_ipproto(ipproto) : NULL;
+	dbg_ts("narrow protocol: END %s.client.ipproto=%s%d %s TS %s[%u]=%s%d ==> %s (%s)",
 	       tss->end_name, end->client.ipproto == 0 ? "*" : "", end->client.ipproto,
 	       str_end_fit_ts(fit),
 	       tss->ts_name, index, ts->ipprotoid == 0 ? "*" : "", ts->ipprotoid,
-	       protocol, str_fit_story(fit));
+	       (protocol == NULL ? "<unset>" : protocol->name),
+	       str_fit_story(fit));
 	return protocol;
 }
 
@@ -716,7 +718,7 @@ static ip_range narrow_range(const struct end *end,
 struct narrowed_traffic_selector {
 	const char *name;
 	int port;
-	int protocol;
+	const struct ip_protocol *protocol;
 	ip_range range;
 };
 
@@ -753,7 +755,7 @@ static bool narrow_ts_end(struct narrowed_traffic_selector *n,
 	}
 
 	n->protocol = narrow_protocol(end, tss, fit, index, indent);
-	if (n->protocol < 0) {
+	if (n->protocol == NULL) {
 		dbg_ts("skipping; %s protocol too wide", tss->ts_name);
 		return false;
 	}
@@ -794,17 +796,19 @@ static int score_narrowed_protocol(const struct narrowed_traffic_selector *ts,
 				   indent_t indent)
 {
 	int f;	/* strength of match */
-	if (ts->protocol == 0) {
-		f = 255;	/* ??? odd value */
-	} else if (ts->protocol > 0) {
-		f = 1;
-	} else {
+	if (ts->protocol == NULL) {
 		f = 0;
+	} else if (ts->protocol == &ip_protocol_all) {
+		f = 255;	/* ??? odd value */
+	} else {
+		f = 1;
 	}
 
-	dbg_ts("%s: narrowed %s protocol %d has fitness %d",
+	dbg_ts("%s: narrowed %s protocol %s has fitness %d",
 	       (f > 0 ? "YES" : "NO"),
-	       ts->name, ts->protocol, f);
+	       ts->name,
+	       (ts->protocol == NULL ? "<unset>" : ts->protocol->name),
+	       f);
 	return f;
 }
 
@@ -1132,8 +1136,8 @@ static void scribble_request_ts_on_connection(struct child_sa *child,
 	 * THAT=INITIATOR.
 	 */
 	dbg_ts("XXX: updating best connection's ports/protocols");
-	c->spd.this.client = selector_from_range_protocol_port(n.r.range, protocol_by_ipproto(n.r.protocol), ip_hport(n.r.port));
-	c->spd.that.client = selector_from_range_protocol_port(n.i.range, protocol_by_ipproto(n.i.protocol), ip_hport(n.i.port));
+	c->spd.this.client = selector_from_range_protocol_port(n.r.range, n.r.protocol, ip_hport(n.r.port));
+	c->spd.that.client = selector_from_range_protocol_port(n.i.range, n.i.protocol, ip_hport(n.i.port));
 }
 
 /*
