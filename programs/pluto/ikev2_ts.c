@@ -714,6 +714,7 @@ static ip_range narrow_range(const struct end *end,
 }
 
 struct narrowed_traffic_selector {
+	const char *name;
 	int port;
 	int protocol;
 	ip_range range;
@@ -732,6 +733,19 @@ static bool narrow_ts_end(struct narrowed_traffic_selector *n,
 			  indent_t indent)
 {
 	passert(tss->nr >= 1);
+	*n = (struct narrowed_traffic_selector) {
+		.name = tss->end_name,
+	};
+
+	const struct traffic_selector *ts = &tss->ts[index];
+	switch (ts->ts_type) {
+	case IKEv2_TS_IPV4_ADDR_RANGE:
+	case IKEv2_TS_IPV6_ADDR_RANGE:
+		break;
+	default:
+		return false;
+	}
+
 	n->port = narrow_port(end, tss, fit, index, indent);
 	if (n->port < 0) {
 		dbg_ts("skipping; %s port too wide", tss->ts_name);
@@ -776,30 +790,21 @@ static struct narrowed_traffic_selectors narrow_tss_ends(struct ends *ends,
 	return n;
 }
 
-static int score_protocol_fit(const struct end *end,
-			      const struct traffic_selectors *tss,
-			      enum fit fit, unsigned index,
-			      indent_t indent)
+static int score_narrowed_protocol(const struct narrowed_traffic_selector *ts,
+				   indent_t indent)
 {
 	int f;	/* strength of match */
-
-	int protocol = narrow_protocol(end, tss, fit, index, indent);
-	if (protocol == 0) {
+	if (ts->protocol == 0) {
 		f = 255;	/* ??? odd value */
-	} else if (protocol > 0) {
+	} else if (ts->protocol > 0) {
 		f = 1;
 	} else {
 		f = 0;
 	}
 
-	const struct traffic_selector *ts = &tss->ts[index];
-	dbg_ts("%s: protocol END %s.client.ipproto=%s%d %s TS %s[%u].ipprotoid=%s%d ==> %d has fitness %d",
+	dbg_ts("%s: narrowed %s protocol %d has fitness %d",
 	       (f > 0 ? "YES" : "NO"),
-	       tss->end_name, end->client.ipproto == 0 ? "*" : "", end->client.ipproto,
-	       str_end_fit_ts(fit),
-	       tss->ts_name, index, (ts->ipprotoid == 0 ? "*" : ""),
-	       ts->ipprotoid,
-	       protocol, f);
+	       ts->name, ts->protocol, f);
 	return f;
 }
 
@@ -808,57 +813,36 @@ static int score_protocol_fit(const struct end *end,
  * time?
  */
 
-static int score_port_fit(const struct end *end,
-			  const struct traffic_selectors *tss,
-			  enum fit fit, unsigned index,
-			  indent_t indent)
+static int score_narrowed_port(const struct narrowed_traffic_selector *ts,
+			       indent_t indent)
 {
 	int f;	/* strength of match */
-
-	int port = narrow_port(end, tss, fit, index, indent);
-	if (port > 0) {
+	if (ts->port > 0) {
 		f = 1;
-	} else if (port == 0) {
+	} else if (ts->port == 0) {
 		f = 65536; /* from 1 + 65535-0 */
 	} else {
 		f = 0;
 	}
 
-	const struct traffic_selector *ts = &tss->ts[index];
-	dbg_ts("%s: port END %s.client.port=%d %s TS %s[%u]=%u..%u ==> %d has fitness %d",
-	       f > 0 ? "YES" : "NO",
-	       tss->ts_name, end->client.hport,
-	       str_end_fit_ts(fit),
-	       tss->ts_name, index, ts->startport, ts->endport,
-	       port, f);
+	dbg_ts("%s: narrowed %s port %d has fitness %d",
+	       f > 0 ? "YES" : "NO", ts->name, ts->port, f);
 	return f;
 }
 
-static int score_range_fit(const struct end *end,
-			   const struct traffic_selectors *tss,
-			   enum fit fit,
-			   unsigned index, indent_t indent)
+static int score_narrowed_range(const struct narrowed_traffic_selector *ts,
+				indent_t indent)
 {
-	const struct traffic_selector *ts = &tss->ts[index];
-
-	ip_range range = narrow_range(end, tss, fit, index, indent);
 	int f;
-	if (range_is_unset(&range)) {
+	if (range_is_unset(&ts->range)) {
 		f = 0;
 	} else {
-		int ts_range = range_host_len(ts->net);
-		int maskbits = end->client.maskbits;
-		f = maskbits + ts_range;
+		f = range_prefix_len(ts->range) + 1;
 	}
 
-	selector_buf sb;
 	range_buf rb;
-	dbg_ts("%s: address-range END %s.client.selector=%s %s TS %s[%u]net=%s has fitness %d",
-	       (f > 0 ? "YES" : "NO"),
-	       tss->end_name, str_selector_subnet_port(&end->client, &sb),
-	       str_end_fit_ts(fit),
-	       tss->ts_name, index, str_range(&ts->net, &rb),
-	       f);
+	dbg_ts("%s: narrowed %s address-range %s has fitness %d",
+	       (f > 0 ? "YES" : "NO"), ts->name, str_range(&ts->range, &rb), f);
 	return f;
 }
 
@@ -869,57 +853,30 @@ struct score {
 	int protocol;
 };
 
-static struct score score_end(const struct end *end,
-			      const struct traffic_selectors *tss,
-			      enum fit fit, unsigned index,
-			      indent_t indent)
+static struct score score_narrowed_ts(const struct narrowed_traffic_selector *ts,
+				      indent_t indent)
 {
-	const struct traffic_selector *ts = &tss->ts[index];
-
-	LSWDBGP(DBG_BASE, buf) {
-		jam(buf, TS_INDENT, ts_indent);
-		jam(buf, "score END %s TS: %s[%u]",
-		    str_end_fit_ts(fit), tss->ts_name, index);
-		if (ts->sec_label.len > 0) {
-			jam(buf, " sec_label=");
-			jam_sanitized_hunk(buf, ts->sec_label);
-		} else {
-			range_buf ts_net;
-			jam(buf, " net=%s iporotoid=%d {start,end}port=%d..%d",
-			    str_range(&ts->net, &ts_net),
-			    ts->ipprotoid,
-			    ts->startport,
-			    ts->endport);
-		}
-	}
-
 	indent.level++;
 
 	struct score score = {
 		.ok = false,
 	};
 
-	switch(ts->ts_type) {
-	case IKEv2_TS_IPV4_ADDR_RANGE:
-	case IKEv2_TS_IPV6_ADDR_RANGE:
-		score.range = score_range_fit(end, tss, fit, index, indent);
-		if (score.range <= 0) {
-			return score;
-		}
-		score.port = score_port_fit(end, tss, fit, index, indent);
-		if (score.port <= 0) {
-			return score;
-		}
-		score.protocol = score_protocol_fit(end, tss, fit, index, indent);
-		if (score.protocol <= 0) {
-			return score;
-		}
-		score.ok = true;
-		return score;
-	case IKEv2_TS_SECLABEL:
-	default:
+	score.range = score_narrowed_range(ts, indent);
+	if (score.range <= 0) {
 		return score;
 	}
+	score.port = score_narrowed_port(ts, indent);
+	if (score.port <= 0) {
+		return score;
+	}
+	score.protocol = score_narrowed_protocol(ts, indent);
+	if (score.protocol <= 0) {
+		return score;
+	}
+	/* made it! */
+	score.ok = true;
+	return score;
 }
 
 struct best_score {
@@ -934,12 +891,9 @@ struct best_score {
 
 static bool score_gt(const struct best_score *score, const struct best_score *best)
 {
-	return (score->range > best->range ||
-		(score->range == best->range &&
-		 score->port > best->port) ||
-		(score->range == best->range &&
-		 score->port == best->port &&
-		 score->protocol > best->protocol));
+	return ((score->range > best->range) ||
+		(score->range == best->range && score->port > best->port) ||
+		(score->range == best->range && score->port == best->port && score->protocol > best->protocol));
 }
 
 /*
@@ -1070,8 +1024,13 @@ static struct best_score score_ends(enum fit fit,
 	for (unsigned tsi_n = 0; tsi_n < tsp->i.nr; tsi_n++) {
 		const struct traffic_selector *tni = &tsp->i.ts[tsi_n];
 
+		struct narrowed_traffic_selector narrowed_tsi;
+		if (!narrow_ts_end(&narrowed_tsi, ends->i, &tsp->i, fit, tsi_n, indent)) {
+			continue;
+		}
+
 		/* choice hardwired for IPrange and sec_label */
-		struct score score_i = score_end(ends->i, &tsp->i, fit, tsi_n, indent);
+		struct score score_i = score_narrowed_ts(&narrowed_tsi, indent);
 		if (!score_i.ok) {
 			continue;
 		}
@@ -1079,7 +1038,12 @@ static struct best_score score_ends(enum fit fit,
 		for (unsigned tsr_n = 0; tsr_n < tsp->r.nr; tsr_n++) {
 			const struct traffic_selector *tnr = &tsp->r.ts[tsr_n];
 
-			struct score score_r = score_end(ends->r, &tsp->r, fit, tsr_n, indent);
+			struct narrowed_traffic_selector narrowed_tsr;
+			if (!narrow_ts_end(&narrowed_tsr, ends->r, &tsp->r, fit, tsr_n, indent)) {
+				continue;
+			}
+
+			struct score score_r = score_narrowed_ts(&narrowed_tsr, indent);
 			if (!score_r.ok) {
 				continue;
 			}
