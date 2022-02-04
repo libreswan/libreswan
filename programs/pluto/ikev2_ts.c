@@ -599,33 +599,6 @@ static int narrow_protocol(const struct end *end,
 	return protocol;
 }
 
-static int score_protocol_fit(const struct end *end,
-			      const struct traffic_selectors *tss,
-			      enum fit fit, unsigned index,
-			      indent_t indent)
-{
-	int f;	/* strength of match */
-
-	int protocol = narrow_protocol(end, tss, fit, index, indent);
-	if (protocol == 0) {
-		f = 255;	/* ??? odd value */
-	} else if (protocol > 0) {
-		f = 1;
-	} else {
-		f = 0;
-	}
-
-	const struct traffic_selector *ts = &tss->ts[index];
-	dbg_ts("%s: protocol END %s.client.ipproto=%s%d %s TS %s[%u].ipprotoid=%s%d ==> %d has fitness %d",
-	       (f > 0 ? "YES" : "NO"),
-	       tss->end_name, end->client.ipproto == 0 ? "*" : "", end->client.ipproto,
-	       str_end_fit_ts(fit),
-	       tss->ts_name, index, (ts->ipprotoid == 0 ? "*" : ""),
-	       ts->ipprotoid,
-	       protocol, f);
-	return f;
-}
-
 /*
  * Narrow the END/TS ports according to FIT.
  *
@@ -687,6 +660,89 @@ static int narrow_port(const struct end *end,
 	return port_low;
 }
 
+struct narrowed_ts {
+	int port;
+	int protocol;
+};
+
+struct narrowed_tss {
+	bool ok;
+	struct narrowed_ts i;
+	struct narrowed_ts r;
+};
+
+static bool narrow_ts_end(struct narrowed_ts *n,
+			  const struct end *end,
+			  const struct traffic_selectors *tss,
+			  enum fit fit, unsigned index,
+			  indent_t indent)
+{
+	passert(tss->nr >= 1);
+	n->port = narrow_port(end, tss, fit, index, indent);
+	if (n->port < 0) {
+		dbg_ts("skipping; %s port too wide", tss->ts_name);
+		return false;
+	}
+
+	n->protocol = narrow_protocol(end, tss, fit, index, indent);
+	if (n->protocol < 0) {
+		dbg_ts("skipping; %s protocol too wide", tss->ts_name);
+		return false;
+	}
+
+	return true;
+}
+
+static struct narrowed_tss narrow_tss_ends(struct ends *ends,
+					   const struct traffic_selector_payloads *tsp,
+					   enum fit fit, unsigned index,
+					   indent_t indent)
+{
+	struct narrowed_tss n = {
+		.ok = false, /* until proven */
+	};
+
+	/* Remember: THAT=INITIATOR; THIS=RESPONDER. */
+
+	if (!narrow_ts_end(&n.i, ends->i, &tsp->i, fit, index, indent)) {
+		return n;
+	}
+
+	if (!narrow_ts_end(&n.r, ends->r, &tsp->r, fit, index, indent)) {
+		return n;
+	}
+
+	n.ok = true;
+	return n;
+}
+
+static int score_protocol_fit(const struct end *end,
+			      const struct traffic_selectors *tss,
+			      enum fit fit, unsigned index,
+			      indent_t indent)
+{
+	int f;	/* strength of match */
+
+	int protocol = narrow_protocol(end, tss, fit, index, indent);
+	if (protocol == 0) {
+		f = 255;	/* ??? odd value */
+	} else if (protocol > 0) {
+		f = 1;
+	} else {
+		f = 0;
+	}
+
+	const struct traffic_selector *ts = &tss->ts[index];
+	dbg_ts("%s: protocol END %s.client.ipproto=%s%d %s TS %s[%u].ipprotoid=%s%d ==> %d has fitness %d",
+	       (f > 0 ? "YES" : "NO"),
+	       tss->end_name, end->client.ipproto == 0 ? "*" : "", end->client.ipproto,
+	       str_end_fit_ts(fit),
+	       tss->ts_name, index, (ts->ipprotoid == 0 ? "*" : ""),
+	       ts->ipprotoid,
+	       protocol, f);
+	return f;
+}
+
 /*
  * Assign a score to the narrowed port, rationale for score lost in
  * time?
@@ -717,7 +773,6 @@ static int score_port_fit(const struct end *end,
 	       port, f);
 	return f;
 }
-
 
 /*
  * Does TS fit inside of END?
@@ -1076,62 +1131,6 @@ static bool v2_child_connection_probably_shared(struct child_sa *child,
 	}
 
 	return false;
-}
-
-struct narrowed_ts {
-	int port;
-	int protocol;
-};
-
-struct narrowed_tss {
-	bool ok;
-	struct narrowed_ts i;
-	struct narrowed_ts r;
-};
-
-static bool narrow_ts_end(struct narrowed_ts *n,
-			  const struct end *end,
-			  const struct traffic_selectors *tss,
-			  enum fit fit, unsigned index,
-			  indent_t indent)
-{
-	passert(tss->nr >= 1);
-	n->port = narrow_port(end, tss, fit, index, indent);
-	if (n->port < 0) {
-		dbg_ts("skipping; %s port too wide", tss->ts_name);
-		return false;
-	}
-
-	n->protocol = narrow_protocol(end, tss, fit, index, indent);
-	if (n->protocol < 0) {
-		dbg_ts("skipping; %s protocol too wide", tss->ts_name);
-		return false;
-	}
-
-	return true;
-}
-
-static struct narrowed_tss narrow_tss_ends(struct ends *ends,
-					   const struct traffic_selector_payloads *tsp,
-					   enum fit fit, unsigned index,
-					   indent_t indent)
-{
-	struct narrowed_tss n = {
-		.ok = false, /* until proven */
-	};
-
-	/* Remember: THAT=INITIATOR; THIS=RESPONDER. */
-
-	if (!narrow_ts_end(&n.i, ends->i, &tsp->i, fit, index, indent)) {
-		return n;
-	}
-
-	if (!narrow_ts_end(&n.r, ends->r, &tsp->r, fit, index, indent)) {
-		return n;
-	}
-
-	n.ok = true;
-	return n;
 }
 
 static void scribble_request_ts_on_connection(struct child_sa *child,
