@@ -175,7 +175,9 @@ static shunk_t build_redirect_notification_data_ip(const ip_address *dest_ip,
 {
 	enum gw_identity_type gwit;
 
-	switch (addrtypeof(dest_ip)) {
+	const struct ip_info *afi = address_type(dest_ip);
+	passert(afi != NULL);
+	switch (afi->af) {
 	case AF_INET:
 		gwit = GW_IPV4;
 		break;
@@ -183,7 +185,7 @@ static shunk_t build_redirect_notification_data_ip(const ip_address *dest_ip,
 		gwit = GW_IPV6;
 		break;
 	default:
-		bad_case(addrtypeof(dest_ip));
+		bad_case(afi->af);
 	}
 
 	return build_redirect_notification_data_common(gwit, address_as_shunk(dest_ip), nonce,

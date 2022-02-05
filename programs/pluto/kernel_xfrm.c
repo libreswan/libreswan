@@ -714,7 +714,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 			tmpl->optional = (rule->proto == ENCAP_PROTO_IPCOMP &&
 					  xfrm_dir != XFRM_POLICY_OUT);
 			tmpl->aalgos = tmpl->ealgos = tmpl->calgos = ~0;
-			tmpl->family = addrtypeof(&kernel_policy->host.dst);
+			tmpl->family = address_type(&kernel_policy->host.dst)->af;
 			/* only the first rule gets the worm; er tunnel flag */
 			if (i == 1 && kernel_policy->mode == ENCAP_MODE_TUNNEL) {
 				tmpl->mode = XFRM_MODE_TUNNEL;
@@ -1272,7 +1272,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 
 	req.p.id.spi = sa->spi;
 	req.p.id.proto = esatype2proto(sa->esatype);
-	req.p.family = addrtypeof(sa->src.address);
+	req.p.family = address_type(sa->src.address)->af;
 	/*
 	 * This requires ipv6 modules. It is required to support 6in4
 	 * and 4in6 tunnels in linux 2.6.25+
@@ -1364,7 +1364,8 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 	 * To avoid breaking backward compatibility, we use a new flag
 	 * (XFRM_STATE_ALIGN4) do change original behavior.
 	*/
-	if (sa->esatype == ET_AH && addrtypeof(sa->src.address) == AF_INET) {
+	if (sa->esatype == ET_AH &&
+	    address_type(sa->src.address) == &ipv4_info) {
 		dbg("xfrm: aligning IPv4 AH to 32bits as per RFC-4302, Section 3.3.3.2.1");
 		req.p.flags |= XFRM_STATE_ALIGN4;
 	}
@@ -1572,8 +1573,8 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 
 	if (sa->nic_offload_dev) {
 		struct xfrm_user_offload xuo = {
-			.flags = (sa->inbound ? XFRM_OFFLOAD_INBOUND : 0) |
-				(addrtypeof(sa->src.address) == AF_INET6 ? XFRM_OFFLOAD_IPV6 : 0),
+			.flags = ((sa->inbound ? XFRM_OFFLOAD_INBOUND : 0) |
+				  (address_type(sa->src.address) == &ipv6_info ? XFRM_OFFLOAD_IPV6 : 0)),
 			.ifindex = if_nametoindex(sa->nic_offload_dev),
 		};
 
@@ -1649,7 +1650,7 @@ static bool xfrm_del_ipsec_spi(ipsec_spi_t spi,
 	req.id.daddr = xfrm_from_address(dst_address);
 
 	req.id.spi = spi;
-	req.id.family = addrtypeof(src_address);
+	req.id.family = address_type(src_address)->af;
 	req.id.proto = proto->ipproto;
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
@@ -2133,7 +2134,7 @@ static ipsec_spi_t xfrm_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 	req.spi.info.mode = tunnel_mode;
 	req.spi.info.reqid = reqid;
 	req.spi.info.id.proto = proto->ipproto;
-	req.spi.info.family = addrtypeof(src);
+	req.spi.info.family = address_type(src)->af;
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.spi)));
 
@@ -2199,7 +2200,7 @@ static bool netlink_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 	req.id.daddr = xfrm_from_address(sa->dst.address);
 
 	req.id.spi = sa->spi;
-	req.id.family = addrtypeof(sa->src.address);
+	req.id.family = address_type(sa->src.address)->af;
 	req.id.proto = sa->proto->ipproto;
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));

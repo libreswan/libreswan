@@ -165,7 +165,6 @@ uint32_t ntohl_address(const ip_address *address);
  */
 
 /* misc. conversions and related */
-extern int addrtypeof(const ip_address *src);
 extern int masktocount(const ip_address *src);
 
 /* tests */

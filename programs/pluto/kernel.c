@@ -800,8 +800,13 @@ bool do_command(const struct connection *c,
 	 */
 	{
 		const char *hs, *cs;
+		const struct ip_info *afi = address_type(&sr->this.host_addr);
+		if (afi == NULL) {
+			llog_pexpect(logger, HERE, "unknown address family");
+			return false;
+		}
 
-		switch (addrtypeof(&sr->this.host_addr)) {
+		switch (afi->af) {
 		case AF_INET:
 			hs = "-host";
 			cs = "-client";
@@ -811,8 +816,7 @@ bool do_command(const struct connection *c,
 			cs = "-client-v6";
 			break;
 		default:
-			llog(RC_LOG_SERIOUS, logger, "unknown address family");
-			return false;
+			bad_case(afi->af);
 		}
 		verb_suffix = selector_range_eq_address(sr->this.client, sr->this.host_addr) ? hs : cs;
 	}

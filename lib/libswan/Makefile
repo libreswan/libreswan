@@ -83,7 +83,6 @@ OBJS += log_ip.o
 OBJS += fd.o
 OBJS += role.o
 
-OBJS += addrtypeof.o
 OBJS += datatot.o
 OBJS += ultot.o
 
