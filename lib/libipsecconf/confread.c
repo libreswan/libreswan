@@ -429,7 +429,7 @@ static bool validate_end(struct starter_conn *conn_st,
 	end->addrtype = end->options[KNCF_IP];
 	switch (end->addrtype) {
 	case KH_ANY:
-		end->addr = end->host_family->address.any;
+		end->addr = unset_address;
 		break;
 
 	case KH_IFACE:

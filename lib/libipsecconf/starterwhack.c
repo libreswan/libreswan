@@ -304,18 +304,18 @@ static bool set_whack_end(char *lr,
 	case KH_DEFAULTROUTE:
 	case KH_IPHOSTNAME:
 		/* note: we always copy the name string below */
-		w->host_addr = l->host_family->address.any;
+		w->host_addr = unset_address;
 		break;
 
 	case KH_OPPO:
 	case KH_GROUP:
 	case KH_OPPOGROUP:
 		/* policy should have been set to OPPO */
-		w->host_addr = l->host_family->address.any;
+		w->host_addr = unset_address;
 		break;
 
 	case KH_ANY:
-		w->host_addr = l->host_family->address.any;
+		w->host_addr = unset_address;
 		break;
 
 	default:
