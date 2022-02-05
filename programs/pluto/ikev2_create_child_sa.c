@@ -801,6 +801,12 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_1(struct state *ik
 {
 	/* responder processing request */
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		/* ike_sa is not an ike_sa.  Fail. */
+		/* XXX: release what? */
+		return STF_INTERNAL_ERROR;
+	}
+
 	struct child_sa *larval_child = ike->sa.st_v2_larval_responder_sa;
 	pexpect(v2_msg_role(request_md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	pexpect(larval_child->sa.st_sa_role == SA_RESPONDER);
@@ -817,15 +823,6 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_1(struct state *ik
 	 */
 	pexpect(larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
 		larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0);
-
-	/* and a parent? */
-	if (ike == NULL) {
-		pexpect_fail(larval_child->sa.st_logger, HERE,
-			     "sponsoring child state #%lu has no parent state #%lu",
-			     larval_child->sa.st_serialno, larval_child->sa.st_clonedfrom);
-		/* XXX: release what? */
-		return STF_INTERNAL_ERROR;
-	}
 
 	unpack_nonce(&larval_child->sa.st_nr, nonce);
 	if (local_secret != NULL) {
@@ -890,6 +887,12 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *ik
 {
 	/* 'child' responding to request */
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		/* ike_sa is not an ike_sa.  Fail. */
+		/* XXX: release what? */
+		return STF_OK; /*IKE*/
+	}
+
 	struct child_sa *larval_child = ike->sa.st_v2_larval_responder_sa;
 	passert(v2_msg_role(request_md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	passert(larval_child->sa.st_sa_role == SA_RESPONDER);
@@ -903,16 +906,6 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *ik
 	 */
 	pexpect(larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
 		larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0);
-
-	/* didn't loose parent? */
-	if (ike == NULL) {
-		pexpect_fail(larval_child->sa.st_logger, HERE,
-			     "sponsoring child state #%lu has no parent state #%lu",
-			     larval_child->sa.st_serialno, larval_child->sa.st_clonedfrom);
-		delete_state(&larval_child->sa);
-		ike->sa.st_v2_larval_responder_sa = NULL;
-		return STF_OK; /*IKE*/
-	}
 
 	if (larval_child->sa.st_dh_shared_secret == NULL) {
 		log_state(RC_LOG, &larval_child->sa, "DH failed");
@@ -1273,22 +1266,20 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_1(struct
 									  chunk_t *nonce)
 {
 	/* responder processing request */
-	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
-	struct child_sa *larval_ike = ike->sa.st_v2_larval_responder_sa; /* not yet emancipated */
 	pexpect(v2_msg_role(request_md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
+
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		/* ike_sa is not an ike_sa.  Fail. */
+		/* XXX: release what? */
+		return STF_INTERNAL_ERROR;
+	}
+
+	struct child_sa *larval_ike = ike->sa.st_v2_larval_responder_sa; /* not yet emancipated */
 	pexpect(larval_ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(larval_ike->sa.st_state->kind == STATE_V2_REKEY_IKE_R0);
 	dbg("%s() for #%lu %s",
 	     __func__, larval_ike->sa.st_serialno, larval_ike->sa.st_state->name);
-
-	/* and a parent? */
-	if (ike == NULL) {
-		pexpect_fail(larval_ike->sa.st_logger, HERE,
-			     "sponsoring child state #%lu has no parent state #%lu",
-			     larval_ike->sa.st_serialno, larval_ike->sa.st_clonedfrom);
-		/* XXX: release what? */
-		return STF_INTERNAL_ERROR;
-	}
 
 	pexpect(local_secret != NULL);
 	pexpect(request_md->chain[ISAKMP_NEXT_v2KE] != NULL);
@@ -1314,21 +1305,19 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2(struct
 {
 	/* 'child' responding to request */
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	/* didn't loose parent? */
+	if (ike == NULL) {
+		/* ike_sa is not an ike_sa.  Fail. */
+		/* XXX: release child? */
+		return STF_INTERNAL_ERROR;
+	}
+
 	struct child_sa *larval_ike = ike->sa.st_v2_larval_responder_sa; /* not yet emancipated */
 	passert(v2_msg_role(request_md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	passert(larval_ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(larval_ike->sa.st_state->kind == STATE_V2_REKEY_IKE_R0);
 	dbg("%s() for #%lu %s",
 	     __func__, larval_ike->sa.st_serialno, larval_ike->sa.st_state->name);
-
-	/* didn't loose parent? */
-	if (ike == NULL) {
-		pexpect_fail(larval_ike->sa.st_logger, HERE,
-			     "sponsoring child state #%lu has no parent state #%lu",
-			     larval_ike->sa.st_serialno, larval_ike->sa.st_clonedfrom);
-		/* XXX: release child? */
-		return STF_INTERNAL_ERROR;
-	}
 
 	if (larval_ike->sa.st_dh_shared_secret == NULL) {
 		record_v2N_response(ike->sa.st_logger, ike, request_md,
