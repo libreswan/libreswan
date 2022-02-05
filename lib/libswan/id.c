@@ -220,11 +220,10 @@ void jam_id_bytes(struct jambuf *buf, const struct id *id, jam_bytes_fn *jam_byt
 		break;
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
-		if (address_is_unset(&id->ip_addr) /*short-circuit*/||
-		    address_is_any(id->ip_addr)) {
-			jam(buf, "%%any");
-		} else {
+		if (address_is_specified(id->ip_addr)) {
 			jam_address(buf, &id->ip_addr);
+		} else {
+			jam_string(buf, "%any");
 		}
 		break;
 	case ID_FQDN:
@@ -297,7 +296,7 @@ bool id_is_any(const struct id *a)
 
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
-		return (address_is_unset(&a->ip_addr) || address_is_any(a->ip_addr));
+		return (!address_is_specified(a->ip_addr));
 
 	case ID_FQDN:
 	case ID_USER_FQDN:

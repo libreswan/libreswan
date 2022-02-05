@@ -198,11 +198,11 @@ bool address_is_unset(const ip_address *address)
 	return !address->is_set;
 }
 
+
 bool address_is_specified(const ip_address address)
 {
 	const struct ip_info *afi = address_type(&address);
 	if (afi == NULL) {
-		/* NULL+unset+unknown */
 		return false;
 	}
 
@@ -210,6 +210,7 @@ bool address_is_specified(const ip_address address)
 	if (address_eq_address(address, afi->address.any)) {
 		return false;
 	}
+
 	return true;
 }
 

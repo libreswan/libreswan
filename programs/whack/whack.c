@@ -1396,9 +1396,11 @@ int main(int argc, char **argv)
 		case OPT_DELETECRASH:	/* --crash <ip-address> */
 			msg.whack_crash = true;
 			opt_to_address(&host_family, &msg.whack_crash_peer);
-			if (address_is_any(msg.whack_crash_peer)) {
-				diagq("0.0.0.0 or 0::0 isn't a valid client address",
-				      optarg);
+			if (!address_is_specified(msg.whack_crash_peer)) {
+				/* either :: or 0.0.0.0; unset rejected */
+				address_buf ab;
+				diagq("invalid --crash <address>",
+				      str_address(&msg.whack_crash_peer, &ab));
 			}
 			continue;
 
@@ -1534,17 +1536,21 @@ int main(int argc, char **argv)
 
 		case OPT_OPPO_HERE:	/* --oppohere <ip-address> */
 			opt_to_address(&client_family, &msg.oppo.local.address);
-			if (address_is_any(msg.oppo.local.address)) {
-				diagq("0.0.0.0 or 0::0 isn't a valid client address",
-				      optarg);
+			if (!address_is_specified(msg.oppo.local.address)) {
+				/* either :: or 0.0.0.0; unset rejected */
+				address_buf ab;
+				diagq("invalid --opphere <address>",
+				      str_address(&msg.oppo.local.address, &ab));
 			}
 			continue;
 
 		case OPT_OPPO_THERE:	/* --oppothere <ip-address> */
 			opt_to_address(&client_family, &msg.oppo.remote.address);
-			if (address_is_any(msg.oppo.remote.address)) {
-				diagq("0.0.0.0 or 0::0 isn't a valid client address",
-				      optarg);
+			if (!address_is_specified(msg.oppo.remote.address)) {
+				/* either :: or 0.0.0.0; unset rejected */
+				address_buf ab;
+				diagq("invalid --oppothere <address>",
+				      str_address(&msg.oppo.remote.address, &ab));
 			}
 			continue;
 

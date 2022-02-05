@@ -57,8 +57,8 @@ bool initiate_connection(struct connection *c, const char *remote_host, bool bac
 	bool ok;
 
 	/* If whack supplied a remote IP, fill it in if we can */
-	if (remote_host != NULL && (address_is_unset(&c->spd.that.host_addr) ||
-				    address_is_any(c->spd.that.host_addr))) {
+	if (remote_host != NULL &&
+	    !address_is_specified(c->spd.that.host_addr)) {
 		ip_address remote_ip;
 
 		ttoaddress_num(shunk1(remote_host), NULL/*UNSPEC*/, &remote_ip);
@@ -119,9 +119,10 @@ bool initiate_connection_2(struct connection *c,
 		return false;
 	}
 
-	if ((remote_host == NULL) && (c->kind != CK_PERMANENT) && !(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
-		if (address_is_unset(&c->spd.that.host_addr) ||
-		    address_is_any(c->spd.that.host_addr)) {
+	if ((remote_host == NULL) &&
+	    (c->kind != CK_PERMANENT) &&
+	    !(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
+		if (!address_is_specified(c->spd.that.host_addr)) {
 			if (c->dnshostname != NULL) {
 				esb_buf b;
 				llog(RC_NOPEERIP, c->logger,
@@ -141,8 +142,7 @@ bool initiate_connection_2(struct connection *c,
 		}
 	}
 
-	if ((address_is_unset(&c->spd.that.host_addr) ||
-	     address_is_any(c->spd.that.host_addr)) &&
+	if (!address_is_specified(c->spd.that.host_addr) &&
 	    (c->policy & POLICY_IKEV2_ALLOW_NARROWING) ) {
 		if (c->dnshostname != NULL) {
 			esb_buf b;
@@ -1094,7 +1094,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 		return;
 	}
 
-	if (address_is_unset(&new_addr) || address_is_any(new_addr)) {
+	if (!address_is_specified(new_addr)) {
 		connection_buf cib;
 		dbg("pending ddns: connection "PRI_CONNECTION" still no address for \"%s\"",
 		    pri_connection(c, &cib), c->dnshostname);

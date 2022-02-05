@@ -892,7 +892,7 @@ static bool add_xauth_addresspool(struct connection *c,
 		return false;
 	}
 
-	if (address_is_any(range_start(pool_range))) {
+	if (!address_is_specified(range_start(pool_range))) {
 		llog(RC_LOG, logger,
 		     "XAUTH IP addresspool %s for the conn %s user=%s cannot start at address zero",
 		     addresspool, c->name, userid);

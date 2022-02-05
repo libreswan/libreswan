@@ -478,11 +478,11 @@ static bool ikev2_set_dns(struct pbs_in *cp_a_pbs, struct child_sa *child,
 	}
 
 	/* i.e. all zeros */
-	if (address_is_any(ip)) {
+	if (!address_is_specified(ip)) {
 		address_buf ip_str;
 		log_state(RC_LOG, &child->sa,
 			  "ERROR INTERNAL_IP%d_DNS %s is invalid",
-			  af->ip_version, ipstr(&ip, &ip_str));
+			  af->ip_version, str_address(&ip, &ip_str));
 		return false;
 	}
 
@@ -523,11 +523,11 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs, struct child_sa 
 	 * There should be one more byte in the pbs, 17th byte is prefix length.
 	 */
 
-	if (address_is_any(ip)) {
-		ipstr_buf ip_str;
+	if (!address_is_specified(ip)) {
+		address_buf ip_str;
 		log_state(RC_LOG, &child->sa,
 			  "ERROR INTERNAL_IP%d_ADDRESS %s is invalid",
-			  af->ip_version, ipstr(&ip, &ip_str));
+			  af->ip_version, str_address(&ip, &ip_str));
 		return false;
 	}
 
@@ -570,8 +570,7 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs, struct child_sa 
 	} else {
 		c->spd.this.client = selector_from_address(ip);
 		/* only set sourceip= value if unset in configuration */
-		if (address_is_unset(&c->spd.this.host_srcip) ||
-		    address_is_any(c->spd.this.host_srcip)) {
+		if (!address_is_specified(c->spd.this.host_srcip)) {
 			dbg("setting host source IP address to %s",
 			    ipstr(&ip, &ip_str));
 			c->spd.this.host_srcip = ip;

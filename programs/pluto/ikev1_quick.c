@@ -422,11 +422,11 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 			return false;
 		}
 		/* i.e., "zero" */
-		if (address_is_any(temp_address)) {
-			ipstr_buf b;
+		if (!address_is_specified(temp_address)) {
+			address_buf b;
 			llog(RC_LOG_SERIOUS, logger,
-				    "%s ID payload %s is invalid (%s) in Quick I1",
-				    which, idtypename, ipstr(&temp_address, &b));
+			     "%s ID payload %s is invalid (%s) in Quick I1",
+			     which, idtypename, str_address(&temp_address, &b));
 			/* XXX Could send notification back */
 			return false;
 		}

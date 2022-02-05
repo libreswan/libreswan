@@ -785,7 +785,7 @@ diag_t install_addresspool(const ip_range pool_range, struct ip_pool **pool)
 
 	/* can't start at 0 */
 	ip_address start = range_start(pool_range);
-	if (address_is_any(start)) {
+	if (!address_is_specified(start)) {
 		range_buf rb;
 		return diag("address pool %s starts at address zero",
 			    str_range(&pool_range, &rb));

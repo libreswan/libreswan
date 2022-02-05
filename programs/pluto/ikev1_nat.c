@@ -312,13 +312,14 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 		return;
 	}
 
-	ipstr_buf b;
-	dbg("received NAT-OA: %s", ipstr(&ip, &b));
-
-	if (address_is_any(ip)) {
+	if (!address_is_specified(ip)) {
+		address_buf b;
 		llog(RC_LOG_SERIOUS, logger,
-			    "NAT-Traversal: received 0.0.0.0 NAT-OA...");
+		     "NAT-Traversal: received %s NAT-OA...",
+		     str_address(&ip, &b));
 	} else {
+		address_buf b;
+		dbg("received NAT-OA: %s", str_address(&ip, &b));
 		hv->st_nat_oa = ip;
 	}
 }

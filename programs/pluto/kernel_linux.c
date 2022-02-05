@@ -116,11 +116,15 @@ static int cmp_iface(const void *lv, const void *rv)
 	if (i != 0) {
 		return i;
 	}
-	/* loopback=0 < addr=1 < any=2 < invalid */
+	/*
+	 * XXX: list was filtered on specified() so 2 never
+	 * happens?
+	 *
+	 * loopback=0 < addr=1 < anything-else=2
+	 */
 #define SCORE(I) (address_is_loopback(I->addr) ? 0			\
 		  : address_is_specified(I->addr) ? 1			\
-		  : address_is_any(I->addr) ? 2				\
-		  : 3/*invalid*/)
+		  : 2)
 	i = SCORE(l) - SCORE(r);
 	if (i != 0) {
 		return i;
