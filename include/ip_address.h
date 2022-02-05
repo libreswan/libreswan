@@ -145,7 +145,6 @@ const struct ip_info *address_type(const ip_address *address);	/* handles NULL *
 bool address_is_specified(const ip_address address);
 
 bool address_is_loopback(const ip_address address);
-bool address_is_any(const ip_address address);
 
 /* are two is_set() addresses identical? */
 bool address_eq_address(const ip_address address, const ip_address another);

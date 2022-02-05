@@ -239,17 +239,6 @@ bool address_is_loopback(const ip_address address)
 	return address_eq_address(address, afi->address.loopback);
 }
 
-bool address_is_any(const ip_address address)
-{
-	const struct ip_info *afi = address_type(&address);
-	if (afi == NULL) {
-		/* NULL+unset+unknown */
-		return false;
-	}
-
-	return address_eq_address(address, afi->address.any);
-}
-
 void pexpect_address(const ip_address *a, where_t where)
 {
 	if (a == NULL) {

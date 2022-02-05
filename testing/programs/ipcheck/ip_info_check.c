@@ -91,14 +91,13 @@ static const struct address_test {
 	const ip_address *address;
 	const char *str;
 	bool is_unset;
-	bool is_any;
 	bool is_specified;
 	bool is_loopback;
 } address_tests[] = {
 	{ LN, 0, NULL,                        "<unset-address>", .is_unset = true, },
 	{ LN, 0, &unset_address,              "<unset-address>", .is_unset = true, },
-	{ LN, 4, &ipv4_info.address.any,      "0.0.0.0",         .is_any = true },
-	{ LN, 6, &ipv6_info.address.any,      "::",              .is_any = true },
+	{ LN, 4, &ipv4_info.address.any,      "0.0.0.0",         .is_unset = false },
+	{ LN, 6, &ipv6_info.address.any,      "::",              .is_unset = false },
 	{ LN, 4, &ipv4_info.address.loopback, "127.0.0.1",       .is_specified = true, .is_loopback = true, },
 	{ LN, 6, &ipv6_info.address.loopback, "::1",             .is_specified = true, .is_loopback = true, },
 };
@@ -182,7 +181,6 @@ static void check_ip_info_address(void)
 		CHECK_TYPE(address);
 		CHECK_STR2(address);
 		CHECK_COND(address, is_unset);
-		CHECK_COND2(address, is_any);
 		CHECK_COND2(address, is_specified);
 		CHECK_COND2(address, is_loopback);
 

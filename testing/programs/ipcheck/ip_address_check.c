@@ -398,14 +398,13 @@ static void check_address_is(void)
 		int family;
 		const char *in;
 		bool is_unset;
-		bool is_any;
 		bool is_specified;
 		bool is_loopback;
 	} tests[] = {
 		{ LN, 0, "<invalid>",		.is_unset = true, },
-		{ LN, 4, "0.0.0.0",			.is_any = true, },
-		{ LN, 6, "::",			.is_any = true, },
-		{ LN, 4, "1.2.3.4",			.is_specified = true, },
+		{ LN, 4, "0.0.0.0",		.is_unset = false, },
+		{ LN, 6, "::",			.is_unset = false, },
+		{ LN, 4, "1.2.3.4",		.is_specified = true, },
 		{ LN, 6, "1:12:3:14:5:16:7:18",	.is_specified = true, },
 		{ LN, 4, "127.0.0.1",		.is_specified = true, .is_loopback = true, },
 		{ LN, 6, "::1",			.is_specified = true, .is_loopback = true, },
@@ -413,8 +412,8 @@ static void check_address_is(void)
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
 		const struct test *t = &tests[ti];
-		PRINT("%s '%s'-> unset: %s, any: %s, specified: %s", pri_family(t->family), t->in,
-		      bool_str(t->is_unset), bool_str(t->is_any), bool_str(t->is_specified));
+		PRINT("%s '%s'-> unset: %s, specified: %s", pri_family(t->family), t->in,
+		      bool_str(t->is_unset), bool_str(t->is_specified));
 
 		/* convert it *to* internal format */
 		ip_address tmp, *address = &tmp;
@@ -429,7 +428,6 @@ static void check_address_is(void)
 		}
 
 		CHECK_COND(address, is_unset);
-		CHECK_COND2(address, is_any);
 		CHECK_COND2(address, is_specified);
 		CHECK_COND2(address, is_loopback);
 	}
