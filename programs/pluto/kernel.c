@@ -1497,7 +1497,7 @@ void show_shunt_status(struct show *s)
 		policy_prio_buf prio;
 
 		/* XXX: hack to preserve output */
-		ip_said said = said_from_address_protocol_spi(selector_type(&bs->our_client)->address.any,
+		ip_said said = said_from_address_protocol_spi(selector_type(&bs->our_client)->address.unspec,
 							      &ip_protocol_internal,
 							      htonl(shunt_policy_spi(bs->shunt_policy)));
 
@@ -1871,7 +1871,7 @@ bool assign_holdpass(const struct connection *c,
 			 * Because it is a shunt and the other end
 			 * doesn't matter?
 			 */
-			route.dst.host_addr = address_type(&route.dst.host_addr)->address.any;
+			route.dst.host_addr = address_type(&route.dst.host_addr)->address.unspec;
 
 			struct kernel_policy kernel_policy = proto_kernel_policy_transport_esp;
 			/* XXX: merge with kernel_policy_from_state()? */
@@ -2949,7 +2949,7 @@ bool route_and_eroute(struct connection *c,
 				 * gotten this far.
 				 */
 				struct bare_shunt *bs = *bspp;
-				ip_address dst = selector_type(&bs->our_client)->address.any;
+				ip_address dst = selector_type(&bs->our_client)->address.unspec;
 				/* XXX: given [sic] src=dst, suspect policy ignored */
 				struct kernel_policy kernel_policy = proto_kernel_policy_transport_esp;
 				kernel_policy.host.src = dst; /* should be useless [XXX: sic] */
@@ -3448,8 +3448,8 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 
 			/* XXX: suspect policy ignored */
 			struct kernel_policy kernel_policy = proto_kernel_policy_transport_esp;
-			kernel_policy.host.src = afi->address.any;
-			kernel_policy.host.dst = afi->address.any;
+			kernel_policy.host.src = afi->address.unspec;
+			kernel_policy.host.dst = afi->address.unspec;
 
 			bool ok = raw_policy(KP_REPLACE_OUTBOUND, THIS_IS_NOT_INBOUND,
 					     &src, &dst,

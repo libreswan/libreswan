@@ -254,7 +254,7 @@ void nat_traversal_natoa_lookup(struct msg_digest *md,
 	passert(md->iface != NULL);
 
 	/* Initialize NAT-OA */
-	hv->st_nat_oa = ipv4_info.address.any;
+	hv->st_nat_oa = ipv4_info.address.unspec;
 
 	/* Count NAT-OA */
 	const struct payload_digest *p;

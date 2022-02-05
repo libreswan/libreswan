@@ -165,7 +165,7 @@ static struct host_pair *alloc_host_pair(ip_address local, ip_address remote, wh
 	 * Force unset/NULL to 'any' a.k.a. zero; so hash is
 	 * consistent and comparisons work.
 	 */
-	hp->remote = (address_is_unset(&remote) ? address_type(&local)->address.any : remote);
+	hp->remote = (address_is_unset(&remote) ? address_type(&local)->address.unspec : remote);
 	init_hash_table_entry(&host_pair_addresses_hash_table, hp);
 	add_hash_table_entry(&host_pair_addresses_hash_table, hp);
 	return hp;

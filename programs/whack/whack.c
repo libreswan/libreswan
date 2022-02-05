@@ -908,7 +908,7 @@ static const struct ip_info *get_address_family(struct family *family)
 
 static ip_address get_address_any(struct family *family)
 {
-	return get_address_family(family)->address.any;
+	return get_address_family(family)->address.unspec;
 }
 
 struct sockaddr_un ctl_addr = {

@@ -399,7 +399,7 @@ static struct raw_iface *find_raw_ifaces4(struct logger *logger)
 	 * bind the socket; somewhat convoluted as BSD as size field.
 	 */
 	{
-		ip_endpoint any_ep = endpoint_from_address_protocol_port(ipv4_info.address.any,
+		ip_endpoint any_ep = endpoint_from_address_protocol_port(ipv4_info.address.unspec,
 									 &ip_protocol_udp,
 									 ip_hport(IKE_UDP_PORT));
 		ip_sockaddr any_sa = sockaddr_from_endpoint(any_ep);

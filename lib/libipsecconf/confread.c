@@ -542,7 +542,7 @@ static bool validate_end(struct starter_conn *conn_st,
 	 * validate the KSCF_NEXTHOP; set nexthop address to
 	 * something consistent, by default
 	 */
-	end->nexthop = end->host_family->address.any;
+	end->nexthop = end->host_family->address.unspec;
 	if (end->strings_set[KSCF_NEXTHOP]) {
 		char *value = end->strings[KSCF_NEXTHOP];
 
@@ -574,7 +574,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			end->nexttype = KH_IPADDR;
 		}
 	} else {
-		end->nexthop = end->host_family->address.any;
+		end->nexthop = end->host_family->address.unspec;
 
 		if (end->addrtype == KH_DEFAULTROUTE) {
 			end->nexttype = KH_DEFAULTROUTE;

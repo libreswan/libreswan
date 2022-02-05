@@ -169,7 +169,7 @@ static void xfrm2ip(const xfrm_address_t *xaddr, ip_address *addr, const sa_fami
 	const struct ip_info *afi = aftoinfo(family);
 	passert(afi != NULL);
 
-	*addr = afi->address.any; /* initialize dst type and zero */
+	*addr = afi->address.unspec; /* initialize dst type and zero */
 	chunk_t a = address_as_chunk(addr);
 
 	/* a = x */

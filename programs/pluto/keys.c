@@ -604,7 +604,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		pexpect(address_is_specified(c->spd.this.host_addr));
 		/* roadwarrior: replace that with %ANYADDR */
 		rw_id.kind = address_type(&c->spd.this.host_addr)->id_ip_addr;
-		rw_id.ip_addr = address_type(&c->spd.this.host_addr)->address.any;
+		rw_id.ip_addr = address_type(&c->spd.this.host_addr)->address.unspec;
 		id_buf old_buf, new_buf;
 		dbg("%s() switching remote roadwarrier ID from %s to %s (%%ANYADDR)",
 		    __func__, str_id(that_id, &old_buf), str_id(&rw_id, &new_buf));

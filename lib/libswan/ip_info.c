@@ -166,7 +166,7 @@ const struct ip_info ipv4_info = {
 	.mask_cnt = 32,
 
 	/* ip_address - .address.any matches grep */
-	.address.any = { .is_set = true, .version = IPv4, }, /* 0.0.0.0 */
+	.address.unspec = { .is_set = true, .version = IPv4, }, /* 0.0.0.0 */
 	.address.loopback = { .is_set = true, .version = IPv4, .bytes = { { 127, 0, 0, 1, }, }, },
 	.address.jam = jam_ipv4_address,
 	.address.jam_wrapped = jam_ipv4_address,
@@ -216,7 +216,7 @@ const struct ip_info ipv6_info = {
 	.mask_cnt = 128,
 
 	/* ip_address - .address.any matches grep */
-	.address.any = { .is_set = true, .version = IPv6, }, /* :: */
+	.address.unspec = { .is_set = true, .version = IPv6, }, /* :: */
 	.address.loopback = { .is_set = true, .version = IPv6, .bytes = { { [15] = 1, }, }, }, /* ::1 */
 	.address.jam = jam_ipv6_address,
 	.address.jam_wrapped = jam_ipv6_address_wrapped,

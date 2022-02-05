@@ -335,7 +335,7 @@ static bool set_whack_end(char *lr,
 		 * but, get the family set up right
 		 * XXX the nexthop type has to get into the whack message!
 		 */
-		w->host_nexthop = l->host_family->address.any;
+		w->host_nexthop = l->host_family->address.unspec;
 		break;
 
 	default:

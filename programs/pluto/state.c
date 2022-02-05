@@ -468,8 +468,8 @@ static struct state *new_state(struct connection *c,
 	st->st_ah.protocol = &ip_protocol_ah;
 	st->st_esp.protocol = &ip_protocol_esp;
 	st->st_ipcomp.protocol = &ip_protocol_ipcomp;
-	st->hidden_variables.st_nat_oa = ipv4_info.address.any;
-	st->hidden_variables.st_natd = ipv4_info.address.any;
+	st->hidden_variables.st_nat_oa = ipv4_info.address.unspec;
+	st->hidden_variables.st_natd = ipv4_info.address.unspec;
 
 	dbg("creating state object #%lu at %p", st->st_serialno, (void *) st);
 
