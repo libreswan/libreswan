@@ -1890,7 +1890,15 @@ static struct connection *fc_try(const struct connection *c,
 		dbg("  fc_try: looking at %s",
 		    str_selectors(&d->spd.this.client, &d->spd.that.client, &sb));
 
-		int wildcards, pathlen;
+		/*
+		 * ??? what should wildcards and pathlen default to?
+		 * Coverity Scan detected that they could be referenced without initialization.
+		 * This happens if the connaliases match.
+		 * This bug was introduced in 605c8010007.
+		 * For now, I've defaulted them to the largest values.
+		 */
+		int wildcards = MAX_WILDCARDS;
+		int pathlen = MAX_CA_PATH_LEN;
 
 		if (!(c->connalias != NULL && d->connalias != NULL && streq(c->connalias, d->connalias))) {
 			if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
