@@ -121,18 +121,14 @@ bool use_interface(const char *rifn)
  * Notable differences:
  *
  * - linux honours --listen
- * - linux does strange things with the 'ipsec*' interface
  */
 
 void process_raw_ifaces(struct raw_iface *rifaces, struct logger *logger)
 {
 	struct raw_iface *ifp;
 
-	/*
-	 * There are no virtual interfaces, so all interfaces are valid
-	 */
 	for (ifp = rifaces; ifp != NULL; ifp = ifp->next) {
-		bool after = false; /* has vfp passed ifp on the list? */
+		bool after = false;	/* has vfp passed ifp on the list? */
 		bool bad = false;
 		struct raw_iface *vfp;
 
@@ -149,6 +145,7 @@ void process_raw_ifaces(struct raw_iface *rifaces, struct logger *logger)
 					       ipstr(&ifp->addr, &b));
 				}
 				bad = true;
+				/* continue just to find other duplicatess */
 			}
 		}
 

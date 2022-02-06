@@ -440,10 +440,6 @@ struct kernel_ops {
 
 extern int create_socket(const struct raw_iface *ifp, const char *v_name, int port, int proto);
 
-#ifndef IPSECDEVPREFIX
-# define IPSECDEVPREFIX "ipsec"
-#endif
-
 extern const struct kernel_ops *kernel_ops;
 #ifdef KERNEL_XFRM
 extern const struct kernel_ops xfrm_kernel_ops;

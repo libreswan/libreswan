@@ -291,7 +291,6 @@ bool use_interface(const char *rifn)
 
 void process_raw_ifaces(struct raw_iface *rifaces, struct logger *logger)
 {
-	struct raw_iface *ifp;
 	ip_address lip;	/* --listen filter option */
 
 	if (pluto_listen) {
@@ -305,75 +304,32 @@ void process_raw_ifaces(struct raw_iface *rifaces, struct logger *logger)
 		dbg("Only looking to listen on %s", str_address(&lip, &b));
 	}
 
-	/*
-	 * Find all virtual/real interface pairs.
-	 * For each real interface...
-	 */
+	struct raw_iface *ifp;
+
 	for (ifp = rifaces; ifp != NULL; ifp = ifp->next) {
-		struct raw_iface *v = NULL;	/* matching ipsecX interface */
 		bool after = false;	/* has vfp passed ifp on the list? */
 		bool bad = false;
 		struct raw_iface *vfp;
-
-		/* ignore if virtual (ipsec*) interface */
-		if (startswith(ifp->name, IPSECDEVPREFIX))
-			continue;
 
 		for (vfp = rifaces; vfp != NULL; vfp = vfp->next) {
 			if (vfp == ifp) {
 				after = true;
 			} else if (sameaddr(&ifp->addr, &vfp->addr)) {
-				/*
-				 * Different entries with matching IP
-				 * addresses.
-				 *
-				 * Many interesting cases.
-				 */
-				if (startswith(vfp->name, IPSECDEVPREFIX)) {
-					if (v != NULL) {
-						ipstr_buf b;
+				if (after) {
+					ipstr_buf b;
 
-						llog(RC_LOG_SERIOUS, logger,
-							    "ipsec interfaces %s and %s share same address %s",
-							    v->name, vfp->name,
-							    ipstr(&ifp->addr, &b));
-						bad = true;
-					} else {
-						/* current winner */
-						v = vfp;
-					}
-				} else {
-					/*
-					 * ugh: a second real interface with
-					 * the same IP address "after" allows
-					 * us to avoid double reporting.
-					 */
-					if (after) {
-						bad = true;
-						break;
-					}
-					continue;
+					llog(RC_LOG_SERIOUS, logger,
+					            "IP interfaces %s and %s share address %s!",
+					       ifp->name, vfp->name,
+					       ipstr(&ifp->addr, &b));
 				}
+				bad = true;
+				/* continue just to find other duplicatess */
 			}
 		}
 
 		if (bad)
 			continue;
-
-		v = ifp;
-
-		/* what if we didn't find a virtual interface? */
-		if (v == NULL) {
-			address_buf b;
-			dbg("IP interface %s %s has no matching ipsec* interface -- ignored",
-			    ifp->name, str_address(&ifp->addr, &b));
-			continue;
-		}
-
-		/*
-		 * We've got all we need; see if this is a new thing:
-		 * search old interfaces list.
-		 */
 
 		/*
 		 * last check before we actually add the entry.
@@ -389,6 +345,10 @@ void process_raw_ifaces(struct raw_iface *rifaces, struct logger *logger)
 			continue;
 		}
 
+		/*
+		 * We've got all we need; see if this is a new thing:
+		 * search old interfaces list.
+		 */
 		add_or_keep_iface_dev(ifp, logger);
 	}
 
