@@ -140,6 +140,7 @@ static bool orient_new_iface_endpoint(struct connection *c, struct end *end)
 			}
 		}
 		break;
+
 	case IKE_TCP_ONLY:
 		if (pluto_listen_tcp) {
 			ifp = bind_iface_endpoint(dev, &iketcp_iface_io,
@@ -153,16 +154,20 @@ static bool orient_new_iface_endpoint(struct connection *c, struct end *end)
 			}
 		}
 		break;
+
 	case IKE_TCP_FALLBACK:
 		return false;
+
+	default:
+		bad_case(c->iketcp);
 	}
 
-	/* already logged */
-	pexpect(ifp != NULL);
-	pexpect(c->interface == NULL);
-	c->interface = iface_endpoint_addref(ifp); /* from bind */
-	if (listening) {
-		listen_on_iface_endpoint(ifp, c->logger);
+	pexpect(c->interface == NULL);	/* no leak */
+	if (ifp != NULL) {
+		c->interface = iface_endpoint_addref(ifp); /* from bind */
+		if (listening) {
+			listen_on_iface_endpoint(ifp, c->logger);
+		}
 	}
 	return true;
 }
