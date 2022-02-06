@@ -408,41 +408,34 @@ ip_port end_host_port(const struct end *end, const struct end *other)
 
 void update_ends_from_this_host_addr(struct end *this, struct end *that)
 {
-	const struct ip_info *afi = address_type(&this->host_addr);
-	if (afi == NULL) {
-		dbg("  %s.host_addr's address family is unknown; skipping %s()",
-		    this->config->leftright, __func__);
-		return;
-	}
-
-	if (!address_is_specified(this->host_addr)) {
-		dbg("  %s.host_addr's is %%any; skipping %s()",
-		    this->config->leftright, __func__);
-		return;
-	}
-
 	address_buf hab;
 	dbg("updating ends from %s.host_addr %s",
 	    this->config->leftright, str_address(&this->host_addr, &hab));
 
-	/* Default ID to IP (but only if not NO_IP -- WildCard) */
-	if (this->id.kind == ID_NONE && address_is_specified(this->host_addr)) {
-		this->id.kind = afi->id_ip_addr;
-		this->id.ip_addr = this->host_addr;
-		this->has_id_wildcards = false;
-		id_buf idb;
-		dbg("  updated %s.id to %s",
-		    this->config->leftright,
-		    str_id(&this->id, &idb));
+	if (!address_is_specified(this->host_addr)) {
+		dbg("  %s.host_addr's is unspecified (unset, ::, or 0.0.0.0); skipping",
+		    this->config->leftright);
+		return;
 	}
 
-	/* propagate this.HOST_ADDR to that.NEXT_HOP */
-	if (!address_is_specified(that->host_nexthop)) {
-		that->host_nexthop = this->host_addr;
-		address_buf ab;
-		dbg("  updated %s.host_nexthop to %s",
-		    that->config->leftright,
-		    str_address(&that->host_nexthop, &ab));
+	const struct ip_info *afi = address_type(&this->host_addr);
+	passert(afi != NULL); /* since specified */
+
+	/*
+	 * Default ID to IP (but only if not NO_IP -- WildCard).
+	 */
+	if (this->id.kind == ID_NONE) {
+		struct id id = {
+			.kind = afi->id_ip_addr,
+			.ip_addr = this->host_addr,
+		};
+		this->has_id_wildcards = false;
+		id_buf old, new;
+		dbg("  updated %s.id from %s to %s",
+		    this->config->leftright,
+		    str_id(&this->id, &old),
+		    str_id(&id, &new));
+		this->id = id;
 	}
 
 	/*
@@ -451,10 +444,10 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 	 * NAT port (and also ESP=0 prefix messages).
 	 */
 	unsigned host_port = hport(end_host_port(this, that));
-	this->host_port = host_port;
-	dbg("  updated %s.host_port to %u",
+	dbg("  updated %s.host_port from %u to %u",
 	    this->config->leftright,
-	    this->host_port);
+	    this->host_port, host_port);
+	this->host_port = host_port;
 
 	/*
 	 * Default client to subnet containing only self.
@@ -471,12 +464,40 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 		 * For instance, the config file omitted subnet, but
 		 * specified protoport; merge that.
 		 */
-		this->client = selector_from_address_protoport(this->host_addr,
-							       this->config->protoport);
-		selector_buf sb;
-		dbg("  updated %s.client to %s",
+		ip_selector client = selector_from_address_protoport(this->host_addr,
+								     this->config->protoport);
+		selector_buf old, new;
+		dbg("  updated %s.client from %s to %s",
 		    this->config->leftright,
-		    str_selector_subnet_port(&this->client, &sb));
+		    str_selector_subnet_port(&this->client, &old),
+		    str_selector_subnet_port(&client, &new));
+		this->client = client;
+	}
+
+	/*
+	 * Propagate this.HOST_ADDR to that.NEXTHOP.
+	 * As in: THAT -> that.NEXTHOP -> THIS.
+	 */
+	if (!address_is_specified(that->host_nexthop)) {
+		address_buf old, new;
+		dbg("  updated %s.host_nexthop from %s to %s",
+		    that->config->leftright,
+		    str_address(&that->host_nexthop, &old),
+		    str_address(&this->host_addr, &new));
+		that->host_nexthop = this->host_addr;
+	}
+
+	/*
+	 * Propagate this.HOST_ADDR's address family to
+	 * that.HOST_ADDR.
+	 */
+	if (!address_is_specified(that->host_addr)) {
+		address_buf old, new;
+		dbg("  updated %s.host_addr from %s to %s",
+		    that->config->leftright,
+		    str_address(&that->host_addr, &old),
+		    str_address(&afi->address.unspec, &new));
+		that->host_addr = afi->address.unspec;
 	}
 }
 
