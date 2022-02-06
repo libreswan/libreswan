@@ -70,7 +70,11 @@ static void dpd_clear_connection(struct connection *c, const char *v)
 	 * to remember what it was to know if we still need to unroute after delete
 	 */
 	flush_pending_by_connection(c); /* remove any partial negotiations that are failing */
-	delete_v1_states_by_connection_family(&c);
+	delete_v1_states_by_connection_family(&c);	/* may change c to NULL */
+	/*
+	 * ??? Coverity Scan (as of 2022 Feb 1) thinks c has been dereferenced
+	 * so testing it for NULL now is suspicious.  It is simply wrong.
+	 */
 	if (c != NULL) {
 		dbg("%s: unrouting connection %s action - clearing",
 		    enum_name(&connection_kind_names, c->kind), v);
