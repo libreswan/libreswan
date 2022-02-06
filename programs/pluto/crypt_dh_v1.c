@@ -41,7 +41,7 @@
  * See draft-ietf-ipsec-ike-01.txt 4.1
  */
 /* MUST BE THREAD-SAFE */
-static void calc_skeyids_iv(struct state *st,
+static void calc_skeyids_iv(const struct state *st,
 			    oakley_auth_t auth, chunk_t pss,
 			    const struct prf_desc *prf_desc,
 			    const struct encrypt_desc *encrypter,
@@ -58,8 +58,6 @@ static void calc_skeyids_iv(struct state *st,
 			    PK11SymKey **enc_key_out,	/* output */
 			    struct logger *logger)
 {
-	const struct hash_desc *hasher = prf_desc ? prf_desc->hasher : NULL;
-
 	/* Generate the SKEYID */
 	PK11SymKey *skeyid;
 	switch (auth) {
@@ -122,7 +120,7 @@ static void calc_skeyids_iv(struct state *st,
 			DBG_dump_hunk("DH_i:", gi);
 			DBG_dump_hunk("DH_r:", gr);
 		}
-		struct crypt_hash *ctx = crypt_hash_init("new IV", hasher, logger);
+		struct crypt_hash *ctx = crypt_hash_init("new IV", prf_desc->hasher, logger);
 		crypt_hash_digest_hunk(ctx, "GI", gi);
 		crypt_hash_digest_hunk(ctx, "GR", gr);
 		*new_iv = crypt_hash_final_mac(&ctx);
