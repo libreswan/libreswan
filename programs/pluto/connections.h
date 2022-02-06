@@ -246,14 +246,14 @@ struct host_pair;	/* opaque type */
 
 struct host_end {
 	const struct config_host_end *config;
-	bool encap;
+	bool encap;			/* are packets encapsulated */
+	uint16_t port;			/* where the IKE port is */
 };
 
 struct /*client_*/end {
 	struct id id;
 
 	ip_address host_addr;
-	uint16_t host_port;		/* where the IKE port is */
 	ip_address
 		host_nexthop,
 		host_srcip;

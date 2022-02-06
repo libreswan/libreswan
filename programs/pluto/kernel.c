@@ -1158,7 +1158,7 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 	    enum_show(&connection_kind_names, c->kind, &b),
 	    bool_str(c->spd.that.has_client),
 	    bool_str(c->policy & POLICY_OPPORTUNISTIC),
-	    c->spd.this.host_port,
+	    c->spd.this.host->port,
 	    pri_shunk(c->config->sec_label));
 
 	/* it makes no sense to route a connection that is ISAKMP-only */
@@ -3281,9 +3281,9 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 	    address_is_specified(c->temp_vars.redirect_ip)) {
 		redirected = true;
 		tmp_host_addr = c->spd.that.host_addr;
-		tmp_host_port = c->spd.that.host_port; /* XXX: needed? */
+		tmp_host_port = c->spd.that.host->port; /* XXX: needed? */
 		c->spd.that.host_addr = endpoint_address(st->st_remote_endpoint);
-		c->spd.that.host_port = endpoint_hport(st->st_remote_endpoint);
+		c->spd.that.host->port = endpoint_hport(st->st_remote_endpoint);
 	}
 
 	const ip_address *src, *dst;
@@ -3339,7 +3339,7 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 
 	if (redirected) {
 		c->spd.that.host_addr = tmp_host_addr;
-		c->spd.that.host_port = tmp_host_port;
+		c->spd.that.host->port = tmp_host_port;
 	}
 
 	return true;

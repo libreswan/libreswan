@@ -446,8 +446,8 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 	unsigned host_port = hport(end_host_port(this, that));
 	dbg("  updated %s.host_port from %u to %u",
 	    this->config->leftright,
-	    this->host_port, host_port);
-	this->host_port = host_port;
+	    this->host->port, host_port);
+	this->host->port = host_port;
 
 	/*
 	 * Default client to subnet containing only self.
@@ -547,8 +547,8 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 		 * XXX: only print anomalies: since the host address
 		 * is zero, so too should be the port.
 		 */
-		if (this->host_port != 0) {
-			jam(buf, ":%u", this->host_port);
+		if (this->host->port != 0) {
+			jam(buf, ":%u", this->host->port);
 		}
 	} else if (is_virtual_end(this)) {
 		jam_string(buf, "%virtual");
@@ -556,8 +556,8 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 		 * XXX: only print anomalies: the host is %virtual
 		 * (what ever that means), so too should be the port.
 		 */
-		if (this->host_port != 0) {
-			jam(buf, ":%u", this->host_port);
+		if (this->host->port != 0) {
+			jam(buf, ":%u", this->host->port);
 		}
 	} else {
 		/* ADDRESS[:PORT][<HOSTNAME>] */
@@ -567,7 +567,7 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 		 * IKE_UDP_PORT.
 		 */
 		bool include_port = (this->host->config->ikeport != 0 ||
-				     this->host_port != IKE_UDP_PORT);
+				     this->host->port != IKE_UDP_PORT);
 		if (!log_ip) {
 			/* ADDRESS(SENSITIVE) */
 			jam_string(buf, "<address>");
@@ -576,7 +576,7 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 			const struct ip_info *afi = address_type(&this->host_addr);
 			/* XXX: jam_address_wrapped()? */
 			afi->address.jam_wrapped(buf, afi, &this->host_addr.bytes);
-			jam(buf, ":%u", this->host_port);
+			jam(buf, ":%u", this->host->port);
 		} else {
 			/* ADDRESS */
 			jam_address(buf, &this->host_addr);

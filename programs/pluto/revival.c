@@ -197,8 +197,8 @@ void add_revival_if_needed(struct state *st)
 		 */
 		dbg("updating connection for remote port %d", st->st_remote_endpoint.hport);
 		dbg("%s() %s.host_port: %u->%u (that)", __func__, c->spd.that.config->leftright,
-		    c->spd.that.host_port, st->st_remote_endpoint.hport);
-		c->spd.that.host_port = st->st_remote_endpoint.hport;
+		    c->spd.that.host->port, st->st_remote_endpoint.hport);
+		c->spd.that.host->port = st->st_remote_endpoint.hport;
 		/*
 		 * Need to force the host to use the encap port.
 		 */

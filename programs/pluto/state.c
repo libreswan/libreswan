@@ -2639,16 +2639,16 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 		/* MOBIKE initiator processing response */
 		c->spd.this.host_addr = endpoint_address(child->sa.st_mobike_local_endpoint);
 		dbg("%s() %s.host_port: %u->%u", __func__, c->spd.this.config->leftright,
-		    c->spd.this.host_port, endpoint_hport(child->sa.st_mobike_local_endpoint));
-		c->spd.this.host_port = endpoint_hport(child->sa.st_mobike_local_endpoint);
+		    c->spd.this.host->port, endpoint_hport(child->sa.st_mobike_local_endpoint));
+		c->spd.this.host->port = endpoint_hport(child->sa.st_mobike_local_endpoint);
 		c->spd.this.host_nexthop = child->sa.st_mobike_host_nexthop;
 		break;
 	case MESSAGE_REQUEST:
 		/* MOBIKE responder processing request */
 		c->spd.that.host_addr = endpoint_address(md->sender);
 		dbg("%s() %s.host_port: %u->%u", __func__, c->spd.that.config->leftright,
-		    c->spd.that.host_port, endpoint_hport(md->sender));
-		c->spd.that.host_port = endpoint_hport(md->sender);
+		    c->spd.that.host->port, endpoint_hport(md->sender));
+		c->spd.that.host->port = endpoint_hport(md->sender);
 
 		/* for the consistency, correct output in ipsec status */
 		child->sa.st_remote_endpoint = ike->sa.st_remote_endpoint = md->sender;

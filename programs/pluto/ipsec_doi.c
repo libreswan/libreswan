@@ -228,7 +228,7 @@ void initialize_new_state(struct state *st,
 	passert(st->st_interface != NULL);
 	st->st_remote_endpoint = endpoint_from_address_protocol_port(c->spd.that.host_addr,
 								     c->interface->io->protocol,
-								     ip_hport(c->spd.that.host_port));
+								     ip_hport(c->spd.that.host->port));
 	endpoint_buf eb;
 	dbg("in %s with remote endpoint set to %s",
 	    __func__, str_endpoint(&st->st_remote_endpoint, &eb));
@@ -266,7 +266,7 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 
 		if (nat)
 			dbg("NAT-T: NAT Traversal detected - their IKE port is '%d'",
-			     c->spd.that.host_port);
+			     c->spd.that.host->port);
 
 		dbg("NAT-T: encaps is '%s'",
 		     c->encaps == yna_auto ? "auto" : bool_str(c->encaps == yna_yes));
