@@ -1309,7 +1309,7 @@ void delete_states_dead_interfaces(struct logger *logger)
 static void delete_v1_states_by_connection_bottom_up(struct connection **cp,
 						     bool siblings)
 {
-	struct connection *c = (*cp);
+	struct connection *c = *cp;
 	struct fd *whackfd = c->logger->global_whackfd;
 
 	/*
@@ -1370,7 +1370,7 @@ static void delete_v1_states_by_connection_bottom_up(struct connection **cp,
 			}
 			dbg("pass %d: delete "PRI_SO" which has connection",
 			    pass, this->st_serialno);
-			pexpect(this->st_connection == (*cp));
+			pexpect(this->st_connection == *cp);
 			/* XXX: something better? */
 			fd_delref(&this->st_logger->global_whackfd);
 			this->st_logger->global_whackfd = fd_addref(whackfd);
@@ -1390,7 +1390,7 @@ static void delete_v2_states_by_connection_top_down(struct connection **cp)
 	/*
 	 * Capture anything useful in the connection.
 	 *
-	 * From here on out, the pointer (*cp) can't be deferenced as
+	 * From here on out, the pointer *cp can't be deferenced as
 	 * the connection may have been deleted.
 	 */
 
@@ -1417,7 +1417,7 @@ static void delete_v2_states_by_connection_top_down(struct connection **cp)
 	}
 
 	if (sa != NULL) {
-		pexpect(sa->st_connection == (*cp));
+		pexpect(sa->st_connection == *cp);
 		/* XXX: something better? */
 		fd_delref(&sa->st_logger->global_whackfd);
 		sa->st_logger->global_whackfd = fd_addref(whackfd);
@@ -1433,7 +1433,7 @@ static void delete_v2_states_by_connection_top_down(struct connection **cp)
 	};
 	while (next_state_new2old(&sf)) {
 		struct state *st = sf.st;
-		pexpect(st->st_connection == (*cp));
+		pexpect(st->st_connection == *cp);
 		/* XXX: something better? */
 		fd_delref(&st->st_logger->global_whackfd);
 		st->st_logger->global_whackfd = fd_addref(whackfd);
@@ -1447,7 +1447,7 @@ void delete_states_by_connection(struct connection **cp)
 {
 	connection_buf cb;
 	dbg("deleting all states for connection "PRI_CONNECTION,
-	    pri_connection((*cp), &cb));
+	    pri_connection(*cp, &cb));
 
 	enum connection_kind ck = (*cp)->kind;
 	co_serial_t connection_serialno = (*cp)->serialno;
@@ -1457,7 +1457,7 @@ void delete_states_by_connection(struct connection **cp)
 	case IKEv2: delete_v2_states_by_connection_top_down(cp); break;
 	}
 
-	/* was (*cp) deleted? */
+	/* was *cp deleted? */
 	struct connection *c = connection_by_serialno(connection_serialno);
 	if (c == NULL) {
 		pexpect(ck == CK_INSTANCE);
