@@ -30,7 +30,7 @@
 #include "iface.h"
 #include "unpack.h"
 
-static bool match_policy(struct connection *c, lset_t req_policy)
+static bool match_policy(const struct connection *c, lset_t req_policy)
 {
 	if (c->config->ike_version != IKEv2) {
 		connection_buf cb;
@@ -92,7 +92,7 @@ static bool match_policy(struct connection *c, lset_t req_policy)
 	return true;
 }
 
-static struct connection *ikev2_find_host_connection(struct msg_digest *md,
+static struct connection *ikev2_find_host_connection(const struct msg_digest *md,
 						     lset_t req_policy,
 						     bool *send_reject_response)
 {
@@ -288,7 +288,8 @@ static struct connection *ikev2_find_host_connection(struct msg_digest *md,
 	return c;
 }
 
-struct connection *find_v2_host_pair_connection(struct msg_digest *md, lset_t *policy,
+struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
+						lset_t *policy,
 						bool *send_reject_response)
 {
 	/* authentication policy alternatives in order of decreasing preference */
