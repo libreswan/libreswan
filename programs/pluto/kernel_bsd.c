@@ -145,7 +145,7 @@ void process_raw_ifaces(struct raw_iface *rifaces, struct logger *logger)
 					       ipstr(&ifp->addr, &b));
 				}
 				bad = true;
-				/* continue just to find other duplicatess */
+				/* continue just to find other duplicates */
 			}
 		}
 
