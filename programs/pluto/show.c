@@ -397,22 +397,20 @@ void binlog_state(struct state *st, enum state_kind new_state)
 	dbg("log_state calling %s for connection %s with tunnel(%s) phase1(%s) phase2(%s)",
 	    pluto_stats_binary, conn->name, tun, p1, p2);
 
-	/* ??? tun, p1, p2 cannot be NULL -- why handle that case? */
-
 	char buf[1024];
 
 	snprintf(buf, sizeof(buf), "%s "
 		 "%s ipsec-tunnel-%s if_stats /proc/net/dev/%s \\; "
-		 "%s ipsec-tunnel-%s tunnel %s \\; "
-		 "%s ipsec-tunnel-%s phase1 %s \\; "
-		 "%s ipsec-tunnel-%s phase2 %s",
+		 "push ipsec-tunnel-%s tunnel %s \\; "
+		 "push ipsec-tunnel-%s phase1 %s \\; "
+		 "push ipsec-tunnel-%s phase2 %s",
 
 		 pluto_stats_binary,
 		 conn->interface ? "push" : "drop", conn->name,
 		 (conn->xfrmi != NULL && conn->xfrmi->name != NULL) ? conn->xfrmi->name : "",
-		 tun ? "push" : "drop", conn->name, tun ? tun : "",
-		 p1  ? "push" : "drop", conn->name, p1  ? p1  : "",
-		 p2  ? "push" : "drop", conn->name, p2  ? p2  : "");
+		 conn->name, tun,
+		 conn->name, p1,
+		 conn->name, p2);
 	if (system(buf) == -1) {
 		log_state(RC_LOG_SERIOUS, st, "statsbin= failed to send status update notification");
 	}
