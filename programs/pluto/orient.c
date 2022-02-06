@@ -202,7 +202,7 @@ static void DBG_orient_end(const char *thisthat, struct end *end, struct end *ot
 		str_address(&end->host_addr, &ab),
 		pri_hport(end_host_port(end, other_end)),
 		end->host->config->ikeport,
-		bool_str(end->host_encap));
+		bool_str(end->host->encap));
 }
 
 bool orient(struct connection *c, struct logger *logger)

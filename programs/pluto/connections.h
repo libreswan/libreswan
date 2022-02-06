@@ -246,6 +246,7 @@ struct host_pair;	/* opaque type */
 
 struct host_end {
 	const struct config_host_end *config;
+	bool encap;
 };
 
 struct /*client_*/end {
@@ -253,7 +254,6 @@ struct /*client_*/end {
 
 	ip_address host_addr;
 	uint16_t host_port;		/* where the IKE port is */
-	bool host_encap;
 	ip_address
 		host_nexthop,
 		host_srcip;

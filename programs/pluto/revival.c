@@ -199,9 +199,12 @@ void add_revival_if_needed(struct state *st)
 		dbg("%s() %s.host_port: %u->%u (that)", __func__, c->spd.that.config->leftright,
 		    c->spd.that.host_port, st->st_remote_endpoint.hport);
 		c->spd.that.host_port = st->st_remote_endpoint.hport;
-		/* need to force the encap port */
-		c->spd.that.host_encap = (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED ||
-					  st->st_interface->io->protocol == &ip_protocol_tcp);
+		/*
+		 * Need to force the host to use the encap port.
+		 */
+		c->spd.that.host->encap =
+			(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED ||
+			 st->st_interface->io->protocol == &ip_protocol_tcp);
 	}
 
 	if (c->kind == CK_INSTANCE && c->sa_keying_tries == 0) {
