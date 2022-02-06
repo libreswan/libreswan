@@ -191,7 +191,7 @@ static void DBG_orient_end(const char *thisthat, struct end *end, struct end *ot
 {
 	address_buf ab;
 	enum_buf enb;
-	DBG_log("  %s(%s) %s host-address=%s host-port="PRI_HPORT" ikeport=%d encap=%s",
+	DBG_log("  %s(%s) host type=%s address=%s port="PRI_HPORT" ikeport=%d encap=%s",
 		end->config->leftright, thisthat,
 		str_enum_short(&keyword_host_names, end->host->config->type, &enb),
 		str_address(&end->host_addr, &ab),
