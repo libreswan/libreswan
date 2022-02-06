@@ -89,14 +89,14 @@ struct config_host_end {
 };
 
 struct config_client_end {
-	const char *leftright;
-	enum left_right index;
 	ip_subnet subnet;
 	ip_protoport protoport;
 	char *updown;
 };
 
 struct config_end {
+	enum left_right index;
+	const char *leftright;
 	struct config_host_end host;
 	struct config_client_end client;
 };
@@ -269,7 +269,7 @@ struct /*client_*/end {
 	 * Danger: for a connection instance, this point into the
 	 * parent connection.
 	 */
-	const struct config_client_end *config;
+	const struct config_end *config;
 	struct host_end *host;
 
 	chunk_t sec_label;

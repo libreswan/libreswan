@@ -465,7 +465,7 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 		 * specified protoport; merge that.
 		 */
 		ip_selector client = selector_from_address_protoport(this->host_addr,
-								     this->config->protoport);
+								     this->config->client.protoport);
 		selector_buf old, new;
 		dbg("  updated %s.client from %s to %s",
 		    this->config->leftright,
@@ -875,7 +875,7 @@ static int extract_end(struct connection *c,
 		       const struct ip_info *client_afi,
 		       struct logger *logger/*connection "..."*/)
 {
-	passert(dst->config == &config_end->client);
+	passert(dst->config == config_end);
 	const char *leftright = dst->config->leftright;
 	bool same_ca = 0;
 
@@ -2182,10 +2182,10 @@ static bool extract_connection(const struct whack_message *wm,
 			 lr == RIGHT_END ? "right" :
 			 NULL);
 		passert(leftright != NULL);
-		config->end[lr].client.leftright = leftright;
-		config->end[lr].client.index = lr;
+		config->end[lr].leftright = leftright;
+		config->end[lr].index = lr;
 		client_ends[lr]->host = &c->host[lr]; /*clone must update*/
-		client_ends[lr]->config = &config->end[lr].client;
+		client_ends[lr]->config = &config->end[lr];
 		c->host[lr].config = &config->end[lr].host;
 	}
 
@@ -2292,7 +2292,7 @@ static bool extract_connection(const struct whack_message *wm,
 	 */
 	struct end *wild_side =
 		(!address_is_specified(c->spd.this.host_addr) ||
-		 c->spd.this.config->protoport.has_port_wildcard ||
+		 c->spd.this.config->client.protoport.has_port_wildcard ||
 		 c->spd.this.has_id_wildcards) ? &c->spd.this : &c->spd.that;
 
 	/* force all oppo connections to have a client */
@@ -2321,7 +2321,7 @@ static bool extract_connection(const struct whack_message *wm,
 		   !address_is_specified(wild_side->host_addr)) {
 		dbg("connection is template: no remote address yet policy negotiate");
 		c->kind = CK_TEMPLATE;
-	} else if (wild_side->config->protoport.has_port_wildcard) {
+	} else if (wild_side->config->client.protoport.has_port_wildcard) {
 		dbg("connection is template: remote has wildcard port");
 		c->kind = CK_TEMPLATE;
 	} else if (c->config->ike_version == IKEv2 && c->config->sec_label.len > 0) {
@@ -3602,9 +3602,9 @@ static void show_one_sr(struct show *s,
 		     OPT_HOST(c->spd.that.host_srcip, thatipb),
 		     OPT_PREFIX_STR("; mycert=", cert_nickname(&c->local->host.cert)),
 		     OPT_PREFIX_STR("; peercert=", cert_nickname(&c->remote->host.cert)),
-		     ((sr->this.config->updown == NULL ||
-		       streq(sr->this.config->updown, "%disabled")) ? "<disabled>"
-		      : sr->this.config->updown));
+		     ((sr->this.config->client.updown == NULL ||
+		       streq(sr->this.config->client.updown, "%disabled")) ? "<disabled>"
+		      : sr->this.config->client.updown));
 
 #undef OPT_HOST
 #undef OPT_PREFIX_STR
