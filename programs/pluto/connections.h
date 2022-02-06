@@ -248,6 +248,7 @@ struct host_end {
 	const struct config_host_end *config;
 	bool encap;			/* are packets encapsulated */
 	uint16_t port;			/* where the IKE port is */
+	ip_address nexthop;		/* identifes interface to send packets */
 };
 
 struct /*client_*/end {
@@ -255,7 +256,6 @@ struct /*client_*/end {
 
 	ip_address host_addr;
 	ip_address
-		host_nexthop,
 		host_srcip;
 	ip_cidr host_vtiip;
 	ip_cidr ifaceip;

@@ -478,13 +478,13 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 	 * Propagate this.HOST_ADDR to that.NEXTHOP.
 	 * As in: THAT -> that.NEXTHOP -> THIS.
 	 */
-	if (!address_is_specified(that->host_nexthop)) {
+	if (!address_is_specified(that->host->nexthop)) {
 		address_buf old, new;
 		dbg("  updated %s.host_nexthop from %s to %s",
 		    that->config->leftright,
-		    str_address(&that->host_nexthop, &old),
+		    str_address(&that->host->nexthop, &old),
 		    str_address(&this->host_addr, &new));
-		that->host_nexthop = this->host_addr;
+		that->host->nexthop = this->host_addr;
 	}
 
 	/*
@@ -693,12 +693,12 @@ static void jam_end_nexthop(struct jambuf *buf, const struct end *this,
 {
 	/* [---hop] */
 	if (!skip_next_hop &&
-	    address_is_specified(this->host_nexthop) &&
-	    !address_eq_address(this->host_nexthop, that->host_addr)) {
+	    address_is_specified(this->host->nexthop) &&
+	    !address_eq_address(this->host->nexthop, that->host_addr)) {
 		if (left_right == LEFT_END) {
 			jam_string(buf, "---");
 		}
-		jam_address(buf, &this->host_nexthop);
+		jam_address(buf, &this->host->nexthop);
 		if (left_right == RIGHT_END) {
 			jam_string(buf, "---");
 		}
@@ -1070,7 +1070,7 @@ static int extract_end(struct connection *c,
 	config_end->host.type = src->host_type;
 	dst->host_addr = src->host_addr;
 	config_end->host.addr_name = clone_str(src->host_addr_name, "host ip");
-	dst->host_nexthop = src->host_nexthop;
+	dst->host->nexthop = src->host_nexthop;
 	dst->host_srcip = src->host_srcip;
 	dst->host_vtiip = src->host_vtiip;
 	dst->ifaceip = src->ifaceip;

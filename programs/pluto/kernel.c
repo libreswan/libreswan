@@ -318,7 +318,7 @@ static bool bare_policy_op(enum kernel_policy_op op,
  */
 #define routes_agree(c, d) \
 	((c)->interface->ip_dev == (d)->interface->ip_dev && \
-	 sameaddr(&(c)->spd.this.host_nexthop, &(d)->spd.this.host_nexthop))
+	 sameaddr(&(c)->spd.this.host->nexthop, &(d)->spd.this.host->nexthop))
 
 const struct kernel_policy proto_kernel_policy_transport_esp = {
 	.mode = ENCAP_MODE_TRANSPORT,
@@ -543,9 +543,9 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	jam(buf, "PLUTO_INTERFACE='%s' ", c->interface == NULL ? "NULL" : c->interface->ip_dev->id_rname);
 	jam(buf, "PLUTO_XFRMI_ROUTE='%s' ",  (c->xfrmi != NULL && c->xfrmi->if_id > 0) ? "yes" : "");
 
-	if (address_is_specified(sr->this.host_nexthop)) {
+	if (address_is_specified(sr->this.host->nexthop)) {
 		jam_string(buf, "PLUTO_NEXT_HOP='");
-		jam_address(buf, &sr->this.host_nexthop);
+		jam_address(buf, &sr->this.host->nexthop);
 		jam_string(buf, "' ");
 	}
 
@@ -2846,8 +2846,8 @@ bool route_and_eroute(struct connection *c,
 		 * This reduces the "window of vulnerability" when packets
 		 * might flow in the clear.
 		 */
-		if (sameaddr(&sr->this.host_nexthop,
-				&esr->this.host_nexthop)) {
+		if (sameaddr(&sr->this.host->nexthop,
+			     &esr->this.host->nexthop)) {
 			if (!do_command(ro, sr, "unroute", st, logger)) {
 				dbg("kernel: unroute command returned an error");
 			}
