@@ -530,12 +530,8 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 {
 	ip_address ta;
 
-	char *id_vname = NULL;
-
-	if (c->xfrmi != NULL && c->xfrmi->name != NULL)
-		id_vname = c->xfrmi->name;
-	else
-		id_vname = "NULL";
+	const char *id_vname = (c->xfrmi != NULL && c->xfrmi->name != NULL) ?
+		c->xfrmi->name : "NULL";
 
 	jam(buf, "PLUTO_CONNECTION='%s' ", c->name);
 	jam(buf, "PLUTO_CONNECTION_TYPE='%s' ", LIN(POLICY_TUNNEL, c->policy) ? "tunnel" : "transport");
