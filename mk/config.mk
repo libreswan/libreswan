@@ -668,12 +668,12 @@ ifeq ($(USE_CAMELLIA),true)
 USERLAND_CFLAGS += -DUSE_CAMELLIA
 endif
 
-USE_CHACHA?=true
+USE_CHACHA ?= true
 ifeq ($(USE_CHACHA),true)
 USERLAND_CFLAGS += -DUSE_CHACHA
 endif
 
-USE_DH2 ?= false
+USE_DH2 ?= $(ALL_ALGS)
 ifeq ($(USE_DH2),true)
 USERLAND_CFLAGS += -DUSE_DH2
 endif
