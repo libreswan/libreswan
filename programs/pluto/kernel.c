@@ -630,7 +630,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 		int pathlen;	/* value ignored */
 		if (key->type == &pubkey_type_rsa &&
 		    same_id(&sr->that.id, &key->id) &&
-		    trusted_ca_nss(key->issuer, sr->that.host->config->ca, &pathlen)) {
+		    trusted_ca_nss(key->issuer, sr->that.config->host.ca, &pathlen)) {
 			jam_dn_or_null(buf, key->issuer, "", jam_shell_quoted_bytes);
 			break;
 		}

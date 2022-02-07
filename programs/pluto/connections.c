@@ -379,13 +379,13 @@ void delete_every_connection(void)
 ip_port end_host_port(const struct end *end, const struct end *other)
 {
 	unsigned port;
-	if (end->host->config->ikeport != 0) {
+	if (end->config->host.ikeport != 0) {
 		/*
 		 * The END's IKEPORT was specified in the config file.
 		 * Use that.
 		 */
-		port = end->host->config->ikeport;
-	} else if (other->host->config->ikeport != 0) {
+		port = end->config->host.ikeport;
+	} else if (other->config->host.ikeport != 0) {
 		/*
 		 * The other end's IKEPORT was specified in the config
 		 * file.  Since specifying an IKEPORT implies ESP
@@ -524,9 +524,9 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 {
 	/* HOST */
 	if (!address_is_specified(this->host_addr)) {
-		if (this->host->config->type == KH_IPHOSTNAME) {
+		if (this->config->host.type == KH_IPHOSTNAME) {
 			jam_string(buf, "%dns");
-			jam(buf, "<%s>", this->host->config->addr_name);
+			jam(buf, "<%s>", this->config->host.addr_name);
 		} else {
 			switch (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC)) {
 			case POLICY_GROUP:
@@ -566,7 +566,7 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 		 * valid, any hardwired IKEPORT or a port other than
 		 * IKE_UDP_PORT.
 		 */
-		bool include_port = (this->host->config->ikeport != 0 ||
+		bool include_port = (this->config->host.ikeport != 0 ||
 				     this->host->port != IKE_UDP_PORT);
 		if (!log_ip) {
 			/* ADDRESS(SENSITIVE) */
@@ -583,10 +583,10 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 		}
 		/* [<HOSTNAME>] */
 		address_buf ab;
-		if (this->host->config->addr_name != NULL &&
+		if (this->config->host.addr_name != NULL &&
 		    !streq(str_address(&this->host_addr, &ab),
-			   this->host->config->addr_name)) {
-			jam(buf, "<%s>", this->host->config->addr_name);
+			   this->config->host.addr_name)) {
+			jam(buf, "<%s>", this->config->host.addr_name);
 		}
 	}
 }
@@ -645,9 +645,9 @@ static void jam_end_id(struct jambuf *buf, const struct end *this)
 
 	if (this->modecfg_server ||
 	    this->modecfg_client ||
-	    this->host->config->xauth.server ||
-	    this->host->config->xauth.client ||
-	    this->host->config->sendcert != cert_defaultcertpolicy) {
+	    this->config->host.xauth.server ||
+	    this->config->host.xauth.client ||
+	    this->config->host.sendcert != cert_defaultcertpolicy) {
 
 		if (open_paren) {
 			jam_string(buf, ",");
@@ -662,12 +662,12 @@ static void jam_end_id(struct jambuf *buf, const struct end *this)
 			jam_string(buf, "+MC");
 		if (this->cat)
 			jam_string(buf, "+CAT");
-		if (this->host->config->xauth.server)
+		if (this->config->host.xauth.server)
 			jam_string(buf, "+XS");
-		if (this->host->config->xauth.client)
+		if (this->config->host.xauth.client)
 			jam_string(buf, "+XC");
 
-		switch (this->host->config->sendcert) {
+		switch (this->config->host.sendcert) {
 		case CERT_NEVERSEND:
 			jam(buf, "+S-C");
 			break;
@@ -1159,7 +1159,7 @@ static int extract_end(struct connection *c,
 	 * XXX this is WRONG, we should do this asynchronously, as part of
 	 * the normal loading process
 	 */
-	switch (dst->host->config->type) {
+	switch (dst->config->host.type) {
 	case KH_IPHOSTNAME:
 	{
 		err_t er = ttoaddress_dns(shunk1(config_end->host.addr_name),
@@ -3624,26 +3624,26 @@ static void show_one_sr(struct show *s,
 		      * Both should not be set, but if they are, we
 		      * want to know.
 		      */
-		     COMBO(sr->this, host->config->xauth.server, host->config->xauth.client),
-		     COMBO(sr->that, host->config->xauth.server, host->config->xauth.client),
+		     COMBO(sr->this, config->host.xauth.server, config->host.xauth.client),
+		     COMBO(sr->that, config->host.xauth.server, config->host.xauth.client),
 		     /* should really be an enum name */
-		     (sr->this.host->config->xauth.server ?
+		     (sr->this.config->host.xauth.server ?
 		      c->xauthby == XAUTHBY_FILE ?
 		      "xauthby:file;" :
 		      c->xauthby == XAUTHBY_PAM ?
 		      "xauthby:pam;" :
 		      "xauthby:alwaysok;" :
 		      ""),
-		     (sr->this.host->config->xauth.username == NULL ? "[any]" :
-		      sr->this.host->config->xauth.username),
-		     (sr->that.host->config->xauth.username == NULL ? "[any]" :
-		      sr->that.host->config->xauth.username));
+		     (sr->this.config->host.xauth.username == NULL ? "[any]" :
+		      sr->this.config->host.xauth.username),
+		     (sr->that.config->host.xauth.username == NULL ? "[any]" :
+		      sr->that.config->host.xauth.username));
 
 	enum_buf auth1, auth2;
 	show_comment(s, PRI_CONNECTION":   our auth:%s, their auth:%s, our autheap:%s, their autheap:%s;",
 		     c->name, instance,
-		     str_enum_short(&keyword_authby_names, sr->this.host->config->authby, &auth1),
-		     str_enum_short(&keyword_authby_names, sr->that.host->config->authby, &auth2),
+		     str_enum_short(&keyword_authby_names, sr->this.config->host.authby, &auth1),
+		     str_enum_short(&keyword_authby_names, sr->that.config->host.authby, &auth2),
 		     sr->this.eap == IKE_EAP_NONE ? "none" : "tls",
 		     sr->that.eap == IKE_EAP_NONE ? "none" : "tls"
 	);

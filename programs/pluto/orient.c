@@ -64,10 +64,10 @@ static void swap_ends(struct connection *c)
 	 * In case of asymmetric auth c->policy contains left.authby.
 	 * This magic will help responder to find connection during INIT.
 	 */
-	if (sr->this.host->config->authby != sr->that.host->config->authby)
+	if (sr->this.config->host.authby != sr->that.config->host.authby)
 	{
 		c->policy &= ~POLICY_ID_AUTH_MASK;
-		switch (sr->this.host->config->authby) {
+		switch (sr->this.config->host.authby) {
 		case AUTHBY_PSK:
 			c->policy |= POLICY_PSK;
 			break;
@@ -84,7 +84,7 @@ static void swap_ends(struct connection *c)
 			/* nothing to add */
 			break;
 		default:
-			bad_case(sr->this.host->config->authby);
+			bad_case(sr->this.config->host.authby);
 		}
 	}
 	/* re-compute the base policy priority using the swapped left/right */
@@ -98,7 +98,7 @@ static void swap_ends(struct connection *c)
 
 static bool orient_new_iface_endpoint(struct connection *c, struct end *end)
 {
-	if (end->host->config->ikeport == 0) {
+	if (end->config->host.ikeport == 0) {
 		return false;
 	}
 	if (address_is_unset(&end->host_addr)) {
@@ -130,7 +130,7 @@ static bool orient_new_iface_endpoint(struct connection *c, struct end *end)
 	case IKE_TCP_NO:
 		if (pluto_listen_udp) {
 			ifp = bind_iface_endpoint(dev, &udp_iface_io,
-						  ip_hport(end->host->config->ikeport),
+						  ip_hport(end->config->host.ikeport),
 						  esp_encapsulation_enabled,
 						  float_nat_initiator,
 						  c->logger);
@@ -144,7 +144,7 @@ static bool orient_new_iface_endpoint(struct connection *c, struct end *end)
 	case IKE_TCP_ONLY:
 		if (pluto_listen_tcp) {
 			ifp = bind_iface_endpoint(dev, &iketcp_iface_io,
-						  ip_hport(end->host->config->ikeport),
+						  ip_hport(end->config->host.ikeport),
 						  esp_encapsulation_enabled,
 						  float_nat_initiator,
 						  c->logger);
@@ -198,10 +198,10 @@ static void DBG_orient_end(const char *thisthat, struct end *end, struct end *ot
 	enum_buf enb;
 	DBG_log("  %s(%s) host type=%s address=%s port="PRI_HPORT" ikeport=%d encap=%s",
 		end->config->leftright, thisthat,
-		str_enum_short(&keyword_host_names, end->host->config->type, &enb),
+		str_enum_short(&keyword_host_names, end->config->host.type, &enb),
 		str_address(&end->host_addr, &ab),
 		pri_hport(end_host_port(end, other_end)),
-		end->host->config->ikeport,
+		end->config->host.ikeport,
 		bool_str(end->host->encap));
 }
 

@@ -55,9 +55,9 @@ static bool idr_wildmatch(const struct end *this, const struct id *idr, struct l
 	/* cert_VerifySubjectAltName, if called, will [debug]log any errors */
 	/* XXX:  calling cert_VerifySubjectAltName with ID_DER_ASN1_DN futile? */
 	/* ??? if cert matches we don't actually do any further ID matching, wildcard or not */
-	if (this->host->config->cert.nss_cert != NULL &&
+	if (this->config->host.cert.nss_cert != NULL &&
 	    (idr->kind == ID_FQDN || idr->kind == ID_DER_ASN1_DN)) {
-		diag_t d = cert_verify_subject_alt_name(this->host->config->cert.nss_cert, idr);
+		diag_t d = cert_verify_subject_alt_name(this->config->host.cert.nss_cert, idr);
 		if (d == NULL) {
 			return true;
 		}
@@ -388,12 +388,12 @@ static struct connection *refine_host_connection_on_responder(int indent,
 				 * what the remote end has sent in the
 				 * IKE_AUTH request.
 				 */
-				if (!LHAS(proposed_authbys, d->spd.that.host->config->authby)) {
+				if (!LHAS(proposed_authbys, d->spd.that.config->host.authby)) {
 					dbg_rhc("skipping because mismatched authby");
 					continue;
 				}
 				/* check that the chosen one has a key */
-				switch (d->spd.that.host->config->authby) {
+				switch (d->spd.that.config->host.authby) {
 				case AUTHBY_PSK:
 					/*
 					 * XXX: This tries to find the
