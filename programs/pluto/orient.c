@@ -56,9 +56,9 @@ static void swap_ends(struct connection *c)
 	sr->this = sr->that;
 	sr->that = this;
 
-	const struct config_end *local = c->local;
+	struct host_end *tmp = c->local;
 	c->local = c->remote;
-	c->remote = local;
+	c->remote = tmp;
 
 	/*
 	 * In case of asymmetric auth c->policy contains left.authby.

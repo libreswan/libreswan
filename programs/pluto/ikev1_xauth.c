@@ -2297,13 +2297,13 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 			XAUTHLELEM(XAUTH_USER_NAME) |
 			XAUTHLELEM(XAUTH_USER_PASSWORD)))
 		{
-			if (st->st_connection->local->host.xauth.client) {
+			if (st->st_connection->local->config->host.xauth.client) {
 				log_state(RC_LOG, st,
 					"XAUTH: No username or password request was received.");
 				return STF_IGNORE;
 			}
 		} else {
-			if (!st->st_connection->local->host.xauth.client) {
+			if (!st->st_connection->local->config->host.xauth.client) {
 				log_state(RC_LOG, st,
 					"XAUTH: Username or password request was received, but XAUTH client mode not enabled.");
 				return STF_IGNORE;

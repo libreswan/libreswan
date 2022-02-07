@@ -265,7 +265,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 
 	const struct connection *c = st->st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
-	const struct cert *mycert = c->local->host.cert.nss_cert != NULL ? &c->local->host.cert : NULL;
+	const struct cert *mycert = c->local->config->host.cert.nss_cert != NULL ? &c->local->config->host.cert : NULL;
 
 	/* parse_isakmp_sa also spits out a winning SA into our reply,
 	 * so we have to build our reply_stream and emit HDR before calling it.
@@ -289,9 +289,9 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 	 */
 	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG &&
 			  mycert != NULL &&
-			  ((c->local->host.sendcert == CERT_SENDIFASKED &&
+			  ((c->local->config->host.sendcert == CERT_SENDIFASKED &&
 			    st->hidden_variables.st_v1_got_certrequest) ||
-			   c->local->host.sendcert == CERT_ALWAYSSEND));
+			   c->local->config->host.sendcert == CERT_ALWAYSSEND));
 
 	bool send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
 
@@ -312,7 +312,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 	}
 
 	doi_log_cert_thinking(st->st_oakley.auth, cert_ike_type(mycert),
-			      c->local->host.sendcert,
+			      c->local->config->host.sendcert,
 			      st->hidden_variables.st_v1_got_certrequest,
 			      send_cert, send_authcerts);
 
@@ -431,7 +431,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 	/* CERTREQ out */
 	if (send_cr) {
 		log_state(RC_LOG, st, "I am sending a certificate request");
-		if (!ikev1_build_and_ship_CR(cert_ike_type(mycert), c->remote->host.ca, &rbody))
+		if (!ikev1_build_and_ship_CR(cert_ike_type(mycert), c->remote->config->host.ca, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -593,7 +593,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 		return r;
 	}
 
-	const struct cert *mycert = c->local->host.cert.nss_cert != NULL ? &c->local->host.cert : NULL;
+	const struct cert *mycert = c->local->config->host.cert.nss_cert != NULL ? &c->local->config->host.cert : NULL;
 
 	enum next_payload_types_ikev1 auth_payload =
 		st->st_oakley.auth == OAKLEY_PRESHARED_KEY ?
@@ -612,9 +612,9 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 	 */
 	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG &&
 			  mycert != NULL &&
-			  ((c->local->host.sendcert == CERT_SENDIFASKED &&
+			  ((c->local->config->host.sendcert == CERT_SENDIFASKED &&
 			    st->hidden_variables.st_v1_got_certrequest) ||
-			   c->local->host.sendcert == CERT_ALWAYSSEND));
+			   c->local->config->host.sendcert == CERT_ALWAYSSEND));
 
 	bool send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
 
@@ -635,7 +635,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 	}
 
 	doi_log_cert_thinking(st->st_oakley.auth, cert_ike_type(mycert),
-			      c->local->host.sendcert,
+			      c->local->config->host.sendcert,
 			      st->hidden_variables.st_v1_got_certrequest,
 			      send_cert, send_authcerts);
 
@@ -1053,11 +1053,11 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 {
 	passert(unused_md == NULL); /* no packet */
 	struct connection *c = st->st_connection;
-	const struct cert *mycert = c->local->host.cert.nss_cert != NULL ? &c->local->host.cert : NULL;
+	const struct cert *mycert = c->local->config->host.cert.nss_cert != NULL ? &c->local->config->host.cert : NULL;
 	bool send_cr = (mycert != NULL &&
 			!has_preloaded_public_key(st) &&
-			(c->local->host.sendcert == CERT_SENDIFASKED ||
-			 c->local->host.sendcert == CERT_ALWAYSSEND));
+			(c->local->config->host.sendcert == CERT_SENDIFASKED ||
+			 c->local->config->host.sendcert == CERT_ALWAYSSEND));
 
 	dbg("aggr_outI1_tail for #%lu", st->st_serialno);
 
@@ -1122,7 +1122,7 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 	/* CERTREQ out */
 	if (send_cr) {
 		log_state(RC_LOG, st, "I am sending a certificate request");
-		if (!ikev1_build_and_ship_CR(cert_ike_type(mycert), c->remote->host.ca, &rbody))
+		if (!ikev1_build_and_ship_CR(cert_ike_type(mycert), c->remote->config->host.ca, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 

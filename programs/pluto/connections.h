@@ -245,7 +245,7 @@ const char *str_policy_prio(policy_prio_t pp, policy_prio_buf *buf);
 struct host_pair;	/* opaque type */
 
 struct host_end {
-	const struct config_host_end *config;
+	const struct config_end *config;
 	bool encap;			/* are packets encapsulated */
 	uint16_t port;			/* where the IKE port is */
 	ip_address nexthop;		/* identifes interface to send packets */
@@ -472,9 +472,9 @@ struct connection {
 	 * template.
 	 */
 	const struct config *config;
-	const struct config_end *local;
-	const struct config_end *remote;
 
+	struct host_end *local;
+	struct host_end *remote;
 	struct host_end host[LEFT_RIGHT_ROOF];
 };
 

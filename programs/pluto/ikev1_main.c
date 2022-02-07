@@ -772,7 +772,7 @@ static stf_status main_inI2_outR2_continue1(struct state *st,
 
 	send_cr = (st->st_oakley.auth == OAKLEY_RSA_SIG) &&
 		!has_preloaded_public_key(st) &&
-		st->st_connection->remote->host.ca.ptr != NULL;
+		st->st_connection->remote->config->host.ca.ptr != NULL;
 
 	/* HDR out */
 	struct pbs_out rbody;
@@ -805,7 +805,7 @@ static stf_status main_inI2_outR2_continue1(struct state *st,
 	if (send_cr) {
 		if (st->st_connection->kind == CK_PERMANENT) {
 			if (!ikev1_build_and_ship_CR(CERT_X509_SIGNATURE,
-						     st->st_connection->remote->host.ca,
+						     st->st_connection->remote->config->host.ca,
 						     &rbody))
 				return STF_INTERNAL_ERROR;
 		} else {
@@ -933,7 +933,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 				       rbody, st->st_logger);
 
 	const struct connection *c = st->st_connection;
-	const struct cert *mycert = c->local->host.cert.nss_cert != NULL ? &c->local->host.cert : NULL;
+	const struct cert *mycert = c->local->config->host.cert.nss_cert != NULL ? &c->local->config->host.cert : NULL;
 
 	/* decode certificate requests */
 	decode_v1_certificate_requests(st, md);
@@ -948,9 +948,9 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 	 */
 	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG &&
 			  mycert != NULL &&
-			  ((c->local->host.sendcert == CERT_SENDIFASKED &&
+			  ((c->local->config->host.sendcert == CERT_SENDIFASKED &&
 			    st->hidden_variables.st_v1_got_certrequest) ||
-			   c->local->host.sendcert == CERT_ALWAYSSEND));
+			   c->local->config->host.sendcert == CERT_ALWAYSSEND));
 
 	bool send_authcerts = (send_cert &&
 			  c->send_ca != CA_SEND_NONE);
@@ -971,7 +971,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 	}
 
 	doi_log_cert_thinking(st->st_oakley.auth, cert_ike_type(mycert),
-			      c->local->host.sendcert,
+			      c->local->config->host.sendcert,
 			      st->hidden_variables.st_v1_got_certrequest,
 			      send_cert, send_authcerts);
 
@@ -1085,7 +1085,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 	if (send_cr) {
 		log_state(RC_LOG, st, "I am sending a certificate request");
 		if (!ikev1_build_and_ship_CR(cert_ike_type(mycert),
-					     c->remote->host.ca,
+					     c->remote->config->host.ca,
 					     rbody))
 			return STF_INTERNAL_ERROR;
 	}
@@ -1196,13 +1196,13 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	struct connection *c = st->st_connection; /* may have changed */
 
 	/* send certificate if we have one and auth is RSA */
-	const struct cert *mycert = c->local->host.cert.nss_cert != NULL ? &c->local->host.cert : NULL;
+	const struct cert *mycert = c->local->config->host.cert.nss_cert != NULL ? &c->local->config->host.cert : NULL;
 
 	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG &&
 			  mycert != NULL &&
-			  ((c->local->host.sendcert == CERT_SENDIFASKED &&
+			  ((c->local->config->host.sendcert == CERT_SENDIFASKED &&
 			    st->hidden_variables.st_v1_got_certrequest) ||
-			   c->local->host.sendcert == CERT_ALWAYSSEND));
+			   c->local->config->host.sendcert == CERT_ALWAYSSEND));
 
 	bool send_authcerts = (send_cert &&
 			  c->send_ca != CA_SEND_NONE);
@@ -1223,7 +1223,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	}
 
 	doi_log_cert_thinking(st->st_oakley.auth, cert_ike_type(mycert),
-			      c->local->host.sendcert,
+			      c->local->config->host.sendcert,
 			      st->hidden_variables.st_v1_got_certrequest,
 			      send_cert, send_authcerts);
 

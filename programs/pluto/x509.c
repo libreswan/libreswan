@@ -304,7 +304,7 @@ generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 		/* we require a road warrior connection */
 		if (d->kind != CK_TEMPLATE ||
 		    (d->policy & POLICY_OPPORTUNISTIC) ||
-		    d->remote->host.ca.ptr == NULL) {
+		    d->remote->config->host.ca.ptr == NULL) {
 			continue;
 		}
 
@@ -313,12 +313,12 @@ generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 				/* prepend a new gn for D */
 				gn = alloc_thing(generalName_t, "generalName");
 				gn->kind = GN_DIRECTORY_NAME;
-				gn->name = d->remote->host.ca;
+				gn->name = d->remote->config->host.ca;
 				gn->next = top;
 				top = gn;
 				break;
 			}
-			if (same_dn(gn->name, d->remote->host.ca)) {
+			if (same_dn(gn->name, d->remote->config->host.ca)) {
 				/* D's CA already in list */
 				break;
 			}
@@ -556,18 +556,18 @@ int get_auth_chain(chunk_t *out_chain, int chain_max,
  */
 bool find_crl_fetch_dn(chunk_t *issuer_dn, struct connection *c)
 {
-	if (c->remote->host.ca.ptr != NULL && c->remote->host.ca.len > 0) {
-		*issuer_dn = c->remote->host.ca;
+	if (c->remote->config->host.ca.ptr != NULL && c->remote->config->host.ca.len > 0) {
+		*issuer_dn = c->remote->config->host.ca;
 		return true;
 	}
 
-	if (c->remote->host.cert.nss_cert != NULL) {
-		*issuer_dn = same_secitem_as_chunk(c->remote->host.cert.nss_cert->derIssuer);
+	if (c->remote->config->host.cert.nss_cert != NULL) {
+		*issuer_dn = same_secitem_as_chunk(c->remote->config->host.cert.nss_cert->derIssuer);
 		return true;
 	}
 
-	if (c->local->host.ca.ptr != NULL && c->local->host.ca.len > 0) {
-		*issuer_dn = c->local->host.ca;
+	if (c->local->config->host.ca.ptr != NULL && c->local->config->host.ca.len > 0) {
+		*issuer_dn = c->local->config->host.ca;
 		return true;
 	}
 
@@ -1079,11 +1079,11 @@ bool ikev2_send_cert_decision(const struct ike_sa *ike)
 		    str_policy(c->policy & POLICY_ID_AUTH_MASK, &pb));
 	} else if (this->config->host.cert.nss_cert == NULL) {
 		dbg("IKEv2 CERT: no certificate to send");
-	} else if (c->local->host.sendcert == CERT_SENDIFASKED &&
+	} else if (c->local->config->host.sendcert == CERT_SENDIFASKED &&
 		   ike->sa.st_requested_ca != NULL) {
 		dbg("IKEv2 CERT: OK to send requested certificate");
 		sendit = true;
-	} else if (c->local->host.sendcert == CERT_ALWAYSSEND) {
+	} else if (c->local->config->host.sendcert == CERT_ALWAYSSEND) {
 		dbg("IKEv2 CERT: OK to send a certificate (always)");
 		sendit = true;
 	} else {
@@ -1099,7 +1099,7 @@ stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
 		dbg("connection->kind is CK_PERMANENT so send CERTREQ");
 
 		if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
-					     st->st_connection->remote->host.ca,
+					     st->st_connection->remote->config->host.ca,
 					     outpbs))
 			return STF_INTERNAL_ERROR;
 	} else {
@@ -1151,7 +1151,7 @@ bool ikev2_send_certreq_INIT_decision(const struct state *st,
 		return false;
 	}
 
-	if (c->remote->host.ca.ptr == NULL || c->remote->host.ca.len < 1) {
+	if (c->remote->config->host.ca.ptr == NULL || c->remote->config->host.ca.len < 1) {
 		dbg("IKEv2 CERTREQ: no CA DN known to send");
 		return false;
 	}
@@ -1164,7 +1164,7 @@ bool ikev2_send_certreq_INIT_decision(const struct state *st,
 /* Send v2 CERT and possible CERTREQ (which should be separated eventually) */
 stf_status ikev2_send_cert(const struct connection *c, struct pbs_out *outpbs)
 {
-	const struct cert *mycert = c->local->host.cert.nss_cert != NULL ? &c->local->host.cert : NULL;
+	const struct cert *mycert = c->local->config->host.cert.nss_cert != NULL ? &c->local->config->host.cert : NULL;
 	bool send_authcerts = c->send_ca != CA_SEND_NONE;
 	bool send_full_chain = send_authcerts && c->send_ca == CA_SEND_ALL;
 

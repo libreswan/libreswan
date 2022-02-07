@@ -307,13 +307,13 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			 * correct.
 			 */
 
-			if (d->local->host.xauth.server != c->local->host.xauth.server) {
+			if (d->local->config->host.xauth.server != c->local->config->host.xauth.server) {
 				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
 				dbg_rhc("skipping because mismatched xauth_server");
 				continue;
 			}
 
-			if (d->local->host.xauth.client != c->local->host.xauth.client) {
+			if (d->local->config->host.xauth.client != c->local->config->host.xauth.client) {
 				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
 				dbg_rhc("skipping because mismatched xauth_client");
 				continue;
@@ -472,11 +472,11 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			 */
 			int peer_pathlen;
 			bool matching_peer_ca = trusted_ca_nss(peer_ca,
-							       d->remote->host.ca,
+							       d->remote->config->host.ca,
 							       &peer_pathlen);
 			int our_pathlen;
 			bool matching_requested_ca = match_requested_ca(requested_ca,
-									d->local->host.ca,
+									d->local->config->host.ca,
 									&our_pathlen);
 			dbg_rhc("matching_peer_ca=%s(%d)/matching_request_ca=%s(%d))",
 				bool_str(matching_peer_ca), peer_pathlen,

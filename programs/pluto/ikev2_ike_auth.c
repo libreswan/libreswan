@@ -301,7 +301,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 			if (DBGP(DBG_BASE)) {
 				dn_buf buf;
 				DBG_log("Sending [CERTREQ] of %s",
-					str_dn(ike->sa.st_connection->remote->host.ca, &buf));
+					str_dn(ike->sa.st_connection->remote->config->host.ca, &buf));
 			}
 			ikev2_send_certreq(&ike->sa, md, &sk.pbs);
 		}
@@ -1021,7 +1021,7 @@ stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike_sa *ik
 		 *
 		 * CREATE_CHILD_SA children should also be cleaned up.
 		 */
-		if (c->local->host.xauth.server && LIN(POLICY_PSK, c->policy)) {
+		if (c->local->config->host.xauth.server && LIN(POLICY_PSK, c->policy)) {
 			/*
 			 * If we are a server and use PSK, all clients
 			 * use the same group ID.

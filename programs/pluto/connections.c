@@ -2168,8 +2168,8 @@ static bool extract_connection(const struct whack_message *wm,
 	 *    RIGHT == REMOTE / THAT
 	 */
 
-	c->local = &config->end[LEFT_END]; /* this */
-	c->remote = &config->end[RIGHT_END]; /* that */
+	c->local = &c->host[LEFT_END]; /* this */
+	c->remote = &c->host[RIGHT_END]; /* this */
 	struct end *client_ends[] = {
 		[LEFT_END] = &c->spd.this,
 		[RIGHT_END] = &c->spd.that,
@@ -2186,7 +2186,7 @@ static bool extract_connection(const struct whack_message *wm,
 		config->end[lr].index = lr;
 		client_ends[lr]->host = &c->host[lr]; /*clone must update*/
 		client_ends[lr]->config = &config->end[lr];
-		c->host[lr].config = &config->end[lr].host;
+		c->host[lr].config = &config->end[lr];
 	}
 
 	const struct whack_end *whack_ends[] = {
@@ -2219,7 +2219,7 @@ static bool extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	if (c->local->host.xauth.server || c->remote->host.xauth.server)
+	if (c->local->config->host.xauth.server || c->remote->config->host.xauth.server)
 		c->policy |= POLICY_XAUTH;
 
 	update_ends_from_this_host_addr(&c->spd.this, &c->spd.that);
@@ -3600,8 +3600,8 @@ static void show_one_sr(struct show *s,
 		     oriented(c) ? "oriented" : "unoriented",
 		     OPT_HOST(c->spd.this.host_srcip, thisipb),
 		     OPT_HOST(c->spd.that.host_srcip, thatipb),
-		     OPT_PREFIX_STR("; mycert=", cert_nickname(&c->local->host.cert)),
-		     OPT_PREFIX_STR("; peercert=", cert_nickname(&c->remote->host.cert)),
+		     OPT_PREFIX_STR("; mycert=", cert_nickname(&c->local->config->host.cert)),
+		     OPT_PREFIX_STR("; peercert=", cert_nickname(&c->remote->config->host.cert)),
 		     ((sr->this.config->client.updown == NULL ||
 		       streq(sr->this.config->client.updown, "%disabled")) ? "<disabled>"
 		      : sr->this.config->client.updown));
@@ -3731,12 +3731,12 @@ void show_one_connection(struct show *s,
 	}
 
 	/* Show CAs */
-	if (c->local->host.ca.ptr != NULL || c->remote->host.ca.ptr != NULL) {
+	if (c->local->config->host.ca.ptr != NULL || c->remote->config->host.ca.ptr != NULL) {
 		dn_buf this_ca, that_ca;
 		show_comment(s, PRI_CONNECTION":   CAs: '%s'...'%s'",
 			     c->name, instance,
-			     str_dn_or_null(c->local->host.ca, "%any", &this_ca),
-			     str_dn_or_null(c->remote->host.ca, "%any", &that_ca));
+			     str_dn_or_null(c->local->config->host.ca, "%any", &this_ca),
+			     str_dn_or_null(c->remote->config->host.ca, "%any", &that_ca));
 	}
 
 	show_comment(s, PRI_CONNECTION":   ike_life: %jds; ipsec_life: %jds; replay_window: %u; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu;",
