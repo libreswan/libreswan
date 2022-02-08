@@ -813,6 +813,9 @@ static void unshare_connection(struct connection *c, struct connection *t/*empla
 
 	if (IS_XFRMI && c->xfrmi != NULL)
 		reference_xfrmi(c);
+
+	c->local = &c->host[t->local->config->index];
+	c->remote = &c->host[t->remote->config->index];
 }
 
 /*
