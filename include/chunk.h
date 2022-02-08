@@ -96,6 +96,10 @@ void append_chunk_bytes(const char *name, chunk_t *lhs, const void *rhs, size_t 
 		typeof(RHS) rhs_ = RHS; /* evaluate once */		\
 		append_chunk_bytes(NAME, LHS, (rhs_).ptr, (rhs_).len);	\
 	})
+#define append_chunk_thing(NAME, LHS, THING)				\
+	({								\
+		append_chunk_bytes(NAME, LHS, &(THING), sizeof(THING)); \
+	})
 
 /*
  * Free contents of chunk (if any) and blat chunk.
