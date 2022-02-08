@@ -757,7 +757,7 @@ void unshare_connection_end(struct connection *c, struct end *e)
 	e->id = clone_id(&e->id, "unshare connection id");
 	e->virt = virtual_ip_addref(e->virt, HERE);
 	pexpect(e->sec_label.ptr == NULL);
-	e->host = &c->host[e->config->index];
+	e->host = &c->end[e->config->index].host;
 }
 
 /*
@@ -814,8 +814,10 @@ static void unshare_connection(struct connection *c, struct connection *t/*empla
 	if (IS_XFRMI && c->xfrmi != NULL)
 		reference_xfrmi(c);
 
-	c->local = &c->host[t->local->config->index];
-	c->remote = &c->host[t->remote->config->index];
+	c->local = &c->end[t->local->config->index];
+	c->remote = &c->end[t->remote->config->index];
+	c->local->client.spd = c->local->host.backdoor = &c->spd.this;
+	c->remote->client.spd = c->local->host.backdoor = &c->spd.that;
 }
 
 /*
@@ -2171,9 +2173,9 @@ static bool extract_connection(const struct whack_message *wm,
 	 *    RIGHT == REMOTE / THAT
 	 */
 
-	c->local = &c->host[LEFT_END]; /* this */
-	c->remote = &c->host[RIGHT_END]; /* this */
-	struct end *client_ends[] = {
+	c->local = &c->end[LEFT_END]; /* this */
+	c->remote = &c->end[RIGHT_END]; /* this */
+	struct end *client_spd[] = {
 		[LEFT_END] = &c->spd.this,
 		[RIGHT_END] = &c->spd.that,
 	};
@@ -2187,9 +2189,11 @@ static bool extract_connection(const struct whack_message *wm,
 		passert(leftright != NULL);
 		config->end[lr].leftright = leftright;
 		config->end[lr].index = lr;
-		client_ends[lr]->host = &c->host[lr]; /*clone must update*/
-		client_ends[lr]->config = &config->end[lr];
-		c->host[lr].config = &config->end[lr];
+		client_spd[lr]->host = &c->end[lr].host; /*clone must update*/
+		client_spd[lr]->config = &config->end[lr];
+		c->end[lr].config = &config->end[lr];
+		c->end[lr].client.spd = client_spd[lr];
+		c->end[lr].host.backdoor = client_spd[lr];
 	}
 
 	const struct whack_end *whack_ends[] = {
@@ -2202,10 +2206,10 @@ static bool extract_connection(const struct whack_message *wm,
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		int opp = (lr + 1) % LEFT_RIGHT_ROOF;
 		same_ca[lr] = extract_end(c,
-					  client_ends[lr],
+					  client_spd[lr],
 					  &config->end[lr],
 					  whack_ends[lr],
-					  client_ends[opp],
+					  client_spd[opp],
 					  host_afi, client_afi,
 					  c->logger);
 		if (same_ca[lr] < 0) {

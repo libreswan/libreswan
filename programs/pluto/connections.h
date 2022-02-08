@@ -249,9 +249,20 @@ struct host_end {
 	bool encap;			/* are packets encapsulated */
 	uint16_t port;			/* where the IKE port is */
 	ip_address nexthop;		/* identifes interface to send packets */
+	struct end *backdoor;		/* hack to get at stuff in struct end that should be here */
 };
 
-struct /*client_*/end {
+struct client_end {
+	struct end *spd;
+};
+
+struct connection_end {
+	const struct config_end *config;
+	struct host_end host;
+	struct client_end client;
+};
+
+struct /*spd_*/end {
 	struct id id;
 
 	ip_address host_addr;
@@ -473,9 +484,9 @@ struct connection {
 	 */
 	const struct config *config;
 
-	struct host_end *local;
-	struct host_end *remote;
-	struct host_end host[LEFT_RIGHT_ROOF];
+	struct connection_end *local;
+	struct connection_end *remote;
+	struct connection_end end[LEFT_RIGHT_ROOF];
 };
 
 extern bool same_peer_ids(const struct connection *c,
