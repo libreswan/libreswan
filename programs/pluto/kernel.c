@@ -573,9 +573,9 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 		jam_string(buf, "' ");
 	}
 
-	if (cidr_is_specified(sr->this.ifaceip)) {
+	if (cidr_is_specified(c->local->config->client.ifaceip)) {
 		jam_string(buf, "INTERFACE_IP='");
-		jam_cidr(buf, &sr->this.ifaceip);
+		jam_cidr(buf, &c->local->config->client.ifaceip);
 		jam_string(buf, "' ");
 	}
 

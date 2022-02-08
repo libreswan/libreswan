@@ -1078,7 +1078,7 @@ static int extract_end(struct connection *c,
 	dst->host->nexthop = src->host_nexthop;
 	dst->host_srcip = src->host_srcip;
 	config_end->client.host_vtiip = src->host_vtiip;
-	dst->ifaceip = src->ifaceip;
+	config_end->client.ifaceip = src->ifaceip;
 	dst->cat = src->cat;
 	dst->pool_range = src->pool_range;
 

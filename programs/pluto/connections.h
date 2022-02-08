@@ -108,8 +108,13 @@ struct config_client_end {
 	ip_protoport protoport;
 	char *updown;
 
-	/* weired host related client stuff */
+	/*
+	 * Weired host related client stuff.
+	 *
+	 * It's only used when there's a Child SA.
+	 */
 	ip_cidr host_vtiip;
+	ip_cidr ifaceip;
 };
 
 struct config_end {
@@ -286,7 +291,6 @@ struct /*spd_*/end {
 	ip_address host_addr;
 	ip_address
 		host_srcip;
-	ip_cidr ifaceip;
 
 	ip_selector client;
 
