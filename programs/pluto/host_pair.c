@@ -222,9 +222,9 @@ struct connection *next_host_pair_connection(const ip_address local,
 void connect_to_host_pair(struct connection *c)
 {
 	if (oriented(c)) {
-		ip_address local = c->spd.this.host_addr;
+		ip_address local = c->local->host.addr;
 		/* remote could be unset OR any */
-		ip_address remote = c->spd.that.host_addr;
+		ip_address remote = c->remote->host.addr;
 		address_buf lb, rb;
 		dbg("looking for host pair matching %s->%s",
 		    str_address(&remote, &rb), str_address(&local, &lb));
@@ -238,9 +238,9 @@ void connect_to_host_pair(struct connection *c)
 		}
 		if (hp == NULL) {
 			/* no suitable host_pair -- build one */
-			ip_address local = c->spd.this.host_addr;
+			ip_address local = c->local->host.addr;
 			/* remote could be unset OR any */
-			ip_address remote = c->spd.that.host_addr;
+			ip_address remote = c->remote->host.addr;
 			hp = alloc_host_pair(local, remote, HERE);
 		}
 		c->host_pair = hp;
@@ -407,7 +407,7 @@ void update_host_pairs(struct connection *c)
 
 	if (d->dnshostname == NULL ||
 	    ttoaddress_dns(shunk1(d->dnshostname),
-			      address_type(&d->spd.that.host_addr), &new_addr) != NULL ||
+			      address_type(&d->remote->host.addr), &new_addr) != NULL ||
 	    sameaddr(&new_addr, &hp->remote))
 		return;
 
@@ -444,7 +444,7 @@ void update_host_pairs(struct connection *c)
 				rehash_db_spd_route_remote_client(&d->spd);
 			}
 
-			d->spd.that.host_addr = new_addr;
+			d->remote->host.addr = new_addr;
 			LIST_RM(hp_next, d, d->host_pair->connections, true);
 
 			d->hp_next = conn_list;

@@ -719,7 +719,7 @@ void wipe_old_v2_connections(const struct ike_sa *ike)
 			continue;
 		}
 
-		bool same_remote_ip = sameaddr(&c->spd.that.host_addr, &d->spd.that.host_addr);
+		bool same_remote_ip = sameaddr(&c->remote->host.addr, &d->remote->host.addr);
 		if (!same_remote_ip && old_is_nullauth && authnull) {
 			llog_sa(RC_LOG, ike, "NULL auth ID for different IP's cannot replace each other");
 			continue;

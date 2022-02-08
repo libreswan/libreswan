@@ -1840,13 +1840,13 @@ void send_v1_delete(struct state *st)
 		}
 
 		if (st->st_ah.present) {
-			*ns = said_from_address_protocol_spi(st->st_connection->spd.this.host_addr,
+			*ns = said_from_address_protocol_spi(st->st_connection->local->host.addr,
 							     &ip_protocol_ah,
 							     st->st_ah.our_spi);
 			ns++;
 		}
 		if (st->st_esp.present) {
-			*ns = said_from_address_protocol_spi(st->st_connection->spd.this.host_addr,
+			*ns = said_from_address_protocol_spi(st->st_connection->local->host.addr,
 							     &ip_protocol_esp,
 							     st->st_esp.our_spi);
 			ns++;

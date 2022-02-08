@@ -64,7 +64,7 @@ void retransmit_v1_msg(struct state *st)
 	address_buf b;
 	connection_buf cib;
 	dbg("handling event EVENT_RETRANSMIT for %s "PRI_CONNECTION" #%lu keying attempt %lu of %lu; retransmit %lu",
-	    str_address(&c->spd.that.host_addr, &b),
+	    str_address(&c->remote->host.addr, &b),
 	    pri_connection(c, &cib),
 	    st->st_serialno, current_try, try_limit,
 	    retransmit_count(st) + 1);

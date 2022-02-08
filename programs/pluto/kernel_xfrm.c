@@ -975,14 +975,14 @@ static bool create_xfrm_migrate_sa(struct state *st,
 		.story = story->buf,	/* content will evolve */
 		.spi = dst->spi,
 		.src = {
-			.address = &src->end->host_addr,
-			.new_address = src->end->host_addr,	/* may change */
+			.address = &src->end->host->addr,
+			.new_address = src->end->host->addr,	/* may change */
 			.client = &src->end->client,
 			.encap_port = endpoint_hport(src->endpoint),	/* may change */
 		},
 		.dst = {
-			.address = &dst->end->host_addr,
-			.new_address = dst->end->host_addr,	/* may change */
+			.address = &dst->end->host->addr,
+			.new_address = dst->end->host->addr,	/* may change */
 			.client = &dst->end->client,
 			.encap_port = endpoint_hport(dst->endpoint),	/* may change */
 		},
@@ -1013,7 +1013,7 @@ static bool create_xfrm_migrate_sa(struct state *st,
 	if (encap_type == NULL)
 		sa.src.encap_port = sa.dst.encap_port = 0;
 
-	ip_said said = said_from_address_protocol_spi(dst->end->host_addr, proto, sa.spi);
+	ip_said said = said_from_address_protocol_spi(dst->end->host->addr, proto, sa.spi);
 	jam_said(&story_jb, &said);
 
 	endpoint_buf ra_old, ra_new;

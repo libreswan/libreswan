@@ -973,7 +973,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		if (IDci->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
 			log_state(RC_LOG_SERIOUS, p1st,
 				  "Applying workaround for MS-818043 NAT-T bug");
-			remote_client = selector_from_address_protocol_port(c->spd.that.host_addr,
+			remote_client = selector_from_address_protocol_port(c->remote->host.addr,
 									    remote_protocol,
 									    remote_port);
 		}
@@ -1020,11 +1020,11 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		}
 	} else {
 		/* implicit IDci and IDcr: peer and self */
-		if (address_type(&c->spd.this.host_addr) != address_type(&c->spd.that.host_addr))
+		if (address_type(&c->local->host.addr) != address_type(&c->remote->host.addr))
 			return STF_FAIL;
 
-		local_client = selector_from_address(c->spd.this.host_addr);
-		remote_client = selector_from_address(c->spd.that.host_addr);
+		local_client = selector_from_address(c->local->host.addr);
+		remote_client = selector_from_address(c->remote->host.addr);
 	}
 
 	struct crypt_mac new_iv;
@@ -1087,14 +1087,14 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 				struct end local = c->spd.this;
 				local.client = *local_client;
-				local.has_client = !selector_eq_address(*local_client, local.host_addr);
+				local.has_client = !selector_eq_address(*local_client, local.host->addr);
 				jam_end(buf, &local, NULL, LEFT_END, LEMPTY, oriented(c));
 
 				jam(buf, "...");
 
 				struct end remote = c->spd.that;
 				remote.client = *remote_client;
-				remote.has_client = !selector_eq_address(*remote_client, remote.host_addr);
+				remote.has_client = !selector_eq_address(*remote_client, remote.host->addr);
 				jam_end(buf, &remote, NULL, RIGHT_END, LEMPTY, oriented(c));
 			}
 			return STF_FAIL + INVALID_ID_INFORMATION;
@@ -1109,7 +1109,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 				/* Plain Road Warrior because no OPPO for IKEv1
 				 * instantiate, carrying over authenticated peer ID
 				 */
-				p = rw_instantiate(p, &c->spd.that.host_addr,
+				p = rw_instantiate(p, &c->remote->host.addr,
 						   remote_client,
 						   &c->remote->host.id);
 			}
@@ -1147,7 +1147,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 			c->spd.that.has_client = true;
 			virtual_ip_delref(&c->spd.that.virt, HERE);
 
-			if (selector_eq_address(*remote_client, c->spd.that.host_addr)) {
+			if (selector_eq_address(*remote_client, c->remote->host.addr)) {
 				c->spd.that.has_client = false;
 			}
 
@@ -1611,8 +1611,8 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 			 * No IDci, IDcr: we must check that the
 			 * defaults match our proposal.
 			 */
-			if (!selector_eq_address(c->spd.this.client, c->spd.this.host_addr) ||
-			    !selector_eq_address(c->spd.that.client, c->spd.that.host_addr)) {
+			if (!selector_eq_address(c->spd.this.client, c->local->host.addr) ||
+			    !selector_eq_address(c->spd.that.client, c->remote->host.addr)) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "IDci, IDcr payloads missing in message but default does not match proposal");
 				return STF_FAIL + INVALID_ID_INFORMATION;
@@ -1867,7 +1867,7 @@ static struct connection *fc_try(const struct connection *c,
 	struct connection *best = NULL;
 	policy_prio_t best_prio = BOTTOM_PRIO;
 	const bool remote_is_host = selector_eq_address(*remote_client,
-							c->spd.that.host_addr);
+							c->remote->host.addr);
 
 	err_t virtualwhy = NULL;
 	FOR_EACH_HOST_PAIR_CONNECTION(local_address, remote_address, d) {
@@ -1985,7 +1985,7 @@ static struct connection *fc_try(const struct connection *c,
 
 				virtualwhy = check_virtual_net_allowed(d,
 								       selector_subnet(*remote_client),
-								       sr->that.host_addr);
+								       sr->that.host->addr);
 
 				if (is_virtual_sr(sr) &&
 				    (virtualwhy != NULL ||
@@ -2213,7 +2213,7 @@ struct connection *find_v1_client_connection(struct connection *const c,
 		 * If so, the caller must have passed NULL for it
 		 * and earlier references would be wrong (segfault).
 		 */
-		d = fc_try(c, c->spd.this.host_addr, c->spd.that.host_addr,
+		d = fc_try(c, c->local->host.addr, c->remote->host.addr,
 			   local_client, remote_client);
 
 		dbg("  fc_try %s gives %s", c->name, (d ? d->name : "none"));
@@ -2230,9 +2230,9 @@ struct connection *find_v1_client_connection(struct connection *const c,
 		for (const struct spd_route *sra = &c->spd;
 		     sra != NULL && !address_is_specified(local_address);
 		     sra = sra->spd_next) {
-			FOR_EACH_HOST_PAIR_CONNECTION(sra->this.host_addr,
+			FOR_EACH_HOST_PAIR_CONNECTION(sra->this.host->addr,
 						      unset_address, ignore) {
-				local_address = sra->this.host_addr;
+				local_address = sra->this.host->addr;
 				selector_buf s2;
 				selector_buf d2;
 				DBG_log("  checking hostpair %s -> %s",

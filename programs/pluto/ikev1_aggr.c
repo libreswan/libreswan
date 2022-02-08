@@ -209,7 +209,7 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 			  "responding to Aggressive Mode, state #%lu, connection "PRI_CONNECTION" from %s",
 			  st->st_serialno,
 			  pri_connection(st->st_connection, &cib),
-			  str_address_sensitive(&c->spd.that.host_addr, &b));
+			  str_address_sensitive(&c->remote->host.addr, &b));
 	}
 
 	merge_quirks(st, md);

@@ -229,7 +229,7 @@ static bool ikev1_verify_esp(const struct connection *c,
 		llog(RC_LOG_SERIOUS, logger,
 			    "unsupported ESP Transform %s from %s",
 			    ta->ta_encrypt->common.fqn,
-			    str_address_sensitive(&c->spd.that.host_addr, &epb));
+			    str_address_sensitive(&c->remote->host.addr, &epb));
 		return false; /* try another */
 	}
 
@@ -3251,7 +3251,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				    !ah_seen) {
 					LSWDBGP(DBG_BASE, buf) {
 						jam_string(buf, "ESP from ");
-						jam_address(buf, &c->spd.that.host_addr);
+						jam_address(buf, &c->remote->host.addr);
 						jam_string(buf, " must either have AUTH or be combined with AH");
 					}
 					continue; /* try another */
@@ -3278,14 +3278,14 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 			address_buf b;
 			dbg("policy for "PRI_CONNECTION" requires encryption but ESP not in Proposal from %s",
 			    pri_connection(c, &cib),
-			    str_address(&c->spd.that.host_addr, &b));
+			    str_address(&c->remote->host.addr, &b));
 			continue; /* we needed encryption, but didn't find ESP */
 		} else if ((st->st_policy & POLICY_AUTHENTICATE) && !ah_seen) {
 			connection_buf cib;
 			address_buf b;
 			dbg("policy for \"%s\"%s requires authentication but none in Proposal from %s",
 			    pri_connection(c, &cib),
-			    str_address(&c->spd.that.host_addr, &b));
+			    str_address(&c->remote->host.addr, &b));
 			continue; /* we need authentication, but we found neither ESP nor AH */
 		}
 
@@ -3298,7 +3298,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 				connection_buf cib;
 				log_state(RC_LOG, st,
 					  "compression proposed by %s, but policy for "PRI_CONNECTION" forbids it",
-					  str_address(&c->spd.that.host_addr, &b),
+					  str_address(&c->remote->host.addr, &b),
 					  pri_connection(c, &cib));
 				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
@@ -3346,7 +3346,7 @@ notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input
 					address_buf b;
 					dbg("unsupported IPCOMP Transform %s from %s",
 					    ipcomp_attrs.transattrs.ta_ipcomp->common.fqn,
-					    str_address(&c->spd.that.host_addr, &b));
+					    str_address(&c->remote->host.addr, &b));
 					continue; /* try another */
 				}
 

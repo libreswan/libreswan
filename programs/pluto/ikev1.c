@@ -3011,7 +3011,7 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 			{
 				bool old_is_nullauth = (LIN(POLICY_AUTH_NULL, d->policy) ||
 							d->remote->config->host.authby == AUTHBY_NULL);
-				bool same_remote_ip = sameaddr(&c->spd.that.host_addr, &d->spd.that.host_addr);
+				bool same_remote_ip = sameaddr(&c->remote->host.addr, &d->remote->host.addr);
 
 				if (same_remote_ip && (!old_is_nullauth && authnull)) {
 					log_state(RC_LOG, &ike->sa, "cannot replace old authenticated connection with authnull connection");

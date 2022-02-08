@@ -112,10 +112,10 @@ static bool orient_new_iface_endpoint(struct connection *c, struct end *end)
 	if (end->config->host.ikeport == 0) {
 		return false;
 	}
-	if (address_is_unset(&end->host_addr)) {
+	if (address_is_unset(&end->host->addr)) {
 		return false;
 	}
-	struct iface_dev *dev = find_iface_dev_by_address(&end->host_addr);
+	struct iface_dev *dev = find_iface_dev_by_address(&end->host->addr);
 	if (dev == NULL) {
 		return false;
 	}
@@ -187,7 +187,7 @@ static bool end_matches_iface_endpoint(const struct end *end,
 				       const struct end *other_end,
 				       const struct iface_endpoint *ifp)
 {
-	ip_address host_addr = end->host_addr;
+	ip_address host_addr = end->host->addr;
 	if (!address_is_specified(host_addr)) {
 		/* %any, unknown, or unset */
 		return false;
@@ -210,7 +210,7 @@ static void DBG_orient_end(const char *thisthat, struct end *end, struct end *ot
 	DBG_log("  %s(%s) host type=%s address=%s port="PRI_HPORT" ikeport=%d encap=%s",
 		end->config->leftright, thisthat,
 		str_enum_short(&keyword_host_names, end->config->host.type, &enb),
-		str_address(&end->host_addr, &ab),
+		str_address(&end->host->addr, &ab),
 		pri_hport(end_host_port(end, other_end)),
 		end->config->host.ikeport,
 		bool_str(end->host->encap));

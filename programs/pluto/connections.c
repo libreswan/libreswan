@@ -178,7 +178,7 @@ void delete_connection(struct connection **cp)
 			address_buf b;
 			llog(RC_LOG, c->logger,
 			     "deleting connection instance with peer %s {isakmp=#%lu/ipsec=#%lu}",
-			     str_address_sensitive(&c->spd.that.host_addr, &b),
+			     str_address_sensitive(&c->remote->host.addr, &b),
 			     c->newest_ike_sa, c->newest_ipsec_sa);
 		}
 		c->kind = CK_GOING_AWAY;
@@ -413,15 +413,15 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 {
 	address_buf hab;
 	dbg("updating ends from %s.host_addr %s",
-	    this->config->leftright, str_address(&this->host_addr, &hab));
+	    this->config->leftright, str_address(&this->host->addr, &hab));
 
-	if (!address_is_specified(this->host_addr)) {
+	if (!address_is_specified(this->host->addr)) {
 		dbg("  %s.host_addr's is unspecified (unset, ::, or 0.0.0.0); skipping",
 		    this->config->leftright);
 		return;
 	}
 
-	const struct ip_info *afi = address_type(&this->host_addr);
+	const struct ip_info *afi = address_type(&this->host->addr);
 	passert(afi != NULL); /* since specified */
 
 	/*
@@ -430,7 +430,7 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 	if (this->host->id.kind == ID_NONE) {
 		struct id id = {
 			.kind = afi->id_ip_addr,
-			.ip_addr = this->host_addr,
+			.ip_addr = this->host->addr,
 		};
 		this->has_id_wildcards = false;
 		id_buf old, new;
@@ -467,7 +467,7 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 		 * For instance, the config file omitted subnet, but
 		 * specified protoport; merge that.
 		 */
-		ip_selector client = selector_from_address_protoport(this->host_addr,
+		ip_selector client = selector_from_address_protoport(this->host->addr,
 								     this->config->client.protoport);
 		selector_buf old, new;
 		dbg("  updated %s.client from %s to %s",
@@ -486,21 +486,21 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 		dbg("  updated %s.host_nexthop from %s to %s",
 		    that->config->leftright,
 		    str_address(&that->host->nexthop, &old),
-		    str_address(&this->host_addr, &new));
-		that->host->nexthop = this->host_addr;
+		    str_address(&this->host->addr, &new));
+		that->host->nexthop = this->host->addr;
 	}
 
 	/*
 	 * Propagate this.HOST_ADDR's address family to
 	 * that.HOST_ADDR.
 	 */
-	if (!address_is_specified(that->host_addr)) {
+	if (!address_is_specified(that->host->addr)) {
 		address_buf old, new;
 		dbg("  updated %s.host_addr from %s to %s",
 		    that->config->leftright,
-		    str_address(&that->host_addr, &old),
+		    str_address(&that->host->addr, &old),
 		    str_address(&afi->address.unspec, &new));
-		that->host_addr = afi->address.unspec;
+		that->host->addr = afi->address.unspec;
 	}
 }
 
@@ -526,7 +526,7 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t policy)
 {
 	/* HOST */
-	if (!address_is_specified(this->host_addr)) {
+	if (!address_is_specified(this->host->addr)) {
 		if (this->config->host.type == KH_IPHOSTNAME) {
 			jam_string(buf, "%dns");
 			jam(buf, "<%s>", this->config->host.addr_name);
@@ -576,18 +576,18 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 			jam_string(buf, "<address>");
 		} else if (include_port) {
 			/* ADDRESS:PORT */
-			const struct ip_info *afi = address_type(&this->host_addr);
+			const struct ip_info *afi = address_type(&this->host->addr);
 			/* XXX: jam_address_wrapped()? */
-			afi->address.jam_wrapped(buf, afi, &this->host_addr.bytes);
+			afi->address.jam_wrapped(buf, afi, &this->host->addr.bytes);
 			jam(buf, ":%u", this->host->port);
 		} else {
 			/* ADDRESS */
-			jam_address(buf, &this->host_addr);
+			jam_address(buf, &this->host->addr);
 		}
 		/* [<HOSTNAME>] */
 		address_buf ab;
 		if (this->config->host.addr_name != NULL &&
-		    !streq(str_address(&this->host_addr, &ab),
+		    !streq(str_address(&this->host->addr, &ab),
 			   this->config->host.addr_name)) {
 			jam(buf, "<%s>", this->config->host.addr_name);
 		}
@@ -603,7 +603,7 @@ static void jam_end_client(struct jambuf *buf, const struct end *this,
 		return;
 	}
 
-	if (selector_eq_address(this->client, this->host_addr)) {
+	if (selector_eq_address(this->client, this->host->addr)) {
 		return;
 	}
 
@@ -640,7 +640,7 @@ static void jam_end_id(struct jambuf *buf, const struct end *this)
 	bool open_paren = false;
 	if (!(this->host->id.kind == ID_NONE ||
 	      (id_is_ipaddr(&this->host->id) &&
-	       sameaddr(&this->host->id.ip_addr, &this->host_addr)))) {
+	       sameaddr(&this->host->id.ip_addr, &this->host->addr)))) {
 		open_paren = true;
 		jam_string(buf, "[");
 		jam_id_bytes(buf, &this->host->id, jam_sanitized_bytes);
@@ -697,7 +697,7 @@ static void jam_end_nexthop(struct jambuf *buf, const struct end *this,
 	/* [---hop] */
 	if (!skip_next_hop &&
 	    address_is_specified(this->host->nexthop) &&
-	    !address_eq_address(this->host->nexthop, that->host_addr)) {
+	    !address_eq_address(this->host->nexthop, that->host->addr)) {
 		if (left_right == LEFT_END) {
 			jam_string(buf, "---");
 		}
@@ -1074,7 +1074,7 @@ static int extract_end(struct connection *c,
 
 	/* the rest is simple copying of corresponding fields */
 	config_end->host.type = src->host_type;
-	dst->host_addr = src->host_addr;
+	dst->host->addr = src->host_addr;
 	config_end->host.addr_name = clone_str(src->host_addr_name, "host ip");
 	dst->host->nexthop = src->host_nexthop;
 	dst->host_srcip = src->host_srcip;
@@ -1169,8 +1169,8 @@ static int extract_end(struct connection *c,
 	case KH_IPHOSTNAME:
 	{
 		err_t er = ttoaddress_dns(shunk1(config_end->host.addr_name),
-					  address_type(&dst->host_addr),
-					  &dst->host_addr);
+					  address_type(&dst->host->addr),
+					  &dst->host->addr);
 		if (er != NULL) {
 			llog(RC_COMMENT, logger,
 			     "failed to convert '%s' at load time: %s",
@@ -2272,7 +2272,7 @@ static bool extract_connection(const struct whack_message *wm,
 	 * orient).
 	 */
 	struct end *wild_side =
-		(!address_is_specified(c->spd.this.host_addr) ||
+		(!address_is_specified(c->local->host.addr) ||
 		 c->spd.this.config->client.protoport.has_port_wildcard ||
 		 c->spd.this.has_id_wildcards) ? &c->spd.this : &c->spd.that;
 
@@ -2299,7 +2299,7 @@ static bool extract_connection(const struct whack_message *wm,
 		c->kind = CK_GROUP;
 		add_group(c);
 	} else if (!NEVER_NEGOTIATE(c->policy) &&
-		   !address_is_specified(wild_side->host_addr)) {
+		   !address_is_specified(wild_side->host->addr)) {
 		dbg("connection is template: no remote address yet policy negotiate");
 		c->kind = CK_TEMPLATE;
 	} else if (wild_side->config->client.protoport.has_port_wildcard) {
@@ -2338,7 +2338,7 @@ static bool extract_connection(const struct whack_message *wm,
 		 * non-instantiations, such as rightsubnet=vnet:%priv
 		 * or rightprotoport=17/%any
 		 *
-		 * passert(!address_is_specified(wild_side->host_addr))
+		 * passert(!address_is_specified(wild_side->host->addr))
 		 */
 		passert(wild_side->virt == NULL);
 		wild_side->virt =
@@ -2489,7 +2489,7 @@ struct connection *add_group_instance(struct connection *group,
 	}
 	t->policy &= ~(POLICY_GROUP | POLICY_GROUTED);
 	t->policy |= POLICY_GROUPINSTANCE; /* mark as group instance for later */
-	t->kind = (!address_is_specified(t->spd.that.host_addr) &&
+	t->kind = (!address_is_specified(t->remote->host.addr) &&
 		   !NEVER_NEGOTIATE(t->policy)) ? CK_TEMPLATE : CK_INSTANCE;
 
 	/* reset log file info */
@@ -2569,14 +2569,14 @@ struct connection *instantiate(struct connection *c,
 		 * - or C is T.IKE and D is C.CHILD (the sec_label is
 		 *   updated below) -> CK_INSTANCE
 		 */
-		pexpect(address_is_specified(c->spd.that.host_addr) || peer_addr != NULL);
+		pexpect(address_is_specified(c->remote->host.addr) || peer_addr != NULL);
 		if (sec_label.len == 0) {
 			kind = CK_TEMPLATE;
 		} else {
 			kind = CK_INSTANCE;
 		}
 	} else {
-		/* pexpect(address_is_specified(c->spd.that.host_addr) || peer_addr != NULL); true??? */
+		/* pexpect(address_is_specified(c->remote->host.addr) || peer_addr != NULL); true??? */
 		kind = CK_INSTANCE;
 	}
 
@@ -2595,7 +2595,7 @@ struct connection *instantiate(struct connection *c,
 	d->kind = kind;
 	passert(oriented(d));
 	if (peer_addr != NULL) {
-		d->spd.that.host_addr = *peer_addr;
+		d->remote->host.addr = *peer_addr;
 	}
 	update_ends_from_this_host_addr(&d->spd.that, &d->spd.this);
 
@@ -2766,15 +2766,15 @@ size_t jam_connection_instance(struct jambuf *buf, const struct connection *c)
 	if (c->policy & POLICY_OPPORTUNISTIC) {
 		s += jam_connection_client(buf, " ", "===",
 					   c->spd.this.client,
-					   c->spd.this.host_addr);
+					   c->local->host.addr);
 		s += jam_string(buf, " ...");
-		s += jam_address(buf, &c->spd.that.host_addr);
+		s += jam_address(buf, &c->remote->host.addr);
 		s += jam_connection_client(buf, "===", "",
 					   c->spd.that.client,
-					   c->spd.that.host_addr);
+					   c->remote->host.addr);
 	} else {
 		s += jam_string(buf, " ");
-		s += jam_address_sensitive(buf, &c->spd.that.host_addr);
+		s += jam_address_sensitive(buf, &c->remote->host.addr);
 	}
 	return s;
 }
@@ -3123,7 +3123,7 @@ struct connection *oppo_instantiate(struct connection *c,
 				selector_from_address_protocol_port(*local_address,
 								    local_protocol,
 								    local_port);
-		} else if (address_eq_address(*local_address, d->spd.this.host_addr)) {
+		} else if (address_eq_address(*local_address, d->local->host.addr)) {
 			/*
 			 * or that it is our private ip in case we are
 			 * behind a port forward.
@@ -3146,7 +3146,7 @@ struct connection *oppo_instantiate(struct connection *c,
 		 * just set the selector and work with that?
 		 */
 		dbg("oppo local has no client; patching damage by instantiate()");
-		passert(address_eq_address(*local_address, d->spd.this.host_addr));
+		passert(address_eq_address(*local_address, d->local->host.addr));
 		d->spd.this.client =
 			selector_from_address_protocol_port(*local_address,
 							    local_protocol,
@@ -3179,7 +3179,7 @@ struct connection *oppo_instantiate(struct connection *c,
 	    selector_protocol(d->spd.that.client)->name,
 	    selector_port(d->spd.that.client).hport);
 
-	if (address_eq_address(*remote_address, d->spd.that.host_addr))
+	if (address_eq_address(*remote_address, d->remote->host.addr))
 		d->spd.that.has_client = false;
 
 	/*
@@ -3438,7 +3438,7 @@ struct connection *route_owner(struct connection *c,
 				continue;
 			if (c_spd->that.client.hport != d_spd->that.client.hport)
 				continue;
-			if (!sameaddr(&c_spd->this.host_addr, &d_spd->this.host_addr))
+			if (!sameaddr(&c_spd->this.host->addr, &d_spd->this.host->addr))
 				continue;
 
 			/*

@@ -259,8 +259,8 @@ static bool bare_policy_op(enum kernel_policy_op op,
 
 	pexpect(op & KERNEL_POLICY_OUTBOUND);
 	struct kernel_policy outbound_kernel_policy = proto_kernel_policy_transport_esp;
-	outbound_kernel_policy.host.src = sr->this.host_addr;
-	outbound_kernel_policy.host.dst = sr->that.host_addr;
+	outbound_kernel_policy.host.src = c->local->host.addr;
+	outbound_kernel_policy.host.dst = c->remote->host.addr;
 
 	if (!raw_policy(op, THIS_IS_NOT_INBOUND,
 			&sr->this.client, &sr->that.client,
@@ -298,8 +298,8 @@ static bool bare_policy_op(enum kernel_policy_op op,
 	 * policy installed.
 	 */
 	struct kernel_policy inbound_kernel_policy = proto_kernel_policy_transport_esp;
-	inbound_kernel_policy.host.src = sr->that.host_addr; /* inbound src<>dst */
-	inbound_kernel_policy.host.dst = sr->this.host_addr; /* inbound src<>dst */
+	inbound_kernel_policy.host.src = c->remote->host.addr; /* inbound src<>dst */
+	inbound_kernel_policy.host.dst = c->local->host.addr; /* inbound src<>dst */
 
 	return raw_policy(op, what_about_inbound,
 			  &sr->that.client, &sr->this.client,
@@ -461,8 +461,8 @@ ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
 			  struct logger *logger)
 {
 	passert(proto == &ip_protocol_ah || proto == &ip_protocol_esp);
-	return kernel_ops_get_ipsec_spi(avoid, &sr->that.host_addr,
-					&sr->this.host_addr, proto, tunnel,
+	return kernel_ops_get_ipsec_spi(avoid, &sr->that.host->addr,
+					&sr->this.host->addr, proto, tunnel,
 					get_proto_reqid(sr->reqid, proto),
 					IPSEC_DOI_SPI_OUR_MIN, 0xffffffffU,
 					"SPI", logger);
@@ -480,8 +480,8 @@ ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel,
 		       struct logger *logger)
 {
 	return kernel_ops_get_ipsec_spi(0,
-					&sr->that.host_addr,
-					&sr->this.host_addr,
+					&sr->that.host->addr,
+					&sr->this.host->addr,
 					&ip_protocol_ipcomp,
 					tunnel,
 					get_proto_reqid(sr->reqid, &ip_protocol_ipcomp),
@@ -546,7 +546,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	}
 
 	jam_string(buf, "PLUTO_ME='");
-	jam_address(buf, &sr->this.host_addr);
+	jam_address(buf, &sr->this.host->addr);
 	jam_string(buf, "' ");
 
 	jam_string(buf, "PLUTO_MY_ID='");
@@ -589,7 +589,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 					 "unknown?"));
 
 	jam_string(buf, "PLUTO_PEER='");
-	jam_address(buf, &sr->that.host_addr);
+	jam_address(buf, &sr->that.host->addr);
 	jam_string(buf, "' ");
 
 	jam_string(buf, "PLUTO_PEER_ID='");
@@ -599,9 +599,9 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	/* for transport mode, things are complicated */
 	jam_string(buf, "PLUTO_PEER_CLIENT='");
 	if (!LIN(POLICY_TUNNEL, c->policy) && (st != NULL && LHAS(st->hidden_variables.st_nat_traversal, NATED_PEER))) {
-		/* pexpect(selector_eq_address(sr->that.client, sr->that.host_addr)); */
-		jam_address(buf, &sr->that.host_addr);
-		jam(buf, "/%d", address_type(&sr->this.host_addr)->mask_cnt/*32 or 128*/);
+		/* pexpect(selector_eq_address(sr->that.client, sr->that.host->addr)); */
+		jam_address(buf, &sr->that.host->addr);
+		jam(buf, "/%d", address_type(&sr->this.host->addr)->mask_cnt/*32 or 128*/);
 	} else {
 		jam_selector_subnet(buf, &sr->that.client);
 	}
@@ -609,7 +609,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 
 	jam_string(buf, "PLUTO_PEER_CLIENT_NET='");
 	if (!LIN(POLICY_TUNNEL, c->policy) && (st != NULL && LHAS(st->hidden_variables.st_nat_traversal, NATED_PEER))) {
-		jam_address(buf, &sr->that.host_addr);
+		jam_address(buf, &sr->that.host->addr);
 	} else {
 		ta = selector_prefix(sr->that.client);
 		jam_address(buf, &ta);
@@ -657,7 +657,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	jam_enum(buf, &connection_kind_names, c->kind);
 	jam_string(buf,"' ");
 
-	jam(buf, "PLUTO_CONN_ADDRFAMILY='ipv%d' ", address_type(&sr->this.host_addr)->ip_version);
+	jam(buf, "PLUTO_CONN_ADDRFAMILY='ipv%d' ", address_type(&sr->this.host->addr)->ip_version);
 	jam(buf, "XAUTH_FAILED=%d ", (st != NULL && st->st_xauth_soft) ? 1 : 0);
 
 	if (st != NULL && st->st_xauth_username[0] != '\0') {
@@ -717,14 +717,14 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 			/* user configured XFRMI_SET_MARK (a.k.a. output mark) add it */
 			jam(buf, "PLUTO_XFRMI_FWMARK='%" PRIu32 "/%#08" PRIx32 "' ",
 			    c->sa_marks.out.val, c->sa_marks.out.mask);
-		} else if (address_in_selector_range(sr->that.host_addr, sr->that.client)) {
+		} else if (address_in_selector_range(sr->that.host->addr, sr->that.client)) {
 			jam(buf, "PLUTO_XFRMI_FWMARK='%" PRIu32 "/0xffffffff' ",
 			    c->xfrmi->if_id);
 		} else {
 			address_buf bpeer;
 			selector_buf peerclient_str;
 			dbg("not adding PLUTO_XFRMI_FWMARK. PLUTO_PEER=%s is not inside PLUTO_PEER_CLIENT=%s",
-			    str_address(&sr->that.host_addr, &bpeer),
+			    str_address(&sr->that.host->addr, &bpeer),
 			    str_selector_subnet_port(&sr->that.client, &peerclient_str));
 			jam(buf, "PLUTO_XFRMI_FWMARK='' ");
 		}
@@ -796,7 +796,7 @@ bool do_command(const struct connection *c,
 	 */
 	{
 		const char *hs, *cs;
-		const struct ip_info *afi = address_type(&sr->this.host_addr);
+		const struct ip_info *afi = address_type(&sr->this.host->addr);
 		if (afi == NULL) {
 			llog_pexpect(logger, HERE, "unknown address family");
 			return false;
@@ -814,7 +814,7 @@ bool do_command(const struct connection *c,
 		default:
 			bad_case(afi->af);
 		}
-		verb_suffix = selector_range_eq_address(sr->this.client, sr->this.host_addr) ? hs : cs;
+		verb_suffix = selector_range_eq_address(sr->this.client, sr->this.host->addr) ? hs : cs;
 	}
 
 	dbg("kernel: command executing %s%s", verb, verb_suffix);
@@ -1054,7 +1054,7 @@ static struct kernel_route kernel_route_from_spd(const struct spd_route *spd,
 		remote_client = spd->that.client;
 		break;
 	case ENCAP_MODE_TRANSPORT:
-		remote_client = selector_from_address_protocol_port(spd->that.host_addr,
+		remote_client = selector_from_address_protocol_port(spd->that.host->addr,
 								    selector_protocol(spd->that.client),
 								    selector_port(spd->that.client));
 		break;
@@ -1086,8 +1086,8 @@ static struct kernel_route kernel_route_from_spd(const struct spd_route *spd,
 
 	local->client = spd->this.client;
 	remote->client = remote_client;
-	local->host_addr = spd->this.host_addr;
-	remote->host_addr = spd->that.host_addr;
+	local->host_addr = spd->this.host->addr;
+	remote->host_addr = spd->that.host->addr;
 
 	return route;
 }
@@ -1667,8 +1667,8 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 		struct end *dst = inbound ? &c->spd.this : &c->spd.that;
 		/* XXX: merge into kernel_policy_from_spd() ? */
 		struct kernel_policy kernel_policy = proto_policy;
-		kernel_policy.host.src = src->host_addr;
-		kernel_policy.host.dst = dst->host_addr;
+		kernel_policy.host.src = src->host->addr;
+		kernel_policy.host.dst = dst->host->addr;
 		if (!raw_policy(inbound ? KP_ADD_INBOUND : KP_ADD_OUTBOUND,
 				inbound ? REPORT_NO_INBOUND : THIS_IS_NOT_INBOUND,
 				&src->client, &dst->client,
@@ -1756,7 +1756,7 @@ bool eroute_connection(enum kernel_policy_op op, const char *opname,
 		       struct logger *logger)
 {
 	if (sr->this.has_cat) {
-		ip_selector client = selector_from_address(sr->this.host_addr);
+		ip_selector client = selector_from_address(sr->this.host->addr);
 		bool t = raw_policy(op, THIS_IS_NOT_INBOUND,
 				    &client, &route->dst.client,
 				    shunt_policy,
@@ -2448,7 +2448,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound,
 	struct connection *const c = st->st_connection;
 
 	/*
-	 * If we have a new address in c->spd.that.host_addr,
+	 * If we have a new address in c->remote->host.addr,
 	 * we are the initiator, have been redirected,
 	 * and yet this routine must use the old address.
 	 *
@@ -2456,7 +2456,7 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound,
 	 * address.
 	 */
 
-	ip_address effective_remote_address = c->spd.that.host_addr;
+	ip_address effective_remote_address = c->remote->host.addr;
 	if (!endpoint_address_eq_address(st->st_remote_endpoint, effective_remote_address) &&
 	    address_is_specified(c->temp_vars.redirect_ip)) {
 		effective_remote_address = endpoint_address(st->st_remote_endpoint);
@@ -2484,11 +2484,11 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound,
 	struct dead_sa dead[3];	/* at most 3 entries */
 	unsigned nr = 0;
 	nr += append_teardown(dead + nr, inbound, &st->st_ah,
-			      c->spd.this.host_addr, effective_remote_address);
+			      c->local->host.addr, effective_remote_address);
 	nr += append_teardown(dead + nr, inbound, &st->st_esp,
-			      c->spd.this.host_addr, effective_remote_address);
+			      c->local->host.addr, effective_remote_address);
 	nr += append_teardown(dead + nr, inbound, &st->st_ipcomp,
-			      c->spd.this.host_addr, effective_remote_address);
+			      c->local->host.addr, effective_remote_address);
 	passert(nr < elemsof(dead));
 
 	/*
@@ -2635,8 +2635,8 @@ bool install_inbound_ipsec_sa(struct state *st)
 				break; /* nobody interesting has a route */
 
 			/* note: we ignore the client addresses at this end */
-			if (sameaddr(&o->spd.that.host_addr,
-					&c->spd.that.host_addr) &&
+			if (sameaddr(&o->remote->host.addr,
+					&c->remote->host.addr) &&
 				o->interface == c->interface)
 				break;  /* existing route is compatible */
 
@@ -2660,7 +2660,7 @@ bool install_inbound_ipsec_sa(struct state *st)
 			log_state(RC_LOG_SERIOUS, st,
 				  "route to peer's client conflicts with "PRI_CONNECTION" %s; releasing old connection to free the route",
 				  pri_connection(o, &cib),
-				  str_address_sensitive(&o->spd.that.host_addr, &b));
+				  str_address_sensitive(&o->remote->host.addr, &b));
 			if (o->kind == CK_INSTANCE) {
 				delete_connection(&o);
 			} else {
@@ -3267,30 +3267,30 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 
 	/*
 	 * If we were redirected (using the REDIRECT mechanism),
-	 * change spd.that.host_addr temporarily, we reset it back
+	 * change remote->host.addr temporarily, we reset it back
 	 * later.
 	 */
 	bool redirected = false;
 	ip_address tmp_host_addr = unset_address;
 	unsigned tmp_host_port = 0;
-	if (!endpoint_address_eq_address(st->st_remote_endpoint, c->spd.that.host_addr) &&
+	if (!endpoint_address_eq_address(st->st_remote_endpoint, c->remote->host.addr) &&
 	    address_is_specified(c->temp_vars.redirect_ip)) {
 		redirected = true;
-		tmp_host_addr = c->spd.that.host_addr;
+		tmp_host_addr = c->remote->host.addr;
 		tmp_host_port = c->spd.that.host->port; /* XXX: needed? */
-		c->spd.that.host_addr = endpoint_address(st->st_remote_endpoint);
+		c->remote->host.addr = endpoint_address(st->st_remote_endpoint);
 		c->spd.that.host->port = endpoint_hport(st->st_remote_endpoint);
 	}
 
 	const ip_address *src, *dst;
 	ipsec_spi_t spi;
 	if (inbound) {
-		src = &c->spd.that.host_addr;
-		dst = &c->spd.this.host_addr;
+		src = &c->remote->host.addr;
+		dst = &c->local->host.addr;
 		spi = p2->our_spi;
 	} else {
-		src = &c->spd.this.host_addr;
-		dst = &c->spd.that.host_addr;
+		src = &c->local->host.addr;
+		dst = &c->remote->host.addr;
 		spi = p2->attrs.spi;
 	}
 
@@ -3334,7 +3334,7 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 	}
 
 	if (redirected) {
-		c->spd.that.host_addr = tmp_host_addr;
+		c->remote->host.addr = tmp_host_addr;
 		c->spd.that.host->port = tmp_host_port;
 	}
 
@@ -3416,8 +3416,8 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 			dbg("kernel: replacing negotiation_shunt with failure_shunt");
 
 			/* fudge up parameter list */
-			const ip_address *src_address = &sr->this.host_addr;
-			const ip_address *dst_address = &sr->that.host_addr;
+			const ip_address *src_address = &sr->this.host->addr;
+			const ip_address *dst_address = &sr->that.host->addr;
 			policy_prio_t policy_prio = BOTTOM_PRIO;	/* of replacing shunt*/
 			const char *why = "oe-failed";
 

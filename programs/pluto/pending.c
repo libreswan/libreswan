@@ -77,7 +77,7 @@ static void add_pending(struct fd *whack_sock,
 			dbg("connection "PRI_CONNECTION" is already pending: waiting on IKE SA #%lu connecting to %s; %s",
 			    pri_connection(c, &cib),
 			    p->ike->sa.st_serialno,
-			    str_address(&c->spd.that.host_addr, &b),
+			    str_address(&c->remote->host.addr, &b),
 			    duplicate ? "ignoring duplicate" : "this IKE SA is different");
 			if (duplicate) {
 				return;
@@ -111,7 +111,7 @@ static void add_pending(struct fd *whack_sock,
 			    /* "IKE SA" or "ISAKMP SA" */
 			    enum_name(&ike_version_parent_sa_names, p->connection->config->ike_version),
 			    pri_state(&ike->sa, &sab),
-			    ipstr(&c->spd.that.host_addr, &b));
+			    ipstr(&c->remote->host.addr, &b));
 	}
 	host_pair_enqueue_pending(c, p);
 }
@@ -343,7 +343,7 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 			dbg("%s pending %s with %s "PRI_CONNECTION"",
 			    what,
 			    (ike->sa.st_ike_version == IKEv2) ? "Child SA" : "Quick Mode",
-			    str_address(&p->connection->spd.that.host_addr, &b),
+			    str_address(&p->connection->remote->host.addr, &b),
 			    pri_connection(p->connection, &cib));
 
 			p->connection = NULL;           /* ownership transferred */

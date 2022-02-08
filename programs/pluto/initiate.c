@@ -58,7 +58,7 @@ bool initiate_connection(struct connection *c, const char *remote_host, bool bac
 
 	/* If whack supplied a remote IP, fill it in if we can */
 	if (remote_host != NULL &&
-	    !address_is_specified(c->spd.that.host_addr)) {
+	    !address_is_specified(c->remote->host.addr)) {
 		ip_address remote_ip;
 
 		ttoaddress_num(shunk1(remote_host), NULL/*UNSPEC*/, &remote_ip);
@@ -108,8 +108,8 @@ bool initiate_connection_2(struct connection *c,
 		ipstr_buf b;
 		llog(RC_ORIENT, c->logger,
 		     "we cannot identify ourselves with either end of this connection.  %s or %s are not usable",
-		     ipstr(&c->spd.this.host_addr, &a),
-		     ipstr(&c->spd.that.host_addr, &b));
+		     ipstr(&c->local->host.addr, &a),
+		     ipstr(&c->remote->host.addr, &b));
 		return false;
 	}
 
@@ -122,7 +122,7 @@ bool initiate_connection_2(struct connection *c,
 	if ((remote_host == NULL) &&
 	    (c->kind != CK_PERMANENT) &&
 	    !(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
-		if (!address_is_specified(c->spd.that.host_addr)) {
+		if (!address_is_specified(c->remote->host.addr)) {
 			if (c->dnshostname != NULL) {
 				esb_buf b;
 				llog(RC_NOPEERIP, c->logger,
@@ -142,7 +142,7 @@ bool initiate_connection_2(struct connection *c,
 		}
 	}
 
-	if (!address_is_specified(c->spd.that.host_addr) &&
+	if (!address_is_specified(c->remote->host.addr) &&
 	    (c->policy & POLICY_IKEV2_ALLOW_NARROWING) ) {
 		if (c->dnshostname != NULL) {
 			esb_buf b;
@@ -439,8 +439,8 @@ static bool same_host(const char *a_dnshostname, const ip_address *a_host_addr,
 static bool same_in_some_sense(const struct connection *a,
 			const struct connection *b)
 {
-	return same_host(a->dnshostname, &a->spd.that.host_addr,
-			b->dnshostname, &b->spd.that.host_addr);
+	return same_host(a->dnshostname, &a->remote->host.addr,
+			b->dnshostname, &b->remote->host.addr);
 }
 
 void restart_connections_by_peer(struct connection *const c, struct logger *logger)
@@ -460,7 +460,7 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
 
 	char *dnshostname = clone_str(c->dnshostname, "dnshostname for restart");
 
-	ip_address host_addr = c->spd.that.host_addr;
+	ip_address host_addr = c->remote->host.addr;
 
 	struct connection *d;
 
@@ -468,7 +468,7 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
 		struct connection *next = d->hp_next; /* copy before d is deleted, CK_INSTANCE */
 
 		if (same_host(dnshostname, &host_addr,
-			      d->dnshostname, &d->spd.that.host_addr)) {
+			      d->dnshostname, &d->remote->host.addr)) {
 			/* This might delete c if CK_INSTANCE */
 			/* ??? is there a chance hp becomes dangling? */
 			terminate_connections_by_name(d->name, /*quiet?*/false, logger);
@@ -481,7 +481,7 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
 		update_host_pairs(c);
 		/* host_pair/host_addr changes with dynamic dns */
 		hp = c->host_pair;
-		host_addr = c->spd.that.host_addr;
+		host_addr = c->remote->host.addr;
 	}
 
 	if (c_kind == CK_INSTANCE && hp_next == NULL) {
@@ -490,7 +490,7 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
 	} else {
 		for (d = hp->connections; d != NULL; d = d->hp_next) {
 			if (same_host(dnshostname, &host_addr,
-					d->dnshostname, &d->spd.that.host_addr))
+					d->dnshostname, &d->remote->host.addr))
 				initiate_connections_by_name(d->name, /*remote-host*/NULL,
 							     /*background?*/true, logger);
 		}
@@ -1071,7 +1071,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	 * changed IP?  The connection might need to get its host_addr
 	 * updated.  Do we do that when terminating the conn?
 	 */
-	if (address_is_specified(c->spd.that.host_addr)) {
+	if (address_is_specified(c->remote->host.addr)) {
 		connection_buf cib;
 		dbg("pending ddns: connection "PRI_CONNECTION" has address",
 		    pri_connection(c, &cib));
@@ -1116,7 +1116,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	 * This cannot currently be reached.  If in the future we do,
 	 * don't do weird things
 	 */
-	if (sameaddr(&new_addr, &c->spd.that.host_addr)) {
+	if (sameaddr(&new_addr, &c->remote->host.addr)) {
 		connection_buf cib;
 		dbg("pending ddns: IP address unchanged for connection "PRI_CONNECTION"",
 		    pri_connection(c, &cib));
@@ -1141,9 +1141,9 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	address_buf old, new;
 	dbg("pending ddns: updating IP address for %s from %s to %s",
 	    c->dnshostname,
-	    str_address_sensitive(&c->spd.that.host_addr, &old),
+	    str_address_sensitive(&c->remote->host.addr, &old),
 	    str_address_sensitive(&new_addr, &new));
-	c->spd.that.host_addr = new_addr;
+	c->remote->host.addr = new_addr;
 	update_ends_from_this_host_addr(&c->spd.that, &c->spd.this);
 
 	/*
@@ -1231,7 +1231,7 @@ void connection_check_phase2(struct logger *logger)
 		llog(RC_LOG, c->logger,
 		     "%s SA negotiating with %s took too long -- replacing",
 		     str_enum(&ike_version_ike_names, c->config->ike_version, &eb),
-		     str_address_sensitive(&c->spd.that.host_addr, &ab));
+		     str_address_sensitive(&c->remote->host.addr, &ab));
 
 		struct state *p1st;
 		switch (c->config->ike_version) {

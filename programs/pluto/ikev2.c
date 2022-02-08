@@ -2553,8 +2553,8 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 
 				if (bs != NULL) {
 					dbg("deleting old bare shunt");
-					if (!delete_bare_shunt(&c->spd.this.host_addr,
-							       &c->spd.that.host_addr,
+					if (!delete_bare_shunt(&c->local->host.addr,
+							       &c->remote->host.addr,
 							       protocol_by_ipproto(c->spd.this.client.ipproto),
 							       /*skip_policy_delete?*/true,
 							       "installed IPsec SA replaced old bare shunt",

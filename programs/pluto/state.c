@@ -1909,7 +1909,7 @@ struct state *find_phase1_state(const struct connection *c, lset_t ok_states)
 		    c->config->ike_version == st->st_ike_version &&
 		    c->host_pair == st->st_connection->host_pair &&
 		    same_peer_ids(c, st->st_connection, NULL) &&
-		    endpoint_address_eq_address(st->st_remote_endpoint, c->spd.that.host_addr) &&
+		    endpoint_address_eq_address(st->st_remote_endpoint, c->remote->host.addr) &&
 		    IS_IKE_SA(st) &&
 		    (best == NULL || best->st_serialno < st->st_serialno))
 		{
@@ -2152,26 +2152,26 @@ static void show_established_child_details(struct show *s, struct state *st)
 		/* SAIDs */
 
 		if (st->st_ah.present) {
-			add_said(c->spd.that.host_addr,
+			add_said(c->remote->host.addr,
 				 &ip_protocol_ah,
 				 st->st_ah.attrs.spi);
-			add_said(c->spd.this.host_addr,
+			add_said(c->local->host.addr,
 				 &ip_protocol_ah,
 				 st->st_ah.our_spi);
 		}
 		if (st->st_esp.present) {
-			add_said(c->spd.that.host_addr,
+			add_said(c->remote->host.addr,
 				 &ip_protocol_esp,
 				 st->st_esp.attrs.spi);
-			add_said(c->spd.this.host_addr,
+			add_said(c->local->host.addr,
 				 &ip_protocol_esp,
 				 st->st_esp.our_spi);
 		}
 		if (st->st_ipcomp.present) {
-			add_said(c->spd.that.host_addr,
+			add_said(c->remote->host.addr,
 				 &ip_protocol_ipcomp,
 				 st->st_ipcomp.attrs.spi);
-			add_said(c->spd.this.host_addr,
+			add_said(c->local->host.addr,
 				 &ip_protocol_ipcomp,
 				 st->st_ipcomp.our_spi);
 		}
@@ -2179,10 +2179,10 @@ static void show_established_child_details(struct show *s, struct state *st)
 		if (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
 		    st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
 		    st->st_ipcomp.attrs.mode == ENCAPSULATION_MODE_TUNNEL) {
-			add_said(c->spd.that.host_addr,
+			add_said(c->remote->host.addr,
 				 &ip_protocol_ipip,
 				 (ipsec_spi_t)0);
-			add_said(c->spd.this.host_addr,
+			add_said(c->local->host.addr,
 				 &ip_protocol_ipip,
 				 (ipsec_spi_t)0);
 		}
@@ -2501,8 +2501,8 @@ ipsec_spi_t uniquify_peer_cpi(ipsec_spi_t cpi, const struct state *st, int tries
 	while (next_state_new2old(&sf)) {
 		struct state *s = sf.st;
 		if (s->st_ipcomp.present &&
-		    sameaddr(&s->st_connection->spd.that.host_addr,
-			     &st->st_connection->spd.that.host_addr) &&
+		    sameaddr(&s->st_connection->remote->host.addr,
+			     &st->st_connection->remote->host.addr) &&
 		    cpi == s->st_ipcomp.attrs.spi)
 		{
 			if (++tries == 20)
@@ -2572,7 +2572,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	struct child_sa *child = child_sa_by_serialno(c->newest_ipsec_sa);
 
 	/* check for all conditions before updating IPsec SA's */
-	if (afi != address_type(&c->spd.that.host_addr)) {
+	if (afi != address_type(&c->remote->host.addr)) {
 		log_state(RC_LOG, &ike->sa,
 			  "MOBIKE: AF change switching between v4 and v6 not supported");
 		return false;
@@ -2640,7 +2640,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	switch (md_role) {
 	case MESSAGE_RESPONSE:
 		/* MOBIKE initiator processing response */
-		c->spd.this.host_addr = endpoint_address(child->sa.st_mobike_local_endpoint);
+		c->local->host.addr = endpoint_address(child->sa.st_mobike_local_endpoint);
 		dbg("%s() %s.host_port: %u->%u", __func__, c->spd.this.config->leftright,
 		    c->spd.this.host->port, endpoint_hport(child->sa.st_mobike_local_endpoint));
 		c->spd.this.host->port = endpoint_hport(child->sa.st_mobike_local_endpoint);
@@ -2648,7 +2648,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 		break;
 	case MESSAGE_REQUEST:
 		/* MOBIKE responder processing request */
-		c->spd.that.host_addr = endpoint_address(md->sender);
+		c->remote->host.addr = endpoint_address(md->sender);
 		dbg("%s() %s.host_port: %u->%u", __func__, c->spd.that.config->leftright,
 		    c->spd.that.host->port, endpoint_hport(md->sender));
 		c->spd.that.host->port = endpoint_hport(md->sender);

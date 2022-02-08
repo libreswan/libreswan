@@ -524,9 +524,9 @@ static void initiate_redirect(const char *story, struct state *ike_sa, void *con
 	c->temp_vars.num_redirects++;
 
 	/* save old address for REDIRECTED_FROM notify */
-	c->temp_vars.old_gw_address = c->spd.that.host_addr;
+	c->temp_vars.old_gw_address = c->remote->host.addr;
 	/* update host_addr of other end, port stays the same */
-	c->spd.that.host_addr = redirect_ip;
+	c->remote->host.addr = redirect_ip;
 
 	address_buf b;
 	llog_sa(RC_LOG, ike,

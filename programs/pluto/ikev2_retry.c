@@ -129,11 +129,11 @@ void retransmit_v2_msg(struct state *ike_sa)
 		ipstr_buf b;
 		connection_buf cib;
 		DBG_log("handling event EVENT_RETRANSMIT for %s "PRI_CONNECTION" #%lu attempt %lu of %lu",
-			ipstr(&c->spd.that.host_addr, &b),
+			ipstr(&c->remote->host.addr, &b),
 			pri_connection(c, &cib),
 			ike->sa.st_serialno, try, try_limit);
 		DBG_log("and parent for %s "PRI_CONNECTION" #%lu keying attempt %lu of %lu; retransmit %lu",
-			ipstr(&c->spd.that.host_addr, &b),
+			ipstr(&c->remote->host.addr, &b),
 			pri_connection(c, &cib),
 			ike->sa.st_serialno,
 			ike->sa.st_try, try_limit,

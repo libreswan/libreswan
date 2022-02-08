@@ -416,7 +416,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	    /* case 1: */
 	    ( remote_id_was_instantiated(c) &&
 	      !(c->policy & POLICY_AGGRESSIVE) &&
-	      !address_is_specified(c->spd.that.host_addr) ) ||
+	      !address_is_specified(c->remote->host.addr) ) ||
 
 	    /* case 2 */
 	    ( (c->policy & POLICY_PSK) &&
@@ -426,16 +426,16 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		( c->kind == CK_INSTANCE &&
 		  id_is_ipaddr(&c->remote->host.id) &&
 		  /* Check if we are a road warrior instantiation, not a vnet: instantiation */
-		  !address_is_specified(c->spd.that.host_addr) ) ) ) ) {
+		  !address_is_specified(c->remote->host.addr) ) ) ) ) {
 		/*
 		 * Since the remote host_addr isn't specified it's
 		 * AFI isn't known; but presumably the local end
 		 * is oriented and known.
 		 */
-		pexpect(address_is_specified(c->spd.this.host_addr));
+		pexpect(address_is_specified(c->local->host.addr));
 		/* roadwarrior: replace that with %ANYADDR */
-		rw_id.kind = address_type(&c->spd.this.host_addr)->id_ip_addr;
-		rw_id.ip_addr = address_type(&c->spd.this.host_addr)->address.unspec;
+		rw_id.kind = address_type(&c->local->host.addr)->id_ip_addr;
+		rw_id.ip_addr = address_type(&c->local->host.addr)->address.unspec;
 		id_buf old_buf, new_buf;
 		dbg("%s() switching remote roadwarrier ID from %s to %s (%%ANYADDR)",
 		    __func__, str_id(that_id, &old_buf), str_id(&rw_id, &new_buf));

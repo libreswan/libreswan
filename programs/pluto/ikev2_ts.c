@@ -146,7 +146,7 @@ static void traffic_selector_to_end(const struct narrowed_traffic_selector *n,
 	ip_port port = ip_hport(n->port);
 	end->client = selector_from_range_protocol_port(n->range, n->protocol, port);
 	/* redundant? */
-	end->has_client = !selector_eq_address(end->client, end->host_addr);
+	end->has_client = !selector_eq_address(end->client, end->host->addr);
 }
 
 /* rewrite me with address_as_{chunk,shunk}()? */
@@ -1588,7 +1588,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			struct connection *s;
 			if (v2_child_connection_probably_shared(child, indent)) {
 				/* instantiate it, filling in peer's ID */
-				s = instantiate(t, &child->sa.st_connection->spd.that.host_addr,
+				s = instantiate(t, &child->sa.st_connection->remote->host.addr,
 						NULL, /*sec_label*/null_shunk);
 			} else {
 				s = child->sa.st_connection;
@@ -1640,7 +1640,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 		 * a proper instance, and then update its selectors.
 		 */
 		struct connection *s = instantiate(best.connection,
-						   &child->sa.st_connection->spd.that.host_addr,
+						   &child->sa.st_connection->remote->host.addr,
 						   NULL, best.selected_sec_label);
 		scribble_request_ts_on_connection(child, s, best.score.n, indent);
 

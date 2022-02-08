@@ -226,7 +226,7 @@ void initialize_new_state(struct state *st,
 	pexpect(st->st_interface == NULL); /* no-leak */
 	st->st_interface = iface_endpoint_addref(c->interface);
 	passert(st->st_interface != NULL);
-	st->st_remote_endpoint = endpoint_from_address_protocol_port(c->spd.that.host_addr,
+	st->st_remote_endpoint = endpoint_from_address_protocol_port(c->remote->host.addr,
 								     c->interface->io->protocol,
 								     ip_hport(c->spd.that.host->port));
 	endpoint_buf eb;
