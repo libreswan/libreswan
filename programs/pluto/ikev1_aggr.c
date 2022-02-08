@@ -753,7 +753,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 	/* It seems as per Cisco implementation, XAUTH and MODECFG
 	 * are not supposed to be performed again during rekey
 	 */
-	if (c->newest_ike_sa != SOS_NOBODY && c->spd.this.config->host.xauth.client &&
+	if (c->newest_ike_sa != SOS_NOBODY && c->local->config->host.xauth.client &&
 	    c->remotepeertype == CISCO) {
 		dbg("skipping XAUTH for rekey for Cisco Peer compatibility.");
 		st->hidden_variables.st_xauth_client_done = true;
@@ -766,7 +766,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 		}
 	}
 
-	if (c->newest_ike_sa != SOS_NOBODY && c->spd.this.config->host.xauth.client &&
+	if (c->newest_ike_sa != SOS_NOBODY && c->local->config->host.xauth.client &&
 	    c->remotepeertype == CISCO) {
 		dbg("this seems to be rekey, and XAUTH is not supposed to be done again");
 		st->hidden_variables.st_xauth_client_done = true;
@@ -906,7 +906,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	 * are not supposed to be performed again during rekey
 	 */
 	if (c->newest_ike_sa != SOS_NOBODY &&
-	    st->st_connection->spd.this.config->host.xauth.client &&
+	    st->st_connection->local->config->host.xauth.client &&
 	    st->st_connection->remotepeertype == CISCO) {
 		dbg("skipping XAUTH for rekey for Cisco Peer compatibility.");
 		st->hidden_variables.st_xauth_client_done = true;
@@ -920,7 +920,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	}
 
 	if (c->newest_ike_sa != SOS_NOBODY &&
-	    st->st_connection->spd.this.config->host.xauth.client &&
+	    st->st_connection->local->config->host.xauth.client &&
 	    st->st_connection->remotepeertype == CISCO) {
 		dbg("this seems to be rekey, and XAUTH is not supposed to be done again");
 		st->hidden_variables.st_xauth_client_done = true;

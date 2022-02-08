@@ -388,12 +388,12 @@ static struct connection *refine_host_connection_on_responder(int indent,
 				 * what the remote end has sent in the
 				 * IKE_AUTH request.
 				 */
-				if (!LHAS(proposed_authbys, d->spd.that.config->host.authby)) {
+				if (!LHAS(proposed_authbys, d->remote->config->host.authby)) {
 					dbg_rhc("skipping because mismatched authby");
 					continue;
 				}
 				/* check that the chosen one has a key */
-				switch (d->spd.that.config->host.authby) {
+				switch (d->remote->config->host.authby) {
 				case AUTHBY_PSK:
 					/*
 					 * XXX: This tries to find the

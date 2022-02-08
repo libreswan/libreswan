@@ -126,7 +126,7 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 enum keyword_authby v2_auth_by(struct ike_sa *ike)
 {
 	const struct connection *c = ike->sa.st_connection;
-	enum keyword_authby authby = c->spd.this.config->host.authby;
+	enum keyword_authby authby = c->local->config->host.authby;
 	if (ike->sa.st_peer_wants_null) {
 		/* we allow authby=null and IDr payload told us to use it */
 		authby = AUTHBY_NULL;

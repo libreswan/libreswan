@@ -1467,15 +1467,15 @@ void process_v1_packet(struct msg_digest *md)
 				esb_buf b;
 				dbg("received isakmp_xchg_type %s; this is a%s%s%s%s in state %s. Reply with UNSUPPORTED_EXCHANGE_TYPE",
 				    enum_show(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
-				    st->st_connection ->spd.this.config->host.xauth.server ? " xauthserver" : "",
-				    st->st_connection->spd.this.config->host.xauth.client ? " xauthclient" : "",
+				    st->st_connection ->local->config->host.xauth.server ? " xauthserver" : "",
+				    st->st_connection->local->config->host.xauth.client ? " xauthclient" : "",
 				    st->st_connection->spd.this.modecfg_server ? " modecfgserver" : "",
 				    st->st_connection->spd.this.modecfg_client ? " modecfgclient" : "",
 				    st->st_state->name);
 				return;
 			}
 		} else {
-			if (st->st_connection->spd.this.config->host.xauth.server &&
+			if (st->st_connection->local->config->host.xauth.server &&
 			    IS_V1_PHASE1(st->st_state->kind)) {
 				/* Switch from Phase1 to Mode Config */
 				dbg("We were in phase 1, with no state, so we went to XAUTH_R0");
@@ -2459,7 +2459,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 * we have XAUTH but not ModeCFG. We move it to the established
 		 * state, so the regular state machine picks up the Quick Mode.
 		 */
-		if (st->st_connection->spd.this.config->host.xauth.client &&
+		if (st->st_connection->local->config->host.xauth.client &&
 		    st->hidden_variables.st_xauth_client_done &&
 		    !st->st_connection->spd.this.modecfg_client &&
 		    st->st_state->kind == STATE_XAUTH_I1)
@@ -2539,7 +2539,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		struct connection *c = st->st_connection;
 
 		/* fixup in case of state machine jump for xauth without modecfg */
-		if (c->spd.this.config->host.xauth.client &&
+		if (c->local->config->host.xauth.client &&
 		    st->hidden_variables.st_xauth_client_done &&
 		    !c->spd.this.modecfg_client &&
 		    (st->st_state->kind == STATE_MAIN_I4 || st->st_state->kind == STATE_AGGR_I2)) {
@@ -2705,7 +2705,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		}
 
 		/* Special case for XAUTH server */
-		if (st->st_connection->spd.this.config->host.xauth.server) {
+		if (st->st_connection->local->config->host.xauth.server) {
 			if (st->st_oakley.doing_xauth &&
 			    IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 				dbg("XAUTH: Sending XAUTH Login/Password Request");
@@ -2721,7 +2721,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 * stay in this state, and let the server query us
 		 */
 		if (!IS_V1_QUICK(st->st_state->kind) &&
-		    st->st_connection->spd.this.config->host.xauth.client &&
+		    st->st_connection->local->config->host.xauth.client &&
 		    !st->hidden_variables.st_xauth_client_done) {
 			dbg("XAUTH client is not yet authenticated");
 			break;
@@ -2981,9 +2981,9 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
 	bool authnull = (LIN(POLICY_AUTH_NULL, c->policy) ||
-			 c->spd.that.config->host.authby == AUTHBY_NULL);
+			 c->remote->config->host.authby == AUTHBY_NULL);
 
-	if (c->spd.this.config->host.xauth.server && LIN(POLICY_PSK, c->policy)) {
+	if (c->local->config->host.xauth.server && LIN(POLICY_PSK, c->policy)) {
 		/*
 		 * If we are a server and use PSK, all clients use the same group ID
 		 * Note that "xauth_server" also refers to IKEv2 CP
@@ -3010,7 +3010,7 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 			    same_id(&c->spd.that.id, &d->spd.that.id))
 			{
 				bool old_is_nullauth = (LIN(POLICY_AUTH_NULL, d->policy) ||
-							d->spd.that.config->host.authby == AUTHBY_NULL);
+							d->remote->config->host.authby == AUTHBY_NULL);
 				bool same_remote_ip = sameaddr(&c->spd.that.host_addr, &d->spd.that.host_addr);
 
 				if (same_remote_ip && (!old_is_nullauth && authnull)) {

@@ -336,12 +336,12 @@ static bool can_reuse_lease(const struct connection *c)
 	 * a non-unique ID_IP* due to clients using pre-NAT IP address
 	 */
 	if (((c->policy & POLICY_PSK) != LEMPTY) ||
-	    c->spd.that.config->host.authby == AUTHBY_PSK)
+	    c->remote->config->host.authby == AUTHBY_PSK)
 		return false;
 
 	/* Cannot share with NULL authentication */
 	if (((c->policy & POLICY_AUTH_NULL) != LEMPTY) ||
-	    c->spd.that.config->host.authby == AUTHBY_NULL)
+	    c->remote->config->host.authby == AUTHBY_NULL)
 		return false;
 
 	/* Cannot share NULL/NONE ID. Also cannot share ID_IP* due to NAT and dynamic IP */
