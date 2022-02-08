@@ -1262,7 +1262,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			 * current connection - it needs a score.
 			 */
 			if (d->kind == CK_INSTANCE &&
-			    d->spd.that.id.kind == ID_NULL &&
+			    d->remote->host.id.kind == ID_NULL &&
 			    d != child->sa.st_connection) {
 				connection_buf cb;
 				dbg_ts("skipping "PRI_CONNECTION", ID_NULL instance (and not original)",
@@ -1305,8 +1305,8 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 
 			/*
 			 * ??? same_id && match_id seems redundant.
-			 * if d->spd.this.id.kind == ID_NONE, both TRUE
-			 * else if c->spd.this.id.kind == ID_NONE,
+			 * if d->local->host.id.kind == ID_NONE, both TRUE
+			 * else if c->local->host.id.kind == ID_NONE,
 			 *     same_id treats it as a wildcard and match_id
 			 *     does not.  Odd.
 			 * else if kinds differ, match_id FALSE
@@ -1323,8 +1323,8 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 				int wildcards;	/* value ignored */
 				int pathlen;	/* value ignored */
 
-				if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
-				      match_id("ts:       ", &c->spd.that.id, &d->spd.that.id, &wildcards) &&
+				if (!(same_id(&c->local->host.id, &d->local->host.id) &&
+				      match_id("ts:       ", &c->remote->host.id, &d->remote->host.id, &wildcards) &&
 				      trusted_ca_nss(c->remote->config->host.ca,
 						     d->remote->config->host.ca, &pathlen))) {
 					connection_buf cb;

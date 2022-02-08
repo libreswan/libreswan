@@ -275,6 +275,7 @@ struct host_end {
 	uint16_t port;			/* where the IKE port is */
 	ip_address nexthop;		/* identifes interface to send packets */
 	struct end *backdoor;		/* hack to get at stuff in struct end that should be here */
+	struct id id;
 };
 
 struct client_end {
@@ -288,8 +289,6 @@ struct connection_end {
 };
 
 struct /*spd_*/end {
-	struct id id;
-
 	ip_address host_addr;
 	ip_address
 		host_srcip;
@@ -552,8 +551,8 @@ extern void rekey_now(const char *name, enum sa_type sa_type,
 
 #define remote_id_was_instantiated(c) \
 	( (c)->kind == CK_INSTANCE && \
-	  ( !id_is_ipaddr(&(c)->spd.that.id) || \
-	    sameaddr(&(c)->spd.that.id.ip_addr, &(c)->spd.that.host_addr) ) )
+	  ( !id_is_ipaddr(&(c)->remote->host.id) || \
+	    sameaddr(&(c)->remote->host.id.ip_addr, &(c)->spd.that.host_addr) ) )
 
 struct state;   /* forward declaration of tag (defined in state.h) */
 

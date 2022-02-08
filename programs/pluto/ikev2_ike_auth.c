@@ -257,8 +257,8 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 
 	bool send_cert = ikev2_send_cert_decision(ike);
 	bool ic =  pc->initial_contact && (ike->sa.st_ike_pred == SOS_NOBODY);
-	bool send_idr = ((pc->spd.that.id.kind != ID_NULL && pc->spd.that.id.name.len != 0) ||
-				pc->spd.that.id.kind == ID_NULL); /* me tarzan, you jane */
+	bool send_idr = ((pc->remote->host.id.kind != ID_NULL && pc->remote->host.id.name.len != 0) ||
+				pc->remote->host.id.kind == ID_NULL); /* me tarzan, you jane */
 
 	if (impair.send_no_idr) {
 		log_state(RC_LOG, &ike->sa, "IMPAIR: omitting IDr payload");
@@ -308,7 +308,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 
 	/* you Tarzan, me Jane support */
 	if (send_idr) {
-		switch (pc->spd.that.id.kind) {
+		switch (pc->remote->host.id.kind) {
 		case ID_DER_ASN1_DN:
 		case ID_FQDN:
 		case ID_USER_FQDN:
@@ -332,7 +332,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		{
 			esb_buf b;
 			dbg("Not sending IDr payload for remote ID type %s",
-			    enum_show(&ike_id_type_names, pc->spd.that.id.kind, &b));
+			    enum_show(&ike_id_type_names, pc->remote->host.id.kind, &b));
 			break;
 		}
 		}
@@ -883,7 +883,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 	 */
 	if (ike->sa.st_connection->policy & POLICY_IKEV2_PAM_AUTHORIZE) {
 		id_buf thatidb;
-		const char *thatid = str_id(&ike->sa.st_connection->spd.that.id, &thatidb);
+		const char *thatid = str_id(&ike->sa.st_connection->remote->host.id, &thatidb);
 		llog_sa(RC_LOG, ike,
 			"IKEv2: [XAUTH]PAM method requested to authorize '%s'",
 			thatid);
@@ -1049,7 +1049,7 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike)
 			struct state *old_p2 = state_by_serialno(c->newest_ipsec_sa);
 			struct connection *d = old_p2 == NULL ? NULL : old_p2->st_connection;
 
-			if (c == d && same_id(&c->spd.that.id, &d->spd.that.id)) {
+			if (c == d && same_id(&c->remote->host.id, &d->remote->host.id)) {
 				dbg("Initial Contact received, deleting old state #%lu from connection '%s' due to new IKE SA #%lu",
 				    c->newest_ipsec_sa, c->name, ike->sa.st_serialno);
 				old_p2->st_send_delete = DONT_SEND_DELETE;

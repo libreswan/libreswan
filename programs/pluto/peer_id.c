@@ -64,7 +64,7 @@ static bool idr_wildmatch(const struct end *this, const struct id *idr, struct l
 		llog_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
 	}
 
-	const struct id *wild = &this->id;
+	const struct id *wild = &this->host->id;
 
 	/* if not both ID_FQDN, fall back to same_id (no wildcarding possible) */
 	if (idr->kind != ID_FQDN || wild->kind != ID_FQDN)
@@ -252,7 +252,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			 * instance which is allowed to have no
 			 * authentication.
 			 */
-			if (c != d && d->kind == CK_INSTANCE && d->spd.that.id.kind == ID_NULL) {
+			if (c != d && d->kind == CK_INSTANCE && d->remote->host.id.kind == ID_NULL) {
 				connection_buf cb;
 				dbg_rhc("skipping ID_NULL instance "PRI_CONNECTION"",
 					pri_connection(d, &cb));
@@ -333,8 +333,8 @@ static struct connection *refine_host_connection_on_responder(int indent,
 				id_buf usb;
 				esb_buf usesb;
 				dbg_rhc("this connection's local id is %s (%s)",
-				    str_id(&d->spd.this.id, &usb),
-				    enum_show(&ike_id_type_names, d->spd.this.id.kind, &usesb));
+				    str_id(&d->local->host.id, &usb),
+				    enum_show(&ike_id_type_names, d->local->host.id.kind, &usesb));
 				/* ??? pexpect(d->spd.spd_next == NULL); */
 				if (!idr_wildmatch(&d->spd.this, tarzan_id, st->st_logger)) {
 					dbg_rhc("skipping because peer IDr payload does not match our expected ID");
@@ -446,7 +446,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			int wildcards = 0;
 			bool matching_peer_id =
 				match_id("rhc:       ",
-					 peer_id, &d->spd.that.id, &wildcards);
+					 peer_id, &d->remote->host.id, &wildcards);
 
 			/*
 			 * Check if peer_id matches, exactly or after
@@ -458,7 +458,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			 */
 			if (!matching_peer_id) {
 				/* must be checking certs */
-				if (d->spd.that.id.kind != ID_FROMCERT) {
+				if (d->remote->host.id.kind != ID_FROMCERT) {
 					dbg_rhc("skipping because peer_id does not match and that.id.kind is not a cert");
 					continue;
 				}
@@ -624,7 +624,7 @@ diag_t update_peer_id_certs(struct ike_sa *ike)
        dbg("rhc: comparing certificate: %s", end_cert->subjectName);
 
        struct id remote_cert_id = empty_id;
-       diag_t d = match_end_cert_id(certs, &c->spd.that.id, &remote_cert_id);
+       diag_t d = match_end_cert_id(certs, &c->remote->host.id, &remote_cert_id);
 
        if (d == NULL) {
 	       dbg("X509: CERT and ID matches current connection");
@@ -634,7 +634,7 @@ diag_t update_peer_id_certs(struct ike_sa *ike)
        } else if (LIN(POLICY_ALLOW_NO_SAN, c->policy)) {
 	       id_buf idb;
 	       dbg("X509: CERT '%s' and ID '%s' don't match but POLICY_ALLOW_NO_SAN",
-		   end_cert->subjectName, str_id(&c->spd.that.id, &idb));
+		   end_cert->subjectName, str_id(&c->remote->host.id, &idb));
 	       llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 	       llog_sa(RC_LOG, ike, "X509: connection allows unmatched IKE ID and certificate SAN");
        } else {
@@ -651,7 +651,7 @@ diag_t update_peer_id(struct ike_sa *ike, const struct id *peer_id, const struct
 
 	struct connection *const c = ike->sa.st_connection; /* no longer changing */
 
-	if (c->spd.that.id.kind == ID_FROMCERT) {
+	if (c->remote->host.id.kind == ID_FROMCERT) {
 #if 0
 		if (peer_id->kind != ID_DER_ASN1_DN) {
 			id_buf idb;
@@ -665,7 +665,7 @@ diag_t update_peer_id(struct ike_sa *ike, const struct id *peer_id, const struct
 		dbg("rhc: %%fromcert and no certificate payload - continuing with peer ID %s",
 		    str_id(peer_id, &idb));
 		replace_connection_that_id(c, peer_id);
-	} else if (same_id(&c->spd.that.id, peer_id)) {
+	} else if (same_id(&c->remote->host.id, peer_id)) {
 		id_buf idb;
 		dbg("rhc: peer ID matches and no certificate payload - continuing with peer ID %s",
 		    str_id(peer_id, &idb));

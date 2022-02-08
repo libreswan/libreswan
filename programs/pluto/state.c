@@ -543,7 +543,7 @@ void delete_state_by_id_name(struct state *st, const char *name)
 		return;
 
 	id_buf thatidb;
-	const char *thatidbuf = str_id(&c->spd.that.id, &thatidb);
+	const char *thatidbuf = str_id(&c->remote->host.id, &thatidb);
 	if (streq(thatidbuf, name)) {
 		struct ike_sa *ike = pexpect_ike_sa(st);
 		delete_ike_family(&ike, PROBABLY_SEND_DELETE);
@@ -1982,7 +1982,7 @@ static void jam_state_traffic(struct jambuf *buf, struct state *st)
 
 	if (st->st_xauth_username[0] == '\0') {
 		jam(buf, ", id='");
-		jam_id_bytes(buf, &c->spd.that.id, jam_sanitized_bytes);
+		jam_id_bytes(buf, &c->remote->host.id, jam_sanitized_bytes);
 		jam(buf, "'");
 	}
 

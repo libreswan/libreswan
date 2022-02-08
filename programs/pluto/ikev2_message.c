@@ -1374,7 +1374,7 @@ struct ikev2_id build_v2_id_payload(const struct end *end, shunk_t *body,
 				    const char *what, struct logger *logger)
 {
 	struct ikev2_id id_header = {
-		.isai_type = id_to_payload(&end->id, &end->host_addr, body),
+		.isai_type = id_to_payload(&end->host->id, &end->host_addr, body),
 		.isai_critical = build_ikev2_critical(false, logger),
 	};
 	if (impair.send_nonzero_reserved_id) {

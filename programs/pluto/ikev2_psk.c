@@ -162,7 +162,7 @@ static diag_t ikev2_calculate_psk_sighash(bool verify,
 		if (psk == NULL) {
 			id_buf idb;
 			return diag("authentication failed: no PSK found for '%s'",
-				    str_id(&c->spd.this.id, &idb));
+				    str_id(&c->local->host.id, &idb));
 		}
 
 		/* XXX: this should happen during connection load */
@@ -171,7 +171,7 @@ static diag_t ikev2_calculate_psk_sighash(bool verify,
 			if (libreswan_fipsmode()) {
 				id_buf idb;
 				return diag("FIPS: authentication failed: '%s' PSK length of %zu bytes is too short for PRF %s in FIPS mode (%zu bytes required)",
-					    str_id(&c->spd.this.id, &idb),
+					    str_id(&c->local->host.id, &idb),
 					    psk->len,
 					    ike->sa.st_oakley.ta_prf->common.fqn,
 					    key_size_min);
@@ -180,7 +180,7 @@ static diag_t ikev2_calculate_psk_sighash(bool verify,
 			id_buf idb;
 			log_state(RC_LOG, &ike->sa,
 				  "WARNING: '%s' PSK length of %zu bytes is too short for PRF %s in FIPS mode (%zu bytes required)",
-				  str_id(&c->spd.this.id, &idb),
+				  str_id(&c->local->host.id, &idb),
 				  psk->len,
 				  ike->sa.st_oakley.ta_prf->common.fqn,
 				  key_size_min);
@@ -282,8 +282,8 @@ diag_t v2_authsig_and_log_using_psk(enum keyword_authby authby,
 		id_buf idb;
 		return diag("authentication failed: %zu byte hash received from peer %s '%s' does not match %zu byte hash of negotiated PRF %s",
 			    sig.len,
-			    enum_show(&ike_id_type_names, ike->sa.st_connection->spd.that.id.kind, &kb),
-			    str_id(&ike->sa.st_connection->spd.that.id, &idb),
+			    enum_show(&ike_id_type_names, ike->sa.st_connection->remote->host.id.kind, &kb),
+			    str_id(&ike->sa.st_connection->remote->host.id, &idb),
 			    hash_len, ike->sa.st_oakley.ta_prf->common.fqn);
 	}
 
@@ -305,8 +305,8 @@ diag_t v2_authsig_and_log_using_psk(enum keyword_authby authby,
 		id_buf idb;
 		esb_buf kb;
 		return diag("authentication failed: computed hash does not match hash received from peer %s '%s'",
-			    enum_show(&ike_id_type_names, ike->sa.st_connection->spd.that.id.kind, &kb),
-			    str_id(&ike->sa.st_connection->spd.that.id, &idb));
+			    enum_show(&ike_id_type_names, ike->sa.st_connection->remote->host.id.kind, &kb),
+			    str_id(&ike->sa.st_connection->remote->host.id, &idb));
 	}
 
 	id_buf idb;
@@ -317,7 +317,7 @@ diag_t v2_authsig_and_log_using_psk(enum keyword_authby authby,
 		 ike->sa.st_sa_role == SA_RESPONDER ? "responder" :
 		 "?"),
 		enum_name(&keyword_authby_names, authby),
-		enum_show(&ike_id_type_names, ike->sa.st_connection->spd.that.id.kind, &kb),
-		str_id(&ike->sa.st_connection->spd.that.id, &idb));
+		enum_show(&ike_id_type_names, ike->sa.st_connection->remote->host.id.kind, &kb),
+		str_id(&ike->sa.st_connection->remote->host.id, &idb));
 	return NULL;
 }

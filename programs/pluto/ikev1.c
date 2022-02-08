@@ -3006,8 +3006,8 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 
 			/* if old IKE SA is same as new IKE sa and non-auth isn't overwrting auth */
 			if (c != d && c->kind == d->kind && streq(c->name, d->name) &&
-			    same_id(&c->spd.this.id, &d->spd.this.id) &&
-			    same_id(&c->spd.that.id, &d->spd.that.id))
+			    same_id(&c->local->host.id, &d->local->host.id) &&
+			    same_id(&c->remote->host.id, &d->remote->host.id))
 			{
 				bool old_is_nullauth = (LIN(POLICY_AUTH_NULL, d->policy) ||
 							d->remote->config->host.authby == AUTHBY_NULL);
@@ -3070,7 +3070,7 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 				struct state *old_p2 = state_by_serialno(c->newest_ipsec_sa);
 				struct connection *d = old_p2 == NULL ? NULL : old_p2->st_connection;
 
-				if (c == d && same_id(&c->spd.that.id, &d->spd.that.id)) {
+				if (c == d && same_id(&c->remote->host.id, &d->remote->host.id)) {
 					dbg("Initial Contact received, deleting old state #%lu from connection '%s'",
 					    c->newest_ipsec_sa, c->name);
 					old_p2->st_send_delete = DONT_SEND_DELETE;

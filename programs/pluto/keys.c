@@ -202,7 +202,7 @@ static bool try_all_keys(const char *cert_origin,
 	id_buf thatid;
 	dbg("trying all '%s's for %s key using %s signature that matches ID: %s",
 	    cert_origin, s->signer->type->name, s->signer->name,
-	    str_id(&s->remote->id, &thatid));
+	    str_id(&s->remote->host->id, &thatid));
 	s->cert_origin = cert_origin;
 
 	bool described = false;
@@ -217,7 +217,7 @@ static bool try_all_keys(const char *cert_origin,
 		}
 
 		int wildcards; /* value ignored */
-		if (!match_id("  ", &key->id, &s->remote->id, &wildcards)) {
+		if (!match_id("  ", &key->id, &s->remote->host->id, &wildcards)) {
 			id_buf printkid;
 			dbg("  skipping '%s' with wrong ID",
 			    str_id(&key->id, &printkid));
@@ -359,12 +359,12 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 			id_buf idb;
 			return diag("authentication failed: no certificate matched %s with %s and '%s'",
 				    signer->name, hash_algo->common.fqn,
-				    str_id(&c->spd.that.id, &idb));
+				    str_id(&c->remote->host.id, &idb));
 		} else {
 			id_buf idb;
 			return diag("authentication failed: using %s with %s for '%s' tried%s",
 				    signer->name, hash_algo->common.fqn,
-				    str_id(&c->spd.that.id, &idb),
+				    str_id(&c->remote->host.id, &idb),
 				    s.tried);
 		}
 	}
@@ -409,8 +409,8 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	/* under certain conditions, override that_id to %ANYADDR */
 
 	struct id rw_id; /* must be at same scope as that_id */
-	const struct id *const this_id = &c->spd.this.id;
-	const struct id *that_id = &c->spd.that.id; /* can change */
+	const struct id *const this_id = &c->local->host.id;
+	const struct id *that_id = &c->remote->host.id; /* can change */
 
 	if (
 	    /* case 1: */
@@ -422,9 +422,9 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	    ( (c->policy & POLICY_PSK) &&
 	      kind == PKK_PSK &&
 	      ( ( c->kind == CK_TEMPLATE &&
-		  c->spd.that.id.kind == ID_NONE ) ||
+		  c->remote->host.id.kind == ID_NONE ) ||
 		( c->kind == CK_INSTANCE &&
-		  id_is_ipaddr(&c->spd.that.id) &&
+		  id_is_ipaddr(&c->remote->host.id) &&
 		  /* Check if we are a road warrior instantiation, not a vnet: instantiation */
 		  !address_is_specified(c->spd.that.host_addr) ) ) ) ) {
 		/*
@@ -560,8 +560,8 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 		id_buf this_buf, that_buf;
 		dbg("%s() using certificate %s to find private key for %s->%s of kind %s",
 		    __func__, nickname,
-		    str_id(&c->spd.this.id, &this_buf),
-		    str_id(&c->spd.that.id, &that_buf),
+		    str_id(&c->local->host.id, &this_buf),
+		    str_id(&c->remote->host.id, &that_buf),
 		    type->name);
 
 		const struct private_key_stuff *pks = NULL;
@@ -602,8 +602,8 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 		id_buf this_buf, that_buf;
 		dbg("%s() using CKAID %s to find private key for %s->%s of kind %s",
 		    __func__, str_ckaid(c->local->config->host.ckaid, &ckb),
-		    str_id(&c->spd.this.id, &this_buf),
-		    str_id(&c->spd.that.id, &that_buf),
+		    str_id(&c->local->host.id, &this_buf),
+		    str_id(&c->remote->host.id, &that_buf),
 		    type->name);
 
 		const struct private_key_stuff *pks;

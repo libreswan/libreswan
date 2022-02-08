@@ -39,7 +39,7 @@ static bool match_policy(const struct connection *c, lset_t req_policy)
 		return false;
 	}
 
-	if (c->kind == CK_INSTANCE && c->spd.that.id.kind == ID_NULL) {
+	if (c->kind == CK_INSTANCE && c->remote->host.id.kind == ID_NULL) {
 		connection_buf cb;
 		dbg("  skipping "PRI_CONNECTION", ID_NULL instance",
 		    pri_connection(c, &cb));
@@ -277,7 +277,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		connection_buf cb;
 		ldbg(md->md_logger, "oppo_instantiate called by %s with "PRI_CONNECTION,
 		     __func__, pri_connection(c, &cb));
-		c = oppo_instantiate(c, &c->spd.that.id,
+		c = oppo_instantiate(c, &c->remote->host.id,
 				     &local_address, &remote_address);
 	} else {
 		/* regular roadwarrior */
@@ -345,7 +345,7 @@ struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
 
 #if 0
 		/* REMOTE==%any so d can never be an instance */
-		if (tmp->kind == CK_INSTANCE && tmp->spd.that.id.kind == ID_NULL) {
+		if (tmp->kind == CK_INSTANCE && tmp->remote->host.id.kind == ID_NULL) {
 			connection_buf cb;
 			dbg("skipping unauthenticated "PRI_CONNECTION" with ID_NULL",
 			    pri_connection(tmp, &cb));

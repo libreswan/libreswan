@@ -229,7 +229,7 @@ bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
 {
 	const struct connection *c = ike->sa.st_connection;
-	struct id id = c->spd.that.id;
+	struct id id = c->remote->host.id;
 
 	if (!c->spd.that.key_from_DNS_on_demand)
 		return false;
@@ -697,8 +697,8 @@ void wipe_old_v2_connections(const struct ike_sa *ike)
 	struct connection_filter cf = {
 		.name = c->name,
 		.kind = c->kind,
-		.this_id_eq = &c->spd.this.id,
-		.that_id_eq = &c->spd.that.id,
+		.this_id_eq = &c->local->host.id,
+		.that_id_eq = &c->remote->host.id,
 		.where = HERE,
 	};
 	while (next_connection_new2old(&cf)) {

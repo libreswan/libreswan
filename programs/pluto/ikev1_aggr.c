@@ -189,7 +189,7 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 		endpoint_buf b;
 		log_state(RC_LOG_SERIOUS, st,
 			  "initial Aggressive Mode packet claiming to be from %s on %s but no matching connection has been authorized",
-			  str_id(&st->st_connection->spd.that.id, &buf),
+			  str_id(&st->st_connection->remote->host.id, &buf),
 			  str_endpoint(&md->sender, &b));
 		/* XXX notification is in order! */
 		return STF_FAIL + INVALID_ID_INFORMATION;
@@ -526,7 +526,7 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 		endpoint_buf b;
 		log_state(RC_LOG_SERIOUS, st,
 			  "initial Aggressive Mode packet claiming to be from %s on %s but no connection has been authorized",
-			  str_id(&st->st_connection->spd.that.id, &buf),
+			  str_id(&st->st_connection->remote->host.id, &buf),
 			  str_endpoint(&md->sender, &b));
 		/* XXX notification is in order! */
 		return STF_FAIL + INVALID_ID_INFORMATION;

@@ -63,7 +63,7 @@ static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *
 	passert(dns_pubkeys != NULL);
 
 	const struct state *st = state_by_serialno(dnsr->so_serial);
-	const struct id *keyid = &st->st_connection->spd.that.id;
+	const struct id *keyid = &st->st_connection->remote->host.id;
 
 	/* algorithm is hardcoded RSA -- PUBKEY_ALG_RSA */
 	/* delete only once. then multiple keys could be added */
@@ -94,12 +94,12 @@ static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *
 		if (keyid->kind == ID_FQDN) {
 			id_buf thatidbuf;
 			dbg("add IPSECKEY pluto as publickey %s %s %s",
-			    str_id(&st->st_connection->spd.that.id, &thatidbuf),
+			    str_id(&st->st_connection->remote->host.id, &thatidbuf),
 			    ttl_buf, enum_name(&dns_auth_level_names, al));
 		} else {
 			id_buf thatidbuf;
 			dbg("add IPSECKEY pluto as publickey %s dns query is %s %s %s",
-			    str_id(&st->st_connection->spd.that.id, &thatidbuf),
+			    str_id(&st->st_connection->remote->host.id, &thatidbuf),
 			    dnsr->qname, ttl_buf,
 			    enum_name(&dns_auth_level_names, al));
 		}
@@ -113,7 +113,7 @@ static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *
 			id_buf thatidbuf;
 			llog(RC_LOG_SERIOUS, dnsr->logger,
 			     "add publickey failed %s, %s, %s", ugh,
-			     str_id(&st->st_connection->spd.that.id, &thatidbuf),
+			     str_id(&st->st_connection->remote->host.id, &thatidbuf),
 			     dnsr->log_buf);
 		}
 	}
@@ -359,7 +359,7 @@ static struct p_dns_req *qry_st_init(struct ike_sa *ike,
 							    struct msg_digest *md,
 							    bool err))
 {
-	struct id id = ike->sa.st_connection->spd.that.id;
+	struct id id = ike->sa.st_connection->remote->host.id;
 
 	char qname[SWAN_MAX_DOMAIN_LEN];
 	struct jambuf qbuf = ARRAY_AS_JAMBUF(qname);
@@ -477,7 +477,7 @@ dns_status responder_fetch_idi_ipseckey(struct ike_sa *ike,
 	}
 
 	if (LIN(ike->sa.st_connection->policy, POLICY_DNS_MATCH_ID)) {
-		struct id id = ike->sa.st_connection->spd.that.id;
+		struct id id = ike->sa.st_connection->remote->host.id;
 		if (id.kind == ID_FQDN) {
 			dnsr_a = qry_st_init(ike, LDNS_RR_TYPE_A, "A",
 					     idi_a_fetch_continue,

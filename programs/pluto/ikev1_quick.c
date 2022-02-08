@@ -1111,7 +1111,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 				 */
 				p = rw_instantiate(p, &c->spd.that.host_addr,
 						   remote_client,
-						   &c->spd.that.id);
+						   &c->remote->host.id);
 			}
 			/* temporarily bump up cur_debugging to get "using..." message
 			 * printed if we'd want it with new connection.
@@ -1765,7 +1765,7 @@ static bool is_virtual_net_used(struct connection *c,
 		case CK_INSTANCE:
 			if ((selector_range_in_selector_range(*peer_net, d->spd.that.client) ||
 			     selector_range_in_selector_range(d->spd.that.client, *peer_net)) &&
-			    !same_id(&d->spd.that.id, peer_id))
+			    !same_id(&d->remote->host.id, peer_id))
 			{
 				id_buf idb;
 				connection_buf cbuf;
@@ -1775,7 +1775,7 @@ static bool is_virtual_net_used(struct connection *c,
 				     str_selector_subnet(peer_net, &client),
 				     pri_connection(d, &cbuf),
 				     enum_name(&connection_kind_names, d->kind),
-				     str_id(&d->spd.that.id, &idb));
+				     str_id(&d->remote->host.id, &idb));
 
 				if (!kernel_ops->overlap_supported) {
 					llog(RC_LOG, c->logger,
@@ -1876,7 +1876,7 @@ static struct connection *fc_try(const struct connection *c,
 			continue;
 		}
 
-		if (d->kind == CK_INSTANCE && d->spd.that.id.kind == ID_NULL) {
+		if (d->kind == CK_INSTANCE && d->remote->host.id.kind == ID_NULL) {
 			connection_buf cb;
 			dbg("skipping unauthenticated "PRI_CONNECTION" with ID_NULL",
 			    pri_connection(d, &cb));
@@ -1901,8 +1901,8 @@ static struct connection *fc_try(const struct connection *c,
 		int pathlen = MAX_CA_PATH_LEN;
 
 		if (!(c->connalias != NULL && d->connalias != NULL && streq(c->connalias, d->connalias))) {
-			if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
-			      match_id("", &c->spd.that.id, &d->spd.that.id, &wildcards) &&
+			if (!(same_id(&c->local->host.id, &d->local->host.id) &&
+			      match_id("", &c->remote->host.id, &d->remote->host.id, &wildcards) &&
 			      trusted_ca_nss(c->remote->config->host.ca, d->remote->config->host.ca, &pathlen))) {
 				continue;
 			}
@@ -1990,7 +1990,7 @@ static struct connection *fc_try(const struct connection *c,
 				if (is_virtual_sr(sr) &&
 				    (virtualwhy != NULL ||
 				     is_virtual_net_used(d, remote_client,
-							 &sr->that.id))) {
+							 &sr->that.host->id))) {
 					dbg("   virtual net not allowed");
 					continue;
 				}
@@ -2053,7 +2053,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 			continue;
 		}
 
-		if (d->kind == CK_INSTANCE && d->spd.that.id.kind == ID_NULL) {
+		if (d->kind == CK_INSTANCE && d->remote->host.id.kind == ID_NULL) {
 			connection_buf cb;
 			dbg("skipping unauthenticated "PRI_CONNECTION" with ID_NULL",
 			    pri_connection(d, &cb));
@@ -2064,8 +2064,8 @@ static struct connection *fc_try_oppo(const struct connection *c,
 			continue;
 
 		int wildcards, pathlen;
-		if (!(same_id(&c->spd.this.id, &d->spd.this.id) &&
-		      match_id("", &c->spd.that.id, &d->spd.that.id, &wildcards) &&
+		if (!(same_id(&c->local->host.id, &d->local->host.id) &&
+		      match_id("", &c->remote->host.id, &d->remote->host.id, &wildcards) &&
 		      trusted_ca_nss(c->remote->config->host.ca, d->remote->config->host.ca, &pathlen))) {
 			continue;
 		}

@@ -1933,10 +1933,10 @@ psk_common:
 							id_buf hid;
 
 							UGH("Can't authenticate: no preshared key found for `%s' and `%s'",
-							    str_id(&c->spd.this.id, &mid),
+							    str_id(&c->local->host.id, &mid),
 							    remote_id_was_instantiated(c) ?
 							    "%any" :
-							    str_id(&c->spd.that.id, &hid));
+							    str_id(&c->remote->host.id, &hid));
 						} else if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
 							DBG_dump_hunk("User PSK:", *pss);
 						}

@@ -42,7 +42,7 @@ static bool match_v1_connection(struct connection *c,
 		return false;
 	}
 
-	if (c->kind == CK_INSTANCE && c->spd.that.id.kind == ID_NULL) {
+	if (c->kind == CK_INSTANCE && c->remote->host.id.kind == ID_NULL) {
 		connection_buf cb;
 		dbg("  skipping "PRI_CONNECTION", ID_NULL instance",
 		    pri_connection(c, &cb));
@@ -101,8 +101,8 @@ static bool match_v1_connection(struct connection *c,
 		return false;
 	}
 
-	if (peer_id != NULL && !same_id(peer_id, &c->spd.that.id) &&
-	    (c->spd.that.id.kind != ID_FROMCERT && !id_is_any(&c->spd.that.id))) {
+	if (peer_id != NULL && !same_id(peer_id, &c->remote->host.id) &&
+	    (c->remote->host.id.kind != ID_FROMCERT && !id_is_any(&c->remote->host.id))) {
 		connection_buf cb;
 		dbg("  skipping "PRI_CONNECTION", peer_id failed",
 		    pri_connection(c, &cb));

@@ -289,7 +289,7 @@ generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 
 #if 0
 		/* REMOTE==%any so d can never be an instance */
-		if (d->kind == CK_INSTANCE && d->spd.that.id.kind == ID_NULL) {
+		if (d->kind == CK_INSTANCE && d->remote->host.id.kind == ID_NULL) {
 			connection_buf cb;
 			dbg("skipping unauthenticated "PRI_CONNECTION" with ID_NULL",
 			    pri_connection(d, &cb));
@@ -764,7 +764,7 @@ bool v1_decode_certs(struct msg_digest *md)
 	struct root_certs *root_certs = root_certs_addref(HERE); /* must-release */
 	struct verified_certs certs = find_and_verify_certs(st->st_logger, st->st_ike_version,
 							    cert_payloads, &rev_opts,
-							    root_certs, &c->spd.that.id);
+							    root_certs, &c->remote->host.id);
 	root_certs_delref(&root_certs, HERE);
 
 	/* either something went wrong, or there were no certs */

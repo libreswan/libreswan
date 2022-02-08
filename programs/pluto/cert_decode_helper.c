@@ -82,7 +82,7 @@ void submit_cert_decode(struct ike_sa *ike, struct state *state_to_resume,
 		.cert_payloads = cert_payloads,
 		.cb = cb,
 		.ike_version = ike->sa.st_ike_version,
-		.id = ike->sa.st_connection->spd.that.id, /* XXX: safe? */
+		.id = ike->sa.st_connection->remote->host.id, /* XXX: safe? */
 		.rev_opts = {
 			.ocsp = ocsp_enable,
 			.ocsp_strict = ocsp_strict,

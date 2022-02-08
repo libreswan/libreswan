@@ -138,7 +138,6 @@ void release_connection(struct connection *c)
 /* Delete a connection */
 static void delete_end(struct end *e)
 {
-	free_id_content(&e->id);
 	free_chunk_content(&e->sec_label);
 	virtual_ip_delref(&e->virt, HERE);
 }
@@ -217,6 +216,10 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		next = sr->spd_next;
 
 		delete_spd_route(&sr, /*first?*/sr == &c->spd, connection_valid);
+	}
+
+	FOR_EACH_ELEMENT(c->end, end) {
+		free_id_content(&end->host.id);
 	}
 
 	/*
@@ -424,7 +427,7 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 	/*
 	 * Default ID to IP (but only if not NO_IP -- WildCard).
 	 */
-	if (this->id.kind == ID_NONE) {
+	if (this->host->id.kind == ID_NONE) {
 		struct id id = {
 			.kind = afi->id_ip_addr,
 			.ip_addr = this->host_addr,
@@ -433,9 +436,9 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 		id_buf old, new;
 		dbg("  updated %s.id from %s to %s",
 		    this->config->leftright,
-		    str_id(&this->id, &old),
+		    str_id(&this->host->id, &old),
 		    str_id(&id, &new));
-		this->id = id;
+		this->host->id = id;
 	}
 
 	/*
@@ -635,12 +638,12 @@ static void jam_end_id(struct jambuf *buf, const struct end *this)
 {
 	/* id, if different from host */
 	bool open_paren = false;
-	if (!(this->id.kind == ID_NONE ||
-	      (id_is_ipaddr(&this->id) &&
-	       sameaddr(&this->id.ip_addr, &this->host_addr)))) {
+	if (!(this->host->id.kind == ID_NONE ||
+	      (id_is_ipaddr(&this->host->id) &&
+	       sameaddr(&this->host->id.ip_addr, &this->host_addr)))) {
 		open_paren = true;
 		jam_string(buf, "[");
-		jam_id_bytes(buf, &this->id, jam_sanitized_bytes);
+		jam_id_bytes(buf, &this->host->id, jam_sanitized_bytes);
 	}
 
 	if (this->modecfg_server ||
@@ -754,7 +757,6 @@ static char *format_connection(char *buf, size_t buf_len,
 /* spd_route's with end's get copied in xauth.c */
 void unshare_connection_end(struct connection *c, struct end *e)
 {
-	e->id = clone_id(&e->id, "unshare connection id");
 	e->virt = virtual_ip_addref(e->virt, HERE);
 	pexpect(e->sec_label.ptr == NULL);
 	e->host = &c->end[e->config->index].host;
@@ -806,6 +808,10 @@ static void unshare_connection(struct connection *c, struct connection *t/*empla
 		if (sr->spd_next != NULL) {
 			sr->spd_next = clone_thing(*sr->spd_next, "spd clone");
 		}
+	}
+
+	FOR_EACH_THING(end, c->local, c->remote) {
+		end->host.id = clone_id(&end->host.id, "unshare connection id");
 	}
 
 	if (c->pool !=  NULL)
@@ -885,7 +891,7 @@ static int extract_end(struct connection *c,
 	 * For %fromcert, the load_end_cert*() call will update it.
 	 */
 	if (src->id == NULL) {
-		dst->id.kind = ID_NONE;
+		dst->host->id.kind = ID_NONE;
 	} else {
 		/*
 		 * Cannot report errors due to low level nesting of functions,
@@ -893,7 +899,7 @@ static int extract_end(struct connection *c,
 		 * atoid() will log real failures like illegal DNS chars already,
 		 * and for @string ID's all chars are valid without processing.
 		 */
-		atoid(src->id, &dst->id);
+		atoid(src->id, &dst->host->id);
 	}
 
 	/* decode CA distinguished name, if any */
@@ -1064,7 +1070,7 @@ static int extract_end(struct connection *c,
 	}
 
 	/* does id have wildcards? */
-	dst->has_id_wildcards = id_count_wildcards(&dst->id) > 0;
+	dst->has_id_wildcards = id_count_wildcards(&dst->host->id) > 0;
 
 	/* the rest is simple copying of corresponding fields */
 	config_end->host.type = src->host_type;
@@ -1282,7 +1288,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	}
 
 	/* XXX: should this be after validity check? */
-	select_nss_cert_id(cert, &end->id);
+	select_nss_cert_id(cert, &end->host->id);
 
 	/* check validity of cert */
 	if (CERT_CheckCertValidTimes(cert, PR_Now(), false) !=
@@ -1292,7 +1298,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	}
 
 	dbg("loading %s certificate \'%s\' pubkey", leftright, nickname);
-	if (!add_pubkey_from_nss_cert(&pluto_pubkeys, &end->id, cert, logger)) {
+	if (!add_pubkey_from_nss_cert(&pluto_pubkeys, &end->host->id, cert, logger)) {
 		/* XXX: push diag_t into add_pubkey_from_nss_cert()? */
 		return diag("%s certificate \'%s\' pubkey could not be loaded",
 			    leftright, nickname);
@@ -2580,9 +2586,9 @@ struct connection *instantiate(struct connection *c,
 	if (peer_id != NULL) {
 		int wildcards;	/* value ignored */
 
-		passert(d->spd.that.id.kind == ID_FROMCERT ||
-			match_id("", peer_id, &d->spd.that.id, &wildcards));
-		d->spd.that.id = *peer_id;
+		passert(d->remote->host.id.kind == ID_FROMCERT ||
+			match_id("", peer_id, &d->remote->host.id, &wildcards));
+		d->remote->host.id = *peer_id;
 		d->spd.that.has_id_wildcards = false;
 	}
 	unshare_connection(d, c);
@@ -3274,7 +3280,7 @@ struct connection *find_outgoing_opportunistic_template(const ip_packet packet)
 
 #if 0
 			/* REMOTE==%any so d can never be an instance */
-			if (c->kind == CK_INSTANCE && c->spd.that.id.kind == ID_NULL) {
+			if (c->kind == CK_INSTANCE && c->remote->host.id.kind == ID_NULL) {
 				connection_buf cb;
 				dbg("skipping unauthenticated "PRI_CONNECTION" with ID_NULL",
 				    pri_connection(c, &cb));
@@ -3814,10 +3820,10 @@ void show_one_connection(struct show *s,
 
 		show_comment(s, PRI_CONNECTION":   our idtype: %s; our id=%s; their idtype: %s; their id=%s",
 			     c->name, instance,
-			     enum_name(&ike_id_type_names, c->spd.this.id.kind),
-			     str_id(&c->spd.this.id, &thisidb),
-			     enum_name(&ike_id_type_names, c->spd.that.id.kind),
-			     str_id(&c->spd.that.id, &thatidb));
+			     enum_name(&ike_id_type_names, c->local->host.id.kind),
+			     str_id(&c->local->host.id, &thisidb),
+			     enum_name(&ike_id_type_names, c->remote->host.id.kind),
+			     str_id(&c->remote->host.id, &thatidb));
 	}
 
 	/* slightly complicated stuff to avoid extra crap */
@@ -4136,9 +4142,9 @@ so_serial_t get_newer_sa_from_connection(struct state *st)
 bool same_peer_ids(const struct connection *c, const struct connection *d,
 		   const struct id *peer_id)
 {
-	return same_id(&c->spd.this.id, &d->spd.this.id) &&
-	       same_id(peer_id == NULL ? &c->spd.that.id : peer_id,
-		       &d->spd.that.id);
+	return same_id(&c->local->host.id, &d->local->host.id) &&
+	       same_id(peer_id == NULL ? &c->remote->host.id : peer_id,
+		       &d->remote->host.id);
 }
 
 void check_connection(struct connection *c, where_t where)

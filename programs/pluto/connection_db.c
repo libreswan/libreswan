@@ -73,22 +73,22 @@ static void jam_connection_that_id(struct jambuf *buf, const struct connection *
 {
 	jam_connection_serialno(buf, c);
 	jam(buf, ": that_id=");
-	jam_id_bytes(buf, &c->spd.that.id, jam_sanitized_bytes);
+	jam_id_bytes(buf, &c->remote->host.id, jam_sanitized_bytes);
 }
 
-HASH_TABLE(connection, that_id, .spd.that.id, STATE_TABLE_SIZE);
+HASH_TABLE(connection, that_id, .remote->host.id, STATE_TABLE_SIZE);
 
 void rehash_db_connection_that_id(struct connection *c)
 {
 	id_buf idb;
 	dbg("%s() rehashing "PRI_CO" that_id=%s",
-	    __func__, pri_co(c->serialno), str_id(&c->spd.that.id, &idb));
+	    __func__, pri_co(c->serialno), str_id(&c->remote->host.id, &idb));
 	rehash_table_entry(&connection_that_id_hash_table, c);
 }
 
 void replace_connection_that_id(struct connection *c, const struct id *src)
 {
-	struct id *dst = &c->spd.that.id;
+	struct id *dst = &c->remote->host.id;
 	passert(dst->name.ptr == NULL || dst->name.ptr != src->name.ptr);
 	free_id_content(dst);
 	*dst = clone_id(src, "replaing connection id");
@@ -190,8 +190,8 @@ struct spd_route *clone_spd_route(struct connection *c, where_t where)
 	sr->spd_next = NULL;
 	pexpect(sr->connection == c);
 	/* unshare pointers */
-	sr->this.id.name = EMPTY_CHUNK;
-	sr->that.id.name = EMPTY_CHUNK;
+	c->local->host.id.name = EMPTY_CHUNK;
+	c->remote->host.id.name = EMPTY_CHUNK;
 	sr->this.virt = NULL;
 	sr->that.virt = NULL;
 
@@ -340,10 +340,10 @@ static bool matches_connection_filter(struct connection *c, struct connection_fi
 	if (filter->name != NULL && !streq(filter->name, c->name)) {
 		return false;
 	}
-	if (filter->this_id_eq != NULL && !id_eq(filter->this_id_eq, &c->spd.this.id)) {
+	if (filter->this_id_eq != NULL && !id_eq(filter->this_id_eq, &c->local->host.id)) {
 		return false;
 	}
-	if (filter->that_id_eq != NULL && !id_eq(filter->that_id_eq, &c->spd.that.id)) {
+	if (filter->that_id_eq != NULL && !id_eq(filter->that_id_eq, &c->remote->host.id)) {
 		return false;
 	}
 	return true; /* sure */
