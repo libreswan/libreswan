@@ -1077,7 +1077,7 @@ static int extract_end(struct connection *c,
 	config_end->host.addr_name = clone_str(src->host_addr_name, "host ip");
 	dst->host->nexthop = src->host_nexthop;
 	dst->host_srcip = src->host_srcip;
-	dst->host_vtiip = src->host_vtiip;
+	config_end->client.host_vtiip = src->host_vtiip;
 	dst->ifaceip = src->ifaceip;
 	dst->cat = src->cat;
 	dst->pool_range = src->pool_range;

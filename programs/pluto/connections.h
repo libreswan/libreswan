@@ -68,6 +68,13 @@ struct connection *connection_by_serialno(co_serial_t serialno);
 enum left_right { LEFT_END, RIGHT_END, };
 #define LEFT_RIGHT_ROOF 2
 
+/*
+ * IKE SA configuration.
+ *
+ * This contains stuff used by IKE_SA_INIT + IKE_AUTH to establish and
+ * then authenticate the IKE SA.
+ */
+
 struct config_host_end {
 	char *addr_name;	/* string version from whack */
 
@@ -81,6 +88,7 @@ struct config_host_end {
 	enum certpolicy sendcert;	/* whether or not to send the certificate */
 	chunk_t ca;			/* CA distinguished name of the end certificate's issuer */
 	ckaid_t *ckaid;
+
 	struct {
 		bool server;
 		bool client;
@@ -88,10 +96,20 @@ struct config_host_end {
 	} xauth;
 };
 
+/*
+ * Child SA configuration.
+ *
+ * This contains stuff used by CREATE_CHILD_SA to establish an IPsec
+ * connection.
+ */
+
 struct config_client_end {
 	ip_subnet subnet;
 	ip_protoport protoport;
 	char *updown;
+
+	/* weired host related client stuff */
+	ip_cidr host_vtiip;
 };
 
 struct config_end {
@@ -268,7 +286,6 @@ struct /*spd_*/end {
 	ip_address host_addr;
 	ip_address
 		host_srcip;
-	ip_cidr host_vtiip;
 	ip_cidr ifaceip;
 
 	ip_selector client;

@@ -567,9 +567,9 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 	jam_address(buf, &ta);
 	jam_string(buf, "' ");
 
-	if (cidr_is_specified(sr->this.host_vtiip)) {
+	if (cidr_is_specified(c->local->config->client.host_vtiip)) {
 		jam_string(buf, "VTI_IP='");
-		jam_cidr(buf, &sr->this.host_vtiip);
+		jam_cidr(buf, &c->local->config->client.host_vtiip);
 		jam_string(buf, "' ");
 	}
 
