@@ -734,6 +734,7 @@ struct state {
 	bool st_ike_sent_v2n_mobike_supported;	/* sent MOBIKE_SUPPORTED notify */
 	bool st_ike_seen_v2n_mobike_supported;	/* did we receive MOBIKE_SUPPORTED */
 	bool st_ike_seen_v2n_initial_contact;	/* did we receive INITIAL_CONTACT */
+	bool st_v2_childless_ikev2_supported;	/* childless exchange? */
 };
 
 /*

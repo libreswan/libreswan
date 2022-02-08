@@ -131,6 +131,7 @@ struct impairment impairments[] = {
 	V("log-rate-limit", log_rate_limit, "set the per-hour(?) cap on rate-limited log messages"),
 	V("major-version-bump", major_version_bump, "cause pluto to send an IKE major version that's higher then we support."),
 	V("minor-version-bump", minor_version_bump, "cause pluto to send an IKE minor version that's higher then we support."),
+	V("childless-ikev2-supported", childless_ikev2_supported, "causes pluto to omit/ignore the CHILDLESS_IKEV2_SUPPORTED notify in the IKE_SA_INIT exchange"),
 	V("omit-hash-notify", omit_hash_notify_request, "causes pluto to omit sending hash notify in IKE_SA_INIT Request"),
 	V("proposal-parser", proposal_parser, "impair algorithm parser - what you see is what you get"),
 	V("rekey-initiate-supernet", rekey_initiate_supernet, "impair IPsec SA rekey initiator TSi and TSR to 0/0 ::0, emulate Windows client"),

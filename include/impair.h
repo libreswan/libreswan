@@ -118,6 +118,9 @@ struct impair {
 	bool force_fips;
 	bool send_key_size_check;
 	bool send_bogus_dcookie;
+
+	bool childless_ikev2_supported;
+
 	bool omit_hash_notify_request;
 	bool ignore_hash_notify_request;
 	bool ignore_hash_notify_response;

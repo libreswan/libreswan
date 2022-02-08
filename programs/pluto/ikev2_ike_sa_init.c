@@ -60,6 +60,7 @@
 static ke_and_nonce_cb initiate_v2_IKE_SA_INIT_request_continue;	/* type assertion */
 static dh_shared_secret_cb process_v2_request_no_skeyseed_continue;	/* type assertion */
 static dh_shared_secret_cb process_v2_IKE_SA_INIT_response_continue;	/* type assertion */
+static ke_and_nonce_cb process_v2_IKE_SA_INIT_request_continue;		/* forward decl and type assertion */
 
 void process_v2_IKE_SA_INIT(struct msg_digest *md)
 {
@@ -820,8 +821,6 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
  * HDR, SAr1, KEr, Nr, [CERTREQ] -->
  */
 
-static ke_and_nonce_cb process_v2_IKE_SA_INIT_request_continue;	/* forward decl and type assertion */
-
 stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 					  struct child_sa *child,
 					  struct msg_digest *md)
@@ -1097,6 +1096,15 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 		return STF_INTERNAL_ERROR;
 	}
 
+	if (impair.childless_ikev2_supported) {
+		llog_sa(RC_LOG, ike, "IMPAIR: omitting CHILDESS_IKEV2_SUPPORTED notify");
+	} else {
+		if (!emit_v2N(v2N_CHILDLESS_IKEV2_SUPPORTED, &rbody)) {
+			return STF_INTERNAL_ERROR;
+		}
+		ike->sa.st_v2_childless_ikev2_supported = true;
+	}
+
 	/* something the other end won't like */
 
 	/* send CERTREQ */
@@ -1282,6 +1290,10 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	 */
 	ike->sa.st_seen_fragmentation_supported = false;
 	ike->sa.st_seen_ppk = false;
+
+	ike->sa.st_v2_childless_ikev2_supported =
+		(impair.childless_ikev2_supported ? false :
+		 md->pd[PD_v2N_CHILDLESS_IKEV2_SUPPORTED] != NULL);
 
 	ike->sa.st_seen_fragmentation_supported = md->pd[PD_v2N_IKEV2_FRAGMENTATION_SUPPORTED] != NULL;
 	ike->sa.st_seen_ppk = md->pd[PD_v2N_USE_PPK] != NULL;
