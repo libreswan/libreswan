@@ -313,6 +313,7 @@ kvmplutotest	ikev2-allow-narrow-03			good
 kvmplutotest	ikev2-allow-narrow-04			good
 kvmplutotest	ikev2-allow-narrow-05			good
 kvmplutotest	ikev2-allow-narrow-07			good
+kvmplutotest	ikev2-allow-narrow-08-2conns		wip
 kvmplutotest	ikev2-allow-narrow-10-protoport		good
 kvmplutotest	ikev2-allow-narrow-11-subnet		good
 kvmplutotest	ikev2-allow-narrow-12-subnet-protoport	good
