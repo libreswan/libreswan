@@ -51,7 +51,7 @@ struct v2SK_payload open_v2SK_payload(struct logger *logger,
 				      struct ike_sa *st);
 bool close_v2SK_payload(struct v2SK_payload *sk);
 
-stf_status encrypt_v2SK_payload(struct v2SK_payload *sk);
+bool encrypt_v2SK_payload(struct v2SK_payload *sk);
 
 stf_status record_v2SK_message(struct pbs_out *msg,
 			       struct v2SK_payload *sk,
@@ -103,6 +103,9 @@ bool open_v2_payload(const char *story,
 		     struct msg_digest *request_md, enum isakmp_xchg_type exchange_type,
 		     uint8_t *buffer, size_t sizeof_buffer, struct v2_payload *payload,
 		     enum payload_security security);
+
+bool close_v2_payload(struct v2_payload *payload);
+
 bool close_and_record_v2_payload(struct v2_payload *payload);
 
 #endif

@@ -490,7 +490,7 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 	*out = clone_hunk(mac, "IntAuth");
 }
 
-stf_status encrypt_v2SK_payload(struct v2SK_payload *sk)
+bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 {
 	struct ike_sa *ike = sk->ike;
 	uint8_t *auth_start = sk->pbs.container->start;
@@ -573,7 +573,7 @@ stf_status encrypt_v2SK_payload(struct v2SK_payload *sk)
 			      aad_start, aad_size,
 			      enc_start, enc_size, integ_size,
 			      cipherkey, true, sk->logger)) {
-			return STF_FAIL;
+			return false;
 		}
 
 		if (DBGP(DBG_CRYPT)) {
@@ -623,7 +623,7 @@ stf_status encrypt_v2SK_payload(struct v2SK_payload *sk)
 		}
 	}
 
-	return STF_OK;
+	return true;
 }
 
 /*
@@ -1347,8 +1347,7 @@ static bool record_outbound_fragment(struct logger *logger,
 	close_output_pbs(&body);
 	close_output_pbs(&frag_stream);
 
-	stf_status ret = encrypt_v2SK_payload(&skf);
-	if (ret != STF_OK) {
+	if (!encrypt_v2SK_payload(&skf)) {
 		llog(RC_LOG, logger, "error encrypting fragment %u", number);
 		return false;
 	}
@@ -1505,7 +1504,7 @@ stf_status record_v2SK_message(struct pbs_out *msg,
 			return STF_INTERNAL_ERROR;
 		}
 	} else {
-		if (encrypt_v2SK_payload(sk) != STF_OK) {
+		if (!encrypt_v2SK_payload(sk)) {
 			llog(RC_LOG, sk->logger,
 				    "error encrypting %s message", what);
 			return STF_INTERNAL_ERROR;
@@ -1582,25 +1581,38 @@ bool open_v2_payload(const char *story,
 	return true;
 }
 
-bool close_and_record_v2_payload(struct v2_payload *payload)
+bool close_v2_payload(struct v2_payload *payload)
 {
+
 	switch (payload->security) {
 	case ENCRYPTED_PAYLOAD:
 		if (!close_v2SK_payload(&payload->sk)) {
 			return false;
 		}
-		close_output_pbs(&payload->body);
-		close_output_pbs(&payload->message);
-		stf_status ret = encrypt_v2SK_payload(&payload->sk);
-		if (ret != STF_OK) {
+		break;
+	case UNENCRYPTED_PAYLOAD:
+		break;
+	}
+	close_output_pbs(&payload->body);
+	close_output_pbs(&payload->message);
+	return true;
+}
+
+bool close_and_record_v2_payload(struct v2_payload *payload)
+{
+	if (!close_v2_payload(payload)) {
+		return false;
+	}
+
+	switch (payload->security) {
+	case ENCRYPTED_PAYLOAD:
+		if (!encrypt_v2SK_payload(&payload->sk)) {
 			llog(RC_LOG, payload->logger,
 			     "error encrypting response");
 			return false;
 		}
 		break;
 	case UNENCRYPTED_PAYLOAD:
-		close_output_pbs(&payload->body);
-		close_output_pbs(&payload->message);
 		break;
 	}
 
