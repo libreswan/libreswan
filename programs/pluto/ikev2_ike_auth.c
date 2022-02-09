@@ -489,7 +489,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 				  "Failed to calculate additional NULL_AUTH");
 			return STF_FATAL;
 		}
-		ike->sa.st_v2_ike_intermediate_used = false;
+		ike->sa.st_v2_ike_intermediate.used = false;
 		if (!emit_v2N_hunk(v2N_NULL_AUTH, null_auth, &sk.pbs)) {
 			free_chunk_content(&null_auth);
 			return STF_INTERNAL_ERROR;
@@ -943,7 +943,7 @@ static stf_status process_v2_IKE_AUTH_request_tail(struct state *ike_st,
 			struct crypt_mac hash_to_sign =
 				v2_calculate_sighash(ike, &ike->sa.st_v2_id_payload.mac,
 						     hash_algo, LOCAL_PERSPECTIVE);
-			ike->sa.st_v2_ike_intermediate_used = false;
+			ike->sa.st_v2_ike_intermediate.used = false;
 			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
 						      authby, auth_method,
 						      process_v2_IKE_AUTH_request_auth_signature_continue)) {
@@ -967,7 +967,7 @@ static stf_status process_v2_IKE_AUTH_request_tail(struct state *ike_st,
 			struct crypt_mac hash_to_sign =
 				v2_calculate_sighash(ike, &ike->sa.st_v2_id_payload.mac,
 						     hash_algo, LOCAL_PERSPECTIVE);
-			ike->sa.st_v2_ike_intermediate_used = false;
+			ike->sa.st_v2_ike_intermediate.used = false;
 			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
 						      authby, auth_method,
 						      process_v2_IKE_AUTH_request_auth_signature_continue)) {
@@ -1164,7 +1164,7 @@ stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike_sa *ik
 	if (!emit_v2_auth(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, &sk.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
-	ike->sa.st_v2_ike_intermediate_used = false;
+	ike->sa.st_v2_ike_intermediate.used = false;
 
 	if (c->config->sec_label.len > 0) {
 		pexpect(c->kind == CK_TEMPLATE);

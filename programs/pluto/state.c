@@ -1009,8 +1009,8 @@ void delete_state_tail(struct state *st)
 #endif
 
 	/* intermediate */
-	free_chunk_content(&st->st_intermediate_packet_me);
-	free_chunk_content(&st->st_intermediate_packet_peer);
+	free_chunk_content(&st->st_v2_ike_intermediate.initiator);
+	free_chunk_content(&st->st_v2_ike_intermediate.responder);
 
 	/* if there is a suspended state transition, disconnect us */
 	struct msg_digest *md = unsuspend_any_md(st);

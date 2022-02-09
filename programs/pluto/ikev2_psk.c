@@ -74,7 +74,6 @@ static diag_t ikev2_calculate_psk_sighash(bool verify,
 
 	const chunk_t *nonce;
 	const char *nonce_name;
-	chunk_t intermediate_auth;
 
 	/*
 	 * RFC-7619
@@ -94,15 +93,21 @@ static diag_t ikev2_calculate_psk_sighash(bool verify,
 	/* this is the IKE_AUTH exchange, so a given */
 	passert(ike->sa.hidden_variables.st_skeyid_calculated);
 
+
+	chunk_t intermediate_auth = empty_chunk;
+	if (ike->sa.st_v2_ike_intermediate.used) {
+		intermediate_auth = clone_hunk_hunk(ike->sa.st_v2_ike_intermediate.initiator,
+						    ike->sa.st_v2_ike_intermediate.responder,
+						    "IntAuth_*_I_A | IntAuth_*_R");
+		/* IKE AUTH's first Message ID */
+		uint8_t ike_auth_mid[sizeof(ike->sa.st_v2_ike_intermediate.id)];
+		hton_bytes(ike->sa.st_v2_ike_intermediate.id + 1,
+			   ike_auth_mid, sizeof(ike_auth_mid));
+		append_chunk_thing("IKE_AUTH_MID", &intermediate_auth, ike_auth_mid);
+	}
+
 	switch (ike->sa.st_sa_role) {
 	case SA_INITIATOR:
-		if (ike->sa.st_v2_ike_intermediate_used) {
-			intermediate_auth = clone_hunk_hunk(ike->sa.st_intermediate_packet_me,
-							    ike->sa.st_intermediate_packet_peer,
-							    "IntAuth_*_I_A | IntAuth_*_R");
-		} else {
-			intermediate_auth = empty_chunk;
-		}
 		if (verify) {
 			/* we are initiator verifying PSK */
 			nonce_name = "Ni: initiator verifying hash from responder";
@@ -117,13 +122,6 @@ static diag_t ikev2_calculate_psk_sighash(bool verify,
 		break;
 
 	case SA_RESPONDER:
-		if (ike->sa.st_v2_ike_intermediate_used) {
-			intermediate_auth = clone_hunk_hunk(ike->sa.st_intermediate_packet_peer,
-							    ike->sa.st_intermediate_packet_me,
-							    "IntAuth_*_I_A | IntAuth_*_R");
-		} else {
-			intermediate_auth = empty_chunk;
-		}
 		if (verify) {
 			/* we are responder verifying PSK */
 			nonce_name = "Nr: responder verifying hash from initiator";

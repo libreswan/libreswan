@@ -50,33 +50,16 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 {
 	enum sa_role role;
 	chunk_t firstpacket;
-	/*
-	 * NOTE: intermediate_auth is only initialized to quiet GCC.
-	 * It doesn't understand that all uses and references are
-	 * guarded identically, with ike->sa.st_intermediate_used.
-	 * Using a local copy ike->sa.st_intermediate_used doesn't help.
-	 * DHR 2020 Sept 12; GCC 10.2.1
-	 */
-	chunk_t ia1 = NULL_HUNK;
-	chunk_t ia2 = NULL_HUNK;
 	switch (from_the_perspective_of) {
 	case LOCAL_PERSPECTIVE:
 		firstpacket = ike->sa.st_firstpacket_me;
 		role = ike->sa.st_sa_role;
-		if (ike->sa.st_v2_ike_intermediate_used) {
-			ia1 = ike->sa.st_intermediate_packet_me;
-			ia2 = ike->sa.st_intermediate_packet_peer;
-		}
 		break;
 	case REMOTE_PERSPECTIVE:
 		firstpacket = ike->sa.st_firstpacket_peer;
 		role = (ike->sa.st_sa_role == SA_INITIATOR ? SA_RESPONDER :
 			ike->sa.st_sa_role == SA_RESPONDER ? SA_INITIATOR :
 			0);
-		if (ike->sa.st_v2_ike_intermediate_used) {
-			ia1 = ike->sa.st_intermediate_packet_peer;
-			ia2 = ike->sa.st_intermediate_packet_me;
-		}
 		break;
 	default:
 		bad_case(from_the_perspective_of);
@@ -84,26 +67,32 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 
 	const chunk_t *nonce;
 	const char *nonce_name;
+	chunk_t ia1;
+	chunk_t ia2;
 	switch (role) {
 	case SA_INITIATOR:
 		/* on initiator, we need to hash responders nonce */
 		nonce = &ike->sa.st_nr;
 		nonce_name = "inputs to hash2 (responder nonce)";
+		ia1 = ike->sa.st_v2_ike_intermediate.initiator;
+		ia2 = ike->sa.st_v2_ike_intermediate.responder;
 		break;
 	case SA_RESPONDER:
 		/* on responder, we need to hash initiators nonce */
 		nonce = &ike->sa.st_ni;
 		nonce_name = "inputs to hash2 (initiator nonce)";
+		ia1 = ike->sa.st_v2_ike_intermediate.responder;
+		ia2 = ike->sa.st_v2_ike_intermediate.initiator;
 		break;
 	default:
-		bad_case(from_the_perspective_of);
+		bad_case(role);
 	}
 
 	if (DBGP(DBG_CRYPT)) {
 		DBG_dump_hunk("inputs to hash1 (first packet)", firstpacket);
 		DBG_dump_hunk(nonce_name, *nonce);
 		DBG_dump_hunk("idhash", *idhash);
-		if (ike->sa.st_v2_ike_intermediate_used) {
+		if (ike->sa.st_v2_ike_intermediate.used) {
 			DBG_dump_hunk("IntAuth_*_I_A", ia1);
 			DBG_dump_hunk("IntAuth_*_R_A", ia2);
 		}
@@ -116,9 +105,14 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 	/* we took the PRF(SK_d,ID[ir]'), so length is prf hash length */
 	passert(idhash->len == ike->sa.st_oakley.ta_prf->prf_output_size);
 	crypt_hash_digest_hunk(ctx, "IDHASH", *idhash);
-	if (ike->sa.st_v2_ike_intermediate_used) {
+	if (ike->sa.st_v2_ike_intermediate.used) {
 		crypt_hash_digest_hunk(ctx, "IntAuth_*_I_A", ia1);
 		crypt_hash_digest_hunk(ctx, "IntAuth_*_R_A", ia2);
+		/* IKE AUTH's first Message ID */
+		uint8_t ike_auth_mid[sizeof(ike->sa.st_v2_ike_intermediate.id)];
+		hton_bytes(ike->sa.st_v2_ike_intermediate.id + 1,
+			   ike_auth_mid, sizeof(ike_auth_mid));
+		crypt_hash_digest_thing(ctx, "IKE_AUTH_MID", ike_auth_mid);
 	}
 	return crypt_hash_final_mac(&ctx);
 }

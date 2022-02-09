@@ -1077,7 +1077,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	    md->pd[PD_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED] != NULL) {
 		if (!emit_v2N(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED, &rbody))
 			return STF_INTERNAL_ERROR;
-		ike->sa.st_v2_ike_intermediate_used = true;
+		ike->sa.st_v2_ike_intermediate.used = true;
 	}
 
 	/* Send SIGNATURE_HASH_ALGORITHMS notification only if we received one */
@@ -1425,7 +1425,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	 * For now, do only one Intermediate Exchange round and
 	 * proceed with IKE_AUTH.
 	 */
-	ike->sa.st_v2_ike_intermediate_used = ((c->policy & POLICY_INTERMEDIATE) &&
+	ike->sa.st_v2_ike_intermediate.used = ((c->policy & POLICY_INTERMEDIATE) &&
 					       md->pd[PD_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED] != NULL);
 
 	submit_dh_shared_secret(&ike->sa, &ike->sa, ike->sa.st_gr/*initiator needs responder KE*/,
@@ -1474,7 +1474,7 @@ stf_status process_v2_IKE_SA_INIT_response_continue(struct state *ike_sa,
 	 * The IKE_SA_INIT response has been processed, now dispatch
 	 * the next request.
 	 */
-	return (ike->sa.st_v2_ike_intermediate_used /* SHH: GNU style ?: */
+	return (ike->sa.st_v2_ike_intermediate.used /* SHH: GNU style ?: */
 		? initiate_v2_IKE_INTERMEDIATE_request
 		: initiate_v2_IKE_AUTH_request)(ike, md);
 }
