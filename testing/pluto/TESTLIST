@@ -1303,3 +1303,7 @@ kvmplutotest	pfkeyv2-initiator-tunnel-ah-ikev2		netbsd
 kvmplutotest	pfkeyv2-initiator-tunnel-esp-ipcomp-ikev2	netbsd
 kvmplutotest	pfkeyv2-initiator-tunnel-esp-ikev2		netbsd
 kvmplutotest	pfkeyv2-ondemand				netbsd
+
+# real world interop configurations
+kvmplutotest	 elvis-is-alive				skiptest # ELVIS-PLUS IPsec test server
+kvmplutotest	 android-be-happy			skiptest # ANDROID simulator
