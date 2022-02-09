@@ -1,0 +1,11 @@
+Responder narrows request.
+
+This test checks to see if the responder accepts a more narrowed down
+proposal as per https://tools.ietf.org/html/rfc5996#section-2.9
+
+The initiator asks for /24, all protocols and ports.
+The responder only allows /28, tcp and port 1234.
+
+Because narrowing=yes on the responder, it will allow and suggest its
+narrowed proposal. Because the initiator has narrowing=yes, it should
+accept the narrowed proposal and install it.

@@ -306,13 +306,17 @@ kvmplutotest	ikev2-isakmp-reserved-flags-01		good
 kvmplutotest	ikev2-isakmp-reserved-flags-02		good
 kvmplutotest	ikev2-payload-reserved-flags-01		good
 kvmplutotest	ikev2-payload-reserved-id-flags-01	good
+
 kvmplutotest	ikev2-allow-narrow-01			good
 kvmplutotest	ikev2-allow-narrow-02			good
 kvmplutotest	ikev2-allow-narrow-03			good
 kvmplutotest	ikev2-allow-narrow-04			good
 kvmplutotest	ikev2-allow-narrow-05			good
-kvmplutotest	ikev2-allow-narrow-06			good
 kvmplutotest	ikev2-allow-narrow-07			good
+kvmplutotest	ikev2-allow-narrow-10-protoport		good
+kvmplutotest	ikev2-allow-narrow-11-subnet		good
+kvmplutotest	ikev2-allow-narrow-12-subnet-protoport	good
+
 kvmplutotest	ikev2-invalid-ke-01-invalid-modp	good
 kvmplutotest	ikev2-invalid-ke-02-wrong-modp		good
 kvmplutotest	ikev2-invalid-ke-03-default-initiator	good
