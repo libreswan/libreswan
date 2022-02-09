@@ -832,15 +832,6 @@ enum isakmp_header_flags {
 #define ISAKMP_FLAGS_RESERVED_BIT7 (1<<ISAKMP_FLAGS_RESERVED_BIT7_IX)
 extern const struct enum_names isakmp_flag_names;
 
-/* IKEv2 header field sizes and offsets from the start of the header */
-#define ADJ_LENGTH_SIZE 4
-#define ADJ_LENGTH_OFFSET 24
-#define EXCH_TYPE_OFFSET 18
-
-/* SK payload header field sizes */
-#define SK_HEADER_SIZE 4
-#define ADJ_PAYLOAD_LENGTH_SIZE 2
-
 /*
  * Situation definition for IPsec DOI.
  */

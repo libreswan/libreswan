@@ -116,7 +116,7 @@ static void compute_intermediate_mac(struct ike_sa *ike,
 
 	shunk_t encrypted_payload = {
 		.ptr = unencrypted_payloads.ptr + unencrypted_payloads.len,
-		.len = plain.len + SK_HEADER_SIZE,
+		.len = plain.len + sizeof(adjusted_encrypted_payload_header),
 	};
 
 	/*
