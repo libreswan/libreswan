@@ -34,8 +34,18 @@
 
 /* SHA-2 256 */
 
-static const uint8_t asn1_blob_rsa_sha2_256[] =	{ LEN_RSA_PSS_SHA2_BLOB, RSA_PSS_SHA256_BLOB };
-static const uint8_t asn1_blob_ecdsa_sha2_256[] = { LEN_ECDSA_SHA2_BLOB, ECDSA_SHA256_BLOB };
+static const uint8_t asn1_pkcs1_1_5_rsa_sha2_256_blob[1+ASN1_PKCS1_1_5_RSA_SIZE] = {
+	ASN1_PKCS1_1_5_RSA_SIZE,
+	ASN1_PKCS1_1_5_RSA_SHA2_256_BLOB
+};
+static const uint8_t asn1_ecdsa_sha2_256_blob[1+ASN1_ECDSA_SHA2_SIZE] = {
+	ASN1_ECDSA_SHA2_SIZE,
+	ASN1_ECDSA_SHA2_256_BLOB
+};
+static const uint8_t asn1_rsassa_pss_sha2_256_blob[1+ASN1_RSASSA_PSS_SHA2_SIZE] = {
+	ASN1_RSASSA_PSS_SHA2_SIZE,
+	ASN1_RSASSA_PSS_SHA2_256_BLOB
+};
 
 const CK_RSA_PKCS_PSS_PARAMS rsa_pss_sha2_256 = {
 	.hashAlg = CKM_SHA256,
@@ -64,8 +74,11 @@ const struct hash_desc ike_alg_hash_sha2_256 = {
 	.hash_block_size = 64,	/* from RFC 4868 */
 	.hash_ops = &ike_alg_hash_nss_ops,
 
-	.hash_asn1_blob_rsa = THING_AS_HUNK(asn1_blob_rsa_sha2_256),
-	.hash_asn1_blob_ecdsa = THING_AS_HUNK(asn1_blob_ecdsa_sha2_256),
+	.digital_signature_blob = {
+		[DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB] = THING_AS_HUNK(asn1_pkcs1_1_5_rsa_sha2_256_blob),
+		[DIGITAL_SIGNATURE_ECDSA_BLOB] = THING_AS_HUNK(asn1_ecdsa_sha2_256_blob),
+		[DIGITAL_SIGNATURE_RSASSA_PSS_BLOB] = THING_AS_HUNK(asn1_rsassa_pss_sha2_256_blob),
+	},
 };
 
 const struct prf_desc ike_alg_prf_sha2_256 = {
@@ -151,8 +164,18 @@ const struct integ_desc ike_alg_integ_hmac_sha2_256_truncbug = {
 
 /* SHA-2 384 */
 
-static const uint8_t asn1_blob_rsa_sha2_384[] =	{ LEN_RSA_PSS_SHA2_BLOB, RSA_PSS_SHA384_BLOB };
-static const uint8_t asn1_blob_ecdsa_sha2_384[] = { LEN_ECDSA_SHA2_BLOB, ECDSA_SHA384_BLOB };
+static const uint8_t asn1_pkcs1_1_5_rsa_sha2_384_blob[1+ASN1_PKCS1_1_5_RSA_SIZE] = {
+	ASN1_PKCS1_1_5_RSA_SIZE,
+	ASN1_PKCS1_1_5_RSA_SHA2_384_BLOB
+};
+static const uint8_t asn1_ecdsa_sha2_384_blob[1+ASN1_ECDSA_SHA2_SIZE] = {
+	ASN1_ECDSA_SHA2_SIZE,
+	ASN1_ECDSA_SHA2_384_BLOB
+};
+static const uint8_t asn1_rsassa_pss_sha2_384_blob[1+ASN1_RSASSA_PSS_SHA2_SIZE] = {
+	ASN1_RSASSA_PSS_SHA2_SIZE,
+	ASN1_RSASSA_PSS_SHA2_384_BLOB
+};
 
 const CK_RSA_PKCS_PSS_PARAMS rsa_pss_sha2_384 = {
 	.hashAlg = CKM_SHA384,
@@ -181,8 +204,11 @@ const struct hash_desc ike_alg_hash_sha2_384 = {
 	.hash_block_size = 128,	/* from RFC 4868 */
 	.hash_ops = &ike_alg_hash_nss_ops,
 
-	.hash_asn1_blob_rsa = THING_AS_HUNK(asn1_blob_rsa_sha2_384),
-	.hash_asn1_blob_ecdsa = THING_AS_HUNK(asn1_blob_ecdsa_sha2_384),
+	.digital_signature_blob = {
+		[DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB] = THING_AS_HUNK(asn1_pkcs1_1_5_rsa_sha2_384_blob),
+		[DIGITAL_SIGNATURE_ECDSA_BLOB] = THING_AS_HUNK(asn1_ecdsa_sha2_384_blob),
+		[DIGITAL_SIGNATURE_RSASSA_PSS_BLOB] = THING_AS_HUNK(asn1_rsassa_pss_sha2_384_blob),
+	},
 };
 
 const struct prf_desc ike_alg_prf_sha2_384 = {
@@ -244,8 +270,18 @@ const struct integ_desc ike_alg_integ_sha2_384 = {
 
 /* SHA-2 512 */
 
-static const uint8_t asn1_blob_rsa_sha2_512[] = { LEN_RSA_PSS_SHA2_BLOB, RSA_PSS_SHA512_BLOB };
-static const uint8_t asn1_blob_ecdsa_sha2_512[] = { LEN_ECDSA_SHA2_BLOB, ECDSA_SHA512_BLOB };
+static const uint8_t asn1_pkcs1_1_5_rsa_sha2_512_blob[1+ASN1_PKCS1_1_5_RSA_SIZE] = {
+	ASN1_PKCS1_1_5_RSA_SIZE,
+	ASN1_PKCS1_1_5_RSA_SHA2_512_BLOB
+};
+static const uint8_t asn1_ecdsa_sha2_512_blob[1+ASN1_ECDSA_SHA2_SIZE] = {
+	ASN1_ECDSA_SHA2_SIZE,
+	ASN1_ECDSA_SHA2_512_BLOB
+};
+static const uint8_t asn1_rsassa_pss_sha2_512_blob[1+ASN1_RSASSA_PSS_SHA2_SIZE] = {
+	ASN1_RSASSA_PSS_SHA2_SIZE,
+	ASN1_RSASSA_PSS_SHA2_512_BLOB
+};
 
 const CK_RSA_PKCS_PSS_PARAMS rsa_pss_sha2_512 = {
 	.hashAlg = CKM_SHA512,
@@ -274,8 +310,11 @@ const struct hash_desc ike_alg_hash_sha2_512 = {
 	.hash_block_size = 128,	/* from RFC 4868 */
 	.hash_ops = &ike_alg_hash_nss_ops,
 
-	.hash_asn1_blob_rsa = THING_AS_HUNK(asn1_blob_rsa_sha2_512),
-	.hash_asn1_blob_ecdsa = THING_AS_HUNK(asn1_blob_ecdsa_sha2_512),
+	.digital_signature_blob = {
+		[DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB] = THING_AS_HUNK(asn1_pkcs1_1_5_rsa_sha2_512_blob),
+		[DIGITAL_SIGNATURE_ECDSA_BLOB] = THING_AS_HUNK(asn1_ecdsa_sha2_512_blob),
+		[DIGITAL_SIGNATURE_RSASSA_PSS_BLOB] = THING_AS_HUNK(asn1_rsassa_pss_sha2_512_blob),
+	},
 };
 
 const struct prf_desc ike_alg_prf_sha2_512 = {

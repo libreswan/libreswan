@@ -506,8 +506,7 @@ struct hash_desc {
 	 * sent in the Auth payload as part of Digital signature
 	 * authentication as per RFC7427
 	 */
-	shunk_t hash_asn1_blob_rsa;
-	shunk_t hash_asn1_blob_ecdsa;
+	shunk_t digital_signature_blob[DIGITAL_SIGNATURE_BLOB_ROOF];
 
 	const struct hash_ops *hash_ops;
 };

@@ -33,7 +33,20 @@
 #include "ike_alg_prf_ikev2_ops.h"
 #include "lsw-pfkeyv2.h"	/* for SADB_*ALG_* */
 
-static const uint8_t asn1_blob_ecdsa_sha1[] = { LEN_ECDSA_SHA1_BLOB, ECDSA_SHA1_BLOB };
+static const uint8_t asn1_pkcs1_1_5_rsa_sha1_blob[1+ASN1_PKCS1_1_5_RSA_SIZE] = {
+	ASN1_PKCS1_1_5_RSA_SIZE,
+	ASN1_PKCS1_1_5_RSA_SHA1_BLOB
+};
+static const uint8_t asn1_ecdsa_sha1_blob[1+ASN1_ECDSA_SHA1_SIZE] = {
+	ASN1_ECDSA_SHA1_SIZE,
+	ASN1_ECDSA_SHA1_BLOB
+};
+#if 0
+static const uint8_t asn1_rsassa_pss_sha1_blob[1+ASN1_RSASSA_PSS_SHA2_SIZE] = {
+	ASN1_RSASSA_PSS_SHA2_SIZE,
+	ASN1_RSASSA_PSS_SHA1_BLOB
+};
+#endif
 
 const struct hash_desc ike_alg_hash_sha1 = {
 	.common = {
@@ -55,7 +68,10 @@ const struct hash_desc ike_alg_hash_sha1 = {
 	.hash_block_size = 64,	/* B from RFC 2104 */
 	.hash_ops = &ike_alg_hash_nss_ops,
 
-	.hash_asn1_blob_ecdsa = THING_AS_HUNK(asn1_blob_ecdsa_sha1),
+	.digital_signature_blob = {
+		[DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB] = THING_AS_HUNK(asn1_pkcs1_1_5_rsa_sha1_blob),
+		[DIGITAL_SIGNATURE_ECDSA_BLOB] = THING_AS_HUNK(asn1_ecdsa_sha1_blob),
+	},
 };
 
 const struct prf_desc ike_alg_prf_sha1 = {

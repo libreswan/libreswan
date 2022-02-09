@@ -144,7 +144,7 @@ bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 			}
 		}
 
-		shunk_t h = hash_algo->hash_asn1_blob_rsa;
+		shunk_t h = hash_algo->digital_signature_blob[DIGITAL_SIGNATURE_RSASSA_PSS_BLOB];
 		if (h.len == 0) {
 			pexpect_fail(ike->sa.st_logger, HERE,
 				     "negotiated hash algorithm %s has no RSA ASN1 blob",
