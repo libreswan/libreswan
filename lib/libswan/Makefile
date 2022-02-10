@@ -46,15 +46,18 @@ OBJS += constants.o \
 	lswconf.o \
 	lswfips.o \
 	sameaddr.o \
-	secrets.o \
 	subnettypeof.o ttodata.o \
 	ttosaid.o \
 	ttosubnet.o \
 	ttoul.o \
 	secitem_chunk.o \
-	base64_pubkey.o \
 	lswnss.o \
 	alg_byname.o
+
+OBJS += secrets.o
+OBJS += pubkey_rsa.o
+OBJS += pubkey_ecdsa.o
+OBJS += base64_pubkey.o
 
 OBJS += sparse_names.o
 OBJS += ttoaddress.o
