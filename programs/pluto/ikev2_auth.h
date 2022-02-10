@@ -45,12 +45,6 @@ shunk_t authby_asn1_hash_blob(const struct hash_desc *hash_algo,
 bool emit_v2_asn1_hash_blob(const struct hash_desc *hash_algo,
 			    pb_stream *a_pbs, enum keyword_authby authby);
 
-struct hash_signature v2_auth_signature(struct logger *logger,
-					const struct crypt_mac *sighash,
-					const struct hash_desc *hash_algo,
-					enum ikev2_auth_method auth_method,
-					const struct private_key_stuff *pks);
-
 bool emit_v2_auth(struct ike_sa *ike,
 		  const struct hash_signature *auth_sig,
 		  const struct crypt_mac *idhash,

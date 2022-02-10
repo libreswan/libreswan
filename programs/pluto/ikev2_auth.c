@@ -38,11 +38,6 @@
 #include "keys.h"
 #include "ikev2_psk.h"
 
-static const uint8_t rsa_sha1_der_header[] = {
-	0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e,
-	0x03, 0x02, 0x1a, 0x05, 0x00, 0x04, 0x14
-};
-
 struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 				      const struct crypt_mac *idhash,
 				      const struct hash_desc *hasher,
@@ -242,61 +237,6 @@ bool emit_v2_asn1_hash_blob(const struct hash_desc *hash_algo,
 		return false;
 	}
 	return true;
-}
-
-struct hash_signature v2_auth_signature(struct logger *logger,
-					const struct crypt_mac *hash_to_sign,
-					const struct hash_desc *hash_algo,
-					enum ikev2_auth_method auth_method,
-					const struct private_key_stuff *pks)
-{
-	passert(hash_to_sign->len <= sizeof(hash_to_sign->ptr/*array*/)); /*hint to coverity*/
-	logtime_t start = logtime_start(logger);
-
-	/*
-	 * Allocate large enough space for any digest.
-	 * Bound could be tightened because the signature octets are
-	 * only concatenated to a SHA1 hash.
-	 */
-	uint8_t hash_octets[sizeof(rsa_sha1_der_header) + sizeof(hash_to_sign->ptr/*an array*/)];
-	size_t hash_len;
-
-	switch (auth_method) {
-
-	case IKEv2_AUTH_RSA:
-		/* old style RSA with SHA1 */
-		passert(hash_algo == &ike_alg_hash_sha1);
-		memcpy(hash_octets, &rsa_sha1_der_header,
-		       sizeof(rsa_sha1_der_header));
-		memcpy(hash_octets + sizeof(rsa_sha1_der_header),
-		       hash_to_sign->ptr, hash_to_sign->len);
-		hash_len = sizeof(rsa_sha1_der_header) + hash_to_sign->len;
-		break;
-
-	case IKEv2_AUTH_DIGSIG:
-		hash_len = hash_to_sign->len;
-		passert(hash_len <= sizeof(hash_octets));
-		memcpy(hash_octets, hash_to_sign->ptr, hash_to_sign->len);
-		break;
-
-	default:
-		bad_case(auth_method);
-	}
-
-	if (DBGP(DBG_BASE)) {
-		DBG_dump("hash to sign", hash_octets, hash_len);
-	}
-
-	logtime_t sign_time = logtime_start(logger);
-	struct hash_signature sig = pks->pubkey_type->sign_hash(pks,
-								hash_octets,
-								hash_len,
-								hash_algo,
-								logger);
-	logtime_stop(&sign_time, "%s() calling sign_hash()", __func__);
-	passert(sig.len <= sizeof(sig.ptr/*array*/));
-	logtime_stop(&start, "%s()", __func__);
-	return sig;
 }
 
 bool emit_v2_auth(struct ike_sa *ike,
