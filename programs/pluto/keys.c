@@ -146,174 +146,6 @@ void list_psks(struct show *s)
 	lsw_foreach_secret(pluto_secrets, print_secrets, s);
 }
 
-bool authsig_using_RSA_pubkey(const struct crypt_mac *expected_hash,
-			      shunk_t signature,
-			      struct pubkey *kr,
-			      const struct hash_desc *hash_algo,
-			      diag_t *fatal_diag,
-			      struct logger *logger)
-{
-	const struct RSA_public_key *k = &kr->u.rsa;
-
-	/* decrypt the signature -- reversing RSA_sign_hash */
-	if (signature.len != kr->size) {
-		/* XXX notification: INVALID_KEY_INFORMATION */
-		*fatal_diag = NULL;
-		return false;
-	}
-
-	SECStatus retVal;
-	if (DBGP(DBG_BASE)) {
-		DBG_dump_hunk("NSS RSA: verifying that decrypted signature matches hash: ",
-			      *expected_hash);
-	}
-
-	/*
-	 * Create a public key storing all keying material in an
-	 * arena.  The arena's lifetime is tied to and released by the
-	 * key.
-	 *
-	 * Danger:
-	 *
-	 * Need to use SECKEY_DestroyPublicKey() to release any
-	 * allocated memory; not SECITEM_FreeArena(); and not both!
-	 *
-	 * A look at SECKEY_DestroyPublicKey()'s source shows that it
-	 * releases the allocated public key by freeing the arena,
-	 * hence only that is needed.
-	 */
-
-	PRArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
-	if (arena == NULL) {
-		*fatal_diag = diag_nss_error("allocating RSA arena");
-		return false;
-	}
-
-	SECKEYPublicKey *publicKey = PORT_ArenaZAlloc(arena, sizeof(SECKEYPublicKey));
-	if (publicKey == NULL) {
-		*fatal_diag = diag_nss_error("allocating RSA pubkey");
-		PORT_FreeArena(arena, PR_FALSE);
-		return false;
-	}
-
-	publicKey->arena = arena;
-	publicKey->keyType = rsaKey;
-	publicKey->pkcs11Slot = NULL;
-	publicKey->pkcs11ID = CK_INVALID_HANDLE;
-
-	/*
-	 * Convert n and e to form the public key in the
-	 * SECKEYPublicKey data structure
-	 */
-
-	const SECItem nss_n = same_chunk_as_secitem(k->n, siBuffer);
-	retVal = SECITEM_CopyItem(publicKey->arena, &publicKey->u.rsa.modulus, &nss_n);
-	if (retVal != SECSuccess) {
-		llog_nss_error(RC_LOG, logger, "copying 'n' (modulus) to RSA public key");
-		SECKEY_DestroyPublicKey(publicKey);
-		return false;
-	}
-
-	const SECItem nss_e = same_chunk_as_secitem(k->e, siBuffer);
-	retVal = SECITEM_CopyItem(publicKey->arena, &publicKey->u.rsa.publicExponent, &nss_e);
-	if (retVal != SECSuccess) {
-		llog_nss_error(RC_LOG, logger, "copying 'e' (exponent) to RSA public key");
-		SECKEY_DestroyPublicKey(publicKey);
-		return false;
-	}
-
-	/*
-	 * Convert the signature into raw form (NSS doesn't do const).
-	 */
-
-	const SECItem encrypted_signature = {
-		.type = siBuffer,
-		.data = DISCARD_CONST(unsigned char *, signature.ptr),
-		.len  = signature.len,
-	};
-
-	if (hash_algo == NULL /* ikev1*/ ||
-	    hash_algo == &ike_alg_hash_sha1 /* old style rsa with SHA1*/) {
-		SECItem decrypted_signature = {
-			.type = siBuffer,
-		};
-		if (SECITEM_AllocItem(publicKey->arena, &decrypted_signature,
-				      signature.len) == NULL) {
-			llog_nss_error(RC_LOG, logger, "allocating space for decrypted RSA signature");
-			SECKEY_DestroyPublicKey(publicKey);
-			return false;
-		}
-
-		if (PK11_VerifyRecover(publicKey, &encrypted_signature, &decrypted_signature,
-				       lsw_nss_get_password_context(logger)) != SECSuccess) {
-			dbg("NSS RSA verify: decrypting signature is failed");
-			SECKEY_DestroyPublicKey(publicKey);
-			*fatal_diag = NULL;
-			return false;
-		}
-
-		LSWDBGP(DBG_CRYPT, buf) {
-			jam_string(buf, "NSS RSA verify: decrypted sig: ");
-			jam_nss_secitem(buf, &decrypted_signature);
-		}
-
-		/* hash at end? See above for length check */
-		passert(decrypted_signature.len >= expected_hash->len);
-		uint8_t *start = (decrypted_signature.data
-				  + decrypted_signature.len
-				  - expected_hash->len);
-		if (!memeq(start, expected_hash->ptr, expected_hash->len)) {
-			dbg("RSA Signature NOT verified");
-			SECKEY_DestroyPublicKey(publicKey);
-			*fatal_diag = NULL;
-			return false;
-		}
-
-		SECKEY_DestroyPublicKey(publicKey);
-		*fatal_diag = NULL;
-		return true;
-	}
-
-	/*
-	 * Digital signature scheme with RSA-PSS
-	 */
-	const CK_RSA_PKCS_PSS_PARAMS *mech = hash_algo->nss.rsa_pkcs_pss_params;
-	if (!pexpect(mech != NULL)) {
-		dbg("NSS RSA verify: hash algorithm not supported");
-		SECKEY_DestroyPublicKey(publicKey);
-		/* internal error? */
-		*fatal_diag = NULL;
-		return false;
-	}
-
-	const SECItem hash_mech_item = {
-		.type = siBuffer,
-		.data = (void*)mech, /* strip const */
-		.len = sizeof(*mech),
-	};
-
-	struct crypt_mac hash_data = *expected_hash; /* cast away const */
-	const SECItem expected_hash_item = {
-		.len = hash_data.len,
-		.data = hash_data.ptr,
-		.type = siBuffer,
-	};
-
-	if (PK11_VerifyWithMechanism(publicKey, CKM_RSA_PKCS_PSS,
-				     &hash_mech_item, &encrypted_signature,
-				     &expected_hash_item,
-				     lsw_nss_get_password_context(logger)) != SECSuccess) {
-		dbg("NSS RSA verify: decrypting signature is failed");
-		SECKEY_DestroyPublicKey(publicKey);
-		*fatal_diag = NULL;
-		return false;
-	}
-
-	SECKEY_DestroyPublicKey(publicKey);
-	*fatal_diag = NULL;
-	return true;
-}
-
 /*
  * Check signature against all RSA public keys we can find.  If we
  * need keys from DNS KEY records, and they haven't been fetched,
@@ -327,11 +159,10 @@ bool authsig_using_RSA_pubkey(const struct crypt_mac *expected_hash,
  */
 
 struct tac_state {
-	const struct pubkey_type *type;
+	const struct pubkey_signer *signer;
 	const struct crypt_mac *hash;
 	shunk_t signature;
 	const struct hash_desc *hash_algo;
-	authsig_using_pubkey_fn *try_pubkey;
 	realtime_t now;
 	struct logger *logger;
 	const struct end *remote;
@@ -369,15 +200,16 @@ static bool try_all_keys(const char *cert_origin,
 			 struct tac_state *s)
 {
 	id_buf thatid;
-	dbg("trying all '%s's for %s key that matches ID: %s",
-	    cert_origin, s->type->name, str_id(&s->remote->id, &thatid));
+	dbg("trying all '%s's for %s key using %s signature that matches ID: %s",
+	    cert_origin, s->signer->type->name, s->signer->name,
+	    str_id(&s->remote->id, &thatid));
 	s->cert_origin = cert_origin;
 
 	bool described = false;
 	for (struct pubkey_list *p = pubkey_db; p != NULL; p = p->next) {
 		struct pubkey *key = p->key;
 
-		if (key->type != s->type) {
+		if (key->type != s->signer->type) {
 			id_buf printkid;
 			dbg("  skipping '%s' with type %s",
 			    str_id(&key->id, &printkid), key->type->name);
@@ -432,9 +264,9 @@ static bool try_all_keys(const char *cert_origin,
 		jam(&s->tried_jambuf, " *%s", keyid_str);
 
 		logtime_t try_time = logtime_start(s->logger);
-		bool passed = (s->try_pubkey)(s->hash, s->signature,
-						 key, s->hash_algo,
-						 &s->fatal_diag, s->logger);
+		bool passed = (s->signer->authenticate_signature)(s->hash, s->signature,
+								  key, s->hash_algo,
+								  &s->fatal_diag, s->logger);
 		logtime_stop(&try_time, "%s() trying a pubkey", __func__);
 
 		if (s->fatal_diag != NULL) {
@@ -463,20 +295,18 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 				    const struct crypt_mac *hash,
 				    shunk_t signature,
 				    const struct hash_desc *hash_algo,
-				    const struct pubkey_type *type,
-				    authsig_using_pubkey_fn *try_pubkey)
+				    const struct pubkey_signer *signer)
 {
 	const struct connection *c = ike->sa.st_connection;
 	struct tac_state s = {
 		/* in */
-		.type = type,
+		.signer = signer,
 		.logger = ike->sa.st_logger,
 		.hash = hash,
 		.now = realnow(),
 		.signature = signature,
 		.hash_algo = hash_algo,
 		.remote = &c->spd.that,
-		.try_pubkey = try_pubkey,
 		/* out */
 		.tried_cnt = 0,
 		.key = NULL,
@@ -487,8 +317,9 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 	/* try all appropriate Public keys */
 
 	dn_buf buf;
-	dbg("required %s CA is '%s'", type->name,
-	    str_dn_or_null(c->remote->config->host.ca, "%any", &buf));
+	dbg("CA is '%s' for %s key using %s signature",
+	    str_dn_or_null(c->remote->config->host.ca, "%any", &buf),
+	    signer->type->name, signer->name);
 
 	passert(ike->sa.st_remote_certs.processed);
 
@@ -527,12 +358,12 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 		if (s.tried_cnt == 0) {
 			id_buf idb;
 			return diag("authentication failed: no certificate matched %s with %s and '%s'",
-				    type->name, hash_algo->common.fqn,
+				    signer->name, hash_algo->common.fqn,
 				    str_id(&c->spd.that.id, &idb));
 		} else {
 			id_buf idb;
 			return diag("authentication failed: using %s with %s for '%s' tried%s",
-				    type->name, hash_algo->common.fqn,
+				    signer->name, hash_algo->common.fqn,
 				    str_id(&c->spd.that.id, &idb),
 				    s.tried);
 		}
@@ -548,7 +379,7 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 			     "?"));
 		}
 		jam(buf, "authenticated using %s with %s and %s certificate ",
-		    type->name, hash_algo->common.fqn,
+		    signer->name, hash_algo->common.fqn,
 		    s.cert_origin);
 		jam(buf, "'");
 		jam_id_bytes(buf, &s.key->id, jam_sanitized_bytes);

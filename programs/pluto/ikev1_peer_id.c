@@ -280,8 +280,7 @@ stf_status oakley_auth(struct msg_digest *md, bool initiator)
 		shunk_t signature = pbs_in_left_as_shunk(&md->chain[ISAKMP_NEXT_SIG]->pbs);
 		diag_t d = authsig_and_log_using_pubkey(ike_sa(st, HERE), &hash, signature,
 							&ike_alg_hash_sha1, /*always*/
-							&pubkey_type_rsa,
-							authsig_using_RSA_pubkey);
+							&pubkey_signer_rsa);
 		if (d != NULL) {
 			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
 			dbg("received message SIG_%s data did not match computed value",

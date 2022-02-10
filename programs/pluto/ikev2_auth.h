@@ -30,6 +30,7 @@ struct hash_desc;
 struct logger;
 struct private_key_stuff;
 enum perspective;
+struct pubkey_signer;
 
 struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 				      const struct crypt_mac *idhash,
@@ -37,6 +38,7 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 				      enum perspective from_the_perspective_of);
 
 enum keyword_authby v2_auth_by(struct ike_sa *ike);
+const struct pubkey_signer *v2_auth_digsig_pubkey_signer(enum keyword_authby authby);
 enum ikev2_auth_method v2_auth_method(struct ike_sa *ike, enum keyword_authby authby);
 const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike);
 
@@ -57,7 +59,7 @@ typedef stf_status (v2_auth_signature_cb)(struct ike_sa *ike,
 bool submit_v2_auth_signature(struct ike_sa *ike,
 			      const struct crypt_mac *sighash,
 			      const struct hash_desc *hash_algo,
-			      enum keyword_authby authby,
+			      const struct pubkey_signer *signer,
 			      enum ikev2_auth_method auth_method,
 			      v2_auth_signature_cb *cb);
 

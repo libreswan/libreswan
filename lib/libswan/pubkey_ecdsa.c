@@ -116,6 +116,18 @@ static err_t ECDSA_secret_sane(struct private_key_stuff *pks_unused UNUSED)
 	return NULL;
 }
 
+const struct pubkey_type pubkey_type_ecdsa = {
+	.alg = PUBKEY_ALG_ECDSA,
+	.name = "ECDSA",
+	.private_key_kind = PKK_ECDSA,
+	.unpack_pubkey_content = ECDSA_unpack_pubkey_content,
+	.free_pubkey_content = ECDSA_free_pubkey_content,
+	.extract_private_key_pubkey_content = ECDSA_extract_private_key_pubkey_content,
+	.free_secret_content = ECDSA_free_secret_content,
+	.secret_sane = ECDSA_secret_sane,
+	.extract_pubkey_content = ECDSA_extract_pubkey_content,
+};
+
 static struct hash_signature ECDSA_sign_hash(const struct private_key_stuff *pks,
 					     const uint8_t *hash_val, size_t hash_len,
 					     const struct hash_desc *hash_algo_unused UNUSED,
@@ -177,15 +189,122 @@ static struct hash_signature ECDSA_sign_hash(const struct private_key_stuff *pks
 	return signature;
 }
 
-const struct pubkey_type pubkey_type_ecdsa = {
-	.alg = PUBKEY_ALG_ECDSA,
+static bool ECDSA_authenticate_signature(const struct crypt_mac *hash, shunk_t signature,
+					 struct pubkey *kr,
+					 const struct hash_desc *unused_hash_algo UNUSED,
+					 diag_t *fatal_diag,
+					 struct logger *logger)
+{
+	PRArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
+	if (arena == NULL) {
+		*fatal_diag = diag_nss_error("allocating ECDSA arena");
+		return false;
+	}
+
+	/*
+	 * convert K(R) into a public key
+	 */
+
+	/* allocate the pubkey */
+	const struct ECDSA_public_key *k = &kr->u.ecdsa;
+	SECKEYPublicKey *publicKey = (SECKEYPublicKey *)
+		PORT_ArenaZAlloc(arena, sizeof(SECKEYPublicKey));
+	if (publicKey == NULL) {
+		*fatal_diag = diag_nss_error("allocating ECDSA pubkey arena");
+		PORT_FreeArena(arena, PR_FALSE);
+		return false;
+	}
+
+	publicKey->arena = arena;
+	publicKey->keyType = ecKey;
+	publicKey->pkcs11Slot = NULL;
+	publicKey->pkcs11ID = CK_INVALID_HANDLE;
+
+	/*
+	 * Copy k and ec params into the arena / publicKey.
+	 */
+
+	SECItem k_pub = same_chunk_as_secitem(k->pub, siBuffer);
+	if (SECITEM_CopyItem(arena, &publicKey->u.ec.publicValue, &k_pub) != SECSuccess) {
+		*fatal_diag = diag_nss_error("copying 'k' to EDSA public key");
+		PORT_FreeArena(arena, PR_FALSE);
+		return false;
+	}
+
+	SECItem k_ecParams = same_chunk_as_secitem(k->ecParams, siBuffer);
+	if (SECITEM_CopyItem(arena, &publicKey->u.ec.DEREncodedParams, &k_ecParams) != SECSuccess) {
+		*fatal_diag = diag_nss_error("copying ecParams to ECDSA public key");
+		PORT_FreeArena(arena, PR_FALSE);
+		return false;
+	}
+
+	/*
+	 * Convert the signature into raw form (NSS doesn't do const).
+	 */
+	SECItem der_signature = {
+		.type = siBuffer,
+		.data = DISCARD_CONST(unsigned char *, signature.ptr),/*NSS doesn't do const*/
+		.len = signature.len
+	};
+	if (DBGP(DBG_BASE)) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam(buf, "%d-byte DER encoded ECDSA signature: ",
+			    der_signature.len);
+			jam_nss_secitem(buf, &der_signature);
+		}
+	}
+
+	SECItem *raw_signature = DSAU_DecodeDerSigToLen(&der_signature,
+							SECKEY_SignatureLen(publicKey));
+	if (raw_signature == NULL) {
+		/* not fatal as dependent on key being tried */
+		llog_nss_error(DEBUG_STREAM, logger,
+			       "unpacking DER encoded ECDSA signature using DSAU_DecodeDerSigToLen()");
+		PORT_FreeArena(arena, PR_FALSE);
+		*fatal_diag = NULL;
+		return false;
+	}
+
+	if (DBGP(DBG_BASE)) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam(buf, "%d-byte raw ESCSA signature: ",
+			    raw_signature->len);
+			jam_nss_secitem(buf, raw_signature);
+		}
+	}
+
+	/*
+	 * put the hash somewhere writable; so it can later be logged?
+	 *
+	 * XXX: cast away const?
+	 */
+	struct crypt_mac hash_data = *hash;
+	SECItem hash_item = {
+		.type = siBuffer,
+		.data = hash_data.ptr,
+		.len = hash_data.len,
+	};
+
+	if (PK11_Verify(publicKey, raw_signature, &hash_item,
+			lsw_nss_get_password_context(logger)) != SECSuccess) {
+		llog_nss_error(DEBUG_STREAM, logger,
+			       "verifying AUTH hash using PK11_Verify() failed:");
+		PORT_FreeArena(arena, PR_FALSE);
+		SECITEM_FreeItem(raw_signature, PR_TRUE);
+		*fatal_diag = NULL;
+		return false;
+	}
+
+	dbg("NSS: verified signature");
+	SECITEM_FreeItem(raw_signature, PR_TRUE);
+
+	*fatal_diag = NULL;
+	return true;
+}
+
+const struct pubkey_signer pubkey_signer_ecdsa = {
 	.name = "ECDSA",
-	.private_key_kind = PKK_ECDSA,
-	.unpack_pubkey_content = ECDSA_unpack_pubkey_content,
-	.free_pubkey_content = ECDSA_free_pubkey_content,
-	.extract_private_key_pubkey_content = ECDSA_extract_private_key_pubkey_content,
-	.free_secret_content = ECDSA_free_secret_content,
-	.secret_sane = ECDSA_secret_sane,
+	.type = &pubkey_type_ecdsa,
 	.sign_hash = ECDSA_sign_hash,
-	.extract_pubkey_content = ECDSA_extract_pubkey_content,
+	.authenticate_signature = ECDSA_authenticate_signature,
 };

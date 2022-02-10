@@ -33,6 +33,7 @@
 #include "diag.h"
 #include "keyid.h"
 #include "refcnt.h"
+#include "crypt_mac.h"
 
 struct logger;
 struct state;	/* forward declaration */
@@ -172,14 +173,35 @@ struct pubkey_type {
 						   SECKEYPublicKey *pubk, SECItem *cert_ckaid);
 	void (*free_secret_content)(struct private_key_stuff *pks);
 	err_t (*secret_sane)(struct private_key_stuff *pks);
+};
+
+struct pubkey_signer {
+	const char *name;
+	const struct pubkey_type *type;
 	struct hash_signature (*sign_hash)(const struct private_key_stuff *pks,
 					   const uint8_t *hash_octets, size_t hash_len,
 					   const struct hash_desc *hash_algo,
 					   struct logger *logger);
+	/*
+	 * Danger! This function returns three results
+	 *
+	 * true;FATAL_DIAG=NULL: pubkey verified
+	 * false;FATAL_DIAG=NULL: pubkey did not verify
+	 * false;FATAL_DIAG!=NULL: operation should be aborted
+	 */
+	bool (*authenticate_signature)(const struct crypt_mac *hash,
+				       shunk_t signature,
+				       struct pubkey *kr,
+				       const struct hash_desc *hash_algo,
+				       diag_t *fatal_diag,
+				       struct logger *logger);
 };
 
 extern const struct pubkey_type pubkey_type_rsa;
 extern const struct pubkey_type pubkey_type_ecdsa;
+
+extern const struct pubkey_signer pubkey_signer_rsa;
+extern const struct pubkey_signer pubkey_signer_ecdsa;
 
 const struct pubkey_type *pubkey_alg_type(enum pubkey_alg alg);
 

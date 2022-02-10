@@ -141,6 +141,18 @@ enum keyword_authby v2_auth_by(struct ike_sa *ike)
 	return authby;
 }
 
+const struct pubkey_signer *v2_auth_digsig_pubkey_signer(enum keyword_authby authby)
+{
+	switch (authby) {
+	case AUTHBY_RSASIG:
+		return &pubkey_signer_rsa;
+	case AUTHBY_ECDSA:
+		return &pubkey_signer_ecdsa;
+	default:
+		bad_case(authby);
+	}
+}
+
 enum ikev2_auth_method v2_auth_method(struct ike_sa *ike, enum keyword_authby authby)
 {
 	struct connection *c = ike->sa.st_connection;
@@ -289,27 +301,6 @@ bool emit_v2_auth(struct ike_sa *ike,
 	return true;
 }
 
-/* check for ASN.1 blob; if found, consume it */
-static bool ikev2_try_asn1_hash_blob(const struct hash_desc *hash_algo,
-				     pb_stream *a_pbs,
-				     enum keyword_authby authby)
-{
-	shunk_t b = authby_asn1_hash_blob(hash_algo, authby);
-
-	uint8_t in_blob[ASN1_LEN_ALGO_IDENTIFIER +
-			PMAX(ASN1_ECDSA_SHA1_SIZE,
-			     PMAX(ASN1_RSASSA_PSS_SHA2_SIZE,
-				  ASN1_ECDSA_SHA2_SIZE))];
-	dbg("looking for ASN.1 blob for method %s for hash_algo %s",
-	    enum_name(&keyword_authby_names, authby), hash_algo->common.fqn);
-	return
-		pexpect(b.ptr != NULL) &&	/* we know this hash */
-		pbs_left(a_pbs) >= b.len && /* the stream has enough octets */
-		memeq(a_pbs->cur, b.ptr, b.len) && /* they are the right octets */
-		pexpect(b.len <= sizeof(in_blob)) && /* enough space in in_blob[] */
-		pexpect(pbs_in_raw(a_pbs, in_blob, b.len, "ASN.1 blob for hash algo") == NULL); /* can eat octets */
-}
-
 /*
  * Called by process_v2_IKE_AUTH_request_tail() and
  * ikev2_in_IKE_AUTH_R() Do the actual AUTH payload verification
@@ -323,6 +314,31 @@ static bool ikev2_try_asn1_hash_blob(const struct hash_desc *hash_algo,
  * This just needs to answer the very simple yes/no question.  Did
  * auth succeed.  Caller needs to decide what response is appropriate.
  */
+
+static diag_t v2_authsig_and_log_using_pubkey(struct ike_sa *ike,
+					      const struct crypt_mac *idhash,
+					      shunk_t signature,
+					      const struct hash_desc *hash_algo,
+					      const struct pubkey_signer *pubkey_signer)
+{
+	statetime_t start = statetime_start(&ike->sa);
+
+	/* XXX: table lookup? */
+	if (hash_algo->common.ikev2_alg_id < 0) {
+		return diag("authentication failed: unknown or unsupported hash algorithm");
+	}
+
+	if (signature.len == 0) {
+		return diag("authentication failed: rejecting received zero-length RSA signature");
+	}
+
+	struct crypt_mac hash = v2_calculate_sighash(ike, idhash, hash_algo,
+						     REMOTE_PERSPECTIVE);
+	diag_t d = authsig_and_log_using_pubkey(ike, &hash, signature,
+						hash_algo, pubkey_signer);
+	statetime_stop(&start, "%s()", __func__);
+	return d;
+}
 
 diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 			  struct ike_sa *ike,
@@ -344,8 +360,9 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 		}
 
 		shunk_t signature = pbs_in_left_as_shunk(signature_pbs);
-		diag_t d = v2_authsig_and_log_using_RSA_pubkey(ike, idhash_in, signature,
-							       &ike_alg_hash_sha1);
+		diag_t d = v2_authsig_and_log_using_pubkey(ike, idhash_in, signature,
+							   &ike_alg_hash_sha1,
+							   &pubkey_signer_rsa);
 		if (d != NULL) {
 			return d;
 		}
@@ -396,63 +413,68 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 
 		/* try to match ASN.1 blob designating the hash algorithm */
 
-		lset_t hn = ike->sa.st_hash_negotiated;
-
 		struct hash_alts {
 			lset_t neg;
 			const struct hash_desc *algo;
 		};
 
-		static const struct hash_alts ha[] = {
+		static const struct hash_alts hash_alts[] = {
 			{ NEGOTIATE_AUTH_HASH_SHA2_512, &ike_alg_hash_sha2_512 },
 			{ NEGOTIATE_AUTH_HASH_SHA2_384, &ike_alg_hash_sha2_384 },
 			{ NEGOTIATE_AUTH_HASH_SHA2_256, &ike_alg_hash_sha2_256 },
 			/* { NEGOTIATE_AUTH_HASH_IDENTITY, IKEv2_HASH_ALGORITHM_IDENTITY }, */
 		};
 
-		const struct hash_alts *hap;
-
-		for (hap = ha; ; hap++) {
-			if (hap == &ha[elemsof(ha)]) {
-				if (DBGP(DBG_BASE)) {
-					size_t dl = min(pbs_left(signature_pbs),
-							(size_t) (ASN1_LEN_ALGO_IDENTIFIER +
-								  PMAX(ASN1_ECDSA_SHA1_SIZE,
-								       PMAX(ASN1_RSASSA_PSS_SHA2_SIZE,
-									    ASN1_ECDSA_SHA2_SIZE))));
-					DBG_dump("offered blob", signature_pbs->cur, dl);
-				}
-				return diag("authentication failed: no acceptable ECDSA/RSA-PSS ASN.1 signature hash proposal included for %s",
-					    enum_name(&keyword_authby_names, that_authby));
-			}
-
-			if ((hn & hap->neg) && ikev2_try_asn1_hash_blob(hap->algo, signature_pbs, that_authby))
-				break;
-
-			dbg("st_hash_negotiated policy does not match hash algorithm %s",
-			    hap->algo->common.fqn);
-		}
-
-		/* try to match the hash */
-		diag_t d;
-
 		shunk_t signature = pbs_in_left_as_shunk(signature_pbs);
-		switch (that_authby) {
-		case AUTHBY_RSASIG:
-			d = v2_authsig_and_log_using_RSA_pubkey(ike, idhash_in, signature, hap->algo);
-			break;
+		shunk_t blob;
+		const struct pubkey_signer *pubkey_signer;
 
-		case AUTHBY_ECDSA:
-			d = v2_authsig_and_log_using_ECDSA_pubkey(ike, idhash_in, signature, hap->algo);
+		const struct hash_alts *hap = NULL;
+		FOR_EACH_ELEMENT(hash_alts, hash_alt) {
+			if (!(hash_alt->neg & ike->sa.st_hash_negotiated)) {
+				continue;
+			}
+			switch(that_authby) {
+			case AUTHBY_RSASIG:
+				blob = hash_alt->algo->digital_signature_blob[DIGITAL_SIGNATURE_RSASSA_PSS_BLOB];
+				pubkey_signer = &pubkey_signer_rsa;
+				break;
+			case AUTHBY_ECDSA:
+				blob = hash_alt->algo->digital_signature_blob[DIGITAL_SIGNATURE_ECDSA_BLOB];
+				pubkey_signer = &pubkey_signer_ecdsa;
+				break;
+			default:
+				bad_case(that_authby);
+			}
+			if (blob.len == 0) {
+				continue;
+			}
+			if (!hunk_starteq(signature, blob)) {
+				dbg("st_hash_negotiated policy does not match hash algorithm %s",
+				    hash_alt->algo->common.fqn);
+				continue;
+			};
+			hap = hash_alt;
 			break;
-
-		default:
-			bad_case(that_authby);
 		}
 
-		return d;
-	}
+		if (hap == NULL) {
+			return diag("authentication failed: no acceptable ECDSA/RSA-PSS ASN.1 signature hash proposal included for %s",
+				    enum_name(&keyword_authby_names, that_authby));
+		}
 
+		/* eat the blob */
+		diag_t d = pbs_in_raw(signature_pbs, NULL/*toss*/, blob.len,
+				      "skip ASN.1 blob for hash algo");
+		if (d != NULL) {
+			return d;
+		}
+
+		dbg("verifying signature using %s", pubkey_signer->name);
+		return v2_authsig_and_log_using_pubkey(ike, idhash_in,
+						       pbs_in_left_as_shunk(signature_pbs),
+						       hap->algo, pubkey_signer);
+	}
 	default:
 		return diag("authentication failed: method %s not supported",
 			    enum_name(&ikev2_auth_names, recv_auth));

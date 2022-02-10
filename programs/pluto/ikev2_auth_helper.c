@@ -40,6 +40,7 @@ struct task {
 	enum ikev2_auth_method auth_method;
 	v2_auth_signature_cb *cb;
 	const struct private_key_stuff *pks;
+	const struct pubkey_signer *signer;
 	/* out */
 	struct hash_signature signature;
 };
@@ -58,7 +59,7 @@ struct task_handler v2_auth_signature_handler = {
 bool submit_v2_auth_signature(struct ike_sa *ike,
 			      const struct crypt_mac *hash_to_sign,
 			      const struct hash_desc *hash_algo,
-			      enum keyword_authby authby,
+			      const struct pubkey_signer *signer,
 			      enum ikev2_auth_method auth_method,
 			      v2_auth_signature_cb *cb)
 {
@@ -67,28 +68,15 @@ bool submit_v2_auth_signature(struct ike_sa *ike,
 		.hash_algo = hash_algo,
 		.auth_method = auth_method,
 		.hash_to_sign = *hash_to_sign,
+		.signer = signer,
 	};
 
 	const struct connection *c = ike->sa.st_connection;
-	switch (authby) {
-	case AUTHBY_RSASIG:
-		task.pks = get_connection_private_key(c, &pubkey_type_rsa,
-						      ike->sa.st_logger);
-		if (task.pks == NULL)
-			/* failure: no key to use */
-			return false;
-		break;
-
-	case AUTHBY_ECDSA:
-		task.pks = get_connection_private_key(c, &pubkey_type_ecdsa,
-						      ike->sa.st_logger);
-		if (task.pks == NULL)
-			/* failure: no key to use */
-			return false;
-		break;
-	default:
-		bad_case(authby);
-	}
+	task.pks = get_connection_private_key(c, signer->type,
+					      ike->sa.st_logger);
+	if (task.pks == NULL)
+		/* failure: no key to use */
+		return false;
 
 	submit_task(ike->sa.st_logger, &ike->sa /*state to resume*/,
 		    clone_thing(task, "signature task"),
@@ -106,7 +94,8 @@ static struct hash_signature v2_auth_signature(struct logger *logger,
 					       const struct crypt_mac *hash_to_sign,
 					       const struct hash_desc *hash_algo,
 					       enum ikev2_auth_method auth_method,
-					       const struct private_key_stuff *pks)
+					       const struct private_key_stuff *pks,
+					       const struct pubkey_signer *signer)
 {
 	passert(hash_to_sign->len <= sizeof(hash_to_sign->ptr/*array*/)); /*hint to coverity*/
 	logtime_t start = logtime_start(logger);
@@ -159,11 +148,11 @@ static struct hash_signature v2_auth_signature(struct logger *logger,
 	}
 
 	logtime_t sign_time = logtime_start(logger);
-	struct hash_signature sig = pks->pubkey_type->sign_hash(pks,
-								hash_octets,
-								hash_len,
-								hash_algo,
-								logger);
+	struct hash_signature sig = signer->sign_hash(pks,
+						      hash_octets,
+						      hash_len,
+						      hash_algo,
+						      logger);
 	logtime_stop(&sign_time, "%s() calling sign_hash()", __func__);
 	passert(sig.len <= sizeof(sig.ptr/*array*/));
 	logtime_stop(&start, "%s()", __func__);
@@ -175,7 +164,7 @@ static void v2_auth_signature_computer(struct logger *logger, struct task *task,
 {
 	task->signature = v2_auth_signature(logger, &task->hash_to_sign, task->hash_algo,
 					    task->auth_method,
-					    task->pks);
+					    task->pks, task->signer);
 }
 
 static stf_status v2_auth_signature_completed(struct state *st,

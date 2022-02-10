@@ -42,6 +42,7 @@ struct private_key_stuff;
 struct hash_desc;
 struct show;
 struct ike_sa;
+struct pubkey_signer;
 
 const struct private_key_stuff *get_connection_private_key(const struct connection *c,
 							   const struct pubkey_type *type,
@@ -70,27 +71,10 @@ extern struct pubkey_list *pluto_pubkeys;
 
 const struct pubkey *find_pubkey_by_ckaid(const char *ckaid);
 
-/*
- * Danger! This function returns two values.
- *
- * true|false: did pubkey KR verify the signature
- * FATAL_DIAG != NULL => operation should be aborted (implies false)
- */
-
-typedef bool (authsig_using_pubkey_fn) (const struct crypt_mac *hash,
-					shunk_t signature,
-					struct pubkey *kr,
-					const struct hash_desc *hash_algo,
-					diag_t *fatal_diag,
-					struct logger *logger);
-
-extern authsig_using_pubkey_fn authsig_using_RSA_pubkey;
-
 extern diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 					   const struct crypt_mac *hash,
 					   shunk_t signature,
 					   const struct hash_desc *hash_algo,
-					   const struct pubkey_type *type,
-					   authsig_using_pubkey_fn *try_pubkey);
+					   const struct pubkey_signer *signer);
 
 #endif /* _KEYS_H */
