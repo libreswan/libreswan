@@ -223,17 +223,16 @@ extern void init_pbs(pb_stream *pbs, uint8_t *start, size_t len,
 		     const char *name);
 
 /*
- * Map a byte buffer to/from an input PBS and a CHUNK (it should take
- * a hunk and treat it readonly).
+ * Map a byte buffer to/from an input PBS and a read-only HUNK.
  */
 extern pb_stream same_chunk_as_pbs_in(chunk_t chunk, const char *name);
-extern shunk_t same_pbs_in_as_shunk(const struct pbs_in *pbs);
 extern chunk_t clone_pbs_in_as_chunk(const struct pbs_in *pbs, const char *name);
 
 /*
- * Map/Clone the remaining contents [cur..pbs_left()) of an input PBS
- * as a chunk.
+ * Map all / the remaining contents [cur..pbs_left()) of an input PBS
+ * as a read-only HUNK.
  */
+extern shunk_t pbs_in_all_as_shunk(const struct pbs_in *pbs);
 extern shunk_t pbs_in_left_as_shunk(const struct pbs_in *pbs);
 
 diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,

@@ -1764,7 +1764,7 @@ chunk_t clone_pbs_out_as_chunk(pb_stream *pbs, const char *name)
 	return clone_hunk(same_pbs_out_as_shunk(pbs), name);
 }
 
-shunk_t same_pbs_in_as_shunk(const struct pbs_in *pbs)
+shunk_t pbs_in_all_as_shunk(const struct pbs_in *pbs)
 {
 	return shunk2(pbs->start, pbs_room(pbs));
 }

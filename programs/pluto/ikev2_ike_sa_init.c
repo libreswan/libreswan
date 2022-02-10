@@ -210,7 +210,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 				   old->sa.st_v2_msgid_windows.responder.recv == 0 &&
 				   old->sa.st_v2_msgid_windows.responder.sent == 0 &&
 				   hunk_eq(old->sa.st_firstpacket_peer,
-					   same_pbs_in_as_shunk(&md->message_pbs))) {
+					   pbs_in_all_as_shunk(&md->message_pbs))) {
 				/*
 				 * It looks a lot like a shiny new IKE
 				 * SA that only just responded to a
