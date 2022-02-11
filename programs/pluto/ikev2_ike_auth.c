@@ -628,7 +628,7 @@ static stf_status process_v2_IKE_AUTH_request_ipseckey_continue(struct ike_sa *i
 
 static stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_digest *md);
 
-stf_status process_v2_IKE_AUTH_standard_payloads(struct ike_sa *ike, struct msg_digest *md)
+stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, struct msg_digest *md)
 {
 	ikev2_log_parentSA(&ike->sa);
 
@@ -734,7 +734,7 @@ static stf_status process_v2_IKE_AUTH_request_post_cert_decode(struct state *ike
 {
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
 
-	stf_status s = process_v2_IKE_AUTH_standard_payloads(ike, md);
+	stf_status s = process_v2_IKE_AUTH_request_standard_payloads(ike, md);
 	if (s != STF_OK)
 		return s;
 

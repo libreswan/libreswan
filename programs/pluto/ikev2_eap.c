@@ -440,7 +440,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 		goto auth_fail;
 	}
 
-	stf_status status = process_v2_IKE_AUTH_standard_payloads(ike, md);
+	stf_status status = process_v2_IKE_AUTH_request_standard_payloads(ike, md);
 	if (status != STF_OK)
 		return status;
 
