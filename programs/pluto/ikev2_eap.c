@@ -637,7 +637,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	struct eap_state *eap = ike->sa.st_eap;
 	struct msg_digest *sa_md = ike->sa.st_eap_sa_md;
 	struct logger *logger = ike->sa.st_logger;
-	struct hash_signature msk = { .len = 64, };
+	struct hash_signature msk = { .len = sizeof(msk.ptr/*array*/), };
 
 	pexpect(eap != NULL);
 	pexpect(sa_md != NULL);
@@ -648,7 +648,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	dbg("responder verifying AUTH payload");
 
 	if (SSL_ExportKeyingMaterial(eap->eaptls_desc, key_pad_str, sizeof key_pad_str - 1,
-			PR_FALSE, 0, 0, msk.ptr, msk.len) != SECSuccess) {
+				     PR_FALSE, 0, 0, msk.ptr, msk.len) != SECSuccess) {
 		free_eap_state(&ike->sa.st_eap);
 		llog_nss_error(RC_LOG, logger, "Keying material export failed");
 		return STF_FATAL;
@@ -663,7 +663,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 
 	diag_t d = v2_authsig_and_log_using_psk(AUTHBY_EAPONLY, ike, &idhash_in,
 						&md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
-						HUNK_AS_CHUNK(msk));
+						&msk);
 	free_eap_state(&ike->sa.st_eap);
 	if (d != NULL) {
 		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");

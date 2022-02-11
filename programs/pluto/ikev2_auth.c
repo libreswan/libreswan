@@ -289,8 +289,7 @@ bool emit_v2_auth(struct ike_sa *ike,
 	case IKEv2_AUTH_PSK:
 	case IKEv2_AUTH_NULL:
 		/* emit */
-		if (!ikev2_emit_psk_auth(authby, ike, id_payload_mac, &a_pbs,
-					 chunk2((void*) auth_sig->ptr, auth_sig->len))) {
+		if (!ikev2_emit_psk_auth(authby, ike, id_payload_mac, &a_pbs, auth_sig)) {
 			llog(RC_LOG_SERIOUS, outs->outs_logger, "Failed to find our PreShared Key");
 			return false;
 		}
@@ -379,7 +378,8 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 				    enum_name(&keyword_authby_names, that_authby));
 		}
 
-		diag_t d = v2_authsig_and_log_using_psk(AUTHBY_PSK, ike, idhash_in, signature_pbs, EMPTY_CHUNK);
+		diag_t d = v2_authsig_and_log_using_psk(AUTHBY_PSK, ike, idhash_in,
+							signature_pbs, NULL/*auth_sig*/);
 		if (d != NULL) {
 			dbg("authentication failed: PSK AUTH mismatch");
 			return d;
@@ -396,7 +396,8 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 				    enum_name(&keyword_authby_names, that_authby));
 		}
 
-		diag_t d = v2_authsig_and_log_using_psk(AUTHBY_NULL, ike, idhash_in, signature_pbs, EMPTY_CHUNK);
+		diag_t d = v2_authsig_and_log_using_psk(AUTHBY_NULL, ike, idhash_in,
+							signature_pbs, NULL/*auth_sig*/);
 		if (d != NULL) {
 			dbg("authentication failed: NULL AUTH mismatch (implementation bug?)");
 			return d;

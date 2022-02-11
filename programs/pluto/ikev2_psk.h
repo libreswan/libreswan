@@ -24,11 +24,12 @@ enum keyword_authby;
 struct ike_sa;
 struct crypt_mac;
 struct pbs_in;
+struct hash_signature;
 
 diag_t v2_authsig_and_log_using_psk(enum keyword_authby authby,
 				    const struct ike_sa *ike,
 				    const struct crypt_mac *idhash,
 				    struct pbs_in *sig_pbs,
-				    chunk_t pss);
+				    const struct hash_signature *auth_sig);
 
 #endif

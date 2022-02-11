@@ -21,6 +21,7 @@ struct crypt_mac;
 struct hash_desc;
 struct payload_digest;
 struct ikev2_ipseckey_dns;
+struct hash_signature;
 enum payload_security;
 
 typedef stf_status crypto_transition_fn(struct state *st, struct msg_digest *md,
@@ -56,7 +57,7 @@ extern bool ikev2_emit_psk_auth(enum keyword_authby authby,
 				const struct ike_sa *ike,
 				const struct crypt_mac *idhash,
 				pb_stream *a_pbs,
-				const chunk_t pss);
+				const struct hash_signature *auth_sig);
 
 extern bool ikev2_create_psk_auth(enum keyword_authby authby,
 				  const struct ike_sa *ike,

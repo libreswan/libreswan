@@ -185,12 +185,11 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 			}
 			return STF_SUSPEND;
 		}
+
 		case IKEv2_AUTH_PSK:
 		case IKEv2_AUTH_NULL:
-		{
-			struct hash_signature sig = { .len = 0, };
-			return initiate_v2_IKE_AUTH_request_signature_continue(ike, md, &sig);
-		}
+			return initiate_v2_IKE_AUTH_request_signature_continue(ike, md, NULL/*auth_sig*/);
+
 		default:
 			log_state(RC_LOG, &ike->sa,
 				  "authentication method %s not supported",
@@ -976,12 +975,11 @@ stf_status generate_v2_responder_auth(struct ike_sa *ike, struct msg_digest *md,
 			}
 			return STF_SUSPEND;
 		}
+
 		case IKEv2_AUTH_PSK:
 		case IKEv2_AUTH_NULL:
-		{
-			struct hash_signature sig = { .len = 0, };
-			return auth_cb(ike, md, &sig);
-		}
+			return auth_cb(ike, md, NULL/*auth_sig*/);
+
 		default:
 			log_state(RC_LOG, &ike->sa,
 				  "authentication method %s not supported",
