@@ -129,11 +129,12 @@ static struct hash_signature RSA_sign_hash_raw_rsa(const struct private_key_stuf
 						   const struct hash_desc *hash_algo,
 						   struct logger *logger)
 {
+	dbg("%s: started using NSS", __func__);
+
 	if (!pexpect(hash_algo == &ike_alg_hash_sha1)) {
 		return (struct hash_signature) { .len = 0, };
 	}
 
-	dbg("RSA_sign_hash: Started using NSS");
 	if (!pexpect(pks->private_key != NULL)) {
 		dbg("no private key!");
 		return (struct hash_signature) { .len = 0, };
@@ -161,7 +162,7 @@ static struct hash_signature RSA_sign_hash_raw_rsa(const struct private_key_stuf
 		return (struct hash_signature) { .len = 0, };
 	}
 
-	dbg("RSA_sign_hash: Ended using NSS");
+	dbg("%s: ended using NSS", __func__);
 	return sig;
 }
 
@@ -171,55 +172,50 @@ static struct hash_signature RSA_sign_hash_pkcs1_1_5_rsa(const struct private_ke
 							 const struct hash_desc *hash_algo,
 							 struct logger *logger)
 {
+	dbg("%s: started using NSS", __func__);
+
 	if (!pexpect(hash_algo == &ike_alg_hash_sha1)) {
 		return (struct hash_signature) { .len = 0, };
 	}
 
-	if (hash_algo->pkcs1_1_5_rsa_header.len > 0) {
-		/* old style RSA with SHA1 */
-		struct crypt_mac sha1_hash = {
-			.len = hash_algo->pkcs1_1_5_rsa_header.len + hash_len,
-		};
-		passert(sha1_hash.len <= sizeof(sha1_hash.ptr/*array*/));
-		memcpy(sha1_hash.ptr, hash_algo->pkcs1_1_5_rsa_header.ptr, hash_algo->pkcs1_1_5_rsa_header.len);
-		memcpy(sha1_hash.ptr + hash_algo->pkcs1_1_5_rsa_header.len, hash_val, hash_len);
-		return RSA_sign_hash_raw_rsa(pks, sha1_hash.ptr, sha1_hash.len, hash_algo, logger);
-	}
-
-	dbg("RSA_sign_hash: Started using NSS");
 	if (!pexpect(pks->private_key != NULL)) {
 		dbg("no private key!");
 		return (struct hash_signature) { .len = 0, };
 	}
 
-	SECItem data = {
+	DBG_dump("hash", hash_val, hash_len);
+	SECItem digest = {
 		.type = siBuffer,
 		.len = hash_len,
 		.data = DISCARD_CONST(uint8_t *, hash_val),
 	};
 
-	struct hash_signature sig = { .len = PK11_SignatureLen(pks->private_key), };
-	passert(sig.len <= sizeof(sig.ptr/*array*/));
-	SECItem signature = {
-		.type = siBuffer,
-		.len = sig.len,
-		.data = sig.ptr,
-	};
-
+	/*
+	 * XXX: the call expects the OID TAG for the hash algorithm
+	 * used to generate the signature.
+	 */
+	SECItem signature_result = {0};
 	SECStatus s = SGN_Digest(pks->private_key,
-				 hash_algo->nss.pkcs1_1_5_rsa_oid_tag,
-				 &signature, &data);
+				 hash_algo->nss.oid_tag,
+				 &signature_result, &digest);
 	if (s != SECSuccess) {
 		/* PR_GetError() returns the thread-local error */
 		enum_buf tb;
 		llog_nss_error(RC_LOG_SERIOUS, logger,
-			       "SGN_Digest(%sd) function failed",
-			       str_nss_oid(hash_algo->nss.pkcs1_1_5_rsa_oid_tag, &tb));
+			       "SGN_Digest(%s) function failed",
+			       str_nss_oid(hash_algo->nss.oid_tag, &tb));
 		return (struct hash_signature) { .len = 0, };
 	}
 
-	dbg("RSA_sign_hash: Ended using NSS");
-	return sig;
+	DBG_dump("signature_result", signature_result.data, signature_result.len);
+	struct hash_signature signature = {
+		.len = PK11_SignatureLen(pks->private_key),
+	};
+	passert(signature.len <= sizeof(signature.ptr/*array*/));
+	memcpy(signature.ptr, signature_result.data, signature.len);
+	DBG_dump_hunk("signature", signature);
+	dbg("%s: ended using NSS", __func__);
+	return signature;
 }
 
 static bool RSA_authenticate_signature_raw_rsa(const struct crypt_mac *expected_hash,
@@ -374,7 +370,8 @@ static struct hash_signature RSA_sign_hash_rsassa_pss(const struct private_key_s
 						      const struct hash_desc *hash_algo,
 						      struct logger *logger)
 {
-	dbg("RSA_sign_hash: Started using NSS");
+	dbg("%s: started using NSS", __func__);
+
 	if (!pexpect(pks->private_key != NULL)) {
 		dbg("no private key!");
 		return (struct hash_signature) { .len = 0, };
@@ -416,7 +413,7 @@ static struct hash_signature RSA_sign_hash_rsassa_pss(const struct private_key_s
 		return (struct hash_signature) { .len = 0, };
 	}
 
-	dbg("RSA_sign_hash: Ended using NSS");
+	dbg("%s: ended using NSS", __func__);
 	return sig;
 }
 

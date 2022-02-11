@@ -41,10 +41,6 @@ static const uint8_t asn1_ecdsa_sha1_blob[1+ASN1_ECDSA_SHA1_SIZE] = {
 	ASN1_ECDSA_SHA1_SIZE,
 	ASN1_ECDSA_SHA1_BLOB
 };
-static const uint8_t asn1_pkcs1_1_5_rsa_sha1_header[] = {
-	0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e,
-	0x03, 0x02, 0x1a, 0x05, 0x00, 0x04, 0x14
-};
 
 const struct hash_desc ike_alg_hash_sha1 = {
 	.common = {
@@ -71,8 +67,6 @@ const struct hash_desc ike_alg_hash_sha1 = {
 		[DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB] = THING_AS_HUNK(asn1_pkcs1_1_5_rsa_sha1_blob),
 		[DIGITAL_SIGNATURE_ECDSA_BLOB] = THING_AS_HUNK(asn1_ecdsa_sha1_blob),
 	},
-
-	.pkcs1_1_5_rsa_header = THING_AS_HUNK(asn1_pkcs1_1_5_rsa_sha1_header),
 };
 
 const struct prf_desc ike_alg_prf_sha1 = {
