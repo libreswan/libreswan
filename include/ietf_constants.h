@@ -500,6 +500,30 @@
 #define ICMP_NEIGHBOR_DISCOVERY 34816
 #define ICMP_NEIGHBOR_SOLICITATION 34560
 
+/* RFC3748, section 4: EAP Code */
+enum eap_code {
+	EAP_CODE_REQUEST = 1,
+	EAP_CODE_RESPONSE,
+	EAP_CODE_SUCCESS,
+	EAP_CODE_FAILURE,
+};
+
+/* EAP Type */
+enum eap_type {
+	EAP_TYPE_TLS = 13, /* RFC5216 EAP-TLS */
+};
+
+/* RFC5216, section 3.1: EAP-TLS flags */
+enum {
+	EAPTLS_FLAGS_START_IX = 5,
+	EAPTLS_FLAGS_MORE_IX = 6,
+	EAPTLS_FLAGS_LENGTH_IX = 7,
+};
+#define EAPTLS_FLAGS_START	(1<<EAPTLS_FLAGS_START_IX)
+#define EAPTLS_FLAGS_MORE	(1<<EAPTLS_FLAGS_MORE_IX)
+#define EAPTLS_FLAGS_LENGTH	(1<<EAPTLS_FLAGS_LENGTH_IX)
+extern const struct enum_names eaptls_flag_names;
+
 /* Version numbers - IKEv1 */
 #define ISAKMP_MAJOR_VERSION 0x1
 #define ISAKMP_MINOR_VERSION 0x0

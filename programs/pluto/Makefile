@@ -80,6 +80,7 @@ OBJS += ikev2_auth.o
 OBJS += ikev2_auth_helper.o
 OBJS += ikev2_delete.o
 OBJS += ikev2_liveness.o
+OBJS += ikev2_eap.o
 
 OBJS += state_db.o
 OBJS += show.o
@@ -172,6 +173,7 @@ OBJS += ikev1_db_ops.o
 # libefence is a free memory allocation debugger
 # Solaris 2 needs -lsocket -lnsl
 USERLAND_LDFLAGS += $(SECCOMP_LDFLAGS)
+USERLAND_LDFLAGS += $(SSL_LDFLAGS)
 USERLAND_LDFLAGS += $(NSS_SMIME_LDFLAGS)
 USERLAND_LDFLAGS += $(NSS_LDFLAGS)
 USERLAND_LDFLAGS += $(NSPR_LDFLAGS)

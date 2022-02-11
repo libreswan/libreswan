@@ -31,6 +31,7 @@
 #include "state.h"
 #include "log.h"
 #include "connections.h"
+#include "nat_traversal.h"
 #include "keys.h"
 #include "secrets.h"
 #include "ikev2_message.h"
@@ -256,7 +257,7 @@ bool emit_v2_auth(struct ike_sa *ike,
 		  const struct crypt_mac *id_payload_mac,
 		  struct pbs_out *outs)
 {
-	enum keyword_authby authby = v2_auth_by(ike);
+	enum keyword_authby authby = ike->sa.st_eap_sa_md ? IKEv2_AUTH_PSK : v2_auth_by(ike);
 
 	struct ikev2_auth a = {
 		.isaa_critical = build_ikev2_critical(false, ike->sa.st_logger),
@@ -288,7 +289,8 @@ bool emit_v2_auth(struct ike_sa *ike,
 	case IKEv2_AUTH_PSK:
 	case IKEv2_AUTH_NULL:
 		/* emit */
-		if (!ikev2_emit_psk_auth(authby, ike, id_payload_mac, &a_pbs)) {
+		if (!ikev2_emit_psk_auth(authby, ike, id_payload_mac, &a_pbs,
+					 chunk2((void*) auth_sig->ptr, auth_sig->len))) {
 			llog(RC_LOG_SERIOUS, outs->outs_logger, "Failed to find our PreShared Key");
 			return false;
 		}
@@ -377,7 +379,7 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 				    enum_name(&keyword_authby_names, that_authby));
 		}
 
-		diag_t d = v2_authsig_and_log_using_psk(AUTHBY_PSK, ike, idhash_in, signature_pbs);
+		diag_t d = v2_authsig_and_log_using_psk(AUTHBY_PSK, ike, idhash_in, signature_pbs, EMPTY_CHUNK);
 		if (d != NULL) {
 			dbg("authentication failed: PSK AUTH mismatch");
 			return d;
@@ -394,7 +396,7 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 				    enum_name(&keyword_authby_names, that_authby));
 		}
 
-		diag_t d = v2_authsig_and_log_using_psk(AUTHBY_NULL, ike, idhash_in, signature_pbs);
+		diag_t d = v2_authsig_and_log_using_psk(AUTHBY_NULL, ike, idhash_in, signature_pbs, EMPTY_CHUNK);
 		if (d != NULL) {
 			dbg("authentication failed: NULL AUTH mismatch (implementation bug?)");
 			return d;

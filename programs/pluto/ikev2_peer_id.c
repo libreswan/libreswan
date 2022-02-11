@@ -105,6 +105,10 @@ diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest
 	 * inside the auth proposal?
 	 */
 
+	if (md->chain[ISAKMP_NEXT_v2AUTH] == NULL) {
+		// auth = IKEv2_AUTH_NONE;
+		return diag("EXPECTATION FAILED: v2AUTH missing; suspect EAPTLS only sends it on the first or last exchange?");
+	}
 	enum ikev2_auth_method atype =
 		md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
 	enum keyword_authby proposed_authbys;

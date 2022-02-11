@@ -628,10 +628,8 @@ static stf_status process_v2_IKE_AUTH_request_ipseckey_continue(struct ike_sa *i
 
 static stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_digest *md);
 
-static stf_status process_v2_IKE_AUTH_request_post_cert_decode(struct state *ike_sa,
-							       struct msg_digest *md)
+stf_status process_v2_IKE_AUTH_standard_payloads(struct ike_sa *ike, struct msg_digest *md)
 {
-	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
 	ikev2_log_parentSA(&ike->sa);
 
 	/* going to switch to child st. before that update parent */
@@ -650,42 +648,8 @@ static stf_status process_v2_IKE_AUTH_request_post_cert_decode(struct state *ike
 		return STF_FATAL;
 	}
 
-	enum ikev2_auth_method atype = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
-	if (IS_LIBUNBOUND && id_ipseckey_allowed(ike, atype)) {
-		dns_status ret = responder_fetch_idi_ipseckey(ike, process_v2_IKE_AUTH_request_ipseckey_continue);
-		switch (ret) {
-		case DNS_SUSPEND:
-			return STF_SUSPEND;
-		case DNS_FATAL:
-			llog_sa(RC_LOG_SERIOUS, ike, "DNS: IPSECKEY not found or usable");
-			return STF_FATAL;
-		case DNS_OK:
-			break;
-		}
-	}
-
-	return process_v2_IKE_AUTH_request_id_tail(ike, md);
-}
-
-stf_status process_v2_IKE_AUTH_request_ipseckey_continue(struct ike_sa *ike,
-							 struct msg_digest *md,
-							 bool err)
-{
-	if (err) {
-		/* already logged?! */
-		record_v2N_response(ike->sa.st_logger, ike, md,
-				    v2N_AUTHENTICATION_FAILED, NULL/*no-data*/,
-				    ENCRYPTED_PAYLOAD);
-		return STF_FATAL;
-	}
-	return process_v2_IKE_AUTH_request_id_tail(ike, md);
-}
-
-stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_digest *md)
-{
 	lset_t policy = ike->sa.st_connection->policy;
 	bool found_ppk = false;
-	chunk_t null_auth = EMPTY_CHUNK;
 
 	/*
 	 * The NOTIFY payloads we receive in the IKE_AUTH request are
@@ -745,6 +709,70 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		    ike->sa.st_ike_sent_v2n_mobike_supported ?
 		    "and sent" : "while it did not sent");
 	}
+	ike->sa.st_ike_seen_v2n_initial_contact = md->pd[PD_v2N_INITIAL_CONTACT] != NULL;
+
+	/*
+	 * If we found proper PPK ID and policy allows PPK, use that.
+	 * Otherwise use NO_PPK_AUTH
+	 */
+	if (found_ppk && LIN(POLICY_PPK_ALLOW, policy))
+		free_chunk_content(&ike->sa.st_no_ppk_auth);
+
+	if (!found_ppk && LIN(POLICY_PPK_INSIST, policy)) {
+		log_state(RC_LOG_SERIOUS, &ike->sa, "Requested PPK_ID not found and connection requires a valid PPK");
+		record_v2N_response(ike->sa.st_logger, ike, md,
+				    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FATAL;
+	}
+
+	return STF_OK;
+}
+
+static stf_status process_v2_IKE_AUTH_request_post_cert_decode(struct state *ike_sa,
+							       struct msg_digest *md)
+{
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+
+	stf_status s = process_v2_IKE_AUTH_standard_payloads(ike, md);
+	if (s != STF_OK)
+		return s;
+
+	enum ikev2_auth_method atype = md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
+	if (IS_LIBUNBOUND && id_ipseckey_allowed(ike, atype)) {
+		dns_status ret = responder_fetch_idi_ipseckey(ike, process_v2_IKE_AUTH_request_ipseckey_continue);
+		switch (ret) {
+		case DNS_SUSPEND:
+			return STF_SUSPEND;
+		case DNS_FATAL:
+			llog_sa(RC_LOG_SERIOUS, ike, "DNS: IPSECKEY not found or usable");
+			return STF_FATAL;
+		case DNS_OK:
+			break;
+		}
+	}
+
+	return process_v2_IKE_AUTH_request_id_tail(ike, md);
+}
+
+stf_status process_v2_IKE_AUTH_request_ipseckey_continue(struct ike_sa *ike,
+							 struct msg_digest *md,
+							 bool err)
+{
+	if (err) {
+		/* already logged?! */
+		record_v2N_response(ike->sa.st_logger, ike, md,
+				    v2N_AUTHENTICATION_FAILED, NULL/*no-data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FATAL;
+	}
+	return process_v2_IKE_AUTH_request_id_tail(ike, md);
+}
+
+stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_digest *md)
+{
+	chunk_t null_auth = EMPTY_CHUNK;
+
 	if (md->pd[PD_v2N_NULL_AUTH] != NULL) {
 		pb_stream pbs = md->pd[PD_v2N_NULL_AUTH]->pbs;
 		size_t len = pbs_left(&pbs);
@@ -758,23 +786,6 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 			free_chunk_content(&null_auth);
 			return STF_FATAL;
 		}
-	}
-	ike->sa.st_ike_seen_v2n_initial_contact = md->pd[PD_v2N_INITIAL_CONTACT] != NULL;
-
-	/*
-	 * If we found proper PPK ID and policy allows PPK, use that.
-	 * Otherwise use NO_PPK_AUTH
-	 */
-	if (found_ppk && LIN(POLICY_PPK_ALLOW, policy))
-		free_chunk_content(&ike->sa.st_no_ppk_auth);
-
-	if (!found_ppk && LIN(POLICY_PPK_INSIST, policy)) {
-		log_state(RC_LOG_SERIOUS, &ike->sa, "Requested PPK_ID not found and connection requires a valid PPK");
-		free_chunk_content(&null_auth);
-		record_v2N_response(ike->sa.st_logger, ike, md,
-				    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
-				    ENCRYPTED_PAYLOAD);
-		return STF_FATAL;
 	}
 
 	/* calculate hash of IDi for AUTH below */
@@ -890,23 +901,9 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 
 static v2_auth_signature_cb process_v2_IKE_AUTH_request_auth_signature_continue; /* type check */
 
-static stf_status process_v2_IKE_AUTH_request_tail(struct state *ike_st,
-							  struct msg_digest *md,
-							  bool pam_status)
+stf_status generate_v2_responder_auth(struct ike_sa *ike, struct msg_digest *md, v2_auth_signature_cb auth_cb)
 {
-	struct ike_sa *ike = pexpect_ike_sa(ike_st);
 	struct connection *const c = ike->sa.st_connection;
-
-	if (!pam_status) {
-		/*
-		 * TBD: send this notification encrypted because the
-		 * AUTH payload succeed
-		 */
-		record_v2N_response(ike->sa.st_logger, ike, md,
-				    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
-				    ENCRYPTED_PAYLOAD);
-		return STF_FATAL;
-	}
 
 	/*
 	 * Construct the IDr payload and store it in state so that it
@@ -946,7 +943,7 @@ static stf_status process_v2_IKE_AUTH_request_tail(struct state *ike_st,
 			ike->sa.st_v2_ike_intermediate.used = false;
 			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
 						      &pubkey_signer_pkcs1_1_5_rsa,
-						      process_v2_IKE_AUTH_request_auth_signature_continue)) {
+						      auth_cb)) {
 				dbg("submit_v2_auth_signature() died, fatal");
 				record_v2N_response(ike->sa.st_logger, ike, md,
 						    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
@@ -970,7 +967,7 @@ static stf_status process_v2_IKE_AUTH_request_tail(struct state *ike_st,
 			ike->sa.st_v2_ike_intermediate.used = false;
 			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
 						      v2_auth_digsig_pubkey_signer(authby),
-						      process_v2_IKE_AUTH_request_auth_signature_continue)) {
+						      auth_cb)) {
 				dbg("submit_v2_auth_signature() died, fatal");
 				record_v2N_response(ike->sa.st_logger, ike, md,
 						    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
@@ -983,7 +980,7 @@ static stf_status process_v2_IKE_AUTH_request_tail(struct state *ike_st,
 		case IKEv2_AUTH_NULL:
 		{
 			struct hash_signature sig = { .len = 0, };
-			return process_v2_IKE_AUTH_request_auth_signature_continue(ike, md, &sig);
+			return auth_cb(ike, md, &sig);
 		}
 		default:
 			log_state(RC_LOG, &ike->sa,
@@ -994,9 +991,27 @@ static stf_status process_v2_IKE_AUTH_request_tail(struct state *ike_st,
 	}
 }
 
-stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike_sa *ike,
-							       struct msg_digest *md,
-							       const struct hash_signature *auth_sig)
+static stf_status process_v2_IKE_AUTH_request_tail(struct state *ike_st,
+							  struct msg_digest *md,
+							  bool pam_status)
+{
+	struct ike_sa *ike = pexpect_ike_sa(ike_st);
+
+	if (!pam_status) {
+		/*
+		 * TBD: send this notification encrypted because the
+		 * AUTH payload succeed
+		 */
+		record_v2N_response(ike->sa.st_logger, ike, md,
+				    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FATAL;
+	}
+
+	return generate_v2_responder_auth(ike, md, process_v2_IKE_AUTH_request_auth_signature_continue);
+}
+
+bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
 
@@ -1055,7 +1070,7 @@ stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike_sa *ik
 
 	/* send response */
 	if (LIN(POLICY_MOBIKE, c->policy) && ike->sa.st_ike_seen_v2n_mobike_supported) {
-		if (c->remote->config->host.type == KH_ANY) {
+		if (c->spd.that.config->host.type == KH_ANY) {
 			/* only allow %any connection to mobike */
 			ike->sa.st_ike_sent_v2n_mobike_supported = true;
 		} else {
@@ -1077,6 +1092,24 @@ stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike_sa *ik
 			send_redirect = true;
 		}
 	}
+
+	if (c->config->sec_label.len > 0) {
+		pexpect(c->kind == CK_TEMPLATE);
+		pexpect(c->spd.this.sec_label.len == 0);
+		if (!install_sec_label_connection_policies(c, ike->sa.st_logger)) {
+			return STF_FATAL;
+		}
+	}
+
+	return send_redirect;
+}
+
+static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike_sa *ike,
+								      struct msg_digest *md,
+								      const struct hash_signature *auth_sig)
+{
+	struct connection *c = ike->sa.st_connection;
+	bool send_redirect = v2_ike_sa_auth_responder_establish(ike);
 
 	/* make sure HDR is at start of a clean buffer */
 	struct pbs_out reply_stream = open_pbs_out("reply packet",
@@ -1165,14 +1198,6 @@ stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike_sa *ik
 		return STF_INTERNAL_ERROR;
 	}
 	ike->sa.st_v2_ike_intermediate.used = false;
-
-	if (c->config->sec_label.len > 0) {
-		pexpect(c->kind == CK_TEMPLATE);
-		pexpect(c->spd.this.sec_label.len == 0);
-		if (!install_sec_label_connection_policies(c, ike->sa.st_logger)) {
-			return STF_FATAL;
-		}
-	}
 
 	/*
 	 * Try to build a child.

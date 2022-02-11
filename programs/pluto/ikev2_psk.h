@@ -18,6 +18,7 @@
 #define IKEV2_PSK_H
 
 #include <stdbool.h>
+#include <chunk.h>
 
 enum keyword_authby;
 struct ike_sa;
@@ -27,6 +28,7 @@ struct pbs_in;
 diag_t v2_authsig_and_log_using_psk(enum keyword_authby authby,
 				    const struct ike_sa *ike,
 				    const struct crypt_mac *idhash,
-				    struct pbs_in *sig_pbs);
+				    struct pbs_in *sig_pbs,
+				    chunk_t pss);
 
 #endif

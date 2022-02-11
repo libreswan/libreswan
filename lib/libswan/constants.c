@@ -2212,6 +2212,50 @@ enum_names ikev2_redirect_gw_names = {
 	NULL
 };
 
+/* EAP - RFC 3748 */
+static const char *const eap_code_name[] = {
+	"EAP_CODE_REQUEST",
+	"EAP_CODE_RESPONSE",
+	"EAP_CODE_SUCCESS",
+	"EAP_CODE_FAILURE",
+};
+
+enum_names eap_code_names = {
+	EAP_CODE_REQUEST,
+	EAP_CODE_FAILURE,
+	ARRAY_REF(eap_code_name),
+	"EAP_CODE_",	/* prefix */
+	NULL
+};
+
+static const char *const eap_type_name[] = {
+	"EAP_TYPE_TLS",
+};
+
+enum_names eap_type_names = {
+	EAP_TYPE_TLS,
+	EAP_TYPE_TLS,
+	ARRAY_REF(eap_type_name),
+	"EAP_TYPE_",	/* prefix */
+	NULL
+};
+
+/* EAP-TLS Flag BITS */
+static const char *const eaptls_flag_name[] = {
+	"EAPTLS_FLAG_START",
+	"EAPTLS_FLAG_MORE",
+	"EAPTLS_FLAG_LENGTH",
+};
+
+const struct enum_names eaptls_flag_names = {
+	EAPTLS_FLAGS_START_IX,
+	EAPTLS_FLAGS_LENGTH_IX,
+	ARRAY_REF(eaptls_flag_name),
+	"EAPTLS_FLAG_", /* prefix */
+	NULL, /* next */
+};
+
+
 /* magic SPI values (specific to Libreswan */
 
 static const char *const policy_spi_none_name[] = {
@@ -2712,6 +2756,7 @@ static const enum_names *en_checklist[] = {
 	&global_timer_names,
 	&event_type_names,
 	&policy_spi_names,
+	&eaptls_flag_names,
 };
 
 void check_enum_names(enum_names *checklist[], size_t tl)

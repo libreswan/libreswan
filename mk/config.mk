@@ -311,6 +311,7 @@ NSS_LDFLAGS ?= -lnss3
 NSS_SMIME_LDFLAGS ?= -lsmime3
 NSS_UTIL_LDFLAGS ?= -lnssutil3
 NSPR_LDFLAGS ?= -lnspr4
+SSL_LDFLAGS ?= -lssl3
 
 # Use local copy of nss function CERT_CompareAVA
 # See https://bugzilla.mozilla.org/show_bug.cgi?id=1336487

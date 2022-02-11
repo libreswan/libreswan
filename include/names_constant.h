@@ -92,6 +92,9 @@ extern enum_names allow_global_redirect_names;
 
 extern enum_names dns_auth_level_names;
 
+extern enum_names eap_code_names;
+extern enum_names eap_type_names;
+
 /*
  * Attribute Type "constant" for Security Context
  *

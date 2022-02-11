@@ -2254,7 +2254,8 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	/* if left/rightauth are set, but symmetric policy is not, fill it in */
-	if (wm->left.authby == wm->right.authby) {
+	if (wm->left.authby == wm->right.authby ||
+	    wm->right.authby == AUTHBY_EAPONLY) {
 		switch (wm->left.authby) {
 		case AUTHBY_RSASIG:
 			c->policy |= POLICY_RSASIG;

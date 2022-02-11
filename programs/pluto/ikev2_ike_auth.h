@@ -16,10 +16,17 @@
 #ifndef IKEV2_IKE_AUTH_H
 #define IKEV2_IKE_AUTH_H
 
+#include "ikev2_auth.h"
+
 stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *md);
+
+stf_status process_v2_IKE_AUTH_standard_payloads(struct ike_sa *ike, struct msg_digest *md);
+stf_status generate_v2_responder_auth(struct ike_sa *ike, struct msg_digest *md, v2_auth_signature_cb auth_cb);
 
 extern ikev2_state_transition_fn process_v2_IKE_AUTH_request;
 extern ikev2_state_transition_fn process_v2_IKE_AUTH_response;
 extern ikev2_state_transition_fn process_v2_IKE_AUTH_failure_response;
+
+bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike);
 
 #endif
