@@ -310,9 +310,8 @@ struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 	passert(RSA_MIN_OCTETS <= sz &&
 		4 + hash->len < sz &&
 		sz <= sizeof(sig.ptr/*array*/));
-	sig = pubkey_signer_rsa.sign_hash(pks, hash->ptr, hash->len,
-					  0/* for ikev2 only */,
-					  logger);
+	sig = pubkey_signer_raw_rsa.sign_hash(pks, hash->ptr, hash->len,
+					      &ike_alg_hash_sha1, logger);
 	passert(sig.len == 0 || sz == sig.len);
 	return sig;
 }

@@ -161,7 +161,7 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 				v2_calculate_sighash(ike, &ike->sa.st_v2_id_payload.mac,
 						     hash_algo, LOCAL_PERSPECTIVE);
 			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
-						      &pubkey_signer_rsa, auth_method,
+						      &pubkey_signer_pkcs1_1_5_rsa,
 						      initiate_v2_IKE_AUTH_request_signature_continue)) {
 				dbg("submit_v2_auth_signature() died, fatal");
 				return STF_FATAL;
@@ -179,7 +179,6 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 						     hash_algo, LOCAL_PERSPECTIVE);
 			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
 						      v2_auth_digsig_pubkey_signer(authby),
-						      auth_method,
 						      initiate_v2_IKE_AUTH_request_signature_continue)) {
 				dbg("submit_v2_auth_signature() died, fatal");
 				return STF_FATAL;
@@ -946,7 +945,7 @@ static stf_status process_v2_IKE_AUTH_request_tail(struct state *ike_st,
 						     hash_algo, LOCAL_PERSPECTIVE);
 			ike->sa.st_v2_ike_intermediate.used = false;
 			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
-						      &pubkey_signer_rsa, auth_method,
+						      &pubkey_signer_pkcs1_1_5_rsa,
 						      process_v2_IKE_AUTH_request_auth_signature_continue)) {
 				dbg("submit_v2_auth_signature() died, fatal");
 				record_v2N_response(ike->sa.st_logger, ike, md,
@@ -971,7 +970,6 @@ static stf_status process_v2_IKE_AUTH_request_tail(struct state *ike_st,
 			ike->sa.st_v2_ike_intermediate.used = false;
 			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
 						      v2_auth_digsig_pubkey_signer(authby),
-						      auth_method,
 						      process_v2_IKE_AUTH_request_auth_signature_continue)) {
 				dbg("submit_v2_auth_signature() died, fatal");
 				record_v2N_response(ike->sa.st_logger, ike, md,

@@ -13,8 +13,8 @@
  * for more details.
  */
 
-#ifndef _IKE_ALG_H
-#define _IKE_ALG_H
+#ifndef IKE_ALG_H
+#define IKE_ALG_H
 
 #include <stdbool.h>	/* for bool */
 #include <pk11pub.h>
@@ -499,6 +499,10 @@ struct hash_desc {
 		 * For digital sign schema
 		 */
 		const CK_RSA_PKCS_PSS_PARAMS *rsa_pkcs_pss_params;
+		/*
+		 * For PKCS#1 1.5 RSA crypto using SGN_Digest()
+		 */
+		SECOidTag pkcs1_1_5_rsa_oid_tag;
 	} nss;
 
 	/*
@@ -507,6 +511,13 @@ struct hash_desc {
 	 * authentication as per RFC7427
 	 */
 	shunk_t digital_signature_blob[DIGITAL_SIGNATURE_BLOB_ROOF];
+
+	/*
+	 * PCKS#1 1.5 RSA header that is prepended to the hash before
+	 * encrypting. Using SGN_Digest(pkcs1_1_5_rsa_oid_tag), does
+	 * this automatically, but only when the algorithm is allowed.
+	 */
+	shunk_t pkcs1_1_5_rsa_header;
 
 	const struct hash_ops *hash_ops;
 };

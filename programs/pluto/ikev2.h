@@ -50,6 +50,8 @@ extern bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
 				     chunk_t *no_ppk_auth /* optional output */,
 				     const struct hash_desc *hash_algo);
 
+struct crypt_mac ikev2_rsa_sha1_hash(const struct crypt_mac *hash);
+
 extern bool ikev2_emit_psk_auth(enum keyword_authby authby,
 				const struct ike_sa *ike,
 				const struct crypt_mac *idhash,

@@ -52,11 +52,6 @@
 #include "ietf_constants.h"
 #include "ikev2_auth.h"
 
-static const uint8_t rsa_sha1_der_header[] = {
-	0x30, 0x21, 0x30, 0x09, 0x06, 0x05, 0x2b, 0x0e,
-	0x03, 0x02, 0x1a, 0x05, 0x00, 0x04, 0x14
-};
-
 bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
 			      const struct crypt_mac *idhash,
 			      pb_stream *a_pbs,
@@ -78,64 +73,44 @@ bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
 	struct crypt_mac hash = v2_calculate_sighash(ike, idhash, hash_algo,
 						     LOCAL_PERSPECTIVE);
 	passert(hash.len <= sizeof(hash.ptr/*array*/));
-
-	/*
-	 * Allocate large enough space for any digest.  Bound could be
-	 * tightened because the signature octets are only
-	 * concatenated to a SHA1.
-	 */
-	unsigned char signed_octets[sizeof(rsa_sha1_der_header) + sizeof(hash.ptr/*array*/)];
-	size_t signed_len;
+	const struct pubkey_signer *signer;
 
 	switch (hash_algo->common.ikev2_alg_id) {
 	case IKEv2_HASH_ALGORITHM_SHA1:
 		/* old style RSA with SHA1 */
-		memcpy(signed_octets, &rsa_sha1_der_header, sizeof(rsa_sha1_der_header));
-		memcpy(signed_octets + sizeof(rsa_sha1_der_header), hash.ptr, hash.len);
-		signed_len = sizeof(rsa_sha1_der_header) + hash.len;
+		signer = &pubkey_signer_pkcs1_1_5_rsa;
 		break;
 	case IKEv2_HASH_ALGORITHM_SHA2_256:
 	case IKEv2_HASH_ALGORITHM_SHA2_384:
 	case IKEv2_HASH_ALGORITHM_SHA2_512:
-		memcpy(signed_octets, hash.ptr, hash.len);
-		signed_len = hash.len;
+		signer = &pubkey_signer_rsassa_pss;
 		break;
 	default:
 		bad_case(hash_algo->common.ikev2_alg_id);
 	}
 
-	passert(signed_len <= sizeof(signed_octets));
 	if (DBGP(DBG_CRYPT)) {
-	    DBG_dump("v2rsa octets", signed_octets, signed_len);
+		DBG_dump_hunk("v2rsa octets", *idhash);
 	}
 
-	/* XXX: merge ikev2_calculate_{rsa,ecdsa}_hash()? */
-	unsigned int sz = pks->size;
-	passert(RSA_MIN_OCTETS <= sz);
-	passert(4 + signed_len < sz);
-	passert(sz <= RSA_MAX_OCTETS);
+	/* now generate signature blob */
+	statetime_t sign_time = statetime_start(&ike->sa);
+	struct hash_signature sig;
+	passert(sizeof(sig.ptr/*array*/) >= RSA_MAX_OCTETS);
+	sig = signer->sign_hash(pks, idhash->ptr, idhash->len,
+				hash_algo, ike->sa.st_logger);
+	statetime_stop(&sign_time, "%s() calling sign_hash_RSA()", __func__);
+	if (sig.len == 0)
+		return false;
 
-	{
-		/* now generate signature blob */
-		statetime_t sign_time = statetime_start(&ike->sa);
-		struct hash_signature sig;
-		passert(sizeof(sig.ptr/*array*/) >= RSA_MAX_OCTETS);
-		sig = pubkey_signer_rsa.sign_hash(pks, signed_octets, signed_len,
-						  hash_algo, ike->sa.st_logger);
-		statetime_stop(&sign_time, "%s() calling sign_hash_RSA()", __func__);
-		if (sig.len == 0)
-			return false;
-
-		passert(sig.len == sz);
-		if (no_ppk_auth != NULL) {
-			*no_ppk_auth = clone_hunk(sig, "NO_PPK_AUTH chunk");
-			if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
-				DBG_dump_hunk("NO_PPK_AUTH payload", *no_ppk_auth);
-			}
-		} else {
-			if (!out_hunk(sig, a_pbs, "rsa signature"))
-				return false;
+	if (no_ppk_auth != NULL) {
+		*no_ppk_auth = clone_hunk(sig, "NO_PPK_AUTH chunk");
+		if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
+			DBG_dump_hunk("NO_PPK_AUTH payload", *no_ppk_auth);
 		}
+	} else {
+		if (!out_hunk(sig, a_pbs, "rsa signature"))
+			return false;
 	}
 
 	statetime_stop(&start, "%s()", __func__);

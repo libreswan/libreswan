@@ -32,6 +32,7 @@ struct private_key_stuff;
 enum perspective;
 struct pubkey_signer;
 
+struct crypt_mac v2_sha1_hash(const struct crypt_mac *hash);
 struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 				      const struct crypt_mac *idhash,
 				      const struct hash_desc *hasher,
@@ -60,7 +61,6 @@ bool submit_v2_auth_signature(struct ike_sa *ike,
 			      const struct crypt_mac *sighash,
 			      const struct hash_desc *hash_algo,
 			      const struct pubkey_signer *signer,
-			      enum ikev2_auth_method auth_method,
 			      v2_auth_signature_cb *cb);
 
 diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,

@@ -126,6 +126,9 @@ const struct pubkey_type pubkey_type_ecdsa = {
 	.free_secret_content = ECDSA_free_secret_content,
 	.secret_sane = ECDSA_secret_sane,
 	.extract_pubkey_content = ECDSA_extract_pubkey_content,
+	.digital_signature_signer = {
+		[DIGITAL_SIGNATURE_ECDSA_BLOB] = &pubkey_signer_ecdsa,
+	}
 };
 
 static struct hash_signature ECDSA_sign_hash(const struct private_key_stuff *pks,
@@ -305,6 +308,7 @@ static bool ECDSA_authenticate_signature(const struct crypt_mac *hash, shunk_t s
 const struct pubkey_signer pubkey_signer_ecdsa = {
 	.name = "ECDSA",
 	.type = &pubkey_type_ecdsa,
+	.digital_signature_blob = DIGITAL_SIGNATURE_ECDSA_BLOB,
 	.sign_hash = ECDSA_sign_hash,
 	.authenticate_signature = ECDSA_authenticate_signature,
 };

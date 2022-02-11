@@ -69,6 +69,7 @@ const struct hash_desc ike_alg_hash_sha2_256 = {
 		.oid_tag = SEC_OID_SHA256,
 		.derivation_mechanism = CKM_SHA256_KEY_DERIVATION,
 		.rsa_pkcs_pss_params = &rsa_pss_sha2_256,
+		.pkcs1_1_5_rsa_oid_tag = SEC_OID_PKCS1_SHA256_WITH_RSA_ENCRYPTION,
 	},
 	.hash_digest_size = SHA2_256_DIGEST_SIZE,
 	.hash_block_size = 64,	/* from RFC 4868 */
@@ -199,6 +200,7 @@ const struct hash_desc ike_alg_hash_sha2_384 = {
 		.oid_tag = SEC_OID_SHA384,
 		.derivation_mechanism = CKM_SHA384_KEY_DERIVATION,
 		.rsa_pkcs_pss_params = &rsa_pss_sha2_384,
+		.pkcs1_1_5_rsa_oid_tag = SEC_OID_PKCS1_SHA384_WITH_RSA_ENCRYPTION,
 	},
 	.hash_digest_size = SHA2_384_DIGEST_SIZE,
 	.hash_block_size = 128,	/* from RFC 4868 */
@@ -305,6 +307,7 @@ const struct hash_desc ike_alg_hash_sha2_512 = {
 		.oid_tag = SEC_OID_SHA512,
 		.derivation_mechanism = CKM_SHA512_KEY_DERIVATION,
 		.rsa_pkcs_pss_params = &rsa_pss_sha2_512,
+		.pkcs1_1_5_rsa_oid_tag = SEC_OID_PKCS1_SHA512_WITH_RSA_ENCRYPTION,
 	},
 	.hash_digest_size = SHA2_512_DIGEST_SIZE,
 	.hash_block_size = 128,	/* from RFC 4868 */

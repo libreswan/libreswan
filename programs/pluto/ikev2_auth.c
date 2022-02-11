@@ -145,7 +145,7 @@ const struct pubkey_signer *v2_auth_digsig_pubkey_signer(enum keyword_authby aut
 {
 	switch (authby) {
 	case AUTHBY_RSASIG:
-		return &pubkey_signer_rsa;
+		return &pubkey_signer_rsassa_pss;
 	case AUTHBY_ECDSA:
 		return &pubkey_signer_ecdsa;
 	default:
@@ -362,7 +362,7 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 		shunk_t signature = pbs_in_left_as_shunk(signature_pbs);
 		diag_t d = v2_authsig_and_log_using_pubkey(ike, idhash_in, signature,
 							   &ike_alg_hash_sha1,
-							   &pubkey_signer_rsa);
+							   &pubkey_signer_pkcs1_1_5_rsa);
 		if (d != NULL) {
 			return d;
 		}
@@ -437,7 +437,7 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 			switch(that_authby) {
 			case AUTHBY_RSASIG:
 				blob = hash_alt->algo->digital_signature_blob[DIGITAL_SIGNATURE_RSASSA_PSS_BLOB];
-				pubkey_signer = &pubkey_signer_rsa;
+				pubkey_signer = &pubkey_signer_rsassa_pss;
 				break;
 			case AUTHBY_ECDSA:
 				blob = hash_alt->algo->digital_signature_blob[DIGITAL_SIGNATURE_ECDSA_BLOB];

@@ -25,7 +25,7 @@
  * for more details.
  */
 
-#include <pk11pub.h>
+#include <cryptohi.h>
 #include <keyhi.h>
 
 #include "lswnss.h"
@@ -117,13 +117,262 @@ const struct pubkey_type pubkey_type_rsa = {
 	.extract_private_key_pubkey_content = RSA_extract_private_key_pubkey_content,
 	.free_secret_content = RSA_free_secret_content,
 	.secret_sane = RSA_secret_sane,
+	.digital_signature_signer = {
+		[DIGITAL_SIGNATURE_RSASSA_PSS_BLOB] = &pubkey_signer_rsassa_pss,
+		[DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB] = &pubkey_signer_pkcs1_1_5_rsa,
+	},
 };
 
 /* returns the length of the result on success; 0 on failure */
-static struct hash_signature RSA_sign_hash(const struct private_key_stuff *pks,
-					   const uint8_t *hash_val, size_t hash_len,
-					   const struct hash_desc *hash_algo,
-					   struct logger *logger)
+static struct hash_signature RSA_sign_hash_raw_rsa(const struct private_key_stuff *pks,
+						   const uint8_t *hash_val, size_t hash_len,
+						   const struct hash_desc *hash_algo,
+						   struct logger *logger)
+{
+	if (!pexpect(hash_algo == &ike_alg_hash_sha1)) {
+		return (struct hash_signature) { .len = 0, };
+	}
+
+	dbg("RSA_sign_hash: Started using NSS");
+	if (!pexpect(pks->private_key != NULL)) {
+		dbg("no private key!");
+		return (struct hash_signature) { .len = 0, };
+	}
+
+	SECItem data = {
+		.type = siBuffer,
+		.len = hash_len,
+		.data = DISCARD_CONST(uint8_t *, hash_val),
+	};
+
+	struct hash_signature sig = { .len = PK11_SignatureLen(pks->private_key), };
+	passert(sig.len <= sizeof(sig.ptr/*array*/));
+	SECItem signature = {
+		.type = siBuffer,
+		.len = sig.len,
+		.data = sig.ptr,
+	};
+
+	SECStatus s = PK11_Sign(pks->private_key, &signature, &data);
+	if (s != SECSuccess) {
+		/* PR_GetError() returns the thread-local error */
+		llog_nss_error(RC_LOG_SERIOUS, logger,
+			       "PK11_Sign() function failed");
+		return (struct hash_signature) { .len = 0, };
+	}
+
+	dbg("RSA_sign_hash: Ended using NSS");
+	return sig;
+}
+
+/* returns the length of the result on success; 0 on failure */
+static struct hash_signature RSA_sign_hash_pkcs1_1_5_rsa(const struct private_key_stuff *pks,
+							 const uint8_t *hash_val, size_t hash_len,
+							 const struct hash_desc *hash_algo,
+							 struct logger *logger)
+{
+	if (!pexpect(hash_algo == &ike_alg_hash_sha1)) {
+		return (struct hash_signature) { .len = 0, };
+	}
+
+	if (hash_algo->pkcs1_1_5_rsa_header.len > 0) {
+		/* old style RSA with SHA1 */
+		struct crypt_mac sha1_hash = {
+			.len = hash_algo->pkcs1_1_5_rsa_header.len + hash_len,
+		};
+		passert(sha1_hash.len <= sizeof(sha1_hash.ptr/*array*/));
+		memcpy(sha1_hash.ptr, hash_algo->pkcs1_1_5_rsa_header.ptr, hash_algo->pkcs1_1_5_rsa_header.len);
+		memcpy(sha1_hash.ptr + hash_algo->pkcs1_1_5_rsa_header.len, hash_val, hash_len);
+		return RSA_sign_hash_raw_rsa(pks, sha1_hash.ptr, sha1_hash.len, hash_algo, logger);
+	}
+
+	dbg("RSA_sign_hash: Started using NSS");
+	if (!pexpect(pks->private_key != NULL)) {
+		dbg("no private key!");
+		return (struct hash_signature) { .len = 0, };
+	}
+
+	SECItem data = {
+		.type = siBuffer,
+		.len = hash_len,
+		.data = DISCARD_CONST(uint8_t *, hash_val),
+	};
+
+	struct hash_signature sig = { .len = PK11_SignatureLen(pks->private_key), };
+	passert(sig.len <= sizeof(sig.ptr/*array*/));
+	SECItem signature = {
+		.type = siBuffer,
+		.len = sig.len,
+		.data = sig.ptr,
+	};
+
+	SECStatus s = SGN_Digest(pks->private_key,
+				 hash_algo->nss.pkcs1_1_5_rsa_oid_tag,
+				 &signature, &data);
+	if (s != SECSuccess) {
+		/* PR_GetError() returns the thread-local error */
+		enum_buf tb;
+		llog_nss_error(RC_LOG_SERIOUS, logger,
+			       "SGN_Digest(%sd) function failed",
+			       str_nss_oid(hash_algo->nss.pkcs1_1_5_rsa_oid_tag, &tb));
+		return (struct hash_signature) { .len = 0, };
+	}
+
+	dbg("RSA_sign_hash: Ended using NSS");
+	return sig;
+}
+
+static bool RSA_authenticate_signature_raw_rsa(const struct crypt_mac *expected_hash,
+					       shunk_t signature,
+					       struct pubkey *kr,
+					       const struct hash_desc *unused_hash_algo,
+					       diag_t *fatal_diag,
+					       struct logger *logger)
+{
+	passert(unused_hash_algo == &ike_alg_hash_sha1);
+
+	const struct RSA_public_key *k = &kr->u.rsa;
+
+	/* decrypt the signature -- reversing RSA_sign_hash */
+	if (signature.len != kr->size) {
+		/* XXX notification: INVALID_KEY_INFORMATION */
+		*fatal_diag = NULL;
+		return false;
+	}
+
+	SECStatus retVal;
+	if (DBGP(DBG_BASE)) {
+		DBG_dump_hunk("NSS RSA: verifying that decrypted signature matches hash: ",
+			      *expected_hash);
+	}
+
+	/*
+	 * Create a public key storing all keying material in an
+	 * arena.  The arena's lifetime is tied to and released by the
+	 * key.
+	 *
+	 * Danger:
+	 *
+	 * Need to use SECKEY_DestroyPublicKey() to release any
+	 * allocated memory; not SECITEM_FreeArena(); and not both!
+	 *
+	 * A look at SECKEY_DestroyPublicKey()'s source shows that it
+	 * releases the allocated public key by freeing the arena,
+	 * hence only that is needed.
+	 */
+
+	PRArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
+	if (arena == NULL) {
+		*fatal_diag = diag_nss_error("allocating RSA arena");
+		return false;
+	}
+
+	SECKEYPublicKey *publicKey = PORT_ArenaZAlloc(arena, sizeof(SECKEYPublicKey));
+	if (publicKey == NULL) {
+		*fatal_diag = diag_nss_error("allocating RSA pubkey");
+		PORT_FreeArena(arena, PR_FALSE);
+		return false;
+	}
+
+	publicKey->arena = arena;
+	publicKey->keyType = rsaKey;
+	publicKey->pkcs11Slot = NULL;
+	publicKey->pkcs11ID = CK_INVALID_HANDLE;
+
+	/*
+	 * Convert n and e to form the public key in the
+	 * SECKEYPublicKey data structure
+	 */
+
+	const SECItem nss_n = same_chunk_as_secitem(k->n, siBuffer);
+	retVal = SECITEM_CopyItem(publicKey->arena, &publicKey->u.rsa.modulus, &nss_n);
+	if (retVal != SECSuccess) {
+		llog_nss_error(RC_LOG, logger, "copying 'n' (modulus) to RSA public key");
+		SECKEY_DestroyPublicKey(publicKey);
+		return false;
+	}
+
+	const SECItem nss_e = same_chunk_as_secitem(k->e, siBuffer);
+	retVal = SECITEM_CopyItem(publicKey->arena, &publicKey->u.rsa.publicExponent, &nss_e);
+	if (retVal != SECSuccess) {
+		llog_nss_error(RC_LOG, logger, "copying 'e' (exponent) to RSA public key");
+		SECKEY_DestroyPublicKey(publicKey);
+		return false;
+	}
+
+	/*
+	 * Convert the signature into raw form (NSS doesn't do const).
+	 */
+
+	const SECItem encrypted_signature = {
+		.type = siBuffer,
+		.data = DISCARD_CONST(unsigned char *, signature.ptr),
+		.len  = signature.len,
+	};
+
+	SECItem decrypted_signature = {
+		.type = siBuffer,
+	};
+	if (SECITEM_AllocItem(publicKey->arena, &decrypted_signature,
+			      signature.len) == NULL) {
+		llog_nss_error(RC_LOG, logger, "allocating space for decrypted RSA signature");
+		SECKEY_DestroyPublicKey(publicKey);
+		return false;
+	}
+
+	if (PK11_VerifyRecover(publicKey, &encrypted_signature, &decrypted_signature,
+			       lsw_nss_get_password_context(logger)) != SECSuccess) {
+		dbg("NSS RSA verify: decrypting signature is failed");
+		SECKEY_DestroyPublicKey(publicKey);
+		*fatal_diag = NULL;
+		return false;
+	}
+
+	if (DBGP(DBG_CRYPT)) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam_string(buf, "NSS RSA verify: decrypted sig: ");
+			jam_nss_secitem(buf, &decrypted_signature);
+		}
+	}
+
+	/* hash at end? See above for length check */
+	passert(decrypted_signature.len >= expected_hash->len);
+	uint8_t *start = (decrypted_signature.data
+			  + decrypted_signature.len
+			  - expected_hash->len);
+	if (!memeq(start, expected_hash->ptr, expected_hash->len)) {
+		dbg("RSA Signature NOT verified");
+		SECKEY_DestroyPublicKey(publicKey);
+		*fatal_diag = NULL;
+		return false;
+	}
+
+	SECKEY_DestroyPublicKey(publicKey);
+	*fatal_diag = NULL;
+	return true;
+}
+
+const struct pubkey_signer pubkey_signer_raw_rsa = {
+	.name = "RSA",
+	.digital_signature_blob = DIGITAL_SIGNATURE_BLOB_ROOF,
+	.type = &pubkey_type_rsa,
+	.sign_hash = RSA_sign_hash_raw_rsa,
+	.authenticate_signature = RSA_authenticate_signature_raw_rsa,
+};
+
+const struct pubkey_signer pubkey_signer_pkcs1_1_5_rsa = {
+	.name = "RSA",
+	.digital_signature_blob = DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB,
+	.type = &pubkey_type_rsa,
+	.sign_hash = RSA_sign_hash_pkcs1_1_5_rsa,
+	.authenticate_signature = RSA_authenticate_signature_raw_rsa,
+};
+
+/* returns the length of the result on success; 0 on failure */
+static struct hash_signature RSA_sign_hash_rsassa_pss(const struct private_key_stuff *pks,
+						      const uint8_t *hash_val, size_t hash_len,
+						      const struct hash_desc *hash_algo,
+						      struct logger *logger)
 {
 	dbg("RSA_sign_hash: Started using NSS");
 	if (!pexpect(pks->private_key != NULL)) {
@@ -145,49 +394,38 @@ static struct hash_signature RSA_sign_hash(const struct private_key_stuff *pks,
 		.data = sig.ptr,
 	};
 
-	if (hash_algo == NULL /* ikev1*/ ||
-	    hash_algo == &ike_alg_hash_sha1 /* old style rsa with SHA1*/) {
-		SECStatus s = PK11_Sign(pks->private_key, &signature, &data);
-		if (s != SECSuccess) {
-			/* PR_GetError() returns the thread-local error */
-			llog_nss_error(RC_LOG_SERIOUS, logger,
-				       "RSA sign function failed");
-			return (struct hash_signature) { .len = 0, };
-		}
-	} else { /* Digital signature scheme with rsa-pss*/
-		const CK_RSA_PKCS_PSS_PARAMS *mech = hash_algo->nss.rsa_pkcs_pss_params;
-		if (mech == NULL) {
-			llog(RC_LOG_SERIOUS, logger,
-				    "digital signature scheme not supported for hash algorithm %s",
-				    hash_algo->common.fqn);
-			return (struct hash_signature) { .len = 0, };
-		}
+	const CK_RSA_PKCS_PSS_PARAMS *mech = hash_algo->nss.rsa_pkcs_pss_params;
+	if (mech == NULL) {
+		llog(RC_LOG_SERIOUS, logger,
+		     "digital signature scheme not supported for hash algorithm %s",
+		     hash_algo->common.fqn);
+		return (struct hash_signature) { .len = 0, };
+	}
 
-		SECItem mech_item = {
-			.type = siBuffer,
-			.data = (void*)mech, /* strip const */
-			.len = sizeof(*mech),
-		};
-		SECStatus s = PK11_SignWithMechanism(pks->private_key, CKM_RSA_PKCS_PSS,
-						     &mech_item, &signature, &data);
-		if (s != SECSuccess) {
-			/* PR_GetError() returns the thread-local error */
-			llog_nss_error(RC_LOG_SERIOUS, logger,
-				       "RSA DSS sign function failed");
-			return (struct hash_signature) { .len = 0, };
-		}
+	SECItem mech_item = {
+		.type = siBuffer,
+		.data = (void*)mech, /* strip const */
+		.len = sizeof(*mech),
+	};
+	SECStatus s = PK11_SignWithMechanism(pks->private_key, CKM_RSA_PKCS_PSS,
+					     &mech_item, &signature, &data);
+	if (s != SECSuccess) {
+		/* PR_GetError() returns the thread-local error */
+		llog_nss_error(RC_LOG_SERIOUS, logger,
+			       "RSA DSS sign function failed");
+		return (struct hash_signature) { .len = 0, };
 	}
 
 	dbg("RSA_sign_hash: Ended using NSS");
 	return sig;
 }
 
-static bool RSA_authenticate_signature(const struct crypt_mac *expected_hash,
-				       shunk_t signature,
-				       struct pubkey *kr,
-				       const struct hash_desc *hash_algo,
-				       diag_t *fatal_diag,
-				       struct logger *logger)
+static bool RSA_authenticate_signature_rsassa_pss(const struct crypt_mac *expected_hash,
+						  shunk_t signature,
+						  struct pubkey *kr,
+						  const struct hash_desc *hash_algo,
+						  diag_t *fatal_diag,
+						  struct logger *logger)
 {
 	const struct RSA_public_key *k = &kr->u.rsa;
 
@@ -268,50 +506,6 @@ static bool RSA_authenticate_signature(const struct crypt_mac *expected_hash,
 		.len  = signature.len,
 	};
 
-	if (hash_algo == NULL /* ikev1*/ ||
-	    hash_algo == &ike_alg_hash_sha1 /* old style rsa with SHA1*/) {
-		SECItem decrypted_signature = {
-			.type = siBuffer,
-		};
-		if (SECITEM_AllocItem(publicKey->arena, &decrypted_signature,
-				      signature.len) == NULL) {
-			llog_nss_error(RC_LOG, logger, "allocating space for decrypted RSA signature");
-			SECKEY_DestroyPublicKey(publicKey);
-			return false;
-		}
-
-		if (PK11_VerifyRecover(publicKey, &encrypted_signature, &decrypted_signature,
-				       lsw_nss_get_password_context(logger)) != SECSuccess) {
-			dbg("NSS RSA verify: decrypting signature is failed");
-			SECKEY_DestroyPublicKey(publicKey);
-			*fatal_diag = NULL;
-			return false;
-		}
-
-		if (DBGP(DBG_CRYPT)) {
-			LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-				jam_string(buf, "NSS RSA verify: decrypted sig: ");
-				jam_nss_secitem(buf, &decrypted_signature);
-			}
-		}
-
-		/* hash at end? See above for length check */
-		passert(decrypted_signature.len >= expected_hash->len);
-		uint8_t *start = (decrypted_signature.data
-				  + decrypted_signature.len
-				  - expected_hash->len);
-		if (!memeq(start, expected_hash->ptr, expected_hash->len)) {
-			dbg("RSA Signature NOT verified");
-			SECKEY_DestroyPublicKey(publicKey);
-			*fatal_diag = NULL;
-			return false;
-		}
-
-		SECKEY_DestroyPublicKey(publicKey);
-		*fatal_diag = NULL;
-		return true;
-	}
-
 	/*
 	 * Digital signature scheme with RSA-PSS
 	 */
@@ -352,9 +546,10 @@ static bool RSA_authenticate_signature(const struct crypt_mac *expected_hash,
 	return true;
 }
 
-const struct pubkey_signer pubkey_signer_rsa = {
+const struct pubkey_signer pubkey_signer_rsassa_pss = {
 	.name = "RSA",
 	.type = &pubkey_type_rsa,
-	.sign_hash = RSA_sign_hash,
-	.authenticate_signature = RSA_authenticate_signature,
+	.digital_signature_blob = DIGITAL_SIGNATURE_RSASSA_PSS_BLOB,
+	.sign_hash = RSA_sign_hash_rsassa_pss,
+	.authenticate_signature = RSA_authenticate_signature_rsassa_pss,
 };

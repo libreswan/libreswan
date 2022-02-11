@@ -34,6 +34,7 @@
 #include "keyid.h"
 #include "refcnt.h"
 #include "crypt_mac.h"
+#include "ike_alg.h"		/* for HASH_ALGORITHM_IDENTIFIER */
 
 struct logger;
 struct state;	/* forward declaration */
@@ -173,10 +174,12 @@ struct pubkey_type {
 						   SECKEYPublicKey *pubk, SECItem *cert_ckaid);
 	void (*free_secret_content)(struct private_key_stuff *pks);
 	err_t (*secret_sane)(struct private_key_stuff *pks);
+	const struct pubkey_signer *digital_signature_signer[DIGITAL_SIGNATURE_BLOB_ROOF];
 };
 
 struct pubkey_signer {
 	const char *name;
+	enum digital_signature_blob digital_signature_blob;
 	const struct pubkey_type *type;
 	struct hash_signature (*sign_hash)(const struct private_key_stuff *pks,
 					   const uint8_t *hash_octets, size_t hash_len,
@@ -200,7 +203,9 @@ struct pubkey_signer {
 extern const struct pubkey_type pubkey_type_rsa;
 extern const struct pubkey_type pubkey_type_ecdsa;
 
-extern const struct pubkey_signer pubkey_signer_rsa;
+extern const struct pubkey_signer pubkey_signer_raw_rsa;
+extern const struct pubkey_signer pubkey_signer_pkcs1_1_5_rsa;
+extern const struct pubkey_signer pubkey_signer_rsassa_pss;
 extern const struct pubkey_signer pubkey_signer_ecdsa;
 
 const struct pubkey_type *pubkey_alg_type(enum pubkey_alg alg);
