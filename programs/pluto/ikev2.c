@@ -1707,7 +1707,7 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 		 * Responding to either an IKE_INTERMEDIATE or
 		 * IKE_AUTH request.
 		 */
-		pexpect(state->nr_transitions == 2);
+		pexpect(state->nr_transitions == 3);
 		if (md->hdr.isa_xchg == ISAKMP_v2_IKE_INTERMEDIATE) {
 			transition = &state->v2.transitions[0];
 			pexpect(transition->recv_type == ISAKMP_v2_IKE_INTERMEDIATE);
