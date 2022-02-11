@@ -148,10 +148,12 @@ OBJS += jam_bytes.o
 OBJS += log_message.o
 OBJS += llog_va_list.o
 OBJS += log_nss_error.o
-OBJS += jam_nss_error.o
-OBJS += jam_nss_ckm.o
-OBJS += jam_nss_ckf.o
+
 OBJS += jam_nss_cka.o
+OBJS += jam_nss_ckf.o
+OBJS += jam_nss_ckm.o
+OBJS += jam_nss_error.o
+OBJS += jam_nss_oid.o
 OBJS += jam_nss_secitem.o
 
 # Crypto code:

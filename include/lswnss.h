@@ -88,9 +88,13 @@ void pexpect_nss_error(struct logger *logger, where_t where,
 		}							\
 	}
 
-size_t jam_nss_ckm(struct jambuf *buf, CK_MECHANISM_TYPE mechanism);
-size_t jam_nss_ckf(struct jambuf *buf, CK_FLAGS flags);
 size_t jam_nss_cka(struct jambuf *buf, CK_ATTRIBUTE_TYPE attribute);
+size_t jam_nss_ckf(struct jambuf *buf, CK_FLAGS flags);
+size_t jam_nss_ckm(struct jambuf *buf, CK_MECHANISM_TYPE mechanism);
+size_t jam_nss_oid(struct jambuf *buf, SECOidTag oidtag);
 size_t jam_nss_secitem(struct jambuf *buf, const SECItem *secitem);
+
+const char *str_nss_oid(SECOidTag oid, enum_buf *buf);
+const char *str_nss_ckm(CK_MECHANISM_TYPE mechanism, enum_buf *buf);
 
 #endif

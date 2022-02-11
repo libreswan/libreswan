@@ -16,16 +16,19 @@
 
 /*
  * XXX: Is there an NSS version of this?
+ *
+ * Kind of SECOID_FindOIDByMechanism() works for some, but not all
+ * values.
  */
 
 #include "lswlog.h"
 #include "lswnss.h"
 
-size_t jam_nss_ckm(struct jambuf *buf, CK_MECHANISM_TYPE mechanism)
+const char *str_nss_ckm(CK_MECHANISM_TYPE mechanism, enum_buf *buf)
 {
 	switch (mechanism) {
 		/* Not using #T + strlen("CKM_") because of clang's -Wstring-plus-int */
-#define CASE(T) case T: return jam_string(buf, &#T[strlen("CKM_")])
+#define CASE(T) case T: return &#T[strlen("CKM_")]
 
 		CASE(CKM_CONCATENATE_BASE_AND_DATA);
 		CASE(CKM_CONCATENATE_BASE_AND_KEY);
@@ -84,10 +87,19 @@ size_t jam_nss_ckm(struct jambuf *buf, CK_MECHANISM_TYPE mechanism)
 
 		CASE(CKM_VENDOR_DEFINED);
 
-
 #undef CASE
 
 	default:
-		return jam(buf, "CKM_%08lx", (long)mechanism);
+	{
+		snprintf(buf->buf, sizeof(buf->buf),
+			 "CKM_%08lx", (long)mechanism);
+		return buf->buf;
 	}
+	}
+}
+
+size_t jam_nss_ckm(struct jambuf *buf, CK_MECHANISM_TYPE mechanism)
+{
+	enum_buf b;
+	return jam_string(buf, str_nss_ckm(mechanism, &b));
 }
