@@ -365,7 +365,14 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 							PR_FALSE /*isperm*/,
 							PR_TRUE /* copyDER */);
 	if (cert == NULL) {
-		dbg_nss_error(logger, "NSS: decoding certs using CERT_ImportCerts() failed");
+		/*
+		 * XXX: need to log something here.  When the certs
+		 * are rejected, pluto stumbles on, eventually
+		 * rejecting the connection for some seamingly
+		 * unrelated reason.
+		 */
+		llog_nss_error(RC_LOG_SERIOUS, logger,
+			       "NSS: decoding certificate using CERT_NewTempCertificate() failed");
 		return;
 	}
 	dbg("decoded cert: %s", cert->subjectName);
