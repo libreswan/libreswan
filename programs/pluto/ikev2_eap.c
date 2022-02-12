@@ -434,7 +434,8 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 			  "Peer attempted EAP authentication, but IKE_AUTH is required");
 		goto auth_fail;
 	}
-	if (c->spd.this.eap != IKE_EAP_TLS || c->spd.that.eap != IKE_EAP_TLS) {
+	if (c->local->config->host.eap != IKE_EAP_TLS ||
+	    c->remote->config->host.eap != IKE_EAP_TLS) {
 		log_state(RC_LOG, &ike->sa,
 			  "Peer attempted EAP authentication, but EAP is not allowed");
 		goto auth_fail;

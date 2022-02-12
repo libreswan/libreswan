@@ -1085,7 +1085,7 @@ static int extract_end(struct connection *c,
 	config_end->host.xauth.server = src->xauth_server;
 	config_end->host.xauth.client = src->xauth_client;
 	config_end->host.xauth.username = clone_str(src->xauth_username, "xauth username");
-	dst->eap = src->eap;
+	config_end->host.eap = src->eap;
 
 	config_end->host.authby = src->authby;
 
@@ -3652,8 +3652,8 @@ static void show_one_sr(struct show *s,
 		     c->name, instance,
 		     str_enum_short(&keyword_authby_names, sr->this.config->host.authby, &auth1),
 		     str_enum_short(&keyword_authby_names, sr->that.config->host.authby, &auth2),
-		     sr->this.eap == IKE_EAP_NONE ? "none" : "tls",
-		     sr->that.eap == IKE_EAP_NONE ? "none" : "tls"
+		     c->local->config->host.eap == IKE_EAP_NONE ? "none" : "tls",
+		     c->remote->config->host.eap == IKE_EAP_NONE ? "none" : "tls"
 	);
 
 	show_comment(s, PRI_CONNECTION":   modecfg info: us:%s, them:%s, modecfg policy:%s, dns:%s, domains:%s, cat:%s;",

@@ -94,6 +94,8 @@ struct config_host_end {
 		bool client;
 		char *username;
 	} xauth;
+
+	enum eap_options eap;		/* whether to require/do EAP auth (eg EAPTLS) */
 };
 
 /*
@@ -308,8 +310,6 @@ struct /*spd_*/end {
 	bool key_from_DNS_on_demand;
 	bool has_client;
 	bool has_id_wildcards;
-
-	enum eap_options eap;		/* whether to require/do EAP auth (eg EAPTLS) */
 
 	struct virtual_ip *virt;
 
