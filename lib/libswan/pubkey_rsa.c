@@ -183,7 +183,6 @@ static struct hash_signature RSA_sign_hash_pkcs1_1_5_rsa(const struct private_ke
 		return (struct hash_signature) { .len = 0, };
 	}
 
-	DBG_dump("hash", hash_val, hash_len);
 	SECItem digest = {
 		.type = siBuffer,
 		.len = hash_len,
@@ -207,13 +206,15 @@ static struct hash_signature RSA_sign_hash_pkcs1_1_5_rsa(const struct private_ke
 		return (struct hash_signature) { .len = 0, };
 	}
 
-	DBG_dump("signature_result", signature_result.data, signature_result.len);
+	/* save the signature, free the returned pointer */
+
 	struct hash_signature signature = {
 		.len = PK11_SignatureLen(pks->private_key),
 	};
 	passert(signature.len <= sizeof(signature.ptr/*array*/));
 	memcpy(signature.ptr, signature_result.data, signature.len);
-	DBG_dump_hunk("signature", signature);
+	PORT_Free(signature_result.data);
+
 	dbg("%s: ended using NSS", __func__);
 	return signature;
 }
