@@ -429,54 +429,62 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 		};
 
 		shunk_t signature = pbs_in_left_as_shunk(signature_pbs);
-		shunk_t blob;
-		const struct pubkey_signer *pubkey_signer;
 
-		const struct hash_alts *hap = NULL;
-		FOR_EACH_ELEMENT(hash_alts, hash_alt) {
-			if (!(hash_alt->neg & ike->sa.st_hash_negotiated)) {
+		dbg("digsig: looking for matching DIGSIG blob");
+		FOR_EACH_ELEMENT(hash_alts, hash) {
+
+			if (!(hash->neg & ike->sa.st_hash_negotiated)) {
+				dbg("digsig:   skipping %s as not negotiated", hash->algo->common.fqn);
 				continue;
 			}
-			switch(that_authby) {
-			case AUTHBY_RSASIG:
-				blob = hash_alt->algo->digital_signature_blob[DIGITAL_SIGNATURE_RSASSA_PSS_BLOB];
-				pubkey_signer = &pubkey_signer_rsassa_pss;
-				break;
-			case AUTHBY_ECDSA:
-				blob = hash_alt->algo->digital_signature_blob[DIGITAL_SIGNATURE_ECDSA_BLOB];
-				pubkey_signer = &pubkey_signer_ecdsa;
-				break;
-			default:
-				bad_case(that_authby);
+
+			/*
+			 * Try all signers and their blob.
+			 *
+			 * That way, when a disabled blob matches a
+			 * more meaningful log message can be printed
+			 * (we're looking at you PKCS#1 1.5 RSA).
+			 */
+			dbg("digsig:   trying %s", hash->algo->common.fqn);
+			FOR_EACH_THING(signer,
+				       &pubkey_signer_ecdsa,
+				       &pubkey_signer_rsassa_pss,
+				       &pubkey_signer_pkcs1_1_5_rsa) {
+				enum digital_signature_blob b = signer->digital_signature_blob;
+				shunk_t blob = hash->algo->digital_signature_blob[b];
+				if (blob.len == 0) {
+					dbg("digsig:     skipping %s as no blob", signer->name);
+					continue;
+				}
+				if (!hunk_starteq(signature, blob)) {
+					dbg("digsig:     skipping %s as blob does not match", signer->name);
+					continue;
+				};
+				if (b == DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB &&
+				    !LIN(POLICY_RSASIG_v1_5, ike->sa.st_connection->policy)) {
+					dbg("digsig:     failing %s due to policy", signer->name);
+					return diag("authentication failed: PKCS#1 1.5 RSA signature is not acceptable due to policy");
+				}
+
+				/* eat the blob */
+				diag_t d = pbs_in_raw(signature_pbs, NULL/*toss*/, blob.len,
+						      "skip ASN.1 blob for hash algo");
+				if (d != NULL) {
+					dbg("digsig:     failing %s due to I/O error: %s", signer->name, str_diag(d));
+					return d;
+				}
+
+				dbg("digsig:     verifying signature using %s", signer->name);
+				return v2_authsig_and_log_using_pubkey(ike, idhash_in,
+								       pbs_in_left_as_shunk(signature_pbs),
+								       hash->algo, signer);
 			}
-			if (blob.len == 0) {
-				continue;
-			}
-			if (!hunk_starteq(signature, blob)) {
-				dbg("st_hash_negotiated policy does not match hash algorithm %s",
-				    hash_alt->algo->common.fqn);
-				continue;
-			};
-			hap = hash_alt;
-			break;
 		}
 
-		if (hap == NULL) {
-			return diag("authentication failed: no acceptable ECDSA/RSA-PSS ASN.1 signature hash proposal included for %s",
-				    enum_name(&keyword_authby_names, that_authby));
-		}
+		dbg("digsig:   no match");
+		return diag("authentication failed: no acceptable ECDSA/RSA-PSS ASN.1 signature hash proposal included for %s",
+			    enum_name(&keyword_authby_names, that_authby));
 
-		/* eat the blob */
-		diag_t d = pbs_in_raw(signature_pbs, NULL/*toss*/, blob.len,
-				      "skip ASN.1 blob for hash algo");
-		if (d != NULL) {
-			return d;
-		}
-
-		dbg("verifying signature using %s", pubkey_signer->name);
-		return v2_authsig_and_log_using_pubkey(ike, idhash_in,
-						       pbs_in_left_as_shunk(signature_pbs),
-						       hap->algo, pubkey_signer);
 	}
 	default:
 		return diag("authentication failed: method %s not supported",

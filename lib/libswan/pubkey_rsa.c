@@ -174,10 +174,6 @@ static struct hash_signature RSA_sign_hash_pkcs1_1_5_rsa(const struct private_ke
 {
 	dbg("%s: started using NSS", __func__);
 
-	if (!pexpect(hash_algo == &ike_alg_hash_sha1)) {
-		return (struct hash_signature) { .len = 0, };
-	}
-
 	if (!pexpect(pks->private_key != NULL)) {
 		dbg("no private key!");
 		return (struct hash_signature) { .len = 0, };
@@ -222,12 +218,10 @@ static struct hash_signature RSA_sign_hash_pkcs1_1_5_rsa(const struct private_ke
 static bool RSA_authenticate_signature_raw_rsa(const struct crypt_mac *expected_hash,
 					       shunk_t signature,
 					       struct pubkey *kr,
-					       const struct hash_desc *unused_hash_algo,
+					       const struct hash_desc *unused_hash_algo UNUSED,
 					       diag_t *fatal_diag,
 					       struct logger *logger)
 {
-	passert(unused_hash_algo == &ike_alg_hash_sha1);
-
 	const struct RSA_public_key *k = &kr->u.rsa;
 
 	/* decrypt the signature -- reversing RSA_sign_hash */
@@ -332,7 +326,11 @@ static bool RSA_authenticate_signature_raw_rsa(const struct crypt_mac *expected_
 		}
 	}
 
-	/* hash at end? See above for length check */
+	/*
+	 * Expect the matching hash to appear at the end.  See above
+	 * for length check.  It may, or may not, be prefixed by a
+	 * PKCS#1 1.5 RSA ASN.1 blob.
+	 */
 	passert(decrypted_signature.len >= expected_hash->len);
 	uint8_t *start = (decrypted_signature.data
 			  + decrypted_signature.len
