@@ -250,6 +250,50 @@ static void finish_connection(struct connection *c, const char *name,
 struct connection *alloc_connection(const char *name, where_t where)
 {
 	struct connection *c = alloc_thing(struct connection, where->func);
+
+	/*
+	 * Allocate the configuration - only allocated on root
+	 * connection; connection instances (clones) inherit these
+	 * pointers.
+	 *
+	 * At this point THIS and THAT are disoriented so
+	 * distinguishing one as local and the other as remote is
+	 * pretty much meaningless.
+	 *
+	 * Somewhat arbitrarially (as in this is the way it's always
+	 * been) start with:
+	 *
+	 *    LEFT == LOCAL / THIS
+	 *    RIGHT == REMOTE / THAT
+	 *
+	 * Needed by the hash table code that expects .that->host.id
+	 * to work.
+	 */
+
+	struct config *config = alloc_thing(struct config, "root config");
+	c->config = c->root_config = config;
+	c->local = &c->end[LEFT_END]; /* this; clone must update */
+	c->remote = &c->end[RIGHT_END]; /* that; clone must update */
+	c->local->client.spd = &c->spd.this;
+	c->remote->client.spd = &c->spd.that;
+
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+		/* "left" or "right" */
+		const char *leftright =
+			(lr == LEFT_END ? "left" :
+			 lr == RIGHT_END ? "right" :
+			 NULL);
+		passert(leftright != NULL);
+		struct connection_end *end = &c->end[lr];
+		struct config_end *config_end = &config->end[lr];
+		config_end->leftright = leftright;
+		config_end->index = lr;
+		end->config = config_end;
+		end->host.backdoor = end->client.spd;
+		end->client.spd->host = &end->host; /*clone must update*/
+		end->client.spd->config = config_end;
+	}
+
 	finish_connection(c, name, 0/*no template*/, where);
 	return c;
 }
@@ -259,6 +303,13 @@ struct connection *clone_connection(const char *name, struct connection *t, wher
 	struct connection *c = clone_thing(*t, where->func);
 	zero_thing(c->hash_table_entries); /* keep init_list_entry() happy */
 	zero_thing(c->spd.hash_table_entries); /* keep init_list_entry() happy */
+
+	/* point local pointers at local structure */
+	c->local = &c->end[t->local->config->index];
+	c->remote = &c->end[t->remote->config->index];
+	c->local->client.spd = c->local->host.backdoor = &c->spd.this;
+	c->remote->client.spd = c->remote->host.backdoor = &c->spd.that;
+
 	finish_connection(c, name, t->serialno, where);
 	return c;
 }

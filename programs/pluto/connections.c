@@ -813,11 +813,6 @@ static void unshare_connection(struct connection *c, struct connection *t/*empla
 
 	if (IS_XFRMI && c->xfrmi != NULL)
 		reference_xfrmi(c);
-
-	c->local = &c->end[t->local->config->index];
-	c->remote = &c->end[t->remote->config->index];
-	c->local->client.spd = c->local->host.backdoor = &c->spd.this;
-	c->remote->client.spd = c->local->host.backdoor = &c->spd.that;
 }
 
 /*
@@ -1415,11 +1410,7 @@ static bool extract_connection(const struct whack_message *wm,
 			       struct connection *c)
 {
 	diag_t d;
-
-	struct config *config = alloc_thing(struct config, "root config");
-	c->root_config = config; /* writeable; root only */
-	c->config = config; /* read only; shared */
-
+	struct config *config = c->root_config; /* writeable; root only */
 	passert(c->name != NULL); /* see alloc_connection() */
 
 	if ((wm->policy & POLICY_TUNNEL) == LEMPTY) {
@@ -2162,39 +2153,15 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	/*
-	 * At this point THIS and THAT are disoriented so
-	 * distinguishing one as local and the other as remote is
-	 * pretty much meaningless.
+	 * Unpack the ends.
 	 *
-	 * Somewhat arbitrarially (as in this is the way it's always
-	 * been) start with:
-	 *
-	 *    LEFT == LOCAL / THIS
-	 *    RIGHT == REMOTE / THAT
+	 * This choice of left/right must match alloc_connection().
 	 */
 
-	c->local = &c->end[LEFT_END]; /* this */
-	c->remote = &c->end[RIGHT_END]; /* this */
 	struct end *client_spd[] = {
-		[LEFT_END] = &c->spd.this,
-		[RIGHT_END] = &c->spd.that,
+		[LEFT_END] = c->end[LEFT_END].client.spd,
+		[RIGHT_END] = c->end[RIGHT_END].client.spd,
 	};
-
-	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-		/* "left" or "right" */
-		const char *leftright =
-			(lr == LEFT_END ? "left" :
-			 lr == RIGHT_END ? "right" :
-			 NULL);
-		passert(leftright != NULL);
-		config->end[lr].leftright = leftright;
-		config->end[lr].index = lr;
-		client_spd[lr]->host = &c->end[lr].host; /*clone must update*/
-		client_spd[lr]->config = &config->end[lr];
-		c->end[lr].config = &config->end[lr];
-		c->end[lr].client.spd = client_spd[lr];
-		c->end[lr].host.backdoor = client_spd[lr];
-	}
 
 	const struct whack_end *whack_ends[] = {
 		[LEFT_END] = &wm->left,
