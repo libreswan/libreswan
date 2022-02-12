@@ -1,21 +1,69 @@
 Configure EAST so that it will interop with an android simulator using x509
 
-The android simulator needs to be given west.p12 (password foobar)
-found in (testing/x509/p12/mainca/west.p12).  See:
-   View > Tool Windows > Device File Explorer
+Setup:
 
-DO NOT SET KVM_PREFIXES: EAST needs to be directly accessable from the
-host.
+- Prepare the host:
 
-On the host:
-    ./kvm install check testing/pluto/android-be-happy
+  DO NOT SET KVM_PREFIXES:
+  EAST needs to be directly accessable from the host.
+
+    ./kvm install
+    ./kvm check testing/pluto/android-be-happy
+    tail -f testing/pluto/android-be-happy/OUTPUT/east.pluto.log
+  and:
     ./kvm sh east
     east# tail -f /tmp/pluto.log
-On the android simulator, configure:
+
+- Start the simulator
+
+- Using studio, copy the certificates east.p12 and west.p12 (password
+  foobar) to android
+
+  Make finding the certs easy:
+
+    cp testing/x509/pkcs12/mainca/east.p12 /tmp
+    cp testing/x509/pkcs12/mainca/west.p12 /tmp
+
+  From studio, open the simulator's storage using:
+
+      View
+      > Tool Windows
+      > Device File Explorer
+
+   From there, navigate to:
+
+      storage
+      v XXX-XXX
+      v Download
+
+   right-click on "Download" and select "upload" to upload the certs
+
+- Using android, add the certificate
+
+  Go to:
+
+    Settings
+    > Security
+    > Encryption & credentials
+    > Install a certificate
+    > VPN & app user certificate
+
+  and navigate to SDCARDS v Downloads and open it (password foobar)
+
+- Using android, configure the connection:
+
+  Go to:
+
+    Network & internet
+    > VPN
+    > +
+
+  And enter:
+
     type: IKEv2/IPsec RSA
     server: 192.1.2.23
     identifier: west
-    IPsec user certificate: west (see above)
+    IPsec user certificate: west (see above, password foobar)
     IPsec CA certificate: (don't verify server)
     IPsec server certificate: (received from server)
 
@@ -25,9 +73,13 @@ Known bugs:
    https://issuetracker.google.com/issues/203676760
 
    Android proposes DIGSIG sha1+sha2 hashes; pluto accepts only sha2;
-   android ignores this and uses a sha1 hash when signing.
+   Android signs with probably-not-supported PKCS#1 1.5 SHA2 RSA.
    https://issuetracker.google.com/issues/213617220
 
    Android shouldn't be sending a delete IKE SA request when it gets
    back an AUTHENTICATION_FAILED IKE_AUTH response
    https://issuetracker.google.com/issues/213599617
+
+   Android crashes when set RSASSA_PSS ASN.1 prefix:
+   Unrecognized ASN.1 objects for Signature algorithm and Hash
+   (worth filing bug?)
