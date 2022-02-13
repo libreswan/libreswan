@@ -155,19 +155,19 @@ bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
 		/* We no longer support SHA1 (as per RFC 8247) */
 		case IKEv2_HASH_ALGORITHM_SHA2_256:
 			if (sighash_policy & POL_SIGHASH_SHA2_256) {
-				ike->sa.st_hash_negotiated |= NEGOTIATE_AUTH_HASH_SHA2_256;
+				ike->sa.st_v2_digsig.negotiated_hashes |= NEGOTIATE_AUTH_HASH_SHA2_256;
 				dbg("received HASH_ALGORITHM_SHA2_256 which is allowed by local policy");
 			}
 			break;
 		case IKEv2_HASH_ALGORITHM_SHA2_384:
 			if (sighash_policy & POL_SIGHASH_SHA2_384) {
-				ike->sa.st_hash_negotiated |= NEGOTIATE_AUTH_HASH_SHA2_384;
+				ike->sa.st_v2_digsig.negotiated_hashes |= NEGOTIATE_AUTH_HASH_SHA2_384;
 				dbg("received HASH_ALGORITHM_SHA2_384 which is allowed by local policy");
 			}
 			break;
 		case IKEv2_HASH_ALGORITHM_SHA2_512:
 			if (sighash_policy & POL_SIGHASH_SHA2_512) {
-				ike->sa.st_hash_negotiated |= NEGOTIATE_AUTH_HASH_SHA2_512;
+				ike->sa.st_v2_digsig.negotiated_hashes |= NEGOTIATE_AUTH_HASH_SHA2_512;
 				dbg("received HASH_ALGORITHM_SHA2_512 which is allowed by local policy");
 			}
 			break;
@@ -175,7 +175,7 @@ bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
 			dbg("received and ignored IKEv2_HASH_ALGORITHM_SHA1 - it is no longer allowed as per RFC 8247");
 			break;
 		case IKEv2_HASH_ALGORITHM_IDENTITY:
-			/* ike->sa.st_hash_negotiated |= NEGOTIATE_HASH_ALGORITHM_IDENTITY; */
+			/* ike->sa.st_v2_digsig.negotiated_hashes |= NEGOTIATE_HASH_ALGORITHM_IDENTITY; */
 			dbg("received unsupported HASH_ALGORITHM_IDENTITY - ignored");
 			break;
 		default:

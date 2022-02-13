@@ -342,10 +342,33 @@ struct state {
 	bool st_outbound_done;			/* if true, then outgoing SA already installed */
 
 	const struct dh_desc *st_pfs_group;   /*group for Phase 2 PFS */
-	lset_t st_hash_negotiated;              /* Saving the negotiated hash values here */
 	lset_t st_policy;                       /* policy for IPsec SA */
 
 	ip_endpoint st_remote_endpoint;        /* where to send packets to */
+
+	/*
+	 * Digital Signature authentication.
+	 *
+	 * During IKE_SA_INIT, the acceptable hash algorithms are
+	 * saved in NEGOTIATED_HASHES.
+	 *
+	 * The IKE_AUTH initiator uses NEGOTIATED_HASHES + POLICY to
+	 * select HASH+SIGNER which is then used sign it's
+	 * proof-of-identity.
+	 *
+	 * The IKE_AUTH responder saves the HASH+SIGNER used by the
+	 * initiator, it then uses that + POLICY to update HASH+SIGNER,
+	 * to sign it's proof-of-identity.
+	 *
+	 * Because things can be asymetric, the initiator values are
+	 * just hints to the responder.
+	 */
+
+	struct {
+		lset_t negotiated_hashes;		/* from IKE_SA_INIT */
+		const struct hash_desc *hash;
+		const struct pubkey_signer *signer;
+	} st_v2_digsig;
 
 	/*
 	 * dhr 2013: why [.st_interface]? There was already

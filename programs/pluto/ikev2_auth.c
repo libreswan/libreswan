@@ -142,18 +142,6 @@ enum keyword_authby v2_auth_by(struct ike_sa *ike)
 	return authby;
 }
 
-const struct pubkey_signer *v2_auth_digsig_pubkey_signer(enum keyword_authby authby)
-{
-	switch (authby) {
-	case AUTHBY_RSASIG:
-		return &pubkey_signer_rsassa_pss;
-	case AUTHBY_ECDSA:
-		return &pubkey_signer_ecdsa;
-	default:
-		bad_case(authby);
-	}
-}
-
 enum ikev2_auth_method v2_auth_method(struct ike_sa *ike, enum keyword_authby authby)
 {
 	struct connection *c = ike->sa.st_connection;
@@ -203,53 +191,37 @@ enum ikev2_auth_method v2_auth_method(struct ike_sa *ike, enum keyword_authby au
 	return auth_method;
 }
 
+/*
+ * Map negotiation bit <-> hash algorithm; in preference order.
+ */
+
+struct negotiated_hash_map {
+	lset_t neg;
+	const struct hash_desc *algo;
+};
+
+static const struct negotiated_hash_map negotiated_hash_map[] = {
+	{ NEGOTIATE_AUTH_HASH_SHA2_512, &ike_alg_hash_sha2_512 },
+	{ NEGOTIATE_AUTH_HASH_SHA2_384, &ike_alg_hash_sha2_384 },
+	{ NEGOTIATE_AUTH_HASH_SHA2_256, &ike_alg_hash_sha2_256 },
+	/* RFC 8420 IDENTITY algo not supported yet */
+	/* { NEGOTIATE_AUTH_HASH_IDENTITY, IKEv2_HASH_ALGORITHM_IDENTITY }, */
+};
+
 const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike)
 {
-	const struct hash_desc *hash_algo;
-	/* RFC 8420 IDENTITY algo not supported yet */
-	if (ike->sa.st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_512) {
-		hash_algo = &ike_alg_hash_sha2_512;
-		dbg("emit hash algo NEGOTIATE_AUTH_HASH_SHA2_512");
-	} else if (ike->sa.st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_384) {
-		hash_algo = &ike_alg_hash_sha2_384;
-		dbg("emit hash algo NEGOTIATE_AUTH_HASH_SHA2_384");
-	} else if (ike->sa.st_hash_negotiated & NEGOTIATE_AUTH_HASH_SHA2_256) {
-		hash_algo = &ike_alg_hash_sha2_256;
-		dbg("emit hash algo NEGOTIATE_AUTH_HASH_SHA2_256");
-	} else {
-		hash_algo = NULL;
-		dbg("DigSig: no compatible DigSig hash algo");
+	dbg("digsig: selecting negotiated hash algorithm");
+	FOR_EACH_ELEMENT(negotiated_hash_map, hash) {
+		if (hash->neg & ike->sa.st_v2_digsig.negotiated_hashes) {
+			dbg("digsig:   selected hash algorithm %s",
+			    hash->algo->common.fqn);
+			return hash->algo;
+		}
+		dbg("digsig:   skipped hash algorithm %s as not negotiated",
+		    hash->algo->common.fqn);
 	}
-	return hash_algo;
-}
-
-shunk_t authby_asn1_hash_blob(const struct hash_desc *hash_algo,
-			      enum keyword_authby authby)
-{
-	switch(authby) {
-	case AUTHBY_RSASIG:
-		return hash_algo->digital_signature_blob[DIGITAL_SIGNATURE_RSASSA_PSS_BLOB];
-	case AUTHBY_ECDSA:
-		return hash_algo->digital_signature_blob[DIGITAL_SIGNATURE_ECDSA_BLOB];
-	default:
-		return null_shunk;
-	}
-}
-
-bool emit_v2_asn1_hash_blob(const struct hash_desc *hash_algo,
-			    struct pbs_out *outs, enum keyword_authby authby)
-{
-	shunk_t b = authby_asn1_hash_blob(hash_algo, authby);
-	if (!pexpect(b.len > 0)) {
-		return false;
-	}
-
-	if (!out_hunk(b, outs, "OID of ASN.1 Algorithm Identifier")) {
-		llog(RC_LOG_SERIOUS, outs->outs_logger,
-		     "DigSig: failed to emit OID of ASN.1 Algorithm Identifier");
-		return false;
-	}
-	return true;
+	dbg("DigSig: no compatible DigSig hash algo");
+	return NULL;
 }
 
 bool emit_v2_auth(struct ike_sa *ike,
@@ -264,23 +236,40 @@ bool emit_v2_auth(struct ike_sa *ike,
 		.isaa_auth_method = v2_auth_method(ike, authby),
 	};
 
-	pb_stream a_pbs;
-	if (!out_struct(&a, &ikev2_auth_desc, outs, &a_pbs)) {
+	struct pbs_out auth_pbs;
+	if (!out_struct(&a, &ikev2_auth_desc, outs, &auth_pbs)) {
 		return false;
 	}
 
 	switch (a.isaa_auth_method) {
 	case IKEv2_AUTH_RSA:
-		if (!out_hunk(*auth_sig, &a_pbs, "signature")) {
+		if (!out_hunk(*auth_sig, &auth_pbs, "signature")) {
 			return false;
 		}
 		break;
 
 	case IKEv2_AUTH_DIGSIG:
 	{
-		const struct hash_desc *hash_algo = v2_auth_negotiated_signature_hash(ike);
-		if (!emit_v2_asn1_hash_blob(hash_algo, &a_pbs, authby) ||
-		    !out_hunk(*auth_sig, &a_pbs, "signature")) {
+		diag_t d;
+		/* saved during signing */
+		const struct hash_desc *hash_alg = ike->sa.st_v2_digsig.hash;
+		const struct pubkey_signer *signer = ike->sa.st_v2_digsig.signer;
+		shunk_t b = hash_alg->digital_signature_blob[signer->digital_signature_blob];
+		if (!pexpect(b.len > 0)) {
+			return false;
+		}
+
+		d = pbs_out_hunk(&auth_pbs, b, "OID of ASN.1 Algorithm Identifier");
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d,
+				  "DigSig: failed to emit OID of ASN.1 Algorithm Identifier");
+			return false;
+		}
+
+		d = pbs_out_hunk(&auth_pbs, *auth_sig, "signature");
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d,
+				  "DigSig: failed to emit HASH");
 			return false;
 		}
 		break;
@@ -289,7 +278,7 @@ bool emit_v2_auth(struct ike_sa *ike,
 	case IKEv2_AUTH_PSK:
 	case IKEv2_AUTH_NULL:
 		/* emit */
-		if (!ikev2_emit_psk_auth(authby, ike, id_payload_mac, &a_pbs, auth_sig)) {
+		if (!ikev2_emit_psk_auth(authby, ike, id_payload_mac, &auth_pbs, auth_sig)) {
 			llog(RC_LOG_SERIOUS, outs->outs_logger, "Failed to find our PreShared Key");
 			return false;
 		}
@@ -298,7 +287,8 @@ bool emit_v2_auth(struct ike_sa *ike,
 	default:
 		bad_case(a.isaa_auth_method);
 	}
-	close_output_pbs(&a_pbs);
+
+	close_output_pbs(&auth_pbs);
 	return true;
 }
 
@@ -409,32 +399,22 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_DIGSIG:
 	{
-		if (that_authby != AUTHBY_ECDSA && that_authby != AUTHBY_RSASIG) {
+		if (that_authby != AUTHBY_ECDSA &&
+		    that_authby != AUTHBY_RSASIG) {
 			return diag("authentication failed: peer attempted authentication through Digital Signature but we want %s",
 				    enum_name(&keyword_authby_names, that_authby));
 		}
 
 		/* try to match ASN.1 blob designating the hash algorithm */
 
-		struct hash_alts {
-			lset_t neg;
-			const struct hash_desc *algo;
-		};
-
-		static const struct hash_alts hash_alts[] = {
-			{ NEGOTIATE_AUTH_HASH_SHA2_512, &ike_alg_hash_sha2_512 },
-			{ NEGOTIATE_AUTH_HASH_SHA2_384, &ike_alg_hash_sha2_384 },
-			{ NEGOTIATE_AUTH_HASH_SHA2_256, &ike_alg_hash_sha2_256 },
-			/* { NEGOTIATE_AUTH_HASH_IDENTITY, IKEv2_HASH_ALGORITHM_IDENTITY }, */
-		};
-
 		shunk_t signature = pbs_in_left_as_shunk(signature_pbs);
 
 		dbg("digsig: looking for matching DIGSIG blob");
-		FOR_EACH_ELEMENT(hash_alts, hash) {
+		FOR_EACH_ELEMENT(negotiated_hash_map, hash) {
 
-			if (!(hash->neg & ike->sa.st_hash_negotiated)) {
-				dbg("digsig:   skipping %s as not negotiated", hash->algo->common.fqn);
+			if (!(hash->neg & ike->sa.st_v2_digsig.negotiated_hashes)) {
+				dbg("digsig:   skipping %s as not negotiated",
+				    hash->algo->common.fqn);
 				continue;
 			}
 
@@ -466,6 +446,9 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 					return diag("authentication failed: PKCS#1 1.5 RSA signature is not acceptable due to policy");
 				}
 
+				dbg("digsig:    using signer %s and hash %s",
+				    signer->name, hash->algo->common.fqn);
+
 				/* eat the blob */
 				diag_t d = pbs_in_raw(signature_pbs, NULL/*toss*/, blob.len,
 						      "skip ASN.1 blob for hash algo");
@@ -474,7 +457,13 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 					return d;
 				}
 
-				dbg("digsig:     verifying signature using %s", signer->name);
+				/*
+				 * Save the choice so that the
+				 * responder can use the same values.
+				 */
+				ike->sa.st_v2_digsig.hash = hash->algo;
+				ike->sa.st_v2_digsig.signer = signer;
+
 				return v2_authsig_and_log_using_pubkey(ike, idhash_in,
 								       pbs_in_left_as_shunk(signature_pbs),
 								       hash->algo, signer);

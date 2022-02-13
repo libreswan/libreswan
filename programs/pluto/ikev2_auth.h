@@ -39,14 +39,11 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 				      enum perspective from_the_perspective_of);
 
 enum keyword_authby v2_auth_by(struct ike_sa *ike);
-const struct pubkey_signer *v2_auth_digsig_pubkey_signer(enum keyword_authby authby);
 enum ikev2_auth_method v2_auth_method(struct ike_sa *ike, enum keyword_authby authby);
 const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike);
 
 shunk_t authby_asn1_hash_blob(const struct hash_desc *hash_algo,
 			      enum keyword_authby authby);
-bool emit_v2_asn1_hash_blob(const struct hash_desc *hash_algo,
-			    pb_stream *a_pbs, enum keyword_authby authby);
 
 bool emit_v2_auth(struct ike_sa *ike,
 		  const struct hash_signature *auth_sig,
