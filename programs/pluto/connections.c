@@ -3756,12 +3756,10 @@ void show_one_connection(struct show *s,
 
 	if (c->config->ike_version == IKEv2) {
 		lset_buf hashpolbuf;
-		const char *hashstr = str_lset(&sighash_policy_bit_names,
-					       c->config->sighash_policy,
-					       &hashpolbuf);
 		show_comment(s, PRI_CONNECTION":   v2-auth-hash-policy: %s;",
 			     c->name, instance,
-			     hashstr);
+			     str_lset_short(&ikev2_hash_algorithm_names, "+",
+					    c->config->sighash_policy, &hashpolbuf));
 	}
 
 	if (c->connmtu != 0)
