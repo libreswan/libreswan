@@ -447,9 +447,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "auth",  kv_conn | kv_leftright, kt_enum,  KNCF_AUTH,  kw_authby_lr_list, NULL, },
   { "cat",  kv_conn | kv_leftright,  kt_bool,  KNCF_CAT, NULL, NULL, },
   { "protoport",  kv_conn | kv_leftright | kv_processed,  kt_string,  KSCF_PROTOPORT, NULL, NULL, },
-#ifdef EAPTLS
   { "autheap",  kv_conn | kv_leftright,  kt_enum,  KNCF_EAP,  kw_eap_list, NULL, },
-#endif
 
   /* these are conn statements which are not left/right */
 
