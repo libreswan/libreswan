@@ -19,6 +19,7 @@ algparse:   SHA1                              IKEv1: IKE         IKEv2: IKE     
 algparse:   SHA2_256                          IKEv1: IKE         IKEv2: IKE         FIPS NSS          sha2, sha256
 algparse:   SHA2_384                          IKEv1: IKE         IKEv2: IKE         FIPS NSS          sha384
 algparse:   SHA2_512                          IKEv1: IKE         IKEv2: IKE         FIPS NSS          sha512
+algparse:   IDENTITY                          IKEv1:             IKEv2:             FIPS             
 algparse: PRF algorithms:
 algparse:   HMAC_MD5                          IKEv1: IKE         IKEv2: IKE              native(HMAC) md5
 algparse:   HMAC_SHA1                         IKEv1: IKE         IKEv2: IKE         FIPS NSS          sha, sha1
