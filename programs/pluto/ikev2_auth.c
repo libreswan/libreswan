@@ -195,15 +195,10 @@ enum ikev2_auth_method v2_auth_method(struct ike_sa *ike, enum keyword_authby au
  * Map negotiation bit <-> hash algorithm; in preference order.
  */
 
-struct negotiated_hash_map {
-	lset_t neg;
-	const struct hash_desc *algo;
-};
-
-static const struct negotiated_hash_map negotiated_hash_map[] = {
-	{ POL_SIGHASH_SHA2_512, &ike_alg_hash_sha2_512 },
-	{ POL_SIGHASH_SHA2_384, &ike_alg_hash_sha2_384 },
-	{ POL_SIGHASH_SHA2_256, &ike_alg_hash_sha2_256 },
+static const struct hash_desc *negotiated_hash_map[] = {
+	&ike_alg_hash_sha2_512,
+	&ike_alg_hash_sha2_384,
+	&ike_alg_hash_sha2_256,
 	/* RFC 8420 IDENTITY algo not supported yet */
 	/* { POL_SIGHASH_IDENTITY, IKEv2_HASH_ALGORITHM_IDENTITY }, */
 };
@@ -212,13 +207,13 @@ const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike)
 {
 	dbg("digsig: selecting negotiated hash algorithm");
 	FOR_EACH_ELEMENT(negotiated_hash_map, hash) {
-		if (hash->neg & ike->sa.st_v2_digsig.negotiated_hashes) {
+		if (ike->sa.st_v2_digsig.negotiated_hashes & LELEM((*hash)->common.ikev2_alg_id)) {
 			dbg("digsig:   selected hash algorithm %s",
-			    hash->algo->common.fqn);
-			return hash->algo;
+			    (*hash)->common.fqn);
+			return (*hash);
 		}
 		dbg("digsig:   skipped hash algorithm %s as not negotiated",
-		    hash->algo->common.fqn);
+		    (*hash)->common.fqn);
 	}
 	dbg("DigSig: no compatible DigSig hash algo");
 	return NULL;
@@ -412,9 +407,10 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 		dbg("digsig: looking for matching DIGSIG blob");
 		FOR_EACH_ELEMENT(negotiated_hash_map, hash) {
 
-			if (!(hash->neg & ike->sa.st_v2_digsig.negotiated_hashes)) {
+			if ((ike->sa.st_v2_digsig.negotiated_hashes &
+			     LELEM((*hash)->common.ikev2_alg_id)) == LEMPTY) {
 				dbg("digsig:   skipping %s as not negotiated",
-				    hash->algo->common.fqn);
+				    (*hash)->common.fqn);
 				continue;
 			}
 
@@ -425,13 +421,13 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 			 * more meaningful log message can be printed
 			 * (we're looking at you PKCS#1 1.5 RSA).
 			 */
-			dbg("digsig:   trying %s", hash->algo->common.fqn);
+			dbg("digsig:   trying %s", (*hash)->common.fqn);
 			FOR_EACH_THING(signer,
 				       &pubkey_signer_ecdsa,
 				       &pubkey_signer_rsassa_pss,
 				       &pubkey_signer_pkcs1_1_5_rsa) {
 				enum digital_signature_blob b = signer->digital_signature_blob;
-				shunk_t blob = hash->algo->digital_signature_blob[b];
+				shunk_t blob = (*hash)->digital_signature_blob[b];
 				if (blob.len == 0) {
 					dbg("digsig:     skipping %s as no blob", signer->name);
 					continue;
@@ -447,7 +443,7 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 				}
 
 				dbg("digsig:    using signer %s and hash %s",
-				    signer->name, hash->algo->common.fqn);
+				    signer->name, (*hash)->common.fqn);
 
 				/* eat the blob */
 				diag_t d = pbs_in_raw(signature_pbs, NULL/*toss*/, blob.len,
@@ -461,12 +457,12 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 				 * Save the choice so that the
 				 * responder can use the same values.
 				 */
-				ike->sa.st_v2_digsig.hash = hash->algo;
+				ike->sa.st_v2_digsig.hash = (*hash);
 				ike->sa.st_v2_digsig.signer = signer;
 
 				return v2_authsig_and_log_using_pubkey(ike, idhash_in,
 								       pbs_in_left_as_shunk(signature_pbs),
-								       hash->algo, signer);
+								       (*hash), signer);
 			}
 		}
 
