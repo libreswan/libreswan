@@ -289,7 +289,6 @@ struct connection *alloc_connection(const char *name, where_t where)
 		config_end->leftright = leftright;
 		config_end->index = lr;
 		end->config = config_end;
-		end->host.backdoor = end->client.spd;
 		end->client.spd->host = &end->host; /*clone must update*/
 		end->client.spd->config = config_end;
 	}
@@ -307,8 +306,8 @@ struct connection *clone_connection(const char *name, struct connection *t, wher
 	/* point local pointers at local structure */
 	c->local = &c->end[t->local->config->index];
 	c->remote = &c->end[t->remote->config->index];
-	c->local->client.spd = c->local->host.backdoor = &c->spd.this;
-	c->remote->client.spd = c->remote->host.backdoor = &c->spd.that;
+	c->local->client.spd = &c->spd.this;
+	c->remote->client.spd = &c->spd.that;
 
 	finish_connection(c, name, t->serialno, where);
 	return c;

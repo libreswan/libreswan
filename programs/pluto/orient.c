@@ -63,8 +63,8 @@ static void swap_ends(struct connection *c)
 	 * ... which means the SPD pointers into the above also need
 	 * updating as their target moved; ulgh!
 	 */
-	c->local->client.spd = c->local->host.backdoor = &c->spd.this;
-	c->remote->client.spd = c->remote->host.backdoor = &c->spd.that;
+	c->local->client.spd = &c->spd.this;
+	c->remote->client.spd = &c->spd.that;
 
 	/* This is all that should be needed; getting there slowly */
 	struct connection_end *tmp = c->local;

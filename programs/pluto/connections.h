@@ -274,7 +274,6 @@ struct host_end {
 	bool encap;			/* are packets encapsulated */
 	uint16_t port;			/* where the IKE port is */
 	ip_address nexthop;		/* identifes interface to send packets */
-	struct end *backdoor;		/* hack to get at stuff in struct end that should be here */
 	struct id id;
 	ip_address addr;
 };
