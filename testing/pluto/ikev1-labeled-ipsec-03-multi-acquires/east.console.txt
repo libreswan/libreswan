@@ -2,11 +2,11 @@
 east #
  # build install se module
 east #
- ../../guestbin/semodule.sh ipsecspd.te
-Compiling targeted ipsecspd module
-Creating targeted ipsecspd.pp policy package
-rm tmp/ipsecspd.mod tmp/ipsecspd.mod.fc
-ipsecspd.pp installed
+ ../../guestbin/semodule.sh ipsecspd-full-perm.te
+Compiling targeted ipsecspd-full-perm module
+Creating targeted ipsecspd-full-perm.pp policy package
+rm tmp/ipsecspd-full-perm.mod.fc tmp/ipsecspd-full-perm.mod
+ipsecspd-full-perm.pp installed
 east #
  setsebool domain_can_mmap_files=1
 east #

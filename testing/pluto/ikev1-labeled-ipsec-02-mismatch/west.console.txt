@@ -2,7 +2,7 @@
 west #
  # install selinux; generated in OUTPUT by east
 west #
- semodule -i OUTPUT/ipsecspd.pp
+ semodule -i OUTPUT/ipsecspd-full-perm.pp
 west #
  setsebool domain_can_mmap_files=1
 west #

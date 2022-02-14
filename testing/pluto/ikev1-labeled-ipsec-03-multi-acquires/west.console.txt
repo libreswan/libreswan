@@ -2,7 +2,7 @@
 west #
  # install selinux; generated in OUTPUT by east
 west #
- semodule -i OUTPUT/ipsecspd.pp
+ semodule -i OUTPUT/ipsecspd-full-perm.pp
 west #
  setsebool domain_can_mmap_files=1
 west #
@@ -96,7 +96,7 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 	socket in priority 0 ptype main 
 west #
  echo "quit" | runcon -t netutils_t nc -w 50 -p 4301 -vvv 192.1.2.23 4300 2>&1 | sed "s/received in .*$/received .../"
-Ncat: Version 7.80 ( https://nmap.org/ncat )
+Ncat: Version 7.91 ( https://nmap.org/ncat )
 NCAT DEBUG: Using system default trusted CA certificates and those in PATH/share/ncat/ca-bundle.crt.
 NCAT DEBUG: Unable to load trusted CA certificates from PATH/share/ncat/ca-bundle.crt: error:02001002:system library:fopen:No such file or directory
 libnsock nsock_iod_new2(): nsock_iod_new (IOD #1)

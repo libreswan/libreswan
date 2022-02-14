@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep
 # build install se module
-../../guestbin/semodule.sh ipsecspd.te
+../../guestbin/semodule.sh ipsecspd-full-perm.te
 setsebool domain_can_mmap_files=1
 setsebool nis_enabled=1
 ipsec start

@@ -1,5 +1,4 @@
-
-policy_module(ipsecspd, 1.0.0)
+policy_module(ipsecspd-full-perm, 1.0.0)
 
 require {
 	role unconfined_r;
@@ -10,9 +9,12 @@ require {
 	type ipsec_spd_t;
 	type ipsec_t;
 	type iptables_t;
+	type netlabel_peer_t;
 	type ping_t;
+	type sshd_t;
 	type unconfined_service_t;
 	type unconfined_t;
+	type unlabeled_t;
 
 	class association { polmatch sendto setcontext };
 	class capability { net_raw };
@@ -21,7 +23,7 @@ require {
 	class file { entrypoint execute getattr ioctl lock map open read };
 	class lnk_file { getattr read };
 	class netif { egress ingress tcp_recv tcp_send udp_recv udp_send };
-       	class node { recvfrom tcp_recv tcp_send udp_recv udp_send sendto };
+        class node { recvfrom tcp_recv tcp_send udp_recv udp_send sendto }; 
 	class process { noatsecure rlimitinh siginh };
 	class tcp_socket { create_stream_socket_perms name_connect node_bind recv_msg send_msg };
 	class udp_socket { create_socket_perms recv_msg send_msg };
@@ -34,7 +36,6 @@ type nping_t;
 role unconfined_r types nping_t;
 
 domain_type(nping_t)
-
 domain_entry_file(nping_t, bin_t)
 
 sysnet_read_config(nping_t)
@@ -64,17 +65,32 @@ corenet_tcp_bind_generic_node(nping_t)
 allow unconfined_service_t unconfined_t:association setcontext;
 allow unconfined_service_t ping_t:association setcontext;
 allow unconfined_service_t ipsec_t:association setcontext;
+allow unconfined_service_t netlabel_peer_t:association setcontext;
 allow unconfined_service_t nping_t:association setcontext;
+allow unconfined_service_t sshd_t:association setcontext;
+
+#============= netlabel_peer_t ==============
+# Required when using NAT at the IPsec gateway with Netlabel fallback
+# labeling enabled for the WAN facing network interface.
+corenet_out_generic_node(netlabel_peer_t)
+allow netlabel_peer_t ipsec_spd_t:association polmatch;
+allow netlabel_peer_t self:association sendto;
 
 #============= ipsec_t ==============
 allow ipsec_t ipsec_mgmt_t:process { noatsecure rlimitinh siginh };
 allow ipsec_t unconfined_t:association setcontext;
 allow ipsec_t ping_t:association setcontext;
 allow ipsec_t ipsec_t:association setcontext;
+allow ipsec_t netlabel_peer_t:association setcontext;
 allow ipsec_t nping_t:association setcontext;
+allow ipsec_t sshd_t:association setcontext;
 ipsec_setcontext_default_spd(ipsec_t)
 
 #============= ipsec_mgmt_t ==============
 allow ipsec_mgmt_t ifconfig_t:process { noatsecure rlimitinh siginh };
 allow ipsec_mgmt_t ipsec_t:process { noatsecure siginh };
 allow ipsec_mgmt_t iptables_t:process { noatsecure rlimitinh siginh };
+
+#============= unlabeled_t ==============
+corenet_out_generic_if(unlabeled_t)
+corenet_out_generic_node(unlabeled_t)
