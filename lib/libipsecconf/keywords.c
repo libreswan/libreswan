@@ -154,9 +154,7 @@ static const struct sparse_name kw_authby_lr_list[] = {
 	{ "rsa",       AUTHBY_RSASIG }, /* alias */
 	{ "ecdsa",     AUTHBY_ECDSA },
 	{ "null",      AUTHBY_NULL },
-#ifdef EAPTLS
 	{ "eaponly",   AUTHBY_EAPONLY },
-#endif
 	SPARSE_NULL
  };
 
@@ -333,13 +331,12 @@ static const struct sparse_name kw_global_ikev1_list[] = {
 	SPARSE_NULL
 };
 
-#ifdef EAPTLS
 static const struct sparse_name kw_eap_list[] = {
 	{ "none", IKE_EAP_NONE }, /* default */
 	{ "tls", IKE_EAP_TLS },
 	SPARSE_NULL
 };
-#endif
+static const struct keyword_enum_values kw_eap_list = VALUES_INITIALIZER(kw_eap_values);
 
 /* MASTER KEYWORD LIST
  * Note: this table is terminated by an entry with keyname == NULL.
