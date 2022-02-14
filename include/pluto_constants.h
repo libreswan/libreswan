@@ -968,23 +968,11 @@ enum sa_policy_bits {
  * sighash_policy_bit_names is for the _latter.
  */
 
-#define NEGOTIATE_AUTH_HASH_SHA1		LELEM(IKEv2_HASH_ALGORITHM_SHA1)	/* rfc7427 does responder support SHA1? */
-#define NEGOTIATE_AUTH_HASH_SHA2_256		LELEM(IKEv2_HASH_ALGORITHM_SHA2_256)	/* rfc7427 does responder support SHA2-256? */
-#define NEGOTIATE_AUTH_HASH_SHA2_384		LELEM(IKEv2_HASH_ALGORITHM_SHA2_384)	/* rfc7427 does responder support SHA2-384? */
-#define NEGOTIATE_AUTH_HASH_SHA2_512		LELEM(IKEv2_HASH_ALGORITHM_SHA2_512)	/* rfc7427 does responder support SHA2-512? */
-#define NEGOTIATE_AUTH_HASH_IDENTITY		LELEM(IKEv2_HASH_ALGORITHM_IDENTITY)	/* rfc4307-bis does responder support IDENTITY? */
-
-enum sighash_policy_bits {
-	POL_SIGHASH_SHA2_256_IX,
-	POL_SIGHASH_SHA2_384_IX,
-	POL_SIGHASH_SHA2_512_IX,
-};
-
-extern const struct enum_names sighash_policy_bit_names;
-
-#define POL_SIGHASH_SHA2_256 LELEM(POL_SIGHASH_SHA2_256_IX)
-#define POL_SIGHASH_SHA2_384 LELEM(POL_SIGHASH_SHA2_384_IX)
-#define POL_SIGHASH_SHA2_512 LELEM(POL_SIGHASH_SHA2_512_IX)
+#define POL_SIGHASH_SHA1		LELEM(IKEv2_HASH_ALGORITHM_SHA1)	/* rfc7427 does responder support SHA1? */
+#define POL_SIGHASH_SHA2_256		LELEM(IKEv2_HASH_ALGORITHM_SHA2_256)	/* rfc7427 does responder support SHA2-256? */
+#define POL_SIGHASH_SHA2_384		LELEM(IKEv2_HASH_ALGORITHM_SHA2_384)	/* rfc7427 does responder support SHA2-384? */
+#define POL_SIGHASH_SHA2_512		LELEM(IKEv2_HASH_ALGORITHM_SHA2_512)	/* rfc7427 does responder support SHA2-512? */
+#define POL_SIGHASH_IDENTITY		LELEM(IKEv2_HASH_ALGORITHM_IDENTITY)	/* rfc4307-bis does responder support IDENTITY? */
 
 /* Default policy for now is using RSA - this might change to ECC */
 #define POLICY_DEFAULT POLICY_RSASIG

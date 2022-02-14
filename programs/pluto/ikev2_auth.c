@@ -201,11 +201,11 @@ struct negotiated_hash_map {
 };
 
 static const struct negotiated_hash_map negotiated_hash_map[] = {
-	{ NEGOTIATE_AUTH_HASH_SHA2_512, &ike_alg_hash_sha2_512 },
-	{ NEGOTIATE_AUTH_HASH_SHA2_384, &ike_alg_hash_sha2_384 },
-	{ NEGOTIATE_AUTH_HASH_SHA2_256, &ike_alg_hash_sha2_256 },
+	{ POL_SIGHASH_SHA2_512, &ike_alg_hash_sha2_512 },
+	{ POL_SIGHASH_SHA2_384, &ike_alg_hash_sha2_384 },
+	{ POL_SIGHASH_SHA2_256, &ike_alg_hash_sha2_256 },
 	/* RFC 8420 IDENTITY algo not supported yet */
-	/* { NEGOTIATE_AUTH_HASH_IDENTITY, IKEv2_HASH_ALGORITHM_IDENTITY }, */
+	/* { POL_SIGHASH_IDENTITY, IKEv2_HASH_ALGORITHM_IDENTITY }, */
 };
 
 const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike)
