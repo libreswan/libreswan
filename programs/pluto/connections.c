@@ -432,7 +432,6 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 			.kind = afi->id_ip_addr,
 			.ip_addr = this->host->addr,
 		};
-		this->has_id_wildcards = false;
 		id_buf old, new;
 		dbg("  updated %s.id from %s to %s",
 		    this->config->leftright,
@@ -1068,9 +1067,6 @@ static int extract_end(struct connection *c,
 			}
 		}
 	}
-
-	/* does id have wildcards? */
-	dst->has_id_wildcards = id_count_wildcards(&dst->host->id) > 0;
 
 	/* the rest is simple copying of corresponding fields */
 	config_end->host.type = src->host_type;
@@ -2274,7 +2270,7 @@ static bool extract_connection(const struct whack_message *wm,
 	struct end *wild_side =
 		(!address_is_specified(c->local->host.addr) ||
 		 c->spd.this.config->client.protoport.has_port_wildcard ||
-		 c->spd.this.has_id_wildcards) ? &c->spd.this : &c->spd.that;
+		 id_has_wildcards(&c->local->host.id) ? &c->spd.this : &c->spd.that);
 
 	/* force all oppo connections to have a client */
 	if (c->policy & POLICY_OPPORTUNISTIC) {
@@ -2589,7 +2585,6 @@ struct connection *instantiate(struct connection *c,
 		passert(d->remote->host.id.kind == ID_FROMCERT ||
 			match_id("", peer_id, &d->remote->host.id, &wildcards));
 		d->remote->host.id = *peer_id;
-		d->spd.that.has_id_wildcards = false;
 	}
 	unshare_connection(d, c);
 	d->kind = kind;

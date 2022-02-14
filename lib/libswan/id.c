@@ -416,25 +416,35 @@ bool match_id(const char *prefix, const struct id *a, const struct id *b,
 }
 
 /* count the number of wildcards in an id */
-int id_count_wildcards(const struct id *id)
+bool id_has_wildcards(const struct id *id)
 {
-	int count = 0;
+	bool has_wildcards;
 
 	switch (id->kind) {
 	case ID_NONE:
-		count = MAX_WILDCARDS;
+		has_wildcards = true;
 		break;
+
+#if 0 /* true? */
+	case ID_IPV4_ADDR:
+	case ID_IPV6_ADDR:
+		has_willdcards = !address_is_specified(id->ip_addr);
+		break;
+#endif
+
 	case ID_DER_ASN1_DN:
-		count = dn_count_wildcards(id->name);
+		has_wildcards = dn_has_wildcards(id->name);
 		break;
+
 	default:
+		has_wildcards = false;
 		break;
 	}
 
 	id_buf b;
-	dbg("counting wild cards for %s is %d", str_id(id, &b), count);
+	dbg("id %s has wildcards: %s", str_id(id, &b), bool_str(has_wildcards));
 
-	return count;
+	return has_wildcards;
 }
 
 static bool match_rdn(const CERTRDN *const rdn_a, const CERTRDN *const rdn_b, bool *const has_wild)

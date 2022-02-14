@@ -37,6 +37,7 @@ struct logger;
 struct pubkey_list;
 struct fd;
 struct show;
+struct id;
 
 /*
  * NSS can actually support a much larger path length
@@ -67,8 +68,6 @@ struct generalName {
 	chunk_t name;
 };
 
-/* forward declaration */
-struct id;
 /*
  * check periodically for expired crls
  */
@@ -76,7 +75,7 @@ extern deltatime_t crl_check_interval;
 
 extern bool same_dn(chunk_t a, chunk_t b);
 extern bool match_dn(chunk_t a, chunk_t b, int *wildcards);
-extern int dn_count_wildcards(chunk_t dn);
+extern bool dn_has_wildcards(chunk_t dn);
 extern err_t atodn(const char *src, chunk_t *dn);
 extern void free_generalNames(generalName_t *gn, bool free_name);
 extern void load_crls(void);

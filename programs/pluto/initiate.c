@@ -1079,7 +1079,8 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	}
 
 	if (c->spd.that.config->client.protoport.has_port_wildcard ||
-	    (c->config->prospective_shunt == SHUNT_TRAP && c->spd.that.has_id_wildcards)) {
+	    (c->config->prospective_shunt == SHUNT_TRAP &&
+	     id_has_wildcards(&c->remote->host.id))) {
 		connection_buf cib;
 		dbg("pending ddns: connection "PRI_CONNECTION" with wildcard not started",
 		    pri_connection(c, &cib));

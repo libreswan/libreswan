@@ -308,7 +308,6 @@ struct /*spd_*/end {
 	chunk_t sec_label;
 	bool key_from_DNS_on_demand;
 	bool has_client;
-	bool has_id_wildcards;
 
 	struct virtual_ip *virt;
 

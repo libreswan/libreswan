@@ -89,7 +89,7 @@ extern bool same_id(const struct id *a, const struct id *b); /* fuzzy */
 #define MAX_WILDCARDS	15
 extern bool match_dn_any_order_wild(const char *prefix, chunk_t a, chunk_t b, int *wildcards);
 extern bool match_id(const char *prefix, const struct id *a, const struct id *b, int *wildcards);
-extern int id_count_wildcards(const struct id *id);
+extern bool id_has_wildcards(const struct id *id);
 #define id_is_ipaddr(id) ((id)->kind == ID_IPV4_ADDR || (id)->kind == \
 			  ID_IPV6_ADDR)
 

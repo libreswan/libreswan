@@ -225,16 +225,16 @@ static err_t get_next_rdn(chunk_t *rdn,	/* input/output */
 /*
  * Count the number of wildcard RDNs in a distinguished name; -1 signifies error.
  */
-int dn_count_wildcards(chunk_t dn)
+bool dn_has_wildcards(chunk_t dn)
 {
 	chunk_t rdn;
 	chunk_t attribute;
 	bool more;
-	int wildcards = 0;
 
 	err_t ugh = init_rdn(dn, &rdn, &attribute, &more);
-	if (ugh != NULL)
-		return -1;
+	if (ugh != NULL) {
+		return false;
+	}
 
 	while (more) {
 		chunk_t oid;
@@ -244,13 +244,16 @@ int dn_count_wildcards(chunk_t dn)
 		ugh = get_next_rdn(&rdn, &attribute, &oid,
 				   &value_ber, &value_type, &value_content,
 				   &more);
-		if (ugh != NULL)
-			return -1;
+		if (ugh != NULL) {
+			return false;
+		}
 
-		if (value_content.len == 1 && value_content.ptr[0] == '*')
-			wildcards++;	/* we have found a wildcard RDN */
+		if (value_content.len == 1 && value_content.ptr[0] == '*') {
+			return true;	/* we have found a wildcard RDN */
+		}
 	}
-	return wildcards;
+
+	return false;
 }
 
 /*
