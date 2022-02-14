@@ -1889,7 +1889,7 @@ enum ikev2_hash_algorithm {
 	IKEv2_HASH_ALGORITHM_IDENTITY = 5, /* RFC 4307-bis */
 	/* 6-1023 Unassigned */
 	/* 1024-65535 Reserved for private use */
-	IKEv2_HASH_ALGORITHM_ROOF
+#define IKEv2_HASH_ALGORITHM_ROOF (IKEv2_HASH_ALGORITHM_IDENTITY + 1)
 };
 
 /*

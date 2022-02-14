@@ -149,38 +149,22 @@ bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
 			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 			return false;
 		}
-		uint16_t h_value = ntohs(nh_value);
+		enum ikev2_hash_algorithm h_value = ntohs(nh_value);
 
-		switch (h_value) {
-		/* We no longer support SHA1 (as per RFC 8247) */
-		case IKEv2_HASH_ALGORITHM_SHA2_256:
-			if (sighash_policy & POL_SIGHASH_SHA2_256) {
-				ike->sa.st_v2_digsig.negotiated_hashes |= POL_SIGHASH_SHA2_256;
-				dbg("received HASH_ALGORITHM_SHA2_256 which is allowed by local policy");
-			}
-			break;
-		case IKEv2_HASH_ALGORITHM_SHA2_384:
-			if (sighash_policy & POL_SIGHASH_SHA2_384) {
-				ike->sa.st_v2_digsig.negotiated_hashes |= POL_SIGHASH_SHA2_384;
-				dbg("received HASH_ALGORITHM_SHA2_384 which is allowed by local policy");
-			}
-			break;
-		case IKEv2_HASH_ALGORITHM_SHA2_512:
-			if (sighash_policy & POL_SIGHASH_SHA2_512) {
-				ike->sa.st_v2_digsig.negotiated_hashes |= POL_SIGHASH_SHA2_512;
-				dbg("received HASH_ALGORITHM_SHA2_512 which is allowed by local policy");
-			}
-			break;
-		case IKEv2_HASH_ALGORITHM_SHA1:
-			dbg("received and ignored IKEv2_HASH_ALGORITHM_SHA1 - it is no longer allowed as per RFC 8247");
-			break;
-		case IKEv2_HASH_ALGORITHM_IDENTITY:
-			/* ike->sa.st_v2_digsig.negotiated_hashes |= NEGOTIATE_HASH_ALGORITHM_IDENTITY; */
-			dbg("received unsupported HASH_ALGORITHM_IDENTITY - ignored");
-			break;
-		default:
-			log_state(RC_LOG, &ike->sa, "received and ignored unknown hash algorithm %d", h_value);
+		const struct hash_desc *hash = ikev2_get_hash_desc(h_value);
+		if (hash == NULL) {
+			llog_sa(RC_LOG, ike, "received and ignored unknown hash algorithm %d", h_value);
+			continue;
 		}
+
+		lset_t hash_bit = LELEM(h_value);
+		if (!(sighash_policy & hash_bit)) {
+			dbg("digsig: received and ignored unacceptable hash algorithm %s", hash->common.fqn);
+			continue;
+		}
+
+		dbg("digsig: received and accepted hash algorithm %s", hash->common.fqn);
+		ike->sa.st_v2_digsig.negotiated_hashes |= hash_bit;
 	}
 	return true;
 }
