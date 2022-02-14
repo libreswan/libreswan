@@ -291,6 +291,11 @@ const struct encrypt_desc *ikev2_get_encrypt_desc(enum ikev2_trans_type_encr id)
 	return encrypt_desc(ikev2_lookup(&ike_alg_encrypt, id));
 }
 
+const struct hash_desc *ikev2_get_hash_desc(enum ikev2_hash_algorithm id)
+{
+	return hash_desc(ikev2_lookup(&ike_alg_hash, id));
+}
+
 const struct prf_desc *ikev2_get_prf_desc(enum ikev2_trans_type_prf id)
 {
 	return prf_desc(ikev2_lookup(&ike_alg_prf, id));

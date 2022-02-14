@@ -801,8 +801,8 @@ const struct dh_desc *dh_desc(const struct ike_alg *alg);
 const struct ipcomp_desc *ipcomp_desc(const struct ike_alg *alg);
 
 /*
- * Find the ENCRYPT / PRF / INTEG / DH algorithm using the IKEv2 wire
- * value.
+ * Find the ENCRYPT / HASH / PRF / INTEG / DH algorithm using the
+ * IKEv2 wire value.
  *
  * Use ike_alg_is_ike() to confirm that the algorithm has a native
  * implementation (as needed by IKE and ESP/AH PFS).  Use a kernel
@@ -810,6 +810,7 @@ const struct ipcomp_desc *ipcomp_desc(const struct ike_alg *alg);
  * who knows).
  */
 
+const struct hash_desc *ikev2_get_hash_desc(enum ikev2_hash_algorithm);
 const struct encrypt_desc *ikev2_get_encrypt_desc(enum ikev2_trans_type_encr);
 const struct prf_desc *ikev2_get_prf_desc(enum ikev2_trans_type_prf);
 const struct integ_desc *ikev2_get_integ_desc(enum ikev2_trans_type_integ);
