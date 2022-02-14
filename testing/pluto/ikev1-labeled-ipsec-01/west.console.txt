@@ -35,6 +35,8 @@ west #
 1v1 "labeled" #2: sent Quick Mode request
 004 "labeled" #2: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
+ # there should be 1 (bogus) tunnel in each direction
+west #
  ip xfrm state
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
@@ -45,7 +47,7 @@ src 192.1.2.23 dst 192.1.2.45
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
-	sel src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 	security context system_u:object_r:ipsec_spd_t:s0 
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
@@ -56,16 +58,16 @@ src 192.1.2.45 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
-	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 
 	security context system_u:object_r:ipsec_spd_t:s0 
 west #
  ip xfrm policy
-src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300 
+src 192.1.2.45/32 dst 192.1.2.23/32 
 	security context system_u:object_r:ipsec_spd_t:s0 
 	dir out priority PRIORITY ptype main 
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
-src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 4300 
+src 192.1.2.23/32 dst 192.1.2.45/32 
 	security context system_u:object_r:ipsec_spd_t:s0 
 	dir in priority PRIORITY ptype main 
 	tmpl src 0.0.0.0 dst 0.0.0.0
@@ -95,31 +97,27 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 src 0.0.0.0/0 dst 0.0.0.0/0 
 	socket in priority 0 ptype main 
 west #
- echo "quit" | runcon -t netutils_t nc -w 50 -p 4301 -vvv 192.1.2.23 4300 2>&1 | sed "s/received in .*$/received .../"
-Ncat: Version 7.91 ( https://nmap.org/ncat )
-NCAT DEBUG: Using system default trusted CA certificates and those in PATH/share/ncat/ca-bundle.crt.
-NCAT DEBUG: Unable to load trusted CA certificates from PATH/share/ncat/ca-bundle.crt: error:02001002:system library:fopen:No such file or directory
-libnsock nsock_iod_new2(): nsock_iod_new (IOD #1)
-libnsock nsock_connect_tcp(): TCP connection requested to 192.1.2.23:4300 (IOD #1) EID 8
-libnsock mksock_bind_addr(): Binding to 0.0.0.0:4301 (IOD #1)
-libnsock nsock_trace_handler_callback(): Callback: CONNECT SUCCESS for EID 8 [192.1.2.23:4300]
-Ncat: Connected to 192.1.2.23:4300.
-libnsock nsock_iod_new2(): nsock_iod_new (IOD #2)
-libnsock nsock_read(): Read request from IOD #1 [192.1.2.23:4300] (timeout: -1ms) EID 18
-libnsock nsock_readbytes(): Read request for 0 bytes from IOD #2 [peer unspecified] EID 26
-libnsock nsock_trace_handler_callback(): Callback: READ SUCCESS for EID 26 [peer unspecified] (5 bytes): quit.
-libnsock nsock_write(): Write request for 5 bytes to IOD #1 EID 35 [192.1.2.23:4300]
-libnsock nsock_trace_handler_callback(): Callback: WRITE SUCCESS for EID 35 [192.1.2.23:4300]
-libnsock nsock_readbytes(): Read request for 0 bytes from IOD #2 [peer unspecified] EID 42
-libnsock nsock_trace_handler_callback(): Callback: READ EOF for EID 42 [peer unspecified]
-libnsock nsock_trace_handler_callback(): Callback: READ EOF for EID 18 [192.1.2.23:4300]
-Ncat: 5 bytes sent, 0 bytes received ...
-libnsock nsock_iod_delete(): nsock_iod_delete (IOD #1)
-libnsock nsock_iod_delete(): nsock_iod_delete (IOD #2)
+ ipsec trafficstatus
+006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+west #
+ # trigger acquire using the predefined ping_t context
+west #
+ ../../guestbin/ping-once.sh --runcon "system_u:system_r:ping_t:s0:c1.c256" --forget -I 192.1.2.45 192.1.2.23
+fired and forgotten
+west #
+ ../../guestbin/wait-for.sh --match '#3' -- ipsec trafficstatus
+006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+west #
+ sleep 5 # allow for IKEv1 protocol sillyness
+west #
+ ../../guestbin/ping-once.sh --runcon "system_u:system_r:ping_t:s0:c1.c256" --up     -I 192.1.2.45 192.1.2.23
+up
+west #
+ # there should be 2 tunnel in each direction
 west #
  ipsec trafficstatus
 006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
-006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=104, outBytes=173, id='@east'
+006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=64, outBytes=64, id='@east'
 west #
  echo done
 done
@@ -127,12 +125,61 @@ west #
  ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 
+	security context system_u:system_r:ping_t:s0:c1.c256 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 
+	security context system_u:system_r:ping_t:s0:c1.c256 
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 
+	security context system_u:object_r:ipsec_spd_t:s0 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 
+	security context system_u:object_r:ipsec_spd_t:s0 
 XFRM policy:
-src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 4300
+src 192.1.2.23/32 dst 192.1.2.45/32
+	security context system_u:object_r:ipsec_spd_t:s0
+	dir in priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.1.2.45/32 dst 192.1.2.23/32
 	security context system_u:object_r:ipsec_spd_t:s0
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
-		proto esp reqid 0 mode transport
+		proto esp reqid REQID mode transport
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
