@@ -336,7 +336,6 @@ static const struct sparse_name kw_eap_list[] = {
 	{ "tls", IKE_EAP_TLS },
 	SPARSE_NULL
 };
-static const struct keyword_enum_values kw_eap_list = VALUES_INITIALIZER(kw_eap_values);
 
 /* MASTER KEYWORD LIST
  * Note: this table is terminated by an entry with keyname == NULL.
