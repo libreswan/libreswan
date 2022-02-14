@@ -2,7 +2,8 @@
 See also https://libreswan.org/
 
 v4.7 (unreleased)
-* FreeBSD: now builds out-of-the-box [Andrew]
+* IKEv2: fix interop with Android 12 + certificates [Andrew]
+* FreeBSD: libreswan builds out-of-the-box [Andrew]
 * kernel: fix deleting policy when an XFRMi FD ID; github/618
 * kernel: general cleanups [Andrew]
 * IKEv2: fix interop when IPCOMP+transport-mode [Andrew]
