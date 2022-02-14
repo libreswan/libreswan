@@ -429,15 +429,17 @@ static const struct hash_desc *hash_descriptors[] = {
 	&ike_alg_hash_sha2_384,
 	&ike_alg_hash_sha2_512,
 #endif
+	&ike_alg_hash_identity,
 };
 
 static void hash_desc_check(const struct ike_alg *alg, struct logger *logger)
 {
 	const struct hash_desc *hash = hash_desc(alg);
-	pexpect_ike_alg(logger, alg, hash->hash_digest_size > 0);
+	size_t min_size = (hash == &ike_alg_hash_identity ? 0 : 1);
+	pexpect_ike_alg(logger, alg, hash->hash_digest_size >= min_size);
+	pexpect_ike_alg(logger, alg, hash->hash_block_size >= min_size);
 	struct crypt_mac mac;
 	pexpect_ike_alg(logger, alg, hash->hash_digest_size <= sizeof(mac.ptr/*an array*/));
-	pexpect_ike_alg(logger, alg, hash->hash_block_size > 0);
 	if (hash->hash_ops != NULL) {
 		pexpect_ike_alg(logger, alg, hash->hash_ops->backend != NULL);
 		pexpect_ike_alg(logger, alg, hash->hash_ops->check != NULL);

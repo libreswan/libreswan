@@ -15,6 +15,9 @@
  * for more details.
  */
 
+#ifndef IKE_ALG_HASH_H
+#define IKE_ALG_HASH_H
+
 #ifdef USE_SHA1
 extern const struct hash_desc ike_alg_hash_sha1;
 #endif
@@ -27,4 +30,8 @@ extern const struct hash_desc ike_alg_hash_sha2_512;
 
 #ifdef USE_MD5
 extern const struct hash_desc ike_alg_hash_md5;
+#endif
+
+extern const struct hash_desc ike_alg_hash_identity;
+
 #endif
