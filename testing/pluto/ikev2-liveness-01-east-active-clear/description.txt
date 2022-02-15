@@ -1,0 +1,9 @@
+IKEv2 "Liveness" checking with action=clear
+
+east: liveness every 5s; timeout 15s
+west: liveness disabled
+
+- west establishes the connection
+- east starts ending liveness probes and west responds
+- west is killed
+- east sees no response and clears the connection

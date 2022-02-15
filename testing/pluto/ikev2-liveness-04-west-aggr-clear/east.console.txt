@@ -1,0 +1,28 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ # look for Message ID of probe that will die
+east #
+ ../../guestbin/wait-for.sh --match 'sent message request 0' -- sed -n -e 's/: ike.*/: .../p' /tmp/pluto.log
+| Message ID: IKE #1 updating initiator sent message request 0: ...
+east #
+ # now check things died
+east #
+ ../../guestbin/wait-for.sh --match ' liveness action ' -- cat /tmp/pluto.log
+"westnet-eastnet-ipv4-psk-ikev2" #1: liveness action - clearing connection kind CK_PERMANENT
+east #
+ # finally check there was never a response
+east #
+ ../../guestbin/wait-for.sh --no-match 'received message response 0' -- sed -n -e 's/: ike.*/: .../p' /tmp/pluto.log
+east #
+ 

@@ -1,0 +1,9 @@
+IKEv2 "Liveness" checking clear with both ends sending probes
+
+east: liveness=5s timeout=15s
+west: liveness=5s timeout=15s
+
+- west establishes
+- both ends send probes (other probes aren't quick enough)
+- west is killed
+- east times out and clears

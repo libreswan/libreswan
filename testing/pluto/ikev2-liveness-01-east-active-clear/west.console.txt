@@ -40,9 +40,10 @@ west #
  ipsec whack --trafficstatus
 006 #2: "westnet-eastnet-ipv4-psk-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
 west #
- # sleep for a few seconds to run a few liveness cycles
+ # look for other end sending us probes
 west #
- sleep 20
+ ../../guestbin/wait-for.sh --match 'received message request 1' -- sed -n -e 's/: ike.*/: .../p' /tmp/pluto.log
+| Message ID: IKE #1 updating responder received message request 1: ...
 west #
  # kill pluto; host may send ICMP unreachble. with iptables it won't
 west #
@@ -51,34 +52,9 @@ west #
  ipsec stop
 Redirecting to: [initsystem]
 west #
- # give dpdtimeout=30 time to trigger dpd, which shows up in final.sh
-west #
- sleep 20
-west #
- sleep 20
+ # confirm things are dead
 west #
  ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
-west #
- echo done
-done
-west #
- # should be empty if east triggered
-west #
- hostname | grep west > /dev/null || ipsec whack --trafficstatus
-west #
- grep "Message ID: [0-9][0-9]* " /tmp/pluto.log
-|    Message ID: 0 (00 00 00 00)
-|    Message ID: 0 (00 00 00 00)
-|    Message ID: 1 (00 00 00 01)
-|    Message ID: 1 (00 00 00 01)
-|    Message ID: 0 (00 00 00 00)
-|    Message ID: 0 (00 00 00 00)
-|    Message ID: 1 (00 00 00 01)
-|    Message ID: 1 (00 00 00 01)
-west #
- # grep on east
-west #
- hostname | grep west > /dev/null || grep -A 1 "has not responded in" /tmp/pluto.log
 west #
  

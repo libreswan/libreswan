@@ -37,21 +37,21 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
+ # Message ID 0+1 used to establish Child SA
+west #
+ # probe=1s; so 8 problems is 8s which is more than east's 5s probe timer
+west #
+ # 8+1 == 9
+west #
+ ../../guestbin/wait-for.sh --match 'received message response 9' -- sed -n -e 's/: ike.*/: .../p' /tmp/pluto.log
+| Message ID: IKE #1 updating initiator received message response 9: ...
+west #
+ # check other end sent no probes
+west #
+ ../../guestbin/wait-for.sh --no-match 'received message request 0' -- sed -n -e 's/: ike.*/: .../p' /tmp/pluto.log
+west #
  #pkill pluto
 west #
  ipsec whack --shutdown --leave-state
-west #
- ipsec start
-Redirecting to: [initsystem]
-west #
- ../../guestbin/wait-until-pluto-started
-west #
- ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
-002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
-west #
- ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
-down
-west #
- ipsec whack --trafficstatus
 west #
  

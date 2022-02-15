@@ -1,0 +1,17 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ ../../guestbin/wait-for.sh --match 'liveness action .* clear' -- cat /tmp/pluto.log
+"westnet-eastnet-ipv4-psk-ikev2" #1: liveness action - clearing connection kind CK_PERMANENT
+east #
+ 
