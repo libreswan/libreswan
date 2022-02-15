@@ -503,7 +503,7 @@ if userland in ("libreswan", "openswan"):
         with open("/run/pluto/nsspw", "w") as f:
             f.write(dbpassword)
             f.write("\n")
-        with open(nssdir + "/nsspassword", "w") as f:
+        with open(ipsecdir + "/nsspassword", "w") as f:
             if args.nsspw:
                 f.write("NSS Certificate DB:" + dbpassword + "\n")
             if args.fips:
