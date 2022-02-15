@@ -59,13 +59,13 @@ static stf_status send_v2_liveness_request(struct ike_sa *ike,
 	return STF_OK;
 }
 
-static void schedule_liveness(struct child_sa *child, deltatime_t time_since_last_contact,
+static void schedule_liveness(struct child_sa *child, deltatime_t time_since_last_exchange,
 			      const char *reason)
 {
 	struct connection *c = child->sa.st_connection;
 	deltatime_t delay = c->dpd_delay;
 	/* reduce wait if contact was by some other means */
-	delay = deltatime_sub(delay, time_since_last_contact);
+	delay = deltatime_sub(delay, time_since_last_exchange);
 	/* in case above screws up? */
 	delay = deltatime_max(c->dpd_delay, deltatime(MIN_LIVENESS));
 	LSWDBGP(DBG_BASE, buf) {
@@ -75,10 +75,10 @@ static void schedule_liveness(struct child_sa *child, deltatime_t time_since_las
 		    child->sa.st_serialno,
 		    str_endpoint(&child->sa.st_remote_endpoint, &remote_buf),
 		    str_deltatime(delay, &db));
-		if (deltatime_cmp(time_since_last_contact, !=, deltatime(0))) {
+		if (deltatime_cmp(time_since_last_exchange, !=, deltatime(0))) {
 			deltatime_buf lcb;
 			jam(buf, " (%s was %s seconds ago)",
-			    reason, str_deltatime(time_since_last_contact, &lcb));
+			    reason, str_deltatime(time_since_last_exchange, &lcb));
 		} else {
 			jam(buf, " (%s)", reason);
 		}
@@ -86,7 +86,33 @@ static void schedule_liveness(struct child_sa *child, deltatime_t time_since_las
 	event_schedule(EVENT_v2_LIVENESS, delay, &child->sa);
 }
 
-/* note: this mutates *st by calling get_sa_info */
+/*
+ * The RFC (2.4.  State Synchronization and Connection Timeouts) as
+ * this to say:
+ *
+ *   To be a good network citizen, retransmission times MUST increase
+ *   exponentially to avoid flooding the network and making an
+ *   existing congestion situation worse.  If there has only been
+ *   outgoing traffic on all of the SAs associated with an IKE SA, it
+ *   is essential to confirm liveness of the other endpoint to avoid
+ *   black holes.  If no cryptographically protected messages have
+ *   been received on an IKE SA or any of its Child SAs recently, the
+ *   system needs to perform a liveness check in order to prevent
+ *   sending messages to a dead peer.  (This is sometimes called "dead
+ *   peer detection" or "DPD", although it is really detecting live
+ *   peers, not dead ones.)  Receipt of a fresh cryptographically
+ *   protected message on an IKE SA or any of its Child SAs ensures
+ *   liveness of the IKE SA and all of its Child SAs.
+ *
+ * However:
+ *
+ * Only checking incoming packets does not demonstrate liveness.  Just
+ * that half the channel is working.  All the incoming packets could
+ * be retransmits.
+ *
+ * note: this mutates *st by calling get_sa_info
+ */
+
 void liveness_check(struct state *st)
 {
 	monotime_t now = mononow();
@@ -107,9 +133,6 @@ void liveness_check(struct state *st)
 	}
 
 	struct connection *c = child->sa.st_connection;
-	struct v2_msgid_window *our = &ike->sa.st_v2_msgid_windows.initiator;
-	/* if nothing else this is when the state was created */
-	pexpect(!is_monotime_epoch(our->last_contact));
 
 	/*
 	 * If the child is lingering (replaced but not yet deleted),
@@ -122,23 +145,96 @@ void liveness_check(struct state *st)
 	}
 
 	/*
-	 * If there's been traffic flowing through the CHILD SA and it
-	 * was less than .dpd_delay ago then re-schedule the probe.
+	 * If the IKE SA is waiting for a response to it's last
+	 * request, reschedule the liveness probe.
 	 *
-	 * XXX: is this useful?  Liveness should be checking
+	 * If the exchange succeeds, there's been a round trip and
+	 * things are alive.
+	 *
+	 * If the exchange fails, liveness will be triggered.
+	 */
+	if (v2_msgid_request_outstanding(ike)) {
+		schedule_liveness(child, /*time-since-last-exchange*/deltatime(0),
+				  "request outstanding");
+		return;
+	}
+
+	/*
+	 * If the IKE SA has a request outstanding, reschedule the
+	 * liveness probe.
+	 *
+	 * For instance, the last exchange list finished, and the next
+	 * exchange is about to start.  If that exchange fails
+	 * liveness will be triggered.
+	 */
+	if (v2_msgid_request_pending(ike)) {
+		schedule_liveness(child, /*time-since-last-exchange*/deltatime(0),
+				  "request pending");
+		return;
+	}
+
+	/*
+	 * If this IKE SA recently completed an exchange, reschedule
+	 * the liveness probe.
+	 *
+	 * Since this end initiated the exchange and got a response, a
+	 * recent round-trip probe worked.
+	 */
+	struct v2_msgid_window *our = &ike->sa.st_v2_msgid_windows.initiator;
+	pexpect(!is_monotime_epoch(our->last_contact));
+	deltatime_t time_since_our_last_exchange = monotimediff(now, our->last_contact);
+	if (deltatime_cmp(time_since_our_last_exchange, <, c->dpd_delay)) {
+		schedule_liveness(child, time_since_our_last_exchange, "successful exchange");
+		return;
+	}
+
+	/*
+	 * If this IKE SA recently received a new message request from
+	 * the peer, reschedule the liveness probe.
+	 *
+	 * The arrival of a new message request #N can only happen
+	 * (ignoring mobike) once the peer has received our response
+	 * to the previous message request #N-1.
+	 *
+	 * The only issue is that while the PEER->US message was
+	 * recent, the US->PEER message could be ancient.  Not to
+	 * worry, the next liveness check will pick this up.  The
+	 * alternative is to save second-last-contact and use that.
+	 *
+	 * The more likely scenario is that the other end is
+	 * constantly sending liveness probes so this end can skip
+	 * them.
+	 */
+	struct v2_msgid_window *peer = &ike->sa.st_v2_msgid_windows.responder;
+	deltatime_t time_since_peer_contact = monotimediff(now, peer->last_contact);
+	if (deltatime_cmp(time_since_peer_contact, <, c->dpd_delay)) {
+		schedule_liveness(child, time_since_peer_contact, "peer contact");
+		return;
+	}
+
+	/*
+	 * If there's been recent traffic flowing in through the CHILD
+	 * SA and it was less than .dpd_delay ago then re-schedule the
+	 * probe.
+	 *
+	 * Per above, the RFC says:
+	 *
+	 *   If no cryptographically protected messages have been
+	 *   received on ... Child SAs recently,
+	 *
+	 * XXX: But is this useful?  Liveness should be checking
 	 * round-trip but this is just looking at incoming data -
 	 * outgoing data could lost and this traffic is all
 	 * re-transmit requests ...
-	 */
-	deltatime_t time_since_last_message;
-	if (get_sa_info(&child->sa, true, &time_since_last_message) &&
-	    /* time_since_last_message < .dpd_delay */
-	    deltatime_cmp(time_since_last_message, <, c->dpd_delay)) {
+ 	 */
+	deltatime_t time_since_last_inbound_message;
+	if (get_sa_info(&child->sa, /*inbound*/true, &time_since_last_inbound_message) &&
+	    deltatime_cmp(time_since_last_inbound_message, <, c->dpd_delay)) {
 		/*
 		 * Update .st_liveness_last, with the time of this
 		 * traffic (unless other traffic is more recent).
 		 */
-		monotime_t last_contact = monotime_sub(now, time_since_last_message);
+		monotime_t last_contact = monotime_sub(now, time_since_last_inbound_message);
 		if (monobefore(our->last_contact, last_contact)) {
 			monotime_buf m0, m1;
 			dbg("liveness: #%lu updating #%lu last contact from %s to %s (last IPsec traffic flow)",
@@ -153,41 +249,9 @@ void liveness_check(struct state *st)
 		 *
 		 * max(dpd_delay - time_since_last_message, * deltatime(MIN_LIVENESS))
 		 */
-		schedule_liveness(child, time_since_last_message, "recent IPsec traffic");
-		return;
-	}
-
-	/*
-	 * If there's already a message request outstanding assume it
-	 * will succeed - if it doesn't the entire family will be
-	 * killed.
-	 *
-	 * No probe is needed for another .dpd_delay seconds.
-	 */
-	if (v2_msgid_request_outstanding(ike)) {
-		schedule_liveness(child, deltatime(0), "request outstanding");
-		return;
-	}
-
-	/*
-	 * If there's an exchange pending; assume it will succeed (for
-	 * instance last exchange just finished, next exchange about
-	 * to start), reschedule the probe.
-	 */
-	if (v2_msgid_request_pending(ike)) {
-		schedule_liveness(child, deltatime(0), "request pending");
-		return;
-	}
-
-	/*
-	 * If was a successful exchange less than .dpd_delay ago,
-	 * reschedule the probe.
-	 */
-	deltatime_t time_since_last_contact = monotimediff(now, our->last_contact);
-	if (deltatime_cmp(time_since_last_contact, <, c->dpd_delay)) {
-		schedule_liveness(child, time_since_last_contact, "successful exchange");
-		return;
-	}
+		schedule_liveness(child, time_since_last_inbound_message, "recent IPsec traffic");
+ 		return;
+ 	}
 
 	endpoint_buf remote_buf;
 	dbg("liveness: #%lu queueing liveness probe for %s using #%lu",
