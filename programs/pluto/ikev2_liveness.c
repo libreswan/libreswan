@@ -231,25 +231,11 @@ void liveness_check(struct state *st)
 	if (get_sa_info(&child->sa, /*inbound*/true, &time_since_last_inbound_message) &&
 	    deltatime_cmp(time_since_last_inbound_message, <, c->dpd_delay)) {
 		/*
-		 * Update .st_liveness_last, with the time of this
-		 * traffic (unless other traffic is more recent).
-		 */
-		monotime_t last_contact = monotime_sub(now, time_since_last_inbound_message);
-		if (monobefore(our->last_contact, last_contact)) {
-			monotime_buf m0, m1;
-			dbg("liveness: #%lu updating #%lu last contact from %s to %s (last IPsec traffic flow)",
-			    child->sa.st_serialno, ike->sa.st_serialno,
-			    str_monotime(our->last_contact, &m0),
-			    str_monotime(last_contact, &m1));
-			our->last_contact = last_contact;
-		}
-		/*
 		 * schedule in .dpd_delay seconds, but adjust for:
-		 * time since last traffic, and min liveness vis
-		 *
-		 * max(dpd_delay - time_since_last_message, * deltatime(MIN_LIVENESS))
+		 * time since last traffic
 		 */
-		schedule_liveness(child, time_since_last_inbound_message, "recent IPsec traffic");
+		schedule_liveness(child, time_since_last_inbound_message,
+				  "recent IPsec traffic");
  		return;
  	}
 
