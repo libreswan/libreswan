@@ -49,6 +49,7 @@ Hash algorithms:
   SHA2_256                          IKEv1: IKE         IKEv2: IKE         FIPS NSS          sha2, sha256
   SHA2_384                          IKEv1: IKE         IKEv2: IKE         FIPS NSS          sha384
   SHA2_512                          IKEv1: IKE         IKEv2: IKE         FIPS NSS          sha512
+  IDENTITY                          IKEv1:             IKEv2:             FIPS             
 PRF algorithms:
   HMAC_MD5                          IKEv1: IKE         IKEv2: IKE              native(HMAC) md5
   HMAC_SHA1                         IKEv1: IKE         IKEv2: IKE         FIPS NSS          sha, sha1
