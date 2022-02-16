@@ -43,12 +43,12 @@ west #
 west #
  # 8+1 == 9
 west #
- ../../guestbin/wait-for.sh --match 'received message response 9' -- sed -n -e 's/: ike.*/: .../p' /tmp/pluto.log
-| Message ID: IKE #1 updating initiator received message response 9: ...
+ ../../guestbin/wait-for.sh --match 'received message response 9' -- sed -n -e '/Message ID/ s/ (.*/ (...)/p' /tmp/pluto.log
+| Message ID: IKE #1 updating initiator received message response 9 (...)
 west #
  # check other end sent no probes
 west #
- ../../guestbin/wait-for.sh --no-match 'received message request 0' -- sed -n -e 's/: ike.*/: .../p' /tmp/pluto.log
+ ../../guestbin/wait-for.sh --no-match 'received message request 0' -- sed -n -e '/Message ID/ s/ (.*/ (...)/p' /tmp/pluto.log
 west #
  #pkill pluto
 west #

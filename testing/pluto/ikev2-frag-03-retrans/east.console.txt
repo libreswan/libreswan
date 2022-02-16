@@ -16,12 +16,11 @@ initdone
 east #
  # On east this shows the duplicates on west there is nothing.
 east #
- grep "fragment .* duplicate Message ID" /tmp/pluto.log | sed "s/last_contact=XX.XXX[^ ]* /last_contact=XXX /g"
-"westnet-eastnet-ikev2" #1: IKE_AUTH request fragment 1 of 5 has duplicate Message ID 1; retransmitting response
-| Message ID: IKE #1 IKE_AUTH request fragment 2 of 5 has duplicate Message ID 1 but is not fragment 1; message dropped: ike.initiator .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XXX ike.responder .sent=1 .recv=1 .recv_frags=5 .last_contact=XXX ike.wip.initiator=-1
-| Message ID: IKE #1 IKE_AUTH request fragment 3 of 5 has duplicate Message ID 1 but is not fragment 1; message dropped: ike.initiator .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XXX ike.responder .sent=1 .recv=1 .recv_frags=5 .last_contact=XXX ike.wip.initiator=-1
-| Message ID: IKE #1 IKE_AUTH request fragment 4 of 5 has duplicate Message ID 1 but is not fragment 1; message dropped: ike.initiator .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XXX ike.responder .sent=1 .recv=1 .recv_frags=5 .last_contact=XXX ike.wip.initiator=-1
-| Message ID: IKE #1 IKE_AUTH request fragment 5 of 5 has duplicate Message ID 1 but is not fragment 1; message dropped: ike.initiator .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XXX ike.responder .sent=1 .recv=1 .recv_frags=5 .last_contact=XXX ike.wip.initiator=-1
+ sed -n -e '/fragment .* duplicate Message ID/ s/ (.*/ (...)/p' /tmp/pluto.log
+| Message ID: IKE #1 IKE_AUTH request fragment 2 of 5 has duplicate Message ID 1 but is not fragment 1; message dropped (...)
+| Message ID: IKE #1 IKE_AUTH request fragment 3 of 5 has duplicate Message ID 1 but is not fragment 1; message dropped (...)
+| Message ID: IKE #1 IKE_AUTH request fragment 4 of 5 has duplicate Message ID 1 but is not fragment 1; message dropped (...)
+| Message ID: IKE #1 IKE_AUTH request fragment 5 of 5 has duplicate Message ID 1 but is not fragment 1; message dropped (...)
 east #
  ../../guestbin/ipsec-look.sh
 east NOW

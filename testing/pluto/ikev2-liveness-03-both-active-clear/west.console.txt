@@ -39,8 +39,8 @@ up
 west #
  # look for a probe
 west #
- ../../guestbin/wait-for.sh --match 'received message ... 2:' -- sed -n -e 's/ [a-z]* 2: ike.*/ ... 2: .../p' /tmp/pluto.log
-| Message ID: IKE #1 updating initiator received message ... 2: ...
+ ../../guestbin/wait-for.sh --match 'received message ... 2 ' -- sed -n -e 's/ [a-z]* 2 (.*/ ... 2 (...)/p' /tmp/pluto.log
+| Message ID: IKE #1 updating initiator received message ... 2 (...)
 west #
  #pkill pluto
 west #

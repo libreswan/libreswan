@@ -47,7 +47,7 @@ done
 west #
  # On east this shows the duplicates on west there is nothing.
 west #
- grep "fragment .* duplicate Message ID" /tmp/pluto.log | sed "s/last_contact=XX.XXX[^ ]* /last_contact=XXX /g"
+ sed -n -e '/fragment .* duplicate Message ID/ s/ (.*/ (...)/p' /tmp/pluto.log
 west #
  ../../guestbin/ipsec-look.sh
 west NOW

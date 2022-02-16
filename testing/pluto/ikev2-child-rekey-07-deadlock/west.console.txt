@@ -78,246 +78,246 @@ west #
 west #
  # May be once the bug is fixed comment it out?
 west #
- grep -E  "Message ID:|emit IKEv2 Delete Payload|exchange type:|**emit ISAKMP Message|**parse ISAKMP Message" /tmp/pluto.log
-| Message ID: IKE #1 initializing (IKE SA): ike.initiator .sent=0->-1 .recv=0->-1 .recv_frags=0 .recv_wip=0->-1 .last_contact=0->XX.XXX ike.responder .sent=0->-1 .recv=0->-1 .recv_frags=0 .recv_wip=0->-1 .last_contact=0->XX.XXX ike.wip.initiator=0->-1
+ grep -E  "Message ID:|emit IKEv2 Delete Payload|exchange type:|**emit ISAKMP Message|**parse ISAKMP Message" /tmp/pluto.log | sed -e 's/ (.*/ (..)/'
+| Message ID: IKE #1 initializing (..)
 | **emit ISAKMP Message:
-|    exchange type: ISAKMP_v2_IKE_SA_INIT (0x22)
-|    Message ID: 0 (00 00 00 00)
+|    exchange type: ISAKMP_v2_IKE_SA_INIT (..)
+|    Message ID: 0 (..)
 | Message ID: updating counters for #1
 | Message ID: IKE #1 skipping update_recv as MD is fake
-| Message ID: IKE #1 scheduling EVENT_RETRANSMIT: ike.initiator .sent=0 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=0
-| Message ID: IKE #1 updating initiator sent message request 0: ike.initiator .sent=-1->0 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1->0
-| Message ID: IKE #1 no pending message initiators to schedule: ike.initiator .sent=0 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=0
+| Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
+| Message ID: IKE #1 updating initiator sent message request 0 (..)
+| Message ID: IKE #1 no pending message initiators to schedule (..)
 | **parse ISAKMP Message:
-|    exchange type: ISAKMP_v2_IKE_SA_INIT (0x22)
-|    Message ID: 0 (00 00 00 00)
+|    exchange type: ISAKMP_v2_IKE_SA_INIT (..)
+|    Message ID: 0 (..)
 | **emit ISAKMP Message:
-|    exchange type: ISAKMP_v2_IKE_AUTH (0x23)
-|    Message ID: 1 (00 00 00 01)
-| Message ID: CHILD #1.#2 initializing (CHILD SA): ike.initiator .sent=0 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=0->-1
+|    exchange type: ISAKMP_v2_IKE_AUTH (..)
+|    Message ID: 1 (..)
+| Message ID: CHILD #1.#2 initializing (..)
 | Message ID: updating counters for #1
-| Message ID: IKE #1 XXX: no EVENT_RETRANSMIT to clear; suspect IKE->CHILD switch: ike.initiator .sent=0 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1
-| Message ID: IKE #1 updating initiator received message response 0: ike.initiator .sent=0 .recv=-1->0 .recv_frags=0 .last_contact=XX.XXX->XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=0->-1
-| Message ID: IKE #1 scheduling EVENT_RETRANSMIT: ike.initiator .sent=1 .recv=0 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=1
-| Message ID: IKE #1 updating initiator sent message request 1: ike.initiator .sent=0->1 .recv=0 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1->1
-| Message ID: IKE #1 no pending message initiators to schedule: ike.initiator .sent=1 .recv=0 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=1
+| Message ID: IKE #1 XXX: no EVENT_RETRANSMIT to clear, suspect IKE->CHILD switch (..)
+| Message ID: IKE #1 updating initiator received message response 0 (..)
+| Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
+| Message ID: IKE #1 updating initiator sent message request 1 (..)
+| Message ID: IKE #1 no pending message initiators to schedule (..)
 | **parse ISAKMP Message:
-|    exchange type: ISAKMP_v2_IKE_AUTH (0x23)
-|    Message ID: 1 (00 00 00 01)
-| Message ID: CHILD #1.#3 initializing (CHILD SA): ike.initiator .sent=1 .recv=0 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=0->-1
-| Message ID: CHILD #1.#4 initializing (CHILD SA): ike.initiator .sent=1 .recv=0 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=0->-1
-| Message ID: CHILD #1.#5 initializing (CHILD SA): ike.initiator .sent=1 .recv=0 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=0->-1
+|    exchange type: ISAKMP_v2_IKE_AUTH (..)
+|    Message ID: 1 (..)
+| Message ID: CHILD #1.#3 initializing (..)
+| Message ID: CHILD #1.#4 initializing (..)
+| Message ID: CHILD #1.#5 initializing (..)
 | Message ID: updating counters for #1
-| Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received: ike.initiator .sent=1 .recv=0 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1
-| Message ID: IKE #1 updating initiator received message response 1: ike.initiator .sent=1 .recv=0->1 .recv_frags=0 .last_contact=XX.XXX->XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=1->-1
-| Message ID: IKE #1 skipping update_send as nothing to send: ike.initiator .sent=1 .recv=1 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1
-| Message ID: IKE #1 no pending message initiators to schedule: ike.initiator .sent=1 .recv=1 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1
-| Message ID: CHILD #1.#3 wakeing IKE SA for next initiator (unack 0): ike.initiator .sent=1 .recv=1 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#3 wakeing IKE SA for next initiator (unack 0): ike.initiator .sent=1 .recv=1 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#3 wakeing IKE SA for next initiator (unack 0): ike.initiator .sent=1 .recv=1 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#3 resuming SA using IKE SA (unack 0): ike.initiator .sent=1 .recv=1 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
+| Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
+| Message ID: IKE #1 updating initiator received message response 1 (..)
+| Message ID: IKE #1 skipping update_send as nothing to send (..)
+| Message ID: IKE #1 no pending message initiators to schedule (..)
+| Message ID: CHILD #1.#3 wakeing IKE SA for next initiator (..)
+| Message ID: CHILD #1.#3 wakeing IKE SA for next initiator (..)
+| Message ID: CHILD #1.#3 wakeing IKE SA for next initiator (..)
+| Message ID: CHILD #1.#3 resuming SA using IKE SA (..)
 | **emit ISAKMP Message:
-|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
-|    Message ID: 2 (00 00 00 02)
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
+|    Message ID: 2 (..)
 | Message ID: updating counters for #3
 | Message ID: IKE #1 skipping update_recv as MD is fake
-| Message ID: CHILD #1.#3 scheduling EVENT_RETRANSMIT: ike.initiator .sent=2 .recv=1 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=2
-| Message ID: CHILD #1.#3 updating initiator sent message request 2: ike.initiator .sent=1->2 .recv=1 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1->2
-| Message ID: CHILD #1.#4 next initiator blocked by outstanding response (unack 1): ike.initiator .sent=2 .recv=1 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
+| Message ID: CHILD #1.#3 scheduling EVENT_RETRANSMIT (..)
+| Message ID: CHILD #1.#3 updating initiator sent message request 2 (..)
+| Message ID: CHILD #1.#4 next initiator blocked by outstanding response (..)
 | **parse ISAKMP Message:
-|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
-|    Message ID: 2 (00 00 00 02)
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
+|    Message ID: 2 (..)
 | Message ID: updating counters for #3
-| Message ID: CHILD #1.#3 clearing EVENT_RETRANSMIT as response received: ike.initiator .sent=2 .recv=1 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#3 updating initiator received message response 2: ike.initiator .sent=2 .recv=1->2 .recv_frags=0 .last_contact=XX.XXX->XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=2->-1
-| Message ID: CHILD #1.#3 skipping update_send as nothing to send: ike.initiator .sent=2 .recv=2 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#4 wakeing IKE SA for next initiator (unack 0): ike.initiator .sent=2 .recv=2 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#4 resuming SA using IKE SA (unack 0): ike.initiator .sent=2 .recv=2 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
+| Message ID: CHILD #1.#3 clearing EVENT_RETRANSMIT as response received (..)
+| Message ID: CHILD #1.#3 updating initiator received message response 2 (..)
+| Message ID: CHILD #1.#3 skipping update_send as nothing to send (..)
+| Message ID: CHILD #1.#4 wakeing IKE SA for next initiator (..)
+| Message ID: CHILD #1.#4 resuming SA using IKE SA (..)
 | **emit ISAKMP Message:
-|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
-|    Message ID: 3 (00 00 00 03)
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
+|    Message ID: 3 (..)
 | Message ID: updating counters for #4
 | Message ID: IKE #1 skipping update_recv as MD is fake
-| Message ID: CHILD #1.#4 scheduling EVENT_RETRANSMIT: ike.initiator .sent=3 .recv=2 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=3
-| Message ID: CHILD #1.#4 updating initiator sent message request 3: ike.initiator .sent=2->3 .recv=2 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1->3
-| Message ID: CHILD #1.#5 next initiator blocked by outstanding response (unack 1): ike.initiator .sent=3 .recv=2 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
+| Message ID: CHILD #1.#4 scheduling EVENT_RETRANSMIT (..)
+| Message ID: CHILD #1.#4 updating initiator sent message request 3 (..)
+| Message ID: CHILD #1.#5 next initiator blocked by outstanding response (..)
 | **parse ISAKMP Message:
-|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
-|    Message ID: 3 (00 00 00 03)
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
+|    Message ID: 3 (..)
 | Message ID: updating counters for #4
-| Message ID: CHILD #1.#4 clearing EVENT_RETRANSMIT as response received: ike.initiator .sent=3 .recv=2 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#4 updating initiator received message response 3: ike.initiator .sent=3 .recv=2->3 .recv_frags=0 .last_contact=XX.XXX->XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=3->-1
-| Message ID: CHILD #1.#4 skipping update_send as nothing to send: ike.initiator .sent=3 .recv=3 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#5 wakeing IKE SA for next initiator (unack 0): ike.initiator .sent=3 .recv=3 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#5 resuming SA using IKE SA (unack 0): ike.initiator .sent=3 .recv=3 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
+| Message ID: CHILD #1.#4 clearing EVENT_RETRANSMIT as response received (..)
+| Message ID: CHILD #1.#4 updating initiator received message response 3 (..)
+| Message ID: CHILD #1.#4 skipping update_send as nothing to send (..)
+| Message ID: CHILD #1.#5 wakeing IKE SA for next initiator (..)
+| Message ID: CHILD #1.#5 resuming SA using IKE SA (..)
 | **emit ISAKMP Message:
-|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
-|    Message ID: 4 (00 00 00 04)
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
+|    Message ID: 4 (..)
 | Message ID: updating counters for #5
 | Message ID: IKE #1 skipping update_recv as MD is fake
-| Message ID: CHILD #1.#5 scheduling EVENT_RETRANSMIT: ike.initiator .sent=4 .recv=3 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=4
-| Message ID: CHILD #1.#5 updating initiator sent message request 4: ike.initiator .sent=3->4 .recv=3 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1->4
-| Message ID: IKE #1 no pending message initiators to schedule: ike.initiator .sent=4 .recv=3 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1
+| Message ID: CHILD #1.#5 scheduling EVENT_RETRANSMIT (..)
+| Message ID: CHILD #1.#5 updating initiator sent message request 4 (..)
+| Message ID: IKE #1 no pending message initiators to schedule (..)
 | **parse ISAKMP Message:
-|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
-|    Message ID: 4 (00 00 00 04)
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
+|    Message ID: 4 (..)
 | Message ID: updating counters for #5
-| Message ID: CHILD #1.#5 clearing EVENT_RETRANSMIT as response received: ike.initiator .sent=4 .recv=3 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#5 updating initiator received message response 4: ike.initiator .sent=4 .recv=3->4 .recv_frags=0 .last_contact=XX.XXX->XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=4->-1
-| Message ID: CHILD #1.#5 skipping update_send as nothing to send: ike.initiator .sent=4 .recv=4 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: IKE #1 no pending message initiators to schedule: ike.initiator .sent=4 .recv=4 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1
-| Message ID: CHILD #1.#6 initializing (CHILD SA): ike.initiator .sent=4 .recv=4 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=0->-1
-| Message ID: CHILD #1.#6 wakeing IKE SA for next initiator (unack 0): ike.initiator .sent=4 .recv=4 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#6 resuming SA using IKE SA (unack 0): ike.initiator .sent=4 .recv=4 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
+| Message ID: CHILD #1.#5 clearing EVENT_RETRANSMIT as response received (..)
+| Message ID: CHILD #1.#5 updating initiator received message response 4 (..)
+| Message ID: CHILD #1.#5 skipping update_send as nothing to send (..)
+| Message ID: IKE #1 no pending message initiators to schedule (..)
+| Message ID: CHILD #1.#6 initializing (..)
+| Message ID: CHILD #1.#6 wakeing IKE SA for next initiator (..)
+| Message ID: CHILD #1.#6 resuming SA using IKE SA (..)
 | **emit ISAKMP Message:
-|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
-|    Message ID: 5 (00 00 00 05)
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
+|    Message ID: 5 (..)
 | Message ID: updating counters for #6
 | Message ID: IKE #1 skipping update_recv as MD is fake
-| Message ID: CHILD #1.#6 scheduling EVENT_RETRANSMIT: ike.initiator .sent=5 .recv=4 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=5
-| Message ID: CHILD #1.#6 updating initiator sent message request 5: ike.initiator .sent=4->5 .recv=4 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1->5
-| Message ID: IKE #1 no pending message initiators to schedule: ike.initiator .sent=5 .recv=4 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1
-| Message ID: CHILD #1.#7 initializing (CHILD SA): ike.initiator .sent=5 .recv=4 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=0->-1
-| Message ID: CHILD #1.#7 next initiator blocked by outstanding response (unack 1): ike.initiator .sent=5 .recv=4 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#8 initializing (CHILD SA): ike.initiator .sent=5 .recv=4 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=0->-1
-| Message ID: CHILD #1.#7 next initiator blocked by outstanding response (unack 1): ike.initiator .sent=5 .recv=4 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#9 initializing (CHILD SA): ike.initiator .sent=5 .recv=4 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=0->-1
-| Message ID: CHILD #1.#7 next initiator blocked by outstanding response (unack 1): ike.initiator .sent=5 .recv=4 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
+| Message ID: CHILD #1.#6 scheduling EVENT_RETRANSMIT (..)
+| Message ID: CHILD #1.#6 updating initiator sent message request 5 (..)
+| Message ID: IKE #1 no pending message initiators to schedule (..)
+| Message ID: CHILD #1.#7 initializing (..)
+| Message ID: CHILD #1.#7 next initiator blocked by outstanding response (..)
+| Message ID: CHILD #1.#8 initializing (..)
+| Message ID: CHILD #1.#7 next initiator blocked by outstanding response (..)
+| Message ID: CHILD #1.#9 initializing (..)
+| Message ID: CHILD #1.#7 next initiator blocked by outstanding response (..)
 | **parse ISAKMP Message:
-|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
-|    Message ID: 5 (00 00 00 05)
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
+|    Message ID: 5 (..)
 | Message ID: updating counters for #6
-| Message ID: CHILD #1.#6 clearing EVENT_RETRANSMIT as response received: ike.initiator .sent=5 .recv=4 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#6 updating initiator received message response 5: ike.initiator .sent=5 .recv=4->5 .recv_frags=0 .last_contact=XX.XXX->XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=5->-1
-| Message ID: CHILD #1.#6 skipping update_send as nothing to send: ike.initiator .sent=5 .recv=5 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#7 wakeing IKE SA for next initiator (unack 0): ike.initiator .sent=5 .recv=5 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#7 resuming SA using IKE SA (unack 0): ike.initiator .sent=5 .recv=5 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
+| Message ID: CHILD #1.#6 clearing EVENT_RETRANSMIT as response received (..)
+| Message ID: CHILD #1.#6 updating initiator received message response 5 (..)
+| Message ID: CHILD #1.#6 skipping update_send as nothing to send (..)
+| Message ID: CHILD #1.#7 wakeing IKE SA for next initiator (..)
+| Message ID: CHILD #1.#7 resuming SA using IKE SA (..)
 | **emit ISAKMP Message:
-|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
-|    Message ID: 6 (00 00 00 06)
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
+|    Message ID: 6 (..)
 | Message ID: updating counters for #7
 | Message ID: IKE #1 skipping update_recv as MD is fake
-| Message ID: CHILD #1.#7 scheduling EVENT_RETRANSMIT: ike.initiator .sent=6 .recv=5 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=6
-| Message ID: CHILD #1.#7 updating initiator sent message request 6: ike.initiator .sent=5->6 .recv=5 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1->6
-| Message ID: CHILD #1.#8 next initiator blocked by outstanding response (unack 1): ike.initiator .sent=6 .recv=5 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#2 next initiator blocked by outstanding response (unack 1): ike.initiator .sent=6 .recv=5 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
+| Message ID: CHILD #1.#7 scheduling EVENT_RETRANSMIT (..)
+| Message ID: CHILD #1.#7 updating initiator sent message request 6 (..)
+| Message ID: CHILD #1.#8 next initiator blocked by outstanding response (..)
+| Message ID: CHILD #1.#2 next initiator blocked by outstanding response (..)
 | **parse ISAKMP Message:
-|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
-|    Message ID: 6 (00 00 00 06)
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
+|    Message ID: 6 (..)
 | Message ID: updating counters for #7
-| Message ID: CHILD #1.#7 clearing EVENT_RETRANSMIT as response received: ike.initiator .sent=6 .recv=5 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#7 updating initiator received message response 6: ike.initiator .sent=6 .recv=5->6 .recv_frags=0 .last_contact=XX.XXX->XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=6->-1
-| Message ID: CHILD #1.#7 skipping update_send as nothing to send: ike.initiator .sent=6 .recv=6 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#2 wakeing IKE SA for next initiator (unack 0): ike.initiator .sent=6 .recv=6 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: IKE #1 resuming SA using IKE SA (unack 0): ike.initiator .sent=6 .recv=6 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1
+| Message ID: CHILD #1.#7 clearing EVENT_RETRANSMIT as response received (..)
+| Message ID: CHILD #1.#7 updating initiator received message response 6 (..)
+| Message ID: CHILD #1.#7 skipping update_send as nothing to send (..)
+| Message ID: CHILD #1.#2 wakeing IKE SA for next initiator (..)
+| Message ID: IKE #1 resuming SA using IKE SA (..)
 | **emit ISAKMP Message:
-|    exchange type: ISAKMP_v2_INFORMATIONAL (0x25)
-|    Message ID: 7 (00 00 00 07)
+|    exchange type: ISAKMP_v2_INFORMATIONAL (..)
+|    Message ID: 7 (..)
 | ****emit IKEv2 Delete Payload:
 | Message ID: updating counters for #1
 | Message ID: IKE #1 skipping update_recv as MD is fake
-| Message ID: IKE #1 scheduling EVENT_RETRANSMIT: ike.initiator .sent=7 .recv=6 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=7
-| Message ID: IKE #1 updating initiator sent message request 7: ike.initiator .sent=6->7 .recv=6 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1->7
-| Message ID: CHILD #1.#8 next initiator blocked by outstanding response (unack 1): ike.initiator .sent=7 .recv=6 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
+| Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
+| Message ID: IKE #1 updating initiator sent message request 7 (..)
+| Message ID: CHILD #1.#8 next initiator blocked by outstanding response (..)
 | **parse ISAKMP Message:
-|    exchange type: ISAKMP_v2_INFORMATIONAL (0x25)
-|    Message ID: 7 (00 00 00 07)
+|    exchange type: ISAKMP_v2_INFORMATIONAL (..)
+|    Message ID: 7 (..)
 | Message ID: updating counters for #1
-| Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received: ike.initiator .sent=7 .recv=6 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1
-| Message ID: IKE #1 updating initiator received message response 7: ike.initiator .sent=7 .recv=6->7 .recv_frags=0 .last_contact=XX.XXX->XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=7->-1
-| Message ID: IKE #1 skipping update_send as nothing to send: ike.initiator .sent=7 .recv=7 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1
-| Message ID: CHILD #1.#8 wakeing IKE SA for next initiator (unack 0): ike.initiator .sent=7 .recv=7 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#8 resuming SA using IKE SA (unack 0): ike.initiator .sent=7 .recv=7 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
+| Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
+| Message ID: IKE #1 updating initiator received message response 7 (..)
+| Message ID: IKE #1 skipping update_send as nothing to send (..)
+| Message ID: CHILD #1.#8 wakeing IKE SA for next initiator (..)
+| Message ID: CHILD #1.#8 resuming SA using IKE SA (..)
 | **emit ISAKMP Message:
-|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
-|    Message ID: 8 (00 00 00 08)
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
+|    Message ID: 8 (..)
 | Message ID: updating counters for #8
 | Message ID: IKE #1 skipping update_recv as MD is fake
-| Message ID: CHILD #1.#8 scheduling EVENT_RETRANSMIT: ike.initiator .sent=8 .recv=7 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=8
-| Message ID: CHILD #1.#8 updating initiator sent message request 8: ike.initiator .sent=7->8 .recv=7 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1->8
-| Message ID: CHILD #1.#9 next initiator blocked by outstanding response (unack 1): ike.initiator .sent=8 .recv=7 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#3 next initiator blocked by outstanding response (unack 1): ike.initiator .sent=8 .recv=7 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
+| Message ID: CHILD #1.#8 scheduling EVENT_RETRANSMIT (..)
+| Message ID: CHILD #1.#8 updating initiator sent message request 8 (..)
+| Message ID: CHILD #1.#9 next initiator blocked by outstanding response (..)
+| Message ID: CHILD #1.#3 next initiator blocked by outstanding response (..)
 | **parse ISAKMP Message:
-|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
-|    Message ID: 8 (00 00 00 08)
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
+|    Message ID: 8 (..)
 | Message ID: updating counters for #8
-| Message ID: CHILD #1.#8 clearing EVENT_RETRANSMIT as response received: ike.initiator .sent=8 .recv=7 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#8 updating initiator received message response 8: ike.initiator .sent=8 .recv=7->8 .recv_frags=0 .last_contact=XX.XXX->XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=8->-1
-| Message ID: CHILD #1.#8 skipping update_send as nothing to send: ike.initiator .sent=8 .recv=8 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#3 wakeing IKE SA for next initiator (unack 0): ike.initiator .sent=8 .recv=8 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: IKE #1 resuming SA using IKE SA (unack 0): ike.initiator .sent=8 .recv=8 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1
+| Message ID: CHILD #1.#8 clearing EVENT_RETRANSMIT as response received (..)
+| Message ID: CHILD #1.#8 updating initiator received message response 8 (..)
+| Message ID: CHILD #1.#8 skipping update_send as nothing to send (..)
+| Message ID: CHILD #1.#3 wakeing IKE SA for next initiator (..)
+| Message ID: IKE #1 resuming SA using IKE SA (..)
 | **emit ISAKMP Message:
-|    exchange type: ISAKMP_v2_INFORMATIONAL (0x25)
-|    Message ID: 9 (00 00 00 09)
+|    exchange type: ISAKMP_v2_INFORMATIONAL (..)
+|    Message ID: 9 (..)
 | ****emit IKEv2 Delete Payload:
 | Message ID: updating counters for #1
 | Message ID: IKE #1 skipping update_recv as MD is fake
-| Message ID: IKE #1 scheduling EVENT_RETRANSMIT: ike.initiator .sent=9 .recv=8 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=9
-| Message ID: IKE #1 updating initiator sent message request 9: ike.initiator .sent=8->9 .recv=8 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1->9
-| Message ID: CHILD #1.#9 next initiator blocked by outstanding response (unack 1): ike.initiator .sent=9 .recv=8 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
+| Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
+| Message ID: IKE #1 updating initiator sent message request 9 (..)
+| Message ID: CHILD #1.#9 next initiator blocked by outstanding response (..)
 | **parse ISAKMP Message:
-|    exchange type: ISAKMP_v2_INFORMATIONAL (0x25)
-|    Message ID: 9 (00 00 00 09)
+|    exchange type: ISAKMP_v2_INFORMATIONAL (..)
+|    Message ID: 9 (..)
 | Message ID: updating counters for #1
-| Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received: ike.initiator .sent=9 .recv=8 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1
-| Message ID: IKE #1 updating initiator received message response 9: ike.initiator .sent=9 .recv=8->9 .recv_frags=0 .last_contact=XX.XXX->XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=9->-1
-| Message ID: IKE #1 skipping update_send as nothing to send: ike.initiator .sent=9 .recv=9 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1
-| Message ID: CHILD #1.#9 wakeing IKE SA for next initiator (unack 0): ike.initiator .sent=9 .recv=9 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#9 resuming SA using IKE SA (unack 0): ike.initiator .sent=9 .recv=9 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
+| Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
+| Message ID: IKE #1 updating initiator received message response 9 (..)
+| Message ID: IKE #1 skipping update_send as nothing to send (..)
+| Message ID: CHILD #1.#9 wakeing IKE SA for next initiator (..)
+| Message ID: CHILD #1.#9 resuming SA using IKE SA (..)
 | **emit ISAKMP Message:
-|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
-|    Message ID: 10 (00 00 00 0a)
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
+|    Message ID: 10 (..)
 | Message ID: updating counters for #9
 | Message ID: IKE #1 skipping update_recv as MD is fake
-| Message ID: CHILD #1.#9 scheduling EVENT_RETRANSMIT: ike.initiator .sent=10 .recv=9 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=10
-| Message ID: CHILD #1.#9 updating initiator sent message request 10: ike.initiator .sent=9->10 .recv=9 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1->10
-| Message ID: IKE #1 no pending message initiators to schedule: ike.initiator .sent=10 .recv=9 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1
-| Message ID: CHILD #1.#4 next initiator blocked by outstanding response (unack 1): ike.initiator .sent=10 .recv=9 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
+| Message ID: CHILD #1.#9 scheduling EVENT_RETRANSMIT (..)
+| Message ID: CHILD #1.#9 updating initiator sent message request 10 (..)
+| Message ID: IKE #1 no pending message initiators to schedule (..)
+| Message ID: CHILD #1.#4 next initiator blocked by outstanding response (..)
 | **parse ISAKMP Message:
-|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (0x24)
-|    Message ID: 10 (00 00 00 0a)
+|    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
+|    Message ID: 10 (..)
 | Message ID: updating counters for #9
-| Message ID: CHILD #1.#9 clearing EVENT_RETRANSMIT as response received: ike.initiator .sent=10 .recv=9 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#9 updating initiator received message response 10: ike.initiator .sent=10 .recv=9->10 .recv_frags=0 .last_contact=XX.XXX->XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=10->-1
-| Message ID: CHILD #1.#9 skipping update_send as nothing to send: ike.initiator .sent=10 .recv=10 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: CHILD #1.#4 wakeing IKE SA for next initiator (unack 0): ike.initiator .sent=10 .recv=10 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: IKE #1 resuming SA using IKE SA (unack 0): ike.initiator .sent=10 .recv=10 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1
+| Message ID: CHILD #1.#9 clearing EVENT_RETRANSMIT as response received (..)
+| Message ID: CHILD #1.#9 updating initiator received message response 10 (..)
+| Message ID: CHILD #1.#9 skipping update_send as nothing to send (..)
+| Message ID: CHILD #1.#4 wakeing IKE SA for next initiator (..)
+| Message ID: IKE #1 resuming SA using IKE SA (..)
 | **emit ISAKMP Message:
-|    exchange type: ISAKMP_v2_INFORMATIONAL (0x25)
-|    Message ID: 11 (00 00 00 0b)
+|    exchange type: ISAKMP_v2_INFORMATIONAL (..)
+|    Message ID: 11 (..)
 | ****emit IKEv2 Delete Payload:
 | Message ID: updating counters for #1
 | Message ID: IKE #1 skipping update_recv as MD is fake
-| Message ID: IKE #1 scheduling EVENT_RETRANSMIT: ike.initiator .sent=11 .recv=10 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=11
-| Message ID: IKE #1 updating initiator sent message request 11: ike.initiator .sent=10->11 .recv=10 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1->11
-| Message ID: IKE #1 no pending message initiators to schedule: ike.initiator .sent=11 .recv=10 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=11
+| Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
+| Message ID: IKE #1 updating initiator sent message request 11 (..)
+| Message ID: IKE #1 no pending message initiators to schedule (..)
 | **parse ISAKMP Message:
-|    exchange type: ISAKMP_v2_INFORMATIONAL (0x25)
-|    Message ID: 11 (00 00 00 0b)
+|    exchange type: ISAKMP_v2_INFORMATIONAL (..)
+|    Message ID: 11 (..)
 | Message ID: updating counters for #1
-| Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received: ike.initiator .sent=11 .recv=10 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1
-| Message ID: IKE #1 updating initiator received message response 11: ike.initiator .sent=11 .recv=10->11 .recv_frags=0 .last_contact=XX.XXX->XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=11->-1
-| Message ID: IKE #1 skipping update_send as nothing to send: ike.initiator .sent=11 .recv=11 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1
-| Message ID: IKE #1 no pending message initiators to schedule: ike.initiator .sent=11 .recv=11 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1
-| Message ID: CHILD #1.#5 wakeing IKE SA for next initiator (unack 0): ike.initiator .sent=11 .recv=11 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX child.wip.initiator=-1
-| Message ID: IKE #1 resuming SA using IKE SA (unack 0): ike.initiator .sent=11 .recv=11 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1
+| Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
+| Message ID: IKE #1 updating initiator received message response 11 (..)
+| Message ID: IKE #1 skipping update_send as nothing to send (..)
+| Message ID: IKE #1 no pending message initiators to schedule (..)
+| Message ID: CHILD #1.#5 wakeing IKE SA for next initiator (..)
+| Message ID: IKE #1 resuming SA using IKE SA (..)
 | **emit ISAKMP Message:
-|    exchange type: ISAKMP_v2_INFORMATIONAL (0x25)
-|    Message ID: 12 (00 00 00 0c)
+|    exchange type: ISAKMP_v2_INFORMATIONAL (..)
+|    Message ID: 12 (..)
 | ****emit IKEv2 Delete Payload:
 | Message ID: updating counters for #1
 | Message ID: IKE #1 skipping update_recv as MD is fake
-| Message ID: IKE #1 scheduling EVENT_RETRANSMIT: ike.initiator .sent=12 .recv=11 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=12
-| Message ID: IKE #1 updating initiator sent message request 12: ike.initiator .sent=11->12 .recv=11 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1->12
-| Message ID: IKE #1 no pending message initiators to schedule: ike.initiator .sent=12 .recv=11 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=12
+| Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
+| Message ID: IKE #1 updating initiator sent message request 12 (..)
+| Message ID: IKE #1 no pending message initiators to schedule (..)
 | **parse ISAKMP Message:
-|    exchange type: ISAKMP_v2_INFORMATIONAL (0x25)
-|    Message ID: 12 (00 00 00 0c)
+|    exchange type: ISAKMP_v2_INFORMATIONAL (..)
+|    Message ID: 12 (..)
 | Message ID: updating counters for #1
-| Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received: ike.initiator .sent=12 .recv=11 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1
-| Message ID: IKE #1 updating initiator received message response 12: ike.initiator .sent=12 .recv=11->12 .recv_frags=0 .last_contact=XX.XXX->XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=12->-1
-| Message ID: IKE #1 skipping update_send as nothing to send: ike.initiator .sent=12 .recv=12 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1
-| Message ID: IKE #1 no pending message initiators to schedule: ike.initiator .sent=12 .recv=12 .recv_frags=0 .last_contact=XX.XXX ike.responder .sent=-1 .recv=-1 .recv_frags=0 .last_contact=XX.XXX ike.wip.initiator=-1
+| Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
+| Message ID: IKE #1 updating initiator received message response 12 (..)
+| Message ID: IKE #1 skipping update_send as nothing to send (..)
+| Message ID: IKE #1 no pending message initiators to schedule (..)
 west #
  echo done
 done

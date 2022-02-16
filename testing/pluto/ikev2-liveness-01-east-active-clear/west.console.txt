@@ -42,8 +42,8 @@ west #
 west #
  # look for other end sending us probes
 west #
- ../../guestbin/wait-for.sh --match 'received message request 1' -- sed -n -e 's/: ike.*/: .../p' /tmp/pluto.log
-| Message ID: IKE #1 updating responder received message request 1: ...
+ ../../guestbin/wait-for.sh --match 'received message request 1' -- sed -n -e '/Message ID/ s/ (.*/ (...)/p' /tmp/pluto.log
+| Message ID: IKE #1 updating responder received message request 1 (...)
 west #
  # kill pluto; host may send ICMP unreachble. with iptables it won't
 west #
