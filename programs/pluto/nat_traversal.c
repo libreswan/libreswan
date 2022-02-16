@@ -205,28 +205,21 @@ static void nat_traversal_ka_event_state(struct state *st, unsigned *data)
 		    st->st_serialno, st->st_interface->io->protocol->name);
 		return;
 	}
-	if (c->newest_ike_sa != st->st_serialno) {
-		dbg("skipping NAT-T KEEP-ALIVE: #%lu is not current IKE SA", st->st_serialno);
-		return;
-	}
-
-	/*
-	 * As long as we don't check get_sa_info() in IPsec SA's, and for
-	 * IKEv1 IPsec SA's always send a keepalive, we might as well
-	 * _not_ send keepalives for IKEv1 IKE SA's.
-	 *
-	 * XXX: IKEv2?
-	 */
 
 	switch (st->st_ike_version) {
 	case IKEv2:
 		/*
-		 * - IKE SA established
-		 * - we are behind NAT
-		 * - NAT-KeepAlive needed (we are NATed)
+		 * In IKEv2 all messages go through the IKE SA.  Hence
+		 * check its timers.
 		 */
+
 		if (!IS_IKE_SA_ESTABLISHED(st)) {
 			dbg("skipping NAT-T KEEP-ALIVE: #%lu is not established", st->st_serialno);
+			return;
+		}
+
+		if (c->newest_ike_sa != st->st_serialno) {
+			dbg("skipping NAT-T KEEP-ALIVE: #%lu is not current IKE SA", st->st_serialno);
 			return;
 		}
 
@@ -270,18 +263,20 @@ static void nat_traversal_ka_event_state(struct state *st, unsigned *data)
 		 * expensive (call get_sa_info() to kernel _and_ find
 		 * IKE SA.
 		 *
-		 * For IKEv2, just use the one IKE SA instead of the
-		 * one or more IPsec SA's (and ignore whether IPsec SA
-		 * was active or not)
-		 *
-		 * for IKEv1, there can be orphan IPsec SA's. We still
-		 * are not checking the kernel, so we just have to
-		 * always send the keepalive.
+		 * For IKEv1, there can be orphaned IPsec SA's.  Since
+		 * we still are not checking the kernel we just have
+		 * to always send the keepalive for all IPsec SAs.
 		 */
 		if (!IS_IPSEC_SA_ESTABLISHED(st)) {
 			dbg("skipping NAT-T KEEP-ALIVE: #%lu is not established", st->st_serialno);
 			return;
 		}
+
+		if (c->newest_ipsec_sa != st->st_serialno) {
+			dbg("skipping NAT-T KEEP-ALIVE: #%lu is not current IPsec SA", st->st_serialno);
+			return;
+		}
+
 		nat_traversal_send_ka(st);
 		(*nat_kap_st)++;
 		return;
