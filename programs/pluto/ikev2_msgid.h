@@ -42,7 +42,8 @@ enum message_role;
  */
 
 struct v2_msgid_window {
-	monotime_t last_contact;  /* received a message */
+	monotime_t last_sent;  /* sent a message */
+	monotime_t last_recv;  /* received a message */
 	intmax_t sent;
 	intmax_t recv;
 	unsigned recv_frags;	/* number of fragments making up message */
@@ -51,6 +52,8 @@ struct v2_msgid_window {
 };
 
 struct v2_msgid_windows {
+	monotime_t last_sent;  /* sent a message */
+	monotime_t last_recv;  /* received a message */
 	struct v2_msgid_window initiator;
 	struct v2_msgid_window responder;
 };

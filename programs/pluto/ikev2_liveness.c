@@ -181,8 +181,8 @@ void liveness_check(struct state *st)
 	 * recent round-trip probe worked.
 	 */
 	struct v2_msgid_window *our = &ike->sa.st_v2_msgid_windows.initiator;
-	pexpect(!is_monotime_epoch(our->last_contact));
-	deltatime_t time_since_our_last_exchange = monotimediff(now, our->last_contact);
+	pexpect(!is_monotime_epoch(our->last_recv));
+	deltatime_t time_since_our_last_exchange = monotimediff(now, our->last_recv);
 	if (deltatime_cmp(time_since_our_last_exchange, <, c->dpd_delay)) {
 		schedule_liveness(child, time_since_our_last_exchange, "successful exchange");
 		return;
@@ -206,7 +206,7 @@ void liveness_check(struct state *st)
 	 * them.
 	 */
 	struct v2_msgid_window *peer = &ike->sa.st_v2_msgid_windows.responder;
-	deltatime_t time_since_peer_contact = monotimediff(now, peer->last_contact);
+	deltatime_t time_since_peer_contact = monotimediff(now, peer->last_recv);
 	if (deltatime_cmp(time_since_peer_contact, <, c->dpd_delay)) {
 		schedule_liveness(child, time_since_peer_contact, "peer contact");
 		return;

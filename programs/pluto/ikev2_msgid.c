@@ -74,7 +74,8 @@ static void jam_ike_window(struct jambuf *buf, const char *what,
 	if (old->recv_wip > -1 || new->recv_wip > -1) {
 		jam_old_new_intmax(buf, ".recv_wip", old->recv_wip, new->recv_wip);
 	}
-	jam_old_new_monotime(buf, ".last_contact", old->last_contact, new->last_contact);
+	jam_old_new_monotime(buf, ".last_sent", old->last_sent, new->last_sent);
+	jam_old_new_monotime(buf, ".last_recv", old->last_recv, new->last_recv);
 }
 
 static void jam_ike_windows(struct jambuf *buf,
@@ -206,8 +207,12 @@ void v2_msgid_init_ike(struct ike_sa *ike)
 	monotime_t now = mononow();
 	struct v2_msgid_windows old_windows = ike->sa.st_v2_msgid_windows;
 	ike->sa.st_v2_msgid_windows = empty_v2_msgid_windows;
-	ike->sa.st_v2_msgid_windows.responder.last_contact = now;
-	ike->sa.st_v2_msgid_windows.initiator.last_contact = now;
+	ike->sa.st_v2_msgid_windows.last_sent = now;
+	ike->sa.st_v2_msgid_windows.last_recv = now;
+	ike->sa.st_v2_msgid_windows.responder.last_sent = now;
+	ike->sa.st_v2_msgid_windows.responder.last_recv = now;
+	ike->sa.st_v2_msgid_windows.initiator.last_sent = now;
+	ike->sa.st_v2_msgid_windows.initiator.last_recv = now;
 	struct v2_msgid_wip old_wip = ike->sa.st_v2_msgid_wip;
 	ike->sa.st_v2_msgid_wip = empty_v2_msgid_wip;
 	/* pretend there's a sender */
@@ -401,7 +406,7 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 
 	update->recv = msgid;
 	update->recv_frags = md->v2_frags_total;
-	update->last_contact = mononow(); /* not strictly correct */
+	new->last_recv = update->last_recv = mononow(); /* not strictly correct */
 
 	dbg_msgids_update(update_received_story, receiving, msgid,
 			  ike, &old, receiver, &old_receiver);
@@ -483,6 +488,7 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 	}
 
 	update->sent = msgid;
+	new->last_sent = update->last_sent = mononow(); /* close enough */
 
 	dbg_msgids_update(update_sent_story, sending, msgid,
 			  ike, &old, sender, &old_sender);
