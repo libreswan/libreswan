@@ -98,6 +98,7 @@ kvmplutotest	addconn-04				good
 kvmplutotest	addconn-05				good
 kvmplutotest	addconn-06-whack-algos			good
 kvmplutotest	addconn-07-defaultroute			good
+kvmplutotest	addconn-08-ordering			wip
 kvmplutotest	algparse-01				good
 kvmplutotest	algparse-02-fips			good
 kvmplutotest	libipsecconf-01				good
