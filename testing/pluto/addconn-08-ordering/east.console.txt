@@ -1,0 +1,6 @@
+/testing/guestbin/swan-prep
+east #
+ echo "initdone"
+initdone
+east #
+ 
