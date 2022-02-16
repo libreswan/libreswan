@@ -601,18 +601,6 @@ static bool bsdkame_del_ipsec_spi(ipsec_spi_t spi UNUSED,
 	return true;
 }
 
-/* Check if there was traffic on given SA during the last idle_max
- * seconds. If TRUE, the SA was idle and DPD exchange should be performed.
- * If FALSE, DPD is not necessary. We also return TRUE for errors, as they
- * could mean that the SA is broken and needs to be replace anyway.
- */
-static bool bsdkame_was_eroute_idle(struct state *st UNUSED,
-				    deltatime_t idle_max UNUSED)
-{
-	passert(false);
-	return false;
-}
-
 static bool bsdkame_except_socket(int socketfd, int family, struct logger *logger)
 {
 	struct sadb_x_policy policy;
@@ -669,7 +657,6 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	.grp_sa = NULL,
 	.del_ipsec_spi = bsdkame_del_ipsec_spi,
 	.get_ipsec_spi = bsdkame_get_ipsec_spi,
-	.eroute_idle = bsdkame_was_eroute_idle,
 	.init = bsdkame_init_pfkey,
 	.shutdown = NULL,
 	.exceptsocket = bsdkame_except_socket,

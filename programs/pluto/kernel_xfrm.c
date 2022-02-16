@@ -2159,22 +2159,6 @@ static ipsec_spi_t xfrm_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 	return rsp.u.sa.id.spi;
 }
 
-/* Check if there was traffic on given SA during the last idle_max
- * seconds. If TRUE, the SA was idle and DPD exchange should be performed.
- * If FALSE, DPD is not necessary. We also return TRUE for errors, as they
- * could mean that the SA is broken and needs to be replace anyway.
- *
- * note: this mutates *st by calling get_sa_info
- */
-static bool netlink_eroute_idle(struct state *st, deltatime_t idle_max)
-{
-	deltatime_t idle_time;
-
-	passert(st != NULL);
-	return !get_sa_info(st, true, &idle_time) ||
-		deltatime_cmp(idle_time, >=, idle_max);
-}
-
 /*
  * netlink_get_sa - Get SA information from the kernel
  *
@@ -2531,7 +2515,6 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.get_ipsec_spi = xfrm_get_ipsec_spi,
 	.del_ipsec_spi = xfrm_del_ipsec_spi,
 	.exceptsocket = NULL,
-	.eroute_idle = netlink_eroute_idle,
 	.migrate_sa_check = netlink_migrate_sa_check,
 	.migrate_ipsec_sa = xfrm_migrate_ipsec_sa,
 	.overlap_supported = false,

@@ -385,7 +385,6 @@ struct kernel_ops {
 			   const struct pluto_xfrmi *xfrmi,
 			   const shunk_t sec_label,
 			   struct logger *logger);
-	bool (*eroute_idle)(struct state *st, deltatime_t idle_max);	/* may mutate *st */
 	/*
 	 * XXX: to delete an SA, delete it's SPI.
 	 */

@@ -3230,11 +3230,32 @@ void delete_larval_ipsec_sa(struct state *st)
 	teardown_ipsec_sa(st, EXPECT_NO_INBOUND);
 }
 
+/*
+ * Check if there was traffic on given SA during the last idle_max
+ * seconds.  If TRUE, the SA was idle and DPD exchange should be
+ * performed.  If FALSE, DPD is not necessary.  We also return TRUE
+ * for errors, as they could mean that the SA is broken and needs to
+ * be replace anyway.
+ *
+ * note: this mutates *st by calling get_sa_info
+ *
+ * XXX:
+ *
+ * The use of get_sa_info() here is likely bogus.  The function
+ * returns the SA's add time (PF_KEY v2 documents it as such, xfrm
+ * returns the .add_time field so presumably ...) when it is assumed
+ * to be returning the idle time.
+ *
+ * Code most likely needs to track data+call-time and see if traffic
+ * flowed since the last call.
+ */
+
 bool was_eroute_idle(struct state *st, deltatime_t since_when)
 {
-	if (kernel_ops->eroute_idle != NULL)
-		return kernel_ops->eroute_idle(st, since_when);
-
+	passert(st != NULL);
+	deltatime_t idle_time;
+	return !get_sa_info(st, true, &idle_time) ||
+		deltatime_cmp(idle_time, >=, since_when);
 	/* it is never idle if we can't check */
 	return false;
 }

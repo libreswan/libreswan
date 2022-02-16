@@ -704,8 +704,8 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 }
 
 static bool pfkeyv2_get_sa(const struct kernel_sa *k,
-			   uint64_t *bytes UNUSED,
-			   uint64_t *add_time UNUSED,
+			   uint64_t *bytes,
+			   uint64_t *add_time,
 			   struct logger *logger)
 {
 	/* GET */
