@@ -235,9 +235,8 @@ static void nat_traversal_ka_event_state(struct state *st, unsigned *data)
 		 * anything eg, if short DPD timers are used we can
 		 * skip this.
 		 */
-		if (!is_monotime_epoch(st->st_v2_last_liveness) &&
-		    deltasecs(monotimediff(mononow(), st->st_v2_last_liveness)) < DEFAULT_KEEP_ALIVE_SECS)
-		{
+		if (!is_monotime_epoch(st->st_v2_msgid_windows.last_sent) &&
+		    deltasecs(monotimediff(mononow(), st->st_v2_msgid_windows.last_sent)) < DEFAULT_KEEP_ALIVE_SECS) {
 			dbg("NAT-T KEEP-ALIVE packet not required as recent DPD event used the IKE SA on conn %s",
 			    c->name);
 			return;

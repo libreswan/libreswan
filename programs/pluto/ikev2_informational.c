@@ -233,9 +233,6 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 		pstats_ike_dpd_replied++;
 	}
 
-	/* authenticated decrypted request - It's alive, alive! */
-	ike->sa.st_v2_last_liveness = mononow();
-
 	return STF_OK;
 }
 
@@ -295,9 +292,6 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 		dbg("received an INFORMATIONAL liveness check response");
 		pstats_ike_dpd_recv++;
 	}
-
-	/* authenticated decrypted response - It's alive, alive! */
-	ike->sa.st_v2_last_liveness = mononow();
 
 	return STF_OK;
 }

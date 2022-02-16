@@ -2101,9 +2101,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 				struct state *pst = state_by_serialno(st->st_clonedfrom);
 				if (pst != NULL) {
 					jam(buf, " lastlive=%jds;",
-					    !is_monotime_epoch(pst->st_v2_last_liveness) ?
-					    deltasecs(monotimediff(mononow(), pst->st_v2_last_liveness)) :
-					    0);
+					    deltasecs(monotimediff(mononow(), pst->st_v2_msgid_windows.last_recv)));
 				}
 			}
 		} else if (st->st_ike_version == IKEv1) {
@@ -2663,9 +2661,6 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	iface_endpoint_delref(&child->sa.st_interface);
 	ike->sa.st_interface = iface_endpoint_addref(md->iface);
 	child->sa.st_interface = iface_endpoint_addref(md->iface);
-
-	/* reset liveness */
-	ike->sa.st_v2_last_liveness = monotime_epoch;
 
 	delete_oriented_hp(c); /* hp list may have changed */
 	if (!orient(c, ike->sa.st_logger)) {

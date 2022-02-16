@@ -729,7 +729,6 @@ struct state {
 
 	struct state_event *st_v1_send_xauth_event;
 
-	monotime_t st_v2_last_liveness;			/* Time of last v2 informational (0 means never?) */
 	struct state_event *st_v2_liveness_event;
 	struct state_event *st_v2_addr_change_event;
 	struct state_event *st_v2_refresh_event;	/* REKEY / REAUTH */
