@@ -214,7 +214,7 @@ static void nat_traversal_ka_event_state(struct state *st, unsigned *data)
 		 */
 
 		if (!IS_IKE_SA_ESTABLISHED(st)) {
-			dbg("skipping NAT-T KEEP-ALIVE: #%lu is not established", st->st_serialno);
+			dbg("skipping NAT-T KEEP-ALIVE: #%lu is not an established IKE SA", st->st_serialno);
 			return;
 		}
 
@@ -225,12 +225,12 @@ static void nat_traversal_ka_event_state(struct state *st, unsigned *data)
 
 		/*
 		 * If this IKE SA sent a packet recently, no need for
-		 * anything eg, if short DPD timers are used we can
-		 * skip this.
+		 * anything eg, if short LIVENESS timers are used we
+		 * can skip this.
 		 */
 		if (!is_monotime_epoch(st->st_v2_msgid_windows.last_sent) &&
 		    deltasecs(monotimediff(mononow(), st->st_v2_msgid_windows.last_sent)) < DEFAULT_KEEP_ALIVE_SECS) {
-			dbg("NAT-T KEEP-ALIVE packet not required as recent DPD event used the IKE SA on conn %s",
+			dbg("skipping NAT-T KEEP-ALIVE: recent message sent using the IKE SA on conn %s",
 			    c->name);
 			return;
 		}
@@ -243,32 +243,34 @@ static void nat_traversal_ka_event_state(struct state *st, unsigned *data)
 		 * need to send keepalives, but that check is a little
 		 * expensive as we have to find some/all IPsec states
 		 * and ask the kernel, every 20s.
+		 *
+		 * XXX:
+		 *
+		 * But that call is being made every minute or so for
+		 * LIVENESS, and it's NAT so probably not that many
+		 * SAs, and finding the IKE SA is cheap.
 		 */
-		dbg("we are behind NAT: sending of NAT-T KEEP-ALIVE for conn %s",
-		    c->name);
-
-		(*nat_kap_st)++;
-		nat_traversal_send_ka(st);
-		return;
+		break;
 
 #ifdef USE_IKEv1
 	case IKEv1:
 		/*
-		 * IKE SA and IPsec SA keepalives happen over the same
-		 * port/NAT mapping.  If the IKE SA is idle and
-		 * triggers keepalives, we don't need to check IPsec
-		 * SA's being idle. If we were to check IPsec SA, we
-		 * could then also update the IKE SA
-		 * st->st_v2_last_liveness, but we think this is too
-		 * expensive (call get_sa_info() to kernel _and_ find
-		 * IKE SA.
-		 *
 		 * For IKEv1, there can be orphaned IPsec SA's.  Since
-		 * we still are not checking the kernel we just have
-		 * to always send the keepalive for all IPsec SAs.
+		 * we are not checking the kernel we just have to
+		 * always send the keepalive for all IPsec SAs.
+		 *
+		 * Older comment providing some backstory:
+		 *
+		 * ISAKMP SA and IPsec SA keepalives happen over the
+		 * same port/NAT mapping.  If the ISAKMP SA is idle
+		 * and triggers keepalives, we don't need to check
+		 * IPsec SA's being idle.  If we were to check IPsec
+		 * SA, we could then also update the ISAKMP SA, but we
+		 * think this is too expensive (call get_sa_info() to
+		 * kernel _and_ find ISAKMP SA.
 		 */
 		if (!IS_IPSEC_SA_ESTABLISHED(st)) {
-			dbg("skipping NAT-T KEEP-ALIVE: #%lu is not established", st->st_serialno);
+			dbg("skipping NAT-T KEEP-ALIVE: #%lu is not established IPsec SA", st->st_serialno);
 			return;
 		}
 
@@ -277,13 +279,16 @@ static void nat_traversal_ka_event_state(struct state *st, unsigned *data)
 			return;
 		}
 
-		nat_traversal_send_ka(st);
-		(*nat_kap_st)++;
-		return;
+		break;
 #endif
 	default:
 		bad_case(st->st_ike_version);
 	}
+
+	dbg("we are behind NAT: sending of NAT-T KEEP-ALIVE for conn %s",
+	    c->name);
+	(*nat_kap_st)++;
+	nat_traversal_send_ka(st);
 }
 
 void nat_traversal_ka_event(struct logger *unused_logger UNUSED)
