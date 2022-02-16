@@ -557,14 +557,15 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port,
 	}
 #endif
 
-	/* With IPv6, there is no fragmentation after
-	 * it leaves our interface.  PMTU discovery
-	 * is mandatory but doesn't work well with IKE (why?).
-	 * So we must set the IPV6_USE_MIN_MTU option.
-	 * See draft-ietf-ipngwg-rfc2292bis-01.txt 11.1
-	 */
+
 #ifdef IPV6_USE_MIN_MTU /* YUCK: not always defined */
-	if (addrtypeof(&ifd->id_address) == AF_INET6 &&
+	/*
+	 * With IPv6, there is no fragmentation after it leaves our
+	 * interface.  PMTU discovery is mandatory but doesn't work
+	 * well with IKE (why?).  So we must set the IPV6_USE_MIN_MTU
+	 * option.  See draft-ietf-ipngwg-rfc2292bis-01.txt 11.1
+	 */
+	if (address_type(&ifd->id_address) == &ipv6_info &&
 	    setsockopt(fd, SOL_SOCKET, IPV6_USE_MIN_MTU,
 		       (const void *)&on, sizeof(on)) < 0) {
 		log_errno(logger, errno, "setsockopt IPV6_USE_MIN_MTU in process_raw_ifaces()");
