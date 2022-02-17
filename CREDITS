@@ -19,11 +19,11 @@ Lubomir Rintel <lkundrak@v3.sk>
 Matt Rogers <mrogers@redhat.com>
 Tuomo Soini <tis@foobar.fi>
 Ravi Teja <hello@rtcms.dev>
-Philippe Vouters <Philippe.Vouters@laposte.net>
+Timo Teräs <timo.teras@iki.fi>
 Paul Wouters <pwouters@redhat.com>
 Herbert Xu <herbert@gondor.apana.org.au>
 
-Libreswan is a fork of the Openswan 2.6.38 codebase.
+Libreswan is a continuation fork of the Openswan 2.6.38 codebase.
 Please see the docs/CREDITS.openswan file from Openswan for details on
 original work.
 
