@@ -1,0 +1,32 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add ikev1-dpdtimeout # requires dpddelay
+conn: "ikev1-dpdtimeout" warning IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set
+002 "ikev1-dpdtimeout": added IKEv1 connection
+west #
+ ipsec auto --add ikev1-dpddelay   # requires dpdtimeout
+conn: "ikev1-dpddelay" warning IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set
+002 "ikev1-dpddelay": added IKEv1 connection
+west #
+ ipsec auto --add ikev1-dpdaction  # requires dpddelay+dpdtimeout
+conn: "ikev1-dpdaction" warning IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set
+002 "ikev1-dpdaction": added IKEv1 connection
+west #
+ ipsec auto --add ikev1-dpdaction-dpdtimeout  # requires dpddelay
+conn: "ikev1-dpdaction-dpdtimeout" warning IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set
+002 "ikev1-dpdaction-dpdtimeout": added IKEv1 connection
+west #
+ ipsec auto --add ikev2-dpdtimeout # ignore dpdtimeout
+conn: "ikev2-dpdtimeout" warning IKEv2 liveness uses retransmit-timeout=, dpdtimeout= ignored
+002 "ikev2-dpdtimeout": added IKEv2 connection
+west #
+ ipsec auto --add ikev2-dpdaction  # requires dpddelay
+conn: "ikev2-dpdaction" warning IKEv2 liveness setting dpdaction= is ignored unless dpddelay= is set
+002 "ikev2-dpdaction": added IKEv2 connection
+west #
+ 
