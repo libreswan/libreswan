@@ -16,8 +16,12 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  */
+
+#ifndef IKEV1_DPD_H
+#define IKEV1_DPD_H
+
 extern stf_status dpd_init(struct state *st);
-extern void dpd_event(struct state *st);
+extern void event_v1_dpd(struct state *st);
 
 extern stf_status dpd_inI_outR(struct state *st,
 			       struct isakmp_notification *const n,
@@ -25,6 +29,8 @@ extern stf_status dpd_inI_outR(struct state *st,
 extern stf_status dpd_inR(struct state *st,
 			  struct isakmp_notification *const n,
 			  pb_stream *pbs);
-extern void dpd_timeout(struct state *st);
+extern void event_v1_dpd_timeout(struct state *st);
 
 #define DPD_RETRANS_MAX 3
+
+#endif

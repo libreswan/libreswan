@@ -450,11 +450,11 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 
 #ifdef USE_IKEv1
 	case EVENT_v1_DPD:
-		dpd_event(st);
+		event_v1_dpd(st);
 		break;
 
 	case EVENT_v1_DPD_TIMEOUT:
-		dpd_timeout(st);
+		event_v1_dpd_timeout(st);
 		break;
 
 #ifdef USE_PAM_AUTH

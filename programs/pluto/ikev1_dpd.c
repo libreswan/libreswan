@@ -82,7 +82,18 @@ static void dpd_clear_connection(struct connection *c, const char *v)
 	}
 }
 
-static void dpd_action(struct state *tbd_st)
+/**
+ * DPD Timeout Function
+ *
+ * This function is called when a timeout DPD_EVENT occurs.  We set clear/trap
+ * both the SA and the eroutes, depending on what the connection definition
+ * tells us (either 'hold' or 'clear')
+ *
+ * @param st A state structure that is fully negotiated
+ * @return void
+ */
+
+void event_v1_dpd_timeout(struct state *tbd_st)
 {
 	/*
 	 * XXX: Danger! These connection calls, notably
@@ -400,7 +411,7 @@ static void p2_dpd_outI1(struct state *p2st)
 	if (st == NULL) {
 		log_state(RC_LOG_SERIOUS, p2st,
 			  "DPD: could not find newest phase 1 state - initiating a new one");
-		dpd_action(p2st);
+		event_v1_dpd_timeout(p2st);
 		return;
 	}
 
@@ -412,7 +423,7 @@ static void p2_dpd_outI1(struct state *p2st)
 	dpd_outI(st, p2st, true, delay, timeout);
 }
 
-void dpd_event(struct state *st)
+void event_v1_dpd(struct state *st)
 {
 	passert(st != NULL);
 
@@ -602,20 +613,4 @@ stf_status dpd_inR(struct state *p1st,
 		event_delete(EVENT_v1_DPD_TIMEOUT, p1st);
 
 	return STF_IGNORE;
-}
-
-/**
- * DPD Timeout Function
- *
- * This function is called when a timeout DPD_EVENT occurs.  We set clear/trap
- * both the SA and the eroutes, depending on what the connection definition
- * tells us (either 'hold' or 'clear')
- *
- * @param st A state structure that is fully negotiated
- * @return void
- */
-
-void dpd_timeout(struct state *st)
-{
-	dpd_action(st);
 }
