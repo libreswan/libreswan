@@ -46,13 +46,14 @@
 
 bool nat_traversal_enabled = true; /* can get disabled if kernel lacks support */
 
-static deltatime_t nat_kap = DELTATIME_INIT(DEFAULT_KEEP_ALIVE_SECS);	/* keep-alive period */
+deltatime_t nat_keepalive_period = DELTATIME_INIT(DEFAULT_KEEP_ALIVE_SECS);
 static bool nat_kap_event = false;
 
 void init_nat_traversal_timer(deltatime_t keep_alive_period, struct logger *logger)
 {
-	if (deltamillisecs(keep_alive_period) != 0)
-		nat_kap = keep_alive_period;
+	if (deltamillisecs(keep_alive_period) != 0) {
+		nat_keepalive_period = keep_alive_period;
+	}
 
 	dbg("init_nat_traversal_timer() initialized with keep_alive=%jds",
 	    deltasecs(keep_alive_period));
@@ -163,7 +164,7 @@ void nat_traversal_new_ka_event(void)
 	if (nat_kap_event)
 		return;	/* Event already schedule */
 
-	schedule_oneshot_timer(EVENT_NAT_T_KEEPALIVE, nat_kap);
+	schedule_oneshot_timer(EVENT_NAT_T_KEEPALIVE, nat_keepalive_period);
 	nat_kap_event = true;
 }
 
@@ -407,8 +408,8 @@ void nat_traversal_change_port_lookup(struct msg_digest *md, struct state *st)
 void show_setup_natt(struct show *s)
 {
 	show_separator(s);
-	show_comment(s, "nat-traversal=%s, keep-alive=%ld, nat-ikeport=%d",
+	show_comment(s, "nat-traversal=%s, keep-alive=%jd, nat-ikeport=%d",
 		     bool_str(nat_traversal_enabled),
-		     (long) deltasecs(nat_kap),
+		     deltasecs(nat_keepalive_period),
 		     NAT_IKE_UDP_PORT);
 }
