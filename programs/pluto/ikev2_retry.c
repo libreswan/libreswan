@@ -39,7 +39,7 @@ static void retransmit_timeout_action(struct ike_sa *ike)
 	const char *kind_name = enum_name(&connection_kind_names,
 					  ike->sa.st_connection->kind);
 
-	switch (ike->sa.st_connection->dpd_action) {
+	switch (ike->sa.st_connection->config->dpd.action) {
 	case DPD_ACTION_CLEAR:
 	{
 		/*
@@ -97,7 +97,7 @@ static void retransmit_timeout_action(struct ike_sa *ike)
 		break;
 
 	default:
-		bad_case(ike->sa.st_connection->dpd_action);
+		bad_case(ike->sa.st_connection->config->dpd.action);
 	}
 }
 

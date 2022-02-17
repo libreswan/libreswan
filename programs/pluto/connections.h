@@ -159,6 +159,14 @@ struct config {
 
 	enum yna_options nic_offload;
 
+	/*
+	 * IKEv1's RFC 3706 DPD; .delay also used by IKEv2 :-/ */
+	struct {
+		deltatime_t delay;		/* time between checks */
+		deltatime_t timeout;	/* time after which we are dead */
+		enum dpd_action action;	/* what to do when we die */
+	} dpd;
+
 	struct config_end end[LEFT_RIGHT_ROOF];
 };
 
@@ -404,11 +412,6 @@ struct connection {
 	 * state?
 	 */
 	int ipsec_mode;			/* tunnel or transport or IKEv1 ... */
-
-	/* RFC 3706 DPD */
-	deltatime_t dpd_delay;		/* time between checks */
-	deltatime_t dpd_timeout;	/* time after which we are dead */
-	enum dpd_action dpd_action;	/* what to do when we die */
 
 	bool nat_keepalive;		/* Send NAT-T Keep-Alives if we are behind NAT */
 	bool initial_contact;		/* Send INITIAL_CONTACT (RFC-2407) payload? */

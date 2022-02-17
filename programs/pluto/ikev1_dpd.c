@@ -98,7 +98,7 @@ static void dpd_action(struct state *tbd_st)
 	passert(liveness_name != NULL);
 	tbd_st = NULL; /* kill TBD_ST; can no longer be trusted */
 
-	switch (c->dpd_action) {
+	switch (c->config->dpd.action) {
 	case DPD_ACTION_CLEAR:
 		llog(RC_LOG, logger,
 		     "%s action - clearing connection kind %s",
@@ -124,7 +124,7 @@ static void dpd_action(struct state *tbd_st)
 		break;
 
 	default:
-		bad_case(c->dpd_action);
+		bad_case(c->config->dpd.action);
 	}
 	free_logger(&logger, HERE);
 }
@@ -222,9 +222,9 @@ stf_status dpd_init(struct state *st)
 		if (st->st_v1_dpd_event == NULL ||
 		    deltatime_cmp(monotimediff(st->st_v1_dpd_event->ev_time, mononow()),
 				  <,
-				  st->st_connection->dpd_delay)) {
+				  st->st_connection->config->dpd.delay)) {
 			event_delete(EVENT_v1_DPD, st);
-			event_schedule(EVENT_v1_DPD, st->st_connection->dpd_delay, st);
+			event_schedule(EVENT_v1_DPD, st->st_connection->config->dpd.delay, st);
 		}
 	}
 	return STF_OK;
@@ -382,8 +382,8 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 
 static void p1_dpd_outI1(struct state *p1st)
 {
-	deltatime_t delay = p1st->st_connection->dpd_delay;
-	deltatime_t timeout = p1st->st_connection->dpd_timeout;
+	deltatime_t delay = p1st->st_connection->config->dpd.delay;
+	deltatime_t timeout = p1st->st_connection->config->dpd.timeout;
 
 	dpd_outI(p1st, p1st, true, delay, timeout);
 }
@@ -391,8 +391,8 @@ static void p1_dpd_outI1(struct state *p1st)
 static void p2_dpd_outI1(struct state *p2st)
 {
 	struct state *st;
-	deltatime_t delay = p2st->st_connection->dpd_delay;
-	deltatime_t timeout = p2st->st_connection->dpd_timeout;
+	deltatime_t delay = p2st->st_connection->config->dpd.delay;
+	deltatime_t timeout = p2st->st_connection->config->dpd.timeout;
 
 	st = find_phase1_state(p2st->st_connection,
 		V1_ISAKMP_SA_ESTABLISHED_STATES);
@@ -483,7 +483,7 @@ stf_status dpd_inI_outR(struct state *p1st,
 			/*
 			 * Needed to work around openbsd bug (isakmpd/dpd.c
 			 * around line 350) where they forget to increase
-			 * isakmp_sa->dpd_seq on unanswered DPD probe violating
+			 * isakmp_sa->config->dpd.seq on unanswered DPD probe violating
 			 * RFC 3706 Section 7 "Security Considerations"
 			 */
 			log_state(RC_LOG_SERIOUS, p1st,

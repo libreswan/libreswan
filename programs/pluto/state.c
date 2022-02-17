@@ -2677,7 +2677,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 		child->sa.st_deleted_local_addr = unset_address;
 		if (dpd_active_locally(&child->sa) && child->sa.st_v2_liveness_event == NULL) {
 			dbg("dpd re-enabled after mobike, scheduling ikev2 liveness checks");
-			deltatime_t delay = deltatime_max(child->sa.st_connection->dpd_delay, deltatime(MIN_LIVENESS));
+			deltatime_t delay = deltatime_max(child->sa.st_connection->config->dpd.delay, deltatime(MIN_LIVENESS));
 			event_schedule(EVENT_v2_LIVENESS, delay, &child->sa);
 		}
 	}
@@ -2688,8 +2688,8 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 /* seems to be a good spot for now */
 bool dpd_active_locally(const struct state *st)
 {
-	return deltasecs(st->st_connection->dpd_delay) != 0 &&
-		deltasecs(st->st_connection->dpd_timeout) != 0;
+	return deltasecs(st->st_connection->config->dpd.delay) != 0 &&
+		deltasecs(st->st_connection->config->dpd.timeout) != 0;
 }
 
 /*

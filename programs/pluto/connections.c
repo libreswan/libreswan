@@ -2032,10 +2032,10 @@ static bool extract_connection(const struct whack_message *wm,
 			}
 		}
 
-		/* RFC 3706 DPD */
-		c->dpd_delay = wm->dpd_delay;
-		c->dpd_timeout = wm->dpd_timeout;
-		c->dpd_action = wm->dpd_action;
+		/* IKEv1's RFC 3706 DPD */
+		config->dpd.delay = wm->dpd_delay; /* also used by IKEv2 :-( */
+		config->dpd.timeout = wm->dpd_timeout;
+		config->dpd.action = wm->dpd_action;
 
 		/* Cisco interop: remote peer type */
 		c->remotepeertype = wm->remotepeertype;
@@ -3822,9 +3822,9 @@ void show_one_connection(struct show *s,
 	/* slightly complicated stuff to avoid extra crap */
 	show_comment(s, PRI_CONNECTION":   dpd: %s; delay:%ld; timeout:%ld; nat-t: encaps:%s; nat_keepalive:%s; ikev1_natt:%s",
 		     c->name, instance,
-		     enum_name(&dpd_action_names, c->dpd_action),
-		     (long) deltasecs(c->dpd_delay),
-		     (long) deltasecs(c->dpd_timeout),
+		     enum_name(&dpd_action_names, c->config->dpd.action),
+		     (long) deltasecs(c->config->dpd.delay),
+		     (long) deltasecs(c->config->dpd.timeout),
 		     (c->encaps == yna_auto) ? "auto" :
 		     bool_str(c->encaps == yna_yes),
 		     bool_str(c->nat_keepalive),

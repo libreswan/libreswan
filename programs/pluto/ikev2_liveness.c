@@ -63,11 +63,11 @@ static void schedule_liveness(struct child_sa *child, deltatime_t time_since_las
 			      const char *reason)
 {
 	struct connection *c = child->sa.st_connection;
-	deltatime_t delay = c->dpd_delay;
+	deltatime_t delay = c->config->dpd.delay;
 	/* reduce wait if contact was by some other means */
 	delay = deltatime_sub(delay, time_since_last_exchange);
 	/* in case above screws up? */
-	delay = deltatime_max(c->dpd_delay, deltatime(MIN_LIVENESS));
+	delay = deltatime_max(c->config->dpd.delay, deltatime(MIN_LIVENESS));
 	LSWDBGP(DBG_BASE, buf) {
 		deltatime_buf db;
 		endpoint_buf remote_buf;
@@ -183,7 +183,7 @@ void liveness_check(struct state *st)
 	struct v2_msgid_window *our = &ike->sa.st_v2_msgid_windows.initiator;
 	pexpect(!is_monotime_epoch(our->last_recv));
 	deltatime_t time_since_our_last_exchange = monotimediff(now, our->last_recv);
-	if (deltatime_cmp(time_since_our_last_exchange, <, c->dpd_delay)) {
+	if (deltatime_cmp(time_since_our_last_exchange, <, c->config->dpd.delay)) {
 		schedule_liveness(child, time_since_our_last_exchange, "successful exchange");
 		return;
 	}
@@ -207,7 +207,7 @@ void liveness_check(struct state *st)
 	 */
 	struct v2_msgid_window *peer = &ike->sa.st_v2_msgid_windows.responder;
 	deltatime_t time_since_peer_contact = monotimediff(now, peer->last_recv);
-	if (deltatime_cmp(time_since_peer_contact, <, c->dpd_delay)) {
+	if (deltatime_cmp(time_since_peer_contact, <, c->config->dpd.delay)) {
 		schedule_liveness(child, time_since_peer_contact, "peer contact");
 		return;
 	}
@@ -229,7 +229,7 @@ void liveness_check(struct state *st)
  	 */
 	deltatime_t time_since_last_inbound_message;
 	if (get_sa_info(&child->sa, /*inbound*/true, &time_since_last_inbound_message) &&
-	    deltatime_cmp(time_since_last_inbound_message, <, c->dpd_delay)) {
+	    deltatime_cmp(time_since_last_inbound_message, <, c->config->dpd.delay)) {
 		/*
 		 * schedule in .dpd_delay seconds, but adjust for:
 		 * time since last traffic
