@@ -196,7 +196,7 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 stf_status dpd_init(struct state *st)
 {
 	bool peer_supports_dpd = st->hidden_variables.st_peer_supports_dpd;
-	bool want_dpd = dpd_active_locally(st);
+	bool want_dpd = dpd_active_locally(st->st_connection);
 
 	if (IS_IKE_SA(st)) { /* so we log this only once */
 		dbg("DPD: dpd_init() called on ISAKMP SA");

@@ -2422,7 +2422,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		if (st->st_state->kind != from_state &&
 		    st->st_state->kind != STATE_UNDEFINED &&
 		    IS_CHILD_SA_ESTABLISHED(st) &&
-		    dpd_active_locally(st)) {
+		    dpd_active_locally(st->st_connection)) {
 			dbg("dpd enabled, scheduling ikev2 liveness checks");
 			deltatime_t delay = deltatime_max(c->config->dpd.delay, deltatime(MIN_LIVENESS));
 			event_schedule(EVENT_v2_LIVENESS, delay, st);

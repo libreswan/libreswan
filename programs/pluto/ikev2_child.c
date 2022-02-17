@@ -812,7 +812,7 @@ void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 	 * start liveness checks if set, making sure we only schedule
 	 * once when moving from I2->I3 or R1->R2
 	 */
-	if (dpd_active_locally(&child->sa)) {
+	if (dpd_active_locally(child->sa.st_connection)) {
 		dbg("dpd enabled, scheduling ikev2 liveness checks");
 		deltatime_t delay = deltatime_max(child->sa.st_connection->config->dpd.delay,
 						  deltatime(MIN_LIVENESS));

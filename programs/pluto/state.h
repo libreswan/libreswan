@@ -887,7 +887,6 @@ extern void delete_state_by_id_name(struct state *st, const char *name);
 
 extern void delete_cryptographic_continuation(struct state *st);
 extern void delete_states_dead_interfaces(struct logger *logger);
-extern bool dpd_active_locally(const struct state *st);
 
 /*
  * Use this to change state, this gives us a handle on all state

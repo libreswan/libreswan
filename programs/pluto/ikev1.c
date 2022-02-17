@@ -2420,7 +2420,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		if (md->dpd) {
 			dbg("peer supports DPD");
 			st->hidden_variables.st_peer_supports_dpd = true;
-			if (dpd_active_locally(st)) {
+			if (dpd_active_locally(st->st_connection)) {
 				dbg("DPD is configured locally");
 			}
 		}

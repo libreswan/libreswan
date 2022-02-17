@@ -2033,9 +2033,24 @@ static bool extract_connection(const struct whack_message *wm,
 		}
 
 		/* IKEv1's RFC 3706 DPD */
-		config->dpd.delay = wm->dpd_delay; /* also used by IKEv2 :-( */
-		config->dpd.timeout = wm->dpd_timeout;
 		config->dpd.action = wm->dpd_action;
+		switch (wm->ike_version) {
+		case IKEv1:
+			if (deltasecs(wm->dpd_delay) > 0 &&
+			    deltasecs(wm->dpd_timeout) > 0) {
+				config->dpd.delay = wm->dpd_delay;
+				config->dpd.timeout = wm->dpd_timeout;
+			} else if (deltasecs(wm->dpd_delay) > 0 ||
+				   deltasecs(wm->dpd_timeout) > 0) {
+				llog(RC_LOG_SERIOUS, c->logger,
+				     "IKEv1 DPD requres both dpddelay and dpdtimeout");
+			}
+			break;
+		case IKEv2:
+			config->dpd.delay = wm->dpd_delay;
+			config->dpd.timeout = wm->dpd_timeout; /* XXX: to-be-deleted */
+			break;
+		}
 
 		/* Cisco interop: remote peer type */
 		c->remotepeertype = wm->remotepeertype;
@@ -4161,4 +4176,10 @@ void check_connection(struct connection *c, where_t where)
 	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		check_db_spd_route(sr, c->logger, where);
 	}
+}
+
+/* seems to be a good spot for now */
+bool dpd_active_locally(const struct connection *c)
+{
+	return deltasecs(c->config->dpd.delay) != 0;
 }

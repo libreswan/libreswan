@@ -327,9 +327,14 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 
 	jam_string(buf, ini);
 	ini = " ";
-	jam(buf, "DPD=%s", (st->st_ike_version == IKEv1 && !st->hidden_variables.st_peer_supports_dpd ? "unsupported" :
-			    dpd_active_locally(st) ? "active" :
-			    "passive"));
+	jam_string(buf, "DPD=");
+	if (st->st_ike_version == IKEv1 && !st->hidden_variables.st_peer_supports_dpd) {
+		jam_string(buf, "unsupported");
+	} else if (dpd_active_locally(st->st_connection)) {
+		jam_string(buf, "active");
+	} else {
+		jam_string(buf, "passive");
+	}
 
 	if (st->st_xauth_username[0] != '\0') {
 		jam_string(buf, ini);

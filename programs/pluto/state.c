@@ -2095,7 +2095,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 			    deltasecs(monotimediff(mononow(), st->st_last_dpd)) : (intmax_t)-1,
 			    st->st_dpd_seqno,
 			    st->st_dpd_expectseqno);
-		} else if (dpd_active_locally(st) && (st->st_ike_version == IKEv2)) {
+		} else if (dpd_active_locally(st->st_connection) && (st->st_ike_version == IKEv2)) {
 			/* stats are on parent sa */
 			if (IS_CHILD_SA(st)) {
 				struct state *pst = state_by_serialno(st->st_clonedfrom);
@@ -2675,7 +2675,8 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 		migration_up(child->sa.st_connection, &child->sa);
 		ike->sa.st_deleted_local_addr = unset_address;
 		child->sa.st_deleted_local_addr = unset_address;
-		if (dpd_active_locally(&child->sa) && child->sa.st_v2_liveness_event == NULL) {
+		if (dpd_active_locally(child->sa.st_connection) &&
+		    child->sa.st_v2_liveness_event == NULL) {
 			dbg("dpd re-enabled after mobike, scheduling ikev2 liveness checks");
 			deltatime_t delay = deltatime_max(child->sa.st_connection->config->dpd.delay, deltatime(MIN_LIVENESS));
 			event_schedule(EVENT_v2_LIVENESS, delay, &child->sa);
@@ -2683,13 +2684,6 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	}
 
 	return true;
-}
-
-/* seems to be a good spot for now */
-bool dpd_active_locally(const struct state *st)
-{
-	return deltasecs(st->st_connection->config->dpd.delay) != 0 &&
-		deltasecs(st->st_connection->config->dpd.timeout) != 0;
 }
 
 /*

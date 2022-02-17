@@ -724,4 +724,6 @@ void rehash_db_connection_that_id(struct connection *c);
 
 void rehash_db_spd_route_remote_client(struct spd_route *sr);
 
+bool dpd_active_locally(const struct connection *c);
+
 #endif
