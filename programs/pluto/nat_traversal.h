@@ -25,6 +25,7 @@
 
 struct hash_desc;
 
+extern deltatime_t nat_keepalive_period;
 
 /*
  *  NAT-Traversal defines for nat_traversal type from nat_traversal.h

@@ -3819,19 +3819,34 @@ void show_one_connection(struct show *s,
 			     str_id(&c->remote->host.id, &thatidb));
 	}
 
-	/* slightly complicated stuff to avoid extra crap */
-	show_comment(s, PRI_CONNECTION":   dpd: %s; delay:%ld; timeout:%ld; nat-t: encaps:%s; nat_keepalive:%s; ikev1_natt:%s",
+	show_comment(s, PRI_CONNECTION":   dpd: %s; delay:%ld; timeout:%ld",
 		     c->name, instance,
 		     enum_name(&dpd_action_names, c->config->dpd.action),
 		     (long) deltasecs(c->config->dpd.delay),
-		     (long) deltasecs(c->config->dpd.timeout),
-		     (c->encaps == yna_auto) ? "auto" :
-		     bool_str(c->encaps == yna_yes),
-		     bool_str(c->nat_keepalive),
-		     (c->ikev1_natt == NATT_BOTH) ? "both" :
-		     (c->ikev1_natt == NATT_RFC) ? "rfc" :
-		     (c->ikev1_natt == NATT_DRAFTS) ? "drafts" : "none"
-		);
+		     (long) deltasecs(c->config->dpd.timeout));
+
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		jam(buf, PRI_CONNECTION":   nat-traversal: encaps:%s",
+		    c->name, instance,
+		    (c->encaps == yna_auto ? "auto" :
+		     bool_str(c->encaps == yna_yes)));
+		jam_string(buf, "; keepalive:");
+		if (c->nat_keepalive) {
+			jam(buf, "%jds", deltasecs(nat_keepalive_period));
+		} else {
+			jam_string(buf, bool_str(false));
+		}
+		if (c->config->ike_version == IKEv1) {
+			jam_string(buf, "; ikev1-method:");
+			switch (c->ikev1_natt) {
+			case NATT_BOTH: jam_string(buf, "rfc+drafts"); break;
+			case NATT_RFC: jam_string(buf, "rfc"); break;
+			case NATT_DRAFTS: jam_string(buf, "drafts"); break;
+			case NATT_NONE: jam_string(buf, "none"); break;
+			default: bad_case(c->ikev1_natt);
+			}
+		}
+	}
 
 	if (!lmod_empty(c->extra_debugging)) {
 		SHOW_JAMBUF(RC_COMMENT, s, buf) {
