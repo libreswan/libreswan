@@ -2691,13 +2691,23 @@ int main(int argc, char **argv)
 	check_life_time(msg.sa_ipsec_life_seconds, IPSEC_SA_LIFETIME_MAXIMUM,
 			"ipseclifetime", &msg);
 
-	if (deltasecs(msg.dpd_delay) != 0 &&
-	    deltasecs(msg.dpd_timeout) == 0)
-		diagw("dpddelay specified, but dpdtimeout is zero, both should be specified");
-
-	if (deltasecs(msg.dpd_delay) == 0 &&
-	    deltasecs(msg.dpd_timeout) != 0)
-		diagw("dpdtimeout specified, but dpddelay is zero, both should be specified");
+	switch (msg.ike_version) {
+	case IKEv1:
+		if (deltasecs(msg.dpd_delay) != 0 &&
+		    deltasecs(msg.dpd_timeout) == 0) {
+			diagw("dpddelay specified, but dpdtimeout is zero, both should be specified");
+		}
+		if (deltasecs(msg.dpd_delay) == 0 &&
+		    deltasecs(msg.dpd_timeout) != 0) {
+			diagw("dpdtimeout specified, but dpddelay is zero, both should be specified");
+		}
+		break;
+	case IKEv2:
+		if (deltasecs(msg.dpd_timeout) != 0) {
+			fprintf(stderr, "whack: IKEv2 liveness uses --retransmit-timeout, option --dpdtimeout ignored\n");
+		}
+		break;
+	}
 
 	switch (msg.dpd_action) {
 	case DPD_ACTION_DISABLED:
