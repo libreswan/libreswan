@@ -112,7 +112,8 @@ east #
 000 "northnet-westnet-ipv4-psk":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "northnet-westnet-ipv4-psk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "northnet-westnet-ipv4-psk":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@north
-000 "northnet-westnet-ipv4-psk":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
+000 "northnet-westnet-ipv4-psk":   dpd: action:hold; delay:0; timeout:0
+000 "northnet-westnet-ipv4-psk":   nat-traversal: encaps:auto; keepalive:20s
 000 "northnet-westnet-ipv4-psk":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $2;
 000 "westnet-northnet-ipv4-psk": 192.0.3.0/24===192.1.2.23[@east]...192.1.2.45[@west]===192.0.1.0/24; unrouted; eroute owner: #0
 000 "westnet-northnet-ipv4-psk":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
@@ -128,7 +129,8 @@ east #
 000 "westnet-northnet-ipv4-psk":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-northnet-ipv4-psk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-northnet-ipv4-psk":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
-000 "westnet-northnet-ipv4-psk":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:auto; nat_keepalive:yes; ikev1_natt:both
+000 "westnet-northnet-ipv4-psk":   dpd: action:hold; delay:0; timeout:0
+000 "westnet-northnet-ipv4-psk":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-northnet-ipv4-psk":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 000  
 000 Total IPsec connections: loaded 2, active 0

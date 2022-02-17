@@ -11,7 +11,7 @@ road #
 002 "road-eastnet-forceencaps": added IKEv2 connection
 road #
  ipsec status |grep encaps:
-000 "road-eastnet-forceencaps":   dpd: action:hold; delay:0; timeout:0; nat-t: encaps:yes; nat_keepalive:yes; ikev1_natt:both
+000 "road-eastnet-forceencaps":   nat-traversal: encaps:yes; keepalive:20s
 road #
  echo "initdone"
 initdone
