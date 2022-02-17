@@ -59,7 +59,7 @@ static const char *const dpd_action_name[] = {
 enum_names dpd_action_names = {
 	DPD_ACTION_DISABLED, DPD_ACTION_RESTART,
 	ARRAY_REF(dpd_action_name),
-	NULL, /* prefix */
+	"action:", /* prefix */
 	NULL
 };
 

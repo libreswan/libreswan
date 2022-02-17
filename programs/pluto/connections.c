@@ -3834,11 +3834,31 @@ void show_one_connection(struct show *s,
 			     str_id(&c->remote->host.id, &thatidb));
 	}
 
-	show_comment(s, PRI_CONNECTION":   dpd: %s; delay:%ld; timeout:%ld",
-		     c->name, instance,
-		     enum_name(&dpd_action_names, c->config->dpd.action),
-		     (long) deltasecs(c->config->dpd.delay),
-		     (long) deltasecs(c->config->dpd.timeout));
+	switch (c->config->ike_version) {
+	case IKEv1:
+	{
+		enum_buf eb;
+		show_comment(s, PRI_CONNECTION":   dpd: %s; action:%s; delay:%jds; timeout:%jds",
+			     c->name, instance,
+			     (deltasecs(c->config->dpd.delay) > 0 &&
+			      deltasecs(c->config->dpd.timeout) > 0 ? "active" : "passive"),
+			     str_enum_short(&dpd_action_names, c->config->dpd.action, &eb),
+			     deltasecs(c->config->dpd.delay),
+			     deltasecs(c->config->dpd.timeout));
+		break;
+	}
+	case IKEv2:
+	{
+		enum_buf eb;
+		show_comment(s, PRI_CONNECTION":   liveness: %s; dpdaction:%s; dpddelay:%jds; retransmit-timeout:%jds",
+			     c->name, instance,
+			     deltasecs(c->config->dpd.delay) > 0 ? "active" : "passive",
+			     str_enum_short(&dpd_action_names, c->config->dpd.action, &eb),
+			     deltasecs(c->config->dpd.delay),
+			     deltasecs(c->config->retransmit_timeout));
+		break;
+	}
+	}
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		jam(buf, PRI_CONNECTION":   nat-traversal: encaps:%s",
