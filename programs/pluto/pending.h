@@ -77,10 +77,11 @@ bool connection_is_pending(const struct connection *c);
 void show_pending_child_details(struct show *s,
 				const struct connection *c,
 				const struct ike_sa *ike);
-bool pending_check_timeout(const struct connection *c);
 
 extern struct connection *first_pending(const struct ike_sa *ike,
 					lset_t *policy,
 					struct fd **p_whack_sock);
+
+void init_pending(void);
 
 #endif

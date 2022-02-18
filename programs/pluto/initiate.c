@@ -1192,85 +1192,8 @@ void connection_check_ddns(struct logger *logger)
 	threadtime_stop(&start, SOS_NOBODY, "in %s for hostname lookup", __func__);
 }
 
-/* time between scans of pending phase2 */
-#define PENDING_PHASE2_INTERVAL (2 * secs_per_minute)
-
-/*
- * Call connection_check_phase2 periodically to check to see if pending
- * phase2s ever got unstuck, and if not, perform DPD action.
- */
-void connection_check_phase2(struct logger *logger)
-{
-	struct connection_filter cf = { .where = HERE, };
-	while (next_connection_new2old(&cf)) {
-		struct connection *c = cf.c;
-
-		if (NEVER_NEGOTIATE(c->policy)) {
-			connection_buf cib;
-			dbg("pending review: connection "PRI_CONNECTION" has no negotiated policy, skipped",
-			    pri_connection(c, &cib));
-			continue;
-		}
-
-		if (!(c->policy & POLICY_UP)) {
-			connection_buf cib;
-			dbg("pending review: connection "PRI_CONNECTION" was not up, skipped",
-			    pri_connection(c, &cib));
-			continue;
-		}
-
-		if (!pending_check_timeout(c)) {
-			connection_buf cib;
-			dbg("pending review: connection "PRI_CONNECTION" has no timed out pending connections, skipped",
-			    pri_connection(c, &cib));
-			continue;
-		}
-
-		/* XXX: push/pop LOGGER's WHACK? */
-		address_buf ab;
-		enum_buf eb;
-		llog(RC_LOG, c->logger,
-		     "%s SA negotiating with %s took too long -- replacing",
-		     str_enum(&ike_version_ike_names, c->config->ike_version, &eb),
-		     str_address_sensitive(&c->remote->host.addr, &ab));
-
-		struct state *p1st;
-		switch (c->config->ike_version) {
-#ifdef USE_IKEv1
-		case IKEv1:
-			p1st = find_phase1_state(c,
-						 (V1_ISAKMP_SA_ESTABLISHED_STATES |
-						  V1_PHASE1_INITIATOR_STATES));
-			break;
-#endif
-		case IKEv2:
-			p1st = find_phase1_state(c, IKEV2_ISAKMP_INITIATOR_STATES);
-			break;
-		default:
-			bad_case(c->config->ike_version);
-		}
-
-		if (p1st != NULL) {
-			/* arrange to rekey the phase 1, if there was one. */
-			if (c->dnshostname != NULL) {
-				restart_connections_by_peer(c, logger);
-			} else {
-				event_force(EVENT_SA_REPLACE, p1st);
-			}
-		} else {
-			/* start a new connection. Something wanted it up */
-			struct initiate_stuff is = {
-				.remote_host = NULL,
-			};
-			initiate_a_connection(c, &is, logger);
-		}
-	}
-}
-
 void init_connections_timer(void)
 {
 	enable_periodic_timer(EVENT_PENDING_DDNS, connection_check_ddns,
 			      deltatime(PENDING_DDNS_INTERVAL));
-	enable_periodic_timer(EVENT_PENDING_PHASE2, connection_check_phase2,
-			      deltatime(PENDING_PHASE2_INTERVAL));
 }
