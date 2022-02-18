@@ -757,7 +757,6 @@ static void handle_known_vendorid_v1(struct msg_digest *md,
 	case VID_NATT_IETF_07:
 	case VID_NATT_IETF_08:
 	case VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE:
-		/* FALL THROUGH */
 	case VID_NATT_RFC:
 		if (md->quirks.qnat_traversal_vid < vid->id) {
 			dbg(" quirks.qnat_traversal_vid set to=%d [%s]", vid->id, vid->descr);

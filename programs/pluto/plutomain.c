@@ -610,11 +610,11 @@ static void usage(FILE *stream)
 		case '!':
 			/* ignore these entries */
 			break;
-		case '^':
-			force_nl = true;
-			meta++;	/* eat ^ */
-			/* FALL THROUGH */
 		default:
+			if (*meta == '^') {
+				force_nl = true;
+				meta++;	/* eat ^ */
+			}
 			if (*meta == '\0')
 				snprintf(chunk, sizeof(chunk),  "[--%s]", nm);
 			else

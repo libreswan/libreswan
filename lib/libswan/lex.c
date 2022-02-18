@@ -81,25 +81,40 @@ void lexclose(struct file_lex_position **flp)
 }
 
 /*
- * Token decoding: shift() loads the next token into tok.
- * If a token starts at the left margin, it is considered
- * to be the first in a record.  We create a special condition,
- * Record Boundary (analogous to EOF), just before such a token.
- * We are unwilling to shift through a record boundary:
- * it must be overridden first.
- * Returns FALSE if Record Boundary or EOF (i.e. no token);
- * tok will then be NULL.
+ * Token decoding: shift() loads the next token into tok.  If a token
+ * starts at the left margin, it is considered to be the first in a
+ * record.  We create a special condition, Record Boundary (analogous
+ * to EOF), just before such a token.  We are unwilling to shift
+ * through a record boundary: it must be overridden first.
+ *
+ * Returns FALSE if Record Boundary or EOF (i.e. no token); tok will
+ * then be NULL.
  */
+
+/*
+ * We have an end-of-line aka start-of-record: return it, deferring
+ * "real" token Caller will clear .bdry so shift() can read the new
+ * line and return the next token.
+ */
+
+static void start_record(struct file_lex_position *flp, char *p)
+{
+	flp->bdry = B_record;
+	flp->tok = NULL;
+	flp->under = *p;
+	flp->cur = p;
+}
 
 /*
  * shift - load next token into tok
  *
  * @return bool True if successful (i.e., there is a token)
  */
+
 bool shift(struct file_lex_position *flp)
 {
 	char *p = flp->cur;
-	char *sor = NULL;	/* start of record for any new lines */
+	char *start_of_record = NULL;	/* start of record for any new lines */
 
 	passert(flp->bdry == B_none);
 
@@ -110,11 +125,11 @@ bool shift(struct file_lex_position *flp)
 	for (;;) {
 		switch (*p) {
 		case '\0':	/* end of line */
-		case '#':	/*
-				 * comment to end of line: treat as end of
-				 * line
-				 */
-			/* get the next line */
+		case '#':	/* comment at end of line */
+			/*
+			 * Treat comment at end of line like line end,
+			 * by getting the next line.
+			 */
 			if (fgets(flp->buffer, sizeof(flp->buffer) - 1,
 					flp->fp) == NULL) {
 				flp->bdry = B_file;
@@ -131,7 +146,7 @@ bool shift(struct file_lex_position *flp)
 			*p = '\0';
 
 			flp->lino++;
-			sor = p = flp->buffer;
+			start_of_record = p = flp->buffer;
 			break;	/* try again for a token */
 
 		case ' ':	/* whitespace */
@@ -142,89 +157,94 @@ bool shift(struct file_lex_position *flp)
 		case '"':	/* quoted token */
 		case '\'':
 		case '`':	/* or execute quotes */
-			if (p != sor) {
+			if (p == start_of_record) {
 				/*
-				 * we have a quoted token:
-				 * note and advance to its end
+				 * Need to return start of record
+				 * before quoted string (on re-entry,
+				 * P hasn't advanced, but
+				 * START_OF_RECORD is NULL).
 				 */
-				flp->tok = p;
-				p = strchr(p + 1, *p);
-				if (p == NULL) {
-					llog(RC_LOG_SERIOUS, flp->logger,
-					     "unterminated string");
-					p = flp->tok + strlen(flp->tok);
-				} else {
-					/* strip quotes from token */
-					flp->quote = *flp->tok;
-					flp->tok++;
-					*p = '\0';
-					p++;
-				}
-
-				/*
-				 * Remember token delimiter and
-				 * replace with '\0' (kind of
-				 * pointless but consistent).
-				 */
-				flp->under = *p;
-				*p = '\0';
-				flp->cur = p;
-				DBGF(DBG_TMI, "lex shift: '%s'", flp->tok);
-				return true; /* token */
-			}
-		/* FALL THROUGH */
-		default:
-			if (p != sor) {
-				/*
-				 * we seem to have a token:
-				 * note and advance to its end
-				 */
-				flp->tok = p;
-
-				if (p[0] == '0' && p[1] == 't') {
-					/* 0t... token goes to end of line */
-					p += strlen(p);
-				} else {
-					/*
-					 * "ordinary" token:
-					 * up to whitespace or end of line
-					 */
-					do {
-						p++;
-					} while (*p != '\0' && !char_isblank(*p));
-
-					/*
-					 * fudge to separate ':' from
-					 * a preceding adjacent token
-					 */
-					if (p - 1 > flp->tok && p[-1] == ':')
-						p--;
-				}
-
-				/*
-				 * remember token delimiter and replace
-				 * with '\0'
-				 */
-				flp->under = *p;
-				*p = '\0';
-				flp->cur = p;
-				DBGF(DBG_TMI, "lex shift: '%s'", flp->tok);
-				return true; /* token */
+				start_record(flp, p);
+				DBGF(DBG_TMI, "lex shift: record(new line, with quotes)");
+				return false; /* no token */
 			}
 
 			/*
-			 * we have an end-of-line aka start-of-record:
-			 * return it, deferring "real" token
-			 *
-			 * Caller will clear .bdry so shift() can read
-			 * the new line and return the next token.
+			 * we have a quoted token:
+			 * note and advance to its end
 			 */
-			flp->bdry = B_record;
-			flp->tok = NULL;
+			flp->tok = p;
+			p = strchr(p + 1, *p);
+			if (p == NULL) {
+				llog(RC_LOG_SERIOUS, flp->logger,
+				     "unterminated string");
+				p = flp->tok + strlen(flp->tok);
+			} else {
+				/* strip quotes from token */
+				flp->quote = *flp->tok;
+				flp->tok++;
+				*p = '\0';
+				p++;
+			}
+
+			/*
+			 * Remember token delimiter and replace with
+			 * '\0' (kind of pointless but consistent).
+			 */
 			flp->under = *p;
+			*p = '\0';
 			flp->cur = p;
-			DBGF(DBG_TMI, "lex shift: record(new line)");
-			return false; /* no token */
+			DBGF(DBG_TMI, "lex shift: '%s'", flp->tok);
+			return true; /* token */
+
+		default:
+			if (p == start_of_record) {
+				/*
+				 * Need to return start of record
+				 * before token (On re-entry, P hasn't
+				 * advanced, but START_OF_RECORD is
+				 * NULL).
+				 */
+				start_record(flp, p);
+				DBGF(DBG_TMI, "lex shift: record(new line, with quotes)");
+				return false; /* no token */
+			}
+
+			/*
+			 * we seem to have a token: note and advance
+			 * to its end
+			 */
+			flp->tok = p;
+
+			if (p[0] == '0' && p[1] == 't') {
+				/* 0t... token goes to end of line */
+				p += strlen(p);
+			} else {
+				/*
+				 * "ordinary" token: up to whitespace
+				 * or end of line
+				 */
+				do {
+					p++;
+				} while (*p != '\0' && !char_isblank(*p));
+
+				/*
+				 * fudge to separate ':' from a
+				 * preceding adjacent token
+				 */
+				if (p - 1 > flp->tok && p[-1] == ':')
+					p--;
+			}
+
+			/*
+			 * remember token delimiter and replace with
+			 * '\0'
+			 */
+			flp->under = *p;
+			*p = '\0';
+			flp->cur = p;
+			DBGF(DBG_TMI, "lex shift: '%s'", flp->tok);
+			return true; /* token */
 		}
 	}
 }

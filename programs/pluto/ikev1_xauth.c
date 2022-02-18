@@ -220,20 +220,31 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 
 	case INTERNAL_IP4_SUBNET:
 	{
-		ip_address client_addr = selector_prefix(c->spd.this.client);
-		diag_t d = pbs_out_address(&attrval, client_addr, "IP4_subnet");
+		diag_t d;
+		ip_address addr = selector_prefix(c->spd.this.client);
+		d = pbs_out_address(&attrval, addr, "IP4_subnet(address)");
 		if (d != NULL) {
 			llog_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
 			return STF_INTERNAL_ERROR;
 		}
+		ip_address mask = selector_prefix_mask(c->spd.this.client);
+		d = pbs_out_address(&attrval, mask, "IP4_subnet(mask)");
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
+			return STF_INTERNAL_ERROR;
+		}
+		break;
 	}
-		/* FALL THROUGH */
+
 	case INTERNAL_IP4_NETMASK:
 	{
-		int m = c->spd.this.client.maskbits;
-		uint32_t mask = htonl(~(m == 32 ? (uint32_t)0 : ~(uint32_t)0 >> m));
-
-		ok = out_raw(&mask, sizeof(mask), &attrval, "IP4_submsk");
+		diag_t d;
+		ip_address mask = selector_prefix_mask(c->spd.this.client);
+		d = pbs_out_address(&attrval, mask, "IP4_netmask");
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
+			return STF_INTERNAL_ERROR;
+		}
 		break;
 	}
 

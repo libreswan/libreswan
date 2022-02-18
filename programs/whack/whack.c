@@ -1817,11 +1817,12 @@ int main(int argc, char **argv)
 		}
 
 		/* RSASIG/ECDSA need more than a single policy bit */
-		case CDP_SINGLETON + POLICY_PSK_IX:	/* --psk */
+		case CDP_SINGLETON + POLICY_PSK_IX:		/* --psk */
 		case CDP_SINGLETON + POLICY_AUTH_NEVER_IX:	/* --auth-never */
 		case CDP_SINGLETON + POLICY_AUTH_NULL_IX:	/* --auth-null */
 			auth_specified = true;
-			/* FALL THROUGH */
+			msg.policy |= LELEM(c - CDP_SINGLETON);
+			continue;
 
 		case CDP_SINGLETON + POLICY_ENCRYPT_IX:	/* --encrypt */
 		/* --authenticate */
