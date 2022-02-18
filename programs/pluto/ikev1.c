@@ -2184,71 +2184,62 @@ void process_packet_tail(struct msg_digest *md)
 	 * Ignore payloads that we don't handle:
 	 */
 	/* XXX Handle Notifications */
-	{
-		struct payload_digest *p = md->chain[ISAKMP_NEXT_N];
+	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_N];
+	     p != NULL; p = p->next) {
 
-		while (p != NULL) {
-			switch (p->payload.notification.isan_type) {
-			case R_U_THERE:
-			case R_U_THERE_ACK:
-			case PAYLOAD_MALFORMED:
-			case INVALID_MESSAGE_ID:
-			case IPSEC_RESPONDER_LIFETIME:
-				if (md->hdr.isa_xchg == ISAKMP_XCHG_INFO) {
-					/* these are handled later on in informational() */
-					break;
+		enum_buf b; /*same scope as nname*/
+		const char *nname = str_enum(&ikev1_notify_names,
+					     p->payload.notification.isan_type,
+					     &b);
+		switch (p->payload.notification.isan_type) {
+		case R_U_THERE:
+		case R_U_THERE_ACK:
+		case PAYLOAD_MALFORMED:
+		case INVALID_MESSAGE_ID:
+		case IPSEC_RESPONDER_LIFETIME:
+			if (md->hdr.isa_xchg == ISAKMP_XCHG_INFO) {
+				/* these are handled later on in informational() */
+				if (DBGP(DBG_BASE)) {
+					DBG_log("%s:", nname);
+					DBG_dump_pbs(&p->pbs);
 				}
-				/* FALL THROUGH */
-			default:
-				if (st == NULL) {
-					enum_buf b;
-					dbg("ignoring informational payload %s, no corresponding state",
-					    str_enum(& ikev1_notify_names,
-						     p->payload.notification.isan_type, &b));
-				} else {
-					enum_buf b;
-					LOG_PACKET(RC_LOG_SERIOUS,
-						   "ignoring informational payload %s, msgid=%08" PRIx32 ", length=%d",
-						   str_enum(&ikev1_notify_names,
-							    p->payload.notification.isan_type,
-							    &b),
-						   st->st_v1_msgid.id,
-						   p->payload.notification.isan_length);
-					if (DBGP(DBG_BASE)) {
-						DBG_dump_pbs(&p->pbs);
-					}
-				}
+				continue;
 			}
-			if (DBGP(DBG_BASE)) {
-				DBG_dump("info:", p->pbs.cur,
-					 pbs_left(&p->pbs));
-			}
-
-			p = p->next;
 		}
 
-		p = md->chain[ISAKMP_NEXT_D];
-		while (p != NULL) {
-			self_delete |= accept_delete(md, p);
-			if (DBGP(DBG_BASE)) {
-				DBG_dump("del:", p->pbs.cur,
-					 pbs_left(&p->pbs));
-			}
-			if (md->v1_st != st) {
-				pexpect(md->v1_st == NULL);
-				dbg("zapping ST as accept_delete() zapped MD.ST");
-				st = md->v1_st;
-			}
-			p = p->next;
+		if (st == NULL) {
+			dbg("ignoring informational payload %s, no corresponding state",
+			    nname);
+		} else {
+			LOG_PACKET(RC_LOG_SERIOUS,
+				   "ignoring informational payload %s, msgid=%08" PRIx32 ", length=%d",
+				   nname, st->st_v1_msgid.id,
+				   p->payload.notification.isan_length);
 		}
+		if (DBGP(DBG_BASE)) {
+			DBG_dump_pbs(&p->pbs);
+		}
+	}
 
-		p = md->chain[ISAKMP_NEXT_VID];
-		while (p != NULL) {
-			handle_vendorid(md, (char *)p->pbs.cur,
-					pbs_left(&p->pbs), false,
-					st != NULL ? st->st_logger : md->md_logger);
-			p = p->next;
+	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_D];
+	     p != NULL; p = p->next) {
+		self_delete |= accept_delete(md, p);
+		if (DBGP(DBG_BASE)) {
+			DBG_dump("del:", p->pbs.cur,
+				 pbs_left(&p->pbs));
 		}
+		if (md->v1_st != st) {
+			pexpect(md->v1_st == NULL);
+			dbg("zapping ST as accept_delete() zapped MD.ST");
+			st = md->v1_st;
+		}
+	}
+
+	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_VID];
+	     p != NULL; p = p->next) {
+		handle_vendorid(md, (char *)p->pbs.cur,
+				pbs_left(&p->pbs), false,
+				st != NULL ? st->st_logger : md->md_logger);
 	}
 
 	if (self_delete) {
