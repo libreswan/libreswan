@@ -1487,7 +1487,6 @@ static bool load_conn(struct starter_conn *conn,
 	 */
 	if (NEVER_NEGOTIATE(conn->policy)) {
 		/* remove IPsec related options */
-		conn->ike_version = 0;
 		conn->policy &= (~(POLICY_PFS |
 				   POLICY_COMPRESS |
 				   POLICY_ESN_NO |
