@@ -2497,6 +2497,88 @@ static void update_next_payload_chain(pb_stream *outs,
  * This routine returns TRUE iff it succeeds.
  */
 
+static diag_t pbs_out_number(struct pbs_out *outs, struct_desc *sd,
+			     const uint8_t **inp,
+			     uint8_t **cur,
+			     field_desc *fp,
+			     bool *immediate)
+{
+
+	uint32_t n;
+
+	switch (fp->size) {
+	case 8 / BITS_PER_BYTE:
+		n = *(const uint8_t *)(*inp);
+		break;
+	case 16 / BITS_PER_BYTE:
+		n = *(const uint16_t *)(*inp);
+		break;
+	case 32 / BITS_PER_BYTE:
+		n = *(const uint32_t *)(*inp);
+		break;
+	default:
+		bad_case(fp->size);
+	}
+
+	switch (fp->field_type) {
+
+	case ft_af_loose_enum: /* Attribute Format + value from an enumeration */
+	case ft_af_enum: /* Attribute Format + value from an enumeration */
+		*immediate = ((n & ISAKMP_ATTR_AF_MASK) ==
+			      ISAKMP_ATTR_AF_TV);
+		if (fp->field_type == ft_af_enum &&
+		    enum_name(fp->desc, n) == NULL) {
+#define MSG "%s of %s has an unknown value: 0x%x+%" PRIu32 " (0x%" PRIx32 ")", \
+				fp->name,				\
+				sd->name,				\
+				n & ISAKMP_ATTR_AF_MASK,		\
+				n & ~ISAKMP_ATTR_AF_MASK,		\
+				n
+			if (!impair.emitting) {
+				return diag(MSG);
+			}
+			llog(RC_LOG, outs->outs_logger, "IMPAIR: emitting "MSG);
+		}
+		break;
+
+	case ft_enum:   /* value from an enumeration */
+		if (enum_name(fp->desc, n) == NULL) {
+			return diag("%s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
+				    fp->name, sd->name,
+				    n, n);
+		}
+		break;
+
+	case ft_loose_enum:     /* value from an enumeration with only some names known */
+		break;
+
+	case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
+		break;
+
+	case ft_lset:           /* bits representing set */
+		if (!test_lset(fp->desc, n)) {
+			lset_buf lb;
+			return diag("bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
+				    fp->name, sd->name,
+				    str_lset(fp->desc, n, &lb),
+				    n);
+		}
+		break;
+
+	default:
+		break;
+	}
+
+	/* emit i low-order bytes of n in network order */
+	for (int i = fp->size - 1; i >= 0; i--) {
+		(*cur)[i] = (uint8_t)n;
+		n >>= BITS_PER_BYTE;
+	}
+	(*inp) += fp->size;
+	(*cur) += fp->size;
+	return NULL;
+}
+
 diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 		      const void *struct_ptr, size_t struct_size,
 		      struct pbs_out *obj_pbs)
@@ -2608,8 +2690,14 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 				cur += i;
 				break;
 			}
+
 			/* immediate form is just like a number */
-			/* FALL THROUGH */
+			diag_t d = pbs_out_number(outs, sd, &inp, &cur, fp, &immediate);
+			if (d != NULL) {
+				return d;
+			}
+			break;
+
 		case ft_nat:            /* natural number (may be 0) */
 		case ft_enum:           /* value from an enumeration */
 		case ft_loose_enum:     /* value from an enumeration with only some names known */
@@ -2618,73 +2706,10 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 		case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
 		case ft_lset:           /* bits representing set */
 		{
-			uint32_t n;
-
-			switch (i) {
-			case 8 / BITS_PER_BYTE:
-				n = *(const uint8_t *)inp;
-				break;
-			case 16 / BITS_PER_BYTE:
-				n = *(const uint16_t *)inp;
-				break;
-			case 32 / BITS_PER_BYTE:
-				n = *(const uint32_t *)inp;
-				break;
-			default:
-				bad_case(i);
+			diag_t d = pbs_out_number(outs, sd, &inp, &cur, fp, &immediate);
+			if (d != NULL) {
+				return d;
 			}
-
-			switch (fp->field_type) {
-
-			case ft_af_loose_enum: /* Attribute Format + value from an enumeration */
-			case ft_af_enum: /* Attribute Format + value from an enumeration */
-				immediate = ((n & ISAKMP_ATTR_AF_MASK) ==
-					     ISAKMP_ATTR_AF_TV);
-				if (fp->field_type == ft_af_enum &&
-				    enum_name(fp->desc, n) == NULL) {
-#define MSG "%s of %s has an unknown value: 0x%x+%" PRIu32 " (0x%" PRIx32 ")", fp->name, sd->name, n & ISAKMP_ATTR_AF_MASK, n & ~ISAKMP_ATTR_AF_MASK, n
-					if (!impair.emitting) {
-						return diag(MSG);
-					}
-					llog(RC_LOG, outs->outs_logger, "IMPAIR: emitting "MSG);
-				}
-				break;
-
-			case ft_enum:   /* value from an enumeration */
-				if (enum_name(fp->desc, n) == NULL) {
-					return diag("%s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
-						    fp->name, sd->name,
-						    n, n);
-				}
-				break;
-
-			case ft_loose_enum:     /* value from an enumeration with only some names known */
-				break;
-
-			case ft_loose_enum_enum:	/* value from an enumeration with partial name table based on previous enum */
-				break;
-
-			case ft_lset:           /* bits representing set */
-				if (!test_lset(fp->desc, n)) {
-					lset_buf lb;
-					return diag("bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
-						    fp->name, sd->name,
-						    str_lset(fp->desc, n, &lb),
-						    n);
-				}
-				break;
-
-			default:
-				break;
-			}
-
-			/* emit i low-order bytes of n in network order */
-			while (i-- != 0) {
-				cur[i] = (uint8_t)n;
-				n >>= BITS_PER_BYTE;
-			}
-			inp += fp->size;
-			cur += fp->size;
 			break;
 		}
 
