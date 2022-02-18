@@ -107,7 +107,8 @@ static enum natt_method nat_traversal_vid_to_method(enum known_vendorid nat_t_vi
 	case VID_NATT_IETF_08:
 	case VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE:
 		dbg("NAT-T VID draft-ietf-ipsc-nat-t-ike-04 to 08 assumed to function as RFC 3947 ");
-		/* FALL THROUGH */
+		return NAT_TRAVERSAL_METHOD_IETF_RFC;
+
 	case VID_NATT_RFC:
 		dbg("returning NAT-T method NAT_TRAVERSAL_METHOD_IETF_RFC");
 		return NAT_TRAVERSAL_METHOD_IETF_RFC;

@@ -2851,12 +2851,11 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		md->v1_st = st = NULL;
 		break;
 
-	default:        /* a shortcut to STF_FAIL, setting md->note */
-		passert(result > STF_FAIL);
-		md->v1_note = result - STF_FAIL;
-		/* FALL THROUGH */
 	case STF_FAIL:
+	default:
 	{
+		passert(result >= STF_FAIL);
+		md->v1_note = result - STF_FAIL;
 		/* As it is, we act as if this message never happened:
 		 * whatever retrying was in place, remains in place.
 		 */

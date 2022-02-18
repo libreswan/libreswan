@@ -1937,11 +1937,14 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 
 			/* display the result */
 			switch (fp->field_type) {
+
 			case ft_len:    /* length of this struct and any following crud */
 			case ft_lv:     /* length/value field of attribute */
 				if (!immediate && !len_meaningful)
 					break;
-			/* FALL THROUGH */
+				DBG_print_nat(fp, n);
+				break;
+
 			case ft_nat: /* natural number (may be 0) */
 				DBG_print_nat(fp, n);
 				break;
