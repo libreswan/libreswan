@@ -1480,30 +1480,30 @@ static bool extract_connection(const struct whack_message *wm,
 	config->ike_version = wm->ike_version;
 
 	if (wm->policy & POLICY_OPPORTUNISTIC &&
-	    c->config->ike_version == IKEv1) {
+	    c->config->ike_version < IKEv2) {
 		llog(RC_FATAL, c->logger,
-			    "failed to add connection: opportunistic connection MUST have IKEv2");
+		     "failed to add connection: opportunistic connection MUST have IKEv2");
 		return false;
 	}
 
 	if (wm->policy & POLICY_MOBIKE &&
-	    c->config->ike_version == IKEv1) {
+	    c->config->ike_version < IKEv2) {
 		llog(RC_FATAL, c->logger,
-			    "failed to add connection: MOBIKE requires IKEv2");
+		     "failed to add connection: MOBIKE requires IKEv2");
 		return false;
 	}
 
 	if (wm->policy & POLICY_IKEV2_ALLOW_NARROWING &&
-	    c->config->ike_version == IKEv1) {
+	    c->config->ike_version < IKEv2) {
 		llog(RC_FATAL, c->logger,
-			    "failed to add connection: narrowing=yes requires IKEv2");
+		     "failed to add connection: narrowing=yes requires IKEv2");
 		return false;
 	}
 
 	if (wm->iketcp != IKE_TCP_NO &&
-	    c->config->ike_version != IKEv2) {
+	    c->config->ike_version < IKEv2) {
 		llog(RC_FATAL, c->logger,
-			    "failed to add connection: enable-tcp= requires IKEv2");
+		     "failed to add connection: enable-tcp= requires IKEv2");
 		return false;
 	}
 
