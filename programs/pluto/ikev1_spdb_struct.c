@@ -1399,15 +1399,25 @@ fail:
 	return false;
 }
 
-/** Handle long form of duration attribute.
+/**
+ * Handle long form of duration attribute.
+ *
  * The code is can only handle values that can fit in unsigned long.
  * "Clamping" is probably an acceptable way to impose this limitation.
  *
  * @param pbs PB Stream
  * @return uint32_t duration, in seconds.
  */
-static uint32_t decode_long_duration(pb_stream *pbs)
+static uint32_t decode_life_duration(const struct isakmp_attribute *a,
+				     struct pbs_in *pbs)
 {
+	if (a->isaat_af_type & ISAKMP_ATTR_AF_TV) {
+		uint32_t val = a->isaat_lv;
+		dbg("   long duration: %" PRIu32 " (TV)", val);
+		return val;
+	}
+	pexpect(a->isaat_af_type & ISAKMP_ATTR_AF_TLV);
+
 	uint32_t val = 0;
 
 	/* ignore leading zeros */
@@ -1422,7 +1432,7 @@ static uint32_t decode_long_duration(pb_stream *pbs)
 		/* decode number */
 		while (pbs_left(pbs) != 0)
 			val = (val << BITS_PER_BYTE) | *pbs->cur++;
-		dbg("   long duration: %" PRIu32, val);
+		dbg("   long duration: %" PRIu32 " (TVL)", val);
 	}
 	return val;
 }
@@ -2043,9 +2053,8 @@ rsasig_common:
 				break;
 
 			case OAKLEY_LIFE_DURATION | ISAKMP_ATTR_AF_TLV:
-				val = decode_long_duration(&attr_pbs);
-				/* FALL THROUGH */
 			case OAKLEY_LIFE_DURATION | ISAKMP_ATTR_AF_TV:
+				val = decode_life_duration(&a, &attr_pbs);
 				if (!LHAS(seen_attrs, OAKLEY_LIFE_TYPE)) {
 					UGH("OAKLEY_LIFE_DURATION attribute not preceded by OAKLEY_LIFE_TYPE attribute");
 					break;
@@ -2518,9 +2527,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			break;
 
 		case SA_LIFE_DURATION | ISAKMP_ATTR_AF_TLV:
-			val = decode_long_duration(&attr_pbs);
-			/* FALL THROUGH */
 		case SA_LIFE_DURATION | ISAKMP_ATTR_AF_TV:
+			val = decode_life_duration(&a, &attr_pbs);
 			ipcomp_inappropriate = false;
 			if (!LHAS(seen_attrs, SA_LIFE_TYPE)) {
 				log_state(RC_LOG_SERIOUS, st,
