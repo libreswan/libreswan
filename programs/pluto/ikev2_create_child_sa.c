@@ -886,15 +886,6 @@ stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	/*
-	 * XXX: fudge a state transition.
-	 *
-	 * Code extracted and simplified from
-	 * success_v2_state_transition(); suspect very similar code
-	 * will appear in the initiator.
-	 */
-	v2_child_sa_established(ike, larval_child);
-
 	return STF_OK; /*IKE*/
 }
 

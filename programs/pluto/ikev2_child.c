@@ -411,6 +411,15 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 		return v2N_INVALID_SYNTAX; /* something fatal to IKE (but bogus) */
 	}
 
+	/*
+	 * XXX: fudge a state transition.
+	 *
+	 * Code extracted and simplified from
+	 * success_v2_state_transition(); suspect very similar code
+	 * will appear in the initiator.
+	 */
+	v2_child_sa_established(ike, larval_child);
+
 	return v2N_NOTHING_WRONG;
 }
 
@@ -1133,15 +1142,6 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 		delete_state(&child->sa);
 		return n;
 	}
-
-	/*
-	 * XXX: fudge a state transition.
-	 *
-	 * Code extracted and simplified from
-	 * success_v2_state_transition(); suspect very similar code
-	 * will appear in the initiator.
-	 */
-	v2_child_sa_established(ike, child);
 
 	return v2N_NOTHING_WRONG;
 }
