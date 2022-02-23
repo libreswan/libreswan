@@ -1700,7 +1700,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
-	set_newest_ipsec_sa("inR1_outI2", st);
+	set_newest_v1_ipsec_sa(__func__, st);
 
 	if (dpd_init(st) != STF_OK) {
 		delete_ipsec_sa(st);
@@ -1732,7 +1732,7 @@ stf_status quick_inI2(struct state *st, struct msg_digest *md UNUSED)
 	if (!install_ipsec_sa(st, false))
 		return STF_INTERNAL_ERROR;
 
-	set_newest_ipsec_sa("inI2", st);
+	set_newest_v1_ipsec_sa(__func__, st);
 
 	update_iv(st);  /* not actually used, but tidy */
 

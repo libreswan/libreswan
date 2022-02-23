@@ -863,8 +863,7 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_1(struct state *ik
 	 * SAs connection).
 	 */
 	pexpect(ike->sa.st_connection->newest_ike_sa == ike->sa.st_serialno);
-	set_newest_ipsec_sa(enum_name(&ikev2_exchange_names, request_md->hdr.isa_xchg),
-			    &larval_child->sa);
+	set_newest_v2_child_sa(__func__, larval_child);
 
 	if (!record_v2_child_response(ike, larval_child, request_md)) {
 		return STF_INTERNAL_ERROR;
@@ -947,8 +946,7 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *ik
 	 * SAs connection).
 	 */
 	pexpect(ike->sa.st_connection->newest_ike_sa == ike->sa.st_serialno);
-	set_newest_ipsec_sa(enum_name(&ikev2_exchange_names, request_md->hdr.isa_xchg),
-			    &larval_child->sa);
+	set_newest_v2_child_sa(__func__, larval_child);
 
 	if (!record_v2_child_response(ike, larval_child, request_md)) {
 		return STF_INTERNAL_ERROR;
