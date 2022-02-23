@@ -798,6 +798,24 @@ void llog_v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 	}
 }
 
+/*
+ * This is called by:
+ *
+ * - IKE_AUTH responder
+ * - IKE_AUTH initiator
+ * - CREATE_CHILD_SA responder
+ *
+ * but NOT by the CREATE_CHILD_SA initiator.
+ *
+ * Why?
+ *
+ * Because the CREATE_CHILD_SA initiator still switches from the IKE
+ * to Child SA and then lets sucess_v2_state_transition() performs the
+ * below.
+ *
+ * Ulgh.
+ */
+
 void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 {
 	change_state(&child->sa, STATE_V2_ESTABLISHED_CHILD_SA);
