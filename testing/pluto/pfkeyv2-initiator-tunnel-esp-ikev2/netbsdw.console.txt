@@ -1,33 +1,26 @@
 # note swan-prep does not yet support BSD
-# note swan-prep does not yet support BSD
 netbsdw #
  ../../guestbin/netbsd-prep.sh
-../../guestbin/netbsd-prep.sh
 ipsec.conf -> PATH/etc/ipsec.conf
 ipsec.secrets -> PATH/etc/ipsec.secrets
 netbsdw #
  ipsec start
-ipsec start
 Redirecting to: [initsystem]
 Initializing NSS database
 Starting pluto.
 netbsdw #
  ipsec auto --add eastnet-westnet-ikev2
-ipsec auto --add eastnet-westnet-ikev2
 002 "eastnet-westnet-ikev2": kernel interface does not support ESN so disabling
 002 "eastnet-westnet-ikev2": added IKEv2 connection
 netbsdw #
  echo "initdone"
-echo "initdone"
 initdone
 netbsdw #
  ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
-../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 unexpected status 2
 PING 192.0.2.254 (192.0.2.254): 56 data bytes ----192.0.2.254 PING Statistics---- 1 packets transmitted, 0 packets received, 100.0% packet loss
 netbsdw #
  ipsec auto --up eastnet-westnet-ikev2
-ipsec auto --up eastnet-westnet-ikev2
 1v2 "eastnet-westnet-ikev2" #1: initiating IKEv2 connection
 1v2 "eastnet-westnet-ikev2" #1: sent IKE_SA_INIT request
 1v2 "eastnet-westnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
@@ -35,48 +28,44 @@ ipsec auto --up eastnet-westnet-ikev2
 004 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 netbsdw #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 netbsdw #
  setkey -D
-setkey -D
 192.1.2.23 192.1.2.45 
-        esp mode=tunnel spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
-        E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
-        A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
-        seq=0x00000001 replay=64 flags=0x00000000 state=mature 
-        created: TIMESTAMP   current: TIMESTAMP
-        diff: N(s)      hard: 28800(s)  soft: 28800(s)
-        last: TIMESTAMP      hard: 0(s)      soft: 0(s)
-        current: 104(bytes)     hard: 0(bytes)  soft: 0(bytes)
-        allocated: 1    hard: 0 soft: 0
-        sadb_seq=1 pid=PID refcnt=0
+   esp mode=tunnel spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
+       E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+ A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+      seq=0x00000001 replay=64 flags=0x00000000 state=mature 
+ created: TIMESTAMP   current: TIMESTAMP
+   diff: N(s)      hard: 28800(s)  soft: 28800(s)
+  last: TIMESTAMP      hard: 0(s)      soft: 0(s)
+      current: 104(bytes)     hard: 0(bytes)  soft: 0(bytes)
+  allocated: 1    hard: 0 soft: 0
+ sadb_seq=1 pid=PID refcnt=0
 192.1.2.45 192.1.2.23 
-        esp mode=tunnel spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
-        E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
-        A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
-        seq=0x00000001 replay=64 flags=0x00000000 state=mature 
-        created: TIMESTAMP   current: TIMESTAMP
-        diff: N(s)      hard: 28800(s)  soft: 28800(s)
-        last: TIMESTAMP      hard: 0(s)      soft: 0(s)
-        current: 152(bytes)     hard: 0(bytes)  soft: 0(bytes)
-        allocated: 1    hard: 0 soft: 0
-        sadb_seq=0 pid=PID refcnt=0
+       esp mode=tunnel spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
+      E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+ A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+      seq=0x00000001 replay=64 flags=0x00000000 state=mature 
+ created: TIMESTAMP   current: TIMESTAMP
+   diff: N(s)      hard: 28800(s)  soft: 28800(s)
+  last: TIMESTAMP      hard: 0(s)      soft: 0(s)
+      current: 152(bytes)     hard: 0(bytes)  soft: 0(bytes)
+  allocated: 1    hard: 0 soft: 0
+ sadb_seq=0 pid=PID refcnt=0
 netbsdw #
  setkey -DP
-setkey -DP
 192.0.2.0/24[any] 192.0.1.0/24[any] 255(reserved)
-        in ipsec
+ in ipsec
         esp/tunnel/192.1.2.23-192.1.2.45/require
         spid=1 seq=1 pid=PID
-        refcnt=0
+    refcnt=0
 192.0.1.0/24[any] 192.0.2.0/24[any] 255(reserved)
-        out ipsec
-        esp/tunnel/192.1.2.45-192.1.2.23/require
+       out ipsec
+       esp/tunnel/192.1.2.45-192.1.2.23/require
         spid=2 seq=0 pid=PID
-        refcnt=0
+    refcnt=0
 netbsdw #
  dmesg | grep ipsec
-dmesg | grep ipsec
 netbsdw #
  
