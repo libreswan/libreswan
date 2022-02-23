@@ -71,6 +71,8 @@ static dh_shared_secret_cb process_v2_CREATE_CHILD_SA_request_continue_2;
 static dh_shared_secret_cb process_v2_CREATE_CHILD_SA_child_response_continue_1;
 
 static ke_and_nonce_cb queue_v2_CREATE_CHILD_SA_initiator; /* signature check */
+static stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *ike,
+								struct msg_digest *request_md);
 
 stf_status queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
 					      struct msg_digest *unused_md,
@@ -825,60 +827,18 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_1(struct state *ik
 		larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0);
 
 	unpack_nonce(&larval_child->sa.st_nr, nonce);
-	if (local_secret != NULL) {
-		unpack_KE_from_helper(&larval_child->sa, local_secret, &larval_child->sa.st_gr);
-		/* initiate calculation of g^xy */
-		submit_dh_shared_secret(&ike->sa, &larval_child->sa, larval_child->sa.st_gi,
-					process_v2_CREATE_CHILD_SA_request_continue_2,
-					HERE);
-		return STF_SUSPEND;
+	if (local_secret == NULL) {
+		/* skip step 2 */
+		/* may invalidate LARVAL_CHILD */
+		return process_v2_CREATE_CHILD_SA_request_continue_3(ike, request_md);
 	}
 
-	v2_notification_t n = process_v2_child_request_payloads(ike, larval_child, request_md);
-	if (n != v2N_NOTHING_WRONG) {
-		/* already logged */
-		record_v2N_response(larval_child->sa.st_logger, ike, request_md,
-				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
-		delete_state(&larval_child->sa);
-		ike->sa.st_v2_larval_responder_sa = NULL;
-		return v2_notification_fatal(n) ? STF_FATAL : STF_OK; /*IKE*/
-	}
-
-	/* install inbound and outbound SPI info */
-	if (!install_ipsec_sa(&larval_child->sa, true)) {
-		/* already logged */
-		record_v2N_response(larval_child->sa.st_logger, ike, request_md,
-				    v2N_TS_UNACCEPTABLE, NULL/*no-data*/,
-				    ENCRYPTED_PAYLOAD);
-		delete_state(&larval_child->sa);
-		ike->sa.st_v2_larval_responder_sa = NULL;
-		return STF_OK; /*IKE*/
-	}
-
-	/*
-	 * Mark that the connection has an established Child SA
-	 * associated with it.
-	 *
-	 * (The IKE SA's connection may not be the same as the Child
-	 * SAs connection).
-	 */
-	pexpect(ike->sa.st_connection->newest_ike_sa == ike->sa.st_serialno);
-	set_newest_v2_child_sa(__func__, larval_child);
-
-	if (!record_v2_child_response(ike, larval_child, request_md)) {
-		return STF_INTERNAL_ERROR;
-	}
-
-	/*
-	 * XXX: fudge a state transition.
-	 *
-	 * Code extracted and simplified from
-	 * success_v2_state_transition(); suspect very similar code
-	 * will appear in the initiator.
-	 */
-	v2_child_sa_established(ike, larval_child);
-
-	return STF_OK;
+	unpack_KE_from_helper(&larval_child->sa, local_secret, &larval_child->sa.st_gr);
+	/* initiate calculation of g^xy */
+	submit_dh_shared_secret(&ike->sa, &larval_child->sa, larval_child->sa.st_gi,
+				process_v2_CREATE_CHILD_SA_request_continue_2,
+				HERE);
+	return STF_SUSPEND;
 }
 
 static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *ike_sa,
@@ -916,6 +876,19 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *ik
 		return STF_FATAL; /* kill IKE family */
 	}
 
+	/* may invalidate LARVAL_CHILD */
+	return process_v2_CREATE_CHILD_SA_request_continue_3(ike, request_md);
+}
+
+stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *ike,
+							 struct msg_digest *request_md)
+{
+	struct child_sa *larval_child = ike->sa.st_v2_larval_responder_sa;
+	passert(v2_msg_role(request_md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
+	passert(larval_child->sa.st_sa_role == SA_RESPONDER);
+	dbg("%s() for #%lu %s",
+	     __func__, larval_child->sa.st_serialno, larval_child->sa.st_state->name);
+
 	v2_notification_t n = process_v2_child_request_payloads(ike, larval_child, request_md);
 	if (n != v2N_NOTHING_WRONG) {
 		/* already logged */
@@ -925,7 +898,6 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *ik
 		ike->sa.st_v2_larval_responder_sa = NULL;
 		return v2_notification_fatal(n) ? STF_FATAL : STF_OK; /*IKE*/
 	}
-
 
 	/* install inbound and outbound SPI info */
 	if (!install_ipsec_sa(&larval_child->sa, true)) {
@@ -946,7 +918,7 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_2(struct state *ik
 	 * SAs connection).
 	 */
 	pexpect(ike->sa.st_connection->newest_ike_sa == ike->sa.st_serialno);
-	set_newest_v2_child_sa(__func__, larval_child);
+	set_newest_v2_child_sa(__func__, larval_child); /* process_v2_CREATE_CHILD_SA_request_continue_2() */
 
 	if (!record_v2_child_response(ike, larval_child, request_md)) {
 		return STF_INTERNAL_ERROR;

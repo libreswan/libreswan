@@ -969,7 +969,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		/* This affects/kills the IKE SA? Oops :-( */
 		return v2N_INVALID_SYNTAX; /* fatal */
 
-	set_newest_v2_child_sa(__func__, child);
+	set_newest_v2_child_sa(__func__, child); /* process_v2_child_response_payloads() */
 
 	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I1)
 		ikev2_rekey_expire_predecessor(child, child->sa.st_ipsec_pred);
@@ -1071,7 +1071,7 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 	}
 
 	/* mark the connection as now having an IPsec SA associated with it. */
-	set_newest_v2_child_sa(__func__, child);
+	set_newest_v2_child_sa(__func__, child); /* process_v2_IKE_AUTH_request_child_sa_payloads() */
 
 	if (!emit_v2_child_response_payloads(ike, child, md, sk_pbs)) {
 		/* already logged */
