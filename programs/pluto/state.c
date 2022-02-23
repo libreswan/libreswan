@@ -2568,6 +2568,17 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	 * for now just do this one connection, later on loop over all Child SAs
 	 */
 	struct child_sa *child = child_sa_by_serialno(c->newest_ipsec_sa);
+	if (child == NULL) {
+		/*
+		 * XXX: Technically, loosing the first child (it gets
+		 * torn down but others remain) is perfectly
+		 * reasonable.  However, per above comments, handling
+		 * multiple Child SAs is still a TODO item.
+		 */
+		llog_pexpect(ike->sa.st_logger, HERE,
+			     "IKE SA lost first Child SA "PRI_SO, pri_so(c->newest_ipsec_sa));
+		return false;
+	}
 
 	/* check for all conditions before updating IPsec SA's */
 	if (afi != address_type(&c->remote->host.addr)) {
