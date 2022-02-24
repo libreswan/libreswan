@@ -1462,18 +1462,17 @@ bool close_and_record_v2_message(struct v2_message *message)
 
 	switch (message->security) {
 	case ENCRYPTED_PAYLOAD:
-		if (!encrypt_v2SK_payload(&message->sk)) {
-			llog(RC_LOG, message->logger,
-			     "error encrypting response");
+		if (record_v2SK_message(&message->message,
+					&message->sk,
+					message->story,
+					message->role) != STF_OK) {
 			return false;
 		}
-		break;
+		return true;
 	case UNENCRYPTED_PAYLOAD:
-		break;
+		record_v2_message(message->ike, &message->message,
+				  message->story, message->role);
+		return true;
 	}
-
-	record_v2_message(message->ike, &message->message,
-			  message->story, message->role);
-
-	return true;
+	bad_case(message->security);
 }
