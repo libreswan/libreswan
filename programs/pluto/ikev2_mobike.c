@@ -266,22 +266,30 @@ void record_deladdr(ip_address *ip, char *a_type)
 
 		ip_address local_address = endpoint_address(st->st_interface->local_endpoint);
 		/* ignore port */
-		if (sameaddr(ip, &local_address)) {
-			ip_address ip_p = st->st_deleted_local_addr;
-			st->st_deleted_local_addr = local_address;
-			struct state *cst = state_by_serialno(st->st_connection->newest_ipsec_sa);
-			migration_down(cst->st_connection, cst);
-			unroute_connection(st->st_connection);
+		if (!sameaddr(ip, &local_address)) {
+			continue;
+		}
 
-			event_delete(EVENT_v2_LIVENESS, cst);
+		ip_address ip_p = st->st_deleted_local_addr;
+		st->st_deleted_local_addr = local_address;
+		struct state *cst = state_by_serialno(st->st_connection->newest_ipsec_sa);
+		if (cst == NULL) {
+			llog_pexpect(st->st_logger, HERE, "newest Child SA "PRI_SO" lost",
+				     pri_so(st->st_connection->newest_ipsec_sa));
+			continue;
+		}
 
-			if (st->st_v2_addr_change_event == NULL) {
-				event_schedule(EVENT_v2_ADDR_CHANGE, deltatime(0), st);
-			} else {
-				ipstr_buf o, n;
-				dbg("#%lu MOBIKE new RTM_DELADDR %s pending previous %s",
-				    st->st_serialno, ipstr(ip, &n), ipstr(&ip_p, &o));
-			}
+		migration_down(cst->st_connection, cst);
+		unroute_connection(st->st_connection);
+
+		event_delete(EVENT_v2_LIVENESS, cst);
+
+		if (st->st_v2_addr_change_event == NULL) {
+			event_schedule(EVENT_v2_ADDR_CHANGE, deltatime(0), st);
+		} else {
+			ipstr_buf o, n;
+			dbg("#%lu MOBIKE new RTM_DELADDR %s pending previous %s",
+			    st->st_serialno, ipstr(ip, &n), ipstr(&ip_p, &o));
 		}
 	}
 }
