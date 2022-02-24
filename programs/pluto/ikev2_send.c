@@ -460,12 +460,12 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	}
 
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
-	struct pbs_out reply = open_pbs_out("unencrypted notification",
-					    buf, sizeof(buf), md->md_logger);
-	struct pbs_out rbody = open_v2_message_body(&reply,
-						    NULL/*no state*/, md/*response*/,
-						    exchange_type);
-	if (!pbs_ok(&rbody)) {
+	struct v2_message response;
+	if (!open_v2_message("unencrypted notification response",
+			     NULL/*no-IKE*/, md->md_logger, md/*response*/,
+			     exchange_type,
+			     buf, sizeof(buf),
+			     &response, UNENCRYPTED_PAYLOAD)) {
 		pexpect_fail(md->md_logger, HERE,
 			     "error building header for unencrypted %s %s notification with message ID %u",
 			     exchange_name, notify_name, md->hdr.isa_msgid);
@@ -474,21 +474,20 @@ void send_v2N_response_from_md(struct msg_digest *md,
 
 	/* build and add v2N payload to the packet */
 	shunk_t nhunk = ndata == NULL ? empty_shunk : *ndata;
-	if (!emit_v2N_hunk(ntype, nhunk, &rbody)) {
+	if (!emit_v2N_hunk(ntype, nhunk, response.pbs)) {
 		pexpect_fail(md->md_logger, HERE,
 			     "error building unencrypted %s %s notification with message ID %u",
 			     exchange_name, notify_name, md->hdr.isa_msgid);
 		return;
 	}
 
-	close_output_pbs(&rbody);
-	close_output_pbs(&reply);
+	close_v2_message(&response);
 
 	/*
 	 * This notification is fire-and-forget (not a proper
 	 * exchange, one with retrying) so it is not saved.
 	 */
-	send_pbs_out_using_md(md, "v2 notify", &reply);
+	send_pbs_out_using_md(md, "v2 notify", &response.message);
 
 	pstat(ikev2_sent_notifies_e, ntype);
 }
