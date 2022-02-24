@@ -98,9 +98,9 @@ uint8_t build_ikev2_critical(bool impaired, struct logger *logger)
  * must be non-NULL (the message being responded to).
  */
 
-struct pbs_out open_v2_message(struct pbs_out *message,
-			       struct ike_sa *ike, struct msg_digest *md,
-			       enum isakmp_xchg_type exchange_type)
+struct pbs_out open_v2_message_body(struct pbs_out *message,
+				    struct ike_sa *ike, struct msg_digest *md,
+				    enum isakmp_xchg_type exchange_type)
 {
 	/* at least one, possibly both */
 	passert(ike != NULL || md != NULL);
@@ -1401,7 +1401,7 @@ bool open_v2_payload(const char *story,
 
 	payload->message = open_pbs_out(story, buf, sizeof_buf, logger);
 
-	payload->body = open_v2_message(&payload->message, ike, request_md, exchange_type);
+	payload->body = open_v2_message_body(&payload->message, ike, request_md, exchange_type);
 	if (!pbs_ok(&payload->body)) {
 		llog(RC_LOG, payload->logger,
 		     "error initializing hdr for encrypted notification");

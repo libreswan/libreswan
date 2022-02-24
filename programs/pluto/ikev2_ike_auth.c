@@ -258,9 +258,9 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 
 	/* HDR out */
 
-	struct pbs_out rbody = open_v2_message(&reply_stream, ike,
-					       NULL /* request */,
-					       ISAKMP_v2_IKE_AUTH);
+	struct pbs_out rbody = open_v2_message_body(&reply_stream,
+						    ike, NULL/*request*/,
+						    ISAKMP_v2_IKE_AUTH);
 	if (!pbs_ok(&rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -1185,9 +1185,9 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 
 	/* HDR out */
 
-	struct pbs_out rbody = open_v2_message(&reply_stream, ike,
-					       md /* response */,
-					       ISAKMP_v2_IKE_AUTH);
+	struct pbs_out rbody = open_v2_message_body(&reply_stream,
+						    ike, md/*response*/,
+						    ISAKMP_v2_IKE_AUTH);
 
 	/* decide to send CERT payload before we generate IDr */
 	bool send_cert = ikev2_send_cert_decision(ike);

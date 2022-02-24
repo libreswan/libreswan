@@ -462,9 +462,9 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
 	struct pbs_out reply = open_pbs_out("unencrypted notification",
 					    buf, sizeof(buf), md->md_logger);
-	struct pbs_out rbody = open_v2_message(&reply, NULL/*no state*/,
-					       md /* response */,
-					       exchange_type);
+	struct pbs_out rbody = open_v2_message_body(&reply,
+						    NULL/*no state*/, md/*response*/,
+						    exchange_type);
 	if (!pbs_ok(&rbody)) {
 		pexpect_fail(md->md_logger, HERE,
 			     "error building header for unencrypted %s %s notification with message ID %u",

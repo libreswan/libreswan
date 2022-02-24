@@ -283,9 +283,9 @@ static stf_status send_eap_termination(struct ike_sa *ike, struct msg_digest *md
 						   ike->sa.st_logger);
 
 	/* HDR out */
-	struct pbs_out rbody = open_v2_message(&reply_stream, ike,
-					       md /* response */,
-					       ISAKMP_v2_IKE_AUTH);
+	struct pbs_out rbody = open_v2_message_body(&reply_stream,
+						    ike, md/*response*/,
+						    ISAKMP_v2_IKE_AUTH);
 
 	struct v2SK_payload sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
 	if (!pbs_ok(&sk.pbs))
@@ -331,9 +331,9 @@ static stf_status send_eaptls_fragment(struct ike_sa *ike, struct msg_digest *md
 						   ike->sa.st_logger);
 
 	/* HDR out */
-	struct pbs_out rbody = open_v2_message(&reply_stream, ike,
-					       md /* response */,
-					       ISAKMP_v2_IKE_AUTH);
+	struct pbs_out rbody = open_v2_message_body(&reply_stream,
+						    ike, md/*response*/,
+						    ISAKMP_v2_IKE_AUTH);
 
 	struct v2SK_payload sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
 	if (!pbs_ok(&sk.pbs))
@@ -465,9 +465,9 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 						   ike->sa.st_logger);
 
 	/* HDR out */
-	struct pbs_out rbody = open_v2_message(&reply_stream, ike,
-					       md /* response */,
-					       ISAKMP_v2_IKE_AUTH);
+	struct pbs_out rbody = open_v2_message_body(&reply_stream,
+						    ike, md /* response */,
+						    ISAKMP_v2_IKE_AUTH);
 
 	/* decide to send CERT payload before we generate IDr */
 	bool send_cert = ikev2_send_cert_decision(ike);
@@ -688,9 +688,9 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 
 	/* HDR out */
 
-	struct pbs_out rbody = open_v2_message(&reply_stream, ike,
-					       md /* response */,
-					       ISAKMP_v2_IKE_AUTH);
+	struct pbs_out rbody = open_v2_message_body(&reply_stream,
+						    ike, md/*response*/,
+						    ISAKMP_v2_IKE_AUTH);
 
 	/* insert an Encryption payload header */
 

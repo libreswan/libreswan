@@ -27,9 +27,9 @@ struct state;
 struct end;
 struct v2_incoming_fragments;
 
-pb_stream open_v2_message(struct pbs_out *reply,
-			  struct ike_sa *ike, struct msg_digest *md,
-			  enum isakmp_xchg_type exchange_type);
+struct pbs_out open_v2_message_body(struct pbs_out *message,
+				    struct ike_sa *ike, struct msg_digest *md,
+				    enum isakmp_xchg_type exchange_type);
 
 struct v2SK_payload {
 	/* public */

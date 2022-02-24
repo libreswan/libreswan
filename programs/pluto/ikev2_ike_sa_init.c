@@ -680,8 +680,9 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 
 	/* HDR out */
 
-	pb_stream rbody = open_v2_message(&reply_stream, ike, NULL /* request */,
-					  ISAKMP_v2_IKE_SA_INIT);
+	struct pbs_out rbody = open_v2_message_body(&reply_stream,
+						    ike, NULL/*request*/,
+						    ISAKMP_v2_IKE_SA_INIT);
 	if (!pbs_ok(&rbody)) {
 		return false;
 	}
@@ -987,9 +988,9 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 						   ike->sa.st_logger);
 
 	/* HDR out */
-	struct pbs_out rbody = open_v2_message(&reply_stream, ike,
-					       md /* response */,
-					       ISAKMP_v2_IKE_SA_INIT);
+	struct pbs_out rbody = open_v2_message_body(&reply_stream,
+						    ike, md/*response*/,
+						    ISAKMP_v2_IKE_SA_INIT);
 	if (!pbs_ok(&rbody)) {
 		return STF_INTERNAL_ERROR;
 	}
