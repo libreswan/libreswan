@@ -273,23 +273,18 @@ static bool start_eap(struct ike_sa *ike, struct pbs_out *pbs)
 	return true;
 }
 
-static stf_status send_eap_termination(struct ike_sa *ike, struct msg_digest *md, uint8_t eap_code)
+static stf_status send_eap_termination_response(struct ike_sa *ike, struct msg_digest *md, uint8_t eap_code)
 {
 	struct eap_state *eap = ike->sa.st_eap;
 
-	/* make sure HDR is at start of a clean buffer */
-	struct pbs_out reply_stream = open_pbs_out("reply packet",
-						   reply_buffer, sizeof(reply_buffer),
-						   ike->sa.st_logger);
-
-	/* HDR out */
-	struct pbs_out rbody = open_v2_message_body(&reply_stream,
-						    ike, md/*response*/,
-						    ISAKMP_v2_IKE_AUTH);
-
-	struct v2SK_payload sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
-	if (!pbs_ok(&sk.pbs))
+	struct v2_message response;
+	if (!open_v2_message("EAP termination response",
+			     ike, ike->sa.st_logger, md/*response*/,
+			     ISAKMP_v2_IKE_AUTH,
+			     reply_buffer, sizeof(reply_buffer),
+			     &response, ENCRYPTED_PAYLOAD)) {
 		return STF_INTERNAL_ERROR;
+	}
 
 	struct ikev2_generic ie = {
 		.isag_critical = build_ikev2_critical(false, ike->sa.st_logger),
@@ -300,44 +295,34 @@ static stf_status send_eap_termination(struct ike_sa *ike, struct msg_digest *md
 	};
 
 	struct pbs_out eap_payload;
-	if (!out_struct(&ie, &ikev2_eap_desc, &sk.pbs, &eap_payload) ||
+	if (!out_struct(&ie, &ikev2_eap_desc, response.pbs, &eap_payload) ||
 	    !out_struct(&eap_msg, &eap_termination_desc, &eap_payload, 0))
 		return STF_INTERNAL_ERROR;
 
 	llog_sa(RC_LOG, ike, "Responding with EAP termination code %d", eap_code);
 
-	close_output_pbs(&eap_payload);
-	if (!close_v2SK_payload(&sk)) {
+	if (!close_and_record_v2_message(&response)) {
 		return STF_INTERNAL_ERROR;
 	}
-	close_output_pbs(&rbody);
-	close_output_pbs(&reply_stream);
 
-	stf_status status = record_v2SK_message(&reply_stream, &sk,
-						"final reply to EAP request",
-						MESSAGE_RESPONSE);
-	return status;
+	return STF_OK;
 }
 
-static stf_status send_eaptls_fragment(struct ike_sa *ike, struct msg_digest *md,
+static stf_status send_eap_fragment_response(struct ike_sa *ike, struct msg_digest *md,
 	uint8_t eap_code, uint32_t max_frag)
 {
 	struct eap_state *eap = ike->sa.st_eap;
 	diag_t d;
 
 	/* make sure HDR is at start of a clean buffer */
-	struct pbs_out reply_stream = open_pbs_out("reply packet",
-						   reply_buffer, sizeof(reply_buffer),
-						   ike->sa.st_logger);
 
-	/* HDR out */
-	struct pbs_out rbody = open_v2_message_body(&reply_stream,
-						    ike, md/*response*/,
-						    ISAKMP_v2_IKE_AUTH);
-
-	struct v2SK_payload sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
-	if (!pbs_ok(&sk.pbs))
+	struct v2_message response;
+	if (!open_v2_message("EAP fragment response",
+			     ike, ike->sa.st_logger, md/*response*/,
+			     ISAKMP_v2_IKE_AUTH, reply_buffer, sizeof(reply_buffer),
+			     &response, ENCRYPTED_PAYLOAD)) {
 		return STF_INTERNAL_ERROR;
+	}
 
 	struct ikev2_generic ie = {
 		.isag_critical = build_ikev2_critical(false, ike->sa.st_logger),
@@ -360,7 +345,7 @@ static stf_status send_eaptls_fragment(struct ike_sa *ike, struct msg_digest *md
 	}
 
 	struct pbs_out eap_payload, eap_data;
-	if (!out_struct(&ie, &ikev2_eap_desc, &sk.pbs, &eap_payload) ||
+	if (!out_struct(&ie, &ikev2_eap_desc, response.pbs, &eap_payload) ||
 	    !out_struct(&eaptls, &eap_tls_desc, &eap_payload, &eap_data))
 		return STF_INTERNAL_ERROR;
 
@@ -384,18 +369,12 @@ static stf_status send_eaptls_fragment(struct ike_sa *ike, struct msg_digest *md
 		}
 	}
 
-	close_output_pbs(&eap_data);
-	close_output_pbs(&eap_payload);
-	if (!close_v2SK_payload(&sk)) {
+	if (!close_and_record_v2_message(&response)) {
 		return STF_INTERNAL_ERROR;
 	}
-	close_output_pbs(&rbody);
-	close_output_pbs(&reply_stream);
 
-	stf_status status = record_v2SK_message(&reply_stream, &sk,
-						"replying to EAP request",
-						MESSAGE_RESPONSE);
-	return status;
+	return STF_OK;
+
 err_diag:
 	llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
 	return STF_FATAL;
@@ -456,43 +435,38 @@ auth_fail:
 }
 
 static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struct ike_sa *ike,
-							   struct msg_digest *md,
-							   const struct hash_signature *auth_sig)
+									   struct msg_digest *md,
+									   const struct hash_signature *auth_sig)
 {
-	/* make sure HDR is at start of a clean buffer */
-	struct pbs_out reply_stream = open_pbs_out("reply packet",
-						   reply_buffer, sizeof(reply_buffer),
-						   ike->sa.st_logger);
-
 	/* HDR out */
-	struct pbs_out rbody = open_v2_message_body(&reply_stream,
-						    ike, md /* response */,
-						    ISAKMP_v2_IKE_AUTH);
+
+	struct v2_message response;
+	if (!open_v2_message("start EAP response",
+			     ike, ike->sa.st_logger, md/*response*/,
+			     ISAKMP_v2_IKE_AUTH,
+			     reply_buffer, sizeof(reply_buffer),
+			     &response, ENCRYPTED_PAYLOAD)) {
+		return STF_INTERNAL_ERROR;
+	}
 
 	/* decide to send CERT payload before we generate IDr */
 	bool send_cert = ikev2_send_cert_decision(ike);
 
-	/* insert an Encryption payload header */
-	struct v2SK_payload sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
-	if (!pbs_ok(&sk.pbs)) {
-		return STF_INTERNAL_ERROR;
-	}
-
 	if (impair.add_unknown_v2_payload_to_sk == ISAKMP_v2_IKE_AUTH) {
 		if (!emit_v2UNKNOWN("SK reply",
 				    impair.add_unknown_v2_payload_to_sk,
-				    &sk.pbs)) {
+				    response.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
 
 	/* send any NOTIFY payloads */
 	if (ike->sa.st_ike_sent_v2n_mobike_supported) {
-		if (!emit_v2N(v2N_MOBIKE_SUPPORTED, &sk.pbs))
+		if (!emit_v2N(v2N_MOBIKE_SUPPORTED, response.pbs))
 			return STF_INTERNAL_ERROR;
 	}
 	if (ike->sa.st_ppk_used) {
-		if (!emit_v2N(v2N_PPK_IDENTITY, &sk.pbs))
+		if (!emit_v2N(v2N_PPK_IDENTITY, response.pbs))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -500,7 +474,7 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 	{
 		pb_stream r_id_pbs;
 		if (!out_struct(&ike->sa.st_v2_id_payload.header,
-				&ikev2_id_r_desc, &sk.pbs, &r_id_pbs) ||
+				&ikev2_id_r_desc, response.pbs, &r_id_pbs) ||
 		    !out_hunk(ike->sa.st_v2_id_payload.data,
 				  &r_id_pbs, "my identity"))
 			return STF_INTERNAL_ERROR;
@@ -514,37 +488,28 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 	 * but ultimately should go into the CERT decision
 	 */
 	if (send_cert) {
-		stf_status certstat = ikev2_send_cert(ike->sa.st_connection, &sk.pbs);
+		stf_status certstat = ikev2_send_cert(ike->sa.st_connection, response.pbs);
 		if (certstat != STF_OK)
 			return certstat;
 	}
 
 	/* now send AUTH payload */
-	if (!emit_v2_auth(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, &sk.pbs)) {
+	if (!emit_v2_auth(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, response.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (!start_eap(ike, &sk.pbs)) {
+	if (!start_eap(ike, response.pbs)) {
 		goto auth_fail;
 	}
 
-	if (!close_v2SK_payload(&sk)) {
+	if (!close_and_record_v2_message(&response)) {
 		return STF_INTERNAL_ERROR;
 	}
-	close_output_pbs(&rbody);
-	close_output_pbs(&reply_stream);
 
 	/* remember the original message with child sa etc. parameters */
 	ike->sa.st_eap_sa_md = md_addref(md);
 
-	/*
-	 * For AUTH exchange, store the message in the IKE SA.
-	 * The attempt to create the CHILD SA could have
-	 * failed.
-	 */
-	return record_v2SK_message(&reply_stream, &sk,
-					"replying to IKE_AUTH request",
-					MESSAGE_RESPONSE);
+	return STF_OK;
 
 auth_fail:
 	pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
@@ -584,10 +549,10 @@ stf_status process_v2_IKE_AUTH_request_EAP_continue(struct ike_sa *ike,
 	if (eaptls.eap_length == sizeof(struct eap_tls)) {
 		if (eap->eap_established && eap->eaptls_chunk.len == 0) {
 			llog_sa(RC_LOG, ike, "EAP Final ACK");
-			return send_eap_termination(ike, md, EAP_CODE_SUCCESS);
+			return send_eap_termination_response(ike, md, EAP_CODE_SUCCESS);
 		}
 		llog_sa(RC_LOG, ike, "EAP Fragment acknowledgement");
-		return send_eaptls_fragment(ike, md, EAP_CODE_REQUEST, 1024);
+		return send_eap_fragment_response(ike, md, EAP_CODE_REQUEST, 1024);
 	}
 
 	if (eaptls.eaptls_flags & EAPTLS_FLAGS_LENGTH) {
@@ -620,10 +585,10 @@ stf_status process_v2_IKE_AUTH_request_EAP_continue(struct ike_sa *ike,
 
 	if (eaptls.eaptls_flags & EAPTLS_FLAGS_MORE) {
 		llog_sa(RC_LOG, ike, "EAP TLS Fragmentation sending ACK");
-		return send_eaptls_fragment(ike, md, EAP_CODE_REQUEST, 0);
+		return send_eap_fragment_response(ike, md, EAP_CODE_REQUEST, 0);
 	}
 
-	return send_eaptls_fragment(ike, md, EAP_CODE_REQUEST, 1024);
+	return send_eap_fragment_response(ike, md, EAP_CODE_REQUEST, 1024);
 
 err_diag:
 	llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
@@ -682,27 +647,20 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	bool send_redirect = v2_ike_sa_auth_responder_establish(ike);
 
 	/* make sure HDR is at start of a clean buffer */
-	struct pbs_out reply_stream = open_pbs_out("reply packet",
-						   reply_buffer, sizeof(reply_buffer),
-						   ike->sa.st_logger);
 
-	/* HDR out */
-
-	struct pbs_out rbody = open_v2_message_body(&reply_stream,
-						    ike, md/*response*/,
-						    ISAKMP_v2_IKE_AUTH);
-
-	/* insert an Encryption payload header */
-
-	struct v2SK_payload sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
-	if (!pbs_ok(&sk.pbs)) {
+	struct v2_message response;
+	if (!open_v2_message("EAP final response",
+			     ike, ike->sa.st_logger, md/*response*/,
+			     ISAKMP_v2_IKE_AUTH,
+			     reply_buffer, sizeof(reply_buffer),
+			     &response, ENCRYPTED_PAYLOAD)) {
 		return STF_INTERNAL_ERROR;
 	}
 
 	if (impair.add_unknown_v2_payload_to_sk == ISAKMP_v2_IKE_AUTH) {
 		if (!emit_v2UNKNOWN("SK reply",
 				    impair.add_unknown_v2_payload_to_sk,
-				    &sk.pbs)) {
+				    response.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -720,14 +678,14 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	 * message with a DELETE payload.
 	 */
 	if (send_redirect) {
-		if (!emit_redirect_notification(shunk1(c->redirect_to), &sk.pbs))
+		if (!emit_redirect_notification(shunk1(c->redirect_to), response.pbs))
 			return STF_INTERNAL_ERROR;
 		ike->sa.st_sent_redirect = true;	/* mark that we have sent REDIRECT in IKE_AUTH */
 	}
 
 	/* now send AUTH payload */
 
-	if (!emit_v2_auth(ike, &msk, &ike->sa.st_v2_id_payload.mac, &sk.pbs)) {
+	if (!emit_v2_auth(ike, &msk, &ike->sa.st_v2_id_payload.mac, response.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 	ike->sa.st_v2_ike_intermediate.used = false;
@@ -741,32 +699,22 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	if (send_redirect) {
 		dbg("skipping child; redirect response");
 	} else {
-		v2_notification_t cn = process_v2_IKE_AUTH_request_child_sa_payloads(ike, ike->sa.st_eap_sa_md, &sk.pbs);
+		v2_notification_t cn = process_v2_IKE_AUTH_request_child_sa_payloads(ike, ike->sa.st_eap_sa_md,
+										     response.pbs);
 		if (v2_notification_fatal(cn)) {
 			record_v2N_response(ike->sa.st_logger, ike, md,
 					    cn, NULL/*no-data*/,
 					    ENCRYPTED_PAYLOAD);
 			return STF_FATAL;
 		} else if (cn != v2N_NOTHING_WRONG) {
-			emit_v2N(cn, &sk.pbs);
+			emit_v2N(cn, response.pbs);
 		}
 	}
 
-	if (!close_v2SK_payload(&sk)) {
+	if (!close_and_record_v2_message(&response)) {
 		return STF_INTERNAL_ERROR;
 	}
-	close_output_pbs(&rbody);
-	close_output_pbs(&reply_stream);
-
-	/*
-	 * For AUTH exchange, store the message in the IKE SA.
-	 * The attempt to create the CHILD SA could have
-	 * failed.
-	 */
-	stf_status status = record_v2SK_message(&reply_stream, &sk,
-						"replying to IKE_AUTH request",
-						MESSAGE_RESPONSE);
 
 	md_delref(&ike->sa.st_eap_sa_md);
-	return status;
+	return STF_OK;
 }
