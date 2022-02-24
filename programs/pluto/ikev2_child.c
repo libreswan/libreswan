@@ -340,6 +340,21 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	ikev2_derive_child_keys(ike, larval_child);
 	ikev2_log_parentSA(&larval_child->sa);
 
+	/*
+	 * Check to see if we need to release an old instance
+	 * Note that this will call delete on the old
+	 * connection we should do this after installing
+	 * ipsec_sa, but that will give us a "eroute in use"
+	 * error.
+	 */
+#ifdef USE_XFRM_INTERFACE
+	if (cc->xfrmi != NULL && cc->xfrmi->if_id != 0) {
+		if (add_xfrmi(cc, larval_child->sa.st_logger)) {
+			return v2N_INVALID_SYNTAX; /* fatal */
+		}
+	}
+#endif
+
 	return v2N_NOTHING_WRONG;
 }
 
@@ -1062,24 +1077,6 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 		delete_state(&child->sa);
 		return n;
 	}
-
-	/*
-	 * Check to see if we need to release an old instance
-	 * Note that this will call delete on the old
-	 * connection we should do this after installing
-	 * ipsec_sa, but that will give us a "eroute in use"
-	 * error.
-	 */
-#ifdef USE_XFRM_INTERFACE
-	struct connection *cc = child->sa.st_connection;
-	if (cc->xfrmi != NULL && cc->xfrmi->if_id != 0) {
-		if (add_xfrmi(cc, child->sa.st_logger)) {
-			/* already logged? */
-			delete_state(&child->sa);
-			return v2N_INVALID_SYNTAX; /* fatal */
-		}
-	}
-#endif
 
 	/* install inbound and outbound SPI info */
 	if (!install_ipsec_sa(&child->sa, true)) {
