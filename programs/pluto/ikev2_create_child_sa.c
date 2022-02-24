@@ -760,42 +760,6 @@ stf_status process_v2_CREATE_CHILD_SA_request(struct ike_sa *ike,
 	return STF_SUSPEND;
 }
 
-static bool record_v2_child_response(struct ike_sa *ike, struct child_sa *child,
-				     struct msg_digest *request_md)
-{
-	passert(ike != NULL);
-	pexpect(v2_msg_role(request_md) == MESSAGE_REQUEST);
-	pexpect(child->sa.st_sa_role == SA_RESPONDER);
-	pexpect(child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
-		child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0);
-
-	/*
-	 * CREATE_CHILD_SA request and response are small 300 - 750 bytes.
-	 * ??? Should we support fragmenting?  Maybe one day.
-	 *
-	 * XXX: not so; keying material can get large.
-	 */
-
-	struct v2_payload payload;
-	if (!open_v2_payload("CREATE_CHILD_SA message",
-			     ike, child->sa.st_logger,
-			     request_md, ISAKMP_v2_CREATE_CHILD_SA,
-			     reply_buffer, sizeof(reply_buffer), &payload,
-			     ENCRYPTED_PAYLOAD)) {
-		return false;
-	}
-
-	if (!emit_v2_child_response_payloads(ike, child, request_md, payload.pbs)) {
-		return false;
-	}
-
-	if (!close_and_record_v2_payload(&payload)) {
-		return false;
-	}
-
-	return true;
-}
-
 static stf_status process_v2_CREATE_CHILD_SA_request_continue_1(struct state *ike_sa,
 								struct msg_digest *request_md,
 								struct dh_local_secret *local_secret,
@@ -886,8 +850,26 @@ stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *ike,
 	struct child_sa *larval_child = ike->sa.st_v2_larval_responder_sa;
 	passert(v2_msg_role(request_md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	passert(larval_child->sa.st_sa_role == SA_RESPONDER);
+	pexpect(larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_R0 ||
+		larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0);
 	dbg("%s() for #%lu %s",
 	     __func__, larval_child->sa.st_serialno, larval_child->sa.st_state->name);
+
+	/*
+	 * CREATE_CHILD_SA request and response are small 300 - 750 bytes.
+	 * ??? Should we support fragmenting?  Maybe one day.
+	 *
+	 * XXX: not so; keying material can get large.
+	 */
+
+	struct v2_payload payload;
+	if (!open_v2_payload("CREATE_CHILD_SA message",
+			     ike, larval_child->sa.st_logger,
+			     request_md, ISAKMP_v2_CREATE_CHILD_SA,
+			     reply_buffer, sizeof(reply_buffer), &payload,
+			     ENCRYPTED_PAYLOAD)) {
+		return STF_FATAL; /* IKE */
+	}
 
 	v2_notification_t n = process_v2_child_request_payloads(ike, larval_child, request_md);
 	if (n != v2N_NOTHING_WRONG) {
@@ -899,7 +881,11 @@ stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *ike,
 		return v2_notification_fatal(n) ? STF_FATAL : STF_OK; /*IKE*/
 	}
 
-	if (!record_v2_child_response(ike, larval_child, request_md)) {
+	if (!emit_v2_child_response_payloads(ike, larval_child, request_md, payload.pbs)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	if (!close_and_record_v2_payload(&payload)) {
 		return STF_INTERNAL_ERROR;
 	}
 
