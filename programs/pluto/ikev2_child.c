@@ -69,6 +69,11 @@
 #include "kernel.h"			/* for get_my_cpi() hack */
 #include "ikev2_proposals.h"
 
+static bool emit_v2_child_response_payloads(struct ike_sa *ike,
+					    const struct child_sa *child,
+					    const struct msg_digest *request_md,
+					    struct pbs_out *outpbs);
+
 static bool has_v2_IKE_AUTH_child_sa_payloads(const struct msg_digest *md)
 {
 	return (md->chain[ISAKMP_NEXT_v2SA] != NULL &&
@@ -242,9 +247,36 @@ bool emit_v2_child_request_payloads(const struct child_sa *larval_child,
 	return true;
 }
 
+/*
+ * Process the CHILD payloads (assumes the SA proposal payloads were
+ * handled earlier).
+ *
+ * Three possible outcomes:
+ *
+ * - everything works: v2N_NOTHING_WRONG is returned and SK_PBS
+ * contains response.
+ *
+ * - the child is invalid: a non-fatal notification is returned; the
+ *   caller deletes the larval child and records the notification as
+ *   the response (or part of a bigger response)
+ *
+ * - something bad: a fatal notification is returned; the caller
+ *   deletes the larval child, tears down the IKE SA, and records the
+ *   notification as the response
+ *
+ * XXX: should this code instead handle things like deleting the child
+ * and recording non-fatal notifications?  For moment no:
+ *
+ * - would have one function creating Child with nested function
+ *   deleting it
+ *
+ * - would have caller having to decide if/when to ignore result
+ */
+
 v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 						    struct child_sa *larval_child,
-						    struct msg_digest *request_md)
+						    struct msg_digest *request_md,
+						    struct pbs_out *sk_pbs)
 {
 	struct connection *cc = larval_child->sa.st_connection;
 
@@ -370,6 +402,14 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	 */
 	pexpect(ike->sa.st_connection->newest_ike_sa == ike->sa.st_serialno);
 	set_newest_v2_child_sa(__func__, larval_child); /* process_v2_CREATE_CHILD_SA_request_continue_2() */
+
+	/*
+	 * Should this save SK_PBS so that, when the emit fails,
+	 * partial output can be discarded?
+	 */
+	if (!emit_v2_child_response_payloads(ike, larval_child, request_md, sk_pbs)) {
+		return v2N_INVALID_SYNTAX; /* something fatal to IKE (but bogus) */
+	}
 
 	return v2N_NOTHING_WRONG;
 }
@@ -1087,17 +1127,11 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 		return n;
 	}
 
-	n = process_v2_child_request_payloads(ike, child, md);
+	n = process_v2_child_request_payloads(ike, child, md, sk_pbs);
 	if (n != v2N_NOTHING_WRONG) {
 		/* already logged */
 		delete_state(&child->sa);
 		return n;
-	}
-
-	if (!emit_v2_child_response_payloads(ike, child, md, sk_pbs)) {
-		/* already logged */
-		delete_state(&child->sa);
-		return v2N_INVALID_SYNTAX; /* something fatal */
 	}
 
 	/*

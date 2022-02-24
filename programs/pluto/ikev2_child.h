@@ -51,11 +51,8 @@ bool emit_v2_child_request_payloads(const struct child_sa *larval_child,
 				    struct pbs_out *outpbs);
 v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 						    struct child_sa *larval_child,
-						    struct msg_digest *request_md);
-bool emit_v2_child_response_payloads(struct ike_sa *ike,
-				     const struct child_sa *child,
-				     const struct msg_digest *request_md,
-				     struct pbs_out *outpbs);
+						    struct msg_digest *request_md,
+						    struct pbs_out *sk_pbs);
 v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike,
 						     struct child_sa *larval_child,
 						     struct msg_digest *response_md);

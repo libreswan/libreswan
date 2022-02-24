@@ -871,7 +871,8 @@ stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *ike,
 		return STF_FATAL; /* IKE */
 	}
 
-	v2_notification_t n = process_v2_child_request_payloads(ike, larval_child, request_md);
+	v2_notification_t n = process_v2_child_request_payloads(ike, larval_child, request_md,
+								payload.pbs);
 	if (n != v2N_NOTHING_WRONG) {
 		/* already logged */
 		record_v2N_response(larval_child->sa.st_logger, ike, request_md,
@@ -879,10 +880,6 @@ stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *ike,
 		delete_state(&larval_child->sa);
 		ike->sa.st_v2_larval_responder_sa = NULL;
 		return v2_notification_fatal(n) ? STF_FATAL : STF_OK; /*IKE*/
-	}
-
-	if (!emit_v2_child_response_payloads(ike, larval_child, request_md, payload.pbs)) {
-		return STF_INTERNAL_ERROR;
 	}
 
 	if (!close_and_record_v2_payload(&payload)) {
