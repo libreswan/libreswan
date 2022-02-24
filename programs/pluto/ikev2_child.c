@@ -355,6 +355,12 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	}
 #endif
 
+	/* install inbound and outbound SPI info */
+	if (!install_ipsec_sa(&larval_child->sa, true)) {
+		/* already logged */
+		return v2N_TS_UNACCEPTABLE;
+	}
+
 	return v2N_NOTHING_WRONG;
 }
 
@@ -1076,13 +1082,6 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 		/* already logged */
 		delete_state(&child->sa);
 		return n;
-	}
-
-	/* install inbound and outbound SPI info */
-	if (!install_ipsec_sa(&child->sa, true)) {
-		/* already logged? */
-		delete_state(&child->sa);
-		return v2N_TS_UNACCEPTABLE; /* oops */
 	}
 
 	/* mark the connection as now having an IPsec SA associated with it. */

@@ -899,17 +899,6 @@ stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *ike,
 		return v2_notification_fatal(n) ? STF_FATAL : STF_OK; /*IKE*/
 	}
 
-	/* install inbound and outbound SPI info */
-	if (!install_ipsec_sa(&larval_child->sa, true)) {
-		/* already logged */
-		record_v2N_response(larval_child->sa.st_logger, ike, request_md,
-				    v2N_TS_UNACCEPTABLE, NULL/*no-data*/,
-				    ENCRYPTED_PAYLOAD);
-		delete_state(&larval_child->sa);
-		ike->sa.st_v2_larval_responder_sa = NULL;
-		return STF_OK; /*IKE*/
-	}
-
 	/*
 	 * Mark that the connection has an established Child SA
 	 * associated with it.
