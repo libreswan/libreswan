@@ -361,6 +361,16 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 		return v2N_TS_UNACCEPTABLE;
 	}
 
+	/*
+	 * Mark that the connection has an established Child SA
+	 * associated with it.
+	 *
+	 * (The IKE SA's connection may not be the same as the Child
+	 * SAs connection).
+	 */
+	pexpect(ike->sa.st_connection->newest_ike_sa == ike->sa.st_serialno);
+	set_newest_v2_child_sa(__func__, larval_child); /* process_v2_CREATE_CHILD_SA_request_continue_2() */
+
 	return v2N_NOTHING_WRONG;
 }
 
@@ -1083,9 +1093,6 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 		delete_state(&child->sa);
 		return n;
 	}
-
-	/* mark the connection as now having an IPsec SA associated with it. */
-	set_newest_v2_child_sa(__func__, child); /* process_v2_IKE_AUTH_request_child_sa_payloads() */
 
 	if (!emit_v2_child_response_payloads(ike, child, md, sk_pbs)) {
 		/* already logged */

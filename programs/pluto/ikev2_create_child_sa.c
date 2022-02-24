@@ -899,16 +899,6 @@ stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *ike,
 		return v2_notification_fatal(n) ? STF_FATAL : STF_OK; /*IKE*/
 	}
 
-	/*
-	 * Mark that the connection has an established Child SA
-	 * associated with it.
-	 *
-	 * (The IKE SA's connection may not be the same as the Child
-	 * SAs connection).
-	 */
-	pexpect(ike->sa.st_connection->newest_ike_sa == ike->sa.st_serialno);
-	set_newest_v2_child_sa(__func__, larval_child); /* process_v2_CREATE_CHILD_SA_request_continue_2() */
-
 	if (!record_v2_child_response(ike, larval_child, request_md)) {
 		return STF_INTERNAL_ERROR;
 	}
