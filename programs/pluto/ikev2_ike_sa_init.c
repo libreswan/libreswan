@@ -666,10 +666,14 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
 
-	/* set up reply */
-	struct pbs_out reply_stream = open_pbs_out("reply packet",
-						   reply_buffer, sizeof(reply_buffer),
-						   ike->sa.st_logger);
+	struct v2_message request;
+	if (!open_v2_message("IKE_SA_INIT request",
+			     ike, ike->sa.st_logger, NULL/*request*/,
+			     ISAKMP_v2_IKE_SA_INIT,
+			     reply_buffer, sizeof(reply_buffer),
+			     &request, UNENCRYPTED_PAYLOAD)) {
+		return false;
+	}
 
 	if (impair.send_bogus_dcookie) {
 		/* add or mangle a dcookie so what we will send is bogus */
@@ -678,22 +682,13 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 		messupn(ike->sa.st_dcookie.ptr, 1);
 	}
 
-	/* HDR out */
-
-	struct pbs_out rbody = open_v2_message_body(&reply_stream,
-						    ike, NULL/*request*/,
-						    ISAKMP_v2_IKE_SA_INIT);
-	if (!pbs_ok(&rbody)) {
-		return false;
-	}
-
 	/*
 	 * https://tools.ietf.org/html/rfc5996#section-2.6
 	 * reply with the anti DDOS cookie if we received one (remote is under attack)
 	 */
 	if (ike->sa.st_dcookie.ptr != NULL) {
 		/* In v2, for parent, protoid must be 0 and SPI must be empty */
-		if (!emit_v2N_hunk(v2N_COOKIE, ike->sa.st_dcookie, &rbody)) {
+		if (!emit_v2N_hunk(v2N_COOKIE, ike->sa.st_dcookie, request.pbs)) {
 			return false;
 		}
 	}
@@ -701,7 +696,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	/* SA out */
 
 	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_proposals;
-	if (!ikev2_emit_sa_proposals(&rbody, ike_proposals,
+	if (!ikev2_emit_sa_proposals(request.pbs, ike_proposals,
 				     null_shunk /* IKE - no CHILD SPI */)) {
 		return false;
 	}
@@ -712,7 +707,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	 */
 
 	/* send KE */
-	if (!emit_v2KE(ike->sa.st_gi, ike->sa.st_oakley.ta_dh, &rbody))
+	if (!emit_v2KE(ike->sa.st_gi, ike->sa.st_oakley.ta_dh, request.pbs))
 		return false;
 
 	/* send NONCE */
@@ -722,7 +717,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 			.isag_critical = build_ikev2_critical(false, ike->sa.st_logger),
 		};
 
-		if (!out_struct(&in, &ikev2_nonce_desc, &rbody, &pb) ||
+		if (!out_struct(&in, &ikev2_nonce_desc, request.pbs, &pb) ||
 		    !out_hunk(ike->sa.st_ni, &pb, "IKEv2 nonce"))
 			return false;
 
@@ -731,19 +726,19 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 
 	/* Send fragmentation support notification */
 	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
-		if (!emit_v2N(v2N_IKEV2_FRAGMENTATION_SUPPORTED, &rbody))
+		if (!emit_v2N(v2N_IKEV2_FRAGMENTATION_SUPPORTED, request.pbs))
 			return false;
 	}
 
 	/* Send USE_PPK Notify payload */
 	if (LIN(POLICY_PPK_ALLOW, c->policy)) {
-		if (!emit_v2N(v2N_USE_PPK, &rbody))
+		if (!emit_v2N(v2N_USE_PPK, request.pbs))
 			return false;
 	}
 
 	/* Send INTERMEDIATE_EXCHANGE_SUPPORTED Notify payload */
 	if (c->policy & POLICY_INTERMEDIATE) {
-		if (!emit_v2N(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED, &rbody))
+		if (!emit_v2N(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED, request.pbs))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -755,10 +750,10 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	 *   and send v2N_REDIRECT_SUPPORTED if we do
 	 */
 	if (address_is_specified(c->temp_vars.redirect_ip)) {
-		if (!emit_redirected_from_notification(&c->temp_vars.old_gw_address, &rbody))
+		if (!emit_redirected_from_notification(&c->temp_vars.old_gw_address, request.pbs))
 			return false;
 	} else if (LIN(POLICY_ACCEPT_REDIRECT_YES, c->policy)) {
-		if (!emit_v2N(v2N_REDIRECT_SUPPORTED, &rbody))
+		if (!emit_v2N(v2N_REDIRECT_SUPPORTED, request.pbs))
 			return false;
 	}
 
@@ -766,7 +761,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	if (!impair.omit_hash_notify_request) {
 		if (((c->policy & POLICY_RSASIG) || (c->policy & POLICY_ECDSA))
 			&& (c->config->sighash_policy != LEMPTY)) {
-			if (!emit_v2N_signature_hash_algorithms(c->config->sighash_policy, &rbody))
+			if (!emit_v2N_signature_hash_algorithms(c->config->sighash_policy, request.pbs))
 				return false;
 		}
 	} else {
@@ -775,35 +770,33 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	}
 
 	/* Send NAT-T Notify payloads */
-	if (!ikev2_out_nat_v2n(&rbody, &ike->sa, &zero_ike_spi/*responder unknown*/))
+	if (!ikev2_out_nat_v2n(request.pbs, &ike->sa, &zero_ike_spi/*responder unknown*/))
 		return false;
 
 	/* From here on, only payloads left are Vendor IDs */
 	if (c->send_vendorid) {
-		if (!emit_v2V(pluto_vendorid, &rbody))
+		if (!emit_v2V(pluto_vendorid, request.pbs))
 			return false;
 	}
 
 	if (c->fake_strongswan) {
-		if (!emit_v2V("strongSwan", &rbody))
+		if (!emit_v2V("strongSwan", request.pbs))
 			return false;
 	}
 
 	if (c->policy & POLICY_AUTH_NULL) {
-		if (!emit_v2V("Opportunistic IPsec", &rbody))
+		if (!emit_v2V("Opportunistic IPsec", request.pbs))
 			return STF_INTERNAL_ERROR;
 	}
 
-	close_output_pbs(&rbody);
-	close_output_pbs(&reply_stream);
+	if (!close_and_record_v2_message(&request)) {
+		return false;
+	}
 
 	/* save packet for later signing */
 	replace_chunk(&ike->sa.st_firstpacket_me,
-		      clone_pbs_out_as_chunk(&reply_stream, "saved first packet"));
+		      clone_pbs_out_as_chunk(&request.message, "saved first packet"));
 
-	/* Transmit */
-	record_v2_message(ike, &reply_stream, "IKE_SA_INIT request",
-			  MESSAGE_REQUEST);
 	return true;
 }
 
@@ -983,15 +976,13 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 			"saved first received packet in inI1outR1_continue_tail"));
 
 	/* make sure HDR is at start of a clean buffer */
-	struct pbs_out reply_stream = open_pbs_out("reply packet",
-						   reply_buffer, sizeof(reply_buffer),
-						   ike->sa.st_logger);
 
-	/* HDR out */
-	struct pbs_out rbody = open_v2_message_body(&reply_stream,
-						    ike, md/*response*/,
-						    ISAKMP_v2_IKE_SA_INIT);
-	if (!pbs_ok(&rbody)) {
+	struct v2_message response;
+	if (!open_v2_message("IKE_SA_INIT response",
+			     ike, ike->sa.st_logger, md/*response*/,
+			     ISAKMP_v2_IKE_SA_INIT,
+			     reply_buffer, sizeof(reply_buffer),
+			     &response, UNENCRYPTED_PAYLOAD)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -1003,7 +994,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 		 * part of the proposal.  Hence the NULL SPI.
 		 */
 		passert(ike->sa.st_v2_accepted_proposal != NULL);
-		if (!ikev2_emit_sa_proposal(&rbody, ike->sa.st_v2_accepted_proposal,
+		if (!ikev2_emit_sa_proposal(response.pbs, ike->sa.st_v2_accepted_proposal,
 					    null_shunk/*IKE has no SPI*/)) {
 			dbg("problem emitting accepted proposal");
 			return STF_INTERNAL_ERROR;
@@ -1038,7 +1029,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	 */
 	pexpect(ike->sa.st_oakley.ta_dh == dh_local_secret_desc(local_secret));
 	unpack_KE_from_helper(&ike->sa, local_secret, &ike->sa.st_gr);
-	if (!emit_v2KE(ike->sa.st_gr, dh_local_secret_desc(local_secret), &rbody)) {
+	if (!emit_v2KE(ike->sa.st_gr, dh_local_secret_desc(local_secret), response.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -1050,7 +1041,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 			.isag_critical = build_ikev2_critical(false, ike->sa.st_logger),
 		};
 
-		if (!out_struct(&in, &ikev2_nonce_desc, &rbody, &pb) ||
+		if (!out_struct(&in, &ikev2_nonce_desc, response.pbs, &pb) ||
 		    !out_hunk(ike->sa.st_nr, &pb, "IKEv2 nonce"))
 			return STF_INTERNAL_ERROR;
 
@@ -1063,20 +1054,20 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 
 	/* Send fragmentation support notification */
 	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
-		if (!emit_v2N(v2N_IKEV2_FRAGMENTATION_SUPPORTED, &rbody))
+		if (!emit_v2N(v2N_IKEV2_FRAGMENTATION_SUPPORTED, response.pbs))
 			return STF_INTERNAL_ERROR;
 	}
 
 	/* Send USE_PPK Notify payload */
 	if (ike->sa.st_seen_ppk) {
-		if (!emit_v2N(v2N_USE_PPK, &rbody))
+		if (!emit_v2N(v2N_USE_PPK, response.pbs))
 			return STF_INTERNAL_ERROR;
 	 }
 
 	/* Send INTERMEDIATE_EXCHANGE_SUPPORTED Notify payload */
 	if ((c->policy & POLICY_INTERMEDIATE) &&
 	    md->pd[PD_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED] != NULL) {
-		if (!emit_v2N(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED, &rbody))
+		if (!emit_v2N(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED, response.pbs))
 			return STF_INTERNAL_ERROR;
 		ike->sa.st_v2_ike_intermediate.used = true;
 	}
@@ -1085,7 +1076,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	if (!impair.ignore_hash_notify_request) {
 		if (ike->sa.st_seen_hashnotify && ((c->policy & POLICY_RSASIG) || (c->policy & POLICY_ECDSA))
 			&& (c->config->sighash_policy != LEMPTY)) {
-			if (!emit_v2N_signature_hash_algorithms(c->config->sighash_policy, &rbody))
+			if (!emit_v2N_signature_hash_algorithms(c->config->sighash_policy, response.pbs))
 				return STF_INTERNAL_ERROR;
 		}
 	} else {
@@ -1093,14 +1084,14 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	}
 
 	/* Send NAT-T Notify payloads */
-	if (!ikev2_out_nat_v2n(&rbody, &ike->sa, &ike->sa.st_ike_spis.responder)) {
+	if (!ikev2_out_nat_v2n(response.pbs, &ike->sa, &ike->sa.st_ike_spis.responder)) {
 		return STF_INTERNAL_ERROR;
 	}
 
 	if (impair.childless_ikev2_supported) {
 		llog_sa(RC_LOG, ike, "IMPAIR: omitting CHILDESS_IKEV2_SUPPORTED notify");
 	} else {
-		if (!emit_v2N(v2N_CHILDLESS_IKEV2_SUPPORTED, &rbody)) {
+		if (!emit_v2N(v2N_CHILDLESS_IKEV2_SUPPORTED, response.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 		ike->sa.st_v2_childless_ikev2_supported = true;
@@ -1111,34 +1102,31 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	/* send CERTREQ */
 	if (send_certreq) {
 		dbg("going to send a certreq");
-		ikev2_send_certreq(&ike->sa, md, &rbody);
+		ikev2_send_certreq(&ike->sa, md, response.pbs);
 	}
 
 	if (c->send_vendorid) {
-		if (!emit_v2V(pluto_vendorid, &rbody))
+		if (!emit_v2V(pluto_vendorid, response.pbs))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (c->fake_strongswan) {
-		if (!emit_v2V("strongSwan", &rbody))
+		if (!emit_v2V("strongSwan", response.pbs))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (c->policy & POLICY_AUTH_NULL) {
-		if (!emit_v2V("Opportunistic IPsec", &rbody))
+		if (!emit_v2V("Opportunistic IPsec", response.pbs))
 			return STF_INTERNAL_ERROR;
 	}
 
-	close_output_pbs(&rbody);
-	close_output_pbs(&reply_stream);
-
-	record_v2_message(ike, &reply_stream,
-			  "reply packet for IKE_SA_INIT request",
-			  MESSAGE_RESPONSE);
+	if (!close_and_record_v2_message(&response)) {
+		return STF_INTERNAL_ERROR;
+	}
 
 	/* save packet for later signing */
 	replace_chunk(&ike->sa.st_firstpacket_me,
-		      clone_pbs_out_as_chunk(&reply_stream, "saved first packet"));
+		      clone_pbs_out_as_chunk(&response.message, "saved first packet"));
 
 	return STF_OK;
 }
