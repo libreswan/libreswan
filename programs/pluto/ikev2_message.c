@@ -98,9 +98,9 @@ uint8_t build_ikev2_critical(bool impaired, struct logger *logger)
  * must be non-NULL (the message being responded to).
  */
 
-struct pbs_out open_v2_message_body(struct pbs_out *message,
-				    struct ike_sa *ike, struct msg_digest *md,
-				    enum isakmp_xchg_type exchange_type)
+static struct pbs_out open_v2_message_body(struct pbs_out *message,
+					   struct ike_sa *ike, struct msg_digest *md,
+					   enum isakmp_xchg_type exchange_type)
 {
 	/* at least one, possibly both */
 	passert(ike != NULL || md != NULL);
@@ -241,9 +241,9 @@ static bool emit_v2SK_iv(struct v2SK_payload *sk)
 	return true;
 }
 
-struct v2SK_payload open_v2SK_payload(struct logger *logger,
-				      struct pbs_out *container,
-				      struct ike_sa *ike)
+static struct v2SK_payload open_v2SK_payload(struct logger *logger,
+					     struct pbs_out *container,
+					     struct ike_sa *ike)
 {
 	static const struct v2SK_payload empty_sk;
 	struct v2SK_payload sk = {
@@ -287,7 +287,7 @@ struct v2SK_payload open_v2SK_payload(struct logger *logger,
 	return sk;
 }
 
-bool close_v2SK_payload(struct v2SK_payload *sk)
+static bool close_v2SK_payload(struct v2SK_payload *sk)
 {
 	/* save cleartext end */
 
@@ -1332,10 +1332,10 @@ static bool record_outbound_fragments(const struct pbs_out *body,
  * it.
  */
 
-stf_status record_v2SK_message(struct pbs_out *msg,
-			       struct v2SK_payload *sk,
-			       const char *what,
-			       enum message_role message)
+static stf_status record_v2SK_message(struct pbs_out *msg,
+				      struct v2SK_payload *sk,
+				      const char *what,
+				      enum message_role message)
 {
 	size_t len = pbs_offset(msg);
 

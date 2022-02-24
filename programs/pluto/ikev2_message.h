@@ -27,9 +27,9 @@ struct state;
 struct end;
 struct v2_incoming_fragments;
 
-struct pbs_out open_v2_message_body(struct pbs_out *message,
-				    struct ike_sa *ike, struct msg_digest *md,
-				    enum isakmp_xchg_type exchange_type);
+/*
+ * Outgoing messages.
+ */
 
 struct v2SK_payload {
 	/* public */
@@ -46,39 +46,9 @@ struct v2SK_payload {
 	chunk_t integrity;
 };
 
-struct v2SK_payload open_v2SK_payload(struct logger *logger,
-				      struct pbs_out *container,
-				      struct ike_sa *st);
-bool close_v2SK_payload(struct v2SK_payload *sk);
-
 bool encrypt_v2SK_payload(struct v2SK_payload *sk);
 
-stf_status record_v2SK_message(struct pbs_out *msg,
-			       struct v2SK_payload *sk,
-			       const char *what,
-			       enum message_role message);
-
 uint8_t build_ikev2_critical(bool impair, struct logger *logger);
-
-enum  collected_fragment {
-	FRAGMENT_IGNORED,
-	FRAGMENTS_MISSING,
-	FRAGMENTS_COMPLETE,
-};
-enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
-						     struct msg_digest *md);
-bool decrypt_v2_incoming_fragments(struct ike_sa *ike,
-				   struct v2_incoming_fragments **frags);
-struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments **frags);
-
-bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md);
-
-struct ikev2_id build_v2_id_payload(const struct end *end, shunk_t *body,
-				    const char *what, struct logger *logger);
-
-/*
- * Make sending small messages easy.
- */
 
 enum payload_security {
 	ENCRYPTED_PAYLOAD = 1,
@@ -109,5 +79,24 @@ bool open_v2_message(const char *story,
 bool close_v2_message(struct v2_message *message);
 
 bool close_and_record_v2_message(struct v2_message *message);
+
+/*
+ * Incoming Messages.
+ */
+enum  collected_fragment {
+	FRAGMENT_IGNORED,
+	FRAGMENTS_MISSING,
+	FRAGMENTS_COMPLETE,
+};
+enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
+						     struct msg_digest *md);
+bool decrypt_v2_incoming_fragments(struct ike_sa *ike,
+				   struct v2_incoming_fragments **frags);
+struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments **frags);
+
+bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md);
+
+struct ikev2_id build_v2_id_payload(const struct end *end, shunk_t *body,
+				    const char *what, struct logger *logger);
 
 #endif
