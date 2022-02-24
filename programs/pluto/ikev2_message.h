@@ -85,10 +85,11 @@ enum payload_security {
 	UNENCRYPTED_PAYLOAD,
 };
 
-struct v2_payload {
+struct v2_message {
 	/* CONTAINS POINTERS to SELF; pass by ref */
 	struct logger *logger;
-	struct pbs_out *pbs; /* where to put message (POINTER!) */
+	struct pbs_out *pbs; /* where to put message (POINTER!); either .BODY or .SK */
+	/* internal fields */
 	enum payload_security security;
 	struct ike_sa *ike;
 	struct pbs_out message;
@@ -98,14 +99,15 @@ struct v2_payload {
 	struct v2SK_payload sk; /* optional */
 };
 
-bool open_v2_payload(const char *story,
+bool open_v2_message(const char *story,
 		     struct ike_sa *ike, struct logger *logger,
 		     struct msg_digest *request_md, enum isakmp_xchg_type exchange_type,
-		     uint8_t *buffer, size_t sizeof_buffer, struct v2_payload *payload,
+		     uint8_t *buffer, size_t sizeof_buffer,
+		     struct v2_message *message,
 		     enum payload_security security);
 
-bool close_v2_payload(struct v2_payload *payload);
+bool close_v2_message(struct v2_message *message);
 
-bool close_and_record_v2_payload(struct v2_payload *payload);
+bool close_and_record_v2_message(struct v2_message *message);
 
 #endif

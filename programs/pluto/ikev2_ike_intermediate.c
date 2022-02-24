@@ -201,8 +201,8 @@ stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike, struct msg_d
 
 	/* beginning of data going out */
 
-	struct v2_payload request;
-	if (!open_v2_payload("intermediate exchange request",
+	struct v2_message request;
+	if (!open_v2_message("intermediate exchange request",
 			     ike, ike->sa.st_logger,
 			     NULL/*request*/, ISAKMP_v2_IKE_INTERMEDIATE,
 			     reply_buffer, sizeof(reply_buffer), &request,
@@ -212,7 +212,7 @@ stf_status initiate_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike, struct msg_d
 
 	/* message is empty! */
 
-	if (!close_v2_payload(&request)) {
+	if (!close_v2_message(&request)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -282,8 +282,8 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 
 	/* beginning of data going out */
 
-	struct v2_payload response;
-	if (!open_v2_payload("intermediate exchange response",
+	struct v2_message response;
+	if (!open_v2_message("intermediate exchange response",
 			     ike, ike->sa.st_logger,
 			     md/*response*/, ISAKMP_v2_IKE_INTERMEDIATE,
 			     reply_buffer, sizeof(reply_buffer), &response,
@@ -293,7 +293,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 
 	/* empty message */
 
-	if (!close_v2_payload(&response)) {
+	if (!close_v2_message(&response)) {
 		return STF_INTERNAL_ERROR;
 	}
 

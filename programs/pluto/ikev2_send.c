@@ -300,7 +300,7 @@ bool emit_v2N_signature_hash_algorithms(lset_t sighash_policy,
  * that the larval child state is about to be deleted.
  */
 
-static bool emit_v2N_spi_response(struct v2_payload *response,
+static bool emit_v2N_spi_response(struct v2_message *response,
 				  struct ike_sa *ike,
 				  struct msg_digest *md,
 				  enum ikev2_sec_proto_id protoid,
@@ -377,7 +377,7 @@ void record_v2N_spi_response(struct logger *logger,
 			     enum payload_security security)
 {
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
-	struct v2_payload response;
+	struct v2_message response;
 
 	/*
 	 * Never send a response to a response.
@@ -387,7 +387,7 @@ void record_v2N_spi_response(struct logger *logger,
 		return;
 	}
 
-	if (!open_v2_payload("v2N response", ike, logger,
+	if (!open_v2_message("v2N response", ike, logger,
 			     md/*response*/, md->hdr.isa_xchg/*same exchange type*/,
 			     buf, sizeof(buf), &response, security)) {
 		return;
@@ -398,7 +398,7 @@ void record_v2N_spi_response(struct logger *logger,
 		return;
 	}
 
-	if (!close_and_record_v2_payload(&response)) {
+	if (!close_and_record_v2_message(&response)) {
 		return;
 	}
 	pstat(ikev2_sent_notifies_e, ntype);
@@ -512,8 +512,8 @@ stf_status record_v2_informational_request(const char *name,
 	 */
 	uint8_t buffer[MIN_OUTPUT_UDP_SIZE];	/* ??? large enough for any informational? */
 
-	struct v2_payload request;
-	if (!open_v2_payload(name, ike, sender->st_logger,
+	struct v2_message request;
+	if (!open_v2_message(name, ike, sender->st_logger,
 			     NULL/*request*/, ISAKMP_v2_INFORMATIONAL,
 			     buffer, sizeof(buffer), &request,
 			     ENCRYPTED_PAYLOAD)) {
@@ -524,7 +524,7 @@ stf_status record_v2_informational_request(const char *name,
 		return STF_INTERNAL_ERROR;
 	}
 
-	if (!close_and_record_v2_payload(&request)) {
+	if (!close_and_record_v2_message(&request)) {
 		return STF_INTERNAL_ERROR;
 	}
 

@@ -37,8 +37,8 @@ bool record_v2_delete(struct ike_sa *ike, struct state *st)
 {
 	uint8_t buf[MIN_OUTPUT_UDP_SIZE];
 
-	struct v2_payload request;
-	if (!open_v2_payload("informational exchange delete request",
+	struct v2_message request;
+	if (!open_v2_message("informational exchange delete request",
 			     ike, st->st_logger,
 			     NULL/*request*/, ISAKMP_v2_INFORMATIONAL,
 			     buf, sizeof(buf), &request,
@@ -81,7 +81,7 @@ bool record_v2_delete(struct ike_sa *ike, struct state *st)
 		close_output_pbs(&del_pbs);
 	}
 
-	if (!close_and_record_v2_payload(&request)) {
+	if (!close_and_record_v2_message(&request)) {
 		return false;
 	}
 

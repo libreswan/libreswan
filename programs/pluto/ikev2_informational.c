@@ -127,8 +127,8 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	 * If we received NAT detection payloads as per MOBIKE, send answers
 	 */
 
-	struct v2_payload response;
-	if (!open_v2_payload("information exchange reply packet",
+	struct v2_message response;
+	if (!open_v2_message("information exchange reply packet",
 			     ike, ike->sa.st_logger,
 			     md/*response*/, ISAKMP_v2_INFORMATIONAL,
 			     reply_buffer, sizeof(reply_buffer), &response,
@@ -171,7 +171,7 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	 */
 
 	/* ??? should we support fragmenting?  Maybe one day. */
-	if (!close_and_record_v2_payload(&response)) {
+	if (!close_and_record_v2_message(&response)) {
 		return STF_INTERNAL_ERROR;
 	}
 
