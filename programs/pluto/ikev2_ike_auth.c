@@ -249,26 +249,16 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		replace_chunk(&ike->sa.st_firstpacket_peer,
 			      clone_pbs_out_as_chunk(&md->message_pbs, "saved first received non-intermediate packet"));
 	}
+
 	/* beginning of data going out */
 
-	/* make sure HDR is at start of a clean buffer */
-	struct pbs_out reply_stream = open_pbs_out("reply packet",
-						   reply_buffer, sizeof(reply_buffer),
-						   ike->sa.st_logger);
-
-	/* HDR out */
-
-	struct pbs_out rbody = open_v2_message_body(&reply_stream,
-						    ike, NULL/*request*/,
-						    ISAKMP_v2_IKE_AUTH);
-	if (!pbs_ok(&rbody)) {
-		return STF_INTERNAL_ERROR;
-	}
-
-	/* insert an Encryption payload header (SK) */
-
-	struct v2SK_payload sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
-	if (!pbs_ok(&sk.pbs)) {
+	struct v2_message request;
+	if (!open_v2_message("IKE_AUTH request",
+			     ike, ike->sa.st_logger, NULL/*request*/,
+			     ISAKMP_v2_IKE_AUTH,
+			     reply_buffer, sizeof(reply_buffer),
+			     &request, ENCRYPTED_PAYLOAD)) {
+		/* already logged */
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -294,7 +284,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		pb_stream i_id_pbs;
 		if (!out_struct(&ike->sa.st_v2_id_payload.header,
 				&ikev2_id_i_desc,
-				&sk.pbs,
+				request.pbs,
 				&i_id_pbs) ||
 		    !out_hunk(ike->sa.st_v2_id_payload.data, &i_id_pbs, "my identity"))
 			return STF_INTERNAL_ERROR;
@@ -304,14 +294,14 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	if (impair.add_unknown_v2_payload_to_sk == ISAKMP_v2_IKE_AUTH) {
 		if (!emit_v2UNKNOWN("SK request",
 				    impair.add_unknown_v2_payload_to_sk,
-				    &sk.pbs)) {
+				    request.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
 
 	/* send [CERT,] payload RFC 4306 3.6, 1.2) */
 	if (send_cert) {
-		stf_status certstat = ikev2_send_cert(ike->sa.st_connection, &sk.pbs);
+		stf_status certstat = ikev2_send_cert(ike->sa.st_connection, request.pbs);
 		if (certstat != STF_OK)
 			return certstat;
 
@@ -323,7 +313,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 				DBG_log("Sending [CERTREQ] of %s",
 					str_dn(ike->sa.st_connection->remote->config->host.ca, &buf));
 			}
-			ikev2_send_certreq(&ike->sa, md, &sk.pbs);
+			ikev2_send_certreq(&ike->sa, md, request.pbs);
 		}
 	}
 
@@ -341,7 +331,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 								   "their IDr",
 								   ike->sa.st_logger);
 			pb_stream r_id_pbs;
-			if (!out_struct(&r_id, &ikev2_id_r_desc, &sk.pbs,
+			if (!out_struct(&r_id, &ikev2_id_r_desc, request.pbs,
 				&r_id_pbs) ||
 			    !out_hunk(id_b, &r_id_pbs, "their IDr"))
 				return STF_INTERNAL_ERROR;
@@ -361,7 +351,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 
 	if (ic) {
 		log_state(RC_LOG, &ike->sa, "sending INITIAL_CONTACT");
-		if (!emit_v2N(v2N_INITIAL_CONTACT, &sk.pbs))
+		if (!emit_v2N(v2N_INITIAL_CONTACT, request.pbs))
 			return STF_INTERNAL_ERROR;
 	} else {
 		dbg("not sending INITIAL_CONTACT");
@@ -369,13 +359,13 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 
 	/* send out the AUTH payload */
 
-	if (!emit_v2_auth(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, &sk.pbs)) {
+	if (!emit_v2_auth(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, request.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 
 	if (LIN(POLICY_MOBIKE, ike->sa.st_connection->policy)) {
 		ike->sa.st_ike_sent_v2n_mobike_supported = true;
-		if (!emit_v2N(v2N_MOBIKE_SUPPORTED, &sk.pbs)) {
+		if (!emit_v2N(v2N_MOBIKE_SUPPORTED, request.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -433,7 +423,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		/* XXX: look further down you're seeing double */
 		if (need_v2_configuration_payload(child->sa.st_connection,
 						  ike->sa.hidden_variables.st_nat_traversal)) {
-			if (!emit_v2_child_configuration_payload(child, &sk.pbs)) {
+			if (!emit_v2_child_configuration_payload(child, request.pbs)) {
 				return STF_INTERNAL_ERROR;
 			}
 		}
@@ -444,13 +434,13 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		 * used.
 		 */
 		const struct ikev2_proposals *child_proposals = cc->config->v2_ike_auth_child_proposals;
-		if (!emit_v2_child_request_payloads(child, child_proposals, &sk.pbs)) {
+		if (!emit_v2_child_request_payloads(child, child_proposals, request.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 
 		/* send CP payloads */
 		if (cc->modecfg_domains != NULL || cc->modecfg_dns != NULL) {
-			if (!emit_v2_child_configuration_payload(child, &sk.pbs)) {
+			if (!emit_v2_child_configuration_payload(child, request.pbs)) {
 				return STF_INTERNAL_ERROR;
 			}
 		}
@@ -471,7 +461,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		}
 
 		pb_stream ppks;
-		if (!emit_v2Npl(v2N_PPK_IDENTITY, &sk.pbs, &ppks) ||
+		if (!emit_v2Npl(v2N_PPK_IDENTITY, request.pbs, &ppks) ||
 		    !emit_unified_ppk_id(&ppk_id_p, &ppks)) {
 			return STF_INTERNAL_ERROR;
 		}
@@ -485,7 +475,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 			}
 
 			if (!emit_v2N_hunk(v2N_NO_PPK_AUTH,
-					   ike->sa.st_no_ppk_auth, &sk.pbs)) {
+					   ike->sa.st_no_ppk_auth, request.pbs)) {
 				return STF_INTERNAL_ERROR;
 			}
 		}
@@ -510,26 +500,18 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 			return STF_FATAL;
 		}
 		ike->sa.st_v2_ike_intermediate.used = false;
-		if (!emit_v2N_hunk(v2N_NULL_AUTH, null_auth, &sk.pbs)) {
+		if (!emit_v2N_hunk(v2N_NULL_AUTH, null_auth, request.pbs)) {
 			free_chunk_content(&null_auth);
 			return STF_INTERNAL_ERROR;
 		}
 		free_chunk_content(&null_auth);
 	}
 
-	if (!close_v2SK_payload(&sk)) {
+	if (!close_and_record_v2_message(&request)) {
 		return STF_INTERNAL_ERROR;
 	}
-	close_output_pbs(&rbody);
-	close_output_pbs(&reply_stream);
 
-	/*
-	 * For AUTH exchange, store the message in the IKE SA.  The
-	 * attempt to create the CHILD SA could have failed.
-	 */
-	return record_v2SK_message(&reply_stream, &sk,
-				   "sending IKE_AUTH request",
-				   MESSAGE_REQUEST);
+	return STF_OK;
 }
 
 /* STATE_V2_PARENT_R1: I2 --> R2
@@ -1178,43 +1160,36 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 	struct connection *c = ike->sa.st_connection;
 	bool send_redirect = v2_ike_sa_auth_responder_establish(ike);
 
-	/* make sure HDR is at start of a clean buffer */
-	struct pbs_out reply_stream = open_pbs_out("reply packet",
-						   reply_buffer, sizeof(reply_buffer),
-						   ike->sa.st_logger);
-
 	/* HDR out */
 
-	struct pbs_out rbody = open_v2_message_body(&reply_stream,
-						    ike, md/*response*/,
-						    ISAKMP_v2_IKE_AUTH);
+	struct v2_message response;
+	if (!open_v2_message("IKE_AUTH response",
+			     ike, ike->sa.st_logger, md/*response*/,
+			     ISAKMP_v2_IKE_AUTH,
+			     reply_buffer, sizeof(reply_buffer),
+			     &response, ENCRYPTED_PAYLOAD)) {
+		return STF_INTERNAL_ERROR;
+	}
 
 	/* decide to send CERT payload before we generate IDr */
 	bool send_cert = ikev2_send_cert_decision(ike);
 
-	/* insert an Encryption payload header */
-
-	struct v2SK_payload sk = open_v2SK_payload(ike->sa.st_logger, &rbody, ike);
-	if (!pbs_ok(&sk.pbs)) {
-		return STF_INTERNAL_ERROR;
-	}
-
 	if (impair.add_unknown_v2_payload_to_sk == ISAKMP_v2_IKE_AUTH) {
 		if (!emit_v2UNKNOWN("SK reply",
 				    impair.add_unknown_v2_payload_to_sk,
-				    &sk.pbs)) {
+				    response.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
 
 	/* send any NOTIFY payloads */
 	if (ike->sa.st_ike_sent_v2n_mobike_supported) {
-		if (!emit_v2N(v2N_MOBIKE_SUPPORTED, &sk.pbs))
+		if (!emit_v2N(v2N_MOBIKE_SUPPORTED, response.pbs))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (ike->sa.st_ppk_used) {
-		if (!emit_v2N(v2N_PPK_IDENTITY, &sk.pbs))
+		if (!emit_v2N(v2N_PPK_IDENTITY, response.pbs))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1231,7 +1206,7 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 	 * message with a DELETE payload.
 	 */
 	if (send_redirect) {
-		if (!emit_redirect_notification(shunk1(c->redirect_to), &sk.pbs))
+		if (!emit_redirect_notification(shunk1(c->redirect_to), response.pbs))
 			return STF_INTERNAL_ERROR;
 		ike->sa.st_sent_redirect = true;	/* mark that we have sent REDIRECT in IKE_AUTH */
 	}
@@ -1240,7 +1215,7 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 	{
 		pb_stream r_id_pbs;
 		if (!out_struct(&ike->sa.st_v2_id_payload.header,
-				&ikev2_id_r_desc, &sk.pbs, &r_id_pbs) ||
+				&ikev2_id_r_desc, response.pbs, &r_id_pbs) ||
 		    !out_hunk(ike->sa.st_v2_id_payload.data,
 				  &r_id_pbs, "my identity"))
 			return STF_INTERNAL_ERROR;
@@ -1254,14 +1229,14 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 	 * but ultimately should go into the CERT decision
 	 */
 	if (send_cert) {
-		stf_status certstat = ikev2_send_cert(ike->sa.st_connection, &sk.pbs);
+		stf_status certstat = ikev2_send_cert(ike->sa.st_connection, response.pbs);
 		if (certstat != STF_OK)
 			return certstat;
 	}
 
 	/* now send AUTH payload */
 
-	if (!emit_v2_auth(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, &sk.pbs)) {
+	if (!emit_v2_auth(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, response.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 	ike->sa.st_v2_ike_intermediate.used = false;
@@ -1275,33 +1250,22 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 	if (send_redirect) {
 		dbg("skipping child; redirect response");
 	} else {
-		v2_notification_t cn = process_v2_IKE_AUTH_request_child_sa_payloads(ike, md, &sk.pbs);
+		v2_notification_t cn = process_v2_IKE_AUTH_request_child_sa_payloads(ike, md, response.pbs);
 		if (v2_notification_fatal(cn)) {
 			record_v2N_response(ike->sa.st_logger, ike, md,
 					    cn, NULL/*no-data*/,
 					    ENCRYPTED_PAYLOAD);
 			return STF_FATAL;
 		} else if (cn != v2N_NOTHING_WRONG) {
-			emit_v2N(cn, &sk.pbs);
+			emit_v2N(cn, response.pbs);
 		}
 	}
 
-	if (!close_v2SK_payload(&sk)) {
+	if (!close_and_record_v2_message(&response)) {
 		return STF_INTERNAL_ERROR;
 	}
-	close_output_pbs(&rbody);
-	close_output_pbs(&reply_stream);
 
-	/*
-	 * For AUTH exchange, store the message in the IKE SA.
-	 * The attempt to create the CHILD SA could have
-	 * failed.
-	 */
-	stf_status status = record_v2SK_message(&reply_stream, &sk,
-						"replying to IKE_AUTH request",
-						MESSAGE_RESPONSE);
-
-	return status;
+	return STF_OK;
 }
 
 /* STATE_V2_PARENT_I2: R2 --> I3
