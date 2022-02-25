@@ -12,6 +12,11 @@ s/\(established Child SA.*[^A-Z]IPCOMP.\)>0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1>0x
 s/\(established Child SA.*[^A-Z]ESP[^=]*=\)>0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1>0xESPESP <0xESPESP \2/
 s/\(established Child SA.*[^A-Z]AH[^=]*=\)>0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1>0xAHAH <0xAHAH \2/
 
+# IKEv2; need to handle {ESP,AH}/TCP
+s/\(rekeyed Child SA.*[^A-Z]IPCOMP.\)>0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1>0xESPESP <0xESPESP \2/
+s/\(rekeyed Child SA.*[^A-Z]ESP[^=]*=\)>0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1>0xESPESP <0xESPESP \2/
+s/\(rekeyed Child SA.*[^A-Z]AH[^=]*=\)>0x[a-f0-9]* <0x[a-f0-9]* \(.*\)$/\1>0xAHAH <0xAHAH \2/
+
 s,\(instance with peer .*\) {isakmp=#.*/ipsec=#.*},\1,
 s,\(initiating Quick Mode .*\) {using isakmp#.*},\1,
 s,\(initiating Quick Mode .* to replace #.*\) {using isakmp#.*},\1,
