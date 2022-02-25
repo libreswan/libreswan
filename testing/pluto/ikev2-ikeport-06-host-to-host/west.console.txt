@@ -55,7 +55,7 @@ west #
 002 "west-east-ikev2" #3: initiating rekey to replace Child SA #2
 1v2 "west-east-ikev2" #3: sent CREATE_CHILD_SA request to rekey IPsec SA
 002 "west-east-ikev2" #3: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
-004 "west-east-ikev2" #3: initiator established Child SA using #1; IPsec tunnel [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
+004 "west-east-ikev2" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP/ESN=>0x533bf3a2 <0x5146a3c1 xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 002 "west-east-ikev2" #2: deleting established Child SA using IKE SA #1
 005 "west-east-ikev2" #2: ESP traffic information: in=336B out=336B
 west #
