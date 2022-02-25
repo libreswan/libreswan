@@ -854,11 +854,16 @@ void llog_v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
 	LLOG_JAMBUF(RC_SUCCESS, child->sa.st_logger, buf) {
-		jam(buf, "%s established Child SA using "PRI_SO"; ",
-		    (child->sa.st_sa_role == SA_INITIATOR ? "initiator" :
-		     child->sa.st_sa_role == SA_RESPONDER ? "responder" :
-		     "?"),
-		    ike->sa.st_serialno);
+		switch (child->sa.st_sa_role) {
+		case SA_INITIATOR: jam_string(buf, "initiator "); break;
+		case SA_RESPONDER: jam_string(buf, "responder "); break;
+		}
+		if (child->sa.st_ipsec_pred != SOS_NOBODY) {
+			jam(buf, "rekeyed Child SA "PRI_SO" ", pri_so(child->sa.st_ipsec_pred));
+		} else {
+			jam(buf, "established Child SA ");
+		}
+		jam(buf, "using "PRI_SO"; ", pri_so(ike->sa.st_serialno));
 		/* log Child SA Traffic Selector details for admin's pleasure */
 		const struct traffic_selector a = traffic_selector_from_end(&c->spd.this, "this");
 		const struct traffic_selector b = traffic_selector_from_end(&c->spd.that, "that");
