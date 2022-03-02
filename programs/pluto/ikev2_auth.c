@@ -142,53 +142,53 @@ enum keyword_authby v2_auth_by(struct ike_sa *ike)
 	return authby;
 }
 
-enum ikev2_auth_method v2_auth_method(struct ike_sa *ike, enum keyword_authby authby)
+/*
+ * Map the configuration's authby=... onto the IKEv2 AUTH message's
+ * auth method.
+ */
+
+enum ikev2_auth_method v2AUTH_method_from_authby(struct ike_sa *ike,
+						 enum keyword_authby authby)
 {
 	struct connection *c = ike->sa.st_connection;
-	enum ikev2_auth_method auth_method;
+
 	switch (authby) {
 	case AUTHBY_RSASIG:
-	{
-		bool allow_legacy = LIN(POLICY_RSASIG_v1_5, c->policy);
-
-		if (!ike->sa.st_seen_hashnotify) {
-			if (allow_legacy) {
-				auth_method = IKEv2_AUTH_RSA;
-			} else {
-				log_state(RC_LOG_SERIOUS, &ike->sa,
-					  "legacy RSA-SHA1 is not allowed but peer supports nothing else");
-				auth_method = IKEv2_AUTH_RESERVED;
-			}
-		} else {
-			if (c->config->sighash_policy != LEMPTY) {
-				auth_method = IKEv2_AUTH_DIGSIG;
-			} else {
-				if (allow_legacy) {
-					auth_method = IKEv2_AUTH_RSA;
-				} else {
-					log_state(RC_LOG_SERIOUS, &ike->sa,
-						  "Local policy does not allow legacy RSA-SHA1 but connection allows no other hash policy");
-					auth_method = IKEv2_AUTH_RESERVED;
-
-				}
-			}
+		if (ike->sa.st_seen_hashnotify &&
+		    c->config->sighash_policy != LEMPTY) {
+			return IKEv2_AUTH_DIGSIG;
 		}
-		break;
-	}
+
+		if (LIN(POLICY_RSASIG_v1_5, c->policy)) {
+			return IKEv2_AUTH_RSA;
+		}
+
+		/* try to log something helpful */
+		if (ike->sa.st_seen_hashnotify) {
+			llog_sa(RC_LOG_SERIOUS, ike,
+				"local policy does not allow legacy RSA-SHA1 but connection allows no other hash policy");
+		} else {
+			llog_sa(RC_LOG_SERIOUS, ike,
+				"legacy RSA-SHA1 is not allowed but peer supports nothing else");
+		}
+		return IKEv2_AUTH_RESERVED;
+
 	case AUTHBY_ECDSA:
-		auth_method = IKEv2_AUTH_DIGSIG;
-		break;
+		return IKEv2_AUTH_DIGSIG;
+
 	case AUTHBY_PSK:
-		auth_method = IKEv2_AUTH_PSK;
-		break;
+		return IKEv2_AUTH_PSK;
+
 	case AUTHBY_NULL:
-		auth_method = IKEv2_AUTH_NULL;
-		break;
+		return IKEv2_AUTH_NULL;
+
+	case AUTHBY_EAPONLY:
 	case AUTHBY_NEVER:
-	default:
-		bad_case(authby);
+	case AUTHBY_UNSET:
+		break;
+
 	}
-	return auth_method;
+	bad_case(authby);
 }
 
 /*
@@ -228,7 +228,7 @@ bool emit_v2_auth(struct ike_sa *ike,
 
 	struct ikev2_auth a = {
 		.isaa_critical = build_ikev2_critical(false, ike->sa.st_logger),
-		.isaa_auth_method = v2_auth_method(ike, authby),
+		.isaa_auth_method = v2AUTH_method_from_authby(ike, authby),
 	};
 
 	struct pbs_out auth_pbs;

@@ -152,7 +152,7 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 
 	{
 		enum keyword_authby authby = v2_auth_by(ike);
-		enum ikev2_auth_method auth_method = v2_auth_method(ike, authby);
+		enum ikev2_auth_method auth_method = v2AUTH_method_from_authby(ike, authby);
 		switch (auth_method) {
 		case IKEv2_AUTH_RSA:
 		{
@@ -934,7 +934,7 @@ stf_status generate_v2_responder_auth(struct ike_sa *ike, struct msg_digest *md,
 
 	{
 		enum keyword_authby authby = v2_auth_by(ike);
-		enum ikev2_auth_method auth_method = v2_auth_method(ike, authby);
+		enum ikev2_auth_method auth_method = v2AUTH_method_from_authby(ike, authby);
 		switch (auth_method) {
 		case IKEv2_AUTH_RSA:
 		{
