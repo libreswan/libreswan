@@ -323,12 +323,13 @@ static err_t fetch_asn1_blob(const char *url, chunk_t *blob, struct logger *logg
 		return ugh;
 	}
 
-	if (is_asn1(*blob)) {
+	ugh = asn1_ok(*blob);
+	if (ugh == NULL) {
 		dbg("  fetched blob coded in DER format");
 	} else {
 		ugh = pemtobin(blob);
 		if (ugh != NULL) {
-		} else if (is_asn1(*blob)) {
+		} else if (asn1_ok(*blob) == NULL) {
 			dbg("  fetched blob coded in PEM format");
 		} else {
 			ugh = "Blob coded in unknown format (within PEM)";

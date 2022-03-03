@@ -17,6 +17,9 @@
  *
  */
 
+#ifndef ASN1_H
+#define ASN1_H
+
 #include "realtime.h"
 #include "chunk.h"
 
@@ -74,7 +77,14 @@ enum asn1_type {
 #define ASN1_MAX_LEN_LEN    4                   /* no coded length takes more than 4 bytes. */
 
 extern int known_oid(chunk_t object);
-extern size_t asn1_length(chunk_t *blob);
 extern void code_asn1_length(size_t length, chunk_t *code);
 extern bool is_printablestring(chunk_t str);
-extern bool is_asn1(chunk_t blob);
+
+typedef chunk_t asn1_t;
+
+err_t asn1_ok(asn1_t blob);
+
+err_t unwrap_asn1_container(enum asn1_type ty, asn1_t *cursor, asn1_t *contents);
+err_t unwrap_asn1_length(asn1_t *cursor, size_t *length);
+
+#endif

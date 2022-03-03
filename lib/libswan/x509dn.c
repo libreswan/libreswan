@@ -123,28 +123,6 @@ static const x501rdn_t x501rdns[] = {
 
 #define RETURN_IF_ERR(f) { err_t ugh = (f); if (ugh != NULL) return ugh; }
 
-static err_t unwrap(enum asn1_type ty, chunk_t *container, chunk_t *contents)
-{
-	if (container->len == 0)
-		return "missing ASN1 type";
-
-	if (container->ptr[0] != ty)
-		return "unexpected ASN1 type";
-
-	size_t sz = asn1_length(container);
-	if (sz == ASN1_INVALID_LENGTH)
-		return "invalid ASN1 length";
-
-	if (sz > container->len)
-		return "ASN1 length larger than space";
-
-	contents->ptr = container->ptr;
-	contents->len = sz;
-	container->ptr += sz;
-	container->len -= sz;
-	return NULL;
-}
-
 static err_t init_rdn(chunk_t dn, /* input (copy) */
 		chunk_t *rdn, /* output */
 		chunk_t *attribute, /* output */
@@ -153,7 +131,7 @@ static err_t init_rdn(chunk_t dn, /* input (copy) */
 	*attribute = EMPTY_CHUNK;
 
 	/* a DN is a SEQUENCE OF RDNs */
-	RETURN_IF_ERR(unwrap(ASN1_SEQUENCE, &dn, rdn));
+	RETURN_IF_ERR(unwrap_asn1_container(ASN1_SEQUENCE, &dn, rdn));
 
 	/* the whole DN should be this ASN1_SEQUENCE */
 	if (dn.len != 0)
@@ -180,16 +158,16 @@ static err_t get_next_rdn(chunk_t *rdn,	/* input/output */
 		 * An RDN is a SET OF attributeTypeAndValue.
 		 * Strip off the ASN1_set wrapper.
 		 */
-		RETURN_IF_ERR(unwrap(ASN1_SET, rdn, attribute));
+		RETURN_IF_ERR(unwrap_asn1_container(ASN1_SET, rdn, attribute));
 	}
 
 	/* An attributeTypeAndValue is a SEQUENCE */
 	chunk_t body;
-	RETURN_IF_ERR(unwrap(ASN1_SEQUENCE, attribute, &body));
+	RETURN_IF_ERR(unwrap_asn1_container(ASN1_SEQUENCE, attribute, &body));
 
 	/* extract oid from body */
 
-	RETURN_IF_ERR(unwrap(ASN1_OID, &body, oid));
+	RETURN_IF_ERR(unwrap_asn1_container(ASN1_OID, &body, oid));
 
 	/* extract string value and its type from body */
 
@@ -212,7 +190,7 @@ static err_t get_next_rdn(chunk_t *rdn,	/* input/output */
 		return "unexpected ASN1 string type";
 	}
 
-	RETURN_IF_ERR(unwrap(*value_type, &body, value_content));
+	RETURN_IF_ERR(unwrap_asn1_container(*value_type, &body, value_content));
 
 	if (body.len != 0)
 		return "crap after OID and value pair of RDN";
