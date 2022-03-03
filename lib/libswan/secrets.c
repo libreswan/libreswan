@@ -359,83 +359,92 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 
 			dbg("line %d: match=0%02o", s->pks.line, match);
 
-			switch (match) {
-			case match_local:
+			if (match == match_none) {
+				continue;
+			}
+
+			if (match == best_match) {
 				/*
-				 * if this is an asymmetric
+				 * two good matches are equally good:
+				 * do they agree?
+				 */
+				bool same = false;
+
+				switch (kind) {
+				case PKK_NULL:
+					same = true;
+					break;
+				case PKK_PSK:
+					same = hunk_eq(s->pks.u.preshared_secret,
+						       best->pks.u.preshared_secret);
+					break;
+				case PKK_RSA:
+					/*
+					 * Dirty trick: since we have
+					 * code to compare RSA public
+					 * keys, but not private keys,
+					 * we make the assumption that
+					 * equal public keys mean
+					 * equal private keys. This
+					 * ought to work.
+					 */
+					same = same_RSA_public_key(
+						&s->pks.u.RSA_private_key.pub,
+						&best->pks.u.RSA_private_key.pub);
+					break;
+				case PKK_ECDSA:
+					/* there are no ECDSA kind of secrets */
+					/* ??? this seems not to be the case */
+					break;
+				case PKK_XAUTH:
+					/*
+					 * We don't support this yet,
+					 * but no need to die.
+					 */
+					break;
+				case PKK_PPK:
+					same = hunk_eq(s->pks.ppk,
+						       best->pks.ppk);
+					break;
+				default:
+					bad_case(kind);
+				}
+				if (!same) {
+					dbg("multiple ipsec.secrets entries with distinct secrets match endpoints: first secret used");
+					/*
+					 * list is backwards: take
+					 * latest in list
+					 */
+					best = s;
+				}
+				continue;
+			}
+
+			if (match == match_local && !asym) {
+				/*
+				 * Only when this is an asymmetric
 				 * (eg. public key) system, allow
 				 * this-side-only match to count, even
-				 * if there are other ids in the list.
+				 * when there are other ids in the
+				 * list.
 				 */
-				if (!asym)
-					break;
-				/* FALLTHROUGH */
+				continue;
+			}
+
+			switch (match) {
+			case match_local:
 			case match_default:	/* default all */
 			case match_any:	/* a wildcard */
 			case match_local | match_default:	/* default peer */
 			case match_local | match_any: /* %any/0.0.0.0 and local */
 			case match_remote | match_any: /* %any/0.0.0.0 and remote */
 			case match_local | match_remote:	/* explicit */
-				if (match == best_match) {
-					/*
-					 * two good matches are equally good:
-					 * do they agree?
-					 */
-					bool same = false;
-
-					switch (kind) {
-					case PKK_NULL:
-						same = true;
-						break;
-					case PKK_PSK:
-						same = hunk_eq(s->pks.u.preshared_secret,
-							       best->pks.u.preshared_secret);
-						break;
-					case PKK_RSA:
-						/*
-						 * Dirty trick: since we have
-						 * code to compare RSA public
-						 * keys, but not private keys,
-						 * we make the assumption that
-						 * equal public keys mean equal
-						 * private keys. This ought to
-						 * work.
-						 */
-						same = same_RSA_public_key(
-							&s->pks.u.RSA_private_key.pub,
-							&best->pks.u.RSA_private_key.pub);
-						break;
-					case PKK_ECDSA:
-						/* there are no ECDSA kind of secrets */
-						/* ??? this seems not to be the case */
-						break;
-					case PKK_XAUTH:
-						/*
-						 * We don't support this yet,
-						 * but no need to die
-						 */
-						break;
-					case PKK_PPK:
-						same = hunk_eq(s->pks.ppk,
-							       best->pks.ppk);
-						break;
-					default:
-						bad_case(kind);
-					}
-					if (!same) {
-						dbg("multiple ipsec.secrets entries with distinct secrets match endpoints: first secret used");
-						/*
-						 * list is backwards:
-						 * take latest in list
-						 */
-						best = s;
-					}
-				} else if (match > best_match) {
+				/*
+				 * XXX: what combinations are missing?
+				 */
+				if (match > best_match) {
 					dbg("match 0%02o beats previous best_match 0%02o match=%p (line=%d)",
-					    match,
-					    best_match,
-					    s, s->pks.line);
-
+					    match, best_match, s, s->pks.line);
 					/* this is the best match so far */
 					best_match = match;
 					best = s;
