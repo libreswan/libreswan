@@ -646,16 +646,19 @@ err_t atodn(const char *src, chunk_t *dn)
 	 * insert type and operand length before the operand already in the buffer
 	 * Note: on buffer overflow this returns from atodn
 	 */
-#	define END_OBJ(ty) { \
-		size_t len = dn_ptr - *--patchpointer; \
-		unsigned char len_buf[ASN1_MAX_LEN_LEN + 1] = { ty }; \
-		chunk_t obj_len = { len_buf + 1, 0 }; \
-		code_asn1_length(len, &obj_len); \
-		if (dn_redline - dn_ptr < (ptrdiff_t)obj_len.len + 1) \
-			return "DN overflow"; \
+#	define END_OBJ(ty)						\
+	{								\
+		size_t len = dn_ptr - *--patchpointer;			\
+		unsigned char len_buf[1 + sizeof(len)] = { ty };	\
+		chunk_t obj_len = { len_buf + 1, 0 };			\
+		/* only handles up to 4 bytes */			\
+		code_asn1_length(len, &obj_len);			\
+		passert(obj_len.len <= sizeof(len_buf));		\
+		if (dn_redline - dn_ptr < (ptrdiff_t)obj_len.len + 1)	\
+			return "DN overflow";				\
 		memmove(*patchpointer + obj_len.len + 1, *patchpointer, len); \
-		memcpy(*patchpointer, len_buf, obj_len.len + 1); \
-		dn_ptr += obj_len.len + 1; \
+		memcpy(*patchpointer, len_buf, obj_len.len + 1);	\
+		dn_ptr += obj_len.len + 1;				\
 	}
 
 	START_OBJ();	/* 0 ASN1_SEQUENCE */

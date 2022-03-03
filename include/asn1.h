@@ -72,10 +72,6 @@ enum asn1_type {
 	ASN1_CONTEXT_C_5 =          0xA5
 };
 
-#define ASN1_INVALID_LENGTH     (~(size_t) 0)   /* largest size_t */
-
-#define ASN1_MAX_LEN_LEN    4                   /* no coded length takes more than 4 bytes. */
-
 extern int known_oid(chunk_t object);
 extern void code_asn1_length(size_t length, chunk_t *code);
 extern bool is_printablestring(chunk_t str);
