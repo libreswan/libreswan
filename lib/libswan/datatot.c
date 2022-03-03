@@ -21,15 +21,13 @@
 static void convert(const char *src, size_t nreal, int format, char *out);
 
 /*
-   - datatot - convert data bytes to text
+ *  - datatot - convert data bytes to text
+ * true length (with NUL) for success
  */
-size_t                          /* true length (with NUL) for success */
-datatot(src, srclen, format, dst, dstlen)
-const unsigned char *src;
-size_t srclen;
-int format;                     /* character indicating what format */
-char *dst;                      /* need not be valid if dstlen is 0 */
-size_t dstlen;
+size_t datatot(const unsigned char *src, size_t srclen,
+	       int format,  	  /* character indicating what format */
+	       char *dst,
+	       size_t dstlen) 	  /* need not be valid if dstlen is 0 */
 {
 	size_t inblocksize;             /* process this many bytes at a time */
 	size_t outblocksize;            /* producing this many */
@@ -52,9 +50,12 @@ size_t dstlen;
 	switch (format) {
 	case 0:
 	case 'h':
-		format = 'x';
 		breakevery = 8;
-	/* FALLTHROUGH */
+		inblocksize = 1;
+		outblocksize = 2;
+		prefix = "0x";
+		format = 'x';
+		break;
 	case 'x':
 		inblocksize = 1;
 		outblocksize = 2;
@@ -63,7 +64,11 @@ size_t dstlen;
 	case ':':
 		breakevery = 2;
 		breakchar = ':';
-	/* FALLTHROUGH */
+		inblocksize = 1;
+		outblocksize = 2;
+		prefix = "";
+		format = 'x';
+		break;
 	case 16:
 		inblocksize = 1;
 		outblocksize = 2;
@@ -83,8 +88,6 @@ size_t dstlen;
 		break;
 	default:
 		return 0;
-
-		break;
 	}
 
 	passert(inblocksize < sizeof(inblock));
@@ -163,11 +166,9 @@ size_t dstlen;
 /*
    - convert - convert one input block to one output block
  */
-static void convert(src, nreal, format, out)
-const char *src;
-size_t nreal;                   /* how much of the input block is real */
-int format;
-char *out;
+static void convert(const char *src,
+		    size_t nreal,    /* how much of the input block is real */
+		    int format, char *out)
 {
 	static char hex[] = "0123456789abcdef";
 	static char base64[] =  "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
