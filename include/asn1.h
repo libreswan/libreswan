@@ -74,7 +74,8 @@ enum asn1_type {
 
 extern int known_oid(chunk_t object);
 extern void code_asn1_length(size_t length, chunk_t *code);
-extern bool is_printablestring(chunk_t str);
+
+bool is_asn1_printablestring(shunk_t str);
 
 typedef chunk_t asn1_t;
 

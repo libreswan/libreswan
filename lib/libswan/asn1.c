@@ -147,44 +147,54 @@ void code_asn1_length(size_t length, chunk_t *code)
 }
 
 /*
- * Determines if a character string is of type ASN.1 printableString.
+ * Determines if a character string is of type ASN.1 PrintableString.
  * See https://en.wikipedia.org/w/index.php?title=PrintableString
  */
-bool is_printablestring(chunk_t str)
+
+bool is_asn1_printablestring(shunk_t str)
 {
 	/*
-	 * printable string character set:
+	 * Map ASCII character onto a printable bit.  The printable
+	 * characters are:
+	 *
 	 * "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 '()+,-./:=?"
+	 *
+	 * Each byte contains a bit mask of valid characters.  The
+	 * most-significant bit contains the first character's bit,
+	 * and so on (so &0x80 checks the left-most character).
 	 */
-	static const unsigned char printable_set[] = {
-		0201u,	/* 0x20        '  (first is the real SPACE) */
-		0373u,	/* 0x28 () +,-./ */
-		0377u,	/* 0x30 01234567 */
-		0247u,	/* 0x38 89:  = ? */
-		0376u,	/* 0x40  ABCDEFG */
-		0377u,	/* 0x48 HIJKLMNO */
-		0377u,	/* 0x50 PQRSTUVW */
-		0007u,	/* 0x58 XYZ      */
-		0376u,	/* 0x60  abcdefg */
-		0377u,	/* 0x68 hijklmno */
-		0377u,	/* 0x70 pqrstuvw */
-		0007u,	/* 0x78 xyz      */
+	static const uint8_t printable_set[256 / 8] = {
+		0000u,	/* 0x00            */
+		0000u,	/* 0x08            */
+		0000u,	/* 0x10            */
+		0000u,	/* 0x18            */
+		0201u,	/* 0x20          '  (first is the real SPACE) */
+		0337u,	/* 0x28 ()  +, -./ */
+		0377u,	/* 0x30 01 234 567 */
+		0345u,	/* 0x38 89 :   = ? */
+		0177u,	/* 0x40  A BCD EFG */
+		0377u,	/* 0x48 HI JKL MNO */
+		0377u,	/* 0x50 PQ RST UVW */
+		0340u,	/* 0x58 XY Z       */
+		0177u,	/* 0x60  a bcd efg */
+		0377u,	/* 0x68 hi jkl mno */
+		0377u,	/* 0x70 pq rst uvw */
+		0340u,	/* 0x78 xy z      */
 	};
 
+	const uint8_t *s = str.ptr;
 	for (unsigned i = 0; i < str.len; i++) {
 		/*
-		 * Tricky test.
-		 * The first part checks if the current character is
-		 * within the range of graphical characters (0x20 - 0x7f).
-		 * It saves a branch instruction by exploiting the way
-		 * underflow of unsigned subtraction yields a large number.
-		 * If the character is in range, we check it by subscripting
-		 * its bit within printable_set[].
+		 * Check if the bit within printable_set[] is set.
+		 * Left shift the mask so that 0x80 checks the bit.
 		 */
-		unsigned u = (unsigned)str.ptr[i] - 0x20u;
-		if (!(u <= 0x7fU - 0x20u &&
-		      (printable_set[u / 8u] & 1u << (u % 8u))))
+		uint8_t u = s[i];
+		uint8_t ps = printable_set[u / 8];
+		uint8_t pb = ps << (u % 8);
+		/* printf("checking '%c' %o %x\n", u, ps, pb); */
+		if (!(pb & 0x80)) {
 			return false;
+		}
 	}
 	return true;
 }

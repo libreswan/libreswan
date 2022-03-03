@@ -811,7 +811,7 @@ err_t atodn(const char *src, chunk_t *dn)
 
 			unsigned char *ns = patchpointer[-1];	/* name operand start */
 			enum asn1_type t = (op->type == ASN1_PRINTABLESTRING &&
-					    !is_printablestring(chunk2(ns, dn_ptr - ns)) ?
+					    !is_asn1_printablestring(shunk2(ns, dn_ptr - ns)) ?
 					    ASN1_T61STRING : op->type);
 
 			END_OBJ(t);	/* 3 value */
