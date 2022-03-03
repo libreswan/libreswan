@@ -366,8 +366,9 @@ bool id_eq(const struct id *a, const struct id *b)
 	}
 
 	case ID_FROMCERT:
-		dbg("same_id() received ID_FROMCERT - unexpected");
-		/* FALLTHROUGH */
+		dbg("%s() received ID_FROMCERT - unexpected", __func__);
+		return same_dn(a->name, b->name);
+
 	case ID_DER_ASN1_DN:
 		return same_dn(a->name, b->name);
 
