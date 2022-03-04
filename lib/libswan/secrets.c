@@ -1021,11 +1021,10 @@ struct pubkey *pubkey_addref(struct pubkey *pk, where_t where)
 /*
  * free a public key struct
  */
-static void free_public_key(void *obj, where_t where UNUSED)
+static void free_pubkey(void *obj, where_t where UNUSED)
 {
 	struct pubkey *pk = obj;
 	free_id_content(&pk->id);
-	free_chunk_content(&pk->issuer);
 	/* algorithm-specific freeing */
 	pk->type->free_pubkey_content(&pk->u);
 	pfree(pk);
@@ -1136,7 +1135,8 @@ static struct pubkey *alloc_pubkey(const struct id *id, /* ASKK */
 				   size_t size,
 				   where_t where)
 {
-	struct pubkey *pk = refcnt_alloc(struct pubkey, free_public_key, where);
+	struct pubkey *pk = refcnt_overalloc(struct pubkey, issuer.len,
+					     free_pubkey, where);
 	pk->u = *pkc;
 	pk->id = clone_id(id, "public key id");
 	pk->dns_auth_level = dns_auth_level;
@@ -1144,10 +1144,17 @@ static struct pubkey *alloc_pubkey(const struct id *id, /* ASKK */
 	pk->installed_time = install_time;
 	pk->until_time = until_time;
 	pk->dns_ttl = ttl;
-	pk->issuer = clone_hunk(issuer, "pubkey issuer");
 	pk->keyid = *keyid;
 	pk->ckaid = *ckaid;
 	pk->size = size;
+
+	/* Append any issuer to the end */
+	if (issuer.len > 0) {
+		void *end = (uint8_t*)pk + sizeof(struct pubkey);
+		pk->issuer = chunk2(end, issuer.len);
+		memcpy(end, issuer.ptr, issuer.len);
+	}
+
 	return pk;
 }
 
