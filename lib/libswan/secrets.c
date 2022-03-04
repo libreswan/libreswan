@@ -1124,14 +1124,17 @@ void replace_public_key(struct pubkey_list **pubkey_db,
 	passert(*pk == NULL); /* stolen */
 }
 
-static struct pubkey *alloc_public_key(const struct id *id, /* ASKK */
-				       enum dns_auth_level dns_auth_level,
-				       const struct pubkey_type *type,
-				       realtime_t install_time, realtime_t until_time,
-				       uint32_t ttl,
-				       const union pubkey_content *pkc,
-				       const keyid_t *keyid, const ckaid_t *ckaid, size_t size,
-				       where_t where)
+static struct pubkey *alloc_pubkey(const struct id *id, /* ASKK */
+				   enum dns_auth_level dns_auth_level,
+				   const struct pubkey_type *type,
+				   realtime_t install_time, realtime_t until_time,
+				   uint32_t ttl,
+				   const union pubkey_content *pkc,
+				   const keyid_t *keyid,
+				   const ckaid_t *ckaid,
+				   shunk_t issuer,
+				   size_t size,
+				   where_t where)
 {
 	struct pubkey *pk = refcnt_alloc(struct pubkey, free_public_key, where);
 	pk->u = *pkc;
@@ -1141,7 +1144,7 @@ static struct pubkey *alloc_public_key(const struct id *id, /* ASKK */
 	pk->installed_time = install_time;
 	pk->until_time = until_time;
 	pk->dns_ttl = ttl;
-	pk->issuer = EMPTY_CHUNK;	/* raw keys have no issuer */
+	pk->issuer = clone_hunk(issuer, "pubkey issuer");
 	pk->keyid = *keyid;
 	pk->ckaid = *ckaid;
 	pk->size = size;
@@ -1167,10 +1170,11 @@ err_t add_public_key(const struct id *id, /* ASKK */
 		return err;
 	}
 
-	struct pubkey *pubkey = alloc_public_key(id, dns_auth_level, type,
-						 install_time, until_time, ttl,
-						 &scratch_pkc, &keyid, &ckaid, size,
-						 HERE);
+	struct pubkey *pubkey = alloc_pubkey(id, dns_auth_level, type,
+					     install_time, until_time, ttl,
+					     &scratch_pkc, &keyid, &ckaid,
+					     null_shunk,	/* raw keys have no issuer */
+					     size, HERE);
 	if (pkp != NULL) {
 		*pkp = pubkey_addref(pubkey, HERE);
 	}
@@ -1413,11 +1417,11 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 	} else {
 		until_time = realtime(not_after / PR_USEC_PER_SEC);
 	}
-	*pk = alloc_public_key(id, /*dns_auth_level*/0/*default*/,
-			       type, install_time, until_time,
-			       /*ttl*/0, &pkc, &keyid, &ckaid, size,
-			       HERE);
-	(*pk)->issuer = clone_secitem_as_chunk(cert->derIssuer, "der");
+	*pk = alloc_pubkey(id, /*dns_auth_level*/0/*default*/,
+			   type, install_time, until_time,
+			   /*ttl*/0, &pkc, &keyid, &ckaid,
+			   same_secitem_as_shunk(cert->derIssuer),
+			   size, HERE);
 	SECITEM_FreeItem(ckaid_nss, PR_TRUE);
 	return NULL;
 }
