@@ -847,7 +847,7 @@ static void decode_certificate_request(struct state *st, enum ike_cert_type cert
 		}
 
 		if (ca_name.len > 0) {
-			err_t e = asn1_ok(ca_name);
+			err_t e = asn1_ok(ASN1(ca_name));
 			if (e != NULL) {
 				llog(RC_LOG_SERIOUS, st->st_logger,
 				     "ignoring CERTREQ payload that is not ASN1: %s", e);

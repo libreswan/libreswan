@@ -78,8 +78,13 @@ extern void code_asn1_length(size_t length, chunk_t *code);
 
 bool is_asn1_printablestring(shunk_t str);
 
-typedef chunk_t asn1_t;
-#define ASN1(H) (asn1_t) { .ptr = H.ptr, .len = H.len, }
+typedef shunk_t asn1_t;
+#define ASN1(CHUNK)							\
+	({								\
+		chunk_t h_ = CHUNK; /* type assertion */		\
+		asn1_t asn1_ = { .ptr = h_.ptr, .len = h_.len, };	\
+		asn1_;							\
+	})
 
 int known_oid(asn1_t object);
 

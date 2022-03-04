@@ -179,7 +179,7 @@ static void unwrap_asn1_length_check(void)
 			FAIL("buffer overflow");
 		}
 
-		asn1_t bytes = ASN1(t->hunk);
+		asn1_t bytes = { .ptr = t->hunk.ptr, .len = t->hunk.len, };
 
 		size_t length;
 		err_t e = unwrap_asn1_length(&bytes, &length);
