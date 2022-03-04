@@ -644,8 +644,9 @@ diag_t match_end_cert_id(const struct certs *certs,
 		}
 
 		int wildcards;
-		bool m = match_dn_any_order_wild("", end_cert_der_subject,
-						 peer_id->name,
+		bool m = match_dn_any_order_wild("",
+						 ASN1(end_cert_der_subject),
+						 ASN1(peer_id->name),
 						 &wildcards);
 		if (!m) {
 			id_buf idb;

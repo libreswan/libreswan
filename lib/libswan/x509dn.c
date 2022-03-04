@@ -1045,7 +1045,7 @@ static bool match_rdn(const CERTRDN *const rdn_a, const CERTRDN *const rdn_b, bo
 	return matched > 0 && matched == ava_num;
 }
 
-static bool match_dn_unordered(const char *prefix, const chunk_t a, const chunk_t b, int *const wildcards)
+static bool match_dn_unordered(const char *prefix, asn1_t a, asn1_t b, int *const wildcards)
 {
 	dn_buf a_dnbuf = { "", };
 	dn_buf b_dnbuf = { "", };
@@ -1056,8 +1056,8 @@ static bool match_dn_unordered(const char *prefix, const chunk_t a, const chunk_
 	 * printable ASCII) so that that it is suitable for NSS's
 	 * CERT_AsciiToName().
 	 */
-	const char *abuf = str_dn(ASN1(a), &a_dnbuf); /* RFC1485 for NSS */
-	const char *bbuf = str_dn(ASN1(b), &b_dnbuf); /* RFC1485 for NSS */
+	const char *abuf = str_dn(a, &a_dnbuf); /* RFC1485 for NSS */
+	const char *bbuf = str_dn(b, &b_dnbuf); /* RFC1485 for NSS */
 
 	/*
 	 * ABUF and BBUF, set by dntoa(), contain an RFC 1485(?)
@@ -1107,9 +1107,9 @@ static bool match_dn_unordered(const char *prefix, const chunk_t a, const chunk_
 	return matched > 0 && rdn_num > 0 && matched == rdn_num;
 }
 
-bool match_dn_any_order_wild(const char *prefix, chunk_t a, chunk_t b, int *wildcards)
+bool match_dn_any_order_wild(const char *prefix, asn1_t a, asn1_t b, int *wildcards)
 {
-	bool ret = match_dn(ASN1(a), ASN1(b), wildcards);
+	bool ret = match_dn(a, b, wildcards);
 
 	if (!ret) {
 		dbg("%s%s: not an exact match, now checking any RDN order with %d wildcards",

@@ -394,7 +394,7 @@ bool match_id(const char *prefix, const struct id *a, const struct id *b,
 		wildcards = MAX_WILDCARDS;
 		match = false;
 	} else if (a->kind == ID_DER_ASN1_DN) {
-		match = match_dn_any_order_wild(prefix, a->name, b->name, &wildcards);
+		match = match_dn_any_order_wild(prefix, ASN1(a->name), ASN1(b->name), &wildcards);
 	} else if (same_id(a, b)) {
 		wildcards = 0;
 		match = true;
