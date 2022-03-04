@@ -93,9 +93,9 @@ bool ocsp_post = false;
 char *curl_iface = NULL;
 long curl_timeout = -1;
 
-SECItem same_chunk_as_dercert_secitem(chunk_t chunk)
+SECItem same_shunk_as_dercert_secitem(shunk_t shunk)
 {
-	return same_chunk_as_secitem(chunk, siDERCertBuffer);
+	return same_shunk_as_secitem(shunk, siDERCertBuffer);
 }
 
 static const char *dntoasi(dn_buf *dst, SECItem si)
@@ -120,7 +120,7 @@ bool match_requested_ca(const generalName_t *requested_ca, chunk_t our_ca,
 	while (requested_ca != NULL) {
 		int pathlen;
 
-		if (trusted_ca_nss(our_ca, requested_ca->name, &pathlen) &&
+		if (trusted_ca(ASN1(our_ca), ASN1(requested_ca->name), &pathlen) &&
 		    pathlen < *our_pathlen)
 			*our_pathlen = pathlen;
 		requested_ca = requested_ca->next;
@@ -188,18 +188,18 @@ static void same_nss_gn_as_pluto_gn(CERTGeneralName *nss_gn,
  * This very well could end up being condensed into
  * an NSS call or two. TBD.
  */
-bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
+bool trusted_ca(asn1_t a, asn1_t b, int *pathlen)
 {
 	if (DBGP(DBG_BASE)) {
 		if (a.ptr != NULL) {
 			dn_buf abuf;
 	    		DBG_log("%s: trustee A = '%s'", __func__,
-				str_dn(ASN1(a), &abuf));
+				str_dn(a, &abuf));
 		}
 		if (b.ptr != NULL) {
 			dn_buf bbuf;
 	    		DBG_log("%s: trustor B = '%s'", __func__,
-				str_dn(ASN1(b), &bbuf));
+				str_dn(b, &bbuf));
 		}
 	}
 
@@ -218,7 +218,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 	*pathlen = 0;
 
 	/* CA a equals CA b => we have a match */
-	if (same_dn(ASN1(a), ASN1(b))) {
+	if (same_dn(a, b)) {
 		return true;
 	}
 
@@ -237,7 +237,7 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 	CERTCertificate *cacert = NULL;
 
 	while ((*pathlen)++ < MAX_CA_PATH_LEN) {
-		SECItem a_dn = same_chunk_as_dercert_secitem(a);
+		SECItem a_dn = same_shunk_as_dercert_secitem(a);
 		cacert = CERT_FindCertByName(handle, &a_dn);
 
 		/* cacert not found or self-signed root cacert => exit */
@@ -246,8 +246,8 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 		}
 
 		/* does the issuer of CA a match CA b? */
-		chunk_t i_dn = same_secitem_as_chunk(cacert->derIssuer);
-		match = same_dn(ASN1(i_dn), ASN1(b));
+		asn1_t i_dn = same_secitem_as_shunk(cacert->derIssuer);
+		match = same_dn(i_dn, b);
 
 		if (match) {
 			/* we have a match: exit the loop */
@@ -1016,7 +1016,7 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 	 */
 
 	if (ca.ptr != NULL) {
-		SECItem caname = same_chunk_as_dercert_secitem(ca);
+		SECItem caname = same_shunk_as_dercert_secitem(ASN1(ca));
 
 		CERTCertificate *cacert =
 			CERT_FindCertByName(handle, &caname);

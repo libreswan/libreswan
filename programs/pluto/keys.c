@@ -225,7 +225,7 @@ static bool try_all_keys(const char *cert_origin,
 		}
 
 		int pl;	/* value ignored */
-		if (!trusted_ca_nss(key->issuer, s->remote->config->host.ca, &pl)) {
+		if (!trusted_ca(ASN1(key->issuer), ASN1(s->remote->config->host.ca), &pl)) {
 			id_buf printkid;
 			dn_buf buf;
 			dbg("  skipping '%s' with untrusted CA '%s'",

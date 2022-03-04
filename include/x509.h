@@ -87,14 +87,14 @@ extern void clear_ocsp_cache(void);
 /*
  * New NSS x509 converted functions
  */
-extern SECItem same_chunk_as_dercert_secitem(chunk_t chunk);
+extern SECItem same_shunk_as_dercert_secitem(shunk_t chunk);
 extern chunk_t get_dercert_from_nss_cert(CERTCertificate *cert);
 extern void select_nss_cert_id(CERTCertificate *cert, struct id *end_id);
 extern bool add_pubkey_from_nss_cert(struct pubkey_list **pubkey_db,
 				     const struct id *keyid,
 				     CERTCertificate *cert,
 				     struct logger *logger);
-extern bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen);
+extern bool trusted_ca(asn1_t a, asn1_t b, int *pathlen);
 extern CERTCertList *get_all_certificates(struct logger *logger);
 
 /*

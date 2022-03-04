@@ -471,9 +471,9 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			 * *_pathlen==0 - a perfect match.
 			 */
 			int peer_pathlen;
-			bool matching_peer_ca = trusted_ca_nss(peer_ca,
-							       d->remote->config->host.ca,
-							       &peer_pathlen);
+			bool matching_peer_ca = trusted_ca(ASN1(peer_ca),
+							   ASN1(d->remote->config->host.ca),
+							   &peer_pathlen);
 			int our_pathlen;
 			bool matching_requested_ca = match_requested_ca(requested_ca,
 									d->local->config->host.ca,
