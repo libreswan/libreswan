@@ -277,7 +277,9 @@ void select_nss_cert_id(CERTCertificate *cert, struct id *end_id)
 {
 	if (end_id->kind == ID_FROMCERT) {
 		dbg("setting ID to ID_DER_ASN1_DN: \'%s\'", cert->subjectName);
-		end_id->name = clone_secitem_as_chunk(cert->derSubject, "cert id");
+		chunk_t name = clone_secitem_as_chunk(cert->derSubject, "cert id");
+		end_id->name = ASN1(name);
+		end_id->scratch = name.ptr;
 		end_id->kind = ID_DER_ASN1_DN;
 	}
 }
@@ -337,7 +339,7 @@ static void gntoid(struct id *id, const generalName_t *gn, struct logger *logger
 	switch (gn->kind) {
 	case GN_DNS_NAME:	/* ID type: ID_FQDN */
 		id->kind = ID_FQDN;
-		id->name = gn->name;
+		id->name = ASN1(gn->name);
 		break;
 	case GN_IP_ADDRESS:	/* ID type: ID_IPV4_ADDR */
 	{
@@ -357,15 +359,15 @@ static void gntoid(struct id *id, const generalName_t *gn, struct logger *logger
 	}
 	case GN_RFC822_NAME:	/* ID type: ID_USER_FQDN */
 		id->kind = ID_USER_FQDN;
-		id->name = gn->name;
+		id->name = ASN1(gn->name);
 		break;
 	case GN_DIRECTORY_NAME:
 		id->kind = ID_DER_ASN1_DN;
-		id->name = gn->name;
+		id->name = ASN1(gn->name);
 		break;
 	default:
 		id->kind = ID_NONE;
-		id->name = EMPTY_CHUNK;
+		id->name = null_shunk;
 		break;
 	}
 }
@@ -406,7 +408,7 @@ static diag_t create_cert_subjectdn_pubkey(CERTCertificate *cert,
 {
 	struct id id = {
 		.kind = ID_DER_ASN1_DN,
-		.name = same_secitem_as_chunk(cert->derSubject),
+		.name = same_secitem_as_shunk(cert->derSubject),
 	};
 	return create_pubkey_from_cert(&id, cert, pk, logger);
 }
@@ -607,14 +609,14 @@ diag_t match_end_cert_id(const struct certs *certs,
 
 	case ID_FROMCERT:
 	{
-		chunk_t end_cert_der_subject = same_secitem_as_chunk(end_cert->derSubject);
+		asn1_t end_cert_der_subject = same_secitem_as_shunk(end_cert->derSubject);
 		/* adopt ID from CERT (the CERT has been verified) */
 		if (DBGP(DBG_BASE)) {
 			id_buf idb;
 			dn_buf dnb;
 			DBG_log("ID_DER_ASN1_DN '%s' does not need further ID verification; stomping on peer_id with '%s'",
 				str_id(peer_id, &idb),
-				str_dn(ASN1(end_cert_der_subject), &dnb));
+				str_dn(end_cert_der_subject, &dnb));
 		}
 		/* provide replacement */
 		*cert_id = (struct id) {
@@ -627,7 +629,7 @@ diag_t match_end_cert_id(const struct certs *certs,
 
 	case ID_DER_ASN1_DN:
 	{
-		chunk_t end_cert_der_subject = same_secitem_as_chunk(end_cert->derSubject);
+		asn1_t end_cert_der_subject = same_secitem_as_shunk(end_cert->derSubject);
 		if (DBGP(DBG_BASE)) {
 			/*
 			 * Dump .derSubject as an RFC 1485 string.
@@ -639,14 +641,14 @@ diag_t match_end_cert_id(const struct certs *certs,
 			id_buf idb;
 			DBG_log("comparing ID_DER_ASN1_DN '%s' to certificate derSubject='%s' (subjectName='%s')",
 				str_id(peer_id, &idb),
-				str_dn(ASN1(end_cert_der_subject), &dnb),
+				str_dn(end_cert_der_subject, &dnb),
 				end_cert->subjectName);
 		}
 
 		int wildcards;
 		bool m = match_dn_any_order_wild("",
-						 ASN1(end_cert_der_subject),
-						 ASN1(peer_id->name),
+						 end_cert_der_subject,
+						 peer_id->name,
 						 &wildcards);
 		if (!m) {
 			id_buf idb;

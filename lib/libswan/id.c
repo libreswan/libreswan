@@ -90,7 +90,8 @@ err_t atoid(const char *src, struct id *id)
 		}
 		*id = (struct id) {
 			.kind = ID_DER_ASN1_DN,
-			.name = name,
+			.name = HUNK_AS_SHUNK(name),
+			.scratch = name.ptr,
 		};
 		return NULL;
 	}
@@ -142,7 +143,8 @@ err_t atoid(const char *src, struct id *id)
 		}
 		*id = (struct id) {
 			.kind = ID_KEY_ID,
-			.name = name,
+			.name = HUNK_AS_SHUNK(name),
+			.scratch = name.ptr,
 		};
 		return NULL;
 	}
@@ -163,7 +165,8 @@ err_t atoid(const char *src, struct id *id)
 		}
 		*id = (struct id) {
 			.kind = ID_DER_ASN1_DN,
-			.name = name,
+			.name = HUNK_AS_SHUNK(name),
+			.scratch = name.ptr,
 		};
 		return NULL;
 	}
@@ -179,18 +182,22 @@ err_t atoid(const char *src, struct id *id)
 		if (src[len-1] == ']') {
 			len -= 1; /* drop trailing "]" */
 		}
+		chunk_t name = clone_bytes_as_chunk(src, len, "key id");
 		*id = (struct id) {
 			.kind = ID_KEY_ID,
-			.name = clone_bytes_as_chunk(src, len, "key id"),
+			.name = ASN1(name),
+			.scratch = name.ptr,
 		};
 		return NULL;
 	}
 
 	if (*src == '@') {
+		chunk_t name = clone_bytes_as_chunk(src + 1, strlen(src)-1, "fqdn id");
 		*id = (struct id) {
 			.kind = ID_FQDN,
 			/* discard @ */
-			.name = clone_bytes_as_chunk(src + 1, strlen(src)-1, "fqdn id"),
+			.name = ASN1(name),
+			.scratch = name.ptr,
 		};
 		return NULL;
 	}
@@ -199,9 +206,11 @@ err_t atoid(const char *src, struct id *id)
 	 * We leave in @, as per DOI 4.6.2.4 (but DNS wants
 	 * . instead).
 	 */
+	chunk_t name = clone_bytes_as_chunk(src, strlen(src), "DOI 4.6.2.4");
 	*id = (struct id) {
 		.kind = ID_USER_FQDN,
-		.name = clone_bytes_as_chunk(src, strlen(src), "DOI 4.6.2.4"),
+		.name = ASN1(name),
+		.scratch = name.ptr,
 	};
 	return NULL;
 }
@@ -234,7 +243,7 @@ void jam_id_bytes(struct jambuf *buf, const struct id *id, jam_bytes_fn *jam_byt
 		jam_bytes(buf, id->name.ptr, id->name.len);
 		break;
 	case ID_DER_ASN1_DN:
-		jam_dn(buf, ASN1(id->name), jam_bytes);
+		jam_dn(buf, id->name, jam_bytes);
 		break;
 	case ID_KEY_ID:
 		jam(buf, "@#0x");
@@ -254,12 +263,14 @@ const char *str_id_bytes(const struct id *id, jam_bytes_fn *jam_bytes, id_buf *d
 	return dst->buf;
 }
 
-struct id clone_id(const struct id *src, const char *name)
+struct id clone_id(const struct id *src, const char *story)
 {
+	chunk_t name = clone_hunk(src->name, story);
 	struct id dst = {
 		.kind = src->kind,
 		.ip_addr = src->ip_addr,
-		.name = clone_hunk(src->name, name),
+		.name = ASN1(name),
+		.scratch = name.ptr,
 	};
 	return dst;
 }
@@ -271,7 +282,7 @@ void free_id_content(struct id *id)
 	case ID_USER_FQDN:
 	case ID_DER_ASN1_DN:
 	case ID_KEY_ID:
-		free_chunk_content(&id->name);
+		pfreeany(id->scratch);
 		break;
 	case ID_FROMCERT:
 	case ID_NONE:
@@ -343,10 +354,10 @@ bool id_eq(const struct id *a, const struct id *b)
 
 		/* strip trailing dots */
 		size_t al = a->name.len;
-		while (al > 0 && a->name.ptr[al - 1] == '.')
+		while (al > 0 && ((const uint8_t*)a->name.ptr)[al - 1] == '.')
 			al--;
 		size_t bl = b->name.len;
-		while (bl > 0 && b->name.ptr[bl - 1] == '.')
+		while (bl > 0 && ((const uint8_t*)b->name.ptr)[bl - 1] == '.')
 			bl--;
 
 		return (al == bl /* same length */ &&
@@ -358,10 +369,10 @@ bool id_eq(const struct id *a, const struct id *b)
 		dbg("same_id() received ID_FROMCERT - unexpected");
 		/* FALLTHROUGH */
 	case ID_DER_ASN1_DN:
-		return same_dn(ASN1(a->name), ASN1(b->name));
+		return same_dn(a->name, b->name);
 
 	case ID_KEY_ID:
-		return hunk_eq(ASN1(a->name), ASN1(b->name));
+		return hunk_eq(a->name, b->name);
 
 	default:
 		bad_case(a->kind);
@@ -394,7 +405,7 @@ bool match_id(const char *prefix, const struct id *a, const struct id *b,
 		wildcards = MAX_WILDCARDS;
 		match = false;
 	} else if (a->kind == ID_DER_ASN1_DN) {
-		match = match_dn_any_order_wild(prefix, ASN1(a->name), ASN1(b->name), &wildcards);
+		match = match_dn_any_order_wild(prefix, a->name, b->name, &wildcards);
 	} else if (same_id(a, b)) {
 		wildcards = 0;
 		match = true;
@@ -433,7 +444,7 @@ bool id_has_wildcards(const struct id *id)
 #endif
 
 	case ID_DER_ASN1_DN:
-		has_wildcards = dn_has_wildcards(ASN1(id->name));
+		has_wildcards = dn_has_wildcards(id->name);
 		break;
 
 	default:

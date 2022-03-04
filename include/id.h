@@ -30,7 +30,10 @@ struct id {
 	ip_address ip_addr;
 
 	/* used for ID_FQDN, ID_USER_FQDN, ID_KEY_ID, ID_DER_ASN_DN */
-	chunk_t name;
+	shunk_t name;
+
+	/* when non-NULL, delete */
+	void *scratch;
 };
 
 struct id_list {

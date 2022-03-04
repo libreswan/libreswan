@@ -332,11 +332,11 @@ static err_t build_dns_name(struct jambuf *name_buf, const struct id *id)
 		 * (XXX: is this still relevant?)
 		 */
 		unsigned len = id->name.len;
-		while (len > 0 && id->name.ptr[len - 1] == '.')
+		while (len > 0 && ((const char*)id->name.ptr)[len - 1] == '.')
 			len--;
 		/* stop at len, or any embedded '\0'; add the '.' */
 		/* XXX: use jam_raw_bytes()? */
-		jam(name_buf, "%.*s.", len, id->name.ptr);
+		jam(name_buf, "%.*s.", len, (const char *)id->name.ptr);
 		break;
 	}
 

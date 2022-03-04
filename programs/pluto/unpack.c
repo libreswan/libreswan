@@ -85,8 +85,8 @@ void unpack_nonce(chunk_t *n, chunk_t *nonce)
 
 diag_t unpack_peer_id(enum ike_id_type kind, struct id *peer, const struct pbs_in *id_pbs)
 {
-	struct pbs_in in_pbs = *id_pbs;
-	size_t left = pbs_left(&in_pbs);
+	struct pbs_in in_pbs = *id_pbs; /* local copy */
+	shunk_t name = pbs_in_left_as_shunk(&in_pbs);
 
 	*peer = (struct id) {.kind = kind };	/* clears everything */
 
@@ -104,50 +104,50 @@ diag_t unpack_peer_id(enum ike_id_type kind, struct id *peer, const struct pbs_i
 	/* seems odd to continue as ID_FQDN? */
 	case ID_USER_FQDN:
 #if 0
-		if (memchr(id_pbs->cur, '@', left) == NULL) {
+		if (memchr(name.ptr, '@', name.len) == NULL) {
 			llog(RC_LOG_SERIOUS, logger,
 				    "peer's ID_USER_FQDN contains no @: %.*s",
 				    (int) left, id_pbs->cur);
 			/* return false; */
 		}
 #endif
-		if (memchr(id_pbs->cur, '\0', left) != NULL) {
+		if (memchr(name.ptr, '\0', name.len) != NULL) {
 			esb_buf b;
 			return diag("Phase 1 (Parent)ID Payload of type %s contains a NUL",
 				    enum_show(&ike_id_type_names, kind, &b));
 		}
 		/* ??? ought to do some more sanity check, but what? */
-		peer->name = chunk2(id_pbs->cur, left);
+		peer->name = name;
 		break;
 
 	case ID_FQDN:
-		if (memchr(id_pbs->cur, '\0', left) != NULL) {
+		if (memchr(name.ptr, '\0', name.len) != NULL) {
 			esb_buf b;
 			return diag("Phase 1 (Parent)ID Payload of type %s contains a NUL",
 				    enum_show(&ike_id_type_names, kind, &b));
 		}
 		/* ??? ought to do some more sanity check, but what? */
-		peer->name = chunk2(id_pbs->cur, left);
+		peer->name = name;
 		break;
 
 	case ID_KEY_ID:
-		peer->name = chunk2(id_pbs->cur, left);
+		peer->name = name;
 		if (DBGP(DBG_BASE)) {
 			DBG_dump_hunk("KEY ID:", peer->name);
 		}
 		break;
 
 	case ID_DER_ASN1_DN:
-		peer->name = chunk2(id_pbs->cur, left);
+		peer->name = name;
 		if (DBGP(DBG_BASE)) {
 		    DBG_dump_hunk("DER ASN1 DN:", peer->name);
 		}
 		break;
 
 	case ID_NULL:
-		if (left != 0) {
+		if (name.len != 0) {
 			if (DBGP(DBG_BASE)) {
-				DBG_dump("unauthenticated NULL ID:", id_pbs->cur, left);
+				DBG_dump_hunk("unauthenticated NULL ID:", name);
 			}
 		}
 		break;
