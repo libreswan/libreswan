@@ -37,8 +37,8 @@ road #
 road #
  # wait for both rekey, ...
 road #
- ../../guestbin/wait-for.sh --match '#3: rekeyed IKE SA #1' -- cat /tmp/pluto.log
-"road-east-x509-ipv4"[1] 192.1.2.23 #3: rekeyed IKE SA #1 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+ ../../guestbin/wait-for.sh --match '#3: responder rekeyed IKE SA #1' -- cat /tmp/pluto.log
+"road-east-x509-ipv4"[1] 192.1.2.23 #3: responder rekeyed IKE SA #1 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 road #
  # and delete, ...
 road #

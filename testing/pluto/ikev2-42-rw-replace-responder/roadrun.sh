@@ -6,7 +6,7 @@ ipsec whack --trafficstatus
 # east's rekey is 50s, margin 10s
 sleep 40
 # wait for both rekey, ...
-../../guestbin/wait-for.sh --match '#3: rekeyed IKE SA #1' -- cat /tmp/pluto.log
+../../guestbin/wait-for.sh --match '#3: responder rekeyed IKE SA #1' -- cat /tmp/pluto.log
 # and delete, ...
 ../../guestbin/wait-for.sh --match '#1: deleting' -- cat /tmp/pluto.log
 # before trying ping (else ping races response)
