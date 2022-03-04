@@ -1268,10 +1268,10 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2(struct
 	v2_msgid_schedule_next_initiator(pexpect_ike_sa(&larval_ike->sa));
 
 	/*
-	 * Announce this to the world.
+	 * Announce this to the world (before releasing whack).
 	 */
 	LLOG_JAMBUF(RC_LOG_SERIOUS, larval_ike->sa.st_logger, buf) {
-		jam(buf, "rekeyed IKE SA "PRI_SO" ", ike->sa.st_serialno);
+		jam(buf, "responder rekeyed IKE SA "PRI_SO" ", ike->sa.st_serialno);
 		jam_v2_ike_details(buf, &larval_ike->sa);
 	}
 
@@ -1410,6 +1410,14 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1(struc
 
 	pexpect(larval_ike->sa.st_ike_pred == ike->sa.st_serialno); /*wow!*/
 	ikev2_rekey_expire_predecessor(larval_ike, larval_ike->sa.st_ike_pred);
+
+	/*
+	 * Announce this to the world.
+	 */
+	LLOG_JAMBUF(RC_LOG_SERIOUS, larval_ike->sa.st_logger, buf) {
+		jam(buf, "initiator rekeyed IKE SA "PRI_SO" ", ike->sa.st_serialno);
+		jam_v2_ike_details(buf, &larval_ike->sa);
+	}
 
 	return STF_OK;
 }
