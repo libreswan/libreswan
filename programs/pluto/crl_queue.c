@@ -153,7 +153,7 @@ void submit_crl_fetch_requests(struct crl_fetch_request **requests, struct logge
 	     request != NULL; request = request->next) {
 		struct crl_fetch_queue *volatile *entry;
 		for (entry = &crl_fetch_queue; *entry != NULL; entry = &(*entry)->next) {
-			if (same_dn(request->issuer_dn, (*entry)->issuer_dn)) {
+			if (same_dn(ASN1(request->issuer_dn), ASN1((*entry)->issuer_dn))) {
 				/* there is already a fetch request */
 				dbg("crl fetch request already exists");
 				/* there might be new distribution points */

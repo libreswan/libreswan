@@ -358,10 +358,10 @@ bool id_eq(const struct id *a, const struct id *b)
 		dbg("same_id() received ID_FROMCERT - unexpected");
 		/* FALLTHROUGH */
 	case ID_DER_ASN1_DN:
-		return same_dn(a->name, b->name);
+		return same_dn(ASN1(a->name), ASN1(b->name));
 
 	case ID_KEY_ID:
-		return hunk_eq(a->name, b->name);
+		return hunk_eq(ASN1(a->name), ASN1(b->name));
 
 	default:
 		bad_case(a->kind);
@@ -560,7 +560,7 @@ static bool match_dn_unordered(const char *prefix, const chunk_t a, const chunk_
 
 bool match_dn_any_order_wild(const char *prefix, chunk_t a, chunk_t b, int *wildcards)
 {
-	bool ret = match_dn(a, b, wildcards);
+	bool ret = match_dn(ASN1(a), ASN1(b), wildcards);
 
 	if (!ret) {
 		dbg("%s%s: not an exact match, now checking any RDN order with %d wildcards",

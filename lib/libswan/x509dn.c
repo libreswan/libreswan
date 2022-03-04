@@ -841,7 +841,7 @@ err_t atodn(const char *src, chunk_t *dn)
  * compare two distinguished names by
  * comparing the individual RDNs
  */
-bool same_dn(chunk_t a, chunk_t b)
+bool same_dn(asn1_t a, asn1_t b)
 {
 	return match_dn(a, b, NULL);	/* degenerate case of match_dn() */
 }
@@ -851,7 +851,7 @@ bool same_dn(chunk_t a, chunk_t b)
  * A single '*' character designates a wildcard RDN in DN b.
  * If wildcards is NULL, exact match is required.
  */
-bool match_dn(chunk_t a, chunk_t b, int *wildcards)
+bool match_dn(asn1_t a, asn1_t b, int *wildcards)
 {
 	asn1_t rdn_a, rdn_b;
 	asn1_t attribute_a, attribute_b;
@@ -875,13 +875,13 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 	 * initialize DN parsing.  Stop (silently) on errors.
 	 */
 	{
-		err_t ua = init_rdn(ASN1(a), &rdn_a, &attribute_a, &more_a);
+		err_t ua = init_rdn(a, &rdn_a, &attribute_a, &more_a);
 		if (ua != NULL) {
 			dbg("match_dn bad a: %s", ua);
 			return false;
 		}
 
-		err_t ub = init_rdn(ASN1(b), &rdn_b, &attribute_b, &more_b);
+		err_t ub = init_rdn(b, &rdn_b, &attribute_b, &more_b);
 		if (ub != NULL) {
 			dbg("match_dn bad b: %s", ub);
 			return false;
@@ -983,8 +983,8 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 			dn_buf abuf;
 			dn_buf bbuf;
 			dbg("while comparing A='%s'<=>'%s'=B with a wildcard count of %d, %s had too few RDNs",
-			    str_dn(ASN1(a), &abuf),
-			    str_dn(ASN1(b), &bbuf),
+			    str_dn(a, &abuf),
+			    str_dn(b, &bbuf),
 			    *wildcards,
 			    (more_a ? "B" : "A"));
 		}
