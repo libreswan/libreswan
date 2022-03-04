@@ -78,10 +78,14 @@ extern void code_asn1_length(size_t length, chunk_t *code);
 bool is_asn1_printablestring(shunk_t str);
 
 typedef chunk_t asn1_t;
+#define ASN1(H) (asn1_t) { .ptr = H.ptr, .len = H.len, }
 
 err_t asn1_ok(asn1_t blob);
 
-err_t unwrap_asn1_container(enum asn1_type ty, asn1_t *cursor, asn1_t *contents);
+err_t unwrap_asn1_type(asn1_t *cursor, enum asn1_type *ty);
 err_t unwrap_asn1_length(asn1_t *cursor, size_t *length);
+err_t unwrap_asn1_value(asn1_t *cursor, size_t length, asn1_t *value);
+/* type-length-value https://en.wikipedia.org/wiki/Type%E2%80%93length%E2%80%93value */
+err_t unwrap_asn1_tlv(asn1_t *cursor, enum asn1_type ty, asn1_t *contents);
 
 #endif

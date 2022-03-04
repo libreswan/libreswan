@@ -67,60 +67,6 @@ int known_oid(chunk_t object)
 }
 
 /*
- * Decode the length in bytes of an ASN.1 object.
- * Blob is updated to reflect the tag and length have been consumed
- */
-
-err_t unwrap_asn1_length(chunk_t *blob, size_t *length)
-{
-	*length = 0;
-
-	if (blob->len == 0) {
-		return "insufficient number of octets to parse ASN.1 length";
-	}
-
-	/* read first octet of length field */
-	uint8_t n = *blob->ptr++;
-	blob->len--;
-
-	if ((n & 0x80) == 0) { /* single length octet */
-		if (n > blob->len) {
-			return "number of length octets is larger than ASN.1 object";
-		}
-		*length = n;
-		return NULL;
-	}
-
-	/* composite length, determine number of length octets */
-	n &= 0x7f;
-
-	if (n > blob->len) {
-		return "number of length octets is larger than ASN.1 object";
-	}
-
-	if (n > sizeof(*length)) {
-#if 0
-		dbg("number of length octets is larger than limit of %zd octets",
-		    sizeof(len));
-#else
-		return "number of length octets is larger than sizeof(size_t)";
-#endif
-	}
-
-	size_t len = 0;
-	while (n-- > 0) {
-		len = 256 * len + *blob->ptr++;
-		blob->len--;
-	}
-	if (len > blob->len) {
-		return "length is larger than remaining blob size";
-	}
-
-	*length = len;
-	return NULL;
-}
-
-/*
  * codes ASN.1 lengths up to a size of 16'777'215 bytes
  */
 void code_asn1_length(size_t length, chunk_t *code)
@@ -202,22 +148,26 @@ bool is_asn1_printablestring(shunk_t str)
 /*
  * tests if a blob contains a valid ASN.1 set or sequence
  */
-err_t asn1_ok(chunk_t blob)
+err_t asn1_ok(asn1_t blob)
 {
-	if (blob.len < 1) {
-		return "cert blob is empty: not binary ASN.1";
+	err_t e;
+
+	enum asn1_type type;
+	e = unwrap_asn1_type(&blob, &type);
+	if (e != NULL) {
+		return e;
 	}
 
-	switch (blob.ptr[0]) {
+	switch (type) {
 	case ASN1_SEQUENCE:
 	case ASN1_SET:
 		break;	/* looks OK */
 	default:
-		return "  cert blob content is not binary ASN.1";
+		return "content is not binary ASN.1";
 	}
 
-	size_t len;
-	err_t e = unwrap_asn1_length(&blob, &len);
+	size_t length;
+	e = unwrap_asn1_length(&blob, &length);
 	if (e != NULL) {
 		return e;
 	}
@@ -225,42 +175,108 @@ err_t asn1_ok(chunk_t blob)
 	return NULL;
 }
 
-static err_t unwrap_asn1_type(chunk_t *container, enum asn1_type ty)
+err_t unwrap_asn1_type(asn1_t *cursor, enum asn1_type *ty)
 {
-	const uint8_t *b = hunk_get(container, sizeof(uint8_t));
+	*ty = 0;
+
+	const uint8_t *b = hunk_get(cursor, sizeof(uint8_t));
 	if (b == NULL) {
 		return "missing ASN.1 type";
 	}
 
-	if (*b != ty) {
-		return "unexpected ASN.1 type";
-	}
-
+	*ty = *b;
 	return NULL;
 }
 
-err_t unwrap_asn1_container(enum asn1_type ty, chunk_t *container, chunk_t *contents)
+/*
+ * Decode the length in bytes of an ASN.1 object.
+ * CURSOR is updated to reflect the length that was consumed.
+ */
+
+err_t unwrap_asn1_length(asn1_t *cursor, size_t *length)
+{
+	*length = 0;
+
+	/* read first octet of length field */
+	const uint8_t *np = hunk_get_thing(cursor, uint8_t);
+	if (np == NULL) {
+		return "insufficient number of octets to parse ASN.1 length";
+	}
+
+	uint8_t n = *np;
+	if ((n & 0x80) == 0) { /* single length octet */
+		if (n > cursor->len) {
+			return "number of length octets is larger than ASN.1 object";
+		}
+		*length = n;
+		return NULL;
+	}
+
+	/* composite length, determine number of length octets */
+	n &= 0x7f;
+	if (n > sizeof(*length)) {
+		return "number of length octets overflows size_t";
+	}
+
+	const uint8_t *lp = hunk_get(cursor, n);
+	if (lp == NULL) {
+		return "number of length octets is larger than ASN.1 object";
+	}
+
+	size_t len = 0;
+	while (n-- > 0) {
+		len = 256 * len + *lp++;
+	}
+	if (len > cursor->len) {
+		return "remaining ASN.1 object is shorter than length";
+	}
+
+	*length = len;
+	return NULL;
+}
+
+/*
+ * Unwrap <length><content>.
+ */
+
+err_t unwrap_asn1_value(asn1_t *cursor, size_t length, asn1_t *contents)
+{
+	/* XXX: redundant */
+	if (length > cursor->len) {
+		return "ASN.1 length larger than space";
+	}
+
+	contents->ptr = cursor->ptr;
+	contents->len = length;
+	cursor->ptr += length;
+	cursor->len -= length;
+	return NULL;
+}
+
+err_t unwrap_asn1_tlv(asn1_t *cursor, enum asn1_type ty, asn1_t *value)
 {
 	err_t e;
 
-	e = unwrap_asn1_type(container, ty);
+	enum asn1_type type;
+	e = unwrap_asn1_type(cursor, &type);
 	if (e != NULL) {
 		return e;
 	}
 
-	size_t sz;
-	e = unwrap_asn1_length(container, &sz);
+	if (ty != type) {
+		return "unexpected ASN.1 type";
+	}
+
+	size_t length;
+	e = unwrap_asn1_length(cursor, &length);
 	if (e != NULL) {
 		return e;
 	}
 
-	if (sz > container->len) {
-		return "ASN1 length larger than space";
+	e = unwrap_asn1_value(cursor, length, value);
+	if (e != NULL) {
+		return e;
 	}
 
-	contents->ptr = container->ptr;
-	contents->len = sz;
-	container->ptr += sz;
-	container->len -= sz;
 	return NULL;
 }

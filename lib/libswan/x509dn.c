@@ -124,14 +124,14 @@ static const x501rdn_t x501rdns[] = {
 #define RETURN_IF_ERR(f) { err_t ugh = (f); if (ugh != NULL) return ugh; }
 
 static err_t init_rdn(chunk_t dn, /* input (copy) */
-		chunk_t *rdn, /* output */
-		chunk_t *attribute, /* output */
-		bool *more) /* output */
+		      chunk_t *rdn, /* output */
+		      chunk_t *attribute, /* output */
+		      bool *more) /* output */
 {
 	*attribute = EMPTY_CHUNK;
 
 	/* a DN is a SEQUENCE OF RDNs */
-	RETURN_IF_ERR(unwrap_asn1_container(ASN1_SEQUENCE, &dn, rdn));
+	RETURN_IF_ERR(unwrap_asn1_tlv(&dn, ASN1_SEQUENCE, rdn));
 
 	/* the whole DN should be this ASN1_SEQUENCE */
 	if (dn.len != 0)
@@ -158,16 +158,16 @@ static err_t get_next_rdn(chunk_t *rdn,	/* input/output */
 		 * An RDN is a SET OF attributeTypeAndValue.
 		 * Strip off the ASN1_set wrapper.
 		 */
-		RETURN_IF_ERR(unwrap_asn1_container(ASN1_SET, rdn, attribute));
+		RETURN_IF_ERR(unwrap_asn1_tlv(rdn, ASN1_SET, attribute));
 	}
 
 	/* An attributeTypeAndValue is a SEQUENCE */
 	chunk_t body;
-	RETURN_IF_ERR(unwrap_asn1_container(ASN1_SEQUENCE, attribute, &body));
+	RETURN_IF_ERR(unwrap_asn1_tlv(attribute, ASN1_SEQUENCE, &body));
 
 	/* extract oid from body */
 
-	RETURN_IF_ERR(unwrap_asn1_container(ASN1_OID, &body, oid));
+	RETURN_IF_ERR(unwrap_asn1_tlv(&body, ASN1_OID, oid));
 
 	/* extract string value and its type from body */
 
@@ -175,7 +175,7 @@ static err_t get_next_rdn(chunk_t *rdn,	/* input/output */
 		return "no room for string's type";
 
 	*value_ber = body;
-	*value_type = body.ptr[0];
+	RETURN_IF_ERR(unwrap_asn1_type(&body, value_type));
 
 	/* ??? what types of string are legitimate? */
 	switch(*value_type) {
@@ -190,7 +190,9 @@ static err_t get_next_rdn(chunk_t *rdn,	/* input/output */
 		return "unexpected ASN1 string type";
 	}
 
-	RETURN_IF_ERR(unwrap_asn1_container(*value_type, &body, value_content));
+	size_t length;
+	RETURN_IF_ERR(unwrap_asn1_length(&body, &length));
+	RETURN_IF_ERR(unwrap_asn1_value(&body, length, value_content));
 
 	if (body.len != 0)
 		return "crap after OID and value pair of RDN";
