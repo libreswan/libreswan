@@ -230,7 +230,7 @@ static bool try_all_keys(const char *cert_origin,
 			dn_buf buf;
 			dbg("  skipping '%s' with untrusted CA '%s'",
 			    str_id(&key->id, &printkid),
-			    str_dn_or_null(key->issuer, "%any", &buf));
+			    str_dn_or_null(ASN1(key->issuer), "%any", &buf));
 			continue;
 		}
 
@@ -254,7 +254,7 @@ static bool try_all_keys(const char *cert_origin,
 		const char *keyid_str = str_keyid(*pubkey_keyid(key));
 		dbg("  trying '%s' aka *%s issued by CA '%s'",
 		    str_id(&key->id, &printkid), keyid_str,
-		    str_dn_or_null(key->issuer, "%any", &buf));
+		    str_dn_or_null(ASN1(key->issuer), "%any", &buf));
 		s->tried_cnt++;
 
 		if (!described) {
@@ -318,7 +318,7 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 
 	dn_buf buf;
 	dbg("CA is '%s' for %s key using %s signature",
-	    str_dn_or_null(c->remote->config->host.ca, "%any", &buf),
+	    str_dn_or_null(ASN1(c->remote->config->host.ca), "%any", &buf),
 	    signer->type->name, signer->name);
 
 	passert(ike->sa.st_remote_certs.processed);
@@ -387,7 +387,7 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 		/* this is so that the cert verified line can be deleted */
 		if (s.key->issuer.ptr != NULL) {
 			jam(buf, " issued by CA '");
-			jam_dn(buf, s.key->issuer, jam_sanitized_bytes);
+			jam_dn(buf, ASN1(s.key->issuer), jam_sanitized_bytes);
 			jam(buf, "'");
 		}
 	}
@@ -753,7 +753,7 @@ static void show_pubkey(struct show *s, struct pubkey *key, bool utc, const char
 	if (key->issuer.len > 0) {
 		dn_buf b;
 		show_comment(s, "       Issuer '%s'",
-			     str_dn(key->issuer, &b));
+			     str_dn(ASN1(key->issuer), &b));
 	}
 }
 

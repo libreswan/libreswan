@@ -201,7 +201,7 @@ static void dn_check(void)
 		{							\
 			dn_buf dnbuf = { "", };				\
 			struct jambuf dnjam = ARRAY_AS_JAMBUF(dnbuf.buf);	\
-			jam_raw_dn(&dnjam, dn, jam_raw_bytes, NSS_COMPATIBLE); \
+			jam_raw_dn(&dnjam, ASN1(dn), jam_raw_bytes, NSS_COMPATIBLE); \
 			if (!streq(dnbuf.buf, OUT)) {			\
 				FAIL(" jam_raw_dn(NSS_COMPATIBLE=%s) returned '%s', expecting '%s'", \
 				     bool_str(NSS_COMPATIBLE),		\
@@ -239,7 +239,7 @@ static void dn_check(void)
 			} else {					\
 				dn_buf adnbuf = { "", };		\
 				struct jambuf adnjam = ARRAY_AS_JAMBUF(adnbuf.buf); \
-				jam_raw_dn(&adnjam, adn, jam_raw_bytes, false); \
+				jam_raw_dn(&adnjam, ASN1(adn), jam_raw_bytes, false); \
 				if (!streq(adnbuf.buf, t->out)) {	\
 					FAIL(" jam_dn(atodn('%s')) returned '%s', expecting '%s'", \
 					     IN, adnbuf.buf, t->out);	\

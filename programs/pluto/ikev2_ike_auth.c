@@ -311,7 +311,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 			if (DBGP(DBG_BASE)) {
 				dn_buf buf;
 				DBG_log("Sending [CERTREQ] of %s",
-					str_dn(ike->sa.st_connection->remote->config->host.ca, &buf));
+					str_dn(ASN1(ike->sa.st_connection->remote->config->host.ca), &buf));
 			}
 			ikev2_send_certreq(&ike->sa, md, request.pbs);
 		}

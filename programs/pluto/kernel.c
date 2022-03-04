@@ -631,7 +631,7 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 		if (key->type == &pubkey_type_rsa &&
 		    same_id(&c->remote->host.id, &key->id) &&
 		    trusted_ca_nss(key->issuer, sr->that.config->host.ca, &pathlen)) {
-			jam_dn_or_null(buf, key->issuer, "", jam_shell_quoted_bytes);
+			jam_dn_or_null(buf, ASN1(key->issuer), "", jam_shell_quoted_bytes);
 			break;
 		}
 	}

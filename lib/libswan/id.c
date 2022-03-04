@@ -234,7 +234,7 @@ void jam_id_bytes(struct jambuf *buf, const struct id *id, jam_bytes_fn *jam_byt
 		jam_bytes(buf, id->name.ptr, id->name.len);
 		break;
 	case ID_DER_ASN1_DN:
-		jam_dn(buf, id->name, jam_bytes);
+		jam_dn(buf, ASN1(id->name), jam_bytes);
 		break;
 	case ID_KEY_ID:
 		jam(buf, "@#0x");
@@ -507,8 +507,8 @@ static bool match_dn_unordered(const char *prefix, const chunk_t a, const chunk_
 	 * printable ASCII) so that that it is suitable for NSS's
 	 * CERT_AsciiToName().
 	 */
-	const char *abuf = str_dn(a, &a_dnbuf); /* RFC1485 for NSS */
-	const char *bbuf = str_dn(b, &b_dnbuf); /* RFC1485 for NSS */
+	const char *abuf = str_dn(ASN1(a), &a_dnbuf); /* RFC1485 for NSS */
+	const char *bbuf = str_dn(ASN1(b), &b_dnbuf); /* RFC1485 for NSS */
 
 	/*
 	 * ABUF and BBUF, set by dntoa(), contain an RFC 1485(?)

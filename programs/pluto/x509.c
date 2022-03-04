@@ -100,7 +100,7 @@ SECItem same_chunk_as_dercert_secitem(chunk_t chunk)
 
 static const char *dntoasi(dn_buf *dst, SECItem si)
 {
-	return str_dn(same_secitem_as_chunk(si), dst);
+	return str_dn(same_secitem_as_shunk(si), dst);
 }
 
 /*
@@ -194,12 +194,12 @@ bool trusted_ca_nss(chunk_t a, chunk_t b, int *pathlen)
 		if (a.ptr != NULL) {
 			dn_buf abuf;
 	    		DBG_log("%s: trustee A = '%s'", __func__,
-				str_dn(a, &abuf));
+				str_dn(ASN1(a), &abuf));
 		}
 		if (b.ptr != NULL) {
 			dn_buf bbuf;
 	    		DBG_log("%s: trustor B = '%s'", __func__,
-				str_dn(b, &bbuf));
+				str_dn(ASN1(b), &bbuf));
 		}
 	}
 
@@ -613,7 +613,8 @@ diag_t match_end_cert_id(const struct certs *certs,
 			id_buf idb;
 			dn_buf dnb;
 			DBG_log("ID_DER_ASN1_DN '%s' does not need further ID verification; stomping on peer_id with '%s'",
-				str_id(peer_id, &idb), str_dn(end_cert_der_subject, &dnb));
+				str_id(peer_id, &idb),
+				str_dn(ASN1(end_cert_der_subject), &dnb));
 		}
 		/* provide replacement */
 		*cert_id = (struct id) {
@@ -638,7 +639,7 @@ diag_t match_end_cert_id(const struct certs *certs,
 			id_buf idb;
 			DBG_log("comparing ID_DER_ASN1_DN '%s' to certificate derSubject='%s' (subjectName='%s')",
 				str_id(peer_id, &idb),
-				str_dn(end_cert_der_subject, &dnb),
+				str_dn(ASN1(end_cert_der_subject), &dnb),
 				end_cert->subjectName);
 		}
 
@@ -833,21 +834,14 @@ static void decode_certificate_request(struct state *st, enum ike_cert_type cert
 	switch (cert_type) {
 	case CERT_X509_SIGNATURE:
 	{
-#if 0
-		shunk_t ca_name = pbs_in_left_as_shunk(pbs);
-#else
-		chunk_t ca_name = {
-			.len = pbs_left(pbs),
-			.ptr = pbs_left(pbs) > 0 ? pbs->cur : NULL
-		};
-#endif
+		asn1_t ca_name = pbs_in_left_as_shunk(pbs);
 
 		if (DBGP(DBG_BASE)) {
 			DBG_dump_hunk("CR", ca_name);
 		}
 
 		if (ca_name.len > 0) {
-			err_t e = asn1_ok(ASN1(ca_name));
+			err_t e = asn1_ok(ca_name);
 			if (e != NULL) {
 				llog(RC_LOG_SERIOUS, st->st_logger,
 				     "ignoring CERTREQ payload that is not ASN1: %s", e);
@@ -1045,7 +1039,7 @@ bool ikev2_build_and_ship_CR(enum ike_cert_type type,
 		} else {
 			LSWDBGP(DBG_BASE, buf) {
 				jam(buf, "NSS: locating CA cert \'");
-				jam_dn(buf, ca, jam_sanitized_bytes);
+				jam_dn(buf, ASN1(ca), jam_sanitized_bytes);
 				jam(buf, "\' for CERTREQ using CERT_FindCertByName() failed: ");
 				jam_nss_error_code(buf, PR_GetError());
 			}

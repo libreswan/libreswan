@@ -339,7 +339,7 @@ void list_crl_fetch_requests(struct show *s, bool utc)
 					     req->trials);
 				dn_buf buf;
 				show_comment(s, "       issuer:  '%s'",
-					     str_dn(req->issuer_dn, &buf));
+					     str_dn(ASN1(req->issuer_dn), &buf));
 				list_distribution_points(s, req->distribution_points);
 			}
 		}

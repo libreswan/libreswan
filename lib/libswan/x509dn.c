@@ -535,12 +535,12 @@ static err_t format_dn(struct jambuf *buf, asn1_t dn,
  * into LDAP-style human-readable ASCII format
  */
 
-void jam_raw_dn(struct jambuf *buf, chunk_t dn, jam_bytes_fn *jam_bytes,
+void jam_raw_dn(struct jambuf *buf, asn1_t dn, jam_bytes_fn *jam_bytes,
 		bool nss_compatible)
 {
 	/* save start in case things screw up */
 	jampos_t pos = jambuf_get_pos(buf);
-	err_t ugh = format_dn(buf, ASN1(dn), jam_bytes, nss_compatible);
+	err_t ugh = format_dn(buf, dn, jam_bytes, nss_compatible);
 	if (ugh != NULL) {
 		/* error: print DN as hex string */
 		if (DBGP(DBG_BASE)) {
@@ -554,14 +554,14 @@ void jam_raw_dn(struct jambuf *buf, chunk_t dn, jam_bytes_fn *jam_bytes,
 	}
 }
 
-err_t parse_dn(chunk_t dn)
+err_t parse_dn(asn1_t dn)
 {
 	dn_buf dnb;
 	struct jambuf buf = ARRAY_AS_JAMBUF(dnb.buf);
-	return format_dn(&buf, ASN1(dn), jam_raw_bytes, true/*nss_compatible*/);
+	return format_dn(&buf, dn, jam_raw_bytes, true/*nss_compatible*/);
 }
 
-void jam_dn_or_null(struct jambuf *buf, chunk_t dn, const char *null_dn,
+void jam_dn_or_null(struct jambuf *buf, asn1_t dn, const char *null_dn,
 		    jam_bytes_fn *jam_bytes)
 {
 	if (dn.ptr == NULL) {
@@ -571,19 +571,19 @@ void jam_dn_or_null(struct jambuf *buf, chunk_t dn, const char *null_dn,
 	}
 }
 
-const char *str_dn_or_null(chunk_t dn, const char *null_dn, dn_buf *dst)
+const char *str_dn_or_null(asn1_t dn, const char *null_dn, dn_buf *dst)
 {
 	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
 	jam_dn_or_null(&buf, dn, null_dn, jam_sanitized_bytes);
 	return dst->buf;
 }
 
-void jam_dn(struct jambuf *buf, chunk_t dn, jam_bytes_fn *jam_bytes)
+void jam_dn(struct jambuf *buf, asn1_t dn, jam_bytes_fn *jam_bytes)
 {
 	jam_dn_or_null(buf, dn, "(empty)", jam_bytes);
 }
 
-const char *str_dn(chunk_t dn, dn_buf *dst)
+const char *str_dn(asn1_t dn, dn_buf *dst)
 {
 	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
 	jam_dn(&buf, dn, jam_sanitized_bytes);
@@ -983,7 +983,9 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 			dn_buf abuf;
 			dn_buf bbuf;
 			dbg("while comparing A='%s'<=>'%s'=B with a wildcard count of %d, %s had too few RDNs",
-			    str_dn(a, &abuf), str_dn(b, &bbuf), *wildcards,
+			    str_dn(ASN1(a), &abuf),
+			    str_dn(ASN1(b), &bbuf),
+			    *wildcards,
 			    (more_a ? "B" : "A"));
 		}
 		return false;

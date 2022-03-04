@@ -917,7 +917,7 @@ static int extract_end(struct connection *c,
 				     leftright, src->ca, ugh);
 			} else {
 				/* now try converting it back; isn't failing this a bug? */
-				ugh = parse_dn(config_end->host.ca);
+				ugh = parse_dn(ASN1(config_end->host.ca));
 				if (ugh != NULL) {
 					llog(RC_LOG, logger,
 					     "error parsing %s CA converted to DN: %s",
@@ -3726,8 +3726,8 @@ void show_one_connection(struct show *s,
 		dn_buf this_ca, that_ca;
 		show_comment(s, PRI_CONNECTION":   CAs: '%s'...'%s'",
 			     c->name, instance,
-			     str_dn_or_null(c->local->config->host.ca, "%any", &this_ca),
-			     str_dn_or_null(c->remote->config->host.ca, "%any", &that_ca));
+			     str_dn_or_null(ASN1(c->local->config->host.ca), "%any", &this_ca),
+			     str_dn_or_null(ASN1(c->remote->config->host.ca), "%any", &that_ca));
 	}
 
 	show_comment(s, PRI_CONNECTION":   ike_life: %jds; ipsec_life: %jds; replay_window: %u; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu;",

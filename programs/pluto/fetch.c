@@ -358,7 +358,7 @@ static bool insert_crl_nss(chunk_t blob, chunk_t issuer, const char *url, struct
 		ret = true;
 		LLOG_JAMBUF(RC_LOG, logger, buf) {
 			jam(buf, "imported CRL for '");
-			jam_dn(buf, issuer, jam_sanitized_bytes);
+			jam_dn(buf, ASN1(issuer), jam_sanitized_bytes);
 			jam(buf, "' from: %s", url);
 		}
 	}
