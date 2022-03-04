@@ -123,12 +123,12 @@ static const x501rdn_t x501rdns[] = {
 
 #define RETURN_IF_ERR(f) { err_t ugh = (f); if (ugh != NULL) return ugh; }
 
-static err_t init_rdn(chunk_t dn, /* input (copy) */
-		      chunk_t *rdn, /* output */
-		      chunk_t *attribute, /* output */
+static err_t init_rdn(asn1_t dn, /* input (copy) */
+		      asn1_t *rdn, /* output */
+		      asn1_t *attribute, /* output */
 		      bool *more) /* output */
 {
-	*attribute = EMPTY_CHUNK;
+	*attribute = (asn1_t) NULL_HUNK;
 
 	/* a DN is a SEQUENCE OF RDNs */
 	RETURN_IF_ERR(unwrap_asn1_tlv(&dn, ASN1_SEQUENCE, rdn));
@@ -144,12 +144,12 @@ static err_t init_rdn(chunk_t dn, /* input (copy) */
 /*
  * Fetches the next RDN in a DN
  */
-static err_t get_next_rdn(chunk_t *rdn,	/* input/output */
-			  chunk_t *attribute, /* input/output */
-			  chunk_t *oid /* output */,
-			  chunk_t *value_ber,		/* output */
+static err_t get_next_rdn(asn1_t *rdn,	/* input/output */
+			  asn1_t *attribute, /* input/output */
+			  asn1_t *oid /* output */,
+			  asn1_t *value_ber,		/* output */
 			  enum asn1_type *value_type,	/* output */
-			  chunk_t *value_content,	/* output */
+			  asn1_t *value_content,	/* output */
 			  bool *more) /* output */
 {
 	/* if all attributes have been parsed, get next rdn */
@@ -162,7 +162,7 @@ static err_t get_next_rdn(chunk_t *rdn,	/* input/output */
 	}
 
 	/* An attributeTypeAndValue is a SEQUENCE */
-	chunk_t body;
+	asn1_t body;
 	RETURN_IF_ERR(unwrap_asn1_tlv(attribute, ASN1_SEQUENCE, &body));
 
 	/* extract oid from body */
@@ -207,20 +207,20 @@ static err_t get_next_rdn(chunk_t *rdn,	/* input/output */
  */
 bool dn_has_wildcards(chunk_t dn)
 {
-	chunk_t rdn;
-	chunk_t attribute;
+	asn1_t rdn;
+	asn1_t attribute;
 	bool more;
 
-	err_t ugh = init_rdn(dn, &rdn, &attribute, &more);
+	err_t ugh = init_rdn(ASN1(dn), &rdn, &attribute, &more);
 	if (ugh != NULL) {
 		return false;
 	}
 
 	while (more) {
-		chunk_t oid;
-		chunk_t value_ber;
+		asn1_t oid;
+		asn1_t value_ber;
 		enum asn1_type value_type;
-		chunk_t value_content;
+		asn1_t value_content;
 		ugh = get_next_rdn(&rdn, &attribute, &oid,
 				   &value_ber, &value_type, &value_content,
 				   &more);
@@ -228,7 +228,8 @@ bool dn_has_wildcards(chunk_t dn)
 			return false;
 		}
 
-		if (value_content.len == 1 && value_content.ptr[0] == '*') {
+		if (value_content.len == 1 &&
+		    *(const char*)value_content.ptr == '*') {
 			return true;	/* we have found a wildcard RDN */
 		}
 	}
@@ -269,20 +270,20 @@ bool dn_has_wildcards(chunk_t dn)
  * See also NSS bug 1709676.
  */
 
-static err_t format_dn(struct jambuf *buf, chunk_t dn,
+static err_t format_dn(struct jambuf *buf, asn1_t dn,
 		       jam_bytes_fn *jam_bytes, bool nss_compatible)
 {
-	chunk_t rdn;
-	chunk_t attribute;
+	asn1_t rdn;
+	asn1_t attribute;
 	bool more;
 
 	RETURN_IF_ERR(init_rdn(dn, &rdn, &attribute, &more));
 
 	for (bool first = true; more; first = false) {
-		chunk_t oid;
-		chunk_t value_ber;
+		asn1_t oid;
+		asn1_t value_ber;
 		enum asn1_type value_type;
-		chunk_t value_content;
+		asn1_t value_content;
 		RETURN_IF_ERR(get_next_rdn(&rdn, &attribute, &oid,
 					   &value_ber, &value_type, &value_content,
 					   &more));
@@ -539,7 +540,7 @@ void jam_raw_dn(struct jambuf *buf, chunk_t dn, jam_bytes_fn *jam_bytes,
 {
 	/* save start in case things screw up */
 	jampos_t pos = jambuf_get_pos(buf);
-	err_t ugh = format_dn(buf, dn, jam_bytes, nss_compatible);
+	err_t ugh = format_dn(buf, ASN1(dn), jam_bytes, nss_compatible);
 	if (ugh != NULL) {
 		/* error: print DN as hex string */
 		if (DBGP(DBG_BASE)) {
@@ -557,7 +558,7 @@ err_t parse_dn(chunk_t dn)
 {
 	dn_buf dnb;
 	struct jambuf buf = ARRAY_AS_JAMBUF(dnb.buf);
-	return format_dn(&buf, dn, jam_raw_bytes, true/*nss_compatible*/);
+	return format_dn(&buf, ASN1(dn), jam_raw_bytes, true/*nss_compatible*/);
 }
 
 void jam_dn_or_null(struct jambuf *buf, chunk_t dn, const char *null_dn,
@@ -852,8 +853,8 @@ bool same_dn(chunk_t a, chunk_t b)
  */
 bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 {
-	chunk_t rdn_a, rdn_b;
-	chunk_t attribute_a, attribute_b;
+	asn1_t rdn_a, rdn_b;
+	asn1_t attribute_a, attribute_b;
 	bool more_a, more_b;
 
 	if (wildcards != NULL) {
@@ -874,13 +875,13 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 	 * initialize DN parsing.  Stop (silently) on errors.
 	 */
 	{
-		err_t ua = init_rdn(a, &rdn_a, &attribute_a, &more_a);
+		err_t ua = init_rdn(ASN1(a), &rdn_a, &attribute_a, &more_a);
 		if (ua != NULL) {
 			dbg("match_dn bad a: %s", ua);
 			return false;
 		}
 
-		err_t ub = init_rdn(b, &rdn_b, &attribute_b, &more_b);
+		err_t ub = init_rdn(ASN1(b), &rdn_b, &attribute_b, &more_b);
 		if (ub != NULL) {
 			dbg("match_dn bad b: %s", ub);
 			return false;
@@ -893,10 +894,10 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 		 * Parse next RDNs and check for errors
 		 * but don't report errors.
 		 */
-		chunk_t oid_a, oid_b;
-		chunk_t value_ber_a, value_ber_b;
+		asn1_t oid_a, oid_b;
+		asn1_t value_ber_a, value_ber_b;
 		enum asn1_type value_type_a, value_type_b;
-		chunk_t value_content_a, value_content_b;
+		asn1_t value_content_a, value_content_b;
 
 		{
 			err_t ua = get_next_rdn(&rdn_a, &attribute_a, &oid_a,
@@ -924,7 +925,7 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 		/* ??? this does not care whether types match.  Should it? */
 		if (wildcards != NULL &&
 		    value_content_b.len == 1 &&
-		    value_content_b.ptr[0] == '*') {
+		    *(const char *)value_content_b.ptr == '*') {
 			(*wildcards)++;
 			continue;
 		}
@@ -939,9 +940,11 @@ bool match_dn(chunk_t a, chunk_t b, int *wildcards)
 		 */
 		if (value_type_a != value_type_b ||
 		    value_type_a == ASN1_PRINTABLESTRING) {
-			unsigned char or = 0x00;
-			for (size_t i = 0; i != value_content_a.len; i++)
-				or |= value_content_a.ptr[i] | value_content_b.ptr[i];
+			uint8_t or = 0x00;
+			for (size_t i = 0; i != value_content_a.len; i++) {
+				or |= ((const uint8_t*)value_content_a.ptr)[i];
+				or |= ((const uint8_t*)value_content_b.ptr)[i];
+			}
 			if (or & 0x80)
 				return false;
 		}

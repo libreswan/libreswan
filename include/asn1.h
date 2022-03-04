@@ -1,9 +1,11 @@
-/* Simple ASN.1 parser
+/* Simple ASN.1 parser, for libreswan
+ *
  * Copyright (C) 2000-2004 Andreas Steffen, Zuercher Hochschule Winterthur
  * Copyright (C) 2005 Michael Richardson <mcr@marajade.sandelman.ca>
  * Copyright (C) 2009 Paul Wouters <paul@xelerance.com>
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 Paul Wouters <pwouters@redhat.com>
+ * Copyright (C) 2022 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -72,13 +74,14 @@ enum asn1_type {
 	ASN1_CONTEXT_C_5 =          0xA5
 };
 
-extern int known_oid(chunk_t object);
 extern void code_asn1_length(size_t length, chunk_t *code);
 
 bool is_asn1_printablestring(shunk_t str);
 
 typedef chunk_t asn1_t;
 #define ASN1(H) (asn1_t) { .ptr = H.ptr, .len = H.len, }
+
+int known_oid(asn1_t object);
 
 err_t asn1_ok(asn1_t blob);
 

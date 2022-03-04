@@ -31,12 +31,12 @@
  * If the oid is listed in the oid_names table then the corresponding
  * position in the oid_names table is returned otherwise -1 is returned
  */
-int known_oid(chunk_t object)
+int known_oid(asn1_t object)
 {
 	int oid = 0;
 
 	while (object.len > 0) {
-		if (oid_names[oid].octet == *object.ptr) {
+		if (oid_names[oid].octet == *(const uint8_t*)object.ptr) {
 			object.len--;
 			object.ptr++;
 			if (object.len == 0) {
