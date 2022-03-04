@@ -292,13 +292,6 @@ err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *
 					const struct private_key_stuff **pks, bool *load_needed,
 					struct logger *logger);
 
-/* these do not clone */
-chunk_t same_secitem_as_chunk(SECItem si);
-shunk_t same_secitem_as_shunk(SECItem si);
-SECItem same_chunk_as_secitem(chunk_t chunk, SECItemType type);
-
-chunk_t clone_secitem_as_chunk(SECItem si, const char *name);
-
 diag_t create_pubkey_from_cert(const struct id *id,
 			       CERTCertificate *cert, struct pubkey **pk,
 			       struct logger *logger) MUST_USE_RESULT;

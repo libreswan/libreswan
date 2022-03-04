@@ -68,6 +68,7 @@
 
 #include "crypto.h"
 #include "secrets.h"
+#include "lswnss.h"
 
 #include "ike_alg.h"
 #include "ike_alg_encrypt_ops.h"	/* XXX: oops */

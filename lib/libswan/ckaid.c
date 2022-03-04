@@ -25,7 +25,7 @@
 
 #include "ckaid.h"
 #include "lswalloc.h"
-#include "secrets.h"
+#include "lswnss.h"
 #include "lswlog.h"
 
 /*

@@ -97,4 +97,13 @@ size_t jam_nss_secitem(struct jambuf *buf, const SECItem *secitem);
 const char *str_nss_oid(SECOidTag oid, enum_buf *buf);
 const char *str_nss_ckm(CK_MECHANISM_TYPE mechanism, enum_buf *buf);
 
+/* these do not clone */
+chunk_t same_secitem_as_chunk(SECItem si);
+shunk_t same_secitem_as_shunk(SECItem si);
+SECItem same_chunk_as_secitem(chunk_t chunk, SECItemType type);
+SECItem same_shunk_as_secitem(shunk_t chunk, SECItemType type); /* NSS doesn't do const */
+
+/* this clones */
+chunk_t clone_secitem_as_chunk(SECItem si, const char *name);
+
 #endif

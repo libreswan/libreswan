@@ -16,7 +16,7 @@
 
 #include "lswalloc.h"
 #include "jambuf.h"
-#include "secrets.h"
+#include "lswnss.h"
 
 SECItem same_chunk_as_secitem(chunk_t chunk, SECItemType type)
 {
@@ -24,6 +24,16 @@ SECItem same_chunk_as_secitem(chunk_t chunk, SECItemType type)
 		.type = type,
 		.data = chunk.ptr,
 		.len = chunk.len,
+	};
+	return si;
+}
+
+SECItem same_shunk_as_secitem(shunk_t shunk, SECItemType type)
+{
+	SECItem si = {
+		.type = type,
+		.data = DISCARD_CONST(uint8_t *, shunk.ptr),
+		.len = shunk.len,
 	};
 	return si;
 }
@@ -46,15 +56,3 @@ chunk_t clone_secitem_as_chunk(SECItem si, const char *name)
 	};
 	return chunk;
 }
-
-#if 0	/* not used (yet?) */
-SECItem clone_chunk_as_secitem(chunk_t chunk, SECItemType type, const char *name)
-{
-	SECItem si = {
-		.type = type,
-		.len = chunk.len,
-		.data = clone_bytes(chunk.ptr, chunk.len, name),
-	};
-	return si;
-}
-#endif
