@@ -98,7 +98,7 @@ static bool idr_wildmatch(const struct end *this, const struct id *idr, struct l
 /*
  * Extracts the peer's ca from the chained list of public keys.
  */
-static chunk_t get_peer_ca(struct pubkey_list *const *pubkey_db,
+static asn1_t get_peer_ca(struct pubkey_list *const *pubkey_db,
 			   const struct id *peer_id)
 {
 	struct pubkey_list *p;
@@ -108,7 +108,7 @@ static chunk_t get_peer_ca(struct pubkey_list *const *pubkey_db,
 		if (key->type == &pubkey_type_rsa && same_id(peer_id, &key->id))
 			return key->issuer;
 	}
-	return EMPTY_CHUNK;
+	return null_shunk;
 }
 
 /*
@@ -187,7 +187,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 	 * Find the PEER's CA, check the per-state DB first.
 	 */
 	pexpect(st->st_remote_certs.processed);
-	chunk_t peer_ca = get_peer_ca(&st->st_remote_certs.pubkey_db, peer_id);
+	asn1_t peer_ca = get_peer_ca(&st->st_remote_certs.pubkey_db, peer_id);
 
 	if (hunk_isempty(peer_ca)) {
 		peer_ca = get_peer_ca(&pluto_pubkeys, peer_id);
@@ -471,7 +471,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			 * *_pathlen==0 - a perfect match.
 			 */
 			int peer_pathlen;
-			bool matching_peer_ca = trusted_ca(ASN1(peer_ca),
+			bool matching_peer_ca = trusted_ca(peer_ca,
 							   ASN1(d->remote->config->host.ca),
 							   &peer_pathlen);
 			int our_pathlen;

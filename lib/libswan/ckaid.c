@@ -27,6 +27,7 @@
 #include "lswalloc.h"
 #include "lswnss.h"
 #include "lswlog.h"
+#include "lswnss.h"
 
 /*
  * Return true IFF CKAID starts with all of START (which is in HEX).

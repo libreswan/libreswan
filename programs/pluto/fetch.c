@@ -449,7 +449,7 @@ void check_crls(struct logger *logger)
 	for (struct pubkey_list *pkl = pluto_pubkeys; pkl != NULL; pkl = pkl->next) {
 		struct pubkey *key = pkl->key;
 		if (key != NULL) {
-			add_crl_fetch_request(ASN1(key->issuer), null_shunk, &requests, logger);
+			add_crl_fetch_request(key->issuer, null_shunk, &requests, logger);
 		}
 	}
 

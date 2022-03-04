@@ -221,7 +221,7 @@ struct pubkey {
 	realtime_t installed_time;
 	realtime_t until_time;
 	uint32_t dns_ttl; /* from wire. until_time is derived using this */
-	chunk_t issuer;
+	asn1_t issuer;
 	const struct pubkey_type *type;
 	union pubkey_content u;
 };
