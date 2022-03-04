@@ -205,13 +205,13 @@ static err_t get_next_rdn(asn1_t *rdn,	/* input/output */
 /*
  * Count the number of wildcard RDNs in a distinguished name; -1 signifies error.
  */
-bool dn_has_wildcards(chunk_t dn)
+bool dn_has_wildcards(asn1_t dn)
 {
 	asn1_t rdn;
 	asn1_t attribute;
 	bool more;
 
-	err_t ugh = init_rdn(ASN1(dn), &rdn, &attribute, &more);
+	err_t ugh = init_rdn(dn, &rdn, &attribute, &more);
 	if (ugh != NULL) {
 		return false;
 	}

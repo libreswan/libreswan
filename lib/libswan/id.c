@@ -433,7 +433,7 @@ bool id_has_wildcards(const struct id *id)
 #endif
 
 	case ID_DER_ASN1_DN:
-		has_wildcards = dn_has_wildcards(id->name);
+		has_wildcards = dn_has_wildcards(ASN1(id->name));
 		break;
 
 	default:
