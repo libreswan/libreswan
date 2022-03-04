@@ -784,7 +784,7 @@ bool v1_decode_certs(struct msg_digest *md)
 			chunk_t fdn = empty_chunk;
 			if (find_crl_fetch_dn(&fdn, c)) {
 				/* FDN contains issuer_dn */
-				submit_crl_fetch_request(fdn, st->st_logger);
+				submit_crl_fetch_request(ASN1(fdn), st->st_logger);
 			}
 		}
 #endif

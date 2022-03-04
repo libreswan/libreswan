@@ -56,7 +56,7 @@ struct crl_fetch_queue {
 };
 
 struct crl_fetch_request {
-	chunk_t issuer_dn;
+	shunk_t issuer_dn;
 	shunk_t url;
 	CERTCertificate *ca; /* must free */
 	CERTCrlDistributionPoints *dps; /* points into CA */
@@ -153,7 +153,7 @@ void submit_crl_fetch_requests(struct crl_fetch_request **requests, struct logge
 	     request != NULL; request = request->next) {
 		struct crl_fetch_queue *volatile *entry;
 		for (entry = &crl_fetch_queue; *entry != NULL; entry = &(*entry)->next) {
-			if (same_dn(ASN1(request->issuer_dn), ASN1((*entry)->issuer_dn))) {
+			if (same_dn(request->issuer_dn, ASN1((*entry)->issuer_dn))) {
 				/* there is already a fetch request */
 				dbg("crl fetch request already exists");
 				/* there might be new distribution points */
@@ -216,7 +216,7 @@ static CERTCrlDistributionPoints *get_cert_distribution_points(CERTCertificate *
 	return dps;
 }
 
-void add_crl_fetch_request(chunk_t issuer_dn, shunk_t url, struct crl_fetch_request **requests,
+void add_crl_fetch_request(asn1_t issuer_dn, shunk_t url, struct crl_fetch_request **requests,
 			   struct logger *logger)
 {
 	/*
@@ -227,7 +227,7 @@ void add_crl_fetch_request(chunk_t issuer_dn, shunk_t url, struct crl_fetch_requ
 	 */
 	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
 	passert(handle != NULL);
-	SECItem issuer_secitem = same_chunk_as_secitem(issuer_dn, siBuffer);
+	SECItem issuer_secitem = same_shunk_as_secitem(issuer_dn, siBuffer);
 	CERTCertificate *ca = CERT_FindCertByName(handle, &issuer_secitem);
 	if (ca == NULL) {
 		llog_nss_error(RC_LOG, logger, "error finding CA to add to fetch request");
@@ -252,7 +252,7 @@ void add_crl_fetch_request(chunk_t issuer_dn, shunk_t url, struct crl_fetch_requ
 	*requests = clone_thing(new_request, "crl request");
 }
 
-void submit_crl_fetch_request(chunk_t issuer_dn, struct logger *logger)
+void submit_crl_fetch_request(asn1_t issuer_dn, struct logger *logger)
 {
 	struct crl_fetch_request *requests = NULL;
 	add_crl_fetch_request(issuer_dn, /*URL*/null_shunk, &requests, logger);

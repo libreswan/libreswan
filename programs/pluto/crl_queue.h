@@ -27,10 +27,10 @@
 
 struct crl_fetch_request;
 
-void submit_crl_fetch_request(chunk_t issuer_dn, struct logger *logger);
+void submit_crl_fetch_request(asn1_t issuer_dn, struct logger *logger);
 void submit_crl_fetch_requests(struct crl_fetch_request **requests, struct logger *logger);
 
-void add_crl_fetch_request(chunk_t issuer_dn, shunk_t url/*could be empty*/,
+void add_crl_fetch_request(asn1_t issuer_dn, shunk_t url/*could be empty*/,
 			   struct crl_fetch_request **requests,
 			   struct logger *logger);
 

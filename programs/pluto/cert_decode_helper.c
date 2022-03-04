@@ -130,7 +130,7 @@ static stf_status cert_decode_completed(struct state *st,
 		 */
 		chunk_t fdn = empty_chunk;
 		if (find_crl_fetch_dn(&fdn, ike->sa.st_connection)) {
-			submit_crl_fetch_request(fdn, ike->sa.st_logger);
+			submit_crl_fetch_request(ASN1(fdn), ike->sa.st_logger);
 		}
 		pexpect(task->verified.cert_chain == NULL);
 		pexpect(task->verified.pubkey_db == NULL);

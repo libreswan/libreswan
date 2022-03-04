@@ -438,7 +438,7 @@ void check_crls(struct logger *logger)
 		if (n->crl != NULL) {
 			chunk_t issuer = same_secitem_as_chunk(n->crl->crl.derName);
 			/* XXX: URL can be null, gets filled in later */
-			add_crl_fetch_request(issuer, shunk1(n->crl->url), &requests, logger);
+			add_crl_fetch_request(ASN1(issuer), shunk1(n->crl->url), &requests, logger);
 		}
 	}
 
@@ -449,7 +449,7 @@ void check_crls(struct logger *logger)
 	for (struct pubkey_list *pkl = pluto_pubkeys; pkl != NULL; pkl = pkl->next) {
 		struct pubkey *key = pkl->key;
 		if (key != NULL) {
-			add_crl_fetch_request(key->issuer, null_shunk, &requests, logger);
+			add_crl_fetch_request(ASN1(key->issuer), null_shunk, &requests, logger);
 		}
 	}
 
@@ -465,7 +465,7 @@ void check_crls(struct logger *logger)
 		     !CERT_LIST_END(node, certs);
 		     node = CERT_LIST_NEXT(node)) {
 			chunk_t issuer = same_secitem_as_chunk(node->cert->derSubject);
-			add_crl_fetch_request(issuer, null_shunk, &requests, logger);
+			add_crl_fetch_request(ASN1(issuer), null_shunk, &requests, logger);
 		}
 	}
 
