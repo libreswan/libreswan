@@ -281,7 +281,10 @@ struct virtual_ip *create_virtual(const char *string, struct logger *logger)
 		str = next + 1;
 	}
 
-	/* allocate struct + array */
+	/*
+	 * Allocate struct plus space for the .net[] array (using the
+	 * array at end of struct hack).
+	 */
 	struct virtual_ip *v = refcnt_overalloc(struct virtual_ip,
 						/*extra*/(n_net * sizeof(ip_subnet)),
 						virtual_ip_free, HERE);

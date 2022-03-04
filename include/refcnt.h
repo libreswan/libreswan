@@ -36,7 +36,8 @@ typedef struct refcnt {
 /*
  * Initialize the refcnt.
  *
- * Note that ref_init(OBJ,HERE) breaks as HERE contains braces.
+ * Note: the over-allocated memory is _NOT_ aligned.
+ * Note: ref_init(OBJ,HERE) breaks as HERE contains braces.
  */
 
 void refcnt_init(const void *pointer, struct refcnt *refcnt,
