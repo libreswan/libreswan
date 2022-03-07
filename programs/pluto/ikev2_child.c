@@ -850,7 +850,7 @@ v2_notification_t process_v2_childs_sa_payload(const char *what,
 	return v2N_NOTHING_WRONG;
 }
 
-void llog_v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
+void llog_v2_child_sa_established(struct ike_sa *ike UNUSED, struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
 	LLOG_JAMBUF(RC_SUCCESS, child->sa.st_logger, buf) {
@@ -864,7 +864,7 @@ void llog_v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 			jam(buf, " rekeyed Child SA "PRI_SO"",
 			    pri_so(child->sa.st_v2_rekey_pred));
 		}
-		jam(buf, " using "PRI_SO"; ", pri_so(ike->sa.st_serialno));
+		jam(buf, " using "PRI_SO"; ", pri_so(child->sa.st_clonedfrom));
 		/* log Child SA Traffic Selector details for admin's pleasure */
 		const struct traffic_selector a = traffic_selector_from_end(&c->spd.this, "this");
 		const struct traffic_selector b = traffic_selector_from_end(&c->spd.that, "that");

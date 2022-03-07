@@ -104,6 +104,12 @@ struct v2_state_transition {
 	enum message_role send;
 
 	/*
+	 * When non-NULL, use this to log a state transition's
+	 * success.
+	 */
+	void (*llog_success)(struct ike_sa *ike, struct state *st);
+
+	/*
 	 * These field names, what ever they are, should exactly match
 	 * equivalent struct payload_summary fields found in struct
 	 * msg_digest.
@@ -170,5 +176,6 @@ stf_status stf_status_from_v2_notification(v2_notification_t n);
 bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c);
 
 void ikev2_child_emancipate(struct ike_sa *old_ike, struct child_sa *new_ike);
+void llog_v2_success_story(struct ike_sa *ike UNUSED, struct state *st);
 
 #endif

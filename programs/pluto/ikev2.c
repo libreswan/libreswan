@@ -127,6 +127,24 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *mdp, struct ik
  *
  */
 
+void llog_v2_success_story(struct ike_sa *ike UNUSED, struct state *st)
+{
+	enum rc_type w = RC_NEW_V2_STATE + st->st_state->kind;
+	LLOG_JAMBUF(w, st->st_logger, buf) {
+		jam_string(buf, st->st_state->story);
+	}
+}
+
+static void llog_v2_success_story_details(struct ike_sa *ike UNUSED, struct state *st)
+{
+	enum rc_type w = RC_NEW_V2_STATE + st->st_state->kind;
+	LLOG_JAMBUF(w, st->st_logger, buf) {
+		jam_string(buf, st->st_state->story);
+		jam_string(buf, " ");
+		jam_parent_sa_details(buf, st);
+	}
+}
+
 /*
  * From RFC 5996 syntax: [optional] and {encrypted}
  *
@@ -216,6 +234,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .next_state = STATE_V2_PARENT_I1,
 	  .send       = MESSAGE_REQUEST,
 	  .processor  = NULL,
+	  .llog_success = llog_v2_success_story,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
 	/* STATE_V2_PARENT_I1: R1B --> I1B
@@ -275,6 +294,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_IKE_SA_INIT_response,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
+	  .llog_success = llog_v2_success_story_details,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
 	{ .story      = "Initiator: process IKE_INTERMEDIATE reply, initiate IKE_AUTH or IKE_INTERMEDIATE",
@@ -287,6 +307,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_IKE_INTERMEDIATE_response,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_IKE_INTERMEDIATE,
+	  .llog_success = llog_v2_success_story,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
 	/* STATE_V2_PARENT_I2: R2 -->
@@ -320,6 +341,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_IKE_AUTH_failure_response,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_IKE_AUTH,
+	  .llog_success = llog_v2_success_story,
 	},
 
 	/* no state: none I1 --> R1
@@ -334,6 +356,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_IKE_SA_INIT_request,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
+	  .llog_success = llog_v2_success_story_details,
 	  .timeout_event = EVENT_SA_DISCARD, },
 
 	/* STATE_V2_PARENT_R1: I2 --> R2
@@ -357,6 +380,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_IKE_INTERMEDIATE_request,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_IKE_INTERMEDIATE,
+	  .llog_success = llog_v2_success_story,
 	  .timeout_event = EVENT_SA_DISCARD, },
 
 	/*
@@ -387,6 +411,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_IKE_AUTH_request_EAP_start,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_IKE_AUTH,
+	  .llog_success = llog_v2_success_story,
 	  .timeout_event = EVENT_SA_DISCARD, },
 
 	{ .story      = "Responder: process IKE_AUTH/EAP, continue EAP",
@@ -398,6 +423,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_IKE_AUTH_request_EAP_continue,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_IKE_AUTH,
+	  .llog_success = llog_v2_success_story,
 	  .timeout_event = EVENT_SA_DISCARD, },
 
 	{ .story      = "Responder: process final IKE_AUTH/EAP",
@@ -410,6 +436,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_IKE_AUTH_request_EAP_final,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_IKE_AUTH,
+	  .llog_success = llog_v2_success_story,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
 	/*
@@ -442,6 +469,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .flags      = LEMPTY,
 	  .send       = MESSAGE_REQUEST,
 	  .processor  = initiate_v2_CREATE_CHILD_SA_rekey_ike_request,
+	  .llog_success = llog_v2_success_story,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
 	{ .story      = "process rekey IKE SA response (CREATE_CHILD_SA)",
@@ -464,6 +492,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_CREATE_CHILD_SA_failure_response,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .llog_success = llog_v2_success_story,
 	  .timeout_event = EVENT_RETAIN, /* no timeout really */
 	},
 
@@ -482,6 +511,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .flags      = LEMPTY,
 	  .send       = MESSAGE_REQUEST,
 	  .processor  = initiate_v2_CREATE_CHILD_SA_rekey_child_request,
+	  .llog_success = llog_v2_success_story,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
 	{ .story      = "process rekey Child SA response (CREATE_CHILD_SA)",
@@ -522,6 +552,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .flags      = LEMPTY,
 	  .send       = MESSAGE_REQUEST,
 	  .processor  = initiate_v2_CREATE_CHILD_SA_new_child_request,
+	  .llog_success = llog_v2_success_story,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
 	{ .story      = "process create Child SA response (CREATE_CHILD_SA)",
@@ -594,6 +625,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_INFORMATIONAL_request,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
+	  .llog_success = llog_v2_success_story,
 	  .timeout_event = EVENT_RETAIN, },
 
 	{ .story      = "Informational Response",
@@ -604,6 +636,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_v2_INFORMATIONAL_response,
 	  .recv_role  = MESSAGE_RESPONSE,
+	  .llog_success = llog_v2_success_story,
 	  .timeout_event = EVENT_RETAIN, },
 
 	/*
@@ -663,6 +696,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = IKE_SA_DEL_process_v2_INFORMATIONAL_response,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
+	  .llog_success = llog_v2_success_story,
 	  .timeout_event = EVENT_RETAIN, },
 
 	/* last entry */
@@ -702,6 +736,10 @@ void init_ikev2(void)
 	/*
 	 * Iterate over the state transitions filling in missing bits
 	 * and checking for consistency.
+	 *
+	 * XXX: this misses magic state transitions, such as
+	 * v2_liveness_probe, that are not directly attached to a
+	 * state.
 	 */
 
 	const struct finite_state *prev = NULL;
@@ -816,6 +854,12 @@ void init_ikev2(void)
 		if (t->recv_role != 0) {
 			passert((t->recv_type == ISAKMP_v2_IKE_SA_INIT) == !from->v2.secured);
 		}
+
+		/*
+		 * Check that everything has either a success story,
+		 * or suppressed logging.
+		 */
+		passert((t->llog_success != NULL) == ((t->flags & SMF2_SUPPRESS_SUCCESS_LOG) == LEMPTY));
 
 		/*
 		 * Point .fs_v2_microcode at the first transition for
@@ -2447,84 +2491,27 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	}
 
 	/*
-	 * Tell whack and logs our progress.
+	 * Tell whack and logs of our progress.
 	 *
 	 * If it's OE or a state transition we're not telling anyone
 	 * about, then be quiet.
 	 */
 
-	dbg("announcing the state transition");
-	enum rc_type w;
-	void (*jam_details)(struct jambuf *buf, struct state *st);
-	bool suppress_log = ((transition->flags & SMF2_SUPPRESS_SUCCESS_LOG) ||
+	pexpect((transition->llog_success != NULL) == ((transition->flags & SMF2_SUPPRESS_SUCCESS_LOG) == LEMPTY));
+	bool suppress_log = (transition->llog_success == NULL ||
 			     (c != NULL && (c->policy & POLICY_OPPORTUNISTIC)));
-	const char *sep = " ";
-	enum sa_role sa_role = 0;
-	if (transition->state == transition->next_state) {
-		/*
-		 * HACK for seemingly going around in circles
-		 */
-		jam_details = NULL;
-		w = RC_NEW_V2_STATE + st->st_state->kind;
-	} else if (IS_CHILD_SA(st) && just_established) {
-		/*
-		 * XXX:
-		 *
-		 * This is a CREATE_CHILD_SA exchange initiator
-		 * completing its transition.  It has already been
-		 * announced.
-		 *
-		 * If the initiator's create child sa is made nested
-		 * then this code can be removed.
-		 */
-		jam_details = NULL;
-		suppress_log = true;
-		sep = "; ";
-		w = RC_SUCCESS; /* also triggers detach */
-	} else if (IS_IKE_SA(st) && just_established) {
-		/* ike_sa_established() called elsewhere */
-		jam_details = jam_parent_sa_details;
-		sa_role = st->st_sa_role;
-		w = RC_SUCCESS; /* also triggers detach */
-	} else if (transition->state == STATE_V2_PARENT_I1 &&
-		   transition->next_state == STATE_V2_PARENT_I2) {
-		jam_details = jam_parent_sa_details;
-		w = RC_NEW_V2_STATE + st->st_state->kind;
-	} else if (st->st_state->kind == STATE_V2_PARENT_R1) {
-		jam_details = jam_parent_sa_details;
-		w = RC_NEW_V2_STATE + st->st_state->kind;
-	} else {
-		jam_details = NULL;
-		w = RC_NEW_V2_STATE + st->st_state->kind;
-	}
-
         if (suppress_log) {
 		LSWDBGP(DBG_BASE, buf) {
 			jam_logger_prefix(buf, st->st_logger);
 			jam_string(buf, transition->story);
 			jam_string(buf, ": ");
-			jam_string(buf, (sa_role == SA_INITIATOR ? "initiator " :
-					 sa_role == SA_RESPONDER ? "responder " :
+			jam_string(buf, (st->st_sa_role == SA_INITIATOR ? "initiator " :
+					 st->st_sa_role == SA_RESPONDER ? "responder " :
 					 ""));
 			jam_string(buf, st->st_state->story);
-			/* document SA details for admin's pleasure */
-			if (jam_details != NULL) {
-				jam_string(buf, sep);
-				jam_details(buf, st);
-			}
 		}
 	} else {
-		LLOG_JAMBUF(w, st->st_logger, buf) {
-			jam_string(buf, (sa_role == SA_INITIATOR ? "initiator " :
-					 sa_role == SA_RESPONDER ? "responder " :
-					 ""));
-			jam_string(buf, st->st_state->story);
-			/* document SA details for admin's pleasure */
-			if (jam_details != NULL) {
-				jam_string(buf, sep);
-				jam_details(buf, st);
-			}
-		}
+		transition->llog_success(ike, st);
 	}
 
 	if (just_established) {
