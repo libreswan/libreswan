@@ -169,6 +169,25 @@ bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
 	return true;
 }
 
+void llog_v2_ike_sa_established(struct ike_sa *ike, struct child_sa *larval)
+{
+	LLOG_JAMBUF(RC_SUCCESS, larval->sa.st_logger, buf) {
+		switch (larval->sa.st_sa_role) {
+		case SA_INITIATOR: jam_string(buf, "initiator"); break;
+		case SA_RESPONDER: jam_string(buf, "responder"); break;
+		}
+		if (larval->sa.st_v2_rekey_pred != SOS_NOBODY) {
+			pexpect(ike->sa.st_serialno == larval->sa.st_v2_rekey_pred);
+			jam(buf, " rekeyed IKE SA "PRI_SO"",
+			    pri_so(larval->sa.st_v2_rekey_pred));
+		} else {
+			jam(buf, " established IKE SA");
+		}
+		jam(buf, " ");
+		jam_parent_sa_details(buf, &larval->sa);
+	}
+}
+
 void v2_ike_sa_established(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;

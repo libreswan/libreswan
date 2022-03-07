@@ -1272,10 +1272,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2(struct
 	/*
 	 * Announce this to the world (before releasing whack).
 	 */
-	LLOG_JAMBUF(RC_LOG_SERIOUS, larval_ike->sa.st_logger, buf) {
-		jam(buf, "responder rekeyed IKE SA "PRI_SO" ", ike->sa.st_serialno);
-		jam_v2_ike_details(buf, &larval_ike->sa);
-	}
+	llog_v2_ike_sa_established(ike, larval_ike);
 
 	/*
 	 * Count successful transition into an established
@@ -1416,10 +1413,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1(struc
 	/*
 	 * Announce this to the world.
 	 */
-	LLOG_JAMBUF(RC_LOG_SERIOUS, larval_ike->sa.st_logger, buf) {
-		jam(buf, "initiator rekeyed IKE SA "PRI_SO" ", ike->sa.st_serialno);
-		jam_v2_ike_details(buf, &larval_ike->sa);
-	}
+	llog_v2_ike_sa_established(ike, larval_ike);
 
 	return STF_OK;
 }

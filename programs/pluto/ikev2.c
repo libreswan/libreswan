@@ -2215,11 +2215,6 @@ void ikev2_child_emancipate(struct ike_sa *old_ike, struct child_sa *new_ike)
 	v2_ike_sa_established(pexpect_ike_sa(&new_ike->sa));
 }
 
-void jam_v2_ike_details(struct jambuf *buf, struct state *st)
-{
-	jam_parent_sa_details(buf, st);
-}
-
 static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 					const struct v2_state_transition *transition)
 {
@@ -2488,15 +2483,15 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		w = RC_SUCCESS; /* also triggers detach */
 	} else if (IS_IKE_SA(st) && just_established) {
 		/* ike_sa_established() called elsewhere */
-		jam_details = jam_v2_ike_details;
+		jam_details = jam_parent_sa_details;
 		sa_role = st->st_sa_role;
 		w = RC_SUCCESS; /* also triggers detach */
 	} else if (transition->state == STATE_V2_PARENT_I1 &&
 		   transition->next_state == STATE_V2_PARENT_I2) {
-		jam_details = jam_v2_ike_details;
+		jam_details = jam_parent_sa_details;
 		w = RC_NEW_V2_STATE + st->st_state->kind;
 	} else if (st->st_state->kind == STATE_V2_PARENT_R1) {
-		jam_details = jam_v2_ike_details;
+		jam_details = jam_parent_sa_details;
 		w = RC_NEW_V2_STATE + st->st_state->kind;
 	} else {
 		jam_details = NULL;
