@@ -575,7 +575,7 @@ static void usage(void)
 		"\n"
 		"Examples:\n"
 		"\n"
-		"    algparse -v1 ike=\n"
+		"    algparse -v1 ike\n"
 		"        expand the default IKEv1 'ike' algorithm table\n"
 		"        (with IKEv1, this is the default algorithms, with IKEv2 it is not)\n"
 		"    algparse -v2 ike=aes-sha1-dh23\n"
