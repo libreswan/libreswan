@@ -42,7 +42,7 @@ west #
 002 "rekey" #5: initiating rekey to replace IKE SA #1
 1v2 "rekey" #5: sent CREATE_CHILD_SA request to rekey IKE SA
 002 "rekey" #5: rekeyed #1 STATE_V2_REKEY_IKE_I1 and expire it remaining life XXs
-003 "rekey" #5: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+004 "rekey" #5: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "rekey" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 west #
  # do an ike rekey - but pick the conn that does not have the actual IKE SA
