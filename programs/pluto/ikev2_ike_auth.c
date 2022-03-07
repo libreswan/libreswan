@@ -267,7 +267,6 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	/* decide whether to send CERT payload */
 
 	bool send_cert = ikev2_send_cert_decision(ike);
-	bool ic =  pc->initial_contact && (ike->sa.st_ike_pred == SOS_NOBODY);
 	bool send_idr = ((pc->remote->host.id.kind != ID_NULL && pc->remote->host.id.name.len != 0) ||
 				pc->remote->host.id.kind == ID_NULL); /* me tarzan, you jane */
 
@@ -349,6 +348,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		}
 	}
 
+	bool ic =  pc->initial_contact && (ike->sa.st_v2_ike_pred == SOS_NOBODY);
 	if (ic) {
 		log_state(RC_LOG, &ike->sa, "sending INITIAL_CONTACT");
 		if (!emit_v2N(v2N_INITIAL_CONTACT, request.pbs))

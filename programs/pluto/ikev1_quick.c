@@ -689,7 +689,7 @@ void quick_outI1(struct fd *whack_sock,
 	}
 
 	/* save for post crypto logging */
-	st->st_ipsec_pred = replacing;
+	st->st_v1_ipsec_pred = replacing;
 
 	if (policy & POLICY_PFS) {
 		submit_ke_and_nonce(st, st->st_pfs_group,
@@ -883,15 +883,15 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	clear_retransmits(st);
 	start_retransmits(st);
 
-	if (st->st_ipsec_pred == SOS_NOBODY) {
+	if (st->st_v1_ipsec_pred == SOS_NOBODY) {
 		log_state(RC_NEW_V1_STATE + st->st_state->kind, st,
 			  "%s", st->st_state->story);
 	} else {
 		log_state(RC_NEW_V1_STATE + st->st_state->kind, st,
 			  "%s, to replace #%lu",
 			  st->st_state->story,
-			  st->st_ipsec_pred);
-		st->st_ipsec_pred = SOS_NOBODY;
+			  st->st_v1_ipsec_pred);
+		st->st_v1_ipsec_pred = SOS_NOBODY;
 	}
 
 	return STF_OK;

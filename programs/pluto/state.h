@@ -308,8 +308,10 @@ struct state {
 	struct state_timing st_timing;		/* accumulative cpu time */
 	so_serial_t st_serialno;                /* serial number (for seniority)*/
 	so_serial_t st_clonedfrom;              /* serial number of parent */
-	so_serial_t st_ike_pred;		/* IKEv2: replacing established IKE SA */
-	so_serial_t st_ipsec_pred;		/* replacing established IPsec SA */
+
+	so_serial_t st_v1_ipsec_pred;		/* IKEv1: replacing established IPsec SA */
+	so_serial_t st_v2_ike_pred;		/* IKEv2: replacing established IKE SA */
+	so_serial_t st_v2_rekey_pred;		/* IKEv2: rekeying established IKE or CHILD SA */
 
 #ifdef USE_PAM_AUTH
 	struct pam_auth *st_pam_auth;		/* per state auth/pam thread */

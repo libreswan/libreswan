@@ -858,8 +858,8 @@ void llog_v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 		case SA_INITIATOR: jam_string(buf, "initiator "); break;
 		case SA_RESPONDER: jam_string(buf, "responder "); break;
 		}
-		if (child->sa.st_ipsec_pred != SOS_NOBODY) {
-			jam(buf, "rekeyed Child SA "PRI_SO" ", pri_so(child->sa.st_ipsec_pred));
+		if (child->sa.st_v2_rekey_pred != SOS_NOBODY) {
+			jam(buf, "rekeyed Child SA "PRI_SO" ", pri_so(child->sa.st_v2_rekey_pred));
 		} else {
 			jam(buf, "established Child SA ");
 		}
@@ -1075,7 +1075,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 	set_newest_v2_child_sa(__func__, child); /* process_v2_child_response_payloads() */
 
 	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I1)
-		ikev2_rekey_expire_predecessor(child, child->sa.st_ipsec_pred);
+		ikev2_rekey_expire_predecessor(child, child->sa.st_v2_rekey_pred);
 
 	return v2N_NOTHING_WRONG;
 }

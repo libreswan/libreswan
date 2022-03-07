@@ -359,7 +359,7 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	 */
 	larval_child->sa.st_policy = capture_child_rekey_policy(&child_being_replaced->sa);
 	larval_child->sa.st_try = 1;
-	larval_child->sa.st_ipsec_pred = child_being_replaced->sa.st_serialno;
+	larval_child->sa.st_v2_rekey_pred = child_being_replaced->sa.st_serialno;
 
 	larval_child->sa.st_v2_create_child_sa_proposals =
 		get_v2_CREATE_CHILD_SA_rekey_child_proposals(ike,
@@ -424,16 +424,16 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		 */
 		llog_sa(RC_LOG_SERIOUS, larval_child,
 			"IKE SA #%lu no longer viable for rekey of Child SA #%lu",
-			ike->sa.st_serialno, larval_child->sa.st_ipsec_pred);
+			ike->sa.st_serialno, larval_child->sa.st_v2_rekey_pred);
 		larval_child->sa.st_policy = cc->policy; /* for pick_initiator */
 		return STF_FAIL;
 	}
 
-	if (!pexpect(larval_child->sa.st_ipsec_pred != SOS_NOBODY)) {
+	if (!pexpect(larval_child->sa.st_v2_rekey_pred != SOS_NOBODY)) {
 		return STF_INTERNAL_ERROR;
 	}
 
-	struct child_sa *prev = child_sa_by_serialno(larval_child->sa.st_ipsec_pred);
+	struct child_sa *prev = child_sa_by_serialno(larval_child->sa.st_v2_rekey_pred);
 	if (prev == NULL) {
 		/*
 		 * XXX: For instance:
@@ -451,7 +451,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		 */
 		llog_sa(LOG_STREAM/*not-whack*/, larval_child,
 			"Child SA to rekey #%lu vanished abort this exchange",
-			larval_child->sa.st_ipsec_pred);
+			larval_child->sa.st_v2_rekey_pred);
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -486,7 +486,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		} else {
 			pexpect_fail(larval_child->sa.st_logger, HERE,
 				     "previous Child SA #%lu being rekeyed is not ESP/AH",
-				     larval_child->sa.st_ipsec_pred);
+				     larval_child->sa.st_v2_rekey_pred);
 			return STF_INTERNAL_ERROR;
 		}
 
@@ -526,7 +526,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 					  STATE_V2_REKEY_CHILD_R0,
 					  null_fd);
 	ike->sa.st_v2_larval_responder_sa = larval_child;
-	larval_child->sa.st_ipsec_pred = predecessor->sa.st_serialno;
+	larval_child->sa.st_v2_rekey_pred = predecessor->sa.st_serialno;
 	larval_child->sa.st_v2_create_child_sa_proposals =
 		get_v2_CREATE_CHILD_SA_rekey_child_proposals(ike,
 							     predecessor->sa.st_v2_accepted_proposal,
@@ -665,7 +665,8 @@ stf_status process_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 		get_v2_CREATE_CHILD_SA_new_child_proposals(ike, larval_child);
 
 	/* state m/c created CHILD SA */
-	pexpect(larval_child->sa.st_ipsec_pred == SOS_NOBODY);
+	pexpect(larval_child->sa.st_v2_ike_pred == SOS_NOBODY);
+	pexpect(larval_child->sa.st_v2_rekey_pred == SOS_NOBODY);
 	v2_notification_t n = assign_v2_responders_child_client(larval_child, md);
 	if (n != v2N_NOTHING_WRONG) {
 		/* already logged */
@@ -1046,7 +1047,7 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike)
 							 ike->sa.st_logger->global_whackfd);
 	larval_ike->sa.st_oakley = ike->sa.st_oakley;
 	larval_ike->sa.st_ike_rekey_spis.initiator = ike_initiator_spi();
-	larval_ike->sa.st_ike_pred = ike->sa.st_serialno;
+	larval_ike->sa.st_v2_rekey_pred = ike->sa.st_serialno;
 	larval_ike->sa.st_try = 1;
 	larval_ike->sa.st_policy = LEMPTY;
 	larval_ike->sa.st_v2_create_child_sa_proposals =
@@ -1092,6 +1093,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 					STATE_V2_REKEY_IKE_R0,
 					null_fd);
 	ike->sa.st_v2_larval_responder_sa = larval_ike;
+	larval_ike->sa.st_v2_rekey_pred = ike->sa.st_serialno;
 
 	struct connection *c = larval_ike->sa.st_connection;
 
@@ -1408,8 +1410,8 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1(struc
 	/* dump new keys */
 	ikev2_log_parentSA(&larval_ike->sa);
 
-	pexpect(larval_ike->sa.st_ike_pred == ike->sa.st_serialno); /*wow!*/
-	ikev2_rekey_expire_predecessor(larval_ike, larval_ike->sa.st_ike_pred);
+	pexpect(larval_ike->sa.st_v2_rekey_pred == ike->sa.st_serialno); /*wow!*/
+	ikev2_rekey_expire_predecessor(larval_ike, larval_ike->sa.st_v2_rekey_pred);
 
 	/*
 	 * Announce this to the world.

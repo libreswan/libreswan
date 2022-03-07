@@ -581,10 +581,9 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	if (predecessor != NULL) {
 		const char *what;
 		if (IS_CHILD_SA_ESTABLISHED(predecessor)) {
-			ike->sa.st_ipsec_pred = predecessor->st_serialno;
 			what = "established Child SA";
 		} else if (IS_IKE_SA_ESTABLISHED(predecessor)) {
-			ike->sa.st_ike_pred = predecessor->st_serialno;
+			ike->sa.st_v2_ike_pred = predecessor->st_serialno;
 			what = "established IKE SA";
 		} else if (IS_IKE_SA(predecessor)) {
 			what = "establishing IKE SA";
