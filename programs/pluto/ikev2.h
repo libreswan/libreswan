@@ -183,6 +183,7 @@ bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c)
 
 void ikev2_child_emancipate(struct ike_sa *old_ike, struct child_sa *new_ike);
 void llog_v2_success_story(struct ike_sa *ike UNUSED, struct state *st);
+void llog_v2_success_exchange(struct ike_sa *ike UNUSED, struct state *st);
 void llog_v2_success_story_details(struct ike_sa *ike UNUSED, struct state *st);
 void ldbg_v2_success(struct ike_sa *ike UNUSED, struct state *st);
 

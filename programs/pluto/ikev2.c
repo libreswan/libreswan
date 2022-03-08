@@ -148,6 +148,22 @@ void llog_v2_success_story(struct ike_sa *ike UNUSED, struct state *st)
 	}
 }
 
+void llog_v2_success_exchange(struct ike_sa *ike UNUSED, struct state *st)
+{
+	enum rc_type w = RC_NEW_V2_STATE + st->st_state->kind;
+	LLOG_JAMBUF(w, st->st_logger, buf) {
+		switch (st->st_v2_transition->recv_role) {
+		case MESSAGE_REQUEST: jam_string(buf, "responder processed"); break;
+		case MESSAGE_RESPONSE: jam_string(buf, "initiator processed"); break;
+		case NO_MESSAGE: jam_string(buf, "initiated"); break;
+		}
+		jam_string(buf, " ");
+		jam_enum_short(buf, &ikev2_exchange_names, st->st_v2_transition->exchange);
+		jam_string(buf, "; ");
+		jam_string(buf, st->st_state->story);
+	}
+}
+
 void llog_v2_success_story_details(struct ike_sa *ike UNUSED, struct state *st)
 {
 	enum rc_type w = RC_NEW_V2_STATE + st->st_state->kind;
@@ -326,7 +342,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .req_clear_payloads = P(SK),
 	  .opt_clear_payloads = LEMPTY,
 	  .processor  = process_v2_IKE_INTERMEDIATE_response,
-	  .llog_success = llog_v2_success_story,
+	  .llog_success = llog_v2_success_exchange,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
 	/* STATE_V2_PARENT_I2: R2 -->
@@ -401,7 +417,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .req_enc_payloads = LEMPTY,
 	  .opt_enc_payloads = LEMPTY,
 	  .processor  = process_v2_IKE_INTERMEDIATE_request,
-	  .llog_success = llog_v2_success_story,
+	  .llog_success = llog_v2_success_exchange,
 	  .timeout_event = EVENT_SA_DISCARD, },
 
 	/*
