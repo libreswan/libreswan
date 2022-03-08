@@ -122,7 +122,6 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 
 void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 			      struct state *owner, /*XXX: used by CREATE_CHILD_SA*/
-			      enum isakmp_xchg_type ix,
 			      const struct v2_state_transition *transition);
 
 void v2_msgid_migrate_queue(struct ike_sa *from, struct child_sa *to);

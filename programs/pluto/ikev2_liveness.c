@@ -277,7 +277,6 @@ void submit_v2_liveness_exchange(struct ike_sa *ike, so_serial_t who_for)
 		return;
 	}
 
-	v2_msgid_queue_initiator(ike, NULL, NULL,
-				 ISAKMP_v2_INFORMATIONAL,
-				 transition);
+	pexpect(transition->exchange == ISAKMP_v2_INFORMATIONAL);
+	v2_msgid_queue_initiator(ike, NULL, NULL, transition);
 }

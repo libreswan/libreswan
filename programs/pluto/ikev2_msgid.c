@@ -498,7 +498,6 @@ struct v2_msgid_pending {
 	so_serial_t child;
 	so_serial_t owner;
 	so_serial_t who_for;
-	const enum isakmp_xchg_type ix;
 	const struct v2_state_transition *transition;
 	struct v2_msgid_pending *next;
 };
@@ -528,8 +527,7 @@ bool v2_msgid_request_pending(struct ike_sa *ike)
 }
 
 void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
-			      struct state *owner, enum isakmp_xchg_type ix,
-			      const struct v2_state_transition *transition)
+			      struct state *owner, const struct v2_state_transition *transition)
 {
 	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
 	so_serial_t who_for = (child != NULL ? child->sa.st_serialno :
@@ -544,10 +542,11 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 	 */
 	struct v2_msgid_pending **pp = &initiator->pending;
 	while (*pp != NULL) {
-		if (ix == ISAKMP_v2_INFORMATIONAL && (*pp)->ix != ISAKMP_v2_INFORMATIONAL) {
+		if (transition->exchange == ISAKMP_v2_INFORMATIONAL
+		    && (*pp)->transition->exchange != ISAKMP_v2_INFORMATIONAL) {
 			dbg("inserting informational exchange for #%lu before #%lu's %s exchange",
 			    who_for, (*pp)->owner,
-			    enum_name(&isakmp_xchg_type_names, (*pp)->ix));
+			    enum_name(&isakmp_xchg_type_names, (*pp)->transition->exchange));
 			break;
 		}
 		pp = &(*pp)->next;
@@ -557,7 +556,6 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 		.child = child != NULL ? child->sa.st_serialno : SOS_NOBODY,
 		.who_for = who_for,
 		.owner = (owner != NULL ? owner->st_serialno : SOS_NOBODY),
-		.ix = ix,
 		.transition = transition,
 		.next = (*pp),
 	};
@@ -601,7 +599,7 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 		if (pending.child != SOS_NOBODY && child == NULL) {
 			dbg_v2_msgid(ike, NULL,
 				     "cannot initiate %s exchange for #%lu as Child SA disappeared (unack %jd)",
-				     enum_name(&isakmp_xchg_type_names, pending.ix),
+				     enum_name(&isakmp_xchg_type_names, pending.transition->exchange),
 				     pending.child, unack);
 			continue;
 		}
@@ -612,7 +610,7 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 			if (owner == NULL) {
 				dbg_v2_msgid(ike, NULL,
 					     "cannot initiate %s exchange for #%lu as state disappeared (unack %jd)",
-					     enum_name(&isakmp_xchg_type_names, pending.ix),
+					     enum_name(&isakmp_xchg_type_names, pending.transition->exchange),
 					     pending.owner, unack);
 				continue;
 			}

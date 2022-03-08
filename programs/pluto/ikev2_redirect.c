@@ -600,8 +600,8 @@ void find_and_active_redirect_states(const char *conn_name,
 			free_chunk_content(&ike->sa.st_active_redirect_gw);
 			ike->sa.st_active_redirect_gw = clone_hunk(active_dest, "redirect");
 			cnt++;
-			v2_msgid_queue_initiator(ike, NULL, NULL, ISAKMP_v2_INFORMATIONAL,
-						 &v2_redirect_ike_transition);
+			pexpect(v2_redirect_ike_transition.exchange == ISAKMP_v2_INFORMATIONAL);
+			v2_msgid_queue_initiator(ike, NULL, NULL, &v2_redirect_ike_transition);
 		}
 	}
 
