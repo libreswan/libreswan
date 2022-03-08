@@ -260,8 +260,8 @@ static const struct v2_state_transition v2_liveness_probe = {
 	.next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	.send = MESSAGE_REQUEST,
 	.processor = send_v2_liveness_request,
+	.llog_success = ldbg_v2_success,
 	.timeout_event =  EVENT_RETAIN,
-	.flags = SMF2_SUPPRESS_SUCCESS_LOG,
 };
 
 void submit_v2_liveness_exchange(struct ike_sa *ike, so_serial_t who_for)

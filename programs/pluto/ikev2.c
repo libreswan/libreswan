@@ -127,6 +127,19 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *mdp, struct ik
  *
  */
 
+void ldbg_v2_success(struct ike_sa *ike UNUSED, struct state *st)
+{
+	LSWDBGP(DBG_BASE, buf) {
+		jam_logger_prefix(buf, st->st_logger);
+		jam_string(buf, st->st_v2_transition->story);
+		jam_string(buf, ": ");
+		jam_string(buf, (st->st_sa_role == SA_INITIATOR ? "initiator " :
+				 st->st_sa_role == SA_RESPONDER ? "responder " :
+				 ""));
+		jam_string(buf, st->st_state->story);
+	}
+}
+
 void llog_v2_success_story(struct ike_sa *ike UNUSED, struct state *st)
 {
 	enum rc_type w = RC_NEW_V2_STATE + st->st_state->kind;
@@ -135,7 +148,7 @@ void llog_v2_success_story(struct ike_sa *ike UNUSED, struct state *st)
 	}
 }
 
-static void llog_v2_success_story_details(struct ike_sa *ike UNUSED, struct state *st)
+void llog_v2_success_story_details(struct ike_sa *ike UNUSED, struct state *st)
 {
 	enum rc_type w = RC_NEW_V2_STATE + st->st_state->kind;
 	LLOG_JAMBUF(w, st->st_logger, buf) {
@@ -245,37 +258,40 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	{ .story      = "received anti-DDOS COOKIE response; resending IKE_SA_INIT request with cookie payload added",
 	  .state      = STATE_V2_PARENT_I1,
 	  .next_state = STATE_V2_PARENT_I0,
-	  .flags = SMF2_SUPPRESS_SUCCESS_LOG,
+	  .flags      = LEMPTY,
 	  .send       = NO_MESSAGE,
 	  .message_payloads.required = P(N),
 	  .message_payloads.notification = v2N_COOKIE,
 	  .processor  = process_v2_IKE_SA_INIT_response_v2N_COOKIE,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
+	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_SA_DISCARD, },
 
 	{ .story      = "received INVALID_KE_PAYLOAD response; resending IKE_SA_INIT with new KE payload",
 	  .state      = STATE_V2_PARENT_I1,
 	  .next_state = STATE_V2_PARENT_I0,
-	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG,
+	  .flags      = LEMPTY,
 	  .send       = NO_MESSAGE,
 	  .message_payloads.required = P(N),
 	  .message_payloads.notification = v2N_INVALID_KE_PAYLOAD,
 	  .processor  = process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
+	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_SA_DISCARD, },
 
 	{ .story      = "received REDIRECT response; resending IKE_SA_INIT request to new destination",
 	  .state      = STATE_V2_PARENT_I1,
 	  .next_state = STATE_V2_PARENT_I0, /* XXX: never happens STF_SUSPEND */
-	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG,
+	  .flags      = LEMPTY,
 	  .send       = NO_MESSAGE,
 	  .message_payloads.required = P(N),
 	  .message_payloads.notification = v2N_REDIRECT,
 	  .processor  = process_v2_IKE_SA_INIT_response_v2N_REDIRECT,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_IKE_SA_INIT,
+	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_SA_DISCARD,
 	},
 
@@ -323,13 +339,14 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .state      = STATE_V2_PARENT_I2,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  /* logged mid transition */
-	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG|SMF2_RELEASE_WHACK,
+	  .flags      = SMF2_RELEASE_WHACK,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDr) | P(AUTH),
 	  .opt_enc_payloads = P(CERT) | P(CP) | P(SA) | P(TSi) | P(TSr),
 	  .processor  = process_v2_IKE_AUTH_response,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_IKE_AUTH,
+	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_SA_REPLACE,
 	},
 
@@ -391,7 +408,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	{ .story      = "Responder: process IKE_AUTH request",
 	  .state      = STATE_V2_PARENT_R1,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
-	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG|SMF2_RELEASE_WHACK,
+	  .flags      = SMF2_RELEASE_WHACK,
 	  .send       = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(IDi) | P(AUTH),
@@ -399,6 +416,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_IKE_AUTH_request,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_IKE_AUTH,
+	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
 	{ .story      = "Responder: process IKE_AUTH request, initiate EAP",
@@ -475,13 +493,14 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	{ .story      = "process rekey IKE SA response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_REKEY_IKE_I1,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
-	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG | SMF2_RELEASE_WHACK,
+	  .flags      = SMF2_RELEASE_WHACK,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni) |  P(KE),
 	  .opt_enc_payloads = P(N),
 	  .processor  = process_v2_CREATE_CHILD_SA_rekey_ike_response,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
 	{ .story      = "process rekey IKE SA failure response (CREATE_CHILD_SA)",
@@ -517,23 +536,25 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	{ .story      = "process rekey Child SA response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_REKEY_CHILD_I1,
 	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
-	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG | SMF2_RELEASE_WHACK,
+	  .flags      = SMF2_RELEASE_WHACK,
 	  .message_payloads.required = P(SK),
 	  .encrypted_payloads.required = P(SA) | P(Ni) | P(TSi) | P(TSr),
 	  .encrypted_payloads.optional = P(KE) | P(N) | P(CP),
 	  .processor  = process_v2_CREATE_CHILD_SA_rekey_child_response,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
 	{ .story      = "process rekey Child SA failure response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_REKEY_CHILD_I1,
 	  .next_state = STATE_V2_CHILD_SA_DELETE, /* never reached */
-	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG | SMF2_RELEASE_WHACK,
+	  .flags      = SMF2_RELEASE_WHACK,
 	  .message_payloads = { .required = P(SK), },
 	  .processor  = process_v2_CREATE_CHILD_SA_failure_response,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, /* no timeout really */
 	},
 
@@ -558,23 +579,25 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	{ .story      = "process create Child SA response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_NEW_CHILD_I1,
 	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
-	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG | SMF2_RELEASE_WHACK,
+	  .flags      = SMF2_RELEASE_WHACK,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(KE) | P(N) | P(CP),
 	  .processor  = process_v2_CREATE_CHILD_SA_new_child_response,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
 	{ .story      = "process create Child SA failure response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_NEW_CHILD_I1,
 	  .next_state = STATE_V2_CHILD_SA_DELETE, /* never reached */
-	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG | SMF2_RELEASE_WHACK,
+	  .flags      = SMF2_RELEASE_WHACK,
 	  .message_payloads = { .required = P(SK), },
 	  .processor  = process_v2_CREATE_CHILD_SA_failure_response,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, /* no timeout really */
 	},
 
@@ -598,22 +621,24 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	{ .story      = "Informational Request (liveness probe)",
 	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
-	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG,
+	  .flags      = LEMPTY,
 	  .send       = MESSAGE_RESPONSE,
 	  .message_payloads.required = P(SK),
 	  .processor  = process_v2_INFORMATIONAL_request,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
+	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
 
 	{ .story      = "Informational Response (liveness probe)",
 	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
-	  .flags      = SMF2_SUPPRESS_SUCCESS_LOG|SMF2_RELEASE_WHACK,
+	  .flags      = SMF2_RELEASE_WHACK,
 	  .message_payloads.required = P(SK),
 	  .processor  = process_v2_INFORMATIONAL_response,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
+	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
 
 	{ .story      = "Informational Request",
@@ -650,7 +675,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	{ .story      = "process rekey IKE SA request (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
-	  .flags      = SMF2_RELEASE_WHACK | SMF2_SUPPRESS_SUCCESS_LOG,
+	  .flags      = SMF2_RELEASE_WHACK,
 	  .send       = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni) | P(KE),
@@ -658,12 +683,13 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_CREATE_CHILD_SA_rekey_ike_request,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN },
 
 	{ .story      = "process rekey Child SA request (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
-	  .flags      = SMF2_RELEASE_WHACK | SMF2_SUPPRESS_SUCCESS_LOG,
+	  .flags      = SMF2_RELEASE_WHACK,
 	  .send       = MESSAGE_RESPONSE,
 	  .message_payloads.required = P(SK),
 	  .encrypted_payloads.required = P(SA) | P(Ni) | P(TSi) | P(TSr),
@@ -672,12 +698,13 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_CREATE_CHILD_SA_rekey_child_request,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
 
 	{ .story      = "process create Child SA request (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
-	  .flags      = SMF2_RELEASE_WHACK | SMF2_SUPPRESS_SUCCESS_LOG,
+	  .flags      = SMF2_RELEASE_WHACK,
 	  .send       = MESSAGE_RESPONSE,
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
@@ -685,6 +712,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_CREATE_CHILD_SA_new_child_request,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_CREATE_CHILD_SA,
+	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
 
 	{ .story      = "IKE_SA_DEL: process INFORMATIONAL response",
@@ -859,7 +887,7 @@ void init_ikev2(void)
 		 * Check that everything has either a success story,
 		 * or suppressed logging.
 		 */
-		passert((t->llog_success != NULL) == ((t->flags & SMF2_SUPPRESS_SUCCESS_LOG) == LEMPTY));
+		passert(t->llog_success != NULL);
 
 		/*
 		 * Point .fs_v2_microcode at the first transition for
@@ -2497,19 +2525,9 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	 * about, then be quiet.
 	 */
 
-	pexpect((transition->llog_success != NULL) == ((transition->flags & SMF2_SUPPRESS_SUCCESS_LOG) == LEMPTY));
-	bool suppress_log = (transition->llog_success == NULL ||
-			     (c != NULL && (c->policy & POLICY_OPPORTUNISTIC)));
-        if (suppress_log) {
-		LSWDBGP(DBG_BASE, buf) {
-			jam_logger_prefix(buf, st->st_logger);
-			jam_string(buf, transition->story);
-			jam_string(buf, ": ");
-			jam_string(buf, (st->st_sa_role == SA_INITIATOR ? "initiator " :
-					 st->st_sa_role == SA_RESPONDER ? "responder " :
-					 ""));
-			jam_string(buf, st->st_state->story);
-		}
+        if (!pexpect(transition->llog_success != NULL) ||
+	    (c->policy & POLICY_OPPORTUNISTIC)) {
+		ldbg_v2_success(ike, st);
 	} else {
 		transition->llog_success(ike, st);
 	}

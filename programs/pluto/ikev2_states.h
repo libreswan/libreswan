@@ -21,14 +21,6 @@ extern struct finite_state v2_states[STATE_IKEv2_ROOF - STATE_IKEv2_FLOOR];
 
 enum smf2_flags {
 	/*
-	 * Suppress logging of a successful state transition.
-	 *
-	 * This is here simply to stop liveness check transitions
-	 * filling up the log file.
-	 */
-	SMF2_SUPPRESS_SUCCESS_LOG = LELEM(8),
-
-	/*
 	 * Should whack be released?
 	 */
 	SMF2_RELEASE_WHACK = LELEM(10),
