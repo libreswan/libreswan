@@ -371,12 +371,12 @@ struct crypt_mac v2_id_hash(struct ike_sa *ike, const char *why,
 	return crypt_prf_final_mac(&id_ctx, NULL/*no-truncation*/);
 }
 
-void ikev2_rekey_expire_predecessor(const struct child_sa *larval_sa, so_serial_t pred)
+void ikev2_rekey_expire_predecessor(const struct child_sa *larval, so_serial_t pred)
 {
 	struct state *rst = state_by_serialno(pred);
 	if (rst == NULL) {
-		llog_sa(RC_LOG, larval_sa,
-			"rekeyed #%lu; the state is already is gone", pred);
+		ldbg(larval->sa.st_logger,
+		     "rekeyed #%lu; the state is already is gone", pred);
 		return;
 	}
 
@@ -390,10 +390,9 @@ void ikev2_rekey_expire_predecessor(const struct child_sa *larval_sa, so_serial_
 	}
 
 	deltatime_buf lb;
-	llog_sa(RC_LOG, larval_sa,
-		"rekeyed #%lu %s and expire it remaining life %ss",
-		pred, larval_sa->sa.st_state->name,
-		(rst->st_v2_lifetime_event == NULL ? "<never>" : str_deltatime(lifetime, &lb)));
+	ldbg(larval->sa.st_logger,
+	     "rekeyed #%lu; expire it remaining life %ss",
+	     pred, (rst->st_v2_lifetime_event == NULL ? "<never>" : str_deltatime(lifetime, &lb)));
 
 	if (deltatime_cmp(lifetime, >, EXPIRE_OLD_SA_DELAY)) {
 		/* replace the REPLACE/EXPIRE event */
