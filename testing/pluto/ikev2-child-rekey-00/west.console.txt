@@ -41,7 +41,6 @@ west #
  ipsec whack --rekey-ike --name rekey
 002 "rekey" #5: initiating rekey to replace IKE SA #1
 1v2 "rekey" #5: sent CREATE_CHILD_SA request to rekey IKE SA
-002 "rekey" #5: rekeyed #1 STATE_V2_REKEY_IKE_I1 and expire it remaining life XXs
 004 "rekey" #5: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "rekey" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 west #
@@ -57,7 +56,6 @@ west #
  ipsec whack --rekey-ipsec --name rekey1
 002 "rekey1" #6: initiating rekey to replace Child SA #3
 1v2 "rekey1" #6: sent CREATE_CHILD_SA request to rekey IPsec SA
-002 "rekey1" #6: rekeyed #3 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 004 "rekey1" #6: initiator rekeyed Child SA #3 using #5; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 002 "rekey1" #3: deleting established Child SA using IKE SA #5
 005 "rekey1" #3: ESP traffic information: in=0B out=0B
@@ -65,7 +63,6 @@ west #
  ipsec whack --rekey-ipsec --name rekey
 002 "rekey" #7: initiating rekey to replace Child SA #2
 1v2 "rekey" #7: sent CREATE_CHILD_SA request to rekey IPsec SA
-002 "rekey" #7: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 004 "rekey" #7: initiator rekeyed Child SA #2 using #5; IPsec tunnel [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 002 "rekey" #2: deleting established Child SA using IKE SA #5
 005 "rekey" #2: ESP traffic information: in=0B out=0B
@@ -73,7 +70,6 @@ west #
  ipsec whack --rekey-ipsec --name rekey2
 002 "rekey2" #8: initiating rekey to replace Child SA #4
 1v2 "rekey2" #8: sent CREATE_CHILD_SA request to rekey IPsec SA
-002 "rekey2" #8: rekeyed #4 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 004 "rekey2" #8: initiator rekeyed Child SA #4 using #5; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 002 "rekey2" #4: deleting established Child SA using IKE SA #5
 005 "rekey2" #4: ESP traffic information: in=0B out=0B

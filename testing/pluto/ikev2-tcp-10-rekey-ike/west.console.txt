@@ -113,7 +113,6 @@ west #
 002 rekeying IKE SA state #1 of connection "westnet-eastnet-ikev2"
 002 "westnet-eastnet-ikev2" #3: initiating rekey to replace IKE SA #1
 1v2 "westnet-eastnet-ikev2" #3: sent CREATE_CHILD_SA request to rekey IKE SA
-002 "westnet-eastnet-ikev2" #3: rekeyed #1 STATE_V2_REKEY_IKE_I1 and expire it remaining life XXs
 004 "westnet-eastnet-ikev2" #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "westnet-eastnet-ikev2" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 west #

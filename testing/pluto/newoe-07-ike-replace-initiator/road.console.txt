@@ -32,7 +32,6 @@ road #
  ipsec whack --rekey-ike --name 1
 002 rekeying IKE SA state #1 of connection "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23
 002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #3: initiating rekey to replace IKE SA #1
-002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #3: rekeyed #1 STATE_V2_REKEY_IKE_I1 and expire it remaining life XXs
 004 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #3: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 road #

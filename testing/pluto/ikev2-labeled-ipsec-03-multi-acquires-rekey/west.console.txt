@@ -308,7 +308,6 @@ west #
 002 rekeying IKE SA state #1 of connection "labeled"
 002 "labeled" #5: initiating rekey to replace IKE SA #1
 1v2 "labeled" #5: sent CREATE_CHILD_SA request to rekey IKE SA
-002 "labeled" #5: rekeyed #1 STATE_V2_REKEY_IKE_I1 and expire it remaining life XXs
 004 "labeled" #5: initiator established IKE SA {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "labeled" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 west #
@@ -316,7 +315,6 @@ west #
 002 rekeying IPsec SA state #2 of connection "labeled"[1] 192.1.2.23
 002 "labeled"[1] 192.1.2.23 #6: initiating rekey to replace Child SA #2
 1v2 "labeled"[1] 192.1.2.23 #6: sent CREATE_CHILD_SA request to rekey IPsec SA
-002 "labeled"[1] 192.1.2.23 #6: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 004 "labeled"[1] 192.1.2.23 #6: initiator established Child SA using #5; IPsec tunnel [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 002 "labeled"[1] 192.1.2.23 #2: deleting established Child SA using IKE SA #5
 005 "labeled"[1] 192.1.2.23 #2: ESP traffic information: in=0B out=273B
@@ -325,7 +323,6 @@ west #
 002 rekeying IPsec SA state #3 of connection "labeled"[2] 192.1.2.23
 002 "labeled"[2] 192.1.2.23 #7: initiating rekey to replace Child SA #3
 1v2 "labeled"[2] 192.1.2.23 #7: sent CREATE_CHILD_SA request to rekey IPsec SA
-002 "labeled"[2] 192.1.2.23 #7: rekeyed #3 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 004 "labeled"[2] 192.1.2.23 #7: initiator established Child SA using #1; IPsec tunnel [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 002 "labeled"[2] 192.1.2.23 #3: deleting established Child SA using IKE SA #5
 005 "labeled"[2] 192.1.2.23 #3: ESP traffic information: in=164B out=0B
@@ -334,7 +331,6 @@ west #
 002 rekeying IPsec SA state #4 of connection "labeled"[3] 192.1.2.23
 002 "labeled"[3] 192.1.2.23 #8: initiating rekey to replace Child SA #4
 1v2 "labeled"[3] 192.1.2.23 #8: sent CREATE_CHILD_SA request to rekey IPsec SA
-002 "labeled"[3] 192.1.2.23 #8: rekeyed #4 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 004 "labeled"[3] 192.1.2.23 #8: initiator established Child SA using #7; IPsec tunnel [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 002 "labeled"[3] 192.1.2.23 #4: deleting established Child SA using IKE SA #5
 005 "labeled"[3] 192.1.2.23 #4: ESP traffic information: in=377B out=429B

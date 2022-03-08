@@ -50,7 +50,6 @@ west #
  ipsec whack --rekey-ipsec --name westnet-eastnet
 002 "westnet-eastnet" #3: initiating rekey to replace Child SA #2
 1v2 "westnet-eastnet" #3: sent CREATE_CHILD_SA request to rekey IPsec SA
-002 "westnet-eastnet" #3: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 004 "westnet-eastnet" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA2_512_256-MODP2048 DPD=passive}
 002 "westnet-eastnet" #2: deleting established Child SA using IKE SA #1
 005 "westnet-eastnet" #2: ESP traffic information: in=84B out=84B

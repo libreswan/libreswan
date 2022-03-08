@@ -67,7 +67,6 @@ west #
  ipsec whack --rekey-ipsec --name ipv4-psk-ikev2-transport
 002 "ipv4-psk-ikev2-transport" #3: initiating rekey to replace Child SA #2
 1v2 "ipv4-psk-ikev2-transport" #3: sent CREATE_CHILD_SA request to rekey IPsec SA
-002 "ipv4-psk-ikev2-transport" #3: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 004 "ipv4-psk-ikev2-transport" #3: initiator rekeyed Child SA #2 using #1; IPsec transport [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA2_256_128-MODP2048 DPD=passive}
 002 "ipv4-psk-ikev2-transport" #2: deleting established Child SA using IKE SA #1
 005 "ipv4-psk-ikev2-transport" #2: ESP traffic information: in=64B out=64B
