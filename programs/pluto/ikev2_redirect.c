@@ -571,7 +571,7 @@ static const struct v2_state_transition v2_redirect_ike_transition = {
 	.next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	.send = MESSAGE_REQUEST,
 	.processor = send_v2_redirect_ike_request,
-	.llog_success = llog_v2_success_story,
+	.llog_success = ldbg_v2_success,
 	.timeout_event =  EVENT_RETAIN,
 };
 

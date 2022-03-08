@@ -650,7 +650,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_INFORMATIONAL_request,
 	  .recv_role  = MESSAGE_REQUEST,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
-	  .llog_success = llog_v2_success_story,
+	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
 
 	{ .story      = "Informational Response",
@@ -661,7 +661,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_v2_INFORMATIONAL_response,
 	  .recv_role  = MESSAGE_RESPONSE,
-	  .llog_success = llog_v2_success_story,
+	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
 
 	/*
@@ -724,7 +724,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = IKE_SA_DEL_process_v2_INFORMATIONAL_response,
 	  .recv_role  = MESSAGE_RESPONSE,
 	  .recv_type  = ISAKMP_v2_INFORMATIONAL,
-	  .llog_success = llog_v2_success_story,
+	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
 
 	/* last entry */

@@ -150,7 +150,7 @@ static const struct v2_state_transition v2_delete_ike = {
 	.next_state = STATE_V2_IKE_SA_DELETE,
 	.send = MESSAGE_REQUEST,
 	.processor = send_v2_delete_ike_request,
-	.llog_success = llog_v2_success_story,
+	.llog_success = ldbg_v2_success,
 	.timeout_event =  EVENT_RETAIN,
 };
 
@@ -160,7 +160,7 @@ static const struct v2_state_transition v2_delete_child = {
 	.next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	.send = MESSAGE_REQUEST,
 	.processor = send_v2_delete_child_request,
-	.llog_success = llog_v2_success_story,
+	.llog_success = ldbg_v2_success,
 	.timeout_event =  EVENT_RETAIN,
 };
 
