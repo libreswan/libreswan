@@ -224,10 +224,10 @@ static const struct v2_state_transition *v2_state_transition(struct logger *logg
 		dbg("  trying: %s", transition->story);
 
 		/* message type? */
-		if (transition->recv_type != md->hdr.isa_xchg) {
+		if (transition->exchange != md->hdr.isa_xchg) {
 			enum_buf xb;
 			dbg("    exchange type does not match %s",
-			    str_enum_short(&ikev2_exchange_names, transition->recv_type, &xb));
+			    str_enum_short(&ikev2_exchange_names, transition->exchange, &xb));
 			continue;
 		}
 

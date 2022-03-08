@@ -83,13 +83,15 @@ struct v2_state_transition {
 	const char *const story;	/* state transition story (not state_story[]) */
 	const enum state_kind state;
 	const enum state_kind next_state;
-	const enum isakmp_xchg_type recv_type;
-	enum message_role recv_role;
 	const lset_t flags;
 
 	/*
-	 * During a successful state transition is an out going
-	 * message expected and, if so, is it a request or response.
+	 * The message type being exchanged.
+	 *
+	 * Incomming message must match RECV_ROLE.
+	 *
+	 * If the transition succeeds, outgoing message must match
+	 * SEND_ROLE.
 	 *
 	 * Old code had a simple flag (SMF2_SEND) and then tried to
 	 * reverse engineer this value from the incoming message.
@@ -101,15 +103,13 @@ struct v2_state_transition {
 	 * things out.  While perhaps it is possible to make all this
 	 * work, spelling it out seems clearer.
 	 */
-	enum message_role send;
+	const enum isakmp_xchg_type exchange;
+	enum message_role recv_role;
+	enum message_role send_role;
 
 	/*
-	 * When non-NULL, use this to log a state transition's
-	 * success.
-	 */
-	void (*llog_success)(struct ike_sa *ike, struct state *st);
-
-	/*
+	 * The message contents.
+	 *
 	 * These field names, what ever they are, should exactly match
 	 * equivalent struct payload_summary fields found in struct
 	 * msg_digest.
@@ -119,6 +119,12 @@ struct v2_state_transition {
 
 	const enum event_type timeout_event;
 	ikev2_state_transition_fn *const processor;
+
+	/*
+	 * When non-NULL, use this to log a state transition's
+	 * success.
+	 */
+	void (*llog_success)(struct ike_sa *ike, struct state *st);
 };
 
 void v2_ike_sa_established(struct ike_sa *ike);
