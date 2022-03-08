@@ -110,9 +110,7 @@ west #
 "west" #3: rekeyed #2 STATE_V2_REKEY_CHILD_I1 and expire it remaining life XXs
 "west" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 "west" #2: deleting established Child SA using IKE SA #1
-"west" #1: established IKE SA
 "west" #2: ESP traffic information: in=84B out=84B
-"west" #1: established IKE SA
 "west" #4: initiating rekey to replace Child SA #3
 "west" #4: sent CREATE_CHILD_SA request to rekey IPsec SA
 "west" #5: initiating rekey to replace Child SA #3
