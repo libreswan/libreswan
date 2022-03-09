@@ -520,7 +520,6 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	change_state(&larval_child->sa, larval_child->sa.st_v2_transition->next_state);
 	return STF_OK;
 }
 
@@ -675,7 +674,6 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	change_state(&larval_child->sa, larval_child->sa.st_v2_transition->next_state);
 	return STF_OK;
 }
 
