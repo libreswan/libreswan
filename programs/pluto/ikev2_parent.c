@@ -482,9 +482,20 @@ void schedule_v2_replace_event(struct state *st)
 
 	struct connection *c = st->st_connection;
 
-	/* unwrapped deltatime_t in seconds */
-	intmax_t delay = deltasecs(IS_IKE_SA(st) ? c->sa_ike_life_seconds
-				   : c->sa_ipsec_life_seconds);
+	/*
+	 * Determine the SA's lifetime (in seconds).
+	 *
+	 * Use .st_establishing_sa, because, for an IKE SA, it may not
+	 * have been emancipated (so IS_IKE_SA() would still be
+	 * false).
+	 */
+	deltatime_t lifetime;
+	switch (st->st_establishing_sa) {
+	case IKE_SA: lifetime = c->sa_ike_life_seconds; break;
+	case IPSEC_SA: lifetime = c->sa_ipsec_life_seconds; break;
+	default: bad_case(st->st_establishing_sa);
+	}
+	intmax_t delay = deltasecs(lifetime);
 
 	enum event_type kind;
 	const char *story;
