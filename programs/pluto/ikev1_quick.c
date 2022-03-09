@@ -636,7 +636,7 @@ void quick_outI1(struct fd *whack_sock,
 
 
 	st->st_v1_msgid.id = generate_msgid(isakmp_sa);
-	change_state(st, STATE_QUICK_I1); /* from STATE_UNDEFINED */
+	change_v1_state(st, STATE_QUICK_I1); /* from STATE_UNDEFINED */
 
 	binlog_refresh_state(st);
 
@@ -1189,7 +1189,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 		switch_md_st(md, st, HERE);	/* feed back new state */
 
-		change_state(st, STATE_QUICK_R0);
+		change_v1_state(st, STATE_QUICK_R0);
 
 		binlog_refresh_state(st);
 

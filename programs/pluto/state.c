@@ -298,7 +298,7 @@ static void update_state_stats(struct state *st,
  * state hash table and the Message ID list.
  */
 
-void change_state(struct state *st, enum state_kind new_state_kind)
+static void change_state(struct state *st, enum state_kind new_state_kind)
 {
 	const struct finite_state *old_state = st->st_state;
 	const struct finite_state *new_state = finite_states[new_state_kind];
@@ -307,6 +307,27 @@ void change_state(struct state *st, enum state_kind new_state_kind)
 		update_state_stats(st, old_state, new_state);
 		binlog_state(st, new_state_kind /* XXX */);
 		st->st_state = new_state;
+	}
+}
+
+void change_v1_state(struct state *st, enum state_kind new_state_kind)
+{
+	change_state(st, new_state_kind);
+}
+
+void change_v2_state(struct state *st)
+{
+	if (pexpect(st->st_v2_transition != NULL)) {
+		st->st_v2_last_transition = st->st_v2_transition;
+		change_state(st, st->st_v2_transition->next_state);
+#if 0
+		/*
+		 * Breaks IKE_AUTH where IKE SA changes state twice:
+		 * mid transition when authentication is established;
+		 * and at the end by success_v2_state_transition()).
+		 */
+		 st->st_v2_transition = NULL;
+#endif
 	}
 }
 
@@ -509,8 +530,7 @@ struct ike_sa *new_v2_ike_state(struct connection *c,
 	struct state *st = new_state(c, ike_initiator_spi, ike_responder_spi,
 				     IKE_SA, sa_role, whack_sock, HERE);
 	struct ike_sa *ike = pexpect_ike_sa(st);
-	const struct finite_state *fs = finite_states[transition->state];
-	change_state(&ike->sa, fs->kind);
+	change_state(&ike->sa, transition->state);
 	set_v2_transition(&ike->sa, transition, HERE);
 	v2_msgid_init_ike(ike);
 	initialize_new_state(&ike->sa, policy, try);
@@ -1641,14 +1661,17 @@ struct child_sa *new_v2_child_state(struct connection *c,
 				    struct ike_sa *ike,
 				    enum sa_type sa_type,
 				    enum sa_role sa_role,
-				    enum state_kind kind,
+				    enum state_kind kind, /* const struct v2_state_transition *transition */
 				    struct fd *whackfd)
 {
+	/* XXX: transitions should be parameter */
+	const struct finite_state *fs = finite_states[kind];
+	passert(fs->nr_transitions == 1);
+	const struct v2_state_transition *transition = &fs->v2.transitions[0];
 	struct state *cst = duplicate_state(c, &ike->sa, sa_type, sa_role, whackfd);
 	struct child_sa *child = pexpect_child_sa(cst);
 	v2_msgid_init_child(ike, child);
-	change_state(&child->sa, kind);
-	const struct v2_state_transition *transition = child->sa.st_state->v2.transitions;
+	change_state(&child->sa, transition->state);
 	set_v2_transition(&child->sa, transition, HERE);
 	binlog_refresh_state(&child->sa);
 	return child;

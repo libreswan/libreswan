@@ -492,7 +492,7 @@ static stf_status modecfg_send_set(struct state *st)
 	uint8_t buf[256];
 	struct pbs_out reply = open_pbs_out("ModecfgR1", buf, sizeof(buf), st->st_logger);
 
-	change_state(st, STATE_MODE_CFG_R1);
+	change_v1_state(st, STATE_MODE_CFG_R1);
 	/* HDR out */
 	struct pbs_out rbody;
 	{
@@ -586,7 +586,7 @@ stf_status xauth_send_request(struct state *st)
 
 	/* this is the beginning of a new exchange */
 	st->st_v1_msgid.phase15 = generate_msgid(st);
-	change_state(st, STATE_XAUTH_R0);
+	change_v1_state(st, STATE_XAUTH_R0);
 
 	/* HDR out */
 	struct pbs_out rbody;
@@ -698,7 +698,7 @@ stf_status modecfg_send_request(struct state *st)
 
 	/* this is the beginning of a new exchange */
 	st->st_v1_msgid.phase15 = generate_msgid(st);
-	change_state(st, STATE_MODE_CFG_I1);
+	change_v1_state(st, STATE_MODE_CFG_I1);
 
 	/* HDR out */
 	struct pbs_out rbody;
@@ -867,7 +867,7 @@ static stf_status xauth_send_status(struct state *st, int status)
 	record_and_send_v1_ike_msg(st, &reply, "XAUTH: status");
 
 	if (status != 0)
-		change_state(st, STATE_XAUTH_R1);
+		change_v1_state(st, STATE_XAUTH_R1);
 
 	return STF_OK;
 }
@@ -2472,7 +2472,7 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 		/* oops, something seriously wrong */
 		log_state(RC_LOG, st,
 			"did not get status attribute in xauth_inI1, looking for new challenge.");
-		change_state(st, STATE_XAUTH_I0);
+		change_v1_state(st, STATE_XAUTH_I0);
 		return xauth_inI0(st, md);
 	}
 

@@ -1312,7 +1312,7 @@ void process_v1_packet(struct msg_digest *md)
 			/* Have we just given an IP address to peer? */
 			if (st->st_state->kind == STATE_MODE_CFG_R2) {
 				/* ISAKMP is up... */
-				change_state(st, STATE_MAIN_R3);
+				change_v1_state(st, STATE_MAIN_R3);
 			}
 
 #ifdef SOFTREMOTE_CLIENT_WORKAROUND
@@ -1479,7 +1479,7 @@ void process_v1_packet(struct msg_digest *md)
 			    IS_V1_PHASE1(st->st_state->kind)) {
 				/* Switch from Phase1 to Mode Config */
 				dbg("We were in phase 1, with no state, so we went to XAUTH_R0");
-				change_state(st, STATE_XAUTH_R0);
+				change_v1_state(st, STATE_XAUTH_R0);
 			}
 
 			/* otherwise, this is fine, we continue in the state we are in */
@@ -2439,7 +2439,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		    finite_states[from_state]->name,
 		    finite_states[smc->next_state]->name);
 
-		change_state(st, smc->next_state);
+		change_v1_state(st, smc->next_state);
 
 		/*
 		 * XAUTH negotiation without ModeCFG cannot follow the regular
@@ -2458,7 +2458,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			bool aggrmode = LHAS(st->st_connection->policy, POLICY_AGGRESSIVE_IX);
 
 			log_state(RC_LOG, st, "XAUTH completed; ModeCFG skipped as per configuration");
-			change_state(st, aggrmode ? STATE_AGGR_I2 : STATE_MAIN_I4);
+			change_v1_state(st, aggrmode ? STATE_AGGR_I2 : STATE_MAIN_I4);
 			st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 		}
 
@@ -2748,7 +2748,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		    IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
 		    !st->hidden_variables.st_modecfg_vars_set &&
 		    !(st->st_connection->policy & POLICY_MODECFG_PULL)) {
-			change_state(st, STATE_MODE_CFG_R1);
+			change_v1_state(st, STATE_MODE_CFG_R1);
 			log_state(RC_LOG, st, "Sending MODE CONFIG set");
 			/*
 			 * ??? we ignore the result of modecfg.
@@ -2767,7 +2767,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		    IS_V1_MODE_CFG_ESTABLISHED(st->st_state) &&
 		    (st->st_seen_nortel_vid)) {
 			log_state(RC_LOG, st, "Nortel 'Contivity Mode' detected, starting Quick Mode");
-			change_state(st, STATE_MAIN_R3); /* ISAKMP is up... */
+			change_v1_state(st, STATE_MAIN_R3); /* ISAKMP is up... */
 			quick_outI1(st->st_logger->object_whackfd, st, st->st_connection,
 				    st->st_connection->policy, 1, SOS_NOBODY, null_shunk);
 			break;

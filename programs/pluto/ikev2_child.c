@@ -904,7 +904,8 @@ void llog_v2_child_sa_established(struct ike_sa *ike UNUSED, struct child_sa *ch
 
 void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 {
-	change_state(&child->sa, STATE_V2_ESTABLISHED_CHILD_SA);
+	pexpect(child->sa.st_v2_transition->next_state == STATE_V2_ESTABLISHED_CHILD_SA);
+	change_v2_state(&child->sa);
 
 	pstat_sa_established(&child->sa);
 

@@ -122,7 +122,7 @@ void main_outI1(struct fd *whack_sock,
 	/* set up new state */
 	initialize_new_state(st, policy, try);
 
-	change_state(st, STATE_MAIN_I1);
+	change_v1_state(st, STATE_MAIN_I1);
 
 	if (HAS_IPSEC_POLICY(policy)) {
 		add_v1_pending(whack_sock, ike, c, policy, 1,
@@ -469,7 +469,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 	st->st_try = 0; /* not our job to try again from start */
 	/* only as accurate as connection */
 	st->st_policy = c->policy & ~POLICY_IPSEC_MASK;
-	change_state(st, STATE_MAIN_R0);
+	change_v1_state(st, STATE_MAIN_R0);
 
 	binlog_refresh_state(st);
 

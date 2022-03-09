@@ -895,7 +895,9 @@ extern void delete_states_dead_interfaces(struct logger *logger);
  * changes which is good for tracking bugs, logging and anything else
  * you might like.
  */
-extern void change_state(struct state *st, enum state_kind new_state);
+
+extern void change_v1_state(struct state *st, enum state_kind new_state);
+extern void change_v2_state(struct state *st);
 
 extern bool state_is_busy(const struct state *st);
 extern bool verbose_state_busy(const struct state *st);

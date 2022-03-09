@@ -264,7 +264,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .send_role  = MESSAGE_REQUEST,
-	  .processor  = NULL,
+	  .processor  = NULL, /* XXX: should be set */
 	  .llog_success = llog_v2_success_story,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
@@ -480,6 +480,30 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .timeout_event = EVENT_SA_REPLACE, },
 
 	/*
+	 * Create a Child SA during IKE_AUTH.
+	 *
+	 * Merge with the CREATE_CHILD_SA transitions below?
+	 */
+
+	{ .story      = "Child SA created by initiator during IKE_AUTH",
+	  .state      = STATE_V2_IKE_AUTH_CHILD_I0,
+	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
+	  .flags      = SMF2_RELEASE_WHACK,
+	  .exchange   = ISAKMP_v2_IKE_AUTH,
+	  .processor  = NULL,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_SA_REPLACE, },
+
+	{ .story      = "Child SA created by responder during IKE_AUTH",
+	  .state      = STATE_V2_IKE_AUTH_CHILD_R0,
+	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
+	  .flags      = SMF2_RELEASE_WHACK,
+	  .exchange   = ISAKMP_v2_IKE_AUTH,
+	  .processor  = NULL,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_SA_REPLACE, },
+
+	/*
 	 * There are three different CREATE_CHILD_SA's invocations,
 	 * this is the combined write up (not in RFC). See above for
 	 * individual cases from RFC.
@@ -512,6 +536,15 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = initiate_v2_CREATE_CHILD_SA_rekey_ike_request,
 	  .llog_success = llog_v2_success_story,
 	  .timeout_event = EVENT_RETRANSMIT, },
+
+	{ .story      = "process rekey IKE SA request (CREATE_CHILD_SA)",
+	  .state      = STATE_V2_REKEY_IKE_R0,
+	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
+	  .flags      = SMF2_RELEASE_WHACK,
+	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	  .processor  = NULL,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_SA_REPLACE, },
 
 	{ .story      = "process rekey IKE SA response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_REKEY_IKE_I1,
@@ -557,6 +590,15 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .llog_success = llog_v2_success_story,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
+	{ .story      = "process rekey Child SA request (CREATE_CHILD_SA)",
+	  .state      = STATE_V2_REKEY_CHILD_R0,
+	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
+	  .flags      = SMF2_RELEASE_WHACK,
+	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	  .processor  = NULL,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_SA_REPLACE, },
+
 	{ .story      = "process rekey Child SA response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_REKEY_CHILD_I1,
 	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
@@ -600,6 +642,15 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = initiate_v2_CREATE_CHILD_SA_new_child_request,
 	  .llog_success = llog_v2_success_story,
 	  .timeout_event = EVENT_RETRANSMIT, },
+
+	{ .story      = "process create Child SA request (CREATE_CHILD_SA)",
+	  .state      = STATE_V2_NEW_CHILD_R0,
+	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
+	  .flags      = SMF2_RELEASE_WHACK,
+	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	  .processor  = NULL,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_SA_REPLACE, },
 
 	{ .story      = "process create Child SA response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_NEW_CHILD_I1,
@@ -891,15 +942,18 @@ void init_ikev2(void)
 		 *
 		 * "<=" is equivalent to implies (except the arrow
 		 * points the wrong way).
+		 *
+		 * XXX: IKE_SA_INIT should have processor set.
 		 */
-		pexpect((t->recv_role == NO_MESSAGE) <=/*implies*/ (t->send_role == MESSAGE_REQUEST));
-		pexpect((t->recv_role == MESSAGE_REQUEST) == (t->send_role == MESSAGE_RESPONSE));
-		pexpect((t->recv_role == MESSAGE_RESPONSE) <=/*implies*/ (t->send_role == NO_MESSAGE || t->send_role == MESSAGE_REQUEST));
-
-		/*
-		 * Check recv_type && recv_role
-		 */
-		pexpect(t->exchange != 0);
+		if (t->processor != NULL || t->exchange == ISAKMP_v2_IKE_SA_INIT) {
+			passert((t->recv_role == NO_MESSAGE) <=/*implies*/ (t->send_role == MESSAGE_REQUEST));
+			passert((t->recv_role == MESSAGE_REQUEST) == (t->send_role == MESSAGE_RESPONSE));
+			passert((t->recv_role == MESSAGE_RESPONSE) <=/*implies*/ (t->send_role == NO_MESSAGE || t->send_role == MESSAGE_REQUEST));
+		} else {
+			passert(t->recv_role == NO_MESSAGE);
+			passert(t->send_role == NO_MESSAGE);
+		}
+		passert(t->exchange != 0);
 
 		/*
 		 * Check that all transitions from a secured state
@@ -2313,7 +2367,8 @@ void ikev2_child_emancipate(struct ike_sa *old_ike, struct child_sa *new_ike)
 	v2_msgid_migrate_queue(old_ike, new_ike);
 
 	/* complete the state transition */
-	change_state(&new_ike->sa, STATE_V2_ESTABLISHED_IKE_SA);
+	pexpect(new_ike->sa.st_v2_transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
+	change_v2_state(&new_ike->sa);
 
 	/* child is now a parent */
 	v2_ike_sa_established(pexpect_ike_sa(&new_ike->sa));
@@ -2355,7 +2410,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 		/* Emancipated ST answers to no one - it's an IKE SA */
 		v2_msgid_schedule_next_initiator(pexpect_ike_sa(st));
 	} else {
-		change_state(st, transition->next_state);
+		change_v2_state(st);
 		v2_msgid_schedule_next_initiator(ike);
 	}
 	passert(st->st_state->kind >= STATE_IKEv2_FLOOR);
