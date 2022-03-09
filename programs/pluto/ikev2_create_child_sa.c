@@ -70,18 +70,22 @@ static dh_shared_secret_cb process_v2_CREATE_CHILD_SA_request_continue_2;
 
 static dh_shared_secret_cb process_v2_CREATE_CHILD_SA_child_response_continue_1;
 
-static ke_and_nonce_cb queue_v2_CREATE_CHILD_SA_initiator; /* signature check */
+static ke_and_nonce_cb queue_v2_CREATE_CHILD_SA_rekey_child_request; /* signature check */
+static ke_and_nonce_cb queue_v2_CREATE_CHILD_SA_rekey_ike_request; /* signature check */
+static ke_and_nonce_cb queue_v2_CREATE_CHILD_SA_new_child_request; /* signature check */
+
 static stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *ike,
 								struct msg_digest *request_md);
 
-stf_status queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
-					      struct msg_digest *unused_md,
-					      struct dh_local_secret *local_secret,
-					      chunk_t *nonce)
+static stf_status queue_v2_CREATE_CHILD_SA_initiator(struct state *owner,
+						     struct ike_sa *ike,
+						     struct child_sa *larval,
+						     struct msg_digest *unused_md,
+						     struct dh_local_secret *local_secret,
+						     chunk_t *nonce,
+						     const struct v2_state_transition *transition)
 {
 	/* child initiating exchange */
-	struct child_sa *larval = pexpect_child_sa(larval_sa);
-	struct ike_sa *ike = ike_sa(&larval->sa, HERE);
 	pexpect(unused_md == NULL);
 	pexpect(larval->sa.st_sa_role == SA_INITIATOR);
 	dbg("%s() for #%lu %s",
@@ -121,9 +125,7 @@ stf_status queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
 
 	pexpect(larval->sa.st_state->nr_transitions == 1);
 	pexpect(larval->sa.st_state->v2.transitions->exchange == ISAKMP_v2_CREATE_CHILD_SA);
-	v2_msgid_queue_initiator(&larval->sa, ike, larval,
-				 larval->sa.st_state->v2.transitions);
-
+	v2_msgid_queue_initiator(owner, ike, larval, transition);
 	return STF_SUSPEND;
 }
 
@@ -379,10 +381,22 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	    pri_shunk(c->spd.this.sec_label));
 
 	submit_ke_and_nonce(&larval_child->sa, larval_child->sa.st_pfs_group /*possibly-null*/,
-			    queue_v2_CREATE_CHILD_SA_initiator,
+			    queue_v2_CREATE_CHILD_SA_rekey_child_request,
 			    "Child Rekey Initiator KE and nonce ni");
 	/* return STF_SUSPEND */
 	return larval_child;
+}
+
+stf_status queue_v2_CREATE_CHILD_SA_rekey_child_request(struct state *larval_sa,
+							struct msg_digest *unused_md,
+							struct dh_local_secret *local_secret,
+							chunk_t *nonce)
+{
+	return queue_v2_CREATE_CHILD_SA_initiator(larval_sa,
+						  ike_sa(larval_sa, HERE),
+						  pexpect_child_sa(larval_sa),
+						  unused_md, local_secret, nonce,
+						  larval_sa->st_state->v2.transitions);
 }
 
 stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
@@ -506,6 +520,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
+	change_state(&larval_child->sa, larval_child->sa.st_v2_transition->next_state);
 	return STF_OK;
 }
 
@@ -590,8 +605,20 @@ void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 	    larval_child->sa.st_pfs_group == NULL ? "no-pfs" : larval_child->sa.st_pfs_group->common.fqn);
 
 	submit_ke_and_nonce(&larval_child->sa, larval_child->sa.st_pfs_group /*possibly-null*/,
-			    queue_v2_CREATE_CHILD_SA_initiator,
+			    queue_v2_CREATE_CHILD_SA_new_child_request,
 			    "Child Initiator KE? and nonce");
+}
+
+stf_status queue_v2_CREATE_CHILD_SA_new_child_request(struct state *larval_sa,
+							struct msg_digest *unused_md,
+							struct dh_local_secret *local_secret,
+							chunk_t *nonce)
+{
+	return queue_v2_CREATE_CHILD_SA_initiator(larval_sa,
+						  ike_sa(larval_sa, HERE),
+						  pexpect_child_sa(larval_sa),
+						  unused_md, local_secret, nonce,
+						  larval_sa->st_state->v2.transitions);
 }
 
 stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
@@ -648,6 +675,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
+	change_state(&larval_child->sa, larval_child->sa.st_v2_transition->next_state);
 	return STF_OK;
 }
 
@@ -1064,10 +1092,22 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike)
 	    larval_ike->sa.st_oakley.ta_dh->common.fqn);
 
 	submit_ke_and_nonce(&larval_ike->sa, larval_ike->sa.st_oakley.ta_dh,
-			    queue_v2_CREATE_CHILD_SA_initiator,
+			    queue_v2_CREATE_CHILD_SA_rekey_ike_request,
 			    "IKE REKEY Initiator KE and nonce ni");
 	/* "return STF_SUSPEND" */
 	return larval_ike;
+}
+
+stf_status queue_v2_CREATE_CHILD_SA_rekey_ike_request(struct state *larval_sa,
+							struct msg_digest *unused_md,
+							struct dh_local_secret *local_secret,
+							chunk_t *nonce)
+{
+	return queue_v2_CREATE_CHILD_SA_initiator(larval_sa,
+						  ike_sa(larval_sa, HERE),
+						  pexpect_child_sa(larval_sa),
+						  unused_md, local_secret, nonce,
+						  larval_sa->st_state->v2.transitions);
 }
 
 stf_status initiate_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
