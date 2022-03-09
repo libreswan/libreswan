@@ -175,9 +175,11 @@ road #
  grep -E  'EVENT_SA_EXPIRE|EVENT_SA_REPLACE' OUTPUT/road.pluto.log | grep '#' | sed -e 's/ timeout in [1-9][^ ]* / timeout in N.N /' -e 's/@0x[0-9a-f]*/@0xXXX/'
 | event_schedule_where: newref EVENT_SA_REPLACE-pe@0xXXX timeout in N.N seconds for #2
 | event_schedule_where: newref EVENT_SA_REPLACE-pe@0xXXX timeout in N.N seconds for #1
+| #1 is retaining EVENT_SA_REPLACE with is previously set timeout
 | #1 deleting EVENT_SA_REPLACE
 | event_schedule_where: newref EVENT_SA_EXPIRE-pe@0xXXX timeout in N.N seconds for #1
 | event_schedule_where: newref EVENT_SA_REPLACE-pe@0xXXX timeout in N.N seconds for #3
+| #1 is retaining EVENT_SA_EXPIRE with is previously set timeout
 | timer_event_cb: processing EVENT_SA_EXPIRE-event@0xXXX for IKE SA #1 in state ESTABLISHED_IKE_SA
 | #1 deleting EVENT_SA_EXPIRE
 road #
