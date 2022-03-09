@@ -121,7 +121,7 @@ stf_status queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
 
 	pexpect(larval->sa.st_state->nr_transitions == 1);
 	pexpect(larval->sa.st_state->v2.transitions->exchange == ISAKMP_v2_CREATE_CHILD_SA);
-	v2_msgid_queue_initiator(ike, larval, &larval->sa,
+	v2_msgid_queue_initiator(&larval->sa, ike, larval,
 				 larval->sa.st_state->v2.transitions);
 
 	return STF_SUSPEND;

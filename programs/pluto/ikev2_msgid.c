@@ -526,9 +526,11 @@ bool v2_msgid_request_pending(struct ike_sa *ike)
 	return initiator->pending != NULL;
 }
 
-void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
-			      struct state *owner, const struct v2_state_transition *transition)
+void v2_msgid_queue_initiator(struct state *owner,
+			      struct ike_sa *ike, struct child_sa *child,
+			      const struct v2_state_transition *transition)
 {
+	passert(owner != NULL);
 	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
 	so_serial_t who_for = (child != NULL ? child->sa.st_serialno :
 			       ike->sa.st_serialno);
@@ -555,7 +557,7 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 	struct v2_msgid_pending new = {
 		.child = child != NULL ? child->sa.st_serialno : SOS_NOBODY,
 		.who_for = who_for,
-		.owner = (owner != NULL ? owner->st_serialno : SOS_NOBODY),
+		.owner = owner->st_serialno,
 		.transition = transition,
 		.next = (*pp),
 	};
@@ -604,18 +606,13 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 			continue;
 		}
 
-		struct state *owner;
-		if (pending.owner != SOS_NOBODY) {
-			owner = state_by_serialno(pending.owner);
-			if (owner == NULL) {
-				dbg_v2_msgid(ike, NULL,
-					     "cannot initiate %s exchange for #%lu as state disappeared (unack %jd)",
-					     enum_name(&isakmp_xchg_type_names, pending.transition->exchange),
-					     pending.owner, unack);
-				continue;
-			}
-		} else {
-			owner = &ike->sa;
+		struct state *owner = state_by_serialno(pending.owner);
+		if (owner == NULL) {
+			dbg_v2_msgid(ike, NULL,
+				     "cannot initiate %s exchange for #%lu as state disappeared (unack %jd)",
+				     enum_name(&isakmp_xchg_type_names, pending.transition->exchange),
+				     pending.owner, unack);
+			continue;
 		}
 
 		dbg_v2_msgid(ike, owner, "resuming SA using IKE SA (unack %jd)", unack);
