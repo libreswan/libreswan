@@ -600,13 +600,17 @@ void rehash_state(struct state *st, const ike_spi_t *ike_responder_spi)
 }
 
 /*
- * Free the Whack socket file descriptor.
- * This has the side effect of telling Whack that we're done.
+ * Free the Whack socket file descriptor attached to ST.
+ *
+ * Once all The Whack FDs have been delref()'d, this will release the
+ * Whack process having the effecto of telling Whack that we're done.
  */
+
 void release_any_whack(struct state *st, where_t where, const char *why)
 {
-	dbg("releasing #%lu's "PRI_FD" because %s",
-	    st->st_serialno, pri_fd(st->st_logger->object_whackfd), why);
+	dbg("releasing #%lu's whack "PRI_FD" because %s for "PRI_WHERE,
+	    st->st_serialno, pri_fd(st->st_logger->object_whackfd), why,
+	    pri_where(where));
 	fd_delref_where(&st->st_logger->object_whackfd, where);
 	fd_delref_where(&st->st_logger->global_whackfd, where);
 }
