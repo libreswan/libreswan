@@ -59,7 +59,6 @@
 #include "ikev2_proposals.h"
 
 static ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_request;
-static ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_child_response;
 
 static ke_and_nonce_cb process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_1;
 static dh_shared_secret_cb process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2;
@@ -558,13 +557,6 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 	return process_v2_CREATE_CHILD_SA_request(ike, larval_child, md);
 }
 
-stf_status process_v2_CREATE_CHILD_SA_rekey_child_response(struct ike_sa *ike,
-							   struct child_sa *larval_child,
-							   struct msg_digest *md)
-{
-	return process_v2_CREATE_CHILD_SA_child_response(ike, larval_child, md);
-}
-
 /*
  * CREATE_CHILD_SA create child request.
  */
@@ -704,13 +696,6 @@ stf_status process_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 	}
 
 	return process_v2_CREATE_CHILD_SA_request(ike, larval_child, md);
-}
-
-stf_status process_v2_CREATE_CHILD_SA_new_child_response(struct ike_sa *ike,
-							 struct child_sa *larval_child,
-							 struct msg_digest *md)
-{
-	return process_v2_CREATE_CHILD_SA_child_response(ike, larval_child, md);
 }
 
 /*

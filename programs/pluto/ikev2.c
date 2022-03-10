@@ -504,25 +504,17 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .timeout_event = EVENT_SA_REPLACE, },
 
 	/*
-	 * There are three different CREATE_CHILD_SA's invocations,
-	 * this is the combined write up (not in RFC). See above for
-	 * individual cases from RFC.
+	 * Child transitions wheh rekeying an IKE SA using
+	 * CREATE_CHILD_SA.
 	 *
-	 * The order that they rekey here matters.
+	 *   Initiator                         Responder
+	 *   --------------------------------------------------------
+	 *   HDR, SK {SA, Ni, KEi} -->
+	 *                                <--  HDR, SK {SA, Nr, KEr}
 	 *
-	 * HDR, SK {SA, Ni, [KEi], [N(REKEY_SA)], [TSi, TSr]} -->
-	 *                <-- HDR, SK {N}
-	 *                <-- HDR, SK {SA, Nr, [KEr], [TSi, TSr]}
-	 */
-
-	/*
-	 * Larval IKE SA's CREATE_CHILD_SA exchange states.
-	 *
-	 * See also IKE SA's state transitions to drive this.
-	 */
-
-	/* no state:   --> CREATE_CHILD IKE Rekey Request
-	 * HDR, SAi, KEi, Ni -->
+	 * See also IKE SA's state transitions, below, that will
+	 * eventually drive these nested state transitions (currently
+	 * these are fudged).
 	 */
 
 	{ .story      = "initiate rekey IKE_SA (CREATE_CHILD_SA)",
@@ -558,12 +550,17 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .timeout_event = EVENT_SA_REPLACE, },
 
 	/*
-	 * CREATE_CHILD_SA exchange to rekey existing child.
+	 * Child transitions when rekeying a Child SA using
+	 * CREATE_CHILD_SA.
 	 *
-	 * In the responder, note the presence of both TS (traffic
-	 * selectors) payload and REKEY_SA notification.  Since a
-	 * create child does not include the REKEY_SA notify it won't
-	 * match.
+	 *   Initiator                         Responder
+	 *   ---------------------------------------------------------
+	 *   HDR, SK {N(REKEY_SA), SA, Ni, [KEi,]
+	 *            TSi, TSr}  -->
+	 *
+	 * See also IKE SA's state transitions, below, that will
+	 * eventually drive these nested state transitions (currently
+	 * these are fudged).
 	 */
 
 	{ .story      = "initiate rekey Child SA (CREATE_CHILD_SA)",
@@ -594,7 +591,8 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .message_payloads.required = P(SK),
 	  .encrypted_payloads.required = P(SA) | P(Ni) | P(TSi) | P(TSr),
 	  .encrypted_payloads.optional = P(KE) | P(N) | P(CP),
-	  .processor  = process_v2_CREATE_CHILD_SA_rekey_child_response,
+	  .processor  = process_v2_CREATE_CHILD_SA_child_response,
+	  /* .processor  = process_v2_CREATE_CHILD_SA_rekey_child_response, */
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
@@ -611,12 +609,17 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	},
 
 	/*
-	 * CREATE_CHILD_SA exchange to create a new child.
+	 * Child transitions when creating a new Child SA using
+	 * CREATE_CHILD_SA.
 	 *
-	 * In the responder note the presence of just TS (traffic
-	 * selectors) payloads.  Earlier rules will have weeded out
-	 * both rekey IKE (no TS payload) and rekey Child (has
-	 * REKEY_SA notify) leaving just create new child.
+	 *   Initiator                         Responder
+	 *   ----------------------------------------------------------
+	 *   HDR, SK {SA, Ni, [KEi,]
+	 *            TSi, TSr}  -->
+	 *
+	 * See also IKE SA's state transitions, below, that will
+	 * eventually drive these nested state transitions (currently
+	 * these are fudged).
 	 */
 
 	{ .story      = "initiate create Child SA (CREATE_CHILD_SA)",
@@ -647,7 +650,8 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .req_clear_payloads = P(SK),
 	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
 	  .opt_enc_payloads = P(KE) | P(N) | P(CP),
-	  .processor  = process_v2_CREATE_CHILD_SA_new_child_response,
+	  .processor  = process_v2_CREATE_CHILD_SA_child_response,
+	  /* .processor  = process_v2_CREATE_CHILD_SA_new_child_response, */
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
@@ -980,7 +984,8 @@ void init_ikev2(void)
 		 * Check that all transitions from a secured state
 		 * require an SK payload.
 		 */
-		passert(LIN(P(SK), t->message_payloads.required) == from->v2.secured);
+		passert(t->recv_role == NO_MESSAGE ||
+			LIN(P(SK), t->message_payloads.required) == from->v2.secured);
 
 		/*
 		 * Check that only IKE_SA_INIT transitions are from an
