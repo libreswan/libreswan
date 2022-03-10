@@ -532,7 +532,12 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	  .processor  = NULL,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .send_role  = MESSAGE_RESPONSE,
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(SA) | P(Ni) | P(KE),
+	  .opt_enc_payloads = P(N),
+	  .processor  = process_v2_CREATE_CHILD_SA_rekey_ike_request,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
@@ -548,6 +553,18 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_CREATE_CHILD_SA_rekey_ike_response,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_SA_REPLACE, },
+
+	{ .story      = "process rekey IKE SA failure response (CREATE_CHILD_SA)",
+	  .state      = STATE_V2_REKEY_IKE_I1,
+	  .next_state = STATE_V2_IKE_SA_DELETE, /* never reached */
+	  .flags      = SMF2_RELEASE_WHACK,
+	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .message_payloads = { .required = P(SK), },
+	  .processor  = process_v2_CREATE_CHILD_SA_failure_response,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_RETAIN, /* no timeout really */
+	},
 
 	/*
 	 * Child transitions when rekeying a Child SA using
@@ -578,7 +595,13 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	  .processor  = NULL,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .send_role  = MESSAGE_RESPONSE,
+	  .message_payloads.required = P(SK),
+	  .encrypted_payloads.required = P(SA) | P(Ni) | P(TSi) | P(TSr),
+	  .encrypted_payloads.optional = P(KE) | P(N) | P(CP),
+	  .encrypted_payloads.notification = v2N_REKEY_SA,
+	  .processor  = process_v2_CREATE_CHILD_SA_rekey_child_request,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
@@ -637,7 +660,12 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .next_state = STATE_V2_ESTABLISHED_CHILD_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
 	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	  .processor  = NULL,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .send_role  = MESSAGE_RESPONSE,
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
+	  .opt_enc_payloads = P(KE) | P(N) | P(CP),
+	  .processor  = process_v2_CREATE_CHILD_SA_new_child_request,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_SA_REPLACE, },
 
@@ -668,14 +696,19 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	},
 
 	/*
-	 * IKE SA's CREATE_CHILD_SA transitions for rekeying IKE SA.
+	 * IKE SA's CREATE_CHILD_SA exchange to rekey IKE SA.
 	 *
-	 * In the initiator, note the lack of TS (traffic selectors)
-	 * payload.  Since rekey and new Child SA exchanges contain TS
-	 * they won't match.
+	 * Note the lack of a TS (traffic selectors) payload.  Since
+	 * rekey and new Child SA exchanges contain TS they won't
+	 * match.
+	 *
+	 *   Initiator                         Responder
+	 *   --------------------------------------------------------
+	 *   HDR, SK {SA, Ni, KEi} -->
+	 *                                <--  HDR, SK {SA, Nr, KEr}
+	 *
+	 * XXX: see ikev2_create_child_sa.c for initiator state.
 	 */
-
-	/* XXX: see ikev2_create_child_sa.c for initiator state */
 
 	{ .story      = "process rekey IKE SA request (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
@@ -704,7 +737,92 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
 
-	{ .story      = "process rekey IKE SA failure response (CREATE_CHILD_SA)",
+	/*
+	 * IKE SA's CREATE_CHILD_SA request to rekey a Child SA.
+	 *
+	 * This transition expects both TS (traffic selectors) and
+	 * N(REKEY_SA)) payloads.  The rekey Child SA request will
+	 * match this, the new Child SA will not and match the weaker
+	 * transition that follows.
+	 *
+	 *   Initiator                         Responder
+	 *   ---------------------------------------------------------
+	 *   HDR, SK {N(REKEY_SA), SA, Ni, [KEi,]
+	 *            TSi, TSr}  -->
+	 *
+	 * XXX: see ikev2_create_child_sa.c for initiator state.
+	 */
+
+	{ .story      = "process rekey Child SA request (CREATE_CHILD_SA)",
+	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
+	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
+	  .flags      = SMF2_RELEASE_WHACK,
+	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .send_role  = MESSAGE_RESPONSE,
+	  .message_payloads.required = P(SK),
+	  .encrypted_payloads.required = P(SA) | P(Ni) | P(TSi) | P(TSr),
+	  .encrypted_payloads.optional = P(KE) | P(N) | P(CP),
+	  .encrypted_payloads.notification = v2N_REKEY_SA,
+	  .processor  = process_v2_CREATE_CHILD_SA_rekey_child_request,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_RETAIN, },
+
+	/*
+	 * IKE SA's CREATE_CHILD_SA request to create a new Child SA.
+	 *
+	 * Note the presence of just TS (traffic selectors) payloads.
+	 * Earlier rules will have weeded out both rekey IKE (no TS
+	 * payload) and rekey Child (has N(REKEY_SA)) leaving just
+	 * create new Child SA.
+	 *
+	 *   Initiator                         Responder
+	 *   ----------------------------------------------------------
+	 *   HDR, SK {SA, Ni, [KEi,]
+	 *            TSi, TSr}  -->
+	 *
+	 * XXX: see ikev2_create_child_sa.c for initiator state.
+	 */
+
+	{ .story      = "process create Child SA request (CREATE_CHILD_SA)",
+	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
+	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
+	  .flags      = SMF2_RELEASE_WHACK,
+	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	  .recv_role  = MESSAGE_REQUEST,
+	  .send_role  = MESSAGE_RESPONSE,
+	  .req_clear_payloads = P(SK),
+	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
+	  .opt_enc_payloads = P(KE) | P(N) | P(CP),
+	  .processor  = process_v2_CREATE_CHILD_SA_new_child_request,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_RETAIN, },
+
+	/*
+	 * IKE SA's CREATE_CHILD_SA response to rekey or create a Child SA
+	 *
+	 * Both rekey and new Child SA share a common transition.  It
+	 * isn't immediately possible to differentiate between them.
+	 * Instead .st_v2_larval_initiator_sa is used.
+	 *
+	 *                                <--  HDR, SK {SA, Nr, [KEr,]
+	 *                                              TSi, TSr}
+	 */
+
+	{ .story      = "process Child SA response (new or rekey) (CREATE_CHILD_SA)",
+	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
+	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
+	  .flags      = SMF2_RELEASE_WHACK,
+	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	  .recv_role  = MESSAGE_RESPONSE,
+	  .message_payloads.required = P(SK),
+	  .encrypted_payloads.required = P(SA) | P(Ni) | P(TSi) | P(TSr),
+	  .encrypted_payloads.optional = P(KE) | P(N) | P(CP),
+	  .processor  = process_v2_CREATE_CHILD_SA_child_response,
+	  .llog_success = ldbg_v2_success,
+	  .timeout_event = EVENT_RETAIN, },
+
+	{ .story      = "process CREATE_CHILD_SA failure response (new or rekey Child SA, rekey IKE SA)",
 	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
 	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	  .flags      = SMF2_RELEASE_WHACK,
@@ -778,43 +896,6 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .req_clear_payloads = P(SK),
 	  .opt_enc_payloads = P(N) | P(D) | P(CP),
 	  .processor  = process_v2_INFORMATIONAL_response,
-	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_RETAIN, },
-
-	/*
-	 * CREATE_CHILD_SA exchanges
-	 *
-	 * In the responder, note the lack of TS (traffic selectors)
-	 * payload.  Since rekey and create child exchanges contain TS
-	 * they won't match.
-	 */
-
-	{ .story      = "process rekey Child SA request (CREATE_CHILD_SA)",
-	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
-	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
-	  .flags      = SMF2_RELEASE_WHACK,
-	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	  .recv_role  = MESSAGE_REQUEST,
-	  .send_role  = MESSAGE_RESPONSE,
-	  .message_payloads.required = P(SK),
-	  .encrypted_payloads.required = P(SA) | P(Ni) | P(TSi) | P(TSr),
-	  .encrypted_payloads.optional = P(KE) | P(N) | P(CP),
-	  .encrypted_payloads.notification = v2N_REKEY_SA,
-	  .processor  = process_v2_CREATE_CHILD_SA_rekey_child_request,
-	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_RETAIN, },
-
-	{ .story      = "process create Child SA request (CREATE_CHILD_SA)",
-	  .state      = STATE_V2_ESTABLISHED_IKE_SA,
-	  .next_state = STATE_V2_ESTABLISHED_IKE_SA,
-	  .flags      = SMF2_RELEASE_WHACK,
-	  .exchange   = ISAKMP_v2_CREATE_CHILD_SA,
-	  .recv_role  = MESSAGE_REQUEST,
-	  .send_role  = MESSAGE_RESPONSE,
-	  .req_clear_payloads = P(SK),
-	  .req_enc_payloads = P(SA) | P(Ni) | P(TSi) | P(TSr),
-	  .opt_enc_payloads = P(KE) | P(N) | P(CP),
-	  .processor  = process_v2_CREATE_CHILD_SA_new_child_request,
 	  .llog_success = ldbg_v2_success,
 	  .timeout_event = EVENT_RETAIN, },
 

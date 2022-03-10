@@ -386,16 +386,37 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	return larval_child;
 }
 
-stf_status queue_v2_CREATE_CHILD_SA_rekey_child_request(struct state *larval_sa,
+static void llog_v2_success_rekey_child_request(struct ike_sa *ike UNUSED, struct state *st)
+{
+	llog_sa(RC_NEW_V2_STATE + st->st_state->kind,
+		st->st_v2_larval_initiator_sa,
+		"sent CREATE_CHILD_SA request to rekey IPsec SA");
+}
+
+static const struct v2_state_transition v2_CREATE_CHILD_SA_rekey_child_transition = {
+	.story      = "initiate rekey Child_SA (CREATE_CHILD_SA)",
+	.state      = STATE_V2_ESTABLISHED_IKE_SA,
+	.next_state = STATE_V2_ESTABLISHED_IKE_SA,
+	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	.send_role  = MESSAGE_REQUEST,
+	.processor  = initiate_v2_CREATE_CHILD_SA_rekey_child_request,
+	.llog_success = llog_v2_success_rekey_child_request,
+	.timeout_event = EVENT_RETAIN,
+};
+
+stf_status queue_v2_CREATE_CHILD_SA_rekey_child_request(struct state *larval_child_sa,
 							struct msg_digest *unused_md,
 							struct dh_local_secret *local_secret,
 							chunk_t *nonce)
 {
-	return queue_v2_CREATE_CHILD_SA_initiator(larval_sa,
-						  ike_sa(larval_sa, HERE),
-						  pexpect_child_sa(larval_sa),
+	/*
+	 * Queue the IKE SA, it can drive the larval child.
+	 */
+	struct ike_sa *ike = ike_sa(larval_child_sa, HERE);
+	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
+	return queue_v2_CREATE_CHILD_SA_initiator(&ike->sa, ike, larval_child,
 						  unused_md, local_secret, nonce,
-						  larval_sa->st_state->v2.transitions);
+						  &v2_CREATE_CHILD_SA_rekey_child_transition);
 }
 
 stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
@@ -439,7 +460,9 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 			"IKE SA #%lu no longer viable for rekey of Child SA #%lu",
 			ike->sa.st_serialno, larval_child->sa.st_v2_rekey_pred);
 		larval_child->sa.st_policy = cc->policy; /* for pick_initiator */
-		return STF_FAIL;
+		delete_state(&larval_child->sa);
+		ike->sa.st_v2_larval_initiator_sa = larval_child = NULL;
+		return STF_OK; /* IKE */
 	}
 
 	if (!pexpect(larval_child->sa.st_v2_rekey_pred != SOS_NOBODY)) {
@@ -469,7 +492,9 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 	}
 
 	if (!prep_v2_child_for_request(larval_child)) {
-		return false;
+		delete_state(&larval_child->sa);
+		ike->sa.st_v2_larval_initiator_sa = larval_child = NULL;
+		return STF_OK; /* IKE */
 	}
 
 	struct v2_message request;
@@ -519,7 +544,16 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	return STF_OK;
+	/*
+	 * Clear any lurking CRYPTO (short term) timeout on the larval
+	 * Child SA and transition to the new state.  The IKE SA will
+	 * have it's retransmit timer set.
+	 */
+	ike->sa.st_v2_larval_initiator_sa = larval_child;
+	delete_event(&larval_child->sa);
+	change_v2_state(&larval_child->sa);
+
+	return STF_OK; /* IKE */
 }
 
 stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
@@ -600,16 +634,37 @@ void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 			    "Child Initiator KE? and nonce");
 }
 
-stf_status queue_v2_CREATE_CHILD_SA_new_child_request(struct state *larval_sa,
+static void llog_v2_success_new_child_request(struct ike_sa *ike, struct state *st UNUSED)
+{
+	llog_sa(RC_NEW_V2_STATE + ike->sa.st_v2_larval_initiator_sa->sa.st_state->kind,
+		ike->sa.st_v2_larval_initiator_sa,
+		"sent CREATE_CHILD_SA request for new IPsec SA");
+}
+
+static const struct v2_state_transition v2_CREATE_CHILD_SA_new_child_transition = {
+	.story      = "initiate new Child SA (CREATE_CHILD_SA)",
+	.state      = STATE_V2_ESTABLISHED_IKE_SA,
+	.next_state = STATE_V2_ESTABLISHED_IKE_SA,
+	.exchange   = ISAKMP_v2_CREATE_CHILD_SA,
+	.send_role  = MESSAGE_REQUEST,
+	.processor  = initiate_v2_CREATE_CHILD_SA_new_child_request,
+	.llog_success = llog_v2_success_new_child_request,
+	.timeout_event = EVENT_RETAIN,
+};
+
+stf_status queue_v2_CREATE_CHILD_SA_new_child_request(struct state *larval_child_sa,
 							struct msg_digest *unused_md,
 							struct dh_local_secret *local_secret,
 							chunk_t *nonce)
 {
-	return queue_v2_CREATE_CHILD_SA_initiator(larval_sa,
-						  ike_sa(larval_sa, HERE),
-						  pexpect_child_sa(larval_sa),
+	/*
+	 * Queue the IKE SA, it can drive the larval child.
+	 */
+	struct ike_sa *ike = ike_sa(larval_child_sa, HERE);
+	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
+	return queue_v2_CREATE_CHILD_SA_initiator(&ike->sa, ike, larval_child,
 						  unused_md, local_secret, nonce,
-						  larval_sa->st_state->v2.transitions);
+						  &v2_CREATE_CHILD_SA_new_child_transition);
 }
 
 stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
@@ -640,7 +695,9 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 			"IKE SA #%lu no longer viable for initiating a Child SA",
 			ike->sa.st_serialno);
 		larval_child->sa.st_policy = larval_child->sa.st_connection->policy; /* for pick_initiator */
-		return STF_FAIL;
+		delete_state(&larval_child->sa);
+		ike->sa.st_v2_larval_initiator_sa = larval_child = NULL;
+		return STF_OK; /* IKE */
 	}
 
 	if (!prep_v2_child_for_request(larval_child)) {
@@ -666,7 +723,16 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 		return STF_INTERNAL_ERROR;
 	}
 
-	return STF_OK;
+	/*
+	 * Clear any lurking CRYPTO (short term) timeout on the larval
+	 * Child SA and transition to the new state.  The IKE SA will
+	 * have it's retransmit timer set.
+	 */
+	ike->sa.st_v2_larval_initiator_sa = larval_child;
+	delete_event(&larval_child->sa);
+	change_v2_state(&larval_child->sa);
+
+	return STF_OK; /* IKE */
 }
 
 stf_status process_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
@@ -811,7 +877,8 @@ static stf_status process_v2_CREATE_CHILD_SA_request_continue_1(struct state *ik
 
 	unpack_KE_from_helper(&larval_child->sa, local_secret, &larval_child->sa.st_gr);
 	/* initiate calculation of g^xy */
-	submit_dh_shared_secret(&ike->sa, &larval_child->sa, larval_child->sa.st_gi,
+	submit_dh_shared_secret(&ike->sa, &larval_child->sa,
+				larval_child->sa.st_gi,
 				process_v2_CREATE_CHILD_SA_request_continue_2,
 				HERE);
 	return STF_SUSPEND;
@@ -913,7 +980,27 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 						     struct msg_digest *response_md)
 {
 	v2_notification_t n;
-	pexpect(larval_child != NULL);
+	pexpect(ike != NULL);
+
+	pexpect(larval_child == NULL);
+	larval_child = ike->sa.st_v2_larval_initiator_sa;
+	if (!pexpect(larval_child != NULL)) {
+		/* XXX: drop everything on the floor */
+		return STF_INTERNAL_ERROR;
+	}
+
+	pexpect(larval_child->sa.st_establishing_sa == IPSEC_SA);
+
+	/*
+	 * Drive the larval Child SA's state machine.
+	 */
+	pexpect(larval_child->sa.st_state->nr_transitions >= 1);
+	const struct v2_state_transition *transition =
+		&larval_child->sa.st_state->v2.transitions[0];
+	pexpect(transition->state == STATE_V2_REKEY_CHILD_I1 ||
+		transition->state == STATE_V2_NEW_CHILD_I1);
+	pexpect(transition->next_state == STATE_V2_ESTABLISHED_CHILD_SA);
+	larval_child->sa.st_v2_transition = transition;
 
 	/* Ni in */
 	if (!accept_v2_nonce(larval_child->sa.st_logger, response_md,
@@ -926,7 +1013,7 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 		 * XXX: initiator; need to initiate a fatal error
 		 * notification exchange.
 		 */
-		return STF_FATAL;
+		return STF_FATAL; /* IKE */
 	}
 
 	n = process_v2_childs_sa_payload("CREATE_CHILD_SA responder matching remote ESP/AH proposals",
@@ -948,6 +1035,9 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 	 */
 	if (larval_child->sa.st_pfs_group == NULL) {
 		v2_notification_t n = process_v2_child_response_payloads(ike, larval_child, response_md);
+		if (v2_notification_fatal(n)) {
+			return STF_FATAL;
+		}
 		if (n != v2N_NOTHING_WRONG) {
 			/*
 			 * Kill the child, but not the IKE SA?
@@ -955,10 +1045,21 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 			 * XXX: initiator; need to initiate a delete
 			 * exchange.
 			 */
-			return v2_notification_fatal(n) ? STF_FATAL : STF_FAIL;
+			delete_state(&larval_child->sa);
+			ike->sa.st_v2_larval_initiator_sa = larval_child = NULL;
+			return STF_OK; /* IKE */
 		}
-		llog_v2_child_sa_established(ike, larval_child);
-		return STF_OK;
+		/*
+		 * XXX: fudge a state transition.
+		 *
+		 * Code extracted and simplified from
+		 * success_v2_state_transition(); suspect very similar code
+		 * will appear in the responder.
+		 */
+		v2_child_sa_established(ike, larval_child);
+		/* hack; cover all bases; handled by close any whacks? */
+		release_whack(larval_child->sa.st_logger, HERE);
+		return STF_OK; /* IKE */
 	}
 
 	/*
@@ -974,22 +1075,36 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 		/*
 		 * XXX: Initiator; need to initiate a delete exchange.
 		 */
-		return STF_FAIL; /* XXX: STF_FATAL? */
+		delete_state(&larval_child->sa);
+		ike->sa.st_v2_larval_initiator_sa = larval_child = NULL;
+		return STF_OK; /* IKE */
 	}
+
 	chunk_t remote_ke = larval_child->sa.st_gr;
-	submit_dh_shared_secret(&larval_child->sa, &larval_child->sa, remote_ke,
+	submit_dh_shared_secret(&ike->sa, &larval_child->sa, remote_ke,
 				process_v2_CREATE_CHILD_SA_child_response_continue_1, HERE);
 	return STF_SUSPEND;
 }
 
-static stf_status process_v2_CREATE_CHILD_SA_child_response_continue_1(struct state *larval_child_sa,
+static stf_status process_v2_CREATE_CHILD_SA_child_response_continue_1(struct state *ike_sa,
 								       struct msg_digest *response_md)
 {
 	/* initiator getting back an answer */
-	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
-	struct ike_sa *ike = ike_sa(&larval_child->sa, HERE);
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
+		/* XXX: drop everything on the floor */
+		return STF_INTERNAL_ERROR;
+	}
+
+	struct child_sa *larval_child = ike->sa.st_v2_larval_initiator_sa;
+	if (!pexpect(larval_child != NULL)) {
+		/* XXX: drop everything on the floor */
+		return STF_INTERNAL_ERROR;
+	}
+
 	pexpect(v2_msg_role(response_md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
 	pexpect(larval_child->sa.st_sa_role == SA_INITIATOR);
+	pexpect(larval_child->sa.st_establishing_sa == IPSEC_SA);
 	dbg("%s() for #%lu %s",
 	     __func__, larval_child->sa.st_serialno, larval_child->sa.st_state->name);
 
@@ -1001,20 +1116,13 @@ static stf_status process_v2_CREATE_CHILD_SA_child_response_continue_1(struct st
 	pexpect(larval_child->sa.st_state->kind == STATE_V2_NEW_CHILD_I1 ||
 		larval_child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I1);
 
-	/* and a parent? */
-	if (ike == NULL) {
-		pexpect_fail(larval_child->sa.st_logger, HERE,
-			     "sponsoring child state #%lu has no parent state #%lu",
-			     larval_child->sa.st_serialno, larval_child->sa.st_clonedfrom);
-		/* XXX: release what? */
-		return STF_FATAL;
-	}
-
 	if (larval_child->sa.st_dh_shared_secret == NULL) {
 		/*
 		 * XXX: initiator; need to initiate a delete exchange.
 		 */
-		return STF_FAIL;
+		delete_state(&larval_child->sa);
+		ike->sa.st_v2_larval_initiator_sa = larval_child = NULL;
+		return STF_OK; /* IKE */
 	}
 
 	v2_notification_t n = process_v2_child_response_payloads(ike, larval_child,
@@ -1024,18 +1132,30 @@ static stf_status process_v2_CREATE_CHILD_SA_child_response_continue_1(struct st
 		 * XXX: initiator; need to initiate a fatal error
 		 * notification exchange.
 		 */
-		return STF_FATAL;
+		return STF_FATAL; /* IKE */
 	}
 
 	if (n != v2N_NOTHING_WRONG) {
 		/*
 		 * XXX: initiator; need to intiate a delete exchange.
 		 */
-		return STF_FAIL;
+		delete_state(&larval_child->sa);
+		ike->sa.st_v2_larval_initiator_sa = larval_child = NULL;
+		return STF_OK; /* IKE */
 	}
 
-	llog_v2_child_sa_established(ike, larval_child);
-	return STF_OK;
+	/*
+	 * XXX: fudge a state transition.
+	 *
+	 * Code extracted and simplified from
+	 * success_v2_state_transition(); suspect very similar code
+	 * will appear in the responder.
+	 */
+	v2_child_sa_established(ike, larval_child);
+	/* hack; cover all bases; handled by close any whacks? */
+	release_whack(larval_child->sa.st_logger, HERE);
+
+	return STF_OK; /* IKE */
 }
 
 /*
@@ -1367,7 +1487,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 	/*
 	 * Drive the larval IKE SA's state machine.
 	 */
-	pexpect(larval_ike->sa.st_state->nr_transitions == 1);
+	pexpect(larval_ike->sa.st_state->nr_transitions >= 1);
 	const struct v2_state_transition *transition =
 		&larval_ike->sa.st_state->v2.transitions[0];
 	pexpect(transition->state == STATE_V2_REKEY_IKE_I1);
@@ -1530,11 +1650,10 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 						       struct msg_digest *md UNUSED)
 {
 	passert(ike != NULL);
-
-	if (child == NULL) {
-		child = ike->sa.st_v2_larval_initiator_sa;
-	}
+	passert(child == NULL);
+	child = ike->sa.st_v2_larval_initiator_sa;
 	if (!pexpect(child != NULL)) {
+		/* XXX: drop everything on the floor */
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -1552,5 +1671,13 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 			break;
 		}
 	}
-	return STF_FAIL;
+
+	/* keep tests happy */
+	llog_sa(RC_NOTIFICATION, child, "state transition '%s' failed",
+		child->sa.st_v2_transition->story);
+
+	delete_state(&child->sa);
+	ike->sa.st_v2_larval_initiator_sa = child = NULL;
+
+	return STF_OK; /* IKE */
 }
