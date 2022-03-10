@@ -570,6 +570,15 @@ void v2_msgid_migrate_queue(struct ike_sa *from, struct child_sa *to)
 	pexpect(to->sa.st_v2_msgid_windows.initiator.pending == NULL);
 	to->sa.st_v2_msgid_windows.initiator.pending = from->sa.st_v2_msgid_windows.initiator.pending;
 	from->sa.st_v2_msgid_windows.initiator.pending = NULL;
+	for (struct v2_msgid_pending *pending = to->sa.st_v2_msgid_windows.initiator.pending; pending != NULL;
+	     pending = pending->next) {
+		if (pending->owner == from->sa.st_serialno) {
+			pending->owner = to->sa.st_serialno;
+		}
+		if (pending->who_for == from->sa.st_serialno) {
+			pending->who_for = to->sa.st_serialno;
+		}
+	}
 }
 
 static void initiate_next(const char *story, struct state *ike_sa, void *context UNUSED)
