@@ -52,13 +52,13 @@ west #
 002 "westnet-eastnet-ikev2b" #3: initiating Child SA using IKE SA #1
 1v2 "westnet-eastnet-ikev2b" #3: sent CREATE_CHILD_SA request for new IPsec SA
 003 "westnet-eastnet-ikev2b" #3: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
-200 "westnet-eastnet-ikev2b" #3: state transition 'process create Child SA failure response (CREATE_CHILD_SA)' failed
+200 "westnet-eastnet-ikev2b" #3: state transition 'initiate create Child SA (CREATE_CHILD_SA)' failed
 west #
  ipsec auto --up westnet-eastnet-ikev2c
 002 "westnet-eastnet-ikev2c" #4: initiating Child SA using IKE SA #1
 1v2 "westnet-eastnet-ikev2c" #4: sent CREATE_CHILD_SA request for new IPsec SA
 003 "westnet-eastnet-ikev2c" #4: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
-200 "westnet-eastnet-ikev2c" #4: state transition 'process create Child SA failure response (CREATE_CHILD_SA)' failed
+200 "westnet-eastnet-ikev2c" #4: state transition 'initiate create Child SA (CREATE_CHILD_SA)' failed
 west #
  #
 west #
