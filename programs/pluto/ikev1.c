@@ -2804,7 +2804,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 
 		if (IS_V1_ISAKMP_SA_ESTABLISHED(st) ||
 		    IS_IPSEC_SA_ESTABLISHED(st))
-			release_any_whack(st, HERE, "IKEv1 transitions finished");
+			release_whack(st->st_logger, HERE);
 
 		if (IS_V1_QUICK(st->st_state->kind))
 			break;

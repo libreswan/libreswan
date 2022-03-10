@@ -599,22 +599,6 @@ void rehash_state(struct state *st, const ike_spi_t *ike_responder_spi)
 	binlog_refresh_state(st);
 }
 
-/*
- * Free the Whack socket file descriptor attached to ST.
- *
- * Once all The Whack FDs have been delref()'d, this will release the
- * Whack process having the effecto of telling Whack that we're done.
- */
-
-void release_any_whack(struct state *st, where_t where, const char *why)
-{
-	dbg("releasing #%lu's whack "PRI_FD" because %s for "PRI_WHERE,
-	    st->st_serialno, pri_fd(st->st_logger->object_whackfd), why,
-	    pri_where(where));
-	fd_delref_where(&st->st_logger->object_whackfd, where);
-	fd_delref_where(&st->st_logger->global_whackfd, where);
-}
-
 void v2_expire_unused_ike_sa(struct ike_sa *ike)
 {
 	passert(ike != NULL);
@@ -707,7 +691,7 @@ static bool flush_incomplete_child(struct state *cst, void *pst)
 		 * Shut down further logging for the child, above are
 		 * the last whack will hear from them.
 		 */
-		release_any_whack(&child->sa, HERE, "IKE going away");
+		release_whack(child->sa.st_logger, HERE);
 	}
 	/*
 	 * XXX: why was this non-conditional?  probably doesn't matter
@@ -1182,7 +1166,7 @@ void delete_state_tail(struct state *st)
 
 	change_state(st, STATE_UNDEFINED);
 
-	release_any_whack(st, HERE, "deleting state");
+	release_whack(st->st_logger, HERE);
 
 	/* from here on we are just freeing RAM */
 

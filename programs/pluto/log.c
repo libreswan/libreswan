@@ -615,15 +615,22 @@ struct logger *string_logger(struct fd *whackfd, where_t where, const char *fmt,
 	return l;
 }
 
+void release_whack(struct logger *logger, where_t where)
+{
+	ldbg(logger, "releasing whack "PRI_FD" for "PRI_WHERE,
+	     pri_fd(logger->object_whackfd), pri_where(where));
+	fd_delref_where(&logger->global_whackfd, where);
+	fd_delref_where(&logger->object_whackfd, where);
+}
+
 void free_logger(struct logger **logp, where_t where)
 {
-	dbg_free("logger", *logp, where);
-	fd_delref_where(&(*logp)->global_whackfd, where);
-	fd_delref_where(&(*logp)->object_whackfd, where);
+	release_whack(*logp, where);
 	/*
 	 * For instance the string allocated by clone_logger().  More
 	 * complex objects are freed by other means.
 	 */
+	dbg_free("logger", *logp, where);
 	if ((*logp)->object_vec->free_object) {
 		pfree((void*) (*logp)->object);
 	}

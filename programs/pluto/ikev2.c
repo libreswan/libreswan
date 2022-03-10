@@ -2634,7 +2634,7 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	}
 
 	if (just_established) {
-		release_any_whack(st, HERE, "IKEv2 transitions finished");
+		release_whack(st->st_logger, HERE);
 
 		/* XXX should call unpend again on parent SA */
 		if (IS_CHILD_SA(st)) {
@@ -2669,12 +2669,12 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 					}
 				}
 			}
-			release_any_whack(&ike->sa, HERE, "IKEv2 transitions finished so releaseing IKE SA");
+			release_whack(ike->sa.st_logger, HERE);
 		}
 	} else if (transition->flags & SMF2_RELEASE_WHACK) {
-		release_any_whack(st, HERE, "transition->flags & RELEASE_WHACK");
+		release_whack(st->st_logger, HERE);
 		if (st != &ike->sa) {
-			release_any_whack(&ike->sa, HERE, "IKE per transition");
+			release_whack(ike->sa.st_logger, HERE);
 		}
 	}
 }

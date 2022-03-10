@@ -198,9 +198,9 @@ void release_pending_whacks(struct state *st, err_t story)
 		struct ike_sa *ike = ike_sa(st, HERE);
 		if (same_fd(st->st_logger->object_whackfd, ike->sa.st_logger->object_whackfd)) {
 			ike_with_same_whack = ike;
-			release_any_whack(&ike->sa, HERE, "release pending whacks state's IKE SA");
+			release_whack(ike->sa.st_logger, HERE);
 		} else {
-			release_any_whack(st, HERE, "releasing isolated child");
+			release_whack(st->st_logger, HERE);
 			return;
 		}
 	} else {
@@ -238,7 +238,7 @@ void release_pending_whacks(struct state *st, err_t story)
 			fd_delref(&p->whack_sock);/*on-heap*/
 		}
 	}
-	release_any_whack(st, HERE, "releasing child");
+	release_whack(st->st_logger, HERE);
 }
 
 /*

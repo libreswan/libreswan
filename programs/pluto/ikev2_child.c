@@ -1319,8 +1319,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 	 */
 	v2_child_sa_established(ike, child);
 	/* hack; cover all bases; handled by close any whacks? */
-	fd_delref(&child->sa.st_logger->object_whackfd);
-	fd_delref(&child->sa.st_logger->global_whackfd);
+	release_whack(child->sa.st_logger, HERE);
 
 	return v2N_NOTHING_WRONG;
 }

@@ -1348,7 +1348,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2(struct
 	 * state.
 	 */
 	pstat_sa_established(&larval_ike->sa);
-	release_any_whack(&larval_ike->sa, HERE, "IKEv2 transitions finished");
+	release_whack(larval_ike->sa.st_logger, HERE);
 
 	/* Schedule for whatever timeout is specified */
 	delete_event(&larval_ike->sa); /* relying on replace */
@@ -1526,7 +1526,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1(struc
 	/* XXX: call transition->llog()? */
 	llog_v2_ike_sa_established(ike, larval_ike);
 
-	release_any_whack(&larval_ike->sa, HERE, "rekey IKE SA finished");
+	release_whack(larval_ike->sa.st_logger, HERE);
 
 	return STF_OK; /* IKE */
 }
