@@ -81,7 +81,6 @@ struct v2_msgid_wip {
 };
 
 void v2_msgid_init_ike(struct ike_sa *ike);
-void v2_msgid_init_child(struct ike_sa *ike, struct child_sa *child);
 void v2_msgid_free(struct state *st);
 
 void v2_msgid_start_responder(struct ike_sa *ike, const struct msg_digest *md);

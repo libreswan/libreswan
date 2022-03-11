@@ -221,17 +221,6 @@ void v2_msgid_init_ike(struct ike_sa *ike)
 			  &ike->sa, &old_wip);
 }
 
-void v2_msgid_init_child(struct ike_sa *ike, struct child_sa *child)
-{
-	child->sa.st_v2_msgid_windows = empty_v2_msgid_windows;
-	struct v2_msgid_wip old_child = child->sa.st_v2_msgid_wip;
-	child->sa.st_v2_msgid_wip = empty_v2_msgid_wip;
-	/* pretend there's a sender */
-	dbg_msgids_update("initializing (CHILD SA)", NO_MESSAGE, -1,
-			  ike, &ike->sa.st_v2_msgid_windows, /* unchanged */
-			  &child->sa, &old_child);
-}
-
 void v2_msgid_start_responder(struct ike_sa *ike, const struct msg_digest *md)
 {
 	enum message_role role = v2_msg_role(md);

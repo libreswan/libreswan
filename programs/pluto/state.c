@@ -1658,7 +1658,6 @@ struct child_sa *new_v2_child_state(struct connection *c,
 	const struct v2_state_transition *transition = &fs->v2.transitions[0];
 	struct state *cst = duplicate_state(c, &ike->sa, sa_type, sa_role, whackfd);
 	struct child_sa *child = pexpect_child_sa(cst);
-	v2_msgid_init_child(ike, child);
 	change_state(&child->sa, transition->state);
 	set_v2_transition(&child->sa, transition, HERE);
 	binlog_refresh_state(&child->sa);
