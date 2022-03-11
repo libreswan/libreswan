@@ -191,7 +191,7 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 		 */
 		send_recorded_v2_message(ike, "v2_INFORMATIONAL IKE SA Delete response",
 					 MESSAGE_RESPONSE);
-		dbg_v2_msgid(ike, &ike->sa,
+		dbg_v2_msgid(ike,
 			     "XXX: in %s() hacking around record 'n' send as calling delete_ike_family() inline",
 			     __func__);
 		v2_msgid_update_sent(ike, md, MESSAGE_RESPONSE);

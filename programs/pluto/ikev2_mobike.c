@@ -335,7 +335,8 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 		 * XXX: record 'n' send violates the RFC.  This code should
 		 * instead let success_v2_state_transition() deal with things.
 		 */
-		dbg_v2_msgid(ike, st, "XXX: in %s() hacking around record'n'send bypassing send queue",
+		dbg_v2_msgid(ike,
+			     "XXX: in %s() hacking around record'n'send bypassing send queue",
 			     __func__);
 		v2_msgid_update_sent(ike, NULL/*no MD; new exchange*/, MESSAGE_REQUEST);
 	}

@@ -128,9 +128,8 @@ void v2_msgid_migrate_queue(struct ike_sa *from, struct child_sa *to);
 
 void v2_msgid_schedule_next_initiator(struct ike_sa *ike);
 
-void dbg_v2_msgid(struct ike_sa *ike, struct state *st, const char *msg, ...) PRINTF_LIKE(3);
-void fail_v2_msgid(where_t where, struct ike_sa *ike, struct state *st,
-		   const char *fmt, ...) PRINTF_LIKE(4);
-#define FAIL_V2_MSGID(IKE, ST, FMT, ...) fail_v2_msgid(HERE, IKE, ST, FMT,##__VA_ARGS__)
+void dbg_v2_msgid(struct ike_sa *ike, const char *msg, ...) PRINTF_LIKE(2);
+void fail_v2_msgid_where(where_t where, struct ike_sa *ike, const char *fmt, ...) PRINTF_LIKE(3);
+#define fail_v2_msgid(IKE, FMT, ...) fail_v2_msgid_where(HERE, IKE, FMT,##__VA_ARGS__)
 
 #endif

@@ -1432,7 +1432,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 		 *   timeout of several minutes.
 		 */
 		if (ike->sa.st_v2_outgoing[MESSAGE_RESPONSE] == NULL) {
-			FAIL_V2_MSGID(ike, &ike->sa,
+			fail_v2_msgid(ike,
 				      "%s request has duplicate Message ID %jd but there is no saved message to retransmit; message dropped",
 				      enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
 				      msgid);
@@ -1491,7 +1491,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 				return true;
 			}
 			if (skf.isaskf_total != ike->sa.st_v2_msgid_windows.responder.recv_frags) {
-				dbg_v2_msgid(ike, &ike->sa,
+				dbg_v2_msgid(ike,
 					     "%s request fragment %u of %u has duplicate Message ID %jd but should have fragment total %u; message dropped",
 					     enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
 					     skf.isaskf_number, skf.isaskf_total, msgid,
@@ -1499,7 +1499,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 				return true;
 			}
 			if (skf.isaskf_number != 1) {
-				dbg_v2_msgid(ike, &ike->sa,
+				dbg_v2_msgid(ike,
 					     "%s request fragment %u of %u has duplicate Message ID %jd but is not fragment 1; message dropped",
 					     enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg),
 					     skf.isaskf_number, skf.isaskf_total, msgid);
@@ -1575,7 +1575,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 				/* multiple fragments */
 				(frags->total >= 1 && frags->count <= frags->total));
 		}
-		dbg_v2_msgid(ike, &ike->sa,
+		dbg_v2_msgid(ike,
 			     "not a duplicate - responder is accumulating encrypted fragments for message with request %jd (SKEYSEED is being computed)",
 			     msgid);
 	} else if (!ike->sa.hidden_variables.st_skeyid_calculated) {
@@ -1590,7 +1590,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 		 * (SKEYSEED started).
 		 */
 		pexpect(ike->sa.st_state->kind == STATE_V2_PARENT_R1);
-		dbg_v2_msgid(ike, &ike->sa,
+		dbg_v2_msgid(ike,
 			     "not a duplicate - message request %jd is new (SKEYSEED still needs to be computed)",
 			     msgid);
 	} else if (frags != NULL) {
@@ -1607,7 +1607,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 		 */
 		pexpect(ike->sa.hidden_variables.st_skeyid_calculated);
 		pexpect(frags->count < frags->total);
-		dbg_v2_msgid(ike, &ike->sa,
+		dbg_v2_msgid(ike,
 			     "not a duplicate - responder is accumulating decrypted fragments for message request %jd (SKEYSEED is known)",
 			     msgid);
 	} else {
@@ -1620,7 +1620,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 		 * start accumulating them.
 		 */
 		pexpect(ike->sa.hidden_variables.st_skeyid_calculated);
-		dbg_v2_msgid(ike, &ike->sa,
+		dbg_v2_msgid(ike,
 			     "not a duplicate - message request %jd is new (SKEYSEED is known)",
 			     msgid);
 	}
@@ -1694,7 +1694,7 @@ static bool is_duplicate_response(struct ike_sa *ike,
 		 * to-old so doesn't expect there to be a matching
 		 * initiator, arrg
 		 */
-		dbg_v2_msgid(ike, &ike->sa, "already processed response %jd (%s); discarding packet",
+		dbg_v2_msgid(ike, "already processed response %jd (%s); discarding packet",
 			     msgid, enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg));
 		return true;
 	}
@@ -1720,7 +1720,7 @@ static bool is_duplicate_response(struct ike_sa *ike,
 		 * The IKE SA is waiting for a message that, according
 		 * to the IKE SA, has yet to be sent?!?
 		 */
-		FAIL_V2_MSGID(ike, &ike->sa,
+		fail_v2_msgid(ike,
 			      "dropping response with Message ID %jd which is from the future - last request sent was %jd",
 			      msgid, ike->sa.st_v2_msgid_windows.initiator.sent);
 		return true;
