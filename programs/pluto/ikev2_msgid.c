@@ -1,6 +1,6 @@
 /* IKEv2 Message ID tracking, for libreswan
  *
- * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2019-2022 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -496,8 +496,7 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 
 struct v2_msgid_pending {
 	so_serial_t child;
-	so_serial_t owner;
-	so_serial_t who_for;
+	so_serial_t who_for; /* for logging; either IKE or Child */
 	const struct v2_state_transition *transition;
 	struct v2_msgid_pending *next;
 };
@@ -526,14 +525,12 @@ bool v2_msgid_request_pending(struct ike_sa *ike)
 	return initiator->pending != NULL;
 }
 
-void v2_msgid_queue_initiator(struct state *owner,
-			      struct ike_sa *ike, struct child_sa *child,
+void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 			      const struct v2_state_transition *transition)
 {
-	passert(owner != NULL);
 	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
-	so_serial_t who_for = (child != NULL ? child->sa.st_serialno :
-			       ike->sa.st_serialno);
+	/* for logging */
+	so_serial_t who_for = (child != NULL ? child->sa.st_serialno : ike->sa.st_serialno);
 	/*
 	 * Find the insertion point; small list?
 	 *
@@ -547,7 +544,7 @@ void v2_msgid_queue_initiator(struct state *owner,
 		if (transition->exchange == ISAKMP_v2_INFORMATIONAL
 		    && (*pp)->transition->exchange != ISAKMP_v2_INFORMATIONAL) {
 			dbg("inserting informational exchange for #%lu before #%lu's %s exchange",
-			    who_for, (*pp)->owner,
+			    who_for, (*pp)->who_for,
 			    enum_name(&isakmp_xchg_type_names, (*pp)->transition->exchange));
 			break;
 		}
@@ -557,7 +554,6 @@ void v2_msgid_queue_initiator(struct state *owner,
 	struct v2_msgid_pending new = {
 		.child = child != NULL ? child->sa.st_serialno : SOS_NOBODY,
 		.who_for = who_for,
-		.owner = owner->st_serialno,
 		.transition = transition,
 		.next = (*pp),
 	};
@@ -572,9 +568,6 @@ void v2_msgid_migrate_queue(struct ike_sa *from, struct child_sa *to)
 	from->sa.st_v2_msgid_windows.initiator.pending = NULL;
 	for (struct v2_msgid_pending *pending = to->sa.st_v2_msgid_windows.initiator.pending; pending != NULL;
 	     pending = pending->next) {
-		if (pending->owner == from->sa.st_serialno) {
-			pending->owner = to->sa.st_serialno;
-		}
 		if (pending->who_for == from->sa.st_serialno) {
 			pending->who_for = to->sa.st_serialno;
 		}
@@ -599,13 +592,6 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 		pfree(initiator->pending);
 		initiator->pending = pending.next;
 
-		/*
-		 * Determine the state that owns the transition (and
-		 * will be passed to complete_v2_state_transition()).
-		 *
-		 * It should always be the IKE SA; but ...
-		 */
-
 		struct child_sa *child = child_sa_by_serialno(pending.child);
 		if (pending.child != SOS_NOBODY && child == NULL) {
 			dbg_v2_msgid(ike, NULL,
@@ -615,30 +601,22 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 			continue;
 		}
 
-		struct state *owner = state_by_serialno(pending.owner);
-		if (owner == NULL) {
-			dbg_v2_msgid(ike, NULL,
-				     "cannot initiate %s exchange for #%lu as state disappeared (unack %jd)",
-				     enum_name(&isakmp_xchg_type_names, pending.transition->exchange),
-				     pending.owner, unack);
-			continue;
-		}
-
-		dbg_v2_msgid(ike, owner, "resuming SA using IKE SA (unack %jd)", unack);
+		struct state *who_for = (child != NULL ? &child->sa : &ike->sa);
+		pexpect(who_for->st_serialno == pending.who_for);
+		dbg_v2_msgid(ike, who_for, "resuming SA using IKE SA (unack %jd)", unack);
 
 		/*
 		 * try to check that the transition still applies ...
 		 */
-		if (!IS_IKE_SA_ESTABLISHED(&ike->sa)) {
-			log_state(RC_LOG, owner, "dropping transition as IKE SA is not established: %s",
-				  pending.transition->story);
-		} else if (pending.transition->state != owner->st_state->kind) {
-			log_state(RC_LOG, owner, "dropping transition as it does not match current state: %s",
-				  pending.transition->story);
+		if (pending.transition->state != ike->sa.st_state->kind) {
+			log_state(RC_LOG, who_for,
+				  "dropping transition %s; IKE SA is not in state %s",
+				  pending.transition->story,
+				  finite_states[pending.transition->state]->short_name);
 		} else {
-			set_v2_transition(owner, pending.transition, HERE);
+			set_v2_transition(&ike->sa, pending.transition, HERE);
 			stf_status status = pending.transition->processor(ike, child, NULL);
-			complete_v2_state_transition(owner, NULL/*initiate so no md*/, status);
+			complete_v2_state_transition(&ike->sa, NULL/*initiate so no md*/, status);
 		}
 	}
 }

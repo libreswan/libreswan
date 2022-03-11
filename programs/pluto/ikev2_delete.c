@@ -171,7 +171,7 @@ void submit_v2_delete_exchange(struct ike_sa *ike, struct child_sa *child)
 	const struct v2_state_transition *transition =
 		(child != NULL ? &v2_delete_child : &v2_delete_ike);
 	pexpect(transition->exchange == ISAKMP_v2_INFORMATIONAL);
-	v2_msgid_queue_initiator(&ike->sa, ike, child, transition);
+	v2_msgid_queue_initiator(ike, child, transition);
 }
 
 bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *md,

@@ -76,8 +76,7 @@ static ke_and_nonce_cb queue_v2_CREATE_CHILD_SA_new_child_request; /* signature 
 static stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *ike,
 								struct msg_digest *request_md);
 
-static stf_status queue_v2_CREATE_CHILD_SA_initiator(struct state *owner,
-						     struct ike_sa *ike,
+static stf_status queue_v2_CREATE_CHILD_SA_initiator(struct ike_sa *ike,
 						     struct child_sa *larval,
 						     struct msg_digest *unused_md,
 						     struct dh_local_secret *local_secret,
@@ -124,7 +123,7 @@ static stf_status queue_v2_CREATE_CHILD_SA_initiator(struct state *owner,
 
 	pexpect(larval->sa.st_state->nr_transitions == 1);
 	pexpect(larval->sa.st_state->v2.transitions->exchange == ISAKMP_v2_CREATE_CHILD_SA);
-	v2_msgid_queue_initiator(owner, ike, larval, transition);
+	v2_msgid_queue_initiator(ike, larval, transition);
 	return STF_SUSPEND;
 }
 
@@ -414,7 +413,7 @@ stf_status queue_v2_CREATE_CHILD_SA_rekey_child_request(struct state *larval_chi
 	 */
 	struct ike_sa *ike = ike_sa(larval_child_sa, HERE);
 	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
-	return queue_v2_CREATE_CHILD_SA_initiator(&ike->sa, ike, larval_child,
+	return queue_v2_CREATE_CHILD_SA_initiator(ike, larval_child,
 						  unused_md, local_secret, nonce,
 						  &v2_CREATE_CHILD_SA_rekey_child_transition);
 }
@@ -662,7 +661,7 @@ stf_status queue_v2_CREATE_CHILD_SA_new_child_request(struct state *larval_child
 	 */
 	struct ike_sa *ike = ike_sa(larval_child_sa, HERE);
 	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
-	return queue_v2_CREATE_CHILD_SA_initiator(&ike->sa, ike, larval_child,
+	return queue_v2_CREATE_CHILD_SA_initiator(ike, larval_child,
 						  unused_md, local_secret, nonce,
 						  &v2_CREATE_CHILD_SA_new_child_transition);
 }
@@ -1229,7 +1228,7 @@ stf_status queue_v2_CREATE_CHILD_SA_rekey_ike_request(struct state *larval_ike_s
 	 */
 	struct ike_sa *ike = ike_sa(larval_ike_sa, HERE);
 	struct child_sa *larval_ike = pexpect_child_sa(larval_ike_sa);
-	return queue_v2_CREATE_CHILD_SA_initiator(&ike->sa, ike, larval_ike,
+	return queue_v2_CREATE_CHILD_SA_initiator(ike, larval_ike,
 						  unused_md, local_secret, nonce,
 						  &v2_CREATE_CHILD_SA_rekey_ike_transition);
 }
