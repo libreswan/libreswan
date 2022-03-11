@@ -504,7 +504,7 @@ struct v2_msgid_pending {
 void v2_msgid_free(struct state *st)
 {
 	/* find the end; small list? */
-	struct v2_msgid_pending **pp = &st->st_v2_msgid_windows.initiator.pending;
+	struct v2_msgid_pending **pp = &st->st_v2_msgid_windows.pending_requests;
 	while (*pp != NULL) {
 		struct v2_msgid_pending *tbd = *pp;
 		*pp = tbd->next;
@@ -521,14 +521,12 @@ bool v2_msgid_request_outstanding(struct ike_sa *ike)
 
 bool v2_msgid_request_pending(struct ike_sa *ike)
 {
-	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
-	return initiator->pending != NULL;
+	return ike->sa.st_v2_msgid_windows.pending_requests != NULL;
 }
 
 void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 			      const struct v2_state_transition *transition)
 {
-	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
 	/* for logging */
 	so_serial_t who_for = (child != NULL ? child->sa.st_serialno : ike->sa.st_serialno);
 	/*
@@ -539,7 +537,7 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 	 * notification) are put at the front before anything else
 	 * (namely CREATE_CHILD_SA).
 	 */
-	struct v2_msgid_pending **pp = &initiator->pending;
+	struct v2_msgid_pending **pp = &ike->sa.st_v2_msgid_windows.pending_requests;
 	while (*pp != NULL) {
 		if (transition->exchange == ISAKMP_v2_INFORMATIONAL
 		    && (*pp)->transition->exchange != ISAKMP_v2_INFORMATIONAL) {
@@ -563,10 +561,10 @@ void v2_msgid_queue_initiator(struct ike_sa *ike, struct child_sa *child,
 
 void v2_msgid_migrate_queue(struct ike_sa *from, struct child_sa *to)
 {
-	pexpect(to->sa.st_v2_msgid_windows.initiator.pending == NULL);
-	to->sa.st_v2_msgid_windows.initiator.pending = from->sa.st_v2_msgid_windows.initiator.pending;
-	from->sa.st_v2_msgid_windows.initiator.pending = NULL;
-	for (struct v2_msgid_pending *pending = to->sa.st_v2_msgid_windows.initiator.pending; pending != NULL;
+	pexpect(to->sa.st_v2_msgid_windows.pending_requests == NULL);
+	to->sa.st_v2_msgid_windows.pending_requests = from->sa.st_v2_msgid_windows.pending_requests;
+	from->sa.st_v2_msgid_windows.pending_requests = NULL;
+	for (struct v2_msgid_pending *pending = to->sa.st_v2_msgid_windows.pending_requests; pending != NULL;
 	     pending = pending->next) {
 		if (pending->who_for == from->sa.st_serialno) {
 			pending->who_for = to->sa.st_serialno;
@@ -583,14 +581,16 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 	}
 	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
 	for (intmax_t unack = (initiator->sent - initiator->recv);
-	     unack < ike->sa.st_connection->ike_window && initiator->pending != NULL;
+	     unack < ike->sa.st_connection->ike_window && ike->sa.st_v2_msgid_windows.pending_requests != NULL;
 	     unack++) {
+
 		/*
-		 * Make a copy of head, removing it from list.
+		 * Make a copy of the pending exchange, and then
+		 * release it.
 		 */
-		struct v2_msgid_pending pending = *initiator->pending;
-		pfree(initiator->pending);
-		initiator->pending = pending.next;
+		struct v2_msgid_pending pending = *ike->sa.st_v2_msgid_windows.pending_requests;
+		pfree(ike->sa.st_v2_msgid_windows.pending_requests);
+		ike->sa.st_v2_msgid_windows.pending_requests = pending.next;
 
 		struct child_sa *child = child_sa_by_serialno(pending.child);
 		if (pending.child != SOS_NOBODY && child == NULL) {
@@ -613,25 +613,42 @@ static void initiate_next(const char *story, struct state *ike_sa, void *context
 				  "dropping transition %s; IKE SA is not in state %s",
 				  pending.transition->story,
 				  finite_states[pending.transition->state]->short_name);
-		} else {
-			set_v2_transition(&ike->sa, pending.transition, HERE);
-			stf_status status = pending.transition->processor(ike, child, NULL);
-			complete_v2_state_transition(&ike->sa, NULL/*initiate so no md*/, status);
+			continue;
 		}
+
+		/*
+		 * The Message ID / open window will only be assigned
+		 * to the request when the state transition finishes
+		 * and the message is sent (which could be several
+		 * events down the road).
+		 *
+		 * This is "ok" as this function is only re-called
+		 * when the response has been received and the
+		 * exchange has finished.
+		 *
+		 * XXX: this should this instead pre-assign the
+		 * Message ID / open window to the exchange (and
+		 * unassign it if the exchange is abandoned)?
+		 */
+
+		set_v2_transition(&ike->sa, pending.transition, HERE);
+		stf_status status = pending.transition->processor(ike, child, NULL);
+		complete_v2_state_transition(&ike->sa, NULL/*initiate so no md*/, status);
 	}
 }
 
 void v2_msgid_schedule_next_initiator(struct ike_sa *ike)
 {
-	struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
+	const struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
+	const struct v2_msgid_pending *pending = ike->sa.st_v2_msgid_windows.pending_requests;
 	/*
 	 * If there appears to be space and there's a pending
 	 * initiate, poke the IKE SA so it tries to initiate things.
 	 */
-	if (initiator->pending != NULL) {
-		intmax_t unack = (initiator->sent - initiator->recv);
+	if (pending != NULL) {
 		/* if this returns NULL, that's ok; will log "LOST" */
-		struct state *who_for = state_by_serialno(initiator->pending->who_for);
+		struct state *who_for = state_by_serialno(pending->who_for);
+		intmax_t unack = (initiator->sent - initiator->recv);
 		if (unack < ike->sa.st_connection->ike_window) {
 			dbg_v2_msgid(ike, who_for,
 				     "wakeing IKE SA for next initiator (unack %jd)",
