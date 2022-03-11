@@ -35,7 +35,7 @@ typedef stf_status ikev2_state_transition_fn(struct ike_sa *ike,
 					     struct child_sa *child, /* could be NULL */
 					     struct msg_digest *md /* could be NULL */);
 
-extern void complete_v2_state_transition(struct state *st,
+extern void complete_v2_state_transition(struct ike_sa *ike,
 					 struct msg_digest *mdp,
 					 stf_status result);
 

@@ -615,7 +615,7 @@ void complete_state_transition(struct state *st, struct msg_digest *md, stf_stat
 		break;
 #endif
 	case IKEv2:
-		complete_v2_state_transition(st, md, status);
+		complete_v2_state_transition(pexpect_ike_sa(st), md, status);
 		break;
 	default:
 		bad_case(st->st_ike_version);

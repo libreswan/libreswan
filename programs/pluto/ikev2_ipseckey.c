@@ -192,7 +192,7 @@ static void idi_ipseckey_resume_ike_sa(struct ike_sa *ike, bool err,
 							     bool err))
 {
 	struct msg_digest *md = unsuspend_any_md(&ike->sa);
-	complete_v2_state_transition(&ike->sa, md, callback(ike, md, err));
+	complete_v2_state_transition(ike, md, callback(ike, md, err));
 	md_delref(&md);
 }
 

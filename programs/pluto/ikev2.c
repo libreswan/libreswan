@@ -1991,7 +1991,7 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 	default:
 		bad_case(v2_msg_role(md));
 	}
-	complete_v2_state_transition(&ike->sa, md, STF_FATAL);
+	complete_v2_state_transition(ike, md, STF_FATAL);
 }
 
 /*
@@ -2312,7 +2312,7 @@ void v2_dispatch(struct ike_sa *ike, struct msg_digest *md,
 		dbg("processor '%s' for #%lu suppresed complete st_v2_transition",
 		    svm->story, old_ike);
 	} else {
-		complete_v2_state_transition(&ike->sa, md, e);
+		complete_v2_state_transition(ike, md, e);
 	}
 
 	statetime_stop(&start, "processing: %s in %s()", svm->story, __func__);
@@ -2424,16 +2424,26 @@ void ikev2_child_emancipate(struct ike_sa *old_ike, struct child_sa *new_ike)
 	v2_ike_sa_established(pexpect_ike_sa(&new_ike->sa));
 }
 
-static void success_v2_state_transition(struct state *st, struct msg_digest *md,
+static void success_v2_state_transition(struct ike_sa *ike,
+					struct msg_digest *md,
 					const struct v2_state_transition *transition)
 {
+	passert(ike != NULL);
+
+	/*
+	 * XXX: keep code below compiling.
+	 *
+	 * Now that ST is always an IKE SA, some of the obsolete code
+	 * below involving checks for a Child SA look pretty silly.
+	 */
+	struct state *st = &ike->sa;
+
 	/*
 	 * XXX: the transition's from state can lie - it may be
 	 * different to the ST's state!
 	 */
 	enum state_kind from_state = transition->state;
 	struct connection *c = st->st_connection;
-	struct ike_sa *ike = ike_sa(st, HERE);
 
 	if (from_state != transition->next_state) {
 		dbg("transitioning from state %s to state %s",
@@ -2765,13 +2775,21 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
  * - fragvid, dpd, nortel
  */
 
-void complete_v2_state_transition(struct state *st,
+void complete_v2_state_transition(struct ike_sa *ike,
 				  struct msg_digest *md,
 				  stf_status result)
 {
-	passert(st != NULL);
-	struct ike_sa *ike = ike_sa(st, HERE);
-	/* struct child_sa *child = IS_CHILD_SA(st) ? pexpect_child_sa(st) : NULL; */
+	if (!pexpect(ike != NULL)) {
+		return;
+	}
+
+	/*
+	 * XXX: keep code below compiling.
+	 *
+	 * Now that ST is always an IKE SA, some of the obsolete code
+	 * below involving checks for a Child SA look pretty silly.
+	 */
+	struct state *st = &ike->sa;
 
 	/* statistics */
 	/* this really depends on the type of error whether it is an IKE or IPsec fail */
@@ -2849,7 +2867,7 @@ void complete_v2_state_transition(struct state *st,
 
 	case STF_OK:
 		/* advance the state */
-		success_v2_state_transition(st, md, transition);
+		success_v2_state_transition(ike, md, transition);
 		break;
 
 	case STF_INTERNAL_ERROR:
@@ -2994,7 +3012,7 @@ static void reinitiate_ike_sa_init(const char *story, struct state *st, void *ar
 							     ike->sa.st_logger);
 		if (p == NULL) {
 			/* already logged */
-			complete_v2_state_transition(st, NULL, STF_FATAL);
+			complete_v2_state_transition(ike, NULL, STF_FATAL);
 			return;
 		}
 		/* replace */
@@ -3022,7 +3040,7 @@ static void reinitiate_ike_sa_init(const char *story, struct state *st, void *ar
 		dbg("processor '%s' for #%lu suppresed complete st_v2_transition",
 		    story, old_st);
 	} else {
-		complete_v2_state_transition(st, NULL, e);
+		complete_v2_state_transition(ike, NULL, e);
 	}
 	statetime_stop(&start, "processing: %s in %s()", story, __func__);
 	/* our caller with md_delref(mdp) */
