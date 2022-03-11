@@ -423,6 +423,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 							   struct msg_digest *null_md UNUSED)
 {
 	struct connection *cc = larval_child->sa.st_connection;
+	pexpect(ike->sa.st_v2_msgid_windows.initiator.wip_sa == larval_child);
 
 	if (!ike->sa.st_viable_parent) {
 		/*
@@ -548,7 +549,6 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 	 * Child SA and transition to the new state.  The IKE SA will
 	 * have it's retransmit timer set.
 	 */
-	ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_child;
 	delete_event(&larval_child->sa);
 	change_v2_state(&larval_child->sa);
 
@@ -670,6 +670,8 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 							 struct child_sa *larval_child,
 							 struct msg_digest *null_md UNUSED)
 {
+	pexpect(ike->sa.st_v2_msgid_windows.initiator.wip_sa == larval_child);
+
 	if (!ike->sa.st_viable_parent) {
 		/*
 		 * This return will delete the larval child.
@@ -727,7 +729,6 @@ stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 	 * Child SA and transition to the new state.  The IKE SA will
 	 * have it's retransmit timer set.
 	 */
-	ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_child;
 	delete_event(&larval_child->sa);
 	change_v2_state(&larval_child->sa);
 
@@ -1237,6 +1238,8 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 							 struct child_sa *larval_ike,
 							 struct msg_digest *null_md)
 {
+	pexpect(ike->sa.st_v2_msgid_windows.initiator.wip_sa == larval_ike);
+
 	if (!record_v2_rekey_ike_message(ike, larval_ike, null_md)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -1246,8 +1249,6 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 	 * IKE SA and transition to the new state.  The current IKE SA
 	 * will have it's retransmit timer set.
 	 */
-	/* pexpect(ike->sa.st_v2_msgid_windows.initiator.wip_sa == NULL); */
-	ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_ike;
 	delete_event(&larval_ike->sa);
 	change_v2_state(&larval_ike->sa);
 
