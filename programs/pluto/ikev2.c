@@ -2447,8 +2447,8 @@ static void success_v2_state_transition(struct state *st, struct msg_digest *md,
 	 */
 
 	dbg("Message ID: updating counters for #%lu", st->st_serialno);
-	v2_msgid_update_recv(ike, st, md);
-	v2_msgid_update_sent(ike, st, md, transition->send_role);
+	v2_msgid_update_recv(ike, md);
+	v2_msgid_update_sent(ike, md, transition->send_role);
 
 	bool established_before = (IS_IKE_SA_ESTABLISHED(st) ||
 				   IS_CHILD_SA_ESTABLISHED(st));
@@ -2872,7 +2872,7 @@ void complete_v2_state_transition(struct state *st,
 		dbg("Message ID: forcing a response received update (deleting IKE_AUTH initiator)");
 		pexpect(st->st_state->kind == STATE_V2_PARENT_I2);
 		pexpect(v2_msg_role(md) == MESSAGE_RESPONSE);
-		v2_msgid_update_recv(ike, &ike->sa, md);
+		v2_msgid_update_recv(ike, md);
 		/*
 		 * All done, now delete the IKE family sending out a
 		 * last gasp delete.
@@ -2898,14 +2898,14 @@ void complete_v2_state_transition(struct state *st,
 		switch (v2_msg_role(md)) {
 		case MESSAGE_RESPONSE:
 			dbg("Message ID: forcing a response received update");
-			v2_msgid_update_recv(ike, NULL, md);
+			v2_msgid_update_recv(ike, md);
 			break;
 		case MESSAGE_REQUEST:
 			dbg("Message ID: responding with recorded fatal error");
 			pexpect(transition->send_role == MESSAGE_RESPONSE);
 			if (ike->sa.st_v2_outgoing[MESSAGE_RESPONSE] != NULL) {
-				v2_msgid_update_recv(ike, st, md);
-				v2_msgid_update_sent(ike, st, md, transition->send_role);
+				v2_msgid_update_recv(ike, md);
+				v2_msgid_update_sent(ike, md, transition->send_role);
 				send_recorded_v2_message(ike, "STF_FATAL",
 							 MESSAGE_RESPONSE);
 			} else {
@@ -2931,14 +2931,14 @@ void complete_v2_state_transition(struct state *st,
 			  transition->story);
 		switch (v2_msg_role(md)) {
 		case MESSAGE_RESPONSE:
-			v2_msgid_update_recv(ike, st, md);
+			v2_msgid_update_recv(ike, md);
 			v2_msgid_schedule_next_initiator(ike);
 			break;
 		case MESSAGE_REQUEST:
 			dbg("Message ID: responding with recorded error");
 			pexpect(transition->send_role == MESSAGE_RESPONSE);
-			v2_msgid_update_recv(ike, st, md);
-			v2_msgid_update_sent(ike, st, md, transition->send_role);
+			v2_msgid_update_recv(ike, md);
+			v2_msgid_update_sent(ike, md, transition->send_role);
 			send_recorded_v2_message(ike, "STF_FAIL", MESSAGE_RESPONSE);
 			break;
 		case NO_MESSAGE:

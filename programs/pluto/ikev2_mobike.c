@@ -337,7 +337,7 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 		 */
 		dbg_v2_msgid(ike, st, "XXX: in %s() hacking around record'n'send bypassing send queue",
 			     __func__);
-		v2_msgid_update_sent(ike, &ike->sa, NULL /* new exchange */, MESSAGE_REQUEST);
+		v2_msgid_update_sent(ike, NULL/*no MD; new exchange*/, MESSAGE_REQUEST);
 	}
 	st->st_interface = old_iface; /* restore-old */
 }

@@ -832,7 +832,7 @@ static void send_delete(struct state *st)
 		 */
 		dbg("Message ID: IKE #%lu sender #%lu in %s hacking around record 'n' send",
 		    ike->sa.st_serialno, st->st_serialno, __func__);
-		v2_msgid_update_sent(ike, &ike->sa, NULL/*new exchange*/, MESSAGE_REQUEST);
+		v2_msgid_update_sent(ike, NULL/*no MD; new exchange*/, MESSAGE_REQUEST);
 		st->st_send_delete = DONT_SEND_DELETE;
 		break;
 	}

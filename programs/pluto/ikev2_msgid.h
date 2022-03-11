@@ -102,10 +102,8 @@ bool v2_msgid_request_pending(struct ike_sa *ike);
  * initiators.  It could probably be simpler, but probably only after
  * record 'n' send has been eliminated.
  */
-void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
-			  struct msg_digest *md);
-void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
-			  struct msg_digest *md, enum message_role sending);
+void v2_msgid_update_recv(struct ike_sa *ike, struct msg_digest *md);
+void v2_msgid_update_sent(struct ike_sa *ike, struct msg_digest *md, enum message_role sending);
 
 /*
  * Handle multiple initiators trying to send simultaneously.

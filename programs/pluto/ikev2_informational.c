@@ -194,7 +194,7 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 		dbg_v2_msgid(ike, &ike->sa,
 			     "XXX: in %s() hacking around record 'n' send as calling delete_ike_family() inline",
 			     __func__);
-		v2_msgid_update_sent(ike, &ike->sa, md, MESSAGE_RESPONSE);
+		v2_msgid_update_sent(ike, md, MESSAGE_RESPONSE);
 		/*
 		 * Danger!
 		 *

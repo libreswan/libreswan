@@ -267,22 +267,12 @@ void v2_msgid_cancel_responder(struct ike_sa *ike, const struct msg_digest *md)
 			  &ike->sa, &ike->sa.st_v2_msgid_wip);
 }
 
-void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
-			  struct msg_digest *md)
+void v2_msgid_update_recv(struct ike_sa *ike, struct msg_digest *md)
 {
 	/* save old value, and add shortcut to new */
 	const struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
 	struct v2_msgid_windows *new = &ike->sa.st_v2_msgid_windows;
-
-	/*
-	 * If the receiver is known, save a copy of the old values.
-	 *
-	 * The receiver (CHILD SA) gets lost (deleted) when processing
-	 * an IKE_AUTH response and authentication fails.  When this
-	 * happens all that matters is that the IKE SA is updated.
-	 */
-	const struct v2_msgid_wip old_receiver =
-		receiver != NULL ? receiver->st_v2_msgid_wip : empty_v2_msgid_wip;
+	const struct v2_msgid_wip old_receiver = ike->sa.st_v2_msgid_wip;
 
 	enum message_role receiving = v2_msg_role(md);
 	intmax_t msgid;
@@ -291,36 +281,37 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 
 	switch (receiving) {
 	case MESSAGE_REQUEST:
+	{
 		update_received_story = "updating responder received";
+		/* update responder's last request received */
+		struct v2_msgid_window *responder = &ike->sa.st_v2_msgid_windows.responder;
+		update = responder;
 		/*
 		 * Processing request finished.  Scrub it as wip.
 		 *
-		 * XXX: should this done in update_sent() since it is
-		 * when sending the response that things really
-		 * finish?
+		 * XXX: should this be done in update_sent() since it
+		 * is when sending the response signifying that things
+		 * really finish?
 		 */
 		msgid = md->hdr.isa_msgid; /* zero-extended */
-		if (receiver != NULL) {
-			if (DBGP(DBG_BASE) &&
-			    receiver->st_v2_msgid_windows.responder.recv_wip != msgid) {
-				FAIL_V2_MSGID(ike, receiver,
-					      "windows.responder.recv_wip == %jd(msgid) (was %jd)",
-					      msgid, receiver->st_v2_msgid_windows.responder.recv_wip);
-			}
-			receiver->st_v2_msgid_windows.responder.recv_wip = -1;
-		} else {
-			FAIL_V2_MSGID(ike, NULL, "XXX: message request receiver lost!?!");
+		if (DBGP(DBG_BASE) && responder->recv_wip != msgid) {
+			FAIL_V2_MSGID(ike, &ike->sa,
+				      "windows.responder.recv_wip == %jd(msgid) (was %jd)",
+				      msgid, responder->recv_wip);
 		}
-		/* update responder's last request received */
-		update = &new->responder;
+		responder->recv_wip = -1;
 		break;
+	}
 	case MESSAGE_RESPONSE:
+	{
 		update_received_story = "updating initiator received";
+		/* update initiator's last response received */
+		struct v2_msgid_window *initiator = &ike->sa.st_v2_msgid_windows.initiator;
+		update = initiator;
 		/*
 		 * Since the response has been successfully processed,
-		 * clear WIP.INITIATOR.  This way duplicate
-		 * responses get discarded as there is no receiving
-		 * state.
+		 * clear WIP.INITIATOR.  This way duplicate responses
+		 * get discarded as there is no receiving state.
 		 *
 		 * XXX: Unfortunately the record 'n' send code throws
 		 * a spanner in the works.  It calls update_send()
@@ -328,63 +319,46 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 		 * WIP.INITIATOR is the old MSGID.
 		 */
 		msgid = md->hdr.isa_msgid; /* zero-extended */
-		if (receiver != NULL) {
-			if (old_receiver.initiator > msgid) {
-				/*
-				 * Hack around record 'n' send calling
-				 * update_sent() (setting
-				 * WIP.INITIATOR to the next request)
-				 * midway through processing.
-				 *
-				 * Getting rid of record 'n' send will
-				 * fix this hack.
-				 */
-				dbg_v2_msgid(ike, receiver,
-					     "XXX: receiver.wip.initiator %jd != receiver.msgid %jd - suspect record'n'called update_sent() before update_recv()",
-					     old_receiver.initiator, msgid);
-			} else {
-				if (DBGP(DBG_BASE) && old_receiver.initiator != msgid) {
-					FAIL_V2_MSGID(ike, receiver,
-						      "receiver.wip.initiator == %jd(msgid) (was %jd)",
-						      msgid, old_receiver.initiator);
-				}
-				receiver->st_v2_msgid_wip.initiator = -1;
-			}
-			/* this is what matters */
-			pexpect(receiver->st_v2_msgid_wip.initiator != msgid);
+		if (old_receiver.initiator > msgid) {
 			/*
-			 * clear the retransmits for the old message
+			 * Hack around record 'n' send calling
+			 * update_sent() (setting WIP.INITIATOR to the
+			 * next request) midway through processing.
 			 *
-			 * XXX: Because the IKE_AUTH initiator
-			 * switches states from IKE->CHILD part way
-			 * through, this code can end up clearing the
-			 * child's retransmits when what is needed is
-			 * to clear the IKE SA's retransmits.
+			 * Getting rid of record 'n' send will fix
+			 * this hack.
 			 */
-			if (ike->sa.st_retransmit_event != NULL) {
-				dbg_v2_msgid(ike, receiver,
-					     "clearing EVENT_RETRANSMIT as response received");
-				clear_retransmits(&ike->sa);
-			} else {
-				dbg_v2_msgid(ike, receiver,
-					     "XXX: no EVENT_RETRANSMIT to clear, suspect IKE->CHILD switch");
-			}
+			dbg_v2_msgid(ike, &ike->sa,
+				     "XXX: receiver.wip.initiator %jd != receiver.msgid %jd - suspect record'n'called update_sent() before update_recv()",
+				     old_receiver.initiator, msgid);
 		} else {
-			/*
-			 * For instance, the IKE_AUTH response is
-			 * rejected and the child (which was the
-			 * receiver) is deleted before this code is
-			 * called.
-			 *
-			 * XXX: if the IKE SA is made the receiver
-			 * this problem goes away.
-			 */
-			dbg("Message ID: IKE #%lu XXX: message response receiver lost, probably a deleted child",
-			    ike->sa.st_serialno);
+			if (DBGP(DBG_BASE) && old_receiver.initiator != msgid) {
+				FAIL_V2_MSGID(ike, &ike->sa,
+					      "receiver.wip.initiator == %jd(msgid) (was %jd)",
+					      msgid, old_receiver.initiator);
+			}
+			ike->sa.st_v2_msgid_wip.initiator = -1;
 		}
-		/* update initiator's last response received */
-		update = &new->initiator;
+		/* this is what matters */
+		pexpect(ike->sa.st_v2_msgid_wip.initiator != msgid);
+		/*
+		 * Clear the retransmits for the old message
+		 *
+		 * XXX: Because the IKE_AUTH initiator switches states
+		 * from IKE->CHILD part way through, this code can end
+		 * up clearing the child's retransmits when what is
+		 * needed is to clear the IKE SA's retransmits.
+		 */
+		if (ike->sa.st_retransmit_event != NULL) {
+			dbg_v2_msgid(ike, &ike->sa,
+				     "clearing EVENT_RETRANSMIT as response received");
+			clear_retransmits(&ike->sa);
+		} else {
+			dbg_v2_msgid(ike, &ike->sa,
+				     "XXX: no EVENT_RETRANSMIT to clear, suspect IKE->CHILD switch");
+		}
 		break;
+	}
 	case NO_MESSAGE:
 		dbg("Message ID: IKE #%lu skipping update_recv as MD is fake",
 		    ike->sa.st_serialno);
@@ -398,15 +372,14 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct state *receiver,
 	new->last_recv = update->last_recv = mononow(); /* not strictly correct */
 
 	dbg_msgids_update(update_received_story, receiving, msgid,
-			  ike, &old, receiver, &old_receiver);
+			  ike, &old, &ike->sa, &old_receiver);
 }
 
-void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
-			  struct msg_digest *md, enum message_role sending)
+void v2_msgid_update_sent(struct ike_sa *ike, struct msg_digest *md, enum message_role sending)
 {
 	struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
 	struct v2_msgid_windows *new = &ike->sa.st_v2_msgid_windows;
-	struct v2_msgid_wip old_sender = sender->st_v2_msgid_wip;
+	struct v2_msgid_wip old_sender = ike->sa.st_v2_msgid_wip;
 
 	/* tbd */
 	intmax_t msgid;
@@ -424,7 +397,7 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 		update_sent_story = "updating initiator sent";
 		update = &new->initiator;
 		msgid = update->sent + 1;
-		sender->st_v2_msgid_wip.initiator = msgid;
+		ike->sa.st_v2_msgid_wip.initiator = msgid;
 #if 0
 		/*
 		 * XXX: The record 'n' send code calls update_send()
@@ -438,17 +411,17 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 		}
 #else
 		if (old_sender.initiator != -1) {
-			dbg_v2_msgid(ike, sender,
+			dbg_v2_msgid(ike, &ike->sa,
 				     "XXX: expecting sender.wip.initiator %jd == -1 - suspect record'n'send out-of-order?)",
 				     old_sender.initiator);
 		}
 #endif
 		if (ike->sa.st_retransmit_event == NULL) {
-			dbg_v2_msgid(ike, sender,
+			dbg_v2_msgid(ike, &ike->sa,
 				     "scheduling EVENT_RETRANSMIT");
 			start_retransmits(&ike->sa);
 		} else {
-			dbg_v2_msgid(ike, sender,
+			dbg_v2_msgid(ike, &ike->sa,
 				     "XXX: EVENT_RETRANSMIT already scheduled -- suspect record'n'send");
 		}
 		break;
@@ -469,7 +442,7 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 		msgid = md->hdr.isa_msgid;
 		break;
 	case NO_MESSAGE:
-		dbg_v2_msgid(ike, sender,
+		dbg_v2_msgid(ike, &ike->sa,
 			     "skipping update_send as nothing to send");
 		return;
 	default:
@@ -480,7 +453,7 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct state *sender,
 	new->last_sent = update->last_sent = mononow(); /* close enough */
 
 	dbg_msgids_update(update_sent_story, sending, msgid,
-			  ike, &old, sender, &old_sender);
+			  ike, &old, &ike->sa, &old_sender);
 }
 
 struct v2_msgid_pending {
