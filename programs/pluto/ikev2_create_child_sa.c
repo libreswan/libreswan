@@ -1109,8 +1109,6 @@ stf_status queue_v2_CREATE_CHILD_SA_rekey_ike_request(struct state *larval_ike_s
 	 */
 	struct ike_sa *ike = ike_sa(larval_ike_sa, HERE);
 	struct child_sa *larval_ike = pexpect_child_sa(larval_ike_sa);
-	/* pexpect(ike->sa.st_v2_larval_initiator_sa == NULL); */
-	ike->sa.st_v2_larval_initiator_sa = larval_ike;
 	return queue_v2_CREATE_CHILD_SA_initiator(&ike->sa, ike, larval_ike,
 						  unused_md, local_secret, nonce,
 						  &v2_CREATE_CHILD_SA_rekey_ike_transition);
@@ -1129,6 +1127,8 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 	 * IKE SA and transition to the new state.  The current IKE SA
 	 * will have it's retransmit timer set.
 	 */
+	/* pexpect(ike->sa.st_v2_larval_initiator_sa == NULL); */
+	ike->sa.st_v2_larval_initiator_sa = larval_ike;
 	delete_event(&larval_ike->sa);
 	change_v2_state(&larval_ike->sa);
 
@@ -1272,7 +1272,8 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_1(struct
 				  &larval_ike->sa.st_ike_rekey_spis.initiator);
 	larval_ike->sa.st_ike_rekey_spis.responder = ike_responder_spi(&request_md->sender,
 								       larval_ike->sa.st_logger);
-	submit_dh_shared_secret(&ike->sa, &larval_ike->sa, larval_ike->sa.st_gi/*responder needs initiator KE*/,
+	submit_dh_shared_secret(&ike->sa, &larval_ike->sa,
+				larval_ike->sa.st_gi/*responder needs initiator KE*/,
 				process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2,
 				HERE);
 
@@ -1351,17 +1352,24 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 							 struct msg_digest *response_md)
 {
 	v2_notification_t n;
+	pexpect(ike != NULL);
 	pexpect(larval_ike == NULL);
 	larval_ike = ike->sa.st_v2_larval_initiator_sa;
-	struct state *st = &larval_ike->sa;
-	pexpect(ike != NULL);
+	if (!pexpect(larval_ike != NULL)) {
+		/* XXX: drop everything on the floor */
+		return STF_INTERNAL_ERROR;
+	}
+
+	pexpect(larval_ike->sa.st_establishing_sa == IKE_SA);
 	pexpect(ike->sa.st_serialno == larval_ike->sa.st_clonedfrom); /* not yet emancipated */
-	struct connection *c = st->st_connection;
+	struct connection *c = larval_ike->sa.st_connection;
 
 	/*
-	 * Drive the larval IKE SA.
+	 * Drive the larval IKE SA's state machine.
 	 */
-	const struct v2_state_transition *transition = &larval_ike->sa.st_state->v2.transitions[0];
+	pexpect(larval_ike->sa.st_state->nr_transitions == 1);
+	const struct v2_state_transition *transition =
+		&larval_ike->sa.st_state->v2.transitions[0];
 	pexpect(transition->state == STATE_V2_REKEY_IKE_I1);
 	pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
 	larval_ike->sa.st_v2_transition = transition;
@@ -1396,7 +1404,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 	if (n != v2N_NOTHING_WRONG) {
 		dbg("failed to accept IKE SA, REKEY, response, in process_v2_CREATE_CHILD_SA_rekey_ike_response");
 		delete_state(&larval_ike->sa);
-		ike->sa.st_v2_larval_initiator_sa = NULL;
+		ike->sa.st_v2_larval_initiator_sa = larval_ike = NULL;
 		return STF_OK; /* IKE */
 	}
 
@@ -1457,6 +1465,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1(struc
 	}
 
 	pexpect(larval_ike->sa.st_sa_role == SA_INITIATOR);
+	pexpect(larval_ike->sa.st_establishing_sa == IKE_SA);
 	pexpect(larval_ike->sa.st_state->kind == STATE_V2_REKEY_IKE_I1);
 	pexpect(v2_msg_role(response_md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
 	dbg("%s() for #%lu %s",
@@ -1521,7 +1530,14 @@ stf_status process_v2_CREATE_CHILD_SA_failure_response(struct ike_sa *ike,
 						       struct msg_digest *md UNUSED)
 {
 	passert(ike != NULL);
-	passert(child != NULL);
+
+	if (child == NULL) {
+		child = ike->sa.st_v2_larval_initiator_sa;
+	}
+	if (!pexpect(child != NULL)) {
+		return STF_INTERNAL_ERROR;
+	}
+
         pstat_sa_failed(&child->sa, REASON_TRAFFIC_SELECTORS_FAILED);
 
 	for (struct payload_digest *ntfy = md->chain[ISAKMP_NEXT_v2N]; ntfy != NULL; ntfy = ntfy->next) {
