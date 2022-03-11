@@ -1181,7 +1181,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 		return v2N_NOTHING_WRONG;
 	}
 
-	struct child_sa *child = ike->sa.st_v2_larval_initiator_sa;
+	struct child_sa *child = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
 	if (child == NULL) {
 		/*
 		 * Did the responder send Child SA payloads this end
@@ -1225,7 +1225,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 			    pri_connection(child->sa.st_connection, &cb));
 			unpend(ike, child->sa.st_connection);
 			delete_state(&child->sa);
-			ike->sa.st_v2_larval_initiator_sa = child = NULL;
+			ike->sa.st_v2_msgid_windows.initiator.wip_sa = child = NULL;
 			/* handled */
 			return v2N_NOTHING_WRONG;
 		}

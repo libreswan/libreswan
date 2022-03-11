@@ -35,10 +35,6 @@ enum message_role;
  * An additional bonus is that the old v2_INVALID_MSGID ((uint32_t)-1)
  * will not match -1 - cross checking code should only compare valid
  * MSGIDs.
- *
- * While .PENDING - the list of states waiting for an open window - is
- * probably only used by the initiator code, store it in the window so
- * that struct contains everything.
  */
 
 struct v2_msgid_window {
@@ -46,9 +42,16 @@ struct v2_msgid_window {
 	monotime_t last_recv;  /* received a message */
 	intmax_t sent;
 	intmax_t recv;
-	unsigned recv_frags;	/* number of fragments making up message */
+	unsigned recv_frags;	/* number of fragments making up incoming message */
 	intmax_t recv_wip;
-	struct v2_msgid_pending *pending;
+	/*
+	 * The SA being worked on by the exchange.
+	 *
+	 * For instance, the larval Child SA being established by an
+	 * IKE_AUTH; larval IKE or Child SA being established or
+	 * rekeyd by a CREATE_CHILD_SA exchange.
+	 */
+	struct child_sa *wip_sa;
 };
 
 struct v2_msgid_windows {
@@ -56,6 +59,7 @@ struct v2_msgid_windows {
 	monotime_t last_recv;  /* received a message */
 	struct v2_msgid_window initiator;
 	struct v2_msgid_window responder;
+	struct v2_msgid_pending *pending_requests;
 };
 
 /*

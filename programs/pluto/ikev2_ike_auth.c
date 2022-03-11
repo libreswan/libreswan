@@ -398,7 +398,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 							    STATE_V2_IKE_AUTH_CHILD_I0,
 							    child_whackfd);
 		fd_delref(&child_whackfd);
-		ike->sa.st_v2_larval_initiator_sa = child;
+		ike->sa.st_v2_msgid_windows.initiator.wip_sa = child;
 
 		/*
 		 * XXX because the early child state ends up with the
@@ -1466,8 +1466,8 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		 * v2N_NOTHING_WRONG.  After all, problem solved.
 		 */
 		llog_sa(RC_LOG_SERIOUS, ike, "IKE SA established but initiator rejected Child SA response");
-		struct child_sa *larval_child = ike->sa.st_v2_larval_initiator_sa;
-		ike->sa.st_v2_larval_initiator_sa = NULL;
+		struct child_sa *larval_child = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
+		ike->sa.st_v2_msgid_windows.initiator.wip_sa = NULL;
 		passert(larval_child != NULL);
 		/*
 		 * Needed to un-plug the pending queue.  Without this
@@ -1514,7 +1514,7 @@ stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 						struct child_sa *unused_child UNUSED,
 						struct msg_digest *md)
 {
-	struct child_sa *child = ike->sa.st_v2_larval_initiator_sa;
+	struct child_sa *child = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
 
 	/*
 	 * Mark IKE SA as failing.
