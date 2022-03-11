@@ -2180,11 +2180,11 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 		return;
 	}
 
-	process_protected_v2_message(ike, &ike->sa, protected_md);
+	process_protected_v2_message(ike, protected_md);
 	md_delref(&protected_md);
 }
 
-void process_protected_v2_message(struct ike_sa *ike, struct state *st, struct msg_digest *md)
+void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 {
 	const enum isakmp_xchg_type ix = md->hdr.isa_xchg;
 
@@ -2233,7 +2233,8 @@ void process_protected_v2_message(struct ike_sa *ike, struct state *st, struct m
 
 	bool secured_payload_failed = false;
 	const struct v2_state_transition *svm =
-		find_v2_state_transition(st->st_logger, st->st_state, md, &secured_payload_failed);
+		find_v2_state_transition(ike->sa.st_logger, ike->sa.st_state, md,
+					 &secured_payload_failed);
 
 	/* no useful state microcode entry? */
 	if (svm == NULL) {
@@ -2264,14 +2265,13 @@ void process_protected_v2_message(struct ike_sa *ike, struct state *st, struct m
 			update_ike_endpoints(ike, md);
 	}
 
-	v2_dispatch(ike, st, md, svm);
+	v2_dispatch(ike, md, svm);
 }
 
-void v2_dispatch(struct ike_sa *ike, struct state *st,
-		 struct msg_digest *md,
+void v2_dispatch(struct ike_sa *ike, struct msg_digest *md,
 		 const struct v2_state_transition *svm)
 {
-	set_v2_transition(st, svm, HERE);
+	set_v2_transition(&ike->sa, svm, HERE);
 
 	/*
 	 * For the responder, update the work-in-progress Message ID
@@ -2292,29 +2292,27 @@ void v2_dispatch(struct ike_sa *ike, struct state *st,
 	dbg("calling processor %s", svm->story);
 
 	/*
-	 * XXX: for now pass in the possibly NULL child; suspect a
-	 * better model is to drop the child and instead have the IKE
-	 * SA run a nested state machine for the child.
+	 * XXX: for now pass in NULL for the child.
 	 *
-	 * For instance, when a CREATE_CHILD_SA request arrives, pass
-	 * that to the IKE SA and then let it do all the create child
-	 * magic.
+	 * Should it be passing in the Message ID window that matched
+	 * the message (assuming there is ever more than one Message
+	 * ID window)?  For something like CREATE_CHILD_SA, it
+	 * contains contain the work-in-progress Child SA.
 	 */
-	so_serial_t old_st = st->st_serialno;
-
-	statetime_t start = statetime_start(st);
-	struct child_sa *child = IS_CHILD_SA(st) ? pexpect_child_sa(st) : NULL;
-	/* danger: st may not be valid */
-	stf_status e = svm->processor(ike, child, md);
+	so_serial_t old_ike = ike->sa.st_serialno;
+	statetime_t start = statetime_start(&ike->sa);
+	stf_status e = svm->processor(ike, NULL/*child*/, md);
+	/* danger: IKE may not be valid */
 
 	if (e == STF_SKIP_COMPLETE_STATE_TRANSITION) {
 		/*
-		 * Danger! Processor did something dodgy like free ST!
+		 * Danger! Processor did something dodgy like free the
+		 * IKE SA!
 		 */
 		dbg("processor '%s' for #%lu suppresed complete st_v2_transition",
-		    svm->story, old_st);
+		    svm->story, old_ike);
 	} else {
-		complete_v2_state_transition(st, md, e);
+		complete_v2_state_transition(&ike->sa, md, e);
 	}
 
 	statetime_stop(&start, "processing: %s in %s()", svm->story, __func__);

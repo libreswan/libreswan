@@ -381,7 +381,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		if (md->fake_clone) {
 			log_state(RC_LOG, &ike->sa, "IMPAIR: processing a fake (cloned) message");
 		}
-		v2_dispatch(ike, &ike->sa, md, transition);
+		v2_dispatch(ike, md, transition);
 		statetime_stop(&start, "%s()", __func__);
 		return;
 	}
@@ -482,7 +482,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		}
 
 		statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
-		v2_dispatch(ike, &ike->sa, md, transition);
+		v2_dispatch(ike, md, transition);
 		statetime_stop(&start, "%s()", __func__);
 		return;
 	}
@@ -1597,7 +1597,7 @@ static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
 		md = reassemble_v2_incoming_fragments(frags);
 	}
 
-	process_protected_v2_message(ike, &ike->sa, md);
+	process_protected_v2_message(ike, md);
 	md_delref(&md);
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }

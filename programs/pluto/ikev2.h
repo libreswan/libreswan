@@ -29,8 +29,7 @@ typedef stf_status crypto_transition_fn(struct state *st, struct msg_digest *md,
 
 void ikev2_process_packet(struct msg_digest *mdp);
 
-void process_protected_v2_message(struct ike_sa *ike, struct state *st,
-				  struct msg_digest *md);
+void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md);
 
 typedef stf_status ikev2_state_transition_fn(struct ike_sa *ike,
 					     struct child_sa *child, /* could be NULL */
@@ -143,8 +142,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 					     pb_stream *in_pbs,
 					     enum next_payload_types_ikev2 np);
 
-void v2_dispatch(struct ike_sa *ike, struct state *st,
-		 struct msg_digest *md,
+void v2_dispatch(struct ike_sa *ike, struct msg_digest *md,
 		 const struct v2_state_transition *transition);
 
 bool accept_v2_nonce(struct logger *logger, struct msg_digest *md,
