@@ -414,27 +414,27 @@ struct ike_sa *ike_sa(struct state *st, where_t where)
 	return (struct ike_sa*) st;
 }
 
-struct ike_sa *pexpect_ike_sa(struct state *st)
+struct ike_sa *pexpect_ike_sa_where(struct state *st, where_t where)
 {
 	if (st == NULL) {
 		return NULL;
 	}
 	if (!IS_IKE_SA(st)) {
-		pexpect_fail(st->st_logger, HERE,
+		pexpect_fail(st->st_logger, where,
 			     "state #%lu is not an IKE SA", st->st_serialno);
 		return NULL; /* kaboom */
 	}
 	return (struct ike_sa*) st;
 }
 
-struct child_sa *pexpect_child_sa(struct state *st)
+struct child_sa *pexpect_child_sa_where(struct state *st, where_t where)
 {
 	if (st == NULL) {
 		return NULL;
 	}
 	if (!IS_CHILD_SA(st)) {
 		/* In IKEv2 a re-keying IKE SA starts life as a child */
-		pexpect_fail(st->st_logger, HERE,
+		pexpect_fail(st->st_logger, where,
 			     "state #%lu is not a CHILD", st->st_serialno);
 		return NULL; /* kaboom */
 	}

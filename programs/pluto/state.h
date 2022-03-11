@@ -790,9 +790,12 @@ struct state {
 
 struct ike_sa { struct state sa; };
 struct ike_sa *ike_sa(struct state *st, where_t where);
-struct ike_sa *pexpect_ike_sa(struct state *st);
+struct ike_sa *pexpect_ike_sa_where(struct state *st, where_t where);
+#define pexpect_ike_sa(ST) pexpect_ike_sa_where(ST, HERE)
+
 struct child_sa { struct state sa; };
-struct child_sa *pexpect_child_sa(struct state *st);
+struct child_sa *pexpect_child_sa_where(struct state *st, where_t where);
+#define pexpect_child_sa(ST) pexpect_child_sa_where(ST, HERE)
 
 /* global variables */
 
