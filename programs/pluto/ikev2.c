@@ -1313,47 +1313,6 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 }
 
 /*
- * Find the SA (IKE or CHILD), within IKE's family, that is initiated
- * or is responding to Message ID.
- *
- * XXX: There's overlap between this and the is_duplicate_*() code.
- * For instance, there's little point in looking for a state when the
- * IKE SA's window shows it too old (at least if we ignore
- * record'n'send bugs).
- */
-
-static struct state *find_v2_sa_by_initiator_wip(struct ike_sa *ike, const msgid_t msgid)
-{
-	/*
-	 * XXX: Would a linked list of CHILD SAs work better, would
-	 * mean reference counting?  Should this also check that MSGID
-	 * is within the IKE SA's window?
-	 */
-	struct state *st;
-	if (ike->sa.st_v2_msgid_wip.initiator == msgid) {
-		/* short-cut */
-		st = &ike->sa;
-	} else {
-		struct state_filter sf = {
-			.where = HERE,
-			.ike_version = IKEv2,
-			.ike_spis = &ike->sa.st_ike_spis,
-		};
-		st = NULL;
-		while (next_state_old2new(&sf)) {
-			if (sf.st->st_v2_msgid_wip.initiator == msgid) {
-				st = sf.st;
-				break;
-			}
-		}
-	}
-	pexpect(st == NULL ||
-		st->st_clonedfrom == SOS_NOBODY ||
-		st->st_clonedfrom == ike->sa.st_serialno);
-	return st;
-}
-
-/*
  * Is this a duplicate of a previous exchange request?
  *
  * - the Message ID is old; drop the message as the exchange is old
@@ -1673,24 +1632,19 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
  * A duplicate response could be:
  *
  * - for an old request where there's no longer an initiator waiting,
- *   and can be dropped
+ *   it can be dropped
  *
  * - the initiator is busy, presumably because this response is a
  *   duplicate and the initiator is waiting on crypto to complete so
  *   it can decrypt the response
  */
 static bool is_duplicate_response(struct ike_sa *ike,
-				  struct state *initiator,
 				  struct msg_digest *md)
 {
 	passert(v2_msg_role(md) == MESSAGE_RESPONSE);
 	intmax_t msgid = md->hdr.isa_msgid;
 
-	/* only a true initiator */
-	pexpect(initiator == NULL ||
-		initiator->st_v2_msgid_wip.initiator == msgid);
-
-	/* the sliding window is really small?!? */
+	/* the sliding window is really small!?! */
 	pexpect(ike->sa.st_v2_msgid_windows.responder.recv ==
 		ike->sa.st_v2_msgid_windows.responder.sent);
 
@@ -1740,26 +1694,19 @@ static bool is_duplicate_response(struct ike_sa *ike,
 		 * to-old so doesn't expect there to be a matching
 		 * initiator, arrg
 		 */
-		if (initiator != NULL) {
-			dbg_v2_msgid(ike, initiator, "XXX: expecting initiator==NULL - suspect record'n'send with an out-of-order wrong packet response; discarding packet");
-		} else {
-			dbg_v2_msgid(ike, initiator, "already processed response %jd (%s); discarding packet",
-				     msgid, enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg));
-		}
+		dbg_v2_msgid(ike, &ike->sa, "already processed response %jd (%s); discarding packet",
+			     msgid, enum_name_short(&ikev2_exchange_names, md->hdr.isa_xchg));
 		return true;
 	}
 
-	if (initiator == NULL) {
+	if (ike->sa.st_v2_msgid_wip.initiator != msgid) {
 		/*
 		 * While there's an IKE SA matching the IKE SPIs,
 		 * there's no corresponding initiator for the message.
-		 *
-		 * XXX: rate_log() sends to whack which, while making
-		 * sense, but churns the test output.
 		 */
-		log_state(RC_LOG, &ike->sa,
-			  "%s message response with Message ID %jd has no matching SA",
-			  enum_name(&ikev2_exchange_names, md->hdr.isa_xchg), msgid);
+		llog_sa(RC_LOG, ike,
+			"%s message response with Message ID %jd has no matching SA",
+			enum_name(&ikev2_exchange_names, md->hdr.isa_xchg), msgid);
 		return true;
 	}
 
@@ -1770,10 +1717,10 @@ static bool is_duplicate_response(struct ike_sa *ike,
 
 	if (msgid > ike->sa.st_v2_msgid_windows.initiator.sent) {
 		/*
-		 * There was an initiator waiting for a message that,
-		 * according to the IKE SA, has yet to be sent?!?
+		 * The IKE SA is waiting for a message that, according
+		 * to the IKE SA, has yet to be sent?!?
 		 */
-		FAIL_V2_MSGID(ike, initiator,
+		FAIL_V2_MSGID(ike, &ike->sa,
 			      "dropping response with Message ID %jd which is from the future - last request sent was %jd",
 			      msgid, ike->sa.st_v2_msgid_windows.initiator.sent);
 		return true;
@@ -1789,8 +1736,11 @@ static bool is_duplicate_response(struct ike_sa *ike,
 	 * be moved.
 	 *
 	 * XXX: Is there a better way to handle this?
+	 *
+	 * XXX: Is this too strict?  Could an in-progress request make
+	 * things look busy?
 	 */
-	if (verbose_state_busy(initiator)) {
+	if (verbose_state_busy(&ike->sa)) {
 		return true;
 	}
 
@@ -2059,7 +2009,6 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	/*
 	 * Deal with duplicate messages and busy states.
 	 */
-	struct state *st; /* set below */
 	switch (v2_msg_role(md)) {
 	case MESSAGE_REQUEST:
 		/*
@@ -2077,7 +2026,6 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 		if (is_duplicate_request_msgid(ike, md)) {
 			return;
 		}
-		st = &ike->sa;
 		break;
 	case MESSAGE_RESPONSE:
 		/*
@@ -2090,19 +2038,16 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 		 * out if the fragments are complete or need to wait
 		 * longer.
 		 */
-		st = find_v2_sa_by_initiator_wip(ike, md->hdr.isa_msgid);
 		if (md->fake_clone) {
 			log_state(RC_LOG, &ike->sa, "IMPAIR: processing a fake (cloned) message");
 		}
-		if (is_duplicate_response(ike, st, md)) {
+		if (is_duplicate_response(ike, md)) {
 			return;
 		}
-		pexpect(st != NULL);
 		break;
 	default:
 		bad_case(v2_msg_role(md));
 	}
-	passert(st != NULL);
 
 	/*
 	 * Is the message protected, or at least looks to be protected
@@ -2162,7 +2107,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 	 * about at most 7 transitions and, in this case, a relatively
 	 * cheap compare (the old code scanned all transitions).
 	 */
-	if (!sniff_v2_state_transition(st->st_logger, st->st_state, md)) {
+	if (!sniff_v2_state_transition(ike->sa.st_logger, ike->sa.st_state, md)) {
 		/* already logged */
 		/* drop packet on the floor */
 		return;
@@ -2235,7 +2180,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *md, struct ike
 		return;
 	}
 
-	process_protected_v2_message(ike, st, protected_md);
+	process_protected_v2_message(ike, &ike->sa, protected_md);
 	md_delref(&protected_md);
 }
 
