@@ -60,8 +60,8 @@ static void jam_ike_window(struct jambuf *buf, const char *what,
 	jam_old_new_intmax(buf, ".sent", old->sent, new->sent);
 	jam_old_new_intmax(buf, ".recv", old->recv, new->recv);
 	jam_old_new_intmax(buf, ".recv_frags", old->recv_frags, new->recv_frags);
-	if (old->recv_wip > -1 || new->recv_wip > -1) {
-		jam_old_new_intmax(buf, ".recv_wip", old->recv_wip, new->recv_wip);
+	if (old->wip > -1 || new->wip > -1) {
+		jam_old_new_intmax(buf, ".wip", old->wip, new->wip);
 	}
 	jam_old_new_monotime(buf, ".last_sent", old->last_sent, new->last_sent);
 	jam_old_new_monotime(buf, ".last_recv", old->last_recv, new->last_recv);
@@ -159,17 +159,13 @@ static const struct v2_msgid_windows empty_v2_msgid_windows = {
 	.initiator = {
 		.sent = -1,
 		.recv = -1,
-		.recv_wip = -1,
+		.wip = -1,
 	},
 	.responder = {
 		.sent = -1,
 		.recv = -1,
-		.recv_wip = -1,
+		.wip = -1,
 	},
-};
-
-static const struct v2_msgid_wip empty_v2_msgid_wip = {
-	.initiator = -1,
 };
 
 void v2_msgid_init_ike(struct ike_sa *ike)
@@ -183,7 +179,6 @@ void v2_msgid_init_ike(struct ike_sa *ike)
 	ike->sa.st_v2_msgid_windows.responder.last_recv = now;
 	ike->sa.st_v2_msgid_windows.initiator.last_sent = now;
 	ike->sa.st_v2_msgid_windows.initiator.last_recv = now;
-	ike->sa.st_v2_msgid_wip = empty_v2_msgid_wip;
 	/* pretend there's a sender */
 	dbg_msgids_update("initializing (IKE SA)", NO_MESSAGE, -1,
 			  ike, &old_windows);
@@ -199,12 +194,12 @@ void v2_msgid_start_responder(struct ike_sa *ike, const struct msg_digest *md)
 	intmax_t msgid = md->hdr.isa_msgid;
 
 	if (DBGP(DBG_BASE) &&
-	    ike->sa.st_v2_msgid_windows.responder.recv_wip != -1) {
+	    ike->sa.st_v2_msgid_windows.responder.wip != -1) {
 		fail_v2_msgid(ike,
-			      "ike->sa.st_v2_msgid_windows.responder.recv_wip == -1 (was %jd)",
-			      ike->sa.st_v2_msgid_windows.responder.recv_wip);
+			      "ike->sa.st_v2_msgid_windows.responder.wip == -1 (was %jd)",
+			      ike->sa.st_v2_msgid_windows.responder.wip);
 	}
-	ike->sa.st_v2_msgid_windows.responder.recv_wip = msgid;
+	ike->sa.st_v2_msgid_windows.responder.wip = msgid;
 	dbg_msgids_update("responder starting", role, msgid,
 			  ike, &ike->sa.st_v2_msgid_windows);
 }
@@ -223,12 +218,12 @@ void v2_msgid_cancel_responder(struct ike_sa *ike, const struct msg_digest *md)
 	 * start_responder() but then STF_IGNORE tries to clear it.
 	 */
 	if (DBGP(DBG_BASE) &&
-	    ike->sa.st_v2_msgid_windows.responder.recv_wip != msgid) {
+	    ike->sa.st_v2_msgid_windows.responder.wip != msgid) {
 		fail_v2_msgid(ike,
-			      "ike->sa.st_v2_msgid_windows.responder.recv_wip == %jd(msgid) (was %jd)",
-			      msgid, ike->sa.st_v2_msgid_windows.responder.recv_wip);
+			      "ike->sa.st_v2_msgid_windows.responder.wip == %jd(msgid) (was %jd)",
+			      msgid, ike->sa.st_v2_msgid_windows.responder.wip);
 	}
-	ike->sa.st_v2_msgid_windows.responder.recv_wip = -1;
+	ike->sa.st_v2_msgid_windows.responder.wip = -1;
 	dbg_msgids_update("cancelling responder", msg_role, msgid,
 			  ike, &ike->sa.st_v2_msgid_windows);
 }
@@ -238,7 +233,6 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct msg_digest *md)
 	/* save old value, and add shortcut to new */
 	const struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
 	struct v2_msgid_windows *new = &ike->sa.st_v2_msgid_windows;
-	const struct v2_msgid_wip old_receiver = ike->sa.st_v2_msgid_wip;
 
 	enum message_role receiving = v2_msg_role(md);
 	intmax_t msgid;
@@ -260,12 +254,12 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct msg_digest *md)
 		 * really finish?
 		 */
 		msgid = md->hdr.isa_msgid; /* zero-extended */
-		if (DBGP(DBG_BASE) && responder->recv_wip != msgid) {
+		if (DBGP(DBG_BASE) && responder->wip != msgid) {
 			fail_v2_msgid(ike,
-				      "windows.responder.recv_wip == %jd(msgid) (was %jd)",
-				      msgid, responder->recv_wip);
+				      "windows.responder.wip == %jd(msgid) (was %jd)",
+				      msgid, responder->wip);
 		}
-		responder->recv_wip = -1;
+		responder->wip = -1;
 		break;
 	}
 	case MESSAGE_RESPONSE:
@@ -285,7 +279,7 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct msg_digest *md)
 		 * WIP.INITIATOR is the old MSGID.
 		 */
 		msgid = md->hdr.isa_msgid; /* zero-extended */
-		if (old_receiver.initiator > msgid) {
+		if (old.initiator.wip > msgid) {
 			/*
 			 * Hack around record 'n' send calling
 			 * update_sent() (setting WIP.INITIATOR to the
@@ -296,17 +290,17 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct msg_digest *md)
 			 */
 			dbg_v2_msgid(ike,
 				     "XXX: receiver.wip.initiator %jd != receiver.msgid %jd - suspect record'n'called update_sent() before update_recv()",
-				     old_receiver.initiator, msgid);
+				     old.initiator.wip, msgid);
 		} else {
-			if (DBGP(DBG_BASE) && old_receiver.initiator != msgid) {
+			if (DBGP(DBG_BASE) && old.initiator.wip != msgid) {
 				fail_v2_msgid(ike,
 					      "receiver.wip.initiator == %jd(msgid) (was %jd)",
-					      msgid, old_receiver.initiator);
+					      msgid, old.initiator.wip);
 			}
-			ike->sa.st_v2_msgid_wip.initiator = -1;
+			new->initiator.wip = -1;
 		}
 		/* this is what matters */
-		pexpect(ike->sa.st_v2_msgid_wip.initiator != msgid);
+		pexpect(new->initiator.wip != msgid);
 		/*
 		 * Clear the retransmits for the old message
 		 *
@@ -342,7 +336,6 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct msg_digest *md, enum messag
 {
 	struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
 	struct v2_msgid_windows *new = &ike->sa.st_v2_msgid_windows;
-	struct v2_msgid_wip old_sender = ike->sa.st_v2_msgid_wip;
 
 	/* tbd */
 	intmax_t msgid;
@@ -360,23 +353,23 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct msg_digest *md, enum messag
 		update_sent_story = "updating initiator sent";
 		update = &new->initiator;
 		msgid = update->sent + 1;
-		ike->sa.st_v2_msgid_wip.initiator = msgid;
+		new->initiator.wip = msgid;
 #if 0
 		/*
 		 * XXX: The record 'n' send code calls update_send()
 		 * before update_recv() breaking WIP.INITIATOR's
 		 * expected sequence OLD-MSGID -> -1 -> NEW-MSGID.
 		 */
-		if (DBGP(DBG_BASE) && old_sender.initiator != -1) {
+		if (DBGP(DBG_BASE) && old.initiator.wip != -1) {
 			fail_v2_msgid(ike,
 				      "sender.wip.initiator == -1 (was %jd)",
-				      old_sender.initiator);
+				      old.initiator.wip);
 		}
 #else
-		if (old_sender.initiator != -1) {
+		if (old.initiator.wip != -1) {
 			dbg_v2_msgid(ike,
 				     "XXX: expecting sender.wip.initiator %jd == -1 - suspect record'n'send out-of-order?)",
-				     old_sender.initiator);
+				     old.initiator.wip);
 		}
 #endif
 		if (ike->sa.st_retransmit_event == NULL) {

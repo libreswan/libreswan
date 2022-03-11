@@ -447,7 +447,6 @@ struct state {
 
 	enum sa_role st_sa_role;			/* who initiated the SA */
 
-	struct v2_msgid_wip st_v2_msgid_wip;		/* IKE and CHILD */
 	struct v2_msgid_windows st_v2_msgid_windows;	/* IKE */
 
 	/* message ID sequence for things we send (as initiator) */

@@ -449,7 +449,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		if (ike->sa.st_state->kind != STATE_V2_PARENT_I1 ||
 		    ike->sa.st_v2_msgid_windows.initiator.sent != 0 ||
 		    ike->sa.st_v2_msgid_windows.initiator.recv != -1 ||
-		    ike->sa.st_v2_msgid_wip.initiator != 0) {
+		    ike->sa.st_v2_msgid_windows.initiator.wip != 0) {
 			/*
 			 * This doesn't seem right; drop the
 			 * packet.

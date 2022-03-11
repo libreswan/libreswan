@@ -43,7 +43,18 @@ struct v2_msgid_window {
 	intmax_t sent;
 	intmax_t recv;
 	unsigned recv_frags;	/* number of fragments making up incoming message */
-	intmax_t recv_wip;
+	/*
+	 * The Message ID for the IKE SA's's in-progress exchange(s).
+	 * If no exchange is in progress then its value is -1.
+	 *
+	 * The INITIATOR's Message ID is valid from the time the
+	 * request is sent (possibly earlier?) through to when the
+	 * response is received.
+	 *
+	 * The RESPONDER Message ID is valid for the period that the
+	 * state is processing the request.
+	 */
+	intmax_t wip;
 	/*
 	 * The SA being worked on by the exchange.
 	 *
@@ -60,24 +71,6 @@ struct v2_msgid_windows {
 	struct v2_msgid_window initiator;
 	struct v2_msgid_window responder;
 	struct v2_msgid_pending *pending_requests;
-};
-
-/*
- * The Message ID for the state's in-progress exchanges.  If no
- * exchange is in progress then its value is -1.
- *
- * The INITIATOR Message ID is valid from the time the request is sent
- * (earlier?) through to when the response is received.  Lookups then
- * use this to route the response to the state waiting for it.
- *
- * The RESPONDER Message ID is valid for the period that the state is
- * processing the request.
- *
- * XXX: should the also be {start,cancel}_initiator()?
- */
-
-struct v2_msgid_wip {
-	intmax_t initiator;
 };
 
 void v2_msgid_init_ike(struct ike_sa *ike);

@@ -1540,7 +1540,7 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 	 * - the message successfully decrypts
 	 *
 	 */
-	if (ike->sa.st_v2_msgid_windows.responder.recv_wip == msgid) {
+	if (ike->sa.st_v2_msgid_windows.responder.wip == msgid) {
 		/* this generates the log message */
 		pexpect(verbose_state_busy(&ike->sa));
 		return true;
@@ -1699,7 +1699,7 @@ static bool is_duplicate_response(struct ike_sa *ike,
 		return true;
 	}
 
-	if (ike->sa.st_v2_msgid_wip.initiator != msgid) {
+	if (ike->sa.st_v2_msgid_windows.initiator.wip != msgid) {
 		/*
 		 * While there's an IKE SA matching the IKE SPIs,
 		 * there's no corresponding initiator for the message.
