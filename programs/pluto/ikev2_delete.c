@@ -1,6 +1,6 @@
-/* IKEv2 DELETE Exchange
+/* IKEv2 DELETE Exchange, for Libreswan
  *
- * Copyright (C) 2020 Andrew Cagney
+ * Copyright (C) 2020-2022 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -88,9 +88,9 @@ bool record_v2_delete(struct ike_sa *ike, struct state *st)
 	return true;
 }
 
-static stf_status send_v2_delete_ike_request(struct ike_sa *ike,
-					     struct child_sa *unused_child UNUSED,
-					     struct msg_digest *md)
+static stf_status initiate_v2_delete_ike_request(struct ike_sa *ike,
+						 struct child_sa *unused_child UNUSED,
+						 struct msg_digest *md)
 {
 	pexpect(md == NULL);
 	if (!record_v2_delete(ike, &ike->sa)) {
@@ -101,9 +101,9 @@ static stf_status send_v2_delete_ike_request(struct ike_sa *ike,
 	return STF_OK;
 }
 
-static stf_status send_v2_delete_child_request(struct ike_sa *ike,
-					       struct child_sa *child,
-					       struct msg_digest *md)
+static stf_status initiate_v2_delete_child_request(struct ike_sa *ike,
+						   struct child_sa *child,
+						   struct msg_digest *md)
 {
 	pexpect(md == NULL);
 	pexpect(child != NULL);
@@ -150,7 +150,7 @@ static const struct v2_state_transition v2_delete_ike = {
 	.next_state = STATE_V2_IKE_SA_DELETE,
 	.exchange = ISAKMP_v2_INFORMATIONAL,
 	.send_role = MESSAGE_REQUEST,
-	.processor = send_v2_delete_ike_request,
+	.processor = initiate_v2_delete_ike_request,
 	.llog_success = ldbg_v2_success,
 	.timeout_event =  EVENT_RETAIN,
 };
@@ -161,7 +161,7 @@ static const struct v2_state_transition v2_delete_child = {
 	.next_state = STATE_V2_ESTABLISHED_IKE_SA,
 	.exchange = ISAKMP_v2_INFORMATIONAL,
 	.send_role = MESSAGE_REQUEST,
-	.processor = send_v2_delete_child_request,
+	.processor = initiate_v2_delete_child_request,
 	.llog_success = ldbg_v2_success,
 	.timeout_event =  EVENT_RETAIN,
 };
