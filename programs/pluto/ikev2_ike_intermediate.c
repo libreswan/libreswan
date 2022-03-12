@@ -432,7 +432,7 @@ stf_status process_v2_IKE_INTERMEDIATE_response_continue(struct state *st, struc
 		 * notification is kind of useless.
 		 */
 		pstat_sa_failed(&ike->sa, REASON_CRYPTO_FAILED);
-		return STF_FAIL;
+		return STF_FATAL;
 	}
 
 	/*
