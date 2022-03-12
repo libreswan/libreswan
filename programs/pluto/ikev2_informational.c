@@ -140,14 +140,30 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 
 	if (md->chain[ISAKMP_NEXT_v2N] != NULL) {
 		if (!process_v2N_requests(ike, md, response.pbs)) {
-			return STF_FAIL + v2N_INVALID_SYNTAX;
+			record_v2N_response(ike->sa.st_logger, ike, md,
+					    v2N_INVALID_SYNTAX, NULL, ENCRYPTED_PAYLOAD);
+			/*
+			 * STF_FATAL will send the recorded message
+			 * and then kill the IKE SA.  Should it
+			 * instead zombify the IKE SA so that
+			 * retransmits get a response?
+			 */
+			return STF_FATAL;
 		}
 	}
 
 	bool del_ike = false;
 	if (md->chain[ISAKMP_NEXT_v2D] != NULL) {
 		if (!process_v2D_requests(&del_ike, ike, md, response.pbs)) {
-			return STF_FAIL + v2N_INVALID_SYNTAX;
+			record_v2N_response(ike->sa.st_logger, ike, md,
+					    v2N_INVALID_SYNTAX, NULL, ENCRYPTED_PAYLOAD);
+			/*
+			 * STF_FATAL will send the recorded message
+			 * and then kill the IKE SA.  Should it
+			 * instead zombify the IKE SA so that
+			 * retransmits get a response?
+			 */
+ 			return STF_FATAL;
 		}
 	}
 
