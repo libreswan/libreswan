@@ -1055,6 +1055,10 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 					 ike, larval_child, response_md,
 					 larval_child->sa.st_v2_create_child_sa_proposals,
 					 /*expect-accepted-proposal?*/true);
+	if (v2_notification_fatal(n)) {
+		return STF_FATAL; /* IKE */
+	}
+
 	if (n != v2N_NOTHING_WRONG) {
 		/*
 		 * Kill the child, but not the IKE SA?
@@ -1062,7 +1066,9 @@ stf_status process_v2_CREATE_CHILD_SA_child_response(struct ike_sa *ike,
 		 * XXX: initiator; need to initiate a delete
 		 * exchange.
 		 */
-		return v2_notification_fatal(n) ? STF_FATAL : STF_FAIL;
+		delete_state(&larval_child->sa);
+		ike->sa.st_v2_msgid_windows.initiator.wip_sa = larval_child = NULL;
+		return STF_OK; /* IKE */
 	}
 
 	/*
