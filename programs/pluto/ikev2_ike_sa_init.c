@@ -849,7 +849,12 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 		pexpect(ike->sa.st_sa_role == SA_RESPONDER);
 		record_v2N_response(ike->sa.st_logger, ike, md,
 				    n, NULL, UNENCRYPTED_PAYLOAD);
-		return v2_notification_fatal(n) ? STF_FATAL : STF_FAIL;
+		/*
+		 * STF_FATAL will send the recorded message and then
+		 * kill the IKE SA.  Should it instead zombify the IKE
+		 * SA so that retransmits get a response?
+		 */
+		return STF_FATAL;
 	}
 
 	if (DBGP(DBG_BASE)) {
@@ -877,7 +882,12 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 				       ike->sa.st_oakley.ta_dh,
 				       UNENCRYPTED_PAYLOAD)) {
 		/* pexpect(reply-recorded) */
-		return STF_FAIL;
+		/*
+		 * STF_FATAL will send the recorded message and then
+		 * kill the IKE SA.  Should it instead zombify the IKE
+		 * SA so that retransmits get a response?
+		 */
+		return STF_FATAL;
 	}
 
 	/*
@@ -887,6 +897,11 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	if (!unpack_KE(&ike->sa.st_gi, "Gi", ike->sa.st_oakley.ta_dh,
 		       md->chain[ISAKMP_NEXT_v2KE], ike->sa.st_logger)) {
 		send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);
+		/*
+		 * STF_FATAL will send the recorded message and then
+		 * kill the IKE SA.  Should it instead zombify the IKE
+		 * SA so that retransmits get a response?
+		 */
 		return STF_FATAL;
 	}
 
@@ -919,8 +934,16 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 
 	if (md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS] != NULL) {
 		if (impair.ignore_hash_notify_response) {
-			log_state(RC_LOG, &ike->sa, "IMPAIR: ignoring the hash notify in IKE_SA_INIT request");
+			llog_sa(RC_LOG, ike, "IMPAIR: ignoring the hash notify in IKE_SA_INIT request");
 		} else if (!negotiate_hash_algo_from_notification(&md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS]->pbs, ike)) {
+			record_v2N_response(ike->sa.st_logger, ike, md,
+					    v2N_INVALID_SYNTAX, NULL, UNENCRYPTED_PAYLOAD);
+			/*
+			 * STF_FATAL will send the recorded message
+			 * and then kill the IKE SA.  Should it
+			 * instead zombify the IKE SA so that
+			 * retransmits get a response?
+			 */
 			return STF_FATAL;
 		}
 		ike->sa.st_seen_hashnotify = true;
@@ -1345,20 +1368,25 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 					     ike_proposals, ike->sa.st_logger);
 		if (n != v2N_NOTHING_WRONG) {
 			dbg("ikev2_parse_parent_sa_body() failed in ikev2_parent_inR1outI2()");
-			return v2_notification_fatal(n) ? STF_FATAL : STF_FAIL; /* initiator; no response */
+			/*
+			 * STF_FATAL will send the code down the retry path.
+			 */
+			return STF_FATAL; /* initiator; no response */
 		}
 
 		if (!ikev2_proposal_to_trans_attrs(ike->sa.st_v2_accepted_proposal,
 						   &ike->sa.st_oakley, ike->sa.st_logger)) {
-			log_state(RC_LOG_SERIOUS, &ike->sa,
-				  "IKE initiator proposed an unsupported algorithm");
+			llog_sa(RC_LOG_SERIOUS, ike,
+				"IKE initiator proposed an unsupported algorithm");
 			free_ikev2_proposal(&ike->sa.st_v2_accepted_proposal);
 			passert(ike->sa.st_v2_accepted_proposal == NULL);
 			/*
 			 * Assume caller et.al. will clean up the
 			 * reset of the mess?
+			 *
+			 * STF_FATAL will send the code down the retry path.
 			 */
-			return STF_FAIL;
+			return STF_FATAL;
 		}
 	}
 	replace_chunk(&ike->sa.st_firstpacket_peer,
@@ -1432,9 +1460,11 @@ stf_status process_v2_IKE_SA_INIT_response_continue(struct state *ike_sa,
 		/*
 		 * XXX: this is the initiator so returning a
 		 * notification is kind of useless.
+		 *
+		 * STF_FATAL will send the code down the retry path.
 		 */
 		pstat_sa_failed(&ike->sa, REASON_CRYPTO_FAILED);
-		return STF_FAIL;
+		return STF_FATAL;
 	}
 
 	calc_v2_keymat(&ike->sa,
