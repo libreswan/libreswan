@@ -2431,20 +2431,23 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	passert(ike != NULL);
 
 	/*
-	 * XXX: keep code below compiling.
-	 *
-	 * Now that ST is always an IKE SA, some of the obsolete code
-	 * below involving checks for a Child SA look pretty silly.
-	 */
-	struct state *st = &ike->sa;
-
-	/*
 	 * XXX: the transition's from state can lie - it may be
 	 * different to the ST's state!
 	 */
 	enum state_kind from_state = transition->state;
-	struct connection *c = st->st_connection;
+	struct connection *c = ike->sa.st_connection;
 
+#if 0
+	/*
+	 * XXX: this fails.
+	 *
+	 * The problem is that the IKE SA, during IKE_AUTH, gets its
+	 * state changed midway through the transition: after
+	 * authentication but before Child SA processing.  Perhaps
+	 * that is no longer needed?
+	 */
+	pexpect(transition->state == ike->sa.st_state->kind);
+#endif
 	if (from_state != transition->next_state) {
 		dbg("transitioning from state %s to state %s",
 		    finite_states[from_state]->name,
@@ -2456,21 +2459,19 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	 * new message.
 	 */
 
-	dbg("Message ID: updating counters for #%lu", st->st_serialno);
+	dbg("Message ID: updating counters for #%lu", ike->sa.st_serialno);
 	v2_msgid_update_recv(ike, md);
 	v2_msgid_update_sent(ike, md, transition->send_role);
 
-	bool established_before = (IS_IKE_SA_ESTABLISHED(st) ||
-				   IS_CHILD_SA_ESTABLISHED(st));
+	bool established_before = IS_IKE_SA_ESTABLISHED(&ike->sa);
 
-	change_v2_state(st);
+	change_v2_state(&ike->sa);
 	v2_msgid_schedule_next_initiator(ike);
 
-	passert(st->st_state->kind >= STATE_IKEv2_FLOOR);
-	passert(st->st_state->kind <  STATE_IKEv2_ROOF);
+	passert(ike->sa.st_state->kind >= STATE_IKEv2_FLOOR);
+	passert(ike->sa.st_state->kind <  STATE_IKEv2_ROOF);
 
-	bool established_after = (IS_IKE_SA_ESTABLISHED(st) ||
-				  IS_CHILD_SA_ESTABLISHED(st));
+	bool established_after = IS_IKE_SA_ESTABLISHED(&ike->sa);
 
 	bool just_established = (!established_before && established_after);
 	if (just_established) {
@@ -2478,7 +2479,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 		 * Count successful transition into an established
 		 * state.
 		 */
-		pstat_sa_established(st);
+		pstat_sa_established(&ike->sa);
 	}
 
 	/*
@@ -2574,70 +2575,53 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	 * Schedule for whatever timeout is specified (and shut down
 	 * any short term timers).
 	 */
-	{
-		enum event_type kind = transition->timeout_event;
-		struct connection *c = st->st_connection;
 
-		switch (kind) {
+	switch (transition->timeout_event) {
 
-		case EVENT_RETRANSMIT:
-			/*
-			 * Event retransmit is really a secret code to
-			 * indicate that a request is being sent and a
-			 * retransmit should already be scheduled.
-			 */
-			dbg("checking that a retransmit timeout_event was already");
-			delete_event(st); /* relying on retransmit */
-			pexpect(ike->sa.st_retransmit_event != NULL);
-			pexpect(transition->send_role == MESSAGE_REQUEST);
-			break;
-
-		case EVENT_SA_REPLACE: /* IKE or Child SA replacement event */
-			delete_event(st); /* relying on replace */
-			schedule_v2_replace_event(st);
-			break;
-
-		case EVENT_SA_DISCARD:
-			delete_event(st);
-			event_schedule(kind, EXCHANGE_TIMEOUT_DELAY, st);
-			break;
-
-		case EVENT_NULL:
-			/*
-			 * Is there really no case where we want to
-			 * set no timer?  more likely an accident?
-			 */
-			pexpect_fail(st->st_logger, HERE,
-				     "v2 microcode entry (%s) has unspecified timeout_event",
-				     transition->story);
-			break;
-
-		case EVENT_RETAIN:
-			/* the previous lifetime event is retained */
-			if (pexpect(st->st_v2_lifetime_event != NULL)) {
-				delete_event(st); /* relying on retained */
-				dbg("#%lu is retaining %s with is previously set timeout",
-				    st->st_serialno,
-				    enum_name(&event_type_names, st->st_v2_lifetime_event->ev_type));
-			}
-			break;
-
-		default:
-			bad_case(kind);
-			break;
-		}
+	case EVENT_RETRANSMIT:
 		/*
-		 * start liveness checks if set, making sure we only
-		 * schedule once when moving from I2->I3 or R1->R2
+		 * Event retransmit is really a secret code to
+		 * indicate that a request is being sent and a
+		 * retransmit should already be scheduled.
 		 */
-		if (st->st_state->kind != from_state &&
-		    st->st_state->kind != STATE_UNDEFINED &&
-		    IS_CHILD_SA_ESTABLISHED(st) &&
-		    dpd_active_locally(st->st_connection)) {
-			dbg("dpd enabled, scheduling ikev2 liveness checks");
-			deltatime_t delay = deltatime_max(c->config->dpd.delay, deltatime(MIN_LIVENESS));
-			event_schedule(EVENT_v2_LIVENESS, delay, st);
+		dbg("checking that a retransmit timeout_event was already");
+		delete_event(&ike->sa); /* relying on retransmit */
+		pexpect(ike->sa.st_retransmit_event != NULL);
+		pexpect(transition->send_role == MESSAGE_REQUEST);
+		break;
+
+	case EVENT_SA_REPLACE: /* IKE or Child SA replacement event */
+		delete_event(&ike->sa); /* relying on replace */
+		schedule_v2_replace_event(&ike->sa);
+		break;
+
+	case EVENT_SA_DISCARD:
+		delete_event(&ike->sa);
+		event_schedule(EVENT_SA_DISCARD, EXCHANGE_TIMEOUT_DELAY, &ike->sa);
+		break;
+
+	case EVENT_NULL:
+		/*
+		 * Is there really no case where we want to
+		 * set no timer?  more likely an accident?
+		 */
+		llog_pexpect(ike->sa.st_logger, HERE,
+			     "v2 microcode entry (%s) has unspecified timeout_event",
+			     transition->story);
+		break;
+
+	case EVENT_RETAIN:
+		/* the previous lifetime event is retained */
+		if (pexpect(ike->sa.st_v2_lifetime_event != NULL)) {
+			delete_event(&ike->sa); /* relying on retained */
+			dbg("#%lu is retaining %s with is previously set timeout",
+			    ike->sa.st_serialno,
+			    enum_name(&event_type_names, ike->sa.st_v2_lifetime_event->ev_type));
 		}
+		break;
+
+	default:
+		bad_case(transition->timeout_event);
 	}
 
 	/*
@@ -2667,54 +2651,15 @@ static void success_v2_state_transition(struct ike_sa *ike,
 
         if (!pexpect(transition->llog_success != NULL) ||
 	    (c->policy & POLICY_OPPORTUNISTIC)) {
-		ldbg_v2_success(ike, st);
+		ldbg_v2_success(ike, &ike->sa);
 	} else {
-		transition->llog_success(ike, st);
+		transition->llog_success(ike, &ike->sa);
 	}
 
 	if (just_established) {
-		release_whack(st->st_logger, HERE);
-
-		/* XXX should call unpend again on parent SA */
-		if (IS_CHILD_SA(st)) {
-			/* with failed child sa, we end up here with an orphan?? */
-			dbg("unpending #%lu's IKE SA #%lu", st->st_serialno,
-			    ike->sa.st_serialno);
-			/* a better call unpend in ikev2_ike_sa_established? */
-			unpend(ike, c);
-
-			/*
-			 * If this was an OE connection, check for removing a potential
-			 * matching bare shunt entry - bare shunts are always a %pass or
-			 * %hold SPI but are found regardless of whether we passed in
-			 * SPI_PASS or SPI_HOLD ?
-			 */
-			if (LIN(POLICY_OPPORTUNISTIC, c->policy)) {
-				struct spd_route *sr = &c->spd;
-				struct bare_shunt **bs = bare_shunt_ptr(&sr->this.client,
-									&sr->that.client,
-									"old bare shunt to delete");
-
-				if (bs != NULL) {
-					dbg("deleting old bare shunt");
-					if (!delete_bare_shunt(&c->local->host.addr,
-							       &c->remote->host.addr,
-							       protocol_by_ipproto(c->spd.this.client.ipproto),
-							       /*skip_policy_delete?*/true,
-							       "installed IPsec SA replaced old bare shunt",
-							       st->st_logger)) {
-						log_state(RC_LOG_SERIOUS, &ike->sa,
-							  "Failed to delete old bare shunt");
-					}
-				}
-			}
-			release_whack(ike->sa.st_logger, HERE);
-		}
+		release_whack(ike->sa.st_logger, HERE);
 	} else if (transition->flags & SMF2_RELEASE_WHACK) {
-		release_whack(st->st_logger, HERE);
-		if (st != &ike->sa) {
-			release_whack(ike->sa.st_logger, HERE);
-		}
+		release_whack(ike->sa.st_logger, HERE);
 	}
 }
 
