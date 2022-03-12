@@ -94,7 +94,6 @@ west #
 | **emit ISAKMP Message:
 |    exchange type: ISAKMP_v2_IKE_AUTH (..)
 |    Message ID: 1 (..)
-| Message ID: CHILD #1.#2 initializing (..)
 | Message ID: updating counters for #1
 | Message ID: IKE #1 XXX: no EVENT_RETRANSMIT to clear, suspect IKE->CHILD switch (..)
 | Message ID: IKE #1 updating initiator received message response 0 (..)
@@ -104,18 +103,15 @@ west #
 | **parse ISAKMP Message:
 |    exchange type: ISAKMP_v2_IKE_AUTH (..)
 |    Message ID: 1 (..)
-| Message ID: CHILD #1.#3 initializing (..)
-| Message ID: CHILD #1.#4 initializing (..)
-| Message ID: CHILD #1.#5 initializing (..)
 | Message ID: updating counters for #1
 | Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
 | Message ID: IKE #1 updating initiator received message response 1 (..)
 | Message ID: IKE #1 skipping update_send as nothing to send (..)
 | Message ID: IKE #1 no pending message initiators to schedule (..)
-| Message ID: CHILD #1.#3 wakeing IKE SA for next initiator (..)
-| Message ID: CHILD #1.#3 wakeing IKE SA for next initiator (..)
-| Message ID: CHILD #1.#3 wakeing IKE SA for next initiator (..)
-| Message ID: IKE #1 resuming SA using IKE SA (..)
+| Message ID: IKE #1 wakeing IKE SA for next initiator #3, (..)
+| Message ID: IKE #1 wakeing IKE SA for next initiator #3, (..)
+| Message ID: IKE #1 wakeing IKE SA for next initiator #3, (..)
+| Message ID: IKE #1 resuming IKE SA for #3 (..)
 | **emit ISAKMP Message:
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 2 (..)
@@ -123,7 +119,7 @@ west #
 | Message ID: IKE #1 skipping update_recv as MD is fake
 | Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
 | Message ID: IKE #1 updating initiator sent message request 2 (..)
-| Message ID: CHILD #1.#4 next initiator blocked by outstanding response (..)
+| Message ID: IKE #1 next initiator #4 blocked by outstanding response (..)
 | **parse ISAKMP Message:
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 2 (..)
@@ -131,8 +127,8 @@ west #
 | Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
 | Message ID: IKE #1 updating initiator received message response 2 (..)
 | Message ID: IKE #1 skipping update_send as nothing to send (..)
-| Message ID: CHILD #1.#4 wakeing IKE SA for next initiator (..)
-| Message ID: IKE #1 resuming SA using IKE SA (..)
+| Message ID: IKE #1 wakeing IKE SA for next initiator #4, (..)
+| Message ID: IKE #1 resuming IKE SA for #4 (..)
 | **emit ISAKMP Message:
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 3 (..)
@@ -140,7 +136,7 @@ west #
 | Message ID: IKE #1 skipping update_recv as MD is fake
 | Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
 | Message ID: IKE #1 updating initiator sent message request 3 (..)
-| Message ID: CHILD #1.#5 next initiator blocked by outstanding response (..)
+| Message ID: IKE #1 next initiator #5 blocked by outstanding response (..)
 | **parse ISAKMP Message:
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 3 (..)
@@ -148,8 +144,8 @@ west #
 | Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
 | Message ID: IKE #1 updating initiator received message response 3 (..)
 | Message ID: IKE #1 skipping update_send as nothing to send (..)
-| Message ID: CHILD #1.#5 wakeing IKE SA for next initiator (..)
-| Message ID: IKE #1 resuming SA using IKE SA (..)
+| Message ID: IKE #1 wakeing IKE SA for next initiator #5, (..)
+| Message ID: IKE #1 resuming IKE SA for #5 (..)
 | **emit ISAKMP Message:
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 4 (..)
@@ -166,9 +162,8 @@ west #
 | Message ID: IKE #1 updating initiator received message response 4 (..)
 | Message ID: IKE #1 skipping update_send as nothing to send (..)
 | Message ID: IKE #1 no pending message initiators to schedule (..)
-| Message ID: CHILD #1.#6 initializing (..)
-| Message ID: CHILD #1.#6 wakeing IKE SA for next initiator (..)
-| Message ID: IKE #1 resuming SA using IKE SA (..)
+| Message ID: IKE #1 wakeing IKE SA for next initiator #6, (..)
+| Message ID: IKE #1 resuming IKE SA for #6 (..)
 | **emit ISAKMP Message:
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 5 (..)
@@ -177,12 +172,9 @@ west #
 | Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
 | Message ID: IKE #1 updating initiator sent message request 5 (..)
 | Message ID: IKE #1 no pending message initiators to schedule (..)
-| Message ID: CHILD #1.#7 initializing (..)
-| Message ID: CHILD #1.#7 next initiator blocked by outstanding response (..)
-| Message ID: CHILD #1.#8 initializing (..)
-| Message ID: CHILD #1.#7 next initiator blocked by outstanding response (..)
-| Message ID: CHILD #1.#9 initializing (..)
-| Message ID: CHILD #1.#7 next initiator blocked by outstanding response (..)
+| Message ID: IKE #1 next initiator #7 blocked by outstanding response (..)
+| Message ID: IKE #1 next initiator #7 blocked by outstanding response (..)
+| Message ID: IKE #1 next initiator #7 blocked by outstanding response (..)
 | **parse ISAKMP Message:
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 5 (..)
@@ -190,8 +182,8 @@ west #
 | Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
 | Message ID: IKE #1 updating initiator received message response 5 (..)
 | Message ID: IKE #1 skipping update_send as nothing to send (..)
-| Message ID: CHILD #1.#7 wakeing IKE SA for next initiator (..)
-| Message ID: IKE #1 resuming SA using IKE SA (..)
+| Message ID: IKE #1 wakeing IKE SA for next initiator #7, (..)
+| Message ID: IKE #1 resuming IKE SA for #7 (..)
 | **emit ISAKMP Message:
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 6 (..)
@@ -199,8 +191,8 @@ west #
 | Message ID: IKE #1 skipping update_recv as MD is fake
 | Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
 | Message ID: IKE #1 updating initiator sent message request 6 (..)
-| Message ID: CHILD #1.#8 next initiator blocked by outstanding response (..)
-| Message ID: CHILD #1.#2 next initiator blocked by outstanding response (..)
+| Message ID: IKE #1 next initiator #8 blocked by outstanding response (..)
+| Message ID: IKE #1 next initiator #2 blocked by outstanding response (..)
 | **parse ISAKMP Message:
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 6 (..)
@@ -208,8 +200,8 @@ west #
 | Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
 | Message ID: IKE #1 updating initiator received message response 6 (..)
 | Message ID: IKE #1 skipping update_send as nothing to send (..)
-| Message ID: CHILD #1.#2 wakeing IKE SA for next initiator (..)
-| Message ID: IKE #1 resuming SA using IKE SA (..)
+| Message ID: IKE #1 wakeing IKE SA for next initiator #2, (..)
+| Message ID: IKE #1 resuming IKE SA for #2 (..)
 | **emit ISAKMP Message:
 |    exchange type: ISAKMP_v2_INFORMATIONAL (..)
 |    Message ID: 7 (..)
@@ -218,7 +210,7 @@ west #
 | Message ID: IKE #1 skipping update_recv as MD is fake
 | Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
 | Message ID: IKE #1 updating initiator sent message request 7 (..)
-| Message ID: CHILD #1.#8 next initiator blocked by outstanding response (..)
+| Message ID: IKE #1 next initiator #8 blocked by outstanding response (..)
 | **parse ISAKMP Message:
 |    exchange type: ISAKMP_v2_INFORMATIONAL (..)
 |    Message ID: 7 (..)
@@ -226,8 +218,8 @@ west #
 | Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
 | Message ID: IKE #1 updating initiator received message response 7 (..)
 | Message ID: IKE #1 skipping update_send as nothing to send (..)
-| Message ID: CHILD #1.#8 wakeing IKE SA for next initiator (..)
-| Message ID: IKE #1 resuming SA using IKE SA (..)
+| Message ID: IKE #1 wakeing IKE SA for next initiator #8, (..)
+| Message ID: IKE #1 resuming IKE SA for #8 (..)
 | **emit ISAKMP Message:
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 8 (..)
@@ -235,8 +227,8 @@ west #
 | Message ID: IKE #1 skipping update_recv as MD is fake
 | Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
 | Message ID: IKE #1 updating initiator sent message request 8 (..)
-| Message ID: CHILD #1.#9 next initiator blocked by outstanding response (..)
-| Message ID: CHILD #1.#3 next initiator blocked by outstanding response (..)
+| Message ID: IKE #1 next initiator #9 blocked by outstanding response (..)
+| Message ID: IKE #1 next initiator #3 blocked by outstanding response (..)
 | **parse ISAKMP Message:
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 8 (..)
@@ -244,8 +236,8 @@ west #
 | Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
 | Message ID: IKE #1 updating initiator received message response 8 (..)
 | Message ID: IKE #1 skipping update_send as nothing to send (..)
-| Message ID: CHILD #1.#3 wakeing IKE SA for next initiator (..)
-| Message ID: IKE #1 resuming SA using IKE SA (..)
+| Message ID: IKE #1 wakeing IKE SA for next initiator #3, (..)
+| Message ID: IKE #1 resuming IKE SA for #3 (..)
 | **emit ISAKMP Message:
 |    exchange type: ISAKMP_v2_INFORMATIONAL (..)
 |    Message ID: 9 (..)
@@ -254,7 +246,7 @@ west #
 | Message ID: IKE #1 skipping update_recv as MD is fake
 | Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
 | Message ID: IKE #1 updating initiator sent message request 9 (..)
-| Message ID: CHILD #1.#9 next initiator blocked by outstanding response (..)
+| Message ID: IKE #1 next initiator #9 blocked by outstanding response (..)
 | **parse ISAKMP Message:
 |    exchange type: ISAKMP_v2_INFORMATIONAL (..)
 |    Message ID: 9 (..)
@@ -262,8 +254,8 @@ west #
 | Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
 | Message ID: IKE #1 updating initiator received message response 9 (..)
 | Message ID: IKE #1 skipping update_send as nothing to send (..)
-| Message ID: CHILD #1.#9 wakeing IKE SA for next initiator (..)
-| Message ID: IKE #1 resuming SA using IKE SA (..)
+| Message ID: IKE #1 wakeing IKE SA for next initiator #9, (..)
+| Message ID: IKE #1 resuming IKE SA for #9 (..)
 | **emit ISAKMP Message:
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 10 (..)
@@ -272,7 +264,7 @@ west #
 | Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
 | Message ID: IKE #1 updating initiator sent message request 10 (..)
 | Message ID: IKE #1 no pending message initiators to schedule (..)
-| Message ID: CHILD #1.#4 next initiator blocked by outstanding response (..)
+| Message ID: IKE #1 next initiator #4 blocked by outstanding response (..)
 | **parse ISAKMP Message:
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 10 (..)
@@ -280,8 +272,8 @@ west #
 | Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
 | Message ID: IKE #1 updating initiator received message response 10 (..)
 | Message ID: IKE #1 skipping update_send as nothing to send (..)
-| Message ID: CHILD #1.#4 wakeing IKE SA for next initiator (..)
-| Message ID: IKE #1 resuming SA using IKE SA (..)
+| Message ID: IKE #1 wakeing IKE SA for next initiator #4, (..)
+| Message ID: IKE #1 resuming IKE SA for #4 (..)
 | **emit ISAKMP Message:
 |    exchange type: ISAKMP_v2_INFORMATIONAL (..)
 |    Message ID: 11 (..)
@@ -299,8 +291,8 @@ west #
 | Message ID: IKE #1 updating initiator received message response 11 (..)
 | Message ID: IKE #1 skipping update_send as nothing to send (..)
 | Message ID: IKE #1 no pending message initiators to schedule (..)
-| Message ID: CHILD #1.#5 wakeing IKE SA for next initiator (..)
-| Message ID: IKE #1 resuming SA using IKE SA (..)
+| Message ID: IKE #1 wakeing IKE SA for next initiator #5, (..)
+| Message ID: IKE #1 resuming IKE SA for #5 (..)
 | **emit ISAKMP Message:
 |    exchange type: ISAKMP_v2_INFORMATIONAL (..)
 |    Message ID: 12 (..)
