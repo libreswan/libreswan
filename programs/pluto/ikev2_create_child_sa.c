@@ -76,55 +76,64 @@ static ke_and_nonce_cb queue_v2_CREATE_CHILD_SA_new_child_request; /* signature 
 static stf_status process_v2_CREATE_CHILD_SA_request_continue_3(struct ike_sa *ike,
 								struct msg_digest *request_md);
 
-static stf_status queue_v2_CREATE_CHILD_SA_initiator(struct ike_sa *ike,
-						     struct child_sa *larval,
-						     struct msg_digest *unused_md,
-						     struct dh_local_secret *local_secret,
-						     chunk_t *nonce,
-						     const struct v2_state_transition *transition)
+static void queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
+					       struct dh_local_secret *local_secret,
+					       chunk_t *nonce,
+					       const struct v2_state_transition *transition)
 {
-	/* child initiating exchange */
-	pexpect(unused_md == NULL);
-	pexpect(larval->sa.st_sa_role == SA_INITIATOR);
 	dbg("%s() for #%lu %s",
-	     __func__, larval->sa.st_serialno, larval->sa.st_state->name);
+	     __func__, larval_sa->st_serialno, larval_sa->st_state->name);
 
-	/*
-	 * XXX: Should this routine be split so that each instance
-	 * handles only one state transition.  If there's commonality
-	 * then the per-transition functions can all call common code.
-	 */
+	struct ike_sa *ike = ike_sa(larval_sa, HERE);
+	/* and a parent? */
+	if (ike == NULL) {
+		/* XXX: drop everything */
+		return;
+	}
+
+	struct child_sa *larval = pexpect_child_sa(larval_sa);
+	if (larval == NULL) {
+		/* XXX: drop everything */
+		return;
+	}
+
+	pexpect(larval->sa.st_sa_role == SA_INITIATOR);
 	pexpect(larval->sa.st_state->kind == STATE_V2_NEW_CHILD_I0 ||
 		larval->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 ||
 		larval->sa.st_state->kind == STATE_V2_REKEY_IKE_I0);
+	pexpect(ike->sa.st_state->kind == STATE_V2_ESTABLISHED_IKE_SA);
 
-	/* and a parent? */
-	if (ike == NULL) {
-		pexpect_fail(larval->sa.st_logger, HERE,
-			     "sponsoring child state #%lu has no parent state #%lu",
-			     larval->sa.st_serialno, larval->sa.st_clonedfrom);
-		/* XXX: release child? */
-		return STF_INTERNAL_ERROR;
-	}
-
-	/* IKE SA => DH */
-	pexpect(larval->sa.st_state->kind == STATE_V2_REKEY_IKE_I0 ? local_secret != NULL : true);
-
+	/*
+	 * Unpack the crypto material computed out-of-band.
+	 *
+	 * For Child SAs DH is optional; for IKE SAs it's required.
+	 * Hence rekeying the IKE SA implies DH.
+	 */
+	pexpect((larval->sa.st_state->kind == STATE_V2_REKEY_IKE_I0) <=/*implies*/ (local_secret != NULL));
 	unpack_nonce(&larval->sa.st_ni, nonce);
 	if (local_secret != NULL) {
 		unpack_KE_from_helper(&larval->sa, local_secret, &larval->sa.st_gi);
 	}
 
-	dbg("queueing child sa with acquired sec_label="PRI_SHUNK,
+	dbg("adding larval SA #%lu to IKE SA #%lu message initiator queue; sec_label="PRI_SHUNK,
+	    larval->sa.st_serialno, ike->sa.st_serialno,
 	    pri_shunk(larval->sa.st_connection->spd.this.sec_label));
 
-	dbg("adding CHILD SA #%lu to IKE SA #%lu message initiator queue",
-	    larval->sa.st_serialno, ike->sa.st_serialno);
+	/*
+	 * Note: larval SA -> IKE SA hop
+	 *
+	 * This function is a callback for the larval SA (the
+	 * stf_status STF_SKIP_COMPLETE_STATE_TRANSITION will be
+	 * returned so that the state machine does not try to update
+	 * its state).
+	 *
+	 * When the queued exchange is initiated, the callback
+	 * TRANSITION .processor(IKE) will be called with the IKE SA.
+	 */
 
 	pexpect(larval->sa.st_state->nr_transitions == 1);
 	pexpect(larval->sa.st_state->v2.transitions->exchange == ISAKMP_v2_CREATE_CHILD_SA);
 	v2_msgid_queue_initiator(ike, larval, transition);
-	return STF_SUSPEND;
 }
 
 static struct child_sa *find_v2N_REKEY_SA_child(struct ike_sa *ike,
@@ -368,6 +377,13 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	larval_child->sa.st_pfs_group =
 		ikev2_proposals_first_dh(larval_child->sa.st_v2_create_child_sa_proposals);
 
+	/*
+	 * Note: this will callback with the larval SA.
+	 *
+	 * Later, when the exchange is initiated, the IKE SA (which
+	 * could have changed) will be called.
+	 */
+
 	policy_buf pb;
 	dbg("#%lu submitting crypto needed to rekey Child SA #%lu using IKE SA #%lu policy=%s pfs=%s sec_label="PRI_SHUNK,
 	    larval_child->sa.st_serialno,
@@ -381,7 +397,7 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	submit_ke_and_nonce(&larval_child->sa, larval_child->sa.st_pfs_group /*possibly-null*/,
 			    queue_v2_CREATE_CHILD_SA_rekey_child_request,
 			    "Child Rekey Initiator KE and nonce ni");
-	/* return STF_SUSPEND */
+
 	return larval_child;
 }
 
@@ -404,18 +420,24 @@ static const struct v2_state_transition v2_CREATE_CHILD_SA_rekey_child_transitio
 };
 
 stf_status queue_v2_CREATE_CHILD_SA_rekey_child_request(struct state *larval_child_sa,
-							struct msg_digest *unused_md,
+							struct msg_digest *null_md UNUSED,
 							struct dh_local_secret *local_secret,
 							chunk_t *nonce)
 {
 	/*
-	 * Queue the IKE SA, it can drive the larval child.
+	 * Note: larval SA -> IKE SA hop
+	 *
+	 * This function is a callback for the larval SA (the
+	 * stf_status STF_SKIP_COMPLETE_STATE_TRANSITION will be
+	 * returned so that the state machine does not try to update
+	 * its state).
+	 *
+	 * When the queued exchange is initiated, the callback
+	 * TRANSITION .processor(IKE) will be called with the IKE SA.
 	 */
-	struct ike_sa *ike = ike_sa(larval_child_sa, HERE);
-	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
-	return queue_v2_CREATE_CHILD_SA_initiator(ike, larval_child,
-						  unused_md, local_secret, nonce,
-						  &v2_CREATE_CHILD_SA_rekey_child_transition);
+	queue_v2_CREATE_CHILD_SA_initiator(larval_child_sa, local_secret, nonce,
+					   &v2_CREATE_CHILD_SA_rekey_child_transition);
+	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
 stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
@@ -621,6 +643,13 @@ void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 	larval_child->sa.st_pfs_group =
 		ikev2_proposals_first_dh(larval_child->sa.st_v2_create_child_sa_proposals);
 
+	/*
+	 * Note: this will callback with the larval SA.
+	 *
+	 * Later, when the exchange is initiated, the IKE SA (which
+	 * could have changed) will be called.
+	 */
+
 	policy_buf pb;
 	dbg("#%lu submitting crypto needed to initiate Child SA using IKE SA #%lu policy=%s pfs=%s",
 	    larval_child->sa.st_serialno,
@@ -652,18 +681,24 @@ static const struct v2_state_transition v2_CREATE_CHILD_SA_new_child_transition 
 };
 
 stf_status queue_v2_CREATE_CHILD_SA_new_child_request(struct state *larval_child_sa,
-							struct msg_digest *unused_md,
+							struct msg_digest *null_md UNUSED,
 							struct dh_local_secret *local_secret,
 							chunk_t *nonce)
 {
 	/*
-	 * Queue the IKE SA, it can drive the larval child.
+	 * Note: larval SA -> IKE SA hop
+	 *
+	 * This function is a callback for the larval SA (the
+	 * stf_status STF_SKIP_COMPLETE_STATE_TRANSITION will be
+	 * returned so that the state machine does not try to update
+	 * its state).
+	 *
+	 * When the queued exchange is initiated, the callback
+	 * TRANSITION .processor(IKE) will be called with the IKE SA.
 	 */
-	struct ike_sa *ike = ike_sa(larval_child_sa, HERE);
-	struct child_sa *larval_child = pexpect_child_sa(larval_child_sa);
-	return queue_v2_CREATE_CHILD_SA_initiator(ike, larval_child,
-						  unused_md, local_secret, nonce,
-						  &v2_CREATE_CHILD_SA_new_child_transition);
+	queue_v2_CREATE_CHILD_SA_initiator(larval_child_sa, local_secret, nonce,
+					   &v2_CREATE_CHILD_SA_new_child_transition);
+	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
 stf_status initiate_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
@@ -1187,6 +1222,13 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike)
 	free_chunk_content(&larval_ike->sa.st_ni); /* this is from the parent. */
 	free_chunk_content(&larval_ike->sa.st_nr); /* this is from the parent. */
 
+	/*
+	 * Note: this will callback with the larval SA.
+	 *
+	 * Later, when the exchange is initiated, the IKE SA (which
+	 * could have changed) will be called.
+	 */
+
 	passert(larval_ike->sa.st_connection != NULL);
 	policy_buf pb;
 	dbg("#%lu submitting crypto needed to rekey IKE SA #%lu policy=%s pfs=%s",
@@ -1220,18 +1262,24 @@ static const struct v2_state_transition v2_CREATE_CHILD_SA_rekey_ike_transition 
 };
 
 stf_status queue_v2_CREATE_CHILD_SA_rekey_ike_request(struct state *larval_ike_sa,
-						      struct msg_digest *unused_md,
+						      struct msg_digest *null_md UNUSED,
 						      struct dh_local_secret *local_secret,
 						      chunk_t *nonce)
 {
 	/*
-	 * Queue the IKE SA, it can drive the larval child.
+	 * Note: larval SA -> IKE SA hop
+	 *
+	 * This function is a callback for the larval SA (the
+	 * stf_status STF_SKIP_COMPLETE_STATE_TRANSITION will be
+	 * returned so that the state machine does not try to update
+	 * its state).
+	 *
+	 * When the queued exchange is initiated, the callback
+	 * TRANSITION .processor(IKE) will be called with the IKE SA.
 	 */
-	struct ike_sa *ike = ike_sa(larval_ike_sa, HERE);
-	struct child_sa *larval_ike = pexpect_child_sa(larval_ike_sa);
-	return queue_v2_CREATE_CHILD_SA_initiator(ike, larval_ike,
-						  unused_md, local_secret, nonce,
-						  &v2_CREATE_CHILD_SA_rekey_ike_transition);
+	queue_v2_CREATE_CHILD_SA_initiator(larval_ike_sa, local_secret, nonce,
+					   &v2_CREATE_CHILD_SA_rekey_ike_transition);
+	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }
 
 stf_status initiate_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
