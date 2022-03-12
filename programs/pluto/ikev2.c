@@ -2728,14 +2728,6 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		return;
 	}
 
-	/*
-	 * XXX: keep code below compiling.
-	 *
-	 * Now that ST is always an IKE SA, some of the obsolete code
-	 * below involving checks for a Child SA look pretty silly.
-	 */
-	struct state *st = &ike->sa;
-
 	/* statistics */
 	/* this really depends on the type of error whether it is an IKE or IPsec fail */
 	if (result > STF_FAIL) {
@@ -2765,13 +2757,25 @@ void complete_v2_state_transition(struct ike_sa *ike,
 	 * and .st_v2_state_transition - it just isn't possible to
 	 * squeeze both the IKE and CHILD transitions into MD.ST.
 	 */
-	const struct v2_state_transition *transition = st->st_v2_transition;
+	const struct v2_state_transition *transition = ike->sa.st_v2_transition;
 	passert(transition != NULL);
 
+#if 0
+	/*
+	 * XXX: this fails.
+	 *
+	 * The problem is that the IKE SA, during IKE_AUTH, gets its
+	 * state changed midway through the transition: after
+	 * authentication but before Child SA processing.  Perhaps
+	 * that is no longer needed?
+	 */
+	pexpect(transition->state == ike->sa.st_state->kind);
+#endif
+
 	LSWDBGP(DBG_BASE, buf) {
-		jam(buf, "#%lu complete_v2_state_transition()", st->st_serialno);
-		if (st->st_state->kind != transition->state) {
-			jam(buf, " in state %s", st->st_state->short_name);
+		jam(buf, "#%lu complete_v2_state_transition()", ike->sa.st_serialno);
+		if (ike->sa.st_state->kind != transition->state) {
+			jam(buf, " in state %s", ike->sa.st_state->short_name);
 		}
 		jam(buf, " ");
 		jam_v2_transition(buf, transition);
@@ -2780,7 +2784,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 	}
 
 	if (DBGP(DBG_BASE)) {
-		check_state(st, HERE);
+		check_state(&ike->sa, HERE);
 	}
 
 	switch (result) {
@@ -2790,7 +2794,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		 * If this transition was triggered by an
 		 * incoming packet, save it.
 		 */
-		suspend_any_md(st, md);
+		suspend_any_md(&ike->sa, md);
 		return;
 
 	case STF_IGNORE:
@@ -2816,9 +2820,10 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		break;
 
 	case STF_INTERNAL_ERROR:
-		log_state(RC_INTERNALERR, st, "state transition function for %s had internal error",
-			  st->st_state->name);
-		release_pending_whacks(st, "internal error");
+		llog_sa(RC_INTERNALERR, ike,
+			"state transition function for %s had internal error",
+			ike->sa.st_state->name);
+		release_pending_whacks(&ike->sa, "internal error");
 		break;
 
 	case STF_V2_DELETE_IKE_AUTH_INITIATOR:
@@ -2833,7 +2838,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		 * exchange ready for delete request.
 		 */
 		dbg("Message ID: forcing a response received update (deleting IKE_AUTH initiator)");
-		pexpect(st->st_state->kind == STATE_V2_PARENT_I2);
+		pexpect(ike->sa.st_state->kind == STATE_V2_PARENT_I2);
 		pexpect(v2_msg_role(md) == MESSAGE_RESPONSE);
 		v2_msgid_update_recv(ike, md);
 		/*
@@ -2847,7 +2852,6 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		delete_ike_family(&ike, DO_SEND_DELETE);
 		/* get out of here -- everything is invalid */
 		pexpect(ike == NULL);
-		st = NULL;
 		return;
 
 	case STF_FATAL:
@@ -2856,8 +2860,8 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		 * transition is selected (TRANSITION==NULL) this code
 		 * is executed - caller needs to kill the state.
 		 */
-		log_state(RC_FATAL, st, "encountered fatal error in state %s",
-			  st->st_state->name);
+		llog_sa(RC_FATAL, ike, "encountered fatal error in state %s",
+			ike->sa.st_state->name);
 		switch (v2_msg_role(md)) {
 		case MESSAGE_RESPONSE:
 			dbg("Message ID: forcing a response received update");
@@ -2880,52 +2884,22 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		}
 
 		/* if this was a child fail, don't destroy the IKE SA */
-		if (IS_IKE_SA(st)) {
+		if (IS_IKE_SA(&ike->sa)) {
 			delete_ike_family(&ike, DONT_SEND_DELETE);
 			pexpect(ike == NULL);
 		}
-
-		/* kill all st pointers */
-		st = NULL;
 		break;
 
 	case STF_FAIL:
-		log_state(RC_NOTIFICATION, st, "state transition '%s' failed",
-			  transition->story);
-		switch (v2_msg_role(md)) {
-		case MESSAGE_RESPONSE:
-			v2_msgid_update_recv(ike, md);
-			v2_msgid_schedule_next_initiator(ike);
-			break;
-		case MESSAGE_REQUEST:
-			dbg("Message ID: responding with recorded error");
-			pexpect(transition->send_role == MESSAGE_RESPONSE);
-			v2_msgid_update_recv(ike, md);
-			v2_msgid_update_sent(ike, md, transition->send_role);
-			send_recorded_v2_message(ike, "STF_FAIL", MESSAGE_RESPONSE);
-			break;
-		case NO_MESSAGE:
-			break;
-		}
-		release_pending_whacks(st, "fatal error"); /* fatal != STF_FATAL  :) */
-		delete_state(st);
-
-		/* kill all st pointers */
-		st = NULL;
-		ike = NULL;
-		break;
-
-	default: /* STF_FAIL+notification */
+	default: /* STF_FAIL[+notification] */
 	{
-		passert(result > STF_FAIL);
+		passert(result >= STF_FAIL);
 		v2_notification_t notification = result - STF_FAIL;
-		llog_pexpect(st->st_logger, HERE,
+		llog_pexpect(ike->sa.st_logger, HERE,
 			     "state transition '%s' failed with %s",
 			     transition->story,
 			     enum_name(&v2_notification_names, notification));
-		delete_state(st);
-		st = NULL;
-		ike = NULL;
+		delete_ike_family(&ike, DONT_SEND_DELETE);
 		break;
 	}
 	}
