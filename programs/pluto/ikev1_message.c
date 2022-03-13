@@ -89,11 +89,11 @@ v1_notification_t accept_v1_nonce(struct logger *logger,
 	if (len < IKEv1_MINIMUM_NONCE_SIZE || IKEv1_MAXIMUM_NONCE_SIZE < len) {
 		llog(RC_LOG_SERIOUS, logger, "%s length not between %d and %d",
 			    name, IKEv1_MINIMUM_NONCE_SIZE, IKEv1_MAXIMUM_NONCE_SIZE);
-		return PAYLOAD_MALFORMED; /* ??? */
+		return v1N_PAYLOAD_MALFORMED; /* ??? */
 	}
 	replace_chunk(dest, clone_hunk(pbs_in_left_as_shunk(nonce_pbs), "nonce"));
 	passert(len == dest->len);
-	return NOTHING_WRONG;
+	return v1N_NOTHING_WRONG;
 }
 
 /*

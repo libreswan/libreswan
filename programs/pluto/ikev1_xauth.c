@@ -1301,7 +1301,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 		if (d != NULL) {
 			llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			/* fail if malformed */
-			return STF_FAIL;
+			return STF_FAIL_v1N;
 		}
 
 		switch (attr.isaat_af_type) {
@@ -1311,20 +1311,20 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 				esb_buf b;
 				dbg("unsupported XAUTH_TYPE value %s received",
 				    enum_show(&xauth_type_names, attr.isaat_lv, &b));
-				return STF_FAIL + NO_PROPOSAL_CHOSEN;
+				return STF_FAIL_v1N + v1N_NO_PROPOSAL_CHOSEN;
 			}
 			break;
 
 		case XAUTH_USER_NAME | ISAKMP_ATTR_AF_TLV:
 			if (gotname) {
 				dbg("XAUTH: two User Names!  Rejected");
-				return STF_FAIL + NO_PROPOSAL_CHOSEN;
+				return STF_FAIL_v1N + v1N_NO_PROPOSAL_CHOSEN;
 			}
 			sz = pbs_left(&strattr);
 			if (strnlen((const char *)strattr.cur, sz) != sz) {
 				log_state(RC_LOG, st,
 					  "XAUTH User Name contains NUL character: rejected");
-				return STF_FAIL + NO_PROPOSAL_CHOSEN;
+				return STF_FAIL_v1N + v1N_NO_PROPOSAL_CHOSEN;
 			}
 			name = chunk2(strattr.cur, sz);
 			gotname = true;
@@ -1334,7 +1334,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 			if (gotpassword) {
 				log_state(RC_LOG, st,
 					  "XAUTH: two User Passwords!  Rejected");
-				return STF_FAIL + NO_PROPOSAL_CHOSEN;
+				return STF_FAIL_v1N + v1N_NO_PROPOSAL_CHOSEN;
 			}
 			sz = pbs_left(&strattr);
 			if (sz > 0 && strattr.cur[sz-1] == '\0') {
@@ -1345,7 +1345,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 			if (strnlen((const char *)strattr.cur, sz) != sz) {
 				log_state(RC_LOG, st,
 					  "XAUTH User Password contains NUL character: rejected");
-				return STF_FAIL + NO_PROPOSAL_CHOSEN;
+				return STF_FAIL_v1N + v1N_NO_PROPOSAL_CHOSEN;
 			}
 			password = chunk2(strattr.cur, sz);
 			gotpassword = true;
@@ -1385,7 +1385,7 @@ stf_status xauth_inR0(struct state *st, struct msg_digest *md)
 				  (int)name.len, name.ptr,
 				  st->hidden_variables.st_xauth_client_attempt);
 
-			return stat == STF_OK ? STF_FAIL : stat;
+			return stat == STF_OK ? STF_FAIL_v1N : stat;
 		}
 	} else {
 		xauth_launch_authent(st, &name, &password);
@@ -1479,7 +1479,7 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 			if (d != NULL) {
 				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				/* reject malformed */
-				return STF_FAIL;
+				return STF_FAIL_v1N;
 			}
 			switch (attr.isaat_af_type) {
 			case INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
@@ -1507,7 +1507,7 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 
 			if (stat != STF_OK) {
 				/* notification payload - not exactly the right choice, but okay */
-				md->v1_note = CERTIFICATE_UNAVAILABLE;
+				md->v1_note = v1N_CERTIFICATE_UNAVAILABLE;
 				return stat;
 			}
 		}
@@ -1559,7 +1559,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 		if (d != NULL) {
 			llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			/* reject malformed */
-			return STF_FAIL;
+			return STF_FAIL_v1N;
 		}
 
 		switch (attr.isaat_af_type) {
@@ -1620,7 +1620,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 
 		if (stat != STF_OK) {
 			/* notification payload - not exactly the right choice, but okay */
-			md->v1_note = CERTIFICATE_UNAVAILABLE;
+			md->v1_note = v1N_CERTIFICATE_UNAVAILABLE;
 			return stat;
 		}
 	}
@@ -1682,7 +1682,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			if (d != NULL) {
 				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				/* reject malformed */
-				return STF_FAIL;
+				return STF_FAIL_v1N;
 			}
 
 			switch (attr.isaat_af_type) {
@@ -1719,7 +1719,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			if (d != NULL) {
 				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				/* reject malformed */
-				return STF_FAIL;
+				return STF_FAIL_v1N;
 			}
 
 			switch (attr.isaat_af_type) {
@@ -2144,7 +2144,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 	lset_t xauth_resp = LEMPTY;
 
 	int status = 0;
-	stf_status stat = STF_FAIL;
+	stf_status stat = STF_FAIL_v1N;
 	bool gotrequest = false;
 	bool gotset = false;
 	bool got_status = false;
@@ -2156,7 +2156,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 
 	if (impair.drop_xauth_r0) {
 		log_state(RC_LOG, st, "IMPAIR: drop XAUTH R0 message ");
-		return STF_FAIL;
+		return STF_FAIL_v1N;
 	}
 
 	st->st_v1_msgid.phase15 = md->hdr.isa_msgid;
@@ -2168,7 +2168,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 			enum_name(&attr_msg_type_names,
 				  ma->isama_type));
 		/* ??? what are we supposed to do here?  Original code fell through to next case! */
-		return STF_FAIL;
+		return STF_FAIL_v1N;
 
 	case ISAKMP_CFG_SET:
 		gotset = true;
@@ -2188,7 +2188,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 		if (d != NULL) {
 			llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 			/* reject malformed */
-			return STF_FAIL;
+			return STF_FAIL_v1N;
 		}
 
 		switch (attr.isaat_af_type) {
@@ -2328,7 +2328,7 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 
 	if (stat != STF_OK) {
 		/* notification payload - not exactly the right choice, but okay */
-		md->v1_note = CERTIFICATE_UNAVAILABLE;
+		md->v1_note = v1N_CERTIFICATE_UNAVAILABLE;
 		return stat;
 	}
 
@@ -2432,7 +2432,7 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 			if (d != NULL) {
 				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				/* reject malformed */
-				return STF_FAIL;
+				return STF_FAIL_v1N;
 			}
 
 			switch (attr.isaat_af_type) {

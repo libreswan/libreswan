@@ -279,7 +279,7 @@ enum seccomp_mode {
 /*
  * status for state-transition-function
  *
- * Note: STF_FAIL + <notification> (<notification> is either
+ * Note: STF_FAIL_v1N + <notification> (<notification> is either
  * notification_t or v2_notification_t) means fail with that
  * notification.  Since <notification> is a uint16_t, it is limited to
  * 65535 possible values (0 isn't valid).
@@ -294,7 +294,7 @@ enum seccomp_mode {
  * operating on a state, should require a state and not the message.
  *
  * delete 'maybe?': For IKEv2, delete the IKE_SA_INIT responder state
- * but only when STF_FAIL+<v2notification>.  IKEv1?  XXX: With no
+ * but only when STF_FAIL_v1N+<v2notification>.  IKEv1?  XXX: With no
  * clear / fast rule, this just creates confusion; perhaps the intent
  * is for it to delete larval response states, who knows?
  *
@@ -302,7 +302,7 @@ enum seccomp_mode {
  * be sent (hopefully there is one).
  *
  * respond 'maybe?': For instance, with IKEv2 when a responder and
- * STF_FAIL+<notification>, a notification is sent as the only content
+ * STF_FAIL_v1N+<notification>, a notification is sent as the only content
  * in a response.  XXX: for IKEv2 this is broken: KE responses can't
  * use it - need to suggest KE; AUTH responses can't use it - need to
  * send other stuff (but they do breaking auth).
@@ -330,8 +330,8 @@ typedef enum {
 	STF_V2_DELETE_IKE_AUTH_INITIATOR,
 				/*   forced    maybe     maybe  'success' */
 	STF_FATAL,		/*     no      always    never   fail */
-	STF_FAIL,       	/*     no      maybe?    maybe?  fail */
-	STF_ROOF = STF_FAIL + 65536 /* see RFC and above */
+	STF_FAIL_v1N,       	/*     no      maybe?    maybe?  fail */
+	STF_ROOF = STF_FAIL_v1N + 65536 /* see RFC and above */
 } stf_status;
 
 /* Misc. stuff */

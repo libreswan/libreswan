@@ -227,7 +227,7 @@ stf_status dpd_init(struct state *st)
 		if (p1st == NULL) {
 			log_state(RC_LOG_SERIOUS, st,
 				  "could not find phase 1 state for DPD");
-			return STF_FAIL;
+			return STF_FAIL_v1N;
 		}
 
 		if (st->st_v1_dpd_event == NULL ||
@@ -378,7 +378,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	    str_endpoint(&p1st->st_remote_endpoint, &b),
 	    p1st->st_serialno);
 
-	if (send_isakmp_notification(p1st, R_U_THERE,
+	if (send_isakmp_notification(p1st, v1N_R_U_THERE,
 				     &seqno, sizeof(seqno)) != STF_IGNORE) {
 		log_state(RC_LOG_SERIOUS, st,
 			  "DPD: could not send R_U_THERE");
@@ -459,7 +459,7 @@ stf_status dpd_inI_outR(struct state *p1st,
 		log_state(RC_LOG_SERIOUS, p1st,
 			  "DPD: R_U_THERE has invalid SPI length (%d)",
 			  n->isan_spisize);
-		return STF_FAIL + PAYLOAD_MALFORMED;
+		return STF_FAIL_v1N + v1N_PAYLOAD_MALFORMED;
 	}
 
 	if (!memeq(pbs->cur, p1st->st_ike_spis.initiator.bytes, COOKIE_SIZE)) {
@@ -478,7 +478,7 @@ stf_status dpd_inI_outR(struct state *p1st,
 		log_state(RC_LOG_SERIOUS, p1st,
 			  "DPD: R_U_THERE has invalid data length (%d)",
 			  (int) pbs_left(pbs));
-		return STF_FAIL + PAYLOAD_MALFORMED;
+		return STF_FAIL_v1N + v1N_PAYLOAD_MALFORMED;
 	}
 
 	seqno = ntohl(*(uint32_t *)pbs->cur);
@@ -515,7 +515,7 @@ stf_status dpd_inI_outR(struct state *p1st,
 
 	p1st->st_dpd_peerseqno = seqno;
 
-	if (send_isakmp_notification(p1st, R_U_THERE_ACK,
+	if (send_isakmp_notification(p1st, v1N_R_U_THERE_ACK,
 				     pbs->cur, pbs_left(pbs)) != STF_IGNORE) {
 		log_state(RC_LOG_SERIOUS, p1st,
 			  "DPD: could not send R_U_THERE_ACK");
@@ -555,7 +555,7 @@ stf_status dpd_inR(struct state *p1st,
 	if (!IS_V1_ISAKMP_SA_ESTABLISHED(p1st)) {
 		log_state(RC_LOG_SERIOUS, p1st,
 			  "DPD: received R_U_THERE_ACK for unestablished ISKAMP SA");
-		return STF_FAIL;
+		return STF_FAIL_v1N;
 	}
 
 	if (n->isan_spisize != COOKIE_SIZE * 2 ||
@@ -563,7 +563,7 @@ stf_status dpd_inR(struct state *p1st,
 		log_state(RC_LOG_SERIOUS, p1st,
 			  "DPD: R_U_THERE_ACK has invalid SPI length (%d)",
 			  n->isan_spisize);
-		return STF_FAIL + PAYLOAD_MALFORMED;
+		return STF_FAIL_v1N + v1N_PAYLOAD_MALFORMED;
 	}
 
 	if (!memeq(pbs->cur, p1st->st_ike_spis.initiator.bytes, COOKIE_SIZE)) {
@@ -584,7 +584,7 @@ stf_status dpd_inR(struct state *p1st,
 		log_state(RC_LOG_SERIOUS, p1st,
 			  "DPD: R_U_THERE_ACK has invalid data length (%d)",
 			  (int) pbs_left(pbs));
-		return STF_FAIL + PAYLOAD_MALFORMED;
+		return STF_FAIL_v1N + v1N_PAYLOAD_MALFORMED;
 	}
 
 	seqno = ntohl(*(uint32_t *)pbs->cur);

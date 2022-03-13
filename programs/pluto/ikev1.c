@@ -939,7 +939,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 		 * a retransmit, so rather then send an error, we might as
 		 * well just send a DPD reply
 		 */
-		case R_U_THERE:
+		case v1N_R_U_THERE:
 			if (st == NULL) {
 				llog(RC_LOG, md->md_logger,
 				     "received bogus R_U_THERE informational message");
@@ -947,7 +947,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 			}
 			return dpd_inI_outR(st, n, n_pbs);
 
-		case R_U_THERE_ACK:
+		case v1N_R_U_THERE_ACK:
 			if (st == NULL) {
 				llog(RC_LOG, md->md_logger,
 				     "received bogus R_U_THERE_ACK informational message");
@@ -955,7 +955,7 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 			}
 			return dpd_inR(st, n, n_pbs);
 
-		case PAYLOAD_MALFORMED:
+		case v1N_PAYLOAD_MALFORMED:
 			if (st != NULL) {
 				st->hidden_variables.st_malformed_received++;
 
@@ -1120,13 +1120,13 @@ void process_v1_packet(struct msg_digest *md)
 		if (md->hdr.isa_msgid != v1_MAINMODE_MSGID) {
 			LOG_PACKET(RC_LOG, "Message ID was 0x%08" PRIx32 " but should be zero in phase 1",
 				   md->hdr.isa_msgid);
-			SEND_NOTIFICATION(INVALID_MESSAGE_ID);
+			SEND_NOTIFICATION(v1N_INVALID_MESSAGE_ID);
 			return;
 		}
 
 		if (ike_spi_is_zero(&md->hdr.isa_ike_initiator_spi)) {
 			LOG_PACKET(RC_LOG, "Initiator Cookie must not be zero in phase 1 message");
-			SEND_NOTIFICATION(INVALID_COOKIE);
+			SEND_NOTIFICATION(v1N_INVALID_COOKIE);
 			return;
 		}
 
@@ -1136,7 +1136,7 @@ void process_v1_packet(struct msg_digest *md)
 			 */
 			if (md->hdr.isa_flags & ISAKMP_FLAGS_v1_ENCRYPTION) {
 				LOG_PACKET(RC_LOG, "initial phase 1 message is invalid: its Encrypted Flag is on");
-				SEND_NOTIFICATION(INVALID_FLAGS);
+				SEND_NOTIFICATION(v1N_INVALID_FLAGS);
 				return;
 			}
 
@@ -1273,19 +1273,19 @@ void process_v1_packet(struct msg_digest *md)
 
 		if (ike_spi_is_zero(&md->hdr.isa_ike_initiator_spi)) {
 			dbg("Quick Mode message is invalid because it has an Initiator Cookie of 0");
-			SEND_NOTIFICATION(INVALID_COOKIE);
+			SEND_NOTIFICATION(v1N_INVALID_COOKIE);
 			return;
 		}
 
 		if (ike_spi_is_zero(&md->hdr.isa_ike_responder_spi)) {
 			dbg("Quick Mode message is invalid because it has a Responder Cookie of 0");
-			SEND_NOTIFICATION(INVALID_COOKIE);
+			SEND_NOTIFICATION(v1N_INVALID_COOKIE);
 			return;
 		}
 
 		if (md->hdr.isa_msgid == v1_MAINMODE_MSGID) {
 			dbg("Quick Mode message is invalid because it has a Message ID of 0");
-			SEND_NOTIFICATION(INVALID_MESSAGE_ID);
+			SEND_NOTIFICATION(v1N_INVALID_MESSAGE_ID);
 			return;
 		}
 
@@ -1330,7 +1330,7 @@ void process_v1_packet(struct msg_digest *md)
 			if (!IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "Quick Mode message is unacceptable because it is for an incomplete ISAKMP SA");
-				SEND_NOTIFICATION(PAYLOAD_MALFORMED /* XXX ? */);
+				SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED /* XXX ? */);
 				return;
 			}
 
@@ -1338,7 +1338,7 @@ void process_v1_packet(struct msg_digest *md)
 				log_state(RC_LOG_SERIOUS, st,
 					  "Quick Mode I1 message is unacceptable because it uses a previously used Message ID 0x%08" PRIx32 " (perhaps this is a duplicated packet)",
 					  md->hdr.isa_msgid);
-				SEND_NOTIFICATION(INVALID_MESSAGE_ID);
+				SEND_NOTIFICATION(v1N_INVALID_MESSAGE_ID);
 				return;
 			}
 			st->st_v1_msgid.reserved = false;
@@ -1499,7 +1499,7 @@ void process_v1_packet(struct msg_digest *md)
 		esb_buf b;
 		dbg("unsupported exchange type %s in message",
 		    enum_show(&ikev1_exchange_names, md->hdr.isa_xchg, &b));
-		SEND_NOTIFICATION(UNSUPPORTED_EXCHANGE_TYPE);
+		SEND_NOTIFICATION(v1N_UNSUPPORTED_EXCHANGE_TYPE);
 		return;
 	}
 	}
@@ -1537,14 +1537,14 @@ void process_v1_packet(struct msg_digest *md)
 					 &fraghdr, sizeof(fraghdr), &frag_pbs);
 		if (d != NULL) {
 			llog_diag(RC_LOG, LOGGER, &d, "%s", "");
-			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+			SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 			return;
 		}
 		if (pbs_room(&frag_pbs) != fraghdr.isafrag_length ||
 		    fraghdr.isafrag_np != ISAKMP_NEXT_NONE ||
 		    fraghdr.isafrag_number == 0 ||
 		    fraghdr.isafrag_number > 16) {
-			SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+			SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 			return;
 		}
 
@@ -1835,7 +1835,7 @@ void process_packet_tail(struct msg_digest *md)
 		if (smc->flags & SMF_INPUT_ENCRYPTED) {
 			LOG_PACKET(RC_LOG_SERIOUS,
 				   "packet rejected: should have been encrypted");
-			SEND_NOTIFICATION(INVALID_FLAGS);
+			SEND_NOTIFICATION(v1N_INVALID_FLAGS);
 			return;
 		}
 	}
@@ -1864,7 +1864,7 @@ void process_packet_tail(struct msg_digest *md)
 					   "more than %zu payloads in message; ignored",
 					   elemsof(md->digest));
 				if (!md->encrypted) {
-					SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+					SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 				}
 				return;
 			}
@@ -1953,7 +1953,7 @@ void process_packet_tail(struct msg_digest *md)
 							   "%smalformed payload in packet",
 							   excuse);
 						if (!md->encrypted) {
-							SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+							SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 						}
 						return;
 					}
@@ -1969,7 +1969,7 @@ void process_packet_tail(struct msg_digest *md)
 						   excuse,
 						   enum_show(&ikev1_payload_names, np, &b));
 					if (!md->encrypted) {
-						SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
+						SEND_NOTIFICATION(v1N_INVALID_PAYLOAD_TYPE);
 					}
 					return;
 				}
@@ -1996,7 +1996,7 @@ void process_packet_tail(struct msg_digest *md)
 						   enum_show(&ikev1_payload_names, np, &b),
 						   finite_states[smc->state]->name);
 					if (!md->encrypted) {
-						SEND_NOTIFICATION(INVALID_PAYLOAD_TYPE);
+						SEND_NOTIFICATION(v1N_INVALID_PAYLOAD_TYPE);
 					}
 					return;
 				}
@@ -2022,7 +2022,7 @@ void process_packet_tail(struct msg_digest *md)
 					   "%smalformed payload in packet",
 					   excuse);
 				if (!md->encrypted) {
-					SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+					SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 				}
 				return;
 			}
@@ -2085,7 +2085,7 @@ void process_packet_tail(struct msg_digest *md)
 				jam_lset_short(buf, &ikev1_payload_names, "+", needed);
 			}
 			if (!md->encrypted) {
-				SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+				SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 			}
 			return;
 		}
@@ -2107,7 +2107,7 @@ void process_packet_tail(struct msg_digest *md)
 			LOG_PACKET(RC_LOG_SERIOUS,
 				   "malformed Phase 1 message: does not start with an SA payload");
 			if (!md->encrypted) {
-				SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+				SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 			}
 			return;
 		}
@@ -2131,7 +2131,7 @@ void process_packet_tail(struct msg_digest *md)
 			LOG_PACKET(RC_LOG_SERIOUS,
 				   "malformed Quick Mode message: does not start with a HASH payload");
 			if (!md->encrypted) {
-				SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+				SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 			}
 			return;
 		}
@@ -2147,7 +2147,7 @@ void process_packet_tail(struct msg_digest *md)
 					LOG_PACKET(RC_LOG_SERIOUS,
 						   "malformed Quick Mode message: SA payload is in wrong position");
 					if (!md->encrypted) {
-						SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+						SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 					}
 					return;
 				}
@@ -2169,13 +2169,13 @@ void process_packet_tail(struct msg_digest *md)
 				    id->next->next != NULL) {
 					LOG_PACKET(RC_LOG_SERIOUS,
 						   "malformed Quick Mode message: if any ID payload is present, there must be exactly two");
-					SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+					SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 					return;
 				}
 				if (id + 1 != id->next) {
 					LOG_PACKET(RC_LOG_SERIOUS,
 						   "malformed Quick Mode message: the ID payloads are not adjacent");
-					SEND_NOTIFICATION(PAYLOAD_MALFORMED);
+					SEND_NOTIFICATION(v1N_PAYLOAD_MALFORMED);
 					return;
 				}
 			}
@@ -2194,11 +2194,11 @@ void process_packet_tail(struct msg_digest *md)
 						   p->payload.notification.isan_type,
 						   &nb);
 		switch (p->payload.notification.isan_type) {
-		case R_U_THERE:
-		case R_U_THERE_ACK:
-		case PAYLOAD_MALFORMED:
-		case INVALID_MESSAGE_ID:
-		case IPSEC_RESPONDER_LIFETIME:
+		case v1N_R_U_THERE:
+		case v1N_R_U_THERE_ACK:
+		case v1N_PAYLOAD_MALFORMED:
+		case v1N_INVALID_MESSAGE_ID:
+		case v1N_IPSEC_RESPONDER_LIFETIME:
 			if (md->hdr.isa_xchg == ISAKMP_XCHG_INFO) {
 				/* these are handled later on in informational() */
 				if (DBGP(DBG_BASE)) {
@@ -2311,7 +2311,7 @@ static void jam_v1_isakmp_details(struct jambuf *buf, struct state *st)
  * md is used to:
  * - find st
  * - find from_state (st might be gone)
- * - find note for STF_FAIL (might not be part of result (STF_FAIL+note))
+ * - find note for STF_FAIL_v1N (might not be part of result (STF_FAIL_v1N+note))
  * - find note for STF_INTERNAL_ERROR
  * - record md->event_already_set
  * - remember_received_packet(st, md);
@@ -2329,14 +2329,14 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 	/* handle oddball/meta results now */
 
 	/*
-	 * statistics; all STF_FAIL+v1N are lumped togeter
+	 * statistics; all STF_FAIL_v1N+v1N are lumped togeter
 	 */
 	pstat(stf_status, result);
 
 	enum_buf neb;
 	dbg("complete v1 state transition with %s",
-	    result > STF_FAIL ?
-	    str_enum_short(&v1_notification_names, result - STF_FAIL, &neb) :
+	    result > STF_FAIL_v1N ?
+	    str_enum_short(&v1_notification_names, result - STF_FAIL_v1N, &neb) :
 	    enum_name(&stf_status_names, result));
 
 	switch (result) {
@@ -2842,11 +2842,11 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		md->v1_st = st = NULL;
 		break;
 
-	case STF_FAIL:
+	case STF_FAIL_v1N:
 	default:
 	{
-		passert(result >= STF_FAIL);
-		md->v1_note = result - STF_FAIL;
+		passert(result >= STF_FAIL_v1N);
+		md->v1_note = result - STF_FAIL_v1N;
 		/* As it is, we act as if this message never happened:
 		 * whatever retrying was in place, remains in place.
 		 */
@@ -2858,7 +2858,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 * wouldn't exactly help here :-).
 		 */
 		enum_buf neb; /* same scope as notify_name */
-		const char *notify_name = (md->v1_note == NOTHING_WRONG ? "failed" :
+		const char *notify_name = (md->v1_note == v1N_NOTHING_WRONG ? "failed" :
 					   str_enum_short(&v1_notification_names, md->v1_note, &neb));
 		if (notify_name == NULL) {
 			notify_name = "internal error";
@@ -2869,7 +2869,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 * But then then any duplicate would lose too, I would think.
 		 */
 
-		if (md->v1_note != NOTHING_WRONG) {
+		if (md->v1_note != v1N_NOTHING_WRONG) {
 			/* this will log */
 			SEND_NOTIFICATION(md->v1_note);
 		} else {

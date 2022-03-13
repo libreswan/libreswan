@@ -267,7 +267,7 @@ stf_status oakley_auth(struct msg_digest *md, bool initiator)
 			log_state(RC_LOG_SERIOUS, st,
 				  "received Hash Payload does not match computed value");
 			/* XXX Could send notification back */
-			r = STF_FAIL + INVALID_HASH_INFORMATION;
+			r = STF_FAIL_v1N + v1N_INVALID_HASH_INFORMATION;
 		} else {
 			dbg("received message HASH_%s data ok",
 			    initiator ? "R" : "I" /*reverse*/);
@@ -285,7 +285,7 @@ stf_status oakley_auth(struct msg_digest *md, bool initiator)
 			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
 			dbg("received message SIG_%s data did not match computed value",
 			    initiator ? "R" : "I" /*reverse*/);
-			r = STF_FAIL + INVALID_KEY_INFORMATION;
+			r = STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 		}
 		break;
 	}

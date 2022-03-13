@@ -2712,7 +2712,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
  *   - nat_traversal_change_port_lookup(md, st)
  * - !(md->hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) to gate Notify payloads/exchanges [WRONG]
  * - find note for STF_INTERNAL_ERROR
- * - find note for STF_FAIL (might not be part of result (STF_FAIL+note))
+ * - find note for STF_FAIL_v1N (might not be part of result (STF_FAIL_v1N+note))
  *
  * We don't use these but complete_v1_state_transition does:
  * - record md->event_already_set
@@ -2866,11 +2866,11 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		}
 		break;
 
-	case STF_FAIL:
-	default: /* STF_FAIL[+notification] */
+	case STF_FAIL_v1N:
+	default: /* STF_FAIL_v1N[+notification] */
 	{
-		passert(result >= STF_FAIL);
-		v2_notification_t notification = result - STF_FAIL;
+		passert(result >= STF_FAIL_v1N);
+		v2_notification_t notification = result - STF_FAIL_v1N;
 		llog_pexpect(ike->sa.st_logger, HERE,
 			     "state transition '%s' failed with %s",
 			     transition->story,

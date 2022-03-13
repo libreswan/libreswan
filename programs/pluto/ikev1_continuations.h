@@ -10,10 +10,10 @@
 /* ??? why are there so many copies of this routine (ikev2.h, ikev1_continuations.h, ipsec_doi.c).
  * Sometimes more than one copy is defined!
  */
-#define RETURN_STF_FAILURE(f) { \
+#define RETURN_STF_FAIL_v1NURE(f) { \
 	v1_notification_t res = (f); \
-	if (res != NOTHING_WRONG) { \
-		  return STF_FAIL + res; \
+	if (res != v1N_NOTHING_WRONG) { \
+		  return STF_FAIL_v1N + res; \
 	} \
 }
 

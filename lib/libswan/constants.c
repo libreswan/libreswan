@@ -1665,63 +1665,64 @@ static const char *const v1_notification_cisco_more_name[] = {
 };
 
 static enum_names v1_notification_cisco_more_names = {
-	ISAKMP_N_CISCO_LOAD_BALANCE,
-	ISAKMP_N_CISCO_PRESHARED_KEY_HASH,
+	v1N_ISAKMP_N_CISCO_LOAD_BALANCE,
+	v1N_ISAKMP_N_CISCO_PRESHARED_KEY_HASH,
 	ARRAY_REF(v1_notification_cisco_more_name),
 	NULL, /* prefix */
 	NULL, /* next */
 };
 
 static enum_names v1_notification_juniper_names = {
-	NETSCREEN_NHTB_INFORM,
-	NETSCREEN_NHTB_INFORM,
+	v1N_NETSCREEN_NHTB_INFORM,
+	v1N_NETSCREEN_NHTB_INFORM,
 	ARRAY_REF(v1_notification_juniper_name),
 	NULL, /* prefix */
 	&v1_notification_cisco_more_names
 };
 
 static enum_names v1_notification_dpd_names = {
-	R_U_THERE, R_U_THERE_ACK,
+	v1N_R_U_THERE,
+	v1N_R_U_THERE_ACK,
 	ARRAY_REF(v1_notification_dpd_name),
 	NULL, /* prefix */
 	&v1_notification_juniper_names
 };
 
 static enum_names v1_notification_ios_alives_names = {
-	ISAKMP_N_IOS_KEEP_ALIVE_REQ,
-	ISAKMP_N_IOS_KEEP_ALIVE_ACK,
+	v1N_ISAKMP_N_IOS_KEEP_ALIVE_REQ,
+	v1N_ISAKMP_N_IOS_KEEP_ALIVE_ACK,
 	ARRAY_REF(v1_notification_ios_alives_name),
 	NULL, /* prefix */
 	&v1_notification_dpd_names
 };
 
 static enum_names v1_notification_cisco_chatter_names = {
-	ISAKMP_N_CISCO_HELLO,
-	ISAKMP_N_CISCO_SHUT_UP,
+	v1N_ISAKMP_N_CISCO_HELLO,
+	v1N_ISAKMP_N_CISCO_SHUT_UP,
 	ARRAY_REF(v1_notification_cisco_chatter_name),
 	NULL, /* prefix */
 	&v1_notification_ios_alives_names
 };
 
 static enum_names v1_notification_ipsec_names = {
-	IPSEC_RESPONDER_LIFETIME,
-	IPSEC_INITIAL_CONTACT,
+	v1N_IPSEC_RESPONDER_LIFETIME,
+	v1N_IPSEC_INITIAL_CONTACT,
 	ARRAY_REF(v1_notification_ipsec_name),
 	NULL, /* prefix */
 	&v1_notification_cisco_chatter_names
 };
 
 static enum_names v1_notification_connected_names = {
-	CONNECTED,
-	CONNECTED,
+	v1N_CONNECTED,
+	v1N_CONNECTED,
 	ARRAY_REF(v1_notification_connected_name),
 	NULL, /* prefix */
 	&v1_notification_ipsec_names
 };
 
 enum_names v1_notification_names = {
-	INVALID_PAYLOAD_TYPE,
-	UNEQUAL_PAYLOAD_LENGTHS,
+	v1N_INVALID_PAYLOAD_TYPE,
+	v1N_UNEQUAL_PAYLOAD_LENGTHS,
 	ARRAY_REF(v1_notification_name),
 	"v1N_", /* prefix */
 	&v1_notification_connected_names

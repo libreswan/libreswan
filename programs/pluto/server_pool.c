@@ -292,7 +292,7 @@ static void inline_worker(const char *story UNUSED, struct state *unused_st UNUS
  *
  * Return values:
  *
- *	STF_FAIL: failure; message already logged.
+ *	STF_FAIL_v1N: failure; message already logged.
  *		STF not called.
  *
  *	STF_SUSPEND: computation queued for later completion.

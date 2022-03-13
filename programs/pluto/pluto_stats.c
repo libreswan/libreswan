@@ -103,7 +103,7 @@ unsigned long pstats_pamauth_aborted;
 
 PLUTO_STAT(stf_status, &stf_status_names,
 	   "total.pluto.stf",
-	   STF_OK, STF_FAIL); /* STF_FAIL+N is counted as STF_FAIL */
+	   STF_OK, STF_FAIL_v1N); /* STF_FAIL_v1N+N is counted as STF_FAIL_v1N */
 
 PLUTO_STAT(ikev2_sent_notifies_e, &v2_notification_names,
 	   "ikev2.sent.notifies.error",

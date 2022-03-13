@@ -1661,7 +1661,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 		log_state(RC_LOG_SERIOUS, st, "Unknown/unsupported DOI %s",
 			  enum_show(&doi_names, sa->isasa_doi, &b));
 		/* XXX Could send notification back */
-		return DOI_NOT_SUPPORTED;	/* reject whole SA */
+		return v1N_DOI_NOT_SUPPORTED;	/* reject whole SA */
 	}
 
 	/* Situation */
@@ -1670,7 +1670,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 	d = pbs_in_struct(sa_pbs, &ipsec_sit_desc, &ipsecdoisit, sizeof(ipsecdoisit), NULL);
 	if (d != NULL) {
 		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
-		return SITUATION_NOT_SUPPORTED;	/* reject whole SA */
+		return v1N_SITUATION_NOT_SUPPORTED;	/* reject whole SA */
 	}
 
 	if (ipsecdoisit != SIT_IDENTITY_ONLY) {
@@ -1678,7 +1678,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 		log_state(RC_LOG_SERIOUS, st, "unsupported IPsec DOI situation (%s)",
 			  str_lset(&sit_bit_names, ipsecdoisit, &lb));
 		/* XXX Could send notification back */
-		return SITUATION_NOT_SUPPORTED;	/* reject whole SA */
+		return v1N_SITUATION_NOT_SUPPORTED;	/* reject whole SA */
 	}
 
 	/* The rules for ISAKMP SAs are scattered.
@@ -1694,7 +1694,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 			  &proposal_pbs);
 	if (d != NULL) {
 		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
-		return PAYLOAD_MALFORMED;	/* reject whole SA */
+		return v1N_PAYLOAD_MALFORMED;	/* reject whole SA */
 	}
 
 	if (proposal.isap_pnp != ISAKMP_NEXT_NONE) {
@@ -1702,7 +1702,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 		log_state(RC_LOG_SERIOUS, st,
 			  "Proposal Payload must be alone in Oakley SA; found %s following Proposal",
 			  enum_show(&ikev1_payload_names, proposal.isap_pnp, &b));
-		return PAYLOAD_MALFORMED;	/* reject whole SA */
+		return v1N_PAYLOAD_MALFORMED;	/* reject whole SA */
 	}
 
 	if (proposal.isap_protoid != PROTO_ISAKMP) {
@@ -1710,7 +1710,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 		log_state(RC_LOG_SERIOUS, st,
 			  "unexpected Protocol ID (%s) found in Oakley Proposal",
 			  enum_show(&ikev1_protocol_names, proposal.isap_protoid, &b));
-		return INVALID_PROTOCOL_ID;	/* reject whole SA */
+		return v1N_INVALID_PROTOCOL_ID;	/* reject whole SA */
 	}
 
 	/* Just what should we accept for the SPI field?
@@ -1742,20 +1742,20 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 		diag_t d = pbs_in_raw(&proposal_pbs, junk_spi, proposal.isap_spisize, "Oakley SPI");
 		if (d != NULL) {
 			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
-			return PAYLOAD_MALFORMED;	/* reject whole SA */
+			return v1N_PAYLOAD_MALFORMED;	/* reject whole SA */
 		}
 	} else {
 		log_state(RC_LOG_SERIOUS, st,
 			  "invalid SPI size (%u) in Oakley Proposal",
 			  (unsigned)proposal.isap_spisize);
-		return INVALID_SPI;	/* reject whole SA */
+		return v1N_INVALID_SPI;	/* reject whole SA */
 	}
 
 	if (selection && proposal.isap_notrans != 1) {
 		log_state(RC_LOG_SERIOUS, st,
 			  "a single Transform is required in a selecting Oakley Proposal; found %u",
 			  (unsigned)proposal.isap_notrans);
-		return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+		return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 	}
 
 	/* for each transform payload... */
@@ -1767,7 +1767,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 		if (no_trans_left == 0) {
 			log_state(RC_LOG_SERIOUS, st,
 				  "number of Transform Payloads disagrees with Oakley Proposal Payload");
-			return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+			return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 		}
 
 		uint16_t life_type = 0;	/* initialized to silence GCC */
@@ -1784,14 +1784,14 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 					 &trans, sizeof(trans), &trans_pbs);
 		if (d != NULL) {
 			llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
-			return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+			return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 		}
 
 		if (trans.isat_transnum <= last_transnum) {
 			/* picky, picky, picky */
 			log_state(RC_LOG_SERIOUS, st,
 				  "Transform Numbers are not monotonically increasing in Oakley Proposal");
-			return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+			return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 		}
 		last_transnum = trans.isat_transnum;
 
@@ -1801,7 +1801,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 				  "expected KEY_IKE but found %s in Oakley Transform",
 				  enum_show(&isakmp_transformid_names,
 					    trans.isat_transid, &b));
-			return INVALID_TRANSFORM_ID;	/* reject whole SA */
+			return v1N_INVALID_TRANSFORM_ID;	/* reject whole SA */
 		}
 
 		uint8_t *attr_start = trans_pbs.cur;
@@ -1832,7 +1832,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 						 &a, sizeof(a), &attr_pbs);
 			if (d != NULL) {
 				llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "invalid transform: ");
-				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+				return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 
 			passert((a.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK) <
@@ -1844,7 +1844,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 					  "repeated %s attribute in Oakley Transform %u",
 					  enum_show(&oakley_attr_names, a.isaat_af_type, &b),
 					  trans.isat_transnum);
-				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+				return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 
 			seen_attrs |= LELEM(
@@ -2037,7 +2037,7 @@ rsasig_common:
 						log_state(RC_LOG_SERIOUS, st,
 							  "attribute OAKLEY_LIFE_TYPE value %s repeated",
 							  enum_show(&oakley_lifetime_names, val, &b));
-						return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+						return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 					}
 					seen_durations |= LELEM(val);
 					life_type = val;
@@ -2174,7 +2174,7 @@ rsasig_common:
 						  "missing mandatory attribute(s) %s in Oakley Transform %u",
 						  str_lset(&oakley_attr_bit_names, missing, &lb),
 						  trans.isat_transnum);
-					return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+					return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 				}
 			}
 
@@ -2224,7 +2224,7 @@ rsasig_common:
 
 			/* copy over the results */
 			st->st_oakley = ta;
-			return NOTHING_WRONG;	/* accept SA */
+			return v1N_NOTHING_WRONG;	/* accept SA */
 		}
 
 		/* transform rejected: on to next transform */
@@ -2235,7 +2235,7 @@ rsasig_common:
 			if (no_trans_left != 0) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "number of Transform Payloads disagrees with Oakley Proposal Payload");
-				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+				return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 			break;
 		}
@@ -2244,11 +2244,11 @@ rsasig_common:
 			log_state(RC_LOG_SERIOUS, st,
 				  "unexpected %s payload in Oakley Proposal",
 				  enum_show(&ikev1_payload_names, proposal.isap_pnp, &b));
-			return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+			return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 		}
 	}
 	log_state(RC_LOG_SERIOUS, st, "no acceptable Oakley Transform");
-	return NO_PROPOSAL_CHOSEN;	/* reject whole SA */
+	return v1N_NO_PROPOSAL_CHOSEN;	/* reject whole SA */
 }
 
 /* Initialize st_oakley field of state for use when initiating in
@@ -2880,14 +2880,14 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 		log_state(RC_LOG_SERIOUS, st, "Unknown or unsupported DOI %s",
 			  enum_show(&doi_names, sa->isasa_doi, &b));
 		/* XXX Could send notification back */
-		return DOI_NOT_SUPPORTED;	/* reject whole SA */
+		return v1N_DOI_NOT_SUPPORTED;	/* reject whole SA */
 	}
 
 	/* Situation */
 	d = pbs_in_struct(sa_pbs, &ipsec_sit_desc, &ipsecdoisit, sizeof(ipsecdoisit), NULL);
 	if (d != NULL) {
 		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
-		return SITUATION_NOT_SUPPORTED;	/* reject whole SA */
+		return v1N_SITUATION_NOT_SUPPORTED;	/* reject whole SA */
 	}
 
 	if (ipsecdoisit != SIT_IDENTITY_ONLY) {
@@ -2895,7 +2895,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 		log_state(RC_LOG_SERIOUS, st, "unsupported IPsec DOI situation (%s)",
 			  str_lset(&sit_bit_names, ipsecdoisit, &lb));
 		/* XXX Could send notification back */
-		return SITUATION_NOT_SUPPORTED;	/* reject whole SA */
+		return v1N_SITUATION_NOT_SUPPORTED;	/* reject whole SA */
 	}
 
 	/* The rules for IPsec SAs are scattered.
@@ -2916,7 +2916,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 			  &next_proposal_pbs);
 	if (d != NULL) {
 		llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
-		return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+		return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 	}
 
 	/* for each conjunction of proposals... */
@@ -2978,17 +2978,17 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 							      "CPI filler");
 					if (d != NULL) {
 						llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
-						return INVALID_SPI;	/* reject whole SA */
+						return v1N_INVALID_SPI;	/* reject whole SA */
 					}
 					if (!all_zero(filler, sizeof(filler))) {
-						return INVALID_SPI;	/* reject whole SA */
+						return v1N_INVALID_SPI;	/* reject whole SA */
 					}
 				} else if (next_proposal.isap_spisize !=
 					   IPCOMP_CPI_SIZE) {
 					log_state(RC_LOG_SERIOUS, st,
 						  "IPsec Proposal with improper CPI size (%u)",
 						  next_proposal.isap_spisize);
-					return INVALID_SPI;	/* reject whole SA */
+					return v1N_INVALID_SPI;	/* reject whole SA */
 				}
 
 				/* We store CPI in the low order of a network order
@@ -3003,7 +3003,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 						      "CPI");
 				if (d != NULL) {
 					llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
-					return INVALID_SPI;	/* reject whole SA */
+					return v1N_INVALID_SPI;	/* reject whole SA */
 				}
 
 				/* If sanity ruled, CPIs would have to be such that
@@ -3021,7 +3021,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 					if (next_spi == 0) {
 						log_state(RC_LOG_SERIOUS, st,
 							  "IPsec Proposal contains well-known CPI that I cannot uniquify");
-						return INVALID_SPI;	/* reject whole SA */
+						return v1N_INVALID_SPI;	/* reject whole SA */
 					}
 					break;
 				default:
@@ -3032,7 +3032,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 						log_state(RC_LOG_SERIOUS, st,
 							  "IPsec Proposal contains CPI from non-negotiated range (0x%" PRIx32 ")",
 							  ntohl(next_spi));
-						return INVALID_SPI;	/* reject whole SA */
+						return v1N_INVALID_SPI;	/* reject whole SA */
 					}
 					break;
 				}
@@ -3044,7 +3044,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 					log_state(RC_LOG_SERIOUS, st,
 						  "IPsec Proposal with improper SPI size (%u)",
 						  next_proposal.isap_spisize);
-					return INVALID_SPI;	/* reject whole SA */
+					return v1N_INVALID_SPI;	/* reject whole SA */
 				}
 
 				diag_t d = pbs_in_raw(&next_proposal_pbs,
@@ -3053,7 +3053,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 						      "SPI");
 				if (d != NULL) {
 					llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
-					return INVALID_SPI;	/* reject whole SA */
+					return v1N_INVALID_SPI;	/* reject whole SA */
 				}
 
 				/* SPI value 0 is invalid and values 1-255 are reserved to IANA.
@@ -3064,7 +3064,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 					log_state(RC_LOG_SERIOUS, st,
 						  "IPsec Proposal contains invalid SPI (0x%" PRIx32 ")",
 						  ntohl(next_spi));
-					return INVALID_SPI;	/* reject whole SA */
+					return v1N_INVALID_SPI;	/* reject whole SA */
 				}
 			}
 
@@ -3079,7 +3079,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 				if (ah_seen) {
 					log_state(RC_LOG_SERIOUS, st,
 						  "IPsec SA contains two simultaneous AH Proposals");
-					return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+					return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 				}
 				ah_seen = true;
 				ah_prop_pbs = next_proposal_pbs;
@@ -3091,7 +3091,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 				if (esp_seen) {
 					log_state(RC_LOG_SERIOUS, st,
 						  "IPsec SA contains two simultaneous ESP Proposals");
-					return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+					return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 				}
 				esp_seen = true;
 				esp_prop_pbs = next_proposal_pbs;
@@ -3103,7 +3103,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 				if (ipcomp_seen) {
 					log_state(RC_LOG_SERIOUS, st,
 						  "IPsec SA contains two simultaneous IPCOMP Proposals");
-					return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+					return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 				}
 				ipcomp_seen = true;
 				ipcomp_prop_pbs = next_proposal_pbs;
@@ -3118,7 +3118,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 					  "unexpected Protocol ID (%s) in IPsec Proposal",
 					  enum_show(&ikev1_protocol_names,
 						    next_proposal.isap_protoid, &b));
-				return INVALID_PROTOCOL_ID;	/* reject whole SA */
+				return v1N_INVALID_PROTOCOL_ID;	/* reject whole SA */
 			}
 			}
 
@@ -3131,7 +3131,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 				log_state(RC_LOG_SERIOUS, st,
 					  "unexpected in Proposal: %s",
 					  enum_show(&ikev1_payload_names, next_proposal.isap_pnp, &b));
-				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+				return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 
 			diag_t d = pbs_in_struct(sa_pbs, &isakmp_proposal_desc,
@@ -3139,7 +3139,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 						 &next_proposal_pbs);
 			if (d != NULL) {
 				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
-				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+				return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 		} while (next_proposal.isap_proposal == propno);
 
@@ -3168,7 +3168,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 							   tn == ah_proposal.isap_notrans - 1,
 							   PROTO_IPSEC_AH,
 							   st))
-					return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+					return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 
 				previous_transnum = ah_trans.isat_transnum;
 
@@ -3204,7 +3204,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 						  ah_attrs.transattrs.ta_integ->common.fqn,
 						  enum_show(&ah_transformid_names,
 							    ah_trans.isat_transid, &b));
-					return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+					return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 				}
 				break;                  /* we seem to be happy */
 			}
@@ -3237,7 +3237,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 				      tn == esp_proposal.isap_notrans - 1,
 				      PROTO_IPSEC_ESP,
 				      st))
-					return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+					return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 
 				previous_transnum = esp_trans.isat_transnum;
 
@@ -3308,14 +3308,14 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 					  "compression proposed by %s, but policy for "PRI_CONNECTION" forbids it",
 					  str_address(&c->remote->host.addr, &b),
 					  pri_connection(c, &cib));
-				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+				return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 
 			if (well_known_cpi != NULL && !ah_seen && !esp_seen) {
 				log_state(RC_LOG, st,
 					  "illegal proposal: bare IPCOMP used with well-known CPI %s",
 					  well_known_cpi->common.fqn);
-				return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+				return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 			}
 
 			for (tn = 0; tn != ipcomp_proposal.isap_notrans;
@@ -3330,7 +3330,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 							   tn == ipcomp_proposal.isap_notrans - 1,
 							   PROTO_IPCOMP,
 							   st)) {
-					return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+					return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 				}
 
 				previous_transnum = ipcomp_trans.isat_transnum;
@@ -3346,7 +3346,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 						  "illegal proposal: IPCOMP well-known CPI %s disagrees with transform %s",
 						  well_known_cpi->common.fqn,
 						  ipcomp_attrs.transattrs.ta_ipcomp->common.fqn);
-					return BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
+					return v1N_BAD_PROPOSAL_SYNTAX;	/* reject whole SA */
 				}
 
 				/* all we can handle! */
@@ -3459,9 +3459,9 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 			st->st_ipcomp.peer_lastused = mononow();
 		}
 
-		return NOTHING_WRONG;	/* accept this transform! */
+		return v1N_NOTHING_WRONG;	/* accept this transform! */
 	}
 
 	log_state(RC_LOG_SERIOUS, st, "no acceptable Proposal in IPsec SA");
-	return NO_PROPOSAL_CHOSEN;	/* reject whole SA */
+	return v1N_NO_PROPOSAL_CHOSEN;	/* reject whole SA */
 }

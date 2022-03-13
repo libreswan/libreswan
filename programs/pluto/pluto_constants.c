@@ -140,7 +140,7 @@ static const char *const stf_status_strings[] = {
 	A(STF_INTERNAL_ERROR),
 	A(STF_V2_DELETE_IKE_AUTH_INITIATOR),
 	A(STF_FATAL),
-	A(STF_FAIL),
+	A(STF_FAIL_v1N),
 #undef A
 };
 

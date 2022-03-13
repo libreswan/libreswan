@@ -527,7 +527,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 	}
 
 	/* SA body in and out */
-	RETURN_STF_FAILURE(parse_isakmp_sa_body(&sa_pd->pbs,
+	RETURN_STF_FAIL_v1NURE(parse_isakmp_sa_body(&sa_pd->pbs,
 						&sa_pd->payload.sa,
 						&r_sa_pbs, false, st));
 
@@ -573,7 +573,7 @@ stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 	{
 		struct payload_digest *const sapd = md->chain[ISAKMP_NEXT_SA];
 
-		RETURN_STF_FAILURE(parse_isakmp_sa_body(&sapd->pbs,
+		RETURN_STF_FAIL_v1NURE(parse_isakmp_sa_body(&sapd->pbs,
 							&sapd->payload.sa,
 							NULL, true, st));
 	}
@@ -581,7 +581,7 @@ stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 	if (libreswan_fipsmode() && st->st_oakley.ta_prf == NULL) {
 		log_state(RC_LOG_SERIOUS, st,
 			  "Missing prf - algo not allowed in fips mode (inR1_outI2)?");
-		return STF_FAIL + SITUATION_NOT_SUPPORTED;
+		return STF_FAIL_v1N + v1N_SITUATION_NOT_SUPPORTED;
 	}
 
 	merge_quirks(st, md);
@@ -691,11 +691,11 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 	/* KE in */
 	if (!unpack_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
 		       md->chain[ISAKMP_NEXT_KE], st->st_logger)) {
-		return STF_FAIL + INVALID_KEY_INFORMATION;
+		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 	}
 
 	/* Ni in */
-	RETURN_STF_FAILURE(accept_v1_nonce(st->st_logger, md, &st->st_ni, "Ni"));
+	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(st->st_logger, md, &st->st_ni, "Ni"));
 
 	/* decode certificate requests */
 	decode_v1_certificate_requests(st, md);
@@ -763,7 +763,7 @@ static stf_status main_inI2_outR2_continue1(struct state *st,
 	if (libreswan_fipsmode() && st->st_oakley.ta_prf == NULL) {
 		log_state(RC_LOG_SERIOUS, st,
 			  "Missing prf - algo not allowed in fips mode (inI2_outR2)?");
-		return STF_FAIL + SITUATION_NOT_SUPPORTED;
+		return STF_FAIL_v1N + v1N_SITUATION_NOT_SUPPORTED;
 	}
 
 	/* send CR if auth is RSA and no preloaded RSA public key exists*/
@@ -905,11 +905,11 @@ stf_status main_inR2_outI3(struct state *st, struct msg_digest *md)
 	/* KE in */
 	if (!unpack_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
 		       md->chain[ISAKMP_NEXT_KE], st->st_logger)) {
-		return STF_FAIL + INVALID_KEY_INFORMATION;
+		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 	}
 
 	/* Nr in */
-	RETURN_STF_FAILURE(accept_v1_nonce(st->st_logger, md, &st->st_nr, "Nr"));
+	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(st->st_logger, md, &st->st_nr, "Nr"));
 	submit_dh_shared_secret(st, st, st->st_gr, main_inR2_outI3_continue, HERE);
 	return STF_SUSPEND;
 }
@@ -923,7 +923,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 	passert(md != NULL);	/* ??? how would this fail? */
 
 	if (st->st_dh_shared_secret == NULL) {
-		return STF_FAIL + INVALID_KEY_INFORMATION;
+		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 	}
 
 	calc_v1_skeyid_and_iv(st);
@@ -1108,7 +1108,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 			sig = v1_sign_hash_RSA(c, &hash, st->st_logger);
 			if (sig.len == 0) {
 				/* already logged */
-				return STF_FAIL + AUTHENTICATION_FAILED;
+				return STF_FAIL_v1N + v1N_AUTHENTICATION_FAILED;
 			}
 
 			if (!ikev1_out_generic_raw(&isakmp_signature_desc,
@@ -1126,7 +1126,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 			.isan_doi = ISAKMP_DOI_IPSEC,
 			.isan_protoid = PROTO_ISAKMP,
 			.isan_spisize = COOKIE_SIZE * 2,
-			.isan_type = IPSEC_INITIAL_CONTACT,
+			.isan_type = v1N_IPSEC_INITIAL_CONTACT,
 		};
 
 		log_state(RC_LOG, st, "sending INITIAL_CONTACT");
@@ -1168,11 +1168,11 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 
 	/* handle case where NSS balked at generating DH */
 	if (st->st_dh_shared_secret == NULL)
-		return STF_FAIL + INVALID_KEY_INFORMATION;
+		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 
 	if (!v1_decode_certs(md)) {
 		log_state(RC_LOG, st, "X509: CERT payload bogus or revoked");
-		return STF_FAIL + INVALID_ID_INFORMATION;
+		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 	}
 
 	/*
@@ -1184,7 +1184,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 
 	if (!ikev1_decode_peer_id_main_mode_responder(st, md)) {
 		dbg("Peer ID failed to decode");
-		return STF_FAIL + INVALID_ID_INFORMATION;
+		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 	}
 
 	/* HASH_I or SIG_I */
@@ -1326,7 +1326,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 			sig = v1_sign_hash_RSA(c, &hash, st->st_logger);
 			if (sig.len == 0) {
 				/* already logged */
-				return STF_FAIL + AUTHENTICATION_FAILED;
+				return STF_FAIL_v1N + v1N_AUTHENTICATION_FAILED;
 			}
 
 			if (!ikev1_out_generic_raw(&isakmp_signature_desc,
@@ -1388,7 +1388,7 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 {
 	if (!v1_decode_certs(md)) {
 		log_state(RC_LOG, st, "X509: CERT payload bogus or revoked");
-		return STF_FAIL + INVALID_ID_INFORMATION;
+		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 	}
 
 	/*
@@ -1402,7 +1402,7 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 
 	if (!ikev1_decode_peer_id_initiator(st, md)) {
 		dbg("Peer ID failed to decode");
-		return STF_FAIL + INVALID_ID_INFORMATION;
+		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 	}
 
 	passert(c == st->st_connection); /* no switch */
@@ -1563,7 +1563,7 @@ static void send_v1_notification(struct logger *logger,
 	monotime_t n = mononow();
 
 	switch (type) {
-	case PAYLOAD_MALFORMED:
+	case v1N_PAYLOAD_MALFORMED:
 		/* only send one per second. */
 		/* ??? this depends on monotime_t having a one-second granularity */
 		if (monobefore(last_malformed, n))
@@ -1603,7 +1603,7 @@ static void send_v1_notification(struct logger *logger,
 		encst = NULL;
 		break;
 
-	case INVALID_FLAGS:
+	case v1N_INVALID_FLAGS:
 		/*
 		 * invalid flags usually includes encryption flags, so do not
 		 * send encrypted.
@@ -1752,7 +1752,7 @@ void send_v1_notification_from_md(struct msg_digest *md, v1_notification_t type)
 	monotime_t n = mononow();
 
 	switch (type) {
-	case PAYLOAD_MALFORMED:
+	case v1N_PAYLOAD_MALFORMED:
 		/* only send one per second. */
 		/* ??? this depends on monotime_t having a one-second granularity */
 		if (monobefore(last_malformed, n))
@@ -1760,7 +1760,7 @@ void send_v1_notification_from_md(struct msg_digest *md, v1_notification_t type)
 		last_malformed = n;
 		break;
 
-	case INVALID_FLAGS:
+	case v1N_INVALID_FLAGS:
 		break;
 
 	default:
@@ -1939,7 +1939,7 @@ void send_v1_delete(struct state *st)
 					.isan_doi = ISAKMP_DOI_IPSEC,
 					.isan_protoid = PROTO_ISAKMP,
 					.isan_spisize = COOKIE_SIZE * 2,
-					.isan_type = INVALID_PAYLOAD_TYPE,
+					.isan_type = v1N_INVALID_PAYLOAD_TYPE,
 				};
 
 				passert(out_struct(&isan, &isakmp_notification_desc, &r_hdr_pbs,

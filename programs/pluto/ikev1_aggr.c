@@ -192,7 +192,7 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 			  str_id(&st->st_connection->remote->host.id, &buf),
 			  str_endpoint(&md->sender, &b));
 		/* XXX notification is in order! */
-		return STF_FAIL + INVALID_ID_INFORMATION;
+		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 	}
 
 	passert(c == st->st_connection); /* no switch */
@@ -235,7 +235,7 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	{
 		pb_stream sabs = sa_pd->pbs;
 
-		RETURN_STF_FAILURE(parse_isakmp_sa_body(&sabs,
+		RETURN_STF_FAIL_v1NURE(parse_isakmp_sa_body(&sabs,
 							&sa_pd->payload.sa,
 							NULL, false, st));
 	}
@@ -243,11 +243,11 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	/* KE in */
 	if (!unpack_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
 		       md->chain[ISAKMP_NEXT_KE], st->st_logger)) {
-		return STF_FAIL + INVALID_KEY_INFORMATION;
+		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 	}
 
 	/* Ni in */
-	RETURN_STF_FAILURE(accept_v1_nonce(st->st_logger, md, &st->st_ni, "Ni"));
+	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(st->st_logger, md, &st->st_ni, "Ni"));
 
 	/* calculate KE and Nonce */
 	submit_ke_and_nonce(st, st->st_oakley.ta_dh,
@@ -272,7 +272,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 	 */
 
 	if (st->st_dh_shared_secret == NULL) {
-		return STF_FAIL + INVALID_KEY_INFORMATION;
+		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 	}
 	calc_v1_skeyid_and_iv(st);
 
@@ -365,9 +365,9 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 		v1_notification_t rn = parse_isakmp_sa_body(&sa_pd->pbs,
 							    &sa_pd->payload.sa,
 							    &r_sa_pbs, false, st);
-		if (rn != NOTHING_WRONG) {
+		if (rn != v1N_NOTHING_WRONG) {
 			free_auth_chain(auth_chain, chain_len);
-			return STF_FAIL + rn;
+			return STF_FAIL_v1N + rn;
 		}
 	}
 
@@ -456,7 +456,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 								     st->st_logger);
 			if (sig.len == 0) {
 				/* already logged */
-				return STF_FAIL + AUTHENTICATION_FAILED;
+				return STF_FAIL_v1N + v1N_AUTHENTICATION_FAILED;
 			}
 
 			if (!ikev1_out_generic_raw(&isakmp_signature_desc,
@@ -530,7 +530,7 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 			  str_id(&st->st_connection->remote->host.id, &buf),
 			  str_endpoint(&md->sender, &b));
 		/* XXX notification is in order! */
-		return STF_FAIL + INVALID_ID_INFORMATION;
+		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 	}
 
 	passert(c == st->st_connection); /* no switch */
@@ -542,8 +542,8 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 			parse_isakmp_sa_body(&sapd->pbs, &sapd->payload.sa,
 					     NULL, true, st);
 
-		if (r != NOTHING_WRONG)
-			return STF_FAIL + r;
+		if (r != v1N_NOTHING_WRONG)
+			return STF_FAIL_v1N + r;
 	}
 
 	merge_quirks(st, md);
@@ -553,11 +553,11 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	/* KE in */
 	if (!unpack_KE(&st->st_gr, "Gr", st->st_oakley.ta_dh,
 		       md->chain[ISAKMP_NEXT_KE], st->st_logger)) {
-		return STF_FAIL + INVALID_KEY_INFORMATION;
+		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 	}
 
 	/* Ni in */
-	RETURN_STF_FAILURE(accept_v1_nonce(st->st_logger, md, &st->st_nr, "Nr"));
+	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(st->st_logger, md, &st->st_nr, "Nr"));
 
 	/* moved the following up as we need Rcookie for hash, skeyids */
 	/* Reinsert the state, using the responder cookie we just received */
@@ -583,7 +583,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 	passert(md->v1_st == st);
 
 	if (st->st_dh_shared_secret == NULL) {
-		return STF_FAIL + INVALID_KEY_INFORMATION;
+		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 	}
 	calc_v1_skeyid_and_iv(st);
 
@@ -735,7 +735,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 								     st->st_logger);
 			if (sig.len == 0) {
 				/* already logged */
-				return STF_FAIL + AUTHENTICATION_FAILED;
+				return STF_FAIL_v1N + v1N_AUTHENTICATION_FAILED;
 			}
 
 			if (!ikev1_out_generic_raw(&isakmp_signature_desc,
@@ -842,7 +842,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 					 &id_pd.payload, sizeof(id_pd.payload), &id_pd.pbs);
 		if (d != NULL) {
 			llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
-			return STF_FAIL + PAYLOAD_MALFORMED;
+			return STF_FAIL_v1N + v1N_PAYLOAD_MALFORMED;
 		}
 	}
 
@@ -869,7 +869,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	if (st->st_remote_certs.verified == NULL) {
 		if (!v1_decode_certs(md)) {
 			log_state(RC_LOG, st, "X509: CERT payload bogus or revoked");
-			return STF_FAIL + INVALID_ID_INFORMATION;
+			return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 		}
 		new_certs_to_verify = (st->st_remote_certs.verified != NULL);
 	}
@@ -885,7 +885,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 		diag_t d = update_peer_id_certs(pexpect_ike_sa(st));
 		if (d != NULL) {
 			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
-			return STF_FAIL + INVALID_ID_INFORMATION;
+			return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 		}
 	}
 

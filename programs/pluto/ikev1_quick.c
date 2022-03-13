@@ -126,27 +126,27 @@ static v1_notification_t accept_PFS_KE(struct state *st, struct msg_digest *md,
 		if (st->st_pfs_group != NULL) {
 			log_state(RC_LOG_SERIOUS, st,
 				  "missing KE payload in %s message", msg_name);
-			return INVALID_KEY_INFORMATION;
+			return v1N_INVALID_KEY_INFORMATION;
 		}
-		return NOTHING_WRONG;
+		return v1N_NOTHING_WRONG;
 	} else {
 		if (st->st_pfs_group == NULL) {
 			log_state(RC_LOG_SERIOUS, st,
 				  "%s message KE payload requires a GROUP_DESCRIPTION attribute in SA",
 				  msg_name);
-			return INVALID_KEY_INFORMATION;
+			return v1N_INVALID_KEY_INFORMATION;
 		}
 		if (ke_pd->next != NULL) {
 			log_state(RC_LOG_SERIOUS, st,
 				  "%s message contains several KE payloads; we accept at most one",
 				  msg_name);
-			return INVALID_KEY_INFORMATION; /* ??? */
+			return v1N_INVALID_KEY_INFORMATION; /* ??? */
 		}
 		if (!unpack_KE(dest, val_name, st->st_pfs_group,
 			       ke_pd, st->st_logger)) {
-			return INVALID_KEY_INFORMATION;
+			return v1N_INVALID_KEY_INFORMATION;
 		}
-		return NOTHING_WRONG;
+		return v1N_NOTHING_WRONG;
 	}
 }
 
@@ -955,7 +955,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 
 		if (!decode_net_id(&IDci->payload.ipsec_id, &IDci->pbs,
 				   &remote_client, "peer client", p1st->st_logger))
-			return STF_FAIL + INVALID_ID_INFORMATION;
+			return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 
 		/* for code overwriting above */
 		const ip_protocol *remote_protocol = protocol_by_ipproto(IDci->payload.ipsec_id.isaiid_protoid);
@@ -985,7 +985,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 
 		if (!decode_net_id(&IDcr->payload.ipsec_id, &IDcr->pbs,
 				   &local_client, "our client", p1st->st_logger))
-			return STF_FAIL + INVALID_ID_INFORMATION;
+			return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 
 		/*
 		 * if there is a NATOA payload, then use it as
@@ -1022,7 +1022,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 	} else {
 		/* implicit IDci and IDcr: peer and self */
 		if (address_type(&c->local->host.addr) != address_type(&c->remote->host.addr))
-			return STF_FAIL;
+			return STF_FAIL_v1N;
 
 		local_client = selector_from_address(c->local->host.addr);
 		remote_client = selector_from_address(c->remote->host.addr);
@@ -1098,7 +1098,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 				remote.has_client = !selector_eq_address(*remote_client, remote.host->addr);
 				jam_end(buf, &remote, NULL, RIGHT_END, LEMPTY, oriented(c));
 			}
-			return STF_FAIL + INVALID_ID_INFORMATION;
+			return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 		}
 
 		/* did we find a better connection? */
@@ -1235,7 +1235,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 			 *
 			 */
 			st->st_pfs_group = &unset_group;
-			RETURN_STF_FAILURE(parse_ipsec_sa_body(&in_pbs,
+			RETURN_STF_FAIL_v1NURE(parse_ipsec_sa_body(&in_pbs,
 							       &sapd->payload.
 							       sa,
 							       NULL,
@@ -1243,10 +1243,10 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 		}
 
 		/* Ni in */
-		RETURN_STF_FAILURE(accept_v1_nonce(st->st_logger, md, &st->st_ni, "Ni"));
+		RETURN_STF_FAIL_v1NURE(accept_v1_nonce(st->st_logger, md, &st->st_ni, "Ni"));
 
 		/* [ KE ] in (for PFS) */
-		RETURN_STF_FAILURE(accept_PFS_KE(st, md, &st->st_gi,
+		RETURN_STF_FAIL_v1NURE(accept_PFS_KE(st, md, &st->st_gi,
 						 "Gi", "Quick Mode I1"));
 
 		passert(st->st_pfs_group != &unset_group);
@@ -1376,7 +1376,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 	}
 
 	/* parse and accept body, this time recording our reply */
-	RETURN_STF_FAILURE(parse_ipsec_sa_body(&sapd->pbs,
+	RETURN_STF_FAIL_v1NURE(parse_ipsec_sa_body(&sapd->pbs,
 					       &sapd->payload.sa,
 					       &r_sa_pbs,
 					       false, st));
@@ -1386,7 +1386,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 	if ((st->st_policy & POLICY_PFS) && st->st_pfs_group == NULL) {
 		log_state(RC_LOG_SERIOUS, st,
 			  "we require PFS but Quick I1 SA specifies no GROUP_DESCRIPTION");
-		return STF_FAIL + NO_PROPOSAL_CHOSEN; /* ??? */
+		return STF_FAIL_v1N + v1N_NO_PROPOSAL_CHOSEN; /* ??? */
 	}
 
 	log_state(RC_LOG, st,
@@ -1508,16 +1508,16 @@ stf_status quick_inR1_outI2(struct state *st, struct msg_digest *md)
 	{
 		struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
 
-		RETURN_STF_FAILURE(parse_ipsec_sa_body(&sa_pd->pbs,
+		RETURN_STF_FAIL_v1NURE(parse_ipsec_sa_body(&sa_pd->pbs,
 						       &sa_pd->payload.sa,
 						       NULL, true, st));
 	}
 
 	/* Nr in */
-	RETURN_STF_FAILURE(accept_v1_nonce(st->st_logger, md, &st->st_nr, "Nr"));
+	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(st->st_logger, md, &st->st_nr, "Nr"));
 
 	/* [ KE ] in (for PFS) */
-	RETURN_STF_FAILURE(accept_PFS_KE(st, md, &st->st_gr, "Gr",
+	RETURN_STF_FAIL_v1NURE(accept_PFS_KE(st, md, &st->st_gr, "Gr",
 					 "Quick Mode R1"));
 
 	if (st->st_pfs_group != NULL) {
@@ -1571,7 +1571,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 					  c->spd.this.client.hport,
 					  selector_subnet(st->st_connection->spd.this.client),
 					  "our client", st->st_logger))
-				return STF_FAIL + INVALID_ID_INFORMATION;
+				return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 
 			/* we checked elsewhere that we got two of them */
 			IDcr = IDci->next;
@@ -1584,7 +1584,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 					  c->spd.that.client.hport,
 					  selector_subnet(st->st_connection->spd.that.client),
 					  "peer client", st->st_logger))
-				return STF_FAIL + INVALID_ID_INFORMATION;
+				return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 
 			/*
 			 * if there is a NATOA payload, then use it as
@@ -1616,7 +1616,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 			    !selector_eq_address(c->spd.that.client, c->remote->host.addr)) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "IDci, IDcr payloads missing in message but default does not match proposal");
-				return STF_FAIL + INVALID_ID_INFORMATION;
+				return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 			}
 		}
 	}
@@ -1705,7 +1705,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 
 	if (dpd_init(st) != STF_OK) {
 		delete_ipsec_sa(st);
-		return STF_FAIL;
+		return STF_FAIL_v1N;
 	}
 
 	return STF_OK;
@@ -1743,7 +1743,7 @@ stf_status quick_inI2(struct state *st, struct msg_digest *md UNUSED)
 	 */
 	if (dpd_init(st) != STF_OK) {
 		delete_ipsec_sa(st);
-		return STF_FAIL;
+		return STF_FAIL_v1N;
 	}
 
 	return STF_OK;
