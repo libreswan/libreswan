@@ -1276,10 +1276,6 @@ kvmplutotest	ikev2-tcp-26-rw-nat-keepalive				good
 kvmplutotest	ikev2-tcp-05-transport-mode				good
 kvmplutotest	ikev2-udp-05-transport-mode 				good
 
-# OpenBSD interop
-kvmplutotest	interop-ikev2-openbsd-01-iked-responder	good
-kvmplutotest	interop-ikev2-openbsd-02-iked-initiator	good
-
 # Intermediary Exchange
 kvmplutotest	ikev2-intermediate-01-rsa-sha1		good
 kvmplutotest	ikev2-intermediate-02-psk		good
@@ -1313,6 +1309,10 @@ kvmplutotest	pfkeyv2-initiator-tunnel-ah-ikev2		netbsd
 kvmplutotest	pfkeyv2-initiator-tunnel-esp-ipcomp-ikev2	netbsd
 kvmplutotest	pfkeyv2-initiator-tunnel-esp-ikev2		netbsd
 kvmplutotest	pfkeyv2-ondemand				netbsd
+
+# OpenBSD interop
+kvmplutotest	interop-ikev2-openbsd-01-iked-responder	openbsd
+kvmplutotest	interop-ikev2-openbsd-02-iked-initiator	openbsd
 
 # real world interop configurations
 kvmplutotest	 elvis-is-alive				skiptest # ELVIS-PLUS IPsec test server
