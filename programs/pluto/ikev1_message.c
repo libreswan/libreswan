@@ -79,9 +79,9 @@ bool ikev1_ship_nonce(chunk_t *n, chunk_t *nonce,
 	return ikev1_justship_nonce(n, outs, name);
 }
 
-notification_t accept_v1_nonce(struct logger *logger,
-			       struct msg_digest *md, chunk_t *dest,
-			       const char *name)
+v1_notification_t accept_v1_nonce(struct logger *logger,
+				  struct msg_digest *md, chunk_t *dest,
+				  const char *name)
 {
 	pb_stream *nonce_pbs = &md->chain[ISAKMP_NEXT_NONCE]->pbs;
 	size_t len = pbs_left(nonce_pbs);

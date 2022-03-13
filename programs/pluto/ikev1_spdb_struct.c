@@ -1618,12 +1618,12 @@ static bool ikev1_verify_ike(const struct trans_attrs *ta,
  *
  * This routine is used by main_inI1_outR1() and main_inR1_outI2().
  */
-notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,		/* body of input SA Payload */
-				    const struct isakmp_sa *sa,	/* header of input SA Payload */
-				    pb_stream *r_sa_pbs,	/* if non-NULL, where to emit winning SA */
-				    bool selection,		/* if this SA is a selection, only one transform
+v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input SA Payload */
+				       const struct isakmp_sa *sa,	/* header of input SA Payload */
+				       struct pbs_out *r_sa_pbs,	/* if non-NULL, where to emit winning SA */
+				       bool selection,		/* if this SA is a selection, only one transform
 								 * can appear. */
-				    struct state *const st)	/* current state object */
+				       struct state *const st)	/* current state object */
 {
 	diag_t d;
 	const struct connection *const c = st->st_connection;
@@ -2858,11 +2858,11 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 	close_output_pbs(&r_proposal_pbs);
 }
 
-notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,           /* body of input SA Payload */
-				   const struct isakmp_sa *sa,  /* header of input SA Payload */
-				   pb_stream *r_sa_pbs,         /* if non-NULL, where to emit body of winning SA */
-				   bool selection,              /* if this SA is a selection, only one transform may appear */
-				   struct state *st)            /* current state object */
+v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body of input SA Payload */
+				      const struct isakmp_sa *sa,  /* header of input SA Payload */
+				      struct pbs_out *r_sa_pbs,         /* if non-NULL, where to emit body of winning SA */
+				      bool selection,              /* if this SA is a selection, only one transform may appear */
+				      struct state *st)            /* current state object */
 {
 	diag_t d;
 	const struct connection *c = st->st_connection;

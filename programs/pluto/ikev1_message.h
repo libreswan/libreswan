@@ -29,9 +29,9 @@ extern bool ikev1_justship_nonce(chunk_t *n, struct pbs_out *outs,
 extern bool ikev1_ship_nonce(chunk_t *n, chunk_t *nonce,
 			     struct pbs_out *outs, const char *name);
 
-extern notification_t accept_v1_nonce(struct logger *logger,
-				      struct msg_digest *md, chunk_t *dest,
-				      const char *name);
+extern v1_notification_t accept_v1_nonce(struct logger *logger,
+					 struct msg_digest *md, chunk_t *dest,
+					 const char *name);
 
 extern bool ikev1_justship_KE(struct logger *logger, chunk_t *g, struct pbs_out *outs);
 

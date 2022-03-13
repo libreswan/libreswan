@@ -37,4 +37,9 @@ bool resend_recorded_v1_ike_msg(struct state *st, const char *where);
 
 void free_v1_message_queues(struct state *st);
 
+extern void send_v1_notification_from_state(struct state *st,
+					    enum state_kind from_state,
+					    v1_notification_t type);
+extern void send_v1_notification_from_md(struct msg_digest *md,
+					 v1_notification_t type);
 #endif

@@ -11,7 +11,7 @@
  * Sometimes more than one copy is defined!
  */
 #define RETURN_STF_FAILURE(f) { \
-	notification_t res = (f); \
+	v1_notification_t res = (f); \
 	if (res != NOTHING_WRONG) { \
 		  return STF_FAIL + res; \
 	} \

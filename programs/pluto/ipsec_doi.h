@@ -35,11 +35,6 @@ extern bool accept_delete(struct msg_digest *md,
 			  struct payload_digest *p);
 extern void accept_self_delete(struct msg_digest *md);
 
-extern void send_notification_from_state(struct state *st,
-					 enum state_kind from_state,
-					 notification_t type);
-extern void send_notification_from_md(struct msg_digest *md, notification_t type);
-
 extern stf_status send_isakmp_notification(struct state *st,
 					   uint16_t type, const void *data,
 					   size_t len);

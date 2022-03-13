@@ -116,8 +116,9 @@ const struct dh_desc *ikev1_quick_pfs(const struct child_proposals proposals)
  * Check and accept optional Quick Mode KE payload for PFS.
  * Extends ACCEPT_PFS to check whether KE is allowed or required.
  */
-static notification_t accept_PFS_KE(struct state *st, struct msg_digest *md,
-				    chunk_t *dest, const char *val_name, const char *msg_name)
+static v1_notification_t accept_PFS_KE(struct state *st, struct msg_digest *md,
+				       chunk_t *dest, const char *val_name,
+				       const char *msg_name)
 {
 	struct payload_digest *const ke_pd = md->chain[ISAKMP_NEXT_KE];
 

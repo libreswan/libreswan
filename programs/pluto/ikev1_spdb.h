@@ -141,20 +141,20 @@ extern bool ikev1_out_sa(pb_stream *outs,
 
 extern lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */);
 
-extern notification_t parse_isakmp_sa_body(pb_stream *sa_pbs,           /* body of input SA Payload */
-					   const struct isakmp_sa *sa,  /* header of input SA Payload */
-					   pb_stream *r_sa_pbs,         /* if non-NULL, where to emit winning SA */
-					   bool selection,              /* if this SA is a selection, only one transform can appear */
-					   struct state *st);           /* current state object */
+extern v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,           /* body of input SA Payload */
+					      const struct isakmp_sa *sa,  /* header of input SA Payload */
+					      struct pbs_out *r_sa_pbs,         /* if non-NULL, where to emit winning SA */
+					      bool selection,              /* if this SA is a selection, only one transform can appear */
+					      struct state *st);           /* current state object */
 
 /* initialize a state with the aggressive mode parameters */
 extern bool init_aggr_st_oakley(struct state *st, lset_t policy);
 
-extern notification_t parse_ipsec_sa_body(pb_stream *sa_pbs,            /* body of input SA Payload */
-					  const struct isakmp_sa *sa,   /* header of input SA Payload */
-					  pb_stream *r_sa_pbs,          /* if non-NULL, where to emit winning SA */
-					  bool selection,               /* if this SA is a selection, only one transform can appear */
-					  struct state *st);            /* current state object */
+extern v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,            /* body of input SA Payload */
+					     const struct isakmp_sa *sa,   /* header of input SA Payload */
+					     struct pbs_out *r_sa_pbs,          /* if non-NULL, where to emit winning SA */
+					     bool selection,               /* if this SA is a selection, only one transform can appear */
+					     struct state *st);            /* current state object */
 
 extern void free_sa_attr(struct db_attr *attr);
 extern void free_sa(struct db_sa **sapp);

@@ -67,6 +67,7 @@
 #include "ip_protocol.h"
 #include "ip_info.h"
 #include "pluto_stats.h"
+#include "ikev1_send.h"
 #include "ikev2_send.h"
 #include "iface.h"
 #include "impair_message.h"
@@ -138,7 +139,7 @@ void process_packet(struct msg_digest **mdp)
 		if (pluto_ikev1_pol == GLOBAL_IKEv1_REJECT) {
 			llog(RC_LOG, md->md_logger,
 			     "rejecting IKEv1 packet as policy is set to reject all IKEv1 packets");
-			send_notification_from_md(md, INVALID_MAJOR_VERSION);
+			send_v1_notification_from_md(md, INVALID_MAJOR_VERSION);
 			return;
 		}
 
@@ -159,7 +160,7 @@ void process_packet(struct msg_digest **mdp)
 			 */
 			llog(RC_LOG, md->md_logger,
 			     "ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
-			send_notification_from_md(md, INVALID_MINOR_VERSION);
+			send_v1_notification_from_md(md, INVALID_MINOR_VERSION);
 			return;
 		}
 		dbg(" processing version=%u.%u packet with exchange type=%s (%d)",

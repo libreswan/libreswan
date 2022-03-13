@@ -1552,12 +1552,12 @@ stf_status send_isakmp_notification(struct state *st,
  */
 static monotime_t last_malformed = MONOTIME_EPOCH;
 
-static void send_notification(struct logger *logger,
-			      struct state *sndst /*possibly fake*/,
-			      notification_t type,
-			      struct state *encst,
-			      msgid_t msgid, uint8_t *icookie, uint8_t *rcookie,
-			      uint8_t protoid)
+static void send_v1_notification(struct logger *logger,
+				 struct state *sndst /*possibly fake*/,
+				 v1_notification_t type,
+				 struct state *encst,
+				 msgid_t msgid, uint8_t *icookie, uint8_t *rcookie,
+				 uint8_t protoid)
 {
 	pb_stream r_hdr_pbs;
 	monotime_t n = mononow();
@@ -1709,8 +1709,8 @@ static void send_notification(struct logger *logger,
 	send_pbs_out_using_state(sndst, "notification packet", &pbs);
 }
 
-void send_notification_from_state(struct state *st, enum state_kind from_state,
-				notification_t type)
+void send_v1_notification_from_state(struct state *st, enum state_kind from_state,
+				     v1_notification_t type)
 {
 	struct state *p1st;
 
@@ -1727,22 +1727,25 @@ void send_notification_from_state(struct state *st, enum state_kind from_state,
 				  "no Phase1 state for Quick mode notification");
 			return;
 		}
-		send_notification(st->st_logger, st, type, p1st, generate_msgid(p1st),
-				  st->st_ike_spis.initiator.bytes, st->st_ike_spis.responder.bytes,
-				  PROTO_ISAKMP);
+		send_v1_notification(st->st_logger, st, type, p1st, generate_msgid(p1st),
+				     st->st_ike_spis.initiator.bytes,
+				     st->st_ike_spis.responder.bytes,
+				     PROTO_ISAKMP);
 	} else if (IS_V1_ISAKMP_ENCRYPTED(from_state)) {
-		send_notification(st->st_logger, st, type, st, generate_msgid(st),
-				st->st_ike_spis.initiator.bytes, st->st_ike_spis.responder.bytes,
-				PROTO_ISAKMP);
+		send_v1_notification(st->st_logger, st, type, st, generate_msgid(st),
+				     st->st_ike_spis.initiator.bytes,
+				     st->st_ike_spis.responder.bytes,
+				     PROTO_ISAKMP);
 	} else {
 		/* no ISAKMP SA established - don't encrypt notification */
-		send_notification(st->st_logger, st, type, NULL, v1_MAINMODE_MSGID,
-				st->st_ike_spis.initiator.bytes, st->st_ike_spis.responder.bytes,
-				PROTO_ISAKMP);
+		send_v1_notification(st->st_logger, st, type, NULL, v1_MAINMODE_MSGID,
+				     st->st_ike_spis.initiator.bytes,
+				     st->st_ike_spis.responder.bytes,
+				     PROTO_ISAKMP);
 	}
 }
 
-void send_notification_from_md(struct msg_digest *md, notification_t type)
+void send_v1_notification_from_md(struct msg_digest *md, v1_notification_t type)
 {
 	pb_stream r_hdr_pbs;
 	monotime_t n = mononow();

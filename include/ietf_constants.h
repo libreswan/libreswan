@@ -1526,7 +1526,7 @@ typedef enum {
 	 * internal ip
 	 */
 	NETSCREEN_NHTB_INFORM = 40001,
-} notification_t;
+} v1_notification_t;
 
 /*
  * https://www.iana.org/assignments/ikev2-parameters/ikev2-parameters.xml#ikev2-parameters-13

@@ -1102,9 +1102,9 @@ void process_v1_packet(struct msg_digest *md)
 	{								\
 		pstats(ikev1_sent_notifies_e, t);			\
 		if (st != NULL)						\
-			send_notification_from_state(st, from_state, t); \
+			send_v1_notification_from_state(st, from_state, t); \
 		else							\
-			send_notification_from_md(md, t);		\
+			send_v1_notification_from_md(md, t);		\
 	}
 
 #define LOGGER (st != NULL ? st->st_logger : md->md_logger)

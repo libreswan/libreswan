@@ -362,8 +362,9 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 		}
 
 		/* SA body in and out */
-		notification_t rn = parse_isakmp_sa_body(&sa_pd->pbs,
-			&sa_pd->payload.sa, &r_sa_pbs, false, st);
+		v1_notification_t rn = parse_isakmp_sa_body(&sa_pd->pbs,
+							    &sa_pd->payload.sa,
+							    &r_sa_pbs, false, st);
 		if (rn != NOTHING_WRONG) {
 			free_auth_chain(auth_chain, chain_len);
 			return STF_FAIL + rn;
@@ -537,7 +538,7 @@ stf_status aggr_inR1_outI2(struct state *st, struct msg_digest *md)
 	/* verify echoed SA */
 	{
 		struct payload_digest *const sapd = md->chain[ISAKMP_NEXT_SA];
-		notification_t r = \
+		v1_notification_t r =
 			parse_isakmp_sa_body(&sapd->pbs, &sapd->payload.sa,
 					     NULL, true, st);
 
