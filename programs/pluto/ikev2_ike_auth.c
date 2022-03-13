@@ -70,6 +70,15 @@ static stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa 
 								  struct msg_digest *md,
 								  const struct hash_signature *sig);
 
+static stf_status process_v2_IKE_AUTH_request_post_cert_decode(struct state *st,
+							       struct msg_digest *md);
+
+static stf_status process_v2_IKE_AUTH_request_ipseckey_continue(struct ike_sa *ike,
+								struct msg_digest *md,
+								bool err);
+
+static stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_digest *md);
+
 stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *md)
 {
 	pexpect(ike->sa.st_sa_role == SA_INITIATOR);
@@ -553,9 +562,6 @@ static stf_status ikev2_pam_continue(struct state *ike_st,
 
 #endif /* USE_PAM_AUTH */
 
-static stf_status process_v2_IKE_AUTH_request_continue_tail(struct state *st,
-								   struct msg_digest *md);
-
 stf_status process_v2_IKE_AUTH_request(struct ike_sa *ike,
 				       struct child_sa *unused_child UNUSED,
 				       struct msg_digest *md)
@@ -579,56 +585,19 @@ stf_status process_v2_IKE_AUTH_request(struct ike_sa *ike,
 		jam_msg_digest(buf, md);
 	}
 
-	stf_status e = process_v2_IKE_AUTH_request_continue_tail(&ike->sa, md);
-	dbg("process_v2_IKE_AUTH_request_continue_tail returned %s",
-	    enum_name(&stf_status_names, e));
-
-	/*
-	 * if failed OE, delete state completely, no create_child_sa
-	 * allowed so childless parent makes no sense. That is also
-	 * the reason why we send v2N_AUTHENTICATION_FAILED, even
-	 * though authenticated succeeded. It shows the remote end
-	 * we have deleted the SA from our end.
-	 */
-	if (e >= STF_FAIL &&
-	    (ike->sa.st_connection->policy & POLICY_OPPORTUNISTIC)) {
-		dbg("deleting opportunistic IKE SA with no Child SA");
-		record_v2N_response(ike->sa.st_logger, ike, md,
-				    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
-				    ENCRYPTED_PAYLOAD);
-		return STF_FATAL; /* STF_ZOMBIFY */
-	}
-
-	return e;
-}
-
-static stf_status process_v2_IKE_AUTH_request_post_cert_decode(struct state *st,
-							       struct msg_digest *md);
-
-static stf_status process_v2_IKE_AUTH_request_continue_tail(struct state *st,
-								   struct msg_digest *md)
-{
-	struct ike_sa *ike = ike_sa(st, HERE);
-
 	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
 	if (cert_payloads != NULL) {
-		submit_cert_decode(ike, st, md, cert_payloads,
-				   process_v2_IKE_AUTH_request_post_cert_decode,
-				   "responder decoding certificates");
+		submit_v2_cert_decode(ike, md, cert_payloads,
+				      process_v2_IKE_AUTH_request_post_cert_decode,
+				      "responder decoding certificates");
 		return STF_SUSPEND;
-	} else {
-		dbg("no certs to decode");
-		ike->sa.st_remote_certs.processed = true;
-		ike->sa.st_remote_certs.harmless = true;
 	}
-	return process_v2_IKE_AUTH_request_post_cert_decode(st, md);
+
+	dbg("no certs to decode");
+	ike->sa.st_remote_certs.processed = true;
+	ike->sa.st_remote_certs.harmless = true;
+	return process_v2_IKE_AUTH_request_post_cert_decode(&ike->sa, md);
 }
-
-static stf_status process_v2_IKE_AUTH_request_ipseckey_continue(struct ike_sa *ike,
-								struct msg_digest *md,
-								bool err);
-
-static stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_digest *md);
 
 stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, struct msg_digest *md)
 {
@@ -1290,9 +1259,9 @@ stf_status process_v2_IKE_AUTH_response(struct ike_sa *ike, struct child_sa *unu
 	 */
 	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
 	if (cert_payloads != NULL) {
-		submit_cert_decode(ike, &ike->sa, md, cert_payloads,
-				   process_v2_IKE_AUTH_response_post_cert_decode,
-				   "initiator decoding certificates");
+		submit_v2_cert_decode(ike, md, cert_payloads,
+				      process_v2_IKE_AUTH_response_post_cert_decode,
+				      "initiator decoding certificates");
 		return STF_SUSPEND;
 	} else {
 		dbg("no certs to decode");

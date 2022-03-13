@@ -72,7 +72,7 @@ struct task_handler cert_decode_handler = {
 	.cleanup_cb = cert_decode_cleanup,
 };
 
-void submit_cert_decode(struct ike_sa *ike, struct state *state_to_resume,
+void submit_v2_cert_decode(struct ike_sa *ike,
 			struct msg_digest *md, struct payload_digest *cert_payloads,
 			cert_decode_cb *cb, const char *why)
 {
@@ -90,7 +90,8 @@ void submit_cert_decode(struct ike_sa *ike, struct state *state_to_resume,
 			.crl_strict = crl_strict,
 		},
 	};
-	submit_task(ike->sa.st_logger, state_to_resume,
+	submit_task(ike->sa.st_logger,
+		    /*resume IKE*/&ike->sa,
 		    clone_thing(task, "decode certificate payload task"),
 		    &cert_decode_handler, why);
 }
