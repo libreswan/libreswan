@@ -175,7 +175,6 @@ bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
  */
 
 bool v2_notification_fatal(v2_notification_t n);
-stf_status stf_status_from_v2_notification(v2_notification_t n);
 
 bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c);
 

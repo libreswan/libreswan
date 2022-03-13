@@ -2979,13 +2979,6 @@ bool v2_notification_fatal(v2_notification_t n)
 		n == v2N_UNSUPPORTED_CRITICAL_PAYLOAD);
 }
 
-stf_status stf_status_from_v2_notification(v2_notification_t n)
-{
-	return (n == v2N_NOTHING_WRONG ? STF_OK :
-		v2_notification_fatal(n) ? STF_FATAL :
-		STF_FAIL);
-}
-
 bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c)
 {
 	const lset_t pending_states = (LELEM(STATE_V2_NEW_CHILD_I1) |
