@@ -2728,37 +2728,13 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		return;
 	}
 
-	/* statistics */
-	/* this really depends on the type of error whether it is an IKE or IPsec fail */
-	if (result > STF_FAIL) {
-		pstats(ike_stf, STF_FAIL);
-	} else {
-		pstats(ike_stf, result);
+	const struct v2_state_transition *transition = ike->sa.st_v2_transition;
+	if (!pexpect(transition != NULL)) {
+		return;
 	}
 
-	/*
-	 * Try to get the transition that is being completed ...
-	 *
-	 * For the moment this comes from the (presumably non-NULL)
-	 * MD.SVM.
-	 *
-	 * XXX: However, when a packet is bad and no transition is
-	 * selected, this code is still called:
-	 *
-	 * STF_IGNORE: to undo the v2_msgid_start_responder() call;
-	 * better would probably be to move that call to after a
-	 * transition has been found (but fragmentation makes this
-	 * messy).
-	 *
-	 * STF_FATAL: to discard a state in response to a bad exchange
-	 * (for instance a protected packet's contents are bogus).
-	 *
-	 * Long term, this value should be extracted from the state
-	 * and .st_v2_state_transition - it just isn't possible to
-	 * squeeze both the IKE and CHILD transitions into MD.ST.
-	 */
-	const struct v2_state_transition *transition = ike->sa.st_v2_transition;
-	passert(transition != NULL);
+	/* statistics */
+	pstat(stf_status, result);
 
 #if 0
 	/*

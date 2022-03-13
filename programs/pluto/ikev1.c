@@ -2327,12 +2327,9 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 	/* handle oddball/meta results now */
 
 	/*
-	 * statistics; lump all FAILs together
-	 *
-	 * Fun fact: using min() stupidly fails (at least in GCC 8.1.1 with -Werror=sign-compare)
-	 * error: comparison of integer expressions of different signedness: `stf_status' {aka `enum <anonymous>'} and `int'
+	 * statistics; all STF_FAIL+v1N are lumped togeter
 	 */
-	pstats(ike_stf, PMIN(result, STF_FAIL));
+	pstat(stf_status, result);
 
 	dbg("complete v1 state transition with %s",
 	    result > STF_FAIL ?

@@ -25,8 +25,8 @@ struct pluto_stat {
 	const enum_names *names;
 	const char *what;
 	unsigned long floor;
-	unsigned long roof; /* ceil+1 */
 	unsigned long *count;
+	unsigned long count_ceiling;
 };
 
 /* All statistics are totals since pluto daemon startup */
@@ -46,7 +46,7 @@ extern const struct pluto_stat pstats_ikev2_sent_notifies_e; /* types of NOTIFY 
 extern const struct pluto_stat pstats_ikev2_recv_notifies_e; /* types of NOTIFY ERRORS */
 extern const struct pluto_stat pstats_ikev2_sent_notifies_s; /* types of NOTIFY STATUS */
 extern const struct pluto_stat pstats_ikev2_recv_notifies_s; /* types of NOTIFY STATUS */
-extern unsigned long pstats_ike_stf[10];	/* count state transitions */
+extern const struct pluto_stat pstats_stf_status;	     /* count state transitions */
 extern unsigned long pstats_ike_dpd_recv;
 extern unsigned long pstats_ike_dpd_sent;
 extern unsigned long pstats_ike_dpd_replied;
@@ -71,25 +71,32 @@ extern void clear_pluto_stats(void);
  *
  * "unsigned" forces negative values to large positive ones,
  * presumably INDEX fits in "unsigned".  Is size_t better?
+ *
+ * pstats() debug logs overflow
+ *
+ * pstat() counts anything <.FLOOR or >= .roof as .roof (the array is
+ * oversized).
  */
 
 #define pstats(TYPE,INDEX) {						\
 		const unsigned __pstat = (INDEX);			\
 		if (__pstat < elemsof(pstats_##TYPE)) {			\
 			pstats_##TYPE[__pstat]++;			\
-		} else if (DBGP(DBG_BASE)) {			\
+		} else if (DBGP(DBG_BASE)) {				\
 			DBG_log("pstats %s %d", #TYPE, __pstat);	\
 		}							\
 	}
 
 #define pstat(TYPE,INDEX)						\
 	{								\
-		const unsigned pstat_ = (INDEX);			\
 		const struct pluto_stat *ps_ = &pstats_##TYPE;		\
-		if (pstat_ < ps_->floor || pstat_ >= ps_->roof) {	\
-			ps_->count[ps_->roof - ps_->floor]++;		\
+		/* underflow forces -ve value to large positive */	\
+		const unsigned long pstat_ = (INDEX) - ps_->floor;	\
+		if (pstat_ > ps_->count_ceiling) {			\
+			/* array has count_celing+1 entries */		\
+			ps_->count[ps_->count_ceiling]++;		\
 		} else {						\
-			ps_->count[pstat_-ps_->floor]++;		\
+			ps_->count[pstat_]++;				\
 		}							\
 	}
 

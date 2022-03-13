@@ -24,7 +24,6 @@
 #include <string.h>
 #include <errno.h>
 
-
 #include "sysdep.h"
 #include "socketwrapper.h"
 #include "constants.h"
@@ -71,7 +70,6 @@ unsigned long pstats_ike_in_bytes;	/* total incoming IPsec traffic */
 unsigned long pstats_ike_out_bytes;	/* total outgoing IPsec traffic */
 unsigned long pstats_ikev1_sent_notifies_e[v1N_ERROR_PSTATS_ROOF]; /* types of NOTIFY ERRORS */
 unsigned long pstats_ikev1_recv_notifies_e[v1N_ERROR_PSTATS_ROOF]; /* types of NOTIFY ERRORS */
-unsigned long pstats_ike_stf[10];	/* count state transitions */ /* ??? what is 10? */
 unsigned long pstats_ipsec_esp;
 unsigned long pstats_ipsec_ah;
 unsigned long pstats_ipsec_ipcomp;
@@ -89,25 +87,33 @@ unsigned long pstats_pamauth_started;
 unsigned long pstats_pamauth_stopped;
 unsigned long pstats_pamauth_aborted;
 
+/*
+ * Anything <FLOOR or >= ROOF is counted as [ROOF].
+ */
+
 #define PLUTO_STAT(TYPE, NAMES, WHAT, FLOOR, ROOF)			\
-	static unsigned long pstats_##TYPE##_count[ROOF-FLOOR +1/*overflow*/]; \
+	static unsigned long pstats_##TYPE##_count[ROOF-FLOOR + 1/*overflow*/]; \
 	const struct pluto_stat pstats_##TYPE = {			\
 		.names = NAMES,						\
 		.what = WHAT,						\
 		.floor = FLOOR,						\
-		.roof = ROOF,						\
 		.count = pstats_##TYPE##_count,				\
+		.count_ceiling = ROOF-FLOOR,				\
 	};
 
+PLUTO_STAT(stf_status, &stf_status_names,
+	   "total.pluto.stf",
+	   STF_OK, STF_FAIL); /* STF_FAIL+N is counted as STF_FAIL */
+
 PLUTO_STAT(ikev2_sent_notifies_e, &v2_notification_names,
-	    "ikev2.sent.notifies.error",
-	    v2N_ERROR_FLOOR, v2N_ERROR_PSTATS_ROOF);
+	   "ikev2.sent.notifies.error",
+	   v2N_ERROR_FLOOR, v2N_ERROR_PSTATS_ROOF);
 PLUTO_STAT(ikev2_recv_notifies_e, &v2_notification_names,
 	   "ikev2.recv.notifies.error",
 	   v2N_ERROR_FLOOR, v2N_ERROR_PSTATS_ROOF);
 
 PLUTO_STAT(ikev2_sent_notifies_s, &v2_notification_names,
-	    "ikev2.sent.notifies.status",
+	   "ikev2.sent.notifies.status",
 	   v2N_STATUS_FLOOR, v2N_STATUS_PSTATS_ROOF);
 PLUTO_STAT(ikev2_recv_notifies_s, &v2_notification_names,
 	   "ikev2.recv.notifies.status",
@@ -321,12 +327,12 @@ void pstat_sa_established(struct state *st)
  * Output.
  */
 
-static void whack_pluto_stat(struct show *s, const struct pluto_stat *stat)
+static void show_pluto_stat(struct show *s, const struct pluto_stat *stat)
 {
-	unsigned long other = stat->count[stat->roof - stat->floor];
-	for (unsigned long e = stat->floor; e < stat->roof; e++) {
-		const char *nm = enum_name_short(stat->names, e);
-		unsigned long count = stat->count[e - stat->floor];
+	unsigned long other = stat->count[stat->count_ceiling];
+	for (unsigned long n = 0; n < stat->count_ceiling; n++) {
+		const char *nm = enum_name_short(stat->names, n + stat->floor);
+		unsigned long count = stat->count[n];
 		/* not logging "UNUSED" */
 		if (nm != NULL && strstr(nm, "UNUSED") == NULL) {
 			show_raw(s, "total.%s.%s=%lu",
@@ -335,12 +341,15 @@ static void whack_pluto_stat(struct show *s, const struct pluto_stat *stat)
 			other += count;
 		}
 	}
-	show_raw(s, "total.%s.other=%lu", stat->what, other);
+	/* prefer enum's name */
+	const char *nm = enum_name_short(stat->names, stat->count_ceiling + stat->floor);
+	show_raw(s, "total.%s.%s=%lu", stat->what,
+		 (nm == NULL ? "other" : nm), other);
 }
 
 static void clear_pluto_stat(const struct pluto_stat *stat)
 {
-	memset(stat->count, 0, stat->roof - stat->floor + 1);
+	memset(stat->count, 0, sizeof(stat->count[0]) * stat->count_ceiling + 1);
 }
 
 /*
@@ -362,6 +371,7 @@ static void enum_stats(struct show *s, enum_names *names, unsigned long start,
 		}
 	}
 }
+
 #define ENUM_STATS(NAMES, START, WHAT, COUNT)	\
 	enum_stats(s, NAMES, START, elemsof(COUNT), WHAT, COUNT)
 
@@ -459,15 +469,6 @@ void show_pluto_stats(struct show *s)
 	ENUM_STATS(&oakley_group_names, OAKLEY_GROUP_MODP768, "ikev2.sent.invalidke.using", pstats_invalidke_sent_u);
 	ENUM_STATS(&oakley_group_names, OAKLEY_GROUP_MODP768, "ikev2.sent.invalidke.suggesting", pstats_invalidke_sent_s);
 
-#if 0
-	/* ??? THIS IS BROKEN (hint: array is wrong size (10)) */
-	for (unsigned long e = STF_IGNORE; e <= STF_FAIL; e++) {
-		show_raw(s, "total.pluto.stf.%s=%lu",
-			    enum_name(&stfstatus_name, e),
-			    pstats_ike_stf[e]);
-	}
-#endif
-
 	IKE_ALG_STATS("ikev1.ipsec.encr", encrypt, IKEv1_ESP_ID, pstats_ikev1_ipsec_encrypt);
 	IKE_ALG_STATS("ikev1.ipsec.integ", integ, IKEv1_ESP_ID, pstats_ikev1_ipsec_integ);
 	IKE_ALG_STATS("ikev2.ipsec.encr", encrypt, IKEv2_ALG_ID, pstats_ikev2_ipsec_encrypt);
@@ -476,10 +477,11 @@ void show_pluto_stats(struct show *s)
 	ENUM_STATS(&ikev1_notify_names, 1, "ikev1.sent.notifies.error", pstats_ikev1_sent_notifies_e);
 	ENUM_STATS(&ikev1_notify_names, 1, "ikev1.recv.notifies.error", pstats_ikev1_recv_notifies_e);
 
-	whack_pluto_stat(s, &pstats_ikev2_sent_notifies_e);
-	whack_pluto_stat(s, &pstats_ikev2_recv_notifies_e);
-	whack_pluto_stat(s, &pstats_ikev2_sent_notifies_s);
-	whack_pluto_stat(s, &pstats_ikev2_recv_notifies_s);
+	show_pluto_stat(s, &pstats_stf_status);
+	show_pluto_stat(s, &pstats_ikev2_sent_notifies_e);
+	show_pluto_stat(s, &pstats_ikev2_recv_notifies_e);
+	show_pluto_stat(s, &pstats_ikev2_sent_notifies_s);
+	show_pluto_stat(s, &pstats_ikev2_recv_notifies_s);
 }
 
 void clear_pluto_stats(void)
