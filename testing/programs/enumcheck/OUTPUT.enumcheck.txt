@@ -2174,187 +2174,217 @@ IETF registry enum_names:
          jam_enum_short 32: CURVE448 OK
          match CURVE448 [short]: OK
 
-  ikev1_notify_names:
-    1 -> INVALID_PAYLOAD_TYPE
-         jam_enum 1: INVALID_PAYLOAD_TYPE OK
-         search INVALID_PAYLOAD_TYPE: OK
-         match INVALID_PAYLOAD_TYPE: OK
+  v1_notification_names:
+    1 -> v1N_INVALID_PAYLOAD_TYPE
+         jam_enum 1: v1N_INVALID_PAYLOAD_TYPE OK
+         search v1N_INVALID_PAYLOAD_TYPE: OK
+         match v1N_INVALID_PAYLOAD_TYPE: OK
          short_name 1: INVALID_PAYLOAD_TYPE OK
          jam_enum_short 1: INVALID_PAYLOAD_TYPE OK
-    2 -> DOI_NOT_SUPPORTED
-         jam_enum 2: DOI_NOT_SUPPORTED OK
-         search DOI_NOT_SUPPORTED: OK
-         match DOI_NOT_SUPPORTED: OK
+         match INVALID_PAYLOAD_TYPE [short]: OK
+    2 -> v1N_DOI_NOT_SUPPORTED
+         jam_enum 2: v1N_DOI_NOT_SUPPORTED OK
+         search v1N_DOI_NOT_SUPPORTED: OK
+         match v1N_DOI_NOT_SUPPORTED: OK
          short_name 2: DOI_NOT_SUPPORTED OK
          jam_enum_short 2: DOI_NOT_SUPPORTED OK
-    3 -> SITUATION_NOT_SUPPORTED
-         jam_enum 3: SITUATION_NOT_SUPPORTED OK
-         search SITUATION_NOT_SUPPORTED: OK
-         match SITUATION_NOT_SUPPORTED: OK
+         match DOI_NOT_SUPPORTED [short]: OK
+    3 -> v1N_SITUATION_NOT_SUPPORTED
+         jam_enum 3: v1N_SITUATION_NOT_SUPPORTED OK
+         search v1N_SITUATION_NOT_SUPPORTED: OK
+         match v1N_SITUATION_NOT_SUPPORTED: OK
          short_name 3: SITUATION_NOT_SUPPORTED OK
          jam_enum_short 3: SITUATION_NOT_SUPPORTED OK
-    4 -> INVALID_COOKIE
-         jam_enum 4: INVALID_COOKIE OK
-         search INVALID_COOKIE: OK
-         match INVALID_COOKIE: OK
+         match SITUATION_NOT_SUPPORTED [short]: OK
+    4 -> v1N_INVALID_COOKIE
+         jam_enum 4: v1N_INVALID_COOKIE OK
+         search v1N_INVALID_COOKIE: OK
+         match v1N_INVALID_COOKIE: OK
          short_name 4: INVALID_COOKIE OK
          jam_enum_short 4: INVALID_COOKIE OK
-    5 -> INVALID_MAJOR_VERSION
-         jam_enum 5: INVALID_MAJOR_VERSION OK
-         search INVALID_MAJOR_VERSION: OK
-         match INVALID_MAJOR_VERSION: OK
+         match INVALID_COOKIE [short]: OK
+    5 -> v1N_INVALID_MAJOR_VERSION
+         jam_enum 5: v1N_INVALID_MAJOR_VERSION OK
+         search v1N_INVALID_MAJOR_VERSION: OK
+         match v1N_INVALID_MAJOR_VERSION: OK
          short_name 5: INVALID_MAJOR_VERSION OK
          jam_enum_short 5: INVALID_MAJOR_VERSION OK
-    6 -> INVALID_MINOR_VERSION
-         jam_enum 6: INVALID_MINOR_VERSION OK
-         search INVALID_MINOR_VERSION: OK
-         match INVALID_MINOR_VERSION: OK
+         match INVALID_MAJOR_VERSION [short]: OK
+    6 -> v1N_INVALID_MINOR_VERSION
+         jam_enum 6: v1N_INVALID_MINOR_VERSION OK
+         search v1N_INVALID_MINOR_VERSION: OK
+         match v1N_INVALID_MINOR_VERSION: OK
          short_name 6: INVALID_MINOR_VERSION OK
          jam_enum_short 6: INVALID_MINOR_VERSION OK
-    7 -> INVALID_EXCHANGE_TYPE
-         jam_enum 7: INVALID_EXCHANGE_TYPE OK
-         search INVALID_EXCHANGE_TYPE: OK
-         match INVALID_EXCHANGE_TYPE: OK
+         match INVALID_MINOR_VERSION [short]: OK
+    7 -> v1N_INVALID_EXCHANGE_TYPE
+         jam_enum 7: v1N_INVALID_EXCHANGE_TYPE OK
+         search v1N_INVALID_EXCHANGE_TYPE: OK
+         match v1N_INVALID_EXCHANGE_TYPE: OK
          short_name 7: INVALID_EXCHANGE_TYPE OK
          jam_enum_short 7: INVALID_EXCHANGE_TYPE OK
-    8 -> INVALID_FLAGS
-         jam_enum 8: INVALID_FLAGS OK
-         search INVALID_FLAGS: OK
-         match INVALID_FLAGS: OK
+         match INVALID_EXCHANGE_TYPE [short]: OK
+    8 -> v1N_INVALID_FLAGS
+         jam_enum 8: v1N_INVALID_FLAGS OK
+         search v1N_INVALID_FLAGS: OK
+         match v1N_INVALID_FLAGS: OK
          short_name 8: INVALID_FLAGS OK
          jam_enum_short 8: INVALID_FLAGS OK
-    9 -> INVALID_MESSAGE_ID
-         jam_enum 9: INVALID_MESSAGE_ID OK
-         search INVALID_MESSAGE_ID: OK
-         match INVALID_MESSAGE_ID: OK
+         match INVALID_FLAGS [short]: OK
+    9 -> v1N_INVALID_MESSAGE_ID
+         jam_enum 9: v1N_INVALID_MESSAGE_ID OK
+         search v1N_INVALID_MESSAGE_ID: OK
+         match v1N_INVALID_MESSAGE_ID: OK
          short_name 9: INVALID_MESSAGE_ID OK
          jam_enum_short 9: INVALID_MESSAGE_ID OK
-   10 -> INVALID_PROTOCOL_ID
-         jam_enum 10: INVALID_PROTOCOL_ID OK
-         search INVALID_PROTOCOL_ID: OK
-         match INVALID_PROTOCOL_ID: OK
+         match INVALID_MESSAGE_ID [short]: OK
+   10 -> v1N_INVALID_PROTOCOL_ID
+         jam_enum 10: v1N_INVALID_PROTOCOL_ID OK
+         search v1N_INVALID_PROTOCOL_ID: OK
+         match v1N_INVALID_PROTOCOL_ID: OK
          short_name 10: INVALID_PROTOCOL_ID OK
          jam_enum_short 10: INVALID_PROTOCOL_ID OK
-   11 -> INVALID_SPI
-         jam_enum 11: INVALID_SPI OK
-         search INVALID_SPI: OK
-         match INVALID_SPI: OK
+         match INVALID_PROTOCOL_ID [short]: OK
+   11 -> v1N_INVALID_SPI
+         jam_enum 11: v1N_INVALID_SPI OK
+         search v1N_INVALID_SPI: OK
+         match v1N_INVALID_SPI: OK
          short_name 11: INVALID_SPI OK
          jam_enum_short 11: INVALID_SPI OK
-   12 -> INVALID_TRANSFORM_ID
-         jam_enum 12: INVALID_TRANSFORM_ID OK
-         search INVALID_TRANSFORM_ID: OK
-         match INVALID_TRANSFORM_ID: OK
+         match INVALID_SPI [short]: OK
+   12 -> v1N_INVALID_TRANSFORM_ID
+         jam_enum 12: v1N_INVALID_TRANSFORM_ID OK
+         search v1N_INVALID_TRANSFORM_ID: OK
+         match v1N_INVALID_TRANSFORM_ID: OK
          short_name 12: INVALID_TRANSFORM_ID OK
          jam_enum_short 12: INVALID_TRANSFORM_ID OK
-   13 -> ATTRIBUTES_NOT_SUPPORTED
-         jam_enum 13: ATTRIBUTES_NOT_SUPPORTED OK
-         search ATTRIBUTES_NOT_SUPPORTED: OK
-         match ATTRIBUTES_NOT_SUPPORTED: OK
+         match INVALID_TRANSFORM_ID [short]: OK
+   13 -> v1N_ATTRIBUTES_NOT_SUPPORTED
+         jam_enum 13: v1N_ATTRIBUTES_NOT_SUPPORTED OK
+         search v1N_ATTRIBUTES_NOT_SUPPORTED: OK
+         match v1N_ATTRIBUTES_NOT_SUPPORTED: OK
          short_name 13: ATTRIBUTES_NOT_SUPPORTED OK
          jam_enum_short 13: ATTRIBUTES_NOT_SUPPORTED OK
-   14 -> NO_PROPOSAL_CHOSEN
-         jam_enum 14: NO_PROPOSAL_CHOSEN OK
-         search NO_PROPOSAL_CHOSEN: OK
-         match NO_PROPOSAL_CHOSEN: OK
+         match ATTRIBUTES_NOT_SUPPORTED [short]: OK
+   14 -> v1N_NO_PROPOSAL_CHOSEN
+         jam_enum 14: v1N_NO_PROPOSAL_CHOSEN OK
+         search v1N_NO_PROPOSAL_CHOSEN: OK
+         match v1N_NO_PROPOSAL_CHOSEN: OK
          short_name 14: NO_PROPOSAL_CHOSEN OK
          jam_enum_short 14: NO_PROPOSAL_CHOSEN OK
-   15 -> BAD_PROPOSAL_SYNTAX
-         jam_enum 15: BAD_PROPOSAL_SYNTAX OK
-         search BAD_PROPOSAL_SYNTAX: OK
-         match BAD_PROPOSAL_SYNTAX: OK
+         match NO_PROPOSAL_CHOSEN [short]: OK
+   15 -> v1N_BAD_PROPOSAL_SYNTAX
+         jam_enum 15: v1N_BAD_PROPOSAL_SYNTAX OK
+         search v1N_BAD_PROPOSAL_SYNTAX: OK
+         match v1N_BAD_PROPOSAL_SYNTAX: OK
          short_name 15: BAD_PROPOSAL_SYNTAX OK
          jam_enum_short 15: BAD_PROPOSAL_SYNTAX OK
-   16 -> PAYLOAD_MALFORMED
-         jam_enum 16: PAYLOAD_MALFORMED OK
-         search PAYLOAD_MALFORMED: OK
-         match PAYLOAD_MALFORMED: OK
+         match BAD_PROPOSAL_SYNTAX [short]: OK
+   16 -> v1N_PAYLOAD_MALFORMED
+         jam_enum 16: v1N_PAYLOAD_MALFORMED OK
+         search v1N_PAYLOAD_MALFORMED: OK
+         match v1N_PAYLOAD_MALFORMED: OK
          short_name 16: PAYLOAD_MALFORMED OK
          jam_enum_short 16: PAYLOAD_MALFORMED OK
-   17 -> INVALID_KEY_INFORMATION
-         jam_enum 17: INVALID_KEY_INFORMATION OK
-         search INVALID_KEY_INFORMATION: OK
-         match INVALID_KEY_INFORMATION: OK
+         match PAYLOAD_MALFORMED [short]: OK
+   17 -> v1N_INVALID_KEY_INFORMATION
+         jam_enum 17: v1N_INVALID_KEY_INFORMATION OK
+         search v1N_INVALID_KEY_INFORMATION: OK
+         match v1N_INVALID_KEY_INFORMATION: OK
          short_name 17: INVALID_KEY_INFORMATION OK
          jam_enum_short 17: INVALID_KEY_INFORMATION OK
-   18 -> INVALID_ID_INFORMATION
-         jam_enum 18: INVALID_ID_INFORMATION OK
-         search INVALID_ID_INFORMATION: OK
-         match INVALID_ID_INFORMATION: OK
+         match INVALID_KEY_INFORMATION [short]: OK
+   18 -> v1N_INVALID_ID_INFORMATION
+         jam_enum 18: v1N_INVALID_ID_INFORMATION OK
+         search v1N_INVALID_ID_INFORMATION: OK
+         match v1N_INVALID_ID_INFORMATION: OK
          short_name 18: INVALID_ID_INFORMATION OK
          jam_enum_short 18: INVALID_ID_INFORMATION OK
-   19 -> INVALID_CERT_ENCODING
-         jam_enum 19: INVALID_CERT_ENCODING OK
-         search INVALID_CERT_ENCODING: OK
-         match INVALID_CERT_ENCODING: OK
+         match INVALID_ID_INFORMATION [short]: OK
+   19 -> v1N_INVALID_CERT_ENCODING
+         jam_enum 19: v1N_INVALID_CERT_ENCODING OK
+         search v1N_INVALID_CERT_ENCODING: OK
+         match v1N_INVALID_CERT_ENCODING: OK
          short_name 19: INVALID_CERT_ENCODING OK
          jam_enum_short 19: INVALID_CERT_ENCODING OK
-   20 -> INVALID_CERTIFICATE
-         jam_enum 20: INVALID_CERTIFICATE OK
-         search INVALID_CERTIFICATE: OK
-         match INVALID_CERTIFICATE: OK
+         match INVALID_CERT_ENCODING [short]: OK
+   20 -> v1N_INVALID_CERTIFICATE
+         jam_enum 20: v1N_INVALID_CERTIFICATE OK
+         search v1N_INVALID_CERTIFICATE: OK
+         match v1N_INVALID_CERTIFICATE: OK
          short_name 20: INVALID_CERTIFICATE OK
          jam_enum_short 20: INVALID_CERTIFICATE OK
-   21 -> CERT_TYPE_UNSUPPORTED
-         jam_enum 21: CERT_TYPE_UNSUPPORTED OK
-         search CERT_TYPE_UNSUPPORTED: OK
-         match CERT_TYPE_UNSUPPORTED: OK
+         match INVALID_CERTIFICATE [short]: OK
+   21 -> v1N_CERT_TYPE_UNSUPPORTED
+         jam_enum 21: v1N_CERT_TYPE_UNSUPPORTED OK
+         search v1N_CERT_TYPE_UNSUPPORTED: OK
+         match v1N_CERT_TYPE_UNSUPPORTED: OK
          short_name 21: CERT_TYPE_UNSUPPORTED OK
          jam_enum_short 21: CERT_TYPE_UNSUPPORTED OK
-   22 -> INVALID_CERT_AUTHORITY
-         jam_enum 22: INVALID_CERT_AUTHORITY OK
-         search INVALID_CERT_AUTHORITY: OK
-         match INVALID_CERT_AUTHORITY: OK
+         match CERT_TYPE_UNSUPPORTED [short]: OK
+   22 -> v1N_INVALID_CERT_AUTHORITY
+         jam_enum 22: v1N_INVALID_CERT_AUTHORITY OK
+         search v1N_INVALID_CERT_AUTHORITY: OK
+         match v1N_INVALID_CERT_AUTHORITY: OK
          short_name 22: INVALID_CERT_AUTHORITY OK
          jam_enum_short 22: INVALID_CERT_AUTHORITY OK
-   23 -> INVALID_HASH_INFORMATION
-         jam_enum 23: INVALID_HASH_INFORMATION OK
-         search INVALID_HASH_INFORMATION: OK
-         match INVALID_HASH_INFORMATION: OK
+         match INVALID_CERT_AUTHORITY [short]: OK
+   23 -> v1N_INVALID_HASH_INFORMATION
+         jam_enum 23: v1N_INVALID_HASH_INFORMATION OK
+         search v1N_INVALID_HASH_INFORMATION: OK
+         match v1N_INVALID_HASH_INFORMATION: OK
          short_name 23: INVALID_HASH_INFORMATION OK
          jam_enum_short 23: INVALID_HASH_INFORMATION OK
-   24 -> AUTHENTICATION_FAILED
-         jam_enum 24: AUTHENTICATION_FAILED OK
-         search AUTHENTICATION_FAILED: OK
-         match AUTHENTICATION_FAILED: OK
+         match INVALID_HASH_INFORMATION [short]: OK
+   24 -> v1N_AUTHENTICATION_FAILED
+         jam_enum 24: v1N_AUTHENTICATION_FAILED OK
+         search v1N_AUTHENTICATION_FAILED: OK
+         match v1N_AUTHENTICATION_FAILED: OK
          short_name 24: AUTHENTICATION_FAILED OK
          jam_enum_short 24: AUTHENTICATION_FAILED OK
-   25 -> INVALID_SIGNATURE
-         jam_enum 25: INVALID_SIGNATURE OK
-         search INVALID_SIGNATURE: OK
-         match INVALID_SIGNATURE: OK
+         match AUTHENTICATION_FAILED [short]: OK
+   25 -> v1N_INVALID_SIGNATURE
+         jam_enum 25: v1N_INVALID_SIGNATURE OK
+         search v1N_INVALID_SIGNATURE: OK
+         match v1N_INVALID_SIGNATURE: OK
          short_name 25: INVALID_SIGNATURE OK
          jam_enum_short 25: INVALID_SIGNATURE OK
-   26 -> ADDRESS_NOTIFICATION
-         jam_enum 26: ADDRESS_NOTIFICATION OK
-         search ADDRESS_NOTIFICATION: OK
-         match ADDRESS_NOTIFICATION: OK
+         match INVALID_SIGNATURE [short]: OK
+   26 -> v1N_ADDRESS_NOTIFICATION
+         jam_enum 26: v1N_ADDRESS_NOTIFICATION OK
+         search v1N_ADDRESS_NOTIFICATION: OK
+         match v1N_ADDRESS_NOTIFICATION: OK
          short_name 26: ADDRESS_NOTIFICATION OK
          jam_enum_short 26: ADDRESS_NOTIFICATION OK
-   27 -> NOTIFY_SA_LIFETIME
-         jam_enum 27: NOTIFY_SA_LIFETIME OK
-         search NOTIFY_SA_LIFETIME: OK
-         match NOTIFY_SA_LIFETIME: OK
+         match ADDRESS_NOTIFICATION [short]: OK
+   27 -> v1N_NOTIFY_SA_LIFETIME
+         jam_enum 27: v1N_NOTIFY_SA_LIFETIME OK
+         search v1N_NOTIFY_SA_LIFETIME: OK
+         match v1N_NOTIFY_SA_LIFETIME: OK
          short_name 27: NOTIFY_SA_LIFETIME OK
          jam_enum_short 27: NOTIFY_SA_LIFETIME OK
-   28 -> CERTIFICATE_UNAVAILABLE
-         jam_enum 28: CERTIFICATE_UNAVAILABLE OK
-         search CERTIFICATE_UNAVAILABLE: OK
-         match CERTIFICATE_UNAVAILABLE: OK
+         match NOTIFY_SA_LIFETIME [short]: OK
+   28 -> v1N_CERTIFICATE_UNAVAILABLE
+         jam_enum 28: v1N_CERTIFICATE_UNAVAILABLE OK
+         search v1N_CERTIFICATE_UNAVAILABLE: OK
+         match v1N_CERTIFICATE_UNAVAILABLE: OK
          short_name 28: CERTIFICATE_UNAVAILABLE OK
          jam_enum_short 28: CERTIFICATE_UNAVAILABLE OK
-   29 -> UNSUPPORTED_EXCHANGE_TYPE
-         jam_enum 29: UNSUPPORTED_EXCHANGE_TYPE OK
-         search UNSUPPORTED_EXCHANGE_TYPE: OK
-         match UNSUPPORTED_EXCHANGE_TYPE: OK
+         match CERTIFICATE_UNAVAILABLE [short]: OK
+   29 -> v1N_UNSUPPORTED_EXCHANGE_TYPE
+         jam_enum 29: v1N_UNSUPPORTED_EXCHANGE_TYPE OK
+         search v1N_UNSUPPORTED_EXCHANGE_TYPE: OK
+         match v1N_UNSUPPORTED_EXCHANGE_TYPE: OK
          short_name 29: UNSUPPORTED_EXCHANGE_TYPE OK
          jam_enum_short 29: UNSUPPORTED_EXCHANGE_TYPE OK
-   30 -> UNEQUAL_PAYLOAD_LENGTHS
-         jam_enum 30: UNEQUAL_PAYLOAD_LENGTHS OK
-         search UNEQUAL_PAYLOAD_LENGTHS: OK
-         match UNEQUAL_PAYLOAD_LENGTHS: OK
+         match UNSUPPORTED_EXCHANGE_TYPE [short]: OK
+   30 -> v1N_UNEQUAL_PAYLOAD_LENGTHS
+         jam_enum 30: v1N_UNEQUAL_PAYLOAD_LENGTHS OK
+         search v1N_UNEQUAL_PAYLOAD_LENGTHS: OK
+         match v1N_UNEQUAL_PAYLOAD_LENGTHS: OK
          short_name 30: UNEQUAL_PAYLOAD_LENGTHS OK
          jam_enum_short 30: UNEQUAL_PAYLOAD_LENGTHS OK
+         match UNEQUAL_PAYLOAD_LENGTHS [short]: OK
 
   v2_notification_names:
     0 -> v2N_RESERVED

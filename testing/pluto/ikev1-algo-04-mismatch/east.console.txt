@@ -16,7 +16,7 @@ east #
  grep NO_PROPOSAL_CHOSEN /tmp/pluto.log
 | complete v1 state transition with NO_PROPOSAL_CHOSEN
 "westnet-eastnet-ipv4-psk-ikev1" #2: sending encrypted notification NO_PROPOSAL_CHOSEN to 192.1.2.45:500
-|    Notify Message Type: NO_PROPOSAL_CHOSEN (0xe)
+|    Notify Message Type: v1N_NO_PROPOSAL_CHOSEN (0xe)
 | state transition function for STATE_QUICK_R0 failed: NO_PROPOSAL_CHOSEN
 east #
  
