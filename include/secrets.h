@@ -224,6 +224,8 @@ struct pubkey {
 	asn1_t issuer;
 	const struct pubkey_type *type;
 	union pubkey_content u;
+	/* for overalloc of issuer */
+	uint8_t end[0];
 };
 
 /*

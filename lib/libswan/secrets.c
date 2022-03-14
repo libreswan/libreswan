@@ -1150,9 +1150,8 @@ static struct pubkey *alloc_pubkey(const struct id *id, /* ASKK */
 
 	/* Append any issuer to the end */
 	if (issuer.len > 0) {
-		void *end = (uint8_t*)pk + sizeof(struct pubkey);
-		pk->issuer = shunk2(end, issuer.len);
-		memcpy(end, issuer.ptr, issuer.len);
+		memcpy(pk->end, issuer.ptr, issuer.len);
+		pk->issuer = shunk2(pk->end, issuer.len);
 	}
 
 	return pk;
