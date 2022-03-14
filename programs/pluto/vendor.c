@@ -568,6 +568,12 @@ static struct vid_struct vid_tab[] = {
 	{ VID_ELVIS, VID_KEEP | VID_SUBSTRING_DUMPHEXA, NULL, "ELVIS-PLUS Zastava",
 		"\x08\xdb\x45\xe6\xcb\x01\xf8\x0b\xb5\x76\xe9\xa7\x8c\x0f\x54\xe1\x30\x0b\x88\x81", 20 },
 
+	/*
+	 * Fortinet
+	 */
+	DEC_MD5_VID(VID_FORTINET_ENDPOINT_CONTROL, "Fortinet Endpoint Control"),
+	DEC_MD5_VID(VID_FORTINET_CONNECT_LICENSE, "forticlient connect license"),
+
 	/* END OF TABLE */
 	{ VID_none, 0, NULL, NULL, NULL, 0 }
 };
