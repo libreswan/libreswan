@@ -474,8 +474,8 @@ void show_pluto_stats(struct show *s)
 	IKE_ALG_STATS("ikev2.ipsec.encr", encrypt, IKEv2_ALG_ID, pstats_ikev2_ipsec_encrypt);
 	IKE_ALG_STATS("ikev2.ipsec.integ", integ, IKEv2_ALG_ID, pstats_ikev2_ipsec_integ);
 
-	ENUM_STATS(&ikev1_notify_names, 1, "ikev1.sent.notifies.error", pstats_ikev1_sent_notifies_e);
-	ENUM_STATS(&ikev1_notify_names, 1, "ikev1.recv.notifies.error", pstats_ikev1_recv_notifies_e);
+	ENUM_STATS(&v1_notification_names, 1, "ikev1.sent.notifies.error", pstats_ikev1_sent_notifies_e);
+	ENUM_STATS(&v1_notification_names, 1, "ikev1.recv.notifies.error", pstats_ikev1_recv_notifies_e);
 
 	show_pluto_stat(s, &pstats_stf_status);
 	show_pluto_stat(s, &pstats_ikev2_sent_notifies_e);

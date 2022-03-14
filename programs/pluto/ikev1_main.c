@@ -1625,11 +1625,12 @@ static void send_v1_notification(struct logger *logger,
 		 * SNDST as that may be fake.
 		 */
 		endpoint_buf b;
+		enum_buf nb;
 		llog(RC_NOTIFICATION + type, logger,
-			    "sending %snotification %s to %s",
-			    encst ? "encrypted " : "",
-			    enum_name(&ikev1_notify_names, type),
-			    str_endpoint(&sndst->st_remote_endpoint, &b));
+		     "sending %snotification %s to %s",
+		     encst ? "encrypted " : "",
+		     str_enum_short(&v1_notification_names, type, &nb),
+		     str_endpoint(&sndst->st_remote_endpoint, &b));
 	}
 
 	uint8_t buffer[1024];	/* ??? large enough for any notification? */
@@ -1768,9 +1769,10 @@ void send_v1_notification_from_md(struct msg_digest *md, v1_notification_t type)
 	}
 
 	endpoint_buf b;
+	enum_buf nb;
 	llog(RC_NOTIFICATION + type, md->md_logger,
 	     "sending notification %s to %s",
-	     enum_name(&ikev1_notify_names, type),
+	     str_enum_short(&v1_notification_names, type, &nb),
 	     str_endpoint(&md->sender, &b));
 
 	uint8_t buffer[1024];	/* ??? large enough for any notification? */

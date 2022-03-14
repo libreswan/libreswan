@@ -924,8 +924,9 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 		 * once we are at least in R3/I4.
 		 * and that the handler is expected to treat them suspiciously.
 		 */
+		enum_buf eb;
 		dbg("processing informational %s (%d)",
-		    enum_name(&ikev1_notify_names, n->isan_type),
+		    str_enum_short(&v1_notification_names, n->isan_type, &eb),
 		    n->isan_type);
 
 		pstats(ikev1_recv_notifies_e, n->isan_type);
@@ -981,9 +982,10 @@ static stf_status informational(struct state *st, struct msg_digest *md)
 		{
 			struct logger *logger = st != NULL ? st->st_logger :
 							     md->md_logger;
+			enum_buf eb;
 			llog(RC_LOG_SERIOUS, logger,
-				    "received and ignored notification payload: %s",
-				    enum_name(&ikev1_notify_names, n->isan_type));
+			     "received and ignored notification payload: %s",
+			     str_enum_short(&v1_notification_names, n->isan_type, &eb));
 			return STF_IGNORE;
 		}
 		}
@@ -2187,10 +2189,10 @@ void process_packet_tail(struct msg_digest *md)
 	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_N];
 	     p != NULL; p = p->next) {
 
-		enum_buf b; /*same scope as nname*/
-		const char *nname = str_enum(&ikev1_notify_names,
-					     p->payload.notification.isan_type,
-					     &b);
+		enum_buf nb; /*same scope as nname*/
+		const char *nname = str_enum_short(&v1_notification_names,
+						   p->payload.notification.isan_type,
+						   &nb);
 		switch (p->payload.notification.isan_type) {
 		case R_U_THERE:
 		case R_U_THERE_ACK:
@@ -2331,9 +2333,10 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 	 */
 	pstat(stf_status, result);
 
+	enum_buf neb;
 	dbg("complete v1 state transition with %s",
 	    result > STF_FAIL ?
-	    enum_name(&ikev1_notify_names, result - STF_FAIL) :
+	    str_enum_short(&v1_notification_names, result - STF_FAIL, &neb) :
 	    enum_name(&stf_status_names, result));
 
 	switch (result) {
@@ -2854,8 +2857,9 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 * NOTHING_WRONG, and even if it did "nothing wrong"
 		 * wouldn't exactly help here :-).
 		 */
+		enum_buf neb; /* same scope as notify_name */
 		const char *notify_name = (md->v1_note == NOTHING_WRONG ? "failed" :
-					   enum_name(&ikev1_notify_names, md->v1_note));
+					   str_enum_short(&v1_notification_names, md->v1_note, &neb));
 		if (notify_name == NULL) {
 			notify_name = "internal error";
 		}

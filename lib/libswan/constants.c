@@ -1594,137 +1594,137 @@ static enum_names oakley_group_type_names = {
 };
 
 /* Notify message type -- RFC2408 3.14.1 */
-static const char *const ikev1_notify_name[] = {
-	"INVALID_PAYLOAD_TYPE", /* 1 */
-	"DOI_NOT_SUPPORTED",
-	"SITUATION_NOT_SUPPORTED",
-	"INVALID_COOKIE",
-	"INVALID_MAJOR_VERSION",
-	"INVALID_MINOR_VERSION",
-	"INVALID_EXCHANGE_TYPE",
-	"INVALID_FLAGS",
-	"INVALID_MESSAGE_ID",
-	"INVALID_PROTOCOL_ID",
-	"INVALID_SPI",
-	"INVALID_TRANSFORM_ID",
-	"ATTRIBUTES_NOT_SUPPORTED",
-	"NO_PROPOSAL_CHOSEN",
-	"BAD_PROPOSAL_SYNTAX",
-	"PAYLOAD_MALFORMED",
-	"INVALID_KEY_INFORMATION",
-	"INVALID_ID_INFORMATION",
-	"INVALID_CERT_ENCODING",
-	"INVALID_CERTIFICATE",
-	"CERT_TYPE_UNSUPPORTED",
-	"INVALID_CERT_AUTHORITY",
-	"INVALID_HASH_INFORMATION",
-	"AUTHENTICATION_FAILED",
-	"INVALID_SIGNATURE",
-	"ADDRESS_NOTIFICATION",
-	"NOTIFY_SA_LIFETIME",
-	"CERTIFICATE_UNAVAILABLE",
-	"UNSUPPORTED_EXCHANGE_TYPE",
-	"UNEQUAL_PAYLOAD_LENGTHS",
+static const char *const v1_notification_name[] = {
+	"v1N_INVALID_PAYLOAD_TYPE", /* 1 */
+	"v1N_DOI_NOT_SUPPORTED",
+	"v1N_SITUATION_NOT_SUPPORTED",
+	"v1N_INVALID_COOKIE",
+	"v1N_INVALID_MAJOR_VERSION",
+	"v1N_INVALID_MINOR_VERSION",
+	"v1N_INVALID_EXCHANGE_TYPE",
+	"v1N_INVALID_FLAGS",
+	"v1N_INVALID_MESSAGE_ID",
+	"v1N_INVALID_PROTOCOL_ID",
+	"v1N_INVALID_SPI",
+	"v1N_INVALID_TRANSFORM_ID",
+	"v1N_ATTRIBUTES_NOT_SUPPORTED",
+	"v1N_NO_PROPOSAL_CHOSEN",
+	"v1N_BAD_PROPOSAL_SYNTAX",
+	"v1N_PAYLOAD_MALFORMED",
+	"v1N_INVALID_KEY_INFORMATION",
+	"v1N_INVALID_ID_INFORMATION",
+	"v1N_INVALID_CERT_ENCODING",
+	"v1N_INVALID_CERTIFICATE",
+	"v1N_CERT_TYPE_UNSUPPORTED",
+	"v1N_INVALID_CERT_AUTHORITY",
+	"v1N_INVALID_HASH_INFORMATION",
+	"v1N_AUTHENTICATION_FAILED",
+	"v1N_INVALID_SIGNATURE",
+	"v1N_ADDRESS_NOTIFICATION",
+	"v1N_NOTIFY_SA_LIFETIME",
+	"v1N_CERTIFICATE_UNAVAILABLE",
+	"v1N_UNSUPPORTED_EXCHANGE_TYPE",
+	"v1N_UNEQUAL_PAYLOAD_LENGTHS",
 };
 
-static const char *const ikev1_notify_status_name[] = {
-	"CONNECTED", /* 16384 */
+static const char *const v1_notification_connected_name[] = {
+	"v1N_CONNECTED", /* 16384 */
 };
 
-static const char *const ikev1_ipsec_notify_name[] = {
-	"IPSEC_RESPONDER_LIFETIME", /* 24576 */
-	"IPSEC_REPLAY_STATUS",
-	"IPSEC_INITIAL_CONTACT",
+static const char *const v1_notification_ipsec_name[] = {
+	"v1N_IPSEC_RESPONDER_LIFETIME", /* 24576 */
+	"v1N_IPSEC_REPLAY_STATUS",
+	"v1N_IPSEC_INITIAL_CONTACT",
 };
 
-static const char *const ikev1_notify_cisco_chatter_name[] = {
-	"ISAKMP_N_CISCO_HELLO", /* 30000 */
-	"ISAKMP_N_CISCO_WWTEBR",
-	"ISAKMP_N_CISCO_SHUT_UP",
+static const char *const v1_notification_cisco_chatter_name[] = {
+	"v1N_ISAKMP_N_CISCO_HELLO", /* 30000 */
+	"v1N_ISAKMP_N_CISCO_WWTEBR",
+	"v1N_ISAKMP_N_CISCO_SHUT_UP",
 };
 
-static const char *const ikev1_notify_ios_alives_name[] = {
-	"ISAKMP_N_IOS_KEEP_ALIVE_REQ", /* 32768 */
-	"ISAKMP_N_IOS_KEEP_ALIVE_ACK",
+static const char *const v1_notification_ios_alives_name[] = {
+	"v1N_ISAKMP_N_IOS_KEEP_ALIVE_REQ", /* 32768 */
+	"v1N_ISAKMP_N_IOS_KEEP_ALIVE_ACK",
 };
 
-static const char *const ikev1_notify_dpd_name[] = {
-	"R_U_THERE", /* 36136 */
-	"R_U_THERE_ACK",
+static const char *const v1_notification_dpd_name[] = {
+	"v1N_R_U_THERE", /* 36136 */
+	"v1N_R_U_THERE_ACK",
 };
 
-static const char *const ikev1_notify_juniper_name[] = {
+static const char *const v1_notification_juniper_name[] = {
 	/* Next Hop Tunnel Binding */
-	"NETSCREEN_NHTB_INFORM", /* 40001 */
+	"v1N_NETSCREEN_NHTB_INFORM", /* 40001 */
 };
 
-static const char *const ikev1_notify_cisco_more_name[] = {
-	"ISAKMP_N_CISCO_LOAD_BALANCE", /* 40501 */
-	"ISAKMP_N_CISCO_UNKNOWN_40502",
-	"ISAKMP_N_CISCO_PRESHARED_KEY_HASH",
+static const char *const v1_notification_cisco_more_name[] = {
+	"v1N_ISAKMP_N_CISCO_LOAD_BALANCE", /* 40501 */
+	"v1N_ISAKMP_N_CISCO_UNKNOWN_40502",
+	"v1N_ISAKMP_N_CISCO_PRESHARED_KEY_HASH",
 };
 
-static enum_names ikev1_notify_cisco_more_names = {
+static enum_names v1_notification_cisco_more_names = {
 	ISAKMP_N_CISCO_LOAD_BALANCE,
 	ISAKMP_N_CISCO_PRESHARED_KEY_HASH,
-	ARRAY_REF(ikev1_notify_cisco_more_name),
+	ARRAY_REF(v1_notification_cisco_more_name),
 	NULL, /* prefix */
-	NULL
+	NULL, /* next */
 };
 
-static enum_names ikev1_notify_juniper_names = {
+static enum_names v1_notification_juniper_names = {
 	NETSCREEN_NHTB_INFORM,
 	NETSCREEN_NHTB_INFORM,
-	ARRAY_REF(ikev1_notify_juniper_name),
+	ARRAY_REF(v1_notification_juniper_name),
 	NULL, /* prefix */
-	&ikev1_notify_cisco_more_names
+	&v1_notification_cisco_more_names
 };
 
-static enum_names ikev1_notify_dpd_names = {
+static enum_names v1_notification_dpd_names = {
 	R_U_THERE, R_U_THERE_ACK,
-	ARRAY_REF(ikev1_notify_dpd_name),
+	ARRAY_REF(v1_notification_dpd_name),
 	NULL, /* prefix */
-	&ikev1_notify_juniper_names
+	&v1_notification_juniper_names
 };
 
-static enum_names ikev1_notify_ios_alives_names = {
+static enum_names v1_notification_ios_alives_names = {
 	ISAKMP_N_IOS_KEEP_ALIVE_REQ,
 	ISAKMP_N_IOS_KEEP_ALIVE_ACK,
-	ARRAY_REF(ikev1_notify_ios_alives_name),
+	ARRAY_REF(v1_notification_ios_alives_name),
 	NULL, /* prefix */
-	&ikev1_notify_dpd_names
+	&v1_notification_dpd_names
 };
 
-static enum_names ikev1_notify_cisco_chatter_names = {
+static enum_names v1_notification_cisco_chatter_names = {
 	ISAKMP_N_CISCO_HELLO,
 	ISAKMP_N_CISCO_SHUT_UP,
-	ARRAY_REF(ikev1_notify_cisco_chatter_name),
+	ARRAY_REF(v1_notification_cisco_chatter_name),
 	NULL, /* prefix */
-	&ikev1_notify_ios_alives_names
+	&v1_notification_ios_alives_names
 };
 
-static enum_names ikev1_ipsec_notify_names = {
+static enum_names v1_notification_ipsec_names = {
 	IPSEC_RESPONDER_LIFETIME,
 	IPSEC_INITIAL_CONTACT,
-	ARRAY_REF(ikev1_ipsec_notify_name),
+	ARRAY_REF(v1_notification_ipsec_name),
 	NULL, /* prefix */
-	&ikev1_notify_cisco_chatter_names
+	&v1_notification_cisco_chatter_names
 };
 
-static enum_names ikev1_notify_status_names = {
+static enum_names v1_notification_connected_names = {
 	CONNECTED,
 	CONNECTED,
-	ARRAY_REF(ikev1_notify_status_name),
+	ARRAY_REF(v1_notification_connected_name),
 	NULL, /* prefix */
-	&ikev1_ipsec_notify_names
+	&v1_notification_ipsec_names
 };
 
-enum_names ikev1_notify_names = {
+enum_names v1_notification_names = {
 	INVALID_PAYLOAD_TYPE,
 	UNEQUAL_PAYLOAD_LENGTHS,
-	ARRAY_REF(ikev1_notify_name),
-	NULL, /* prefix */
-	&ikev1_notify_status_names
+	ARRAY_REF(v1_notification_name),
+	"v1N_", /* prefix */
+	&v1_notification_connected_names
 };
 
 static const char *const ikev2_notify_name_private[] = {
@@ -2730,7 +2730,7 @@ static const enum_names *en_checklist[] = {
 	&ikev2_auth_names,
 	&oakley_group_names,
 	&oakley_group_type_names,
-	&ikev1_notify_names,
+	&v1_notification_names,
 	&v2_notification_names,
 	&ikev2_ts_type_names,
 	&attr_msg_type_names,
