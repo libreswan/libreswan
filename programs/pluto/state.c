@@ -266,7 +266,7 @@ static void update_state_stats(struct state *st,
 
 		if (category_states != count_states) {
 			/* not really ST's fault? */
-			pexpect_fail(st->st_logger, HERE,
+			llog_pexpect(st->st_logger, HERE,
 				     "category states: "PRI_CAT" != count states: "PRI_CAT,
 				     category_states, count_states);
 		}
@@ -274,7 +274,7 @@ static void update_state_stats(struct state *st,
 		if (cat_count[CAT_ESTABLISHED_IKE_SA] !=
 		    (cat_count_ike_sa[CAT_AUTHENTICATED] + cat_count_ike_sa[CAT_ANONYMOUS])) {
 			/* not really ST's fault? */
-			pexpect_fail(st->st_logger, HERE,
+			llog_pexpect(st->st_logger, HERE,
 				     "established IKE SA: "PRI_CAT" != authenticated: "PRI_CAT" + anoynmous: "PRI_CAT,
 				     cat_count[CAT_ESTABLISHED_IKE_SA],
 				     cat_count_ike_sa[CAT_AUTHENTICATED],
@@ -284,7 +284,7 @@ static void update_state_stats(struct state *st,
 		if (cat_count[CAT_ESTABLISHED_CHILD_SA] !=
 		    (cat_count_child_sa[CAT_AUTHENTICATED] + cat_count_child_sa[CAT_ANONYMOUS])) {
 			/* not really ST's fault? */
-			pexpect_fail(st->st_logger, HERE,
+			llog_pexpect(st->st_logger, HERE,
 				     "established CHILD SA: "PRI_CAT" != authenticated: "PRI_CAT" + anoynmous: "PRI_CAT,
 				     cat_count[CAT_ESTABLISHED_CHILD_SA],
 				     cat_count_child_sa[CAT_AUTHENTICATED],
@@ -420,7 +420,7 @@ struct ike_sa *pexpect_ike_sa_where(struct state *st, where_t where)
 		return NULL;
 	}
 	if (!IS_IKE_SA(st)) {
-		pexpect_fail(st->st_logger, where,
+		llog_pexpect(st->st_logger, where,
 			     "state #%lu is not an IKE SA", st->st_serialno);
 		return NULL; /* kaboom */
 	}
@@ -434,7 +434,7 @@ struct child_sa *pexpect_child_sa_where(struct state *st, where_t where)
 	}
 	if (!IS_CHILD_SA(st)) {
 		/* In IKEv2 a re-keying IKE SA starts life as a child */
-		pexpect_fail(st->st_logger, where,
+		llog_pexpect(st->st_logger, where,
 			     "state #%lu is not a CHILD", st->st_serialno);
 		return NULL; /* kaboom */
 	}
@@ -2685,7 +2685,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 
 	delete_oriented_hp(c); /* hp list may have changed */
 	if (!orient(c, ike->sa.st_logger)) {
-		pexpect_fail(ike->sa.st_logger, HERE,
+		llog_pexpect(ike->sa.st_logger, HERE,
 			     "%s after mobike failed", "orient");
 	}
 	/* assumption: orientation has not changed */

@@ -423,7 +423,7 @@ static stf_status handle_helper_answer(struct state *st,
 		status = STF_SKIP_COMPLETE_STATE_TRANSITION;
 	} else if (st == NULL) {
 		/* oops, the state disappeared! */
-		pexpect_fail(job->logger, HERE, PRI_JOB": state disappeared!", pri_job(job));
+		llog_pexpect(job->logger, HERE, PRI_JOB": state disappeared!", pri_job(job));
 		status = STF_SKIP_COMPLETE_STATE_TRANSITION;
 	} else {
 		dbg(PRI_JOB": calling state's callback function", pri_job(job));

@@ -96,7 +96,8 @@ void kernel_encrypt_add(const struct encrypt_desc *alg)
 bool kernel_alg_dh_ok(const struct dh_desc *dh)
 {
 	if (dh == NULL) {
-		log_pexpect(HERE, "%s", "DH needs to be valid (non-NULL)");
+		llog_pexpect(&global_logger, HERE,
+			     "DH needs to be valid (non-NULL)");
 		return false;
 	}
 	/* require an in-process/ike implementation of DH */
@@ -128,7 +129,8 @@ bool kernel_alg_integ_ok(const struct integ_desc *alg)
 bool kernel_alg_is_ok(const struct ike_alg *alg)
 {
 	if (alg == NULL) {
-		log_pexpect(HERE, "%s", "algorithm needs to be valid (non-NULL)");
+		llog_pexpect(&global_logger, HERE,
+			     "algorithm needs to be valid (non-NULL)");
 		return false;
 	} else if (alg->algo_type == &ike_alg_dh) {
 		return kernel_alg_dh_ok(dh_desc(alg));

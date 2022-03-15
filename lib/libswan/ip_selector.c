@@ -545,7 +545,7 @@ void pexpect_selector(const ip_selector *s, where_t where)
 
 	if (s->is_set == false ||
 	    s->version == 0) {
-		log_pexpect(where, "invalid selector: "PRI_SELECTOR, pri_selector(s));
+		llog_pexpect(&global_logger, where, "invalid selector: "PRI_SELECTOR, pri_selector(s));
 	}
 }
 

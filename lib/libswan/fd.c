@@ -126,7 +126,8 @@ bool fd_p(const struct fd *fd)
 		return false;
 	}
 	if (fd->magic != FD_MAGIC) {
-		log_pexpect(HERE, "wrong magic for "PRI_FD"", pri_fd(fd));
+		llog_pexpect(&global_logger, HERE,
+			     "wrong magic for "PRI_FD"", pri_fd(fd));
 		return false;
 	}
 	return true;

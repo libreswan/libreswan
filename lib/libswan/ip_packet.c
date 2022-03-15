@@ -149,7 +149,7 @@ const char *str_packet(const ip_packet *packet, packet_buf *dst)
 void pexpect_packet(const ip_packet *packet, where_t where)
 {
 	if (packet == NULL) {
-		log_pexpect(where, "null packet");
+		llog_pexpect(&global_logger, where, "null packet");
 		return;
 	}
 
@@ -163,10 +163,12 @@ void pexpect_packet(const ip_packet *packet, where_t where)
 	     */
 	    (packet->protocol->endpoint_requires_non_zero_port && packet->dst.hport == 0)) {
 		if (packet->is_set) {
-			log_pexpect(where, "invalid packet: "PRI_PACKET, pri_packet(packet));
+			llog_pexpect(&global_logger, where,
+				     "invalid packet: "PRI_PACKET, pri_packet(packet));
 
 		}
 	} else if (!packet->is_set) {
-		log_pexpect(where, "invalid packet: "PRI_PACKET, pri_packet(packet));
+		llog_pexpect(&global_logger, where,
+			     "invalid packet: "PRI_PACKET, pri_packet(packet));
 	}
 }

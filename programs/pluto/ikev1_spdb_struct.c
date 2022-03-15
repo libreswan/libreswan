@@ -266,12 +266,12 @@ static bool ikev1_verify_esp(const struct connection *c,
 	 * know?
 	 */
 	if (ta->ta_prf != NULL) {
-		pexpect_fail(logger, HERE, "ESP IPsec Transform refused: contains unexpected PRF %s",
+		llog_pexpect(logger, HERE, "ESP IPsec Transform refused: contains unexpected PRF %s",
 			     ta->ta_prf->common.fqn);
 		return false;
 	}
 	if (ta->ta_dh != NULL) {
-		pexpect_fail(logger, HERE, "ESP IPsec Transform refused: contains unexpected DH %s",
+		llog_pexpect(logger, HERE, "ESP IPsec Transform refused: contains unexpected DH %s",
 			     ta->ta_dh->common.fqn);
 		return false;
 	}
@@ -304,22 +304,22 @@ static bool ikev1_verify_ah(const struct connection *c,
 		return false;       /* try another */
 	}
 	if (ta->ta_encrypt != NULL) {
-		pexpect_fail(logger, HERE,
+		llog_pexpect(logger, HERE,
 			     "AH IPsec Transform refused: contains unexpected encryption %s",
 			     ta->ta_encrypt->common.fqn);
 		return false;
 	}
 	if (ta->ta_prf != NULL) {
-		pexpect_fail(logger, HERE, "AH IPsec Transform refused: contains unexpected PRF %s",
+		llog_pexpect(logger, HERE, "AH IPsec Transform refused: contains unexpected PRF %s",
 			     ta->ta_prf->common.fqn);
 		return false;
 	}
 	if (ta->ta_integ == NULL) {
-		pexpect_fail(logger, HERE, "AH IPsec Transform refused: missing integrity algorithm");
+		llog_pexpect(logger, HERE, "AH IPsec Transform refused: missing integrity algorithm");
 		return false;
 	}
 	if (ta->ta_dh != NULL) {
-		pexpect_fail(logger, HERE, "AH IPsec Transform refused: contains unexpected DH %s",
+		llog_pexpect(logger, HERE, "AH IPsec Transform refused: contains unexpected DH %s",
 			     ta->ta_dh->common.fqn);
 		return false;
 	}
@@ -473,7 +473,7 @@ static struct db_context *kernel_alg_db_new(struct child_proposals proposals,
 				success = false;	/* ??? should we break? */
 		}
 	} else {
-		pexpect_fail(logger, HERE, "%s", "proposals should be non-NULL");
+		llog_pexpect(logger, HERE, "%s", "proposals should be non-NULL");
 	}
 
 	if (!success) {
@@ -611,7 +611,7 @@ static struct ike_proposals v1_default_ike_proposals(struct logger *logger)
 	struct proposal_parser *parser = ike_proposal_parser(&policy);
 	struct ike_proposals defaults = { .p = proposals_from_str(parser, NULL), };
 	if (defaults.p == NULL) {
-		pexpect_fail(logger, HERE,
+		llog_pexpect(logger, HERE,
 			     "Invalid IKEv1 default algorithms: %s",
 			     str_diag(parser->diag));
 	}
@@ -660,7 +660,7 @@ static struct db_sa *oakley_alg_mergedb(struct ike_proposals ike_proposals,
 
 		const struct encrypt_desc *enc_desc = algs.encrypt;
 		if (eklen != 0 && !encrypt_has_key_bit_length(enc_desc, eklen)) {
-			pexpect_fail(logger, HERE,
+			llog_pexpect(logger, HERE,
 				     "IKEv1 proposal with ENCRYPT%s (specified) keylen:%d, not valid, should have been dropped",
 				     enc_desc->common.fqn,
 				     eklen);
@@ -1552,7 +1552,7 @@ static bool ikev1_verify_ike(const struct trans_attrs *ta,
 		return false;
 	}
 	if (ta->ta_integ != NULL) {
-		pexpect_fail(logger, HERE, "OAKLEY proposal refused: contains unexpected integrity %s",
+		llog_pexpect(logger, HERE, "OAKLEY proposal refused: contains unexpected integrity %s",
 			     ta->ta_prf->common.fqn);
 		return false;
 	}

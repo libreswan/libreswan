@@ -386,7 +386,7 @@ static struct lease *connection_lease(struct connection *c)
 	uintmax_t offset;
 	err_t err = address_to_range_offset(pool->r, prefix, &offset);
 	if (err != NULL) {
-		pexpect_fail(c->logger, HERE, "offset of address in range failed: %s", err);
+		llog_pexpect(c->logger, HERE, "offset of address in range failed: %s", err);
 		return NULL;
 	}
 	passert(pool->nr_leases <= pool->size);
@@ -832,7 +832,7 @@ void show_addresspool_status(struct show *s)
 	show_separator(s);
 #define CHECK(A, B)							\
 	if ((A) != (B)) {						\
-		pexpect_fail(show_logger(s), HERE,			\
+		llog_pexpect(show_logger(s), HERE,			\
 			     "" #A " (%u) does not match " #B " (%u)",	\
 			     A, B);					\
 	}

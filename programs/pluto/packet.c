@@ -2386,7 +2386,7 @@ static void start_next_payload_chain(struct pbs_out *outs,
 	uint8_t n = *inp;
 	if (n != ISAKMP_NEXT_NONE) {
 		esb_buf npb;
-		pexpect_fail(outs->outs_logger, HERE,
+		llog_pexpect(outs->outs_logger, HERE,
 			     "next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
 			     sd->name, fp->name, n,
 			     enum_show(fp->desc, n, &npb));
@@ -2455,7 +2455,7 @@ static void update_next_payload_chain(pb_stream *outs,
 		     enum_show(fp->desc, n, &npb));
 	} else if (n != ISAKMP_NEXT_NONE) {
 		esb_buf npb;
-		pexpect_fail(outs->outs_logger, HERE,
+		llog_pexpect(outs->outs_logger, HERE,
 			     "next payload chain: ignoring supplied '%s'.'%s' value %d:%s",
 			     sd->name, fp->name, n,
 			     enum_show(fp->desc, n, &npb));

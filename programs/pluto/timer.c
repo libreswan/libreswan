@@ -523,7 +523,7 @@ void event_schedule_where(enum event_type type, deltatime_t delay, struct state 
 
 	struct state_event **evp = state_event_slot(st, type);
 	if (evp == NULL) {
-		pexpect_fail(st->st_logger, where,
+		llog_pexpect(st->st_logger, where,
 			     "#%lu has no .st_*event field for %s",
 			     st->st_serialno, event_name);
 		return;
@@ -531,7 +531,7 @@ void event_schedule_where(enum event_type type, deltatime_t delay, struct state 
 
 	if (*evp != NULL) {
 		/* help debugging by stumbling on */
-		pexpect_fail(st->st_logger, where,
+		llog_pexpect(st->st_logger, where,
 			     "#%lu already has %s scheduled; forcing %s",
 			     st->st_serialno,
 			     enum_name(&event_type_names, (*evp)->ev_type),
@@ -562,7 +562,7 @@ void event_delete_where(enum event_type type, struct state *st, where_t where)
 {
 	struct state_event **evp = state_event_slot(st, type);
 	if (evp == NULL) {
-		pexpect_fail(st->st_logger, where,
+		llog_pexpect(st->st_logger, where,
 			     "#%lu has no .st_event field for %s",
 			     st->st_serialno, enum_name(&event_type_names, type));
 		return;

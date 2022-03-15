@@ -44,7 +44,7 @@ struct logger;
 		/* wrapping ASSERTION in parens suppresses -Wparen */	\
 		bool assertion__ = ASSERTION; /* no paren */		\
 		if (!assertion__) {					\
-			pexpect_fail(LOGGER, HERE,			\
+			llog_pexpect(LOGGER, HERE,			\
 				     PRI_IKE_ALG" fails: " #ASSERTION,	\
 				     pri_ike_alg(ALG));			\
 		}							\
@@ -55,7 +55,7 @@ struct logger;
 		/* wrapping ASSERTION in parens suppresses -Wparen */	\
 		bool assertion__ = ASSERTION; /* no paren */		\
 		if (!assertion__) {					\
-			pexpect_fail(LOGGER, HERE,			\
+			llog_pexpect(LOGGER, HERE,			\
 				     PRI_IKE_ALG" %s fails: "#ASSERTION, \
 				     pri_ike_alg(ALG),			\
 				     ike_alg_key_name(KEY));		\
@@ -68,7 +68,7 @@ struct logger;
 		const char *lhs = LHS;					\
 		const char *rhs = RHS;					\
 		if (lhs == NULL || rhs == NULL || !streq(LHS, RHS)) {	\
-			pexpect_fail(LOGGER, HERE,			\
+			llog_pexpect(LOGGER, HERE,			\
 				     PRI_IKE_ALG" fails: %s != %s (%s != %s)", \
 				     pri_ike_alg(ALG),			\
 				     lhs, rhs, #LHS, #RHS);		\
@@ -81,7 +81,7 @@ struct logger;
 		const char *lhs = LHS;					\
 		const char *rhs = RHS;					\
 		if (lhs == NULL || rhs == NULL || !strcaseeq(LHS, RHS)) { \
-			pexpect_fail(LOGGER, HERE,			\
+			llog_pexpect(LOGGER, HERE,			\
 				     PRI_IKE_ALG" fails: %s != %s (%s != %s)", \
 				     pri_ike_alg(ALG),			\
 				     ike_alg_type_name((ALG)->algo_type), \

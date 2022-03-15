@@ -252,6 +252,6 @@ void pexpect_address(const ip_address *a, where_t where)
 
 	if (a->is_set == false ||
 	    a->version == 0) {
-		log_pexpect(where, "invalid address: "PRI_ADDRESS, pri_address(a));
+		llog_pexpect(&global_logger, where, "invalid address: "PRI_ADDRESS, pri_address(a));
 	}
 }

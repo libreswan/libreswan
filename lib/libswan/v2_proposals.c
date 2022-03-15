@@ -212,7 +212,7 @@ static enum proposal_status parse_proposal(struct proposal_parser *parser,
 				return PROPOSAL_IGNORE;
 			}
 			if (!impair.proposal_parser) {
-				pexpect_fail(parser->policy->logger, HERE,
+				llog_pexpect(parser->policy->logger, HERE,
 					     "all encryption algorithms skipped");
 				proposal_error(parser, "all encryption algorithms discarded");
 				passert(parser->diag != NULL);

@@ -512,6 +512,6 @@ void pexpect_range(const ip_range *r, where_t where)
 	if (r->is_set == false ||
 	    r->version == 0 ||
 	    bytes_cmp(r->version, r->start, r->version, r->end) > 0) {
-		log_pexpect(where, "invalid range: "PRI_RANGE, pri_range(r));
+		llog_pexpect(&global_logger, where, "invalid range: "PRI_RANGE, pri_range(r));
 	}
 }

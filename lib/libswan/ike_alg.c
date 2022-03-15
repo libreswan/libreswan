@@ -361,7 +361,7 @@ static void pexpect_ike_alg_base_in_table(struct logger *logger, where_t where,
 					  const struct ike_alg *base_alg)
 {
 	if (!ike_alg_in_table(base_alg)) {
-		pexpect_fail(logger, where,
+		llog_pexpect(logger, where,
 			     PRI_IKE_ALG" base "PRI_IKE_ALG" missing from algorithm table",
 			     pri_ike_alg(alg), pri_ike_alg(base_alg));
 	}
@@ -387,11 +387,11 @@ static bool pexpect_ike_alg_has_name(struct logger *logger, where_t where,
 				     const char *description)
 {
 	if (name == NULL) {
-		pexpect_fail(logger, where, PRI_IKE_ALG" %s name is NULL",
+		llog_pexpect(logger, where, PRI_IKE_ALG" %s name is NULL",
 			     pri_ike_alg(alg), description);
 		return false;
 	} else if (!ike_alg_has_name(alg, shunk1(name))) {
-		pexpect_fail(logger, where, PRI_IKE_ALG" missing %s name %s",
+		llog_pexpect(logger, where, PRI_IKE_ALG" missing %s name %s",
 			     pri_ike_alg(alg), description, name);
 		return false;
 	}
@@ -410,7 +410,7 @@ static void pexpect_ike_alg_has_base_names(struct logger *logger, where_t where,
 {
 	FOR_EACH_IKE_ALG_NAME(base_alg, alg_name) {
 		if (!ike_alg_has_name(alg, alg_name)) {
-			pexpect_fail(logger, where,
+			llog_pexpect(logger, where,
 				     PRI_IKE_ALG" missing name "PRI_SHUNK" in base "PRI_IKE_ALG,
 				     pri_ike_alg(alg), pri_shunk(alg_name),
 				     pri_ike_alg(base_alg));

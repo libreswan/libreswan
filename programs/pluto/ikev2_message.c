@@ -323,7 +323,7 @@ static bool close_v2SK_payload(struct v2SK_payload *sk)
 			     ? sk->ike->sa.st_oakley.ta_encrypt->aead_tag_size
 			     : sk->ike->sa.st_oakley.ta_integ->integ_output_size);
 	if (integ_size == 0) {
-		pexpect_fail(sk->logger, HERE,
+		llog_pexpect(sk->logger, HERE,
 			     "error initializing integrity checksum for encrypted %s payload",
 			     sk->pbs.container->name);
 		return false;
@@ -517,7 +517,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 {
 	if (!ike->sa.hidden_variables.st_skeyid_calculated) {
 		endpoint_buf b;
-		pexpect_fail(ike->sa.st_logger, HERE,
+		llog_pexpect(ike->sa.st_logger, HERE,
 			     "received encrypted packet from %s but no exponents for state #%lu to decrypt it",
 			     str_endpoint_sensitive(&ike->sa.st_remote_endpoint, &b),
 			     ike->sa.st_serialno);
@@ -1413,7 +1413,7 @@ bool open_v2_message(const char *story,
 	case ENCRYPTED_PAYLOAD:
 		/* never encrypt an IKE_SA_INIT exchange */
 		if (exchange_type == ISAKMP_v2_IKE_SA_INIT) {
-			pexpect_fail(message->logger, HERE,
+			llog_pexpect(message->logger, HERE,
 				     "exchange type IKE_SA_INIT is invalid for encrypted notification");
 			return false;
 		}

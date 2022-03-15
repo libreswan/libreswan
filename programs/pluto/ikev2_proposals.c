@@ -1632,7 +1632,7 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 					ikev2_get_encrypt_desc(transform->id);
 				if (encrypt == NULL) {
 					esb_buf buf;
-					pexpect_fail(logger, HERE,
+					llog_pexpect(logger, HERE,
 						     "accepted IKEv2 proposal contains unexpected ENCRYPT %s",
 						     enum_show(&ikev2_trans_type_encr_names,
 							       transform->id, &buf));
@@ -1654,7 +1654,7 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 					 * succeed.
 					 */
 					esb_buf buf;
-					pexpect_fail(logger, HERE,
+					llog_pexpect(logger, HERE,
 						     "accepted IKEv2 proposal contains unexpected PRF %s",
 						     enum_show(&ikev2_trans_type_prf_names,
 							       transform->id, &buf));
@@ -1674,7 +1674,7 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 					 * succeed.
 					 */
 					esb_buf buf;
-					pexpect_fail(logger, HERE,
+					llog_pexpect(logger, HERE,
 						     "accepted IKEv2 proposal contains unexpected INTEG %s",
 						     enum_show(&ikev2_trans_type_integ_names,
 							       transform->id, &buf));
@@ -1695,7 +1695,7 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 					 * likely really bad.
 					 */
 					esb_buf buf;
-					pexpect_fail(logger, HERE,
+					llog_pexpect(logger, HERE,
 						     "accepted IKEv2 proposal contains unexpected DH %s",
 						     enum_show(&oakley_group_names,
 							       transform->id, &buf));
@@ -1714,14 +1714,14 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 					break;
 				default:
 					ta.esn_enabled = false;
-					pexpect_fail(logger, HERE,
+					llog_pexpect(logger, HERE,
 						     "accepted IKEv2 proposal contains unexpected ESN %d",
 						     transform->id);
 					return false;
 				}
 				break;
 			default:
-				pexpect_fail(logger, HERE,
+				llog_pexpect(logger, HERE,
 					     "accepted IKEv2 proposal contains unexpected trans type %d",
 					     type);
 				return false;
@@ -1837,11 +1837,11 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 {
 	const char *protocol = enum_name_short(&ikev2_proposal_protocol_id_names, proposal->protoid);
 	if (proposal->protoid == 0 || protocol == NULL) {
-		pexpect_fail(logger, HERE, "%s", "IKEv2 ENCRYPT transform protocol unknown");
+		llog_pexpect(logger, HERE, "%s", "IKEv2 ENCRYPT transform protocol unknown");
 		return false;
 	}
 	if (encrypt == NULL) {
-		pexpect_fail(logger, HERE, "IKEv2 %s ENCRYPT transform has no encrypt algorithm", protocol);
+		llog_pexpect(logger, HERE, "IKEv2 %s ENCRYPT transform has no encrypt algorithm", protocol);
 		return false;
 	}
 	if (encrypt->common.id[IKEv2_ALG_ID] == 0) {
@@ -1851,7 +1851,7 @@ static bool append_encrypt_transform(struct ikev2_proposal *proposal,
 		return false;
 	}
 	if (keylen > 0 && !encrypt_has_key_bit_length(encrypt, keylen)) {
-		pexpect_fail(logger, HERE, "IKEv2 %s %s ENCRYPT transform has an invalid key length of %u",
+		llog_pexpect(logger, HERE, "IKEv2 %s %s ENCRYPT transform has an invalid key length of %u",
 			     protocol, encrypt->common.fqn, keylen);
 		return false;
 	}

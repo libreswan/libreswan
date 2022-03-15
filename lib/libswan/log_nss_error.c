@@ -83,5 +83,5 @@ void pexpect_nss_error(struct logger *logger, where_t where,
 	jam_va_nss_error_code(buf, PR_GetError(), message, ap);
 	va_end(ap);
 	/* XXX: double copy */
-	pexpect_fail(logger, where, PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
+	llog_pexpect(logger, where, PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
 }

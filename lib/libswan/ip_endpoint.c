@@ -276,6 +276,6 @@ void pexpect_endpoint(const ip_endpoint *e, where_t where)
 	    e->ipproto == 0 ||
 	    protocol == NULL /* ||
 	    (protocol->endpoint_requires_non_zero_port && e->hport == 0) */) {
-		log_pexpect(where, "invalid endpoint: "PRI_ENDPOINT, pri_endpoint(e));
+		llog_pexpect(&global_logger, where, "invalid endpoint: "PRI_ENDPOINT, pri_endpoint(e));
 	}
 }

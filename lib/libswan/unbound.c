@@ -299,7 +299,7 @@ bool unbound_resolve(char *src, const struct ip_info *afi,
 	passert(result->len != NULL);
 
 	if ((size_t)result->len[0] != afi->ip_size) {
-		pexpect_fail(logger, HERE, "dns record is %u bytes, expecting %zu",
+		llog_pexpect(logger, HERE, "dns record is %u bytes, expecting %zu",
 			     result->len[0], afi->ip_size);
 		ub_resolve_free(result);
 		return false;

@@ -114,7 +114,7 @@ static PK11SymKey *ike_sa_skeyseed(const struct prf_desc *prf_desc,
 						    logger);
 	free_chunk_content(&key);
 	if (prf == NULL) {
-		pexpect_fail(logger, HERE,
+		llog_pexpect(logger, HERE,
 			     "failed to create IKEv2 PRF for computing SKEYSEED = prf(Ni | Nr, g^ir)");
 		return NULL;
 	}
@@ -138,7 +138,7 @@ static PK11SymKey *ike_sa_rekey_skeyseed(const struct prf_desc *prf_desc,
 						      "SK_d (old)", SK_d_old,
 						      logger);
 	if (prf == NULL) {
-		pexpect_fail(logger, HERE,
+		llog_pexpect(logger, HERE,
 			     "failed to create IKEv2 PRF for computing SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr)");
 		return NULL;
 	}
@@ -230,7 +230,7 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
 					     "FIPS: failure creating %s PRF context for digesting PSK",
 					     prf_desc->common.fqn);
 			}
-			pexpect_fail(logger, HERE, "failure creating %s PRF context for digesting PSK",
+			llog_pexpect(logger, HERE, "failure creating %s PRF context for digesting PSK",
 				     prf_desc->common.fqn);
 			return empty_mac;
 		}

@@ -31,8 +31,9 @@
 				jam_list_entry(buf, (ENTRY));		\
 				jam(buf, ": %s", #ASSERTION);		\
 				/* XXX: hack: double copy */		\
-				log_pexpect(HERE, PRI_SHUNK,		\
-					    pri_shunk(jambuf_as_shunk(buf))); \
+				llog_pexpect(&global_logger, HERE,	\
+					     PRI_SHUNK,			\
+					     pri_shunk(jambuf_as_shunk(buf))); \
 			}						\
 		}							\
 	}
@@ -46,8 +47,9 @@
 				    (INFO)->name,			\
 				    #ASSERTION);			\
 				/* XXX: hack: double copy */		\
-				log_pexpect(HERE, PRI_SHUNK,		\
-					    pri_shunk(jambuf_as_shunk(buf))); \
+				llog_pexpect(&global_logger, HERE,	\
+					     PRI_SHUNK,			\
+					     pri_shunk(jambuf_as_shunk(buf))); \
 			}						\
 		}							\
 	}

@@ -832,7 +832,7 @@ void init_ikev1(struct logger *logger)
 		from->nr_transitions++;
 
 		if (t->message == NULL) {
-			pexpect_fail(logger, HERE, "transition %s -> %s missing .message",
+			llog_pexpect(logger, HERE, "transition %s -> %s missing .message",
 				     from->short_name, to->short_name);
 		}
 
@@ -875,13 +875,13 @@ void init_ikev1(struct logger *logger)
 			 * require integrity via the HASH payload.
 			 */
 			if (!(t->req_payloads & LELEM(ISAKMP_NEXT_HASH))) {
-				pexpect_fail(logger, HERE,
+				llog_pexpect(logger, HERE,
 					     "transition %s -> %s (%s) missing HASH payload",
 					     from->short_name, to->short_name,
 					     t->message);
 			}
 			if (t->hash_type == V1_HASH_NONE) {
-				pexpect_fail(logger, HERE,
+				llog_pexpect(logger, HERE,
 					     "transition %s -> %s (%s) missing HASH protection",
 					     from->short_name, to->short_name,
 					     t->message);

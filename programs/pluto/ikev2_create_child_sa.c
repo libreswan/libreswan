@@ -144,7 +144,7 @@ static struct child_sa *find_v2N_REKEY_SA_child(struct ike_sa *ike,
 	 */
 	const struct payload_digest *rekey_sa_payload = md->pd[PD_v2N_REKEY_SA];
 	if (rekey_sa_payload == NULL) {
-		pexpect_fail(ike->sa.st_logger, HERE,
+		llog_pexpect(ike->sa.st_logger, HERE,
 			     "rekey child can't find its rekey_sa payload");
 		return NULL;
 	}
@@ -544,7 +544,7 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 			rekey_spi = prev->sa.st_ah.our_spi;
 			rekey_protoid = PROTO_IPSEC_AH;
 		} else {
-			pexpect_fail(larval_child->sa.st_logger, HERE,
+			llog_pexpect(larval_child->sa.st_logger, HERE,
 				     "previous Child SA #%lu being rekeyed is not ESP/AH",
 				     larval_child->sa.st_v2_rekey_pred);
 			return STF_INTERNAL_ERROR;

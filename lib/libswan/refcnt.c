@@ -63,7 +63,7 @@ void refcnt_init(const void *pointer, struct refcnt *refcnt,
 	}
 	pthread_mutex_unlock(&refcnt_mutex);
 	if (old != 0 || new != 1) {
-		log_pexpect(where, "refcnt for %s@%p should have been 0 initialized",
+		llog_pexpect(&global_logger, where, "refcnt for %s@%p should have been 0 initialized",
 			    base->what, pointer);
 	}
 	DEBUG_LOG("new");
@@ -86,7 +86,7 @@ void refcnt_addref_where(const char *what, const void *pointer,
 	}
 	pthread_mutex_unlock(&refcnt_mutex);
 	if (old == 0) {
-		log_pexpect(where, "refcnt for %s@%p should have been non-0",
+		llog_pexpect(&global_logger, where, "refcnt for %s@%p should have been non-0",
 			    what, pointer);
 	}
 	DEBUG_LOG("add");
@@ -127,7 +127,7 @@ void refcnt_delref_where(const char *what, void *pointer, struct refcnt *refcnt,
 	}
 	pthread_mutex_unlock(&refcnt_mutex);
 	if (old == 0) {
-		log_pexpect(where, "refcnt for %s@%p should have been non-0",
+		llog_pexpect(&global_logger, where, "refcnt for %s@%p should have been non-0",
 			    what, pointer);
 	}
 	DEBUG_LOG("del");

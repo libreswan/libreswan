@@ -67,7 +67,7 @@ void pam_auth_abort(struct state *st, const char *story)
 	struct pam_auth *pamauth = st->st_pam_auth;
 
 	if (pamauth == NULL) {
-		pexpect_fail(st->st_logger, HERE,
+		llog_pexpect(st->st_logger, HERE,
 			     "PAM: %s while authenticating yet no PAM process to abort",
 			     story);
 		return;

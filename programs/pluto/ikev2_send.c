@@ -344,12 +344,12 @@ static bool emit_v2N_spi_response(struct v2_message *response,
 		 * the SPI field of the notification is set to match
 		 * the SPI of the Child SA.
 		*/
-		pexpect_fail(response->logger, HERE,
+		llog_pexpect(response->logger, HERE,
 			     "trying to send unimplemented %s notification",
 			     notify_name);
 		return false;
 	case v2N_REKEY_SA:
-		pexpect_fail(response->logger, HERE,
+		llog_pexpect(response->logger, HERE,
 			     "%s notification cannot be part of a response",
 			     notify_name);
 		return false;
@@ -466,7 +466,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 			     exchange_type,
 			     buf, sizeof(buf),
 			     &response, UNENCRYPTED_PAYLOAD)) {
-		pexpect_fail(md->md_logger, HERE,
+		llog_pexpect(md->md_logger, HERE,
 			     "error building header for unencrypted %s %s notification with message ID %u",
 			     exchange_name, notify_name, md->hdr.isa_msgid);
 		return;
@@ -475,7 +475,7 @@ void send_v2N_response_from_md(struct msg_digest *md,
 	/* build and add v2N payload to the packet */
 	shunk_t nhunk = ndata == NULL ? empty_shunk : *ndata;
 	if (!emit_v2N_hunk(ntype, nhunk, response.pbs)) {
-		pexpect_fail(md->md_logger, HERE,
+		llog_pexpect(md->md_logger, HERE,
 			     "error building unencrypted %s %s notification with message ID %u",
 			     exchange_name, notify_name, md->hdr.isa_msgid);
 		return;

@@ -457,13 +457,7 @@ extern void llog_pexpect(const struct logger *logger, where_t where,
 		assertion__; /* result */				\
 	})
 
-/*
- * older: message does not reach whack
- */
-
 #define pexpect(ASSERTION)  PEXPECT(&global_logger, ASSERTION)
-#define log_pexpect(WHERE, FMT, ...) llog_pexpect(&global_logger, WHERE, FMT,##__VA_ARGS__)
-#define pexpect_fail llog_pexpect
 
 /* for a switch statement */
 

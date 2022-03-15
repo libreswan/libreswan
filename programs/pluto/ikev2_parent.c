@@ -433,7 +433,7 @@ static bool expire_ike_because_child_not_used(struct state *st)
 	}
 
 	if (c->spd.that.has_lease) {
-		pexpect_fail(st->st_logger, HERE,
+		llog_pexpect(st->st_logger, HERE,
 			     "#%lu has lease; should not be trying to replace",
 			     st->st_serialno);
 		return true;
@@ -446,7 +446,7 @@ static bool expire_ike_because_child_not_used(struct state *st)
 		ike = pexpect_ike_sa(st);
 		cst = state_by_serialno(c->newest_ipsec_sa);
 		if (cst == NULL) {
-			pexpect_fail(st->st_logger, HERE,
+			llog_pexpect(st->st_logger, HERE,
 				     "can't check usage as IKE SA #%lu has no newest child",
 				     ike->sa.st_serialno);
 			return true;
@@ -582,7 +582,7 @@ static bool state_is_expired(struct state *st, const char *what)
 		 * the IKE SA has gone they shouldn't be getting
 		 * rekeys!
 		 */
-		pexpect_fail(st->st_logger, HERE,
+		llog_pexpect(st->st_logger, HERE,
 			     "not %s Child SA #%lu; as IKE SA #%lu has diasppeared",
 			     what, st->st_serialno, st->st_clonedfrom);
 		event_force(EVENT_SA_EXPIRE, st);
@@ -603,7 +603,7 @@ static bool state_is_expired(struct state *st, const char *what)
 		 * SA establishes).  This SA should have been expired
 		 * at the same time; do it now.
 		 */
-		pexpect_fail(st->st_logger, HERE,
+		llog_pexpect(st->st_logger, HERE,
 			     "not %s stale %s SA #%lu; as already got a newer #%lu",
 			     what, satype, st->st_serialno, newer_sa);
 		event_force(EVENT_SA_EXPIRE, st);
