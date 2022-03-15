@@ -642,7 +642,7 @@ err_t lease_that_address(struct connection *c, const struct state *st)
 	ip_address ia;
 	err_t err = pool_lease_to_address(pool, new_lease, &ia);
 	if (err != NULL) {
-		llog_pexpect_fail(st->st_logger, HERE, "%s", err);
+		llog_pexpect(st->st_logger, HERE, "%s", err);
 	}
 	c->spd.that.has_lease = true;
 	c->spd.that.has_client = true;
@@ -852,7 +852,7 @@ void show_addresspool_status(struct show *s)
 			ip_address lease_ip;
 			err_t err = pool_lease_to_address(pool, lease, &lease_ip);
 			if (err != NULL) {
-				llog_pexpect_fail(show_logger(s), HERE, "%s", err);
+				llog_pexpect(show_logger(s), HERE, "%s", err);
 			}
 			address_buf lease_ipb;
 			const char *lease_str = str_address(&lease_ip, &lease_ipb);
