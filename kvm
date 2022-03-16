@@ -3,8 +3,114 @@
 set -e
 
 hosts=$(echo $($(dirname $0)/testing/utils/kvmhosts.sh))
-pass1="commit sh modified baseline baseline-passed baseline-failed --baseline --baseline-passed --baseline-failed ${hosts}"
-pass2="add check diffs results recheck upgrade patch install clean keys kill demolish purge uninstall downgrade upgrade transmogrify status check-clean shutdown"
+
+# Anything matching '^____[-a-z]' is considered a command (_ denotes a
+# space).
+
+pass1help()
+{
+    cat <<EOF
+
+  Use the test directories that have been modified when running and
+  comparing tests:
+
+    modified
+	apply operation to modified tests (default is all tests)
+
+  When comparing results, specify the baseline directory to compare
+  against (default is Makefile.inc.local:KVM_BASELINE):
+
+    baseline
+	compare test results against baseline
+    baseline-passed
+	compare test results against baseline tests that passed
+    baseline-failed
+	compare test results against baseline tests that failed
+    --baseline <dir>
+	specify baseline directory to compare against
+    --baseline-passed <dir>
+	specify baseline directory to compare against
+    --baseline-failed
+	specify baseline directory to compare against
+
+Utilities:
+
+  sh <host> [ <command> ]
+	start a shell on <host> which can be ${hosts}
+
+EOF
+}
+
+pass1=$(pass1help | awk '/^    [-a-z]/ { printf " %s ", $1 }' ; echo ${host})
+
+pass2help()
+{
+    cat <<EOF
+
+  Build / install the test domains:
+
+    install
+	install libreswan onto the build domains
+    upgrade
+	upgrade the base domains
+    transmogrify
+	transmogrify the base domains
+    clean
+	clean the test environment (delete test and build domains and build trees)
+    keys
+	update the keys used for testing
+
+  Run Tests:
+
+    check [ <test-directory> ... ]
+        run the testsuite
+    recheck [ <test-directory> ... ]
+	re-run the testsuite
+    diffs [ <test-directory> ... ]
+	show differences for the specified tests
+    results [ <test-directory> ... ]
+	show differences for the specified tests
+    check-clean
+	delete the test results (leave the build trees and domains alone)
+
+  Update the test results (and GIT repository containing the tests):
+
+    patch [ <test-directory> ... ]
+	apply test differences to the specified test directories (or all
+	test directories)
+    add [ <test-directory> ... ]
+	<<git add>> the specified test directories (or all test
+	directories)
+    commit [ <test-directory> ... ]
+	commit added changes
+
+  Manipulate the kvmrunner process:
+
+    status
+	report the status of the running test
+    kill
+	kill the running testsuite
+
+  Clean up the test environment
+
+    uninstall
+	delete the build and test domains
+	(but leave the build trees and base domains alone)
+    downgrade
+	delete the build and test domains
+	remove any updates to the base domains
+    purge
+	delete base, build and test domains
+	delete any build trees
+    demolish
+	delete all domains and all builds
+    shutdown
+	shutdown the domains
+
+EOF
+}
+
+pass2=$(pass2help | awk '/^    [-a-z]/ { printf " %s ", $1 }')
 
 # translate ../../../kvm ... into ./kvm ...
 
@@ -35,12 +141,18 @@ fi
 if test $# -eq 0; then
     cat <<EOF
 Usage:
-   <operation> <operation> ... <arg> <arg>
-where <operation is>
-  sh <domain>
-  ${pass2} ... <test> ...
-To enable completion:
+
+   <operation> <operation> ... <test-directory> <test-directory> ...
+
+Where operations are:
+EOF
+    pass1help
+    pass2help
+cat <<EOF
+To enable completion, add:
   complete -o filename -C './kvm' ./kvm
+to .bashrc
+EOF
 EOF
     exit 1
 fi
@@ -81,7 +193,10 @@ testingdir=$(sed -n -e 's/^KVM_TESTINGDIR[ ]*=[ ]*\([^ ]*\).*/\1/p' Makefile.inc
 i=0
 while test $# -gt 0 ; do
     case " ${pass2} " in
-	*" $1 "* ) ops[$i]="$1" ; i=$((i + 1)) ;;
+	*" $1 "* )
+	    # accumulate pass2 commands
+	    ops[$i]="$1" ; i=$((i + 1))
+	    ;;
 	* )
 	    # must be a pass1 command
 	    case "$1" in
@@ -98,9 +213,6 @@ while test $# -gt 0 ; do
 		test ) ops[$i]=check ; i=$((i + 1) ;;
 		retest ) ops[$i]=recheck ; i=$((i + 1)) ;;
 		test-clean ) ops[$i]=check-clean ; i=$((i + 1)) ;;
-
-		# git wrappers
-		commit ) shift ; exec git commit "$@" ;;
 
 		sh )
 		    shift
@@ -205,12 +317,11 @@ diffs_command()
 status=0
 for op in "${ops[@]}" ; do
     case ${op} in
-	add )
-	    git add "$@"
-	    ;;
-	kill )
-	    gmake kvm-${op}
-	    ;;
+
+	commit ) git commit "$@" ;;
+	add ) git add "$@" ;;
+
+	kill ) gmake kvm-${op} ;;
 	upgrade | clean | install | demolish | purge | uninstall | downgrade | upgrade | transmogrify | status | check-clean | shutdown )
 	    echo gmake kvm-${op}
 	    gmake kvm-${op} || exit $?
