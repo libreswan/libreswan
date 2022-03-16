@@ -318,8 +318,7 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct msg_digest *md)
 		break;
 	}
 	case NO_MESSAGE:
-		dbg("Message ID: IKE #%lu skipping update_recv as MD is fake",
-		    ike->sa.st_serialno);
+		dbg_v2_msgid(ike, "skipping update_recv as no message (presumably initiator)");
 		return;
 	default:
 		bad_case(receiving);
@@ -396,7 +395,7 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct msg_digest *md, enum messag
 		msgid = md->hdr.isa_msgid;
 		break;
 	case NO_MESSAGE:
-		dbg_v2_msgid(ike, "skipping update_send as nothing to send");
+		dbg_v2_msgid(ike, "skipping update_send as nothing to send (presumably intiator receiving a response)");
 		return;
 	default:
 		bad_case(sending);
