@@ -40,15 +40,6 @@ static stf_status send_v2_liveness_request(struct ike_sa *ike,
 					   struct child_sa *child UNUSED,
 					   struct msg_digest *md UNUSED)
 {
-	/*
-	 * XXX: What does it mean to send a liveness probe for a CHILD
-	 * SA?  Since the packet contents are empty there's nothing
-	 * for the other end to identify which child this is for!
-	 *
-	 * XXX: See record 'n'_send for how screwed up all this is:
-	 * need to pass in the CHILD SA so that its liveness
-	 * timestamp (and not the IKE) gets updated.
-	 */
 	pstats_ike_dpd_sent++;
 	stf_status e = record_v2_informational_request("liveness probe informational request",
 						       ike, &ike->sa/*sender*/,
