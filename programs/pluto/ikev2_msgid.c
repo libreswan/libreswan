@@ -304,16 +304,20 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct msg_digest *md)
 		/*
 		 * Clear the retransmits for the old message
 		 *
-		 * XXX: Because the IKE_AUTH initiator switches states
-		 * from IKE->CHILD part way through, this code can end
-		 * up clearing the child's retransmits when what is
-		 * needed is to clear the IKE SA's retransmits.
+		 * XXX:
+		 *
+		 * Whenever work (crypto) is off-loaded submit_task()
+		 * clears retransmits, hence the below check.
+		 *
+		 * This is bogus: the crypto could be for the
+		 * responder; a background task; or the message could
+		 * be rejected.  All reasons to continue retransmits.
 		 */
 		if (ike->sa.st_retransmit_event != NULL) {
 			dbg_v2_msgid(ike, "clearing EVENT_RETRANSMIT as response received");
 			clear_retransmits(&ike->sa);
 		} else {
-			dbg_v2_msgid(ike, "XXX: no EVENT_RETRANSMIT to clear, suspect IKE->CHILD switch");
+			dbg_v2_msgid(ike, "no EVENT_RETRANSMIT to clear; suspect submit_task()");
 		}
 		break;
 	}

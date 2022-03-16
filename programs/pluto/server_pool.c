@@ -361,8 +361,10 @@ void submit_task(const struct logger *logger,
 		/*
 		 * XXX: Danger:
 		 *
-		 * Clearing retransmits here is wrong, for instance
-		 * when crypto is being run in the background.
+		 * Clearing retransmits here is wrong, for instance:
+		 * crypto is being run in the background; crypto is
+		 * for the responder (IKEv2 retransmits are by the
+		 * initiator); the message may be dropped.
 		 */
 		delete_event(st);
 		clear_retransmits(st);
