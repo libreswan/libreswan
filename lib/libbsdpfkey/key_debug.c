@@ -74,7 +74,7 @@
 
 #include "lswlog.h"
 
-#define panic(MSG) PASSERT_FAIL("%s", MSG)
+#define panic(MSG) llog_passert(&global_logger, HERE, "%s", MSG)
 
 static void kdebug_sadb_prop(struct sadb_ext *);
 static void kdebug_sadb_identity(struct sadb_ext *);

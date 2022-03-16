@@ -442,7 +442,8 @@ static reqid_t get_proto_reqid(reqid_t base, const struct ip_protocol *proto)
 	if (proto == &ip_protocol_ah)
 		return reqid_ah(base);
 
-	PASSERT_FAIL("bad protocol %s", proto->name);
+	llog_passert(&global_logger, HERE,
+		     "bad protocol %s", proto->name);
 }
 
 static const char *said_str(const ip_address dst,

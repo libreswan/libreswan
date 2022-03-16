@@ -43,7 +43,7 @@ static void do_nss_ctr(const struct encrypt_desc *alg UNUSED,
 
 	passert(sym_key);
 	if (sym_key == NULL) {
-		passert_fail(logger, HERE, "%s", "NSS derived enc key in NULL");
+		llog_passert(logger, HERE, "%s", "NSS derived enc key in NULL");
 	}
 
 	CK_AES_CTR_PARAMS counter_param;

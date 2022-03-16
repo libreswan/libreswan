@@ -201,7 +201,7 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
 		PK11SymKey *pss_key = prf_key_from_hunk("pss", prf_desc, pss, logger);
 		if (pss_key == NULL) {
 			if (libreswan_fipsmode()) {
-				passert_fail(logger, HERE, "FIPS: failure creating %s PRF context for digesting PSK",
+				llog_passert(logger, HERE, "FIPS: failure creating %s PRF context for digesting PSK",
 					     prf_desc->common.fqn);
 			}
 			llog_pexpect(logger, HERE, "failure creating %s PRF context for digesting PSK",

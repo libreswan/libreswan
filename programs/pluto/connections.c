@@ -3142,7 +3142,7 @@ struct connection *oppo_instantiate(struct connection *c,
 			 */
 			update_selector_hport(&d->spd.this.client, 0);
 		} else {
-			passert_fail(c->logger, HERE,
+			llog_passert(c->logger, HERE,
 				     "local address does not match the host or client");
 		}
 	} else {

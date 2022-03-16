@@ -1273,7 +1273,8 @@ static bool emit_transform_attributes(struct pbs_out *transform_pbs,
 	} else {
 		switch (impair_key_length_attribute) {
 		case IMPAIR_EMIT_NO:
-			PASSERT_FAIL("%s", "should have been handled");
+			llog_passert(transform_pbs->outs_logger, HERE,
+				     "%s", "should have been handled");
 			break;
 		case IMPAIR_EMIT_EMPTY:
 			llog(RC_LOG, transform_pbs->outs_logger,

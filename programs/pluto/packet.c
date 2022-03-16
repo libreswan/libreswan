@@ -2247,8 +2247,7 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 			break;
 
 		case ft_end: /* end of field list */
-			lsw_passert_fail(HERE, "should not be here");
-
+			llog_passert(&global_logger, HERE, "should not be here");
 		default:
 			bad_case(fp->field_type);
 		}

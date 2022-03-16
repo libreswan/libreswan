@@ -937,7 +937,7 @@ static void check_enum_name(const char *what,
 {
 	if (id >= 0) {
 		if (enum_names == NULL) {
-			passert_fail(logger, HERE, "%s %s %s has no enum names",
+			llog_passert(logger, HERE, "%s %s %s has no enum names",
 				     alg->algo_type->name,
 				     alg->fqn, what);
 		}

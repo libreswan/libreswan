@@ -106,7 +106,8 @@ chunk_t chunk_from_hex(const char *hex, const char *name)
 		/* Expecting <HEX><HEX> */
 		if (!char_isxdigit(pos[0]) || !char_isxdigit(pos[1])) {
 			/* friendly barf for debugging */
-			PASSERT_FAIL("expected hex digit at offset %tu in hex buffer \"%s\" but found \"%.1s\"",
+			llog_passert(&global_logger, HERE,
+				     "expected hex digit at offset %tu in hex buffer \"%s\" but found \"%.1s\"",
 				     pos - hex, hex, pos);
 		}
 

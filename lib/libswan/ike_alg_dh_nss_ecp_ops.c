@@ -49,7 +49,7 @@ static void nss_ecp_calc_local_secret(const struct dh_desc *group,
 	DBGF(DBG_CRYPT, "oid %d %x", group->nss_oid, group->nss_oid);
 	SECOidData *pk11_data = SECOID_FindOIDByTag(group->nss_oid);
 	if (pk11_data == NULL) {
-		passert_fail(logger, HERE, "lookup of OID %d for EC group %s parameters failed",
+		llog_passert(logger, HERE, "lookup of OID %d for EC group %s parameters failed",
 			     group->nss_oid, group->common.fqn);
 	}
 	if (DBGP(DBG_CRYPT)) {

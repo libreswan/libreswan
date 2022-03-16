@@ -226,7 +226,7 @@ static struct crypt_mac psk_auth(const struct prf_desc *prf_desc,
 					    prf_desc, "shared secret", pss, logger);
 		if (prf == NULL) {
 			if (libreswan_fipsmode()) {
-				passert_fail(logger, HERE,
+				llog_passert(logger, HERE,
 					     "FIPS: failure creating %s PRF context for digesting PSK",
 					     prf_desc->common.fqn);
 			}

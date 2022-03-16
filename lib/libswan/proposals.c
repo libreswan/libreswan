@@ -322,7 +322,8 @@ static enum proposal_algorithm ike_to_proposal_algorithm(const struct ike_alg *a
 	} else if (alg->algo_type == IKE_ALG_DH) {
 		return PROPOSAL_dh;
 	} else {
-		PASSERT_FAIL("unexpected algorithm type %s",
+		llog_passert(&global_logger, HERE,
+			     "unexpected algorithm type %s",
 			     ike_alg_type_name(alg->algo_type));
 	}
 }

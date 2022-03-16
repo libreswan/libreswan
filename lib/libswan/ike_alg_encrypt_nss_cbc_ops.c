@@ -37,7 +37,7 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 	DBGF(DBG_CRYPT, "NSS ike_alg_nss_cbc: %s - enter", alg->common.fqn);
 
 	if (symkey == NULL) {
-		passert_fail(logger, HERE,
+		llog_passert(logger, HERE,
 			     "%s - NSS derived enc key in NULL",
 			     alg->common.fqn);
 	}
@@ -48,7 +48,7 @@ static void ike_alg_nss_cbc(const struct encrypt_desc *alg,
 	ivitem.len = alg->enc_blocksize;
 	SECItem *secparam = PK11_ParamFromIV(alg->nss.mechanism, &ivitem);
 	if (secparam == NULL) {
-		passert_fail(logger, HERE,
+		llog_passert(logger, HERE,
 			     "%s - Failure to set up PKCS11 param (err %d)",
 			     alg->common.fqn, PR_GetError());
 	}

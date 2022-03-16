@@ -32,8 +32,13 @@ struct logger;
 /* our versions of assert: log result */
 
 /*
- * preferredL can log with prefix to whack from a thread.
+ * Preferred: can log with prefix to whack from a thread.
  */
+
+#ifndef GLOBAL_LOGGER
+extern const struct logger global_logger;
+#define GLOBAL_LOGGER
+#endif
 
 extern void llog_passert(const struct logger *logger, where_t where,
 			 const char *message, ...) NEVER_RETURNS PRINTF_LIKE(3);
@@ -50,27 +55,16 @@ extern void llog_passert(const struct logger *logger, where_t where,
 		(void) true;							\
 	})
 
-/*
- * older: message does not reach whack
- */
-
-#ifndef GLOBAL_LOGGER
-extern const struct logger global_logger;
-#define GLOBAL_LOGGER
-#endif
-
-#define PASSERT_FAIL(FMT, ...) llog_passert(&global_logger, HERE, FMT,##__VA_ARGS__)
 #define passert(ASSERTION)     PASSERT(&global_logger, ASSERTION)
-#define lsw_passert_fail(WHERE, FMT, ...) llog_passert(&global_logger, WHERE, FMT,##__VA_ARGS__)
-#define passert_fail llog_passert
 
 /* evaluate x exactly once; assert that err_t result is NULL; */
-#define happy(x) /* TBD: use ??? */			\
-	{						\
-		err_t ugh = x;				\
-		if (ugh != NULL) {			\
-			PASSERT_FAIL("%s", ugh);	\
-		}					\
+#define happy(x) /* TBD: use ??? */				\
+	{							\
+		err_t ugh = x;					\
+		if (ugh != NULL) {				\
+			llog_passert(&global_logger, HERE,	\
+				     "%s", ugh);		\
+		}						\
 	}
 
 #endif /* _LIBRESWAN_PASSERT_H */

@@ -1103,10 +1103,10 @@ const struct sadb_ext *get_sadb_ext(shunk_t *msgbase,
 
 	size_t len = ext->sadb_ext_len * sizeof(uint64_t);
 	if (len == 0) {
-		PASSERT_FAIL("have zero bytes");
+		llog_passert(logger, HERE, "have zero bytes");
 	}
 	if (msgbase->len < len) {
-		PASSERT_FAIL("have %zu bytes but should be %zu",
+		llog_passert(logger, HERE, "have %zu bytes but should be %zu",
 			     msgbase->len, len);
 	}
 

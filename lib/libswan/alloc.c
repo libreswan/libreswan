@@ -121,7 +121,8 @@ static void *allocate(void *(*alloc)(size_t), size_t size, const char *name)
 	}
 
 	if (p == NULL) {
-		PASSERT_FAIL("unable to allocate %zu bytes for %s", size, name);
+		llog_passert(&global_logger, HERE,
+			     "unable to allocate %zu bytes for %s", size, name);
 	}
 
 	if (leak_detective) {
@@ -147,9 +148,11 @@ void pfree(void *ptr)
 		p = ((union mhdr *)ptr) - 1;
 
 		if (p->i.magic == ~LEAK_MAGIC) {
-			PASSERT_FAIL("pointer %p invalid, possible double free (magic == ~LEAK_MAGIC)", ptr);
+			llog_passert(&global_logger, HERE,
+				     "pointer %p invalid, possible double free (magic == ~LEAK_MAGIC)", ptr);
 		} else if (p->i.magic != LEAK_MAGIC) {
-			PASSERT_FAIL("pointer %p invalid, possible heap corruption or bad pointer (magic != LEAK_MAGIC or ~LEAK_MAGIC})", ptr);
+			llog_passert(&global_logger, HERE,
+				     "pointer %p invalid, possible heap corruption or bad pointer (magic != LEAK_MAGIC or ~LEAK_MAGIC})", ptr);
 		}
 
 		remove_allocation(p);
@@ -259,7 +262,8 @@ void *uninitialized_realloc(void *ptr, size_t new_size, const char *name)
 		remove_allocation(p);
 		p = realloc(p, sizeof(union mhdr) + new_size);
 		if (p == NULL) {
-			PASSERT_FAIL("unable to reallocate %zu bytes for %s", new_size, name);
+			llog_passert(&global_logger, HERE,
+				     "unable to reallocate %zu bytes for %s", new_size, name);
 		}
 		install_allocation(p, new_size, name);
 		return p+1;

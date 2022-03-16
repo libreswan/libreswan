@@ -258,7 +258,7 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 
 		switch (v2del->isad_protoid) {
 		case PROTO_ISAKMP:
-			passert_fail(ike->sa.st_logger, HERE, "unexpected IKE delete");
+			llog_passert(ike->sa.st_logger, HERE, "unexpected IKE delete");
 
 		case PROTO_IPSEC_AH: /* Child SAs */
 		case PROTO_IPSEC_ESP: /* Child SAs */
@@ -377,7 +377,7 @@ bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md)
 
 		switch (v2del->isad_protoid) {
 		case PROTO_ISAKMP:
-			passert_fail(ike->sa.st_logger, HERE, "unexpected IKE delete");
+			llog_passert(ike->sa.st_logger, HERE, "unexpected IKE delete");
 
 		case PROTO_IPSEC_AH: /* Child SAs */
 		case PROTO_IPSEC_ESP: /* Child SAs */

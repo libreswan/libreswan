@@ -772,7 +772,7 @@ int main(int argc, char **argv)
 			 * Long option already handled by getopt_long.
 			 * Not currently used since we always set flag to NULL.
 			 */
-			passert_fail(logger, HERE, "unexpected 0 returned by getopt_long()");
+			llog_passert(logger, HERE, "unexpected 0 returned by getopt_long()");
 
 		case ':':	/* diagnostic already printed by getopt_long */
 		case '?':	/* diagnostic already printed by getopt_long */

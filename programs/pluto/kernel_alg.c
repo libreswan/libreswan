@@ -139,7 +139,8 @@ bool kernel_alg_is_ok(const struct ike_alg *alg)
 	} else if (alg->algo_type == &ike_alg_integ) {
 		return kernel_alg_integ_ok(integ_desc(alg));
 	} else {
-		PASSERT_FAIL("algorithm %s of type %s is not valid in the kernel",
+		llog_passert(&global_logger, HERE,
+			     "algorithm %s of type %s is not valid in the kernel",
 			     alg->fqn, ike_alg_type_name(alg->algo_type));
 	}
 }

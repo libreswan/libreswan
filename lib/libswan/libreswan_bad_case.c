@@ -22,6 +22,7 @@
 
 void libreswan_bad_case(const char *expression, long value, where_t where)
 {
-	lsw_passert_fail(where, "switch (%s) case %ld (0x%lx) unexpected",
-			 expression, value, value);
+	llog_passert(&global_logger, where,
+		     "switch (%s) case %ld (0x%lx) unexpected",
+		     expression, value, value);
 }
