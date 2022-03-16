@@ -33,11 +33,7 @@ west #
  echo done
 done
 west #
- grep INVALID_MAJOR_VERSION /tmp/pluto.log
-|    Notify Message Type: v2N_INVALID_MAJOR_VERSION (0x5)
+ grep '^[^|].*INVALID_MAJOR_VERSION' /tmp/pluto.log
 "westnet-eastnet-ikev2-major" #1: dropping unexpected IKE_SA_INIT message containing INVALID_MAJOR_VERSION notification; message payloads: N; missing payloads: SA,KE,Ni
-west #
- grep "INVALID_MAJOR_VERSION" /tmp/pluto.log >/dev/null && echo payload found
-payload found
 west #
  
