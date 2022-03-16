@@ -84,7 +84,7 @@ west #
 |    exchange type: ISAKMP_v2_IKE_SA_INIT (..)
 |    Message ID: 0 (..)
 | Message ID: updating counters for #1
-| Message ID: IKE #1 skipping update_recv as MD is fake
+| Message ID: IKE #1 skipping update_recv as no message (..)
 | Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
 | Message ID: IKE #1 updating initiator sent message request 0 (..)
 | Message ID: IKE #1 no pending message initiators to schedule (..)
@@ -95,7 +95,7 @@ west #
 |    exchange type: ISAKMP_v2_IKE_AUTH (..)
 |    Message ID: 1 (..)
 | Message ID: updating counters for #1
-| Message ID: IKE #1 XXX: no EVENT_RETRANSMIT to clear, suspect IKE->CHILD switch (..)
+| Message ID: IKE #1 no EVENT_RETRANSMIT to clear; suspect submit_task() (..)
 | Message ID: IKE #1 updating initiator received message response 0 (..)
 | Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
 | Message ID: IKE #1 updating initiator sent message request 1 (..)
@@ -116,7 +116,7 @@ west #
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 2 (..)
 | Message ID: updating counters for #1
-| Message ID: IKE #1 skipping update_recv as MD is fake
+| Message ID: IKE #1 skipping update_recv as no message (..)
 | Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
 | Message ID: IKE #1 updating initiator sent message request 2 (..)
 | Message ID: IKE #1 next initiator #4 blocked by outstanding response (..)
@@ -133,7 +133,7 @@ west #
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 3 (..)
 | Message ID: updating counters for #1
-| Message ID: IKE #1 skipping update_recv as MD is fake
+| Message ID: IKE #1 skipping update_recv as no message (..)
 | Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
 | Message ID: IKE #1 updating initiator sent message request 3 (..)
 | Message ID: IKE #1 next initiator #5 blocked by outstanding response (..)
@@ -150,7 +150,7 @@ west #
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 4 (..)
 | Message ID: updating counters for #1
-| Message ID: IKE #1 skipping update_recv as MD is fake
+| Message ID: IKE #1 skipping update_recv as no message (..)
 | Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
 | Message ID: IKE #1 updating initiator sent message request 4 (..)
 | Message ID: IKE #1 no pending message initiators to schedule (..)
@@ -168,7 +168,7 @@ west #
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 5 (..)
 | Message ID: updating counters for #1
-| Message ID: IKE #1 skipping update_recv as MD is fake
+| Message ID: IKE #1 skipping update_recv as no message (..)
 | Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
 | Message ID: IKE #1 updating initiator sent message request 5 (..)
 | Message ID: IKE #1 no pending message initiators to schedule (..)
@@ -188,7 +188,7 @@ west #
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 6 (..)
 | Message ID: updating counters for #1
-| Message ID: IKE #1 skipping update_recv as MD is fake
+| Message ID: IKE #1 skipping update_recv as no message (..)
 | Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
 | Message ID: IKE #1 updating initiator sent message request 6 (..)
 | Message ID: IKE #1 next initiator #8 blocked by outstanding response (..)
@@ -207,7 +207,7 @@ west #
 |    Message ID: 7 (..)
 | ****emit IKEv2 Delete Payload:
 | Message ID: updating counters for #1
-| Message ID: IKE #1 skipping update_recv as MD is fake
+| Message ID: IKE #1 skipping update_recv as no message (..)
 | Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
 | Message ID: IKE #1 updating initiator sent message request 7 (..)
 | Message ID: IKE #1 next initiator #8 blocked by outstanding response (..)
@@ -224,7 +224,7 @@ west #
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 8 (..)
 | Message ID: updating counters for #1
-| Message ID: IKE #1 skipping update_recv as MD is fake
+| Message ID: IKE #1 skipping update_recv as no message (..)
 | Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
 | Message ID: IKE #1 updating initiator sent message request 8 (..)
 | Message ID: IKE #1 next initiator #9 blocked by outstanding response (..)
@@ -243,7 +243,7 @@ west #
 |    Message ID: 9 (..)
 | ****emit IKEv2 Delete Payload:
 | Message ID: updating counters for #1
-| Message ID: IKE #1 skipping update_recv as MD is fake
+| Message ID: IKE #1 skipping update_recv as no message (..)
 | Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
 | Message ID: IKE #1 updating initiator sent message request 9 (..)
 | Message ID: IKE #1 next initiator #9 blocked by outstanding response (..)
@@ -260,7 +260,7 @@ west #
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 10 (..)
 | Message ID: updating counters for #1
-| Message ID: IKE #1 skipping update_recv as MD is fake
+| Message ID: IKE #1 skipping update_recv as no message (..)
 | Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
 | Message ID: IKE #1 updating initiator sent message request 10 (..)
 | Message ID: IKE #1 no pending message initiators to schedule (..)
@@ -279,7 +279,7 @@ west #
 |    Message ID: 11 (..)
 | ****emit IKEv2 Delete Payload:
 | Message ID: updating counters for #1
-| Message ID: IKE #1 skipping update_recv as MD is fake
+| Message ID: IKE #1 skipping update_recv as no message (..)
 | Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
 | Message ID: IKE #1 updating initiator sent message request 11 (..)
 | Message ID: IKE #1 no pending message initiators to schedule (..)
@@ -298,7 +298,7 @@ west #
 |    Message ID: 12 (..)
 | ****emit IKEv2 Delete Payload:
 | Message ID: updating counters for #1
-| Message ID: IKE #1 skipping update_recv as MD is fake
+| Message ID: IKE #1 skipping update_recv as no message (..)
 | Message ID: IKE #1 scheduling EVENT_RETRANSMIT (..)
 | Message ID: IKE #1 updating initiator sent message request 12 (..)
 | Message ID: IKE #1 no pending message initiators to schedule (..)
