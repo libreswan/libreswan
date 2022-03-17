@@ -80,7 +80,7 @@ const struct integ_desc ike_alg_integ_hmac_md5_96 = {
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_MD5,
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_MD5,
-			[IKEv2_ALG_ID] = IKEv2_AUTH_HMAC_MD5_96,
+			[IKEv2_ALG_ID] = IKEv2_INTEG_HMAC_MD5_96,
 		},
 	},
 	.integ_keymat_size = MD5_DIGEST_SIZE,

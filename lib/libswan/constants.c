@@ -2093,8 +2093,8 @@ static const char *const ikev2_trans_type_integ_name[] = {
 };
 
 enum_names ikev2_trans_type_integ_names = {
-	IKEv2_AUTH_NONE,
-	IKEv2_AUTH_HMAC_SHA2_512_256,
+	IKEv2_INTEG_NONE,
+	IKEv2_INTEG_HMAC_SHA2_512_256,
 	ARRAY_REF(ikev2_trans_type_integ_name),
 	"AUTH_", /* prefix */
 	NULL

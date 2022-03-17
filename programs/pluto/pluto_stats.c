@@ -51,7 +51,7 @@ unsigned long pstats_ikev2_redirect_completed;
 unsigned long pstats_ikev1_encr[OAKLEY_ENCR_PSTATS_ROOF];
 unsigned long pstats_ikev2_encr[IKEv2_ENCR_PSTATS_ROOF];
 unsigned long pstats_ikev1_integ[OAKLEY_HASH_PSTATS_ROOF];
-unsigned long pstats_ikev2_integ[IKEv2_AUTH_PSTATS_ROOF];
+unsigned long pstats_ikev2_integ[IKEv2_INTEG_PSTATS_ROOF];
 unsigned long pstats_ikev1_groups[OAKLEY_GROUP_PSTATS_ROOF];
 unsigned long pstats_ikev2_groups[OAKLEY_GROUP_PSTATS_ROOF];
 unsigned long pstats_invalidke_recv_s[OAKLEY_GROUP_PSTATS_ROOF];
@@ -62,7 +62,7 @@ unsigned long pstats_invalidke_sent_u[OAKLEY_GROUP_PSTATS_ROOF];
 unsigned long pstats_ikev1_ipsec_encrypt[ESP_PSTATS_ROOF];
 unsigned long pstats_ikev2_ipsec_encrypt[IKEv2_ENCR_PSTATS_ROOF];
 unsigned long pstats_ikev1_ipsec_integ[AUTH_ALGORITHM_PSTATS_ROOF];
-unsigned long pstats_ikev2_ipsec_integ[IKEv2_AUTH_PSTATS_ROOF];
+unsigned long pstats_ikev2_ipsec_integ[IKEv2_INTEG_PSTATS_ROOF];
 
 uint64_t pstats_ipsec_in_bytes;	/* total incoming IPsec traffic */
 uint64_t pstats_ipsec_out_bytes;	/* total outgoing IPsec traffic */
@@ -460,7 +460,7 @@ void show_pluto_stats(struct show *s)
 	ENUM_STATS(&oakley_hash_names, OAKLEY_MD5, "ikev1.integ", pstats_ikev1_integ);
 	ENUM_STATS(&oakley_group_names, OAKLEY_GROUP_MODP768, "ikev1.group", pstats_ikev1_groups);
 	ENUM_STATS(&ikev2_trans_type_encr_names, IKEv2_ENCR_3DES, "ikev2.encr", pstats_ikev2_encr);
-	ENUM_STATS(&ikev2_trans_type_integ_names, IKEv2_AUTH_HMAC_MD5_96, "ikev2.integ", pstats_ikev2_integ);
+	ENUM_STATS(&ikev2_trans_type_integ_names, IKEv2_INTEG_HMAC_MD5_96, "ikev2.integ", pstats_ikev2_integ);
 	ENUM_STATS(&oakley_group_names, OAKLEY_GROUP_MODP768, "ikev2.group", pstats_ikev2_groups);
 
 	/* we log the received invalid groups and the suggested valid groups */

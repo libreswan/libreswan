@@ -558,8 +558,8 @@ static int process_transforms(pb_stream *prop_pbs, struct jambuf *remote_jam_buf
 		if (type == IKEv2_TRANS_TYPE_INTEG) {
 			if (first_integrity_transid < 0) {
 				first_integrity_transid = remote_trans.isat_transid;
-			} else if (first_integrity_transid == IKEv2_AUTH_NONE ||
-				   remote_trans.isat_transid == IKEv2_AUTH_NONE) {
+			} else if (first_integrity_transid == IKEv2_INTEG_NONE ||
+				   remote_trans.isat_transid == IKEv2_INTEG_NONE) {
 				llog(RC_LOG, logger, "remote proposal %u transform %d has more than 'none' integrity %d %d",
 					    remote_propnum, remote_transform_nr,
 					    first_integrity_transid, remote_trans.isat_transid);
@@ -853,7 +853,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 					 * proposal, NONE is implied.
 					 */
 					if ((type == IKEv2_TRANS_TYPE_INTEG &&
-					     sentinel_transform->id == IKEv2_AUTH_NONE) ||
+					     sentinel_transform->id == IKEv2_INTEG_NONE) ||
 					    (type == IKEv2_TRANS_TYPE_DH &&
 					     sentinel_transform->id == OAKLEY_GROUP_NONE)) {
 						optional_transform_types |= LELEM(type);
@@ -1086,7 +1086,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 					unsigned id;
 					switch (type) {
 					case IKEv2_TRANS_TYPE_INTEG:
-						id = IKEv2_AUTH_NONE;
+						id = IKEv2_INTEG_NONE;
 						break;
 					case IKEv2_TRANS_TYPE_DH:
 						id = OAKLEY_GROUP_NONE;
@@ -1400,7 +1400,7 @@ static int walk_transforms(pb_stream *proposal_pbs, int nr_trans,
 				 * (as also recommended by the RFC?).
 				 */
 				impairment = impair.v2_proposal_integ;
-				none = IKEv2_AUTH_NONE; /* always zero */
+				none = IKEv2_INTEG_NONE; /* always zero */
 				break;
 			case IKEv2_TRANS_TYPE_DH:
 				/*

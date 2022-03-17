@@ -106,7 +106,7 @@ const struct integ_desc ike_alg_integ_sha1 = {
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_SHA1,
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_SHA1,
-			[IKEv2_ALG_ID] = IKEv2_AUTH_HMAC_SHA1_96,
+			[IKEv2_ALG_ID] = IKEv2_INTEG_HMAC_SHA1_96,
 		},
 		.fips = true,
 	},

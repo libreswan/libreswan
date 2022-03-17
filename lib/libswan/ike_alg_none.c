@@ -78,7 +78,7 @@ const struct integ_desc ike_alg_integ_none = {
 			 * finally add IKEv1_AH_ID.
 			 */
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_NONE, /* not NULL_KAME? */
-			[IKEv2_ALG_ID] = IKEv2_AUTH_NONE,
+			[IKEv2_ALG_ID] = IKEv2_INTEG_NONE,
 		},
 		/*
 		* Because aes_gcm-null is valid in FIPS mode, "none"

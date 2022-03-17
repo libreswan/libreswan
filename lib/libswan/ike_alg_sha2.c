@@ -119,7 +119,7 @@ const struct integ_desc ike_alg_integ_sha2_256 = {
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_SHA2_256,
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_SHA2_256,
-			[IKEv2_ALG_ID] = IKEv2_AUTH_HMAC_SHA2_256_128,
+			[IKEv2_ALG_ID] = IKEv2_INTEG_HMAC_SHA2_256_128,
 		},
 		.fips = true,
 	},
@@ -250,7 +250,7 @@ const struct integ_desc ike_alg_integ_sha2_384 = {
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_SHA2_384,
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_SHA2_384,
-			[IKEv2_ALG_ID] = IKEv2_AUTH_HMAC_SHA2_384_192,
+			[IKEv2_ALG_ID] = IKEv2_INTEG_HMAC_SHA2_384_192,
 		},
 		.fips = true,
 	},
@@ -357,7 +357,7 @@ const struct integ_desc ike_alg_integ_sha2_512 = {
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_SHA2_512,
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_SHA2_512,
-			[IKEv2_ALG_ID] = IKEv2_AUTH_HMAC_SHA2_512_256,
+			[IKEv2_ALG_ID] = IKEv2_INTEG_HMAC_SHA2_512_256,
 		},
 		.fips = true,
 	},
