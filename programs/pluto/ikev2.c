@@ -2430,8 +2430,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	 */
 
 	dbg("Message ID: updating counters for #%lu", ike->sa.st_serialno);
-	v2_msgid_update_recv(ike, md);
-	v2_msgid_update_sent(ike, md, transition->send_role);
+	v2_msgid_finish(ike, md);
 
 	bool established_before = IS_IKE_SA_ESTABLISHED(&ike->sa);
 
@@ -2772,10 +2771,10 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		 * Initiator processing response, finish current
 		 * exchange ready for delete request.
 		 */
-		dbg("Message ID: forcing a response received update (deleting IKE_AUTH initiator)");
+		dbg_v2_msgid(ike, "forcing a response received update (STF_V2_DELETE_IKE_AUTH_INITIATOR)");
 		pexpect(ike->sa.st_state->kind == STATE_V2_PARENT_I2);
 		pexpect(v2_msg_role(md) == MESSAGE_RESPONSE);
-		v2_msgid_update_recv(ike, md);
+		v2_msgid_finish(ike, md);
 		/*
 		 * All done, now delete the IKE family sending out a
 		 * last gasp delete.
@@ -2794,15 +2793,14 @@ void complete_v2_state_transition(struct ike_sa *ike,
 			"encountered fatal error in state %s", ike->sa.st_state->name);
 		switch (v2_msg_role(md)) {
 		case MESSAGE_RESPONSE:
-			dbg_v2_msgid(ike, "forcing a response received update");
-			v2_msgid_update_recv(ike, md);
+			dbg_v2_msgid(ike, "forcing a response received update (STF_FATAL)");
+			v2_msgid_finish(ike, md);
 			break;
 		case MESSAGE_REQUEST:
 			pexpect(transition->send_role == MESSAGE_RESPONSE);
 			if (ike->sa.st_v2_outgoing[MESSAGE_RESPONSE] != NULL) {
 				dbg_v2_msgid(ike, "responding with recorded fatal message");
-				v2_msgid_update_recv(ike, md);
-				v2_msgid_update_sent(ike, md, transition->send_role);
+				v2_msgid_finish(ike, md);
 				send_recorded_v2_message(ike, "STF_FATAL",
 							 MESSAGE_RESPONSE);
 			} else {

@@ -251,7 +251,7 @@ void v2_msgid_cancel(struct ike_sa *ike, const struct msg_digest *md)
 	}
 }
 
-void v2_msgid_update_recv(struct ike_sa *ike, struct msg_digest *md)
+static void v2_msgid_update_recv(struct ike_sa *ike, const struct msg_digest *md)
 {
 	/* save old value, and add shortcut to new */
 	const struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
@@ -358,7 +358,7 @@ void v2_msgid_update_recv(struct ike_sa *ike, struct msg_digest *md)
 	dbg_msgids_update(update_received_story, receiving, msgid, ike, &old);
 }
 
-void v2_msgid_update_sent(struct ike_sa *ike, struct msg_digest *md, enum message_role sending)
+void v2_msgid_update_sent(struct ike_sa *ike, const struct msg_digest *md, enum message_role sending)
 {
 	struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
 	struct v2_msgid_windows *new = &ike->sa.st_v2_msgid_windows;
@@ -432,6 +432,12 @@ void v2_msgid_update_sent(struct ike_sa *ike, struct msg_digest *md, enum messag
 	new->last_sent = update->last_sent = mononow(); /* close enough */
 
 	dbg_msgids_update(update_sent_story, sending, msgid, ike, &old);
+}
+
+void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md)
+{
+	v2_msgid_update_recv(ike, md);
+	v2_msgid_update_sent(ike, md, ike->sa.st_v2_transition->send_role);
 }
 
 struct v2_msgid_pending {
