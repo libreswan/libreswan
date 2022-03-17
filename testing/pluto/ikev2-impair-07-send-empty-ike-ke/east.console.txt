@@ -15,6 +15,7 @@ initdone
 east #
  grep -e "^[^|].* #[0-9]*:" /tmp/pluto.log | grep -v proposal
 "westnet-eastnet-ipv4-psk-ikev2" #1: KE has 0 byte DH public value; 256 required
+"westnet-eastnet-ipv4-psk-ikev2" #1: responding to IKE_SA_INIT message (ID 0) from 192.1.2.45:500 with unencrypted notification INVALID_SYNTAX
 "westnet-eastnet-ipv4-psk-ikev2" #1: encountered fatal error in state STATE_V2_PARENT_R0
 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting state (STATE_V2_PARENT_R0) and NOT sending notification
 "westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: sending an empty KE value
