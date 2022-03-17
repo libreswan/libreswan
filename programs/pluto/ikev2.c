@@ -2742,8 +2742,13 @@ void complete_v2_state_transition(struct ike_sa *ike,
 	 *
 	 * The problem is that the IKE SA, during IKE_AUTH, gets its
 	 * state changed midway through the transition: after
-	 * authentication but before Child SA processing.  Perhaps
-	 * that is no longer needed?
+	 * authentication but before Child SA processing.
+	 *
+	 * Perhaps that is no longer needed?
+	 *
+	 * Part of the hack is to get the IKE SA established message
+	 * out _before_ the Child SA processing occures.  Is that the
+	 * only reason?
 	 */
 	pexpect(transition->state == ike->sa.st_state->kind);
 #endif
@@ -2836,34 +2841,37 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		 * transition is selected (TRANSITION==NULL) this code
 		 * is executed - caller needs to kill the state.
 		 */
-		llog_sa(RC_FATAL, ike, "encountered fatal error in state %s",
-			ike->sa.st_state->name);
+		llog_sa(RC_FATAL, ike,
+			"encountered fatal error in state %s", ike->sa.st_state->name);
 		switch (v2_msg_role(md)) {
 		case MESSAGE_RESPONSE:
-			dbg("Message ID: forcing a response received update");
+			dbg_v2_msgid(ike, "forcing a response received update");
 			v2_msgid_update_recv(ike, md);
 			break;
 		case MESSAGE_REQUEST:
-			dbg("Message ID: responding with recorded fatal error");
 			pexpect(transition->send_role == MESSAGE_RESPONSE);
 			if (ike->sa.st_v2_outgoing[MESSAGE_RESPONSE] != NULL) {
+				dbg_v2_msgid(ike, "responding with recorded fatal message");
 				v2_msgid_update_recv(ike, md);
 				v2_msgid_update_sent(ike, md, transition->send_role);
 				send_recorded_v2_message(ike, "STF_FATAL",
 							 MESSAGE_RESPONSE);
 			} else {
-				dbg("Message ID: exchange zombie as no response?");
+				fail_v2_msgid(ike, "exchange zombie as no response?");
 			}
 			break;
 		case NO_MESSAGE:
+			/*
+			 * For instance, something really messed up
+			 * while initiating an exchange.
+			 */
+			dbg_v2_msgid(ike, "no message yet fatal error?");
 			break;
 		}
 
 		/* if this was a child fail, don't destroy the IKE SA */
-		if (IS_IKE_SA(&ike->sa)) {
-			delete_ike_family(&ike, DONT_SEND_DELETE);
-			pexpect(ike == NULL);
-		}
+		delete_ike_family(&ike, DONT_SEND_DELETE);
+		pexpect(ike == NULL);
 		break;
 
 	case STF_FAIL_v1N:
