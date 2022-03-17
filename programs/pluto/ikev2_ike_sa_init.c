@@ -896,7 +896,9 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	/* note: v1 notification! */
 	if (!unpack_KE(&ike->sa.st_gi, "Gi", ike->sa.st_oakley.ta_dh,
 		       md->chain[ISAKMP_NEXT_v2KE], ike->sa.st_logger)) {
-		send_v2N_response_from_md(md, v2N_INVALID_SYNTAX, NULL);
+		record_v2N_response(ike->sa.st_logger, ike, md,
+				    v2N_INVALID_SYNTAX,
+				    NULL, UNENCRYPTED_PAYLOAD);
 		/*
 		 * STF_FATAL will send the recorded message and then
 		 * kill the IKE SA.  Should it instead zombify the IKE
