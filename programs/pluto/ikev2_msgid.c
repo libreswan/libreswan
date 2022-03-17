@@ -197,24 +197,31 @@ void v2_msgid_init_ike(struct ike_sa *ike)
 	dbg_msgids_update("initializing", NO_MESSAGE, -1, ike, &old_windows);
 }
 
-void v2_msgid_start_responder(struct ike_sa *ike, const struct msg_digest *md)
+void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
 {
 	enum message_role role = v2_msg_role(md);
-	if (!pexpect(role == MESSAGE_REQUEST)) {
-		return;
+	switch (v2_msg_role(md)) {
+	case NO_MESSAGE:
+		dbg_v2_msgid(ike, "initiator starting new exchange");
+		break;
+	case MESSAGE_REQUEST:
+	{
+		/* extend msgid */
+		intmax_t msgid = md->hdr.isa_msgid;
+		if (ike->sa.st_v2_msgid_windows.responder.wip != -1) {
+			fail_v2_msgid(ike,
+				      "responder.wip shold be -1, was %jd",
+				      ike->sa.st_v2_msgid_windows.responder.wip);
+		}
+		ike->sa.st_v2_msgid_windows.responder.wip = msgid;
+		dbg_msgids_update("responder starting", role, msgid,
+				  ike, &ike->sa.st_v2_msgid_windows);
+		break;
 	}
-	/* extend msgid */
-	intmax_t msgid = md->hdr.isa_msgid;
-
-	if (DBGP(DBG_BASE) &&
-	    ike->sa.st_v2_msgid_windows.responder.wip != -1) {
-		fail_v2_msgid(ike,
-			      "ike->sa.st_v2_msgid_windows.responder.wip == -1 (was %jd)",
-			      ike->sa.st_v2_msgid_windows.responder.wip);
+	case MESSAGE_RESPONSE:
+		dbg_v2_msgid(ike, "initiator processing response to existing exchange");
+		break;
 	}
-	ike->sa.st_v2_msgid_windows.responder.wip = msgid;
-	dbg_msgids_update("responder starting", role, msgid,
-			  ike, &ike->sa.st_v2_msgid_windows);
 }
 
 void v2_msgid_cancel_responder(struct ike_sa *ike, const struct msg_digest *md)

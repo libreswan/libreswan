@@ -76,9 +76,6 @@ struct v2_msgid_windows {
 void v2_msgid_init_ike(struct ike_sa *ike);
 void v2_msgid_free(struct state *st);
 
-void v2_msgid_start_responder(struct ike_sa *ike, const struct msg_digest *md);
-void v2_msgid_cancel_responder(struct ike_sa *ike, const struct msg_digest *md);
-
 bool v2_msgid_request_outstanding(struct ike_sa *ike);
 bool v2_msgid_request_pending(struct ike_sa *ike);
 
@@ -95,6 +92,10 @@ bool v2_msgid_request_pending(struct ike_sa *ike);
  * initiators.  It could probably be simpler, but probably only after
  * record 'n' send has been eliminated.
  */
+
+void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md);
+void v2_msgid_cancel_responder(struct ike_sa *ike, const struct msg_digest *md);
+
 void v2_msgid_update_recv(struct ike_sa *ike, struct msg_digest *md);
 void v2_msgid_update_sent(struct ike_sa *ike, struct msg_digest *md, enum message_role sending);
 

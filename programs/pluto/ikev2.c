@@ -1965,32 +1965,29 @@ static void complete_protected_but_fatal_exchange(struct ike_sa *ike, struct msg
 		}
 		break;
 	}
-	/*pexpect(st->st_v2_transition == NULL);*/
-	set_v2_transition(&ike->sa, transition, HERE);
 
 	/*
-	 * Now send a secured response, and fail the transition.
+	 * Fudge things so that the IKE SA appears to be processing MD
+	 * using TRANSITION.
+	 */
+	/*pexpect(st->st_v2_transition == NULL);*/
+	set_v2_transition(&ike->sa, transition, HERE);
+	v2_msgid_start(ike, md);
+
+	/*
+	 * Respond to the request (can't respond to a response).
 	 */
 	switch (v2_msg_role(md)) {
 	case MESSAGE_REQUEST:
-		/*
-		 * Send back a secured error response.  Need to first
-		 * put the IKE SA into responder mode.
-		 */
-		v2_msgid_start_responder(ike, md);
 		record_v2N_response(ike->sa.st_logger, ike, md,
 				    n, data, ENCRYPTED_PAYLOAD);
 		break;
 	case MESSAGE_RESPONSE:
-		/*
-		 * Can't respond so kill the IKE SA - the
-		 * secured message contained crap so there's
-		 * little that can be done.
-		 */
 		break;
 	default:
 		bad_case(v2_msg_role(md));
 	}
+
 	complete_v2_state_transition(ike, md, STF_FATAL);
 }
 
@@ -2271,15 +2268,12 @@ void process_protected_v2_message(struct ike_sa *ike, struct msg_digest *md)
 void v2_dispatch(struct ike_sa *ike, struct msg_digest *md,
 		 const struct v2_state_transition *svm)
 {
-	set_v2_transition(&ike->sa, svm, HERE);
-
 	/*
-	 * For the responder, update the work-in-progress Message ID
-	 * window (since work has commenced).
+	 * Start the state transition, including any updates to
+	 * work-in-progress Message IDs.
 	 */
-	if (v2_msg_role(md) == MESSAGE_REQUEST) {
-		v2_msgid_start_responder(ike, md);
-	}
+	set_v2_transition(&ike->sa, svm, HERE);
+	v2_msgid_start(ike, md);
 
 	if (DBGP(DBG_BASE)) {
 		if (pbs_left(&md->message_pbs) != 0)
