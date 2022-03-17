@@ -2746,9 +2746,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		 * Logged earlier (where the decision to ignore
 		 * occured).
 		 */
-		if (v2_msg_role(md) == MESSAGE_REQUEST) {
-			v2_msgid_cancel_responder(ike, md);
-		}
+		v2_msgid_cancel(ike, md);
 		return;
 
 	case STF_OK:

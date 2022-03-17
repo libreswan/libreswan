@@ -94,7 +94,7 @@ bool v2_msgid_request_pending(struct ike_sa *ike);
  */
 
 void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md);
-void v2_msgid_cancel_responder(struct ike_sa *ike, const struct msg_digest *md);
+void v2_msgid_cancel(struct ike_sa *ike, const struct msg_digest *md);
 
 void v2_msgid_update_recv(struct ike_sa *ike, struct msg_digest *md);
 void v2_msgid_update_sent(struct ike_sa *ike, struct msg_digest *md, enum message_role sending);

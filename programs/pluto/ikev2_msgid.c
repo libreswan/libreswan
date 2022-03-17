@@ -200,7 +200,7 @@ void v2_msgid_init_ike(struct ike_sa *ike)
 void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
 {
 	enum message_role role = v2_msg_role(md);
-	switch (v2_msg_role(md)) {
+	switch (role) {
 	case NO_MESSAGE:
 		dbg_v2_msgid(ike, "initiator starting new exchange");
 		break;
@@ -224,28 +224,31 @@ void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md)
 	}
 }
 
-void v2_msgid_cancel_responder(struct ike_sa *ike, const struct msg_digest *md)
+void v2_msgid_cancel(struct ike_sa *ike, const struct msg_digest *md)
 {
 	enum message_role msg_role = v2_msg_role(md);
-	if (!pexpect(msg_role == MESSAGE_REQUEST)) {
-		return;
+	switch (msg_role) {
+	case NO_MESSAGE:
+		dbg_v2_msgid(ike, "initiator canceling new exchange");
+		break;
+	case MESSAGE_REQUEST:
+	{
+		/* extend msgid */
+		intmax_t msgid = md->hdr.isa_msgid;
+		if (ike->sa.st_v2_msgid_windows.responder.wip != msgid) {
+			fail_v2_msgid(ike,
+				      "responder.wip should be %jd, was %jd",
+				      msgid, ike->sa.st_v2_msgid_windows.responder.wip);
+		}
+		ike->sa.st_v2_msgid_windows.responder.wip = -1;
+		dbg_msgids_update("responder cancelling", msg_role, msgid,
+				  ike, &ike->sa.st_v2_msgid_windows);
+		break;
 	}
-	/* extend msgid */
-	intmax_t msgid = md->hdr.isa_msgid;
-
-	/*
-	 * If an encrypted message is corrupt things bail before
-	 * start_responder() but then STF_IGNORE tries to clear it.
-	 */
-	if (DBGP(DBG_BASE) &&
-	    ike->sa.st_v2_msgid_windows.responder.wip != msgid) {
-		fail_v2_msgid(ike,
-			      "ike->sa.st_v2_msgid_windows.responder.wip == %jd(msgid) (was %jd)",
-			      msgid, ike->sa.st_v2_msgid_windows.responder.wip);
+	case MESSAGE_RESPONSE:
+		dbg_v2_msgid(ike, "initiator canceling processing of response to existing exchange");
+		break;
 	}
-	ike->sa.st_v2_msgid_windows.responder.wip = -1;
-	dbg_msgids_update("cancelling responder", msg_role, msgid,
-			  ike, &ike->sa.st_v2_msgid_windows);
 }
 
 void v2_msgid_update_recv(struct ike_sa *ike, struct msg_digest *md)
