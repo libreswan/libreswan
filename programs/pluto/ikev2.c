@@ -2450,13 +2450,6 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	bool established_after = IS_IKE_SA_ESTABLISHED(&ike->sa);
 
 	bool just_established = (!established_before && established_after);
-	if (just_established) {
-		/*
-		 * Count successful transition into an established
-		 * state.
-		 */
-		pstat_sa_established(&ike->sa);
-	}
 
 	/*
 	 * 2.23.  NAT Traversal

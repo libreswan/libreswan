@@ -136,7 +136,7 @@ static void queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
 	v2_msgid_queue_initiator(ike, larval, transition);
 }
 
-static void ikev2_child_emancipate(struct ike_sa *old_ike, struct child_sa *new_ike)
+static void emancipate_larval_ike_sa(struct ike_sa *old_ike, struct child_sa *new_ike)
 {
 	/* initialize the the new IKE SA. reset and message ID */
 	new_ike->sa.st_clonedfrom = SOS_NOBODY;
@@ -151,13 +151,28 @@ static void ikev2_child_emancipate(struct ike_sa *old_ike, struct child_sa *new_
 
 	dbg("moving over any pending requests");
 	v2_msgid_migrate_queue(old_ike, new_ike);
+	v2_msgid_schedule_next_initiator(pexpect_ike_sa(&new_ike->sa));
 
 	/* complete the state transition */
-	pexpect(new_ike->sa.st_v2_transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
-	change_v2_state(&new_ike->sa);
+	const struct v2_state_transition *transition = new_ike->sa.st_v2_transition;
+	pexpect(transition->state == new_ike->sa.st_state->kind);
+	pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
+	change_v2_state(&new_ike->sa); /* should trash .st_v2_transition */
 
 	/* child is now a parent */
 	v2_ike_sa_established(pexpect_ike_sa(&new_ike->sa));
+
+	/* Schedule for whatever timeout is specified */
+	pexpect(transition->timeout_event == EVENT_SA_REPLACE);
+	delete_event(&new_ike->sa); /* relying on replace */
+	schedule_v2_replace_event(&new_ike->sa);
+
+	/*
+	 * Announce this to the world.
+	 */
+	/* XXX: call transition->llog()? */
+	llog_v2_ike_sa_established(old_ike, new_ike);
+	release_whack(new_ike->sa.st_logger, HERE);
 }
 
 static struct child_sa *find_v2N_REKEY_SA_child(struct ike_sa *ike,
@@ -1481,19 +1496,25 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_1(struct
 static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2(struct state *ike_sa,
 									  struct msg_digest *request_md)
 {
-	/* 'child' responding to request */
+	/* IKE SA responder with child */
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
-	/* didn't loose parent? */
 	if (ike == NULL) {
-		/* ike_sa is not an ike_sa.  Fail. */
-		/* XXX: release child? */
+		/* XXX: drop everything on the floor */
 		return STF_INTERNAL_ERROR;
 	}
 
+	/* Just checking this is the rekey IKE SA responder */
 	struct child_sa *larval_ike = ike->sa.st_v2_msgid_windows.responder.wip_sa; /* not yet emancipated */
+	if (!pexpect(larval_ike != NULL)) {
+		/* XXX: drop everything on the floor */
+		return STF_INTERNAL_ERROR;
+	}
+
 	passert(v2_msg_role(request_md) == MESSAGE_REQUEST); /* i.e., MD!=NULL */
 	passert(larval_ike->sa.st_sa_role == SA_RESPONDER);
 	pexpect(larval_ike->sa.st_state->kind == STATE_V2_REKEY_IKE_R0);
+	pexpect(larval_ike->sa.st_v2_transition->state == STATE_V2_REKEY_IKE_R0);
+	pexpect(larval_ike->sa.st_v2_transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
 	dbg("%s() for #%lu %s",
 	     __func__, larval_ike->sa.st_serialno, larval_ike->sa.st_state->name);
 
@@ -1518,26 +1539,7 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2(struct
 		return STF_INTERNAL_ERROR;
 	}
 
-	ikev2_child_emancipate(ike, larval_ike);
-	/* Emancipated ST answers to no one - it's an IKE SA */
-	v2_msgid_schedule_next_initiator(pexpect_ike_sa(&larval_ike->sa));
-
-	/*
-	 * Announce this to the world (before releasing whack).
-	 */
-	llog_v2_ike_sa_established(ike, larval_ike);
-
-	/*
-	 * Count successful transition into an established
-	 * state.
-	 */
-	pstat_sa_established(&larval_ike->sa);
-	release_whack(larval_ike->sa.st_logger, HERE);
-
-	/* Schedule for whatever timeout is specified */
-	delete_event(&larval_ike->sa); /* relying on replace */
-	schedule_v2_replace_event(&larval_ike->sa);
-
+	emancipate_larval_ike_sa(ike, larval_ike);
 	return STF_OK; /* IKE */
 }
 
@@ -1649,7 +1651,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response(struct ike_sa *ike,
 static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1(struct state *ike_sa,
 									   struct msg_digest *response_md)
 {
-	/* initiator getting back an answer */
+	/* IKE SA initiator with child getting back an answer */
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
 	if (ike == NULL) {
 		/* XXX: drop everything on the floor */
@@ -1662,10 +1664,14 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1(struc
 		return STF_INTERNAL_ERROR;
 	}
 
+	/* Just checking this is the rekey IKE SA initiator */
 	pexpect(larval_ike->sa.st_sa_role == SA_INITIATOR);
 	pexpect(larval_ike->sa.st_establishing_sa == IKE_SA);
 	pexpect(larval_ike->sa.st_state->kind == STATE_V2_REKEY_IKE_I1);
+	pexpect(larval_ike->sa.st_v2_transition->state == STATE_V2_REKEY_IKE_I1);
+	pexpect(larval_ike->sa.st_v2_transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
 	pexpect(v2_msg_role(response_md) == MESSAGE_RESPONSE); /* i.e., MD!=NULL */
+
 	dbg("%s() for #%lu %s",
 	     __func__, larval_ike->sa.st_serialno, larval_ike->sa.st_state->name);
 
@@ -1690,35 +1696,11 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1(struc
 	pexpect(larval_ike->sa.st_v2_rekey_pred == ike->sa.st_serialno); /*wow!*/
 	ikev2_rekey_expire_predecessor(larval_ike, larval_ike->sa.st_v2_rekey_pred);
 
-	const struct v2_state_transition *transition = larval_ike->sa.st_v2_transition;
-	pexpect(transition->state == STATE_V2_REKEY_IKE_I1);
-	pexpect(transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
-
-	pexpect(transition->timeout_event == EVENT_SA_REPLACE);
-	delete_event(&larval_ike->sa); /* relying on replace */
-	schedule_v2_replace_event(&larval_ike->sa);
-
 	/*
 	 * Emancipate: release the Child from the control of its
 	 * Parent) making it an IKE SA.  Includes changing state.
 	 */
-	ikev2_child_emancipate(ike, larval_ike);
-	/* Emancipated ST answers to no one - it's an IKE SA */
-	v2_msgid_schedule_next_initiator(pexpect_ike_sa(&larval_ike->sa));
-
-	/*
-	 * Count successful transition into an established
-	 * state.
-	 */
-	pstat_sa_established(&larval_ike->sa);
-
-	/*
-	 * Announce this to the world.
-	 */
-	/* XXX: call transition->llog()? */
-	llog_v2_ike_sa_established(ike, larval_ike);
-
-	release_whack(larval_ike->sa.st_logger, HERE);
+	emancipate_larval_ike_sa(ike, larval_ike);
 
 	return STF_OK; /* IKE */
 }
