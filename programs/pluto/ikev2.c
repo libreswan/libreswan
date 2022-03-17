@@ -87,7 +87,7 @@
 #include "ikev2_child.h"		/* for jam_v2_child_sa_details() */
 #include "ikev2_eap.h"
 
-static callback_cb reinitiate_ike_sa_init;	/* type assertion */
+static callback_cb reinitiate_v2_ike_sa_init;	/* type assertion */
 
 static void process_packet_with_secured_ike_sa(struct msg_digest *mdp, struct ike_sa *ike);
 
@@ -2780,15 +2780,8 @@ void complete_v2_state_transition(struct ike_sa *ike,
 
 	case STF_IGNORE:
 		/*
-		 * logged above
-		 *
-		 * XXX: really?  Suspect this means to say logged
-		 * where STF_IGNORE is returned.
-		 *
-		 * XXX: even when a packet is invalid and no
-		 * transition is selected (TRANSITION==NULL) this code
-		 * is executed - caller needs to cancel the responder
-		 * processing the message.
+		 * Logged earlier (where the decision to ignore
+		 * occured).
 		 */
 		if (v2_msg_role(md) == MESSAGE_REQUEST) {
 			v2_msgid_cancel_responder(ike, md);
@@ -2828,7 +2821,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		 *
 		 * XXX: this call will fire and forget.  It should
 		 * call v2_msgid_queue_initiator() with high priority
-		 * so this is performed as a separate transition?
+		 * so this is performed as a separate transition.
 		 */
 		delete_ike_family(&ike, DO_SEND_DELETE);
 		/* get out of here -- everything is invalid */
@@ -2836,11 +2829,6 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		return;
 
 	case STF_FATAL:
-		/*
-		 * XXX: even when a packet is invalid and no
-		 * transition is selected (TRANSITION==NULL) this code
-		 * is executed - caller needs to kill the state.
-		 */
 		llog_sa(RC_FATAL, ike,
 			"encountered fatal error in state %s", ike->sa.st_state->name);
 		switch (v2_msg_role(md)) {
@@ -2889,7 +2877,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 	}
 }
 
-static void reinitiate_ike_sa_init(const char *story, struct state *st, void *arg)
+static void reinitiate_v2_ike_sa_init(const char *story, struct state *st, void *arg)
 {
 	stf_status (*resume)(struct ike_sa *ike) = arg;
 
@@ -2897,11 +2885,23 @@ static void reinitiate_ike_sa_init(const char *story, struct state *st, void *ar
 		dbg(" lost state for %s", story);
 		return;
 	}
+
 	struct ike_sa *ike = pexpect_ike_sa(st);
 	if (ike == NULL) {
 		/* already logged */
 		return;
 	}
+
+	/*
+	 * Need to wind back the Message ID counters so that the send
+	 * code things it is creating Message 0.
+	 */
+	v2_msgid_init_ike(ike);
+
+	/*
+	 * Pretend to be running the initiate state transition.
+	 */
+	set_v2_transition(&ike->sa, finite_states[STATE_V2_PARENT_I0]->v2.transitions, HERE); /* first */
 
 	/*
 	 * Need to re-open TCP.
@@ -2923,16 +2923,6 @@ static void reinitiate_ike_sa_init(const char *story, struct state *st, void *ar
 		ike->sa.st_interface = iface_endpoint_addref(p);
 	}
 
-	/*
-	 * Need to wind back the Message ID counters so that the send
-	 * code things it is creating Message 0.
-	 */
-	v2_msgid_init_ike(ike);
-
-	/*
-	 * Pretend to be running the initiate state.
-	 */
-	set_v2_transition(&ike->sa, finite_states[STATE_V2_PARENT_I0]->v2.transitions, HERE); /* first */
 	so_serial_t old_st = st->st_serialno;
 	statetime_t start = statetime_start(st);
 	stf_status e = resume(ike);
@@ -2946,14 +2936,13 @@ static void reinitiate_ike_sa_init(const char *story, struct state *st, void *ar
 		complete_v2_state_transition(ike, NULL, e);
 	}
 	statetime_stop(&start, "processing: %s in %s()", story, __func__);
-	/* our caller with md_delref(mdp) */
 }
 
 void schedule_reinitiate_v2_ike_sa_init(struct ike_sa *ike,
 					stf_status (*resume)(struct ike_sa *ike))
 {
 	schedule_callback("reinitiating IKE_SA_INIT", ike->sa.st_serialno,
-			  reinitiate_ike_sa_init, resume);
+			  reinitiate_v2_ike_sa_init, resume);
 }
 
 bool v2_notification_fatal(v2_notification_t n)
