@@ -245,6 +245,9 @@ bool emit_v2_auth(struct ike_sa *ike,
 
 	switch (a.isaa_auth_method) {
 	case IKEv2_AUTH_RSA:
+	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
+	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
+	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
 		if (!out_hunk(*auth_sig, &auth_pbs, "signature")) {
 			return false;
 		}
@@ -345,6 +348,14 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 	 * recv_auth appearing in all case branches be merged?
 	 */
 
+	if (impair.force_v2_auth_method != 0 &&
+	    recv_auth != impair.force_v2_auth_method) {
+		enum_buf ab, bb;
+		return diag("IMPAIR: authentication failed: peer sent a %s authentication payload but we want %s",
+			    str_enum_short(&ikev2_auth_method_names, recv_auth, &ab),
+			    str_enum_short(&ikev2_auth_method_names, impair.force_v2_auth_method, &bb));
+	}
+
 	switch (recv_auth) {
 	case IKEv2_AUTH_RSA:
 		if (that_authby != AUTHBY_RSASIG) {
@@ -357,6 +368,41 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 						       signature_pbs,
 						       &ike_alg_hash_sha1,
 						       &pubkey_signer_pkcs1_1_5_rsa);
+
+	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
+		if (that_authby != AUTHBY_ECDSA) {
+			enum_buf eb;
+			return diag("authentication failed: peer attempted %s authentication but we want %s",
+				    str_enum(&ikev2_auth_method_names, recv_auth, &eb),
+				    enum_name(&keyword_authby_names, that_authby));
+		}
+		return v2_authsig_and_log_using_pubkey(ike, idhash_in,
+						       signature_pbs,
+						       &ike_alg_hash_sha2_256,
+						       &pubkey_signer_ecdsa/*_p256*/);
+
+	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
+		if (that_authby != AUTHBY_ECDSA) {
+			enum_buf eb;
+			return diag("authentication failed: peer attempted %s authentication but we want %s",
+				    str_enum(&ikev2_auth_method_names, recv_auth, &eb),
+				    enum_name(&keyword_authby_names, that_authby));
+		}
+		return v2_authsig_and_log_using_pubkey(ike, idhash_in,
+						       signature_pbs,
+						       &ike_alg_hash_sha2_384,
+						       &pubkey_signer_ecdsa/*_p384*/);
+	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
+		if (that_authby != AUTHBY_ECDSA) {
+			enum_buf eb;
+			return diag("authentication failed: peer attempted %s authentication but we want %s",
+				    str_enum(&ikev2_auth_method_names, recv_auth, &eb),
+				    enum_name(&keyword_authby_names, that_authby));
+		}
+		return v2_authsig_and_log_using_pubkey(ike, idhash_in,
+						       signature_pbs,
+						       &ike_alg_hash_sha2_512,
+						       &pubkey_signer_ecdsa/*_p521*/);
 
 	case IKEv2_AUTH_PSK:
 	{

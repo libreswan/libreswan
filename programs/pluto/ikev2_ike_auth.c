@@ -184,6 +184,25 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 							    &pubkey_signer_pkcs1_1_5_rsa,
 							    initiate_v2_IKE_AUTH_request_signature_continue);
 
+	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
+		return submit_v2_IKE_AUTH_request_signature(ike,
+							    &ike->sa.st_v2_id_payload,
+							    &ike_alg_hash_sha2_256,
+							    &pubkey_signer_ecdsa/*_p256*/,
+							    initiate_v2_IKE_AUTH_request_signature_continue);
+	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
+		return submit_v2_IKE_AUTH_request_signature(ike,
+							    &ike->sa.st_v2_id_payload,
+							    &ike_alg_hash_sha2_384,
+							    &pubkey_signer_ecdsa/*_p384*/,
+							    initiate_v2_IKE_AUTH_request_signature_continue);
+	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
+		return submit_v2_IKE_AUTH_request_signature(ike,
+							    &ike->sa.st_v2_id_payload,
+							    &ike_alg_hash_sha2_512,
+							    &pubkey_signer_ecdsa/*_p521*/,
+							    initiate_v2_IKE_AUTH_request_signature_continue);
+
 	case IKEv2_AUTH_DIGSIG:
 		/*
 		 * Save the HASH and SIGNER for later - used when
@@ -928,6 +947,25 @@ stf_status generate_v2_responder_auth(struct ike_sa *ike, struct msg_digest *md,
 							     &ike_alg_hash_sha1,
 							     &pubkey_signer_pkcs1_1_5_rsa,
 							     auth_cb);
+
+	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
+		return submit_v2_IKE_AUTH_response_signature(ike, md,
+							    &ike->sa.st_v2_id_payload,
+							    &ike_alg_hash_sha2_256,
+							    &pubkey_signer_ecdsa/*_p256*/,
+							    auth_cb);
+	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
+		return submit_v2_IKE_AUTH_response_signature(ike, md,
+							    &ike->sa.st_v2_id_payload,
+							    &ike_alg_hash_sha2_384,
+							    &pubkey_signer_ecdsa/*_p384*/,
+							    auth_cb);
+	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
+		return submit_v2_IKE_AUTH_response_signature(ike, md,
+							    &ike->sa.st_v2_id_payload,
+							    &ike_alg_hash_sha2_512,
+							    &pubkey_signer_ecdsa/*_p521*/,
+							    auth_cb);
 
 	case IKEv2_AUTH_DIGSIG:
 	{

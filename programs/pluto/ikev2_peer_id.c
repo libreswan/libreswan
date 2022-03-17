@@ -115,6 +115,17 @@ diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest
 	case IKEv2_AUTH_RSA:
 		proposed_authbys = LELEM(AUTHBY_RSASIG);
 		break;
+	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
+	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
+	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
+		if (atype != impair.force_v2_auth_method) {
+			enum_buf eb;
+			return diag("IMPAIR: legacy RFC 4754 %s authentication is not supported "PRI_WHERE,
+				    str_enum(&ikev2_auth_method_names, atype, &eb),
+				    pri_where(HERE));
+		}
+		proposed_authbys = LELEM(AUTHBY_ECDSA);
+		break;
 	case IKEv2_AUTH_PSK:
 		proposed_authbys = LELEM(AUTHBY_PSK);
 		break;
