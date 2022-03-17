@@ -136,6 +136,30 @@ static void queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
 	v2_msgid_queue_initiator(ike, larval, transition);
 }
 
+static void ikev2_child_emancipate(struct ike_sa *old_ike, struct child_sa *new_ike)
+{
+	/* initialize the the new IKE SA. reset and message ID */
+	new_ike->sa.st_clonedfrom = SOS_NOBODY;
+	v2_msgid_init_ike(pexpect_ike_sa(&new_ike->sa));
+
+	/* Switch to the new IKE SPIs */
+	new_ike->sa.st_ike_spis = new_ike->sa.st_ike_rekey_spis;
+	rehash_state_cookies_in_db(&new_ike->sa);
+
+	dbg("NEW_IKE has updated IKE_SPIs, migrate children");
+	v2_migrate_children(old_ike, new_ike);
+
+	dbg("moving over any pending requests");
+	v2_msgid_migrate_queue(old_ike, new_ike);
+
+	/* complete the state transition */
+	pexpect(new_ike->sa.st_v2_transition->next_state == STATE_V2_ESTABLISHED_IKE_SA);
+	change_v2_state(&new_ike->sa);
+
+	/* child is now a parent */
+	v2_ike_sa_established(pexpect_ike_sa(&new_ike->sa));
+}
+
 static struct child_sa *find_v2N_REKEY_SA_child(struct ike_sa *ike,
 						struct msg_digest *md)
 {
