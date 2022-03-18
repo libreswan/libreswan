@@ -12,7 +12,7 @@
  * Copyright (C) 2013-2019 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2015-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2015-2022 Andrew Cagney
  * Copyright (C) 2017-2018 Sahana Prasad <sahana.prasad07@gmail.com>
  * Copyright (C) 2017-2018 Vukasin Karadzic <vukasin.karadzic@gmail.com>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
@@ -78,6 +78,21 @@ static stf_status process_v2_IKE_AUTH_request_ipseckey_continue(struct ike_sa *i
 								bool err);
 
 static stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_digest *md);
+
+static stf_status submit_v2_IKE_AUTH_request_signature(struct ike_sa *ike,
+						       const struct v2_id_payload *id_payload,
+						       const struct hash_desc *hash_algo,
+						       const struct pubkey_signer *signer,
+						       v2_auth_signature_cb *cb)
+{
+	struct crypt_mac hash_to_sign = v2_calculate_sighash(ike, &id_payload->mac, hash_algo,
+							     LOCAL_PERSPECTIVE);
+	if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo, signer, cb)) {
+		dbg("submit_v2_auth_signature() died, fatal");
+		return STF_FATAL;
+	}
+	return STF_SUSPEND;
+}
 
 stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *md)
 {
@@ -159,76 +174,57 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 					   ike->sa.st_sk_pi_no_ppk);
 	}
 
-	{
-		enum keyword_authby authby = v2_auth_by(ike);
-		enum ikev2_auth_method auth_method = v2AUTH_method_from_authby(ike, authby);
-		switch (auth_method) {
-		case IKEv2_AUTH_RSA:
-		{
-			const struct hash_desc *hash_algo = &ike_alg_hash_sha1;
-			struct crypt_mac hash_to_sign =
-				v2_calculate_sighash(ike, &ike->sa.st_v2_id_payload.mac,
-						     hash_algo, LOCAL_PERSPECTIVE);
-			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
-						      &pubkey_signer_pkcs1_1_5_rsa,
-						      initiate_v2_IKE_AUTH_request_signature_continue)) {
-				dbg("submit_v2_auth_signature() died, fatal");
-				return STF_FATAL;
-			}
-			return STF_SUSPEND;
-		}
-		case IKEv2_AUTH_DIGSIG:
-		{
-			/*
-			 * Save the HASH and SIGNER for later - used
-			 * when emitting the siguature (should the
-			 * signature instead include the bonus blob?).
-			 */
-			ike->sa.st_v2_digsig.hash = v2_auth_negotiated_signature_hash(ike);
-			if (ike->sa.st_v2_digsig.hash == NULL) {
-				return STF_FATAL;
-			}
+	enum keyword_authby authby = v2_auth_by(ike);
+	enum ikev2_auth_method auth_method = v2AUTH_method_from_authby(ike, authby);
+	switch (auth_method) {
+	case IKEv2_AUTH_RSA:
+		return submit_v2_IKE_AUTH_request_signature(ike,
+							    &ike->sa.st_v2_id_payload,
+							    &ike_alg_hash_sha1,
+							    &pubkey_signer_pkcs1_1_5_rsa,
+							    initiate_v2_IKE_AUTH_request_signature_continue);
 
-			switch (authby) {
-			case AUTHBY_RSASIG:
-				/* XXX: way to force PKCS#1 1.5? */
-				ike->sa.st_v2_digsig.signer = &pubkey_signer_rsassa_pss;
-				break;
-			case AUTHBY_ECDSA:
-				ike->sa.st_v2_digsig.signer = &pubkey_signer_ecdsa;
-				break;
-			default:
-				bad_case(authby);
-			}
-
-			struct crypt_mac hash_to_sign =
-				v2_calculate_sighash(ike, &ike->sa.st_v2_id_payload.mac,
-						     ike->sa.st_v2_digsig.hash,
-						     LOCAL_PERSPECTIVE);
-
-			if (!submit_v2_auth_signature(ike, &hash_to_sign,
-						      ike->sa.st_v2_digsig.hash,
-						      ike->sa.st_v2_digsig.signer,
-						      initiate_v2_IKE_AUTH_request_signature_continue)) {
-				dbg("submit_v2_auth_signature() died, fatal");
-				return STF_FATAL;
-			}
-			return STF_SUSPEND;
-		}
-
-		case IKEv2_AUTH_PSK:
-		case IKEv2_AUTH_NULL:
-			return initiate_v2_IKE_AUTH_request_signature_continue(ike, md, NULL/*auth_sig*/);
-
-		default:
-		{
-			enum_buf eb;
-			llog_sa(RC_LOG, ike,
-				"authentication method %s not supported",
-				str_enum(&ikev2_auth_method_names, auth_method, &eb));
+	case IKEv2_AUTH_DIGSIG:
+		/*
+		 * Save the HASH and SIGNER for later - used when
+		 * emitting the siguature (should the signature
+		 * instead include the bonus blob?).
+		 */
+		ike->sa.st_v2_digsig.hash = v2_auth_negotiated_signature_hash(ike);
+		if (ike->sa.st_v2_digsig.hash == NULL) {
 			return STF_FATAL;
 		}
+
+		switch (authby) {
+		case AUTHBY_RSASIG:
+			/* XXX: way to force PKCS#1 1.5? */
+			ike->sa.st_v2_digsig.signer = &pubkey_signer_rsassa_pss;
+			break;
+		case AUTHBY_ECDSA:
+			ike->sa.st_v2_digsig.signer = &pubkey_signer_ecdsa;
+			break;
+		default:
+			bad_case(authby);
 		}
+
+		return submit_v2_IKE_AUTH_request_signature(ike,
+							    &ike->sa.st_v2_id_payload,
+							    ike->sa.st_v2_digsig.hash,
+							    ike->sa.st_v2_digsig.signer,
+							    initiate_v2_IKE_AUTH_request_signature_continue);
+
+	case IKEv2_AUTH_PSK:
+	case IKEv2_AUTH_NULL:
+		return initiate_v2_IKE_AUTH_request_signature_continue(ike, md, NULL/*auth_sig*/);
+
+	default:
+	{
+		enum_buf eb;
+		llog_sa(RC_LOG, ike,
+			"authentication method %s not supported",
+			str_enum(&ikev2_auth_method_names, auth_method, &eb));
+		return STF_FATAL;
+	}
 	}
 }
 
