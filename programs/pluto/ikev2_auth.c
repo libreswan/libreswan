@@ -310,7 +310,7 @@ bool emit_v2_auth(struct ike_sa *ike,
 
 static diag_t v2_authsig_and_log_using_pubkey(struct ike_sa *ike,
 					      const struct crypt_mac *idhash,
-					      shunk_t signature,
+					      const struct pbs_in *signature_pbs,
 					      const struct hash_desc *hash_algo,
 					      const struct pubkey_signer *pubkey_signer)
 {
@@ -321,6 +321,7 @@ static diag_t v2_authsig_and_log_using_pubkey(struct ike_sa *ike,
 		return diag("authentication failed: unknown or unsupported hash algorithm");
 	}
 
+	shunk_t signature = pbs_in_left_as_shunk(signature_pbs);
 	if (signature.len == 0) {
 		return diag("authentication failed: rejecting received zero-length RSA signature");
 	}
@@ -346,22 +347,16 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 
 	switch (recv_auth) {
 	case IKEv2_AUTH_RSA:
-	{
 		if (that_authby != AUTHBY_RSASIG) {
-			return diag("authentication failed: peer attempted RSA authentication but we want %s",
+			enum_buf eb;
+			return diag("authentication failed: peer attempted %s authentication but we want %s",
+				    str_enum(&ikev2_auth_method_names, recv_auth, &eb),
 				    enum_name(&keyword_authby_names, that_authby));
 		}
-
-		shunk_t signature = pbs_in_left_as_shunk(signature_pbs);
-		diag_t d = v2_authsig_and_log_using_pubkey(ike, idhash_in, signature,
-							   &ike_alg_hash_sha1,
-							   &pubkey_signer_pkcs1_1_5_rsa);
-		if (d != NULL) {
-			return d;
-		}
-
-		return NULL;
-	}
+		return v2_authsig_and_log_using_pubkey(ike, idhash_in,
+						       signature_pbs,
+						       &ike_alg_hash_sha1,
+						       &pubkey_signer_pkcs1_1_5_rsa);
 
 	case IKEv2_AUTH_PSK:
 	{
@@ -468,7 +463,7 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 				ike->sa.st_v2_digsig.signer = signer;
 
 				return v2_authsig_and_log_using_pubkey(ike, idhash_in,
-								       pbs_in_left_as_shunk(signature_pbs),
+								       signature_pbs,
 								       (*hash), signer);
 			}
 		}
