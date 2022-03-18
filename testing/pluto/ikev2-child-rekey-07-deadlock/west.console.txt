@@ -91,6 +91,7 @@ west #
 | **parse ISAKMP Message:
 |    exchange type: ISAKMP_v2_IKE_SA_INIT (..)
 |    Message ID: 0 (..)
+| Message ID: IKE #1 initiator processing response to existing exchange (..)
 | **emit ISAKMP Message:
 |    exchange type: ISAKMP_v2_IKE_AUTH (..)
 |    Message ID: 1 (..)
@@ -103,6 +104,7 @@ west #
 | **parse ISAKMP Message:
 |    exchange type: ISAKMP_v2_IKE_AUTH (..)
 |    Message ID: 1 (..)
+| Message ID: IKE #1 initiator processing response to existing exchange (..)
 | Message ID: updating counters for #1
 | Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
 | Message ID: IKE #1 updating initiator received message response 1 (..)
@@ -123,6 +125,7 @@ west #
 | **parse ISAKMP Message:
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 2 (..)
+| Message ID: IKE #1 initiator processing response to existing exchange (..)
 | Message ID: updating counters for #1
 | Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
 | Message ID: IKE #1 updating initiator received message response 2 (..)
@@ -140,6 +143,7 @@ west #
 | **parse ISAKMP Message:
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 3 (..)
+| Message ID: IKE #1 initiator processing response to existing exchange (..)
 | Message ID: updating counters for #1
 | Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
 | Message ID: IKE #1 updating initiator received message response 3 (..)
@@ -157,6 +161,7 @@ west #
 | **parse ISAKMP Message:
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 4 (..)
+| Message ID: IKE #1 initiator processing response to existing exchange (..)
 | Message ID: updating counters for #1
 | Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
 | Message ID: IKE #1 updating initiator received message response 4 (..)
@@ -178,6 +183,7 @@ west #
 | **parse ISAKMP Message:
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 5 (..)
+| Message ID: IKE #1 initiator processing response to existing exchange (..)
 | Message ID: updating counters for #1
 | Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
 | Message ID: IKE #1 updating initiator received message response 5 (..)
@@ -196,6 +202,7 @@ west #
 | **parse ISAKMP Message:
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 6 (..)
+| Message ID: IKE #1 initiator processing response to existing exchange (..)
 | Message ID: updating counters for #1
 | Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
 | Message ID: IKE #1 updating initiator received message response 6 (..)
@@ -214,6 +221,7 @@ west #
 | **parse ISAKMP Message:
 |    exchange type: ISAKMP_v2_INFORMATIONAL (..)
 |    Message ID: 7 (..)
+| Message ID: IKE #1 initiator processing response to existing exchange (..)
 | Message ID: updating counters for #1
 | Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
 | Message ID: IKE #1 updating initiator received message response 7 (..)
@@ -232,6 +240,7 @@ west #
 | **parse ISAKMP Message:
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 8 (..)
+| Message ID: IKE #1 initiator processing response to existing exchange (..)
 | Message ID: updating counters for #1
 | Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
 | Message ID: IKE #1 updating initiator received message response 8 (..)
@@ -250,6 +259,7 @@ west #
 | **parse ISAKMP Message:
 |    exchange type: ISAKMP_v2_INFORMATIONAL (..)
 |    Message ID: 9 (..)
+| Message ID: IKE #1 initiator processing response to existing exchange (..)
 | Message ID: updating counters for #1
 | Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
 | Message ID: IKE #1 updating initiator received message response 9 (..)
@@ -268,6 +278,7 @@ west #
 | **parse ISAKMP Message:
 |    exchange type: ISAKMP_v2_CREATE_CHILD_SA (..)
 |    Message ID: 10 (..)
+| Message ID: IKE #1 initiator processing response to existing exchange (..)
 | Message ID: updating counters for #1
 | Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
 | Message ID: IKE #1 updating initiator received message response 10 (..)
@@ -286,6 +297,7 @@ west #
 | **parse ISAKMP Message:
 |    exchange type: ISAKMP_v2_INFORMATIONAL (..)
 |    Message ID: 11 (..)
+| Message ID: IKE #1 initiator processing response to existing exchange (..)
 | Message ID: updating counters for #1
 | Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
 | Message ID: IKE #1 updating initiator received message response 11 (..)
@@ -305,6 +317,7 @@ west #
 | **parse ISAKMP Message:
 |    exchange type: ISAKMP_v2_INFORMATIONAL (..)
 |    Message ID: 12 (..)
+| Message ID: IKE #1 initiator processing response to existing exchange (..)
 | Message ID: updating counters for #1
 | Message ID: IKE #1 clearing EVENT_RETRANSMIT as response received (..)
 | Message ID: IKE #1 updating initiator received message response 12 (..)
