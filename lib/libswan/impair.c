@@ -186,6 +186,10 @@ struct impairment impairments[] = {
 	V("unknown-v2-payload-critical", unknown_v2_payload_critical,
 	  "include the unknown payload in the encrypted SK payload"),
 
+	V("force-v2-auth-method", force_v2_auth_method,
+	  "force the use of the specified IKEv2 AUTH method",
+	  .how_enum_names = &ikev2_auth_method_names),
+
 	V("omit-v2-ike-auth-child", omit_v2_ike_auth_child,
 	  "omit, and don't expect, CHILD SA payloads in IKE_AUTH message"),
 	V("ignore-v2-ike-auth-child", ignore_v2_ike_auth_child,

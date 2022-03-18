@@ -152,6 +152,13 @@ enum ikev2_auth_method v2AUTH_method_from_authby(struct ike_sa *ike,
 {
 	struct connection *c = ike->sa.st_connection;
 
+	if (impair.force_v2_auth_method != 0) {
+		enum_buf eb;
+		llog_sa(RC_LOG, ike, "IMPAIR: forcing auth method %s",
+			str_enum(&ikev2_auth_method_names, impair.force_v2_auth_method, &eb));
+		return impair.force_v2_auth_method;
+	}
+
 	switch (authby) {
 	case AUTHBY_RSASIG:
 		if (ike->sa.st_seen_hashnotify &&
