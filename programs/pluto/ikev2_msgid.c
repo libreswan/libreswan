@@ -437,7 +437,14 @@ void v2_msgid_update_sent(struct ike_sa *ike, const struct msg_digest *md, enum 
 void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md)
 {
 	v2_msgid_update_recv(ike, md);
-	v2_msgid_update_sent(ike, md, ike->sa.st_v2_transition->send_role);
+	/*
+	 * XXX: If possible, avoid relying on .st_v2_transition.  When
+	 * record'n'send is forcing an initiate, .st_v2_transition is
+	 * bogus.  When record'n'send goes away so does this hack.
+	 */
+	v2_msgid_update_sent(ike, md,
+			     (md == NULL ? MESSAGE_REQUEST :
+			      ike->sa.st_v2_transition->send_role));
 }
 
 struct v2_msgid_pending {

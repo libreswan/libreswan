@@ -716,10 +716,12 @@ static bool should_send_delete(const struct state *st)
 {
 	switch (st->st_send_delete) {
 	case DO_SEND_DELETE:
-		dbg("%s: #%lu? YES, because", __func__, st->st_serialno);
+		dbg("%s: #%lu? YES, because .st_send_delete==DO_SEND_DELETE",
+		    __func__, st->st_serialno);
 		return true;
 	case DONT_SEND_DELETE:
-		dbg("%s: #%lu? NO, because", __func__, st->st_serialno);
+		dbg("%s: #%lu? NO, because .st_send_delete==DONT_SEND_DELETE",
+		    __func__, st->st_serialno);
 		return false;
 	default:
 		break;
@@ -730,7 +732,7 @@ static bool should_send_delete(const struct state *st)
 	case IKEv1:
 		if (!IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
 		    !IS_IPSEC_SA_ESTABLISHED(st)) {
-			dbg("%s: #%lu? no, IKEv1 SA in state %s is not established",
+			dbg("%s: "PRI_SO"? no, IKEv1 SA in state %s is not established",
 			    __func__, st->st_serialno, st->st_state->name);
 			return false;
 		}
@@ -740,16 +742,17 @@ static bool should_send_delete(const struct state *st)
 			 * would need to start a new IKE SA to send
 			 * the delete notification ???
 			 */
-			dbg("%s: #%lu? no, IKEv1 SA in state %s has no ISAKMP (Phase 1) SA",
+			dbg("%s: "PRI_SO"? no, IKEv1 SA in state %s has no ISAKMP (Phase 1) SA",
 			    __func__, st->st_serialno, st->st_state->name);
 			return false;
 		}
-		break;
+		dbg("%s: "PRI_SO"? yes, IKEv1", __func__, st->st_serialno);
+		return true;
 #endif
 	case IKEv2:
 		if (!IS_IKE_SA_ESTABLISHED(st) &&
 		    !IS_CHILD_SA_ESTABLISHED(st)) {
-			dbg("%s: #%lu? no, IKEv2 SA in state %s is not established",
+			dbg("%s: "PRI_SO"? no, IKEv2 SA in state %s is not established",
 			    __func__, st->st_serialno, st->st_state->name);
 			return false;
 		}
@@ -772,17 +775,23 @@ static bool should_send_delete(const struct state *st)
 			 *
 			 * Anyway, play it safe.
 			 */
-			dbg("%s: #%lu? no, IKEv2 SA in state %s has no parent; suspect IKE SA was deleted without deleting children",
+			dbg("%s: "PRI_SO"? no, IKEv2 SA in state %s has no parent; suspect IKE SA was deleted without deleting children",
 			    __func__, st->st_serialno, st->st_state->name);
 			return false;
 		}
-		break;
-	default:
-		bad_case(st->st_ike_version);
-	}
+		/*
+		 * Established Child SA implies it's IKE SA is
+		 * established.
+		 *
+		 * Don't require .st_viable_parent; a rekeyed IKE SA,
+		 * which is established but not viable, needs to send
+		 * a delete.
+		 */
+		dbg("%s: "PRI_SO"? yes, IKEv2 SA with IKE SA", __func__, st->st_serialno);
+		return true;
 
-	dbg("%s: yes", __func__);
-	return true;
+	}
+	bad_case(st->st_ike_version);
 }
 
 static void send_delete(struct state *st)
@@ -800,45 +809,50 @@ static void send_delete(struct state *st)
 #ifdef USE_IKEv1
 	case IKEv1:
 		send_v1_delete(st);
-		break;
+		return;
 #endif
 	case IKEv2:
 	{
-		struct ike_sa *ike = ike_sa(st, HERE);
-
-		/* XXX: something better? */
-		struct fd *ike_whack = ike->sa.st_logger->global_whackfd;
-		ike->sa.st_logger->global_whackfd = fd_addref(st->st_logger->global_whackfd);
-
-		record_v2_delete(ike, st);
-		send_recorded_v2_message(ike, "delete notification",
-					 MESSAGE_REQUEST);
-
-		/* XXX: something better? */
-		fd_delref(&ike->sa.st_logger->global_whackfd);
-		ike->sa.st_logger->global_whackfd = ike_whack;
-
 		/*
-		 * XXX: The record 'n' send call shouldn't be needed.
-		 * Instead, as part of this transition (live ->
-		 * being-deleted) the standard success_v2_transition()
-		 * code path should get to do the right thing.
+		 * XXX: This code sends delete for Child SAs.
 		 *
-		 * XXX: The record 'n' send call leads to an RFC
-		 * violation.  The lack of a state transition means
-		 * there's nothing set up to wait for the ack.  And
-		 * that in turn means that the next packet will be
-		 * sent before this one has had a response.
+		 * For instance, during shutdown and because
+		 * connections are are deleted new-to-old, a
+		 * connection instance with a Child SA will be deleted
+		 * before the connection instance with the IKE SA.
+		 *
+		 * XXX: record'n'send call shouldn't be needed.
+		 *
+		 * Instead of forcing a delete, this code should use
+		 * normal state transitions and exchanges to delete
+		 * things.
+		 *
+		 * XXX: record'n'send call can violate RFC
+		 *
+		 * Since nothing is waiting for the response, there's
+		 * nothing to ensure that this send was received
+		 * before the next is sent.
+		 *
+		 * XXX: the established IKE SA may not be viable
+		 *
+		 * For instance, even though after a rekey, the old
+		 * IKE SA is established and not .st_viable_parent,
+		 * still needs to send a delete (but again it should
+		 * do that using a state transition)?
 		 */
-		dbg("Message ID: IKE #%lu sender #%lu in %s hacking around record 'n' send",
-		    ike->sa.st_serialno, st->st_serialno, __func__);
-		v2_msgid_update_sent(ike, NULL/*no MD; new exchange*/, MESSAGE_REQUEST);
+
+		struct ike_sa *ike = ike_sa(st, HERE);
+		dbg_v2_msgid(ike, "in %s() hacking around record'n'send for "PRI_SO,
+			     __func__, st->st_serialno);
+		v2_msgid_start(ike, NULL/*MD*/);
+		record_v2_delete(ike, st);
+		send_recorded_v2_message(ike, "delete notification", MESSAGE_REQUEST);
+		v2_msgid_finish(ike, NULL/*MD*/);
 		st->st_send_delete = DONT_SEND_DELETE;
-		break;
+		return;
 	}
-	default:
-		bad_case(st->st_ike_version);
 	}
+	bad_case(st->st_ike_version);
 }
 
 static void delete_state_tail(struct state *st);
