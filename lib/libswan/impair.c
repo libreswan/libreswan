@@ -171,7 +171,6 @@ struct impairment impairments[] = {
 	V("tcp-skip-setsockopt-espintcp", tcp_skip_setsockopt_espintcp, "skip the required setsockopt(\"espintcp\") call"),
 
 	A("initiate-v2-liveness", INITIATE_v2_LIVENESS, 0, "initiate an IKEv2 liveness exchange", "IKE SA"),
-	A("initiate-v2-delete", INITIATE_v2_DELETE, 0, "initiate an IKEv2 delete exchange", "SA"),
 
 	A("send-keepalive", SEND_KEEPALIVE, 0, "send a NAT keepalive packet", "SA"),
 
@@ -556,7 +555,6 @@ bool process_impair(const struct whack_impair *wc,
 			jam_impairment(buf, impairment);
 		}
 		return true;
-	case CALL_INITIATE_v2_DELETE:
 	case CALL_INITIATE_v2_LIVENESS:
 	case CALL_SEND_KEEPALIVE:
 	case CALL_GLOBAL_EVENT_HANDLER:
