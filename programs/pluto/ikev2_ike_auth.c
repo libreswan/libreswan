@@ -1286,7 +1286,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		 * IKE_AUTH was okay, and then send an INFORMATIONAL
 		 * DELETE IKE SA but we have not implemented that yet.
 		 */
-		return STF_V2_DELETE_IKE_AUTH_INITIATOR;
+		return STF_V2_INITIATOR_DELETE_IKE_FAMILY;
 	}
 
 	struct connection *c = ike->sa.st_connection;
@@ -1350,7 +1350,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		 * IKE_AUTH was okay, and then send an INFORMATIONAL
 		 * DELETE IKE SA but we have not implemented that yet.
 		 */
-		return STF_V2_DELETE_IKE_AUTH_INITIATOR;
+		return STF_V2_INITIATOR_DELETE_IKE_FAMILY;
 	}
 
 	/*

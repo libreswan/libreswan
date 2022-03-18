@@ -186,43 +186,19 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	 * Close up the packet and send it.
 	 */
 
-	/* ??? should we support fragmenting?  Maybe one day. */
 	if (!close_and_record_v2_message(&response)) {
 		return STF_INTERNAL_ERROR;
 	}
 
 	/*
-	 * ... now we can delete the IKE SA if we want to.
-	 * The response is hopefully empty.
+	 * ... now we can delete the IKE SA if we want to.  The
+	 * response is hopefully empty.
 	 */
 	if (del_ike) {
 		/*
-		 * Record 'n' send the message inline.  Should be
-		 * handling this better.  Perhaps signaling the death
-		 * by returning STF_ZOMBIFY?  The IKE SA should
-		 * linger so that it can sink retransmits.
-		 *
-		 * Since the IKE SA is about to disappear the update
-		 * isn't needed but what ever (i.e., be consistent).
+		 * Complete the transtion; but then wipe us out.
 		 */
-		send_recorded_v2_message(ike, "v2_INFORMATIONAL IKE SA Delete response",
-					 MESSAGE_RESPONSE);
-		dbg_v2_msgid(ike,
-			     "XXX: in %s() hacking around record 'n' send as calling delete_ike_family() inline",
-			     __func__);
-		v2_msgid_update_sent(ike, md, MESSAGE_RESPONSE);
-		/*
-		 * Danger!
-		 *
-		 * The call to delete_ike_family() deletes this IKE
-		 * SA.  Signal this up the chain by returning
-		 * STF_SKIP_COMPLETE_STATE_TRANSITION.
-		 *
-		 * Killing .v1_st is an extra safety net.
-		 */
-		delete_ike_family(&ike, DONT_SEND_DELETE);
-		pexpect(ike == NULL);
-		return STF_SKIP_COMPLETE_STATE_TRANSITION;
+		return STF_V2_RESPONDER_DELETE_IKE_FAMILY;
 	}
 
 	mobike_possibly_send_recorded(ike, md);

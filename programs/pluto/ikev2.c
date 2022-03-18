@@ -2732,6 +2732,10 @@ void complete_v2_state_transition(struct ike_sa *ike,
 
 	switch (result) {
 
+	case STF_SKIP_COMPLETE_STATE_TRANSITION:
+		/* should never get here */
+		bad_case(result);
+
 	case STF_SUSPEND:
 		/*
 		 * If this transition was triggered by an
@@ -2751,38 +2755,55 @@ void complete_v2_state_transition(struct ike_sa *ike,
 	case STF_OK:
 		/* advance the state */
 		success_v2_state_transition(ike, md, transition);
-		break;
+		return;
 
 	case STF_INTERNAL_ERROR:
 		llog_sa(RC_INTERNALERR, ike,
 			"state transition function for %s had internal error",
 			ike->sa.st_state->name);
 		release_pending_whacks(&ike->sa, "internal error");
-		break;
+		return;
 
-	case STF_V2_DELETE_IKE_AUTH_INITIATOR:
+	case STF_V2_RESPONDER_DELETE_IKE_FAMILY:
 		/*
-		 * XXX: this is a hack so that IKE_AUTH initiator can
-		 * both delete the IKE SA and send an IKE SA delete
-		 * notification because the IKE_AUTH response was
-		 * rejected.
+		 * Responder processing something that triggered a
+		 * delete IKE family (but not for reasons that are
+		 * fatal).
+		 *
+		 * For instance, a N(D(IKE)) request.
+		 *
+		 * XXX: should this zombify the IKE SA so that
+		 * re-transmits have something that can respond.
 		 */
+		/* send the response */
+		dbg_v2_msgid(ike, "finishing old exchange (STF_V2_RESPONDER_DELETE_IKE_FAMILY)");
+		pexpect(transition->recv_role == MESSAGE_REQUEST);
+		pexpect(transition->send_role == MESSAGE_RESPONSE);
+		v2_msgid_finish(ike, md);
+		send_recorded_v2_message(ike, "DELETE_IKE_FAMILY", MESSAGE_RESPONSE);
+		/* do the deed */
+		delete_ike_family(&ike, DONT_SEND_DELETE);
+		pexpect(ike == NULL);
+		return;
+
+	case STF_V2_INITIATOR_DELETE_IKE_FAMILY:
 		/*
 		 * Initiator processing response, finish current
-		 * exchange ready for delete request.
-		 */
-		dbg_v2_msgid(ike, "forcing a response received update (STF_V2_DELETE_IKE_AUTH_INITIATOR)");
-		pexpect(ike->sa.st_state->kind == STATE_V2_PARENT_I2);
-		pexpect(v2_msg_role(md) == MESSAGE_RESPONSE);
-		v2_msgid_finish(ike, md);
-		/*
-		 * All done, now delete the IKE family sending out a
-		 * last gasp delete.
+		 * exchange and then record'n'send a fire'n'forget
+		 * delete.
 		 *
-		 * XXX: this call will fire and forget.  It should
-		 * call v2_msgid_queue_initiator() with high priority
-		 * so this is performed as a separate transition.
+		 * For instance, when the IKE_AUTH response's
+		 * authentication fails the initiator needs to quickly
+		 * send out a delete (this is IKEv2's documented
+		 * violation to the don't respond to a response rule).
+		 *
+		 * XXX: this should instead jump to a new transition
+		 * that performs a proper delete exchange.
 		 */
+		dbg_v2_msgid(ike, "finishing old exchange (STF_V2_INITIATOR_DELETE_IKE_FAMILY)");
+		pexpect(transition->recv_role == MESSAGE_RESPONSE);
+		v2_msgid_finish(ike, md);
+		/* do the deed */
 		delete_ike_family(&ike, DO_SEND_DELETE);
 		/* get out of here -- everything is invalid */
 		pexpect(ike == NULL);
@@ -2819,21 +2840,20 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		/* if this was a child fail, don't destroy the IKE SA */
 		delete_ike_family(&ike, DONT_SEND_DELETE);
 		pexpect(ike == NULL);
-		break;
+		return;
 
 	case STF_FAIL_v1N:
-	default: /* STF_FAIL_v1N[+notification] */
-	{
-		passert(result >= STF_FAIL_v1N);
-		v2_notification_t notification = result - STF_FAIL_v1N;
-		llog_pexpect(ike->sa.st_logger, HERE,
-			     "state transition '%s' failed with %s",
-			     transition->story,
-			     enum_name(&v2_notification_names, notification));
-		delete_ike_family(&ike, DONT_SEND_DELETE);
 		break;
 	}
-	}
+
+	/* default */
+	passert(result >= STF_FAIL_v1N);
+	v2_notification_t notification = result - STF_FAIL_v1N;
+	llog_pexpect(ike->sa.st_logger, HERE,
+		     "state transition '%s' failed with %s",
+		     transition->story,
+		     enum_name(&v2_notification_names, notification));
+	delete_ike_family(&ike, DONT_SEND_DELETE);
 }
 
 static void reinitiate_v2_ike_sa_init(const char *story, struct state *st, void *arg)

@@ -327,11 +327,12 @@ typedef enum {
 	STF_SUSPEND,            /*   suspend     no       no     tbd? */
 	STF_OK,                 /*    yes        no     message? tbd? */
 	STF_INTERNAL_ERROR,     /*     no        no      never   tbd? */
-	STF_V2_DELETE_IKE_AUTH_INITIATOR,
+	STF_V2_RESPONDER_DELETE_IKE_FAMILY, /* does not send delete */
+	STF_V2_INITIATOR_DELETE_IKE_FAMILY, /* sends delete */
 				/*   forced    maybe     maybe  'success' */
 	STF_FATAL,		/*     no      always    never   fail */
 	STF_FAIL_v1N,       	/*     no      maybe?    maybe?  fail */
-	STF_ROOF = STF_FAIL_v1N + 65536 /* see RFC and above */
+#define STF_ROOF (STF_FAIL_v1N + 65536) /* see RFC and above */
 } stf_status;
 
 /* Misc. stuff */
