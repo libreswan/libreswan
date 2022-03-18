@@ -553,33 +553,27 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_deletestate) {
 		dbg_whack(s, "start: deletestate #%lu", m->whack_deletestateno);
-		struct state *st =
-			state_by_serialno(m->whack_deletestateno);
+		struct state *st = state_by_serialno(m->whack_deletestateno);
 
 		if (st == NULL) {
 			llog(RC_UNKNOWN_NAME, logger, "no state #%lu to delete",
 			     m->whack_deletestateno);
 		} else {
-			/* XXX: something better? */
-			fd_delref(&st->st_logger->global_whackfd);
-			st->st_logger->global_whackfd = fd_addref(whackfd);
-			log_state(LOG_STREAM/*not-whack*/, st,
-				  "received whack to delete %s state #%lu %s",
-				  enum_name(&ike_version_names, st->st_ike_version),
-				  st->st_serialno,
-				  st->st_state->name);
+			merge_loggers(st, m->whack_async/*background*/, logger);
+			llog(LOG_STREAM/*not-whack*/, st->st_logger,
+			     "received whack to delete %s state #%lu %s",
+			     enum_name(&ike_version_names, st->st_ike_version),
+			     st->st_serialno, st->st_state->name);
 
-			if ((st->st_ike_version == IKEv2) && !IS_CHILD_SA(st)) {
-				log_state(LOG_STREAM/*not-whack*/, st,
-					  "Also deleting any corresponding CHILD_SAs");
-				struct ike_sa *ike = pexpect_ike_sa(st);
-				delete_ike_family(&ike, PROBABLY_SEND_DELETE);
-				st = NULL;
-				/* note: no md->st to clear */
-			} else {
+			switch (st->st_ike_version) {
+			case IKEv1:
 				delete_state(st);
 				st = NULL;
-				/* note: no md->st to clear */
+				break;
+			case IKEv2:
+				submit_v2_delete_exchange(ike_sa(st, HERE),
+							  IS_CHILD_SA(st) ? pexpect_child_sa(st) : NULL);
+				break;
 			}
 		}
 		dbg_whack(s, "stop: deletestate #%lu", m->whack_deletestateno);
