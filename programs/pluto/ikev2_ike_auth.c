@@ -871,6 +871,24 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 
 static v2_auth_signature_cb process_v2_IKE_AUTH_request_auth_signature_continue; /* type check */
 
+static stf_status submit_v2_IKE_AUTH_response_signature(struct ike_sa *ike, struct msg_digest *md,
+							const struct v2_id_payload *id_payload,
+							const struct hash_desc *hash_algo,
+							const struct pubkey_signer *signer,
+							v2_auth_signature_cb *cb)
+{
+	struct crypt_mac hash_to_sign = v2_calculate_sighash(ike, &id_payload->mac, hash_algo,
+							     LOCAL_PERSPECTIVE);
+	if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo, signer, cb)) {
+		dbg("submit_v2_auth_signature() died, fatal");
+		record_v2N_response(ike->sa.st_logger, ike, md,
+				    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
+				    ENCRYPTED_PAYLOAD);
+		return STF_FATAL;
+	}
+	return STF_SUSPEND;
+}
+
 stf_status generate_v2_responder_auth(struct ike_sa *ike, struct msg_digest *md, v2_auth_signature_cb auth_cb)
 {
 	struct connection *const c = ike->sa.st_connection;
@@ -900,114 +918,89 @@ stf_status generate_v2_responder_auth(struct ike_sa *ike, struct msg_digest *md,
 	ike->sa.st_v2_id_payload.mac = v2_hash_id_payload("IDr", ike, "st_skey_pr_nss",
 							  ike->sa.st_skey_pr_nss);
 
+	enum keyword_authby authby = v2_auth_by(ike);
+	enum ikev2_auth_method auth_method = v2AUTH_method_from_authby(ike, authby);
+	switch (auth_method) {
+
+	case IKEv2_AUTH_RSA:
+		return submit_v2_IKE_AUTH_response_signature(ike, md,
+							     &ike->sa.st_v2_id_payload,
+							     &ike_alg_hash_sha1,
+							     &pubkey_signer_pkcs1_1_5_rsa,
+							     auth_cb);
+
+	case IKEv2_AUTH_DIGSIG:
 	{
-		enum keyword_authby authby = v2_auth_by(ike);
-		enum ikev2_auth_method auth_method = v2AUTH_method_from_authby(ike, authby);
-		switch (auth_method) {
-		case IKEv2_AUTH_RSA:
-		{
-			const struct hash_desc *hash_algo = &ike_alg_hash_sha1;
-			struct crypt_mac hash_to_sign =
-				v2_calculate_sighash(ike, &ike->sa.st_v2_id_payload.mac,
-						     hash_algo, LOCAL_PERSPECTIVE);
-			ike->sa.st_v2_ike_intermediate.used = false;
-			if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo,
-						      &pubkey_signer_pkcs1_1_5_rsa,
-						      auth_cb)) {
-				dbg("submit_v2_auth_signature() died, fatal");
-				record_v2N_response(ike->sa.st_logger, ike, md,
-						    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
-						    ENCRYPTED_PAYLOAD);
-				return STF_FATAL;
-			}
-			return STF_SUSPEND;
+		/*
+		 * Prefer the HASH and SIGNER algorithms saved when
+		 * authenticating the initiator (assuming the
+		 * initiator was authenticated using DIGSIG).
+		 *
+		 * For HASH, both ends negotiated acceptable hash
+		 * algorithms during IKE_SA_INIT.  For SIGNER, the
+		 * algorithm also needs to be consistent with local
+		 * AUTHBY.
+		 *
+		 * Save the decision so it is available when emitting
+		 * the computed hash.
+		 */
+		dbg("digsig: selecting hash and signer");
+		const char *hash_story;
+		if (ike->sa.st_v2_digsig.hash == NULL) {
+			ike->sa.st_v2_digsig.hash = v2_auth_negotiated_signature_hash(ike);
+			hash_story = "from policy";
+		} else {
+			hash_story = "saved earlier";
 		}
-		case IKEv2_AUTH_DIGSIG:
-		{
-			/*
-			 * Prefer the HASH and SIGNER algorithms saved
-			 * when authenticating the initiator (assuming
-			 * the initiator was authenticated using
-			 * DIGSIG).
-			 *
-			 * For HASH, both ends negotiated acceptable
-			 * hash algorithms during IKE_SA_INIT.  For
-			 * SIGNER, the algorithm also needs to be
-			 * consistent with local AUTHBY.
-			 *
-			 * Save the decision so it is available when
-			 * emitting the computed hash.
-			 */
-			dbg("digsig: selecting hash and signer");
-			const char *hash_story;
-			if (ike->sa.st_v2_digsig.hash == NULL) {
-				ike->sa.st_v2_digsig.hash = v2_auth_negotiated_signature_hash(ike);
-				hash_story = "from policy";
-			} else {
-				hash_story = "saved earlier";
-			}
-			if (ike->sa.st_v2_digsig.hash == NULL) {
-				record_v2N_response(ike->sa.st_logger, ike, md,
-						    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
-						    ENCRYPTED_PAYLOAD);
-				return STF_FATAL;
-			}
-			dbg("digsig:   using hash %s %s",
-			    ike->sa.st_v2_digsig.hash->common.fqn,
-			    hash_story);
-			const char *signer_story;
-			switch (authby) {
-			case AUTHBY_RSASIG:
-				if (ike->sa.st_v2_digsig.signer == NULL ||
-				    ike->sa.st_v2_digsig.signer->type != &pubkey_type_rsa) {
-					ike->sa.st_v2_digsig.signer = &pubkey_signer_rsassa_pss;
-					signer_story = "from policy";
-				} else {
-					signer_story = "saved earlier";
-				}
-				break;
-			case AUTHBY_ECDSA:
-				/* no choice */
-				signer_story = "hardwired";
-				ike->sa.st_v2_digsig.signer = &pubkey_signer_ecdsa;
-				break;
-			default:
-				bad_case(authby);
-			}
-			dbg("digsig:   using %s signer %s",
-			    ike->sa.st_v2_digsig.signer->name, signer_story);
-
-			struct crypt_mac hash_to_sign =
-				v2_calculate_sighash(ike, &ike->sa.st_v2_id_payload.mac,
-						     ike->sa.st_v2_digsig.hash,
-						     LOCAL_PERSPECTIVE);
-
-			ike->sa.st_v2_ike_intermediate.used = false;
-			if (!submit_v2_auth_signature(ike, &hash_to_sign,
-						      ike->sa.st_v2_digsig.hash,
-						      ike->sa.st_v2_digsig.signer, auth_cb)) {
-				dbg("submit_v2_auth_signature() died, fatal");
-				record_v2N_response(ike->sa.st_logger, ike, md,
-						    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
-						    ENCRYPTED_PAYLOAD);
-				return STF_FATAL;
-			}
-			return STF_SUSPEND;
-		}
-
-		case IKEv2_AUTH_PSK:
-		case IKEv2_AUTH_NULL:
-			return auth_cb(ike, md, NULL/*auth_sig*/);
-
-		default:
-		{
-			enum_buf eb;
-			llog_sa(RC_LOG, ike,
-				"authentication method %s not supported",
-				str_enum(&ikev2_auth_method_names, auth_method, &eb));
+		if (ike->sa.st_v2_digsig.hash == NULL) {
+			record_v2N_response(ike->sa.st_logger, ike, md,
+					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
+					    ENCRYPTED_PAYLOAD);
 			return STF_FATAL;
 		}
+		dbg("digsig:   using hash %s %s",
+		    ike->sa.st_v2_digsig.hash->common.fqn,
+		    hash_story);
+		const char *signer_story;
+		switch (authby) {
+		case AUTHBY_RSASIG:
+			if (ike->sa.st_v2_digsig.signer == NULL ||
+			    ike->sa.st_v2_digsig.signer->type != &pubkey_type_rsa) {
+				ike->sa.st_v2_digsig.signer = &pubkey_signer_rsassa_pss;
+				signer_story = "from policy";
+			} else {
+				signer_story = "saved earlier";
+			}
+			break;
+		case AUTHBY_ECDSA:
+			/* no choice */
+			signer_story = "hardwired";
+			ike->sa.st_v2_digsig.signer = &pubkey_signer_ecdsa;
+			break;
+		default:
+			bad_case(authby);
 		}
+		dbg("digsig:   using %s signer %s",
+		    ike->sa.st_v2_digsig.signer->name, signer_story);
+
+		return submit_v2_IKE_AUTH_response_signature(ike, md,
+							     &ike->sa.st_v2_id_payload,
+							     ike->sa.st_v2_digsig.hash,
+							     ike->sa.st_v2_digsig.signer, auth_cb);
+	}
+
+	case IKEv2_AUTH_PSK:
+	case IKEv2_AUTH_NULL:
+		return auth_cb(ike, md, NULL/*auth_sig*/);
+
+	default:
+	{
+		enum_buf eb;
+		llog_sa(RC_LOG, ike,
+			"authentication method %s not supported",
+			str_enum(&ikev2_auth_method_names, auth_method, &eb));
+		return STF_FATAL;
+	}
 	}
 }
 
