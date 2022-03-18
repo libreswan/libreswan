@@ -314,62 +314,100 @@ void record_deladdr(ip_address *ip, char *a_type)
 }
 
 #ifdef KERNEL_XFRM
-static void initiate_mobike_probe(struct ike_sa *ike, struct starter_end *this,
-				  struct iface_endpoint *new_iface)
+static void record_n_send_v2_mobike_probe_request(struct ike_sa *ike)
+{
+	/*
+	 * 3.5.  Changing Addresses in IPsec SAs
+	 * https://datatracker.ietf.org/doc/html/rfc4555#section-3.5
+	 *
+	 *   The description in the rest of this section assumes that the
+	 *   initiator has already decided what the new addresses should be.  When
+	 *   this decision has been made, the initiator:
+	 *
+	 * This code path was triggered by the kernel detecting
+	 * an address change.  Does that mean the decision has been
+	 * made?
+	 *
+	 *   o  Updates the IKE_SA with the new addresses, and sets the
+	 *      "pending_update" flag in the IKE_SA.
+	 *
+	 * Here the caller switches things, and then switches things
+	 * back.
+	 *
+	 *   o  If there are outstanding IKEv2 requests (requests for which the
+	 *      initiator has not yet received a reply), continues retransmitting
+	 *      them using the addresses in the IKE_SA (the new addresses).
+	 *
+	 * Unfortunately, not implemented.
+	 *
+	 *   o  When the window size allows, sends an INFORMATIONAL request
+	 *      containing the UPDATE_SA_ADDRESSES notification (which does not
+	 *      contain any data), and clears the "pending_update" flag.  The
+	 *      request will be as follows:
+	 *
+	 * The message is always sent.
+	 *
+	 * If there's a message outstanding the below will likely
+	 * pexpect().
+	 */
+
+	dbg_v2_msgid(ike, "record'n'send MOBIKE probe request");
+	v2_msgid_start(ike, NULL/*md*/);
+	stf_status e = record_v2_informational_request("mobike informational request",
+						       ike, &ike->sa/*sender*/,
+						       add_mobike_payloads);
+	if (e != STF_OK) {
+		return;
+	}
+	v2_msgid_finish(ike, NULL/*md*/);
+	send_recorded_v2_message(ike, "mobike informational request",
+				 MESSAGE_REQUEST);
+}
+#endif
+
+#ifdef KERNEL_XFRM
+static void initiate_mobike_probe(struct ike_sa *ike,
+				  struct iface_endpoint *new_iface,
+				  ip_address new_nexthop)
 {
 	/*
 	 * caveat: could a CP initiator find an address received
 	 * from the pool as a new source address?
 	 */
 
-	ipstr_buf s, g;
-	endpoint_buf b;
-	dbg(PRI_SO" MOBIKE new source address %s remote %s and gateway %s",
+	address_buf g;
+	endpoint_buf lb, rb;
+	dbg(PRI_SO" MOBIKE new local %s remote %s and gateway %s",
 	    ike->sa.st_serialno,
-	    str_address(&this->addr, &s),
-	    str_endpoint(&ike->sa.st_remote_endpoint, &b),
-	    str_address(&this->nexthop, &g));
+	    str_endpoint(&new_iface->local_endpoint, &lb),
+	    str_endpoint(&ike->sa.st_remote_endpoint, &rb),
+	    str_address(&new_nexthop, &g));
 	/*
-	 * XXX: why not local_endpoint or is this redundant?
-	 *
 	 * The interface changed (new address in .address) but
 	 * continue to use the existing port.
 	 */
-	ip_port port = endpoint_port(ike->sa.st_interface->local_endpoint);
-	ike->sa.st_mobike_local_endpoint = endpoint_from_address_protocol_port(this->addr,
-									       ike->sa.st_interface->io->protocol,
-									       port);
-	ike->sa.st_mobike_host_nexthop = this->nexthop; /* for updown, after xfrm migration */
+	ike->sa.st_mobike_local_endpoint = new_iface->local_endpoint;
+	ike->sa.st_mobike_host_nexthop = new_nexthop; /* for updown, after xfrm migration */
+
 	/* notice how it gets set back below */
 	struct iface_endpoint *old_iface = ike->sa.st_interface;
 	ike->sa.st_interface = new_iface; /* tmp-new */
 
-	stf_status e = record_v2_informational_request("mobike informational request",
-						       ike, &ike->sa/*sender*/,
-						       add_mobike_payloads);
-	if (e == STF_OK) {
-		send_recorded_v2_message(ike, "mobike informational request",
-					 MESSAGE_REQUEST);
-		/*
-		 * XXX: record 'n' send violates the RFC.  This code should
-		 * instead let success_v2_state_transition() deal with things.
-		 */
-		dbg_v2_msgid(ike,
-			     "XXX: in %s() hacking around record'n'send bypassing send queue",
-			     __func__);
-		v2_msgid_update_sent(ike, NULL/*no MD; new exchange*/, MESSAGE_REQUEST);
-	}
+	record_n_send_v2_mobike_probe_request(ike);
+
 	ike->sa.st_interface = old_iface; /* restore-old */
 }
 #endif
 
 #ifdef KERNEL_XFRM
-static struct iface_endpoint *ikev2_src_iface(struct ike_sa *ike,
-					      struct starter_end *this)
+static struct iface_endpoint *find_new_iface(struct ike_sa *ike, ip_address new_src_addr)
 {
-	/* success found a new source address */
+	/*
+	 * Merge the old port in with the new interface address, and
+	 * then look at up.
+	 */
 	ip_port port = endpoint_port(ike->sa.st_interface->local_endpoint);
-	ip_endpoint local_endpoint = endpoint_from_address_protocol_port(this->addr,
+	ip_endpoint local_endpoint = endpoint_from_address_protocol_port(new_src_addr,
 									 ike->sa.st_interface->io->protocol,
 									 port);
 	struct iface_endpoint *iface = find_iface_endpoint_by_local_endpoint(local_endpoint);
@@ -396,6 +434,12 @@ void ikev2_addr_change(struct state *ike_sa)
 	}
 
 	if (!mobike_check_established(ike)) {
+		return;
+	}
+
+	if (kernel_ops->migrate_ipsec_sa == NULL) {
+		llog_sa(RC_LOG, ike, "%s does not support MOBIKE",
+			kernel_ops->interface_name);
 		return;
 	}
 
@@ -460,9 +504,9 @@ void ikev2_addr_change(struct state *ike_sa)
 
 		case RESOLVE_SUCCESS:
 		{
-			struct iface_endpoint *iface = ikev2_src_iface(ike, &this);
+			struct iface_endpoint *iface = find_new_iface(ike, this.addr);
 			if (iface != NULL)
-				initiate_mobike_probe(ike, &this, iface);
+				initiate_mobike_probe(ike, iface, this.nexthop);
 			break;
 		}
 
@@ -482,10 +526,6 @@ void ikev2_addr_change(struct state *ike_sa)
 		}
 		break;
 	}
-
-#else /* !defined(KERNEL_XFRM) */
-
-	llog_sa(RC_LOG, ike, "without NETKEY we cannot ikev2_addr_change()");
 
 #endif
 }
