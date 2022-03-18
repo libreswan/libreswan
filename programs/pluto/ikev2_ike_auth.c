@@ -221,10 +221,13 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 			return initiate_v2_IKE_AUTH_request_signature_continue(ike, md, NULL/*auth_sig*/);
 
 		default:
-			log_state(RC_LOG, &ike->sa,
-				  "authentication method %s not supported",
-				  enum_name(&ikev2_auth_names, auth_method));
+		{
+			enum_buf eb;
+			llog_sa(RC_LOG, ike,
+				"authentication method %s not supported",
+				str_enum(&ikev2_auth_method_names, auth_method, &eb));
 			return STF_FATAL;
+		}
 		}
 	}
 }
@@ -1001,10 +1004,13 @@ stf_status generate_v2_responder_auth(struct ike_sa *ike, struct msg_digest *md,
 			return auth_cb(ike, md, NULL/*auth_sig*/);
 
 		default:
-			log_state(RC_LOG, &ike->sa,
-				  "authentication method %s not supported",
-				  enum_name(&ikev2_auth_names, auth_method));
+		{
+			enum_buf eb;
+			llog_sa(RC_LOG, ike,
+				"authentication method %s not supported",
+				str_enum(&ikev2_auth_method_names, auth_method, &eb));
 			return STF_FATAL;
+		}
 		}
 	}
 }

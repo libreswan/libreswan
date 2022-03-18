@@ -1366,23 +1366,22 @@ enum ikev2_cp_type {
 };
 
 /*
- * extern enum_names ikev2_auth_names;
  * https://www.iana.nl/assignments/ikev2-parameters/ikev2-parameters.xhtml
  * IKEv2 Authentication Method
  */
 
 enum ikev2_auth_method {
 	IKEv2_AUTH_RESERVED = 0,
-	IKEv2_AUTH_RSA = 1,
-	IKEv2_AUTH_PSK = 2,
-	IKEv2_AUTH_DSA = 3,
+	IKEv2_AUTH_RSA = 1, /* RSA_DIGITAL_SIGNATURE */
+	IKEv2_AUTH_PSK = 2, /* SHARED_KEY_MAC */
+	IKEv2_AUTH_DSS_DIGITAL_SIGNATURE = 3,
 	/* 4 - 8 unassigned */
-	IKEv2_AUTH_P256 = 9, /* RFC 4754 */
-	IKEv2_AUTH_P384 = 10, /* RFC 4754 */
-	IKEv2_AUTH_P521 = 11, /* RFC 4754 */
-	IKEv2_AUTH_GSPM = 12, /* RFC 6467 */
-	IKEv2_AUTH_NULL = 13, /* draft-ietf-ipsecme-ikev2-null-auth */
-	IKEv2_AUTH_DIGSIG = 14, /* RFC 7427 */
+	IKEv2_AUTH_ECDSA_SHA2_256_P256 = 9, /* RFC 4754 */
+	IKEv2_AUTH_ECDSA_SHA2_384_P384 = 10, /* RFC 4754 */
+	IKEv2_AUTH_ECDSA_SHA2_512_P521 = 11, /* RFC 4754 */
+	IKEv2_AUTH_GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD = 12, /* RFC 6467 */
+	IKEv2_AUTH_NULL = 13, /* NULL_AUTHENTICATION draft-ietf-ipsecme-ikev2-null-auth */
+	IKEv2_AUTH_DIGSIG = 14, /* DIGITAL_SIGNATURE RFC 7427 */
 	/* 15 - 200 unassigned */
 	/* 201 - 255 private use */
 };

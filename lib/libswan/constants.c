@@ -1499,29 +1499,27 @@ enum_names ikev2_cp_type_names = {
 };
 
 /* ikev2 auth methods */
-static const char *const ikev2_auth_name[] = {
-	"IKEv2_AUTH_RESERVED", /* 0 */
-	"IKEv2_AUTH_RSA", /* 1 */
-	"IKEv2_AUTH_SHARED",
-	"IKEv2_AUTH_DSA(UNUSED)",
-	"IKEv2_AUTH_UNUSED_4",
-	"IKEv2_AUTH_UNUSED_5",
-	"IKEv2_AUTH_UNUSED_6",
-	"IKEv2_AUTH_UNUSED_7",
-	"IKEv2_AUTH_UNUSED_8",
-	"IKEv2_AUTH_ECDSA_P256",
-	"IKEv2_AUTH_ECDSA_P384",
-	"IKEv2_AUTH_ECDSA_P521",
-	"IKEv2_AUTH_GSPM", /* 12 - RFC 6467 */
-	"IKEv2_AUTH_NULL",
-	"IKEv2_AUTH_DIGSIG", /* 14 - RFC 7427 */
+static const char *const ikev2_auth_method_name[] = {
+#define E(S) [S] = #S
+	E(IKEv2_AUTH_RESERVED),
+	E(IKEv2_AUTH_RSA),
+	[IKEv2_AUTH_PSK] = "IKEv2_AUTH_SHARED",
+	E(IKEv2_AUTH_DSS_DIGITAL_SIGNATURE),
+	/* 4 - 8 unassigned */
+	E(IKEv2_AUTH_ECDSA_SHA2_256_P256),
+	E(IKEv2_AUTH_ECDSA_SHA2_384_P384),
+	E(IKEv2_AUTH_ECDSA_SHA2_512_P521),
+	E(IKEv2_AUTH_GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD), /* 12 - RFC 6467 */
+	E(IKEv2_AUTH_NULL),
+	E(IKEv2_AUTH_DIGSIG), /* 14 - RFC 7427 */
+#undef E
 };
 
-enum_names ikev2_auth_names = {
+enum_names ikev2_auth_method_names = {
 	IKEv2_AUTH_RESERVED,
 	IKEv2_AUTH_DIGSIG,
-	ARRAY_REF(ikev2_auth_name),
-	NULL, /* prefix */
+	ARRAY_REF(ikev2_auth_method_name),
+	"IKEv2_AUTH_", /* prefix */
 	NULL
 };
 
@@ -2728,7 +2726,7 @@ static const enum_names *en_checklist[] = {
 	&oakley_auth_names,
 	&ikev2_cp_attribute_type_names,
 	&ikev2_cp_type_names,
-	&ikev2_auth_names,
+	&ikev2_auth_method_names,
 	&oakley_group_names,
 	&oakley_group_type_names,
 	&v1_notification_names,

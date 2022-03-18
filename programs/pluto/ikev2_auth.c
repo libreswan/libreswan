@@ -472,7 +472,10 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 
 	}
 	default:
+	{
+		enum_buf eb;
 		return diag("authentication failed: method %s not supported",
-			    enum_name(&ikev2_auth_names, recv_auth));
+			    str_enum(&ikev2_auth_method_names, recv_auth, &eb));
+	}
 	}
 }

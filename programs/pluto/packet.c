@@ -1233,7 +1233,7 @@ static field_desc ikev2_auth_fields[] = {
 	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
 	{ ft_lset, 8 / BITS_PER_BYTE, "flags", &payload_flag_names },
 	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "auth method", &ikev2_auth_names },
+	{ ft_enum, 8 / BITS_PER_BYTE, "auth method", &ikev2_auth_method_names },
 	{ ft_zig, 24 / BITS_PER_BYTE, "reserved", NULL },
 	{ ft_end,  0, NULL, NULL }
 };

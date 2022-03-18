@@ -260,7 +260,7 @@ bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
 		if (atype != IKEv2_AUTH_RESERVED && !(atype == IKEv2_AUTH_RSA ||
 							atype == IKEv2_AUTH_DIGSIG)) {
 			err1 = " initiator IKEv2 Auth Method mismatched ";
-			err2 = enum_name(&ikev2_auth_names, atype);
+			err2 = str_enum(&ikev2_auth_method_names, atype, &eb2);
 		}
 
 		if (id.kind != ID_FQDN &&

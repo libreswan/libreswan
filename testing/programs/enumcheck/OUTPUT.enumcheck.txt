@@ -3281,93 +3281,72 @@ IETF registry enum_names:
          jam_enum 0: IKEv2_AUTH_RESERVED OK
          search IKEv2_AUTH_RESERVED: OK
          match IKEv2_AUTH_RESERVED: OK
-         short_name 0: IKEv2_AUTH_RESERVED OK
-         jam_enum_short 0: IKEv2_AUTH_RESERVED OK
+         short_name 0: RESERVED OK
+         jam_enum_short 0: RESERVED OK
+         match RESERVED [short]: OK
     1 -> IKEv2_AUTH_RSA
          jam_enum 1: IKEv2_AUTH_RSA OK
          search IKEv2_AUTH_RSA: OK
          match IKEv2_AUTH_RSA: OK
-         short_name 1: IKEv2_AUTH_RSA OK
-         jam_enum_short 1: IKEv2_AUTH_RSA OK
+         short_name 1: RSA OK
+         jam_enum_short 1: RSA OK
+         match RSA [short]: OK
     2 -> IKEv2_AUTH_SHARED
          jam_enum 2: IKEv2_AUTH_SHARED OK
          search IKEv2_AUTH_SHARED: OK
          match IKEv2_AUTH_SHARED: OK
-         short_name 2: IKEv2_AUTH_SHARED OK
-         jam_enum_short 2: IKEv2_AUTH_SHARED OK
-    3 -> IKEv2_AUTH_DSA(UNUSED)
-         jam_enum 3: IKEv2_AUTH_DSA(UNUSED) OK
-         search IKEv2_AUTH_DSA(UNUSED): OK
-         match IKEv2_AUTH_DSA(UNUSED): OK
-         match IKEv2_AUTH_DSA [trunc]: OK
-         short_name 3: IKEv2_AUTH_DSA(UNUSED) OK
-         jam_enum_short 3: IKEv2_AUTH_DSA(UNUSED) OK
-    4 -> IKEv2_AUTH_UNUSED_4
-         jam_enum 4: IKEv2_AUTH_UNUSED_4 OK
-         search IKEv2_AUTH_UNUSED_4: OK
-         match IKEv2_AUTH_UNUSED_4: OK
-         short_name 4: IKEv2_AUTH_UNUSED_4 OK
-         jam_enum_short 4: IKEv2_AUTH_UNUSED_4 OK
-    5 -> IKEv2_AUTH_UNUSED_5
-         jam_enum 5: IKEv2_AUTH_UNUSED_5 OK
-         search IKEv2_AUTH_UNUSED_5: OK
-         match IKEv2_AUTH_UNUSED_5: OK
-         short_name 5: IKEv2_AUTH_UNUSED_5 OK
-         jam_enum_short 5: IKEv2_AUTH_UNUSED_5 OK
-    6 -> IKEv2_AUTH_UNUSED_6
-         jam_enum 6: IKEv2_AUTH_UNUSED_6 OK
-         search IKEv2_AUTH_UNUSED_6: OK
-         match IKEv2_AUTH_UNUSED_6: OK
-         short_name 6: IKEv2_AUTH_UNUSED_6 OK
-         jam_enum_short 6: IKEv2_AUTH_UNUSED_6 OK
-    7 -> IKEv2_AUTH_UNUSED_7
-         jam_enum 7: IKEv2_AUTH_UNUSED_7 OK
-         search IKEv2_AUTH_UNUSED_7: OK
-         match IKEv2_AUTH_UNUSED_7: OK
-         short_name 7: IKEv2_AUTH_UNUSED_7 OK
-         jam_enum_short 7: IKEv2_AUTH_UNUSED_7 OK
-    8 -> IKEv2_AUTH_UNUSED_8
-         jam_enum 8: IKEv2_AUTH_UNUSED_8 OK
-         search IKEv2_AUTH_UNUSED_8: OK
-         match IKEv2_AUTH_UNUSED_8: OK
-         short_name 8: IKEv2_AUTH_UNUSED_8 OK
-         jam_enum_short 8: IKEv2_AUTH_UNUSED_8 OK
-    9 -> IKEv2_AUTH_ECDSA_P256
-         jam_enum 9: IKEv2_AUTH_ECDSA_P256 OK
-         search IKEv2_AUTH_ECDSA_P256: OK
-         match IKEv2_AUTH_ECDSA_P256: OK
-         short_name 9: IKEv2_AUTH_ECDSA_P256 OK
-         jam_enum_short 9: IKEv2_AUTH_ECDSA_P256 OK
-   10 -> IKEv2_AUTH_ECDSA_P384
-         jam_enum 10: IKEv2_AUTH_ECDSA_P384 OK
-         search IKEv2_AUTH_ECDSA_P384: OK
-         match IKEv2_AUTH_ECDSA_P384: OK
-         short_name 10: IKEv2_AUTH_ECDSA_P384 OK
-         jam_enum_short 10: IKEv2_AUTH_ECDSA_P384 OK
-   11 -> IKEv2_AUTH_ECDSA_P521
-         jam_enum 11: IKEv2_AUTH_ECDSA_P521 OK
-         search IKEv2_AUTH_ECDSA_P521: OK
-         match IKEv2_AUTH_ECDSA_P521: OK
-         short_name 11: IKEv2_AUTH_ECDSA_P521 OK
-         jam_enum_short 11: IKEv2_AUTH_ECDSA_P521 OK
-   12 -> IKEv2_AUTH_GSPM
-         jam_enum 12: IKEv2_AUTH_GSPM OK
-         search IKEv2_AUTH_GSPM: OK
-         match IKEv2_AUTH_GSPM: OK
-         short_name 12: IKEv2_AUTH_GSPM OK
-         jam_enum_short 12: IKEv2_AUTH_GSPM OK
+         short_name 2: SHARED OK
+         jam_enum_short 2: SHARED OK
+         match SHARED [short]: OK
+    3 -> IKEv2_AUTH_DSS_DIGITAL_SIGNATURE
+         jam_enum 3: IKEv2_AUTH_DSS_DIGITAL_SIGNATURE OK
+         search IKEv2_AUTH_DSS_DIGITAL_SIGNATURE: OK
+         match IKEv2_AUTH_DSS_DIGITAL_SIGNATURE: OK
+         short_name 3: DSS_DIGITAL_SIGNATURE OK
+         jam_enum_short 3: DSS_DIGITAL_SIGNATURE OK
+         match DSS_DIGITAL_SIGNATURE [short]: OK
+    9 -> IKEv2_AUTH_ECDSA_SHA2_256_P256
+         jam_enum 9: IKEv2_AUTH_ECDSA_SHA2_256_P256 OK
+         search IKEv2_AUTH_ECDSA_SHA2_256_P256: OK
+         match IKEv2_AUTH_ECDSA_SHA2_256_P256: OK
+         short_name 9: ECDSA_SHA2_256_P256 OK
+         jam_enum_short 9: ECDSA_SHA2_256_P256 OK
+         match ECDSA_SHA2_256_P256 [short]: OK
+   10 -> IKEv2_AUTH_ECDSA_SHA2_384_P384
+         jam_enum 10: IKEv2_AUTH_ECDSA_SHA2_384_P384 OK
+         search IKEv2_AUTH_ECDSA_SHA2_384_P384: OK
+         match IKEv2_AUTH_ECDSA_SHA2_384_P384: OK
+         short_name 10: ECDSA_SHA2_384_P384 OK
+         jam_enum_short 10: ECDSA_SHA2_384_P384 OK
+         match ECDSA_SHA2_384_P384 [short]: OK
+   11 -> IKEv2_AUTH_ECDSA_SHA2_512_P521
+         jam_enum 11: IKEv2_AUTH_ECDSA_SHA2_512_P521 OK
+         search IKEv2_AUTH_ECDSA_SHA2_512_P521: OK
+         match IKEv2_AUTH_ECDSA_SHA2_512_P521: OK
+         short_name 11: ECDSA_SHA2_512_P521 OK
+         jam_enum_short 11: ECDSA_SHA2_512_P521 OK
+         match ECDSA_SHA2_512_P521 [short]: OK
+   12 -> IKEv2_AUTH_GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD
+         jam_enum 12: IKEv2_AUTH_GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD OK
+         search IKEv2_AUTH_GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD: OK
+         match IKEv2_AUTH_GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD: OK
+         short_name 12: GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD OK
+         jam_enum_short 12: GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD OK
+         match GENERIC_SECURE_PASSWORD_AUTHENTICATION_METHOD [short]: OK
    13 -> IKEv2_AUTH_NULL
          jam_enum 13: IKEv2_AUTH_NULL OK
          search IKEv2_AUTH_NULL: OK
          match IKEv2_AUTH_NULL: OK
-         short_name 13: IKEv2_AUTH_NULL OK
-         jam_enum_short 13: IKEv2_AUTH_NULL OK
+         short_name 13: NULL OK
+         jam_enum_short 13: NULL OK
+         match NULL [short]: OK
    14 -> IKEv2_AUTH_DIGSIG
          jam_enum 14: IKEv2_AUTH_DIGSIG OK
          search IKEv2_AUTH_DIGSIG: OK
          match IKEv2_AUTH_DIGSIG: OK
-         short_name 14: IKEv2_AUTH_DIGSIG OK
-         jam_enum_short 14: IKEv2_AUTH_DIGSIG OK
+         short_name 14: DIGSIG OK
+         jam_enum_short 14: DIGSIG OK
+         match DIGSIG [short]: OK
 
   ikev2_trans_type_encr_names:
     1 -> DES_IV64(UNUSED)

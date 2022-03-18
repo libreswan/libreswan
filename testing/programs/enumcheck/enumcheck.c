@@ -330,7 +330,7 @@ int main(int argc UNUSED, char *argv[])
 	test_enums("ikev2_proposal_protocol_id_names", &ikev2_proposal_protocol_id_names);
 	test_enums("ikev2_delete_protocol_id_names", &ikev2_delete_protocol_id_names);
 	test_enums("ikev2_notify_protocol_id_names", &ikev2_notify_protocol_id_names);
-	test_enums("ikev2_auth_names", &ikev2_auth_names);
+	test_enums("ikev2_auth_names", &ikev2_auth_method_names);
 	test_enum_range("ikev2_trans_type_encr_names", &ikev2_trans_type_encr_names, 0, 256);
 	test_enums("ikev2_trans_type_prf_names", &ikev2_trans_type_prf_names);
 	test_enums("ikev2_trans_type_integ_names", &ikev2_trans_type_integ_names);
