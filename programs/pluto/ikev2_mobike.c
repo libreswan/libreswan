@@ -49,13 +49,13 @@ static bool add_mobike_response_payloads(shunk_t cookie2, struct msg_digest *md,
 					 struct pbs_out *pbs, struct ike_sa *ike);
 
 /* can an established state initiate or respond to mobike probe */
-static bool mobike_check_established(struct state *st)
+static bool mobike_check_established(struct ike_sa *ike)
 {
-	struct connection *c = st->st_connection;
+	struct connection *c = ike->sa.st_connection;
 	bool ret = (LIN(POLICY_MOBIKE, c->policy) &&
-		    st->st_ike_seen_v2n_mobike_supported &&
-		    st->st_ike_sent_v2n_mobike_supported &&
-		    IS_IKE_SA_ESTABLISHED(st));
+		    ike->sa.st_ike_seen_v2n_mobike_supported &&
+		    ike->sa.st_ike_sent_v2n_mobike_supported &&
+		    IS_IKE_SA_ESTABLISHED(&ike->sa));
 
 	return ret;
 }
@@ -63,7 +63,7 @@ static bool mobike_check_established(struct state *st)
 bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 				 struct pbs_out *pbs)
 {
-	if (!mobike_check_established(&ike->sa)) {
+	if (!mobike_check_established(ike)) {
 		return true;
 	}
 
@@ -147,7 +147,7 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 
 void process_v2N_mobike_responses(struct ike_sa *ike, struct msg_digest *md)
 {
-	bool may_mobike = mobike_check_established(&ike->sa);
+	bool may_mobike = mobike_check_established(ike);
 	if (!may_mobike) {
 		dbg("MOBIKE response: not updating IPsec SA");
 		return;
@@ -179,7 +179,7 @@ void process_v2N_mobike_responses(struct ike_sa *ike, struct msg_digest *md)
 
 void mobike_possibly_send_recorded(struct ike_sa *ike, struct msg_digest *md)
 {
-	if (mobike_check_established(&ike->sa) &&
+	if (mobike_check_established(ike) &&
 	    !LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST) &&
 	    !endpoint_eq_endpoint(md->sender, ike->sa.st_remote_endpoint)) {
 		/* swap out the remote-endpoint; restored below */
@@ -213,7 +213,7 @@ bool add_mobike_response_payloads(shunk_t cookie2, struct msg_digest *md,
 }
 
 #ifdef KERNEL_XFRM
-static payload_emitter_fn add_mobike_payloads;
+static payload_emitter_fn add_mobike_payloads; /* type check */
 static bool add_mobike_payloads(struct state *st, pb_stream *pbs)
 {
 	ip_endpoint local_endpoint = st->st_mobike_local_endpoint;
@@ -228,26 +228,35 @@ void record_newaddr(ip_address *ip, char *a_type)
 {
 	address_buf ip_str;
 	dbg("XFRM RTM_NEWADDR %s %s", str_address(ip, &ip_str), a_type);
-	struct state_filter sf = { .where = HERE, };
+	struct state_filter sf = {
+		.ike_version = IKEv2,
+		.where = HERE,
+	};
 	while (next_state_new2old(&sf)) {
-		struct state *st = sf.st;
 
-		if (!mobike_check_established(st))
+		if (!IS_IKE_SA(sf.st)) {
 			continue;
+		}
 
-		if (address_is_specified(st->st_deleted_local_addr)) {
+		struct ike_sa *ike = pexpect_ike_sa(sf.st);
+		if (!mobike_check_established(ike)) {
+			continue;
+		}
+
+		if (address_is_specified(ike->sa.st_deleted_local_addr)) {
 			/*
 			 * A work around for delay between new address
 			 * and new route A better fix would be listen
 			 * to RTM_NEWROUTE, RTM_DELROUTE
 			 */
-			if (st->st_v2_addr_change_event == NULL) {
+			if (ike->sa.st_v2_addr_change_event == NULL) {
 				event_schedule(EVENT_v2_ADDR_CHANGE,
-					       RTM_NEWADDR_ROUTE_DELAY, st);
+					       RTM_NEWADDR_ROUTE_DELAY,
+					       &ike->sa);
 			} else {
 				address_buf b;
-				dbg("#%lu MOBIKE ignore address %s change pending previous",
-				    st->st_serialno, str_address_sensitive(ip, &b));
+				dbg(PRI_SO" MOBIKE ignore address %s change pending previous",
+				    ike->sa.st_serialno, str_address_sensitive(ip, &b));
 			}
 		}
 	}
@@ -257,48 +266,57 @@ void record_deladdr(ip_address *ip, char *a_type)
 {
 	address_buf ip_str;
 	dbg("XFRM RTM_DELADDR %s %s", str_address(ip, &ip_str), a_type);
-	struct state_filter sf = { .where = HERE, };
+	struct state_filter sf = {
+		.ike_version = IKEv2,
+		.where = HERE,
+	};
 	while (next_state_new2old(&sf)) {
-		struct state *st = sf.st;
 
-		if (!mobike_check_established(st))
+		if (!IS_IKE_SA(sf.st)) {
 			continue;
+		}
 
-		ip_address local_address = endpoint_address(st->st_interface->local_endpoint);
+		struct ike_sa *ike = pexpect_ike_sa(sf.st);
+
+		if (!mobike_check_established(ike)) {
+			continue;
+		}
+
+		ip_address local_address = endpoint_address(ike->sa.st_interface->local_endpoint);
 		/* ignore port */
 		if (!sameaddr(ip, &local_address)) {
 			continue;
 		}
 
-		ip_address ip_p = st->st_deleted_local_addr;
-		st->st_deleted_local_addr = local_address;
-		struct state *cst = state_by_serialno(st->st_connection->newest_ipsec_sa);
-		if (cst == NULL) {
-			llog_pexpect(st->st_logger, HERE, "newest Child SA "PRI_SO" lost",
-				     pri_so(st->st_connection->newest_ipsec_sa));
+		ip_address ip_p = ike->sa.st_deleted_local_addr;
+		ike->sa.st_deleted_local_addr = local_address;
+		struct child_sa *child = child_sa_by_serialno(ike->sa.st_connection->newest_ipsec_sa);
+		if (child == NULL) {
+			llog_pexpect(ike->sa.st_logger, HERE,
+				     "newest Child SA "PRI_SO" lost",
+				     pri_so(ike->sa.st_connection->newest_ipsec_sa));
 			continue;
 		}
 
-		migration_down(cst->st_connection, cst);
-		unroute_connection(st->st_connection);
+		migration_down(child);
+		unroute_connection(ike->sa.st_connection);
 
-		event_delete(EVENT_v2_LIVENESS, cst);
+		event_delete(EVENT_v2_LIVENESS, &child->sa);
 
-		if (st->st_v2_addr_change_event == NULL) {
-			event_schedule(EVENT_v2_ADDR_CHANGE, deltatime(0), st);
+		if (ike->sa.st_v2_addr_change_event == NULL) {
+			event_schedule(EVENT_v2_ADDR_CHANGE, deltatime(0), &ike->sa);
 		} else {
 			ipstr_buf o, n;
-			dbg("#%lu MOBIKE new RTM_DELADDR %s pending previous %s",
-			    st->st_serialno, ipstr(ip, &n), ipstr(&ip_p, &o));
+			dbg(PRI_SO" MOBIKE new RTM_DELADDR %s pending previous %s",
+			    ike->sa.st_serialno, ipstr(ip, &n), ipstr(&ip_p, &o));
 		}
 	}
 }
 
 #ifdef KERNEL_XFRM
-static void initiate_mobike_probe(struct state *st, struct starter_end *this,
+static void initiate_mobike_probe(struct ike_sa *ike, struct starter_end *this,
 				  struct iface_endpoint *new_iface)
 {
-	struct ike_sa *ike = ike_sa(st, HERE);
 	/*
 	 * caveat: could a CP initiator find an address received
 	 * from the pool as a new source address?
@@ -306,27 +324,28 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 
 	ipstr_buf s, g;
 	endpoint_buf b;
-	dbg("#%lu MOBIKE new source address %s remote %s and gateway %s",
-	    st->st_serialno, ipstr(&this->addr, &s),
-	    str_endpoint(&st->st_remote_endpoint, &b),
-	    ipstr(&this->nexthop, &g));
+	dbg(PRI_SO" MOBIKE new source address %s remote %s and gateway %s",
+	    ike->sa.st_serialno,
+	    str_address(&this->addr, &s),
+	    str_endpoint(&ike->sa.st_remote_endpoint, &b),
+	    str_address(&this->nexthop, &g));
 	/*
 	 * XXX: why not local_endpoint or is this redundant?
 	 *
 	 * The interface changed (new address in .address) but
 	 * continue to use the existing port.
 	 */
-	ip_port port = endpoint_port(st->st_interface->local_endpoint);
-	st->st_mobike_local_endpoint = endpoint_from_address_protocol_port(this->addr,
-									   st->st_interface->io->protocol,
-									   port);
-	st->st_mobike_host_nexthop = this->nexthop; /* for updown, after xfrm migration */
+	ip_port port = endpoint_port(ike->sa.st_interface->local_endpoint);
+	ike->sa.st_mobike_local_endpoint = endpoint_from_address_protocol_port(this->addr,
+									       ike->sa.st_interface->io->protocol,
+									       port);
+	ike->sa.st_mobike_host_nexthop = this->nexthop; /* for updown, after xfrm migration */
 	/* notice how it gets set back below */
-	struct iface_endpoint *old_iface = st->st_interface;
-	st->st_interface = new_iface; /* tmp-new */
+	struct iface_endpoint *old_iface = ike->sa.st_interface;
+	ike->sa.st_interface = new_iface; /* tmp-new */
 
 	stf_status e = record_v2_informational_request("mobike informational request",
-						       ike, st/*sender*/,
+						       ike, &ike->sa/*sender*/,
 						       add_mobike_payloads);
 	if (e == STF_OK) {
 		send_recorded_v2_message(ike, "mobike informational request",
@@ -340,25 +359,25 @@ static void initiate_mobike_probe(struct state *st, struct starter_end *this,
 			     __func__);
 		v2_msgid_update_sent(ike, NULL/*no MD; new exchange*/, MESSAGE_REQUEST);
 	}
-	st->st_interface = old_iface; /* restore-old */
+	ike->sa.st_interface = old_iface; /* restore-old */
 }
 #endif
 
 #ifdef KERNEL_XFRM
-static struct iface_endpoint *ikev2_src_iface(struct state *st,
+static struct iface_endpoint *ikev2_src_iface(struct ike_sa *ike,
 					      struct starter_end *this)
 {
 	/* success found a new source address */
-	ip_port port = endpoint_port(st->st_interface->local_endpoint);
+	ip_port port = endpoint_port(ike->sa.st_interface->local_endpoint);
 	ip_endpoint local_endpoint = endpoint_from_address_protocol_port(this->addr,
-									 st->st_interface->io->protocol,
+									 ike->sa.st_interface->io->protocol,
 									 port);
 	struct iface_endpoint *iface = find_iface_endpoint_by_local_endpoint(local_endpoint);
 	if (iface == NULL) {
 		endpoint_buf b;
-		dbg("#%lu no interface for %s try to initialize",
-		    st->st_serialno, str_endpoint(&local_endpoint, &b));
-		find_ifaces(false, st->st_logger);
+		dbg(PRI_SO" no interface for %s try to initialize",
+		    ike->sa.st_serialno, str_endpoint(&local_endpoint, &b));
+		find_ifaces(false, ike->sa.st_logger);
 		iface = find_iface_endpoint_by_local_endpoint(local_endpoint);
 		if (iface ==  NULL) {
 			return NULL;
@@ -369,10 +388,16 @@ static struct iface_endpoint *ikev2_src_iface(struct state *st,
 }
 #endif
 
-void ikev2_addr_change(struct state *st)
+void ikev2_addr_change(struct state *ike_sa)
 {
-	if (!mobike_check_established(st))
+	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
+	if (ike == NULL) {
 		return;
+	}
+
+	if (!mobike_check_established(ike)) {
+		return;
+	}
 
 #ifdef KERNEL_XFRM
 
@@ -381,13 +406,13 @@ void ikev2_addr_change(struct state *st)
 	struct starter_end this = {
 		.addrtype = KH_DEFAULTROUTE,
 		.nexttype = KH_DEFAULTROUTE,
-		.host_family = endpoint_type(&st->st_remote_endpoint),
+		.host_family = endpoint_type(&ike->sa.st_remote_endpoint),
 	};
 
 	struct starter_end that = {
 		.addrtype = KH_IPADDR,
-		.host_family = endpoint_type(&st->st_remote_endpoint),
-		.addr = endpoint_address(st->st_remote_endpoint),
+		.host_family = endpoint_type(&ike->sa.st_remote_endpoint),
+		.addr = endpoint_address(ike->sa.st_remote_endpoint),
 	};
 
 	/*
@@ -396,14 +421,14 @@ void ikev2_addr_change(struct state *st)
 	 */
 	lset_t verbose_rc_flags = DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY;
 	switch (resolve_defaultroute_one(&this, &that, verbose_rc_flags,
-					 st->st_logger)) {
+					 ike->sa.st_logger)) {
 
 	case RESOLVE_FAILURE:
 	{
 		/* keep this DEBUG, if a libreswan log, too many false +ve */
 		address_buf b;
-		dbg("#%lu no local gateway to reach %s",
-		    st->st_serialno, str_address(&that.addr, &b));
+		dbg(PRI_SO" no local gateway to reach %s",
+		    ike->sa.st_serialno, str_address(&that.addr, &b));
 		break;
 	}
 
@@ -413,30 +438,31 @@ void ikev2_addr_change(struct state *st)
 		/* ??? original code treated this as failure */
 		/* bad_case(0); */
 		address_buf b;
-		log_state(RC_LOG, st,
-			  "no local gateway to reach %s (unexpected SUCCESS from first resolve_defaultroute_one())",
-			  str_address(&that.addr, &b));
+		llog_sa(RC_LOG, ike,
+			"no local gateway to reach %s (unexpected SUCCESS from first resolve_defaultroute_one())",
+			str_address(&that.addr, &b));
 		break;
 	}
 
 	case RESOLVE_PLEASE_CALL_AGAIN: /* please call again: more to do */
 		switch (resolve_defaultroute_one(&this, &that, verbose_rc_flags,
-						 st->st_logger)) {
+						 ike->sa.st_logger)) {
 
 		case RESOLVE_FAILURE:
 		{
 			address_buf g, b;
-			log_state(RC_LOG, st, "no local source address to reach remote %s, local gateway %s",
-				  str_address_sensitive(&that.addr, &b),
-				  str_address(&this.nexthop, &g));
+			llog_sa(RC_LOG, ike,
+				"no local source address to reach remote %s, local gateway %s",
+				str_address_sensitive(&that.addr, &b),
+				str_address(&this.nexthop, &g));
 			break;
 		}
 
 		case RESOLVE_SUCCESS:
 		{
-			struct iface_endpoint *iface = ikev2_src_iface(st, &this);
+			struct iface_endpoint *iface = ikev2_src_iface(ike, &this);
 			if (iface != NULL)
-				initiate_mobike_probe(st, &this, iface);
+				initiate_mobike_probe(ike, &this, iface);
 			break;
 		}
 
@@ -446,9 +472,10 @@ void ikev2_addr_change(struct state *st)
 			/* ??? original code treated this as failure */
 			/* bad_case(1); */
 			address_buf g, b;
-			log_state(RC_LOG, st, "no local source address to reach remote %s, local gateway %s (unexpected TRY AGAIN from second resolve_defaultroute_one())",
-				  str_address_sensitive(&that.addr, &b),
-				  str_address(&this.nexthop, &g));
+			llog_sa(RC_LOG, ike,
+				"no local source address to reach remote %s, local gateway %s (unexpected TRY AGAIN from second resolve_defaultroute_one())",
+				str_address_sensitive(&that.addr, &b),
+				str_address(&this.nexthop, &g));
 			break;
 		}
 
@@ -458,7 +485,7 @@ void ikev2_addr_change(struct state *st)
 
 #else /* !defined(KERNEL_XFRM) */
 
-	log_state(RC_LOG, st, "without NETKEY we cannot ikev2_addr_change()");
+	llog_sa(RC_LOG, ike, "without NETKEY we cannot ikev2_addr_change()");
 
 #endif
 }

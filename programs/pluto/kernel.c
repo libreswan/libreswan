@@ -1356,20 +1356,22 @@ static bool sag_eroute(const struct state *st,
 				 st->st_logger);
 }
 
-void migration_up(struct connection *c,  struct state *st)
+void migration_up(struct child_sa *child)
 {
+	struct connection *c = child->sa.st_connection;
 	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 #ifdef IPSEC_CONNECTION_LIMIT
 		num_ipsec_eroute++;
 #endif
 		sr->routing = RT_ROUTED_TUNNEL; /* do now so route_owner won't find us */
-		do_command(c, sr, "up", st, st->st_logger);
-		do_command(c, sr, "route", st, st->st_logger);
+		do_command(c, sr, "up", &child->sa, child->sa.st_logger);
+		do_command(c, sr, "route", &child->sa, child->sa.st_logger);
 	}
 }
 
-void migration_down(struct connection *c,  struct state *st)
+void migration_down(struct child_sa *child)
 {
+	struct connection *c = child->sa.st_connection;
 	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		enum routing_t cr = sr->routing;
 
@@ -1382,14 +1384,13 @@ void migration_down(struct connection *c,  struct state *st)
 
 		/* only unroute if no other connection shares it */
 		if (routed(cr) && route_owner(c, sr, NULL, NULL, NULL) == NULL) {
-			do_command(c, sr, "down", st, st->st_logger);
-			st->st_mobike_del_src_ip = true;
-			do_command(c, sr, "unroute", st, st->st_logger);
-			st->st_mobike_del_src_ip = false;
+			do_command(c, sr, "down", &child->sa, child->sa.st_logger);
+			child->sa.st_mobike_del_src_ip = true;
+			do_command(c, sr, "unroute", &child->sa, child->sa.st_logger);
+			child->sa.st_mobike_del_src_ip = false;
 		}
 	}
 }
-
 
 /*
  * Delete any eroute for a connection and unroute it if route isn't
