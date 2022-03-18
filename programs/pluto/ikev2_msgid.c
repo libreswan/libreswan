@@ -297,7 +297,7 @@ static void v2_msgid_update_recv(struct ike_sa *ike, const struct msg_digest *md
 		 * get discarded as there is no receiving state.
 		 *
 		 * XXX: Unfortunately the record 'n' send code throws
-		 * a spanner in the works.  It calls update_send()
+		 * a spanner in the works.  It calls update_sent()
 		 * before update_recv() breaking the assumption that
 		 * WIP.INITIATOR is the old MSGID.
 		 */
@@ -358,7 +358,7 @@ static void v2_msgid_update_recv(struct ike_sa *ike, const struct msg_digest *md
 	dbg_msgids_update(update_received_story, receiving, msgid, ike, &old);
 }
 
-void v2_msgid_update_sent(struct ike_sa *ike, const struct msg_digest *md, enum message_role sending)
+static void v2_msgid_update_sent(struct ike_sa *ike, const struct msg_digest *md, enum message_role sending)
 {
 	struct v2_msgid_windows old = ike->sa.st_v2_msgid_windows;
 	struct v2_msgid_windows *new = &ike->sa.st_v2_msgid_windows;
@@ -382,7 +382,7 @@ void v2_msgid_update_sent(struct ike_sa *ike, const struct msg_digest *md, enum 
 		new->initiator.wip = msgid;
 #if 0
 		/*
-		 * XXX: The record 'n' send code calls update_send()
+		 * XXX: The record 'n' send code calls update_sent()
 		 * before update_recv() breaking WIP.INITIATOR's
 		 * expected sequence OLD-MSGID -> -1 -> NEW-MSGID.
 		 */

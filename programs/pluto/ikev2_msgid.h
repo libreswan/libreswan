@@ -97,8 +97,6 @@ void v2_msgid_start(struct ike_sa *ike, const struct msg_digest *md);
 void v2_msgid_cancel(struct ike_sa *ike, const struct msg_digest *md);
 void v2_msgid_finish(struct ike_sa *ike, const struct msg_digest *md);
 
-void v2_msgid_update_sent(struct ike_sa *ike, const struct msg_digest *md, enum message_role sending);
-
 /*
  * Handle multiple initiators trying to send simultaneously.
  *
