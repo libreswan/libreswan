@@ -165,8 +165,8 @@ west #
 000  
 west #
  ipsec whack --deletestate 1
-005 "westnet-eastnet-ipv4-psk-ikev2" #2: ESP traffic information: in=84B out=84B
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: intiating delete
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting state (STATE_V2_IKE_SA_DELETE) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  sleep 2
