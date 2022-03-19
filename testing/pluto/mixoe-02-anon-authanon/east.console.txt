@@ -33,7 +33,7 @@ initdone
 east #
  # Authentication should be AUTH_NULL
 east #
- hostname | grep nic > /dev/null || grep authenticated /tmp/pluto.log
+ grep '^[^|].*authenticated' /tmp/pluto.log
 "private-or-clear#192.1.3.0/24"[1] ...192.1.3.209 #1: responder established IKE SA; authenticated using authby=null and peer ID_IPV4_ADDR '192.1.3.209'
 east #
  

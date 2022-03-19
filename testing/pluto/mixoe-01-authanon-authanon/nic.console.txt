@@ -2,8 +2,4 @@ iptables -t nat -F
 nic #
  iptables -F
 nic #
- # Authentication should be RSA
-nic #
- hostname | grep nic > /dev/null || grep authenticated /tmp/pluto.log
-nic #
  
