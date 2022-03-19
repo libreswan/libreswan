@@ -359,6 +359,9 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 		log_raw(LOG_WARNING, "", buf);
 		break;
 	case WHACK_STREAM:
+		if (DBGP(DBG_BASE)) {
+			log_raw(LOG_DEBUG, "|] ", buf);
+		}
 		log_whacks(rc, logger, buf);
 		break;
 	case ERROR_STREAM:
