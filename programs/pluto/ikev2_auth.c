@@ -311,7 +311,8 @@ bool emit_v2_auth(struct ike_sa *ike,
  * auth succeed.  Caller needs to decide what response is appropriate.
  */
 
-static diag_t v2_authsig_and_log_using_pubkey(struct ike_sa *ike,
+static diag_t v2_authsig_and_log_using_pubkey(lset_t auth_policy,
+					      struct ike_sa *ike,
 					      const struct crypt_mac *idhash,
 					      const struct pbs_in *signature_pbs,
 					      const struct hash_desc *hash_algo,
@@ -319,14 +320,44 @@ static diag_t v2_authsig_and_log_using_pubkey(struct ike_sa *ike,
 {
 	statetime_t start = statetime_start(&ike->sa);
 
-	/* XXX: table lookup? */
+	struct connection *c = ike->sa.st_connection;
+
 	if (hash_algo->common.ikev2_alg_id < 0) {
 		return diag("authentication failed: unknown or unsupported hash algorithm");
 	}
 
+	/*
+	 * The field c->config->sighash_policy contains values
+	 * intended for Digital Signature method.  Since that method
+	 * never allows SHA1, that bit is never set in in
+	 * .sighash_policy.
+	 *
+	 * Hence the hack to allow PKCS#1 1.5 RSA + SHA1 which can
+	 * only be for legacy RSA_DIGITAL_SIGNATURE.
+	 *
+	 * XXX: suspect adding that bit and then using .sighash_policy
+	 * to determine if SHA1 is allowed at all would be cleaner.
+	 */
+
+	lset_t hash_bit = LELEM(hash_algo->common.ikev2_alg_id);
+	if (auth_policy & POLICY_RSASIG_v1_5 &&
+	    hash_algo == &ike_alg_hash_sha1) {
+		pexpect(!(c->config->sighash_policy & hash_bit));
+		dbg("skipping sighash check as PKCS#1 1.5 RSA + SHA1");
+	} else if (!(c->config->sighash_policy & hash_bit)) {
+		return diag("authentication failed: peer authentication requires hash algorithm %s",
+			    hash_algo->common.fqn);
+	}
+
+	if ((c->policy & auth_policy) != auth_policy) {
+		policy_buf pb;
+		return diag("authentication failed: peer authentication requires policy %s",
+			    str_policy(auth_policy, &pb));
+	}
+
 	shunk_t signature = pbs_in_left_as_shunk(signature_pbs);
 	if (signature.len == 0) {
-		return diag("authentication failed: rejecting received zero-length RSA signature");
+		return diag("authentication failed: rejecting received zero-length signature");
 	}
 
 	struct crypt_mac hash = v2_calculate_sighash(ike, idhash, hash_algo,
@@ -348,58 +379,30 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 	 * recv_auth appearing in all case branches be merged?
 	 */
 
-	if (impair.force_v2_auth_method != 0 &&
-	    recv_auth != impair.force_v2_auth_method) {
-		enum_buf ab, bb;
-		return diag("IMPAIR: authentication failed: peer sent a %s authentication payload but we want %s",
-			    str_enum_short(&ikev2_auth_method_names, recv_auth, &ab),
-			    str_enum_short(&ikev2_auth_method_names, impair.force_v2_auth_method, &bb));
-	}
-
 	switch (recv_auth) {
 	case IKEv2_AUTH_RSA:
-		if (that_authby != AUTHBY_RSASIG) {
-			enum_buf eb;
-			return diag("authentication failed: peer attempted %s authentication but we want %s",
-				    str_enum(&ikev2_auth_method_names, recv_auth, &eb),
-				    enum_name(&keyword_authby_names, that_authby));
-		}
-		return v2_authsig_and_log_using_pubkey(ike, idhash_in,
+		return v2_authsig_and_log_using_pubkey(POLICY_RSASIG_v1_5,
+						       ike, idhash_in,
 						       signature_pbs,
 						       &ike_alg_hash_sha1,
 						       &pubkey_signer_pkcs1_1_5_rsa);
 
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
-		if (that_authby != AUTHBY_ECDSA) {
-			enum_buf eb;
-			return diag("authentication failed: peer attempted %s authentication but we want %s",
-				    str_enum(&ikev2_auth_method_names, recv_auth, &eb),
-				    enum_name(&keyword_authby_names, that_authby));
-		}
-		return v2_authsig_and_log_using_pubkey(ike, idhash_in,
+		return v2_authsig_and_log_using_pubkey(POLICY_ECDSA,
+						       ike, idhash_in,
 						       signature_pbs,
 						       &ike_alg_hash_sha2_256,
 						       &pubkey_signer_ecdsa/*_p256*/);
 
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
-		if (that_authby != AUTHBY_ECDSA) {
-			enum_buf eb;
-			return diag("authentication failed: peer attempted %s authentication but we want %s",
-				    str_enum(&ikev2_auth_method_names, recv_auth, &eb),
-				    enum_name(&keyword_authby_names, that_authby));
-		}
-		return v2_authsig_and_log_using_pubkey(ike, idhash_in,
+		return v2_authsig_and_log_using_pubkey(POLICY_ECDSA,
+						       ike, idhash_in,
 						       signature_pbs,
 						       &ike_alg_hash_sha2_384,
 						       &pubkey_signer_ecdsa/*_p384*/);
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
-		if (that_authby != AUTHBY_ECDSA) {
-			enum_buf eb;
-			return diag("authentication failed: peer attempted %s authentication but we want %s",
-				    str_enum(&ikev2_auth_method_names, recv_auth, &eb),
-				    enum_name(&keyword_authby_names, that_authby));
-		}
-		return v2_authsig_and_log_using_pubkey(ike, idhash_in,
+		return v2_authsig_and_log_using_pubkey(POLICY_ECDSA,
+						       ike, idhash_in,
 						       signature_pbs,
 						       &ike_alg_hash_sha2_512,
 						       &pubkey_signer_ecdsa/*_p521*/);
@@ -470,47 +473,54 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 			 * (we're looking at you PKCS#1 1.5 RSA).
 			 */
 			dbg("digsig:   trying %s", (*hash)->common.fqn);
-			FOR_EACH_THING(signer,
-				       &pubkey_signer_ecdsa,
-				       &pubkey_signer_rsassa_pss,
-				       &pubkey_signer_pkcs1_1_5_rsa) {
-				enum digital_signature_blob b = signer->digital_signature_blob;
+			static const struct {
+				const struct pubkey_signer *signer;
+				lset_t policy;
+			} signers[] = {
+				{ &pubkey_signer_ecdsa, POLICY_ECDSA, },
+				{ &pubkey_signer_rsassa_pss, POLICY_RSASIG, },
+				{ &pubkey_signer_pkcs1_1_5_rsa, POLICY_RSASIG_v1_5, }
+			};
+
+			FOR_EACH_ELEMENT(signers, s) {
+				enum digital_signature_blob b = s->signer->digital_signature_blob;
 				shunk_t blob = (*hash)->digital_signature_blob[b];
 				if (blob.len == 0) {
-					dbg("digsig:     skipping %s as no blob", signer->name);
+					dbg("digsig:     skipping %s as no blob",
+					    s->signer->name);
 					continue;
 				}
 				if (!hunk_starteq(signature, blob)) {
-					dbg("digsig:     skipping %s as blob does not match", signer->name);
+					dbg("digsig:     skipping %s as blob does not match",
+					    s->signer->name);
 					continue;
 				};
-				if (b == DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB &&
-				    !LIN(POLICY_RSASIG_v1_5, ike->sa.st_connection->policy)) {
-					dbg("digsig:     failing %s due to policy", signer->name);
-					return diag("authentication failed: PKCS#1 1.5 RSA signature is not acceptable due to policy");
-				}
 
 				dbg("digsig:    using signer %s and hash %s",
-				    signer->name, (*hash)->common.fqn);
+				    s->signer->name, (*hash)->common.fqn);
 
 				/* eat the blob */
 				diag_t d = pbs_in_raw(signature_pbs, NULL/*toss*/, blob.len,
 						      "skip ASN.1 blob for hash algo");
 				if (d != NULL) {
-					dbg("digsig:     failing %s due to I/O error: %s", signer->name, str_diag(d));
+					dbg("digsig:     failing %s due to I/O error: %s",
+					    s->signer->name, str_diag(d));
 					return d;
 				}
 
 				/*
 				 * Save the choice so that the
-				 * responder can use the same values.
+				 * responder can prefer the same
+				 * values.
 				 */
 				ike->sa.st_v2_digsig.hash = (*hash);
-				ike->sa.st_v2_digsig.signer = signer;
+				ike->sa.st_v2_digsig.signer = s->signer;
 
-				return v2_authsig_and_log_using_pubkey(ike, idhash_in,
+				return v2_authsig_and_log_using_pubkey(s->policy,
+								       ike, idhash_in,
 								       signature_pbs,
-								       (*hash), signer);
+								       (*hash),
+								       s->signer);
 			}
 		}
 
