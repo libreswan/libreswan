@@ -1443,7 +1443,6 @@ static bool load_conn(struct starter_conn *conn,
 			} else if (streq(val, "null")) {
 				conn->policy |= POLICY_AUTH_NULL;
 			} else if (streq(val, "rsa-sha1")) {
-				conn->policy |= POLICY_RSASIG;
 				conn->policy |= POLICY_RSASIG_v1_5;
 			} else if (streq(val, "rsa-sha2")) {
 				conn->policy |= POLICY_RSASIG;
