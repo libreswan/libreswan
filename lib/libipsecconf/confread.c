@@ -1404,16 +1404,18 @@ static bool load_conn(struct starter_conn *conn,
 		}
 	}
 
-	/* read in the authby string and translate to policy bits
-	 * this is the symmetric (left+right) version
-	 * there is also leftauthby/rightauthby version stored in 'end'
+	/*
+	 * Read in the authby= string and translate to policy bits.
+	 *
+	 * This is the symmetric (left+right) version.  There is also
+	 * leftauth=/rightauth= version stored in 'end'
 	 *
 	 * authby=secret|rsasig|null|never|rsa-HASH
 	 *
 	 * using authby=rsasig results in legacy POLICY_RSASIG_v1_5 and RSA_PSS
 	 *
-	 * HASH needs to use full syntax - eg sha2_256 and not sha256, to avoid
-	 * confusion with sha3_256
+	 * HASH needs to use full syntax - eg sha2_256 and not sha256,
+	 * to avoid confusion with sha3_256
 	 */
 	if (conn->strings_set[KSCF_AUTHBY]) {
 		char *val = strtok(conn->strings[KSCF_AUTHBY], ", ");
@@ -1449,6 +1451,7 @@ static bool load_conn(struct starter_conn *conn,
 				conn->sighash_policy |= POL_SIGHASH_SHA2_384;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
 			} else if (streq(val, "rsa-sha2_256")) {
+				conn->policy |= POLICY_RSASIG;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
 			} else if (streq(val, "rsa-sha2_384")) {
 				conn->policy |= POLICY_RSASIG;
