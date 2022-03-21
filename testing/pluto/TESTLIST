@@ -522,7 +522,7 @@ kvmplutotest	interop-ikev2-strongswan-46-responder-ecdsa-384		good
 kvmplutotest	ikev2-x509-ecdsa-01					good
 kvmplutotest	ikev2-x509-ecdsa-02-mismatch				good
 kvmplutotest	ikev2-x509-ecdsa-03-legacy-initiator			wip
-kvmplutotest	ikev2-x509-ecdsa-03-legacy-responder			good
+kvmplutotest	ikev2-x509-ecdsa-03-legacy-responder			wip
 
 # Opportunstic Encryption using AUTH NULL
 kvmplutotest	newoe-01-whack				good

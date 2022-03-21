@@ -18,6 +18,10 @@ east #
 east #
  ipsec whack --impair suppress-retransmits
 east #
+ ipsec whack --impair force-v2-auth-method:ecdsa_sha2_512_p521
+east #
+ ipsec whack --impair omit-v2n-signature-hash-algorithms
+east #
  echo "initdone"
 initdone
 east #
