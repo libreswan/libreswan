@@ -121,9 +121,6 @@ struct impair {
 
 	bool childless_ikev2_supported;
 
-	bool omit_hash_notify_request;
-	bool ignore_hash_notify_request;
-	bool ignore_hash_notify_response;
 	enum impair_v2_transform v2_proposal_integ;
 	enum impair_v2_transform v2_proposal_dh;
 	unsigned ikev2_add_ike_transform;
@@ -154,6 +151,9 @@ struct impair {
 	bool unknown_v2_payload_critical;
 
 	unsigned force_v2_auth_method;
+
+	bool ignore_v2N_SIGNATURE_HASH_ALGORITHMS;
+	bool omit_v2N_SIGNATURE_HASH_ALGORITHMS;
 
 	bool omit_v2_ike_auth_child;
 	bool ignore_v2_ike_auth_child;

@@ -756,17 +756,15 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	}
 
 	/* Send SIGNATURE_HASH_ALGORITHMS Notify payload */
-	if (!impair.omit_hash_notify_request) {
-		if (((c->policy & POLICY_RSASIG) ||
-		     (c->policy & POLICY_RSASIG_v1_5) ||
-		     (c->policy & POLICY_ECDSA)) &&
-		    (c->config->sighash_policy != LEMPTY)) {
-			if (!emit_v2N_signature_hash_algorithms(c->config->sighash_policy, request.pbs))
-				return false;
-		}
-	} else {
+	if (impair.omit_v2N_SIGNATURE_HASH_ALGORITHMS) {
 		log_state(RC_LOG, &ike->sa,
-			  "Impair: Skipping the Signature hash notify in IKE_SA_INIT Request");
+			  "IMPAIR: omitting the SIGNATURE_HASH_ALGORITHM notification in IKE_SA_INIT request");
+	} else if (((c->policy & POLICY_RSASIG) ||
+		    (c->policy & POLICY_RSASIG_v1_5) ||
+		    (c->policy & POLICY_ECDSA))
+		   && (c->config->sighash_policy != LEMPTY)) {
+		if (!emit_v2N_signature_hash_algorithms(c->config->sighash_policy, request.pbs))
+			return false;
 	}
 
 	/* Send NAT-T Notify payloads */
@@ -937,20 +935,24 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	}
 
 	if (md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS] != NULL) {
-		if (impair.ignore_hash_notify_response) {
-			llog_sa(RC_LOG, ike, "IMPAIR: ignoring the hash notify in IKE_SA_INIT request");
-		} else if (!negotiate_hash_algo_from_notification(&md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS]->pbs, ike)) {
-			record_v2N_response(ike->sa.st_logger, ike, md,
-					    v2N_INVALID_SYNTAX, NULL, UNENCRYPTED_PAYLOAD);
-			/*
-			 * STF_FATAL will send the recorded message
-			 * and then kill the IKE SA.  Should it
-			 * instead zombify the IKE SA so that
-			 * retransmits get a response?
-			 */
-			return STF_FATAL;
+		if (impair.ignore_v2N_SIGNATURE_HASH_ALGORITHMS) {
+			llog_sa(RC_LOG, ike,
+				"IMPAIR: ignoring SIGNATURE_HASH_ALGORITHMS notify in IKE_SA_INIT request");
+		} else {
+			if (!negotiate_hash_algo_from_notification(&md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS]->pbs, ike)) {
+				record_v2N_response(ike->sa.st_logger, ike, md,
+						    v2N_INVALID_SYNTAX, NULL, UNENCRYPTED_PAYLOAD);
+				/*
+				 * STF_FATAL will send the recorded
+				 * message and then kill the IKE SA.
+				 * Should it instead zombify the IKE
+				 * SA so that retransmits get a
+				 * response?
+				 */
+				return STF_FATAL;
+			}
+			ike->sa.st_seen_hashnotify = true;
 		}
-		ike->sa.st_seen_hashnotify = true;
 	}
 
 	/* calculate the nonce and the KE */
@@ -1097,18 +1099,23 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 		ike->sa.st_v2_ike_intermediate.used = true;
 	}
 
-	/* Send SIGNATURE_HASH_ALGORITHMS notification only if we received one */
-	if (!impair.ignore_hash_notify_request) {
-		if (ike->sa.st_seen_hashnotify &&
-		    ((c->policy & POLICY_RSASIG) ||
-		     (c->policy & POLICY_RSASIG_v1_5) ||
-		     (c->policy & POLICY_ECDSA))
-		    && (c->config->sighash_policy != LEMPTY)) {
-			if (!emit_v2N_signature_hash_algorithms(c->config->sighash_policy, response.pbs))
-				return STF_INTERNAL_ERROR;
+	/*
+	 * Send SIGNATURE_HASH_ALGORITHMS notification, but only if we
+	 * received one.
+	 *
+	 * XXX: This seems to contradict the RFC which suggests that
+	 * it is sent unconditionally?
+	 */
+	if (impair.omit_v2N_SIGNATURE_HASH_ALGORITHMS) {
+		llog_sa(RC_LOG, ike, "IMPAIR: omitting SIGNATURE_HASH_ALGORITHMS notification in IKE_SA_INIT response");
+	} else if (ike->sa.st_seen_hashnotify &&
+		   ((c->policy & POLICY_RSASIG) ||
+		    (c->policy & POLICY_RSASIG_v1_5) ||
+		    (c->policy & POLICY_ECDSA))
+		   && (c->config->sighash_policy != LEMPTY)) {
+		if (!emit_v2N_signature_hash_algorithms(c->config->sighash_policy, response.pbs)) {
+			return STF_INTERNAL_ERROR;
 		}
-	} else {
-		log_state(RC_LOG, &ike->sa, "Impair: Not sending out signature hash notify");
 	}
 
 	/* Send NAT-T Notify payloads */
@@ -1314,14 +1321,17 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 
 	ike->sa.st_seen_fragmentation_supported = md->pd[PD_v2N_IKEV2_FRAGMENTATION_SUPPORTED] != NULL;
 	ike->sa.st_seen_ppk = md->pd[PD_v2N_USE_PPK] != NULL;
+
 	if (md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS] != NULL) {
-		if (impair.ignore_hash_notify_request) {
-			log_state(RC_LOG, &ike->sa,
-				  "IMPAIR: ignoring the Signature hash notify in IKE_SA_INIT response");
-		} else if (!negotiate_hash_algo_from_notification(&md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS]->pbs, ike)) {
-			return STF_FATAL;
+		if (impair.ignore_v2N_SIGNATURE_HASH_ALGORITHMS) {
+			llog_sa(RC_LOG, ike,
+				"IMPAIR: ignoring SIGNATURE_HASH_ALGORITHMS notify in IKE_SA_INIT response");
+		} else {
+			if (!negotiate_hash_algo_from_notification(&md->pd[PD_v2N_SIGNATURE_HASH_ALGORITHMS]->pbs, ike)) {
+				return STF_FATAL;
+			}
+			ike->sa.st_seen_hashnotify = true;
 		}
-		ike->sa.st_seen_hashnotify = true;
 	}
 
 	/*

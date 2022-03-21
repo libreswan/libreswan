@@ -111,8 +111,6 @@ struct impairment impairments[] = {
 	V("drop-xauth-r0", drop_xauth_r0, "causes pluto to drop an XAUTH user/passwd request on IKE initiator"),
 	V("emitting", emitting, "disable correctness-checks when emitting a payload (let anything out)"),
 	V("force-fips", force_fips, "causes pluto to believe we are in fips mode, NSS needs its own hack"),
-	V("ignore-hash-notify", ignore_hash_notify_request, "causes pluto to ignore incoming hash notify from IKE_SA_INIT Request"),
-	V("ignore-hash-notify-resp", ignore_hash_notify_response, "causes pluto to ignore incoming hash notify from IKE_SA_INIT Response"),
 	V("ike-initiator-spi", ike_initiator_spi, "corrupt the IKE initiator SPI", .unsigned_help = "set SPI to <unsigned>"),
 	V("ike-key-length-attribute", ike_key_length_attribute, "corrupt the outgoing IKE proposal's key length attribute",
 	  .how_keywords = &impair_emit_keywords, .unsigned_help = "emit <unsigned> as the key length"),
@@ -132,7 +130,12 @@ struct impairment impairments[] = {
 	V("major-version-bump", major_version_bump, "cause pluto to send an IKE major version that's higher then we support."),
 	V("minor-version-bump", minor_version_bump, "cause pluto to send an IKE minor version that's higher then we support."),
 	V("childless-ikev2-supported", childless_ikev2_supported, "causes pluto to omit/ignore the CHILDLESS_IKEV2_SUPPORTED notify in the IKE_SA_INIT exchange"),
-	V("omit-hash-notify", omit_hash_notify_request, "causes pluto to omit sending hash notify in IKE_SA_INIT Request"),
+
+	V("ignore-v2n-signature-hash-algorithms", ignore_v2N_SIGNATURE_HASH_ALGORITHMS,
+	  "causes pluto to ignore the notification SIGNATURE_HASH_ALGORITHMS in the IKE_SA_INIT exchange"),
+	V("omit-v2n-signature-hash-algorithms", omit_v2N_SIGNATURE_HASH_ALGORITHMS,
+	  "causes pluto to omit the notification SIGNATURE_HASH_ALGORITHMS in the IKE_SA_INIT exchange"),
+
 	V("proposal-parser", proposal_parser, "impair algorithm parser - what you see is what you get"),
 	V("rekey-initiate-supernet", rekey_initiate_supernet, "impair IPsec SA rekey initiator TSi and TSR to 0/0 ::0, emulate Windows client"),
 	V("rekey-initiate-subnet", rekey_initiate_subnet, "impair IPsec SA rekey initiator TSi and TSR to X/32 or X/128"),
