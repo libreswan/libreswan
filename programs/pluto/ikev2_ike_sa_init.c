@@ -757,8 +757,10 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 
 	/* Send SIGNATURE_HASH_ALGORITHMS Notify payload */
 	if (!impair.omit_hash_notify_request) {
-		if (((c->policy & POLICY_RSASIG) || (c->policy & POLICY_ECDSA))
-			&& (c->config->sighash_policy != LEMPTY)) {
+		if (((c->policy & POLICY_RSASIG) ||
+		     (c->policy & POLICY_RSASIG_v1_5) ||
+		     (c->policy & POLICY_ECDSA)) &&
+		    (c->config->sighash_policy != LEMPTY)) {
 			if (!emit_v2N_signature_hash_algorithms(c->config->sighash_policy, request.pbs))
 				return false;
 		}
@@ -1097,8 +1099,11 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 
 	/* Send SIGNATURE_HASH_ALGORITHMS notification only if we received one */
 	if (!impair.ignore_hash_notify_request) {
-		if (ike->sa.st_seen_hashnotify && ((c->policy & POLICY_RSASIG) || (c->policy & POLICY_ECDSA))
-			&& (c->config->sighash_policy != LEMPTY)) {
+		if (ike->sa.st_seen_hashnotify &&
+		    ((c->policy & POLICY_RSASIG) ||
+		     (c->policy & POLICY_RSASIG_v1_5) ||
+		     (c->policy & POLICY_ECDSA))
+		    && (c->config->sighash_policy != LEMPTY)) {
 			if (!emit_v2N_signature_hash_algorithms(c->config->sighash_policy, response.pbs))
 				return STF_INTERNAL_ERROR;
 		}
