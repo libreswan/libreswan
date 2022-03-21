@@ -50,15 +50,17 @@ static stf_status send_v2_liveness_request(struct ike_sa *ike,
 	return STF_OK;
 }
 
-static void schedule_liveness(struct child_sa *child, deltatime_t time_since_last_exchange,
+static void schedule_liveness(struct child_sa *child, deltatime_t time_since_last_contact,
 			      const char *reason)
 {
 	struct connection *c = child->sa.st_connection;
 	deltatime_t delay = c->config->dpd.delay;
-	/* reduce wait if contact was by some other means */
-	delay = deltatime_sub(delay, time_since_last_exchange);
-	/* in case above screws up? */
-	delay = deltatime_max(c->config->dpd.delay, deltatime(MIN_LIVENESS));
+	/*
+	 * Wait DELAY from the time of the last contact; not NOW.
+	 * Which means DELAY is reduced.  But don't be too frequent.
+	 */
+	delay = deltatime_sub(delay, time_since_last_contact);
+	delay = deltatime_max(delay, deltatime(MIN_LIVENESS));
 	LSWDBGP(DBG_BASE, buf) {
 		deltatime_buf db;
 		endpoint_buf remote_buf;
@@ -66,15 +68,38 @@ static void schedule_liveness(struct child_sa *child, deltatime_t time_since_las
 		    child->sa.st_serialno,
 		    str_endpoint(&child->sa.st_remote_endpoint, &remote_buf),
 		    str_deltatime(delay, &db));
-		if (deltatime_cmp(time_since_last_exchange, !=, deltatime(0))) {
+		if (deltatime_cmp(time_since_last_contact, !=, deltatime(0))) {
 			deltatime_buf lcb;
 			jam(buf, " (%s was %s seconds ago)",
-			    reason, str_deltatime(time_since_last_exchange, &lcb));
+			    reason, str_deltatime(time_since_last_contact, &lcb));
 		} else {
 			jam(buf, " (%s)", reason);
 		}
 	}
 	event_schedule(EVENT_v2_LIVENESS, delay, &child->sa);
+}
+
+static bool recent_last_contact(struct child_sa *child, monotime_t now,
+				monotime_t last_contact,
+				const char *reason)
+{
+	/*
+	 * Convert the last contact into the time since last contact.
+	 * Add MIN_LIVENESS (probably 1) of fuzz so that anything
+	 * close to DELAY doesn't cause a re-schedule.
+	 */
+	deltatime_t time_since_last_contact = monotimediff(now, /*-*/ last_contact);
+	deltatime_t fuzz_since_last_contact = deltatime_add(time_since_last_contact,
+							    deltatime(MIN_LIVENESS));
+	if (deltatime_cmp(fuzz_since_last_contact, <, child->sa.st_connection->config->dpd.delay)) {
+		/*
+		 * Too little time has passed since the last contact
+		 * (i.e., too small); schedule a new liveness check.
+		 */
+		schedule_liveness(child, time_since_last_contact, reason);
+		return true;
+	}
+	return false;
 }
 
 /*
@@ -173,9 +198,7 @@ void liveness_check(struct state *st)
 	 */
 	struct v2_msgid_window *our = &ike->sa.st_v2_msgid_windows.initiator;
 	pexpect(!is_monotime_epoch(our->last_recv));
-	deltatime_t time_since_our_last_exchange = monotimediff(now, our->last_recv);
-	if (deltatime_cmp(time_since_our_last_exchange, <, c->config->dpd.delay)) {
-		schedule_liveness(child, time_since_our_last_exchange, "successful exchange");
+	if (recent_last_contact(child, now, our->last_recv, "successful exchange")) {
 		return;
 	}
 
@@ -197,9 +220,7 @@ void liveness_check(struct state *st)
 	 * them.
 	 */
 	struct v2_msgid_window *peer = &ike->sa.st_v2_msgid_windows.responder;
-	deltatime_t time_since_peer_contact = monotimediff(now, peer->last_recv);
-	if (deltatime_cmp(time_since_peer_contact, <, c->config->dpd.delay)) {
-		schedule_liveness(child, time_since_peer_contact, "peer contact");
+	if (recent_last_contact(child, now, peer->last_recv, "peer contact")) {
 		return;
 	}
 
@@ -220,14 +241,7 @@ void liveness_check(struct state *st)
  	 */
 	monotime_t last_inbound_message;
 	if (get_sa_info(&child->sa, /*inbound*/true, &last_inbound_message)) {
-		deltatime_t time_since_last_inbound_message = monotimediff(now, last_inbound_message);
-		if (deltatime_cmp(time_since_last_inbound_message, <, c->config->dpd.delay)) {
-			/*
-			 * Too recent; schedule in .dpd.delay seconds,
-			 * but adjust for: time since last traffic
-			 */
-			schedule_liveness(child, time_since_last_inbound_message,
-					  "recent IPsec traffic");
+		if (recent_last_contact(child, now, last_inbound_message, "recent IPsec traffic")) {
 			return;
 		}
 	}
@@ -240,7 +254,8 @@ void liveness_check(struct state *st)
 	submit_v2_liveness_exchange(ike, child->sa.st_serialno);
 
 	/* in case above screws up? */
-	schedule_liveness(child, deltatime(0), "backup for liveness probe");
+	schedule_liveness(child, /*time-since-last-exchange*/deltatime(0),
+			  "backup for liveness probe");
 }
 
 /*
