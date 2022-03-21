@@ -758,10 +758,207 @@ static bool validate_end(struct starter_conn *conn_st,
  *        value is considered acceptable.
  * @return bool TRUE if unsuccessful
  */
+
+static bool translate_field(struct starter_conn *conn,
+			    const struct section_list *sl,
+			    enum keyword_set assigned_value,
+			    starter_errors_t *perrl,
+			    const struct kw_list *kw,
+			    ksf *the_strings,
+			    str_set *set_strings,
+			    unsigned str_floor,
+			    unsigned str_roof,
+			    knf *the_options,
+			    int_set *set_options,
+			    unsigned opt_floor,
+			    unsigned opt_roof)
+{
+	bool serious_err = false;
+	unsigned int field = kw->keyword.keydef->field;
+
+	assert(kw->keyword.keydef != NULL);
+
+	switch (kw->keyword.keydef->type) {
+	case kt_string:
+	case kt_filename:
+	case kt_dirname:
+	case kt_bitstring:
+	case kt_ipaddr:
+	case kt_range:
+	case kt_subnet:
+	case kt_idtype:
+		/* all treated as strings for now, even loose enums */
+		assert(field < str_roof);
+
+		if ((*set_strings)[field] == k_set) {
+			char tmp_err[512];
+
+			snprintf(tmp_err, sizeof(tmp_err),
+				 "duplicate key '%s' in conn %s while processing def %s",
+				 kw->keyword.keydef->keyname,
+				 conn->name,
+				 sl->name);
+
+			starter_log(LOG_LEVEL_INFO, "%s", tmp_err);
+			starter_error_append(perrl, "%s", tmp_err);
+
+			/* only fatal if we try to change values */
+			if (kw->keyword.string == NULL ||
+			    (*the_strings)[field] == NULL ||
+			    !streq(kw->keyword.string,
+				   (*the_strings)[field]))
+			{
+				serious_err = true;
+				break;
+			}
+		}
+		pfreeany((*the_strings)[field]);
+
+		if (kw->string == NULL) {
+			starter_error_append(perrl, "Invalid %s value",
+					     kw->keyword.keydef->keyname);
+			serious_err = true;
+			break;
+		}
+
+		(*the_strings)[field] = clone_str(kw->string, "kt_idtype kw->string");
+		(*set_strings)[field] = assigned_value;
+		break;
+
+	case kt_appendstring:
+	case kt_appendlist:
+		/* implicitly, this field can have multiple values */
+		assert(str_floor <= field && field < str_roof);
+		if ((*the_strings)[field] == NULL) {
+			(*the_strings)[field] = clone_str(kw->string, "kt_appendlist kw->string");
+		} else {
+			char *s = (*the_strings)[field];
+			size_t old_len = strlen(s);	/* excludes '\0' */
+			size_t new_len = strlen(kw->string);
+			char *n = alloc_bytes(old_len + 1 + new_len + 1, "kt_appendlist");
+
+			memcpy(n, s, old_len);
+			n[old_len] = ' ';
+			memcpy(n + old_len + 1, kw->string, new_len + 1);	/* includes '\0' */
+			(*the_strings)[field] = n;
+			pfree(s);
+		}
+		(*set_strings)[field] = true;
+		break;
+
+	case kt_rsasigkey:
+	case kt_loose_enum:
+		assert(field <= KSCF_last_loose);
+
+		if ((*set_options)[field] == k_set) {
+			char tmp_err[512];
+
+			snprintf(tmp_err, sizeof(tmp_err),
+				 "duplicate key '%s' in conn %s while processing def %s",
+				 kw->keyword.keydef->keyname,
+				 conn->name,
+				 sl->name);
+
+			starter_log(LOG_LEVEL_INFO, "%s", tmp_err);
+			starter_error_append(perrl, "%s", tmp_err);
+
+			/* only fatal if we try to change values */
+			if ((*the_options)[field] != (int)kw->number ||
+			    !((*the_options)[field] ==
+			      LOOSE_ENUM_OTHER &&
+			      kw->number == LOOSE_ENUM_OTHER &&
+			      kw->keyword.string != NULL &&
+			      (*the_strings)[field] != NULL &&
+			      streq(kw->keyword.string,
+				    (*the_strings)[field])))
+			{
+				serious_err = true;
+				break;
+			}
+		}
+
+		(*the_options)[field] = kw->number;
+		if (kw->number == LOOSE_ENUM_OTHER) {
+			assert(kw->keyword.string != NULL);
+			pfreeany((*the_strings)[field]);
+			(*the_strings)[field] = clone_str(
+				kw->keyword.string, "kt_loose_enum kw->keyword.string");
+		}
+		(*set_options)[field] = assigned_value;
+		break;
+
+	case kt_list:
+	case kt_lset:
+	case kt_bool:
+	case kt_invertbool:
+	case kt_enum:
+	case kt_number:
+	case kt_time:
+	case kt_percent:
+		/* all treated as a number for now */
+		assert(opt_floor <= field && field < opt_roof);
+
+		if ((*set_options)[field] == k_set) {
+			char tmp_err[512];
+
+			snprintf(tmp_err, sizeof(tmp_err),
+				 "duplicate key '%s' in conn %s while processing def %s",
+				 kw->keyword.keydef->keyname,
+				 conn->name,
+				 sl->name);
+			starter_log(LOG_LEVEL_INFO, "%s", tmp_err);
+			starter_error_append(perrl, "%s", tmp_err);
+			/* only fatal if we try to change values */
+			if ((*the_options)[field] != (int)kw->number) {
+				serious_err = true;
+				break;
+			}
+		}
+
+		(*the_options)[field] = kw->number;
+		(*set_options)[field] = assigned_value;
+		break;
+
+	case kt_comment:
+		break;
+
+	case kt_obsolete:
+		starter_log(LOG_LEVEL_INFO,
+			    "Warning: obsolete keyword '%s' ignored",
+			    kw->keyword.keydef->keyname);
+		break;
+
+	case kt_obsolete_quiet:
+		starter_log(LOG_LEVEL_ERR,
+			    "Warning: obsolete keyword '%s' ignored",
+			    kw->keyword.keydef->keyname);
+		break;
+	}
+	return serious_err;
+}
+
+static bool translate_leftright(struct starter_conn *conn,
+				const struct section_list *sl,
+				enum keyword_set assigned_value,
+				starter_errors_t *perrl,
+				const struct kw_list *kw,
+				struct starter_end *this)
+{
+	return translate_field(conn, sl, assigned_value, perrl, kw,
+			       /*the_strings*/&this->strings,
+			       /*set_strings*/&this->strings_set,
+			       /*str_floor*/KSCF_last_loose + 1,
+			       /*str_roof*/KSCF_last_leftright + 1,
+			       /*the_options*/&this->options,
+			       /*set_options*/&this->options_set,
+			       /*opt_floor*/KSCF_last_loose + 1,
+			       /*opt_roof*/KNCF_last_leftright + 1);
+}
+
 static bool translate_conn(struct starter_conn *conn,
-		    const struct section_list *sl,
-		    enum keyword_set assigned_value,
-		    starter_errors_t *perrl)
+			   const struct section_list *sl,
+			   enum keyword_set assigned_value,
+			   starter_errors_t *perrl)
 {
 	/* note: not all errors are considered serious */
 	bool serious_err = false;
@@ -779,198 +976,30 @@ static bool translate_conn(struct starter_conn *conn,
 			continue;
 		}
 
-		ksf *the_strings;
-		str_set *set_strings;
-		unsigned str_floor, str_roof;
-
-		knf *the_options;
-		int_set *set_options;
-		unsigned opt_floor, opt_roof;
-
 		if (kw->keyword.keydef->validity & kv_leftright) {
-			struct starter_end *this = kw->keyword.keyleft ?
-				&conn->left : &conn->right;
-
-			the_strings = &this->strings;
-			set_strings = &this->strings_set;
-			str_floor = KSCF_last_loose + 1;
-			str_roof = KSCF_last_leftright + 1;
-
-			the_options = &this->options;
-			set_options = &this->options_set;
-			opt_floor = KSCF_last_loose + 1;
-			opt_roof = KNCF_last_leftright + 1;
+			if (kw->keyword.keyleft) {
+				serious_err |=
+					translate_leftright(conn, sl, assigned_value,
+							    perrl, kw,
+							    &conn->left);
+			}
+			if (kw->keyword.keyright) {
+				serious_err |=
+					translate_leftright(conn, sl, assigned_value,
+							    perrl, kw,
+							    &conn->right);
+			}
 		} else {
-			the_strings = &conn->strings;
-			set_strings = &conn->strings_set;
-			str_floor = KSCF_last_leftright + 1;
-			str_roof = KSCF_ROOF;
-
-			the_options = &conn->options;
-			set_options = &conn->options_set;
-			opt_floor = KNCF_last_leftright + 1;
-			opt_roof = KNCF_ROOF;
-		}
-
-		unsigned int field = kw->keyword.keydef->field;
-
-		assert(kw->keyword.keydef != NULL);
-
-		switch (kw->keyword.keydef->type) {
-		case kt_string:
-		case kt_filename:
-		case kt_dirname:
-		case kt_bitstring:
-		case kt_ipaddr:
-		case kt_range:
-		case kt_subnet:
-		case kt_idtype:
-			/* all treated as strings for now, even loose enums */
-			assert(field < str_roof);
-
-			if ((*set_strings)[field] == k_set) {
-				char tmp_err[512];
-
-				snprintf(tmp_err, sizeof(tmp_err),
-					 "duplicate key '%s' in conn %s while processing def %s",
-					 kw->keyword.keydef->keyname,
-					 conn->name,
-					 sl->name);
-
-				starter_log(LOG_LEVEL_INFO, "%s", tmp_err);
-				starter_error_append(perrl, "%s", tmp_err);
-
-				/* only fatal if we try to change values */
-				if (kw->keyword.string == NULL ||
-				    (*the_strings)[field] == NULL ||
-				    !streq(kw->keyword.string,
-					   (*the_strings)[field]))
-				{
-					serious_err = true;
-					break;
-				}
-			}
-			pfreeany((*the_strings)[field]);
-
-			if (kw->string == NULL) {
-				starter_error_append(perrl, "Invalid %s value",
-					 kw->keyword.keydef->keyname);
-				serious_err = true;
-				break;
-			}
-
-			(*the_strings)[field] = clone_str(kw->string, "kt_idtype kw->string");
-			(*set_strings)[field] = assigned_value;
-			break;
-
-		case kt_appendstring:
-		case kt_appendlist:
-			/* implicitly, this field can have multiple values */
-			assert(str_floor <= field && field < str_roof);
-			if ((*the_strings)[field] == NULL) {
-				(*the_strings)[field] = clone_str(kw->string, "kt_appendlist kw->string");
-			} else {
-				char *s = (*the_strings)[field];
-				size_t old_len = strlen(s);	/* excludes '\0' */
-				size_t new_len = strlen(kw->string);
-				char *n = alloc_bytes(old_len + 1 + new_len + 1, "kt_appendlist");
-
-				memcpy(n, s, old_len);
-				n[old_len] = ' ';
-				memcpy(n + old_len + 1, kw->string, new_len + 1);	/* includes '\0' */
-				(*the_strings)[field] = n;
-				pfree(s);
-			}
-			(*set_strings)[field] = true;
-			break;
-
-		case kt_rsasigkey:
-		case kt_loose_enum:
-			assert(field <= KSCF_last_loose);
-
-			if ((*set_options)[field] == k_set) {
-				char tmp_err[512];
-
-				snprintf(tmp_err, sizeof(tmp_err),
-					 "duplicate key '%s' in conn %s while processing def %s",
-					 kw->keyword.keydef->keyname,
-					 conn->name,
-					 sl->name);
-
-				starter_log(LOG_LEVEL_INFO, "%s", tmp_err);
-				starter_error_append(perrl, "%s", tmp_err);
-
-				/* only fatal if we try to change values */
-				if ((*the_options)[field] != (int)kw->number ||
-				    !((*the_options)[field] ==
-					LOOSE_ENUM_OTHER &&
-				      kw->number == LOOSE_ENUM_OTHER &&
-				      kw->keyword.string != NULL &&
-				      (*the_strings)[field] != NULL &&
-				      streq(kw->keyword.string,
-					     (*the_strings)[field])))
-				{
-					serious_err = true;
-					break;
-				}
-			}
-
-			(*the_options)[field] = kw->number;
-			if (kw->number == LOOSE_ENUM_OTHER) {
-				assert(kw->keyword.string != NULL);
-				pfreeany((*the_strings)[field]);
-				(*the_strings)[field] = clone_str(
-					kw->keyword.string, "kt_loose_enum kw->keyword.string");
-			}
-			(*set_options)[field] = assigned_value;
-			break;
-
-		case kt_list:
-		case kt_lset:
-		case kt_bool:
-		case kt_invertbool:
-		case kt_enum:
-		case kt_number:
-		case kt_time:
-		case kt_percent:
-			/* all treated as a number for now */
-			assert(opt_floor <= field && field < opt_roof);
-
-			if ((*set_options)[field] == k_set) {
-				char tmp_err[512];
-
-				snprintf(tmp_err, sizeof(tmp_err),
-					 "duplicate key '%s' in conn %s while processing def %s",
-					 kw->keyword.keydef->keyname,
-					 conn->name,
-					 sl->name);
-				starter_log(LOG_LEVEL_INFO, "%s", tmp_err);
-				starter_error_append(perrl, "%s", tmp_err);
-				/* only fatal if we try to change values */
-				if ((*the_options)[field] != (int)kw->number) {
-					serious_err = true;
-					break;
-				}
-			}
-
-			(*the_options)[field] = kw->number;
-			(*set_options)[field] = assigned_value;
-			break;
-
-		case kt_comment:
-			break;
-
-		case kt_obsolete:
-			starter_log(LOG_LEVEL_INFO,
-				    "Warning: obsolete keyword '%s' ignored",
-				    kw->keyword.keydef->keyname);
-			break;
-
-		case kt_obsolete_quiet:
-			starter_log(LOG_LEVEL_ERR,
-				    "Warning: obsolete keyword '%s' ignored",
-				    kw->keyword.keydef->keyname);
-			break;
+			serious_err |=
+				translate_field(conn, sl, assigned_value, perrl, kw,
+						/*the_strings*/&conn->strings,
+						/*set_strings*/&conn->strings_set,
+						/*str_floor*/KSCF_last_leftright + 1,
+						/*str_roof*/KSCF_ROOF,
+						/*the_options*/&conn->options,
+						/*set_options*/&conn->options_set,
+						/*opt_floor*/KNCF_last_leftright + 1,
+						/*opt_roof*/KNCF_ROOF);
 		}
 	}
 	return serious_err;

@@ -390,7 +390,8 @@ struct keyword_def {
 struct keyword {
 	const struct keyword_def *keydef;
 	bool keyleft;
-	char               *string;
+	bool keyright;
+	char *string;
 };
 
 /* note: these lists are dynamic */

@@ -594,17 +594,16 @@ static const struct keyword_def ipsec_conf_keyword_comment =
 /* type is really "token" type, which is actually int */
 int parser_find_keyword(const char *s, YYSTYPE *lval)
 {
-	bool keyleft;
+	bool left = false;
+	bool right = false;
 	int keywordtype;
-
-	keyleft = false;
 
 	const struct keyword_def *k;
 	for (k = ipsec_conf_keywords; k->keyname != NULL; k++) {
-
 		if (strcaseeq(s, k->keyname)) {
 			if (k->validity & kv_leftright) {
-				continue;
+				left = true;
+				right = true;
 			}
 			break;
 		}
@@ -612,11 +611,12 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 		if (k->validity & kv_leftright) {
 			if (strncaseeq(s, "left", 4) &&
 			    strcaseeq(s + 4, k->keyname)) {
-				keyleft = true;
+				left = true;
 				break;
-			} else if (strncaseeq(s, "right", 5) &&
-				   strcaseeq(s + 5, k->keyname)) {
-				keyleft = false;
+			}
+			if (strncaseeq(s, "right", 5) &&
+			    strcaseeq(s + 5, k->keyname)) {
+				right = true;
 				break;
 			}
 		}
@@ -657,7 +657,8 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 
 	/* else, set up llval.k to point, and return KEYWORD */
 	lval->k.keydef = k;
-	lval->k.keyleft = keyleft;
+	lval->k.keyleft = left;
+	lval->k.keyright = right;
 	return keywordtype;
 }
 
