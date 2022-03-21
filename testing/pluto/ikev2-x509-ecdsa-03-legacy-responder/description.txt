@@ -1,0 +1,2 @@
+IKEv2 ECDSA digital signature where responder only supports legacy AUTH=ECDSA_SHA2
+
