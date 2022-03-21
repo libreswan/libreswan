@@ -3255,10 +3255,15 @@ void delete_larval_ipsec_sa(struct state *st)
 bool was_eroute_idle(struct state *st, deltatime_t since_when)
 {
 	passert(st != NULL);
-	deltatime_t idle_time;
-	return !get_sa_info(st, true, &idle_time) ||
-		deltatime_cmp(idle_time, >=, since_when);
-	/* it is never idle if we can't check */
+	monotime_t last_contact;
+	if (!get_sa_info(st, /*inbound*/true, &last_contact)) {
+		/* snafu; assume idle!?! */
+		return true;
+	}
+	deltatime_t idle_time = monotimediff(mononow(), last_contact);
+	if (deltatime_cmp(idle_time, >=, since_when)) {
+		return true;
+	}
 	return false;
 }
 
@@ -3267,7 +3272,7 @@ bool was_eroute_idle(struct state *st, deltatime_t since_when)
  *
  * Note: this mutates *st.
  */
-bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
+bool get_sa_info(struct state *st, bool inbound, monotime_t *last_contact /* OUTPUT */)
 {
 	struct connection *const c = st->st_connection;
 
@@ -3345,15 +3350,15 @@ bool get_sa_info(struct state *st, bool inbound, deltatime_t *ago /* OUTPUT */)
 			p2->our_bytes = bytes;
 			p2->our_lastused = mononow();
 		}
-		if (ago != NULL)
-			*ago = monotimediff(mononow(), p2->our_lastused);
+		if (last_contact != NULL)
+			*last_contact = p2->our_lastused;
 	} else {
 		if (bytes > p2->peer_bytes) {
 			p2->peer_bytes = bytes;
 			p2->peer_lastused = mononow();
 		}
-		if (ago != NULL)
-			*ago = monotimediff(mononow(), p2->peer_lastused);
+		if (last_contact != NULL)
+			*last_contact = p2->peer_lastused;
 	}
 
 	if (redirected) {

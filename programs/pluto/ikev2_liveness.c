@@ -218,17 +218,19 @@ void liveness_check(struct state *st)
 	 * outgoing data could lost and this traffic is all
 	 * re-transmit requests ...
  	 */
-	deltatime_t time_since_last_inbound_message;
-	if (get_sa_info(&child->sa, /*inbound*/true, &time_since_last_inbound_message) &&
-	    deltatime_cmp(time_since_last_inbound_message, <, c->config->dpd.delay)) {
-		/*
-		 * schedule in .dpd_delay seconds, but adjust for:
-		 * time since last traffic
-		 */
-		schedule_liveness(child, time_since_last_inbound_message,
-				  "recent IPsec traffic");
- 		return;
- 	}
+	monotime_t last_inbound_message;
+	if (get_sa_info(&child->sa, /*inbound*/true, &last_inbound_message)) {
+		deltatime_t time_since_last_inbound_message = monotimediff(now, last_inbound_message);
+		if (deltatime_cmp(time_since_last_inbound_message, <, c->config->dpd.delay)) {
+			/*
+			 * Too recent; schedule in .dpd.delay seconds,
+			 * but adjust for: time since last traffic
+			 */
+			schedule_liveness(child, time_since_last_inbound_message,
+					  "recent IPsec traffic");
+			return;
+		}
+	}
 
 	endpoint_buf remote_buf;
 	dbg("liveness: #%lu queueing liveness probe for %s using #%lu",
