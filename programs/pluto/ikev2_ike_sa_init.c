@@ -1096,7 +1096,6 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	    md->pd[PD_v2N_INTERMEDIATE_EXCHANGE_SUPPORTED] != NULL) {
 		if (!emit_v2N(v2N_INTERMEDIATE_EXCHANGE_SUPPORTED, response.pbs))
 			return STF_INTERNAL_ERROR;
-		ike->sa.st_v2_ike_intermediate.used = true;
 	}
 
 	/*
