@@ -37,9 +37,12 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- # look for a probe
+ # look for two probes
 west #
- ../../guestbin/wait-for.sh --match 'received message ... 2 ' -- sed -n -e 's/ [a-z]* 2 (.*/ ... 2 (...)/p' /tmp/pluto.log
+ ../../guestbin/wait-for.sh --match 'responder received message ... 2 ' -- sed -n -e 's/ [a-z]* 2 (.*/ ... 2 (...)/p' /tmp/pluto.log
+| Message ID: IKE #1 updating responder received message ... 2 (...)
+west #
+ ../../guestbin/wait-for.sh --match 'initiator received message ... 2 ' -- sed -n -e 's/ [a-z]* 2 (.*/ ... 2 (...)/p' /tmp/pluto.log
 | Message ID: IKE #1 updating initiator received message ... 2 (...)
 west #
  #pkill pluto
