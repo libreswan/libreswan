@@ -210,7 +210,7 @@ enum_names sa_policy_bit_names = {
 	NULL
 };
 
-static const char *const keyword_authby_name[] = {
+static const char *const keyword_auth_name[] = {
 	"unset",
 	"never",
 	"secret",
@@ -220,9 +220,9 @@ static const char *const keyword_authby_name[] = {
 	"eaponly",
 };
 
-enum_names keyword_authby_names = {
-	AUTHBY_UNSET, AUTHBY_EAPONLY,
-	ARRAY_REF(keyword_authby_name),
+enum_names keyword_auth_names = {
+	AUTH_UNSET, AUTH_EAPONLY,
+	ARRAY_REF(keyword_auth_name),
 	NULL, /* prefix */
 	NULL
 };
@@ -411,7 +411,7 @@ static const enum_names *pluto_enum_names_checklist[] = {
 	&sa_policy_bit_names,
 	&kernel_policy_op_names,
 	&shunt_policy_names,
-	&keyword_authby_names,
+	&keyword_auth_names,
 	&keyword_host_names,
 };
 

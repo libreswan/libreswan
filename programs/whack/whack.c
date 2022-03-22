@@ -1748,15 +1748,15 @@ int main(int argc, char **argv)
 		case END_AUTHBY:
 			auth_specified = true;
 			if (streq(optarg, "psk"))
-				msg.right.authby = AUTHBY_PSK;
+				msg.right.auth = AUTH_PSK;
 			else if (streq(optarg, "null"))
-				msg.right.authby = AUTHBY_NULL;
+				msg.right.auth = AUTH_NULL;
 			else if (streq(optarg, "rsasig") || streq(optarg, "rsa"))
-				msg.right.authby = AUTHBY_RSASIG;
+				msg.right.auth = AUTH_RSASIG;
 			else if (streq(optarg, "ecdsa"))
-				msg.right.authby = AUTHBY_ECDSA;
+				msg.right.auth = AUTH_ECDSA;
 			else if (streq(optarg, "eaponly"))
-				msg.right.authby = AUTHBY_EAPONLY;
+				msg.right.auth = AUTH_EAPONLY;
 			else
 				diagw("authby option is not one of psk, ecdsa, rsasig, rsa, null or eaponly");
 			continue;
@@ -2611,7 +2611,7 @@ int main(int argc, char **argv)
 		} else {
 			/* not just a shunt: a real ipsec connection */
 			if ((msg.policy & POLICY_ID_AUTH_MASK) == LEMPTY &&
-				msg.left.authby == AUTHBY_NEVER && msg.right.authby == AUTHBY_NEVER)
+				msg.left.auth == AUTH_NEVER && msg.right.auth == AUTH_NEVER)
 				diagw("must specify connection authentication, eg --rsasig, --psk or --auth-null for non-shunt connection");
 			/*
 			 * ??? this test can never fail:

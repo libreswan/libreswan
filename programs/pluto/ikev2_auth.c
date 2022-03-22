@@ -113,29 +113,29 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 	return crypt_hash_final_mac(&ctx);
 }
 
-enum keyword_authby v2_auth_by(struct ike_sa *ike)
+enum keyword_auth v2_auth_by(struct ike_sa *ike)
 {
 	const struct connection *c = ike->sa.st_connection;
-	enum keyword_authby authby = c->local->config->host.authby;
+	enum keyword_auth authby = c->local->config->host.auth;
 	if (ike->sa.st_peer_wants_null) {
 		/* we allow authby=null and IDr payload told us to use it */
-		authby = AUTHBY_NULL;
-	} else if (authby == AUTHBY_UNSET) {
+		authby = AUTH_NULL;
+	} else if (authby == AUTH_UNSET) {
 		/*
 		 * Asymmetric policy unset.
 		 * Pick up from symmetric policy, in order of preference!
 		 */
 		if ((c->policy & POLICY_ECDSA) &&
 		    (c->config->sighash_policy != LEMPTY)) {
-			authby = AUTHBY_ECDSA;
+			authby = AUTH_ECDSA;
 		} else if (c->policy & POLICY_RSASIG) {
-			authby = AUTHBY_RSASIG;
+			authby = AUTH_RSASIG;
 		} else if (c->policy & POLICY_PSK) {
-			authby = AUTHBY_PSK;
+			authby = AUTH_PSK;
 		} else if (c->policy & POLICY_AUTH_NULL) {
-			authby = AUTHBY_NULL;
+			authby = AUTH_NULL;
 		} else {
-			/* leave authby == AUTHBY_UNSET */
+			/* leave authby == AUTH_UNSET */
 			/* ??? we will surely crash with bad_case */
 		}
 	}
@@ -148,7 +148,7 @@ enum keyword_authby v2_auth_by(struct ike_sa *ike)
  */
 
 enum ikev2_auth_method v2AUTH_method_from_authby(struct ike_sa *ike,
-						 enum keyword_authby authby)
+						 enum keyword_auth authby)
 {
 	struct connection *c = ike->sa.st_connection;
 
@@ -160,7 +160,7 @@ enum ikev2_auth_method v2AUTH_method_from_authby(struct ike_sa *ike,
 	}
 
 	switch (authby) {
-	case AUTHBY_RSASIG:
+	case AUTH_RSASIG:
 		if (ike->sa.st_seen_hashnotify &&
 		    c->config->sighash_policy != LEMPTY) {
 			return IKEv2_AUTH_DIGSIG;
@@ -180,18 +180,18 @@ enum ikev2_auth_method v2AUTH_method_from_authby(struct ike_sa *ike,
 		}
 		return IKEv2_AUTH_RESERVED;
 
-	case AUTHBY_ECDSA:
+	case AUTH_ECDSA:
 		return IKEv2_AUTH_DIGSIG;
 
-	case AUTHBY_PSK:
+	case AUTH_PSK:
 		return IKEv2_AUTH_PSK;
 
-	case AUTHBY_NULL:
+	case AUTH_NULL:
 		return IKEv2_AUTH_NULL;
 
-	case AUTHBY_EAPONLY:
-	case AUTHBY_NEVER:
-	case AUTHBY_UNSET:
+	case AUTH_EAPONLY:
+	case AUTH_NEVER:
+	case AUTH_UNSET:
 		break;
 
 	}
@@ -231,7 +231,7 @@ bool emit_v2_auth(struct ike_sa *ike,
 		  const struct crypt_mac *id_payload_mac,
 		  struct pbs_out *outs)
 {
-	enum keyword_authby authby = ike->sa.st_eap_sa_md ? AUTHBY_PSK : v2_auth_by(ike);
+	enum keyword_auth authby = ike->sa.st_eap_sa_md ? AUTH_PSK : v2_auth_by(ike);
 	struct ikev2_auth a = {
 		.isaa_critical = build_ikev2_critical(false, ike->sa.st_logger),
 		.isaa_auth_method = v2AUTH_method_from_authby(ike, authby),
@@ -371,7 +371,7 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 			  struct ike_sa *ike,
 			  const struct crypt_mac *idhash_in,
 			  struct pbs_in *signature_pbs,
-			  const enum keyword_authby that_authby)
+			  const enum keyword_auth that_authby)
 {
 	/*
 	 * XXX: can the boiler plate check that THAT_AUTHBY matches
@@ -408,12 +408,12 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_PSK:
 	{
-		if (that_authby != AUTHBY_PSK) {
+		if (that_authby != AUTH_PSK) {
 			return diag("authentication failed: peer attempted PSK authentication but we want %s",
-				    enum_name(&keyword_authby_names, that_authby));
+				    enum_name(&keyword_auth_names, that_authby));
 		}
 
-		diag_t d = v2_authsig_and_log_using_psk(AUTHBY_PSK, ike, idhash_in,
+		diag_t d = v2_authsig_and_log_using_psk(AUTH_PSK, ike, idhash_in,
 							signature_pbs, NULL/*auth_sig*/);
 		if (d != NULL) {
 			dbg("authentication failed: PSK AUTH mismatch");
@@ -425,13 +425,13 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_NULL:
 	{
-		if (!(that_authby == AUTHBY_NULL ||
-		      (that_authby == AUTHBY_RSASIG && LIN(POLICY_AUTH_NULL, ike->sa.st_connection->policy)))) {
+		if (!(that_authby == AUTH_NULL ||
+		      (that_authby == AUTH_RSASIG && LIN(POLICY_AUTH_NULL, ike->sa.st_connection->policy)))) {
 			return diag("authentication failed: peer attempted NULL authentication but we want %s",
-				    enum_name(&keyword_authby_names, that_authby));
+				    enum_name(&keyword_auth_names, that_authby));
 		}
 
-		diag_t d = v2_authsig_and_log_using_psk(AUTHBY_NULL, ike, idhash_in,
+		diag_t d = v2_authsig_and_log_using_psk(AUTH_NULL, ike, idhash_in,
 							signature_pbs, NULL/*auth_sig*/);
 		if (d != NULL) {
 			dbg("authentication failed: NULL AUTH mismatch (implementation bug?)");
@@ -444,10 +444,10 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_DIGSIG:
 	{
-		if (that_authby != AUTHBY_ECDSA &&
-		    that_authby != AUTHBY_RSASIG) {
+		if (that_authby != AUTH_ECDSA &&
+		    that_authby != AUTH_RSASIG) {
 			return diag("authentication failed: peer attempted authentication through Digital Signature but we want %s",
-				    enum_name(&keyword_authby_names, that_authby));
+				    enum_name(&keyword_auth_names, that_authby));
 		}
 
 		/* try to match ASN.1 blob designating the hash algorithm */
@@ -525,7 +525,7 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 
 		dbg("digsig:   no match");
 		return diag("authentication failed: no acceptable ECDSA/RSA-PSS ASN.1 signature hash proposal included for %s",
-			    enum_name(&keyword_authby_names, that_authby));
+			    enum_name(&keyword_auth_names, that_authby));
 
 	}
 	default:

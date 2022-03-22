@@ -209,8 +209,8 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 	d->state = STATE_LOADED;
 
-	d->left.authby = AUTHBY_UNSET;
-	d->right.authby = AUTHBY_UNSET;
+	d->left.authby = AUTH_UNSET;
+	d->right.authby = AUTH_UNSET;
 
 	d->left.updown = clone_str(DEFAULT_UPDOWN, "conn default left updown");
 	d->right.updown = clone_str(DEFAULT_UPDOWN, "conn default right updown");

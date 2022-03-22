@@ -83,7 +83,7 @@ struct config_host_end {
 	/*
 	 * Proof of identity.
 	 */
-	enum keyword_authby authby;
+	enum keyword_auth auth;
 	cert_t cert;			/* end certificate */
 	enum certpolicy sendcert;	/* whether or not to send the certificate */
 	chunk_t ca;			/* CA distinguished name of the end certificate's issuer */

@@ -1086,9 +1086,9 @@ static int extract_end(struct connection *c,
 	config_end->host.xauth.username = clone_str(src->xauth_username, "xauth username");
 	config_end->host.eap = src->eap;
 
-	config_end->host.authby = src->authby;
+	config_end->host.auth = src->auth;
 
-	if (src->eap == IKE_EAP_NONE && src->authby == AUTHBY_EAPONLY) {
+	if (src->eap == IKE_EAP_NONE && src->auth == AUTH_EAPONLY) {
 		llog(RC_LOG_SERIOUS, logger, "failed to add connection: leftauth/rightauth can only be 'eaponly' when using leftautheap/rightautheap is not 'none'");
 		return -1;
 	}
@@ -1244,8 +1244,10 @@ static diag_t check_connection_end(const struct whack_end *this,
 	if (this->id != NULL && streq(this->id, "%fromcert")) {
 		lset_t auth_pol = (wm->policy & POLICY_ID_AUTH_MASK);
 
-		if (this->authby == AUTHBY_PSK || this->authby == AUTHBY_NULL ||
-			auth_pol == POLICY_PSK || auth_pol == POLICY_AUTH_NULL) {
+		if (this->auth == AUTH_PSK ||
+		    this->auth == AUTH_NULL ||
+		    auth_pol == POLICY_PSK ||
+		    auth_pol == POLICY_AUTH_NULL) {
 			return diag("ID cannot be specified as %%fromcert if PSK or AUTH-NULL is used");
 		}
 	}
@@ -1546,72 +1548,75 @@ static bool extract_connection(const struct whack_message *wm,
 			llog(RC_INFORMATIONAL, c->logger,
 				    "ignored enable-tcp= option for type=passthrough connection");
 		}
-		if (wm->left.authby != AUTHBY_UNSET || wm->right.authby != AUTHBY_UNSET) {
+		if (wm->left.auth != AUTH_UNSET ||
+		    wm->right.auth != AUTH_UNSET) {
 			llog(RC_FATAL, c->logger,
 				    "failed to add connection: leftauth= / rightauth= options are invalid for type=passthrough connection");
 			return false;
 		}
 	} else {
 		/* reject all bad combinations of authby with leftauth=/rightauth= */
-		if (wm->left.authby != AUTHBY_UNSET || wm->right.authby != AUTHBY_UNSET) {
+		if (wm->left.auth != AUTH_UNSET ||
+		    wm->right.auth != AUTH_UNSET) {
 			if (c->config->ike_version == IKEv1) {
 				llog(RC_FATAL, c->logger,
 					    "failed to add connection: leftauth= and rightauth= require ikev2");
 				return false;
 			}
-			if (wm->left.authby == AUTHBY_UNSET || wm->right.authby == AUTHBY_UNSET) {
+			if (wm->left.auth == AUTH_UNSET ||
+			    wm->right.auth == AUTH_UNSET) {
 				llog(RC_FATAL, c->logger,
 					    "failed to add connection: leftauth= and rightauth= must both be set or both be unset");
 				return false;
 			}
 			/* ensure no conflicts of set left/rightauth with (set or unset) authby= */
-			if (wm->left.authby == wm->right.authby) {
+			if (wm->left.auth == wm->right.auth) {
 
 				lset_t auth_pol = (wm->policy & POLICY_ID_AUTH_MASK);
 				const char *conflict = NULL;
-				switch (wm->left.authby) {
-				case AUTHBY_PSK:
+				switch (wm->left.auth) {
+				case AUTH_PSK:
 					if (auth_pol != POLICY_PSK && auth_pol != LEMPTY) {
 						conflict = "leftauthby=secret but authby= is not secret";
 					}
 					break;
-				case AUTHBY_NULL:
+				case AUTH_NULL:
 					if (auth_pol != POLICY_AUTH_NULL && auth_pol != LEMPTY) {
 						conflict = "leftauthby=null but authby= is not null";
 					}
 					break;
-				case AUTHBY_NEVER:
+				case AUTH_NEVER:
 					if ((wm->policy & POLICY_ID_AUTH_MASK) != LEMPTY) {
 						conflict = "leftauthby=never but authby= is not never - double huh?";
 					}
 					break;
-				case AUTHBY_RSASIG:
-				case AUTHBY_ECDSA:
+				case AUTH_RSASIG:
+				case AUTH_ECDSA:
 					/* will be fixed later below */
 					break;
-				case AUTHBY_EAPONLY:
+				case AUTH_EAPONLY:
 					/* no conflict possible with symmetric POLICY flags */
 					break;
 				default:
-					bad_case(wm->left.authby);
+					bad_case(wm->left.auth);
 				}
 				if (conflict != NULL) {
 					policy_buf pb;
 					llog(RC_FATAL, c->logger,
 					     "failed to add connection: leftauth=%s and rightauth=%s conflict with authby=%s, %s",
-					     enum_name(&keyword_authby_names, wm->left.authby),
-					     enum_name(&keyword_authby_names, wm->right.authby),
+					     enum_name(&keyword_auth_names, wm->left.auth),
+					     enum_name(&keyword_auth_names, wm->right.auth),
 					     str_policy(wm->policy & POLICY_ID_AUTH_MASK, &pb),
 					     conflict);
 					return false;
 				}
 			} else {
-				if ((wm->left.authby == AUTHBY_PSK && wm->right.authby == AUTHBY_NULL) ||
-				    (wm->left.authby == AUTHBY_NULL && wm->right.authby == AUTHBY_PSK)) {
+				if ((wm->left.auth == AUTH_PSK && wm->right.auth == AUTH_NULL) ||
+				    (wm->left.auth == AUTH_NULL && wm->right.auth == AUTH_PSK)) {
 					llog(RC_FATAL, c->logger,
 						    "failed to add connection: cannot mix PSK and NULL authentication (leftauth=%s and rightauth=%s)",
-						    enum_name(&keyword_authby_names, wm->left.authby),
-						    enum_name(&keyword_authby_names, wm->right.authby));
+						    enum_name(&keyword_auth_names, wm->left.auth),
+						    enum_name(&keyword_auth_names, wm->right.auth));
 					return false;
 				}
 			}
@@ -1750,13 +1755,13 @@ static bool extract_connection(const struct whack_message *wm,
 	if (c->config->ike_version == IKEv1)
 		c->policy = (c->policy & ~(POLICY_ECDSA | POLICY_RSASIG_v1_5));
 	/* ignore symmetrical defaults if we got left/rightauth */
-	if (wm->left.authby != wm->right.authby)
+	if (wm->left.auth != wm->right.auth)
 		c->policy = c->policy & ~POLICY_ID_AUTH_MASK;
 	/* remove default pubkey policy if left/rightauth is specified */
-	if (wm->left.authby == wm->right.authby) {
-		if (wm->left.authby == AUTHBY_RSASIG)
+	if (wm->left.auth == wm->right.auth) {
+		if (wm->left.auth == AUTH_RSASIG)
 			c->policy = (c->policy & ~(POLICY_ECDSA));
-		if (wm->left.authby == AUTHBY_ECDSA)
+		if (wm->left.auth == AUTH_ECDSA)
 			c->policy = (c->policy & ~(POLICY_RSASIG | POLICY_RSASIG_v1_5));
 	}
 
@@ -1823,8 +1828,9 @@ static bool extract_connection(const struct whack_message *wm,
 	    pri_connection(c, &cb), str_connection_policies(c, &pb));
 
 	if (NEVER_NEGOTIATE(wm->policy)) {
-		/* set default to AUTHBY_NEVER if unset and we do not expect to do IKE */
-		if (wm->left.authby == AUTHBY_UNSET && wm->right.authby == AUTHBY_UNSET) {
+		/* set default to AUTH_NEVER if unset and we do not expect to do IKE */
+		if (wm->left.auth == AUTH_UNSET &&
+		    wm->right.auth == AUTH_UNSET) {
 			if ((c->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
 				/* authby= was also not specified - fill in default */
 				c->policy |= POLICY_AUTH_NEVER;
@@ -1835,7 +1841,8 @@ static bool extract_connection(const struct whack_message *wm,
 		}
 	} else {
 		/* set default to RSASIG if unset and we expect to do IKE */
-		if (wm->left.authby == AUTHBY_UNSET && wm->right.authby == AUTHBY_UNSET) {
+		if (wm->left.auth == AUTH_UNSET &&
+		    wm->right.auth == AUTH_UNSET) {
 			 if ((c->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
 				/* authby= was also not specified - fill in default */
 				c->policy |= POLICY_DEFAULT;
@@ -1846,12 +1853,12 @@ static bool extract_connection(const struct whack_message *wm,
 		}
 
 		/* fixup symmetric policy flags based on asymmetric ones */
-		if ((wm->left.authby == AUTHBY_NULL && wm->right.authby == AUTHBY_RSASIG) ||
-		    (wm->left.authby == AUTHBY_RSASIG && wm->right.authby == AUTHBY_NULL)) {
+		if ((wm->left.auth == AUTH_NULL && wm->right.auth == AUTH_RSASIG) ||
+		    (wm->left.auth == AUTH_RSASIG && wm->right.auth == AUTH_NULL)) {
 			c->policy |= POLICY_RSASIG;
 		}
-		if ((wm->left.authby == AUTHBY_NULL && wm->right.authby == AUTHBY_ECDSA) ||
-		    (wm->left.authby == AUTHBY_ECDSA && wm->right.authby == AUTHBY_NULL)) {
+		if ((wm->left.auth == AUTH_NULL && wm->right.auth == AUTH_ECDSA) ||
+		    (wm->left.auth == AUTH_ECDSA && wm->right.auth == AUTH_NULL)) {
 			c->policy |= POLICY_ECDSA;
 		}
 
@@ -2222,37 +2229,37 @@ static bool extract_connection(const struct whack_message *wm,
 	 * If both left/rightauth is unset, fill it in with
 	 * (preferred) symmetric policy.
 	 */
-	if (wm->left.authby == AUTHBY_UNSET &&
-	    wm->right.authby == AUTHBY_UNSET) {
-		enum keyword_authby authby;
+	if (wm->left.auth == AUTH_UNSET &&
+	    wm->right.auth == AUTH_UNSET) {
+		enum keyword_auth authby;
 		if (c->policy & POLICY_RSASIG)
-			authby = AUTHBY_RSASIG;
+			authby = AUTH_RSASIG;
 		else if (c->policy & POLICY_ECDSA)
-			authby = AUTHBY_ECDSA;
+			authby = AUTH_ECDSA;
 		else if (c->policy & POLICY_PSK)
-			authby = AUTHBY_PSK;
+			authby = AUTH_PSK;
 		else if (c->policy & POLICY_AUTH_NULL)
-			authby = AUTHBY_NULL;
+			authby = AUTH_NULL;
 		else
-			authby = AUTHBY_UNSET;
-		config->end[LEFT_END].host.authby = authby;
-		config->end[RIGHT_END].host.authby = authby;
+			authby = AUTH_UNSET;
+		config->end[LEFT_END].host.auth = authby;
+		config->end[RIGHT_END].host.auth = authby;
 	}
 
 	/* if left/rightauth are set, but symmetric policy is not, fill it in */
-	if (wm->left.authby == wm->right.authby ||
-	    wm->right.authby == AUTHBY_EAPONLY) {
-		switch (wm->left.authby) {
-		case AUTHBY_RSASIG:
+	if (wm->left.auth == wm->right.auth ||
+	    wm->right.auth == AUTH_EAPONLY) {
+		switch (wm->left.auth) {
+		case AUTH_RSASIG:
 			c->policy |= POLICY_RSASIG;
 			break;
-		case AUTHBY_ECDSA:
+		case AUTH_ECDSA:
 			c->policy |= POLICY_ECDSA;
 			break;
-		case AUTHBY_PSK:
+		case AUTH_PSK:
 			c->policy |= POLICY_PSK;
 			break;
-		case AUTHBY_NULL:
+		case AUTH_NULL:
 			c->policy |= POLICY_AUTH_NULL;
 			break;
 		default:
@@ -3635,8 +3642,8 @@ static void show_one_sr(struct show *s,
 	enum_buf auth1, auth2;
 	show_comment(s, PRI_CONNECTION":   our auth:%s, their auth:%s, our autheap:%s, their autheap:%s;",
 		     c->name, instance,
-		     str_enum_short(&keyword_authby_names, sr->this.config->host.authby, &auth1),
-		     str_enum_short(&keyword_authby_names, sr->that.config->host.authby, &auth2),
+		     str_enum_short(&keyword_auth_names, sr->this.config->host.auth, &auth1),
+		     str_enum_short(&keyword_auth_names, sr->that.config->host.auth, &auth2),
 		     c->local->config->host.eap == IKE_EAP_NONE ? "none" : "tls",
 		     c->remote->config->host.eap == IKE_EAP_NONE ? "none" : "tls"
 	);

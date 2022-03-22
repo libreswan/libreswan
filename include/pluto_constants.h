@@ -91,14 +91,14 @@ enum keyword_remotepeertype {
 	CISCO = 1,
 };
 
-enum keyword_authby {
-	AUTHBY_UNSET = 0,
-	AUTHBY_NEVER,
-	AUTHBY_PSK,
-	AUTHBY_RSASIG,
-	AUTHBY_ECDSA,
-	AUTHBY_NULL,
-	AUTHBY_EAPONLY,
+enum keyword_auth {
+	AUTH_UNSET = 0,
+	AUTH_NEVER,
+	AUTH_PSK,
+	AUTH_RSASIG,
+	AUTH_ECDSA,
+	AUTH_NULL,
+	AUTH_EAPONLY,
 };
 
 enum keyword_xauthby {

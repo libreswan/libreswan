@@ -174,7 +174,7 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 					   ike->sa.st_sk_pi_no_ppk);
 	}
 
-	enum keyword_authby authby = v2_auth_by(ike);
+	enum keyword_auth authby = v2_auth_by(ike);
 	enum ikev2_auth_method auth_method = v2AUTH_method_from_authby(ike, authby);
 	switch (auth_method) {
 	case IKEv2_AUTH_RSA:
@@ -215,11 +215,11 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 		}
 
 		switch (authby) {
-		case AUTHBY_RSASIG:
+		case AUTH_RSASIG:
 			/* XXX: way to force PKCS#1 1.5? */
 			ike->sa.st_v2_digsig.signer = &pubkey_signer_rsassa_pss;
 			break;
-		case AUTHBY_ECDSA:
+		case AUTH_ECDSA:
 			ike->sa.st_v2_digsig.signer = &pubkey_signer_ecdsa;
 			break;
 		default:
@@ -516,10 +516,10 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	 * chunk. This is only done on the initiator in IKE_AUTH, and
 	 * not repeated in rekeys.
 	 */
-	if (v2_auth_by(ike) == AUTHBY_RSASIG && pc->policy & POLICY_AUTH_NULL) {
+	if (v2_auth_by(ike) == AUTH_RSASIG && pc->policy & POLICY_AUTH_NULL) {
 		/* store in null_auth */
 		chunk_t null_auth = NULL_HUNK;
-		if (!ikev2_create_psk_auth(AUTHBY_NULL, ike,
+		if (!ikev2_create_psk_auth(AUTH_NULL, ike,
 					   &ike->sa.st_v2_id_payload.mac,
 					   &null_auth)) {
 			log_state(RC_LOG_SERIOUS, &ike->sa,
@@ -784,9 +784,9 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 
 	/* process AUTH payload */
 
-	enum keyword_authby that_authby = ike->sa.st_connection->remote->config->host.authby;
+	enum keyword_auth that_authby = ike->sa.st_connection->remote->config->host.auth;
 
-	passert(that_authby != AUTHBY_NEVER && that_authby != AUTHBY_UNSET);
+	passert(that_authby != AUTH_NEVER && that_authby != AUTH_UNSET);
 
 	if (!ike->sa.st_ppk_used && ike->sa.st_no_ppk_auth.ptr != NULL) {
 		/*
@@ -802,7 +802,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 
 		diag_t d = v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 					      ike, &idhash_in, &pbs_no_ppk_auth,
-					      ike->sa.st_connection->remote->config->host.authby);
+					      ike->sa.st_connection->remote->config->host.auth);
 		if (d != NULL) {
 			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 			dbg("no PPK auth failed");
@@ -830,7 +830,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 			dbg("going to try to verify NULL_AUTH from Notify payload");
 			init_pbs(&pbs_null_auth, null_auth.ptr, len, "pb_stream for verifying NULL_AUTH");
 			diag_t d = v2_authsig_and_log(IKEv2_AUTH_NULL, ike, &idhash_in,
-						      &pbs_null_auth, AUTHBY_NULL);
+						      &pbs_null_auth, AUTH_NULL);
 			if (d != NULL) {
 				llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 				dbg("NULL_auth from Notify Payload failed");
@@ -846,7 +846,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 			dbg("responder verifying AUTH payload");
 			diag_t d = v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
 						      ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
-						      ike->sa.st_connection->remote->config->host.authby);
+						      ike->sa.st_connection->remote->config->host.auth);
 			if (d != NULL) {
 				llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 				dbg("I2 Auth Payload failed");
@@ -937,7 +937,7 @@ stf_status generate_v2_responder_auth(struct ike_sa *ike, struct msg_digest *md,
 	ike->sa.st_v2_id_payload.mac = v2_hash_id_payload("IDr", ike, "st_skey_pr_nss",
 							  ike->sa.st_skey_pr_nss);
 
-	enum keyword_authby authby = v2_auth_by(ike);
+	enum keyword_auth authby = v2_auth_by(ike);
 	enum ikev2_auth_method auth_method = v2AUTH_method_from_authby(ike, authby);
 	switch (auth_method) {
 
@@ -1001,7 +1001,7 @@ stf_status generate_v2_responder_auth(struct ike_sa *ike, struct msg_digest *md,
 		    hash_story);
 		const char *signer_story;
 		switch (authby) {
-		case AUTHBY_RSASIG:
+		case AUTH_RSASIG:
 			if (ike->sa.st_v2_digsig.signer == NULL ||
 			    ike->sa.st_v2_digsig.signer->type != &pubkey_type_rsa) {
 				ike->sa.st_v2_digsig.signer = &pubkey_signer_rsassa_pss;
@@ -1010,7 +1010,7 @@ stf_status generate_v2_responder_auth(struct ike_sa *ike, struct msg_digest *md,
 				signer_story = "saved earlier";
 			}
 			break;
-		case AUTHBY_ECDSA:
+		case AUTH_ECDSA:
 			/* no choice */
 			signer_story = "hardwired";
 			ike->sa.st_v2_digsig.signer = &pubkey_signer_ecdsa;
@@ -1323,9 +1323,9 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	}
 
 	struct connection *c = ike->sa.st_connection;
-	enum keyword_authby that_authby = c->remote->config->host.authby;
+	enum keyword_auth that_authby = c->remote->config->host.auth;
 
-	passert(that_authby != AUTHBY_NEVER && that_authby != AUTHBY_UNSET);
+	passert(that_authby != AUTH_NEVER && that_authby != AUTH_UNSET);
 
 	if (md->pd[PD_v2N_PPK_IDENTITY] != NULL) {
 		if (!LIN(POLICY_PPK_ALLOW, c->policy)) {

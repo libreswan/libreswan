@@ -13,7 +13,7 @@ extern enum_names netkey_sa_dir_names;
 #endif
 extern enum_names sd_action_names;
 extern enum_names stf_status_names;
-extern enum_names keyword_authby_names;
+extern enum_names keyword_auth_names;
 extern enum_names keyword_host_names;
 
 extern const enum_names debug_names;

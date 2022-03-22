@@ -147,14 +147,14 @@ static const struct sparse_name kw_seccomp_list[] = {
 };
 #endif
 
-static const struct sparse_name kw_authby_lr_list[] = {
-	{ "never",     AUTHBY_NEVER },
-	{ "secret",    AUTHBY_PSK },
-	{ "rsasig",    AUTHBY_RSASIG },
-	{ "rsa",       AUTHBY_RSASIG }, /* alias */
-	{ "ecdsa",     AUTHBY_ECDSA },
-	{ "null",      AUTHBY_NULL },
-	{ "eaponly",   AUTHBY_EAPONLY },
+static const struct sparse_name kw_auth_list[] = {
+	{ "never",     AUTH_NEVER },
+	{ "secret",    AUTH_PSK },
+	{ "rsasig",    AUTH_RSASIG },
+	{ "rsa",       AUTH_RSASIG }, /* alias */
+	{ "ecdsa",     AUTH_ECDSA },
+	{ "null",      AUTH_NULL },
+	{ "eaponly",   AUTH_EAPONLY },
 	SPARSE_NULL
  };
 
@@ -443,7 +443,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   /* xauthusername is still used in NetworkManager-libreswan :/ */
   { "xauthusername",  kv_conn | kv_leftright,  kt_string,  KSCF_USERNAME, NULL, NULL, }, /* old alias */
   { "addresspool",  kv_conn | kv_leftright,  kt_range,  KSCF_ADDRESSPOOL, NULL, NULL, },
-  { "auth",  kv_conn | kv_leftright, kt_enum,  KNCF_AUTH,  kw_authby_lr_list, NULL, },
+  { "auth",  kv_conn | kv_leftright, kt_enum,  KNCF_AUTH,  kw_auth_list, NULL, },
   { "cat",  kv_conn | kv_leftright,  kt_bool,  KNCF_CAT, NULL, NULL, },
   { "protoport",  kv_conn | kv_leftright | kv_processed,  kt_string,  KSCF_PROTOPORT, NULL, NULL, },
   { "autheap",  kv_conn | kv_leftright,  kt_enum,  KNCF_EAP,  kw_eap_list, NULL, },

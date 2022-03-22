@@ -2972,7 +2972,7 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
 	bool authnull = (LIN(POLICY_AUTH_NULL, c->policy) ||
-			 c->remote->config->host.authby == AUTHBY_NULL);
+			 c->remote->config->host.auth == AUTH_NULL);
 
 	if (c->local->config->host.xauth.server && LIN(POLICY_PSK, c->policy)) {
 		/*
@@ -3001,7 +3001,7 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 			    same_id(&c->remote->host.id, &d->remote->host.id))
 			{
 				bool old_is_nullauth = (LIN(POLICY_AUTH_NULL, d->policy) ||
-							d->remote->config->host.authby == AUTHBY_NULL);
+							d->remote->config->host.auth == AUTH_NULL);
 				bool same_remote_ip = sameaddr(&c->remote->host.addr, &d->remote->host.addr);
 
 				if (same_remote_ip && (!old_is_nullauth && authnull)) {

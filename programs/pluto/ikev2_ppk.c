@@ -121,12 +121,12 @@ bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 			    chunk_t *no_ppk_auth /* output */)
 {
 	struct connection *c = ike->sa.st_connection;
-	enum keyword_authby authby = c->local->config->host.authby;
+	enum keyword_auth authby = c->local->config->host.auth;
 
 	free_chunk_content(no_ppk_auth);	/* in case it was occupied */
 
 	switch (authby) {
-	case AUTHBY_RSASIG:
+	case AUTH_RSASIG:
 	{
 		const struct hash_desc *hash_algo = v2_auth_negotiated_signature_hash(ike);
 		if (hash_algo == NULL) {
@@ -175,9 +175,9 @@ bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 		free_chunk_content(&hashval);
 		return true;
 	}
-	case AUTHBY_PSK:
+	case AUTH_PSK:
 		/* store in no_ppk_auth */
-		if (!ikev2_create_psk_auth(AUTHBY_PSK, ike, id_hash, no_ppk_auth)) {
+		if (!ikev2_create_psk_auth(AUTH_PSK, ike, id_hash, no_ppk_auth)) {
 			return false; /* was STF_INTERNAL_ERROR but don't tell */
 		}
 		return true;

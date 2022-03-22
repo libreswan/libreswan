@@ -72,30 +72,30 @@ static void swap_ends(struct connection *c)
 	c->remote = tmp;
 
 	/*
-	 * In case of asymmetric auth c->policy contains left.authby.
+	 * In case of asymmetric auth c->policy contains left.auth.
 	 * This magic will help responder to find connection during INIT.
 	 */
-	if (sr->this.config->host.authby != sr->that.config->host.authby)
+	if (sr->this.config->host.auth != sr->that.config->host.auth)
 	{
 		c->policy &= ~POLICY_ID_AUTH_MASK;
-		switch (sr->this.config->host.authby) {
-		case AUTHBY_PSK:
+		switch (sr->this.config->host.auth) {
+		case AUTH_PSK:
 			c->policy |= POLICY_PSK;
 			break;
-		case AUTHBY_RSASIG:
+		case AUTH_RSASIG:
 			c->policy |= POLICY_RSASIG;
 			break;
-		case AUTHBY_ECDSA:
+		case AUTH_ECDSA:
 			c->policy |= POLICY_ECDSA;
 			break;
-		case AUTHBY_NULL:
+		case AUTH_NULL:
 			c->policy |= POLICY_AUTH_NULL;
 			break;
-		case AUTHBY_NEVER:
+		case AUTH_NEVER:
 			/* nothing to add */
 			break;
 		default:
-			bad_case(sr->this.config->host.authby);
+			bad_case(sr->this.config->host.auth);
 		}
 	}
 	/* re-compute the base policy priority using the swapped left/right */

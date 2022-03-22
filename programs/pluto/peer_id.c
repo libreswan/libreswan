@@ -180,8 +180,8 @@ static struct connection *refine_host_connection_on_responder(int indent,
 
 	const generalName_t *requested_ca = st->st_requested_ca;
 
-	passert(!LHAS(proposed_authbys, AUTHBY_NEVER));
-	passert(!LHAS(proposed_authbys, AUTHBY_UNSET));
+	passert(!LHAS(proposed_authbys, AUTH_NEVER));
+	passert(!LHAS(proposed_authbys, AUTH_UNSET));
 
 	/*
 	 * Find the PEER's CA, check the per-state DB first.
@@ -354,7 +354,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 					dbg_rhc("skipping because AGGRESSIVE isn't right");
 					continue;	/* differ about aggressive mode */
 				}
-				if (LHAS(proposed_authbys, AUTHBY_PSK)) {
+				if (LHAS(proposed_authbys, AUTH_PSK)) {
 					if (!(d->policy & POLICY_PSK)) {
 						/* there needs to be a key */
 						dbg_rhc("skipping because no PSK in POLICY");
@@ -366,7 +366,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 						continue; /* no secret */
 					}
 				}
-				if (LHAS(proposed_authbys, AUTHBY_RSASIG)) {
+				if (LHAS(proposed_authbys, AUTH_RSASIG)) {
 					if (!(d->policy & POLICY_RSASIG)) {
 						dbg_rhc("skipping because not RSASIG in POLICY");
 						continue;	/* no key */
@@ -388,13 +388,13 @@ static struct connection *refine_host_connection_on_responder(int indent,
 				 * what the remote end has sent in the
 				 * IKE_AUTH request.
 				 */
-				if (!LHAS(proposed_authbys, d->remote->config->host.authby)) {
+				if (!LHAS(proposed_authbys, d->remote->config->host.auth)) {
 					dbg_rhc("skipping because mismatched authby");
 					continue;
 				}
 				/* check that the chosen one has a key */
-				switch (d->remote->config->host.authby) {
-				case AUTHBY_PSK:
+				switch (d->remote->config->host.auth) {
+				case AUTH_PSK:
 					/*
 					 * XXX: This tries to find the
 					 * PSK for what is potentially
@@ -410,13 +410,13 @@ static struct connection *refine_host_connection_on_responder(int indent,
 					}
 #endif
 					break;
-				case AUTHBY_RSASIG:
+				case AUTH_RSASIG:
 					if (get_connection_private_key(d, &pubkey_type_rsa, st->st_logger) == NULL) {
 						dbg_rhc("skipping because RSASIG and no private key");
 						continue;	/* no key */
 					}
 					break;
-				case AUTHBY_ECDSA:
+				case AUTH_ECDSA:
 					if (get_connection_private_key(d, &pubkey_type_ecdsa, st->st_logger) == NULL) {
 						dbg_rhc("skipping because ECDSA and no private key");
 						continue;	/* no key */
@@ -426,7 +426,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 				{
 					lset_buf eb;
 					dbg_rhc("%s so no authby checks performed",
-						str_lset_short(&keyword_authby_names, "+",
+						str_lset_short(&keyword_auth_names, "+",
 							       proposed_authbys, &eb));
 					break;
 				}

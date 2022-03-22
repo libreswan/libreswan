@@ -109,10 +109,10 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 	lset_t proposed_authbys;
 	switch (auth) {
 	case OAKLEY_PRESHARED_KEY:
-		proposed_authbys = LELEM(AUTHBY_PSK);
+		proposed_authbys = LELEM(AUTH_PSK);
 		break;
 	case OAKLEY_RSA_SIG:
-		proposed_authbys = LELEM(AUTHBY_RSASIG);
+		proposed_authbys = LELEM(AUTH_RSASIG);
 		break;
 		/* Not implemented */
 	case OAKLEY_DSS_SIG:
@@ -136,7 +136,7 @@ bool ikev1_decode_peer_id_main_mode_responder(struct state *st, struct msg_diges
 	 * !IS_MOST_REFINED: is less specific.  For IKEv1, the search
 	 * didn't find a best; for IKEv2 it can additionally mean that
 	 * there was no search because the initiator proposed
-	 * AUTHBY_NULL.  AUTHBY_NULL never switches as it is assumed
+	 * AUTH_NULL.  AUTH_NULL never switches as it is assumed
 	 * that the perfect connection was chosen during IKE_SA_INIT.
 	 *
 	 * Either way, !IS_MOST_REFINED leads to a same_id() and other

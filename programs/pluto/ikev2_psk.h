@@ -20,13 +20,13 @@
 #include <stdbool.h>
 #include <chunk.h>
 
-enum keyword_authby;
+enum keyword_auth;
 struct ike_sa;
 struct crypt_mac;
 struct pbs_in;
 struct hash_signature;
 
-diag_t v2_authsig_and_log_using_psk(enum keyword_authby authby,
+diag_t v2_authsig_and_log_using_psk(enum keyword_auth authby,
 				    const struct ike_sa *ike,
 				    const struct crypt_mac *idhash,
 				    struct pbs_in *sig_pbs,

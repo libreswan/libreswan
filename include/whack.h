@@ -88,7 +88,7 @@ struct whack_end {
 	char *ckaid;
 	char *rsasigkey;
 
-	enum keyword_authby authby;
+	enum keyword_auth auth;
 
 	enum keyword_host host_type;
 	ip_address host_addr;

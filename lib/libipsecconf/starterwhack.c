@@ -388,7 +388,7 @@ static bool set_whack_end(char *lr,
 		w->sendcert = CERT_ALWAYSSEND;
 
 	if (l->options_set[KNCF_AUTH])
-		w->authby = l->options[KNCF_AUTH];
+		w->auth = l->options[KNCF_AUTH];
 
 	if (l->options_set[KNCF_EAP])
 		w->eap = l->options[KNCF_EAP];

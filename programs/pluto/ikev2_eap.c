@@ -408,7 +408,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 	ike->sa.st_remote_certs.harmless = true;
 
 	const struct connection *c = ike->sa.st_connection;
-	if (c->spd.that.config->host.authby != AUTHBY_EAPONLY) {
+	if (c->spd.that.config->host.auth != AUTH_EAPONLY) {
 		log_state(RC_LOG, &ike->sa,
 			  "Peer attempted EAP authentication, but IKE_AUTH is required");
 		goto auth_fail;
@@ -627,7 +627,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 						pbs_in_all_as_shunk(&sa_md->chain[ISAKMP_NEXT_v2IDi]->pbs),
 						"skey_pi", ike->sa.st_skey_pi_nss);
 
-	diag_t d = v2_authsig_and_log_using_psk(AUTHBY_EAPONLY, ike, &idhash_in,
+	diag_t d = v2_authsig_and_log_using_psk(AUTH_EAPONLY, ike, &idhash_in,
 						&md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
 						&msk);
 	free_eap_state(&ike->sa.st_eap);

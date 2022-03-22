@@ -115,24 +115,24 @@ diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest
 	}
 	enum ikev2_auth_method atype =
 		md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method;
-	enum keyword_authby proposed_authbys;
+	enum keyword_auth proposed_authbys;
 	switch (atype) {
 	case IKEv2_AUTH_RSA:
-		proposed_authbys = LELEM(AUTHBY_RSASIG);
+		proposed_authbys = LELEM(AUTH_RSASIG);
 		break;
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
-		proposed_authbys = LELEM(AUTHBY_ECDSA);
+		proposed_authbys = LELEM(AUTH_ECDSA);
 		break;
 	case IKEv2_AUTH_PSK:
-		proposed_authbys = LELEM(AUTHBY_PSK);
+		proposed_authbys = LELEM(AUTH_PSK);
 		break;
 	case IKEv2_AUTH_NULL:
-		proposed_authbys = LELEM(AUTHBY_NULL);
+		proposed_authbys = LELEM(AUTH_NULL);
 		break;
 	case IKEv2_AUTH_DIGSIG:
-		proposed_authbys = LELEM(AUTHBY_RSASIG) | LELEM(AUTHBY_ECDSA);
+		proposed_authbys = LELEM(AUTH_RSASIG) | LELEM(AUTH_ECDSA);
 		break;
 	default:
 		dbg("ikev2 skipping refine_host_connection due to unknown policy");
@@ -149,7 +149,7 @@ diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest
 	 * !IS_MOST_REFINED: is less specific.  For IKEv1, the search
 	 * didn't find a best; for IKEv2 it can additionally mean that
 	 * there was no search because the initiator proposed
-	 * AUTHBY_NULL.  AUTHBY_NULL never switches as it is assumed
+	 * AUTH_NULL.  AUTH_NULL never switches as it is assumed
 	 * that the perfect connection was chosen during IKE_SA_INIT.
 	 *
 	 * Either way, !IS_MOST_REFINED leads to a same_id() and other
@@ -158,7 +158,7 @@ diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest
 	 * This may change st->st_connection!
 	 * Our caller might be surprised!
 	 */
-       if (!LHAS(proposed_authbys, AUTHBY_NULL)) {
+       if (!LHAS(proposed_authbys, AUTH_NULL)) {
 	       refine_host_connection_of_state_on_responder(&ike->sa,
 							    proposed_authbys,
 							    &peer_id, tarzan_id);

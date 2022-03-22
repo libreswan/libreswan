@@ -57,19 +57,19 @@
 static diag_t ikev2_calculate_psk_sighash(bool verify,
 					  const struct hash_signature *auth_sig,
 					  const struct ike_sa *ike,
-					  enum keyword_authby authby,
+					  enum keyword_auth authby,
 					  const struct crypt_mac *idhash,
 					  const chunk_t firstpacket,
 					  struct crypt_mac *sighash)
 {
 	const struct connection *c = ike->sa.st_connection;
 	*sighash = empty_mac;
-	passert(authby == AUTHBY_EAPONLY || authby == AUTHBY_PSK || authby == AUTHBY_NULL);
+	passert(authby == AUTH_EAPONLY || authby == AUTH_PSK || authby == AUTH_NULL);
 
 	dbg("ikev2_calculate_psk_sighash() called from %s to %s PSK with authby=%s",
 	    ike->sa.st_state->name,
 	    verify ? "verify" : "create",
-	    enum_name(&keyword_authby_names, authby));
+	    enum_name(&keyword_auth_names, authby));
 
 	/* this is the IKE_AUTH exchange, so a given */
 	passert(ike->sa.hidden_variables.st_skeyid_calculated);
@@ -153,7 +153,7 @@ static diag_t ikev2_calculate_psk_sighash(bool verify,
 			return diag("EXPECTATION FAILED: missing auth_sig");
 		}
 		pss = HUNK_AS_SHUNK(*auth_sig);
-	} else if (authby != AUTHBY_NULL) {
+	} else if (authby != AUTH_NULL) {
 		/*
 		 * XXX: same PSK used for both local and remote end,
 		 * so peer doesn't apply?
@@ -212,7 +212,7 @@ static diag_t ikev2_calculate_psk_sighash(bool verify,
 	return NULL;
 }
 
-bool ikev2_emit_psk_auth(enum keyword_authby authby,
+bool ikev2_emit_psk_auth(enum keyword_auth authby,
 			 const struct ike_sa *ike,
 			 const struct crypt_mac *idhash,
 			 pb_stream *a_pbs,
@@ -236,7 +236,7 @@ bool ikev2_emit_psk_auth(enum keyword_authby authby,
 	return ok;
 }
 
-bool ikev2_create_psk_auth(enum keyword_authby authby,
+bool ikev2_create_psk_auth(enum keyword_auth authby,
 			   const struct ike_sa *ike,
 			   const struct crypt_mac *idhash,
 			   chunk_t *additional_auth /* output */)
@@ -251,7 +251,7 @@ bool ikev2_create_psk_auth(enum keyword_authby authby,
 		return false;
 	}
 
-	const char *chunk_n = (authby == AUTHBY_PSK) ? "NO_PPK_AUTH chunk" : "NULL_AUTH chunk";
+	const char *chunk_n = (authby == AUTH_PSK) ? "NO_PPK_AUTH chunk" : "NULL_AUTH chunk";
 	*additional_auth = clone_hunk(signed_octets, chunk_n);
 	if (DBGP(DBG_CRYPT)) {
 		DBG_dump_hunk(chunk_n, *additional_auth);
@@ -266,7 +266,7 @@ bool ikev2_create_psk_auth(enum keyword_authby authby,
  * The log message must mention both the peer's ID and kind.
  */
 
-diag_t v2_authsig_and_log_using_psk(enum keyword_authby authby,
+diag_t v2_authsig_and_log_using_psk(enum keyword_auth authby,
 				    const struct ike_sa *ike,
 				    const struct crypt_mac *idhash,
 				    struct pbs_in *sig_pbs,
@@ -274,7 +274,7 @@ diag_t v2_authsig_and_log_using_psk(enum keyword_authby authby,
 {
 	shunk_t sig = pbs_in_left_as_shunk(sig_pbs);
 
-	passert(authby == AUTHBY_EAPONLY || authby == AUTHBY_PSK || authby == AUTHBY_NULL);
+	passert(authby == AUTH_EAPONLY || authby == AUTH_PSK || authby == AUTH_NULL);
 
 	size_t hash_len = ike->sa.st_oakley.ta_prf->prf_output_size;
 	if (sig.len != hash_len) {
@@ -316,7 +316,7 @@ diag_t v2_authsig_and_log_using_psk(enum keyword_authby authby,
 		(ike->sa.st_sa_role == SA_INITIATOR ? "initiator" :
 		 ike->sa.st_sa_role == SA_RESPONDER ? "responder" :
 		 "?"),
-		enum_name(&keyword_authby_names, authby),
+		enum_name(&keyword_auth_names, authby),
 		enum_show(&ike_id_type_names, ike->sa.st_connection->remote->host.id.kind, &kb),
 		str_id(&ike->sa.st_connection->remote->host.id, &idb));
 	return NULL;
