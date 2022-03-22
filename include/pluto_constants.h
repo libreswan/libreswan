@@ -857,7 +857,17 @@ enum sa_policy_bits {
 	POLICY_AUTH_NEVER_IX,
 	POLICY_AUTH_NULL_IX,
 
+	/*
+	 * Danger: there's code relying on RSASIG_v1_5 not being part
+	 * of POLICY_ID_AUTH_MASK (for instance code blatting) policy
+	 * when re-orienting.
+	 */
 #define POLICY_ID_AUTH_MASK	LRANGE(POLICY_PSK_IX, POLICY_AUTH_NULL_IX)
+#define POLICY_AUTHBY_RSASIG_MASK	(POLICY_RSASIG | POLICY_RSASIG_v1_5)
+#define POLICY_AUTHBY_ECDSA_MASK	(POLICY_ECDSA)
+#define POLICY_AUTHBY_PSK_MASK		(POLICY_PSK)
+#define POLICY_AUTHBY_NULL_MASK		(POLICY_AUTH_NULL)
+#define POLICY_AUTHBY_MASK		(LRANGE(POLICY_PSK_IX, POLICY_AUTH_NULL_IX) | POLICY_RSASIG_v1_5)
 
 	POLICY_ENCRYPT_IX,	/* must be first of IPSEC policies */
 	POLICY_AUTHENTICATE_IX,	/* must be second */

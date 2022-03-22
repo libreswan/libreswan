@@ -876,6 +876,7 @@ static diag_t extract_client_afi(const struct whack_message *wm,
 static int extract_end(struct connection *c,
 		       struct end *dst,
 		       struct config_end *config_end,
+		       const struct whack_message *wm,
 		       const struct whack_end *src,
 		       struct end *other_end,
 		       const struct ip_info *host_afi,
@@ -1086,13 +1087,33 @@ static int extract_end(struct connection *c,
 	config_end->host.xauth.username = clone_str(src->xauth_username, "xauth username");
 	config_end->host.eap = src->eap;
 
-	config_end->host.auth = src->auth;
-
 	if (src->eap == IKE_EAP_NONE && src->auth == AUTH_EAPONLY) {
 		llog(RC_LOG_SERIOUS, logger, "failed to add connection: leftauth/rightauth can only be 'eaponly' when using leftautheap/rightautheap is not 'none'");
 		return -1;
 	}
 
+	config_end->host.auth = src->auth;
+	lset_t policy_authby = LEMPTY;
+	switch (src->auth) {
+	case AUTH_PSK:
+		policy_authby = (wm->policy & POLICY_AUTHBY_PSK_MASK);
+		break;
+	case AUTH_RSASIG:
+		policy_authby = (wm->policy & POLICY_AUTHBY_RSASIG_MASK);
+		break;
+	case AUTH_ECDSA:
+		policy_authby = (wm->policy & POLICY_AUTHBY_ECDSA_MASK);
+		break;
+	case AUTH_NULL:
+		policy_authby = (wm->policy & POLICY_AUTHBY_NULL_MASK);
+		break;
+	case AUTH_EAPONLY:
+	case AUTH_UNSET:
+		policy_authby = (wm->policy & POLICY_AUTHBY_MASK); /* ??? */
+	case AUTH_NEVER:
+		break;
+	}
+	config_end->host.policy_authby = policy_authby;
 
 	/* save some defaults */
 	config_end->client.subnet = src->client;
@@ -2201,7 +2222,7 @@ static bool extract_connection(const struct whack_message *wm,
 		same_ca[lr] = extract_end(c,
 					  client_spd[lr],
 					  &config->end[lr],
-					  whack_ends[lr],
+					  wm, whack_ends[lr],
 					  client_spd[opp],
 					  host_afi, client_afi,
 					  c->logger);

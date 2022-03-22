@@ -310,7 +310,7 @@ bool emit_v2_auth(struct ike_sa *ike,
  * auth succeed.  Caller needs to decide what response is appropriate.
  */
 
-static diag_t v2_authsig_and_log_using_pubkey(lset_t auth_policy,
+static diag_t v2_authsig_and_log_using_pubkey(lset_t policy_authby,
 					      struct ike_sa *ike,
 					      const struct crypt_mac *idhash,
 					      const struct pbs_in *signature_pbs,
@@ -339,7 +339,7 @@ static diag_t v2_authsig_and_log_using_pubkey(lset_t auth_policy,
 	 */
 
 	lset_t hash_bit = LELEM(hash_algo->common.ikev2_alg_id);
-	if (auth_policy & POLICY_RSASIG_v1_5 &&
+	if (policy_authby & POLICY_RSASIG_v1_5 &&
 	    hash_algo == &ike_alg_hash_sha1) {
 		pexpect(!(c->config->sighash_policy & hash_bit));
 		dbg("skipping sighash check as PKCS#1 1.5 RSA + SHA1");
@@ -348,10 +348,10 @@ static diag_t v2_authsig_and_log_using_pubkey(lset_t auth_policy,
 			    hash_algo->common.fqn);
 	}
 
-	if ((c->policy & auth_policy) != auth_policy) {
+	if ((c->remote->config->host.policy_authby & policy_authby) != policy_authby) {
 		policy_buf pb;
 		return diag("authentication failed: peer authentication requires policy %s",
-			    str_policy(auth_policy, &pb));
+			    str_policy(policy_authby, &pb));
 	}
 
 	shunk_t signature = pbs_in_left_as_shunk(signature_pbs);
