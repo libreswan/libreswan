@@ -56,11 +56,11 @@ west #
  ipsec status | grep unrouted
 000 "4in4-base": 1.2.3.0/24===10.11.12.13...20.21.22.23; unrouted; eroute owner: #0
 000 "4in4-good": 1.2.3.0/24===10.11.12.13...20.21.22.23===0.0.0.0/0; unrouted; eroute owner: #0
-000 "4in4-protoport": 1.2.3.0/24:TCP/22===10.11.12.13...20.21.22.23===20.21.22.23/32:TCP/22; unrouted; eroute owner: #0
+000 "4in4-protoport": 1.2.3.0/24===10.11.12.13...20.21.22.23===20.21.22.23/32:TCP/22; unrouted; eroute owner: #0
 000 "4in6-good": 1.2.3.0/24===10:11:12:13::...20:21:22:23::===0.0.0.0/0; unrouted; eroute owner: #0
 000 "6in4-good": 1:2:3::/64===10.11.12.13...20.21.22.23===::/0; unrouted; eroute owner: #0
 000 "6in6-base": 1:2:3::/64===10:11:12:13::...20:21:22:23::; unrouted; eroute owner: #0
 000 "6in6-good": 1:2:3::/64===10:11:12:13::...20:21:22:23::===::/0; unrouted; eroute owner: #0
-000 "6in6-protoport": 1:2:3::/64:TCP/22===10:11:12:13::...20:21:22:23::===20:21:22:23::/128:TCP/22; unrouted; eroute owner: #0
+000 "6in6-protoport": 1:2:3::/64===10:11:12:13::...20:21:22:23::===20:21:22:23::/128:TCP/22; unrouted; eroute owner: #0
 west #
  

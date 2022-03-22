@@ -7,7 +7,7 @@
  * Copyright (C) 2013-2019 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 David McCullough <ucdevel@gmail.com>
  * Copyright (C) 2013-2016 Antony Antony <antony@phenome.org>
- * Copyright (C) 2016-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016-2022 Andrew Cagney
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
  *
@@ -20,7 +20,6 @@
  * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
- *
  */
 
 #include <string.h>
@@ -602,7 +601,9 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 	for (k = ipsec_conf_keywords; k->keyname != NULL; k++) {
 		if (strcaseeq(s, k->keyname)) {
 			if (k->validity & kv_leftright) {
+#if 0 /* see github#663 */
 				left = true;
+#endif
 				right = true;
 			}
 			break;
