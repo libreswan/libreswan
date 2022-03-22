@@ -66,24 +66,7 @@ west #
  echo done
 done
 west #
- grep -e 'auth method: ' -e 'hash algorithm identifier' -e "^[^|].* established IKE SA" OUTPUT/*pluto.log
-OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:| hash algorithm identifier (network ordered)
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
-OUTPUT/east.pluto.log:"westnet-eastnet-ikev2" #1: responder established IKE SA; authenticated using RSA with SHA1 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-OUTPUT/east.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/west.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256 into IKEv2 Notify Payload
-OUTPUT/west.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256: 00 02
-OUTPUT/west.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384 into IKEv2 Notify Payload
-OUTPUT/west.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384: 00 03
-OUTPUT/west.pluto.log:| emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512 into IKEv2 Notify Payload
-OUTPUT/west.pluto.log:| hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_512: 00 04
-OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_RSA (0x1)
-OUTPUT/west.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
-OUTPUT/west.pluto.log:"westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated using authby=null and peer ID_NULL 'ID_NULL'
+ grep -e "^[^|].* established IKE SA" /tmp/pluto.log
+"westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated using authby=null and peer ID_NULL 'ID_NULL'
 west #
  
