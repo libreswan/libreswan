@@ -1033,6 +1033,7 @@ int main(int argc, char **argv)
 	zero(&msg);	/* ??? pointer fields might not be NULLed */
 
 	clear_end(&msg.right);	/* left set from this after --to */
+	msg.right.leftright = "left"; /* YES! */
 
 	struct family host_family = { 0, };
 	struct family client_family = { 0, };
@@ -1801,6 +1802,7 @@ int main(int argc, char **argv)
 
 			msg.left = msg.right;
 			clear_end(&msg.right);
+			msg.right.leftright = "right";
 			end_seen = LEMPTY;
 			continue;
 
