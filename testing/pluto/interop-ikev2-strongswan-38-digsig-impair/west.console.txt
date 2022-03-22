@@ -61,7 +61,7 @@ crl fetching failed
 certificate status is not available
   reached self-signed root ca with a path length of 0
   using trusted certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
-authentication of 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' with RSA_EMSA_PSS_SHA2_512_SALT_64 successful
+authentication of 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' with RSA signature successful
 IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]
 scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
