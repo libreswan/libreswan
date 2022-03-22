@@ -688,6 +688,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	if (!emit_v2_auth(ike, &msk, &ike->sa.st_v2_id_payload.mac, response.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
+	ike->sa.st_v2_ike_intermediate.used = false;
 
 	/*
 	 * Try to build a child.
