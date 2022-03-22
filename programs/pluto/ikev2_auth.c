@@ -231,8 +231,7 @@ bool emit_v2_auth(struct ike_sa *ike,
 		  const struct crypt_mac *id_payload_mac,
 		  struct pbs_out *outs)
 {
-	enum keyword_authby authby = ike->sa.st_eap_sa_md ? IKEv2_AUTH_PSK : v2_auth_by(ike);
-
+	enum keyword_authby authby = ike->sa.st_eap_sa_md ? AUTHBY_PSK : v2_auth_by(ike);
 	struct ikev2_auth a = {
 		.isaa_critical = build_ikev2_critical(false, ike->sa.st_logger),
 		.isaa_auth_method = v2AUTH_method_from_authby(ike, authby),
