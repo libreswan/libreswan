@@ -1095,17 +1095,19 @@ static int extract_end(struct connection *c,
 	config_end->host.auth = src->auth;
 	lset_t policy_authby = LEMPTY;
 	switch (src->auth) {
-	case AUTH_PSK:
-		policy_authby = (wm->policy & POLICY_AUTHBY_PSK_MASK);
-		break;
 	case AUTH_RSASIG:
 		policy_authby = (wm->policy & POLICY_AUTHBY_RSASIG_MASK);
 		break;
 	case AUTH_ECDSA:
 		policy_authby = (wm->policy & POLICY_AUTHBY_ECDSA_MASK);
 		break;
+	case AUTH_PSK:
+		/* force only bit */
+		policy_authby = POLICY_PSK;
+		break;
 	case AUTH_NULL:
-		policy_authby = (wm->policy & POLICY_AUTHBY_NULL_MASK);
+		/* force only bit */
+		policy_authby = POLICY_AUTH_NULL;
 		break;
 	case AUTH_EAPONLY:
 	case AUTH_UNSET:
@@ -1113,6 +1115,14 @@ static int extract_end(struct connection *c,
 	case AUTH_NEVER:
 		break;
 	}
+	if (wm->ike_version == IKEv1) {
+		/* strip stuff IKEv1 ignores */
+		policy_authby &= ~POLICY_ECDSA;
+		policy_authby &= ~POLICY_RSASIG_v1_5;
+	}
+	lset_buf pab;
+	dbg("fake %sauthby=%s", src->leftright,
+	    str_lset_short(&sa_policy_bit_names, "+", policy_authby, &pab));
 	config_end->host.policy_authby = policy_authby;
 
 	/* save some defaults */
