@@ -66,7 +66,7 @@ west #
 000 "ecdsa-sha2_384":   v2-auth-hash-policy: SHA2_384;
 000 "ecdsa-sha2_512":   policy: IKEv2+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 000 "ecdsa-sha2_512":   v2-auth-hash-policy: SHA2_512;
-000 "rsa-sha1":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+RSASIG_v1_5;
+000 "rsa-sha1":   policy: IKEv2+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+RSASIG_v1_5;
 000 "rsa-sha1":   v2-auth-hash-policy: none;
 000 "rsa-sha2":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 000 "rsa-sha2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
