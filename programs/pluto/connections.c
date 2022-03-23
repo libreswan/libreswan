@@ -1879,12 +1879,22 @@ static bool extract_connection(const struct whack_message *wm,
 		/* set default to RSASIG if unset and we expect to do IKE */
 		if (wm->left.auth == AUTH_UNSET &&
 		    wm->right.auth == AUTH_UNSET) {
-			 if ((c->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
-				/* authby= was also not specified - fill in default */
-				c->policy |= POLICY_DEFAULT;
+			 if ((c->policy & POLICY_AUTHBY_MASK) == LEMPTY) {
+				/*
+				 * authby= was also not specified -
+				 * fill in default.
+				 *
+				 * XXX: is this code path dead?  If
+				 * whack sent over authyby=rsa-sha1
+				 * then this code was adding in RSA,
+				 * but that should no longer be
+				 * needed.
+				 */
+				c->policy |= POLICY_AUTHBY_DEFAULTS;
 				policy_buf pb;
-				dbg("no AUTH policy was set - defaulting to %s",
-				    str_policy(c->policy & POLICY_ID_AUTH_MASK, &pb));
+				llog_pexpect(c->logger, HERE,
+					     "no AUTH policy was set - defaulting to %s",
+					     str_policy(c->policy & POLICY_AUTHBY_MASK, &pb));
 			}
 		}
 
@@ -2268,9 +2278,9 @@ static bool extract_connection(const struct whack_message *wm,
 	if (wm->left.auth == AUTH_UNSET &&
 	    wm->right.auth == AUTH_UNSET) {
 		enum keyword_auth authby;
-		if (c->policy & POLICY_RSASIG)
+		if (c->policy & POLICY_AUTHBY_RSASIG_MASK)
 			authby = AUTH_RSASIG;
-		else if (c->policy & POLICY_ECDSA)
+		else if (c->policy & POLICY_AUTHBY_ECDSA_MASK)
 			authby = AUTH_ECDSA;
 		else if (c->policy & POLICY_PSK)
 			authby = AUTH_PSK;
