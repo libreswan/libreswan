@@ -755,13 +755,21 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 			return false;
 	}
 
-	/* Send SIGNATURE_HASH_ALGORITHMS Notify payload */
+	/*
+	 * Send the initiator's SIGNATURE_HASH_ALGORITHMS notification
+	 * based on the remote's .policy_authby.
+	 *
+	 * The initiator would like the responder to prove their
+	 * identity using one of these hashes (plus a signature).
+	 * Since the iniator can't switch connections the decision is
+	 * final.
+	 */
 	if (impair.omit_v2N_SIGNATURE_HASH_ALGORITHMS) {
 		log_state(RC_LOG, &ike->sa,
 			  "IMPAIR: omitting the SIGNATURE_HASH_ALGORITHM notification in IKE_SA_INIT request");
 	} else if ((c->remote->config->host.policy_authby & POLICY_AUTHBY_DIGSIG_MASK) &&
 		   (c->config->sighash_policy != LEMPTY)) {
-		if (!emit_v2N_signature_hash_algorithms(c->config->sighash_policy, request.pbs))
+		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(c->config->sighash_policy, request.pbs))
 			return false;
 	}
 
@@ -1098,13 +1106,20 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	}
 
 	/*
-	 * Send SIGNATURE_HASH_ALGORITHMS notification.
+	 * Send the responder's SIGNATURE_HASH_ALGORITHMS notification
+	 * unconditionally:
+	 *
+	 * + the connection is tentative, remote .policy_authby could
+	 *   be wrong (for instance, IKE_AUTH may trigger a switch
+	 *   from host-host:PSK -> host-any:RSA).
+	 *
+	 * + not sending SIGNATURE_HASH_ALGORITHM leaks configuration
+	 *   information
 	 */
 	if (impair.omit_v2N_SIGNATURE_HASH_ALGORITHMS) {
 		llog_sa(RC_LOG, ike, "IMPAIR: omitting SIGNATURE_HASH_ALGORITHMS notification in IKE_SA_INIT response");
-	} else if ((c->remote->config->host.policy_authby & POLICY_AUTHBY_DIGSIG_MASK) &&
-		   (c->config->sighash_policy != LEMPTY)) {
-		if (!emit_v2N_signature_hash_algorithms(c->config->sighash_policy, response.pbs)) {
+	} else if (c->config->sighash_policy != LEMPTY) {
+		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(c->config->sighash_policy, response.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
