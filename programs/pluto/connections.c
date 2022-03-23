@@ -1278,7 +1278,7 @@ static diag_t check_connection_end(const struct whack_end *this,
 	}
 
 	if (this->id != NULL && streq(this->id, "%fromcert")) {
-		lset_t auth_pol = (wm->policy & POLICY_ID_AUTH_MASK);
+		lset_t auth_pol = (wm->policy & POLICY_AUTHBY_MASK);
 
 		if (this->auth == AUTH_PSK ||
 		    this->auth == AUTH_NULL ||
@@ -1484,7 +1484,7 @@ static bool extract_connection(const struct whack_message *wm,
 		}
 	}
 	if (wm->prospective_shunt != SHUNT_UNSET && wm->prospective_shunt != SHUNT_TRAP) {
-		if ((wm->policy & (POLICY_ID_AUTH_MASK & ~POLICY_AUTH_NEVER)) != LEMPTY) {
+		if ((wm->policy & (POLICY_AUTHBY_MASK & ~POLICY_AUTH_NEVER)) != LEMPTY) {
 			llog(RC_FATAL, c->logger,
 				    "failed to add connection: shunt connection cannot have authentication method other then authby=never");
 			return false;
@@ -1608,7 +1608,7 @@ static bool extract_connection(const struct whack_message *wm,
 			/* ensure no conflicts of set left/rightauth with (set or unset) authby= */
 			if (wm->left.auth == wm->right.auth) {
 
-				lset_t auth_pol = (wm->policy & POLICY_ID_AUTH_MASK);
+				lset_t auth_pol = (wm->policy & POLICY_AUTHBY_MASK);
 				const char *conflict = NULL;
 				switch (wm->left.auth) {
 				case AUTH_PSK:
@@ -1622,7 +1622,7 @@ static bool extract_connection(const struct whack_message *wm,
 					}
 					break;
 				case AUTH_NEVER:
-					if ((wm->policy & POLICY_ID_AUTH_MASK) != LEMPTY) {
+					if (auth_pol != LEMPTY) {
 						conflict = "leftauthby=never but authby= is not never - double huh?";
 					}
 					break;
@@ -1642,7 +1642,7 @@ static bool extract_connection(const struct whack_message *wm,
 					     "failed to add connection: leftauth=%s and rightauth=%s conflict with authby=%s, %s",
 					     enum_name(&keyword_auth_names, wm->left.auth),
 					     enum_name(&keyword_auth_names, wm->right.auth),
-					     str_policy(wm->policy & POLICY_ID_AUTH_MASK, &pb),
+					     str_policy(wm->policy & POLICY_AUTHBY_MASK, &pb),
 					     conflict);
 					return false;
 				}
@@ -1791,8 +1791,9 @@ static bool extract_connection(const struct whack_message *wm,
 	if (c->config->ike_version == IKEv1)
 		c->policy = (c->policy & ~(POLICY_ECDSA | POLICY_RSASIG_v1_5));
 	/* ignore symmetrical defaults if we got left/rightauth */
-	if (wm->left.auth != wm->right.auth)
-		c->policy = c->policy & ~POLICY_ID_AUTH_MASK;
+	if (wm->left.auth != wm->right.auth) {
+		c->policy = c->policy & ~POLICY_AUTHBY_MASK;
+	}
 	/* remove default pubkey policy if left/rightauth is specified */
 	if (wm->left.auth == wm->right.auth) {
 		if (wm->left.auth == AUTH_RSASIG)
@@ -1867,12 +1868,12 @@ static bool extract_connection(const struct whack_message *wm,
 		/* set default to AUTH_NEVER if unset and we do not expect to do IKE */
 		if (wm->left.auth == AUTH_UNSET &&
 		    wm->right.auth == AUTH_UNSET) {
-			if ((c->policy & POLICY_ID_AUTH_MASK) == LEMPTY) {
+			if ((c->policy & POLICY_AUTHBY_MASK) == LEMPTY) {
 				/* authby= was also not specified - fill in default */
 				c->policy |= POLICY_AUTH_NEVER;
 				policy_buf pb;
 				dbg("no AUTH policy was set for type=passthrough - defaulting to %s",
-				    str_policy(c->policy & POLICY_ID_AUTH_MASK, &pb));
+				    str_policy(c->policy & POLICY_AUTHBY_MASK, &pb));
 			}
 		}
 	} else {

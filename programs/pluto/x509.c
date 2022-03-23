@@ -1139,7 +1139,8 @@ bool ikev2_send_certreq_INIT_decision(const struct state *st,
 
 	const struct connection *c = st->st_connection;
 
-	if ((c->policy & POLICY_ID_AUTH_MASK) == POLICY_PSK || (c->policy & POLICY_ID_AUTH_MASK) == POLICY_AUTH_NULL) {
+	if ((c->policy & POLICY_AUTHBY_MASK) == POLICY_PSK ||
+	    (c->policy & POLICY_AUTHBY_MASK) == POLICY_AUTH_NULL) {
 		dbg("IKEv2 CERTREQ: authby=secret and authby=null do not require CERTREQ");
 		return false;
 	}

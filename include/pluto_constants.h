@@ -850,10 +850,6 @@ enum sa_policy_bits {
 	 * (They are used to index an array in spdb.c when determining
 	 * default IKEv1 proposals; arguably the array should be
 	 * deleted but that is another story).
-	 *
-	 * Danger: there's code relying on RSASIG_v1_5 not being part
-	 * of POLICY_ID_AUTH_MASK (for instance code blatting) policy
-	 * when re-orienting.
 	 */
 	POLICY_PSK_IX = 0,
 	POLICY_RSASIG_IX = 1,
@@ -861,7 +857,6 @@ enum sa_policy_bits {
 	POLICY_AUTH_NEVER_IX,
 	POLICY_AUTH_NULL_IX,
 
-#define POLICY_ID_AUTH_MASK	LRANGE(POLICY_PSK_IX, POLICY_AUTH_NULL_IX)
 #define POLICY_AUTHBY_RSASIG_MASK	(POLICY_RSASIG | POLICY_RSASIG_v1_5)
 #define POLICY_AUTHBY_ECDSA_MASK	(POLICY_ECDSA)
 #define POLICY_AUTHBY_MASK		(LRANGE(POLICY_PSK_IX, POLICY_AUTH_NULL_IX) | POLICY_RSASIG_v1_5)

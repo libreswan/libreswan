@@ -2599,8 +2599,9 @@ int main(int argc, char **argv)
 			}
 		} else {
 			/* not just a shunt: a real ipsec connection */
-			if ((msg.policy & POLICY_ID_AUTH_MASK) == LEMPTY &&
-				msg.left.auth == AUTH_NEVER && msg.right.auth == AUTH_NEVER)
+			if ((msg.policy & POLICY_AUTHBY_MASK) == LEMPTY &&
+			    msg.left.auth == AUTH_NEVER &&
+			    msg.right.auth == AUTH_NEVER)
 				diagw("must specify connection authentication, eg --rsasig, --psk or --auth-null for non-shunt connection");
 			/*
 			 * ??? this test can never fail:

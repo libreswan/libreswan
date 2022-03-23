@@ -476,7 +476,7 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 			{
 				const char *abs = "UNKNOWN";
 
-				switch (conn->policy & POLICY_ID_AUTH_MASK) {
+				switch (conn->policy & POLICY_AUTHBY_MASK) {
 				case POLICY_PSK:
 					abs = "secret";
 					break;

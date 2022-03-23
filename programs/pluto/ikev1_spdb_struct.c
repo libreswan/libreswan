@@ -1896,8 +1896,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 
 			case OAKLEY_AUTHENTICATION_METHOD | ISAKMP_ATTR_AF_TV:
 			{
-				lset_t iap = st->st_policy &
-					     POLICY_ID_AUTH_MASK;
+				lset_t iap = (st->st_policy & POLICY_AUTHBY_MASK);
 
 				/* check that authentication method is acceptable */
 				switch (val) {
