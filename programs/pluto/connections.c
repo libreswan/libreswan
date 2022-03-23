@@ -2874,10 +2874,19 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 		sep = "+";
 	}
 
-	lset_t other = c->policy;
-	if (other != LEMPTY) {
+	lset_t policy = c->policy;
+
+	lset_t authby = policy & POLICY_AUTHBY_MASK;
+	policy &= ~POLICY_AUTHBY_MASK;
+	if (authby != LEMPTY) {
 		s += jam_string(buf, sep);
-		s += jam_lset_short(buf, &sa_policy_bit_names, "+", other);
+		s += jam_lset_short(buf, &sa_policy_bit_names, "+", authby);
+		sep = "+";
+	}
+
+	if (policy != LEMPTY) {
+		s += jam_string(buf, sep);
+		s += jam_lset_short(buf, &sa_policy_bit_names, "+", policy);
 		sep = "+";
 	}
 
