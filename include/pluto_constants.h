@@ -850,6 +850,10 @@ enum sa_policy_bits {
 	 * (They are used to index an array in spdb.c when determining
 	 * default IKEv1 proposals; arguably the array should be
 	 * deleted but that is another story).
+	 *
+	 * Danger: there's code relying on RSASIG_v1_5 not being part
+	 * of POLICY_ID_AUTH_MASK (for instance code blatting) policy
+	 * when re-orienting.
 	 */
 	POLICY_PSK_IX = 0,
 	POLICY_RSASIG_IX = 1,
@@ -857,16 +861,12 @@ enum sa_policy_bits {
 	POLICY_AUTH_NEVER_IX,
 	POLICY_AUTH_NULL_IX,
 
-	/*
-	 * Danger: there's code relying on RSASIG_v1_5 not being part
-	 * of POLICY_ID_AUTH_MASK (for instance code blatting) policy
-	 * when re-orienting.
-	 */
 #define POLICY_ID_AUTH_MASK	LRANGE(POLICY_PSK_IX, POLICY_AUTH_NULL_IX)
 #define POLICY_AUTHBY_RSASIG_MASK	(POLICY_RSASIG | POLICY_RSASIG_v1_5)
 #define POLICY_AUTHBY_ECDSA_MASK	(POLICY_ECDSA)
 #define POLICY_AUTHBY_MASK		(LRANGE(POLICY_PSK_IX, POLICY_AUTH_NULL_IX) | POLICY_RSASIG_v1_5)
 #define POLICY_AUTHBY_DIGSIG_MASK	(POLICY_AUTHBY_ECDSA_MASK | POLICY_AUTHBY_RSASIG_MASK)
+#define POLICY_AUTHBY_DEFAULTS		(POLICY_RSASIG | POLICY_RSASIG_v1_5 | POLICY_ECDSA)
 
 	POLICY_ENCRYPT_IX,	/* must be first of IPSEC policies */
 	POLICY_AUTHENTICATE_IX,	/* must be second */
@@ -969,20 +969,15 @@ enum sa_policy_bits {
 #define POLICY_RSASIG_v1_5	LELEM(POLICY_RSASIG_v1_5_IX)
 
 /*
- * XXX: Danger!
- *
- * As well as IKEv2_HASH_ALGORITHM_* and the the lset_t constants
- * NEGOTIATE_AUTH_HASH_*, pluto defines the enum POL_SIGHASH_*_IX and
- * lset_t constants POL_SIGHHASH_* using different values.  Ulgh.
- *
- * sighash_policy_bit_names is for the _latter.
+ * RFC 7427 Signature Hash Algorithm exchang
  */
 
-#define POL_SIGHASH_SHA1		LELEM(IKEv2_HASH_ALGORITHM_SHA1)	/* rfc7427 does responder support SHA1? */
-#define POL_SIGHASH_SHA2_256		LELEM(IKEv2_HASH_ALGORITHM_SHA2_256)	/* rfc7427 does responder support SHA2-256? */
-#define POL_SIGHASH_SHA2_384		LELEM(IKEv2_HASH_ALGORITHM_SHA2_384)	/* rfc7427 does responder support SHA2-384? */
-#define POL_SIGHASH_SHA2_512		LELEM(IKEv2_HASH_ALGORITHM_SHA2_512)	/* rfc7427 does responder support SHA2-512? */
-#define POL_SIGHASH_IDENTITY		LELEM(IKEv2_HASH_ALGORITHM_IDENTITY)	/* rfc4307-bis does responder support IDENTITY? */
+#define POL_SIGHASH_SHA1	LELEM(IKEv2_HASH_ALGORITHM_SHA1)	/* rfc7427 does responder support SHA1? */
+#define POL_SIGHASH_SHA2_256	LELEM(IKEv2_HASH_ALGORITHM_SHA2_256)	/* rfc7427 does responder support SHA2-256? */
+#define POL_SIGHASH_SHA2_384	LELEM(IKEv2_HASH_ALGORITHM_SHA2_384)	/* rfc7427 does responder support SHA2-384? */
+#define POL_SIGHASH_SHA2_512	LELEM(IKEv2_HASH_ALGORITHM_SHA2_512)	/* rfc7427 does responder support SHA2-512? */
+#define POL_SIGHASH_IDENTITY	LELEM(IKEv2_HASH_ALGORITHM_IDENTITY)	/* rfc4307-bis does responder support IDENTITY? */
+#define POL_SIGHASH_DEFAULTS	(POL_SIGHASH_SHA2_256 | POL_SIGHASH_SHA2_384 | POL_SIGHASH_SHA2_512);
 
 /* Default policy for now is using RSA - this might change to ECC */
 #define POLICY_DEFAULT POLICY_RSASIG

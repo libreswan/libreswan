@@ -225,8 +225,6 @@ static const char *name = NULL;
 
 static const char *remote_host = NULL;
 
-static bool auth_specified = false;
-
 /*
  * Print a string as a diagnostic, then exit whack unhappily
  *
@@ -1747,7 +1745,6 @@ int main(int argc, char **argv)
 		 *  Note: auth-never cannot be asymmetrical
 		 */
 		case END_AUTHBY:
-			auth_specified = true;
 			if (streq(optarg, "psk"))
 				msg.right.auth = AUTH_PSK;
 			else if (streq(optarg, "null"))
@@ -1822,7 +1819,6 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_PSK_IX:		/* --psk */
 		case CDP_SINGLETON + POLICY_AUTH_NEVER_IX:	/* --auth-never */
 		case CDP_SINGLETON + POLICY_AUTH_NULL_IX:	/* --auth-null */
-			auth_specified = true;
 			msg.policy |= LELEM(c - CDP_SINGLETON);
 			continue;
 
@@ -2117,7 +2113,6 @@ int main(int argc, char **argv)
 			continue;
 
 		case ALGO_RSASIG: /* --rsasig */
-			auth_specified = true;
 			msg.policy |= POLICY_RSASIG;
 			msg.policy |= POLICY_RSASIG_v1_5;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
@@ -2125,51 +2120,42 @@ int main(int argc, char **argv)
 			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
 			continue;
 		case ALGO_RSA_SHA1: /* --rsa-sha1 */
-			auth_specified = true;
 			msg.policy |= POLICY_RSASIG_v1_5;
 			continue;
 		case ALGO_RSA_SHA2: /* --rsa-sha2 */
-			auth_specified = true;
 			msg.policy |= POLICY_RSASIG;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
 			continue;
 		case ALGO_RSA_SHA2_256:	/* --rsa-sha2_256 */
-			auth_specified = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
 			msg.policy |= POLICY_RSASIG;
 			continue;
 		case ALGO_RSA_SHA2_384:	/* --rsa-sha2_384 */
-			auth_specified = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
 			msg.policy |= POLICY_RSASIG;
 			continue;
 		case ALGO_RSA_SHA2_512:	/* --rsa-sha2_512 */
-			auth_specified = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
 			msg.policy |= POLICY_RSASIG;
 			continue;
 
 		case ALGO_ECDSA: /* --ecdsa and --ecdsa-sha2 */
-			auth_specified = true;
 			msg.policy |= POLICY_ECDSA;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
 			continue;
 		case ALGO_ECDSA_SHA2_256:	/* --ecdsa-sha2_256 */
-			auth_specified = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
 			msg.policy |= POLICY_ECDSA;
 			continue;
 		case ALGO_ECDSA_SHA2_384:	/* --ecdsa-sha2_384 */
-			auth_specified = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
 			msg.policy |= POLICY_ECDSA;
 			continue;
 		case ALGO_ECDSA_SHA2_512:	/* --ecdsa-sha2_512 */
-			auth_specified = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
 			msg.policy |= POLICY_ECDSA;
 			continue;
@@ -2537,16 +2523,17 @@ int main(int argc, char **argv)
 		msg.tunnel_addr_family = client_family.type->af;
 	}
 
-	if (!auth_specified) {
-		/* match the parser loading defaults to whack defaults */
-		msg.policy |= POLICY_RSASIG;
-		if (msg.ike_version == IKEv2) {
-			msg.policy |= POLICY_RSASIG_v1_5;
-			msg.policy |= POLICY_ECDSA;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
-			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
-		}
+	if ((msg.policy & POLICY_AUTHBY_MASK) == LEMPTY) {
+		/*
+		 * Since the options above always set both AUTHBY and
+		 * SIGHASH bits, only need to check AUTHBY for unset.
+		 *
+		 * Mimic addconn's behaviour: specifying auth= (yes,
+		 * whack calls it --authby) does not clear the
+		 * policy_authby defaults.  That is left to pluto.
+		 */
+		msg.policy |= POLICY_AUTHBY_DEFAULTS;
+		msg.sighash_policy |= POL_SIGHASH_DEFAULTS;
 	}
 
 	if (optind != argc) {

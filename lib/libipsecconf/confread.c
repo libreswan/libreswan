@@ -177,19 +177,17 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 # undef DOPT
 
 	d->ike_version = IKEv2;
-	d->policy =
-		POLICY_TUNNEL |
-		POLICY_ECDSA | POLICY_RSASIG | POLICY_RSASIG_v1_5 | /* authby= */
-		POLICY_ENCRYPT | POLICY_PFS |
-		POLICY_IKE_FRAG_ALLOW |      /* ike_frag=yes */
-		POLICY_ESN_NO | POLICY_ESN_YES; /* esn=either */
+	d->policy = (POLICY_TUNNEL |
+		     /* authby= */ POLICY_AUTHBY_DEFAULTS |
+		     POLICY_ENCRYPT | POLICY_PFS |
+		     /* ike_frag=yes */ POLICY_IKE_FRAG_ALLOW |
+		     /* esn=either */ POLICY_ESN_NO | POLICY_ESN_YES);
 
 	d->prospective_shunt = SHUNT_UNSET;
 	d->negotiation_shunt = SHUNT_UNSET;
 	d->failure_shunt = SHUNT_UNSET;
 
-	d->sighash_policy =
-		POL_SIGHASH_SHA2_256 | POL_SIGHASH_SHA2_384 | POL_SIGHASH_SHA2_512;
+	d->sighash_policy = POL_SIGHASH_DEFAULTS;
 
 	d->left.host_family = NULL;
 	d->left.addr = unset_address;
@@ -1233,13 +1231,6 @@ static bool load_conn(struct starter_conn *conn,
 	KW_POLICY_FLAG(KNCF_COMPRESS, POLICY_COMPRESS);
 	KW_POLICY_FLAG(KNCF_PFS, POLICY_PFS);
 
-	/* reset authby= flags */
-	if (conn->strings_set[KSCF_AUTHBY]) {
-
-		conn->policy &= ~POLICY_ID_AUTH_MASK;
-		conn->sighash_policy = LEMPTY;
-	}
-
 	KW_POLICY_NEGATIVE_FLAG(KNCF_IKEPAD, POLICY_NO_IKEPAD);
 
 	KW_POLICY_NEGATIVE_FLAG(KNCF_REKEY, POLICY_DONT_REKEY);
@@ -1447,8 +1438,7 @@ static bool load_conn(struct starter_conn *conn,
 		char *val = strtok(conn->strings[KSCF_AUTHBY], ", ");
 
 		conn->sighash_policy = LEMPTY;
-		conn->policy &= ~POLICY_ID_AUTH_MASK;
-		conn->policy &= ~POLICY_RSASIG_v1_5;
+		conn->policy &= ~POLICY_AUTHBY_MASK;
 
 		while (val != NULL) {
 			/* Supported for IKEv1 and IKEv2 */

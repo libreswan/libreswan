@@ -1120,9 +1120,14 @@ static int extract_end(struct connection *c,
 		policy_authby &= ~POLICY_ECDSA;
 		policy_authby &= ~POLICY_RSASIG_v1_5;
 	}
-	lset_buf pab;
-	dbg("fake %sauthby=%s", src->leftright,
-	    str_lset_short(&sa_policy_bit_names, "+", policy_authby, &pab));
+	lset_buf pab, wpb;
+	enum_buf ab;
+	dbg("fake %sauthby=%s using %sauth=%s and %s",
+	    src->leftright,
+	    str_lset_short(&sa_policy_bit_names, "+", policy_authby, &pab),
+	    src->leftright,
+	    str_enum_short(&keyword_auth_names, src->auth, &ab),
+	    str_lset_short(&sa_policy_bit_names, "+", wm->policy, &wpb));
 	config_end->host.policy_authby = policy_authby;
 
 	/* save some defaults */
