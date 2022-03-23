@@ -759,10 +759,8 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	if (impair.omit_v2N_SIGNATURE_HASH_ALGORITHMS) {
 		log_state(RC_LOG, &ike->sa,
 			  "IMPAIR: omitting the SIGNATURE_HASH_ALGORITHM notification in IKE_SA_INIT request");
-	} else if (((c->policy & POLICY_RSASIG) ||
-		    (c->policy & POLICY_RSASIG_v1_5) ||
-		    (c->policy & POLICY_ECDSA))
-		   && (c->config->sighash_policy != LEMPTY)) {
+	} else if ((c->remote->config->host.policy_authby & POLICY_AUTHBY_DIGSIG_MASK) &&
+		   (c->config->sighash_policy != LEMPTY)) {
 		if (!emit_v2N_signature_hash_algorithms(c->config->sighash_policy, request.pbs))
 			return false;
 	}
@@ -1100,19 +1098,12 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	}
 
 	/*
-	 * Send SIGNATURE_HASH_ALGORITHMS notification, but only if we
-	 * received one.
-	 *
-	 * XXX: This seems to contradict the RFC which suggests that
-	 * it is sent unconditionally?
+	 * Send SIGNATURE_HASH_ALGORITHMS notification.
 	 */
 	if (impair.omit_v2N_SIGNATURE_HASH_ALGORITHMS) {
 		llog_sa(RC_LOG, ike, "IMPAIR: omitting SIGNATURE_HASH_ALGORITHMS notification in IKE_SA_INIT response");
-	} else if (ike->sa.st_seen_hashnotify &&
-		   ((c->policy & POLICY_RSASIG) ||
-		    (c->policy & POLICY_RSASIG_v1_5) ||
-		    (c->policy & POLICY_ECDSA))
-		   && (c->config->sighash_policy != LEMPTY)) {
+	} else if ((c->remote->config->host.policy_authby & POLICY_AUTHBY_DIGSIG_MASK) &&
+		   (c->config->sighash_policy != LEMPTY)) {
 		if (!emit_v2N_signature_hash_algorithms(c->config->sighash_policy, response.pbs)) {
 			return STF_INTERNAL_ERROR;
 		}
