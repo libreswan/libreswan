@@ -34,7 +34,7 @@ west #
 000 "tfc":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "tfc":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "tfc":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "tfc":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+RSASIG_v1_5;
+000 "tfc":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 000 "tfc":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "tfc":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:1500;
 000 "tfc":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;

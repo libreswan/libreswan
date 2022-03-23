@@ -25,7 +25,7 @@ west #
 002 "netkey": added IKEv2 connection
 west #
  ipsec auto --status | grep DECAP_DSCP
-000 "netkey":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+DECAP_DSCP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+RSASIG_v1_5;
+000 "netkey":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+DECAP_DSCP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 west #
  ipsec whack --impair suppress-retransmits
 west #

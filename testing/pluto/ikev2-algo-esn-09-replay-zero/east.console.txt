@@ -12,7 +12,7 @@ east #
 000 "east":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 0; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 east #
  ipsec auto --status | egrep -i ESN
-000 "east":   policy: IKEv2+RSASIG+ECDSA+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+RSASIG_v1_5;
+000 "east":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
 east #
  echo "initdone"
 initdone
