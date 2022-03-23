@@ -29,9 +29,13 @@
 #include "demux.h"
 #include "iface.h"
 #include "unpack.h"
+#include "orient.h"		/* for oriented() */
 
-static bool match_policy(const struct connection *c, lset_t req_policy)
+static bool match_policy(const struct connection *c, lset_t req_authby)
 {
+	pexpect((req_authby & ~ POLICY_AUTHBY_MASK) == LEMPTY);
+	pexpect(oriented(c)); /* searching oriented lists */
+
 	if (c->config->ike_version != IKEv2) {
 		connection_buf cb;
 		dbg("  skipping "PRI_CONNECTION", not IKEv2",
@@ -79,10 +83,14 @@ static bool match_policy(const struct connection *c, lset_t req_policy)
 	}
 
 	/*
-	 * Skip when any REQ_POLICY bit is unset (negate makes
-	 * them set).
+	 * Require all the REQ_POLICY bits to match (there's actually
+	 * ony one).
+	 *
+	 * XXX: this was c->policy which contained the _local_ policy
+	 * bits; hence the use of c->local.  See github#666 (fitting
+	 * number).
 	 */
-	if ((req_policy & ~c->policy) != LEMPTY) {
+	if ((req_authby & c->local->config->host.policy_authby) != req_authby) {
 		connection_buf cb;
 		dbg("  skipping "PRI_CONNECTION", missing policy",
 		    pri_connection(c, &cb));
@@ -93,9 +101,10 @@ static bool match_policy(const struct connection *c, lset_t req_policy)
 }
 
 static struct connection *ikev2_find_host_connection(const struct msg_digest *md,
-						     lset_t req_policy,
+						     lset_t req_authby,
 						     bool *send_reject_response)
 {
+	pexpect((req_authby & ~ POLICY_AUTHBY_MASK) == LEMPTY);
 	const ip_endpoint *local_endpoint = &md->iface->local_endpoint;
 	const ip_endpoint *remote_endpoint = &md->sender;
 
@@ -109,11 +118,11 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 	dbg("%s() %s->%s policy=%s", __func__,
 	    str_address(&remote_address, &rb),
 	    str_address(&local_address, &lb),
-	    str_policy(req_policy, &pb));
+	    str_policy(req_authby, &pb));
 
 	struct connection *c = NULL;
 	FOR_EACH_HOST_PAIR_CONNECTION(local_address, remote_address, d) {
-		if (!match_policy(d, req_policy)) {
+		if (!match_policy(d, req_authby)) {
 			continue;
 		}
 
@@ -168,7 +177,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 	 * Food Groups kind of assumes one.
 	 */
 	FOR_EACH_HOST_PAIR_CONNECTION(local_address, unset_address, d) {
-		if (!match_policy(d, req_policy)) {
+		if (!match_policy(d, req_authby)) {
 			continue;
 		}
 
@@ -237,7 +246,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		     "%s message received on %s but no connection has been authorized with policy %s",
 		     enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
 		     str_endpoint(local_endpoint, &b),
-		     str_policy(req_policy, &pb));
+		     str_policy(req_authby, &pb));
 		*send_reject_response = true;
 		return NULL;
 	}
@@ -292,8 +301,16 @@ struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
 						lset_t *policy,
 						bool *send_reject_response)
 {
-	/* authentication policy alternatives in order of decreasing preference */
-	static const lset_t policies[] = { POLICY_ECDSA, POLICY_RSASIG, POLICY_PSK, POLICY_AUTH_NULL };
+	/*
+	 * authentication policy alternatives in order of decreasing
+	 * preference.
+	 */
+	static const lset_t authbys[] = {
+		POLICY_ECDSA,
+		POLICY_RSASIG, POLICY_RSASIG_v1_5,
+		POLICY_PSK,
+		POLICY_AUTH_NULL,
+	};
 
 	struct connection *c = NULL;
 	unsigned int i;
@@ -302,7 +319,7 @@ struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
 	 * XXX in the near future, this loop should find
 	 * type=passthrough and return STF_DROP
 	 */
-	for (i=0; i < elemsof(policies); i++) {
+	for (i=0; i < elemsof(authbys); i++) {
 		/*
 		 * When the connection "isn't found" POLICY and
 		 * SEND_REJECTED_RESPONSE end up with the values from
@@ -311,7 +328,7 @@ struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
 		 * For instance, if an earlier search returns NULL but
 		 * clears SEND_REJECT_RESPONSE, that will be lost.
 		 */
-		*policy = policies[i];
+		*policy = authbys[i];
 		*send_reject_response = true;
 		c = ikev2_find_host_connection(md, *policy,
 					       send_reject_response);
