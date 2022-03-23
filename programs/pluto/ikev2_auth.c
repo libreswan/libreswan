@@ -457,7 +457,7 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 		dbg("digsig: looking for matching DIGSIG blob");
 		FOR_EACH_ELEMENT(negotiated_hash_map, hash) {
 
-			if ((ike->sa.st_v2_digsig.negotiated_hashes &
+			if ((ike->sa.st_connection->config->sighash_policy &
 			     LELEM((*hash)->common.ikev2_alg_id)) == LEMPTY) {
 				dbg("digsig:   skipping %s as not negotiated",
 				    (*hash)->common.fqn);
