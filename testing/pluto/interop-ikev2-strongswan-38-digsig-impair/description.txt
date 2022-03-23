@@ -1,15 +1,13 @@
-RFC 7427 :
-Basic pluto with IKEv2 using X.509 on the responder (east), and Strongswan on
-the initiator (west) with impairment.
+RFC 7427: pluto (responder) impaired to not see strongswan's (initiator) SIGNATURE_HASH_ALGORITHMS
 
-The impairment is introduced in such a way that we ignore processing the hash notify
-we receive from strongswan in IKE_SA_INIT Request.
+Check that pluto will prove its identity using legacy RSA when the
+initiator doesn't send SIGNATURE_HASH_ALGORITHMS.
 
-This is to ensure that Libreswan with default Authentication type as 
-Digital Signatures (RFC 7427 )can still interop with an older version of strongswan that does not 
-support RFC 7427
+Basic pluto with IKEv2 using X.509 on the responder (east), and
+Strongswan on the initiator (west).
 
-Authentication should be successfulk with RSA-SHA1 (old style RSA)
+Responder's proof-of-identity uses RSA-SHA1 (old style RSA).
 
-
+Initiator's proof-of-identity uses Digital Signature Method (since
+pluto always sends its hash algorithms).
 
