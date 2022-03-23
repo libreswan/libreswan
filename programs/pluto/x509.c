@@ -1071,10 +1071,10 @@ bool ikev2_send_cert_decision(const struct ike_sa *ike)
 	if (ike->sa.st_peer_wants_null) {
 		/* XXX: only ever true on responder */
 		/* ??? should we log something?  All others do. */
-	} else if (LDISJOINT(c->policy, POLICY_ECDSA | POLICY_RSASIG)) {
+	} else if ((c->local->config->host.policy_authby & POLICY_AUTHBY_DIGSIG_MASK) == LEMPTY) {
 		policy_buf pb;
-		dbg("IKEv2 CERT: policy does not have RSASIG or ECDSA: %s",
-		    str_policy(c->policy & POLICY_ID_AUTH_MASK, &pb));
+		dbg("IKEv2 CERT: local policy_authby does not have RSA or ECDSA: %s",
+		    str_policy(c->policy & POLICY_AUTHBY_MASK, &pb));
 	} else if (this->config->host.cert.nss_cert == NULL) {
 		dbg("IKEv2 CERT: no certificate to send");
 	} else if (c->local->config->host.sendcert == CERT_SENDIFASKED &&
