@@ -33,6 +33,6 @@ east #
 initdone
 east #
  grep -e "^[^|].* established IKE SA" /tmp/pluto.log
-"westnet-eastnet-ikev2" #1: responder established IKE SA; authenticated using RSA with SHA2_512 and preloaded certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+"westnet-eastnet-ikev2" #1: responder established IKE SA; authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 east #
  
