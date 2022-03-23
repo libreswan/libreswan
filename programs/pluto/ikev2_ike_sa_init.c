@@ -1074,8 +1074,8 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	}
 
 	/* decide to send a CERTREQ - for RSASIG or GSSAPI */
-	send_certreq = (((c->policy & POLICY_RSASIG) &&
-			 !has_preloaded_public_key(&ike->sa)));
+	send_certreq = ((c->remote->config->host.policy_authby & POLICY_AUTHBY_DIGSIG_MASK) &&
+			!has_preloaded_public_key(&ike->sa));
 
 	/* Send fragmentation support notification */
 	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
