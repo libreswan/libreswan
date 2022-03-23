@@ -69,7 +69,6 @@ struct starter_end {
 	ip_cidr ifaceip;
 	char *iface;
 	char *id;
-	enum keyword_auth authby;
 
 	ip_protoport protoport;
 
