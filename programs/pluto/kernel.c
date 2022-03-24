@@ -521,205 +521,174 @@ static void jam_clean_xauth_username(struct jambuf *buf,
 }
 
 /*
- * form the command string
+ * fmt_common_shell_out: form the command string
  *
  * note: this mutates *st by calling get_sa_info().
  */
-static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
-				 const struct spd_route *sr, struct state *st,
-				 bool inbytes, bool outbytes)
+bool fmt_common_shell_out(char *buf,
+			  size_t blen,
+			  const struct connection *c,
+			  const struct spd_route *sr,
+			  struct state *st)
 {
-	ip_address ta;
+	struct jambuf jb = array_as_jambuf(buf, blen);
+	const bool tunneling = LIN(POLICY_TUNNEL, c->policy);
 
-	const char *id_vname = (c->xfrmi != NULL && c->xfrmi->name != NULL) ?
-		c->xfrmi->name : "NULL";
+	/* macros to jam definitions of various forms */
+#	define JDstr(name, string)  jam(&jb, name "='%s' ", string)
+#	define JDuint(name, u)  jam(&jb, name "=%u ", u)
+#	define JDuint64(name, u)  jam(&jb, name "=%" PRIu64 " ", u)
+#	define JDemitter(name, emitter)  { jam_string(&jb, name "='"); emitter; jam_string(&jb, "' "); }
+#	define JDipaddr(name, addr)  JDemitter(name, { ip_address ta = addr; jam_address(&jb, &ta); } )
 
-	jam(buf, "PLUTO_CONNECTION='%s' ", c->name);
-	jam(buf, "PLUTO_CONNECTION_TYPE='%s' ", LIN(POLICY_TUNNEL, c->policy) ? "tunnel" : "transport");
-	jam(buf, "PLUTO_VIRT_INTERFACE='%s' ", id_vname);
-	jam(buf, "PLUTO_INTERFACE='%s' ", c->interface == NULL ? "NULL" : c->interface->ip_dev->id_rname);
-	jam(buf, "PLUTO_XFRMI_ROUTE='%s' ",  (c->xfrmi != NULL && c->xfrmi->if_id > 0) ? "yes" : "");
+	JDstr("PLUTO_CONNECTION", c->name);
+	JDstr("PLUTO_CONNECTION_TYPE", tunneling ? "tunnel" : "transport");
+	JDstr("PLUTO_VIRT_INTERFACE", (c->xfrmi != NULL && c->xfrmi->name != NULL) ?
+		c->xfrmi->name : "NULL");
+	JDstr("PLUTO_INTERFACE", c->interface == NULL ? "NULL" : c->interface->ip_dev->id_rname);
+	JDstr("PLUTO_XFRMI_ROUTE",  (c->xfrmi != NULL && c->xfrmi->if_id > 0) ? "yes" : "");
 
 	if (address_is_specified(sr->this.host->nexthop)) {
-		jam_string(buf, "PLUTO_NEXT_HOP='");
-		jam_address(buf, &sr->this.host->nexthop);
-		jam_string(buf, "' ");
+		JDipaddr("PLUTO_NEXT_HOP", sr->this.host->nexthop);
 	}
 
-	jam_string(buf, "PLUTO_ME='");
-	jam_address(buf, &sr->this.host->addr);
-	jam_string(buf, "' ");
-
-	jam_string(buf, "PLUTO_MY_ID='");
-	jam_id_bytes(buf, &c->local->host.id, jam_shell_quoted_bytes);
-	jam_string(buf, "' ");
-
-	jam_string(buf, "PLUTO_MY_CLIENT='");
-	jam_selector_subnet(buf, &sr->this.client);
-	jam_string(buf, "' ");
-
-	jam_string(buf, "PLUTO_MY_CLIENT_NET='");
-	ta = selector_prefix(sr->this.client);
-	jam_address(buf, &ta);
-	jam_string(buf, "' ");
-
-	jam_string(buf, "PLUTO_MY_CLIENT_MASK='");
-	ta = selector_prefix_mask(sr->this.client);
-	jam_address(buf, &ta);
-	jam_string(buf, "' ");
+	JDipaddr("PLUTO_ME", sr->this.host->addr);
+	JDemitter("PLUTO_MY_ID", jam_id_bytes(&jb, &c->local->host.id, jam_shell_quoted_bytes));
+	JDemitter("PLUTO_MY_CLIENT", jam_selector_subnet(&jb, &sr->this.client));
+	JDipaddr("PLUTO_MY_CLIENT_NET", selector_prefix(sr->this.client));
+	JDipaddr("PLUTO_MY_CLIENT_MASK", selector_prefix_mask(sr->this.client));
 
 	if (cidr_is_specified(c->local->config->client.host_vtiip)) {
-		jam_string(buf, "VTI_IP='");
-		jam_cidr(buf, &c->local->config->client.host_vtiip);
-		jam_string(buf, "' ");
+		JDemitter("VTI_IP", jam_cidr(&jb, &c->local->config->client.host_vtiip));
 	}
 
 	if (cidr_is_specified(c->local->config->client.ifaceip)) {
-		jam_string(buf, "INTERFACE_IP='");
-		jam_cidr(buf, &c->local->config->client.ifaceip);
-		jam_string(buf, "' ");
+		JDemitter("INTERFACE_IP", jam_cidr(&jb, &c->local->config->client.ifaceip));
 	}
 
-	jam(buf, "PLUTO_MY_PORT='%u' ", sr->this.client.hport);
-	jam(buf, "PLUTO_MY_PROTOCOL='%u' ", sr->this.client.ipproto);
-	jam(buf, "PLUTO_SA_REQID='%u' ", sr->reqid);
-	jam(buf, "PLUTO_SA_TYPE='%s' ", (st == NULL ? "none" :
+	JDuint("PLUTO_MY_PORT", sr->this.client.hport);
+	JDuint("PLUTO_MY_PROTOCOL", sr->this.client.ipproto);
+	JDuint("PLUTO_SA_REQID", sr->reqid);
+	JDstr("PLUTO_SA_TYPE", (st == NULL ? "none" :
 					 st->st_esp.present ? "ESP" :
 					 st->st_ah.present ? "AH" :
 					 st->st_ipcomp.present ? "IPCOMP" :
 					 "unknown?"));
 
-	jam_string(buf, "PLUTO_PEER='");
-	jam_address(buf, &sr->that.host->addr);
-	jam_string(buf, "' ");
-
-	jam_string(buf, "PLUTO_PEER_ID='");
-	jam_id_bytes(buf, &c->remote->host.id, jam_shell_quoted_bytes);
-	jam_string(buf, "' ");
+	JDipaddr("PLUTO_PEER", sr->that.host->addr);
+	JDemitter("PLUTO_PEER_ID", jam_id_bytes(&jb, &c->remote->host.id, jam_shell_quoted_bytes));
 
 	/* for transport mode, things are complicated */
-	jam_string(buf, "PLUTO_PEER_CLIENT='");
-	if (!LIN(POLICY_TUNNEL, c->policy) && (st != NULL && LHAS(st->hidden_variables.st_nat_traversal, NATED_PEER))) {
+	jam_string(&jb, "PLUTO_PEER_CLIENT='");
+	if (!tunneling && st != NULL && LHAS(st->hidden_variables.st_nat_traversal, NATED_PEER)) {
 		/* pexpect(selector_eq_address(sr->that.client, sr->that.host->addr)); */
-		jam_address(buf, &sr->that.host->addr);
-		jam(buf, "/%d", address_type(&sr->this.host->addr)->mask_cnt/*32 or 128*/);
+		jam_address(&jb, &sr->that.host->addr);
+		jam(&jb, "/%d", address_type(&sr->this.host->addr)->mask_cnt/*32 or 128*/);
 	} else {
-		jam_selector_subnet(buf, &sr->that.client);
+		jam_selector_subnet(&jb, &sr->that.client);
 	}
-	jam_string(buf, "' ");
+	jam_string(&jb, "' ");
 
-	jam_string(buf, "PLUTO_PEER_CLIENT_NET='");
-	if (!LIN(POLICY_TUNNEL, c->policy) && (st != NULL && LHAS(st->hidden_variables.st_nat_traversal, NATED_PEER))) {
-		jam_address(buf, &sr->that.host->addr);
-	} else {
-		ta = selector_prefix(sr->that.client);
-		jam_address(buf, &ta);
-	}
-	jam_string(buf, "' ");
+	JDipaddr("PLUTO_PEER_CLIENT_NET",
+		(!tunneling && st != NULL && LHAS(st->hidden_variables.st_nat_traversal, NATED_PEER)) ?
+			sr->that.host->addr : selector_prefix(sr->that.client));
 
-	jam_string(buf, "PLUTO_PEER_CLIENT_MASK='");
-	ta = selector_prefix_mask(sr->that.client);
-	jam_address(buf, &ta);
-	jam_string(buf, "' ");
+	JDipaddr("PLUTO_PEER_CLIENT_MASK", selector_prefix_mask(sr->that.client));
+	JDuint("PLUTO_PEER_PORT", sr->that.client.hport);
+	JDuint("PLUTO_PEER_PROTOCOL", sr->that.client.ipproto);
 
-	jam(buf, "PLUTO_PEER_PORT='%u' ", sr->that.client.hport);
-	jam(buf, "PLUTO_PEER_PROTOCOL='%u' ", sr->that.client.ipproto);
-
-	jam_string(buf, "PLUTO_PEER_CA='");
+	jam_string(&jb, "PLUTO_PEER_CA='");
 	for (struct pubkey_list *p = pluto_pubkeys; p != NULL; p = p->next) {
 		struct pubkey *key = p->key;
 		int pathlen;	/* value ignored */
 		if (key->type == &pubkey_type_rsa &&
 		    same_id(&c->remote->host.id, &key->id) &&
 		    trusted_ca(key->issuer, ASN1(sr->that.config->host.ca), &pathlen)) {
-			jam_dn_or_null(buf, key->issuer, "", jam_shell_quoted_bytes);
+			jam_dn_or_null(&jb, key->issuer, "", jam_shell_quoted_bytes);
 			break;
 		}
 	}
-	jam_string(buf, "' ");
+	jam_string(&jb, "' ");
 
-	jam(buf, "PLUTO_STACK='%s' ", kernel_ops->updown_name);
+	JDstr("PLUTO_STACK", kernel_ops->updown_name);
 
 	if (c->metric != 0) {
-		jam(buf, "PLUTO_METRIC=%d ", c->metric);
+		jam(&jb, "PLUTO_METRIC=%d ", c->metric);
 	}
 
 	if (c->connmtu != 0) {
-		jam(buf, "PLUTO_MTU=%d ", c->connmtu);
+		jam(&jb, "PLUTO_MTU=%d ", c->connmtu);
 	}
 
-	jam(buf, "PLUTO_ADDTIME='%" PRIu64 "' ", st == NULL ? (uint64_t)0 : st->st_esp.add_time);
-
-	jam_string(buf, "PLUTO_CONN_POLICY='");
-	jam_connection_policies(buf, c);
-	jam_string(buf, "' ");
-
-	jam_string(buf, "PLUTO_CONN_KIND='");
-	jam_enum(buf, &connection_kind_names, c->kind);
-	jam_string(buf,"' ");
-
-	jam(buf, "PLUTO_CONN_ADDRFAMILY='ipv%d' ", address_type(&sr->this.host->addr)->ip_version);
-	jam(buf, "XAUTH_FAILED=%d ", (st != NULL && st->st_xauth_soft) ? 1 : 0);
+	JDuint64("PLUTO_ADDTIME", st == NULL ? (uint64_t)0 : st->st_esp.add_time);
+	JDemitter("PLUTO_CONN_POLICY",	jam_connection_policies(&jb, c));
+	JDemitter("PLUTO_CONN_KIND", jam_enum(&jb, &connection_kind_names, c->kind));
+	jam(&jb, "PLUTO_CONN_ADDRFAMILY='ipv%d' ", address_type(&sr->this.host->addr)->ip_version);
+	JDuint("XAUTH_FAILED", (st != NULL && st->st_xauth_soft) ? 1 : 0);
 
 	if (st != NULL && st->st_xauth_username[0] != '\0') {
-		jam_string(buf, "PLUTO_USERNAME='");
-		jam_clean_xauth_username(buf, st->st_xauth_username, st->st_logger);
-		jam_string(buf, "' ");
+		JDemitter("PLUTO_USERNAME", jam_clean_xauth_username(&jb, st->st_xauth_username, st->st_logger));
 	}
 
 	if (address_is_specified(sr->this.host_srcip)) {
-		jam_string(buf, "PLUTO_MY_SOURCEIP='");
-		jam_address(buf, &sr->this.host_srcip);
-		jam_string(buf, "' ");
+		JDipaddr("PLUTO_MY_SOURCEIP", sr->this.host_srcip);
 		if (st != NULL)
-			jam(buf, "PLUTO_MOBIKE_EVENT='%s' ",
+			JDstr("PLUTO_MOBIKE_EVENT",
 			    st->st_mobike_del_src_ip ? "yes" : "");
 	}
 
-	jam(buf, "PLUTO_IS_PEER_CISCO='%u' ", c->remotepeertype /* ??? kind of odd printing an enum with %u */);
-	jam(buf, "PLUTO_PEER_DNS_INFO='%s' ", (st != NULL && st->st_seen_cfg_dns != NULL) ? st->st_seen_cfg_dns : "");
-	jam(buf, "PLUTO_PEER_DOMAIN_INFO='%s' ", (st != NULL && st->st_seen_cfg_domains != NULL) ? st->st_seen_cfg_domains : "");
-	jam(buf, "PLUTO_PEER_BANNER='%s' ", (st != NULL && st->st_seen_cfg_banner != NULL) ? st->st_seen_cfg_banner : "");
-	jam(buf, "PLUTO_CFG_SERVER='%u' ", sr->this.modecfg_server);
-	jam(buf, "PLUTO_CFG_CLIENT='%u' ", sr->this.modecfg_client);
+	JDuint("PLUTO_IS_PEER_CISCO", c->remotepeertype /* ??? kind of odd printing an enum with %u */);
+	JDstr("PLUTO_PEER_DNS_INFO", (st != NULL && st->st_seen_cfg_dns != NULL) ? st->st_seen_cfg_dns : "");
+	JDstr("PLUTO_PEER_DOMAIN_INFO", (st != NULL && st->st_seen_cfg_domains != NULL) ? st->st_seen_cfg_domains : "");
+	JDstr("PLUTO_PEER_BANNER", (st != NULL && st->st_seen_cfg_banner != NULL) ? st->st_seen_cfg_banner : "");
+	JDuint("PLUTO_CFG_SERVER", sr->this.modecfg_server);
+	JDuint("PLUTO_CFG_CLIENT", sr->this.modecfg_client);
 #ifdef HAVE_NM
-	jam(buf, "PLUTO_NM_CONFIGURED='%u' ", c->nmconfigured);
+	JDuint("PLUTO_NM_CONFIGURED", c->nmconfigured);
 #endif
 
-	if (inbytes) {
-		jam(buf, "PLUTO_INBYTES='%" PRIu64 "' ",
-		    st->st_esp.present ? st->st_esp.our_bytes :
-		    st->st_ah.present ? st->st_ah.our_bytes :
-		    st->st_ipcomp.present ? st->st_ipcomp.our_bytes :
-		    0);
-	}
-	if (outbytes) {
-		jam(buf, "PLUTO_OUTBYTES='%" PRIu64 "' ",
-		    st->st_esp.present ? st->st_esp.peer_bytes :
-		    st->st_ah.present ? st->st_ah.peer_bytes :
-		    st->st_ipcomp.present ? st->st_ipcomp.peer_bytes :
-		    0);
+	if (st != NULL) {
+		/*
+		 * note: this mutates *st by calling get_sa_info
+		 *
+		 * XXX: does the get_sa_info() call order matter? Should this
+		 * be a single "atomic" call?
+		 */
+		if (get_sa_info(st, true, NULL)) {
+			JDuint64("PLUTO_INBYTES",
+			    st->st_esp.present ? st->st_esp.our_bytes :
+			    st->st_ah.present ? st->st_ah.our_bytes :
+			    st->st_ipcomp.present ? st->st_ipcomp.our_bytes :
+			    0);
+		}
+		if (get_sa_info(st, false, NULL)) {
+			JDuint64("PLUTO_OUTBYTES",
+			    st->st_esp.present ? st->st_esp.peer_bytes :
+			    st->st_ah.present ? st->st_ah.peer_bytes :
+			    st->st_ipcomp.present ? st->st_ipcomp.peer_bytes :
+			    0);
+		}
 	}
 
 	if (c->nflog_group != 0) {
-		jam(buf, "NFLOG=%d ", c->nflog_group);
+		jam(&jb, "NFLOG=%d ", c->nflog_group);
 	}
 
 	if (c->sa_marks.in.val != 0) {
-		jam(buf, "CONNMARK_IN=%" PRIu32 "/%#08" PRIx32 " ",
+		jam(&jb, "CONNMARK_IN=%" PRIu32 "/%#08" PRIx32 " ",
 		    c->sa_marks.in.val, c->sa_marks.in.mask);
 	}
 	if (c->sa_marks.out.val != 0 && c->xfrmi == NULL) {
-		jam(buf, "CONNMARK_OUT=%" PRIu32 "/%#08" PRIx32 " ",
+		jam(&jb, "CONNMARK_OUT=%" PRIu32 "/%#08" PRIx32 " ",
 		    c->sa_marks.out.val, c->sa_marks.out.mask);
 	}
 	if (c->xfrmi != NULL) {
 		if (c->sa_marks.out.val != 0) {
 			/* user configured XFRMI_SET_MARK (a.k.a. output mark) add it */
-			jam(buf, "PLUTO_XFRMI_FWMARK='%" PRIu32 "/%#08" PRIx32 "' ",
+			jam(&jb, "PLUTO_XFRMI_FWMARK='%" PRIu32 "/%#08" PRIx32 "' ",
 			    c->sa_marks.out.val, c->sa_marks.out.mask);
 		} else if (address_in_selector_range(sr->that.host->addr, sr->that.client)) {
-			jam(buf, "PLUTO_XFRMI_FWMARK='%" PRIu32 "/0xffffffff' ",
+			jam(&jb, "PLUTO_XFRMI_FWMARK='%" PRIu32 "/0xffffffff' ",
 			    c->xfrmi->if_id);
 		} else {
 			address_buf bpeer;
@@ -727,48 +696,31 @@ static void jam_common_shell_out(struct jambuf *buf, const struct connection *c,
 			dbg("not adding PLUTO_XFRMI_FWMARK. PLUTO_PEER=%s is not inside PLUTO_PEER_CLIENT=%s",
 			    str_address(&sr->that.host->addr, &bpeer),
 			    str_selector_subnet_port(&sr->that.client, &peerclient_str));
-			jam(buf, "PLUTO_XFRMI_FWMARK='' ");
+			jam(&jb, "PLUTO_XFRMI_FWMARK='' ");
 		}
 	}
-	jam(buf, "VTI_IFACE='%s' ", c->vti_iface ? c->vti_iface : "");
-	jam(buf, "VTI_ROUTING='%s' ", bool_str(c->vti_routing));
-	jam(buf, "VTI_SHARED='%s' ", bool_str(c->vti_shared));
+	JDstr("VTI_IFACE", c->vti_iface ? c->vti_iface : "");
+	JDstr("VTI_ROUTING", bool_str(c->vti_routing));
+	JDstr("VTI_SHARED", bool_str(c->vti_shared));
 
 	if (sr->this.has_cat) {
-		jam_string(buf, "CAT='YES' ");
+		jam_string(&jb, "CAT='YES' ");
 	}
 
-	jam(buf, "SPI_IN=0x%x SPI_OUT=0x%x " /* SPI_IN SPI_OUT */,
+	jam(&jb, "SPI_IN=0x%x SPI_OUT=0x%x " /* SPI_IN SPI_OUT */,
 	    (st == NULL ? 0 : st->st_esp.present ? ntohl(st->st_esp.attrs.spi) :
 	     st->st_ah.present ? ntohl(st->st_ah.attrs.spi) :
 	     st->st_ipcomp.present ? ntohl(st->st_ipcomp.attrs.spi) : 0),
 	    (st == NULL ? 0 : st->st_esp.present ? ntohl(st->st_esp.our_spi) :
 	     st->st_ah.present ? ntohl(st->st_ah.our_spi) :
 	     st->st_ipcomp.present ? ntohl(st->st_ipcomp.our_spi) : 0));
-}
+	return jambuf_ok(&jb);
 
-/*
- * form the command string
- *
- * note: this mutates *st by calling fmt_traffic_str
- */
-bool fmt_common_shell_out(char *buf, size_t blen, const struct connection *c,
-			  const struct spd_route *sr, struct state *st)
-{
-	/*
-	 * note: this mutates *st by calling get_sa_info
-	 *
-	 * XXX: does the get_sa_info() call order matter? Should this
-	 * be a single "atomic" call?
-	 *
-	 * true==inbound: inbound updates OUR_BYTES; !inbound updates
-	 * PEER_BYTES.
-	 */
-	bool outbytes = st != NULL && get_sa_info(st, false, NULL);
-	bool inbytes = st != NULL && get_sa_info(st, true, NULL);
-	struct jambuf jambuf = array_as_jambuf(buf, blen);
-	jam_common_shell_out(&jambuf, c, sr, st, inbytes, outbytes);
-	return jambuf_ok(&jambuf);
+#	undef JDstr
+#	undef JDuint
+#	undef JDuint64
+#	undef JDemitter
+#	undef JDipaddr
 }
 
 bool do_command(const struct connection *c,
@@ -778,8 +730,6 @@ bool do_command(const struct connection *c,
 		/* either st, or c's logger */
 		struct logger *logger)
 {
-	const char *verb_suffix;
-
 	/*
 	 * Support for skipping updown, eg leftupdown=""
 	 * Useful on busy servers that do not need to use updown for anything
@@ -795,6 +745,8 @@ bool do_command(const struct connection *c,
 	 * Figure out which verb suffix applies.
 	 * NOTE: this is a duplicate of code in mast_do_command_vs.
 	 */
+	const char *verb_suffix;
+
 	{
 		const char *hs, *cs;
 		const struct ip_info *afi = address_type(&sr->this.host->addr);
