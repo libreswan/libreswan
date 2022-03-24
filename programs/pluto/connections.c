@@ -4174,7 +4174,7 @@ uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt)
 	/* Determine the base priority (2 bits) (0 is manual by user). */
 	unsigned base;
 	if (LIN(POLICY_GROUPINSTANCE, c->policy)) {
-		if (LIN(POLICY_AUTH_NULL, c->policy)) {
+		if (LIN(POLICY_AUTH_NULL, c->remote->config->host.policy_authby)) {
 			base = 3; /* opportunistic anonymous */
 		} else {
 			base = 2; /* opportunistic */
