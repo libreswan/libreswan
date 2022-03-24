@@ -3702,14 +3702,86 @@ static void show_one_sr(struct show *s,
 		     (sr->that.config->host.xauth.username == NULL ? "[any]" :
 		      sr->that.config->host.xauth.username));
 
-	enum_buf auth1, auth2;
-	show_comment(s, PRI_CONNECTION":   our auth:%s, their auth:%s, our autheap:%s, their autheap:%s;",
-		     c->name, instance,
-		     str_enum_short(&keyword_auth_names, sr->this.config->host.auth, &auth1),
-		     str_enum_short(&keyword_auth_names, sr->that.config->host.auth, &auth2),
-		     c->local->config->host.eap == IKE_EAP_NONE ? "none" : "tls",
-		     c->remote->config->host.eap == IKE_EAP_NONE ? "none" : "tls"
-	);
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		const char *who;
+		jam(buf, PRI_CONNECTION":   ", c->name, instance);
+		/*
+		 * When showing the AUTH try to show just the AUTH=
+		 * text (and append the AUTHBY mask when things don't
+		 * match).
+		 *
+		 * For instance, given POLICY_AUTH_NULL and AUTH_NULL,
+		 * just show "null".
+		 *
+		 * But there's a twist: when the oriented peer AUTH
+		 * and AUTHBY don't match, show just AUTHBY.  When
+		 * authenticating (at least for IKEv2) AUTH is
+		 * actually ignored - it's AUTHBY that counts.
+		 */
+		who = "our";
+		FOR_EACH_THING(end, &c->local->config->host, &c->remote->config->host) {
+			jam(buf, "%s auth:", who);
+			lset_t expect = LEMPTY;
+			lset_t mask = POLICY_AUTHBY_MASK;
+			switch (end->auth) {
+			case AUTH_RSASIG:
+				expect = POLICY_RSASIG;
+				mask = POLICY_AUTHBY_RSASIG_MASK;
+				break;
+			case AUTH_ECDSA:
+				expect = POLICY_ECDSA;
+				mask = POLICY_AUTHBY_ECDSA_MASK;
+				break;
+			case AUTH_PSK:
+				mask = expect = POLICY_PSK;
+				break;
+			case AUTH_NULL:
+				mask = expect = POLICY_AUTH_NULL;
+				break;
+			case AUTH_NEVER:
+			case AUTH_UNSET:
+				mask = expect = POLICY_AUTH_NEVER;
+				break;
+			default:
+				break;
+			}
+
+			/* remote is allowed anything in authby */
+			if (end == &c->remote->config->host) {
+				mask = POLICY_AUTHBY_MASK;
+			}
+
+			if ((end->policy_authby & mask & ~expect) == LEMPTY) {
+				jam_enum_short(buf, &keyword_auth_names, end->auth);
+			} else if (oriented(c) && end == &c->remote->config->host) {
+				/*
+				 * Oriented peer can use anything in
+				 * .policy_authby.
+				 */
+				jam_lset_short(buf, &sa_policy_bit_names, "+",
+					       end->policy_authby);
+			} else {
+				jam_enum_short(buf, &keyword_auth_names, end->auth);
+				if (end->policy_authby & ~expect) {
+					/* ... the unexpected */
+					jam_string(buf, "(");
+					jam_lset_short(buf, &sa_policy_bit_names, "+",
+						       end->policy_authby & mask);
+					jam_string(buf, ")");
+				}
+			}
+			who = ", their";
+		}
+		/* eap */
+		who = ", our";
+		FOR_EACH_THING(end, &c->local->config->host, &c->remote->config->host) {
+			jam(buf, "%s autheap:%s", who,
+			    (end->eap == IKE_EAP_NONE ? "none" :
+			     end->eap == IKE_EAP_TLS ? "tls" : "???"));
+			who = ", their";
+		}
+		jam_string(buf, ";");
+	}
 
 	show_comment(s, PRI_CONNECTION":   modecfg info: us:%s, them:%s, modecfg policy:%s, dns:%s, domains:%s, cat:%s;",
 		     c->name, instance,
