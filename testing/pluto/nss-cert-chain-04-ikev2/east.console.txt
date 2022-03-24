@@ -27,7 +27,7 @@ east #
 000 "road-A": 192.0.2.254/32===192.1.2.23[@east.testing.libreswan.org]---192.1.2.45...%any[@someone.testing.libreswan.org]===192.0.1.254/32; unrouted; eroute owner: #0
 000 "road-A":     oriented; my_ip=192.0.2.254; their_ip=unset; mycert=east; my_updown=ipsec _updown;
 000 "road-A":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "road-A":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+000 "road-A":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 000 "road-A":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "road-A":   sec_label:unset;
 000 "road-A":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for otherca, E=testing@libreswan.org'
@@ -45,7 +45,7 @@ east #
 000 "road-chain-B": 192.0.2.254/32===192.1.2.23[@east.testing.libreswan.org]---192.1.2.45...%any[@west_chain_endcert.testing.libreswan.org]===192.0.1.254/32; unrouted; eroute owner: #0
 000 "road-chain-B":     oriented; my_ip=192.0.2.254; their_ip=unset; mycert=east; my_updown=ipsec _updown;
 000 "road-chain-B":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "road-chain-B":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+000 "road-chain-B":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 000 "road-chain-B":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "road-chain-B":   sec_label:unset;
 000 "road-chain-B":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'

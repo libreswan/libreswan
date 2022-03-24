@@ -59,7 +59,7 @@ west #
 000 "192.1.2.45-to-192.1.2.23": 192.1.2.45...192.1.2.23[%fromcert]; prospective erouted; eroute owner: #0
 000 "192.1.2.45-to-192.1.2.23":     oriented; my_ip=unset; their_ip=unset; mycert=west; my_updown=ipsec _updown;
 000 "192.1.2.45-to-192.1.2.23":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "192.1.2.45-to-192.1.2.23":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+000 "192.1.2.45-to-192.1.2.23":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 000 "192.1.2.45-to-192.1.2.23":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "192.1.2.45-to-192.1.2.23":   sec_label:unset;
 000 "192.1.2.45-to-192.1.2.23":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'

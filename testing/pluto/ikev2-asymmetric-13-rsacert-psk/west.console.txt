@@ -29,7 +29,7 @@ west #
 000 "westnet-eastnet-ikev2": 192.0.1.0/24===192.1.2.45[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org]...192.1.2.23[@east]===192.0.2.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-ikev2":     oriented; my_ip=unset; their_ip=unset; mycert=west; my_updown=ipsec _updown;
 000 "westnet-eastnet-ikev2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "westnet-eastnet-ikev2":   our auth:rsasig, their auth:secret, our autheap:none, their autheap:none;
+000 "westnet-eastnet-ikev2":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-ikev2":   sec_label:unset;
 000 "westnet-eastnet-ikev2":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'

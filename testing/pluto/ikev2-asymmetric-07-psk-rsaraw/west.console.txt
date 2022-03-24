@@ -28,7 +28,7 @@ west #
 000 "westnet-eastnet-ikev2": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-ikev2":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-ikev2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "westnet-eastnet-ikev2":   our auth:secret, their auth:rsasig, our autheap:none, their autheap:none;
+000 "westnet-eastnet-ikev2":   our auth:secret, their auth:RSASIG+RSASIG_v1_5, our autheap:none, their autheap:none;
 000 "westnet-eastnet-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-ikev2":   sec_label:unset;
 000 "westnet-eastnet-ikev2":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;

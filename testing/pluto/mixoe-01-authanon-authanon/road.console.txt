@@ -22,11 +22,11 @@ road #
 000 Total IPsec connections: loaded 11, active 0
 road #
  ipsec status | grep "our auth" | grep private
-000 "clear-or-private":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "private":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "private-or-clear":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "private-or-clear#192.1.2.23/32":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
-000 "private-or-clear-all":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
+000 "clear-or-private":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+AUTH_NULL+RSASIG_v1_5, our autheap:none, their autheap:none;
+000 "private":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+AUTH_NULL+RSASIG_v1_5, our autheap:none, their autheap:none;
+000 "private-or-clear":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+AUTH_NULL+RSASIG_v1_5, our autheap:none, their autheap:none;
+000 "private-or-clear#192.1.2.23/32":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+AUTH_NULL+RSASIG_v1_5, our autheap:none, their autheap:none;
+000 "private-or-clear-all":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+AUTH_NULL+RSASIG_v1_5, our autheap:none, their autheap:none;
 road #
  echo "initdone"
 initdone
