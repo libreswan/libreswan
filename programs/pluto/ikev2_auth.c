@@ -371,10 +371,15 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 			  struct ike_sa *ike,
 			  const struct crypt_mac *idhash_in,
 			  struct pbs_in *signature_pbs,
-			  const enum keyword_auth that_authby)
+			  const enum keyword_auth that_auth)
 {
+	enum_buf ramb, eanb;
+	dbg("verifying auth payload, remote sent v2AUTH=%s we want auth=%s",
+	    str_enum_short(&ikev2_auth_method_names, recv_auth, &ramb),
+	    str_enum_short(&keyword_auth_names, that_auth, &eanb));
+
 	/*
-	 * XXX: can the boiler plate check that THAT_AUTHBY matches
+	 * XXX: can the boiler plate check that THAT_AUTH matches
 	 * recv_auth appearing in all case branches be merged?
 	 */
 
@@ -408,9 +413,9 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_PSK:
 	{
-		if (that_authby != AUTH_PSK) {
+		if (that_auth != AUTH_PSK) {
 			return diag("authentication failed: peer attempted PSK authentication but we want %s",
-				    enum_name(&keyword_auth_names, that_authby));
+				    enum_name(&keyword_auth_names, that_auth));
 		}
 
 		diag_t d = v2_authsig_and_log_using_psk(AUTH_PSK, ike, idhash_in,
@@ -425,10 +430,15 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_NULL:
 	{
-		if (!(that_authby == AUTH_NULL ||
-		      (that_authby == AUTH_RSASIG && LIN(POLICY_AUTH_NULL, ike->sa.st_connection->policy)))) {
+		/*
+		 * Given authby=rsa+null, that_auth==rsa.  Hence the
+		 * second test; but doesn't that make the first test
+		 * redundant?
+		 */
+		if (that_auth != AUTH_NULL &&
+		    (ike->sa.st_connection->remote->config->host.policy_authby & POLICY_AUTH_NULL) == LEMPTY) {
 			return diag("authentication failed: peer attempted NULL authentication but we want %s",
-				    enum_name(&keyword_auth_names, that_authby));
+				    enum_name(&keyword_auth_names, that_auth));
 		}
 
 		diag_t d = v2_authsig_and_log_using_psk(AUTH_NULL, ike, idhash_in,
@@ -444,10 +454,10 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 
 	case IKEv2_AUTH_DIGSIG:
 	{
-		if (that_authby != AUTH_ECDSA &&
-		    that_authby != AUTH_RSASIG) {
+		if (that_auth != AUTH_ECDSA &&
+		    that_auth != AUTH_RSASIG) {
 			return diag("authentication failed: peer attempted authentication through Digital Signature but we want %s",
-				    enum_name(&keyword_auth_names, that_authby));
+				    enum_name(&keyword_auth_names, that_auth));
 		}
 
 		/* try to match ASN.1 blob designating the hash algorithm */
@@ -525,7 +535,7 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 
 		dbg("digsig:   no match");
 		return diag("authentication failed: no acceptable ECDSA/RSA-PSS ASN.1 signature hash proposal included for %s",
-			    enum_name(&keyword_auth_names, that_authby));
+			    enum_name(&keyword_auth_names, that_auth));
 
 	}
 	default:
