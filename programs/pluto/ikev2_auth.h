@@ -38,17 +38,20 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 				      const struct hash_desc *hasher,
 				      enum perspective from_the_perspective_of);
 
-enum keyword_auth v2_auth_by(struct ike_sa *ike);
-enum ikev2_auth_method v2AUTH_method_from_authby(struct ike_sa *ike, enum keyword_auth authby);
 const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike);
 
 shunk_t authby_asn1_hash_blob(const struct hash_desc *hash_algo,
 			      enum keyword_auth authby);
 
-bool emit_v2_auth(struct ike_sa *ike,
-		  const struct hash_signature *auth_sig,
-		  const struct crypt_mac *idhash,
-		  pb_stream *outpbs);
+/*
+ * The local end's proof-of-identity sent to the remote peer.
+ */
+enum keyword_auth local_v2_auth(struct ike_sa *ike);
+enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike, enum keyword_auth auth);
+bool emit_local_v2AUTH(struct ike_sa *ike,
+		       const struct hash_signature *auth_sig,
+		       const struct crypt_mac *idhash,
+		       pb_stream *outpbs);
 
 typedef stf_status (v2_auth_signature_cb)(struct ike_sa *ike,
 					  struct msg_digest *md,

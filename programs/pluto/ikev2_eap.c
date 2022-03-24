@@ -494,7 +494,7 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 	}
 
 	/* now send AUTH payload */
-	if (!emit_v2_auth(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, response.pbs)) {
+	if (!emit_local_v2AUTH(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, response.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -685,7 +685,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 
 	/* now send AUTH payload */
 
-	if (!emit_v2_auth(ike, &msk, &ike->sa.st_v2_id_payload.mac, response.pbs)) {
+	if (!emit_local_v2AUTH(ike, &msk, &ike->sa.st_v2_id_payload.mac, response.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 	ike->sa.st_v2_ike_intermediate.used = false;

@@ -113,7 +113,7 @@ struct crypt_mac v2_calculate_sighash(const struct ike_sa *ike,
 	return crypt_hash_final_mac(&ctx);
 }
 
-enum keyword_auth v2_auth_by(struct ike_sa *ike)
+enum keyword_auth local_v2_auth(struct ike_sa *ike)
 {
 	const struct connection *c = ike->sa.st_connection;
 	enum keyword_auth authby = c->local->config->host.auth;
@@ -147,8 +147,8 @@ enum keyword_auth v2_auth_by(struct ike_sa *ike)
  * auth method.
  */
 
-enum ikev2_auth_method v2AUTH_method_from_authby(struct ike_sa *ike,
-						 enum keyword_auth authby)
+enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
+					   enum keyword_auth authby)
 {
 	struct connection *c = ike->sa.st_connection;
 
@@ -161,16 +161,27 @@ enum ikev2_auth_method v2AUTH_method_from_authby(struct ike_sa *ike,
 
 	switch (authby) {
 	case AUTH_RSASIG:
-		if (ike->sa.st_seen_hashnotify &&
-		    c->config->sighash_policy != LEMPTY) {
+		/*
+		 * Peer sent us N(SIGNATURE_HASH_ALGORITHMS)
+		 * indicating a preference for Digital Signature
+		 * Method, and local policy was ok with the
+		 * suggestion.
+		 */
+		if (ike->sa.st_v2_digsig.negotiated_hashes != LEMPTY) {
 			return IKEv2_AUTH_DIGSIG;
 		}
 
-		if (LIN(POLICY_RSASIG_v1_5, c->policy)) {
+		/*
+		 * Local policy allows proof-of-identity using legacy
+		 * RSASIG_v1_5.
+		 */
+		if (c->local->config->host.policy_authby & POLICY_RSASIG_v1_5) {
 			return IKEv2_AUTH_RSA;
 		}
 
-		/* try to log something helpful */
+		/*
+		 * Nothing acceptable, try to log something helpful.
+		 */
 		if (ike->sa.st_seen_hashnotify) {
 			llog_sa(RC_LOG_SERIOUS, ike,
 				"local policy does not allow legacy RSA-SHA1 but connection allows no other hash policy");
@@ -226,15 +237,15 @@ const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike)
 	return NULL;
 }
 
-bool emit_v2_auth(struct ike_sa *ike,
-		  const struct hash_signature *auth_sig,
-		  const struct crypt_mac *id_payload_mac,
-		  struct pbs_out *outs)
+bool emit_local_v2AUTH(struct ike_sa *ike,
+		       const struct hash_signature *auth_sig,
+		       const struct crypt_mac *id_payload_mac,
+		       struct pbs_out *outs)
 {
-	enum keyword_auth authby = ike->sa.st_eap_sa_md ? AUTH_PSK : v2_auth_by(ike);
+	enum keyword_auth authby = ike->sa.st_eap_sa_md ? AUTH_PSK : local_v2_auth(ike);
 	struct ikev2_auth a = {
 		.isaa_critical = build_ikev2_critical(false, ike->sa.st_logger),
-		.isaa_auth_method = v2AUTH_method_from_authby(ike, authby),
+		.isaa_auth_method = local_v2AUTH_method(ike, authby),
 	};
 
 	struct pbs_out auth_pbs;

@@ -174,8 +174,8 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 					   ike->sa.st_sk_pi_no_ppk);
 	}
 
-	enum keyword_auth authby = v2_auth_by(ike);
-	enum ikev2_auth_method auth_method = v2AUTH_method_from_authby(ike, authby);
+	enum keyword_auth authby = local_v2_auth(ike);
+	enum ikev2_auth_method auth_method = local_v2AUTH_method(ike, authby);
 	switch (auth_method) {
 	case IKEv2_AUTH_RSA:
 		return submit_v2_IKE_AUTH_request_signature(ike,
@@ -386,7 +386,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 
 	/* send out the AUTH payload */
 
-	if (!emit_v2_auth(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, request.pbs)) {
+	if (!emit_local_v2AUTH(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, request.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 
@@ -516,7 +516,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	 * chunk. This is only done on the initiator in IKE_AUTH, and
 	 * not repeated in rekeys.
 	 */
-	if (v2_auth_by(ike) == AUTH_RSASIG && pc->policy & POLICY_AUTH_NULL) {
+	if (local_v2_auth(ike) == AUTH_RSASIG && pc->policy & POLICY_AUTH_NULL) {
 		/* store in null_auth */
 		chunk_t null_auth = NULL_HUNK;
 		if (!ikev2_create_psk_auth(AUTH_NULL, ike,
@@ -937,8 +937,8 @@ stf_status generate_v2_responder_auth(struct ike_sa *ike, struct msg_digest *md,
 	ike->sa.st_v2_id_payload.mac = v2_hash_id_payload("IDr", ike, "st_skey_pr_nss",
 							  ike->sa.st_skey_pr_nss);
 
-	enum keyword_auth authby = v2_auth_by(ike);
-	enum ikev2_auth_method auth_method = v2AUTH_method_from_authby(ike, authby);
+	enum keyword_auth authby = local_v2_auth(ike);
+	enum ikev2_auth_method auth_method = local_v2AUTH_method(ike, authby);
 	switch (auth_method) {
 
 	case IKEv2_AUTH_RSA:
@@ -1238,7 +1238,7 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 
 	/* now send AUTH payload */
 
-	if (!emit_v2_auth(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, response.pbs)) {
+	if (!emit_local_v2AUTH(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, response.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 	ike->sa.st_v2_ike_intermediate.used = false;
