@@ -647,7 +647,14 @@ bool fmt_common_shell_out(char *buf,
 	JDuint("PLUTO_NM_CONFIGURED", c->nmconfigured);
 #endif
 
-	if (st != NULL) {
+	const struct ipsec_proto_info *const first_pi =
+		st == NULL ? NULL :
+		st->st_esp.present ? &st->st_esp :
+		st->st_ah.present ? &st->st_ah :
+		st->st_ipcomp.present ? &st->st_ipcomp :
+		NULL;
+
+	if (first_pi != NULL) {
 		/*
 		 * note: this mutates *st by calling get_sa_info
 		 *
@@ -655,18 +662,10 @@ bool fmt_common_shell_out(char *buf,
 		 * be a single "atomic" call?
 		 */
 		if (get_sa_info(st, true, NULL)) {
-			JDuint64("PLUTO_INBYTES",
-			    st->st_esp.present ? st->st_esp.our_bytes :
-			    st->st_ah.present ? st->st_ah.our_bytes :
-			    st->st_ipcomp.present ? st->st_ipcomp.our_bytes :
-			    0);
+			JDuint64("PLUTO_INBYTES", first_pi->our_bytes);
 		}
 		if (get_sa_info(st, false, NULL)) {
-			JDuint64("PLUTO_OUTBYTES",
-			    st->st_esp.present ? st->st_esp.peer_bytes :
-			    st->st_ah.present ? st->st_ah.peer_bytes :
-			    st->st_ipcomp.present ? st->st_ipcomp.peer_bytes :
-			    0);
+			JDuint64("PLUTO_OUTBYTES", first_pi->peer_bytes);
 		}
 	}
 
@@ -708,12 +707,9 @@ bool fmt_common_shell_out(char *buf,
 	}
 
 	jam(&jb, "SPI_IN=0x%x SPI_OUT=0x%x " /* SPI_IN SPI_OUT */,
-	    (st == NULL ? 0 : st->st_esp.present ? ntohl(st->st_esp.attrs.spi) :
-	     st->st_ah.present ? ntohl(st->st_ah.attrs.spi) :
-	     st->st_ipcomp.present ? ntohl(st->st_ipcomp.attrs.spi) : 0),
-	    (st == NULL ? 0 : st->st_esp.present ? ntohl(st->st_esp.our_spi) :
-	     st->st_ah.present ? ntohl(st->st_ah.our_spi) :
-	     st->st_ipcomp.present ? ntohl(st->st_ipcomp.our_spi) : 0));
+		first_pi == NULL ? 0 : ntohl(first_pi->attrs.spi),
+		first_pi == NULL ? 0 : ntohl(first_pi->our_spi));
+
 	return jambuf_ok(&jb);
 
 #	undef JDstr
