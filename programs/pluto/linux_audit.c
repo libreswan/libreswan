@@ -232,7 +232,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 		    op == LAK_CHILD_DESTROY ? "destroy" : "start", /* fail uses op=start */
 		    conn_encode,
 		    st->st_serialno,
-		    st->st_esp.present ? "ipsec-esp" : (st->st_ah.present ? "ipsec-ah" : "ipsec-policy"),
+		    st->st_esp.present ? "ipsec-esp" : st->st_ah.present ? "ipsec-ah" : "ipsec-policy",
 		    c->policy & POLICY_TUNNEL ? "tunnel" : "transport");
 
 		/*

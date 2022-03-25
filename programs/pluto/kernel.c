@@ -569,11 +569,12 @@ bool fmt_common_shell_out(char *buf,
 	JDuint("PLUTO_MY_PORT", sr->this.client.hport);
 	JDuint("PLUTO_MY_PROTOCOL", sr->this.client.ipproto);
 	JDuint("PLUTO_SA_REQID", sr->reqid);
-	JDstr("PLUTO_SA_TYPE", (st == NULL ? "none" :
-					 st->st_esp.present ? "ESP" :
-					 st->st_ah.present ? "AH" :
-					 st->st_ipcomp.present ? "IPCOMP" :
-					 "unknown?"));
+	JDstr("PLUTO_SA_TYPE",
+		st == NULL ? "none" :
+		st->st_esp.present ? "ESP" :
+		st->st_ah.present ? "AH" :
+		st->st_ipcomp.present ? "IPCOMP" :
+		"unknown?");
 
 	JDipaddr("PLUTO_PEER", sr->that.host->addr);
 	JDemitter("PLUTO_PEER_ID", jam_id_bytes(&jb, &c->remote->host.id, jam_shell_quoted_bytes));
@@ -3224,7 +3225,7 @@ bool get_sa_info(struct state *st, bool inbound, monotime_t *last_contact /* OUT
 {
 	struct connection *const c = st->st_connection;
 
-	if (kernel_ops->get_sa == NULL || (!st->st_esp.present && !st->st_ah.present)) {
+	if (kernel_ops->get_sa == NULL) {
 		return false;
 	}
 

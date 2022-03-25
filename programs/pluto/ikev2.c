@@ -1220,7 +1220,7 @@ struct payload_summary ikev2_decode_payloads(struct logger *log,
 			summary.n = v2N_INVALID_SYNTAX;
 			break;
 		}
-		summary.repeated |= (summary.present & LELEM(np));
+		summary.repeated |= summary.present & LELEM(np);
 		summary.present |= LELEM(np);
 
 		/*

@@ -2214,13 +2214,13 @@ static void show_established_child_details(struct show *s, struct state *st)
 		jam(buf, " Traffic:");
 
 		if (st->st_ah.present) {
-			if (get_sa_info(st, false, NULL)) {
-				jam(buf, " AHout=");
-				jam_readable_humber(buf, st->st_ah.peer_bytes, false);
-			}
 			if (get_sa_info(st, true, NULL)) {
 				jam(buf, " AHin=");
 				jam_readable_humber(buf, st->st_ah.our_bytes, false);
+			}
+			if (get_sa_info(st, false, NULL)) {
+				jam(buf, " AHout=");
+				jam_readable_humber(buf, st->st_ah.peer_bytes, false);
 			}
 			jam(buf, " AHmax=");		/* TBD: "The ! is not printed." */
 			jam_readable_humber(buf, st->st_ah.attrs.life_kilobytes, true);
@@ -2238,14 +2238,6 @@ static void show_established_child_details(struct show *s, struct state *st)
 			jam_readable_humber(buf, st->st_esp.attrs.life_kilobytes, true);
 		}
 		if (st->st_ipcomp.present) {
-			if (get_sa_info(st, false, NULL)) {
-				jam(buf, " IPCOMPout=");
-				jam_readable_humber(buf, st->st_ipcomp.peer_bytes, false);
-			}
-			if (get_sa_info(st, true, NULL)) {
-				jam(buf, " IPCOMPin=");
-				jam_readable_humber(buf, st->st_ipcomp.our_bytes, false);
-			}
 			jam(buf, "! IPCOMPmax=");	/* TBD: "The ! is not printed." */
 			jam_readable_humber(buf, st->st_ipcomp.attrs.life_kilobytes, true);
 		}
