@@ -664,21 +664,24 @@ static struct db_sa IKEv1_oakley_aggr_mode_db_sa_table[] = {
  *
  * POLICY_PSK, POLICY_RSASIG, and XAUTH for this end (idiosyncratic).
  */
-static int IKEv1_db_sa_index(lset_t x, const struct connection *c)
+static int IKEv1_db_sa_index(const struct connection *c)
 {
+	/* IKEv1 is symmetric */
+	lset_t x = c->local->config->host.policy_authby;
+	pexpect(x == c->remote->config->host.policy_authby);
 	return (x & LRANGES(POLICY_PSK, POLICY_RSASIG)) |
 		((lset_t)c->local->config->host.xauth.server << (POLICY_RSASIG_IX+1)) |
 		((lset_t)c->local->config->host.xauth.client << (POLICY_RSASIG_IX+2));
 }
 
-struct db_sa *IKEv1_oakley_main_mode_db_sa(lset_t x, const struct connection *c)
+struct db_sa *IKEv1_oakley_main_mode_db_sa(const struct connection *c)
 {
-	return &IKEv1_oakley_main_mode_db_sa_table[IKEv1_db_sa_index(x, c)];
+	return &IKEv1_oakley_main_mode_db_sa_table[IKEv1_db_sa_index(c)];
 }
 
-struct db_sa *IKEv1_oakley_aggr_mode_db_sa(lset_t x, const struct connection *c)
+struct db_sa *IKEv1_oakley_aggr_mode_db_sa(const struct connection *c)
 {
-	return &IKEv1_oakley_aggr_mode_db_sa_table[IKEv1_db_sa_index(x, c)];
+	return &IKEv1_oakley_aggr_mode_db_sa_table[IKEv1_db_sa_index(c)];
 }
 
 /**************** IPsec (quick mode) SA database ****************/

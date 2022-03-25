@@ -2260,9 +2260,9 @@ rsasig_common:
  */
 
 /* XXX MCR. I suspect that actually all of this is redundant */
-bool init_aggr_st_oakley(struct state *st, lset_t policy)
+bool init_aggr_st_oakley(struct ike_sa *ike)
 {
-	const struct connection *c = st->st_connection;
+	const struct connection *c = ike->sa.st_connection;
 
 	/*
 	 * Construct the proposals by combining IKE_PROPOSALS with the
@@ -2275,7 +2275,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	 */
 	struct db_sa *revised_sadb;
 	{
-		const struct db_sa *sadb = IKEv1_oakley_aggr_mode_db_sa(policy, c);
+		const struct db_sa *sadb = IKEv1_oakley_aggr_mode_db_sa(c);
 		const struct db_attr *auth = &sadb->prop_conjs[0].props[0].trans[0].attrs[2];
 		passert(auth->type.oakley == OAKLEY_AUTHENTICATION_METHOD);
 		enum ikev1_auth_method auth_method = auth->val;
@@ -2285,7 +2285,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 		 */
 		revised_sadb = v1_ike_alg_make_sadb(c->config->ike_proposals,
 						    auth_method, true,
-						    st->st_logger);
+						    ike->sa.st_logger);
 	}
 
 	if (revised_sadb == NULL)
@@ -2339,7 +2339,7 @@ bool init_aggr_st_oakley(struct state *st, lset_t policy)
 	ta.ta_dh = ikev1_get_ike_dh_desc(grp->val); /* OAKLEY_GROUP_DESCRIPTION */
 	passert(ta.ta_dh != NULL);
 
-	st->st_oakley = ta;
+	ike->sa.st_oakley = ta;
 
 	free_sa(&revised_sadb);
 	return true;

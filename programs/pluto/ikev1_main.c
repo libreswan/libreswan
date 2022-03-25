@@ -166,7 +166,8 @@ void main_outI1(struct fd *whack_sock,
 	{
 		uint8_t *sa_start = rbody.cur;
 
-		if (!ikev1_out_sa(&rbody, IKEv1_oakley_main_mode_db_sa(policy, c),
+		if (!ikev1_out_sa(&rbody,
+				  IKEv1_oakley_main_mode_db_sa(c),
 				  st, true, false)) {
 			log_state(RC_LOG, st, "outsa fail");
 			return;

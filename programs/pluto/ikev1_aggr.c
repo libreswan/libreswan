@@ -988,19 +988,19 @@ void aggr_outI1(struct fd *whack_sock,
 	initialize_new_state(st, policy, try);
 
 	if (LIN(POLICY_PSK, c->policy) && LIN(POLICY_AGGRESSIVE, c->policy)) {
-		log_state(RC_LOG_SERIOUS, st,
-			  "IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
+		llog_sa(RC_LOG_SERIOUS, ike,
+			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
 	}
 
-	if (!init_aggr_st_oakley(st, policy)) {
+	if (!init_aggr_st_oakley(ike)) {
 		/*
 		 * This is only the case if NO IKE proposal was specified in the
 		 * configuration file.  It's not the case if there were multiple
 		 * configurations, even conflicting multiple DH groups.  So this
 		 * should tell the user to add a proper proposal policy
 		 */
-		log_state(RC_AGGRALGO, st,
-			  "no IKE proposal policy specified in config!  Cannot initiate aggressive mode.  A policy must be specified in the configuration and should contain at most one DH group (mod1024, mod1536, mod2048).  Only the first DH group will be honored.");
+		llog_sa(RC_AGGRALGO, ike,
+			"no IKE proposal policy specified in config!  Cannot initiate aggressive mode.  A policy must be specified in the configuration and should contain at most one DH group (mod1024, mod1536, mod2048).  Only the first DH group will be honored.");
 		return;
 	}
 
@@ -1087,7 +1087,7 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 		uint8_t *sa_start = rbody.cur;
 
 		if (!ikev1_out_sa(&rbody,
-				  IKEv1_oakley_aggr_mode_db_sa(st->st_policy, c),
+				  IKEv1_oakley_aggr_mode_db_sa(c),
 				  st, true, true)) {
 			return STF_INTERNAL_ERROR;
 		}

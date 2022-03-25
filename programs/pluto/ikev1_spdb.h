@@ -108,10 +108,10 @@ struct db_sa {
 };
 
 /*
- * IKE policies.
+ * ISAKMP policies.
  */
-extern struct db_sa *IKEv1_oakley_main_mode_db_sa(lset_t x, const struct connection *c);
-extern struct db_sa *IKEv1_oakley_aggr_mode_db_sa(lset_t x, const struct connection *c);
+extern struct db_sa *IKEv1_oakley_main_mode_db_sa(const struct connection *c);
+extern struct db_sa *IKEv1_oakley_aggr_mode_db_sa(const struct connection *c);
 
 /*
  * The ipsec sadb is subscripted by a bitset with members from
@@ -148,7 +148,7 @@ extern v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,           /
 					      struct state *st);           /* current state object */
 
 /* initialize a state with the aggressive mode parameters */
-extern bool init_aggr_st_oakley(struct state *st, lset_t policy);
+extern bool init_aggr_st_oakley(struct ike_sa *st);
 
 extern v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,            /* body of input SA Payload */
 					     const struct isakmp_sa *sa,   /* header of input SA Payload */
