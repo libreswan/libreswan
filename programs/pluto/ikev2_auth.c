@@ -167,6 +167,7 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		 * Method, and local policy was ok with the
 		 * suggestion.
 		 */
+		pexpect(c->local->config->host.policy_authby & POLICY_AUTHBY_RSASIG_MASK);
 		if (ike->sa.st_v2_digsig.negotiated_hashes != LEMPTY) {
 			return IKEv2_AUTH_DIGSIG;
 		}
@@ -192,7 +193,48 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		return IKEv2_AUTH_RESERVED;
 
 	case AUTH_ECDSA:
-		return IKEv2_AUTH_DIGSIG;
+		/*
+		 * Peer sent us N(SIGNATURE_HASH_ALGORITHMS)
+		 * indicating a preference for Digital Signature
+		 * Method, and local policy was ok with the
+		 * suggestion.
+		 */
+		pexpect(c->local->config->host.policy_authby & POLICY_AUTHBY_ECDSA_MASK);
+		if (ike->sa.st_v2_digsig.negotiated_hashes != LEMPTY) {
+			return IKEv2_AUTH_DIGSIG;
+		}
+
+		/*
+		 * If there are HASH algorithms, prute force pick the
+		 * first and use that.  Note that this doesn't check
+		 * that the ECDSA key matches the Pnnn.  Instead, like
+		 * for Digital Signature Method, it allows any ECDSA
+		 * key.
+		 *
+		 * XXX: this _should_ be looking at the ECDSA key.
+		 */
+		if (ike->sa.st_connection->config->sighash_policy & POL_SIGHASH_SHA2_512) {
+			return IKEv2_AUTH_ECDSA_SHA2_512_P521;
+		}
+		if (ike->sa.st_connection->config->sighash_policy & POL_SIGHASH_SHA2_384) {
+			return IKEv2_AUTH_ECDSA_SHA2_384_P384;
+		}
+		if (ike->sa.st_connection->config->sighash_policy & POL_SIGHASH_SHA2_256) {
+			return IKEv2_AUTH_ECDSA_SHA2_256_P256;
+		}
+
+		/*
+		 * Nothing acceptable, try to log something helpful.
+		 */
+		if (ike->sa.st_seen_hashnotify) {
+			llog_sa(RC_LOG_SERIOUS, ike,
+				"local policy requires ECDSA but peer sent no acceptable signature hash algorithms");
+			return IKEv2_AUTH_RESERVED;
+		}
+
+		llog_sa(RC_LOG_SERIOUS, ike,
+			"legacy ECDSA is not implemented");
+		return IKEv2_AUTH_RESERVED;
 
 	case AUTH_PSK:
 		return IKEv2_AUTH_PSK;
