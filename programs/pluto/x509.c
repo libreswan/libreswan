@@ -929,23 +929,32 @@ static chunk_t ikev2_hash_ca_keys(x509cert_t *ca_chain)
 }
 #endif
 
-/* instead of ikev2_hash_ca_keys use this for now. A single key hash. */
-static chunk_t ikev2_hash_nss_cert_key(CERTCertificate *cert,
-				       struct logger *logger)
+/*
+ * Look for the existence of a non-expiring preloaded public key.
+ */
+bool remote_has_preloaded_pubkey(const struct state *st)
 {
-	unsigned char sighash[SHA1_DIGEST_SIZE];
-	zero(&sighash);
+	const struct connection *c = st->st_connection;
 
-/* TODO: This should use SHA1 even if USE_SHA1 is disabled for IKE/IPsec */
-	struct crypt_hash *ctx = crypt_hash_init("SHA-1 of Certificate Public Key",
-						 &ike_alg_hash_sha1, logger);
-	crypt_hash_digest_bytes(ctx, "pubkey",
-				cert->derPublicKey.data,
-				cert->derPublicKey.len);
-	crypt_hash_final_bytes(&ctx, sighash, sizeof(sighash));
-	chunk_t result = clone_bytes_as_chunk(sighash, SHA1_DIGEST_SIZE, "pkey hash");
+	/* do not consider rw connections since
+	 * the peer's identity must be known
+	 */
+	if (c->kind == CK_PERMANENT) {
+		/* look for a matching RSA public key */
+		for (const struct pubkey_list *p = pluto_pubkeys; p != NULL;
+		     p = p->next) {
+			const struct pubkey *key = p->key;
 
-	return result;
+			if ((key->type == &pubkey_type_rsa ||
+			     key->type == &pubkey_type_ecdsa) &&
+			    same_id(&c->remote->host.id, &key->id) &&
+			    is_realtime_epoch(key->until_time)) {
+				/* found a preloaded public key */
+				return true;
+			}
+		}
+	}
+	return false;
 }
 
 bool ikev1_ship_CERT(enum ike_cert_type type, shunk_t cert, pb_stream *outs)
@@ -980,270 +989,6 @@ bool ikev1_build_and_ship_CR(enum ike_cert_type type,
 
 	close_output_pbs(&cr_pbs);
 	return true;
-}
-
-bool ikev2_build_and_ship_CR(enum ike_cert_type type,
-			     chunk_t ca,
-			     pb_stream *outs)
-{
-	/*
-	 * CERT_GetDefaultCertDB() simply returns the contents of a
-	 * static variable set by NSS_Initialize().  It doesn't check
-	 * the value and doesn't set PR error.  Short of calling
-	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
-	 */
-	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
-	passert(handle != NULL);
-
-	pb_stream cr_pbs;
-	struct ikev2_certreq cr_hd = {
-		.isacertreq_critical =  ISAKMP_PAYLOAD_NONCRITICAL,
-		.isacertreq_enc = type,
-	};
-
-	/* build CR header */
-	if (!out_struct(&cr_hd, &ikev2_certificate_req_desc, outs, &cr_pbs))
-		return false;
-	/*
-	 * The Certificate Encoding field has the same values as those defined
-	 * in Section 3.6.  The Certification Authority field contains an
-	 * indicator of trusted authorities for this certificate type.  The
-	 * Certification Authority value is a concatenated list of SHA-1 hashes
-	 * of the public keys of trusted Certification Authorities (CAs).  Each
-	 * is encoded as the SHA-1 hash of the Subject Public Key Info element
-	 * (see section 4.1.2.7 of [PKIX]) from each Trust Anchor certificate.
-	 * The 20-octet hashes are concatenated and included with no other
-	 * formatting.
-	 *
-	 * How are multiple trusted CAs chosen?
-	 */
-
-	if (ca.ptr != NULL) {
-		SECItem caname = same_shunk_as_dercert_secitem(ASN1(ca));
-
-		CERTCertificate *cacert =
-			CERT_FindCertByName(handle, &caname);
-
-		if (cacert != NULL && CERT_IsCACert(cacert, NULL)) {
-			dbg("located CA cert %s for CERTREQ", cacert->subjectName);
-			/*
-			 * build CR body containing the concatenated SHA-1 hashes of the
-			 * CA's public key. This function currently only uses a single CA
-			 * and should support more in the future
-			 * */
-			chunk_t cr_full_hash = ikev2_hash_nss_cert_key(cacert,
-								       outs->outs_logger);
-
-			if (!out_hunk(cr_full_hash, &cr_pbs, "CA cert public key hash")) {
-				free_chunk_content(&cr_full_hash);
-				return false;
-			}
-			free_chunk_content(&cr_full_hash);
-		} else {
-			LSWDBGP(DBG_BASE, buf) {
-				jam(buf, "NSS: locating CA cert \'");
-				jam_dn(buf, ASN1(ca), jam_sanitized_bytes);
-				jam(buf, "\' for CERTREQ using CERT_FindCertByName() failed: ");
-				jam_nss_error_code(buf, PR_GetError());
-			}
-		}
-	}
-	/*
-	 * can it be empty?
-	 * this function's returns need fixing
-	 * */
-	close_output_pbs(&cr_pbs);
-	return true;
-}
-
-/*
- * For IKEv2, returns TRUE if we should be sending a cert
- */
-bool ikev2_send_cert_decision(const struct ike_sa *ike)
-{
-	const struct connection *c = ike->sa.st_connection;
-	const struct end *this = &c->spd.this;
-
-	dbg("IKEv2 CERT: send a certificate?");
-
-	bool sendit = false;
-
-	if (ike->sa.st_peer_wants_null) {
-		/* XXX: only ever true on responder */
-		/* ??? should we log something?  All others do. */
-	} else if ((c->local->config->host.policy_authby & POLICY_AUTHBY_DIGSIG_MASK) == LEMPTY) {
-		policy_buf pb;
-		dbg("IKEv2 CERT: local policy_authby does not have RSA or ECDSA: %s",
-		    str_policy(c->policy & POLICY_AUTHBY_MASK, &pb));
-	} else if (this->config->host.cert.nss_cert == NULL) {
-		dbg("IKEv2 CERT: no certificate to send");
-	} else if (c->local->config->host.sendcert == CERT_SENDIFASKED &&
-		   ike->sa.st_requested_ca != NULL) {
-		dbg("IKEv2 CERT: OK to send requested certificate");
-		sendit = true;
-	} else if (c->local->config->host.sendcert == CERT_ALWAYSSEND) {
-		dbg("IKEv2 CERT: OK to send a certificate (always)");
-		sendit = true;
-	} else {
-		dbg("IKEv2 CERT: no cert requested or we don't want to send");
-	}
-	return sendit;
-}
-
-stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
-			      pb_stream *outpbs)
-{
-	if (st->st_connection->kind == CK_PERMANENT) {
-		dbg("connection->kind is CK_PERMANENT so send CERTREQ");
-
-		if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
-					     st->st_connection->remote->config->host.ca,
-					     outpbs))
-			return STF_INTERNAL_ERROR;
-	} else {
-		dbg("connection->kind is not CK_PERMANENT (instance), so collect CAs");
-
-		generalName_t *gn = collect_rw_ca_candidates(md);
-
-		if (gn != NULL) {
-			dbg("connection is RW, lookup CA candidates");
-
-			for (generalName_t *ca = gn; ca != NULL; ca = ca->next) {
-				if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
-							     ca->name, outpbs)) {
-					free_generalNames(gn, false);
-					return STF_INTERNAL_ERROR;
-				}
-			}
-			free_generalNames(gn, false);
-		} else {
-			dbg("not a roadwarrior instance, sending empty CA in CERTREQ");
-			if (!ikev2_build_and_ship_CR(CERT_X509_SIGNATURE,
-					       EMPTY_CHUNK,
-					       outpbs))
-				return STF_INTERNAL_ERROR;
-		}
-	}
-	return STF_OK;
-}
-
-bool ikev2_send_certreq_INIT_decision(const struct state *st,
-				      enum sa_role role)
-{
-	dbg("IKEv2 CERTREQ: send a cert request?");
-
-	if (role != SA_INITIATOR) {
-		dbg("IKEv2 CERTREQ: not the original initiator");
-		return false;
-	}
-
-	const struct connection *c = st->st_connection;
-
-	if ((c->policy & POLICY_AUTHBY_MASK) == POLICY_PSK ||
-	    (c->policy & POLICY_AUTHBY_MASK) == POLICY_AUTH_NULL) {
-		dbg("IKEv2 CERTREQ: authby=secret and authby=null do not require CERTREQ");
-		return false;
-	}
-
-	if (has_preloaded_public_key(st)) {
-		dbg("IKEv2 CERTREQ: public key already known");
-		return false;
-	}
-
-	if (c->remote->config->host.ca.ptr == NULL || c->remote->config->host.ca.len < 1) {
-		dbg("IKEv2 CERTREQ: no CA DN known to send");
-		return false;
-	}
-
-	dbg("IKEv2 CERTREQ: OK to send a certificate request");
-
-	return true;
-}
-
-/* Send v2 CERT and possible CERTREQ (which should be separated eventually) */
-stf_status ikev2_send_cert(const struct connection *c, struct pbs_out *outpbs)
-{
-	const struct cert *mycert = c->local->config->host.cert.nss_cert != NULL ? &c->local->config->host.cert : NULL;
-	bool send_authcerts = c->send_ca != CA_SEND_NONE;
-	bool send_full_chain = send_authcerts && c->send_ca == CA_SEND_ALL;
-
-	if (impair.send_pkcs7_thingie) {
-		llog(RC_LOG, outpbs->outs_logger, "IMPAIR: sending cert as PKCS7 blob");
-		passert(mycert != NULL);
-		SECItem *pkcs7 = nss_pkcs7_blob(mycert, send_full_chain);
-		if (!pexpect(pkcs7 != NULL)) {
-			return STF_INTERNAL_ERROR;
-		}
-		struct ikev2_cert pkcs7_hdr = {
-			.isac_critical = build_ikev2_critical(false, outpbs->outs_logger),
-			.isac_enc = CERT_PKCS7_WRAPPED_X509,
-		};
-		pb_stream cert_pbs;
-		if (!out_struct(&pkcs7_hdr, &ikev2_certificate_desc,
-				outpbs, &cert_pbs) ||
-		    !out_hunk(same_secitem_as_chunk(*pkcs7), &cert_pbs, "PKCS7")) {
-			SECITEM_FreeItem(pkcs7, PR_TRUE);
-			return STF_INTERNAL_ERROR;
-		}
-		close_output_pbs(&cert_pbs);
-		SECITEM_FreeItem(pkcs7, PR_TRUE);
-		return STF_OK;
-	}
-
-	/*****
-	 * From here on, if send_authcerts, we are obligated to:
-	 * free_auth_chain(auth_chain, chain_len);
-	 *****/
-
-	chunk_t auth_chain[MAX_CA_PATH_LEN] = { { NULL, 0 } };
-	int chain_len = 0;
-
-	if (send_authcerts) {
-		chain_len = get_auth_chain(auth_chain, MAX_CA_PATH_LEN,
-					   mycert,
-					   send_full_chain ? true : false);
-	}
-
-	const struct ikev2_cert certhdr = {
-		.isac_critical = build_ikev2_critical(false, outpbs->outs_logger),
-		.isac_enc = cert_ike_type(mycert),
-	};
-
-	/*   send own (Initiator CERT) */
-	{
-		pb_stream cert_pbs;
-
-		dbg("sending [CERT] of certificate: %s", cert_nickname(mycert));
-
-		if (!out_struct(&certhdr, &ikev2_certificate_desc,
-				outpbs, &cert_pbs) ||
-		    !out_hunk(cert_der(mycert), &cert_pbs, "CERT")) {
-			free_auth_chain(auth_chain, chain_len);
-			return STF_INTERNAL_ERROR;
-		}
-
-		close_output_pbs(&cert_pbs);
-	}
-
-	/* send optional chain CERTs */
-	{
-		for (int i = 0; i < chain_len ; i++) {
-			pb_stream cert_pbs;
-
-			dbg("sending an authcert");
-
-			if (!out_struct(&certhdr, &ikev2_certificate_desc,
-				outpbs, &cert_pbs) ||
-			    !out_hunk(auth_chain[i], &cert_pbs, "CERT"))
-			{
-				free_auth_chain(auth_chain, chain_len);
-				return STF_INTERNAL_ERROR;
-			}
-			close_output_pbs(&cert_pbs);
-		}
-	}
-	free_auth_chain(auth_chain, chain_len);
-	return STF_OK;
 }
 
 static bool cert_has_private_key(CERTCertificate *cert, struct logger *logger)

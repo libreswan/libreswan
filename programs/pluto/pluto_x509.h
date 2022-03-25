@@ -51,9 +51,6 @@ extern generalName_t *collect_rw_ca_candidates(struct msg_digest *md);
 extern bool ikev1_build_and_ship_CR(enum ike_cert_type type,
 				    chunk_t ca, pb_stream *outs);
 
-extern bool ikev2_build_and_ship_CR(enum ike_cert_type type,
-				    chunk_t ca, pb_stream *outs);
-
 extern void load_authcerts(const char *type, const char *path,
 			   uint8_t auth_flags);
 
@@ -64,17 +61,11 @@ extern bool ikev1_ship_CERT(enum ike_cert_type type, shunk_t cert, pb_stream *ou
 extern int get_auth_chain(chunk_t *out_chain, int chain_max,
 			  const struct cert *end_cert, bool full_chain);
 extern void free_auth_chain(chunk_t *chain, int chain_len);
-extern bool ikev2_send_cert_decision(const struct ike_sa *ike);
-extern stf_status ikev2_send_certreq(struct state *st, struct msg_digest *md,
-				     pb_stream *outpbs);
-
-stf_status ikev2_send_cert(const struct connection *c, pb_stream *outpbs);
-
-bool ikev2_send_certreq_INIT_decision(const struct state *st,
-				      enum sa_role role);
 
 #if defined(LIBCURL) || defined(LIBLDAP)
 bool find_crl_fetch_dn(chunk_t *issuer_dn, struct connection *c);
 #endif
+
+bool remote_has_preloaded_pubkey(const struct state *st);
 
 #endif /* _PLUTO_X509_H */

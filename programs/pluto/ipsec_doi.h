@@ -38,9 +38,6 @@ extern void accept_self_delete(struct msg_digest *md);
 extern stf_status send_isakmp_notification(struct state *st,
 					   uint16_t type, const void *data,
 					   size_t len);
-
-extern bool has_preloaded_public_key(const struct state *st);
-
 extern void jam_child_sa_details(struct jambuf *buf, struct state *st);
 extern void jam_parent_sa_details(struct jambuf *buf, struct state *st);
 

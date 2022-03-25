@@ -40,6 +40,7 @@
 #include "ikev2_ike_auth.h"
 #include "ikev2_peer_id.h"
 #include "ikev2_redirect.h"
+#include "ikev2_cert.h"
 #include "ikev2_child.h"
 #include "pluto_stats.h"
 #include "pluto_x509.h"
@@ -488,7 +489,7 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 	 * but ultimately should go into the CERT decision
 	 */
 	if (send_cert) {
-		stf_status certstat = ikev2_send_cert(ike->sa.st_connection, response.pbs);
+		stf_status certstat = emit_v2CERT(ike->sa.st_connection, response.pbs);
 		if (certstat != STF_OK)
 			return certstat;
 	}

@@ -56,6 +56,7 @@
 #include "ikev2_redirect.h"
 #include "ikev2_ipseckey.h"
 #include "ikev2_ppk.h"
+#include "ikev2_cert.h"
 #include "keys.h"
 #include "ike_alg_hash.h"
 #include "ikev2_cp.h"
@@ -326,21 +327,22 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	}
 
 	/* send [CERT,] payload RFC 4306 3.6, 1.2) */
+
 	if (send_cert) {
-		stf_status certstat = ikev2_send_cert(ike->sa.st_connection, request.pbs);
+		stf_status certstat = emit_v2CERT(ike->sa.st_connection, request.pbs);
 		if (certstat != STF_OK)
 			return certstat;
+	}
 
-		/* send CERTREQ */
-		bool send_certreq = ikev2_send_certreq_INIT_decision(&ike->sa, SA_INITIATOR);
-		if (send_certreq) {
-			if (DBGP(DBG_BASE)) {
-				dn_buf buf;
-				DBG_log("Sending [CERTREQ] of %s",
-					str_dn(ASN1(ike->sa.st_connection->remote->config->host.ca), &buf));
-			}
-			ikev2_send_certreq(&ike->sa, md, request.pbs);
+	/* send CERTREQ */
+
+	if (need_v2CERTREQ_in_IKE_AUTH_request(ike)) {
+		if (DBGP(DBG_BASE)) {
+			dn_buf buf;
+			DBG_log("Sending [CERTREQ] of %s",
+				str_dn(ASN1(ike->sa.st_connection->remote->config->host.ca), &buf));
 		}
+		emit_v2CERTREQ(ike, md, request.pbs);
 	}
 
 	/* you Tarzan, me Jane support */
@@ -1231,7 +1233,7 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 	 * but ultimately should go into the CERT decision
 	 */
 	if (send_cert) {
-		stf_status certstat = ikev2_send_cert(ike->sa.st_connection, response.pbs);
+		stf_status certstat = emit_v2CERT(ike->sa.st_connection, response.pbs);
 		if (certstat != STF_OK)
 			return certstat;
 	}

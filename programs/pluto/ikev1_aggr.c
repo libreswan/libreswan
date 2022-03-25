@@ -317,7 +317,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 			      send_cert, send_authcerts);
 
 	/* send certificate request, if we don't have a preloaded RSA public key */
-	bool send_cr = send_cert && !has_preloaded_public_key(st);
+	bool send_cr = send_cert && !remote_has_preloaded_pubkey(st);
 
 	dbg(" I am %ssending a certificate request",
 	    send_cr ? "" : "not ");
@@ -1056,7 +1056,7 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 	struct connection *c = st->st_connection;
 	const struct cert *mycert = c->local->config->host.cert.nss_cert != NULL ? &c->local->config->host.cert : NULL;
 	bool send_cr = (mycert != NULL &&
-			!has_preloaded_public_key(st) &&
+			!remote_has_preloaded_pubkey(st) &&
 			(c->local->config->host.sendcert == CERT_SENDIFASKED ||
 			 c->local->config->host.sendcert == CERT_ALWAYSSEND));
 

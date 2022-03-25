@@ -48,9 +48,9 @@
 #include "unpack.h"
 #include "ikev2_message.h"
 #include "crypt_dh.h"
-#include "ipsec_doi.h"			/* for has_preloaded_public_key()!?! */
 #include "ikev2_send.h"
 #include "pluto_x509.h"
+#include "ikev2_cert.h"
 #include "iface.h"
 #include "pending.h"
 #include "ikev2_ipseckey.h"
@@ -982,7 +982,6 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	    __func__, ike->sa.st_serialno, ike->sa.st_state->name);
 
 	struct connection *c = ike->sa.st_connection;
-	bool send_certreq = false;
 
 	/* note that we don't update the state here yet */
 
@@ -1081,10 +1080,6 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 		close_output_pbs(&pb);
 	}
 
-	/* decide to send a CERTREQ - for RSASIG or GSSAPI */
-	send_certreq = ((c->remote->config->host.policy_authby & POLICY_AUTHBY_DIGSIG_MASK) &&
-			!has_preloaded_public_key(&ike->sa));
-
 	/* Send fragmentation support notification */
 	if (c->policy & POLICY_IKE_FRAG_ALLOW) {
 		if (!emit_v2N(v2N_IKEV2_FRAGMENTATION_SUPPORTED, response.pbs))
@@ -1141,9 +1136,10 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	/* something the other end won't like */
 
 	/* send CERTREQ */
-	if (send_certreq) {
+
+	if (need_v2CERTREQ_in_IKE_SA_INIT_response(ike)) {
 		dbg("going to send a certreq");
-		ikev2_send_certreq(&ike->sa, md, response.pbs);
+		emit_v2CERTREQ(ike, md, response.pbs);
 	}
 
 	if (c->send_vendorid) {
