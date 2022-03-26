@@ -61,21 +61,21 @@ bool nat_traversal_insert_vid(pb_stream *outs, const struct connection *c)
 	switch (c->ikev1_natt) {
 	case NATT_RFC:
 		dbg("skipping VID_NATT drafts");
-		return out_vid(outs, VID_NATT_RFC);
+		return out_v1VID(outs, VID_NATT_RFC);
 
 	case NATT_BOTH:
 		dbg("sending draft and RFC NATT VIDs");
-		return (out_vid(outs, VID_NATT_RFC) &&
+		return (out_v1VID(outs, VID_NATT_RFC) &&
 			/* drafts */
-			out_vid(outs, VID_NATT_IETF_03) &&
-			out_vid(outs, VID_NATT_IETF_02_N) &&
-			out_vid(outs, VID_NATT_IETF_02));
+			out_v1VID(outs, VID_NATT_IETF_03) &&
+			out_v1VID(outs, VID_NATT_IETF_02_N) &&
+			out_v1VID(outs, VID_NATT_IETF_02));
 
 	case NATT_DRAFTS:
 		dbg("skipping VID_NATT_RFC");
-		return (out_vid(outs, VID_NATT_IETF_03) &&
-			out_vid(outs, VID_NATT_IETF_02_N) &&
-			out_vid(outs, VID_NATT_IETF_02));
+		return (out_v1VID(outs, VID_NATT_IETF_03) &&
+			out_v1VID(outs, VID_NATT_IETF_02_N) &&
+			out_v1VID(outs, VID_NATT_IETF_02));
 
 	case NATT_NONE:
 		/* This should never be reached, but makes compiler happy */

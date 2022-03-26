@@ -116,33 +116,6 @@ bool emit_v2UNKNOWN(const char *victim, enum isakmp_xchg_type exchange_type,
 }
 
 /*
- * Send the STRING out as a V2 Vendor payload.
- *
- * XXX: Perhaps someday STRING will be replaced by enum
- * known_vendorid.
- */
-bool emit_v2V(const char *string, pb_stream *outs)
-{
-	diag_t d;
-	struct ikev2_generic gen = {
-		.isag_np = 0,
-	};
-	struct pbs_out pbs;
-	d = pbs_out_struct(outs, &ikev2_vendor_id_desc, &gen, sizeof(gen), &pbs);
-	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
-		return false;
-	}
-	d = pbs_out_raw(&pbs, string, strlen(string), string);
-	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
-		return false;
-	}
-	close_output_pbs(&pbs);
-	return true;
-}
-
-/*
  * ship_v2N: add notify payload to the rbody
  * (See also specialized versions ship_v2Nsp and ship_v2Ns.)
  *

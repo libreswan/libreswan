@@ -182,7 +182,7 @@ void main_outI1(struct fd *whack_sock,
 	}
 
 	/* send Vendor IDs */
-	if (!out_vid_set(&rbody, c)) {
+	if (!out_v1VID_set(&rbody, c)) {
 		return;
 	}
 
@@ -533,12 +533,12 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 						&r_sa_pbs, false, st));
 
 	/* send Vendor IDs */
-	if (!out_vid_set(&rbody, c))
+	if (!out_v1VID_set(&rbody, c))
 		return STF_INTERNAL_ERROR;
 
 	/* as Responder, send best NAT VID we received */
 	if (st->hidden_variables.st_nat_traversal != LEMPTY) {
-		if (!out_vid(&rbody, md->quirks.qnat_traversal_vid))
+		if (!out_v1VID(&rbody, md->quirks.qnat_traversal_vid))
 			return STF_INTERNAL_ERROR;
 	}
 

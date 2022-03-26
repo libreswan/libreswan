@@ -899,7 +899,8 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
  * @param vid Int of VendorID to be sent (see vendor.h for the list)
  * @return bool True if successful
  */
-bool out_vid(pb_stream *outs, unsigned int vid)
+
+bool out_v1VID(pb_stream *outs, unsigned int vid)
 {
 	struct vid_struct *pvid;
 
@@ -907,8 +908,7 @@ bool out_vid(pb_stream *outs, unsigned int vid)
 	for (pvid = vid_tab; pvid->id != vid; pvid++)
 		passert(pvid->id != VID_none); /* we must find what we are trying to send */
 
-	dbg("out_vid(): sending [%s]", pvid->descr);
-
+	dbg("%s(): sending [%s]", __func__, pvid->descr);
 	return ikev1_out_generic_raw(&isakmp_vendor_id_desc, outs,
 			       pvid->vid, pvid->vid_len, "V_ID");
 }
@@ -930,7 +930,7 @@ bool out_vid(pb_stream *outs, unsigned int vid)
  * exploit the NP backpatching logic in out_struct.
  */
 
-bool out_vid_set(pb_stream *outs, const struct connection *c)
+bool out_v1VID_set(struct pbs_out *outs, const struct connection *c)
 {
 	/* cusomizeable Vendor ID */
 	if (c->send_vendorid) {
@@ -942,7 +942,7 @@ bool out_vid_set(pb_stream *outs, const struct connection *c)
 
 #define MAYBE_VID(q, vid) {  \
 	if (q) {  \
-		if (!out_vid(outs, vid)) {  \
+		if (!out_v1VID(outs, vid)) {  \
 			return false;  \
 		}  \
 	}  \
@@ -963,7 +963,7 @@ bool out_vid_set(pb_stream *outs, const struct connection *c)
 	 * we count on backpatching to fix our np.
 	 */
 
-	if (!out_vid(outs, VID_MISC_DPD)) {
+	if (!out_v1VID(outs, VID_MISC_DPD)) {
 		return false;
 	}
 
@@ -987,4 +987,45 @@ bool vid_is_oppo(const char *vid, size_t len)
 	} else {
 		return false;
 	}
+}
+
+/*
+ * Add an IKEv2 (!)  vendor id payload to the msg
+ */
+
+static bool emit_v2V_raw(struct pbs_out *outs, shunk_t vid, const char *descr)
+{
+	diag_t d;
+	struct ikev2_generic gen = {
+		.isag_np = 0,
+	};
+	struct pbs_out pbs;
+	d = pbs_out_struct(outs, &ikev2_vendor_id_desc, &gen, sizeof(gen), &pbs);
+	if (d != NULL) {
+		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+		return false;
+	}
+	d = pbs_out_hunk(&pbs, vid, descr);
+	if (d != NULL) {
+		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+		return false;
+	}
+	close_output_pbs(&pbs);
+	return true;
+}
+
+bool emit_v2V(struct pbs_out *outs, const char * vid)
+{
+	return emit_v2V_raw(outs, shunk1(vid), vid);
+}
+
+bool emit_v2VID(struct pbs_out *outs, enum known_vendorid vid)
+{
+	const struct vid_struct *pvid;
+	passert(vid != 0);
+	for (pvid = vid_tab; pvid->id != vid; pvid++)
+		passert(pvid->id != VID_none); /* we must find what we are trying to send */
+
+	dbg("%s(): sending [%s]", __func__, pvid->descr);
+	return emit_v2V_raw(outs, shunk2(pvid->vid, pvid->vid_len), pvid->descr);
 }

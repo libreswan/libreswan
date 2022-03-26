@@ -779,17 +779,17 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 
 	/* From here on, only payloads left are Vendor IDs */
 	if (c->send_vendorid) {
-		if (!emit_v2V(pluto_vendorid, request.pbs))
+		if (!emit_v2V(request.pbs, pluto_vendorid))
 			return false;
 	}
 
 	if (c->fake_strongswan) {
-		if (!emit_v2V("strongSwan", request.pbs))
+		if (!emit_v2VID(request.pbs, VID_STRONGSWAN))
 			return false;
 	}
 
 	if (c->policy & POLICY_AUTH_NULL) {
-		if (!emit_v2V("Opportunistic IPsec", request.pbs))
+		if (!emit_v2VID(request.pbs, VID_OPPORTUNISTIC))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -1143,17 +1143,17 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	}
 
 	if (c->send_vendorid) {
-		if (!emit_v2V(pluto_vendorid, response.pbs))
+		if (!emit_v2V(response.pbs, pluto_vendorid))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (c->fake_strongswan) {
-		if (!emit_v2V("strongSwan", response.pbs))
+		if (!emit_v2VID(response.pbs, VID_STRONGSWAN))
 			return STF_INTERNAL_ERROR;
 	}
 
 	if (c->policy & POLICY_AUTH_NULL) {
-		if (!emit_v2V("Opportunistic IPsec", response.pbs))
+		if (!emit_v2VID(response.pbs, VID_OPPORTUNISTIC))
 			return STF_INTERNAL_ERROR;
 	}
 

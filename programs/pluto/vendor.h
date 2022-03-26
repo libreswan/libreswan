@@ -36,10 +36,13 @@ void init_vendorid(struct logger *logger);
 void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 		     bool ikev2, struct logger *logger);
 
-bool out_vid(pb_stream *outs, unsigned int vid);
+bool out_v1VID(struct pbs_out *outs, unsigned int vid);
 
-bool out_vid_set(pb_stream *outs, const struct connection *c);
+bool out_v1VID_set(struct pbs_out *outs, const struct connection *c);
 
 bool vid_is_oppo(const char *vid, size_t len);
+
+bool emit_v2V(struct pbs_out *outs, const char *vid);
+bool emit_v2VID(struct pbs_out *outs, enum known_vendorid);
 
 #endif /* _VENDOR_H_ */
