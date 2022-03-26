@@ -708,8 +708,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 				  b->background, b->logger);
 
 		packet_buf pb;
+		enum_buf hab;
 		dbg("initiated on demand using security label and %s %s",
-		    (c->policy & POLICY_AUTH_NULL) ? "AUTH_NULL" : "RSASIG",
+		    str_enum_short(&keyword_auth_names, c->local->config->host.auth, &hab),
 		    str_packet(&b->packet, &pb));
 
 		return;
@@ -824,8 +825,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 				  b->background, b->logger);
 
 		packet_buf pb;
+		enum_buf hab;
 		dbg("initiated on demand using %s %s",
-		    (c->policy & POLICY_AUTH_NULL) ? "AUTH_NULL" : "RSASIG",
+		    str_enum_short(&keyword_auth_names, c->local->config->host.auth, &hab),
 		    str_packet(&b->packet, &pb));
 
 		return;
