@@ -513,12 +513,13 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	/*
 	 * The initiator:
 	 *
-	 * We sent normal IKEv2_AUTH_RSA but if the policy also allows
-	 * AUTH_NULL, we will send a Notify with NULL_AUTH in separate
-	 * chunk. This is only done on the initiator in IKE_AUTH, and
-	 * not repeated in rekeys.
+	 * We sent normal Digital Signature authentication, but if the
+	 * policy also allows AUTH_NULL, we will send a Notify with
+	 * NULL_AUTH in separate chunk. This is only done on the
+	 * initiator in IKE_AUTH, and not repeated in rekeys.
 	 */
-	if (local_v2_auth(ike) == AUTH_RSASIG && pc->policy & POLICY_AUTH_NULL) {
+	if ((pc->local->config->host.policy_authby & POLICY_AUTHBY_DIGSIG_MASK) &&
+	    (pc->local->config->host.policy_authby & POLICY_AUTH_NULL)) {
 		/* store in null_auth */
 		chunk_t null_auth = NULL_HUNK;
 		if (!ikev2_create_psk_auth(AUTH_NULL, ike,
