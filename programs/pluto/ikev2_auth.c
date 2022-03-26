@@ -120,7 +120,7 @@ enum keyword_auth local_v2_auth(struct ike_sa *ike)
 	if (ike->sa.st_peer_wants_null) {
 		/* we allow authby=null and IDr payload told us to use it */
 		authby = AUTH_NULL;
-	} else if (authby == AUTH_UNSET) {
+	} else if (!pexpect(authby != AUTH_UNSET)) {
 		/*
 		 * Asymmetric policy unset.
 		 * Pick up from symmetric policy, in order of preference!
