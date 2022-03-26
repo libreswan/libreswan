@@ -788,7 +788,18 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 			return false;
 	}
 
-	if (c->policy & POLICY_AUTH_NULL) {
+	/*
+	 * Announce to the world that this end likes NULL
+	 * authentication (either accepts NULL authentication or is
+	 * going to use to authenticate).
+	 *
+	 * XXX: is announcing to the world that this end accepts NULL
+	 * authentication really a good idea?
+	 *
+	 * XXX: should this check POLICY_OPPORTUNISTIC?
+	 */
+	if ((c->local->config->host.policy_authby |
+	     c->remote->config->host.policy_authby) & POLICY_AUTH_NULL) {
 		if (!emit_v2VID(request.pbs, VID_OPPORTUNISTIC))
 			return STF_INTERNAL_ERROR;
 	}
@@ -1152,7 +1163,18 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 			return STF_INTERNAL_ERROR;
 	}
 
-	if (c->policy & POLICY_AUTH_NULL) {
+	/*
+	 * Announce to the world that this end likes NULL
+	 * authentication (either accepts NULL authentication or is
+	 * going to use to authenticate).
+	 *
+	 * XXX: is announcing to the world that this end accepts NULL
+	 * authentication really a good idea?
+	 *
+	 * XXX: should this check POLICY_OPPORTUNISTIC?
+	 */
+	if ((c->local->config->host.policy_authby |
+	     c->remote->config->host.policy_authby) & POLICY_AUTH_NULL) {
 		if (!emit_v2VID(response.pbs, VID_OPPORTUNISTIC))
 			return STF_INTERNAL_ERROR;
 	}
