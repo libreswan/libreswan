@@ -3210,10 +3210,7 @@ bool was_eroute_idle(struct state *st, deltatime_t since_when)
 		return true;
 	}
 	deltatime_t idle_time = monotimediff(mononow(), last_contact);
-	if (deltatime_cmp(idle_time, >=, since_when)) {
-		return true;
-	}
-	return false;
+	return deltatime_cmp(idle_time, >=, since_when);
 }
 
 /*
