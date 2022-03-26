@@ -267,7 +267,7 @@ static void nat_traversal_ka_event_state(struct state *st, unsigned *data)
 		 * and triggers keepalives, we don't need to check
 		 * IPsec SA's being idle.  If we were to check IPsec
 		 * SA, we could then also update the ISAKMP SA, but we
-		 * think this is too expensive (call get_sa_info() to
+		 * think this is too expensive (call get_sa_bundle_info() to
 		 * kernel _and_ find ISAKMP SA.
 		 */
 		if (!IS_IPSEC_SA_ESTABLISHED(st)) {

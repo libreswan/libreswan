@@ -126,7 +126,7 @@ static bool recent_last_contact(struct child_sa *child, monotime_t now,
  * that half the channel is working.  All the incoming packets could
  * be retransmits.
  *
- * note: this mutates *st by calling get_sa_info
+ * note: this mutates *st by calling get_sa_bundle_info
  */
 
 void liveness_check(struct state *st)
@@ -240,7 +240,7 @@ void liveness_check(struct state *st)
 	 * re-transmit requests ...
  	 */
 	monotime_t last_inbound_message;
-	if (get_sa_info(&child->sa, /*inbound*/true, &last_inbound_message)) {
+	if (get_sa_bundle_info(&child->sa, /*inbound*/true, &last_inbound_message)) {
 		if (recent_last_contact(child, now, last_inbound_message, "recent IPsec traffic")) {
 			return;
 		}

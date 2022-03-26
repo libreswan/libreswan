@@ -523,7 +523,7 @@ static void jam_clean_xauth_username(struct jambuf *buf,
 /*
  * fmt_common_shell_out: form the command string
  *
- * note: this mutates *st by calling get_sa_info().
+ * note: this mutates *st by calling get_sa_bundle_info().
  */
 bool fmt_common_shell_out(char *buf,
 			  size_t blen,
@@ -657,15 +657,15 @@ bool fmt_common_shell_out(char *buf,
 
 	if (first_pi != NULL) {
 		/*
-		 * note: this mutates *st by calling get_sa_info
+		 * note: this mutates *st by calling get_sa_bundle_info
 		 *
-		 * XXX: does the get_sa_info() call order matter? Should this
+		 * XXX: does the get_sa_bundle_info() call order matter? Should this
 		 * be a single "atomic" call?
 		 */
-		if (get_sa_info(st, true, NULL)) {
+		if (get_sa_bundle_info(st, true, NULL)) {
 			JDuint64("PLUTO_INBYTES", first_pi->our_bytes);
 		}
-		if (get_sa_info(st, false, NULL)) {
+		if (get_sa_bundle_info(st, false, NULL)) {
 			JDuint64("PLUTO_OUTBYTES", first_pi->peer_bytes);
 		}
 	}
@@ -3188,11 +3188,11 @@ void delete_larval_ipsec_sa(struct state *st)
  * for errors, as they could mean that the SA is broken and needs to
  * be replace anyway.
  *
- * note: this mutates *st by calling get_sa_info
+ * note: this mutates *st by calling get_sa_bundle_info
  *
  * XXX:
  *
- * The use of get_sa_info() here is likely bogus.  The function
+ * The use of get_sa_bundle_info() here is likely bogus.  The function
  * returns the SA's add time (PF_KEY v2 documents it as such, xfrm
  * returns the .add_time field so presumably ...) when it is assumed
  * to be returning the idle time.
@@ -3205,7 +3205,7 @@ bool was_eroute_idle(struct state *st, deltatime_t since_when)
 {
 	passert(st != NULL);
 	monotime_t last_contact;
-	if (!get_sa_info(st, /*inbound*/true, &last_contact)) {
+	if (!get_sa_bundle_info(st, /*inbound*/true, &last_contact)) {
 		/* snafu; assume idle!?! */
 		return true;
 	}
@@ -3214,11 +3214,14 @@ bool was_eroute_idle(struct state *st, deltatime_t since_when)
 }
 
 /*
- * get information about a given sa - needs merging with was_eroute_idle
+ * get information about a given SA bundle
+ *
+ * ??? needs merging with was_eroute_idle
  *
  * Note: this mutates *st.
+ * Note: this only changes counts in the first SA in the bundle!
  */
-bool get_sa_info(struct state *st, bool inbound, monotime_t *last_contact /* OUTPUT */)
+bool get_sa_bundle_info(struct state *st, bool inbound, monotime_t *last_contact /* OUTPUT */)
 {
 	struct connection *const c = st->st_connection;
 
@@ -3227,14 +3230,17 @@ bool get_sa_info(struct state *st, bool inbound, monotime_t *last_contact /* OUT
 	}
 
 	const struct ip_protocol *proto;
-	struct ipsec_proto_info *p2;
+	struct ipsec_proto_info *pi;
 
 	if (st->st_esp.present) {
 		proto = &ip_protocol_esp;
-		p2 = &st->st_esp;
+		pi = &st->st_esp;
 	} else if (st->st_ah.present) {
 		proto = &ip_protocol_ah;
-		p2 = &st->st_ah;
+		pi = &st->st_ah;
+	} else if (st->st_ipcomp.present) {
+		proto = &ip_protocol_ipcomp;
+		pi = &st->st_ipcomp;
 	} else {
 		return false;
 	}
@@ -3261,11 +3267,11 @@ bool get_sa_info(struct state *st, bool inbound, monotime_t *last_contact /* OUT
 	if (inbound) {
 		src = &c->remote->host.addr;
 		dst = &c->local->host.addr;
-		spi = p2->our_spi;
+		spi = pi->our_spi;
 	} else {
 		src = &c->local->host.addr;
 		dst = &c->remote->host.addr;
-		spi = p2->attrs.spi;
+		spi = pi->attrs.spi;
 	}
 
 	said_buf sb;
@@ -3277,7 +3283,7 @@ bool get_sa_info(struct state *st, bool inbound, monotime_t *last_contact /* OUT
 		.story = said_str(*dst, proto, spi, &sb),
 	};
 
-	dbg("kernel: get_sa_info %s", sa.story);
+	dbg("kernel: get_sa_bundle_info %s", sa.story);
 
 	uint64_t bytes;
 	uint64_t add_time;
@@ -3285,27 +3291,21 @@ bool get_sa_info(struct state *st, bool inbound, monotime_t *last_contact /* OUT
 	if (!kernel_ops->get_sa(&sa, &bytes, &add_time, st->st_logger))
 		return false;
 
-	p2->add_time = add_time;
+	pi->add_time = add_time;
 
 	/* field has been set? */
-	passert(!is_monotime_epoch(p2->our_lastused));
-	passert(!is_monotime_epoch(p2->peer_lastused));
+	passert(!is_monotime_epoch(pi->our_lastused));
+	passert(!is_monotime_epoch(pi->peer_lastused));
 
-	if (inbound) {
-		if (bytes > p2->our_bytes) {
-			p2->our_bytes = bytes;
-			p2->our_lastused = mononow();
-		}
-		if (last_contact != NULL)
-			*last_contact = p2->our_lastused;
-	} else {
-		if (bytes > p2->peer_bytes) {
-			p2->peer_bytes = bytes;
-			p2->peer_lastused = mononow();
-		}
-		if (last_contact != NULL)
-			*last_contact = p2->peer_lastused;
+	uint64_t *pb = inbound ? &pi->our_bytes : &pi->peer_bytes;
+	monotime_t *plu = inbound ? &pi->our_lastused : &pi->peer_lastused;
+
+	if (bytes > *pb) {
+		*pb = bytes;
+		*plu = mononow();
 	}
+	if (last_contact != NULL)
+		*last_contact = *plu;
 
 	if (redirected) {
 		c->remote->host.addr = tmp_host_addr;

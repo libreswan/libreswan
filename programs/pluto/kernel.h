@@ -538,7 +538,7 @@ void delete_ipsec_sa(struct state *st);
 void delete_larval_ipsec_sa(struct state *st);
 
 extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
-extern bool get_sa_info(struct state *st, bool inbound, monotime_t *last_contact /* OUTPUT */);
+extern bool get_sa_bundle_info(struct state *st, bool inbound, monotime_t *last_contact /* OUTPUT */);
 extern bool migrate_ipsec_sa(struct child_sa *child);
 
 static inline bool compatible_overlapping_connections(const struct connection *a,

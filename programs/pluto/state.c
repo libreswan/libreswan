@@ -956,10 +956,10 @@ void delete_state_tail(struct state *st)
 	if (IS_IPSEC_SA_ESTABLISHED(st) ||
 	    IS_CHILD_SA_ESTABLISHED(st)) {
 		/* pull in the traffic counters into state before they're lost */
-		if (!get_sa_info(st, false, NULL)) {
+		if (!get_sa_bundle_info(st, false, NULL)) {
 			log_state(RC_LOG, st, "failed to pull traffic counters from outbound IPsec SA");
 		}
-		if (!get_sa_info(st, true, NULL)) {
+		if (!get_sa_bundle_info(st, true, NULL)) {
 			log_state(RC_LOG, st, "failed to pull traffic counters from inbound IPsec SA");
 		}
 
@@ -1974,7 +1974,7 @@ void state_eroute_usage(const ip_selector *ours, const ip_selector *peers,
 	}
 }
 
-/* note: this mutates *st by calling get_sa_info */
+/* note: this mutates *st by calling get_sa_bundle_info */
 static void jam_state_traffic(struct jambuf *buf, struct state *st)
 {
 	jam(buf, "#%lu: ", st->st_serialno);
@@ -1990,14 +1990,14 @@ static void jam_state_traffic(struct jambuf *buf, struct state *st)
 	    (st->st_esp.present ? "ESP" : st->st_ah.present ? "AH" : st->st_ipcomp.present ? "IPCOMP" : "UNKNOWN"),
 	    st->st_esp.add_time);
 
-	if (get_sa_info(st, true, NULL)) {
+	if (get_sa_bundle_info(st, true, NULL)) {
 		unsigned inb = (st->st_esp.present ? st->st_esp.our_bytes:
 				st->st_ah.present ? st->st_ah.our_bytes :
 				st->st_ipcomp.present ? st->st_ipcomp.our_bytes : 0);
 		jam(buf, ", inBytes=%u", inb);
 	}
 
-	if (get_sa_info(st, false, NULL)) {
+	if (get_sa_bundle_info(st, false, NULL)) {
 		unsigned outb = (st->st_esp.present ? st->st_esp.peer_bytes :
 				 st->st_ah.present ? st->st_ah.peer_bytes :
 				 st->st_ipcomp.present ? st->st_ipcomp.peer_bytes : 0);
@@ -2038,13 +2038,13 @@ static void show_state_traffic(struct show *s,
 
 	/* whack-log-global - no prefix */
 	SHOW_JAMBUF(rc, s, buf) {
-		/* note: this mutates *st by calling get_sa_info */
+		/* note: this mutates *st by calling get_sa_bundle_info */
 		jam_state_traffic(buf, st);
 	}
 }
 
 /*
- * odd fact: st cannot be const because we call get_sa_info on it
+ * Note: st cannot be const because we call get_sa_bundle_info on it
  */
 
 static void show_state(struct show *s, struct state *st, const monotime_t now)
@@ -2213,33 +2213,58 @@ static void show_established_child_details(struct show *s, struct state *st)
 
 		jam(buf, " Traffic:");
 
+		/*
+		 * this code is counter-intuitive because counts only appear in
+		 * the first SA in a bundle.  So we ascribe flow in the first
+		 * SA to all of the SAs in a bundle.
+		 *
+		 * This leads to incorrect IPCOMP counts since the number of bytes changes
+		 * with compression.
+		 */
+
+		bool in_info = get_sa_bundle_info(st, true, NULL);
+		bool out_info = get_sa_bundle_info(st, false, NULL);
+		struct ipsec_proto_info *first_sa =
+			st->st_ah.present ? &st->st_ah :
+			st->st_esp.present ? &st->st_esp :
+			st->st_ipcomp.present ? &st->st_ipcomp :
+			NULL;
+
 		if (st->st_ah.present) {
-			if (get_sa_info(st, true, NULL)) {
+			if (in_info) {
 				jam(buf, " AHin=");
-				jam_readable_humber(buf, st->st_ah.our_bytes, false);
+				jam_readable_humber(buf, first_sa->our_bytes, false);
 			}
-			if (get_sa_info(st, false, NULL)) {
+			if (out_info) {
 				jam(buf, " AHout=");
-				jam_readable_humber(buf, st->st_ah.peer_bytes, false);
+				jam_readable_humber(buf, first_sa->peer_bytes, false);
 			}
 			jam(buf, " AHmax=");		/* TBD: "The ! is not printed." */
-			jam_readable_humber(buf, st->st_ah.attrs.life_kilobytes, true);
+			jam_readable_humber(buf, first_sa->attrs.life_kilobytes, true);
 		}
 		if (st->st_esp.present) {
-			if (get_sa_info(st, true, NULL)) {
+			if (in_info) {
 				jam(buf, " ESPin=");
-				jam_readable_humber(buf, st->st_esp.our_bytes, false);
+				jam_readable_humber(buf, first_sa->our_bytes, false);
 			}
-			if (get_sa_info(st, false, NULL)) {
+			if (out_info) {
 				jam(buf, " ESPout=");
-				jam_readable_humber(buf, st->st_esp.peer_bytes, false);
+				jam_readable_humber(buf, first_sa->peer_bytes, false);
 			}
 			jam(buf, " ESPmax=");		/* TBD: "The ! is not printed." */
-			jam_readable_humber(buf, st->st_esp.attrs.life_kilobytes, true);
+			jam_readable_humber(buf, first_sa->attrs.life_kilobytes, true);
 		}
 		if (st->st_ipcomp.present) {
+			if (in_info) {
+				jam(buf, " IPCOMPin=");
+				jam_readable_humber(buf, first_sa->our_bytes, false);
+			}
+			if (out_info) {
+				jam(buf, " IPCOMPout=");
+				jam_readable_humber(buf, first_sa->peer_bytes, false);
+			}
 			jam(buf, "! IPCOMPmax=");	/* TBD: "The ! is not printed." */
-			jam_readable_humber(buf, st->st_ipcomp.attrs.life_kilobytes, true);
+			jam_readable_humber(buf, first_sa->attrs.life_kilobytes, true);
 		}
 
 		jam(buf, " "); /* TBD: trailing blank */
