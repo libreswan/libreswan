@@ -681,13 +681,17 @@ void v2_event_sa_reauth(struct state *st)
 void wipe_old_v2_connections(const struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
-	bool authnull = (LIN(POLICY_AUTH_NULL, c->policy) ||
-			 c->remote->config->host.auth == AUTH_NULL);
+	bool new_remote_is_authnull =
+		((c->remote->config->host.policy_authby & POLICY_AUTH_NULL) ||
+		 /*XXX: redundant? */
+		 c->remote->config->host.auth == AUTH_NULL);
 
-	if (c->local->config->host.xauth.server && LIN(POLICY_PSK, c->policy)) {
+	if (c->local->config->host.xauth.server &&
+	    (c->remote->config->host.policy_authby & POLICY_PSK)) {
 		/*
-		 * If we are a server and use PSK, all clients use the same group ID
-		 * Note that "xauth_server" also refers to IKEv2 CP
+		 * If we are a server and authenticate all clients
+		 * using PSK then all clients use the same group ID
+		 * Note that "xauth.server" also refers to IKEv2 CP
 		 */
 		dbg("%s() skipped, we are a server using PSK and clients are using a group ID", __func__);
 		return;
@@ -726,15 +730,18 @@ void wipe_old_v2_connections(const struct ike_sa *ike)
 			continue;
 		}
 
-		bool old_is_nullauth = (LIN(POLICY_AUTH_NULL, d->policy) ||
-					d->remote->config->host.auth == AUTH_NULL);
-		if (!old_is_nullauth && authnull) {
+		bool old_remote_is_nullauth =
+			((d->remote->config->host.policy_authby & POLICY_AUTH_NULL) ||
+			 /* XXX: redundant? */
+			 d->remote->config->host.auth == AUTH_NULL);
+		if (!old_remote_is_nullauth && new_remote_is_authnull) {
 			llog_sa(RC_LOG, ike, "cannot replace old authenticated connection with authnull connection");
 			continue;
 		}
 
-		bool same_remote_ip = sameaddr(&c->remote->host.addr, &d->remote->host.addr);
-		if (!same_remote_ip && old_is_nullauth && authnull) {
+		if (!address_eq_address(c->remote->host.addr, d->remote->host.addr) &&
+		    old_remote_is_nullauth &&
+		    new_remote_is_authnull) {
 			llog_sa(RC_LOG, ike, "NULL auth ID for different IP's cannot replace each other");
 			continue;
 		}
