@@ -1092,43 +1092,57 @@ static int extract_end(struct connection *c,
 		return -1;
 	}
 
-	config_end->host.auth = src->auth;
-	lset_t policy_authby = LEMPTY;
+	/* these may be tweaked */
+	lset_t authby = wm->policy;
+	if (wm->ike_version == IKEv1) {
+		/* strip stuff IKEv1 ignores */
+		authby &= ~POLICY_ECDSA;
+		authby &= ~POLICY_RSASIG_v1_5;
+	}
+	enum keyword_auth auth = src->auth;
 	switch (src->auth) {
 	case AUTH_RSASIG:
-		policy_authby = (wm->policy & POLICY_AUTHBY_RSASIG_MASK);
+		authby &= POLICY_AUTHBY_RSASIG_MASK;
 		break;
 	case AUTH_ECDSA:
-		policy_authby = (wm->policy & POLICY_AUTHBY_ECDSA_MASK);
+		authby &= POLICY_AUTHBY_ECDSA_MASK;
 		break;
 	case AUTH_PSK:
 		/* force only bit */
-		policy_authby = POLICY_PSK;
+		authby = POLICY_PSK;
 		break;
 	case AUTH_NULL:
 		/* force only bit */
-		policy_authby = POLICY_AUTH_NULL;
+		authby = POLICY_AUTH_NULL;
+		break;
+	case AUTH_UNSET:
+		authby &= POLICY_AUTHBY_MASK; /* ??? */
+		if (authby & POLICY_AUTHBY_RSASIG_MASK)
+			auth = AUTH_RSASIG;
+		else if (authby & POLICY_AUTHBY_ECDSA_MASK)
+			auth = AUTH_ECDSA;
+		else if (authby & POLICY_PSK)
+			auth = AUTH_PSK;
+		else if (authby & POLICY_AUTH_NULL)
+			auth = AUTH_NULL;
+		else
+			auth = AUTH_UNSET;
 		break;
 	case AUTH_EAPONLY:
-	case AUTH_UNSET:
-		policy_authby = (wm->policy & POLICY_AUTHBY_MASK); /* ??? */
+		authby &= POLICY_AUTHBY_MASK; /* ??? */
+		break;
 	case AUTH_NEVER:
 		break;
 	}
-	if (wm->ike_version == IKEv1) {
-		/* strip stuff IKEv1 ignores */
-		policy_authby &= ~POLICY_ECDSA;
-		policy_authby &= ~POLICY_RSASIG_v1_5;
-	}
-	lset_buf pab, wpb;
-	enum_buf ab;
-	dbg("fake %sauthby=%s using %sauth=%s and %s",
-	    src->leftright,
-	    str_lset_short(&sa_policy_bit_names, "+", policy_authby, &pab),
-	    src->leftright,
-	    str_enum_short(&keyword_auth_names, src->auth, &ab),
+	lset_buf epb, wpb;
+	enum_buf eab, wab;
+	dbg("fake %sauth=%s %sauthby=%s from whack %sauth=%s and %s",
+	    src->leftright, str_enum_short(&keyword_auth_names, auth, &eab),
+	    src->leftright, str_lset_short(&sa_policy_bit_names, "+", authby, &epb),
+	    src->leftright, str_enum_short(&keyword_auth_names, src->auth, &wab),
 	    str_lset_short(&sa_policy_bit_names, "+", wm->policy, &wpb));
-	config_end->host.policy_authby = policy_authby;
+	config_end->host.auth = auth;
+	config_end->host.policy_authby = authby;
 
 	/* save some defaults */
 	config_end->client.subnet = src->client;
