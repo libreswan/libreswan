@@ -163,16 +163,19 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 		    (st->st_ike_version == IKEv2) ? "2.0" : "1");
 
 		jam(&buf, " auth=");
-		if (st->st_ike_version == IKEv2) {
-			jam_string(&buf, (c->policy & POLICY_PSK) ? "PRESHARED_KEY" :
-				(c->policy & POLICY_RSASIG) ? "RSA_SIG" :
-				(c->policy & POLICY_ECDSA) ? "ECDSA" : "unknown");
+		if (st->st_ike_version == IKEv2 ||
+		    op == LAK_PARENT_FAIL) {
+			/*
+			 * XXX: is this reliable; it's the intent not
+			 * result.  Is local correct?
+			 */
+			lset_t authby = c->local->config->host.policy_authby;
+			jam_string(&buf, ((authby & POLICY_PSK) ? "PRESHARED_KEY" :
+					  (authby & POLICY_RSASIG) ? "RSA_SIG" :
+					  (authby & POLICY_RSASIG_v1_5) ? "RSA_SIG" :
+					  (authby & POLICY_ECDSA) ? "ECDSA" : "unknown"));
 		} else {
-			if (op == LAK_PARENT_FAIL)
-				jam_string(&buf, (c->policy & POLICY_PSK) ? "PRESHARED_KEY" :
-					(c->policy & POLICY_RSASIG) ? "RSA_SIG" : "unknown");
-			else
-				jam_enum_short(&buf, &oakley_auth_names, st->st_oakley.auth);
+			jam_enum_short(&buf, &oakley_auth_names, st->st_oakley.auth);
 		}
 
 		jam(&buf, " cipher=%s ksize=%d",
