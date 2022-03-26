@@ -486,9 +486,6 @@ struct secret *lsw_get_xauthsecret(char *xauthname)
 
 const chunk_t *get_connection_psk(const struct connection *c)
 {
-	/* caller handles null_auth */
-	passert((c->policy & POLICY_AUTH_NULL) == LEMPTY);
-
 	struct secret *s = lsw_get_secret(c, PKK_PSK, false);
 	if (s == NULL) {
 		dbg("no PreShared Key Found");
