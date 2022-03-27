@@ -885,7 +885,29 @@ static int extract_end(struct connection *c,
 {
 	passert(dst->config == config_end);
 	const char *leftright = dst->config->leftright;
-	bool same_ca = 0;
+	bool same_ca = false;
+
+	/* XXX: still nasty; just less low-level */
+	if (range_size(src->pool_range) > 0) {
+		struct ip_pool *pool; /* ignore */
+		diag_t d = find_addresspool(src->pool_range, &pool);
+		if (d != NULL) {
+			llog_diag(RC_FATAL, logger, &d, "failed to add connection: ");
+			return -1;
+		}
+	}
+
+	if (src->id != NULL && streq(src->id, "%fromcert")) {
+		lset_t auth_pol = (wm->policy & POLICY_AUTHBY_MASK);
+		if (src->auth == AUTH_PSK ||
+		    src->auth == AUTH_NULL ||
+		    auth_pol == POLICY_PSK ||
+		    auth_pol == POLICY_AUTH_NULL) {
+			llog(RC_FATAL, logger,
+			     "failed to add connection: ID cannot be specified as %%fromcert if PSK or AUTH-NULL is used");
+			return -1;
+		}
+	}
 
 	/*
 	 * decode id, if any
@@ -908,7 +930,7 @@ static int extract_end(struct connection *c,
 	config_end->host.ca = empty_chunk;
 	if (src->ca != NULL) {
 		if (streq(src->ca, "%same")) {
-			same_ca = 1;
+			same_ca = true;
 		} else if (!streq(src->ca, "%any")) {
 			err_t ugh;
 
@@ -1261,48 +1283,6 @@ static int extract_end(struct connection *c,
 	}
 
 	return same_ca;
-}
-
-static diag_t check_connection_end(const struct whack_end *this,
-				   const struct whack_end *that,
-				   const struct whack_message *wm)
-{
-	/* ??? seems like a nasty test (in-band, low-level) */
-	/* XXX: still nasty; just less low-level */
-	if (range_size(this->pool_range) > 0) {
-		struct ip_pool *pool; /* ignore */
-		diag_t d = find_addresspool(this->pool_range, &pool);
-		if (d != NULL) {
-			return d;
-		}
-	}
-
-	/* MAKE this more sane in the face of unresolved IP addresses */
-	if (that->host_type != KH_IPHOSTNAME &&
-	    !address_is_specified(that->host_addr)) {
-		/*
-		 * Other side is wildcard: we must check if other conditions
-		 * met.
-		 */
-		if (this->host_type != KH_IPHOSTNAME &&
-		    !address_is_specified(this->host_addr)) {
-			return diag("connection %s must specify host IP address for our side",
-				    wm->name);
-		}
-	}
-
-	if (this->id != NULL && streq(this->id, "%fromcert")) {
-		lset_t auth_pol = (wm->policy & POLICY_AUTHBY_MASK);
-
-		if (this->auth == AUTH_PSK ||
-		    this->auth == AUTH_NULL ||
-		    auth_pol == POLICY_PSK ||
-		    auth_pol == POLICY_AUTH_NULL) {
-			return diag("ID cannot be specified as %%fromcert if PSK or AUTH-NULL is used");
-		}
-	}
-
-	return NULL; /* happy */
 }
 
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
@@ -1800,14 +1780,17 @@ static bool extract_connection(const struct whack_message *wm,
 		client_afi = host_afi;
 	}
 
-	d = check_connection_end(&wm->right, &wm->left, wm);
-	if (d != NULL) {
-		llog_diag(RC_FATAL, c->logger, &d, "failed to add connection: ");
-		return false;
-	}
-	d = check_connection_end(&wm->left, &wm->right, wm);
-	if (d != NULL) {
-		llog_diag(RC_FATAL, c->logger, &d, "failed to add connection: ");
+	/*
+	 * When the other side is wildcard: we must check if other
+	 * conditions met.
+	 *
+	 * MAKE this more sane in the face of unresolved IP
+	 * addresses.
+	 */
+	if (wm->left.host_type != KH_IPHOSTNAME && !address_is_specified(wm->left.host_addr) &&
+	    wm->right.host_type != KH_IPHOSTNAME && !address_is_specified(wm->right.host_addr)) {
+		llog(RC_FATAL, c->logger,
+		     "failed to add connection: must specify host IP address for our side");
 		return false;
 	}
 
@@ -2261,7 +2244,7 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	/*
-	 * Unpack the ends.
+	 * Unpack and verify the ends.
 	 *
 	 * This choice of left/right must match alloc_connection().
 	 */
