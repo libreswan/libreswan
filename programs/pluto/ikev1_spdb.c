@@ -545,7 +545,7 @@ static struct db_prop_conj IKEv1_oakley_props_pskrsasig_xauths[] =
 	{ { AD_PC(IKEv1_oakley_pc_pskrsasig_xauths) } };
 
 /* the sadb entry, subscripted by IKEv1_db_sa_index() */
-static struct db_sa IKEv1_oakley_main_mode_db_sa_table[] = {
+static struct db_sa IKEv1_oakley_main_mode_db_sa_table[16] = {
 	{ AD_NULL },                                    /* none */
 	{ AD_SAp(IKEv1_oakley_props_psk) },             /* PSK */
 	{ AD_SAp(IKEv1_oakley_props_rsasig) },          /* RSASIG */
@@ -636,7 +636,7 @@ static struct db_prop_conj IKEv1_oakley_am_props_rsasig_xauths[] =
 	{ { AD_PC(oakley_am_pc_rsasig_xauths) } };
 
 /* the sadb entry, subscripted by IKEv1_db_sa_index() */
-static struct db_sa IKEv1_oakley_aggr_mode_db_sa_table[] = {
+static struct db_sa IKEv1_oakley_aggr_mode_db_sa_table[16] = {
 	{ AD_NULL },                                    /* none */
 	{ AD_SAp(IKEv1_oakley_am_props_psk) },          /* PSK */
 	{ AD_SAp(IKEv1_oakley_am_props_rsasig) },       /* RSASIG */
@@ -669,9 +669,10 @@ static int IKEv1_db_sa_index(const struct connection *c)
 	/* IKEv1 is symmetric */
 	lset_t x = c->local->config->host.policy_authby;
 	pexpect(x == c->remote->config->host.policy_authby);
-	return (x & LRANGES(POLICY_PSK, POLICY_RSASIG)) |
-		((lset_t)c->local->config->host.xauth.server << (POLICY_RSASIG_IX+1)) |
-		((lset_t)c->local->config->host.xauth.client << (POLICY_RSASIG_IX+2));
+	return ((x & POLICY_PSK ? 1 : 0) |
+		(x & POLICY_RSASIG ? 2 : 0) |
+		(c->local->config->host.xauth.server ? 4 : 0) |
+		(c->local->config->host.xauth.client ? 8 : 0));
 }
 
 struct db_sa *IKEv1_oakley_main_mode_db_sa(const struct connection *c)
