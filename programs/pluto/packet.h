@@ -226,6 +226,7 @@ extern void init_pbs(pb_stream *pbs, uint8_t *start, size_t len,
  * Map a byte buffer to/from an input PBS and a read-only HUNK.
  */
 extern pb_stream same_chunk_as_pbs_in(chunk_t chunk, const char *name);
+struct pbs_in pbs_in_from_shunk(shunk_t shunk, const char *name); /* XXX: hackish */
 extern chunk_t clone_pbs_in_as_chunk(const struct pbs_in *pbs, const char *name);
 
 /*

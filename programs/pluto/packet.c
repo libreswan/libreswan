@@ -1817,10 +1817,17 @@ struct pbs_out open_pbs_out(const char *name, uint8_t *buffer, size_t sizeof_buf
 	return outs;
 }
 
-pb_stream same_chunk_as_pbs_in(chunk_t chunk, const char *name)
+struct pbs_in same_chunk_as_pbs_in(chunk_t chunk, const char *name)
 {
 	pb_stream pbs;
 	init_pbs(&pbs, chunk.ptr, chunk.len, name);
+	return pbs;
+}
+
+struct pbs_in pbs_in_from_shunk(shunk_t shunk, const char *name)
+{
+	struct pbs_in pbs;
+	init_pbs(&pbs, (void*)shunk.ptr, shunk.len, name);
 	return pbs;
 }
 
