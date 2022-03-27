@@ -1115,30 +1115,31 @@ static int extract_end(struct connection *c,
 	}
 
 	/* these may be tweaked */
-	lset_t authby = wm->policy;
+	lset_t authby = wm->policy & POLICY_AUTHBY_MASK;
 	if (wm->ike_version == IKEv1) {
 		/* strip stuff IKEv1 ignores */
 		authby &= ~POLICY_ECDSA;
 		authby &= ~POLICY_RSASIG_v1_5;
 	}
+
 	enum keyword_auth auth = src->auth;
-	switch (src->auth) {
+	lset_t authby_mask = LEMPTY;
+	switch (auth) {
 	case AUTH_RSASIG:
-		authby &= POLICY_AUTHBY_RSASIG_MASK;
+		authby_mask = POLICY_AUTHBY_RSASIG_MASK;
 		break;
 	case AUTH_ECDSA:
-		authby &= POLICY_AUTHBY_ECDSA_MASK;
+		authby_mask = POLICY_AUTHBY_ECDSA_MASK;
 		break;
 	case AUTH_PSK:
-		/* force only bit */
+		/* force only bit (not on by default) */
 		authby = POLICY_PSK;
 		break;
 	case AUTH_NULL:
-		/* force only bit */
+		/* force only bit (not on by default) */
 		authby = POLICY_AUTH_NULL;
 		break;
 	case AUTH_UNSET:
-		authby &= POLICY_AUTHBY_MASK; /* ??? */
 		if (authby & POLICY_AUTHBY_RSASIG_MASK)
 			auth = AUTH_RSASIG;
 		else if (authby & POLICY_AUTHBY_ECDSA_MASK)
@@ -1151,11 +1152,24 @@ static int extract_end(struct connection *c,
 			auth = AUTH_UNSET;
 		break;
 	case AUTH_EAPONLY:
-		authby &= POLICY_AUTHBY_MASK; /* ??? */
 		break;
 	case AUTH_NEVER:
 		break;
 	}
+
+	if (authby_mask != LEMPTY) {
+		authby &= authby_mask;
+		if (authby == LEMPTY) {
+			enum_buf ab;
+			lset_buf pb;
+			llog(RC_LOG_SERIOUS, logger,
+			     "failed to add connection: %sauth=%s expects authby=%s",
+			     leftright, str_enum_short(&keyword_auth_names, auth, &ab),
+			     str_lset_short(&sa_policy_bit_names, "or authby=", authby_mask, &pb));
+			return -1;
+		}
+	}
+
 	lset_buf epb, wpb;
 	enum_buf eab, wab;
 	dbg("fake %sauth=%s %sauthby=%s from whack %sauth=%s and %s",
@@ -1638,98 +1652,6 @@ static bool extract_connection(const struct whack_message *wm,
 			     enum_name(&keyword_auth_names, wm->left.auth),
 			     enum_name(&keyword_auth_names, wm->right.auth));
 			return false;
-		}
-
-		/*
-		 * Ensure no conflicts of set left/rightauth with (set
-		 * or unset) authby=
-		 *
-		 * XXX: given this check is only performed when
-		 * (left,right}auth are the same doesn't it completely
-		 * miss this feature's point?
-		 */
-		if (wm->left.auth == wm->right.auth) {
-			lset_t auth_pol = (wm->policy & POLICY_AUTHBY_MASK);
-			const char *conflict = NULL;
-			switch (wm->left.auth) {
-			case AUTH_UNSET:
-				break;
-			case AUTH_PSK:
-				if (auth_pol != POLICY_PSK && auth_pol != LEMPTY) {
-					conflict = "authby= is not secret";
-				}
-				break;
-			case AUTH_NULL:
-				if (auth_pol != POLICY_AUTH_NULL && auth_pol != LEMPTY) {
-					conflict = "authby= is not null";
-				}
-				break;
-			case AUTH_NEVER:
-				if (auth_pol != LEMPTY) {
-					conflict = "authby= is not never - double huh?";
-				}
-				break;
-			case AUTH_RSASIG:
-			case AUTH_ECDSA:
-				/* will be fixed later below */
-				break;
-			case AUTH_EAPONLY:
-				/* no conflict possible with symmetric POLICY flags */
-				break;
-			default:
-				bad_case(wm->left.auth);
-			}
-			if (conflict != NULL) {
-				policy_buf pb;
-				llog(RC_FATAL, c->logger,
-				     "failed to add connection: leftauth=%s and rightauth=%s conflict with authby=%s, %s",
-				     enum_name(&keyword_auth_names, wm->left.auth),
-				     enum_name(&keyword_auth_names, wm->right.auth),
-				     str_policy(wm->policy & POLICY_AUTHBY_MASK, &pb),
-				     conflict);
-				return false;
-			}
-		}
-
-		/*
-		 * Fixup symmetric policy flags based on asymmetric
-		 * ones.
-		 */
-		if ((wm->left.auth == AUTH_NULL && wm->right.auth == AUTH_RSASIG) ||
-		    (wm->left.auth == AUTH_RSASIG && wm->right.auth == AUTH_NULL)) {
-			c->policy |= POLICY_RSASIG;
-		}
-		if ((wm->left.auth == AUTH_NULL && wm->right.auth == AUTH_ECDSA) ||
-		    (wm->left.auth == AUTH_ECDSA && wm->right.auth == AUTH_NULL)) {
-			c->policy |= POLICY_ECDSA;
-		}
-
-		if (c->config->ike_version == IKEv1) {
-			/*
-			 * Ignore IKEv2 ECDSA and legacy RSA policies
-			 * for IKEv1 connections.
-			 */
-			c->policy &= ~POLICY_ECDSA;
-			c->policy &= ~POLICY_RSASIG_v1_5;
-		}
-
-		if (wm->left.auth != wm->right.auth) {
-			/*
-			 * Ignore symmetrical defaults if we got
-			 * left/rightauth.
-			 */
-			c->policy &= ~POLICY_AUTHBY_MASK;
-		}
-
-		if (wm->left.auth == wm->right.auth) {
-			/*
-			 * Remove default pubkey policy if
-			 * left/rightauth is specified.
-			 */
-			if (wm->left.auth == AUTH_RSASIG)
-				c->policy &= ~(POLICY_AUTHBY_DIGSIG_MASK & ~POLICY_AUTHBY_RSASIG_MASK);
-			if (wm->left.auth == AUTH_ECDSA)
-				c->policy &= ~(POLICY_AUTHBY_DIGSIG_MASK & ~POLICY_AUTHBY_ECDSA_MASK);
 		}
 
 		if (c->config->ike_version == IKEv2) {
