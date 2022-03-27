@@ -787,9 +787,11 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 
 	/* process AUTH payload */
 
-	enum keyword_auth that_authby = ike->sa.st_connection->remote->config->host.auth;
-
-	passert(that_authby != AUTH_NEVER && that_authby != AUTH_UNSET);
+	enum keyword_auth remote_auth = ike->sa.st_connection->remote->config->host.auth;
+	lset_t remote_authby = ike->sa.st_connection->remote->config->host.policy_authby;
+	passert(remote_auth != AUTH_NEVER && remote_auth != AUTH_UNSET);
+	bool remote_can_authby_null = (remote_authby & POLICY_AUTH_NULL);
+	bool remote_can_authby_digsig = (remote_authby & POLICY_AUTHBY_DIGSIG_MASK);
 
 	if (!ike->sa.st_ppk_used && ike->sa.st_no_ppk_auth.ptr != NULL) {
 		/*
@@ -801,11 +803,11 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		pb_stream pbs_no_ppk_auth;
 		pb_stream pbs = md->chain[ISAKMP_NEXT_v2AUTH]->pbs;
 		size_t len = pbs_left(&pbs);
+		pexpect(len == ike->sa.st_no_ppk_auth.len);
 		init_pbs(&pbs_no_ppk_auth, ike->sa.st_no_ppk_auth.ptr, len, "pb_stream for verifying NO_PPK_AUTH");
 
 		diag_t d = v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-					      ike, &idhash_in, &pbs_no_ppk_auth,
-					      ike->sa.st_connection->remote->config->host.auth);
+					      ike, &idhash_in, &pbs_no_ppk_auth, remote_auth);
 		if (d != NULL) {
 			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 			dbg("no PPK auth failed");
@@ -817,49 +819,46 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 			return STF_FATAL;
 		}
 		dbg("NO_PPK_AUTH verified");
-	} else {
-		bool policy_null = LIN(POLICY_AUTH_NULL, ike->sa.st_connection->policy);
-		bool policy_rsasig = LIN(POLICY_RSASIG, ike->sa.st_connection->policy);
-
+	} else if (null_auth.ptr != NULL && remote_can_authby_null && !remote_can_authby_digsig) {
 		/*
-		 * if received NULL_AUTH in Notify payload and we only allow NULL Authentication,
-		 * proceed with verifying that payload, else verify AUTH normally
+		 * If received NULL_AUTH in Notify payload and we only
+		 * allow NULL Authentication, proceed with verifying
+		 * that payload, else verify AUTH normally.
 		 */
-		if (null_auth.ptr != NULL && policy_null && !policy_rsasig) {
-			/* making a dummy pb_stream so we could pass it to v2_check_auth */
-			pb_stream pbs_null_auth;
-			size_t len = null_auth.len;
 
-			dbg("going to try to verify NULL_AUTH from Notify payload");
-			init_pbs(&pbs_null_auth, null_auth.ptr, len, "pb_stream for verifying NULL_AUTH");
-			diag_t d = v2_authsig_and_log(IKEv2_AUTH_NULL, ike, &idhash_in,
-						      &pbs_null_auth, AUTH_NULL);
-			if (d != NULL) {
-				llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
-				dbg("NULL_auth from Notify Payload failed");
-				record_v2N_response(ike->sa.st_logger, ike, md,
-						    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
-						    ENCRYPTED_PAYLOAD);
-				free_chunk_content(&null_auth);
-				pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
-				return STF_FATAL;
-			}
-			dbg("NULL_AUTH verified");
-		} else {
-			dbg("responder verifying AUTH payload");
-			diag_t d = v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-						      ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
-						      ike->sa.st_connection->remote->config->host.auth);
-			if (d != NULL) {
-				llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
-				dbg("I2 Auth Payload failed");
-				record_v2N_response(ike->sa.st_logger, ike, md,
-						    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
-						    ENCRYPTED_PAYLOAD);
-				free_chunk_content(&null_auth);
-				pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
-				return STF_FATAL;
-			}
+		/* making a dummy pb_stream so we could pass it to v2_check_auth */
+		pb_stream pbs_null_auth;
+		size_t len = null_auth.len;
+
+		dbg("going to try to verify NULL_AUTH from Notify payload");
+		init_pbs(&pbs_null_auth, null_auth.ptr, len, "pb_stream for verifying NULL_AUTH");
+		diag_t d = v2_authsig_and_log(IKEv2_AUTH_NULL, ike, &idhash_in,
+					      &pbs_null_auth, AUTH_NULL);
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
+			dbg("NULL_auth from Notify Payload failed");
+			record_v2N_response(ike->sa.st_logger, ike, md,
+					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
+					    ENCRYPTED_PAYLOAD);
+			free_chunk_content(&null_auth);
+			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
+			return STF_FATAL;
+		}
+		dbg("NULL_AUTH verified");
+	} else {
+		dbg("responder verifying AUTH payload");
+		diag_t d = v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
+					      ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
+					      remote_auth);
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
+			dbg("I2 Auth Payload failed");
+			record_v2N_response(ike->sa.st_logger, ike, md,
+					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
+					    ENCRYPTED_PAYLOAD);
+			free_chunk_content(&null_auth);
+			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
+			return STF_FATAL;
 		}
 	}
 
