@@ -1586,14 +1586,6 @@ static bool extract_connection(const struct whack_message *wm,
 
 	/* we could complain about a lot more whack strings */
 	if (NEVER_NEGOTIATE(wm->policy)) {
-		if (wm->ike != NULL) {
-			llog(RC_INFORMATIONAL, c->logger,
-				    "ignored ike= option for type=passthrough connection");
-		}
-		if (wm->esp != NULL) {
-			llog(RC_INFORMATIONAL, c->logger,
-				    "ignored esp= option for type=passthrough connection");
-		}
 		if (wm->iketcp != IKE_TCP_NO) {
 			llog(RC_INFORMATIONAL, c->logger,
 				    "ignored enable-tcp= option for type=passthrough connection");
@@ -1923,142 +1915,150 @@ static bool extract_connection(const struct whack_message *wm,
 			c->policy |= POLICY_ECDSA;
 		}
 
-		/* IKE cipher suites */
+	}
 
-		if (!LIN(POLICY_AUTH_NEVER, wm->policy) &&
-		    (wm->ike != NULL || c->config->ike_version == IKEv2)) {
-			const struct proposal_policy proposal_policy = {
-				/* logic needs to match pick_initiator() */
-				.version = c->config->ike_version,
-				.alg_is_ok = ike_alg_is_ike,
-				.pfs = LIN(POLICY_PFS, wm->policy),
-				.check_pfs_vs_dh = false,
-				.logger_rc_flags = ALL_STREAMS|RC_LOG,
-				.logger = c->logger, /* on-stack */
-				/* let defaults stumble on regardless */
-				.ignore_parser_errors = (wm->ike == NULL),
-			};
+	/* IKE cipher suites */
 
-			struct proposal_parser *parser = ike_proposal_parser(&proposal_policy);
-			config->ike_proposals.p = proposals_from_str(parser, wm->ike);
+	if (NEVER_NEGOTIATE(wm->policy)) {
+		if (wm->ike != NULL) {
+			llog(RC_INFORMATIONAL, c->logger,
+			     "ignored ike= option for type=passthrough connection");
+		}
+	} else if (!LIN(POLICY_AUTH_NEVER, wm->policy) &&
+		   (wm->ike != NULL || c->config->ike_version == IKEv2)) {
+		const struct proposal_policy proposal_policy = {
+			/* logic needs to match pick_initiator() */
+			.version = c->config->ike_version,
+			.alg_is_ok = ike_alg_is_ike,
+			.pfs = LIN(POLICY_PFS, wm->policy),
+			.check_pfs_vs_dh = false,
+			.logger_rc_flags = ALL_STREAMS|RC_LOG,
+			.logger = c->logger, /* on-stack */
+			/* let defaults stumble on regardless */
+			.ignore_parser_errors = (wm->ike == NULL),
+		};
 
-			if (c->config->ike_proposals.p == NULL) {
-				pexpect(parser->diag != NULL); /* something */
-				llog_diag(RC_FATAL, c->logger, &parser->diag,
-					 "failed to add connection: ");
-				free_proposal_parser(&parser);
-				/* caller will free C */
-				return false;
-			}
+		struct proposal_parser *parser = ike_proposal_parser(&proposal_policy);
+		config->ike_proposals.p = proposals_from_str(parser, wm->ike);
+
+		if (c->config->ike_proposals.p == NULL) {
+			pexpect(parser->diag != NULL); /* something */
+			llog_diag(RC_FATAL, c->logger, &parser->diag,
+				  "failed to add connection: ");
 			free_proposal_parser(&parser);
+			/* caller will free C */
+			return false;
+		}
+		free_proposal_parser(&parser);
 
-			/* from here on, error returns should alg_info_free(&c->ike_proposals->ai); */
-
-			LSWDBGP(DBG_BASE, buf) {
-				jam_string(buf, "ike (phase1) algorithm values: ");
-				jam_proposals(buf, c->config->ike_proposals.p);
-			}
-
-			if (c->config->ike_version == IKEv2) {
-				connection_buf cb;
-				dbg("constructing local IKE proposals for "PRI_CONNECTION,
-				    pri_connection(c, &cb));
-				config->v2_ike_proposals =
-					ikev2_proposals_from_proposals(IKEv2_SEC_PROTO_IKE,
-								       config->ike_proposals.p,
-								       c->logger);
-				llog_v2_proposals(LOG_STREAM/*not-whack*/|RC_LOG, c->logger,
-						  config->v2_ike_proposals,
-						  "IKE SA proposals");
-			}
+		LSWDBGP(DBG_BASE, buf) {
+			jam_string(buf, "ike (phase1) algorithm values: ");
+			jam_proposals(buf, c->config->ike_proposals.p);
 		}
 
-		/* ESP or AH cipher suites (but not both) */
-
-		if (wm->esp != NULL ||
-		    (c->config->ike_version == IKEv2 &&
-		     (c->policy & (POLICY_ENCRYPT|POLICY_AUTHENTICATE)))) {
-			const char *esp = wm->esp != NULL ? wm->esp : "";
-			dbg("from whack: got --esp=%s", esp);
-
-			const struct proposal_policy proposal_policy = {
-				/*
-				 * logic needs to match pick_initiator()
-				 *
-				 * XXX: Once pluto is changed to IKEv1 XOR
-				 * IKEv2 it should be possible to move this
-				 * magic into pluto proper and instead pass a
-				 * simple boolean.
-				 */
-				.version = c->config->ike_version,
-				.alg_is_ok = kernel_alg_is_ok,
-				.pfs = LIN(POLICY_PFS, wm->policy),
-				.check_pfs_vs_dh = true,
-				.logger_rc_flags = ALL_STREAMS|RC_LOG,
-				.logger = c->logger, /* on-stack */
-				/* let defaults stumble on regardless */
-				.ignore_parser_errors = (wm->esp == NULL),
-			};
-
-			/*
-			 * We checked above that exactly one of
-			 * POLICY_ENCRYPT and POLICY_AUTHENTICATE is on.
-			 * The only difference in processing is which
-			 * function is called (and those functions are
-			 * almost identical).
-			 */
-			struct proposal_parser *(*fn)(const struct proposal_policy *policy) =
-				(c->policy & POLICY_ENCRYPT) ? esp_proposal_parser :
-				(c->policy & POLICY_AUTHENTICATE) ? ah_proposal_parser :
-				NULL;
-			passert(fn != NULL);
-			struct proposal_parser *parser = fn(&proposal_policy);
-			config->child_proposals.p = proposals_from_str(parser, wm->esp);
-			if (c->config->child_proposals.p == NULL) {
-				pexpect(parser->diag != NULL);
-				llog_diag(RC_FATAL, c->logger, &parser->diag,
-					 "failed to add connection: ");
-				free_proposal_parser(&parser);
-				/* caller will free C */
-				return false;
-			}
-			free_proposal_parser(&parser);
-
-			/* from here on, error returns should alg_info_free(&c->child_proposals->ai); */
-
-			LSWDBGP(DBG_BASE, buf) {
-				jam_string(buf, "ESP/AH string values: ");
-				jam_proposals(buf, c->config->child_proposals.p);
-			};
-
-			/*
-			 * For IKEv2, also generate the Child proposal
-			 * that will be used during IKE AUTH.
-			 *
-			 * Since a Child SA established during an
-			 * IKE_AUTH exchange does not propose DH
-			 * (keying material is taken from the IKE SA's
-			 * SKEYSEED), DH is stripped from the
-			 * proposals.
-			 *
-			 * Since only things that affect this proposal
-			 * suite are the connection's .policy bits and
-			 * the contents .child_proposals, and
-			 * modifiying those triggers the creation of a
-			 * new connection (true?), the connection can
-			 * be cached.
-			 */
-			if (c->config->ike_version == IKEv2) {
-				/* UNSET_GROUP means strip DH from the proposal. */
-				config->v2_ike_auth_child_proposals =
-					get_v2_child_proposals(c, "loading config", &unset_group,
+		if (c->config->ike_version == IKEv2) {
+			connection_buf cb;
+			dbg("constructing local IKE proposals for "PRI_CONNECTION,
+			    pri_connection(c, &cb));
+			config->v2_ike_proposals =
+				ikev2_proposals_from_proposals(IKEv2_SEC_PROTO_IKE,
+							       config->ike_proposals.p,
 							       c->logger);
-				llog_v2_proposals(LOG_STREAM/*not-whack*/|RC_LOG, c->logger,
-						  config->v2_ike_auth_child_proposals,
-						  "Child SA proposals");
-			}
+			llog_v2_proposals(LOG_STREAM/*not-whack*/|RC_LOG, c->logger,
+					  config->v2_ike_proposals,
+					  "IKE SA proposals");
 		}
+	}
 
+	/* ESP or AH cipher suites (but not both) */
+
+	if (NEVER_NEGOTIATE(wm->policy)) {
+		if (wm->esp != NULL) {
+			llog(RC_INFORMATIONAL, c->logger,
+			     "ignored esp= option for type=passthrough connection");
+		}
+	} else if (wm->esp != NULL ||
+		   (c->config->ike_version == IKEv2 &&
+		    (c->policy & (POLICY_ENCRYPT|POLICY_AUTHENTICATE)))) {
+		const char *esp = wm->esp != NULL ? wm->esp : "";
+		dbg("from whack: got --esp=%s", esp);
+
+		const struct proposal_policy proposal_policy = {
+			/*
+			 * logic needs to match pick_initiator()
+			 *
+			 * XXX: Once pluto is changed to IKEv1 XOR
+			 * IKEv2 it should be possible to move this
+			 * magic into pluto proper and instead pass a
+			 * simple boolean.
+			 */
+			.version = c->config->ike_version,
+			.alg_is_ok = kernel_alg_is_ok,
+			.pfs = LIN(POLICY_PFS, wm->policy),
+			.check_pfs_vs_dh = true,
+			.logger_rc_flags = ALL_STREAMS|RC_LOG,
+			.logger = c->logger, /* on-stack */
+			/* let defaults stumble on regardless */
+			.ignore_parser_errors = (wm->esp == NULL),
+		};
+
+		/*
+		 * We checked above that exactly one of POLICY_ENCRYPT
+		 * and POLICY_AUTHENTICATE is on.  The only difference
+		 * in processing is which function is called (and
+		 * those functions are almost identical).
+		 */
+		struct proposal_parser *(*fn)(const struct proposal_policy *policy) =
+			(c->policy & POLICY_ENCRYPT) ? esp_proposal_parser :
+			(c->policy & POLICY_AUTHENTICATE) ? ah_proposal_parser :
+			NULL;
+		passert(fn != NULL);
+		struct proposal_parser *parser = fn(&proposal_policy);
+		config->child_proposals.p = proposals_from_str(parser, wm->esp);
+		if (c->config->child_proposals.p == NULL) {
+			pexpect(parser->diag != NULL);
+			llog_diag(RC_FATAL, c->logger, &parser->diag,
+				  "failed to add connection: ");
+			free_proposal_parser(&parser);
+			/* caller will free C */
+			return false;
+		}
+		free_proposal_parser(&parser);
+
+		LSWDBGP(DBG_BASE, buf) {
+			jam_string(buf, "ESP/AH string values: ");
+			jam_proposals(buf, c->config->child_proposals.p);
+		};
+
+		/*
+		 * For IKEv2, also generate the Child proposal that
+		 * will be used during IKE AUTH.
+		 *
+		 * Since a Child SA established during an IKE_AUTH
+		 * exchange does not propose DH (keying material is
+		 * taken from the IKE SA's SKEYSEED), DH is stripped
+		 * from the proposals.
+		 *
+		 * Since only things that affect this proposal suite
+		 * are the connection's .policy bits and the contents
+		 * .child_proposals, and modifiying those triggers the
+		 * creation of a new connection (true?), the
+		 * connection can be cached.
+		 */
+		if (c->config->ike_version == IKEv2) {
+			/* UNSET_GROUP means strip DH from the proposal. */
+			config->v2_ike_auth_child_proposals =
+				get_v2_child_proposals(c, "loading config", &unset_group,
+						       c->logger);
+			llog_v2_proposals(LOG_STREAM/*not-whack*/|RC_LOG, c->logger,
+					  config->v2_ike_auth_child_proposals,
+					  "Child SA proposals");
+		}
+	}
+
+	if (NEVER_NEGOTIATE(wm->policy)) {
+		dbg("skipping over misc settings");
+	} else {
 		config->nic_offload = wm->nic_offload;
 		c->sa_ike_life_seconds = wm->sa_ike_life_seconds;
 		c->sa_ipsec_life_seconds = wm->sa_ipsec_life_seconds;
