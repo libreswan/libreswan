@@ -1578,18 +1578,29 @@ static bool extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	if (wm->iketcp != IKE_TCP_NO && (wm->remote_tcpport == 0 || wm->remote_tcpport == 500)) {
-		llog(RC_FATAL, c->logger,
-			    "failed to add connection: tcp-remoteport cannot be 0 or 500");
-		return false;
-	}
+	/* RFC 8229 TCP encap*/
 
-	/* we could complain about a lot more whack strings */
 	if (NEVER_NEGOTIATE(wm->policy)) {
 		if (wm->iketcp != IKE_TCP_NO) {
 			llog(RC_INFORMATIONAL, c->logger,
-				    "ignored enable-tcp= option for type=passthrough connection");
+			     "ignored enable-tcp= option for type=passthrough connection");
 		}
+		/* cleanup inherited default */
+		c->iketcp = IKE_TCP_NO;
+		c->remote_tcpport = 0;
+	} else {
+		if (wm->iketcp != IKE_TCP_NO && (wm->remote_tcpport == 0 || wm->remote_tcpport == 500)) {
+			llog(RC_FATAL, c->logger,
+			     "failed to add connection: tcp-remoteport cannot be 0 or 500");
+			return false;
+		}
+		c->remote_tcpport = wm->remote_tcpport;
+		c->iketcp = wm->iketcp;
+	}
+
+	/* we could complain about a lot more whack strings */
+
+	if (NEVER_NEGOTIATE(wm->policy)) {
 		if (wm->left.auth != AUTH_UNSET ||
 		    wm->right.auth != AUTH_UNSET) {
 			llog(RC_FATAL, c->logger,
@@ -1811,12 +1822,6 @@ static bool extract_connection(const struct whack_message *wm,
 	/* ignore supplied sighash and ECDSA (from defaults) for IKEv1 */
 	if (c->config->ike_version == IKEv2) {
 		config->sighash_policy = wm->sighash_policy;
-	}
-
-	if (NEVER_NEGOTIATE(c->policy)) {
-		/* cleanup inherited default */
-		c->iketcp = IKE_TCP_NO;
-		c->remote_tcpport = 0;
 	}
 
 	/*
@@ -2145,10 +2150,6 @@ static bool extract_connection(const struct whack_message *wm,
 		/* RFC 5685 - IKEv2 Redirect mechanism */
 		c->redirect_to = clone_str(wm->redirect_to, "connection redirect_to");
 		c->accept_redirect_to = clone_str(wm->accept_redirect_to, "connection accept_redirect_to");
-
-		/* RFC 8229 TCP encap*/
-		c->remote_tcpport = wm->remote_tcpport;
-		c->iketcp = wm->iketcp;
 
 		/*
 		 * parse mark and mask values form the mark/mask string
