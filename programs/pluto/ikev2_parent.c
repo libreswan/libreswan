@@ -682,12 +682,12 @@ void wipe_old_v2_connections(const struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
 	bool new_remote_is_authnull =
-		((c->remote->config->host.policy_authby & POLICY_AUTH_NULL) ||
+		(c->remote->config->host.authby.null ||
 		 /*XXX: redundant? */
 		 c->remote->config->host.auth == AUTH_NULL);
 
 	if (c->local->config->host.xauth.server &&
-	    (c->remote->config->host.policy_authby & POLICY_PSK)) {
+	    c->remote->config->host.authby.psk) {
 		/*
 		 * If we are a server and authenticate all clients
 		 * using PSK then all clients use the same group ID
@@ -730,10 +730,9 @@ void wipe_old_v2_connections(const struct ike_sa *ike)
 			continue;
 		}
 
-		bool old_remote_is_nullauth =
-			((d->remote->config->host.policy_authby & POLICY_AUTH_NULL) ||
-			 /* XXX: redundant? */
-			 d->remote->config->host.auth == AUTH_NULL);
+		bool old_remote_is_nullauth = (d->remote->config->host.authby.null ||
+					       /* XXX: redundant? */
+					       d->remote->config->host.auth == AUTH_NULL);
 		if (!old_remote_is_nullauth && new_remote_is_authnull) {
 			llog_sa(RC_LOG, ike, "cannot replace old authenticated connection with authnull connection");
 			continue;

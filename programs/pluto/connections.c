@@ -52,6 +52,7 @@
 #include "certs.h"
 #include "secrets.h"
 #include "lswnss.h"
+#include "authby.h"
 
 #include "defs.h"
 #include "connections.h" /* needs id.h */
@@ -1105,13 +1106,13 @@ static int extract_end(struct connection *c,
 
 	/* these may be tweaked */
 
-	lset_t authby = (NEVER_NEGOTIATE(wm->policy) ? POLICY_AUTH_NEVER :
-			 (wm->policy & POLICY_AUTHBY_MASK));
+	struct authby authby = (NEVER_NEGOTIATE(wm->policy) ? AUTHBY_NEVER :
+				authby_from_policy(wm->policy));
 
 	if (wm->ike_version == IKEv1) {
 		/* strip stuff IKEv1 ignores */
-		authby &= ~POLICY_ECDSA;
-		authby &= ~POLICY_RSASIG_v1_5;
+		authby.ecdsa = false;
+		authby.rsasig_v1_5 = false;
 	}
 
 	if (wm->ike_version == IKEv1 && src->auth != AUTH_UNSET) {
@@ -1138,32 +1139,24 @@ static int extract_end(struct connection *c,
 	}
 
 	enum keyword_auth auth = src->auth;
-	lset_t authby_mask = LEMPTY;
+	struct authby authby_mask = {0};
 	switch (auth) {
 	case AUTH_RSASIG:
-		authby_mask = POLICY_AUTHBY_RSASIG_MASK;
+		authby_mask = AUTHBY_RSASIG;
 		break;
 	case AUTH_ECDSA:
-		authby_mask = POLICY_AUTHBY_ECDSA_MASK;
+		authby_mask = AUTHBY_ECDSA;
 		break;
 	case AUTH_PSK:
 		/* force only bit (not on by default) */
-		authby = POLICY_PSK;
+		authby = (struct authby) { .psk = true, };
 		break;
 	case AUTH_NULL:
 		/* force only bit (not on by default) */
-		authby = POLICY_AUTH_NULL;
+		authby = (struct authby) { .null = true, };
 		break;
 	case AUTH_UNSET:
-		if (authby & POLICY_AUTHBY_RSASIG_MASK)
-			auth = AUTH_RSASIG;
-		else if (authby & POLICY_AUTHBY_ECDSA_MASK)
-			auth = AUTH_ECDSA;
-		else if (authby & POLICY_PSK)
-			auth = AUTH_PSK;
-		else if (authby & POLICY_AUTH_NULL)
-			auth = AUTH_NULL;
-		/* else leave it unset; probably never */
+		auth = auth_from_authby(authby);
 		break;
 	case AUTH_EAPONLY:
 		break;
@@ -1171,28 +1164,30 @@ static int extract_end(struct connection *c,
 		break;
 	}
 
-	if (authby_mask != LEMPTY) {
-		authby &= authby_mask;
-		if (authby == LEMPTY) {
+	if (authby_is_set(authby_mask)) {
+		authby = authby_intersection(authby, authby_mask);
+		if (!authby_is_set(authby)) {
 			enum_buf ab;
-			lset_buf pb;
+			authby_buf pb;
 			llog(RC_LOG_SERIOUS, logger,
 			     "failed to add connection: %sauth=%s expects authby=%s",
 			     leftright, str_enum_short(&keyword_auth_names, auth, &ab),
-			     str_lset_short(&sa_policy_bit_names, "or authby=", authby_mask, &pb));
+			     str_authby(authby_mask, &pb));
 			return -1;
 		}
 	}
 
-	lset_buf epb, wpb;
-	enum_buf eab, wab;
+	lset_buf wpb;
+	enum_buf wab;
+	enum_buf eab;
+	authby_buf epb;
 	dbg("fake %sauth=%s %sauthby=%s from whack %sauth=%s and %s",
 	    src->leftright, str_enum_short(&keyword_auth_names, auth, &eab),
-	    src->leftright, str_lset_short(&sa_policy_bit_names, "+", authby, &epb),
+	    src->leftright, str_authby(authby, &epb),
 	    src->leftright, str_enum_short(&keyword_auth_names, src->auth, &wab),
 	    str_lset_short(&sa_policy_bit_names, "+", wm->policy, &wpb));
 	config_end->host.auth = auth;
-	config_end->host.policy_authby = authby;
+	config_end->host.authby = authby;
 
 	if (src->id != NULL && streq(src->id, "%fromcert")) {
 		if (auth == AUTH_PSK || auth == AUTH_NULL) {
@@ -2205,11 +2200,12 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	lset_buf op, np;
+	lset_t policy_authby = policy_from_authby(c->local->config->host.authby);
 	dbg("replacing connection's policy_authby %s with local local %s",
 	    str_lset_short(&sa_policy_bit_names, "+", c->policy & POLICY_AUTHBY_MASK, &op),
-	    str_lset_short(&sa_policy_bit_names, "+", c->local->config->host.policy_authby, &np));
+	    str_lset_short(&sa_policy_bit_names, "+", policy_authby, &np));
 	c->policy &= ~POLICY_AUTHBY_MASK;
-	c->policy |= c->local->config->host.policy_authby;
+	c->policy |= policy_authby;
 
 	c->spd.spd_next = NULL;
 	c->spd.connection = c;
@@ -3611,54 +3607,22 @@ static void show_one_sr(struct show *s,
 		who = "our";
 		FOR_EACH_THING(end, &c->local->config->host, &c->remote->config->host) {
 			jam(buf, "%s auth:", who);
-			lset_t expect = LEMPTY;
-			lset_t mask = POLICY_AUTHBY_MASK;
-			switch (end->auth) {
-			case AUTH_RSASIG:
-				expect = POLICY_RSASIG;
-				mask = POLICY_AUTHBY_RSASIG_MASK;
-				break;
-			case AUTH_ECDSA:
-				expect = POLICY_ECDSA;
-				mask = POLICY_AUTHBY_ECDSA_MASK;
-				break;
-			case AUTH_PSK:
-				mask = expect = POLICY_PSK;
-				break;
-			case AUTH_NULL:
-				mask = expect = POLICY_AUTH_NULL;
-				break;
-			case AUTH_NEVER:
-			case AUTH_UNSET:
-				mask = expect = POLICY_AUTH_NEVER;
-				break;
-			default:
-				break;
-			}
-
-			/* remote is allowed anything in authby */
-			if (end == &c->remote->config->host) {
-				mask = POLICY_AUTHBY_MASK;
-			}
-
-			if ((end->policy_authby & mask & ~expect) == LEMPTY) {
+			/*
+			 * EXPECT everything except rsasig_v1_5.
+			 */
+			struct authby expect = authby_from_auth(end->auth);
+			struct authby mask = (oriented(c) && end == &c->local->config->host ? expect : AUTHBY_ALL);
+			expect.rsasig_v1_5 = false;
+			struct authby authby = authby_intersection(end->authby, mask);
+			if (authby_eq(authby, expect)) {
 				jam_enum_short(buf, &keyword_auth_names, end->auth);
 			} else if (oriented(c) && end == &c->remote->config->host) {
-				/*
-				 * Oriented peer can use anything in
-				 * .policy_authby.
-				 */
-				jam_lset_short(buf, &sa_policy_bit_names, "+",
-					       end->policy_authby);
+				jam_authby(buf, end->authby);
 			} else {
 				jam_enum_short(buf, &keyword_auth_names, end->auth);
-				if (end->policy_authby & ~expect) {
-					/* ... the unexpected */
-					jam_string(buf, "(");
-					jam_lset_short(buf, &sa_policy_bit_names, "+",
-						       end->policy_authby & mask);
-					jam_string(buf, ")");
-				}
+				jam_string(buf, "(");
+				jam_authby(buf, authby);
+				jam_string(buf, ")");
 			}
 			who = ", their";
 		}
@@ -4136,7 +4100,7 @@ uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt)
 	/* Determine the base priority (2 bits) (0 is manual by user). */
 	unsigned base;
 	if (LIN(POLICY_GROUPINSTANCE, c->policy)) {
-		if (LIN(POLICY_AUTH_NULL, c->remote->config->host.policy_authby)) {
+		if (c->remote->config->host.authby.null) {
 			base = 3; /* opportunistic anonymous */
 		} else {
 			base = 2; /* opportunistic */

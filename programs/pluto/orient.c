@@ -75,10 +75,10 @@ static void swap_ends(struct connection *c)
 	 * In case of asymmetric auth c->policy contains left.auth.
 	 * This magic will help responder to find connection during INIT.
 	 *
-	 * XXX: why?  Can the code just use host.policy_authby?
+	 * XXX: why?  Can the code just use host.authby?
 	 */
 	c->policy &= ~POLICY_AUTHBY_MASK;
-	c->policy |= c->local->config->host.policy_authby;
+	c->policy |= policy_from_authby(c->local->config->host.authby);
 
 	/* re-compute the base policy priority using the swapped left/right */
 	set_policy_prio(c);

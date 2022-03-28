@@ -667,10 +667,10 @@ static struct db_sa IKEv1_oakley_aggr_mode_db_sa_table[16] = {
 static int IKEv1_db_sa_index(const struct connection *c)
 {
 	/* IKEv1 is symmetric */
-	lset_t x = c->local->config->host.policy_authby;
-	pexpect(x == c->remote->config->host.policy_authby);
-	return ((x & POLICY_PSK ? 1 : 0) |
-		(x & POLICY_RSASIG ? 2 : 0) |
+	struct authby authby = c->local->config->host.authby;
+	pexpect(authby_eq(authby, c->remote->config->host.authby));
+	return ((authby.psk ? 1 : 0) |
+		(authby.rsasig ? 2 : 0) |
 		(c->local->config->host.xauth.server ? 4 : 0) |
 		(c->local->config->host.xauth.client ? 8 : 0));
 }

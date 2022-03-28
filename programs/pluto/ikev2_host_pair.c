@@ -30,10 +30,10 @@
 #include "iface.h"
 #include "unpack.h"
 #include "orient.h"		/* for oriented() */
+#include "authby.h"
 
-static bool match_policy(const struct connection *c, lset_t req_authby)
+static bool match_connection(const struct connection *c, struct authby req_authby)
 {
-	pexpect((req_authby & ~ POLICY_AUTHBY_MASK) == LEMPTY);
 	pexpect(oriented(c)); /* searching oriented lists */
 
 	if (c->config->ike_version != IKEv2) {
@@ -71,7 +71,10 @@ static bool match_policy(const struct connection *c, lset_t req_authby)
 				return false;
 			}
 
-			/* shunt match - stop the search for another conn if we are groupinstance*/
+			/*
+			 * Shunt match - stop the search for another
+			 * conn if we are groupinstance.
+			 */
 			if (c->policy & POLICY_GROUPINSTANCE) {
 				return true;
 			}
@@ -90,9 +93,9 @@ static bool match_policy(const struct connection *c, lset_t req_authby)
 	 * bits; hence the use of c->local.  See github#666 (fitting
 	 * number).
 	 */
-	if ((req_authby & c->local->config->host.policy_authby) != req_authby) {
+	if (!authby_le(req_authby, c->local->config->host.authby)) {
 		connection_buf cb;
-		dbg("  skipping "PRI_CONNECTION", missing policy",
+		dbg("  skipping "PRI_CONNECTION", missing authby",
 		    pri_connection(c, &cb));
 		return false;
 	}
@@ -101,10 +104,9 @@ static bool match_policy(const struct connection *c, lset_t req_authby)
 }
 
 static struct connection *ikev2_find_host_connection(const struct msg_digest *md,
-						     lset_t req_authby,
+						     struct authby req_authby,
 						     bool *send_reject_response)
 {
-	pexpect((req_authby & ~ POLICY_AUTHBY_MASK) == LEMPTY);
 	const ip_endpoint *local_endpoint = &md->iface->local_endpoint;
 	const ip_endpoint *remote_endpoint = &md->sender;
 
@@ -114,15 +116,15 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 
 	address_buf lb;
 	address_buf rb;
-	policy_buf pb;
+	authby_buf pb;
 	dbg("%s() %s->%s policy=%s", __func__,
 	    str_address(&remote_address, &rb),
 	    str_address(&local_address, &lb),
-	    str_policy(req_authby, &pb));
+	    str_authby(req_authby, &pb));
 
 	struct connection *c = NULL;
 	FOR_EACH_HOST_PAIR_CONNECTION(local_address, remote_address, d) {
-		if (!match_policy(d, req_authby)) {
+		if (!match_connection(d, req_authby)) {
 			continue;
 		}
 
@@ -177,7 +179,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 	 * Food Groups kind of assumes one.
 	 */
 	FOR_EACH_HOST_PAIR_CONNECTION(local_address, unset_address, d) {
-		if (!match_policy(d, req_authby)) {
+		if (!match_connection(d, req_authby)) {
 			continue;
 		}
 
@@ -241,12 +243,12 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 
 	if (c == NULL) {
 		endpoint_buf b;
-		policy_buf pb;
+		authby_buf pb;
 		ldbg(md->md_logger,
 		     "%s message received on %s but no connection has been authorized with policy %s",
 		     enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
 		     str_endpoint(local_endpoint, &b),
-		     str_policy(req_authby, &pb));
+		     str_authby(req_authby, &pb));
 		*send_reject_response = true;
 		return NULL;
 	}
@@ -305,21 +307,23 @@ struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
 	 * authentication policy alternatives in order of decreasing
 	 * preference.
 	 */
-	static const lset_t authbys[] = {
-		POLICY_ECDSA,
-		POLICY_RSASIG, POLICY_RSASIG_v1_5,
-		POLICY_PSK,
-		POLICY_AUTH_NULL,
+	static const struct authby authbys[] = {
+		{ .ecdsa = true, },
+		{ .rsasig = true, },
+		{ .rsasig_v1_5 = true, },
+		{ .psk = true, },
+		{ .null = true, },
 	};
 
 	struct connection *c = NULL;
-	unsigned int i;
 
 	/*
 	 * XXX in the near future, this loop should find
 	 * type=passthrough and return STF_DROP
+	 *
+	 * XXX: this nested loop could do with a tune up.
 	 */
-	for (i=0; i < elemsof(authbys); i++) {
+	for (unsigned i = 0; i < elemsof(authbys); i++) {
 		/*
 		 * When the connection "isn't found" POLICY and
 		 * SEND_REJECTED_RESPONSE end up with the values from
@@ -328,9 +332,10 @@ struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
 		 * For instance, if an earlier search returns NULL but
 		 * clears SEND_REJECT_RESPONSE, that will be lost.
 		 */
-		*policy = authbys[i];
+		struct authby req_authby = authbys[i];
+		*policy = policy_from_authby(req_authby);
 		*send_reject_response = true;
-		c = ikev2_find_host_connection(md, *policy,
+		c = ikev2_find_host_connection(md, req_authby,
 					       send_reject_response);
 		if (c != NULL)
 			break;

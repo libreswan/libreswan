@@ -150,7 +150,7 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		 * Method, and local policy was ok with the
 		 * suggestion.
 		 */
-		pexpect(c->local->config->host.policy_authby & POLICY_AUTHBY_RSASIG_MASK);
+		pexpect(authby_has_rsasig(c->local->config->host.authby));
 		if (ike->sa.st_v2_digsig.negotiated_hashes != LEMPTY) {
 			return IKEv2_AUTH_DIGSIG;
 		}
@@ -159,7 +159,7 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		 * Local policy allows proof-of-identity using legacy
 		 * RSASIG_v1_5.
 		 */
-		if (c->local->config->host.policy_authby & POLICY_RSASIG_v1_5) {
+		if (c->local->config->host.authby.rsasig_v1_5) {
 			return IKEv2_AUTH_RSA;
 		}
 
@@ -182,7 +182,7 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		 * Method, and local policy was ok with the
 		 * suggestion.
 		 */
-		pexpect(c->local->config->host.policy_authby & POLICY_AUTHBY_ECDSA_MASK);
+		pexpect(authby_has_ecdsa(c->local->config->host.authby));
 		if (ike->sa.st_v2_digsig.negotiated_hashes != LEMPTY) {
 			return IKEv2_AUTH_DIGSIG;
 		}
@@ -346,7 +346,7 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
  * auth succeed.  Caller needs to decide what response is appropriate.
  */
 
-static diag_t v2_authsig_and_log_using_pubkey(lset_t policy_authby,
+static diag_t v2_authsig_and_log_using_pubkey(struct authby authby,
 					      struct ike_sa *ike,
 					      const struct crypt_mac *idhash,
 					      const struct pbs_in *signature_pbs,
@@ -375,8 +375,7 @@ static diag_t v2_authsig_and_log_using_pubkey(lset_t policy_authby,
 	 */
 
 	lset_t hash_bit = LELEM(hash_algo->common.ikev2_alg_id);
-	if (policy_authby & POLICY_RSASIG_v1_5 &&
-	    hash_algo == &ike_alg_hash_sha1) {
+	if (authby.rsasig_v1_5 && hash_algo == &ike_alg_hash_sha1) {
 		pexpect(!(c->config->sighash_policy & hash_bit));
 		dbg("skipping sighash check as PKCS#1 1.5 RSA + SHA1");
 	} else if (!(c->config->sighash_policy & hash_bit)) {
@@ -384,10 +383,10 @@ static diag_t v2_authsig_and_log_using_pubkey(lset_t policy_authby,
 			    hash_algo->common.fqn);
 	}
 
-	if ((c->remote->config->host.policy_authby & policy_authby) != policy_authby) {
-		policy_buf pb;
+	if (!authby_le(authby, c->remote->config->host.authby)) {
+		authby_buf pb;
 		return diag("authentication failed: peer authentication requires policy %s",
-			    str_policy(policy_authby, &pb));
+			    str_authby(authby, &pb));
 	}
 
 	shunk_t signature = pbs_in_left_as_shunk(signature_pbs);
@@ -421,27 +420,27 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 
 	switch (recv_auth) {
 	case IKEv2_AUTH_RSA:
-		return v2_authsig_and_log_using_pubkey(POLICY_RSASIG_v1_5,
+		return v2_authsig_and_log_using_pubkey((struct authby) { .rsasig_v1_5 = true, },
 						       ike, idhash_in,
 						       signature_pbs,
 						       &ike_alg_hash_sha1,
 						       &pubkey_signer_pkcs1_1_5_rsa);
 
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
-		return v2_authsig_and_log_using_pubkey(POLICY_ECDSA,
+		return v2_authsig_and_log_using_pubkey((struct authby) { .ecdsa = true, },
 						       ike, idhash_in,
 						       signature_pbs,
 						       &ike_alg_hash_sha2_256,
 						       &pubkey_signer_ecdsa/*_p256*/);
 
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
-		return v2_authsig_and_log_using_pubkey(POLICY_ECDSA,
+		return v2_authsig_and_log_using_pubkey((struct authby) { .ecdsa = true, },
 						       ike, idhash_in,
 						       signature_pbs,
 						       &ike_alg_hash_sha2_384,
 						       &pubkey_signer_ecdsa/*_p384*/);
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
-		return v2_authsig_and_log_using_pubkey(POLICY_ECDSA,
+		return v2_authsig_and_log_using_pubkey((struct authby) { .ecdsa = true, },
 						       ike, idhash_in,
 						       signature_pbs,
 						       &ike_alg_hash_sha2_512,
@@ -472,7 +471,7 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 		 * redundant?
 		 */
 		if (that_auth != AUTH_NULL &&
-		    (ike->sa.st_connection->remote->config->host.policy_authby & POLICY_AUTH_NULL) == LEMPTY) {
+		    !ike->sa.st_connection->remote->config->host.authby.null) {
 			return diag("authentication failed: peer attempted NULL authentication but we want %s",
 				    enum_name(&keyword_auth_names, that_auth));
 		}
@@ -520,11 +519,11 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 			dbg("digsig:   trying %s", (*hash)->common.fqn);
 			static const struct {
 				const struct pubkey_signer *signer;
-				lset_t policy;
+				struct authby authby;
 			} signers[] = {
-				{ &pubkey_signer_ecdsa, POLICY_ECDSA, },
-				{ &pubkey_signer_rsassa_pss, POLICY_RSASIG, },
-				{ &pubkey_signer_pkcs1_1_5_rsa, POLICY_RSASIG_v1_5, }
+				{ &pubkey_signer_ecdsa, { .ecdsa = true, }, },
+				{ &pubkey_signer_rsassa_pss, { .rsasig = true, }, },
+				{ &pubkey_signer_pkcs1_1_5_rsa, { .rsasig_v1_5 = true, }, }
 			};
 
 			FOR_EACH_ELEMENT(signers, s) {
@@ -561,7 +560,7 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 				ike->sa.st_v2_digsig.hash = (*hash);
 				ike->sa.st_v2_digsig.signer = s->signer;
 
-				return v2_authsig_and_log_using_pubkey(s->policy,
+				return v2_authsig_and_log_using_pubkey(s->authby,
 								       ike, idhash_in,
 								       signature_pbs,
 								       (*hash),

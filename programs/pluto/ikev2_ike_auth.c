@@ -518,8 +518,8 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	 * NULL_AUTH in separate chunk. This is only done on the
 	 * initiator in IKE_AUTH, and not repeated in rekeys.
 	 */
-	if ((pc->local->config->host.policy_authby & POLICY_AUTHBY_DIGSIG_MASK) &&
-	    (pc->local->config->host.policy_authby & POLICY_AUTH_NULL)) {
+	if (authby_has_digsig(pc->local->config->host.authby) &&
+	    pc->local->config->host.authby.null) {
 		/* store in null_auth */
 		chunk_t null_auth = NULL_HUNK;
 		if (!ikev2_create_psk_auth(AUTH_NULL, ike,
@@ -788,10 +788,10 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 	/* process AUTH payload */
 
 	enum keyword_auth remote_auth = ike->sa.st_connection->remote->config->host.auth;
-	lset_t remote_authby = ike->sa.st_connection->remote->config->host.policy_authby;
+	struct authby remote_authby = ike->sa.st_connection->remote->config->host.authby;
 	passert(remote_auth != AUTH_NEVER && remote_auth != AUTH_UNSET);
-	bool remote_can_authby_null = (remote_authby & POLICY_AUTH_NULL);
-	bool remote_can_authby_digsig = (remote_authby & POLICY_AUTHBY_DIGSIG_MASK);
+	bool remote_can_authby_null = remote_authby.null;
+	bool remote_can_authby_digsig = authby_has_digsig(remote_authby);
 
 	if (!ike->sa.st_ppk_used && ike->sa.st_no_ppk_auth.ptr != NULL) {
 		/*

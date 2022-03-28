@@ -12,7 +12,7 @@
  * Copyright (C) 2013 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2013-2020 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
- * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2019-2022 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -44,6 +44,8 @@
 #include "hash_table.h"
 #include "diag.h"
 #include "ckaid.h"
+#include "authby.h"
+
 /*
  * Note that we include this even if not X509, because we do not want
  * the structures to change lots.
@@ -84,7 +86,8 @@ struct config_host_end {
 	 * Proof of identity.
 	 */
 	enum keyword_auth auth;
-	lset_t policy_authby;		/* See POLICY_AUTHBY_MASK */
+	struct authby authby;
+
 	cert_t cert;			/* end certificate */
 	enum certpolicy sendcert;	/* whether or not to send the certificate */
 	chunk_t ca;			/* CA distinguished name of the end certificate's issuer */

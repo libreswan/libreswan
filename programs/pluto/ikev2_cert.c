@@ -178,9 +178,8 @@ stf_status emit_v2CERTREQ(struct ike_sa *ike, struct msg_digest *md,
 
 bool need_v2CERTREQ_in_IKE_SA_INIT_response(const struct ike_sa *ike)
 {
-	lset_t authby = ike->sa.st_connection->remote->config->host.policy_authby;
-	return ((authby & POLICY_AUTHBY_DIGSIG_MASK) &&
-		!remote_has_preloaded_pubkey(&ike->sa));
+	struct authby authby = ike->sa.st_connection->remote->config->host.authby;
+	return (authby_has_digsig(authby) && !remote_has_preloaded_pubkey(&ike->sa));
 }
 
 bool need_v2CERTREQ_in_IKE_AUTH_request(const struct ike_sa *ike)
@@ -189,7 +188,7 @@ bool need_v2CERTREQ_in_IKE_AUTH_request(const struct ike_sa *ike)
 
 	const struct connection *c = ike->sa.st_connection;
 
-	if ((c->remote->config->host.policy_authby & POLICY_AUTHBY_DIGSIG_MASK) == LEMPTY) {
+	if (!authby_has_digsig(c->remote->config->host.authby)) {
 		dbg("IKEv2 CERTREQ: responder has no auth method requiring them to send back their cert");
 		return false;
 	}
@@ -311,10 +310,10 @@ bool ikev2_send_cert_decision(const struct ike_sa *ike)
 	if (ike->sa.st_peer_wants_null) {
 		/* XXX: only ever true on responder */
 		/* ??? should we log something?  All others do. */
-	} else if ((c->local->config->host.policy_authby & POLICY_AUTHBY_DIGSIG_MASK) == LEMPTY) {
-		policy_buf pb;
-		dbg("IKEv2 CERT: local policy_authby does not have RSA or ECDSA: %s",
-		    str_policy(c->policy & POLICY_AUTHBY_MASK, &pb));
+	} else if (!authby_has_digsig(c->local->config->host.authby)) {
+		authby_buf pb;
+		dbg("IKEv2 CERT: local authby does not have RSA or ECDSA: %s",
+		    str_authby(c->local->config->host.authby, &pb));
 	} else if (this->config->host.cert.nss_cert == NULL) {
 		dbg("IKEv2 CERT: no certificate to send");
 	} else if (c->local->config->host.sendcert == CERT_SENDIFASKED &&
