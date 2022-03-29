@@ -329,11 +329,10 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 		 * We don't know how to implement %hold, but it is
 		 * okay.  When we need a hold, the kernel XFRM acquire
 		 * state will do the job (by dropping or holding the
-		 * packet) until this entry expires. See
-		 * /proc/sys/net/core/xfrm_acq_expires After
-		 * expiration, the underlying policy causing the
-		 * original acquire will fire again, dropping further
-		 * packets.
+		 * packet) until this entry expires.
+		 *
+		 * XXX: except this is BSD ...; same should hold true
+		 * with a different option?
 		 */
 		dbg("netlink_raw_policy: SHUNT_HOLD implemented as no-op");
 		return true; /* yes really */
