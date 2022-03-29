@@ -38,6 +38,7 @@ struct authby {
 #define AUTHBY_NULL (struct authby) { .null = true, }
 #define AUTHBY_PSK (struct authby) { .psk = true, }
 
+#define AUTHBY_NONE (struct authby) {0}
 #define AUTHBY_ALL (struct authby) { true, true, true, true, true, true }
 
 struct authby authby_intersection(struct authby lhs, struct authby rhs);

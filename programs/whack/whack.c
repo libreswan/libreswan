@@ -1817,9 +1817,13 @@ int main(int argc, char **argv)
 
 		/* RSASIG/ECDSA need more than a single policy bit */
 		case CDP_SINGLETON + POLICY_PSK_IX:		/* --psk */
+			msg.authby.psk = true;
+			continue;
 		case CDP_SINGLETON + POLICY_AUTH_NEVER_IX:	/* --auth-never */
+			msg.authby.never = true;
+			continue;
 		case CDP_SINGLETON + POLICY_AUTH_NULL_IX:	/* --auth-null */
-			msg.policy |= LELEM(c - CDP_SINGLETON);
+			msg.authby.null = true;
 			continue;
 
 		case CDP_SINGLETON + POLICY_ENCRYPT_IX:	/* --encrypt */
@@ -2113,51 +2117,51 @@ int main(int argc, char **argv)
 			continue;
 
 		case ALGO_RSASIG: /* --rsasig */
-			msg.policy |= POLICY_RSASIG;
-			msg.policy |= POLICY_RSASIG_v1_5;
+			msg.authby.rsasig = true;
+			msg.authby.rsasig_v1_5 = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
 			continue;
 		case ALGO_RSA_SHA1: /* --rsa-sha1 */
-			msg.policy |= POLICY_RSASIG_v1_5;
+			msg.authby.rsasig_v1_5 = true;
 			continue;
 		case ALGO_RSA_SHA2: /* --rsa-sha2 */
-			msg.policy |= POLICY_RSASIG;
+			msg.authby.rsasig = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
 			continue;
 		case ALGO_RSA_SHA2_256:	/* --rsa-sha2_256 */
+			msg.authby.rsasig = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
-			msg.policy |= POLICY_RSASIG;
 			continue;
 		case ALGO_RSA_SHA2_384:	/* --rsa-sha2_384 */
+			msg.authby.rsasig = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
-			msg.policy |= POLICY_RSASIG;
 			continue;
 		case ALGO_RSA_SHA2_512:	/* --rsa-sha2_512 */
+			msg.authby.rsasig = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
-			msg.policy |= POLICY_RSASIG;
 			continue;
 
 		case ALGO_ECDSA: /* --ecdsa and --ecdsa-sha2 */
-			msg.policy |= POLICY_ECDSA;
+			msg.authby.ecdsa = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
 			continue;
 		case ALGO_ECDSA_SHA2_256:	/* --ecdsa-sha2_256 */
+			msg.authby.ecdsa = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
-			msg.policy |= POLICY_ECDSA;
 			continue;
 		case ALGO_ECDSA_SHA2_384:	/* --ecdsa-sha2_384 */
+			msg.authby.ecdsa = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
-			msg.policy |= POLICY_ECDSA;
 			continue;
 		case ALGO_ECDSA_SHA2_512:	/* --ecdsa-sha2_512 */
+			msg.authby.ecdsa = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
-			msg.policy |= POLICY_ECDSA;
 			continue;
 
 		case CD_CONNIPV4:	/* --ipv4; mimic --ipv6 */
@@ -2508,8 +2512,9 @@ int main(int argc, char **argv)
 
 	switch (msg.ike_version) {
 	case IKEv1:
-		if (msg.policy & POLICY_ECDSA)
+		if (msg.authby.ecdsa) {
 			diagw("connection cannot specify --ecdsa and --ikev1");
+		}
 		/* delete any inherited sighash_poliyc from --rsasig including sha2 */
 		msg.sighash_policy = LEMPTY;
 		break;
@@ -2523,7 +2528,7 @@ int main(int argc, char **argv)
 		msg.tunnel_addr_family = client_family.type->af;
 	}
 
-	if ((msg.policy & POLICY_AUTHBY_MASK) == LEMPTY) {
+	if (!authby_is_set(msg.authby)) {
 		/*
 		 * Since the options above always set both AUTHBY and
 		 * SIGHASH bits, only need to check AUTHBY for unset.
@@ -2532,7 +2537,7 @@ int main(int argc, char **argv)
 		 * whack calls it --authby) does not clear the
 		 * policy_authby defaults.  That is left to pluto.
 		 */
-		msg.policy |= POLICY_AUTHBY_DEFAULTS;
+		msg.authby = AUTHBY_DEFAULTS;
 		msg.sighash_policy |= POL_SIGHASH_DEFAULTS;
 	}
 
@@ -2575,9 +2580,12 @@ int main(int argc, char **argv)
 			diagw("connection missing --host after --to");
 
 		if (msg.policy & POLICY_OPPORTUNISTIC) {
-			if ((msg.policy & (POLICY_PSK | POLICY_RSASIG)) !=
-			    POLICY_RSASIG)
-				diagw("only RSASIG is supported for opportunism");
+			if (msg.authby.psk) {
+				diagw("PSK is not supported for opportunism");
+			}
+			if (!authby_has_digsig(msg.authby)) {
+				diagw("only Digital Signatures are supported for opportunism");
+			}
 
 			if ((msg.policy & POLICY_PFS) == 0)
 				diagw("PFS required for opportunism");
@@ -2592,14 +2600,14 @@ int main(int argc, char **argv)
 		    subnet_type(&msg.right.client))
 			diagw("endpoints clash: one is IPv4 and the other is IPv6");
 
-		if (msg.policy & POLICY_AUTH_NEVER) {
+		if (msg.authby.never) {
 			if (msg.prospective_shunt == SHUNT_TRAP ||
 			    msg.prospective_shunt == SHUNT_UNSET) {
 				diagw("shunt connection must have shunt policy (eg --pass, --drop or --reject). Is this a non-shunt connection missing an authentication method such as --psk or --rsasig or --auth-null ?");
 			}
 		} else {
 			/* not just a shunt: a real ipsec connection */
-			if ((msg.policy & POLICY_AUTHBY_MASK) == LEMPTY &&
+			if (!authby_is_set(msg.authby) &&
 			    msg.left.auth == AUTH_NEVER &&
 			    msg.right.auth == AUTH_NEVER)
 				diagw("must specify connection authentication, eg --rsasig, --psk or --auth-null for non-shunt connection");

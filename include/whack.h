@@ -36,6 +36,7 @@
 #include "ip_subnet.h"
 #include "ip_protoport.h"
 #include "ip_cidr.h"
+#include "authby.h"
 
 #ifndef DEFAULT_RUNDIR
 # define DEFAULT_RUNDIR "/run/pluto/"
@@ -172,6 +173,7 @@ struct whack_message {
 	enum ike_version ike_version;
 
 	lset_t policy;
+	struct authby authby;
 	lset_t sighash_policy;
 	enum shunt_policy prospective_shunt;
 	enum shunt_policy negotiation_shunt;

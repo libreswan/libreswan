@@ -35,6 +35,7 @@
 #include "ip_protoport.h"
 #include "ip_cidr.h"
 #include "lswcdefs.h"
+#include "authby.h"
 
 struct logger;
 
@@ -106,6 +107,7 @@ struct starter_conn {
 
 	enum ike_version ike_version;
 	lset_t policy;
+	struct authby authby;
 	lset_t sighash_policy;
 	enum shunt_policy prospective_shunt;
 	enum shunt_policy negotiation_shunt;

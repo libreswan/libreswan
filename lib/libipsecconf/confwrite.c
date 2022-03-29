@@ -473,35 +473,11 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 			cwpb("pfs", POLICY_PFS);
 			cwpbf("ikepad", POLICY_NO_IKEPAD);
 
-			{
-				const char *abs = "UNKNOWN";
 
-				switch (conn->policy & POLICY_AUTHBY_MASK) {
-				case POLICY_PSK:
-					abs = "secret";
-					break;
-
-				case POLICY_RSASIG:
-					abs = "rsasig";
-					break;
-
-				case POLICY_PSK | POLICY_RSASIG:
-					abs = "secret|rsasig";
-					break;
-
-				case POLICY_AUTH_NULL:
-					abs = "null";
-					break;
-
-				default:
-					abs = "never";
-					break;
-				}
-				if (conn->left.options[KNCF_AUTH] == k_unset ||
-						conn->right.options[KNCF_AUTH]
-						== k_unset) {
-					cwf("authby", abs);
-				}
+			if (conn->left.options[KNCF_AUTH] == k_unset ||
+			    conn->right.options[KNCF_AUTH] == k_unset) {
+				authby_buf ab;
+				cwf("authby", str_authby(conn->authby, &ab));
 			}
 
 			{

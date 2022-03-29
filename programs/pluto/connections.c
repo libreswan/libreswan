@@ -1107,7 +1107,7 @@ static int extract_end(struct connection *c,
 	/* these may be tweaked */
 
 	struct authby authby = (NEVER_NEGOTIATE(wm->policy) ? AUTHBY_NEVER :
-				authby_from_policy(wm->policy));
+				wm->authby);
 
 	if (wm->ike_version == IKEv1) {
 		/* strip stuff IKEv1 ignores */
@@ -1180,12 +1180,14 @@ static int extract_end(struct connection *c,
 	lset_buf wpb;
 	enum_buf wab;
 	enum_buf eab;
-	authby_buf epb;
-	dbg("fake %sauth=%s %sauthby=%s from whack %sauth=%s and %s",
+	authby_buf wabb;
+	authby_buf eabb;
+	dbg("fake %sauth=%s %sauthby=%s from whack %sauth=%s policy %s authby %s",
 	    src->leftright, str_enum_short(&keyword_auth_names, auth, &eab),
-	    src->leftright, str_authby(authby, &epb),
+	    src->leftright, str_authby(authby, &eabb),
 	    src->leftright, str_enum_short(&keyword_auth_names, src->auth, &wab),
-	    str_lset_short(&sa_policy_bit_names, "+", wm->policy, &wpb));
+	    str_lset_short(&sa_policy_bit_names, "+", wm->policy & POLICY_AUTHBY_MASK, &wpb),
+	    str_authby(wm->authby, &wabb));
 	config_end->host.auth = auth;
 	config_end->host.authby = authby;
 
@@ -1500,7 +1502,7 @@ static bool extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	if (LIN(POLICY_AUTH_NEVER, wm->policy)) {
+	if (wm->authby.never) {
 		if (wm->prospective_shunt == SHUNT_UNSET ||
 		    wm->prospective_shunt == SHUNT_TRAP) {
 			llog(RC_FATAL, c->logger,
@@ -1508,18 +1510,19 @@ static bool extract_connection(const struct whack_message *wm,
 			return false;
 		}
 	}
-	if (wm->prospective_shunt != SHUNT_UNSET && wm->prospective_shunt != SHUNT_TRAP) {
-		if ((wm->policy & (POLICY_AUTHBY_MASK & ~POLICY_AUTH_NEVER)) != LEMPTY) {
+	if (wm->prospective_shunt != SHUNT_UNSET &&
+	    wm->prospective_shunt != SHUNT_TRAP) {
+		if (!authby_eq(wm->authby, (struct authby) { .never = true, })) {
 			llog(RC_FATAL, c->logger,
-				    "failed to add connection: shunt connection cannot have authentication method other then authby=never");
+			     "failed to add connection: shunt connection cannot have authentication method other then authby=never");
 			return false;
 		}
 	} else {
 		switch (wm->policy & (POLICY_AUTHENTICATE | POLICY_ENCRYPT)) {
 		case LEMPTY:
-			if (!LIN(POLICY_AUTH_NEVER, wm->policy)) {
+			if (!wm->authby.never) {
 				llog(RC_FATAL, c->logger,
-					    "failed to add connection: non-shunt connection must have AH or ESP");
+				     "failed to add connection: non-shunt connection must have AH or ESP");
 				return false;
 			}
 			break;
@@ -1810,8 +1813,8 @@ static bool extract_connection(const struct whack_message *wm,
 			llog(RC_INFORMATIONAL, c->logger,
 			     "ignored ike= option for type=passthrough connection");
 		}
-	} else if (!LIN(POLICY_AUTH_NEVER, wm->policy) &&
-		   (wm->ike != NULL || c->config->ike_version == IKEv2)) {
+	} else if (!wm->authby.never && (wm->ike != NULL ||
+					 wm->ike_version == IKEv2)) {
 		const struct proposal_policy proposal_policy = {
 			/* logic needs to match pick_initiator() */
 			.version = c->config->ike_version,

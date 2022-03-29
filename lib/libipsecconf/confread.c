@@ -178,11 +178,10 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 	d->ike_version = IKEv2;
 	d->policy = (POLICY_TUNNEL |
-		     /* authby= */ POLICY_AUTHBY_DEFAULTS |
 		     POLICY_ENCRYPT | POLICY_PFS |
 		     /* ike_frag=yes */ POLICY_IKE_FRAG_ALLOW |
 		     /* esn=either */ POLICY_ESN_NO | POLICY_ESN_YES);
-
+	d->authby = AUTHBY_DEFAULTS;
 	d->prospective_shunt = SHUNT_UNSET;
 	d->negotiation_shunt = SHUNT_UNSET;
 	d->failure_shunt = SHUNT_UNSET;
@@ -1177,23 +1176,26 @@ static bool load_conn(struct starter_conn *conn,
 			break;
 
 		case KS_PASSTHROUGH:
-			conn->policy &=
-				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
-				  POLICY_TUNNEL | POLICY_RSASIG);
+			conn->policy &= ~(POLICY_ENCRYPT |
+					  POLICY_AUTHENTICATE |
+					  POLICY_TUNNEL);
+			conn->authby = AUTHBY_NONE;
 			conn->prospective_shunt = SHUNT_PASS;
 			break;
 
 		case KS_DROP:
-			conn->policy &=
-				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
-				  POLICY_TUNNEL | POLICY_RSASIG);
+			conn->policy &= ~(POLICY_ENCRYPT |
+					  POLICY_AUTHENTICATE |
+					  POLICY_TUNNEL);
+			conn->authby = AUTHBY_NONE;
 			conn->prospective_shunt = SHUNT_DROP;
 			break;
 
 		case KS_REJECT:
-			conn->policy &=
-				~(POLICY_ENCRYPT | POLICY_AUTHENTICATE |
-				  POLICY_TUNNEL | POLICY_RSASIG);
+			conn->policy &= ~(POLICY_ENCRYPT |
+					  POLICY_AUTHENTICATE |
+					  POLICY_TUNNEL);
+			conn->authby = AUTHBY_NONE;
 			conn->prospective_shunt = SHUNT_REJECT;
 			break;
 		}
@@ -1438,55 +1440,55 @@ static bool load_conn(struct starter_conn *conn,
 		char *val = strtok(conn->strings[KSCF_AUTHBY], ", ");
 
 		conn->sighash_policy = LEMPTY;
-		conn->policy &= ~POLICY_AUTHBY_MASK;
+		conn->authby = (struct authby) {0};
 
 		while (val != NULL) {
 			/* Supported for IKEv1 and IKEv2 */
 			if (streq(val, "secret")) {
-				conn->policy |= POLICY_PSK;
+				conn->authby.psk = true;;
 			} else if (streq(val, "rsasig") || streq(val, "rsa")) {
-				conn->policy |= POLICY_RSASIG;
-				conn->policy |= POLICY_RSASIG_v1_5;
+				conn->authby.rsasig = true;
+				conn->authby.rsasig_v1_5 = true;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_384;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
 			} else if (streq(val, "never")) {
-				conn->policy |= POLICY_AUTH_NEVER;
+				conn->authby.never = true;
 			/* everything else is only supported for IKEv2 */
 			} else if (conn->ike_version == IKEv1) {
 				starter_error_append(perrl, "ikev1 connection must use authby= of rsasig, secret or never");
 				return true;
 			} else if (streq(val, "null")) {
-				conn->policy |= POLICY_AUTH_NULL;
+				conn->authby.null = true;
 			} else if (streq(val, "rsa-sha1")) {
-				conn->policy |= POLICY_RSASIG_v1_5;
+				conn->authby.rsasig_v1_5 = true;
 			} else if (streq(val, "rsa-sha2")) {
-				conn->policy |= POLICY_RSASIG;
+				conn->authby.rsasig = true;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_384;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
 			} else if (streq(val, "rsa-sha2_256")) {
-				conn->policy |= POLICY_RSASIG;
+				conn->authby.rsasig = true;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
 			} else if (streq(val, "rsa-sha2_384")) {
-				conn->policy |= POLICY_RSASIG;
+				conn->authby.rsasig = true;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_384;
 			} else if (streq(val, "rsa-sha2_512")) {
-				conn->policy |= POLICY_RSASIG;
+				conn->authby.rsasig = true;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
 			} else if (streq(val, "ecdsa") || streq(val, "ecdsa-sha2")) {
-				conn->policy |= POLICY_ECDSA;
+				conn->authby.ecdsa = true;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_384;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
 			} else if (streq(val, "ecdsa-sha2_256")) {
-				conn->policy |= POLICY_ECDSA;
+				conn->authby.ecdsa = true;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
 			} else if (streq(val, "ecdsa-sha2_384")) {
-				conn->policy |= POLICY_ECDSA;
+				conn->authby.ecdsa = true;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_384;
 			} else if (streq(val, "ecdsa-sha2_512")) {
-				conn->policy |= POLICY_ECDSA;
+				conn->authby.ecdsa = true;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
 			} else if (streq(val, "ecdsa-sha1")) {
 				starter_error_append(perrl, "authby=ecdsa cannot use sha1, only sha2");
