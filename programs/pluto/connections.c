@@ -874,11 +874,12 @@ static diag_t extract_client_afi(const struct whack_message *wm,
 }
 
 static int extract_end(struct connection *c,
-		       struct end *dst,
 		       struct config_end *config_end,
+		       struct end *dst,
+		       struct end *other_end,
 		       const struct whack_message *wm,
 		       const struct whack_end *src,
-		       struct end *other_end,
+		       const struct whack_end *other_src,
 		       const struct ip_info *host_afi,
 		       const struct ip_info *client_afi,
 		       struct logger *logger/*connection "..."*/)
@@ -1103,11 +1104,37 @@ static int extract_end(struct connection *c,
 	}
 
 	/* these may be tweaked */
-	lset_t authby = wm->policy & POLICY_AUTHBY_MASK;
+
+	lset_t authby = (NEVER_NEGOTIATE(wm->policy) ? POLICY_AUTH_NEVER :
+			 (wm->policy & POLICY_AUTHBY_MASK));
+
 	if (wm->ike_version == IKEv1) {
 		/* strip stuff IKEv1 ignores */
 		authby &= ~POLICY_ECDSA;
 		authby &= ~POLICY_RSASIG_v1_5;
+	}
+
+	if (wm->ike_version == IKEv1 && src->auth != AUTH_UNSET) {
+		llog(RC_FATAL, c->logger,
+		     "failed to add connection: %sauth= requires IKEv2", leftright);
+		return -1;
+	}
+
+	if (NEVER_NEGOTIATE(wm->policy) && src->auth != AUTH_UNSET) {
+		llog(RC_FATAL, c->logger,
+		     "failed to add connection: %sauth= option is invalid for type=passthrough connection",
+		     leftright);
+		return -1;
+	}
+
+	/*
+	 * XXX: why?  Note: this checks WM, not C - it could be done
+	 * before extract_end(), but do it here.
+	 */
+	if ((src->auth == AUTH_UNSET) != (other_src->auth == AUTH_UNSET)) {
+		llog(RC_FATAL, c->logger,
+		     "failed to add connection: leftauth= and rightauth= must both be set or both be unset");
+		return -1;
 	}
 
 	enum keyword_auth auth = src->auth;
@@ -1136,8 +1163,7 @@ static int extract_end(struct connection *c,
 			auth = AUTH_PSK;
 		else if (authby & POLICY_AUTH_NULL)
 			auth = AUTH_NULL;
-		else
-			auth = AUTH_UNSET;
+		/* else leave it unset; probably never */
 		break;
 	case AUTH_EAPONLY:
 		break;
@@ -1591,72 +1617,11 @@ static bool extract_connection(const struct whack_message *wm,
 	/* authentication (proof of identity) */
 
 	if (NEVER_NEGOTIATE(wm->policy)) {
-		if (wm->left.auth != AUTH_UNSET ||
-		    wm->right.auth != AUTH_UNSET) {
-			llog(RC_FATAL, c->logger,
-			     "failed to add connection: leftauth= / rightauth= options are invalid for type=passthrough connection");
-			return false;
-		}
-		/* set default to AUTH_NEVER if unset and we do not expect to do IKE */
-		if ((c->policy & POLICY_AUTHBY_MASK) == LEMPTY) {
-			/* authby= was also not specified - fill in default */
-			c->policy |= POLICY_AUTH_NEVER;
-			policy_buf pb;
-			dbg("no AUTH policy was set for type=passthrough - defaulting to %s",
-			    str_policy(c->policy & POLICY_AUTHBY_MASK, &pb));
-		}
+		dbg("ignore sighash, never negotiate");
+	} else if (c->config->ike_version == IKEv1) {
+		dbg("ignore sighash, IKEv1");
 	} else {
-		enum_buf lab, rab;
-		lset_buf cpb;
-		dbg("checking leftauth=%s rightauth=%s against whack policy %s",
-		    str_enum_short(&keyword_auth_names, wm->left.auth, &lab),
-		    str_enum_short(&keyword_auth_names, wm->right.auth, &rab),
-		    str_lset_short(&sa_policy_bit_names, "+", wm->policy, &cpb));
-		/*
-		 * Reject all bad combinations of authby with
-		 * leftauth=/rightauth=.
-		 */
-
-		if (wm->left.auth == AUTH_UNSET &&
-		    wm->right.auth == AUTH_UNSET &&
-		    (wm->policy & POLICY_AUTHBY_MASK) == LEMPTY) {
-			/*
-			 * authby= was somehow blanked out
-			 */
-			llog(RC_FATAL, c->logger, "no authentication (auth=, authby=) was set");
-			return false;
-		}
-
-		if (c->config->ike_version == IKEv1 &&
-		    (wm->left.auth != AUTH_UNSET ||
-		     wm->right.auth != AUTH_UNSET)) {
-			llog(RC_FATAL, c->logger,
-			     "failed to add connection: leftauth= and rightauth= require IKEv2");
-			return false;
-		}
-
-		if ((wm->left.auth == AUTH_UNSET) != (wm->right.auth == AUTH_UNSET)) {
-			llog(RC_FATAL, c->logger,
-			     "failed to add connection: leftauth= and rightauth= must both be set or both be unset");
-			return false;
-		}
-
-		if ((wm->left.auth == AUTH_PSK && wm->right.auth == AUTH_NULL) ||
-		    (wm->left.auth == AUTH_NULL && wm->right.auth == AUTH_PSK)) {
-			llog(RC_FATAL, c->logger,
-			     "failed to add connection: cannot mix PSK and NULL authentication (leftauth=%s and rightauth=%s)",
-			     enum_name(&keyword_auth_names, wm->left.auth),
-			     enum_name(&keyword_auth_names, wm->right.auth));
-			return false;
-		}
-
-		if (c->config->ike_version == IKEv2) {
-			/*
-			 * Ignore supplied sighash and ECDSA (from
-			 * defaults) for IKEv1.
-			 */
-			config->sighash_policy = wm->sighash_policy;
-		}
+		config->sighash_policy = wm->sighash_policy;
 	}
 
 	/* some port stuff */
@@ -2179,25 +2144,22 @@ static bool extract_connection(const struct whack_message *wm,
 
 	int same_ca[LEFT_RIGHT_ROOF] = { 0, };
 
-	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-		int opp = (lr + 1) % LEFT_RIGHT_ROOF;
-		same_ca[lr] = extract_end(c,
-					  client_spd[lr],
-					  &config->end[lr],
-					  wm, whack_ends[lr],
-					  client_spd[opp],
-					  host_afi, client_afi,
-					  c->logger);
-		if (same_ca[lr] < 0) {
+	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
+		int that = (this + 1) % LEFT_RIGHT_ROOF;
+		same_ca[this] = extract_end(c, &config->end[this],
+					    client_spd[this], client_spd[that],
+					    wm, whack_ends[this], whack_ends[that],
+					    host_afi, client_afi, c->logger);
+		if (same_ca[this] < 0) {
 			return false;
 		}
 	}
 
-	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
-		int opp = (lr + 1) % LEFT_RIGHT_ROOF;
-		if (same_ca[opp] == 1) {
-			config->end[opp].host.ca = clone_hunk(config->end[lr].host.ca,
-							     "same ca");
+	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
+		int that = (this + 1) % LEFT_RIGHT_ROOF;
+		if (same_ca[that] == 1) {
+			config->end[that].host.ca = clone_hunk(config->end[this].host.ca,
+							       "same ca");
 			break;
 		}
 	}
