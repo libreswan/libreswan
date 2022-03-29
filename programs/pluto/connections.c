@@ -2209,44 +2209,36 @@ static bool extract_connection(const struct whack_message *wm,
 	update_ends_from_this_host_addr(&c->spd.that, &c->spd.this);
 
 	/*
-	 * If both left/rightauth is unset, fill it in with
-	 * (preferred) symmetric policy.
+	 * Cross-check the auth= vs authby= results.
 	 */
-	if (wm->left.auth == AUTH_UNSET &&
-	    wm->right.auth == AUTH_UNSET) {
-		enum keyword_auth authby;
-		if (c->policy & POLICY_AUTHBY_RSASIG_MASK)
-			authby = AUTH_RSASIG;
-		else if (c->policy & POLICY_AUTHBY_ECDSA_MASK)
-			authby = AUTH_ECDSA;
-		else if (c->policy & POLICY_PSK)
-			authby = AUTH_PSK;
-		else if (c->policy & POLICY_AUTH_NULL)
-			authby = AUTH_NULL;
-		else
-			authby = AUTH_UNSET;
-		config->end[LEFT_END].host.auth = authby;
-		config->end[RIGHT_END].host.auth = authby;
-	}
 
-	/* if left/rightauth are set, but symmetric policy is not, fill it in */
-	if (wm->left.auth == wm->right.auth ||
-	    wm->right.auth == AUTH_EAPONLY) {
-		switch (wm->left.auth) {
-		case AUTH_RSASIG:
-			c->policy |= POLICY_RSASIG;
-			break;
-		case AUTH_ECDSA:
-			c->policy |= POLICY_ECDSA;
-			break;
-		case AUTH_PSK:
-			c->policy |= POLICY_PSK;
-			break;
-		case AUTH_NULL:
-			c->policy |= POLICY_AUTH_NULL;
-			break;
-		default:
-			break;
+	if (NEVER_NEGOTIATE(c->policy)) {
+		if (!pexpect(c->local->config->host.auth == AUTH_UNSET &&
+			     c->remote->config->host.auth == AUTH_UNSET)) {
+			return false;
+		}
+	} else {
+		if (c->local->config->host.auth == AUTH_UNSET ||
+		    c->remote->config->host.auth == AUTH_UNSET) {
+			/*
+			 * Since an unset auth is set from authby,
+			 * authby= must have somehow been blanked out
+			 * or left with something useless (such as
+			 * never).
+			 */
+			llog(RC_FATAL, c->logger, "no authentication (auth=, authby=) was set");
+			return false;
+		}
+
+		if ((c->local->config->host.auth == AUTH_PSK && c->remote->config->host.auth == AUTH_NULL) ||
+		    (c->local->config->host.auth == AUTH_NULL && c->remote->config->host.auth == AUTH_PSK)) {
+			llog(RC_FATAL, c->logger,
+			     "failed to add connection: cannot mix PSK and NULL authentication (%sauth=%s and %sauth=%s)",
+			     c->local->config->leftright,
+			     enum_name(&keyword_auth_names, c->local->config->host.auth),
+			     c->remote->config->leftright,
+			     enum_name(&keyword_auth_names, c->remote->config->host.auth));
+			return false;
 		}
 	}
 
