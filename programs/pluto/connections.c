@@ -897,18 +897,6 @@ static int extract_end(struct connection *c,
 		}
 	}
 
-	if (src->id != NULL && streq(src->id, "%fromcert")) {
-		lset_t auth_pol = (wm->policy & POLICY_AUTHBY_MASK);
-		if (src->auth == AUTH_PSK ||
-		    src->auth == AUTH_NULL ||
-		    auth_pol == POLICY_PSK ||
-		    auth_pol == POLICY_AUTH_NULL) {
-			llog(RC_FATAL, logger,
-			     "failed to add connection: ID cannot be specified as %%fromcert if PSK or AUTH-NULL is used");
-			return -1;
-		}
-	}
-
 	/*
 	 * decode id, if any
 	 *
@@ -1179,6 +1167,14 @@ static int extract_end(struct connection *c,
 	    str_lset_short(&sa_policy_bit_names, "+", wm->policy, &wpb));
 	config_end->host.auth = auth;
 	config_end->host.policy_authby = authby;
+
+	if (src->id != NULL && streq(src->id, "%fromcert")) {
+		if (auth == AUTH_PSK || auth == AUTH_NULL) {
+			llog(RC_FATAL, logger,
+			     "failed to add connection: ID cannot be specified as %%fromcert if PSK or AUTH-NULL is used");
+			return -1;
+		}
+	}
 
 	/* save some defaults */
 	config_end->client.subnet = src->client;
