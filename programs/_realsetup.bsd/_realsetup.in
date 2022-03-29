@@ -28,8 +28,6 @@ plutoctl=/var/run/pluto/pluto.ctl
 subsyslock=/var/lock/subsys/ipsec
 lock=/var/run/pluto/ipsec_setup.pid
 
-xfrm_stat=/proc/sys/net/core/xfrm_acq_expires
-
 # defaults for "config setup" items
 IPSECuniqueids=${IPSECuniqueids:-yes}
 IPSECcrlcheckinterval=${IPSECcrlcheckinterval:-0}
@@ -181,14 +179,6 @@ case "$1" in
 
 	perform $KILLKERNELSTATE
 	rm -f /var/run/pluto.pid
-
-	# When we exit we clean up (remove) the modules we are using, even the kame'ish ones
-	if test -e ${xfrm_stat}; then
-		lsmod 2>&1 | grep "^xfrm4_tunnel" > /dev/null && rmmod xfrm4_tunnel
-		lsmod 2>&1 | grep "^af_key" > /dev/null && rmmod af_key
-		# old name for xfrm4_tunnel
-		lsmod 2>&1 | grep "^xfrm_user" > /dev/null && rmmod xfrm_user
-	fi
 
 	perform test -d $(dirname $subsyslock) "&&" rm -f $subsyslock
 
