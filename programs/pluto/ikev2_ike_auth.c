@@ -1089,10 +1089,12 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike)
 		 *
 		 * CREATE_CHILD_SA children should also be cleaned up.
 		 */
-		if (c->local->config->host.xauth.server && LIN(POLICY_PSK, c->policy)) {
+		if (c->local->config->host.xauth.server &&
+		    c->remote->config->host.authby.psk) {
 			/*
-			 * If we are a server and use PSK, all clients
-			 * use the same group ID.
+			 * If we are a server and expect remote
+			 * clients to authenticate using PSK, then all
+			 * clients use the same group ID.
 			 *
 			 * Note that "xauth_server" also refers to
 			 * IKEv2 CP
