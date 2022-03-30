@@ -355,7 +355,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 					continue;	/* differ about aggressive mode */
 				}
 				if (LHAS(proposed_authbys, AUTH_PSK)) {
-					if (!(d->policy & POLICY_PSK)) {
+					if (!(d->remote->config->host.auth == AUTH_PSK)) {
 						/* there needs to be a key */
 						dbg_rhc("skipping because no PSK in POLICY");
 						continue;
@@ -367,7 +367,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 					}
 				}
 				if (LHAS(proposed_authbys, AUTH_RSASIG)) {
-					if (!(d->policy & POLICY_RSASIG)) {
+					if (!(d->remote->config->host.auth == AUTH_RSASIG)) {
 						dbg_rhc("skipping because not RSASIG in POLICY");
 						continue;	/* no key */
 					}
@@ -387,6 +387,13 @@ static struct connection *refine_host_connection_on_responder(int indent,
 				 * rightauth match, but we only know
 				 * what the remote end has sent in the
 				 * IKE_AUTH request.
+				 *
+				 * XXX: this is too strict.  For
+				 * instance, given a connection that
+				 * allows both both ECDSA and RSASIG
+				 * then because .auth=rsasig
+				 * (prefered) the below will reject
+				 * ECDSA?
 				 */
 				if (!LHAS(proposed_authbys, d->remote->config->host.auth)) {
 					dbg_rhc("skipping because mismatched authby");
