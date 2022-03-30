@@ -1,2 +1,0 @@
-Basic test of pluto using aggressive mode using PSK
-

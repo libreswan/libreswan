@@ -1,0 +1,1 @@
+IKEv1 using agressive mode and explicit authby=secret,rsasig (should choose PSK!?!)
