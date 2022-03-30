@@ -329,24 +329,30 @@ static void DBG_lease(bool verbose, const struct ip_pool *pool, const struct lea
  *   ??? This constitutes a leak.
  */
 
-static bool can_reuse_lease(const struct connection *c)
+static bool client_can_reuse_lease(const struct connection *c)
 {
 	/*
-	 * Cannot share with PSK - it either uses GroupID or
-	 * a non-unique ID_IP* due to clients using pre-NAT IP address
+	 * Cannot share with clients that can authenticate using PSK -
+	 * it either uses GroupID or a non-unique ID_IP* due to
+	 * clients using pre-NAT IP address
 	 */
-	if (((c->policy & POLICY_PSK) != LEMPTY) ||
+	if (c->remote->config->host.authby.psk ||
 	    c->remote->config->host.auth == AUTH_PSK)
 		return false;
 
-	/* Cannot share with NULL authentication */
-	if (((c->policy & POLICY_AUTH_NULL) != LEMPTY) ||
+	/*
+	 * Cannot share with clients that can authenticate using NULL.
+	 * Just a bad idea.
+	 */
+	if (c->remote->config->host.authby.null ||
 	    c->remote->config->host.auth == AUTH_NULL)
 		return false;
 
 	/* Cannot share NULL/NONE ID. Also cannot share ID_IP* due to NAT and dynamic IP */
-	if (c->remote->host.id.kind == ID_NULL || c->remote->host.id.kind == ID_NONE ||
-	    c->remote->host.id.kind == ID_IPV4_ADDR || c->remote->host.id.kind == ID_IPV6_ADDR)
+	if (c->remote->host.id.kind == ID_NULL ||
+	    c->remote->host.id.kind == ID_NONE ||
+	    c->remote->host.id.kind == ID_IPV4_ADDR ||
+	    c->remote->host.id.kind == ID_IPV6_ADDR)
 		return false;
 
 	/* If uniqueids=false - this can mean multiple clients on the same ID & CERT */
@@ -526,7 +532,7 @@ err_t lease_that_address(struct connection *c, const struct state *st)
 
 	struct ip_pool *pool = c->pool;
 	const struct id *that_id = &c->remote->host.id;
-	bool reusable = can_reuse_lease(c);
+	bool reusable = client_can_reuse_lease(c);
 
 	id_buf that_idb;
 	char thatstr[sizeof(id_buf) + MAX_XAUTH_USERNAME_LEN];
