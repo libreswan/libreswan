@@ -806,8 +806,8 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		pexpect(len == ike->sa.st_no_ppk_auth.len);
 		init_pbs(&pbs_no_ppk_auth, ike->sa.st_no_ppk_auth.ptr, len, "pb_stream for verifying NO_PPK_AUTH");
 
-		diag_t d = v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-					      ike, &idhash_in, &pbs_no_ppk_auth, remote_auth);
+		diag_t d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
+						 ike, &idhash_in, &pbs_no_ppk_auth, remote_auth);
 		if (d != NULL) {
 			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 			dbg("no PPK auth failed");
@@ -832,8 +832,8 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 
 		dbg("going to try to verify NULL_AUTH from Notify payload");
 		init_pbs(&pbs_null_auth, null_auth.ptr, len, "pb_stream for verifying NULL_AUTH");
-		diag_t d = v2_authsig_and_log(IKEv2_AUTH_NULL, ike, &idhash_in,
-					      &pbs_null_auth, AUTH_NULL);
+		diag_t d = verify_v2AUTH_and_log(IKEv2_AUTH_NULL, ike, &idhash_in,
+						 &pbs_null_auth, AUTH_NULL);
 		if (d != NULL) {
 			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 			dbg("NULL_auth from Notify Payload failed");
@@ -847,9 +847,9 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		dbg("NULL_AUTH verified");
 	} else {
 		dbg("responder verifying AUTH payload");
-		diag_t d = v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-					      ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
-					      remote_auth);
+		diag_t d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
+						 ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
+						 remote_auth);
 		if (d != NULL) {
 			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 			dbg("I2 Auth Payload failed");
@@ -1376,8 +1376,8 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	/* process AUTH payload */
 
 	dbg("initiator verifying AUTH payload");
-	d = v2_authsig_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
-			       ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs, that_authby);
+	d = verify_v2AUTH_and_log(md->chain[ISAKMP_NEXT_v2AUTH]->payload.v2auth.isaa_auth_method,
+				  ike, &idhash_in, &md->chain[ISAKMP_NEXT_v2AUTH]->pbs, that_authby);
 	if (d != NULL) {
 		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 		pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);

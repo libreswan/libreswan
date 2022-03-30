@@ -266,11 +266,11 @@ bool ikev2_create_psk_auth(enum keyword_auth authby,
  * The log message must mention both the peer's ID and kind.
  */
 
-diag_t v2_authsig_and_log_using_psk(enum keyword_auth authby,
-				    const struct ike_sa *ike,
-				    const struct crypt_mac *idhash,
-				    struct pbs_in *sig_pbs,
-				    const struct hash_signature *auth_sig)
+diag_t verify_v2AUTH_and_log_using_psk(enum keyword_auth authby,
+				       const struct ike_sa *ike,
+				       const struct crypt_mac *idhash,
+				       struct pbs_in *sig_pbs,
+				       const struct hash_signature *auth_sig)
 {
 	shunk_t sig = pbs_in_left_as_shunk(sig_pbs);
 

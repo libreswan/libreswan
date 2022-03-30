@@ -628,9 +628,9 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 						pbs_in_all_as_shunk(&sa_md->chain[ISAKMP_NEXT_v2IDi]->pbs),
 						"skey_pi", ike->sa.st_skey_pi_nss);
 
-	diag_t d = v2_authsig_and_log_using_psk(AUTH_EAPONLY, ike, &idhash_in,
-						&md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
-						&msk);
+	diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_EAPONLY, ike, &idhash_in,
+						   &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
+						   &msk);
 	free_eap_state(&ike->sa.st_eap);
 	if (d != NULL) {
 		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");

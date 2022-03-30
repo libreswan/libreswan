@@ -63,10 +63,10 @@ bool submit_v2_auth_signature(struct ike_sa *ike,
 			      const struct pubkey_signer *signer,
 			      v2_auth_signature_cb *cb);
 
-diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
-			  struct ike_sa *ike,
-			  const struct crypt_mac *idhash_in,
-			  struct pbs_in *signature_pbs,
-			  const enum keyword_auth that_authby);
+diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
+			     struct ike_sa *ike,
+			     const struct crypt_mac *idhash_in,
+			     struct pbs_in *signature_pbs,
+			     const enum keyword_auth that_authby);
 
 #endif

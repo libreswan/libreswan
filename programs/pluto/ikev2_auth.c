@@ -346,12 +346,12 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
  * auth succeed.  Caller needs to decide what response is appropriate.
  */
 
-static diag_t v2_authsig_and_log_using_pubkey(struct authby authby,
-					      struct ike_sa *ike,
-					      const struct crypt_mac *idhash,
-					      const struct pbs_in *signature_pbs,
-					      const struct hash_desc *hash_algo,
-					      const struct pubkey_signer *pubkey_signer)
+static diag_t verify_v2AUTH_and_log_using_pubkey(struct authby authby,
+						 struct ike_sa *ike,
+						 const struct crypt_mac *idhash,
+						 const struct pbs_in *signature_pbs,
+						 const struct hash_desc *hash_algo,
+						 const struct pubkey_signer *pubkey_signer)
 {
 	statetime_t start = statetime_start(&ike->sa);
 
@@ -402,11 +402,11 @@ static diag_t v2_authsig_and_log_using_pubkey(struct authby authby,
 	return d;
 }
 
-diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
-			  struct ike_sa *ike,
-			  const struct crypt_mac *idhash_in,
-			  struct pbs_in *signature_pbs,
-			  const enum keyword_auth that_auth)
+diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
+			     struct ike_sa *ike,
+			     const struct crypt_mac *idhash_in,
+			     struct pbs_in *signature_pbs,
+			     const enum keyword_auth that_auth)
 {
 	enum_buf ramb, eanb;
 	dbg("verifying auth payload, remote sent v2AUTH=%s we want auth=%s",
@@ -420,31 +420,31 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 
 	switch (recv_auth) {
 	case IKEv2_AUTH_RSA:
-		return v2_authsig_and_log_using_pubkey((struct authby) { .rsasig_v1_5 = true, },
-						       ike, idhash_in,
-						       signature_pbs,
-						       &ike_alg_hash_sha1,
-						       &pubkey_signer_pkcs1_1_5_rsa);
+		return verify_v2AUTH_and_log_using_pubkey((struct authby) { .rsasig_v1_5 = true, },
+							  ike, idhash_in,
+							  signature_pbs,
+							  &ike_alg_hash_sha1,
+							  &pubkey_signer_pkcs1_1_5_rsa);
 
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
-		return v2_authsig_and_log_using_pubkey((struct authby) { .ecdsa = true, },
-						       ike, idhash_in,
-						       signature_pbs,
-						       &ike_alg_hash_sha2_256,
-						       &pubkey_signer_ecdsa/*_p256*/);
+		return verify_v2AUTH_and_log_using_pubkey((struct authby) { .ecdsa = true, },
+							  ike, idhash_in,
+							  signature_pbs,
+							  &ike_alg_hash_sha2_256,
+							  &pubkey_signer_ecdsa/*_p256*/);
 
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
-		return v2_authsig_and_log_using_pubkey((struct authby) { .ecdsa = true, },
-						       ike, idhash_in,
-						       signature_pbs,
-						       &ike_alg_hash_sha2_384,
-						       &pubkey_signer_ecdsa/*_p384*/);
+		return verify_v2AUTH_and_log_using_pubkey((struct authby) { .ecdsa = true, },
+							  ike, idhash_in,
+							  signature_pbs,
+							  &ike_alg_hash_sha2_384,
+							  &pubkey_signer_ecdsa/*_p384*/);
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
-		return v2_authsig_and_log_using_pubkey((struct authby) { .ecdsa = true, },
-						       ike, idhash_in,
-						       signature_pbs,
-						       &ike_alg_hash_sha2_512,
-						       &pubkey_signer_ecdsa/*_p521*/);
+		return verify_v2AUTH_and_log_using_pubkey((struct authby) { .ecdsa = true, },
+							  ike, idhash_in,
+							  signature_pbs,
+							  &ike_alg_hash_sha2_512,
+							  &pubkey_signer_ecdsa/*_p521*/);
 
 	case IKEv2_AUTH_PSK:
 	{
@@ -453,8 +453,8 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 				    enum_name(&keyword_auth_names, that_auth));
 		}
 
-		diag_t d = v2_authsig_and_log_using_psk(AUTH_PSK, ike, idhash_in,
-							signature_pbs, NULL/*auth_sig*/);
+		diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_PSK, ike, idhash_in,
+							   signature_pbs, NULL/*auth_sig*/);
 		if (d != NULL) {
 			dbg("authentication failed: PSK AUTH mismatch");
 			return d;
@@ -476,8 +476,8 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 				    enum_name(&keyword_auth_names, that_auth));
 		}
 
-		diag_t d = v2_authsig_and_log_using_psk(AUTH_NULL, ike, idhash_in,
-							signature_pbs, NULL/*auth_sig*/);
+		diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_NULL, ike, idhash_in,
+							   signature_pbs, NULL/*auth_sig*/);
 		if (d != NULL) {
 			dbg("authentication failed: NULL AUTH mismatch (implementation bug?)");
 			return d;
@@ -560,11 +560,11 @@ diag_t v2_authsig_and_log(enum ikev2_auth_method recv_auth,
 				ike->sa.st_v2_digsig.hash = (*hash);
 				ike->sa.st_v2_digsig.signer = s->signer;
 
-				return v2_authsig_and_log_using_pubkey(s->authby,
-								       ike, idhash_in,
-								       signature_pbs,
-								       (*hash),
-								       s->signer);
+				return verify_v2AUTH_and_log_using_pubkey(s->authby,
+									  ike, idhash_in,
+									  signature_pbs,
+									  (*hash),
+									  s->signer);
 			}
 		}
 
