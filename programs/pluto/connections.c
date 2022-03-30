@@ -3599,8 +3599,8 @@ static void show_one_sr(struct show *s,
 		 * text (and append the AUTHBY mask when things don't
 		 * match).
 		 *
-		 * For instance, given POLICY_AUTH_NULL and AUTH_NULL,
-		 * just show "null".
+		 * For instance, given authby=null and auth=null, just
+		 * show "null".
 		 *
 		 * But there's a twist: when the oriented peer AUTH
 		 * and AUTHBY don't match, show just AUTHBY.  When

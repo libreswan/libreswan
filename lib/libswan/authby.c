@@ -82,26 +82,14 @@ bool authby_has_digsig(struct authby lhs)
 	return authby_has_ecdsa(lhs) || authby_has_rsasig(lhs);
 }
 
-struct authby authby_from_policy(lset_t policy)
-{
-	return (struct authby) {
-		.null = policy & POLICY_AUTH_NULL,
-		.never = policy & POLICY_AUTH_NEVER,
-		.psk = policy & POLICY_PSK,
-		.rsasig = policy & POLICY_RSASIG,
-		.ecdsa = policy & POLICY_ECDSA,
-		.rsasig_v1_5 = policy & POLICY_RSASIG_v1_5,
-	};
-}
-
 lset_t policy_from_authby(struct authby authby)
 {
-	return ((authby.null ? POLICY_AUTH_NULL : LEMPTY) |
-		(authby.never ? POLICY_AUTH_NEVER : LEMPTY) |
-		(authby.psk ? POLICY_PSK : LEMPTY) |
-		(authby.rsasig ?  POLICY_RSASIG : LEMPTY) |
-		(authby.ecdsa ?  POLICY_ECDSA : LEMPTY) |
-		(authby.rsasig_v1_5 ?  POLICY_RSASIG_v1_5 : LEMPTY));
+	return ((authby.null ? LELEM(POLICY_AUTH_NULL_IX) : LEMPTY) |
+		(authby.never ? LELEM(POLICY_AUTH_NEVER_IX) : LEMPTY) |
+		(authby.psk ? LELEM(POLICY_PSK_IX) : LEMPTY) |
+		(authby.rsasig ? LELEM(POLICY_RSASIG_IX) : LEMPTY) |
+		(authby.ecdsa ? LELEM(POLICY_ECDSA_IX) : LEMPTY) |
+		(authby.rsasig_v1_5 ? LELEM(POLICY_RSASIG_v1_5_IX) : LEMPTY));
 }
 
 enum keyword_auth auth_from_authby(struct authby authby)

@@ -327,7 +327,7 @@ struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
 		/*
 		 * When the connection "isn't found" POLICY and
 		 * SEND_REJECTED_RESPONSE end up with the values from
-		 * the final POLICY_AUTH_NULL search.
+		 * the final authby=null search.
 		 *
 		 * For instance, if an earlier search returns NULL but
 		 * clears SEND_REJECT_RESPONSE, that will be lost.

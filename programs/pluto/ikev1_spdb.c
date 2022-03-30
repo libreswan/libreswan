@@ -662,7 +662,8 @@ static struct db_sa IKEv1_oakley_aggr_mode_db_sa_table[16] = {
  * The oakley sadb is subscripted by a bitset computed by
  * IKEv1_db_sa_index().
  *
- * POLICY_PSK, POLICY_RSASIG, and XAUTH for this end (idiosyncratic).
+ * authby.psk, authby.rsasig, and xauth.{client,server} for this end
+ * (idiosyncratic).
  */
 static int IKEv1_db_sa_index(const struct connection *c)
 {

@@ -54,7 +54,6 @@ bool authby_has_digsig(struct authby);
 lset_t policy_from_authby(struct authby authby);
 enum keyword_auth auth_from_authby(struct authby authby);
 struct authby authby_from_auth(enum keyword_auth auth);
-struct authby authby_from_policy(lset_t policy);
 
 typedef struct {
 	char buf[sizeof("RSA+NULL+NEVER+RSASIG+ECDSA+RSASIG_v1_5") + 1/*canary*/];

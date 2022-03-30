@@ -1431,7 +1431,7 @@ static bool load_conn(struct starter_conn *conn,
 	 *
 	 * authby=secret|rsasig|null|never|rsa-HASH
 	 *
-	 * using authby=rsasig results in legacy POLICY_RSASIG_v1_5 and RSA_PSS
+	 * using authby=rsasig results in both RSASIG_v1_5 and RSA_PSS
 	 *
 	 * HASH needs to use full syntax - eg sha2_256 and not sha256,
 	 * to avoid confusion with sha3_256
