@@ -669,9 +669,8 @@ diag_t update_peer_id(struct ike_sa *ike, const struct id *peer_id, const struct
 		id_buf idb;
 		dbg("rhc: peer ID matches and no certificate payload - continuing with peer ID %s",
 		    str_id(peer_id, &idb));
-	} else if (LIN(POLICY_AUTH_NULL, c->policy) &&
-		   tarzan_id != NULL &&
-		   tarzan_id->kind == ID_NULL) {
+	} else if (c->remote->config->host.authby.null &&
+		   tarzan_id != NULL && tarzan_id->kind == ID_NULL) {
 		id_buf peer_idb;
 		llog_sa(RC_LOG, ike,
 			"Peer ID '%s' expects us to have ID_NULL and connection allows AUTH_NULL - allowing",
