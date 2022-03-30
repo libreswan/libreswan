@@ -158,25 +158,35 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 
 	/* Set up state */
 	struct ike_sa *ike = new_v1_rstate(c, md);
-	struct state *st = &ike->sa;
-	md->v1_st = st;  /* (caller will reset cur_state) */
-	change_v1_state(st, STATE_AGGR_R1);
+	md->v1_st = &ike->sa;  /* (caller will reset cur_state) */
+	change_v1_state(&ike->sa, STATE_AGGR_R1);
 
-	/* warn for especially dangerous Aggressive Mode and PSK */
-	if (LIN(POLICY_PSK, c->policy) && LIN(POLICY_AGGRESSIVE, c->policy)) {
-		log_state(RC_LOG_SERIOUS, st,
-			  "IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
+	/*
+	 * Warn when peer is expected to use especially dangerous
+	 * Aggressive Mode and PSK (IKEv1 authentication is symmetric
+	 * so also applies to this end).
+	 */
+	if (c->remote->config->host.auth == AUTH_PSK && LIN(POLICY_AGGRESSIVE, c->policy)) {
+		llog_sa(RC_LOG_SERIOUS, ike,
+			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
 	}
 
-	st->st_policy = policy;	/* ??? not sure what's needed here */
+	ike->sa.st_policy = policy;	/* ??? not sure what's needed here */
 
-	/* ??? not sure what's needed here */
-	st->st_oakley.auth = policy & POLICY_PSK ? OAKLEY_PRESHARED_KEY :
-		policy & POLICY_RSASIG ? OAKLEY_RSA_SIG :
-		0;	/* we don't really know */
+	/*
+	 * ??? not sure what's needed here.
+	 *
+	 * Use remote's allowed authentication; since IKEv1 is
+	 * symmetric this also applies to us.  Strangely this
+	 * preference for PSK over RSASIG is the reverse of
+	 * auth_from_authby() which is used to set host.auth.
+	 */
+	ike->sa.st_oakley.auth = (c->remote->config->host.auth == AUTH_PSK ? OAKLEY_PRESHARED_KEY :
+				  c->remote->config->host.auth == AUTH_RSASIG ? OAKLEY_RSA_SIG :
+				  0);	/* we don't really know */
 
 	if (!v1_decode_certs(md)) {
-		log_state(RC_LOG, st, "X509: CERT payload bogus or revoked");
+		llog_sa(RC_LOG, ike, "X509: CERT payload bogus or revoked");
 		return false;
 	}
 
@@ -184,37 +194,37 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	 * Note: Aggressive mode so this cannot change the connection.
 	 */
 
-	if (!ikev1_decode_peer_id_aggr_mode_responder(st, md)) {
+	if (!ikev1_decode_peer_id_aggr_mode_responder(&ike->sa, md)) {
 		id_buf buf;
 		endpoint_buf b;
-		log_state(RC_LOG_SERIOUS, st,
-			  "initial Aggressive Mode packet claiming to be from %s on %s but no matching connection has been authorized",
-			  str_id(&st->st_connection->remote->host.id, &buf),
-			  str_endpoint(&md->sender, &b));
+		llog_sa(RC_LOG_SERIOUS, ike,
+			"initial Aggressive Mode packet claiming to be from %s on %s but no matching connection has been authorized",
+			str_id(&ike->sa.st_connection->remote->host.id, &buf),
+			str_endpoint(&md->sender, &b));
 		/* XXX notification is in order! */
 		return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 	}
 
-	passert(c == st->st_connection); /* no switch */
+	passert(c == ike->sa.st_connection); /* no switch */
 
-	st->st_try = 0;                                 /* Not our job to try again from start */
-	st->st_policy = c->policy & ~POLICY_IPSEC_MASK; /* only as accurate as connection */
+	ike->sa.st_try = 0;                                 /* Not our job to try again from start */
+	ike->sa.st_policy &= ~POLICY_IPSEC_MASK; /* only as accurate as connection */
 
-	binlog_refresh_state(st);
+	binlog_refresh_state(&ike->sa);
 
 	{
 		address_buf b;
 		connection_buf cib;
-		log_state(RC_LOG, st,
-			  "responding to Aggressive Mode, state #%lu, connection "PRI_CONNECTION" from %s",
-			  st->st_serialno,
-			  pri_connection(st->st_connection, &cib),
-			  str_address_sensitive(&c->remote->host.addr, &b));
+		llog_sa(RC_LOG, ike,
+			"responding to Aggressive Mode, state #%lu, connection "PRI_CONNECTION" from %s",
+			ike->sa.st_serialno,
+			pri_connection(c, &cib),
+			str_address_sensitive(&c->remote->host.addr, &b));
 	}
 
-	merge_quirks(st, md);
+	merge_quirks(&ike->sa, md);
 
-	set_nat_traversal(st, md);
+	set_nat_traversal(&ike->sa, md);
 
 	/* save initiator SA for HASH */
 
@@ -223,8 +233,8 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	 * This routine creates *st itself so how would this field
 	 * be already filled-in.
 	 */
-	pexpect(st->st_p1isa.ptr == NULL);
-	st->st_p1isa = clone_pbs_in_as_chunk(&sa_pd->pbs, "sa in aggr_inI1_outR1()");
+	pexpect(ike->sa.st_p1isa.ptr == NULL);
+	ike->sa.st_p1isa = clone_pbs_in_as_chunk(&sa_pd->pbs, "sa in aggr_inI1_outR1()");
 
 	/*
 	 * parse_isakmp_sa picks the right group, which we need to know
@@ -236,21 +246,21 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 		pb_stream sabs = sa_pd->pbs;
 
 		RETURN_STF_FAIL_v1NURE(parse_isakmp_sa_body(&sabs,
-							&sa_pd->payload.sa,
-							NULL, false, st));
+							    &sa_pd->payload.sa,
+							    NULL, false, &ike->sa));
 	}
 
 	/* KE in */
-	if (!unpack_KE(&st->st_gi, "Gi", st->st_oakley.ta_dh,
-		       md->chain[ISAKMP_NEXT_KE], st->st_logger)) {
+	if (!unpack_KE(&ike->sa.st_gi, "Gi", ike->sa.st_oakley.ta_dh,
+		       md->chain[ISAKMP_NEXT_KE], ike->sa.st_logger)) {
 		return STF_FAIL_v1N + v1N_INVALID_KEY_INFORMATION;
 	}
 
 	/* Ni in */
-	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(st->st_logger, md, &st->st_ni, "Ni"));
+	RETURN_STF_FAIL_v1NURE(accept_v1_nonce(ike->sa.st_logger, md, &ike->sa.st_ni, "Ni"));
 
 	/* calculate KE and Nonce */
-	submit_ke_and_nonce(st, st->st_oakley.ta_dh,
+	submit_ke_and_nonce(&ike->sa, ike->sa.st_oakley.ta_dh,
 			    aggr_inI1_outR1_continue1,
 			    "outI2 KE");
 	return STF_SUSPEND;
@@ -982,12 +992,11 @@ void aggr_outI1(struct fd *whack_sock,
 {
 	/* set up new state */
 	struct ike_sa *ike = new_v1_istate(c, whack_sock);
-	struct state *st = &ike->sa;
-	statetime_t start = statetime_backdate(st, inception);
-	change_v1_state(st, STATE_AGGR_I1);
-	initialize_new_state(st, policy, try);
+	statetime_t start = statetime_backdate(&ike->sa, inception);
+	change_v1_state(&ike->sa, STATE_AGGR_I1);
+	initialize_new_state(&ike->sa, policy, try);
 
-	if (LIN(POLICY_PSK, c->policy) && LIN(POLICY_AGGRESSIVE, c->policy)) {
+	if (c->local->config->host.auth == AUTH_PSK && LIN(POLICY_AGGRESSIVE, c->policy)) {
 		llog_sa(RC_LOG_SERIOUS, ike,
 			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
 	}
@@ -1010,18 +1019,18 @@ void aggr_outI1(struct fd *whack_sock,
 			       sec_label, true /*part of initiate*/);
 
 	if (predecessor == NULL) {
-		log_state(RC_LOG, st, "initiating IKEv1 Aggressive Mode connection");
+		llog_sa(RC_LOG, ike, "initiating IKEv1 Aggressive Mode connection");
 	} else {
-		update_pending(pexpect_ike_sa(predecessor), pexpect_ike_sa(st));
-		log_state(RC_LOG, st,
+		update_pending(pexpect_ike_sa(predecessor), ike);
+		llog_sa(RC_LOG, ike,
 			"initiating IKEv1 Aggressive Mode connection #%lu to replace #%lu",
-			st->st_serialno, predecessor->st_serialno);
+			ike->sa.st_serialno, predecessor->st_serialno);
 	}
 
 	/*
 	 * Calculate KE and Nonce.
 	 */
-	submit_ke_and_nonce(st, st->st_oakley.ta_dh,
+	submit_ke_and_nonce(&ike->sa, ike->sa.st_oakley.ta_dh,
 			    aggr_outI1_continue,
 			    "aggr_outI1 KE + nonce");
 	statetime_stop(&start, "%s()", __func__);
