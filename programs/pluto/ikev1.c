@@ -2971,13 +2971,19 @@ void doi_log_cert_thinking(uint16_t auth,
 void ISAKMP_SA_established(const struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
-	bool authnull = (LIN(POLICY_AUTH_NULL, c->policy) ||
+	/*
+	 * XXX: this indicates that NULL auth is allowed; not that it
+	 * was used.
+	 */
+	bool authnull = (c->remote->config->host.authby.null ||
 			 c->remote->config->host.auth == AUTH_NULL);
 
-	if (c->local->config->host.xauth.server && LIN(POLICY_PSK, c->policy)) {
+	if (c->local->config->host.xauth.server &&
+	    c->remote->config->host.authby.psk) {
 		/*
-		 * If we are a server and use PSK, all clients use the same group ID
-		 * Note that "xauth_server" also refers to IKEv2 CP
+		 * If we are a server and require the peer to use PSK,
+		 * all clients use the same group ID Note that
+		 * "xauth_server" also refers to IKEv2 CP
 		 */
 		dbg("We are a server using PSK and clients are using a group ID");
 	} else if (!uniqueIDs) {
@@ -2998,9 +3004,12 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 			/* if old IKE SA is same as new IKE sa and non-auth isn't overwrting auth */
 			if (c != d && c->kind == d->kind && streq(c->name, d->name) &&
 			    same_id(&c->local->host.id, &d->local->host.id) &&
-			    same_id(&c->remote->host.id, &d->remote->host.id))
-			{
-				bool old_is_nullauth = (LIN(POLICY_AUTH_NULL, d->policy) ||
+			    same_id(&c->remote->host.id, &d->remote->host.id)) {
+				/*
+				 * XXX: this indicates that NULL auth
+				 * is allowed; not that it was used.
+				 */
+				bool old_is_nullauth = (d->remote->config->host.authby.null ||
 							d->remote->config->host.auth == AUTH_NULL);
 				bool same_remote_ip = sameaddr(&c->remote->host.addr, &d->remote->host.addr);
 
@@ -3032,40 +3041,6 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 						/* this deletes the states */
 						release_connection(d);
 					}
-				}
-			}
-		}
-
-		/*
-		 * This only affects IKEv2, since we don't store any
-		 * received INITIAL_CONTACT for IKEv1.
-		 * We don't do this on IKEv1, because it seems to
-		 * confuse various third parties (Windows, Cisco VPN 300,
-		 * and juniper
-		 * likely because this would be called before the IPsec SA
-		 * of QuickMode is installed, so the remote endpoints view
-		 * this IKE SA still as the active one?
-		 */
-		if (ike->sa.st_ike_seen_v2n_initial_contact) {
-			if (c->newest_ike_sa != SOS_NOBODY &&
-			    c->newest_ike_sa != ike->sa.st_serialno) {
-				struct state *old_p1 = state_by_serialno(c->newest_ike_sa);
-
-				dbg("deleting replaced IKE state for %s",
-				    old_p1->st_connection->name);
-				old_p1->st_send_delete = DONT_SEND_DELETE;
-				event_force(EVENT_SA_EXPIRE, old_p1);
-			}
-
-			if (c->newest_ipsec_sa != SOS_NOBODY) {
-				struct state *old_p2 = state_by_serialno(c->newest_ipsec_sa);
-				struct connection *d = old_p2 == NULL ? NULL : old_p2->st_connection;
-
-				if (c == d && same_id(&c->remote->host.id, &d->remote->host.id)) {
-					dbg("Initial Contact received, deleting old state #%lu from connection '%s'",
-					    c->newest_ipsec_sa, c->name);
-					old_p2->st_send_delete = DONT_SEND_DELETE;
-					event_force(EVENT_SA_EXPIRE, old_p2);
 				}
 			}
 		}
