@@ -371,7 +371,8 @@ static struct connection *refine_host_connection_on_responder(int indent,
 						dbg_rhc("skipping because not RSASIG in POLICY");
 						continue;	/* no key */
 					}
-					if (get_connection_private_key(d, &pubkey_type_rsa, st->st_logger) == NULL) {
+					if (get_local_private_key(d, &pubkey_type_rsa,
+								  st->st_logger) == NULL) {
 						/*
 						 * We must at least be able to find
 						 * our private key.
@@ -418,13 +419,15 @@ static struct connection *refine_host_connection_on_responder(int indent,
 #endif
 					break;
 				case AUTH_RSASIG:
-					if (get_connection_private_key(d, &pubkey_type_rsa, st->st_logger) == NULL) {
+					if (get_local_private_key(d, &pubkey_type_rsa,
+								  st->st_logger) == NULL) {
 						dbg_rhc("skipping because RSASIG and no private key");
 						continue;	/* no key */
 					}
 					break;
 				case AUTH_ECDSA:
-					if (get_connection_private_key(d, &pubkey_type_ecdsa, st->st_logger) == NULL) {
+					if (get_local_private_key(d, &pubkey_type_ecdsa,
+								  st->st_logger) == NULL) {
 						dbg_rhc("skipping because ECDSA and no private key");
 						continue;	/* no key */
 					}

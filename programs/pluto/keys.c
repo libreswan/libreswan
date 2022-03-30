@@ -546,9 +546,9 @@ const chunk_t *get_ppk_by_id(const chunk_t *ppk_id)
  * indicated by a NULL pointer.
  */
 
-const struct private_key_stuff *get_connection_private_key(const struct connection *c,
-							   const struct pubkey_type *type,
-							   struct logger *logger)
+const struct private_key_stuff *get_local_private_key(const struct connection *c,
+						      const struct pubkey_type *type,
+						      struct logger *logger)
 {
 	/* is there a certificate assigned to this connection? */
 	if (c->local->config->host.cert.nss_cert != NULL) {
@@ -563,7 +563,8 @@ const struct private_key_stuff *get_connection_private_key(const struct connecti
 
 		const struct private_key_stuff *pks = NULL;
 		bool load_needed;
-		err_t err = find_or_load_private_key_by_cert(&pluto_secrets, &c->local->config->host.cert,
+		err_t err = find_or_load_private_key_by_cert(&pluto_secrets,
+							     &c->local->config->host.cert,
 							     &pks, &load_needed, logger);
 		if (err != NULL) {
 			dbg("private key for certificate %s not found in NSS DB",

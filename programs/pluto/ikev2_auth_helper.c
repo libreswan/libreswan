@@ -61,16 +61,16 @@ bool submit_v2_auth_signature(struct ike_sa *ike,
 			      const struct pubkey_signer *signer,
 			      v2_auth_signature_cb *cb)
 {
+	const struct connection *c = ike->sa.st_connection;
 	struct task task = {
 		.cb = cb,
 		.hash_algo = hash_algo,
 		.hash_to_sign = *hash_to_sign,
 		.signer = signer,
+		.pks = get_local_private_key(c, signer->type,
+					     ike->sa.st_logger),
 	};
 
-	const struct connection *c = ike->sa.st_connection;
-	task.pks = get_connection_private_key(c, signer->type,
-					      ike->sa.st_logger);
 	if (task.pks == NULL)
 		/* failure: no key to use */
 		return false;
