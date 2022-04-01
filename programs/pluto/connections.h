@@ -620,14 +620,14 @@ const char *str_connection_instance(const struct connection *c,
 
 extern void connection_delete_unused_instance(struct connection **cp, struct state *old_state, struct fd *whackfd);
 
-/* A template connection's eroute can be eclipsed by
- * either a %hold or an eroute for an instance iff
- * the template is a /32 -> /32.  This requires some special casing.
+/*
+ * A template connection's eroute can be eclipsed by either a %hold or
+ * an eroute for an instance IFF the template is a /32 -> /32.  This
+ * requires some special casing.
  */
 #define eclipsable(sr) (selector_contains_one_address((sr)->this.client) && \
 			selector_contains_one_address((sr)->that.client))
-extern long eclipse_count;
-extern struct connection *eclipsed(const struct connection *c, struct spd_route ** /*OUT*/);
+struct spd_route *eclipsing(const struct spd_route *sr);
 
 /* print connection status */
 

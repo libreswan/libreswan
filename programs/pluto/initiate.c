@@ -861,7 +861,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	if (sr->routing == RT_ROUTED_PROSPECTIVE && eclipsable(sr)) {
 		dbg("route is eclipsed");
 		sr->routing = RT_ROUTED_ECLIPSED;
-		eclipse_count++;
 	}
 
 	pexpect(c->kind == CK_TEMPLATE);

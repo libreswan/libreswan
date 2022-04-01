@@ -207,14 +207,12 @@ static bool bare_policy_op(enum kernel_policy_op op,
 			/* really an add */
 			op = KP_ADD_OUTBOUND;
 			opname = "replace eclipsed";
-			eclipse_count--;
 			break;
 		case KP_DELETE_OUTBOUND:
 			/*
 			 * delete unnecessary:
 			 * we don't actually have an eroute
 			 */
-			eclipse_count--;
 			return true;
 
 		case KP_ADD_OUTBOUND: /*never eclipsed add*/
@@ -224,16 +222,14 @@ static bool bare_policy_op(enum kernel_policy_op op,
 			/* never inbound */
 			bad_case(op);
 		}
-	} else if (eclipse_count > 0 && op == KP_DELETE_OUTBOUND && eclipsable(sr)) {
+	} else if (op == KP_DELETE_OUTBOUND) {
 		/* maybe we are uneclipsing something */
-		struct spd_route *esr;
-		struct connection *ue = eclipsed(c, &esr);
-
-		if (ue != NULL) {
+		struct spd_route *esr = eclipsing(sr);
+		if (esr != NULL) {
 			esr->routing = RT_ROUTED_PROSPECTIVE;
 			return bare_policy_op(KP_REPLACE_OUTBOUND,
 					      THIS_IS_NOT_INBOUND,
-					      ue, esr,
+					      esr->connection, esr,
 					      RT_ROUTED_PROSPECTIVE,
 					      "restoring eclipsed",
 					      logger);

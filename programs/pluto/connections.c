@@ -4067,44 +4067,55 @@ void connection_delete_unused_instance(struct connection **cp,
 }
 
 /*
- * A template connection's eroute can be eclipsed by
- * either a %hold or an eroute for an instance iff
- * the template is a /32 -> /32. This requires some special casing.
+ * Return the template template connection's eroute that has been
+ * eclipsed by either a %hold or an eroute for an instance.
+ *
+ * This can be the case IFF the template is a /32 -> /32.  This
+ * requires some special casing.
+ *
+ * XXX: Based on the pexpect() it can can be reduced to just walking
+ * the from_serial list; since this stuff never has multiple
+ * spd_routes, can just assume there's one.
  */
-long eclipse_count = 0;
 
-struct connection *eclipsed(const struct connection *c, struct spd_route **esrp /*OUT*/)
+struct spd_route *eclipsing(const struct spd_route *sr)
 {
-	/*
-	 * This function was changed in freeswan 2.02 and since
-	 * then has never worked because it always returned NULL.
-	 * It should be caught by the testing/pluto/co-terminal test cases.
-	 * ??? DHR doesn't know how much of this is true.
-	 */
-
-	/* ??? this logic seems broken: it doesn't try all spd_routes of c */
-
-	/* XXX This logic also predates support for protoports, which isn't handled below */
-
-	struct connection_filter cq = { .where = HERE, };
-	while (next_connection_new2old(&cq)) {
-		struct connection *ue = cq.c;
-
-		for (struct spd_route *srue = &ue->spd; srue != NULL; srue =srue->spd_next) {
-			for (const struct spd_route *src = &c->spd; src != NULL; src = src->spd_next) {
-				if (srue->routing == RT_ROUTED_ECLIPSED &&
-				    selector_range_eq_selector_range(src->this.client, srue->this.client) &&
-				    selector_range_eq_selector_range(src->that.client, srue->that.client)) {
-					connection_buf cb, ub;
-					dbg(PRI_CONNECTION" eclipsed "PRI_CONNECTION,
-					    pri_connection(c, &cb), pri_connection(ue, &ub));
-					*esrp = srue;
-					return ue;
-				}
-			}
-		}
+	if (sr->connection->kind != CK_INSTANCE &&
+	    sr->connection->kind != CK_GOING_AWAY) {
+		enum_buf kb;
+		connection_buf cb;
+		dbg(PRI_CONNECTION" is not eclipsing, kind %s needs to be an instance (or GOING_AWAY, ugh)",
+		    pri_connection(sr->connection, &cb),
+		    str_enum(&connection_kind_names, sr->connection->kind, &kb));
+		/* don't consider sec_labels */
+		return NULL;
 	}
-	*esrp = NULL;
+
+	/*
+	 * Starting with the SR's connection parent, Walk the parent
+	 * chain looking for a connection with an eclipsed SPD.
+	 */
+	for (struct connection *c = connection_by_serialno(sr->connection->serial_from);
+	     c != NULL;
+	     c = connection_by_serialno(c->serial_from)) {
+		struct spd_route *srue = &c->spd;
+		if (srue->routing != RT_ROUTED_ECLIPSED) {
+			continue;
+		}
+		/*
+		 * Eclipsable connections can have only one SPD; rest
+		 * just sanity checks.
+		 */
+		pexpect(srue->spd_next == NULL);
+		pexpect(eclipsable(srue));
+		pexpect(selector_range_eq_selector_range(sr->this.client, srue->this.client));
+		pexpect(selector_range_eq_selector_range(sr->that.client, srue->that.client));
+		connection_buf cb, ub;
+		dbg(PRI_CONNECTION" eclipsing "PRI_CONNECTION,
+		    pri_connection(sr->connection, &cb),
+		    pri_connection(srue->connection, &ub));
+		return srue;
+	}
 	return NULL;
 }
 
