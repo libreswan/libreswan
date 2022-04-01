@@ -2831,24 +2831,6 @@ bool route_and_eroute(struct connection *c,
 
 		if (bspp != NULL) {
 			free_bare_shunt(bspp);
-		} else if (ero != NULL && ero != c) {
-			/* check if ero is an ancestor of c. */
-			struct connection *ero2;
-
-			for (ero2 = c; ero2 != NULL && ero2 != c;
-				ero2 = ero2->policy_next)
-				;
-
-			if (ero2 == NULL) {
-				/*
-				 * By elimination, we must be eclipsing ero.
-				 * Checked above.
-				 */
-				if (ero->spd.routing != RT_ROUTED_ECLIPSED) {
-					ero->spd.routing = RT_ROUTED_ECLIPSED;
-					eclipse_count++;
-				}
-			}
 		}
 
 		if (st == NULL) {
