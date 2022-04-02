@@ -1104,33 +1104,22 @@ static int extract_end(struct connection *c,
 		return -1;
 	}
 
-	/* these may be tweaked */
+	/*
+	 * Determine the authentication from auth= and authby=.
+	 */
 
-	struct authby authby = (NEVER_NEGOTIATE(wm->policy) ? AUTHBY_NEVER :
-				wm->authby);
-
-	if (wm->ike_version == IKEv1) {
-		/* strip stuff IKEv1 ignores */
-		authby.ecdsa = false;
-		authby.rsasig_v1_5 = false;
-	}
-
-	if (wm->ike_version == IKEv1 && src->auth != AUTH_UNSET) {
+	if (NEVER_NEGOTIATE(wm->policy) && src->auth != AUTH_UNSET && src->auth != AUTH_NEVER) {
+		/* AUTH_UNSET is updated below */
+		enum_buf ab;
 		llog(RC_FATAL, c->logger,
-		     "failed to add connection: %sauth= requires IKEv2", leftright);
-		return -1;
-	}
-
-	if (NEVER_NEGOTIATE(wm->policy) && src->auth != AUTH_UNSET) {
-		llog(RC_FATAL, c->logger,
-		     "failed to add connection: %sauth= option is invalid for type=passthrough connection",
-		     leftright);
+		     "failed to add connection: %sauth=%s option is invalid for type=passthrough connection",
+		     leftright, str_enum_short(&keyword_auth_names, src->auth, &ab));
 		return -1;
 	}
 
 	/*
-	 * Note: this checks the incoming WM (wack message), and not
-	 * the outgoing C (connection) - it could be done before
+	 * Note: this checks the whack message (WM), and not the
+	 * connection (C) being construct - it could be done before
 	 * extract_end(), but do it here.
 	 *
 	 * XXX: why not allow this?
@@ -1141,7 +1130,55 @@ static int extract_end(struct connection *c,
 		return -1;
 	}
 
+	/* value starting points */
+	struct authby authby = (NEVER_NEGOTIATE(wm->policy) ? AUTHBY_NEVER :
+				!authby_is_set(wm->authby) ? AUTHBY_DEFAULTS :
+				wm->authby);
 	enum keyword_auth auth = src->auth;
+
+	/*
+	 * IKEv1 determines AUTH from authby= (it ignores auth= and
+	 * bonus bits in authby=foo,bar).
+	 *
+	 * This logic still applies when NEVER_NEGOTIATE() - it turns
+	 * above AUTHBY_NEVER into AUTH_NEVER.
+	 */
+	if (wm->ike_version == IKEv1) {
+		/* override auth= using above authby= */
+		if (auth != AUTH_UNSET) {
+			llog(RC_FATAL, c->logger,
+			     "failed to add connection: %sauth= is not supported by IKEv1", leftright);
+			return -1;
+		}
+		auth = auth_from_authby(authby);
+		/* Force authby= to be consistent with selected AUTH */
+		authby = authby_from_auth(auth);
+		authby.ecdsa = false;
+		authby.rsasig_v1_5 = false;
+		if (!authby_is_set(authby)) {
+			/* just striped ECDSA say */
+			authby_buf ab;
+			llog(RC_FATAL, c->logger,
+			     "failed to add connection: authby=%s is invalid for IKEv1",
+			     str_authby(wm->authby, &ab));
+			return -1;
+		}
+		/* ignore bonus wm->authby (not authby) bits */
+		struct authby exclude = authby_not(authby);
+		struct authby supplied = wm->authby;
+		supplied.rsasig_v1_5 = false;
+		supplied.ecdsa = false;
+		struct authby unexpected = authby_and(supplied, exclude);
+		if (authby_is_set(unexpected)) {
+			authby_buf wb, ub;
+			llog(RC_FATAL, logger,
+			     "failed to add connection: additional %s in authby=%s is not supported by IKEv1",
+			     str_authby(unexpected, &ub),
+			     str_authby(supplied, &wb));
+			return -1;
+		}
+	}
+
 	struct authby authby_mask = {0};
 	switch (auth) {
 	case AUTH_RSASIG:
@@ -1168,13 +1205,14 @@ static int extract_end(struct connection *c,
 	}
 
 	if (authby_is_set(authby_mask)) {
-		authby = authby_intersection(authby, authby_mask);
+		authby = authby_and(authby, authby_mask);
 		if (!authby_is_set(authby)) {
 			enum_buf ab;
 			authby_buf pb;
 			llog(RC_LOG_SERIOUS, logger,
 			     "failed to add connection: %sauth=%s expects authby=%s",
-			     leftright, str_enum_short(&keyword_auth_names, auth, &ab),
+			     leftright,
+			     str_enum_short(&keyword_auth_names, auth, &ab),
 			     str_authby(authby_mask, &pb));
 			return -1;
 		}
@@ -3620,7 +3658,7 @@ static void show_one_sr(struct show *s,
 			struct authby expect = authby_from_auth(end->auth);
 			struct authby mask = (oriented(c) && end == &c->local->config->host ? expect : AUTHBY_ALL);
 			expect.rsasig_v1_5 = false;
-			struct authby authby = authby_intersection(end->authby, mask);
+			struct authby authby = authby_and(end->authby, mask);
 			if (authby_eq(authby, expect)) {
 				jam_enum_short(buf, &keyword_auth_names, end->auth);
 			} else if (oriented(c) && end == &c->remote->config->host) {

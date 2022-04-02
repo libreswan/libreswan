@@ -2530,14 +2530,13 @@ int main(int argc, char **argv)
 
 	if (!authby_is_set(msg.authby)) {
 		/*
-		 * Since the options above always set both AUTHBY and
-		 * SIGHASH bits, only need to check AUTHBY for unset.
+		 * Since any option potentially setting SIGHASH bits
+		 * always sets AUTHBY, check that.
 		 *
 		 * Mimic addconn's behaviour: specifying auth= (yes,
 		 * whack calls it --authby) does not clear the
 		 * policy_authby defaults.  That is left to pluto.
 		 */
-		msg.authby = AUTHBY_DEFAULTS;
 		msg.sighash_policy |= POL_SIGHASH_DEFAULTS;
 	}
 

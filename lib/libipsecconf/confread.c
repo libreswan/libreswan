@@ -181,7 +181,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 		     POLICY_ENCRYPT | POLICY_PFS |
 		     /* ike_frag=yes */ POLICY_IKE_FRAG_ALLOW |
 		     /* esn=either */ POLICY_ESN_NO | POLICY_ESN_YES);
-	d->authby = AUTHBY_DEFAULTS;
+	d->authby = AUTHBY_NONE; /* blank goes to defaults */
 	d->prospective_shunt = SHUNT_UNSET;
 	d->negotiation_shunt = SHUNT_UNSET;
 	d->failure_shunt = SHUNT_UNSET;

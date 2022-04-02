@@ -41,8 +41,10 @@ struct authby {
 #define AUTHBY_NONE (struct authby) {0}
 #define AUTHBY_ALL (struct authby) { true, true, true, true, true, true }
 
-struct authby authby_intersection(struct authby lhs, struct authby rhs);
-struct authby authby_union(struct authby lhs, struct authby rhs);
+struct authby authby_xor(struct authby lhs, struct authby rhs);
+struct authby authby_and(struct authby lhs, struct authby rhs);
+struct authby authby_or(struct authby lhs, struct authby rhs);
+struct authby authby_not(struct authby lhs);
 bool authby_le(struct authby lhs, struct authby rhs);
 bool authby_is_set(struct authby authby);
 bool authby_eq(struct authby, struct authby);

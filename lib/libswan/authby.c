@@ -45,12 +45,22 @@ bool authby_is_set(struct authby authby)
 	return REDUCE(authby, ||);
 }
 
-struct authby authby_intersection(struct authby lhs, struct authby rhs)
+struct authby authby_xor(struct authby lhs, struct authby rhs)
+{
+	return OP(lhs, !=, rhs);
+}
+
+struct authby authby_not(struct authby lhs)
+{
+	return authby_xor(lhs, AUTHBY_ALL);
+}
+
+struct authby authby_and(struct authby lhs, struct authby rhs)
 {
 	return OP(lhs, &&, rhs);
 }
 
-struct authby authby_union(struct authby lhs, struct authby rhs)
+struct authby authby_or(struct authby lhs, struct authby rhs)
 {
 	return OP(lhs, ||, rhs);
 }
