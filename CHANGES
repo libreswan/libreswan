@@ -2,6 +2,7 @@
 See also https://libreswan.org/
 
 v4.7 (unreleased)
+* IKEv1: reject IKEv2 only authby=secret+rsasig [Andrew]
 * config: end keywords with no left/right prefix are applied to both ends
 * IKEv2: fix interop with Android 12 + certificates [Andrew]
 * FreeBSD: libreswan builds out-of-the-box [Andrew]
