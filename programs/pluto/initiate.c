@@ -958,7 +958,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	if (raw_policy(KP_ADD_OUTBOUND, THIS_IS_NOT_INBOUND,
 		       &local_shunt, &remote_shunt,
 		       b->negotiation_shunt,
-		       &kernel_policy,
+		       (b->negotiation_shunt == SHUNT_PASS ? NULL : &kernel_policy),
 		       deltatime(SHUNT_PATIENCE),
 		       calculate_sa_prio(c, LIN(POLICY_OPPORTUNISTIC, c->policy) ? true : false),
 		       NULL, 0 /* xfrm-if-id */,
