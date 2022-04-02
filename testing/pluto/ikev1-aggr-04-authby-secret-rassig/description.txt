@@ -1,1 +1,1 @@
-IKEv1 using agressive mode and explicit authby=secret,rsasig (should choose PSK!?!)
+IKEv1 rejects connection us agressive mode and explicit authby=secret,rsasig
