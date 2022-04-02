@@ -532,6 +532,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 			    const shunk_t sec_label,
 			    struct logger *logger)
 {
+	const char *op_str = enum_name(&kernel_policy_op_names, op);
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
 	pexpect(selector_protocol(*dst_client) == client_proto);
 
@@ -546,12 +547,10 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	} req;
 
 	unsigned xfrm_action;
-	bool xfrm_tmpl;
 	const char *policy_name;
 	/* shunt route */
 	switch (shunt_policy) {
 	case SHUNT_UNSET:
-		xfrm_tmpl = true;
 		xfrm_action = XFRM_POLICY_ALLOW;
 		if (kernel_policy != NULL && kernel_policy->last > 0) {
 			policy_name =
@@ -565,7 +564,6 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 		break;
 	case SHUNT_PASS:
 		xfrm_action = XFRM_POLICY_ALLOW;
-		xfrm_tmpl = false;
 		policy_name = "%pass(none)";
 		break;
 	case SHUNT_HOLD:
@@ -582,19 +580,16 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	case SHUNT_DROP:
 		/* used with type=passthrough - can it not use SHUNT_PASS ?? */
 		xfrm_action = XFRM_POLICY_BLOCK;
-		xfrm_tmpl = true;
 		policy_name = "%drop(discard)";
 		break;
 	case SHUNT_REJECT:
 		/* used with type=passthrough - can it not use SHUNT_PASS ?? */
 		xfrm_action = XFRM_POLICY_BLOCK;
-		xfrm_tmpl = true;
 		policy_name = "%reject(discard)";
 		break;
 	case SHUNT_NONE:
 		/* used with type=passthrough - can it not use SPI_PASS ?? */
 		xfrm_action = XFRM_POLICY_BLOCK;
-		xfrm_tmpl = true;
 		policy_name = "%discard(discard)";
 		break;
 	case SHUNT_TRAP:
@@ -603,7 +598,6 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 			return true;
 		}
 		xfrm_action = XFRM_POLICY_ALLOW;
-		xfrm_tmpl = true;
 		policy_name = "%trap(ipsec)";
 		break;
 	default:
@@ -611,8 +605,8 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	}
 
 	const unsigned xfrm_dir = (op == KP_ADD_INBOUND || op == KP_DELETE_INBOUND) ? XFRM_POLICY_IN : XFRM_POLICY_OUT;
-	dbg("%s() policy=%s action=%d templ=%s dir=%d",
-	    __func__, policy_name, xfrm_action, bool_str(xfrm_tmpl), xfrm_dir);
+	dbg("%s() policy=%s action=%d dir=%d op=%s",
+	    __func__, policy_name, xfrm_action, xfrm_dir, op_str);
 
 	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
@@ -662,8 +656,21 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 		req.u.id.dir = xfrm_dir;
 		req.n.nlmsg_type = XFRM_MSG_DELPOLICY;
 		req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.u.id)));
+		pexpect(kernel_policy == NULL);
 	} else {
+		/*
+		 * NEW will fail when an existing policy, UPD always
+		 * works.  This seems to happen in cases with NAT'ed
+		 * XP clients, or quick recycling/resurfacing of
+		 * roadwarriors on the same IP.
+		 *
+		 * UPD is also needed for two separate tunnels with
+		 * same end subnets.  Like A = B = C config where both
+		 * A - B and B - C have tunnel A = C configured.
+		 */
 		req.u.p.dir = xfrm_dir;
+		req.n.nlmsg_type = XFRM_MSG_UPDPOLICY;
+		req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.u.p)));
 
 		/* The caller should have set the proper priority by now */
 		req.u.p.priority = sa_priority;
@@ -675,19 +682,6 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 		req.u.p.lft.soft_packet_limit = XFRM_INF;
 		req.u.p.lft.hard_byte_limit = XFRM_INF;
 		req.u.p.lft.hard_packet_limit = XFRM_INF;
-
-		/*
-		 * NEW will fail when an existing policy, UPD always works.
-		 * This seems to happen in cases with NAT'ed XP clients, or
-		 * quick recycling/resurfacing of roadwarriors on the same IP.
-		 *
-		 * UPD is also needed for two separate tunnels with same end
-		 * subnets
-		 * Like A = B = C config where both A - B and B - C have
-		 * tunnel A = C configured.
-		 */
-		req.n.nlmsg_type = XFRM_MSG_UPDPOLICY;
-		req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.u.p)));
 	}
 
 	/*
@@ -695,13 +689,15 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	 * will carry the packets (which the kernel seems to call
 	 * user_templ).
 	 *
+	 * This is not needed when deleting; and this is not needed
+	 * when installing a PASS policy.
+	 *
 	 * XXX: why not just test proto_info - let caller decide if it
 	 * is needed.  Lets find out.
 	 */
-	if (kernel_policy != NULL && xfrm_tmpl &&
+	if (kernel_policy != NULL &&
 	    op != KP_DELETE_OUTBOUND &&
 	    op != KP_DELETE_INBOUND) {
-		pexpect(xfrm_tmpl == true);
 		struct xfrm_user_tmpl tmpls[4] = {0};
 
 		/* remember; kernel_policy.rule[] is 1 based */
@@ -747,19 +743,19 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 
 	} else if (DBGP(DBG_BASE)) {
 		if (kernel_policy == NULL) {
-			DBG_log("%s() ignoring xfrm_user_tmpl because NULL, templ=%s op=%d",
-				__func__, bool_str(xfrm_tmpl), op);
+			DBG_log("%s() ignoring xfrm_user_tmpl because NULL, op=%s",
+				__func__, op_str);
 		} else {
 			/*
 			 * Dump ignored proto_info[].
 			 */
 			for (unsigned i = 1; i <= kernel_policy->last; i++) {
 				const struct kernel_policy_rule *rule = &kernel_policy->rule[i];
-				DBG_log("%s() ignoring xfrm_user_tmpl reqid=%d proto=%s %s because tmpl=%s op=%d",
+				DBG_log("%s() ignoring xfrm_user_tmpl reqid=%d proto=%s %s because op=%s",
 					__func__, rule->reqid,
 					protocol_by_ipproto(rule->proto)->name,
 					encap_mode_name(kernel_policy->mode),
-					bool_str(xfrm_tmpl), op);
+					op_str);
 			}
 		}
 	}
@@ -769,8 +765,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	 *
 	 * XXX: again, can't the caller decide this?
 	 */
-	if (sa_marks != NULL && xfrm_tmpl) {
-		pexpect(xfrm_tmpl == true);
+	if (sa_marks != NULL) {
 		if (xfrmi == NULL) {
 			struct sa_mark sa_mark = (xfrm_dir == XFRM_POLICY_IN) ? sa_marks->in : sa_marks->out;
 
@@ -790,6 +785,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 			}
 #ifdef USE_XFRM_INTERFACE
 		} else {
+			/* XXX: strange how this only looks at .out */
 			dbg("%s() adding XFRMA_IF_ID %" PRIu32 " req.n.nlmsg_type=%" PRIu32,
 			    __func__, xfrmi->if_id, req.n.nlmsg_type);
 			nl_addattr32(&req.n, sizeof(req.data), XFRMA_IF_ID, xfrmi->if_id);
@@ -805,11 +801,6 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 			}
 #endif
 		}
-	} else if (DBGP(DBG_BASE) && sa_marks != NULL) {
-		DBG_log("%s() ignoring xfrm_mark in %x/%x out %x/%x because tmpl=%s op=%d", __func__,
-			sa_marks->in.val, sa_marks->in.mask,
-			sa_marks->out.val, sa_marks->out.mask,
-			bool_str(xfrm_tmpl), op);
 	}
 
 	if (sec_label.len > 0) {
