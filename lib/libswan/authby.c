@@ -99,6 +99,7 @@ enum keyword_auth auth_from_authby(struct authby authby)
 		authby.rsasig_v1_5 ? AUTH_RSASIG :
 		authby.psk ? AUTH_PSK :
 		authby.null ? AUTH_NULL :
+		authby.never ? AUTH_NEVER :
 		AUTH_UNSET);
 }
 

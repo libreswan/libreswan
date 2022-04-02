@@ -1129,8 +1129,11 @@ static int extract_end(struct connection *c,
 	}
 
 	/*
-	 * XXX: why?  Note: this checks WM, not C - it could be done
-	 * before extract_end(), but do it here.
+	 * Note: this checks the incoming WM (wack message), and not
+	 * the outgoing C (connection) - it could be done before
+	 * extract_end(), but do it here.
+	 *
+	 * XXX: why not allow this?
 	 */
 	if ((src->auth == AUTH_UNSET) != (other_src->auth == AUTH_UNSET)) {
 		llog(RC_FATAL, c->logger,
@@ -2173,8 +2176,9 @@ static bool extract_connection(const struct whack_message *wm,
 	 */
 
 	if (NEVER_NEGOTIATE(c->policy)) {
-		if (!pexpect(c->local->config->host.auth == AUTH_UNSET &&
-			     c->remote->config->host.auth == AUTH_UNSET)) {
+		if (!PEXPECT(c->logger,
+			     c->local->config->host.auth == AUTH_NEVER &&
+			     c->remote->config->host.auth == AUTH_NEVER)) {
 			return false;
 		}
 	} else {
