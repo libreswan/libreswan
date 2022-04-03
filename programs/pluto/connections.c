@@ -2258,10 +2258,10 @@ static bool extract_connection(const struct whack_message *wm,
 	/* set internal fields */
 	c->instance_serial = 0;
 	c->interface = NULL; /* initializing */
-	c->spd.routing = RT_UNROUTED;
+	set_spd_routing(&c->spd, RT_UNROUTED);
+	set_spd_owner(&c->spd, SOS_NOBODY);
 	c->newest_ike_sa = SOS_NOBODY;
 	c->newest_ipsec_sa = SOS_NOBODY;
-	c->spd.eroute_owner = SOS_NOBODY;
 	c->temp_vars.num_redirects = 0;
 	/*
 	 * is spd.reqid necessary for all c? CK_INSTANCE or CK_PERMANENT
@@ -2619,10 +2619,12 @@ struct connection *instantiate(struct connection *c,
 	set_policy_prio(d);
 
 	/* set internal fields */
-	d->spd.routing = RT_UNROUTED;
+	set_spd_routing(&d->spd, RT_UNROUTED);
+	set_spd_owner(&d->spd, SOS_NOBODY);
+
 	d->newest_ike_sa = SOS_NOBODY;
 	d->newest_ipsec_sa = SOS_NOBODY;
-	d->spd.eroute_owner = SOS_NOBODY;
+
 
 	/* reset log file info */
 	d->log_file_name = NULL;
@@ -3201,7 +3203,7 @@ struct connection *oppo_instantiate(struct connection *c,
 	 * If there was another instance eclipsing, we'd be using it.
 	 */
 	if (c->spd.routing == RT_ROUTED_ECLIPSED)
-		d->spd.routing = RT_ROUTED_PROSPECTIVE;
+		set_spd_routing(&d->spd, RT_ROUTED_PROSPECTIVE);
 
 	/*
 	 * Remember if the template is routed:

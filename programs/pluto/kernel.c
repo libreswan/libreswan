@@ -226,7 +226,7 @@ static bool bare_policy_op(enum kernel_policy_op op,
 		/* maybe we are uneclipsing something */
 		struct spd_route *esr = eclipsing(sr);
 		if (esr != NULL) {
-			esr->routing = RT_ROUTED_PROSPECTIVE;
+			set_spd_routing(esr, RT_ROUTED_PROSPECTIVE);
 			return bare_policy_op(KP_REPLACE_OUTBOUND,
 					      THIS_IS_NOT_INBOUND,
 					      esr->connection, esr,
@@ -1073,8 +1073,8 @@ static enum routability note_nearconflict(struct connection *outside,	/* CK_PERM
 	 * policy, we need to make sure that it no longer thinks that
 	 * it owns the eroute.
 	 */
-	outside->spd.eroute_owner = SOS_NOBODY;
-	outside->spd.routing = RT_UNROUTED_KEYED;
+	set_spd_routing(&outside->spd, RT_UNROUTED_KEYED);
+	set_spd_owner(&outside->spd, SOS_NOBODY);
 
 	/*
 	 * set the priority of the new eroute owner to be higher
@@ -1310,7 +1310,8 @@ void migration_up(struct child_sa *child)
 #ifdef IPSEC_CONNECTION_LIMIT
 		num_ipsec_eroute++;
 #endif
-		sr->routing = RT_ROUTED_TUNNEL; /* do now so route_owner won't find us */
+		/* do now so route_owner won't find us */
+		set_spd_routing(sr, RT_ROUTED_TUNNEL);
 		do_command(c, sr, "up", &child->sa, child->sa.st_logger);
 		do_command(c, sr, "route", &child->sa, child->sa.st_logger);
 	}
@@ -1326,8 +1327,8 @@ void migration_down(struct child_sa *child)
 		if (erouted(cr))
 			num_ipsec_eroute--;
 #endif
-
-		sr->routing = RT_UNROUTED; /* do now so route_owner won't find us */
+		/* do now so route_owner won't find us */
+		set_spd_routing(sr, RT_UNROUTED);
 
 		/* only unroute if no other connection shares it */
 		if (routed(cr) && route_owner(c, sr, NULL, NULL, NULL) == NULL) {
@@ -1368,7 +1369,8 @@ void unroute_connection(struct connection *c)
 #endif
 		}
 
-		sr->routing = RT_UNROUTED; /* do now so route_owner won't find us */
+		/* do now so route_owner won't find us */
+		set_spd_routing(sr, RT_UNROUTED);
 
 		/* only unroute if no other connection shares it */
 		if (routed(cr) && route_owner(c, sr, NULL, NULL, NULL) == NULL) {
@@ -1689,7 +1691,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	}
 
 	/* Success! */
-	c->spd.routing = RT_ROUTED_PROSPECTIVE;
+	set_spd_routing(&c->spd, RT_ROUTED_PROSPECTIVE);
 	return true;
 }
 
@@ -1858,7 +1860,7 @@ bool assign_holdpass(const struct connection *c,
 			return false;
 		}
 	}
-	sr->routing = rn;
+	set_spd_routing(sr, rn);
 	dbg("kernel:  assign_holdpass() done - returning success");
 	return true;
 }
@@ -2801,8 +2803,7 @@ bool route_and_eroute(struct connection *c,
 				dbg("kernel: installed route: ro name=%s, rosr->routing was %s",
 					ro->name, enum_name(&routing_story, rosr->routing));
 				pexpect(!erouted(rosr->routing)); /* warn for now - requires fixing */
-				rosr->routing = RT_UNROUTED;
-
+				set_spd_routing(rosr, RT_UNROUTED);
 				/* no need to keep old value */
 				ro = route_owner(c, sr, &rosr, NULL, NULL);
 			} while (ro != NULL);
@@ -2819,17 +2820,10 @@ bool route_and_eroute(struct connection *c,
 
 		if (st == NULL) {
 			passert(sr->eroute_owner == SOS_NOBODY);
-			sr->routing = RT_ROUTED_PROSPECTIVE;
+			set_spd_routing(sr, RT_ROUTED_PROSPECTIVE);
 		} else {
-			sr->routing = RT_ROUTED_TUNNEL;
-			connection_buf cib;
-			dbg("kernel: route_and_eroute: instance "PRI_CONNECTION", setting eroute_owner {spd=%p,sr=%p} to #%lu (was #%lu) (newest_ipsec_sa=#%lu)",
-			    pri_connection(st->st_connection, &cib),
-			    &st->st_connection->spd, sr,
-			    st->st_serialno,
-			    sr->eroute_owner,
-			    st->st_connection->newest_ipsec_sa);
-			sr->eroute_owner = st->st_serialno;
+			set_spd_routing(sr, RT_ROUTED_TUNNEL);
+			set_spd_owner(sr, st->st_serialno);
 			/* clear host shunts that clash with freshly installed route */
 			clear_narrow_holds(&sr->this.client, &sr->that.client, logger);
 		}
@@ -3035,8 +3029,8 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 		struct spd_route *srcisco = st->st_connection->spd.spd_next;
 
 		if (srcisco != NULL) {
-			st->st_connection->spd.eroute_owner = srcisco->eroute_owner;
-			st->st_connection->spd.routing = srcisco->routing;
+			set_spd_owner(&st->st_connection->spd, srcisco->eroute_owner);
+			set_spd_routing(&st->st_connection->spd, srcisco->routing);
 		}
 	}
 
@@ -3096,9 +3090,7 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 			continue;
 		}
 
-		dbg("kernel: %s() changing eroute_owner "PRI_SO" to NOBODY",
-		    __func__, pri_so(sr->eroute_owner));
-		sr->eroute_owner = SOS_NOBODY;
+		set_spd_owner(sr, SOS_NOBODY);
 
 		/*
 		 * Routing should become RT_ROUTED_FAILURE, but if
@@ -3108,12 +3100,7 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 		enum routing_t new_routing =
 			(c->config->failure_shunt == SHUNT_NONE ? RT_ROUTED_PROSPECTIVE :
 			 RT_ROUTED_FAILURE);
-		enum_buf orb, nrb;
-		dbg("kernel: %s() changing routing from %s to %s",
-		    __func__,
-		    str_enum_short(&routing_story, sr->routing, &orb),
-		    str_enum_short(&routing_story, new_routing, &nrb));
-		sr->routing = new_routing;
+		set_spd_routing(sr, new_routing);
 
 		if (sr == &c->spd && c->remotepeertype == CISCO) {
 			dbg("kernel: %s() skipping, first SPD and remotepeertype is CISCO, damage done",
@@ -3503,7 +3490,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 	}
 
 	/* change routing so we don't get cleared out when state/connection dies */
-	sr->routing = rn;
+	set_spd_routing(sr, rn);
 	dbg("kernel: orphan_holdpas() done - returning success");
 	return true;
 }
