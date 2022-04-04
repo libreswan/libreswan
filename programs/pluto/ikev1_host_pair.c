@@ -115,19 +115,38 @@ static bool match_v1_connection(struct connection *c, struct authby authby,
 	}
 
 	/*
-	 * Success if all specified authby bits are in candidate's
-	 * policy.  It works even when the exact-match bits are
-	 * included.
+	 * Check that the proposed authby matches the connection's
+	 * auth (IKEv1 only does one auth per connection) so match
+	 * needs to be exact.
 	 *
-	 * XXX: this interacts with preparse_isakmp_sa_body() which
-	 * clears all the authby bits when there's more than one!
+	 * Order matters.  First match, be it RSA or PSK is accepted.
 	 */
-	if ((authby.rsasig && !(c->policy & POLICY_RSASIG)) ||
-	    (authby.psk && !(c->policy & POLICY_PSK))) {
+	switch (c->remote->config->host.auth) {
+	case AUTH_RSASIG:
+		if (!authby.rsasig) {
+			connection_buf cb;
+			dbg("  skipping "PRI_CONNECTION", RSASIG was not proposed",
+			    pri_connection(c, &cb));
+			return false;
+		}
+		break;
+	case AUTH_PSK:
+		if (!authby.psk) {
+			connection_buf cb;
+			dbg("  skipping "PRI_CONNECTION", PSK was not proposed",
+			    pri_connection(c, &cb));
+			return false;
+		}
+		break;
+	default:
+	{
 		connection_buf cb;
-		dbg("  skipping "PRI_CONNECTION", req policy missing",
-		    pri_connection(c, &cb));
+		enum_buf eb;
+		dbg("  skipping "PRI_CONNECTION", %s is never proposed",
+		    pri_connection(c, &cb),
+		    str_enum(&keyword_auth_names, c->remote->config->host.auth, &eb));
 		return false;
+	}
 	}
 
 	return true;

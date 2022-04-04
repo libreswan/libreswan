@@ -1522,20 +1522,6 @@ diag_t preparse_isakmp_sa_body(struct pbs_in sa_pbs /* by value! */,
 		}
 	}
 
-	/*
-	 * These policy bits will be used in a call to find_host_connection.
-	 * The meaning is: each of these present bits must be present
-	 * in a connection's policy.
-	 *
-	 * If both PSK and RSASIG are present now, that means that
-	 * either is acceptable.  The right way to express this is
-	 * to turn both off!
-	 */
-	if (authby.psk && authby.rsasig) {
-		authby.psk = false;
-		authby.rsasig = false;
-	}
-
 	*authby_out = authby;
 	*xauth_out = xauth;
 	return NULL;

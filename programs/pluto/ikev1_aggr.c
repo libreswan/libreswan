@@ -181,6 +181,15 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 	}
 
 	ike->sa.st_policy = policy_from_authby_xauth(authby, xauth) | POLICY_AGGRESSIVE;	/* ??? not sure what's needed here */
+	if (authby.rsasig && authby.psk) {
+		/*
+		 * XXX: scrub policy bits; broken as want .st_policy
+		 * to contain the auth that was used?  Main Mode path
+		 * just sets it to the connection's policy (which is
+		 * almost as bad).
+		 */
+		ike->sa.st_policy &= ~(POLICY_RSASIG|POLICY_PSK);
+	}
 
 	/*
 	 * ??? not sure what's needed here.
