@@ -30,10 +30,9 @@
 #include "iface.h"
 #include "ikev1_spdb.h"
 
-static bool match_v1_connection(struct connection *c,
-				lset_t req_policy,
-				bool exact_match_policy_xauth,
-				const struct id *peer_id)
+static bool match_v1_connection(struct connection *c, struct authby authby,
+				bool policy_xauth, bool exact_match_policy_xauth,
+				bool policy_aggressive, const struct id *peer_id)
 {
 	if (c->config->ike_version != IKEv1) {
 		connection_buf cb;
@@ -95,14 +94,14 @@ static bool match_v1_connection(struct connection *c,
 	 * the policy_exact_mask.
 	 */
 	if (exact_match_policy_xauth) {
-		if ((req_policy & POLICY_XAUTH) != (c->policy & POLICY_XAUTH)) {
+		if (policy_xauth == !(c->policy & POLICY_XAUTH)) {
 			connection_buf cb;
 			dbg("  skipping "PRI_CONNECTION", exact match POLICY_XAUTH failed",
 			    pri_connection(c, &cb));
 			return false;
 		}
 	}
-	if ((req_policy & POLICY_AGGRESSIVE) != (c->policy & POLICY_AGGRESSIVE)) {
+	if (policy_aggressive == !(c->policy & POLICY_AGGRESSIVE)) {
 		connection_buf cb;
 		dbg("  skipping "PRI_CONNECTION", exact match POLICY_AGGRESSIVE failed",
 		    pri_connection(c, &cb));
@@ -118,11 +117,15 @@ static bool match_v1_connection(struct connection *c,
 	}
 
 	/*
-	 * Success if all specified policy bits are in candidate's
+	 * Success if all specified authby bits are in candidate's
 	 * policy.  It works even when the exact-match bits are
 	 * included.
+	 *
+	 * XXX: this interacts with preparse_isakmp_sa_body() which
+	 * clears all the authby bits when there's more than one!
 	 */
-	if ((req_policy & ~c->policy) != LEMPTY) {
+	if ((authby.rsasig && !(c->policy & POLICY_RSASIG)) ||
+	    (authby.psk && !(c->policy & POLICY_PSK))) {
 		connection_buf cb;
 		dbg("  skipping "PRI_CONNECTION", req policy missing",
 		    pri_connection(c, &cb));
@@ -162,23 +165,27 @@ static bool match_v1_connection(struct connection *c,
 
 static struct connection *find_v1_host_connection(const ip_address local_address,
 						  const ip_address remote_address,
-						  lset_t req_policy,
-						  bool exact_match_policy_xauth,
+						  struct authby authby,
+						  bool policy_xauth, bool exact_match_policy_xauth,
+						  bool policy_aggressive,
 						  const struct id *peer_id)
 {
 	address_buf lb;
 	address_buf rb;
-	policy_buf pb;
-	dbg("%s() %s->%s policy=%s but ignoring ports",
+	authby_buf pb;
+	dbg("%s() %s->%s authby=%s xauth=%s(exact=%s) aggressive=%s(exact=true) but ignoring ports",
 	    __func__,
 	    str_address(&remote_address, &rb),
 	    str_address(&local_address, &lb),
-	    str_policy(req_policy, &pb));
+	    str_authby(authby, &pb),
+	    bool_str(policy_xauth), bool_str(exact_match_policy_xauth),
+	    bool_str(policy_aggressive));
 
 	struct connection *c = NULL;
 	FOR_EACH_HOST_PAIR_CONNECTION(local_address, remote_address, d) {
-		if (!match_v1_connection(d, req_policy, exact_match_policy_xauth,
-					 peer_id)) {
+		if (!match_v1_connection(d, authby,
+					 policy_xauth, exact_match_policy_xauth,
+					 policy_aggressive, peer_id)) {
 			continue;
 		}
 
@@ -201,24 +208,26 @@ static struct connection *find_v1_host_connection(const ip_address local_address
 }
 
 struct connection *find_v1_aggr_mode_connection(struct msg_digest *md,
-						lset_t req_policy,
+						struct authby authby,
+						bool policy_xauth,
 						const struct id *peer_id)
 {
 	struct connection *c;
 
 	c = find_v1_host_connection(md->iface->ip_dev->id_address,
 				    endpoint_address(md->sender),
-				    req_policy, true/*exact match POLICY_XAUTH*/,
+				    authby,
+				    policy_xauth, true/*exact match POLICY_XAUTH*/,
+				    true/*POLICY_AGGRESSIVE*/,
 				    peer_id);
 	if (c != NULL) {
 		return c;
 	}
 
 	c = find_v1_host_connection(md->iface->ip_dev->id_address, unset_address,
-				    req_policy, true/*exact match POLICY_XAUTH*/,
-				    peer_id);
+				    authby, policy_xauth, true/*exact match POLICY_XAUTH*/,
+				    true/*POLICY_AGGRESSIVE*/, peer_id);
 	if (c != NULL) {
-		passert(LIN(req_policy, c->policy));
 		/* Create a temporary connection that is a copy of this one.
 		 * Peers ID isn't declared yet.
 		 */
@@ -227,11 +236,11 @@ struct connection *find_v1_aggr_mode_connection(struct msg_digest *md,
 	}
 
 	endpoint_buf b;
-	policy_buf pb;
+	authby_buf pb;
 	llog(RC_LOG_SERIOUS, md->md_logger,
-	     "initial Aggressive Mode message from %s but no (wildcard) connection has been configured with policy %s",
+	     "initial Aggressive Mode message from %s but no (wildcard) connection has been configured with authby %s",
 	     str_endpoint(&md->sender, &b),
-	     str_policy(req_policy, &pb));
+	     str_authby(authby, &pb));
 
 	return NULL;
 }
@@ -254,8 +263,9 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 
 	c = find_v1_host_connection(md->iface->ip_dev->id_address,
 				    endpoint_address(md->sender),
-				    LEMPTY/*any-policy-will-do*/,
-				    false/*exact match POLICY_XAUTH*/,
+				    AUTHBY_NONE/*any-auth-will-do*/,
+				    false/*POLICY_XAUTH*/, false/*exact match POLICY_XAUTH*/,
+				    false/*POLICY_AGGRESSIVE*/,
 				    NULL /* peer ID not known yet */);
 	if (c != NULL) {
 		/*
@@ -291,8 +301,8 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	 */
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
 	struct authby authby = {0};
-	bool xauth = false;
-	diag_t d = preparse_isakmp_sa_body(sa_pd->pbs, &authby, &xauth);
+	bool policy_xauth = false;
+	diag_t d = preparse_isakmp_sa_body(sa_pd->pbs, &authby, &policy_xauth);
 	if (d != NULL) {
 		llog_diag(RC_LOG_SERIOUS, md->md_logger, &d,
 			  "initial Main Mode message has corrupt SA payload: ");
@@ -301,8 +311,9 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 
 	FOR_EACH_HOST_PAIR_CONNECTION(md->iface->ip_dev->id_address, unset_address, d) {
 
-		if (!match_v1_connection(d, policy_from_authby_xauth(authby, xauth),
-					 true/*exact match POLICY_XAUTH*/,
+		if (!match_v1_connection(d, authby,
+					 policy_xauth, true/*exact match POLICY_XAUTH*/,
+					 false/*POLICY_AGGRESSIVE*/,
 					 NULL /* peer ID not known yet */)) {
 			continue;
 		}
@@ -335,7 +346,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 		authby_buf ab;
 		llog(RC_LOG_SERIOUS, md->md_logger,
 		     "initial Main Mode message received but no connection has been authorized with authby=%s and xauth=%s",
-		     str_authby(authby, &ab), bool_str(xauth));
+		     str_authby(authby, &ab), bool_str(policy_xauth));
 		/* XXX notification is in order! */
 		return NULL;
 	}

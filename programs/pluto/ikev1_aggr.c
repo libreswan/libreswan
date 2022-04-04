@@ -158,7 +158,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 		ppeer_id = &peer_id;
 	}
 
-	struct connection *c = find_v1_aggr_mode_connection(md, policy_from_authby_xauth(authby, xauth) | POLICY_AGGRESSIVE, ppeer_id);
+	struct connection *c = find_v1_aggr_mode_connection(md, authby, xauth, ppeer_id);
 	if (c == NULL) {
 		/* XXX: already logged */
 		/* XXX notification is in order! */
