@@ -120,9 +120,10 @@ static stf_status aggr_inI1_outR1_continue1(struct state *st,
  * SMF_DS_AUTH:  HDR, SA, KE, Nr, IDii
  *           --> HDR, SA, KE, Nr, IDir, [CERT,] SIG_R
  */
-stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
+stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 			   struct msg_digest *md)
 {
+	diag_t d;
 	/* With Aggressive Mode, we get an ID payload in this, the first
 	 * message, so we can use it to index the preshared-secrets
 	 * when the IP address would not be meaningful (i.e. Road
@@ -134,14 +135,21 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 		return STF_IGNORE;
 	}
 
-	const lset_t policy = preparse_isakmp_sa_body(sa_pd->pbs) | POLICY_AGGRESSIVE;
+	lset_t policy = LEMPTY;
+	d = preparse_isakmp_sa_body(sa_pd->pbs, &policy);
+	policy |= POLICY_AGGRESSIVE;
+	if (d != NULL) {
+		llog_diag(RC_LOG_SERIOUS, md->md_logger, &d,
+			  "initial Aggressive Mode message has corrupt SA payload: ");
+		return STF_IGNORE;
+	}
 
 	const struct payload_digest *const id_pld = md->chain[ISAKMP_NEXT_ID];
 	const struct isakmp_id *const id = &id_pld->payload.id;
 	struct id peer_id;
 	struct id *ppeer_id = NULL;
 
-	diag_t d = unpack_peer_id(id->isaid_idtype, &peer_id, &id_pld->pbs);
+	d = unpack_peer_id(id->isaid_idtype, &peer_id, &id_pld->pbs);
 	if (d != NULL) {
 		dbg("IKEv1 aggressive mode peer ID unpacking failed - ignored peer ID to find connection");
 	} else {

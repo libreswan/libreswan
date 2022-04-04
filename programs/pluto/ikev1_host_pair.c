@@ -236,16 +236,26 @@ struct connection *find_v1_aggr_mode_connection(struct msg_digest *md,
 	return NULL;
 }
 
-
 struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 {
 	struct connection *c;
 
 	/* random source ports are handled by find_host_connection */
+
+
+	/*
+	 * This call does not try to match authentication
+	 * (preparse_isakmp_sa_body() isn't called).  Hence LEMPTY fir
+	 * policy and FALSE for exact_match_POLICY_XAUTH - neither of
+	 * these are known.
+	 *
+	 * Why?
+	 */
+
 	c = find_v1_host_connection(md->iface->ip_dev->id_address,
 				    endpoint_address(md->sender),
-				    /* XXX: why exact match POLICY_XAUTH==false? */
-				    LEMPTY, false/*exact match POLICY_XAUTH*/,
+				    LEMPTY/*any-policy-will-do*/,
+				    false/*exact match POLICY_XAUTH*/,
 				    NULL /* peer ID not known yet */);
 	if (c != NULL) {
 		/*
@@ -280,7 +290,14 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	 * Food Groups kind of assumes one.
 	 */
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
-	lset_t policy = preparse_isakmp_sa_body(sa_pd->pbs);
+	lset_t policy = LEMPTY;
+	diag_t d = preparse_isakmp_sa_body(sa_pd->pbs, &policy);
+	if (d != NULL) {
+		llog_diag(RC_LOG_SERIOUS, md->md_logger, &d,
+			  "initial Main Mode message has corrupt SA payload: ");
+		return NULL;
+	}
+
 	FOR_EACH_HOST_PAIR_CONNECTION(md->iface->ip_dev->id_address, unset_address, d) {
 
 		if (!match_v1_connection(d, policy,

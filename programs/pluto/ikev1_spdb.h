@@ -139,7 +139,7 @@ extern bool ikev1_out_sa(pb_stream *outs,
 		   bool oakley_mode,
 		   bool aggressive_mode);
 
-extern lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */);
+diag_t preparse_isakmp_sa_body(struct pbs_in sa_pbs /* by value! */, lset_t *policy);
 
 extern v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,           /* body of input SA Payload */
 					      const struct isakmp_sa *sa,  /* header of input SA Payload */

@@ -1444,66 +1444,62 @@ static uint32_t decode_life_duration(const struct isakmp_attribute *a,
  * All we want for the moment is to know whether peer is using RSA or PSK.
  * NOTE: sa_pbs is passed by value so the caller's PBS is unchanged!
  */
-lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */)
+
+diag_t preparse_isakmp_sa_body(struct pbs_in sa_pbs /* by value! */,
+			       lset_t *policy_out)
 {
-	pb_stream proposal_pbs;
-	struct isakmp_proposal proposal;
-	pb_stream trans_pbs;
-	struct isakmp_transform trans;
-	struct isakmp_attribute a;
-	pb_stream attr_pbs;
-	uint32_t ipsecdoisit;
-	unsigned trans_left;
 	lset_t policy = LEMPTY;
 	diag_t d;
+	*policy_out = LEMPTY;
 
-	d = pbs_in_struct(&sa_pbs, &ipsec_sit_desc, &ipsecdoisit, sizeof(ipsecdoisit), NULL);
+	uint32_t ipsecdoisit;
+	d = pbs_in_struct(&sa_pbs, &ipsec_sit_desc,
+			  &ipsecdoisit, sizeof(ipsecdoisit), NULL);
 	if (d != NULL) {
-		pfree_diag(&d); /* ignore error! */
-		return LEMPTY;
+		return d;
 	}
 
-	d = pbs_in_struct(&sa_pbs, &isakmp_proposal_desc, &proposal, sizeof(proposal), &proposal_pbs);
+	struct pbs_in proposal_pbs;
+	struct isakmp_proposal proposal;
+	d = pbs_in_struct(&sa_pbs, &isakmp_proposal_desc,
+			  &proposal, sizeof(proposal), &proposal_pbs);
 	if (d != NULL) {
-		pfree_diag(&d); /* ignore error! */
-		return LEMPTY;
+		return d;
 	}
 
 	if (proposal.isap_spisize > MAX_ISAKMP_SPI_SIZE)
-		return LEMPTY;
+		return diag("proposal SPI size is too big");
 
 	if (proposal.isap_spisize > 0) {
 		uint8_t junk_spi[MAX_ISAKMP_SPI_SIZE];
 
 		d = pbs_in_raw(&proposal_pbs, junk_spi, proposal.isap_spisize, "Oakley SPI");
 		if (d != NULL) {
-			pfree_diag(&d); /* ignore error! */
-			return LEMPTY;
+			return d;
 		}
 	}
 
-	trans_left = proposal.isap_notrans;
-	while (trans_left-- != 0) {
+	for (unsigned trans_left = proposal.isap_notrans; trans_left > 0; trans_left--) {
+		struct pbs_in trans_pbs;
+		struct isakmp_transform trans;
 		diag_t d = pbs_in_struct(&proposal_pbs, &isakmp_isakmp_transform_desc,
-					 &trans, sizeof(trans),
-					 &trans_pbs);
+					 &trans, sizeof(trans), &trans_pbs);
 		if (d != NULL) {
-			pfree_diag(&d); /* ignore error! */
-			return LEMPTY;
+			return d;
 		}
 
 		while (pbs_left(&trans_pbs) >= isakmp_oakley_attribute_desc.size) {
+			struct pbs_in attr_pbs;
+			struct isakmp_attribute attr;
 			diag_t d = pbs_in_struct(&trans_pbs, &isakmp_oakley_attribute_desc,
-						 &a, sizeof(a),
-						 &attr_pbs);
+						 &attr, sizeof(attr), &attr_pbs);
 			if (d != NULL) {
-				pfree_diag(&d); /* ignore error! */
-				return LEMPTY;
+				return d;
 			}
 
-			switch (a.isaat_af_type) {
+			switch (attr.isaat_af_type) {
 			case OAKLEY_AUTHENTICATION_METHOD | ISAKMP_ATTR_AF_TV:
-				switch (a.isaat_lv) {
+				switch (attr.isaat_lv) {
 				case XAUTHInitPreShared:
 					policy |= POLICY_XAUTH;
 					/* fallthrough */
@@ -1534,7 +1530,8 @@ lset_t preparse_isakmp_sa_body(pb_stream sa_pbs /* by value! */)
 	if (LIN(POLICY_PSK | POLICY_RSASIG, policy))
 		policy &= ~(POLICY_PSK | POLICY_RSASIG);
 
-	return policy;
+	*policy_out = policy;
+	return NULL;
 }
 
 static bool ikev1_verify_ike(const struct trans_attrs *ta,
