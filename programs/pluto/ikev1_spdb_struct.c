@@ -1446,11 +1446,13 @@ static uint32_t decode_life_duration(const struct isakmp_attribute *a,
  */
 
 diag_t preparse_isakmp_sa_body(struct pbs_in sa_pbs /* by value! */,
-			       lset_t *policy_out)
+			       struct authby *authby_out, bool *xauth_out)
 {
-	lset_t policy = LEMPTY;
 	diag_t d;
-	*policy_out = LEMPTY;
+	bool xauth = false;
+	struct authby authby = {0};
+	*authby_out = authby;
+	*xauth_out = xauth;
 
 	uint32_t ipsecdoisit;
 	d = pbs_in_struct(&sa_pbs, &ipsec_sit_desc,
@@ -1501,16 +1503,18 @@ diag_t preparse_isakmp_sa_body(struct pbs_in sa_pbs /* by value! */,
 			case OAKLEY_AUTHENTICATION_METHOD | ISAKMP_ATTR_AF_TV:
 				switch (attr.isaat_lv) {
 				case XAUTHInitPreShared:
-					policy |= POLICY_XAUTH;
-					/* fallthrough */
+					xauth = true;
+					authby.psk = true;
+					break;
 				case OAKLEY_PRESHARED_KEY:
-					policy |= POLICY_PSK;
+					authby.psk = true;
 					break;
 				case XAUTHInitRSA:
-					policy |= POLICY_XAUTH;
-					/* fallthrough */
+					xauth = true;
+					authby.rsasig = true;
+					break;
 				case OAKLEY_RSA_SIG:
-					policy |= POLICY_RSASIG;
+					authby.rsasig = true;
 					break;
 				}
 				break;
@@ -1527,10 +1531,13 @@ diag_t preparse_isakmp_sa_body(struct pbs_in sa_pbs /* by value! */,
 	 * either is acceptable.  The right way to express this is
 	 * to turn both off!
 	 */
-	if (LIN(POLICY_PSK | POLICY_RSASIG, policy))
-		policy &= ~(POLICY_PSK | POLICY_RSASIG);
+	if (authby.psk && authby.rsasig) {
+		authby.psk = false;
+		authby.rsasig = false;
+	}
 
-	*policy_out = policy;
+	*authby_out = authby;
+	*xauth_out = xauth;
 	return NULL;
 }
 

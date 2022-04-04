@@ -290,8 +290,9 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	 * Food Groups kind of assumes one.
 	 */
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
-	lset_t policy = LEMPTY;
-	diag_t d = preparse_isakmp_sa_body(sa_pd->pbs, &policy);
+	struct authby authby = {0};
+	bool xauth = false;
+	diag_t d = preparse_isakmp_sa_body(sa_pd->pbs, &authby, &xauth);
 	if (d != NULL) {
 		llog_diag(RC_LOG_SERIOUS, md->md_logger, &d,
 			  "initial Main Mode message has corrupt SA payload: ");
@@ -300,7 +301,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 
 	FOR_EACH_HOST_PAIR_CONNECTION(md->iface->ip_dev->id_address, unset_address, d) {
 
-		if (!match_v1_connection(d, policy,
+		if (!match_v1_connection(d, policy_from_authby_xauth(authby, xauth),
 					 true/*exact match POLICY_XAUTH*/,
 					 NULL /* peer ID not known yet */)) {
 			continue;
@@ -331,10 +332,10 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	}
 
 	if (c == NULL) {
-		policy_buf pb;
+		authby_buf ab;
 		llog(RC_LOG_SERIOUS, md->md_logger,
-		     "initial Main Mode message received but no connection has been authorized with policy %s",
-		     str_policy(policy, &pb));
+		     "initial Main Mode message received but no connection has been authorized with authby=%s and xauth=%s",
+		     str_authby(authby, &ab), bool_str(xauth));
 		/* XXX notification is in order! */
 		return NULL;
 	}

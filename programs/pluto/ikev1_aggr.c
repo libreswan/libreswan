@@ -124,10 +124,12 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 			   struct msg_digest *md)
 {
 	diag_t d;
-	/* With Aggressive Mode, we get an ID payload in this, the first
-	 * message, so we can use it to index the preshared-secrets
-	 * when the IP address would not be meaningful (i.e. Road
-	 * Warrior).  That's the one justification for Aggressive Mode.
+	/*
+	 * With Aggressive Mode, we get an ID payload in this, the
+	 * first message, so we can use it to index the
+	 * preshared-secrets when the IP address would not be
+	 * meaningful (i.e. Road Warrior).  That's the one
+	 * justification for Aggressive Mode.
 	 */
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
 
@@ -135,9 +137,9 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 		return STF_IGNORE;
 	}
 
-	lset_t policy = LEMPTY;
-	d = preparse_isakmp_sa_body(sa_pd->pbs, &policy);
-	policy |= POLICY_AGGRESSIVE;
+	bool xauth = false;
+	struct authby authby = {0};
+	d = preparse_isakmp_sa_body(sa_pd->pbs, &authby, &xauth);
 	if (d != NULL) {
 		llog_diag(RC_LOG_SERIOUS, md->md_logger, &d,
 			  "initial Aggressive Mode message has corrupt SA payload: ");
@@ -156,7 +158,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 		ppeer_id = &peer_id;
 	}
 
-	struct connection *c = find_v1_aggr_mode_connection(md, policy, ppeer_id);
+	struct connection *c = find_v1_aggr_mode_connection(md, policy_from_authby_xauth(authby, xauth) | POLICY_AGGRESSIVE, ppeer_id);
 	if (c == NULL) {
 		/* XXX: already logged */
 		/* XXX notification is in order! */
@@ -178,7 +180,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
 	}
 
-	ike->sa.st_policy = policy;	/* ??? not sure what's needed here */
+	ike->sa.st_policy = policy_from_authby_xauth(authby, xauth) | POLICY_AGGRESSIVE;	/* ??? not sure what's needed here */
 
 	/*
 	 * ??? not sure what's needed here.
