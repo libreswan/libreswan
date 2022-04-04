@@ -31,8 +31,8 @@
 #include "ikev1_spdb.h"
 
 static bool match_v1_connection(struct connection *c, struct authby authby,
-				bool policy_xauth, bool exact_match_policy_xauth,
-				bool policy_aggressive, const struct id *peer_id)
+				bool policy_xauth, bool policy_aggressive,
+				const struct id *peer_id)
 {
 	if (c->config->ike_version != IKEv1) {
 		connection_buf cb;
@@ -93,13 +93,11 @@ static bool match_v1_connection(struct connection *c, struct authby authby,
 	 * Each of our callers knows what is known so specifies
 	 * the policy_exact_mask.
 	 */
-	if (exact_match_policy_xauth) {
-		if (policy_xauth == !(c->policy & POLICY_XAUTH)) {
-			connection_buf cb;
-			dbg("  skipping "PRI_CONNECTION", exact match POLICY_XAUTH failed",
-			    pri_connection(c, &cb));
-			return false;
-		}
+	if (policy_xauth == !(c->policy & POLICY_XAUTH)) {
+		connection_buf cb;
+		dbg("  skipping "PRI_CONNECTION", exact match POLICY_XAUTH failed",
+		    pri_connection(c, &cb));
+		return false;
 	}
 	if (policy_aggressive == !(c->policy & POLICY_AGGRESSIVE)) {
 		connection_buf cb;
@@ -165,26 +163,24 @@ static bool match_v1_connection(struct connection *c, struct authby authby,
 
 static struct connection *find_v1_host_connection(const ip_address local_address,
 						  const ip_address remote_address,
-						  struct authby authby,
-						  bool policy_xauth, bool exact_match_policy_xauth,
+						  struct authby authby, bool policy_xauth,
 						  bool policy_aggressive,
 						  const struct id *peer_id)
 {
 	address_buf lb;
 	address_buf rb;
 	authby_buf pb;
-	dbg("%s() %s->%s authby=%s xauth=%s(exact=%s) aggressive=%s(exact=true) but ignoring ports",
+	dbg("%s() %s->%s authby=%s xauth=%s aggressive=%s but ignoring ports",
 	    __func__,
 	    str_address(&remote_address, &rb),
 	    str_address(&local_address, &lb),
 	    str_authby(authby, &pb),
-	    bool_str(policy_xauth), bool_str(exact_match_policy_xauth),
+	    bool_str(policy_xauth),
 	    bool_str(policy_aggressive));
 
 	struct connection *c = NULL;
 	FOR_EACH_HOST_PAIR_CONNECTION(local_address, remote_address, d) {
-		if (!match_v1_connection(d, authby,
-					 policy_xauth, exact_match_policy_xauth,
+		if (!match_v1_connection(d, authby, policy_xauth,
 					 policy_aggressive, peer_id)) {
 			continue;
 		}
@@ -216,8 +212,7 @@ struct connection *find_v1_aggr_mode_connection(struct msg_digest *md,
 
 	c = find_v1_host_connection(md->iface->ip_dev->id_address,
 				    endpoint_address(md->sender),
-				    authby,
-				    policy_xauth, true/*exact match POLICY_XAUTH*/,
+				    authby, policy_xauth,
 				    true/*POLICY_AGGRESSIVE*/,
 				    peer_id);
 	if (c != NULL) {
@@ -225,8 +220,9 @@ struct connection *find_v1_aggr_mode_connection(struct msg_digest *md,
 	}
 
 	c = find_v1_host_connection(md->iface->ip_dev->id_address, unset_address,
-				    authby, policy_xauth, true/*exact match POLICY_XAUTH*/,
-				    true/*POLICY_AGGRESSIVE*/, peer_id);
+				    authby, policy_xauth,
+				    true/*POLICY_AGGRESSIVE*/,
+				    peer_id);
 	if (c != NULL) {
 		/* Create a temporary connection that is a copy of this one.
 		 * Peers ID isn't declared yet.
@@ -251,6 +247,15 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 
 	/* random source ports are handled by find_host_connection */
 
+	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
+	struct authby authby = {0};
+	bool policy_xauth = false;
+	diag_t d = preparse_isakmp_sa_body(sa_pd->pbs, &authby, &policy_xauth);
+	if (d != NULL) {
+		llog_diag(RC_LOG_SERIOUS, md->md_logger, &d,
+			  "initial Main Mode message has corrupt SA payload: ");
+		return NULL;
+	}
 
 	/*
 	 * This call does not try to match authentication
@@ -263,8 +268,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 
 	c = find_v1_host_connection(md->iface->ip_dev->id_address,
 				    endpoint_address(md->sender),
-				    AUTHBY_NONE/*any-auth-will-do*/,
-				    false/*POLICY_XAUTH*/, false/*exact match POLICY_XAUTH*/,
+				    authby, policy_xauth,
 				    false/*POLICY_AGGRESSIVE*/,
 				    NULL /* peer ID not known yet */);
 	if (c != NULL) {
@@ -299,20 +303,10 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	 * between an Initiator's address and that of its client, but
 	 * Food Groups kind of assumes one.
 	 */
-	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
-	struct authby authby = {0};
-	bool policy_xauth = false;
-	diag_t d = preparse_isakmp_sa_body(sa_pd->pbs, &authby, &policy_xauth);
-	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, md->md_logger, &d,
-			  "initial Main Mode message has corrupt SA payload: ");
-		return NULL;
-	}
 
 	FOR_EACH_HOST_PAIR_CONNECTION(md->iface->ip_dev->id_address, unset_address, d) {
 
-		if (!match_v1_connection(d, authby,
-					 policy_xauth, true/*exact match POLICY_XAUTH*/,
+		if (!match_v1_connection(d, authby, policy_xauth,
 					 false/*POLICY_AGGRESSIVE*/,
 					 NULL /* peer ID not known yet */)) {
 			continue;
