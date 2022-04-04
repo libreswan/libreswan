@@ -32,7 +32,7 @@
 
 static bool match_v1_connection(struct connection *c,
 				lset_t req_policy,
-				lset_t policy_exact_mask,
+				bool exact_match_policy_xauth,
 				const struct id *peer_id)
 {
 	if (c->config->ike_version != IKEv1) {
@@ -94,9 +94,17 @@ static bool match_v1_connection(struct connection *c,
 	 * Each of our callers knows what is known so specifies
 	 * the policy_exact_mask.
 	 */
-	if ((req_policy ^ c->policy) & policy_exact_mask) {
+	if (exact_match_policy_xauth) {
+		if ((req_policy & POLICY_XAUTH) != (c->policy & POLICY_XAUTH)) {
+			connection_buf cb;
+			dbg("  skipping "PRI_CONNECTION", exact match POLICY_XAUTH failed",
+			    pri_connection(c, &cb));
+			return false;
+		}
+	}
+	if ((req_policy & POLICY_AGGRESSIVE) != (c->policy & POLICY_AGGRESSIVE)) {
 		connection_buf cb;
-		dbg("  skipping "PRI_CONNECTION", req policy exact failed",
+		dbg("  skipping "PRI_CONNECTION", exact match POLICY_AGGRESSIVE failed",
 		    pri_connection(c, &cb));
 		return false;
 	}
@@ -154,7 +162,8 @@ static bool match_v1_connection(struct connection *c,
 
 static struct connection *find_v1_host_connection(const ip_address local_address,
 						  const ip_address remote_address,
-						  lset_t req_policy, lset_t policy_exact_mask,
+						  lset_t req_policy,
+						  bool exact_match_policy_xauth,
 						  const struct id *peer_id)
 {
 	address_buf lb;
@@ -168,7 +177,8 @@ static struct connection *find_v1_host_connection(const ip_address local_address
 
 	struct connection *c = NULL;
 	FOR_EACH_HOST_PAIR_CONNECTION(local_address, remote_address, d) {
-		if (!match_v1_connection(d, req_policy, policy_exact_mask, peer_id)) {
+		if (!match_v1_connection(d, req_policy, exact_match_policy_xauth,
+					 peer_id)) {
 			continue;
 		}
 
@@ -192,20 +202,21 @@ static struct connection *find_v1_host_connection(const ip_address local_address
 
 struct connection *find_v1_aggr_mode_connection(struct msg_digest *md,
 						lset_t req_policy,
-						lset_t policy_exact_mask,
 						const struct id *peer_id)
 {
 	struct connection *c;
 
 	c = find_v1_host_connection(md->iface->ip_dev->id_address,
 				    endpoint_address(md->sender),
-				    req_policy, policy_exact_mask, peer_id);
+				    req_policy, true/*exact match POLICY_XAUTH*/,
+				    peer_id);
 	if (c != NULL) {
 		return c;
 	}
 
 	c = find_v1_host_connection(md->iface->ip_dev->id_address, unset_address,
-				    req_policy, policy_exact_mask, peer_id);
+				    req_policy, true/*exact match POLICY_XAUTH*/,
+				    peer_id);
 	if (c != NULL) {
 		passert(LIN(req_policy, c->policy));
 		/* Create a temporary connection that is a copy of this one.
@@ -233,7 +244,9 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	/* random source ports are handled by find_host_connection */
 	c = find_v1_host_connection(md->iface->ip_dev->id_address,
 				    endpoint_address(md->sender),
-				    LEMPTY, POLICY_AGGRESSIVE, NULL /* peer ID not known yet */);
+				    /* XXX: why exact match POLICY_XAUTH==false? */
+				    LEMPTY, false/*exact match POLICY_XAUTH*/,
+				    NULL /* peer ID not known yet */);
 	if (c != NULL) {
 		/*
 		 * we found a non %any conn. double check if it needs
@@ -271,7 +284,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	FOR_EACH_HOST_PAIR_CONNECTION(md->iface->ip_dev->id_address, unset_address, d) {
 
 		if (!match_v1_connection(d, policy,
-					 POLICY_XAUTH | POLICY_AGGRESSIVE,
+					 true/*exact match POLICY_XAUTH*/,
 					 NULL /* peer ID not known yet */)) {
 			continue;
 		}

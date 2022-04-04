@@ -135,7 +135,6 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 	}
 
 	const lset_t policy = preparse_isakmp_sa_body(sa_pd->pbs) | POLICY_AGGRESSIVE;
-	const lset_t policy_exact_mask = POLICY_XAUTH | POLICY_AGGRESSIVE;
 
 	const struct payload_digest *const id_pld = md->chain[ISAKMP_NEXT_ID];
 	const struct isakmp_id *const id = &id_pld->payload.id;
@@ -149,7 +148,7 @@ stf_status aggr_inI1_outR1(struct state *unused_st UNUSED,
 		ppeer_id = &peer_id;
 	}
 
-	struct connection *c = find_v1_aggr_mode_connection(md, policy, policy_exact_mask, ppeer_id);
+	struct connection *c = find_v1_aggr_mode_connection(md, policy, ppeer_id);
 	if (c == NULL) {
 		/* XXX: already logged */
 		/* XXX notification is in order! */

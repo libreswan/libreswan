@@ -33,7 +33,6 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md);
 
 struct connection *find_v1_aggr_mode_connection(struct msg_digest *md,
 						lset_t req_policy,
-						lset_t policy_exact_mask,
 						const struct id *peer_id);
 
 #endif
