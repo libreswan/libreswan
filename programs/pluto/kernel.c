@@ -3212,14 +3212,72 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 			}
 		} else {
 			dbg("kernel: %s() calling bare_policy_op(REPLACE_OUTBOUND), it is the default", __func__);
-			if (!bare_policy_op(KP_REPLACE_OUTBOUND,
-					    THIS_IS_NOT_INBOUND,
-					    sr->connection, sr, sr->routing,
-					    "teardown_ipsec_sa() replace with shunt",
-					    st->st_logger)) {
+			/*
+			 * XXX: sr->routing is set based on
+			 * .failure_shunt, and then shunt is set based
+			 * on .routing; yes, circular!
+			 */
+			pexpect(sr->routing == RT_ROUTED_PROSPECTIVE ||
+				sr->routing == RT_ROUTED_FAILURE);
+			enum routing_t new_routing =
+				(sr->connection->config->failure_shunt == SHUNT_NONE ? RT_ROUTED_PROSPECTIVE :
+				 RT_ROUTED_FAILURE);
+			enum shunt_policy shunt_policy =
+				(new_routing == RT_ROUTED_PROSPECTIVE ? sr->connection->config->prospective_shunt :
+				 sr->connection->config->failure_shunt);
+
+			/*
+			 * + if the .failure_shunt==SHUNT_NONE then
+			 * the .prospective_shunt is chosen and that
+			 * can't be SHUNT_NONE
+			 *
+			 * + if the .failure_shunt!=SHUNT_NONE then
+			 * the .failure_shunt is chosen, and that
+			 * isn't SHUNT_NONE.
+			 */
+			pexpect(shunt_policy != SHUNT_NONE);
+			enum kernel_policy_op op = KP_REPLACE_OUTBOUND;
+			if (shunt_policy == SHUNT_NONE) {
+				/* replace with nothing == delete */
+				op = KP_DELETE_OUTBOUND;
+			}
+			pexpect(op == KP_REPLACE_OUTBOUND);
+			struct kernel_policy outbound_kernel_policy = proto_kernel_policy_transport_esp;
+			outbound_kernel_policy.host.src = sr->connection->local->host.addr;
+			outbound_kernel_policy.host.dst = sr->connection->remote->host.addr;
+			if (!raw_policy(op, THIS_IS_NOT_INBOUND,
+					&sr->this.client, &sr->that.client,
+					shunt_policy,
+					(op == KP_REPLACE_OUTBOUND ? &outbound_kernel_policy : NULL),
+					deltatime(0),
+					calculate_sa_prio(sr->connection, false),
+					&sr->connection->sa_marks, sr->connection->xfrmi,
+					/* XXX: should this be the state's sec_label? */
+					HUNK_AS_SHUNK(sr->connection->config->sec_label),
+					sr->connection->logger,
+					"%s() outbound kernel policy", __func__)) {
 				log_state(RC_LOG, st,
-					  "kernel: %s() failed to replace policy with shunt",
+					  "kernel: %s() failed to replace outbound kernel policy",
 					  __func__);
+			}
+
+			pexpect(op == KP_REPLACE_OUTBOUND);
+			if (op == KP_DELETE_OUTBOUND) {
+				if (raw_policy(KP_DELETE_INBOUND, REPORT_NO_INBOUND,
+					       &sr->that.client, &sr->this.client,
+					       shunt_policy,
+					       NULL/*delete so no policy*/,
+					       deltatime(0),
+					       calculate_sa_prio(sr->connection, false),
+					       &sr->connection->sa_marks, sr->connection->xfrmi,
+					       /* XXX: should this be the state's sec_label? */
+					       HUNK_AS_SHUNK(sr->connection->config->sec_label),
+					       sr->connection->logger,
+					       "%s() inbound shunt for replace inbound kernel policy", __func__)) {
+					log_state(RC_LOG, st,
+						  "kernel: %s() failed to delete inbound kernel policy",
+						  __func__);
+				}
 			}
 		}
 	}
