@@ -3199,22 +3199,6 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 					  __func__);
 			}
 
-			if (!raw_policy(KP_DELETE_INBOUND, REPORT_NO_INBOUND,
-					&sr->this.client, &sr->that.client,
-					sr->connection->config->failure_shunt/*delete so ignored!?!*/,
-					NULL/*delete so no kernel_policy*/,
-					deltatime(0),
-					calculate_sa_prio(sr->connection, false),
-					&sr->connection->sa_marks, sr->connection->xfrmi,
-					/* XXX: should this be the state's sec_label? */
-					HUNK_AS_SHUNK(sr->connection->config->sec_label),
-					sr->connection->logger,
-					"%s() outbound shunt for teardwn IPsec SA", __func__)) {
-				log_state(RC_LOG, st,
-					  "kernel: %s() failed to delete inbound connection's kernel policy",
-					  __func__);
-			}
-
 			/* ??? CLANG 3.5 thinks that c might be NULL */
 			dbg("kernel: %s() calling raw_policy(delete-inbound), eroute_owner==NOBODY",
 			    __func__);
