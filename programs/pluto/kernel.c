@@ -3215,7 +3215,16 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 			/*
 			 * XXX: sr->routing is set based on
 			 * .failure_shunt, and then shunt is set based
-			 * on .routing; yes, circular!
+			 * on .routing; yes, circular!  The code below
+			 * is to spell this out:
+			 *
+			 * + if the .failure_shunt==SHUNT_NONE then
+			 * the .prospective_shunt is chosen and that
+			 * can't be SHUNT_NONE
+			 *
+			 * + if the .failure_shunt!=SHUNT_NONE then
+			 * the .failure_shunt is chosen, and that
+			 * isn't SHUNT_NONE.
 			 */
 			pexpect(sr->routing == RT_ROUTED_PROSPECTIVE ||
 				sr->routing == RT_ROUTED_FAILURE);
@@ -3225,30 +3234,15 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 			enum shunt_policy shunt_policy =
 				(new_routing == RT_ROUTED_PROSPECTIVE ? sr->connection->config->prospective_shunt :
 				 sr->connection->config->failure_shunt);
-
-			/*
-			 * + if the .failure_shunt==SHUNT_NONE then
-			 * the .prospective_shunt is chosen and that
-			 * can't be SHUNT_NONE
-			 *
-			 * + if the .failure_shunt!=SHUNT_NONE then
-			 * the .failure_shunt is chosen, and that
-			 * isn't SHUNT_NONE.
-			 */
 			pexpect(shunt_policy != SHUNT_NONE);
-			enum kernel_policy_op op = KP_REPLACE_OUTBOUND;
-			if (shunt_policy == SHUNT_NONE) {
-				/* replace with nothing == delete */
-				op = KP_DELETE_OUTBOUND;
-			}
-			pexpect(op == KP_REPLACE_OUTBOUND);
+
 			struct kernel_policy outbound_kernel_policy = proto_kernel_policy_transport_esp;
 			outbound_kernel_policy.host.src = sr->connection->local->host.addr;
 			outbound_kernel_policy.host.dst = sr->connection->remote->host.addr;
-			if (!raw_policy(op, THIS_IS_NOT_INBOUND,
+			if (!raw_policy(KP_REPLACE_OUTBOUND, THIS_IS_NOT_INBOUND,
 					&sr->this.client, &sr->that.client,
 					shunt_policy,
-					(op == KP_REPLACE_OUTBOUND ? &outbound_kernel_policy : NULL),
+					&outbound_kernel_policy,
 					deltatime(0),
 					calculate_sa_prio(sr->connection, false),
 					&sr->connection->sa_marks, sr->connection->xfrmi,
@@ -3259,25 +3253,6 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 				log_state(RC_LOG, st,
 					  "kernel: %s() failed to replace outbound kernel policy",
 					  __func__);
-			}
-
-			pexpect(op == KP_REPLACE_OUTBOUND);
-			if (op == KP_DELETE_OUTBOUND) {
-				if (raw_policy(KP_DELETE_INBOUND, REPORT_NO_INBOUND,
-					       &sr->that.client, &sr->this.client,
-					       shunt_policy,
-					       NULL/*delete so no policy*/,
-					       deltatime(0),
-					       calculate_sa_prio(sr->connection, false),
-					       &sr->connection->sa_marks, sr->connection->xfrmi,
-					       /* XXX: should this be the state's sec_label? */
-					       HUNK_AS_SHUNK(sr->connection->config->sec_label),
-					       sr->connection->logger,
-					       "%s() inbound shunt for replace inbound kernel policy", __func__)) {
-					log_state(RC_LOG, st,
-						  "kernel: %s() failed to delete inbound kernel policy",
-						  __func__);
-				}
 			}
 		}
 	}
