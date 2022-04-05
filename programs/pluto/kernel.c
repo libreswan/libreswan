@@ -3134,11 +3134,31 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 					  "kernel: %s() failed to replace eclipsed policy with shunt",
 					  __func__);
 			}
+
 			/*
-			 * XXX: Note the lack of replace/delete
-			 * inbound, and the unconditional call further
-			 * down.
+			 * XXX: This deletes the connection instance's
+			 * inbound kernel policy; should it instead
+			 * delete nor replace the eclipsed
+			 * connection's policy.
 			 */
+			dbg("kernel: %s() calling raw_policy(delete-inbound), eroute_owner==NOBODY",
+			    __func__);
+			if (!raw_policy(KP_DELETE_INBOUND, what_about_inbound,
+					&st->st_connection->spd.that.client,
+					&st->st_connection->spd.this.client,
+					SHUNT_UNSET,
+					/*kernel_policy*/NULL/*no-policy-template*/,
+					deltatime(0),
+					calculate_sa_prio(st->st_connection, false),
+					&st->st_connection->sa_marks,
+					st->st_connection->xfrmi,
+					/*sec_label:always-null*/null_shunk,
+					st->st_logger,
+					"%s() teardown inbound Child SA", __func__)) {
+				llog(RC_LOG, st->st_logger,
+				     "raw_policy in teardown_half_ipsec_sa() failed to delete inbound");
+			}
+
 #ifdef IPSEC_CONNECTION_LIMIT
 			num_ipsec_eroute--;
 #endif
@@ -3163,7 +3183,6 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 			 * routing.
 			 */
 			dbg("kernel: %s() calling unroute_connection(), instance is OPPORTUNISTIC|DONT_REKEY", __func__);
-
 			if (!raw_policy(KP_DELETE_OUTBOUND, THIS_IS_NOT_INBOUND,
 					&sr->this.client, &sr->that.client,
 					sr->connection->config->failure_shunt/*delete so ignored!?!*/,
@@ -3179,10 +3198,7 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 					  "kernel: %s() failed to delete outbound connection's kernel policy",
 					  __func__);
 			}
-			/*
-			 * XXX: Note there an inbound delete call
-			 * here, and further down.
-			 */
+
 			if (!raw_policy(KP_DELETE_INBOUND, REPORT_NO_INBOUND,
 					&sr->this.client, &sr->that.client,
 					sr->connection->config->failure_shunt/*delete so ignored!?!*/,
@@ -3198,6 +3214,26 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 					  "kernel: %s() failed to delete inbound connection's kernel policy",
 					  __func__);
 			}
+
+			/* ??? CLANG 3.5 thinks that c might be NULL */
+			dbg("kernel: %s() calling raw_policy(delete-inbound), eroute_owner==NOBODY",
+			    __func__);
+			if (!raw_policy(KP_DELETE_INBOUND, what_about_inbound,
+					&st->st_connection->spd.that.client,
+					&st->st_connection->spd.this.client,
+					SHUNT_UNSET,
+					/*kernel_policy*/NULL/*no-policy-template*/,
+					deltatime(0),
+					calculate_sa_prio(st->st_connection, false),
+					&st->st_connection->sa_marks,
+					st->st_connection->xfrmi,
+					/*sec_label:always-null*/null_shunk,
+					st->st_logger,
+					"%s() teardown inbound Child SA", __func__)) {
+				llog(RC_LOG, st->st_logger,
+				     "raw_policy in teardown_half_ipsec_sa() failed to delete inbound");
+			}
+
 #ifdef IPSEC_CONNECTION_LIMIT
 			num_ipsec_eroute--;
 #endif
@@ -3254,33 +3290,34 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 					  "kernel: %s() failed to replace outbound kernel policy",
 					  __func__);
 			}
+
+			/*
+			 * XXX: this deletes the inbound policy;
+			 * should it instead replace it with
+			 * something?
+			 */
+			dbg("kernel: %s() calling raw_policy(delete-inbound), eroute_owner==NOBODY",
+			    __func__);
+			if (!raw_policy(KP_DELETE_INBOUND, what_about_inbound,
+					&st->st_connection->spd.that.client,
+					&st->st_connection->spd.this.client,
+					SHUNT_UNSET,
+					/*kernel_policy*/NULL/*no-policy-template*/,
+					deltatime(0),
+					calculate_sa_prio(st->st_connection, false),
+					&st->st_connection->sa_marks,
+					st->st_connection->xfrmi,
+					/*sec_label:always-null*/null_shunk,
+					st->st_logger,
+					"%s() teardown inbound Child SA", __func__)) {
+				llog(RC_LOG, st->st_logger,
+				     "raw_policy in teardown_half_ipsec_sa() failed to delete inbound");
+			}
 		}
 	}
 
 	dbg("kernel: %s() calling teardown_half_ipsec_sa(outbound)", __func__);
 	teardown_half_ipsec_sa(st, /*inbound?*/false);
-
-	/* ??? CLANG 3.5 thinks that c might be NULL */
-	if (st->st_connection->spd.eroute_owner == SOS_NOBODY) {
-		dbg("kernel: %s() calling raw_policy(delete-inbound), eroute_owner==NOBODY",
-		    __func__);
-		if (!raw_policy(KP_DELETE_INBOUND, what_about_inbound,
-				&st->st_connection->spd.that.client,
-				&st->st_connection->spd.this.client,
-				SHUNT_UNSET,
-				/*kernel_policy*/NULL/*no-policy-template*/,
-				deltatime(0),
-				calculate_sa_prio(st->st_connection, false),
-				&st->st_connection->sa_marks,
-				st->st_connection->xfrmi,
-				/*sec_label:always-null*/null_shunk,
-				st->st_logger,
-				"%s() teardown inbound Child SA", __func__)) {
-			llog(RC_LOG, st->st_logger,
-			     "raw_policy in teardown_half_ipsec_sa() failed to delete inbound");
-		}
-	}
-
 	/* For larval IPsec SAs this may not exist */
 	dbg("kernel: %s() calling teardown_half_ipsec_sa(inbound)", __func__);
 	teardown_half_ipsec_sa(st, /*inbound*/true);
