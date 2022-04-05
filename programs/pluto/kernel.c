@@ -11,7 +11,7 @@
  * Copyright (C) 2010-2019 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012-2015 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
- * Copyright (C) 2016-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016-2022 Andrew Cagney
  * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
@@ -3069,13 +3069,7 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 
 	dbg("kernel: %s() for "PRI_SO" ...", __func__, pri_so(st->st_serialno));
 
-	/*
-	 * If the state is the eroute owner, we must adjust the
-	 * routing for the connection.
-	 */
-	struct connection *c = st->st_connection;
-
-	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
+	for (struct spd_route *sr = &st->st_connection->spd; sr != NULL; sr = sr->spd_next) {
 
 		if (sr->eroute_owner != st->st_serialno) {
 			dbg("kernel: %s() skipping, eroute_owner "PRI_SO" doesn't match Child SA "PRI_SO,
@@ -3096,12 +3090,12 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 		 * RT_ROUTED_PROSPECTIVE as if no failure happened.
 		 */
 		enum routing_t new_routing =
-			(c->config->failure_shunt == SHUNT_NONE ? RT_ROUTED_PROSPECTIVE :
+			(sr->connection->config->failure_shunt == SHUNT_NONE ? RT_ROUTED_PROSPECTIVE :
 			 RT_ROUTED_FAILURE);
 		set_spd_owner(sr, SOS_NOBODY);
 		set_spd_routing(sr, new_routing);
 
-		if (sr == &c->spd && c->remotepeertype == CISCO) {
+		if (sr == &sr->connection->spd && sr->connection->remotepeertype == CISCO) {
 			/*
 			 * XXX: this is currently the only reason for
 			 * spd_next walking.
@@ -3112,7 +3106,7 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 		}
 
 		dbg("kernel: %s() running 'down'", __func__);
-		(void) do_command(c, sr, "down", st, st->st_logger);
+		(void) do_command(sr->connection, sr, "down", st, st->st_logger);
 
 		/*
 		 * Is the SPD eclipsing something else?
@@ -3124,16 +3118,28 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 		struct spd_route *esr = eclipsing(sr);
 		if (esr != NULL) {
 			set_spd_routing(esr, RT_ROUTED_PROSPECTIVE);
-			if (!bare_policy_op(KP_REPLACE_OUTBOUND,
-					    THIS_IS_NOT_INBOUND,
-					    esr->connection, esr,
-					    RT_ROUTED_PROSPECTIVE,
-					    "restoring eclipsed",
-					    c->logger)) {
+			struct kernel_policy outbound_kernel_policy = proto_kernel_policy_transport_esp;
+			outbound_kernel_policy.host.src = esr->connection->local->host.addr;
+			outbound_kernel_policy.host.dst = esr->connection->remote->host.addr;
+			if (!raw_policy(KP_REPLACE_OUTBOUND, THIS_IS_NOT_INBOUND,
+					&esr->this.client, &esr->that.client,
+					esr->connection->config->prospective_shunt,
+					&outbound_kernel_policy,
+					deltatime(0),
+					calculate_sa_prio(esr->connection, false),
+					&esr->connection->sa_marks, esr->connection->xfrmi,
+					HUNK_AS_SHUNK(esr->connection->config->sec_label), esr->connection->logger,
+					"%s() outbound shunt for restoring eclipsed", __func__)) {
 				log_state(RC_LOG, st,
 					  "kernel: %s() failed to replace eclipsed policy with shunt",
 					  __func__);
 			}
+			/*
+			 * XXX: notice the lack of replace/delete
+			 * inbound.  Probably a bug but somewhat
+			 * benine since it is the outbound policy
+			 * containing the trap that really matters?
+			 */
 #ifdef IPSEC_CONNECTION_LIMIT
 			num_ipsec_eroute--;
 #endif
@@ -3142,11 +3148,13 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 				sr->routing == RT_ROUTED_FAILURE);
 			set_spd_routing(sr, RT_UNROUTED);
 			/* only unroute if no other connection shares it */
-			if (route_owner(c, sr, NULL, NULL, NULL) == NULL) {
-				do_command(c, sr, "unroute", NULL, c->logger);
+			if (route_owner(sr->connection, sr, NULL, NULL, NULL) == NULL) {
+				do_command(sr->connection, sr, "unroute", NULL,
+					   sr->connection->logger);
 			}
-		} else if (c->kind == CK_INSTANCE && ((c->policy & POLICY_OPPORTUNISTIC) ||
-						      (c->policy & POLICY_DONT_REKEY))) {
+		} else if (sr->connection->kind == CK_INSTANCE &&
+			   ((sr->connection->policy & POLICY_OPPORTUNISTIC) ||
+			    (sr->connection->policy & POLICY_DONT_REKEY))) {
 			/*
 			 *
 			 * Case 1: just get rid of the IPSEC SA
@@ -3158,9 +3166,9 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 			dbg("kernel: %s() calling unroute_connection(), instance is OPPORTUNISTIC|DONT_REKEY", __func__);
 			bare_policy_op(KP_DELETE_OUTBOUND,
 				       EXPECT_NO_INBOUND,
-				       c, sr, RT_UNROUTED,
+				       sr->connection, sr, RT_UNROUTED,
 				       "unrouting connection",
-				       c->logger);
+				       sr->connection->logger);
 #ifdef IPSEC_CONNECTION_LIMIT
 			num_ipsec_eroute--;
 #endif
@@ -3169,8 +3177,9 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 				sr->routing == RT_ROUTED_FAILURE);
 			set_spd_routing(sr, RT_UNROUTED);
 			/* only unroute if no other connection shares it */
-			if (route_owner(c, sr, NULL, NULL, NULL) == NULL) {
-				do_command(c, sr, "unroute", NULL, c->logger);
+			if (route_owner(sr->connection, sr, NULL, NULL, NULL) == NULL) {
+				do_command(sr->connection, sr, "unroute", NULL,
+					   sr->connection->logger);
 			}
 		} else {
 			dbg("kernel: %s() calling bare_policy_op(REPLACE_OUTBOUND), it is the default", __func__);
@@ -3190,17 +3199,18 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 	teardown_half_ipsec_sa(st, /*inbound?*/false);
 
 	/* ??? CLANG 3.5 thinks that c might be NULL */
-	if (c->spd.eroute_owner == SOS_NOBODY) {
+	if (st->st_connection->spd.eroute_owner == SOS_NOBODY) {
 		dbg("kernel: %s() calling raw_policy(delete-inbound), eroute_owner==NOBODY",
 		    __func__);
 		if (!raw_policy(KP_DELETE_INBOUND, what_about_inbound,
-				&c->spd.that.client,
-				&c->spd.this.client,
+				&st->st_connection->spd.that.client,
+				&st->st_connection->spd.this.client,
 				SHUNT_UNSET,
 				/*kernel_policy*/NULL/*no-policy-template*/,
 				deltatime(0),
-				calculate_sa_prio(c, false),
-				&c->sa_marks, c->xfrmi,
+				calculate_sa_prio(st->st_connection, false),
+				&st->st_connection->sa_marks,
+				st->st_connection->xfrmi,
 				/*sec_label:always-null*/null_shunk,
 				st->st_logger,
 				"%s() teardown inbound Child SA", __func__)) {
