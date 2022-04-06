@@ -3108,21 +3108,26 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 		dbg("kernel: %s() running 'down'", __func__);
 		(void) do_command(sr->connection, sr, "down", st, st->st_logger);
 
-		/*
-		 * Is the SPD eclipsing something else?
-		 *
-		 * If it is then, instead of deleting the kernel
-		 * policy, replace it with what ever the eclipsed
-		 * connection had before being eclipsed.
-		 */
 		struct spd_route *esr = eclipsing(sr);
 		if (esr != NULL) {
-			/* put ESR back to normal routing */
+
+			/*
+			 * ESR was eclipsed by SR.
+			 *
+			 * Instead of deleting SR's kernel policy,
+			 * replace it with what ever the eclipsed ESR
+			 * connection had before being eclipsed.
+			 *
+			 * The restored policy uses TRANSPORT mode
+			 * (the host .{src,dst} provides the family
+			 * but the address isn't used).
+			 */
 			pexpect(esr->routing == RT_ROUTED_ECLIPSED);
 			set_spd_routing(esr, RT_ROUTED_PROSPECTIVE);
 			struct kernel_policy outbound_kernel_policy = proto_kernel_policy_transport_esp;
-			outbound_kernel_policy.host.src = esr->connection->local->host.addr;
-			outbound_kernel_policy.host.dst = esr->connection->remote->host.addr;
+			outbound_kernel_policy.host.dst =
+				outbound_kernel_policy.host.src =
+				selector_type(&esr->this.client)->address.unspec;
 			if (!raw_policy(KP_REPLACE_OUTBOUND, THIS_IS_NOT_INBOUND,
 					&esr->this.client, &esr->that.client,
 					esr->connection->config->prospective_shunt,
@@ -3239,6 +3244,11 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 			 * + if the .failure_shunt!=SHUNT_NONE then
 			 * the .failure_shunt is chosen, and that
 			 * isn't SHUNT_NONE.
+			 *
+			 * This code installs a TRANSPORT mode policy
+			 * (the host .{src,dst} provides the family
+			 * but the address isn't used).  The actual
+			 * connection might be TUNNEL.
 			 */
 			enum routing_t new_routing = (sr->connection->config->failure_shunt == SHUNT_NONE ?
 						      RT_ROUTED_PROSPECTIVE :
@@ -3248,8 +3258,9 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 							  sr->connection->config->failure_shunt);
 			pexpect(shunt_policy != SHUNT_NONE);
 			struct kernel_policy outbound_kernel_policy = proto_kernel_policy_transport_esp;
-			outbound_kernel_policy.host.src = sr->connection->local->host.addr;
-			outbound_kernel_policy.host.dst = sr->connection->remote->host.addr;
+			outbound_kernel_policy.host.dst =
+				outbound_kernel_policy.host.src =
+				selector_type(&sr->this.client)->address.unspec;
 			if (!raw_policy(KP_REPLACE_OUTBOUND, THIS_IS_NOT_INBOUND,
 					&sr->this.client, &sr->that.client,
 					shunt_policy,
