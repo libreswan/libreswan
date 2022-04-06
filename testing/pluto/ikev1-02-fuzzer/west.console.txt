@@ -15,6 +15,38 @@ west #
 Running a fuzzing scan
 west #
  ./ike-scan.sh > OUTPUT/fuzz.log
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
+---	Pass 1 of 1 completed
 west #
  echo done
 done
