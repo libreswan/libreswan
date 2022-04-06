@@ -1886,8 +1886,6 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 
 			case OAKLEY_AUTHENTICATION_METHOD | ISAKMP_ATTR_AF_TV:
 			{
-				lset_t iap = (st->st_policy & POLICY_AUTHBY_MASK);
-
 				/* check that authentication method is acceptable */
 				switch (val) {
 				case XAUTHInitPreShared:
@@ -1921,7 +1919,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 					}
 psk_common:
 
-					if ((iap & POLICY_PSK) == LEMPTY) {
+					if (c->remote->config->host.auth != AUTH_PSK) {
 						UGH("policy does not allow OAKLEY_PRESHARED_KEY authentication");
 					} else {
 						/* check that we can find a proper preshared secret */
@@ -1974,7 +1972,7 @@ psk_common:
 					}
 rsasig_common:
 					/* Accept if policy specifies RSASIG or is default */
-					if ((iap & POLICY_RSASIG) == LEMPTY) {
+					if (c->remote->config->host.auth != AUTH_RSASIG) {
 						UGH("policy does not allow OAKLEY_RSA_SIG authentication");
 					} else {
 						/* We'd like to check
@@ -2111,7 +2109,7 @@ rsasig_common:
 
 		while (ok) {
 
-			if ((st->st_policy & POLICY_PSK) &&
+			if (c->remote->config->host.auth == AUTH_PSK &&
 			    pss != &empty_chunk &&
 			    pss != NULL &&
 			    ta.ta_prf != NULL) {
