@@ -3084,22 +3084,22 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 			continue;
 		}
 
-		/*
-		 * Routing should become RT_ROUTED_FAILURE, but if
-		 * POLICY_FAIL_NONE, then we just go right back to
-		 * RT_ROUTED_PROSPECTIVE as if no failure happened.
-		 */
-		enum routing_t new_routing =
-			(sr->connection->config->failure_shunt == SHUNT_NONE ? RT_ROUTED_PROSPECTIVE :
-			 RT_ROUTED_FAILURE);
 		set_spd_owner(sr, SOS_NOBODY);
-		set_spd_routing(sr, new_routing);
 
 		if (sr == &sr->connection->spd && sr->connection->remotepeertype == CISCO) {
 			/*
 			 * XXX: this is currently the only reason for
 			 * spd_next walking.
+			 *
+			 * Routing should become RT_ROUTED_FAILURE,
+			 * but if POLICY_FAIL_NONE, then we just go
+			 * right back to RT_ROUTED_PROSPECTIVE as if
+			 * no failure happened.
 			 */
+			enum routing_t new_routing =
+				(sr->connection->config->failure_shunt == SHUNT_NONE ? RT_ROUTED_PROSPECTIVE :
+				 RT_ROUTED_FAILURE);
+			set_spd_routing(sr, new_routing);
 			dbg("kernel: %s() skipping, first SPD and remotepeertype is CISCO, damage done",
 			    __func__);
 			continue;
@@ -3117,6 +3117,8 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 		 */
 		struct spd_route *esr = eclipsing(sr);
 		if (esr != NULL) {
+			/* put ESR back to normal routing */
+			pexpect(esr->routing == RT_ROUTED_ECLIPSED);
 			set_spd_routing(esr, RT_ROUTED_PROSPECTIVE);
 			struct kernel_policy outbound_kernel_policy = proto_kernel_policy_transport_esp;
 			outbound_kernel_policy.host.src = esr->connection->local->host.addr;
@@ -3134,24 +3136,22 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 					  "kernel: %s() failed to replace eclipsed policy with shunt",
 					  __func__);
 			}
-
 			/*
 			 * XXX: This deletes the connection instance's
 			 * inbound kernel policy; should it instead
 			 * delete nor replace the eclipsed
-			 * connection's policy.
+			 * connection's policy?
 			 */
 			dbg("kernel: %s() calling raw_policy(delete-inbound), eroute_owner==NOBODY",
 			    __func__);
 			if (!raw_policy(KP_DELETE_INBOUND, what_about_inbound,
-					&st->st_connection->spd.that.client,
-					&st->st_connection->spd.this.client,
+					&sr->that.client, &sr->this.client,
 					SHUNT_UNSET,
-					/*kernel_policy*/NULL/*no-policy-template*/,
+					NULL/*no-policy-template as delete*/,
 					deltatime(0),
-					calculate_sa_prio(st->st_connection, false),
-					&st->st_connection->sa_marks,
-					st->st_connection->xfrmi,
+					calculate_sa_prio(sr->connection, false),
+					&sr->connection->sa_marks,
+					sr->connection->xfrmi,
 					/*sec_label:always-null*/null_shunk,
 					st->st_logger,
 					"%s() teardown inbound Child SA", __func__)) {
@@ -3162,18 +3162,18 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 #ifdef IPSEC_CONNECTION_LIMIT
 			num_ipsec_eroute--;
 #endif
-			/* do now so route_owner won't find us */
-			pexpect(sr->routing == RT_ROUTED_PROSPECTIVE ||
-				sr->routing == RT_ROUTED_FAILURE);
+			/* do now so route_owner() won't find us */
 			set_spd_routing(sr, RT_UNROUTED);
 			/* only unroute if no other connection shares it */
 			if (route_owner(sr->connection, sr, NULL, NULL, NULL) == NULL) {
 				do_command(sr->connection, sr, "unroute", NULL,
 					   sr->connection->logger);
 			}
+
 		} else if (sr->connection->kind == CK_INSTANCE &&
 			   ((sr->connection->policy & POLICY_OPPORTUNISTIC) ||
 			    (sr->connection->policy & POLICY_DONT_REKEY))) {
+
 			/*
 			 *
 			 * Case 1: just get rid of the IPSEC SA
@@ -3203,14 +3203,13 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 			dbg("kernel: %s() calling raw_policy(delete-inbound), eroute_owner==NOBODY",
 			    __func__);
 			if (!raw_policy(KP_DELETE_INBOUND, what_about_inbound,
-					&st->st_connection->spd.that.client,
-					&st->st_connection->spd.this.client,
+					&sr->that.client, &sr->this.client,
 					SHUNT_UNSET,
-					/*kernel_policy*/NULL/*no-policy-template*/,
+					NULL/*no-policy-template as delete*/,
 					deltatime(0),
-					calculate_sa_prio(st->st_connection, false),
-					&st->st_connection->sa_marks,
-					st->st_connection->xfrmi,
+					calculate_sa_prio(sr->connection, false),
+					&sr->connection->sa_marks,
+					sr->connection->xfrmi,
 					/*sec_label:always-null*/null_shunk,
 					st->st_logger,
 					"%s() teardown inbound Child SA", __func__)) {
@@ -3222,22 +3221,17 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 			num_ipsec_eroute--;
 #endif
 			/* do now so route_owner won't find us */
-			pexpect(sr->routing == RT_ROUTED_PROSPECTIVE ||
-				sr->routing == RT_ROUTED_FAILURE);
 			set_spd_routing(sr, RT_UNROUTED);
 			/* only unroute if no other connection shares it */
 			if (route_owner(sr->connection, sr, NULL, NULL, NULL) == NULL) {
 				do_command(sr->connection, sr, "unroute", NULL,
 					   sr->connection->logger);
 			}
+
 		} else {
+
 			dbg("kernel: %s() calling bare_policy_op(REPLACE_OUTBOUND), it is the default", __func__);
 			/*
-			 * XXX: sr->routing is set based on
-			 * .failure_shunt, and then shunt is set based
-			 * on .routing; yes, circular!  The code below
-			 * is to spell this out:
-			 *
 			 * + if the .failure_shunt==SHUNT_NONE then
 			 * the .prospective_shunt is chosen and that
 			 * can't be SHUNT_NONE
@@ -3246,16 +3240,13 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 			 * the .failure_shunt is chosen, and that
 			 * isn't SHUNT_NONE.
 			 */
-			pexpect(sr->routing == RT_ROUTED_PROSPECTIVE ||
-				sr->routing == RT_ROUTED_FAILURE);
-			enum routing_t new_routing =
-				(sr->connection->config->failure_shunt == SHUNT_NONE ? RT_ROUTED_PROSPECTIVE :
-				 RT_ROUTED_FAILURE);
-			enum shunt_policy shunt_policy =
-				(new_routing == RT_ROUTED_PROSPECTIVE ? sr->connection->config->prospective_shunt :
-				 sr->connection->config->failure_shunt);
+			enum routing_t new_routing = (sr->connection->config->failure_shunt == SHUNT_NONE ?
+						      RT_ROUTED_PROSPECTIVE :
+						      RT_ROUTED_FAILURE);
+			enum shunt_policy shunt_policy = (sr->connection->config->failure_shunt == SHUNT_NONE ?
+							  sr->connection->config->prospective_shunt :
+							  sr->connection->config->failure_shunt);
 			pexpect(shunt_policy != SHUNT_NONE);
-
 			struct kernel_policy outbound_kernel_policy = proto_kernel_policy_transport_esp;
 			outbound_kernel_policy.host.src = sr->connection->local->host.addr;
 			outbound_kernel_policy.host.dst = sr->connection->remote->host.addr;
@@ -3274,7 +3265,6 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 					  "kernel: %s() failed to replace outbound kernel policy",
 					  __func__);
 			}
-
 			/*
 			 * XXX: this deletes the inbound policy;
 			 * should it instead replace it with
@@ -3283,20 +3273,23 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 			dbg("kernel: %s() calling raw_policy(delete-inbound), eroute_owner==NOBODY",
 			    __func__);
 			if (!raw_policy(KP_DELETE_INBOUND, what_about_inbound,
-					&st->st_connection->spd.that.client,
-					&st->st_connection->spd.this.client,
+					&sr->connection->spd.that.client,
+					&sr->connection->spd.this.client,
 					SHUNT_UNSET,
 					/*kernel_policy*/NULL/*no-policy-template*/,
 					deltatime(0),
-					calculate_sa_prio(st->st_connection, false),
-					&st->st_connection->sa_marks,
-					st->st_connection->xfrmi,
+					calculate_sa_prio(sr->connection, false),
+					&sr->connection->sa_marks,
+					sr->connection->xfrmi,
 					/*sec_label:always-null*/null_shunk,
 					st->st_logger,
 					"%s() teardown inbound Child SA", __func__)) {
 				llog(RC_LOG, st->st_logger,
 				     "raw_policy in teardown_half_ipsec_sa() failed to delete inbound");
 			}
+			/* update routing; route_owner() will see this and fail */
+			set_spd_routing(sr, new_routing);
+
 		}
 	}
 
