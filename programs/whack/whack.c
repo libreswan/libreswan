@@ -2181,19 +2181,6 @@ int main(int argc, char **argv)
 			}
 			host_family.used_by = long_opts[long_index].name;
 			host_family.type = &ipv4_info;
-
-			/*
-			 * Consider defaulting client_family to
-			 * AF_INET6.  Do so only if it hasn't yet been
-			 * specified or used.
-			 */
-			if (LDISJOINT(cd_seen,
-				      LELEM(CD_TUNNELIPV4 - CD_FIRST) |
-				      LELEM(CD_TUNNELIPV6 - CD_FIRST)) &&
-			    client_family.used_by == NULL) {
-				client_family.used_by = long_opts[long_index].name;
-				client_family.type = &ipv4_info;
-			}
 			continue;
 
 		case CD_CONNIPV6:	/* --ipv6; mimic ipv4 */
@@ -2213,19 +2200,6 @@ int main(int argc, char **argv)
 			}
 			host_family.used_by = long_opts[long_index].name;
 			host_family.type = &ipv6_info;
-
-			/*
-			 * Consider defaulting client_family to
-			 * AF_INET6.  Do so only if it hasn't yet been
-			 * specified or used.
-			 */
-			if (LDISJOINT(cd_seen,
-				      LELEM(CD_TUNNELIPV4 - CD_FIRST) |
-				      LELEM(CD_TUNNELIPV6 - CD_FIRST)) &&
-			    client_family.used_by == NULL) {
-				client_family.used_by = long_opts[long_index].name;
-				client_family.type = &ipv6_info;
-			}
 			continue;
 
 		case CD_TUNNELIPV4:	/* --tunnelipv4 */
