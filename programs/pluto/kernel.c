@@ -11,7 +11,7 @@
  * Copyright (C) 2010-2019 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2012-2015 Paul Wouters <paul@libreswan.org>
  * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
- * Copyright (C) 2016-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016-2022 Andrew Cagney
  * Copyright (C) 2019 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
  *
@@ -226,7 +226,7 @@ static bool bare_policy_op(enum kernel_policy_op op,
 		/* maybe we are uneclipsing something */
 		struct spd_route *esr = eclipsing(sr);
 		if (esr != NULL) {
-			esr->routing = RT_ROUTED_PROSPECTIVE;
+			set_spd_routing(esr, RT_ROUTED_PROSPECTIVE);
 			return bare_policy_op(KP_REPLACE_OUTBOUND,
 					      THIS_IS_NOT_INBOUND,
 					      esr->connection, esr,
@@ -1073,8 +1073,8 @@ static enum routability note_nearconflict(struct connection *outside,	/* CK_PERM
 	 * policy, we need to make sure that it no longer thinks that
 	 * it owns the eroute.
 	 */
-	outside->spd.eroute_owner = SOS_NOBODY;
-	outside->spd.routing = RT_UNROUTED_KEYED;
+	set_spd_routing(&outside->spd, RT_UNROUTED_KEYED);
+	set_spd_owner(&outside->spd, SOS_NOBODY);
 
 	/*
 	 * set the priority of the new eroute owner to be higher
@@ -1310,7 +1310,8 @@ void migration_up(struct child_sa *child)
 #ifdef IPSEC_CONNECTION_LIMIT
 		num_ipsec_eroute++;
 #endif
-		sr->routing = RT_ROUTED_TUNNEL; /* do now so route_owner won't find us */
+		/* do now so route_owner won't find us */
+		set_spd_routing(sr, RT_ROUTED_TUNNEL);
 		do_command(c, sr, "up", &child->sa, child->sa.st_logger);
 		do_command(c, sr, "route", &child->sa, child->sa.st_logger);
 	}
@@ -1326,8 +1327,8 @@ void migration_down(struct child_sa *child)
 		if (erouted(cr))
 			num_ipsec_eroute--;
 #endif
-
-		sr->routing = RT_UNROUTED; /* do now so route_owner won't find us */
+		/* do now so route_owner won't find us */
+		set_spd_routing(sr, RT_UNROUTED);
 
 		/* only unroute if no other connection shares it */
 		if (routed(cr) && route_owner(c, sr, NULL, NULL, NULL) == NULL) {
@@ -1368,7 +1369,8 @@ void unroute_connection(struct connection *c)
 #endif
 		}
 
-		sr->routing = RT_UNROUTED; /* do now so route_owner won't find us */
+		/* do now so route_owner won't find us */
+		set_spd_routing(sr, RT_UNROUTED);
 
 		/* only unroute if no other connection shares it */
 		if (routed(cr) && route_owner(c, sr, NULL, NULL, NULL) == NULL) {
@@ -1689,7 +1691,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	}
 
 	/* Success! */
-	c->spd.routing = RT_ROUTED_PROSPECTIVE;
+	set_spd_routing(&c->spd, RT_ROUTED_PROSPECTIVE);
 	return true;
 }
 
@@ -1858,7 +1860,7 @@ bool assign_holdpass(const struct connection *c,
 			return false;
 		}
 	}
-	sr->routing = rn;
+	set_spd_routing(sr, rn);
 	dbg("kernel:  assign_holdpass() done - returning success");
 	return true;
 }
@@ -2389,11 +2391,14 @@ static unsigned append_teardown(struct dead_sa *dead, bool inbound,
 	return 0;
 }
 
-static bool teardown_half_ipsec_sa(struct state *st, bool inbound,
-				   enum what_about_inbound what_about_inbound)
-{
-	/* Delete any AH, ESP, and IP in IP SPIs. */
+/*
+ * Delete any AH, ESP, and IPCOMP kernel states.
+ *
+ * Deleting only requires the addresses, protocol, and IPsec SPIs.
+ */
 
+static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
+{
 	struct connection *const c = st->st_connection;
 
 	/*
@@ -2409,23 +2414,6 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound,
 	if (!endpoint_address_eq_address(st->st_remote_endpoint, effective_remote_address) &&
 	    address_is_specified(c->temp_vars.redirect_ip)) {
 		effective_remote_address = endpoint_address(st->st_remote_endpoint);
-	}
-
-	/* ??? CLANG 3.5 thinks that c might be NULL */
-	if (inbound && c->spd.eroute_owner == SOS_NOBODY &&
-	    !raw_policy(KP_DELETE_INBOUND, what_about_inbound,
-			&c->spd.that.client,
-			&c->spd.this.client,
-			SHUNT_UNSET,
-			/*kernel_policy*/NULL/*no-policy-template*/,
-			deltatime(0),
-			calculate_sa_prio(c, false),
-			&c->sa_marks, c->xfrmi,
-			/*sec_label:always-null*/null_shunk,
-			st->st_logger,
-			"%s() teardown inbound Child SA", __func__)) {
-		llog(RC_LOG, st->st_logger,
-		     "raw_policy in teardown_half_ipsec_sa() failed to delete inbound");
 	}
 
 	/* collect each proto SA that needs deleting */
@@ -2815,8 +2803,7 @@ bool route_and_eroute(struct connection *c,
 				dbg("kernel: installed route: ro name=%s, rosr->routing was %s",
 					ro->name, enum_name(&routing_story, rosr->routing));
 				pexpect(!erouted(rosr->routing)); /* warn for now - requires fixing */
-				rosr->routing = RT_UNROUTED;
-
+				set_spd_routing(rosr, RT_UNROUTED);
 				/* no need to keep old value */
 				ro = route_owner(c, sr, &rosr, NULL, NULL);
 			} while (ro != NULL);
@@ -2833,17 +2820,10 @@ bool route_and_eroute(struct connection *c,
 
 		if (st == NULL) {
 			passert(sr->eroute_owner == SOS_NOBODY);
-			sr->routing = RT_ROUTED_PROSPECTIVE;
+			set_spd_routing(sr, RT_ROUTED_PROSPECTIVE);
 		} else {
-			sr->routing = RT_ROUTED_TUNNEL;
-			connection_buf cib;
-			dbg("kernel: route_and_eroute: instance "PRI_CONNECTION", setting eroute_owner {spd=%p,sr=%p} to #%lu (was #%lu) (newest_ipsec_sa=#%lu)",
-			    pri_connection(st->st_connection, &cib),
-			    &st->st_connection->spd, sr,
-			    st->st_serialno,
-			    sr->eroute_owner,
-			    st->st_connection->newest_ipsec_sa);
-			sr->eroute_owner = st->st_serialno;
+			set_spd_routing(sr, RT_ROUTED_TUNNEL);
+			set_spd_owner(sr, st->st_serialno);
 			/* clear host shunts that clash with freshly installed route */
 			clear_narrow_holds(&sr->this.client, &sr->that.client, logger);
 		}
@@ -3049,8 +3029,8 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 		struct spd_route *srcisco = st->st_connection->spd.spd_next;
 
 		if (srcisco != NULL) {
-			st->st_connection->spd.eroute_owner = srcisco->eroute_owner;
-			st->st_connection->spd.routing = srcisco->routing;
+			set_spd_owner(&st->st_connection->spd, srcisco->eroute_owner);
+			set_spd_routing(&st->st_connection->spd, srcisco->routing);
 		}
 	}
 
@@ -3075,6 +3055,53 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
  * out.
  */
 
+static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
+				     enum shunt_policy outbound_shunt,
+				     struct spd_route *out,
+				     struct spd_route *in,
+				     enum what_about_inbound what_about_inbound,
+				     struct logger *logger, const char *story)
+{
+	pexpect(outbound_op == KP_DELETE_OUTBOUND || outbound_op == KP_REPLACE_OUTBOUND);
+	/*
+	 * The restored policy uses TRANSPORT mode (the host
+	 * .{src,dst} provides the family but the address isn't used).
+	 */
+	struct kernel_policy outbound_kernel_policy = proto_kernel_policy_transport_esp;
+	outbound_kernel_policy.host.dst =
+		outbound_kernel_policy.host.src =
+		selector_type(&out->this.client)->address.unspec;
+	if (!raw_policy(outbound_op, THIS_IS_NOT_INBOUND,
+			&out->this.client, &out->that.client,
+			outbound_shunt,
+			(outbound_op == KP_REPLACE_OUTBOUND ? &outbound_kernel_policy : NULL),
+			deltatime(0),
+			calculate_sa_prio(out->connection, false),
+			&out->connection->sa_marks, out->connection->xfrmi,
+			HUNK_AS_SHUNK(out->connection->config->sec_label),
+			out->connection->logger,
+			"%s() outbound kernel policy for %s", __func__, story)) {
+		llog(RC_LOG, logger,
+		     "kernel: %s() outbound failed %s", __func__, story);
+	}
+	dbg("kernel: %s() calling raw_policy(delete-inbound), eroute_owner==NOBODY",
+	    __func__);
+	if (!raw_policy(KP_DELETE_INBOUND, what_about_inbound,
+			&in->that.client, &in->this.client,
+			SHUNT_UNSET,
+			NULL/*no-policy-template as delete*/,
+			deltatime(0),
+			calculate_sa_prio(in->connection, false),
+			&in->connection->sa_marks,
+			in->connection->xfrmi,
+			/*sec_label:always-null*/null_shunk,
+			in->connection->logger,
+			"%s() inbound kernel policy for %s", __func__, story)) {
+		llog(RC_LOG, logger,
+		     "kernel: %s() outbound failed %s", __func__, story);
+	}
+}
+
 static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_about_inbound)
 {
 	/* XXX in IKEv2 we get a spurious call with a parent st :( */
@@ -3087,68 +3114,147 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 		linux_audit_conn(st, LAK_CHILD_DESTROY);
 	}
 
-	/*
-	 * If the state is the eroute owner, we must adjust the
-	 * routing for the connection.
-	 */
-	struct connection *c = st->st_connection;
+	dbg("kernel: %s() for "PRI_SO" ...", __func__, pri_so(st->st_serialno));
 
-	for (struct spd_route *sr = &c->spd; sr; sr = sr->spd_next) {
-		if (sr->eroute_owner == st->st_serialno &&
-		    sr->routing == RT_ROUTED_TUNNEL) {
-			sr->eroute_owner = SOS_NOBODY;
+	for (struct spd_route *sr = &st->st_connection->spd; sr != NULL; sr = sr->spd_next) {
 
+		if (sr->eroute_owner != st->st_serialno) {
+			dbg("kernel: %s() skipping, eroute_owner "PRI_SO" doesn't match Child SA "PRI_SO,
+			    __func__, pri_so(sr->eroute_owner), pri_so(st->st_serialno));
+			continue;
+		}
+
+		if (sr->routing != RT_ROUTED_TUNNEL) {
+			enum_buf rb;
+			dbg("kernel: %s() skipping, routing %s isn't TUNNEL",
+			    __func__, str_enum_short(&routing_story, sr->routing, &rb));
+			continue;
+		}
+
+		set_spd_owner(sr, SOS_NOBODY);
+
+		if (sr == &sr->connection->spd && sr->connection->remotepeertype == CISCO) {
 			/*
+			 * XXX: this is currently the only reason for
+			 * spd_next walking.
+			 *
 			 * Routing should become RT_ROUTED_FAILURE,
 			 * but if POLICY_FAIL_NONE, then we just go
 			 * right back to RT_ROUTED_PROSPECTIVE as if
 			 * no failure happened.
 			 */
-			sr->routing =
-				(c->config->failure_shunt == SHUNT_NONE ?
-				 RT_ROUTED_PROSPECTIVE :
+			enum routing_t new_routing =
+				(sr->connection->config->failure_shunt == SHUNT_NONE ? RT_ROUTED_PROSPECTIVE :
 				 RT_ROUTED_FAILURE);
+			set_spd_routing(sr, new_routing);
+			dbg("kernel: %s() skipping, first SPD and remotepeertype is CISCO, damage done",
+			    __func__);
+			continue;
+		}
 
-			if (sr == &c->spd &&
-			    c->remotepeertype == CISCO)
-				continue;
+		dbg("kernel: %s() running 'down'", __func__);
+		(void) do_command(sr->connection, sr, "down", st, st->st_logger);
 
-			(void) do_command(c, sr, "down", st, st->st_logger);
-			if ((c->policy & POLICY_OPPORTUNISTIC) &&
-			    c->kind == CK_INSTANCE) {
-				/*
-				 * in this case we get rid of the
-				 * IPSEC SA
-				 */
-				unroute_connection(c);
-			} else if ((c->policy & POLICY_DONT_REKEY) &&
-				   c->kind == CK_INSTANCE) {
-				/*
-				 * in this special case, even if the
-				 * connection is still alive (due to
-				 * an ISAKMP SA), we get rid of
-				 * routing.  Even though there is
-				 * still an eroute, the c->routing
-				 * setting will convince
-				 * unroute_connection to delete it.
-				 * unroute_connection would be upset
-				 * if c->routing == RT_ROUTED_TUNNEL
-				 */
-				unroute_connection(c);
-			} else {
-				if (!bare_policy_op(KP_REPLACE_OUTBOUND,
-						    THIS_IS_NOT_INBOUND,
-						    c, sr, sr->routing,
-						    "delete_ipsec_sa() replace with shunt",
-						    st->st_logger)) {
-					log_state(RC_LOG, st,
-						  "shunt_policy() failed replace with shunt in delete_ipsec_sa()");
-				}
+		struct spd_route *esr = eclipsing(sr);
+		if (esr != NULL) {
+
+			/*
+			 * ESR was eclipsed by SR.
+			 *
+			 * Instead of deleting SR's kernel policy,
+			 * replace it with what ever the eclipsed ESR
+			 * connection had before being eclipsed.
+			 *
+			 * The restored policy uses TRANSPORT mode
+			 * (the host .{src,dst} provides the family
+			 * but the address isn't used).
+			 */
+			pexpect(esr->routing == RT_ROUTED_ECLIPSED);
+			set_spd_routing(esr, RT_ROUTED_PROSPECTIVE);
+			teardown_kernel_policies(KP_REPLACE_OUTBOUND,
+						 esr->connection->config->prospective_shunt,
+						 esr, sr, what_about_inbound,
+						 st->st_logger,
+						 "restoring eclipsed");
+#ifdef IPSEC_CONNECTION_LIMIT
+			num_ipsec_eroute--;
+#endif
+			/* do now so route_owner() won't find us */
+			set_spd_routing(sr, RT_UNROUTED);
+			/* only unroute if no other connection shares it */
+			if (route_owner(sr->connection, sr, NULL, NULL, NULL) == NULL) {
+				do_command(sr->connection, sr, "unroute", NULL,
+					   sr->connection->logger);
 			}
+
+		} else if (sr->connection->kind == CK_INSTANCE &&
+			   ((sr->connection->policy & POLICY_OPPORTUNISTIC) ||
+			    (sr->connection->policy & POLICY_DONT_REKEY))) {
+
+			/*
+			 *
+			 * Case 1: just get rid of the IPSEC SA
+			 *
+			 * Case 2: even if the connection is still
+			 * alive (due to an ISAKMP SA), we get rid of
+			 * routing.
+			 */
+			teardown_kernel_policies(KP_DELETE_OUTBOUND,
+						 sr->connection->config->failure_shunt/*delete so almost ignored!?!*/,
+						 sr, sr, what_about_inbound,
+						 st->st_logger,
+						 "deleting instance");
+#ifdef IPSEC_CONNECTION_LIMIT
+			num_ipsec_eroute--;
+#endif
+			/* do now so route_owner won't find us */
+			set_spd_routing(sr, RT_UNROUTED);
+			/* only unroute if no other connection shares it */
+			if (route_owner(sr->connection, sr, NULL, NULL, NULL) == NULL) {
+				do_command(sr->connection, sr, "unroute", NULL,
+					   sr->connection->logger);
+			}
+
+		} else {
+
+			dbg("kernel: %s() calling bare_policy_op(REPLACE_OUTBOUND), it is the default", __func__);
+			/*
+			 * + if the .failure_shunt==SHUNT_NONE then
+			 * the .prospective_shunt is chosen and that
+			 * can't be SHUNT_NONE
+			 *
+			 * + if the .failure_shunt!=SHUNT_NONE then
+			 * the .failure_shunt is chosen, and that
+			 * isn't SHUNT_NONE.
+			 *
+			 * This code installs a TRANSPORT mode policy
+			 * (the host .{src,dst} provides the family
+			 * but the address isn't used).  The actual
+			 * connection might be TUNNEL.
+			 */
+			enum routing_t new_routing = (sr->connection->config->failure_shunt == SHUNT_NONE ?
+						      RT_ROUTED_PROSPECTIVE :
+						      RT_ROUTED_FAILURE);
+			enum shunt_policy shunt_policy = (sr->connection->config->failure_shunt == SHUNT_NONE ?
+							  sr->connection->config->prospective_shunt :
+							  sr->connection->config->failure_shunt);
+			pexpect(shunt_policy != SHUNT_NONE);
+			teardown_kernel_policies(KP_REPLACE_OUTBOUND,
+						 shunt_policy,
+						 sr, sr, what_about_inbound,
+						 st->st_logger,
+						 "replace");
+			/* update routing; route_owner() will see this and fail */
+			set_spd_routing(sr, new_routing);
+
 		}
 	}
-	teardown_half_ipsec_sa(st, /*inbound?*/false, THIS_IS_NOT_INBOUND);
-	teardown_half_ipsec_sa(st, /*inbound*/true, what_about_inbound);
+
+	dbg("kernel: %s() calling teardown_half_ipsec_sa(outbound)", __func__);
+	teardown_half_ipsec_sa(st, /*inbound?*/false);
+	/* For larval IPsec SAs this may not exist */
+	dbg("kernel: %s() calling teardown_half_ipsec_sa(inbound)", __func__);
+	teardown_half_ipsec_sa(st, /*inbound*/true);
 }
 
 void delete_ipsec_sa(struct state *st)
@@ -3467,7 +3573,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 	}
 
 	/* change routing so we don't get cleared out when state/connection dies */
-	sr->routing = rn;
+	set_spd_routing(sr, rn);
 	dbg("kernel: orphan_holdpas() done - returning success");
 	return true;
 }

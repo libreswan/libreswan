@@ -352,6 +352,26 @@ struct spd_route {
 	struct connection *connection;
 	so_serial_t eroute_owner;
 	enum routing_t routing; /* level of routing in place */
+#define set_spd_owner(SPD, SO)					\
+	{								\
+		connection_buf cb;					\
+		dbg("kernel: spd owner: "PRI_CONNECTION" "PRI_SO"->"PRI_SO, \
+		    pri_connection((SPD)->connection, &cb),		\
+		    pri_so((SPD)->eroute_owner),			\
+		    /* SO could be an enum :-( */			\
+		    pri_so((so_serial_t)SO));				\
+		(SPD)->eroute_owner = SO;				\
+	}
+#define set_spd_routing(SPD, RT)					\
+	{								\
+		connection_buf cb;					\
+		enum_buf ob, nb;					\
+		dbg("kernel: spd routing: "PRI_CONNECTION" %s->%s",	\
+		    pri_connection((SPD)->connection, &cb),		\
+		    str_enum(&routing_story, (SPD)->routing, &ob),	\
+		    str_enum(&routing_story, RT, &nb));			\
+		(SPD)->routing = RT;					\
+	}
 	reqid_t reqid;
 	struct {
 		struct list_entry list;

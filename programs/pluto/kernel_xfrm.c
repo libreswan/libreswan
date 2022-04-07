@@ -484,7 +484,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 		if (error == 0) {
 			/* pexpect? */
 			llog(RC_LOG, logger,
-			     "kernel: xfrm %s for flow %s%s encountered unexpected policy",
+			     "kernel: xfrm %s for flow %s %s encountered unexpected policy",
 			     sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
 			     story, adstory);
 			return true;
@@ -493,7 +493,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 	}
 
 	log_errno(logger, error,
-		  "kernel: xfrm %s%s response for flow %s",
+		  "kernel: xfrm %s %s response for flow %s",
 		  sparse_val_show(xfrm_type_names, hdr->nlmsg_type),
 		  story, adstory);
 	return false;
