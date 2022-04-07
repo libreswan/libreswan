@@ -2817,11 +2817,11 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 
 	lset_t policy = c->policy;
 
-	lset_t authby = policy & POLICY_AUTHBY_MASK;
+	struct authby authby = c->local->config->host.authby;
 	policy &= ~POLICY_AUTHBY_MASK;
-	if (authby != LEMPTY) {
+	if (authby_is_set(authby)) {
 		s += jam_string(buf, sep);
-		s += jam_lset_short(buf, &sa_policy_bit_names, "+", authby);
+		s += jam_authby(buf, authby);
 		sep = "+";
 	}
 
