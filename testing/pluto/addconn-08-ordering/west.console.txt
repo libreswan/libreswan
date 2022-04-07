@@ -1,12 +1,31 @@
 /testing/guestbin/swan-prep
 west #
- echo "initdone"
-initdone
+ ipsec start
+Redirecting to: [initsystem]
 west #
- # config contains a conn option in config setup, addconn must deal
+ ../../guestbin/wait-until-pluto-started
 west #
- ipsec addconn --config /etc/ipsec.conf --checkconfig
-[added message when it works]
+ ipsec whack --name order-test --tunnel --encrypt --ipv4 --tunnelipv6  --host 1.2.3.4 --id foo --client fe80::1/128 --to --host 2.3.4.5 --id bar --client fe80::2/128
+002 "order-test": added IKEv2 connection
+west #
+ ipsec whack --status | grep order-test
+000 "order-test": fe80::1/128===1.2.3.4[+S?C]...2.3.4.5[+S?C]===fe80::2/128; unrouted; eroute owner: #0
+000 "order-test":     unoriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
+000 "order-test":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
+000 "order-test":   our auth:rsasig(RSASIG+ECDSA+RSASIG_v1_5), their auth:rsasig(RSASIG+ECDSA+RSASIG_v1_5), our autheap:none, their autheap:none;
+000 "order-test":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
+000 "order-test":   sec_label:unset;
+000 "order-test":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "order-test":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
+000 "order-test":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
+000 "order-test":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL;
+000 "order-test":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
+000 "order-test":   conn_prio: 128,128; interface: ; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
+000 "order-test":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
+000 "order-test":   our idtype: ID_IPV4_ADDR; our id=1.2.3.4; their idtype: ID_IPV4_ADDR; their id=2.3.4.5
+000 "order-test":   liveness: passive; dpdaction:disabled; dpddelay:0s; retransmit-timeout:60s
+000 "order-test":   nat-traversal: encaps:no; keepalive:20s
+000 "order-test":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 west #
  echo done
 done

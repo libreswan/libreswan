@@ -1,2 +1,3 @@
 /testing/guestbin/swan-prep
-echo "initdone"
+ipsec start
+../../guestbin/wait-until-pluto-started
