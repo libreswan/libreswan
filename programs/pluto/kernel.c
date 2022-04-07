@@ -3055,6 +3055,53 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
  * out.
  */
 
+static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
+				     enum shunt_policy outbound_shunt,
+				     struct spd_route *out,
+				     struct spd_route *in,
+				     enum what_about_inbound what_about_inbound,
+				     struct logger *logger, const char *story)
+{
+	pexpect(outbound_op == KP_DELETE_OUTBOUND || outbound_op == KP_REPLACE_OUTBOUND);
+	/*
+	 * The restored policy uses TRANSPORT mode (the host
+	 * .{src,dst} provides the family but the address isn't used).
+	 */
+	struct kernel_policy outbound_kernel_policy = proto_kernel_policy_transport_esp;
+	outbound_kernel_policy.host.dst =
+		outbound_kernel_policy.host.src =
+		selector_type(&out->this.client)->address.unspec;
+	if (!raw_policy(outbound_op, THIS_IS_NOT_INBOUND,
+			&out->this.client, &out->that.client,
+			outbound_shunt,
+			(outbound_op == KP_REPLACE_OUTBOUND ? &outbound_kernel_policy : NULL),
+			deltatime(0),
+			calculate_sa_prio(out->connection, false),
+			&out->connection->sa_marks, out->connection->xfrmi,
+			HUNK_AS_SHUNK(out->connection->config->sec_label),
+			out->connection->logger,
+			"%s() outbound kernel policy for %s", __func__, story)) {
+		llog(RC_LOG, logger,
+		     "kernel: %s() outbound failed %s", __func__, story);
+	}
+	dbg("kernel: %s() calling raw_policy(delete-inbound), eroute_owner==NOBODY",
+	    __func__);
+	if (!raw_policy(KP_DELETE_INBOUND, what_about_inbound,
+			&in->that.client, &in->this.client,
+			SHUNT_UNSET,
+			NULL/*no-policy-template as delete*/,
+			deltatime(0),
+			calculate_sa_prio(in->connection, false),
+			&in->connection->sa_marks,
+			in->connection->xfrmi,
+			/*sec_label:always-null*/null_shunk,
+			in->connection->logger,
+			"%s() inbound kernel policy for %s", __func__, story)) {
+		llog(RC_LOG, logger,
+		     "kernel: %s() outbound failed %s", __func__, story);
+	}
+}
+
 static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_about_inbound)
 {
 	/* XXX in IKEv2 we get a spurious call with a parent st :( */
@@ -3124,46 +3171,11 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 			 */
 			pexpect(esr->routing == RT_ROUTED_ECLIPSED);
 			set_spd_routing(esr, RT_ROUTED_PROSPECTIVE);
-			struct kernel_policy outbound_kernel_policy = proto_kernel_policy_transport_esp;
-			outbound_kernel_policy.host.dst =
-				outbound_kernel_policy.host.src =
-				selector_type(&esr->this.client)->address.unspec;
-			if (!raw_policy(KP_REPLACE_OUTBOUND, THIS_IS_NOT_INBOUND,
-					&esr->this.client, &esr->that.client,
-					esr->connection->config->prospective_shunt,
-					&outbound_kernel_policy,
-					deltatime(0),
-					calculate_sa_prio(esr->connection, false),
-					&esr->connection->sa_marks, esr->connection->xfrmi,
-					HUNK_AS_SHUNK(esr->connection->config->sec_label), esr->connection->logger,
-					"%s() outbound shunt for restoring eclipsed", __func__)) {
-				log_state(RC_LOG, st,
-					  "kernel: %s() failed to replace eclipsed policy with shunt",
-					  __func__);
-			}
-			/*
-			 * XXX: This deletes the connection instance's
-			 * inbound kernel policy; should it instead
-			 * delete nor replace the eclipsed
-			 * connection's policy?
-			 */
-			dbg("kernel: %s() calling raw_policy(delete-inbound), eroute_owner==NOBODY",
-			    __func__);
-			if (!raw_policy(KP_DELETE_INBOUND, what_about_inbound,
-					&sr->that.client, &sr->this.client,
-					SHUNT_UNSET,
-					NULL/*no-policy-template as delete*/,
-					deltatime(0),
-					calculate_sa_prio(sr->connection, false),
-					&sr->connection->sa_marks,
-					sr->connection->xfrmi,
-					/*sec_label:always-null*/null_shunk,
-					st->st_logger,
-					"%s() teardown inbound Child SA", __func__)) {
-				llog(RC_LOG, st->st_logger,
-				     "raw_policy in teardown_half_ipsec_sa() failed to delete inbound");
-			}
-
+			teardown_kernel_policies(KP_REPLACE_OUTBOUND,
+						 esr->connection->config->prospective_shunt,
+						 esr, sr, what_about_inbound,
+						 st->st_logger,
+						 "restoring eclipsed");
 #ifdef IPSEC_CONNECTION_LIMIT
 			num_ipsec_eroute--;
 #endif
@@ -3187,41 +3199,11 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 			 * alive (due to an ISAKMP SA), we get rid of
 			 * routing.
 			 */
-			dbg("kernel: %s() calling unroute_connection(), instance is OPPORTUNISTIC|DONT_REKEY", __func__);
-			if (!raw_policy(KP_DELETE_OUTBOUND, THIS_IS_NOT_INBOUND,
-					&sr->this.client, &sr->that.client,
-					sr->connection->config->failure_shunt/*delete so ignored!?!*/,
-					NULL/*delete so no kernel_policy*/,
-					deltatime(0),
-					calculate_sa_prio(sr->connection, false),
-					&sr->connection->sa_marks, sr->connection->xfrmi,
-					/* XXX: should this be the state's sec_label? */
-					HUNK_AS_SHUNK(sr->connection->config->sec_label),
-					sr->connection->logger,
-					"%s() outbound shunt for teardwn IPsec SA", __func__)) {
-				log_state(RC_LOG, st,
-					  "kernel: %s() failed to delete outbound connection's kernel policy",
-					  __func__);
-			}
-
-			/* ??? CLANG 3.5 thinks that c might be NULL */
-			dbg("kernel: %s() calling raw_policy(delete-inbound), eroute_owner==NOBODY",
-			    __func__);
-			if (!raw_policy(KP_DELETE_INBOUND, what_about_inbound,
-					&sr->that.client, &sr->this.client,
-					SHUNT_UNSET,
-					NULL/*no-policy-template as delete*/,
-					deltatime(0),
-					calculate_sa_prio(sr->connection, false),
-					&sr->connection->sa_marks,
-					sr->connection->xfrmi,
-					/*sec_label:always-null*/null_shunk,
-					st->st_logger,
-					"%s() teardown inbound Child SA", __func__)) {
-				llog(RC_LOG, st->st_logger,
-				     "raw_policy in teardown_half_ipsec_sa() failed to delete inbound");
-			}
-
+			teardown_kernel_policies(KP_DELETE_OUTBOUND,
+						 sr->connection->config->failure_shunt/*delete so almost ignored!?!*/,
+						 sr, sr, what_about_inbound,
+						 st->st_logger,
+						 "deleting instance");
 #ifdef IPSEC_CONNECTION_LIMIT
 			num_ipsec_eroute--;
 #endif
@@ -3257,47 +3239,11 @@ static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_abo
 							  sr->connection->config->prospective_shunt :
 							  sr->connection->config->failure_shunt);
 			pexpect(shunt_policy != SHUNT_NONE);
-			struct kernel_policy outbound_kernel_policy = proto_kernel_policy_transport_esp;
-			outbound_kernel_policy.host.dst =
-				outbound_kernel_policy.host.src =
-				selector_type(&sr->this.client)->address.unspec;
-			if (!raw_policy(KP_REPLACE_OUTBOUND, THIS_IS_NOT_INBOUND,
-					&sr->this.client, &sr->that.client,
-					shunt_policy,
-					&outbound_kernel_policy,
-					deltatime(0),
-					calculate_sa_prio(sr->connection, false),
-					&sr->connection->sa_marks, sr->connection->xfrmi,
-					/* XXX: should this be the state's sec_label? */
-					HUNK_AS_SHUNK(sr->connection->config->sec_label),
-					sr->connection->logger,
-					"%s() outbound kernel policy", __func__)) {
-				log_state(RC_LOG, st,
-					  "kernel: %s() failed to replace outbound kernel policy",
-					  __func__);
-			}
-			/*
-			 * XXX: this deletes the inbound policy;
-			 * should it instead replace it with
-			 * something?
-			 */
-			dbg("kernel: %s() calling raw_policy(delete-inbound), eroute_owner==NOBODY",
-			    __func__);
-			if (!raw_policy(KP_DELETE_INBOUND, what_about_inbound,
-					&sr->connection->spd.that.client,
-					&sr->connection->spd.this.client,
-					SHUNT_UNSET,
-					/*kernel_policy*/NULL/*no-policy-template*/,
-					deltatime(0),
-					calculate_sa_prio(sr->connection, false),
-					&sr->connection->sa_marks,
-					sr->connection->xfrmi,
-					/*sec_label:always-null*/null_shunk,
-					st->st_logger,
-					"%s() teardown inbound Child SA", __func__)) {
-				llog(RC_LOG, st->st_logger,
-				     "raw_policy in teardown_half_ipsec_sa() failed to delete inbound");
-			}
+			teardown_kernel_policies(KP_REPLACE_OUTBOUND,
+						 shunt_policy,
+						 sr, sr, what_about_inbound,
+						 st->st_logger,
+						 "replace");
 			/* update routing; route_owner() will see this and fail */
 			set_spd_routing(sr, new_routing);
 
