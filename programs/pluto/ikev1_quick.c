@@ -665,11 +665,8 @@ void quick_outI1(struct fd *whack_sock,
 	}
 
 	LLOG_JAMBUF(RC_LOG, st->st_logger, buf) {
-		jam(buf, "initiating Quick Mode IKEv1");
-		if (policy != LEMPTY) {
-			jam(buf, "+");
-			jam_policy(buf, policy);
-		}
+		jam(buf, "initiating Quick Mode ");
+		jam_connection_policies(buf, st->st_connection);
 		if (replacing != SOS_NOBODY) {
 			jam(buf, " to replace #%lu", replacing);
 		}
