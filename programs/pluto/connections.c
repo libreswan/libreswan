@@ -2244,14 +2244,6 @@ static bool extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	lset_buf op, np;
-	lset_t policy_authby = policy_from_authby(c->local->config->host.authby);
-	dbg("replacing connection's policy_authby %s with local local %s",
-	    str_lset_short(&sa_policy_bit_names, "+", c->policy & POLICY_AUTHBY_MASK, &op),
-	    str_lset_short(&sa_policy_bit_names, "+", policy_authby, &np));
-	c->policy &= ~POLICY_AUTHBY_MASK;
-	c->policy |= policy_authby;
-
 	c->spd.spd_next = NULL;
 	c->spd.connection = c;
 
