@@ -6,5 +6,5 @@ sleep 5
 ping -n -q -c 4 192.0.2.254
 ipsec whack --trafficstatus
 # note there should NOT be any incomplete IKE SA attempting to do ModeCFG or EVENT_RETRANSMIT
-ipsec status |grep STATE
+ipsec showstates
 echo done

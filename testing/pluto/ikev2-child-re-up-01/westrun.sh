@@ -8,5 +8,5 @@ sleep 3
 ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
 ipsec whack --trafficstatus
 # there should not be two tunnels in EVENT_SA_REPLACE? One should be in EVENT_SA_EXPIRE ?
-ipsec status |grep STATE
+ipsec showstates
 echo done
