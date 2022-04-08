@@ -157,11 +157,6 @@ enum_names stf_status_names = {
  */
 static const char *const sa_policy_bit_name[] = {
 #define P(N) [N##_IX] = #N
-	P(POLICY_PSK),
-	P(POLICY_RSASIG),
-	P(POLICY_ECDSA),
-	P(POLICY_AUTH_NEVER),
-	P(POLICY_AUTH_NULL),
 	P(POLICY_ENCRYPT),
 	P(POLICY_AUTHENTICATE),
 	P(POLICY_COMPRESS),
@@ -199,7 +194,6 @@ static const char *const sa_policy_bit_name[] = {
 	P(POLICY_ESN_YES),
 	P(POLICY_INTERMEDIATE),
 	P(POLICY_IGNORE_PEER_DNS),
-	P(POLICY_RSASIG_v1_5),
 #undef P
 };
 

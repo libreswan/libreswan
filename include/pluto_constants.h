@@ -843,23 +843,6 @@ enum shunt_policy {
 };
 
 enum sa_policy_bits {
-	/*
-	 * XXX: Do not re-order or re-number the following pair.  Bad
-	 * things happen.
-	 *
-	 * (They are used to index an array in spdb.c when determining
-	 * default IKEv1 proposals; arguably the array should be
-	 * deleted but that is another story).
-	 */
-	POLICY_PSK_IX = 0,
-	POLICY_RSASIG_IX = 1,
-	POLICY_ECDSA_IX = 2,
-	POLICY_AUTH_NEVER_IX,
-	POLICY_AUTH_NULL_IX,
-	POLICY_RSASIG_v1_5_IX,
-
-#define AUTHBY_DEFAULTS			(struct authby) { .rsasig = true, .rsasig_v1_5 = true, .ecdsa = true }
-
 	POLICY_ENCRYPT_IX,	/* must be first of IPSEC policies */
 	POLICY_AUTHENTICATE_IX,	/* must be second */
 	POLICY_COMPRESS_IX,	/* must be third */
