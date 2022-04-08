@@ -36,16 +36,20 @@ road #
 fired and forgotten
 road #
  ../../guestbin/wait-for.sh --match private-or-clear -- ipsec whack --trafficstatus
-[this should be up]
+006 #2: "private-or-clear#2001:db8:1:2::/64"[1] ...2001:db8:1:2::23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='ID_NULL'
 road #
  ../../guestbin/ping-once.sh --up -6 2001:db8:1:2::23
 up
 road #
  ipsec whack --trafficstatus
+006 #2: "private-or-clear#2001:db8:1:2::/64"[1] ...2001:db8:1:2::23, type=ESP, add_time=1234567890, inBytes=64, outBytes=64, id='ID_NULL'
 road #
  # confirm we got transport mode, not tunnel mode
 road #
  ip xfrm state | grep mode
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	proto esp spi 0x00000000 reqid 0 mode transport
 road #
  echo done
 done
@@ -53,6 +57,28 @@ road #
  ../../guestbin/ipsec-look.sh
 road NOW
 XFRM state:
+src 2001:db8:1:2::23 dst 2001:db8:1:3::209
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 flag esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	sel src 2001:db8:1:2::23/128 dst 2001:db8:1:3::209/128 
+src 2001:db8:1:3::209 dst 2001:db8:1:2::23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 flag esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	sel src 2001:db8:1:3::209/128 dst 2001:db8:1:2::23/128 
+src 2001:db8:1:3::209 dst 2001:db8:1:2::23
+	proto esp spi 0x00000000 reqid 0 mode transport
+	replay-window 0 
+	sel src 2001:db8:1:3::209/128 dst 2001:db8:1:2::23/128 proto udp sport EPHEM dport 1025 
 XFRM policy:
 src 2001:db8:1:2::254/128 dst 2001:db8:1:3::209/128
 	dir fwd priority PRIORITY ptype main
@@ -72,8 +98,14 @@ src fe80::/10 dst 2001:db8:1:3::209/128
 	dir fwd priority PRIORITY ptype main
 src fe80::/10 dst 2001:db8:1:3::209/128
 	dir in priority PRIORITY ptype main
+src 2001:db8:1:2::23/128 dst 2001:db8:1:3::209/128
+	dir in priority PRIORITY ptype main
+	tmpl src :: dst ::
+		proto esp reqid REQID mode transport
 src 2001:db8:1:3::209/128 dst 2001:db8:1:2::23/128
 	dir out priority PRIORITY ptype main
+	tmpl src :: dst ::
+		proto esp reqid REQID mode transport
 src 2001:db8:1:3::209/128 dst 2001:db8:1:2::/64
 	dir out priority PRIORITY ptype main
 	tmpl src :: dst ::
