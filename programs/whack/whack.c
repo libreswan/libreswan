@@ -483,21 +483,30 @@ enum option_enums {
 #   define CD_LAST CD_INTERMEDIATE	/* last connection description */
 
 /*
- * Algorithm options (just because CD_ was full)
+ * Proof-of-identity options (just because CD_ was full) that fill in
+ * the .authby and .sighash_policy fields.
  */
-#define ALGO_FIRST	ALGO_RSASIG
-	ALGO_RSASIG, /* SHA1 and (for IKEv2) SHA2 */
-	ALGO_RSA_SHA1,
-	ALGO_RSA_SHA2,
-	ALGO_RSA_SHA2_256,
-	ALGO_RSA_SHA2_384,
-	ALGO_RSA_SHA2_512,
-	ALGO_ECDSA, /* no SHA1 support */
-	ALGO_ECDSA_SHA2_256,
-	ALGO_ECDSA_SHA2_384,
-	ALGO_ECDSA_SHA2_512,
+#define OPT_AUTHBY_FIRST	OPT_AUTHBY_RSASIG
+	OPT_AUTHBY_PSK,
+	OPT_AUTHBY_AUTH_NEVER,
+	OPT_AUTHBY_AUTH_NULL,
+	OPT_AUTHBY_RSASIG, /* SHA1 and (for IKEv2) SHA2 */
+	OPT_AUTHBY_RSA_SHA1,
+	OPT_AUTHBY_RSA_SHA2,
+	OPT_AUTHBY_RSA_SHA2_256,
+	OPT_AUTHBY_RSA_SHA2_384,
+	OPT_AUTHBY_RSA_SHA2_512,
+	OPT_AUTHBY_ECDSA, /* no SHA1 support */
+	OPT_AUTHBY_ECDSA_SHA2_256,
+	OPT_AUTHBY_ECDSA_SHA2_384,
+	OPT_AUTHBY_ECDSA_SHA2_512,
+#define OPT_AUTHBY_LAST	OPT_AUTHBY_ECDSA_SHA2_512
 
-#define ALGO_LAST	ALGO_ECDSA_SHA2_512
+/*
+ * Proof of identity options that set .auth (yes the options are
+ * called authby, contradicting config files).
+ */
+
 
 /*
  * Shunt policies
@@ -678,14 +687,7 @@ static const struct option long_opts[] = {
 	/* option for cert rotation */
 
 #define PS(o, p)	{ o, no_argument, NULL, CDP_SINGLETON + POLICY_##p##_IX + OO }
-	PS("psk", PSK),
 	PS("intermediate", INTERMEDIATE),
-	/* These require more complicated settings now, done below
-	 * PS("rsasig", RSASIG),
-	 * PS("ecdsa", ECDSA),
-	 */
-	PS("auth-never", AUTH_NEVER),
-	PS("auth-null", AUTH_NULL),
 
 	PS("encrypt", ENCRYPT),
 	PS("authenticate", AUTHENTICATE),
@@ -786,18 +788,22 @@ static const struct option long_opts[] = {
 	{ "remote-peer-type", required_argument, NULL, CD_REMOTEPEERTYPE + OO },
 	{ "nic-offload", required_argument, NULL, CD_NIC_OFFLOAD + OO},
 
-	{ "rsasig", no_argument, NULL, ALGO_RSASIG + OO },
-	{ "ecdsa", no_argument, NULL, ALGO_ECDSA + OO },
-	{ "ecdsa-sha2", no_argument, NULL, ALGO_ECDSA + OO },
-	{ "ecdsa-sha2_256", no_argument, NULL, ALGO_ECDSA_SHA2_256 + OO },
-	{ "ecdsa-sha2_384", no_argument, NULL, ALGO_ECDSA_SHA2_384 + OO },
-	{ "ecdsa-sha2_512", no_argument, NULL, ALGO_ECDSA_SHA2_512 + OO },
-	{ "rsa-sha1", no_argument, NULL, ALGO_RSA_SHA1 + OO },
-	{ "rsa-sha2", no_argument, NULL, ALGO_RSA_SHA2 + OO },
-	{ "rsa-sha2_256", no_argument, NULL, ALGO_RSA_SHA2_256 + OO },
-	{ "rsa-sha2_384", no_argument, NULL, ALGO_RSA_SHA2_384 + OO },
-	{ "rsa-sha2_512", no_argument, NULL, ALGO_RSA_SHA2_512 + OO },
-
+#define AB(NAME, ENUM) { NAME, no_argument, NULL, OPT_AUTHBY_##ENUM + OO, }
+	AB("psk", PSK),
+	AB("auth-never", AUTH_NEVER),
+	AB("auth-null", AUTH_NULL),
+	AB("rsasig", RSASIG),
+	AB("ecdsa", ECDSA),
+	AB("ecdsa-sha2", ECDSA),
+	AB("ecdsa-sha2_256", ECDSA_SHA2_256),
+	AB("ecdsa-sha2_384", ECDSA_SHA2_384),
+	AB("ecdsa-sha2_512", ECDSA_SHA2_512),
+	AB("rsa-sha1", RSA_SHA1),
+	AB("rsa-sha2", RSA_SHA2),
+	AB("rsa-sha2_256", RSA_SHA2_256),
+	AB("rsa-sha2_384", RSA_SHA2_384),
+	AB("rsa-sha2_512", RSA_SHA2_512),
+#undef AB
 
 	{ "ikev1", no_argument, NULL, CD_IKEv1 + OO },
 	{ "ikev1-allow", no_argument, NULL, CD_IKEv1 + OO }, /* obsolete name */
@@ -1026,7 +1032,7 @@ int main(int argc, char **argv)
 	assert(LST_LAST - LST_FIRST < LELEM_ROOF);
 	assert(END_LAST - END_FIRST < LELEM_ROOF);
 	assert(CD_LAST - CD_FIRST < LELEM_ROOF);
-	assert(ALGO_LAST - ALGO_FIRST < LELEM_ROOF);
+	assert(OPT_AUTHBY_LAST - OPT_AUTHBY_FIRST < LELEM_ROOF);
 
 	zero(&msg);	/* ??? pointer fields might not be NULLed */
 
@@ -1201,12 +1207,12 @@ int main(int argc, char **argv)
 				      long_opts[long_index].name);
 			cdp_seen |= f;
 			opts1_seen |= LELEM(OPT_CD);
-		} else if (ALGO_FIRST <= c && c <= ALGO_LAST) {
+		} else if (OPT_AUTHBY_FIRST <= c && c <= OPT_AUTHBY_LAST) {
 			/*
  			 * ALGO options all translate into two lset's
  			 * msg.policy and msg.sighash
  			 */
-			lset_t f = LELEM(c - ALGO_FIRST);
+			lset_t f = LELEM(c - OPT_AUTHBY_FIRST);
 
 			if (algo_seen & f)
 				diagq("duplicated flag",
@@ -1815,17 +1821,6 @@ int main(int argc, char **argv)
 			continue;
 		}
 
-		/* RSASIG/ECDSA need more than a single policy bit */
-		case CDP_SINGLETON + POLICY_PSK_IX:		/* --psk */
-			msg.authby.psk = true;
-			continue;
-		case CDP_SINGLETON + POLICY_AUTH_NEVER_IX:	/* --auth-never */
-			msg.authby.never = true;
-			continue;
-		case CDP_SINGLETON + POLICY_AUTH_NULL_IX:	/* --auth-null */
-			msg.authby.null = true;
-			continue;
-
 		case CDP_SINGLETON + POLICY_ENCRYPT_IX:	/* --encrypt */
 		/* --authenticate */
 		case CDP_SINGLETON + POLICY_AUTHENTICATE_IX:
@@ -2116,50 +2111,61 @@ int main(int argc, char **argv)
 			msg.sec_label = optarg;
 			continue;
 
-		case ALGO_RSASIG: /* --rsasig */
+
+		/* RSASIG/ECDSA need more than a single policy bit */
+		case OPT_AUTHBY_PSK:		/* --psk */
+			msg.authby.psk = true;
+			continue;
+		case OPT_AUTHBY_AUTH_NEVER:	/* --auth-never */
+			msg.authby.never = true;
+			continue;
+		case OPT_AUTHBY_AUTH_NULL:	/* --auth-null */
+			msg.authby.null = true;
+			continue;
+		case OPT_AUTHBY_RSASIG: /* --rsasig */
 			msg.authby.rsasig = true;
 			msg.authby.rsasig_v1_5 = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
 			continue;
-		case ALGO_RSA_SHA1: /* --rsa-sha1 */
+		case OPT_AUTHBY_RSA_SHA1: /* --rsa-sha1 */
 			msg.authby.rsasig_v1_5 = true;
 			continue;
-		case ALGO_RSA_SHA2: /* --rsa-sha2 */
+		case OPT_AUTHBY_RSA_SHA2: /* --rsa-sha2 */
 			msg.authby.rsasig = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
 			continue;
-		case ALGO_RSA_SHA2_256:	/* --rsa-sha2_256 */
+		case OPT_AUTHBY_RSA_SHA2_256:	/* --rsa-sha2_256 */
 			msg.authby.rsasig = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
 			continue;
-		case ALGO_RSA_SHA2_384:	/* --rsa-sha2_384 */
+		case OPT_AUTHBY_RSA_SHA2_384:	/* --rsa-sha2_384 */
 			msg.authby.rsasig = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
 			continue;
-		case ALGO_RSA_SHA2_512:	/* --rsa-sha2_512 */
+		case OPT_AUTHBY_RSA_SHA2_512:	/* --rsa-sha2_512 */
 			msg.authby.rsasig = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
 			continue;
 
-		case ALGO_ECDSA: /* --ecdsa and --ecdsa-sha2 */
+		case OPT_AUTHBY_ECDSA: /* --ecdsa and --ecdsa-sha2 */
 			msg.authby.ecdsa = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
 			continue;
-		case ALGO_ECDSA_SHA2_256:	/* --ecdsa-sha2_256 */
+		case OPT_AUTHBY_ECDSA_SHA2_256:	/* --ecdsa-sha2_256 */
 			msg.authby.ecdsa = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_256;
 			continue;
-		case ALGO_ECDSA_SHA2_384:	/* --ecdsa-sha2_384 */
+		case OPT_AUTHBY_ECDSA_SHA2_384:	/* --ecdsa-sha2_384 */
 			msg.authby.ecdsa = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_384;
 			continue;
-		case ALGO_ECDSA_SHA2_512:	/* --ecdsa-sha2_512 */
+		case OPT_AUTHBY_ECDSA_SHA2_512:	/* --ecdsa-sha2_512 */
 			msg.authby.ecdsa = true;
 			msg.sighash_policy |= POL_SIGHASH_SHA2_512;
 			continue;
