@@ -345,10 +345,8 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		/*
 		 * Is there a connection that matches the message?
 		 */
-		lset_t policy = LEMPTY;
 		bool send_reject_response = true;
-		struct connection *c = find_v2_host_pair_connection(md, &policy,
-								    &send_reject_response);
+		struct connection *c = find_v2_host_pair_connection(md, &send_reject_response);
 		if (c == NULL) {
 			if (send_reject_response) {
 				/*
@@ -374,7 +372,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 						      md->hdr.isa_ike_spis.initiator,
 						      ike_responder_spi(&md->sender,
 									md->md_logger),
-						      policy, 0, null_fd);
+						      LEMPTY, 0, null_fd);
 
 		statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
 		/* XXX: keep test results happy */

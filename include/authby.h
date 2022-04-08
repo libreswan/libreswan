@@ -53,11 +53,6 @@ bool authby_has_rsasig(struct authby);
 bool authby_has_ecdsa(struct authby);
 bool authby_has_digsig(struct authby);
 
-lset_t policy_from_authby(struct authby authby); /* XXX: delete */
-#define policy_from_authby_xauth(AUTHBY, XAUTH)	/* XXX: delete */	\
-	(policy_from_authby(AUTHBY) |					\
-	 (XAUTH ? POLICY_XAUTH : LEMPTY))
-
 enum keyword_auth auth_from_authby(struct authby authby);
 struct authby authby_from_auth(enum keyword_auth auth);
 

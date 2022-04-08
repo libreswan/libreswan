@@ -31,7 +31,6 @@
 struct msg_digest;
 
 struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
-						lset_t *policy,
 						bool *send_reject_response);
 
 #endif

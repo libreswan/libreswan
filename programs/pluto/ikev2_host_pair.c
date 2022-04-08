@@ -300,7 +300,6 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 }
 
 struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
-						lset_t *policy,
 						bool *send_reject_response)
 {
 	/*
@@ -333,7 +332,6 @@ struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
 		 * clears SEND_REJECT_RESPONSE, that will be lost.
 		 */
 		struct authby req_authby = authbys[i];
-		*policy = policy_from_authby(req_authby);
 		*send_reject_response = true;
 		c = ikev2_find_host_connection(md, req_authby,
 					       send_reject_response);
@@ -354,11 +352,11 @@ struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
 	passert(c != NULL);	/* (e != STF_OK) == (c == NULL) */
 
 	connection_buf ci;
-	policy_buf pb;
+	authby_buf pb;
 	ldbg(md->md_logger,
-	     "found connection: "PRI_CONNECTION" with policy %s",
+	     "found connection: "PRI_CONNECTION" with remote authby %s",
 	     pri_connection(c, &ci),
-	     str_policy(*policy, &pb));
+	     str_authby(c->remote->config->host.authby, &pb));
 
 	/*
 	 * Did we overlook a type=passthrough foodgroup?
