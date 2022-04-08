@@ -1,0 +1,52 @@
+/testing/guestbin/swan-prep --46
+east #
+ cp policies/* /etc/ipsec.d/policies/
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ # give OE policies time to load
+east #
+ ../../guestbin/wait-for.sh --match 'loaded 13' -- ipsec auto --status
+000 Total IPsec connections: loaded 13, active 0
+east #
+ echo "initdone"
+initdone
+east #
+ ../../guestbin/ipsec-look.sh
+east NOW
+XFRM state:
+XFRM policy:
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir out priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir out priority PRIORITY ptype main
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+2001:db8:0:1::/64 via 2001:db8:1:2::45 dev eth1
+2001:db8:0:2::/64 dev eth0 proto kernel metric 256
+2001:db8:1:2::/64 dev eth1 proto kernel metric 256
+fe80::/64 dev eth1 proto kernel metric 256
+fe80::/64 dev eth0 proto kernel metric 256
+default via 2001:db8:1:2::254 dev eth1
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east #
+ 

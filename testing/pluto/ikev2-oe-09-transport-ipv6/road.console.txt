@@ -1,0 +1,70 @@
+/testing/guestbin/swan-prep --46
+road #
+ cp policies/* /etc/ipsec.d/policies/
+road #
+ ipsec start
+Redirecting to: [initsystem]
+road #
+ ../../guestbin/wait-until-pluto-started
+road #
+ # give OE policies time to load
+road #
+ ../../guestbin/wait-for.sh --match 'loaded 13' -- ipsec auto --status
+000 Total IPsec connections: loaded 13, active 0
+road #
+ ip -s xfrm monitor > /tmp/xfrm-monitor.out &
+[x] PID
+road #
+ echo "initdone"
+initdone
+road #
+ # bring up OE
+road #
+ ../../guestbin/ping-once.sh --forget -6 2001:db8:1:2::23
+fired and forgotten
+road #
+ ../../guestbin/wait-for.sh --match private-or-clear -- ipsec whack --trafficstatus
+-006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='ID_NULL'
+road #
+ ../../guestbin/ping-once.sh --up -6 2001:db8:1:2::23
+up
+road #
+ ipsec whack --trafficstatus
+road #
+ # confirm we got transport mode, not tunnel mode
+road #
+ ip xfrm state | grep mode
+road #
+ echo done
+done
+road #
+ ../../guestbin/ipsec-look.sh
+road NOW
+XFRM state:
+XFRM policy:
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 135
+	dir out priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir fwd priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir in priority PRIORITY ptype main
+src ::/0 dst ::/0 proto ipv6-icmp type 136
+	dir out priority PRIORITY ptype main
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.3.254 dev eth0
+192.1.3.0/24 dev eth0 proto kernel scope link src 192.1.3.209
+2001:db8:1:3::/64 dev eth0 proto kernel metric 256
+fe80::/64 dev eth0 proto kernel metric 256
+default via 2001:db8:1:3::254 dev eth0
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+road #
+ 

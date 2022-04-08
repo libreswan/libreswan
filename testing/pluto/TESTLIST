@@ -534,7 +534,8 @@ kvmplutotest	newoe-07-ike-replace-initiator		good
 kvmplutotest	newoe-07-ike-replace-initiator-esp	good
 kvmplutotest	newoe-08-restart			good
 kvmplutotest	newoe-09-mutual				good
-kvmplutotest	newoe-09-mutual-transport		good
+kvmplutotest	ikev2-oe-09-transport-ipv4		good
+kvmplutotest	ikev2-oe-09-transport-ipv6		wip
 kvmplutotest	newoe-10-expire-inactive		good
 kvmplutotest	newoe-10-expire-inactive-ike		good
 kvmplutotest	newoe-11-failike			good
