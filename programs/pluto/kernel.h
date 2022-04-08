@@ -178,7 +178,7 @@ struct kernel_policy {
 	struct kernel_policy_rule rule[5]; /* [0]+AH+ESP+COMP+0 */
 };
 
-extern const struct kernel_policy proto_kernel_policy_transport_esp;
+struct kernel_policy bare_kernel_policy(const struct ip_info *afi);
 
 /*
  * How a packet flows through the kernel.

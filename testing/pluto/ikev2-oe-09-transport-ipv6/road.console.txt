@@ -2,15 +2,27 @@
 road #
  cp policies/* /etc/ipsec.d/policies/
 road #
+ echo "2001:db8:1:2::0/64" >>  /etc/ipsec.d/policies/private-or-clear
+road #
+ echo "2001:db8:1:3::254/128" >> /etc/ipsec.d/policies/clear
+road #
+ echo "2001:db8:1:2::254/128" >> /etc/ipsec.d/policies/clear
+road #
+ echo "fe80::/10" >> /etc/ipsec.d/policies/clear
+road #
  ipsec start
 Redirecting to: [initsystem]
+road #
+ # ensure for tests acquires expire before our failureshunt=2m
+road #
+ echo 30 > /proc/sys/net/core/xfrm_acq_expires
 road #
  ../../guestbin/wait-until-pluto-started
 road #
  # give OE policies time to load
 road #
- ../../guestbin/wait-for.sh --match 'loaded 13' -- ipsec auto --status
-000 Total IPsec connections: loaded 13, active 0
+ ../../guestbin/wait-for.sh --match 'loaded 9' -- ipsec auto --status
+000 Total IPsec connections: loaded 9, active 0
 road #
  ip -s xfrm monitor > /tmp/xfrm-monitor.out &
 [x] PID
@@ -24,7 +36,7 @@ road #
 fired and forgotten
 road #
  ../../guestbin/wait-for.sh --match private-or-clear -- ipsec whack --trafficstatus
--006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='ID_NULL'
+[this should be up]
 road #
  ../../guestbin/ping-once.sh --up -6 2001:db8:1:2::23
 up
@@ -42,6 +54,30 @@ road #
 road NOW
 XFRM state:
 XFRM policy:
+src 2001:db8:1:2::254/128 dst 2001:db8:1:3::209/128
+	dir fwd priority PRIORITY ptype main
+src 2001:db8:1:2::254/128 dst 2001:db8:1:3::209/128
+	dir in priority PRIORITY ptype main
+src 2001:db8:1:3::209/128 dst 2001:db8:1:2::254/128
+	dir out priority PRIORITY ptype main
+src 2001:db8:1:3::209/128 dst 2001:db8:1:3::254/128
+	dir out priority PRIORITY ptype main
+src 2001:db8:1:3::254/128 dst 2001:db8:1:3::209/128
+	dir fwd priority PRIORITY ptype main
+src 2001:db8:1:3::254/128 dst 2001:db8:1:3::209/128
+	dir in priority PRIORITY ptype main
+src 2001:db8:1:3::209/128 dst fe80::/10
+	dir out priority PRIORITY ptype main
+src fe80::/10 dst 2001:db8:1:3::209/128
+	dir fwd priority PRIORITY ptype main
+src fe80::/10 dst 2001:db8:1:3::209/128
+	dir in priority PRIORITY ptype main
+src 2001:db8:1:3::209/128 dst 2001:db8:1:2::23/128
+	dir out priority PRIORITY ptype main
+src 2001:db8:1:3::209/128 dst 2001:db8:1:2::/64
+	dir out priority PRIORITY ptype main
+	tmpl src :: dst ::
+		proto esp reqid 0 mode transport
 src ::/0 dst ::/0 proto ipv6-icmp type 135
 	dir fwd priority PRIORITY ptype main
 src ::/0 dst ::/0 proto ipv6-icmp type 135
