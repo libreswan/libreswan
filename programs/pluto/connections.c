@@ -1218,16 +1218,12 @@ static int extract_end(struct connection *c,
 		}
 	}
 
-	lset_buf wpb;
-	enum_buf wab;
 	enum_buf eab;
 	authby_buf wabb;
 	authby_buf eabb;
-	dbg("fake %sauth=%s %sauthby=%s from whack %sauth=%s policy %s authby %s",
+	dbg("fake %sauth=%s %sauthby=%s from whack authby %s",
 	    src->leftright, str_enum_short(&keyword_auth_names, auth, &eab),
 	    src->leftright, str_authby(authby, &eabb),
-	    src->leftright, str_enum_short(&keyword_auth_names, src->auth, &wab),
-	    str_lset_short(&sa_policy_bit_names, "+", wm->policy & POLICY_AUTHBY_MASK, &wpb),
 	    str_authby(wm->authby, &wabb));
 	config_end->host.auth = auth;
 	config_end->host.authby = authby;
@@ -2810,7 +2806,6 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	lset_t policy = c->policy;
 
 	struct authby authby = c->local->config->host.authby;
-	policy &= ~POLICY_AUTHBY_MASK;
 	if (authby_is_set(authby)) {
 		s += jam_string(buf, sep);
 		s += jam_authby(buf, authby);

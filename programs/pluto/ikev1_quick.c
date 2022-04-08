@@ -1199,8 +1199,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 		 * the bridge, I think.  It will reflect the ISAKMP SA that we
 		 * are using.
 		 */
-		st->st_policy = (p1st->st_policy & POLICY_AUTHBY_MASK) |
-				(c->policy & ~POLICY_AUTHBY_MASK);
+		st->st_policy = c->policy;
 
 		if (p1st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) {
 			/* ??? this partially overwrites what was done via hv */

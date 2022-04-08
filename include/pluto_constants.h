@@ -858,12 +858,6 @@ enum sa_policy_bits {
 	POLICY_AUTH_NULL_IX,
 	POLICY_RSASIG_v1_5_IX,
 
-#define POLICY_AUTHBY_MASK	(LELEM(POLICY_PSK_IX) |		\
-				 LELEM(POLICY_RSASIG_IX) |	\
-				 LELEM(POLICY_ECDSA_IX) |	\
-				 LELEM(POLICY_RSASIG_v1_5_IX) |	\
-				 LELEM(POLICY_AUTH_NEVER_IX) |	\
-				 LELEM(POLICY_AUTH_NULL_IX))
 #define AUTHBY_DEFAULTS			(struct authby) { .rsasig = true, .rsasig_v1_5 = true, .ecdsa = true }
 
 	POLICY_ENCRYPT_IX,	/* must be first of IPSEC policies */
