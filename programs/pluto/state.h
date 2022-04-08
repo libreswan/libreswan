@@ -924,6 +924,8 @@ void check_state(struct state *st, where_t where);
 
 void connswitch_state_and_log(struct state *st, struct connection *c);
 
+void DBG_tcpdump_ike_sa_keys(const struct state *st);
+
 /*
  * For iterating over the state DB.
  *

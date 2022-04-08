@@ -370,7 +370,6 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	}
 
 	ikev2_derive_child_keys(ike, larval_child);
-	ikev2_log_parentSA(&larval_child->sa);
 
 	/*
 	 * Check to see if we need to release an old instance

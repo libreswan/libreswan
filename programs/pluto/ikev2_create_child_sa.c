@@ -1532,9 +1532,6 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request_continue_2(struct
 		       ike->sa.st_oakley.ta_prf, /* for IKE/ESP/AH */
 		       &larval_ike->sa.st_ike_rekey_spis);
 
-	/* dump new keys */
-	ikev2_log_parentSA(&larval_ike->sa);
-
 	if (!record_v2_rekey_ike_message(ike, larval_ike, /*responder*/request_md)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -1689,9 +1686,6 @@ static stf_status process_v2_CREATE_CHILD_SA_rekey_ike_response_continue_1(struc
 		       ike->sa.st_skey_d_nss, /* only IKE has SK_d */
 		       ike->sa.st_oakley.ta_prf, /* for IKE/ESP/AH */
 		       &larval_ike->sa.st_ike_rekey_spis/* new SPIs */);
-
-	/* dump new keys */
-	ikev2_log_parentSA(&larval_ike->sa);
 
 	pexpect(larval_ike->sa.st_v2_rekey_pred == ike->sa.st_serialno); /*wow!*/
 	ikev2_rekey_expire_predecessor(larval_ike, larval_ike->sa.st_v2_rekey_pred);

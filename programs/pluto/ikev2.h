@@ -42,8 +42,6 @@ extern void complete_v2_state_transition(struct ike_sa *ike,
 void schedule_reinitiate_v2_ike_sa_init(struct ike_sa *ike,
 					stf_status (*resume)(struct ike_sa *ike));
 
-extern void ikev2_log_parentSA(const struct state *st);
-
 extern bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
 				     const struct crypt_mac *idhash,
 				     pb_stream *a_pbs,

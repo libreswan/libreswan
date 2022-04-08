@@ -66,6 +66,7 @@
 #include "orient.h"
 #include "ikev2_proposals.h"		/* for free_ikev2_proposal() */
 #include "ikev2_eap.h"			/* for free_eap_state() */
+#include "lswfips.h"			/* for libreswan_fipsmode() */
 
 bool uniqueIDs = false;
 
@@ -3236,3 +3237,86 @@ void connswitch_state_and_log(struct state *st, struct connection *new)
 					  st->st_logger->global_whackfd);
 }
 
+/*
+ * This logs to the main log the authentication and encryption keys
+ * for an IKE/ISAKMP SA.  This is done in a format that is compatible
+ * with tcpdump 4.0's -E option.
+ *
+ * The log message will require that a cut command is used to remove
+ * the initial text.
+ *
+ * DANGER: this intentionally leaks cryptographic secrets.
+ */
+void DBG_tcpdump_ike_sa_keys(const struct state *st)
+{
+	passert(DBGP(DBG_PRIVATE));
+	passert(!libreswan_fipsmode());
+
+	if (st->st_oakley.ta_integ == NULL ||
+	    st->st_oakley.ta_encrypt == NULL)
+		return;
+
+	/* format initiator SPI */
+	char tispi[3 + 2*IKE_SA_SPI_SIZE];
+	(void)datatot(st->st_ike_spis.initiator.bytes, sizeof(st->st_ike_spis.initiator.bytes),
+		      'x',
+		      tispi, sizeof(tispi));
+
+	/* format responder SPI */
+	char trspi[3 + 2*IKE_SA_SPI_SIZE];
+	(void)datatot(st->st_ike_spis.responder.bytes, sizeof(st->st_ike_spis.responder.bytes),
+		      'x',
+		      trspi, sizeof(trspi));
+
+	const char *authalgo = st->st_oakley.ta_integ->integ_tcpdump_name;
+	const char *encalgo = st->st_oakley.ta_encrypt->encrypt_tcpdump_name;
+
+	/*
+	 * Text of encryption key length (suffix for encalgo).
+	 * No more than 3 digits, but compiler fears it might be 5.
+	 */
+	char tekl[6] = "";
+	if (st->st_oakley.enckeylen != 0)
+		snprintf(tekl, sizeof(tekl), "%u",
+			 st->st_oakley.enckeylen);
+
+	/* v2 IKE authentication key for initiator (256 bit bound) */
+	chunk_t ai = chunk_from_symkey("ai", st->st_skey_ai_nss,
+				       st->st_logger);
+	char tai[3 + 2 * BYTES_FOR_BITS(256)] = "";
+	(void)datatot(ai.ptr, ai.len, 'x', tai, sizeof(tai));
+	free_chunk_content(&ai);
+
+	/* v2 IKE encryption key for initiator (256 bit bound) */
+	chunk_t ei = chunk_from_symkey("ei", st->st_skey_ei_nss,
+				       st->st_logger);
+	char tei[3 + 2 * BYTES_FOR_BITS(256)] = "";
+	(void)datatot(ei.ptr, ei.len, 'x', tei, sizeof(tei));
+	free_chunk_content(&ei);
+
+	DBG_log("ikev%d I %s %s %s:%s %s%s:%s",
+		st->st_ike_version,
+		tispi, trspi,
+		authalgo, tai,
+		encalgo, tekl, tei);
+
+	/* v2 IKE authentication key for responder (256 bit bound) */
+	chunk_t ar = chunk_from_symkey("ar", st->st_skey_ar_nss,
+				       st->st_logger);
+	char tar[3 + 2 * BYTES_FOR_BITS(256)] = "";
+	(void)datatot(ar.ptr, ar.len, 'x', tar, sizeof(tar));
+	free_chunk_content(&ar);
+
+	/* v2 IKE encryption key for responder (256 bit bound) */
+	chunk_t er = chunk_from_symkey("er", st->st_skey_er_nss,
+				       st->st_logger);
+	char ter[3 + 2 * BYTES_FOR_BITS(256)] = "";
+	(void)datatot(er.ptr, er.len, 'x', ter, sizeof(ter));
+	free_chunk_content(&er);
+
+	DBG_log("ikev%d R %s %s %s:%s %s%s:%s",
+		st->st_ike_version,
+		tispi, trspi,
+		authalgo, tar,
+		encalgo, tekl, ter);
+}

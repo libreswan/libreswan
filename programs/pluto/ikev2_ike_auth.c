@@ -253,7 +253,6 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 							   const struct hash_signature *auth_sig)
 {
 	struct connection *const pc = ike->sa.st_connection;	/* parent connection */
-	ikev2_log_parentSA(&ike->sa);
 
 	/*
 	 * XXX:
@@ -622,8 +621,6 @@ stf_status process_v2_IKE_AUTH_request(struct ike_sa *ike,
 
 stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, struct msg_digest *md)
 {
-	ikev2_log_parentSA(&ike->sa);
-
 	/* going to switch to child st. before that update parent */
 	if (!LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST))
 		update_ike_endpoints(ike, md);

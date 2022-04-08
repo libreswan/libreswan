@@ -195,6 +195,10 @@ void v2_ike_sa_established(struct ike_sa *ike)
 	ike->sa.st_viable_parent = true;
 	linux_audit_conn(&ike->sa, LAK_PARENT_START);
 	pstat_sa_established(&ike->sa);
+	/* dump new keys */
+	if (DBGP(DBG_PRIVATE)) {
+		DBG_tcpdump_ike_sa_keys(&ike->sa);
+	}
 }
 
 /*

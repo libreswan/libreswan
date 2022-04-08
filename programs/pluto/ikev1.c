@@ -3046,6 +3046,11 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 		}
 	}
 
+	/* dump new keys */
+	if (DBGP(DBG_PRIVATE)) {
+		DBG_tcpdump_ike_sa_keys(&ike->sa);
+	}
+
 	c->newest_ike_sa = ike->sa.st_serialno;
 }
 
