@@ -56,6 +56,8 @@
 #endif
 #include "demux.h"		/* for free_demux() */
 #include "impair_message.h"	/* for free_impair_message() */
+#include "state_db.h"		/* for check_state_db() */
+#include "connection_db.h"	/* for check_{connection,spd}_db() */
 
 volatile bool exiting_pluto = false;
 static enum pluto_exit_code pluto_exit_code;
@@ -111,6 +113,13 @@ void exit_epilogue(void)
 #endif
 		exit(PLUTO_EXIT_LEAVE_STATE);
 	}
+
+	/*
+	 * Before ripping everything down; check internal state.
+	 */
+	check_state_db(logger);
+	check_connection_db(logger);
+	check_spd_route_db(logger);
 
 	/*
 	 * This should wipe pretty much everything: states, revivals,
