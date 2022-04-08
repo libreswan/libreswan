@@ -1,5 +1,5 @@
 ipsec auto --up west
-ipsec status | grep STATE_
+ipsec showstates
 echo "sleep 0-50/600"
 sleep 50
 echo "sleep 50-100/600"
@@ -24,6 +24,6 @@ echo "sleep 500-550/600"
 sleep 50
 echo "sleep 550-600/600"
 sleep 50
-ipsec status | grep STATE_
+ipsec showstates
 grep vanish /tmp/pluto.log
 echo done

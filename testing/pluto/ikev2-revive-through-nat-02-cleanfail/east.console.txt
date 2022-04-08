@@ -12,7 +12,7 @@ initdone
 east #
  # should be empty for east and road
 east #
- ipsec status |grep STATE_
+ ipsec showstates
 east #
  # there should be no instance connections
 east #

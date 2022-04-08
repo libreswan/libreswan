@@ -3,4 +3,4 @@ sleep 5
 # should show no tunnels and no bare shunts and a state in STATE_PARENT_I1
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
-ipsec status |grep STATE_
+ipsec showstates

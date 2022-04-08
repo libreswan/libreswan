@@ -6,7 +6,7 @@ ipsec whack --rekey-ike --name 1
 # wait two seconds to ensure old parent has expired
 sleep 2
 # parent state must be #3 and the latest ISAKMP
-ipsec status | grep STATE_
+ipsec showstates
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
 echo done

@@ -10,7 +10,7 @@ sleep 9
 ipsec whack --rekey-ipsec --name west
 sleep 2
 # expect IKE #1 CHILD #3
-ipsec status |grep STATE_
+ipsec showstates
 ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 ipsec whack --trafficstatus
 # why?
@@ -21,7 +21,7 @@ sleep 11
 ipsec whack --rekey-ipsec --name west
 sleep 2
 # expect IKE #1 CHILD #4
-ipsec status |grep STATE_
+ipsec showstates
 ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 ipsec whack --trafficstatus
 echo done

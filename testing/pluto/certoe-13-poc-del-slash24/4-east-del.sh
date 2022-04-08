@@ -4,5 +4,5 @@ ipsec whack --trafficstatus
 ipsec restart
 ../../guestbin/wait-until-pluto-started
 # should be empty
-ipsec status |grep STATE_
+ipsec showstates
 echo waiting on road to re-initiate

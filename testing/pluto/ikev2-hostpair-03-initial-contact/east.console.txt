@@ -14,12 +14,13 @@ east #
  echo "initdone"
 initdone
 east #
- ipsec status | grep STATE_
+ ipsec showstates
 000 #1: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; idle;
 000 #3: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; idle;
 000 #5: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; idle;
 000 #7: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 000 #8: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:4500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #7; idle;
+000 #8: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254 esp.ESPSPIi@192.1.2.254 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.254 tun.0@192.1.2.23 Traffic: ESPin=84B ESPout=84B ESPmax=0B 
 east #
  ip xfrm policy
 src 192.1.2.23/32 dst 192.0.2.1/32 

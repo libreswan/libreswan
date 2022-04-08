@@ -138,7 +138,7 @@ road #
 road #
  # There should NOT be an IPsec SA, and a partial OE attempt going?
 road #
- ipsec status |grep STATE_
+ ipsec showstates
 road #
  ipsec whack --trafficstatus
 road #
@@ -160,6 +160,6 @@ road #
 road #
  # additional 'authenticated' partial state lingers
 road #
- ipsec status | grep STATE_
+ ipsec showstates
 road #
  

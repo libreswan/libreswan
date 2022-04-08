@@ -1,2 +1,2 @@
-ipsec status | grep STATE_
+ipsec showstates
 ip xfrm policy

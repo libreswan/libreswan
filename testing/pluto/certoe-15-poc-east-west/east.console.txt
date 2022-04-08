@@ -45,7 +45,7 @@ east #
 east #
  # should be empty
 east #
- ipsec status |grep STATE_
+ ipsec showstates
 east #
  echo waiting on west to re-initiate
 waiting on west to re-initiate

@@ -15,6 +15,6 @@ initdone
 east #
  # on east, we should see no more partial state
 east #
- ipsec status | grep STATE_
+ ipsec showstates
 east #
  

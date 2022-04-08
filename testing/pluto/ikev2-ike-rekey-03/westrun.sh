@@ -10,7 +10,7 @@ ipsec auto --up westnet-eastnet-ikev2c
 ../../guestbin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
 ../../guestbin/ping-once.sh --up -I 192.0.101.254 192.0.201.254
 ipsec whack --trafficstatus
-ipsec status |grep STATE_
+ipsec showstates
 # Wait intil 30(23+10) - between 23 and 46
 sleep 23
 sleep 7
@@ -19,7 +19,7 @@ sleep 7
 ../../guestbin/ping-once.sh --up -I 192.0.100.254 192.0.200.254
 ../../guestbin/ping-once.sh --up -I 192.0.101.254 192.0.201.254
 ipsec whack --trafficstatus
-ipsec status |grep STATE_|sort
+ipsec showstates|sort
 # Wait intil 60(30+30) - between 46 and 69, after 53
 sleep 30
 # confirm #5-#7 replaced by #8-#10; and #1 by #11
@@ -28,5 +28,5 @@ sleep 30
 ../../guestbin/ping-once.sh --up -I 192.0.101.254 192.0.201.254
 # in final.sh
 # ipsec whack --trafficstatus
-# ipsec status |grep STATE_
+# ipsec showstates
 echo done

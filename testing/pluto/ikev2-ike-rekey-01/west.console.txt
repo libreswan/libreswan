@@ -50,8 +50,9 @@ west #
  ipsec whack --trafficstatus
 006 #2: "west", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
 west #
- ipsec status |grep STATE_
+ ipsec showstates
 000 #2: "west":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #3; idle;
+000 #2: "west" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=168B ESPout=168B ESPmax=0B 
 000 #3: "west":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 west #
  # why?
@@ -69,15 +70,17 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsec status |grep STATE_
+ ipsec showstates
 000 #2: "west":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #4; idle;
+000 #2: "west" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=252B ESPout=252B ESPmax=0B 
 000 #4: "west":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 west #
  ipsec whack --trafficstatus
 006 #2: "west", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@east'
 west #
- ipsec status |grep STATE_
+ ipsec showstates
 000 #2: "west":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #4; idle;
+000 #2: "west" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=252B ESPout=252B ESPmax=0B 
 000 #4: "west":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 west #
  

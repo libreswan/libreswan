@@ -11,7 +11,7 @@ ipsec whack --rekey-ipsec --name west-east/4x0 --async
 sleep 45
 # state #1 in STATE_V2_ESTABLISHED_IKE_SA, and #6, #7, #8 and #9 in STATE_V2_ESTABLISHED_CHILD_SA
 # anything other state is a sign of regression
-ipsec status | grep STATE_
+ipsec showstates
 # this is complex grep line susceptible to changes to log lines.
 # until we find better one keep this.
 # May be once the bug is fixed comment it out?

@@ -1,3 +1,3 @@
 ipsec whack --trafficstatus
-ipsec status |grep STATE_
+ipsec showstates
 ../../guestbin/ipsec-look.sh

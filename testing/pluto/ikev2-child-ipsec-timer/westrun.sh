@@ -1,9 +1,9 @@
 ipsec auto --up westnet-eastnet-ikev2
 sleep 5
-ipsec status |grep STATE_
+ipsec showstates
 # rerunning --up should use CREATE_CHILD_SA
 ipsec auto --up westnet-eastnet-ikev2
-ipsec status |grep STATE_
+ipsec showstates
 sleep 45
-ipsec status |grep STATE_
+ipsec showstates
 echo done

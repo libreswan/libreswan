@@ -39,6 +39,6 @@ done
 west #
  # on east, we should see no more partial state
 west #
- ipsec status | grep STATE_
+ ipsec showstates
 west #
  

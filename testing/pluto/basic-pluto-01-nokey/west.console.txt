@@ -48,7 +48,7 @@ west #
 west #
  # we should not see any leftover states
 west #
- ipsec status |grep STATE_
+ ipsec showstates
 west #
  echo done
 done

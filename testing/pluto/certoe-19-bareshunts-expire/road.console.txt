@@ -60,7 +60,7 @@ road #
  ip -o xfrm pol | grep 192.1.2.23
 src 192.1.3.209/32 dst 192.1.2.23/32 \	dir out priority 3850240 ptype main \
 road #
- ipsec status | grep STATE_ || true
+ ipsec showstates || true
 road #
  # wait on OE shunt to expire: should show no more shunts for
 road #
@@ -70,7 +70,7 @@ road #
 road #
  ip -o xfrm pol | grep 192.1.2.23 || true
 road #
- ipsec status | grep STATE_ || true
+ ipsec showstates || true
 road #
  # repeat test with a hold shunt - but it really shouldn't matter
 road #
@@ -106,7 +106,7 @@ road #
  ip -o xfrm pol | grep 192.1.3.46 || true
 src 192.1.3.209/32 dst 192.1.3.46/32 \	dir out action block priority 0 ptype main \	tmpl src 0.0.0.0 dst 0.0.0.0\		proto esp reqid 0 mode transport\
 road #
- ipsec status | grep STATE_ || true
+ ipsec showstates || true
 road #
  # wait for failing shunt to expire: should show no more shunts for
 road #
@@ -117,6 +117,6 @@ road #
  ip -o xfrm pol | grep 192.1.3.46 || true
 src 192.1.3.209/32 dst 192.1.3.46/32 \	dir out action block priority 0 ptype main \	tmpl src 0.0.0.0 dst 0.0.0.0\		proto esp reqid 0 mode transport\
 road #
- ipsec status | grep STATE_ || true
+ ipsec showstates || true
 road #
  

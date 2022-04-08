@@ -41,7 +41,7 @@ west #
 west #
  # only on east, pluto should be attempting to connect to west because it has auto=start
 west #
- ipsec status |grep STATE_
+ ipsec showstates
 west #
  # confirm the revive conn code triggered
 west #

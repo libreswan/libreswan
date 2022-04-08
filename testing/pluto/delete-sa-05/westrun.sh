@@ -5,4 +5,4 @@ ipsec whack --trafficstatus
 ipsec auto --delete west-east-auto
 sleep 2
 # We should still have the ISAKMP SA for west-east-auto2
-ipsec status |grep west-east | grep STATE_
+ipsec showstates | grep west-east

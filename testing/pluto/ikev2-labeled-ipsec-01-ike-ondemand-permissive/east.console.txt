@@ -79,8 +79,9 @@ Certificate Nickname                                         Trust Attributes
 east #
  # The IKE SA should be associated with the template connection
 east #
- ipsec status |grep STATE_
+ ipsec showstates
 000 #1: "labeled":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 000 #2: "labeled"[1] 192.1.2.45:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; IKE SA #1; idle;
+000 #2: "labeled"[1] 192.1.2.45 esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 Traffic: ESPin=64B ESPout=64B ESPmax=0B 
 east #
  

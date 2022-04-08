@@ -63,7 +63,7 @@ road #
 road #
  # should be empty
 road #
- ipsec status |grep STATE_
+ ipsec showstates
 road #
  # trigger ping, this will be lost
 road #

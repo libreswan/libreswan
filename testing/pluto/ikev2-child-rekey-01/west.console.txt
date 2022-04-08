@@ -61,8 +61,9 @@ west #
  ipsec whack --trafficstatus
 006 #4: "west", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
 west #
- ipsec status |grep STATE_
+ ipsec showstates
 000 #1: "west":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 000 #4: "west":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
+000 #4: "west" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=0B 
 west #
  

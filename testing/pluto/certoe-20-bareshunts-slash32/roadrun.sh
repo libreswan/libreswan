@@ -8,14 +8,14 @@ sleep 3
 # should show nothing in shuntstatus (shunt is not bare, but with conn), should show up in xfrm policy and show partial STATE
 ipsec whack --shuntstatus
 ip -o xfrm pol | grep 192.1.2.23
-ipsec status | grep STATE_
+ipsec showstates
 sleep 10
 # should show %pass in shuntstatus and xfrm policy and without partial STATE
 ipsec whack --shuntstatus
 ip -o xfrm pol | grep 192.1.2.23
-ipsec status | grep STATE_
+ipsec showstates
 sleep 35
 # should show no more shunts for 192.1.2.23, but SHOULD show our %trap xfrm policy and no STATE's
 ipsec whack --shuntstatus
 ip -o xfrm pol | grep 192.1.2.23
-ipsec status | grep STATE_
+ipsec showstates

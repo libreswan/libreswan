@@ -16,7 +16,7 @@ ipsec auto --delete authenticated
 ../../guestbin/ping-once.sh --down -I 192.1.3.209 192.1.2.23
 ../../guestbin/wait-for.sh --match '#3: IKE SA authentication request rejected by peer' -- cat /tmp/pluto.log
 # There should NOT be an IPsec SA, and a partial OE attempt going?
-ipsec status |grep STATE_
+ipsec showstates
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
 echo done

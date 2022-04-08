@@ -5,16 +5,16 @@ ipsec auto --up westnet-eastnet-b
 ipsec auto --up westnet-eastnet-c
 ../../guestbin/ping-once.sh --up -I 192.0.101.254 192.0.201.254
 ipsec whack --trafficstatus
-ipsec status |grep STATE_
+ipsec showstates
 echo sleep 3m
 sleep 60
 sleep 60
 sleep 60
 ipsec whack --trafficstatus
-ipsec status |grep STATE_
+ipsec showstates
 sleep 60
 ipsec whack --trafficstatus
-ipsec status |grep STATE_
+ipsec showstates
 sleep 60
 sleep 60
 sleep 60

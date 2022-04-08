@@ -43,7 +43,7 @@ done
 road #
  # should be empty for east and road
 road #
- ipsec status |grep STATE_
+ ipsec showstates
 road #
  # there should be no instance connections
 road #

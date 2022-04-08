@@ -1,7 +1,7 @@
 # east triggered OE, we still have our #1 which is now obsoleted
 sleep 30
 # state #1 should be gone by now. State #2 and #3 should be there.
-ipsec status |grep STATE_
+ipsec showstates
 # confirm it didn't create a shunt and did not nuke out policy
 ipsec shuntstatus
 ip xfrm policy
