@@ -3095,26 +3095,29 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
  * out.
  */
 
-static void teardown_kernel_policies(enum kernel_policy_opd outbound_opd,
+static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
 				     enum shunt_policy outbound_shunt,
 				     struct spd_route *out,
 				     struct spd_route *in,
 				     enum expect_kernel_policy expect_kernel_policy,
 				     struct logger *logger, const char *story)
 {
-	pexpect(outbound_opd == KP_DELETE_OUTBOUND || outbound_opd == KP_REPLACE_OUTBOUND);
+	pexpect(outbound_op == KERNEL_POLICY_OP_DELETE ||
+		outbound_op == KERNEL_POLICY_OP_REPLACE);
 	/*
 	 * The restored policy uses TRANSPORT mode (the host
 	 * .{src,dst} provides the family but the address isn't used).
 	 */
 	struct kernel_policy outbound_kernel_policy =
 		bare_kernel_policy(&out->this.client, &out->that.client);
-	if (!raw_policy(KERNEL_POLICY_OPD(outbound_opd),
+	if (!raw_policy(outbound_op,
+			KERNEL_POLICY_DIR_OUTBOUND,
 			EXPECT_KERNEL_POLICY_OK,
 			&outbound_kernel_policy.src.client,
 			&outbound_kernel_policy.dst.client,
 			outbound_shunt,
-			(outbound_opd == KP_REPLACE_OUTBOUND ? &outbound_kernel_policy : NULL),
+			(outbound_op == KERNEL_POLICY_OP_REPLACE ? &outbound_kernel_policy
+			 : NULL),
 			deltatime(0),
 			calculate_sa_prio(out->connection, false),
 			&out->connection->sa_marks, out->connection->xfrmi,
@@ -3213,7 +3216,7 @@ static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy expect
 			 */
 			pexpect(esr->routing == RT_ROUTED_ECLIPSED);
 			set_spd_routing(esr, RT_ROUTED_PROSPECTIVE);
-			teardown_kernel_policies(KP_REPLACE_OUTBOUND,
+			teardown_kernel_policies(KERNEL_POLICY_OP_REPLACE,
 						 esr->connection->config->prospective_shunt,
 						 esr, sr, expect_kernel_policy,
 						 st->st_logger,
@@ -3241,7 +3244,7 @@ static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy expect
 			 * alive (due to an ISAKMP SA), we get rid of
 			 * routing.
 			 */
-			teardown_kernel_policies(KP_DELETE_OUTBOUND,
+			teardown_kernel_policies(KERNEL_POLICY_OP_DELETE,
 						 sr->connection->config->failure_shunt/*delete so almost ignored!?!*/,
 						 sr, sr, expect_kernel_policy,
 						 st->st_logger,
@@ -3281,7 +3284,7 @@ static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy expect
 							  sr->connection->config->prospective_shunt :
 							  sr->connection->config->failure_shunt);
 			pexpect(shunt_policy != SHUNT_NONE);
-			teardown_kernel_policies(KP_REPLACE_OUTBOUND,
+			teardown_kernel_policies(KERNEL_POLICY_OP_REPLACE,
 						 shunt_policy,
 						 sr, sr, expect_kernel_policy,
 						 st->st_logger,
