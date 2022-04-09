@@ -90,7 +90,9 @@ static bool route_and_eroute(struct connection *c,
 			     /* st or c */
 			     struct logger *logger);
 
-static bool eroute_connection(enum kernel_policy_opd opd, const char *opname,
+static bool eroute_connection(enum kernel_policy_op op,
+			      enum kernel_policy_dir dir,
+			      const char *opname,
 			      const struct spd_route *sr,
 			      enum shunt_policy shunt_policy,
 			      const struct kernel_policy *kernel_policy,
@@ -1290,7 +1292,7 @@ bool trap_connection(struct connection *c)
 
 static bool sag_eroute(const struct state *st,
 		       const struct spd_route *sr,
-		       enum kernel_policy_opd opd,
+		       enum kernel_policy_op op,
 		       const char *opname)
 {
 	struct connection *c = st->st_connection;
@@ -1305,13 +1307,12 @@ static bool sag_eroute(const struct state *st,
 	/* check for no transform at all */
 	passert(kernel_policy.nr_rules > 0);
 
-	pexpect(opd & KERNEL_POLICY_DIR_OUTBOUND);
-
 	/* hack */
 	char why[256];
 	snprintf(why, sizeof(why), "%s() %s", __func__, opname);
 
-	return eroute_connection(opd, why, sr, SHUNT_UNSET,
+	return eroute_connection(op, KERNEL_POLICY_DIR_OUTBOUND,
+				 why, sr, SHUNT_UNSET,
 				 &kernel_policy,
 				 calculate_sa_prio(c, false),
 				 &c->sa_marks, c->xfrmi,
@@ -1717,7 +1718,9 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	return true;
 }
 
-bool eroute_connection(enum kernel_policy_opd opd, const char *opname,
+bool eroute_connection(enum kernel_policy_op op,
+		       enum kernel_policy_dir dir,
+		       const char *opname,
 		       const struct spd_route *sr,
 		       enum shunt_policy shunt_policy,
 		       const struct kernel_policy *kernel_policy,
@@ -1729,7 +1732,7 @@ bool eroute_connection(enum kernel_policy_opd opd, const char *opname,
 {
 	if (sr->this.has_cat) {
 		ip_selector client = selector_from_address(sr->this.host->addr);
-		bool t = raw_policy(KERNEL_POLICY_OPD(opd),
+		bool t = raw_policy(op, dir,
 				    EXPECT_KERNEL_POLICY_OK,
 				    &client, &kernel_policy->dst.route,
 				    shunt_policy,
@@ -1748,7 +1751,7 @@ bool eroute_connection(enum kernel_policy_opd opd, const char *opname,
 		dbg("kernel: %s CAT extra route added return=%d", __func__, t);
 	}
 
-	return raw_policy(KERNEL_POLICY_OPD(opd),
+	return raw_policy(op, dir,
 			  EXPECT_KERNEL_POLICY_OK,
 			  &kernel_policy->src.route, &kernel_policy->dst.route,
 			  shunt_policy,
@@ -1823,22 +1826,21 @@ bool assign_holdpass(const struct connection *c,
 		 * Once the broad %hold is in place, delete the narrow one.
 		 */
 		if (rn != ro) {
-			enum kernel_policy_opd opd;
+			enum kernel_policy_op op;
 			const char *reason;
 
 			if (erouted(ro)) {
-				opd = KP_REPLACE_OUTBOUND;
+				op = KERNEL_POLICY_OP_REPLACE;
 				reason = "assign_holdpass() replace %trap with broad %pass or %hold";
 			} else {
-				opd = KP_ADD_OUTBOUND;
+				op = KERNEL_POLICY_OP_ADD;
 				reason = "assign_holdpass() add broad %pass or %hold";
 			}
 
-			pexpect(opd & KERNEL_POLICY_DIR_OUTBOUND);
-
 			struct kernel_policy outbound_kernel_policy =
 				bare_kernel_policy(&sr->this.client, &sr->that.client);
-			if (eroute_connection(opd, reason, sr, negotiation_shunt,
+			if (eroute_connection(op, KERNEL_POLICY_DIR_OUTBOUND,
+					      reason, sr, negotiation_shunt,
 					      &outbound_kernel_policy,
 					      calculate_sa_prio(c, false),
 					      NULL, 0 /* xfrm_if_id */,
@@ -2736,7 +2738,8 @@ bool route_and_eroute(struct connection *c,
 							  "route_and_eroute() replace shunt",
 							  logger);
 		} else {
-			eroute_installed = sag_eroute(st, sr, KP_REPLACE_OUTBOUND,
+			eroute_installed = sag_eroute(st, sr,
+						      KERNEL_POLICY_OP_REPLACE,
 						      "route_and_eroute() replace sag");
 		}
 
@@ -2761,7 +2764,9 @@ bool route_and_eroute(struct connection *c,
 							  "route_and_eroute() add",
 							  logger);
 		} else {
-			eroute_installed = sag_eroute(st, sr, KP_ADD_OUTBOUND, "add");
+			eroute_installed = sag_eroute(st, sr,
+						      KERNEL_POLICY_OP_ADD,
+						      "add");
 		}
 	}
 
@@ -2947,7 +2952,7 @@ bool route_and_eroute(struct connection *c,
 
 					if (ost != NULL) {
 						if (!sag_eroute(ost, esr,
-								KP_REPLACE_OUTBOUND,
+								KERNEL_POLICY_OP_REPLACE,
 								"restore"))
 							llog(RC_LOG, logger,
 							     "sag_eroute() in route_and_eroute() failed restore/replace");
@@ -2966,7 +2971,7 @@ bool route_and_eroute(struct connection *c,
 					}
 				} else {
 					if (!sag_eroute(st, sr,
-							KP_DELETE_OUTBOUND,
+							KERNEL_POLICY_OP_DELETE,
 							"delete")) {
 						llog(RC_LOG, logger,
 							    "sag_eroute() in route_and_eroute() failed in st case for delete");
