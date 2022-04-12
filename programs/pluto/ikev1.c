@@ -2972,18 +2972,18 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
 	/*
-	 * XXX: this indicates that NULL auth is allowed; not that it
-	 * was used.
+	 * Since IKEv1 connections can have only one AUTH type, having
+	 * AUTH_NULL here, for the remote end means that the remote
+	 * end used AUTH NULL.
 	 */
-	bool authnull = (c->remote->config->host.authby.null ||
-			 c->remote->config->host.auth == AUTH_NULL);
+	bool new_uses_authnull = c->remote->config->host.auth == AUTH_NULL;
 
 	if (c->local->config->host.xauth.server &&
-	    c->remote->config->host.authby.psk) {
+	    c->remote->config->host.auth == AUTH_PSK) {
 		/*
 		 * If we are a server and require the peer to use PSK,
 		 * all clients use the same group ID Note that
-		 * "xauth_server" also refers to IKEv2 CP
+		 * "xauth_server" also refers to IKEv2 CP.
 		 */
 		dbg("We are a server using PSK and clients are using a group ID");
 	} else if (!uniqueIDs) {
@@ -3002,21 +3002,20 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 			struct connection *d = cf.c;
 
 			/* if old IKE SA is same as new IKE sa and non-auth isn't overwrting auth */
-			if (c != d && c->kind == d->kind && streq(c->name, d->name) &&
+			if (c != d &&
+			    c->kind == d->kind &&
+			    streq(c->name, d->name) &&
 			    same_id(&c->local->host.id, &d->local->host.id) &&
 			    same_id(&c->remote->host.id, &d->remote->host.id)) {
-				/*
-				 * XXX: this indicates that NULL auth
-				 * is allowed; not that it was used.
-				 */
-				bool old_is_nullauth = (d->remote->config->host.authby.null ||
-							d->remote->config->host.auth == AUTH_NULL);
+				bool old_uses_nullauth = d->remote->config->host.auth == AUTH_NULL;
 				bool same_remote_ip = sameaddr(&c->remote->host.addr, &d->remote->host.addr);
 
-				if (same_remote_ip && (!old_is_nullauth && authnull)) {
-					log_state(RC_LOG, &ike->sa, "cannot replace old authenticated connection with authnull connection");
-				} else if (!same_remote_ip && old_is_nullauth && authnull) {
-					log_state(RC_LOG, &ike->sa, "NULL auth ID for different IP's cannot replace each other");
+				if (same_remote_ip &&
+				    !old_uses_nullauth && new_uses_authnull) {
+					llog_sa(RC_LOG, ike, "cannot replace old authenticated connection with authnull connection");
+				} else if (!same_remote_ip &&
+					   old_uses_nullauth && new_uses_authnull) {
+					llog_sa(RC_LOG, ike, "NULL auth ID for different IP's cannot replace each other");
 				} else {
 					dbg("unorienting old connection with same IDs");
 					/*
