@@ -125,6 +125,7 @@ kvmplutotest	whack-02-globalstatus			good
 kvmplutotest	ikev2-03-basic-rawrsa			good
 kvmplutotest	ikev2-03-basic-rawrsa-ckaid		good
 kvmplutotest	ikev2-03-basic-rawrsa-rsasigkey		good
+kvmplutotest	ikev2-03-basic-rawrsa-pem		good
 kvmplutotest	ikev2-04-basic-x509			good
 kvmplutotest	ikev2-04-basic-x509-ckaid		good
 kvmplutotest	ikev2-04-basic-x509-no-ca		good

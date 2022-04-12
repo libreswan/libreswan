@@ -1,0 +1,5 @@
+IKEv2 interop when both ends have only .pem private key files.
+
+NSS doesn't allow the direct import of PEM private keys.  However, it
+can be fooled into loading the key, when it is bundled with a
+self-signed certificate, in a PKCS#12 file.
