@@ -1523,6 +1523,28 @@ static void clear_narrow_holds(const ip_selector *our_client,
 	}
 }
 
+static bool delete_bare_shunt_kernel_policy(const ip_address *src_address,
+					    const ip_address *dst_address,
+					    const struct ip_protocol *transport_proto,
+					    const char *why, struct logger *logger)
+{
+	ip_selector src = selector_from_address_protocol(*src_address, transport_proto);
+	ip_selector dst = selector_from_address_protocol(*dst_address, transport_proto);
+	selectors_buf sb;
+	dbg("kernel: deleting bare shunt %s from kernel for %s",
+	    str_selectors(&src, &dst, &sb), why);
+	/* assume low code logged action */
+	return raw_policy(KP_DELETE_OUTBOUND, THIS_IS_NOT_INBOUND,
+			  &src, &dst,
+			  SHUNT_PASS,
+			  /*kernel_policy*/NULL/*delete->no-policy-rules*/,
+			  deltatime(SHUNT_PATIENCE),
+			  0, /* we don't know connection for priority yet */
+			  /*sa_marks+xfrmi*/NULL,NULL,
+			  null_shunk, logger,
+			  "%s() %s", __func__, why);
+}
+
 bool delete_bare_shunt(const ip_address *src_address,
 		       const ip_address *dst_address,
 		       const struct ip_protocol *transport_proto,
@@ -1542,19 +1564,9 @@ bool delete_bare_shunt(const ip_address *src_address,
 		     str_selectors_sensitive(&src, &dst, &sb));
 		ok = true; /* always succeed */
 	} else {
-		selectors_buf sb;
-		dbg("kernel: deleting bare shunt %s from kernel for %s",
-		    str_selectors(&src, &dst, &sb), why);
 		/* assume low code logged action */
-		ok = raw_policy(KP_DELETE_OUTBOUND, THIS_IS_NOT_INBOUND,
-				&src, &dst,
-				SHUNT_PASS,
-				/*kernel_policy*/NULL/*delete->no-policy-rules*/,
-				deltatime(SHUNT_PATIENCE),
-				0, /* we don't know connection for priority yet */
-				/*sa_marks+xfrmi*/NULL,NULL,
-				null_shunk, logger,
-				"%s() %s", __func__, why);
+		ok = delete_bare_shunt_kernel_policy(src_address, dst_address,
+						     transport_proto, why, logger);
 		if (!ok) {
 			/* did/should kernel log this? */
 			selectors_buf sb;
@@ -3572,14 +3584,14 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 	return true;
 }
 
-static void expire_bare_shunts(struct logger *logger, bool all)
+static void expire_bare_shunts(struct logger *logger)
 {
 	dbg("kernel: checking for aged bare shunts from shunt table to expire");
 	for (struct bare_shunt **bspp = &bare_shunts; *bspp != NULL; ) {
 		struct bare_shunt *bsp = *bspp;
 		time_t age = deltasecs(monotimediff(mononow(), bsp->last_activity));
 
-		if (age > deltasecs(pluto_shunt_lifetime) || all) {
+		if (age > deltasecs(pluto_shunt_lifetime)) {
 			dbg_bare_shunt("expiring old", bsp);
 			if (co_serial_is_set(bsp->from_serialno)) {
 				struct connection *c = connection_by_serialno(bsp->from_serialno);
@@ -3613,15 +3625,33 @@ static void expire_bare_shunts(struct logger *logger, bool all)
 	}
 }
 
+static void delete_bare_shunts(struct logger *logger)
+{
+	dbg("kernel: emptying bare shunt table");
+	while (bare_shunts != NULL) { /* nothing left */
+		const struct bare_shunt *bsp = bare_shunts;
+		ip_address our_addr = selector_prefix(bsp->our_client);
+		ip_address peer_addr = selector_prefix(bsp->peer_client);
+		if (!delete_bare_shunt_kernel_policy(&our_addr, &peer_addr,
+						     bsp->transport_proto,
+						     __func__, logger)) {
+			llog(RC_LOG_SERIOUS, logger,
+			     "failed to delete bare shunt's kernel policy"); /* big oops */
+		}
+		free_bare_shunt(&bare_shunts); /* also updates BARE_SHUNTS */
+	}
+}
+
 static void kernel_scan_shunts(struct logger *logger)
 {
-	expire_bare_shunts(logger, false/*not-all*/);
+	expire_bare_shunts(logger);
 }
 
 void shutdown_kernel(struct logger *logger)
 {
 
-	if (kernel_ops->shutdown != NULL)
+	if (kernel_ops->shutdown != NULL) {
 		kernel_ops->shutdown(logger);
-	expire_bare_shunts(logger, true/*all*/);
+	}
+	delete_bare_shunts(logger);
 }
