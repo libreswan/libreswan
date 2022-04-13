@@ -1849,7 +1849,6 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol,
 	const struct ip_protocol *transport_proto = protocol_by_ipproto(pol->sel.proto);
 
 	if (delete_bare_shunt(&src, &dst, transport_proto,
-			      /*skip_policy_delete?*/false,
 			      "delete expired bare shunt", logger)) {
 		dbg("netlink_shunt_expire() called delete_bare_shunt() with success");
 	} else {

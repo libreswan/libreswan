@@ -1494,7 +1494,6 @@ static void clear_narrow_holds(const ip_selector *our_client,
 			ip_address peer_addr = selector_prefix(p->peer_client);
 			if (!delete_bare_shunt(&our_addr, &peer_addr,
 					       transport_proto,
-					       /*skip_policy_delete?*/false,
 					       "clear_narrow_holds() removing clashing narrow hold",
 					       logger)) {
 				/* ??? we could not delete a bare shunt */
@@ -1548,7 +1547,6 @@ static bool delete_bare_shunt_kernel_policy(const ip_address *src_address,
 bool delete_bare_shunt(const ip_address *src_address,
 		       const ip_address *dst_address,
 		       const struct ip_protocol *transport_proto,
-		       bool skip_policy_delete,
 		       const char *why, struct logger *logger)
 {
 	const struct ip_info *afi = address_type(src_address);
@@ -1557,23 +1555,15 @@ bool delete_bare_shunt(const ip_address *src_address,
 	ip_selector src = selector_from_address_protocol(*src_address, transport_proto);
 	ip_selector dst = selector_from_address_protocol(*dst_address, transport_proto);
 
-	bool ok;
-	if (skip_policy_delete) {
+	/* assume low code logged action */
+	bool ok = delete_bare_shunt_kernel_policy(src_address, dst_address,
+						  transport_proto, why, logger);
+	if (!ok) {
+		/* did/should kernel log this? */
 		selectors_buf sb;
-		llog(RC_LOG, logger, "deleting bare shunt %s from pluto shunt table",
+		llog(RC_LOG, logger,
+		     "delete kernel shunt %s failed - deleting from pluto shunt table",
 		     str_selectors_sensitive(&src, &dst, &sb));
-		ok = true; /* always succeed */
-	} else {
-		/* assume low code logged action */
-		ok = delete_bare_shunt_kernel_policy(src_address, dst_address,
-						     transport_proto, why, logger);
-		if (!ok) {
-			/* did/should kernel log this? */
-			selectors_buf sb;
-			llog(RC_LOG, logger,
-			     "delete kernel shunt %s failed - deleting from pluto shunt table",
-			     str_selectors_sensitive(&src, &dst, &sb));
-		}
 	}
 
 	/*
@@ -1866,7 +1856,6 @@ bool assign_holdpass(const struct connection *c,
 
 		if (!delete_bare_shunt(&src_host_addr, &dst_host_addr,
 				       packet->protocol,
-				       /*skip_policy_delete?*/false,
 				       (c->config->negotiation_shunt == SHUNT_PASS ? "delete narrow %pass" :
 				       "assign_holdpass() delete narrow %hold"),
 				       c->logger)) {

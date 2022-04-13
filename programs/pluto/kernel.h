@@ -510,7 +510,6 @@ extern void migration_down(struct child_sa *child);
 
 extern bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
 			      const struct ip_protocol *transport_proto,
-			      bool skip_policy_delete,
 			      const char *why, struct logger *logger);
 
 bool assign_holdpass(const struct connection *c,
