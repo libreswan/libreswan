@@ -4,10 +4,14 @@
 rm /etc/ipsec.d/*.db
 modutil -create -dbdir /etc/ipsec.d -force
 
-# import it
+# import fiddled keys
 pk12util -d /etc/ipsec.d/ -i OUTPUT/west.p12 -W foobar
 pk12util -d /etc/ipsec.d/ -i OUTPUT/east.p12 -W foobar
 certutil -K -d /etc/ipsec.d/
+
+# patch up ipsec.conf
+sed -i -e "s/@east-ckaid@/`cat OUTPUT/east.ckaid`/" /etc/ipsec.conf
+sed -i -e "s/@west-ckaid@/`cat OUTPUT/west.ckaid`/" /etc/ipsec.conf
 
 # confirm that the network is alive
 ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254

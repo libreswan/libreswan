@@ -6,7 +6,7 @@ west #
 west #
  modutil -create -dbdir /etc/ipsec.d -force
 west #
- # import it
+ # import fiddled keys
 west #
  pk12util -d /etc/ipsec.d/ -i OUTPUT/west.p12 -W foobar
 pk12util: PKCS12 IMPORT SUCCESSFUL
@@ -16,8 +16,14 @@ pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
  certutil -K -d /etc/ipsec.d/
 certutil: Checking token "NSS Certificate DB" in slot "NSS User Private Key and Certificate Services"
-< 0> rsa      42ce27ac8668ab0e1f20894f1f73f95de4aa6c72   west
-< 1> rsa      bbb6c827009a118d533c91b7aa5d0e9fa3c9dd45   east
+< 0> rsa      <<CKAID#1>>   west
+< 1> rsa      <<CKAID#2>>   east
+west #
+ # patch up ipsec.conf
+west #
+ sed -i -e "s/@east-ckaid@/`cat OUTPUT/east.ckaid`/" /etc/ipsec.conf
+west #
+ sed -i -e "s/@west-ckaid@/`cat OUTPUT/west.ckaid`/" /etc/ipsec.conf
 west #
  # confirm that the network is alive
 west #
@@ -131,3 +137,4 @@ east                                                         u,u,u
 west                                                         u,u,u
 west #
  
+
