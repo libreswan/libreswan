@@ -1470,68 +1470,19 @@ void show_shunt_status(struct show *s)
 	}
 }
 
-/*
- * Clear any bare shunt holds that overlap with the network we have
- * just routed.  We only consider "narrow" holds: ones for a single
- * address to single address.
- */
-static void clear_narrow_holds(const ip_selector *our_client,
-			       const ip_selector *peer_client,
-			       struct logger *logger)
+static bool delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
+					    struct logger *logger,
+					    where_t where)
 {
-	const ip_protocol *transport_proto = protocol_by_ipproto(our_client->ipproto);
-	struct bare_shunt *p, **pp;
-
-	for (pp = &bare_shunts; (p = *pp) != NULL; ) {
-		/*
-		 * is p->{local,remote} within {local,remote}.
-		 */
-		if (p->shunt_policy == SHUNT_HOLD &&
-		    transport_proto == p->transport_proto &&
-		    selector_in_selector(p->our_client, *our_client) &&
-		    selector_in_selector(p->peer_client, *peer_client)) {
-			ip_address our_addr = selector_prefix(p->our_client);
-			ip_address peer_addr = selector_prefix(p->peer_client);
-			if (!delete_bare_shunt(&our_addr, &peer_addr,
-					       transport_proto,
-					       "clear_narrow_holds() removing clashing narrow hold",
-					       logger)) {
-				/* ??? we could not delete a bare shunt */
-				llog_bare_shunt(RC_LOG, logger, p, "failed to delete");
-				break;	/* unlikely to succeed a second time */
-			} else if (*pp == p) {
-				/*
-				 * ??? We deleted the wrong bare shunt!
-				 * This happened because more than one entry
-				 * matched and we happened to delete a
-				 * different one.
-				 * Log it!  And keep deleting.
-				 */
-				llog_bare_shunt(RC_LOG, logger, p, "UNEXPECTEDLY SURVIVING");
-				pp = &bare_shunts;	/* just in case, start over */
-			}
-			/*
-			 * ??? if we were sure that there could only be one
-			 * matching entry, we could break out of the FOR.
-			 * For an unknown reason this is not always the case,
-			 * so we will continue the loop, with pp unchanged.
-			 */
-		} else {
-			pp = &p->next;
-		}
-	}
-}
-
-static bool delete_bare_shunt_kernel_policy(const ip_address *src_address,
-					    const ip_address *dst_address,
-					    const struct ip_protocol *transport_proto,
-					    const char *why, struct logger *logger)
-{
-	ip_selector src = selector_from_address_protocol(*src_address, transport_proto);
-	ip_selector dst = selector_from_address_protocol(*dst_address, transport_proto);
+	/* this strips the port (but why?) */
+	const struct ip_protocol *transport_proto = bsp->transport_proto;
+	ip_address src_address = selector_prefix(bsp->our_client);
+	ip_address dst_address = selector_prefix(bsp->peer_client);
+	ip_selector src = selector_from_address_protocol(src_address, transport_proto);
+	ip_selector dst = selector_from_address_protocol(dst_address, transport_proto);
 	selectors_buf sb;
-	dbg("kernel: deleting bare shunt %s from kernel for %s",
-	    str_selectors(&src, &dst, &sb), why);
+	dbg("kernel: deleting bare shunt %s from kernel "PRI_WHERE,
+	    str_selectors(&src, &dst, &sb), pri_where(where));
 	/* assume low code logged action */
 	return raw_policy(KP_DELETE_OUTBOUND, THIS_IS_NOT_INBOUND,
 			  &src, &dst,
@@ -1541,13 +1492,48 @@ static bool delete_bare_shunt_kernel_policy(const ip_address *src_address,
 			  0, /* we don't know connection for priority yet */
 			  /*sa_marks+xfrmi*/NULL,NULL,
 			  null_shunk, logger,
-			  "%s() %s", __func__, why);
+			  "%s() %s", __func__, where->func);
 }
 
-bool delete_bare_shunt(const ip_address *src_address,
-		       const ip_address *dst_address,
-		       const struct ip_protocol *transport_proto,
-		       const char *why, struct logger *logger)
+/*
+ * Clear any bare shunt holds that overlap with the network we have
+ * just routed.  We only consider "narrow" holds: ones for a single
+ * address to single address.
+ */
+static void clear_narrow_holds(const ip_selector *src_client,
+			       const ip_selector *dst_client,
+			       struct logger *logger)
+{
+	const ip_protocol *transport_proto = protocol_by_ipproto(src_client->ipproto);
+	struct bare_shunt **bspp = &bare_shunts;
+	while (*bspp != NULL) {
+		/*
+		 * is bsp->{local,remote} within {local,remote}.
+		 */
+		struct bare_shunt *bsp = *bspp;
+		if (bsp->shunt_policy == SHUNT_HOLD &&
+		    transport_proto == bsp->transport_proto &&
+		    selector_in_selector(bsp->our_client, *src_client) &&
+		    selector_in_selector(bsp->peer_client, *dst_client)) {
+			if (!delete_bare_shunt_kernel_policy(bsp, logger, HERE)) {
+				/* ??? we could not delete a bare shunt */
+				llog_bare_shunt(RC_LOG, logger, bsp, "failed to delete");
+			}
+			free_bare_shunt(bspp);
+		} else {
+			bspp = &(*bspp)->next;
+		}
+	}
+}
+
+/*
+ * If there's kernel policy and/or a bare shunt, delete it.
+ */
+
+bool flush_bare_shunt(const ip_address *src_address,
+		      const ip_address *dst_address,
+		      const struct ip_protocol *transport_proto,
+		      const char *why, struct logger *logger)
 {
 	const struct ip_info *afi = address_type(src_address);
 	pexpect(afi == address_type(dst_address));
@@ -1556,8 +1542,19 @@ bool delete_bare_shunt(const ip_address *src_address,
 	ip_selector dst = selector_from_address_protocol(*dst_address, transport_proto);
 
 	/* assume low code logged action */
-	bool ok = delete_bare_shunt_kernel_policy(src_address, dst_address,
-						  transport_proto, why, logger);
+	selectors_buf sb;
+	dbg("kernel: deleting bare shunt %s from kernel for %s",
+	    str_selectors(&src, &dst, &sb), why);
+	/* assume low code logged action */
+	bool ok = raw_policy(KP_DELETE_OUTBOUND, THIS_IS_NOT_INBOUND,
+			     &src, &dst,
+			     SHUNT_PASS,
+			     /*kernel_policy*/NULL/*delete->no-policy-rules*/,
+			     deltatime(SHUNT_PATIENCE),
+			     0, /* we don't know connection for priority yet */
+			     /*sa_marks+xfrmi*/NULL,NULL,
+			     null_shunk, logger,
+			     "%s() %s", __func__, why);
 	if (!ok) {
 		/* did/should kernel log this? */
 		selectors_buf sb;
@@ -1854,11 +1851,11 @@ bool assign_holdpass(const struct connection *c,
 		ip_address src_host_addr = packet_src_address(*packet);
 		ip_address dst_host_addr = packet_dst_address(*packet);
 
-		if (!delete_bare_shunt(&src_host_addr, &dst_host_addr,
-				       packet->protocol,
-				       (c->config->negotiation_shunt == SHUNT_PASS ? "delete narrow %pass" :
+		if (!flush_bare_shunt(&src_host_addr, &dst_host_addr,
+				      packet->protocol,
+				      (c->config->negotiation_shunt == SHUNT_PASS ? "delete narrow %pass" :
 				       "assign_holdpass() delete narrow %hold"),
-				       c->logger)) {
+				      c->logger)) {
 			dbg("kernel: assign_holdpass() delete_bare_shunt() succeeded");
 		} else {
 			llog(RC_LOG, c->logger,
@@ -3602,13 +3599,9 @@ static void expire_bare_shunts(struct logger *logger)
 					}
 				}
 			} else {
-				ip_address our_addr = selector_prefix(bsp->our_client);
-				ip_address peer_addr = selector_prefix(bsp->peer_client);
-				if (!delete_bare_shunt_kernel_policy(&our_addr, &peer_addr,
-								     bsp->transport_proto,
-								     "expire_bare_shunts()", logger)) {
-					llog(RC_LOG_SERIOUS, logger,
-					     "failed to delete bare shunt");
+				if (!delete_bare_shunt_kernel_policy(bsp, logger, HERE)) {
+					llog_bare_shunt(RC_LOG_SERIOUS, logger, bsp,
+							"failed to delete bare shunt");
 				}
 			}
 			free_bare_shunt(bspp);
@@ -3624,13 +3617,9 @@ static void delete_bare_shunts(struct logger *logger)
 	dbg("kernel: emptying bare shunt table");
 	while (bare_shunts != NULL) { /* nothing left */
 		const struct bare_shunt *bsp = bare_shunts;
-		ip_address our_addr = selector_prefix(bsp->our_client);
-		ip_address peer_addr = selector_prefix(bsp->peer_client);
-		if (!delete_bare_shunt_kernel_policy(&our_addr, &peer_addr,
-						     bsp->transport_proto,
-						     __func__, logger)) {
-			llog(RC_LOG_SERIOUS, logger,
-			     "failed to delete bare shunt's kernel policy"); /* big oops */
+		if (!delete_bare_shunt_kernel_policy(bsp, logger, HERE)) {
+			llog_bare_shunt(RC_LOG_SERIOUS, logger, bsp,
+					"failed to delete bare shunt's kernel policy"); /* big oops */
 		}
 		free_bare_shunt(&bare_shunts); /* also updates BARE_SHUNTS */
 	}

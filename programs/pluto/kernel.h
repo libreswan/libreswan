@@ -508,9 +508,9 @@ extern void unroute_connection(struct connection *c);
 extern void migration_up(struct child_sa *child);
 extern void migration_down(struct child_sa *child);
 
-extern bool delete_bare_shunt(const ip_address *src, const ip_address *dst,
-			      const struct ip_protocol *transport_proto,
-			      const char *why, struct logger *logger);
+extern bool flush_bare_shunt(const ip_address *src, const ip_address *dst,
+			     const struct ip_protocol *transport_proto,
+			     const char *why, struct logger *logger);
 
 bool assign_holdpass(const struct connection *c,
 		     struct spd_route *sr,
