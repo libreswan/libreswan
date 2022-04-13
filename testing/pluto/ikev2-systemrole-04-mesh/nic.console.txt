@@ -9,6 +9,6 @@ nic #
  sed -n -e '/PLAY RECAP/,$ p' -e '/^failed:/ p' OUTPUT/$(hostname).ansible.log
 PLAY RECAP *********************************************************************
 east                       : ok=15   changed=4    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
-west                       : ok=18   changed=4    unreachable=0    failed=0    skipped=5    rescued=0    ignored=0   
+west                       : ok=19   changed=4    unreachable=0    failed=0    skipped=6    rescued=0    ignored=0   
 nic #
  
