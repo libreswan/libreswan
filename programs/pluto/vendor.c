@@ -783,10 +783,6 @@ static void handle_known_vendorid_v1(struct msg_digest *md,
 		md->ikev2 = true;
 		break;
 
-	case VID_NORTEL:
-		md->nortel = true;
-		break;
-
 	case VID_SSH_SENTINEL_1_4_1:
 		llog(RC_LOG_SERIOUS, logger,
 			    "SSH Sentinel 1.4.1 found, setting XAUTH_ACK quirk");

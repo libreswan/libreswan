@@ -2416,12 +2416,6 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			}
 		}
 
-		/* If state has VID_NORTEL, import it to activate workaround */
-		if (md->nortel) {
-			dbg("peer requires Nortel Contivity workaround");
-			st->st_seen_nortel_vid = true;
-		}
-
 		if (!st->st_v1_msgid.reserved &&
 		    IS_CHILD_SA(st) &&
 		    st->st_v1_msgid.id != v1_MAINMODE_MSGID) {
@@ -2756,20 +2750,6 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			 * What do the RFCs say?
 			 */
 			modecfg_start_set(st);
-			break;
-		}
-
-		/*
-		 * If we are the responder and the client is in "Contivity mode",
-		 * we need to initiate Quick mode
-		 */
-		if (!(smc->flags & SMF_INITIATOR) &&
-		    IS_V1_MODE_CFG_ESTABLISHED(st->st_state) &&
-		    (st->st_seen_nortel_vid)) {
-			log_state(RC_LOG, st, "Nortel 'Contivity Mode' detected, starting Quick Mode");
-			change_v1_state(st, STATE_MAIN_R3); /* ISAKMP is up... */
-			quick_outI1(st->st_logger->object_whackfd, st, st->st_connection,
-				    st->st_connection->policy, 1, SOS_NOBODY, null_shunk);
 			break;
 		}
 
