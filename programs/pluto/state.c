@@ -1483,7 +1483,7 @@ void delete_states_by_connection(struct connection **cp)
 	case IKEv2: delete_v2_states_by_connection_top_down(cp); break;
 	}
 
-	/* was *cp deleted? */
+	/* Was (*cp), an instance, deleted? */
 	struct connection *c = connection_by_serialno(connection_serialno);
 	if (c == NULL) {
 		pexpect(ck == CK_INSTANCE);
@@ -1493,15 +1493,23 @@ void delete_states_by_connection(struct connection **cp)
 
 	for (const struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
 		/*
-		 * these passerts are not true currently due to mobike.
-		 * Requires some re-implementation. Use pexpect for now.
+		 * These passerts are not true currently due to
+		 * mobike.  Requires some re-implementation. Use
+		 * pexpect for now.
 		 */
-		pexpect(sr->eroute_owner == SOS_NOBODY);
-		pexpect(sr->routing != RT_ROUTED_TUNNEL);
+		if (sr->eroute_owner != SOS_NOBODY) {
+			connection_buf cb;
+			llog_pexpect(c->logger, HERE, "eroute owner "PRI_SO" should be 0",
+				     pri_connection(c, &cb),
+				     pri_so(sr->eroute_owner));
+		}
+		if (sr->routing == RT_ROUTED_TUNNEL) {
+			connection_buf cb;
+			llog_pexpect(c->logger, HERE, "routing should not be ROUTED_TUNNEL (what should it be?)",
+				     pri_connection(c, &cb));
+		}
 	}
-
 }
-
 
 void delete_v1_states_by_connection_family(struct connection **cp)
 {
