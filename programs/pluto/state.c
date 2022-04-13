@@ -1498,15 +1498,11 @@ void delete_states_by_connection(struct connection **cp)
 		 * pexpect for now.
 		 */
 		if (sr->eroute_owner != SOS_NOBODY) {
-			connection_buf cb;
 			llog_pexpect(c->logger, HERE, "eroute owner "PRI_SO" should be 0",
-				     pri_connection(c, &cb),
 				     pri_so(sr->eroute_owner));
 		}
 		if (sr->routing == RT_ROUTED_TUNNEL) {
-			connection_buf cb;
-			llog_pexpect(c->logger, HERE, "routing should not be ROUTED_TUNNEL (what should it be?)",
-				     pri_connection(c, &cb));
+			llog_pexpect(c->logger, HERE, "routing should not be ROUTED_TUNNEL (what should it be?)");
 		}
 	}
 }
