@@ -177,10 +177,11 @@ KVM_FEDORA_UPGRADE_PACKAGES += \
     python3-netaddr \
     rpm-build \
     rsync \
-    selinux-policy-devel \
     screen \
+    selinux-policy-devel \
     socat \
     softhsm \
+    sshpass \
     strace \
     systemd-devel \
     systemd-networkd \
