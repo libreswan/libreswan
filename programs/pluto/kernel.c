@@ -3594,6 +3594,12 @@ static void expire_bare_shunts(struct logger *logger)
 		if (age > deltasecs(pluto_shunt_lifetime)) {
 			dbg_bare_shunt("expiring old", bsp);
 			if (co_serial_is_set(bsp->from_serialno)) {
+				/*
+				 * Time to restore the connection's
+				 * shunt.  Presumably the bare shunt
+				 * was a place holder while things
+				 * were given time to rest (back-off).
+				 */
 				struct connection *c = connection_by_serialno(bsp->from_serialno);
 				if (c != NULL) {
 					if (!bare_policy_op(KP_ADD_OUTBOUND,
@@ -3606,18 +3612,17 @@ static void expire_bare_shunts(struct logger *logger)
 						     "trap shunt install failed ");
 					}
 				}
+			} else {
+				ip_address our_addr = selector_prefix(bsp->our_client);
+				ip_address peer_addr = selector_prefix(bsp->peer_client);
+				if (!delete_bare_shunt_kernel_policy(&our_addr, &peer_addr,
+								     bsp->transport_proto,
+								     "expire_bare_shunts()", logger)) {
+					llog(RC_LOG_SERIOUS, logger,
+					     "failed to delete bare shunt");
+				}
 			}
-			ip_address our_addr = selector_prefix(bsp->our_client);
-			ip_address peer_addr = selector_prefix(bsp->peer_client);
-			bool skip_policy_delete = co_serial_is_set(bsp->from_serialno);
-			if (!delete_bare_shunt(&our_addr, &peer_addr,
-					       bsp->transport_proto,
-					       skip_policy_delete,
-					       "expire_bare_shunts()", logger)) {
-				llog(RC_LOG_SERIOUS, logger,
-					    "failed to delete bare shunt");
-			}
-			passert(bsp != *bspp);
+			free_bare_shunt(bspp);
 		} else {
 			dbg_bare_shunt("keeping recent", bsp);
 			bspp = &bsp->next;
