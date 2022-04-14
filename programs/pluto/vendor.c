@@ -523,18 +523,52 @@ static struct vid_struct vid_tab[] = {
  * leak: self-vendor ID, item size: 37
  * leak: 2 * vid->data, item size: 13
  */
+
+static void DBG_vid_struct(const struct vid_struct *vid, struct logger *logger)
+{
+	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+		jam(buf, " %3d ", vid->id); /* match " %3s " below */
+		jam_string(buf, vid->descr);
+		if (vid->flags & VID_MD5HASH) {
+			jam_string(buf, " +md5");
+		}
+		if (vid->flags & VID_SUBSTRING_DUMPHEXA) {
+			jam_string(buf, " substring+hexa");
+		}
+		if (vid->flags & VID_SUBSTRING_DUMPASCII) {
+			jam_string(buf, " substring+ascii");
+		}
+		if (vid->flags & VID_SUBSTRING_MATCH) {
+			jam_string(buf, " substring+match");
+		}
+	}
+	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+		jam(buf, " %3s ", ""); /* match " %3d " above */
+		jam_dump_bytes(buf, vid->vid, vid->vid_len);
+		jam_string(buf, " [");
+		jam_sanitized_bytes(buf, vid->vid, vid->vid_len);
+		jam_string(buf, "]");
+	}
+}
+
 void init_vendorid(struct logger *logger)
 {
+	dbg("building Vendor ID table");
+
 	FOR_EACH_ELEMENT_FROM_1(vid, vid_tab) {
 		passert(vid->id != 0);
+		bool good = true;
 
 		if (vid->flags & VID_STRING) {
 			/** VendorID is a string **/
+			good &= pexpect(vid->vid == NULL);
+			good &= pexpect(vid->descr == NULL || !streq(vid->descr, vid->data));
 			vid->vid = clone_str(vid->data, "vid->data (ignore)");
 			/* clang 3.4 thinks that vid->data might be NULL but it won't be */
 			vid->vid_len = strlen(vid->data);
 		} else if (vid->flags & VID_MD5HASH) {
 			/** VendorID is a string to hash with MD5 **/
+			good &= pexpect(vid->vid == NULL);
 			unsigned char *vidm = alloc_bytes(MD5_DIGEST_SIZE,
 							 "VendorID MD5 (ignore)");
 			const unsigned char *d = (const unsigned char *)vid->data;
@@ -550,6 +584,7 @@ void init_vendorid(struct logger *logger)
 			vid->vid_len = MD5_DIGEST_SIZE;
 		} else if (vid->flags & VID_FSWAN_HASH) {
 			/** FreeS/WAN 2.00+ specific hash **/
+			good &= pexpect(vid->vid == NULL);
 #define FSWAN_VID_SIZE 12
 			unsigned char hash[MD5_DIGEST_SIZE];
 			char *vidm = alloc_bytes(FSWAN_VID_SIZE, "fswan VID (ignore)");
@@ -577,19 +612,24 @@ void init_vendorid(struct logger *logger)
 			}
 			vid->vid_len = FSWAN_VID_SIZE;
 #undef FSWAN_VID_SIZE
+		} else {
+			good &= pexpect(vid->vid_len > 0);
+			good &= pexpect(vid->vid != NULL);
+			good &= pexpect(vid->descr != NULL);
 		}
 
 		if (vid->descr == NULL) {
 			/** Find something to display **/
 			vid->descr = vid->data;
 		}
-#if 0
-		DBG_log("init_vendorid: %d [%s]",
-			vid->id,
-			vid->descr == NULL ? vid->descr : "");
-		if (vid->vid != NULL)
-			DBG_dump("VID:", vid->vid, vid->vid_len);
-#endif
+
+		/* job done? */
+		good &= pexpect(vid->descr != NULL);
+		good &= pexpect(vid->vid != NULL);
+		good &= pexpect(vid->vid_len > 0);
+		if (!good || DBGP(DBG_TMI)) {
+			DBG_vid_struct(vid, logger);
+		}
 	}
 }
 
@@ -601,9 +641,7 @@ static void dbg_vid(struct logger *logger, shunk_t vid, const struct vid_struct 
 			    vid_useful ? "received" : "ignoring");
 			if (pvid->flags & VID_SUBSTRING_DUMPHEXA) {
 				/* Dump description + Hexa */
-				if (pvid->descr != NULL) {
-					jam(buf, "%s ", pvid->descr);
-				}
+				jam(buf, "%s ", pvid->descr);
 				jam_dump_hunk(buf, vid);
 			} else if (pvid->flags & VID_SUBSTRING_DUMPASCII) {
 				/* Dump ASCII content */
@@ -611,9 +649,7 @@ static void dbg_vid(struct logger *logger, shunk_t vid, const struct vid_struct 
 				jam_sanitized_hunk(buf, vid);
 			} else {
 				/* Dump description (descr) */
-				if (pvid->descr != NULL) {
-					jam_string(buf, pvid->descr);
-				}
+				jam_string(buf, pvid->descr);
 			}
 			jam(buf, "]");
 		}
