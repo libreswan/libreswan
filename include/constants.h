@@ -130,6 +130,11 @@ enum {
 	     THING < (ARRAY) + elemsof(ARRAY);		\
 	     THING++)
 
+#define FOR_EACH_ELEMENT_FROM_1(THING, ARRAY)		\
+	for (typeof(&(ARRAY)[1]) THING = &(ARRAY)[1];	\
+	     THING < (ARRAY) + elemsof(ARRAY);		\
+	     THING++)
+
 /*
  * Fill a string field, ensuring that it is padded and terminated with NUL
  * If termination isn't required, strncpy would do.
