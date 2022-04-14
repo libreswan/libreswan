@@ -109,7 +109,6 @@
 #define VID_MD5HASH             0x0001
 #define VID_STRING              0x0002
 #define VID_FSWAN_HASH          0x0004
-#define VID_SELF                0x0008
 
 #define VID_SUBSTRING_DUMPHEXA  0x0100
 #define VID_SUBSTRING_DUMPASCII 0x0200
@@ -134,6 +133,10 @@ struct vid_struct {
 	{ id, VID_MD5HASH, str, NULL, NULL, 0 }
 #define DEC_FSWAN_VID(id, str, descr) \
 	{ id, VID_FSWAN_HASH, str, descr, NULL, 0 }
+
+#define VID(ID, FLAGS, DATA, DESCR)					\
+	{ .id = ID, .flags = FLAGS, .data = DATA, .descr = DESCR,       \
+			.vid = NULL, .vid_len = 0, }
 
 static struct vid_struct vid_tab[] = {
 
@@ -319,11 +322,9 @@ static struct vid_struct vid_tab[] = {
 	DEC_FSWAN_VID(VID_OPENSWAN2,
 		      "Openswan 2.2.0",
 		      "Openswan 2.2.0"),
-	{
-		/* always make sure to include ourself! */
-		VID_LIBRESWANSELF, VID_SELF, libreswan_vendorid, "Libreswan (this version)",
-		libreswan_vendorid, 0
-	},
+
+	/* always make sure to include ourself! */
+	VID(VID_LIBRESWANSELF, VID_STRING, libreswan_vendorid, "Libreswan (this version)"),
 
 	/* NAT-Traversal */
 	DEC_MD5_VID(VID_NATT_STENBERG_01, "draft-stenberg-ipsec-nat-traversal-01"),
@@ -590,9 +591,7 @@ void init_vendorid(struct logger *logger)
 	struct vid_struct *vid;
 
 	for (vid = vid_tab; vid->id != VID_none; vid++) {
-		if (vid->flags & VID_SELF) {
-			vid->vid_len = strlen(vid->vid);
-		} else if (vid->flags & VID_STRING) {
+		if (vid->flags & VID_STRING) {
 			/** VendorID is a string **/
 			vid->vid = clone_str(vid->data, "vid->data (ignore)");
 			/* clang 3.4 thinks that vid->data might be NULL but it won't be */
