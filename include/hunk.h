@@ -59,6 +59,15 @@
  * EMPTY (pointing somewhere but no bytes) are considered different.
  */
 
+#define hunk_cmp(L, R)							\
+	({								\
+		typeof(L) l_ = L; /* evaluate once */			\
+		typeof(R) r_ = R; /* evaluate once */			\
+		raw_cmp(l_.ptr, l_.len, r_.ptr, r_.len);		\
+	})
+int raw_cmp(const void *l_ptr, size_t l_len,
+	    const void *r_ptr, size_t r_len);
+
 bool bytes_eq(const void *l_ptr, size_t l_len,
 	      const void *r_ptr, size_t r_len);
 bool case_eq(const void *l_ptr, size_t l_len,

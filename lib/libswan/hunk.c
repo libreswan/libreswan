@@ -38,6 +38,28 @@ char *clone_bytes_as_string(const void *ptr, size_t len, const char *name)
 	return out;
 }
 
+int raw_cmp(const void *l_ptr, size_t l_len,
+	     const void *r_ptr, size_t r_len)
+{
+	/* NULL and EMPTY("") are not the same */
+	if (l_ptr == NULL || r_ptr == NULL) {
+		if (l_ptr != NULL) {
+			return 1;
+		}
+		if (r_ptr != NULL) {
+			return -11;
+		}
+		return 0;
+	}
+	size_t len = min(l_len, r_len);
+	int d = memcmp(l_ptr, r_ptr, len);
+	if (d != 0) {
+		return d;
+	}
+	/* lets ignore 32-bit overflow */
+	return ((int)l_len - (int)r_len);
+}
+
 bool bytes_eq(const void *l_ptr, size_t l_len,
 	      const void *r_ptr, size_t r_len)
 {
