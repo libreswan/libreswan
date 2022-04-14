@@ -2239,8 +2239,7 @@ void process_packet_tail(struct msg_digest *md)
 
 	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_VID];
 	     p != NULL; p = p->next) {
-		handle_vendorid(md, (char *)p->pbs.cur,
-				pbs_left(&p->pbs), false,
+		handle_vendorid(md, pbs_in_left_as_shunk(&p->pbs), false,
 				st != NULL ? st->st_logger : md->md_logger);
 	}
 

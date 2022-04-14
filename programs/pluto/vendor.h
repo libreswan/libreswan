@@ -26,6 +26,7 @@
 
 #include "known_vendorid.h"
 #include "packet.h"		/* for pb_stream */
+#include "shunk.h"
 
 struct msg_digest;
 struct connection;
@@ -33,7 +34,7 @@ struct logger;
 
 void init_vendorid(struct logger *logger);
 
-void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
+void handle_vendorid(struct msg_digest *md, shunk_t vid,
 		     bool ikev2, struct logger *logger);
 
 bool out_v1VID(struct pbs_out *outs, unsigned int vid);

@@ -651,26 +651,26 @@ void init_vendorid(struct logger *logger)
 	}
 }
 
-static void dbg_vid(struct logger *logger, const char *vidstr, size_t len, struct vid_struct *vid, bool vid_useful)
+static void dbg_vid(struct logger *logger, shunk_t vid, const struct vid_struct *pvid, bool vid_useful)
 {
 	if (DBGP(DBG_BASE)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam(buf, "%s Vendor ID payload [",
 			    vid_useful ? "received" : "ignoring");
-			if (vid->flags & VID_SUBSTRING_DUMPHEXA) {
+			if (pvid->flags & VID_SUBSTRING_DUMPHEXA) {
 				/* Dump description + Hexa */
-				if (vid->descr != NULL) {
-					jam(buf, "%s ", vid->descr);
+				if (pvid->descr != NULL) {
+					jam(buf, "%s ", pvid->descr);
 				}
-				jam_dump_bytes(buf, vidstr, len);
-			} else if (vid->flags & VID_SUBSTRING_DUMPASCII) {
+				jam_dump_hunk(buf, vid);
+			} else if (pvid->flags & VID_SUBSTRING_DUMPASCII) {
 				/* Dump ASCII content */
 				/* no descr? */
-				jam_sanitized_bytes(buf, vidstr, len);
+				jam_sanitized_hunk(buf, vid);
 			} else {
 				/* Dump description (descr) */
-				if (vid->descr != NULL) {
-					jam_string(buf, vid->descr);
+				if (pvid->descr != NULL) {
+					jam_string(buf, pvid->descr);
 				}
 			}
 			jam(buf, "]");
@@ -684,14 +684,13 @@ static void dbg_vid(struct logger *logger, const char *vidstr, size_t len, struc
  */
 
 static void handle_known_vendorid_v2(struct msg_digest *md,
-				  const char *vidstr,
-				  size_t len,
-				  struct vid_struct *vid)
+				     shunk_t vid,
+				     const struct vid_struct *pvid)
 {
 	bool vid_useful = true; /* tentatively TRUE */
 
 	/* IKEv2 VID processing */
-	switch (vid->id) {
+	switch (pvid->id) {
 	case VID_LIBRESWANSELF:
 	case VID_LIBRESWAN:
 	case VID_LIBRESWAN_OLD:
@@ -703,7 +702,7 @@ static void handle_known_vendorid_v2(struct msg_digest *md,
 		break;
 	}
 
-	dbg_vid(md->md_logger, vidstr, len, vid, vid_useful);
+	dbg_vid(md->md_logger, vid, pvid, vid_useful);
 }
 
 /*
@@ -720,14 +719,13 @@ static void handle_known_vendorid_v2(struct msg_digest *md,
  * @return void
  */
 static void handle_known_vendorid_v1(struct msg_digest *md,
-				     const char *vidstr,
-				     size_t len,
-				     struct vid_struct *vid,
+				     shunk_t vid,
+				     const struct vid_struct *pvid,
 				     struct logger *logger)
 {
 	bool vid_useful = true; /* tentatively TRUE */
 
-	switch (vid->id) {
+	switch (pvid->id) {
 	/*
 	 * Use most recent supported NAT-Traversal method and ignore
 	 * the other ones (implementations will send all supported
@@ -758,11 +756,11 @@ static void handle_known_vendorid_v1(struct msg_digest *md,
 	case VID_NATT_IETF_08:
 	case VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE:
 	case VID_NATT_RFC:
-		if (md->quirks.qnat_traversal_vid < vid->id) {
-			dbg(" quirks.qnat_traversal_vid set to=%d [%s]", vid->id, vid->descr);
-			md->quirks.qnat_traversal_vid = vid->id;
+		if (md->quirks.qnat_traversal_vid < pvid->id) {
+			dbg(" quirks.qnat_traversal_vid set to=%d [%s]", pvid->id, pvid->descr);
+			md->quirks.qnat_traversal_vid = pvid->id;
 		} else {
-			dbg("Ignoring older NAT-T Vendor ID payload [%s]", vid->descr);
+			dbg("Ignoring older NAT-T Vendor ID payload [%s]", pvid->descr);
 			vid_useful = false;
 		}
 		break;
@@ -800,21 +798,20 @@ static void handle_known_vendorid_v1(struct msg_digest *md,
 		vid_useful = false;
 		break;
 	}
-	dbg_vid(md->md_logger, vidstr, len, vid, vid_useful);
+	dbg_vid(md->md_logger, vid, pvid, vid_useful);
 }
 
 
 static void handle_known_vendorid(struct msg_digest *md,
-				  const char *vidstr,
-				  size_t len,
-				  struct vid_struct *vid,
+				  shunk_t vid,
+				  const struct vid_struct *pvid,
 				  bool ikev2,
 				  struct logger *logger)
 {
 	if (ikev2)
-		handle_known_vendorid_v2(md, vidstr, len, vid);
+		handle_known_vendorid_v2(md, vid, pvid);
 	else
-		handle_known_vendorid_v1(md, vidstr, len, vid, logger);
+		handle_known_vendorid_v1(md, vid, pvid, logger);
 }
 
 /*
@@ -830,10 +827,10 @@ static void handle_known_vendorid(struct msg_digest *md,
  * @param st State Structure (Hopefully initialized)
  * @return void
  */
-void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
+void handle_vendorid(struct msg_digest *md, shunk_t vid,
 		     bool ikev2, struct logger *logger)
 {
-	struct vid_struct *pvid;
+	const struct vid_struct *pvid;
 
 	/*
 	 * Find known VendorID in vid_tab
@@ -848,18 +845,18 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 		 * ??? is there really a point in checking for
 		 * pvid->vid_len?
 		 */
-		if (pvid->vid != NULL && pvid->vid_len != 0 && len != 0) {
-			if (pvid->vid_len == len) {
-				if (memeq(pvid->vid, vid, len)) {
+		if (pvid->vid != NULL && pvid->vid_len != 0 && vid.len != 0) {
+			if (pvid->vid_len == vid.len) {
+				if (memeq(pvid->vid, vid.ptr, vid.len)) {
 					handle_known_vendorid(md, vid,
-							      len, pvid, ikev2,
+							      pvid, ikev2,
 							      logger);
 					return;
 				}
-			} else if (pvid->vid_len < len &&
+			} else if (pvid->vid_len < vid.len &&
 				   (pvid->flags & VID_SUBSTRING)) {
-				if (memeq(pvid->vid, vid, pvid->vid_len)) {
-					handle_known_vendorid(md, vid, len,
+				if (memeq(pvid->vid, vid.ptr, pvid->vid_len)) {
+					handle_known_vendorid(md, vid,
 							      pvid, ikev2,
 							      logger);
 					return;
@@ -873,8 +870,8 @@ void handle_vendorid(struct msg_digest *md, const char *vid, size_t len,
 	 */
 	LLOG_JAMBUF(RC_LOG_SERIOUS, logger, buf) {
 		jam(buf, "ignoring unknown Vendor ID payload [");
-		jam_dump_bytes(buf, vid, PMIN(len, MAX_LOG_VID_LEN));
-		if (len > MAX_LOG_VID_LEN) {
+		jam_dump_bytes(buf, vid.ptr, PMIN(vid.len, MAX_LOG_VID_LEN));
+		if (vid.len > MAX_LOG_VID_LEN) {
 			jam(buf, "...");
 		}
 		jam(buf, "]");

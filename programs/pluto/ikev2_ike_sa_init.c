@@ -843,7 +843,7 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 
 	/* Vendor ID processing */
 	for (struct payload_digest *v = md->chain[ISAKMP_NEXT_v2V]; v != NULL; v = v->next) {
-		handle_vendorid(md, (char *)v->pbs.cur, pbs_left(&v->pbs), true, ike->sa.st_logger);
+		handle_vendorid(md, pbs_in_left_as_shunk(&v->pbs), true, ike->sa.st_logger);
 	}
 
 	/* Get the proposals ready. */
