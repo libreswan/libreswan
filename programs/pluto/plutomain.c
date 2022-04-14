@@ -1779,6 +1779,8 @@ int main(int argc, char **argv)
 	init_ike_alg(logger);
 	test_ike_alg(logger);
 
+	init_vendorid(logger);
+
 	if (selftest_only) {
 		/*
 		 * skip pluto_exit()
@@ -1792,7 +1794,6 @@ int main(int argc, char **argv)
 
 	start_server_helpers(nhelpers, logger);
 	init_kernel(logger);
-	init_vendorid(logger);
 #if defined(LIBCURL) || defined(LIBLDAP)
 	start_crl_fetch_helper(logger);
 #endif
