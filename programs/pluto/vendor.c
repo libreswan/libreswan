@@ -138,6 +138,10 @@ struct vid_struct {
 	{ .id = ID, .flags = FLAGS, .data = DATA, .descr = DESCR,       \
 			.vid = NULL, .vid_len = 0, }
 
+#define RAW(ID, FLAGS, DESCR, RAW_VID)					\
+	{ .id = ID, .flags = FLAGS, .descr = DESCR,                     \
+			.vid = RAW_VID, .vid_len = sizeof(RAW_VID) - 1 /*don't count NUL*/, }
+
 static struct vid_struct vid_tab[] = {
 
 	/* Implementation names */
@@ -371,12 +375,9 @@ static struct vid_struct vid_tab[] = {
 	{ VID_MISC_HEARTBEAT_NOTIFY, VID_STRING | VID_SUBSTRING_DUMPHEXA,
 	  "HeartBeat_Notify", "HeartBeat Notify", NULL, 0 },
 
-	/*
-	 * MacOS X
-	 */
-	{ VID_MACOSX, VID_STRING | VID_SUBSTRING_DUMPHEXA, "Mac OSX 10.x",
-	  "\x4d\xf3\x79\x28\xe9\xfc\x4f\xd1\xb3\x26\x21\x70\xd5\x15\xc6\x62",
-	  NULL, 0 },
+	/* MacOS X */
+	RAW(VID_MACOSX, VID_KEEP, "Mac OSX 10.x",
+	    "\x4d\xf3\x79\x28\xe9\xfc\x4f\xd1\xb3\x26\x21\x70\xd5\x15\xc6\x62"),
 
 	DEC_MD5_VID(VID_IKE_FRAGMENTATION, "FRAGMENTATION"),
 	DEC_MD5_VID(VID_INITIAL_CONTACT, "Vid-Initial-Contact"),
