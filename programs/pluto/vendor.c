@@ -135,12 +135,11 @@ struct vid_struct {
 	VID(ID, VID_FSWAN_HASH, STR, DESCR)
 
 #define VID(ID, FLAGS, DATA, DESCR)					\
-	{ .id = ID, .flags = FLAGS, .data = DATA, .descr = DESCR,       \
-			.vid = NULL, .vid_len = 0, }
+	[ID] = { .id = ID, .flags = FLAGS, .data = DATA, .descr = DESCR, }
 
 #define RAW(ID, FLAGS, DESCR, RAW_VID)					\
-	{ .id = ID, .flags = FLAGS, .descr = DESCR,                     \
-			.vid = RAW_VID, .vid_len = sizeof(RAW_VID) - 1 /*don't count NUL*/, }
+	[ID] = { .id = ID, .flags = FLAGS, .descr = DESCR,		\
+		.vid = RAW_VID, .vid_len = sizeof(RAW_VID) - 1 /*don't count NUL*/, }
 
 static struct vid_struct vid_tab[] = {
 
@@ -532,9 +531,9 @@ static struct vid_struct vid_tab[] = {
  */
 void init_vendorid(struct logger *logger)
 {
-	struct vid_struct *vid;
+	FOR_EACH_ELEMENT_FROM_1(vid, vid_tab) {
+		passert(vid->id != 0);
 
-	for (vid = vid_tab; vid->id != VID_none; vid++) {
 		if (vid->flags & VID_STRING) {
 			/** VendorID is a string **/
 			vid->vid = clone_str(vid->data, "vid->data (ignore)");
@@ -779,22 +778,11 @@ static void handle_known_vendorid(struct msg_digest *md,
 void handle_vendorid(struct msg_digest *md, shunk_t vid,
 		     bool ikev2, struct logger *logger)
 {
-	const struct vid_struct *pvid;
-
 	/*
 	 * Find known VendorID in vid_tab
 	 */
-	for (pvid = vid_tab; pvid->id != VID_none; pvid++) {
-		/*
-		 * ??? if len == 0 we should skip the loop
-		 * (the loop doesn't change len).
-		 * But I strongly suspect that even without this check
-		 * nothing will match anyway, with the same result.
-		 *
-		 * ??? is there really a point in checking for
-		 * pvid->vid_len?
-		 */
-		if (pvid->vid != NULL && pvid->vid_len != 0 && vid.len != 0) {
+	if (vid.len > 0) {
+		FOR_EACH_ELEMENT_FROM_1(pvid, vid_tab) {
 			if (pvid->vid_len == vid.len) {
 				if (memeq(pvid->vid, vid.ptr, vid.len)) {
 					handle_known_vendorid(md, vid,
@@ -838,15 +826,12 @@ void handle_vendorid(struct msg_digest *md, shunk_t vid,
 
 bool out_v1VID(pb_stream *outs, unsigned int vid)
 {
-	struct vid_struct *pvid;
-
 	passert(vid != 0);
-	for (pvid = vid_tab; pvid->id != vid; pvid++)
-		passert(pvid->id != VID_none); /* we must find what we are trying to send */
-
+	passert(vid < elemsof(vid_tab));
+	const struct vid_struct *pvid = &vid_tab[vid];
 	dbg("%s(): sending [%s]", __func__, pvid->descr);
 	return ikev1_out_generic_raw(&isakmp_vendor_id_desc, outs,
-			       pvid->vid, pvid->vid_len, "V_ID");
+				     pvid->vid, pvid->vid_len, "V_ID");
 }
 
 /*
@@ -911,12 +896,7 @@ bool out_v1VID_set(struct pbs_out *outs, const struct connection *c)
  */
 bool vid_is_oppo(const char *vid, size_t len)
 {
-	struct vid_struct *pvid;
-
-	/* stop at right vid in vidtable (should be first entry) */
-	for (pvid = vid_tab; pvid->id != VID_OPPORTUNISTIC; pvid++)
-		passert(pvid->id != VID_none); /* we must find VID_OPPORTUNISTIC */
-
+	const struct vid_struct *pvid = &vid_tab[VID_OPPORTUNISTIC];
 	if (pvid->vid_len == len && memeq(vid, pvid->vid, len)) {
 		dbg("VID_OPPORTUNISTIC received");
 		return true;
@@ -957,11 +937,9 @@ bool emit_v2V(struct pbs_out *outs, const char * vid)
 
 bool emit_v2VID(struct pbs_out *outs, enum known_vendorid vid)
 {
-	const struct vid_struct *pvid;
 	passert(vid != 0);
-	for (pvid = vid_tab; pvid->id != vid; pvid++)
-		passert(pvid->id != VID_none); /* we must find what we are trying to send */
-
+	passert(vid < elemsof(vid_tab));
+	const struct vid_struct *pvid = &vid_tab[vid];
 	dbg("%s(): sending [%s]", __func__, pvid->descr);
 	return emit_v2V_raw(outs, shunk2(pvid->vid, pvid->vid_len), pvid->descr);
 }
