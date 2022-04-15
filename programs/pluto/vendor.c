@@ -454,13 +454,10 @@ static struct vid_struct vid_tab[] = {
 	DEC_MD5_VID(VID_STRONGSWAN_2_2_2, "strongSwan 2.2.2"),
 	DEC_MD5_VID(VID_STRONGSWAN_2_2_1, "strongSwan 2.2.1"),
 	DEC_MD5_VID(VID_STRONGSWAN_2_2_0, "strongSwan 2.2.0"),
-	{
-		/**
-		 * Cisco VPN 3000
-		 */
-		VID_IKE_FRAGMENTATION, VID_MD5HASH | VID_SUBSTRING_DUMPHEXA,
-		"FRAGMENTATION", NULL, NULL, 0
-	},
+
+	/* Cisco VPN 3000 (also sent by strongSwan) */
+	VID(VID_CISCO_IKE_FRAGMENTATION, VID_MD5HASH | VID_SUBSTRING_DUMPHEXA,
+	    "FRAGMENTATION", NULL),
 
 	/*
 	 * NCP.de
