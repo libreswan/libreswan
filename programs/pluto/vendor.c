@@ -142,13 +142,7 @@ static struct vid_struct vid_tab[] = {
 
 	/* Implementation names */
 
-	/*
-	 * We send this VID to let people know this is opportunistic ipsec.
-	 * Keep this entry as the first - we look this in the table regularly
-	 */
-	{ VID_OPPORTUNISTIC, VID_STRING | VID_KEEP, "Opportunistic IPsec",
-	 "\x4f\x70\x70\x6f\x72\x74\x75\x6e\x69\x73\x74\x69\x63\x20\x49\x50\x73\x65\x63",
-	  NULL, 0},
+	VID(VID_OPPORTUNISTIC, VID_STRING | VID_KEEP, "Opportunistic IPsec", NULL),
 
 	{ VID_OPENPGP, VID_STRING, "OpenPGP10171", "OpenPGP", NULL, 0 },
 
