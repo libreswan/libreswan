@@ -276,6 +276,8 @@ static bool start_eap(struct ike_sa *ike, struct pbs_out *pbs)
 
 static stf_status send_eap_termination_response(struct ike_sa *ike, struct msg_digest *md, uint8_t eap_code)
 {
+	llog_sa(RC_LOG, ike, "responding with EAP termination code %d", eap_code);
+
 	struct eap_state *eap = ike->sa.st_eap;
 
 	struct v2_message response;
@@ -296,12 +298,18 @@ static stf_status send_eap_termination_response(struct ike_sa *ike, struct msg_d
 	};
 
 	struct pbs_out eap_payload;
-	if (!out_struct(&ie, &ikev2_eap_desc, response.pbs, &eap_payload) ||
-	    !out_struct(&eap_msg, &eap_termination_desc, &eap_payload, 0))
+	if (!out_struct(&ie, &ikev2_eap_desc, response.pbs, &eap_payload)) {
 		return STF_INTERNAL_ERROR;
+	}
 
-	llog_sa(RC_LOG, ike, "Responding with EAP termination code %d", eap_code);
+	if (!out_struct(&eap_msg, &eap_termination_desc, &eap_payload, 0)) {
+		return STF_INTERNAL_ERROR;
+	}
 
+	dbg("closing EAP termination payload");
+	close_output_pbs(&eap_payload);
+
+	dbg("closing/recording EAP termination response");
 	if (!close_and_record_v2_message(&response)) {
 		return STF_INTERNAL_ERROR;
 	}
@@ -310,7 +318,7 @@ static stf_status send_eap_termination_response(struct ike_sa *ike, struct msg_d
 }
 
 static stf_status send_eap_fragment_response(struct ike_sa *ike, struct msg_digest *md,
-	uint8_t eap_code, uint32_t max_frag)
+					     uint8_t eap_code, uint32_t max_frag)
 {
 	struct eap_state *eap = ike->sa.st_eap;
 	diag_t d;
@@ -345,10 +353,15 @@ static stf_status send_eap_fragment_response(struct ike_sa *ike, struct msg_dige
 			eaptls.eaptls_flags |= EAPTLS_FLAGS_MORE;
 	}
 
-	struct pbs_out eap_payload, eap_data;
-	if (!out_struct(&ie, &ikev2_eap_desc, response.pbs, &eap_payload) ||
-	    !out_struct(&eaptls, &eap_tls_desc, &eap_payload, &eap_data))
+	struct pbs_out eap_payload;
+	if (!out_struct(&ie, &ikev2_eap_desc, response.pbs, &eap_payload)) {
 		return STF_INTERNAL_ERROR;
+	}
+
+	struct pbs_out eap_data;
+	if (!out_struct(&eaptls, &eap_tls_desc, &eap_payload, &eap_data)) {
+		return STF_INTERNAL_ERROR;
+	}
 
 	if (eaptls.eaptls_flags & EAPTLS_FLAGS_LENGTH) {
 		uint32_t msglen = htonl(eap->eaptls_chunk.len);
@@ -356,12 +369,13 @@ static stf_status send_eap_fragment_response(struct ike_sa *ike, struct msg_dige
 		if (d != NULL) goto err_diag;
 	}
 
-	llog_sa(RC_LOG, ike, "Responding with %d bytes of %zd EAP data",
+	llog_sa(RC_LOG, ike, "responding with %d bytes of %zd EAP data",
 		max_frag, eap->eaptls_chunk.len);
 
 	if (max_frag) {
 		d = pbs_out_raw(&eap_data, eap->eaptls_chunk.ptr + eap->eaptls_pos, max_frag, "EAP-TLS data");
-		if (d != NULL) goto err_diag;
+		if (d != NULL)
+			goto err_diag;
 		eap->eaptls_pos += max_frag;
 
 		if (!(eaptls.eaptls_flags & EAPTLS_FLAGS_MORE)) {
@@ -370,6 +384,11 @@ static stf_status send_eap_fragment_response(struct ike_sa *ike, struct msg_dige
 		}
 	}
 
+	dbg("closing EAP data / payload");
+	close_output_pbs(&eap_data);
+ 	close_output_pbs(&eap_payload);
+
+	dbg("closing/recording EAP response");
 	if (!close_and_record_v2_message(&response)) {
 		return STF_INTERNAL_ERROR;
 	}
