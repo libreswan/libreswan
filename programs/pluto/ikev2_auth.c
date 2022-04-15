@@ -219,13 +219,20 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 			"legacy ECDSA is not implemented");
 		return IKEv2_AUTH_RESERVED;
 
+	case AUTH_EAPONLY:
+		/*
+		 * EAP-Only uses an EAP Generated KEY; which is
+		 * bundled in PSK (it certainly isn't one of the
+		 * signature payloads)?
+		 */
+		return IKEv2_AUTH_PSK;
+
 	case AUTH_PSK:
 		return IKEv2_AUTH_PSK;
 
 	case AUTH_NULL:
 		return IKEv2_AUTH_NULL;
 
-	case AUTH_EAPONLY:
 	case AUTH_NEVER:
 	case AUTH_UNSET:
 		break;
