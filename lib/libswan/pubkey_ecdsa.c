@@ -306,7 +306,7 @@ static bool ECDSA_authenticate_signature(const struct crypt_mac *hash, shunk_t s
 }
 
 const struct pubkey_signer pubkey_signer_ecdsa = {
-	.name = "ECDSA",
+	.name = "ECDSA", /* name from RFC 7427 */
 	.type = &pubkey_type_ecdsa,
 	.digital_signature_blob = DIGITAL_SIGNATURE_ECDSA_BLOB,
 	.sign_hash = ECDSA_sign_hash,

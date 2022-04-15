@@ -31,7 +31,7 @@ north #
 1v2 "north-eastnets/0x2" #1: sent IKE_SA_INIT request
 002 "north-eastnets/0x2" #1: switching CHILD #2 to pending connection "north-eastnets/0x1"
 1v2 "north-eastnets/0x2" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP2048}
-003 "north-eastnets/0x2" #1: initiator established IKE SA; authenticated using RSA with SHA2_512 and preloaded certificate '@east'
+003 "north-eastnets/0x2" #1: initiator established IKE SA; authenticated using RSASSA-PSS with SHA2_512 and preloaded certificate '@east'
 004 "north-eastnets/0x1" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 DPD=passive}
 002 "north-eastnets/0x2" #3: initiating Child SA using IKE SA #1
 1v2 "north-eastnets/0x2" #3: sent CREATE_CHILD_SA request for new IPsec SA

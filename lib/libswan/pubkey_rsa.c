@@ -356,7 +356,7 @@ const struct pubkey_signer pubkey_signer_raw_rsa = {
 };
 
 const struct pubkey_signer pubkey_signer_pkcs1_1_5_rsa = {
-	.name = "RSA",
+	.name = "PKCS#1 1.5 RSA", /* name from RFC 7427 */
 	.digital_signature_blob = DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB,
 	.type = &pubkey_type_rsa,
 	.sign_hash = RSA_sign_hash_pkcs1_1_5_rsa,
@@ -543,7 +543,7 @@ static bool RSA_authenticate_signature_rsassa_pss(const struct crypt_mac *expect
 }
 
 const struct pubkey_signer pubkey_signer_rsassa_pss = {
-	.name = "RSA",
+	.name = "RSASSA-PSS", /* name from RFC 7427 */
 	.type = &pubkey_type_rsa,
 	.digital_signature_blob = DIGITAL_SIGNATURE_RSASSA_PSS_BLOB,
 	.sign_hash = RSA_sign_hash_rsassa_pss,
