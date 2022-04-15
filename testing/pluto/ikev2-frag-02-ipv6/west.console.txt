@@ -18,7 +18,7 @@ west #
 1v2 "v6-tunnel" #1: initiating IKEv2 connection
 1v2 "v6-tunnel" #1: sent IKE_SA_INIT request
 1v2 "v6-tunnel" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_256 group=MODP2048}
-003 "v6-tunnel" #1: initiator established IKE SA; authenticated using RSA with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+003 "v6-tunnel" #1: initiator established IKE SA; authenticated using RSASSA-PSS with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 004 "v6-tunnel" #2: initiator established Child SA using #1; IPsec tunnel [2001:111:1111::-2001:111:1111:ffff:ffff:ffff:ffff:ffff:0-65535 0] -> [2001:2222:222:2200::-2001:2222:222:22ff:ffff:ffff:ffff:ffff:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  grep "fragment number" /tmp/pluto.log
