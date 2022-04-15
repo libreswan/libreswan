@@ -405,11 +405,15 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 		jam_msg_digest(buf, md);
 	}
 
+	/*
+	 * XXX: hack so that incoming certs are ignored; should update
+	 * CERT code?
+	 */
 	ike->sa.st_remote_certs.processed = true;
 	ike->sa.st_remote_certs.harmless = true;
 
 	const struct connection *c = ike->sa.st_connection;
-	if (c->spd.that.config->host.auth != AUTH_EAPONLY) {
+	if (c->remote->config->host.auth != AUTH_EAPONLY) {
 		log_state(RC_LOG, &ike->sa,
 			  "Peer attempted EAP authentication, but IKE_AUTH is required");
 		goto auth_fail;
@@ -439,6 +443,8 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 									   struct msg_digest *md,
 									   const struct hash_signature *auth_sig)
 {
+	struct connection *c = ike->sa.st_connection;
+
 	/* HDR out */
 
 	struct v2_message response;
@@ -495,7 +501,9 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 	}
 
 	/* now send AUTH payload */
-	if (!emit_local_v2AUTH(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, response.pbs)) {
+	if (c->local->config->host.auth == AUTH_EAPONLY) {
+		dbg("EAP: skipping AUTH payload as our proof-of-identity is eap-only");
+	} else if (!emit_local_v2AUTH(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, response.pbs)) {
 		return STF_INTERNAL_ERROR;
 	}
 
