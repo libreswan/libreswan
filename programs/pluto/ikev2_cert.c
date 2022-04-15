@@ -296,35 +296,50 @@ stf_status emit_v2CERT(const struct connection *c, struct pbs_out *outpbs)
 }
 
 /*
- * For IKEv2, returns TRUE if we should be sending a cert
+ * For IKEv2, returns TRUE if we should be sending a cert.
+ *
+ * EAP-Only, for instance, never sends certs.
  */
 bool ikev2_send_cert_decision(const struct ike_sa *ike)
 {
 	const struct connection *c = ike->sa.st_connection;
 	const struct end *this = &c->spd.this;
 
-	dbg("IKEv2 CERT: send a certificate?");
-
-	bool sendit = false;
-
 	if (ike->sa.st_peer_wants_null) {
 		/* XXX: only ever true on responder */
-		/* ??? should we log something?  All others do. */
-	} else if (!authby_has_digsig(c->local->config->host.authby)) {
-		authby_buf pb;
-		dbg("IKEv2 CERT: local authby does not have RSA or ECDSA: %s",
-		    str_authby(c->local->config->host.authby, &pb));
-	} else if (this->config->host.cert.nss_cert == NULL) {
-		dbg("IKEv2 CERT: no certificate to send");
-	} else if (c->local->config->host.sendcert == CERT_SENDIFASKED &&
-		   ike->sa.st_requested_ca != NULL) {
-		dbg("IKEv2 CERT: OK to send requested certificate");
-		sendit = true;
-	} else if (c->local->config->host.sendcert == CERT_ALWAYSSEND) {
-		dbg("IKEv2 CERT: OK to send a certificate (always)");
-		sendit = true;
-	} else {
-		dbg("IKEv2 CERT: no cert requested or we don't want to send");
+		dbg("IKEv2 CERT: not sending cert: peer wants (we're using?) NULL")
+		return false;
 	}
-	return sendit;
+
+	if (c->local->config->host.auth == AUTH_EAPONLY) {
+		dbg("IKEv2 CERT: not sending cert: local %sauth==EAPONLY",
+		    c->local->config->leftright)
+		return false;
+	}
+
+	if (!authby_has_digsig(c->local->config->host.authby)) {
+		authby_buf pb;
+		dbg("IKEv2 CERT: not sending cert: local %sauthby=%s does not have RSA or ECDSA",
+		    c->local->config->leftright,
+		    str_authby(c->local->config->host.authby, &pb));
+		return false;
+	}
+
+	if (this->config->host.cert.nss_cert == NULL) {
+		dbg("IKEv2 CERT: not sending cert: there is no local certificate to send");
+		return false;
+	}
+
+	if (c->local->config->host.sendcert == CERT_SENDIFASKED &&
+	    ike->sa.st_requested_ca != NULL) {
+		dbg("IKEv2 CERT: OK to send certificate (send if asked)");
+		return true;
+	}
+
+	if (c->local->config->host.sendcert == CERT_ALWAYSSEND) {
+		dbg("IKEv2 CERT: OK to send a certificate (always)");
+		return true;
+	}
+
+	return false;
 }
