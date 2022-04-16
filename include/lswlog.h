@@ -368,10 +368,10 @@ extern lset_t cur_debugging;	/* current debugging level */
 void DBG_log(const char *message, ...) PRINTF_LIKE(1);
 void DBG_va_list(const char *message, va_list ap) VPRINTF_LIKE(1);
 void DBG_dump(const char *label, const void *p, size_t len);
-#define DBG_dump_hunk(LABEL, HUNK)				\
-	{							\
-		typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
-		DBG_dump(LABEL, hunk_.ptr, hunk_.len);		\
+#define DBG_dump_hunk(LABEL, HUNK)					\
+	{								\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
+		DBG_dump(LABEL, hunk_->ptr, hunk_->len);		\
 	}
 #define DBG_dump_thing(LABEL, THING) DBG_dump(LABEL, &(THING), sizeof(THING))
 
