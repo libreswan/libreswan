@@ -631,7 +631,6 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	struct eap_state *eap = ike->sa.st_eap;
 	struct msg_digest *sa_md = ike->sa.st_eap_sa_md;
 	struct logger *logger = ike->sa.st_logger;
-	struct hash_signature msk = { .len = sizeof(msk.ptr/*array*/), };
 
 	pexpect(eap != NULL);
 	pexpect(sa_md != NULL);
@@ -641,19 +640,36 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 
 	dbg("responder verifying AUTH payload");
 
-	if (SSL_ExportKeyingMaterial(eap->eaptls_desc, key_pad_str, sizeof key_pad_str - 1,
-				     PR_FALSE, 0, 0, msk.ptr, msk.len) != SECSuccess) {
+	/*
+	 * IKEv2: 2.16.  Extensible Authentication Protocol Methods
+	 *
+	 * ... The shared key from EAP is the field from the EAP
+	 * specification named MSK.
+	 *
+	 * In EAP-TLS, MSK is defined as:
+	 *
+	 * MSK          = Key_Material(0,63)
+	 */
+	struct hash_signature msk = { .len = 64/* from RFC? */, };
+	passert(msk.len <= sizeof(msk.ptr/*array*/));
+	if (SSL_ExportKeyingMaterial(eap->eaptls_desc,
+				     key_pad_str, sizeof(key_pad_str) - 1,
+				     PR_FALSE, NULL, 0,
+				     msk.ptr, msk.len) != SECSuccess) {
 		free_eap_state(&ike->sa.st_eap);
 		llog_nss_error(RC_LOG, logger, "Keying material export failed");
 		return STF_FATAL;
 	}
 
-	DBG_dump_hunk("EAP MSK", msk);
-
 	/* calculate hash of IDi for AUTH below */
 	struct crypt_mac idhash_in = v2_id_hash(ike, "IDi verify hash", "IDi",
 						pbs_in_all_as_shunk(&sa_md->chain[ISAKMP_NEXT_v2IDi]->pbs),
 						"skey_pi", ike->sa.st_skey_pi_nss);
+
+	if (DBGP(DBG_BASE)) {
+		DBG_dump_hunk("EAP: msk", msk);
+		DBG_dump_hunk("EAP: idhash_in", idhash_in);
+	}
 
 	diag_t d = verify_v2AUTH_and_log_using_psk(AUTH_EAPONLY, ike, &idhash_in,
 						   &md->chain[ISAKMP_NEXT_v2AUTH]->pbs,
