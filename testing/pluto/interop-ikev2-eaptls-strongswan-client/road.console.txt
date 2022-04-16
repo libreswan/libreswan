@@ -17,61 +17,69 @@ generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP
 sending packet: from 192.1.3.209[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.3.209[500] (XXX bytes)
 parsed IKE_SA_INIT response 0 [ N(INVAL_KE) ]
-peer didn't accept DH group ECP_256, it requested MODP_3072
+peer didn't accept DH group CURVE_25519, it requested MODP_2048
 initiating IKE_SA rw-eap[1] to 192.1.2.23
 generating IKE_SA_INIT request 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(REDIR_SUP) ]
 sending packet: from 192.1.3.209[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.3.209[500] (XXX bytes)
-parsed IKE_SA_INIT response 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) N(FRAG_SUP) N(HASH_ALG) N(CHDLESS_SUP) N(MULT_AUTH) ]
-selected proposal: IKE:AES_GCM_16_256/PRF_HMAC_SHA2_256/MODP_3072
+parsed IKE_SA_INIT response 0 [ SA KE No N(FRAG_SUP) N(HASH_ALG) N(NATD_S_IP) N(NATD_D_IP) N(CHDLESS_SUP) CERTREQ ]
+selected proposal: IKE:AES_GCM_16_256/PRF_HMAC_SHA2_512/MODP_2048
 sending cert request for "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
 establishing CHILD_SA rw-eap{1}
-generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) CERTREQ IDr CPRQ(ADDR DNS) SA TSi TSr N(MOBIKE_SUP) N(NO_ADD_ADDR) N(MULT_AUTH) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
+generating IKE_AUTH request 1 [ IDi N(INIT_CONTACT) CERTREQ IDr CPRQ(ADDR DNS) SA TSi TSr N(MOBIKE_SUP) N(NO_ADD_ADDR) N(EAP_ONLY) N(MSG_ID_SYN_SUP) ]
 sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
-parsed IKE_AUTH response 1 [ EF(1/2) ]
-received fragment #1 of 2, waiting for complete IKE message
-received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
-parsed IKE_AUTH response 1 [ EF(2/2) ]
-received fragment #2 of 2, reassembled fragmented IKE message (XXX bytes)
-parsed IKE_AUTH response 1 [ IDr CERT AUTH EAP/REQ/ID ]
-received end entity cert "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
-  using certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
-  using trusted ca certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
-checking certificate status of "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
-  requesting ocsp status from 'http://nic.testing.libreswan.org:2560' ...
-ocsp response verification failed, no signer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=nic.testing.libreswan.org, E=user-nic@testing.libreswan.org' found
-ocsp check failed, fallback to crl
-  fetching crl from 'http://nic.testing.libreswan.org/revoked.crl' ...
-libcurl request failed [7]: Failed to connect to nic.testing.libreswan.org XXX
-crl fetching failed
-certificate status is not available
-  reached self-signed root ca with a path length of 0
-authentication of 'east.testing.libreswan.org' with RSA_EMSA_PKCS1_SHA2_256 successful
-server requested EAP_IDENTITY (id 0x00), sending 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
-generating IKE_AUTH request 2 [ EAP/RES/ID ]
-sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
-received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
-parsed IKE_AUTH response 2 [ EAP/REQ/TLS ]
+parsed IKE_AUTH response 1 [ IDr EAP/REQ/TLS ]
 server requested EAP_TLS authentication (id 0xXX)
+allow mutual EAP-only authentication
+generating IKE_AUTH request 2 [ EAP/RES/TLS ]
+sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
+received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
+parsed IKE_AUTH response 2 [ EF(1/3) ]
+received fragment #1 of 3, waiting for complete IKE message
+received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
+parsed IKE_AUTH response 2 [ EF(2/3) ]
+received fragment #2 of 3, waiting for complete IKE message
+received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
+parsed IKE_AUTH response 2 [ EF(3/3) ]
+received fragment #3 of 3, reassembled fragmented IKE message (XXX bytes)
+parsed IKE_AUTH response 2 [ EAP/REQ/TLS ]
 generating IKE_AUTH request 3 [ EAP/RES/TLS ]
 sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
+parsed IKE_AUTH response 3 [ EF(1/3) ]
+received fragment #1 of 3, waiting for complete IKE message
+received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
+parsed IKE_AUTH response 3 [ EF(2/3) ]
+received fragment #2 of 3, waiting for complete IKE message
+received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
+parsed IKE_AUTH response 3 [ EF(3/3) ]
+received fragment #3 of 3, reassembled fragmented IKE message (XXX bytes)
 parsed IKE_AUTH response 3 [ EAP/REQ/TLS ]
 generating IKE_AUTH request 4 [ EAP/RES/TLS ]
 sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
+parsed IKE_AUTH response 4 [ EF(1/3) ]
+received fragment #1 of 3, waiting for complete IKE message
+received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
+parsed IKE_AUTH response 4 [ EF(2/3) ]
+received fragment #2 of 3, waiting for complete IKE message
+received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
+parsed IKE_AUTH response 4 [ EF(3/3) ]
+received fragment #3 of 3, reassembled fragmented IKE message (XXX bytes)
 parsed IKE_AUTH response 4 [ EAP/REQ/TLS ]
 generating IKE_AUTH request 5 [ EAP/RES/TLS ]
 sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
-parsed IKE_AUTH response 5 [ EAP/REQ/TLS ]
-generating IKE_AUTH request 6 [ EAP/RES/TLS ]
-sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
+parsed IKE_AUTH response 5 [ EF(1/2) ]
+received fragment #1 of 2, waiting for complete IKE message
 received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
-parsed IKE_AUTH response 6 [ EAP/REQ/TLS ]
-negotiated TLS 1.2 using suite TLS_DHE_RSA_WITH_AES_256_GCM_SHA384
+parsed IKE_AUTH response 5 [ EF(2/2) ]
+received fragment #2 of 2, reassembled fragmented IKE message (XXX bytes)
+parsed IKE_AUTH response 5 [ EAP/REQ/TLS ]
+negotiated TLS 1.2 using suite TLS_DHE_RSA_WITH_AES_128_GCM_SHA256
 received TLS server certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+received TLS intermediate certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
   using certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
   using trusted ca certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
 checking certificate status of "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
@@ -85,6 +93,10 @@ certificate status is not available
   reached self-signed root ca with a path length of 0
 received TLS cert request for 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 sending TLS client certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
+generating IKE_AUTH request 6 [ EAP/RES/TLS ]
+sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
+received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
+parsed IKE_AUTH response 6 [ EAP/REQ/TLS ]
 generating IKE_AUTH request 7 [ EAP/RES/TLS ]
 sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
@@ -96,24 +108,20 @@ parsed IKE_AUTH response 8 [ EAP/REQ/TLS ]
 generating IKE_AUTH request 9 [ EAP/RES/TLS ]
 sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
-parsed IKE_AUTH response 9 [ EAP/REQ/TLS ]
-generating IKE_AUTH request 10 [ EAP/RES/TLS ]
-sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
-received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
-parsed IKE_AUTH response 10 [ EAP/SUCC ]
+parsed IKE_AUTH response 9 [ EAP/SUCC ]
 EAP method EAP_TLS succeeded, MSK established
 authentication of 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org' (myself) with EAP
-generating IKE_AUTH request 11 [ AUTH ]
+generating IKE_AUTH request 10 [ AUTH ]
 sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
-parsed IKE_AUTH response 11 [ AUTH CPRP(ADDR) SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) ]
+parsed IKE_AUTH response 10 [ AUTH CPRP(ADDR) SA TSi TSr ]
 authentication of 'east.testing.libreswan.org' with EAP successful
 IKE_SA rw-eap[1] established between 192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org]...192.1.2.23[east.testing.libreswan.org]
 scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
-installing new virtual IP 100.64.10.1
-selected proposal: ESP:AES_CBC_256/HMAC_SHA2_256_128/NO_EXT_SEQ
-CHILD_SA rw-eap{1} established with SPIs SPISPI_i SPISPI_o and TS 100.64.10.1/32 === 192.0.2.0/24
+installing new virtual IP 10.0.10.1
+selected proposal: ESP:AES_CBC_256/HMAC_SHA2_512_256/NO_EXT_SEQ
+CHILD_SA rw-eap{1} established with SPIs SPISPI_i SPISPI_o and TS 10.0.10.1/32 === 192.0.2.0/24
 connection 'rw-eap' established successfully
 road #
  echo done
@@ -127,6 +135,6 @@ Bypass LAN 192.1.3.0/24:  192.1.3.0/24 === 192.1.3.0/24 PASS
 Security Associations (1 up, 0 connecting):
       rw-eap[1]: ESTABLISHED XXX second ago, 192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org]...192.1.2.23[east.testing.libreswan.org]
       rw-eap{1}:  INSTALLED, TUNNEL, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
-      rw-eap{1}:   100.64.10.1/32 === 192.0.2.0/24
+      rw-eap{1}:   10.0.10.1/32 === 192.0.2.0/24
 road #
  
