@@ -353,7 +353,10 @@ static struct vid_struct vid_tab[] = {
 	RAW(VID_MACOSX, VID_KEEP, "Mac OSX 10.x",
 	    "\x4d\xf3\x79\x28\xe9\xfc\x4f\xd1\xb3\x26\x21\x70\xd5\x15\xc6\x62"),
 
-	DEC_MD5_VID(VID_IKE_FRAGMENTATION, "FRAGMENTATION"),
+	/* FRAGMENTATION; Cisco VPN 3000 and strongSwan send extra values */
+	RAW(VID_IKE_FRAGMENTATION, VID_SUBSTRING_DUMPHEXA, "FRAGMENTATION",
+	    "\x40\x48\xb7\xd5\x6e\xbc\xe8\x85\x25\xe7\xde\x7f\x00\xd6\xc2\xd3"),
+
 	DEC_MD5_VID(VID_INITIAL_CONTACT, "Vid-Initial-Contact"),
 
 	/*
@@ -423,10 +426,6 @@ static struct vid_struct vid_tab[] = {
 	DEC_MD5_VID(VID_STRONGSWAN_2_2_2, "strongSwan 2.2.2"),
 	DEC_MD5_VID(VID_STRONGSWAN_2_2_1, "strongSwan 2.2.1"),
 	DEC_MD5_VID(VID_STRONGSWAN_2_2_0, "strongSwan 2.2.0"),
-
-	/* Cisco VPN 3000 (also sent by strongSwan) */
-	VID(VID_CISCO_IKE_FRAGMENTATION, VID_MD5HASH | VID_SUBSTRING_DUMPHEXA,
-	    "FRAGMENTATION", NULL),
 
 	/*
 	 * NCP.de
@@ -738,7 +737,6 @@ static void handle_known_vendorid_v1(struct msg_digest *md,
 		md->quirks.xauth_vid = true;
 		break;
 
-	case VID_CISCO_IKE_FRAGMENTATION:
 	case VID_IKE_FRAGMENTATION:
 		md->fragvid = true;
 		break;
