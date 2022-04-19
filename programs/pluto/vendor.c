@@ -328,6 +328,7 @@ static struct vid_struct vid_tab[] = {
 	/* SonicWall */
 	RAW(VID_SONICWALL_1, VID_KEEP, "Sonicwall 1 (TZ 170 Standard?)",
 	    "\x40\x4b\xf4\x39\x52\x2c\xa3\xf6"),
+	/* apparently also Watchguard FireBoxs */
 	RAW(VID_SONICWALL_2, VID_KEEP, "Sonicwall 2 (3.1.0.12-86s?)",
 	    "\xda\x8e\x93\x78\x80\x01\x00\x00"),
 
@@ -478,9 +479,6 @@ static struct vid_struct vid_tab[] = {
 
 	RAW(VID_SIDEWINDER, VID_KEEP, "Sidewinder",
 	    "\x84\x04\xad\xf9\xcd\xa0\x57\x60\xb2\xca\x29\x2e\x4b\xff\x53\x7b"),
-
-	RAW(VID_WATCHGUARD, VID_KEEP, "Watchguard FireBox",
-	    "\xda\x8e\x93\x78\x80\x01\x00\x00"),
 
 	RAW(VID_LUCENT_GW9, VID_KEEP, "Lucent VPN Gateway 9 (LVG9.1.255:BRICK:9.1.255)",
 	    "\x4c\x56\x47\x39\x2e\x32\x2e\x32\x34\x35\x3a\x42\x52\x49\x43\x4b\x3a\x39\x2e\x32\x2e\x32\x34\x35"),
