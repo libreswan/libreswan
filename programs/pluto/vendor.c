@@ -193,14 +193,20 @@ static struct vid_struct vid_tab[] = {
 	    "\x7B\xB9\x38\x67\xD7\x6C\x8D\x80\xDF\x0F\x40\xFA\xE8\xFC\x3B\x19\x00\x00\x00\x06"),
 	RAW(VID_MS_AUTHIP_KE_DHMAX, VID_KEEP, "AUTHIP INIT KE DH MAX",
 	    "\x7B\xB9\x38\x67\xD7\x6C\x8D\x80\xDF\x0F\x40\xFA\xE8\xFC\x3B\x19\x00\x00\x00\x07"),
-
-	DEC_MD5_VID(VID_MS_NLBS_PRESENT, "NLBS_PRESENT(NLB/MSCS fast failover supported)"),
-	DEC_MD5_VID(VID_MS_MAMIEEXISTS, "MS-MamieExists(AuthIP supported)"),
-	DEC_MD5_VID(VID_MS_CGAv1, "IKE CGA version 1"),
-	DEC_MD5_VID(VID_MS_NEGDISCCAP, "MS-Negotiation Discovery Capable"),
-	DEC_MD5_VID(VID_MS_XBOX_ONE_2013, "Microsoft Xbox One 2013"),
-	DEC_MD5_VID(VID_MS_XBOX_IKEv2, "Xbox IKEv2 Negotiation"),
-	DEC_MD5_VID(VID_MS_SEC_REALM_ID, "MSFT IPsec Security Realm Id"),
+	RAW(VID_MS_NLBS_PRESENT, VID_KEEP, "NLB/MSCS fast failover supported",
+	    "\x72\x87\x2B\x95\xFC\xDA\x2E\xB7\x08\xEF\xE3\x22\x11\x9B\x49\x71"),
+	RAW(VID_MS_AUTHIP_SUPPORTED, VID_KEEP, "AuthIP supported",
+	    "\x21\x4C\xA4\xFA\xFF\xA7\xF3\x2D\x67\x48\xE5\x30\x33\x95\xAE\x83"),
+	RAW(VID_MS_CGA_SUPPORTED, VID_KEEP, "CGA supported",
+	    "\xE3\xA5\x96\x6A\x76\x37\x9F\xE7\x07\x22\x82\x31\xE5\xCE\x86\x52"),
+	RAW(VID_MS_NEGOTIATION_DISCOVERY_SUPPORTED, VID_KEEP, "Negotiation discovery supported",
+	    "\xFB\x1D\xE3\xCD\xF3\x41\xB7\xEA\x16\xB7\xE5\xBE\x08\x55\xF1\x20"),
+	RAW(VID_MS_XBOX_ONE_2013, VID_KEEP, "Microsoft Xbox One 2013",
+	    "\x8A\xA3\x94\xCF\x8A\x55\x77\xDC\x31\x10\xC1\x13\xB0\x27\xA4\xF2"),
+	RAW(VID_MS_XBOX_IKEv2, VID_KEEP, "Xbox IKEv2 Negotiation",
+	    "\x66\x08\x22\xB3\xA7\x3A\x24\x41\x49\x57\x8D\x62\xE0\xEB\x46\xA0"),
+	RAW(VID_MS_SEC_REALM_ID, VID_KEEP, "MSFT IPsec Security Realm Id",
+	    "\x68\x6A\x8C\xBD\xFE\x63\x4B\x40\x51\x46\xFB\x2B\xAF\x33\xE9\xE8"),
 
 	/* These two VID's plus VID_MS_NT5 trigger GSS-API support on Windows */
 	DEC_MD5_VID(VID_GSSAPILONG, "A GSS-API Authentication Method for IKE"),
@@ -349,11 +355,6 @@ static struct vid_struct vid_tab[] = {
 
 	DEC_MD5_VID(VID_IKE_FRAGMENTATION, "FRAGMENTATION"),
 	DEC_MD5_VID(VID_INITIAL_CONTACT, "Vid-Initial-Contact"),
-
-	/* Microsoft Windows Vista, and maybe Server 2008? */
-	DEC_MD5_VID(VID_VISTA_AUTHIP,  "MS-Negotiation Discovery Capable"),
-	DEC_MD5_VID(VID_VISTA_AUTHIP2, "IKE CGA version 1"),
-	DEC_MD5_VID(VID_VISTA_AUTHIP3, "MS-MamieExists"),
 
 	/*
 	 * strongSwan
