@@ -350,10 +350,6 @@ static struct vid_struct vid_tab[] = {
 	VID(VID_MISC_HEARTBEAT_NOTIFY, VID_STRING | VID_SUBSTRING_DUMPHEXA,
 	  "HeartBeat_Notify", "HeartBeat Notify"),
 
-	/* MacOS X */
-	RAW(VID_MACOSX, VID_KEEP, "Mac OSX 10.x",
-	    "\x4d\xf3\x79\x28\xe9\xfc\x4f\xd1\xb3\x26\x21\x70\xd5\x15\xc6\x62"),
-
 	/* FRAGMENTATION; Cisco VPN 3000 and strongSwan send extra values */
 	RAW(VID_IKE_FRAGMENTATION, VID_SUBSTRING_DUMPHEXA, "FRAGMENTATION",
 	    "\x40\x48\xb7\xd5\x6e\xbc\xe8\x85\x25\xe7\xde\x7f\x00\xd6\xc2\xd3"),
