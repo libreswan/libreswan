@@ -516,6 +516,33 @@ static struct vid_struct vid_tab[] = {
 #undef RAW
 };
 
+/* Leave out VID_none */
+static const struct vid_struct *vid_lookup[elemsof(vid_tab) - 1/*leave out entry 0*/];
+
+static int qsort_vid_cmp(const void *lp, const void *rp)
+{
+	const struct vid_struct *l = *(void**)lp;
+	const struct vid_struct *r = *(void**)rp;
+
+	/*
+	 * If this isn't sufficient then there are deeper problems.
+	 */
+	return raw_cmp(l->vid, l->vid_len, r->vid, r->vid_len);
+}
+
+#if 0
+static int bsearch_vid_cmp(const void *kp, const void *mp)
+{
+	const shunk_t *vid = kp;
+	const struct vid_struct *pvid = *(void**)mp;
+	if (pvid->vid_len < vid->len && (pvid->flags & VID_SUBSTRING)) {
+		return raw_cmp(vid->ptr, pvid->vid_len, pvid->vid, pvid->vid_len);
+	} else {
+		return raw_cmp(vid->ptr, vid->len, pvid->vid, pvid->vid_len);
+	}
+}
+#endif
+
 /*
  * Setup VendorID structs, and populate them
  * FIXME: This functions leaks a little bit, but these are one time leaks:
@@ -556,8 +583,17 @@ void init_vendorid(struct logger *logger)
 	dbg("building Vendor ID table");
 
 	FOR_EACH_ELEMENT_FROM_1(vid, vid_tab) {
-		passert(vid->id != 0);
 		bool good = true;
+
+		/*
+		 * Point the lookup table at VID table.
+		 *
+		 * Entry VID_TAB[0] is not included; hence ID-1.
+		 */
+		passert(vid->id > 0);
+		unsigned id0 = vid->id - 1;
+		passert(id0 < elemsof(vid_lookup));
+		vid_lookup[id0] = vid;
 
 		if (vid->flags & VID_STRING) {
 			/** VendorID is a string **/
@@ -628,6 +664,41 @@ void init_vendorid(struct logger *logger)
 		good &= pexpect(vid->vid != NULL);
 		good &= pexpect(vid->vid_len > 0);
 		if (!good || DBGP(DBG_TMI)) {
+			DBG_vid_struct(vid, logger);
+		}
+	}
+
+	qsort(vid_lookup, elemsof(vid_lookup), sizeof(vid_lookup[0]), qsort_vid_cmp);
+
+	/*
+	 * Check that there's no overlap between elements of the
+	 * sorted VID_LOOKUP[].  For instance, a short whild card
+	 * overlaping a longer VID.
+	 */
+	dbg("verifying VID lookup table");
+	const struct vid_struct *clash = vid_lookup[0];
+	FOR_EACH_ELEMENT_FROM_1(vidp, vid_lookup) {
+		const struct vid_struct *vid = vidp[+0];
+
+		/* are the starts different? */
+		if (!memeq(clash->vid, vid->vid, PMIN(clash->vid_len, vid->vid_len))) {
+			/* easy peasy */
+			clash = vid;
+			continue;
+		}
+
+		/* is clash shorter and exact */
+		if (!(clash->flags & VID_SUBSTRING) &&
+		    clash->vid_len < vid->vid_len) {
+			/* lemon squeezy */
+			clash = vid;
+			continue;
+		}
+
+		if (DBGP(DBG_BASE)) {
+			DBG_log("Vendor ID '%s' and '%s' clash",
+				clash->descr, vid->descr);
+			DBG_vid_struct(clash, logger);
 			DBG_vid_struct(vid, logger);
 		}
 	}
