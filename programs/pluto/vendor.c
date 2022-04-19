@@ -127,12 +127,12 @@ struct vid_struct {
 	unsigned int vid_len;
 };
 
-#define DEC_MD5_VID_D(id, str, descr) \
-	{ id, VID_MD5HASH, str, descr, NULL, 0 }
-#define DEC_MD5_VID(id, str) \
-	{ id, VID_MD5HASH, str, NULL, NULL, 0 }
-#define DEC_FSWAN_VID(id, str, descr) \
-	{ id, VID_FSWAN_HASH, str, descr, NULL, 0 }
+#define DEC_MD5_VID_D(ID, STR, DESCR)		\
+	VID(ID, VID_MD5HASH, STR, DESCR)
+#define DEC_MD5_VID(ID, STR)			\
+	VID(ID, VID_MD5HASH, STR, NULL)
+#define DEC_FSWAN_VID(ID, STR, DESCR)		\
+	VID(ID, VID_FSWAN_HASH, STR, DESCR)
 
 #define VID(ID, FLAGS, DATA, DESCR)					\
 	{ .id = ID, .flags = FLAGS, .data = DATA, .descr = DESCR,       \
@@ -146,9 +146,9 @@ static struct vid_struct vid_tab[] = {
 
 	/* Implementation names */
 
-	VID(VID_OPPORTUNISTIC, VID_STRING | VID_KEEP, "Opportunistic IPsec", NULL),
+	VID(VID_OPPORTUNISTIC, VID_STRING, "Opportunistic IPsec", NULL),
 
-	{ VID_OPENPGP, VID_STRING, "OpenPGP10171", "OpenPGP", NULL, 0 },
+	VID(VID_OPENPGP, VID_STRING, "OpenPGP10171", "OpenPGP"),
 
 	DEC_MD5_VID(VID_KAME_RACOON, "KAME/racoon"),
 
@@ -261,31 +261,26 @@ static struct vid_struct vid_tab[] = {
 	    "\x12\xf5\xf2\x8c\x45\x71\x68\xa9\x70\x2d\x9f\xe2\x74\xcc\x01\x00"),
 
 	/* 434953434f56504e2d5245562d3032 */
-	{ VID_CISCO_VPN_REV_02, VID_STRING, "CISCOVPN-REV-02",
-	  NULL, NULL, 0 },
+	VID(VID_CISCO_VPN_REV_02, VID_STRING, "CISCOVPN-REV-02", NULL),
 
 	RAW(VID_CISCO_UNITY_FWTYPE, VID_KEEP, "Cisco-Unity FW type",
 	    "\x80\x01\x00\x01\x80\x02\x00\x01\x80\x03\x00\x02"),
 
 	/* 434953434f2d44454c4554452d524541534f4e */
-	{ VID_CISCO_DELETE_REASON, VID_STRING, "CISCO-DELETE-REASON",
-	  NULL, NULL, 0 },
+	VID(VID_CISCO_DELETE_REASON, VID_STRING, "CISCO-DELETE-REASON", NULL),
 
 	/* 434953434f2d44594e414d49432d524f555445 */
-	{ VID_CISCO_DYNAMIC_ROUTE, VID_STRING, "CISCO-DYNAMIC-ROUTE",
-	  NULL, NULL, 0 },
+	VID(VID_CISCO_DYNAMIC_ROUTE, VID_STRING, "CISCO-DYNAMIC-ROUTE", NULL),
 
 	/* 464c455856504e2d535550504f52544544 */
-	{ VID_CISCO_FLEXVPN_SUPPORTED, VID_STRING, "FLEXVPN-SUPPORTED",
-	  NULL, NULL, 0 },
+	VID(VID_CISCO_FLEXVPN_SUPPORTED, VID_STRING, "FLEXVPN-SUPPORTED", NULL),
 
 	/*
 	 * Timestep VID seen:
 	 *   - 54494d455354455020312053475720313532302033313520322e303145303133
 	 *     = 'TIMESTEP 1 SGW 1520 315 2.01E013'
 	 */
-	{ VID_TIMESTEP, VID_STRING | VID_SUBSTRING_DUMPASCII, "TIMESTEP",
-	  NULL, NULL, 0 },
+	VID(VID_TIMESTEP, VID_STRING | VID_SUBSTRING_DUMPASCII, "TIMESTEP", NULL),
 
 	DEC_FSWAN_VID(VID_FSWAN_2_00_VID,
 		      "Linux FreeS/WAN 2.00 PLUTO_SENDS_VENDORID",
@@ -343,12 +338,11 @@ static struct vid_struct vid_tab[] = {
 	    "\x3b\x90\x31\xdc\xe4\xfc\xf8\x8b\x48\x9a\x92\x39\x63\xdd\x0c\x49"),
 
 	/* Obsolete: Was used by libreswan and openswan to detect bid-down attacks */
-	{ VID_MISC_IKEv2, VID_STRING | VID_KEEP, "IKEv2", "CAN-IKEv2(obsolete)", NULL,
-	  0 },
+	VID(VID_MISC_IKEv2, VID_STRING, "IKEv2", "CAN-IKEv2(obsolete)"),
 
 	/* VID is ASCII "HeartBeat_Notify" plus a few bytes (version?) */
-	{ VID_MISC_HEARTBEAT_NOTIFY, VID_STRING | VID_SUBSTRING_DUMPHEXA,
-	  "HeartBeat_Notify", "HeartBeat Notify", NULL, 0 },
+	VID(VID_MISC_HEARTBEAT_NOTIFY, VID_STRING | VID_SUBSTRING_DUMPHEXA,
+	  "HeartBeat_Notify", "HeartBeat Notify"),
 
 	/* MacOS X */
 	RAW(VID_MACOSX, VID_KEEP, "Mac OSX 10.x",
@@ -523,8 +517,9 @@ static struct vid_struct vid_tab[] = {
 	DEC_MD5_VID(VID_FORTINET_CONNECT_LICENSE, "forticlient connect license"),
 
 	/* END OF TABLE */
-	{ VID_none, 0, NULL, NULL, NULL, 0 }
+	VID(VID_none, 0, NULL, NULL),
 
+#undef VID
 #undef RAW
 };
 
