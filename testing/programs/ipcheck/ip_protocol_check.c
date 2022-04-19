@@ -21,7 +21,7 @@
 
 void ip_protocol_check(void)
 {
-	FOR_EACH_ELEMENT(ip_protocols, p) {
+	FOR_EACH_ELEMENT(p, ip_protocols) {
 		/* fudge up something to keep print happy */
 		size_t ti = p - ip_protocols;
 		struct { unsigned line; } t[] = { { .line = LN, }, };

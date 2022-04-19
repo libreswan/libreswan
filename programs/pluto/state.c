@@ -2085,7 +2085,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 		};
 		/* remove NULLs */
 		unsigned nr_events = 0;
-		FOR_EACH_ELEMENT(events, event) {
+		FOR_EACH_ELEMENT(event, events) {
 			if (*event != NULL) {
 				events[nr_events] = *event;
 				nr_events++;

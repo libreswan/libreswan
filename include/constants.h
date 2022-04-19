@@ -125,7 +125,7 @@ enum {
 	     thingp_ < things_ + elemsof(things_) ? (THING = *thingp_, true) : false; \
 	     thingp_++)
 
-#define FOR_EACH_ELEMENT(ARRAY, THING)			\
+#define FOR_EACH_ELEMENT(THING, ARRAY)			\
 	for (typeof(&(ARRAY)[0]) THING = (ARRAY);	\
 	     THING < (ARRAY) + elemsof(ARRAY);		\
 	     THING++)

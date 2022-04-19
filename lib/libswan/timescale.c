@@ -42,7 +42,7 @@ const struct timescale *ttotimescale(shunk_t cursor, const struct timescale *def
 		return default_scale;
 	}
 
-	FOR_EACH_ELEMENT(timescales, scale) {
+	FOR_EACH_ELEMENT(scale, timescales) {
 		if (hunk_strcaseeq(cursor, (*scale)->suffix)) {
 			return *scale;
 		}

@@ -83,7 +83,7 @@ void show_process_status(struct show *s)
 	show_separator(s);
 	/* XXX: don't sort for now */
 	show_comment(s, "  PID  Process");
-	FOR_EACH_ELEMENT(pid_entry_pid_buckets, h) {
+	FOR_EACH_ELEMENT(h, pid_entry_pid_buckets) {
 		const struct pid_entry *e;
 		FOR_EACH_LIST_ENTRY_NEW2OLD(h, e) {
 			/*

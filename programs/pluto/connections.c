@@ -221,7 +221,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		delete_spd_route(&sr, /*first?*/sr == &c->spd, connection_valid);
 	}
 
-	FOR_EACH_ELEMENT(c->end, end) {
+	FOR_EACH_ELEMENT(end, c->end) {
 		free_id_content(&end->host.id);
 	}
 
@@ -252,7 +252,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		free_proposals(&config->child_proposals.p);
 		free_ikev2_proposals(&config->v2_ike_proposals);
 		free_ikev2_proposals(&config->v2_ike_auth_child_proposals);
-		FOR_EACH_ELEMENT(config->end, end) {
+		FOR_EACH_ELEMENT(end, config->end) {
 			pfreeany(end->client.updown);
 			if (end->host.cert.nss_cert != NULL) {
 				CERT_DestroyCertificate(end->host.cert.nss_cert);

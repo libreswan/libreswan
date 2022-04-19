@@ -256,7 +256,7 @@ static const struct hash_desc *negotiated_hash_map[] = {
 const struct hash_desc *v2_auth_negotiated_signature_hash(struct ike_sa *ike)
 {
 	dbg("digsig: selecting negotiated hash algorithm");
-	FOR_EACH_ELEMENT(negotiated_hash_map, hash) {
+	FOR_EACH_ELEMENT(hash, negotiated_hash_map) {
 		if (ike->sa.st_v2_digsig.negotiated_hashes & LELEM((*hash)->common.ikev2_alg_id)) {
 			dbg("digsig:   selected hash algorithm %s",
 			    (*hash)->common.fqn);
@@ -507,7 +507,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		shunk_t signature = pbs_in_left_as_shunk(signature_pbs);
 
 		dbg("digsig: looking for matching DIGSIG blob");
-		FOR_EACH_ELEMENT(negotiated_hash_map, hash) {
+		FOR_EACH_ELEMENT(hash, negotiated_hash_map) {
 
 			if ((ike->sa.st_connection->config->sighash_policy &
 			     LELEM((*hash)->common.ikev2_alg_id)) == LEMPTY) {
@@ -533,7 +533,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 				{ &pubkey_signer_pkcs1_1_5_rsa, { .rsasig_v1_5 = true, }, }
 			};
 
-			FOR_EACH_ELEMENT(signers, s) {
+			FOR_EACH_ELEMENT(s, signers) {
 				enum digital_signature_blob b = s->signer->digital_signature_blob;
 				shunk_t blob = (*hash)->digital_signature_blob[b];
 				if (blob.len == 0) {
