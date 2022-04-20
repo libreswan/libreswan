@@ -1,0 +1,121 @@
+/testing/guestbin/swan-prep
+north #
+ iptables -F INPUT
+north #
+ iptables -F OUTPUT
+north #
+ # ensure that clear text does not get through
+north #
+ # block port 7 via ipsec to confirm IPsec only covers 17/1701
+north #
+ iptables -A OUTPUT -m policy --dir out --pol ipsec -p tcp --dport 7 -j REJECT
+north #
+ iptables -A OUTPUT -o eth1 -d 192.1.2.23 -m policy --dir out --pol none -p udp --dport 1701 -j REJECT
+north #
+ iptables -A OUTPUT -m policy --dir out --pol ipsec -j ACCEPT
+north #
+ iptables -A INPUT -i eth1 -s 192.1.2.23 -m policy --dir in --pol none -p udp --sport 1701 -j REJECT
+north #
+ iptables -A INPUT -m policy --dir in --pol ipsec -j ACCEPT
+north #
+ ipsec start
+Redirecting to: [initsystem]
+north #
+ ../../guestbin/wait-until-pluto-started
+north #
+ ipsec auto --add north-east-l2tp
+002 "north-east-l2tp": added IKEv1 connection
+north #
+ (cd /tmp && xl2tpd -D 2>/tmp/xl2tpd.log ) &
+[B] PID
+north #
+ ipsec auto --route north-east-l2tp
+north #
+ echo done
+done
+north #
+ ipsec auto --up north-east-l2tp
+002 "north-east-l2tp" #1: initiating IKEv1 Main Mode connection
+1v1 "north-east-l2tp" #1: sent Main Mode request
+1v1 "north-east-l2tp" #1: sent Main Mode I2
+1v1 "north-east-l2tp" #1: sent Main Mode I3
+002 "north-east-l2tp" #1: Peer ID is ID_FQDN: '@east'
+003 "north-east-l2tp" #1: authenticated using RSA with SHA1 and preloaded certificate '@east'
+004 "north-east-l2tp" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+002 "north-east-l2tp" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+1v1 "north-east-l2tp" #2: sent Quick Mode request
+004 "north-east-l2tp" #2: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+north #
+ echo "c server" > /var/run/xl2tpd/l2tp-control
+north #
+ sleep 5
+north #
+ # should be non-zero counters if l2tp worked
+north #
+ # workaround for diff err msg between fedora versions resulting in diff byte count
+north #
+ ipsec whack --trafficstatus | grep -v "inBytes=0" | sed "s/type=ESP.*$/[...]/"
+006 #2: "north-east-l2tp", [...]
+north #
+ # testing passthrough of non-l2tp/ipsec traffic
+north #
+ echo quit | socat - TCP:192.0.2.254:7
+quit
+north #
+ ip addr show dev ppp0 | sed "s/ qdisc.*$//"
+5: ppp0: <POINTOPOINT,MULTICAST,NOARP,UP,LOWER_UP> mtu 1395
+    link/ppp
+    inet 192.0.2.128 peer 192.0.2.254/32 scope global ppp0
+       valid_lft forever preferred_lft forever
+north #
+ echo done
+done
+north #
+ ../../guestbin/ipsec-look.sh
+north NOW
+XFRM state:
+src 192.1.2.23 dst 192.1.3.33
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	sel src 192.1.2.23/32 dst 192.1.3.33/32 proto udp sport 1701 dport 1701 
+src 192.1.3.33 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	sel src 192.1.3.33/32 dst 192.1.2.23/32 proto udp sport 1701 dport 1701 
+XFRM policy:
+src 192.1.2.23/32 dst 192.1.3.33/32 proto udp sport 1701 dport 1701
+	dir in priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.1.3.33/32 dst 192.1.2.23/32 proto udp sport 1701 dport 1701
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.3.254 dev eth1
+192.0.2.254 dev ppp0 proto kernel scope link src 192.0.2.128
+192.0.3.0/24 dev eth0 proto kernel scope link src 192.0.3.254
+192.1.3.0/24 dev eth1 proto kernel scope link src 192.1.3.33
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+north #
+ grep 'Result using RFC 3947' /tmp/pluto.log
+| NAT-Traversal: Result using RFC 3947 (NAT-Traversal) sender port 500: no NAT detected
+north #
+ 
