@@ -46,7 +46,6 @@
 #include "demux.h"      /* needs packet.h */
 #include "ikev2.h"
 #include "server.h"
-#include "vendor.h"
 #include "keys.h"
 #include "crypt_prf.h"
 #include "crypt_symkey.h"

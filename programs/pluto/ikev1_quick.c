@@ -72,7 +72,6 @@
 #include "host_pair.h"
 #include "ikev1_xauth.h"
 
-#include "vendor.h"
 #include "nat_traversal.h"
 #include "ikev1_nat.h"
 #include "virtual_ip.h"

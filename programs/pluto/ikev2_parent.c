@@ -53,7 +53,6 @@
 #include "ikev2.h"
 #include "log.h"
 #include "ipsec_doi.h"
-#include "vendor.h"
 #include "timer.h"
 #include "ike_spi.h"
 #include "rnd.h"
@@ -61,7 +60,6 @@
 #include "kernel.h"
 #include "nat_traversal.h"
 #include "keyhi.h" /* for SECKEY_DestroyPublicKey */
-#include "vendor.h"
 #include "crypt_hash.h"
 #include "ikev2_ipseckey.h"
 #include "ikev2_ppk.h"

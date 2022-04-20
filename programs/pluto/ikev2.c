@@ -58,7 +58,6 @@
 #include "whack.h"      /* requires connections.h */
 #include "server.h"
 #include "nat_traversal.h"
-#include "vendor.h"
 #include "ip_address.h"
 #include "ikev2_send.h"
 #include "state_db.h"		/* for reash_state_cookies_in_db() */

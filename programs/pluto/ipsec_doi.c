@@ -71,7 +71,6 @@
 #include "ikev2_send.h"
 #include "ikev1_xauth.h"
 #include "ip_info.h"
-#include "vendor.h"
 #include "nat_traversal.h"
 #include "ikev1_dpd.h"
 #include "pluto_x509.h"

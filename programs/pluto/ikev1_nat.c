@@ -34,10 +34,10 @@
 #include "ikev1_nat.h"
 #include "state.h"
 #include "connections.h"
-#include "vendor.h"
 #include "iface.h"
 #include "ip_info.h"
 #include "pending.h"
+#include "ikev1_vendorid.h"
 
 /*
  * Add NAT-Traversal VIDs (supported ones)

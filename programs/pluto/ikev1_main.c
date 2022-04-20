@@ -80,7 +80,6 @@
 #include "ikev1_message.h"
 #include "ikev1_xauth.h"
 #include "crypt_prf.h"
-#include "vendor.h"
 #include "nat_traversal.h"
 #include "ikev1_nat.h"
 #include "ikev1_dpd.h"
@@ -100,6 +99,7 @@
 #include "ikev1_host_pair.h"
 #include "ikev1_peer_id.h"
 #include "lswnss.h"
+#include "ikev1_vendorid.h"
 
 /*
  * Initiate an Oakley Main Mode exchange.

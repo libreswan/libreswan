@@ -26,12 +26,8 @@
 #include "crypt_hash.h"
 #include "ike_alg_hash.h"
 
-#include "defs.h"		/* for so_serial_t et.al. */
-#include "known_vendorid.h"
-#include "vendor.h"
-#include "log.h"
-#include "demux.h"
-#include "connections.h"
+#include "vendorid.h"
+#include "lswlog.h"
 
 /**
  * Listing of interesting but details unknown Vendor IDs:
@@ -704,162 +700,46 @@ void init_vendorid(struct logger *logger)
 	}
 }
 
-static void dbg_vid(struct logger *logger, shunk_t vid, const struct vid_struct *pvid, bool vid_useful)
+void llog_vendorid(struct logger *logger, enum known_vendorid id, shunk_t vid, bool vid_useful)
 {
-	if (DBGP(DBG_BASE)) {
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam(buf, "%s Vendor ID payload [",
-			    vid_useful ? "received" : "ignoring");
-			if (pvid->flags & VID_SUBSTRING_DUMPHEXA) {
-				/* Dump description + Hexa */
-				jam(buf, "%s ", pvid->descr);
-				jam_dump_hunk(buf, vid);
-			} else if (pvid->flags & VID_SUBSTRING_DUMPASCII) {
-				/* Dump ASCII content */
-				/* no descr? */
-				jam_sanitized_hunk(buf, vid);
-			} else {
-				/* Dump description (descr) */
-				jam_string(buf, pvid->descr);
+	if (id == VID_none) {
+		/*
+		 * Unknown Vendor ID. Log the beginning.
+		 */
+		LLOG_JAMBUF(RC_LOG_SERIOUS, logger, buf) {
+			jam(buf, "ignoring unknown Vendor ID payload [");
+			jam_dump_bytes(buf, vid.ptr, PMIN(vid.len, MAX_LOG_VID_LEN));
+			if (vid.len > MAX_LOG_VID_LEN) {
+				jam(buf, "...");
 			}
 			jam(buf, "]");
 		}
-	}
-}
-
-/*
- * Handle IKEv2 Known VendorID's.
- * We don't know about any real IKEv2 vendor id strings yet
- */
-
-static void handle_known_vendorid_v2(struct msg_digest *md,
-				     shunk_t vid,
-				     const struct vid_struct *pvid)
-{
-	bool vid_useful = true; /* tentatively TRUE */
-
-	/* IKEv2 VID processing */
-	switch (pvid->id) {
-	case VID_LIBRESWANSELF:
-	case VID_LIBRESWAN:
-	case VID_LIBRESWAN_OLD:
-	case VID_OPPORTUNISTIC:
-		/* not really useful, but it changes the msg from "ignored" to "received" */
-		break;
-	default:
-		vid_useful = false;
-		break;
-	}
-
-	dbg_vid(md->md_logger, vid, pvid, vid_useful);
-}
-
-/*
- * Handle IKEv1 Known VendorID's.  This function parses what the remote peer
- * sends us, and enables/disables features based on it.  As we go along,
- * we set vid_useful to TRUE if we did something based on this VendorID.  This
- * suppresses the 'Ignored VendorID ...' log message.
- *
- * @param md message_digest
- * @param vidstr VendorID String
- * @param len Length of vidstr
- * @param vid VendorID Struct (see vendor.h)
- * @param st State Structure (Hopefully initialized)
- * @return void
- */
-static void handle_known_vendorid_v1(struct msg_digest *md,
-				     shunk_t vid,
-				     const struct vid_struct *pvid,
-				     struct logger *logger)
-{
-	bool vid_useful = true; /* tentatively TRUE */
-
-	switch (pvid->id) {
-	/*
-	 * Use most recent supported NAT-Traversal method and ignore
-	 * the other ones (implementations will send all supported
-	 * methods but only one will be used)
-	 *
-	 * Note: most recent == higher id in vendor.h
-	 */
-
-	case VID_LIBRESWANSELF:
-	case VID_LIBRESWAN:
-	case VID_LIBRESWAN_OLD:
-	case VID_OPPORTUNISTIC:
-		/* not really useful, but it changes the msg from "ignored" to "received" */
-		break;
-
-	case VID_NATT_IETF_00:
-	case VID_NATT_IETF_01:
-		vid_useful = false; /* no longer supported */
-		break;
-
-	case VID_NATT_IETF_02:
-	case VID_NATT_IETF_02_N:
-	case VID_NATT_IETF_03:
-	case VID_NATT_IETF_04:
-	case VID_NATT_IETF_05:
-	case VID_NATT_IETF_06:
-	case VID_NATT_IETF_07:
-	case VID_NATT_IETF_08:
-	case VID_NATT_DRAFT_IETF_IPSEC_NAT_T_IKE:
-	case VID_NATT_RFC:
-		if (md->quirks.qnat_traversal_vid < pvid->id) {
-			dbg(" quirks.qnat_traversal_vid set to=%d [%s]", pvid->id, pvid->descr);
-			md->quirks.qnat_traversal_vid = pvid->id;
-		} else {
-			dbg("Ignoring older NAT-T Vendor ID payload [%s]", pvid->descr);
-			vid_useful = false;
+	} else {
+		/*
+		 * Known Vendor ID, casually mention it in the debug
+		 * logs.
+		 */
+		if (DBGP(DBG_BASE)) {
+			const struct vid_struct *pvid = &vid_tab[id];
+			LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+				jam(buf, "%s Vendor ID payload [",
+				    vid_useful ? "received" : "ignoring");
+				if (pvid->flags & VID_SUBSTRING_DUMPHEXA) {
+					/* Dump description + Hexa */
+					jam(buf, "%s ", pvid->descr);
+					jam_dump_hunk(buf, vid);
+				} else if (pvid->flags & VID_SUBSTRING_DUMPASCII) {
+					/* Dump ASCII content */
+					/* no descr? */
+					jam_sanitized_hunk(buf, vid);
+				} else {
+					/* Dump description (descr) */
+					jam_string(buf, pvid->descr);
+				}
+				jam(buf, "]");
+			}
 		}
-		break;
-
-	case VID_MISC_DPD:
-	case VID_DPD1_NG:
-		/* Remote side would like to do DPD with us on this connection */
-		md->dpd = true;
-		break;
-
-	case VID_MISC_IKEv2:
-		md->ikev2 = true;
-		break;
-
-	case VID_SSH_SENTINEL_1_4_1:
-		llog(RC_LOG_SERIOUS, logger,
-			    "SSH Sentinel 1.4.1 found, setting XAUTH_ACK quirk");
-		md->quirks.xauth_ack_msgid = true;
-		break;
-
-	case VID_CISCO_UNITY:
-		md->quirks.modecfg_pull_mode = true;
-		break;
-
-	case VID_MISC_XAUTH:
-		md->quirks.xauth_vid = true;
-		break;
-
-	case VID_IKE_FRAGMENTATION:
-		md->fragvid = true;
-		break;
-
-	default:
-		vid_useful = false;
-		break;
 	}
-	dbg_vid(md->md_logger, vid, pvid, vid_useful);
-}
-
-
-static void handle_known_vendorid(struct msg_digest *md,
-				  shunk_t vid,
-				  const struct vid_struct *pvid,
-				  bool ikev2,
-				  struct logger *logger)
-{
-	if (ikev2)
-		handle_known_vendorid_v2(md, vid, pvid);
-	else
-		handle_known_vendorid_v1(md, vid, pvid, logger);
 }
 
 /*
@@ -876,8 +756,7 @@ static void handle_known_vendorid(struct msg_digest *md,
  * @return void
  */
 
-void handle_vendorid(struct msg_digest *md, shunk_t vid,
-		     bool ikev2, struct logger *logger)
+enum known_vendorid vendorid_by_shunk(shunk_t vid)
 {
 	/*
 	 * Find known VendorID in vid_tab
@@ -903,168 +782,40 @@ void handle_vendorid(struct msg_digest *md, shunk_t vid,
 						   sizeof(vid_lookup[0]),
 						   bsearch_vid_cmp);
 		if (vidp != NULL) {
-			handle_known_vendorid(md, vid, *vidp, ikev2, logger);
-			return;
+			return (*vidp)->id;
+		}
 #else
 		FOR_EACH_ELEMENT_FROM_1(pvid, vid_tab) {
 			if (pvid->vid_len == vid.len) {
 				if (memeq(pvid->vid, vid.ptr, vid.len)) {
-					handle_known_vendorid(md, vid,
-							      pvid, ikev2,
-							      logger);
-					return;
+					return pvid->id;
 				}
 			} else if (pvid->vid_len < vid.len &&
 				   (pvid->flags & VID_SUBSTRING)) {
 				if (memeq(pvid->vid, vid.ptr, pvid->vid_len)) {
-					handle_known_vendorid(md, vid,
-							      pvid, ikev2,
-							      logger);
-					return;
+					return pvid->id;
 				}
 			}
 		}
 #endif
 	}
-
-	/*
-	 * Unknown VendorID. Log the beginning.
-	 */
-	LLOG_JAMBUF(RC_LOG_SERIOUS, logger, buf) {
-		jam(buf, "ignoring unknown Vendor ID payload [");
-		jam_dump_bytes(buf, vid.ptr, PMIN(vid.len, MAX_LOG_VID_LEN));
-		if (vid.len > MAX_LOG_VID_LEN) {
-			jam(buf, "...");
-		}
-		jam(buf, "]");
-	}
+	return VID_none;
 }
 
-/**
- * Add an IKEv1 (!)  vendor id payload to the msg
- *
- * @param np
- * @param outs PB stream
- * @param vid Int of VendorID to be sent (see vendor.h for the list)
- * @return bool True if successful
- */
-
-bool out_v1VID(pb_stream *outs, unsigned int vid)
+const char *str_vendorid(enum known_vendorid id, enum_buf *eb)
 {
-	passert(vid != 0);
-	passert(vid < elemsof(vid_tab));
-	const struct vid_struct *pvid = &vid_tab[vid];
-	dbg("%s(): sending [%s]", __func__, pvid->descr);
-	return ikev1_out_generic_raw(&isakmp_vendor_id_desc, outs,
-				     pvid->vid, pvid->vid_len, "V_ID");
-}
-
-/*
- * out_vid_set: output all Vendor ID payloads for IKEv1.
- *
- * Next Payload has historically been tricky.  We dodge this
- * by a couple of ways
- *
- * We always emit DPD VID.  So the our caller knows that the
- * preceding NP must be ISAKMP_NEXT_VID.  This also means that
- * each VID payload before DPD VID must have NP ISAKMP_NEXT_VID.
- *
- * It happens that VID payloads that are emitted here are the last payloads
- * of the message so the DPD VID payload's NP must be ISAKMP_NEXT_NONE.
- *
- * If any changes make this NP calculation more tricky, we should
- * exploit the NP backpatching logic in out_struct.
- */
-
-bool out_v1VID_set(struct pbs_out *outs, const struct connection *c)
-{
-	/* cusomizeable Vendor ID */
-	if (c->send_vendorid) {
-		if (!ikev1_out_generic_raw(&isakmp_vendor_id_desc, outs,
-					pluto_vendorid, strlen(pluto_vendorid), "Pluto Vendor ID")) {
-			return false;
-		}
+	if (id > 0 && id < elemsof(vid_tab)) {
+		return vid_tab[id].descr;
 	}
 
-#define MAYBE_VID(q, vid) {  \
-	if (q) {  \
-		if (!out_v1VID(outs, vid)) {  \
-			return false;  \
-		}  \
-	}  \
+	snprintf(eb->buf, sizeof(eb->buf), "VID_%u", id);
+	return eb->buf;
 }
 
-	MAYBE_VID(c->cisco_unity, VID_CISCO_UNITY);
-	MAYBE_VID(c->fake_strongswan, VID_STRONGSWAN);
-	MAYBE_VID(c->policy & POLICY_IKE_FRAG_ALLOW, VID_IKE_FRAGMENTATION);
-	MAYBE_VID(c->local->config->host.xauth.client || c->spd.this.config->host.xauth.server, VID_MISC_XAUTH);
-
-#undef MAYBE_VID
-
-	/*
-	 * DPD: last, unconditional, VID.
-	 * Note: because this is unconditional AND last
-	 * we know that all previous np must be ISAKMP_NEXT_VID.
-	 * There might be a successor payload generated by caller;
-	 * we count on backpatching to fix our np.
-	 */
-
-	if (!out_v1VID(outs, VID_MISC_DPD)) {
-		return false;
-	}
-
-	return true;
-}
-
-/*
- * The VID table or entries are static
- */
-bool vid_is_oppo(const char *vid, size_t len)
+shunk_t shunk_from_vendorid(enum known_vendorid id)
 {
-	const struct vid_struct *pvid = &vid_tab[VID_OPPORTUNISTIC];
-	if (pvid->vid_len == len && memeq(vid, pvid->vid, len)) {
-		dbg("VID_OPPORTUNISTIC received");
-		return true;
-	} else {
-		return false;
-	}
-}
-
-/*
- * Add an IKEv2 (!)  vendor id payload to the msg
- */
-
-static bool emit_v2V_raw(struct pbs_out *outs, shunk_t vid, const char *descr)
-{
-	diag_t d;
-	struct ikev2_generic gen = {
-		.isag_np = 0,
-	};
-	struct pbs_out pbs;
-	d = pbs_out_struct(outs, &ikev2_vendor_id_desc, &gen, sizeof(gen), &pbs);
-	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
-		return false;
-	}
-	d = pbs_out_hunk(&pbs, vid, descr);
-	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
-		return false;
-	}
-	close_output_pbs(&pbs);
-	return true;
-}
-
-bool emit_v2V(struct pbs_out *outs, const char * vid)
-{
-	return emit_v2V_raw(outs, shunk1(vid), vid);
-}
-
-bool emit_v2VID(struct pbs_out *outs, enum known_vendorid vid)
-{
-	passert(vid != 0);
-	passert(vid < elemsof(vid_tab));
-	const struct vid_struct *pvid = &vid_tab[vid];
-	dbg("%s(): sending [%s]", __func__, pvid->descr);
-	return emit_v2V_raw(outs, shunk2(pvid->vid, pvid->vid_len), pvid->descr);
+	passert(id > 0);
+	passert(id < elemsof(vid_tab));
+	const struct vid_struct *pvid = &vid_tab[id];
+	return shunk2(pvid->vid, pvid->vid_len);
 }

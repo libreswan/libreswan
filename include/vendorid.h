@@ -21,8 +21,21 @@
  *
  */
 
-#ifndef _KNOWN_VENDORID_H_
-#define _KNOWN_VENDORID_H_
+#ifndef VENDORID_H
+#define VENDORID_H
+
+#include "constants.h"		/* for enum_buf */
+#include "shunk.h"
+
+struct logger;
+
+void init_vendorid(struct logger *logger);
+
+enum known_vendorid vendorid_by_shunk(shunk_t vid);
+shunk_t shunk_from_vendorid(enum known_vendorid id);
+
+void llog_vendorid(struct logger *logger, enum known_vendorid id, shunk_t vid, bool useful);
+const char *str_vendorid(enum known_vendorid id, enum_buf *eb);
 
 enum known_vendorid {
 	VID_none = 0,	/* when none seen, this will appear */
@@ -226,4 +239,5 @@ enum known_vendorid {
 	VID_DPD1_NG,
 };
 
-#endif /* _KNOWN_VENDORID_H_ */
+#endif
+

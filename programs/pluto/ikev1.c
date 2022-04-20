@@ -153,7 +153,7 @@
 #include "retransmit.h"
 #include "nat_traversal.h"
 #include "ikev1_nat.h"
-#include "vendor.h"
+#include "ikev1_vendorid.h"
 #include "ikev1_dpd.h"
 #include "host_pair.h"
 #include "ip_address.h"
@@ -2239,8 +2239,8 @@ void process_packet_tail(struct msg_digest *md)
 
 	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_VID];
 	     p != NULL; p = p->next) {
-		handle_vendorid(md, pbs_in_left_as_shunk(&p->pbs), false,
-				st != NULL ? st->st_logger : md->md_logger);
+		handle_v1_vendorid(md, pbs_in_left_as_shunk(&p->pbs),
+				   (st != NULL ? st->st_logger : md->md_logger));
 	}
 
 	if (self_delete) {

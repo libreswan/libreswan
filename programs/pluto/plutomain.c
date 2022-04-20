@@ -55,7 +55,7 @@
 #include "fetch.h"
 #include "ipsecconf/confread.h"
 #include "crypto.h"
-#include "vendor.h"
+#include "vendorid.h"
 #include "enum_names.h"
 #include "virtual_ip.h"
 #include "state_db.h"		/* for init_state_db() */

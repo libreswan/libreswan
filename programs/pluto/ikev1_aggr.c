@@ -36,7 +36,6 @@
 #include "ipsec_doi.h"  /* needs demux.h and state.h */
 #include "ikev1_send.h"
 #include "ikev1.h"
-#include "vendor.h"
 #include "nat_traversal.h"
 #include "ikev1_nat.h"
 #include "pluto_x509.h"
@@ -55,6 +54,7 @@
 #include "ikev1_host_pair.h"
 #include "ikev1_peer_id.h"
 #include "peer_id.h"	/* for update_peer_id_cert() */
+#include "ikev1_vendorid.h"
 
 /* STATE_AGGR_R0: HDR, SA, KE, Ni, IDii
  *           --> HDR, SA, KE, Nr, IDir, HASH_R/SIG_R

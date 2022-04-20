@@ -91,6 +91,8 @@ OBJS += role.o
 OBJS += datatot.o
 OBJS += ultot.o
 
+OBJS += vendorid.o
+
 OBJS += proposals.o
 OBJS += v1_proposals.o
 OBJS += v2_proposals.o

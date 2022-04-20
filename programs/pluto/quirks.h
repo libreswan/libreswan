@@ -15,7 +15,7 @@
 #ifndef _QUIRKS_H_
 #define _QUIRKS_H_
 
-#include "known_vendorid.h"	/* for enum known_vendorid */
+#include "vendorid.h"	/* for enum known_vendorid */
 
 /*
  * PAUL: Why are the quirks in the message digest and not in the state?

@@ -35,7 +35,7 @@
 #include "ikev2_redirect.h"
 #include "ikev2_host_pair.h"
 #include "ikev2_states.h"
-#include "vendor.h"
+#include "ikev2_vendorid.h"
 #include "ikev2_cookie.h"
 #include "ikev2.h"
 #include "ikev2_ike_sa_init.h"
@@ -843,7 +843,7 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 
 	/* Vendor ID processing */
 	for (struct payload_digest *v = md->chain[ISAKMP_NEXT_v2V]; v != NULL; v = v->next) {
-		handle_vendorid(md, pbs_in_left_as_shunk(&v->pbs), true, ike->sa.st_logger);
+		handle_v2_vendorid(pbs_in_left_as_shunk(&v->pbs), ike->sa.st_logger);
 	}
 
 	/* Get the proposals ready. */
