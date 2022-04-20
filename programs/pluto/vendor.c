@@ -875,6 +875,7 @@ static void handle_known_vendorid(struct msg_digest *md,
  * @param st State Structure (Hopefully initialized)
  * @return void
  */
+
 void handle_vendorid(struct msg_digest *md, shunk_t vid,
 		     bool ikev2, struct logger *logger)
 {
@@ -882,6 +883,29 @@ void handle_vendorid(struct msg_digest *md, shunk_t vid,
 	 * Find known VendorID in vid_tab
 	 */
 	if (vid.len > 0) {
+#if 0
+		/*
+		 * XXX: this code fails because the lookup table
+		 * contains multiple entries starting with:
+		 *
+		 *| Vendor ID 'Openswan(project)' and 'Libreswan (3.6+)' clash
+		 *|   64 Openswan(project) substring+match
+		 *|      4f 45 [OE]
+		 *
+		 * something a simple binary search can't handle.
+		 *
+		 * A search + linear list might help; but that is
+		 * complicated by Libreswan's current string only
+		 * beeing known after parameter parsing.
+		 */
+		struct vid_struct **vidp = bsearch(&vid, vid_lookup,
+						   elemsof(vid_lookup),
+						   sizeof(vid_lookup[0]),
+						   bsearch_vid_cmp);
+		if (vidp != NULL) {
+			handle_known_vendorid(md, vid, *vidp, ikev2, logger);
+			return;
+#else
 		FOR_EACH_ELEMENT_FROM_1(pvid, vid_tab) {
 			if (pvid->vid_len == vid.len) {
 				if (memeq(pvid->vid, vid.ptr, vid.len)) {
@@ -900,6 +924,7 @@ void handle_vendorid(struct msg_digest *md, shunk_t vid,
 				}
 			}
 		}
+#endif
 	}
 
 	/*
