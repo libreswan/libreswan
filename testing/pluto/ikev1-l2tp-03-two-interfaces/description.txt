@@ -1,0 +1,29 @@
+L2TP: east has two template connections; each on a different interface
+
+East is configured with two template connections:
+
+    conn l2tp-north-to-east-east
+	right=192.1.2.23
+    conn l2tp-distraction-on-east
+	right=192.1.3.33.
+
+where both have:
+
+        ikev2=no
+        type=transport
+	leftsubnet=vhost:%priv,%no
+        left=%any
+        leftprotoport=17/%any
+
+(since it is transport mode leftclient= should track left[host]=
+during instantiation?).
+
+North tries to use quick mode to establish L2TP for:
+
+      192.1.2.23/32:1701 -UDP-> 192.1.3.33/32:1701
+
+In v4.5 it worked.
+
+In v4.6 the overlap-ip check gets confused because it sees:
+
+     192.1.3.33:UDP/1701 is within distraction's left[client]=%any

@@ -12,8 +12,8 @@ iptables -A INPUT -m policy --dir in --pol ipsec -j ACCEPT
 
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add north-on-north-l2tp
+ipsec auto --add l2tp-north-to-east-on-north
 
 (cd /tmp && xl2tpd -D 2>/tmp/xl2tpd.log ) &
-ipsec auto --route north-on-north-l2tp
+ipsec auto --route l2tp-north-to-east-on-north
 echo done

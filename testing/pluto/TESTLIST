@@ -1099,6 +1099,7 @@ kvmplutotest	replay-authip-01			good
 
 kvmplutotest	ikev1-l2tp-01				good
 kvmplutotest	ikev1-l2tp-02				good
+kvmplutotest	ikev1-l2tp-03-two-interfaces		wip	github/693
 
 kvmplutotest	listen-change-01			good
 

@@ -1,5 +1,0 @@
-This tests the most basic L2TP configuration --- 1 client (not behind)
-a NAT, and a server. Basic east/west connection.
-
-This test case is to make sure virtual-private exclusion is not checked
-for non-natted transport mode road warrior.

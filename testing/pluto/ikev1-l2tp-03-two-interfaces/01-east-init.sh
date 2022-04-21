@@ -2,8 +2,8 @@
 
 ipsec start
 ../../guestbin/wait-until-pluto-started
-ipsec auto --add north-on-east-l2tp
-ipsec auto --add road-l2tp # distraction
+ipsec auto --add l2tp-north-to-east-on-east
+ipsec auto --add l2tp-distraction-on-east
 
 # ensure that clear text does not get through
 iptables -A INPUT  -i eth1 -d 192.1.2.23 -m policy --dir in --pol none -p udp --dport 1701 -j REJECT
