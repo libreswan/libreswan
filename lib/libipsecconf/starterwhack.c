@@ -287,11 +287,11 @@ static char *connection_name(const struct starter_conn *conn)
 	}
 }
 
-static bool set_whack_end(char *lr,
-			struct whack_end *w,
-			const struct starter_end *l)
+static bool set_whack_end(struct whack_end *w,
+			  const struct starter_end *l)
 {
-	w->leftright = lr;
+	const char *lr = l->leftright;
+	w->leftright = DISCARD_CONST(char*, lr);
 	w->id = l->id;
 	w->host_type = l->addrtype;
 
@@ -418,13 +418,14 @@ static bool set_whack_end(char *lr,
 }
 
 static int starter_whack_add_pubkey(struct starter_config *cfg,
-				const struct starter_conn *conn,
-				const struct starter_end *end, const char *lr)
+				    const struct starter_conn *conn,
+				    const struct starter_end *end)
 {
 	const char *err;
 	char err_buf[TTODATAV_BUF];
 	char keyspace[1024 + 4];
 	int ret = 0;
+	const char *lr = end->leftright;
 
 	struct whack_message msg = empty_whack_message;
 	msg.whack_key = true;
@@ -685,9 +686,9 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	if (conn->options_set[KNCF_XAUTHFAIL])
 		msg.xauthfail = conn->options[KNCF_XAUTHFAIL];
 
-	if (!set_whack_end("left",  &msg.left, &conn->left))
+	if (!set_whack_end(&msg.left, &conn->left))
 		return -1;
-	if (!set_whack_end("right", &msg.right, &conn->right))
+	if (!set_whack_end(&msg.right, &conn->right))
 		return -1;
 
 	msg.esp = conn->esp;
@@ -700,12 +701,12 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		return r;
 
 	if (conn->left.rsasigkey != NULL) {
-		r = starter_whack_add_pubkey(cfg, conn, &conn->left,  "left");
+		r = starter_whack_add_pubkey(cfg, conn, &conn->left);
 		if (r != 0)
 			return r;
 	}
 	if (conn->right.rsasigkey != NULL) {
-		r = starter_whack_add_pubkey(cfg, conn, &conn->right,  "right");
+		r = starter_whack_add_pubkey(cfg, conn, &conn->right);
 		if (r != 0)
 			return r;
 	}

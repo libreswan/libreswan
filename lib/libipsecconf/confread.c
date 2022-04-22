@@ -188,11 +188,13 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 	d->sighash_policy = POL_SIGHASH_DEFAULTS;
 
+	d->left.leftright = "left";
 	d->left.host_family = NULL;
 	d->left.addr = unset_address;
 	d->left.nexttype = KH_NOTSET;
 	d->left.nexthop = unset_address;
 
+	d->right.leftright = "right";
 	d->right.host_family = NULL;
 	d->right.addr = unset_address;
 	d->right.nexttype = KH_NOTSET;
@@ -405,10 +407,10 @@ static bool load_setup(struct starter_config *cfg,
 
 static bool validate_end(struct starter_conn *conn_st,
 			 struct starter_end *end,
-			 const char *leftright,
 			 starter_errors_t *perrl,
 			 struct logger *logger)
 {
+	const char *leftright = end->leftright;
 	err_t er = NULL;
 	bool err = false;
 
@@ -758,6 +760,7 @@ static bool translate_field(struct starter_conn *conn,
 			    enum keyword_set assigned_value,
 			    starter_errors_t *perrl,
 			    const struct kw_list *kw,
+			    const char *leftright,
 			    ksf *the_strings,
 			    str_set *set_strings,
 			    unsigned str_floor,
@@ -788,8 +791,8 @@ static bool translate_field(struct starter_conn *conn,
 			char tmp_err[512];
 
 			snprintf(tmp_err, sizeof(tmp_err),
-				 "duplicate key '%s' in conn %s while processing def %s",
-				 kw->keyword.keydef->keyname,
+				 "duplicate key '%s%s' in conn %s while processing def %s",
+				 leftright, kw->keyword.keydef->keyname,
 				 conn->name,
 				 sl->name);
 
@@ -848,8 +851,8 @@ static bool translate_field(struct starter_conn *conn,
 			char tmp_err[512];
 
 			snprintf(tmp_err, sizeof(tmp_err),
-				 "duplicate key '%s' in conn %s while processing def %s",
-				 kw->keyword.keydef->keyname,
+				 "duplicate key '%s%s' in conn %s while processing def %s",
+				 leftright, kw->keyword.keydef->keyname,
 				 conn->name,
 				 sl->name);
 
@@ -896,8 +899,8 @@ static bool translate_field(struct starter_conn *conn,
 			char tmp_err[512];
 
 			snprintf(tmp_err, sizeof(tmp_err),
-				 "duplicate key '%s' in conn %s while processing def %s",
-				 kw->keyword.keydef->keyname,
+				 "duplicate key '%s%s' in conn %s while processing def %s",
+				 leftright, kw->keyword.keydef->keyname,
 				 conn->name,
 				 sl->name);
 			starter_log(LOG_LEVEL_INFO, "%s", tmp_err);
@@ -939,6 +942,7 @@ static bool translate_leftright(struct starter_conn *conn,
 				struct starter_end *this)
 {
 	return translate_field(conn, sl, assigned_value, perrl, kw,
+			       /*leftright*/this->leftright,
 			       /*the_strings*/&this->strings,
 			       /*set_strings*/&this->strings_set,
 			       /*str_floor*/KSCF_last_loose + 1,
@@ -986,6 +990,7 @@ static bool translate_conn(struct starter_conn *conn,
 		} else {
 			serious_err |=
 				translate_field(conn, sl, assigned_value, perrl, kw,
+						/*leftright*/"",
 						/*the_strings*/&conn->strings,
 						/*set_strings*/&conn->strings_set,
 						/*str_floor*/KSCF_last_leftright + 1,
@@ -1552,8 +1557,8 @@ static bool load_conn(struct starter_conn *conn,
 	}
 	conn->left.host_family = conn->right.host_family = afi;
 
-	err |= validate_end(conn, &conn->left, "left", perrl, logger);
-	err |= validate_end(conn, &conn->right, "right", perrl, logger);
+	err |= validate_end(conn, &conn->left, perrl, logger);
+	err |= validate_end(conn, &conn->right, perrl, logger);
 
 	/*
 	 * TODO:

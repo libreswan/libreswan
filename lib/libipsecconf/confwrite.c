@@ -51,11 +51,11 @@ void confwrite_list(FILE *out, char *prefix, int val, const struct keyword_def *
 }
 
 static void confwrite_int(FILE *out,
-		   char   *side,
-		   unsigned int context,
-		   knf options,
-		   int_set options_set,
-		   ksf strings)
+			  const char *side,
+			  unsigned int context,
+			  knf options,
+			  int_set options_set,
+			  ksf strings)
 {
 	const struct keyword_def *k;
 
@@ -170,10 +170,10 @@ static void confwrite_int(FILE *out,
 }
 
 static void confwrite_str(FILE *out,
-		   char *side,
-		   unsigned int context,
-		   ksf strings,
-		   str_set strings_set)
+			  const char *side,
+			  unsigned int context,
+			  ksf strings,
+			  str_set strings_set)
 {
 	const struct keyword_def *k;
 
@@ -245,10 +245,9 @@ static void confwrite_str(FILE *out,
 	}
 }
 
-static void confwrite_side(FILE *out,
-		    struct starter_end *end,
-		    char *side)
+static void confwrite_side(FILE *out, struct starter_end *end)
 {
+	const char *side = end->leftright;
 	switch (end->addrtype) {
 	case KH_NOTSET:
 		/* nothing! */
@@ -403,8 +402,8 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 		}
 		fprintf(out, "\n");
 	}
-	confwrite_side(out, &conn->left,  "left");
-	confwrite_side(out, &conn->right, "right");
+	confwrite_side(out, &conn->left);
+	confwrite_side(out, &conn->right);
 	/* fprintf(out, "# confwrite_int:\n"); */
 	confwrite_int(out, "", kv_conn,
 		      conn->options, conn->options_set, conn->strings);
