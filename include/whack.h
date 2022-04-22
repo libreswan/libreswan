@@ -74,7 +74,7 @@
  * and because whack is a separate program from pluto.
  */
 struct whack_end {
-	char *leftright;	/* either "left" or "right" */
+	const char *leftright;	/* either "left" or "right" (not shipped) */
 
 	char *id;		/* id string (if any) -- decoded by pluto */
 	char *ca;		/* distinguished name string (if any) -- parsed by pluto */

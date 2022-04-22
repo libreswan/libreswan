@@ -291,7 +291,7 @@ static bool set_whack_end(struct whack_end *w,
 			  const struct starter_end *l)
 {
 	const char *lr = l->leftright;
-	w->leftright = DISCARD_CONST(char*, lr);
+	w->leftright = lr;
 	w->id = l->id;
 	w->host_type = l->addrtype;
 

@@ -229,6 +229,39 @@ static bool unpack_ip_protocol(struct whackpacker *wp UNUSED,
 	return *protocol != NULL;
 }
 
+static bool pack_constant_string(struct whackpacker *wp UNUSED,
+				 const char **string,
+				 const char *constant,
+				 const char *what)
+{
+	if (*string != NULL) {
+		DBGF(DBG_TMI, "%s: '%s' was: %s (%s)", __func__, what, *string, constant);
+		passert(streq(*string, constant));
+		*string = NULL;
+	} else {
+		/*
+		 * For instance, when whack sends constrol messages
+		 * such as "status" the whack_end .leftright field is
+		 * still NULL.
+		 *
+		 * The unpack will set the field, oops.
+		 */
+		DBGF(DBG_TMI, "%s: '%s' was null (%s)", __func__, what, constant);
+	}
+	return true;
+}
+
+static bool unpack_constant_string(struct whackpacker *wp UNUSED,
+				 const char **string,
+				 const char *constant,
+				 const char *what)
+{
+	pexpect(*string == NULL);
+	*string = constant;
+	DBGF(DBG_TMI, "%s: '%s' is %s", __func__, what, *string);
+	return true;
+}
+
 /*
  * in and out/
  */
@@ -239,6 +272,7 @@ struct pickler {
 	bool (*raw)(struct whackpacker *wp, void **bytes, size_t nr_bytes, const char *what);
 	bool (*ip_info)(struct whackpacker *wp, const struct ip_info **info, const char *what);
 	bool (*ip_protocol)(struct whackpacker *wp, const struct ip_protocol **protocol, const char *what);
+	bool (*constant_string)(struct whackpacker *wp, const char **p, const char *leftright, const char *what);
 };
 
 const struct pickler pickle_packer = {
@@ -248,6 +282,7 @@ const struct pickler pickle_packer = {
 	.raw = pack_raw,
 	.ip_info = pack_ip_info,
 	.ip_protocol = pack_ip_protocol,
+	.constant_string = pack_constant_string,
 };
 
 const struct pickler pickle_unpacker = {
@@ -257,12 +292,14 @@ const struct pickler pickle_unpacker = {
 	.raw = unpack_raw,
 	.ip_info = unpack_ip_info,
 	.ip_protocol = unpack_ip_protocol,
+	.constant_string = unpack_constant_string,
 };
 
 #define PICKLE_STRING(FIELD) pickle->string(wp, FIELD, #FIELD)
 #define PICKLE_CHUNK(FIELD) pickle->chunk(wp, FIELD, #FIELD)
 #define PICKLE_SHUNK(FIELD) pickle->shunk(wp, FIELD, #FIELD)
 #define PICKLE_THINGS(THINGS, NR) pickle->raw(wp, (void**)(THINGS), NR*sizeof((THINGS)[0][0]), #THINGS)
+#define PICKLE_CONSTANT_STRING(FIELD, VALUE) pickle->constant_string(wp, FIELD, VALUE, #FIELD)
 
 #if 0
 #define PICKLE_CIDR(CIDR) \
@@ -271,10 +308,12 @@ const struct pickler pickle_unpacker = {
 #define PICKLE_CIDR(CIDR) true
 #endif
 
-static bool pickle_whack_end(struct whackpacker *wp, struct whack_end *end,
+static bool pickle_whack_end(struct whackpacker *wp,
+			     const char *leftright,
+			     struct whack_end *end,
 			     const struct pickler *pickle)
 {
-	return (PICKLE_STRING(&end->leftright) &&
+	return (PICKLE_CONSTANT_STRING(&end->leftright, leftright),
 		PICKLE_STRING(&end->id) &&
 		PICKLE_STRING(&end->cert) &&
 		PICKLE_STRING(&end->rsasigkey) &&
@@ -293,8 +332,8 @@ static bool pickle_whack_end(struct whackpacker *wp, struct whack_end *end,
 static bool pickle_whack_message(struct whackpacker *wp, const struct pickler *pickle)
 {
 	return (PICKLE_STRING(&wp->msg->name) && /* first */
-		pickle_whack_end(wp, &wp->msg->left, pickle) &&
-		pickle_whack_end(wp, &wp->msg->right, pickle) &&
+		pickle_whack_end(wp, "left", &wp->msg->left, pickle) &&
+		pickle_whack_end(wp, "right",&wp->msg->right, pickle) &&
 		PICKLE_STRING(&wp->msg->keyid) &&
 		PICKLE_STRING(&wp->msg->ike) &&
 		PICKLE_STRING(&wp->msg->esp) &&
