@@ -1,0 +1,9 @@
+IKEv1 road establishes tunnel to east; east then quick-modes a tunnel back
+
+Trying to reproduce github #633.
+
+road, using xauth, establishes a tunnel to east
+east, then establishes a second tunnel (using the same parent) back to road
+
+Suspect the problem is that the east->road connection is rejected on
+road as it gets confused with the proposed subnet vs road's 0.0.0.0/0.

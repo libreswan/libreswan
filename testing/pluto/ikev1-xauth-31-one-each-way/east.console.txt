@@ -1,0 +1,82 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add xauth-road-eastnet
+002 "xauth-road-eastnet": added IKEv1 connection
+east #
+ echo "initdone"
+initdone
+east #
+ echo east-established
+east-established
+east #
+ ../../guestbin/wait-for.sh --match '#2: IPsec SA established' -- cat /tmp/pluto.log
+"xauth-road-eastnet"[1] 192.1.3.209 #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive username=use1}
+east #
+ echo 06-east-up
+06-east-up
+east #
+ ipsec auto --add east-to-road-on-east
+002 "east-to-road-on-east": added IKEv1 connection
+east #
+ ipsec auto --up east-to-road-on-east
+002 "east-to-road-on-east" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+1v1 "east-to-road-on-east" #3: sent Quick Mode request
+031 "east-to-road-on-east" #3: STATE_QUICK_I1: 60 second timeout exceeded after 7 retransmits.  No acceptable response to our first Quick Mode message: perhaps peer likes no proposal
+000 "east-to-road-on-east" #3: starting keying attempt 2 of an unlimited number, but releasing whack
+east #
+ ../../guestbin/ipsec-look.sh
+east NOW
+XFRM state:
+src 192.1.3.209 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 
+	sel src 192.1.3.209/32 dst 192.1.2.23/32 
+src 192.1.3.209 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.23 dst 192.1.3.209
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+XFRM policy:
+src 192.0.2.0/24 dst 192.1.3.209/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.3.209
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.0.2.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.0.2.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.3.209 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+XFRM done
+IPSEC mangle TABLES
+NEW_IPSEC_CONN mangle TABLES
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east #
+ 
