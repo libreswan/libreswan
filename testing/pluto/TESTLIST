@@ -100,6 +100,7 @@ kvmplutotest	addconn-06-whack-algos			good
 kvmplutotest	addconn-07-defaultroute			good
 kvmplutotest	addconn-08-ordering			good	github:658
 kvmplutotest	addconn-09-dpd-vs-liveness		good
+kvmplutotest	addconn-10-duplicate-key		good
 kvmplutotest	algparse-01				good
 kvmplutotest	algparse-02-fips			good
 kvmplutotest	libipsecconf-01				good
