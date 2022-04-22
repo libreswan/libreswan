@@ -1001,7 +1001,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 	 * ikev1_quick.c
 	 *
 	 */
-	bool initial_contact = c->initial_contact;
+	bool initial_contact = c->config->send_initial_contact;
 	dbg("I will %ssend an initial contact payload",
 	    initial_contact ? "" : "NOT ");
 

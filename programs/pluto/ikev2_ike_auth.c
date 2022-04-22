@@ -376,7 +376,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		}
 	}
 
-	bool ic =  pc->initial_contact && (ike->sa.st_v2_ike_pred == SOS_NOBODY);
+	bool ic = (pc->config->send_initial_contact && (ike->sa.st_v2_ike_pred == SOS_NOBODY));
 	if (ic) {
 		log_state(RC_LOG, &ike->sa, "sending INITIAL_CONTACT");
 		if (!emit_v2N(v2N_INITIAL_CONTACT, request.pbs))

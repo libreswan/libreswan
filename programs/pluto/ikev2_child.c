@@ -238,7 +238,7 @@ bool emit_v2_child_request_payloads(const struct child_sa *larval_child,
 		return false;
 	}
 
-	if (cc->send_no_esp_tfc &&
+	if (cc->config->send_no_esp_tfc &&
 	    !emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, pbs)) {
 		return false;
 	}
@@ -486,11 +486,6 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 		}
 	}
 
-	if (cc->send_no_esp_tfc &&
-	    !emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, outpbs)) {
-		return false;
-	}
-
 	/*
 	 * XXX: see above notes on 'role' - this must be the
 	 * SA_RESPONDER.
@@ -505,7 +500,7 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 		return false;
 	}
 
-	if (cc->send_no_esp_tfc &&
+	if (cc->config->send_no_esp_tfc &&
 	    !emit_v2N(v2N_ESP_TFC_PADDING_NOT_SUPPORTED, outpbs)) {
 			return false;
 	}

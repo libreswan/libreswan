@@ -172,6 +172,12 @@ struct config {
 		enum dpd_action action;	/* what to do when we die */
 	} dpd;
 
+	bool send_no_esp_tfc;
+	bool send_initial_contact;		/* Send INITIAL_CONTACT (RFC-2407) payload? */
+	bool send_vendorid;			/* Send our vendorid? Security vs Debugging help */
+	bool send_vid_fake_strongswan;		/* Send the unversioned strongswan VID */
+	bool send_vid_cisco_unity;		/* Send Unity VID for cisco compatibility */
+
 	struct config_end end[LEFT_RIGHT_ROOF];
 };
 
@@ -419,7 +425,6 @@ struct connection {
 	unsigned long sa_keying_tries;
 	uint32_t sa_priority;
 	uint32_t sa_tfcpad;
-	bool send_no_esp_tfc;
 	uint32_t sa_replay_window; /* Usually 32, KLIPS and XFRM/NETKEY support 64 */
 				   /* See also kernel_ops->replay_window */
 	struct sa_marks sa_marks; /* contains a MARK values and MASK value for IPsec SA */
@@ -438,11 +443,7 @@ struct connection {
 	int ipsec_mode;			/* tunnel or transport or IKEv1 ... */
 
 	bool nat_keepalive;		/* Send NAT-T Keep-Alives if we are behind NAT */
-	bool initial_contact;		/* Send INITIAL_CONTACT (RFC-2407) payload? */
-	bool cisco_unity;		/* Send Unity VID for cisco compatibility */
-	bool fake_strongswan;		/* Send the unversioned strongswan VID */
 	bool mobike;			/* Allow MOBIKE */
-	bool send_vendorid;		/* Send our vendorid? Security vs Debugging help */
 	enum ikev1_natt_policy ikev1_natt; /* whether or not to send IKEv1 draft/rfc NATT VIDs */
 	enum yna_options encaps; /* encapsulation mode of auto/yes/no - formerly forceencaps=yes/no */
 

@@ -2056,10 +2056,10 @@ static bool extract_connection(const struct whack_message *wm,
 		c->encaps = wm->encaps;
 		c->nat_keepalive = wm->nat_keepalive;
 		c->ikev1_natt = wm->ikev1_natt;
-		c->initial_contact = wm->initial_contact;
-		c->cisco_unity = wm->cisco_unity;
-		c->fake_strongswan = wm->fake_strongswan;
-		c->send_vendorid = wm->send_vendorid;
+		config->send_initial_contact = wm->initial_contact;
+		config->send_vid_cisco_unity = wm->cisco_unity;
+		config->send_vid_fake_strongswan = wm->fake_strongswan;
+		config->send_vendorid = wm->send_vendorid;
 		c->send_ca = wm->send_ca;
 		c->xauthby = wm->xauthby;
 		c->xauthfail = wm->xauthfail;
@@ -2127,7 +2127,7 @@ static bool extract_connection(const struct whack_message *wm,
 	c->nflog_group = wm->nflog_group;
 	c->sa_priority = wm->sa_priority;
 	c->sa_tfcpad = wm->sa_tfcpad;
-	c->send_no_esp_tfc = wm->send_no_esp_tfc;
+	config->send_no_esp_tfc = wm->send_no_esp_tfc;
 
 	/*
 	 * Since security labels use the same REQID for everything,
@@ -3779,13 +3779,14 @@ void show_one_connection(struct show *s,
 		     c->iketcp == IKE_TCP_FALLBACK ? "fallback" : "<BAD VALUE>",
 		     c->remote_tcpport);
 
-	show_comment(s, PRI_CONNECTION":   initial-contact:%s; cisco-unity:%s; fake-strongswan:%s; send-vendorid:%s; send-no-esp-tfc:%s;",
-		     c->name, instance,
-		     bool_str(c->initial_contact),
-		     bool_str(c->cisco_unity),
-		     bool_str(c->fake_strongswan),
-		     bool_str(c->send_vendorid),
-		     bool_str(c->send_no_esp_tfc));
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		jam(buf, PRI_CONNECTION":  ", c->name, instance);
+		jam(buf, " initial-contact:%s;", bool_str(c->config->send_initial_contact));
+		jam(buf, " cisco-unity:%s;", bool_str(c->config->send_vid_cisco_unity));
+		jam(buf, " fake-strongswan:%s;", bool_str(c->config->send_vid_fake_strongswan));
+		jam(buf, " send-vendorid:%s;", bool_str(c->config->send_vendorid));
+		jam(buf, " send-no-esp-tfc:%s;", bool_str(c->config->send_no_esp_tfc));
+	}
 
 	if (c->policy_next != NULL) {
 		show_comment(s, PRI_CONNECTION":   policy_next: %s",

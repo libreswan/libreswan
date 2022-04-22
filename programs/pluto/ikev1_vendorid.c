@@ -169,7 +169,7 @@ bool out_v1VID(pb_stream *outs, unsigned int id)
 bool out_v1VID_set(struct pbs_out *outs, const struct connection *c)
 {
 	/* cusomizeable Vendor ID */
-	if (c->send_vendorid) {
+	if (c->config->send_vendorid) {
 		if (!ikev1_out_generic_raw(&isakmp_vendor_id_desc, outs,
 					pluto_vendorid, strlen(pluto_vendorid), "Pluto Vendor ID")) {
 			return false;
@@ -184,8 +184,8 @@ bool out_v1VID_set(struct pbs_out *outs, const struct connection *c)
 	}  \
 }
 
-	MAYBE_VID(c->cisco_unity, VID_CISCO_UNITY);
-	MAYBE_VID(c->fake_strongswan, VID_STRONGSWAN);
+	MAYBE_VID(c->config->send_vid_cisco_unity, VID_CISCO_UNITY);
+	MAYBE_VID(c->config->send_vid_fake_strongswan, VID_STRONGSWAN);
 	MAYBE_VID(c->policy & POLICY_IKE_FRAG_ALLOW, VID_IKE_FRAGMENTATION);
 	MAYBE_VID(c->local->config->host.xauth.client || c->spd.this.config->host.xauth.server, VID_MISC_XAUTH);
 

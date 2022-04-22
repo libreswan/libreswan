@@ -776,12 +776,12 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 		return false;
 
 	/* From here on, only payloads left are Vendor IDs */
-	if (c->send_vendorid) {
+	if (c->config->send_vendorid) {
 		if (!emit_v2V(request.pbs, pluto_vendorid))
 			return false;
 	}
 
-	if (c->fake_strongswan) {
+	if (c->config->send_vid_fake_strongswan) {
 		if (!emit_v2VID(request.pbs, VID_STRONGSWAN))
 			return false;
 	}
@@ -1151,12 +1151,12 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 		emit_v2CERTREQ(ike, md, response.pbs);
 	}
 
-	if (c->send_vendorid) {
+	if (c->config->send_vendorid) {
 		if (!emit_v2V(response.pbs, pluto_vendorid))
 			return STF_INTERNAL_ERROR;
 	}
 
-	if (c->fake_strongswan) {
+	if (c->config->send_vid_fake_strongswan) {
 		if (!emit_v2VID(response.pbs, VID_STRONGSWAN))
 			return STF_INTERNAL_ERROR;
 	}
