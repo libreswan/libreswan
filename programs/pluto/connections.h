@@ -100,6 +100,7 @@ struct config_host_end {
 	} xauth;
 
 	enum eap_options eap;		/* whether to require/do EAP auth (eg EAPTLS) */
+	bool key_from_DNS_on_demand;
 };
 
 /*
@@ -317,7 +318,6 @@ struct /*spd_*/end {
 	struct host_end *host;
 
 	chunk_t sec_label;
-	bool key_from_DNS_on_demand;
 	bool has_client;
 
 	struct virtual_ip *virt;

@@ -1289,7 +1289,7 @@ static int extract_end(struct connection *c,
 							     src->protoport);
 	}
 
-	dst->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
+	config_end->host.key_from_DNS_on_demand = src->key_from_DNS_on_demand;
 	config_end->client.updown = clone_str(src->updown, "config_end.client.updown");
 	config_end->host.sendcert = src->sendcert == 0 ? CERT_SENDIFASKED : src->sendcert;
 	config_end->host.ikeport = src->host_ikeport;
@@ -3792,14 +3792,21 @@ void show_one_connection(struct show *s,
 			     c->name, instance, c->policy_next->name);
 	}
 
-	policy_buf pb;
-	show_comment(s, PRI_CONNECTION":   policy: %s%s%s%s;",
-		     c->name, instance,
-		     str_connection_policies(c, &pb),
-		     (c->spd.this.key_from_DNS_on_demand ||
-		      c->spd.that.key_from_DNS_on_demand) ? "; " : "",
-		     (c->spd.this.key_from_DNS_on_demand ? "+lKOD" : ""),
-		     (c->spd.that.key_from_DNS_on_demand ? "+rKOD" : ""));
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		jam(buf, PRI_CONNECTION":   policy: ", c->name, instance);
+		jam_connection_policies(buf, c);
+		if (c->local->config->host.key_from_DNS_on_demand ||
+		    c->remote->config->host.key_from_DNS_on_demand) {
+			jam_string(buf, "; ");
+			if (c->local->config->host.key_from_DNS_on_demand) {
+				jam_string(buf, "+lKOD");
+			}
+			if (c->remote->config->host.key_from_DNS_on_demand) {
+				jam_string(buf, "+rKOD");
+			}
+		}
+		jam_string(buf, ";");
+	}
 
 	if (c->config->ike_version == IKEv2) {
 		lset_buf hashpolbuf;

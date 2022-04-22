@@ -237,7 +237,7 @@ bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
 	const struct connection *c = ike->sa.st_connection;
 	struct id id = c->remote->host.id;
 
-	if (!c->spd.that.key_from_DNS_on_demand)
+	if (!c->remote->config->host.key_from_DNS_on_demand)
 		return false;
 
 	if (c->remote->config->host.auth == AUTH_RSASIG &&
