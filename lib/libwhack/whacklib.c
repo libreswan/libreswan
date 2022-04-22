@@ -363,10 +363,11 @@ bool unpack_whack_msg(struct whackpacker *wp, struct logger *logger)
 	return true;
 }
 
-void clear_end(struct whack_end *e)
+void clear_end(const char *leftright, struct whack_end *e)
 {
 	static const struct whack_end zero_end;	/* zeros and NULL pointers */
 	*e = zero_end;
+	e->leftright = leftright;
 }
 
 int whack_get_value(char *buf, size_t bufsize)

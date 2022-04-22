@@ -1036,8 +1036,9 @@ int main(int argc, char **argv)
 
 	zero(&msg);	/* ??? pointer fields might not be NULLed */
 
-	clear_end(&msg.right);	/* left set from this after --to */
-	msg.right.leftright = "left"; /* YES! */
+	clear_end("left", &msg.left);
+	clear_end("right", &msg.right);
+	struct whack_end *end = &msg.left;
 
 	struct family host_family = { 0, };
 	struct family client_family = { 0, };
@@ -1613,22 +1614,22 @@ int main(int argc, char **argv)
 			lset_t new_policy;
 			if (streq(optarg, "%any")) {
 				new_policy = LEMPTY;
-				msg.right.host_addr = get_address_any(&host_family);
+				end->host_addr = get_address_any(&host_family);
 			} else if (streq(optarg, "%opportunistic")) {
 				/* always use tunnel mode; mark as opportunistic */
 				new_policy = POLICY_TUNNEL | POLICY_OPPORTUNISTIC;
-				msg.right.host_addr = get_address_any(&host_family);
+				end->host_addr = get_address_any(&host_family);
 			} else if (streq(optarg, "%group")) {
 				/* always use tunnel mode; mark as group */
 				new_policy = POLICY_TUNNEL | POLICY_GROUP;
-				msg.right.host_addr = get_address_any(&host_family);
+				end->host_addr = get_address_any(&host_family);
 			} else if (streq(optarg, "%opportunisticgroup")) {
 				/* always use tunnel mode; mark as opportunistic */
 				new_policy = POLICY_TUNNEL | POLICY_OPPORTUNISTIC | POLICY_GROUP;
-				msg.right.host_addr = get_address_any(&host_family);
+				end->host_addr = get_address_any(&host_family);
 			} else if (msg.left.id != NULL && !streq(optarg, "%null")) {
 				new_policy = LEMPTY;
-				if (opt_ttoaddress_num(&host_family, &msg.right.host_addr) == NULL) {
+				if (opt_ttoaddress_num(&host_family, &end->host_addr) == NULL) {
 					/*
 					 * we have a proper numeric IP
 					 * address.
@@ -1641,7 +1642,7 @@ int main(int argc, char **argv)
 					 * the syntax.
 					 */
 					msg.dnshostname = optarg;
-					opt_ttoaddress_dns(&host_family, &msg.right.host_addr);
+					opt_ttoaddress_dns(&host_family, &end->host_addr);
 					/*
 					 * we don't fail here.  pluto
 					 * will re-check the DNS later
@@ -1649,7 +1650,7 @@ int main(int argc, char **argv)
 				}
 			} else {
 				new_policy = LEMPTY;
-				opt_to_address(&host_family, &msg.right.host_addr);
+				opt_to_address(&host_family, &end->host_addr);
 			}
 
 			msg.policy |= new_policy;
@@ -1661,9 +1662,9 @@ int main(int argc, char **argv)
 					 * --client to 0.0.0.0/0
 					 * or IPV6 equivalent
 					 */
-					msg.right.client = get_address_family(&client_family)->subnet.all;
+					end->client = get_address_family(&client_family)->subnet.all;
 				}
-				pexpect(msg.right.client.is_set);
+				pexpect(end->client.is_set);
 			}
 			if (new_policy & POLICY_GROUP) {
 				/*
@@ -1676,22 +1677,22 @@ int main(int argc, char **argv)
 				end_seen |= LELEM(END_CLIENT - END_FIRST);
 			}
 			if (new_policy & POLICY_OPPORTUNISTIC)
-				msg.right.key_from_DNS_on_demand = true;
+				end->key_from_DNS_on_demand = true;
 			continue;
 		}
 
 		case END_ID:	/* --id <identity> */
-			msg.right.id = optarg;	/* decoded by Pluto */
+			end->id = optarg;	/* decoded by Pluto */
 			continue;
 
 		case END_SENDCERT:	/* --sendcert */
 			if (streq(optarg, "yes") || streq(optarg, "always")) {
-				msg.right.sendcert = CERT_ALWAYSSEND;
+				end->sendcert = CERT_ALWAYSSEND;
 			} else if (streq(optarg,
 					 "no") || streq(optarg, "never")) {
-				msg.right.sendcert = CERT_NEVERSEND;
+				end->sendcert = CERT_NEVERSEND;
 			} else if (streq(optarg, "ifasked")) {
-				msg.right.sendcert = CERT_SENDIFASKED;
+				end->sendcert = CERT_SENDIFASKED;
 			} else {
 				diagq("whack sendcert value is not legal",
 				      optarg);
@@ -1700,26 +1701,26 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_CERT:	/* --cert <path> */
-			if (msg.right.ckaid != NULL)
+			if (end->ckaid != NULL)
 				diagw("only one --cert <nickname> or --ckaid <ckaid> allowed");
-			msg.right.cert = optarg;	/* decoded by Pluto */
+			end->cert = optarg;	/* decoded by Pluto */
 			continue;
 
 		case END_CKAID:	/* --ckaid <ckaid> */
-			if (msg.right.cert != NULL)
+			if (end->cert != NULL)
 				diagw("only one --cert <nickname> or --ckaid <ckaid> allowed");
 			/* try parsing it; the error isn't the most specific */
 			const char *ugh = ttodata(optarg, 0, 16, NULL, 0, NULL);
 			diagq(ugh, optarg);
-			msg.right.ckaid = optarg;	/* decoded by Pluto */
+			end->ckaid = optarg;	/* decoded by Pluto */
 			continue;
 
 		case END_CA:	/* --ca <distinguished name> */
-			msg.right.ca = optarg;	/* decoded by Pluto */
+			end->ca = optarg;	/* decoded by Pluto */
 			continue;
 
 		case END_GROUPS:	/* --groups <access control groups> */
-			msg.right.groups = optarg;	/* decoded by Pluto */
+			end->groups = optarg;	/* decoded by Pluto */
 			continue;
 
 		case END_IKEPORT:	/* --ikeport <port-number> */
@@ -1727,23 +1728,23 @@ int main(int argc, char **argv)
 				diagq("<port-number> must be a number between 1 and 65535",
 					optarg);
 			}
-			msg.right.host_ikeport = opt_whole;
+			end->host_ikeport = opt_whole;
 			continue;
 
 		case END_NEXTHOP:	/* --nexthop <ip-address> */
 			if (streq(optarg, "%direct")) {
-				msg.right.host_nexthop = get_address_any(&host_family);
+				end->host_nexthop = get_address_any(&host_family);
 			} else {
-				opt_to_address(&host_family, &msg.right.host_nexthop);
+				opt_to_address(&host_family, &end->host_nexthop);
 			}
 			continue;
 
 		case END_SRCIP:	/* --srcip <ip-address> */
-			opt_to_address(&host_family, &msg.right.host_srcip);
+			opt_to_address(&host_family, &end->host_srcip);
 			continue;
 
 		case END_VTIIP:	/* --vtiip <ip-address/mask> */
-			opt_to_cidr(&client_family, &msg.right.host_vtiip);
+			opt_to_cidr(&client_family, &end->host_vtiip);
 			continue;
 
 		/*
@@ -1752,50 +1753,50 @@ int main(int argc, char **argv)
 		 */
 		case END_AUTHBY:
 			if (streq(optarg, "psk"))
-				msg.right.auth = AUTH_PSK;
+				end->auth = AUTH_PSK;
 			else if (streq(optarg, "null"))
-				msg.right.auth = AUTH_NULL;
+				end->auth = AUTH_NULL;
 			else if (streq(optarg, "rsasig") || streq(optarg, "rsa"))
-				msg.right.auth = AUTH_RSASIG;
+				end->auth = AUTH_RSASIG;
 			else if (streq(optarg, "ecdsa"))
-				msg.right.auth = AUTH_ECDSA;
+				end->auth = AUTH_ECDSA;
 			else if (streq(optarg, "eaponly"))
-				msg.right.auth = AUTH_EAPONLY;
+				end->auth = AUTH_EAPONLY;
 			else
 				diagw("authby option is not one of psk, ecdsa, rsasig, rsa, null or eaponly");
 			continue;
 
 		case END_AUTHEAP:
 			if (streq(optarg, "tls"))
-				msg.right.eap = IKE_EAP_TLS;
+				end->eap = IKE_EAP_TLS;
 			else if (streq(optarg, "none"))
-				msg.right.eap = IKE_EAP_NONE;
+				end->eap = IKE_EAP_NONE;
 			else diagw("--autheap option is not one of none, tls");
 			continue;
 
 		case END_CLIENT:	/* --client <subnet> */
 			if (startswith(optarg, "vhost:") ||
 			    startswith(optarg, "vnet:")) {
-				msg.right.virt = optarg;
+				end->virt = optarg;
 			} else {
-				opt_to_subnet(&client_family, &msg.right.client, logger);
-				pexpect(msg.right.client.is_set);
+				opt_to_subnet(&client_family, &end->client, logger);
+				pexpect(end->client.is_set);
 			}
 			msg.policy |= POLICY_TUNNEL;	/* client => tunnel */
 			continue;
 
 		/* --clientprotoport <protocol>/<port> */
 		case END_CLIENTPROTOPORT:
-			diagq(ttoprotoport(optarg, &msg.right.protoport),
+			diagq(ttoprotoport(optarg, &end->protoport),
 				optarg);
 			continue;
 
 		case END_DNSKEYONDEMAND:	/* --dnskeyondemand */
-			msg.right.key_from_DNS_on_demand = true;
+			end->key_from_DNS_on_demand = true;
 			continue;
 
 		case END_UPDOWN:	/* --updown <updown> */
-			msg.right.updown = optarg;
+			end->updown = optarg;
 			continue;
 
 		case CD_TO:	/* --to */
@@ -1803,9 +1804,7 @@ int main(int argc, char **argv)
 			if (!LHAS(end_seen, END_HOST - END_FIRST))
 				diagw("connection missing --host before --to");
 
-			msg.left = msg.right;
-			clear_end(&msg.right);
-			msg.right.leftright = "right";
+			end = &msg.right;
 			end_seen = LEMPTY;
 			continue;
 
@@ -2227,11 +2226,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_XAUTHSERVER:	/* --xauthserver */
-			msg.right.xauth_server = true;
+			end->xauth_server = true;
 			continue;
 
 		case END_XAUTHCLIENT:	/* --xauthclient */
-			msg.right.xauth_client = true;
+			end->xauth_client = true;
 			continue;
 
 		case OPT_USERNAME:	/* --username, was --xauthname */
@@ -2240,7 +2239,7 @@ int main(int argc, char **argv)
 			 * if this is going to be an conn definition, so do
 			 * both actions
 			 */
-			msg.right.xauth_username = optarg;
+			end->xauth_username = optarg;
 			gotusername = true;
 			/* ??? why does this length include NUL? */
 			usernamelen = jam_str(xauthusername, sizeof(xauthusername),
@@ -2257,15 +2256,15 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_MODECFGCLIENT:	/* --modeconfigclient */
-			msg.right.modecfg_client = true;
+			end->modecfg_client = true;
 			continue;
 
 		case END_MODECFGSERVER:	/* --modeconfigserver */
-			msg.right.modecfg_server = true;
+			end->modecfg_server = true;
 			continue;
 
 		case END_ADDRESSPOOL:	/* --addresspool */
-			diagq(ttorange(optarg, NULL, &msg.right.pool_range), optarg);
+			diagq(ttorange(optarg, NULL, &end->pool_range), optarg);
 			continue;
 
 		case CD_MODECFGDNS:	/* --modecfgdns */
