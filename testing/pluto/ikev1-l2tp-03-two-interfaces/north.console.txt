@@ -48,6 +48,16 @@ north #
 1v1 "l2tp-north-to-east-on-north" #2: sent Quick Mode request
 004 "l2tp-north-to-east-on-north" #2: IPsec SA established transport mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 north #
+ # give the kernel messages time to appear
+north #
+ echo "c server" > /var/run/xl2tpd/l2tp-control ; sleep 5
+north #
+ ../../guestbin/ping-once.sh --up 192.0.2.254
+up
+north #
+ ipsec whack --trafficstatus | grep -v "inBytes=0" | sed "s/type=ESP.*$/[...]/"
+006 #2: "l2tp-north-to-east-on-north", [...]
+north #
  ../../guestbin/ipsec-look.sh
 north NOW
 XFRM state:
@@ -85,6 +95,7 @@ IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
 default via 192.1.3.254 dev eth1
+192.0.2.254 dev ppp0 proto kernel scope link src 192.0.2.128
 192.0.3.0/24 dev eth0 proto kernel scope link src 192.0.3.254
 192.1.3.0/24 dev eth1 proto kernel scope link src 192.1.3.33
 NSS_CERTIFICATES
