@@ -210,9 +210,6 @@ conn westnet-eastnet-x509
 conn east-ipv4-pool-100
 	leftaddresspool=192.0.2.100-192.0.2.199
 
-conn west-ipv4-pool-100
-	leftaddresspool=192.0.1.100-192.0.1.199
-
 conn north-east-base
 	also=north-east-base-ipv4
 	also=north-east-base-id-nss
@@ -335,7 +332,7 @@ conn road-east-x509-ipv4
 
 conn rw-westnet-pool-x509-ipv4
 	also=rw-west-base-x509
-	also=west-ipv4-pool-100
+	leftaddresspool=192.0.1.100-192.0.1.199
 	rightsubnet=192.0.1.0/24
 	narrowing=yes
 
