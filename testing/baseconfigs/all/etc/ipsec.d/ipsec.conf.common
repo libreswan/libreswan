@@ -478,10 +478,3 @@ conn north-east
 	rightid=@east
 	also=east-rightrsasigkey
 	rightnexthop=192.1.2.254
-
-conn north-east-psk
-	#left=%defaultroute or %any
-	leftid=@north
-	right=192.1.2.23
-	rightid=@east
-	authby=secret
