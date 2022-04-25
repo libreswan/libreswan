@@ -190,14 +190,6 @@ conn westnet-eastnet-pass
 	type=passthrough
 	#auto=start
 
-conn westnet-eastnet-drop
-	also=west-east-base-id-nss
-	also=west-east-base-ipv4
-	leftsubnet=192.0.1.0/24
-	rightsubnet=192.0.2.0/24
-	type=drop
-	#auto=start
-
 conn westnet-eastnet-x509
 	leftsubnet=192.0.1.0/24
 	leftsourceip=192.0.1.254
