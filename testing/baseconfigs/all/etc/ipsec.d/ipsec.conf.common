@@ -9,14 +9,6 @@
 # left  = other stuff.
 #
 
-conn me-to-anyone
-	right=%defaultroute
-	rightnexthop=%defaultroute
-	left=%opportunistic
-	failureshunt=drop
-	# uncomment to enable incoming; change to auto=route for outgoing
-	#auto=add
-
 # food groups: clear, clear-or-private, private-or-clear, private, block
 # Tempting to use "postcard" instead of "clear"
 # these are for a subnet behind us.
