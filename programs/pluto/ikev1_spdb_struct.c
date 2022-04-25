@@ -1407,34 +1407,43 @@ fail:
  *
  * @param pbs PB Stream
  * @return uint32_t duration, in seconds.
+ *
+ * Technical nit, there's only one bit involved: ISAKMP_ATTR_AF_MASK
+ * == ISAKMP_ATTR_AF_TV == 0x8000 and ISAKMP_ATTR_AF_TLV is zero.
  */
 static uint32_t decode_life_duration(const struct isakmp_attribute *a,
 				     struct pbs_in *pbs)
 {
-	if (a->isaat_af_type & ISAKMP_ATTR_AF_TV) {
+	switch (a->isaat_af_type & ISAKMP_ATTR_AF_MASK) {
+	case ISAKMP_ATTR_AF_TV:
+	{
 		uint32_t val = a->isaat_lv;
-		dbg("   long duration: %" PRIu32 " (TV)", val);
+		dbg("   basic duration: %" PRIu32 " (TV)", val);
 		return val;
 	}
-	pexpect(a->isaat_af_type & ISAKMP_ATTR_AF_TLV);
+	case ISAKMP_ATTR_AF_TLV:
+	{
+		/* ignore leading zeros */
+		while (pbs_left(pbs) != 0 && *pbs->cur == '\0') {
+			pbs->cur++;
+		}
 
-	uint32_t val = 0;
-
-	/* ignore leading zeros */
-	while (pbs_left(pbs) != 0 && *pbs->cur == '\0')
-		pbs->cur++;
-
-	if (pbs_left(pbs) > sizeof(val)) {
-		/* "clamp" too large value to max representable value */
-		val -= 1; /* portable way to get to maximum value */
-		dbg("   too large duration clamped to: %" PRIu32, val);
-	} else {
-		/* decode number */
-		while (pbs_left(pbs) != 0)
-			val = (val << BITS_PER_BYTE) | *pbs->cur++;
-		dbg("   long duration: %" PRIu32 " (TVL)", val);
+		uint32_t val = 0;
+		if (pbs_left(pbs) > sizeof(val)) {
+			/* "clamp" too large value to max representable value */
+			val = UINT32_MAX;
+			dbg("   too large long duration clamped to: %" PRIu32, val);
+		} else {
+			/* decode number */
+			while (pbs_left(pbs) != 0) {
+				val = (val << BITS_PER_BYTE) | *pbs->cur++;
+			}
+			dbg("   long duration: %" PRIu32 " (TVL)", val);
+		}
+		return val;
 	}
-	return val;
+	}
+	bad_case(a->isaat_af_type);
 }
 
 /* Preparse the body of an IKEv1 ISAKMP SA Payload and find which policy is
