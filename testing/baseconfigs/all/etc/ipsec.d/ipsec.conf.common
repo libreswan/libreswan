@@ -75,10 +75,6 @@ conn westnet-east
 	leftsubnet=192.0.1.0/24
 	#auto=start
 
-conn westnet-eastnet-ipcomp
-	compress=yes
-	also=westnet-eastnet
-
 conn westnet-eastnet-sourceip
 	leftsourceip=192.0.1.254
 	also=westnet-eastnet
