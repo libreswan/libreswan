@@ -480,13 +480,6 @@ conn north-east-psk
 	rightid=@east
 	authby=secret
 
-conn north-east-x509-fail-base
-        left=192.1.3.33
-        leftrsasigkey=%cert
-        #
-        right=192.1.2.23
-        rightrsasigkey=%cert
-
 conn road-client
 	leftmodecfgclient=yes
 	leftsubnet=0.0.0.0/0
