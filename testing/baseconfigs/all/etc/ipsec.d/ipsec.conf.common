@@ -81,13 +81,6 @@ conn west-east-pass
 	type=passthrough
 	#auto=start
 
-conn westnet-east-pass
-	also=west-east-base-id-nss
-	also=west-east-base-ipv4
-	leftsubnet=192.0.1.0/24
-	type=passthrough
-	#auto=start
-
 conn westnet-eastnet-ipcomp
 	compress=yes
 	also=westnet-eastnet
