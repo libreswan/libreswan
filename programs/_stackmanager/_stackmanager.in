@@ -32,7 +32,9 @@ eval $(ASAN_OPTIONS=detect_leaks=0 ipsec addconn  --configsetup | grep -v "#" | 
 test ${IPSEC_INIT_SCRIPT_DEBUG} && set -v -x
 MODPROBE="@MODPROBEBIN@ @MODPROBEARGS@"
 
+# not all kernels have either :/
 xfrm_stat=/proc/sys/net/core/xfrm_acq_expires
+xfrm_old=/proc/net/xfrm_stat
 action="${1}"
 
 if [ -z "${action}" ]; then
@@ -47,7 +49,7 @@ stop_xfrm() {
     # Validate wait option
     [ "${1}" = "--wait" -o "${1}" = "-w" ] && wait="${1}"
 
-    if [ -f ${xfrm_stat} ]; then
+    if [ -f ${xfrm_stat}  -o -f ${xfrm_old}]; then
 	ip xfrm state flush
 	ip xfrm policy flush
 	if [ -n "$(ip xfrm state)" -o -n "$(ip xfrm policy)" ]; then
