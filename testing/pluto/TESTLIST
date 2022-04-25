@@ -742,6 +742,7 @@ kvmplutotest	delete-sa-06			good
 kvmplutotest	delete-sa-08-rhbz1311360	good
 kvmplutotest	delete-sa-09-rhbz1311360-c32	good
 kvmplutotest	ikev1-27-uniqueid		good
+kvmplutotest	ikev1-27-huge-lifetime		good	github/695
 
 # connection switching tests
 kvmplutotest	ikev1-connswitch-01		good
