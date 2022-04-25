@@ -221,10 +221,6 @@ conn west-east-base
 	also=west-east-base-ipv4
 	also=west-east-base-id-nss
 
-conn road-east-base-fqdn-default-route
-	left=%defaultroute
-	right=east.testing.libreswan.org
-
 conn west-east-base-fqdn
 	left=west.testing.libreswan.org
 	right=east.testing.libreswan.org
