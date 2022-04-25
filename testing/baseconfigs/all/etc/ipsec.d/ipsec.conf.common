@@ -166,11 +166,6 @@ conn road-eastnet
 	also=road-east-base-id-nss
 	rightsubnet=192.0.2.0/24
 
-conn rad-eastnet-fqdn
-	also=road-east-base-fqdn-default-route
-	also=road-east-base-id-nss
-	rightsubnet=192.0.2.0/24
-
 conn westnet-eastnet-fqdn
 	also=west-east-base-fqdn
 	also=west-east-base-id-nss
