@@ -182,14 +182,6 @@ conn northnet-eastnet-ipv6
 	leftsubnet=2001:db8:0:3::0/64
 	rightsubnet=2001:db8:0:2::0/64
 
-conn westnet-eastnet-pass
-	also=west-east-base-id-nss
-	also=west-east-base-ipv4
-	leftsubnet=192.0.1.0/24
-	rightsubnet=192.0.2.0/24
-	type=passthrough
-	#auto=start
-
 conn westnet-eastnet-x509
 	leftsubnet=192.0.1.0/24
 	leftsourceip=192.0.1.254
