@@ -181,25 +181,6 @@ struct kernel_policy {
 struct kernel_policy bare_kernel_policy(const struct ip_info *afi);
 
 /*
- * How a packet flows through the kernel.
- *
- * In transport mode the kernel code expects both the CLIENT and
- * HOST_ADDR to be for public interfaces, however for L2TP they are
- * not (the client found in the spd might be for an address behind the
- * nat).
- *
- * XXX: host_addr should be an endpoint?  By this point everything has
- * been resolved?
- */
-
-struct kernel_route {
-	struct route_end {
-		ip_selector client;
-		ip_address host_addr;
-	} src, dst;
-};
-
-/*
  * Replaces SADB_X_SATYPE_* for non-KLIPS code. Assumes normal
  * SADB_SATYPE values
  *
