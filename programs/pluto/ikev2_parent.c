@@ -571,10 +571,8 @@ void schedule_v2_replace_event(struct state *st)
 	pexpect(st->st_v2_lifetime_event->ev_type == kind);
 }
 
-static bool state_is_expired(struct state *st, const char *what)
+static bool state_is_expired(struct state *st, const char *verb)
 {
-	const char *satype = IS_IKE_SA(st) ? "IKE" : "Child";
-
 	struct ike_sa *ike = ike_sa(st, HERE);
 	if (ike == NULL) {
 		/*
@@ -587,7 +585,7 @@ static bool state_is_expired(struct state *st, const char *what)
 		 */
 		llog_pexpect(st->st_logger, HERE,
 			     "not %s Child SA #%lu; as IKE SA #%lu has diasppeared",
-			     what, st->st_serialno, st->st_clonedfrom);
+			     verb, st->st_serialno, st->st_clonedfrom);
 		event_force(EVENT_SA_EXPIRE, st);
 		return true;
 	}
@@ -603,12 +601,30 @@ static bool state_is_expired(struct state *st, const char *what)
 		/*
 		 * A newer SA implies that this SA has already been
 		 * successfully replaced (it's only set when the newer
-		 * SA establishes).  This SA should have been expired
-		 * at the same time; do it now.
+		 * SA establishes).
+		 *
+		 * Two ways this can happen:
+		 *
+		 * + the SA should have been expired at the same time
+		 * as the new SA was established; but wasn't
+		 *
+		 * + this and the peer established the same SA in
+		 * parallel, aka crossing the streams; the two SAs are
+		 * allowed to linger until one is clearly obsolete;
+		 * see github/699
+		 *
+		 * either way expire the SA now
 		 */
+		const char *satype = IS_IKE_SA(st) ? "IKE" : "Child";
+#if 0
 		llog_pexpect(st->st_logger, HERE,
 			     "not %s stale %s SA #%lu; as already got a newer #%lu",
-			     what, satype, st->st_serialno, newer_sa);
+			     verb, satype, st->st_serialno, newer_sa);
+#else
+		log_state(RC_LOG, st,
+			  "not %s stale %s SA #%lu; as already got a newer #%lu",
+			  verb, satype, st->st_serialno, newer_sa);
+#endif
 		event_force(EVENT_SA_EXPIRE, st);
 		return true;
 	}
