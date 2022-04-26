@@ -62,7 +62,7 @@
 
 #include "pluto_stats.h"
 
-static void dpd_clear_connection(struct connection *c, const char *v)
+static void dpd_clear_connection(struct connection *c)
 {
 	/*
 	 * For CK_INSTANCE, delete_states_by_connection() will clear
@@ -76,8 +76,8 @@ static void dpd_clear_connection(struct connection *c, const char *v)
 	 * so testing it for NULL now is suspicious.  It is simply wrong.
 	 */
 	if (c != NULL) {
-		dbg("%s: unrouting connection %s action - clearing",
-		    enum_name(&connection_kind_names, c->kind), v);
+		dbg("%s: unrouting connection DPD action - clearing",
+		    enum_name(&connection_kind_names, c->kind));
 		unroute_connection(c); /* --unroute */
 	}
 }
@@ -105,31 +105,27 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 	 */
 	struct logger *logger = clone_logger(tbd_st->st_logger, HERE);
 	struct connection *c = tbd_st->st_connection;
-	const char *liveness_name = enum_name(&ike_version_liveness_names, tbd_st->st_ike_version);
-	passert(liveness_name != NULL);
 	tbd_st = NULL; /* kill TBD_ST; can no longer be trusted */
 
 	switch (c->config->dpd.action) {
 	case DPD_ACTION_CLEAR:
 		llog(RC_LOG, logger,
-		     "%s action - clearing connection kind %s",
-		     liveness_name, enum_name(&connection_kind_names, c->kind));
-		dpd_clear_connection(c, liveness_name);
+		     "DPD action - clearing connection kind %s",
+		     enum_name(&connection_kind_names, c->kind));
+		dpd_clear_connection(c);
 		break;
 
 	case DPD_ACTION_RESTART:
 		llog(RC_LOG, logger,
-		     "%s action - restarting all connections that share this peer",
-		     liveness_name);
+		     "DPD action - restarting all connections that share this peer");
 		restart_connections_by_peer(c, logger);
 		break;
 
 	case DPD_ACTION_HOLD:
 		llog(RC_LOG, logger,
-		     "%s action - putting connection into hold",
-		     liveness_name);
+		     "DPD action - putting connection into hold");
 		if (c->kind == CK_INSTANCE) {
-			dbg("%s warning dpdaction=hold on instance futile - will be deleted", liveness_name);
+			dbg("DPD warning dpdaction=hold on instance futile - will be deleted");
 		}
 		delete_v1_states_by_connection_family(&c);
 		break;
