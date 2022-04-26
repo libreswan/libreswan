@@ -111,7 +111,6 @@ west #
 000  
 west #
  grep -E "liveness action|acquire|on-demand" OUTPUT/west.pluto.log
-netlink_acquire got message with length 44 < 232 bytes; ignore message
 "westnet-eastnet-ikev2" #1: liveness action - putting connection into hold
 | xfrm acquire rtattribute type 5 ...
 | xfrm acquire rtattribute type 16 ...
