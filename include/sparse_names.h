@@ -24,6 +24,8 @@
 #ifndef SPARSE_NAMES_H
 #define SPARSE_NAMES_H
 
+struct jambuf;
+
 /*
  * sparse_names is much like enum_names, except values are not known
  * to be contiguous or ordered.
@@ -46,8 +48,9 @@ typedef struct {
 	char buf[16];/*how big?*/
 } sparse_buf;
 
-extern const char *sparse_name(sparse_names sd, unsigned long val);
-extern const char *sparse_val_show(sparse_names sd, unsigned long val); /* uses static buffer -- NOT RE-ENTRANT */
+const char *sparse_name(sparse_names sd, unsigned long val);
+size_t jam_sparse(struct jambuf *buf, sparse_names sd, unsigned long val);
+const char *str_sparse(sparse_names sd, unsigned long val, sparse_buf *buf);
 
 /*
  * sparse_sparse_names is much like enum_enum_names, except, again the

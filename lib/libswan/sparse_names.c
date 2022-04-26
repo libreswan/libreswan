@@ -23,6 +23,8 @@
 
 #include "sparse_names.h"
 
+#include "jambuf.h"
+
 /* look up enum names in a sparse_names */
 const char *sparse_name(sparse_names sd, unsigned long val)
 {
@@ -37,20 +39,26 @@ const char *sparse_name(sparse_names sd, unsigned long val)
 
 /*
  * find or construct a string to describe an sparse value
- *
- * Result may be in STATIC buffer -- NOT RE-ENTRANT!
  */
-const char *sparse_val_show(sparse_names sd, unsigned long val)
+size_t jam_sparse(struct jambuf *buf, sparse_names sd, unsigned long val)
 {
 	const char *p = sparse_name(sd, val);
-
-	if (p == NULL) {
-		static sparse_buf b;	/* STATIC!! */
-
-		snprintf(b.buf, sizeof(b.buf), "%lu??", val);
-		p = b.buf;
+	if (p != NULL) {
+		return jam_string(buf, p);
 	}
-	return p;
+
+	return jam(buf, "%lu??", val);
+}
+
+const char *str_sparse(sparse_names sd, unsigned long val, sparse_buf *buf)
+{
+	const char *p = sparse_name(sd, val);
+	if (p != NULL) {
+		return p;
+	}
+
+	snprintf(buf->buf, sizeof(buf->buf), "%lu??", val);
+	return buf->buf;
 }
 
 const char *sparse_sparse_name(sparse_sparse_names ssd, unsigned long v1, unsigned long v2)
