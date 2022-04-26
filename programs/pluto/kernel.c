@@ -2007,24 +2007,21 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	 * tunnel mode as a side effect.  There needs to be at least
 	 * one rule.
 	 */
-	struct kernel_policy proto_policy = kernel_policy_from_state(st, &c->spd,
-								     (inbound ? ENCAP_DIRECTION_INBOUND :
-								      ENCAP_DIRECTION_OUTBOUND));
-	if (!pexpect(proto_policy.last > 0)) {
+	struct kernel_policy kernel_policy =
+		kernel_policy_from_state(st, &c->spd,
+					 (inbound ? ENCAP_DIRECTION_INBOUND :
+					  ENCAP_DIRECTION_OUTBOUND));
+	if (!pexpect(kernel_policy.last > 0)) {
 		return false;
 	}
 
-	struct kernel_route route = kernel_route_from_spd(&c->spd, proto_policy.mode,
-							  (inbound ? ENCAP_DIRECTION_INBOUND :
-							   ENCAP_DIRECTION_OUTBOUND));
-
 	const struct kernel_sa said_boilerplate = {
-		.src.address = &route.src.host_addr,
-		.dst.address = &route.dst.host_addr,
-		.src.client = &route.src.client,
-		.dst.client = &route.dst.client,
+		.src.address = &kernel_policy.src.host,
+		.dst.address = &kernel_policy.dst.host,
+		.src.client = &kernel_policy.src.route,
+		.dst.client = &kernel_policy.dst.route,
 		.inbound = inbound,
-		.tunnel = (proto_policy.mode == ENCAP_MODE_TUNNEL),
+		.tunnel = (kernel_policy.mode == ENCAP_MODE_TUNNEL),
 		.transport_proto = c->spd.this.client.ipproto,
 		.sa_lifetime = c->sa_ipsec_life_seconds,
 		.sec_label = (st->st_v1_seen_sec_label.len > 0 ? st->st_v1_seen_sec_label :
@@ -2040,7 +2037,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	    str_selector_subnet_port(said_boilerplate.src.client, &scb),
 	    protocol_by_ipproto(said_boilerplate.transport_proto)->name,
 	    str_address(said_boilerplate.src.address, &sab),
-	    encap_mode_name(proto_policy.mode),
+	    encap_mode_name(kernel_policy.mode),
 	    str_address(said_boilerplate.dst.address, &dab),
 	    protocol_by_ipproto(said_boilerplate.transport_proto)->name,
 	    str_selector_subnet_port(said_boilerplate.dst.client, &dcb),
@@ -2063,7 +2060,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->ipcomp = st->st_ipcomp.attrs.transattrs.ta_ipcomp;
 		said_next->level = said_next - said;
 		said_next->reqid = reqid_ipcomp(c->spd.reqid);
-		said_next->story = said_str(route.dst.host_addr,
+		said_next->story = said_str(kernel_policy.dst.host,
 					    &ip_protocol_ipcomp,
 					    ipcomp_spi, &text_ipcomp);
 
@@ -2240,7 +2237,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->dst.encap_port = encap_dport;
 		said_next->encap_type = encap_type;
 		said_next->natt_oa = &natt_oa;
-		said_next->story = said_str(route.dst.host_addr, &ip_protocol_esp,
+		said_next->story = said_str(kernel_policy.dst.host,
+					    &ip_protocol_esp,
 					    esp_spi, &text_esp);
 
 		if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
@@ -2299,7 +2297,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->authkey = ah_dst_keymat;
 		said_next->level = said_next - said;
 		said_next->reqid = reqid_ah(c->spd.reqid);
-		said_next->story = said_str(route.dst.host_addr, &ip_protocol_ah,
+		said_next->story = said_str(kernel_policy.dst.host,
+					    &ip_protocol_ah,
 					    ah_spi, &text_ah);
 
 		said_next->replay_window = c->sa_replay_window;
@@ -2336,7 +2335,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	 */
 	dbg("kernel: %s() is thinking about installing inbound eroute? inbound=%d owner=#%lu %s",
 	    __func__, inbound, c->spd.eroute_owner,
-	    encap_mode_name(proto_policy.mode));
+	    encap_mode_name(kernel_policy.mode));
 	if (inbound &&
 	    c->spd.eroute_owner == SOS_NOBODY &&
 	    (c->config->sec_label.len == 0 || c->config->ike_version == IKEv1)) {
@@ -2352,14 +2351,14 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 * already indicating that the parameters are going to
 		 * need reversing ...
 		 */
-		struct kernel_policy policy = proto_policy;
-		policy.src.host = route.src.host_addr;	/* src_host */
-		policy.dst.host = route.dst.host_addr;	/* dst_host */
+		struct kernel_policy kernel_policy =
+			kernel_policy_from_state(st, &c->spd,
+						 ENCAP_DIRECTION_INBOUND);
 		if (!raw_policy(KP_ADD_INBOUND, REPORT_NO_INBOUND,
-				&route.src.client,	/* src_client */
-				&route.dst.client,	/* dst_client */
+				&kernel_policy.src.route,	/* src_client */
+				&kernel_policy.dst.route,	/* dst_client */
 				SHUNT_UNSET,
-				&policy,			/* " */
+				&kernel_policy,			/* " */
 				deltatime(0),		/* lifetime */
 				calculate_sa_prio(c, false),	/* priority */
 				&c->sa_marks, c->xfrmi,		/* IPsec SA marks */
