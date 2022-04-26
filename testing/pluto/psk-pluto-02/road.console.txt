@@ -46,7 +46,7 @@ road #
 003 "road-eastnet-psk" #1: received Hash Payload does not match computed value
 223 "road-eastnet-psk" #1: sending notification INVALID_HASH_INFORMATION to 192.1.2.23:500
 002 "road-eastnet-psk" #1: deleting state (STATE_AGGR_I1) and NOT sending notification
-002 "road-eastnet-psk" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+002 "road-eastnet-psk" #1: deleting ISAKMP SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 road #
  echo done
 done

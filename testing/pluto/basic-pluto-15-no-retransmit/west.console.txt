@@ -23,7 +23,7 @@ west #
 1v1 "westnet-eastnet" #1: sent Main Mode request
 002 "westnet-eastnet" #1: IMPAIR: retransmit so deleting SA
 002 "westnet-eastnet" #1: deleting state (STATE_MAIN_I1) and NOT sending notification
-002 "westnet-eastnet" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+002 "westnet-eastnet" #1: deleting ISAKMP SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  ipsec auto --up westnet-eastnet-ikev2
 1v2 "westnet-eastnet-ikev2" #3: initiating IKEv2 connection

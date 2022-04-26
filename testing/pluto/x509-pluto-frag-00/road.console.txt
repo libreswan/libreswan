@@ -25,7 +25,7 @@ road #
 1v1 "x509" #1: sent Main Mode I3
 002 "x509" #1: IMPAIR: retransmit so deleting SA
 002 "x509" #1: deleting state (STATE_MAIN_I3) and NOT sending notification
-002 "x509" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+002 "x509" #1: deleting ISAKMP SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 road #
  grep "fragment number" /tmp/pluto.log
 road #

@@ -33,7 +33,7 @@ west #
 010 "ikev1-failtest" #1: STATE_MAIN_I1: retransmission; will wait 1 seconds for response
 031 "ikev1-failtest" #1: STATE_MAIN_I1: 2 second timeout exceeded after 2 retransmits. No response (or no acceptable response) to our first IKEv1 message
 002 "ikev1-failtest" #1: deleting state (STATE_MAIN_I1) and NOT sending notification
-002 "ikev1-failtest" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+002 "ikev1-failtest" #1: deleting ISAKMP SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  ipsec auto --delete ikev1-failtest
 002 "ikev1-failtest": terminating SAs using this connection
@@ -46,7 +46,7 @@ west #
 003 "ikev1-aggr-failtest" #3: authentication failed: using RSA with SHA1 for '@east-v1' tried preloaded: *000000000
 217 "ikev1-aggr-failtest" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 002 "ikev1-aggr-failtest" #3: deleting state (STATE_AGGR_I1) and NOT sending notification
-002 "ikev1-aggr-failtest" #3: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+002 "ikev1-aggr-failtest" #3: deleting ISAKMP SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  ipsec auto --delete ikev1-aggr-failtest
 002 "ikev1-aggr-failtest": terminating SAs using this connection
