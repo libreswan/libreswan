@@ -83,25 +83,6 @@
 #include "ip_encap.h"
 #include "show.h"
 
-/*
- * How a packet flows through the kernel.
- *
- * In transport mode the kernel code expects both the CLIENT and
- * HOST_ADDR to be for public interfaces, however for L2TP they are
- * not (the client found in the spd might be for an address behind the
- * nat).
- *
- * XXX: host_addr should be an endpoint?  By this point everything has
- * been resolved?
- */
-
-struct kernel_route {
-	struct route_end {
-		ip_selector client;
-		ip_address host_addr;
-	} src, dst;
-};
-
 static bool route_and_eroute(struct connection *c,
 			     struct spd_route *sr,
 			     struct state *st,
@@ -111,7 +92,6 @@ static bool route_and_eroute(struct connection *c,
 static bool eroute_connection(enum kernel_policy_op op, const char *opname,
 			      const struct spd_route *sr,
 			      enum shunt_policy shunt_policy,
-			      const struct kernel_route *route,
 			      const struct kernel_policy *kernel_policy,
 			      uint32_t sa_priority,
 			      const struct sa_marks *sa_marks,
@@ -1078,65 +1058,6 @@ static struct kernel_policy kernel_policy_from_state(const struct state *st,
 	return kernel_policy;
 }
 
-static struct kernel_route kernel_route_from_spd(const struct spd_route *spd,
-						 enum encap_mode mode,
-						 enum encap_direction flow)
-{
-	/*
-	 * With pfkey and transport mode with nat-traversal we need to
-	 * change the remote IPsec SA to point to external ip of the
-	 * peer.  Here we substitute real client ip with NATD ip.
-	 *
-	 * Bug #1004 fix.
-	 *
-	 * There really isn't "client" with XFRM and transport mode so
-	 * eroute must be done to natted, visible ip. If we don't hide
-	 * internal IP, communication doesn't work.
-	 */
-	ip_selector remote_client;
-	switch (mode) {
-	case ENCAP_MODE_TUNNEL:
-		remote_client = spd->that.client;
-		break;
-	case ENCAP_MODE_TRANSPORT:
-		remote_client = selector_from_address_protocol_port(spd->that.host->addr,
-								    selector_protocol(spd->that.client),
-								    selector_port(spd->that.client));
-		break;
-	default:
-		bad_case(mode);
-	}
-	selector_buf os, ns;
-	dbg("%s() changing remote selector %s to %s",
-	    __func__,
-	    str_selector_subnet_port(&spd->that.client, &os),
-	    str_selector_subnet_port(&remote_client, &ns));
-
-	struct kernel_route route = {0};
-	struct route_end *local;
-	struct route_end *remote;
-
-	switch (flow) {
-	case ENCAP_DIRECTION_INBOUND:
-		remote = &route.src;
-		local = &route.dst;
-		break;
-	case ENCAP_DIRECTION_OUTBOUND:
-		local = &route.src;
-		remote = &route.dst;
-		break;
-	default:
-		bad_case(flow);
-	}
-
-	local->client = spd->this.client;
-	remote->client = remote_client;
-	local->host_addr = spd->this.host->addr;
-	remote->host_addr = spd->that.host->addr;
-
-	return route;
-}
-
 /*
  * handle co-terminal attempt of the "near" kind
  *
@@ -1382,15 +1303,13 @@ static bool sag_eroute(const struct state *st,
 	passert(kernel_policy.last > 0);
 
 	pexpect(op & KERNEL_POLICY_OUTBOUND);
-	struct kernel_route route = kernel_route_from_spd(sr, kernel_policy.mode,
-							  ENCAP_DIRECTION_OUTBOUND);
 
 	/* hack */
 	char why[256];
 	snprintf(why, sizeof(why), "%s() %s", __func__, opname);
 
 	return eroute_connection(op, why, sr, SHUNT_UNSET,
-				 &route, &kernel_policy,
+				 &kernel_policy,
 				 calculate_sa_prio(c, false),
 				 &c->sa_marks, c->xfrmi,
 				 HUNK_AS_SHUNK(c->config->sec_label),
@@ -1787,7 +1706,6 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 bool eroute_connection(enum kernel_policy_op op, const char *opname,
 		       const struct spd_route *sr,
 		       enum shunt_policy shunt_policy,
-		       const struct kernel_route *route,
 		       const struct kernel_policy *kernel_policy,
 		       uint32_t sa_priority,
 		       const struct sa_marks *sa_marks,
@@ -1798,7 +1716,7 @@ bool eroute_connection(enum kernel_policy_op op, const char *opname,
 	if (sr->this.has_cat) {
 		ip_selector client = selector_from_address(sr->this.host->addr);
 		bool t = raw_policy(op, THIS_IS_NOT_INBOUND,
-				    &client, &route->dst.client,
+				    &client, &kernel_policy->dst.route,
 				    shunt_policy,
 				    kernel_policy,
 				    deltatime(0),
@@ -1816,7 +1734,7 @@ bool eroute_connection(enum kernel_policy_op op, const char *opname,
 	}
 
 	return raw_policy(op, THIS_IS_NOT_INBOUND,
-			  &route->src.client, &route->dst.client,
+			  &kernel_policy->src.route, &kernel_policy->dst.route,
 			  shunt_policy,
 			  kernel_policy,
 			  deltatime(0),
@@ -1901,22 +1819,11 @@ bool assign_holdpass(const struct connection *c,
 			}
 
 			pexpect(op & KERNEL_POLICY_OUTBOUND);
-			struct kernel_route route = kernel_route_from_spd(sr,
-									  ENCAP_MODE_TRANSPORT,
-									  ENCAP_DIRECTION_OUTBOUND);
-			/*
-			 * XXX: why?
-			 *
-			 * Because only this end is interesting?
-			 * Because it is a shunt and the other end
-			 * doesn't matter?
-			 */
-			route.dst.host_addr = address_type(&route.dst.host_addr)->address.unspec;
 
 			struct kernel_policy outbound_kernel_policy =
 				bare_kernel_policy(&sr->this.client, &sr->that.client);
 			if (eroute_connection(op, reason, sr, negotiation_shunt,
-					      &route, &outbound_kernel_policy,
+					      &outbound_kernel_policy,
 					      calculate_sa_prio(c, false),
 					      NULL, 0 /* xfrm_if_id */,
 					      HUNK_AS_SHUNK(c->config->sec_label),
