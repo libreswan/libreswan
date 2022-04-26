@@ -74,10 +74,6 @@ enum sa_type {
 #define SA_TYPE_ROOF (IPSEC_SA+1)
 };
 
-extern enum_names ike_version_parent_sa_names;
-extern enum_names ike_version_child_sa_names;
-extern enum_enum_names sa_type_ike_version_sa_names;
-
 typedef uint32_t msgid_t;      /* Host byte ordered */
 #define PRI_MSGID "%"PRIu32
 #define v1_MAINMODE_MSGID  ((msgid_t) 0)		/* network and host order */

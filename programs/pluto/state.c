@@ -804,7 +804,7 @@ static void send_delete(struct state *st)
 
 	dbg("#%lu send %s delete notification for %s",
 	    st->st_serialno,
-	    enum_name(&ike_version_names, st->st_ike_version),
+	    st->st_connection->config->ike_info->version_name,
 	    st->st_state->name);
 	switch (st->st_ike_version) {
 #ifdef USE_IKEv1
@@ -2112,9 +2112,8 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 		}
 
 		if (IS_IPSEC_SA_ESTABLISHED(st)) {
-			enum_buf eb;
 			jam(buf, " %s "PRI_SO";",
-			    str_enum(&ike_version_parent_sa_names, st->st_ike_version, &eb),
+			    c->config->ike_info->sa_type_name[IKE_SA],
 			    pri_so(st->st_clonedfrom));
 		} else if (st->hidden_variables.st_peer_supports_dpd) {
 			/* ??? why is printing -1 better than 0? */
@@ -3043,7 +3042,7 @@ static void dbg_newest_ipsec_sa_change(const char *f, so_serial_t old_ipsec_sa,
 	dbg("%s: instance %s[%lu], setting %s newest_ipsec_sa to #%lu (was #%lu) (spd.eroute=#%lu) cloned from #%lu",
 	    f, st->st_connection->name,
 	    st->st_connection->instance_serial,
-	    enum_name(&ike_version_names, st->st_ike_version),
+	    st->st_connection->config->ike_info->version_name,
 	    st->st_connection->newest_ipsec_sa, old_ipsec_sa,
 	    st->st_connection->spd.eroute_owner,
 	    st->st_clonedfrom);

@@ -46,7 +46,7 @@ static int rekey_connection_now(struct connection *c,
 {
 	if (c->config->ike_version != IKEv2) {
 		llog(RC_LOG, logger, "cannot force rekey of %s connection",
-		     enum_name(&ike_version_names, c->config->ike_version));
+		     c->config->ike_info->version_name);
 		return 0;
 	}
 	struct rekey_how *how = arg;
@@ -63,7 +63,7 @@ static int rekey_connection_now(struct connection *c,
 	}
 	if (st == NULL) {
 		llog(RC_LOG, logger, "connection does not have %s",
-		     enum_enum_name(&sa_type_ike_version_sa_names, how->sa_type, c->config->ike_version));
+		     c->config->ike_info->sa_type_name[how->sa_type]);
 		return 0;
 	}
 	rekey_state(st, how->background, logger);

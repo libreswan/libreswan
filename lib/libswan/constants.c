@@ -172,42 +172,6 @@ enum_names ike_version_names = {
 	NULL,
 };
 
-static const char *const ike_version_liveness_name[] = {
-	"DPD",
-	"liveness",
-};
-
-enum_names ike_version_liveness_names = {
-	IKEv1, IKEv2,
-	ARRAY_REF(ike_version_liveness_name),
-	NULL, /* prefix */
-	NULL,
-};
-
-static const char *const ike_version_child_name[] = {
-	"IPsec",
-	"CHILD",
-};
-
-enum_names ike_version_child_names = {
-	IKEv1, IKEv2,
-	ARRAY_REF(ike_version_child_name),
-	NULL, /* prefix */
-	NULL,
-};
-
-static const char *const ike_version_ike_name[] = {
-	"ISAKMP",
-	"IKE",
-};
-
-enum_names ike_version_ike_names = {
-	IKEv1, IKEv2,
-	ARRAY_REF(ike_version_ike_name),
-	NULL, /* prefix */
-	NULL,
-};
-
 /* Domain of Interpretation */
 
 static const char *const doi_name[] = {
@@ -2747,9 +2711,6 @@ static const enum_names *en_checklist[] = {
 	&ikev2_redirect_gw_names,
 	&ip_protocol_id_names,
 	&ike_version_names,
-	&ike_version_liveness_names,
-	&ike_version_ike_names,
-	&ike_version_child_names,
 	&payload_flag_names,
 	&oakley_attr_bit_names,
 	&global_timer_names,

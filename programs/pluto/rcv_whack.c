@@ -544,7 +544,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			merge_loggers(st, m->whack_async/*background*/, logger);
 			llog(LOG_STREAM/*not-whack*/, st->st_logger,
 			     "received whack to delete %s state #%lu %s",
-			     enum_name(&ike_version_names, st->st_ike_version),
+			     st->st_connection->config->ike_info->version_name,
 			     st->st_serialno, st->st_state->name);
 
 			switch (st->st_ike_version) {

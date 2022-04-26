@@ -1583,6 +1583,28 @@ static bool extract_connection(const struct whack_message *wm,
 #endif
 	}
 	config->ike_version = wm->ike_version;
+	static const struct ike_info ike_info[] = {
+		[0] = {
+			.version = 0,
+			.version_name = "INVALID",
+			.sa_type_name[IKE_SA] = "PARENT?!?",
+			.sa_type_name[IPSEC_SA] = "CHILD?!?",
+		},
+		[IKEv1] = {
+			.version = IKEv1,
+			.version_name = "IKEv1",
+			.sa_type_name[IKE_SA] = "ISAKMP SA",
+			.sa_type_name[IPSEC_SA] = "IPsec SA",
+		},
+		[IKEv2] = {
+			.version = IKEv2,
+			.version_name = "IKEv2",
+			.sa_type_name[IKE_SA] = "IKE SA",
+			.sa_type_name[IPSEC_SA] = "Child SA",
+		},
+	};
+	passert(wm->ike_version < elemsof(ike_info));
+	config->ike_info = &ike_info[wm->ike_version];
 
 	if (wm->policy & POLICY_OPPORTUNISTIC &&
 	    c->config->ike_version < IKEv2) {
@@ -1840,7 +1862,7 @@ static bool extract_connection(const struct whack_message *wm,
 	connection_buf cb;
 	policy_buf pb;
 	dbg("added new %s connection "PRI_CONNECTION" with policy %s",
-	    enum_name(&ike_version_names, c->config->ike_version),
+	    c->config->ike_info->version_name,
 	    pri_connection(c, &cb), str_connection_policies(c, &pb));
 
 	/* IKE cipher suites */
@@ -2399,9 +2421,7 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 	};
 
 	const char *what = (NEVER_NEGOTIATE(c->policy) ? policy_shunt_names[c->config->prospective_shunt] :
-			    c->config->ike_version == IKEv1 ? "IKEv1" :
-			    c->config->ike_version == IKEv2 ? "IKEv2" :
-			    "IKEv?");
+			    c->config->ike_info->version_name);
 	/* connection is good-to-go: log against it */
 	llog(RC_LOG, c->logger, "added %s connection", what);
 	policy_buf pb;
@@ -2799,7 +2819,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	lset_t shunt;
 
 	if (c->config->ike_version > 0) {
-		s += jam_enum(buf, &ike_version_names, c->config->ike_version);
+		s += jam_string(buf, c->config->ike_info->version_name);
 		sep = "+";
 	}
 

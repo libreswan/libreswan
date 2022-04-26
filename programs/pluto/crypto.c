@@ -92,7 +92,7 @@ void show_ike_alg_connection(struct show *s,
 			jam(buf,
 			    "\"%s\"%s:   %s algorithm newest: ",
 			    c->name, instance,
-			    enum_name(&ike_version_names, st->st_ike_version));
+			    st->st_connection->config->ike_info->version_name);
 			const struct trans_attrs *ta = &st->st_oakley;
 			const char *sep = "";
 			if (ta->ta_encrypt != NULL) {

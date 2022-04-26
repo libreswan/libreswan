@@ -563,7 +563,7 @@ bool refine_host_connection_of_state_on_responder(struct state *st,
 	int indent = 0;
 	connection_buf cib;
 	dbg_rhc("looking for an %s connection more refined than "PRI_CONNECTION"",
-	    enum_name(&ike_version_names, st->st_ike_version),
+		st->st_connection->config->ike_info->version_name,
 	    pri_connection(st->st_connection, &cib));
 	indent = 1;
 

@@ -131,8 +131,15 @@ struct config_end {
 	struct config_client_end client;
 };
 
+struct ike_info {
+	enum ike_version version;
+	const char *version_name;
+	const char *sa_type_name[SA_TYPE_ROOF];
+};
+
 struct config {
 	enum ike_version ike_version;
+	const struct ike_info *ike_info;
 
 	chunk_t sec_label;
 

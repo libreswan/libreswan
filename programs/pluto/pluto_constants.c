@@ -279,42 +279,6 @@ enum_names dns_auth_level_names = {
 	NULL
 };
 
-/*
- * enum sa_type -> enum ike_version
- */
-
-static const char *const ike_version_child_sa_name[] = {
-	[IKEv1-IKEv1] = "IPsec SA",
-	[IKEv2-IKEv1] = "Child SA"
-};
-
-enum_names ike_version_child_sa_names = {
-	IKEv1, IKEv2,
-	ARRAY_REF(ike_version_child_sa_name),
-	NULL, NULL,
-};
-
-static const char *const ike_version_parent_sa_name[] = {
-	[IKEv1-IKEv1] = "ISAKMP SA",
-	[IKEv2-IKEv1] = "IKE SA"
-};
-
-enum_names ike_version_parent_sa_names = {
-	IKEv1, IKEv2,
-	ARRAY_REF(ike_version_parent_sa_name),
-	NULL, NULL,
-};
-
-static const enum_names *sa_type_ike_version_sa_name[] = {
-	[IKE_SA] = &ike_version_parent_sa_names,
-	[IPSEC_SA] = &ike_version_child_sa_names,
-};
-
-enum_enum_names sa_type_ike_version_sa_names = {
-	SA_TYPE_FLOOR, SA_TYPE_ROOF-1,
-	ARRAY_REF(sa_type_ike_version_sa_name),
-};
-
 /* enum kernel_policy_op_names */
 
 static const char *kernel_policy_op_name[] = {
@@ -399,8 +363,6 @@ static const enum_names *pluto_enum_names_checklist[] = {
 #ifdef KERNEL_XFRM
 	&netkey_sa_dir_names,
 #endif
-	&ike_version_parent_sa_names,
-	&ike_version_child_sa_names,
 	&perspective_names,
 	&sa_policy_bit_names,
 	&kernel_policy_op_names,

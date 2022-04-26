@@ -216,7 +216,7 @@ struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
 			continue;
 		}
 		dbg("State DB: found %s state #%lu in %s (%s)",
-		    enum_name(&ike_version_names, ike_version),
+		    st->st_connection->config->ike_info->version_name,
 		    st->st_serialno, st->st_state->short_name, name);
 		return st;
 	}
@@ -287,7 +287,7 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
 			}
 		}
 		dbg("State DB: found %s state #%lu in %s (%s)",
-		    enum_name(&ike_version_names, ike_version),
+		    st->st_connection->config->ike_info->version_name,
 		    st->st_serialno, st->st_state->short_name, name);
 		return st;
 	}
@@ -312,7 +312,7 @@ HASH_DB(state,
 void rehash_state_cookies_in_db(struct state *st)
 {
 	dbg("State DB: re-hashing %s state #%lu IKE SPIi and SPI[ir]",
-	    enum_name(&ike_version_names, st->st_ike_version),
+	    st->st_connection->config->ike_info->version_name,
 	    st->st_serialno);
 	rehash_table_entry(&state_ike_spis_hash_table, st);
 	rehash_table_entry(&state_ike_initiator_spi_hash_table, st);

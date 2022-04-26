@@ -108,9 +108,9 @@ static void add_pending(struct fd *whack_sock,
 		log_pending(only | RC_COMMENT, p,
 			    "queue %s; waiting on %s "PRI_STATE" negotiating with %s",
 			    /* "Child SA" or "IPsec SA" */
-			    enum_name(&ike_version_child_sa_names, p->connection->config->ike_version),
+			    p->connection->config->ike_info->sa_type_name[IPSEC_SA],
 			    /* "IKE SA" or "ISAKMP SA" */
-			    enum_name(&ike_version_parent_sa_names, p->connection->config->ike_version),
+			    p->connection->config->ike_info->sa_type_name[IKE_SA],
 			    pri_state(&ike->sa, &sab),
 			    ipstr(&c->remote->host.addr, &b));
 	}
@@ -232,8 +232,7 @@ void release_pending_whacks(struct state *st, err_t story)
 					    "%s for IKE SA, but releasing whack for pending %s",
 					    story,
 					    /* "IPsec SA" or "CHILD SA" */
-					    enum_name(&ike_version_child_sa_names,
-						      p->connection->config->ike_version));
+					    p->connection->config->ike_info->sa_type_name[IPSEC_SA]);
 			}
 			fd_delref(&p->whack_sock);/*on-heap*/
 		}
@@ -440,10 +439,9 @@ void connection_check_phase2(struct logger *logger)
 
 		/* XXX: push/pop LOGGER's WHACK? */
 		address_buf ab;
-		enum_buf eb;
 		llog(RC_LOG, c->logger,
-		     "%s SA negotiating with %s took too long -- replacing",
-		     str_enum(&ike_version_ike_names, c->config->ike_version, &eb),
+		     "%s negotiating with %s took too long -- replacing",
+		     c->config->ike_info->sa_type_name[IKE_SA],
 		     str_address_sensitive(&c->remote->host.addr, &ab));
 
 		struct state *p1st;

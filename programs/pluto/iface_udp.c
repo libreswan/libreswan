@@ -575,7 +575,7 @@ static struct state *find_likely_sender(size_t packet_len, uint8_t *buffer,
 	}
 
 	dbg("MSG_ERRQUEUE packet matches %s SA #%lu",
-	    enum_name(&ike_version_names, ike_version),
+	    st->st_connection->config->ike_info->version_name,
 	    st->st_serialno);
 	return st;
 }

@@ -37,9 +37,6 @@ extern enum_names auth_alg_names;
 extern enum_names oakley_lifetime_names;
 
 extern enum_names ike_version_names;
-extern enum_names ike_version_liveness_names;
-extern enum_names ike_version_ike_names;
-extern enum_names ike_version_child_names;
 
 extern enum_names version_names;
 extern enum_names doi_names;

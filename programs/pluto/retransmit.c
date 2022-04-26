@@ -253,7 +253,7 @@ enum retransmit_status retransmit(struct state *st)
 				break;
 			default:
 				jam(buf, ".  No response (or no acceptable response) to our %s message",
-					enum_name(&ike_version_names, st->st_ike_version));
+				    st->st_connection->config->ike_info->version_name);
 				break;
 			}
 		}
