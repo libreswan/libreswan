@@ -72,9 +72,9 @@ bool raw_policy(enum kernel_policy_op op,
 		if (kernel_policy == NULL) {
 			jam(buf, "<null>");
 		} else {
-			jam_address(buf, &kernel_policy->host.src);
+			jam_address(buf, &kernel_policy->src.host);
 			jam(buf, "==>");
-			jam_address(buf, &kernel_policy->host.dst);
+			jam_address(buf, &kernel_policy->dst.host);
 			jam(buf, ",mode=%s", encap_mode_name(kernel_policy->mode));
 
 			jam_string(buf, "rule=[(inner)");

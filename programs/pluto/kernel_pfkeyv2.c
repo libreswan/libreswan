@@ -799,8 +799,8 @@ static struct sadb_x_ipsecrequest *put_sadb_x_ipsecrequest(struct outbuf *msg,
 			 .sadb_x_ipsecrequest_mode = mode,
 			 .sadb_x_ipsecrequest_level = ipsec_level_require,
 			 .sadb_x_ipsecrequest_reqid = /*rule->reqid*/0);
-	put_ip_sockaddr(msg, &kernel_policy->host.src);
-	put_ip_sockaddr(msg, &kernel_policy->host.dst);
+	put_ip_sockaddr(msg, &kernel_policy->src.host);
+	put_ip_sockaddr(msg, &kernel_policy->dst.host);
 	padup_sadb(msg, x_ipsecrequest);
 	/* patch up mess? */
 	x_ipsecrequest->sadb_x_ipsecrequest_len *= sizeof(uint64_t);

@@ -381,8 +381,8 @@ static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
 	policylen = sizeof(*policy_struct);
 
 	if (policy == IPSEC_POLICY_IPSEC && encap != NULL) {
-		ip_sockaddr local_sa = sockaddr_from_address(encap->host.src);
-		ip_sockaddr remote_sa = sockaddr_from_address(encap->host.dst);
+		ip_sockaddr local_sa = sockaddr_from_address(encap->src.host);
+		ip_sockaddr remote_sa = sockaddr_from_address(encap->dst.host);
 
 		ir = (struct sadb_x_ipsecrequest *)&policy_struct[1];
 

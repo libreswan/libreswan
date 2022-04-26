@@ -718,13 +718,13 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 			tmpl->optional = (rule->proto == ENCAP_PROTO_IPCOMP &&
 					  xfrm_dir != XFRM_POLICY_OUT);
 			tmpl->aalgos = tmpl->ealgos = tmpl->calgos = ~0;
-			tmpl->family = address_type(&kernel_policy->host.dst)->af;
+			tmpl->family = address_type(&kernel_policy->dst.host)->af;
 			/* only the first rule gets the worm; er tunnel flag */
 			if (i == 1 && kernel_policy->mode == ENCAP_MODE_TUNNEL) {
 				tmpl->mode = XFRM_MODE_TUNNEL;
 				/* tunnel mode needs addresses */
-				tmpl->saddr = xfrm_from_address(&kernel_policy->host.src);
-				tmpl->id.daddr = xfrm_from_address(&kernel_policy->host.dst);
+				tmpl->saddr = xfrm_from_address(&kernel_policy->src.host);
+				tmpl->id.daddr = xfrm_from_address(&kernel_policy->dst.host);
 			} else {
 				tmpl->mode = XFRM_MODE_TRANSPORT;
 			}
@@ -737,8 +737,8 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 			    tmpl->optional,
 			    tmpl->family,
 			    tmpl->mode,
-			    str_address(tmpl->mode ? &kernel_policy->host.src : &unset_address, &sb),
-			    str_address(tmpl->mode ? &kernel_policy->host.dst : &unset_address, &db));
+			    str_address(tmpl->mode ? &kernel_policy->src.host : &unset_address, &sb),
+			    str_address(tmpl->mode ? &kernel_policy->dst.host : &unset_address, &db));
 		}
 
 		/* append  */
