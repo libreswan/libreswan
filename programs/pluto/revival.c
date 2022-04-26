@@ -169,11 +169,15 @@ void add_revival_if_needed(struct state *st)
 	}
 
 	if (*find_revival(c) != NULL) {
-		log_state(RC_LOG, st, "deleting IKE SA but connection is supposed to remain up; EVENT_REVIVE_CONNS already scheduled");
+		log_state(RC_LOG, st,
+			  "deleting %s but connection is supposed to remain up; EVENT_REVIVE_CONNS already scheduled",
+			  c->config->ike_info->sa_type_name[IKE_SA]);
 		return;
 	}
 
-	log_state(RC_LOG, st, "deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS");
+	log_state(RC_LOG, st,
+		  "deleting %s but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS",
+		  c->config->ike_info->sa_type_name[IKE_SA]);
 
 	struct revival *r = alloc_thing(struct revival,
 					"revival struct");

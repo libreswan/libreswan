@@ -205,9 +205,9 @@ static struct connection *find_v1_host_connection(const ip_address local_address
 		}
 
 		/*
-		 * This could be a shared IKE SA connection, in which
-		 * case we prefer to find the connection that has the
-		 * IKE SA.
+		 * This could be a shared ISAKMP SA connection, in
+		 * which case we prefer to find the connection that
+		 * has the ISAKMP SA.
 		 */
 		if (d->newest_ike_sa != SOS_NOBODY) {
 			/* instant winner */

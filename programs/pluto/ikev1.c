@@ -2935,16 +2935,15 @@ void doi_log_cert_thinking(uint16_t auth,
  * Note the serial number, and release any connections with
  * the same peer ID but different peer IP address.
  *
- * Called by IKEv1 and IKEv2 when the IKE SA is established.
- * It checks if the freshly established connection needs is
- * replacing an established version of itself.
+ * Called by IKEv1 when the ISAKMP SA is established.  It checks if
+ * the freshly established connection needs is replacing an
+ * established version of itself.
  *
  * The use of uniqueIDs is mostly historic and might be removed
  * in a future version. It is ignored for PSK based connections,
  * which only act based on being a "server using PSK".
  *
- * IKEv1 code does not send or process INITIAL_CONTACT
- * IKEv2 codes does so we take it into account.
+ * IKEv1 code does not send or process INITIAL_CONTACT.
  */
 
 void ISAKMP_SA_established(const struct ike_sa *ike)

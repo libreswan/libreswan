@@ -669,9 +669,11 @@ static bool flush_incomplete_child(struct state *cst, void *pst)
 			 * REPLACING_SA and the connection needs to
 			 * say up.
 			 */
-			log_state(RC_LOG_SERIOUS, &child->sa,
-				  "reschedule pending CHILD SA - the IKE SA #%lu is going away",
-				  ike->sa.st_serialno);
+			llog_sa(RC_LOG_SERIOUS, child,
+				"reschedule pending %s - the %s #%lu is going away",
+				c->config->ike_info->sa_type_name[IPSEC_SA],
+				c->config->ike_info->sa_type_name[IKE_SA],
+				ike->sa.st_serialno);
 			child->sa.st_policy = c->policy; /* for pick_initiator */
 			event_force(EVENT_SA_REPLACE, &child->sa);
 
@@ -682,9 +684,11 @@ static bool flush_incomplete_child(struct state *cst, void *pst)
 			 * REPLACING_SA, or the connection shouldn't
 			 * stay up.
 			 */
-			log_state(RC_LOG_SERIOUS, &child->sa,
-				  "expire pending CHILD SA - the IKE SA #%lu is going away",
-				  ike->sa.st_serialno);
+			llog_sa(RC_LOG_SERIOUS, child,
+				"expire pending %s - the %s #%lu is going away",
+				c->config->ike_info->sa_type_name[IPSEC_SA],
+				c->config->ike_info->sa_type_name[IKE_SA],
+				ike->sa.st_serialno);
 			event_force(EVENT_SA_EXPIRE, &child->sa);
 
 		}
