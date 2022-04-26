@@ -1701,21 +1701,23 @@ static ip_packet packet_from_xfrm_selector(const struct ip_info *afi,
 			       protocol, ip_nport(sel->sport), ip_nport(sel->dport));
 }
 
+static const void *nlmsg_data(struct nlmsghdr *n, size_t size, struct logger *logger, where_t where)
+{
+	if (n->nlmsg_len < NLMSG_LENGTH(size)) {
+		sparse_buf sb;
+		llog(RC_LOG, logger,
+		     "%s got %s message with length %"PRIu32" < %zu bytes; ignore message",
+		     where->func,
+		     str_sparse(xfrm_type_names, n->nlmsg_type, &sb),
+		     n->nlmsg_len, size);
+		return NULL;
+	}
+	dbg("xfrm netlink msg len %zu", (size_t) n->nlmsg_len);
+	return NLMSG_DATA(n);
+}
+
 static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 {
-	struct xfrm_user_acquire *acquire;
-	shunk_t sec_label = NULL_HUNK;
-
-	dbg("xfrm netlink msg len %zu", (size_t) n->nlmsg_len);
-
-	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*acquire))) {
-		llog(RC_LOG, logger,
-		     "netlink_acquire got message with length %zu < %zu bytes; ignore message",
-		     (size_t) n->nlmsg_len,
-		     sizeof(*acquire));
-		return;
-	}
-
 	/*
 	 * WARNING: netlink only guarantees 32-bit alignment.
 	 * See NLMSG_ALIGNTO in the kernel's include/uapi/linux/netlink.h.
@@ -1732,8 +1734,13 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 	 * This isn't safe when the kernel and userland may
 	 * be compiled with different models.
 	 */
-	acquire = NLMSG_DATA(n);	/* insufficiently aligned */
+	const struct xfrm_user_acquire *acquire = /* insufficiently unaligned */
+		nlmsg_data(n, sizeof(*acquire), logger, HERE);
+	if (acquire == NULL) {
+		return;
+	}
 
+	shunk_t sec_label = NULL_HUNK;
 	const struct ip_info *afi = aftoinfo(acquire->policy.sel.family);
 	if (afi == NULL) {
 		llog(RC_LOG, logger,
@@ -1924,7 +1931,28 @@ static void process_addr_chage(struct nlmsghdr *n, struct logger *logger)
 
 static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
 {
-	struct xfrm_user_polexpire *upe;
+	/*
+	 * WARNING: netlink only guarantees 32-bit alignment.
+	 * See NLMSG_ALIGNTO in the kernel's include/uapi/linux/netlink.h.
+	 * BUT some fields in struct xfrm_user_acquire are 64-bit and so access
+	 * may be improperly aligned.  This will fail on a few strict
+	 * architectures (it does break C rules).
+	 *
+	 * WARNING: this code's understanding to the XFRM netlink
+	 * messages is from programs/pluto/linux26/xfrm.h.
+	 * There is no guarantee that this matches the kernel's
+	 * understanding.
+	 *
+	 * Many things are defined to be int or unsigned int.
+	 * This isn't safe when the kernel and userland may
+	 * be compiled with different models.
+	 */
+	const struct xfrm_user_polexpire *upe = /* insufficiently aligned */
+		nlmsg_data(n, sizeof(*upe), logger, HERE);
+	if (upe != NULL) {
+		return;
+	}
+
 	ip_address src, dst;
 
 	struct {
@@ -1933,15 +1961,6 @@ static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
 	} req;
 	struct nlm_resp rsp;
 
-	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*upe))) {
-		llog(RC_LOG, logger,
-			    "netlink_policy_expire got message with length %zu < %zu bytes; ignore message",
-			    (size_t) n->nlmsg_len,
-			    sizeof(*upe));
-		return;
-	}
-
-	upe = NLMSG_DATA(n);
 	xfrm2ip(&upe->pol.sel.saddr, &src, upe->pol.sel.family);
 	xfrm2ip(&upe->pol.sel.daddr, &dst, upe->pol.sel.family);
 	address_buf a;
@@ -1986,17 +2005,6 @@ static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
 
 static void netlink_expire(struct nlmsghdr *n, struct logger *logger)
 {
-	struct xfrm_user_expire *expire; /* not aligned */
-
-	dbg("xfrm netlink msg len %zu", (size_t) n->nlmsg_len);
-	if (n->nlmsg_len < NLMSG_LENGTH(sizeof(*expire))) {
-		llog(RC_LOG, logger,
-		     "netlink_acquire got message with length %zu < %zu bytes; ignore message",
-		     (size_t) n->nlmsg_len,
-		     sizeof(*expire));
-		return;
-	}
-
 	/*
 	 * WARNING: netlink only guarantees 32-bit alignment.
 	 * See NLMSG_ALIGNTO in the kernel's include/uapi/linux/netlink.h.
@@ -2013,7 +2021,11 @@ static void netlink_expire(struct nlmsghdr *n, struct logger *logger)
 	 * This isn't safe when the kernel and userland may
 	 * be compiled with different models.
 	 */
-	expire = NLMSG_DATA(n);	/* insufficiently aligned */
+	const struct xfrm_user_expire *expire = /* insufficiently aligned */
+		nlmsg_data(n, sizeof(*expire), logger, HERE);
+	if (expire == NULL) {
+		return;
+	}
 
 	const struct ip_info *afi = aftoinfo(expire->state.family);
 	if (afi == NULL) {
