@@ -2218,88 +2218,60 @@ static bool netlink_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 }
 
 /* add bypass policies/holes icmp */
-static bool netlink_bypass_policy(int family, int proto, int port,
-				  struct logger *logger)
+static bool add_icmpv6_bypass_policy(int port, struct logger *logger)
 {
+	/* icmp is packed into [sd]port */
+	uint16_t icmp_type = port >> 8;
+	uint16_t icmp_code = port & 0xFF;
+
 	struct {
 		struct nlmsghdr n;
-		union {
-			struct xfrm_userpolicy_info p;
-			struct xfrm_userpolicy_id id;
-		} u;
-		char data[MAX_NETLINK_DATA_SIZE];
-	} req;
+		struct xfrm_userpolicy_info p;
+	} req = {
+		.n = {
+			.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK,
+			.nlmsg_type = XFRM_MSG_UPDPOLICY,
+			.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.p))),
+		},
+		.p = {
+			.priority = 1, /* give admin prio 0 as override */
+			.action = XFRM_POLICY_ALLOW,
+			.share = XFRM_SHARE_ANY,
 
-	zero(&req);
+			.lft.soft_byte_limit = XFRM_INF,
+			.lft.soft_packet_limit = XFRM_INF,
+			.lft.hard_byte_limit = XFRM_INF,
+			.lft.hard_packet_limit = XFRM_INF,
 
-	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
+			.sel.proto = IPPROTO_ICMPV6,
+			.sel.family = AF_INET6,
+			/* pack icmp into ports */
+			.sel.sport = htons(icmp_type),
+			.sel.dport = htons(icmp_code),
+			.sel.sport_mask = 0xffff,
+		},
+	};
 
-	req.n.nlmsg_type = XFRM_MSG_UPDPOLICY;
-	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.u.p)));
+	const char *text = "add port bypass";
 
-	req.u.p.dir = XFRM_POLICY_IN;
-	req.u.p.priority = 1; /* give admin prio 0 as override */
-	req.u.p.action = XFRM_POLICY_ALLOW;
-	req.u.p.share = XFRM_SHARE_ANY;
+	/*
+	 * EXPECT_NO_INBOUND means no fail on missing and/or
+	 * success.
+	 */
+	req.p.dir = XFRM_POLICY_IN;
+	if (!sendrecv_xfrm_policy(&req.n, REPORT_NO_INBOUND,
+				  text, "(in)", logger))
+		return false;
 
-	req.u.p.lft.soft_byte_limit = XFRM_INF;
-	req.u.p.lft.soft_packet_limit = XFRM_INF;
-	req.u.p.lft.hard_byte_limit = XFRM_INF;
-	req.u.p.lft.hard_packet_limit = XFRM_INF;
+	req.p.dir = XFRM_POLICY_FWD;
+	if (!sendrecv_xfrm_policy(&req.n, REPORT_NO_INBOUND,
+				  text, "(fwd)", logger))
+		return false;
 
-	req.u.p.sel.proto = proto;
-	req.u.p.sel.family = family;
-
-	const char* text = "add port bypass";
-
-	if (proto == IPPROTO_ICMPV6) {
-		uint16_t icmp_type;
-		uint16_t icmp_code;
-
-		icmp_type = port >> 8;
-		icmp_code = port & 0xFF;
-		req.u.p.sel.sport = htons(icmp_type);
-		req.u.p.sel.dport = htons(icmp_code);
-		req.u.p.sel.sport_mask = 0xffff;
-
-		/*
-		 * EXPECT_NO_INBOUND means no fail on missing and/or
-		 * success.
-		 */
-		if (!sendrecv_xfrm_policy(&req.n, EXPECT_NO_INBOUND,
-					  text, "(in)", logger))
-			return false;
-
-		req.u.p.dir = XFRM_POLICY_FWD;
-
-		if (!sendrecv_xfrm_policy(&req.n, EXPECT_NO_INBOUND,
-					  text, "(fwd)", logger))
-			return false;
-
-		req.u.p.dir = XFRM_POLICY_OUT;
-
-		if (!sendrecv_xfrm_policy(&req.n, EXPECT_NO_INBOUND,
-					  text, "(out)", logger))
-			return false;
-	} else {
-		req.u.p.sel.dport = htons(port);
-		req.u.p.sel.dport_mask = 0xffff;
-
-		if (!sendrecv_xfrm_policy(&req.n, EXPECT_NO_INBOUND,
-					  text, "(in)", logger))
-			return false;
-
-		req.u.p.dir = XFRM_POLICY_OUT;
-
-		req.u.p.sel.sport = htons(port);
-		req.u.p.sel.sport_mask = 0xffff;
-		req.u.p.sel.dport = 0;
-		req.u.p.sel.dport_mask = 0;
-
-		if (!sendrecv_xfrm_policy(&req.n, EXPECT_NO_INBOUND,
-					  text, "(out)", logger))
-			return false;
-	}
+	req.p.dir = XFRM_POLICY_OUT;
+	if (!sendrecv_xfrm_policy(&req.n, THIS_IS_NOT_INBOUND,
+				  text, "(out)", logger))
+		return false;
 
 	return true;
 }
@@ -2347,15 +2319,11 @@ static void netlink_v6holes(struct logger *logger)
 		return;
 	}
 
-	if (!netlink_bypass_policy(AF_INET6, IPPROTO_ICMPV6,
-				   ICMP_NEIGHBOR_DISCOVERY,
-				   logger)) {
+	if (!add_icmpv6_bypass_policy(ICMP_NEIGHBOR_DISCOVERY, logger)) {
 		fatal(PLUTO_EXIT_KERNEL_FAIL, logger,
 		      "kernel: could not insert ICMP_NEIGHBOUR_DISCOVERY bypass policy");
 	}
-	if (!netlink_bypass_policy(AF_INET6, IPPROTO_ICMPV6,
-				   ICMP_NEIGHBOR_SOLICITATION,
-				   logger)) {
+	if (!add_icmpv6_bypass_policy(ICMP_NEIGHBOR_SOLICITATION, logger)) {
 		fatal(PLUTO_EXIT_KERNEL_FAIL, logger,
 		      "kernel: could not insert ICMP_NEIGHBOUR_SOLICITATION bypass policy");
 	}
