@@ -334,7 +334,7 @@ struct kernel_policy bare_kernel_policy(const ip_selector *src,
 		.src.host = child_afi->address.unspec,
 		.dst.host = child_afi->address.unspec,
 		.mode = ENCAP_MODE_TRANSPORT,
-		.last = 1,
+		.nr_rules = 1,
 		.rule[1] = {
 			.proto = ENCAP_PROTO_ESP,
 			.reqid = 0,
@@ -991,7 +991,7 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 		.src.route = src_route,
 		.dst.route = dst_route,
 		.mode = mode,
-		.last = 0,
+		.nr_rules = 0,
 	};
 
 	/*
@@ -1026,8 +1026,8 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 	}
 
 	passert(last < kernel_policy.rule + elemsof(kernel_policy.rule));
-	kernel_policy.last = last - kernel_policy.rule;
-	passert(kernel_policy.last < elemsof(kernel_policy.rule));
+	kernel_policy.nr_rules = last - kernel_policy.rule;
+	passert(kernel_policy.nr_rules < elemsof(kernel_policy.rule));
 
 	return kernel_policy;
 }
@@ -1300,7 +1300,7 @@ static bool sag_eroute(const struct state *st,
 	struct kernel_policy kernel_policy =
 		kernel_policy_from_state(st, sr, ENCAP_DIRECTION_OUTBOUND);
 	/* check for no transform at all */
-	passert(kernel_policy.last > 0);
+	passert(kernel_policy.nr_rules > 0);
 
 	pexpect(op & KERNEL_POLICY_OUTBOUND);
 
@@ -1624,7 +1624,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 		bool inbound = (direction == ENCAP_DIRECTION_INBOUND);
 		const struct kernel_policy kernel_policy =
 			kernel_policy_from_spd(c->policy, &c->spd, mode, direction);
-		if (kernel_policy.last == 0) {
+		if (kernel_policy.nr_rules == 0) {
 			/* XXX: log? */
 			return false;
 		}
@@ -1929,7 +1929,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		kernel_policy_from_state(st, &c->spd,
 					 (inbound ? ENCAP_DIRECTION_INBOUND :
 					  ENCAP_DIRECTION_OUTBOUND));
-	if (!pexpect(kernel_policy.last > 0)) {
+	if (!pexpect(kernel_policy.nr_rules > 0)) {
 		return false;
 	}
 

@@ -48,7 +48,7 @@ bool raw_policy(enum kernel_policy_op op,
 		jam(buf, "kernel: %s() ", __func__);
 		jam_enum_short(buf, &kernel_policy_op_names, op);
 		if (kernel_policy != NULL &&
-		    kernel_policy->last > 0 &&
+		    kernel_policy->nr_rules > 0 &&
 		    (op == KP_DELETE_OUTBOUND || op == KP_DELETE_INBOUND)) {
 			jam(buf, ",ENCAP!=NULL");
 		}
@@ -79,7 +79,7 @@ bool raw_policy(enum kernel_policy_op op,
 
 			jam_string(buf, "rule=[(inner)");
 			const char *sep = "";
-			for (unsigned i = 1; i <= kernel_policy->last; i++) {
+			for (unsigned i = 1; i <= kernel_policy->nr_rules; i++) {
 				const struct kernel_policy_rule *rule = &kernel_policy->rule[i];
 				const ip_protocol *rule_proto = protocol_by_ipproto(rule->proto);
 				jam(buf, "%s%s(%d)", sep, rule_proto->name, rule->reqid);

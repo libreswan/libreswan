@@ -560,10 +560,10 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	switch (shunt_policy) {
 	case SHUNT_UNSET:
 		xfrm_action = XFRM_POLICY_ALLOW;
-		if (kernel_policy != NULL && kernel_policy->last > 0) {
+		if (kernel_policy != NULL && kernel_policy->nr_rules > 0) {
 			policy_name =
 				(kernel_policy->mode == ENCAP_MODE_TUNNEL ? ip_protocol_ipip.name :
-				 kernel_policy->mode == ENCAP_MODE_TRANSPORT ? protocol_by_ipproto(kernel_policy->rule[kernel_policy->last].proto)->name :
+				 kernel_policy->mode == ENCAP_MODE_TRANSPORT ? protocol_by_ipproto(kernel_policy->rule[kernel_policy->nr_rules].proto)->name :
 				 "UNKNOWN");
 		} else {
 			/* MUST BE DELETE! */
@@ -709,8 +709,8 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 		struct xfrm_user_tmpl tmpls[4] = {0};
 
 		/* remember; kernel_policy.rule[] is 1 based */
-		passert(kernel_policy->last <= (int)elemsof(tmpls));
-		for (unsigned i = 1; i <= kernel_policy->last; i++) {
+		passert(kernel_policy->nr_rules <= (int)elemsof(tmpls));
+		for (unsigned i = 1; i <= kernel_policy->nr_rules; i++) {
 			const struct kernel_policy_rule *rule = &kernel_policy->rule[i];
 			struct xfrm_user_tmpl *tmpl = &tmpls[i-1/*remove bias*/];
 			tmpl->reqid = rule->reqid;
@@ -744,7 +744,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 		/* append  */
 		struct rtattr *attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 		attr->rta_type = XFRMA_TMPL;
-		attr->rta_len = kernel_policy->last/*nr-rules*/ * sizeof(tmpls[0]);
+		attr->rta_len = kernel_policy->nr_rules/*nr-rules*/ * sizeof(tmpls[0]);
 		memcpy(RTA_DATA(attr), tmpls, attr->rta_len);
 		attr->rta_len = RTA_LENGTH(attr->rta_len);
 		req.n.nlmsg_len += attr->rta_len;
@@ -757,7 +757,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 			/*
 			 * Dump ignored proto_info[].
 			 */
-			for (unsigned i = 1; i <= kernel_policy->last; i++) {
+			for (unsigned i = 1; i <= kernel_policy->nr_rules; i++) {
 				const struct kernel_policy_rule *rule = &kernel_policy->rule[i];
 				DBG_log("%s() ignoring xfrm_user_tmpl reqid=%d proto=%s %s because op=%s",
 					__func__, rule->reqid,

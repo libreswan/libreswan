@@ -823,7 +823,7 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 			     .sadb_x_policy_type = policy_type,
 			     .sadb_x_policy_dir = policy_dir);
 
-	if (kernel_policy != NULL && kernel_policy->last > 0) {
+	if (kernel_policy != NULL && kernel_policy->nr_rules > 0) {
 		pexpect((op & KERNEL_POLICY_ADD) ||
 			(op & KERNEL_POLICY_REPLACE));
 		pexpect(policy_type == ipsec_policy_ipsec);
@@ -835,7 +835,7 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 		 */
 		enum ipsec_mode mode = (kernel_policy->mode == ENCAP_MODE_TUNNEL ? ipsec_mode_tunnel :
 					ipsec_mode_transport);
-		for (unsigned i = 1; i <= kernel_policy->last; i++) {
+		for (unsigned i = 1; i <= kernel_policy->nr_rules; i++) {
 			const struct kernel_policy_rule *rule = &kernel_policy->rule[i];
 			put_sadb_x_ipsecrequest(req, kernel_policy, mode, rule);
 			mode = ipsec_mode_transport;

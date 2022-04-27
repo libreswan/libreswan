@@ -191,20 +191,20 @@ struct kernel_policy {
 		ip_address host;
 	} src, dst;
 	/*
-	 * Index from 1; RULE[0] is always empty; so last==0 implies
-	 * no rules.
+	 * Index from 1; RULE[0] is always empty; so .nr_rules==0
+	 * implies no rules.
 	 *
 	 * The rules are applied to an outgoing packet in order they
 	 * appear in the rule[] table.  Hence, the output from
-	 * rule[last] goes across the wire, and rule[1] specifies the
-	 * first transform.
+	 * .rule[.nr_rules] goes across the wire, and rule[1]
+	 * specifies the first transform.
 	 *
 	 * The first transform is also set according to MODE (tunnel
 	 * or transport); any other rules are always in transport
 	 * mode.
 	 */
 	enum encap_mode mode;
-	unsigned last;
+	unsigned nr_rules;
 	struct kernel_policy_rule rule[5]; /* [0]+AH+ESP+COMP+0 */
 };
 
