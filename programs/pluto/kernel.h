@@ -208,7 +208,8 @@ struct kernel_policy {
 	struct kernel_policy_rule rule[5]; /* [0]+AH+ESP+COMP+0 */
 };
 
-struct kernel_policy bare_kernel_policy(const struct ip_info *afi);
+struct kernel_policy bare_kernel_policy(const ip_selector *src,
+					const ip_selector *dst);
 
 /*
  * Replaces SADB_X_SATYPE_* for non-KLIPS code. Assumes normal

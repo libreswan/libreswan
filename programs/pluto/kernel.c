@@ -272,10 +272,11 @@ static bool bare_policy_op(enum kernel_policy_op op,
 	bool delete = (op & KERNEL_POLICY_DELETE);
 
 	pexpect(op & KERNEL_POLICY_OUTBOUND);
-	struct kernel_policy outbound_kernel_policy = bare_kernel_policy(selector_type(&sr->this.client));
-
+	struct kernel_policy outbound_kernel_policy =
+		bare_kernel_policy(&sr->this.client, &sr->that.client);
 	if (!raw_policy(op, THIS_IS_NOT_INBOUND,
-			&sr->this.client, &sr->that.client,
+			&outbound_kernel_policy.src.client,
+			&outbound_kernel_policy.dst.client,
 			shunt_policy,
 			((delete || shunt_policy == SHUNT_PASS) ? NULL :
 			 &outbound_kernel_policy),
@@ -310,9 +311,11 @@ static bool bare_policy_op(enum kernel_policy_op op,
 	 * outbound policies when there's only the basic outbound
 	 * policy installed.
 	 */
-	struct kernel_policy inbound_kernel_policy = bare_kernel_policy(selector_type(&sr->that.client));
+	struct kernel_policy inbound_kernel_policy =
+		bare_kernel_policy(&sr->that.client, &sr->this.client);
 	return raw_policy(op, what_about_inbound,
-			  &sr->that.client, &sr->this.client,
+			  &inbound_kernel_policy.src.client,
+			  &inbound_kernel_policy.dst.client,
 			  shunt_policy,
 			  ((delete || shunt_policy == SHUNT_PASS) ? NULL :
 			   &inbound_kernel_policy),
@@ -331,9 +334,17 @@ static bool bare_policy_op(enum kernel_policy_op op,
 	((c)->interface->ip_dev == (d)->interface->ip_dev && \
 	 sameaddr(&(c)->spd.this.host->nexthop, &(d)->spd.this.host->nexthop))
 
-struct kernel_policy bare_kernel_policy(const struct ip_info *child_afi)
+struct kernel_policy bare_kernel_policy(const ip_selector *src,
+					const ip_selector *dst)
 {
+	const struct ip_info *child_afi = selector_type(src);
+	pexpect(selector_type(dst) == child_afi);
 	struct kernel_policy transport_esp = {
+		/* what will capture packets */
+		.src.client = *src,
+		.dst.client = *dst,
+		.src.route = *src,
+		.dst.route = *dst,
 		/*
 		 * With transport mode, the encapsulated packet on the
 		 * host interface must have the same family as the raw
@@ -1902,10 +1913,10 @@ bool assign_holdpass(const struct connection *c,
 			 */
 			route.dst.host_addr = address_type(&route.dst.host_addr)->address.unspec;
 
-			struct kernel_policy kernel_policy = bare_kernel_policy(selector_type(&sr->this.client));
-
+			struct kernel_policy outbound_kernel_policy =
+				bare_kernel_policy(&sr->this.client, &sr->that.client);
 			if (eroute_connection(op, reason, sr, negotiation_shunt,
-					      &route, &kernel_policy,
+					      &route, &outbound_kernel_policy,
 					      calculate_sa_prio(c, false),
 					      NULL, 0 /* xfrm_if_id */,
 					      HUNK_AS_SHUNK(c->config->sec_label),
@@ -2935,12 +2946,14 @@ bool route_and_eroute(struct connection *c,
 				 * gotten this far.
 				 */
 				struct bare_shunt *bs = *bspp;
-				struct kernel_policy kernel_policy = bare_kernel_policy(selector_type(&bs->our_client));
+				struct kernel_policy outbound_kernel_policy =
+					bare_kernel_policy(&bs->our_client,
+							   &bs->peer_client);
 				if (!raw_policy(KP_REPLACE_OUTBOUND, THIS_IS_NOT_INBOUND,
-						&bs->our_client,
-						&bs->peer_client,
+						&outbound_kernel_policy.src.client,
+						&outbound_kernel_policy.dst.client,
 						bs->shunt_policy,
-						&kernel_policy,
+						&outbound_kernel_policy,
 						deltatime(SHUNT_PATIENCE),
 						calculate_sa_prio(c, false),
 						/*sa_mars+xfrmi*/NULL,NULL,
@@ -3138,9 +3151,11 @@ static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
 	 * The restored policy uses TRANSPORT mode (the host
 	 * .{src,dst} provides the family but the address isn't used).
 	 */
-	struct kernel_policy outbound_kernel_policy = bare_kernel_policy(selector_type(&out->this.client));
+	struct kernel_policy outbound_kernel_policy =
+		bare_kernel_policy(&out->this.client, &out->that.client);
 	if (!raw_policy(outbound_op, THIS_IS_NOT_INBOUND,
-			&out->this.client, &out->that.client,
+			&outbound_kernel_policy.src.client,
+			&outbound_kernel_policy.dst.client,
 			outbound_shunt,
 			(outbound_op == KP_REPLACE_OUTBOUND ? &outbound_kernel_policy : NULL),
 			deltatime(0),
@@ -3574,11 +3589,14 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 			 * delete things.
 			 */
 
-			struct kernel_policy kernel_policy = bare_kernel_policy(selector_type(&src));
+			struct kernel_policy outbound_kernel_policy =
+				bare_kernel_policy(&src, &dst);
 			bool ok = raw_policy(KP_REPLACE_OUTBOUND, THIS_IS_NOT_INBOUND,
-					     &src, &dst,
+					     &outbound_kernel_policy.src.client,
+					     &outbound_kernel_policy.dst.client,
 					     failure_shunt,
-					     (failure_shunt == SHUNT_PASS ? NULL : &kernel_policy),
+					     (failure_shunt == SHUNT_PASS ? NULL :
+					      &outbound_kernel_policy),
 					     deltatime(SHUNT_PATIENCE),
 					     0, /* we don't know connection for priority yet */
 					     /*sa_marks+xfrmi*/NULL,NULL,

@@ -951,12 +951,15 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 * violation into raw_policy()?
 	 */
 
-	struct kernel_policy kernel_policy = bare_kernel_policy(selector_type(&local_shunt));
+	struct kernel_policy outbound_kernel_policy =
+		bare_kernel_policy(&local_shunt, &remote_shunt);
 
 	if (raw_policy(KP_ADD_OUTBOUND, THIS_IS_NOT_INBOUND,
-		       &local_shunt, &remote_shunt,
+		       &outbound_kernel_policy.src.client,
+		       &outbound_kernel_policy.dst.client,
 		       b->negotiation_shunt,
-		       (b->negotiation_shunt == SHUNT_PASS ? NULL : &kernel_policy),
+		       (b->negotiation_shunt == SHUNT_PASS ? NULL :
+			&outbound_kernel_policy),
 		       deltatime(SHUNT_PATIENCE),
 		       calculate_sa_prio(c, LIN(POLICY_OPPORTUNISTIC, c->policy) ? true : false),
 		       NULL, 0 /* xfrm-if-id */,
