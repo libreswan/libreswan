@@ -237,6 +237,8 @@ enum known_vendorid {
 	VID_INITIAL_CONTACT,
 	VID_MISC_IKEv2,
 	VID_DPD1_NG,
+
+#define VID_ROOF (VID_DPD1_NG+1)
 };
 
 #endif

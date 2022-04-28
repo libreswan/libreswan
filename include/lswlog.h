@@ -266,7 +266,7 @@ void llog_dump(lset_t rc_flags,
 #define llog_dump_hunk(RC_FLAGS, LOGGER, HUNK)				\
 	{								\
 		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
-		llog_dump(LABEL, hunk_->ptr, hunk_->len);		\
+		llog_dump(RC_FLAGS, LOGGER, hunk_->ptr, hunk_->len);	\
 	}
 
 /*
