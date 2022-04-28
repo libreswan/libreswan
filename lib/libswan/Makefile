@@ -149,7 +149,7 @@ OBJS += lswglob.o
 OBJS += global_logger.o
 OBJS += jambuf.o
 OBJS += jam_bytes.o
-OBJS += log_message.o
+OBJS += llog.o
 OBJS += llog_va_list.o
 OBJS += log_nss_error.o
 
