@@ -1,4 +1,5 @@
 /* Libreswan ISAKMP VendorID Handling
+ *
  * Copyright (C) 2002-2003 Mathieu Lafon - Arkoon Network Security
  * Copyright (C) 2004 Xelerance Corporation
  * Copyright (C) 2012-2019 Paul Wouters <pwouters@redhat.com>
@@ -119,8 +120,7 @@ struct vid_struct {
 
 	/* filled in at runtime: */
 	const char *descr;
-	const char *vid;
-	unsigned int vid_len;
+	shunk_t vid;
 };
 
 #define DEC_MD5_VID_D(ID, STR, DESCR)		\
@@ -134,8 +134,15 @@ struct vid_struct {
 	[ID] = { .id = ID, .flags = FLAGS, .data = DATA, .descr = DESCR, }
 
 #define RAW(ID, FLAGS, DESCR, RAW_VID)					\
-	[ID] = { .id = ID, .flags = FLAGS, .descr = DESCR,		\
-		.vid = RAW_VID, .vid_len = sizeof(RAW_VID) - 1 /*don't count NUL*/, }
+	[ID] = {							\
+		.id = ID,						\
+		.flags = FLAGS,						\
+		.descr = DESCR,						\
+		.vid = {						\
+			.ptr = RAW_VID,					\
+			.len = sizeof(RAW_VID) - 1 /*don't count NUL*/, \
+		},							\
+	}
 
 static struct vid_struct vid_tab[] = {
 
@@ -523,21 +530,17 @@ static int qsort_vid_cmp(const void *lp, const void *rp)
 	/*
 	 * If this isn't sufficient then there are deeper problems.
 	 */
-	return raw_cmp(l->vid, l->vid_len, r->vid, r->vid_len);
+	return hunk_cmp(l->vid, r->vid);
 }
 
-#if 0
-static int bsearch_vid_cmp(const void *kp, const void *mp)
+static int vid_cmp(shunk_t key, const struct vid_struct *member)
 {
-	const shunk_t *vid = kp;
-	const struct vid_struct *pvid = *(void**)mp;
-	if (pvid->vid_len < vid->len && (pvid->flags & VID_SUBSTRING)) {
-		return raw_cmp(vid->ptr, pvid->vid_len, pvid->vid, pvid->vid_len);
+	if (member->vid.len < key.len && (member->flags & VID_SUBSTRING)) {
+		return raw_cmp(key.ptr, member->vid.len, member->vid.ptr, member->vid.len);
 	} else {
-		return raw_cmp(vid->ptr, vid->len, pvid->vid, pvid->vid_len);
+		return hunk_cmp(key, member->vid);
 	}
 }
-#endif
 
 /*
  * Setup VendorID structs, and populate them
@@ -547,7 +550,7 @@ static int bsearch_vid_cmp(const void *kp, const void *mp)
  * leak: 2 * vid->data, item size: 13
  */
 
-static void DBG_vid_struct(const struct vid_struct *vid, struct logger *logger)
+static void DBG_vid_struct(const struct vid_struct *vid, const struct logger *logger)
 {
 	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 		jam(buf, " %3d ", vid->id); /* match " %3s " below */
@@ -567,9 +570,9 @@ static void DBG_vid_struct(const struct vid_struct *vid, struct logger *logger)
 	}
 	LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 		jam(buf, " %3s ", ""); /* match " %3d " above */
-		jam_dump_bytes(buf, vid->vid, vid->vid_len);
+		jam_dump_hunk(buf, vid->vid);
 		jam_string(buf, " [");
-		jam_sanitized_bytes(buf, vid->vid, vid->vid_len);
+		jam_sanitized_bytes(buf, vid->vid.ptr, vid->vid.len);
 		jam_string(buf, "]");
 	}
 }
@@ -593,35 +596,29 @@ void init_vendorid(struct logger *logger)
 
 		if (vid->flags & VID_STRING) {
 			/** VendorID is a string **/
-			good &= pexpect(vid->vid == NULL);
+			good &= pexpect(vid->vid.ptr == NULL);
+			good &= pexpect(vid->vid.len == 0);
 			good &= pexpect(vid->descr == NULL || !streq(vid->descr, vid->data));
-			vid->vid = clone_str(vid->data, "vid->data (ignore)");
-			/* clang 3.4 thinks that vid->data might be NULL but it won't be */
-			vid->vid_len = strlen(vid->data);
+			vid->vid = shunk1(vid->data);
 		} else if (vid->flags & VID_MD5HASH) {
 			/** VendorID is a string to hash with MD5 **/
-			good &= pexpect(vid->vid == NULL);
-			unsigned char *vidm = alloc_bytes(MD5_DIGEST_SIZE,
-							 "VendorID MD5 (ignore)");
-			const unsigned char *d = (const unsigned char *)vid->data;
-
-			vid->vid = (char *)vidm;
-
+			good &= pexpect(vid->vid.ptr == NULL);
+			good &= pexpect(vid->vid.len == 0);
 			/* TODO: This use must allowed even with USE_MD5=false */
 			struct crypt_hash *ctx = crypt_hash_init("vendor id",
 								 &ike_alg_hash_md5,
 								 logger);
-			crypt_hash_digest_bytes(ctx, "data", d, strlen(vid->data));
+			crypt_hash_digest_bytes(ctx, "data", vid->data, strlen(vid->data));
+			void *vidm = alloc_bytes(MD5_DIGEST_SIZE, "VendorID MD5 (ignore)");
 			crypt_hash_final_bytes(&ctx, vidm, MD5_DIGEST_SIZE);
-			vid->vid_len = MD5_DIGEST_SIZE;
+			vid->vid = shunk2(vidm, MD5_DIGEST_SIZE);
 		} else if (vid->flags & VID_FSWAN_HASH) {
 			/** FreeS/WAN 2.00+ specific hash **/
-			good &= pexpect(vid->vid == NULL);
+			good &= pexpect(vid->vid.ptr == NULL);
+			good &= pexpect(vid->vid.len == 0);
 #define FSWAN_VID_SIZE 12
 			unsigned char hash[MD5_DIGEST_SIZE];
 			char *vidm = alloc_bytes(FSWAN_VID_SIZE, "fswan VID (ignore)");
-
-			vid->vid = vidm;
 
 			struct crypt_hash *ctx = crypt_hash_init("vendor id",
 								 &ike_alg_hash_md5,
@@ -642,12 +639,14 @@ void init_vendorid(struct logger *logger)
 				vidm[i] &= 0x7f;
 				vidm[i] |= 0x40;
 			}
-			vid->vid_len = FSWAN_VID_SIZE;
+			vid->vid = shunk2(vidm, FSWAN_VID_SIZE);
 #undef FSWAN_VID_SIZE
 		} else {
-			good &= pexpect(vid->vid_len > 0);
-			good &= pexpect(vid->vid != NULL);
+			/* RAW() */
+			good &= pexpect(vid->vid.len > 0);
+			good &= pexpect(vid->vid.ptr != NULL);
 			good &= pexpect(vid->descr != NULL);
+			good &= pexpect(vid->data == NULL);
 		}
 
 		if (vid->descr == NULL) {
@@ -657,8 +656,8 @@ void init_vendorid(struct logger *logger)
 
 		/* job done? */
 		good &= pexpect(vid->descr != NULL);
-		good &= pexpect(vid->vid != NULL);
-		good &= pexpect(vid->vid_len > 0);
+		good &= pexpect(vid->vid.ptr != NULL);
+		good &= pexpect(vid->vid.len > 0);
 		if (!good || DBGP(DBG_TMI)) {
 			DBG_vid_struct(vid, logger);
 		}
@@ -672,31 +671,24 @@ void init_vendorid(struct logger *logger)
 	 * overlaping a longer VID.
 	 */
 	dbg("verifying VID lookup table");
-	const struct vid_struct *clash = vid_lookup[0];
+	const struct vid_struct **clash = &vid_lookup[0];
 	FOR_EACH_ELEMENT_FROM_1(vidp, vid_lookup) {
-		const struct vid_struct *vid = vidp[+0];
 
-		/* are the starts different? */
-		if (!memeq(clash->vid, vid->vid, PMIN(clash->vid_len, vid->vid_len))) {
-			/* easy peasy */
-			clash = vid;
-			continue;
-		}
-
-		/* is clash shorter and exact */
-		if (!(clash->flags & VID_SUBSTRING) &&
-		    clash->vid_len < vid->vid_len) {
-			/* lemon squeezy */
-			clash = vid;
+		int c = vid_cmp((*vidp)->vid, (*clash));
+		if (c > 0) {
+			/* ordered: easy peasy; lemon squeezy */
+			clash = vidp;
 			continue;
 		}
 
 		if (DBGP(DBG_BASE)) {
 			DBG_log("Vendor ID '%s' and '%s' clash",
-				clash->descr, vid->descr);
-			DBG_vid_struct(clash, logger);
-			DBG_vid_struct(vid, logger);
+				(*clash)->descr, (*vidp)->descr);
+			DBG_vid_struct((*clash), logger);
+			DBG_vid_struct((*vidp), logger);
 		}
+
+		pexpect(c == 0);
 	}
 }
 
@@ -786,13 +778,12 @@ enum known_vendorid vendorid_by_shunk(shunk_t vid)
 		}
 #else
 		FOR_EACH_ELEMENT_FROM_1(pvid, vid_tab) {
-			if (pvid->vid_len == vid.len) {
-				if (memeq(pvid->vid, vid.ptr, vid.len)) {
+			if (pvid->vid.len == vid.len) {
+				if (hunk_eq(pvid->vid, vid)) {
 					return pvid->id;
 				}
-			} else if (pvid->vid_len < vid.len &&
-				   (pvid->flags & VID_SUBSTRING)) {
-				if (memeq(pvid->vid, vid.ptr, pvid->vid_len)) {
+			} else if (pvid->flags & VID_SUBSTRING) {
+				if (hunk_starteq(vid, pvid->vid)) {
 					return pvid->id;
 				}
 			}
@@ -817,5 +808,5 @@ shunk_t shunk_from_vendorid(enum known_vendorid id)
 	passert(id > 0);
 	passert(id < elemsof(vid_tab));
 	const struct vid_struct *pvid = &vid_tab[id];
-	return shunk2(pvid->vid, pvid->vid_len);
+	return pvid->vid;
 }
