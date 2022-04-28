@@ -519,27 +519,45 @@ static struct vid_struct vid_tab[] = {
 #undef RAW
 };
 
-/* Leave out VID_none */
-static const struct vid_struct *vid_lookup[elemsof(vid_tab) - 1/*leave out entry 0*/];
+/*
+ * SEE: comments in init_vendorid().
+ */
 
-static int qsort_vid_cmp(const void *lp, const void *rp)
+struct vid_entry {
+	const struct vid_struct *entry; /* in VID_TAB[] */
+};
+
+/* vendor IDs sorted by the raw .vid; VID_none aka 0 is omitted */
+static struct vid_entry vid_sorted[elemsof(vid_tab) - 1/*leave out entry 0*/];
+
+/* bsearch table pointing at VID_SORTED[] */
+static const struct vid_entry *vid_lookup[elemsof(vid_sorted)];
+unsigned elemsof_vid_lookup;
+
+static int vid_sorted_cmp(const void *lp, const void *rp)
 {
-	const struct vid_struct *l = *(void**)lp;
-	const struct vid_struct *r = *(void**)rp;
+	const struct vid_entry *l = lp;
+	const struct vid_entry *r = rp;
 
 	/*
-	 * If this isn't sufficient then there are deeper problems.
+	 * If this isn't sufficient there are deeper problems.
 	 */
-	return hunk_cmp(l->vid, r->vid);
+	return hunk_cmp(l->entry->vid, r->entry->vid);
 }
 
-static int vid_cmp(shunk_t key, const struct vid_struct *member)
+static int vid_entry_cmp(const shunk_t *key, const struct vid_entry *member)
 {
-	if (member->vid.len < key.len && (member->flags & VID_SUBSTRING)) {
-		return raw_cmp(key.ptr, member->vid.len, member->vid.ptr, member->vid.len);
+	if (member->entry->vid.len < key->len && (member->entry->flags & VID_SUBSTRING)) {
+		return raw_cmp(key->ptr, member->entry->vid.len,
+			       member->entry->vid.ptr, member->entry->vid.len);
 	} else {
-		return hunk_cmp(key, member->vid);
+		return hunk_cmp(*key, member->entry->vid);
 	}
+}
+
+static int vid_lookup_cmp(const void *key, const void *member)
+{
+	return vid_entry_cmp(key, *(const struct vid_entry**)member);
 }
 
 /*
@@ -591,8 +609,8 @@ void init_vendorid(struct logger *logger)
 		 */
 		passert(vid->id > 0);
 		unsigned id0 = vid->id - 1;
-		passert(id0 < elemsof(vid_lookup));
-		vid_lookup[id0] = vid;
+		passert(id0 < elemsof(vid_sorted));
+		vid_sorted[id0].entry = vid;
 
 		if (vid->flags & VID_STRING) {
 			/** VendorID is a string **/
@@ -663,32 +681,63 @@ void init_vendorid(struct logger *logger)
 		}
 	}
 
-	qsort(vid_lookup, elemsof(vid_lookup), sizeof(vid_lookup[0]), qsort_vid_cmp);
+	/*
+	 * Sort the VID_TAB[] creating VID_SORTED.  Because VIDs
+	 * overlap, the result is a table containing overlapping
+	 * entries which means it isn't suitable for a binary search.
+	 *
+	 * For instance, given:
+	 *
+	 *    "OA.*"
+	 *    "OE.*"
+	 *    "OE Libreswan.*"
+	 *    "OE Libreswan 123"
+	 *    "OF.*"
+	 *
+	 * a search for "OE LIBRESWAN" could find "OE.*" or fail.
+	 */
+	qsort(vid_sorted, elemsof(vid_sorted), sizeof(vid_sorted[0]), vid_sorted_cmp);
 
 	/*
-	 * Check that there's no overlap between elements of the
-	 * sorted VID_LOOKUP[].  For instance, a short whild card
-	 * overlaping a longer VID.
+	 * Prune the VID_SORTED[] table of all but the shortest VIDs
+	 * creating VID_LOOKUP[].  Each entry points point into
+	 * VID_SORTED[] at the first of the overlapping VIDs that
+	 * match the VID_LOOKUP[] entry.
+	 *
+	 * For instance, creating:
+	 *
+	 *   VID_LOOKUP[]    VID_SORTED[]
+	 *     "OA.*"     ->   "OA.*"
+	 *     "OE.*"     ->   "OE.*"
+	 *                     "OE Libreswan.*"
+	 *                     "OE Libreswan 123"
+	 *     "OF.*"     ->   "OF.*"
+	 *
+	 * A search for "OE LIBRESWAN" is then performed in two steps:
+	 *
+	 * 1. using bsearch(VID_LOOKUP) to find the element "OE.*"
+	 * 2. a linear search of VID_SORTED[] starting at it's "OE.*" entry
 	 */
 	dbg("verifying VID lookup table");
-	const struct vid_struct **clash = &vid_lookup[0];
-	FOR_EACH_ELEMENT_FROM_1(vidp, vid_lookup) {
+	vid_lookup[elemsof_vid_lookup++] = &vid_sorted[0];
+	FOR_EACH_ELEMENT_FROM_1(vidp, vid_sorted) {
 
-		int c = vid_cmp((*vidp)->vid, (*clash));
+		/* do this and prev clash? */
+		const struct vid_entry *prev = vid_lookup[elemsof_vid_lookup-1];
+		int c = vid_entry_cmp(&vidp->entry->vid, prev);
 		if (c > 0) {
-			/* ordered: easy peasy; lemon squeezy */
-			clash = vidp;
+			/* no: easy peasy; lemon squeezy */
+			vid_lookup[elemsof_vid_lookup++] = vidp;
 			continue;
 		}
 
 		if (DBGP(DBG_BASE)) {
 			DBG_log("Vendor ID '%s' and '%s' clash",
-				(*clash)->descr, (*vidp)->descr);
-			DBG_vid_struct((*clash), logger);
-			DBG_vid_struct((*vidp), logger);
+				prev->entry->descr,
+				vidp->entry->descr);
+			DBG_vid_struct(prev->entry, logger);
+			DBG_vid_struct(vidp->entry, logger);
 		}
-
-		pexpect(c == 0);
 	}
 }
 
@@ -754,28 +803,61 @@ enum known_vendorid vendorid_by_shunk(shunk_t vid)
 	 * Find known VendorID in vid_tab
 	 */
 	if (vid.len > 0) {
-#if 0
-		/*
-		 * XXX: this code fails because the lookup table
-		 * contains multiple entries starting with:
-		 *
-		 *| Vendor ID 'Openswan(project)' and 'Libreswan (3.6+)' clash
-		 *|   64 Openswan(project) substring+match
-		 *|      4f 45 [OE]
-		 *
-		 * something a simple binary search can't handle.
-		 *
-		 * A search + linear list might help; but that is
-		 * complicated by Libreswan's current string only
-		 * beeing known after parameter parsing.
-		 */
-		struct vid_struct **vidp = bsearch(&vid, vid_lookup,
-						   elemsof(vid_lookup),
-						   sizeof(vid_lookup[0]),
-						   bsearch_vid_cmp);
-		if (vidp != NULL) {
-			return (*vidp)->id;
+#if 1
+		/* oh for generics */
+		const struct vid_entry **bvid = bsearch(&vid, vid_lookup,
+							elemsof_vid_lookup,
+							sizeof(vid_lookup[0]),
+							vid_lookup_cmp);
+		if (bvid == NULL) {
+			/* no luck */
+			return VID_none;
 		}
+
+		/* BVID points into VID_LOOKUP[] */
+		passert(bvid >= &vid_lookup[0]);
+		passert(bvid < &vid_lookup[elemsof_vid_lookup]);
+
+		/* *BVID points into VID_SORTED[] */
+		const struct vid_entry *best = *bvid;
+		pexpect(vid_entry_cmp(&vid, best) == 0);
+		passert(best >= &vid_sorted[0]);
+		passert(best < &vid_sorted[elemsof(vid_sorted)]);
+		if (DBGP(DBG_TMI)) {
+			DBG_log("starting with first clash:");
+			DBG_vid_struct(best->entry, &global_logger);
+		}
+
+		for (const struct vid_entry *vidp = best + 1;
+		     vidp < &vid_sorted[elemsof(vid_sorted)];
+		     vidp++) {
+
+			if (DBGP(DBG_TMI)) {
+				DBG_vid_struct(vidp->entry, &global_logger);
+			}
+
+			int c = vid_entry_cmp(&vid, vidp);
+			if (c < 0) {
+				if (DBGP(DBG_TMI)) {
+					DBG_log("end of clashes reached:");
+				}
+				break;
+			}
+
+			if (c == 0) {
+				if (DBGP(DBG_TMI)) {
+					DBG_log("updating best");
+				}
+				best = vidp;
+				continue;
+			}
+
+			if (DBGP(DBG_TMI)) {
+				DBG_log("not the best");
+			}
+		}
+
+		return best->entry->id;
 #else
 		FOR_EACH_ELEMENT_FROM_1(pvid, vid_tab) {
 			if (pvid->vid.len == vid.len) {
