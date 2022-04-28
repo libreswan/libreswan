@@ -150,6 +150,7 @@ OBJS += global_logger.o
 OBJS += jambuf.o
 OBJS += jam_bytes.o
 OBJS += llog.o
+OBJS += llog_dump.o
 OBJS += llog_va_list.o
 OBJS += log_nss_error.o
 

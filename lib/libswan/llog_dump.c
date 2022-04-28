@@ -26,10 +26,40 @@
 
 #include "lswlog.h"
 
-void DBG_dump(const char *label, const void *p, size_t len)
+/*
+ * dump raw bytes; when LABEL is non-NULL prefix the dump with a log
+ * line containing the label.
+ */
+
+void llog_dump(lset_t rc_flags, const struct logger *logger,
+	       const void *p, size_t len)
 {
-	if (label != NULL) {
-		llog(DEBUG_STREAM, &global_logger, "%s", label);
-	}
-	llog_dump(DEBUG_STREAM, &global_logger, p, len);
+	const uint8_t *cp = p;
+	do {
+		/* each line shows 16 bytes; remember sizeof includes '\0' */
+		char hex[sizeof("  xx xx xx xx  xx xx xx xx  xx xx xx xx  xx xx xx xx")];
+		char str[sizeof("................")];
+		char *hp = hex;
+		char *sp = str;
+		for (int  i = 0; len != 0 && i != 4; i++) {
+			*hp++ = ' ';
+			for (int j = 0; len != 0 && j != 4; len--, j++) {
+				static const char hexdig[] =
+					"0123456789abcdef";
+
+				*hp++ = ' ';
+				*hp++ = hexdig[(*cp >> 4) & 0xF];
+				*hp++ = hexdig[(*cp >> 0) & 0xF];
+
+				*sp++ = (char_isprint(*cp) ? *cp : '.');
+
+				cp++;
+			}
+		}
+		*hp++ = '\0';
+		*sp++ = '\0';
+		passert(hp <= hex + elemsof(hex));
+		passert(sp <= str + elemsof(str));
+		llog(rc_flags, logger, "%-*s   %s", (int)sizeof(hex)-1, hex, str);
+	} while (len != 0);
 }

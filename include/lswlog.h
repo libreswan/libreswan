@@ -260,6 +260,15 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 		     BUF != NULL;					\
 		     jambuf_to_logger(BUF, (LOGGER), RC_FLAGS), BUF = NULL)
 
+void llog_dump(lset_t rc_flags,
+	       const struct logger *log,
+	       const void *p, size_t len);
+#define llog_dump_hunk(RC_FLAGS, LOGGER, HUNK)				\
+	{								\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
+		llog_dump(LABEL, hunk_->ptr, hunk_->len);		\
+	}
+
 /*
  * Wrap <message> in a prefix and suffix where the suffix contains
  * errno and message.
