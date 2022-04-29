@@ -238,7 +238,6 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	pfreeany(c->modecfg_dns);
 	pfreeany(c->modecfg_domains);
 	pfreeany(c->modecfg_banner);
-	pfreeany(c->dnshostname);
 	pfreeany(c->redirect_to);
 	pfreeany(c->accept_redirect_to);
 	iface_endpoint_delref(&c->interface);
@@ -252,6 +251,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		free_ikev2_proposals(&config->v2_ike_proposals);
 		free_ikev2_proposals(&config->v2_ike_auth_child_proposals);
 		pfreeany(config->connalias);
+		pfreeany(config->dnshostname);
 		FOR_EACH_ELEMENT(end, config->end) {
 			pfreeany(end->client.updown);
 			if (end->host.cert.nss_cert != NULL) {
@@ -789,7 +789,6 @@ static void unshare_connection(struct connection *c, struct connection *t/*empla
 				"connection modecfg_domains");
 	c->modecfg_banner = clone_str(c->modecfg_banner,
 				"connection modecfg_banner");
-	c->dnshostname = clone_str(c->dnshostname, "connection dnshostname");
 
 	c->vti_iface = clone_str(c->vti_iface, "connection vti_iface");
 
@@ -1734,7 +1733,7 @@ static bool extract_connection(const struct whack_message *wm,
 	/* duplicate any alias, adding spaces to the beginning and end */
 	config->connalias = clone_str(wm->connalias, "connection alias");
 
-	c->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
+	config->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
 	c->policy = wm->policy;
 
 	switch (wm->prospective_shunt) {

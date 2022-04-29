@@ -171,6 +171,7 @@ struct config {
 	struct ikev2_proposals *v2_ike_auth_child_proposals;
 
 	enum yna_options nic_offload;
+	char *dnshostname;
 
 	/*
 	 * IKEv1's RFC 3706 DPD; .delay also used by IKEv2 :-/ */
@@ -498,7 +499,6 @@ struct connection {
 	struct connection *hp_next;
 
 	enum send_ca_policy send_ca;
-	char *dnshostname;
 
 	struct ip_pool *pool; /* IPv4 addresspool as a range, start end */
 

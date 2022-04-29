@@ -388,7 +388,7 @@ void host_pair_remove_connection(struct connection *c, bool connection_valid)
 void update_host_pairs(struct connection *c)
 {
 	struct host_pair *hp = c->host_pair;
-	const char *dnshostname = c->dnshostname;
+	const char *dnshostname = c->config->dnshostname;
 
 	/* ??? perhaps we should return early if dnshostname == NULL */
 
@@ -398,15 +398,15 @@ void update_host_pairs(struct connection *c)
 	struct connection *d = hp->connections;
 
 	/* ??? looks as if addr_family is not allowed to change.  Bug? */
-	/* ??? why are we using d->dnshostname instead of (c->)dnshostname? */
+	/* ??? why are we using d->config->dnshostname instead of (c->)dnshostname? */
 	/* ??? code used to test for d == NULL, but that seems impossible. */
 
-	pexpect(dnshostname == d->dnshostname || streq(dnshostname, d->dnshostname));
+	pexpect(dnshostname == d->config->dnshostname || streq(dnshostname, d->config->dnshostname));
 
 	ip_address new_addr;
 
-	if (d->dnshostname == NULL ||
-	    ttoaddress_dns(shunk1(d->dnshostname),
+	if (d->config->dnshostname == NULL ||
+	    ttoaddress_dns(shunk1(d->config->dnshostname),
 			      address_type(&d->remote->host.addr), &new_addr) != NULL ||
 	    sameaddr(&new_addr, &hp->remote))
 		return;
@@ -418,10 +418,10 @@ void update_host_pairs(struct connection *c)
 
 		/*
 		 * ??? this test used to assume that dnshostname != NULL
-		 * if d->dnshostname != NULL.  Is that true?
+		 * if d->config->dnshostname != NULL.  Is that true?
 		 */
-		if (d->dnshostname != NULL && dnshostname != NULL &&
-		    streq(d->dnshostname, dnshostname)) {
+		if (d->config->dnshostname != NULL && dnshostname != NULL &&
+		    streq(d->config->dnshostname, dnshostname)) {
 			/*
 			 * If there is a dnshostname and it is the same as
 			 * the one that has changed, then change

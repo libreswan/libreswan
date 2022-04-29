@@ -123,7 +123,7 @@ bool initiate_connection_2(struct connection *c,
 	    (c->kind != CK_PERMANENT) &&
 	    !(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
 		if (!address_is_specified(c->remote->host.addr)) {
-			if (c->dnshostname != NULL) {
+			if (c->config->dnshostname != NULL) {
 				esb_buf b;
 				llog(RC_NOPEERIP, c->logger,
 				     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
@@ -144,7 +144,7 @@ bool initiate_connection_2(struct connection *c,
 
 	if (!address_is_specified(c->remote->host.addr) &&
 	    (c->policy & POLICY_IKEV2_ALLOW_NARROWING) ) {
-		if (c->dnshostname != NULL) {
+		if (c->config->dnshostname != NULL) {
 			esb_buf b;
 			llog(RC_NOPEERIP, c->logger,
 			     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
@@ -439,8 +439,8 @@ static bool same_host(const char *a_dnshostname, const ip_address *a_host_addr,
 static bool same_in_some_sense(const struct connection *a,
 			const struct connection *b)
 {
-	return same_host(a->dnshostname, &a->remote->host.addr,
-			b->dnshostname, &b->remote->host.addr);
+	return same_host(a->config->dnshostname, &a->remote->host.addr,
+			 b->config->dnshostname, &b->remote->host.addr);
 }
 
 void restart_connections_by_peer(struct connection *const c, struct logger *logger)
@@ -458,7 +458,7 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
 	if (hp == NULL)
 		return;
 
-	char *dnshostname = clone_str(c->dnshostname, "dnshostname for restart");
+	char *dnshostname = clone_str(c->config->dnshostname, "dnshostname for restart");
 
 	ip_address host_addr = c->remote->host.addr;
 
@@ -468,7 +468,7 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
 		struct connection *next = d->hp_next; /* copy before d is deleted, CK_INSTANCE */
 
 		if (same_host(dnshostname, &host_addr,
-			      d->dnshostname, &d->remote->host.addr)) {
+			      d->config->dnshostname, &d->remote->host.addr)) {
 			/* This might delete c if CK_INSTANCE */
 			/* ??? is there a chance hp becomes dangling? */
 			terminate_connections_by_name(d->name, /*quiet?*/false, logger);
@@ -490,7 +490,7 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
 	} else {
 		for (d = hp->connections; d != NULL; d = d->hp_next) {
 			if (same_host(dnshostname, &host_addr,
-					d->dnshostname, &d->remote->host.addr))
+					d->config->dnshostname, &d->remote->host.addr))
 				initiate_connections_by_name(d->name, /*remote-host*/NULL,
 							     /*background?*/true, logger);
 		}
@@ -1060,7 +1060,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	const char *e;
 
 	/* this is the cheapest check, so do it first */
-	if (c->dnshostname == NULL)
+	if (c->config->dnshostname == NULL)
 		return;
 
 	/* should we let the caller get away with this? */
@@ -1089,18 +1089,18 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 		return;
 	}
 
-	e = ttoaddress_dns(shunk1(c->dnshostname), NULL/*UNSPEC*/, &new_addr);
+	e = ttoaddress_dns(shunk1(c->config->dnshostname), NULL/*UNSPEC*/, &new_addr);
 	if (e != NULL) {
 		connection_buf cib;
 		dbg("pending ddns: connection "PRI_CONNECTION" lookup of \"%s\" failed: %s",
-		    pri_connection(c, &cib), c->dnshostname, e);
+		    pri_connection(c, &cib), c->config->dnshostname, e);
 		return;
 	}
 
 	if (!address_is_specified(new_addr)) {
 		connection_buf cib;
 		dbg("pending ddns: connection "PRI_CONNECTION" still no address for \"%s\"",
-		    pri_connection(c, &cib), c->dnshostname);
+		    pri_connection(c, &cib), c->config->dnshostname);
 		return;
 	}
 
@@ -1143,7 +1143,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 
 	address_buf old, new;
 	dbg("pending ddns: updating IP address for %s from %s to %s",
-	    c->dnshostname,
+	    c->config->dnshostname,
 	    str_address_sensitive(&c->remote->host.addr, &old),
 	    str_address_sensitive(&new_addr, &new));
 	c->remote->host.addr = new_addr;
