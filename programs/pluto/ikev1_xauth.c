@@ -1098,7 +1098,7 @@ static stf_status ikev1_xauth_callback(struct state *st,
 	 * The soft fail mode is used to bring up the SA in a walled garden.
 	 * This can be detected in the updown script by the env variable XAUTH_FAILED=1
 	 */
-	if (!results && st->st_connection->xauthfail == XAUTHFAIL_SOFT) {
+	if (!results && st->st_connection->config->xauthfail == XAUTHFAIL_SOFT) {
 		log_state(RC_LOG, st,
 			  "XAUTH: authentication for %s failed, but policy is set to soft fail",
 			  name);
@@ -1203,7 +1203,7 @@ static void xauth_launch_authent(struct state *st,
 	clear_retransmits(st);
 	event_delete(EVENT_v1_SEND_XAUTH, st);
 
-	switch (st->st_connection->xauthby) {
+	switch (st->st_connection->config->xauthby) {
 #ifdef USE_PAM_AUTH
 	case XAUTHBY_PAM:
 		log_state(RC_LOG, st,
@@ -1234,7 +1234,7 @@ static void xauth_launch_authent(struct state *st,
 		log_state(RC_LOG, st,
 			  "XAUTH: unknown authentication method requested to authenticate user '%s'",
 			  arg_name);
-		bad_case(st->st_connection->xauthby);
+		bad_case(st->st_connection->config->xauthby);
 	}
 
 	pfreeany(arg_name);

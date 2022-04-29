@@ -2072,8 +2072,8 @@ static bool extract_connection(const struct whack_message *wm,
 		config->send_vid_fake_strongswan = wm->fake_strongswan;
 		config->send_vendorid = wm->send_vendorid;
 		c->send_ca = wm->send_ca;
-		c->xauthby = wm->xauthby;
-		c->xauthfail = wm->xauthfail;
+		config->xauthby = wm->xauthby;
+		config->xauthfail = wm->xauthfail;
 
 		config->modecfg.dns = clone_str(wm->modecfg_dns, "connection modecfg_dns");
 		config->modecfg.domains = clone_str(wm->modecfg_domains, "connection modecfg_domains");
@@ -3620,10 +3620,8 @@ static void show_one_sr(struct show *s,
 		     COMBO(sr->that, config->host.xauth.server, config->host.xauth.client),
 		     /* should really be an enum name */
 		     (sr->this.config->host.xauth.server ?
-		      c->xauthby == XAUTHBY_FILE ?
-		      "xauthby:file;" :
-		      c->xauthby == XAUTHBY_PAM ?
-		      "xauthby:pam;" :
+		      c->config->xauthby == XAUTHBY_FILE ? "xauthby:file;" :
+		      c->config->xauthby == XAUTHBY_PAM ? "xauthby:pam;" :
 		      "xauthby:alwaysok;" :
 		      ""),
 		     (sr->this.config->host.xauth.username == NULL ? "[any]" :

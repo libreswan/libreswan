@@ -152,6 +152,9 @@ struct config {
 	enum shunt_policy negotiation_shunt;	/* during */
 	enum shunt_policy failure_shunt;	/* after */
 
+	enum keyword_xauthby xauthby;
+	enum keyword_xauthfail xauthfail;
+
 	/*
 	 * The proposal specified in the config file, and for IKEv2,
 	 * that proposal converted to IKEv2 form.
@@ -471,9 +474,6 @@ struct connection {
 
 	/* Cisco interop: remote peer type */
 	enum keyword_remotepeertype remotepeertype;
-
-	enum keyword_xauthby xauthby;
-	enum keyword_xauthfail xauthfail;
 
 	char *log_file_name;			/* name of log file */
 	FILE *log_file;				/* possibly open FILE */
