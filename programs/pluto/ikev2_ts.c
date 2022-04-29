@@ -1317,9 +1317,9 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			 */
 
 			/* conns created as aliases from the same source have identical ID/CA */
-			if (!(c->connalias != NULL &&
-			      d->connalias != NULL &&
-			      streq(c->connalias, d->connalias))) {
+			if (!(c->config->connalias != NULL &&
+			      d->config->connalias != NULL &&
+			      streq(c->config->connalias, d->config->connalias))) {
 				int wildcards;	/* value ignored */
 				int pathlen;	/* value ignored */
 

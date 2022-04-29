@@ -1954,7 +1954,9 @@ static struct connection *fc_try(const struct connection *c,
 		int wildcards = MAX_WILDCARDS;
 		int pathlen = MAX_CA_PATH_LEN;
 
-		if (!(c->connalias != NULL && d->connalias != NULL && streq(c->connalias, d->connalias))) {
+		if (!(c->config->connalias != NULL &&
+		      d->config->connalias != NULL &&
+		      streq(c->config->connalias, d->config->connalias))) {
 			if (!(same_id(&c->local->host.id, &d->local->host.id) &&
 			      match_id("", &c->remote->host.id, &d->remote->host.id, &wildcards) &&
 			      trusted_ca(ASN1(c->remote->config->host.ca),

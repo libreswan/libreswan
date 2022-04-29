@@ -234,7 +234,6 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	free_logger(&c->logger, HERE);
 
 	pfreeany(c->foodgroup);
-	pfreeany(c->connalias);
 	pfreeany(c->vti_iface);
 	pfreeany(c->modecfg_dns);
 	pfreeany(c->modecfg_domains);
@@ -252,6 +251,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		free_proposals(&config->child_proposals.p);
 		free_ikev2_proposals(&config->v2_ike_proposals);
 		free_ikev2_proposals(&config->v2_ike_auth_child_proposals);
+		pfreeany(config->connalias);
 		FOR_EACH_ELEMENT(end, config->end) {
 			pfreeany(end->client.updown);
 			if (end->host.cert.nss_cert != NULL) {
@@ -282,7 +282,7 @@ int foreach_connection_by_alias(const char *alias,
 	while (next_connection_new2old(&cq)) {
 		struct connection *p = cq.c;
 
-		if (lsw_alias_cmp(alias, p->connalias))
+		if (lsw_alias_cmp(alias, p->config->connalias))
 			count += (*f)(p, arg, logger);
 	}
 	return count;
@@ -790,9 +790,6 @@ static void unshare_connection(struct connection *c, struct connection *t/*empla
 	c->modecfg_banner = clone_str(c->modecfg_banner,
 				"connection modecfg_banner");
 	c->dnshostname = clone_str(c->dnshostname, "connection dnshostname");
-
-	/* duplicate any alias, adding spaces to the beginning and end */
-	c->connalias = clone_str(c->connalias, "connection alias");
 
 	c->vti_iface = clone_str(c->vti_iface, "connection vti_iface");
 
@@ -1735,7 +1732,7 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	/* duplicate any alias, adding spaces to the beginning and end */
-	c->connalias = clone_str(wm->connalias, "connection alias");
+	config->connalias = clone_str(wm->connalias, "connection alias");
 
 	c->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
 	c->policy = wm->policy;
@@ -3965,10 +3962,10 @@ void show_one_connection(struct show *s,
 		}
 	}
 
-	if (c->connalias != NULL) {
+	if (c->config->connalias != NULL) {
 		show_comment(s, PRI_CONNECTION":   aliases: %s",
 			     c->name, instance,
-			     c->connalias);
+			     c->config->connalias);
 	}
 
 	show_ike_alg_connection(s, c, instance);

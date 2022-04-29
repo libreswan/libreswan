@@ -141,6 +141,7 @@ struct config {
 	enum ike_version ike_version;
 	const struct ike_info *ike_info;
 
+	char *connalias;
 	chunk_t sec_label;
 
 	deltatime_t retransmit_interval; /* initial retransmit time, doubles each time */
@@ -423,7 +424,6 @@ struct connection {
 	char *name;
 	struct logger *logger;
 	char *foodgroup;
-	char *connalias;
 	lset_t policy;
 	deltatime_t sa_ike_life_seconds;
 	deltatime_t sa_ipsec_life_seconds;
