@@ -155,6 +155,11 @@ struct config {
 	enum keyword_xauthby xauthby;
 	enum keyword_xauthfail xauthfail;
 
+	struct {
+		char *to;        /* RFC 5685 */
+		char *accept;
+	} redirect;
+
 	/*
 	 * The proposal specified in the config file, and for IKEv2,
 	 * that proposal converted to IKEv2 form.
@@ -512,9 +517,6 @@ struct connection {
 	uint16_t connmtu;	/* mtu for tunnel routes */
 	uint16_t nflog_group;	/* NFLOG group - 0 means disabled */
 	msgid_t ike_window;     /* IKE v2 window size 7296#section-2.3 */
-
-	char *redirect_to;        /* RFC 5685 */
-	char *accept_redirect_to;
 
 	struct {
 		struct list_entry list;

@@ -235,8 +235,6 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 
 	pfreeany(c->foodgroup);
 	pfreeany(c->vti_iface);
-	pfreeany(c->redirect_to);
-	pfreeany(c->accept_redirect_to);
 	iface_endpoint_delref(&c->interface);
 
 	struct config *config = c->root_config;
@@ -252,6 +250,8 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		pfreeany(config->modecfg.dns);
 		pfreeany(config->modecfg.domains);
 		pfreeany(config->modecfg.banner);
+		pfreeany(config->redirect.to);
+		pfreeany(config->redirect.accept);
 		FOR_EACH_ELEMENT(end, config->end) {
 			pfreeany(end->client.updown);
 			if (end->host.cert.nss_cert != NULL) {
@@ -784,11 +784,6 @@ static void unshare_connection(struct connection *c, struct connection *t/*empla
 	c->foodgroup = clone_str(c->foodgroup, "connection foodgroup");
 
 	c->vti_iface = clone_str(c->vti_iface, "connection vti_iface");
-
-	c->redirect_to = clone_str(c->redirect_to,\
-					"connection redirect_to");
-	c->accept_redirect_to = clone_str(c->accept_redirect_to,\
-					"connection accept_redirect_to");
 
 	c->interface = iface_endpoint_addref(t->interface);
 
@@ -2080,8 +2075,8 @@ static bool extract_connection(const struct whack_message *wm,
 		config->modecfg.banner = clone_str(wm->modecfg_banner, "connection modecfg_banner");
 
 		/* RFC 5685 - IKEv2 Redirect mechanism */
-		c->redirect_to = clone_str(wm->redirect_to, "connection redirect_to");
-		c->accept_redirect_to = clone_str(wm->accept_redirect_to, "connection accept_redirect_to");
+		config->redirect.to = clone_str(wm->redirect_to, "connection redirect_to");
+		config->redirect.accept = clone_str(wm->accept_redirect_to, "connection accept_redirect_to");
 
 		/*
 		 * parse mark and mask values form the mark/mask string

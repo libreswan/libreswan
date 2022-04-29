@@ -1137,7 +1137,7 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike)
 	    (LIN(POLICY_SEND_REDIRECT_ALWAYS, c->policy) ||
 	     (!LIN(POLICY_SEND_REDIRECT_NEVER, c->policy) &&
 	      require_ddos_cookies()))) {
-		if (c->redirect_to == NULL) {
+		if (c->config->redirect.to == NULL) {
 			log_state(RC_LOG_SERIOUS, &ike->sa,
 				  "redirect-to is not specified, can't redirect requests");
 		} else {
@@ -1209,7 +1209,7 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 	 * message with a DELETE payload.
 	 */
 	if (send_redirect) {
-		if (!emit_redirect_notification(shunk1(c->redirect_to), response.pbs))
+		if (!emit_redirect_notification(shunk1(c->config->redirect.to), response.pbs))
 			return STF_INTERNAL_ERROR;
 		ike->sa.st_sent_redirect = true;	/* mark that we have sent REDIRECT in IKE_AUTH */
 	}
