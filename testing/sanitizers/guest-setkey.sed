@@ -9,11 +9,11 @@ b end
   n
   /^[a-z]* #/ b end
 
-  s/ [0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]/ XXXXXXXX/g
+  s/\([ \t]\)[0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]/\tXXXXXXXX/g
 
-  s/ pid=[1-9][0-9]*/ pid=PID/
-  s/ spi=[1-9][0-9]*(0x[^)]*)/ spi=SPISPI(0xSPISPI)/
-  s/ diff: [0-9]*/ diff: N/
+  s/\([ \t]\)pid=[1-9][0-9]*/\1pid=PID/
+  s/\([ \t]\)spi=[1-9][0-9]*(0x[^)]*)/\1spi=SPISPI(0xSPISPI)/
+  s/\([ \t]\)diff: [0-9]*/\1diff: N/
 
 b match
 

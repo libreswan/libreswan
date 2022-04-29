@@ -28,39 +28,39 @@ up
 netbsdw #
  setkey -D
 192.1.2.23 192.1.2.45 
-       esp mode=transport spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
-   E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
- A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
-      seq=0x00000001 replay=64 flags=0x00000000 state=mature 
- created: TIMESTAMP   current: TIMESTAMP
-   diff: N(s)      hard: 28800(s)  soft: 28800(s)
-  last: TIMESTAMP      hard: 0(s)      soft: 0(s)
-      current: 84(bytes)      hard: 0(bytes)  soft: 0(bytes)
-  allocated: 1    hard: 0 soft: 0
- sadb_seq=1 pid=PID refcnt=0
+	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
+	E: aes-cbc 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
+	A: hmac-sha1 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
+	seq=0x00000001 replay=64 flags=0x00000000 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 28800(s)	soft: 28800(s)
+	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
+	current: 84(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 1	hard: 0	soft: 0
+	sadb_seq=1 pid=PID refcnt=0
 192.1.2.45 192.1.2.23 
-       esp mode=transport spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
-    E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
- A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
-      seq=0x00000001 replay=64 flags=0x00000000 state=mature 
- created: TIMESTAMP   current: TIMESTAMP
-   diff: N(s)      hard: 28800(s)  soft: 28800(s)
-  last: TIMESTAMP      hard: 0(s)      soft: 0(s)
-      current: 136(bytes)     hard: 0(bytes)  soft: 0(bytes)
-  allocated: 1    hard: 0 soft: 0
- sadb_seq=0 pid=PID refcnt=0
+	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
+	E: aes-cbc 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
+	A: hmac-sha1 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
+	seq=0x00000001 replay=64 flags=0x00000000 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 28800(s)	soft: 28800(s)
+	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
+	current: 136(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 1	hard: 0	soft: 0
+	sadb_seq=0 pid=PID refcnt=0
 netbsdw #
  setkey -DP
 192.1.2.23[any] 192.1.2.45[any] 255(reserved)
-  in ipsec
-        esp/transport/192.1.2.23-192.1.2.45/require
-     spid=1 seq=1 pid=PID
-    refcnt=0
+	in ipsec
+	esp/transport/192.1.2.23-192.1.2.45/require
+	spid=1 seq=1 pid=PID
+	refcnt=0
 192.1.2.45[any] 192.1.2.23[any] 255(reserved)
-   out ipsec
-       esp/transport/192.1.2.45-192.1.2.23/require
-     spid=2 seq=0 pid=PID
-    refcnt=0
+	out ipsec
+	esp/transport/192.1.2.45-192.1.2.23/require
+	spid=2 seq=0 pid=PID
+	refcnt=0
 netbsdw #
  dmesg | grep ipsec
 netbsdw #

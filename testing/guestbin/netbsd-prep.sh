@@ -16,3 +16,5 @@ done
 
 rm -f /tmp/pluto.log
 ln -s $PWD/OUTPUT/${hostname}.pluto.log /tmp/pluto.log
+
+stty -oxtabs
