@@ -257,7 +257,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 		 * and the last's is finished at the end
 		 * so our loop structure is odd.
 		 */
-		char *ipstr = strtok(c->modecfg_dns, ", ");
+		char *ipstr = strtok(c->config->modecfg.dns, ", ");
 
 		while (ipstr != NULL) {
 			ip_address dnsip;
@@ -298,15 +298,15 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 		 * We don't know if existing IKEv1 implementations support
 		 * more then one, so we just send the first one configured.
 		 */
-		char *first = strtok(c->modecfg_domains, ", ");
+		char *first = strtok(c->config->modecfg.domains, ", ");
 		if (first != NULL)
 			ok = out_raw(first, strlen(first), &attrval, "MODECFG_DOMAIN");
 		break;
 	}
 
 	case MODECFG_BANNER:
-		ok = out_raw(c->modecfg_banner,
-			     strlen(c->modecfg_banner),
+		ok = out_raw(c->config->modecfg.banner,
+			     strlen(c->config->modecfg.banner),
 			     &attrval, "");
 		break;
 
@@ -418,7 +418,7 @@ static stf_status modecfg_resp(struct state *st,
 		}
 
 		/* If we got DNS addresses, answer with those */
-		if (c->modecfg_dns != NULL)
+		if (c->config->modecfg.dns != NULL)
 			resp |= LELEM(INTERNAL_IP4_DNS);
 		else
 			resp &= ~LELEM(INTERNAL_IP4_DNS);
@@ -446,15 +446,15 @@ static stf_status modecfg_resp(struct state *st,
 		 * anyway.
 		 * ??? might we be sending them twice?
 		 */
-		if (c->modecfg_domains != NULL) {
-			dbg("We are sending '%s' as domain", strtok(c->modecfg_domains, ", "));
+		if (c->config->modecfg.domains != NULL) {
+			dbg("We are sending '%s' as domain", strtok(c->config->modecfg.domains, ", "));
 			isakmp_add_attr(&strattr, MODECFG_DOMAIN, ia, st);
 		} else {
 			dbg("we are not sending a domain");
 		}
 
-		if (c->modecfg_banner != NULL) {
-			dbg("We are sending '%s' as banner", c->modecfg_banner);
+		if (c->config->modecfg.banner != NULL) {
+			dbg("We are sending '%s' as banner", c->config->modecfg.banner);
 			isakmp_add_attr(&strattr, MODECFG_BANNER, ia, st);
 		} else {
 			dbg("We are not sending a banner");
