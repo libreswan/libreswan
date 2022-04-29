@@ -135,10 +135,10 @@ bool emit_v2_child_configuration_payload(const struct child_sa *child, struct pb
 				      IKEv2_INTERNAL_IP4_ADDRESS : IKEv2_INTERNAL_IP6_ADDRESS,
 				      &that_client_address, "Internal IP Address", &cp_pbs);
 
-		if (c->config->modecfg.dns != NULL) {
+		if (c->modecfg_dns != NULL) {
 			char *ipstr;
 
-			ipstr = strtok(c->config->modecfg.dns, ", ");
+			ipstr = strtok(c->modecfg_dns, ", ");
 			while (ipstr != NULL) {
 				if (strchr(ipstr, '.') != NULL) {
 					ip_address ip;
@@ -170,10 +170,10 @@ bool emit_v2_child_configuration_payload(const struct child_sa *child, struct pb
 			}
 		}
 
-		if (c->config->modecfg.domains != NULL) {
+		if (c->modecfg_domains != NULL) {
 			char *domain;
 
-			domain = strtok(c->config->modecfg.domains, ", ");
+			domain = strtok(c->modecfg_domains, ", ");
 			while (domain != NULL) {
 				if (ikev2_ship_cp_attr_str(IKEv2_INTERNAL_DNS_DOMAIN, domain,
 					"IKEv2_INTERNAL_DNS_DOMAIN", &cp_pbs) != STF_OK)

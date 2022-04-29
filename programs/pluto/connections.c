@@ -235,6 +235,9 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 
 	pfreeany(c->foodgroup);
 	pfreeany(c->vti_iface);
+	pfreeany(c->modecfg_dns);
+	pfreeany(c->modecfg_domains);
+	pfreeany(c->modecfg_banner);
 	iface_endpoint_delref(&c->interface);
 
 	struct config *config = c->root_config;
@@ -247,9 +250,6 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		free_ikev2_proposals(&config->v2_ike_auth_child_proposals);
 		pfreeany(config->connalias);
 		pfreeany(config->dnshostname);
-		pfreeany(config->modecfg.dns);
-		pfreeany(config->modecfg.domains);
-		pfreeany(config->modecfg.banner);
 		pfreeany(config->redirect.to);
 		pfreeany(config->redirect.accept);
 		FOR_EACH_ELEMENT(end, config->end) {
@@ -782,6 +782,13 @@ static void unshare_connection(struct connection *c, struct connection *t/*empla
 	c->root_config = NULL;
 
 	c->foodgroup = clone_str(c->foodgroup, "connection foodgroup");
+
+	c->modecfg_dns = clone_str(c->modecfg_dns,
+				"connection modecfg_dns");
+	c->modecfg_domains = clone_str(c->modecfg_domains,
+				"connection modecfg_domains");
+	c->modecfg_banner = clone_str(c->modecfg_banner,
+				"connection modecfg_banner");
 
 	c->vti_iface = clone_str(c->vti_iface, "connection vti_iface");
 
@@ -2070,9 +2077,9 @@ static bool extract_connection(const struct whack_message *wm,
 		config->xauthby = wm->xauthby;
 		config->xauthfail = wm->xauthfail;
 
-		config->modecfg.dns = clone_str(wm->modecfg_dns, "connection modecfg_dns");
-		config->modecfg.domains = clone_str(wm->modecfg_domains, "connection modecfg_domains");
-		config->modecfg.banner = clone_str(wm->modecfg_banner, "connection modecfg_banner");
+		c->modecfg_dns = clone_str(wm->modecfg_dns, "connection modecfg_dns");
+		c->modecfg_domains = clone_str(wm->modecfg_domains, "connection modecfg_domains");
+		c->modecfg_banner = clone_str(wm->modecfg_banner, "connection modecfg_banner");
 
 		/* RFC 5685 - IKEv2 Redirect mechanism */
 		config->redirect.to = clone_str(wm->redirect_to, "connection redirect_to");
@@ -3679,15 +3686,15 @@ static void show_one_sr(struct show *s,
 		     COMBO(sr->that, modecfg_server, modecfg_client),
 
 		     (c->policy & POLICY_MODECFG_PULL) ? "pull" : "push",
-		     (c->config->modecfg.dns == NULL) ? "unset" : c->config->modecfg.dns,
-		     (c->config->modecfg.domains == NULL) ? "unset" : c->config->modecfg.domains,
+		     (c->modecfg_dns == NULL) ? "unset" : c->modecfg_dns,
+		     (c->modecfg_domains == NULL) ? "unset" : c->modecfg_domains,
 		     sr->this.cat ? "set" : "unset");
 
 #undef COMBO
 
-	if (c->config->modecfg.banner != NULL) {
+	if (c->modecfg_banner != NULL) {
 		show_comment(s, PRI_CONNECTION": banner:%s;",
-			     c->name, instance, c->config->modecfg.banner);
+			     c->name, instance, c->modecfg_banner);
 	}
 
 	/*
