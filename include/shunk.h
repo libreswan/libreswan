@@ -22,6 +22,7 @@
 
 #include "hunk.h"
 #include "err.h"
+#include "where.h"
 
 /*
  * Think of shunk_t and chunk_t as opposite solutions to the same
@@ -87,6 +88,9 @@ shunk_t shunk_slice(shunk_t s, size_t start, size_t stop);
  *
  */
 shunk_t shunk_token(shunk_t *input, char *delim, const char *delims);
+
+/* only the shunk_t** pointer needs freeing */
+shunk_t *clone_shunk_tokens(shunk_t input, const char *delim, where_t here);
 
 /*
  * Return the sequence of characters in ACCEPT, update INPUT.
