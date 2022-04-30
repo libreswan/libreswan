@@ -1442,67 +1442,81 @@ static bool load_conn(struct starter_conn *conn,
 	 * to avoid confusion with sha3_256
 	 */
 	if (conn->strings_set[KSCF_AUTHBY]) {
-		char *val = strtok(conn->strings[KSCF_AUTHBY], ", ");
 
 		conn->sighash_policy = LEMPTY;
 		conn->authby = (struct authby) {0};
 
-		while (val != NULL) {
+		shunk_t curseby = shunk1(conn->strings[KSCF_AUTHBY]);
+		while (true) {
+
+			shunk_t val = shunk_token(&curseby, NULL/*delim*/, ", ");
+
+			if (val.ptr == NULL) {
+				break;
+			}
+#if 0
+			if (val.len == 0) {
+				/* ignore empty fields? */
+				continue;
+			}
+#endif
+
 			/* Supported for IKEv1 and IKEv2 */
-			if (streq(val, "secret")) {
+			if (hunk_streq(val, "secret")) {
 				conn->authby.psk = true;;
-			} else if (streq(val, "rsasig") || streq(val, "rsa")) {
+			} else if (hunk_streq(val, "rsasig") ||
+				   hunk_streq(val, "rsa")) {
 				conn->authby.rsasig = true;
 				conn->authby.rsasig_v1_5 = true;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_384;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
-			} else if (streq(val, "never")) {
+			} else if (hunk_streq(val, "never")) {
 				conn->authby.never = true;
 			/* everything else is only supported for IKEv2 */
 			} else if (conn->ike_version == IKEv1) {
 				starter_error_append(perrl, "ikev1 connection must use authby= of rsasig, secret or never");
 				return true;
-			} else if (streq(val, "null")) {
+			} else if (hunk_streq(val, "null")) {
 				conn->authby.null = true;
-			} else if (streq(val, "rsa-sha1")) {
+			} else if (hunk_streq(val, "rsa-sha1")) {
 				conn->authby.rsasig_v1_5 = true;
-			} else if (streq(val, "rsa-sha2")) {
+			} else if (hunk_streq(val, "rsa-sha2")) {
 				conn->authby.rsasig = true;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_384;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
-			} else if (streq(val, "rsa-sha2_256")) {
+			} else if (hunk_streq(val, "rsa-sha2_256")) {
 				conn->authby.rsasig = true;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
-			} else if (streq(val, "rsa-sha2_384")) {
+			} else if (hunk_streq(val, "rsa-sha2_384")) {
 				conn->authby.rsasig = true;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_384;
-			} else if (streq(val, "rsa-sha2_512")) {
+			} else if (hunk_streq(val, "rsa-sha2_512")) {
 				conn->authby.rsasig = true;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
-			} else if (streq(val, "ecdsa") || streq(val, "ecdsa-sha2")) {
+			} else if (hunk_streq(val, "ecdsa") ||
+				   hunk_streq(val, "ecdsa-sha2")) {
 				conn->authby.ecdsa = true;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_384;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
-			} else if (streq(val, "ecdsa-sha2_256")) {
+			} else if (hunk_streq(val, "ecdsa-sha2_256")) {
 				conn->authby.ecdsa = true;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_256;
-			} else if (streq(val, "ecdsa-sha2_384")) {
+			} else if (hunk_streq(val, "ecdsa-sha2_384")) {
 				conn->authby.ecdsa = true;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_384;
-			} else if (streq(val, "ecdsa-sha2_512")) {
+			} else if (hunk_streq(val, "ecdsa-sha2_512")) {
 				conn->authby.ecdsa = true;
 				conn->sighash_policy |= POL_SIGHASH_SHA2_512;
-			} else if (streq(val, "ecdsa-sha1")) {
+			} else if (hunk_streq(val, "ecdsa-sha1")) {
 				starter_error_append(perrl, "authby=ecdsa cannot use sha1, only sha2");
 				return true;
 			} else {
 				starter_error_append(perrl, "connection authby= value is unknown");
 				return true;
 			}
-			val = strtok(NULL, ", ");
 		}
 	}
 
