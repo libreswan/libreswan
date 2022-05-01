@@ -138,37 +138,22 @@ bool emit_v2_child_configuration_payload(const struct child_sa *child, struct pb
 				      IKEv2_INTERNAL_IP4_ADDRESS : IKEv2_INTERNAL_IP6_ADDRESS,
 				      &that_client_address, "Internal IP Address", &cp_pbs);
 
-		if (c->modecfg_dns != NULL) {
-			char *ipstr;
-
-			ipstr = strtok(c->modecfg_dns, ", ");
-			while (ipstr != NULL) {
-				if (strchr(ipstr, '.') != NULL) {
-					ip_address ip;
-					err_t e = ttoaddress_num(shunk1(ipstr), &ipv4_info, &ip);
-					if (e != NULL) {
-						log_state(RC_LOG_SERIOUS, &child->sa,
-							  "Ignored bogus DNS IP address '%s'", ipstr);
-					} else {
-						if (ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_DNS, &ip,
-							"IP4_DNS", &cp_pbs) != STF_OK)
-								return false;
-					}
-				} else if (strchr(ipstr, ':') != NULL) {
-					ip_address ip;
-					err_t e = ttoaddress_num(shunk1(ipstr), &ipv6_info, &ip);
-					if (e != NULL) {
-						log_state(RC_LOG_SERIOUS, &child->sa,
-							  "Ignored bogus DNS IP address '%s'", ipstr);
-					} else {
-						if (ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_DNS, &ip,
-							"IP6_DNS", &cp_pbs) != STF_OK)
-								return false;
-					}
-				} else {
-					log_state(RC_LOG_SERIOUS, &child->sa,
-						  "Ignored bogus DNS IP address '%s'", ipstr);
+		for (ip_address *dns = c->config->modecfg.dns;
+		     dns != NULL && dns->is_set; dns++) {
+			const struct ip_info *afi = address_type(dns);
+			switch (afi->ip_version) {
+			case IPv4:
+				if (ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_DNS, dns,
+							  "IP4_DNS", &cp_pbs) != STF_OK) {
+					return false;
 				}
+				break;
+			case IPv6:
+				if (ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_DNS, dns,
+							  "IP6_DNS", &cp_pbs) != STF_OK) {
+					return false;
+				}
+				break;
 			}
 		}
 
