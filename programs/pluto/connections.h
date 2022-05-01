@@ -181,6 +181,10 @@ struct config {
 	enum yna_options nic_offload;
 	char *dnshostname;
 
+	struct {
+		char *banner;
+	} modecfg;
+
 	/*
 	 * IKEv1's RFC 3706 DPD; .delay also used by IKEv2 :-/ */
 	struct {
@@ -509,7 +513,6 @@ struct connection {
 
 	char *modecfg_dns;
 	char *modecfg_domains;
-	char *modecfg_banner;
 
 	uint32_t metric;	/* metric for tunnel routes */
 	uint16_t connmtu;	/* mtu for tunnel routes */

@@ -305,8 +305,8 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 	}
 
 	case MODECFG_BANNER:
-		ok = out_raw(c->modecfg_banner,
-			     strlen(c->modecfg_banner),
+		ok = out_raw(c->config->modecfg.banner,
+			     strlen(c->config->modecfg.banner),
 			     &attrval, "");
 		break;
 
@@ -453,8 +453,8 @@ static stf_status modecfg_resp(struct state *st,
 			dbg("we are not sending a domain");
 		}
 
-		if (c->modecfg_banner != NULL) {
-			dbg("We are sending '%s' as banner", c->modecfg_banner);
+		if (c->config->modecfg.banner != NULL) {
+			dbg("We are sending '%s' as banner", c->config->modecfg.banner);
 			isakmp_add_attr(&strattr, MODECFG_BANNER, ia, st);
 		} else {
 			dbg("We are not sending a banner");

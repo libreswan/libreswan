@@ -237,7 +237,6 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	pfreeany(c->vti_iface);
 	pfreeany(c->modecfg_dns);
 	pfreeany(c->modecfg_domains);
-	pfreeany(c->modecfg_banner);
 	iface_endpoint_delref(&c->interface);
 
 	struct config *config = c->root_config;
@@ -250,6 +249,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		free_ikev2_proposals(&config->v2_ike_auth_child_proposals);
 		pfreeany(config->connalias);
 		pfreeany(config->dnshostname);
+		pfreeany(config->modecfg.banner);
 		pfreeany(config->redirect.to);
 		pfreeany(config->redirect.accept);
 		FOR_EACH_ELEMENT(end, config->end) {
@@ -787,8 +787,6 @@ static void unshare_connection(struct connection *c, struct connection *t/*empla
 				"connection modecfg_dns");
 	c->modecfg_domains = clone_str(c->modecfg_domains,
 				"connection modecfg_domains");
-	c->modecfg_banner = clone_str(c->modecfg_banner,
-				"connection modecfg_banner");
 
 	c->vti_iface = clone_str(c->vti_iface, "connection vti_iface");
 
@@ -2079,7 +2077,8 @@ static bool extract_connection(const struct whack_message *wm,
 
 		c->modecfg_dns = clone_str(wm->modecfg_dns, "connection modecfg_dns");
 		c->modecfg_domains = clone_str(wm->modecfg_domains, "connection modecfg_domains");
-		c->modecfg_banner = clone_str(wm->modecfg_banner, "connection modecfg_banner");
+		config->modecfg.banner = clone_str(wm->modecfg_banner, "connection modecfg_banner");
+
 
 		/* RFC 5685 - IKEv2 Redirect mechanism */
 		config->redirect.to = clone_str(wm->redirect_to, "connection redirect_to");
@@ -3692,9 +3691,9 @@ static void show_one_sr(struct show *s,
 
 #undef COMBO
 
-	if (c->modecfg_banner != NULL) {
+	if (c->config->modecfg.banner != NULL) {
 		show_comment(s, PRI_CONNECTION": banner:%s;",
-			     c->name, instance, c->modecfg_banner);
+			     c->name, instance, c->config->modecfg.banner);
 	}
 
 	/*
