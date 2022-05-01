@@ -3680,15 +3680,15 @@ static void show_one_sr(struct show *s,
 		jam_string(buf, ";");
 	}
 
-	show_comment(s, PRI_CONNECTION":   modecfg info: us:%s, them:%s, modecfg policy:%s, dns:%s, domains:%s, cat:%s;",
-		     c->name, instance,
-		     COMBO(sr->this, modecfg_server, modecfg_client),
-		     COMBO(sr->that, modecfg_server, modecfg_client),
-
-		     (c->policy & POLICY_MODECFG_PULL) ? "pull" : "push",
-		     (c->modecfg_dns == NULL) ? "unset" : c->modecfg_dns,
-		     (c->modecfg_domains == NULL) ? "unset" : c->modecfg_domains,
-		     sr->this.cat ? "set" : "unset");
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		jam(buf, PRI_CONNECTION":   modecfg info:", c->name, instance);
+		jam(buf, " us:%s,", COMBO(sr->this, modecfg_server, modecfg_client));
+		jam(buf, " them:%s,", COMBO(sr->that, modecfg_server, modecfg_client));
+		jam(buf, " modecfg policy:%s,", (c->policy & POLICY_MODECFG_PULL ? "pull" : "push"));
+		jam(buf, " dns:%s,", (c->modecfg_dns == NULL ? "unset" : c->modecfg_dns));
+		jam(buf, " domains:%s,", (c->modecfg_domains == NULL ? "unset" : c->modecfg_domains));
+		jam(buf, " cat:%s;", sr->this.cat ? "set" : "unset");
+	}
 
 #undef COMBO
 
