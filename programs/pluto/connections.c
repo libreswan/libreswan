@@ -3706,7 +3706,20 @@ static void show_one_sr(struct show *s,
 		jam(buf, " us:%s,", COMBO(sr->this, modecfg_server, modecfg_client));
 		jam(buf, " them:%s,", COMBO(sr->that, modecfg_server, modecfg_client));
 		jam(buf, " modecfg policy:%s,", (c->policy & POLICY_MODECFG_PULL ? "pull" : "push"));
-		jam(buf, " dns:%s,", (c->modecfg_dns == NULL ? "unset" : c->modecfg_dns));
+
+		jam_string(buf, " dns:");
+		if (c->config->modecfg.dns == NULL) {
+			jam_string(buf, "unset,");
+		} else {
+			const char *sep = "";
+			for (const ip_address *dns = c->config->modecfg.dns;
+			     dns->is_set; dns++) {
+				jam_string(buf, sep);
+				sep = ", ";
+				jam_address(buf, dns);
+			}
+			jam_string(buf, ",");
+		}
 
 		jam_string(buf, " domains:");
 		if (c->config->modecfg.domains == NULL) {
