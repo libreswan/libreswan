@@ -235,7 +235,6 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 
 	pfreeany(c->foodgroup);
 	pfreeany(c->vti_iface);
-	pfreeany(c->modecfg_dns);
 	iface_endpoint_delref(&c->interface);
 
 	struct config *config = c->root_config;
@@ -783,9 +782,6 @@ static void unshare_connection(struct connection *c, struct connection *t/*empla
 	c->root_config = NULL;
 
 	c->foodgroup = clone_str(c->foodgroup, "connection foodgroup");
-
-	c->modecfg_dns = clone_str(c->modecfg_dns,
-				"connection modecfg_dns");
 
 	c->vti_iface = clone_str(c->vti_iface, "connection vti_iface");
 
@@ -2073,8 +2069,6 @@ static bool extract_connection(const struct whack_message *wm,
 		c->send_ca = wm->send_ca;
 		config->xauthby = wm->xauthby;
 		config->xauthfail = wm->xauthfail;
-
-		c->modecfg_dns = clone_str(wm->modecfg_dns, "connection modecfg_dns");
 
 		err_t e = ttoaddress_list_num(shunk1(wm->modecfg_dns), ", ",
 					      /* IKEv1 doesn't do IPv6 */
