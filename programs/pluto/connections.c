@@ -3698,7 +3698,18 @@ static void show_one_sr(struct show *s,
 		jam(buf, " them:%s,", COMBO(sr->that, modecfg_server, modecfg_client));
 		jam(buf, " modecfg policy:%s,", (c->policy & POLICY_MODECFG_PULL ? "pull" : "push"));
 		jam(buf, " dns:%s,", (c->modecfg_dns == NULL ? "unset" : c->modecfg_dns));
-		jam(buf, " domains:%s,", (c->modecfg_domains == NULL ? "unset" : c->modecfg_domains));
+
+		jam_string(buf, " domains:");
+		if (c->config->modecfg.domains == NULL) {
+			jam_string(buf, "unset,");
+		} else {
+			for (const shunk_t *domain = c->config->modecfg.domains;
+			     domain->ptr != NULL; domain++) {
+				jam_sanitized_hunk(buf, *domain);
+				jam_string(buf, ",");
+			}
+		}
+
 		jam(buf, " cat:%s;", sr->this.cat ? "set" : "unset");
 	}
 
