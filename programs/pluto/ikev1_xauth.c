@@ -251,32 +251,24 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 	case INTERNAL_IP4_DNS:
 	{
 		/*
-		 * Emit one attribute per DNS IP.
-		 * (All other cases emit exactly one attribute.)
-		 * The first's emission is started above
-		 * and the last's is finished at the end
-		 * so our loop structure is odd.
+		 * Emit one attribute per DNS IP (all other cases emit
+		 * exactly one attribute).
+		 *
+		 * The first's emission is started above and the
+		 * last's is finished at the end so our loop structure
+		 * is odd.
 		 */
-		char *ipstr = strtok(c->modecfg_dns, ", ");
+		for (ip_address *dns = c->config->modecfg.dns;
+		     dns != NULL && dns->is_set; dns++) {
 
-		while (ipstr != NULL) {
-			ip_address dnsip;
-			err_t e = ttoaddress_num(shunk1(ipstr), &ipv4_info, &dnsip);
-
-			if (e != NULL) {
-				log_state(RC_LOG_SERIOUS, st,
-					  "Invalid DNS IPv4 %s:%s", ipstr, e);
-				return STF_INTERNAL_ERROR;
-			}
 			/* emit attribute's value */
-			diag_t d = pbs_out_address(&attrval, dnsip, "IP4_dns");
+			diag_t d = pbs_out_address(&attrval, *dns, "IP4_dns");
 			if (d != NULL) {
 				llog_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
 				return STF_INTERNAL_ERROR;
 			}
 
-			ipstr = strtok(NULL, ", ");
-			if (ipstr != NULL) {
+			if (dns[1].is_set) {
 				/* end this attribute */
 				close_output_pbs(&attrval);
 
@@ -419,7 +411,7 @@ static stf_status modecfg_resp(struct state *st,
 		}
 
 		/* If we got DNS addresses, answer with those */
-		if (c->modecfg_dns != NULL)
+		if (c->config->modecfg.dns != NULL)
 			resp |= LELEM(INTERNAL_IP4_DNS);
 		else
 			resp &= ~LELEM(INTERNAL_IP4_DNS);
