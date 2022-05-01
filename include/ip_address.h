@@ -85,6 +85,10 @@ err_t ttoaddress_num(shunk_t src, const struct ip_info *type, ip_address *dst);
 /* if numeric lookup fails, try a DNS lookup */
 err_t ttoaddress_dns(shunk_t src, const struct ip_info *type, ip_address *dst);
 
+/* assumes list addresses in dotted / colon notation */
+err_t ttoaddress_list_num(shunk_t input, const char *delim,
+			  const struct ip_info *type, ip_address **output);
+
 /*
  * Convert an address to a string:
  *

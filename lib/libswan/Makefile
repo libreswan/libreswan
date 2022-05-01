@@ -64,6 +64,7 @@ OBJS += base64_pubkey.o
 
 OBJS += sparse_names.o
 OBJS += ttoaddress.o
+OBJS += ttoaddress_list_num.o
 OBJS += ttoprotocol.o
 OBJS += alloc.o
 OBJS += alloc_printf.o
