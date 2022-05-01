@@ -84,29 +84,32 @@ static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
 	return STF_OK;
 }
 
-static stf_status ikev2_ship_cp_attr_str(uint16_t type, char *str,
-		const char *story, pb_stream *outpbs)
+static diag_t emit_v2CP_attribute(struct pbs_out *outpbs,
+				  uint16_t type, shunk_t attrib,
+				  const char *story)
 {
-	pb_stream a_pbs;
+	diag_t d;
 	struct ikev2_cp_attribute attr = {
 		.type = type,
-		.len = (str == NULL) ? 0 : strlen(str),
+		.len = attrib.len,
 	};
 
-	if (!out_struct(&attr, &ikev2_cp_attribute_desc, outpbs,
-				&a_pbs))
-		return STF_INTERNAL_ERROR;
+	pb_stream a_pbs;
+	d = pbs_out_struct(outpbs, &ikev2_cp_attribute_desc,
+			   &attr, sizeof(attr), &a_pbs);
+	if (d != NULL) {
+		return d;
+	}
 
-	if (attr.len > 0) {
-		diag_t d = pbs_out_raw(&a_pbs, str, attr.len, story);
+	if (attrib.len > 0) {
+		diag_t d = pbs_out_hunk(&a_pbs, attrib, story);
 		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
-			return STF_INTERNAL_ERROR;
+			return d;
 		}
 	}
 
 	close_output_pbs(&a_pbs);
-	return STF_OK;
+	return NULL;
 }
 
 /*
@@ -135,50 +138,35 @@ bool emit_v2_child_configuration_payload(const struct child_sa *child, struct pb
 				      IKEv2_INTERNAL_IP4_ADDRESS : IKEv2_INTERNAL_IP6_ADDRESS,
 				      &that_client_address, "Internal IP Address", &cp_pbs);
 
-		if (c->modecfg_dns != NULL) {
-			char *ipstr;
-
-			ipstr = strtok(c->modecfg_dns, ", ");
-			while (ipstr != NULL) {
-				if (strchr(ipstr, '.') != NULL) {
-					ip_address ip;
-					err_t e = ttoaddress_num(shunk1(ipstr), &ipv4_info, &ip);
-					if (e != NULL) {
-						log_state(RC_LOG_SERIOUS, &child->sa,
-							  "Ignored bogus DNS IP address '%s'", ipstr);
-					} else {
-						if (ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_DNS, &ip,
-							"IP4_DNS", &cp_pbs) != STF_OK)
-								return false;
-					}
-				} else if (strchr(ipstr, ':') != NULL) {
-					ip_address ip;
-					err_t e = ttoaddress_num(shunk1(ipstr), &ipv6_info, &ip);
-					if (e != NULL) {
-						log_state(RC_LOG_SERIOUS, &child->sa,
-							  "Ignored bogus DNS IP address '%s'", ipstr);
-					} else {
-						if (ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_DNS, &ip,
-							"IP6_DNS", &cp_pbs) != STF_OK)
-								return false;
-					}
-				} else {
-					log_state(RC_LOG_SERIOUS, &child->sa,
-						  "Ignored bogus DNS IP address '%s'", ipstr);
+		for (ip_address *dns = c->config->modecfg.dns;
+		     dns != NULL && dns->is_set; dns++) {
+			const struct ip_info *afi = address_type(dns);
+			switch (afi->ip_version) {
+			case IPv4:
+				if (ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_DNS, dns,
+							  "IP4_DNS", &cp_pbs) != STF_OK) {
+					return false;
 				}
-				ipstr = strtok(NULL, ", ");
+				break;
+			case IPv6:
+				if (ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_DNS, dns,
+							  "IP6_DNS", &cp_pbs) != STF_OK) {
+					return false;
+				}
+				break;
 			}
 		}
 
-		if (c->modecfg_domains != NULL) {
-			char *domain;
-
-			domain = strtok(c->modecfg_domains, ", ");
-			while (domain != NULL) {
-				if (ikev2_ship_cp_attr_str(IKEv2_INTERNAL_DNS_DOMAIN, domain,
-					"IKEv2_INTERNAL_DNS_DOMAIN", &cp_pbs) != STF_OK)
-						return false;
-				domain = strtok(NULL, ", ");
+		for (const shunk_t *domain = c->config->modecfg.domains;
+		     domain != NULL && domain->ptr != NULL; domain++) {
+			diag_t d = emit_v2CP_attribute(&cp_pbs,
+						       IKEv2_INTERNAL_DNS_DOMAIN,
+						       *domain,
+						       "IKEv2_INTERNAL_DNS_DOMAIN");
+			if (d != NULL) {
+				llog_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d,
+					  "%s", "");
+				return false;
 			}
 		}
 	} else { /* cfg request */

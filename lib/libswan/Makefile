@@ -56,6 +56,7 @@ OBJS += constants.o \
 	lswnss.o \
 	alg_byname.o
 
+OBJS += clone_shunk_tokens.o
 OBJS += secrets.o
 OBJS += pubkey_rsa.o
 OBJS += pubkey_ecdsa.o
@@ -63,6 +64,7 @@ OBJS += base64_pubkey.o
 
 OBJS += sparse_names.o
 OBJS += ttoaddress.o
+OBJS += ttoaddress_list_num.o
 OBJS += ttoprotocol.o
 OBJS += alloc.o
 OBJS += alloc_printf.o

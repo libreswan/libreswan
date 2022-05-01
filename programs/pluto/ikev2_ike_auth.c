@@ -467,7 +467,8 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		}
 
 		/* send CP payloads */
-		if (cc->modecfg_domains != NULL || cc->modecfg_dns != NULL) {
+		if (cc->config->modecfg.domains != NULL ||
+		    cc->config->modecfg.dns != NULL) {
 			if (!emit_v2_child_configuration_payload(child, request.pbs)) {
 				return STF_INTERNAL_ERROR;
 			}

@@ -235,9 +235,6 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 
 	pfreeany(c->foodgroup);
 	pfreeany(c->vti_iface);
-	pfreeany(c->modecfg_dns);
-	pfreeany(c->modecfg_domains);
-	pfreeany(c->modecfg_banner);
 	iface_endpoint_delref(&c->interface);
 
 	struct config *config = c->root_config;
@@ -250,6 +247,9 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		free_ikev2_proposals(&config->v2_ike_auth_child_proposals);
 		pfreeany(config->connalias);
 		pfreeany(config->dnshostname);
+		pfreeany(config->modecfg.dns);
+		pfreeany(config->modecfg.domains);
+		pfreeany(config->modecfg.banner);
 		pfreeany(config->redirect.to);
 		pfreeany(config->redirect.accept);
 		FOR_EACH_ELEMENT(end, config->end) {
@@ -782,13 +782,6 @@ static void unshare_connection(struct connection *c, struct connection *t/*empla
 	c->root_config = NULL;
 
 	c->foodgroup = clone_str(c->foodgroup, "connection foodgroup");
-
-	c->modecfg_dns = clone_str(c->modecfg_dns,
-				"connection modecfg_dns");
-	c->modecfg_domains = clone_str(c->modecfg_domains,
-				"connection modecfg_domains");
-	c->modecfg_banner = clone_str(c->modecfg_banner,
-				"connection modecfg_banner");
 
 	c->vti_iface = clone_str(c->vti_iface, "connection vti_iface");
 
@@ -2077,9 +2070,31 @@ static bool extract_connection(const struct whack_message *wm,
 		config->xauthby = wm->xauthby;
 		config->xauthfail = wm->xauthfail;
 
-		c->modecfg_dns = clone_str(wm->modecfg_dns, "connection modecfg_dns");
-		c->modecfg_domains = clone_str(wm->modecfg_domains, "connection modecfg_domains");
-		c->modecfg_banner = clone_str(wm->modecfg_banner, "connection modecfg_banner");
+		err_t e = ttoaddress_list_num(shunk1(wm->modecfg_dns), ", ",
+					      /* IKEv1 doesn't do IPv6 */
+					      (wm->ike_version == IKEv1 ? &ipv4_info : NULL),
+					      &config->modecfg.dns);
+		if (e != NULL) {
+			llog(RC_FATAL, c->logger,
+			     "failed to add connection: modecfgdns=%s invalid: %s",
+			     wm->modecfg_dns, e);
+			/* caller will free C */
+			return false;
+		}
+
+		config->modecfg.domains = clone_shunk_tokens(shunk1(wm->modecfg_domains),
+							     ", ", HERE);
+		if (wm->ike_version == IKEv1 &&
+		    config->modecfg.domains != NULL &&
+		    config->modecfg.domains[1].ptr != NULL) {
+			llog(RC_LOG_SERIOUS, c->logger,
+			     "IKEv1 only uses the first domain in modecfgdomain=%s",
+			     wm->modecfg_domains);
+			config->modecfg.domains[1] = null_shunk;
+		}
+
+		config->modecfg.banner = clone_str(wm->modecfg_banner, "connection modecfg_banner");
+
 
 		/* RFC 5685 - IKEv2 Redirect mechanism */
 		config->redirect.to = clone_str(wm->redirect_to, "connection redirect_to");
@@ -3680,21 +3695,45 @@ static void show_one_sr(struct show *s,
 		jam_string(buf, ";");
 	}
 
-	show_comment(s, PRI_CONNECTION":   modecfg info: us:%s, them:%s, modecfg policy:%s, dns:%s, domains:%s, cat:%s;",
-		     c->name, instance,
-		     COMBO(sr->this, modecfg_server, modecfg_client),
-		     COMBO(sr->that, modecfg_server, modecfg_client),
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		jam(buf, PRI_CONNECTION":   modecfg info:", c->name, instance);
+		jam(buf, " us:%s,", COMBO(sr->this, modecfg_server, modecfg_client));
+		jam(buf, " them:%s,", COMBO(sr->that, modecfg_server, modecfg_client));
+		jam(buf, " modecfg policy:%s,", (c->policy & POLICY_MODECFG_PULL ? "pull" : "push"));
 
-		     (c->policy & POLICY_MODECFG_PULL) ? "pull" : "push",
-		     (c->modecfg_dns == NULL) ? "unset" : c->modecfg_dns,
-		     (c->modecfg_domains == NULL) ? "unset" : c->modecfg_domains,
-		     sr->this.cat ? "set" : "unset");
+		jam_string(buf, " dns:");
+		if (c->config->modecfg.dns == NULL) {
+			jam_string(buf, "unset,");
+		} else {
+			const char *sep = "";
+			for (const ip_address *dns = c->config->modecfg.dns;
+			     dns->is_set; dns++) {
+				jam_string(buf, sep);
+				sep = ", ";
+				jam_address(buf, dns);
+			}
+			jam_string(buf, ",");
+		}
+
+		jam_string(buf, " domains:");
+		if (c->config->modecfg.domains == NULL) {
+			jam_string(buf, "unset,");
+		} else {
+			for (const shunk_t *domain = c->config->modecfg.domains;
+			     domain->ptr != NULL; domain++) {
+				jam_sanitized_hunk(buf, *domain);
+				jam_string(buf, ",");
+			}
+		}
+
+		jam(buf, " cat:%s;", sr->this.cat ? "set" : "unset");
+	}
 
 #undef COMBO
 
-	if (c->modecfg_banner != NULL) {
+	if (c->config->modecfg.banner != NULL) {
 		show_comment(s, PRI_CONNECTION": banner:%s;",
-			     c->name, instance, c->modecfg_banner);
+			     c->name, instance, c->config->modecfg.banner);
 	}
 
 	/*

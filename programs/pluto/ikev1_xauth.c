@@ -251,32 +251,24 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 	case INTERNAL_IP4_DNS:
 	{
 		/*
-		 * Emit one attribute per DNS IP.
-		 * (All other cases emit exactly one attribute.)
-		 * The first's emission is started above
-		 * and the last's is finished at the end
-		 * so our loop structure is odd.
+		 * Emit one attribute per DNS IP (all other cases emit
+		 * exactly one attribute).
+		 *
+		 * The first's emission is started above and the
+		 * last's is finished at the end so our loop structure
+		 * is odd.
 		 */
-		char *ipstr = strtok(c->modecfg_dns, ", ");
+		for (ip_address *dns = c->config->modecfg.dns;
+		     dns != NULL && dns->is_set; dns++) {
 
-		while (ipstr != NULL) {
-			ip_address dnsip;
-			err_t e = ttoaddress_num(shunk1(ipstr), &ipv4_info, &dnsip);
-
-			if (e != NULL) {
-				log_state(RC_LOG_SERIOUS, st,
-					  "Invalid DNS IPv4 %s:%s", ipstr, e);
-				return STF_INTERNAL_ERROR;
-			}
 			/* emit attribute's value */
-			diag_t d = pbs_out_address(&attrval, dnsip, "IP4_dns");
+			diag_t d = pbs_out_address(&attrval, *dns, "IP4_dns");
 			if (d != NULL) {
 				llog_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
 				return STF_INTERNAL_ERROR;
 			}
 
-			ipstr = strtok(NULL, ", ");
-			if (ipstr != NULL) {
+			if (dns[1].is_set) {
 				/* end this attribute */
 				close_output_pbs(&attrval);
 
@@ -298,15 +290,16 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 		 * We don't know if existing IKEv1 implementations support
 		 * more then one, so we just send the first one configured.
 		 */
-		char *first = strtok(c->modecfg_domains, ", ");
-		if (first != NULL)
-			ok = out_raw(first, strlen(first), &attrval, "MODECFG_DOMAIN");
+		if (c->config->modecfg.domains != NULL) {
+			shunk_t first = c->config->modecfg.domains[0];
+			ok = out_raw(first.ptr, first.len, &attrval, "MODECFG_DOMAIN");
+		}
 		break;
 	}
 
 	case MODECFG_BANNER:
-		ok = out_raw(c->modecfg_banner,
-			     strlen(c->modecfg_banner),
+		ok = out_raw(c->config->modecfg.banner,
+			     strlen(c->config->modecfg.banner),
 			     &attrval, "");
 		break;
 
@@ -418,7 +411,7 @@ static stf_status modecfg_resp(struct state *st,
 		}
 
 		/* If we got DNS addresses, answer with those */
-		if (c->modecfg_dns != NULL)
+		if (c->config->modecfg.dns != NULL)
 			resp |= LELEM(INTERNAL_IP4_DNS);
 		else
 			resp &= ~LELEM(INTERNAL_IP4_DNS);
@@ -446,15 +439,16 @@ static stf_status modecfg_resp(struct state *st,
 		 * anyway.
 		 * ??? might we be sending them twice?
 		 */
-		if (c->modecfg_domains != NULL) {
-			dbg("We are sending '%s' as domain", strtok(c->modecfg_domains, ", "));
+		if (c->config->modecfg.domains != NULL) {
+			dbg("We are sending '"PRI_SHUNK"' as domain",
+			    pri_shunk(c->config->modecfg.domains[0]));
 			isakmp_add_attr(&strattr, MODECFG_DOMAIN, ia, st);
 		} else {
 			dbg("we are not sending a domain");
 		}
 
-		if (c->modecfg_banner != NULL) {
-			dbg("We are sending '%s' as banner", c->modecfg_banner);
+		if (c->config->modecfg.banner != NULL) {
+			dbg("We are sending '%s' as banner", c->config->modecfg.banner);
 			isakmp_add_attr(&strattr, MODECFG_BANNER, ia, st);
 		} else {
 			dbg("We are not sending a banner");
