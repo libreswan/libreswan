@@ -182,6 +182,7 @@ struct config {
 	char *dnshostname;
 
 	struct {
+		shunk_t *domains;	/* NULL terminated list */
 		char *banner;
 	} modecfg;
 

@@ -249,6 +249,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		free_ikev2_proposals(&config->v2_ike_auth_child_proposals);
 		pfreeany(config->connalias);
 		pfreeany(config->dnshostname);
+		pfreeany(config->modecfg.domains);
 		pfreeany(config->modecfg.banner);
 		pfreeany(config->redirect.to);
 		pfreeany(config->redirect.accept);
@@ -2077,6 +2078,18 @@ static bool extract_connection(const struct whack_message *wm,
 
 		c->modecfg_dns = clone_str(wm->modecfg_dns, "connection modecfg_dns");
 		c->modecfg_domains = clone_str(wm->modecfg_domains, "connection modecfg_domains");
+
+		config->modecfg.domains = clone_shunk_tokens(shunk1(wm->modecfg_domains),
+							     ", ", HERE);
+		if (wm->ike_version == IKEv1 &&
+		    config->modecfg.domains != NULL &&
+		    config->modecfg.domains[1].ptr != NULL) {
+			llog(RC_LOG_SERIOUS, c->logger,
+			     "IKEv1 only uses the first domain in modecfgdomain=%s",
+			     wm->modecfg_domains);
+			config->modecfg.domains[1] = null_shunk;
+		}
+
 		config->modecfg.banner = clone_str(wm->modecfg_banner, "connection modecfg_banner");
 
 
