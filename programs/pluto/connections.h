@@ -513,7 +513,6 @@ struct connection {
 	struct ip_pool *pool; /* IPv4 addresspool as a range, start end */
 
 	char *modecfg_dns;
-	char *modecfg_domains;
 
 	uint32_t metric;	/* metric for tunnel routes */
 	uint16_t connmtu;	/* mtu for tunnel routes */

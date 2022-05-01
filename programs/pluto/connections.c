@@ -236,7 +236,6 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	pfreeany(c->foodgroup);
 	pfreeany(c->vti_iface);
 	pfreeany(c->modecfg_dns);
-	pfreeany(c->modecfg_domains);
 	iface_endpoint_delref(&c->interface);
 
 	struct config *config = c->root_config;
@@ -786,8 +785,6 @@ static void unshare_connection(struct connection *c, struct connection *t/*empla
 
 	c->modecfg_dns = clone_str(c->modecfg_dns,
 				"connection modecfg_dns");
-	c->modecfg_domains = clone_str(c->modecfg_domains,
-				"connection modecfg_domains");
 
 	c->vti_iface = clone_str(c->vti_iface, "connection vti_iface");
 
@@ -2077,7 +2074,6 @@ static bool extract_connection(const struct whack_message *wm,
 		config->xauthfail = wm->xauthfail;
 
 		c->modecfg_dns = clone_str(wm->modecfg_dns, "connection modecfg_dns");
-		c->modecfg_domains = clone_str(wm->modecfg_domains, "connection modecfg_domains");
 
 		config->modecfg.domains = clone_shunk_tokens(shunk1(wm->modecfg_domains),
 							     ", ", HERE);
