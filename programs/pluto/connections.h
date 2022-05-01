@@ -182,6 +182,7 @@ struct config {
 	char *dnshostname;
 
 	struct {
+		ip_address *dns;	/* !.is_set terminated list */
 		shunk_t *domains;	/* NULL terminated list */
 		char *banner;
 	} modecfg;

@@ -248,6 +248,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		free_ikev2_proposals(&config->v2_ike_auth_child_proposals);
 		pfreeany(config->connalias);
 		pfreeany(config->dnshostname);
+		pfreeany(config->modecfg.dns);
 		pfreeany(config->modecfg.domains);
 		pfreeany(config->modecfg.banner);
 		pfreeany(config->redirect.to);
@@ -2074,6 +2075,18 @@ static bool extract_connection(const struct whack_message *wm,
 		config->xauthfail = wm->xauthfail;
 
 		c->modecfg_dns = clone_str(wm->modecfg_dns, "connection modecfg_dns");
+
+		err_t e = ttoaddress_list_num(shunk1(wm->modecfg_dns), ", ",
+					      /* IKEv1 doesn't do IPv6 */
+					      (wm->ike_version == IKEv1 ? &ipv4_info : NULL),
+					      &config->modecfg.dns);
+		if (e != NULL) {
+			llog(RC_FATAL, c->logger,
+			     "failed to add connection: modecfgdns=%s invalid: %s",
+			     wm->modecfg_dns, e);
+			/* caller will free C */
+			return false;
+		}
 
 		config->modecfg.domains = clone_shunk_tokens(shunk1(wm->modecfg_domains),
 							     ", ", HERE);
