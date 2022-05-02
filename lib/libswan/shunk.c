@@ -118,6 +118,26 @@ shunk_t shunk_span(shunk_t *input, const char *accept)
 	return token;
 }
 
+bool shunk_eat(shunk_t *shunk, shunk_t dinner)
+{
+	if (shunk->ptr == NULL || dinner.ptr == NULL) {
+		return false;
+	}
+	if (shunk->len < dinner.len) {
+		return false;
+	}
+	if (strncmp(shunk->ptr, dinner.ptr, dinner.len) != 0) {
+		return false;
+	}
+	*shunk = shunk_slice(*shunk, dinner.len, shunk->len);
+	return true;
+}
+
+bool shunk_streat(shunk_t *shunk, const char *dinner)
+{
+	return shunk_eat(shunk, shunk1(dinner));
+}
+
 bool shunk_caseeat(shunk_t *shunk, shunk_t dinner)
 {
 	if (shunk->ptr == NULL || dinner.ptr == NULL) {
