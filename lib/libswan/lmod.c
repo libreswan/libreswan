@@ -70,26 +70,32 @@ bool lmod_is_clr(lmod_t mod, lset_t clr)
 bool lmod_arg(lmod_t *mod, const struct lmod_info *info,
 	      const char *args, bool enable)
 {
-	char *list = clone_str(args, "list"); /* must free */
 	bool ok = true;
-	const char *delim = "+, \t";
-	for (char *tmp = list, *elem = strsep(&tmp, delim);
-	     elem != NULL; elem = strsep(&tmp, delim)) {
-		if (enable && streq(elem, "none")) {
+	shunk_t cursor = shunk1(args);
+	while (true) {
+		shunk_t elem = shunk_token(&cursor, NULL/*delim*/, "+, \t");
+		if (elem.ptr == NULL) {
+			break;
+		}
+		if (elem.len == 0) {
+			/* ignore empty */
+			continue;
+		}
+		if (enable && hunk_streq(elem, "none")) {
 			/* excludes --no-... none */
 			mod->clr = info->mask;
 			mod->set = LEMPTY;
-		} else if (*elem != '\0') {
+		} else {
 			/* non-empty */
-			const char *arg = elem;
+			shunk_t arg = elem;
 			/* excludes --no-... no-... */
-			bool no = enable ? eat(arg, "no-") : true;
+			bool no = enable ? shunk_streat(&arg, "no-") : true;
 			lset_t bits = LEMPTY;
 			/* try aliases first */
 			if (info->aliases != NULL) {
 				for (struct lmod_alias *c = info->aliases;
 				     c->name != NULL; c++) {
-					if (streq(c->name, arg)) {
+					if (hunk_streq(arg, c->name)) {
 						bits = c->bits;
 						break;
 					}
@@ -97,7 +103,7 @@ bool lmod_arg(lmod_t *mod, const struct lmod_info *info,
 			}
 			/* try bit mask second */
 			if (bits == LEMPTY) {
-				int ix = enum_match(info->names, shunk1(arg));
+				int ix = enum_match(info->names, arg);
 				if (ix >= 0) {
 					bits = LELEM(ix);
 				}
@@ -115,9 +121,8 @@ bool lmod_arg(lmod_t *mod, const struct lmod_info *info,
 				mod->set |= bits;
 				mod->clr &= ~bits;
 			}
-		} /* else ignore empty ... */
+		}
 	}
-	pfree(list);
 	return ok;
 }
 
