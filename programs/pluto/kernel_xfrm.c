@@ -241,10 +241,14 @@ static void init_netlink_route_fd(struct logger *logger)
 static void init_netlink(struct logger *logger)
 {
 #define XFRM_ACQ_EXPIRES "/proc/sys/net/core/xfrm_acq_expires"
+#define XFRM_STAT "/proc/net/xfrm_stat"
+
 	struct stat buf;
 	if (stat(XFRM_ACQ_EXPIRES, &buf) != 0) {
-		fatal_errno(PLUTO_EXIT_KERNEL_FAIL, logger, errno,
-			    "no XFRM kernel support detected, missing "XFRM_ACQ_EXPIRES);
+		if (stat(XFRM_STAT, &buf) != 0) {
+			fatal_errno(PLUTO_EXIT_KERNEL_FAIL, logger, errno,
+			    "no XFRM kernel support detected, missing "XFRM_ACQ_EXPIRES" and "XFRM_STAT);
+		}
 	}
 
 	struct sockaddr_nl addr;
