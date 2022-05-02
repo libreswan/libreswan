@@ -1249,7 +1249,6 @@ static stf_status process_v2_CREATE_CHILD_SA_child_response_continue_1(struct st
 struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
-	ike->sa.st_viable_parent = false;
 
 	; /* to be determined */
 	struct child_sa *larval_ike = new_v2_child_state(c, ike, IKE_SA,
@@ -1331,6 +1330,15 @@ stf_status initiate_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 							 struct child_sa *larval_ike,
 							 struct msg_digest *null_md)
 {
+	/*
+	 * Since this IKE SA is rekeying, it's no longer viable.
+	 */
+	if (!pexpect(ike->sa.st_viable_parent)) {
+		return STF_INTERNAL_ERROR;
+	}
+
+	ike->sa.st_viable_parent = false;
+
 	pexpect(ike->sa.st_v2_msgid_windows.initiator.wip_sa == larval_ike);
 
 	if (!record_v2_rekey_ike_message(ike, larval_ike, null_md)) {
