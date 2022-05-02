@@ -442,9 +442,20 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 
 static void llog_v2_success_rekey_child_request(struct ike_sa *ike)
 {
-	llog_sa(RC_NEW_V2_STATE + ike->sa.st_state->kind,
-		ike->sa.st_v2_msgid_windows.initiator.wip_sa,
-		"sent CREATE_CHILD_SA request to rekey IPsec SA");
+	/* XXX: should the lerval SA be a parameter? */
+	struct child_sa *larval = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
+	if (larval != NULL) {
+#if 0
+		llog_sa(RC_NEW_V2_STATE + larval->sa.st_state->kind, larval,
+			"sent CREATE_CHILD_SA request to rekey IPsec SA "PRI_SO" using IKE SA "PRI_SO,
+			pri_so(larval->sa.st_v2_rekey_pred), pri_so(ike->sa.st_serialno));
+#else
+		llog_sa(RC_NEW_V2_STATE + larval->sa.st_state->kind, larval,
+			"sent CREATE_CHILD_SA request to rekey IPsec SA");
+#endif
+	} else {
+		llog_sa(RC_LOG_SERIOUS, ike, "rekey of Child SA abandoned");
+	}
 }
 
 static const struct v2_state_transition v2_CREATE_CHILD_SA_rekey_child_transition = {
@@ -703,9 +714,20 @@ void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 
 static void llog_v2_success_new_child_request(struct ike_sa *ike)
 {
-	llog_sa(RC_NEW_V2_STATE + ike->sa.st_v2_msgid_windows.initiator.wip_sa->sa.st_state->kind,
-		ike->sa.st_v2_msgid_windows.initiator.wip_sa,
-		"sent CREATE_CHILD_SA request for new IPsec SA");
+	/* XXX: should the lerval SA be a parameter? */
+	struct child_sa *larval = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
+	if (larval != NULL) {
+#if 0
+		llog_sa(RC_NEW_V2_STATE + larval->sa.st_state->kind, larval,
+			"sent CREATE_CHILD_SA request for new IPsec SA using IKE SA "PRI_SO,
+			pri_so(ike->sa.st_serialno));
+#else
+		llog_sa(RC_NEW_V2_STATE + larval->sa.st_state->kind, larval,
+			"sent CREATE_CHILD_SA request for new IPsec SA");
+#endif
+	} else {
+		llog_sa(RC_LOG_SERIOUS, ike, "create new Child SA abandoned");
+	}
 }
 
 static const struct v2_state_transition v2_CREATE_CHILD_SA_new_child_transition = {
@@ -1289,9 +1311,21 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike)
 
 static void llog_v2_success_rekey_ike_request(struct ike_sa *ike)
 {
-	llog_sa(RC_NEW_V2_STATE + ike->sa.st_state->kind,
-		ike->sa.st_v2_msgid_windows.initiator.wip_sa,
-		"sent CREATE_CHILD_SA request to rekey IKE SA");
+	/* XXX: should the lerval SA be a parameter? */
+	struct child_sa *larval = ike->sa.st_v2_msgid_windows.initiator.wip_sa;
+	if (larval != NULL) {
+		pexpect(larval->sa.st_v2_rekey_pred == ike->sa.st_serialno);
+#if 0
+		llog_sa(RC_NEW_V2_STATE + larval->sa.st_state->kind, larval,
+			"sent CREATE_CHILD_SA request to rekey IKE SA "PRI_SO,
+			pri_so(larval->sa.st_v2_rekey_pred));
+#else
+		llog_sa(RC_NEW_V2_STATE + larval->sa.st_state->kind, larval,
+			"sent CREATE_CHILD_SA request to rekey IKE SA");
+#endif
+	} else {
+		llog_sa(RC_LOG_SERIOUS, ike, "rekey of IKE SA abandoned");
+	}
 }
 
 static const struct v2_state_transition v2_CREATE_CHILD_SA_rekey_ike_transition = {
