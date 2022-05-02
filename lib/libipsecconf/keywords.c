@@ -665,32 +665,31 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 
 unsigned int parser_enum_list(const struct keyword_def *kd, const char *s, bool list)
 {
-	char complaintbuf[80];
-
 	assert(kd->type == kt_list || kd->type == kt_enum);
-
-	/* strsep(3) is destructive, so give it a safe-to-munge copy of s */
-	char *scopy = strdup(s);
-	char *scursor = scopy;
 
 	unsigned int valresult = 0;
 
 	/*
-	 * split up the string into comma separated pieces, and look each piece up in the
-	 * value list provided in the definition.
+	 * Split up the string into comma separated pieces, and look
+	 * each piece up in the value list provided in the definition.
 	 */
 
 	int numfound = 0;
-	char *piece;
-	while ((piece = strsep(&scursor, ":, \t")) != NULL) {
-		/* discard empty strings */
-		if (piece[0] == '\0')
+	shunk_t cursor = shunk1(s);
+	while (true) {
+		shunk_t piece = shunk_token(&cursor, NULL/*delim*/, ":, \t");
+		if (piece.ptr == NULL) {
+			break;
+		}
+		if (piece.len == 0) {
+			/* discard empty strings */
 			continue;
+		}
 
 		assert(kd->validenum != NULL);
 		for (const struct sparse_name *kev = kd->validenum;
 		     kev->name != NULL; kev++) {
-			if (strcaseeq(piece, kev->name)) {
+			if (hunk_strcaseeq(piece, kev->name)) {
 				/* found it: count it */
 				numfound++;
 				valresult |= kev->value;
@@ -699,30 +698,24 @@ unsigned int parser_enum_list(const struct keyword_def *kd, const char *s, bool 
 		}
 		if (numfound == 0) {
 			/* we didn't find anything, complain */
-			snprintf(complaintbuf, sizeof(complaintbuf),
-				 "%s: %d: keyword %s, invalid value: %s",
-				 parser_cur_filename(),
-				 parser_cur_lineno(),
-				 kd->keyname, piece);
-
-			fprintf(stderr, "ERROR: %s\n", complaintbuf);
-			free(scopy);
+			fprintf(stderr,
+				"ERROR: %s: %d: keyword %s, invalid value: "PRI_SHUNK"\n",
+				parser_cur_filename(),
+				parser_cur_lineno(),
+				kd->keyname,
+				pri_shunk(piece));
 			exit(1);
 		}
 	}
 
 	if (numfound > 1 && !list) {
-		snprintf(complaintbuf, sizeof(complaintbuf),
-			 "%s: %d: keyword %s accepts only one value, not %s",
-			 parser_cur_filename(), parser_cur_lineno(),
-			 kd->keyname, scopy);
-
-		fprintf(stderr, "ERROR: %s\n", complaintbuf);
-		free(scopy);
+		fprintf(stderr,
+			"ERROR: %s: %d: keyword %s accepts only one value, not %s\n",
+			parser_cur_filename(), parser_cur_lineno(),
+			kd->keyname, s);
 		exit(1);
 	}
-
-	free(scopy);
+;
 	return valresult;
 }
 
