@@ -440,10 +440,10 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	return larval_child;
 }
 
-static void llog_v2_success_rekey_child_request(struct ike_sa *ike UNUSED, struct state *st)
+static void llog_v2_success_rekey_child_request(struct ike_sa *ike)
 {
-	llog_sa(RC_NEW_V2_STATE + st->st_state->kind,
-		st->st_v2_msgid_windows.initiator.wip_sa,
+	llog_sa(RC_NEW_V2_STATE + ike->sa.st_state->kind,
+		ike->sa.st_v2_msgid_windows.initiator.wip_sa,
 		"sent CREATE_CHILD_SA request to rekey IPsec SA");
 }
 
@@ -701,7 +701,7 @@ void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 			    "Child Initiator KE? and nonce");
 }
 
-static void llog_v2_success_new_child_request(struct ike_sa *ike, struct state *st UNUSED)
+static void llog_v2_success_new_child_request(struct ike_sa *ike)
 {
 	llog_sa(RC_NEW_V2_STATE + ike->sa.st_v2_msgid_windows.initiator.wip_sa->sa.st_state->kind,
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa,
@@ -1288,10 +1288,10 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike)
 	return larval_ike;
 }
 
-static void llog_v2_success_rekey_ike_request(struct ike_sa *ike UNUSED, struct state *st)
+static void llog_v2_success_rekey_ike_request(struct ike_sa *ike)
 {
-	llog_sa(RC_NEW_V2_STATE + st->st_state->kind,
-		st->st_v2_msgid_windows.initiator.wip_sa,
+	llog_sa(RC_NEW_V2_STATE + ike->sa.st_state->kind,
+		ike->sa.st_v2_msgid_windows.initiator.wip_sa,
 		"sent CREATE_CHILD_SA request to rekey IKE SA");
 }
 

@@ -126,50 +126,50 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *mdp, struct ik
  *
  */
 
-void ldbg_v2_success(struct ike_sa *ike UNUSED, struct state *st)
+void ldbg_v2_success(struct ike_sa *ike)
 {
 	LSWDBGP(DBG_BASE, buf) {
-		jam_logger_prefix(buf, st->st_logger);
-		jam_string(buf, st->st_v2_transition->story);
+		jam_logger_prefix(buf, ike->sa.st_logger);
+		jam_string(buf, ike->sa.st_v2_transition->story);
 		jam_string(buf, ": ");
-		jam_string(buf, (st->st_sa_role == SA_INITIATOR ? "initiator " :
-				 st->st_sa_role == SA_RESPONDER ? "responder " :
+		jam_string(buf, (ike->sa.st_sa_role == SA_INITIATOR ? "initiator " :
+				 ike->sa.st_sa_role == SA_RESPONDER ? "responder " :
 				 ""));
-		jam_string(buf, st->st_state->story);
+		jam_string(buf, ike->sa.st_state->story);
 	}
 }
 
-void llog_v2_success_story(struct ike_sa *ike UNUSED, struct state *st)
+void llog_v2_success_story(struct ike_sa *ike)
 {
-	enum rc_type w = RC_NEW_V2_STATE + st->st_state->kind;
-	LLOG_JAMBUF(w, st->st_logger, buf) {
-		jam_string(buf, st->st_state->story);
+	enum rc_type w = RC_NEW_V2_STATE + ike->sa.st_state->kind;
+ 	LLOG_JAMBUF(w, ike->sa.st_logger, buf) {
+		jam_string(buf, ike->sa.st_state->story);
 	}
 }
 
-void llog_v2_success_exchange(struct ike_sa *ike UNUSED, struct state *st)
+void llog_v2_success_exchange(struct ike_sa *ike)
 {
-	enum rc_type w = RC_NEW_V2_STATE + st->st_state->kind;
-	LLOG_JAMBUF(w, st->st_logger, buf) {
-		switch (st->st_v2_transition->recv_role) {
+	enum rc_type w = RC_NEW_V2_STATE + ike->sa.st_state->kind;
+	LLOG_JAMBUF(w, ike->sa.st_logger, buf) {
+		switch (ike->sa.st_v2_transition->recv_role) {
 		case MESSAGE_REQUEST: jam_string(buf, "responder processed"); break;
 		case MESSAGE_RESPONSE: jam_string(buf, "initiator processed"); break;
 		case NO_MESSAGE: jam_string(buf, "initiated"); break;
 		}
 		jam_string(buf, " ");
-		jam_enum_short(buf, &ikev2_exchange_names, st->st_v2_transition->exchange);
+		jam_enum_short(buf, &ikev2_exchange_names, ike->sa.st_v2_transition->exchange);
 		jam_string(buf, "; ");
-		jam_string(buf, st->st_state->story);
+		jam_string(buf, ike->sa.st_state->story);
 	}
 }
 
-void llog_v2_success_story_details(struct ike_sa *ike UNUSED, struct state *st)
+void llog_v2_success_story_details(struct ike_sa *ike)
 {
-	enum rc_type w = RC_NEW_V2_STATE + st->st_state->kind;
-	LLOG_JAMBUF(w, st->st_logger, buf) {
-		jam_string(buf, st->st_state->story);
+	enum rc_type w = RC_NEW_V2_STATE + ike->sa.st_state->kind;
+	LLOG_JAMBUF(w, ike->sa.st_logger, buf) {
+		jam_string(buf, ike->sa.st_state->story);
 		jam_string(buf, " ");
-		jam_parent_sa_details(buf, st);
+		jam_parent_sa_details(buf, &ike->sa);
 	}
 }
 
@@ -2531,9 +2531,9 @@ static void success_v2_state_transition(struct ike_sa *ike,
 
         if (!pexpect(transition->llog_success != NULL) ||
 	    (c->policy & POLICY_OPPORTUNISTIC)) {
-		ldbg_v2_success(ike, &ike->sa);
+		ldbg_v2_success(ike);
 	} else {
-		transition->llog_success(ike, &ike->sa);
+		transition->llog_success(ike);
 	}
 
 	if (just_established) {

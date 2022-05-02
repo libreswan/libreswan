@@ -118,10 +118,10 @@ struct v2_state_transition {
 	ikev2_state_transition_fn *const processor;
 
 	/*
-	 * When non-NULL, use this to log a state transition's
-	 * success.
+	 * When non-NULL, use this to log the IKE SA's successful
+	 * state transition.
 	 */
-	void (*llog_success)(struct ike_sa *ike, struct state *st);
+	void (*llog_success)(struct ike_sa *ike);
 };
 
 void v2_ike_sa_established(struct ike_sa *ike);
@@ -176,9 +176,9 @@ bool v2_notification_fatal(v2_notification_t n);
 
 bool already_has_larval_v2_child(struct ike_sa *ike, const struct connection *c);
 
-void llog_v2_success_story(struct ike_sa *ike UNUSED, struct state *st);
-void llog_v2_success_exchange(struct ike_sa *ike UNUSED, struct state *st);
-void llog_v2_success_story_details(struct ike_sa *ike UNUSED, struct state *st);
-void ldbg_v2_success(struct ike_sa *ike UNUSED, struct state *st);
+void llog_v2_success_story(struct ike_sa *ike);
+void llog_v2_success_exchange(struct ike_sa *ike);
+void llog_v2_success_story_details(struct ike_sa *ike);
+void ldbg_v2_success(struct ike_sa *ike);
 
 #endif
