@@ -60,36 +60,104 @@ west #
 west #
  send() { { printf "$@" ; for c in 1 2 3 4 5 6 7 8 9 10 ; do sleep 1 ; printf "" ; done; } | ncat east 4500 ; }
 west #
+ # 4.  TCP-Encapsulated Stream Prefix
+west #
+ #
+west #
+ #  0      1      2      3      4      5
+west #
+ # +------+------+------+------+------+------+
+west #
+ # | 0x49 | 0x4b | 0x45 | 0x54 | 0x43 | 0x50 |
+west #
+ # +------+------+------+------+------+------+
+west #
+ #
+west #
+ # followed by ...
+west #
+ #
+west #
+ # 3.1.  TCP-Encapsulated IKE Header Format
+west #
+ #                      1                   2                   3
+west #
+ #  0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1 2 3 4 5 6 7 8 9 0 1
+west #
+ #                                 +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+west #
+ #                                 |            Length             |
+west #
+ # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+west #
+ # |                         Non-ESP Marker                        |
+west #
+ # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+west #
+ # |                                                               |
+west #
+ # ~                      IKE header [RFC7296]                     ~
+west #
+ # |                                                               |
+west #
+ # +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
+west #
+ #
+west #
+ # ... where LENGTH includes the length field
+west #
  # open the TCP socket
 west #
  send ''
 west #
- # open the TCP socket, send one byte
+ # send one byte
 west #
- send '\0'
+ send 'I'
 west #
- # open the TCP socket, send not IKETCP
+ # send not IKETCP
 west #
  send '123456'
 west #
- # open the TCP socket, send IKETCP
+ # send IKETCP prefix
 west #
  send 'IKETCP'
 west #
- # open the TCP socket, send IKETCP<byte>
+ # send IKETCP prefix + <00>
 west #
- send 'IKETCP\0'
+ send 'IKETCP\00'
 west #
- # open the TCP socket, send IKETCP<0x0000>
+ # send IKETCP prefix + length=0; min length is 2
 west #
  send 'IKETCP\x0\x0'
 Ncat: Connection reset by peer.
 west #
- # open the TCP socket, send IKETCP<0x00ff>
+ # send IKETCP prefix + length=2
 west #
- send 'IKETCP\x0\xff'
+ send 'IKETCP\x0\x2'
 west #
- # open the TCP socket, send IKETCP<0xffff>
+ # send IKETCP prefix + length=6 + non-ESP marker (0)
+west #
+ send 'IKETCP\x00\x06''\x00\x00\x00\x00'
+west #
+ # send IKETCP prefix + length=6 + non-ESP marker (0) + <ff> == mangled
+west #
+ send 'IKETCP\x00\x07''\x00\x00\x00\x00''\xff'
+west #
+ # send IKETCP prefix + length=2+4+28=0x22 + non-ESP marker (0) + <header:length=28=0x1c>
+west #
+ send 'IKETCP\x00\x22''\x00\x00\x00\x00''\x01\x02\x03\x04\x05\x06\x07\x08''\x00\x00\x00\x00\x00\x00\x00\x00''\x00\x20\x22\x08''\x00\x00\x00\x00''\x00\x00\x00\x1c' | hexdump
+0000000 2a00 0000 0000 0201 0403 0605 0807 0000
+0000010 0000 0000 0000 2029 2022 0000 0000 0000
+0000020 2400 0000 0800 0000 0700               
+000002a
+west #
+ # send IKETCP prefix + length=0x00ff
+west #
+ # for some reason this sometimes causes EAGAIN on east
+west #
+ send 'IKETCP\x00\xff'
+west #
+ # send IKETCP prefix + length=0xffff
 west #
  send 'IKETCP\xff\xff'
 west #
