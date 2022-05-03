@@ -50,8 +50,4 @@ west #
  echo done
 done
 west #
- crlutil -L -d sql:/etc/ipsec.d | grep mainca
-west #
- ipsec auto --listcrls | grep issuer
-west #
  
