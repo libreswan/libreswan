@@ -17,7 +17,6 @@ extern void start_crl_fetch_helper(struct logger *logger);
 extern void stop_crl_fetch_helper(struct logger *logger);
 
 extern void free_crl_fetch(void);
-extern void check_crls(struct logger *logger);
 
 extern char *curl_iface;
 extern long curl_timeout;

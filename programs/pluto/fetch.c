@@ -381,7 +381,7 @@ static bool fetch_crl(chunk_t issuer_dn, const char *url, struct logger *logger)
 	chunk_t blob = empty_chunk; /* must free */
 	err_t ugh = fetch_asn1_blob(url, &blob, logger);
 	if (ugh != NULL) {
-		dbg("fetch failed:  %s", ugh);
+		dbg("CRL: fetch failed:  %s", ugh);
 		return false;
 	}
 
@@ -401,7 +401,7 @@ static bool fetch_crl(chunk_t issuer_dn, const char *url, struct logger *logger)
  * fetch_crl() can process, redundant fetches will be merged.
  */
 
-void check_crls(struct logger *logger)
+static void check_crls(struct logger *logger)
 {
 	/*
 	 * Shallow - contents point into existing structures.
@@ -478,22 +478,23 @@ void check_crls(struct logger *logger)
 
 	submit_crl_fetch_requests(&requests, logger);
 
-	dbg("releasing cert list in %s()", __func__);
+	dbg("CRL: releasing cert list in %s()", __func__);
 	if (certs != NULL) {
 		CERT_DestroyCertList(certs);
 	}
 
-	dbg("releasing crl list in %s()", __func__);
+	dbg("CRL: releasing crl list in %s()", __func__);
 	PORT_FreeArena(crl_list->arena, PR_FALSE);
 }
 
 static void *fetch_thread(void *arg UNUSED)
 {
-	dbg("fetch thread started");
+	dbg("CRL: fetch thread started");
 	/* XXX: on thread so no whack */
 	struct logger *logger = string_logger(null_fd, HERE, "crl thread: "); /* must free */
 	process_crl_fetch_requests(fetch_crl, logger);
 	free_logger(&logger, HERE);
+	dbg("CRL: fetch thread stopped");
 	return NULL;
 }
 
@@ -510,7 +511,7 @@ void start_crl_fetch_helper(struct logger *logger)
 	 */
 	init_oneshot_timer(EVENT_CHECK_CRLS, check_crls);
 	if (deltasecs(crl_check_interval) <= 0) {
-		dbg("CRL checking disabled");
+		dbg("CRL: checking disabled");
 		return;
 	}
 

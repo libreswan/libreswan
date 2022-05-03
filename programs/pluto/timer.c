@@ -63,7 +63,6 @@
 #include "pluto_sd.h"
 #include "ikev1_retry.h"
 #include "ikev2_retry.h"
-#include "fetch.h"		/* for check_crls() */
 #include "pluto_stats.h"
 #include "iface.h"
 #include "ikev2_liveness.h"

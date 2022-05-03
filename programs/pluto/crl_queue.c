@@ -56,7 +56,7 @@ struct crl_fetch_queue {
 };
 
 struct crl_fetch_request {
-	shunk_t issuer_dn;
+	asn1_t issuer_dn;
 	shunk_t url;
 	CERTCertificate *ca; /* must free */
 	CERTCrlDistributionPoints *dps; /* points into CA */
@@ -148,6 +148,7 @@ static void unlocked_append_distribution_points(struct crl_distribution_point *v
 
 void submit_crl_fetch_requests(struct crl_fetch_request **requests, struct logger *logger)
 {
+	dbg("CRL: submitting crl fetch requests");
 	pthread_mutex_lock(&crl_queue_mutex);
 	for (struct crl_fetch_request *request = requests != NULL ? *requests : NULL;
 	     request != NULL; request = request->next) {
@@ -155,15 +156,19 @@ void submit_crl_fetch_requests(struct crl_fetch_request **requests, struct logge
 		for (entry = &crl_fetch_queue; *entry != NULL; entry = &(*entry)->next) {
 			if (same_dn(request->issuer_dn, ASN1((*entry)->issuer_dn))) {
 				/* there is already a fetch request */
-				dbg("crl fetch request already exists");
+				dn_buf dnb;
+				dbg("CRL:   adding distribution point to existing fetch request: %s",
+				    str_dn(request->issuer_dn, &dnb));
 				/* there might be new distribution points */
 				unlocked_append_distribution_points(&(*entry)->distribution_points,
 								    request->url, request->dps);
-				dbg("crl fetch request augmented");
 				break;
 			}
 		}
 		if (*entry == NULL) {
+			dn_buf dnb;
+			dbg("CRL:   adding new fetch request: %s",
+			    str_dn(request->issuer_dn, &dnb));
 			/* APPEND new requests */
 			struct crl_fetch_queue new_entry = {
 				.request_time = realnow(),
@@ -178,7 +183,7 @@ void submit_crl_fetch_requests(struct crl_fetch_request **requests, struct logge
 			*entry = clone_thing(new_entry, "crl entry");
 		}
 	}
-	dbg("pokeing the sleeping dragon");
+	dbg("CRL: poke the sleeping dragon (fetch thread)");
 	pthread_cond_signal(&crl_queue_cond);
 	pthread_mutex_unlock(&crl_queue_mutex);
 
@@ -216,7 +221,8 @@ static CERTCrlDistributionPoints *get_cert_distribution_points(CERTCertificate *
 	return dps;
 }
 
-void add_crl_fetch_request(asn1_t issuer_dn, shunk_t url, struct crl_fetch_request **requests,
+void add_crl_fetch_request(asn1_t issuer_dn, shunk_t url,
+			   struct crl_fetch_request **requests,
 			   struct logger *logger)
 {
 	/*
@@ -236,7 +242,7 @@ void add_crl_fetch_request(asn1_t issuer_dn, shunk_t url, struct crl_fetch_reque
 
 	CERTCrlDistributionPoints *cert_dps = get_cert_distribution_points(ca, logger);
 	if (cert_dps == NULL && url.len == 0) {
-		dbg("no distribution point available for new fetch request");
+		dbg("CRL: no distribution point available for new fetch request");
 		CERT_DestroyCertificate(ca);
 		return;
 	}
@@ -264,7 +270,7 @@ void process_crl_fetch_requests(fetch_crl_fn *fetch_crl, struct logger *unused_l
 	pthread_mutex_lock(&crl_queue_mutex);
 	while (!exiting_pluto) {
 		/* if there's something process it */
-		dbg("processing CRL fetch requests");
+		dbg("CRL: the sleeping dragon awakes");
 		unsigned requests_processed = 0;
 		for (struct crl_fetch_queue *volatile *volatile reqp = &crl_fetch_queue;
 		     *reqp != NULL && !exiting_pluto; ) {
@@ -282,12 +288,15 @@ void process_crl_fetch_requests(fetch_crl_fn *fetch_crl, struct logger *unused_l
 				 * crl_fetch_request list, or its
 				 * crl_distribution_point list.
 				 */
-				dbg("unlocking crl queue");
+				dbg("CRL:   unlocking crl queue");
 				pthread_mutex_unlock(&crl_queue_mutex);
+				dn_buf dnb;
+				dbg("CRL:     fetching: %s",
+				    str_dn(ASN1(req->issuer_dn), &dnb));
 				if (fetch_crl(req->issuer_dn, dp->url, req->logger)) {
 					fetched = true;
 				}
-				dbg("locked crl queue");
+				dbg("CRL:   locked crl queue");
 				pthread_mutex_lock(&crl_queue_mutex);
 			}
 			if (fetched) {
@@ -301,7 +310,7 @@ void process_crl_fetch_requests(fetch_crl_fn *fetch_crl, struct logger *unused_l
 		if (exiting_pluto) {
 			break;
 		}
-		dbg("%u CRL fetch requests processed, waiting for more to do",
+		dbg("CRL: %u requests processed, the dragon sleeps",
 		    requests_processed);
 		int status = pthread_cond_wait(&crl_queue_cond, &crl_queue_mutex);
 		passert(status == 0);
