@@ -117,7 +117,7 @@ static bool invoke_command(const char *verb, const char *verb_suffix,
  */
 
 static bool bare_policy_op(enum kernel_policy_op op,
-			   enum what_about_inbound what_about_inbound,
+			   enum expect_kernel_policy what_about_inbound,
 			   const struct connection *c,
 			   const struct spd_route *sr,
 			   enum routing_t rt_kind,
@@ -1532,12 +1532,14 @@ static void clear_narrow_holds(const ip_selector *src_client,
 }
 
 /*
- * If there's kernel policy and/or a bare shunt, delete it.
+ * If there's kernel policy and/or a bare shunt, delete it.  If there
+ * isn't ignore the error.
  */
 
 bool flush_bare_shunt(const ip_address *src_address,
 		      const ip_address *dst_address,
 		      const struct ip_protocol *transport_proto,
+		      enum expect_kernel_policy expect_kernel_policy,
 		      const char *why, struct logger *logger)
 {
 	const struct ip_info *afi = address_type(src_address);
@@ -1551,7 +1553,7 @@ bool flush_bare_shunt(const ip_address *src_address,
 	dbg("kernel: deleting bare shunt %s from kernel for %s",
 	    str_selectors(&src, &dst, &sb), why);
 	/* assume low code logged action */
-	bool ok = raw_policy(KP_DELETE_OUTBOUND, THIS_IS_NOT_INBOUND,
+	bool ok = raw_policy(KP_DELETE_OUTBOUND, expect_kernel_policy,
 			     &src, &dst,
 			     SHUNT_PASS,
 			     /*kernel_policy*/NULL/*delete->no-policy-rules*/,
@@ -1841,7 +1843,7 @@ bool assign_holdpass(const struct connection *c,
 		ip_address dst_host_addr = packet_dst_address(*packet);
 
 		if (!flush_bare_shunt(&src_host_addr, &dst_host_addr,
-				      packet->protocol,
+				      packet->protocol, IGNORE_KERNEL_POLICY_MISSING,
 				      (c->config->negotiation_shunt == SHUNT_PASS ? "delete narrow %pass" :
 				       "assign_holdpass() delete narrow %hold"),
 				      c->logger)) {
@@ -3050,7 +3052,7 @@ static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
 				     enum shunt_policy outbound_shunt,
 				     struct spd_route *out,
 				     struct spd_route *in,
-				     enum what_about_inbound what_about_inbound,
+				     enum expect_kernel_policy what_about_inbound,
 				     struct logger *logger, const char *story)
 {
 	pexpect(outbound_op == KP_DELETE_OUTBOUND || outbound_op == KP_REPLACE_OUTBOUND);
@@ -3092,7 +3094,7 @@ static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
 	}
 }
 
-static void teardown_ipsec_sa(struct state *st, enum what_about_inbound what_about_inbound)
+static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy what_about_inbound)
 {
 	/* XXX in IKEv2 we get a spurious call with a parent st :( */
 	if (!pexpect(IS_CHILD_SA(st))) {

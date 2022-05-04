@@ -27,7 +27,7 @@
  */
 
 bool raw_policy(enum kernel_policy_op op,
-		enum what_about_inbound what_about_inbound,
+		enum expect_kernel_policy what_about_inbound,
 		const ip_selector *src_client,
 		const ip_selector *dst_client,
 		enum shunt_policy shunt_policy,
@@ -124,7 +124,8 @@ bool raw_policy(enum kernel_policy_op op,
 	case KP_ADD_OUTBOUND:
 	case KP_DELETE_OUTBOUND:
 	case KP_REPLACE_OUTBOUND:
-		pexpect(what_about_inbound == THIS_IS_NOT_INBOUND);
+		pexpect(what_about_inbound == THIS_IS_NOT_INBOUND ||
+			what_about_inbound == IGNORE_KERNEL_POLICY_MISSING);
 		break;
 	}
 

@@ -457,7 +457,7 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
  * @return boolean
  */
 static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
-				 enum what_about_inbound what_about_inbound,
+				 enum expect_kernel_policy what_about_inbound,
 				 const char *story, const char *adstory,
 				 struct logger *logger)
 {
@@ -478,8 +478,10 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 	int error = -rsp.u.e.error;
 
 	switch (what_about_inbound) {
-	case IGNORE_FWD_INBOUND:
-		return true;
+	case IGNORE_KERNEL_POLICY_MISSING:
+		if (error == 0 || error == ENOENT) {
+			return true;
+		}
 		break;
 	case THIS_IS_NOT_INBOUND:
 	case REPORT_NO_INBOUND:
@@ -532,7 +534,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
  * @return boolean True if successful
  */
 static bool xfrm_raw_policy(enum kernel_policy_op op,
-			    enum what_about_inbound what_about_inbound,
+			    enum expect_kernel_policy what_about_inbound,
 			    const ip_selector *src_client,
 			    const ip_selector *dst_client,
 			    enum shunt_policy shunt_policy,
@@ -860,7 +862,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 		dbg("xfrm: %s() deleting policy forward (even when there may not be one)",
 		    __func__);
 		req.u.id.dir = XFRM_POLICY_FWD;
-		ok &= sendrecv_xfrm_policy(&req.n, IGNORE_FWD_INBOUND,
+		ok &= sendrecv_xfrm_policy(&req.n, IGNORE_KERNEL_POLICY_MISSING,
 					   policy_name, "(fwd)", logger);
 		break;
 	case KP_ADD_INBOUND:
@@ -1867,7 +1869,7 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol,
 	ip_address dst = address_from_xfrm(afi, &pol->sel.daddr);
 	const struct ip_protocol *transport_proto = protocol_by_ipproto(pol->sel.proto);
 
-	if (flush_bare_shunt(&src, &dst, transport_proto,
+	if (flush_bare_shunt(&src, &dst, transport_proto, THIS_IS_NOT_INBOUND,
 			     "delete expired bare shunt", logger)) {
 		dbg("netlink_shunt_expire() called delete_bare_shunt() with success");
 	} else {

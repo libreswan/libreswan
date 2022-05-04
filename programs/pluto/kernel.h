@@ -321,27 +321,28 @@ struct raw_iface {
  *			  (op == KP_DELETE_OUTBOUND && ntohl(cur_spi) == SPI_HOLD));
  *
  * but was too forgiving.  It hid bugs such as trying to delete the
- * wrong policy.  Hopefully, over time these enums can go away:
- *
- * The biggest hack, IGNORE_FWD_INBOUND, gets around raw_policy() not
- * being good at figuring out when a "fwd" is needed.  Suspect problem
- * is with callers passing in dud parameters.
+ * wrong policy.
  */
 
-enum what_about_inbound {
+enum expect_kernel_policy {
 	THIS_IS_NOT_INBOUND = 1,
-	IGNORE_FWD_INBOUND,
+	/* Kernel policy can return either ENOENT or 0. */
+	IGNORE_KERNEL_POLICY_MISSING,
+#if 0
+	REPORT_KERNEL_POLICY_MISSING,
+	REPORT_KERNEL_POLICY_PRESENT,
+#endif
 	EXPECT_NO_INBOUND,
 	REPORT_NO_INBOUND,
 };
 
 #define what_about_inbound_name(E)					\
 	({								\
-		enum what_about_inbound e_ = E;				\
+		enum expect_kernel_policy e_ = E;			\
 		const char *n_ = "?";					\
 		switch (e_) {						\
 		case THIS_IS_NOT_INBOUND: n_ = "THIS_IS_NOT_INBOUND"; break; \
-		case IGNORE_FWD_INBOUND: n_ = "IGNORE_FWD_INBOUND"; break; \
+		case IGNORE_KERNEL_POLICY_MISSING: n_ = "IGNORE_KERNEL_POLICY_MISSING"; break; \
 		case EXPECT_NO_INBOUND: n_ = "EXPECT_NO_INBOUND"; break; \
 		case REPORT_NO_INBOUND: n_ = "REPORT_NO_INBOUND"; break; \
 		}							\
@@ -386,7 +387,7 @@ struct kernel_ops {
 	void (*process_queue)(void);
 	void (*process_msg)(int, struct logger *);
 	bool (*raw_policy)(enum kernel_policy_op op,
-			   enum what_about_inbound what_about_inbound,
+			   enum expect_kernel_policy what_about_inbound,
 			   const ip_selector *src_client,
 			   const ip_selector *dst_client,
 			   enum shunt_policy shunt_policy,
@@ -522,6 +523,7 @@ extern void migration_down(struct child_sa *child);
 
 extern bool flush_bare_shunt(const ip_address *src, const ip_address *dst,
 			     const struct ip_protocol *transport_proto,
+			     enum expect_kernel_policy expect_kernel_policy,
 			     const char *why, struct logger *logger);
 
 bool assign_holdpass(const struct connection *c,

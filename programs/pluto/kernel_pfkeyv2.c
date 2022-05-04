@@ -849,7 +849,7 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 }
 
 static bool pfkeyv2_raw_policy(enum kernel_policy_op op,
-			       enum what_about_inbound what_about_inbound UNUSED,
+			       enum expect_kernel_policy what_about_inbound UNUSED,
 			       const ip_selector *src_client,
 			       const ip_selector *dst_client,
 			       enum shunt_policy shunt_policy,

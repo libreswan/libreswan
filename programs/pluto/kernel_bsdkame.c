@@ -293,7 +293,7 @@ static void bsdkame_consume_pfkey(int pfkeyfd, unsigned int pfkey_seq, struct lo
  * that is already setup.
  */
 static bool bsdkame_raw_policy(enum kernel_policy_op sadb_op,
-			       enum what_about_inbound what_about_inbound UNUSED,
+			       enum expect_kernel_policy what_about_inbound UNUSED,
 			       const ip_selector *src_client,
 			       const ip_selector *dst_client,
 			       enum shunt_policy shunt_policy,
