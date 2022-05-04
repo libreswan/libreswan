@@ -296,8 +296,14 @@ void record_deladdr(ip_address *ip, char *a_type)
 			continue;
 		}
 
+		/*
+		 * "down" / "unroute" the connection but _don't_
+		 * delete the kernel state / policy.
+		 *
+		 * Presumably the kernel policy (at least) is acting
+		 * like a trap while mibike migrates things?
+		 */
 		migration_down(child);
-		unroute_connection(ike->sa.st_connection);
 
 		event_delete(EVENT_v2_LIVENESS, &child->sa);
 
