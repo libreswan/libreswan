@@ -206,15 +206,13 @@ static CERTCrlDistributionPoints *get_cert_distribution_points(CERTCertificate *
 	SECItem crls;
 	if (CERT_FindCertExtension(cert, SEC_OID_X509_CRL_DIST_POINTS,
 				   &crls) != SECSuccess) {
-		llog_nss_error(DEBUG_STREAM, logger,
-			       "finding CRL distribution points using CERT_FindCertExtension() failed");
+		ldbg_nss_error(logger, "finding CRL distribution points using CERT_FindCertExtension() failed");
 		return NULL;
 	}
 
 	CERTCrlDistributionPoints *dps = CERT_DecodeCRLDistributionPoints(cert->arena, &crls);
 	if (dps == NULL) {
-		llog_nss_error(DEBUG_STREAM, logger,
-			       "decoding CRL distribution points using CERT_DecodeCRLDistributionPoints() failed");
+		ldbg_nss_error(logger, "decoding CRL distribution points using CERT_DecodeCRLDistributionPoints() failed");
 		return NULL;
 	}
 

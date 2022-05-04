@@ -80,7 +80,7 @@ void passert_nss_error(struct logger *logger, where_t where,
 void pexpect_nss_error(struct logger *logger, where_t where,
 		       const char *message, ...) PRINTF_LIKE(3);
 
-#define dbg_nss_error(LOGGER, MESSAGE, ...)				\
+#define ldbg_nss_error(LOGGER, MESSAGE, ...)				\
 	{								\
 		if (DBGP(DBG_BASE)) {					\
 			llog_nss_error(DEBUG_STREAM, logger,		\

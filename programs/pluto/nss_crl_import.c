@@ -37,8 +37,7 @@ static const char crl_name[] = "_import_crl";
  */
 int send_crl_to_import(uint8_t *der, size_t len, const char *url, struct logger *logger)
 {
-	CERTSignedCrl *crl = NULL;
-	CERTCertificate *cacert = NULL;
+	CERTCertificate *cacert = NULL; /* must have function scope */
 	PLArenaPool *arena = NULL;
 	SECItem crl_si;
 	char *arg[4] = { NULL };
@@ -116,14 +115,16 @@ int send_crl_to_import(uint8_t *der, size_t len, const char *url, struct logger 
 	arena = PORT_NewArena(SEC_ASN1_DEFAULT_ARENA_SIZE);
 
 	/* arena owned by crl */
-	if ((crl = CERT_DecodeDERCrl(arena, &crl_si, SEC_CRL_TYPE)) == NULL) {
-		dbg_nss_error(logger, "decoding CRL using CERT_DecodeDERCrl() failed");
+	CERTSignedCrl *crl = CERT_DecodeDERCrl(arena, &crl_si, SEC_CRL_TYPE);
+	if (crl == NULL) {
+		ldbg_nss_error(logger, "decoding CRL using CERT_DecodeDERCrl() failed");
 		PORT_FreeArena(arena, false);
 		goto end;
 	}
 
-	if ((cacert = CERT_FindCertByName(handle, &crl->crl.derName)) == NULL) {
-		dbg_nss_error(logger, "finding cert by name using CERT_FindCertByName() failed");
+	cacert = CERT_FindCertByName(handle, &crl->crl.derName);
+	if (cacert == NULL) {
+		ldbg_nss_error(logger, "finding cert by name using CERT_FindCertByName() failed");
 		SEC_DestroyCrl(crl);
 		goto end;
 	}
