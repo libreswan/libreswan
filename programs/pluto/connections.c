@@ -2274,8 +2274,14 @@ static bool extract_connection(const struct whack_message *wm,
 	/* set internal fields */
 	c->instance_serial = 0;
 	c->interface = NULL; /* initializing */
+
+	/* should be true */
+	pexpect(c->spd.routing == RT_UNROUTED);
+	pexpect(c->spd.eroute_owner == SOS_NOBODY);
+	/* leave a breadcrumb */
 	set_spd_routing(&c->spd, RT_UNROUTED);
 	set_spd_owner(&c->spd, SOS_NOBODY);
+
 	c->newest_ike_sa = SOS_NOBODY;
 	c->newest_ipsec_sa = SOS_NOBODY;
 	c->temp_vars.num_redirects = 0;
@@ -2632,7 +2638,13 @@ struct connection *instantiate(struct connection *c,
 	/* since both ends updated; presumably already oriented? */
 	set_policy_prio(d);
 
-	/* set internal fields */
+	/* should still be true */
+#if 0
+	pexpect(d->spd.routing == RT_UNROUTED); /* CK_INSTANCE? */
+	pexpect(d->spd.routing == RT_PROSPECTIVE_EROUTED);  /* CK_GROUPINSTANCE? */
+#endif
+	pexpect(d->spd.eroute_owner == SOS_NOBODY);
+	/* leave another breadcrumb */
 	set_spd_routing(&d->spd, RT_UNROUTED);
 	set_spd_owner(&d->spd, SOS_NOBODY);
 

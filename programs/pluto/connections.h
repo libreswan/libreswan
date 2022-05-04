@@ -379,26 +379,30 @@ struct spd_route {
 	struct end this;
 	struct end that;
 	struct connection *connection;
+
 	so_serial_t eroute_owner;
-	enum routing_t routing; /* level of routing in place */
-#define set_spd_owner(SPD, SO)					\
+#define set_spd_owner(SPD, SO)						\
 	{								\
 		connection_buf cb;					\
-		dbg("kernel: spd owner: "PRI_CONNECTION" "PRI_SO"->"PRI_SO, \
+		dbg("kernel: spd owner: "PRI_CONNECTION" "PRI_SO"->"PRI_SO" "PRI_WHERE, \
 		    pri_connection((SPD)->connection, &cb),		\
 		    pri_so((SPD)->eroute_owner),			\
 		    /* SO could be an enum :-( */			\
-		    pri_so((so_serial_t)SO));				\
+		    pri_so((so_serial_t)SO),				\
+		    pri_where(HERE));					\
 		(SPD)->eroute_owner = SO;				\
 	}
+
+	enum routing_t routing; /* level of routing in place */
 #define set_spd_routing(SPD, RT)					\
 	{								\
 		connection_buf cb;					\
 		enum_buf ob, nb;					\
-		dbg("kernel: spd routing: "PRI_CONNECTION" %s->%s",	\
+		dbg("kernel: spd routing: "PRI_CONNECTION" %s->%s "PRI_WHERE, \
 		    pri_connection((SPD)->connection, &cb),		\
 		    str_enum(&routing_story, (SPD)->routing, &ob),	\
-		    str_enum(&routing_story, RT, &nb));			\
+		    str_enum(&routing_story, RT, &nb),			\
+		    pri_where(HERE));					\
 		(SPD)->routing = RT;					\
 	}
 	reqid_t reqid;
