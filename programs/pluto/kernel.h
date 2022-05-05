@@ -552,15 +552,6 @@ extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
 extern bool get_sa_bundle_info(struct state *st, bool inbound, monotime_t *last_contact /* OUTPUT */);
 extern bool migrate_ipsec_sa(struct child_sa *child);
 
-static inline bool compatible_overlapping_connections(const struct connection *a,
-						      const struct connection *b)
-{
-	return kernel_ops->overlap_supported &&
-	       a != NULL && b != NULL &&
-	       a != b &&
-	       LIN(POLICY_OVERLAPIP, a->policy & b->policy);
-}
-
 extern void show_kernel_interface(struct show *s);
 void shutdown_kernel(struct logger *logger);
 

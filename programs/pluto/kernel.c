@@ -305,14 +305,6 @@ static bool bare_policy_op(enum kernel_policy_op op,
 			  "%s() inbound shunt for %s", __func__, opname);
 }
 
-/* test if the routes required for two different connections agree
- * It is assumed that the destination subnets agree; we are only
- * testing that the interfaces and nexthops match.
- */
-#define routes_agree(c, d) \
-	((c)->interface->ip_dev == (d)->interface->ip_dev && \
-	 sameaddr(&(c)->spd.this.host->nexthop, &(d)->spd.this.host->nexthop))
-
 struct kernel_policy bare_kernel_policy(const ip_selector *src,
 					const ip_selector *dst)
 {
@@ -1111,6 +1103,7 @@ static enum routability note_nearconflict(struct connection *outside,	/* CK_PERM
 /*
  * Note: this may mutate c
  */
+
 static enum routability could_route(struct connection *c, struct logger *logger)
 {
 	esb_buf b;
@@ -1153,38 +1146,50 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 	}
 
 	struct spd_route *esr, *rosr;
-	struct connection *ero,		/* who, if anyone, owns our eroute? */
-		*ro = route_owner(c, &c->spd, &rosr, &ero, &esr);	/* who owns our route? */
+	struct connection *ero;		/* who, if anyone, owns our eroute? */
+	struct connection *ro = route_owner(c, &c->spd, &rosr, &ero, &esr);	/* who owns our route? */
 
 	/*
-	 * If there is already a route for peer's client subnet
-	 * and it disagrees about interface or nexthop, we cannot steal it.
-	 * Note: if this connection is already routed (perhaps for another
-	 * state object), the route will agree.
-	 * This is as it should be -- it will arise during rekeying.
+	 * If there is already a route for peer's client subnet and it
+	 * disagrees about interface or nexthop, we cannot steal it.
+	 *
+	 * Note: if this connection is already routed (perhaps for
+	 * another state object), the route will agree.  This is as it
+	 * should be -- it will arise during rekeying.
 	 */
-	if (ro != NULL && !routes_agree(ro, c)) {
 
-		if (!compatible_overlapping_connections(c, ero)) {
+	if (ro != NULL &&
+	    (ro->interface->ip_dev != c->interface->ip_dev ||
+	     !address_eq_address(ro->local->host.nexthop, c->local->host.nexthop))) {
+
+		bool compatible_overlap = (kernel_ops->overlap_supported &&
+					   c != NULL &&
+					   ero != NULL &&
+					   c != ero &&
+					   LIN(POLICY_OVERLAPIP, c->policy & ero->policy));
+
+		if (!compatible_overlap) {
 			/*
-			 * Another connection is already using the eroute.
-			 * TODO: XFRM supports this. For now, only allow this for OE
+			 * Another connection is already using the
+			 * eroute.
+			 *
+			 * TODO: XFRM supports this. For now, only
+			 * allow this for OE
 			 */
 			if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 				connection_buf cib;
 				llog(RC_LOG_SERIOUS, logger,
-					    "cannot route -- route already in use for "PRI_CONNECTION"",
-					    pri_connection(ro, &cib));
+				     "cannot route -- route already in use for "PRI_CONNECTION"",
+				     pri_connection(ro, &cib));
 				return route_impossible;
 			} else {
 				connection_buf cib;
 				llog(RC_LOG_SERIOUS, logger,
-					    "cannot route -- route already in use for "PRI_CONNECTION" - but allowing anyway",
-					    pri_connection(ro, &cib));
+				     "cannot route -- route already in use for "PRI_CONNECTION" - but allowing anyway",
+				     pri_connection(ro, &cib));
 			}
 		}
 	}
-
 
 	/* if there is an eroute for another connection, there is a problem */
 	if (ero != NULL && ero != c) {
@@ -2763,8 +2768,15 @@ bool route_and_eroute(struct connection *c,
 		route_installed = do_command(c, sr, "route", st, logger);
 		if (!route_installed)
 			dbg("kernel: route command returned an error");
-	} else if (routed(sr->routing) ||
-		routes_agree(ro, c)) {
+	} else if (routed(sr->routing)) {
+		route_installed = true; /* nothing to be done */
+	} else if (ro->interface->ip_dev == c->interface->ip_dev &&
+		   address_eq_address(ro->local->host.nexthop, c->local->host.nexthop)) {
+		/*
+		 * The routes required for two different connections
+		 * agree (it is assumed that the destination subnets
+		 * agree).
+		 */
 		route_installed = true; /* nothing to be done */
 	} else {
 		/*
@@ -2799,7 +2811,7 @@ bool route_and_eroute(struct connection *c,
 		if (route_installed) {
 			do {
 				dbg("kernel: installed route: ro name=%s, rosr->routing was %s",
-					ro->name, enum_name(&routing_story, rosr->routing));
+				    ro->name, enum_name(&routing_story, rosr->routing));
 				pexpect(!erouted(rosr->routing)); /* warn for now - requires fixing */
 				set_spd_routing(rosr, RT_UNROUTED);
 				/* no need to keep old value */
