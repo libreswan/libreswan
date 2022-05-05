@@ -239,6 +239,8 @@ ifeq ($(USE_UNBOUND_EVENT_H_COPY),true)
 USERLAND_INCLUDES += -I$(top_srcdir)/include/unbound
 endif
 
+OBJS += pluto_exit_code_names.o
+
 OBJS += $(abs_builddir)/version.o
 
 # build version.c using version number from mk/version.mk

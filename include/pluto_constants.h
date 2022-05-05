@@ -1018,6 +1018,8 @@ enum pluto_exit_code {
 	PLUTO_EXIT_SHELL_COMMAND_NOT_EXECUTABLE = 127,
 };
 
+extern enum_names pluto_exit_code_names;
+
 #define SWAN_MAX_DOMAIN_LEN 256 /* includes nul termination */
 
 extern void init_pluto_constants(void);

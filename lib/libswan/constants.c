@@ -2717,6 +2717,7 @@ static const enum_names *en_checklist[] = {
 	&event_type_names,
 	&policy_spi_names,
 	&eaptls_flag_names,
+	&pluto_exit_code_names,
 };
 
 void check_enum_names(enum_names *checklist[], size_t tl)
