@@ -203,6 +203,22 @@ void exit_epilogue(void)
 
 void shutdown_pluto(struct logger *logger, enum pluto_exit_code status)
 {
+	switch (status) {
+	case PLUTO_EXIT_LEAVE_STATE:
+		llog(LOG_STREAM|RC_LOG, logger, "Pluto is shutting down (leaving state)");
+		break;
+	case PLUTO_EXIT_OK:
+		llog(LOG_STREAM|RC_LOG, logger, "Pluto is shutting down");
+		break;
+	default:
+	{
+		enum_buf eb;
+		llog(LOG_STREAM|RC_LOG, logger, "Pluto is shutting down (%s)",
+		     str_enum_short(&pluto_exit_code_names, status, &eb));
+		break;
+	}
+	}
+
 	/*
 	 * Leak the whack FD so that only when pluto finally exits the
 	 * attached whack that is waiting on the socket will be

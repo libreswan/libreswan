@@ -964,9 +964,6 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	/* luckly last !?! */
 	if (m->whack_shutdown) {
 		dbg_whack(s, "start: shutdown");
-		if (m->whack_leave_state) {
-			llog(DEBUG_STREAM|RC_LOG, logger, "shutting down, leavings state");
-		}
 		shutdown_pluto(logger, m->whack_leave_state ? PLUTO_EXIT_LEAVE_STATE : PLUTO_EXIT_OK);
 		dbg_whack(s, "stop: shutdown");
 	}
