@@ -483,8 +483,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 			return true;
 		}
 		break;
-	case THIS_IS_NOT_INBOUND:
-	case REPORT_NO_INBOUND:
+	case EXPECT_KERNEL_POLICY_OK:
 		if (error == 0) {
 			return true;
 		}
@@ -1869,7 +1868,7 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol,
 	ip_address dst = address_from_xfrm(afi, &pol->sel.daddr);
 	const struct ip_protocol *transport_proto = protocol_by_ipproto(pol->sel.proto);
 
-	if (flush_bare_shunt(&src, &dst, transport_proto, THIS_IS_NOT_INBOUND,
+	if (flush_bare_shunt(&src, &dst, transport_proto, EXPECT_KERNEL_POLICY_OK,
 			     "delete expired bare shunt", logger)) {
 		dbg("netlink_shunt_expire() called delete_bare_shunt() with success");
 	} else {
@@ -2265,17 +2264,17 @@ static bool add_icmpv6_bypass_policy(int port, struct logger *logger)
 	 * success.
 	 */
 	req.p.dir = XFRM_POLICY_IN;
-	if (!sendrecv_xfrm_policy(&req.n, REPORT_NO_INBOUND,
+	if (!sendrecv_xfrm_policy(&req.n, EXPECT_KERNEL_POLICY_OK,
 				  text, "(in)", logger))
 		return false;
 
 	req.p.dir = XFRM_POLICY_FWD;
-	if (!sendrecv_xfrm_policy(&req.n, REPORT_NO_INBOUND,
+	if (!sendrecv_xfrm_policy(&req.n, EXPECT_KERNEL_POLICY_OK,
 				  text, "(fwd)", logger))
 		return false;
 
 	req.p.dir = XFRM_POLICY_OUT;
-	if (!sendrecv_xfrm_policy(&req.n, THIS_IS_NOT_INBOUND,
+	if (!sendrecv_xfrm_policy(&req.n, EXPECT_KERNEL_POLICY_OK,
 				  text, "(out)", logger))
 		return false;
 

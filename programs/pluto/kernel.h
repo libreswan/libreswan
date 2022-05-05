@@ -325,26 +325,24 @@ struct raw_iface {
  */
 
 enum expect_kernel_policy {
-	THIS_IS_NOT_INBOUND = 1,
 	/* Kernel policy can return either ENOENT or 0. */
 	IGNORE_KERNEL_POLICY_MISSING,
 #if 0
-	REPORT_KERNEL_POLICY_MISSING,
 	REPORT_KERNEL_POLICY_PRESENT,
 #endif
 	EXPECT_NO_INBOUND,
-	REPORT_NO_INBOUND,
+	/* op can only return 0 */
+	EXPECT_KERNEL_POLICY_OK,
 };
 
-#define what_about_inbound_name(E)					\
+#define expect_kernel_policy_name(E)					\
 	({								\
 		enum expect_kernel_policy e_ = E;			\
 		const char *n_ = "?";					\
 		switch (e_) {						\
-		case THIS_IS_NOT_INBOUND: n_ = "THIS_IS_NOT_INBOUND"; break; \
 		case IGNORE_KERNEL_POLICY_MISSING: n_ = "IGNORE_KERNEL_POLICY_MISSING"; break; \
 		case EXPECT_NO_INBOUND: n_ = "EXPECT_NO_INBOUND"; break; \
-		case REPORT_NO_INBOUND: n_ = "REPORT_NO_INBOUND"; break; \
+		case EXPECT_KERNEL_POLICY_OK: n_ = "REPORT_NO_INBOUND"; break; \
 		}							\
 		n_;							\
 	})
@@ -387,7 +385,7 @@ struct kernel_ops {
 	void (*process_queue)(void);
 	void (*process_msg)(int, struct logger *);
 	bool (*raw_policy)(enum kernel_policy_op op,
-			   enum expect_kernel_policy what_about_inbound,
+			   enum expect_kernel_policy expect_kernel_policy,
 			   const ip_selector *src_client,
 			   const ip_selector *dst_client,
 			   enum shunt_policy shunt_policy,

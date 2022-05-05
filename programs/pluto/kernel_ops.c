@@ -27,7 +27,7 @@
  */
 
 bool raw_policy(enum kernel_policy_op op,
-		enum expect_kernel_policy what_about_inbound,
+		enum expect_kernel_policy expect_kernel_policy,
 		const ip_selector *src_client,
 		const ip_selector *dst_client,
 		enum shunt_policy shunt_policy,
@@ -54,7 +54,7 @@ bool raw_policy(enum kernel_policy_op op,
 		}
 
 		jam_string(buf, " ");
-		jam_string(buf, what_about_inbound_name(what_about_inbound));
+		jam_string(buf, expect_kernel_policy_name(expect_kernel_policy));
 
 		jam(buf, " ");
 		va_list ap;
@@ -115,20 +115,6 @@ bool raw_policy(enum kernel_policy_op op,
 
 	pexpect(src_client_proto == dst_client_proto);
 
-	switch (op) {
-	case KP_ADD_INBOUND:
-	case KP_DELETE_INBOUND:
-	case KP_REPLACE_INBOUND:
-		pexpect(what_about_inbound != THIS_IS_NOT_INBOUND);
-		break;
-	case KP_ADD_OUTBOUND:
-	case KP_DELETE_OUTBOUND:
-	case KP_REPLACE_OUTBOUND:
-		pexpect(what_about_inbound == THIS_IS_NOT_INBOUND ||
-			what_about_inbound == IGNORE_KERNEL_POLICY_MISSING);
-		break;
-	}
-
 	switch(shunt_policy) {
 	case SHUNT_HOLD:
 		dbg("kernel: %s() SPI_HOLD implemented as no-op", __func__);
@@ -144,7 +130,7 @@ bool raw_policy(enum kernel_policy_op op,
 		break;
 	}
 
-	bool result = kernel_ops->raw_policy(op, what_about_inbound,
+	bool result = kernel_ops->raw_policy(op, expect_kernel_policy,
 					     src_client, dst_client,
 					     shunt_policy,
 					     kernel_policy,

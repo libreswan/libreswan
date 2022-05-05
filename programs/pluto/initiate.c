@@ -571,7 +571,8 @@ static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const c
 		pexpect(b->failure_shunt != SHUNT_UNSET); /* set to something */
 		ip_selector src = packet_src_selector(b->packet);
 		ip_selector dst = packet_dst_selector(b->packet);
-		if (!raw_policy(KP_REPLACE_OUTBOUND, THIS_IS_NOT_INBOUND,
+		if (!raw_policy(KP_REPLACE_OUTBOUND,
+				EXPECT_KERNEL_POLICY_OK,
 				&src, &dst,
 				b->failure_shunt,
 				/*encap*/NULL/*no-policy-template*/,
@@ -954,7 +955,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	struct kernel_policy outbound_kernel_policy =
 		bare_kernel_policy(&local_shunt, &remote_shunt);
 
-	if (raw_policy(KP_ADD_OUTBOUND, THIS_IS_NOT_INBOUND,
+	if (raw_policy(KP_ADD_OUTBOUND,
+		       EXPECT_KERNEL_POLICY_OK,
 		       &outbound_kernel_policy.src.client,
 		       &outbound_kernel_policy.dst.client,
 		       b->negotiation_shunt,

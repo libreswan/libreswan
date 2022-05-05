@@ -117,7 +117,7 @@ static bool invoke_command(const char *verb, const char *verb_suffix,
  */
 
 static bool bare_policy_op(enum kernel_policy_op op,
-			   enum expect_kernel_policy what_about_inbound,
+			   enum expect_kernel_policy expect_kernel_policy,
 			   const struct connection *c,
 			   const struct spd_route *sr,
 			   enum routing_t rt_kind,
@@ -143,7 +143,7 @@ static bool bare_policy_op(enum kernel_policy_op op,
 		jam_enum_short(buf, &kernel_policy_op_names, op);
 
 		jam_string(buf, " ");
-		jam_string(buf, what_about_inbound_name(what_about_inbound));
+		jam_string(buf, expect_kernel_policy_name(expect_kernel_policy));
 
 		jam(buf, " %s", opname);
 		jam(buf, " ");
@@ -227,7 +227,7 @@ static bool bare_policy_op(enum kernel_policy_op op,
 		if (esr != NULL) {
 			set_spd_routing(esr, RT_ROUTED_PROSPECTIVE);
 			return bare_policy_op(KP_REPLACE_OUTBOUND,
-					      THIS_IS_NOT_INBOUND,
+					      EXPECT_KERNEL_POLICY_OK,
 					      esr->connection, esr,
 					      RT_ROUTED_PROSPECTIVE,
 					      "restoring eclipsed",
@@ -254,7 +254,8 @@ static bool bare_policy_op(enum kernel_policy_op op,
 	pexpect(op & KERNEL_POLICY_OUTBOUND);
 	struct kernel_policy outbound_kernel_policy =
 		bare_kernel_policy(&sr->this.client, &sr->that.client);
-	if (!raw_policy(op, THIS_IS_NOT_INBOUND,
+	if (!raw_policy(op,
+			EXPECT_KERNEL_POLICY_OK,
 			&outbound_kernel_policy.src.client,
 			&outbound_kernel_policy.dst.client,
 			shunt_policy,
@@ -281,8 +282,6 @@ static bool bare_policy_op(enum kernel_policy_op op,
 		return true;
 	}
 
-	pexpect(what_about_inbound != THIS_IS_NOT_INBOUND);
-
 	/*
 	 * Note the crossed streams since inbound.
 	 *
@@ -293,7 +292,7 @@ static bool bare_policy_op(enum kernel_policy_op op,
 	 */
 	struct kernel_policy inbound_kernel_policy =
 		bare_kernel_policy(&sr->that.client, &sr->this.client);
-	return raw_policy(op, what_about_inbound,
+	return raw_policy(op, expect_kernel_policy,
 			  &inbound_kernel_policy.src.client,
 			  &inbound_kernel_policy.dst.client,
 			  shunt_policy,
@@ -1489,7 +1488,8 @@ static bool delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 	dbg("kernel: deleting bare shunt %s from kernel "PRI_WHERE,
 	    str_selectors(&src, &dst, &sb), pri_where(where));
 	/* assume low code logged action */
-	return raw_policy(KP_DELETE_OUTBOUND, THIS_IS_NOT_INBOUND,
+	return raw_policy(KP_DELETE_OUTBOUND,
+			  EXPECT_KERNEL_POLICY_OK,
 			  &src, &dst,
 			  SHUNT_PASS,
 			  /*kernel_policy*/NULL/*delete->no-policy-rules*/,
@@ -1631,7 +1631,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 			return false;
 		}
 		if (!raw_policy(inbound ? KP_ADD_INBOUND : KP_ADD_OUTBOUND,
-				inbound ? REPORT_NO_INBOUND : THIS_IS_NOT_INBOUND,
+				EXPECT_KERNEL_POLICY_OK,
 				&kernel_policy.src.client, &kernel_policy.dst.client,
 				SHUNT_UNSET,
 				&kernel_policy,
@@ -1653,7 +1653,8 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 				 */
 				dbg("pulling previously installed outbound policy");
 				pexpect(direction == ENCAP_DIRECTION_INBOUND);
-				raw_policy(KP_DELETE_OUTBOUND, THIS_IS_NOT_INBOUND,
+				raw_policy(KP_DELETE_OUTBOUND,
+					   EXPECT_KERNEL_POLICY_OK,
 					   &c->spd.this.client, &c->spd.that.client,
 					   SHUNT_UNSET,
 					   /*kernel_policy*/NULL/*delete->no-policy-rules*/,
@@ -1686,7 +1687,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 			struct end *dst = inbound ? &c->spd.this : &c->spd.that;
 			/* ignore result */
 			raw_policy(inbound ? KP_DELETE_INBOUND : KP_DELETE_OUTBOUND,
-				   inbound ? REPORT_NO_INBOUND : THIS_IS_NOT_INBOUND,
+				   EXPECT_KERNEL_POLICY_OK,
 				   &src->client, &dst->client,
 				   SHUNT_PASS,
 				   /*kernel_policy*/NULL/*delete->no-policy-rules*/,
@@ -1717,7 +1718,7 @@ bool eroute_connection(enum kernel_policy_op op, const char *opname,
 {
 	if (sr->this.has_cat) {
 		ip_selector client = selector_from_address(sr->this.host->addr);
-		bool t = raw_policy(op, THIS_IS_NOT_INBOUND,
+		bool t = raw_policy(op, EXPECT_KERNEL_POLICY_OK,
 				    &client, &kernel_policy->dst.route,
 				    shunt_policy,
 				    kernel_policy,
@@ -1735,7 +1736,8 @@ bool eroute_connection(enum kernel_policy_op op, const char *opname,
 		dbg("kernel: %s CAT extra route added return=%d", __func__, t);
 	}
 
-	return raw_policy(op, THIS_IS_NOT_INBOUND,
+	return raw_policy(op,
+			  EXPECT_KERNEL_POLICY_OK,
 			  &kernel_policy->src.route, &kernel_policy->dst.route,
 			  shunt_policy,
 			  kernel_policy,
@@ -2274,7 +2276,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		struct kernel_policy kernel_policy =
 			kernel_policy_from_state(st, &c->spd,
 						 ENCAP_DIRECTION_INBOUND);
-		if (!raw_policy(KP_ADD_INBOUND, REPORT_NO_INBOUND,
+		if (!raw_policy(KP_ADD_INBOUND,
+				EXPECT_KERNEL_POLICY_OK,
 				&kernel_policy.src.route,	/* src_client */
 				&kernel_policy.dst.route,	/* dst_client */
 				SHUNT_UNSET,
@@ -2693,7 +2696,7 @@ bool route_and_eroute(struct connection *c,
 		/* if no state provided, then install a shunt for later */
 		if (st == NULL) {
 			eroute_installed = bare_policy_op(KP_REPLACE_OUTBOUND,
-							  THIS_IS_NOT_INBOUND,
+							  EXPECT_KERNEL_POLICY_OK,
 							  c, sr, RT_ROUTED_PROSPECTIVE,
 							  "route_and_eroute() replace shunt",
 							  logger);
@@ -2718,7 +2721,7 @@ bool route_and_eroute(struct connection *c,
 		/* if no state provided, then install a shunt for later */
 		if (st == NULL) {
 			eroute_installed = bare_policy_op(KP_ADD_OUTBOUND,
-							  REPORT_NO_INBOUND,
+							  EXPECT_KERNEL_POLICY_OK,
 							  c, sr, RT_ROUTED_PROSPECTIVE,
 							  "route_and_eroute() add",
 							  logger);
@@ -2858,7 +2861,8 @@ bool route_and_eroute(struct connection *c,
 				struct kernel_policy outbound_kernel_policy =
 					bare_kernel_policy(&bs->our_client,
 							   &bs->peer_client);
-				if (!raw_policy(KP_REPLACE_OUTBOUND, THIS_IS_NOT_INBOUND,
+				if (!raw_policy(KP_REPLACE_OUTBOUND,
+						EXPECT_KERNEL_POLICY_OK,
 						&outbound_kernel_policy.src.client,
 						&outbound_kernel_policy.dst.client,
 						bs->shunt_policy,
@@ -2878,7 +2882,7 @@ bool route_and_eroute(struct connection *c,
 				if (esr->eroute_owner == SOS_NOBODY) {
 					/* note: normal or eclipse case */
 					if (!bare_policy_op(KP_REPLACE_OUTBOUND,
-							    THIS_IS_NOT_INBOUND,
+							    EXPECT_KERNEL_POLICY_OK,
 							    ero, esr, esr->routing,
 							    "route_and_eroute() restore",
 							    logger)) {
@@ -2910,7 +2914,7 @@ bool route_and_eroute(struct connection *c,
 				/* there was no previous eroute: delete whatever we installed */
 				if (st == NULL) {
 					if (!bare_policy_op(KP_DELETE_OUTBOUND,
-							    REPORT_NO_INBOUND,
+							    EXPECT_KERNEL_POLICY_OK,
 							    c, sr, sr->routing,
 							    "route_and_eroute() delete",
 							    logger)) {
@@ -3044,7 +3048,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
  * But this means that while there's now always an outbound policy,
  * there may not yet be an inbound policy!  For instance, IKEv2 IKE
  * AUTH initiator gets rejected.  So what is there, and should this
- * even be called?  WHAT_ABOUT_INBOUND is trying to help sort this
+ * even be called?  EXPECT_KERNEL_POLICY is trying to help sort this
  * out.
  */
 
@@ -3052,7 +3056,7 @@ static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
 				     enum shunt_policy outbound_shunt,
 				     struct spd_route *out,
 				     struct spd_route *in,
-				     enum expect_kernel_policy what_about_inbound,
+				     enum expect_kernel_policy expect_kernel_policy,
 				     struct logger *logger, const char *story)
 {
 	pexpect(outbound_op == KP_DELETE_OUTBOUND || outbound_op == KP_REPLACE_OUTBOUND);
@@ -3062,7 +3066,8 @@ static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
 	 */
 	struct kernel_policy outbound_kernel_policy =
 		bare_kernel_policy(&out->this.client, &out->that.client);
-	if (!raw_policy(outbound_op, THIS_IS_NOT_INBOUND,
+	if (!raw_policy(outbound_op,
+			EXPECT_KERNEL_POLICY_OK,
 			&outbound_kernel_policy.src.client,
 			&outbound_kernel_policy.dst.client,
 			outbound_shunt,
@@ -3078,7 +3083,7 @@ static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
 	}
 	dbg("kernel: %s() calling raw_policy(delete-inbound), eroute_owner==NOBODY",
 	    __func__);
-	if (!raw_policy(KP_DELETE_INBOUND, what_about_inbound,
+	if (!raw_policy(KP_DELETE_INBOUND, expect_kernel_policy,
 			&in->that.client, &in->this.client,
 			SHUNT_UNSET,
 			NULL/*no-policy-template as delete*/,
@@ -3094,7 +3099,7 @@ static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
 	}
 }
 
-static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy what_about_inbound)
+static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy expect_kernel_policy)
 {
 	/* XXX in IKEv2 we get a spurious call with a parent st :( */
 	if (!pexpect(IS_CHILD_SA(st))) {
@@ -3165,7 +3170,7 @@ static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy what_a
 			set_spd_routing(esr, RT_ROUTED_PROSPECTIVE);
 			teardown_kernel_policies(KP_REPLACE_OUTBOUND,
 						 esr->connection->config->prospective_shunt,
-						 esr, sr, what_about_inbound,
+						 esr, sr, expect_kernel_policy,
 						 st->st_logger,
 						 "restoring eclipsed");
 #ifdef IPSEC_CONNECTION_LIMIT
@@ -3193,7 +3198,7 @@ static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy what_a
 			 */
 			teardown_kernel_policies(KP_DELETE_OUTBOUND,
 						 sr->connection->config->failure_shunt/*delete so almost ignored!?!*/,
-						 sr, sr, what_about_inbound,
+						 sr, sr, expect_kernel_policy,
 						 st->st_logger,
 						 "deleting instance");
 #ifdef IPSEC_CONNECTION_LIMIT
@@ -3233,7 +3238,7 @@ static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy what_a
 			pexpect(shunt_policy != SHUNT_NONE);
 			teardown_kernel_policies(KP_REPLACE_OUTBOUND,
 						 shunt_policy,
-						 sr, sr, what_about_inbound,
+						 sr, sr, expect_kernel_policy,
 						 st->st_logger,
 						 "replace");
 			/* update routing; route_owner() will see this and fail */
@@ -3251,7 +3256,7 @@ static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy what_a
 
 void delete_ipsec_sa(struct state *st)
 {
-	teardown_ipsec_sa(st, REPORT_NO_INBOUND);
+	teardown_ipsec_sa(st, EXPECT_KERNEL_POLICY_OK);
 }
 
 void delete_larval_ipsec_sa(struct state *st)
@@ -3500,7 +3505,8 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 
 			struct kernel_policy outbound_kernel_policy =
 				bare_kernel_policy(&src, &dst);
-			bool ok = raw_policy(KP_REPLACE_OUTBOUND, THIS_IS_NOT_INBOUND,
+			bool ok = raw_policy(KP_REPLACE_OUTBOUND,
+					     EXPECT_KERNEL_POLICY_OK,
 					     &outbound_kernel_policy.src.client,
 					     &outbound_kernel_policy.dst.client,
 					     failure_shunt,
@@ -3588,7 +3594,7 @@ static void expire_bare_shunts(struct logger *logger)
 				struct connection *c = connection_by_serialno(bsp->from_serialno);
 				if (c != NULL) {
 					if (!bare_policy_op(KP_ADD_OUTBOUND,
-							    REPORT_NO_INBOUND,
+							    EXPECT_KERNEL_POLICY_OK,
 							    c, &c->spd,
 							    RT_ROUTED_PROSPECTIVE,
 							    "expire_bare_shunts() add",
