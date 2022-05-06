@@ -34,9 +34,7 @@
 #include "ipsecconf/confread.h"
 #include "ipsecconf/confwrite.h"
 #include "ipsecconf/starterwhack.h"
-#ifdef KERNEL_XFRM
-#include "addr_lookup.h"
-#endif
+#include "addr_lookup.h"	/* for resolve_default_route() */
 #ifdef USE_DNSSEC
 # include "dnssec.h"
 #endif
@@ -66,32 +64,11 @@ static char *environlize(const char *str)
  * XXX: why not let pluto resolve all this like it is already doing?
  * because of MOBIKE.
  */
-static void resolve_defaultroute(struct starter_conn *conn UNUSED, struct logger *logger)
+static void resolve_default_routes(struct starter_conn *conn UNUSED, struct logger *logger)
 {
-#ifdef KERNEL_XFRM
 	lset_t verbose_rc_flags = verbose ? (WHACK_STREAM|NO_PREFIX) : LEMPTY;
-	if (resolve_defaultroute_one(&conn->left, &conn->right, verbose_rc_flags,
-				     logger) == RESOLVE_PLEASE_CALL_AGAIN) {
-		resolve_defaultroute_one(&conn->left, &conn->right,
-					 verbose_rc_flags, logger);
-	}
-	if (resolve_defaultroute_one(&conn->right, &conn->left, verbose_rc_flags,
-				     logger) == RESOLVE_PLEASE_CALL_AGAIN) {
-		resolve_defaultroute_one(&conn->right, &conn->left,
-					 verbose_rc_flags, logger);
-	}
-#else /* !defined(KERNEL_XFRM) */
-	/* What kind of result are we seeking? */
-	bool seeking_src = (conn->left.addrtype == KH_DEFAULTROUTE ||
-			    conn->right.addrtype == KH_DEFAULTROUTE);
-	bool seeking_gateway = (conn->left.nexttype == KH_DEFAULTROUTE ||
-				conn->right.nexttype == KH_DEFAULTROUTE);
-	if (!seeking_src && !seeking_gateway)
-		return;	/* this end already figured out */
-
-	fatal(PLUTO_EXIT_FAIL, logger,
-	      "addcon: without XFRM, cannot resolve_defaultroute()");
-#endif
+	resolve_default_route(&conn->left, &conn->right, verbose_rc_flags, logger);
+	resolve_default_route(&conn->right, &conn->left, verbose_rc_flags, logger);
 }
 
 #ifdef HAVE_SECCOMP
@@ -442,7 +419,7 @@ int main(int argc, char *argv[])
 			{
 				if (verbose > 0)
 					printf(" %s\n", conn->name);
-				resolve_defaultroute(conn, logger);
+				resolve_default_routes(conn, logger);
 				starter_whack_add_conn(cfg, conn, logger);
 			}
 		}
@@ -538,7 +515,7 @@ int main(int argc, char *argv[])
 						p1, p2, p3,
 						conn->name);
 				} else {
-					resolve_defaultroute(conn, logger);
+					resolve_default_routes(conn, logger);
 					exit_status = starter_whack_add_conn(cfg, conn, logger);
 					conn->state = STATE_ADDED;
 				}

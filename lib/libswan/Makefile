@@ -86,6 +86,13 @@ ifeq ($(USE_XFRM_INTERFACE), true)
 endif
 endif
 
+ifeq ($(USE_XFRM),true)
+OBJS += resolve_default_route_linux.o
+endif
+ifeq ($(filter true, $(sort $(USE_BSDKAME) $(USE_PFKEYV2))),true)
+OBJS += resolve_default_route_bsd.o
+endif
+
 OBJS += log_ip.o
 OBJS += fd.o
 OBJS += role.o

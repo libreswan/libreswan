@@ -1,6 +1,8 @@
-/* default route lookup, for libreswan
+/* linux route resolution, for libreswan
  *
- * Copyright (C) 2018,2022 Andrew Cagney
+ * Copyright (C) 2017 Antony Antony
+ * Copyright (C) 2018 Paul Wouters
+ * Copyright (C) 2022 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -13,30 +15,30 @@
  * for more details.
  */
 
-#ifndef ADDR_LOOKUP_H
-#define ADDR_LOOKUP_H
-
-#include <stdbool.h>
-
-#include "lset.h"
-
-struct starter_end;
-struct logger;
-
-enum resolve_status {
-	RESOLVE_FAILURE = -1,
-	RESOLVE_SUCCESS = 0,
-	RESOLVE_PLEASE_CALL_AGAIN = 1,
-};
-
-enum resolve_status resolve_defaultroute_one(struct starter_end *host,
-					     struct starter_end *peer,
-					     lset_t verbose_rc_flags,
-					     struct logger *logger);
+#include "addr_lookup.h"
 
 bool resolve_default_route(struct starter_end *host,
 			   struct starter_end *peer,
 			   lset_t verbose_rc_flags,
-			   struct logger *logger);
+			   struct logger *logger)
+{
+	switch (resolve_defaultroute_one(host, peer, verbose_rc_flags, logger)) {
+	case RESOLVE_FAILURE:
+		return false;
+	case RESOLVE_SUCCESS:
+		return true;
+	case RESOLVE_PLEASE_CALL_AGAIN:
+		break;
+	}
 
-#endif
+	switch (resolve_defaultroute_one(host, peer, verbose_rc_flags, logger)) {
+	case RESOLVE_FAILURE:
+		return false;
+	case RESOLVE_SUCCESS:
+		return true;
+	case RESOLVE_PLEASE_CALL_AGAIN:
+		return false;
+	}
+
+	return false;
+}
