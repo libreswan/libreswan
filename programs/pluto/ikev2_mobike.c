@@ -212,7 +212,6 @@ bool add_mobike_response_payloads(shunk_t cookie2, struct msg_digest *md,
 		(cookie2.len == 0 || emit_v2N_hunk(v2N_COOKIE2, cookie2, pbs)));
 }
 
-#ifdef KERNEL_XFRM
 static payload_emitter_fn add_mobike_payloads; /* type check */
 static bool add_mobike_payloads(struct state *st, pb_stream *pbs)
 {
@@ -222,7 +221,6 @@ static bool add_mobike_payloads(struct state *st, pb_stream *pbs)
 		ikev2_out_natd(&local_endpoint, &remote_endpoint,
 			       &st->st_ike_spis, pbs);
 }
-#endif
 
 void record_newaddr(ip_address *ip, char *a_type)
 {
@@ -313,7 +311,6 @@ void record_deladdr(ip_address *ip, char *a_type)
 	}
 }
 
-#ifdef KERNEL_XFRM
 static void record_n_send_v2_mobike_probe_request(struct ike_sa *ike)
 {
 	/*
@@ -363,9 +360,7 @@ static void record_n_send_v2_mobike_probe_request(struct ike_sa *ike)
 	send_recorded_v2_message(ike, "mobike informational request",
 				 MESSAGE_REQUEST);
 }
-#endif
 
-#ifdef KERNEL_XFRM
 static void initiate_mobike_probe(struct ike_sa *ike,
 				  struct iface_endpoint *new_iface,
 				  ip_address new_nexthop)
@@ -397,9 +392,7 @@ static void initiate_mobike_probe(struct ike_sa *ike,
 
 	ike->sa.st_interface = old_iface; /* restore-old */
 }
-#endif
 
-#ifdef KERNEL_XFRM
 static struct iface_endpoint *find_new_iface(struct ike_sa *ike, ip_address new_src_addr)
 {
 	/*
@@ -424,7 +417,6 @@ static struct iface_endpoint *find_new_iface(struct ike_sa *ike, ip_address new_
 
 	return iface;
 }
-#endif
 
 void ikev2_addr_change(struct state *ike_sa)
 {
@@ -443,89 +435,36 @@ void ikev2_addr_change(struct state *ike_sa)
 		return;
 	}
 
-#ifdef KERNEL_XFRM
-
-	/* let's re-discover local address */
-
-	struct starter_end this = {
-		.addrtype = KH_DEFAULTROUTE,
-		.nexttype = KH_DEFAULTROUTE,
-		.host_family = endpoint_type(&ike->sa.st_remote_endpoint),
-	};
-
-	struct starter_end that = {
-		.addrtype = KH_IPADDR,
-		.host_family = endpoint_type(&ike->sa.st_remote_endpoint),
-		.addr = endpoint_address(ike->sa.st_remote_endpoint),
-	};
-
-	/*
-	 * mobike need two lookups. one for the gateway and
-	 * the one for the source address
-	 */
-	lset_t verbose_rc_flags = DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY;
-	switch (resolve_defaultroute_one(&this, &that, verbose_rc_flags,
-					 ike->sa.st_logger)) {
-
-	case RESOLVE_FAILURE:
+	ip_address dest = endpoint_address(ike->sa.st_remote_endpoint);
+	struct ip_route route;
+	switch (get_route(dest, &route, ike->sa.st_logger)) {
+	case ROUTE_SUCCESS:
+	{
+		struct iface_endpoint *iface = find_new_iface(ike, route.source);
+		if (iface != NULL) {
+			initiate_mobike_probe(ike, iface, route.gateway);
+		}
+		break;
+	}
+	case ROUTE_GATEWAY_FAILED:
 	{
 		/* keep this DEBUG, if a libreswan log, too many false +ve */
 		address_buf b;
 		dbg(PRI_SO" no local gateway to reach %s",
-		    ike->sa.st_serialno, str_address(&that.addr, &b));
+		    ike->sa.st_serialno, str_address(&dest, &b));
 		break;
 	}
-
-	case RESOLVE_SUCCESS:
+	case ROUTE_SOURCE_FAILED:
 	{
-		/* cannot happen */
-		/* ??? original code treated this as failure */
-		/* bad_case(0); */
-		address_buf b;
+		address_buf g, b;
 		llog_sa(RC_LOG, ike,
-			"no local gateway to reach %s (unexpected SUCCESS from first resolve_defaultroute_one())",
-			str_address(&that.addr, &b));
+			"no local source address to reach remote %s, local gateway %s",
+			str_address_sensitive(&dest, &b),
+			str_address(&route.gateway, &g));
 		break;
 	}
-
-	case RESOLVE_PLEASE_CALL_AGAIN: /* please call again: more to do */
-		switch (resolve_defaultroute_one(&this, &that, verbose_rc_flags,
-						 ike->sa.st_logger)) {
-
-		case RESOLVE_FAILURE:
-		{
-			address_buf g, b;
-			llog_sa(RC_LOG, ike,
-				"no local source address to reach remote %s, local gateway %s",
-				str_address_sensitive(&that.addr, &b),
-				str_address(&this.nexthop, &g));
-			break;
-		}
-
-		case RESOLVE_SUCCESS:
-		{
-			struct iface_endpoint *iface = find_new_iface(ike, this.addr);
-			if (iface != NULL)
-				initiate_mobike_probe(ike, iface, this.nexthop);
-			break;
-		}
-
-		case RESOLVE_PLEASE_CALL_AGAIN: /* please call again: more to do */
-		{
-			/* cannot happen */
-			/* ??? original code treated this as failure */
-			/* bad_case(1); */
-			address_buf g, b;
-			llog_sa(RC_LOG, ike,
-				"no local source address to reach remote %s, local gateway %s (unexpected TRY AGAIN from second resolve_defaultroute_one())",
-				str_address_sensitive(&that.addr, &b),
-				str_address(&this.nexthop, &g));
-			break;
-		}
-
-		}
+	case ROUTE_FATAL:
+		/* already logged */
 		break;
 	}
-
-#endif
 }

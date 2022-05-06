@@ -238,10 +238,16 @@ static const char *pa(enum keyword_host type, ip_address address,
 	}
 }
 
-enum resolve_status resolve_defaultroute_one(struct starter_end *host,
-					     struct starter_end *peer,
-					     lset_t verbose_rc_flags,
-					     struct logger *logger)
+enum resolve_status {
+	RESOLVE_FAILURE = -1,
+	RESOLVE_SUCCESS = 0,
+	RESOLVE_PLEASE_CALL_AGAIN = 1,
+};
+
+static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
+						    struct starter_end *peer,
+						    lset_t verbose_rc_flags,
+						    struct logger *logger)
 {
 	/*
 	 * "left="         == host->addrtype and host->addr
@@ -599,4 +605,78 @@ enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 		pa(host->addrtype, host->addr, host->strings[KSCF_IP], &ab),
 		pa(host->nexttype, host->nexthop, host->strings[KSCF_NEXTHOP], &gb));
 	return status;
+}
+
+enum route_status get_route(ip_address dest, struct ip_route *route, struct logger *logger)
+{
+	/* let's re-discover local address */
+
+	struct starter_end this = {
+		.addrtype = KH_DEFAULTROUTE,
+		.nexttype = KH_DEFAULTROUTE,
+		.host_family = address_type(&dest),
+	};
+
+	struct starter_end that = {
+		.addrtype = KH_IPADDR,
+		.host_family = this.host_family,
+		.addr = dest,
+	};
+
+	lset_t verbose_rc_flags = DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY;
+
+	/*
+	 * mobike need two lookups. one for the gateway and the one
+	 * for the source address.
+	 */
+
+	switch (resolve_defaultroute_one(&this, &that, verbose_rc_flags, logger)) {
+	case RESOLVE_FAILURE:
+		return ROUTE_GATEWAY_FAILED;
+	case RESOLVE_SUCCESS:
+		/* cannot happen */
+		/* ??? original code treated this as failure */
+		/* bad_case(0); */
+		llog_pexpect(logger, HERE,
+			     "unexpected SUCCESS from first resolve_defaultroute_one())");
+		return ROUTE_FATAL;
+	case RESOLVE_PLEASE_CALL_AGAIN: /* please call again: more to do */
+		/* expected; so far only gateway resolved */
+		break;
+	}
+
+	switch (resolve_defaultroute_one(&this, &that, verbose_rc_flags, logger)) {
+	case RESOLVE_FAILURE:
+		return ROUTE_SOURCE_FAILED;
+	case RESOLVE_SUCCESS:
+		break;
+	case RESOLVE_PLEASE_CALL_AGAIN: /* please call again: more to do */
+		/* cannot happen */
+		/* ??? original code treated this as failure */
+		/* bad_case(1); */
+		llog_pexpect(logger, HERE,
+			     "unexpected TRY AGAIN from second resolve_defaultroute_one()");
+		return ROUTE_FATAL;
+	}
+
+	route->source = this.addr;
+	route->gateway = this.nexthop;
+	return ROUTE_SUCCESS;
+}
+
+void resolve_default_route(struct starter_end *host,
+			   struct starter_end *peer,
+			   lset_t verbose_rc_flags,
+			   struct logger *logger)
+{
+	switch (resolve_defaultroute_one(host, peer, verbose_rc_flags, logger)) {
+	case RESOLVE_FAILURE:
+		return;
+	case RESOLVE_SUCCESS:
+		return;
+	case RESOLVE_PLEASE_CALL_AGAIN:
+		break;
+	}
+
+	resolve_defaultroute_one(host, peer, verbose_rc_flags, logger);
 }

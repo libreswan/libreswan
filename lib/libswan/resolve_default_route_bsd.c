@@ -20,7 +20,7 @@
 #include "ipsecconf/confread.h"
 #include "lswlog.h"		/* for fatal() */
 
-bool resolve_default_route(struct starter_end *host,
+void resolve_default_route(struct starter_end *host,
 			   struct starter_end *peer,
 			   lset_t verbose_rc_flags UNUSED,
 			   struct logger *logger)
@@ -31,8 +31,13 @@ bool resolve_default_route(struct starter_end *host,
 	bool seeking_gateway = (host->nexttype == KH_DEFAULTROUTE ||
 				peer->nexttype == KH_DEFAULTROUTE);
 	if (!seeking_src && !seeking_gateway)
-		return true;	/* this end already figured out */
+		return;	/* this end already figured out */
 
 	fatal(PLUTO_EXIT_FAIL, logger,
 	      "addcon: without XFRM, cannot resolve_defaultroute()");
+}
+
+enum route_status get_route(ip_address dest UNUSED, struct ip_route *route UNUSED, struct logger *logger UNUSED)
+{
+	return ROUTE_GATEWAY_FAILED;
 }
