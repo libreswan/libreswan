@@ -20,7 +20,6 @@ CRYPT_LDFLAGS =
 USE_BSDKAME = true
 USE_PFKEYV2 = true
 USE_LIBCAP_NG = false
-USE_PF_ROUTE = true
 
 INITSYSTEM=rc.d
 

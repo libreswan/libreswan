@@ -18,9 +18,14 @@
 #include <sys/socket.h>
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/route.h>
 #include <unistd.h>
 #include <errno.h>
+
+#include <net/route.h>
+/* NetBSD defines RT_ADVANCE(); FreeBSD SA_SIZE() */
+#ifndef RT_ADVANCE
+# define RT_ADVANCE(AP, SA) AP += SA_SIZE(SA)
+#endif
 
 #include "addr_lookup.h"
 #include "constants.h"
@@ -164,7 +169,9 @@ static enum route_status get_route_1(int s, ip_address dst,
 				break;
 			case RTA_AUTHOR:	/* sockaddr for author of redirect */
 			case RTA_BRD:		/* for NEWADDR, broadcast or p-p dest addr */
+#ifdef RTA_TAG
 			case RTA_TAG:		/* route tag */
+#endif
 				break;
 			}
 			if (e != NULL) {
