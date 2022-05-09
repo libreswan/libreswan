@@ -192,7 +192,7 @@ USERLAND_LDFLAGS += $(RT_LDFLAGS)
 OBJS += iface.o
 OBJS += iface_udp.o
 OBJS += iface_tcp.o
-OBJS += kernel_iface.o
+# implement kernel_iface.h
 ifneq ($(LINUX_VARIANT),)
 OBJS += kernel_iface_linux.o
 endif

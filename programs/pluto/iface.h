@@ -81,7 +81,6 @@ struct iface_dev {
 };
 
 void release_iface_dev(struct iface_dev **id);
-void add_or_keep_iface_dev(struct raw_iface *ifp, struct logger *logger);
 struct iface_dev *find_iface_dev_by_address(const ip_address *address);
 
 struct iface_endpoint {
@@ -197,6 +196,9 @@ struct iface_endpoint *alloc_iface_endpoint(int fd,
 					    bool float_nat_initiator,
 					    ip_endpoint local_endpoint,
 					    where_t where);
+
+extern char *pluto_listen;	/* from --listen flag */
+extern bool use_interface(const char *rifn);
 
 extern void shutdown_ifaces(struct logger *logger);
 

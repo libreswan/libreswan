@@ -71,7 +71,7 @@
 #include "crypt_symkey.h"	/* for init_crypt_symkey() */
 #include "crl_queue.h"		/* for free_crl_queue() */
 #include "pending.h"		/* for init_pending() */
-#include "kernel_iface.h"	/* for use_interface() */
+#include "iface.h"		/* for use_interface() */
 #include "server_pool.h"
 
 #ifndef IPSECDIR
@@ -106,7 +106,6 @@ bool in_main_thread(void)
 }
 
 static char *rundir = NULL;
-char *pluto_listen = NULL;
 static bool fork_desired = USE_FORK || USE_DAEMON;
 static bool selftest_only = false;
 

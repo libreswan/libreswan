@@ -18,47 +18,14 @@
  * for more details.
  */
 
-#include <stddef.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <errno.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/wait.h>
-#include <sys/ioctl.h>
-#include <sys/utsname.h>
+#include <stdlib.h>		/* for qsort() */
+#include <linux/if_addr.h>	/* for IFA_F_TENTATIVE and IFA_F_DADFAILED */
 
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-#include <linux/if_addr.h>
-
-
-#include "sysdep.h"
-#include "constants.h"
+#include "ip_info.h"
 
 #include "defs.h"
-#include "rnd.h"
-#include "id.h"
-#include "connections.h"        /* needs id.h */
-#include "state.h"
-#include "timer.h"
-#include "kernel.h"
-#include "kernel_xfrm.h"
-#include "kernel_iface.h"
-#include "packet.h"
-#include "x509.h"
 #include "log.h"
-#include "server.h"
-#include "whack.h"      /* for RC_LOG_SERIOUS */
-#include "keys.h"
-#include "ip_address.h"
-#include "ip_sockaddr.h"
-#include "ip_info.h"
-#include "iface.h"
+#include "kernel_iface.h"
 
 #ifdef HAVE_BROKEN_POPEN
 /*
@@ -262,86 +229,4 @@ struct raw_iface *find_raw_ifaces6(struct logger *unused_logger UNUSED)
 	}
 
 	return rifaces;
-}
-
-/*
- * XXX: the BSD and Linux versions of this function are close to
- * identical.
- *
- * Notable differences:
- *
- * - linux honours --listen
- * - linux does strange things with the 'ipsec*' interface
- */
-
-void process_raw_ifaces(struct raw_iface *rifaces, struct logger *logger)
-{
-	ip_address lip;	/* --listen filter option */
-
-	if (pluto_listen) {
-		err_t e = ttoaddress_num(shunk1(pluto_listen), NULL/*UNSPEC*/, &lip);
-
-		if (e != NULL) {
-			DBG_log("invalid listen= option ignored: %s", e);
-			pluto_listen = NULL;
-		}
-		address_buf b;
-		dbg("Only looking to listen on %s", str_address(&lip, &b));
-	}
-
-	struct raw_iface *ifp;
-
-	for (ifp = rifaces; ifp != NULL; ifp = ifp->next) {
-		bool after = false;	/* has vfp passed ifp on the list? */
-		bool bad = false;
-		struct raw_iface *vfp;
-
-		for (vfp = rifaces; vfp != NULL; vfp = vfp->next) {
-			if (vfp == ifp) {
-				after = true;
-			} else if (sameaddr(&ifp->addr, &vfp->addr)) {
-				if (after) {
-					ipstr_buf b;
-
-					llog(RC_LOG_SERIOUS, logger,
-					            "IP interfaces %s and %s share address %s!",
-					       ifp->name, vfp->name,
-					       ipstr(&ifp->addr, &b));
-				}
-				bad = true;
-				/* continue just to find other duplicates */
-			}
-		}
-
-		if (bad)
-			continue;
-
-		/*
-		 * last check before we actually add the entry.
-		 *
-		 * ignore if --listen is specified and we do not match
-		 */
-		if (pluto_listen != NULL && !sameaddr(&lip, &ifp->addr)) {
-			ipstr_buf b;
-
-			llog(RC_LOG, logger,
-				    "skipping interface %s with %s",
-				    ifp->name, ipstr(&ifp->addr, &b));
-			continue;
-		}
-
-		/*
-		 * We've got all we need; see if this is a new thing:
-		 * search old interfaces list.
-		 */
-		add_or_keep_iface_dev(ifp, logger);
-	}
-
-	/* delete the raw interfaces list */
-	while (rifaces != NULL) {
-		struct raw_iface *t = rifaces;
-
-		rifaces = t->next;
-		pfree(t);
-	}
 }

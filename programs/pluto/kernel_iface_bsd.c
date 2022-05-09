@@ -18,7 +18,6 @@
  */
 
 #include "defs.h"
-#include "iface.h"			/* for add_or_keep_iface_dev() */
 #include "kernel_iface.h"
 #include "log.h"
 
@@ -61,58 +60,4 @@
 struct raw_iface *find_raw_ifaces6(struct logger *logger UNUSED)
 {
 	return NULL;
-}
-
-/*
- * XXX: the BSD and Linux versions of this function are close to
- * identical.
- *
- * Notable differences:
- *
- * - linux honours --listen
- */
-
-void process_raw_ifaces(struct raw_iface *rifaces, struct logger *logger)
-{
-	struct raw_iface *ifp;
-
-	for (ifp = rifaces; ifp != NULL; ifp = ifp->next) {
-		bool after = false;	/* has vfp passed ifp on the list? */
-		bool bad = false;
-		struct raw_iface *vfp;
-
-		for (vfp = rifaces; vfp != NULL; vfp = vfp->next) {
-			if (vfp == ifp) {
-				after = true;
-			} else if (sameaddr(&ifp->addr, &vfp->addr)) {
-				if (after) {
-					ipstr_buf b;
-
-					llog(RC_LOG_SERIOUS, logger,
-					            "IP interfaces %s and %s share address %s!",
-					       ifp->name, vfp->name,
-					       ipstr(&ifp->addr, &b));
-				}
-				bad = true;
-				/* continue just to find other duplicates */
-			}
-		}
-
-		if (bad)
-			continue;
-
-		/*
-		 * We've got all we need; see if this is a new thing:
-		 * search old interfaces list.
-		 */
-		add_or_keep_iface_dev(ifp, logger);
-	}
-
-	/* delete the raw interfaces list */
-	while (rifaces != NULL) {
-		struct raw_iface *t = rifaces;
-
-		rifaces = t->next;
-		pfree(t);
-	}
 }

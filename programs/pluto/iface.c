@@ -25,7 +25,11 @@
  *
  */
 
+#include <stdlib.h>		/* for malloc() free() UGH! */
 #include <unistd.h>		/* for close() */
+#include <sys/ioctl.h>
+
+#include "socketwrapper.h"		/* for safe_sock() */
 
 #include "defs.h"
 
@@ -41,6 +45,8 @@
 #include "ip_encap.h"
 #include "kernel.h"			/* for kernel_ops_detect_offload() */
 
+
+char *pluto_listen = NULL;		/* from --listen flag */
 struct iface_endpoint *interfaces = NULL;  /* public interfaces */
 
 static void jam_iface_endpoint(struct jambuf *buf, const struct iface_endpoint *ifp)
@@ -107,7 +113,7 @@ static void mark_ifaces_dead(void)
 	}
 }
 
-void add_or_keep_iface_dev(struct raw_iface *ifp, struct logger *logger)
+static void add_or_keep_iface_dev(struct raw_iface *ifp, struct logger *logger)
 {
 	/* find the iface */
 	struct iface_dev *ifd;
@@ -370,6 +376,216 @@ void listen_on_iface_endpoint(struct iface_endpoint *ifp, struct logger *logger)
 	    ifp->fd, ifp->io->protocol->name);
 }
 
+/*
+ * Process the updated list of interfaces.
+ */
+
+static struct raw_iface *find_raw_ifaces4(struct logger *logger)
+{
+	/* Get a UDP socket */
+
+	int udp_sock = safe_socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+	if (udp_sock == -1) {
+		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
+			    "socket() failed in find_raw_ifaces4()");
+	}
+
+	/* get list of interfaces with assigned IPv4 addresses from system */
+
+	/*
+	 * Without SO_REUSEADDR, bind() of udp_sock will cause
+	 * 'address already in use?
+	 */
+	static const int on = true;     /* by-reference parameter; constant, we hope */
+	if (setsockopt(udp_sock, SOL_SOCKET, SO_REUSEADDR,
+		       (const void *)&on, sizeof(on)) < 0) {
+		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
+			    "setsockopt(SO_REUSEADDR) in find_raw_ifaces4()");
+	}
+
+	/*
+	 * bind the socket; somewhat convoluted as BSD as size field.
+	 */
+	{
+		ip_endpoint any_ep = endpoint_from_address_protocol_port(ipv4_info.address.unspec,
+									 &ip_protocol_udp,
+									 ip_hport(IKE_UDP_PORT));
+		ip_sockaddr any_sa = sockaddr_from_endpoint(any_ep);
+		if (bind(udp_sock, &any_sa.sa.sa, any_sa.len) < 0) {
+			endpoint_buf eb;
+			fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
+				    "bind(%s) failed in %s()",
+				    str_endpoint(&any_ep, &eb), __func__);
+		}
+	}
+
+	/*
+	 * Load buf with array of raw interfaces from kernel.
+	 *
+	 * We have to guess at the upper bound (num).
+	 * If we guess low, double num and repeat.
+	 * But don't go crazy: stop before 1024**2.
+	 *
+	 * Tricky: num is a static so that we won't have to start from
+	 * 64 in subsequent calls to find_raw_ifaces4.
+	 */
+	static int num = 64;
+	struct ifconf ifconf;
+	struct ifreq *buf = NULL;	/* for list of interfaces -- arbitrary limit */
+	for (; num < (1024 * 1024); num *= 2) {
+		/* Get num local interfaces.  See netdevice(7). */
+		ifconf.ifc_len = num * sizeof(struct ifreq);
+
+		free(buf);
+		buf = malloc(ifconf.ifc_len);
+		if (buf == NULL) {
+			fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
+				    "malloc of %d in find_raw_ifaces4()",
+				    ifconf.ifc_len);
+		}
+		memset(buf, 0xDF, ifconf.ifc_len);	/* stomp */
+		ifconf.ifc_buf = (void *) buf;
+
+		if (ioctl(udp_sock, SIOCGIFCONF, &ifconf) == -1) {
+			fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
+				    "ioctl(SIOCGIFCONF) in find_raw_ifaces4()");
+		}
+
+		/* if we got back less than we asked for, we have them all */
+		if (ifconf.ifc_len < (int)(sizeof(struct ifreq) * num))
+			break;
+	}
+
+	/* Add an entry to rifaces for each interesting interface. */
+	struct raw_iface *rifaces = NULL;
+	for (int j = 0; (j + 1) * sizeof(struct ifreq) <= (size_t)ifconf.ifc_len; j++) {
+		struct raw_iface ri;
+		const struct sockaddr_in *rs =
+			(struct sockaddr_in *) &buf[j].ifr_addr;
+		struct ifreq auxinfo;
+
+		/* build a NUL-terminated copy of the rname field */
+		memcpy(ri.name, buf[j].ifr_name, IFNAMSIZ-1);
+		ri.name[IFNAMSIZ-1] = '\0';
+		dbg("Inspecting interface %s ", ri.name);
+
+		/* ignore all but AF_INET interfaces */
+		if (rs->sin_family != AF_INET) {
+			dbg("Ignoring non AF_INET interface %s ", ri.name);
+			continue; /* not interesting */
+		}
+
+		/* Find out stuff about this interface.  See netdevice(7). */
+		zero(&auxinfo); /* paranoia */
+		memcpy(auxinfo.ifr_name, buf[j].ifr_name, IFNAMSIZ-1);
+		/* auxinfo.ifr_name[IFNAMSIZ-1] already '\0' */
+		if (ioctl(udp_sock, SIOCGIFFLAGS, &auxinfo) == -1) {
+			log_errno(logger, errno,
+				  "Ignored interface %s - ioctl(SIOCGIFFLAGS) failed in find_raw_ifaces4()",
+				  ri.name);
+			continue; /* happens when using device with label? */
+		}
+		if (!(auxinfo.ifr_flags & IFF_UP)) {
+			dbg("Ignored interface %s - it is not up", ri.name);
+			continue; /* ignore an interface that isn't UP */
+		}
+#ifdef IFF_SLAVE
+		/* only linux ... */
+		if (auxinfo.ifr_flags & IFF_SLAVE) {
+			dbg("Ignored interface %s - it is a slave interface", ri.name);
+			continue; /* ignore slave interfaces; they share IPs with their master */
+		}
+#endif
+		/* ignore unconfigured interfaces */
+		if (rs->sin_addr.s_addr == 0) {
+			dbg("Ignored interface %s - it is unconfigured", ri.name);
+			continue;
+		}
+
+		ri.addr = address_from_in_addr(&rs->sin_addr);
+		ipstr_buf b;
+		dbg("found %s with address %s", ri.name, ipstr(&ri.addr, &b));
+		ri.next = rifaces;
+		rifaces = clone_thing(ri, "struct raw_iface");
+	}
+
+	free(buf);	/* was allocated via malloc() */
+	close(udp_sock);
+	return rifaces;
+}
+
+static void process_raw_ifaces(struct raw_iface *rifaces, struct logger *logger)
+{
+	ip_address lip;	/* --listen filter option */
+
+	if (pluto_listen) {
+		err_t e = ttoaddress_num(shunk1(pluto_listen), NULL/*UNSPEC*/, &lip);
+
+		if (e != NULL) {
+			DBG_log("invalid listen= option ignored: %s", e);
+			pluto_listen = NULL;
+		}
+		address_buf b;
+		dbg("Only looking to listen on %s", str_address(&lip, &b));
+	}
+
+	struct raw_iface *ifp;
+
+	for (ifp = rifaces; ifp != NULL; ifp = ifp->next) {
+		bool after = false;	/* has vfp passed ifp on the list? */
+		bool bad = false;
+		struct raw_iface *vfp;
+
+		for (vfp = rifaces; vfp != NULL; vfp = vfp->next) {
+			if (vfp == ifp) {
+				after = true;
+			} else if (sameaddr(&ifp->addr, &vfp->addr)) {
+				if (after) {
+					ipstr_buf b;
+
+					llog(RC_LOG_SERIOUS, logger,
+					            "IP interfaces %s and %s share address %s!",
+					       ifp->name, vfp->name,
+					       ipstr(&ifp->addr, &b));
+				}
+				bad = true;
+				/* continue just to find other duplicates */
+			}
+		}
+
+		if (bad)
+			continue;
+
+		/*
+		 * last check before we actually add the entry.
+		 *
+		 * ignore if --listen is specified and we do not match
+		 */
+		if (pluto_listen != NULL && !sameaddr(&lip, &ifp->addr)) {
+			ipstr_buf b;
+
+			llog(RC_LOG, logger,
+				    "skipping interface %s with %s",
+				    ifp->name, ipstr(&ifp->addr, &b));
+			continue;
+		}
+
+		/*
+		 * We've got all we need; see if this is a new thing:
+		 * search old interfaces list.
+		 */
+		add_or_keep_iface_dev(ifp, logger);
+	}
+
+	/* delete the raw interfaces list */
+	while (rifaces != NULL) {
+		struct raw_iface *t = rifaces;
+
+		rifaces = t->next;
+		pfree(t);
+	}
+}
+
 void find_ifaces(bool rm_dead, struct logger *logger)
 {
 	/*
@@ -413,6 +629,23 @@ void show_ifaces_status(struct show *s)
 			     p->ip_dev->id_rname,
 			     p->io->protocol->name,
 			     str_endpoint(&p->local_endpoint, &b));
+	}
+}
+
+/* Called to handle --interface <ifname>
+ * Semantics: if specified, only these (real) interfaces are considered.
+ */
+
+static const char *pluto_ifn[10];
+static int pluto_ifn_roof = 0;
+
+bool use_interface(const char *rifn)
+{
+	if (pluto_ifn_roof >= (int)elemsof(pluto_ifn)) {
+		return false;
+	} else {
+		pluto_ifn[pluto_ifn_roof++] = rifn;
+		return true;
 	}
 }
 

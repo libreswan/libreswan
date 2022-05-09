@@ -17,7 +17,7 @@
 #ifndef KERNEL_IFACE_H
 #define KERNEL_IFACE_H
 
-#include <net/if.h>		/* for IFNAMSIZ */
+#include <net/if.h>		/* for IFNAMSIZ; ULGH! */
 
 #include "ip_address.h"
 
@@ -29,10 +29,6 @@ struct raw_iface {
 	struct raw_iface *next;
 };
 
-extern struct raw_iface *find_raw_ifaces4(struct logger *logger);
 extern struct raw_iface *find_raw_ifaces6(struct logger *logger);
-extern void process_raw_ifaces(struct raw_iface *ifaces, struct logger *logger);
-
-extern bool use_interface(const char *rifn);
 
 #endif

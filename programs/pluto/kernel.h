@@ -342,8 +342,6 @@ enum expect_kernel_policy {
 		n_;							\
 	})
 
-extern char *pluto_listen;	/* from --listen flag */
-
 struct kernel_ops {
 	/*
 	 * The names used to identify the interface.
