@@ -43,9 +43,9 @@ west #
  ipsec asn1check > /dev/null || echo failed
 asn1check: leak detective found no leaks
 west #
- ipsec vendorid > /dev/null || echo failed
-vendorid: Initializing NSS
-vendorid: FIPS Mode: NO
+ ipsec vendoridcheck > /dev/null || echo failed
+vendoridcheck: Initializing NSS
+vendoridcheck: FIPS Mode: NO
 west #
  # Need to disable DNS tests; localhost is ok
 west #

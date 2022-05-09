@@ -1,4 +1,4 @@
-# algparse Makefile, for libreswan
+# vendorid Makefile, for libreswan
 #
 # Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
 #
@@ -12,7 +12,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-PROGRAM = vendorid
+PROGRAM = vendoridcheck
 OBJS += $(PROGRAM).o
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
@@ -25,7 +25,7 @@ USERLAND_LDFLAGS += $(NSPR_LDFLAGS)
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
 else
-include ../../mk/program.mk
+include ../../../mk/program.mk
 endif
 
 local-check: $(PROGRAM)

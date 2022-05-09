@@ -46,7 +46,6 @@ SUBDIRS += rsasigkey
 SUBDIRS += setup
 SUBDIRS += show
 SUBDIRS += showhostkey
-SUBDIRS += vendorid
 SUBDIRS += verify
 
 ifeq ($(USE_PORTEXCLUDES),true)
