@@ -180,7 +180,6 @@ void iface_endpoint_delref_where(struct iface_endpoint **ifp, where_t where);
 extern struct iface_endpoint *interfaces;   /* public interfaces */
 
 extern struct iface_endpoint *find_iface_endpoint_by_local_endpoint(ip_endpoint local_endpoint);
-extern bool use_interface(const char *rifn);
 extern void find_ifaces(bool rm_dead, struct logger *logger);
 extern void show_ifaces_status(struct show *s);
 void listen_on_iface_endpoint(struct iface_endpoint *ifp, struct logger *logger);

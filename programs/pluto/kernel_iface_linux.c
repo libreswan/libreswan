@@ -48,6 +48,7 @@
 #include "timer.h"
 #include "kernel.h"
 #include "kernel_xfrm.h"
+#include "kernel_iface.h"
 #include "packet.h"
 #include "x509.h"
 #include "log.h"
@@ -99,9 +100,6 @@
  * "down-host" and "down-client" are run when an eroute is deleted.
  * They are useful for adjusting a firewall.
  */
-
-static const char *pluto_ifn[10];
-static int pluto_ifn_roof = 0;
 
 static int cmp_iface(const void *lv, const void *rv)
 {
@@ -264,19 +262,6 @@ struct raw_iface *find_raw_ifaces6(struct logger *unused_logger UNUSED)
 	}
 
 	return rifaces;
-}
-
-/* Called to handle --interface <ifname>
- * Semantics: if specified, only these (real) interfaces are considered.
- */
-bool use_interface(const char *rifn)
-{
-	if (pluto_ifn_roof >= (int)elemsof(pluto_ifn)) {
-		return false;
-	} else {
-		pluto_ifn[pluto_ifn_roof++] = rifn;
-		return true;
-	}
 }
 
 /*

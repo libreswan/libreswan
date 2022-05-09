@@ -35,6 +35,7 @@
 struct sa_marks;
 struct spd_route;
 struct iface_dev;
+struct raw_iface;
 struct show;
 
 /*
@@ -306,12 +307,6 @@ struct kernel_sa {
 	deltatime_t sa_lifetime; /* number of seconds until SA expires */
 };
 
-struct raw_iface {
-	ip_address addr;
-	char name[IFNAMSIZ + 20]; /* what would be a safe size? */
-	struct raw_iface *next;
-};
-
 /*
  * What to do when there's a policy op returns the ENOENT response?
  *
@@ -462,9 +457,6 @@ extern const struct kernel_ops pfkeyv2_kernel_ops;
 #endif
 
 extern const struct kernel_ops *const kernel_stacks[];
-
-extern struct raw_iface *find_raw_ifaces6(struct logger *logger);
-extern void process_raw_ifaces(struct raw_iface *ifaces, struct logger *logger);
 
 /* helper for invoking call outs */
 extern bool fmt_common_shell_out(char *buf, size_t blen,

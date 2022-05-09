@@ -17,45 +17,10 @@
  *
  */
 
-#include <stddef.h>
-#include <string.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <signal.h>
-#include <errno.h>
-#include <unistd.h>
-#include <fcntl.h>
-#include <sys/ioctl.h>
-#include <sys/utsname.h>
-#include <sys/types.h>
-
-#include <sys/stat.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <arpa/inet.h>
-
-
-#include "sysdep.h"
-#include "socketwrapper.h"
-#include "constants.h"
-#include "ip_info.h"
-
 #include "defs.h"
-#include "rnd.h"
-#include "id.h"
-#include "connections.h"        /* needs id.h */
-#include "state.h"
-#include "timer.h"
-#include "kernel.h"
-#include "kernel_xfrm.h"
-#include "packet.h"
-#include "x509.h"
+#include "iface.h"			/* for add_or_keep_iface_dev() */
+#include "kernel_iface.h"
 #include "log.h"
-#include "server.h"
-#include "whack.h"      /* for RC_LOG_SERIOUS */
-#include "keys.h"
-#include "iface.h"
-#include "ip_sockaddr.h"
 
 /* invoke the updown script to do the routing and firewall commands required
  *
@@ -90,28 +55,12 @@
  * They are useful for adjusting a firewall.
  */
 
-static const char *pluto_ifn[10];
-static int pluto_ifn_roof = 0;
-
 /*
  * there is a BSD way to do this, probably SIOCGCONF
  */
 struct raw_iface *find_raw_ifaces6(struct logger *logger UNUSED)
 {
 	return NULL;
-}
-
-/* Called to handle --interface <ifname>
- * Semantics: if specified, only these (real) interfaces are considered.
- */
-bool use_interface(const char *rifn)
-{
-	if (pluto_ifn_roof >= (int)elemsof(pluto_ifn)) {
-		return false;
-	} else {
-		pluto_ifn[pluto_ifn_roof++] = rifn;
-		return true;
-	}
 }
 
 /*

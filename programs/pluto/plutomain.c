@@ -71,7 +71,7 @@
 #include "crypt_symkey.h"	/* for init_crypt_symkey() */
 #include "crl_queue.h"		/* for free_crl_queue() */
 #include "pending.h"		/* for init_pending() */
-#include "iface.h"
+#include "kernel_iface.h"	/* for use_interface() */
 #include "server_pool.h"
 
 #ifndef IPSECDIR

@@ -99,6 +99,7 @@
 #include "ikev2_mobike.h"
 #include "ip_packet.h"
 #include "sparse_names.h"
+#include "kernel_iface.h"
 
 /* required for Linux 2.6.26 kernel and later */
 #ifndef XFRM_STATE_AF_UNSPEC
