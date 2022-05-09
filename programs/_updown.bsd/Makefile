@@ -11,7 +11,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-PROGRAM=_updown.bsdkame
+PROGRAM=_updown.bsd
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk

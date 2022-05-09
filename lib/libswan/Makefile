@@ -77,16 +77,16 @@ OBJS += certs.o
 OBJS += reqid.o
 OBJS += keyid.o
 
-ifeq ($(USE_XFRM),true)
+ifneq ($(LINUX_VARIANT),)
 OBJS += addr_lookup.o
 OBJS += kernel_netlink_reply.o
 OBJS += kernel_netlink_query.o
 ifeq ($(USE_XFRM_INTERFACE), true)
- OBJS += netlink_attrib.o
+OBJS += netlink_attrib.o
 endif
 endif
 
-ifeq ($(filter true, $(sort $(USE_BSDKAME) $(USE_PFKEYV2))),true)
+ifneq ($(BSD_VARIANT),)
 OBJS += resolve_default_route_bsd.o
 endif
 

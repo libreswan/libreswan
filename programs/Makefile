@@ -56,9 +56,9 @@ ifeq ($(USE_XFRM),true)
 SUBDIRS +=  _updown.xfrm
 endif
 
-ifeq ($(USE_BSDKAME),true)
+ifneq ($(BSD_VARIANT),)
 SUBDIRS += _realsetup.bsd
-SUBDIRS += _updown.bsdkame
+SUBDIRS += _updown.bsd
 endif
 
 include $(top_srcdir)/mk/targets.mk
