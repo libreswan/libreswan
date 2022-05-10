@@ -482,10 +482,23 @@ static void iketcp_listen(struct iface_endpoint *ifp,
 static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port,
 			   struct logger *logger)
 {
+	const ip_protocol *protocol = &ip_protocol_tcp;
+	ip_endpoint endpoint = endpoint_from_address_protocol_port(ifd->id_address, protocol, port);
+#define BIND_ERROR(MSG, ...)						\
+	{								\
+		int e = errno;						\
+		endpoint_buf eb;					\
+		log_errno(logger, e,					\
+			  "bind %s TCP endpoint %s failed, "MSG,	\
+			  ifd->id_rname, str_endpoint(&endpoint, &eb),	\
+			  ##__VA_ARGS__);				\
+	}
+
 	const struct ip_info *type = address_type(&ifd->id_address);
-	int fd = socket(type->af, SOCK_STREAM, IPPROTO_TCP);
+	int fd = socket(type->pf, SOCK_STREAM, protocol->ipproto);
 	if (fd < 0) {
-		log_errno(logger, errno, "socket() in %s()", __func__);
+		BIND_ERROR("socket(%s, SOCK_STREAM, %s)",
+			   type->pf_name, protocol->name);
 		return -1;
 	}
 
@@ -497,20 +510,21 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port,
 		if (!(fcntl_flags & O_NONBLOCK)) {
 			fcntl_flags |= O_NONBLOCK;
 			if (fcntl(fd, F_SETFL, fcntl_flags) == -1) {
-				log_errno(logger, errno, "fcntl(,, O_NONBLOCK) in create_socket()");
+				BIND_ERROR("fcntl(F_SETFL, O_NONBLOCK)");
+				/* stumble on */
 			}
 		}
 	}
 
 	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
-		log_errno(logger, errno, "fcntl(,, FD_CLOEXEC) in create_socket()");
+		BIND_ERROR("fcntl(F_SETFD, FD_CLOEXEC)");
 		close(fd);
 		return -1;
 	}
 
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
 		       (const void *)&on, sizeof(on)) < 0) {
-		log_errno(logger, errno, "setsockopt SO_REUSEADDR in create_socket()");
+		BIND_ERROR("setsockopt(SOL_SOCKET, SO_REUSEADDR)");
 		close(fd);
 		return -1;
 	}
@@ -519,7 +533,7 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port,
 	static const int so_prio = 6; /* rumored maximum priority, might be 7 on linux? */
 	if (setsockopt(fd, SOL_SOCKET, SO_PRIORITY, (const void *)&so_prio,
 		       sizeof(so_prio)) < 0) {
-		log_errno(logger, errno, "setsockopt(SO_PRIORITY) in %s()", __func__);
+		BIND_ERROR("setsockopt(SOL_SOCKET, SO_PRIORITY)");
 		/* non-fatal */
 	}
 #endif
@@ -538,11 +552,11 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port,
 #endif
 		if (setsockopt(fd, SOL_SOCKET, so_rcv, (const void *)&pluto_sock_bufsize,
 			       sizeof(pluto_sock_bufsize)) < 0) {
-			log_errno(logger, errno, "setsockopt(SO_RCVBUFFORCE) in %s()", __func__);
+			BIND_ERROR("setsockopt(SOL_SOCKET, SO_RCVBUFFORCE)");
 		}
 		if (setsockopt(fd, SOL_SOCKET, so_snd, (const void *)&pluto_sock_bufsize,
 			       sizeof(pluto_sock_bufsize)) < 0) {
-			log_errno(logger, errno, "setsockopt(SO_SNDBUFFORCE) in %s()", __func__);
+			BIND_ERROR("setsockopt(SOL_SOCKET, SO_SNDBUFFORCE)");
 		}
 	}
 
@@ -550,25 +564,24 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port,
 #if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
 	if (pluto_sock_errqueue) {
 		if (setsockopt(fd, SOL_IP, IP_RECVERR, (const void *)&on, sizeof(on)) < 0) {
-			log_errno(logger, errno, "setsockopt IP_RECVERR in create_socket()");
+			BIND_ERROR("setsockopt(SOL_IP, IP_RECVERR)");
 			close(fd);
 			return -1;
 		}
 	}
 #endif
 
-
-#ifdef IPV6_USE_MIN_MTU /* YUCK: not always defined */
 	/*
 	 * With IPv6, there is no fragmentation after it leaves our
 	 * interface.  PMTU discovery is mandatory but doesn't work
 	 * well with IKE (why?).  So we must set the IPV6_USE_MIN_MTU
 	 * option.  See draft-ietf-ipngwg-rfc2292bis-01.txt 11.1
 	 */
+#ifdef IPV6_USE_MIN_MTU /* YUCK: not always defined */
 	if (address_type(&ifd->id_address) == &ipv6_info &&
 	    setsockopt(fd, SOL_SOCKET, IPV6_USE_MIN_MTU,
 		       (const void *)&on, sizeof(on)) < 0) {
-		log_errno(logger, errno, "setsockopt IPV6_USE_MIN_MTU in process_raw_ifaces()");
+		BIND_ERROR("setsockopt(SOL_SOCKET, IPV6_USE_MIN_MTU)");
 		close(fd);
 		return -1;
 	}
@@ -583,6 +596,7 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port,
 	 */
 	if (kernel_ops->poke_ipsec_policy_hole != NULL &&
 	    !kernel_ops->poke_ipsec_policy_hole(ifd, fd, logger)) {
+		/* already logged */
 		close(fd);
 		return -1;
 	}
@@ -597,10 +611,7 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port,
 								      port);
 	ip_sockaddr if_sa = sockaddr_from_endpoint(if_endpoint);
 	if (bind(fd, &if_sa.sa.sa, if_sa.len) < 0) {
-		endpoint_buf b;
-		log_errno(logger, errno, "bind() for %s %s in process_raw_ifaces()",
-			  ifd->id_rname,
-			  str_endpoint(&if_endpoint, &b));
+		BIND_ERROR("bind()");
 		close(fd);
 		return -1;
 	}
@@ -608,19 +619,22 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port,
 #if defined(HAVE_UDPFROMTO)
 	/* we are going to use udpfromto.c, so initialize it */
 	if (udpfromto_init(fd) == -1) {
-		log_errno(logger, errno, "udpfromto_init() returned an error - ignored");
+		log_errno(logger, errno,
+			  "udpfromto_init() returned an error - ignored");
 	}
 #endif
 
 	/* poke a hole for IKE messages in the IPsec layer */
 	if (kernel_ops->exceptsocket != NULL) {
 		if (!kernel_ops->exceptsocket(fd, AF_INET, logger)) {
+			/* already logged */
 			close(fd);
 			return -1;
 		}
 	}
 
 	return fd;
+#undef BIND_ERROR
 }
 
 static int iketcp_bind_iface_endpoint(struct iface_dev *ifd, ip_port port,
