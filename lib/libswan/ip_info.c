@@ -264,9 +264,13 @@ const struct ip_info *aftoinfo(int af)
 	case AF_INET6:
 		return &ipv6_info;
 	case AF_UNSPEC:
+#if 0
+		return &unspec_info;
+#else
 		return NULL;
+#endif
 	default:
-		bad_case(af);
+		return NULL;
 	}
 }
 
