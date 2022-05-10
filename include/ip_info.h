@@ -76,10 +76,21 @@ struct ip_info {
 	unsigned ikev2_max_fragment_size;
 
 	/*
-	 * Sockaddr.
+	 * socket()
+	 *
+	 * PF_INET or PF_INET6; yes same value as AF_* but never know
 	 */
-	int af; /* AF_INET or AF_INET6 */
+	int pf;
+	const char *pf_name;
+
+	/*
+	 * Sockaddr.
+	 *
+	 * AF_INET or AF_INET6
+	 */
+	int af;
 	const char *af_name;
+	/* misc */
 	size_t sockaddr_size; /* sizeof(sockaddr_in) | sizeof(sockaddr_in6)? */
 	ip_address (*address_from_sockaddr)(const ip_sockaddr sa);
 	ip_port (*port_from_sockaddr)(const ip_sockaddr sa);
