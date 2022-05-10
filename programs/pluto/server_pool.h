@@ -68,6 +68,6 @@ extern void submit_task(const struct logger *logger,
 
 extern void start_server_helpers(int nhelpers, struct logger *logger);
 void stop_server_helpers(void (*all_server_helpers_stopped)(void));
-void free_server_helper_jobs(void);
+void free_server_helper_jobs(struct logger *logger);
 
 #endif

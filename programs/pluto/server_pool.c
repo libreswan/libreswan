@@ -600,14 +600,16 @@ void stop_server_helpers(void (*server_helpers_stopped_cb)(void))
 	}
 }
 
-void free_server_helper_jobs(void)
+void free_server_helper_jobs(struct logger *logger)
 {
-	passert(helper_threads_started == helper_threads_stopped); /* all stopped */
-	passert(helper_threads == NULL);
-
-	struct job *job = NULL;
-	FOR_EACH_LIST_ENTRY_OLD2NEW(&backlog, job) {
-		remove_list_entry(&job->backlog);
-		free_job(&job);
+	if (helper_threads_started == helper_threads_stopped) {
+		passert(helper_threads == NULL);
+		struct job *job = NULL;
+		FOR_EACH_LIST_ENTRY_OLD2NEW(&backlog, job) {
+			remove_list_entry(&job->backlog);
+			free_job(&job);
+		}
+	} else {
+		llog(RC_LOG, logger, "WARNING: helper threads still running");
 	}
 }

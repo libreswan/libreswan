@@ -127,21 +127,7 @@ void exit_epilogue(void)
 	 */
 	delete_every_connection();
 
-	/*
-	 * Deleting connections (which deletes states) don't try to
-	 * delete asynchronous jobs pending in helper queue; instead
-	 * they are just flagged as cancelled.
-	 *
-	 * The helper thread will then throw cancelled jobs back at a
-	 * main thread callback, and the main thread callback will
-	 * then clean it up.
-	 *
-	 * Except, during shutdown, there's no helper threads and no
-	 * event-loop.
-	 *
-	 * Hence, do it manually.
-	 */
-	free_server_helper_jobs();
+	free_server_helper_jobs(logger);
 
 	free_root_certs(logger);
 	free_preshared_secrets(logger);
