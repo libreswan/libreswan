@@ -142,6 +142,12 @@ static void sort_ifaces(struct raw_iface **rifaces)
 	pfree(ifaces);
 }
 
+/*
+ * See netdevice(7) where it documents that <<struct ifconf>> +
+ * <<SIOCGIFCONF>> only work on IPv4 and /proc/net/if_inet6 or
+ * rtnetlink(7) should be used for IPv6.
+ */
+
 struct raw_iface *find_raw_ifaces6(struct logger *unused_logger UNUSED)
 {
 	/* Get list of interfaces with IPv6 addresses from system from /proc/net/if_inet6).
@@ -166,21 +172,19 @@ struct raw_iface *find_raw_ifaces6(struct logger *unused_logger UNUSED)
 		dbg("could not open %s", proc_name);
 	} else {
 		for (;; ) {
-			struct raw_iface ri;
 			unsigned short xb[8];           /* IPv6 address as 8 16-bit chunks */
-			char sb[8 * 5];                 /* IPv6 address as string-with-colons */
 			unsigned int if_idx;            /* proc field, not used */
 			unsigned int plen;              /* proc field, not used */
 			unsigned int scope;             /* proc field, used to exclude link-local */
 			unsigned int dad_status;        /* proc field */
+			char ifname[21]; /* NOTE %20s below */
 			/* ??? I hate and distrust scanf -- DHR */
 			int r = fscanf(proc_sock,
 				       "%4hx%4hx%4hx%4hx%4hx%4hx%4hx%4hx"
 				       " %x %02x %02x %02x %20s\n",
-				       xb + 0, xb + 1, xb + 2, xb + 3, xb + 4,
-				       xb + 5, xb + 6, xb + 7,
-				       &if_idx, &plen, &scope, &dad_status,
-				       ri.name);
+				       xb + 0, xb + 1, xb + 2, xb + 3,
+				       xb + 4, xb + 5, xb + 6, xb + 7,
+				       &if_idx, &plen, &scope, &dad_status, ifname);
 
 			/* ??? we should diagnose any problems */
 			if (r != 13)
@@ -201,18 +205,25 @@ struct raw_iface *find_raw_ifaces6(struct logger *unused_logger UNUSED)
 				))
 				continue;
 
+			char sb[8 * 5];                 /* IPv6 address as string-with-colons */
 			snprintf(sb, sizeof(sb),
 				 "%04x:%04x:%04x:%04x:%04x:%04x:%04x:%04x",
 				 xb[0], xb[1], xb[2], xb[3], xb[4], xb[5],
 				 xb[6], xb[7]);
 
-			happy(ttoaddress_num(shunk1(sb), &ipv6_info, &ri.addr));
+			ip_address ifaddr;
+			happy(ttoaddress_num(shunk1(sb), &ipv6_info, &ifaddr));
 
-			if (address_is_specified(ri.addr)) {
-				dbg("found %s with address %s",
-				    ri.name, sb);
-				ri.next = rifaces;
-				rifaces = clone_thing(ri, "struct raw_iface");
+			if (address_is_specified(ifaddr)) {
+				struct raw_iface *ri = overalloc_thing(struct raw_iface,
+								       strlen(ifname) + 1,
+								       "iface");
+				ri->addr = ifaddr;
+				strcpy(ri->name, ifname);
+				ri->next = rifaces;
+				rifaces = ri;
+				address_buf ab;
+				dbg("found %s with address %s", ri->name, str_address(&ri->addr, &ab));
 			}
 		}
 		fclose(proc_sock);

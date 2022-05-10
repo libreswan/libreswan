@@ -17,16 +17,14 @@
 #ifndef KERNEL_IFACE_H
 #define KERNEL_IFACE_H
 
-#include <net/if.h>		/* for IFNAMSIZ; ULGH! */
-
 #include "ip_address.h"
 
 struct logger;
 
 struct raw_iface {
 	ip_address addr;
-	char name[IFNAMSIZ + 20]; /* what would be a safe size? */
 	struct raw_iface *next;
+	char name[1]; /* MUST BE LAST; overalloc hack */
 };
 
 extern struct raw_iface *find_raw_ifaces6(struct logger *logger);
