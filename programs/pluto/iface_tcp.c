@@ -579,9 +579,9 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port,
 	 */
 #ifdef IPV6_USE_MIN_MTU /* YUCK: not always defined */
 	if (address_type(&ifd->id_address) == &ipv6_info &&
-	    setsockopt(fd, SOL_SOCKET, IPV6_USE_MIN_MTU,
+	    setsockopt(fd, IPPROTO_IPV6, IPV6_USE_MIN_MTU,
 		       (const void *)&on, sizeof(on)) < 0) {
-		BIND_ERROR("setsockopt(SOL_SOCKET, IPV6_USE_MIN_MTU)");
+		BIND_ERROR("setsockopt(IPPROTO_IPV6, IPV6_USE_MIN_MTU)");
 		close(fd);
 		return -1;
 	}
