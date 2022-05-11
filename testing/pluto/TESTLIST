@@ -1318,6 +1318,9 @@ kvmplutotest	pfkeyv2-initiator-tunnel-4in4-ah-ipcomp-ikev2		netbsd
 kvmplutotest	pfkeyv2-initiator-tunnel-4in4-ah-ikev2			netbsd
 kvmplutotest	pfkeyv2-initiator-tunnel-4in4-esp-ipcomp-ikev2		netbsd
 kvmplutotest	pfkeyv2-initiator-tunnel-4in4-esp-ikev2			netbsd
+kvmplutotest	pfkeyv2-initiator-tunnel-4in6-esp-ikev2			netbsd
+kvmplutotest	pfkeyv2-initiator-tunnel-6in4-esp-ikev2			netbsd
+kvmplutotest	pfkeyv2-initiator-tunnel-6in6-esp-ikev2			netbsd
 kvmplutotest	pfkeyv2-ondemand					skiptest #netbsd-wip
 
 # OpenBSD interop
