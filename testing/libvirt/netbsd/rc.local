@@ -7,32 +7,40 @@ else
     mac=$(ifconfig vioif1 | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
     case "$mac" in
 	'12:00:00:64:64:23' ) # For East machine
-	    if1v4=192.1.2.23
-	    if1v6=2001:db8:1:2::23
-	    if2v4=192.0.2.254
 	    hostname=netbsde
+	    # eth1
+	    vioif1v4=192.1.2.23
+	    vioif1v6=2001:db8:1:2::23
+	    # eth0
+	    vioif2v4=192.0.2.254
+	    vioif2v6=2001:db8:1:2::254
 	    ;;
 	'12:00:00:64:64:45') # For West machine
-	    if1v4=192.1.2.45
-	    if1v6=2001:db8:1:2::45
-	    if2v4=192.0.1.254
 	    hostname=netbsdw
+	    # eth1
+	    vioif1v4=192.1.2.45
+	    vioif1v6=2001:db8:1:2::45
+	    # eth0
+	    vioif2v4=192.0.1.254
+	    vioif2v6=2001:db8:0:1::254
 	    ;;
 	* )
 	    ;;
     esac
     if test -n "${hostname}" ; then
 	echo hostname=${hostname}
-	echo if1v4=${if1v4}
-	echo if1v6=${if1v6}
-	echo if2v4=${if2v4}
-	cat <<EOF > /etc/ifconfig.vioif1
-inet ${if1v4} netmask 255.255.255.0
-inet6 ${if1v6} prefixlen 64 alias
-up
+	for if in vioif1 vioif2 ; do
+            v4=$(eval echo \${${if}v4})
+            v6=$(eval echo \${${if}v6})
+	    echo ${if}v4=${v4}
+	    echo ${if}v6=${v6}
+	    cat <<EOF > /etc/ifconfig.${if}
+inet ${v4} netmask 255.255.255.0
+inet6 ${v6} prefixlen 64 alias
 EOF
-	cat <<EOF > /etc/ifconfig.vioif2
-inet ${if2v4} netmask 255.255.255.0
+	done
+	cat <<EOF >> /etc/ifconfig.vioif1
+up
 EOF
 	echo nameserver 192.1.2.254		>> /etc/resolv.conf
 	echo 192.1.2.254			> /etc/mygate
