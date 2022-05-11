@@ -23,10 +23,10 @@
 
 struct raw_iface *find_raw_ifaces4(struct logger *logger)
 {
-	return find_raw_ifaces(logger);
+	return find_raw_ifaces(&ipv4_info, logger);
 }
 
 struct raw_iface *find_raw_ifaces6(struct logger *logger UNUSED)
 {
-	return NULL;
+	return find_raw_ifaces(&ipv6_info, logger);
 }

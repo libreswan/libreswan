@@ -244,5 +244,5 @@ struct raw_iface *find_raw_ifaces6(struct logger *unused_logger UNUSED)
 
 struct raw_iface *find_raw_ifaces4(struct logger *logger)
 {
-	return find_raw_ifaces(logger);
+	return find_raw_ifaces(&ipv4_info, logger);
 }

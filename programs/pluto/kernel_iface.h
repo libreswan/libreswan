@@ -27,7 +27,7 @@ struct raw_iface {
 	char name[1]; /* MUST BE LAST; overalloc hack */
 };
 
-extern struct raw_iface *find_raw_ifaces(struct logger *logger);
+extern struct raw_iface *find_raw_ifaces(const struct ip_info *afi, struct logger *logger);
 extern struct raw_iface *find_raw_ifaces4(struct logger *logger);
 extern struct raw_iface *find_raw_ifaces6(struct logger *logger);
 

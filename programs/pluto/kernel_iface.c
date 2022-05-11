@@ -46,28 +46,18 @@
  * for any address so this should also work for IPv6.
  */
 
-/*
- * Process the updated list of interfaces.
- *
- * On linux, see netdevice(7) (and note that it clearly documents that
- * the below code only works with IPv4).
- *
- * On BSD, see netintro(4).  On BSD, <<struct ifreq>> includes
- * sockaddr_storage in its union of addresses and that is big enough
- * for any address so this should also work for IPv6.
- */
-
-struct raw_iface *find_raw_ifaces(struct logger *logger)
+struct raw_iface *find_raw_ifaces(const struct ip_info *afi, struct logger *logger)
 {
 	/* Get a UDP socket */
+	dbg("finding raw interfaces of type %s", afi->ip_name);
 
-	int udp_sock = safe_socket(PF_INET, SOCK_DGRAM, IPPROTO_UDP);
+
+	int udp_sock = safe_socket(afi->pf, SOCK_DGRAM, IPPROTO_UDP);
 	if (udp_sock == -1) {
 		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-			    "socket() failed in find_raw_ifaces4()");
+			    "find %s interfaces failed calling socket(%s, SOCK_DGRAM, IPPROTO_UDP)",
+			    afi->ip_name, afi->pf_name);
 	}
-
-	/* get list of interfaces with assigned IPv4 addresses from system */
 
 	/*
 	 * Without SO_REUSEADDR, bind() of udp_sock will cause
@@ -77,23 +67,22 @@ struct raw_iface *find_raw_ifaces(struct logger *logger)
 	if (setsockopt(udp_sock, SOL_SOCKET, SO_REUSEADDR,
 		       (const void *)&on, sizeof(on)) < 0) {
 		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-			    "setsockopt(SO_REUSEADDR) in find_raw_ifaces4()");
+			    "find %s interfaces failed calling setsockopt(SOL_SOCKET, SO_REUSEADDR)",
+			    afi->ip_name);
 	}
 
 	/*
-	 * bind the socket; somewhat convoluted as BSD as size field.
+	 * Build an "any" endpoint and then bind the socket.
 	 */
-	{
-		ip_endpoint any_ep = endpoint_from_address_protocol_port(ipv4_info.address.unspec,
-									 &ip_protocol_udp,
-									 ip_hport(IKE_UDP_PORT));
-		ip_sockaddr any_sa = sockaddr_from_endpoint(any_ep);
-		if (bind(udp_sock, &any_sa.sa.sa, any_sa.len) < 0) {
-			endpoint_buf eb;
-			fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-				    "bind(%s) failed in %s()",
-				    str_endpoint(&any_ep, &eb), __func__);
-		}
+	ip_endpoint any_ep = endpoint_from_address_protocol_port(afi->address.unspec,
+								 &ip_protocol_udp,
+								 ip_hport(IKE_UDP_PORT));
+	ip_sockaddr any_sa = sockaddr_from_endpoint(any_ep);
+	if (bind(udp_sock, &any_sa.sa.sa, any_sa.len) < 0) {
+		endpoint_buf eb;
+		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
+			    "find %s interfaces failed calling bind(%s)",
+			    afi->ip_name, str_endpoint(&any_ep, &eb));
 	}
 
 	/*
@@ -106,7 +95,7 @@ struct raw_iface *find_raw_ifaces(struct logger *logger)
 	 * Tricky: num is a static so that we won't have to start from
 	 * 64 in subsequent calls to find_raw_ifaces4.
 	 */
-	static int num = 64;
+	static volatile int num = 64; /* not very thread safe */
 	struct ifconf ifconf = { .ifc_len = 0, };
 	void *buf = NULL;	/* for list of interfaces -- arbitrary limit */
 	for (; num < (1024 * 1024); num *= 2) {
@@ -121,7 +110,8 @@ struct raw_iface *find_raw_ifaces(struct logger *logger)
 
 		if (ioctl(udp_sock, SIOCGIFCONF, &ifconf) == -1) {
 			fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-				    "ioctl(SIOCGIFCONF) in find_raw_ifaces4()");
+				    "find %s interfaces failed calling ioctl(SIOCGIFCONF)",
+				    afi->ip_name);
 		}
 
 		/* if we got back less than we asked for, we have them all */
@@ -130,61 +120,98 @@ struct raw_iface *find_raw_ifaces(struct logger *logger)
 		}
 	}
 
-	/* Add an entry to rifaces for each interesting interface. */
+	unsigned nr_req = (ifconf.ifc_len / sizeof(struct ifreq));
+	dbg("ioctl(IOCGIFCONF) returned %u %s interfaces", nr_req, afi->ip_name);
+
+	/*
+	 * Add an entry to rifaces for each interesting interface.
+	 */
 	struct raw_iface *rifaces = NULL;
-	for (const struct ifreq *ifr = ifconf.ifc_req;
-	     ifr < ifconf.ifc_req + (ifconf.ifc_len / sizeof(struct ifreq));
-	     ifr++) {
+	for (const struct ifreq *ifr = ifconf.ifc_req; ifr < ifconf.ifc_req + nr_req; ifr++) {
 
 		/* build a NUL-terminated copy of the rname field */
 		char ifname[IFNAMSIZ + 1];
 		memcpy(ifname, ifr->ifr_name, IFNAMSIZ);
 		ifname[IFNAMSIZ] = '\0';
-		dbg("Inspecting interface %s ", ifname);
 
 		/* ignore all but AF_INET interfaces */
-		if (ifr->ifr_addr.sa_family != AF_INET) {
-			dbg("Ignoring non AF_INET interface %s ", ifname);
+		if (ifr->ifr_addr.sa_family != afi->af) {
+			dbg("  ignoring non-%s interface %s with family %d",
+			    afi->ip_name, ifname, ifr->ifr_addr.sa_family);
 			continue; /* not interesting */
 		}
 
-		/* Find out stuff about this interface.  See netdevice(7). */
+		ip_address addr;
+		err_t e = sockaddr_to_address_port(&ifr->ifr_addr, sizeof(ifr->ifr_ifru),
+						   &addr, NULL/*port*/);
+		if (e != NULL) {
+			dbg("  ignoring %s interface %s: %s",
+			    afi->ip_name, ifname, e);
+			continue; /* ignore slave interfaces; they share IPs with their master */
+		}
+
+		/* ignore all but AF_INET interfaces (redundant) */
+		if (!pexpect(address_type(&addr) == afi)) {
+			dbg("  ignoring non-%s interface %s",
+			    afi->ip_name, ifname);
+			continue; /* not interesting */
+		}
+
+		/* ignore unconfigured interfaces */
+		if (!address_is_specified(addr)) {
+			address_buf ab;
+			dbg("  ignoring %s interface %s with unspecified address %s",
+			    afi->ip_name, ifname, str_address(&addr, &ab));
+			continue;
+		}
+
+#if 0
+		if (address_is_loopback(addr)) {
+			address_buf ab;
+			dbg("  ignoring %s interface %s with loopback address %s",
+			    afi->ip_name, ifname, str_address(&addr, &ab));
+			continue;
+		}
+#endif
+
+		/*
+		 * Find out stuff about this interface.  See
+		 * netdevice(7) or netintro(4).
+		 */
 		struct ifreq auxinfo = {0};
 		passert(sizeof(auxinfo.ifr_name) == sizeof(ifr->ifr_name)); /* duh! */
 		memcpy(auxinfo.ifr_name, ifr->ifr_name, IFNAMSIZ);
 		if (ioctl(udp_sock, SIOCGIFFLAGS, &auxinfo) == -1) {
 			log_errno(logger, errno,
-				  "Ignored interface %s - ioctl(SIOCGIFFLAGS) failed in find_raw_ifaces4()",
-				  ifname);
+				  "ignored %s interface %s - ioctl(SIOCGIFFLAGS) failed",
+				  afi->ip_name, ifname);
 			continue; /* happens when using device with label? */
 		}
+
 		if (!(auxinfo.ifr_flags & IFF_UP)) {
-			dbg("Ignored interface %s - it is not up", ifname);
+			dbg("  ignoring non-up %s interface %s",
+			    afi->ip_name, ifname);
 			continue; /* ignore an interface that isn't UP */
 		}
 #ifdef IFF_SLAVE
 		/* only linux ... */
 		if (auxinfo.ifr_flags & IFF_SLAVE) {
-			dbg("Ignored interface %s - it is a slave interface", ifname);
+			dbg("  ignoring slave %s interface %s",
+			    afi->ip_name, ifname);
 			continue; /* ignore slave interfaces; they share IPs with their master */
 		}
 #endif
-		/* ignore unconfigured interfaces */
-		const struct sockaddr_in *rs = (const struct sockaddr_in *) &ifr->ifr_addr;
-		if (rs->sin_addr.s_addr == 0) {
-			dbg("Ignored interface %s - it is unconfigured", ifname);
-			continue;
-		}
 
 		struct raw_iface *ri = overalloc_thing(struct raw_iface,
 						       strlen(ifname) + 1,
 						       "iface");
-		ri->addr = address_from_in_addr(&rs->sin_addr);
+		ri->addr = addr;
 		strcpy(ri->name, ifname);
 		ri->next = rifaces;
 		rifaces = ri;
 		ipstr_buf b;
-		dbg("found %s with address %s", ri->name, ipstr(&ri->addr, &b));
+		dbg("  found %s interface %s with address %s",
+		    afi->ip_name, ri->name, ipstr(&ri->addr, &b));
 	}
 
 	pfree(buf);
