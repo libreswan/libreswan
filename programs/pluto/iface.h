@@ -20,7 +20,6 @@
 #ifndef IFACE_H
 #define IFACE_H
 
-
 #include "ip_endpoint.h"
 #include "refcnt.h"
 #include "list_entry.h"

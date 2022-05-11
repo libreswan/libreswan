@@ -241,3 +241,8 @@ struct raw_iface *find_raw_ifaces6(struct logger *unused_logger UNUSED)
 
 	return rifaces;
 }
+
+struct raw_iface *find_raw_ifaces4(struct logger *logger)
+{
+	return find_raw_ifaces(logger);
+}
