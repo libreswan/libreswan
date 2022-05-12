@@ -42,7 +42,6 @@ s/last_contact=[0-9]*\.[0-9]*/last_contact=XX.XXX/g
 # TCP sockets
 s/ socket [0-9][0-9]*: / socket XX: /g
 
-/^nohup: ignoring input and redirecting stderr to stdout$/d
 s/encap type 7 sport/encap type espintcp sport/g
 s/unbound-control.[0-9]*:[0-9]*./unbound-control[XXXXXX:X] /g 
 s/ping: connect: Network is unreachable/connect: Network is unreachable/g

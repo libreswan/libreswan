@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
 dmesg -n 6
-# nohup tcpdump -i eth1 -s 65535 -X -vv -nn tcp > OUTPUT/west.tcpdump &
-nohup dumpcap -i eth1 -w /tmp/west.pcap > OUTPUT/west.dumpcap &
+# nohup tcpdump -i eth1 -s 65535 -X -vv -nn tcp > OUTPUT/west.tcpdump & sleep 1 # wait for nohup msg
+# nohup dumpcap -i eth1 -w /tmp/west.pcap > OUTPUT/west.dumpcap & sleep 1 # wait for nohup msg
 # confirm that the network is alive
 ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 # make sure that clear text does not get through
