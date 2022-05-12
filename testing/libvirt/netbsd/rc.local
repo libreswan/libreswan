@@ -13,7 +13,7 @@ else
 	    vioif1v6=2001:db8:1:2::23
 	    # eth0
 	    vioif2v4=192.0.2.254
-	    vioif2v6=2001:db8:1:2::254
+	    vioif2v6=2001:db8:0:2::254
 	    ;;
 	'12:00:00:64:64:45') # For West machine
 	    hostname=netbsdw
