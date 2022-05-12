@@ -28,12 +28,10 @@ netbsdw #
 	spid=1 seq=0 pid=PID
 	refcnt=0
 netbsdw #
- ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-unexpected status 2
-PING 192.0.2.254 (192.0.2.254): 56 data bytes ----192.0.2.254 PING Statistics---- 1 packets transmitted, 0 packets received, 100.0% packet loss
+ ../../guestbin/ping-once.sh --up --4 --I 192.0.1.254 192.0.2.254
+down UNEXPECTED
 netbsdw #
- ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-unexpected status 2
-PING 192.0.2.254 (192.0.2.254): 56 data bytes ----192.0.2.254 PING Statistics---- 1 packets transmitted, 0 packets received, 100.0% packet loss
+ ../../guestbin/ping-once.sh --up --4 --I 192.0.1.254 192.0.2.254
+down UNEXPECTED
 netbsdw #
  

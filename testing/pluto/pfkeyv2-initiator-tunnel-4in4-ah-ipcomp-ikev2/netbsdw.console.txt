@@ -16,9 +16,8 @@ netbsdw #
  echo "initdone"
 initdone
 netbsdw #
- ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
-unexpected status 2
-PING 192.0.2.254 (192.0.2.254): 56 data bytes ----192.0.2.254 PING Statistics---- 1 packets transmitted, 0 packets received, 100.0% packet loss
+ ../../guestbin/ping-once.sh --down --4 --I 192.0.1.254 192.0.2.254
+down
 netbsdw #
  ipsec auto --up eastnet-westnet-ikev2
 1v2 "eastnet-westnet-ikev2" #1: initiating IKEv2 connection
@@ -27,7 +26,7 @@ netbsdw #
 003 "eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP DPD=passive}
 netbsdw #
- ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up --4 --I 192.0.1.254 192.0.2.254
 up
 netbsdw #
  setkey -D
