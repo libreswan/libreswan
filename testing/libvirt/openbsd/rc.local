@@ -12,20 +12,22 @@ else
     case "$mac" in
 	'12:00:00:64:64:23' ) # For East machine
 	    echo "==>>> EAST MACHINE"
-	    echo 'inet 192.1.2.23 255.255.255.0 NONE'    > /etc/hostname.vio1
+	    echo 'inet 192.1.2.23 255.255.255.0 NONE'    >  /etc/hostname.vio1
 	    echo 'inet6 2001:db8:1:2::23 64'             >> /etc/hostname.vio1
 	    echo 'up'                                    >> /etc/hostname.vio1
-	    echo 'inet 192.0.2.254 255.255.255.0 NONE'   > /etc/hostname.vio2
+	    echo 'inet 192.0.2.254 255.255.255.0 NONE'   >  /etc/hostname.vio2
+	    echo 'inet6 2001:db8:0:2::254 64'            >> /etc/hostname.vio2
 	    echo 'openbsde'                              > /etc/myname
 	    echo '192.1.2.254'                           > /etc/mygate
 	    echo 'nameserver 192.1.2.254'                >> /etc/resolv.conf
 	    ;;
 	'12:00:00:64:64:45') # For West machine
 	    echo "==>>> WEST MACHINE"
-	    echo 'inet 192.1.2.45 255.255.255.0 NONE'    > /etc/hostname.vio1
+	    echo 'inet 192.1.2.45 255.255.255.0 NONE'    >  /etc/hostname.vio1
 	    echo 'inet6 2001:db8:1:2::45 64'             >> /etc/hostname.vio1
 	    echo 'up'                                    >> /etc/hostname.vio1
-	    echo 'inet 192.0.1.254 255.255.255.0 NONE'   > /etc/hostname.vio2
+	    echo 'inet 192.0.1.254 255.255.255.0 NONE'   >  /etc/hostname.vio2
+	    echo 'inet6 2001:db8:0:1::254 64'            >> /etc/hostname.vio2
 	    echo 'openbsdw'                              > /etc/myname
 	    echo '192.1.2.254'                           > /etc/mygate
 	    echo 'nameserver 192.1.2.254'                >> /etc/resolv.conf
