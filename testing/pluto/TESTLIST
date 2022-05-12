@@ -936,6 +936,7 @@ kvmplutotest	interop-ikev1-strongswan-psk-aggr-01			good
 kvmplutotest	interop-ikev2-strongswan-16-ah-initiator-sha512		good
 kvmplutotest	interop-ikev2-strongswan-17-ah-initiator-sha256		good
 kvmplutotest	interop-ikev2-strongswan-18-compress			good
+kvmplutotest	interop-ikev2-strongswan-18-compress-6in6		good
 kvmplutotest	interop-ikev2-strongswan-18-compress-initiator		good
 kvmplutotest	interop-ikev2-strongswan-20-strongswan-eap		good
 kvmplutotest	interop-ikev2-strongswan-22-cp-responder-psk		good

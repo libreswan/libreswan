@@ -1,0 +1,178 @@
+/testing/guestbin/swan-prep --46
+west #
+ # confirm that the network is alive
+west #
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+west #
+ # ensure that clear text does not get through
+west #
+ iptables -A INPUT -i eth1 -s 192.0.2.0/24 -j DROP
+west #
+ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
+west #
+ # confirm clear text does not get through
+west #
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
+down
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-ikev2
+002 "westnet-eastnet-ikev2": added IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up westnet-eastnet-ikev2
+1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
+1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request
+1v2 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request {cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
+003 "westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
+004 "westnet-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [2001:db8:0:1::-2001:db8:0:1:ffff:ffff:ffff:ffff:0-65535 0] -> [2001:db8:0:2::-2001:db8:0:2:ffff:ffff:ffff:ffff:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP DPD=passive}
+west #
+ # first pings hit regular ESP since pings too small to compress
+west #
+ ping -n -q -c 4 -I 2001:db8:0:1::254 2001:db8:0:2::254
+PING 2001:db8:0:2::254(2001:db8:0:2::254) from 2001:db8:0:1::254 : 56 data bytes
+--- 2001:db8:0:2::254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ # this oddly shows up as 0 packets and 4 packets on ipcomp
+west #
+ ip -o -s xfrm state|grep "proto comp" | sed "s/^\(.*\)\(lifetime current:.*\)\(add .*$\)/\2/"
+lifetime current:\	  416(bytes), 4(packets)\	  
+lifetime current:\	  416(bytes), 4(packets)\	  
+west #
+ # test compression via large pings that can be compressed on IPCOMP SA
+west #
+ ping -n -q -c 4 -s 8184  -p ff -I 2001:db8:0:1::254 2001:db8:0:2::254
+PING 2001:db8:0:2::254(2001:db8:0:2::254) from 2001:db8:0:1::254 : 8184 data bytes
+--- 2001:db8:0:2::254 ping statistics ---
+4 packets transmitted, 4 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ # this then  shows up as 4 packets and 8 packets on ipcomp
+west #
+ ip -o -s xfrm state|grep "proto comp" | sed "s/^\(.*\)\(lifetime current:.*\)\(add .*$\)/\2/"
+lifetime current:\	  34336(bytes), 28(packets)\	  
+lifetime current:\	  34336(bytes), 28(packets)\	  
+west #
+ # We cannot run ipsec whack --trafficstatus because compression causes the byte count to slightly differ each run
+west #
+ echo done
+done
+west #
+ # should see ipcomp entries
+west #
+ ip xfrm state
+src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	sel src ::/0 dst ::/0 
+src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	comp deflate 
+src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+	proto 41 spi 0xSPISPI reqid 0 mode tunnel
+	replay-window 0 
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+	sel src ::/0 dst ::/0 
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec
+	comp deflate 
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto 41 spi 0xSPISPI reqid 0 mode tunnel
+	replay-window 0 
+west #
+ ip xfrm policy
+src 2001:db8:0:1::/64 dst 2001:db8:0:2::/64 
+	dir out priority PRIORITY ptype main 
+	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+		proto comp reqid REQID mode tunnel
+	tmpl src :: dst ::
+		proto esp reqid REQID mode transport
+src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64 
+	dir fwd priority PRIORITY ptype main 
+	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+		proto comp reqid REQID mode tunnel
+		level use 
+	tmpl src :: dst ::
+		proto esp reqid REQID mode transport
+src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64 
+	dir in priority PRIORITY ptype main 
+	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+		proto comp reqid REQID mode tunnel
+		level use 
+	tmpl src :: dst ::
+		proto esp reqid REQID mode transport
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 135 
+	dir out priority PRIORITY ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 135 
+	dir fwd priority PRIORITY ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 135 
+	dir in priority PRIORITY ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 136 
+	dir out priority PRIORITY ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 136 
+	dir fwd priority PRIORITY ptype main 
+src ::/0 dst ::/0 proto ipv6-icmp type 136 
+	dir in priority PRIORITY ptype main 
+west #
+ 

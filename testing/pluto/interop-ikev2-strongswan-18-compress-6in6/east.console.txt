@@ -1,0 +1,112 @@
+/testing/guestbin/swan-prep --46 --userland strongswan
+east #
+ ../../guestbin/strongswan-start.sh
+east #
+ echo "initdone"
+initdone
+east #
+ # should see ipcomp entries
+east #
+ ip xfrm state
+src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	sel src ::/0 dst ::/0 
+src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag noecn nopmtudisc af-unspec
+	comp deflate 
+src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+	proto 41 spi 0xSPISPI reqid 0 mode tunnel
+	replay-window 0 
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	sel src ::/0 dst ::/0 
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag noecn nopmtudisc af-unspec
+	comp deflate 
+src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+	proto 41 spi 0xSPISPI reqid 0 mode tunnel
+	replay-window 0 
+east #
+ ip xfrm policy
+src 2001:db8:0:2::/64 dst 2001:db8:0:1::/64 
+	dir out priority PRIORITY ptype main 
+	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:2::45
+		proto comp spi 0xSPISPI reqid REQID mode tunnel
+	tmpl src :: dst ::
+		proto esp spi 0xSPISPI reqid REQID mode transport
+src 2001:db8:0:1::/64 dst 2001:db8:0:2::/64 
+	dir fwd priority PRIORITY ptype main 
+	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+		proto comp reqid REQID mode tunnel
+		level use 
+	tmpl src :: dst ::
+		proto esp reqid REQID mode transport
+src 2001:db8:0:1::/64 dst 2001:db8:0:2::/64 
+	dir in priority PRIORITY ptype main 
+	tmpl src 2001:db8:1:2::45 dst 2001:db8:1:2::23
+		proto comp reqid REQID mode tunnel
+		level use 
+	tmpl src :: dst ::
+		proto esp reqid REQID mode transport
+src fe80::/64 dst fe80::/64 
+	dir fwd priority PRIORITY ptype main 
+src fe80::/64 dst fe80::/64 
+	dir in priority PRIORITY ptype main 
+src fe80::/64 dst fe80::/64 
+	dir out priority PRIORITY ptype main 
+src 2001:db8:1:2::/64 dst 2001:db8:1:2::/64 
+	dir fwd priority PRIORITY ptype main 
+src 2001:db8:1:2::/64 dst 2001:db8:1:2::/64 
+	dir in priority PRIORITY ptype main 
+src 2001:db8:1:2::/64 dst 2001:db8:1:2::/64 
+	dir out priority PRIORITY ptype main 
+src 2001:db8:0:2::/64 dst 2001:db8:0:2::/64 
+	dir fwd priority PRIORITY ptype main 
+src 2001:db8:0:2::/64 dst 2001:db8:0:2::/64 
+	dir in priority PRIORITY ptype main 
+src 2001:db8:0:2::/64 dst 2001:db8:0:2::/64 
+	dir out priority PRIORITY ptype main 
+src ::1/128 dst ::1/128 
+	dir fwd priority PRIORITY ptype main 
+src ::1/128 dst ::1/128 
+	dir in priority PRIORITY ptype main 
+src ::1/128 dst ::1/128 
+	dir out priority PRIORITY ptype main 
+src 192.1.2.0/24 dst 192.1.2.0/24 
+	dir fwd priority PRIORITY ptype main 
+src 192.1.2.0/24 dst 192.1.2.0/24 
+	dir in priority PRIORITY ptype main 
+src 192.1.2.0/24 dst 192.1.2.0/24 
+	dir out priority PRIORITY ptype main 
+src 192.0.2.0/24 dst 192.0.2.0/24 
+	dir fwd priority PRIORITY ptype main 
+src 192.0.2.0/24 dst 192.0.2.0/24 
+	dir in priority PRIORITY ptype main 
+src 192.0.2.0/24 dst 192.0.2.0/24 
+	dir out priority PRIORITY ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+east #
+ 
