@@ -105,6 +105,10 @@ typedef struct {
 size_t jam_address(struct jambuf *buf, const ip_address *src);
 const char *str_address(const ip_address *src, address_buf *dst);
 
+/* either N.N.N.N or [::] */
+size_t jam_address_wrapped(struct jambuf *buf, const ip_address *src);
+const char *str_address_wrapped(const ip_address *src, address_buf *dst);
+
 /*
  * sensitive: don't print address when !log_ip
  *

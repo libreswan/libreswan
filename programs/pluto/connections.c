@@ -577,10 +577,8 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 			/* ADDRESS(SENSITIVE) */
 			jam_string(buf, "<address>");
 		} else if (include_port) {
-			/* ADDRESS:PORT */
-			const struct ip_info *afi = address_type(&this->host->addr);
-			/* XXX: jam_address_wrapped()? */
-			afi->address.jam_wrapped(buf, afi, &this->host->addr.bytes);
+			/* [ADDRESS]:PORT */
+			jam_address_wrapped(buf, &this->host->addr);
 			jam(buf, ":%u", this->host->port);
 		} else {
 			/* ADDRESS */

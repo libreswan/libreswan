@@ -123,6 +123,20 @@ size_t jam_address(struct jambuf *buf, const ip_address *address)
 	return afi->address.jam(buf, afi, &address->bytes);
 }
 
+size_t jam_address_wrapped(struct jambuf *buf, const ip_address *address)
+{
+	if (address_is_unset(address)) {
+		return jam_string(buf, "<unset-address>");
+	}
+
+	const struct ip_info *afi = address_type(address);
+	if (afi == NULL) {
+		return jam_string(buf, "<unknown-address>");
+	}
+
+	return afi->address.jam_wrapped(buf, afi, &address->bytes);
+}
+
 size_t jam_address_sensitive(struct jambuf *buf, const ip_address *address)
 {
 	if (!log_ip) {
@@ -171,6 +185,14 @@ const char *str_address(const ip_address *src,
 {
 	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
 	jam_address(&buf, src);
+	return dst->buf;
+}
+
+const char *str_address_wrapped(const ip_address *src,
+				address_buf *dst)
+{
+	struct jambuf buf = ARRAY_AS_JAMBUF(dst->buf);
+	jam_address_wrapped(&buf, src);
 	return dst->buf;
 }
 
