@@ -606,7 +606,7 @@ sparse_names ipsec_proto_names = {
 
 void jam_sadb_address(struct jambuf *buf, const struct sadb_address *m)
 {
-	jam(buf, "sadb_address @%p", m);
+	jam(buf, "sadb_address @%p:", m);
 	JAM_LEN(sadb_address, len);
 	JAM_SADB(sadb_address, exttype);
 	JAM_SADB(sadb_address, proto);
@@ -673,7 +673,7 @@ void jam_sadb_key(struct jambuf *buf, const struct sadb_key *m)
 
 void jam_sadb_lifetime(struct jambuf *buf, const struct sadb_lifetime *m)
 {
-	jam(buf, "sadb_lifetime @%p", m);
+	jam(buf, "sadb_lifetime @%p:", m);
 	JAM_LEN(sadb_lifetime, len);
 	JAM_SADB(sadb_lifetime, exttype);
 	J(u32, sadb_lifetime, allocations);
@@ -711,7 +711,7 @@ void jam_sadb_sa(struct jambuf *buf, enum sadb_satype satype, const struct sadb_
 	jam(buf, "sadb_sa @%p:", m);
 	JAM_LEN(sadb_sa, len);
 	JAM_SADB(sadb_sa, exttype);
-	jam(buf, " spi=%u(%x)", m->sadb_sa_spi, m->sadb_sa_spi);
+	jam(buf, " spi=%u(%x)", ntohl(m->sadb_sa_spi), ntohl(m->sadb_sa_spi));
 	J(u8, sadb_sa, replay);
 	JAM_SPARSE(sadb_sastate_names, sadb_sa, state);
 	JAM_SPARSE_SPARSE(sadb_satype_aalg_names, satype, sadb_sa, auth);
@@ -818,6 +818,7 @@ void jam_sadb_x_policy(struct jambuf *buf, const struct sadb_x_policy *m)
 #else
 	J(u32, sadb_x_policy, reserved2);
 #endif
+
 }
 
 void jam_sadb_x_sa2(struct jambuf *buf, const struct sadb_x_sa2 *m)
@@ -895,7 +896,7 @@ void DBG_msg(struct logger *logger, const void *ptr, size_t len, const char *fmt
 			}
 			address_buf ab;
 			port_buf pb;
-			DBG_log("    %s:%s", str_address(&addr, &ab), str_hport(port, &pb));
+			DBG_log("    %s:%s", str_address_wrapped(&addr, &ab), str_hport(port, &pb));
 			/* no PEXPECT(logger, address_cursor.len == 0); may be padded */
 			break;
 		}
@@ -1027,10 +1028,10 @@ void DBG_msg(struct logger *logger, const void *ptr, size_t len, const char *fmt
 			}
 			DBG_sadb_x_policy(logger, x_policy, "  ");
 
-			while (ext_cursor.len > 0) {
+			while (x_policy_cursor.len > 0) {
 				shunk_t x_ipsecrequest_cursor;
 				const struct sadb_x_ipsecrequest *x_ipsecrequest =
-					get_sadb_x_ipsecrequest(&ext_cursor, &x_ipsecrequest_cursor, logger);
+					get_sadb_x_ipsecrequest(&x_policy_cursor, &x_ipsecrequest_cursor, logger);
 				if (x_ipsecrequest == NULL) {
 					break;
 				}
@@ -1045,7 +1046,7 @@ void DBG_msg(struct logger *logger, const void *ptr, size_t len, const char *fmt
 					}
 					address_buf ab;
 					port_buf pb;
-					DBG_log("    %s:%s", str_address(&address, &ab), str_hport(port, &pb));
+					DBG_log("     %s:%s", str_address_wrapped(&address, &ab), str_hport(port, &pb));
 				}
 			}
 			PEXPECT(logger, ext_cursor.len == 0);
