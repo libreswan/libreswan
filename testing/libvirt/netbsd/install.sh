@@ -19,5 +19,6 @@ pkg_add ldns
 pkg_add xmlto
 pkg_add pkg-config
 pkg_add fping
+pkg_add racoon2
 pkg_add mozilla-rootcerts
 mozilla-rootcerts install
