@@ -53,12 +53,12 @@ netbsdw #
  setkey -DP
 192.1.2.23[any] 192.1.2.45[any] 255(reserved)
 	in ipsec
-	esp/transport/192.1.2.23-192.1.2.45/require
+	esp/transport//require
 	spid=1 seq=1 pid=PID
 	refcnt=0
 192.1.2.45[any] 192.1.2.23[any] 255(reserved)
 	out ipsec
-	esp/transport/192.1.2.45-192.1.2.23/require
+	esp/transport//require
 	spid=2 seq=0 pid=PID
 	refcnt=0
 netbsdw #

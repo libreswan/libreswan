@@ -75,13 +75,13 @@ netbsdw #
 2001:db8:0:2::/64[any] 2001:db8:0:1::/64[any] 255(reserved)
 	in ipsec
 	ipcomp/tunnel/192.1.2.23-192.1.2.45/require
-	esp/transport/192.1.2.23-192.1.2.45/require
+	esp/transport//require
 	spid=1 seq=1 pid=PID
 	refcnt=0
 2001:db8:0:1::/64[any] 2001:db8:0:2::/64[any] 255(reserved)
 	out ipsec
 	ipcomp/tunnel/192.1.2.45-192.1.2.23/require
-	esp/transport/192.1.2.45-192.1.2.23/require
+	esp/transport//require
 	spid=2 seq=0 pid=PID
 	refcnt=0
 netbsdw #
