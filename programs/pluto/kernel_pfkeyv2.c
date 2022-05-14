@@ -481,7 +481,7 @@ static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 					 const ip_address *src,
 					 const ip_address *dst,
 					 const struct ip_protocol *proto,
-					 bool tunnel_mode,
+					 bool tunnel_mode_u UNUSED,
 					 reqid_t reqid,
 					 uintmax_t min, uintmax_t max,
 					 const char *story UNUSED,	/* often SAID string */
@@ -508,9 +508,8 @@ static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 	 * but since the REQID is always specified, it might as well
 	 * be included).
 	 */
-	put_sadb_x_sa2(&req,
-		       (tunnel_mode ? ipsec_mode_tunnel : ipsec_mode_transport),
-		       reqid);
+	put_sadb_x_sa2(&req, ipsec_mode_any, reqid);
+	/* (tunnel_mode ? ipsec_mode_tunnel : ipsec_mode_transport), */
 
 	put_sadb_address(&req, sadb_ext_address_src, src);
 	put_sadb_address(&req, sadb_ext_address_dst, dst);
@@ -656,9 +655,8 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 	 *
 	 * XXX: why not just set "tunnel" on the inner-most kernel_sa?
 	 */
-	put_sadb_x_sa2(&req,
-		       (k->level == 0 && k->tunnel ?  ipsec_mode_tunnel : ipsec_mode_transport),
-		       k->reqid);
+	put_sadb_x_sa2(&req, ipsec_mode_any, k->reqid);
+	/* (k->level == 0 && k->tunnel ?  ipsec_mode_tunnel : ipsec_mode_transport), */
 
 	/* address(SD) */
 
@@ -723,6 +721,9 @@ static bool pfkeyv2_get_sa(const struct kernel_sa *k,
 
 	uint8_t reqbuf[SIZEOF_SADB_BASE +
 		       SIZEOF_SADB_SA +
+#if 0
+		       SIZEOF_SADB_X_SA2 +
+#endif
 		       SIZEOF_SADB_ADDRESS * 2];
 	struct outbuf req;
 	struct sadb_msg *base = msg_base(&req, __func__,
@@ -732,6 +733,11 @@ static bool pfkeyv2_get_sa(const struct kernel_sa *k,
 	/* SA(*) */
 
 	put_sadb_sa__spi(&req, k->spi);
+
+#if 0
+	/* NetBSD includes this; why? */
+	put_sadb_x_sa2(&req, 0, 0);
+#endif
 
 	/* address(SD) */
 

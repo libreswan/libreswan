@@ -99,10 +99,12 @@ enum encap_proto {
  *
  * Contrary to the RFCs and ENCAPSULATION_MODE_*, the kernel only has
  * to handle two modes.  Hence an ENUM that only defines those values.
+ *
+ * Except contrary to that, PF KEY v2 accepts the mode "any".
  */
 
 enum encap_mode {
-	ENCAP_MODE_TRANSPORT,
+	ENCAP_MODE_TRANSPORT = 1,
 	ENCAP_MODE_TUNNEL,
 };
 
@@ -111,6 +113,7 @@ enum encap_mode {
 		enum encap_mode e_ = E;					\
 		(e_ == ENCAP_MODE_TUNNEL ? "tunnel" :			\
 		 e_ == ENCAP_MODE_TRANSPORT ? "transport" :		\
+		 e_ == 0 ? "any!?!" :					\
 		 "unknown");						\
 	})
 

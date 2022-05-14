@@ -95,6 +95,7 @@ enum ipsec_dir {
 };
 
 enum ipsec_mode {
+	ipsec_mode_any = 0,
 	ipsec_mode_transport = IPSEC_MODE_TRANSPORT,
 	ipsec_mode_tunnel = IPSEC_MODE_TUNNEL,
 };

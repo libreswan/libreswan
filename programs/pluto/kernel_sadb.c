@@ -580,6 +580,7 @@ sparse_names ipsec_dir_names = {
 };
 
 sparse_names ipsec_mode_names = {
+	{ "any!?!", ipsec_mode_any, },
 	S(IPSEC_MODE_TRANSPORT),
 	S(IPSEC_MODE_TUNNEL),
 	SPARSE_NULL
