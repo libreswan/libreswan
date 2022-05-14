@@ -28,7 +28,7 @@ up
 netbsdw #
  setkey -D
 2001:db8:1:2::23 2001:db8:1:2::45 
-	ipcomp mode=transport spi=SPISPI(0xSPISPI) reqid=16390(0x00004006)
+	ipcomp mode=any spi=SPISPI(0xSPISPI) reqid=16390(0x00004006)
 	C: deflate 	seq=0x00000000 replay=0 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
@@ -37,7 +37,7 @@ netbsdw #
 	allocated: 0	hard: 0	soft: 0
 	sadb_seq=3 pid=PID refcnt=0
 2001:db8:1:2::23 2001:db8:1:2::45 
-	ah mode=transport spi=SPISPI(0xSPISPI) reqid=16388(0x00004004)
+	ah mode=any spi=SPISPI(0xSPISPI) reqid=16388(0x00004004)
 	A: hmac-sha1 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
 	seq=0x00000001 replay=64 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
@@ -47,7 +47,7 @@ netbsdw #
 	allocated: 1	hard: 0	soft: 0
 	sadb_seq=2 pid=PID refcnt=0
 2001:db8:1:2::45 2001:db8:1:2::23 
-	ipcomp mode=transport spi=SPISPI(0xSPISPI) reqid=16390(0x00004006)
+	ipcomp mode=any spi=SPISPI(0xSPISPI) reqid=16390(0x00004006)
 	C: deflate 	seq=0x00000000 replay=0 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
@@ -56,7 +56,7 @@ netbsdw #
 	allocated: 1	hard: 0	soft: 0
 	sadb_seq=1 pid=PID refcnt=0
 2001:db8:1:2::45 2001:db8:1:2::23 
-	ah mode=transport spi=SPISPI(0xSPISPI) reqid=16388(0x00004004)
+	ah mode=any spi=SPISPI(0xSPISPI) reqid=16388(0x00004004)
 	A: hmac-sha1 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
 	seq=0x00000001 replay=64 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP

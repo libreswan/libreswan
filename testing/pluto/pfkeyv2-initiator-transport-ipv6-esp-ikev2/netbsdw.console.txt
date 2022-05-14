@@ -28,7 +28,7 @@ up
 netbsdw #
  setkey -D
 2001:db8:1:2::23 2001:db8:1:2::45 
-	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
+	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
 	E: aes-cbc 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
 	A: hmac-sha1 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
 	seq=0x00000001 replay=64 flags=0x00000000 state=mature 
@@ -39,7 +39,7 @@ netbsdw #
 	allocated: 1	hard: 0	soft: 0
 	sadb_seq=1 pid=PID refcnt=0
 2001:db8:1:2::45 2001:db8:1:2::23 
-	esp mode=transport spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
+	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
 	E: aes-cbc 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
 	A: hmac-sha1 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
 	seq=0x00000001 replay=64 flags=0x00000000 state=mature 
