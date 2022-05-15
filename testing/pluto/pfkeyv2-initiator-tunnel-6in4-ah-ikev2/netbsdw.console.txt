@@ -16,7 +16,7 @@ netbsdw #
  echo "initdone"
 initdone
 netbsdw #
- ../../guestbin/ping-once.sh --down --6 --I 2001:db8:0:1::254 2001:db8:0:2::254
+ ../../guestbin/ping-once.sh --down -6 -I 2001:db8:0:1::254 2001:db8:0:2::254
 down
 netbsdw #
  ipsec auto --up eastnet-westnet-ikev2
@@ -26,7 +26,19 @@ netbsdw #
 003 "eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [2001:db8:0:1::-2001:db8:0:1:ffff:ffff:ffff:ffff:0-65535 0] -> [2001:db8:0:2::-2001:db8:0:2:ffff:ffff:ffff:ffff:0-65535 0] {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 DPD=passive}
 netbsdw #
- ../../guestbin/ping-once.sh --up --6 --I 2001:db8:0:1::254 2001:db8:0:2::254
+ setkey -DP
+2001:db8:0:2::/64[any] 2001:db8:0:1::/64[any] 255(reserved)
+	in ipsec
+	ah/tunnel/192.1.2.23-192.1.2.45/require
+	spid=1 seq=1 pid=PID
+	refcnt=0
+2001:db8:0:1::/64[any] 2001:db8:0:2::/64[any] 255(reserved)
+	out ipsec
+	ah/tunnel/192.1.2.45-192.1.2.23/require
+	spid=2 seq=0 pid=PID
+	refcnt=0
+netbsdw #
+ ../../guestbin/ping-once.sh --up -6 -I 2001:db8:0:1::254 2001:db8:0:2::254
 up
 netbsdw #
  setkey -D
@@ -51,17 +63,30 @@ netbsdw #
 	allocated: 1	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=0
 netbsdw #
- setkey -DP
-2001:db8:0:2::/64[any] 2001:db8:0:1::/64[any] 255(reserved)
-	in ipsec
-	ah/tunnel/192.1.2.23-192.1.2.45/require
-	spid=1 seq=1 pid=PID
-	refcnt=0
-2001:db8:0:1::/64[any] 2001:db8:0:2::/64[any] 255(reserved)
-	out ipsec
-	ah/tunnel/192.1.2.45-192.1.2.23/require
-	spid=2 seq=0 pid=PID
-	refcnt=0
+ ../../guestbin/ping-once.sh --big --up -6 -I 2001:db8:0:1::254 2001:db8:0:2::254
+up
+netbsdw #
+ setkey -D
+192.1.2.23 192.1.2.45 
+	ah mode=any spi=SPISPI(0xSPISPI) reqid=16388(0x00004004)
+	A: hmac-sha1 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
+	seq=0x00000002 replay=64 flags=0x00000000 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 28800(s)	soft: 28800(s)
+	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
+	current: 1192(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 2	hard: 0	soft: 0
+	sadb_seq=1 pid=PID refcnt=0
+192.1.2.45 192.1.2.23 
+	ah mode=any spi=SPISPI(0xSPISPI) reqid=16388(0x00004004)
+	A: hmac-sha1 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
+	seq=0x00000002 replay=64 flags=0x00000000 state=mature 
+	created: TIMESTAMP	current: TIMESTAMP
+	diff: N(s)	hard: 28800(s)	soft: 28800(s)
+	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
+	current: 1240(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 2	hard: 0	soft: 0
+	sadb_seq=0 pid=PID refcnt=0
 netbsdw #
  dmesg | grep ipsec
 netbsdw #
