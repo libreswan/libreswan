@@ -11,9 +11,10 @@ Send one ping packet.  Options:
   --down		expect the remote end to be down (wait a short while)
   --fire-and-forget	do not wait for reply (actually waits 1 seconds)
   --error		expect a strange error code
-  --big                 send a big (about 8k) packet
-  --small               send a small (about 50 byte) packet
-  --4 | --6             force IPv4 or IPv6
+  --small               send a small packet (about 50 byte, uncompressed)
+  --big                 send a big packet   (about 1k, should compress)
+  --huge                send a huge packet  (about 8k, should fragment and/or compress)
+  -4 | -6               force IPv4 or IPv6
 EOF
     exit 1
 fi
@@ -59,7 +60,7 @@ while test $# -gt 0 && expr "$1" : "-" > /dev/null; do
  	    exit 1
  	    ;;
 	-4 )
-	    args="${args} -4"
+	    # args="${args} -4"
 	    ;;
 	-6 )
 	    args="${args} -6"
