@@ -208,9 +208,9 @@ while test $# -gt 0 ; do
 		    ;;
 
 		# aliases for pass2 commands
-		diff ) ops[$i]=diffs ; i=$((i + 1)) ;;
+		diff )   ops[$i]=diffs ;   i=$((i + 1)) ;;
 		result ) ops[$i]=results ; i=$((i + 1)) ;;
-		test ) ops[$i]=check ; i=$((i + 1) ;;
+		test   ) ops[$i]=check ;   i=$((i + 1)) ;;
 		retest ) ops[$i]=recheck ; i=$((i + 1)) ;;
 		test-clean ) ops[$i]=check-clean ; i=$((i + 1)) ;;
 
