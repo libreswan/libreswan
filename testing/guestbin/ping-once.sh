@@ -11,38 +11,73 @@ Send one ping packet.  Options:
   --down		expect the remote end to be down (wait a short while)
   --fire-and-forget	do not wait for reply (actually waits 1 seconds)
   --error		expect a strange error code
+  --big                 send a big (about 8k) packet
+  --small               send a small (about 50 byte) packet
+  --4 | --6             force IPv4 or IPv6
 EOF
     exit 1
 fi
 
 op=
 runcon=
+args=
 
-while test $# -gt 0 && expr "$1" : "--" > /dev/null; do
+while test $# -gt 0 && expr "$1" : "-" > /dev/null; do
     case "$1" in
-	--up)
+	--up )
 	    op=up
 	    wait=5  # a long time
 	    ;;
-	--down)
+	--down )
 	    op=down
 	    wait=1  # a short time
 	    ;;
-	--fire-and-forget|--forget)
+	--fire-and-forget | --forget )
 	    # XXX: 0 doesn't seem to do anything?
 	    op=forget
 	    wait=1
 	    ;;
-	--error)
+	--error )
 	    op=error
 	    wait=1
 	    ;;
-	--runcon)
+	--runcon )
 	    shift
 	    runcon=$1
 	    ;;
+	--small )
+	    args="${args} -s 50"
+	    ;;
+	--big )
+	    args="${args} -s 1000"
+	    ;;
+	--huge )
+	    args="${args} -s 8000"
+	    ;;
 	--*)
-	    echo "Unrecognized option: ${op}" 1>&2
+	    echo "Unrecognized custom option: $1" 1>&2
+ 	    exit 1
+ 	    ;;
+	-4 )
+	    args="${args} -4"
+	    ;;
+	-6 )
+	    args="${args} -6"
+	    ;;
+	-I ) # -I INTERFACE?
+	    shift
+	    args="${args} -I $1"
+	    ;;
+	-s ) # -s SIZE
+	    shift
+	    args="${args} -s $1"
+	    ;;
+	-p ) # -p FILL
+	    shift
+	    args="${args} -p $1"
+	    ;;
+	-*)
+	    echo "Unrecognized common option: $1" 1>&2
 	    exit 1
 	    ;;
 	*)
@@ -63,7 +98,6 @@ fi
 #
 # Ping options:
 #
-# -q              be quiet
 # -n              numeric only (don't touch DNS)
 # -c <count>      send <count> packets (always one)
 # -w <deadline>   give up after <deadline> seconds
@@ -72,7 +106,7 @@ fi
 # To prevent more than one packet going out, the ping <interval> must
 # be greater than the <deadline>.
 
-ping="ping -q -n -c 1 -i $(expr 1 + ${wait}) -w ${wait} "$@""
+ping="ping -n -c 1 -i $(expr 1 + ${wait}) -w ${wait} ${args} "$@""
 if test -n "${runcon}" ; then
     ping="runcon ${runcon} ${ping}"
 fi
