@@ -46,25 +46,25 @@ while test $# -gt 0 && expr "$1" : "-" > /dev/null; do
 	    runcon=$1
 	    ;;
 	--small )
-	    args="${args} -s 50"
+	    size=50
 	    ;;
 	--big )
-	    args="${args} -s 1000"
+	    size=1000
 	    ;;
 	--huge )
-	    args="${args} -s 8000"
+	    size=8000
 	    ;;
 	--*)
 	    echo "Unrecognized custom option: $1" 1>&2
  	    exit 1
  	    ;;
-	-I ) # -I INTERFACE?
+	-I ) # -I INTERFACE, actually source
 	    shift
-	    args="${args} -I $1"
+	    interface=$1
 	    ;;
 	-s ) # -s SIZE
 	    shift
-	    args="${args} -s $1"
+	    size=$1
 	    ;;
 	-p ) # -p FILL
 	    shift
@@ -94,28 +94,31 @@ fi
 # use a heuristic to figure out ping vs ping6
 
 case "$@" in
-    *:* ) ping=ping6 ;;
-    * ) ping=ping ;;
+    *:* )
+	ping=fping
+	interface=${interface:+--src ${interface}}
+	timeout=" --timeout ${wait}s"
+	size=${size:+--size ${size}}
+	;;
+    * )
+	ping=ping
+	interface=${interface:+-I ${interface}}
+	# To prevent more than one packet going out, specify a ping
+	# <interval> greater than the wait <deadline>.
+	timeout=" -i $(expr 1 + ${wait}) -w ${wait}"
+	size=${size:+-s ${size}}
+	;;
 esac
 
 # Record the ping command that will run (the secret sauce used to
 # invoke ping is subject to change, it is hidden from the test
 # results).
-#
-# Ping options:
-#
-# -n              numeric only (don't touch DNS)
-# -c <count>      send <count> packets (always one)
-# -w <deadline>   give up after <deadline> seconds
-# -i <interval>   wait <interval> seconds between packets
-#
-# To prevent more than one packet going out, the ping <interval> must
-# be greater than the <deadline>.
 
-ping="${ping} -n -c 1 -i $(expr 1 + ${wait}) -w ${wait} ${args} "$@""
+ping="${ping} -n -c 1 ${timeout} ${size} ${args} ${interface} "$@""
 if test -n "${runcon}" ; then
     ping="runcon ${runcon} ${ping}"
 fi
+
 echo ==== cut ====
 echo "${ping}"
 echo ==== tuc ====
@@ -139,9 +142,22 @@ echo "${output}"
 echo ==== tuc ====
 
 case "${result}-${op}" in
-    up-up | down-down )       echo ${result} ;                         exit 0 ;;
-    down-up | up-down )       echo ${result} UNEXPECTED ;              exit 1 ;;
-    up-forget | down-forget ) echo fired and forgotten ;               exit 0 ;;
-    error-error )             echo "${output}" | sed -e 's/ping: //' ; exit 0 ;;
-    * ) echo unexpected status ${status} ; echo ${output} ;              exit 1 ;;
+    up-forget | down-forget ) echo fired and forgotten ; exit 0 ;;
+    up-forget | down-forget ) echo fired and forgotten ; exit 0 ;;
+    up-up | down-down )       echo ${result} ; exit 0 ;;
+    down-up | up-down )
+	echo ${result} UNEXPECTED
+	echo "# ${ping}"
+	echo ${output}
+	exit 1
+	;;
+    error-error )
+	echo "${output}" | sed -e 's/ping: //' -e 's/ping6: //' -e 's/fping: //'
+	exit 0
+	;;
+    * )
+        echo unexpected status ${status}
+	echo "# ${ping}"
+	echo ${output}
+	exit 1 ;;
 esac
