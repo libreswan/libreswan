@@ -2,19 +2,22 @@
 See also https://libreswan.org/
 
 v4.7 (unreleased)
-* kernel: fix double delete of kernel policy when tearing down SA [Andrew]
-* IKEv1: reject IKEv2 only authby=secret+rsasig [Andrew]
-* config: end keywords with no left/right prefix are applied to both ends
-* IKEv2: fix interop with Android 12 + certificates [Andrew]
-* FreeBSD: libreswan builds out-of-the-box [Andrew]
-* kernel: fix deleting policy when an XFRMi FD ID; github/618
-* kernel: general cleanups [Andrew]
+* IKEv2: EAPTLS support [Timo Teräs / Andrew ]
+* IKEv2: EAPONLY support [Andrew]
 * IKEv2: fix interop when IPCOMP+transport-mode [Andrew]
 * IKEv2: fix race between new IKE SA and liveness [Andrew]
-* building: fix build on fedora rawhide
+* IKEv2: fix interop with Android 12 + certificates [Andrew]
+* IKEv1: reject IKEv2 only authby=secret+rsasig [Andrew]
+* config: end keywords with no left/right prefix are applied to both ends
+* kernel: fix double delete of kernel policy when tearing down SA [Andrew]
+* kernel: fix deleting policy when an XFRMi FD ID; github/618 [Andrew]
+* kernel: general cleanups [Andrew]
+* _stackmanager / pluto: support Ubuntu 18.04 LTS kernels [Paul]
+* FreeBSD: libreswan builds out-of-the-box [Andrew]
+* BSD: Add IPv6 support (tested on NetBSD)
+* building: fix build on fedora rawhide [Paul]
 * internals: initiate IKEv2 CREATE_CHILD_SA exchange using IKE SA [Andrew]
 * internals: _updown.bsdkame renamed to _updown.bsd
-* BSD: Add IPv6 support (tested on NetBSD)
 
 v4.6 (January 11, 2022)
 * SECURITY: Fixes CVE-2022-23094 https://libreswan.org/security/CVE-2022-23094
