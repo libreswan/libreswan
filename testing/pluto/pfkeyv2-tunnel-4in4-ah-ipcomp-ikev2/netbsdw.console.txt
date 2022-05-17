@@ -16,7 +16,7 @@ netbsdw #
  echo "initdone"
 initdone
 netbsdw #
- ../../guestbin/ping-once.sh --down -4 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 netbsdw #
  ipsec auto --up eastnet-westnet-ikev2
@@ -40,7 +40,7 @@ netbsdw #
 	spid=2 seq=0 pid=PID
 	refcnt=0
 netbsdw #
- ../../guestbin/ping-once.sh --up -4 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 netbsdw #
  setkey -D
@@ -83,7 +83,7 @@ netbsdw #
 	allocated: 0	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=0
 netbsdw #
- ../../guestbin/ping-once.sh --big --up -4 -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --big --up -I 192.0.1.254 192.0.2.254
 up
 netbsdw #
  setkey -D

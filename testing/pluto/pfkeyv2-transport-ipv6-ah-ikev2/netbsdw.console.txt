@@ -35,7 +35,7 @@ netbsdw #
 	spid=2 seq=0 pid=PID
 	refcnt=0
 netbsdw #
- ../../guestbin/ping-once.sh --up -6 2001:db8:1:2::23
+ ../../guestbin/ping-once.sh --up 2001:db8:1:2::23
 up
 netbsdw #
  setkey -D
@@ -60,7 +60,7 @@ netbsdw #
 	allocated: 1	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=0
 netbsdw #
- ../../guestbin/ping-once.sh --big --up -6 2001:db8:1:2::23
+ ../../guestbin/ping-once.sh --big --up 2001:db8:1:2::23
 up
 netbsdw #
  setkey -D

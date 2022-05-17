@@ -13,7 +13,7 @@ west #
 west #
  # confirm clear text does not get through
 west #
- ../../guestbin/ping-once.sh --down -6 -I 2001:db8:1:2::45 2001:db8:1:2::23
+ ../../guestbin/ping-once.sh --down -I 2001:db8:1:2::45 2001:db8:1:2::23
 down
 west #
  ipsec start
@@ -26,13 +26,13 @@ initdone
 west #
  # one ping will get lost in the ondemand as only TCP is cached
 west #
- ../../guestbin/ping-once.sh --forget -6 -I 2001:db8:1:2::45 2001:db8:1:2::23
+ ../../guestbin/ping-once.sh --forget -I 2001:db8:1:2::45 2001:db8:1:2::23
 fired and forgotten
 west #
  ../../guestbin/wait-for.sh --match v6-transport -- ipsec whack --trafficstatus
 006 #2: "v6-transport", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
 west #
- ../../guestbin/ping-once.sh --up -6 -I 2001:db8:1:2::45 2001:db8:1:2::23
+ ../../guestbin/ping-once.sh --up -I 2001:db8:1:2::45 2001:db8:1:2::23
 up
 west #
  ipsec whack --trafficstatus

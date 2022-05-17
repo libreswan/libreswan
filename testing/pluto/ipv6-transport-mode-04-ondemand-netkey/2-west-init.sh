@@ -5,7 +5,7 @@
 ip6tables -A INPUT -i eth1 -s 2001:db8:1:2::23 -p ipv6-icmp --icmpv6-type echo-reply  -j DROP
 ip6tables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 # confirm clear text does not get through
-../../guestbin/ping-once.sh --down -6 -I 2001:db8:1:2::45 2001:db8:1:2::23
+../../guestbin/ping-once.sh --down -I 2001:db8:1:2::45 2001:db8:1:2::23
 ipsec start
 ../../guestbin/wait-until-pluto-started
 echo "initdone"

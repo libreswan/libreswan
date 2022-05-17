@@ -30,13 +30,13 @@ road #
  echo "initdone"
 initdone
 road #
- ../../guestbin/ping-once.sh --forget -6 2001:db8:1:2::23
+ ../../guestbin/ping-once.sh --forget 2001:db8:1:2::23
 fired and forgotten
 road #
  ../../guestbin/wait-for.sh --match private-or-clear -- ipsec whack --trafficstatus
 006 #2: "private-or-clear#2001:db8:1:2::/64"[1] ...2001:db8:1:2::23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='ID_NULL'
 road #
- ../../guestbin/ping-once.sh --up -6 2001:db8:1:2::23
+ ../../guestbin/ping-once.sh --up 2001:db8:1:2::23
 up
 road #
  ipsec whack --trafficstatus

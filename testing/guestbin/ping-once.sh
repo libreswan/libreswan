@@ -14,7 +14,6 @@ Send one ping packet.  Options:
   --small               send a small packet (about 50 byte, uncompressed)
   --big                 send a big packet   (about 1k, should compress)
   --huge                send a huge packet  (about 8k, should fragment and/or compress)
-  -4 | -6               force IPv4 or IPv6
 EOF
     exit 1
 fi
@@ -59,12 +58,6 @@ while test $# -gt 0 && expr "$1" : "-" > /dev/null; do
 	    echo "Unrecognized custom option: $1" 1>&2
  	    exit 1
  	    ;;
-	-4 )
-	    # args="${args} -4"
-	    ;;
-	-6 )
-	    args="${args} -6"
-	    ;;
 	-I ) # -I INTERFACE?
 	    shift
 	    args="${args} -I $1"
@@ -93,6 +86,18 @@ if test -z "${op}" ; then
     exit 1
 fi
 
+if test $# -ne 1 ; then
+    echo "too many parameters: $@"
+    exit 1
+fi
+
+# use a heuristic to figure out ping vs ping6
+
+case "$@" in
+    *:* ) ping=ping6 ;;
+    * ) ping=ping ;;
+esac
+
 # Record the ping command that will run (the secret sauce used to
 # invoke ping is subject to change, it is hidden from the test
 # results).
@@ -107,7 +112,7 @@ fi
 # To prevent more than one packet going out, the ping <interval> must
 # be greater than the <deadline>.
 
-ping="ping -n -c 1 -i $(expr 1 + ${wait}) -w ${wait} ${args} "$@""
+ping="${ping} -n -c 1 -i $(expr 1 + ${wait}) -w ${wait} ${args} "$@""
 if test -n "${runcon}" ; then
     ping="runcon ${runcon} ${ping}"
 fi
