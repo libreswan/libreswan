@@ -1974,54 +1974,6 @@ static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
 	}
 }
 
-static void netlink_expire(struct nlmsghdr *n, struct logger *logger)
-{
-	/*
-	 * WARNING: netlink only guarantees 32-bit alignment.
-	 * See NLMSG_ALIGNTO in the kernel's include/uapi/linux/netlink.h.
-	 * BUT some fields in struct xfrm_user_acquire are 64-bit and so access
-	 * may be improperly aligned.  This will fail on a few strict
-	 * architectures (it does break C rules).
-	 *
-	 * WARNING: this code's understanding to the XFRM netlink
-	 * messages is from programs/pluto/linux26/xfrm.h.
-	 * There is no guarantee that this matches the kernel's
-	 * understanding.
-	 *
-	 * Many things are defined to be int or unsigned int.
-	 * This isn't safe when the kernel and userland may
-	 * be compiled with different models.
-	 */
-	const struct xfrm_user_expire *expire = /* insufficiently aligned */
-		nlmsg_data(n, sizeof(*expire), logger, HERE);
-	if (expire == NULL) {
-		return;
-	}
-
-	const struct ip_info *afi = aftoinfo(expire->state.family);
-	if (afi == NULL) {
-		llog(RC_LOG, logger,
-		     "kernel: XFRM_MSG_EXPIRE message malformed: family %u unknown",
-		     expire->state.family);
-		return;
-	}
-
-	const ip_protocol *protocol = protocol_by_ipproto(expire->state.id.proto);
-	if (protocol == NULL) {
-		llog(RC_LOG, logger,
-		     "XFRM_MSG_EXPIRE message from kernel malformed: protocol %u unknown",
-		     expire->state.id.proto);
-		return;
-	}
-
-	ip_address daddr = address_from_xfrm(afi, &expire->state.id.daddr);
-
-	address_buf b;
-	dbg("kernel: expire: protocol %s dest %s SPI "PRI_IPSEC_SPI,
-	    protocol->name, str_address(&daddr, &b),
-	    pri_ipsec_spi(expire->state.id.spi));
-}
-
 /* returns FALSE iff EAGAIN */
 static bool netlink_get(int fd, struct logger *logger)
 {
@@ -2068,9 +2020,6 @@ static bool netlink_get(int fd, struct logger *logger)
 		break;
 	case XFRM_MSG_POLEXPIRE:
 		netlink_policy_expire(&rsp.n, logger);
-		break;
-	case XFRM_MSG_EXPIRE:
-		netlink_expire(&rsp.n, logger);
 		break;
 
 	case RTM_NEWADDR:
