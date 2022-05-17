@@ -8,8 +8,7 @@ road #
  ip -6 route del default
 road #
  ../../guestbin/ping-once.sh --down 2001:db8:0:2::254
-unexpected status 2
-connect: Network is unreachable
+down
 road #
  # add default via link local
 road #
