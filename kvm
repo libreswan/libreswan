@@ -2,7 +2,19 @@
 
 set -e
 
-hosts=$(echo $($(dirname $0)/testing/utils/kvmhosts.sh))
+# possible hostnames, always implies first
+
+platforms="fedora freebsd netbsd openbsd"
+
+basehosts=
+for p in ${platforms} ; do
+    basehosts="${basehosts} ${p}-base ${p}-upgrade"
+done
+
+# eat newlines
+testhosts=$(echo $($(dirname $0)/testing/utils/kvmhosts.sh))
+
+hosts="${testhosts} ${platforms} ${basehosts}"
 
 # Anything matching '^____[-a-z]' is considered a command (_ denotes a
 # space).
@@ -10,6 +22,7 @@ hosts=$(echo $($(dirname $0)/testing/utils/kvmhosts.sh))
 pass1help()
 {
     cat <<EOF
+Modifiers:
 
   Use the test directories that have been modified when running and
   comparing tests:
@@ -33,56 +46,62 @@ pass1help()
     --baseline-failed
 	specify baseline directory to compare against
 
-Utilities:
+  To log into a domain:
 
-  sh <host> [ <command> ]
-	start a shell on <host> which can be ${hosts}
-
+    sh <host> [ <command> ]
+	start a shell on <host> which can be a:
+	  test domain: ${testhosts}
+	  build domain: ${platforms}
+	  base domain: ${basehosts}
 EOF
 }
 
 pass1=$(pass1help | awk '/^    [-a-z]/ { printf " %s ", $1 }' ; echo ${host})
 
+# Anything matching '^____[-a-z]' is considered a command (_ denotes a
+# space).
+
 pass2help()
 {
     cat <<EOF
+  Set up the test environment:
 
-  Build / install the test domains:
+    install[-PLATFORM]
+	install libreswan onto the build domains,
+	and then create the test domains
+    uninstall[-PLATFORM]
+	delete the build and test domains
+	(but leave the build trees and base domains alone)
 
-    install
-	install libreswan onto the build domains
-    upgrade
-	upgrade the base domains
-    transmogrify
-	transmogrify the base domains
-    clean
-	clean the test environment (delete test and build domains and build trees)
-    keys
-	update the keys used for testing
-
-  Run Tests:
+  Run tests, examine results:
 
     check [ <test-directory> ... ]
-        run the testsuite
+	run the testsuite
     recheck [ <test-directory> ... ]
 	re-run the testsuite
     diffs [ <test-directory> ... ]
-	show differences for the specified tests
+	show differences (for the specified tests)
+	exit non-zero when differences are found
     results [ <test-directory> ... ]
-	show differences for the specified tests
+	list test results (for the specified tests)
+	exit non-zero when failures are found
+
+  Prepare for a clean test run:
+
+    clean
+	clean the test environment (delete test and build domains and
+	build trees)
     check-clean
 	delete the test results (leave the build trees and domains alone)
+    keys
+	update the keys used for testing
 
-  Update the test results (and GIT repository containing the tests):
+  Update the expected test results (and GIT repository):
 
     patch [ <test-directory> ... ]
-	apply test differences to the specified test directories (or all
-	test directories)
+	apply test differences (to the specified test directories)
     add [ <test-directory> ... ]
-	<<git add>> the specified test directories (or all test
-	directories)
-    commit [ <test-directory> ... ]
-	commit added changes
+	<<git add>> (the specified test directories)
 
   Manipulate the kvmrunner process:
 
@@ -93,12 +112,14 @@ pass2help()
 
   Clean up the test environment
 
-    uninstall
-	delete the build and test domains
-	(but leave the build trees and base domains alone)
-    downgrade
+    downgrade[-PLATFORM]
 	delete the build and test domains
 	remove any updates to the base domains
+    upgrade[-PLATFORM]
+	upgrade the base domains
+    transmogrify[-PLATFORM]
+	transmogrify the base domains
+
     purge
 	delete base, build and test domains
 	delete any build trees
@@ -106,11 +127,26 @@ pass2help()
 	delete all domains and all builds
     shutdown
 	shutdown the domains
-
 EOF
 }
 
-pass2=$(pass2help | awk '/^    [-a-z]/ { printf " %s ", $1 }')
+pass2=$(pass2help | awk -v "plat=${platforms}" -- '
+BEGIN {
+	split(plat, platforms)
+	print plat
+}
+/^    [a-z]*.-PLATFORM.$/ {
+	t=$1
+	sub(/[^a-z]*$/,"",t)
+	printf " %s ", t
+	for (i in platforms) {
+		printf " %s-%s ", t, platforms[i]
+	}
+	next
+}
+/^    [-a-z]*/ {
+	printf " %s ", $1
+}')
 
 # translate ../../../kvm ... into ./kvm ...
 
@@ -142,17 +178,19 @@ if test $# -eq 0; then
     cat <<EOF
 Usage:
 
-   <operation> <operation> ... <test-directory> <test-directory> ...
+   <modifier> ... <operation> ... <test-directory> <test-directory> ...
 
-Where operations are:
 EOF
     pass1help
+    echo
     pass2help
 cat <<EOF
+
 To enable completion, add:
+
   complete -o filename -C './kvm' ./kvm
+
 to .bashrc
-EOF
 EOF
     exit 1
 fi
@@ -318,11 +356,16 @@ status=0
 for op in "${ops[@]}" ; do
     case ${op} in
 
-	commit ) git commit "$@" ;;
 	add ) git add "$@" ;;
 
 	kill ) gmake kvm-${op} ;;
-	upgrade | clean | install | demolish | purge | uninstall | downgrade | upgrade | transmogrify | status | check-clean | shutdown )
+	downgrade* | upgrade* | transmogrify* )
+	    # downgrade-netbsd -> netbsd-downgrade
+	    o=$(echo ${op} | sed -e 's/\([a-z]*\)-\([a-z]*\)/\2-\1/')
+	    echo gmake kvm-${o}
+	    gmake kvm-${o} || exit $?
+	    ;;
+	demolish | purge | status | check-clean | shutdown | uninstall* | install* )
 	    echo gmake kvm-${op}
 	    gmake kvm-${op} || exit $?
 	    ;;

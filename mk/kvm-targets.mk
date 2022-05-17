@@ -986,6 +986,16 @@ kvm-%-install: $(KVM_POOLDIR_PREFIX)%
 		gmake install-base $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS)
 	$(KVMSH) --shutdown $(notdir $<)
 
+$(patsubst %, kvm-install-%, $(KVM_PLATFORM)): \
+kvm-install-%:
+	$(MAKE) $(patsubst %, kvm-undefine-%, $(call add-kvm-prefixes, $(KVM_$($*)_HOST_NAMES)))
+	$(MAKE) kvm-$*-install
+	$(MAKE) $(call add-kvm-localdir-prefixes, $(KVM_$($*)_HOST_NAMES))
+
+$(patsubst %, kvm-uninstall-%, $(KVM_PLATFORM)): \
+kvm-uninstall-%:
+	$(MAKE) $(patsubst %, kvm-undefine-%, $(call add-kvm-prefixes, $(KVM_$($*)_HOST_NAMES)))
+	$(MAKE) kvm-undefine-$(KVM_FIRST_PREFIX)$*
 
 #
 # Create the local domains
@@ -1077,8 +1087,7 @@ kvm-define: $(addprefix $(KVM_POOLDIR)/,$(KVM_PLATFORM_BUILD_DOMAIN_NAMES))
 kvm-define: $(addprefix $(KVM_LOCALDIR)/,$(KVM_PLATFORM_TEST_DOMAIN_NAMES))
 
 .PHONY: kvm-uninstall
-kvm-uninstall: $(patsubst %, kvm-undefine-%, $(KVM_TEST_DOMAIN_NAMES))
-kvm-uninstall: $(patsubst %, kvm-undefine-$(KVM_FIRST_PREFIX)%, $(KVM_OS))
+kvm-uninstall: $(patsubst %, kvm-uninstall-%, $(KVM_OS))
 
 .PHONY: kvm-clean
 kvm-clean: kvm-uninstall
@@ -1130,8 +1139,8 @@ kvm-rpm: $(KVM_POOLDIR_PREFIX)fedora
 			-ba $(RPM_BUILD_CLEAN) \
 			rpmbuild/SPECS/libreswan-testing.spec
 
-.PHONY: kvm-rpm-install
-kvm-rpm-install: $(KVM_POOLDIR_PREFIX)fedora
+.PHONY: kvm-install-rpm
+kvm-install-rpm: $(KVM_POOLDIR_PREFIX)fedora
 	rm -fr rpmbuild/*RPMS
 	$(MAKE) kvm-rpm
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(notdir $<) 'rpm -aq | grep libreswan && rpm -e $$(rpm -aq | grep libreswan) || true'
@@ -1149,27 +1158,17 @@ kvm-rpm-install: $(KVM_POOLDIR_PREFIX)fedora
 # is booted, this is done using a series of sub-makes (without this,
 # things barf because the build domain things its disk is in use).
 
-.PHONY: kvm-install
-kvm-install: $(patsubst %, kvm-undefine-%, $(KVM_TEST_DOMAIN_NAMES))
+KVM_INSTALL_TARGETS += $(foreach os, $(filter-out fedora openbsd, $(KVM_OS)), kvm-install-$(os))
 ifeq ($(KVM_INSTALL_RPM), true)
-	$(MAKE) kvm-rpm-install
+KVM_INSTALL_TARGETS += kvm-install-rpm
 else
-	$(MAKE) kvm-fedora-install
+KVM_INSTALL_TARGETS += kvm-install-fedora
 endif
-ifdef KVM_NETBSD
-	$(MAKE) kvm-netbsd-install
-endif
-ifdef KVM_FREEBSD
-	$(MAKE) kvm-freebsd-install
-endif
-	$(MAKE) $(KVM_KEYS)
-	$(MAKE) $(KVM_TEST_DOMAINS)
 
-.PHONY: kvm-bisect
-kvm-bisect:
-	: 125 is git bisect magic for 'skip'
-	$(MAKE) kvm-install || exit 125
-	$(MAKE) kvm-test kvm-diffs $(if $(KVM_TESTS),KVM_TESTS="$(KVM_TESTS)")
+.PHONY: kvm-install
+kvm-install:
+	$(MAKE) $(KVM_INSTALL_TARGETS)
+	$(MAKE) $(KVM_KEYS)
 
 
 #
@@ -1359,33 +1358,6 @@ Manually building and modifying the base domain and network:
 
       note that uninstalling the gateway also uninstalls the base
       domain (since it depends on the gateway)
-
-Running 'git bisect' to find a regression:
-
-  First find or create test (don't commit it) that detects the
-  regression.  If the test is new don't commit it - this way the test
-  sticks around as commits are checked out.
-
-  Next, as per normal, establish the bounds of the bisect:
-
-    git bisect start
-    git bisect good ...
-    git bisect bad ...
-
-  Finally use the kvm-bisect and KVM_TESTS to build and run each
-  commit:
-
-    git bisect run make kvm-bisect KVM_TESTS=test/that/changed
-
-  The kvm-bisect target is roughly equivalent to:
-
-    make kvm-install || exit 125
-    make kvm-test KVM_TESTS=...
-    make kvm-diffs KVM_TESTS=...
-
-  where <<exit 125>> is git magic for result unknown; and (unlike
-  kvm-test) kvm-diffs exits with a non-zero status code when things
-  fail.
 
 Standard targets and operations:
 
