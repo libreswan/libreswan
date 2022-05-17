@@ -3,7 +3,7 @@ nic #
  /testing/guestbin/nic-vpn-role-tmp
 nic #
  ansible-playbook --skip-tags packages -i ansible-inventory.yml test-east-west.yml 2>&1 | tee OUTPUT/ansible.out | grep -v DEPRECATED | tail -3 | sort
-east                       : ok=10   changed=3    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
-west                       : ok=13   changed=3    unreachable=0    failed=0    skipped=4    rescued=0    ignored=0   
+east                       : ok=11   changed=3    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
+west                       : ok=14   changed=3    unreachable=0    failed=0    skipped=4    rescued=0    ignored=0   
 nic #
  
