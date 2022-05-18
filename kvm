@@ -340,7 +340,7 @@ if test -n "${modified}" ; then
     fi
     set -- ${modified}
 elif test $# -eq 0 ; then
-    set -- --test-status "'${kvm_test_status}'" ${kvm_test_flags} ${kvm_testingdir}
+    set -- --test-status "${kvm_test_status}" ${kvm_test_flags} ${kvm_testingdir}
 fi
 
 if test -z "${ops[*]}" ; then
