@@ -2,7 +2,7 @@
 See also https://libreswan.org/
 
 v4.7 (unreleased)
-* IKEv2: EAPTLS support [Timo Teräs / Andrew ]
+* IKEv2: EAPTLS support [Timo Teräs / Andrew]
 * IKEv2: EAPONLY support [Andrew]
 * IKEv2: fix interop when IPCOMP+transport-mode [Andrew]
 * IKEv2: fix race between new IKE SA and liveness [Andrew]
