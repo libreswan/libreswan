@@ -133,7 +133,6 @@ EOF
 pass2=$(pass2help | awk -v "plat=${platforms}" -- '
 BEGIN {
 	split(plat, platforms)
-	print plat
 }
 /^    [a-z]*.-PLATFORM.$/ {
 	t=$1
@@ -148,7 +147,44 @@ BEGIN {
 	printf " %s ", $1
 }')
 
-# translate ../../../kvm ... into ./kvm ...
+
+# Invoked by completer with:
+#
+#   $0 <command==$0> <word> <previous>?
+#
+# ${pass1}, ${pass2} and ${hosts} contain completion values.
+
+if test "$1" == $0 -a $# -eq 3 ; then
+    command=$1
+    word=$2
+    previous=$3
+    # hack to detect first vs later argument
+    if test "${previous}" == "${command}" ; then
+	# first command
+	compgen -W "${pass1} ${pass2}" "${word}" | sort
+    elif test "${previous}" == sh ; then
+	# pass 1 command
+	compgen -W "${hosts}" "${word}"
+    else
+	case $pass2 in
+	    *" ${word}"* )
+		# word looks to be matching a command (or is empty),
+		# expand to either <command> or <directory>
+		compgen -o plusdirs -W "${pass2}" "${word}"
+		;;
+	    * )
+		# doesn't match a command, so throw in the testing
+		# directory as a quick expansion
+		compgen -o plusdirs -W "${pass2}" -G "testing/pluto/${word}*" "${word}"
+		;;
+	esac
+    fi
+    exit 0
+fi
+
+# Translate ../../../kvm [...] into ./kvm [...] and with no [...]
+# implying "clean".  Do this before checking $#=0 as this can add the
+# missing parameter.
 
 if test $(realpath $(dirname $0)) != $(realpath ${PWD}) ; then
     if test $# -eq 0 ; then
@@ -174,6 +210,8 @@ if test $(realpath $(dirname $0)) != $(realpath ${PWD}) ; then
     echo "$@"
 fi
 
+# Finally is there at least one parameter?
+
 if test $# -eq 0; then
     cat <<EOF
 Usage:
@@ -186,35 +224,14 @@ EOF
     pass2help
 cat <<EOF
 
-To enable completion, add:
+To enable completion, add these lines to .bashrc:
 
-  complete -o filename -C './kvm' ./kvm
+  complete -o filenames -C        ./kvm        ./kvm
+  complete -o filenames -C ../../../kvm ../../../kvm
 
-to .bashrc
+(the first is for top-level, the second for within a directory)
 EOF
     exit 1
-fi
-
-# Invoked by completer with:
-#
-#   $0 <command==$0> <word> <previous>?
-
-if test "$1" == $0 -a $# -eq 3 ; then
-    command=$1
-    word=$2
-    previous=$3
-    # hack to detect first vs later argument
-    if test "${previous}" == "${command}" ; then
-	# first command
-	compgen -W "${pass1} ${pass2}" "${word}" | sort
-    elif test "${previous}" == sh ; then
-	# pass 1 command
-	compgen -W "${hosts}" "${word}"
-    else
-	# either <command> or <directory>
-	compgen -o plusdirs -W "${pass2}" "${word}"
-    fi
-    exit 0
 fi
 
 # accumulate pass 2 commands; execute pass 1 commands immediately
