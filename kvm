@@ -340,7 +340,7 @@ if test -n "${modified}" ; then
     fi
     set -- ${modified}
 elif test $# -eq 0 ; then
-    set -- --test-status "${kvm_test_status}" ${kvm_test_flags} ${kvm_testingdir}
+    set -- ${kvm_testingdir}
 fi
 
 if test -z "${ops[*]}" ; then
@@ -351,11 +351,11 @@ fi
 results_command()
 {
     if test -n "${baseline}" ; then
-	./testing/utils/kvmresults.py ${__baseline} "$@" \
+	./testing/utils/kvmresults.py --test-status "${kvm_test_status}" ${kvm_test_flags} ${__baseline} "$@" \
 	    | grep --line-buffered -v -e baseline:untested \
 	    | grep --line-buffered -e ${baseline}
     else
-	./testing/utils/kvmresults.py "$@"
+	./testing/utils/kvmresults.py --test-status "${kvm_test_status}" ${kvm_test_flags} "$@"
 	status=$?
     fi
 }
@@ -363,14 +363,14 @@ results_command()
 diffs_command()
 {
     if test -n "${baseline}" ; then
-	./testing/utils/kvmresults.py ${__baseline} --stats none "$@" \
+	./testing/utils/kvmresults.py --test-status "${kvm_test_status}" ${kvm_test_flags} ${__baseline} --stats none "$@" \
 	    | grep --line-buffered -v -e baseline:untested \
 	    | grep --line-buffered -e "${baseline}" \
 	    | while read test eol ; do
 	    ./testing/utils/kvmresults.py --stats none --print diffs ${test}
 	done
     else
-	./testing/utils/kvmresults.py --stats none --print diffs "$@"
+	./testing/utils/kvmresults.py --test-status "${kvm_test_status}" ${kvm_test_flags} --stats none --print diffs "$@"
 	status=$?
     fi
 }

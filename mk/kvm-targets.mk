@@ -452,7 +452,7 @@ kvm-%: $(KVM_HOST_OK) kvm-keys-ok
 	: shutdown all the build domains, kvmrunner shuts down the test domains
 	$(foreach domain, $(KVM_BUILD_DOMAINS), $(call shutdown-os-domain, $(domain)))
 	@$(MAKE) $(if $(WEB_ENABLED), web-test-prep, -s web-pages-disabled)
-	: KVM_TESTS=$(STRIPPED_KVM_TESTS)
+	: KVM_TESTS="$(STRIPPED_KVM_TESTS)"
 	$(KVMRUNNER) \
 		$(if $(KVM_PIDFILE), --pid-file "$(KVM_PIDFILE)") \
 		$(foreach prefix,$(KVM_PREFIXES), --prefix $(prefix)) \
