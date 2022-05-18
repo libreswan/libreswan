@@ -1271,8 +1271,8 @@ kvmplutotest	ikev2-tcp-00-yes					good
 kvmplutotest	ikev2-tcp-00-fallback					good
 kvmplutotest	ikev2-tcp-01-eof					good
 kvmplutotest	ikev2-tcp-02-timeout					good
-kvmplutotest	ikev2-tcp-03-basic-rawrsa-blocking			good
-kvmplutotest	ikev2-tcp-03-basic-rawrsa-nonblocking			good
+kvmplutotest	ikev2-tcp-03-basic-rawrsa-blocking			wip	github/717
+kvmplutotest	ikev2-tcp-03-basic-rawrsa-nonblocking			wip	github/717
 kvmplutotest	ikev2-tcp-04-ikeport					good
 kvmplutotest	ikev2-tcp-06-fail-ike-sa-init-cookie			good
 kvmplutotest	ikev2-tcp-06-fail-ike-sa-init-invalid-ke		good
