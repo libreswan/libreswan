@@ -234,16 +234,23 @@ EOF
     exit 1
 fi
 
-# accumulate pass 2 commands; execute pass 1 commands immediately
+# Accumulate pass 2 commands; execute pass 1 commands immediately.
+#
+# XXX: should "sh" be delayed so that "downgrade install sh netbsd"
+# DTRT?
 
 declare -a ops
+
+kvm_baseline=$(gmake print-kvm-baseline)
+kvm_test_status=$(gmake print-kvm-test-status)
+kvm_test_flags=$(gmake print-kvm-test-flags)
+kvm_prefixes=($(gmake print-kvm-prefixes))
+kvm_testingdir=$(gmake print-kvm-testingdir)
+
 modified=
 baseline=
-__baseline=$(sed -n -e 's/^KVM_BASELINE[ ]*=[ ]*/--baseline /p' Makefile.inc.local)
-prefix=$(sed -n -e 's/^KVM_PREFIXES[ ]*=[ ]*\([^ ]*\).*/\1/p' Makefile.inc.local)
-# without the eval quotes get quotes get quotes; anyone know why?
-__test_flags=$(eval echo $(sed -n -e 's/^KVM_TEST_FLAGS[ ]*=[ ]*//p' Makefile.inc.local))
-testingdir=$(sed -n -e 's/^KVM_TESTINGDIR[ ]*=[ ]*\([^ ]*\).*/\1/p' Makefile.inc.local)
+__baseline=${kvm_baseline:+--baseline ${kvm_baseline}}
+prefix=${prefixes[0]}
 
 i=0
 while test $# -gt 0 ; do
@@ -331,9 +338,9 @@ if test -n "${modified}" ; then
 	echo "both modified and tests specified" 1>&2
 	exit 1
     fi
-    set ${modified}
+    set -- ${modified}
 elif test $# -eq 0 ; then
-    set ${testingdir:-testing}/pluto
+    set -- --test-status "'${kvm_test_status}'" ${kvm_test_flags} ${kvm_testingdir}
 fi
 
 if test -z "${ops[*]}" ; then
@@ -344,11 +351,11 @@ fi
 results_command()
 {
     if test -n "${baseline}" ; then
-	./testing/utils/kvmresults.py ${__test_flags} ${__baseline} "$@" \
+	./testing/utils/kvmresults.py ${__baseline} "$@" \
 	    | grep --line-buffered -v -e baseline:untested \
 	    | grep --line-buffered -e ${baseline}
     else
-	./testing/utils/kvmresults.py ${__test_flags} "$@"
+	./testing/utils/kvmresults.py "$@"
 	status=$?
     fi
 }
@@ -356,14 +363,14 @@ results_command()
 diffs_command()
 {
     if test -n "${baseline}" ; then
-	./testing/utils/kvmresults.py ${__test_flags} ${__baseline} --stats none "$@" \
+	./testing/utils/kvmresults.py ${__baseline} --stats none "$@" \
 	    | grep --line-buffered -v -e baseline:untested \
 	    | grep --line-buffered -e "${baseline}" \
 	    | while read test eol ; do
 	    ./testing/utils/kvmresults.py --stats none --print diffs ${test}
 	done
     else
-	./testing/utils/kvmresults.py ${__test_flags} --stats none --print diffs "$@"
+	./testing/utils/kvmresults.py --stats none --print diffs "$@"
 	status=$?
     fi
 }
