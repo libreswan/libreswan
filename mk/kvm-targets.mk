@@ -682,7 +682,7 @@ kvm-purge-networks:
 	$(foreach network, $(KVM_TEST_NETWORKS), \
 		$(call destroy-kvm-network, $(network)))
 kvm-demolish-gateway:
-	$(call destroy-kvm-network, $(KVM_GATEWAY_FILE)
+	$(call destroy-kvm-network, $(KVM_GATEWAY_FILE))
 
 
 ##
