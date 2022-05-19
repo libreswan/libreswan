@@ -225,7 +225,7 @@ def _sanitize_output(logger, raw_path, test):
     if process.returncode or stderr:
         # any hint of an error
         logger.error("sanitize command '%s' failed; exit code %s; stderr: '%s'",
-                     command, process.returncode, stderr.decode("utf8"))
+                     command, process.returncode, stderr.decode('utf-8'))
         return None
     return stdout
 
@@ -521,7 +521,7 @@ class TestResult:
         self.logger.debug("grep() '%s' matched '%s'", regex, group)
         if cast:
             # caller is matching valid utf-8, decode and cast
-            result = cast(group.decode())
+            result = cast(group.decode('utf-8'))
         else:
             # caller isn't interested in what matched, return success
             result = True

@@ -163,7 +163,7 @@ def build_result(logger, result, baseline, args, what_to_print, b):
             b.add(Print.DIFFS, domain,
                   result.diffs[domain],
                   string=(lambda diff, sep: diff
-                          and (sep and "\n" or "") + b"\n".join(diff).decode()
+                          and (sep and "\n" or "") + b"\n".join(diff).decode('utf-8')
                           or ""))
 
     b.flush()

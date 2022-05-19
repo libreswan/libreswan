@@ -20,7 +20,7 @@ def _host_names():
     host_names = set()
     # this failing is a disaster
     output = subprocess.check_output([utilsdir.relpath("kvmhosts.sh")])
-    for host_name in output.decode("utf-8").splitlines():
+    for host_name in output.decode('utf-8').splitlines():
         host_names.add(host_name)
     return host_names
 

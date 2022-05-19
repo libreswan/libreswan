@@ -74,7 +74,7 @@ class Domain:
                                    stderr=subprocess.STDOUT)
         stdout, stderr = process.communicate()
         status = process.returncode
-        output = stdout.decode("utf-8").strip()
+        output = stdout.decode('utf-8').strip()
         if status:
             self.logger.debug("virsh exited with unexpected status code %s\n%s",
                               status, output)
@@ -223,7 +223,7 @@ class Domain:
         status, output = console.expect_prompt(rb'(.*)')
         if status:
             raise AssertionError("extracting fstab failed: %s", status)
-        fstab = output.group(1).decode()
+        fstab = output.group(1).decode('utf-8')
         # convert the fstab into a second map; look for NFS and 9p
         # mounts
         mounts = []
