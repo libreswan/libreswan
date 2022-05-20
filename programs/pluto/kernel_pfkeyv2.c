@@ -820,7 +820,7 @@ static struct sadb_x_ipsecrequest *put_sadb_x_ipsecrequest(struct outbuf *msg,
 	 * states: In the case that transport mode is used, no
 	 * additional addresses are specified.
 	 */
-	if (mode == IPSEC_MODE_TUNNEL) {
+	if (mode == ipsec_mode_tunnel) {
 		put_ip_sockaddr(msg, &kernel_policy->src.host);
 		put_ip_sockaddr(msg, &kernel_policy->dst.host);
 	}
