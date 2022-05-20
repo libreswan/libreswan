@@ -6,15 +6,18 @@ set -e
 
 platforms="fedora freebsd netbsd openbsd"
 
+buildhosts=${platforms}
 basehosts=
+upgradehosts=
 for p in ${platforms} ; do
     basehosts="${basehosts} ${p}-base ${p}-upgrade"
+    upgradehosts="${upgradehosts} ${p}-upgrade ${p}-upgrade"
 done
 
 # eat newlines
 testhosts=$(echo $($(dirname $0)/testing/utils/kvmhosts.sh))
 
-hosts="${testhosts} ${platforms} ${basehosts}"
+hosts="${testhosts} ${buildhosts} ${basehosts} ${upgradehosts}"
 
 # Anything matching '^____[-a-z]' is considered a command (_ denotes a
 # space).
@@ -53,6 +56,7 @@ Modifiers:
 	  test domain: ${testhosts}
 	  build domain: ${platforms}
 	  base domain: ${basehosts}
+	  upgrade domain: ${upgradehosts}
 EOF
 }
 
@@ -112,13 +116,19 @@ pass2help()
 
   Clean up the test environment
 
+    base[-PLATFORM]
+	(re)build the base domain
+	creates: ${basehosts}
+    upgrade[-PLATFORM]
+	installs missing + upgrades existing packages on base domain
+	creates: ${upgradehosts}
+    transmogrify[-PLATFORM]
+	transmogrify the upgraded domains
+	creates: ${platforms}
+
     downgrade[-PLATFORM]
 	delete the build and test domains
 	remove any updates to the base domains
-    upgrade[-PLATFORM]
-	upgrade the base domains
-    transmogrify[-PLATFORM]
-	transmogrify the base domains
 
     purge
 	delete base, build and test domains
@@ -383,7 +393,7 @@ for op in "${ops[@]}" ; do
 	add ) git add "$@" ;;
 
 	kill ) gmake kvm-${op} ;;
-	downgrade* | upgrade* | transmogrify* )
+	base* | upgrade* | transmogrify* | downgrade* )
 	    # downgrade-netbsd -> netbsd-downgrade
 	    o=$(echo ${op} | sed -e 's/\([a-z]*\)-\([a-z]*\)/\2-\1/')
 	    echo gmake kvm-${o}
