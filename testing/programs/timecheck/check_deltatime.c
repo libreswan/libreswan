@@ -80,6 +80,9 @@ static void check_ttodeltatime(void)
 		{ "1x", (uintmax_t)0, &timescale_milliseconds, false, },
 		{ "x1", (uintmax_t)0, &timescale_milliseconds, false, },
 		{ "1mm", (uintmax_t)0, &timescale_milliseconds, false, },
+		{ "1seconds", (uintmax_t)0, &timescale_milliseconds, false, },
+		{ "1 s", (uintmax_t)0, &timescale_milliseconds, false, },
+		{ "0x10", (uintmax_t)0, &timescale_seconds, false, },
 	};
 
 	for (unsigned i = 0; i < elemsof(test_ttodeltatime); i++) {
