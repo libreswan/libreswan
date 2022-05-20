@@ -17,6 +17,19 @@ run()
 }
 
 
+title mount /source and /testing
+
+# /source and /testing are only pinned down during transmogrify.
+
+for mount in source testing ; do
+    cat <<EOF >>/etc/fstab
+${mount} /${mount} 9p defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0,x-systemd.automount 0 0
+EOF
+    mkdir /${mount}
+    mount /${mount}
+done
+
+
 title limit kernel to two installs
 
 # https://ask.fedoraproject.org/t/old-kernels-removal/7026/2

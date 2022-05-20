@@ -776,16 +776,37 @@ $(KVM_POOLDIR_PREFIX)%-base: | \
 			--os-variant=$(KVM_$($*)_VIRT_INSTALL_OS_VARIANT) \
 			--disk=path=$@.qcow2,size=$(VIRT_DISK_SIZE_GB),bus=virtio,format=qcow2 \
 			$(KVM_$($*)_VIRT_INSTALL_FLAGS)
-	: Check that kvmsh can capture and return exit codes.
-	:   KVMSH expects the prompt to look something like:
-	:     [USER@HOST PWD EXIT_CODE]#
+	:
+	: Check that the shell prompt includes the exit code.
+	:
+	: KVMSH uses the prompt exit code to determine the status of
+	: the last command run vis:
+	:
+	:     [user@host pwd]# false
+	:     [user@host pwd 1]# true
+	:     [user@host pwd]#
+	:
 	$(KVMSH) $(notdir $@) -- true
 	! $(KVMSH) $(notdir $@) -- false
-	: Check that /pool is mounted.
-	:   Shell scripts used to fine-tune the domain are run from the
-	:   /pool directory.
+	:
+	: Check that /pool - KVM_POOLDIR - is mounted.
+	:
+	: The package install, upgrade, and transmogrify scripts
+	: are copied to and then run from that directory.
+	:
 	$(KVMSH) $(notdir $@) -- test -r /pool/$(notdir $@).qcow2
-	: everything seems to be working, shut down
+	:
+	: Check that /source and /testing directories are not present.
+	:
+	: The /source and /testing directories are set up by transmogrify.
+	: They can change and may not point into this directory tree.
+	: Delaying their creation hopefully makes it harder to accidently
+	: access the wrong files.
+	:
+	$(KVMSH) $(notdir $@) -- test ! -d /source -a ! -d /testing
+	:
+	: Everything seems to be working, shut down.
+	:
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
 

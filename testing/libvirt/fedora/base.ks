@@ -97,15 +97,22 @@ EOD
 # automount so that things are only mounted after the VM has booted
 # and a snapshot has been taken.
 #
+# Why use /etc/fstab?
+#
 # To quote the systemd.mount documentation: In general, configuring
 # mount points through /etc/fstab is the preferred approach.
+#
+# Why not create and mount /source and /testing?
+#
+# These may not point at the current directory (they can change, and
+# are setup during transmogrify).  Not setting them now makes it
+# harder to accidently use a file from a wrong directory.
 
-for mount in testing source pool ; do
-    cat <<EOF >>/etc/fstab
-${mount} /${mount} 9p defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0,x-systemd.automount 0 0
+mkdir /pool
+
+cat <<EOF >>/etc/fstab
+pool /pool 9p defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0,x-systemd.automount 0 0
 EOF
-    mkdir /${mount}
-done
 
 systemctl enable iptables.service
 systemctl enable ip6tables.service
