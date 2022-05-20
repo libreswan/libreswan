@@ -227,15 +227,15 @@ KVM_FIRST_PREFIX = $(call strip-prefix,$(firstword $(KVM_PREFIXES)))
 
 # targets for dumping the above
 .PHONY: print-kvm-prefixes
-print-kvm-prefixes: ; @echo "$(KVM_PREFIXES)"
+print-kvm-prefixes: ; @echo '$(KVM_PREFIXES)'
 .PHONY: print-kvm-test-status
-print-kvm-test-status: ; @echo "$(KVM_TEST_STATUS)"
+print-kvm-test-status: ; @echo '$(STRIPPED_KVM_TEST_STATUS)'
 .PHONY: print-kvm-test-flags
-print-kvm-test-flags: ; @echo "$(KVM_TEST_FLAGS)"
+print-kvm-test-flags: ; @echo '$(KVM_TEST_FLAGS)'
 .PHONY: print-kvm-testingdir
-print-kvm-testingdir: ; @echo "$(KVM_TESTINGDIR)"
+print-kvm-testingdir: ; @echo '$(KVM_TESTINGDIR)'
 .PHONY: print-kvm-baseline
-print-kvm-baseline: ; @echo "$(KVM_BASELINE)"
+print-kvm-baseline: ; @echo '$(KVM_BASELINE)'
 
 KVM_BUILD_DOMAIN_NAMES = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_BUILD_HOST_NAMES))
 KVM_TEST_DOMAIN_NAMES = $(call add-kvm-prefixes, $(KVM_TEST_HOST_NAMES))
@@ -445,7 +445,15 @@ kvm-kill:
 kvm-status:
 	test -s "$(KVM_PIDFILE)" && ps $(file < $(KVM_PIDFILE))
 
-KVM_TEST_STATUS ?= good$(if $(KVM_FREEBSD),|freebsd)$(if $(KVM_NETBSD),|netbsd)$(if $(KVM_OPENBSD),|openbsd)
+# Allow any of 'KVM_TEST_STATUS=good|wip', 'KVM_TEST_STATUS=good wip',
+# or KVM_TEST_STATUS+=wip.
+
+KVM_TEST_STATUS += good
+KVM_TEST_STATUS += $(if $(KVM_FREEBSD),freebsd)
+KVM_TEST_STATUS += $(if $(KVM_NETBSD),netbsd)
+KVM_TEST_STATUS += $(if $(KVM_OPENBSD),openbsd)
+
+STRIPPED_KVM_TEST_STATUS = $(subst $(sp),|,$(sort $(KVM_TEST_STATUS)))
 
 kvm-test kvm-check kvm-retest kvm-recheck: \
 kvm-%: $(KVM_HOST_OK) kvm-keys-ok
@@ -460,7 +468,7 @@ kvm-%: $(KVM_HOST_OK) kvm-keys-ok
 		$(if $(WEB_ENABLED), --publish-hash $(WEB_HASH)) \
 		$(if $(WEB_ENABLED), --publish-results $(WEB_RESULTSDIR)) \
 		$(if $(WEB_ENABLED), --publish-status $(WEB_SUMMARYDIR)/status.json) \
-		 --test-status '$(KVM_TEST_STATUS)' \
+		 --test-status '$(STRIPPED_KVM_TEST_STATUS)' \
 		$(if $(filter kvm-re%, $@), --skip passed) \
 		$(KVMRUNNER_FLAGS) \
 		$(KVM_TEST_FLAGS) \
