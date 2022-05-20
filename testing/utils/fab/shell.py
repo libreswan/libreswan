@@ -28,19 +28,17 @@ TIMEOUT = 10
 # - OpenBSD doesn't define ${HOST} or ${HOSTNAME}
 PS1='[$USER@$(hostname|sed -e s/\\\\..*//) \\$(s=\\$?;p=\\${PWD##*/};echo \\${p:-/} \\${s#0})]# '
 
-# Named groups for each part of the above
+# Names for each of the groups in the above (used below).
+#
+# Note that these are STRINGS and not BYTES.  Even though any names in
+# re.match(b'...') are bytes, the regex code indexes the group
+# dictionary with the names converted to strings.
+
 USERNAME_GROUP = "username"
 HOSTNAME_GROUP = "hostname"
 BASENAME_GROUP = "basename"
 STATUS_GROUP = "status"
 DOLLAR_GROUP = "dollar"
-
-# Patterns for each part of the above prompt
-USERNAME_PATTERN = r'[-.a-z0-9]+'
-HOSTNAME_PATTERN = r'[-a-z0-9]+'
-BASENAME_PATTERN = r'[-+=:,\.a-z0-9A-Z_~]+'
-STATUS_PATTERN = r'| [0-9]+'
-DOLLAR_PATTERN = r'[#\$]'
 
 def compile_prompt(logger, username=None, hostname=None):
     """Create a regex that matches PS1.
@@ -68,50 +66,57 @@ def compile_prompt(logger, username=None, hostname=None):
     #
     # Can't anchor this pattern to the end-of-buffer using $ as other
     # random output may appear.
+    #
+    # Construct the regex as a STRING, and then convert it to BYTEs.
+    # The regex code indexes the group dictionary using the string
+    # name so this is hopefully easier?
 
     prompt = (r'(|\x1b\[\?2004h)' + # bracketed paste mode prefix!
               r'(' +
               (
-                  (hostname or HOSTNAME_PATTERN)
+                  # HOSTNAME#
+                  (hostname or r'[-a-z0-9]+')
               ) +
               r'|' +
               (
+                  # [USER@HOST DIR STATUS]#
                   r'\[' +
-                  r'(?P<' + USERNAME_GROUP + r'>' + (username or USERNAME_PATTERN) + r')' +
+                  r'(?P<' + USERNAME_GROUP + r'>' + (username or r'[-.a-z0-9]+') + r')' +
                   r'@' +
-                  r'(?P<' + HOSTNAME_GROUP + r'>' + HOSTNAME_PATTERN + r')' +
+                  r'(?P<' + HOSTNAME_GROUP + r'>' + (hostname or r'[-a-z0-9]+') + r')' +
                   r' ' +
-                  r'(?P<' + BASENAME_GROUP + r'>' + (BASENAME_PATTERN) + r')' +
-                  r'(?P<' + STATUS_GROUP + r'>'   + (STATUS_PATTERN) + r')' +
+                  r'(?P<' + BASENAME_GROUP + r'>' + r'[-+=:,\.a-z0-9A-Z_~]+)' +
+                  r'(| (?P<' + STATUS_GROUP + r'>[0-9]+))' +
                   r'\]'
               ) +
               r')' +
-              r'(?P<' + DOLLAR_GROUP + r'>'   + (dollar or DOLLAR_PATTERN)  + r')' +
+              r'(?P<' + DOLLAR_GROUP + r'>' + (dollar or r'[#\$]') + r')' +
               r' ')
     logger.debug("prompt '%s'", prompt)
     # byte regex
     return re.compile(prompt.encode())
 
 
-def check_prompt_group(logger, match, expected, field):
+def _check_prompt_group(logger, match, field, expected):
     if expected:
-        found = match.group(field).decode('utf-8')
-        logger.debug("prompt field: '%s' expected: '%s' found: '%s'", field, expected, found)
-        if expected != found:
+        found = match.group(field)
+        logger.debug("prompt field: '%s' expected: '%s' found: '%s'",
+                     field, expected, found)
+        if expected.encode() != found:
             # Throw TIMEOUT as that is what is expected and what
             # would have happened.
             raise pexpect.TIMEOUT("incorrect prompt, field '%s' should be '%s but was '%s'" \
                                   % (field, expected, found))
 
 
-def check_prompt(logger, match, hostname=None, username=None, basename=None, dollar=None):
+def _check_prompt(logger, match, hostname=None, username=None, basename=None, dollar=None):
     """Match wild-card  of the prompt pattern; return status"""
 
     logger.debug("match %s contains %s", match, match.groupdict())
-    check_prompt_group(logger, match, hostname, HOSTNAME_GROUP)
-    check_prompt_group(logger, match, username, USERNAME_GROUP)
-    check_prompt_group(logger, match, basename, BASENAME_GROUP)
-    check_prompt_group(logger, match, dollar, DOLLAR_GROUP)
+    _check_prompt_group(logger, match, HOSTNAME_GROUP, hostname)
+    _check_prompt_group(logger, match, USERNAME_GROUP, username)
+    _check_prompt_group(logger, match, BASENAME_GROUP, basename)
+    _check_prompt_group(logger, match, DOLLAR_GROUP, dollar)
     # If there's no status, return None, not empty.
     status = match.group(STATUS_GROUP)
     if status:
@@ -221,8 +226,8 @@ class Remote:
         # This can throw a pexpect.TIMEOUT or pexpect.EOF exception
         self.child.expect(self.prompt, timeout=timeout, \
                           searchwindowsize=searchwindowsize)
-        status = check_prompt(self.logger, self.child.match,
-                              basename=self.basename)
+        status = _check_prompt(self.logger, self.child.match,
+                               basename=self.basename)
         self.logger.debug("run exit status %s", status)
         return status
 
@@ -281,13 +286,13 @@ class Remote:
 
         """
 
-        self.logger.debug("expect '%s' and prompt", expect)
+        self.logger.debug("expect '%s' and prompt", expect.decode('ascii'))
         if self.expect([expect + rb'\s+' + self.prompt.pattern, self.prompt],
                        timeout=timeout, searchwindowsize=searchwindowsize):
             self.logger.debug("only matched prompt")
             raise pexpect.TIMEOUT("pattern %s not found" % expect)
-        status = check_prompt(self.logger, self.child.match,
-                              basename=self.basename)
+        status = _check_prompt(self.logger, self.child.match,
+                               basename=self.basename)
         self.logger.debug("status %s match %s", status, self.child.match)
         return status, self.child.match
 

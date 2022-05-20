@@ -54,7 +54,10 @@ def _login(domain, console, login, password,
             raise pexpect.TIMEOUT("too many login attempts with domain %s" % domain)
 
         # Hopefully "Last login" is matched before "login: "
-        match = console.expect([LOGIN_PROMPT, PASSWORD_PROMPT, "Last login", console.prompt],
+        match = console.expect([LOGIN_PROMPT,
+                                PASSWORD_PROMPT,
+                                b'Last login',
+                                console.prompt],
                                timeout=timeout)
         if match == 0:
             timeout = PASSWORD_TIMEOUT
