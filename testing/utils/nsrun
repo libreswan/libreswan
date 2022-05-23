@@ -3107,7 +3107,7 @@ def ns_run_script_subprocess(console, host, script, timeout=120, testname=None):
 
 
 def localhost_sudo(args, testname):
-    cmd = "%s /bin/bash -i" % DEF.sudo_c
+    cmd = ["%s /bin/bash -i" % DEF.sudo_c]
     logger.debug("host sudo command : %s", cmd)
     s = shell.Remote(cmd, logger, hostname=args.node, username="root")
     if s:
@@ -3554,7 +3554,7 @@ class Namespace:
 
     def nsenter_pexpect_shell(self, test, host):
         ns = "%s-%s" % (host, test.name)
-        cmd = self.nsenter_cmd(ns) + ' /bin/bash'
+        cmd = [self.nsenter_cmd(ns) + ' /bin/bash']
         logger.debug("nsenter full command : %s", cmd)
         s = shell.Remote(cmd, logger, hostname=host, username="root")
         if s:
