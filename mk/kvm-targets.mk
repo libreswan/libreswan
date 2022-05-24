@@ -72,7 +72,8 @@ KVM_TRANSMOGRIFY = \
 	-e 's;@@LOCALDIR@@;$(KVM_LOCALDIR);' \
 	-e 's;@@TESTINGDIR@@;$(KVM_TESTINGDIR);' \
 	-e 's;@@USER@@;$(KVM_UID);' \
-	-e 's;@@GROUP@@;$(KVM_GID);'
+	-e 's;@@GROUP@@;$(KVM_GID);' \
+	-e 's;@@PREFIX@@;$(KVM_FIRST_PREFIX);'
 
 # The alternative is qemu:///session and it doesn't require root.
 # However, it has never been used, and the python tools all assume
