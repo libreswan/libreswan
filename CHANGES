@@ -1,7 +1,7 @@
 
 See also https://libreswan.org/
 
-v4.7 (unreleased)
+v4.7 (May 24, 2022)
 * IKEv2: EAPTLS support [Timo Teräs / Andrew]
 * IKEv2: EAPONLY support [Andrew]
 * IKEv2: fix interop when IPCOMP+transport-mode [Andrew]
