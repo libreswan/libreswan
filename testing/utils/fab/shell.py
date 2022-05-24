@@ -270,9 +270,6 @@ class Remote:
         return self.child.expect_exact(expect, timeout=timeout,
                                        searchwindowsize=searchwindowsize)
 
-    def sendcontrol(self, control):
-        return self.child.sendcontrol(control)
-
     def expect_prompt(self, expect, timeout=TIMEOUT, searchwindowsize=-1):
         """Like expect but also match the prompt
 
