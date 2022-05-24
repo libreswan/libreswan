@@ -34,7 +34,7 @@ west #
 000 "westnet-eastnet-compress":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-compress":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-compress":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "westnet-eastnet-compress":   policy: IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
+000 "westnet-eastnet-compress":   policy: IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 000 "westnet-eastnet-compress":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-compress":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-compress":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
@@ -53,7 +53,7 @@ west #
 002 "westnet-eastnet-compress" #1: Peer ID is ID_FQDN: '@east'
 003 "westnet-eastnet-compress" #1: authenticated using RSA with SHA1 and preloaded certificate '@east'
 004 "westnet-eastnet-compress" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
-002 "westnet-eastnet-compress" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO
+002 "westnet-eastnet-compress" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+COMPRESS+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "westnet-eastnet-compress" #2: sent Quick Mode request
 004 "westnet-eastnet-compress" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP DPD=passive}
 west #
@@ -73,16 +73,16 @@ up
 west #
  # test compression via large pings that can be compressed on IPCOMP SA
 west #
- ../../guestbin/ping-once.sh --up -s 8184 -p ff -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up --large -I 192.0.1.254 192.0.2.254
 up
 west #
- ../../guestbin/ping-once.sh --up -s 8184 -p ff -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up --large -I 192.0.1.254 192.0.2.254
 up
 west #
- ../../guestbin/ping-once.sh --up -s 8184 -p ff -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up --large -I 192.0.1.254 192.0.2.254
 up
 west #
- ../../guestbin/ping-once.sh --up -s 8184 -p ff -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --up --large -I 192.0.1.254 192.0.2.254
 up
 west #
  ipsec whack --trafficstatus | sed -e 's/Bytes=6[0-9][0-9],/Bytes=6nn,/g'
@@ -158,22 +158,22 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- ipsec auto --down westnet-eastnet-compress | sed -e 's/Bytes=6[0-9][0-9],/Bytes=6nn,/g'
+ ipsec auto --down westnet-eastnet-compress | sed -e 's/=6[0-9][0-9]B/=6nnB/g'
 002 "westnet-eastnet-compress": terminating SAs using this connection
 002 "westnet-eastnet-compress" #2: deleting state (STATE_QUICK_I2) and sending notification
-005 "westnet-eastnet-compress" #2: ESP traffic information: in=659B out=664B
+005 "westnet-eastnet-compress" #2: ESP traffic information: in=6nnB out=6nnB
 005 "westnet-eastnet-compress" #2: IPCOMP traffic information: in=0B out=0B
 002 "westnet-eastnet-compress" #1: deleting state (STATE_MAIN_I4) and sending notification
 west #
  echo done
 done
 west #
-!! this should not have states !!
  ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
 !! this should not have states !!
 XFRM policy:
+!! this should not have policies !!
 XFRM done
 IPSEC mangle TABLES
 NEW_IPSEC_CONN mangle TABLES

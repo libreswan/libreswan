@@ -4,16 +4,29 @@
 
 if test $# -lt 2; then
     cat <<EOF
+
 Usage:
-    $0 --up|--down|--fire-and-forget|--error [-I <interface>] <destination>" 1>&2
-Send one ping packet.  Options:
+
+    $0 --(up|down|fire-and-forget) <options> <destination>" 1>&2
+
+Send one ping packet.  Where:
+
   --up			expect the remote end to be up (wait a long while)
   --down		expect the remote end to be down (wait a short while)
   --fire-and-forget	do not wait for reply (actually waits 1 seconds)
+
+Packet sizes (padding is always 0).  The default is 56-bytes which,
+when combined with the 8-byte IPv4 ICMP header, works out to 64-byte
+message.
+
+  --small		send a small 12-byte packet, should not compress/fragment
+  --medium		send a medium 1k packet, should compress)
+  --large		send a large 8k packet, should fragment and/or compress
+
+Other options:
+
   --error		expect a strange error code
-  --small               send a small packet (about 50 byte, uncompressed)
-  --big                 send a big packet   (about 1k, should compress)
-  --huge                send a huge packet  (about 8k, should fragment and/or compress)
+  --runcon		wrap ping command in specified runconn command
 EOF
     exit 1
 fi
@@ -46,12 +59,12 @@ while test $# -gt 0 && expr "$1" : "-" > /dev/null; do
 	    runcon=$1
 	    ;;
 	--small )
-	    size=50
+	    size=12
 	    ;;
-	--big )
+	--medium )
 	    size=1000
 	    ;;
-	--huge )
+	--large )
 	    size=8000
 	    ;;
 	--*)
@@ -61,14 +74,6 @@ while test $# -gt 0 && expr "$1" : "-" > /dev/null; do
 	-I ) # -I INTERFACE, actually source
 	    shift
 	    interface=$1
-	    ;;
-	-s ) # -s SIZE
-	    shift
-	    size=$1
-	    ;;
-	-p ) # -p FILL
-	    shift
-	    args="${args} -p $1"
 	    ;;
 	-*)
 	    echo "Unrecognized common option: $1" 1>&2
@@ -82,7 +87,7 @@ while test $# -gt 0 && expr "$1" : "-" > /dev/null; do
 done
 
 if test -z "${op}" ; then
-    echo "Missing --<operation>" 1>&2
+    echo "missing --(up|down|fire-and-forget)" 1>&2
     exit 1
 fi
 
@@ -106,7 +111,7 @@ case "$@" in
 	# To prevent more than one packet going out, specify a ping
 	# <interval> greater than the wait <deadline>.
 	timeout=" -i $(expr 1 + ${wait}) -w ${wait}"
-	size=${size:+-s ${size}}
+	size=${size:+-s ${size} -p 00}
 	;;
 esac
 

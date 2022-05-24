@@ -84,7 +84,7 @@ netbsdw #
 	sadb_seq=1 pid=PID refcnt=0
 2001:db8:1:2::45 2001:db8:1:2::23 
 netbsdw #
- ../../guestbin/ping-once.sh --big --up -I 192.0.1.254 192.0.2.254
+ ../../guestbin/ping-once.sh --medium --up -I 192.0.1.254 192.0.2.254
 up
 netbsdw #
  setkey -D
