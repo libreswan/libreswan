@@ -589,7 +589,7 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port,
 	 * IKE packets, unlike KLIPS which implicitly always allows
 	 * plaintext IKE.  This installs one IPsec policy per socket
 	 * but this function is called for each: IPv4 port 500 and
-	 * 4500 IPv6 port 500
+	 * 4500 IPv6 port 500.
 	 */
 	if (kernel_ops->poke_ipsec_policy_hole != NULL &&
 	    !kernel_ops->poke_ipsec_policy_hole(fd, type, logger)) {
@@ -598,15 +598,7 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port,
 		return -1;
 	}
 
-	/*
-	 * ??? does anyone care about the value of port of ifp->addr?
-	 * Old code seemed to assume that it should be reset to pluto_port.
-	 * But only on successful bind.  Seems wrong or unnecessary.
-	 */
-	ip_endpoint if_endpoint = endpoint_from_address_protocol_port(ifd->id_address,
-								      &ip_protocol_tcp,
-								      port);
-	ip_sockaddr if_sa = sockaddr_from_endpoint(if_endpoint);
+	ip_sockaddr if_sa = sockaddr_from_endpoint(endpoint);
 	if (bind(fd, &if_sa.sa.sa, if_sa.len) < 0) {
 		BIND_ERROR("bind()");
 		close(fd);
