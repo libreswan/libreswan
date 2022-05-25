@@ -42,7 +42,7 @@ west #
 003 "westnet-eastnet-ikev2" #2: CHILD SA failed: TS_UNACCEPTABLE
 003 "westnet-eastnet-ikev2" #1: IKE SA established but initiator rejected Child SA response
 002 "westnet-eastnet-ikev2" #2: deleting larval Child SA using IKE SA #1
-003 "westnet-eastnet-ikev2" #2: ERROR: netlink response for Del SA esp.ESPSPIi@192.1.2.23 included errno 3: No such process
+003 ERROR: "westnet-eastnet-ikev2" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.23: No such process (errno 3)
 west #
  echo done
 done

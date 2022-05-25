@@ -42,7 +42,7 @@ west #
 010 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_V2_PARENT_I2: retransmission; will wait 32 seconds for response
 031 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_V2_PARENT_I2: 60 second timeout exceeded after 7 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
 000 "westnet-eastnet-ipv4-psk-ikev2" #1: starting keying attempt 2 of an unlimited number, but releasing whack
-003 "westnet-eastnet-ipv4-psk-ikev2" #2: ERROR: netlink response for Del SA esp.ESPSPIi@192.1.2.45 included errno 3: No such process
+003 ERROR: "westnet-eastnet-ipv4-psk-ikev2" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
 west #
  # The state should have been deleted, but replaced via event
 west #
