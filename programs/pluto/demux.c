@@ -85,7 +85,7 @@ static callback_cb handle_md_event;		/* type assertion */
  * md_addref().
  */
 
-static void process_md(struct msg_digest *md)
+void process_md(struct msg_digest *md)
 {
 	diag_t d = pbs_in_struct(&md->packet_pbs, &isakmp_hdr_desc,
 				 &md->hdr, sizeof(md->hdr), &md->message_pbs);

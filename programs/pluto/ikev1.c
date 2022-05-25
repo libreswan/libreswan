@@ -1630,12 +1630,13 @@ void process_v1_packet(struct msg_digest *md)
 					}
 
 					/*
-					 * Earlier calls to
-					 * process_md() already did
-					 * sanity checks on the
-					 * header.
+					 * process_md() calls
+					 * process_v1_packet(), but
+					 * only after first
+					 * initializing .hdr and
+					 * .message_pbs.
 					 */
-					process_v1_packet(whole_md);
+					process_md(whole_md);
 					md_delref(&whole_md);
 					free_v1_message_queues(st);
 					/* optimize: if receiving fragments, immediately respond with fragments too */

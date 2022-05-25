@@ -249,4 +249,6 @@ void jam_msg_digest(struct jambuf *log, const struct msg_digest *md);
 
 void shutdown_demux(void);
 
+void process_md(struct msg_digest *md);
+
 #endif /* _DEMUX_H */
