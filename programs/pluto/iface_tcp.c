@@ -491,6 +491,8 @@ const struct iface_io iketcp_iface_io = {
 /*
  * Open a TCP socket connected to st_remote_endpoint.
  *
+ * TCP: THIS IS A BLOCKING CALL
+ *
  * Since this end is opening the socket, this end is responsible for
  * sending the IKE-in-TCP magic word.
  */
@@ -500,9 +502,11 @@ struct iface_endpoint *open_tcp_endpoint(struct iface_dev *local_dev,
 					 struct logger *logger)
 {
 	dbg("TCP: opening socket");
-	int fd = socket(AF_INET, SOCK_STREAM|SOCK_CLOEXEC, IPPROTO_TCP);
+	const struct ip_info *afi = endpoint_type(&remote_endpoint);
+	int fd = socket(afi->socket.domain, SOCK_STREAM|SOCK_CLOEXEC, IPPROTO_TCP);
 	if (fd < 0) {
-		llog_error(logger, errno, "TCP: socket() failed");
+		llog_error(logger, errno, "TCP: socket(%s,SOCK_STREAM|SOCK_CLOEXEC,IPPROTO_TCP) failed",
+			   afi->socket.domain_name);
 		return NULL;
 	}
 
@@ -589,19 +593,22 @@ struct iface_endpoint *open_tcp_endpoint(struct iface_dev *local_dev,
 		dbg("TCP: socket %d: enabling \"espintcp\"", fd);
 		if (setsockopt(fd, IPPROTO_TCP, TCP_ULP, "espintcp", sizeof("espintcp"))) {
 			llog_error(logger, errno,
-				   "setsockopt(SOL_TCP, TCP_ULP) failed in netlink_espintcp()");
+				   "setsockopt(SOL_TCP, TCP_ULP) failed "PRI_WHERE,
+				   pri_where(HERE));
 			close(fd);
 			return NULL;
 		}
 		if (setsockopt(fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_in, sizeof(policy_in))) {
 			llog_error(logger, errno,
-				   "setsockopt(PPROTO_IP, IP_XFRM_POLICY(in)) failed in netlink_espintcp()");
+				   "setsockopt(IPROTO_IP, IP_XFRM_POLICY(in)) failed "PRI_WHERE,
+				   pri_where(HERE));
 			close(fd);
 			return NULL;
 		}
 		if (setsockopt(fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_out, sizeof(policy_out))) {
 			llog_error(logger, errno,
-				   "setsockopt(PPROTO_IP, IP_XFRM_POLICY(out)) failed in netlink_espintcp()");
+				   "setsockopt(PPROTO_IP, IP_XFRM_POLICY(out)) failed "PRI_WHERE,
+				   pri_where(HERE));
 			close(fd);
 			return NULL;
 		}
