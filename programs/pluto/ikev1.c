@@ -1609,11 +1609,15 @@ void process_v1_packet(struct msg_digest *md)
 								      "IKE fragments buffer");
 					size_t offset = 0;
 
-					/* Reassemble fragments in buffer */
+					/*
+					 * Reassemble fragments in
+					 * buffer.
+					 *
+					 * Header is taken directly
+					 * from first fragment.
+					 */
 					frag = st->st_v1_rfrags;
-					while (frag != NULL &&
-					       frag->index <= last_frag_index)
-					{
+					while (frag != NULL && frag->index <= last_frag_index) {
 						passert(offset + frag->size <=
 							size);
 						memcpy(buffer + offset,
@@ -1622,10 +1626,15 @@ void process_v1_packet(struct msg_digest *md)
 						frag = frag->next;
 					}
 
+					/*
+					 * Earlier calls to
+					 * process_md() already did
+					 * sanity checks on the
+					 * header.
+					 */
 					init_pbs(&whole_md->packet_pbs, buffer, size,
 						 "packet");
-
-					process_packet(&whole_md);
+					process_v1_packet(whole_md);
 					md_delref(&whole_md);
 					free_v1_message_queues(st);
 					/* optimize: if receiving fragments, immediately respond with fragments too */

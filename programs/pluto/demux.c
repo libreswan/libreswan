@@ -80,16 +80,13 @@ static callback_cb handle_md_event;		/* type assertion */
  * If all goes well, this routine eventually calls a state-specific
  * transition function.
  *
- * This routine will not md_delref(mdp).  It is expected that its
- * caller will do this.  In fact, it will zap *mdp to NULL if it
- * thinks **mdp should not be freed.  So the caller should be prepared
- * for *mdp being set to NULL.
+ * This routine will not md_delref(mdp).  It is assumed its caller
+ * will do this, and if MD needs to stick around, the callee will
+ * md_addref().
  */
 
-void process_packet(struct msg_digest **mdp)
+static void process_md(struct msg_digest *md)
 {
-	struct msg_digest *md = *mdp;
-
 	diag_t d = pbs_in_struct(&md->packet_pbs, &isakmp_hdr_desc,
 				 &md->hdr, sizeof(md->hdr), &md->message_pbs);
 	if (d != NULL) {
@@ -235,14 +232,6 @@ void process_packet(struct msg_digest **mdp)
 }
 
 /*
- * Deal with state changes.
- */
-static void process_md(struct msg_digest **mdp)
-{
-	process_packet(mdp);
-}
-
-/*
  * wrapper for read_message() and process_md()
  *
  * The main purpose of this wrapper is to factor out teardown code
@@ -301,7 +290,7 @@ void process_iface_packet(int fd, void *ifp_arg, struct logger *logger)
 			 * a reference (aka addref), and the below
 			 * won't delete MD.
 			 */
-			process_md(&md);
+			process_md(md);
 		}
 		md_delref(&md);
 		pexpect(md == NULL);
@@ -340,7 +329,7 @@ static void process_md_clone(struct msg_digest *orig, const char *fmt, ...)
 		DBG_dump(NULL, md->packet_pbs.start, pbs_room(&md->packet_pbs));
 	}
 
-	process_md(&md);
+	process_md(md);
 
 	LLOG_JAMBUF(RC_LOG, md->md_logger, buf) {
 		jam(buf, "IMPAIR: stop processing ");
@@ -424,7 +413,7 @@ static void handle_md_event(const char *story UNUSED, struct state *st, void *co
 {
 	pexpect(st == NULL);
 	struct msg_digest *md = context;
-	process_md(&md);
+	process_md(md);
 	md_delref(&md);
 	pexpect(md == NULL);
 }

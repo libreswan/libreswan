@@ -241,8 +241,6 @@ struct msg_digest *clone_raw_md(struct msg_digest *md, where_t where);
 
 void schedule_md_event(const char *story, struct msg_digest *md);
 
-extern void process_packet(struct msg_digest **mdp);
-
 extern char *cisco_stringify(pb_stream *pbs, const char *attr_name,
 			     bool keep, struct logger *logger);
 
