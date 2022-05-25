@@ -48,7 +48,6 @@
 #include "demux.h"
 #include "log.h"
 #include "ip_info.h"
-#include "nat_traversal.h"	/* for nat_traversal_enabled which seems like a broken idea */
 #include "pluto_stats.h"
 
 /* work around weird combo's of glibc and kernel header conflicts */
@@ -476,8 +475,8 @@ static void iketcp_listen(struct iface_endpoint *ifp,
 	}
 }
 
-static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port,
-			   struct logger *logger)
+static int iketcp_bind_iface_endpoint(struct iface_dev *ifd, ip_port port,
+				      struct logger *logger)
 {
 	const ip_protocol *protocol = &ip_protocol_tcp;
 	ip_endpoint endpoint = endpoint_from_address_protocol_port(ifd->id_address, protocol, port);
@@ -616,13 +615,6 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port,
 
 	return fd;
 #undef BIND_ERROR
-}
-
-static int iketcp_bind_iface_endpoint(struct iface_dev *ifd, ip_port port,
-				      bool unused_esp_encapsulation_enabled UNUSED,
-				      struct logger *logger)
-{
-	return bind_tcp_socket(ifd, port, logger);
 }
 
 const struct iface_io iketcp_iface_io = {

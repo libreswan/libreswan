@@ -47,10 +47,9 @@
 #include "log.h"
 #include "ip_info.h"
 #include "ip_sockaddr.h"
-#include "nat_traversal.h"	/* for nat_traversal_enabled which seems like a broken idea */
 
-static int bind_udp_socket(const struct iface_dev *ifd, ip_port port,
-			   struct logger *logger)
+static int udp_bind_iface_endpoint(struct iface_dev *ifd, ip_port port,
+				   struct logger *logger)
 {
 	const ip_protocol *protocol = &ip_protocol_udp;
 	ip_endpoint endpoint = endpoint_from_address_protocol_port(ifd->id_address, protocol, port);
@@ -194,12 +193,12 @@ static int bind_udp_socket(const struct iface_dev *ifd, ip_port port,
 #undef BIND_ERROR
 }
 
-static bool nat_traversal_espinudp(int sk, struct iface_dev *ifd,
+static bool nat_traversal_espinudp(const struct iface_endpoint *ifp,
 				   struct logger *logger)
 {
-	const char *fam = address_type(&ifd->id_address)->ip_name;
-	dbg("NAT-Traversal: Trying sockopt style NAT-T");
-
+	const char *fam = endpoint_type(&ifp->local_endpoint)->ip_name;
+	ldbg(logger, "NAT-Traversal: Trying sockopt style NAT-T");
+ 
 	/*
 	 * The SOL (aka socket level) is really the the protocol
 	 * number which, for UDP, is always 17.  Linux provides a
@@ -225,19 +224,15 @@ static bool nat_traversal_espinudp(int sk, struct iface_dev *ifd,
 	 */
 	const int sol_value = UDP_ENCAP_ESPINUDP;
 
-	int r = setsockopt(sk, sol_udp, sol_name, &sol_value, sizeof(sol_value));
+	int r = setsockopt(ifp->fd, sol_udp, sol_name, &sol_value, sizeof(sol_value));
 	if (r == -1) {
-		dbg("NAT-Traversal: ESPINUDP(%d) setup failed for sockopt style NAT-T family %s (errno=%d)",
-		    sol_value, fam, errno);
-		/* all methods failed to detect NAT-T support */
-		llog(RC_LOG_SERIOUS, logger,
-			    "NAT-Traversal: ESPINUDP for this kernel not supported or not found for family %s; NAT-traversal is turned OFF", fam);
-		nat_traversal_enabled = false;
+		ldbg(logger, "NAT-Traversal: ESPINUDP(%d) setup failed for sockopt style NAT-T family %s (errno=%d)",
+		     sol_value, fam, errno);
 		return false;
 	}
 
-	dbg("NAT-Traversal: ESPINUDP(%d) setup succeeded for sockopt style NAT-T family %s",
-	    sol_value, fam);
+	ldbg(logger, "NAT-Traversal: ESPINUDP(%d) setup succeeded for sockopt style NAT-T family %s",
+	     sol_value, fam);
 	return true;
 }
 
@@ -422,21 +417,6 @@ static void udp_listen(struct iface_endpoint *ifp,
 	}
 }
 
-static int udp_bind_iface_endpoint(struct iface_dev *ifd, ip_port port,
-				   bool esp_encapsulation_enabled,
-				   struct logger *logger)
-{
-	int fd = bind_udp_socket(ifd, port, logger);
-	if (fd < 0) {
-		return -1;
-	}
-	if (esp_encapsulation_enabled &&
-	    !nat_traversal_espinudp(fd, ifd, logger)) {
-		dbg("nat-traversal failed");
-	}
-	return fd;
-}
-
 static void udp_cleanup(struct iface_endpoint *ifp)
 {
 	detach_fd_read_listener(&ifp->udp.read_listener);
@@ -449,6 +429,7 @@ const struct iface_io udp_iface_io = {
 	.write_packet = udp_write_packet,
 	.listen = udp_listen,
 	.bind_iface_endpoint = udp_bind_iface_endpoint,
+	.enable_esp_encap = nat_traversal_espinudp,
 	.cleanup = udp_cleanup,
 };
 

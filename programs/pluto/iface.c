@@ -40,6 +40,7 @@
 #include "ip_sockaddr.h"
 #include "ip_encap.h"
 #include "kernel.h"			/* for kernel_ops_detect_offload() */
+#include "nat_traversal.h"		/* for nat_traversal_enabled which seems like a broken idea */
 
 char *pluto_listen = NULL;		/* from --listen flag */
 struct iface_endpoint *interfaces = NULL;  /* public interfaces */
@@ -241,6 +242,7 @@ struct iface_endpoint *iface_endpoint_addref_where(struct iface_endpoint *ifp, w
 	return addref_where(ifp, where);
 }
 
+
 struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd,
 					   const struct iface_io *io,
 					   ip_port port,
@@ -248,6 +250,7 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd,
 					   bool float_nat_initiator,
 					   struct logger *logger)
 {
+	const struct ip_info *afi = address_type(&ifd->id_address);
 	ip_endpoint local_endpoint = endpoint_from_address_protocol_port(ifd->id_address,
 									 io->protocol, port);
 	if (esp_encapsulation_enabled &&
@@ -261,7 +264,7 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd,
 		return NULL;
 	}
 
-	int fd = io->bind_iface_endpoint(ifd, port, esp_encapsulation_enabled, logger);
+	int fd = io->bind_iface_endpoint(ifd, port, logger);
 	if (fd < 0) {
 		/* already logged? */
 		return NULL;
@@ -283,11 +286,20 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd,
 	ifp->next = interfaces;
 	interfaces = ifp;
 
+	if (esp_encapsulation_enabled &&
+	    io->enable_esp_encap != NULL &&
+	    !io->enable_esp_encap(ifp, logger)) {
+		llog(RC_LOG_SERIOUS, logger,
+		     "NAT-Traversal: ESPINUDP for this kernel not supported or not found for family %s; NAT-traversal is turned OFF", afi->af_name);
+		nat_traversal_enabled = false;
+	}
+
 	endpoint_buf b;
 	llog(RC_LOG, logger,
 	     "adding %s interface %s %s",
 	     io->protocol->name, ifp->ip_dev->id_rname,
 	     str_endpoint(&ifp->local_endpoint, &b));
+
 	return ifp;
 }
 

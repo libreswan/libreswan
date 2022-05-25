@@ -49,9 +49,8 @@ struct iface_io {
 				struct logger *logger);
 	void (*cleanup)(struct iface_endpoint *ifp);
 	void (*listen)(struct iface_endpoint *fip, struct logger *logger);
-	int (*bind_iface_endpoint)(struct iface_dev *ifd,
-				   ip_port port, bool esp_encapsulation_enabled,
-				   struct logger *logger);
+	int (*bind_iface_endpoint)(struct iface_dev *ifd, ip_port port, struct logger *logger);
+	bool (*enable_esp_encap)(const struct iface_endpoint *ifp, struct logger *logger);
 };
 
 extern const struct iface_io udp_iface_io;
