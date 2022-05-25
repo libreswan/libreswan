@@ -2438,19 +2438,18 @@ static err_t netlink_migrate_sa_check(struct logger *logger)
 	}
 }
 
-static bool netlink_poke_ipsec_policy_hole(const struct iface_dev *ifd, int fd, struct logger *logger)
+static bool netlink_poke_ipsec_policy_hole(int fd, const struct ip_info *afi, struct logger *logger)
 {
-	const struct ip_info *type = address_type(&ifd->id_address);
 	struct xfrm_userpolicy_info policy = {
 		.action = XFRM_POLICY_ALLOW,
 		.sel = {
-			.family = type->af,
+			.family = afi->af,
 		}
 	};
 
 	int opt, sol;
 
-	if (type == &ipv6_info) {
+	if (afi == &ipv6_info) {
 		sol = IPPROTO_IPV6;
 		opt = IPV6_XFRM_POLICY;
 	} else {
