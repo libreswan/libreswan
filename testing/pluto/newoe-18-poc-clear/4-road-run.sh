@@ -9,7 +9,7 @@ ipsec whack --trafficstatus
 ipsec whack --shuntstatus
 ../../guestbin/ipsec-look.sh
 # ping should succeed in the clear
-../../guestbin/ping-once.sh -I 192.1.3.209 192.1.2.23
+../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 # should show for our failed attempt at OE
 grep "initiate on-demand" /tmp/pluto.log
 # save ip log
