@@ -87,7 +87,8 @@ int main(int argc, char *argv[])
 	} else if (*len_end != '\0') {
 		fatal(PLUTO_EXIT_FAIL, logger, "<der-size> contains grailing garbage: %s", len_str);
 	} else if (errno != 0) {
-		fatal_errno(PLUTO_EXIT_FAIL, logger, errno, "<der-size> is out-of-range: %s", len_str);
+		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
+			    "<der-size> '%s' is out-of-range", len_str);
 	}
 
 	if (len <= 0) {

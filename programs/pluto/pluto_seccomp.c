@@ -165,7 +165,7 @@ static void init_seccomp(uint32_t def_action, bool main, struct logger *logger)
 	if (rc < 0) {
 		seccomp_release(ctx);
 		fatal_errno(PLUTO_EXIT_SECCOMP_FAIL, logger, -rc,
-			    "seccomp_load() failed!");
+			    "seccomp_load() failed");
 	}
 }
 

@@ -54,6 +54,7 @@ void fatal_errno(enum pluto_exit_code rc, const struct logger *logger,
 	va_start(ap, fmt);
 	jam_fatal(&buf, logger, fmt, ap);
 	va_end(ap);
+	jam_string(&buf, ": ");
 	jam_errno(&buf, error);
 	jambuf_to_logger(&buf, logger, ERROR_FLAGS);
 	libreswan_exit(rc);

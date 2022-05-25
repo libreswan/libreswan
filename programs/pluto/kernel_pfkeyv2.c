@@ -213,7 +213,7 @@ static bool msg_sendrecv(struct outbuf *req, struct sadb_msg *msg, struct inbuf 
 	ssize_t s = send(pfkeyv2_fd, req->buf.ptr, req->ptr - (void*)req->buf.ptr, 0);
 	if (s < 0) {
 		fatal_errno(PLUTO_EXIT_KERNEL_FAIL, req->logger, errno,
-			    "sending %s: ", req->what);
+			    "sending %s", req->what);
 		return false;
 	}
 

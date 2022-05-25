@@ -77,7 +77,8 @@ realtime_t realnow(void)
 		 * caller.
 		 */
 		fatal_errno(PLUTO_EXIT_KERNEL_FAIL, &global_logger, errno,
-			    "clock_gettime(%d,...) call in realnow() failed: ", realtime_clockid());
+			    "clock_gettime(%d,...) call in realnow() failed",
+			    realtime_clockid());
 	}
 	realtime_t t = {
 		.rt = {

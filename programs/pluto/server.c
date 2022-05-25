@@ -1046,7 +1046,7 @@ void run_server(char *conffile, struct logger *logger)
 	static const char addconn_path[] = IPSEC_EXECDIR "/addconn";
 	if (access(addconn_path, X_OK) < 0) {
 		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-			    "%s: missing or not executable: ",
+			    "%s: missing or not executable",
 			    addconn_path);
 	}
 
