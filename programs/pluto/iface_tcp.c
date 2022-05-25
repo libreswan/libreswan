@@ -613,14 +613,6 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port,
 		return -1;
 	}
 
-#if defined(HAVE_UDPFROMTO)
-	/* we are going to use udpfromto.c, so initialize it */
-	if (udpfromto_init(fd) == -1) {
-		log_errno(logger, errno,
-			  "udpfromto_init() returned an error - ignored");
-	}
-#endif
-
 	/* poke a hole for IKE messages in the IPsec layer */
 	if (kernel_ops->exceptsocket != NULL) {
 		if (!kernel_ops->exceptsocket(fd, AF_INET, logger)) {
