@@ -1604,10 +1604,8 @@ void process_v1_packet(struct msg_digest *md)
 				} else if (frag->index == last_frag_index) {
 					struct msg_digest *whole_md = alloc_md(frag->md->iface,
 									       &frag->md->sender,
+									       NULL/*packet*/, size,
 									       HERE);
-					uint8_t *buffer = alloc_bytes(size,
-								      "IKE fragments buffer");
-					size_t offset = 0;
 
 					/*
 					 * Reassemble fragments in
@@ -1615,8 +1613,13 @@ void process_v1_packet(struct msg_digest *md)
 					 *
 					 * Header is taken directly
 					 * from first fragment.
+					 *
+					 * XXX: DANGER! this code is
+					 * re-using FRAG.
 					 */
 					frag = st->st_v1_rfrags;
+					uint8_t *buffer = whole_md->packet_pbs.start;
+					size_t offset = 0;
 					while (frag != NULL && frag->index <= last_frag_index) {
 						passert(offset + frag->size <=
 							size);
@@ -1632,8 +1635,6 @@ void process_v1_packet(struct msg_digest *md)
 					 * sanity checks on the
 					 * header.
 					 */
-					init_pbs(&whole_md->packet_pbs, buffer, size,
-						 "packet");
 					process_v1_packet(whole_md);
 					md_delref(&whole_md);
 					free_v1_message_queues(st);

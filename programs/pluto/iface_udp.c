@@ -401,11 +401,7 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 		return NULL;
 	}
 
-	struct msg_digest *md = alloc_md(ifp, &sender, HERE);
-	init_pbs(&md->packet_pbs,
-		 clone_bytes(packet_ptr, packet_len,
-			     "message buffer in udp_read_packet()"),
-		 packet_len, "packet");
+	struct msg_digest *md = alloc_md(ifp, &sender, packet_ptr, packet_len, HERE);
 	return md;
 }
 

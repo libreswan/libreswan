@@ -25,35 +25,35 @@ static void free_md(void *obj, where_t where)
 	struct msg_digest *md = obj;
 	free_chunk_content(&md->raw_packet);
 	free_logger(&md->md_logger, where);
-	pfreeany(md->packet_pbs.start);
 	iface_endpoint_delref_where(&md->iface, where);
 	pfree(md);
 }
 
-struct msg_digest *alloc_md(struct iface_endpoint *ifp, const ip_endpoint *sender,
+struct msg_digest *alloc_md(struct iface_endpoint *ifp,
+			    const ip_endpoint *sender,
+			    const uint8_t *packet, size_t packet_len,
 			    where_t where)
 {
-	/* convenient initializer:
-	 * - all pointers NULL
-	 * - .note = NOTHING_WRONG
-	 * - .encrypted = FALSE
-	 */
-	struct msg_digest *md = refcnt_alloc(struct msg_digest, free_md, where);
+	struct msg_digest *md = refcnt_overalloc(struct msg_digest, packet_len, free_md, where);
 	md->iface = iface_endpoint_addref_where(ifp, where);
 	md->sender = *sender;
 	md->md_logger = alloc_logger(md, &logger_message_vec, where);
+	void *buffer = md + 1;
+	init_pbs(&md->packet_pbs, buffer, packet_len, "packet");
+	if (packet != NULL) {
+		memcpy(buffer, packet, packet_len);
+	}
 	return md;
 }
 
 struct msg_digest *clone_raw_md(struct msg_digest *md, where_t where)
 {
-	struct msg_digest *clone = alloc_md(md->iface, &md->sender, where);
+	size_t packet_len = pbs_room(&md->packet_pbs);
+	struct msg_digest *clone = alloc_md(md->iface, &md->sender,
+					    md->packet_pbs.start, packet_len,
+					    where);
 	clone->fake_clone = true;
 	clone->md_inception = threadtime_start();
-	/* packet_pbs ... */
-	size_t packet_size = pbs_room(&md->packet_pbs);
-	void *packet_bytes = clone_bytes(md->packet_pbs.start, packet_size, "clone md");
-	init_pbs(&clone->packet_pbs, packet_bytes, packet_size, "clone md");
 	return clone;
 }
 
