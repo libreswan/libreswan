@@ -562,7 +562,7 @@ void stop_crl_fetch_helper(struct logger *logger)
 		/* use a timer? */
 		int status = pthread_join(fetch_thread_id, NULL);
 		if (status != 0) {
-			log_errno(logger, status, "problem waiting for crl fetch thread to exit");
+			llog_error(logger, status, "problem waiting for crl fetch thread to exit");
 		}
 	}
 }

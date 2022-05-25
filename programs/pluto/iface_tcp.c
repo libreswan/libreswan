@@ -488,10 +488,10 @@ static int bind_tcp_socket(const struct iface_dev *ifd, ip_port port,
 	{								\
 		int e = errno;						\
 		endpoint_buf eb;					\
-		log_errno(logger, e,					\
-			  "bind %s TCP endpoint %s failed, "MSG,	\
-			  ifd->id_rname, str_endpoint(&endpoint, &eb),	\
-			  ##__VA_ARGS__);				\
+		llog_error(logger, e,					\
+			   "bind %s TCP endpoint %s failed, "MSG,	\
+			   ifd->id_rname, str_endpoint(&endpoint, &eb),	\
+			   ##__VA_ARGS__);				\
 	}
 
 	const struct ip_info *type = address_type(&ifd->id_address);
@@ -668,7 +668,7 @@ struct iface_endpoint *open_tcp_endpoint(struct iface_dev *local_dev,
 	dbg("TCP: opening socket");
 	int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
 	if (fd < 0) {
-		log_errno(logger, errno, "TCP: socket() failed");
+		llog_error(logger, errno, "TCP: socket() failed");
 		return NULL;
 	}
 
@@ -684,7 +684,7 @@ struct iface_endpoint *open_tcp_endpoint(struct iface_dev *local_dev,
 	dbg("TCP: socket %d: connecting to other end", fd);
 	ip_sockaddr remote_sockaddr = sockaddr_from_endpoint(remote_endpoint);
 	if (connect(fd, &remote_sockaddr.sa.sa, remote_sockaddr.len) < 0) {
-		log_errno(logger, errno, "TCP: connect(%d) failed", fd);
+		llog_error(logger, errno, "TCP: connect(%d) failed", fd);
 		close(fd);
 		return NULL;
 	}
@@ -697,7 +697,7 @@ struct iface_endpoint *open_tcp_endpoint(struct iface_dev *local_dev,
 			.len = sizeof(local_sockaddr.sa),
 		};
 		if (getsockname(fd, &local_sockaddr.sa.sa, &local_sockaddr.len) < 0) {
-			log_errno(logger, errno, "TCP: socket %d: failed to get local TCP address from socket", fd);
+			llog_error(logger, errno, "TCP: socket %d: failed to get local TCP address from socket", fd);
 			close(fd);
 			return NULL;
 		}
@@ -723,8 +723,8 @@ struct iface_endpoint *open_tcp_endpoint(struct iface_dev *local_dev,
 		dbg("TCP: socket %d: sending IKE-in-TCP prefix", fd);
 		const uint8_t iketcp[] = IKE_IN_TCP_PREFIX;
 		if (write(fd, iketcp, sizeof(iketcp)) != (ssize_t)sizeof(iketcp)) {
-			log_errno(logger, errno,
-				  "TCP: socket %d: send of IKE-in-TCP prefix failed", fd);
+			llog_error(logger, errno,
+				   "TCP: socket %d: send of IKE-in-TCP prefix failed", fd);
 			close(fd);
 			return NULL;
 		}
@@ -754,20 +754,20 @@ struct iface_endpoint *open_tcp_endpoint(struct iface_dev *local_dev,
 		};
 		dbg("TCP: socket %d: enabling \"espintcp\"", fd);
 		if (setsockopt(fd, IPPROTO_TCP, TCP_ULP, "espintcp", sizeof("espintcp"))) {
-			log_errno(logger, errno,
-				  "setsockopt(SOL_TCP, TCP_ULP) failed in netlink_espintcp()");
+			llog_error(logger, errno,
+				   "setsockopt(SOL_TCP, TCP_ULP) failed in netlink_espintcp()");
 			close(fd);
 			return NULL;
 		}
 		if (setsockopt(fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_in, sizeof(policy_in))) {
-			log_errno(logger, errno,
-				  "setsockopt(PPROTO_IP, IP_XFRM_POLICY(in)) failed in netlink_espintcp()");
+			llog_error(logger, errno,
+				   "setsockopt(PPROTO_IP, IP_XFRM_POLICY(in)) failed in netlink_espintcp()");
 			close(fd);
 			return NULL;
 		}
 		if (setsockopt(fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_out, sizeof(policy_out))) {
-			log_errno(logger, errno,
-				  "setsockopt(PPROTO_IP, IP_XFRM_POLICY(out)) failed in netlink_espintcp()");
+			llog_error(logger, errno,
+				   "setsockopt(PPROTO_IP, IP_XFRM_POLICY(out)) failed in netlink_espintcp()");
 			close(fd);
 			return NULL;
 		}

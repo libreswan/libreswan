@@ -58,10 +58,10 @@ static int bind_udp_socket(const struct iface_dev *ifd, ip_port port,
 	{								\
 		int e = errno;						\
 		endpoint_buf eb;					\
-		log_errno(logger, e,					\
-			  "bind %s UDP endpoint %s failed, "MSG,	\
-			  ifd->id_rname, str_endpoint(&endpoint, &eb),	\
-			  ##__VA_ARGS__);				\
+		llog_error(logger, e,					\
+			   "bind %s UDP endpoint %s failed, "MSG,	\
+			   ifd->id_rname, str_endpoint(&endpoint, &eb),	\
+			   ##__VA_ARGS__);				\
 	}
 
 	const struct ip_info *type = address_type(&ifd->id_address);
@@ -661,14 +661,14 @@ static bool check_msg_errqueue(const struct iface_endpoint *ifp, short interest,
 					return false;
 				}
 				again_count++;
-				log_errno(logger, errno,
-					  "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s) (attempt %d)",
-					  ifp->ip_dev->id_rname, before, again_count);
+				llog_error(logger, errno,
+					   "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s) (attempt %d)",
+					   ifp->ip_dev->id_rname, before, again_count);
 				continue;
 			}
-			log_errno(logger, errno,
-				  "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s)",
-				  ifp->ip_dev->id_rname, before);
+			llog_error(logger, errno,
+				   "recvmsg(,, MSG_ERRQUEUE) on %s failed (noticed before %s)",
+				   ifp->ip_dev->id_rname, before);
 			break;
 		}
 		passert(packet_len >= 0);

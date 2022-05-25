@@ -931,8 +931,8 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 					    "OK: seccomp security was not enabled and the rogue syscall was blocked");
 				break;
 			case SECCOMP_ENABLED:
-				llog(RC_LOG_SERIOUS, logger,
-					    "ERROR: pluto seccomp was enabled but the rogue syscall did not terminate pluto!");
+				llog_error(logger, 0/*no-errno*/,
+					   "pluto seccomp was enabled but the rogue syscall did not terminate pluto!");
 				break;
 			default:
 				bad_case(pluto_seccomp_mode);
@@ -942,16 +942,16 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 				    "pluto: seccomp test syscall was not blocked");
 			switch (pluto_seccomp_mode) {
 			case SECCOMP_TOLERANT:
-				llog(RC_LOG_SERIOUS, logger,
-					    "ERROR: pluto seccomp was tolerant but the rogue syscall was not blocked!");
+				llog_error(logger, 0/*no-errno*/,
+					   "pluto seccomp was tolerant but the rogue syscall was not blocked!");
 				break;
 			case SECCOMP_DISABLED:
 				llog(RC_LOG_SERIOUS, logger,
 					    "OK: pluto seccomp was disabled and the rogue syscall was not blocked");
 				break;
 			case SECCOMP_ENABLED:
-				llog(RC_LOG_SERIOUS, logger,
-					    "ERROR: pluto seccomp was enabled but the rogue syscall was not blocked!");
+				llog_error(logger, 0/*no-errno*/,
+					   "pluto seccomp was enabled but the rogue syscall was not blocked!");
 				break;
 			default:
 				bad_case(pluto_seccomp_mode);
@@ -1008,8 +1008,8 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 
 	ssize_t n = fd_read(whackfd, &msg, sizeof(msg));
 	if (n <= 0) {
-		log_errno(whack_logger, -(int)n,
-			  "read() failed in whack_handle()");
+		llog_error(whack_logger, -(int)n,
+			   "read() failed in whack_handle()");
 		return;
 	}
 

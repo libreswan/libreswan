@@ -127,7 +127,7 @@ int server_fork(const char *name, so_serial_t serialno, server_fork_op *op,
 	pid_t pid = fork();
 	switch (pid) {
 	case -1:
-		log_errno(logger, errno, "fork failed");
+		llog_error(logger, errno, "fork failed");
 		return -1;
 	case 0: /* child */
 		exit(op(context, logger));
@@ -177,7 +177,7 @@ void server_fork_sigchld_handler(struct logger *logger)
 			if (errno == ECHILD) {
 				dbg("waitpid returned ECHILD (no child processes left)");
 			} else {
-				log_errno(logger, errno, "waitpid unexpectedly failed");
+				llog_error(logger, errno, "waitpid unexpectedly failed");
 			}
 			return;
 		case 0: /* nothing to do */
@@ -271,7 +271,7 @@ void server_fork_exec(const char *what, const char *path,
 #endif
 	switch (pid) {
 	case -1: /* oops */
-		log_errno(logger, errno, "fork failed");
+		llog_error(logger, errno, "fork failed");
 		break;
 	case 0: /* child */
 		execve(path, argv, envp);

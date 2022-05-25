@@ -182,9 +182,9 @@ struct raw_iface *find_raw_ifaces(const struct ip_info *afi, struct logger *logg
 		passert(sizeof(auxinfo.ifr_name) == sizeof(ifr->ifr_name)); /* duh! */
 		memcpy(auxinfo.ifr_name, ifr->ifr_name, IFNAMSIZ);
 		if (ioctl(udp_sock, SIOCGIFFLAGS, &auxinfo) == -1) {
-			log_errno(logger, errno,
-				  "ignored %s interface %s - ioctl(SIOCGIFFLAGS) failed",
-				  afi->ip_name, ifname);
+			llog_error(logger, errno,
+				   "ignored %s interface %s - ioctl(SIOCGIFFLAGS) failed",
+				   afi->ip_name, ifname);
 			continue; /* happens when using device with label? */
 		}
 

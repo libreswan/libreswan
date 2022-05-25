@@ -252,9 +252,9 @@ bool unbound_resolve(char *src, const struct ip_info *afi,
 	}
 
 	if (result->bogus) {
-		llog(RC_LOG, logger,
-			    "ERROR: %s failed DNSSEC validation!",
-			    result->qname);
+		llog_error(logger, 0/*no-errno*/,
+			   "%s failed DNSSEC validation",
+			   result->qname);
 		ub_resolve_free(result);
 		return false;
 	}

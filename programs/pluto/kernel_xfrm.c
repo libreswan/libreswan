@@ -353,19 +353,19 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 
 	if (r < 0) {
 		sparse_buf sb;
-		log_errno(logger, errno,
-			  "netlink write() of %s message for %s %s failed",
-			  str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
-			  description, story);
+		llog_error(logger, errno,
+			   "netlink write() of %s message for %s %s failed",
+			   str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
+			   description, story);
 		return false;
 	}
 
 	if ((size_t)r != len) {
 		sparse_buf sb;
-		llog(RC_LOG_SERIOUS, logger,
-		     "ERROR: netlink write() of %s message for %s %s truncated: %zd instead of %zu",
-		     str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
-		     description, story, r, len);
+		llog_error(logger, 0/*no-errno*/,
+			   "netlink write() of %s message for %s %s truncated: %zd instead of %zu",
+			   str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
+			   description, story, r, len);
 		return false;
 	}
 
@@ -379,10 +379,10 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 				continue;
 			*recv_errno = errno;
 			sparse_buf sb;
-			log_errno(logger, errno,
-				  "netlink recvfrom() of response to our %s message for %s %s failed",
-				  str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
-				  description, story);
+			llog_error(logger, errno,
+				   "netlink recvfrom() of response to our %s message for %s %s failed",
+				   str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
+				   description, story);
 			return false;
 		} else if ((size_t) r < sizeof(rsp.n)) {
 			llog(RC_LOG, logger,
@@ -417,10 +417,8 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 
 	if (rsp.n.nlmsg_type != expected_resp_type && rsp.n.nlmsg_type == NLMSG_ERROR) {
 		if (rsp.u.e.error != 0) {
-			llog(RC_LOG_SERIOUS, logger,
-				    "ERROR: netlink response for %s %s included errno %d: %s",
-				    description, story, -rsp.u.e.error,
-				    strerror(-rsp.u.e.error));
+			llog_error(logger, -rsp.u.e.error,
+				   "netlink response for %s %s", description, story);
 			return false;
 		}
 		/*
@@ -506,10 +504,10 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 	}
 
 	sparse_buf sb;
-	log_errno(logger, error,
-		  "kernel: xfrm %s %s response for flow %s",
-		  str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
-		  story, adstory);
+	llog_error(logger, error,
+		   "kernel: xfrm %s %s response for flow %s",
+		   str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
+		   story, adstory);
 	return false;
 }
 
@@ -1153,8 +1151,8 @@ static bool siocethtool(const char *ifname, void *data, const char *action, stru
 			dbg("cannot offload to %s because SIOCETHTOOL %s failed: %s",
 				ifname, action, strerror(errno));
 		} else {
-			log_errno(logger, errno, "can't offload to %s because SIOCETHTOOL %s failed",
-				  ifname, action);
+			llog_error(logger, errno, "can't offload to %s because SIOCETHTOOL %s failed",
+				   ifname, action);
 		}
 		return false;
 	} else {
@@ -2071,9 +2069,7 @@ static bool netlink_get(int fd, struct logger *logger)
 			return false;
 
 		if (errno != EINTR) {
-			log_errno(logger, errno,
-				  "kernel: recvfrom() failed in netlink_get: errno(%d): %s",
-				  errno, strerror(errno));
+			llog_error(logger, errno, "kernel: recvfrom() failed in netlink_get");
 		}
 		return true;
 	} else if ((size_t)r < sizeof(rsp.n)) {
@@ -2344,14 +2340,14 @@ static bool qry_xfrm_mirgrate_support(struct nlmsghdr *hdr, struct logger *logge
 	int nl_fd = socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
 
 	if (nl_fd < 0) {
-		log_errno(logger, errno,
-			  "socket() in qry_xfrm_mirgrate_support()");
+		llog_error(logger, errno,
+			   "socket() in qry_xfrm_mirgrate_support()");
 		return false;
 	}
 
 	if (fcntl(nl_fd, F_SETFL, O_NONBLOCK) != 0) {
-		log_errno(logger, errno,
-			  "fcntl(O_NONBLOCK in qry_xfrm_mirgrate_support()");
+		llog_error(logger, errno,
+			   "fcntl(O_NONBLOCK in qry_xfrm_mirgrate_support()");
 		close(nl_fd);
 
 		return false;
@@ -2363,13 +2359,13 @@ static bool qry_xfrm_mirgrate_support(struct nlmsghdr *hdr, struct logger *logge
 		r = write(nl_fd, hdr, len);
 	} while (r < 0 && errno == EINTR);
 	if (r < 0) {
-		log_errno(logger, errno,
-			  "netlink write() xfrm_migrate_support lookup");
+		llog_error(logger, errno,
+			   "netlink write() xfrm_migrate_support lookup");
 		close(nl_fd);
 		return false;
 	} else if ((size_t)r != len) {
-		llog(RC_LOG_SERIOUS, logger,
-			    "ERROR: netlink write() xfrm_migrate_support message truncated: %zd instead of %zu",
+		llog_error(logger, 0/*no-errno*/,
+			   "netlink write() xfrm_migrate_support message truncated: %zd instead of %zu",
 			    r, len);
 		close(nl_fd);
 		return false;
@@ -2464,15 +2460,15 @@ static bool netlink_poke_ipsec_policy_hole(const struct iface_dev *ifd, int fd, 
 
 	policy.dir = XFRM_POLICY_IN;
 	if (setsockopt(fd, sol, opt, &policy, sizeof(policy)) < 0) {
-		log_errno(logger, errno,
-			  "setsockopt IP_XFRM_POLICY XFRM_POLICY_IN in process_raw_ifaces()");
+		llog_error(logger, errno,
+			   "setsockopt IP_XFRM_POLICY XFRM_POLICY_IN in process_raw_ifaces()");
 		return false;
 	}
 
 	policy.dir = XFRM_POLICY_OUT;
 	if (setsockopt(fd, sol, opt, &policy, sizeof(policy)) < 0) {
-		log_errno(logger, errno,
-			  "setsockopt IP_XFRM_POLICY XFRM_POLICY_OUT in process_raw_ifaces()");
+		llog_error(logger, errno,
+			   "setsockopt IP_XFRM_POLICY XFRM_POLICY_OUT in process_raw_ifaces()");
 		return false;
 	}
 

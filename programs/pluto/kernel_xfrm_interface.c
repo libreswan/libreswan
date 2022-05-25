@@ -110,8 +110,9 @@ static bool nl_query_small_resp(const struct nlmsghdr *req,
 				context, if_name);
 			/* pretend all is well */
 		} else {
-			log_errno(logger, errno,
-				  "in nl_query_small_resp() for %s() dev %s", context, if_name);
+			llog_error(logger, errno,
+				   "in nl_query_small_resp() for %s() dev %s",
+				   context, if_name);
 			passert(errno > 0);
 			unhappy = true;
 		}
@@ -122,8 +123,9 @@ static bool nl_query_small_resp(const struct nlmsghdr *req,
 	} else if (rsp.n.nlmsg_type == NLMSG_ERROR) {
 		/* The packet is an error packet: rsp.u.e.error is a negative errno value */
 		passert(rsp.u.e.error < 0);
-		log_errno(logger, -rsp.u.e.error,
-			  "NLMSG_ERROR in nl_query_small_resp() for %s() dev %s", context, if_name);
+		llog_error(logger, -rsp.u.e.error,
+			   "NLMSG_ERROR in nl_query_small_resp() for %s() dev %s",
+			   context, if_name);
 		unhappy = true;
 	} else {
 		/* ??? this treatment looks suspect */
@@ -175,8 +177,8 @@ static bool link_add_nl_msg(const char *if_name /*non-NULL*/,
 		/* e.g link id of the interface, eth0 */
 		uint32_t dev_link_id = if_nametoindex(dev_name);
 		if (dev_link_id == 0) {
-			log_errno(logger, errno,
-				  "cannot find interface index for device %s", dev_name);
+			llog_error(logger, errno,
+				   "cannot find interface index for device %s", dev_name);
 			return true;
 		}
 		nl_addattr32(&req->n, sizeof(req->data), IFLA_XFRM_LINK, dev_link_id);
@@ -197,9 +199,9 @@ static bool ip_link_set_up(const char *if_name, struct logger *logger)
 	req.i.ifi_flags |= IFF_UP;
 	req.i.ifi_index = if_nametoindex(if_name);
 	if (req.i.ifi_index == 0) {
-		log_errno(logger, errno,
-			  "link_set_up_nl() cannot find index of xfrm interface %s",
-			  if_name);
+		llog_error(logger, errno,
+			   "link_set_up_nl() cannot find index of xfrm interface %s",
+			   if_name);
 		return true;
 	}
 
@@ -212,8 +214,8 @@ static bool ip_link_del(const char *if_name, struct logger *logger)
 	struct nl_ifinfomsg_req req = init_nl_ifi(RTM_DELLINK, NLM_F_REQUEST);
 	req.i.ifi_index = if_nametoindex(if_name);
 	if (req.i.ifi_index == 0) {
-		log_errno(logger, errno, "ip_link_del() cannot find index of interface %s",
-			  if_name);
+		llog_error(logger, errno, "ip_link_del() cannot find index of interface %s",
+			   if_name);
 		return true;
 	}
 
@@ -230,8 +232,8 @@ static bool ip_link_add_xfrmi(const char *if_name /*non-NULL*/,
 	struct nl_ifinfomsg_req req;
 	zero(&req);
 	if (link_add_nl_msg(if_name, dev_name, if_id, &req, logger)) {
-		llog(RC_FATAL, logger,
-			    "ERROR: link_add_nl_msg() creating netlink message failed");
+		llog_error(logger, 0/*no-errno*/,
+			   "link_add_nl_msg() creating netlink message failed");
 		return true;
 	}
 
@@ -427,7 +429,8 @@ static bool find_xfrmi_interface(const char *if_name, /* optional */
 	int nl_fd = nl_send_query(&req.n, NETLINK_ROUTE, logger);
 
 	if (nl_fd < 0) {
-		llog(RC_LOG_SERIOUS, logger, "ERROR: write to netlink socket failed");
+		llog_error(logger, 0/*no-errno*/,
+			   "write to netlink socket failed");
 		return true;
 	}
 
@@ -439,7 +442,8 @@ static bool find_xfrmi_interface(const char *if_name, /* optional */
 	close(nl_fd);
 
 	if (len < 0) {
-		llog(RC_LOG_SERIOUS, logger, "ERROR: netlink_read_reply() failed in find_any_xfrmi_interface()");
+		llog_error(logger, 0/*no-errno*/,
+			   "netlink_read_reply() failed in find_any_xfrmi_interface()");
 		pfreeany(resp_msgbuf);
 		return true;
 	}
@@ -495,8 +499,8 @@ static err_t ipsec1_support_test(const char *if_name /*non-NULL*/,
 		return "xfrmi is not supported";
 	} else {
 		if (dev_exists_check(if_name)) {
-			log_errno(logger, errno,
-				  "FATAL cannot find device %s", if_name);
+			llog_error(logger, errno,
+				   "cannot find device %s", if_name);
 
 			/*
 			 * failed to create xfrmi device.
@@ -553,9 +557,9 @@ err_t xfrm_iface_supported(struct logger *logger)
 		if (if_id == 0 && (e == ENXIO || e == ENODEV)) {
 			err = ipsec1_support_test(if_name, lo, logger);
 		} else if (if_id == 0) {
-			log_errno(logger, e,
-				  "FATAL unexpected error in xfrm_iface_supported() while checking device %s",
-				  if_name);
+			llog_error(logger, e,
+				   "unexpected error in xfrm_iface_supported() while checking device %s",
+				   if_name);
 			xfrm_interface_support = -1;
 			err = "cannot decide xfrmi support. assumed no.";
 		} else {
@@ -673,8 +677,8 @@ bool add_xfrmi(struct connection *c, struct logger *logger)
 		/* device exists: match name, type xfrmi, and xfrm_if_id */
 		if (find_xfrmi_interface(c->xfrmi->name, c->xfrmi->if_id, logger)) {
 			/* found wrong device abort adding */
-			llog(RC_LOG_SERIOUS, logger,
-				    "ERROR device %s exist and do not match expected type xfrm or xfrm_if_id %u. check 'ip -d link show dev %s'", c->xfrmi->name, c->xfrmi->if_id, c->xfrmi->name);
+			llog_error(logger, 0/*no-errno*/,
+				   "device %s exist and do not match expected type xfrm or xfrm_if_id %u. check 'ip -d link show dev %s'", c->xfrmi->name, c->xfrmi->if_id, c->xfrmi->name);
 			return true;
 		}
 	}
@@ -735,8 +739,8 @@ void stale_xfrmi_interfaces(struct logger *logger)
 	if (errno == ENXIO || errno == ENODEV) {
 		dbg("no stale xfrmi interface '%s' found", if_name);
 	} else {
-		log_errno(logger, errno,
-			  "failed stale_xfrmi_interfaces() call if_nametoindex('%s')", if_name);
+		llog_error(logger, errno,
+			   "failed stale_xfrmi_interfaces() call if_nametoindex('%s')", if_name);
 		return;
 	}
 }

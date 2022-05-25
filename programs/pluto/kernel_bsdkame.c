@@ -628,13 +628,13 @@ static bool bsdkame_except_socket(int socketfd, int family, struct logger *logge
 	policy.sadb_x_policy_dir = IPSEC_DIR_INBOUND;
 	if (setsockopt(socketfd, level, optname, &policy,
 		       sizeof(policy)) == -1) {
-		log_errno(logger, errno, "bsdkame except socket setsockopt");
+		llog_error(logger, errno, "bsdkame except socket setsockopt");
 		return false;
 	}
 	policy.sadb_x_policy_dir = IPSEC_DIR_OUTBOUND;
 	if (setsockopt(socketfd, level, optname, &policy,
 		       sizeof(policy)) == -1) {
-		log_errno(logger, errno, "bsdkame except socket setsockopt");
+		llog_error(logger, errno, "bsdkame except socket setsockopt");
 		return false;
 	}
 	return true;
