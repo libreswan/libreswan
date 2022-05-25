@@ -398,15 +398,6 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd,
 		return NULL;
 	}
 
-	/* poke a hole for IKE messages in the IPsec layer */
-	if (kernel_ops->exceptsocket != NULL) {
-		if (!kernel_ops->exceptsocket(fd, AF_INET, logger)) {
-			/* already logged */
-			close(fd);
-			return NULL;
-		}
-	}
-
 	struct iface_endpoint *ifp =
 		alloc_iface_endpoint(fd, ifd, io,
 				     esp_encapsulation_enabled,

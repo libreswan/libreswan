@@ -2499,7 +2499,6 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.grp_sa = NULL,
 	.get_ipsec_spi = xfrm_get_ipsec_spi,
 	.del_ipsec_spi = xfrm_del_ipsec_spi,
-	.exceptsocket = NULL,
 	.migrate_sa_check = netlink_migrate_sa_check,
 	.migrate_ipsec_sa = xfrm_migrate_ipsec_sa,
 	.overlap_supported = false,

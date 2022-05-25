@@ -436,7 +436,6 @@ struct kernel_ops {
 			      const char *story,	/* often SAID string */
 			      struct logger *logger);
 
-	bool (*exceptsocket)(int socketfd, int family, struct logger *logger);
 	err_t (*migrate_sa_check)(struct logger *);
 	bool (*migrate_ipsec_sa)(struct child_sa *child);
 	void (*v6holes)(struct logger *logger);

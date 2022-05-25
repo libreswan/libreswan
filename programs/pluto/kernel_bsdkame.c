@@ -600,46 +600,6 @@ static bool bsdkame_del_ipsec_spi(ipsec_spi_t spi UNUSED,
 	return true;
 }
 
-static bool bsdkame_except_socket(int socketfd, int family, struct logger *logger)
-{
-	struct sadb_x_policy policy;
-	int level, optname;
-
-	switch (family) {
-	case AF_INET:
-		level = IPPROTO_IP;
-		optname = IP_IPSEC_POLICY;
-		break;
-#ifdef INET6
-	case AF_INET6:
-		level = IPPROTO_IPV6;
-		optname = IPV6_IPSEC_POLICY;
-		break;
-#endif
-	default:
-		llog(RC_LOG, logger, "unsupported address family (%d)", family);
-		return false;
-	}
-
-	zero(&policy);	/* OK: no pointer fields */
-	policy.sadb_x_policy_len = PFKEY_UNIT64(sizeof(policy));
-	policy.sadb_x_policy_exttype = SADB_X_EXT_POLICY;
-	policy.sadb_x_policy_type = IPSEC_POLICY_BYPASS;
-	policy.sadb_x_policy_dir = IPSEC_DIR_INBOUND;
-	if (setsockopt(socketfd, level, optname, &policy,
-		       sizeof(policy)) == -1) {
-		llog_error(logger, errno, "bsdkame except socket setsockopt");
-		return false;
-	}
-	policy.sadb_x_policy_dir = IPSEC_DIR_OUTBOUND;
-	if (setsockopt(socketfd, level, optname, &policy,
-		       sizeof(policy)) == -1) {
-		llog_error(logger, errno, "bsdkame except socket setsockopt");
-		return false;
-	}
-	return true;
-}
-
 static const char *bsdkame_protostack_names[] = { "bsdkame", "bsd", "kame", NULL, };
 
 const struct kernel_ops bsdkame_kernel_ops = {
@@ -658,7 +618,6 @@ const struct kernel_ops bsdkame_kernel_ops = {
 	.get_ipsec_spi = bsdkame_get_ipsec_spi,
 	.init = bsdkame_init_pfkey,
 	.shutdown = NULL,
-	.exceptsocket = bsdkame_except_socket,
 	.overlap_supported = false,
 	.sha2_truncbug_support = false,
 	.v6holes = NULL,
