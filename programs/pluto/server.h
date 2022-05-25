@@ -52,8 +52,9 @@ extern struct sockaddr_un info_addr;    /* address of control (info) socket */
 diag_t init_ctl_socket(struct logger *logger);
 extern void delete_ctl_socket(void);
 
-struct iface_endpoint *open_tcp_endpoint(struct iface_dev *local_dev, ip_endpoint remote_endpoint,
-					 struct logger *logger); /* TCP: terrible name? */
+struct iface_endpoint *connect_to_tcp_endpoint(struct iface_dev *local_dev,
+					       ip_endpoint remote_endpoint,
+					       struct logger *logger); /* TCP: terrible name? */
 
 extern bool listening;  /* should we pay attention to IKE messages? */
 extern bool pluto_listen_udp;

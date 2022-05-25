@@ -496,9 +496,9 @@ const struct iface_io iketcp_iface_io = {
  * sending the IKE-in-TCP magic word.
  */
 
-struct iface_endpoint *open_tcp_endpoint(struct iface_dev *local_dev,
-					 ip_endpoint remote_endpoint,
-					 struct logger *logger)
+struct iface_endpoint *connect_to_tcp_endpoint(struct iface_dev *local_dev,
+					       ip_endpoint remote_endpoint,
+					       struct logger *logger)
 {
 	dbg("TCP: opening socket");
 	const struct ip_info *afi = endpoint_type(&remote_endpoint);
