@@ -94,7 +94,7 @@ netbsdw #
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
-	current: 135(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	current: 124(bytes)	hard: 0(bytes)	soft: 0(bytes)
 	allocated: 2	hard: 0	soft: 0
 	sadb_seq=3 pid=PID refcnt=0
 192.1.2.45 192.1.2.23 
@@ -103,7 +103,7 @@ netbsdw #
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
-	current: 135(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	current: 124(bytes)	hard: 0(bytes)	soft: 0(bytes)
 	allocated: 2	hard: 0	soft: 0
 	sadb_seq=2 pid=PID refcnt=0
 192.1.2.45 192.1.2.23 
@@ -114,7 +114,7 @@ netbsdw #
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
-	current: 240(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	current: 224(bytes)	hard: 0(bytes)	soft: 0(bytes)
 	allocated: 2	hard: 0	soft: 0
 	sadb_seq=1 pid=PID refcnt=0
 192.1.2.23 192.1.2.45 
