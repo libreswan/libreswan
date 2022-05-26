@@ -166,7 +166,7 @@ int family;
 		break;
 	}
 
-	if ((so = socket(family, SOCK_DGRAM, 0)) < 0)
+	if ((so = socket(family, SOCK_DGRAM|SOCK_CLOEXEC, 0)) < 0)
 		err(1, "socket");
 
 	len = ipsec_get_policylen(policy);

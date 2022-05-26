@@ -500,7 +500,7 @@ struct iface_endpoint *open_tcp_endpoint(struct iface_dev *local_dev,
 					 struct logger *logger)
 {
 	dbg("TCP: opening socket");
-	int fd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP);
+	int fd = socket(AF_INET, SOCK_STREAM|SOCK_CLOEXEC, IPPROTO_TCP);
 	if (fd < 0) {
 		llog_error(logger, errno, "TCP: socket() failed");
 		return NULL;

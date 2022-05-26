@@ -27,17 +27,11 @@
 /* returns a file descriptor on success; -1 on error */
 int nl_send_query(const struct nlmsghdr *req, int protocol, struct logger *logger)
 {
-	int nl_fd = socket(AF_NETLINK, SOCK_DGRAM, protocol);
+	int nl_fd = socket(AF_NETLINK, SOCK_DGRAM|SOCK_CLOEXEC|SOCK_NONBLOCK, protocol);
 
 	if (nl_fd < 0) {
 		llog_error(logger, errno, "socket() in nl_send_query() protocol %d", protocol);
 		return nl_fd;	/* -1 */
-	}
-
-	if (fcntl(nl_fd, F_SETFL, O_NONBLOCK) != 0) {
-		llog_error(logger, errno, "fcntl(O_NONBLOCK) in nl_send_query() protocol %d", protocol);
-		close(nl_fd);
-		return -1;
 	}
 
 	size_t len = req->nlmsg_len;

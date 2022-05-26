@@ -1775,7 +1775,7 @@ pfkey_open(void)
 	int ret;
 	socklen_t len;
 
-	if ((so = socket(PF_KEY, SOCK_RAW, PF_KEY_V2)) < 0) {
+	if ((so = socket(PF_KEY, SOCK_RAW|SOCK_CLOEXEC, PF_KEY_V2)) < 0) {
 		__ipsec_set_strerror(strerror(errno));
 		return -1;
 	}

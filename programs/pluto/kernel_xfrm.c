@@ -2311,19 +2311,11 @@ static bool qry_xfrm_mirgrate_support(struct nlmsghdr *hdr, struct logger *logge
 	size_t len;
 	ssize_t r;
 	struct sockaddr_nl addr;
-	int nl_fd = socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
+	int nl_fd = socket(AF_NETLINK, SOCK_DGRAM|SOCK_CLOEXEC|SOCK_NONBLOCK, NETLINK_XFRM);
 
 	if (nl_fd < 0) {
 		llog_error(logger, errno,
 			   "socket() in qry_xfrm_mirgrate_support()");
-		return false;
-	}
-
-	if (fcntl(nl_fd, F_SETFL, O_NONBLOCK) != 0) {
-		llog_error(logger, errno,
-			   "fcntl(O_NONBLOCK in qry_xfrm_mirgrate_support()");
-		close(nl_fd);
-
 		return false;
 	}
 

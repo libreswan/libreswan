@@ -55,7 +55,7 @@ struct raw_iface *find_raw_ifaces(const struct ip_info *afi, struct logger *logg
 	int udp_sock = socket(afi->socket.domain, SOCK_DGRAM|SOCK_CLOEXEC, IPPROTO_UDP);
 	if (udp_sock == -1) {
 		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-			    "find %s interfaces failed calling socket(%s, SOCK_DGRAM, IPPROTO_UDP)",
+			    "find %s interfaces failed calling socket(%s, SOCK_DGRAM|SOCK_CLOEXEC, IPPROTO_UDP)",
 			    afi->ip_name, afi->socket.domain_name);
 	}
 
