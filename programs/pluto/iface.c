@@ -25,7 +25,16 @@
  *
  */
 
+#include <sys/types.h>
+#include <sys/socket.h>		/* MSG_ERRQUEUE if defined */
+
+#include <errno.h>
 #include <unistd.h>		/* for close() */
+#include <fcntl.h>
+
+#ifdef MSG_ERRQUEUE
+# include <netinet/in.h> 	/* for IP_RECVERR */
+#endif
 
 #include "defs.h"
 
@@ -250,24 +259,152 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd,
 					   bool float_nat_initiator,
 					   struct logger *logger)
 {
+#define BIND_ERROR(MSG, ...)						\
+	{								\
+		int e = errno;						\
+		endpoint_buf eb;					\
+		llog_error(logger, e,					\
+			   "bind %s %s endpoint %s failed, "MSG,	\
+			   ifd->id_rname, io->protocol->name,		\
+			   str_endpoint(&local_endpoint, &eb),		\
+			   ##__VA_ARGS__);				\
+	}
+
 	const struct ip_info *afi = address_type(&ifd->id_address);
 	ip_endpoint local_endpoint = endpoint_from_address_protocol_port(ifd->id_address,
 									 io->protocol, port);
 	if (esp_encapsulation_enabled &&
 	    io->protocol->encap_esp->encap_type == 0) {
-		endpoint_buf b;
-		llog(RC_LOG, logger,
-		     "%s encapsulation on %s interface %s %s is not configured (problem with kernel headers?)",
-		     io->protocol->encap_esp->name,
-		     io->protocol->name,
-		     ifd->id_rname, str_endpoint(&local_endpoint, &b));
+		errno = 0; /*no-errno*/
+		BIND_ERROR("%s encapsulation is not configured (problem with kernel headers?)",
+			   io->protocol->encap_esp->name);
 		return NULL;
 	}
 
-	int fd = io->bind_iface_endpoint(ifd, port, logger);
+	int fd = socket(afi->pf, io->socket_type, io->protocol->ipproto);
 	if (fd < 0) {
-		/* already logged? */
+		BIND_ERROR("socket(%s, SOCK_STREAM, %s)",
+			   afi->pf_name, io->protocol->name);
 		return NULL;
+	}
+
+	int fcntl_flags;
+	static const int on = true;     /* by-reference parameter; constant, we hope */
+
+	/* Set socket Nonblocking */
+	if ((fcntl_flags = fcntl(fd, F_GETFL)) >= 0) {
+		if (!(fcntl_flags & O_NONBLOCK)) {
+			fcntl_flags |= O_NONBLOCK;
+			if (fcntl(fd, F_SETFL, fcntl_flags) == -1) {
+				BIND_ERROR("fcntl(F_SETFL, O_NONBLOCK)");
+				/* non-fatal; stumble on */
+			}
+		}
+	}
+
+	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
+		BIND_ERROR("fcntl(F_SETFD, FD_CLOEXEC)");
+		close(fd);
+		return NULL;
+	}
+
+	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
+		       (const void *)&on, sizeof(on)) < 0) {
+		BIND_ERROR("setsockopt(SOL_SOCKET, SO_REUSEADDR)");
+		close(fd);
+		return NULL;
+	}
+
+#ifdef SO_PRIORITY
+	static const int so_prio = 6; /* rumored maximum priority, might be 7 on linux? */
+	if (setsockopt(fd, SOL_SOCKET, SO_PRIORITY, (const void *)&so_prio,
+		       sizeof(so_prio)) < 0) {
+		BIND_ERROR("setsockopt(SOL_SOCKET, SO_PRIORITY)");
+		/* non-fatal; stumble on */
+	}
+#endif
+
+	if (pluto_sock_bufsize != IKE_BUF_AUTO) {
+#if defined(linux)
+		/*
+		 * Override system maximum
+		 * Requires CAP_NET_ADMIN
+		 */
+		int so_rcv = SO_RCVBUFFORCE;
+		int so_snd = SO_SNDBUFFORCE;
+#else
+		int so_rcv = SO_RCVBUF;
+		int so_snd = SO_SNDBUF;
+#endif
+		if (setsockopt(fd, SOL_SOCKET, so_rcv, (const void *)&pluto_sock_bufsize,
+			       sizeof(pluto_sock_bufsize)) < 0) {
+			BIND_ERROR("setsockopt(SOL_SOCKET, SO_RCVBUFFORCE)");
+			/* non-fatal; stumble on */
+		}
+		if (setsockopt(fd, SOL_SOCKET, so_snd, (const void *)&pluto_sock_bufsize,
+			       sizeof(pluto_sock_bufsize)) < 0) {
+			BIND_ERROR("setsockopt(SOL_SOCKET, SO_SNDBUFFORCE)");
+			/* non-fatal; stumble on */
+		}
+	}
+
+	/* To improve error reporting.  See ip(7). */
+#if defined(IP_RECVERR) && defined(MSG_ERRQUEUE)
+	if (pluto_sock_errqueue) {
+		if (setsockopt(fd, SOL_IP, IP_RECVERR, (const void *)&on, sizeof(on)) < 0) {
+			BIND_ERROR("setsockopt(SOL_IP, IP_RECVERR)");
+			close(fd);
+			return NULL;
+		}
+	}
+#endif
+
+	/*
+	 * With IPv6, there is no fragmentation after it leaves our
+	 * interface.  PMTU discovery is mandatory but doesn't work
+	 * well with IKE (why?).  So we must set the IPV6_USE_MIN_MTU
+	 * option.
+	 *
+	 * See draft-ietf-ipngwg-rfc2292bis-01.txt 11.1
+	 */
+#ifdef IPV6_USE_MIN_MTU /* YUCK: not always defined */
+	if (afi == &ipv6_info &&
+	    setsockopt(fd, IPPROTO_IPV6, IPV6_USE_MIN_MTU,
+		       (const void *)&on, sizeof(on)) < 0) {
+		BIND_ERROR("setsockopt(IPPROTO_IPV6, IPV6_USE_MIN_MTU)");
+		close(fd);
+		return NULL;
+	}
+#endif
+
+	/*
+	 * NETKEY requires us to poke an IPsec policy hole that allows
+	 * IKE packets, unlike KLIPS which implicitly always allows
+	 * plaintext IKE.  This installs one IPsec policy per socket
+	 * but this function is called for each: IPv4 port 500 and
+	 * 4500 IPv6 port 500.
+	 */
+	if (kernel_ops->poke_ipsec_policy_hole != NULL &&
+	    !kernel_ops->poke_ipsec_policy_hole(fd, afi, logger)) {
+		/* already logged */
+		close(fd);
+		return NULL;
+	}
+
+	ip_sockaddr if_sa = sockaddr_from_endpoint(local_endpoint);
+	if (bind(fd, &if_sa.sa.sa, if_sa.len) < 0) {
+		BIND_ERROR("bind()");
+		close(fd);
+		return NULL;
+	}
+
+	/* poke a hole for IKE messages in the IPsec layer */
+	if (kernel_ops->exceptsocket != NULL) {
+		if (!kernel_ops->exceptsocket(fd, AF_INET, logger)) {
+			/* already logged */
+			close(fd);
+			return NULL;
+		}
 	}
 
 	struct iface_endpoint *ifp =
@@ -301,6 +438,7 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd,
 	     str_endpoint(&ifp->local_endpoint, &b));
 
 	return ifp;
+#undef BIND_ERROR
 }
 
 /*
