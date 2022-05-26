@@ -281,32 +281,14 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd,
 		return NULL;
 	}
 
-	int fd = socket(afi->pf, io->socket_type, io->protocol->ipproto);
+	int fd = socket(afi->pf, io->socket_type|SOCK_CLOEXEC|SOCK_NONBLOCK, io->protocol->ipproto);
 	if (fd < 0) {
 		BIND_ERROR("socket(%s, SOCK_STREAM, %s)",
 			   afi->pf_name, io->protocol->name);
 		return NULL;
 	}
 
-	int fcntl_flags;
 	static const int on = true;     /* by-reference parameter; constant, we hope */
-
-	/* Set socket Nonblocking */
-	if ((fcntl_flags = fcntl(fd, F_GETFL)) >= 0) {
-		if (!(fcntl_flags & O_NONBLOCK)) {
-			fcntl_flags |= O_NONBLOCK;
-			if (fcntl(fd, F_SETFL, fcntl_flags) == -1) {
-				BIND_ERROR("fcntl(F_SETFL, O_NONBLOCK)");
-				/* non-fatal; stumble on */
-			}
-		}
-	}
-
-	if (fcntl(fd, F_SETFD, FD_CLOEXEC) == -1) {
-		BIND_ERROR("fcntl(F_SETFD, FD_CLOEXEC)");
-		close(fd);
-		return NULL;
-	}
 
 	if (setsockopt(fd, SOL_SOCKET, SO_REUSEADDR,
 		       (const void *)&on, sizeof(on)) < 0) {
