@@ -69,7 +69,6 @@
 #endif
 
 #include "sysdep.h"
-#include "socketwrapper.h"
 #include "constants.h"
 #include "defs.h"
 #include "id.h"
@@ -206,19 +205,9 @@ static xfrm_address_t xfrm_from_address(const ip_address *addr)
 
 static void init_netlink_route_fd(struct logger *logger)
 {
-	nl_route_fd = safe_socket(AF_NETLINK, SOCK_RAW, NETLINK_ROUTE);
+	nl_route_fd = socket(AF_NETLINK, SOCK_RAW|SOCK_CLOEXEC|SOCK_NONBLOCK, NETLINK_ROUTE);
 	if (nl_route_fd < 0) {
 		fatal_errno(PLUTO_EXIT_FAIL, logger, errno, "socket()");
-	}
-
-	if (fcntl(nl_route_fd, F_SETFD, FD_CLOEXEC) != 0) {
-		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-			    "fcntl(FD_CLOEXEC) for bcast NETLINK_ROUTE");
-	}
-
-	if (fcntl(nl_route_fd, F_SETFL, O_NONBLOCK) != 0) {
-		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-			    "fcntl(O_NONBLOCK) for bcast NETLINK_ROUTE");
 	}
 
 	struct sockaddr_nl addr = {
@@ -254,32 +243,17 @@ static void init_netlink(struct logger *logger)
 
 	struct sockaddr_nl addr;
 
-	nl_send_fd = safe_socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
+	nl_send_fd = socket(AF_NETLINK, SOCK_DGRAM|SOCK_CLOEXEC, NETLINK_XFRM);
 
 	if (nl_send_fd < 0) {
 		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
 			    "socket() in init_netlink()");
 	}
 
-	if (fcntl(nl_send_fd, F_SETFD, FD_CLOEXEC) != 0) {
-		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-			    "fcntl(FD_CLOEXEC) in init_netlink()");
-	}
-
-	nl_xfrm_fd = safe_socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
+	nl_xfrm_fd = socket(AF_NETLINK, SOCK_DGRAM|SOCK_CLOEXEC|SOCK_NONBLOCK, NETLINK_XFRM);
 	if (nl_xfrm_fd < 0) {
 		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
 			    "socket() for bcast in init_netlink()");
-	}
-
-	if (fcntl(nl_xfrm_fd, F_SETFD, FD_CLOEXEC) != 0) {
-		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-			    "fcntl(FD_CLOEXEC) for bcast in init_netlink()");
-	}
-
-	if (fcntl(nl_xfrm_fd, F_SETFL, O_NONBLOCK) != 0) {
-		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-			    "fcntl(O_NONBLOCK) for bcast in init_netlink()");
 	}
 
 	addr.nl_family = AF_NETLINK;

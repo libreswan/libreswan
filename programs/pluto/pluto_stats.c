@@ -25,7 +25,6 @@
 #include <errno.h>
 
 #include "sysdep.h"
-#include "socketwrapper.h"
 #include "constants.h"
 #include "defs.h"
 #include "state.h"

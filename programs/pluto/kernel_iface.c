@@ -26,8 +26,8 @@
 
 #include <sys/ioctl.h>
 #include <net/if.h>
-
-#include "socketwrapper.h"		/* for safe_sock() */
+#include <errno.h>
+#include <unistd.h>
 
 #include "ip_info.h"
 
@@ -52,7 +52,7 @@ struct raw_iface *find_raw_ifaces(const struct ip_info *afi, struct logger *logg
 	dbg("finding raw interfaces of type %s", afi->ip_name);
 
 
-	int udp_sock = safe_socket(afi->pf, SOCK_DGRAM, IPPROTO_UDP);
+	int udp_sock = socket(afi->pf, SOCK_DGRAM|SOCK_CLOEXEC, IPPROTO_UDP);
 	if (udp_sock == -1) {
 		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
 			    "find %s interfaces failed calling socket(%s, SOCK_DGRAM, IPPROTO_UDP)",

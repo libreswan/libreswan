@@ -49,7 +49,6 @@
 
 #include "lswtool.h"
 #include "sysdep.h"
-#include "socketwrapper.h"
 #include "constants.h"
 #include "lswlog.h"
 #include "whack.h"
@@ -2745,7 +2744,7 @@ int main(int argc, char **argv)
 		exit(RC_WHACK_PROBLEM);
 	}
 
-	int sock = safe_socket(AF_UNIX, SOCK_STREAM, 0);
+	int sock = socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC, 0);
 	int exit_status = 0;
 	ssize_t len = wp.str_next - (unsigned char *)&msg;
 

@@ -52,7 +52,6 @@
 #include <event2/thread.h>
 
 #include "sysdep.h"
-#include "socketwrapper.h"
 #include "constants.h"
 #include "defs.h"
 #include "state.h"
@@ -125,13 +124,9 @@ struct sockaddr_un ctl_addr = {
 diag_t init_ctl_socket(struct logger *logger UNUSED/*maybe*/)
 {
 	delete_ctl_socket();    /* preventative medicine */
-	ctl_fd = safe_socket(AF_UNIX, SOCK_STREAM, 0);
+	ctl_fd = socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC, 0);
 	if (ctl_fd == -1) {
 		return diag_errno(errno, "could not create control socket"/*: */);
-	}
-
-	if (fcntl(ctl_fd, F_SETFD, FD_CLOEXEC) == -1) {
-		return diag_errno(errno, "could not fcntl FD+CLOEXEC control socket"/*: */);
 	}
 
 	/* to keep control socket secure, use umask */

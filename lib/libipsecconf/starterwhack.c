@@ -39,8 +39,6 @@
 #include "ipsecconf/confread.h"
 #include "ipsecconf/starterlog.h"
 
-#include "socketwrapper.h"
-
 #ifndef _LIBRESWAN_H
 #include <libreswan.h>	/* FIXME: ugly include lines */
 #include "constants.h"
@@ -231,7 +229,7 @@ static int send_whack_msg(struct whack_message *msg, char *ctlsocket)
 	len = wp.str_next - (unsigned char *)msg;
 
 	/* Connect to pluto ctl */
-	sock = safe_socket(AF_UNIX, SOCK_STREAM, 0);
+	sock = socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC, 0);
 	if (sock < 0) {
 		starter_log(LOG_LEVEL_ERR, "socket() failed: %s",
 			strerror(errno));

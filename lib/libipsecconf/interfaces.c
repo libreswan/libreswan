@@ -29,8 +29,6 @@
 #include "constants.h"
 #include "ip_endpoint.h"
 #include "ip_address.h"
-#include "socketwrapper.h"
-//#include "libreswan/ipsec_tunnel.h"
 #include "passert.h"
 #include "ipsecconf/interfaces.h"
 #include "ipsecconf/exec.h"
@@ -49,7 +47,7 @@ bool starter_iface_find(const char *iface, const struct ip_info *family,
 	if (iface == NULL)
 		return false;	/* ??? can this ever happen? */
 
-	int sock = safe_socket(family->af, SOCK_DGRAM, 0);
+	int sock = socket(family->af, SOCK_DGRAM|SOCK_CLOEXEC, 0);
 	if (sock < 0)
 		return false;
 
