@@ -76,12 +76,16 @@ struct ip_info {
 	unsigned ikev2_max_fragment_size;
 
 	/*
-	 * socket()
+	 * socket(domain, type, protocol)
 	 *
-	 * PF_INET or PF_INET6; yes same value as AF_* but never know
+	 * AKA protocol family (hence PF in PF_INET and PF_INET6).
+	 * The values are the same as AF_INET and AF_INET6, and Linux
+	 * documents those instead.
 	 */
-	int pf;
-	const char *pf_name;
+	struct {
+		int domain;
+		const char *domain_name;
+	} socket;
 
 	/*
 	 * Sockaddr.

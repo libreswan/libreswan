@@ -191,8 +191,10 @@ const struct ip_info ipv4_info = {
 	.ikev2_max_fragment_size = ISAKMP_V2_FRAG_MAXLEN_IPv4,
 
 	/* socket() */
-	.pf = PF_INET,
-	.pf_name = "PF_INET",
+	.socket = {
+		.domain = PF_INET,
+		.domain_name = "PF_INET",
+	},
 
 	/* sockaddr */
 	.af = AF_INET,
@@ -245,8 +247,10 @@ const struct ip_info ipv6_info = {
 	.ikev2_max_fragment_size = ISAKMP_V2_FRAG_MAXLEN_IPv6,
 
 	/* socket() */
-	.pf = PF_INET6,
-	.pf_name = "PF_INET6",
+	.socket = {
+		.domain = PF_INET6,
+		.domain_name = "PF_INET6",
+	},
 
 	/* sockaddr */
 	.af = AF_INET6,
