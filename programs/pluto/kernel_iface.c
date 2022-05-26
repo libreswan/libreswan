@@ -94,13 +94,15 @@ struct raw_iface *find_raw_ifaces(const struct ip_info *afi, struct logger *logg
 	 *
 	 * Tricky: num is a static so that we won't have to start from
 	 * 64 in subsequent calls to find_raw_ifaces4.
+	 *
+	 * See netdevice(7) (linux) or netintro(4) (BSD).
 	 */
 	static volatile int num = 64; /* not very thread safe */
 	struct ifconf ifconf = { .ifc_len = 0, };
 	void *buf = NULL;	/* for list of interfaces -- arbitrary limit */
 	for (; num < (1024 * 1024); num *= 2) {
-		/* Get num local interfaces.  See netdevice(7). */
 		int len = num * sizeof(struct ifreq);
+		dbg("  allocated %d buffer for SIOCGIFCONF", len);
 		realloc_bytes(&buf, ifconf.ifc_len, len, "ifreq");
 
 		ifconf = (struct ifconf) {
@@ -121,18 +123,38 @@ struct raw_iface *find_raw_ifaces(const struct ip_info *afi, struct logger *logg
 	}
 
 	unsigned nr_req = (ifconf.ifc_len / sizeof(struct ifreq));
-	dbg("ioctl(IOCGIFCONF) returned %u %s interfaces", nr_req, afi->ip_name);
+	dbg("  ioctl(IOCGIFCONF) returned %u %s interfaces", nr_req, afi->ip_name);
 
 	/*
 	 * Add an entry to rifaces for each interesting interface.
 	 */
 	struct raw_iface *rifaces = NULL;
-	for (const struct ifreq *ifr = ifconf.ifc_req; ifr < ifconf.ifc_req + nr_req; ifr++) {
+	const void *ifrp = buf;
+	while (ifrp < buf + ifconf.ifc_len) {
 
-		/* build a NUL-terminated copy of the rname field */
+		/*
+		 * Extract the contents.
+		 *
+		 * For ifname, build a NUL-terminated copy of the
+		 * rname field.
+		 *
+		 * And save the pointer into the address.
+		 */
+		const struct ifreq *ifr = ifrp;
 		char ifname[IFNAMSIZ + 1];
 		memcpy(ifname, ifr->ifr_name, IFNAMSIZ);
 		ifname[IFNAMSIZ] = '\0';
+
+		/*
+		 * Advance the pointer.  Do it now before any of the
+		 * continue statements.  Thanks, but no thanks,
+		 * FreeBSD!!!
+		 */
+#ifdef _SIZEOF_ADDR_IFREQ
+		ifrp += _SIZEOF_ADDR_IFREQ(*ifr);
+#else
+		ifrp += sizeof(struct ifreq);
+#endif
 
 		/* ignore all but AF_INET interfaces */
 		if (ifr->ifr_addr.sa_family != afi->af) {
@@ -142,7 +164,8 @@ struct raw_iface *find_raw_ifaces(const struct ip_info *afi, struct logger *logg
 		}
 
 		ip_address addr;
-		err_t e = sockaddr_to_address_port(&ifr->ifr_addr, sizeof(ifr->ifr_ifru),
+		err_t e = sockaddr_to_address_port(&ifr->ifr_addr,
+						   ifrp - (const void*)&ifr->ifr_addr,
 						   &addr, NULL/*port*/);
 		if (e != NULL) {
 			dbg("  ignoring %s interface %s: %s",
