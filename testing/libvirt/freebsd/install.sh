@@ -15,3 +15,4 @@ pkg install -y ldns
 pkg install -y xmlto
 pkg install -y bash
 pkg install -y strongswan
+pkg install -y fping
