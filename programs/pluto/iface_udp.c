@@ -279,7 +279,10 @@ static void udp_cleanup(struct iface_endpoint *ifp)
 
 const struct iface_io udp_iface_io = {
 	.send_keepalive = true,
-	.socket_type = SOCK_DGRAM,
+	.socket = {
+		.type = SOCK_DGRAM,
+		.type_name = "SOCK_DGRAM",
+	},
 	.protocol = &ip_protocol_udp,
 	.read_packet = udp_read_packet,
 	.write_packet = udp_write_packet,

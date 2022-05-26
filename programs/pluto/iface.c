@@ -281,10 +281,10 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd,
 		return NULL;
 	}
 
-	int fd = socket(afi->pf, io->socket_type|SOCK_CLOEXEC|SOCK_NONBLOCK, io->protocol->ipproto);
+	int fd = socket(afi->pf, io->socket.type|SOCK_CLOEXEC|SOCK_NONBLOCK, io->protocol->ipproto);
 	if (fd < 0) {
-		BIND_ERROR("socket(%s, SOCK_STREAM, %s)",
-			   afi->pf_name, io->protocol->name);
+		BIND_ERROR("socket(%s, %s|SOCK_CLOEXEC|SOCK_NONBLOCK, %s)",
+			   afi->pf_name, io->socket.type_name, io->protocol->name);
 		return NULL;
 	}
 

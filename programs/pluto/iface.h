@@ -40,7 +40,10 @@ struct iface_packet {
 
 struct iface_io {
 	bool send_keepalive;
-	int socket_type;
+	struct {
+		int type;
+		const char *type_name;
+	} socket;
 	const struct ip_protocol *protocol;
 	struct msg_digest *(*read_packet)(struct iface_endpoint **ifp,
 					  struct logger *logger);
@@ -50,7 +53,6 @@ struct iface_io {
 				struct logger *logger);
 	void (*cleanup)(struct iface_endpoint *ifp);
 	void (*listen)(struct iface_endpoint *fip, struct logger *logger);
-	void (*socket)();
 	int (*bind_iface_endpoint)(const char *iface, ip_endpoint endpoint, struct logger *logger);
 	bool (*enable_esp_encap)(const struct iface_endpoint *ifp, struct logger *logger);
 };

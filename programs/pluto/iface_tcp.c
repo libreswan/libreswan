@@ -477,7 +477,10 @@ static void iketcp_listen(struct iface_endpoint *ifp,
 
 const struct iface_io iketcp_iface_io = {
 	.protocol = &ip_protocol_tcp,
-	.socket_type = SOCK_STREAM,
+	.socket = {
+		.type = SOCK_STREAM,
+		.type_name = "SOCK_STREAM",
+	},
 	.send_keepalive = false,
 	.read_packet = iketcp_read_packet,
 	.write_packet = iketcp_write_packet,
