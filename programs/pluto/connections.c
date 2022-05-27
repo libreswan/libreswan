@@ -114,7 +114,6 @@ static void hash_connection(struct connection *c)
 
 struct connection *conn_by_name(const char *nm, bool no_inst)
 {
-	dbg("FOR_EACH_CONNECTION_... in %s", __func__);
 	struct connection_filter cq = {
 		.name = nm,
 		.where = HERE,
