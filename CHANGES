@@ -2,6 +2,8 @@
 See also https://libreswan.org/
 
 v4.8 (unreleased)
+* FreeBSD: fix code finding interfaces; github/728 [Andrew]
+* FreeBSD: build using GCC not LLVM; freebsd/264288 [Andrew]
 
 v4.7 (May 24, 2022)
 * IKEv2: EAPTLS support [Timo Teräs / Andrew]
