@@ -135,6 +135,9 @@ static int ocsp_cache_max_age = OCSP_DEFAULT_CACHE_MAX_AGE;
 static char *pluto_lock_filename = NULL;
 static bool pluto_lock_created = false;
 
+/* Overridden by virtual_private= in ipsec.conf */
+static char *virtual_private = NULL;
+
 void free_pluto_main(void)
 {
 	/* Some values can be NULL if not specified as pluto argument */
@@ -152,6 +155,7 @@ void free_pluto_main(void)
 	pfreeany(pluto_dnssec_trusted);
 	pfreeany(rundir);
 	free_global_redirect_dests();
+	pfreeany(virtual_private);
 }
 
 /* string naming compile-time options that have interop implications */
@@ -349,14 +353,21 @@ static struct starter_config *read_cfg_file(char *configfile, long longindex, st
  * Values passed in are expected to have been allocated using our
  * own functions.
  */
-static void set_cfg_string(char **target, char *value)
+
+static void replace_value(char **target, const char *value)
+{
+	pfreeany(*target);
+	*target = clone_str(value, __func__);
+}
+
+static void replace_when_cfg_setup(char **target, const struct starter_config *cfg,
+				   enum keyword_string_config_field field)
 {
 	/* Do nothing if value is unset. */
+	const char *value = cfg->setup.strings[field];
 	if (value == NULL || *value == '\0')
 		return;
-
-	/* Don't free previous target, it might be statically set. */
-	*target = clone_str(value, "(ignore) set_cfg_string item");
+	replace_value(target, value);
 }
 
 /*
@@ -641,20 +652,16 @@ static void usage(FILE *stream)
 #ifdef USE_DNSSEC
 static void set_dnssec_file_names (struct starter_config *cfg)
 {
+	/*
+	 * The default config value is DEFAULT_DNSSEC_ROOTKEY_FILE,
+	 * and not NULL, so always replace; but only with something
+	 * non empty.
+	 */
+	pfreeany(pluto_dnssec_rootfile);
 	if (cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE][0] != '\0') {
-		pfreeany(pluto_dnssec_rootfile);
-		set_cfg_string(&pluto_dnssec_rootfile,
-				cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE]);
-	} else {
-		/* unset the global one config file unset it */
-		pfreeany(pluto_dnssec_rootfile);
-		pluto_dnssec_rootfile = NULL;
+		pluto_dnssec_rootfile = clone_str(cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE], __func__);
 	}
-	if (cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS] != NULL &&
-			cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS][0] != '\0') {
-		set_cfg_string(&pluto_dnssec_trusted,
-				cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS]);
-	}
+	replace_when_cfg_setup(&pluto_dnssec_trusted, cfg, KSF_PLUTO_DNSSEC_ANCHORS);
 }
 #endif
 
@@ -727,9 +734,6 @@ int main(int argc, char **argv)
 	pluto_lock_filename = clone_str(DEFAULT_RUNDIR "/pluto.pid", "lock file");
 
 	deltatime_t keep_alive = DELTATIME_INIT(0);
-
-	/* Overridden by virtual_private= in ipsec.conf */
-	char *virtual_private = NULL;
 
 	/* handle arguments */
 	for (;; ) {
@@ -867,20 +871,28 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'g':	/* --logfile */
-			pluto_log_file = clone_str(optarg, "pluto_log_file");
+			replace_value(&pluto_log_file, optarg);
 			log_to_file_desired = true;
 			continue;
+
 #ifdef USE_DNSSEC
 		case OPT_DNSSEC_ROOTKEY_FILE:	/* --dnssec-rootkey-file */
+			/*
+			 * The default config value is
+			 * DEFAULT_DNSSEC_ROOTKEY_FILE, and not NULL,
+			 * so always replace; but only with something
+			 * non empty.
+			 */
+			pfreeany(pluto_dnssec_rootfile);
 			if (optarg[0] != '\0') {
-				pfree(pluto_dnssec_rootfile);
-				pluto_dnssec_rootfile = clone_str(optarg,
-						"dnssec_rootkey_file");
+				pluto_dnssec_rootfile = clone_str(optarg, "dnssec-rootkey-file");
 			}
 			continue;
+#endif  /* USE_DNSSEC */
 
+#ifdef USE_DNSSEC
 		case OPT_DNSSEC_TRUSTED:	/* --dnssec-trusted */
-			pluto_dnssec_trusted = clone_str(optarg, "pluto_dnssec_trusted");
+			replace_value(&pluto_dnssec_trusted, optarg);
 			continue;
 #endif  /* USE_DNSSEC */
 
@@ -923,12 +935,12 @@ int main(int argc, char **argv)
 				 */
 				llog(RC_LOG, logger,
 					    "invalid listen argument ignored: %s\n", e);
-			} else {
-				pluto_listen = clone_str(optarg, "pluto_listen");
-				llog(RC_LOG, logger,
-					    "bind() will be filtered for %s\n",
-					    pluto_listen);
+				continue;
 			}
+
+			replace_value(&pluto_listen, optarg);
+			llog(RC_LOG, logger,
+			     "bind() will be filtered for %s", pluto_listen);
 			continue;
 		}
 
@@ -1010,11 +1022,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'Y':
-			ocsp_uri = clone_str(optarg, "ocsp_uri");
+			replace_value(&ocsp_uri, optarg);
 			continue;
 
 		case 'J':
-			ocsp_trust_name = clone_str(optarg, "ocsp_trust_name");
+			replace_value(&ocsp_trust_name, optarg);
 			continue;
 
 		case 'T':	/* --ocsp_timeout <seconds> */
@@ -1186,30 +1198,29 @@ int main(int argc, char **argv)
 			continue;
 
 		case '6':	/* --virtual-private */
-			virtual_private = clone_str(optarg, "virtual_private");
+			replace_value(&virtual_private, optarg);
 			continue;
 
 		case 'z':	/* --config */
 		{
 			/*
-			 * Config struct to variables mapper. This will
-			 * overwrite all previously set options. Keep this
-			 * in the same order as long_opts[] is.
+			 * Config struct to variables mapper.  This
+			 * will overwrite all previously set options.
+			 * Keep this in the same order as long_opts[]
+			 * is.
 			 */
 			pfree(conffile);
 			conffile = clone_str(optarg, "conffile via getopt");
 			/* may not return */
 			struct starter_config *cfg = read_cfg_file(conffile, longindex, logger);
 
-			/* leak */
-			set_cfg_string(&pluto_log_file,
-				       cfg->setup.strings[KSF_LOGFILE]);
+			replace_when_cfg_setup(&pluto_log_file, cfg, KSF_LOGFILE);
+			if (pluto_log_file != NULL)
+				log_to_syslog = false;
 #ifdef USE_DNSSEC
 			set_dnssec_file_names(cfg);
 #endif
 
-			if (pluto_log_file != NULL)
-				log_to_syslog = false;
 			/* plutofork= no longer supported via config file */
 			log_param.log_with_timestamp = cfg->setup.options[KBF_LOGTIME];
 			log_append = cfg->setup.options[KBF_LOGAPPEND];
@@ -1248,10 +1259,8 @@ int main(int argc, char **argv)
 			ocsp_cache_min_age = cfg->setup.options[KBF_OCSP_CACHE_MIN_AGE_MS] / 1000;
 			ocsp_cache_max_age = cfg->setup.options[KBF_OCSP_CACHE_MAX_AGE_MS] / 1000;
 
-			set_cfg_string(&ocsp_uri,
-				       cfg->setup.strings[KSF_OCSP_URI]);
-			set_cfg_string(&ocsp_trust_name,
-				       cfg->setup.strings[KSF_OCSP_TRUSTNAME]);
+			replace_when_cfg_setup(&ocsp_uri, cfg, KSF_OCSP_URI);
+			replace_when_cfg_setup(&ocsp_trust_name, cfg, KSF_OCSP_TRUSTNAME);
 
 			char *tmp_global_redirect = cfg->setup.strings[KSF_GLOBAL_REDIRECT];
 			if (tmp_global_redirect == NULL || streq(tmp_global_redirect, "no")) {
@@ -1274,12 +1283,11 @@ int main(int argc, char **argv)
 			do_dnssec = false;
 #endif
 			/*
-			 * We don't check interfaces= here because that part
-			 * has been dealt with in _stackmanager before we
-			 * started
+			 * We don't check interfaces= here because
+			 * that part has been dealt with in
+			 * _stackmanager before we started.
 			 */
-			set_cfg_string(&pluto_listen,
-				       cfg->setup.strings[KSF_LISTEN]);
+			replace_when_cfg_setup(&pluto_listen, cfg, KSF_LISTEN);
 
 			/* ike-socket-bufsize= */
 			pluto_sock_bufsize = cfg->setup.options[KBF_IKEBUF];
@@ -1352,8 +1360,7 @@ int main(int argc, char **argv)
 			pluto_nss_seedbits = cfg->setup.options[KBF_SEEDBITS];
 			keep_alive = deltatime(cfg->setup.options[KBF_KEEPALIVE]);
 
-			set_cfg_string(&virtual_private,
-				       cfg->setup.strings[KSF_VIRTUALPRIVATE]);
+			replace_when_cfg_setup(&virtual_private, cfg, KSF_VIRTUALPRIVATE);
 
 			set_global_redirect_dests(cfg->setup.strings[KSF_GLOBAL_REDIRECT_TO]);
 
