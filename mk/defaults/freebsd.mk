@@ -2,6 +2,10 @@ BSD_VARIANT=freebsd
 # sketch out pkgsrc
 PKG_BASE ?= /usr/local
 
+# See: https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=264288
+# See: https://github.com/libreswan/libreswan/issues/735
+CC=gcc
+
 USERLAND_CFLAGS += -DHAS_SUN_LEN
 USERLAND_CFLAGS += -DNEED_SIN_LEN
 
