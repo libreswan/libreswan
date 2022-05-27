@@ -16,3 +16,5 @@ pkg install -y xmlto
 pkg install -y bash
 pkg install -y strongswan
 pkg install -y fping
+pkg install -y gdb
+pkg install -y gcc
