@@ -273,7 +273,7 @@ ipsec_dump_ipsecrequest(char *buf, size_t len, struct sadb_x_ipsecrequest *xisr,
     size_t bound /* boundary */, int withports)
 {
 	const char *proto, *mode, *level;
-	char abuf[NI_MAXHOST * 2 + 2];
+	char abuf[(NI_MAXHOST + NI_MAXSERV + sizeof("[]")) * 2 + sizeof("-")];
 
 	if (xisr->sadb_x_ipsecrequest_len > bound) {
 		__ipsec_errcode = EIPSEC_INVAL_PROTO;
@@ -368,7 +368,8 @@ static int
 set_addresses(char *buf, size_t len, struct sockaddr *sa1, struct sockaddr *sa2,
     int withports)
 {
-	char tmp1[NI_MAXHOST], tmp2[NI_MAXHOST];
+	char tmp1[NI_MAXHOST + NI_MAXSERV + sizeof("[]")];
+	char tmp2[NI_MAXHOST + NI_MAXSERV + sizeof("[]")];
 
 	if (set_address(tmp1, sizeof(tmp1), sa1, withports) == NULL ||
 	    set_address(tmp2, sizeof(tmp2), sa2, withports) == NULL)
