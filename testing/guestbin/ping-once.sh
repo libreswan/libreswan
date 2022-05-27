@@ -98,15 +98,29 @@ fi
 
 # use a heuristic to figure out ping vs ping6
 
-case "$@" in
-    *:* )
+case $(uname -s) in
+    *BSD )
 	ping=fping
+	;;
+    Linux )
+	case "$@" in
+	    *:* )
+		ping=fping
+		;;
+	    * )
+		ping=ping
+		;;
+	esac
+    ;;
+esac
+
+case ${ping} in
+    fping )
 	interface=${interface:+--src ${interface}}
 	timeout=" --timeout ${wait}s"
 	size=${size:+--size ${size}}
 	;;
-    * )
-	ping=ping
+    ping )
 	interface=${interface:+-I ${interface}}
 	# To prevent more than one packet going out, specify a ping
 	# <interval> greater than the wait <deadline>.
