@@ -1012,22 +1012,29 @@ $(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
 	touch $@
 
 ##
-## Install libreswan into the build.
+## Install libreswan into the build domain.
 ##
 
-$(patsubst %, kvm-%-install, $(KVM_PLATFORM)): \
+# some rules are overwritten below
+KVM_INSTALL_PLATFORM += $(filter-out fedora openbsd, $(KVM_PLATFORM))
+ifneq ($(KVM_INSTALL_RPM),true)
+KVM_INSTALL_PLATFORM += fedora
+endif
+#KVM_INSTALL_PLATFORM += openbsd -- not working
+
+$(patsubst %, kvm-%-install, $(KVM_INSTALL_PLATFORM)): \
 kvm-%-install: $(KVM_POOLDIR_PREFIX)%
 	$(KVMSH) $(KVMSH_FLAGS) \
 		--chdir /source \
 		$(notdir $<) \
 		-- \
 		gmake install-base $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS)
-	$(KVMSH) --shutdown $(notdir $<)
 
 $(patsubst %, kvm-install-%, $(KVM_PLATFORM)): \
 kvm-install-%:
 	$(MAKE) $(patsubst %, kvm-undefine-%, $(call add-kvm-prefixes, $(KVM_$($*)_HOST_NAMES)))
 	$(MAKE) kvm-$*-install
+	$(KVMSH) --shutdown $(KVM_FIRST_PREFIX)$*
 	$(MAKE) $(call add-kvm-localdir-prefixes, $(KVM_$($*)_HOST_NAMES))
 
 $(patsubst %, kvm-uninstall-%, $(KVM_PLATFORM)): \
@@ -1177,14 +1184,19 @@ kvm-rpm: $(KVM_POOLDIR_PREFIX)fedora
 			-ba $(RPM_BUILD_CLEAN) \
 			rpmbuild/SPECS/libreswan-testing.spec
 
-.PHONY: kvm-install-rpm
-kvm-install-rpm: $(KVM_POOLDIR_PREFIX)fedora
+ifeq ($(KVM_INSTALL_RPM), true)
+.PHONY: kvm-fedora-install
+kvm-fedora-install: $(KVM_POOLDIR_PREFIX)fedora
 	rm -fr rpmbuild/*RPMS
 	$(MAKE) kvm-rpm
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(notdir $<) 'rpm -aq | grep libreswan && rpm -e $$(rpm -aq | grep libreswan) || true'
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(notdir $<) 'rpm -i /source/rpmbuild/RPMS/x86_64/libreswan*rpm'
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(notdir $<) 'restorecon /usr/local/sbin /usr/local/libexec/ipsec -Rv'
-	$(KVMSH) --shutdown $(KVM_KEYS_DOMAIN)
+endif
+
+.PHONY: kvm-openbsd-install
+kvm-openbsd-install:  $(KVM_POOLDIR_PREFIX)openbsd
+	@echo install not implemented on openbsd
 
 #
 # kvm-install target
@@ -1196,16 +1208,8 @@ kvm-install-rpm: $(KVM_POOLDIR_PREFIX)fedora
 # is booted, this is done using a series of sub-makes (without this,
 # things barf because the build domain things its disk is in use).
 
-KVM_INSTALL_TARGETS += $(foreach os, $(filter-out fedora openbsd, $(KVM_OS)), kvm-install-$(os))
-ifeq ($(KVM_INSTALL_RPM), true)
-KVM_INSTALL_TARGETS += kvm-install-rpm
-else
-KVM_INSTALL_TARGETS += kvm-install-fedora
-endif
-
 .PHONY: kvm-install
-kvm-install:
-	$(MAKE) $(KVM_INSTALL_TARGETS)
+kvm-install: $(foreach os, $(KVM_OS), kvm-install-$(os))
 	$(MAKE) $(KVM_KEYS)
 
 
