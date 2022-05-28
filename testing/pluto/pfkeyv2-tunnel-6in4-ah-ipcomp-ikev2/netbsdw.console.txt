@@ -9,6 +9,8 @@ Redirecting to: [initsystem]
 Initializing NSS database
 Starting pluto.
 netbsdw #
+ ../../guestbin/wait-until-pluto-started
+netbsdw #
  ipsec auto --add eastnet-westnet-ikev2
 002 "eastnet-westnet-ikev2": kernel interface does not support ESN so disabling
 002 "eastnet-westnet-ikev2": added IKEv2 connection
@@ -47,13 +49,13 @@ netbsdw #
 192.1.2.23 192.1.2.45 
 	ah mode=any spi=SPISPI(0xSPISPI) reqid=16388(0x00004004)
 	A: hmac-sha1 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
-	seq=0x00000000 replay=64 flags=0x00000000 state=mature 
+	seq=0x00000001 replay=64 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
-	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
-	allocated: 0	hard: 0	soft: 0
-	sadb_seq=7 pid=PID refcnt=0
+	current: 57(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 1	hard: 0	soft: 0
+	sadb_seq=3 pid=PID refcnt=0
 192.1.2.45 192.1.2.23 
 	ipcomp mode=any spi=SPISPI(0xSPISPI) reqid=16390(0x00004006)
 	C: deflate 	seq=0x00000000 replay=0 flags=0x00000000 state=mature 
@@ -62,7 +64,7 @@ netbsdw #
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
 	current: 57(bytes)	hard: 0(bytes)	soft: 0(bytes)
 	allocated: 1	hard: 0	soft: 0
-	sadb_seq=5 pid=PID refcnt=0
+	sadb_seq=2 pid=PID refcnt=0
 192.1.2.45 192.1.2.23 
 	ah mode=any spi=SPISPI(0xSPISPI) reqid=16388(0x00004004)
 	A: hmac-sha1 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
@@ -72,16 +74,16 @@ netbsdw #
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
 	current: 81(bytes)	hard: 0(bytes)	soft: 0(bytes)
 	allocated: 1	hard: 0	soft: 0
-	sadb_seq=3 pid=PID refcnt=0
+	sadb_seq=1 pid=PID refcnt=0
 192.1.2.23 192.1.2.45 
 	ipcomp mode=any spi=SPISPI(0xSPISPI) reqid=16390(0x00004006)
 	C: deflate 	seq=0x00000000 replay=0 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
-	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
-	allocated: 0	hard: 0	soft: 0
-	sadb_seq=1 pid=PID refcnt=0
+	current: 124(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 1	hard: 0	soft: 0
+	sadb_seq=0 pid=PID refcnt=0
 netbsdw #
  ../../guestbin/ping-once.sh --medium --up -I 2001:db8:0:1::254 2001:db8:0:2::254
 up
@@ -90,41 +92,41 @@ netbsdw #
 192.1.2.23 192.1.2.45 
 	ah mode=any spi=SPISPI(0xSPISPI) reqid=16388(0x00004004)
 	A: hmac-sha1 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
-	seq=0x00000000 replay=64 flags=0x00000000 state=mature 
+	seq=0x00000002 replay=64 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
-	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
-	allocated: 0	hard: 0	soft: 0
-	sadb_seq=7 pid=PID refcnt=0
+	current: 121(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 2	hard: 0	soft: 0
+	sadb_seq=3 pid=PID refcnt=0
 192.1.2.45 192.1.2.23 
 	ipcomp mode=any spi=SPISPI(0xSPISPI) reqid=16390(0x00004006)
 	C: deflate 	seq=0x00000000 replay=0 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
-	current: 57(bytes)	hard: 0(bytes)	soft: 0(bytes)
-	allocated: 1	hard: 0	soft: 0
-	sadb_seq=5 pid=PID refcnt=0
+	current: 121(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 2	hard: 0	soft: 0
+	sadb_seq=2 pid=PID refcnt=0
 192.1.2.45 192.1.2.23 
 	ah mode=any spi=SPISPI(0xSPISPI) reqid=16388(0x00004004)
 	A: hmac-sha1 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
-	seq=0x00000001 replay=64 flags=0x00000000 state=mature 
+	seq=0x00000002 replay=64 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
-	current: 81(bytes)	hard: 0(bytes)	soft: 0(bytes)
-	allocated: 1	hard: 0	soft: 0
-	sadb_seq=3 pid=PID refcnt=0
+	current: 169(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 2	hard: 0	soft: 0
+	sadb_seq=1 pid=PID refcnt=0
 192.1.2.23 192.1.2.45 
 	ipcomp mode=any spi=SPISPI(0xSPISPI) reqid=16390(0x00004006)
 	C: deflate 	seq=0x00000000 replay=0 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
-	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
-	allocated: 0	hard: 0	soft: 0
-	sadb_seq=1 pid=PID refcnt=0
+	current: 1192(bytes)	hard: 0(bytes)	soft: 0(bytes)
+	allocated: 2	hard: 0	soft: 0
+	sadb_seq=0 pid=PID refcnt=0
 netbsdw #
  dmesg | grep ipsec
 netbsdw #
