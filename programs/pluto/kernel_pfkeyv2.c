@@ -872,7 +872,7 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 }
 
 static bool pfkeyv2_raw_policy(enum kernel_policy_op op,
-			       enum expect_kernel_policy what_about_inbound UNUSED,
+			       enum expect_kernel_policy expect_kernel_policy,
 			       const ip_selector *src_client,
 			       const ip_selector *dst_client,
 			       enum shunt_policy shunt_policy,
@@ -943,8 +943,15 @@ static bool pfkeyv2_raw_policy(enum kernel_policy_op op,
 
 	struct inbuf resp;
 	if (!msg_sendrecv(&req, base, &resp)) {
-		llog_pexpect(logger, HERE, "receiving");
-		return false;
+		switch (expect_kernel_policy) {
+		case IGNORE_KERNEL_POLICY_MISSING:
+		case EXPECT_NO_INBOUND:
+			dbg("Ignoring pfkey error");
+			break;
+		case EXPECT_KERNEL_POLICY_OK:
+			llog_pexpect(logger, HERE, "receiving");
+			return false;
+		}
 	}
 
 	return true;
