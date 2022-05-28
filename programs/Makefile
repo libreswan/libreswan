@@ -1,7 +1,7 @@
 # Copyright (C) 1998, 1999  Henry Spencer.
 # Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
 # Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
-# Copyright (C) 2015,2017 Andrew Cagney
+# Copyright (C) 2015,2017,2022 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -28,7 +28,6 @@ SUBDIRS += whack
 SUBDIRS += _import_crl
 SUBDIRS += _plutorun
 SUBDIRS += _secretcensor
-SUBDIRS += _stackmanager
 SUBDIRS += _unbound-hook
 SUBDIRS += _updown
 SUBDIRS += addconn
@@ -54,6 +53,10 @@ endif
 
 ifeq ($(USE_XFRM),true)
 SUBDIRS +=  _updown.xfrm
+endif
+
+ifneq ($(LINUX_VARIANT),)
+SUBDIRS += _stackmanager
 endif
 
 ifneq ($(BSD_VARIANT),)
