@@ -30,6 +30,11 @@ TRANSFORM_DEPS = \
 %: %.sh $(TRANSFORM_DEPS) | $(builddir)
 	$(transform_script)
 
+# remember only one is defined
+OS_VARIANT = $(strip $(BSD_VARIANT) $(LINUX_VARIANT))
+%: %.$(OS_VARIANT).sh $(TRANSFORM_DEPS) | $(builddir)
+	$(transform_script)
+
 %: %.in $(TRANSFORM_DEPS) | $(builddir)
 	$(transform_script)
 
