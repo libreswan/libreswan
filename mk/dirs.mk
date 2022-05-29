@@ -108,9 +108,10 @@ else
 endif
 abs_top_builddir := $(abspath $(top_builddir))
 
-# path down from $(top_srcdir)
-path_srcdir := $(subst $(abs_top_srcdir)/,,$(abs_srcdir))
-builddir := $(top_builddir)/$(path_srcdir)
+# path down from $(top_srcdir); note that PATH_SRCDIR contains a
+# leading / (else top-level breaks).
+path_srcdir := $(subst $(abs_top_srcdir),,$(abs_srcdir))
+builddir := $(top_builddir)$(path_srcdir)
 abs_builddir := $(abspath $(builddir))
 
 # Always include the other directory in the search path.
@@ -137,6 +138,7 @@ OBJDIRTOP?=$(abs_top_builddir)
 	@echo ""
 	@echo dirs.mk.file=$(dirs.mk.file)
 	@echo dirs.mk.dir=$(dirs.mk.dir)
+	@echo path_srcdir=$(path_srcdir)
 	@echo top_srcdir=$(top_srcdir)
 	@echo dirs.mk.included.from.srcdir="$(dirs.mk.included.from.srcdir)"
 	@echo ""
