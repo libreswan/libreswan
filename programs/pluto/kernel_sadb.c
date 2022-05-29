@@ -440,7 +440,9 @@ sparse_names sadb_calg_names = {
 
 sparse_names sadb_ealg_names = {
 	S(SADB_EALG_NULL),
+#ifdef SADB_EALG_DESCBC
 	S(SADB_EALG_DESCBC),
+#endif
 	S(SADB_EALG_3DESCBC),
 	S(SADB_EALG_NULL),
 #ifdef SADB_X_EALG_BLF

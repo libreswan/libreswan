@@ -46,9 +46,15 @@ enum sadb_type {
 	sadb_getspi = SADB_GETSPI,
 	sadb_register = SADB_REGISTER,
 	sadb_update = SADB_UPDATE,
+#ifdef SADB_X_SPDADD
 	sadb_x_spdadd = SADB_X_SPDADD,
+#endif
+#ifdef SADB_X_SPDDELETE
 	sadb_x_spddelete = SADB_X_SPDDELETE,
+#endif
+#ifdef SADB_X_SPDUPDATE
 	sadb_x_spdupdate = SADB_X_SPDUPDATE,
+#endif
 };
 
 enum sadb_satype {
@@ -71,7 +77,9 @@ enum sadb_exttype {
 	sadb_ext_spirange = SADB_EXT_SPIRANGE,
 	sadb_ext_supported_auth = SADB_EXT_SUPPORTED_AUTH,
 	sadb_ext_supported_encrypt = SADB_EXT_SUPPORTED_ENCRYPT,
+#ifdef SADB_X_EXT_NAT_T_TYPE
 	sadb_x_ext_nat_t_type = SADB_X_EXT_NAT_T_TYPE,
+#endif
 	sadb_x_ext_policy = SADB_X_EXT_POLICY,
 	sadb_x_ext_sa2 = SADB_X_EXT_SA2,
 };
