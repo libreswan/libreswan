@@ -381,7 +381,7 @@ static struct p_dns_req *qry_st_init(struct ike_sa *ike,
 	p->log_buf = alloc_printf("IKEv2 DNS query -- %s IN %s --",
 				  p->qname, qtype_name);
 
-	p->qclass = ns_c_in;
+	p->qclass = C_IN; /* aka ns_c_in */
 	p->qtype = qtype;
 	p->cache_hit = true;
 	p->dns_status = DNS_SUSPEND;
