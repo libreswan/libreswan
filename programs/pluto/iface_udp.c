@@ -48,6 +48,7 @@
 #include "ip_info.h"
 #include "ip_sockaddr.h"
 
+#ifdef UDP_ENCAP
 static bool nat_traversal_espinudp(const struct iface_endpoint *ifp,
 				   struct logger *logger)
 {
@@ -90,6 +91,7 @@ static bool nat_traversal_espinudp(const struct iface_endpoint *ifp,
 	     sol_value, fam);
 	return true;
 }
+#endif /* ifdef UDP_ENCAP */
 
 #ifdef MSG_ERRQUEUE
 static bool check_msg_errqueue(const struct iface_endpoint *ifp,
@@ -287,7 +289,9 @@ const struct iface_io udp_iface_io = {
 	.read_packet = udp_read_packet,
 	.write_packet = udp_write_packet,
 	.listen = udp_listen,
+#ifdef UDP_ENCAP
 	.enable_esp_encap = nat_traversal_espinudp,
+#endif
 	.cleanup = udp_cleanup,
 };
 
