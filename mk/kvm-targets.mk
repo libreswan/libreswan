@@ -1016,11 +1016,10 @@ $(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
 ##
 
 # some rules are overwritten below
-KVM_INSTALL_PLATFORM += $(filter-out fedora openbsd, $(KVM_PLATFORM))
+KVM_INSTALL_PLATFORM += $(filter-out fedora, $(KVM_PLATFORM))
 ifneq ($(KVM_INSTALL_RPM),true)
 KVM_INSTALL_PLATFORM += fedora
 endif
-#KVM_INSTALL_PLATFORM += openbsd -- not working
 
 $(patsubst %, kvm-%-install, $(KVM_INSTALL_PLATFORM)): \
 kvm-%-install: $(KVM_POOLDIR_PREFIX)%
