@@ -2396,7 +2396,6 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 	bool got_status = false;
 	unsigned int status = XAUTH_STATUS_FAIL;
 	stf_status stat;
-	lset_t xauth_resp = LEMPTY;	/* ??? value never used */
 
 	dbg("xauth_inI1");
 
@@ -2431,7 +2430,6 @@ stf_status xauth_inI1(struct state *st, struct msg_digest *md)
 
 			switch (attr.isaat_af_type) {
 			case XAUTH_STATUS | ISAKMP_ATTR_AF_TV:
-				xauth_resp |= XAUTHLELEM(XAUTH_STATUS);
 				got_status = true;
 				switch (attr.isaat_lv) {
 				case XAUTH_STATUS_FAIL:
