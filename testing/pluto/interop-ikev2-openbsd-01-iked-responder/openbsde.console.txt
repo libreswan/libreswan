@@ -24,8 +24,8 @@ openbsde #
  ipsecctl -s all | sort
 FLOWS:
 SAD:
-esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI auth hmac-sha2-256 enc aes-256
-esp tunnel from 192.1.2.45 to 192.1.2.23 spi 0xSPISPI auth hmac-sha2-256 enc aes-256
+esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI enc aes-128-gcm
+esp tunnel from 192.1.2.45 to 192.1.2.23 spi 0xSPISPI enc aes-128-gcm
 flow esp in from 192.0.1.0/24 to 192.0.2.0/24 peer 192.1.2.45 srcid FQDN/east dstid FQDN/west type require
 flow esp out from 192.0.2.0/24 to 192.0.1.0/24 peer 192.1.2.45 srcid FQDN/east dstid FQDN/west type require
 openbsde #
