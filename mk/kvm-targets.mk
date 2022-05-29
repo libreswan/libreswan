@@ -1193,10 +1193,6 @@ kvm-fedora-install: $(KVM_POOLDIR_PREFIX)fedora
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(notdir $<) 'restorecon /usr/local/sbin /usr/local/libexec/ipsec -Rv'
 endif
 
-.PHONY: kvm-openbsd-install
-kvm-openbsd-install:  $(KVM_POOLDIR_PREFIX)openbsd
-	@echo install not implemented on openbsd
-
 #
 # kvm-install target
 #
