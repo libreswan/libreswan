@@ -349,6 +349,9 @@ USE_GLIBC_KERN_FLIP_HEADERS ?= false
 # this file as shipped with libreswan. The copy is taken from unbound 1.6.0.
 USE_UNBOUND_EVENT_H_COPY ?= false
 
+# -levent can mean two things?
+LIBEVENT_LDFLAGS ?= -levent_core -levent_pthreads
+
 # Install the portexclude service for policies/portexcludes.conf policies
 # Disabled per default for now because it requires python[23]
 USE_PORTEXCLUDES ?= false
