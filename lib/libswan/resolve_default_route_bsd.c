@@ -22,9 +22,16 @@
 #include <errno.h>
 
 #include <net/route.h>
-/* NetBSD defines RT_ADVANCE(); FreeBSD SA_SIZE() */
+
+/* NetBSD defines RT_ADVANCE(); FreeBSD SA_SIZE(); OpenBSD nada */
 #ifndef RT_ADVANCE
-# define RT_ADVANCE(AP, SA) AP += SA_SIZE(SA)
+# if defined __FreeBSD__
+#  define RT_ADVANCE(AP, SA) AP += SA_SIZE(SA)
+# elif defined __OpenBSD__
+#  define RT_ADVANCE(AP, SA) AP += (1 + (((SA)->sa_len - 1) | (sizeof(long) - 1)))
+# else
+#  error RT_ADVANCE
+# endif
 #endif
 
 #include "addr_lookup.h"
