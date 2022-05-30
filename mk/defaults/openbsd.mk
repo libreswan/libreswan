@@ -6,7 +6,7 @@ PKG_BASE ?= /usr/local
 # See: https://github.com/libreswan/libreswan/issues/735
 #CC=gcc
 
-WARNING_CFLAGS=
+WARNING_CFLAGS += -Wno-unused
 USERLAND_CFLAGS += -DHAS_SUN_LEN
 USERLAND_CFLAGS += -DNEED_SIN_LEN
 
@@ -19,7 +19,7 @@ NSS_LDFLAGS = -L$(PKG_BASE)/lib/nss -Wl,-rpath,$(PKG_BASE)/lib/nss -lnss3 -lfree
 NSPR_LDFLAGS = -L$(PKG_BASE)/lib/nspr -Wl,-rpath,$(PKG_BASE)/lib/nspr -lnspr4
 
 #USE_BSDKAME = true
-#USE_PFKEYV2 = true
+USE_PFKEYV2 = true
 CRYPT_LDFLAGS =
 RT_LDFLAGS = 
 

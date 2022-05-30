@@ -22,10 +22,52 @@
 #include <stdint.h>		/* because pfkeyv2.h doesn't */
 
 #include "lsw-pfkeyv2.h"	/* also pulls in missing types dependencies */
-#ifdef linux
-# include <linux/ipsec.h>
-#else
-# include <netipsec/ipsec.h>
+
+/* unscrew lack of struct sadb_x_sa2 */
+#ifdef __OpenBSD__
+# undef SADB_X_EXT_SA2
+#endif
+
+/* unscrew totally different struct sadb_x_policy */
+#ifdef __OpenBSD__
+# if SADB_X_EXT_POLICY != 25
+#  error confused
+# endif
+# undef SADB_X_EXT_POLICY
+# define SADB_X_EXT_POLICY2	25
+# define sadb_x_policy2 sadb_x_policy
+#endif
+
+#ifdef __OpenBSD__
+/* in sadb_prop */
+# define sadb_prop_num sadb_prop_num
+#endif
+
+#ifdef __linux__
+/* in sadb_x_policy */
+# define sadb_x_policy_priority sadb_x_policy_priority
+/* in sadb_x_ipsecrequest */
+# define sadb_x_ipsecrequest_reserved1 sadb_x_ipsecrequest_reserved1
+# define sadb_x_ipsecrequest_reserved2 sadb_x_ipsecrequest_reserved2
+#endif
+
+#ifdef __FreeBSD__
+/* in sadb_x_policy */
+# define sadb_x_policy_scope sadb_x_policy_scope
+# define sadb_x_policy_priority sadb_x_policy_priority
+#endif
+
+/*
+ * struct sadb_x_policy requires these definitions, but OpenBSD
+ * doesn't use any of that.
+ */
+
+#ifdef SADB_X_EXT_POLICY
+# ifdef __linux__
+#  include <linux/ipsec.h>
+# else
+#  include <netipsec/ipsec.h>
+# endif
 #endif
 
 #include "lswcdefs.h"
@@ -64,6 +106,8 @@ enum sadb_satype {
 	sadb_x_satype_ipcomp = SADB_X_SATYPE_IPCOMP,
 };
 
+/* only add what is used */
+
 enum sadb_exttype {
 	sadb_ext_address_dst = SADB_EXT_ADDRESS_DST,
 	sadb_ext_address_src = SADB_EXT_ADDRESS_SRC,
@@ -74,14 +118,18 @@ enum sadb_exttype {
 	sadb_ext_lifetime_soft = SADB_EXT_LIFETIME_SOFT,
 	sadb_ext_proposal = SADB_EXT_PROPOSAL,
 	sadb_ext_sa = SADB_EXT_SA,
+#ifdef SADB_X_EXT_SA2
+	sadb_x_ext_sa2 = SADB_X_EXT_SA2,
+#endif
 	sadb_ext_spirange = SADB_EXT_SPIRANGE,
 	sadb_ext_supported_auth = SADB_EXT_SUPPORTED_AUTH,
 	sadb_ext_supported_encrypt = SADB_EXT_SUPPORTED_ENCRYPT,
 #ifdef SADB_X_EXT_NAT_T_TYPE
 	sadb_x_ext_nat_t_type = SADB_X_EXT_NAT_T_TYPE,
 #endif
+#ifdef SADB_X_EXT_POLICY
 	sadb_x_ext_policy = SADB_X_EXT_POLICY,
-	sadb_x_ext_sa2 = SADB_X_EXT_SA2,
+#endif
 };
 
 enum sadb_sastate {
@@ -91,28 +139,54 @@ enum sadb_sastate {
 	sadb_sastate_mature = SADB_SASTATE_MATURE,
 };
 
+enum sadb_saflags {
+	sadb_saflags_pfs = SADB_SAFLAGS_PFS,
+#ifdef SADB_X_SAFLAGS_TUNNEL
+	sadb_x_saflags_tunnel = SADB_X_SAFLAGS_TUNNEL,
+#endif
+#ifdef SADB_X_SAFLAGS_CHAINDEL
+	sadb_x_saflags_chaindel = SADB_X_SAFLAGS_CHAINDEL,
+#endif
+#ifdef SADB_X_SAFLAGS_ESN
+	sadb_x_saflags_esn = SADB_X_SAFLAGS_ESN,
+#endif
+#ifdef SADB_X_SAFLAGS_UDPENCAP
+	sadb_x_saflags_udpencap = SADB_X_SAFLAGS_UDPENCAP,
+#endif
+};
+
+#ifdef SADB_X_EXT_POLICY
 enum ipsec_policy {
 	ipsec_policy_discard = IPSEC_POLICY_DISCARD,
 	ipsec_policy_ipsec = IPSEC_POLICY_IPSEC,
 	ipsec_policy_none = IPSEC_POLICY_NONE,
 };
+#endif
 
+#ifdef SADB_X_EXT_POLICY
 enum ipsec_dir {
 	ipsec_dir_inbound = IPSEC_DIR_INBOUND,
 	ipsec_dir_outbound = IPSEC_DIR_OUTBOUND,
 };
+#endif
 
+#ifdef SADB_X_EXT_POLICY
 enum ipsec_mode {
 	ipsec_mode_any = 0,
 	ipsec_mode_transport = IPSEC_MODE_TRANSPORT,
 	ipsec_mode_tunnel = IPSEC_MODE_TUNNEL,
 };
+#endif
 
 enum ipsec_proto {
 	ipsec_proto_ah = IPPROTO_AH,
 	ipsec_proto_esp = IPPROTO_ESP,
 	ipsec_proto_ipip = IPPROTO_IPIP,
-	ipsec_proto_any = IPSEC_PROTO_ANY, /* 255, akaIPSEC_ULPROTO_ANY */
+#ifdef IPSEC_PROTO_ANY
+	ipsec_proto_any = IPSEC_PROTO_ANY, /* 255, aka IPSEC_ULPROTO_ANY */
+#else
+	ipsec_proto_any = 255,
+#endif
 #ifdef IPPROTO_IPCOMP
 	ipsec_proto_ipcomp = IPPROTO_IPCOMP,
 #endif
@@ -138,6 +212,9 @@ extern sparse_names sadb_saflags_names;
 extern sparse_names sadb_sastate_names;
 extern sparse_names sadb_satype_names;
 extern sparse_names sadb_type_names;
+#ifdef SADB_X_EXT_PROTOCOL
+extern sparse_names sadb_protocol_proto_names;
+#endif
 
 extern sparse_sparse_names sadb_alg_names;
 extern sparse_sparse_names sadb_satype_ealg_names;
@@ -187,6 +264,7 @@ void jam_sadb_sa(struct jambuf *buf, enum sadb_satype, const struct sadb_sa *m);
 			##__VA_ARGS__, const struct TYPE *m)
 
 DD(sadb_address);
+DD(sadb_x_address2);
 DD(sadb_comb);
 DD(sadb_ext);
 DD(sadb_ident);
@@ -195,15 +273,27 @@ DD(sadb_lifetime);
 DD(sadb_msg);
 DD(sadb_prop);
 DD(sadb_proposal);
+#ifdef SADB_X_EXT_PROTOCOL
+DD(sadb_protocol);
+#endif
 DD(sadb_sens);
 DD(sadb_spirange);
 DD(sadb_supported);
+#ifdef SADB_X_EXT_POLICY /* nexted within sadb_x_policy */
 DD(sadb_x_ipsecrequest);
+#endif
 DD(sadb_x_nat_t_frag);
 DD(sadb_x_nat_t_port);
 DD(sadb_x_nat_t_type);
+#ifdef SADB_X_EXT_POLICY
 DD(sadb_x_policy);
+#endif
+#ifdef SADB_X_EXT_POLICY2
+DD(sadb_x_policy2);
+#endif
+#ifdef SADB_X_EXT_SA2
 DD(sadb_x_sa2);
+#endif
 
 #undef DD
 
@@ -223,14 +313,26 @@ GET_SADB(sadb_lifetime);
 GET_SADB(sadb_msg);
 GET_SADB(sadb_prop);
 GET_SADB(sadb_proposal);
+#ifdef SADB_X_EXT_PROTOCOL
+GET_SADB(sadb_protocol);
+#endif
 GET_SADB(sadb_sa);
 GET_SADB(sadb_sens);
 GET_SADB(sadb_spirange);
 GET_SADB(sadb_supported);
+#ifdef SADB_X_EXT_POLICY
 GET_SADB(sadb_x_ipsecrequest);
+#endif
+#ifdef SADB_X_EXT_POLICY
 GET_SADB(sadb_x_policy);
+#endif
+#ifdef SADB_X_EXT_POLICY2
+GET_SADB(sadb_x_policy2);
+#endif
 GET_SADB(sadb_x_nat_t_type);
+#ifdef SADB_X_EXT_SA2
 GET_SADB(sadb_x_sa2);
+#endif
 
 #undef GET_SADB
 

@@ -28,17 +28,12 @@
  */
 
 #if defined(KERNEL_BSDKAME) || defined(KERNEL_PFKEYV2)
-# ifdef linux
+# ifdef __linux__
 #  include <stdint.h>
 #  include <linux/pfkeyv2.h>
-#  define sadb_x_policy_priority sadb_x_policy_priority
 # else
 #  include <sys/types.h>
 #  include <net/pfkeyv2.h>
-# endif
-# ifdef __FreeBSD__
-#  define sadb_x_policy_scope sadb_x_policy_scope
-#  define sadb_x_policy_priority sadb_x_policy_priority
 # endif
 #endif
 

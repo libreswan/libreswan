@@ -25,7 +25,27 @@ typedef uint16_t u16_t;
 typedef uint32_t u32_t;
 typedef uint64_t u64_t;
 
-#define J(P, T, F) jam(buf, " "#F"=%"PRI##P, (P##_t)m->T##_##F)
+/*
+ * XXX: the double macro is so that the parameters (which might be
+ * defines) are expanded before being passed on.  For instance, given:
+ *
+ *   #define foo bar
+ *   J(P, foo, F)
+ *
+ * will expand to:
+ *
+ *   J2(P, bar, F)
+ */
+
+#define J(P, T, F) J2(P, T, F)
+#define J2(P, T, F) jam(buf, " "#F"=%"PRI##P, (P##_t)m->T##_##F)
+
+#define JX(T, F) JX2(T, F)
+#define JX2(T, F)							\
+	{								\
+		jam(buf, " "#F"=");					\
+		jam_hex_bytes(buf, &m->T##_##F, sizeof(m->T##_##F));	\
+	}
 
 #define JAM_SPARSE(E, T, F)						\
 	{								\
@@ -336,7 +356,7 @@ sparse_names sadb_satype_names = {
 	S(SADB_X_SATYPE_TCPSIGNATURE),
 #endif
 #ifdef SADB_X_SATYPE_IPIP
-	SADB_X_SATYPE_IPIP
+	S(SADB_X_SATYPE_IPIP),
 #endif
 	SPARSE_NULL
 };
@@ -563,6 +583,7 @@ sparse_sparse_names sadb_satype_aalg_names = {
 	{ 0, NULL, }
 };
 
+#ifdef SADB_X_EXT_POLICY
 sparse_names ipsec_policy_names = {
 	S(IPSEC_POLICY_DISCARD),
 	S(IPSEC_POLICY_NONE),
@@ -571,7 +592,9 @@ sparse_names ipsec_policy_names = {
 	S(IPSEC_POLICY_BYPASS),
 	SPARSE_NULL
 };
+#endif
 
+#ifdef SADB_X_EXT_POLICY
 sparse_names ipsec_dir_names = {
 	S(IPSEC_DIR_ANY),
 	S(IPSEC_DIR_INBOUND),
@@ -580,13 +603,16 @@ sparse_names ipsec_dir_names = {
 	S(IPSEC_DIR_INVALID),
 	SPARSE_NULL
 };
+#endif
 
+#ifdef SADB_X_EXT_POLICY
 sparse_names ipsec_mode_names = {
 	{ "any!?!", ipsec_mode_any, },
 	S(IPSEC_MODE_TRANSPORT),
 	S(IPSEC_MODE_TUNNEL),
 	SPARSE_NULL
 };
+#endif
 
 sparse_names ipsec_level_names = {
 	S(IPSEC_LEVEL_REQUIRE),
@@ -597,7 +623,9 @@ sparse_names ipsec_proto_names = {
 	S(IPPROTO_AH),
 	S(IPPROTO_ESP),
 	S(IPPROTO_IPIP),
+#ifdef IPSEC_PROTO_ANY
 	S(IPSEC_PROTO_ANY), /* 255, aka IPSEC_ULPROTO_ANY */
+#endif
 #ifdef IPPROTO_IPCOMP
 	S(IPPROTO_IPCOMP),
 #endif
@@ -607,14 +635,18 @@ sparse_names ipsec_proto_names = {
 	SPARSE_NULL
 };
 
+
 void jam_sadb_address(struct jambuf *buf, const struct sadb_address *m)
 {
 	jam(buf, "sadb_address @%p:", m);
 	JAM_LEN(sadb_address, len);
 	JAM_SADB(sadb_address, exttype);
+#ifdef __OpenBSD__
+	JX(sadb_address, reserved);
+#else
 	JAM_SADB(sadb_address, proto);
 	J(u8, sadb_address, prefixlen);
-	J(u16, sadb_address, reserved);
+#endif
 }
 
 void jam_sadb_alg(struct jambuf *buf, enum sadb_exttype exttype, const struct sadb_alg *m)
@@ -624,7 +656,7 @@ void jam_sadb_alg(struct jambuf *buf, enum sadb_exttype exttype, const struct sa
 	J(u8, sadb_alg, ivlen);
 	J(u16, sadb_alg, minbits);
 	J(u16, sadb_alg, maxbits);
-	J(u16, sadb_alg, reserved);
+	JX(sadb_alg, reserved);
 }
 
 void jam_sadb_comb(struct jambuf *buf, const struct sadb_comb *m)
@@ -637,7 +669,7 @@ void jam_sadb_comb(struct jambuf *buf, const struct sadb_comb *m)
 	J(u16, sadb_comb, auth_maxbits);
 	J(u16, sadb_comb, encrypt_minbits);
 	J(u16, sadb_comb, encrypt_maxbits);
-	J(u32, sadb_comb, reserved);
+	JX(sadb_comb, reserved);
 	J(u32, sadb_comb, soft_allocations);
 	J(u32, sadb_comb, hard_allocations);
 	J(u64, sadb_comb, soft_bytes);
@@ -661,7 +693,7 @@ void jam_sadb_ident(struct jambuf *buf, const struct sadb_ident *m)
 	JAM_LEN(sadb_ident, len);
 	JAM_SADB(sadb_ident, exttype);
 	J(u16, sadb_ident, type);
-	J(u16, sadb_ident, reserved);
+	JX(sadb_ident, reserved);
 	J(u64, sadb_ident, id);
 }
 
@@ -671,7 +703,7 @@ void jam_sadb_key(struct jambuf *buf, const struct sadb_key *m)
 	JAM_LEN(sadb_key, len);
 	JAM_SADB(sadb_key, exttype);
 	J(u16, sadb_key, bits);
-	J(u16, sadb_key, reserved);
+	JX(sadb_key, reserved);
 }
 
 void jam_sadb_lifetime(struct jambuf *buf, const struct sadb_lifetime *m)
@@ -693,7 +725,7 @@ void jam_sadb_msg(struct jambuf *buf, const struct sadb_msg *m)
 	J(u8, sadb_msg, errno);
 	JAM_SADB(sadb_msg, satype);
 	JAM_LEN(sadb_msg, len);
-	J(u16, sadb_msg, reserved);
+	JX(sadb_msg, reserved);
 	J(u32, sadb_msg, seq);
 	J(u32, sadb_msg, pid);
 }
@@ -703,10 +735,11 @@ void jam_sadb_prop(struct jambuf *buf, const struct sadb_prop *m)
 	jam(buf, "sadb_prop @%p", m);
 	JAM_LEN(sadb_prop, len);
 	JAM_SADB(sadb_prop, exttype);
+#ifdef sadb_prop_num
+	J(u8, sadb_prop, num);
+#endif
 	J(u8, sadb_prop, replay);
-	J(u8, sadb_prop, reserved[0]);
-	J(u8, sadb_prop, reserved[1]);
-	J(u8, sadb_prop, reserved[2]);
+	JX(sadb_prop, reserved);
 }
 
 void jam_sadb_sa(struct jambuf *buf, enum sadb_satype satype, const struct sadb_sa *m)
@@ -732,7 +765,7 @@ void jam_sadb_sens(struct jambuf *buf, const struct sadb_sens *m)
 	J(u8, sadb_sens, sens_len);
 	J(u8, sadb_sens, integ_level);
 	J(u8, sadb_sens, integ_len);
-	J(u32, sadb_sens, reserved);
+	JX(sadb_sens, reserved);
 }
 
 void jam_sadb_spirange(struct jambuf *buf, const struct sadb_spirange *m)
@@ -742,7 +775,7 @@ void jam_sadb_spirange(struct jambuf *buf, const struct sadb_spirange *m)
 	JAM_SADB(sadb_spirange, exttype);
 	J(u32, sadb_spirange, min);
 	J(u32, sadb_spirange, max);
-	J(u32, sadb_spirange, reserved);
+	JX(sadb_spirange, reserved);
 }
 
 void jam_sadb_supported(struct jambuf *buf, const struct sadb_supported *m)
@@ -750,9 +783,10 @@ void jam_sadb_supported(struct jambuf *buf, const struct sadb_supported *m)
 	jam(buf, "sadb_supported @%p", m);
 	JAM_LEN(sadb_supported, len);
 	JAM_SADB(sadb_supported, exttype);
-	J(u32, sadb_supported, reserved);
+	JX(sadb_supported, reserved);
 }
 
+#ifdef SADB_X_EXT_POLICY
 void jam_sadb_x_ipsecrequest(struct jambuf *buf, const struct sadb_x_ipsecrequest *m)
 {
 	jam(buf, "sadb_x_ipsecrequest @%p", m);
@@ -760,14 +794,15 @@ void jam_sadb_x_ipsecrequest(struct jambuf *buf, const struct sadb_x_ipsecreques
 	JAM_IPSEC(sadb_x_ipsecrequest, proto);
 	JAM_IPSEC(sadb_x_ipsecrequest, mode);
 	JAM_IPSEC(sadb_x_ipsecrequest, level);
-#if 0
+#ifdef sadb_x_ipsecrequest_reserved1
 	J(u16, sadb_x_ipsecrequest, reserved1);
 #endif
 	J(u16, sadb_x_ipsecrequest, reqid);
-#if 0
+#ifdef sadb_x_ipsecrequest_reserved1
 	J(u16, sadb_x_ipsecrequest, reserved2);
 #endif
 }
+#endif
 
 #ifdef SADB_X_EXT_NAT_T_FRAG
 void jam_sadb_x_nat_t_frag(struct jambuf *buf, const struct sadb_x_nat_t_frag *m)
@@ -776,7 +811,7 @@ void jam_sadb_x_nat_t_frag(struct jambuf *buf, const struct sadb_x_nat_t_frag *m
 	JAM_LEN(sadb_x_nat_t_frag, len);
 	JAM_SADB(sadb_x_nat_t_frag, exttype);
 	J(u16, sadb_x_nat_t_frag, fraglen);
-	J(u16, sadb_x_nat_t_frag, reserved);
+	JX(sadb_x_nat_t_frag, reserved);
 }
 #endif
 
@@ -787,21 +822,22 @@ void jam_sadb_x_nat_t_port(struct jambuf *buf, const struct sadb_x_nat_t_port *m
 	JAM_LEN(sadb_x_nat_t_port, len);
 	JAM_SADB(sadb_x_nat_t_port, exttype);
 	J(u16, sadb_x_nat_t_port, port);
-	J(u16, sadb_x_nat_t_port, reserved);
+	JX(sadb_x_nat_t_port, reserved);
 }
 #endif
 
+#ifdef SADB_X_EXT_NAT_T_TYPE
 void jam_sadb_x_nat_t_type(struct jambuf *buf, const struct sadb_x_nat_t_type *m)
 {
 	jam(buf, "sadb_x_nat_t_type @%p", m);
 	JAM_LEN(sadb_x_nat_t_type, len);
 	JAM_SADB(sadb_x_nat_t_type, exttype);
 	J(u8, sadb_x_nat_t_type, type);
-	J(u8, sadb_x_nat_t_type, reserved[0]);
-	J(u8, sadb_x_nat_t_type, reserved[1]);
-	J(u8, sadb_x_nat_t_type, reserved[2]);
+	JX(sadb_x_nat_t_type, reserved);
 }
+#endif
 
+#ifdef SADB_X_EXT_POLICY
 void jam_sadb_x_policy(struct jambuf *buf, const struct sadb_x_policy *m)
 {
 	jam(buf, "sadb_x_policy @%p:", m);
@@ -813,17 +849,28 @@ void jam_sadb_x_policy(struct jambuf *buf, const struct sadb_x_policy *m)
 #ifdef sadb_x_policy_scope
 	J(u8, sadb_x_policy, scope);
 #else
-	J(u8, sadb_x_policy, reserved);
+	JX(sadb_x_policy, reserved);
 #endif
 	J(u32, sadb_x_policy, id);
 #ifdef sadb_x_policy_priority
 	J(u32, sadb_x_policy, priority);
 #else
-	J(u32, sadb_x_policy, reserved2);
+	JX(sadb_x_policy, reserved2);
+#endif
+}
 #endif
 
-}
+#ifdef SADB_X_EXT_POLICY2
+void jam_sadb_x_policy2(struct jambuf *buf, const struct sadb_x_policy2 *m)
+{
+	jam(buf, "sadb_x_policy2 @%p:", m);
+	JAM_LEN(sadb_x_policy2, len);
+	JAM_SADB(sadb_x_policy2, exttype);
+	J(u32, sadb_x_policy2, seq);
+};
+#endif
 
+#ifdef SADB_X_EXT_SA2
 void jam_sadb_x_sa2(struct jambuf *buf, const struct sadb_x_sa2 *m)
 {
 	jam(buf, "sadb_x_sa2 @%p:", m);
@@ -835,6 +882,7 @@ void jam_sadb_x_sa2(struct jambuf *buf, const struct sadb_x_sa2 *m)
 	J(u32, sadb_x_sa2, sequence);
 	J(u32, sadb_x_sa2, reqid);
 }
+#endif
 
 bool get_sadb_sockaddr_address_port(shunk_t *cursor,
 				    ip_address *address,
@@ -1021,6 +1069,7 @@ void DBG_msg(struct logger *logger, const void *ptr, size_t len, const char *fmt
 			break;
 		}
 
+#ifdef SADB_X_EXT_POLICY
 		case sadb_x_ext_policy:
 		{
 			shunk_t x_policy_cursor;
@@ -1055,7 +1104,9 @@ void DBG_msg(struct logger *logger, const void *ptr, size_t len, const char *fmt
 			PEXPECT(logger, ext_cursor.len == 0);
 			break;
 		}
+#endif
 
+#ifdef SADB_X_EXT_NAT_T_TYPE
 		case sadb_x_ext_nat_t_type:
 		{
 			shunk_t x_nat_t_type_cursor;
@@ -1068,7 +1119,9 @@ void DBG_msg(struct logger *logger, const void *ptr, size_t len, const char *fmt
 			PEXPECT(logger, x_nat_t_type_cursor.len == 0); /* nothing following */
 			break;
 		}
+#endif
 
+#ifdef SADB_X_EXT_SA2
 		case sadb_x_ext_sa2:
 		{
 			shunk_t x_sa2_cursor;
@@ -1081,6 +1134,7 @@ void DBG_msg(struct logger *logger, const void *ptr, size_t len, const char *fmt
 			PEXPECT(logger, x_sa2_cursor.len == 0); /* nothing following */
 			break;
 		}
+#endif
 
 		default:
 		{
@@ -1129,7 +1183,8 @@ const struct sadb_ext *get_sadb_ext(shunk_t *msgbase,
  * storing the nr-bytes in len.  Hence LEN_MULTIPLIER.
  */
 
-#define GET_SADB(TYPE, LEN_MULTIPLIER)					\
+#define GET_SADB(TYPE, LEN_MULTIPLIER) X_GET_SADB(TYPE, LEN_MULTIPLIER)
+#define X_GET_SADB(TYPE, LEN_MULTIPLIER)				\
 	const struct TYPE *get_##TYPE(shunk_t *cursor,			\
 				      shunk_t *type_cursor,		\
 				      struct logger *logger)		\
@@ -1173,10 +1228,21 @@ GET_SADB(sadb_prop, sizeof(uint64_t));
 GET_SADB(sadb_sa, sizeof(uint64_t));
 GET_SADB(sadb_spirange, sizeof(uint64_t));
 GET_SADB(sadb_supported, sizeof(uint64_t));
+#ifdef SADB_X_EXT_POLICY
 GET_SADB(sadb_x_ipsecrequest, sizeof(uint8_t)); /* XXX: see rfc, screwup */
+#endif
+#ifdef SADB_X_EXT_NAT_T_TYPE
 GET_SADB(sadb_x_nat_t_type, sizeof(uint64_t));
+#endif
+#ifdef SADB_X_EXT_POLICY
 GET_SADB(sadb_x_policy, sizeof(uint64_t));
+#endif
+#ifdef SADB_X_EXT_POLICY2
+GET_SADB(sadb_x_policy2, sizeof(uint64_t));
+#endif
+#ifdef SADB_X_EXT_SA2
 GET_SADB(sadb_x_sa2, sizeof(uint64_t));
+#endif
 
 #define DD(TYPE, ...)						\
 	void DBG_##TYPE(struct logger *logger,			\
@@ -1208,9 +1274,20 @@ DD(sadb_msg);
 DD(sadb_prop);
 DD(sadb_spirange);
 DD(sadb_supported);
+#ifdef SADB_X_EXT_POLICY
 DD(sadb_x_ipsecrequest);
+#endif
+#ifdef SADB_X_EXT_NAT_T_TYPE
 DD(sadb_x_nat_t_type);
+#endif
+#ifdef SADB_X_EXT_POLICY
 DD(sadb_x_policy);
+#endif
+#ifdef SADB_X_EXT_POLICY2
+DD(sadb_x_policy2);
+#endif
+#ifdef SADB_X_EXT_SA2
 DD(sadb_x_sa2);
+#endif
 
 #undef DD

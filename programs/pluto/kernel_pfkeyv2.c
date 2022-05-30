@@ -238,8 +238,8 @@ static struct sadb_msg *put_sadb_base(struct outbuf *msg,
 static struct sadb_sa *put_sadb_sa(struct outbuf *msg,
 				   ipsec_spi_t spi,
 				   enum sadb_satype satype,
-				   enum sadb_sastate state,
-				   unsigned replay,
+				   enum sadb_sastate sastate,
+				   unsigned replay_window,
 				   const struct integ_desc *integ,
 				   const struct encrypt_desc *encrypt,
 				   const struct ipcomp_desc *ipcomp)
@@ -253,8 +253,8 @@ static struct sadb_sa *put_sadb_sa(struct outbuf *msg,
 
 	struct sadb_sa tmp = {
 		SADB_EXT_INIT(sadb_sa, sadb_ext_sa,
-			      .sadb_sa_replay = replay,
-			      .sadb_sa_state = state,
+			      .sadb_sa_replay = replay_window,
+			      .sadb_sa_state = sastate,
 			      .sadb_sa_spi = spi,
 			      .sadb_sa_auth = aalg,
 			      .sadb_sa_encrypt = ealg),
@@ -264,11 +264,6 @@ static struct sadb_sa *put_sadb_sa(struct outbuf *msg,
 	return sa;
 }
 
-static struct sadb_sa *put_sadb_sa__spi(struct outbuf *msg, ipsec_spi_t spi)
-{
-	return put_sadb_sa(msg, spi, 0, 0, 0, NULL, NULL, 0);
-}
-
 static struct ip_sockaddr *put_ip_sockaddr(struct outbuf *msg,
 					   const ip_address *addr)
 {
@@ -276,6 +271,7 @@ static struct ip_sockaddr *put_ip_sockaddr(struct outbuf *msg,
 	return hunk_put(msg, &sa.sa, sa.len);
 }
 
+#ifndef __OpenBSD__
 static struct sadb_address *put_sadb_selector(struct outbuf *msg,
 					      enum sadb_exttype srcdst,
 					      const ip_selector *selector)
@@ -294,16 +290,22 @@ static struct sadb_address *put_sadb_selector(struct outbuf *msg,
 	padup_sadb(msg, address);
 	return address;
 }
+#endif
 
 static struct sadb_address *put_sadb_address(struct outbuf *msg,
 					     enum sadb_exttype srcdst,
 					     const ip_address *addr)
 {
 	const struct ip_info *afi = address_type(addr);
+#ifdef __OpenBSD__
+	struct sadb_address *address =
+		put_sadb_ext(msg, sadb_address, srcdst);
+#else
 	struct sadb_address *address =
 		put_sadb_ext(msg, sadb_address, srcdst,
 			     .sadb_address_proto = ipsec_proto_any/*255*/,
 			     .sadb_address_prefixlen = afi->mask_cnt);
+#endif
 	put_ip_sockaddr(msg, addr);
 	padup_sadb(msg, address);
 	return address;
@@ -332,6 +334,7 @@ static struct sadb_spirange *put_sadb_spirange(struct outbuf *msg, uintmax_t min
 	return spirange;
 }
 
+#ifdef SADB_X_EXT_SA2
 static struct sadb_x_sa2 *put_sadb_x_sa2(struct outbuf *msg,
 					 enum ipsec_mode ipsec_mode,
 					 reqid_t reqid)
@@ -343,6 +346,7 @@ static struct sadb_x_sa2 *put_sadb_x_sa2(struct outbuf *msg,
 			     .sadb_x_sa2_reqid = reqid);
 	return x_sa2;
 }
+#endif
 
 static struct sadb_msg *msg_base(struct outbuf *msg, const char *what,
 				 chunk_t buf,
@@ -492,7 +496,9 @@ static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 	/* recv: <base, SA(*), address(SD)> */
 
 	uint8_t reqbuf[SIZEOF_SADB_BASE +
+#ifndef __OpenBSD__
 		       SIZEOF_SADB_X_SA2 +
+#endif
 		       SIZEOF_SADB_ADDRESS * 2 +
 		       SIZEOF_SADB_SPIRANGE];
 	struct outbuf req;
@@ -508,7 +514,10 @@ static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 	 * but since the REQID is always specified, it might as well
 	 * be included).
 	 */
+#ifndef __OpenBSD__
 	put_sadb_x_sa2(&req, ipsec_mode_any, reqid);
+#endif
+
 	/* (tunnel_mode ? ipsec_mode_tunnel : ipsec_mode_transport), */
 
 	put_sadb_address(&req, sadb_ext_address_src, src);
@@ -572,7 +581,6 @@ static bool pfkeyv2_del_ipsec_spi(ipsec_spi_t spi,
 
 	uint8_t reqbuf[SIZEOF_SADB_BASE +
 		       SIZEOF_SADB_SA +
-		       SIZEOF_SADB_X_SA2 +
 		       SIZEOF_SADB_ADDRESS * 2];
 	struct outbuf req;
 	struct sadb_msg *base = msg_base(&req, __func__,
@@ -581,7 +589,8 @@ static bool pfkeyv2_del_ipsec_spi(ipsec_spi_t spi,
 
 	/* SA(*) */
 
-	put_sadb_sa__spi(&req, spi);
+	put_sadb_sa(&req, spi, /*satype*/0, /*sastate*/0, /*replay*/0,
+		    /*integ*/NULL, /*encrypt*/NULL, /*ipcomp*/NULL);
 
 	/* address(SD) */
 
@@ -655,7 +664,9 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 	 *
 	 * XXX: why not just set "tunnel" on the inner-most kernel_sa?
 	 */
+#ifndef __OpenBSD__
 	put_sadb_x_sa2(&req, ipsec_mode_any, k->reqid);
+#endif
 	/* (k->level == 0 && k->tunnel ?  ipsec_mode_tunnel : ipsec_mode_transport), */
 
 	/* address(SD) */
@@ -721,9 +732,6 @@ static bool pfkeyv2_get_sa(const struct kernel_sa *k,
 
 	uint8_t reqbuf[SIZEOF_SADB_BASE +
 		       SIZEOF_SADB_SA +
-#if 0
-		       SIZEOF_SADB_X_SA2 +
-#endif
 		       SIZEOF_SADB_ADDRESS * 2];
 	struct outbuf req;
 	struct sadb_msg *base = msg_base(&req, __func__,
@@ -732,12 +740,8 @@ static bool pfkeyv2_get_sa(const struct kernel_sa *k,
 
 	/* SA(*) */
 
-	put_sadb_sa__spi(&req, k->spi);
-
-#if 0
-	/* NetBSD includes this; why? */
-	put_sadb_x_sa2(&req, 0, 0);
-#endif
+	put_sadb_sa(&req, k->spi, /*satype*/0, /*sastate*/0, /*replay*/0,
+		    /*integ*/NULL, /*encrypt*/NULL, /*ipcomp*/NULL);
 
 	/* address(SD) */
 
@@ -780,8 +784,12 @@ static bool pfkeyv2_get_sa(const struct kernel_sa *k,
 		case sadb_ext_key_auth:
 		case sadb_ext_key_encrypt:
 		case sadb_ext_sa:
+#ifdef SADB_X_EXT_SA2
 		case sadb_x_ext_sa2:
+#endif
+#ifdef SADB_X_EXT_NAT_T_TYPE
 		case sadb_x_ext_nat_t_type:
+#endif
 		case sadb_ext_lifetime_hard:
 		case sadb_ext_lifetime_soft:
 			/* ignore these */
@@ -796,6 +804,7 @@ static bool pfkeyv2_get_sa(const struct kernel_sa *k,
 	return false;
 }
 
+#ifdef SADB_X_EXT_POLICY
 static struct sadb_x_ipsecrequest *put_sadb_x_ipsecrequest(struct outbuf *msg,
 							   const struct kernel_policy *kernel_policy,
 							   enum ipsec_mode mode,
@@ -829,7 +838,9 @@ static struct sadb_x_ipsecrequest *put_sadb_x_ipsecrequest(struct outbuf *msg,
 	x_ipsecrequest->sadb_x_ipsecrequest_len *= sizeof(uint64_t);
 	return x_ipsecrequest;
 }
+#endif
 
+#ifdef SADB_X_EXT_POLICY
 static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 					       enum kernel_policy_op op,
 					       enum ipsec_policy policy_type,
@@ -870,6 +881,7 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 	padup_sadb(req, x_policy);
 	return x_policy;
 }
+#endif
 
 static bool pfkeyv2_raw_policy(enum kernel_policy_op op,
 			       enum expect_kernel_policy expect_kernel_policy,
@@ -884,9 +896,11 @@ static bool pfkeyv2_raw_policy(enum kernel_policy_op op,
 			       const shunk_t sec_label UNUSED,
 			       struct logger *logger)
 {
-	/* SPDADD */
-	/* <base, policy, address(SD), [lifetime(HS)]> */
-	/* <base, policy, address(SD), [lifetime(HS)]> */
+#ifdef __OpenBSD__
+	return false;
+#else
+
+	/* SPDADD: <base, policy, address(SD), [lifetime(HS)]> */
 
 	enum sadb_type type = ((op & KERNEL_POLICY_ADD) ? sadb_x_spdadd :
 			       (op & KERNEL_POLICY_DELETE) ? sadb_x_spddelete :
@@ -955,6 +969,7 @@ static bool pfkeyv2_raw_policy(enum kernel_policy_op op,
 	}
 
 	return true;
+#endif
 }
 
 static bool process_address(shunk_t *ext_cursor, ip_address *addr, ip_port *port, struct logger *logger)
@@ -1004,7 +1019,9 @@ static void process_acquire(shunk_t base_cursor, struct logger *logger)
 				return;
 			}
 			break;
+#ifdef SADB_X_EXT_POLICY
 		case sadb_x_ext_policy:
+#endif
 		case sadb_ext_proposal:
 			ldbg_sadb_ext(logger, ext, "ignore: ");
 			break;
