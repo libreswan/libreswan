@@ -71,11 +71,15 @@ pass2help()
   Set up the test environment:
 
     install[-PLATFORM]
-	install libreswan onto the build domains,
-	and then create the test domains
+	build and install libreswan on the build domains, and then
+	create the test domains
     uninstall[-PLATFORM]
 	delete the build and test domains
 	(but leave the build trees and base domains alone)
+
+    build[-PLATFORM]
+	build libreswan on the build domains
+        (normally install is used)
 
   Run tests, examine results:
 
@@ -393,7 +397,7 @@ for op in "${ops[@]}" ; do
 	add ) git add "$@" ;;
 
 	kill ) gmake kvm-${op} ;;
-	base* | upgrade* | transmogrify* | downgrade* )
+	base* | upgrade* | transmogrify* | downgrade* | build* )
 	    # downgrade-netbsd -> netbsd-downgrade
 	    o=$(echo ${op} | sed -e 's/\([a-z]*\)-\([a-z]*\)/\2-\1/')
 	    echo gmake kvm-${o}

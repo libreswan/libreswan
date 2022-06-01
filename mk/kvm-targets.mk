@@ -1012,14 +1012,37 @@ $(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
 	touch $@
 
 ##
-## Install libreswan into the build domain.
+## Build/Install libreswan into the build domain.
 ##
+
+# Notice how the <<gmake base>> and <<gmake install-base>> rules do
+# not shut down the domain.  That is left to the rule creating all the
+# test instances.
+
+# First delete all of the build domain's clones.  The build domain
+# won't boot when its clones are running.
+#
+# So that all the INSTALL domains are deleted before the build domain
+# is booted, this is done using a series of sub-makes (without this,
+# things barf because the build domain things its disk is in use).
 
 # some rules are overwritten below
 KVM_INSTALL_PLATFORM += $(filter-out fedora, $(KVM_PLATFORM))
 ifneq ($(KVM_INSTALL_RPM),true)
 KVM_INSTALL_PLATFORM += fedora
 endif
+
+$(patsubst %, kvm-%-build, $(KVM_INSTALL_PLATFORM)): \
+kvm-%-build: $(KVM_POOLDIR_PREFIX)%
+	: $(MAKE) $(patsubst %, kvm-undefine-%, $(call add-kvm-prefixes, $(KVM_$($*)_HOST_NAMES)))
+	$(KVMSH) $(KVMSH_FLAGS) \
+		--chdir /source \
+		$(notdir $<) \
+		-- \
+		gmake base $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS)
+
+.PHONY: kvm-build
+kvm-build: $(foreach os, $(KVM_OS), kvm-$(os)-build)
 
 $(patsubst %, kvm-%-install, $(KVM_INSTALL_PLATFORM)): \
 kvm-%-install: $(KVM_POOLDIR_PREFIX)%
@@ -1040,6 +1063,12 @@ $(patsubst %, kvm-uninstall-%, $(KVM_PLATFORM)): \
 kvm-uninstall-%:
 	$(MAKE) $(patsubst %, kvm-undefine-%, $(call add-kvm-prefixes, $(KVM_$($*)_HOST_NAMES)))
 	$(MAKE) kvm-undefine-$(KVM_FIRST_PREFIX)$*
+
+
+.PHONY: kvm-install
+kvm-install: $(foreach os, $(KVM_OS), kvm-install-$(os))
+	$(MAKE) $(KVM_KEYS)
+
 
 #
 # Create the local domains
@@ -1192,21 +1221,6 @@ kvm-fedora-install: $(KVM_POOLDIR_PREFIX)fedora
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(notdir $<) 'rpm -i /source/rpmbuild/RPMS/x86_64/libreswan*rpm'
 	$(KVMSH) $(KVMSH_FLAGS) --chdir . $(notdir $<) 'restorecon /usr/local/sbin /usr/local/libexec/ipsec -Rv'
 endif
-
-#
-# kvm-install target
-#
-# First delete all of the build domain's clones.  The build domain
-# won't boot when its clones are running.
-#
-# So that all the INSTALL domains are deleted before the build domain
-# is booted, this is done using a series of sub-makes (without this,
-# things barf because the build domain things its disk is in use).
-
-.PHONY: kvm-install
-kvm-install: $(foreach os, $(KVM_OS), kvm-install-$(os))
-	$(MAKE) $(KVM_KEYS)
-
 
 #
 # kvmsh-HOST
