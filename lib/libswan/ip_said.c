@@ -131,7 +131,17 @@ const struct ip_info *said_type(const ip_said *said)
 	}
 
 	/* may return NULL */
-	return ip_version_info(said->version);
+	return said_info(*said);
+}
+
+const struct ip_info *said_info(const ip_said said)
+{
+	if (!said.is_set) {
+		return NULL;
+	}
+
+	/* may return NULL */
+	return ip_version_info(said.version);
 }
 
 ip_address said_address(const ip_said said)

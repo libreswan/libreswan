@@ -44,12 +44,18 @@ const struct ip_info *cidr_type(const ip_cidr *cidr)
 		return NULL;
 	}
 
-	if (!cidr->is_set) {
+	/* may return NULL */
+	return cidr_info(*cidr);
+}
+
+const struct ip_info *cidr_info(const ip_cidr cidr)
+{
+	if (!cidr.is_set) {
 		return NULL;
 	}
 
 	/* may return NULL */
-	return ip_version_info(cidr->version);
+	return ip_version_info(cidr.version);
 }
 
 ip_address cidr_address(const ip_cidr cidr)

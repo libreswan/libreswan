@@ -220,12 +220,22 @@ ip_range range_from_subnet(const ip_subnet subnet)
 
 const struct ip_info *range_type(const ip_range *range)
 {
-	if (range_is_unset(range)) {
+	if (range == NULL) {
 		return NULL;
 	}
 
 	/* may return NULL */
-	return ip_version_info(range->version);
+	return range_info(*range);
+}
+
+const struct ip_info *range_info(const ip_range range)
+{
+	if (!range.is_set) {
+		return NULL;
+	}
+
+	/* may return NULL */
+	return ip_version_info(range.version);
 }
 
 bool range_is_unset(const ip_range *range)

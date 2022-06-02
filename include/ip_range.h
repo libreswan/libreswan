@@ -82,6 +82,7 @@ extern const ip_range unset_range;
 
 bool range_is_unset(const ip_range *r);			/* handles NULL */
 const struct ip_info *range_type(const ip_range *r);	/* handles NULL */
+const struct ip_info *range_info(const ip_range r);	/* handles NULL */
 
 bool range_is_zero(ip_range range);	/* ::-ffff... or 0.0.0.0-0.0.0.0 */
 bool range_is_all(const ip_range r);	/* ::-:: or 0.0.0.0-0.0.0.0 */

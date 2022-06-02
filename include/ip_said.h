@@ -125,8 +125,10 @@ const char *str_said(const ip_said *said, said_buf *buf);
  * Details.
  */
 
-bool said_is_unset(const ip_said *said);
-const struct ip_info *said_type(const ip_said *said);
+bool said_is_unset(const ip_said *said);		/* handles NULL */
+const struct ip_info *said_type(const ip_said *said);	/* handles NULL */
+const struct ip_info *said_info(const ip_said said);
+
 ip_address said_address(const ip_said said);
 const struct ip_protocol *said_protocol(const ip_said said);
 

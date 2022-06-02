@@ -106,6 +106,7 @@ extern const ip_subnet unset_subnet;
 
 bool subnet_is_unset(const ip_subnet *subnet);			/* handles NULL */
 const struct ip_info *subnet_type(const ip_subnet *subnet);	/* handles NULL */
+const struct ip_info *subnet_info(const ip_subnet subnet);
 
 bool subnet_is_zero(const ip_subnet subnet);	/* ::/128 or 0.0.0.0/32 */
 bool subnet_is_all(const ip_subnet subnet);	/* ::/0 or 0.0.0.0/0 */

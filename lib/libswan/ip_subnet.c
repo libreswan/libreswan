@@ -101,12 +101,22 @@ ip_address subnet_prefix(const ip_subnet subnet)
 
 const struct ip_info *subnet_type(const ip_subnet *subnet)
 {
-	if (subnet_is_unset(subnet)) {
+	if (subnet == NULL) {
 		return NULL;
 	}
 
-	/* may be NULL */
-	return ip_version_info(subnet->version);
+	/* may return NULL */
+	return subnet_info(*subnet);
+}
+
+const struct ip_info *subnet_info(const ip_subnet subnet)
+{
+	if (!subnet.is_set) {
+		return NULL;
+	}
+
+	/* may return NULL */
+	return ip_version_info(subnet.version);
 }
 
 bool subnet_is_unset(const ip_subnet *subnet)

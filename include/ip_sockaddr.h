@@ -1,5 +1,5 @@
 /* unix sockaddr mashup, for libreswan
-
+ *
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  *
  * This library is free software; you can redistribute it and/or modify it

@@ -67,12 +67,22 @@ ip_address address_from_in6_addr(const struct in6_addr *in6)
 
 const struct ip_info *address_type(const ip_address *address)
 {
-	if (address_is_unset(address)) {
+	if (address == NULL) {
 		return NULL;
 	}
 
 	/* may return NULL */
-	return ip_version_info(address->version);
+	return address_info(*address);
+}
+
+const struct ip_info *address_info(const ip_address address)
+{
+	if (!address.is_set) {
+		return NULL;
+	}
+
+	/* may return NULL */
+	return ip_version_info(address.version);
 }
 
 /*

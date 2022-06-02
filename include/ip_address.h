@@ -150,6 +150,8 @@ extern const ip_address unset_address;
 bool address_is_unset(const ip_address *address);		/* handles NULL */
 const struct ip_info *address_type(const ip_address *address);	/* handles NULL */
 
+const struct ip_info *address_info(const ip_address address);
+
 bool address_is_specified(const ip_address address);
 
 bool address_is_loopback(const ip_address address);

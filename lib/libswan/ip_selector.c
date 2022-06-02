@@ -326,12 +326,22 @@ ip_selector selector_from_subnet_protoport(const ip_subnet subnet,
 
 const struct ip_info *selector_type(const ip_selector *selector)
 {
-	if (selector_is_unset(selector)) {
+	if (selector == NULL) {
 		return NULL;
 	}
 
 	/* may return NULL */
-	return ip_version_info(selector->version);
+	return selector_info(*selector);
+}
+
+const struct ip_info *selector_info(const ip_selector selector)
+{
+	if (!selector.is_set) {
+		return NULL;
+	}
+
+	/* may return NULL */
+	return ip_version_info(selector.version);
 }
 
 ip_port selector_port(const ip_selector selector)

@@ -124,6 +124,7 @@ extern const ip_selector unset_selector;
 
 bool selector_is_unset(const ip_selector *selector);			/* handles NULL */
 const struct ip_info *selector_type(const ip_selector *selector);	/* handles NULL */
+const struct ip_info *selector_info(const ip_selector selector);
 
 bool selector_is_zero(const ip_selector selector);	/* ::/128 or 0.0.0.0/32 */
 bool selector_is_all(const ip_selector selector);	/* ::/0 or 0.0.0.0/0 */

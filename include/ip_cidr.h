@@ -47,6 +47,7 @@ void pexpect_cidr(const ip_cidr a, where_t where);
 extern const ip_cidr unset_cidr;
 
 const struct ip_info *cidr_type(const ip_cidr *cidr);	/* handles NULL */
+const struct ip_info *cidr_info(const ip_cidr cidr);
 
 ip_address cidr_address(const ip_cidr cidr);
 
