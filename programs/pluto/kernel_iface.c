@@ -122,39 +122,51 @@ struct raw_iface *find_raw_ifaces(const struct ip_info *afi, struct logger *logg
 		}
 	}
 
+	/*
+	 * Because, on FreeBSD and OpenBSD the <<struct ifreq>> isn't
+	 * big enough to hold an IPv[46] address, the entries can be
+	 * larger than sizeof(struct ifreq).
+	 *
+	 * Code below gets to figure out the true size.
+	 */
 	unsigned nr_req = (ifconf.ifc_len / sizeof(struct ifreq));
-	dbg("  ioctl(IOCGIFCONF) returned %u %s interfaces", nr_req, afi->ip_name);
+	dbg("  ioctl(SIOCGIFCONF) returned %u bytes (roughly %u %s interfaces)",
+	    ifconf.ifc_len, nr_req, afi->ip_name);
 
 	/*
-	 * Add an entry to rifaces for each interesting interface.
+	 * For each interesting interface, add an entry to rifaces.
 	 */
 	struct raw_iface *rifaces = NULL;
 	const void *ifrp = buf;
 	while (ifrp < buf + ifconf.ifc_len) {
 
 		/*
-		 * Extract the contents.
-		 *
-		 * For ifname, build a NUL-terminated copy of the
-		 * rname field.
-		 *
-		 * And save the pointer into the address.
+		 * Current offset into the buffer.
 		 */
 		const struct ifreq *ifr = ifrp;
-		char ifname[IFNAMSIZ + 1];
-		memcpy(ifname, ifr->ifr_name, IFNAMSIZ);
-		ifname[IFNAMSIZ] = '\0';
 
 		/*
-		 * Advance the pointer.  Do it now before any of the
-		 * continue statements.  Thanks, but no thanks,
-		 * FreeBSD!!!
+		 * Determine the true size of the structure at IFR and
+		 * use that to advance the buffer pointer.
+		 *
+		 * While NetBSD an Linux can use sizeof(struct ifreq)
+		 * directly, FreeBSD and OpenBSD need to look at
+		 * .sa_len (but eqn works on NetBSD).
 		 */
-#ifdef _SIZEOF_ADDR_IFREQ
-		ifrp += _SIZEOF_ADDR_IFREQ(*ifr);
+#ifdef NEED_SIN_LEN
+		ifrp += (ifr->ifr_ifru.ifru_addr.sa_len <= sizeof(ifr->ifr_ifru) ? sizeof(struct ifreq) :
+			 (sizeof(struct ifreq) - sizeof(ifr->ifr_ifru) + ifr->ifr_ifru.ifru_addr.sa_len));
 #else
 		ifrp += sizeof(struct ifreq);
 #endif
+
+		/*
+		 * Because .ifr_name may not be NUL terminated, build
+		 * a NUL-terminated copy of its value.
+		 */
+		char ifname[IFNAMSIZ + 1];
+		memcpy(ifname, ifr->ifr_name, IFNAMSIZ);
+		ifname[IFNAMSIZ] = '\0';
 
 		/* ignore all but AF_INET interfaces */
 		if (ifr->ifr_addr.sa_family != afi->af) {
