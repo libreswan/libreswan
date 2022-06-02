@@ -51,3 +51,8 @@ list-local-base:
 
 include $(top_srcdir)/mk/targets.mk
 include $(top_srcdir)/mk/rules.mk
+
+# remember only one is defined
+OS_VARIANT = $(strip $(BSD_VARIANT) $(LINUX_VARIANT))
+pluto: $(OS_VARIANT).sh $(TRANSFORM_DEPS) | $(builddir)
+	$(transform_script)
