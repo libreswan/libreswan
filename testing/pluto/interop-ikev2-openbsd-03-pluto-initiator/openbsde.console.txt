@@ -1,0 +1,84 @@
+set +o emacs
+set +o emacs
+openbsde #
+ set +o vi
+openbsde #
+ set +o gmacs
+openbsde #
+ # note swan-prep does not yet support iked
+openbsde #
+ #/testing/guestbin/swan-prep
+openbsde #
+ cp openbsde.conf /etc/iked.conf
+openbsde #
+ chmod 600 /etc/iked.conf
+openbsde #
+ rm -f /tmp/iked.log
+openbsde #
+ ln -s $PWD/OUTPUT/openbsde.iked.log /tmp/iked.log
+openbsde #
+ /sbin/iked -dvvv > /tmp/iked.log 2>&1 &
+[x] PID
+openbsde #
+ echo "initdone"
+initdone
+openbsde #
+ ipsecctl -v -v -k -s all
+FLOWS:
+@0 flow esp in from 192.0.1.0/24 to 192.0.2.0/24 peer 192.1.2.45 srcid FQDN/east dstid FQDN/west type require
+@1 flow esp out from 192.0.2.0/24 to 192.0.1.0/24 peer 192.1.2.45 srcid FQDN/east dstid FQDN/west type require
+SAD:
+@0 esp tunnel from 192.1.2.45 to 192.1.2.23 spi 0x58691d9d auth hmac-sha2-256 enc null \
+	authkey 0xb984d175d10d0cda427e11ca1c5ff3cb3db1f60c7da1d1e0ccb1d659d567b72e \
+	enckey 0x
+	sa: spi 0x58691d9d auth hmac-sha2-256 enc null
+		state mature replay 64 flags 0x404<tunnel,esn>
+	lifetime_cur: alloc 0 bytes 88 add 1654350422 first 1654350432
+	lifetime_hard: alloc 0 bytes 2147483648 add 10800 first 0
+	lifetime_soft: alloc 0 bytes 1859720839 add 9352 first 0
+	address_src: 192.1.2.45
+	address_dst: 192.1.2.23
+	key_auth: bits 256: b984d175d10d0cda427e11ca1c5ff3cb3db1f60c7da1d1e0ccb1d659d567b72e
+	key_encrypt: bits 0: 
+	identity_src: type fqdn id 0: FQDN/west
+	identity_dst: type fqdn id 0: FQDN/east
+	lifetime_lastuse: alloc 0 bytes 0 add 0 first 1654350432
+	tag: IKED
+	counter: 
+		1 input packet
+		0 output packets
+		220 input bytes
+		0 output bytes
+		104 input bytes, decompressed
+		0 output bytes, uncompressed
+		0 packets dropped on input
+		0 packets dropped on output
+	replay: rpl 1
+@0 esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0x6900515a auth hmac-sha2-256 enc null \
+	authkey 0x3560c6c3f0ed9bde68f660d55bfe92a4101368eca68ee5c66acb39fabdbef0da \
+	enckey 0x
+	sa: spi 0x6900515a auth hmac-sha2-256 enc null
+		state mature replay 64 flags 0x404<tunnel,esn>
+	lifetime_cur: alloc 0 bytes 84 add 1654350422 first 1654350432
+	lifetime_hard: alloc 0 bytes 2147483648 add 10800 first 0
+	lifetime_soft: alloc 0 bytes 1844688453 add 9277 first 0
+	address_src: 192.1.2.23
+	address_dst: 192.1.2.45
+	key_auth: bits 256: 3560c6c3f0ed9bde68f660d55bfe92a4101368eca68ee5c66acb39fabdbef0da
+	key_encrypt: bits 0: 
+	identity_src: type fqdn id 0: FQDN/east
+	identity_dst: type fqdn id 0: FQDN/west
+	lifetime_lastuse: alloc 0 bytes 0 add 0 first 1654350432
+	tag: IKED
+	counter: 
+		0 input packets
+		1 output packet
+		0 input bytes
+		132 output bytes
+		0 input bytes, decompressed
+		104 output bytes, uncompressed
+		0 packets dropped on input
+		0 packets dropped on output
+	replay: rpl 2
+openbsde #
+ 

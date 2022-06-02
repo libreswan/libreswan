@@ -1349,8 +1349,9 @@ kvmplutotest	pfkeyv2-esn-ah-freebsd			freebsd
 kvmplutotest	pfkeyv2-ondemand			skiptest #netbsd-wip
 
 # OpenBSD interop
-kvmplutotest	interop-ikev2-openbsd-01-iked-responder	openbsd
-kvmplutotest	interop-ikev2-openbsd-02-iked-initiator	openbsd
+kvmplutotest	interop-ikev2-openbsd-01-iked-responder		openbsd
+kvmplutotest	interop-ikev2-openbsd-02-iked-initiator		openbsd
+kvmplutotest	interop-ikev2-openbsd-03-pluto-initiator	openbsd
 
 # real world interop configurations
 kvmplutotest	 elvis-is-alive				skiptest # ELVIS-PLUS IPsec test server
