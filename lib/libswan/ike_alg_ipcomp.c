@@ -41,10 +41,10 @@ const struct ipcomp_desc ike_alg_ipcomp_deflate = {
 	},
 	.kernel = {
 		.xfrm_name = "deflate",
-#ifdef SADB_X_CALG_DEFLATE
-		.sadb_calg_id = SADB_X_CALG_DEFLATE,
-#endif
 	},
+#ifdef SADB_X_CALG_DEFLATE
+	.ipcomp_sadb_calg_id = SADB_X_CALG_DEFLATE,
+#endif
 };
 
 const struct ipcomp_desc ike_alg_ipcomp_lzs = {
@@ -61,10 +61,10 @@ const struct ipcomp_desc ike_alg_ipcomp_lzs = {
 	},
 	.kernel = {
 		.xfrm_name = "lzs",
-#ifdef SADB_X_CALG_LZS
-		.sadb_calg_id = SADB_X_CALG_LZS,
-#endif
 	},
+#ifdef SADB_X_CALG_LZS
+	.ipcomp_sadb_calg_id = SADB_X_CALG_LZS,
+#endif
 };
 
 
@@ -82,8 +82,8 @@ const struct ipcomp_desc ike_alg_ipcomp_lzjh = {
 	},
 	.kernel = {
 		.xfrm_name = "lzjh",
-#ifdef SADB_X_CALG_LZJH
-		.sadb_calg_id = SADB_X_CALG_LZJH,
-#endif
 	},
+#ifdef SADB_X_CALG_LZJH
+	.ipcomp_sadb_calg_id = SADB_X_CALG_LZJH,
+#endif
 };

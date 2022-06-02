@@ -722,12 +722,13 @@ struct ipcomp_desc {
 		 * NULL implies not supported.
 		 */
 		const char *xfrm_name;
-		/*
-		 * The algorithms's SADB (pfkeyv2) value (>0 when defined for
-		 * this OS).
-		 */
-		unsigned sadb_calg_id;
 	} kernel;
+
+	/*
+	 * The algorithms's SADB (pfkeyv2) value (>0 when defined for
+	 * this OS).
+	 */
+	unsigned ipcomp_sadb_calg_id;
 
 	/*
 	 * Will IKE ever support IPCOMP?
@@ -849,6 +850,6 @@ const struct ipcomp_desc *ikev1_get_kernel_ipcomp_desc(enum ipsec_ipcomp_algo);
 
 const struct encrypt_desc *encrypt_desc_by_sadb_ealg_id(unsigned id);
 const struct integ_desc *integ_desc_by_sadb_aalg_id(unsigned id);
-const struct ipcomp_desc *ipcomp_desc_by_sadb_aalg_id(unsigned id);
+const struct ipcomp_desc *ipcomp_desc_by_sadb_calg_id(unsigned id);
 
 #endif /* _IKE_ALG_H */

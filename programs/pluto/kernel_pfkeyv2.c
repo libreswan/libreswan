@@ -248,8 +248,7 @@ static struct sadb_sa *put_sadb_sa(struct outbuf *msg,
 			 0);
 	unsigned ealg = (encrypt != NULL ? encrypt->encrypt_sadb_ealg_id :
 			 /* XXX: NetBSD treats IPCOMP like ENCRYPT */
-			 ipcomp != NULL ? ipcomp->kernel.sadb_calg_id :
-			 0);
+			 ipcomp != NULL ? ipcomp->ipcomp_sadb_calg_id : 0);
 
 	struct sadb_sa tmp = {
 		SADB_EXT_INIT(sadb_sa, sadb_ext_sa,

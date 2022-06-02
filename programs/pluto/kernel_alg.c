@@ -38,8 +38,10 @@
 
 static const struct integ_desc *integ_by_fqn[MAX_ALGS];
 static const struct encrypt_desc *encrypt_by_fqn[MAX_ALGS];
+static const struct ipcomp_desc *ipcomp_by_fqn[MAX_ALGS];
 static size_t integ_num = 0;
 static size_t encrypt_num = 0;
+static size_t ipcomp_num = 0;
 
 /*
  *      Forget previous registration
@@ -52,7 +54,8 @@ void kernel_alg_init(void)
 	/* ??? do these zero calls do anything useful? */
 	zero(&integ_by_fqn);
 	zero(&encrypt_by_fqn);
-	encrypt_num = integ_num = 0;
+	zero(&ipcomp_by_fqn);
+	encrypt_num = integ_num = ipcomp_num = 0;
 }
 
 /*
@@ -93,6 +96,11 @@ void kernel_encrypt_add(const struct encrypt_desc *alg)
 	ADD(alg, encrypt);
 }
 
+void kernel_ipcomp_add(const struct ipcomp_desc *alg)
+{
+	ADD(alg, ipcomp);
+}
+
 bool kernel_alg_dh_ok(const struct dh_desc *dh)
 {
 	if (dh == NULL) {
@@ -126,6 +134,11 @@ bool kernel_alg_integ_ok(const struct integ_desc *alg)
 	KERNEL_ALG_OK(alg, integ);
 }
 
+bool kernel_alg_ipcomp_ok(const struct ipcomp_desc *alg)
+{
+	KERNEL_ALG_OK(alg, ipcomp);
+}
+
 bool kernel_alg_is_ok(const struct ike_alg *alg)
 {
 	if (alg == NULL) {
@@ -138,6 +151,8 @@ bool kernel_alg_is_ok(const struct ike_alg *alg)
 		return kernel_alg_encrypt_ok(encrypt_desc(alg));
 	} else if (alg->algo_type == &ike_alg_integ) {
 		return kernel_alg_integ_ok(integ_desc(alg));
+	} else if (alg->algo_type == &ike_alg_ipcomp) {
+		return kernel_alg_ipcomp_ok(ipcomp_desc(alg));
 	} else {
 		llog_passert(&global_logger, HERE,
 			     "algorithm %s of type %s is not valid in the kernel",
@@ -196,6 +211,11 @@ const struct integ_desc **next_kernel_integ_desc(const struct integ_desc **last)
 	NEXT(last, integ)
 }
 
+const struct ipcomp_desc **next_kernel_ipcomp_desc(const struct ipcomp_desc **last)
+{
+	NEXT(last, ipcomp)
+}
+
 int kernel_alg_encrypt_count(void)
 {
 	return encrypt_num;
@@ -204,4 +224,9 @@ int kernel_alg_encrypt_count(void)
 int kernel_alg_integ_count(void)
 {
 	return integ_num;
+}
+
+int kernel_alg_ipcomp_count(void)
+{
+	return ipcomp_num;
 }

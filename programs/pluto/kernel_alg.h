@@ -62,25 +62,30 @@ struct alg_info_esp;	/* forward declaration */
 struct dh_desc;
 struct encrypt_desc;
 struct integ_desc;
+struct ipcomp_desc;
 
 extern bool kernel_alg_is_ok(const struct ike_alg *alg);
 
 extern bool kernel_alg_dh_ok(const struct dh_desc *dh);
 extern bool kernel_alg_encrypt_ok(const struct encrypt_desc *encrypt);
 extern bool kernel_alg_integ_ok(const struct integ_desc *integ);
+extern bool kernel_alg_ipcomp_ok(const struct ipcomp_desc *integ);
 
 bool kernel_alg_encrypt_key_size(const struct encrypt_desc *encrypt,
 				 int keylen, size_t *key_size);
 
 int kernel_alg_encrypt_count(void);
 int kernel_alg_integ_count(void);
+int kernel_alg_ipcomp_count(void);
 
 const struct encrypt_desc **next_kernel_encrypt_desc(const struct encrypt_desc **last);
 const struct integ_desc **next_kernel_integ_desc(const struct integ_desc **last);
+const struct ipcomp_desc **next_kernel_ipcomp_desc(const struct ipcomp_desc **last);
 
 extern void kernel_alg_init(void);
 
 void kernel_integ_add(const struct integ_desc *integ);
 void kernel_encrypt_add(const struct encrypt_desc *encrypt);
+void kernel_ipcomp_add(const struct ipcomp_desc *encrypt);
 
 #endif

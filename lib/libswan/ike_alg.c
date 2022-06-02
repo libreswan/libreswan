@@ -338,6 +338,11 @@ const struct integ_desc *integ_desc_by_sadb_aalg_id(unsigned id)
 	LOOKUP(integ_desc, integ_sadb_aalg_id, id);
 }
 
+const struct ipcomp_desc *ipcomp_desc_by_sadb_calg_id(unsigned id)
+{
+	LOOKUP(ipcomp_desc, ipcomp_sadb_calg_id, id);
+}
+
 /*
  * Validate and register IKE algorithm objects
  *
