@@ -155,45 +155,49 @@ struct kernel_policy_rule {
 	reqid_t reqid;
 };
 
+struct kernel_policy_end {
+	/*
+	 * The SRC/DST selectors of the policy.  This is what captures
+	 * the packets so they can be put through the wringer, er,
+	 * rules listed below.
+	 */
+	ip_selector client;
+	/*
+	 * The route addresses of the encapsulated packets.
+	 *
+	 * With pfkey and transport mode with nat-traversal we need to
+	 * change the remote IPsec SA to point to external ip of the
+	 * peer.  Here we substitute real client ip with NATD ip.
+	 *
+	 * Bug #1004 fix.
+	 *
+	 * There really isn't "client" with XFRM and transport mode so
+	 * eroute must be done to natted, visible ip. If we don't hide
+	 * internal IP, communication doesn't work.
+	 *
+	 * XXX: old comment?
+	 */
+	ip_selector route;
+	/*
+	 * The src/dst addresses of the encapsulated packet that are
+	 * to go across the public network.
+	 *
+	 * All rules should use these values?
+	 *
+	 * With setkey and transport mode, they can be unset; but
+	 * libreswan doesn't do that.  Actually they can be IPv[46]
+	 * UNSPEC and libreswan does that because XFRM insists on it.
+	 */
+	ip_address host;
+};
+
 struct kernel_policy {
-	struct {
-		/*
-		 * The SRC/DST selectors of the policy.  This is what
-		 * captures the packets so they can be put through the
-		 * wringer, er, rules listed below.
-		 */
-		ip_selector client;
-		/*
-		 * The route addresses of the encapsulated packets.
-		 *
-		 * With pfkey and transport mode with nat-traversal we
-		 * need to change the remote IPsec SA to point to
-		 * external ip of the peer.  Here we substitute real
-		 * client ip with NATD ip.
-		 *
-		 * Bug #1004 fix.
-		 *
-		 * There really isn't "client" with XFRM and transport
-		 * mode so eroute must be done to natted, visible
-		 * ip. If we don't hide internal IP, communication
-		 * doesn't work.
-		 *
-		 * XXX: old comment?
-		 */
-		ip_selector route;
-		/*
-		 * The src/dst addresses of the encapsulated packet
-		 * that are to go across the public network.
-		 *
-		 * All rules should use these values?
-		 *
-		 * With setkey and transport mode, they can be unset;
-		 * but libreswan doesn't do that.  Actually they can
-		 * be IPv[46] UNSPEC and libreswan does that because
-		 * XFRM insists on it.
-		 */
-		ip_address host;
-	} src, dst;
+	/*
+	 * The src/dst selector and src/dst host (and apparently
+	 * route).
+	 */
+	struct kernel_policy_end src;
+	struct kernel_policy_end dst;
 	/*
 	 * Index from 1; RULE[0] is always empty; so .nr_rules==0
 	 * implies no rules.
@@ -209,7 +213,7 @@ struct kernel_policy {
 	 */
 	enum encap_mode mode;
 	unsigned nr_rules;
-	struct kernel_policy_rule rule[5]; /* [0]+AH+ESP+COMP+0 */
+	struct kernel_policy_rule rule[5]; /* [0]+IPCOMP+AH+ESP+0 */
 };
 
 struct kernel_policy bare_kernel_policy(const ip_selector *src,
