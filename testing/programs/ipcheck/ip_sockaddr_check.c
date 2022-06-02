@@ -70,7 +70,7 @@ static void check_sockaddr_as_endpoint(void)
 			memcpy(&raw.sa.sa.sin.sin_addr, t->addr, sizeof(raw.sa.sa.sin.sin_addr));
 			raw.sa.sa.sin.sin_family = AF_INET;
 			raw.sa.sa.sin.sin_port = htons(t->port);
-#ifdef NEED_SIN_LEN
+#ifdef USE_SOCKADDR_LEN
                 	raw.sa.sa.sin.sin_len = sizeof(struct sockaddr_in);
 #endif
 			break;
@@ -78,7 +78,7 @@ static void check_sockaddr_as_endpoint(void)
 			memcpy(&raw.sa.sa.sin6.sin6_addr, t->addr, sizeof(raw.sa.sa.sin6.sin6_addr));
 			raw.sa.sa.sin6.sin6_family = AF_INET6;
 			raw.sa.sa.sin6.sin6_port = htons(t->port);
-#ifdef NEED_SIN_LEN
+#ifdef USE_SOCKADDR_LEN
                 	raw.sa.sa.sin6.sin6_len = sizeof(struct sockaddr_in6);
 #endif
 			break;

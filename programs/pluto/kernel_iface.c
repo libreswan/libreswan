@@ -153,7 +153,7 @@ struct raw_iface *find_raw_ifaces(const struct ip_info *afi, struct logger *logg
 		 * directly, FreeBSD and OpenBSD need to look at
 		 * .sa_len (but eqn works on NetBSD).
 		 */
-#ifdef NEED_SIN_LEN
+#ifdef USE_SOCKADDR_LEN
 		ifrp += (ifr->ifr_ifru.ifru_addr.sa_len <= sizeof(ifr->ifr_ifru) ? sizeof(struct ifreq) :
 			 (sizeof(struct ifreq) - sizeof(ifr->ifr_ifru) + ifr->ifr_ifru.ifru_addr.sa_len));
 #else

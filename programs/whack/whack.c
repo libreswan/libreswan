@@ -917,7 +917,7 @@ static ip_address get_address_any(struct family *family)
 struct sockaddr_un ctl_addr = {
 	.sun_family = AF_UNIX,
 	.sun_path  = DEFAULT_CTL_SOCKET,
-#if defined(HAS_SUN_LEN)
+#ifdef USE_SOCKADDR_LEN
 	.sun_len = sizeof(struct sockaddr_un),
 #endif
 };

@@ -109,7 +109,7 @@ int ctl_fd = NULL_FD;   /* file descriptor of control (whack) socket */
 
 struct sockaddr_un ctl_addr = {
 	.sun_family = AF_UNIX,
-#if defined(HAS_SUN_LEN)
+#ifdef USE_SOCKADDR_LEN
 	.sun_len = sizeof(struct sockaddr_un),
 #endif
 	.sun_path = DEFAULT_CTL_SOCKET

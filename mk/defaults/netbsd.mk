@@ -4,8 +4,7 @@ PKG_BASE ?= /usr/pkg
 PKG_DBDIR ?= /var/db/pkg
 PKG_PATH ?= /usr/pkgsrc/packages/All
 
-USERLAND_CFLAGS += -DHAS_SUN_LEN
-USERLAND_CFLAGS += -DNEED_SIN_LEN
+USERLAND_CFLAGS += -DUSE_SOCKADDR_LEN
 
 USERLAND_INCLUDES += -I$(PKG_BASE)/include
 

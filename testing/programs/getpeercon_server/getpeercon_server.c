@@ -115,7 +115,7 @@ int main(int argc, char *argv[])
 			srv_sock_port);
 		memset(&srv_sock_addr, 0, sizeof(srv_sock_addr));
 		srv_sock_addr.sin6_family = AF_INET6;
-#ifdef NEED_SIN_LEN
+#ifdef USE_SOCKADDR_LEN
 		srv_sock_addr.sin6_len = sizeof(struct sockaddr_in6);
 #endif
 		memcpy(&srv_sock_addr.sin6_addr, &in6addr_any,
@@ -129,7 +129,7 @@ int main(int argc, char *argv[])
 		fprintf(stderr, "-> listening on UNIX socket %s ... ",
 			srv_sock_path);
 		srv_sock_addr.sun_family = AF_UNIX;
-#ifdef NEED_SIN_LEN
+#ifdef USE_SOCKADDR_LEN
 #error how do we set srv_sock_addr.sun_len?
 #endif
 		/* make .sun_path both NUL-padded and NUL-terminated */

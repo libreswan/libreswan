@@ -6,8 +6,7 @@ PKG_BASE ?= /usr/local
 # See: https://github.com/libreswan/libreswan/issues/735
 CC=gcc
 
-USERLAND_CFLAGS += -DHAS_SUN_LEN
-USERLAND_CFLAGS += -DNEED_SIN_LEN
+USERLAND_CFLAGS += -DUSE_SOCKADDR_LEN
 
 USERLAND_INCLUDES += -I$(PKG_BASE)/include
 

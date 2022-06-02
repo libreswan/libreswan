@@ -88,7 +88,7 @@ ip_sockaddr sockaddr_from_address_port(const ip_address address, ip_port port)
 		sa.sa.sin.sin_family = afi->af;
 		sa.sa.sin.sin_port = nport(port);
 		dst_addr = THING_AS_CHUNK(sa.sa.sin.sin_addr);
-#ifdef NEED_SIN_LEN
+#ifdef USE_SOCKADDR_LEN
 		sa.sa.sin.sin_len = sizeof(struct sockaddr_in);
 #endif
 		break;
@@ -96,7 +96,7 @@ ip_sockaddr sockaddr_from_address_port(const ip_address address, ip_port port)
 		sa.sa.sin6.sin6_family = afi->af;
 		sa.sa.sin6.sin6_port = nport(port);
 		dst_addr = THING_AS_CHUNK(sa.sa.sin6.sin6_addr);
-#ifdef NEED_SIN_LEN
+#ifdef USE_SOCKADDR_LEN
 		sa.sa.sin6.sin6_len = sizeof(struct sockaddr_in6);
 #endif
 		break;
