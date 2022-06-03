@@ -91,6 +91,9 @@ enum sadb_exttype {
 	sadb_ext_spirange = SADB_EXT_SPIRANGE,
 	sadb_ext_supported_auth = SADB_EXT_SUPPORTED_AUTH,
 	sadb_ext_supported_encrypt = SADB_EXT_SUPPORTED_ENCRYPT,
+#ifdef SADB_X_EXT_SUPPORTED_COMP
+	sadb_x_ext_supported_comp = SADB_X_EXT_SUPPORTED_COMP,
+#endif
 #ifdef SADB_X_EXT_NAT_T_TYPE
 	sadb_x_ext_nat_t_type = SADB_X_EXT_NAT_T_TYPE,
 #endif

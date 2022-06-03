@@ -574,6 +574,9 @@ sparse_names sadb_lifetime_names = {
 sparse_sparse_names sadb_alg_names = {
 	{ sadb_ext_supported_auth, sadb_aalg_names, },
 	{ sadb_ext_supported_encrypt, sadb_ealg_names, },
+#ifdef SADB_X_EXT_SUPPORTED_COMP
+	{ sadb_x_ext_supported_comp, sadb_calg_names, },
+#endif
 	{ 0, NULL, },
 };
 
@@ -1048,6 +1051,9 @@ void DBG_msg(struct logger *logger, const void *ptr, size_t len, const char *fmt
 
 		case sadb_ext_supported_auth:
 		case sadb_ext_supported_encrypt:
+#ifdef SADB_X_EXT_SUPPORTED_COMP
+		case sadb_x_ext_supported_comp:
+#endif
 		{
 			shunk_t supported_cursor;
 			const struct sadb_supported *supported =
