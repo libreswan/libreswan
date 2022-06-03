@@ -35,7 +35,7 @@ op=
 runcon=
 args=
 
-while test $# -gt 0 && expr "$1" : "-" > /dev/null; do
+while test $# -gt 0 && expr x"$1" : x"-" > /dev/null; do
     case "$1" in
 	--up )
 	    op=up
