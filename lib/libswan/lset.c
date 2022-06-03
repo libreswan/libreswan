@@ -21,6 +21,7 @@
 
 #include "lswlog.h"	/* for passert() */
 #include "enum_names.h"
+#include "sparse_names.h"
 
 /* test a set by seeing if all bits have names */
 bool test_lset(const struct enum_names *en, lset_t val)
@@ -99,4 +100,31 @@ const char *str_lset_short(enum_names *en, const char *separator,
 	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
 	jam_lset_short(&buf, en, separator, val);
 	return out->buf;
+}
+
+size_t jam_sparse_lset(struct jambuf *buf, const struct sparse_name *sd, lset_t val)
+{
+	if (val == LEMPTY) {
+		return jam(buf, "none");
+	}
+
+	size_t s = 0;
+	const char *sep = "";
+	for (unsigned e = 0; val != 0; e++) {
+		lset_t bit = LELEM(e);
+		if (val & bit) {
+			s += jam_string(buf, sep);
+			sep = LSET_SEPARATOR;
+			/* can return NULL */
+			const char *name = sparse_name(sd, bit);
+			if (name == NULL) {
+				/* No name for this bit, use hex. */
+				s += jam(buf, "0x" PRI_LSET, bit);
+			} else {
+				s += jam_string(buf, name);
+			}
+		}
+		val &= ~bit;
+	}
+	return s;
 }
