@@ -65,6 +65,12 @@ typedef uint64_t u64_t;
 		}							\
 	}
 
+#define JAM_SPARSE_LSET(NAMES, T, F)					\
+	{								\
+		jam(buf, " "#F"=%lu=", (long unsigned)m->T##_##F);	\
+		jam_sparse_lset(buf, NAMES, m->T##_##F);		\
+	}
+
 #define JAM_SADB(T, F)							\
 	JAM_SPARSE(sadb_##F##_names, T, F)
 
@@ -752,7 +758,7 @@ void jam_sadb_sa(struct jambuf *buf, enum sadb_satype satype, const struct sadb_
 	JAM_SPARSE(sadb_sastate_names, sadb_sa, state);
 	JAM_SPARSE_SPARSE(sadb_satype_aalg_names, satype, sadb_sa, auth);
 	JAM_SPARSE_SPARSE(sadb_satype_ealg_names, satype, sadb_sa, encrypt);
-	J(u32, sadb_sa, flags);
+	JAM_SPARSE_LSET(sadb_saflag_names, sadb_sa, flags);
 }
 
 void jam_sadb_sens(struct jambuf *buf, const struct sadb_sens *m)

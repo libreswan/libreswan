@@ -208,7 +208,7 @@ extern sparse_names sadb_flow_type_names;
 extern sparse_names sadb_identtype_names;
 extern sparse_names sadb_lifetime_names;
 extern sparse_names sadb_policyflag_names;
-extern sparse_names sadb_saflags_names;
+extern sparse_names sadb_saflag_names;
 extern sparse_names sadb_sastate_names;
 extern sparse_names sadb_satype_names;
 extern sparse_names sadb_type_names;

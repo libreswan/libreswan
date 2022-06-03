@@ -240,6 +240,7 @@ static struct sadb_sa *put_sadb_sa(struct outbuf *msg,
 				   enum sadb_satype satype,
 				   enum sadb_sastate sastate,
 				   unsigned replay_window,
+				   unsigned saflags,
 				   const struct integ_desc *integ,
 				   const struct encrypt_desc *encrypt,
 				   const struct ipcomp_desc *ipcomp)
@@ -254,6 +255,7 @@ static struct sadb_sa *put_sadb_sa(struct outbuf *msg,
 		SADB_EXT_INIT(sadb_sa, sadb_ext_sa,
 			      .sadb_sa_replay = replay_window,
 			      .sadb_sa_state = sastate,
+			      .sadb_sa_flags = saflags,
 			      .sadb_sa_spi = spi,
 			      .sadb_sa_auth = aalg,
 			      .sadb_sa_encrypt = ealg),
@@ -588,7 +590,7 @@ static bool pfkeyv2_del_ipsec_spi(ipsec_spi_t spi,
 
 	/* SA(*) */
 
-	put_sadb_sa(&req, spi, /*satype*/0, /*sastate*/0, /*replay*/0,
+	put_sadb_sa(&req, spi, /*satype*/0, /*sastate*/0, /*replay*/0, /*saflags*/0,
 		    /*integ*/NULL, /*encrypt*/NULL, /*ipcomp*/NULL);
 
 	/* address(SD) */
@@ -645,10 +647,17 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 
 	/* SA */
 
+	unsigned saflags = 0;
+#ifdef SADB_X_SAFLAGS_ESN
+	if (k->esn) {
+		saflags |= SADB_X_SAFLAGS_ESN;
+	}
+#endif
+
 	put_sadb_sa(&req, k->spi,
 		    base->sadb_msg_satype,
-		    sadb_sastate_larval/*XXX: sadb_sastate_mature*/,
-		    k->replay_window,
+		    sadb_sastate_mature,
+		    k->replay_window, saflags,
 		    k->integ, k->encrypt, k->ipcomp);
 
 	/*
@@ -739,7 +748,7 @@ static bool pfkeyv2_get_sa(const struct kernel_sa *k,
 
 	/* SA(*) */
 
-	put_sadb_sa(&req, k->spi, /*satype*/0, /*sastate*/0, /*replay*/0,
+	put_sadb_sa(&req, k->spi, /*satype*/0, /*sastate*/0, /*replay*/0, /*saflags*/0,
 		    /*integ*/NULL, /*encrypt*/NULL, /*ipcomp*/NULL);
 
 	/* address(SD) */
@@ -1104,7 +1113,9 @@ const struct kernel_ops pfkeyv2_kernel_ops = {
 	.interface_name = "PF_KEY v2",
 	.overlap_supported = false,	/* XXX: delete this? */
 	.sha2_truncbug_support = false,
-	.esn_supported = false,		/* but is on FreeBSD and OpenBSD? */
+#ifdef SADB_X_SAFLAGS_ESN
+	.esn_supported = true,		/* FreeBSD and OpenBSD? */
+#endif
 	.replay_window = 64,
 	.async_fdp = &pfkeyv2_fd,	/* XXX: fix code using this not checking for >0 */
 	.route_fdp = NULL,		/* XXX: what is this? */
