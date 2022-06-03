@@ -266,28 +266,28 @@ static struct sadb_sa *put_sadb_sa(struct outbuf *msg,
 }
 
 static struct ip_sockaddr *put_ip_sockaddr(struct outbuf *msg,
-					   const ip_address *addr)
+					   const ip_address addr)
 {
-	ip_sockaddr sa = sockaddr_from_address(*addr);
+	ip_sockaddr sa = sockaddr_from_address(addr);
 	return hunk_put(msg, &sa.sa, sa.len);
 }
 
 #ifndef __OpenBSD__
 static struct sadb_address *put_sadb_selector(struct outbuf *msg,
 					      enum sadb_exttype srcdst,
-					      const ip_selector *selector)
+					      const ip_selector selector)
 {
-	const struct ip_protocol *protocol = selector_protocol(*selector);
+	const struct ip_protocol *protocol = selector_protocol(selector);
 	enum ipsec_proto proto = (protocol == &ip_protocol_all ? ipsec_proto_any/*255*/ :
 				  protocol != NULL ? protocol->ipproto :
 				  pexpect(0));
-	ip_address prefix = selector_prefix(*selector);
-	unsigned prefix_len = selector_prefix_bits(*selector);
+	ip_address prefix = selector_prefix(selector);
+	unsigned prefix_len = selector_prefix_bits(selector);
 	struct sadb_address *address =
 		put_sadb_ext(msg, sadb_address, srcdst,
 			     .sadb_address_proto = proto,
 			     .sadb_address_prefixlen = prefix_len);
-	put_ip_sockaddr(msg, &prefix);
+	put_ip_sockaddr(msg, prefix);
 	padup_sadb(msg, address);
 	return address;
 }
@@ -295,9 +295,9 @@ static struct sadb_address *put_sadb_selector(struct outbuf *msg,
 
 static struct sadb_address *put_sadb_address(struct outbuf *msg,
 					     enum sadb_exttype srcdst,
-					     const ip_address *addr)
+					     const ip_address addr)
 {
-	const struct ip_info *afi = address_type(addr);
+	const struct ip_info *afi = address_info(addr);
 #ifdef __OpenBSD__
 	struct sadb_address *address =
 		put_sadb_ext(msg, sadb_address, srcdst);
@@ -521,8 +521,8 @@ static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 
 	/* (tunnel_mode ? ipsec_mode_tunnel : ipsec_mode_transport), */
 
-	put_sadb_address(&req, sadb_ext_address_src, src);
-	put_sadb_address(&req, sadb_ext_address_dst, dst);
+	put_sadb_address(&req, sadb_ext_address_src, *src);
+	put_sadb_address(&req, sadb_ext_address_dst, *dst);
 	put_sadb_spirange(&req, min, max);
 
 	struct inbuf resp;
@@ -595,8 +595,8 @@ static bool pfkeyv2_del_ipsec_spi(ipsec_spi_t spi,
 
 	/* address(SD) */
 
-	put_sadb_address(&req, sadb_ext_address_src, src_address);
-	put_sadb_address(&req, sadb_ext_address_dst, dst_address);
+	put_sadb_address(&req, sadb_ext_address_src, *src_address);
+	put_sadb_address(&req, sadb_ext_address_dst, *dst_address);
 
 	struct inbuf recv;
 	if (!msg_sendrecv(&req, base, &recv)) {
@@ -679,8 +679,8 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 
 	/* address(SD) */
 
-	put_sadb_address(&req, sadb_ext_address_src, k->src.address);
-	put_sadb_address(&req, sadb_ext_address_dst, k->dst.address);
+	put_sadb_address(&req, sadb_ext_address_src, *k->src.address);
+	put_sadb_address(&req, sadb_ext_address_dst, *k->dst.address);
 
 	/* (address(P)) */
 
@@ -753,8 +753,8 @@ static bool pfkeyv2_get_sa(const struct kernel_sa *k,
 
 	/* address(SD) */
 
-	put_sadb_address(&req, sadb_ext_address_src, k->src.address);
-	put_sadb_address(&req, sadb_ext_address_dst, k->dst.address);
+	put_sadb_address(&req, sadb_ext_address_src, *k->src.address);
+	put_sadb_address(&req, sadb_ext_address_dst, *k->dst.address);
 
 	struct inbuf resp;
 	if (!msg_sendrecv(&req, base, &resp)) {
@@ -838,8 +838,8 @@ static struct sadb_x_ipsecrequest *put_sadb_x_ipsecrequest(struct outbuf *msg,
 	 * additional addresses are specified.
 	 */
 	if (mode == ipsec_mode_tunnel) {
-		put_ip_sockaddr(msg, &kernel_policy->src.host);
-		put_ip_sockaddr(msg, &kernel_policy->dst.host);
+		put_ip_sockaddr(msg, kernel_policy->src.host);
+		put_ip_sockaddr(msg, kernel_policy->dst.host);
 	}
 	padup_sadb(msg, x_ipsecrequest);
 	/* patch up mess? */
@@ -927,8 +927,8 @@ static bool pfkeyv2_raw_policy(enum kernel_policy_op op,
 
 	/* address(SD) */
 
-	put_sadb_selector(&req, sadb_ext_address_src, src_client);
-	put_sadb_selector(&req, sadb_ext_address_dst, dst_client);
+	put_sadb_selector(&req, sadb_ext_address_src, *src_client);
+	put_sadb_selector(&req, sadb_ext_address_dst, *dst_client);
 
 	/* [lifetime(HSC)] */
 
