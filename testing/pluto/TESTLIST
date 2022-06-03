@@ -1344,6 +1344,8 @@ kvmplutotest	pfkeyv2-tunnel-6in6-ah-ikev2		netbsd
 kvmplutotest	pfkeyv2-tunnel-6in6-esp-ipcomp-ikev2	netbsd	github/713
 kvmplutotest	pfkeyv2-tunnel-6in6-esp-ikev2		netbsd
 
+kvmplutotest	pfkeyv2-esn-esp-freebsd			freebsd
+kvmplutotest	pfkeyv2-esn-ah-freebsd			freebsd
 kvmplutotest	pfkeyv2-ondemand			skiptest #netbsd-wip
 
 # OpenBSD interop
