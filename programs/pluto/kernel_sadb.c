@@ -866,16 +866,6 @@ void jam_sadb_x_policy(struct jambuf *buf, const struct sadb_x_policy *m)
 }
 #endif
 
-#ifdef SADB_X_EXT_POLICY2
-void jam_sadb_x_policy2(struct jambuf *buf, const struct sadb_x_policy2 *m)
-{
-	jam(buf, "sadb_x_policy2 @%p:", m);
-	JAM_LEN(sadb_x_policy2, len);
-	JAM_SADB(sadb_x_policy2, exttype);
-	J(u32, sadb_x_policy2, seq);
-};
-#endif
-
 #ifdef SADB_X_EXT_SA2
 void jam_sadb_x_sa2(struct jambuf *buf, const struct sadb_x_sa2 *m)
 {
@@ -1243,9 +1233,6 @@ GET_SADB(sadb_x_nat_t_type, sizeof(uint64_t));
 #ifdef SADB_X_EXT_POLICY
 GET_SADB(sadb_x_policy, sizeof(uint64_t));
 #endif
-#ifdef SADB_X_EXT_POLICY2
-GET_SADB(sadb_x_policy2, sizeof(uint64_t));
-#endif
 #ifdef SADB_X_EXT_SA2
 GET_SADB(sadb_x_sa2, sizeof(uint64_t));
 #endif
@@ -1288,9 +1275,6 @@ DD(sadb_x_nat_t_type);
 #endif
 #ifdef SADB_X_EXT_POLICY
 DD(sadb_x_policy);
-#endif
-#ifdef SADB_X_EXT_POLICY2
-DD(sadb_x_policy2);
 #endif
 #ifdef SADB_X_EXT_SA2
 DD(sadb_x_sa2);

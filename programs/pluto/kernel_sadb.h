@@ -23,43 +23,10 @@
 
 #include "lsw-pfkeyv2.h"	/* also pulls in missing types dependencies */
 
-/* unscrew lack of struct sadb_x_sa2 */
-#ifdef __OpenBSD__
-# undef SADB_X_EXT_SA2
-#endif
-
-/* unscrew totally different struct sadb_x_policy */
-#ifdef __OpenBSD__
-# if SADB_X_EXT_POLICY != 25
-#  error confused
-# endif
-# undef SADB_X_EXT_POLICY
-# define SADB_X_EXT_POLICY2	25
-# define sadb_x_policy2 sadb_x_policy
-#endif
-
-#ifdef __OpenBSD__
-/* in sadb_prop */
-# define sadb_prop_num sadb_prop_num
-#endif
-
-#ifdef __linux__
-/* in sadb_x_policy */
-# define sadb_x_policy_priority sadb_x_policy_priority
-/* in sadb_x_ipsecrequest */
-# define sadb_x_ipsecrequest_reserved1 sadb_x_ipsecrequest_reserved1
-# define sadb_x_ipsecrequest_reserved2 sadb_x_ipsecrequest_reserved2
-#endif
-
-#ifdef __FreeBSD__
-/* in sadb_x_policy */
-# define sadb_x_policy_scope sadb_x_policy_scope
-# define sadb_x_policy_priority sadb_x_policy_priority
-#endif
-
 /*
  * struct sadb_x_policy requires these definitions, but OpenBSD
- * doesn't use any of that.
+ * doesn't use any of that - it's SADB_X_EXT_POLICY is totally
+ * different.
  */
 
 #ifdef SADB_X_EXT_POLICY
@@ -212,9 +179,6 @@ extern sparse_names sadb_saflag_names;
 extern sparse_names sadb_sastate_names;
 extern sparse_names sadb_satype_names;
 extern sparse_names sadb_type_names;
-#ifdef SADB_X_EXT_PROTOCOL
-extern sparse_names sadb_protocol_proto_names;
-#endif
 
 extern sparse_sparse_names sadb_alg_names;
 extern sparse_sparse_names sadb_satype_ealg_names;
@@ -273,9 +237,6 @@ DD(sadb_lifetime);
 DD(sadb_msg);
 DD(sadb_prop);
 DD(sadb_proposal);
-#ifdef SADB_X_EXT_PROTOCOL
-DD(sadb_protocol);
-#endif
 DD(sadb_sens);
 DD(sadb_spirange);
 DD(sadb_supported);
@@ -287,9 +248,6 @@ DD(sadb_x_nat_t_port);
 DD(sadb_x_nat_t_type);
 #ifdef SADB_X_EXT_POLICY
 DD(sadb_x_policy);
-#endif
-#ifdef SADB_X_EXT_POLICY2
-DD(sadb_x_policy2);
 #endif
 #ifdef SADB_X_EXT_SA2
 DD(sadb_x_sa2);
@@ -313,9 +271,6 @@ GET_SADB(sadb_lifetime);
 GET_SADB(sadb_msg);
 GET_SADB(sadb_prop);
 GET_SADB(sadb_proposal);
-#ifdef SADB_X_EXT_PROTOCOL
-GET_SADB(sadb_protocol);
-#endif
 GET_SADB(sadb_sa);
 GET_SADB(sadb_sens);
 GET_SADB(sadb_spirange);
@@ -325,9 +280,6 @@ GET_SADB(sadb_x_ipsecrequest);
 #endif
 #ifdef SADB_X_EXT_POLICY
 GET_SADB(sadb_x_policy);
-#endif
-#ifdef SADB_X_EXT_POLICY2
-GET_SADB(sadb_x_policy2);
 #endif
 GET_SADB(sadb_x_nat_t_type);
 #ifdef SADB_X_EXT_SA2
