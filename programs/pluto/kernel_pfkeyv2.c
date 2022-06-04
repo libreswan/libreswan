@@ -46,6 +46,7 @@ static int pfkeyv2_fd;
 #define SIZEOF_SADB_X_POLICY (sizeof(struct sadb_x_policy) + SIZEOF_SADB_X_IPSECREQUEST * 2)
 #define SIZEOF_SADB_X_SA2 sizeof(struct sadb_x_sa2)
 #define SIZEOF_SADB_X_IPSECREQUEST (sizeof(struct sadb_x_ipsecrequest) + SIZEOF_SADB_ADDRESS * 2)
+#define SIZEOF_SADB_X_SA_REPLAY sizeof(struct sadb_x_sa_replay)
 
 struct outbuf {
 	const char *what;
@@ -639,7 +640,11 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 		       SIZEOF_SADB_ADDRESS * 3 +
 		       SIZEOF_SADB_KEY * 2 +
 		       SIZEOF_SADB_IDENT * 2 +
-		       SIZEOF_SADB_SENS];
+#ifdef SADB_X_EXT_SA_REPLAY
+		       SIZEOF_SADB_X_SA_REPLAY +
+#endif
+		       SIZEOF_SADB_SENS +
+		       0];
 	struct outbuf req;
 	struct sadb_msg *base = msg_base(&req, __func__,
 					 chunk2(reqbuf, sizeof(reqbuf)),
@@ -654,10 +659,36 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 	}
 #endif
 
+	/*
+	 * Determine the size of the replay window (presumably one bit
+	 * per packet?).
+	 *
+	 * + The field .replay_window specifies the size in packets.
+	 *
+	 * + PF KEY v2's .sadb_sa_replay expects the size in 8-packet
+	 *   bytes.  FreeBSD's setkey describes it as "one eighth of
+	 *   the anti-replay window size in packets".
+	 *
+	 * Hence the jugging with byte vs bit below.
+	 *
+	 * XXX: need way to provide the upper bound to the window size
+	 * to the code loading a connection can pre-emptively reject
+	 * to-big values.  For instance, the OpenBSD kernel limits the
+	 * value to 64*8 packets.
+	 *
+	 * FreeBSD's setkey sets .sadb_sa_replay to the saturated
+	 * value and then, the field saturates, also adds a
+	 * SADB_X_EXT_SA_REPLAY payload specifying the replay window
+	 * size in packets.
+	 */
+	unsigned bytes_for_replay_window = BYTES_FOR_BITS(k->replay_window);
 	put_sadb_sa(&req, k->spi,
 		    base->sadb_msg_satype,
 		    sadb_sastate_mature,
-		    k->replay_window, saflags,
+		    /*sadb_sa_replay*/
+		    (bytes_for_replay_window > UINT8_MAX ? UINT8_MAX :
+		     bytes_for_replay_window),
+		    saflags,
 		    k->integ, k->encrypt, k->ipcomp);
 
 	/*
@@ -709,6 +740,26 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 	/* (identity(SD)) */
 
 	/* (sensitivity) */
+
+	/* replay (extended mix) */
+
+#ifdef SADB_X_EXT_SA_REPLAY
+	/*
+	 * Per-above, only emit this when .sadb_sa_replay isn't big
+	 * enough (it's pretty big).
+	 *
+	 * Unlike .sadb_sa_replay which is in bytes (8 bits for 8
+	 * packets per byte), .sadb_x_ext_sa_replay_replay is in
+	 * packets - no conversion is required (FreeBSD's kernel
+	 * converts it to bytes).
+	 */
+	if (bytes_for_replay_window > UINT8_MAX) {
+		/* The -32 comes from FreeBSD!?! */
+		pexpect(k->replay_window <= (UINT32_MAX - 32));
+		put_sadb_ext(&req, sadb_x_sa_replay, sadb_x_ext_sa_replay,
+			     .sadb_x_sa_replay_replay = k->replay_window);
+	}
+#endif
 
 	/* UPDATE */
         /* <base, SA, (lifetime(HSC),) address(SD), (address(P),)
@@ -800,6 +851,9 @@ static bool pfkeyv2_get_sa(const struct kernel_sa *k,
 #endif
 		case sadb_ext_lifetime_hard:
 		case sadb_ext_lifetime_soft:
+#ifdef SADB_X_EXT_SA_REPLAY
+		case sadb_x_ext_sa_replay:
+#endif
 			/* ignore these */
 			break;
 		default:
@@ -1116,7 +1170,16 @@ const struct kernel_ops pfkeyv2_kernel_ops = {
 #ifdef SADB_X_SAFLAGS_ESN
 	.esn_supported = true,		/* FreeBSD and OpenBSD? */
 #endif
-	.replay_window = 64,
+#if defined(SADB_X_EXT_SA_REPLAY)
+	/* .sadb_x_sa_replay_replay is in packets */
+	.replay_window = (UINT32_MAX - 32), /* packets */
+#elif defined(__OpenBSD__)
+	/* kernel limits value to 64 * 8 packet bits per-byte */
+	.replay_window = 64 * 8, /* packets */
+#else
+	/* .sadb_sa_replay is in bytes with 1 bit per packet */
+	.replay_window = UINT8_MAX * 8, /* packets */
+#endif
 	.async_fdp = &pfkeyv2_fd,	/* XXX: fix code using this not checking for >0 */
 	.route_fdp = NULL,		/* XXX: what is this? */
 
