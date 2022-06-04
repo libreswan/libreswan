@@ -408,7 +408,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 {
 	/* under certain conditions, override that_id to %ANYADDR */
 
-	struct id rw_id; /* must be at same scope as that_id */
+	struct id rw_id; /* MUST BE AT SAME SCOPE AS THAT_ID */
 	const struct id *const this_id = &c->local->host.id;
 	const struct id *that_id = &c->remote->host.id; /* can change */
 
@@ -434,8 +434,10 @@ static struct secret *lsw_get_secret(const struct connection *c,
 		 */
 		pexpect(address_is_specified(c->local->host.addr));
 		/* roadwarrior: replace that with %ANYADDR */
-		rw_id.kind = address_type(&c->local->host.addr)->id_ip_addr;
-		rw_id.ip_addr = address_type(&c->local->host.addr)->address.unspec;
+		rw_id = (struct id) {
+			.kind = address_type(&c->local->host.addr)->id_ip_addr,
+			.ip_addr = address_type(&c->local->host.addr)->address.unspec,
+		};
 		id_buf old_buf, new_buf;
 		dbg("%s() switching remote roadwarrier ID from %s to %s (%%ANYADDR)",
 		    __func__, str_id(that_id, &old_buf), str_id(&rw_id, &new_buf));
