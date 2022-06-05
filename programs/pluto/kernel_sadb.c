@@ -188,6 +188,9 @@ sparse_names sadb_exttype_names = {
 	S(SADB_EXT_LIFETIME_CURRENT),
 	S(SADB_EXT_LIFETIME_HARD),
 	S(SADB_EXT_LIFETIME_SOFT),
+#ifdef SADB_X_EXT_LIFETIME_LASTUSE
+	S(SADB_X_EXT_LIFETIME_LASTUSE),
+#endif
 	S(SADB_EXT_ADDRESS_SRC),
 	S(SADB_EXT_ADDRESS_DST),
 	S(SADB_EXT_ADDRESS_PROXY),
@@ -226,9 +229,6 @@ sparse_names sadb_exttype_names = {
 #endif
 #ifdef SADB_X_EXT_KMPRIVATE
 	S(SADB_X_EXT_KMPRIVATE),
-#endif
-#ifdef SADB_X_EXT_LIFETIME_LASTUSE
-	S(SADB_X_EXT_LIFETIME_LASTUSE),
 #endif
 #ifdef SADB_X_EXT_LOCAL_AUTH
 	S(SADB_X_EXT_LOCAL_AUTH),
@@ -982,6 +982,9 @@ void DBG_msg(struct logger *logger, const void *ptr, size_t len, const char *fmt
 		case sadb_ext_lifetime_soft:
 		case sadb_ext_lifetime_hard:
 		case sadb_ext_lifetime_current:
+#ifdef SADB_X_EXT_LIFETIME_LASTUSE
+		case sadb_x_ext_lifetime_lastuse:
+#endif
 		{
 			shunk_t lifetime_cursor;
 			const struct sadb_lifetime *lifetime =

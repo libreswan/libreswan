@@ -83,6 +83,9 @@ enum sadb_exttype {
 	sadb_ext_lifetime_current = SADB_EXT_LIFETIME_CURRENT,
 	sadb_ext_lifetime_hard = SADB_EXT_LIFETIME_HARD,
 	sadb_ext_lifetime_soft = SADB_EXT_LIFETIME_SOFT,
+#ifdef SADB_X_EXT_LIFETIME_LASTUSE
+	sadb_x_ext_lifetime_lastuse = SADB_X_EXT_LIFETIME_LASTUSE,
+#endif
 	sadb_ext_proposal = SADB_EXT_PROPOSAL,
 	sadb_ext_sa = SADB_EXT_SA,
 #ifdef SADB_X_EXT_SA2
