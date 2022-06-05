@@ -959,6 +959,18 @@ void DBG_msg(struct logger *logger, const void *ptr, size_t len, const char *fmt
 
 		case sadb_ext_address_src:
 		case sadb_ext_address_dst:
+#ifdef SADB_X_EXT_SRC_FLOW
+		case sadb_x_ext_src_flow:
+#endif
+#ifdef SADB_X_EXT_DST_FLOW
+		case sadb_x_ext_dst_flow:
+#endif
+#ifdef SADB_X_EXT_SRC_MASK
+		case sadb_x_ext_src_mask:
+#endif
+#ifdef SADB_X_EXT_DST_MASK
+		case sadb_x_ext_dst_mask:
+#endif
 		{
 			shunk_t address_cursor;
 			const struct sadb_address *address =

@@ -109,6 +109,18 @@ enum sadb_exttype {
 #ifdef SADB_X_EXT_COUNTER
 	sadb_x_ext_counter = SADB_X_EXT_COUNTER,
 #endif
+#ifdef SADB_X_EXT_SRC_MASK
+	sadb_x_ext_src_mask = SADB_X_EXT_SRC_MASK,
+#endif
+#ifdef SADB_X_EXT_DST_MASK
+	sadb_x_ext_dst_mask = SADB_X_EXT_DST_MASK,
+#endif
+#ifdef SADB_X_EXT_SRC_FLOW
+	sadb_x_ext_src_flow = SADB_X_EXT_SRC_FLOW,
+#endif
+#ifdef SADB_X_EXT_DST_FLOW
+	sadb_x_ext_dst_flow = SADB_X_EXT_DST_FLOW,
+#endif
 };
 
 enum sadb_sastate {
