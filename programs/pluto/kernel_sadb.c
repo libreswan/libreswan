@@ -893,6 +893,24 @@ void jam_sadb_x_sa_replay(struct jambuf *buf, const struct sadb_x_sa_replay *m)
 }
 #endif
 
+#ifdef SADB_X_EXT_COUNTER
+void jam_sadb_x_counter(struct jambuf *buf, const struct sadb_x_counter *m)
+{
+	jam(buf, "sadb_x_counter @%p:", m);
+	JAM_LEN(sadb_x_counter, len);
+	JAM_SADB(sadb_x_counter, exttype);
+	J(u32,  sadb_x_counter, pad);
+	J(u64, sadb_x_counter, ipackets);	/* Input IPsec packets */
+	J(u64, sadb_x_counter, opackets);	/* Output IPsec packets */
+	J(u64, sadb_x_counter, ibytes);	/* Input bytes */
+	J(u64, sadb_x_counter, obytes);	/* Output bytes */
+	J(u64, sadb_x_counter, idrops);	/* Dropped on input */
+	J(u64, sadb_x_counter, odrops);	/* Dropped on output */
+	J(u64, sadb_x_counter, idecompbytes);	/* Input bytes, decompressed */
+	J(u64, sadb_x_counter, ouncompbytes);	/* Output bytes, uncompressed */
+}
+#endif
+
 bool get_sadb_sockaddr_address_port(shunk_t *cursor,
 				    ip_address *address,
 				    ip_port *port,
@@ -1166,6 +1184,21 @@ void DBG_msg(struct logger *logger, const void *ptr, size_t len, const char *fmt
 		}
 #endif
 
+#ifdef SADB_X_EXT_COUNTER
+		case sadb_x_ext_counter:
+		{
+			shunk_t sa_cursor;
+			const struct sadb_x_counter *x_counter =
+				get_sadb_x_counter(&ext_cursor, &sa_cursor, logger);
+			if (x_counter == NULL) {
+				return;
+			}
+			DBG_sadb_x_counter(logger, x_counter, "  ");
+			PEXPECT(logger, sa_cursor.len == 0); /* nothing following */
+			break;
+		}
+#endif
+
 		default:
 		{
 			LLOG_JAMBUF(ERROR_FLAGS, logger, buf) {
@@ -1273,6 +1306,9 @@ GET_SADB(sadb_x_sa2, sizeof(uint64_t));
 #ifdef SADB_X_EXT_SA_REPLAY
 GET_SADB(sadb_x_sa_replay, sizeof(uint64_t));
 #endif
+#ifdef SADB_X_EXT_COUNTER
+GET_SADB(sadb_x_counter, sizeof(uint64_t));
+#endif
 
 #define DD(TYPE, ...)						\
 	void DBG_##TYPE(struct logger *logger,			\
@@ -1318,6 +1354,9 @@ DD(sadb_x_sa2);
 #endif
 #ifdef SADB_X_EXT_SA_REPLAY
 DD(sadb_x_sa_replay)
+#endif
+#ifdef SADB_X_EXT_COUNTER
+DD(sadb_x_counter);
 #endif
 
 #undef DD

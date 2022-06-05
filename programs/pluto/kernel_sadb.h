@@ -106,6 +106,9 @@ enum sadb_exttype {
 #ifdef SADB_X_EXT_SA_REPLAY
 	sadb_x_ext_sa_replay = SADB_X_EXT_SA_REPLAY,
 #endif
+#ifdef SADB_X_EXT_COUNTER
+	sadb_x_ext_counter = SADB_X_EXT_COUNTER,
+#endif
 };
 
 enum sadb_sastate {
@@ -264,6 +267,9 @@ DD(sadb_x_sa2);
 #ifdef SADB_X_EXT_SA_REPLAY
 DD(sadb_x_sa_replay);
 #endif
+#ifdef SADB_X_EXT_COUNTER
+DD(sadb_x_counter);
+#endif
 
 #undef DD
 
@@ -299,6 +305,9 @@ GET_SADB(sadb_x_sa2);
 #endif
 #ifdef SADB_X_EXT_SA_REPLAY
 GET_SADB(sadb_x_sa_replay);
+#endif
+#ifdef SADB_X_EXT_COUNTER
+GET_SADB(sadb_x_counter);
 #endif
 
 #undef GET_SADB
