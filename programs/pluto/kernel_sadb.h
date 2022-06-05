@@ -37,6 +37,15 @@
 # endif
 #endif
 
+/*
+ * struct sadb_policy requires these additional definitions.
+ */
+
+#ifdef SADB_X_EXT_PROTOCOL
+# include <sys/socket.h>       /* for struct sockaddr; required by ... */
+# include <netinet/ip_ipsp.h>  /* for IPSP_DIRECTION_* */
+#endif
+
 #include "lswcdefs.h"
 #include "shunk.h"
 #include "sparse_names.h"
@@ -63,6 +72,12 @@ enum sadb_type {
 #endif
 #ifdef SADB_X_SPDUPDATE
 	sadb_x_spdupdate = SADB_X_SPDUPDATE,
+#endif
+#ifdef SADB_X_ADDFLOW
+	sadb_x_addflow = SADB_X_ADDFLOW,
+#endif
+#ifdef SADB_X_DELFLOW
+	sadb_x_delflow = SADB_X_DELFLOW,
 #endif
 };
 
@@ -120,6 +135,12 @@ enum sadb_exttype {
 #endif
 #ifdef SADB_X_EXT_DST_FLOW
 	sadb_x_ext_dst_flow = SADB_X_EXT_DST_FLOW,
+#endif
+#ifdef SADB_X_EXT_PROTOCOL
+	sadb_x_ext_protocol = SADB_X_EXT_PROTOCOL,
+#ifdef SADB_X_EXT_FLOW_TYPE
+	sadb_x_ext_flow_type = SADB_X_EXT_FLOW_TYPE,
+#endif
 #endif
 };
 
@@ -190,6 +211,16 @@ enum ipsec_level {
 	ipsec_level_require = IPSEC_LEVEL_REQUIRE,
 };
 
+#ifdef SADB_X_EXT_FLOW_TYPE
+enum sadb_x_flow_type {
+	sadb_x_flow_type_use = SADB_X_FLOW_TYPE_USE,
+	sadb_x_flow_type_acquire = SADB_X_FLOW_TYPE_ACQUIRE,
+	sadb_x_flow_type_require = SADB_X_FLOW_TYPE_REQUIRE,
+	sadb_x_flow_type_bypass = SADB_X_FLOW_TYPE_BYPASS,
+	sadb_x_flow_type_deny = SADB_X_FLOW_TYPE_DENY,
+	sadb_x_flow_type_dontacq = SADB_X_FLOW_TYPE_DONTACQ,
+};
+#endif
 
 extern sparse_names sadb_aalg_names;
 extern sparse_names sadb_calg_names;
@@ -203,11 +234,17 @@ extern sparse_names sadb_saflag_names;
 extern sparse_names sadb_sastate_names;
 extern sparse_names sadb_satype_names;
 extern sparse_names sadb_type_names;
+#ifdef SADB_X_EXT_PROTOCOL
+extern sparse_sparse_names sadb_protocol_proto_names;
+extern sparse_names sadb_protocol_direction_names;
+extern sparse_names sadb_x_flow_type_names;
+#endif
 
 extern sparse_sparse_names sadb_alg_names;
 extern sparse_sparse_names sadb_satype_ealg_names;
 extern sparse_sparse_names sadb_satype_aalg_names;
 
+extern sparse_names ipsec_proto_names;
 extern sparse_names ipsec_policy_names;
 extern sparse_names ipsec_dir_names;
 extern sparse_names ipsec_mode_names;
@@ -282,6 +319,9 @@ DD(sadb_x_sa_replay);
 #ifdef SADB_X_EXT_COUNTER
 DD(sadb_x_counter);
 #endif
+#ifdef SADB_X_EXT_PROTOCOL
+DD(sadb_protocol);
+#endif
 
 #undef DD
 
@@ -320,6 +360,9 @@ GET_SADB(sadb_x_sa_replay);
 #endif
 #ifdef SADB_X_EXT_COUNTER
 GET_SADB(sadb_x_counter);
+#endif
+#ifdef SADB_X_EXT_PROTOCOL
+GET_SADB(sadb_protocol);
 #endif
 
 #undef GET_SADB

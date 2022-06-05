@@ -399,6 +399,24 @@ sparse_names sadb_policyflag_names = {
 	SPARSE_NULL
 };
 
+#ifdef SADB_X_EXT_PROTOCOL
+sparse_sparse_names sadb_protocol_proto_names = {
+#ifdef SADB_X_EXT_FLOW_TYPE
+	{ SADB_X_EXT_FLOW_TYPE, sadb_x_flow_type_names, },
+#endif
+	{ SADB_X_EXT_PROTOCOL, ipsec_proto_names, },
+	{ 0, NULL, },
+};
+#endif
+
+#ifdef SADB_X_EXT_PROTOCOL
+sparse_names sadb_protocol_direction_names = {
+	S(IPSP_DIRECTION_IN),
+	S(IPSP_DIRECTION_OUT),
+	SPARSE_NULL,
+};
+#endif
+
 sparse_names sadb_aalg_names = {
 	S(SADB_AALG_NONE),
 	S(SADB_AALG_MD5HMAC),
@@ -644,6 +662,18 @@ sparse_names ipsec_proto_names = {
 	SPARSE_NULL
 };
 
+#ifdef SADB_X_EXT_FLOW_TYPE
+sparse_names sadb_x_flow_type_names = {
+	S(SADB_X_FLOW_TYPE_USE),
+	S(SADB_X_FLOW_TYPE_ACQUIRE),
+	S(SADB_X_FLOW_TYPE_REQUIRE),
+	S(SADB_X_FLOW_TYPE_BYPASS),
+	S(SADB_X_FLOW_TYPE_DENY),
+	S(SADB_X_FLOW_TYPE_DONTACQ),
+	SPARSE_NULL,
+};
+#endif
+
 
 void jam_sadb_address(struct jambuf *buf, const struct sadb_address *m)
 {
@@ -867,6 +897,20 @@ void jam_sadb_x_policy(struct jambuf *buf, const struct sadb_x_policy *m)
 	JX(sadb_x_policy, reserved2);
 #endif
 }
+#endif
+
+#ifdef SADB_X_EXT_PROTOCOL
+void jam_sadb_protocol(struct jambuf *buf, const struct sadb_protocol *m)
+{
+	jam(buf, "sadb_protocol @%p:", m);
+	JAM_LEN(sadb_protocol, len);
+	JAM_SADB(sadb_protocol, exttype);
+	JAM_SPARSE_SPARSE(sadb_protocol_proto_names, m->sadb_protocol_exttype,
+			  sadb_protocol, proto);
+	JAM_SPARSE(sadb_protocol_direction_names, sadb_protocol, direction);
+	J(u8, sadb_protocol, flags);
+	J(u8, sadb_protocol, reserved2);
+};
 #endif
 
 #ifdef SADB_X_EXT_SA2
@@ -1211,6 +1255,24 @@ void DBG_msg(struct logger *logger, const void *ptr, size_t len, const char *fmt
 		}
 #endif
 
+#ifdef SADB_X_EXT_PROTOCOL
+#ifdef SADB_X_EXT_FLOW_TYPE
+		case sadb_x_ext_flow_type:
+#endif
+		case sadb_x_ext_protocol:
+		{
+			shunk_t sa_cursor;
+			const struct sadb_protocol *protocol =
+				get_sadb_protocol(&ext_cursor, &sa_cursor, logger);
+			if (protocol == NULL) {
+				return;
+			}
+			DBG_sadb_protocol(logger, protocol, "  ");
+			PEXPECT(logger, sa_cursor.len == 0); /* nothing following */
+			break;
+		}
+#endif
+
 		default:
 		{
 			LLOG_JAMBUF(ERROR_FLAGS, logger, buf) {
@@ -1321,6 +1383,9 @@ GET_SADB(sadb_x_sa_replay, sizeof(uint64_t));
 #ifdef SADB_X_EXT_COUNTER
 GET_SADB(sadb_x_counter, sizeof(uint64_t));
 #endif
+#ifdef SADB_X_EXT_PROTOCOL
+GET_SADB(sadb_protocol, sizeof(uint64_t));
+#endif
 
 #define DD(TYPE, ...)						\
 	void DBG_##TYPE(struct logger *logger,			\
@@ -1369,6 +1434,9 @@ DD(sadb_x_sa_replay)
 #endif
 #ifdef SADB_X_EXT_COUNTER
 DD(sadb_x_counter);
+#endif
+#ifdef SADB_X_EXT_PROTOCOL
+DD(sadb_protocol);
 #endif
 
 #undef DD
