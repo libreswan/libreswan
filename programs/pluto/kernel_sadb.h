@@ -243,6 +243,7 @@ extern sparse_names sadb_protocol_direction_names;
 extern sparse_names sadb_x_flow_type_names;
 #endif
 
+extern sparse_names sadb_proto_names;
 extern sparse_sparse_names sadb_alg_names;
 extern sparse_sparse_names sadb_satype_ealg_names;
 extern sparse_sparse_names sadb_satype_aalg_names;
@@ -251,6 +252,7 @@ extern sparse_names ipsec_proto_names;
 extern sparse_names ipsec_policy_names;
 extern sparse_names ipsec_dir_names;
 extern sparse_names ipsec_mode_names;
+extern sparse_names ipsec_level_names;
 
 #define ldbg_msg(LOGGER, PTR, LEN, FMT, ...)				\
 	{								\
