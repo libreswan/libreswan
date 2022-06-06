@@ -138,9 +138,12 @@ enum sadb_exttype {
 #endif
 #ifdef SADB_X_EXT_PROTOCOL
 	sadb_x_ext_protocol = SADB_X_EXT_PROTOCOL,
+#endif
 #ifdef SADB_X_EXT_FLOW_TYPE
 	sadb_x_ext_flow_type = SADB_X_EXT_FLOW_TYPE,
 #endif
+#ifdef SADB_X_EXT_REPLAY
+	sadb_x_ext_replay = SADB_X_EXT_REPLAY,
 #endif
 };
 
@@ -322,6 +325,9 @@ DD(sadb_x_counter);
 #ifdef SADB_X_EXT_PROTOCOL
 DD(sadb_protocol);
 #endif
+#ifdef SADB_X_EXT_REPLAY
+DD(sadb_x_replay);
+#endif
 
 #undef DD
 
@@ -363,6 +369,9 @@ GET_SADB(sadb_x_counter);
 #endif
 #ifdef SADB_X_EXT_PROTOCOL
 GET_SADB(sadb_protocol);
+#endif
+#ifdef SADB_X_EXT_REPLAY
+GET_SADB(sadb_x_replay);
 #endif
 
 #undef GET_SADB

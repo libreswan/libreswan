@@ -955,6 +955,17 @@ void jam_sadb_x_counter(struct jambuf *buf, const struct sadb_x_counter *m)
 }
 #endif
 
+#ifdef SADB_X_EXT_REPLAY
+void jam_sadb_x_replay(struct jambuf *buf, const struct sadb_x_replay *m)
+{
+	jam(buf, "sadb_x_replay @%p:", m);
+	JAM_LEN(sadb_x_replay, len);
+	JAM_SADB(sadb_x_replay, exttype);
+	JX(sadb_x_replay, reserved);
+	J(u64, sadb_x_replay, count);
+}
+#endif
+
 bool get_sadb_sockaddr_address_port(shunk_t *cursor,
 				    ip_address *address,
 				    ip_port *port,
@@ -1273,6 +1284,21 @@ void DBG_msg(struct logger *logger, const void *ptr, size_t len, const char *fmt
 		}
 #endif
 
+#ifdef SADB_X_EXT_REPLAY
+		case sadb_x_ext_replay:
+		{
+			shunk_t sa_cursor;
+			const struct sadb_x_replay *x_replay =
+				get_sadb_x_replay(&ext_cursor, &sa_cursor, logger);
+			if (x_replay == NULL) {
+				return;
+			}
+			DBG_sadb_x_replay(logger, x_replay, "  ");
+			PEXPECT(logger, sa_cursor.len == 0); /* nothing following */
+			break;
+		}
+#endif
+
 		default:
 		{
 			LLOG_JAMBUF(ERROR_FLAGS, logger, buf) {
@@ -1386,6 +1412,9 @@ GET_SADB(sadb_x_counter, sizeof(uint64_t));
 #ifdef SADB_X_EXT_PROTOCOL
 GET_SADB(sadb_protocol, sizeof(uint64_t));
 #endif
+#ifdef SADB_X_EXT_REPLAY
+GET_SADB(sadb_x_replay, sizeof(uint64_t));
+#endif
 
 #define DD(TYPE, ...)						\
 	void DBG_##TYPE(struct logger *logger,			\
@@ -1437,6 +1466,9 @@ DD(sadb_x_counter);
 #endif
 #ifdef SADB_X_EXT_PROTOCOL
 DD(sadb_protocol);
+#endif
+#ifdef SADB_X_EXT_REPLAY
+DD(sadb_x_replay)
 #endif
 
 #undef DD
