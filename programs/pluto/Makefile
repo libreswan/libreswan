@@ -112,6 +112,7 @@ OBJS += kernel_alg.o
 ifeq ($(filter true, $(sort $(USE_BSDKAME) $(USE_PFKEYV2))),true)
 OBJS += kernel_sadb.o
 OBJS += kernel_sadb_names.o
+OBJS += kernel_sadb_logger.o
 endif
 
 ifeq ($(USE_XFRM),true)

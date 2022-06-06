@@ -97,7 +97,10 @@ static size_t msg_len(const void *start, struct outbuf *msg)
 		struct TYPE ps_thing_ = { __VA_ARGS__ };		\
 		struct outbuf *ps_req_ = MSG;				\
 		struct TYPE *ps_ptr_ = hunk_put_thing(ps_req_, ps_thing_); \
-		ldbg_##TYPE(ps_req_->logger, ps_ptr_, "put ");		\
+		if (DBGP(DBG_BASE)) {					\
+			llog_##TYPE(DEBUG_STREAM, ps_req_->logger,	\
+				    ps_ptr_, "put ");			\
+		}							\
 		ps_ptr_;						\
 	})
 
@@ -115,7 +118,10 @@ static size_t msg_len(const void *start, struct outbuf *msg)
 		req_->len -= pad_;					\
 		/* XXX: pexpect ..._len == sizeof(TYPE) */		\
 		ext_->sadb_##NAME##_len = msg_len(ext_, req_);		\
-		ldbg_sadb_##NAME(req_->logger, NAME, " padup ");		\
+		if (DBGP(DBG_BASE)) {					\
+			llog_sadb_##NAME(DEBUG_STREAM, req_->logger,	\
+					 NAME, " padup ");		\
+		}							\
 	})
 
 #define put_sadb_ext(REQ, TYPE, EXTTYPE, ...)				\
@@ -164,7 +170,9 @@ static bool recv_msg(struct inbuf *msg, const char *what, struct logger *logger)
 
 	ldbg(logger, "read %zd bytes", s);
 	msg->buf = chunk2(msg->buffer, s);
-	ldbg_msg(logger, msg->buf.ptr, msg->buf.len, "%s:", msg->what);
+	if (DBGP(DBG_BASE)) {
+		llog_sadb(DEBUG_STREAM, logger, msg->buf.ptr, msg->buf.len, "%s:", msg->what);
+	}
 
 	return true;
 }
@@ -210,7 +218,9 @@ static bool msg_recv(struct inbuf *msg, const char *what, const struct sadb_msg 
 static bool msg_sendrecv(struct outbuf *req, struct sadb_msg *msg, struct inbuf *recv)
 {
 	padup_sadb(req, msg);
-	ldbg_msg(req->logger, req->buf.ptr, req->buf.len, "sending %s:", req->what);
+	if (DBGP(DBG_BASE)) {
+		llog_sadb(DEBUG_STREAM, req->logger, req->buf.ptr, req->buf.len, "sending %s:", req->what);
+	}
 	ssize_t s = send(pfkeyv2_fd, req->buf.ptr, req->ptr - (void*)req->buf.ptr, 0);
 	if (s < 0) {
 		fatal_errno(PLUTO_EXIT_KERNEL_FAIL, req->logger, errno,
@@ -262,7 +272,9 @@ static struct sadb_sa *put_sadb_sa(struct outbuf *msg,
 			      .sadb_sa_encrypt = ealg),
 	};
 	struct sadb_sa *sa = hunk_put_thing(msg, tmp);
-	ldbg_sadb_sa(msg->logger, satype, sa, "put ");
+	if (DBGP(DBG_BASE)) {
+		llog_sadb_sa(DEBUG_STREAM, msg->logger, satype, sa, "put ");
+	}
 	return sa;
 }
 
@@ -413,7 +425,9 @@ static void register_satype(const struct ip_protocol *proto, struct logger *logg
 				llog_pexpect(logger, HERE, "bad ext");
 				return;
 			}
-			ldbg_sadb_supported(logger, supported, "get ");
+			if (DBGP(DBG_BASE)) {
+				llog_sadb_supported(DEBUG_STREAM, logger, supported, "get ");
+			}
 
 			unsigned nr_algs = ((supported->sadb_supported_len * sizeof(uint64_t) -
 					     sizeof(struct sadb_supported)) / sizeof(struct sadb_alg));
@@ -427,7 +441,9 @@ static void register_satype(const struct ip_protocol *proto, struct logger *logg
 				}
 
 				enum sadb_exttype exttype = supported->sadb_supported_exttype;
-				ldbg_sadb_alg(logger, exttype, alg, "get ");
+				if (DBGP(DBG_BASE)) {
+					llog_sadb_alg(DEBUG_STREAM, logger, exttype, alg, "get ");
+				}
 
 				switch (exttype) {
 				case sadb_ext_supported_auth:
@@ -552,7 +568,9 @@ static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 				llog_pexpect(logger, HERE, "getting sa");
 				return 0;
 			}
-			ldbg_sadb_sa(logger, base->sadb_msg_satype, sa, "get ");
+			if (DBGP(DBG_BASE)) {
+				llog_sadb_sa(DEBUG_STREAM, logger, base->sadb_msg_satype, sa, "get ");
+			}
 			spi = sa->sadb_sa_spi;
 			break;
 		}
@@ -833,7 +851,9 @@ static bool pfkeyv2_get_sa(const struct kernel_sa *k,
 				llog_pexpect(logger, HERE, "getting policy");
 				return 0;
 			}
-			ldbg_sadb_lifetime(logger, lifetime, "get ");
+			if (DBGP(DBG_BASE)) {
+				llog_sadb_lifetime(DEBUG_STREAM, logger, lifetime, "get ");
+			}
 			*bytes = lifetime->sadb_lifetime_bytes;
 			*add_time = lifetime->sadb_lifetime_addtime;
 			break;
@@ -857,7 +877,7 @@ static bool pfkeyv2_get_sa(const struct kernel_sa *k,
 			/* ignore these */
 			break;
 		default:
-			ldbg_sadb_ext(logger, ext, "get_sa ");
+			llog_sadb_ext(RC_LOG, logger, ext, "get_sa ");
 			llog_pexpect(logger, HERE, "bad ext");
 			break;
 		}
@@ -1042,7 +1062,9 @@ static bool process_address(shunk_t *ext_cursor, ip_address *addr, ip_port *port
 	if (address == NULL) {
 		return false;
 	}
-	ldbg_sadb_address(logger, address, "  ");
+	if (DBGP(DBG_BASE)) {
+		llog_sadb_address(DEBUG_STREAM, logger, address, "  ");
+	}
 	if (!get_sadb_sockaddr_address_port(&address_cursor, addr, port, logger)) {
 		return false;
 	}
@@ -1085,10 +1107,14 @@ static void process_acquire(shunk_t base_cursor, struct logger *logger)
 		case sadb_x_ext_policy:
 #endif
 		case sadb_ext_proposal:
-			ldbg_sadb_ext(logger, ext, "ignore: ");
+			if (DBGP(DBG_BASE)) {
+				llog_sadb_ext(DEBUG_STREAM, logger, ext, "ignore: ");
+			}
 			break;
 		default:
-			ldbg_sadb_ext(logger, ext, "huh? ");
+			if (DBGP(DBG_BASE)) {
+				llog_sadb_ext(DEBUG_STREAM, logger, ext, "huh? ");
+			}
 			break;
 		}
 	}
@@ -1114,7 +1140,9 @@ static void process_acquire(shunk_t base_cursor, struct logger *logger)
 
 static void process_pending(chunk_t msg, struct logger *logger)
 {
-	ldbg_msg(logger, msg.ptr, msg.len, "pending ");
+	if (DBGP(DBG_BASE)) {
+		llog_sadb(DEBUG_STREAM, logger, msg.ptr, msg.len, "pending ");
+	}
 
 	shunk_t cursor = HUNK_AS_SHUNK(msg);
 	shunk_t base_cursor;

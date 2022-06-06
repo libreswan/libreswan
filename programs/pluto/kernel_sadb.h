@@ -254,84 +254,52 @@ extern sparse_names ipsec_dir_names;
 extern sparse_names ipsec_mode_names;
 extern sparse_names ipsec_level_names;
 
-#define ldbg_msg(LOGGER, PTR, LEN, FMT, ...)				\
-	{								\
-		if (DBGP(DBG_BASE)) {					\
-			DBG_msg(LOGGER, PTR, LEN, FMT, ##__VA_ARGS__);	\
-		}							\
-	}
+void llog_sadb(lset_t rc_flags, struct logger *logger, const void *ptr, size_t len, const char *fmt, ...) PRINTF_LIKE(5);
 
-void DBG_msg(struct logger *logger, const void *ptr, size_t len, const char *fmt, ...) PRINTF_LIKE(4);
+void llog_sadb_alg(lset_t rc_flags, struct logger *logger, enum sadb_exttype, const struct sadb_alg *m, const char *what);
+void llog_sadb_sa(lset_t rc_flags, struct logger *logger, enum sadb_satype, const struct sadb_sa *m, const char *what);
 
-#define ldbg_sadb_alg(LOGGER, EXTTYPE, M, WHAT)			\
-	{							\
-		if (DBGP(DBG_BASE)) {				\
-			DBG_sadb_alg(LOGGER, EXTTYPE, M, WHAT);	\
-		}						\
-	}
-
-#define ldbg_sadb_sa(LOGGER, EXTTYPE, M, WHAT)			\
-	{							\
-		if (DBGP(DBG_BASE)) {				\
-			DBG_sadb_sa(LOGGER, EXTTYPE, M, WHAT);	\
-		}						\
-	}
-
-void DBG_sadb_alg(struct logger *logger, enum sadb_exttype, const struct sadb_alg *m, const char *what);
-void DBG_sadb_sa(struct logger *logger, enum sadb_satype, const struct sadb_sa *m, const char *what);
-void jam_sadb_alg(struct jambuf *buf, enum sadb_exttype, const struct sadb_alg *m);
-void jam_sadb_sa(struct jambuf *buf, enum sadb_satype, const struct sadb_sa *m);
-
-#define DD(TYPE, ...)							\
-	struct TYPE;							\
-	void ldbg_##TYPE(struct logger *logger,				\
-			 ##__VA_ARGS__, const struct TYPE *m,		\
-			 const char *what);				\
-	void DBG_##TYPE(struct logger *logger,				\
-			##__VA_ARGS__, const struct TYPE *m,		\
-			const char *what);				\
-	void jam_##TYPE(struct jambuf *buf,				\
-			##__VA_ARGS__, const struct TYPE *m)
-
-DD(sadb_address);
-DD(sadb_x_address2);
-DD(sadb_comb);
-DD(sadb_ext);
-DD(sadb_ident);
-DD(sadb_key);
-DD(sadb_lifetime);
-DD(sadb_msg);
-DD(sadb_prop);
-DD(sadb_proposal);
-DD(sadb_sens);
-DD(sadb_spirange);
-DD(sadb_supported);
+void llog_sadb_address(lset_t rc_flags, struct logger *logger, const struct sadb_address *m, const char *what);
+void llog_sadb_comb(lset_t rc_flags, struct logger *logger, const struct sadb_comb *m, const char *what);
+void llog_sadb_ext(lset_t rc_flags, struct logger *logger, const struct sadb_ext *m, const char *what);
+void llog_sadb_ident(lset_t rc_flags, struct logger *logger, const struct sadb_ident *m, const char *what);
+void llog_sadb_key(lset_t rc_flags, struct logger *logger, const struct sadb_key *m, const char *what);
+void llog_sadb_lifetime(lset_t rc_flags, struct logger *logger, const struct sadb_lifetime *m, const char *what);
+void llog_sadb_msg(lset_t rc_flags, struct logger *logger, const struct sadb_msg *m, const char *what);
+void llog_sadb_prop(lset_t rc_flags, struct logger *logger, const struct sadb_prop *m, const char *what);
+void llog_sadb_sens(lset_t rc_flags, struct logger *logger, const struct sadb_sens *m, const char *what);
+void llog_sadb_spirange(lset_t rc_flags, struct logger *logger, const struct sadb_spirange *m, const char *what);
+void llog_sadb_supported(lset_t rc_flags, struct logger *logger, const struct sadb_supported *m, const char *what);
 #ifdef SADB_X_EXT_POLICY /* nexted within sadb_x_policy */
-DD(sadb_x_ipsecrequest);
+void llog_sadb_x_ipsecrequest(lset_t rc_flags, struct logger *logger, const struct sadb_x_ipsecrequest *m, const char *what);
 #endif
-DD(sadb_x_nat_t_frag);
-DD(sadb_x_nat_t_port);
-DD(sadb_x_nat_t_type);
+#ifdef SADB_X_EXT_NAT_T_FRAG
+void llog_sadb_x_nat_t_frag(lset_t rc_flags, struct logger *logger, const struct sadb_x_nat_t_frag *m, const char *what);
+#endif
+#ifdef SADB_X_EXT_NAT_T_PORT
+void llog_sadb_x_nat_t_port(lset_t rc_flags, struct logger *logger, const struct sadb_x_nat_t_port *m, const char *what);
+#endif
+#ifdef SADB_X_EXT_NAT_T_TYPE
+void llog_sadb_x_nat_t_type(lset_t rc_flags, struct logger *logger, const struct sadb_x_nat_t_type *m, const char *what);
+#endif
 #ifdef SADB_X_EXT_POLICY
-DD(sadb_x_policy);
+void llog_sadb_x_policy(lset_t rc_flags, struct logger *logger, const struct sadb_x_policy *m, const char *what);
 #endif
 #ifdef SADB_X_EXT_SA2
-DD(sadb_x_sa2);
+void llog_sadb_x_sa2(lset_t rc_flags, struct logger *logger, const struct sadb_x_sa2 *m, const char *what);
 #endif
 #ifdef SADB_X_EXT_SA_REPLAY
-DD(sadb_x_sa_replay);
+void llog_sadb_x_sa_replay(lset_t rc_flags, struct logger *logger, const struct sadb_x_sa_replay *m, const char *what);
 #endif
 #ifdef SADB_X_EXT_COUNTER
-DD(sadb_x_counter);
+void llog_sadb_x_counter(lset_t rc_flags, struct logger *logger, const struct sadb_x_counter *m, const char *what);
 #endif
 #ifdef SADB_X_EXT_PROTOCOL
-DD(sadb_protocol);
+void llog_sadb_protocol(lset_t rc_flags, struct logger *logger, const struct sadb_protocol *m, const char *what);
 #endif
 #ifdef SADB_X_EXT_REPLAY
-DD(sadb_x_replay);
+void llog_sadb_x_replay(lset_t rc_flags, struct logger *logger, const struct sadb_x_replay *m, const char *what);
 #endif
-
-#undef DD
 
 bool get_sadb_sockaddr_address_port(shunk_t *cursor,
 				    ip_address *address,
