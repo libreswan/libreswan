@@ -59,7 +59,7 @@ netbsdw #
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
 	E: aes-cbc 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
 	A: hmac-sha1 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
-	seq=0x00000001 replay=64 flags=0x00000000 state=mature 
+	seq=0x00000001 replay=8 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
@@ -79,7 +79,7 @@ netbsdw #
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
 	E: aes-cbc 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
 	A: hmac-sha1 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
-	seq=0x00000001 replay=64 flags=0x00000000 state=mature 
+	seq=0x00000001 replay=8 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
@@ -104,7 +104,7 @@ netbsdw #
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
 	E: aes-cbc 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
 	A: hmac-sha1 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
-	seq=0x00000002 replay=64 flags=0x00000000 state=mature 
+	seq=0x00000002 replay=8 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
@@ -124,7 +124,7 @@ netbsdw #
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
 	E: aes-cbc 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
 	A: hmac-sha1 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
-	seq=0x00000002 replay=64 flags=0x00000000 state=mature 
+	seq=0x00000002 replay=8 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
