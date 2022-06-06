@@ -1347,6 +1347,7 @@ kvmplutotest	pfkeyv2-tunnel-6in6-esp-ikev2		netbsd
 kvmplutotest	pfkeyv2-esn-esp-freebsd			freebsd
 kvmplutotest	pfkeyv2-esn-ah-freebsd			freebsd
 kvmplutotest	pfkeyv2-ondemand			skiptest #netbsd-wip
+kvmplutotest	pfkeyv2-replay-window-freebsd		freebsd
 
 # OpenBSD interop
 kvmplutotest	interop-ikev2-openbsd-01-iked-responder		openbsd
