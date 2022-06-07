@@ -365,6 +365,8 @@ static void check_in_addr(void)
 			a = address_from_in6_addr(&in6);
 			break;
 		}
+		default:
+			FAIL("test %zd has invalid family %d", ti, t->family);
 		}
 
 		/* as a string */
