@@ -26,7 +26,9 @@ USE_LIBCAP_NG = false
 USE_UNBOUND_EVENT_H_COPY = true
 USE_PTHREAD_SETSCHEDPRIO = false
 USE_AUTHPAM = false
+
 USE_DNSSEC = true
+DEFAULT_DNSSEC_ROOTKEY_FILE = /var/unbound/db/root.key
 
 INITSYSTEM=rc.d
 

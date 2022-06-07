@@ -88,6 +88,8 @@ ifeq ($(LINUX_VARIANT),ubuntu)
 endif
 
 ifeq ($(LINUX_VARIANT),fedora)
+
+  DEFAULT_DNSSEC_ROOTKEY_FILE ?= "/var/lib/unbound/root.key"
   USE_LINUX_AUDIT?=true
   USE_SECCOMP?=true
   USE_LABELED_IPSEC?=true

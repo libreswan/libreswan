@@ -356,9 +356,6 @@ LIBEVENT_LDFLAGS ?= -levent_core -levent_pthreads
 # Disabled per default for now because it requires python[23]
 USE_PORTEXCLUDES ?= false
 
-# The default DNSSEC root key location is set to /var/lib/unbound/root.key
-# DEFAULT_DNSSEC_ROOTKEY_FILE=/var/lib/unbound/root.key
-
 # Enable AddressSanitizer - see https://libreswan.org/wiki/Compiling_with_AddressSanitizer
 # requires clang or gcc >= 4.8 and libasan. Do not combine with Electric Fence and do not
 # run pluto with --leak-detective
@@ -387,9 +384,6 @@ USE_IKEv1 ?= true
 ifeq ($(USE_IKEv1),true)
 USERLAND_CFLAGS += -DUSE_IKEv1
 endif
-
-# Enable support for DNSSEC. This requires the unbound and ldns libraries.
-USE_DNSSEC ?= true
 
 # For systemd start/stop notifications and watchdog feature
 # We only enable this by default if used INITSYSTEM is systemd
@@ -589,11 +583,20 @@ ifeq ($(USE_PFKEYV2),true)
 USERLAND_CFLAGS += -DKERNEL_PFKEYV2
 endif
 
+# Enable support for DNSSEC. This requires the unbound and ldns
+# libraries.  The default DNSSEC root key location must be set in
+# default/*.mk; look for auto-trust-anchor-file in unbound.conf.
+
+USE_DNSSEC ?= true
+# DEFAULT_DNSSEC_ROOTKEY_FILE=<unspecified>
+
 ifeq ($(USE_DNSSEC),true)
 USERLAND_CFLAGS += -DUSE_DNSSEC
 UNBOUND_LDFLAGS ?= -lunbound -lldns
-DEFAULT_DNSSEC_ROOTKEY_FILE ?= "/var/lib/unbound/root.key"
-USERLAND_CFLAGS += -DDEFAULT_DNSSEC_ROOTKEY_FILE=\"${DEFAULT_DNSSEC_ROOTKEY_FILE}\"
+ifndef DEFAULT_DNSSEC_ROOTKEY_FILE
+$(error DEFAULT_DNSSEC_ROOTKEY_FILE unknown)
+endif
+USERLAND_CFLAGS += -DDEFAULT_DNSSEC_ROOTKEY_FILE=\"$(DEFAULT_DNSSEC_ROOTKEY_FILE)\"
 endif
 
 ifeq ($(USE_FIPSCHECK),true)
