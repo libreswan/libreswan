@@ -446,6 +446,19 @@ void llog_sadb_x_replay(lset_t rc_flags, struct logger *logger,
 }
 #endif
 
+#ifdef SADB_X_EXT_UDPENCAP
+void llog_sadb_x_udpencap(lset_t rc_flags, struct logger *logger,
+			const struct sadb_x_udpencap *m, const char *what)
+{
+	JAM_HEADER_SADB(sadb_x_udpencap);
+
+	JAM(u16, sadb_x_udpencap, port);
+	JAM_RAW(sadb_x_udpencap, reserved);
+
+	jambuf_to_logger(buf, logger, rc_flags);
+}
+#endif
+
 void llog_sadb(lset_t rc_flags, struct logger *logger,
 	       const void *ptr, size_t len, const char *fmt, ...)
 {
@@ -758,6 +771,21 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 				return;
 			}
 			llog_sadb_x_replay(rc_flags, logger, x_replay, "  ");
+			PEXPECT(logger, sa_cursor.len == 0); /* nothing following */
+			break;
+		}
+#endif
+
+#ifdef SADB_X_EXT_UDPENCAP
+		case sadb_x_ext_udpencap:
+		{
+			shunk_t sa_cursor;
+			const struct sadb_x_udpencap *x_udpencap =
+				get_sadb_x_udpencap(&ext_cursor, &sa_cursor, logger);
+			if (x_udpencap == NULL) {
+				return;
+			}
+			llog_sadb_x_udpencap(rc_flags, logger, x_udpencap, "  ");
 			PEXPECT(logger, sa_cursor.len == 0); /* nothing following */
 			break;
 		}

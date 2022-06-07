@@ -139,3 +139,6 @@ GET_SADB(sadb_protocol, sizeof(uint64_t));
 #ifdef SADB_X_EXT_REPLAY
 GET_SADB(sadb_x_replay, sizeof(uint64_t));
 #endif
+#ifdef SADB_X_EXT_UDPENCAP
+GET_SADB(sadb_x_udpencap, sizeof(uint64_t));
+#endif

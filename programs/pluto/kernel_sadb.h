@@ -145,6 +145,9 @@ enum sadb_exttype {
 #ifdef SADB_X_EXT_REPLAY
 	sadb_x_ext_replay = SADB_X_EXT_REPLAY,
 #endif
+#ifdef SADB_X_EXT_UDPENCAP
+	sadb_x_ext_udpencap = SADB_X_EXT_UDPENCAP,
+#endif
 };
 
 enum sadb_sastate {
@@ -300,6 +303,9 @@ void llog_sadb_protocol(lset_t rc_flags, struct logger *logger, const struct sad
 #ifdef SADB_X_EXT_REPLAY
 void llog_sadb_x_replay(lset_t rc_flags, struct logger *logger, const struct sadb_x_replay *m, const char *what);
 #endif
+#ifdef SADB_X_EXT_UDPENCAP
+void llog_sadb_x_udpencap(lset_t rc_flags, struct logger *logger, const struct sadb_x_udpencap *m, const char *what);
+#endif
 
 bool get_sadb_sockaddr_address_port(shunk_t *cursor,
 				    ip_address *address,
@@ -342,6 +348,9 @@ GET_SADB(sadb_protocol);
 #endif
 #ifdef SADB_X_EXT_REPLAY
 GET_SADB(sadb_x_replay);
+#endif
+#ifdef SADB_X_EXT_UDPENCAP
+GET_SADB(sadb_x_udpencap);
 #endif
 
 #undef GET_SADB
