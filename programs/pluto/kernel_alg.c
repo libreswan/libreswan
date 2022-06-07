@@ -101,6 +101,19 @@ void kernel_ipcomp_add(const struct ipcomp_desc *alg)
 	ADD(alg, ipcomp);
 }
 
+void kernel_alg_add(const struct ike_alg *alg)
+{
+	if (alg->algo_type == &ike_alg_encrypt) {
+		kernel_encrypt_add(encrypt_desc(alg));
+	} else if (alg->algo_type == &ike_alg_integ) {
+		kernel_integ_add(integ_desc(alg));
+	} else if (alg->algo_type == &ike_alg_ipcomp) {
+		kernel_ipcomp_add(ipcomp_desc(alg));
+	} else {
+		passert(0);
+	}
+}
+
 bool kernel_alg_dh_ok(const struct dh_desc *dh)
 {
 	if (dh == NULL) {

@@ -389,6 +389,44 @@ static enum sadb_satype proto_satype(const struct ip_protocol *proto)
 		pexpect(0));
 }
 
+static bool register_alg(shunk_t *msgext, const struct ike_alg_type *type,
+			 struct logger *logger)
+{
+	const struct sadb_supported *supported =
+		hunk_get_thing(msgext, const struct sadb_supported);
+	if (supported == NULL) {
+		llog_pexpect(logger, HERE, "bad ext");
+		return false;
+	}
+	if (DBGP(DBG_BASE)) {
+		llog_sadb_supported(DEBUG_STREAM, logger, supported, "get ");
+	}
+
+	unsigned nr_algs = ((supported->sadb_supported_len * sizeof(uint64_t) -
+			     sizeof(struct sadb_supported)) / sizeof(struct sadb_alg));
+	for (unsigned n = 0; n < nr_algs; n++) {
+
+		const struct sadb_alg *alg =
+			hunk_get_thing(msgext, const struct sadb_alg);
+		if (alg == NULL) {
+			llog_pexpect(logger, HERE, "bad ext");
+			return false;
+		}
+
+		enum sadb_exttype exttype = supported->sadb_supported_exttype;
+		if (DBGP(DBG_BASE)) {
+			llog_sadb_alg(DEBUG_STREAM, logger, exttype, alg, "get ");
+		}
+
+		const struct ike_alg *ike_alg = ike_alg_by_key_id(type, SADB_ALG_ID,
+								  alg->sadb_alg_id);
+		if (ike_alg != NULL) {
+			kernel_alg_add(ike_alg);
+		}
+	}
+	return true;
+}
+
 static void register_satype(const struct ip_protocol *proto, struct logger *logger)
 {
 	ldbg(logger, "sending %s request", proto->name);
@@ -417,60 +455,17 @@ static void register_satype(const struct ip_protocol *proto, struct logger *logg
 		enum sadb_exttype exttype = ext->sadb_ext_type;
 		switch (exttype) {
 		case sadb_ext_supported_auth:
-		case sadb_ext_supported_encrypt:
-		{
-			const struct sadb_supported *supported =
-				hunk_get_thing(&msgext, const struct sadb_supported);
-			if (supported == NULL) {
-				llog_pexpect(logger, HERE, "bad ext");
+			if (!register_alg(&msgext, &ike_alg_integ, logger)) {
+				/* already logged */
 				return;
 			}
-			if (DBGP(DBG_BASE)) {
-				llog_sadb_supported(DEBUG_STREAM, logger, supported, "get ");
-			}
-
-			unsigned nr_algs = ((supported->sadb_supported_len * sizeof(uint64_t) -
-					     sizeof(struct sadb_supported)) / sizeof(struct sadb_alg));
-			for (unsigned n = 0; n < nr_algs; n++) {
-
-				const struct sadb_alg *alg =
-					hunk_get_thing(&msgext, const struct sadb_alg);
-				if (alg == NULL) {
-					llog_pexpect(logger, HERE, "bad ext");
-					return;
-				}
-
-				enum sadb_exttype exttype = supported->sadb_supported_exttype;
-				if (DBGP(DBG_BASE)) {
-					llog_sadb_alg(DEBUG_STREAM, logger, exttype, alg, "get ");
-				}
-
-				switch (exttype) {
-				case sadb_ext_supported_auth:
-				{
-					const struct integ_desc *integ =
-						integ_desc_by_sadb_aalg_id(alg->sadb_alg_id);
-					if (integ != NULL) {
-						kernel_integ_add(integ);
-					}
-					break;
-				}
-				case sadb_ext_supported_encrypt:
-				{
-					const struct encrypt_desc *encrypt =
-						encrypt_desc_by_sadb_ealg_id(alg->sadb_alg_id);
-					if (encrypt != NULL) {
-						kernel_encrypt_add(encrypt);
-					}
-					break;
-				}
-				default:
-					llog_pexpect(logger, HERE, "unknown");
-					break;
-				}
+			break;
+		case sadb_ext_supported_encrypt:
+			if (!register_alg(&msgext, &ike_alg_encrypt, logger)) {
+				/* already logged */
+				return;
 			}
 			break;
-		}
 		default:
 			llog_pexpect(logger, HERE, "unknown ext");
 			break;
