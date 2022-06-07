@@ -2483,7 +2483,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			}
 
 			seen_attrs |= LELEM(ty);
-			passert(ty < ipsec_attr_val_descs_roof);
+			passert(ty < IPSEC_ATTR_VAL_DESCS_ROOF);
 			vdesc = ipsec_attr_val_descs[ty];
 		}
 

@@ -983,7 +983,7 @@ enum_names ipsec_attr_names = {
 };
 
 /* for each IPsec attribute, which enum_names describes its values? */
-enum_names *const ipsec_attr_val_descs[] = {
+enum_names *const ipsec_attr_val_descs[IPSEC_ATTR_VAL_DESCS_ROOF] = {
 	NULL,	/* (none) */
 	&sa_lifetime_names,	/* SA_LIFE_TYPE */
 	NULL,	/* SA_LIFE_DURATION */
@@ -1003,8 +1003,6 @@ enum_names *const ipsec_attr_val_descs[] = {
 	NULL, /* ADDRESS_PRESERVATION */
 	NULL, /* SA_DIRECTION */
 };
-
-const unsigned int ipsec_attr_val_descs_roof = elemsof(ipsec_attr_val_descs);
 
 /* SA Lifetime Type attribute */
 static const char *const sa_lifetime_name[] = {
