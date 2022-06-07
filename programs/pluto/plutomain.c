@@ -121,7 +121,7 @@ static char *conffile;
 static int pluto_nss_seedbits;
 static int nhelpers = -1;
 static bool do_dnssec = false;
-static char *pluto_dnssec_rootfile = NULL;
+static char *pluto_dnssec_rootkey_file = NULL;
 static char *pluto_dnssec_trusted = NULL;
 
 static char *ocsp_uri = NULL;
@@ -151,7 +151,7 @@ void free_pluto_main(void)
 	pfreeany(ocsp_trust_name);
 	pfreeany(curl_iface);
 	pfreeany(pluto_log_file);
-	pfreeany(pluto_dnssec_rootfile);
+	pfreeany(pluto_dnssec_rootkey_file);
 	pfreeany(pluto_dnssec_trusted);
 	pfreeany(rundir);
 	free_global_redirect_dests();
@@ -657,9 +657,9 @@ static void set_dnssec_file_names (struct starter_config *cfg)
 	 * and not NULL, so always replace; but only with something
 	 * non empty.
 	 */
-	pfreeany(pluto_dnssec_rootfile);
+	pfreeany(pluto_dnssec_rootkey_file);
 	if (cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE][0] != '\0') {
-		pluto_dnssec_rootfile = clone_str(cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE], __func__);
+		pluto_dnssec_rootkey_file = clone_str(cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE], __func__);
 	}
 	replace_when_cfg_setup(&pluto_dnssec_trusted, cfg, KSF_PLUTO_DNSSEC_ANCHORS);
 }
@@ -729,7 +729,7 @@ int main(int argc, char **argv)
 	rundir = clone_str(DEFAULT_RUNDIR, "rundir");
 	pluto_vendorid = clone_str(ipsec_version_vendorid(), "vendorid in main()");
 #ifdef USE_DNSSEC
-	pluto_dnssec_rootfile = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "root.key file");
+	pluto_dnssec_rootkey_file = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "root.key file");
 #endif
 	pluto_lock_filename = clone_str(DEFAULT_RUNDIR "/pluto.pid", "lock file");
 
@@ -883,9 +883,9 @@ int main(int argc, char **argv)
 			 * so always replace; but only with something
 			 * non empty.
 			 */
-			pfreeany(pluto_dnssec_rootfile);
+			pfreeany(pluto_dnssec_rootkey_file);
 			if (optarg[0] != '\0') {
-				pluto_dnssec_rootfile = clone_str(optarg, "dnssec-rootkey-file");
+				pluto_dnssec_rootkey_file = clone_str(optarg, "dnssec-rootkey-file");
 			}
 			continue;
 #endif  /* USE_DNSSEC */
@@ -1811,7 +1811,7 @@ int main(int argc, char **argv)
 #ifdef USE_DNSSEC
 	{
 		diag_t d = unbound_event_init(get_pluto_event_base(), do_dnssec,
-					      pluto_dnssec_rootfile, pluto_dnssec_trusted,
+					      pluto_dnssec_rootkey_file, pluto_dnssec_trusted,
 					      logger/*for-warnings*/);
 		if (d != NULL) {
 			fatal_diag(PLUTO_EXIT_UNBOUND_FAIL, logger, &d, "%s", "");
@@ -1840,8 +1840,8 @@ void show_setup_plutomain(struct show *s)
 
 #ifdef USE_DNSSEC
 	show_comment(s, "dnssec-rootkey-file=%s, dnssec-trusted=%s",
-		pluto_dnssec_rootfile == NULL ? "<unset>" : pluto_dnssec_rootfile,
-		pluto_dnssec_trusted == NULL ? "<unset>" : pluto_dnssec_trusted);
+		     pluto_dnssec_rootkey_file == NULL ? "<unset>" : pluto_dnssec_rootkey_file,
+		     pluto_dnssec_trusted == NULL ? "<unset>" : pluto_dnssec_trusted);
 #endif
 
 	show_comment(s, "sbindir=%s, libexecdir=%s",
