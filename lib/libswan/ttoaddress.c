@@ -243,7 +243,8 @@ static err_t colon(shunk_t src, ip_address *dst)
 	int gapat = -1;	/* where was empty piece seen */
 	unsigned colon_count = 0;
 	unsigned i = 0;
-	while (i < sizeof(u.byte) && cursor.len > 0) {
+	/* while there is more to parse and room for a pair of octets ... */
+	while (cursor.len > 0 && i <= sizeof(u.byte) - 2) {
 
 		/* all paths needs to make progress or return */
 
