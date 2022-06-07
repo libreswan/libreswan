@@ -729,18 +729,12 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 	/* (address(P)) */
 
 	/* key(AE[C]) (AUTH/INTEG/IPCOMP) */
-	switch (k->esatype) {
-	case ET_AH:
+
+	if (k->authkeylen > 0) {
 		put_sadb_key(&req, sadb_ext_key_auth, shunk2(k->authkey, k->authkeylen));
-		break;
-	case ET_ESP:
+	}
+	if (k->enckeylen > 0) {
 		put_sadb_key(&req, sadb_ext_key_encrypt, shunk2(k->enckey, k->enckeylen));
-		put_sadb_key(&req, sadb_ext_key_auth, shunk2(k->authkey, k->authkeylen));
-		break;
-	case ET_IPCOMP:
-		break;
-	default:
-		llog_passert(logger, HERE, "bad key(A)");
 	}
 
 	/* (lifetime(HSC)) */
