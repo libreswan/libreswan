@@ -31,6 +31,9 @@ const struct encrypt_desc ike_alg_encrypt_3des_cbc =
 			[IKEv1_OAKLEY_ID] = OAKLEY_3DES_CBC,
 			[IKEv1_ESP_ID] = ESP_3DES,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_3DES,
+#ifdef SADB_EALG_3DESCBC
+			[SADB_ALG_ID] = SADB_EALG_3DESCBC,
+#endif
 		},
 		.fips = true,
 	},
@@ -44,9 +47,6 @@ const struct encrypt_desc ike_alg_encrypt_3des_cbc =
 	.keydeflen =        DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE,
 	.key_bit_lengths = { DES_CBC_BLOCK_SIZE * 3 * BITS_PER_BYTE, },
 	.encrypt_ops = &ike_alg_encrypt_nss_cbc_ops,
-#ifdef SADB_EALG_3DESCBC
-	.encrypt_sadb_ealg_id = SADB_EALG_3DESCBC,
-#endif
 	.encrypt_netlink_xfrm_name = "des3_ede",
 	.encrypt_tcpdump_name = "3des",
 	.encrypt_ike_audit_name = "3des",

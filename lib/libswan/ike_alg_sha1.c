@@ -107,6 +107,9 @@ const struct integ_desc ike_alg_integ_sha1 = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_SHA1,
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_SHA1,
 			[IKEv2_ALG_ID] = IKEv2_INTEG_HMAC_SHA1_96,
+#ifdef SADB_AALG_SHA1HMAC
+			[SADB_ALG_ID] = SADB_AALG_SHA1HMAC,
+#endif
 		},
 		.fips = true,
 	},
@@ -114,9 +117,6 @@ const struct integ_desc ike_alg_integ_sha1 = {
 	.integ_output_size = SHA1_DIGEST_SIZE_96,
 	.integ_ikev1_ah_transform = AH_SHA,
 	.prf = &ike_alg_prf_sha1,
-#ifdef SADB_AALG_SHA1HMAC
-	.integ_sadb_aalg_id = SADB_AALG_SHA1HMAC,
-#endif
 	.integ_netlink_xfrm_name = "sha1",
 	.integ_tcpdump_name = "sha1",
 	.integ_ike_audit_name = "sha1",

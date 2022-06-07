@@ -38,6 +38,9 @@ const struct encrypt_desc ike_alg_encrypt_null =
 			[IKEv1_OAKLEY_ID] = -1,
 			[IKEv1_ESP_ID] = ESP_NULL,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_NULL,
+#ifdef SADB_EALG_NULL
+			[SADB_ALG_ID] = SADB_EALG_NULL,
+#endif
 		},
 	},
 	.enc_blocksize =  1,
@@ -46,9 +49,6 @@ const struct encrypt_desc ike_alg_encrypt_null =
 	.keylen_omitted = true,
 	.keydeflen = 0,
 	.key_bit_lengths = { 0, },
-#ifdef SADB_EALG_NULL
-	.encrypt_sadb_ealg_id = SADB_EALG_NULL,
-#endif
 	.encrypt_netlink_xfrm_name = "cipher_null",
 	.encrypt_tcpdump_name = "null",
 	.encrypt_ike_audit_name = "null",
@@ -79,6 +79,10 @@ const struct integ_desc ike_alg_integ_none = {
 			 */
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_NONE, /* not NULL_KAME? */
 			[IKEv2_ALG_ID] = IKEv2_INTEG_NONE,
+#ifdef SADB_X_AALG_NULL
+			/* This is from BSD's KAME */
+			[SADB_ALG_ID] = SADB_X_AALG_NULL,
+#endif
 		},
 		/*
 		* Because aes_gcm-null is valid in FIPS mode, "none"
@@ -89,10 +93,6 @@ const struct integ_desc ike_alg_integ_none = {
 		*/
 		.fips = true,
 	},
-#ifdef SADB_X_AALG_NULL
-	/* This is from BSD's KAME */
-	.integ_sadb_aalg_id = SADB_X_AALG_NULL,
-#endif
 	.integ_netlink_xfrm_name = "digest_null",
 	.integ_tcpdump_name = "none",
 	.integ_ike_audit_name = "none",

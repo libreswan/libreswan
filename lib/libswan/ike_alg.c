@@ -102,6 +102,7 @@ const char *ike_alg_key_name(enum ike_alg_key key)
 		[IKEv1_OAKLEY_ID] = "IKEv1 OAKLEY ID",
 		[IKEv1_ESP_ID] = "IKEv1 ESP ID",
 		[IKEv2_ALG_ID] = "IKEv2 ID",
+		[SADB_ALG_ID] = "SADB ID",
 	};
 	passert(key < elemsof(names));
 	return names[key];
@@ -234,6 +235,12 @@ static const struct ike_alg *lookup_by_id(const struct ike_alg_type *type,
 	return NULL;
 }
 
+const struct ike_alg *ike_alg_by_key_id(const struct ike_alg_type *type,
+					enum ike_alg_key key, unsigned id)
+{
+	return lookup_by_id(type, key, id, DBG_CRYPT);
+}
+
 static const struct ike_alg *ikev1_oakley_lookup(const struct ike_alg_type *algorithms,
 						 unsigned id)
 {
@@ -316,31 +323,19 @@ const struct ipcomp_desc *ikev2_get_ipcomp_desc(enum ipsec_ipcomp_algo id)
 	return ipcomp_desc(ikev2_lookup(&ike_alg_ipcomp, id));
 }
 
-#define LOOKUP(TYPE, FIELD, VALUE)					\
-	{								\
-		for (const struct TYPE **algp = next_##TYPE(NULL);	\
-		     algp != NULL; algp = next_##TYPE(algp)) {		\
-			const struct TYPE *alg = *algp;			\
-			if (alg->FIELD == VALUE) {			\
-				return alg;				\
-			}						\
-		}							\
-		return NULL;						\
-	}
-
 const struct encrypt_desc *encrypt_desc_by_sadb_ealg_id(unsigned id)
 {
-	LOOKUP(encrypt_desc, encrypt_sadb_ealg_id, id);
+	return encrypt_desc(lookup_by_id(&ike_alg_encrypt, SADB_ALG_ID, id, DBG_CRYPT));
 }
 
 const struct integ_desc *integ_desc_by_sadb_aalg_id(unsigned id)
 {
-	LOOKUP(integ_desc, integ_sadb_aalg_id, id);
+	return integ_desc(lookup_by_id(&ike_alg_encrypt, SADB_ALG_ID, id, DBG_CRYPT));
 }
 
 const struct ipcomp_desc *ipcomp_desc_by_sadb_calg_id(unsigned id)
 {
-	LOOKUP(ipcomp_desc, ipcomp_sadb_calg_id, id);
+	return ipcomp_desc(lookup_by_id(&ike_alg_encrypt, SADB_ALG_ID, id, DBG_CRYPT));
 }
 
 /*
@@ -975,11 +970,12 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 	FOR_EACH_IKE_ALGP(type, algp) {
 		const struct ike_alg *alg = *algp;
 
-		DBGF(DBG_CRYPT, "%s algorithm %s, IKEv1 OAKLEY id: %d, IKEv1 ESP_INFO id: %d, IKEv2 id: %d",
+		DBGF(DBG_CRYPT, "%s algorithm %s, IKEv1 OAKLEY: %d, IKEv1 ESP_INFO: %d, IKEv2: %d SADB: %d",
 		     type->name, alg->fqn,
 		     alg->id[IKEv1_OAKLEY_ID],
 		     alg->id[IKEv1_ESP_ID],
-		     alg->id[IKEv2_ALG_ID]);
+		     alg->id[IKEv2_ALG_ID],
+		     alg->id[SADB_ALG_ID]);
 
 		/*
 		 * Check the FQN first; and require upper case.  If
@@ -1001,7 +997,7 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 		pexpect_ike_alg_has_name(logger, HERE, alg, alg->fqn, ".name");
 
 		/*
-		 * Don't allow 0 as an algorithm ID.
+		 * Check the IDs have all been set (i.e, non-zero).
 		 *
 		 * Don't even try to check 'none' algorithms.
 		 */
@@ -1009,23 +1005,15 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 		    alg != &ike_alg_dh_none.common) {
 			for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
 			     key < IKE_ALG_KEY_ROOF; key++) {
-				pexpect_ike_alg_key(logger, alg, key, alg->id[key] != 0);
-			}
-		}
-
-		/*
-		 * Check the IDs have all been set.
-		 *
-		 * Don't even try to check 'none' algorithms.
-		 */
-		if (alg != &ike_alg_integ_none.common &&
-		    alg != &ike_alg_dh_none.common) {
-			pexpect_ike_alg(logger, alg, alg->id[IKEv1_OAKLEY_ID] != 0);
-			pexpect_ike_alg(logger, alg, alg->id[IKEv1_ESP_ID] != 0);
-			pexpect_ike_alg(logger, alg, alg->id[IKEv2_ALG_ID] != 0);
-			for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
-			     key < IKE_ALG_KEY_ROOF; key++) {
-				pexpect_ike_alg_key(logger, alg, key, alg->id[key] != 0);
+				int id = alg->id[key];
+				switch (key) {
+				case SADB_ALG_ID:
+					pexpect_ike_alg_key(logger, alg, key, id >= 0);
+					break;
+				default:
+					pexpect_ike_alg_key(logger, alg, key, id == -1 || id > 0);
+					break;
+				}
 			}
 		}
 
@@ -1041,13 +1029,19 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 		for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
 		     key < IKE_ALG_KEY_ROOF; key++) {
 			int id = alg->id[key];
-			if (id >= 0) {
-				at_least_one_valid_id = true;
-				check_enum_name(ike_alg_key_name(key),
-						alg, id,
-						type->enum_names[key],
-						logger);
+			switch (key) {
+			case SADB_ALG_ID:
+				/* SADB needs sparse names */
+				continue;
+			default:
+				if (id < 0) continue;
+				break;
 			}
+			at_least_one_valid_id = true;
+			check_enum_name(ike_alg_key_name(key),
+					alg, id,
+					type->enum_names[key],
+					logger);
 		}
 		pexpect_ike_alg(logger, alg, at_least_one_valid_id);
 
@@ -1065,8 +1059,16 @@ static void check_algorithm_table(const struct ike_alg_type *type,
 		for (enum ike_alg_key key = IKE_ALG_KEY_FLOOR;
 		     key < IKE_ALG_KEY_ROOF; key++) {
 			int id = alg->id[key];
+			switch (key) {
+			case SADB_ALG_ID:
+				if (id <= 0) continue;
+				break;
+			default:
+				if (id < 0) continue;
+				break;
+			}
 			pexpect_ike_alg_key(logger, alg, key,
-					    id < 0 || lookup_by_id(&scratch, key, id, LEMPTY) == NULL);
+					    lookup_by_id(&scratch, key, id, LEMPTY) == NULL);
 		}
 
 		/*

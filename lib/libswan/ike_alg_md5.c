@@ -81,15 +81,15 @@ const struct integ_desc ike_alg_integ_hmac_md5_96 = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_MD5,
 			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_MD5,
 			[IKEv2_ALG_ID] = IKEv2_INTEG_HMAC_MD5_96,
+#ifdef SADB_AALG_MD5HMAC
+			[SADB_ALG_ID] = SADB_AALG_MD5HMAC,
+#endif
 		},
 	},
 	.integ_keymat_size = MD5_DIGEST_SIZE,
 	.integ_output_size = MD5_DIGEST_SIZE_96,
 	.integ_ikev1_ah_transform = AH_MD5,
 	.prf = &ike_alg_prf_hmac_md5,
-#ifdef SADB_AALG_MD5HMAC
-	.integ_sadb_aalg_id = SADB_AALG_MD5HMAC,
-#endif
 	.integ_netlink_xfrm_name = "md5",
 	.integ_tcpdump_name = "md5",
 	.integ_ike_audit_name = "md5",

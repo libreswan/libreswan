@@ -36,15 +36,15 @@ const struct ipcomp_desc ike_alg_ipcomp_deflate = {
 			[IKEv1_OAKLEY_ID] = -1,
 			[IKEv1_ESP_ID] = IPCOMP_DEFLATE,
 			[IKEv2_ALG_ID] = IPCOMP_DEFLATE,
+#ifdef SADB_X_CALG_DEFLATE
+			[SADB_ALG_ID] = SADB_X_CALG_DEFLATE,
+#endif
 		},
 		.fips = true, /* it's meaningless */
 	},
 	.kernel = {
 		.xfrm_name = "deflate",
 	},
-#ifdef SADB_X_CALG_DEFLATE
-	.ipcomp_sadb_calg_id = SADB_X_CALG_DEFLATE,
-#endif
 };
 
 const struct ipcomp_desc ike_alg_ipcomp_lzs = {
@@ -56,15 +56,15 @@ const struct ipcomp_desc ike_alg_ipcomp_lzs = {
 			[IKEv1_OAKLEY_ID] = -1,
 			[IKEv1_ESP_ID] = -1, /*IPCOMP_LZS*/
 			[IKEv2_ALG_ID] = IPCOMP_LZS,
+#ifdef SADB_X_CALG_LZS
+			[SADB_ALG_ID] = SADB_X_CALG_LZS,
+#endif
 		},
 		.fips = true, /* it's meaningless */
 	},
 	.kernel = {
 		.xfrm_name = "lzs",
 	},
-#ifdef SADB_X_CALG_LZS
-	.ipcomp_sadb_calg_id = SADB_X_CALG_LZS,
-#endif
 };
 
 
@@ -77,13 +77,13 @@ const struct ipcomp_desc ike_alg_ipcomp_lzjh = {
 			[IKEv1_OAKLEY_ID] = -1,
 			[IKEv1_ESP_ID] = -1, /*IPCOMP_LZJH*/
 			[IKEv2_ALG_ID] = IPCOMP_LZJH,
+#ifdef SADB_X_CALG_LZJH
+			[SADB_ALG_ID] = SADB_X_CALG_LZJH,
+#endif
 		},
 		.fips = true, /* it's meaningless */
 	},
 	.kernel = {
 		.xfrm_name = "lzjh",
 	},
-#ifdef SADB_X_CALG_LZJH
-	.ipcomp_sadb_calg_id = SADB_X_CALG_LZJH,
-#endif
 };

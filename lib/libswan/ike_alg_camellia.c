@@ -51,6 +51,9 @@ const struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 			[IKEv1_OAKLEY_ID] = OAKLEY_CAMELLIA_CBC,
 			[IKEv1_ESP_ID] = ESP_CAMELLIA,
 			[IKEv2_ALG_ID] = IKEv2_ENCR_CAMELLIA_CBC,
+#ifdef SADB_X_EALG_CAMELLIACBC
+			[SADB_ALG_ID] = SADB_X_EALG_CAMELLIACBC,
+#endif
 		},
 	},
 	.nss = {
@@ -62,9 +65,6 @@ const struct encrypt_desc ike_alg_encrypt_camellia_cbc =
 	.keydeflen =    CAMELLIA_KEY_DEF_LEN,
 	.key_bit_lengths = { 256, 192, 128, },
 	.encrypt_ops = &ike_alg_encrypt_nss_cbc_ops,
-#ifdef SADB_X_EALG_CAMELLIACBC
-	.encrypt_sadb_ealg_id = SADB_X_EALG_CAMELLIACBC,
-#endif
 	.encrypt_netlink_xfrm_name = "cbc(camellia)",
 	.encrypt_tcpdump_name = "camellia",
 	.encrypt_ike_audit_name = "camellia",
