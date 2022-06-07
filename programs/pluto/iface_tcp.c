@@ -295,7 +295,6 @@ static struct msg_digest *iketcp_read_packet(struct iface_endpoint **ifp,
 		} else {
 
 			dbg_iketcp(*ifp, "enabling ESPINTCP");
-
 			if (setsockopt((*ifp)->fd, IPPROTO_TCP, TCP_ULP,
 				      "espintcp", sizeof("espintcp"))) {
 				int e = errno;
@@ -305,7 +304,7 @@ static struct msg_digest *iketcp_read_packet(struct iface_endpoint **ifp,
 				iketcp_shutdown(ifp); /* i.e., delete IFP */
 				return NULL;
 			}
-#if defined(linux)
+#ifdef __linux__
 			int af = address_type(&(*ifp)->ip_dev->id_address)->af;
 			struct xfrm_userpolicy_info policy_in = {
 				.action = XFRM_POLICY_ALLOW,
@@ -577,8 +576,16 @@ struct iface_endpoint *open_tcp_endpoint(struct iface_dev *local_dev,
 	 */
 	if (impair.tcp_skip_setsockopt_espintcp) {
 		llog(RC_LOG, logger, "IMPAIR: TCP: skipping setsockopt(espintcp)");
-#if defined(linux)
 	} else {
+		dbg("TCP: socket %d: enabling \"espintcp\"", fd);
+		if (setsockopt(fd, IPPROTO_TCP, TCP_ULP, "espintcp", sizeof("espintcp"))) {
+			llog_error(logger, errno,
+				   "setsockopt(SOL_TCP, TCP_ULP) failed "PRI_WHERE,
+				   pri_where(HERE));
+			close(fd);
+			return NULL;
+		}
+#ifdef __linux__
 		int af = endpoint_type(&remote_endpoint)->af;
 		struct xfrm_userpolicy_info policy_in = {
 			.action = XFRM_POLICY_ALLOW,
@@ -590,14 +597,6 @@ struct iface_endpoint *open_tcp_endpoint(struct iface_dev *local_dev,
 			.sel.family = af,
 			.dir = XFRM_POLICY_OUT,
 		};
-		dbg("TCP: socket %d: enabling \"espintcp\"", fd);
-		if (setsockopt(fd, IPPROTO_TCP, TCP_ULP, "espintcp", sizeof("espintcp"))) {
-			llog_error(logger, errno,
-				   "setsockopt(SOL_TCP, TCP_ULP) failed "PRI_WHERE,
-				   pri_where(HERE));
-			close(fd);
-			return NULL;
-		}
 		if (setsockopt(fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_in, sizeof(policy_in))) {
 			llog_error(logger, errno,
 				   "setsockopt(IPROTO_IP, IP_XFRM_POLICY(in)) failed "PRI_WHERE,
