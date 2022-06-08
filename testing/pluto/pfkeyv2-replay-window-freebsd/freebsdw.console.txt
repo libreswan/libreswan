@@ -9,6 +9,9 @@ Redirecting to: [initsystem]
 Initializing NSS database
 Starting pluto.
 freebsdw #
+ ipsec auto --add overflow # should fail
+036 "overflow": failed to add connection: replay-window=18446744073709551614 exceeds PF_KEY v2 limit of 4294967263
+freebsdw #
  ipsec auto --add eastnet-westnet-ikev2
 002 "eastnet-westnet-ikev2": added IKEv2 connection
 freebsdw #
