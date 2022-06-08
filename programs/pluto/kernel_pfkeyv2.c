@@ -1189,13 +1189,13 @@ const struct kernel_ops pfkeyv2_kernel_ops = {
 #endif
 #if defined(SADB_X_EXT_SA_REPLAY)
 	/* .sadb_x_sa_replay_replay is in packets */
-	.replay_window = (UINT32_MAX - 32), /* packets */
+	.max_replay_window = (UINT32_MAX - 32), /* packets */
 #elif defined(__OpenBSD__)
 	/* kernel limits value to 64 * 8 packet bits per-byte */
-	.replay_window = 64 * 8, /* packets */
+	.max_replay_window = 64 * 8, /* packets */
 #else
 	/* .sadb_sa_replay is in bytes with 1 bit per packet */
-	.replay_window = UINT8_MAX * 8, /* packets */
+	.max_replay_window = UINT8_MAX * 8, /* packets */
 #endif
 	.async_fdp = &pfkeyv2_fd,	/* XXX: fix code using this not checking for >0 */
 	.route_fdp = NULL,		/* XXX: what is this? */

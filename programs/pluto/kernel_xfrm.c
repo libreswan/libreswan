@@ -2448,7 +2448,8 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.updown_name = "xfrm",
 	.async_fdp = &nl_xfrm_fd,
 	.route_fdp = &nl_route_fd,
-	.replay_window = IPSEC_SA_DEFAULT_REPLAY_WINDOW,
+	/* don't overflow BYTES_FOR_BITS(replay_window) * 8 */
+	.max_replay_window = UINT32_MAX & ~7,
 	.esn_supported = true,
 
 	.init = init_netlink,

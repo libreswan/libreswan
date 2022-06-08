@@ -376,7 +376,7 @@ struct kernel_ops {
 	bool overlap_supported;
 	bool sha2_truncbug_support;
 	bool esn_supported;
-	int replay_window;
+	uintmax_t max_replay_window;
 	int *async_fdp;
 	int *route_fdp;
 

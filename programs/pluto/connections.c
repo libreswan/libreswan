@@ -1838,6 +1838,12 @@ static bool extract_connection(const struct whack_message *wm,
 		     "kernel interface does not support ESN so disabling");
 		c->policy &= ~POLICY_ESN_YES;
 		c->policy |= POLICY_ESN_NO;
+	} else if (wm->sa_replay_window > kernel_ops->max_replay_window) {
+		llog(RC_FATAL, c->logger,
+		     "failed to add connection: replay-window=%ju exceeds %s limit of %ju",
+		     wm->sa_replay_window,
+		     kernel_ops->interface_name, kernel_ops->max_replay_window);
+		return false;
 	}
 
 	connection_buf cb;
