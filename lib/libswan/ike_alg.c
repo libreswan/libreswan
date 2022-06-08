@@ -222,16 +222,16 @@ static const struct ike_alg *lookup_by_id(const struct ike_alg_type *type,
 		const struct ike_alg *alg = *algp;
 		if (alg->id[key] == id) {
 			const char *name = enum_name_short(type->enum_names[key], id);
-			DBGF(debug, "%s ike_alg_lookup_by_id id: %s=%u, found %s\n",
-			     type->name,
+			DBGF(debug, "%s %s id: %s=%u, found %s\n",
+			     type->name, __func__,
 			     name ? name : "???",
 			     id, alg->fqn);
 			return alg;
 		}
  	}
 	const char *name = enum_name_short(type->enum_names[key], id);
-	DBGF(debug, "%s ike_alg_lookup_by_id id: %s=%u, not found\n",
-	     type->name, name ? name : "???", id);
+	DBGF(debug, "%s %s id: %s=%u, not found\n",
+	     type->name, __func__, name ? name : "???", id);
 	return NULL;
 }
 
@@ -330,12 +330,12 @@ const struct encrypt_desc *encrypt_desc_by_sadb_ealg_id(unsigned id)
 
 const struct integ_desc *integ_desc_by_sadb_aalg_id(unsigned id)
 {
-	return integ_desc(lookup_by_id(&ike_alg_encrypt, SADB_ALG_ID, id, DBG_CRYPT));
+	return integ_desc(lookup_by_id(&ike_alg_integ, SADB_ALG_ID, id, DBG_CRYPT));
 }
 
 const struct ipcomp_desc *ipcomp_desc_by_sadb_calg_id(unsigned id)
 {
-	return ipcomp_desc(lookup_by_id(&ike_alg_encrypt, SADB_ALG_ID, id, DBG_CRYPT));
+	return ipcomp_desc(lookup_by_id(&ike_alg_ipcomp, SADB_ALG_ID, id, DBG_CRYPT));
 }
 
 /*
