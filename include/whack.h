@@ -184,7 +184,7 @@ struct whack_message {
 	deltatime_t sa_rekey_margin;
 	unsigned long sa_rekey_fuzz;
 	unsigned long sa_keying_tries;
-	unsigned long sa_replay_window;
+	uintmax_t sa_replay_window;
 	deltatime_t retransmit_timeout;
 	deltatime_t retransmit_interval;
 	enum yna_options nic_offload;
