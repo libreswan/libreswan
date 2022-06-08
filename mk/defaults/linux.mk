@@ -1,138 +1,98 @@
-USE_XFRM = true
-
-USERLAND_CFLAGS += -DTimeZoneOffset=timezone
-
 # Detect linux variants and releases.
 
-# So that the sub-shell is invoked only once, ":=" is used.  This in
-# turn means 'ifndef' is needed as := is unconditional.
+# So that the sub-shell is invoked only once, ":=" is used.  Because
+# there is no conditional version of := (':=' is unconditional), the
+# assignment needs to be wrapped in 'ifndef'.
 
 ifndef LINUX_VARIANT
-  ifneq ($(wildcard /etc/os-release),)
-    LINUX_VARIANT:=$(shell sed -n -e 's/^ID=//p' /etc/os-release)
-    export LINUX_VARIANT
-  endif
+  export LINUX_VARIANT := $(sort $(shell sed -n -e 's/"//g' -e 's/^ID_LIKE=//p' -e 's/^ID=//p' /etc/os-release))
 endif
+
+ifndef LINUX_VERSION_CODENAME
+  LINUX_VERSION_CODENAME := $(shell sed -n -e 's/^VERSION_CODENAME=//p' /etc/os-release)
+endif
+
+ifndef LINUX_VERSION_ID
+  LINUX_VERSION_ID = $(shell sed -n -e 's/^VERSION_ID=//p' /etc/os-release)
+endif
+
 #(info LINUX_VARIANT=$(LINUX_VARIANT))
+#(info LINUX_VERSION_ID=$(LINUX_VERSION_ID))
+#(info LINUX_VERSION_CODENAME=$(LINUX_VERSION_CODENAME))
 
-ifndef LINUX_VARIANT_VERSION
-  ifneq ($(wildcard /etc/os-release),)
-    LINUX_VARIANT_VERSION:=$(shell sed -n -e 's/^VERSION_ID=//p' /etc/os-release)
-    export LINUX_VARIANT_VERSION
+#
+# Debian derived
+#
+
+ifneq ($(filter debian,$(LINUX_VARIANT)),)
+  DEFAULT_DNSSEC_ROOTKEY_FILE ?= /usr/share/dns/root.key
+  ifeq ($(VERSION_CODENAME),buster) # Debian 10 (Buster); until June 2024
+    USE_NSS_KDF ?= false
   endif
-endif
-#(info LINUX_VARIANT_VERSION=$(LINUX_VARIANT_VERSION))
-
-ifeq ($(LINUX_VARIANT),debian)
-  DEFAULT_DNSSEC_ROOTKEY_FILE?=/usr/share/dns/root.key
-  ifndef VERSION_CODENAME
-    ifneq ($(wildcard /etc/os-release),)
-      VERSION_CODENAME:=$(shell sed -n -e 's/^VERSION_CODENAME=//p' /etc/os-release)
-      export VERSION_CODENAME
-    endif
+  ifeq ($(VERSION_CODENAME),focal)  # Ubuntu 20.04 LTS (Focal Fossa); until April 2025
+    USE_NSS_KDF ?= false
   endif
-
-  ifeq ($(VERSION_CODENAME),buster)
-    USE_NSS_KDF?=false
-  endif
-
-  ifeq ($(VERSION_CODENAME),stretch)
-    USE_NSS_KDF?=false
-    USE_XFRM_INTERFACE_IFLA_HEADER?=true
-    USE_DNSSEC?=false
-    USE_DH31?=false
-    USE_NSS_IPSEC_PROFILE?=false
-    USE_NSS_AVA_COPY?=true
+  ifeq ($(VERSION_CODENAME),bionic) # Ubuntu 18.04 LTS (Bionic Beaver); until April 2023
+    USE_NSS_KDF ?= false
+    USE_XFRM_INTERFACE_IFLA_HEADER ?= true
+    USE_NSS_IPSEC_PROFILE ?= false
   endif
 endif
 
-ifeq ($(LINUX_VARIANT),ubuntu)
-  DEFAULT_DNSSEC_ROOTKEY_FILE?=/usr/share/dns/root.key
-  VERSION_CODENAME:=$(shell sed -n -e 's/^VERSION_CODENAME=//p' /etc/os-release)
+#
+# Fedora derived
+#
 
-  ifeq ($(VERSION_CODENAME),focal)
-    USE_NSS_KDF?=false
-  endif
-
-  ifeq ($(VERSION_CODENAME),stretch)
-    USE_NSS_KDF?=false
-    USE_XFRM_INTERFACE_IFLA_HEADER?=true
-    USE_DNSSEC?=false
-    USE_DH31?=false
-    USE_NSS_IPSEC_PROFILE?=false
-    USE_NSS_AVA_COPY?=true
-  endif
-
-  ifeq ($(VERSION_CODENAME),cosmic)
-    USE_NSS_KDF?=false
-    USE_XFRM_INTERFACE_IFLA_HEADER?=true
-    USE_NSS_IPSEC_PROFILE?=false
-  endif
-
-  ifeq ($(VERSION_CODENAME),bionic)
-    USE_NSS_KDF?=false
-    USE_XFRM_INTERFACE_IFLA_HEADER?=true
-    USE_NSS_IPSEC_PROFILE?=false
-  endif
-
-  ifeq ($(VERSION_CODENAME),xenial)
-    USE_NSS_KDF?=false
-    USE_XFRM_INTERFACE?=false
-    USE_DNSSEC?=false
-    USE_DH31?=false
-    USE_NSS_IPSEC_PROFILE?=false
-    USE_NSS_AVA_COPY?=true
-    WERROR_CFLAGS=-Werror -Wno-missing-field-initializers -Wno-error=address
-    USE_GLIBC_KERN_FLIP_HEADERS?=true
-  endif
-endif
-
-ifeq ($(LINUX_VARIANT),fedora)
-
+ifneq ($(filter fedora,$(LINUX_VARIANT)),)
   DEFAULT_DNSSEC_ROOTKEY_FILE ?= /var/lib/unbound/root.key
-  USE_LINUX_AUDIT?=true
-  USE_SECCOMP?=true
-  USE_LABELED_IPSEC?=true
-
-  ifeq ($(LINUX_VARIANT_VERSION),30)
-    USE_NSS_KDF?=false
-  endif
-
-  ifeq ($(LINUX_VARIANT_VERSION),29)
-    USE_NSS_KDF?=false
-  endif
-
-  ifeq ($(LINUX_VARIANT_VERSION),28)
-    USE_NSS_KDF?=false
-  endif
-
-  # Assume that fedora 22 (used by test VMs) needs the hack
-  ifeq ($(LINUX_VARIANT_VERSION),22)
-    USE_GLIBC_KERN_FLIP_HEADERS=true
-  endif
-
+  USE_LINUX_AUDIT ?= true
+  USE_SECCOMP ?= true
+  USE_LABELED_IPSEC ?= true
 endif
-#(info USE_GLIBC_KERN_FLIP_HEADERS=$(USE_GLIBC_KERN_FLIP_HEADERS))
 
+#
+# OpenSuSe derived
+# https://en.opensuse.org/SDB:SUSE_and_openSUSE_Products_Version_Outputs
+#
+
+ifneq ($(filter suse,$(LINUX_VARIANT)),)
+  # https://lists.opensuse.org/archives/list/users@lists.opensuse.org/message/HYB6CKB7DPMPAN7BGUC6MRHE6TWZDABI/
+  DEFAULT_DNSSEC_ROOTKEY_FILE ?= /etc/unbound/root.key
+endif
+
+#
+# Arch Linux derived
+#
+
+ifneq ($(filter arch,$(LINUX_VARIANT)),)
+  # https://wiki.archlinux.org/title/unbound#Root_hints
+  DEFAULT_DNSSEC_ROOTKEY_FILE ?= /etc/unbound/trusted-key.key
+endif
 
 #
 # INITSYSTEM
 #
 
 ifndef INITSYSTEM
-  ifeq ($(shell test -r /proc/1/comm && cat /proc/1/comm),systemd)
-    #  works for systemd, not upstart?
-    INITSYSTEM=systemd
-  else ifneq ($(and $(wildcard /lib/systemd/systemd),$(wildcard /var/run/systemd)),)
+  ifneq ($(and $(wildcard /lib/systemd/systemd),$(wildcard /var/run/systemd)),)
     INITSYSTEM=systemd
   else ifneq ($(and $(wildcard /sbin/start),$(wildcard /etc/redhat-release)),)
     # override for rhel/centos to use sysvinit
     INITSYSTEM=sysvinit
   else ifneq ($(wildcard /sbin/start),)
     INITSYSTEM=upstart
-  else ifneq ($(or $(wildcard /sbin/rc-service),$(wildcard /usr/sbin/rc-service)),)
+  else ifneq ($(wildcard /sbin/rc-service /usr/sbin/rc-service),)
+    # either
     INITSYSTEM=openrc
   else
     INITSYSTEM=sysvinit
   endif
 endif
+
+#
+# basic stuff (unless overwridden by above)
+#
+
+USE_XFRM ?= true
+USERLAND_CFLAGS += -DTimeZoneOffset=timezone
+USE_DNSSEC ?= true
