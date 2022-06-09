@@ -20,11 +20,18 @@ cat <<EOF | tee -a /mnt/etc/fstab
 @@GATEWAY@@:@@POOLDIR@@ /pool nfs rw,tcp 0 0
 EOF
 
+# Tweak the (korn) shell prompt
+
 cat <<EOF | tee /mnt/root/.profile
-PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/X11R6/bin:/usr/local/sbin:/usr/local/bin
-export PATH
+export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/X11R6/bin:/usr/local/sbin:/usr/local/bin
+
+export PKG_CACHE=/pool/pkg.openbsd
+export PKG_PATH=${PKG_CACHE}:installpath
+
 case "\$-" in
      *i* )
+         set -o emacs
+         set -o csh-history
 	 PS1='[\u@\h \W \$(echo \$?)]\\\$ '
 	 ;;
 esac
