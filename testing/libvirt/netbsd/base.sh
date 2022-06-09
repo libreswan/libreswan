@@ -93,8 +93,9 @@ case "\$-" in
 	if /bin/test -z "\${HOST}"; then
 	   HOST=\$(hostname)
 	fi
-	( set -o tabcomplete 2>/dev/null ) && set -o tabcomplete
-	( set -o promptcmds 2>/dev/null ) && set -o promptcmds
+	set -E emacs
+	set -o tabcomplete
+	set -o promptcmds
 	PS1='['"\${USER}@\${HOST%%.*}"' \$(s=\$?;p=\${PWD##*/};echo \${p:-/} \${s#0})]# '
         ;;
 esac
