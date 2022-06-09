@@ -74,7 +74,7 @@ endif
 #
 
 ifndef INITSYSTEM
-  ifneq ($(and $(wildcard /lib/systemd/systemd),$(wildcard /var/run/systemd)),)
+  ifneq ($(and $(wildcard /lib/systemd/systemd),$(wildcard /run/systemd)),)
     INITSYSTEM=systemd
   else ifneq ($(and $(wildcard /sbin/start),$(wildcard /etc/redhat-release)),)
     # override for rhel/centos to use sysvinit
