@@ -19,18 +19,6 @@ else
   ENABLE_LIBCAP_NG = USE_LIBCAP_NG=false
 endif
 
-# only for Debian Jessie(8.x)
-# most other Distribution & Release sepcfic options are in mk/defaults/linux.mk
-DISTRO_CONF =
-DISTRO_CONF += $(shell grep -qE 'jessie' /etc/os-release && echo USE_DNSSEC=false)
-DISTRO_CONF += $(shell grep -qE 'jessie' /etc/os-release && echo USE_GLIBC_KERN_FLIP_HEADERS=true)
-DISTRO_CONF += $(shell grep -qE 'jessie' /etc/os-release && echo USE_NSS_IPSEC_PROFILE=false)
-DISTRO_CONF += $(shell grep -qE 'jessie' /etc/os-release && echo USE_NSS_AVA_COPY=true)
-DISTRO_CONF += $(shell grep -qE 'jessie' /etc/os-release && echo USE_DH31=false)
-DISTRO_CONF += $(shell grep -qE 'jessie' /etc/os-release && echo USE_XFRM_INTERFACE=false)
-DISTRO_CONF += $(shell grep -qE 'jessie' /etc/os-release && echo 'WERROR_CFLAGS="-Werror -Wno-missing-field-initializers -Wno-error=address"')
-DISTRO_CONF += $(shell grep -qE 'jessie' /etc/os-release && echo USE_NSS_KDF=false)
-
 override_dh_auto_build:
 	dh_auto_build -- programs \
 		ARCH=$(DEB_HOST_ARCH) \
@@ -39,11 +27,8 @@ override_dh_auto_build:
 		FINALLIBEXECDIR=/usr/libexec/ipsec \
 		FINALMANDIR=/usr/share/man \
 		USE_LDAP=true \
-		USE_FIPSCHECK=false \
 		$(ENABLE_LIBCAP_NG) \
-		$(ENABLE_SELINUX) \
-		DEFAULT_DNSSEC_ROOTKEY_FILE=/usr/share/dns/root.key \
-		$(DISTRO_CONF)
+		$(ENABLE_SELINUX)
 
 override_dh_auto_install-arch:
 	# Add here commands to install the package into debian/libreswan
@@ -54,11 +39,9 @@ override_dh_auto_install-arch:
 		FINALLIBEXECDIR=/usr/libexec/ipsec \
 		FINALMANDIR=/usr/share/man \
 		USE_LDAP=true \
-		USE_FIPSCHECK=false \
 		$(ENABLE_LIBCAP_NG) \
 		$(ENABLE_SELINUX) \
-		DESTDIR=$(CURDIR)/debian/libreswan \
-		$(DISTRO_CONF)
+		DESTDIR=$(CURDIR)/debian/libreswan
 
 override_dh_auto_test:
 	 echo "Skip dh_auto_test"
