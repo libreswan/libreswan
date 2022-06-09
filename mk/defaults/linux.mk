@@ -57,7 +57,7 @@ endif
 
 ifneq ($(filter suse,$(LINUX_VARIANT)),)
   # https://lists.opensuse.org/archives/list/users@lists.opensuse.org/message/HYB6CKB7DPMPAN7BGUC6MRHE6TWZDABI/
-  DEFAULT_DNSSEC_ROOTKEY_FILE ?= /etc/unbound/root.key
+  DEFAULT_DNSSEC_ROOTKEY_FILE ?= /var/lib/unbound/root.key
 endif
 
 #
@@ -66,7 +66,7 @@ endif
 
 ifneq ($(filter arch,$(LINUX_VARIANT)),)
   # https://wiki.archlinux.org/title/unbound#Root_hints
-  DEFAULT_DNSSEC_ROOTKEY_FILE ?= /etc/unbound/trusted-key.key
+  DEFAULT_DNSSEC_ROOTKEY_FILE ?= /etc/trusted-key.key
 endif
 
 #
