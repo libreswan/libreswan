@@ -8,11 +8,11 @@ ifndef LINUX_VARIANT
   export LINUX_VARIANT := $(sort $(shell sed -n -e 's/"//g' -e 's/^ID_LIKE=//p' -e 's/^ID=//p' /etc/os-release))
 endif
 
-ifndef VERSION_CODENAME
+ifndef LINUX_VERSION_CODENAME
  # examples
  # on debian and its derivatives VERSION_CODENAME=buster
  # on fedora VERSION_CODENAME=""
-  VERSION_CODENAME := $(shell sed -n -e 's/^VERSION_CODENAME=//p' /etc/os-release)
+  LINUX_VERSION_CODENAME := $(shell sed -n -e 's/^VERSION_CODENAME=//p' /etc/os-release)
 endif
 
 ifndef LINUX_VERSION_ID
@@ -21,7 +21,7 @@ endif
 
 #(info LINUX_VARIANT=$(LINUX_VARIANT))
 #(info LINUX_VERSION_ID=$(LINUX_VERSION_ID))
-#(info VERSION_CODENAME=$(VERSION_CODENAME))
+#(info LINUX_VERSION_CODENAME=$(LINUX_VERSION_CODENAME))
 
 #
 # Debian derived
@@ -29,13 +29,13 @@ endif
 
 ifneq ($(filter debian,$(LINUX_VARIANT)),)
   DEFAULT_DNSSEC_ROOTKEY_FILE ?= /usr/share/dns/root.key
-  ifeq ($(VERSION_CODENAME),buster) # Debian 10 (Buster); until June 2024
+  ifeq ($(LINUX_VERSION_CODENAME),buster) # Debian 10 (Buster); until June 2024
     USE_NSS_KDF ?= false
   endif
-  ifeq ($(VERSION_CODENAME),focal)  # Ubuntu 20.04 LTS (Focal Fossa); until April 2025
+  ifeq ($(LINUX_VERSION_CODENAME),focal)  # Ubuntu 20.04 LTS (Focal Fossa); until April 2025
     USE_NSS_KDF ?= false
   endif
-  ifeq ($(VERSION_CODENAME),bionic) # Ubuntu 18.04 LTS (Bionic Beaver); until April 2023
+  ifeq ($(LINUX_VERSION_CODENAME),bionic) # Ubuntu 18.04 LTS (Bionic Beaver); until April 2023
     USE_NSS_KDF ?= false
     USE_XFRM_INTERFACE_IFLA_HEADER ?= true
     USE_NSS_IPSEC_PROFILE ?= false
