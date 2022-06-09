@@ -8,8 +8,11 @@ ifndef LINUX_VARIANT
   export LINUX_VARIANT := $(sort $(shell sed -n -e 's/"//g' -e 's/^ID_LIKE=//p' -e 's/^ID=//p' /etc/os-release))
 endif
 
-ifndef LINUX_VERSION_CODENAME
-  LINUX_VERSION_CODENAME := $(shell sed -n -e 's/^VERSION_CODENAME=//p' /etc/os-release)
+ifndef VERSION_CODENAME
+ # examples
+ # on debian and its derivatives VERSION_CODENAME=buster
+ # on fedora VERSION_CODENAME=""
+  VERSION_CODENAME := $(shell sed -n -e 's/^VERSION_CODENAME=//p' /etc/os-release)
 endif
 
 ifndef LINUX_VERSION_ID
@@ -18,7 +21,7 @@ endif
 
 #(info LINUX_VARIANT=$(LINUX_VARIANT))
 #(info LINUX_VERSION_ID=$(LINUX_VERSION_ID))
-#(info LINUX_VERSION_CODENAME=$(LINUX_VERSION_CODENAME))
+#(info VERSION_CODENAME=$(VERSION_CODENAME))
 
 #
 # Debian derived
