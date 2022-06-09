@@ -907,62 +907,42 @@ $(KVM_OPENBSD_BASE_ISO): testing/libvirt/openbsd/base.sh
 
 
 ##
-## Create and update the base domain, installing missing packages.
+## Upgrade the base domain: create a clone, install any missing
+## packages and upgrade any packages that are out-of-date.
 ##
-## Repeated kvm-$(OS)-upgrade calls upgrade (not fresh install) the
-## domain.  Use kvm-$(OS)-downgrade to force this.
-##
-## At this point only /pool is accessible (/source and /testing are
-## not, see below).
-
-.PHONY: kvm-downgrade
-kvm-downgrade: $(patsubst %, kvm-%-downgrade, $(KVM_OS))
-
-$(patsubst %, kvm-%-downgrade, $(KVM_PLATFORM)): \
-kvm-%-downgrade:
-	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade
-	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade.*
+## While the script is running only /pool, pointing into this repo, is
+## accessible (/source and /testing which may point elsewhere are not
+## accessable, see above and below).
 
 $(patsubst %, kvm-%-upgrade, $(KVM_PLATFORM)): \
 kvm-%-upgrade:
-	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade  # not .*
+	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade
+	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade.*
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-upgrade
 
 .PHONY: kvm-upgrade
 kvm-upgrade: $(patsubst %, kvm-%-upgrade, $(KVM_OS))
 
-$(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade.vm, $(KVM_PLATFORM)): \
-$(KVM_POOLDIR_PREFIX)%-upgrade.vm: $(KVM_POOLDIR_PREFIX)%-base \
-		testing/libvirt/%/install.sh \
-		| $(KVM_HOST_OK)
-	: creating domain ...-upgrade, not -upgrade.vm, hence basename
-	$(MAKE) kvm-undefine-$(basename $(notdir $@))
-	$(call clone-os-disk, $<.qcow2, $(basename $@).qcow2)
-	$(VIRT_INSTALL) \
-		$(VIRT_INSTALL_FLAGS) \
-		--name=$(notdir $(basename $@)) \
-		--os-variant=$(KVM_$($*)_VIRT_INSTALL_OS_VARIANT) \
-		--disk=cache=writeback,path=$(basename $@).qcow2 \
-		--import \
-		--noautoconsole
-	: install $(notdir $(basename $@)) using install.sh from $(srcdir) and not $(KVM_SOURCEDIR)
-	cp testing/libvirt/$*/install.sh $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)$*.install.sh
-	$(KVMSH) $(notdir $(basename $@)) -- /pool/$(KVM_FIRST_PREFIX)$*.install.sh $(KVM_$($*)_INSTALL_FLAGS)
-	: only shutdown when install works
-	$(KVMSH) --shutdown $(basename $(notdir $@))
-	touch $@
-
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade, $(KVM_PLATFORM)): \
-$(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-upgrade.vm \
+$(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-base \
 		testing/libvirt/%/upgrade.sh \
 		| $(KVM_HOST_OK)
-	: upgrade $($*) using upgrade.sh from $(srcdir) and not $(KVM_SOURCEDIR)
-	cp testing/libvirt/$*/upgrade.sh $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)$*.upgrade.sh
-	$(KVMSH) $(notdir $@) -- /pool/$(KVM_FIRST_PREFIX)$*.upgrade.sh $(KVM_$($*)_UPGRADE_FLAGS)
+	$(MAKE) kvm-undefine-$(notdir $@)
+	$(call clone-os-disk, $<.qcow2, $@.qcow2)
+	$(VIRT_INSTALL) \
+		$(VIRT_INSTALL_FLAGS) \
+		--name=$(notdir $@) \
+		--os-variant=$(KVM_$($*)_VIRT_INSTALL_OS_VARIANT) \
+		--disk=cache=writeback,path=$@.qcow2 \
+		--import \
+		--noautoconsole
+	: Copy install.sh, from this directory tree and not $(KVM_SOURCEDIR),
+	: to $(KVM_POOLDIR) so it can be run using /pool.
+	cp testing/libvirt/$*/upgrade.sh $@.sh
+	$(KVMSH) $(notdir $@) -- /pool/$(notdir $@).sh $(KVM_$($*)_UPGRADE_FLAGS)
 	: only shutdown when upgrade works
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
-
 
 ##
 ## Create the os domain by transmogrifying the updated domain.
