@@ -7,9 +7,7 @@ Uploaders:
 Vcs-Browser: https://github.com/libreswan/libreswan
 Vcs-Git: https://github.com/libreswan/libreswan
 Standards-Version: 4.1.0
-# Rules-Requires-Root: no # breaks jessie
-# libunbound-dev (>= 1.6.5~)  # this is not yet
-# For Ubuntu 14.04 instead of libsystemd-dev, use libsystemd-daemon-dev
+Rules-Requires-Root: no
 Build-Depends:
  bison,
  bzip2,
@@ -29,7 +27,7 @@ Build-Depends:
  libpam0g-dev,
  libselinux1-dev [linux-any],
  libsystemd-dev,
- libunbound-dev,
+ libunbound-dev (>= 1.6.5~),
  man2html,
  pkg-config,
  po-debconf,
