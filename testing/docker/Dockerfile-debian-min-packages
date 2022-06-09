@@ -26,7 +26,7 @@ CMD ["/sbin/init"]
 RUN echo "precedence ::ffff:0:0/96  100" >> /etc/gai.conf
 RUN echo "net.ipv6.conf.all.disable_ipv6=1" >> /etc/sysctl.conf
 RUN apt-get update && apt-get -o Dpkg::Options::="--force-confold" -y install \
-	apt-src apt-utils bash-completion dh-systemd dns-root-data devscripts \
+	apt-src apt-utils bash-completion dns-root-data devscripts \
 	equivs git iproute2 less locales openssh-server vim screen wget
 RUN sed -i -e 's/^# deb-src/deb-src/' /etc/apt/sources.list && apt-get update
 RUN localedef -i en_US -f UTF-8 en_US.UTF-8

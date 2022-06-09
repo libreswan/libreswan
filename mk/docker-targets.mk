@@ -85,14 +85,6 @@ endif
 ifeq ($(DISTRO), centos)
 	MAKE_BASE = base
 	MAKE_INSTLL_BASE = install-base
-	ifeq ($(DISTRO_REL), 6)
-		DOCKERFILE_PKG = $(D)/Dockerfile-$(DISTRO)6-min-packages
-		LOCAL_MAKE_FLAGS += USE_DNSSEC=$(D_USE_DNSSEC)
-		LOCAL_MAKE_FLAGS += USE_NSS_IPSEC_PROFILE=$(D_USE_NSS_IPSEC_PROFILE)
-		LOCAL_MAKE_FLAGS += USE_XFRM_INTERFACE_IFLA_HEADER=true
-		LOCAL_MAKE_FLAGS += USE_NSS_KDF=false
-		LOCAL_MAKE_FLAGS += WERROR_CFLAGS='-Werror -Wfatal-errors -Wno-missing-field-initializers'
-	endif
 
 	ifeq ($(DISTRO_REL), 7)
 		LOCAL_MAKE_FLAGS += USE_XFRM_INTERFACE_IFLA_HEADER=true
@@ -176,15 +168,13 @@ install-testing-deb-dep: install-deb-dep
 		$(TESTING_DEB_PACKAGES))
 
 .PHONY: install-deb-dep
-# RUN_DEBS_OLD ?= $$(grep -qE 'jessie|xenial' /etc/os-release && echo "host iptables")
-# hard code these two packages it fail on xenial and old ones.
-# on buster host is virtual package
-RUN_DEBS_OLD ?= bind9-host iptables
+# only for buster and older
+DEV_BUSTER_DEB ?= $$(grep -qE 'buster' /etc/os-release && echo "dh-systemd ")
 RUN_DEBS ?= $$(test -f /usr/bin/apt-cache && apt-cache depends libreswan | awk '/Depends:/{print $$2}' | grep -v "<" | sort -u)
 install-deb-dep:
 	apt-get update
 	# development dependencies
-	apt-get install -y equivs devscripts dh-systemd
+	apt-get install -y equivs devscripts $(DEV_BUSTER_DEB)
 	# libreswan specific development dependencies
 	# apt-get -y --no-install-recommends build-dep libreswan
 	cp -r packaging/debian/control libreswan-control
@@ -215,13 +205,6 @@ dockerfile: $(DOCKERFILE_PKG)
 	echo 'MAINTAINER "Antony Antony" <antony@phenome.org>' >> $(DOCKERFILE)
 	@$(call debian_exp_repo,$(DISTRO_REL),$(DOCKERFILE))
 	cat $(DOCKERFILE_PKG) >> $(DOCKERFILE)
-
-.PHONY: travis-ubuntu-xenial
-travis-ubuntu-xenial: ubuntu-xenial-packages
-	$(DOCKER_CMD) run -h $(DI_T) --privileged --name $(DI_T) \
-	-v $(PWD):/home/build/libreswan  \
-	-v /sys/fs/cgroup:/sys/fs/cgroup:ro -d ubuntu-xenial-packages
-	$(DOCKER_CMD) ps -a
 
 .PHONY: docker-build
 docker-build: dockerfile
