@@ -2,23 +2,39 @@
 
 set -xe
 
-# packages
-
 cat <<EOF | tee /etc/pkg_install.conf
 PKG_PATH=https://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/i386/9.2/All
 EOF
 
-: git crashes, do not know why
-pkg_add git || true
-pkg_add gmake
-pkg_add nss
-pkg_add unbound
-pkg_add bison
-pkg_add flex
-pkg_add ldns
-pkg_add xmlto
-pkg_add pkg-config
-pkg_add fping
-pkg_add racoon2
-pkg_add mozilla-rootcerts
+
+# First install pkgin, it knows how to cache downloaded files.
+
+pkg_add pkgin
+
+# Next hack pkgin's cache to point at /pool
+
+mkdir -p /pool/pkg.netbsd
+#rmdir /var/db/pkgin/cache
+ln -s /pool/pkg.netbsd /var/db/pkgin/cache
+
+# finally install the packages
+
+: pkg_add git crashes, do not know why
+pkgin -y install git
+pkgin -y install gmake
+pkgin -y install nss
+pkgin -y install unbound
+pkgin -y install bison
+pkgin -y install flex
+pkgin -y install ldns
+pkgin -y install xmlto
+pkgin -y install pkg-config
+pkgin -y install fping
+pkgin -y install racoon2
+pkgin -y install mozilla-rootcerts
+
+# git, for instance, requires the mozilla root certs.
 mozilla-rootcerts install
+
+pkg_admin fetch-pkg-vulnerabilities
+pkg_admin audit || true
