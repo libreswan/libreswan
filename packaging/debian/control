@@ -14,7 +14,6 @@ Build-Depends:
  bison,
  bzip2,
  debhelper (>= 9),
- dh-systemd,
  flex,
  htmldoc,
  libaudit-dev [linux-any],
