@@ -18,13 +18,14 @@ done
 
 # Point the cache at /pool
 dnf config-manager --save --setopt=keepcache=True
-# not fedora.dnf which matches: rm -f /pool/fedora.*
-dnf config-manager --save --setopt=cachedir=/pool/dnf.fedora
+# not /pool/fedora.pkg as that matches: rm -f /pool/fedora.*
+dnf config-manager --save --setopt=cachedir=/pool/pkg.fedora
 #dnf config-manager --save --setopt=makecache=0
 
 # make it explicit
 dnf makecache
 
+# "$@" contains: install-packages -- upgrade-packates
 install=$(echo "$@" | sed -e 's/--.*//')
 upgrade=$(echo "$@" | sed -e 's/..--//')
 dnf install -y ${install}

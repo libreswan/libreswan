@@ -112,6 +112,7 @@ kvm-fedora-kernel-prms:
 #   https://nohats.ca/ftp/strongswan/strongswan-5.8.4-2.fc30.x86_64.rpm \
 #   libgcrypt
 
+# upgrade.sh expects: install-packages -- upgrade-packates
 KVM_FEDORA_UPGRADE_FLAGS += \
 	$(KVM_FEDORA_UPGRADE_PACKAGES) \
 	-- \
