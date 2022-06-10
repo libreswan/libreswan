@@ -433,20 +433,20 @@ void llog_sadb_x_counter(lset_t rc_flags, struct logger *logger,
 }
 #endif
 
-#ifdef SADB_X_EXT_REPLAY
+#ifdef SADB_X_EXT_REPLAY /* OpenBSD */
 void llog_sadb_x_replay(lset_t rc_flags, struct logger *logger,
 			const struct sadb_x_replay *m, const char *what)
 {
 	JAM_HEADER_SADB(sadb_x_replay);
 
 	JAM_RAW(sadb_x_replay, reserved);
-	JAM(u64, sadb_x_replay, count);
+	JAM(u64, sadb_x_replay, count); /* number of replays detected? */
 
 	jambuf_to_logger(buf, logger, rc_flags);
 }
 #endif
 
-#ifdef SADB_X_EXT_UDPENCAP
+#ifdef SADB_X_EXT_UDPENCAP /* OpenBSD */
 void llog_sadb_x_udpencap(lset_t rc_flags, struct logger *logger,
 			const struct sadb_x_udpencap *m, const char *what)
 {
@@ -761,7 +761,7 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 		}
 #endif
 
-#ifdef SADB_X_EXT_REPLAY
+#ifdef SADB_X_EXT_REPLAY /* OpenBSD */
 		case sadb_x_ext_replay:
 		{
 			shunk_t sa_cursor;

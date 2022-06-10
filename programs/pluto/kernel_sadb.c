@@ -136,7 +136,7 @@ GET_SADB(sadb_x_counter, sizeof(uint64_t));
 #ifdef SADB_X_EXT_PROTOCOL
 GET_SADB(sadb_protocol, sizeof(uint64_t));
 #endif
-#ifdef SADB_X_EXT_REPLAY
+#ifdef SADB_X_EXT_REPLAY /* OpenBSD */
 GET_SADB(sadb_x_replay, sizeof(uint64_t));
 #endif
 #ifdef SADB_X_EXT_UDPENCAP

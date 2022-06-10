@@ -213,7 +213,7 @@ sparse_names sadb_exttype_names = {
 #ifdef SADB_X_EXT_REMOTE_CREDENTIALS
 	S(SADB_X_EXT_REMOTE_CREDENTIALS),
 #endif
-#ifdef SADB_X_EXT_REPLAY
+#ifdef SADB_X_EXT_REPLAY /* OpenBSD */
 	S(SADB_X_EXT_REPLAY),
 #endif
 #ifdef SADB_X_EXT_SA2

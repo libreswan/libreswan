@@ -673,8 +673,7 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 #endif
 
 	/*
-	 * Determine the size of the replay window (presumably one bit
-	 * per packet?).
+	 * Determine the size of the replay window:
 	 *
 	 * + The field .replay_window specifies the size in packets.
 	 *
@@ -684,17 +683,27 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 	 *
 	 * Hence the jugging with byte vs bit below.
 	 *
-	 * XXX: need way to provide the upper bound to the window size
-	 * to the code loading a connection can pre-emptively reject
-	 * to-big values.  For instance, the OpenBSD kernel limits the
-	 * value to 64*8 packets.
+	 * What about values larger than UINT8_MAX*8 (~2k)?
 	 *
-	 * FreeBSD's setkey sets .sadb_sa_replay to the saturated
-	 * value and then, the field saturates, also adds a
-	 * SADB_X_EXT_SA_REPLAY payload specifying the replay window
-	 * size in packets.
+	 * FreeBSD: supports both .sadb_sa_replay and the
+	 * SADB_X_EXT_SA_REPLAY extension.  When .replay_window
+	 * exceeds UINT8_MAX*8, .sadb_sa_replay is set to UINT8_MAX
+	 * and a SADB_X_EXT_SA_REPLAY payload is added containing
+	 * .replay_window (in packets not bytes).
+	 *
+	 * NetBSD: supports .sadb_sa_replay.
+	 *
+	 * OpenBSD: supports .sadb_sa_replay, the kernel enforces an
+	 * additional a hardwired limit of 64 (*8).  Also, on the way
+	 * in, IKED hardwires the value to 65(*8), IPSECCTL can't set
+	 * the value at all, and ISAKMPD does have a parameter.
+	 *
+	 * Note: OpenBSD also defines SADB_X_EXT_REPLAY but that is
+	 * unrelated.  It contains a count of the number of replays
+	 * that the kernel detected?
 	 */
 	unsigned bytes_for_replay_window = BYTES_FOR_BITS(k->replay_window);
+
 	put_sadb_sa(&req, k->spi,
 		    base->sadb_msg_satype,
 		    sadb_sastate_mature,
@@ -750,15 +759,15 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 
 	/* replay (extended mix) */
 
-#ifdef SADB_X_EXT_SA_REPLAY
+#ifdef SADB_X_EXT_SA_REPLAY /* FreeBSD */
 	/*
 	 * Per-above, only emit this when .sadb_sa_replay isn't big
-	 * enough (it's pretty big).
+	 * enough (it's pretty big at 2k, Linux caps things to 4k).
 	 *
-	 * Unlike .sadb_sa_replay which is in bytes (8 bits for 8
-	 * packets per byte), .sadb_x_ext_sa_replay_replay is in
-	 * packets - no conversion is required (FreeBSD's kernel
-	 * converts it to bytes).
+	 * Unlike .sadb_sa_replay which is in bytes (8 packets per
+	 * byte), .sadb_x_ext_sa_replay_replay is in packets - no
+	 * conversion is required (FreeBSD's kernel convers the packet
+	 * value back to bytes internally).
 	 */
 	if (bytes_for_replay_window > UINT8_MAX) {
 		/* The -32 comes from FreeBSD!?! */

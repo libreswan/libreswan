@@ -142,7 +142,7 @@ enum sadb_exttype {
 #ifdef SADB_X_EXT_FLOW_TYPE
 	sadb_x_ext_flow_type = SADB_X_EXT_FLOW_TYPE,
 #endif
-#ifdef SADB_X_EXT_REPLAY
+#ifdef SADB_X_EXT_REPLAY /* OpenBSD */
 	sadb_x_ext_replay = SADB_X_EXT_REPLAY,
 #endif
 #ifdef SADB_X_EXT_UDPENCAP
@@ -300,7 +300,7 @@ void llog_sadb_x_counter(lset_t rc_flags, struct logger *logger, const struct sa
 #ifdef SADB_X_EXT_PROTOCOL
 void llog_sadb_protocol(lset_t rc_flags, struct logger *logger, const struct sadb_protocol *m, const char *what);
 #endif
-#ifdef SADB_X_EXT_REPLAY
+#ifdef SADB_X_EXT_REPLAY /* OpenBSD */
 void llog_sadb_x_replay(lset_t rc_flags, struct logger *logger, const struct sadb_x_replay *m, const char *what);
 #endif
 #ifdef SADB_X_EXT_UDPENCAP
@@ -346,7 +346,7 @@ GET_SADB(sadb_x_counter);
 #ifdef SADB_X_EXT_PROTOCOL
 GET_SADB(sadb_protocol);
 #endif
-#ifdef SADB_X_EXT_REPLAY
+#ifdef SADB_X_EXT_REPLAY /* OpenBSD */
 GET_SADB(sadb_x_replay);
 #endif
 #ifdef SADB_X_EXT_UDPENCAP
