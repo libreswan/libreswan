@@ -20,7 +20,16 @@ cat <<EOF | tee -a /mnt/etc/fstab
 @@GATEWAY@@:@@POOLDIR@@ /pool nfs rw,tcp 0 0
 EOF
 
-# Tweak the (korn) shell prompt
+# also unpack sources
+
+mount /dev/cd0c /mnt2
+cd /mnt/home
+tar xzf /mnt2/src.tar.gz
+tar xzf /mnt2/sys.tar.gz
+cd /
+umount /mnt2
+
+# Tweak the (korn) shell prompt et.al.
 
 cat <<EOF | tee /mnt/root/.profile
 export PATH=/sbin:/usr/sbin:/bin:/usr/bin:/usr/X11R6/bin:/usr/local/sbin:/usr/local/bin

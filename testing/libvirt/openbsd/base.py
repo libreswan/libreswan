@@ -58,6 +58,7 @@ es(child,'# ','mount /dev/cd0c /mnt')
 #Copying of install.conf file
 es(child,'# ','cp /mnt/base.conf /')
 es(child,'# ','cp /mnt/base.sh /')
+es(child,'# ','cp /mnt/base.disk /')
 #Unmounting the drive
 es(child,'# ','umount /mnt')
 
@@ -70,12 +71,16 @@ while(child.expect([".*install has been successfully completed!", pexpect.EOF, p
 # customize the install
 es(child,'# ','/bin/sh -x /base.sh')
 
+#child.logfile = None
+#child.interact()
+#exit(0)
+
 #To shutdown the base domain
 es(child,'openbsd# ','sync ; sync ; sync\n')
 es(child,'openbsd# ','halt -p\n')
 
-print("Waiting 10 seconds to shutdown...")
-time.sleep(10)
+print("Waiting for shutdown...")
+time.sleep(20)
 child.close()
 #To force shutdown the base domain via virt manager
 os.system('sudo virsh destroy ' + domain + ' > /dev/null')
