@@ -705,12 +705,6 @@ kvm-demolish-gateway:
 
 .PHONY: kvm-iso
 
-KVM_FEDORA_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_FEDORA_ISO_URL))
-kvm-iso: $(KVM_FEDORA_ISO)
-$(KVM_FEDORA_ISO): | $(KVM_POOLDIR)
-	wget --output-document $@.tmp --no-clobber -- $(KVM_FEDORA_ISO_URL)
-	mv $@.tmp $@
-
 # For FreeBSD, download the compressed ISO
 KVM_FREEBSD_ISO ?= $(KVM_POOLDIR)/$(notdir $(KVM_FREEBSD_ISO_URL))
 kvm-iso: $(KVM_FREEBSD_ISO)
@@ -812,7 +806,20 @@ $(KVM_POOLDIR_PREFIX)%-base: | \
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
 
+
+#
 # Fedora
+#
+# - since kickstart is used this is pretty straight forward
+#
+
+KVM_FEDORA_ISO_URL ?= https://download.fedoraproject.org/pub/fedora/linux/releases/35/Server/x86_64/iso/Fedora-Server-dvd-x86_64-35-1.2.iso
+KVM_FEDORA_KICKSTART_FILE ?= testing/libvirt/fedora/base.ks
+KVM_FEDORA_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_FEDORA_ISO_URL))
+kvm-iso: $(KVM_FEDORA_ISO)
+$(KVM_FEDORA_ISO): | $(KVM_POOLDIR)
+	wget --output-document $@.tmp --no-clobber -- $(KVM_FEDORA_ISO_URL)
+	mv $@.tmp $@
 
 KVM_FEDORA_BASE_DOMAIN = $(KVM_POOLDIR_PREFIX)fedora-base
 KVM_FEDORA_VIRT_INSTALL_OS_VARIANT ?= fedora30
@@ -824,7 +831,12 @@ KVM_FEDORA_VIRT_INSTALL_FLAGS = \
 $(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_ISO)
 $(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_KICKSTART_FILE)
 
-# FreeBSD uses a modified install CD
+
+#
+# FreeBSD
+#
+# - uses a modified install CD
+#
 
 KVM_FREEBSD_BASE_DOMAIN = $(KVM_POOLDIR_PREFIX)freebsd-base
 KVM_FREEBSD_VIRT_INSTALL_OS_VARIANT ?= freebsd10.0
@@ -848,7 +860,12 @@ $(KVM_FREEBSD_BASE_ISO): testing/libvirt/freebsd/base.conf
 		/etc/installerconfig=$(KVM_FREEBSD_BASE_DOMAIN).base.conf
 	mv $@.tmp $@
 
-# NetBSD, uses a serial console boot iso
+
+#
+# NetBSD
+#
+# - needs a second serial console boot iso
+#
 
 KVM_NETBSD_BASE_DOMAIN = $(KVM_POOLDIR_PREFIX)netbsd-base
 KVM_NETBSD_VIRT_INSTALL_OS_VARIANT ?= netbsd8.0
@@ -872,6 +889,7 @@ $(KVM_NETBSD_BASE_ISO): testing/libvirt/netbsd/base.sh
 		-graft-points \
 		/base.sh=$(KVM_NETBSD_BASE_DOMAIN).base.sh
 	mv $@.tmp $@
+
 
 #
 # OpenBSD
