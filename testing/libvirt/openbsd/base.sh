@@ -2,8 +2,6 @@
 
 set -x
 
-# Save the config files
-
 # Start iked daemon by default on boot
 echo 'iked_flags=""' >> /mnt/etc/rc.conf.local
 
@@ -12,18 +10,20 @@ echo powerdown=YES >>     /etc/rc.powerdown
 echo powerdown=YES >> /mnt/etc/rc.powerdown
 
 echo '====> Zapping rc.firsttime <===='
+
 rm /mnt/etc/rc.firsttime
 
 echo '====> Mounting /pool <===='
+
 mkdir -p /mnt/pool
 cat <<EOF | tee -a /mnt/etc/fstab
 @@GATEWAY@@:@@POOLDIR@@ /pool nfs rw,tcp 0 0
 EOF
 
-# also unpack sources
+echo '====> also unpack sources <===='
 
 mount /dev/cd0c /mnt2
-cd /mnt/home
+cd /mnt/usr/src
 tar xzf /mnt2/src.tar.gz
 tar xzf /mnt2/sys.tar.gz
 cd /
