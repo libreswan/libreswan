@@ -30,7 +30,7 @@ print("gateway", gateway)
 print("pooldir", pooldir)
 print("command", command)
 
-def es(child,expect,send,t=30):
+def es(child,expect,send,t=60):
 	try:
 		child.expect(expect,timeout=t)
 		child.send(send+'\n')
