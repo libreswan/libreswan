@@ -24,3 +24,4 @@ add bison
 add libldns
 add xmlto
 add curl
+add git
