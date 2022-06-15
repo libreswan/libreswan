@@ -28,9 +28,10 @@ pkgin -y install bison
 pkgin -y install flex
 pkgin -y install ldns
 pkgin -y install xmlto
-pkgin -y install pkg-config
+pkgin -y install pkgconf
 pkgin -y install fping
 pkgin -y install racoon2
+pkgin -y install pkg_developer
 pkgin -y install mozilla-rootcerts
 
 # git, for instance, requires the mozilla root certs.
