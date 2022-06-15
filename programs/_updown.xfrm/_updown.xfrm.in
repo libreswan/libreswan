@@ -806,9 +806,26 @@ doroute() {
     return 0
 }
 
+iptable_supported() {
+        case "@IPTABLES_BINARY@" in
+                *iptables*)
+                  return 0;
+                  ;;
+        esac
+
+        return 1;
+}
+
 # TODO: We need to specify CIDR mask but our _MASK variables are in old school format
 # TODO: Exclude udp 4500 traffic
 addnflog() {
+
+    if [ !iptable_supported ]
+        # need iptabels
+        # FIXME :  add nftable support
+        return 1
+    fi
+
     if [ -n "${NFLOG}" ]; then
 	iptables -I OUTPUT -m policy --dir out --pol ipsec \
 	    -s ${PLUTO_MY_CLIENT} -d ${PLUTO_PEER_CLIENT} \
@@ -820,6 +837,13 @@ addnflog() {
 }
 
 delnflog() {
+
+   if [ ! iptable_supported ] ; then
+        # need iptabels
+        # FIXME :  add nftable support
+        return 1;
+   fi
+
     if [ -n "${NFLOG}" ]; then
 	iptables -D OUTPUT -m policy --dir out --pol ipsec \
 	    -s ${PLUTO_MY_CLIENT} -d ${PLUTO_PEER_CLIENT} \
