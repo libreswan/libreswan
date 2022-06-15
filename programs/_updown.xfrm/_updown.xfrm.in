@@ -942,6 +942,12 @@ delvti() {
 
 # Client Address Translation CAT
 addcat() {
+    if [ !iptable_supported ]; then
+        # need iptabels
+        # FIXME :  add nftable support
+        return 0
+    fi
+
     if [ -n "${CAT}" ] && [ "${PLUTO_MY_CLIENT_NET}" != "0.0.0.0" ] ; then
 	iptables -t nat -I POSTROUTING -m policy --dir out --pol ipsec \
 	    -d ${PLUTO_PEER_CLIENT} -j SNAT --to-source ${PLUTO_MY_CLIENT_NET}
@@ -952,6 +958,12 @@ addcat() {
 }
 
 delcat() {
+    if [ !iptable_supported ]; then
+        # need iptabels
+        # FIXME :  add nftable support
+        return 0
+    fi
+
     if [ -n "${CAT}" ]; then
 	iptables -t nat -D PREROUTING -m policy --dir in --pol ipsec  \
 	    -d ${PLUTO_MY_CLIENT_NET} -s ${PLUTO_PEER_CLIENT} \
