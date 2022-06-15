@@ -268,6 +268,13 @@ INITDDIR ?= $(DESTDIR)$(FINALINITDDIR)
 # PYTHON_BINARY is used for python scripts shebang
 PYTHON_BINARY ?= /usr/bin/python3
 
+# iptables for dianostics, CAT, or NFLOG
+# set "" to disable
+IPTABLES_BINARY ?= iptables
+ifeq ($(filter iptables,$IPTABLES_BINARY),)
+HAVE_IPTABLES ?= true
+endif
+
 # SHELL_BINARY is used for sh scripts shebang
 SHELL_BINARY ?= /bin/sh
 
@@ -525,6 +532,7 @@ TRANSFORM_VARIABLES = sed \
 			-e "s:@SD_WATCHDOGSEC@:$(SD_WATCHDOGSEC):g" \
 			-e "s:@SHELL_BINARY@:$(SHELL_BINARY):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
+			-e "s:@IPTABLES_BINARY@:$(IPTABLES_BINARY):g" \
 			$(NULL)
 
 # For KVM testing setup
@@ -770,6 +778,10 @@ USERLAND_CFLAGS += -DFORCE_PR_ASSERT
 # stick with RETRANSMIT_INTERVAL_DEFAULT as makefile variable name
 ifdef RETRANSMIT_INTERVAL_DEFAULT
 USERLAND_CFLAGS += -DRETRANSMIT_INTERVAL_DEFAULT_MS="$(RETRANSMIT_INTERVAL_DEFAULT)"
+endif
+
+ifeq ($(HAVE_IPTABLES),true)
+USERLAND_CFLAGS += -DHAVE_IPTABLES
 endif
 
 ifeq ($(HAVE_BROKEN_POPEN),true)
