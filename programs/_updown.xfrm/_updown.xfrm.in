@@ -820,10 +820,10 @@ iptable_supported() {
 # TODO: Exclude udp 4500 traffic
 addnflog() {
 
-    if [ !iptable_supported ]
+    if [ !iptable_supported ]; then
         # need iptabels
         # FIXME :  add nftable support
-        return 1
+        return 0
     fi
 
     if [ -n "${NFLOG}" ]; then
