@@ -489,19 +489,19 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 		enum sadb_exttype exttype = ext->sadb_ext_type;
 		switch (exttype) {
 
-		case sadb_ext_address_src:
-		case sadb_ext_address_dst:
+		case SADB_EXT_ADDRESS_SRC:
+		case SADB_EXT_ADDRESS_DST:
 #ifdef SADB_X_EXT_SRC_FLOW
-		case sadb_x_ext_src_flow:
+		case SADB_X_EXT_SRC_FLOW:
 #endif
 #ifdef SADB_X_EXT_DST_FLOW
-		case sadb_x_ext_dst_flow:
+		case SADB_X_EXT_DST_FLOW:
 #endif
 #ifdef SADB_X_EXT_SRC_MASK
-		case sadb_x_ext_src_mask:
+		case SADB_X_EXT_SRC_MASK:
 #endif
 #ifdef SADB_X_EXT_DST_MASK
-		case sadb_x_ext_dst_mask:
+		case SADB_X_EXT_DST_MASK:
 #endif
 		{
 			shunk_t address_cursor;
@@ -523,8 +523,8 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 			break;
 		}
 
-		case sadb_ext_key_encrypt:
-		case sadb_ext_key_auth:
+		case SADB_EXT_KEY_ENCRYPT:
+		case SADB_EXT_KEY_AUTH:
 		{
 			shunk_t key_cursor;
 			const struct sadb_key *key =
@@ -541,11 +541,11 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 			break;
 		}
 
-		case sadb_ext_lifetime_soft:
-		case sadb_ext_lifetime_hard:
-		case sadb_ext_lifetime_current:
+		case SADB_EXT_LIFETIME_SOFT:
+		case SADB_EXT_LIFETIME_HARD:
+		case SADB_EXT_LIFETIME_CURRENT:
 #ifdef SADB_X_EXT_LIFETIME_LASTUSE
-		case sadb_x_ext_lifetime_lastuse:
+		case SADB_X_EXT_LIFETIME_LASTUSE:
 #endif
 		{
 			shunk_t lifetime_cursor;
@@ -559,7 +559,7 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 			break;
 		}
 
-		case sadb_ext_proposal:
+		case SADB_EXT_PROPOSAL:
 		{
 			shunk_t prop_cursor;
 			const struct sadb_prop *prop =
@@ -588,7 +588,7 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 			break;
 		}
 
-		case sadb_ext_sa:
+		case SADB_EXT_SA:
 		{
 			shunk_t sa_cursor;
 			const struct sadb_sa *sa =
@@ -601,7 +601,7 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 			break;
 		}
 
-		case sadb_ext_spirange:
+		case SADB_EXT_SPIRANGE:
 		{
 			shunk_t spirange_cursor;
 			const struct sadb_spirange *spirange =
@@ -614,10 +614,10 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 			break;
 		}
 
-		case sadb_ext_supported_auth:
-		case sadb_ext_supported_encrypt:
+		case SADB_EXT_SUPPORTED_AUTH:
+		case SADB_EXT_SUPPORTED_ENCRYPT:
 #ifdef SADB_X_EXT_SUPPORTED_COMP
-		case sadb_x_ext_supported_comp:
+		case SADB_X_EXT_SUPPORTED_COMP:
 #endif
 		{
 			shunk_t supported_cursor;
@@ -647,7 +647,7 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 		}
 
 #ifdef SADB_X_EXT_POLICY
-		case sadb_x_ext_policy:
+		case SADB_X_EXT_POLICY:
 		{
 			shunk_t x_policy_cursor;
 			const struct sadb_x_policy *x_policy =
@@ -684,7 +684,7 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 #endif
 
 #ifdef SADB_X_EXT_NAT_T_TYPE
-		case sadb_x_ext_nat_t_type:
+		case SADB_X_EXT_NAT_T_TYPE:
 		{
 			shunk_t x_nat_t_type_cursor;
 			const struct sadb_x_nat_t_type *x_nat_t_type =
@@ -699,7 +699,7 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 #endif
 
 #ifdef SADB_X_EXT_SA2
-		case sadb_x_ext_sa2:
+		case SADB_X_EXT_SA2:
 		{
 			shunk_t x_sa2_cursor;
 			const struct sadb_x_sa2 *x_sa2 =
@@ -714,7 +714,7 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 #endif
 
 #ifdef SADB_X_EXT_SA_REPLAY
-		case sadb_x_ext_sa_replay:
+		case SADB_X_EXT_SA_REPLAY:
 		{
 			shunk_t sa_cursor;
 			const struct sadb_x_sa_replay *x_sa_replay =
@@ -729,7 +729,7 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 #endif
 
 #ifdef SADB_X_EXT_COUNTER
-		case sadb_x_ext_counter:
+		case SADB_X_EXT_COUNTER:
 		{
 			shunk_t sa_cursor;
 			const struct sadb_x_counter *x_counter =
@@ -745,9 +745,9 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 
 #ifdef SADB_X_EXT_PROTOCOL
 #ifdef SADB_X_EXT_FLOW_TYPE
-		case sadb_x_ext_flow_type:
+		case SADB_X_EXT_FLOW_TYPE:
 #endif
-		case sadb_x_ext_protocol:
+		case SADB_X_EXT_PROTOCOL:
 		{
 			shunk_t sa_cursor;
 			const struct sadb_protocol *protocol =
@@ -762,7 +762,7 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 #endif
 
 #ifdef SADB_X_EXT_REPLAY /* OpenBSD */
-		case sadb_x_ext_replay:
+		case SADB_X_EXT_REPLAY:
 		{
 			shunk_t sa_cursor;
 			const struct sadb_x_replay *x_replay =
@@ -777,7 +777,7 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 #endif
 
 #ifdef SADB_X_EXT_UDPENCAP
-		case sadb_x_ext_udpencap:
+		case SADB_X_EXT_UDPENCAP:
 		{
 			shunk_t sa_cursor;
 			const struct sadb_x_udpencap *x_udpencap =

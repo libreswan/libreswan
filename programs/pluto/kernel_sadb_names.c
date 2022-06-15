@@ -498,23 +498,23 @@ sparse_names sadb_lifetime_names = {
 };
 
 sparse_sparse_names sadb_alg_names = {
-	{ sadb_ext_supported_auth, sadb_aalg_names, },
-	{ sadb_ext_supported_encrypt, sadb_ealg_names, },
+	{ SADB_EXT_SUPPORTED_AUTH, sadb_aalg_names, },
+	{ SADB_EXT_SUPPORTED_ENCRYPT, sadb_ealg_names, },
 #ifdef SADB_X_EXT_SUPPORTED_COMP
-	{ sadb_x_ext_supported_comp, sadb_calg_names, },
+	{ SADB_X_EXT_SUPPORTED_COMP, sadb_calg_names, },
 #endif
 	{ 0, NULL, },
 };
 
 sparse_sparse_names sadb_satype_ealg_names = {
-	{ sadb_satype_esp, sadb_ealg_names, },
-	{ sadb_x_satype_ipcomp, sadb_calg_names, },
+	{ SADB_SATYPE_ESP, sadb_ealg_names, },
+	{ SADB_X_SATYPE_IPCOMP, sadb_calg_names, },
 	{ 0, NULL, }
 };
 
 sparse_sparse_names sadb_satype_aalg_names = {
-	{ sadb_satype_esp, sadb_aalg_names, },
-	{ sadb_satype_ah, sadb_aalg_names, },
+	{ SADB_SATYPE_ESP, sadb_aalg_names, },
+	{ SADB_SATYPE_AH, sadb_aalg_names, },
 	{ 0, NULL, }
 };
 
@@ -542,7 +542,7 @@ sparse_names ipsec_dir_names = {
 
 #ifdef SADB_X_EXT_POLICY
 sparse_names ipsec_mode_names = {
-	{ "any!?!", ipsec_mode_any, },
+	{ "any!?!", IPSEC_MODE_ANY, },
 	S(IPSEC_MODE_TRANSPORT),
 	S(IPSEC_MODE_TUNNEL),
 	SPARSE_NULL
