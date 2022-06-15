@@ -33,3 +33,4 @@ FINALRUNDIR=/var/run/pluto
 FINALSYSCONFDIR=$(PREFIX)/etc
 FINALNSSDIR=$(PREFIX)/etc/ipsec.d
 FINALEXAMPECONFDIR=$(PREFIX)/share/examples/libreswan
+FINALMANDIR=$(PREFIX)/man
