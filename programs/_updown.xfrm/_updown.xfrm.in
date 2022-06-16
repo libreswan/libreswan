@@ -813,7 +813,7 @@ doroute() {
     return 0
 }
 
-iptable_supported() {
+iptables_supported() {
         case "@IPTABLES_BINARY@" in
                 *iptables*)
                   return 0;
@@ -827,7 +827,7 @@ iptable_supported() {
 # TODO: Exclude udp 4500 traffic
 addnflog() {
 
-    if ! iptable_supported; then
+    if ! iptables_supported; then
         # need iptabels
         # FIXME :  add nftable support
         return 0
@@ -845,7 +845,7 @@ addnflog() {
 
 delnflog() {
 
-   if ! iptable_supported; then
+   if ! iptables_supported; then
         # need iptabels
         # FIXME :  add nftable support
         return 1;
@@ -949,7 +949,7 @@ delvti() {
 
 # Client Address Translation CAT
 addcat() {
-    if [ !iptable_supported ]; then
+    if !iptables_supported; then
         # need iptabels
         # FIXME :  add nftable support
         return 0
@@ -965,7 +965,7 @@ addcat() {
 }
 
 delcat() {
-    if [ !iptable_supported ]; then
+    if ! iptables_supported; then
         # need iptabels
         # FIXME :  add nftable support
         return 0
