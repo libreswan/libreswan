@@ -138,6 +138,8 @@ if ${look_iptables} ; then
     if grep -q ^mangle /proc/net/ip6_tables_names 2>/dev/null; then
 	ip6tables -n -t mangle -L IPSEC
     fi
+    echo iptables filter TABLE
+    iptables -n -t filter -L
 fi
 
 if ${look_route} ; then
