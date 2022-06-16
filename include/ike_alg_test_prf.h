@@ -27,3 +27,26 @@ extern const struct prf_test_vector hmac_md5_prf_tests[];
 bool test_prf_vectors(const struct prf_desc *desc,
 		      const struct prf_test_vector *tests,
 		      struct logger *logger);
+
+struct kdf_test_vector {
+	const char *description;
+	const char *ni;
+	unsigned ni_size;
+	const char *nr;
+	unsigned nr_size;
+	const char *gir;
+	const char *gir_new;
+	unsigned gir_size;
+	const char *spii;
+	const char *spir;
+	const char *skeyseed;
+	const char *skeyseed_rekey;
+	const char *dkm;
+	unsigned dkm_size;
+};
+
+extern const struct kdf_test_vector hmac_sha1_kdf_tests[];
+
+bool test_kdf_vectors(const struct prf_desc *desc,
+		      const struct kdf_test_vector *tests,
+		      struct logger *logger);

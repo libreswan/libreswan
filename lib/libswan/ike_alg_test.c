@@ -50,4 +50,7 @@ void test_ike_alg(struct logger *logger)
 #ifdef USE_MD5
 	TEST(test_prf_vectors, ike_alg_prf_hmac_md5,       hmac_md5_prf_tests);
 #endif
+#ifdef USE_SHA1
+	TEST(test_kdf_vectors, ike_alg_prf_sha1,           hmac_sha1_kdf_tests);
+#endif
 }

@@ -224,3 +224,177 @@ bool test_prf_vectors(const struct prf_desc *desc,
 	}
 	return ok;
 }
+
+const struct kdf_test_vector hmac_sha1_kdf_tests[] = {
+	{
+		.description = "CAVP: IKEv2 key derivation with HMAC-SHA1",
+		.ni = "0x32b50d5f4a3763f3",
+		.ni_size = 8,
+		.nr = "0x9206a04b26564cb1",
+		.nr_size = 8,
+		.gir = ("0x4b2c1f971981a8ad8d0abeafabf38cf7"
+			"5fc8349c148142465ed9c8b516b8be52"),
+		.gir_new = ("0x863f3c9d06efd39d2b907b97f8699e5d"
+			    "d5251ef64a2a176f36ee40c87d4f9330"),
+		.gir_size = 32,
+		.spii = "0x34c9e7c188868785",
+		.spir = "0x3ff77d760d2b2199",
+		.skeyseed = "0xa9a7b222b59f8f48645f28a1db5b5f5d7479cba7",
+		.skeyseed_rekey = "0x63e81194946ebd05df7df5ebf5d8750056bf1f1d",
+		.dkm = ("0xa14293677cc80ff8f9cc0eee30d895da"
+			"9d8f405666e30ef0dfcb63c634a46002"
+			"a2a63080e514a062768b76606f9fa5e9"
+			"92204fc5a670bde3f10d6b027113936a"
+			"5c55b648a194ae587b0088d52204b702"
+			"c979fa280870d2ed41efa9c549fd1119"
+			"8af1670b143d384bd275c5f594cf266b"
+			"05ebadca855e4249520a441a81157435"
+			"a7a56cc4"),
+		.dkm_size = 132,
+	},
+	{
+		.description = NULL,
+	}
+};
+
+static bool test_kdf_vector(const struct prf_desc *prf,
+			    const struct kdf_test_vector *test,
+			    struct logger *logger)
+{
+	chunk_t chunk_ni = decode_to_chunk(__func__, test->ni);
+	passert(chunk_ni.len == test->ni_size);
+	chunk_t chunk_nr = decode_to_chunk(__func__, test->nr);
+	passert(chunk_nr.len == test->nr_size);
+	chunk_t chunk_spii = decode_to_chunk(__func__, test->spii);
+	chunk_t chunk_spir = decode_to_chunk(__func__, test->spir);
+	chunk_t chunk_gir = decode_to_chunk(__func__, test->gir);
+	passert(chunk_gir.len == test->gir_size);
+	chunk_t chunk_gir_new = decode_to_chunk(__func__, test->gir_new);
+	passert(chunk_gir_new.len == test->gir_size);
+	chunk_t chunk_skeyseed = decode_to_chunk(__func__, test->skeyseed);
+	chunk_t chunk_skeyseed_rekey =
+		decode_to_chunk(__func__, test->skeyseed_rekey);
+	chunk_t chunk_dkm = decode_to_chunk(__func__, test->dkm);
+	passert(chunk_dkm.len == test->dkm_size);
+	SECItem params = { 0, };
+	bool ok = true;
+
+
+	/* SKEYSEED = prf(Ni | Nr, g^ir) */
+	PK11SymKey *gir = symkey_from_hunk("gir symkey", chunk_gir, logger);
+	CK_NSS_IKE_PRF_DERIVE_PARAMS ike_prf_params = {
+		.prfMechanism = prf->nss.mechanism,
+		.bDataAsKey = CK_TRUE,
+		.bRekey = CK_FALSE,
+		.pNi = chunk_ni.ptr,
+		.ulNiLen = chunk_ni.len,
+		.pNr = chunk_nr.ptr,
+		.ulNrLen = chunk_nr.len,
+	};
+	params.data = (unsigned char *)&ike_prf_params;
+	params.len = sizeof(ike_prf_params);
+	PK11SymKey *skeyseed =
+		crypt_derive(gir, CKM_NSS_IKE_PRF_DERIVE, &params,
+			     "skeyseed", CKM_NSS_IKE_PRF_PLUS_DERIVE,
+			     CKA_DERIVE, /*keysize*/0, /*flags*/0,
+			     HERE, logger);
+	if (!verify_symkey(test->description, chunk_skeyseed, skeyseed,
+			   logger)) {
+		ok = false;
+	}
+
+	/* prf+ (SKEYSEED, Ni | Nr | SPIi | SPIr) */
+	chunk_t chunk_seed_data = clone_hunk_hunk(chunk_ni, chunk_nr,
+						  "seed_data = Ni || Nr");
+	append_chunk_hunk("seed_data = Nir || SPIi",
+			  &chunk_seed_data, chunk_spii);
+	append_chunk_hunk("seed_data = Nir || SPIir",
+			  &chunk_seed_data, chunk_spir);
+
+	CK_NSS_IKE_PRF_PLUS_DERIVE_PARAMS ike_prf_plus_params = {
+		.pSeedData = chunk_seed_data.ptr,
+		.ulSeedDataLen = chunk_seed_data.len,
+		.prfMechanism = prf->nss.mechanism,
+		.bHasSeedKey = CK_FALSE,
+	};
+	params.data = (unsigned char *)&ike_prf_plus_params;
+	params.len = sizeof(ike_prf_plus_params);
+
+	PK11SymKey *dkm = crypt_derive(skeyseed,
+				       CKM_NSS_IKE_PRF_PLUS_DERIVE, &params,
+				       "prfplus", CKM_EXTRACT_KEY_FROM_KEY,
+				       CKA_DERIVE,
+				       /*keysize*/test->dkm_size, /*flags*/0,
+				       HERE, logger);
+
+	if (!verify_symkey(test->description, chunk_dkm, dkm, logger)) {
+		ok = false;
+	}
+
+	/* SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr) */
+	PK11SymKey *gir_new = symkey_from_hunk("gir_new symkey", chunk_gir_new,
+					       logger);
+
+	CK_NSS_IKE_PRF_DERIVE_PARAMS ike_prf_params_rekey = {
+		.prfMechanism = prf->nss.mechanism,
+		.bDataAsKey = CK_FALSE,
+		.bRekey = CK_TRUE,
+		.hNewKey = PK11_GetSymKeyHandle(gir_new),
+		.pNi = chunk_ni.ptr,
+		.ulNiLen = chunk_ni.len,
+		.pNr = chunk_nr.ptr,
+		.ulNrLen = chunk_nr.len,
+	};
+	params.data = (unsigned char *)&ike_prf_params_rekey;
+	params.len = sizeof(ike_prf_params_rekey);
+
+	PK11SymKey *skd = key_from_symkey_bytes("SK_d", dkm,
+                                                 0, prf->prf_key_size,
+                                                 HERE, logger);
+	PK11SymKey *skeyseed_rekey =
+		crypt_derive(skd, CKM_NSS_IKE_PRF_DERIVE, &params,
+			     "skeyseed_rekey", CKM_NSS_IKE_PRF_PLUS_DERIVE,
+			     CKA_DERIVE, /*key-size*/0, /*flags*/0,
+			     HERE, logger);
+	if (!verify_symkey(test->description, chunk_skeyseed_rekey,
+			   skeyseed_rekey, logger)) {
+		ok = false;
+	}
+
+	DBGF(DBG_CRYPT, "%s: %s %s", __func__, test->description,
+	     ok ? "passed" : "failed");
+
+	release_symkey(__func__, "gir", &gir);
+	release_symkey(__func__, "gir_new", &gir_new);
+	release_symkey(__func__, "skeyseed", &skeyseed);
+	release_symkey(__func__, "dkm", &dkm);
+	release_symkey(__func__, "skd", &skd);
+	release_symkey(__func__, "skeyseed_rekey", &skeyseed_rekey);
+
+	free_chunk_content(&chunk_ni);
+	free_chunk_content(&chunk_nr);
+	free_chunk_content(&chunk_gir);
+	free_chunk_content(&chunk_gir_new);
+	free_chunk_content(&chunk_spii);
+	free_chunk_content(&chunk_spir);
+	free_chunk_content(&chunk_seed_data);
+	free_chunk_content(&chunk_skeyseed);
+	free_chunk_content(&chunk_skeyseed_rekey);
+	free_chunk_content(&chunk_dkm);
+	return ok;
+}
+
+bool test_kdf_vectors(const struct prf_desc *desc,
+		      const struct kdf_test_vector *tests,
+		      struct logger *logger)
+{
+	bool ok = true;
+	for (const struct kdf_test_vector *test = tests;
+	     test->description != NULL; test++) {
+		llog(RC_LOG, logger, "  %s", test->description);
+		if (!test_kdf_vector(desc, test, logger)) {
+			ok = false;
+		}
+	}
+	return ok;
+}
