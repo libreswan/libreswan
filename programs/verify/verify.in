@@ -22,12 +22,14 @@
 # for more details.
 
 import os, sys, subprocess, glob, socket, locale
+from shutil import which
 
 retcode = 0
 
 conffile = "@FINALCONFFILE@"
 confdir = "@FINALCONFDIR@"
 ipsecbin = "@IPSEC_SBINDIR@/ipsec"
+iptablesbin = "@IPTABLES_BINARY@"
 
 prefencoding = locale.getpreferredencoding(False)
 
@@ -154,11 +156,13 @@ def cmdchecks():
 	else:
 		print_result("OK","OK")
 
-	printfun("Checking 'iptables' command")
-	if not os.path.isfile("/sbin/iptables") and not os.path.isfile("/usr/sbin/iptables"):
-		print_result("WARN","MISSING")
-	else:
-		print_result("OK","OK")
+	if len(iptablesbin):
+		printfun("Checking 'iptables' command")
+
+		if which(iptablesbin) or os.path.isfile(iptablesbin):
+			print_result("OK","OK")
+		else:
+			print_result("WARN","MISSING")
 
 	printfun("Checking 'prelink' command does not interfere with FIPS")
 	if os.path.isfile("/sbin/prelink") or os.path.isfile("/usr/sbin/prelink"):
