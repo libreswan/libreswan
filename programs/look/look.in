@@ -138,14 +138,6 @@ if ${look_iptables} ; then
     if grep -q ^mangle /proc/net/ip6_tables_names 2>/dev/null; then
 	ip6tables -n -t mangle -L IPSEC
     fi
-
-    echo NEW_IPSEC_CONN mangle TABLES
-    if grep -q ^mangle /proc/net/ip_tables_names 2>/dev/null; then
-	iptables -n -t mangle -L NEW_IPSEC_CONN
-    fi
-    if grep -q ^mangle /proc/net/ip6_tables_names 2>/dev/null; then
-	ip6tables -n -t mangle -L NEW_IPSEC_CONN
-    fi
 fi
 
 if ${look_route} ; then
