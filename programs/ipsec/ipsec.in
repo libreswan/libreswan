@@ -32,6 +32,11 @@ DBPW=""
 CACERTDIR="${IPSEC_CONFDDIR}/cacerts"
 CRLDIR="${IPSEC_CONFDDIR}/crls"
 CTLSOCKET="${IPSEC_RUNDIR}/pluto.ctl"
+IPTABLES_BINARY=@IPTABLES_BINARY@
+if [ -z "@IPTABLES_BINARY@" ]; then
+ # as place holder when it is set to ""
+ IPTABLES_BINARY=iptables
+fi
 
 export IPSEC_EXECDIR IPSEC_CONF IPSEC_RUNDIR CTLSOCKET
 
@@ -135,15 +140,15 @@ ipsec_stopnflog() {
     if [ -z "${NFGROUP}" ]; then
 	exit 0
     fi
-    iptables -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group "${NFGROUP}" --nflog-prefix all-ipsec
-    iptables -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group "${NFGROUP}" --nflog-prefix all-ipsec
+    ${IPTABLES_BINARY} -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group "${NFGROUP}" --nflog-prefix all-ipsec
+    ${IPTABLES_BINARY} -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group "${NFGROUP}" --nflog-prefix all-ipsec
     exit 0
 }
 
 ipsec_checknflog() {
     NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_EXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup | grep -v "#" | grep nflog| sed -e "s/^.*=//" -e "s/'//g");
     if [ -n "${NFGROUP}" ]; then
-	OLDNFGROUP=$(iptables -L -n | grep "all-ipsec nflog-group" | sed "s/^.* //" | tail -1);
+	OLDNFGROUP=$(${IPTABLES_BINARY} -L -n | grep "all-ipsec nflog-group" | sed "s/^.* //" | tail -1);
 	if [ -n "${OLDNFGROUP}" ]; then
 	    if [ "${NFGROUP}" = "${OLDNFGROUP}" ]; then
 		# nothing to do
@@ -152,20 +157,20 @@ ipsec_checknflog() {
 	    else
 		# delete rules with old group number
 		echo "deleting rules with old nflog group ${OLDNFGROUP}"
-		iptables -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group ${OLDNFGROUP} --nflog-prefix all-ipsec
-		iptables -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group ${OLDNFGROUP} --nflog-prefix all-ipsec
+		${IPTABLES_BINARY} -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group ${OLDNFGROUP} --nflog-prefix all-ipsec
+		${IPTABLES_BINARY} -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group ${OLDNFGROUP} --nflog-prefix all-ipsec
 	    fi
 	fi
 	# insert rules with current group number
-	iptables -I INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group ${NFGROUP} --nflog-prefix all-ipsec
-	iptables -I OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group ${NFGROUP} --nflog-prefix all-ipsec
+	${IPTABLES_BINARY} -I INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group ${NFGROUP} --nflog-prefix all-ipsec
+	${IPTABLES_BINARY} -I OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group ${NFGROUP} --nflog-prefix all-ipsec
 	echo "nflog ipsec capture enabled on nflog:${NFGROUP}"
     else
-	OLDNFGROUP=$(iptables -L -n | grep "all-ipsec nflog-group" | sed "s/^.* //" | tail -1);
+	OLDNFGROUP=$(${IPTABLES_BINARY} -L -n | grep "all-ipsec nflog-group" | sed "s/^.* //" | tail -1);
 	if [ -n "${OLDNFGROUP}" ]; then
 	    echo "deleting rules with old nflog group ${OLDNFGROUP}"
-	    iptables -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group "${OLDNFGROUP}" --nflog-prefix all-ipsec
-	    iptables -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group "${OLDNFGROUP}" --nflog-prefix all-ipsec
+	    ${IPTABLES_BINARY} -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group "${OLDNFGROUP}" --nflog-prefix all-ipsec
+	    ${IPTABLES_BINARY} -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group "${OLDNFGROUP}" --nflog-prefix all-ipsec
 	fi
 	echo "nflog ipsec capture disabled"
     fi

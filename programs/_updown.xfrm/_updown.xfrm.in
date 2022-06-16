@@ -248,6 +248,13 @@ fi
 BACKUP_RESOLV_CONF=@IPSEC_RUNDIR@/libreswan-resolv-conf-backup
 ETC_RESOLV_CONF=@FINALSYSCONFDIR@/resolv.conf
 
+IPTABLES_BINARY=@IPTABLES_BINARY@
+if [ -z "@IPTABLES_BINARY@" ]; then
+ # set to iptables as a place holder when it is set to ""
+ # CAT or NFLOG won't work
+ IPTABLES_BINARY=iptables
+fi
+
 case "${PLUTO_CONN_ADDRFAMILY}" in
     ipv4)
 	FAMILY=4
@@ -827,10 +834,10 @@ addnflog() {
     fi
 
     if [ -n "${NFLOG}" ]; then
-	iptables -I OUTPUT -m policy --dir out --pol ipsec \
+	${IPTABLES_BINARY} -I OUTPUT -m policy --dir out --pol ipsec \
 	    -s ${PLUTO_MY_CLIENT} -d ${PLUTO_PEER_CLIENT} \
 	    -j NFLOG --nflog-group ${NFLOG} --nflog-prefix ${PLUTO_CONNECTION}
-	iptables -I INPUT  -m policy --dir in --pol ipsec \
+	${IPTABLES_BINARY} -I INPUT  -m policy --dir in --pol ipsec \
 	    -s ${PLUTO_PEER_CLIENT} -d ${PLUTO_MY_CLIENT} \
 	    -j NFLOG --nflog-group ${NFLOG} --nflog-prefix ${PLUTO_CONNECTION}
     fi
@@ -845,10 +852,10 @@ delnflog() {
    fi
 
     if [ -n "${NFLOG}" ]; then
-	iptables -D OUTPUT -m policy --dir out --pol ipsec \
+	${IPTABLES_BINARY} -D OUTPUT -m policy --dir out --pol ipsec \
 	    -s ${PLUTO_MY_CLIENT} -d ${PLUTO_PEER_CLIENT} \
 	    -j NFLOG --nflog-group ${NFLOG} --nflog-prefix ${PLUTO_CONNECTION}
-	iptables -D INPUT  -m policy --dir in --pol ipsec \
+	${IPTABLES_BINARY} -D INPUT  -m policy --dir in --pol ipsec \
 	    -s ${PLUTO_PEER_CLIENT} -d ${PLUTO_MY_CLIENT} \
 	    -j NFLOG --nflog-group ${NFLOG} --nflog-prefix ${PLUTO_CONNECTION}
     fi
@@ -949,9 +956,9 @@ addcat() {
     fi
 
     if [ -n "${CAT}" ] && [ "${PLUTO_MY_CLIENT_NET}" != "0.0.0.0" ] ; then
-	iptables -t nat -I POSTROUTING -m policy --dir out --pol ipsec \
+	${IPTABLES_BINARY} -t nat -I POSTROUTING -m policy --dir out --pol ipsec \
 	    -d ${PLUTO_PEER_CLIENT} -j SNAT --to-source ${PLUTO_MY_CLIENT_NET}
-	iptables -t nat -I PREROUTING -m policy --dir in --pol ipsec \
+	${IPTABLES_BINARY} -t nat -I PREROUTING -m policy --dir in --pol ipsec \
 	    -d ${PLUTO_MY_CLIENT_NET} -s ${PLUTO_PEER_CLIENT} \
 	    -j DNAT --to-destination ${PLUTO_ME}
     fi
@@ -965,10 +972,10 @@ delcat() {
     fi
 
     if [ -n "${CAT}" ]; then
-	iptables -t nat -D PREROUTING -m policy --dir in --pol ipsec  \
+	${IPTABLES_BINARY} -t nat -D PREROUTING -m policy --dir in --pol ipsec  \
 	    -d ${PLUTO_MY_CLIENT_NET} -s ${PLUTO_PEER_CLIENT} \
 	    -j DNAT --to-destination ${PLUTO_ME}
-	iptables -t nat -D POSTROUTING -m policy --dir out --pol ipsec \
+	${IPTABLES_BINARY} -t nat -D POSTROUTING -m policy --dir out --pol ipsec \
 	    -d ${PLUTO_PEER_CLIENT} -j SNAT --to-source ${PLUTO_MY_CLIENT_NET}
     fi
 }
