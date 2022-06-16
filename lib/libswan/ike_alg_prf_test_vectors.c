@@ -166,6 +166,7 @@ static bool test_prf_vector(const struct prf_desc *prf,
 		? decode_to_chunk(__func__, test->message)
 		: alloc_chunk(test->message_size, __func__);
 	chunk_t prf_output = decode_to_chunk(__func__, test->prf_output);
+	bool ok = true;
 
 
 	/* chunk interface */
@@ -177,7 +178,9 @@ static bool test_prf_vector(const struct prf_desc *prf,
 	if (DBGP(DBG_CRYPT)) {
 		DBG_dump_hunk("chunk output", chunk_output);
 	}
-	bool ok = verify_hunk(test->description, prf_output, chunk_output);
+	if (!verify_hunk(test->description, prf_output, chunk_output)) {
+		ok = false;
+	}
 
 	/* symkey interface */
 	PK11SymKey *symkey_key = symkey_from_hunk("key symkey", chunk_key, logger);
@@ -191,9 +194,10 @@ static bool test_prf_vector(const struct prf_desc *prf,
 	if (DBGP(DBG_CRYPT)) {
 		DBG_symkey(logger, "output", "symkey", symkey_output);
 	}
-	ok = verify_symkey(test->description, prf_output, symkey_output, logger);
+	if (!verify_symkey(test->description, prf_output, symkey_output, logger)) {
+		ok = false;
+	}
 	DBGF(DBG_CRYPT, "%s: %s %s", __func__, test->description, ok ? "passed" : "failed");
-	release_symkey(__func__, "symkey", &symkey_output);
 
 	free_chunk_content(&chunk_message);
 	free_chunk_content(&chunk_key);
