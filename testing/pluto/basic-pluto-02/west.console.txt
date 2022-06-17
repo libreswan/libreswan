@@ -134,7 +134,6 @@ XFRM state:
 XFRM policy:
 XFRM done
 IPSEC mangle TABLES
-NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
 default via 192.1.2.254 dev eth1
 25.1.0.0/16 via 192.0.1.254 dev eth0

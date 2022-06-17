@@ -144,7 +144,6 @@ src 192.0.2.219/32 dst 192.0.2.0/24
 XFRM done
 IPSEC mangle TABLES
 iptables: No chain/target/match by that name.
-NEW_IPSEC_CONN mangle TABLES
 iptables: No chain/target/match by that name.
 ROUTING TABLES
 default via 192.1.2.254 dev eth1 

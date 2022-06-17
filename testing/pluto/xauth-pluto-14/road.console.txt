@@ -84,7 +84,6 @@ src 192.0.2.100/32 dst 0.0.0.0/0
 		proto esp reqid REQID mode tunnel
 XFRM done
 IPSEC mangle TABLES
-NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
 0.0.0.0/1 via 192.1.3.254 dev eth0 src 192.0.2.100
 default via 192.1.3.254 dev eth0

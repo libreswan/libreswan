@@ -129,7 +129,6 @@ src 192.0.3.10/32 dst 192.0.2.0/24
 	tmpl src 192.1.33.222 dst 192.1.2.23
 XFRM done
 IPSEC mangle TABLES
-NEW_IPSEC_CONN mangle TABLES
 ROUTING TABLES
 default via 192.1.33.254 dev eth0
 192.0.2.0/24 via 192.1.33.254 dev eth0 src 192.0.3.10
