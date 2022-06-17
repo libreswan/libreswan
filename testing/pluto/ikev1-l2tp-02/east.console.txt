@@ -63,6 +63,17 @@ src 192.1.2.254/32 dst 192.1.2.23/32 proto udp sport 1701 dport 1701
 		proto esp reqid REQID mode transport
 XFRM done
 IPSEC mangle TABLES
+iptables filter TABLE
+Chain INPUT (policy ACCEPT)
+target     prot opt source               destination         
+REJECT     udp  --  0.0.0.0/0            192.1.2.23           policy match dir in pol none udp dpt:1701 reject-with icmp-port-unreachable
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
+Chain FORWARD (policy ACCEPT)
+target     prot opt source               destination         
+Chain OUTPUT (policy ACCEPT)
+target     prot opt source               destination         
+REJECT     udp  --  192.1.2.23           0.0.0.0/0            policy match dir out pol none udp spt:1701 reject-with icmp-port-unreachable
+ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir out pol ipsec
 ROUTING TABLES
 default via 192.1.2.254 dev eth1
 192.0.1.0/24 via 192.1.2.45 dev eth1
