@@ -32,11 +32,6 @@ DBPW=""
 CACERTDIR="${IPSEC_CONFDDIR}/cacerts"
 CRLDIR="${IPSEC_CONFDDIR}/crls"
 CTLSOCKET="${IPSEC_RUNDIR}/pluto.ctl"
-IPTABLES_BINARY=@IPTABLES_BINARY@
-if [ -z "@IPTABLES_BINARY@" ]; then
- # as place holder when it is set to ""
- IPTABLES_BINARY=iptables
-fi
 
 export IPSEC_EXECDIR IPSEC_CONF IPSEC_RUNDIR CTLSOCKET
 
@@ -135,20 +130,53 @@ ipsec_help() {
     exit 2
 }
 
+# add nflog-all
+nflog_nftables_add() {
+    local nft=${FIREWALL_CMD}
+    ${nft} add table ip filter
+    ${nft} add chain ip filter ipsec-all-input "{ type filter hook input priority 0; policy accept; }"
+    ${nft} add chain ip filter ipsec-all-output "{ type filter hook output priority 0; policy accept; }"
+    ${nft} add rule ip filter ipsec-all-input meta ipsec exists log prefix "all-ipsec" group 50
+    ${nft} add rule ip filter ipsec-all-output rt ipsec exists log prefix "all-ipsec" group 50
+}
+
+nflog_nftables_delete() {
+    local nft=${FIREWALL_CMD}
+    ${nft} delete chain ip filter ipsec-all-input
+    ${nft} delete chain ip filter ipsec-all-output
+}
+
+nflog_iptables_delete() {
+    local GROUP=$1
+    local iptables=${FIREWALL_CMD}
+    ${iptablese} -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group "${GROUP}" --nflog-prefix all-ipsec
+    ${iptablese} -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group "${GROUP}" --nflog-prefix all-ipsec
+}
+
 ipsec_stopnflog() {
     NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_EXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup | grep -v "#" | grep nflog | sed -e "s/^.*=//" -e "s/'//g");
     if [ -z "${NFGROUP}" ]; then
 	exit 0
     fi
-    ${IPTABLES_BINARY} -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group "${NFGROUP}" --nflog-prefix all-ipsec
-    ${IPTABLES_BINARY} -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group "${NFGROUP}" --nflog-prefix all-ipsec
+    firewall_cmd
+    local iptables=${FIREWALL_CMD}
+
+    if [ "${FIREWALL}" = "IPTABLES" ] ; then
+        nflog_iptables_delete "${NFGROUP}"
+    elif [ "${FIREWALL}" = "NFTABLES" ] ; then
+        nflog_nftables_delete
+    else
+        echo "unknown firewall comaand ${FIREWALL_CMD} and ${FIREWALL} expect ipables or nft"
+        exit 1
+    fi
+
     exit 0
 }
 
-ipsec_checknflog() {
-    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_EXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup | grep -v "#" | grep nflog| sed -e "s/^.*=//" -e "s/'//g");
+checknflog_iptables() {
+    local iptables=${FIREWALL_CMD}
     if [ -n "${NFGROUP}" ]; then
-	OLDNFGROUP=$(${IPTABLES_BINARY} -L -n | grep "all-ipsec nflog-group" | sed "s/^.* //" | tail -1);
+	OLDNFGROUP=$(${iptables} -L -n | grep "all-ipsec nflog-group" | sed "s/^.* //" | tail -1);
 	if [ -n "${OLDNFGROUP}" ]; then
 	    if [ "${NFGROUP}" = "${OLDNFGROUP}" ]; then
 		# nothing to do
@@ -157,23 +185,74 @@ ipsec_checknflog() {
 	    else
 		# delete rules with old group number
 		echo "deleting rules with old nflog group ${OLDNFGROUP}"
-		${IPTABLES_BINARY} -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group ${OLDNFGROUP} --nflog-prefix all-ipsec
-		${IPTABLES_BINARY} -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group ${OLDNFGROUP} --nflog-prefix all-ipsec
+                nflog_iptables_delete "${OLDNFGROUP}"
 	    fi
 	fi
 	# insert rules with current group number
-	${IPTABLES_BINARY} -I INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group ${NFGROUP} --nflog-prefix all-ipsec
-	${IPTABLES_BINARY} -I OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group ${NFGROUP} --nflog-prefix all-ipsec
+	${iptables} -I INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group ${NFGROUP} --nflog-prefix all-ipsec
+	${iptables} -I OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group ${NFGROUP} --nflog-prefix all-ipsec
 	echo "nflog ipsec capture enabled on nflog:${NFGROUP}"
     else
-	OLDNFGROUP=$(${IPTABLES_BINARY} -L -n | grep "all-ipsec nflog-group" | sed "s/^.* //" | tail -1);
+	OLDNFGROUP=$(${iptables} -L -n | grep "all-ipsec nflog-group" | sed "s/^.* //" | tail -1);
 	if [ -n "${OLDNFGROUP}" ]; then
 	    echo "deleting rules with old nflog group ${OLDNFGROUP}"
-	    ${IPTABLES_BINARY} -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group "${OLDNFGROUP}" --nflog-prefix all-ipsec
-	    ${IPTABLES_BINARY} -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group "${OLDNFGROUP}" --nflog-prefix all-ipsec
+        nflog_iptables_delete "${OLDNFGROUP}"
 	fi
 	echo "nflog ipsec capture disabled"
     fi
+}
+
+checknflog_nftables() {
+    local nft=${FIREWALL_CMD}
+
+    if [ -n "${NFGROUP}" ]; then
+        if ! ${nft} list chain ip filter ipsec-all-input 2>/de/null >/dev/null; then
+            nflog_nftables_add
+        fi
+    else
+        nflog_nftables_delete
+    fi
+
+    # nft delete rule filter input handle 15
+    # nft add rule ip filter ipsec-all-input meta ipsec exists ipsec in ip saddr 192.168.1.0/24 accept
+    # nft -a list
+    # nft -a list chain ip filter ipsec-all-output
+    # nft delete chain ip filter ipsec-all-output
+}
+
+firewall_cmd() {
+    FIREWALL=""
+    FIREWALL_CMD="@IPTABLES_BINARY@"
+    if [ -z "${FIREWALL_CMD}" ]; then
+        # set to false as a place holder when it is set to "" at build
+        # CAT or NFLOG can't be configured
+        FIRWALL_CMD=false
+    fi
+
+    case "${FIREWALL_CMD}" in
+    *iptables*)
+	    FIREWALL="IPTABLES";
+    ;;
+    *nft*)
+            FIREWALL="NFTABLES";
+    ;;
+    esac
+}
+
+ipsec_checknflog() {
+    NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_EXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup | grep -v "#" | grep nflog| sed -e "s/^.*=//" -e "s/'//g");
+
+    firewall_cmd
+
+    if [ "${FIREWALL}" = "IPTABLES" ] ; then
+        checknflog_iptables
+    elif [ "${FIREWALL}" = "NFTABLES" ] ; then
+        checknflog_nftables
+    else
+	echo "unknown firewall comaand ${FIREWALL_CMD} and ${FIREWALL} expect ipables or nft"
+	exit 1
+    fi
+
     exit 0
 }
 
