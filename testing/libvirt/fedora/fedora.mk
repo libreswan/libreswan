@@ -158,6 +158,7 @@ KVM_FEDORA_UPGRADE_PACKAGES += \
     mtr \
     nc \
     net-tools \
+    nftables \
     nmap \
     nsd \
     $(KVM_FEDORA_NSPR_PACKAGES) \
