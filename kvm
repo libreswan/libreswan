@@ -168,15 +168,15 @@ BEGIN {
 #
 # ${pass1}, ${pass2} and ${hosts} contain completion values.
 
-if test "$1" == $0 -a $# -eq 3 ; then
+if test "$1" = $0 -a $# -eq 3 ; then
     command=$1
     word=$2
     previous=$3
     # hack to detect first vs later argument
-    if test "${previous}" == "${command}" ; then
+    if test "${previous}" = "${command}" ; then
 	# first command
 	compgen -W "${pass1} ${pass2}" "${word}" | sort
-    elif test "${previous}" == sh ; then
+    elif test "${previous}" = sh ; then
 	# pass 1 command
 	compgen -W "${hosts}" "${word}"
     else
