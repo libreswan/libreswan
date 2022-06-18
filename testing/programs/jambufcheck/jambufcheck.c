@@ -29,10 +29,8 @@ static void check_jambuf(bool ok, const char *expect, ...)
 {
 	const char *oks =  ok ? "true" : "false";
 	for (int i = 0; i < 3; i++) {
-		const char *op = (i == 0 ? "jam" :
-				  i == 1 ? "jam_string" :
-				  i == 2 ? "jam_char" :
-				  "???");
+		static const char *const ops[] = { "jam", "jam_str", "jam_char" };
+		const char *op = ops[i];
 		printf("%s: %s '%s' %s\n", __func__, op, expect, oks);
 		/* 10 characters + NUL + SENTINEL */
 		char array[12] = "abcdefghijkl";
