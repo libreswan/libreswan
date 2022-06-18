@@ -939,7 +939,7 @@ delvti() {
 # Client Address Translation CAT
 addcat() {
     firewall_cmd
-    if [ "${FIREWALL}"="IPTABLES" -a -n "${CAT}" -a "${PLUTO_MY_CLIENT_NET}" != "0.0.0.0" ] ; then
+    if [ "${FIREWALL}" = "IPTABLES" -a -n "${CAT}" -a "${PLUTO_MY_CLIENT_NET}" != "0.0.0.0" ] ; then
 	${FIREWALL_CMD} -t nat -I POSTROUTING -m policy --dir out --pol ipsec \
 	    -d ${PLUTO_PEER_CLIENT} -j SNAT --to-source ${PLUTO_MY_CLIENT_NET}
 	${FIREWALL_CMD} -t nat -I PREROUTING -m policy --dir in --pol ipsec \
@@ -950,7 +950,7 @@ addcat() {
 
 delcat() {
     firewall_cmd
-    if [ "${FIREWALL}"="IPTABLES" -a -n "${CAT}" -a "${FIREWALL}"="IPTABLES" ]; then
+    if [ "${FIREWALL}" = "IPTABLES" -a -n "${CAT}" ]; then
         ${FIREWALL_CMD} -t nat -D PREROUTING -m policy --dir in --pol ipsec  \
 	    -d ${PLUTO_MY_CLIENT_NET} -s ${PLUTO_PEER_CLIENT} \
 	    -j DNAT --to-destination ${PLUTO_ME}
