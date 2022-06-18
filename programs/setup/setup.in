@@ -69,7 +69,7 @@ case "$1" in
 		exec /etc/init.d/ipsec start
 		;;
 	    docker )
-	    	echo "Redirecting to: /etc/init.d/ipsec start"
+		echo "Redirecting to: /etc/init.d/ipsec start"
 		exec /etc/init.d/ipsec start
 		;;
 	    rc.d )
@@ -78,6 +78,7 @@ case "$1" in
 		;;
 	    namespaces )
 		echo "Redirecting to: namespaces direct start via ipsec pluto"
+		ipsec --checknflog > /dev/null
 		exec ipsec pluto --config @FINALSYSCONFDIR@/ipsec.conf --leak-detective
 		;;
 	    "" )
@@ -130,6 +131,7 @@ case "$1" in
 		echo "Redirecting to: namespaces direct stop via ipsec whack --shutdown"
 		ipsec whack --shutdown
 		ip xfrm state flush
+		ipsec --stopnflog > /dev/null
 		;;
 	    "" )
 		what="ipsec whack --shutdown"
@@ -142,7 +144,7 @@ case "$1" in
 		;;
 	esac
 
-       	# Remove any loaded IPsec stack
+	# Remove any loaded IPsec stack
 	# linux_START
 	[ -f /proc/modules ] && ipsec _stackmanager stop
 	# linux_STOP
