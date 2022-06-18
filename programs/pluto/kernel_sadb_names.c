@@ -555,17 +555,17 @@ sparse_names ipsec_level_names = {
 };
 
 sparse_names ipsec_proto_names = {
-	S(IPPROTO_AH),
-	S(IPPROTO_ESP),
-	S(IPPROTO_IPIP),
+	S(IPSEC_PROTO_AH),
+	S(IPSEC_PROTO_ESP),
+	S(IPSEC_PROTO_IPIP),
 #ifdef IPSEC_PROTO_ANY
 	S(IPSEC_PROTO_ANY), /* 255, aka IPSEC_ULPROTO_ANY */
 #endif
-#ifdef IPPROTO_IPCOMP
-	S(IPPROTO_IPCOMP),
+#ifdef IPSEC_PROTO_IPCOMP
+	S(IPSEC_PROTO_IPCOMP),
 #endif
-#ifdef IPPROTO_COMP
-	S(IPPROTO_COMP),
+#ifdef IPSEC_PROTO_COMP
+	S(IPSEC_PROTO_COMP),
 #endif
 	SPARSE_NULL
 };

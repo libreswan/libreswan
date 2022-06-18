@@ -383,16 +383,16 @@ enum ipsec_mode {
 enum ipsec_proto {
 
 	ipsec_proto_ah = IPPROTO_AH,
-#undef IPPROTO_AH
-#define IPPROTO_ah ipproto_ah
+#undef IPSEC_PROTO_AH
+#define IPSEC_PROTO_AH ipsec_proto_ah
 
 	ipsec_proto_esp = IPPROTO_ESP,
-#undef IPPROTO_ESP
-#define IPPROTO_esp ipproto_esp
+#undef IPSEC_PROTO_ESP
+#define IPSEC_PROTO_ESP ipsec_proto_esp
 
 	ipsec_proto_ipip = IPPROTO_IPIP,
-#undef IPPROTO_IPIP
-#define IPPROTO_ipip ipproto_ipip
+#undef IPSEC_PROTO_IPIP
+#define IPSEC_PROTO_IPIP ipsec_proto_ipip
 #ifdef IPSEC_PROTO_ANY
 
 	ipsec_proto_any = IPSEC_PROTO_ANY, /* 255, aka IPSEC_ULPROTO_ANY */
@@ -404,14 +404,14 @@ enum ipsec_proto {
 
 #ifdef IPPROTO_IPCOMP
 	ipsec_proto_ipcomp = IPPROTO_IPCOMP,
-#undef IPPROTO_IPCOMP
-#define IPPROTO_ipcomp ipproto_ipcomp
+#undef IPSEC_PROTO_IPCOMP
+#define IPSEC_PROTO_IPCOMP ipsec_proto_ipcomp
 #endif
 
 #ifdef IPPROTO_COMP
 	ipsec_proto_ipcomp = IPPROTO_COMP,
-#undef IPPROTO_COMP
-#define IPPROTO_comp ipproto_comp
+#undef IPSEC_PROTO_IPCOMP
+#define IPSEC_PROTO_IPCOMP ipsec_proto_ipcomp
 #endif
 
 };
