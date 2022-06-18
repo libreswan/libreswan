@@ -271,7 +271,7 @@ PYTHON_BINARY ?= /usr/bin/python3
 # iptables for dianostics, CAT, or NFLOG
 # set "" to disable
 IPTABLES_BINARY ?= iptables
-ifneq ($(findstring iptables, $IPTABLES_BINARY),)
+ifneq (, $(findstring iptables,$(IPTABLES_BINARY)))
 HAVE_IPTABLES ?= true
 endif
 
