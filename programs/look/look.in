@@ -35,14 +35,29 @@ esac
 # The ability to select what is displayed is internal, but is used for
 # testing.
 
+firewall_cmd() {
+    HAVE_IPTABLES=@HAVE_IPTABLES@
+    HAVE_NFTABLES=@HAVE_NFTABLES@
+    if [ "${HAVE_NFTABLES}" = true ]; then #nft has precedence
+        FIREWALL=NFTABLES
+    elif [ "${HAVE_IPTABLES}" = true ]; then
+        FIREWALL=IPTABLES
+    else
+        FIREWALL=""
+    fi
+}
+
 default()
 {
     look_state=$1
     look_policy=$1
-    look_iptables=$1
+    test "${FIREWALL}" = IPTABLES && look_iptables=$1 || look_iptables=false
+    test "${FIREWALL}" = NFTABLES && look_nftables=$1 || look_nftables=false
     look_route=$1
     look_nss=$1
 }
+
+firewall_cmd
 
 if test $# -eq 0 ; then
     default true
@@ -52,7 +67,8 @@ else
 	case "$1" in
      	    state) look_state=true ;;
      	    policy) look_policy=true ;;
-	    iptables) look_iptables=true ;;
+	    iptables)  look_iptables=true ;;
+	    nftables) look_nftables=true ;;
 	    route ) look_route=true ;;
 	    nss ) look_nss=true ;;
 	    * ) echo Usage: ${me} ; exit 1 ;;
@@ -129,6 +145,10 @@ if ${look_state} || ${look_policy} ; then
     fi
 fi
 
+if ${look_nftables} ; then
+    echo nft list ruleset
+    nft list ruleset
+fi
 
 if ${look_iptables} ; then
     echo IPSEC mangle TABLES
