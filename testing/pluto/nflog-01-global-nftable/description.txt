@@ -1,0 +1,2 @@
+ikev2 rawrsa with setup global nflog:50 only works with stack xfrm & nftables.
+no iptables commands allowed iptables and nftables may not mix well
