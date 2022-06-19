@@ -119,11 +119,13 @@ west #
  iptables -L -n
 Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
+NFLOG      all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec nflog-prefix  all-ipsec nflog-group 50
 ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
 DROP       all  --  192.0.2.0/24         0.0.0.0/0           
 Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
+NFLOG      all  --  0.0.0.0/0            0.0.0.0/0            policy match dir out pol ipsec nflog-prefix  all-ipsec nflog-group 50
 west #
  
