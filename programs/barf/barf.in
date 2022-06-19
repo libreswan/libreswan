@@ -255,21 +255,29 @@ do
     fi
 
 done
-_________________________ iptables
-if [ -e /proc/net/ip_tables_names ]; then
-    if [ -r /sbin/iptables-save -o -r /usr/sbin/iptables-save ]; then
-	iptables-save --modprobe=/dev/null
-    else
-	if [ -r /sbin/iptables -o -r /usr/sbin/iptables ]; then
-	    iptables -L -v -n
-	    _________________________ iptables-nat
-	    grep ^nat /proc/net/ip_tables_names >/dev/null 2>&1 && \
-		iptables -t nat -L -v -n
-	    _________________________ iptables-mangle
-	    grep ^mangle /proc/net/ip_tables_names >/dev/null 2>&1 && \
-	    iptables -t mangle -L -v -n
-	fi
+HAVE_IPTABLES=@HAVE_IPTABLES@
+HAVE_NFTABLES=@HAVE_NFTABLES@
+if test "${HAVE_NFTABLES}" = true; then
+    nft list ruleset
+elif test "${HAVE_IPTABLES}" = true; then
+    _________________________ iptables
+    if [ -e /proc/net/ip_tables_names ]; then
+        if [ -r /sbin/iptables-save -o -r /usr/sbin/iptables-save ]; then
+            iptables-save --modprobe=/dev/null
+        else
+            if [ -r /sbin/iptables -o -r /usr/sbin/iptables ]; then
+                iptables -L -v -n
+                _________________________ iptables-nat
+                grep ^nat /proc/net/ip_tables_names >/dev/null 2>&1 && \
+                iptables -t nat -L -v -n
+                _________________________ iptables-mangle
+                grep ^mangle /proc/net/ip_tables_names >/dev/null 2>&1 && \
+                iptables -t mangle -L -v -n
+            fi
+        fi
     fi
+else
+    echo "no iptable or nftable support"
 fi
 _________________________ ip6tables
 if [ -e ip6_tables_names ]; then
