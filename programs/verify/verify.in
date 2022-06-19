@@ -29,7 +29,8 @@ retcode = 0
 conffile = "@FINALCONFFILE@"
 confdir = "@FINALCONFDIR@"
 ipsecbin = "@IPSEC_SBINDIR@/ipsec"
-iptablesbin = "@IPTABLES_BINARY@"
+iptables = "@HAVE_IPTABLES@"
+nftables = "@HAVE_NFTABLES@"
 
 prefencoding = locale.getpreferredencoding(False)
 
@@ -156,10 +157,18 @@ def cmdchecks():
 	else:
 		print_result("OK","OK")
 
-	if len(iptablesbin):
+	if "true" in iptables:
 		printfun("Checking 'iptables' command")
 
-		if which(iptablesbin) or os.path.isfile(iptablesbin):
+		if which(iptables):
+			print_result("OK","OK")
+		else:
+			print_result("WARN","MISSING")
+
+	if "true" in nftables:
+		printfun("Checking 'nft' command")
+
+		if which(nftables):
 			print_result("OK","OK")
 		else:
 			print_result("WARN","MISSING")
