@@ -20,7 +20,7 @@ NSPR_LDFLAGS = -L$(PKG_BASE)/lib/nspr -Wl,-rpath,$(PKG_BASE)/lib/nspr -lnspr4
 #USE_BSDKAME = true
 USE_PFKEYV2 = true
 CRYPT_LDFLAGS =
-RT_LDFLAGS = 
+RT_LDFLAGS =
 
 USE_LIBCAP_NG = false
 USE_UNBOUND_EVENT_H_COPY = true
@@ -31,6 +31,9 @@ USE_DNSSEC = true
 DEFAULT_DNSSEC_ROOTKEY_FILE = /var/unbound/db/root.key
 
 INITSYSTEM=rc.d
+
+HAVE_IPTABLES = false
+HAVE_NFTABLES = false
 
 # not /run/pluto
 FINALRUNDIR=/var/run/pluto

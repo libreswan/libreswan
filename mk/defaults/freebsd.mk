@@ -28,6 +28,9 @@ DEFAULT_DNSSEC_ROOTKEY_FILE = /usr/local/etc/unbound/root.key
 
 INITSYSTEM=rc.d
 
+HAVE_IPTABLES = false
+HAVE_NFTABLES = false
+
 # not /run/pluto
 FINALRUNDIR=/var/run/pluto
 
