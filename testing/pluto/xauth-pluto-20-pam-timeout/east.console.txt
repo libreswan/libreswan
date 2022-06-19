@@ -73,7 +73,7 @@ Certificate Nickname                                         Trust Attributes
 east #
  sed -n -e '/^[^|].*PAM: / { s/ 0.[0-9]* / 0.NNN / ; s/ 60.[0-9]* / 60.NNN / ; s/ 59.[0-9]* / 60.NNN / ; p }' /tmp/pluto.log
 "xauth-road-eastnet"[1] 192.1.3.209 #1: PAM: authentication of user 'gooduser90' ABORTED (timeout) after 60.NNN seconds
-"xauth-road-eastnet"[3] 192.1.3.209 #3: PAM: authentication of user 'gooduser' SUCCEEDED after 0.NNN seconds
+"xauth-road-eastnet"[2] 192.1.3.209 #3: PAM: authentication of user 'gooduser' SUCCEEDED after 0.NNN seconds
 east #
  if [ -f /etc/pam.d/pluto.stock ]; then mv /etc/pam.d/pluto.stock /etc/pam.d/pluto ; fi
 east #
