@@ -268,12 +268,10 @@ INITDDIR ?= $(DESTDIR)$(FINALINITDDIR)
 # PYTHON_BINARY is used for python scripts shebang
 PYTHON_BINARY ?= /usr/bin/python3
 
-# iptables for dianostics, CAT, or NFLOG
-# set "" to disable
-IPTABLES_BINARY ?= iptables
-ifneq (, $(findstring iptables,$(IPTABLES_BINARY)))
+# iptables for CAT, or NFLOG, look, barf, verify
 HAVE_IPTABLES ?= true
-endif
+# nft nflog-all(nflog not yet), look, barf, verfiy
+HAVE_NFTABLES ?= false
 
 # SHELL_BINARY is used for sh scripts shebang
 SHELL_BINARY ?= /bin/sh
@@ -532,7 +530,8 @@ TRANSFORM_VARIABLES = sed \
 			-e "s:@SD_WATCHDOGSEC@:$(SD_WATCHDOGSEC):g" \
 			-e "s:@SHELL_BINARY@:$(SHELL_BINARY):g" \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
-			-e "s:@IPTABLES_BINARY@:$(IPTABLES_BINARY):g" \
+			-e "s:@HAVE_IPTABLES@:$(HAVE_IPTABLES):g" \
+			-e "s:@HAVE_NFTABLES@:$(HAVE_NFTABLES):g" \
 			$(NULL)
 
 # For KVM testing setup
@@ -782,6 +781,10 @@ endif
 
 ifeq ($(HAVE_IPTABLES),true)
 USERLAND_CFLAGS += -DHAVE_IPTABLES
+endif
+
+ifeq ($(HAVE_NFTABLES),true)
+USERLAND_CFLAGS += -DHAVE_NFTABLES
 endif
 
 ifeq ($(HAVE_BROKEN_POPEN),true)

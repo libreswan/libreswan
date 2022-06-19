@@ -437,4 +437,8 @@ extern unsigned int parser_enum_list(const struct keyword_def *kd, const char *s
 				     bool list);
 extern unsigned int parser_loose_enum(struct keyword *k, const char *s);
 
+#if defined(HAVE_IPTABLES) && defined(HAVE_NFTABLES)
+error "set HAVE_IPTABLES or HAVE_NFTABLES"
+#endif
+
 #endif /* _KEYWORDS_H_ */
