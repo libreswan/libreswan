@@ -28,13 +28,7 @@ SUBDIRS += whack
 SUBDIRS += _import_crl
 SUBDIRS += _plutorun
 SUBDIRS += _secretcensor
-
-ifneq ($(BSD_VARIANT),)
-SUBDIRS += _unbound-hook.bsd
-else
 SUBDIRS += _unbound-hook
-endif
-
 SUBDIRS += _updown
 SUBDIRS += addconn
 SUBDIRS += algparse

@@ -1,7 +1,8 @@
-#!@PYTHON_BINARY@
-# -*- mode: python; -*-
+#!@SHELL_BINARY@
+# -*- mode: sh; sh-shell: sh -*-
 #
 # Copyright (C) 2018 Paul Wouters <pwouters@redhat.com>
+# Copyright (C) 2022 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -13,44 +14,45 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-import sys
-import subprocess
+set -u
+#set -e
 
-# Get my %defaultroute IP address
-myip = subprocess.check_output("ip -o route get 8.8.8.8", shell=True)
-myip = myip.split("src")[1].strip().split()[0]
+if test $# -lt 4 ; then
+    echo "Usage: QNAME TTL IP RRDATA" 1>&2
+    exit 1
+fi
 
-argv = sys.argv
-ourself = argv.pop(0)
+# Get my %defaultroute (gateway) IP address.
+myip=$(ipsec showroute --gateway 8.8.8.8)
 
-try:
-    qname = argv.pop(0)
-    ttl = argv.pop(0)
-    ip = argv.pop(0)
-except:
-    sys.exit("Bad arguments to ipsec _unbound")
+qname=$1 ; shift
+ttl=$1 ; shift
+ip=$1 ; shift
 
-# unbound now quotes the entire RRDATAs, so it counts as 1 argument in the list
-data = argv.pop(0).split(" ")
+# Remainder of parameters are quoted DNS RRs, iterate over each
+# breaking it down.
 
-while (data != []):
-    try:
-        gwprec = data.pop(0)
-        gwtype = data.pop(0)
-        gwalg = data.pop(0)
-        gwid = data.pop(0)
-        pubkey = data.pop(0)
-        addkeyip = "ipsec whack --keyid %s --addkey --pubkeyrsa 0s%s"%(ip, pubkey)
-        addkeyhostname = "ipsec whack --keyid @%s --addkey --pubkeyrsa 0s%s"%(qname, pubkey)
-        print("processing an IPSECKEY record for Opportunistic IPsec to %s(%s)"%(qname,ip))
-        print(subprocess.call(addkeyip, shell=True))
-        print(subprocess.call(addkeyhostname, shell=True))
-    except:
-        sys.exit("failed to process an IPSECKEY record for Opportunistic IPsec to %s(%s)"%(qname,ip))
+for rr in "$@" ; do
+    # reset args to
+    set -- ${rr}
+    if test $# -lt 5 ; then
+	echo "ingoring short rr record: $@" 1>&2
+	exit 1
+    fi
+    gwprec=$1 ; shift
+    gwtype=$1 ; shift
+    gwalg=$1 ; shift
+    gwid=$1 ; shift
+    pubkey=$1 ; shift
+
+    echo "processing an IPSECKEY record for Opportunistic IPsec to ${qname}(${ip})"
+    ipsec whack --keyid "${ip}" --addkey --pubkeyrsa 0s"${pubkey}"
+    ipsec whack --keyid @"${qname}" --addkey --pubkeyrsa 0s"${pubkey}"
+done
 
 # done injecting all IPSECKEY records into pluto - try actual OE now
-cmdoeip = "ipsec whack --oppohere %s --oppothere %s"%(myip, ip)
-print(subprocess.check_output(cmdoeip, shell=True))
+ipsec whack --oppohere "${myip}" --oppothere "${ip}"
+
 #cmdoeqname = "ipsec whack --oppohere %s --oppothere %s"%(myip, qname)
 #ret, output = commands.getstatusoutput(cmdoeqname)
-print(subprocess.check_output("ipsec whack --trafficstatus", shell=True))
+ipsec whack --trafficstatus
