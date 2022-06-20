@@ -22,7 +22,7 @@ config setup
 	#
 	# Some machines use a DNS resolver on localhost with broken DNSSEC
 	# support. This can be tested using the command:
-	# dig +dnssec DNSnameOfRemoveServer
+	# dig +dnssec DNSnameOfRemoteServer
 	# If that fails but omitting '+dnssec' works, the system's resolver is
 	# broken and you might need to disable DNSSEC.
 	# dnssec-enable=no
