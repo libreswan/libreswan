@@ -198,21 +198,20 @@ checknflog_iptables() {
 }
 
 checknflog_nftables() {
-
     if [ -n "${NFGROUP}" ]; then
-        f=$((nft list table ip filter 2>/dev/null | wc -l) || echo 0)
-        if [ ${f} -gt 0 ]; then
-            f=$(nft list chain ip filter ipsec-all-input  2>/dev/null | wc -l || echo 0)
-            if [ ${f} -gt 0 ]; then
-                echo "found ipsec-all-input"
-            else
-                nflog_nftables_add
-            fi
-        else
-            nflog_nftables_add
-        fi
+	f=$(nft list table ip filter 2>/dev/null | wc -l)
+	if [ ${f} -gt 0 ]; then
+	    f=$(nft list chain ip filter ipsec-all-input 2>/dev/null | wc -l)
+	    if [ ${f} -gt 0 ]; then
+		echo "found ipsec-all-input"
+	    else
+		nflog_nftables_add
+	    fi
+	else
+	    nflog_nftables_add
+	fi
     else
-        nflog_nftables_delete
+	nflog_nftables_delete
     fi
 
     # nft delete rule filter input handle 15
