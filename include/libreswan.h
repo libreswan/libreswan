@@ -88,9 +88,6 @@ extern const char libreswan_vendorid[];
 /* data types for SA conversion functions */
 
 /* part extraction and special addresses */
-extern struct in_addr hostof(struct in_addr addr,
-		       struct in_addr mask
-		       );
 extern struct in_addr broadcastof(struct in_addr addr,
 			   struct in_addr mask
 			   );
