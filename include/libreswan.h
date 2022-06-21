@@ -85,13 +85,6 @@ extern const char libreswan_vendorid[];
 
 /* end of obsolete functions */
 
-/* data types for SA conversion functions */
-
-/* part extraction and special addresses */
-extern struct in_addr broadcastof(struct in_addr addr,
-			   struct in_addr mask
-			   );
-
 /*
  * ENUM of klips debugging values. Not currently used in klips.
  * debug flag is actually 32 -bits, but only one bit is ever used,
