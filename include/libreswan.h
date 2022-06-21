@@ -80,14 +80,6 @@ extern const char libreswan_vendorid[];
 
 /* end of obsolete functions */
 
-/*
- * pluto and lwdnsq need to know the maximum size of the commands to,
- * and replies from lwdnsq.
- */
-
-#define LWDNSQ_CMDBUF_LEN      1024
-#define LWDNSQ_RESULT_LEN_MAX  4096
-
 /* syntax for passthrough SA */
 #ifndef PASSTHROUGHNAME
 #define PASSTHROUGHNAME "%passthrough"
