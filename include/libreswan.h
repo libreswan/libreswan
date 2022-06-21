@@ -86,28 +86,6 @@ extern const char libreswan_vendorid[];
 /* end of obsolete functions */
 
 /*
- * ENUM of klips debugging values. Not currently used in klips.
- * debug flag is actually 32 -bits, but only one bit is ever used,
- * so we can actually pack it all into a single 32-bit word.
- */
-enum klips_debug_flags {
-	KDF_VERBOSE     = 0,
-	KDF_XMIT        = 1,
-	KDF_NETLINK     = 2, /* obsolete */
-	KDF_XFORM       = 3,
-	KDF_EROUTE      = 4,
-	KDF_SPI         = 5,
-	KDF_RADIJ       = 6,
-	KDF_ESP         = 7,
-	KDF_AH          = 8, /* obsolete */
-	KDF_RCV         = 9,
-	KDF_TUNNEL      = 10,
-	KDF_PFKEY       = 11,
-	KDF_COMP        = 12,
-	KDF_NATT        = 13,
-};
-
-/*
  * pluto and lwdnsq need to know the maximum size of the commands to,
  * and replies from lwdnsq.
  */
