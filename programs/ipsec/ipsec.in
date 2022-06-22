@@ -46,26 +46,7 @@ export EF_DISABLE_BANNER=1
 DONTMENTION='^(ipsec|_.*|.*\.old|.*\.orig|.*~)$'
 
 # version numbering (details filled in by build)
-# Possibly should call a C program to invoke the version_code() function
-# instead, but for performance's sake, we inline it here (and only here).
-version="@IPSECVERSION@"
-
-# export the version information
-IPSEC_VERSION="${version}"
-export IPSEC_VERSION
-
-# function for the funky user/kernel version stuff
-fixversion() {
-    stack=" (none)"
-    if [ -f /proc/sys/net/core/xfrm_acq_expires ]; then
-	stack=" (XFRM)"
-    else
-	if [ -f /mach_kernel ]; then
-	    stack=" (OSX)"
-	fi
-    fi
-    version="${version}${stack} on $(uname -r)"
-}
+export IPSEC_VERSION="@IPSECVERSION@"
 
 set_nss_db_trusts() {
     # has to handle a NSS nick with spaces
@@ -89,8 +70,7 @@ ipsec_usage() {
     echo "Use --help for a list of commands, or see the ipsec(8) manual page"
     echo "Most commands have their own manual pages, e.g. ipsec_auto(8)."
     echo "See <https://libreswan.org> for more general info."
-    fixversion
-    echo "Linux Libreswan ${version}"
+    echo "Libreswan ${IPSEC_VERSION}"
     exit 2
 }
 
@@ -125,8 +105,7 @@ ipsec_help() {
     echo
     echo "See also: man ipsec <command> or ipsec <command> --help"
     echo "See <https://libreswan.org/> for more general info."
-    fixversion
-    echo "Linux Libreswan ${version}"
+    echo "Libreswan ${IPSEC_VERSION}"
     exit 2
 }
 
@@ -580,8 +559,7 @@ while [ ${#} -gt 0 ]; do
 	    ;;
     	version|--version|--versioncode)
 	    # some ubuntu/debian scripts use --versioncode, so let's keep the alias
-	    fixversion
-	    echo "Linux Libreswan ${version}"
+	    echo "Libreswan ${IPSEC_VERSION}"
 	    exit 0
 	    ;;
 	--directory)
