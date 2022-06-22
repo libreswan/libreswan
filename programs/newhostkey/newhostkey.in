@@ -1,4 +1,5 @@
 #!@SHELL_BINARY@
+# -*- mode: sh; sh-shell: sh -*-
 #
 # generate new key for this host
 #

@@ -1,4 +1,5 @@
 #!@PYTHON_BINARY@
+# -*- mode: python; -*-
 
 import sys
 import subprocess

@@ -1,4 +1,5 @@
 #!@SHELL_BINARY@
+# -*- mode: sh; sh-shell: sh -*-
 #
 # default updown script for use with NETKEY(XFRM)
 #

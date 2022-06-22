@@ -1,4 +1,5 @@
 #!@SHELL_BINARY@
+# -*- mode: sh; sh-shell: sh -*-
 # IPsec startup and shutdown script
 #
 ### BEGIN INIT INFO

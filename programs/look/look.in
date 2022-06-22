@@ -1,4 +1,5 @@
 #!@SHELL_BINARY@
+# -*- mode: sh; sh-shell: sh -*-
 # quick look at current connections and related information
 # Copyright (C) 1998, 1999  Henry Spencer.
 # Copyright (C) 2012-2019 Paul Wouters <pwouters@redhat.com>

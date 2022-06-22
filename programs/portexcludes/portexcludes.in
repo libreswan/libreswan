@@ -1,4 +1,5 @@
 #!@PYTHON_BINARY@
+# -*- mode: python; -*-
 
 """Insert/remove port exclude overrides.
 

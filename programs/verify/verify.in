@@ -1,4 +1,5 @@
 #!@PYTHON_BINARY@
+# -*- mode: python; -*-
 #
 # Copyright (C) 2012 - 2013 Paul Wouters <pwouters@redhat.com>
 #

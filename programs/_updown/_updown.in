@@ -1,4 +1,5 @@
 #!@SHELL_BINARY@
+# -*- mode: sh; sh-shell: sh -*-
 # iproute2 version, default updown script
 #
 # Copyright (C) 2003-2004 Nigel Metheringham
