@@ -696,37 +696,6 @@ kvm-demolish-gateway:
 
 ##
 ##
-## Download all required ISOs
-##
-##
-
-# Note: Remember, $(basename) is counter intuitive - unlike UNIX
-# basename it doesn't strip the directory.
-
-.PHONY: kvm-iso
-
-# For FreeBSD, download the compressed ISO
-KVM_FREEBSD_ISO ?= $(KVM_POOLDIR)/$(notdir $(KVM_FREEBSD_ISO_URL))
-kvm-iso: $(KVM_FREEBSD_ISO)
-$(KVM_FREEBSD_ISO): | $(KVM_POOLDIR)
-	wget --output-document $@.xz --no-clobber -- $(KVM_FREEBSD_ISO_URL).xz
-	xz --uncompress --keep $@.xz
-
-# NetBSD requires a serial boot ISO (boot-com.iso) and an install ISO
-# (NetBSD-*.iso).
-KVM_NETBSD_INSTALL_ISO ?= $(KVM_POOLDIR)/$(notdir $(KVM_NETBSD_INSTALL_ISO_URL))
-KVM_NETBSD_BOOT_ISO ?= $(basename $(KVM_NETBSD_INSTALL_ISO))-boot.iso
-kvm-iso: $(KVM_NETBSD_BOOT_ISO)
-kvm-iso: $(KVM_NETBSD_INSTALL_ISO)
-$(KVM_NETBSD_INSTALL_ISO): | $(KVM_POOLDIR)
-	wget --output-document $@.tmp --no-clobber -- $(KVM_NETBSD_INSTALL_ISO_URL)
-	mv $@.tmp $@
-$(KVM_NETBSD_BOOT_ISO): | $(KVM_POOLDIR)
-	wget --output-document $@.tmp --no-clobber -- $(KVM_NETBSD_BOOT_ISO_URL)
-	mv $@.tmp $@
-
-##
-##
 ## Utilities
 ##
 ##
@@ -807,6 +776,8 @@ $(KVM_POOLDIR_PREFIX)%-base: | \
 	touch $@
 
 
+.PHONY: kvm-iso
+
 #
 # Fedora
 #
@@ -838,6 +809,7 @@ $(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_KICKSTART_FILE)
 # - uses a modified install CD
 #
 
+KVM_FREEBSD_ISO_URL = https://download.freebsd.org/releases/amd64/amd64/ISO-IMAGES/13.0/FreeBSD-13.0-RELEASE-amd64-disc1.iso
 KVM_FREEBSD_BASE_DOMAIN = $(KVM_POOLDIR_PREFIX)freebsd-base
 KVM_FREEBSD_VIRT_INSTALL_OS_VARIANT ?= freebsd10.0
 KVM_FREEBSD_BASE_ISO = $(KVM_FREEBSD_BASE_DOMAIN).iso
@@ -860,6 +832,12 @@ $(KVM_FREEBSD_BASE_ISO): testing/libvirt/freebsd/base.conf
 		/etc/installerconfig=$(KVM_FREEBSD_BASE_DOMAIN).base.conf
 	mv $@.tmp $@
 
+# For FreeBSD, download the compressed ISO
+KVM_FREEBSD_ISO ?= $(KVM_POOLDIR)/$(notdir $(KVM_FREEBSD_ISO_URL))
+kvm-iso: $(KVM_FREEBSD_ISO)
+$(KVM_FREEBSD_ISO): | $(KVM_POOLDIR)
+	wget --output-document $@.xz --no-clobber -- $(KVM_FREEBSD_ISO_URL).xz
+	xz --uncompress --keep $@.xz
 
 #
 # NetBSD
@@ -867,6 +845,8 @@ $(KVM_FREEBSD_BASE_ISO): testing/libvirt/freebsd/base.conf
 # - needs a second serial console boot iso
 #
 
+KVM_NETBSD_BOOT_ISO_URL ?= https://cdn.netbsd.org/pub/NetBSD/NetBSD-9.2/i386/installation/cdrom/boot-com.iso
+KVM_NETBSD_INSTALL_ISO_URL ?= https://cdn.netbsd.org/pub/NetBSD/NetBSD-9.2/images/NetBSD-9.2-i386.iso
 KVM_NETBSD_BASE_DOMAIN = $(KVM_POOLDIR_PREFIX)netbsd-base
 KVM_NETBSD_VIRT_INSTALL_OS_VARIANT ?= netbsd8.0
 KVM_NETBSD_BASE_ISO = $(KVM_NETBSD_BASE_DOMAIN).iso
@@ -890,6 +870,19 @@ $(KVM_NETBSD_BASE_ISO): testing/libvirt/netbsd/base.sh
 		/base.sh=$(KVM_NETBSD_BASE_DOMAIN).base.sh
 	mv $@.tmp $@
 
+
+# NetBSD requires a serial boot ISO (boot-com.iso) and an install ISO
+# (NetBSD-*.iso).
+KVM_NETBSD_INSTALL_ISO ?= $(KVM_POOLDIR)/$(notdir $(KVM_NETBSD_INSTALL_ISO_URL))
+KVM_NETBSD_BOOT_ISO ?= $(basename $(KVM_NETBSD_INSTALL_ISO))-boot.iso
+kvm-iso: $(KVM_NETBSD_BOOT_ISO)
+kvm-iso: $(KVM_NETBSD_INSTALL_ISO)
+$(KVM_NETBSD_INSTALL_ISO): | $(KVM_POOLDIR)
+	wget --output-document $@.tmp --no-clobber -- $(KVM_NETBSD_INSTALL_ISO_URL)
+	mv $@.tmp $@
+$(KVM_NETBSD_BOOT_ISO): | $(KVM_POOLDIR)
+	wget --output-document $@.tmp --no-clobber -- $(KVM_NETBSD_BOOT_ISO_URL)
+	mv $@.tmp $@
 
 #
 # OpenBSD
