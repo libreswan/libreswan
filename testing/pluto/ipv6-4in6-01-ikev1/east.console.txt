@@ -12,6 +12,6 @@ east #
 initdone
 east #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-4in6", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@west'
+006 #2: "westnet-eastnet-4in6", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@west'
 east #
  

@@ -117,7 +117,7 @@ west #
 000 "westnet-eastnet":   our auth:rsasig, their auth:rsasig, our autheap:none, their autheap:none;
 000 "westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet":   sec_label:unset;
-000 "westnet-eastnet":   ike_life: 65536s; ipsec_life: 65536s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet":   ike_life: 65536s; ipsec_life: 65536s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -162,7 +162,7 @@ west #
 up
 west #
  ipsec trafficstatus
-006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
+006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@east'
 west #
  ip route list
 default via 192.1.2.254 dev eth1

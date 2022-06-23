@@ -84,10 +84,10 @@ north #
 done
 north #
  ipsec whack --trafficstatus
-006 #2: "north-east-21", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
-006 #4: "north-east-22", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
-006 #6: "north-east-23", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
-006 #8: "north-east-24", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
+006 #2: "north-east-21", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@east'
+006 #4: "north-east-22", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@east'
+006 #6: "north-east-23", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@east'
+006 #8: "north-east-24", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@east'
 north #
  ip -s link show ipsec1
 Device "ipsec1" does not exist.

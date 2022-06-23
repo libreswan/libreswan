@@ -39,7 +39,7 @@ north #
  # wait on OE IKE negotiation
 north #
  ../../guestbin/wait-for.sh --match private-or-clear -- ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
 north #
  # ping should succeed through tunnel (road pings once, north twice)
 north #
@@ -52,7 +52,7 @@ north #
 up
 north #
  ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=16EiB, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
 north #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
@@ -165,7 +165,7 @@ north #
  # jacob two two for east?
 north #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=16EiB, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
 north #
  ../../guestbin/ipsec-look.sh | sed "s/\(.\)port [0-9][0-9][0-9][0-9] /\1port XXXX /g"
 north NOW

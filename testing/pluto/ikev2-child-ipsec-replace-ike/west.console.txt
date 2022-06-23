@@ -61,9 +61,9 @@ west #
 004 "westnet-eastnet-ikev2c" #4: initiator established Child SA using #1; IPsec tunnel [192.0.101.0-192.0.101.255:0-65535 0] -> [192.0.201.0-192.0.201.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
-006 #3: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
-006 #4: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+006 #2: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=16EiB, id='@east'
+006 #3: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=16EiB, id='@east'
+006 #4: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@east'
 west #
  sleep 40
 west #
@@ -80,8 +80,8 @@ PING 192.0.200.254 (192.0.200.254) from 192.0.100.254 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec whack --trafficstatus
-006 #6: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
-006 #7: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@east'
+006 #6: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=16EiB, id='@east'
+006 #7: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=16EiB, id='@east'
 west #
  echo done
 done

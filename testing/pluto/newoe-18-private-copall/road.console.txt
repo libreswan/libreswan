@@ -34,7 +34,7 @@ road #
  # should show tunnel and no shunts
 road #
  ipsec whack --trafficstatus
-006 #2: "private#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='ID_NULL'
+006 #2: "private#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='ID_NULL'
 road #
  ipsec whack --shuntstatus
 000 Bare Shunt list:

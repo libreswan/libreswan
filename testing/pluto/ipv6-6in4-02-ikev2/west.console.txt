@@ -36,7 +36,7 @@ west #
 000 "westnet-eastnet-6in4":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 000 "westnet-eastnet-6in4":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-6in4":   sec_label:unset;
-000 "westnet-eastnet-6in4":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-6in4":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-6in4":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-6in4":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-6in4":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -70,7 +70,7 @@ west #
 done
 west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-6in4", type=ESP, add_time=1234567890, inBytes=416, outBytes=416, id='@east'
+006 #2: "westnet-eastnet-6in4", type=ESP, add_time=1234567890, inBytes=416, outBytes=416, maxBytes=16EiB, id='@east'
 west #
  ip xfrm state
 src 192.1.2.23 dst 192.1.2.45

@@ -15,7 +15,7 @@ east #
 000 "east-any":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
 000 "east-any":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "east-any":   sec_label:unset;
-000 "east-any":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "east-any":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "east-any":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "east-any":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "east-any":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES; +rKOD;
@@ -51,6 +51,6 @@ east #
 000        ID_IPV4_ADDR '192.1.2.23'
 east #
  ipsec whack --trafficstatus
-006 #2: "east-any"[1] 192.1.3.33, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='192.1.3.33'
+006 #2: "east-any"[1] 192.1.3.33, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='192.1.3.33'
 east #
  
