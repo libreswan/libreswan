@@ -170,6 +170,7 @@ VIRT_INSTALL_FLAGS = \
 #     KVM_OPENBSD=
 # NOT ...=false
 
+KVM_DEBIAN ?=
 KVM_FEDORA ?= true
 KVM_FREEBSD ?=
 KVM_NETBSD ?=
@@ -195,6 +196,13 @@ KVM_OS += $(if $(KVM_FEDORA),  fedora)
 KVM_OS += $(if $(KVM_FREEBSD), freebsd)
 KVM_OS += $(if $(KVM_NETBSD),  netbsd)
 KVM_OS += $(if $(KVM_OPENBSD), openbsd)
+
+# fed into virt-install --os-variant
+KVM_DEBIAN_OS_VARIANT ?= $(shell osinfo-query os | awk '/debian[1-9]/ {print $$1}' | sort -V | tail -1)
+KVM_FEDORA_OS_VARIANT ?= $(shell osinfo-query os | awk '/fedora[1-9]/ {print $$1}' | sort -V | tail -1)
+KVM_FREEBSD_OS_VARIANT ?= $(shell osinfo-query os | awk '/freebsd[1-9]/ {print $$1}' | sort -V | tail -1)
+KVM_NETBSD_OS_VARIANT ?= $(shell osinfo-query os | awk '/netbsd[1-9]/ {print $$1}' | sort -V | tail -1)
+KVM_OPENBSD_OS_VARIANT ?= $(shell osinfo-query os | awk '/openbsd[1-9]/ {print $$1}' | sort -V | tail -1)
 
 #
 # Hosts
@@ -738,7 +746,7 @@ $(KVM_POOLDIR_PREFIX)%-base: | \
 		$(VIRT_INSTALL) \
 			$(VIRT_INSTALL_FLAGS) \
 			--name=$(notdir $@) \
-			--os-variant=$(KVM_$($*)_VIRT_INSTALL_OS_VARIANT) \
+			--os-variant=$(KVM_$($*)_OS_VARIANT) \
 			--disk=path=$@.qcow2,size=$(VIRT_DISK_SIZE_GB),bus=virtio,format=qcow2 \
 			$(KVM_$($*)_VIRT_INSTALL_FLAGS)
 	:
@@ -793,7 +801,6 @@ $(KVM_FEDORA_ISO): | $(KVM_POOLDIR)
 	mv $@.tmp $@
 
 KVM_FEDORA_BASE_DOMAIN = $(KVM_POOLDIR_PREFIX)fedora-base
-KVM_FEDORA_VIRT_INSTALL_OS_VARIANT ?= $(shell osinfo-query os | awk '/fedora[1-9]/ {print $$1}' | sort -V | tail -1)
 KVM_FEDORA_VIRT_INSTALL_FLAGS = \
 	--location=$(KVM_FEDORA_ISO) \
 	--initrd-inject=$(KVM_FEDORA_KICKSTART_FILE) \
@@ -811,7 +818,6 @@ $(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_KICKSTART_FILE)
 
 KVM_FREEBSD_ISO_URL = https://download.freebsd.org/releases/amd64/amd64/ISO-IMAGES/13.0/FreeBSD-13.0-RELEASE-amd64-disc1.iso
 KVM_FREEBSD_BASE_DOMAIN = $(KVM_POOLDIR_PREFIX)freebsd-base
-KVM_FREEBSD_VIRT_INSTALL_OS_VARIANT ?= $(shell osinfo-query os | awk '/freebsd[1-9]/ {print $$1}' | sort -V | tail -1)
 KVM_FREEBSD_BASE_ISO = $(KVM_FREEBSD_BASE_DOMAIN).iso
 KVM_FREEBSD_VIRT_INSTALL_FLAGS = \
        --cdrom=$(KVM_FREEBSD_BASE_ISO)
@@ -848,7 +854,6 @@ $(KVM_FREEBSD_ISO): | $(KVM_POOLDIR)
 KVM_NETBSD_BOOT_ISO_URL ?= https://cdn.netbsd.org/pub/NetBSD/NetBSD-9.2/i386/installation/cdrom/boot-com.iso
 KVM_NETBSD_INSTALL_ISO_URL ?= https://cdn.netbsd.org/pub/NetBSD/NetBSD-9.2/images/NetBSD-9.2-i386.iso
 KVM_NETBSD_BASE_DOMAIN = $(KVM_POOLDIR_PREFIX)netbsd-base
-KVM_NETBSD_VIRT_INSTALL_OS_VARIANT ?= $(shell osinfo-query os | awk '/netbsd[1-9]/ {print $$1}' | sort -V | tail -1)
 KVM_NETBSD_BASE_ISO = $(KVM_NETBSD_BASE_DOMAIN).iso
 KVM_NETBSD_VIRT_INSTALL_FLAGS = \
 	--cdrom=$(KVM_NETBSD_BOOT_ISO) \
@@ -915,7 +920,6 @@ $(KVM_OPENBSD_POOLPREFIX)-%: | $(KVM_POOLDIR)
 
 KVM_OPENBSD_BASE_DOMAIN = $(KVM_POOLDIR_PREFIX)openbsd-base
 # 
-KVM_OPENBSD_VIRT_INSTALL_OS_VARIANT ?= $(shell osinfo-query os | awk '/openbsd[1-9]/ {print $$1}' | sort -V | tail -1)
 KVM_OPENBSD_BASE_ISO = $(KVM_OPENBSD_BASE_DOMAIN).iso
 KVM_OPENBSD_VIRT_INSTALL_FLAGS = --cdrom=$(KVM_OPENBSD_BASE_ISO)
 
@@ -973,7 +977,7 @@ $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-base \
 	$(VIRT_INSTALL) \
 		$(VIRT_INSTALL_FLAGS) \
 		--name=$(notdir $@) \
-		--os-variant=$(KVM_$($*)_VIRT_INSTALL_OS_VARIANT) \
+		--os-variant=$(KVM_$($*)_OS_VARIANT) \
 		--disk=cache=writeback,path=$@.qcow2 \
 		--import \
 		--noautoconsole
@@ -1014,7 +1018,7 @@ $(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
 		$(VIRT_SOURCEDIR) \
 		$(VIRT_TESTINGDIR) \
 		--name=$(notdir $@) \
-		--os-variant=$(KVM_$($*)_VIRT_INSTALL_OS_VARIANT) \
+		--os-variant=$(KVM_$($*)_OS_VARIANT) \
 		--disk=cache=writeback,path=$@.qcow2 \
 		--import \
 		--noautoconsole
@@ -1333,6 +1337,12 @@ Configuration:
     $(call kvm-var-value,KVM_FREEBSD_HOST_NAMES)
     $(call kvm-var-value,KVM_NETBSD_HOST_NAMES)
     $(call kvm-var-value,KVM_OPENBSD_HOST_NAMES)
+
+    $(call kvm-var-value,KVM_DEBIAN_OS_VARIANT)
+    $(call kvm-var-value,KVM_FEDORA_OS_VARIANT)
+    $(call kvm-var-value,KVM_FREEBSD_OS_VARIANT)
+    $(call kvm-var-value,KVM_NETBSD_OS_VARIANT)
+    $(call kvm-var-value,KVM_OPENBSD_OS_VARIANT)
 
     $(call kvm-var-value,KVM_TEST_HOST_NAMES)
     $(call kvm-var-value,KVM_TEST_DOMAIN_NAMES)
