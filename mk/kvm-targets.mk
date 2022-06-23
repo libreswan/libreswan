@@ -276,6 +276,7 @@ KVM_PLATFORM_DOMAIN_NAMES = $(KVM_PLATFORM_BUILD_DOMAIN_NAMES) $(KVM_PLATFORM_TE
 # Other utilities and directories
 #
 
+QEMU_IMG ?= sudo qemu-img
 KVMSH ?= $(KVM_PYTHON) testing/utils/kvmsh.py
 KVMRUNNER ?= $(KVM_PYTHON) testing/utils/kvmrunner.py
 KVMRESULTS ?= $(KVM_PYTHON) testing/utils/kvmresults.py
@@ -703,19 +704,6 @@ kvm-demolish-gateway:
 
 ##
 ##
-## Utilities
-##
-##
-
-define clone-os-disk
-	: clone-os-disk
-	:    in=$(strip $(1))
-	:    out=$(strip $(2))
-	sudo qemu-img create -f qcow2 -F qcow2 -b $(1) $(2)
-endef
-
-##
-##
 ## Build the base domains
 ##
 ##
@@ -972,7 +960,7 @@ $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-base \
 		testing/libvirt/%/upgrade.sh \
 		| $(KVM_HOST_OK)
 	$(MAKE) kvm-undefine-$(notdir $@)
-	$(call clone-os-disk, $<.qcow2, $@.qcow2)
+	$(QEMU_IMG) create -f qcow2 -F qcow2 -b $<.qcow2 $@.qcow2
 	$(VIRT_INSTALL) \
 		$(VIRT_INSTALL_FLAGS) \
 		--name=$(notdir $@) \
@@ -1015,7 +1003,7 @@ $(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
 		testing/libvirt/%/transmogrify.sh \
 		$(KVM_HOST_OK)
 	$(MAKE) kvm-undefine-$(notdir $@)
-	$(call clone-os-disk, $<.qcow2, $@.qcow2)
+	$(QEMU_IMG) create -f qcow2 -F qcow2 -b $<.qcow2 $@.qcow2
 	$(VIRT_INSTALL) \
 		$(VIRT_INSTALL_FLAGS) \
 		$(VIRT_SOURCEDIR) \
@@ -1113,7 +1101,7 @@ define define-clone-domain
 		testing/libvirt/vm/$(strip $(2)).xml
 	: install-kvm-test-domain prefix=$(strip $(1)) host=$(strip $(2)) template=$(strip $(3))
 	$$(MAKE) kvm-undefine-$$(notdir $$@)
-	$(call clone-os-disk, $(addprefix $(3), .qcow2), $$@.qcow2)
+	$$(QEMU_IMG) create -f qcow2 -F qcow2 -b $(strip $(3)).qcow2 $$@.qcow2
 	$$(KVM_TRANSMOGRIFY) \
 		-e "s:@@NAME@@:$$(notdir $$@):" \
 		-e "s:network='192_:network='$(addprefix $(notdir $(1)), 192_):" \
