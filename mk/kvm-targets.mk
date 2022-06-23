@@ -64,7 +64,6 @@ KVM_GID ?= $(shell id -g $(KVM_GROUP))
 
 KVM_TRANSMOGRIFY = \
 	sed \
-	-e 's;@@DOMAIN@@;$(KVM_DOMAIN);' \
 	-e 's;@@POOLDIR@@;$(KVM_POOLDIR);' \
 	-e 's;@@GATEWAY@@;$(KVM_GATEWAY_ADDRESS);' \
 	-e 's;@@POOLDIR@@;$(KVM_POOLDIR);' \
