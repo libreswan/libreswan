@@ -29,6 +29,6 @@ west #
  # we should see conn other being up
 west #
  ipsec whack --trafficstatus
-006 #2: "main", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+006 #2: "main", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 west #
  

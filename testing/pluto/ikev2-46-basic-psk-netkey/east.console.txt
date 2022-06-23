@@ -12,7 +12,7 @@ east #
 initdone
 east #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ipv4-psk-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@west'
+006 #2: "westnet-eastnet-ipv4-psk-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@west'
 east #
  ../../guestbin/ipsec-look.sh
 east NOW

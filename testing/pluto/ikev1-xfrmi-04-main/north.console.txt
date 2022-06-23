@@ -33,13 +33,13 @@ north #
 up
 north #
  ipsec whack --trafficstatus
-006 #2: "northnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
+006 #2: "northnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=16EiB, id='@east'
 north #
  echo done
 done
 north #
  ipsec whack --trafficstatus
-006 #2: "northnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@east'
+006 #2: "northnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=16EiB, id='@east'
 north #
  ip -s link show ipsec1
 X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN

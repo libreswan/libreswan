@@ -104,7 +104,7 @@ east #
 000 "northnet-westnet-ipv4-psk":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "northnet-westnet-ipv4-psk":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "northnet-westnet-ipv4-psk":   sec_label:unset;
-000 "northnet-westnet-ipv4-psk":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "northnet-westnet-ipv4-psk":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "northnet-westnet-ipv4-psk":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "northnet-westnet-ipv4-psk":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "northnet-westnet-ipv4-psk":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -121,7 +121,7 @@ east #
 000 "westnet-northnet-ipv4-psk":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-northnet-ipv4-psk":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-northnet-ipv4-psk":   sec_label:unset;
-000 "westnet-northnet-ipv4-psk":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-northnet-ipv4-psk":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-northnet-ipv4-psk":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-northnet-ipv4-psk":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-northnet-ipv4-psk":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -146,8 +146,8 @@ east #
 initdone
 east #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
-006 #2: "northnet-westnet-ipv4-psk", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@north'
-006 #4: "westnet-northnet-ipv4-psk", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@west'
+006 #2: "northnet-westnet-ipv4-psk", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=16EiB, id='@north'
+006 #4: "westnet-northnet-ipv4-psk", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=16EiB, id='@west'
 east #
  ../../guestbin/ipsec-look.sh
 east NOW

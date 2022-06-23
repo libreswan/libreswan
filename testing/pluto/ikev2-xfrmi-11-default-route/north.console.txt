@@ -35,7 +35,7 @@ PING 192.0.2.254 (192.0.2.254) 56(84) bytes of data.
 4 packets transmitted, 0 received, 100% packet loss, time XXXX
 north #
  ipsec trafficstatus
-006 #2: "north-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+006 #2: "north-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@east'
 north #
  ip -s link show ipsec2
 X: ipsec2@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
@@ -65,12 +65,12 @@ X: ipsec2@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
     336        4        0       0       0       0       
 north #
  ipsec trafficstatus
-006 #2: "north-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+006 #2: "north-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=16EiB, id='@east'
 north #
  echo "initdone"
 initdone
 north #
  ipsec whack --trafficstatus
-006 #2: "north-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+006 #2: "north-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=16EiB, id='@east'
 north #
  

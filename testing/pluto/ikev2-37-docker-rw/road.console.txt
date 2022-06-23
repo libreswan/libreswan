@@ -97,7 +97,7 @@ ipsec auto --status
 000 "road-eastnet-nonat":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
 000 "road-eastnet-nonat":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "road-eastnet-nonat":   sec_label:unset;
-000 "road-eastnet-nonat":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "road-eastnet-nonat":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-eastnet-nonat":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "road-eastnet-nonat":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "road-eastnet-nonat":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -134,7 +134,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.2.219 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
 ipsec whack --trafficstatus
-006 #2: "road-eastnet-nonat", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+006 #2: "road-eastnet-nonat", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=16EiB, id='@east'
 road #
 ../guestbin/ipsec-look.sh
 road NOW

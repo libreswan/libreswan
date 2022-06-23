@@ -43,7 +43,7 @@ west #
 up
 west #
  ipsec trafficstatus
-006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
+006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@east'
 west #
  # does not work on 3.29 for now leave it timer based rekey
 west #
@@ -62,7 +62,7 @@ west #
  # only #3 should be there with traffic
 west #
  ipsec trafficstatus
-006 #3: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
+006 #3: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@east'
 west #
  ipsec status | grep westnet-eastnet
 000 "westnet-eastnet": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; erouted; eroute owner: #3
@@ -71,7 +71,7 @@ west #
 000 "westnet-eastnet":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet":   sec_label:unset;
-000 "westnet-eastnet":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 0%; keyingtries: 0;
+000 "westnet-eastnet":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 0%; keyingtries: 0;
 000 "westnet-eastnet":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
