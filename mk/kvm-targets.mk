@@ -1114,7 +1114,7 @@ define define-clone-domain
 	: install-kvm-test-domain prefix=$(strip $(1)) host=$(strip $(2)) template=$(strip $(3))
 	$$(MAKE) kvm-undefine-$$(notdir $$@)
 	$(call clone-os-disk, $(addprefix $(3), .qcow2), $$@.qcow2)
-	$(KVM_TRANSMOGRIFY) \
+	$$(KVM_TRANSMOGRIFY) \
 		-e "s:@@NAME@@:$$(notdir $$@):" \
 		-e "s:network='192_:network='$(addprefix $(notdir $(1)), 192_):" \
 		< testing/libvirt/vm/$(strip $(2)).xml \
