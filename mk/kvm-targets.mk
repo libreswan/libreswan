@@ -980,10 +980,14 @@ $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-base \
 		--disk=cache=writeback,path=$@.qcow2 \
 		--import \
 		--noautoconsole
-	: Copy install.sh, from this directory tree and not $(KVM_SOURCEDIR),
-	: to $(KVM_POOLDIR) so it can be run using /pool.
-	cp testing/libvirt/$*/upgrade.sh $@.sh
-	$(KVMSH) $(notdir $@) -- /pool/$(notdir $@).sh $(KVM_$($*)_UPGRADE_FLAGS)
+
+	: Copy/transmogrify upgrade.sh in this directory - $(srcdir) - to
+	: $(KVMPOOLDIR) where it can be run from within the VM.
+	: Do not use upgrade.sh from $(KVM_SOURCEDIR) which can be different
+	: and is only used for building pluto.
+	$(KVM_TRANSMOGRIFY) testing/libvirt/$*/upgrade.sh > $@.upgrade.sh
+	$(KVMSH) $(notdir $@) -- \
+		/bin/sh -x /pool/$(notdir $@).upgrade.sh $(KVM_$($*)_UPGRADE_FLAGS)
 	: only shutdown when upgrade works
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
@@ -1021,17 +1025,14 @@ $(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
 		--disk=cache=writeback,path=$@.qcow2 \
 		--import \
 		--noautoconsole
-	: transmogrify $($*) using transmogrify.sh from
-	:   srcdir=$(srcdir)
-	: and not
-	:   KVM_SOURCEDIR=$(KVM_SOURCEDIR)
-	$(KVM_TRANSMOGRIFY) \
-		testing/libvirt/$*/transmogrify.sh \
-		> $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)$*.transmogrify.sh
+	: Copy/transmogrify transmogrify.sh in this directory - $(srcdir) - to
+	: $(KVMPOOLDIR) where it can be run from within the VM.
+	: Do not use upgrade.sh from $(KVM_SOURCEDIR) which can be different
+	: and is only used for building pluto.
+	$(KVM_TRANSMOGRIFY) testing/libvirt/$*/transmogrify.sh > $@.transmogrify.sh
 	$(KVMSH) $(notdir $@) -- \
-		/bin/sh -x \
-		/pool/$(KVM_FIRST_PREFIX)$*.transmogrify.sh
-	: only shutdown when transmogrify succeeds
+		/bin/sh -x /pool/$(notdir $@).transmogrify.sh $(KVM_$($*)_TRANSMOGRIFY_FLAGS)
+	: only shutdown after transmogrify succeeds
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
 

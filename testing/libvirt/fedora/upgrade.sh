@@ -2,6 +2,8 @@
 
 set -xe
 
+PREFIX=@@PREFIX@@
+
 echo disable useless repos
 
 for repo in fedora-modular updates-modular fedora-cisco-openh264 ; do
@@ -30,3 +32,9 @@ install=$(echo "$@" | sed -e 's/--.*//')
 upgrade=$(echo "$@" | sed -e 's/..--//')
 dnf install -y ${install}
 dnf upgrade -y ${upgrade}
+
+# now save the latest kernels
+kernel=$(ls /boot/vmlinuz-* | sort -V | tail -1)
+cp -v ${kernel} /pool/${PREFIX}fedora-upgrade.vmlinuz
+ramfs=$(ls /boot/initramfs-*.img | sort -V | tail -1)
+cp -v ${ramfs} /pool/${PREFIX}fedora-upgrade.initramfs
