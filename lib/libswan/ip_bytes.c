@@ -19,7 +19,7 @@
 #include "ip_bytes.h"
 #include "ip_info.h"
 
-const struct ip_bytes unset_bytes;
+const struct ip_bytes unset_ip_bytes;
 
 /*
  * mashup() notes:
@@ -36,14 +36,14 @@ const struct ip_blit clear_bits = { .and = 0x00, .or = 0x00, };
 const struct ip_blit set_bits = { .and = 0x00/*don't care*/, .or = 0xff, };
 const struct ip_blit keep_bits = { .and = 0xff, .or = 0x00, };
 
-struct ip_bytes bytes_from_blit(const struct ip_info *afi,
-				const struct ip_bytes in,
-				const struct ip_blit *routing_prefix,
-				const struct ip_blit *host_identifier,
-				unsigned prefix_bit_length)
+struct ip_bytes ip_bytes_from_blit(const struct ip_info *afi,
+				   const struct ip_bytes in,
+				   const struct ip_blit *routing_prefix,
+				   const struct ip_blit *host_identifier,
+				   unsigned prefix_bit_length)
 {
 	if (!pexpect(prefix_bit_length <= afi->mask_cnt)) {
-		return unset_bytes;	/* "can't happen" */
+		return unset_ip_bytes;	/* "can't happen" */
 	}
 
 	struct ip_bytes out = in;
@@ -99,11 +99,11 @@ struct ip_bytes bytes_from_blit(const struct ip_info *afi,
  * Calculate l-r using unsigned arithmetic
  */
 
-struct ip_bytes bytes_sub(const struct ip_info *afi,
-			  const struct ip_bytes l,
-			  const struct ip_bytes r)
+struct ip_bytes ip_bytes_sub(const struct ip_info *afi,
+			     const struct ip_bytes l,
+			     const struct ip_bytes r)
 {
-	struct ip_bytes diff = unset_bytes;
+	struct ip_bytes diff = unset_ip_bytes;
 
 	/* subtract: diff = hi - lo */
 	unsigned borrow = 0;
@@ -119,7 +119,7 @@ struct ip_bytes bytes_sub(const struct ip_info *afi,
 	return diff;
 }
 
-int bytes_first_set_bit(const struct ip_info *afi, const struct ip_bytes bytes)
+int ip_bytes_first_set_bit(const struct ip_info *afi, const struct ip_bytes bytes)
 {
 	for (unsigned i = 0; i < afi->ip_size; i++) {
 		uint8_t byte = bytes.byte[i];
@@ -135,9 +135,9 @@ int bytes_first_set_bit(const struct ip_info *afi, const struct ip_bytes bytes)
 	return afi->ip_size * 8;
 }
 
-int bytes_prefix_bits(const struct ip_info *afi,
-		      const struct ip_bytes lo,
-		      const struct ip_bytes hi)
+int ip_bytes_prefix_bits(const struct ip_info *afi,
+			 const struct ip_bytes lo,
+			 const struct ip_bytes hi)
 {
 	/*
 	 * Determine the prefix_bits (the CIDR network part) by
@@ -185,8 +185,8 @@ int bytes_prefix_bits(const struct ip_info *afi,
  * bytes_cmp - compare two raw addresses
  */
 
-int bytes_cmp(enum ip_version l_version, const struct ip_bytes l_bytes,
-	      enum ip_version r_version, const struct ip_bytes r_bytes)
+int ip_bytes_cmp(enum ip_version l_version, const struct ip_bytes l_bytes,
+		 enum ip_version r_version, const struct ip_bytes r_bytes)
 {
 	int cmp = l_version - r_version;
 	if (cmp != 0) {
@@ -197,7 +197,7 @@ int bytes_cmp(enum ip_version l_version, const struct ip_bytes l_bytes,
 	return memcmp(l_bytes.byte, r_bytes.byte, sizeof(l_bytes));
 }
 
-bool bytes_is_zero(const struct ip_bytes *bytes)
+bool ip_bytes_is_zero(const struct ip_bytes *bytes)
 {
-	return thingeq(*bytes, unset_bytes);
+	return thingeq(*bytes, unset_ip_bytes);
 }

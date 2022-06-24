@@ -57,11 +57,11 @@ typedef struct {
 	struct ip_bytes bytes;
 } ip_address;
 
-#define PRI_ADDRESS "<address-%s:IPv%d["PRI_BYTES"]>"
+#define PRI_ADDRESS "<address-%s:IPv%d["PRI_IP_BYTES"]>"
 #define pri_address(A)					\
 		((A)->is_set ? "set" : "unset"),	\
 		(A)->version,				\
-		pri_bytes((A)->bytes)
+		pri_ip_bytes((A)->bytes)
 
 void pexpect_address(const ip_address *a, where_t where);
 #define paddress(A) pexpect_address(A, HERE)

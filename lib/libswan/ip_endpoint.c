@@ -152,7 +152,7 @@ bool endpoint_is_specified(const ip_endpoint endpoint)
 	}
 
 	/* treat any 0 address as suspect */
-	if (thingeq(endpoint.bytes, unset_bytes)) {
+	if (thingeq(endpoint.bytes, unset_ip_bytes)) {
 		/* any address (but we know it is zero) */
 		return false;
 	}

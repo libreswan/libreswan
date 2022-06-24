@@ -35,10 +35,10 @@ struct ip_bytes {
 	uint8_t byte[16];
 };
 
-extern const struct ip_bytes unset_bytes;
+extern const struct ip_bytes unset_ip_bytes;
 
-#define PRI_BYTES "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
-#define pri_bytes(B)							\
+#define PRI_IP_BYTES "%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x%02x"
+#define pri_ip_bytes(B)							\
 	(B).byte[0],							\
 		(B).byte[1],						\
 		(B).byte[2],						\
@@ -65,30 +65,30 @@ extern const struct ip_blit set_bits;
 extern const struct ip_blit clear_bits;
 extern const struct ip_blit keep_bits;
 
-struct ip_bytes bytes_from_blit(const struct ip_info *afi,
-				const struct ip_bytes bytes,
-				const struct ip_blit *routing_prefix,
-				const struct ip_blit *host_id,
-				unsigned nr_prefix_bits);
+struct ip_bytes ip_bytes_from_blit(const struct ip_info *afi,
+				   const struct ip_bytes bytes,
+				   const struct ip_blit *routing_prefix,
+				   const struct ip_blit *host_id,
+				   unsigned nr_prefix_bits);
 
 /* Calculate l-r using unsigned arithmetic */
-struct ip_bytes bytes_sub(const struct ip_info *afi,
-			  const struct ip_bytes l,
-			  const struct ip_bytes r);
+struct ip_bytes ip_bytes_sub(const struct ip_info *afi,
+			     const struct ip_bytes l,
+			     const struct ip_bytes r);
 
 /* find first non-zero bit from left */
-int bytes_first_set_bit(const struct ip_info *afi,
-			const struct ip_bytes bytes);
+int ip_bytes_first_set_bit(const struct ip_info *afi,
+			   const struct ip_bytes bytes);
 
 /* match prefixes, or -1 */
-int bytes_prefix_bits(const struct ip_info *afi,
-		      const struct ip_bytes lo,
-		      const struct ip_bytes hi);
+int ip_bytes_prefix_bits(const struct ip_info *afi,
+			 const struct ip_bytes lo,
+			 const struct ip_bytes hi);
 
-int bytes_cmp(enum ip_version l_version, const struct ip_bytes l_bytes,
-	      enum ip_version r_version, const struct ip_bytes r_bytes);
+int ip_bytes_cmp(enum ip_version l_version, const struct ip_bytes l_bytes,
+		 enum ip_version r_version, const struct ip_bytes r_bytes);
 
-bool bytes_is_zero(const struct ip_bytes *bytes);
+bool ip_bytes_is_zero(const struct ip_bytes *bytes);
 
 #define IP_INFO_UNSET(IP)			\
 	(IP == NULL ? "null" :			\

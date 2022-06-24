@@ -63,7 +63,7 @@ bool selector_contains_one_address(const ip_selector selector)
 	}
 
 	/* Unlike subnetishost() this rejects 0.0.0.0/32. */
-	return (!thingeq(selector.bytes, unset_bytes) &&
+	return (!thingeq(selector.bytes, unset_ip_bytes) &&
 		selector.maskbits == afi->mask_cnt &&
 		selector.ipproto == 0 &&
 		selector.hport == 0);
@@ -370,14 +370,14 @@ ip_range selector_range(const ip_selector selector)
 		return unset_range;
 	}
 
-	struct ip_bytes start = bytes_from_blit(afi, selector.bytes,
-						/*routing-prefix*/&keep_bits,
-						/*host-identifier*/&clear_bits,
-						selector.maskbits);
-	struct ip_bytes end = bytes_from_blit(afi, selector.bytes,
-					      /*routing-prefix*/&keep_bits,
-					      /*host-identifier*/&set_bits,
-					      selector.maskbits);
+	struct ip_bytes start = ip_bytes_from_blit(afi, selector.bytes,
+						   /*routing-prefix*/&keep_bits,
+						   /*host-identifier*/&clear_bits,
+						   selector.maskbits);
+	struct ip_bytes end = ip_bytes_from_blit(afi, selector.bytes,
+						 /*routing-prefix*/&keep_bits,
+						 /*host-identifier*/&set_bits,
+						 selector.maskbits);
 	return range_from_raw(HERE, afi->ip_version, start, end);
 }
 
@@ -405,10 +405,10 @@ ip_address selector_prefix_mask(const ip_selector selector)
 		return unset_address;
 	}
 
-	struct ip_bytes prefix = bytes_from_blit(afi, selector.bytes,
-						 /*routing-prefix*/ &set_bits,
-						 /*host-identifier*/ &clear_bits,
-						 selector.maskbits);
+	struct ip_bytes prefix = ip_bytes_from_blit(afi, selector.bytes,
+						    /*routing-prefix*/ &set_bits,
+						    /*host-identifier*/ &clear_bits,
+						    selector.maskbits);
 	return address_from_raw(HERE, afi->ip_version, prefix);
 }
 
@@ -475,11 +475,11 @@ bool selector_in_selector(const ip_selector i, const ip_selector o)
 	}
 
 	/* ib=i.prefix[0 .. o.bits] == ob=o.prefix[0 .. o.bits] */
-	struct ip_bytes ib = bytes_from_blit(afi,
-					     /*INNER*/i.bytes,
-					     /*routing-prefix*/&keep_bits,
-					     /*host-identifier*/&clear_bits,
-					     /*OUTER*/o.maskbits);
+	struct ip_bytes ib = ip_bytes_from_blit(afi,
+						/*INNER*/i.bytes,
+						/*routing-prefix*/&keep_bits,
+						/*host-identifier*/&clear_bits,
+						/*OUTER*/o.maskbits);
 	if (!thingeq(ib, o.bytes)) {
 		return false;
 	}
@@ -625,11 +625,11 @@ err_t numeric_to_selector(shunk_t input,
 		return "missing prefix bit size";
 	}
 
-	struct ip_bytes host = bytes_from_blit(afi, address.bytes,
-					       /*routing-prefix*/&clear_bits,
-					       /*host-identifier*/&keep_bits,
-					       prefix_bits);
-	if (!thingeq(host, unset_bytes)) {
+	struct ip_bytes host = ip_bytes_from_blit(afi, address.bytes,
+						  /*routing-prefix*/&clear_bits,
+						  /*host-identifier*/&keep_bits,
+						  prefix_bits);
+	if (!thingeq(host, unset_ip_bytes)) {
 		return "host-identifier must be zero";
 	}
 

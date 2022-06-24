@@ -126,7 +126,7 @@ static bool tryhex(shunk_t hex,
 
 static err_t trydotted(shunk_t src, ip_address *dst)
 {
-	struct ip_bytes bytes = unset_bytes;
+	struct ip_bytes bytes = unset_ip_bytes;
 
 	shunk_t cursor = src;
 	for (unsigned b = 0; b < 4 && cursor.ptr != NULL /* more-input */; b++) {
@@ -237,7 +237,7 @@ static err_t trydotted(shunk_t src, ip_address *dst)
 static err_t colon(shunk_t src, ip_address *dst)
 {
 	shunk_t cursor = src;
-	struct ip_bytes u = unset_bytes;
+	struct ip_bytes u = unset_ip_bytes;
 #       define  IT      "IPv6 numeric address"
 
 	int gapat = -1;	/* where was empty piece seen */

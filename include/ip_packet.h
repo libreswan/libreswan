@@ -46,14 +46,14 @@ typedef struct {
 	/*XXX sec_label?*/
 } ip_packet;
 
-#define PRI_PACKET "<packet-%s:%s["PRI_BYTES"]:%u-%s->["PRI_BYTES"]:%u>"
+#define PRI_PACKET "<packet-%s:%s["PRI_IP_BYTES"]:%u-%s->["PRI_IP_BYTES"]:%u>"
 #define pri_packet(S)							\
 		((S)->is_set ? "set" : "unset"),			\
 		(S)->info != NULL ? (S)->info->ip_name : "IPv?",	\
-		pri_bytes((S)->src.bytes),				\
+		pri_ip_bytes((S)->src.bytes),				\
 		(S)->src.hport,						\
 		(S)->protocol != NULL ? (S)->protocol->name : "<null>",	\
-		pri_bytes((S)->dst.bytes),				\
+		pri_ip_bytes((S)->dst.bytes),				\
 		(S)->dst.hport
 
 void pexpect_packet(const ip_packet *s, where_t where);

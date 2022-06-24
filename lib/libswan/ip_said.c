@@ -98,7 +98,7 @@ size_t jam_said(struct jambuf *buf, const ip_said *said)
 
 	if (proto == &ip_protocol_ipip/*TUN*/ &&
 	    said->spi == PASSTHROUGHSPI &&
-	    /* any zero */ thingeq(said->dst, unset_bytes)) {
+	    /* any zero */ thingeq(said->dst, unset_ip_bytes)) {
 		return jam_string(buf, (afi == &ipv4_info ? PASSTHROUGH4NAME :
 					afi == &ipv6_info ? PASSTHROUGH6NAME :
 					"<unknown-said-version>"));;

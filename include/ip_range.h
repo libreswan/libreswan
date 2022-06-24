@@ -31,12 +31,12 @@ typedef struct {
 	struct ip_bytes end;
 } ip_range;
 
-#define PRI_RANGE "<range-%s:IPv%d["PRI_BYTES"]->["PRI_BYTES"]>"
+#define PRI_RANGE "<range-%s:IPv%d["PRI_IP_BYTES"]->["PRI_IP_BYTES"]>"
 #define pri_range(R)					\
 		((R)->is_set ? "set" : "unset"),	\
 		(R)->version,				\
-		pri_bytes((R)->start),			\
-		pri_bytes((R)->end)
+		pri_ip_bytes((R)->start),		\
+		pri_ip_bytes((R)->end)
 
 void pexpect_range(const ip_range *r, where_t where);
 #define prange(R) pexpect_range(R, HERE)

@@ -155,8 +155,8 @@ void pexpect_packet(const ip_packet *packet, where_t where)
 
 	if (packet->info == NULL ||
 	    packet->protocol == NULL ||
-	    bytes_is_zero(&packet->src.bytes) ||
-	    bytes_is_zero(&packet->dst.bytes) ||
+	    ip_bytes_is_zero(&packet->src.bytes) ||
+	    ip_bytes_is_zero(&packet->dst.bytes) ||
 	    /*
 	     * An acquire triggered by a packet with no specified
 	     * source port will have a zero source port.

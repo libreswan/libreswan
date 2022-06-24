@@ -34,11 +34,11 @@ typedef struct {
 	unsigned prefix_bits;
 } ip_cidr;
 
-#define PRI_CIDR "<cidr-%s:IPv%d["PRI_BYTES"]/%u>"
+#define PRI_CIDR "<cidr-%s:IPv%d["PRI_IP_BYTES"]/%u>"
 #define pri_cidr(A)							\
 		((A).is_set ? "set" : "unset"),				\
 		(A).version,						\
-		pri_bytes((A).bytes),					\
+		pri_ip_bytes((A).bytes),					\
 		(A).prefix_bits
 
 void pexpect_cidr(const ip_cidr a, where_t where);

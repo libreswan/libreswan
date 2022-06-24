@@ -65,13 +65,13 @@ typedef struct {
 	int hport;
 } ip_selector;
 
-#define PRI_SELECTOR "<selector-%s:IPv%d,%s["PRI_BYTES"]:%u/%u>"
+#define PRI_SELECTOR "<selector-%s:IPv%d,%s["PRI_IP_BYTES"]:%u/%u>"
 #define pri_selector(S)						\
 		((S)->is_set ? "set" : "unset"),		\
 		(S)->version,					\
 		((S)->ipproto > 255 ? "IPPROTO>255" :		\
 		 protocol_by_ipproto((S)->ipproto)->name),	\
-		pri_bytes((S)->bytes),				\
+		pri_ip_bytes((S)->bytes),			\
 		(S)->hport,					\
 		(S)->maskbits
 

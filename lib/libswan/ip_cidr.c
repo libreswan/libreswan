@@ -81,11 +81,11 @@ err_t cidr_specified(const ip_cidr cidr)
 
 	/* https://en.wikipedia.org/wiki/IPv6_address#Special_addresses */
 	/* ::/0 and/or 0.0.0.0/0 */
-	if (cidr.prefix_bits == 0 && thingeq(cidr.bytes, unset_bytes)) {
+	if (cidr.prefix_bits == 0 && thingeq(cidr.bytes, unset_ip_bytes)) {
 		return "default route (no specific route)";
 	}
 
-	if (thingeq(cidr.bytes, unset_bytes)) {
+	if (thingeq(cidr.bytes, unset_ip_bytes)) {
 		return "unspecified address";
 	}
 

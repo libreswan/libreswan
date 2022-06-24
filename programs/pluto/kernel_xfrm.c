@@ -1650,7 +1650,7 @@ static bool xfrm_del_ipsec_spi(ipsec_spi_t spi,
 static struct ip_bytes bytes_from_xfrm_address(const struct ip_info *afi,
 					       const xfrm_address_t *xaddr)
 {
-	struct ip_bytes bytes = unset_bytes; /* "zero" it & set type */
+	struct ip_bytes bytes = unset_ip_bytes; /* "zero" it & set type */
 	memcpy(&bytes, xaddr, afi->ip_size);
 	return bytes;
 }
