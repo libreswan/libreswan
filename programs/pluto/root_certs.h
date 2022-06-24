@@ -1,6 +1,6 @@
 /* Root Certificate Cache, for libreswan
  *
- * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2019,2022 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -28,8 +28,13 @@ struct root_certs {
 	CERTCertList *trustcl;
 };
 
-struct root_certs *root_certs_addref(where_t where);
-void root_certs_delref(struct root_certs **, where_t where);
+struct root_certs *root_certs_addref_where(where_t where);
+#define root_certs_addref() root_certs_addref_where(HERE)
+
+void root_certs_delref_where(struct root_certs **, where_t where);
+#define root_certs_delref(ROOT_CERTS) root_certs_delref_where(ROOT_CERTS, HERE)
+
+
 bool root_certs_empty(const struct root_certs *);
 
 #endif

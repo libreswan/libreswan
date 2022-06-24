@@ -34,7 +34,7 @@ static void root_certs_free(void *obj, where_t unused_where UNUSED)
 	pfreeany(root_certs);
 }
 
-struct root_certs *root_certs_addref(where_t where)
+struct root_certs *root_certs_addref_where(where_t where)
 {
 	passert(in_main_thread());
 
@@ -105,8 +105,7 @@ struct root_certs *root_certs_addref(where_t where)
 	return root_certs;
 }
 
-void root_certs_delref(struct root_certs **root_certs,
-			where_t where)
+void root_certs_delref_where(struct root_certs **root_certs, where_t where)
 {
 	delref_where(root_certs, where);
 }
@@ -153,7 +152,7 @@ void free_root_certs(struct logger *logger)
 		/* extend or set cert cache lifetime */
 		schedule_oneshot_timer(EVENT_FREE_ROOT_CERTS, FREE_ROOT_CERTS_TIMEOUT);
 	} else {
-		root_certs_delref(&root_cert_db, HERE);
+		root_certs_delref(&root_cert_db);
 		pexpect(root_cert_db == NULL);
 	}
 }
