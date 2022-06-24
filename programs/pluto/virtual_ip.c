@@ -489,12 +489,12 @@ void show_virtual_private(struct show *s)
 	}
 }
 
-struct virtual_ip *virtual_ip_addref(struct virtual_ip *vip, where_t where)
+struct virtual_ip *virtual_ip_addref_where(struct virtual_ip *vip, where_t where)
 {
 	return addref_where(vip, where);
 }
 
-void virtual_ip_delref(struct virtual_ip **vip, where_t where)
+void virtual_ip_delref_where(struct virtual_ip **vip, where_t where)
 {
 	delref_where(vip, where);
 }

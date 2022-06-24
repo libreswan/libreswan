@@ -1142,7 +1142,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 			c->spd.that.client = *remote_client;
 			rehash_db_spd_route_remote_client(&c->spd);
 			c->spd.that.has_client = true;
-			virtual_ip_delref(&c->spd.that.virt, HERE);
+			virtual_ip_delref(&c->spd.that.virt);
 
 			if (selector_eq_address(*remote_client, c->remote->host.addr)) {
 				c->spd.that.has_client = false;

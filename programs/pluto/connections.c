@@ -141,7 +141,7 @@ void release_connection(struct connection *c)
 static void delete_end(struct end *e)
 {
 	free_chunk_content(&e->sec_label);
-	virtual_ip_delref(&e->virt, HERE);
+	virtual_ip_delref(&e->virt);
 }
 
 static void delete_spd_route(struct spd_route **sr, bool first, bool valid)
@@ -756,7 +756,7 @@ static char *format_connection(char *buf, size_t buf_len,
 /* spd_route's with end's get copied in xauth.c */
 void unshare_connection_end(struct connection *c, struct end *e)
 {
-	e->virt = virtual_ip_addref(e->virt, HERE);
+	e->virt = virtual_ip_addref(e->virt);
 	pexpect(e->sec_label.ptr == NULL);
 	e->host = &c->end[e->config->index].host;
 }
@@ -2501,7 +2501,7 @@ struct connection *add_group_instance(struct connection *group,
 
 	if (t->spd.that.virt != NULL) {
 		DBG_log("virtual_ip not supported in group instance; ignored");
-		virtual_ip_delref(&t->spd.that.virt, HERE);
+		virtual_ip_delref(&t->spd.that.virt);
 	}
 
 	unshare_connection(t, group);
