@@ -21,20 +21,18 @@
 #include "lswalloc.h"		/* for clone_bytes() */
 #include "hunk.h"
 
-char *clone_bytes_as_string(const void *ptr, size_t len, const char *name)
+char *clone_bytes_as_string(const void *ptr, size_t maxlen, const char *name)
 {
 	if (ptr == NULL) {
 		return NULL;
 	}
 
-	/* NUL terminated (could also contain NULs, oops)? */
-	const char *in = ptr;
-	if (len > 0 && in[len - 1] == '\0') {
-		return clone_bytes(in, len, name);
-	}
+	/* Look for terminating NULL, if there is one */
+	size_t len = strnlen(ptr, maxlen);
 
 	char *out = alloc_things(char, len + 1, name);
 	memcpy(out, ptr, len);
+	out[maxlen] = '\0'; /* also done by alloc_things() */
 	return out;
 }
 
