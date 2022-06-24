@@ -1192,9 +1192,9 @@ void delete_state_tail(struct state *st)
 #ifdef USE_IKEv1
 	ikev1_clear_msgid_list(st);
 #endif
-	pubkey_delref(&st->st_peer_pubkey, HERE);
-	free_eap_state(&st->st_eap);
+	pubkey_delref(&st->st_peer_pubkey);
 	md_delref(&st->st_eap_sa_md);
+	free_eap_state(&st->st_eap);
 
 	free_ikev2_proposals(&st->st_v2_create_child_sa_proposals);
 	free_ikev2_proposal(&st->st_v2_accepted_proposal);

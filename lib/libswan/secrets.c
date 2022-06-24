@@ -1022,7 +1022,7 @@ void lsw_load_preshared_secrets(struct secret **psecrets, const char *secrets_fi
 	process_secrets_file(&flp, psecrets, secrets_file);
 }
 
-struct pubkey *pubkey_addref(struct pubkey *pk, where_t where)
+struct pubkey *pubkey_addref_where(struct pubkey *pk, where_t where)
 {
 	return addref_where(pk, where);
 }
@@ -1039,7 +1039,7 @@ static void free_pubkey(void *obj, where_t where UNUSED)
 	pfree(pk);
 }
 
-void pubkey_delref(struct pubkey **pkp, where_t where)
+void pubkey_delref_where(struct pubkey **pkp, where_t where)
 {
 	delref_where(pkp, where);
 }
@@ -1053,7 +1053,7 @@ struct pubkey_list *free_public_keyentry(struct pubkey_list *p)
 	struct pubkey_list *nxt = p->next;
 
 	if (p->key != NULL)
-		pubkey_delref(&p->key, HERE);
+		pubkey_delref_where(&p->key, HERE);
 	pfree(p);
 	return nxt;
 }
@@ -1191,7 +1191,7 @@ err_t add_public_key(const struct id *id, /* ASKK */
 					     null_shunk,	/* raw keys have no issuer */
 					     size, HERE);
 	if (pkp != NULL) {
-		*pkp = pubkey_addref(pubkey, HERE);
+		*pkp = pubkey_addref(pubkey);
 	}
 	install_public_key(&pubkey, head);
 	passert(pubkey == NULL); /* stolen */

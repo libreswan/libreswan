@@ -268,8 +268,10 @@ void delete_public_keys(struct pubkey_list **head,
 			const struct pubkey_type *type);
 extern void form_keyid(chunk_t e, chunk_t n, keyid_t *keyid, size_t *keysize); /*XXX: make static? */
 
-struct pubkey *pubkey_addref(struct pubkey *pk, where_t where);
-extern void pubkey_delref(struct pubkey **pkp, where_t where);
+struct pubkey *pubkey_addref_where(struct pubkey *pk, where_t where);
+#define pubkey_addref(PK) pubkey_addref_where(PK, HERE)
+extern void pubkey_delref_where(struct pubkey **pkp, where_t where);
+#define pubkey_delref(PKP) pubkey_delref_where(PKP, HERE)
 
 extern bool same_RSA_public_key(const struct RSA_public_key *a,
 				const struct RSA_public_key *b);

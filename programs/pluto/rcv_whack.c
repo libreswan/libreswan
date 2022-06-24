@@ -330,7 +330,7 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 		/* try to pre-load the private key */
 		bool load_needed;
 		const ckaid_t *ckaid = pubkey_ckaid(pubkey);
-		pubkey_delref(&pubkey, HERE);
+		pubkey_delref(&pubkey);
 		err_t err = preload_private_key_by_ckaid(ckaid, &load_needed, logger);
 		if (err != NULL) {
 			dbg("no private key: %s", err);

@@ -391,8 +391,8 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 			jam(buf, "'");
 		}
 	}
-	pubkey_delref(&ike->sa.st_peer_pubkey, HERE);
-	ike->sa.st_peer_pubkey = pubkey_addref(s.key, HERE);
+	pubkey_delref(&ike->sa.st_peer_pubkey);
+	ike->sa.st_peer_pubkey = pubkey_addref(s.key);
 	return NULL;
 }
 
