@@ -150,8 +150,12 @@ struct raw_iface *find_raw_ifaces(const struct ip_info *afi, struct logger *logg
 		 * use that to advance the buffer pointer.
 		 *
 		 * While NetBSD an Linux can use sizeof(struct ifreq)
-		 * directly, FreeBSD and OpenBSD need to look at
-		 * .sa_len (but eqn works on NetBSD).
+		 * directly, FreeBSD, OpenBSD and Darwin need to look
+		 * at .sa_len (equation, below, also also works on
+		 * NetBSD).
+		 *
+		 * Darwin defines the macro _SIZEOF_ADDR_IFREQ() in
+		 * <net/if.h> with an equivalent equation.
 		 */
 #ifdef USE_SOCKADDR_LEN
 		ifrp += (ifr->ifr_ifru.ifru_addr.sa_len <= sizeof(ifr->ifr_ifru) ? sizeof(struct ifreq) :
