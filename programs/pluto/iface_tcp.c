@@ -54,9 +54,7 @@
 #if defined(linux)
 # ifndef GLIBC_KERN_FLIP_HEADERS
 #  include "linux/xfrm.h" /* local (if configured) or system copy */
-#  include "libreswan.h"
 # else
-#  include "libreswan.h"
 #  include "linux/xfrm.h" /* local (if configured) or system copy */
 # endif
 #endif

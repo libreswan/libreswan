@@ -26,6 +26,9 @@
 #include "where.h"
 #include "ip_bytes.h"
 
+struct in_addr;
+struct in6_addr;
+
 struct jambuf;
 struct ip_info;
 

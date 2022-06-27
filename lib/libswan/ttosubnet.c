@@ -18,7 +18,6 @@
 #include <string.h>
 
 #include "ip_subnet.h"
-#include "libreswan.h"		/* for ttoulb() */
 #include "ip_info.h" 	/* ipv6_info */
 #include "lswlog.h"	/* for dbg() */
 #include "ip_protocol.h"

@@ -30,7 +30,6 @@
 #include <assert.h>
 #include <poll.h>
 
-#include <libreswan.h>
 #include <pcap.h>
 
 #include "libreswan/pfkeyv2.h"

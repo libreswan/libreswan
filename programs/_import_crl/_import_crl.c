@@ -16,7 +16,6 @@
  */
 
 #include <unistd.h>
-#include <libreswan.h>
 #include <prlong.h>
 #include <secder.h>
 #include <errno.h>

@@ -2,7 +2,6 @@
  * names_constant.h
  */
 #include <sys/types.h>
-#include <libreswan.h>
 
 extern enum_names ip_protocol_id_names;	/* aka ipproto_*; in ip_protocol.c */
 

@@ -33,12 +33,7 @@
 #include <stdint.h>		/* for uintmax_t */
 
 #include "lset.h"
-
-#ifndef _LIBRESWAN_H
-#include "libreswan.h"
 #include "constants.h"
-#endif
-
 
 /*
  * These are global configuration strings.

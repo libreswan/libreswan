@@ -35,10 +35,6 @@
 #include <string.h>
 #include <assert.h>
 #include <getopt.h>
-#include <libreswan.h>
-#include "lswalloc.h"
-//#include "secrets.h"
-
 #include <prerror.h>
 #include <prinit.h>
 #include <prmem.h>

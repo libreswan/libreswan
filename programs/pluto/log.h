@@ -20,8 +20,6 @@
 #ifndef _PLUTO_LOG_H
 #define _PLUTO_LOG_H
 
-#include <libreswan.h>
-
 #include "lswcdefs.h"
 #include "lswlog.h"
 #include "fd.h"

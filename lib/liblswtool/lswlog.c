@@ -28,8 +28,6 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include <libreswan.h>
-
 #include "constants.h"
 #include "lswtool.h"
 #include "lswlog.h"

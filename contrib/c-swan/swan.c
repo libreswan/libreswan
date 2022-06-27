@@ -30,7 +30,7 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <netdb.h>
-#include "libreswan.h"
+
 #include "swan.h"
 
 #define COMMAND_BUFFER	65536	/* Max length of "ip xfrm" output */

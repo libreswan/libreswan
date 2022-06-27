@@ -28,8 +28,6 @@
 #include <arpa/inet.h>
 #include <getopt.h>
 #include <assert.h>
-
-#include <libreswan.h>
 #include <stdarg.h>
 
 #include "sysdep.h"

@@ -34,7 +34,6 @@
 #include <errno.h>
 #include <string.h>
 #include <getopt.h>
-#include <libreswan.h>
 
 #include <prerror.h>
 #include <prinit.h>
