@@ -40,6 +40,7 @@
 #include <getopt.h>
 #include <unistd.h>	/* for unlink(), write(), close(), access(), et.al. */
 
+#include "lswversion.h"
 #include "lswconf.h"
 #include "lswfips.h"
 #include "lswnss.h"

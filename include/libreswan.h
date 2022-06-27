@@ -49,12 +49,6 @@ typedef uint32_t ipsec_spi_t;
 #define PRI_IPSEC_SPI "%08x"
 #define pri_ipsec_spi(SPI) ntohl(SPI)
 
-/* odds and ends */
-extern const char *ipsec_version_code(void);
-extern const char *ipsec_version_vendorid(void);
-extern const char *ipsec_version_string(void);
-extern const char libreswan_vendorid[];
-
 /* end of obsolete functions */
 
 /* syntax for passthrough SA */

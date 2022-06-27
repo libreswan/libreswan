@@ -46,7 +46,7 @@
 #include <limits.h>	/* for INT_MAX */
 
 #include "ttodata.h"
-
+#include "lswversion.h"
 #include "lswtool.h"
 #include "sysdep.h"
 #include "constants.h"

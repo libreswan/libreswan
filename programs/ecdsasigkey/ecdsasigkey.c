@@ -35,8 +35,6 @@
 #include <string.h>
 #include <getopt.h>
 #include <libreswan.h>
-#include "lswalloc.h"
-//#include "secrets.h"
 
 #include <prerror.h>
 #include <prinit.h>
@@ -55,6 +53,7 @@
 
 #include "ttodata.h"
 #include "constants.h"
+#include "lswversion.h"
 #include "lswalloc.h"
 #include "lswlog.h"
 #include "lswtool.h"

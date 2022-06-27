@@ -15,39 +15,14 @@
  *
  */
 
-#ifdef __KERNEL__
-# include <linux/version.h>
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 38) && \
-	!defined(AUTOCONF_INCLUDED)
-#  include <linux/config.h>
-# endif
-# define __NO_VERSION__
-# include <linux/module.h>
-# if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 0) && LINUX_VERSION_CODE >= \
-	KERNEL_VERSION(2, 4, 26)
-#  include <linux/moduleparam.h>
-# endif
-#endif
-
-#include "libreswan.h"
+#include "lswversion.h"
 
 #define V       "@IPSECVERSION@"        /* substituted in by Makefile */
 #define VID    "@IPSECVIDVERSION@"     /* substituted in by Makefile */
 #define OUR_VENDOR_VID    "OE-Libreswan-@IPSECVIDVERSION@"     /* substituted in by Makefile */
 static const char libreswan_number[] = V;
 static const char libreswan_string[] = "Libreswan " V;
-#ifdef __KERNEL__
-static
-#endif
 const char libreswan_vendorid[] = OUR_VENDOR_VID;
-
-
-/*
- * pass version to modinfo
- */
-#ifdef MODULE_VERSION
-MODULE_VERSION(V);
-#endif
 
 const char *ipsec_version_code(void)
 {

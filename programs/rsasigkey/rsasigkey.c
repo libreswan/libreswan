@@ -56,6 +56,7 @@
 
 #include "ttodata.h"
 #include "constants.h"
+#include "lswversion.h"
 #include "lswalloc.h"
 #include "lswlog.h"
 #include "lswtool.h"
