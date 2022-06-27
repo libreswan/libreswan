@@ -36,19 +36,6 @@
 # endif
 #endif
 
-/*
- * And the SA ID stuff.
- *
- * The value is in network order.
- *
- * XXX: Like IKE SPIs it should be hunk like byte array so that the
- * network ordering is enforced.
- */
-
-typedef uint32_t ipsec_spi_t;
-#define PRI_IPSEC_SPI "%08x"
-#define pri_ipsec_spi(SPI) ntohl(SPI)
-
 /* end of obsolete functions */
 
 /* syntax for passthrough SA */

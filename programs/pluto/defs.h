@@ -25,6 +25,8 @@
 #include "lswalloc.h"
 #include "realtime.h"
 
+#include "ipsec_spi.h"
+
 /*
  * Per-connection unique ID.
  *
