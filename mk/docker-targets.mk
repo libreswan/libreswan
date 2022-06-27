@@ -32,7 +32,6 @@ DISTRO_REL ?= 32	# default release
 D_USE_UNBOUND_EVENT_H_COPY ?= true
 D_USE_DNSSEC ?= false
 D_USE_NSS_IPSEC_PROFILE ?= flase
-D_USE_GLIBC_KERN_FLIP_HEADERS ?= true
 D_USE_NSS_AVA_COPY ?= true
 
 DOCKERFILE ?= $(D)/dockerfile

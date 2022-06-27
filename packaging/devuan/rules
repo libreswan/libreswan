@@ -22,7 +22,6 @@ endif
 # Distribution & Release sepcfic config option.
 DISTRO_CONF =
 DISTRO_CONF += $(shell grep -qE 'jessie|stretch|xenial' /etc/os-release && echo USE_DNSSEC=false)
-DISTRO_CONF += $(shell grep -qE 'jessie|xenial' /etc/os-release && echo USE_GLIBC_KERN_FLIP_HEADERS=true)
 DISTRO_CONF += $(shell grep -qE 'bionic|cosmic|jessie|stretch|xenial' /etc/os-release && echo USE_NSS_IPSEC_PROFILE=false)
 DISTRO_CONF += $(shell grep -qE 'jessie|stretch|xenial' /etc/os-release && echo USE_NSS_AVA_COPY=true)
 DISTRO_CONF += $(shell grep -qE 'jessie|stretch' /etc/os-release && echo USE_DH31=false)

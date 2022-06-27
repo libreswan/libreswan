@@ -50,13 +50,9 @@
 #include "ip_info.h"
 #include "pluto_stats.h"
 
-/* work around weird combo's of glibc and kernel header conflicts */
-#if defined(linux)
-# ifndef GLIBC_KERN_FLIP_HEADERS
-#  include "linux/xfrm.h" /* local (if configured) or system copy */
-# else
-#  include "linux/xfrm.h" /* local (if configured) or system copy */
-# endif
+/* for xfrm_userpolicy_info */
+#ifdef __linux__
+# include "linux/xfrm.h" /* local (if configured) or system copy */
 #endif
 
 static void accept_ike_in_tcp_cb(int accepted_fd, ip_sockaddr *sockaddr,

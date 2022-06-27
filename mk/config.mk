@@ -344,11 +344,6 @@ USERLAND_CFLAGS += -DXFRM_LIFETIME_DEFAULT=$(XFRM_LIFETIME_DEFAULT)
 
 USE_XFRM_INTERFACE_IFLA_HEADER ?= false
 
-# Some systems have a bogus combination of glibc and kernel-headers which
-# causes a conflict in the IPv6 defines. Try enabling this option as a workaround
-# when you see errors related to 'struct in6_addr'
-USE_GLIBC_KERN_FLIP_HEADERS ?= false
-
 # When compiling on a system where unbound is missing the required unbound-event.h
 # include file, enable this workaround option that will enable an included copy of
 # this file as shipped with libreswan. The copy is taken from unbound 1.6.0.

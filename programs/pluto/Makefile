@@ -99,10 +99,6 @@ USERLAND_INCLUDES += -I${LIBRESWANSRCDIR}/programs/pluto/linux-extra-if-link
 endif
 endif
 
-ifeq ($(USE_GLIBC_KERN_FLIP_HEADERS),true)
-USERLAND_CFLAGS += -DGLIBC_KERN_FLIP_HEADERS
-endif
-
 # kernel
 
 OBJS += kernel.o

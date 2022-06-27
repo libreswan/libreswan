@@ -1,12 +1,7 @@
 #ifndef _NETLINK_H
 # define _NETLINK_H
 
-/* work around weird combo's of glibc and kernel header conflicts */
-#ifndef GLIBC_KERN_FLIP_HEADERS
 # include "linux/xfrm.h" /* local (if configured) or system copy */
-#else
-# include "linux/xfrm.h" /* local (if configured) or system copy */
-#endif
 
 #include <linux/netlink.h>
 
