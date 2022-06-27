@@ -17,7 +17,8 @@
 
 #include <string.h>
 
-#include "libreswan.h"
+#include "ttodata.h"
+
 #include "hunk.h"		/* for char_to_lower() */
 
 /* converters and misc */

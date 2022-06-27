@@ -24,6 +24,7 @@
 #include "lswalloc.h"
 #include "lswlog.h"
 #include "secrets.h"
+#include "ttodata.h"
 
 /*
  * Deal with RFC Resource Records as defined in rfc3110 (nee rfc2537).

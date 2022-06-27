@@ -23,6 +23,8 @@
 # error this file should only be compiled when DNSSEC is defined
 #endif
 
+#include "ttodata.h"
+
 #include "defs.h"
 #include "log.h"
 #include <ldns/ldns.h>		/* rpm:ldns-devel deb:libldns-dev */

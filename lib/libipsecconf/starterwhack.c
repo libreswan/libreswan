@@ -34,15 +34,11 @@
 #include <errno.h>
 
 #include "sysdep.h"
+#include "ttodata.h"
 
 #include "ipsecconf/starterwhack.h"
 #include "ipsecconf/confread.h"
 #include "ipsecconf/starterlog.h"
-
-#ifndef _LIBRESWAN_H
-#include <libreswan.h>	/* FIXME: ugly include lines */
-#include "constants.h"
-#endif
 
 #include "lswalloc.h"
 #include "lswlog.h"

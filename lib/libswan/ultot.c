@@ -15,7 +15,7 @@
 
 #include <string.h>
 
-#include "libreswan.h"
+#include "ttodata.h"
 
 /*
    - ultot - convert unsigned long to text

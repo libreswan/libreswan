@@ -42,6 +42,7 @@
 #include "constants.h"
 #include "lswalloc.h"
 #include "pem.h"
+#include "ttodata.h"
 
 #include <pk11pub.h>
 #include <prmem.h>

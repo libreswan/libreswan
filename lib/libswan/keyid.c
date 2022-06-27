@@ -17,7 +17,7 @@
 #include <string.h>
 
 #include "keyid.h"
-#include "libreswan.h"		/* for datatot() */
+#include "ttodata.h"		/* for datatot() */
 
 const keyid_t empty_keyid;
 

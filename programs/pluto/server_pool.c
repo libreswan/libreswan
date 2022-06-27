@@ -31,6 +31,8 @@
 #include <unistd.h>	/* for sleep() */
 #include <limits.h>	/* for UINT_MAX, ULONG_MAX */
 
+#include "ttodata.h"
+
 #include "defs.h"
 #include "log.h"
 #include "state.h"

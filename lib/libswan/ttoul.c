@@ -17,7 +17,7 @@
 #include <limits.h>		/* for ULONG_MAX */
 #include <string.h>
 
-#include "libreswan.h"
+#include "ttodata.h"
 
 /*
  * ttoul - convert text substring to unsigned long number

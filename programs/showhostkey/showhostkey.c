@@ -47,6 +47,7 @@
 # define ns_t_ipseckey 45
 #endif
 
+#include "ttodata.h"
 #include "constants.h"
 #include "lswlog.h"
 #include "lswalloc.h"

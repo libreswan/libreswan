@@ -45,7 +45,7 @@
 #include <assert.h>
 #include <limits.h>	/* for INT_MAX */
 
-#include <libreswan.h>
+#include "ttodata.h"
 
 #include "lswtool.h"
 #include "sysdep.h"

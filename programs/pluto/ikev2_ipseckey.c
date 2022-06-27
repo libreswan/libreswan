@@ -25,6 +25,12 @@
 
 #include <arpa/inet.h>	/* for inet_ntop */
 #include <arpa/nameser.h>
+
+#include "ttodata.h"
+#include "ip_address.h"
+#include "ip_info.h"
+#include "id.h"
+
 #include "defs.h"
 #include "log.h"
 #include "constants.h"	/* for demux.h */
@@ -32,14 +38,11 @@
 #include "state.h"
 #include "connections.h"
 #include "dnssec.h"	/* for lswub_resolve_event_secure_kind */
-#include "id.h"
 #include "ikev2.h"
 #include "ikev2_ipseckey.h"
 #include "ikev2_ipseckey_dnsr.h"
 #include "keys.h"
 #include "secrets.h"
-#include "ip_address.h"
-#include "ip_info.h"
 #include "ikev2_ike_auth.h"
 
 #define LDNS_RR_TYPE_A 1

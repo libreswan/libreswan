@@ -40,6 +40,7 @@
 #include "ip_info.h"
 #include "hunk.h"		/* for char_is_space() */
 #include "ip_cidr.h"
+#include "ttodata.h"
 
 #include "ipsecconf/confread.h"
 #include "ipsecconf/starterlog.h"

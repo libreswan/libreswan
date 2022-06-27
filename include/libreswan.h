@@ -49,29 +49,6 @@ typedef uint32_t ipsec_spi_t;
 #define PRI_IPSEC_SPI "%08x"
 #define pri_ipsec_spi(SPI) ntohl(SPI)
 
-/*
- * new IPv6-compatible functions
- */
-
-/* text conversions */
-extern err_t ttoul(const char *src, size_t srclen, int format, unsigned long *dst);
-extern err_t ttoulb(const char *src, size_t srclen, int format,
-	unsigned long upb, unsigned long *dst);
-extern size_t ultot(unsigned long src, int format, char *buf, size_t buflen);
-#define ULTOT_BUF	((64+2)/3 + 1)  /* holds 64 bits in octal + NUL */
-
-extern err_t ttodata(const char *src, size_t srclen, int base, char *buf,
-	      size_t buflen, size_t *needed);
-extern err_t ttodatav(const char *src, size_t srclen, int base,
-	       char *buf,  size_t buflen, size_t *needed,
-	       char *errp, size_t errlen, unsigned int flags);
-#define TTODATAV_BUF    40              /* ttodatav's largest non-literal message */
-#define TTODATAV_IGNORESPACE  (1 << 1)  /* ignore spaces in base64 encodings */
-#define TTODATAV_SPACECOUNTS  0         /* do not ignore spaces in base64 */
-
-extern size_t datatot(const unsigned char *src, size_t srclen, int format,
-	       char *buf, size_t buflen);
-
 /* odds and ends */
 extern const char *ipsec_version_code(void);
 extern const char *ipsec_version_vendorid(void);

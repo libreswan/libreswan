@@ -43,6 +43,7 @@
 #include <cryptohi.h>
 #include <keyhi.h>
 
+#include "ttodata.h"
 #include "lswglob.h"
 #include "sysdep.h"
 #include "lswlog.h"

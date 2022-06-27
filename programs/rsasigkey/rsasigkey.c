@@ -53,6 +53,8 @@
 #include <time.h>
 
 #include <arpa/nameser.h> /* for NS_MAXDNAME */
+
+#include "ttodata.h"
 #include "constants.h"
 #include "lswalloc.h"
 #include "lswlog.h"

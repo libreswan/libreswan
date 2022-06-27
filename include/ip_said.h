@@ -21,6 +21,7 @@
 #include "diag.h"
 #include "ip_endpoint.h"
 #include "libreswan.h"		/* for ipsec_spi_t */
+#include "ttodata.h"
 #include "ip_protocol.h"
 
 struct jambuf;

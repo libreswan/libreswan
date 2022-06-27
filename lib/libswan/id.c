@@ -30,7 +30,6 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-
 #include "sysdep.h"
 #include "constants.h"
 #include "passert.h"
@@ -42,6 +41,7 @@
 #include <cert.h>
 #include "certs.h"
 #include "ip_info.h"
+#include "ttodata.h"
 
 const struct id empty_id = {
 	.kind = ID_NONE,

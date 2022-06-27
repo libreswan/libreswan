@@ -1,0 +1,49 @@
+/*
+ * header file for Libreswan library functions
+ * Copyright (C) 1998, 1999, 2000  Henry Spencer.
+ * Copyright (C) 1999, 2000, 2001  Richard Guy Briggs
+ * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ *
+ * This library is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Library General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.  See <https://www.gnu.org/licenses/lgpl-2.1.txt>.
+ *
+ * This library is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU Library General Public
+ * License for more details.
+ *
+ */
+
+#ifndef TTODATA_H
+#define TTODATA_H    /* seen it, no need to see it again */
+
+#include <stddef.h>		/* for size_t */
+
+#include "err.h"
+
+/*
+ * new IPv6-compatible functions
+ */
+
+/* text conversions */
+extern err_t ttoul(const char *src, size_t srclen, int format, unsigned long *dst);
+extern err_t ttoulb(const char *src, size_t srclen, int format,
+	unsigned long upb, unsigned long *dst);
+extern size_t ultot(unsigned long src, int format, char *buf, size_t buflen);
+#define ULTOT_BUF	((64+2)/3 + 1)  /* holds 64 bits in octal + NUL */
+
+extern err_t ttodata(const char *src, size_t srclen, int base, char *buf,
+	      size_t buflen, size_t *needed);
+extern err_t ttodatav(const char *src, size_t srclen, int base,
+	       char *buf,  size_t buflen, size_t *needed,
+	       char *errp, size_t errlen, unsigned int flags);
+#define TTODATAV_BUF    40              /* ttodatav's largest non-literal message */
+#define TTODATAV_IGNORESPACE  (1 << 1)  /* ignore spaces in base64 encodings */
+#define TTODATAV_SPACECOUNTS  0         /* do not ignore spaces in base64 */
+
+extern size_t datatot(const unsigned char *src, size_t srclen, int format,
+	       char *buf, size_t buflen);
+
+#endif
