@@ -969,6 +969,7 @@ static bool pfkeyv2_add_sa(const struct kernel_state *k,
 static bool pfkeyv2_get_kernel_state(const struct kernel_state *k,
 				     uint64_t *bytes,
 				     uint64_t *add_time,
+				     uint64_t *lastused UNUSED,
 				     struct logger *logger)
 {
 	/* GET */

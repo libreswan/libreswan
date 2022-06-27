@@ -2285,7 +2285,8 @@ static ipsec_spi_t xfrm_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
  * @return bool True if successful
  */
 static bool xfrm_get_kernel_state(const struct kernel_state *sa, uint64_t *bytes,
-				  uint64_t *add_time, struct logger *logger)
+				  uint64_t *add_time, uint64_t *lastused,
+				  struct logger *logger)
 {
 	struct {
 		struct nlmsghdr n;
@@ -2315,6 +2316,24 @@ static bool xfrm_get_kernel_state(const struct kernel_state *sa, uint64_t *bytes
 
 	*bytes = rsp.u.info.curlft.bytes;
 	*add_time = rsp.u.info.curlft.add_time;
+
+	/* Run through rtattributes looking for XFRMA_LASTUSED */
+	struct rtattr *attr = (struct rtattr *) ((char *) NLMSG_DATA(&rsp.n) +
+			NLMSG_ALIGN(sizeof(struct xfrm_usersa_info)));
+	size_t remaining = rsp.n.nlmsg_len -
+				NLMSG_SPACE(sizeof(struct xfrm_usersa_info));
+	while (remaining > 0) {
+		dbg("xfrm get_sa rtattribute type %u ...", attr->rta_type);
+		switch (attr->rta_type) {
+		case XFRMA_LASTUSED:
+			memcpy(lastused, RTA_DATA(attr), sizeof(uint64_t));
+			break;
+		default:
+			break;
+		}
+		attr = RTA_NEXT(attr, remaining); /* updates remaining too */
+	}
+
 	return true;
 }
 

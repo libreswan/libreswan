@@ -2915,7 +2915,8 @@ bool get_ipsec_traffic(struct state *st,
 
 	uint64_t bytes;
 	uint64_t add_time;
-	if (!kernel_ops->get_kernel_state(&sa, &bytes, &add_time, st->st_logger))
+	uint64_t lastused;
+	if (!kernel_ops->get_kernel_state(&sa, &bytes, &add_time, &lastused, st->st_logger))
 		return false;
 
 	proto_info->add_time = add_time;
@@ -2925,7 +2926,10 @@ bool get_ipsec_traffic(struct state *st,
 
 	if (bytes > flow->bytes) {
 		flow->bytes = bytes;
-		flow->last_used = mononow();
+		if (lastused > 0)
+			flow->last_used = monotime(lastused);
+		else
+			flow->last_used = mononow();
 	}
 
 	return true;
