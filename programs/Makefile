@@ -28,7 +28,13 @@ SUBDIRS += whack
 SUBDIRS += _import_crl
 SUBDIRS += _plutorun
 SUBDIRS += _secretcensor
+
+ifneq ($(BSD_VARIANT),)
+SUBDIRS += _unbound-hook.bsd
+else
 SUBDIRS += _unbound-hook
+endif
+
 SUBDIRS += _updown
 SUBDIRS += addconn
 SUBDIRS += algparse
@@ -43,9 +49,20 @@ SUBDIRS += newhostkey
 SUBDIRS += readwriteconf
 SUBDIRS += rsasigkey
 SUBDIRS += setup
+
+ifneq ($(BSD_VARIANT),)
+SUBDIRS += show.bsd
+else
 SUBDIRS += show
+endif
+
 SUBDIRS += showhostkey
+
+ifneq ($(BSD_VARIANT),)
+SUBDIRS += verify.bsd
+else
 SUBDIRS += verify
+endif
 
 ifeq ($(USE_PORTEXCLUDES),true)
 SUBDIRS += portexcludes

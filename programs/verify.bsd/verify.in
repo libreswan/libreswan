@@ -1,0 +1,353 @@
+#!@PYTHON_BINARY@
+# -*- mode: python; -*-
+#
+# Copyright (C) 2012 - 2013 Paul Wouters <pwouters@redhat.com>
+#
+# Based on old perl and shell code:
+# Copyright (C) 2003 Sam Sgro <sam@freeswan.org>
+# Copyright (C) 2005-2008 Michael Richardson <mcr@xelerance.com>
+# Copyright (C) 2005-2009 Paul Wouters <paul@xelerance.com>
+# Copyright (C) 2012-2014 Paul Wouters <paul@libreswan.org>
+#
+# Based on "verify" from the FreeS/WAN distribution, (C) 2001 Michael
+# Richardson <mcr@freeswan.org>
+#
+# This program is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License as published by the
+# Free Software Foundation; either version 2 of the License, or (at your
+# option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
+#
+# This program is distributed in the hope that it will be useful, but
+# WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+# or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# for more details.
+
+import os, sys, subprocess, glob, socket, locale
+from shutil import which
+
+retcode = 0
+
+conffile = "@FINALCONFFILE@"
+confdir = "@FINALCONFDIR@"
+ipsecbin = "@IPSEC_SBINDIR@/ipsec"
+iptables = "@HAVE_IPTABLES@"
+nftables = "@HAVE_NFTABLES@"
+
+prefencoding = locale.getpreferredencoding(False)
+
+if not os.path.isfile(ipsecbin):
+	# hopefully somewhere in our path then
+	ipsecbin = "ipsec"
+
+if not os.path.isfile(conffile):
+	if not os.path.isfile("%s/ipsec.conf"%confdir):
+		# try some fall backs
+		if os.path.isfile("/etc/ipsec.conf"):
+			print("WARNING: ipsec.conf not found at compiled-in location '%s/ipsec.conf', using /etc/ipsec.conf instead" %confdir)
+			confdir = "/etc/"
+		elif os.path.isfile("/usr/local/etc/ipsec.conf"):
+			print("WARNING: ipsec.conf not found at compiled-in location '%s/ipsec.conf', using /etc/ipsec.conf instead"%confdir)
+			confdir = "/usr/local/etc/"
+		else:
+			sys.exit("Failed to find ipsec.conf - checked %s, /etc and /usr/local/etc"%confdir)
+
+# Should we print in colour by default?
+colour = 0
+try:
+	p = subprocess.Popen("consoletype", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	output, err = p.communicate()
+	output = output.decode(prefencoding).strip()
+	if output in ("vc","tty","pty"):
+		colour = 1
+except:
+	try:
+		p = subprocess.Popen("tput colors", stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		output, err = p.communicate()
+		if int(output) > 0:
+			colour = 1
+	except:
+		pass
+
+
+def printfun(text):
+	# suppress newline
+	sys.stdout.write("%-50s"%text)
+
+def print_result(rcode, rtext):
+	global colour
+	global retcode
+	OK = '\033[92m'
+	WARN = '\033[93m'
+	FAIL = '\033[91m'
+	ENDC = '\033[0m'
+
+	if rcode == "FAIL":
+		retcode += 1
+		if not rtext:
+			rtext = "FAILED"
+		if colour:
+			print("\t[%s%s%s]"%(FAIL,rtext,ENDC))
+		else:
+			print("\t[%s]"%rtext)
+	elif rcode == "WARN":
+		if not rtext:
+			rtext = "WARNING"
+		if colour:
+			print("\t[%s%s%s]"%(WARN,rtext,ENDC))
+		else:
+			print("\t[%s]"%rtext)
+	elif rcode == "OK":
+		if not rtext:
+			rtext = "OK"
+		if colour:
+			print("\t[%s%s%s]"%(OK,rtext,ENDC))
+		else:
+			print("\t[%s]"%rtext)
+	else:
+		print("INTERNAL ERROR - unknown rcode:%s"%rcode)
+
+
+def plutocheck():
+	global retcode
+	printfun("Checking that pluto is running")
+	p = subprocess.Popen(["pidof", "pluto"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	output, err = p.communicate()
+	if not output:
+		retcode += 1
+		print_result("FAIL","FAILED")
+		return
+	else:
+		print_result("OK","OK")
+
+	# only if pluto is running, do the listen tests and ipsec  secrets test
+	udp500check()
+	udp4500check()
+	ipsecsecretcheck()
+
+def rpfiltercheck():
+	global retcode
+	fail = 0
+	printfun("Checking rp_filter")
+	for dirname in glob.glob("/proc/sys/net/ipv4/conf/*"):
+		val = open("%s/rp_filter"%dirname,"r").read().strip()
+		if val == "1":
+			if fail == 0:
+				print_result("FAIL","ENABLED")
+			fail = 1
+			printfun(" %s/rp_filter"%dirname)
+			print_result("FAIL","ENABLED")
+			retcode += 1
+	if fail == 0:
+			print_result("OK","OK")
+	else:
+		print("  rp_filter is not fully aware of IPsec and should be disabled")
+
+def cmdchecks():
+	global retcode
+	printfun("Checking 'ip' command")
+	if not os.path.isfile("/sbin/ip") and not os.path.isfile("/usr/sbin/ip") \
+	   and not os.path.isfile("/bin/ip"):
+		print_result("FAIL","FAILED")
+		retcode += 1
+	p = subprocess.Popen(["ip", "xfrm"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	output, err = p.communicate()
+	err = err.decode(prefencoding)
+	if not "XFRM" in err:
+		print_result("FAIL","IP XFRM BROKEN")
+		retcode += 1
+	else:
+		print_result("OK","OK")
+
+	if "true" in iptables:
+		printfun("Checking 'iptables' command")
+
+		if which(iptables):
+			print_result("OK","OK")
+		else:
+			print_result("WARN","MISSING")
+
+	if "true" in nftables:
+		printfun("Checking 'nft' command")
+
+		if which(nftables):
+			print_result("OK","OK")
+		else:
+			print_result("WARN","MISSING")
+
+	printfun("Checking 'prelink' command does not interfere with FIPS")
+	if os.path.isfile("/sbin/prelink") or os.path.isfile("/usr/sbin/prelink"):
+		if os.path.isfile("/etc/prelink.cache"):
+			print_result("WARN","PRESENT")
+		else:
+			print_result("FAIL","IN USE")
+			retcode += 1
+	else:
+		print_result("OK","OK")
+
+def udp500check():
+	global retcode
+	printfun(" Pluto listening for IKE on udp 500")
+	try:
+		p = subprocess.Popen(["ss", "-n", "-a", "-u", "sport = :500"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		output, err = p.communicate()
+		output = output.decode(prefencoding)
+		if ":500" in output:
+			print_result("OK","OK")
+		else:
+			print_result("FAIL","FAILED")
+			retcode += 1
+	except:
+		print_result("FAIL","FAILED")
+		retcode += 1
+
+def udp4500check():
+	global retcode
+	global sscmd
+	printfun(" Pluto listening for IKE/NAT-T on udp 4500")
+	if not sscmd:
+		print_result("WARN","UNKNOWN")
+		print("(install the 'ss' command to activate this test)")
+		return
+	try:
+		p = subprocess.Popen([sscmd, "-n", "-a", "-u", "sport = :4500"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		output, err = p.communicate()
+		output = output.decode(prefencoding)
+		if ":4500" in output:
+			print_result("OK","OK")
+		else:
+			print_result("WARN","DISABLED")
+	except:
+		print_result("FAIL","DISABLED")
+		retcode += 1
+
+def installstartcheck():
+	global retcode
+	print("Verifying installed system and configuration files\n")
+	printfun("Version check and ipsec on-path")
+	try:
+		p = subprocess.Popen(["ipsec", "--version"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+		output, err = p.communicate()
+		output = output.decode(prefencoding)
+		if "swan" in output:
+			print_result("OK","OK")
+			print(output.replace("Linux","").strip())
+		else:
+			print_result("FAIL","FAILED")
+	except:
+		print_result("FAIL","FAILED")
+
+	printfun("Checking for IPsec support in kernel")
+	if not os.path.isfile("/proc/net/ipsec_eroute") and not os.path.isfile("/proc/sys/net/core/xfrm_acq_expires"):
+		print_result("FAIL","FAILED")
+		if "no kernel code presently loaded" in output:
+			print("\n The ipsec service should be started before running 'ipsec verify'\n")
+		return
+	else:
+		print_result("OK","OK")
+
+	installchecknetkey()
+
+def installchecknetkey():
+	global retcode
+	print(" NETKEY: Testing XFRM related proc values")
+	for option in ( "send_redirects", "accept_redirects"):
+		printfun("         ICMP default/%s"%option)
+		try:
+			redir = open("/proc/sys/net/ipv4/conf/default/%s"%option,"r").read().strip()
+		except:
+			print_result("FAIL","VERY BROKEN KERNEL")
+			return
+		if redir == "0":
+			print_result("OK","OK")
+		else:
+			print_result("FAIL","NOT DISABLED")
+			print("\n  Disable /proc/sys/net/ipv4/conf/*/%s or XFRM/NETKEY will act on or cause sending of bogus ICMP redirects!\n"%option)
+
+	printfun("         XFRM larval drop")
+	try:
+		larval = open("/proc/sys/net/core/xfrm_larval_drop","r").read().strip()
+	except:
+		print_result("FAIL","OLD OR BROKEN KERNEL")
+		return
+	if larval == "1":
+		print_result("OK","OK")
+	else:
+		print_result("FAIL","NOT ENABLED")
+
+def ipsecsecretcheck():
+	global retcode
+	# we need to be root, because the only way to check is to reload them
+	printfun(" Pluto ipsec.secret syntax")
+	uid = os.getuid()
+	if uid != 0:
+		print_result("WARN","UNKNOWN")
+		print(" (run ipsec verify as root to test ipsec.secrets)")
+		return
+
+	p = subprocess.Popen(["ipsec","secrets"], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	output, err = p.communicate()
+	if "ERROR" in output:
+		print_result("FAIL","PARSE ERROR")
+		for line in output.split("\n"):
+			line = line.strip()
+			if line and "ERROR" in line:
+				print("  %s"%line)
+	elif "WARNING" in output:
+		print_result("WARN","OBSOLETE")
+		for line in output.split("\n"):
+			line = line.strip()
+			if line and "WARNING" in line:
+				print("  %s"%line)
+	else:
+		print_result("OK","OK")
+
+def ipsecconfcheck():
+	global retcode
+	printfun("Pluto ipsec.conf syntax")
+	p = subprocess.Popen(["ipsec","addconn","--checkconfig"], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	output, err = p.communicate()
+	err = err.decode(prefencoding)
+	if "syntax error" in err:
+		print_result("FAIL","PARSE ERROR")
+		print(err)
+	else:
+		print_result("OK","OK")
+
+def configsetupcheck():
+	global retcode
+	p = subprocess.Popen(["ipsec","addconn","--configsetup"], universal_newlines=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+	configsetup, err = p.communicate()
+
+	# grab obsolete settings
+	printfun("Checking for obsolete ipsec.conf options")
+	if not err:
+		print_result("OK","OK")
+	else:
+		print_result("WARN","OBSOLETE KEYWORD")
+		print(err[:-1])
+
+def main():
+	global retcode
+	global sscmd
+	if os.path.isfile("/usr/sbin/ss"):
+		sscmd = "/usr/sbin/ss"
+	elif os.path.isfile("/bin/ss"):
+		sscmd = "/bin/ss"
+	elif os.path.isfile("/sbin/ss"):
+		sscmd = "/sbin/ss"
+
+	installstartcheck()
+	ipsecconfcheck()
+	rpfiltercheck()
+	plutocheck()
+	cmdchecks()
+	configsetupcheck()
+	if retcode:
+		plural = ""
+		if retcode > 1:
+			plural = "s"
+		sys.stderr.write("\nipsec verify: encountered %s error%s - see 'man ipsec_verify' for help\n"%(retcode,plural))
+		sys.exit(retcode)
+
+if __name__ == "__main__":
+	main()

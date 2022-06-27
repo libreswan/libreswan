@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!-- lifted from troff+man by doclifter -->
+<refentry>
+<refentryinfo>
+  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
+</refentryinfo>
+<refmeta>
+<refentrytitle>IPSEC_VERIFY</refentrytitle>
+<manvolnum>8</manvolnum>
+<refmiscinfo class='date'>23 Dec 2012</refmiscinfo>
+<refmiscinfo class="source">libreswan</refmiscinfo>
+<refmiscinfo class="manual">Executable programs</refmiscinfo>
+</refmeta>
+<refnamediv id='name'>
+<refname>ipsec verify</refname>
+<refpurpose>see if the IPsec subsystem has been installed correctly</refpurpose>
+</refnamediv>
+<!-- body begins here -->
+<refsynopsisdiv id='synopsis'>
+<cmdsynopsis>
+  <command>ipsec</command>
+    <arg choice='plain'><replaceable>verify</replaceable></arg>
+</cmdsynopsis>
+</refsynopsisdiv>
+
+
+<refsect1 id='description'><title>DESCRIPTION</title>
+<para>The
+<emphasis remap='I'>ipsec verify</emphasis>
+examines the local system for a number of common system faults and
+configuration mistakes.</para>
+
+
+</refsect1>
+
+<refsect1 id='history'><title>HISTORY</title>
+<para>Written originally for the Linux FreeS/WAN project
+&lt;<ulink url='https://www.freeswan.org'>https://www.freeswan.org</ulink>&gt;
+by Michael Richardson. Rewritten in python by Paul Wouters</para>
+</refsect1>
+
+<refsect1 id='bugs'><title>BUGS</title>
+<para><emphasis remap='I'>Verify</emphasis>
+was converted from shell to perl to python, and the MASQUERADING/NAT rule tests still need
+to be ported.
+The <emphasis remap='I'>ss</emphasis> command is around in various non-intuitive and buggy
+versions, causing some false-positives with respect to listening on UDP port 500 and 4500.
+See https://bugzilla.redhat.com/show_bug.cgi?id=829630
+</para>
+
+</refsect1>
+</refentry>
+
