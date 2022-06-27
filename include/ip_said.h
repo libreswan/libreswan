@@ -27,6 +27,20 @@
 struct jambuf;
 
 /*
+ * Magic SAID names for for passthrough SA.
+ */
+
+#define PASSTHROUGHNAME		"%passthrough"
+#define PASSTHROUGH4NAME        "%passthrough4"
+#define PASSTHROUGH6NAME        "%passthrough6"
+#define PASSTHROUGHIS		"tun0@0.0.0.0"
+#define PASSTHROUGH4IS		"tun0@0.0.0.0"
+#define PASSTHROUGH6IS		"tun0@::"
+#define PASSTHROUGHTYPE		"tun"
+#define PASSTHROUGHSPI		0
+#define PASSTHROUGHDST		0
+
+/*
  * Magic values for use in combination with ip_protocol_internal to
  * flag shunt types.
  *

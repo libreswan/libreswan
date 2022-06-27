@@ -38,17 +38,4 @@
 
 /* end of obsolete functions */
 
-/* syntax for passthrough SA */
-#ifndef PASSTHROUGHNAME
-#define PASSTHROUGHNAME "%passthrough"
-#define PASSTHROUGH4NAME        "%passthrough4"
-#define PASSTHROUGH6NAME        "%passthrough6"
-#define PASSTHROUGHIS   "tun0@0.0.0.0"
-#define PASSTHROUGH4IS  "tun0@0.0.0.0"
-#define PASSTHROUGH6IS  "tun0@::"
-#define PASSTHROUGHTYPE "tun"
-#define PASSTHROUGHSPI  0
-#define PASSTHROUGHDST  0
-#endif
-
 #endif /* _LIBRESWAN_H */
