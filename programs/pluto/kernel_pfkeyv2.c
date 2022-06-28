@@ -348,7 +348,7 @@ static struct sadb_spirange *put_sadb_spirange(struct outbuf *msg, uintmax_t min
 	return spirange;
 }
 
-#ifdef SADB_X_EXT_SA2
+#ifdef SADB_X_EXT_SA2 /* FreeBSD NetBSD */
 static struct sadb_x_sa2 *put_sadb_x_sa2(struct outbuf *msg,
 					 enum ipsec_mode ipsec_mode,
 					 reqid_t reqid)
@@ -534,7 +534,7 @@ static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 	/* recv: <base, SA(*), address(SD)> */
 
 	uint8_t reqbuf[SIZEOF_SADB_BASE +
-#ifndef __OpenBSD__
+#ifdef SADB_X_EXT_SA2 /* FreeBSD NetBSD */
 		       SIZEOF_SADB_X_SA2 +
 #endif
 		       SIZEOF_SADB_ADDRESS * 2 +
@@ -545,14 +545,15 @@ static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 					 SADB_GETSPI, proto_satype(proto), logger);
 
 	/*
-	 * XXX: the PF_KEY_V2 RFC didn't leave space to specify REQID
-	 * and/or transport mode (tunnel was assumed).
+	 * XXX: the original PF_KEY_V2 RFC didn't leave space to
+	 * specify REQID and/or transport mode (tunnel was assumed).
 	 *
 	 * SADB_X_SA2 provides a way to specify that (it's optional,
 	 * but since the REQID is always specified, it might as well
 	 * be included).
 	 */
-#ifndef __OpenBSD__
+
+#ifdef SADB_X_EXT_SA2 /* FreeBSD NetBSD */
 	put_sadb_x_sa2(&req, IPSEC_MODE_ANY, reqid);
 #endif
 
@@ -678,7 +679,7 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 		       SIZEOF_SADB_ADDRESS * 3 +
 		       SIZEOF_SADB_KEY * 2 +
 		       SIZEOF_SADB_IDENT * 2 +
-#ifdef SADB_X_EXT_SA_REPLAY
+#ifdef SADB_X_EXT_SA_REPLAY /* FreeBSD */
 		       SIZEOF_SADB_X_SA_REPLAY +
 #endif
 		       SIZEOF_SADB_SENS +
@@ -691,7 +692,10 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 	/* SA */
 
 	unsigned saflags = 0;
-#ifdef SADB_X_SAFLAGS_ESN
+#ifdef SADB_X_SAFLAGS_ESN /* FreeBSD OpenBSD */
+	/*
+	 * Both FreeBSD and OpenBSD support the ESN flag.
+	 */
 	if (k->esn) {
 		saflags |= SADB_X_SAFLAGS_ESN;
 	}
@@ -750,7 +754,8 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 	 *
 	 * XXX: why not just set "tunnel" on the inner-most kernel_sa?
 	 */
-#ifndef __OpenBSD__
+
+#ifdef SADB_X_EXT_SA2 /* FreeBSD NetBSD */
 	put_sadb_x_sa2(&req, IPSEC_MODE_ANY, k->reqid);
 #endif
 	/* (k->level == 0 && k->tunnel ?  ipsec_mode_tunnel : ipsec_mode_transport), */
@@ -886,15 +891,15 @@ static bool pfkeyv2_get_sa(const struct kernel_sa *k,
 		case SADB_EXT_KEY_AUTH:
 		case SADB_EXT_KEY_ENCRYPT:
 		case SADB_EXT_SA:
-#ifdef SADB_X_EXT_SA2
+#ifdef SADB_X_EXT_SA2 /* FreeBSD NetBSD */
 		case SADB_X_EXT_SA2:
 #endif
-#ifdef SADB_X_EXT_NAT_T_TYPE
+#ifdef SADB_X_EXT_NAT_T_TYPE /* FreeBSD NetBSD */
 		case SADB_X_EXT_NAT_T_TYPE:
 #endif
 		case SADB_EXT_LIFETIME_HARD:
 		case SADB_EXT_LIFETIME_SOFT:
-#ifdef SADB_X_EXT_SA_REPLAY
+#ifdef SADB_X_EXT_SA_REPLAY /* FreeBSD */
 		case SADB_X_EXT_SA_REPLAY:
 #endif
 			/* ignore these */
@@ -909,7 +914,7 @@ static bool pfkeyv2_get_sa(const struct kernel_sa *k,
 	return false;
 }
 
-#ifdef SADB_X_EXT_POLICY
+#ifdef SADB_X_EXT_POLICY /* FreeBSD NetBSD */
 static struct sadb_x_ipsecrequest *put_sadb_x_ipsecrequest(struct outbuf *msg,
 							   const struct kernel_policy *kernel_policy,
 							   enum ipsec_mode mode,
@@ -945,7 +950,7 @@ static struct sadb_x_ipsecrequest *put_sadb_x_ipsecrequest(struct outbuf *msg,
 }
 #endif
 
-#ifdef SADB_X_EXT_POLICY
+#ifdef SADB_X_EXT_POLICY /* FreeBSD NetBSD */
 static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 					       enum kernel_policy_op op,
 					       enum ipsec_policy policy_type,
@@ -1126,7 +1131,7 @@ static void process_acquire(shunk_t base_cursor, struct logger *logger)
 				return;
 			}
 			break;
-#ifdef SADB_X_EXT_POLICY
+#ifdef SADB_X_EXT_POLICY /* FreeBSD NetBSD */
 		case SADB_X_EXT_POLICY:
 #endif
 		case SADB_EXT_PROPOSAL:
@@ -1219,10 +1224,10 @@ const struct kernel_ops pfkeyv2_kernel_ops = {
 	.interface_name = "PF_KEY v2",
 	.overlap_supported = false,	/* XXX: delete this? */
 	.sha2_truncbug_support = false,
-#ifdef SADB_X_SAFLAGS_ESN
+#ifdef SADB_X_SAFLAGS_ESN /* FreeBSD OpenBSD */
 	.esn_supported = true,		/* FreeBSD and OpenBSD? */
 #endif
-#if defined(SADB_X_EXT_SA_REPLAY)
+#ifdef SADB_X_EXT_SA_REPLAY /* FreeBSD */
 	/* .sadb_x_sa_replay_replay is in packets */
 	.max_replay_window = (UINT32_MAX - 32), /* packets */
 #elif defined(__OpenBSD__)
