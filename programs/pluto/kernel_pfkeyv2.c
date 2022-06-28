@@ -466,6 +466,31 @@ static void register_satype(const struct ip_protocol *proto, struct logger *logg
 				return;
 			}
 			break;
+#ifdef SADB_X_EXT_SUPPORTED_COMP /* OpenBSD */
+		case SADB_X_EXT_SUPPORTED_COMP:
+			/*
+			 * Handle COMP algorithms:
+			 *
+			 * + the original RFC 2367 makes no reference
+			 * to compression, if it had been included it
+			 * would have looked something like this.
+			 *
+			 * However, it's worth noting:
+			 *
+			 * + there's really only ever been one
+			 * compression algorithm
+			 *
+			 * + using compression with IPsec has fallen
+			 * out of favour (the benefit is marginal;
+			 * it's not well tested on either Linux or
+			 * [*]BSD)
+			 */
+			if (!register_alg(&msgext, &ike_alg_ipcomp, logger)) {
+				/* already logged */
+				return;
+			}
+			break;
+#endif
 		default:
 			llog_pexpect(logger, HERE, "unknown ext");
 			break;
