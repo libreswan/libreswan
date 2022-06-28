@@ -100,8 +100,6 @@ def compile_prompt(logger, username=None, hostname=None):
 def _check_prompt_group(logger, match, field, expected):
     if expected:
         found = match.group(field)
-        logger.debug("prompt field: '%s' expected: '%s' found: '%s'",
-                     field, expected, found)
         if expected.encode() != found:
             # Throw TIMEOUT as that is what is expected and what
             # would have happened.
