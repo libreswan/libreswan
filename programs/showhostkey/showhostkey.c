@@ -10,7 +10,7 @@
  * Copyright (C) 2010, 2016 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2012-2013 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2012 Paul Wouters <paul@libreswan.org>
- * Copyright (C) 2016 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2016, 2022 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -62,12 +62,21 @@
 #include <prinit.h>
 
 char usage[] =
-	"Usage: showhostkey [ --verbose ] [ --debug ]\n"
-	"        { --version | --dump | --list | --left | --right |\n"
-	"                --ipseckey [ --precedence <precedence> ] \n"
-	"                [ --gateway <gateway> ] }\n"
-	"        [ --rsaid <rsaid> | --ckaid <ckaid> ]\n"
-	"        [ --nssdir <nssdir> ] [ --password <password> ]\n";
+	"Usage:\n"
+	"   showhostkey --version\n"
+	"   showhostkey { --dump | --list }\n"
+	"   showhostkey { --left | --right }\n"
+	"               { --rsaid <rsaid> | --ckaid <ckaid> }\n"
+	"   showhostkey --ipseckey\n"
+	"               { --rsaid <rsaid> | --ckaid <ckaid> }\n"
+	"               [ --precedence <precedence> ] \n"
+	"               [ --gateway <gateway> ]\n"
+	"Additional options:\n"
+	"   --verbose\n"
+	"   --debug\n"
+	"   --nssdir <nssdir>\n"
+	"   --password <password>\n"
+	;
 
 /*
  * For new options, avoid magic numbers.
