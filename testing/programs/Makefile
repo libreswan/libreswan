@@ -28,7 +28,6 @@ ifeq ($(USE_LABELED_IPSEC),true)
 SUBDIRS += getpeercon_server
 endif
 SUBDIRS += asn1check
-SUBDIRS += routecheck
 SUBDIRS += vendoridcheck
 
 include $(top_srcdir)/mk/targets.mk

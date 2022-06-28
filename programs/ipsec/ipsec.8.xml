@@ -92,6 +92,7 @@ to stdout for debugging</para>
 <para><userinput>ipsec checknflog</userinput> is used to initialise iptables rules for the nflog devices when specified via the nflog= or nflog-all= configuration options.</para>
 
 <para><userinput>ipsec stopnflog</userinput> is used to delete iptables rules for the nflog devices.</para>
+
 </refsect1>
 
 <refsect1 id='returncode'><title>RETURN CODE</title>
@@ -114,6 +115,7 @@ may in fact exit with an error code after the fork. </para>
 <citerefentry><refentrytitle>ipsec_checknss</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>ipsec_initnss</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
 <citerefentry><refentrytitle>ipsec_setup</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+<citerefentry><refentrytitle>ipsec_showroute</refentrytitle><manvolnum>8</manvolnum></citerefentry>
 <citerefentry><refentrytitle>ipsec_showhostkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>
 </para>
 </refsect1>

@@ -24,7 +24,11 @@ int main(int argc, char **argv)
 	struct logger *logger = tool_init_log(argv[0]);
 
 	if (argc == 1) {
-		llog(WHACK_STREAM, logger, "usage: <dst>");
+		llog(WHACK_STREAM|NO_PREFIX, logger, "Usage:");
+		llog(WHACK_STREAM|NO_PREFIX, logger, "  ipsec showroute <destination-address>");
+		llog(WHACK_STREAM|NO_PREFIX, logger, "prints:");
+		llog(WHACK_STREAM|NO_PREFIX, logger, "  <host-interface> <gateway> <destination-address>");
+		llog(WHACK_STREAM|NO_PREFIX, logger, "for the given <destination-address>");
 		exit(1);
 	}
 
@@ -40,7 +44,7 @@ int main(int argc, char **argv)
 	case ROUTE_SUCCESS:
 	{
 		address_buf sb, gb, ab;
-		llog(WHACK_STREAM, logger, "%s %s %s",
+		llog(WHACK_STREAM|NO_PREFIX, logger, "%s %s %s",
 		     str_address(&route.source, &sb),
 		     str_address(&route.gateway, &gb),
 		     str_address(&dst, &ab));

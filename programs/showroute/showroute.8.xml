@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
+"http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+
+<refentry>
+  <refentryinfo>
+    <author>
+      <firstname>Andrew</firstname>
+      <surname>Cagney</surname>
+      <authorblurb>
+	<para>
+	  placeholder to suppress warning
+	</para>
+      </authorblurb>
+    </author>
+  </refentryinfo>
+  <refmeta>
+    <refentrytitle>IPSEC_SHOWROUTE</refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo class='date'>27 June 2022</refmiscinfo>
+    <refmiscinfo class="source">libreswan</refmiscinfo>
+    <refmiscinfo class="manual">Executable programs</refmiscinfo>
+  </refmeta>
+  <refnamediv id='name'>
+    <refname>ipsec showroute</refname>
+    <refpurpose>show route to given address</refpurpose>
+  </refnamediv>
+
+  <!-- body begins here -->
+  <refsynopsisdiv id='synopsis'>
+    <cmdsynopsis>
+      <command>ipsec</command>
+      <arg choice='plain'><replaceable>showroute</replaceable></arg>
+      <arg choice='req'><replaceable>ip address</replaceable></arg>
+    </cmdsynopsis>
+  </refsynopsisdiv>
+
+  <refsect1 id='description'>
+    <title>DESCRIPTION</title>
+    <para>
+      <emphasis remap='I'>showroute</emphasis> outputs (on standard
+      output) the host, gateway, and destination address for the
+      specified IP address.
+    </para>
+  </refsect1>
+
+  <refsect1 id='history'>
+    <title>HISTORY</title>
+    <para>
+      Added to Libreswan in 2022.
+    </para>
+  </refsect1>
+
+</refentry>

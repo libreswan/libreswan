@@ -1,6 +1,6 @@
-# routecheck Makefile, for libreswan
+# showroute Makefile, for libreswan
 #
-# Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2017, 2022 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -12,10 +12,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-# XXX: Hack to suppress the man page.  Should one be added?
-PROGRAM_MANPAGE =
-
-PROGRAM = routecheck
+PROGRAM = showroute
 OBJS += $(PROGRAM).o
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
@@ -25,7 +22,7 @@ USERLAND_LDFLAGS += $(UNBOUND_LDFLAGS)
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
 else
-include ../../../mk/program.mk
+include ../../mk/program.mk
 endif
 
 local-check: $(PROGRAM)

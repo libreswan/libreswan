@@ -57,6 +57,7 @@ SUBDIRS += show
 endif
 
 SUBDIRS += showhostkey
+SUBDIRS += showroute
 
 ifneq ($(BSD_VARIANT),)
 SUBDIRS += verify.bsd
