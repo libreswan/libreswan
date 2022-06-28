@@ -3306,14 +3306,14 @@ def check_host_xfrm_stack():
     # check if there is XFRM stack on the host
 
     v_line = runcmd("ipsec version")
-    if v_line.split()[3] != '(XFRM)':
-        logger.debug("no XFRM stack found, try to load it %s", v_line)
+    if not os.path.isfile("/proc/net/xfrm_stat"):
+        logger.debug("no Linux IPsec stack found, try to load it %s", v_line)
         runcmd("sudo ipsec _stackmanager start --xfrm")
         v_line = runcmd("ipsec version")
-        if v_line.split()[3] != '(XFRM)' and v_line.split()[3] != '(netkey)':
+        if not os.path.isfile("/proc/net/xfrm_stat"):
             # give up
             logger.error(
-                "ABORT no XFRM stack found. cannot run test, %s", v_line)
+                "ABORT no Linux IPsec stack found. cannot run test, %s", v_line)
             return True
 
 
