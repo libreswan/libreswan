@@ -1147,19 +1147,24 @@ kvm-shutdown: $(patsubst %, kvm-shutdown-%, $(KVM_PLATFORM_DOMAIN_NAMES))
 .PHONY: kvm-undefine
 $(patsubst %, kvm-undefine-%, $(KVM_PLATFORM_DOMAIN_NAMES)): \
 kvm-undefine-%:
-	case "$$($(VIRSH) domstate $*)" in \
-	"running" | "in shutdown" | "paused" ) \
-		$(VIRSH) destroy $* ; \
-		$(VIRSH) undefine $* \
-		;; \
-	"shut off" ) \
-		$(VIRSH) undefine $* \
-		;; \
-	"" ) ;; \
-	esac
+	@if state=$$($(VIRSH) domstate $* 2>&1); then \
+		case "$${state}" in \
+		"running" | "in shutdown" | "paused" ) \
+			echo -n "destroying $*: " ; $(VIRSH) destroy $* ; \
+			echo -n "undefining $*: " ; $(VIRSH) undefine $* \
+			;; \
+		"shut off" ) \
+			echo -n "undefining $*: " ; $(VIRSH) undefine $* \
+			;; \
+		* ) \
+			echo "Unknown state $${state} for $*" ; \
+			;; \
+		esac ; \
+	else \
+		echo "No domain $*" ; \
+	fi
 	rm -f $(KVM_POOLDIR)/$*       $(KVM_LOCALDIR)/$*
 	rm -f $(KVM_POOLDIR)/$*.qcow2 $(KVM_LOCALDIR)/$*.qcow2
-	rm -f $(KVM_POOLDIR)/$*.vm    $(KVM_LOCALDIR)/$*.vm
 kvm-undefine: $(patsubst %, kvm-undefine-%, $(KVM_PLATFORM_DOMAIN_NAMES))
 
 .PHONY: kvm-define
