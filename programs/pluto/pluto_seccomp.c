@@ -158,6 +158,7 @@ static void init_seccomp(uint32_t def_action, bool main, struct logger *logger)
 	LSW_SECCOMP_ADD(sigreturn);
 	LSW_SECCOMP_ADD(stat);
 	LSW_SECCOMP_ADD(statfs);
+	LSW_SECCOMP_ADD(statfs64);
 	LSW_SECCOMP_ADD(waitpid);
 	LSW_SECCOMP_ADD(write);
 
