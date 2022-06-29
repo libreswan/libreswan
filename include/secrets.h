@@ -62,10 +62,6 @@ struct ECDSA_public_key {
 
 struct ECDSA_private_key {
 	struct ECDSA_public_key pub;
-	chunk_t ecParams;
-	chunk_t pub_val; /* publicValue */
-	chunk_t privateValue;
-	chunk_t version;
 };
 
 err_t rsa_pubkey_to_base64(chunk_t exponent, chunk_t modulus, char **rr);
