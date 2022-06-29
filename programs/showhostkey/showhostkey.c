@@ -244,20 +244,31 @@ static int pick_by_ckaid(struct secret *secret UNUSED,
 	}
 }
 
-static char *pubkey_to_rfc3110_base64(const struct RSA_public_key *pub)
+static char *pks_to_base64_dnssec_pubkey(struct private_key_stuff *pks)
 {
-	if (pub->e.len == 0 || pub->n.len == 0) {
-		fprintf(stderr, "%s: public key not found\n",
+	chunk_t chunk = empty_chunk; /* must free */
+	err_t e = pks->pubkey_type->pubkey_content_to_dnssec_pubkey(&pks->u.pubkey, &chunk);
+	if (e != NULL) {
+		fprintf(stderr, "%s: %s\n", progname, e);
+		return NULL;
+	}
+
+	/*
+	 * A byte is 8-bits, base64 uses 6-bits (2^6=64).  Plus some
+	 * for 0s.  Plus some for \0.  Plus some extra for rounding.
+	 */
+	size_t len = chunk.len * 8 / 6 + 2 + 1 + 10;
+	char *base64 = alloc_bytes(len, "base64 resource record");
+	size_t n = datatot(chunk.ptr, chunk.len, 's', base64, len);
+	if (n >= len) {
+		free_chunk_content(&chunk);
+		pfreeany(base64);
+		fprintf(stderr, "%s: base64 encoded RSA public key resource record larger than expected",
 			progname);
 		return NULL;
 	}
-	char* base64;
-	err_t err = rsa_pubkey_to_base64(pub->e, pub->n, &base64);
-	if (err) {
-		fprintf(stderr, "%s: unexpected error encoding RSA public key '%s'\n",
-			progname, err);
-		return NULL;
-	}
+
+	free_chunk_content(&chunk);
 	return base64;
 }
 
@@ -276,7 +287,7 @@ static int show_dnskey(struct private_key_stuff *pks,
 		return 5;
 	}
 
-	char *base64 = pubkey_to_rfc3110_base64(&pks->u.pubkey.rsa);
+	char *base64 = pks_to_base64_dnssec_pubkey(pks);
 	if (base64 == NULL) {
 		return 5;
 	}
@@ -322,7 +333,7 @@ static int show_confkey(struct private_key_stuff *pks,
 		return 5;
 	}
 
-	char *base64 = pubkey_to_rfc3110_base64(&pks->u.pubkey.rsa);
+	char *base64 = pks_to_base64_dnssec_pubkey(pks);
 	if (base64 == NULL) {
 		return 5;
 	}

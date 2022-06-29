@@ -35,6 +35,49 @@
 #include "ike_alg_hash.h"
 
 /*
+ * Deal with RFC Resource Records as defined in rfc3110 (nee rfc2537).
+ */
+
+static err_t RSA_pubkey_content_to_dnssec_pubkey(const union pubkey_content *pkc, chunk_t *dnssec_pubkey)
+{
+	const struct RSA_public_key *rsa = &pkc->rsa;
+	chunk_t exponent = rsa->e;
+	chunk_t modulus = rsa->n;
+	*dnssec_pubkey = EMPTY_CHUNK;
+
+	/*
+	 * Since exponent length field is either 1 or 3 bytes in size,
+	 * just allocate 3 extra bytes.
+	 */
+	size_t rrlen = exponent.len + modulus.len + 3;
+	uint8_t *buf = alloc_bytes(rrlen, "buffer for rfc3110");
+	uint8_t *p = buf;
+
+	if (exponent.len <= 255) {
+		*p++ = exponent.len;
+	} else if (exponent.len <= 0xffff) {
+		*p++ = 0;
+		*p++ = (exponent.len >> 8) & 0xff;
+		*p++ = exponent.len & 0xff;
+	} else {
+		pfree(buf);
+		return "RSA public key exponent too long for resource record";
+	}
+
+	memcpy(p, exponent.ptr, exponent.len);
+	p += exponent.len;
+	memcpy(p, modulus.ptr, modulus.len);
+	p += modulus.len;
+
+	*dnssec_pubkey = (chunk_t) {
+		.ptr = buf,
+		.len = p - buf,
+	};
+
+	return NULL;
+}
+
+/*
  * Note: e and n will point int rr.
  *
  * See https://www.rfc-editor.org/rfc/rfc3110#section-2
@@ -228,6 +271,7 @@ const struct pubkey_type pubkey_type_rsa = {
 	.private_key_kind = PKK_RSA,
 	.free_pubkey_content = RSA_free_pubkey_content,
 	.dnssec_pubkey_to_pubkey_content = RSA_dnssec_pubkey_to_pubkey_content,
+	.pubkey_content_to_dnssec_pubkey = RSA_pubkey_content_to_dnssec_pubkey,
 	.extract_pubkey_content = RSA_extract_pubkey_content,
 	.extract_private_key_pubkey_content = RSA_extract_private_key_pubkey_content,
 	.free_secret_content = RSA_free_secret_content,

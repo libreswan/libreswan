@@ -61,8 +61,6 @@ union pubkey_content {
 	struct ECDSA_public_key ecdsa;
 };
 
-err_t rsa_pubkey_to_base64(chunk_t exponent, chunk_t modulus, char **rr);
-
 /*
  * private key types
  */
@@ -144,10 +142,12 @@ struct pubkey_type {
 	enum pubkey_alg alg;
 	enum private_key_kind private_key_kind;
 	void (*free_pubkey_content)(union pubkey_content *pkc);
-	/* the blob in DNSKEY's Public Key field */
+	/* to/from the blob in DNSKEY's Public Key field */
 	err_t (*dnssec_pubkey_to_pubkey_content)(chunk_t dnskey_pubkey,
 						 union pubkey_content *pkc,
 						 keyid_t *keyid, ckaid_t *ckaid, size_t *size);
+	err_t (*pubkey_content_to_dnssec_pubkey)(const union pubkey_content *pkc,
+						 chunk_t *dnssec_pubkey);
 	/* nss */
 	void (*extract_pubkey_content)(union pubkey_content *pkc,
 				       keyid_t *keyid, ckaid_t *ckaid, size_t *size,

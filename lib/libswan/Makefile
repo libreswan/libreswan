@@ -60,7 +60,6 @@ OBJS += clone_shunk_tokens.o
 OBJS += secrets.o
 OBJS += pubkey_rsa.o
 OBJS += pubkey_ecdsa.o
-OBJS += base64_pubkey.o
 
 OBJS += sparse_names.o
 OBJS += ttoaddress.o
