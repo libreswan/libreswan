@@ -165,6 +165,7 @@
 #include "ip_selector.h"
 #include "unpack.h"
 #include "pending.h"
+#include "rekeyfuzz.h"
 
 #ifdef HAVE_NM
 #include "kernel.h"
@@ -2609,12 +2610,6 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			 * Responder, and the dictated time is
 			 * acceptable, plan to EXPIRE.
 			 *
-			 * Important policy lies buried here.  For
-			 * example, we favour the initiator over the
-			 * responder by making the initiator start
-			 * rekeying sooner.  Also, fuzz is only added
-			 * to the initiator's margin.
-			 *
 			 * Note: for ISAKMP SA, we let the negotiated
 			 * time stand (implemented by earlier logic).
 			 */
@@ -2625,25 +2620,17 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 					      EVENT_SA_EXPIRE);
 			}
 			if (event_type != EVENT_SA_EXPIRE) {
-				time_t marg_s = deltasecs(c->sa_rekey_margin);
-
-				if (smc->flags & SMF_INITIATOR) {
-					marg_s += marg_s *
-						c->sa_rekey_fuzz /
-						100.E0 *
-						(rand() /
-						 (RAND_MAX + 1.E0));
-				} else {
-					marg_s /= 2;
-				}
+				time_t marg_s =  fuzz_margin((smc->flags & SMF_INITIATOR),
+							     deltasecs(c->sa_rekey_margin),
+							     c->sa_rekey_fuzz);
 				deltatime_t marg = deltatime(marg_s);
-
 				if (deltatime_cmp(event_delay, >, marg)) {
-					event_delay = deltatime_sub(event_delay, marg);
 					st->st_replace_margin = marg;
 				} else {
-					event_type = EVENT_SA_EXPIRE;
+					marg_s = 0;
+					marg = deltatime(marg_s);
 				}
+				event_delay = deltatime_sub(event_delay, marg);
 			}
 			event_schedule(event_type, event_delay, st);
 			break;
