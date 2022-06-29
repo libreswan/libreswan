@@ -34,6 +34,117 @@
 #include "ike_alg.h"
 #include "ike_alg_hash.h"
 
+/* Note: e and n will point int rr */
+static err_t rfc_resource_record_to_rsa_pubkey(chunk_t rr, chunk_t *e, chunk_t *n)
+{
+	*e = EMPTY_CHUNK;
+	*n = EMPTY_CHUNK;
+
+	/*
+	 * Step 1: find the bounds of the exponent and modulus within
+	 * the resource record and verify that they are sane.
+	 */
+
+	chunk_t exponent;
+	if (rr.len >= 2 && rr.ptr[0] != 0x00) {
+		/*
+		 * Exponent length is one-byte, followed by that many
+		 * exponent bytes
+		 */
+		exponent = (chunk_t) {
+			.ptr = rr.ptr + 1,
+			.len = rr.ptr[0]
+		};
+	} else if (rr.len >= 3 && rr.ptr[0] == 0x00) {
+		/*
+		 * Exponent length is 0x00 followed by 2 bytes of
+		 * length (big-endian), followed by that many exponent
+		 * bytes
+		 */
+		exponent = (chunk_t) {
+			.ptr = rr.ptr + 3,
+			.len = (rr.ptr[1] << BITS_PER_BYTE) + rr.ptr[2],
+		};
+	} else {
+		/* not even room for length! */
+		return "RSA public key resource record way too short";
+	}
+
+	/*
+	 * Does the exponent fall off the end of the resource record?
+	 */
+	uint8_t *const exponent_end = exponent.ptr + exponent.len;
+	uint8_t *const rr_end = rr.ptr + rr.len;
+	if (exponent_end > rr_end) {
+		return "truncated RSA public key resource record exponent";
+	}
+
+	/*
+	 * What is left over forms the modulus.
+	 */
+	chunk_t modulus = {
+		.ptr = exponent_end,
+		.len = rr_end - exponent_end,
+	};
+
+	if (modulus.len < RSA_MIN_OCTETS_RFC) {
+		return "RSA public key resource record modulus too short";
+	}
+	if (modulus.len < RSA_MIN_OCTETS) {
+		return RSA_MIN_OCTETS_UGH;
+	}
+	if (modulus.len > RSA_MAX_OCTETS) {
+		return RSA_MAX_OCTETS_UGH;
+	}
+
+	/*
+	 * Step 2: all looks good, export the slices
+	 */
+	*e = exponent;
+	*n = modulus;
+	return NULL;
+}
+
+static err_t unpack_RSA_public_key(struct RSA_public_key *rsa,
+				   keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+				   const chunk_t *pubkey)
+{
+	/* unpack */
+	chunk_t exponent;
+	chunk_t modulus;
+	err_t rrerr = rfc_resource_record_to_rsa_pubkey(*pubkey, &exponent, &modulus);
+	if (rrerr != NULL) {
+		return rrerr;
+	}
+
+	err_t ckerr = form_ckaid_rsa(modulus, ckaid);
+	if (ckerr != NULL) {
+		return ckerr;
+	}
+
+	err_t e = keyblob_to_keyid(pubkey->ptr, pubkey->len, keyid);
+	if (e != NULL) {
+		return e;
+	}
+
+	*size = modulus.len;
+	rsa->e = clone_hunk(exponent, "e");
+	rsa->n = clone_hunk(modulus, "n");
+
+	/* generate the CKAID */
+
+	if (DBGP(DBG_BASE)) {
+		/* pubkey information isn't DBG_PRIVATE */
+		DBG_log("keyid: *%s", str_keyid(*keyid));
+		DBG_log("  size: %zu", *size);
+		DBG_dump_hunk("  n", rsa->n);
+		DBG_dump_hunk("  e", rsa->e);
+		DBG_dump_hunk("  CKAID", *ckaid);
+	}
+
+	return NULL;
+}
+
 static err_t RSA_unpack_pubkey_content(union pubkey_content *u,
 				       keyid_t *keyid, ckaid_t *ckaid, size_t *size,
 				       chunk_t pubkey)
