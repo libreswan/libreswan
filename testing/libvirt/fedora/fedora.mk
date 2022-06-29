@@ -65,9 +65,9 @@ kvm-fedora-nspr-rpms:
 # empty.  XL2TPD sucks in the latest kernel so is included in the
 # list.
 #
-# KVM_FEDORA_KERNEL_RPMDIR ?= /source/kernel
+# KVM_FEDORA_KERNEL_RPMDIR ?= /pool/kernel
 # KVM_FEDORA_KERNEL_ARCH ? = x86_64
-# KVM_FEDORA_KERNEL_VERSION ?= 5.8.0-0.rc1.1.fc33.$(KERNEL_ARCH).rpm
+# KVM_FEDORA_KERNEL_VERSION ?= -5.8.0-0.rc1.1.fc33.$(KERNEL_ARCH).rpm
 
 KVM_FEDORA_KERNEL_RPMDIR ?=
 KVM_FEDORA_KERNEL_VERSION ?=
@@ -76,7 +76,7 @@ KVM_FEDORA_KERNEL_PACKAGE_NAMES ?= \
 	kernel \
 	kernel-core \
 	kernel-devel \
-	kernel-headers \
+	$(kernel-headers) \
 	kernel-modules \
 	kernel-modules-extra \
 	$(NULL)
