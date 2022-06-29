@@ -1166,21 +1166,22 @@ static struct pubkey *alloc_pubkey(const struct id *id, /* ASKK */
 	return pk;
 }
 
-err_t add_public_key(const struct id *id, /* ASKK */
-		     enum dns_auth_level dns_auth_level,
-		     const struct pubkey_type *type,
-		     realtime_t install_time, realtime_t until_time,
-		     uint32_t ttl,
-		     const chunk_t *key,
-		     struct pubkey **pkp,
-		     struct pubkey_list **head)
+err_t unpack_dnssec_pubkey(const struct id *id, /* ASKK */
+			   enum dns_auth_level dns_auth_level,
+			   const struct pubkey_type *type,
+			   realtime_t install_time, realtime_t until_time,
+			   uint32_t ttl,
+			   const chunk_t dnssec_pubkey,
+			   struct pubkey **pkp,
+			   struct pubkey_list **head)
 {
 	/* first: algorithm-specific decoding of key chunk */
 	union pubkey_content scratch_pkc;
 	keyid_t keyid;
 	ckaid_t ckaid;
 	size_t size;
-	err_t err = type->unpack_pubkey_content(&scratch_pkc, &keyid, &ckaid, &size, *key);
+	err_t err = type->dnssec_pubkey_to_pubkey_content(dnssec_pubkey, &scratch_pkc,
+							  &keyid, &ckaid, &size);
 	if (err != NULL) {
 		return err;
 	}

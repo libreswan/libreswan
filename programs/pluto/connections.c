@@ -972,7 +972,6 @@ static int extract_end(struct connection *c,
 		 * XXX: hack: whack will load the rsasigkey in a
 		 * second message, this code just extracts the ckaid.
 		 */
-		const struct pubkey_type *type = &pubkey_type_rsa;
 		/* XXX: lifted from starter_whack_add_pubkey() */
 		char err_buf[TTODATAV_BUF];
 		char keyspace[1024 + 4];
@@ -986,8 +985,9 @@ static int extract_end(struct connection *c,
 		keyid_t pubkey;
 		ckaid_t ckaid;
 		size_t size;
-		err = type->unpack_pubkey_content(&pkc, &pubkey, &ckaid, &size,
-						  chunk2(keyspace, keylen));
+		const struct pubkey_type *type = &pubkey_type_rsa;
+		err = type->dnssec_pubkey_to_pubkey_content(chunk2(keyspace, keylen),
+							    &pkc, &pubkey, &ckaid, &size);
 		if (err != NULL) {
 			llog(RC_FATAL, logger,
 				    "failed to add connection: %s raw public key invalid: %s",

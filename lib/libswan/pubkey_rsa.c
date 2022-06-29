@@ -34,8 +34,12 @@
 #include "ike_alg.h"
 #include "ike_alg_hash.h"
 
-/* Note: e and n will point int rr */
-static err_t rfc_resource_record_to_rsa_pubkey(chunk_t rr, chunk_t *e, chunk_t *n)
+/*
+ * Note: e and n will point int rr.
+ *
+ * See https://www.rfc-editor.org/rfc/rfc3110#section-2
+ */
+static err_t pubkey_dnssec_pubkey_to_rsa_pubkey(chunk_t rr, chunk_t *e, chunk_t *n)
 {
 	*e = EMPTY_CHUNK;
 	*n = EMPTY_CHUNK;
@@ -105,14 +109,14 @@ static err_t rfc_resource_record_to_rsa_pubkey(chunk_t rr, chunk_t *e, chunk_t *
 	return NULL;
 }
 
-static err_t unpack_RSA_public_key(struct RSA_public_key *rsa,
-				   keyid_t *keyid, ckaid_t *ckaid, size_t *size,
-				   const chunk_t *pubkey)
+static err_t unpack_RSA_dnssec_pubkey(struct RSA_public_key *rsa,
+				      keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+				      chunk_t dnssec_pubkey)
 {
 	/* unpack */
 	chunk_t exponent;
 	chunk_t modulus;
-	err_t rrerr = rfc_resource_record_to_rsa_pubkey(*pubkey, &exponent, &modulus);
+	err_t rrerr = pubkey_dnssec_pubkey_to_rsa_pubkey(dnssec_pubkey, &exponent, &modulus);
 	if (rrerr != NULL) {
 		return rrerr;
 	}
@@ -122,7 +126,7 @@ static err_t unpack_RSA_public_key(struct RSA_public_key *rsa,
 		return ckerr;
 	}
 
-	err_t e = keyblob_to_keyid(pubkey->ptr, pubkey->len, keyid);
+	err_t e = keyblob_to_keyid(dnssec_pubkey.ptr, dnssec_pubkey.len, keyid);
 	if (e != NULL) {
 		return e;
 	}
@@ -145,11 +149,11 @@ static err_t unpack_RSA_public_key(struct RSA_public_key *rsa,
 	return NULL;
 }
 
-static err_t RSA_unpack_pubkey_content(union pubkey_content *u,
-				       keyid_t *keyid, ckaid_t *ckaid, size_t *size,
-				       chunk_t pubkey)
+static err_t RSA_dnssec_pubkey_to_pubkey_content(chunk_t dnssec_pubkey,
+						 union pubkey_content *u,
+						 keyid_t *keyid, ckaid_t *ckaid, size_t *size)
 {
-	return unpack_RSA_public_key(&u->rsa, keyid, ckaid, size, &pubkey);
+	return unpack_RSA_dnssec_pubkey(&u->rsa, keyid, ckaid, size, dnssec_pubkey);
 }
 
 static void RSA_free_public_content(struct RSA_public_key *rsa)
@@ -223,7 +227,7 @@ const struct pubkey_type pubkey_type_rsa = {
 	.name = "RSA",
 	.private_key_kind = PKK_RSA,
 	.free_pubkey_content = RSA_free_pubkey_content,
-	.unpack_pubkey_content = RSA_unpack_pubkey_content,
+	.dnssec_pubkey_to_pubkey_content = RSA_dnssec_pubkey_to_pubkey_content,
 	.extract_pubkey_content = RSA_extract_pubkey_content,
 	.extract_private_key_pubkey_content = RSA_extract_private_key_pubkey_content,
 	.free_secret_content = RSA_free_secret_content,

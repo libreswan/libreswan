@@ -314,13 +314,13 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 
 		/* add the public key */
 		struct pubkey *pubkey = NULL; /* must-delref */
-		err_t ugh = add_public_key(&keyid, PUBKEY_LOCAL, type,
-					   /*install_time*/realnow(),
-					   /*until_time*/realtime_epoch,
-					   /*ttl*/0,
-					   &msg->keyval,
-					   &pubkey/*new-public-key:must-delref*/,
-					   &pluto_pubkeys);
+		err_t ugh = unpack_dnssec_pubkey(&keyid, PUBKEY_LOCAL, type,
+						 /*install_time*/realnow(),
+						 /*until_time*/realtime_epoch,
+						 /*ttl*/0,
+						 msg->keyval,
+						 &pubkey/*new-public-key:must-delref*/,
+						 &pluto_pubkeys);
 		if (ugh != NULL) {
 			llog(RC_LOG_SERIOUS, logger, "%s", ugh);
 			free_id_content(&keyid);

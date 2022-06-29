@@ -33,13 +33,28 @@
 #include "lswlog.h"
 #include "secrets.h"
 
-static err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa,
-				     keyid_t *keyid, ckaid_t *ckaid, size_t *size,
-				     const chunk_t *pubkey)
+static err_t unpack_ECDSA_dnssec_pubkey(struct ECDSA_public_key *ecdsa,
+					keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+					const chunk_t dnssec_pubkey)
 {
+	/*
+	  this is broken:
+
+	  - ecParam needs to be set to the ASN.1 of the OID (look for
+            SEC_ASN1_OBJECT_ID)
+
+	  - the actual ecParam needs to be determined based on
+            DNSSEC_PUBKEY size?
+
+	  - depending on the type of EC, the dnssec_pubkey may need an
+            additional EC_POINT_FORM_UNCOMPRESSED prefix (this is why
+            .pub is 97 bytes when it should be 2*48=96 for P-384)
+
+	*/
+
 	err_t e;
 
-	e = form_ckaid_ecdsa(*pubkey, ckaid);
+	e = form_ckaid_ecdsa(dnssec_pubkey, ckaid);
 	if (e != NULL) {
 		return e;
 	}
@@ -50,8 +65,8 @@ static err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa,
 		return e;
 	}
 
-	*size = pubkey->len;
-	ecdsa->pub = clone_hunk(*pubkey, "public value");
+	*size = dnssec_pubkey.len;
+	ecdsa->pub = clone_hunk(dnssec_pubkey, "public value");
 
 	if (DBGP(DBG_BASE)) {
 		/* pubkey information isn't DBG_PRIVATE */
@@ -64,11 +79,11 @@ static err_t unpack_ECDSA_public_key(struct ECDSA_public_key *ecdsa,
        return NULL;
 }
 
-static err_t ECDSA_unpack_pubkey_content(union pubkey_content *u,
-					 keyid_t *keyid, ckaid_t *ckaid, size_t *size,
-					 chunk_t pubkey)
+static err_t ECDSA_dnssec_pubkey_to_pubkey_content(chunk_t dnssec_pubkey,
+						   union pubkey_content *u,
+						   keyid_t *keyid, ckaid_t *ckaid, size_t *size)
 {
-	return unpack_ECDSA_public_key(&u->ecdsa, keyid, ckaid, size, &pubkey);
+	return unpack_ECDSA_dnssec_pubkey(&u->ecdsa, keyid, ckaid, size, dnssec_pubkey);
 }
 
 static void ECDSA_free_public_content(struct ECDSA_public_key *ecdsa)
@@ -103,9 +118,11 @@ static void ECDSA_extract_public_key(struct ECDSA_public_key *pub,
 				   pubkey_nss->u.ec.publicValue.len, keyid);
 	passert(e == NULL);
 
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("keyid *%s", str_keyid(*keyid));
-		DBG_log("  size: %zu", *size);
+	if (DBGP(DBG_BASE)) {
+		ckaid_buf cb;
+		DBG_log("ECDSA keyid *%s", str_keyid(*keyid));
+		DBG_log("ECDSA keyid *%s", str_ckaid(ckaid, &cb));
+		DBG_log("ECDSA size: %zu", *size);
 		DBG_dump_hunk("pub", pub->pub);
 		DBG_dump_hunk("ecParams", pub->ecParams);
 	}
@@ -151,7 +168,7 @@ const struct pubkey_type pubkey_type_ecdsa = {
 	.alg = PUBKEY_ALG_ECDSA,
 	.name = "ECDSA",
 	.private_key_kind = PKK_ECDSA,
-	.unpack_pubkey_content = ECDSA_unpack_pubkey_content,
+	.dnssec_pubkey_to_pubkey_content = ECDSA_dnssec_pubkey_to_pubkey_content,
 	.free_pubkey_content = ECDSA_free_pubkey_content,
 	.extract_private_key_pubkey_content = ECDSA_extract_private_key_pubkey_content,
 	.free_secret_content = ECDSA_free_secret_content,
