@@ -97,6 +97,7 @@
 #include "ikev2_child.h"
 #include "ikev2_child.h"
 #include "ikev2_create_child_sa.h"	/* for ikev2_rekey_ike_start() */
+#include "rekeyfuzz.h"
 
 bool accept_v2_nonce(struct logger *logger, struct msg_digest *md,
 		     chunk_t *dest, const char *name)
@@ -513,43 +514,24 @@ void schedule_v2_replace_event(struct state *st)
 		kind = EVENT_SA_REPLACE;
 		story = "IKE SA with policy re-authenticate";
 	} else {
-		/*
-		 * Important policy lies buried here.  For example, we
-		 * favour the initiator over the responder by making
-		 * the initiator start rekeying sooner.  Also, fuzz is
-		 * only added to the initiator's margin.
-		 *
-		 * Unwrapped deltatime_t is in seconds.
-		 */
-		intmax_t marg = deltasecs(c->sa_rekey_margin);
-		switch (st->st_sa_role) {
-		case SA_INITIATOR:
-			marg += marg *
-				c->sa_rekey_fuzz / 100.E0 *
-				(rand() / (RAND_MAX + 1.E0));
-			break;
-		case SA_RESPONDER:
-			marg /= 2;
-			break;
-		default:
-			bad_case(st->st_sa_role);
-		}
+		time_t marg_s = fuzz_margin((st->st_sa_role == SA_INITIATOR),
+					    deltasecs(c->sa_rekey_margin),
+					    c->sa_rekey_fuzz);
 
-		intmax_t rekey_delay = delay - marg;
+		intmax_t rekey_delay = delay;
+		if (delay > marg_s)
+			rekey_delay = delay - marg_s;
+		else
+			marg_s = 0;
+		deltatime_t marg = deltatime(marg_s);
+		st->st_replace_margin = marg;
 
-		if (rekey_delay > 0) {
-			/*
-			 * Time to rekey/reauth; scheduled once during
-			 * a state's lifetime.
-			 */
-			dbg("#%lu will start re-keying in %jd seconds (replace in %jd seconds)",
-			    st->st_serialno, rekey_delay, delay);
-			event_schedule(EVENT_v2_REKEY, deltatime(rekey_delay), st);
-			pexpect(st->st_v2_refresh_event->ev_type == EVENT_v2_REKEY);
-			story = "attempting re-key";
-		} else {
-			story = "margin to small for re-key";
-		}
+		/* Time to rekey/reauth; scheduled once during a state's lifetime.*/
+		dbg("#%lu will start re-keying in %jd seconds (replace in %jd seconds)",
+		    st->st_serialno, rekey_delay, delay);
+		event_schedule(EVENT_v2_REKEY, deltatime(rekey_delay), st);
+		pexpect(st->st_v2_refresh_event->ev_type == EVENT_v2_REKEY);
+		story = "attempting re-key";
 
 		kind = EVENT_SA_REPLACE;
 	}
