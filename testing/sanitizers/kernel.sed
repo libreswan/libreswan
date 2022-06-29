@@ -27,6 +27,7 @@ s/\[\s\+[0-9]\+\.[0-9]\+\] /[ 00.00] /
 /\[ 00.00] audit: / b zap
 /\[ 00.00] Bluetooth: / b zap # yes, apparently NIC has Bluetooth
 /\[ 00.00] .*: performance on this CPU would be suboptimal/ b zap
+/\[ 00.00] .* used greatest stack depth: [0-9]* bytes left/ b zap
 
 b
 
