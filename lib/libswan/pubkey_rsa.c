@@ -78,16 +78,16 @@ static void RSA_extract_private_key_pubkey_content(struct private_key_stuff *pks
 						   SECKEYPublicKey *pubkey_nss,
 						   SECItem *ckaid_nss)
 {
-	struct RSA_private_key *rsak = &pks->u.RSA_private_key;
-	RSA_extract_public_key(&rsak->pub, keyid, ckaid, size,
+	struct RSA_public_key *pubkey = &pks->u.pubkey.rsa;
+	RSA_extract_public_key(pubkey, keyid, ckaid, size,
 			       pubkey_nss, ckaid_nss);
 }
 
 static void RSA_free_secret_content(struct private_key_stuff *pks)
 {
 	SECKEY_DestroyPrivateKey(pks->private_key);
-	struct RSA_private_key *rsak = &pks->u.RSA_private_key;
-	RSA_free_public_content(&rsak->pub);
+	struct RSA_public_key *pubkey = &pks->u.pubkey.rsa;
+	RSA_free_public_content(pubkey);
 }
 
 static err_t RSA_secret_sane(struct private_key_stuff *pks)

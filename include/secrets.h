@@ -51,17 +51,14 @@ struct RSA_public_key {
 	chunk_t e;	/* exponent: relatively prime to (p-1) * (q-1) [probably small] */
 };
 
-struct RSA_private_key {
-	struct RSA_public_key pub;
-};
-
 struct ECDSA_public_key {
 	chunk_t ecParams;
 	chunk_t pub; /* publicValue */
 };
 
-struct ECDSA_private_key {
-	struct ECDSA_public_key pub;
+union pubkey_content {
+	struct RSA_public_key rsa;
+	struct ECDSA_public_key ecdsa;
 };
 
 err_t rsa_pubkey_to_base64(chunk_t exponent, chunk_t modulus, char **rr);
@@ -96,8 +93,7 @@ struct private_key_stuff {
 	int line;
 	union {
 		chunk_t preshared_secret;
-		struct RSA_private_key RSA_private_key;
-		struct ECDSA_private_key ECDSA_private_key;
+		union pubkey_content pubkey;
 		/* struct smartcard *smartcard; */
 	} u;
 
@@ -147,11 +143,6 @@ struct hash_signature {
 	 * ECDSA 256, 384, and 521.
 	 */
 	uint8_t ptr[PMAX(RSA_MAX_OCTETS, BYTES_FOR_BITS(1056))];
-};
-
-union pubkey_content {
-	struct RSA_public_key rsa;
-	struct ECDSA_public_key ecdsa;
 };
 
 struct pubkey_type {

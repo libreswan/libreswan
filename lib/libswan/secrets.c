@@ -389,9 +389,8 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 					 * equal private keys. This
 					 * ought to work.
 					 */
-					same = same_RSA_public_key(
-						&s->pks.u.RSA_private_key.pub,
-						&best->pks.u.RSA_private_key.pub);
+					same = same_RSA_public_key(&s->pks.u.pubkey.rsa,
+								   &best->pks.u.pubkey.rsa);
 					break;
 				case PKK_ECDSA:
 					/* there are no ECDSA kind of secrets */

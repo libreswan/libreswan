@@ -93,16 +93,16 @@ static void ECDSA_extract_private_key_pubkey_content(struct private_key_stuff *p
 						     SECKEYPublicKey *pubkey_nss,
 						     SECItem *ckaid_nss)
 {
-	struct ECDSA_private_key *ecdsak = &pks->u.ECDSA_private_key;
-	ECDSA_extract_public_key(&ecdsak->pub, keyid, ckaid, size,
+	struct ECDSA_public_key *pubkey = &pks->u.pubkey.ecdsa;
+	ECDSA_extract_public_key(pubkey, keyid, ckaid, size,
 				 pubkey_nss, ckaid_nss);
 }
 
 static void ECDSA_free_secret_content(struct private_key_stuff *pks)
 {
 	SECKEY_DestroyPrivateKey(pks->private_key);
-	struct ECDSA_private_key *ecdsak = &pks->u.ECDSA_private_key;
-	ECDSA_free_public_content(&ecdsak->pub);
+	struct ECDSA_public_key *pubkey = &pks->u.pubkey.ecdsa;
+	ECDSA_free_public_content(pubkey);
 }
 
 /*

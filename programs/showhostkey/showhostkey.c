@@ -276,7 +276,7 @@ static int show_dnskey(struct private_key_stuff *pks,
 		return 5;
 	}
 
-	char *base64 = pubkey_to_rfc3110_base64(&pks->u.RSA_private_key.pub);
+	char *base64 = pubkey_to_rfc3110_base64(&pks->u.pubkey.rsa);
 	if (base64 == NULL) {
 		return 5;
 	}
@@ -322,7 +322,7 @@ static int show_confkey(struct private_key_stuff *pks,
 		return 5;
 	}
 
-	char *base64 = pubkey_to_rfc3110_base64(&pks->u.RSA_private_key.pub);
+	char *base64 = pubkey_to_rfc3110_base64(&pks->u.pubkey.rsa);
 	if (base64 == NULL) {
 		return 5;
 	}
