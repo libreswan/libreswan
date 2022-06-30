@@ -257,7 +257,20 @@ static int pick_by_ckaid(struct secret *secret UNUSED,
 	}
 }
 
-static char *pks_to_base64_dnssec_pubkey(struct private_key_stuff *pks)
+static char *base64_from_chunk(chunk_t chunk)
+{
+	/*
+	 * A byte is 8-bits, base64 uses 6-bits (2^6=64).  Plus some
+	 * for 0s.  Plus some for \0.  Plus some extra for rounding.
+	 */
+	size_t len = chunk.len * 8 / 6 + 2 + 1 + 10;
+	char *base64 = alloc_bytes(len, "base64");
+	size_t n = datatot(chunk.ptr, chunk.len, 64, base64, len);
+	passert(n < len);
+	return base64;
+}
+
+static char *base64_dnssec_pubkey_from_pks(struct private_key_stuff *pks)
 {
 	chunk_t chunk = empty_chunk; /* must free */
 	err_t e = pks->pubkey_type->pubkey_content_to_dnssec_pubkey(&pks->u.pubkey, &chunk);
@@ -266,21 +279,7 @@ static char *pks_to_base64_dnssec_pubkey(struct private_key_stuff *pks)
 		return NULL;
 	}
 
-	/*
-	 * A byte is 8-bits, base64 uses 6-bits (2^6=64).  Plus some
-	 * for 0s.  Plus some for \0.  Plus some extra for rounding.
-	 */
-	size_t len = chunk.len * 8 / 6 + 2 + 1 + 10;
-	char *base64 = alloc_bytes(len, "base64 resource record");
-	size_t n = datatot(chunk.ptr, chunk.len, 's', base64, len);
-	if (n >= len) {
-		free_chunk_content(&chunk);
-		pfreeany(base64);
-		fprintf(stderr, "%s: base64 encoded RSA public key resource record larger than expected",
-			progname);
-		return NULL;
-	}
-
+	char *base64 = base64_from_chunk(chunk);
 	free_chunk_content(&chunk);
 	return base64;
 }
@@ -300,7 +299,7 @@ static int show_dnskey(struct private_key_stuff *pks,
 		return 5;
 	}
 
-	char *base64 = pks_to_base64_dnssec_pubkey(pks);
+	char *base64 = base64_dnssec_pubkey_from_pks(pks);
 	if (base64 == NULL) {
 		return 5;
 	}
@@ -321,7 +320,7 @@ static int show_dnskey(struct private_key_stuff *pks,
 
 	printf("%s.    IN    IPSECKEY  %d %d 2 %s %s\n",
 	       qname, precedence, gateway_type,
-	       (gateway == NULL) ? "." : gateway, base64 + sizeof("0s") - 1);
+	       (gateway == NULL) ? "." : gateway, base64);
 	pfree(base64);
 	return 0;
 }
@@ -346,7 +345,7 @@ static int show_confkey(struct private_key_stuff *pks,
 		return 5;
 	}
 
-	char *base64 = pks_to_base64_dnssec_pubkey(pks);
+	char *base64 = base64_dnssec_pubkey_from_pks(pks);
 	if (base64 == NULL) {
 		return 5;
 	}
@@ -355,14 +354,14 @@ static int show_confkey(struct private_key_stuff *pks,
 	case PKK_RSA:
 		printf("\t# rsakey %s\n",
 		       pks->keyid.keyid);
-		printf("\t%srsasigkey=%s\n", side,
+		printf("\t%srsasigkey=0s%s\n", side,
 		       base64);
 		pfree(base64);
 		break;
 	case PKK_ECDSA:
 		printf("\t# ecdsakey %s\n",
 		       pks->keyid.keyid);
-		printf("\t%secdsasigkey=%s\n", side,
+		printf("\t%secdsasigkey=0s%s\n", side,
 		       base64);
 		pfree(base64);
 		break;
