@@ -199,6 +199,81 @@ static err_t RSA_dnssec_pubkey_to_pubkey_content(chunk_t dnssec_pubkey,
 	return unpack_RSA_dnssec_pubkey(&u->rsa, keyid, ckaid, size, dnssec_pubkey);
 }
 
+static err_t RSA_pubkey_content_to_der(const union pubkey_content *u, chunk_t *der)
+{
+	*der = empty_chunk;
+
+	PLArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
+
+	/*
+	 * Step 1: encode the raw publick key into PUBKEY_DER.
+	 *
+	 * In nss/lib/softoken/pkcs11c.c:sftk_unwrapPrivateKey()
+	 * there's code doing something similar with
+	 * nsslowkey_RSAPublicKeyTemplate.
+	 */
+
+	struct pubkey_value {
+		SECItem modulus;
+		SECItem exponent;
+	} pubkey_value = {
+		/* why siUnsignedInteger? see nss/lib/softoken/lowkey.c */
+		.modulus = same_chunk_as_secitem(u->rsa.n, siUnsignedInteger),
+		.exponent = same_chunk_as_secitem(u->rsa.e, siUnsignedInteger),
+	};
+
+	/* see nss/lib/softoken/lowkey.c */
+	static const SEC_ASN1Template pubkey_template[] = {
+		{ SEC_ASN1_SEQUENCE, 0, NULL, sizeof(struct pubkey_value), },
+		{ SEC_ASN1_INTEGER, offsetof(struct pubkey_value, modulus), NULL, 0, },
+		{ SEC_ASN1_INTEGER, offsetof(struct pubkey_value, exponent), NULL, 0, },
+		{ 0 },
+	};
+
+	SECItem *pubkey_der = SEC_ASN1EncodeItem(arena, NULL, &pubkey_value, pubkey_template);
+	if (DBGP(DBG_BASE)) {
+		DBG_dump("pubkey", pubkey_der->data, pubkey_der->len);
+	}
+
+	/*
+	 * Step 2: wrap PUBKEY_DER as an x509(?) structure that
+	 * includes the algorithm.
+	 *
+	 * In nss/lib/softoken/pkcs11c.c:sftk_unwrapPrivateKey() there's code doing this using
+	 * nsslowkey_SubjectPublicKeyInfoTemplate
+	 */
+
+	struct wrap_value {
+		SECAlgorithmID id;
+		SECItem bits;
+	} wrap_value = {
+		.id = {
+			.algorithm = SECOID_FindOIDByTag(SEC_OID_PKCS1_RSA_ENCRYPTION)->oid,
+		},
+		.bits = *pubkey_der,
+	};
+	/* BIT_STRING expects things in bits! */
+	wrap_value.bits.len *= 8;
+
+	static const SEC_ASN1Template wrap_template[] = {
+		{ SEC_ASN1_SEQUENCE, 0, NULL, sizeof(struct wrap_value), },
+		{ SEC_ASN1_INLINE|SEC_ASN1_XTRN, offsetof(struct wrap_value, id), SECOID_AlgorithmIDTemplate, 0, },
+		{ SEC_ASN1_BIT_STRING, offsetof(struct wrap_value, bits), NULL, 0, },
+		{ 0 },
+	};
+
+	SECItem *wrap_der = SEC_ASN1EncodeItem(arena, NULL, &wrap_value, wrap_template);
+	if (DBGP(DBG_BASE)) {
+		DBG_dump("wrap", wrap_der->data, wrap_der->len);
+	}
+
+	*der = clone_secitem_as_chunk(*wrap_der, "der");
+
+	PORT_FreeArena(arena, PR_TRUE/*zero*/);
+	return NULL;
+
+}
+
 static void RSA_free_public_content(struct RSA_public_key *rsa)
 {
 	free_chunk_content(&rsa->n);
@@ -272,6 +347,7 @@ const struct pubkey_type pubkey_type_rsa = {
 	.free_pubkey_content = RSA_free_pubkey_content,
 	.dnssec_pubkey_to_pubkey_content = RSA_dnssec_pubkey_to_pubkey_content,
 	.pubkey_content_to_dnssec_pubkey = RSA_pubkey_content_to_dnssec_pubkey,
+	.pubkey_content_to_der = RSA_pubkey_content_to_der,
 	.extract_pubkey_content = RSA_extract_pubkey_content,
 	.extract_private_key_pubkey_content = RSA_extract_private_key_pubkey_content,
 	.free_secret_content = RSA_free_secret_content,

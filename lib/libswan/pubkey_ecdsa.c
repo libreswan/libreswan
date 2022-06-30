@@ -86,6 +86,18 @@ static err_t ECDSA_dnssec_pubkey_to_pubkey_content(chunk_t dnssec_pubkey,
 	return unpack_ECDSA_dnssec_pubkey(&u->ecdsa, keyid, ckaid, size, dnssec_pubkey);
 }
 
+static err_t ECDSA_pubkey_content_to_dnssec_pubkey(const union pubkey_content *u UNUSED,
+						   chunk_t *dnssec_pubkey UNUSED)
+{
+	return "not implemented";
+}
+
+static err_t ECDSA_pubkey_content_to_der(const union pubkey_content *u UNUSED,
+					 chunk_t *der UNUSED)
+{
+	return "not implemented";
+}
+
 static void ECDSA_free_public_content(struct ECDSA_public_key *ecdsa)
 {
 	free_chunk_content(&ecdsa->pub);
@@ -169,6 +181,8 @@ const struct pubkey_type pubkey_type_ecdsa = {
 	.name = "ECDSA",
 	.private_key_kind = PKK_ECDSA,
 	.dnssec_pubkey_to_pubkey_content = ECDSA_dnssec_pubkey_to_pubkey_content,
+	.pubkey_content_to_dnssec_pubkey = ECDSA_pubkey_content_to_dnssec_pubkey,
+	.pubkey_content_to_der = ECDSA_pubkey_content_to_der,
 	.free_pubkey_content = ECDSA_free_pubkey_content,
 	.extract_private_key_pubkey_content = ECDSA_extract_private_key_pubkey_content,
 	.free_secret_content = ECDSA_free_secret_content,

@@ -148,6 +148,9 @@ struct pubkey_type {
 						 keyid_t *keyid, ckaid_t *ckaid, size_t *size);
 	err_t (*pubkey_content_to_dnssec_pubkey)(const union pubkey_content *pkc,
 						 chunk_t *dnssec_pubkey);
+	/* BEGIN PUBLIC KEY and not BEGIN RSA PUBLIC KEY format */
+	err_t (*pubkey_content_to_der)(const union pubkey_content *pkc,
+				       chunk_t *dnssec_pubkey);
 	/* nss */
 	void (*extract_pubkey_content)(union pubkey_content *pkc,
 				       keyid_t *keyid, ckaid_t *ckaid, size_t *size,

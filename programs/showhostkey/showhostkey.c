@@ -71,6 +71,8 @@ char usage[] =
 	"               { --rsaid <rsaid> | --ckaid <ckaid> }\n"
 	"               [ --precedence <precedence> ] \n"
 	"               [ --gateway <gateway> ]\n"
+	"   showhostkey --pem\n"
+	"               { --rsaid <rsaid> | --ckaid <ckaid> }\n"
 	"Additional options:\n"
 	"   --verbose\n"
 	"   --debug\n"
@@ -100,6 +102,7 @@ enum opt {
 	OPT_PASSWORD,
 	OPT_CKAID,
 	OPT_DEBUG,
+	OPT_PEM,
 };
 
 const char short_opts[] = "v?d:lrg";
@@ -121,6 +124,7 @@ struct option long_opts[] = {
 	{ "configdir",  required_argument,      NULL,   OPT_CONFIGDIR, }, /* obsoleted */
 	{ "nssdir",     required_argument,      NULL,   OPT_NSSDIR, }, /* nss-tools use -d */
 	{ "password",   required_argument,      NULL,   OPT_PASSWORD, },
+	{ "pem",        no_argument,            NULL,   OPT_PEM, },
 	{ 0,            0,                      NULL,   0, }
 };
 
@@ -325,6 +329,32 @@ static int show_dnskey(struct private_key_stuff *pks,
 	return 0;
 }
 
+static int show_pem(struct private_key_stuff *pks)
+{
+	chunk_t der = empty_chunk; /* must free */
+	err_t e = pks->pubkey_type->pubkey_content_to_der(&pks->u.pubkey, &der);
+	if (e != NULL) {
+		fprintf(stderr, "%s: %s\n", progname, e);
+		return 5;
+	}
+
+	char *pem = base64_from_chunk(der);
+	free_chunk_content(&der);
+
+	printf("-----BEGIN PUBLIC KEY-----\n");
+	printf("%s\n", pem);
+	printf("-----END PUBLIC KEY-----\n");
+
+	/*
+	 * The output should be accepted by
+	 * openssl pkey -in /tmp/x -inform PEM -pubin -noout -text
+	 */
+
+	pfreeany(pem);
+
+	return 0;
+}
+
 static int show_confkey(struct private_key_stuff *pks,
 			char *side)
 {
@@ -496,6 +526,7 @@ int main(int argc, char *argv[])
 	bool dump_flg = false;
 	bool list_flg = false;
 	bool ipseckey_flg = false;
+	bool pem_flg = false;
 	char *gateway = NULL;
 	int precedence = 10;
 	char *ckaid = NULL;
@@ -520,6 +551,10 @@ int main(int argc, char *argv[])
 
 		case OPT_IPSECKEY:
 			ipseckey_flg = true;
+			break;
+
+		case OPT_PEM:
+			pem_flg = true;
 			break;
 
 		case OPT_PRECIDENCE:
@@ -578,18 +613,18 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	if (!(left_flg + right_flg + ipseckey_flg + dump_flg + list_flg)) {
+	if (!(left_flg + right_flg + ipseckey_flg + pem_flg + dump_flg + list_flg)) {
 		fprintf(stderr, "%s: You must specify an operation\n", progname);
 		goto usage;
 	}
 
-	if ((left_flg + right_flg + ipseckey_flg + dump_flg + list_flg) > 1) {
+	if ((left_flg + right_flg + ipseckey_flg + pem_flg + dump_flg + list_flg) > 1) {
 		fprintf(stderr, "%s: You must specify only one operation\n",
 			progname);
 		goto usage;
 	}
 
-	if ((left_flg + right_flg + ipseckey_flg) && !ckaid && !rsaid) {
+	if ((left_flg + right_flg + ipseckey_flg + pem_flg) && !ckaid && !rsaid) {
 		fprintf(stderr, "%s: You must select a key using --ckaid or --rsaid\n",
 			progname);
 		goto usage;
@@ -666,6 +701,11 @@ int main(int argc, char *argv[])
 
 	if (ipseckey_flg) {
 		status = show_dnskey(pks, precedence, gateway);
+		goto out;
+	}
+
+	if (pem_flg) {
+		status = show_pem(pks);
 		goto out;
 	}
 
