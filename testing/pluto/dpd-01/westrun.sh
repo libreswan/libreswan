@@ -32,6 +32,6 @@ sleep 10
 # Tunnel should be back up now even without triggering traffic
 echo "Tunnel should be up even without trigger traffic"
 ipsec whack --trafficstatus
-ping -n -q -c 8 192.1.2.23
-ipsec whack --trafficstatus
+../../guestbin/fping-short.sh --lossy 10 -I 192.1.2.45 192.1.2.23
+../../guestbin/ipsec-trafficstatus.sh
 echo done
