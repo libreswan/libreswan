@@ -81,9 +81,20 @@ char usage[] =
 /*
  * For new options, avoid magic numbers.
  *
- * XXX: Can fix old options later.
+ * XXX: The Can fix old options later.
  */
 enum opt {
+	OPT_HELP = '?',
+	OPT_IPSECKEY = 'K',
+	OPT_GATEWAY = 'g',
+	OPT_LEFT = 'l',
+	OPT_RIGHT = 'r',
+	OPT_LIST = 'L',
+	OPT_NSSDIR = 'd', /* nss-tools use -d */
+	OPT_VERBOSE = 'v',
+	OPT_VERSION = 'V',
+	OPT_RSAID = 'I',
+	OPT_PRECIDENCE = 'p',
 	OPT_CONFIGDIR = 256,
 	OPT_DUMP,
 	OPT_PASSWORD,
@@ -91,22 +102,24 @@ enum opt {
 	OPT_DEBUG,
 };
 
-struct option opts[] = {
-	{ "help",       no_argument,            NULL,   '?', },
-	{ "left",       no_argument,            NULL,   'l', },
-	{ "right",      no_argument,            NULL,   'r', },
+const char short_opts[] = "v?d:lrg";
+
+struct option long_opts[] = {
+	{ "help",       no_argument,            NULL,   OPT_HELP, },
+	{ "left",       no_argument,            NULL,   OPT_LEFT, },
+	{ "right",      no_argument,            NULL,   OPT_RIGHT, },
 	{ "dump",       no_argument,            NULL,   OPT_DUMP, },
 	{ "debug",      no_argument,            NULL,   OPT_DEBUG, },
-	{ "list",       no_argument,            NULL,   'L', },
-	{ "ipseckey",   no_argument,            NULL,   'K', },
-	{ "gateway",    required_argument,      NULL,   'g', },
-	{ "precedence", required_argument,      NULL,   'p', },
+	{ "list",       no_argument,            NULL,   OPT_LIST, },
+	{ "ipseckey",   no_argument,            NULL,   OPT_IPSECKEY, },
+	{ "gateway",    required_argument,      NULL,   OPT_GATEWAY, },
+	{ "precedence", required_argument,      NULL,   OPT_PRECIDENCE, },
 	{ "ckaid",      required_argument,      NULL,   OPT_CKAID, },
-	{ "rsaid",      required_argument,      NULL,   'I', },
-	{ "version",    no_argument,            NULL,   'V', },
-	{ "verbose",    no_argument,            NULL,   'v', },
+	{ "rsaid",      required_argument,      NULL,   OPT_RSAID, },
+	{ "version",    no_argument,            NULL,   OPT_VERSION, },
+	{ "verbose",    no_argument,            NULL,   OPT_VERBOSE, },
 	{ "configdir",  required_argument,      NULL,   OPT_CONFIGDIR, }, /* obsoleted */
-	{ "nssdir",     required_argument,      NULL,   'd', }, /* nss-tools use -d */
+	{ "nssdir",     required_argument,      NULL,   OPT_NSSDIR, }, /* nss-tools use -d */
 	{ "password",   required_argument,      NULL,   OPT_PASSWORD, },
 	{ 0,            0,                      NULL,   0, }
 };
@@ -489,16 +502,16 @@ int main(int argc, char *argv[])
 	char *ckaid = NULL;
 	char *rsaid = NULL;
 
-	while ((opt = getopt_long(argc, argv, "", opts, NULL)) != EOF) {
+	while ((opt = getopt_long(argc, argv, short_opts, long_opts, NULL)) != EOF) {
 		switch (opt) {
-		case '?':
+		case OPT_HELP:
 			goto usage;
 			break;
 
-		case 'l':
+		case OPT_LEFT:
 			left_flg = true;
 			break;
-		case 'r':
+		case OPT_RIGHT:
 			right_flg = true;
 			break;
 
@@ -506,12 +519,11 @@ int main(int argc, char *argv[])
 			dump_flg = true;
 			break;
 
-		case 'K':
+		case OPT_IPSECKEY:
 			ipseckey_flg = true;
-			gateway = clone_str(optarg, "gateway");
 			break;
 
-		case 'p':
+		case OPT_PRECIDENCE:
 			{
 				unsigned long u;
 				err_t ugh = ttoulb(optarg, 0, 10, 255, &u);
@@ -524,16 +536,11 @@ int main(int argc, char *argv[])
 				precedence = u;
 			}
 			break;
-		case 'L':
+		case OPT_LIST:
 			list_flg = true;
 			break;
 
-		case 's':
-		case 'R':
-		case 'c':
-			break;
-
-		case 'g':
+		case OPT_GATEWAY:
 			ipseckey_flg = true;
 			gateway = clone_str(optarg, "gateway");
 			break;
@@ -542,12 +549,12 @@ int main(int argc, char *argv[])
 			ckaid = clone_str(optarg, "ckaid");
 			break;
 
-		case 'I':
+		case OPT_RSAID:
 			rsaid = clone_str(optarg, "rsaid");
 			break;
 
 		case OPT_CONFIGDIR:	/* Obsoletd by --nssdir|-d */
-		case 'd':
+		case OPT_NSSDIR:
 			lsw_conf_nssdir(optarg, logger);
 			break;
 
@@ -555,11 +562,7 @@ int main(int argc, char *argv[])
 			lsw_conf_nsspassword(optarg);
 			break;
 
-		case 'n':
-		case 'h':
-			break;
-
-		case 'v':
+		case OPT_VERBOSE:
 			log_to_stderr = true;
 			break;
 
@@ -567,7 +570,7 @@ int main(int argc, char *argv[])
 			cur_debugging = -1;
 			break;
 
-		case 'V':
+		case OPT_VERSION:
 			fprintf(stdout, "%s\n", ipsec_version_string());
 			exit(0);
 
