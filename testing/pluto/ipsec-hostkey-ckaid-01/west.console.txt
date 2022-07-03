@@ -8,9 +8,15 @@ west #
  ipsec showhostkey --list
 < 1> RSA keyid: <<KEYID#1>> ckaid: <<CKAID#1>>
 west #
- ipsec showhostkey --left --ckaid "$ckaid"
+ ipsec showhostkey --dump
+< 1> RSA keyid: <<KEYID#1>> ckaid: <<CKAID#1>>
+west #
+ ipsec showhostkey --left --ckaid "${ckaid}"
 	# rsakey <<KEYID#1>>
-	leftrsasigkey=<<RSASIGKEY#1>>
+	leftrsasigkey=0s<<RSASIGKEY#1>>
+west #
+ ipsec showhostkey --ipseckey --ckaid "${ckaid}"
+west.    IN    IPSECKEY  10 0 2 . <<RSASIGKEY#1>>
 west #
  
 
