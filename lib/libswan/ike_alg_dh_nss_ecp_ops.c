@@ -47,29 +47,24 @@ static void nss_ecp_calc_local_secret(const struct dh_desc *group,
 	 * data) from NSS.
 	 */
 	DBGF(DBG_CRYPT, "oid %d %x", group->nss_oid, group->nss_oid);
+
+	/*
+	 * Wrap the raw OID in ASN.1.  SECKEYECParams is just a
+	 * glorifed SECItem.
+	 */
 	SECOidData *pk11_data = SECOID_FindOIDByTag(group->nss_oid);
 	if (pk11_data == NULL) {
 		llog_passert(logger, HERE, "lookup of OID %d for EC group %s parameters failed",
 			     group->nss_oid, group->common.fqn);
 	}
+	SECKEYECParams *pk11_param = SEC_ASN1EncodeItem(NULL, NULL, &pk11_data->oid,
+							SEC_ObjectIDTemplate);
 	if (DBGP(DBG_CRYPT)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, "pk11_data->oid: ");
 			jam_nss_secitem(buf, &pk11_data->oid);
 		}
 	}
-
-	/*
-	 * Need to prepend the param with its size; for moment assume
-	 * the returned value is small.  If it ever gets too big will
-	 * need to re-encode the length some how.
-	 */
-	passert(pk11_data->oid.len < 256);
-	SECKEYECParams *pk11_param = SECITEM_AllocItem(NULL, NULL, (2 + pk11_data->oid.len));
-	pk11_param->type = siBuffer,
-	pk11_param->data[0] = SEC_ASN1_OBJECT_ID;
-	pk11_param->data[1] = pk11_data->oid.len;
-	memcpy(pk11_param->data + 2, pk11_data->oid.data, pk11_data->oid.len);
 	if (DBGP(DBG_CRYPT)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, "pk11_param");
@@ -80,7 +75,7 @@ static void nss_ecp_calc_local_secret(const struct dh_desc *group,
 	*privk = SECKEY_CreateECPrivateKey(pk11_param, pubk,
 					   lsw_nss_get_password_context(logger));
 
-	SECITEM_FreeItem(pk11_param, PR_TRUE);
+	SECITEM_FreeItem(pk11_param, PR_TRUE/*also-free-item*/);
 
 	if (*pubk == NULL || *privk == NULL) {
 		passert_nss_error(logger, HERE,

@@ -1,5 +1,5 @@
 /*
- * RSA signature key generation, for libreswan
+ * ECDSA signature key generation, for libreswan
  *
  * Copyright (C) 1999, 2000, 2001  Henry Spencer.
  * Copyright (C) 2003-2008 Michael C Richardson <mcr@xelerance.com>
@@ -223,15 +223,13 @@ static void ecdsasigkey(SECOidTag curve, int seedbits,
 	SECKEYPrivateKey *privkey = NULL;
 	SECKEYPublicKey *pubkey = NULL;
 
-	unsigned char buf[65];
-	SECItem ecdsaparams = { siBuffer, buf, sizeof(buf) };
-	SECOidData *oiddata = SECOID_FindOIDByTag(curve);
 
-	passert(oiddata->oid.len <= sizeof(buf) - 2);
-	ecdsaparams.data[0] = SEC_ASN1_OBJECT_ID;
-	ecdsaparams.data[1] = oiddata->oid.len;
-	memcpy(ecdsaparams.data + 2, oiddata->oid.data, oiddata->oid.len);
-	ecdsaparams.len = oiddata->oid.len + 2;
+	/*
+	 * Wrap the raw OID in ASN.1.  Must double free ecdsaparams.
+	 */
+	SECOidData *oiddata = SECOID_FindOIDByTag(curve);
+	SECItem *ecdsaparams = SEC_ASN1EncodeItem(NULL, NULL, &oiddata->oid,
+						  SEC_ObjectIDTemplate);
 
 	diag_t d = lsw_nss_setup(oco->nssdir, 0, logger);
 
@@ -250,10 +248,13 @@ static void ecdsasigkey(SECOidTag curve, int seedbits,
 	UpdateNSS_RNG(seedbits, logger);
 	privkey = PK11_GenerateKeyPair(slot,
 				       CKM_EC_KEY_PAIR_GEN,
-				       &ecdsaparams, &pubkey,
+				       ecdsaparams, &pubkey,
 				       PR_TRUE,
 				       PK11_IsFIPS() ? PR_TRUE : PR_FALSE,
 				       lsw_nss_get_password_context(logger));
+
+	SECITEM_FreeItem(ecdsaparams, PR_TRUE/*also-free-item*/);
+
 	/* inTheToken, isSensitive, passwordCallbackFunction */
 	if (privkey == NULL) {
 		fprintf(stderr,
