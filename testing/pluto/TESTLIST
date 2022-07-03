@@ -1231,6 +1231,8 @@ kvmplutotest	seccomp-03-updown		wip
 kvmplutotest	ipsec-hostkey-ckaid-01		good
 kvmplutotest	ipsec-hostkey-ckaid-02-fips	good
 kvmplutotest	ipsec-hostkey-ckaid-03-nsspw	good
+kvmplutotest	ipsec-hostkey-04-ikev1		good
+kvmplutotest	ipsec-hostkey-04-ikev2		good
 
 # PPK
 kvmplutotest	ikev2-ppk-dynamic-01				wip
