@@ -34,6 +34,7 @@
 	<arg choice='plain'>--left</arg>
 	<arg choice='plain'>--right</arg>
 	<arg choice='plain'>--ipseckey</arg>
+	<arg choice='plain'>--pem</arg>
       </group>
     </arg>
     <sbr/>
@@ -177,6 +178,17 @@
 	<listitem>
 	  <para>
 	    Select the public key to display using the RSA key ID.
+	  </para>
+	</listitem>
+      </varlistentry>
+
+      <varlistentry>
+	<term>
+	  <option>--pem</option>
+	</term>
+	<listitem>
+	  <para>
+	    Print the selected public key in PEM encoded ASN.1 format.
 	  </para>
 	</listitem>
       </varlistentry>
