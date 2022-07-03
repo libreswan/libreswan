@@ -2,12 +2,14 @@
 See also https://libreswan.org/
 
 v4.8 (unreleased)
+* showhostkey: add --pem option to print PEM encoded public key [Andrew]
 * BSD: fix replay window byte vs bit math [Andrew]
 * BSD: support large replay window when available; github/756 [Andrew]
 * BSD: support ESN when available; github/721 [Andrew]
 * BSD: make code finding interfaces more portable; github/728 [Andrew]
-* FreeBSD: build using GCC not LLVM; freebsd/264288 [Andrew]
-* building: dropped default build and packaging support for fedora 22, 28, 29, 30
+* BSD: always build using GCC; freebsd/264288 llvm/55963 [Andrew]
+* building: dropped default build and packaging support for:
+  	    Fedora 22, 28, 29, 30
             Debian stretch
             Ubuntu cosmic, xenial
             RHEL6 was removed in v4.5
