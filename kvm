@@ -300,7 +300,7 @@ while test $# -gt 0 ; do
 		# wrappers
 		modified )
 		    modified=$(git status testing/pluto/ \
-				   | awk '/(modified|deleted|renamed):/ { print $NF }' \
+				   | awk '/(modified|deleted|renamed|new file):/ { print $NF }' \
 				   | grep '/.*/.*/' \
 				   | cut -d/ -f1-3 \
 				   | sort -u)
