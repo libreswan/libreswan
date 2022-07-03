@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --nokeys
 rm -f /tmp/newhostkey.txt
-ckaid=$(ipsec newhostkey 2>&1 | grep "showhostkey" | sed "s/^.*ckaid //")
+ckaid=$(ipsec newhostkey --keytype rsa 2>&1 | grep "showhostkey" | sed "s/^.*ckaid //")
 # sanitizing brought to you by id-sanitize.sed
 ipsec showhostkey --list
 ipsec showhostkey --dump

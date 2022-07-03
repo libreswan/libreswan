@@ -1,0 +1,34 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ rm -f /tmp/newhostkey.txt
+west #
+ ckaid=$(ipsec newhostkey --keytype rsa 2>&1 | grep "showhostkey" | sed "s/^.*ckaid //")
+west #
+ # sanitizing brought to you by id-sanitize.sed
+west #
+ ipsec showhostkey --list
+< 1> RSA keyid: <<KEYID#1>> ckaid: <<CKAID#1>>
+west #
+ ipsec showhostkey --dump
+< 1> RSA keyid: <<KEYID#1>> ckaid: <<CKAID#1>>
+west #
+ ipsec showhostkey --left --ckaid "${ckaid}"
+	# rsakey <<KEYID#1>>
+	leftrsasigkey=0s<<RSASIGKEY#1>>
+west #
+ ipsec showhostkey --ipseckey --ckaid "${ckaid}"
+west.    IN    IPSECKEY  10 0 2 . <<RSASIGKEY#1>>
+west #
+ # see description.txt for why they are different
+west #
+ ipsec showhostkey --pem --ckaid "${ckaid}" | grep PUBLIC
+-----BEGIN PUBLIC KEY-----
+-----END PUBLIC KEY-----
+west #
+ ipsec showhostkey --pem --ckaid "${ckaid}" | openssl pkey -inform PEM -pubin | grep PUBLIC
+-----BEGIN PUBLIC KEY-----
+-----END PUBLIC KEY-----
+west #
+ 
+

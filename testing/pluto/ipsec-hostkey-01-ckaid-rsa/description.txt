@@ -1,0 +1,15 @@
+Create/store a new host key into an unprotected NSS database
+
+Note that <<ipsec showhostkey --pem>> and <<openssl -pkey>> have
+slightly different RSA ASN.1 formats.  The latter emits:
+
+  SEQUENCE (2 elem)
+    SEQUENCE (2 elem)
+      Offset: 4
+      Length: 2+13 (constructed)
+      Value: (2 elem)
+        OBJECT IDENTIFIER 1.2.840.113549.1.1.1 rsaEncryption (PKCS #1)
+        NULL
+    BIT STRING (4000 bit) ...
+
+while as the former omits the NULL.

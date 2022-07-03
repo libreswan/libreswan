@@ -1228,9 +1228,10 @@ kvmplutotest	seccomp-02-tolerant		good
 kvmplutotest	seccomp-03-updown		wip
 
 # Utility tests like "ipsec showhostkey"
-kvmplutotest	ipsec-hostkey-ckaid-01		good
-kvmplutotest	ipsec-hostkey-ckaid-02-fips	good
-kvmplutotest	ipsec-hostkey-ckaid-03-nsspw	good
+kvmplutotest	ipsec-hostkey-01-ckaid-rsa	good
+kvmplutotest	ipsec-hostkey-01-ckaid-ecdsa	wip
+kvmplutotest	ipsec-hostkey-02-ckaid-fips	good
+kvmplutotest	ipsec-hostkey-03-ckaid-nsspw	good
 kvmplutotest	ipsec-hostkey-04-ikev1		good
 kvmplutotest	ipsec-hostkey-04-ikev2		good
 
