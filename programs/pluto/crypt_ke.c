@@ -103,12 +103,12 @@ static const struct task_handler ke_and_nonce_handler = {
 };
 
 void submit_ke_and_nonce(struct state *st, const struct dh_desc *dh,
-			 ke_and_nonce_cb *cb, const char *name)
+			 ke_and_nonce_cb *cb, where_t where)
 {
 	struct task *task = alloc_thing(struct task, "dh");
 	task->dh = dh;
 	task->cb = cb;
-	submit_task(st->st_logger, st, task, &ke_and_nonce_handler, name);
+	submit_task(st->st_logger, st, task, &ke_and_nonce_handler, where);
 }
 
 /*

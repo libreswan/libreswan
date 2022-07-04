@@ -59,7 +59,8 @@ bool submit_v2_auth_signature(struct ike_sa *ike,
 			      const struct crypt_mac *hash_to_sign,
 			      const struct hash_desc *hash_algo,
 			      const struct pubkey_signer *signer,
-			      v2_auth_signature_cb *cb)
+			      v2_auth_signature_cb *cb,
+			      where_t where)
 {
 	const struct connection *c = ike->sa.st_connection;
 	struct task task = {
@@ -77,8 +78,7 @@ bool submit_v2_auth_signature(struct ike_sa *ike,
 
 	submit_task(ike->sa.st_logger, &ike->sa /*state to resume*/,
 		    clone_thing(task, "signature task"),
-		    &v2_auth_signature_handler,
-		    "computing responder signature");
+		    &v2_auth_signature_handler, where);
 	return true;
 }
 

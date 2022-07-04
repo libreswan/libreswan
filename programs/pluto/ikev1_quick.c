@@ -690,12 +690,10 @@ void quick_outI1(struct fd *whack_sock,
 
 	if (policy & POLICY_PFS) {
 		submit_ke_and_nonce(st, st->st_pfs_group,
-				    quick_outI1_continue,
-				    "quick_outI1 KE");
+				    quick_outI1_continue, HERE);
 	} else {
 		submit_ke_and_nonce(st, NULL /* no-nonce*/,
-				    quick_outI1_continue,
-				    "quick_outI1 KE");
+				    quick_outI1_continue, HERE);
 	}
 }
 
@@ -1249,8 +1247,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 		passert(st->st_connection != NULL);
 
 		submit_ke_and_nonce(st, st->st_pfs_group/*possibly-null*/,
-				    quick_inI1_outR1_continue1,
-				    "quick_inI1_outR1_tail");
+				    quick_inI1_outR1_continue1, HERE);
 
 		passert(st->st_connection != NULL);
 		return STF_SUSPEND;

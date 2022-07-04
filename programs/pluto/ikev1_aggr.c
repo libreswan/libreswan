@@ -270,8 +270,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 
 	/* calculate KE and Nonce */
 	submit_ke_and_nonce(&ike->sa, ike->sa.st_oakley.ta_dh,
-			    aggr_inI1_outR1_continue1,
-			    "outI2 KE");
+			    aggr_inI1_outR1_continue1, HERE);
 	return STF_SUSPEND;
 }
 
@@ -1040,8 +1039,7 @@ void aggr_outI1(struct fd *whack_sock,
 	 * Calculate KE and Nonce.
 	 */
 	submit_ke_and_nonce(&ike->sa, ike->sa.st_oakley.ta_dh,
-			    aggr_outI1_continue,
-			    "aggr_outI1 KE + nonce");
+			    aggr_outI1_continue, HERE);
 	statetime_stop(&start, "%s()", __func__);
 }
 

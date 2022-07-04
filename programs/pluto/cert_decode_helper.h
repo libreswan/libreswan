@@ -37,6 +37,6 @@ typedef stf_status (cert_decode_cb)(struct state *st, struct msg_digest *md);
 
 void submit_v2_cert_decode(struct ike_sa *ike,
 			   struct msg_digest *md, struct payload_digest *cert_payloads,
-			   cert_decode_cb *cb, const char *why);
+			   cert_decode_cb *cb, where_t where);
 
 #endif

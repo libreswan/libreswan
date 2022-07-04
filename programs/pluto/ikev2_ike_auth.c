@@ -88,7 +88,7 @@ static stf_status submit_v2_IKE_AUTH_request_signature(struct ike_sa *ike,
 {
 	struct crypt_mac hash_to_sign = v2_calculate_sighash(ike, &id_payload->mac, hash_algo,
 							     LOCAL_PERSPECTIVE);
-	if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo, signer, cb)) {
+	if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo, signer, cb, HERE)) {
 		dbg("submit_v2_auth_signature() died, fatal");
 		return STF_FATAL;
 	}
@@ -609,8 +609,7 @@ stf_status process_v2_IKE_AUTH_request(struct ike_sa *ike,
 	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
 	if (cert_payloads != NULL) {
 		submit_v2_cert_decode(ike, md, cert_payloads,
-				      process_v2_IKE_AUTH_request_post_cert_decode,
-				      "responder decoding certificates");
+				      process_v2_IKE_AUTH_request_post_cert_decode, HERE);
 		return STF_SUSPEND;
 	}
 
@@ -898,7 +897,7 @@ static stf_status submit_v2_IKE_AUTH_response_signature(struct ike_sa *ike, stru
 {
 	struct crypt_mac hash_to_sign = v2_calculate_sighash(ike, &id_payload->mac, hash_algo,
 							     LOCAL_PERSPECTIVE);
-	if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo, signer, cb)) {
+	if (!submit_v2_auth_signature(ike, &hash_to_sign, hash_algo, signer, cb, HERE)) {
 		dbg("submit_v2_auth_signature() died, fatal");
 		record_v2N_response(ike->sa.st_logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
@@ -1295,8 +1294,7 @@ stf_status process_v2_IKE_AUTH_response(struct ike_sa *ike, struct child_sa *unu
 	struct payload_digest *cert_payloads = md->chain[ISAKMP_NEXT_v2CERT];
 	if (cert_payloads != NULL) {
 		submit_v2_cert_decode(ike, md, cert_payloads,
-				      process_v2_IKE_AUTH_response_post_cert_decode,
-				      "initiator decoding certificates");
+				      process_v2_IKE_AUTH_response_post_cert_decode, HERE);
 		return STF_SUSPEND;
 	} else {
 		dbg("no certs to decode");

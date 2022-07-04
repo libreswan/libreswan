@@ -589,7 +589,7 @@ stf_status main_inR1_outI2(struct state *st, struct msg_digest *md)
 	set_nat_traversal(st, md);
 
 	submit_ke_and_nonce(st, st->st_oakley.ta_dh,
-			    main_inR1_outI2_continue, "outI2 KE");
+			    main_inR1_outI2_continue, HERE);
 	return STF_SUSPEND;
 }
 
@@ -706,8 +706,7 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 	ikev1_natd_init(st, md);
 
 	submit_ke_and_nonce(st, st->st_oakley.ta_dh,
-			    main_inI2_outR2_continue1,
-			    "inI2_outR2 KE");
+			    main_inI2_outR2_continue1, HERE);
 	return STF_SUSPEND;
 }
 

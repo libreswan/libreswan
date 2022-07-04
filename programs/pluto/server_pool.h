@@ -64,7 +64,7 @@ extern void submit_task(const struct logger *logger,
 			struct state *st,
 			struct task *task,
 			const struct task_handler *handler,
-			const char *name);
+			where_t where);
 
 extern void start_server_helpers(int nhelpers, struct logger *logger);
 void stop_server_helpers(void (*all_server_helpers_stopped)(void));

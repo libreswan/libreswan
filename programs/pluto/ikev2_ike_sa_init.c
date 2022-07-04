@@ -634,8 +634,7 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	 * Calculate KE and Nonce.
 	 */
 	submit_ke_and_nonce(&ike->sa, ike->sa.st_oakley.ta_dh,
-			    initiate_v2_IKE_SA_INIT_request_continue,
-			    "initiate_v2_IKE_SA_INIT_request_continue KE");
+			    initiate_v2_IKE_SA_INIT_request_continue, HERE);
 	statetime_stop(&start, "%s()", __func__);
 }
 
@@ -971,10 +970,8 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	}
 
 	/* calculate the nonce and the KE */
-	submit_ke_and_nonce(&ike->sa,
-			    ike->sa.st_oakley.ta_dh,
-			    process_v2_IKE_SA_INIT_request_continue,
-			    "process_v2_IKE_SA_INIT_request_continue");
+	submit_ke_and_nonce(&ike->sa, ike->sa.st_oakley.ta_dh,
+			    process_v2_IKE_SA_INIT_request_continue, HERE);
 	return STF_SUSPEND;
 }
 
@@ -1205,8 +1202,7 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 static stf_status resubmit_ke_and_nonce(struct ike_sa *ike)
 {
 	submit_ke_and_nonce(&ike->sa, ike->sa.st_oakley.ta_dh,
-			    initiate_v2_IKE_SA_INIT_request_continue,
-			    "rekey outI");
+			    initiate_v2_IKE_SA_INIT_request_continue, HERE);
 	return STF_SUSPEND;
 }
 

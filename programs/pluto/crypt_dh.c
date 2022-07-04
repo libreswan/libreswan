@@ -215,5 +215,5 @@ void submit_dh_shared_secret(struct state *task_st,
 	task->local_secret = dh_local_secret_addref(dh_st->st_dh_local_secret, HERE);
 	task->dh_serialno = dh_st->st_serialno;
 	task->cb = cb;
-	submit_task(dh_st->st_logger, task_st, task, &dh_shared_secret_handler, "DH shared secret");
+	submit_task(dh_st->st_logger, task_st, task, &dh_shared_secret_handler, where);
 }
