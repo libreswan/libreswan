@@ -101,7 +101,7 @@ echo ==== tuc ====
 
 case "${result}" in
     success )
-	echo ${output} | sed -e 's/\(.*inBytes=\)\([0-9]*\)\(, outBytes=\)\([0-9]*\)\(.*\)/\1XXX \3XXX \5/g'
+	echo ${output} | sed -e 's/\(.*inBytes=\)\([0-9]*\)\(, outBytes=\)\([0-9]*\)\(.*\)/\1XXX\3XXX\5/g'
 	exit 0
 	;;
     error )
