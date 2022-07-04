@@ -322,7 +322,7 @@ static void jam_v2_proposal(struct jambuf *buf, int propnum,
 			    const struct ikev2_proposal *proposal)
 {
 	if (propnum != 0) {
-		jam(buf, "%d:", propnum);
+		jam(buf, "%d: ", propnum);
 	}
 	jam(buf, "%s=", protoid_name(proposal->protoid));
 	const char *sep = "";
@@ -2181,16 +2181,16 @@ struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 struct ikev2_proposals *get_v2_CREATE_CHILD_SA_new_child_proposals(struct ike_sa *ike,
 								   struct child_sa *larval_child)
 {
-	const char *why = "new Child SA";
 	struct connection *c = larval_child->sa.st_connection;
 	const struct dh_desc *default_dh =
 		c->policy & POLICY_PFS ? ike->sa.st_oakley.ta_dh : NULL;
 	struct ikev2_proposals *proposals =
 		get_v2_child_proposals(larval_child->sa.st_connection,
-				       "Child SA proposals (new)", default_dh,
+				       "Child SA proposals (new child)", default_dh,
 				       larval_child->sa.st_logger);
 	llog_v2_proposals(LOG_STREAM/*not-whack*/|RC_LOG,
-			  larval_child->sa.st_logger, proposals, why);
+			  larval_child->sa.st_logger, proposals,
+			  "Child SA proposals (new child)");
 	return proposals;
 }
 

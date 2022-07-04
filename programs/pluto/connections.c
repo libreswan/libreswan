@@ -1901,7 +1901,7 @@ static bool extract_connection(const struct whack_message *wm,
 							       c->logger);
 			llog_v2_proposals(LOG_STREAM/*not-whack*/|RC_LOG, c->logger,
 					  config->v2_ike_proposals,
-					  "IKE SA proposals");
+					  "IKE SA proposals (connection add)");
 		}
 	}
 
@@ -1987,7 +1987,7 @@ static bool extract_connection(const struct whack_message *wm,
 						       c->logger);
 			llog_v2_proposals(LOG_STREAM/*not-whack*/|RC_LOG, c->logger,
 					  config->v2_ike_auth_child_proposals,
-					  "Child SA proposals");
+					  "Child SA proposals (connection add)");
 		}
 	}
 
