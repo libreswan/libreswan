@@ -94,8 +94,13 @@ static void nss_ecp_calc_local_secret(const struct dh_desc *group,
 	}
 }
 
-static chunk_t nss_ecp_clone_local_secret_ke(const struct dh_desc *group,
-					     const SECKEYPublicKey *local_pubk)
+/*
+ * NSS sometimes includes the EC_POINT_FORM_UNCOMPRESSED prefix but
+ * what is needed is the plain EC coordinate without that prefix (see
+ * documentation in pk11_get_EC_PointLenInBytes()).
+ */
+static shunk_t nss_ecp_local_secret_ke(const struct dh_desc *group,
+				       const SECKEYPublicKey *local_pubk)
 {
 #ifdef USE_DH31
 	if (group->nss_oid == SEC_OID_CURVE25519) {
@@ -106,12 +111,12 @@ static chunk_t nss_ecp_clone_local_secret_ke(const struct dh_desc *group,
 		 */
 		passert(local_pubk->u.ec.publicValue.len == group->bytes);
 		DBG_log("putting NSS raw CURVE25519 public key blob on wire");
-		return clone_bytes_as_chunk(local_pubk->u.ec.publicValue.data, group->bytes, "ECP KE");
+		return same_secitem_as_shunk(local_pubk->u.ec.publicValue);
 	}
 #endif
 	passert(local_pubk->u.ec.publicValue.data[0] == EC_POINT_FORM_UNCOMPRESSED);
 	passert(local_pubk->u.ec.publicValue.len == group->bytes + 1);
-	return clone_bytes_as_chunk(local_pubk->u.ec.publicValue.data + 1, group->bytes, "ECP KE");
+	return shunk2(local_pubk->u.ec.publicValue.data + 1, group->bytes);
 }
 
 static diag_t nss_ecp_calc_shared_secret(const struct dh_desc *group,
@@ -222,6 +227,6 @@ const struct dh_ops ike_alg_dh_nss_ecp_ops = {
 	.backend = "NSS(ECP)",
 	.check = nss_ecp_check,
 	.calc_local_secret = nss_ecp_calc_local_secret,
-	.clone_local_secret_ke = nss_ecp_clone_local_secret_ke,
+	.local_secret_ke = nss_ecp_local_secret_ke,
 	.calc_shared_secret = nss_ecp_calc_shared_secret,
 };

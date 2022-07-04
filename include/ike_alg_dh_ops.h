@@ -43,8 +43,8 @@ struct dh_ops {
 				  SECKEYPrivateKey **local_privk,
 				  SECKEYPublicKey **locak_pubk,
 				  struct logger *logger);
-	chunk_t (*clone_local_secret_ke)(const struct dh_desc *group,
-					 const SECKEYPublicKey *local_pubk);
+	shunk_t (*local_secret_ke)(const struct dh_desc *group,
+				   const SECKEYPublicKey *local_pubk);
 	diag_t (*calc_shared_secret)(const struct dh_desc *group,
 				     SECKEYPrivateKey *local_privk,
 				     const SECKEYPublicKey *local_pubk,

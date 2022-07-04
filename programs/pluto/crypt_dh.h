@@ -45,7 +45,7 @@ struct logger;
 struct dh_local_secret;
 
 struct dh_local_secret *calc_dh_local_secret(const struct dh_desc *group, struct logger *logger);
-chunk_t clone_dh_local_secret_ke(struct dh_local_secret *local_secret);
+shunk_t dh_local_secret_ke(struct dh_local_secret *local_secret);
 const struct dh_desc *dh_local_secret_desc(struct dh_local_secret *local_secret);
 
 struct dh_local_secret *dh_local_secret_addref(struct dh_local_secret *local_secret, where_t where);

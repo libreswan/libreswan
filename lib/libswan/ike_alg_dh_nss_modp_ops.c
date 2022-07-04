@@ -77,13 +77,12 @@ static void nss_modp_calc_local_secret(const struct dh_desc *group,
 	free_chunk_content(&base);
 }
 
-static chunk_t nss_modp_clone_local_secret_ke(const struct dh_desc *group,
-					      const SECKEYPublicKey *local_pubk)
+static shunk_t nss_modp_local_secret_ke(const struct dh_desc *group,
+					const SECKEYPublicKey *local_pubk)
 {
 	/* clone secitem as chunk()? */
-	/* ??? if pexpect fails, and we are going to clone anyway, should we not use publicValue.len as len? */
-	pexpect(local_pubk->u.dh.publicValue.len == group->bytes);
-	return clone_bytes_as_chunk(local_pubk->u.dh.publicValue.data, group->bytes, "MODP KE");
+	passert(local_pubk->u.dh.publicValue.len == group->bytes);
+	return shunk2(local_pubk->u.dh.publicValue.data, group->bytes);
 }
 
 static diag_t nss_modp_calc_shared_secret(const struct dh_desc *group,
@@ -141,6 +140,6 @@ const struct dh_ops ike_alg_dh_nss_modp_ops = {
 	.backend = "NSS(MODP)",
 	.check = nss_modp_check,
 	.calc_local_secret = nss_modp_calc_local_secret,
-	.clone_local_secret_ke = nss_modp_clone_local_secret_ke,
+	.local_secret_ke = nss_modp_local_secret_ke,
 	.calc_shared_secret = nss_modp_calc_shared_secret,
 };

@@ -102,10 +102,10 @@ struct dh_local_secret *calc_dh_local_secret(const struct dh_desc *group, struct
 	return secret;
 }
 
-chunk_t clone_dh_local_secret_ke(struct dh_local_secret *local_secret)
+shunk_t dh_local_secret_ke(struct dh_local_secret *local_secret)
 {
-	return local_secret->group->dh_ops->clone_local_secret_ke(local_secret->group,
-								  local_secret->pubk);
+	return local_secret->group->dh_ops->local_secret_ke(local_secret->group,
+							    local_secret->pubk);
 }
 
 const struct dh_desc *dh_local_secret_desc(struct dh_local_secret *local_secret)
