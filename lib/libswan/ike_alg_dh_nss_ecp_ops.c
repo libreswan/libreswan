@@ -102,21 +102,19 @@ static void nss_ecp_calc_local_secret(const struct dh_desc *group,
 static shunk_t nss_ecp_local_secret_ke(const struct dh_desc *group,
 				       const SECKEYPublicKey *local_pubk)
 {
-#ifdef USE_DH31
-	if (group->nss_oid == SEC_OID_CURVE25519) {
-		/*
-		 * NSS returns the plain EC X-point (see documentation
-		 * in pk11_get_EC_PointLenInBytes(), and that is what
-		 * needs to go over the wire.
-		 */
-		passert(local_pubk->u.ec.publicValue.len == group->bytes);
-		DBG_log("putting NSS raw CURVE25519 public key blob on wire");
-		return same_secitem_as_shunk(local_pubk->u.ec.publicValue);
+	if (group->nss_adds_ec_point_form_uncompressed) {
+		passert(local_pubk->u.ec.publicValue.data[0] == EC_POINT_FORM_UNCOMPRESSED);
+		passert(local_pubk->u.ec.publicValue.len == group->bytes + 1);
+		return shunk2(local_pubk->u.ec.publicValue.data + 1, group->bytes);
 	}
-#endif
-	passert(local_pubk->u.ec.publicValue.data[0] == EC_POINT_FORM_UNCOMPRESSED);
-	passert(local_pubk->u.ec.publicValue.len == group->bytes + 1);
-	return shunk2(local_pubk->u.ec.publicValue.data + 1, group->bytes);
+	/*
+	 * NSS returns the plain EC X-point (see documentation
+	 * in pk11_get_EC_PointLenInBytes(), and that is what
+	 * needs to go over the wire.
+	 */
+	passert(local_pubk->u.ec.publicValue.len == group->bytes);
+	dbg("putting NSS raw CURVE25519 public key blob on wire");
+	return same_secitem_as_shunk(local_pubk->u.ec.publicValue);
 }
 
 static diag_t nss_ecp_calc_shared_secret(const struct dh_desc *group,
@@ -150,8 +148,16 @@ static diag_t nss_ecp_calc_shared_secret(const struct dh_desc *group,
 	}
 	/* must NSS-free remote_pubk.u.ec.publicValue */
 
-#ifdef USE_DH31
-	if (group->nss_oid == SEC_OID_CURVE25519) {
+	if (group->nss_adds_ec_point_form_uncompressed) {
+		/*
+		 * NSS returns and expects the encoded EC X-point pair
+		 * as the public part; but prefixed by
+		 * EC_POINT_FORM_COMPRESSED.
+		 */
+		passert(remote_ke.len + 1 == local_pubk->u.ec.publicValue.len);
+		remote_pubk.u.ec.publicValue.data[0] = EC_POINT_FORM_UNCOMPRESSED;
+		memcpy(remote_pubk.u.ec.publicValue.data + 1, remote_ke.ptr, remote_ke.len);
+	} else {
 		/*
 		 * NSS returns and expects the raw EC X-point as the
 		 * public part.  The raw remote KE matches this format
@@ -160,20 +166,7 @@ static diag_t nss_ecp_calc_shared_secret(const struct dh_desc *group,
 		passert(remote_ke.len == local_pubk->u.ec.publicValue.len);
 		DBG_log("passing raw CURVE25519 public key blob to NSS");
 		memcpy(remote_pubk.u.ec.publicValue.data, remote_ke.ptr, remote_ke.len);
-	} else {
-#endif
-		/*
-		 * NSS returns and expects the encoded EC X-point as
-		 * the public part.  Need to encode the raw remote KE
-		 * so it matches (which is easy, just prefix the
-		 * uncompressed tag to the raw value).
-		 */
-		passert(remote_ke.len + 1 == local_pubk->u.ec.publicValue.len);
-		remote_pubk.u.ec.publicValue.data[0] = EC_POINT_FORM_UNCOMPRESSED;
-		memcpy(remote_pubk.u.ec.publicValue.data + 1, remote_ke.ptr, remote_ke.len);
-#ifdef USE_DH31
 	}
-#endif
 
 	/*
 	 * XXX: The "result type" can be nearly everything.  Use

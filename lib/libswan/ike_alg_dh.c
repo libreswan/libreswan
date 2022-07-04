@@ -187,6 +187,7 @@ const struct dh_desc ike_alg_dh_secp256r1 = {
 	.group = OAKLEY_GROUP_ECP_256,
 	.bytes = BYTES_FOR_BITS(256) * 2,
 	.nss_oid = SEC_OID_SECG_EC_SECP256R1,
+	.nss_adds_ec_point_form_uncompressed = true,
 	.dh_ops = &ike_alg_dh_nss_ecp_ops,
 };
 
@@ -205,6 +206,7 @@ const struct dh_desc ike_alg_dh_secp384r1 = {
 	.group = OAKLEY_GROUP_ECP_384,
 	.bytes = BYTES_FOR_BITS(384) * 2,
 	.nss_oid = SEC_OID_SECG_EC_SECP384R1,
+	.nss_adds_ec_point_form_uncompressed = true,
 	.dh_ops = &ike_alg_dh_nss_ecp_ops,
 };
 
@@ -223,6 +225,7 @@ const struct dh_desc ike_alg_dh_secp521r1 = {
 	.group = OAKLEY_GROUP_ECP_521,
 	.bytes = BYTES_FOR_BITS(521) * 2,
 	.nss_oid = SEC_OID_SECG_EC_SECP521R1,
+	.nss_adds_ec_point_form_uncompressed = true,
 	.dh_ops = &ike_alg_dh_nss_ecp_ops,
 };
 

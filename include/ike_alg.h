@@ -693,7 +693,7 @@ struct integ_desc {
 struct dh_desc {
 	struct ike_alg common;		/* must be first */
 	uint16_t group;
-	size_t bytes;
+	size_t bytes;			/* raw bytes to be put on wire */
 
 	/*
 	 * For MODP groups, the base and prime used when generating
@@ -706,6 +706,15 @@ struct dh_desc {
 	 * For ECP groups, the NSS ASN.1 OID that identifies the ECP.
 	 */
 	SECOidTag nss_oid;
+	/*
+	 * For most EC algorithms, NSS's public key value consists of
+	 * the one byte EC_POINT_FORM_UNCOMPRESSED prefix followed by
+	 * two equal-sized points.
+	 *
+	 * There's one exception (curve25519) which contains no prefix
+	 * and just a single point.
+	 */
+	bool nss_adds_ec_point_form_uncompressed;
 
 	const struct dh_ops *dh_ops;
 };
