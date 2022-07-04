@@ -15,10 +15,10 @@ west #
 west #
  ipsec showhostkey --left --ckaid "${ckaid}"
 	# rsakey <<KEYID#1>>
-	leftrsasigkey=0s<<RSASIGKEY#1>>
+	leftrsasigkey=0s<<RAW-PUBKEY#1>>
 west #
  ipsec showhostkey --ipseckey --ckaid "${ckaid}"
-west.    IN    IPSECKEY  10 0 2 . <<RSASIGKEY#1>>
+west.    IN    IPSECKEY  10 0 2 . <<RAW-PUBKEY#1>>
 west #
  # see description.txt for why they are different
 west #

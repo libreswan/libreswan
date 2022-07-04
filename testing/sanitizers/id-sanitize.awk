@@ -59,9 +59,9 @@ func find(name, pattern,
     # < 0> rsa      01de34c675160eb6aa7f74b6430d8637d75c4674   east
     find("CKAID", "< *[0-9]+> rsa *([+=0-9a-zA-Z/]+)")
 
-    find("RSASIGKEY", "rsasigkey=0s([+=0-9a-zA-Z/]+)")
-    # RSA's algorithm is 2
-    find("RSASIGKEY", "IPSECKEY +[0-9]+ +[0-9]+ +2 +[.:0-9a-f]+ +([+=0-9a-zA-Z/]+)$")
+    find("RAW-PUBKEY", "sigkey=0s([+=0-9a-zA-Z/]+)")
+    # RSA's algorithm is 2; ECDSA pretents to be 3
+    find("RAW-PUBKEY", "IPSECKEY +[0-9]+ +[0-9]+ +[23] +[.:0-9a-f]+ +([+=0-9a-zA-Z/]+)$")
 
     find("KEYID", "keyid: ([+=0-9a-zA-Z/]+)")
 
