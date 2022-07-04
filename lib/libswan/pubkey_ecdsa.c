@@ -28,51 +28,96 @@
 #include <pk11pub.h>
 #include <cryptohi.h>
 #include <keyhi.h>
+/*
+ * In addition to EC_POINT_FORM_UNCOMPRESSED, <blapit.h> defines
+ * things like AES_BLOCK_SIZE which conflicts with "ietf_constants.h".
+ */
+#if 0
+#include <blapit.h>
+#else
+#define EC_POINT_FORM_UNCOMPRESSED 0x04
+#endif
 
 #include "lswnss.h"
 #include "lswlog.h"
 #include "secrets.h"
+#include "ike_alg_dh.h"		/* for OID and size of EC algorithms */
 
 static err_t unpack_ECDSA_dnssec_pubkey(struct ECDSA_public_key *ecdsa,
 					keyid_t *keyid, ckaid_t *ckaid, size_t *size,
 					const chunk_t dnssec_pubkey)
 {
-	/*
-	  this is broken:
-
-	  - ecParam needs to be set to the ASN.1 of the OID (look for
-            SEC_ASN1_OBJECT_ID)
-
-	  - the actual ecParam needs to be determined based on
-            DNSSEC_PUBKEY size?
-
-	  - depending on the type of EC, the dnssec_pubkey may need an
-            additional EC_POINT_FORM_UNCOMPRESSED prefix (this is why
-            .pub is 97 bytes when it should be 2*48=96 for P-384)
-
-	*/
-
 	err_t e;
 
-	e = form_ckaid_ecdsa(dnssec_pubkey, ckaid);
+	static const struct dh_desc *dh[] = {
+		&ike_alg_dh_secp256r1,
+		&ike_alg_dh_secp384r1,
+		&ike_alg_dh_secp521r1,
+	};
+
+	/*
+	 * DNSSEC_PUBKEY may include the EC_POINT_FORM_UNCOMPRESSED
+	 * prefix.  Strip that off.
+	 */
+
+	const struct dh_desc *group = NULL;
+	chunk_t raw = {0};
+	FOR_EACH_ELEMENT(e, dh) {
+		if (dnssec_pubkey.len == (*e)->bytes) {
+			group = (*e);
+			raw = dnssec_pubkey;
+			break;
+		}
+		if (group->nss_adds_ec_point_form_uncompressed &&
+		    dnssec_pubkey.len == (*e)->bytes + 1 &&
+		    dnssec_pubkey.ptr[0] == EC_POINT_FORM_UNCOMPRESSED) {
+			group = (*e);
+			/* ignore prefix */
+			raw = chunk2(dnssec_pubkey.ptr + 1, dnssec_pubkey.len - 1);
+			break;
+		}
+	}
+	if (group == NULL) {
+		return "unrecognized EC pubkey";
+	}
+
+	/* just assume this */
+	passert(group->nss_adds_ec_point_form_uncompressed);
+	ecdsa->pub = alloc_chunk(raw.len + 1, "EC (prefixed)");
+	ecdsa->pub.ptr[0] = EC_POINT_FORM_UNCOMPRESSED;
+	memcpy(ecdsa->pub.ptr + 1, raw.ptr, raw.len);
+
+	/* should this include EC? */
+	e = form_ckaid_ecdsa(ecdsa->pub, ckaid);
 	if (e != NULL) {
 		return e;
 	}
 
-	/* use the ckaid since that digested the entire pubkey */
+	/*
+	 * Use the ckaid since that digested the entire pubkey (this
+	 * is made up)
+	 */
 	e = keyblob_to_keyid(ckaid->ptr, ckaid->len, keyid);
 	if (e != NULL) {
 		return e;
 	}
 
-	*size = dnssec_pubkey.len;
-	ecdsa->pub = clone_hunk(dnssec_pubkey, "public value");
+	SECOidData *ec_params = SECOID_FindOIDByTag(group->nss_oid);
+	if (ec_params == NULL) {
+		llog_passert(&global_logger, HERE,
+			     "lookup of OID %d for EC group %s parameters failed",
+			     group->nss_oid, group->common.fqn);
+	}
+	ecdsa->ecParams = clone_secitem_as_chunk(ec_params->oid, "EC param");
+
+	*size = ecdsa->pub.len;
 
 	if (DBGP(DBG_BASE)) {
 		/* pubkey information isn't DBG_PRIVATE */
 		DBG_log("keyid: *%s", str_keyid(*keyid));
 		DBG_log("  size: %zu", *size);
 		DBG_dump_hunk("  pub", ecdsa->pub);
+		DBG_dump_hunk("  ecParams", ecdsa->ecParams);
 		DBG_dump_hunk("  CKAID", *ckaid);
 	}
 
@@ -89,7 +134,11 @@ static err_t ECDSA_dnssec_pubkey_to_pubkey_content(chunk_t dnssec_pubkey,
 static err_t ECDSA_pubkey_content_to_dnssec_pubkey(const union pubkey_content *u UNUSED,
 						   chunk_t *dnssec_pubkey UNUSED)
 {
-	return "not implemented";
+	const struct ECDSA_public_key *ecdsa = &u->ecdsa;
+	passert((ecdsa->pub.len & 1) == 1);
+	passert(ecdsa->pub.ptr[0] == EC_POINT_FORM_UNCOMPRESSED);
+	*dnssec_pubkey = clone_bytes_as_chunk(ecdsa->pub.ptr + 1, ecdsa->pub.len - 1, "EC POINTS (even)");
+	return NULL;
 }
 
 static err_t ECDSA_pubkey_content_to_der(const union pubkey_content *u UNUSED,
@@ -102,13 +151,6 @@ static void ECDSA_free_public_content(struct ECDSA_public_key *ecdsa)
 {
 	free_chunk_content(&ecdsa->pub);
 	free_chunk_content(&ecdsa->ecParams);
-	/* ckaid is an embedded struct (no pointer) */
-	/*
-	 * ??? what about ecdsa->pub.{version,ckaid}?
-	 *
-	 * CKAID's been changed to an embedded struct (so no pointer).
-	 * VERSION was dropped?
-	 */
 }
 
 static void ECDSA_free_pubkey_content(union pubkey_content *u)
@@ -125,9 +167,8 @@ static void ECDSA_extract_public_key(struct ECDSA_public_key *pub,
 	pub->ecParams = clone_secitem_as_chunk(pubkey_nss->u.ec.DEREncodedParams, "ECDSA ecParams");
 	*size = pubkey_nss->u.ec.publicValue.len;
 	*ckaid = ckaid_from_secitem(ckaid_nss);
-	/* keyid */
-	err_t e = keyblob_to_keyid(pubkey_nss->u.ec.publicValue.data,
-				   pubkey_nss->u.ec.publicValue.len, keyid);
+	/* keyid; make this up */
+	err_t e = keyblob_to_keyid(ckaid->ptr, ckaid->len, keyid);
 	passert(e == NULL);
 
 	if (DBGP(DBG_BASE)) {

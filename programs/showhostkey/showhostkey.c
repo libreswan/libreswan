@@ -297,12 +297,6 @@ static int show_dnskey(struct private_key_stuff *pks,
 
 	gethostname(qname, sizeof(qname));
 
-	if (pks->kind != PKK_RSA) {
-		fprintf(stderr, "%s: wrong kind of key %s in show_dnskey. Expected PKK_RSA.\n",
-			progname, enum_name(&private_key_kind_names, pks->kind));
-		return 5;
-	}
-
 	char *base64 = base64_dnssec_pubkey_from_pks(pks);
 	if (base64 == NULL) {
 		return 5;
@@ -322,8 +316,9 @@ static int show_dnskey(struct private_key_stuff *pks,
 		}
 	}
 
-	printf("%s.    IN    IPSECKEY  %d %d 2 %s %s\n",
+	printf("%s.    IN    IPSECKEY  %d %d %d %s %s\n",
 	       qname, precedence, gateway_type,
+	       pks->pubkey_type->alg,
 	       (gateway == NULL) ? "." : gateway, base64);
 	pfree(base64);
 	return 0;
