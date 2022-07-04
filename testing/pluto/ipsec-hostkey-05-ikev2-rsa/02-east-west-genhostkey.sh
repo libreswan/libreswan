@@ -5,6 +5,6 @@ leftright=$(case $us in east ) echo right ;; west ) echo left ;; esac)
 echo us=${us} them=${them} leftright=${leftright}
 
 # generate the host key and save it
-ckaid=$(ipsec newhostkey 2>&1 | grep "showhostkey" | sed "s/^.*ckaid //")
+ckaid=$(ipsec newhostkey --keytype rsa 2>&1 | grep "showhostkey" | sed "s/^.*ckaid //")
 # sanitizing brought to you by id-sanitize.sed
 ipsec showhostkey --${leftright} --ckaid "${ckaid}" > OUTPUT/$us.hostkey
