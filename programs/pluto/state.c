@@ -333,45 +333,61 @@ void change_v2_state(struct state *st)
 }
 
 /*
- * readable_humber: make large numbers clearer by expressing them as KB or MB,
- * as appropriate.
- * The prefix is literally copied into the output.
- * Tricky representation: if the prefix starts with !, the number
- * is taken as kilobytes.  Thus the caller can avoid scaling, with its
- * risk of overflow.  The ! is not printed.
+ * readable_humber: make large numbers clearer by expressing them
+ * as Ki,Mi,Gi,Ti,Pi,Ei and 2^64 will be 16Ei based on
+ * https://en.wikipedia.org/wiki/Binary_prefix IEC 60027-2 standard.
+ * The prefix and suffix2 are literally copied into the output.
+ * e.g. use sufix2 "B" for Bytes.
  */
-static char *readable_humber(uint64_t num,
-			     char *buf,
-			     const char *buf_roof,
-			     const char *prefix)
+static char *readable_humber_iec_60027_2(uint64_t num, char *buf, const char *buf_roof,
+			     const char *prefix, char *suffix2)
 {
 	size_t buf_len = buf_roof - buf;
 	uint64_t to_print = num;
 	const char *suffix;
 	int ret;
-	bool kilos = prefix[0] == '!';
 
-	if (!kilos && num < 1024) {
-		suffix = "B";
-	} else {
-		if (!kilos)
-			to_print /= 1024;
-
-		if (to_print < 1024) {
-			suffix = "KB";
-		} else {
-			to_print /= 1024;
-			suffix = "MB";
-		}
+	if (num < 1024) {
+		suffix = "";
+	} else if (num >= binary_per_kilo && num < binary_per_mega) {
+			to_print /= binary_per_kilo;
+			suffix = "Ki";
+	} else if (num >= binary_per_mega && num < binary_per_giga) {
+			to_print /= binary_per_mega;
+			suffix = "Mi";
+	} else if (num >= binary_per_giga && num < binary_per_tera) {
+			to_print /= binary_per_giga;
+			suffix = "Gi";
+	} else if (num >= binary_per_tera && num < binary_per_peta) {
+			to_print /= binary_per_tera;
+			suffix = "Ti";
+	} else if (num >= binary_per_peta && num < binary_per_exa) {
+			to_print /= binary_per_peta;
+			suffix = "Pi";
+	} else if (num == (uint64_t) IPSEC_SA_MAX_DEFAULT) {
+			suffix = "16Ei";
+	} else if (num >= binary_per_exa) {
+			to_print /= binary_per_exa;
+			suffix = "Ei";
 	}
-
-	ret = snprintf(buf, buf_len, "%s%" PRIu64 "%s", prefix, to_print,
-		       suffix + kilos);
+	if (num == (uint64_t) IPSEC_SA_MAX_DEFAULT) {
+		ret = snprintf(buf, buf_len, "%s%s%s", prefix, suffix, suffix2);
+	} else {
+		ret = snprintf(buf, buf_len, "%s%" PRIu64 "%s%s", prefix, to_print,
+			       suffix, suffix2);
+	}
 	if (ret < 0 || (size_t) ret >= buf_len)
 		return buf;
 
 	return buf + ret;
 }
+
+char *readable_humber(uint64_t num, char *buf, const char *buf_roof,
+			     const char *prefix, char *suffix2)
+{
+	return readable_humber_iec_60027_2(num, buf, buf_roof, prefix, suffix2);
+}
+
 
 static size_t jam_readable_humber(struct jambuf *buf, uint64_t num, bool kilos)
 {
@@ -977,12 +993,13 @@ void delete_state_tail(struct state *st)
 			char *sbcp = readable_humber(st->st_esp.our_bytes,
 					       statebuf,
 					       statebuf + sizeof(statebuf),
-					       "ESP traffic information: in=");
+					       "ESP traffic information: in=",
+						"B");
 
 			(void)readable_humber(st->st_esp.peer_bytes,
 					       sbcp,
 					       statebuf + sizeof(statebuf),
-					       " out=");
+					       " out=", "B");
 			log_state(RC_INFORMATIONAL, st, "%s%s%s",
 				  statebuf,
 				  st->st_xauth_username[0] != '\0' ? " XAUTHuser=" : "",
@@ -996,12 +1013,13 @@ void delete_state_tail(struct state *st)
 			char *sbcp = readable_humber(st->st_ah.peer_bytes,
 					       statebuf,
 					       statebuf + sizeof(statebuf),
-					       "AH traffic information: in=");
+					       "AH traffic information: in=",
+						"B");
 
 			(void)readable_humber(st->st_ah.our_bytes,
 					       sbcp,
 					       statebuf + sizeof(statebuf),
-					       " out=");
+					       " out=", "B");
 			log_state(RC_INFORMATIONAL, st, "%s%s%s",
 				  statebuf,
 				  st->st_xauth_username[0] != '\0' ? " XAUTHuser=" : "",
@@ -1015,12 +1033,12 @@ void delete_state_tail(struct state *st)
 			char *sbcp = readable_humber(st->st_ipcomp.peer_bytes,
 					       statebuf,
 					       statebuf + sizeof(statebuf),
-					       "IPCOMP traffic information: in=");
+					       "IPCOMP traffic information: in=", "B");
 
 			(void)readable_humber(st->st_ipcomp.our_bytes,
 					       sbcp,
 					       statebuf + sizeof(statebuf),
-					       " out=");
+					       " out=",  "B");
 			log_state(RC_INFORMATIONAL, st, "%s%s%s",
 				  statebuf,
 				  st->st_xauth_username[0] != '\0' ? " XAUTHuser=" : "",
@@ -1763,11 +1781,14 @@ struct ike_sa *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initiator_sp
 struct v2_spi_filter {
 	uint8_t protoid;
 	ipsec_spi_t outbound_spi;
+	ipsec_spi_t our_spi;
+	ip_address *dst;
 };
 
 static bool v2_spi_predicate(struct state *st, void *context)
 {
 	struct v2_spi_filter *filter = context;
+	bool ret = false;
 
 	struct ipsec_proto_info *pr;
 	switch (filter->protoid) {
@@ -1784,9 +1805,25 @@ static bool v2_spi_predicate(struct state *st, void *context)
 	if (pr->present) {
 		if (pr->attrs.spi == filter->outbound_spi) {
 			dbg("v2 CHILD SA #%lu found using their inbound (our outbound) SPI, in %s",
-			    st->st_serialno,
-			    st->st_state->name);
-			return true;
+			    st->st_serialno, st->st_state->name);
+			ret = true;
+			if (filter->dst != NULL) {
+				ret = false;
+				if (sameaddr(&st->st_connection->remote->host.addr,
+					     filter->dst))
+					ret = true;
+			}
+		} else if (filter->our_spi > 0 &&
+				filter->our_spi == pr->our_spi) {
+			dbg("v2 CHILD SA #%lu found using their our SPI, in %s",
+			    st->st_serialno, st->st_state->name);
+			ret = true;
+			if (filter->dst != NULL) {
+				ret = false;
+				if (sameaddr(&st->st_connection->local->host.addr,
+				    filter->dst))
+					ret = true;
+			}
 		}
 #if 0
 		/* see function description above */
@@ -1798,7 +1835,26 @@ static bool v2_spi_predicate(struct state *st, void *context)
 		}
 #endif
 	}
-	return false;
+	return ret;
+}
+
+struct child_sa *find_v2_child_sa_by_spi(ipsec_spi_t spi, int8_t protoid,
+					 ip_address *dst)
+{
+	struct v2_spi_filter filter = {
+		.protoid = protoid,
+		.outbound_spi = spi,
+		/* fill the same spi, the kernel expire has no direction */
+		.our_spi = spi,
+		.dst = dst,
+	};
+	struct state_filter sf = { .where = HERE, };
+	while (next_state_new2old(&sf)) {
+		struct state *st = sf.st;
+		if (v2_spi_predicate(st, &filter))
+			break;
+	};
+	return pexpect_child_sa(sf.st);
 }
 
 struct child_sa *find_v2_child_sa_by_outbound_spi(struct ike_sa *ike,
@@ -2011,6 +2067,12 @@ static void jam_state_traffic(struct jambuf *buf, struct state *st)
 				 st->st_ah.present ? st->st_ah.peer_bytes :
 				 st->st_ipcomp.present ? st->st_ipcomp.peer_bytes : 0);
 		jam(buf, ", outBytes=%u", outb);
+
+		if (c->sa_ipsec_max_bytes != 0) {
+			char bytesbuf[strlen(" 18446744073709551616 ") + strlen(" Ki B ")];
+			readable_humber(c->sa_ipsec_max_bytes, bytesbuf, bytesbuf + sizeof(bytesbuf), "", "B");
+			jam(buf, ", maxBytes=%s", bytesbuf);
+		}
 	}
 
 	if (st->st_xauth_username[0] == '\0') {
@@ -2249,6 +2311,7 @@ static void show_established_child_details(struct show *s, struct state *st)
 			}
 			jam(buf, " AHmax=");		/* TBD: "The ! is not printed." */
 			jam_readable_humber(buf, first_sa->attrs.life_kilobytes, true);
+			jam_readable_humber(buf, c->sa_ipsec_max_bytes, true);
 		}
 		if (st->st_esp.present) {
 			if (in_info) {
@@ -3326,4 +3389,25 @@ void DBG_tcpdump_ike_sa_keys(const struct state *st)
 		tispi, trspi,
 		authalgo, tar,
 		encalgo, tekl, ter);
+}
+
+void set_sa_expire_next_event(enum event_type next_event, struct state *st)
+{
+	switch (st->st_ike_version) {
+	case IKEv2:
+		event_delete(EVENT_v2_LIVENESS, st);
+		if (next_event == EVENT_NULL)
+			next_event = EVENT_v2_REKEY;
+
+		break;
+	case IKEv1:
+		event_delete(EVENT_v1_DPD, st);
+		if (next_event == EVENT_NULL)
+			next_event = EVENT_SA_REPLACE;
+		break;
+	default:
+		bad_case(st->st_ike_version);
+	}
+
+	event_force(next_event, st);
 }

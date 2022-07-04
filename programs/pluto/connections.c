@@ -1997,6 +1997,8 @@ static bool extract_connection(const struct whack_message *wm,
 		config->nic_offload = wm->nic_offload;
 		c->sa_ike_life_seconds = wm->sa_ike_life_seconds;
 		c->sa_ipsec_life_seconds = wm->sa_ipsec_life_seconds;
+		c->sa_ipsec_max_bytes = wm->sa_ipsec_max_bytes;
+		c->sa_ipsec_max_packets = wm->sa_ipsec_max_packets;
 		c->sa_rekey_margin = wm->sa_rekey_margin;
 		c->sa_rekey_fuzz = wm->sa_rekey_fuzz;
 		c->sa_keying_tries = wm->sa_keying_tries;
@@ -2440,14 +2442,16 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 	/* connection is good-to-go: log against it */
 	llog(RC_LOG, c->logger, "added %s connection", what);
 	policy_buf pb;
-	dbg("ike_life: %jd; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s",
+	dbg("ike_life: %jd; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s ipsec_max_bytes: %" PRIu64 " ipsec_max_packets %" PRIu64,
 	    deltasecs(c->sa_ike_life_seconds),
 	    deltasecs(c->sa_ipsec_life_seconds),
 	    deltasecs(c->sa_rekey_margin),
 	    c->sa_rekey_fuzz,
 	    c->sa_keying_tries,
 	    c->sa_replay_window,
-	    str_connection_policies(c, &pb));
+	    str_connection_policies(c, &pb),
+	    c->sa_ipsec_max_bytes,
+	    c->sa_ipsec_max_packets);
 	char topo[CONN_BUF_LEN];
 	dbg("%s", format_connection(topo, sizeof(topo), c, &c->spd));
 	/* XXX: something better? */
@@ -3785,6 +3789,8 @@ void show_one_connection(struct show *s,
 	char satfcstr[13];
 	char nflogstr[8];
 	char markstr[2 * (2 * strlen("0xffffffff") + strlen("/")) + strlen(", ") ];
+	char bytesbuf[strlen(" 18446744073709551616 ") + strlen(" Ki B ")];
+	char packetsbuf[sizeof(bytesbuf)];
 
 	if (oriented(c)) {
 		if (c->xfrmi != NULL && c->xfrmi->name != NULL) {
@@ -3825,10 +3831,13 @@ void show_one_connection(struct show *s,
 			     str_dn_or_null(ASN1(c->remote->config->host.ca), "%any", &that_ca));
 	}
 
-	show_comment(s, PRI_CONNECTION":   ike_life: %jds; ipsec_life: %jds; replay_window: %u; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu;",
+	readable_humber(c->sa_ipsec_max_bytes, bytesbuf, bytesbuf + sizeof(bytesbuf), "", "B");
+	readable_humber(c->sa_ipsec_max_packets, packetsbuf, packetsbuf + sizeof(packetsbuf), "", "");
+	show_comment(s, PRI_CONNECTION":   ike_life: %jds; ipsec_life: %jds; ipsec_max_bytes: %s; ipsec_max_packets: %s; replay_window: %u; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu;",
 		     c->name, instance,
 		     deltasecs(c->sa_ike_life_seconds),
 		     deltasecs(c->sa_ipsec_life_seconds),
+		     bytesbuf, packetsbuf,
 		     c->sa_replay_window,
 		     deltasecs(c->sa_rekey_margin),
 		     c->sa_rekey_fuzz,

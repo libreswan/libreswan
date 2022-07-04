@@ -310,7 +310,10 @@ struct kernel_sa {
 	const char *nic_offload_dev;
 	uint32_t xfrm_if_id;
 	struct sa_mark mark_set; /* config keyword mark-out */
-
+	uint64_t sa_ipsec_max_bytes;
+	uint64_t sa_max_soft_bytes;
+	uint64_t sa_ipsec_max_packets;
+	uint64_t sa_max_soft_packets;
 	deltatime_t sa_lifetime; /* number of seconds until SA expires */
 };
 
@@ -566,5 +569,6 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 extern deltatime_t bare_shunt_interval;
 
 extern bool kernel_ops_detect_offload(const struct raw_iface *ifp, struct logger *logger);
-
+extern void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address *dst,
+		      bool hard, uint64_t bytes, uint64_t packets, uint64_t add_time);
 #endif

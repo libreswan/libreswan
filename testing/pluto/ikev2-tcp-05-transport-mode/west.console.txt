@@ -27,7 +27,7 @@ PING 192.1.2.23 (192.1.2.23) 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec whack --trafficstatus
-006 #2: "ikev2-west-east", type=ESP, add_time=1234567890, inBytes=256, outBytes=256, id='@east'
+006 #2: "ikev2-west-east", type=ESP, add_time=1234567890, inBytes=256, outBytes=256, maxBytes=16EiB, id='@east'
 west #
  # should show tcp being used
 west #

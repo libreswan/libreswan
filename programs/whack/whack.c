@@ -1069,6 +1069,8 @@ int main(int argc, char **argv)
 	msg.nic_offload = yna_auto;
 	msg.sa_ike_life_seconds = deltatime(IKE_SA_LIFETIME_DEFAULT);
 	msg.sa_ipsec_life_seconds = deltatime(IPSEC_SA_LIFETIME_DEFAULT);
+	msg.sa_ipsec_max_bytes = IPSEC_SA_MAX_DEFAULT;
+	msg.sa_ipsec_max_packets = IPSEC_SA_MAX_DEFAULT;
 	msg.sa_rekey_margin = deltatime(SA_REPLACEMENT_MARGIN_DEFAULT);
 	msg.sa_rekey_fuzz = SA_REPLACEMENT_FUZZ_DEFAULT;
 	msg.sa_keying_tries = SA_REPLACEMENT_RETRIES_DEFAULT;

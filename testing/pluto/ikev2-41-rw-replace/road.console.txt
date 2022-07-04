@@ -120,7 +120,7 @@ road #
 000 "road-east-x509-ipv4":   modecfg info: us:client, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "road-east-x509-ipv4":   sec_label:unset;
 000 "road-east-x509-ipv4":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 "road-east-x509-ipv4":   ike_life: 90s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
+000 "road-east-x509-ipv4":   ike_life: 90s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-east-x509-ipv4":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "road-east-x509-ipv4":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "road-east-x509-ipv4":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -138,7 +138,7 @@ road #
 000 "road-east-x509-ipv4"[1]:   modecfg info: us:client, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "road-east-x509-ipv4"[1]:   sec_label:unset;
 000 "road-east-x509-ipv4"[1]:   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 "road-east-x509-ipv4"[1]:   ike_life: 90s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
+000 "road-east-x509-ipv4"[1]:   ike_life: 90s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-east-x509-ipv4"[1]:   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "road-east-x509-ipv4"[1]:   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "road-east-x509-ipv4"[1]:   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -277,7 +277,7 @@ road #
 000 "road-east-x509-ipv4":   modecfg info: us:client, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "road-east-x509-ipv4":   sec_label:unset;
 000 "road-east-x509-ipv4":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 "road-east-x509-ipv4":   ike_life: 90s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
+000 "road-east-x509-ipv4":   ike_life: 90s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-east-x509-ipv4":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "road-east-x509-ipv4":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "road-east-x509-ipv4":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -295,7 +295,7 @@ road #
 000 "road-east-x509-ipv4"[1]:   modecfg info: us:client, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "road-east-x509-ipv4"[1]:   sec_label:unset;
 000 "road-east-x509-ipv4"[1]:   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 "road-east-x509-ipv4"[1]:   ike_life: 90s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
+000 "road-east-x509-ipv4"[1]:   ike_life: 90s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 10s; rekey_fuzz: 100%; keyingtries: 0;
 000 "road-east-x509-ipv4"[1]:   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "road-east-x509-ipv4"[1]:   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "road-east-x509-ipv4"[1]:   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;

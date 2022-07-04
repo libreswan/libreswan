@@ -58,6 +58,18 @@ enum ike_version {
 #define FIPS_IKE_SA_LIFETIME_MAXIMUM secs_per_hour * 24
 #define FIPS_MIN_RSA_KEY_SIZE 2048 /* 112 bits, see SP800-131A */
 
+/*
+ * XFRM_INF is ~(uint64_t)0 insted using ~(int64_)0 here.
+ * cfg->conn_default.options[kbf] only support int.
+ * ~(uint64_t)0 would cause error.
+ * error: overflow in conversion from ‘long unsigned int’ to ‘int’ changes value
+ * from ‘18446744073709551615’ to ‘-1’ [-Werror=overflow]
+ *
+ * May be add support for uint64_t
+ */
+#define IPSEC_SA_MAX_DEFAULT ~(int64_t)0 /* XFRM_INF, including xfrm.h is probably over doing it */
+#define IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE 90 /* let the wise men pick this % until we implement soft_limit */
+
 #define PLUTO_SHUNT_LIFE_DURATION_DEFAULT (15 * secs_per_minute)
 #define PLUTO_HALFOPEN_SA_LIFE (secs_per_minute )
 
@@ -1019,6 +1031,16 @@ enum pluto_exit_code {
 };
 
 extern enum_names pluto_exit_code_names;
+/*
+ * EXPIRE type events from the kernel.
+ * Based on these, different actions can be taken, eg skipping delete SPI
+ */
+enum sa_expire_kind {
+	/* 0 reserved */
+	SA_ACTIVE = 1,
+	SA_SOFT_EXPIRED = 2,
+	SA_HARD_EXPIRED = 3,
+};
 
 #define SWAN_MAX_DOMAIN_LEN 256 /* includes nul termination */
 

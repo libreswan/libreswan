@@ -109,7 +109,7 @@ road #
 000 "block":   our auth:never, their auth:never, our autheap:none, their autheap:none;
 000 "block":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "block":   sec_label:unset;
-000 "block":   ike_life: 0s; ipsec_life: 0s; replay_window: 0; rekey_margin: 0s; rekey_fuzz: 0%; keyingtries: 0;
+000 "block":   ike_life: 0s; ipsec_life: 0s; ipsec_max_bytes: 0B; ipsec_max_packets: 0; replay_window: 0; rekey_margin: 0s; rekey_fuzz: 0%; keyingtries: 0;
 000 "block":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:0;
 000 "block":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "block":   policy: IKEv2+AUTH_NEVER+GROUP+GROUTED+REJECT+NEVER_NEGOTIATE;
@@ -126,7 +126,7 @@ road #
 000 "clear":   our auth:never, their auth:never, our autheap:none, their autheap:none;
 000 "clear":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "clear":   sec_label:unset;
-000 "clear":   ike_life: 0s; ipsec_life: 0s; replay_window: 0; rekey_margin: 0s; rekey_fuzz: 0%; keyingtries: 0;
+000 "clear":   ike_life: 0s; ipsec_life: 0s; ipsec_max_bytes: 0B; ipsec_max_packets: 0; replay_window: 0; rekey_margin: 0s; rekey_fuzz: 0%; keyingtries: 0;
 000 "clear":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:0;
 000 "clear":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "clear":   policy: IKEv2+AUTH_NEVER+GROUP+GROUTED+PASS+NEVER_NEGOTIATE;
@@ -143,7 +143,7 @@ road #
 000 "clear#192.1.2.253/32":   our auth:never, their auth:never, our autheap:none, their autheap:none;
 000 "clear#192.1.2.253/32":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "clear#192.1.2.253/32":   sec_label:unset;
-000 "clear#192.1.2.253/32":   ike_life: 0s; ipsec_life: 0s; replay_window: 0; rekey_margin: 0s; rekey_fuzz: 0%; keyingtries: 0;
+000 "clear#192.1.2.253/32":   ike_life: 0s; ipsec_life: 0s; ipsec_max_bytes: 0B; ipsec_max_packets: 0; replay_window: 0; rekey_margin: 0s; rekey_fuzz: 0%; keyingtries: 0;
 000 "clear#192.1.2.253/32":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:0;
 000 "clear#192.1.2.253/32":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "clear#192.1.2.253/32":   policy: IKEv2+AUTH_NEVER+GROUPINSTANCE+PASS+NEVER_NEGOTIATE;
@@ -160,7 +160,7 @@ road #
 000 "clear#192.1.3.253/32":   our auth:never, their auth:never, our autheap:none, their autheap:none;
 000 "clear#192.1.3.253/32":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "clear#192.1.3.253/32":   sec_label:unset;
-000 "clear#192.1.3.253/32":   ike_life: 0s; ipsec_life: 0s; replay_window: 0; rekey_margin: 0s; rekey_fuzz: 0%; keyingtries: 0;
+000 "clear#192.1.3.253/32":   ike_life: 0s; ipsec_life: 0s; ipsec_max_bytes: 0B; ipsec_max_packets: 0; replay_window: 0; rekey_margin: 0s; rekey_fuzz: 0%; keyingtries: 0;
 000 "clear#192.1.3.253/32":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:0;
 000 "clear#192.1.3.253/32":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "clear#192.1.3.253/32":   policy: IKEv2+AUTH_NEVER+GROUPINSTANCE+PASS+NEVER_NEGOTIATE;
@@ -177,7 +177,7 @@ road #
 000 "clear#192.1.3.254/32":   our auth:never, their auth:never, our autheap:none, their autheap:none;
 000 "clear#192.1.3.254/32":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "clear#192.1.3.254/32":   sec_label:unset;
-000 "clear#192.1.3.254/32":   ike_life: 0s; ipsec_life: 0s; replay_window: 0; rekey_margin: 0s; rekey_fuzz: 0%; keyingtries: 0;
+000 "clear#192.1.3.254/32":   ike_life: 0s; ipsec_life: 0s; ipsec_max_bytes: 0B; ipsec_max_packets: 0; replay_window: 0; rekey_margin: 0s; rekey_fuzz: 0%; keyingtries: 0;
 000 "clear#192.1.3.254/32":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:0;
 000 "clear#192.1.3.254/32":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "clear#192.1.3.254/32":   policy: IKEv2+AUTH_NEVER+GROUPINSTANCE+PASS+NEVER_NEGOTIATE;
@@ -194,7 +194,7 @@ road #
 000 "clear-or-private":   our auth:null, their auth:null, our autheap:none, their autheap:none;
 000 "clear-or-private":   modecfg info: us:client, them:server, modecfg policy:push, dns:unset, domains:unset, cat:set;
 000 "clear-or-private":   sec_label:unset;
-000 "clear-or-private":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
+000 "clear-or-private":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
 000 "clear-or-private":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "clear-or-private":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "clear-or-private":   policy: IKEv2+AUTH_NULL+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+GROUP+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+NEGO_PASS+failurePASS;
@@ -211,7 +211,7 @@ road #
 000 "private":   our auth:null, their auth:null, our autheap:none, their autheap:none;
 000 "private":   modecfg info: us:client, them:server, modecfg policy:push, dns:unset, domains:unset, cat:set;
 000 "private":   sec_label:unset;
-000 "private":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
+000 "private":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
 000 "private":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "private":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "private":   policy: IKEv2+AUTH_NULL+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+GROUP+GROUTED+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+failureDROP;
@@ -228,7 +228,7 @@ road #
 000 "private-or-clear":   our auth:null, their auth:null, our autheap:none, their autheap:none;
 000 "private-or-clear":   modecfg info: us:client, them:server, modecfg policy:push, dns:unset, domains:unset, cat:set;
 000 "private-or-clear":   sec_label:unset;
-000 "private-or-clear":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
+000 "private-or-clear":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
 000 "private-or-clear":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "private-or-clear":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "private-or-clear":   policy: IKEv2+AUTH_NULL+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+GROUP+GROUTED+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+NEGO_PASS+failurePASS;
@@ -245,7 +245,7 @@ road #
 000 "private-or-clear#192.1.2.0/24":   our auth:null, their auth:null, our autheap:none, their autheap:none;
 000 "private-or-clear#192.1.2.0/24":   modecfg info: us:client, them:server, modecfg policy:push, dns:unset, domains:unset, cat:set;
 000 "private-or-clear#192.1.2.0/24":   sec_label:unset;
-000 "private-or-clear#192.1.2.0/24":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
+000 "private-or-clear#192.1.2.0/24":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
 000 "private-or-clear#192.1.2.0/24":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "private-or-clear#192.1.2.0/24":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "private-or-clear#192.1.2.0/24":   policy: IKEv2+AUTH_NULL+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+GROUPINSTANCE+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+NEGO_PASS+failurePASS;
@@ -323,13 +323,13 @@ road #
 down
 road #
  ../../guestbin/wait-for.sh --match '192.1.2.23' -- ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='ID_NULL', lease=10.0.10.1/32
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='ID_NULL', lease=10.0.10.1/32
 road #
  ../../guestbin/ping-once.sh --up   -I 192.1.3.209 192.1.2.23
 up
 road #
  ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL', lease=10.0.10.1/32
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='ID_NULL', lease=10.0.10.1/32
 road #
  # bring up second tunnel
 road #
@@ -337,14 +337,14 @@ road #
 down
 road #
  ../../guestbin/wait-for.sh --match '192.1.2.45' -- ipsec whack --trafficstatus
-006 #4: "private-or-clear#192.1.2.0/24"[2] 10.0.10.1/32=== ...192.1.2.45, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='ID_NULL', lease=10.0.10.1/32
+006 #4: "private-or-clear#192.1.2.0/24"[2] 10.0.10.1/32=== ...192.1.2.45, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='ID_NULL', lease=10.0.10.1/32
 road #
  ../../guestbin/ping-once.sh --up   -I 192.1.3.209 192.1.2.45
 up
 road #
  ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL', lease=10.0.10.1/32
-006 #4: "private-or-clear#192.1.2.0/24"[2] 10.0.10.1/32=== ...192.1.2.45, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL', lease=10.0.10.1/32
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='ID_NULL', lease=10.0.10.1/32
+006 #4: "private-or-clear#192.1.2.0/24"[2] 10.0.10.1/32=== ...192.1.2.45, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='ID_NULL', lease=10.0.10.1/32
 road #
  echo done
 done
@@ -353,8 +353,8 @@ road #
 down
 road #
  ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='ID_NULL', lease=10.0.10.1/32
-006 #4: "private-or-clear#192.1.2.0/24"[2] 10.0.10.1/32=== ...192.1.2.45, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='ID_NULL', lease=10.0.10.1/32
+006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='ID_NULL', lease=10.0.10.1/32
+006 #4: "private-or-clear#192.1.2.0/24"[2] 10.0.10.1/32=== ...192.1.2.45, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=16EiB, id='ID_NULL', lease=10.0.10.1/32
 road #
  iptables -t nat -L -n
 Chain PREROUTING (policy ACCEPT)

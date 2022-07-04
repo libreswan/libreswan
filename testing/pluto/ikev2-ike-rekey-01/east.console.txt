@@ -12,7 +12,7 @@ east #
 initdone
 east #
  ipsec whack --trafficstatus
-006 #2: "east", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@west'
+006 #2: "east", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=16EiB, id='@west'
 east #
  ipsec showstates
 000 #2: "east":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #4; idle;

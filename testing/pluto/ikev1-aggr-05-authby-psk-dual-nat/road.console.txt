@@ -28,7 +28,7 @@ road #
  # sleep 3
 road #
  ipsec trafficstatus
-006 #2: "road-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+006 #2: "road-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@east'
 road #
  # emulate bringing up second server behind same NAT "runner"
 road #
@@ -57,6 +57,6 @@ road #
 done
 road #
  ipsec whack --trafficstatus
-006 #4: "runner-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east'
+006 #4: "runner-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@east'
 road #
  

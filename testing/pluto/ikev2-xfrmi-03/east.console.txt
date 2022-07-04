@@ -22,8 +22,8 @@ east #
 initdone
 east #
  ipsec whack --trafficstatus
-006 #4: "northnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@north'
-006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, id='@west'
+006 #4: "northnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@north'
+006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=16EiB, id='@west'
 east #
  ip -s link show ipsec1
 X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
