@@ -59,7 +59,7 @@ FPING=${fping-fping}
 wait=5
 
 OPTIONS=$(getopt -o I: --long up,down,lossy:,src:,help, -- "$@")
-if (( $? != 0 )); then
+if [ $? -gt 0 ]; then
     err 4 "Error calling getopt"
 fi
 eval set -- "$OPTIONS"
@@ -128,7 +128,7 @@ done
 
 shift $((OPTIND - 1))
 
-if test $# -ne 1 ; then
+if [ $# -ne 1 ] ; then
     echo "too many parameters: $@"
     exit 1
 fi
@@ -163,8 +163,7 @@ echo "${output}"
 echo ==== tuc ====
 
 case "${result}-${op}" in
-    up-forget | down-forget ) echo fired and forgotten ; exit 0 ;;
-    up-forget | down-forget ) echo fired and forgotten ; exit 0 ;;
+    up-forget | down-forget) echo fired and forgotten ; exit 0 ;;
     up-up | down-down | up-lossy ) echo ${result} ; exit 0 ;;
     down-up | up-down )
 	echo ${result} UNEXPECTED

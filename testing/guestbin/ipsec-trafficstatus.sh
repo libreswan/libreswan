@@ -1,5 +1,5 @@
 #!/bin/sh
-set -eu
+set -u
 
 # a wrapper to around 'ipsec trafficstatus' with sanitizer fluctations in byte count
 
@@ -8,7 +8,7 @@ max=4294967295 # lets go easy use 2^32-1 even hough xfrm INF is 2^64
 result=error
 
 usage() {
-	if test $# -lt 2; then
+	if [ $# -lt 2]; then
 		cat <<EOF
 Usage:
 
@@ -32,8 +32,7 @@ if [ "${verbose}" = "yes" ]; then
 	set -x
 fi
 
-
-if test $# -gt 0 ; then
+if [ $# -gt 0 ]; then
 	OPTIONS=$(getopt  --long min:,max:,help, -- "$@")
 	if (( $? != 0 )); then
 	    err 4 "Error calling getopt"
@@ -62,7 +61,7 @@ if test $# -gt 0 ; then
 	shift $((OPTIND - 1))
 fi
 
-if test $# -ne 0 ; then
+if [ $# -ne 0 ]; then
     echo "too many parameters: $@"
     exit 1
 fi
@@ -87,7 +86,7 @@ case "${status}" in
 	inB=$(echo ${output} | sed -e 's/\(.*inBytes=\)\([0-9]*\)\(,.*\)/\2/g')
 	outB=$(echo ${output} | sed -e 's/\(.*outBytes=\)\([0-9]*\)\(,.*\)/\2/g')
 	bytes=$(expr ${inB} + ${outB})
-	if [ ${bytes} -gt ${min} -a ${bytes} -le ${max} ] ; then
+	if [ ${bytes} -gt ${min} ] && [ ${bytes} -le ${max} ]; then
 		result=success
 	fi
 	;;
