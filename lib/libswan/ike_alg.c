@@ -827,9 +827,9 @@ static const struct dh_desc *dh_descriptors[] = {
 	&ike_alg_dh_modp4096,
 	&ike_alg_dh_modp6144,
 	&ike_alg_dh_modp8192,
-	&ike_alg_dh_dh19,
-	&ike_alg_dh_dh20,
-	&ike_alg_dh_dh21,
+	&ike_alg_dh_secp256r1,
+	&ike_alg_dh_secp384r1,
+	&ike_alg_dh_secp521r1,
 #ifdef USE_DH22
 	&ike_alg_dh_dh22,
 #endif
@@ -840,7 +840,7 @@ static const struct dh_desc *dh_descriptors[] = {
 	&ike_alg_dh_dh24,
 #endif
 #ifdef USE_DH31
-	&ike_alg_dh_dh31,
+	&ike_alg_dh_curve25519,
 #endif
 };
 

@@ -172,7 +172,7 @@ const struct dh_desc ike_alg_dh_modp8192 = {
 	.dh_ops = &ike_alg_dh_nss_modp_ops,
 };
 
-const struct dh_desc ike_alg_dh_dh19 = {
+const struct dh_desc ike_alg_dh_secp256r1 = {
 	.common = {
 		.algo_type = IKE_ALG_DH,
 		.fqn = "DH19",
@@ -190,7 +190,7 @@ const struct dh_desc ike_alg_dh_dh19 = {
 	.dh_ops = &ike_alg_dh_nss_ecp_ops,
 };
 
-const struct dh_desc ike_alg_dh_dh20 = {
+const struct dh_desc ike_alg_dh_secp384r1 = {
 	.common = {
 		.algo_type = IKE_ALG_DH,
 		.fqn = "DH20",
@@ -208,7 +208,7 @@ const struct dh_desc ike_alg_dh_dh20 = {
 	.dh_ops = &ike_alg_dh_nss_ecp_ops,
 };
 
-const struct dh_desc ike_alg_dh_dh21 = {
+const struct dh_desc ike_alg_dh_secp521r1 = {
 	.common = {
 		.algo_type = IKE_ALG_DH,
 		.fqn = "DH21",
@@ -292,7 +292,7 @@ const struct dh_desc ike_alg_dh_dh24 = {
 /* https://tools.ietf.org/html/rfc8031 */
 
 #ifdef USE_DH31
-const struct dh_desc ike_alg_dh_dh31 = {
+const struct dh_desc ike_alg_dh_curve25519 = {
 	.common = {
 		.algo_type = IKE_ALG_DH,
 		.fqn = "DH31",

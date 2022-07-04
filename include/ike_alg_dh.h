@@ -24,9 +24,9 @@ extern const struct dh_desc ike_alg_dh_modp3072;
 extern const struct dh_desc ike_alg_dh_modp4096;
 extern const struct dh_desc ike_alg_dh_modp6144;
 extern const struct dh_desc ike_alg_dh_modp8192;
-extern const struct dh_desc ike_alg_dh_dh19;
-extern const struct dh_desc ike_alg_dh_dh20;
-extern const struct dh_desc ike_alg_dh_dh21;
+extern const struct dh_desc ike_alg_dh_secp256r1;
+extern const struct dh_desc ike_alg_dh_secp384r1;
+extern const struct dh_desc ike_alg_dh_secp521r1;
 #ifdef USE_DH22
 extern const struct dh_desc ike_alg_dh_dh22;
 #endif
@@ -37,7 +37,7 @@ extern const struct dh_desc ike_alg_dh_dh23;
 extern const struct dh_desc ike_alg_dh_dh24;
 #endif
 #ifdef USE_DH31
-extern const struct dh_desc ike_alg_dh_dh31;
+extern const struct dh_desc ike_alg_dh_curve25519;
 #endif
 
 /*
