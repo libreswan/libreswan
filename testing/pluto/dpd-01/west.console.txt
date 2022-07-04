@@ -94,7 +94,7 @@ west #
 up
 west #
  ../../guestbin/ipsec-trafficstatus.sh
-006 #4: "west-east", type=ESP, add_time=1234567890, inBytes=XXX , outBytes=XXX , id='@east'
+006 #4: "west-east", type=ESP, add_time=1234567890, inBytes=XXX, outBytes=XXX, id='@east'
 west #
  echo done
 done
@@ -110,7 +110,7 @@ src 192.1.2.23 dst 192.1.2.45
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
+	 00000000 00000000 00000000 XXXXXXXX
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
@@ -119,11 +119,11 @@ src 192.1.2.45 dst 192.1.2.23
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
+	 00000000 00000000 00000000 XXXXXXXX
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0x00000000 reqid 0 mode transport
-	replay-window 0 
-	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto udp sport EPHEM dport 1025 dev eth1 
+	replay-window 0
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 proto udp sport EPHEM dport 1025 dev eth1
 XFRM policy:
 src 192.1.2.23/32 dst 192.1.2.45/32
 	dir fwd priority PRIORITY ptype main
@@ -141,11 +141,11 @@ XFRM done
 IPSEC mangle TABLES
 iptables filter TABLE
 Chain INPUT (policy ACCEPT)
-target     prot opt source               destination         
+target     prot opt source               destination
 Chain FORWARD (policy ACCEPT)
-target     prot opt source               destination         
+target     prot opt source               destination
 Chain OUTPUT (policy ACCEPT)
-target     prot opt source               destination         
+target     prot opt source               destination
 ROUTING TABLES
 default via 192.1.2.254 dev eth1
 192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
@@ -155,4 +155,4 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 west #
- 
+
