@@ -215,17 +215,23 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 			return STF_FATAL;
 		}
 
+		const struct pubkey_signer *signer;
 		switch (authby) {
 		case AUTH_RSASIG:
 			/* XXX: way to force PKCS#1 1.5? */
-			ike->sa.st_v2_digsig.signer = &pubkey_signer_rsassa_pss;
+			signer = &pubkey_signer_rsassa_pss;
 			break;
 		case AUTH_ECDSA:
-			ike->sa.st_v2_digsig.signer = &pubkey_signer_ecdsa;
+			signer = &pubkey_signer_ecdsa;
 			break;
 		default:
 			bad_case(authby);
 		}
+		enum_buf ana;
+		dbg("digsig:   authby %s selects signer %s",
+		    str_enum(&keyword_auth_names, authby, &ana),
+		    signer->name);
+		ike->sa.st_v2_digsig.signer = signer;
 
 		return submit_v2_IKE_AUTH_request_signature(ike,
 							    &ike->sa.st_v2_id_payload,
