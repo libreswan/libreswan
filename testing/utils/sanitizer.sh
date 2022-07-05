@@ -91,7 +91,7 @@ for fixup in `echo $REF_CONSOLE_FIXUPS`; do
     for fixupdir in "$@" ; do
 	if test -f $fixupdir/$fixup ; then
 	    case $fixup in
-		*.n.sed) cleanup="sed -n -f $fixupdir/$fixup" ;; # keep this first
+		*.sed-n) cleanup="sed -n -f $fixupdir/$fixup" ;; # keep this first
 		*.sed) cleanup="sed -f $fixupdir/$fixup" ;;
 		*.pl)  cleanup="perl $fixupdir/$fixup" ;;
 		*.awk) cleanup="awk -f $fixupdir/$fixup" ;;
