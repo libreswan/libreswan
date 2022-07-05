@@ -128,6 +128,17 @@ struct option long_opts[] = {
 	{ 0,            0,                      NULL,   0, }
 };
 
+static void print_secret(const char *kind, const char *name,
+			 const char *idb, chunk_t secret, bool disclose)
+{
+	printf("%s keyid: %s\n", kind, idb);
+	if (disclose) {
+		char pskbuf[128] = "";
+		datatot(secret.ptr, secret.len, 'x', pskbuf, sizeof(pskbuf));
+		printf("    %s: \"%s\"\n", name, pskbuf);
+	}
+}
+
 static void print(struct private_key_stuff *pks,
 		  int count, struct id *id, bool disclose)
 {
@@ -136,13 +147,6 @@ static void print(struct private_key_stuff *pks,
 		str_id(id, &idbuf);
 	}
 	const char *idb = idbuf.buf;
-
-	char pskbuf[128] = "";
-	if (pks->kind == PKK_PSK || pks->kind == PKK_XAUTH) {
-		datatot(pks->u.preshared_secret.ptr,
-			pks->u.preshared_secret.len,
-			'x', pskbuf, sizeof(pskbuf));
-	}
 
 	if (count) {
 		/* ipsec.secrets format */
@@ -154,14 +158,17 @@ static void print(struct private_key_stuff *pks,
 
 	switch (pks->kind) {
 	case PKK_PSK:
-		printf("PSK keyid: %s\n", idb);
-		if (disclose)
-			printf("    psk: \"%s\"\n", pskbuf);
+		print_secret("PSK", "psk", idb, pks->u.preshared_secret, disclose);
 		break;
 
-	// only old/obsolete secrets entries use this
-	case PKK_RSA: {
-		printf("RSA");
+	case PKK_XAUTH:
+		print_secret("XAUTH", "xauth", idb, pks->u.preshared_secret, disclose);
+		break;
+
+	case PKK_RSA:
+	case PKK_ECDSA:
+	{
+		printf("%s", pks->pubkey_type->name);
 		keyid_t keyid = pks->keyid;
 		printf(" keyid: %s", str_keyid(keyid)[0] ? str_keyid(keyid) : "<missing-pubkey>");
 		if (id) {
@@ -172,17 +179,6 @@ static void print(struct private_key_stuff *pks,
 		printf(" ckaid: %s\n", str_ckaid(ckaid, &cb));
 		break;
 	}
-
-	// this never has a secret entry so shouldn't ne needed
-	case PKK_ECDSA: {
-		break;
-	}
-
-	case PKK_XAUTH:
-		printf("XAUTH keyid: %s\n", idb);
-		if (disclose)
-			printf("    xauth: \"%s\"\n", pskbuf);
-		break;
 
 	case PKK_PPK:
 		break;
