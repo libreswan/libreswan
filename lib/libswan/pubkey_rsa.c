@@ -282,36 +282,36 @@ static err_t pubkey_content_to_der(const union pubkey_content *pkc, chunk_t *dns
 	return RSA_pubkey_content_to_der(&pkc->rsa, dnssec_pubkey);
 }
 
-static void RSA_free_public_content(struct RSA_public_key *rsa)
+static void RSA_free_pubkey_content(struct RSA_public_key *rsa)
 {
 	free_chunk_content(&rsa->n);
 	free_chunk_content(&rsa->e);
 }
 
-static void RSA_free_pubkey_content(union pubkey_content *u)
+static void free_pubkey_content(union pubkey_content *u)
 {
-	RSA_free_public_content(&u->rsa);
+	RSA_free_pubkey_content(&u->rsa);
 }
 
-static void RSA_extract_public_key(struct RSA_public_key *pub,
-				   keyid_t *keyid, ckaid_t *ckaid, size_t *size,
-				   SECKEYPublicKey *pubk,
-				   SECItem *cert_ckaid)
+static void RSA_extract_pubkey_content(struct RSA_public_key *pub,
+				       keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+				       SECKEYPublicKey *pubk,
+				       SECItem *cert_ckaid)
 {
 	pub->e = clone_bytes_as_chunk(pubk->u.rsa.publicExponent.data,
-					   pubk->u.rsa.publicExponent.len, "e");
+				      pubk->u.rsa.publicExponent.len, "e");
 	pub->n = clone_bytes_as_chunk(pubk->u.rsa.modulus.data,
-					   pubk->u.rsa.modulus.len, "n");
+				      pubk->u.rsa.modulus.len, "n");
 	*ckaid = ckaid_from_secitem(cert_ckaid);
 	form_keyid(pub->e, pub->n, keyid, size);
 }
 
-static void RSA_extract_pubkey_content(union pubkey_content *pkc,
-				       keyid_t *keyid, ckaid_t *ckaid, size_t *size,
-				       SECKEYPublicKey *pubkey_nss,
-				       SECItem *ckaid_nss)
+static void extract_pubkey_content(union pubkey_content *pkc,
+				   keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+				   SECKEYPublicKey *pubkey_nss,
+				   SECItem *ckaid_nss)
 {
-	RSA_extract_public_key(&pkc->rsa, keyid, ckaid, size, pubkey_nss, ckaid_nss);
+	RSA_extract_pubkey_content(&pkc->rsa, keyid, ckaid, size, pubkey_nss, ckaid_nss);
 }
 
 static void RSA_extract_private_key_pubkey_content(struct private_key_stuff *pks,
@@ -320,15 +320,15 @@ static void RSA_extract_private_key_pubkey_content(struct private_key_stuff *pks
 						   SECItem *ckaid_nss)
 {
 	struct RSA_public_key *pubkey = &pks->u.pubkey.rsa;
-	RSA_extract_public_key(pubkey, keyid, ckaid, size,
-			       pubkey_nss, ckaid_nss);
+	RSA_extract_pubkey_content(pubkey, keyid, ckaid, size,
+				   pubkey_nss, ckaid_nss);
 }
 
 static void RSA_free_secret_content(struct private_key_stuff *pks)
 {
 	SECKEY_DestroyPrivateKey(pks->private_key);
 	struct RSA_public_key *pubkey = &pks->u.pubkey.rsa;
-	RSA_free_public_content(pubkey);
+	RSA_free_pubkey_content(pubkey);
 }
 
 static err_t RSA_secret_sane(struct private_key_stuff *pks)
@@ -352,11 +352,11 @@ const struct pubkey_type pubkey_type_rsa = {
 	.alg = PUBKEY_ALG_RSA,
 	.name = "RSA",
 	.private_key_kind = PKK_RSA,
-	.free_pubkey_content = RSA_free_pubkey_content,
+	.free_pubkey_content = free_pubkey_content,
 	.dnssec_pubkey_to_pubkey_content = dnssec_pubkey_to_pubkey_content,
 	.pubkey_content_to_dnssec_pubkey = pubkey_content_to_dnssec_pubkey,
 	.pubkey_content_to_der = pubkey_content_to_der,
-	.extract_pubkey_content = RSA_extract_pubkey_content,
+	.extract_pubkey_content = extract_pubkey_content,
 	.extract_private_key_pubkey_content = RSA_extract_private_key_pubkey_content,
 	.free_secret_content = RSA_free_secret_content,
 	.secret_sane = RSA_secret_sane,

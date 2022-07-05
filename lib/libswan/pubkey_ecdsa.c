@@ -196,15 +196,15 @@ static err_t pubkey_content_to_der(const union pubkey_content *pkc, chunk_t *dns
 	return ECDSA_pubkey_content_to_der(&pkc->ecdsa, dnssec_pubkey);
 }
 
-static void ECDSA_free_public_content(struct ECDSA_public_key *ecdsa)
+static void ECDSA_free_pubkey_content(struct ECDSA_public_key *ecdsa)
 {
 	free_chunk_content(&ecdsa->pub);
 	free_chunk_content(&ecdsa->ecParams);
 }
 
-static void ECDSA_free_pubkey_content(union pubkey_content *u)
+static void free_pubkey_content(union pubkey_content *u)
 {
-	ECDSA_free_public_content(&u->ecdsa);
+	ECDSA_free_pubkey_content(&u->ecdsa);
 }
 
 static void ECDSA_extract_public_key(struct ECDSA_public_key *pub,
@@ -252,7 +252,7 @@ static void ECDSA_free_secret_content(struct private_key_stuff *pks)
 {
 	SECKEY_DestroyPrivateKey(pks->private_key);
 	struct ECDSA_public_key *pubkey = &pks->u.pubkey.ecdsa;
-	ECDSA_free_public_content(pubkey);
+	ECDSA_free_pubkey_content(pubkey);
 }
 
 /*
@@ -273,7 +273,7 @@ const struct pubkey_type pubkey_type_ecdsa = {
 	.dnssec_pubkey_to_pubkey_content = dnssec_pubkey_to_pubkey_content,
 	.pubkey_content_to_dnssec_pubkey = pubkey_content_to_dnssec_pubkey,
 	.pubkey_content_to_der = pubkey_content_to_der,
-	.free_pubkey_content = ECDSA_free_pubkey_content,
+	.free_pubkey_content = free_pubkey_content,
 	.extract_private_key_pubkey_content = ECDSA_extract_private_key_pubkey_content,
 	.free_secret_content = ECDSA_free_secret_content,
 	.secret_sane = ECDSA_secret_sane,
