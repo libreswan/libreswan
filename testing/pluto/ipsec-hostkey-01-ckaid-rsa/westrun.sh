@@ -7,5 +7,5 @@ ipsec showhostkey --dump
 ipsec showhostkey --left --ckaid "${ckaid}"
 ipsec showhostkey --ipseckey --ckaid "${ckaid}"
 # see description.txt for why they are different
-ipsec showhostkey --pem --ckaid "${ckaid}" | grep PUBLIC
-ipsec showhostkey --pem --ckaid "${ckaid}" | openssl pkey -inform PEM -pubin | grep PUBLIC
+ipsec showhostkey --pem --ckaid "${ckaid}"
+ipsec showhostkey --pem --ckaid "${ckaid}" | openssl pkey -inform PEM -pubin
