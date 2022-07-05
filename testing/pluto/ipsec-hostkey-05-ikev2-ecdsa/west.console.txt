@@ -21,7 +21,7 @@ us=west them=east leftright=left
 west #
  # generate the host key and save it
 west #
- ckaid=$(ipsec newhostkey 2>&1 | grep "showhostkey" | sed "s/^.*ckaid //")
+ ckaid=$(ipsec newhostkey --keytype ecdsa 2>&1 | grep "showhostkey" | sed "s/^.*ckaid //")
 west #
  # sanitizing brought to you by id-sanitize.sed
 west #

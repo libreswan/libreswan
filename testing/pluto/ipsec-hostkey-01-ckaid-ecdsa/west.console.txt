@@ -10,8 +10,8 @@ west #
  ipsec showhostkey --list
 < 1> west # ipsec showhostkey --dump
 < 1> west # ipsec showhostkey --left --ckaid "${ckaid}"
-	# ecdsakey cQs+dmJlJ
-	leftecdsasigkey=0s<<RAW-PUBKEY#1>>
+	# ecdsakey 5Bd7o+VXk
+	leftecdsakey=0spu5eGXCr9qR4eFcmurvbwapeFxzF9KY0i4Rj8q9hsChDFR6Bq0qhLquPZXxhH3y51dopTGuxMN2KPb52QN19vw==
 west #
  ipsec showhostkey --ipseckey --ckaid "${ckaid}"
 west.    IN    IPSECKEY  10 0 3 . <<RAW-PUBKEY#1>>
@@ -24,7 +24,7 @@ west #
  ipsec showhostkey --pem --ckaid "${ckaid}" | openssl pkey -inform PEM -pubin | grep PUBLIC
 ipsec showhostkey: not implemented
 unable to load Public Key
-140214407634432:error:0909006C:PEM routines:get_name:no start line:crypto/pem/pem_lib.c:745:Expecting: PUBLIC KEY
+140566842813952:error:0909006C:PEM routines:get_name:no start line:crypto/pem/pem_lib.c:745:Expecting: PUBLIC KEY
 west #
  
 
