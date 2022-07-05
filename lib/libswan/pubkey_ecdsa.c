@@ -180,9 +180,9 @@ static err_t ECDSA_pubkey_content_to_der(const struct ECDSA_public_key *ecdsa, c
 	};
 
 	SECItem *wrap_der = SEC_ASN1EncodeItem(NULL/*double-free*/, NULL, &wrap_value, wrap_template);
-	//if (DBGP(DBG_BASE)) {
+	if (DBGP(DBG_BASE)) {
 		DBG_dump("wrap", wrap_der->data, wrap_der->len);
-		//}
+	}
 
 	*der = clone_secitem_as_chunk(*wrap_der, "der");
 
