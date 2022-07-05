@@ -74,8 +74,10 @@ struct starter_end {
 
 	ip_protoport protoport;
 
-	enum keyword_pubkey rsasigkey_type;
-	char *rsasigkey;
+	enum keyword_pubkey pubkey_type;
+	enum pubkey_alg pubkey_alg; /*0 means PUBKEY is PEM*/
+	char *pubkey;
+
 	bool key_from_DNS_on_demand;
 	char *virt;
 	char *certx;

@@ -87,7 +87,8 @@ struct whack_end {
 	 */
 	char *cert;
 	char *ckaid;
-	char *rsasigkey;
+	char *pubkey;
+	enum pubkey_alg pubkey_alg; /* 0 means PUBKEY is PEM */
 
 	enum keyword_auth auth;
 

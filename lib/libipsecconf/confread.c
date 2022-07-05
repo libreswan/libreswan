@@ -361,7 +361,7 @@ static bool load_setup(struct starter_config *cfg,
 			break;
 
 		case kt_bitstring:
-		case kt_rsasigkey:
+		case kt_pubkey:
 		case kt_ipaddr:
 		case kt_subnet:
 		case kt_range:
@@ -595,10 +595,28 @@ static bool validate_end(struct starter_conn *conn_st,
 		}
 	}
 
-	if (end->options_set[KSCF_RSASIGKEY]) {
-		end->rsasigkey_type = end->options[KSCF_RSASIGKEY];
+	static const struct {
+		enum pubkey_alg alg;
+		enum keyword_string_conn_field kscf;
+		const char *name;
+	} keys[] = {
+		{ .alg = PUBKEY_ALG_RSA, KSCF_RSASIGKEY, "rsasigkey", },
+		{ .alg = PUBKEY_ALG_ECDSA, KSCF_ECDSAKEY, "ecdsakey", },
+		{ .alg = 0, KSCF_PUBKEY, "pubkey", },
+	};
 
-		switch (end->options[KSCF_RSASIGKEY]) {
+	FOR_EACH_ELEMENT(key, keys) {
+		if (!end->options_set[key->kscf]) {
+			continue;
+		}
+		if (end->pubkey != NULL) {
+			ERR_FOUND("duplicate public key");
+		}
+
+		end->pubkey_type = end->options[key->kscf];
+		end->pubkey_alg = key->alg;
+
+		switch (end->options[key->kscf]) {
 		case PUBKEY_DNSONDEMAND:
 			end->key_from_DNS_on_demand = true;
 			break;
@@ -606,10 +624,10 @@ static bool validate_end(struct starter_conn *conn_st,
 		default:
 			end->key_from_DNS_on_demand = false;
 			/* validate the KSCF_RSASIGKEY1/RSASIGKEY2 */
-			if (end->strings[KSCF_RSASIGKEY] != NULL) {
-				char *value = end->strings[KSCF_RSASIGKEY];
-				pfreeany(end->rsasigkey);
-				end->rsasigkey = clone_str(value, "end->rsasigkey");
+			if (end->strings[key->kscf] != NULL) {
+				char *value = end->strings[key->kscf];
+				pfreeany(end->pubkey);
+				end->pubkey = clone_str(value, "end->pubkey");
 			}
 		}
 	}
@@ -844,7 +862,7 @@ static bool translate_field(struct starter_conn *conn,
 		(*set_strings)[field] = true;
 		break;
 
-	case kt_rsasigkey:
+	case kt_pubkey:
 	case kt_loose_enum:
 		assert(field <= KSCF_last_loose);
 
@@ -1641,7 +1659,7 @@ static void copy_conn_default(struct starter_conn *conn,
 
 	STR_FIELD_END(iface);
 	STR_FIELD_END(id);
-	STR_FIELD_END(rsasigkey);
+	STR_FIELD_END(pubkey);
 	STR_FIELD_END(virt);
 	STR_FIELD_END(certx);
 	STR_FIELD_END(ckaid);
@@ -1818,7 +1836,7 @@ static void confread_free_conn(struct starter_conn *conn)
 
 	STR_FIELD_END(iface);
 	STR_FIELD_END(id);
-	STR_FIELD_END(rsasigkey);
+	STR_FIELD_END(pubkey);
 	STR_FIELD_END(virt);
 	STR_FIELD_END(certx);
 	STR_FIELD_END(ckaid);

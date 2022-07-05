@@ -222,9 +222,9 @@ static const struct sparse_name kw_type_list[] = {
 };
 
 /*
- * Values for rsasigkey={ %cert, %dnsondemand, %dns, literal }
+ * Values for {rsasigkey,ecdsakey,pubkey}={ %cert, %dnsondemand, %dns, literal }
  */
-static const struct sparse_name kw_rsasigkey_list[] = {
+static const struct sparse_name kw_pubkey_list[] = {
 	{ "",             PUBKEY_PREEXCHANGED },
 	{ "%cert",        PUBKEY_CERTIFICATE },
 #ifdef USE_DNSSEC
@@ -430,7 +430,11 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "nexthop",  kv_conn | kv_leftright,  kt_ipaddr,  KSCF_NEXTHOP, NULL, NULL, },
   { "updown",  kv_conn | kv_leftright,  kt_filename,  KSCF_UPDOWN, NULL, NULL, },
   { "id",  kv_conn | kv_leftright,  kt_idtype,  KSCF_ID, NULL, NULL, },
-  { "rsasigkey",  kv_conn | kv_leftright,  kt_rsasigkey,  KSCF_RSASIGKEY,  kw_rsasigkey_list, NULL, },
+  { "rsasigkey",  kv_conn | kv_leftright,  kt_pubkey,  KSCF_RSASIGKEY,  kw_pubkey_list, NULL, },
+  { "ecdsakey",  kv_conn | kv_leftright,  kt_pubkey,  KSCF_ECDSAKEY,  kw_pubkey_list, NULL, },
+#if 0
+  { "pubkey",  kv_conn | kv_leftright,  kt_pubkey,  KSCF_PUBKEY,  kw_pubkey_list, NULL, },
+#endif
   { "cert",  kv_conn | kv_leftright,  kt_filename,  KSCF_CERT, NULL, NULL, },
   { "ckaid",  kv_conn | kv_leftright,  kt_string,  KSCF_CKAID, NULL, NULL, },
   { "sendcert",  kv_conn | kv_leftright,  kt_enum,  KNCF_SENDCERT,  kw_sendcert_list, NULL, },
@@ -757,7 +761,7 @@ unsigned int parser_loose_enum(struct keyword *k, const char *s)
 	const struct keyword_def *kd = k->keydef;
 	unsigned int valresult;
 
-	assert(kd->type == kt_loose_enum || kd->type == kt_rsasigkey);
+	assert(kd->type == kt_loose_enum || kd->type == kt_pubkey);
 	assert(kd->validenum != NULL && kd->validenum != NULL);
 
 	const struct sparse_name *kev;

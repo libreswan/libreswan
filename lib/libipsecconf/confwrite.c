@@ -80,7 +80,7 @@ static void confwrite_int(FILE *out,
 		case kt_appendlist:
 		case kt_filename:
 		case kt_dirname:
-		case kt_rsasigkey:
+		case kt_pubkey:
 
 		case kt_percent:
 		case kt_ipaddr:
@@ -210,7 +210,7 @@ static void confwrite_str(FILE *out,
 			}
 			break;
 
-		case kt_rsasigkey:
+		case kt_pubkey:
 		case kt_ipaddr:
 		case kt_range:
 		case kt_subnet:
@@ -341,8 +341,14 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 			str_cidr(&end->ifaceip, &as));
 	}
 
-	if (end->rsasigkey != NULL && end->rsasigkey[0] != '\0')
-		fprintf(out, "\t%srsasigkey=%s\n", side, end->rsasigkey);
+	if (end->pubkey != NULL && end->pubkey[0] != '\0') {
+		fprintf(out, "\t%s%s=%s\n", side,
+			(end->pubkey_alg == PUBKEY_ALG_RSA ? "rsasigkey" :
+			 end->pubkey_alg == PUBKEY_ALG_ECDSA ? "ecdsakey" :
+			 end->pubkey_alg == PUBKEY_ALG_DSA ? "dsakey" :
+			 "pubkey"),
+			end->pubkey);
+	}
 
 	if (end->protoport.is_set) {
 		protoport_buf buf;
