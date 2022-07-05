@@ -322,7 +322,7 @@ static void jam_v2_proposal(struct jambuf *buf, int propnum,
 			    const struct ikev2_proposal *proposal)
 {
 	if (propnum != 0) {
-		jam(buf, "%d: ", propnum);
+		jam(buf, "%d:", propnum);
 	}
 	jam(buf, "%s=", protoid_name(proposal->protoid));
 	const char *sep = "";
