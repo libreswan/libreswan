@@ -38,9 +38,8 @@
  * Deal with RFC Resource Records as defined in rfc3110 (nee rfc2537).
  */
 
-static err_t RSA_pubkey_content_to_dnssec_pubkey(const union pubkey_content *pkc, chunk_t *dnssec_pubkey)
+static err_t RSA_pubkey_content_to_dnssec_pubkey(const struct RSA_public_key *rsa, chunk_t *dnssec_pubkey)
 {
-	const struct RSA_public_key *rsa = &pkc->rsa;
 	chunk_t exponent = rsa->e;
 	chunk_t modulus = rsa->n;
 	*dnssec_pubkey = EMPTY_CHUNK;
@@ -75,6 +74,11 @@ static err_t RSA_pubkey_content_to_dnssec_pubkey(const union pubkey_content *pkc
 	};
 
 	return NULL;
+}
+
+static err_t pubkey_content_to_dnssec_pubkey(const union pubkey_content *pkc, chunk_t *dnssec_pubkey)
+{
+	return RSA_pubkey_content_to_dnssec_pubkey(&pkc->rsa, dnssec_pubkey);
 }
 
 /*
@@ -152,9 +156,9 @@ static err_t pubkey_dnssec_pubkey_to_rsa_pubkey(chunk_t rr, chunk_t *e, chunk_t 
 	return NULL;
 }
 
-static err_t unpack_RSA_dnssec_pubkey(struct RSA_public_key *rsa,
-				      keyid_t *keyid, ckaid_t *ckaid, size_t *size,
-				      chunk_t dnssec_pubkey)
+static err_t RSA_dnssec_pubkey_to_pubkey_content(struct RSA_public_key *rsa,
+						 keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+						 chunk_t dnssec_pubkey)
 {
 	/* unpack */
 	chunk_t exponent;
@@ -192,14 +196,14 @@ static err_t unpack_RSA_dnssec_pubkey(struct RSA_public_key *rsa,
 	return NULL;
 }
 
-static err_t RSA_dnssec_pubkey_to_pubkey_content(chunk_t dnssec_pubkey,
-						 union pubkey_content *u,
-						 keyid_t *keyid, ckaid_t *ckaid, size_t *size)
+static err_t dnssec_pubkey_to_pubkey_content(chunk_t dnssec_pubkey,
+					     union pubkey_content *u,
+					     keyid_t *keyid, ckaid_t *ckaid, size_t *size)
 {
-	return unpack_RSA_dnssec_pubkey(&u->rsa, keyid, ckaid, size, dnssec_pubkey);
+	return RSA_dnssec_pubkey_to_pubkey_content(&u->rsa, keyid, ckaid, size, dnssec_pubkey);
 }
 
-static err_t RSA_pubkey_content_to_der(const union pubkey_content *u, chunk_t *der)
+static err_t RSA_pubkey_content_to_der(const struct RSA_public_key *rsa, chunk_t *der)
 {
 	*der = empty_chunk;
 
@@ -218,8 +222,8 @@ static err_t RSA_pubkey_content_to_der(const union pubkey_content *u, chunk_t *d
 		SECItem exponent;
 	} pubkey_value = {
 		/* why siUnsignedInteger? see nss/lib/softoken/lowkey.c */
-		.modulus = same_chunk_as_secitem(u->rsa.n, siUnsignedInteger),
-		.exponent = same_chunk_as_secitem(u->rsa.e, siUnsignedInteger),
+		.modulus = same_chunk_as_secitem(rsa->n, siUnsignedInteger),
+		.exponent = same_chunk_as_secitem(rsa->e, siUnsignedInteger),
 	};
 
 	/* see nss/lib/softoken/lowkey.c */
@@ -271,7 +275,11 @@ static err_t RSA_pubkey_content_to_der(const union pubkey_content *u, chunk_t *d
 
 	PORT_FreeArena(arena, PR_TRUE/*zero*/);
 	return NULL;
+}
 
+static err_t pubkey_content_to_der(const union pubkey_content *pkc, chunk_t *dnssec_pubkey)
+{
+	return RSA_pubkey_content_to_der(&pkc->rsa, dnssec_pubkey);
 }
 
 static void RSA_free_public_content(struct RSA_public_key *rsa)
@@ -345,9 +353,9 @@ const struct pubkey_type pubkey_type_rsa = {
 	.name = "RSA",
 	.private_key_kind = PKK_RSA,
 	.free_pubkey_content = RSA_free_pubkey_content,
-	.dnssec_pubkey_to_pubkey_content = RSA_dnssec_pubkey_to_pubkey_content,
-	.pubkey_content_to_dnssec_pubkey = RSA_pubkey_content_to_dnssec_pubkey,
-	.pubkey_content_to_der = RSA_pubkey_content_to_der,
+	.dnssec_pubkey_to_pubkey_content = dnssec_pubkey_to_pubkey_content,
+	.pubkey_content_to_dnssec_pubkey = pubkey_content_to_dnssec_pubkey,
+	.pubkey_content_to_der = pubkey_content_to_der,
 	.extract_pubkey_content = RSA_extract_pubkey_content,
 	.extract_private_key_pubkey_content = RSA_extract_private_key_pubkey_content,
 	.free_secret_content = RSA_free_secret_content,
