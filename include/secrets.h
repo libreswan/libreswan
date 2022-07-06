@@ -111,6 +111,8 @@ struct private_key_stuff {
 	ckaid_t ckaid;
 };
 
+diag_t private_key_stuff_to_der(struct private_key_stuff *pks, chunk_t *der);
+
 extern struct private_key_stuff *lsw_get_pks(struct secret *s);
 extern struct id_list *lsw_get_idlist(const struct secret *s);
 
@@ -148,9 +150,6 @@ struct pubkey_type {
 						 keyid_t *keyid, ckaid_t *ckaid, size_t *size);
 	err_t (*pubkey_content_to_dnssec_pubkey)(const union pubkey_content *pkc,
 						 chunk_t *dnssec_pubkey);
-	/* BEGIN PUBLIC KEY and not BEGIN RSA PUBLIC KEY format */
-	err_t (*pubkey_content_to_der)(const union pubkey_content *pkc,
-				       chunk_t *dnssec_pubkey);
 	/* nss */
 	void (*extract_pubkey_content)(union pubkey_content *pkc,
 				       keyid_t *keyid, ckaid_t *ckaid, size_t *size,

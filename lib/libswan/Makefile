@@ -56,6 +56,7 @@ OBJS += constants.o \
 	lswnss.o \
 	alg_byname.o
 
+OBJS += private_key_stuff_to_der.o
 OBJS += clone_shunk_tokens.o
 OBJS += secrets.o
 OBJS += pubkey_rsa.o

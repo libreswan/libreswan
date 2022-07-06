@@ -163,56 +163,6 @@ static err_t pubkey_content_to_dnssec_pubkey(const union pubkey_content *u,
 	return ECDSA_pubkey_content_to_dnssec_pubkey(&u->ecdsa, dnssec_pubkey);
 }
 
-static err_t ECDSA_pubkey_content_to_der(const struct ECDSA_public_key *ecdsa, chunk_t *der)
-{
-	/*
-	 * Encoding EC is much simpler than RSA ...
-	 *
-	 * The SECAlgorithmID is relatively straight forward.  The
-	 * only got-ya is that the bits include
-	 * EC_POINT_FORM_UNCOMPRESSED.
-	 */
-
-	passert((ecdsa->pub.len & 1) == 1);
-	passert(ecdsa->pub.ptr[0] == EC_POINT_FORM_UNCOMPRESSED);
-
-	struct wrap_value {
-		SECAlgorithmID id;
-		SECItem bits;
-	} wrap_value = {
-		.id = {
-			.algorithm = SECOID_FindOIDByTag(SEC_OID_ANSIX962_EC_PUBLIC_KEY)->oid,
-			.parameters = same_chunk_as_secitem(ecdsa->ecParams, siBuffer),
-		},
-		.bits = same_chunk_as_secitem(ecdsa->pub, siBuffer),
-	};
-	/* BIT_STRING expects things in bits! */
-	wrap_value.bits.len *= 8;
-
-	static const SEC_ASN1Template wrap_template[] = {
-		{ SEC_ASN1_SEQUENCE, 0, NULL, sizeof(struct wrap_value), },
-		{ SEC_ASN1_INLINE|SEC_ASN1_XTRN, offsetof(struct wrap_value, id), SECOID_AlgorithmIDTemplate, 0, },
-		{ SEC_ASN1_BIT_STRING, offsetof(struct wrap_value, bits), NULL, 0, },
-		{ 0 },
-	};
-
-	SECItem *wrap_der = SEC_ASN1EncodeItem(NULL/*double-free*/, NULL, &wrap_value, wrap_template);
-	if (DBGP(DBG_BASE)) {
-		DBG_dump("wrap", wrap_der->data, wrap_der->len);
-	}
-
-	*der = clone_secitem_as_chunk(*wrap_der, "der");
-
-	SECITEM_FreeItem(wrap_der, PR_TRUE/*zero*/);
-
-	return NULL;
-}
-
-static err_t pubkey_content_to_der(const union pubkey_content *pkc, chunk_t *dnssec_pubkey)
-{
-	return ECDSA_pubkey_content_to_der(&pkc->ecdsa, dnssec_pubkey);
-}
-
 static void ECDSA_free_pubkey_content(struct ECDSA_public_key *ecdsa)
 {
 	free_chunk_content(&ecdsa->pub);
@@ -289,7 +239,6 @@ const struct pubkey_type pubkey_type_ecdsa = {
 	.private_key_kind = PKK_ECDSA,
 	.dnssec_pubkey_to_pubkey_content = dnssec_pubkey_to_pubkey_content,
 	.pubkey_content_to_dnssec_pubkey = pubkey_content_to_dnssec_pubkey,
-	.pubkey_content_to_der = pubkey_content_to_der,
 	.free_pubkey_content = free_pubkey_content,
 	.extract_private_key_pubkey_content = ECDSA_extract_private_key_pubkey_content,
 	.free_secret_content = ECDSA_free_secret_content,
