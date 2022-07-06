@@ -102,23 +102,40 @@ static err_t ECDSA_dnssec_pubkey_to_pubkey_content(struct ECDSA_public_key *ecds
 		return e;
 	}
 
-	SECOidData *ec_params = SECOID_FindOIDByTag(group->nss_oid);
-	if (ec_params == NULL) {
+	/*
+	 * Wrap the raw OID in ASN.1.  SECKEYECParams is just a
+	 * glorifed SECItem.
+	 *
+	 * See also DH code.
+	 */
+	const SECOidData *ec_oid = SECOID_FindOIDByTag(group->nss_oid); /*static*/
+	if (ec_oid == NULL) {
 		llog_passert(&global_logger, HERE,
 			     "lookup of OID %d for EC group %s parameters failed",
 			     group->nss_oid, group->common.fqn);
 	}
-	ecdsa->ecParams = clone_secitem_as_chunk(ec_params->oid, "EC param");
+	SECKEYECParams *ec_params = SEC_ASN1EncodeItem(NULL/*must-double-free*/,
+						       NULL, &ec_oid->oid,
+						       SEC_ObjectIDTemplate);
+	if (ec_params == NULL) {
+		llog_passert(&global_logger, HERE,
+			     "wrapping of OID %d EC group %s parameters failed",
+			     group->nss_oid, group->common.fqn);
+	}
+
+	ecdsa->ecParams = clone_secitem_as_chunk(*ec_params, "EC param");
+	SECITEM_FreeItem(ec_params, PR_TRUE/*also-free-SECItem*/);
 
 	*size = ecdsa->pub.len;
 
 	if (DBGP(DBG_BASE)) {
 		/* pubkey information isn't DBG_PRIVATE */
+		DBG_log("ECDSA Key:");
 		DBG_log("keyid: *%s", str_keyid(*keyid));
 		DBG_log("  size: %zu", *size);
-		DBG_dump_hunk("  pub", ecdsa->pub);
-		DBG_dump_hunk("  ecParams", ecdsa->ecParams);
-		DBG_dump_hunk("  CKAID", *ckaid);
+		DBG_dump_hunk("pub", ecdsa->pub);
+		DBG_dump_hunk("ecParams", ecdsa->ecParams);
+		DBG_dump_hunk("CKAID", *ckaid);
 	}
 
        return NULL;

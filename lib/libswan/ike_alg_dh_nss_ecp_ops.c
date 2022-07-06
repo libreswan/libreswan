@@ -51,31 +51,29 @@ static void nss_ecp_calc_local_secret(const struct dh_desc *group,
 	/*
 	 * Wrap the raw OID in ASN.1.  SECKEYECParams is just a
 	 * glorifed SECItem.
+	 *
+	 * See also ECDSA code.
 	 */
-	SECOidData *pk11_data = SECOID_FindOIDByTag(group->nss_oid);
-	if (pk11_data == NULL) {
-		llog_passert(logger, HERE, "lookup of OID %d for EC group %s parameters failed",
+	const SECOidData *ec_oid = SECOID_FindOIDByTag(group->nss_oid); /*static*/
+	if (ec_oid == NULL) {
+		llog_passert(logger, HERE,
+			     "lookup of OID %d for EC group %s parameters failed",
 			     group->nss_oid, group->common.fqn);
 	}
-	SECKEYECParams *pk11_param = SEC_ASN1EncodeItem(NULL, NULL, &pk11_data->oid,
-							SEC_ObjectIDTemplate);
-	if (DBGP(DBG_CRYPT)) {
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam_string(buf, "pk11_data->oid: ");
-			jam_nss_secitem(buf, &pk11_data->oid);
-		}
-	}
-	if (DBGP(DBG_CRYPT)) {
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam_string(buf, "pk11_param");
-			jam_nss_secitem(buf, pk11_param);
-		}
+	SECKEYECParams *ec_params = SEC_ASN1EncodeItem(NULL/*must-double-free*/,
+						       NULL, &ec_oid->oid,
+						       SEC_ObjectIDTemplate);
+	if (ec_params == NULL) {
+		llog_passert(logger, HERE,
+			     "wrapping of OID %d EC group %s parameters failed",
+			     group->nss_oid, group->common.fqn);
 	}
 
-	*privk = SECKEY_CreateECPrivateKey(pk11_param, pubk,
+
+	*privk = SECKEY_CreateECPrivateKey(ec_params, pubk,
 					   lsw_nss_get_password_context(logger));
 
-	SECITEM_FreeItem(pk11_param, PR_TRUE/*also-free-item*/);
+	SECITEM_FreeItem(ec_params, PR_TRUE/*also-free-SECItem*/);
 
 	if (*pubk == NULL || *privk == NULL) {
 		passert_nss_error(logger, HERE,
