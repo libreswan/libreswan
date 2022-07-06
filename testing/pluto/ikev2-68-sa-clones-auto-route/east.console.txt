@@ -18,7 +18,7 @@ east #
 000 "westnet-eastnet-0":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-0":   labeled_ipsec:no;
 000 "westnet-eastnet-0":   sec_label:unset;
-000 "westnet-eastnet-0":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 0;
+000 "westnet-eastnet-0":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 0;
 000 "westnet-eastnet-0":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-0":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-0":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -36,7 +36,7 @@ east #
 000 "westnet-eastnet-1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-1":   labeled_ipsec:no;
 000 "westnet-eastnet-1":   sec_label:unset;
-000 "westnet-eastnet-1":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 1;
+000 "westnet-eastnet-1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 1;
 000 "westnet-eastnet-1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-1":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -54,7 +54,7 @@ east #
 000 "westnet-eastnet-2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-2":   labeled_ipsec:no;
 000 "westnet-eastnet-2":   sec_label:unset;
-000 "westnet-eastnet-2":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 2;
+000 "westnet-eastnet-2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 2;
 000 "westnet-eastnet-2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-2":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -72,9 +72,9 @@ east #
 initdone
 east #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-0", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@west'
-006 #3: "westnet-eastnet-1", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@west'
-006 #4: "westnet-eastnet-2", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, id='@west'
+006 #2: "westnet-eastnet-0", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@west'
+006 #3: "westnet-eastnet-1", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=16EiB, id='@west'
+006 #4: "westnet-eastnet-2", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=16EiB, id='@west'
 east #
  # policies and state should be multiple
 east #
@@ -141,7 +141,7 @@ east #
 000 "westnet-eastnet-0":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-0":   labeled_ipsec:no;
 000 "westnet-eastnet-0":   sec_label:unset;
-000 "westnet-eastnet-0":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 0;
+000 "westnet-eastnet-0":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 0;
 000 "westnet-eastnet-0":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-0":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-0":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -161,7 +161,7 @@ east #
 000 "westnet-eastnet-1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-1":   labeled_ipsec:no;
 000 "westnet-eastnet-1":   sec_label:unset;
-000 "westnet-eastnet-1":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 1;
+000 "westnet-eastnet-1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 1;
 000 "westnet-eastnet-1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-1":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -180,7 +180,7 @@ east #
 000 "westnet-eastnet-2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-2":   labeled_ipsec:no;
 000 "westnet-eastnet-2":   sec_label:unset;
-000 "westnet-eastnet-2":   ike_life: 28800s; ipsec_life: 28800s; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 2;
+000 "westnet-eastnet-2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0; clone_id: 2;
 000 "westnet-eastnet-2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-2":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+OVERLAPIP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;

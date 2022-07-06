@@ -165,6 +165,8 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 	DOPT(KNCF_SALIFETIME_MS, IPSEC_SA_LIFETIME_DEFAULT * 1000);
 	DOPT(KNCF_REKEYMARGIN_MS, SA_REPLACEMENT_MARGIN_DEFAULT * 1000);
+	DOPT(KNCF_IPSEC_MAXBYTES, IPSEC_SA_MAX_DEFAULT);
+	DOPT(KNCF_IPSEC_PACKETS, IPSEC_SA_MAX_DEFAULT);
 	DOPT(KNCF_REKEYFUZZ, SA_REPLACEMENT_FUZZ_DEFAULT);
 
 	DOPT(KNCF_KEYINGTRIES, SA_REPLACEMENT_RETRIES_DEFAULT);
@@ -354,6 +356,8 @@ static bool load_setup(struct starter_config *cfg,
 		case kt_number:
 		case kt_time:
 		case kt_percent:
+		case kt_binary:
+		case kt_byte:
 			/* all treated as a number for now */
 			assert(f < elemsof(cfg->setup.options));
 			cfg->setup.options[f] = kw->number;
@@ -911,6 +915,8 @@ static bool translate_field(struct starter_conn *conn,
 	case kt_number:
 	case kt_time:
 	case kt_percent:
+	case kt_binary:
+	case kt_byte:
 		/* all treated as a number for now */
 		assert(opt_floor <= field && field < opt_roof);
 

@@ -20,7 +20,7 @@ east #
  # traffic should be 0 bytes in both directions
 east #
  ipsec whack --trafficstatus
-006 #2: "road-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@road'
+006 #2: "road-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@road'
 east #
  ../../guestbin/tcpdump.sh --stop
 [ 00.00] device eth1 left promiscuous mode

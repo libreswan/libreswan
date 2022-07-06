@@ -188,6 +188,8 @@ struct impairment impairments[] = {
 	  .how_enum_names = &ikev2_exchange_names),
 	V("unknown-v2-payload-critical", unknown_v2_payload_critical,
 	  "include the unknown payload in the encrypted SK payload"),
+	V("ignore-soft-expire", ignore_soft_expire, "ignore kernel soft expire events"),
+	V("ignore-hard-expire", ignore_hard_expire, "ignore kernel hard expire events"),
 
 	V("force-v2-auth-method", force_v2_auth_method,
 	  "force the use of the specified IKEv2 AUTH method",

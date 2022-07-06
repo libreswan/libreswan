@@ -82,6 +82,7 @@
 #include "ip_selector.h"
 #include "ip_encap.h"
 #include "show.h"
+#include "rekeyfuzz.h"
 
 static bool route_and_eroute(struct connection *c,
 			     struct spd_route *sr,
@@ -1942,6 +1943,21 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		return false;
 	}
 
+	uint64_t sa_ipsec_soft_bytes =  c->sa_ipsec_max_bytes;
+	uint64_t sa_ipsec_soft_packets = c->sa_ipsec_max_packets;
+
+	if (!LIN(POLICY_DONT_REKEY, c->policy)) {
+		uint64_t margin_bytes = c->sa_ipsec_max_bytes -  c->sa_ipsec_max_bytes * IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE / 100;
+		uint64_t margin_packets = c->sa_ipsec_max_packets - c->sa_ipsec_max_packets * IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE / 100;
+		sa_ipsec_soft_bytes = soft_limit(st->st_sa_role == SA_INITIATOR,
+						 c->sa_ipsec_max_bytes, margin_bytes,
+						 c->sa_rekey_fuzz);
+		sa_ipsec_soft_packets = soft_limit((st->st_sa_role == SA_INITIATOR),
+						   c->sa_ipsec_max_packets,
+						   margin_packets,
+						   c->sa_rekey_fuzz);
+		dbg("%s %d #%lu ipsec-max-bytes %lu/%lu ipsec-max-packets %lu/%lu margin bytes %lu margin mackets %lu IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE %u", __func__, __LINE__,  st->st_serialno,  sa_ipsec_soft_bytes, c->sa_ipsec_max_bytes, sa_ipsec_soft_packets, c->sa_ipsec_max_packets, margin_bytes, margin_packets, IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE);
+	}
 	const struct kernel_sa said_boilerplate = {
 		.src.address = &kernel_policy.src.host,
 		.dst.address = &kernel_policy.dst.host,
@@ -1951,10 +1967,16 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		.tunnel = (kernel_policy.mode == ENCAP_MODE_TUNNEL),
 		.transport_proto = c->spd.this.client.ipproto,
 		.sa_lifetime = c->sa_ipsec_life_seconds,
+		.sa_max_soft_bytes = sa_ipsec_soft_bytes,
+		.sa_max_soft_packets = sa_ipsec_soft_packets,
+		.sa_ipsec_max_bytes = c->sa_ipsec_max_bytes,
+		.sa_ipsec_max_packets = c->sa_ipsec_max_packets,
 		.sec_label = (st->st_v1_seen_sec_label.len > 0 ? st->st_v1_seen_sec_label :
 			      st->st_v1_acquired_sec_label.len > 0 ? st->st_v1_acquired_sec_label :
 			      c->spd.this.sec_label /* assume connection outlive their kernel_sa's */),
 	};
+
+
 
 	address_buf sab, dab;
 	selector_buf scb, dcb;
@@ -2381,10 +2403,20 @@ static unsigned append_teardown(struct dead_sa *dead, bool inbound,
 	if (present) {
 		dead->protocol = proto->protocol;
 		if (inbound) {
+			if (proto->peer_kernel_sa_expired & SA_HARD_EXPIRED) {
+				dbg("kernel expired SPI 0x%x skip deleting",
+				    ntohl(proto->our_spi));
+				return 0;
+			}
 			dead->spi = proto->our_spi; /* incoming */
 			dead->src = effective_remote_address;
 			dead->dst = host_addr;
 		} else {
+			if (proto->our_kernel_sa_expired & SA_HARD_EXPIRED) {
+				dbg("kernel hard expired SPI 0x%x skip deleting",
+				    ntohl(proto->attrs.spi));
+				return 0;
+			}
 			dead->spi = proto->attrs.spi; /* outgoing */
 			dead->src = host_addr;
 			dead->dst = effective_remote_address;
@@ -3308,6 +3340,31 @@ bool was_eroute_idle(struct state *st, deltatime_t since_when)
 	return deltatime_cmp(idle_time, >=, since_when);
 }
 
+static void set_sa_info(struct ipsec_proto_info *p2, uint64_t bytes,
+			 uint64_t add_time, bool inbound, deltatime_t *ago)
+{
+	if (p2->add_time == 0 && add_time != 0)
+		p2->add_time = add_time; /* this should happen exactly once */
+
+	pexpect(p2->add_time == add_time);
+
+	if (inbound) {
+		if (bytes > p2->our_bytes) {
+			p2->our_bytes = bytes;
+			p2->our_lastused = mononow();
+		}
+		if (ago != NULL)
+			*ago = monotimediff(mononow(), p2->our_lastused);
+	} else {
+		if (bytes > p2->peer_bytes) {
+			p2->peer_bytes = bytes;
+			p2->peer_lastused = mononow();
+		}
+		if (ago != NULL)
+			*ago = monotimediff(mononow(), p2->peer_lastused);
+	}
+}
+
 /*
  * get information about a given SA bundle
  *
@@ -3338,6 +3395,18 @@ bool get_sa_bundle_info(struct state *st, bool inbound, monotime_t *last_contact
 		pi = &st->st_ipcomp;
 	} else {
 		return false;
+	}
+
+	if (inbound) {
+		if (pi->peer_kernel_sa_expired & SA_HARD_EXPIRED) {
+			dbg("kernel expired peer SA SPI 0x%x skip get_sa_info()", ntohl(pi->attrs.spi));
+			return true; /* all is well use the last known info */
+		}
+	} else {
+		if (pi->our_kernel_sa_expired & SA_HARD_EXPIRED) {
+			dbg("kernel expired our SA SPI 0x%x get_sa_info()", ntohl(pi->our_spi));
+			return true; /* all is well use last known info */
+		}
 	}
 
 	/*
@@ -3382,7 +3451,6 @@ bool get_sa_bundle_info(struct state *st, bool inbound, monotime_t *last_contact
 
 	uint64_t bytes;
 	uint64_t add_time;
-
 	if (!kernel_ops->get_sa(&sa, &bytes, &add_time, st->st_logger))
 		return false;
 
@@ -3654,4 +3722,84 @@ void shutdown_kernel(struct logger *logger)
 		kernel_ops->shutdown(logger);
 	}
 	delete_bare_shunts(logger);
+}
+
+void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address *dst,
+		       bool hard, uint64_t bytes, uint64_t packets, uint64_t add_time)
+{
+	struct child_sa *child = find_v2_child_sa_by_spi(spi, protoid, dst);
+	address_buf a;
+	const struct connection *c;
+
+	if (child == NULL) {
+		dbg("Received kernel %s EXPIRE event for IPsec SPI 0x%x, but there is no connection with this SPI and dst %s bytes %" PRIu64 " packets %" PRIu64,
+		     hard ? "hard" : "soft",
+		     ntohl(spi), str_address(dst, &a), bytes, packets);
+		return;
+	}
+
+	c = child->sa.st_connection;
+
+	if ((hard && impair.ignore_hard_expire) ||
+	    (!hard && impair.ignore_soft_expire)) {
+		llog(RC_LOG, c->logger, "IMPAIR: suppressing a %s EXPIRE event spi 0x%x dst %s bytes %" PRIu64 " packets %" PRIu64,
+		     hard ? "hard" : "soft", ntohl(spi), str_address(dst, &a),
+		     bytes, packets);
+		return;
+	}
+
+	bool rekey = !LIN(POLICY_DONT_REKEY, c->policy);
+	bool newest = c->newest_ipsec_sa == child->sa.st_serialno;
+	struct state *st =  &child->sa;
+	struct ipsec_proto_info *pr = st->st_esp.present ? &st->st_esp : st->st_ah.present ? &st->st_ah : st->st_ipcomp.present ? &st->st_ipcomp : NULL;
+
+	bool softexpired = ((pr->peer_kernel_sa_expired & SA_SOFT_EXPIRED) ||
+			(pr->our_kernel_sa_expired & SA_SOFT_EXPIRED));
+
+	bool hardexpired = ((pr->peer_kernel_sa_expired & SA_HARD_EXPIRED) ||
+			(pr->our_kernel_sa_expired & SA_HARD_EXPIRED));
+
+	enum sa_expire_kind expire = hard ? SA_HARD_EXPIRED : SA_SOFT_EXPIRED;
+
+	llog(RC_LOG, c->logger, "Received %s EXPIRE for SPI 0x%x bytes %" PRIu64 " packets %" PRIu64 " %s rekey=%s%s%s%s",
+	     hard ? "hard" : "soft", ntohl(spi), bytes, packets,
+             newest ? "for the newest SA" : "for old SA. Delete it or it is about to expire.",
+	     rekey ?  "yes" : "no",
+	     softexpired ? " one of SA was soft expired ignore this expire." : ".",
+	     hardexpired ? " one of SA was hard expired ignore this expire." : ".",
+             (newest && rekey && !softexpired && !hardexpired) ? " Replace this SA" : "");
+
+	if ((softexpired && expire == SA_SOFT_EXPIRED)  ||
+	    (hardexpired && expire == SA_HARD_EXPIRED)) {
+		dbg("#%lu one of the SA has already expired ignore this %s EXPIRE",
+		    child->sa.st_serialno, hard ? "hard" : "soft");
+		/*
+		 * likely the other direction SA EXPIRED, it triggered a rekey first.
+		 * It should be safe to ignore the second one. No need to log.
+		 */
+	} else if (!hardexpired && expire == SA_HARD_EXPIRED) {
+		if (pr->attrs.spi == spi) {
+			pr->our_kernel_sa_expired |= expire;
+			set_sa_info(pr, bytes, add_time, true /* inbound */, NULL);
+		} else {
+			pr->peer_kernel_sa_expired |= expire;
+			set_sa_info(pr, bytes, add_time, false /* outbound */, NULL);
+		}
+		set_sa_expire_next_event(EVENT_SA_EXPIRE, &child->sa);
+	} else if (newest && rekey && !hardexpired && !softexpired && expire == SA_SOFT_EXPIRED) {
+		if (pr->attrs.spi == spi) {
+			set_sa_info(pr, bytes, add_time, true /* inbound */, NULL);
+			pr->peer_kernel_sa_expired |= expire;
+		} else {
+			pr->our_kernel_sa_expired |= expire;
+			set_sa_info(pr, bytes, add_time, false /* outbound */, NULL);
+		}
+		set_sa_expire_next_event(EVENT_NULL, &child->sa);
+	} else {
+		/*
+		 * 'if' and multiple 'else if's are using multiple variables.
+		 * I may have overlooked some cases. lets break hard on unexpected cases.
+		 */
+		passert(1); /* lets break! */
+	}
 }

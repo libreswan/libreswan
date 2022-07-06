@@ -228,6 +228,8 @@ enum keyword_numeric_conn_field {
 	KNCF_SAN_ON_CERT,
 	KNCF_DNS_MATCH_ID,
 	KNCF_SALIFETIME_MS,
+	KNCF_IPSEC_MAXBYTES,
+	KNCF_IPSEC_PACKETS,
 	KNCF_REKEY,
 	KNCF_REAUTH,
 	KNCF_REKEYMARGIN_MS,
@@ -368,6 +370,8 @@ enum keyword_type {
 	kt_number,              /* an integer */
 	kt_time,                /* a number representing time */
 	kt_percent,             /* a number representing percentage */
+	kt_byte,                /* a number representing Binary bytes with prefixs. KiB.. IEC 60027-2/ISO 8000 */
+	kt_binary,              /* a number representing Binary prefixes Ki. IEC 60027-2/ISO 8000  */
 	kt_range,               /* ip address range 1.2.3.4-1.2.3.10 */
 	kt_ipaddr,              /* an IP address */
 	kt_subnet,              /* an IP address subnet */

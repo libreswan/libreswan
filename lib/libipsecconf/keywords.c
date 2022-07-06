@@ -495,6 +495,8 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "keylife",  kv_conn | kv_alias,  kt_time,  KNCF_SALIFETIME_MS, NULL, NULL, },
   { "lifetime",  kv_conn | kv_alias,  kt_time,  KNCF_SALIFETIME_MS, NULL, NULL, },
   { "salifetime",  kv_conn,  kt_time,  KNCF_SALIFETIME_MS, NULL, NULL, },
+  { "ipsec-max-bytes",  kv_conn,  kt_byte,  KNCF_IPSEC_MAXBYTES, NULL, NULL, },
+  { "ipsec-max-packets",  kv_conn,  kt_binary,  KNCF_IPSEC_PACKETS, NULL, NULL, },
 
   { "retransmit-timeout",  kv_conn,  kt_time,  KNCF_RETRANSMIT_TIMEOUT_MS, NULL, NULL, },
   { "retransmit-interval",  kv_conn|kv_milliseconds,  kt_time,  KNCF_RETRANSMIT_INTERVAL_MS, NULL, NULL, },
@@ -652,6 +654,12 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 		break;
 	case kt_time:
 		keywordtype = TIMEWORD;
+		break;
+	case kt_binary:
+		keywordtype = BINARYWORD;
+		break;
+	case kt_byte:
+		keywordtype = BYTEWORD;
 		break;
 	case kt_comment:
 		keywordtype = COMMENT;

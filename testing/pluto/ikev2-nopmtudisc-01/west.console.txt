@@ -43,7 +43,7 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-006 #2: "netkey", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, id='@east'
+006 #2: "netkey", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@east'
 west #
  ip xfrm state |grep nopmtudisc
 	replay-window 0 flag nopmtudisc af-unspec esn

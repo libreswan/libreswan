@@ -26,9 +26,9 @@ east #
 initdone
 east #
  ipsec whack --trafficstatus
-006 #13: "westnet-eastnet-a", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@west'
-006 #15: "westnet-eastnet-b", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@west'
-006 #14: "westnet-eastnet-c", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@west'
+006 #13: "westnet-eastnet-a", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@west'
+006 #15: "westnet-eastnet-b", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@west'
+006 #14: "westnet-eastnet-c", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@west'
 east #
  ipsec showstates
 000 #13: "westnet-eastnet-a":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #17; idle;

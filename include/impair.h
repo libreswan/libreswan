@@ -159,6 +159,8 @@ struct impair {
 	bool ignore_v2_ike_auth_child;
 
 	bool event_check_crls;
+	bool ignore_soft_expire;
+	bool ignore_hard_expire;
 
 	/*
 	 * add more here

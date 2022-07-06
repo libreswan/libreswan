@@ -29,7 +29,7 @@ west #
  # we should see a connection switch on east
 west #
  ipsec whack --trafficstatus
-006 #2: "main", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@east.testing.libreswan.org'
+006 #2: "main", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@east.testing.libreswan.org'
 west #
  hostname | grep east && grep '^[^|].* switched ' /tmp/pluto.log
 west #

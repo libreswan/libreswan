@@ -76,6 +76,6 @@ north #
 done
 north #
  ipsec whack --trafficstatus
-006 #2: "north", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, id='@east'
+006 #2: "north", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=16EiB, id='@east'
 north #
  

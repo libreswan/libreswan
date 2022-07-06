@@ -16,8 +16,8 @@ east #
 initdone
 east #
  ipsec trafficstatus
-006 #2: "east/0x1"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@road.testing.libreswan.org'
-006 #4: "east/0x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, id='@road.testing.libreswan.org'
+006 #2: "east/0x1"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@road.testing.libreswan.org'
+006 #4: "east/0x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@road.testing.libreswan.org'
 east #
  ../../guestbin/ipsec-look.sh
 east NOW
