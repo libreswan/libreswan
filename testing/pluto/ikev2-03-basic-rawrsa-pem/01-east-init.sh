@@ -8,7 +8,7 @@ key=east
 
 # start with the raw key
 cp ../../x509/keys/${key}.key OUTPUT/
-head -1 OUTPUT/*.key
+cat OUTPUT/${key}.key
 # create a CSR and using that ...
 openssl req -new -subj "/CN=${key}" -key OUTPUT/${key}.key -out OUTPUT/${key}.csr < /dev/null
 openssl req -text -in OUTPUT/${key}.csr -noout | grep ${key}
@@ -21,7 +21,7 @@ key=west
 
 # start with the raw key
 cp ../../x509/keys/${key}.key OUTPUT/
-head -1 OUTPUT/*.key
+cat OUTPUT/${key}.key
 # create a CSR and using that ...
 openssl req -new -subj "/CN=${key}" -key OUTPUT/${key}.key -out OUTPUT/${key}.csr < /dev/null
 openssl req -text -in OUTPUT/${key}.csr -noout | grep ${key}

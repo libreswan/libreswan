@@ -12,8 +12,10 @@ east #
 east #
  cp ../../x509/keys/${key}.key OUTPUT/
 east #
- head -1 OUTPUT/*.key
+ cat OUTPUT/${key}.key
 -----BEGIN PRIVATE KEY-----
+...
+-----END PRIVATE KEY-----
 east #
  # create a CSR and using that ...
 east #
@@ -39,11 +41,10 @@ east #
 east #
  cp ../../x509/keys/${key}.key OUTPUT/
 east #
- head -1 OUTPUT/*.key
-==> OUTPUT/east.key <==
+ cat OUTPUT/${key}.key
 -----BEGIN PRIVATE KEY-----
-==> OUTPUT/west.key <==
------BEGIN PRIVATE KEY-----
+...
+-----END PRIVATE KEY-----
 east #
  # create a CSR and using that ...
 east #
