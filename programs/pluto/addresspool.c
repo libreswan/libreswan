@@ -807,7 +807,7 @@ diag_t install_addresspool(const ip_range pool_range, struct ip_pool **pool)
 	if (*pool != NULL) {
 		/* re-use existing pool */
 		if (DBGP(DBG_BASE)) {
-			DBG_pool(true, *pool, "reusing existing address pool@%p", pool);
+			DBG_pool(true, *pool, "reusing existing address pool@%p", *pool);
 		}
 		return NULL;
 	}
