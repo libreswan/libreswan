@@ -281,6 +281,12 @@ static bool test_kdf_vector(const struct prf_desc *prf,
 
 
 	/* SKEYSEED = prf(Ni | Nr, g^ir) */
+#if 0
+	static PK11SymKey *ike_sa_skeyseed(const struct prf_desc *prf_desc,
+					   const chunk_t Ni, const chunk_t Nr,
+					   PK11SymKey *dh_secret,
+					   struct logger *logger);
+#else
 	PK11SymKey *gir = symkey_from_hunk("gir symkey", chunk_gir, logger);
 	CK_NSS_IKE_PRF_DERIVE_PARAMS ike_prf_params = {
 		.prfMechanism = prf->nss.mechanism,
@@ -298,12 +304,21 @@ static bool test_kdf_vector(const struct prf_desc *prf,
 			     "skeyseed", CKM_NSS_IKE_PRF_PLUS_DERIVE,
 			     CKA_DERIVE, /*keysize*/0, /*flags*/0,
 			     HERE, logger);
+#endif
 	if (!verify_symkey(test->description, chunk_skeyseed, skeyseed,
 			   logger)) {
 		ok = false;
 	}
 
 	/* prf+ (SKEYSEED, Ni | Nr | SPIi | SPIr) */
+#if 0
+	static PK11SymKey *ike_sa_keymat(const struct prf_desc *prf_desc,
+					 PK11SymKey *skeyseed,
+					 const chunk_t Ni, const chunk_t Nr,
+					 shunk_t SPIi, shunk_t SPIr,
+					 size_t required_bytes,
+					 struct logger *logger);
+#else
 	chunk_t chunk_seed_data = clone_hunk_hunk(chunk_ni, chunk_nr,
 						  "seed_data = Ni || Nr");
 	append_chunk_hunk("seed_data = Nir || SPIi",
@@ -326,6 +341,7 @@ static bool test_kdf_vector(const struct prf_desc *prf,
 				       CKA_DERIVE,
 				       /*keysize*/test->dkm_size, /*flags*/0,
 				       HERE, logger);
+#endif
 
 	if (!verify_symkey(test->description, chunk_dkm, dkm, logger)) {
 		ok = false;
