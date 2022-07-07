@@ -42,6 +42,7 @@
 #include "lswlog.h"
 #include "secrets.h"
 #include "ike_alg_dh.h"		/* for OID and size of EC algorithms */
+#include "refcnt.h"		/* for dbg_{alloc,free}() */
 
 static err_t ECDSA_dnssec_pubkey_to_pubkey_content(struct ECDSA_public_key *ecdsa,
 						   keyid_t *keyid, ckaid_t *ckaid, size_t *size,
@@ -56,16 +57,16 @@ static err_t ECDSA_dnssec_pubkey_to_pubkey_content(struct ECDSA_public_key *ecds
 	};
 
 	/*
-	 * DNSSEC_PUBKEY may include the EC_POINT_FORM_UNCOMPRESSED
-	 * prefix.  Strip that off.
+	 * The raw DNSSEC_PUBKEY, fed to us by a user, could include
+	 * the EC_POINT_FORM_UNCOMPRESSED prefix.  Strip that off.
 	 */
 
 	const struct dh_desc *group = NULL;
-	chunk_t raw = {0};
+	shunk_t raw = {0};
 	FOR_EACH_ELEMENT(e, dh) {
 		if (dnssec_pubkey.len == (*e)->bytes) {
 			group = (*e);
-			raw = dnssec_pubkey;
+			raw = HUNK_AS_SHUNK(dnssec_pubkey);
 			break;
 		}
 		if (group->nss_adds_ec_point_form_uncompressed &&
@@ -73,7 +74,7 @@ static err_t ECDSA_dnssec_pubkey_to_pubkey_content(struct ECDSA_public_key *ecds
 		    dnssec_pubkey.ptr[0] == EC_POINT_FORM_UNCOMPRESSED) {
 			group = (*e);
 			/* ignore prefix */
-			raw = chunk2(dnssec_pubkey.ptr + 1, dnssec_pubkey.len - 1);
+			raw = shunk2(dnssec_pubkey.ptr + 1, dnssec_pubkey.len - 1);
 			break;
 		}
 	}
@@ -81,15 +82,71 @@ static err_t ECDSA_dnssec_pubkey_to_pubkey_content(struct ECDSA_public_key *ecds
 		return "unrecognized EC pubkey";
 	}
 
-	/* just assume this */
-	passert(group->nss_adds_ec_point_form_uncompressed);
-	ecdsa->pub = alloc_chunk(raw.len + 1, "EC (prefixed)");
-	ecdsa->pub.ptr[0] = EC_POINT_FORM_UNCOMPRESSED;
-	memcpy(ecdsa->pub.ptr + 1, raw.ptr, raw.len);
+	/*
+	 * Allocate the public key, giving it its own arena.
+	 *
+	 * Since the arena contains everything allocated to the
+	 * seckey, error recovery just requires freeing that.
+	 */
+
+	PRArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
+	if (arena == NULL) {
+		return "allocating ECDSA arena";
+	}
+
+	SECKEYPublicKey *seckey = (SECKEYPublicKey *) PORT_ArenaZAlloc(arena, sizeof(SECKEYPublicKey));
+	if (seckey == NULL) {
+		PORT_FreeArena(arena, /*zero?*/PR_FALSE);
+		return "allocating ECDSA pubkey arena";
+	}
+
+	seckey->arena = arena;
+	seckey->keyType = ecKey;
+	seckey->pkcs11Slot = NULL;
+	seckey->pkcs11ID = CK_INVALID_HANDLE;
+	SECKEYECPublicKey *ec = &seckey->u.ec;
+
+	/*
+	 * Copy the RAW EC point(s) into the arena, adding them to the
+	 * public key.
+	 */
+
+	if (SECITEM_AllocItem(arena, &ec->publicValue, raw.len + 1) == NULL) {
+		PORT_FreeArena(arena, /*zero?*/PR_FALSE);
+		return "copying 'k' to EDSA public key";
+	}
+	ec->publicValue.data[0] = EC_POINT_FORM_UNCOMPRESSED;
+	memcpy(ec->publicValue.data + 1, raw.ptr, raw.len);
+
+	/*
+	 * Copy the OID (wrapped in ASN.1 ObjectID template) into the
+	 * arena, adding it to the public key.
+	 *
+	 * See also DH code.
+	 */
+	const SECOidData *ec_oid = SECOID_FindOIDByTag(group->nss_oid); /*static*/
+	if (ec_oid == NULL) {
+		PORT_FreeArena(arena, /*zero?*/PR_FALSE);
+		return "lookup of EC OID failed";
+	}
+
+	if (SEC_ASN1EncodeItem(arena, &ec->DEREncodedParams,
+			       &ec_oid->oid, SEC_ObjectIDTemplate) == NULL) {
+		PORT_FreeArena(arena, /*zero?*/PR_FALSE);
+		return "ASN.1 encoding of EC OID failed";
+	}
+
+	/*
+	 * Maintain old fields.
+	 */
+
+	ecdsa->ecParams = clone_secitem_as_chunk(ec->DEREncodedParams, "EC param");
+	ecdsa->pub = clone_secitem_as_chunk(ec->publicValue, "EC key");
 
 	/* should this include EC? */
 	e = form_ckaid_ecdsa(ecdsa->pub, ckaid);
 	if (e != NULL) {
+		PORT_FreeArena(arena, /*zero?*/PR_FALSE);
 		return e;
 	}
 
@@ -99,32 +156,12 @@ static err_t ECDSA_dnssec_pubkey_to_pubkey_content(struct ECDSA_public_key *ecds
 	 */
 	e = keyblob_to_keyid(ckaid->ptr, ckaid->len, keyid);
 	if (e != NULL) {
+		PORT_FreeArena(arena, /*zero?*/PR_FALSE);
 		return e;
 	}
 
-	/*
-	 * Wrap the raw OID in ASN.1.  SECKEYECParams is just a
-	 * glorifed SECItem.
-	 *
-	 * See also DH code.
-	 */
-	const SECOidData *ec_oid = SECOID_FindOIDByTag(group->nss_oid); /*static*/
-	if (ec_oid == NULL) {
-		llog_passert(&global_logger, HERE,
-			     "lookup of OID %d for EC group %s parameters failed",
-			     group->nss_oid, group->common.fqn);
-	}
-	SECKEYECParams *ec_params = SEC_ASN1EncodeItem(NULL/*must-double-free*/,
-						       NULL, &ec_oid->oid,
-						       SEC_ObjectIDTemplate);
-	if (ec_params == NULL) {
-		llog_passert(&global_logger, HERE,
-			     "wrapping of OID %d EC group %s parameters failed",
-			     group->nss_oid, group->common.fqn);
-	}
-
-	ecdsa->ecParams = clone_secitem_as_chunk(*ec_params, "EC param");
-	SECITEM_FreeItem(ec_params, PR_TRUE/*also-free-SECItem*/);
+	ecdsa->seckey_public = seckey;
+	dbg_alloc("ecdsa->seckey_public", seckey, HERE);
 
 	*size = ecdsa->pub.len;
 
@@ -167,6 +204,9 @@ static void ECDSA_free_pubkey_content(struct ECDSA_public_key *ecdsa)
 {
 	free_chunk_content(&ecdsa->pub);
 	free_chunk_content(&ecdsa->ecParams);
+	dbg_free("ecdsa->seckey_public", ecdsa->seckey_public, HERE);
+	SECKEY_DestroyPublicKey(ecdsa->seckey_public);
+	ecdsa->seckey_public = NULL;
 }
 
 static void free_pubkey_content(union pubkey_content *u)
@@ -174,14 +214,16 @@ static void free_pubkey_content(union pubkey_content *u)
 	ECDSA_free_pubkey_content(&u->ecdsa);
 }
 
-static void ECDSA_extract_public_key(struct ECDSA_public_key *pub,
-				     keyid_t *keyid, ckaid_t *ckaid, size_t *size,
-				     SECKEYPublicKey *pubkey_nss,
-				     SECItem *ckaid_nss)
+static void ECDSA_extract_pubkey_content(struct ECDSA_public_key *ecdsa,
+					 keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+					 SECKEYPublicKey *seckey_public,
+					 SECItem *ckaid_nss)
 {
-	pub->pub = clone_secitem_as_chunk(pubkey_nss->u.ec.publicValue, "ECDSA pub");
-	pub->ecParams = clone_secitem_as_chunk(pubkey_nss->u.ec.DEREncodedParams, "ECDSA ecParams");
-	*size = pubkey_nss->u.ec.publicValue.len;
+	ecdsa->pub = clone_secitem_as_chunk(seckey_public->u.ec.publicValue, "ECDSA pub");
+	ecdsa->ecParams = clone_secitem_as_chunk(seckey_public->u.ec.DEREncodedParams, "ECDSA ecParams");
+	ecdsa->seckey_public = SECKEY_CopyPublicKey(seckey_public);
+	dbg_alloc("ecdsa->seckey_public", ecdsa->seckey_public, HERE);
+	*size = seckey_public->u.ec.publicValue.len;
 	*ckaid = ckaid_from_secitem(ckaid_nss);
 	/* keyid; make this up */
 	err_t e = keyblob_to_keyid(ckaid->ptr, ckaid->len, keyid);
@@ -192,27 +234,27 @@ static void ECDSA_extract_public_key(struct ECDSA_public_key *pub,
 		DBG_log("ECDSA keyid *%s", str_keyid(*keyid));
 		DBG_log("ECDSA keyid *%s", str_ckaid(ckaid, &cb));
 		DBG_log("ECDSA size: %zu", *size);
-		DBG_dump_hunk("pub", pub->pub);
-		DBG_dump_hunk("ecParams", pub->ecParams);
+		DBG_dump_hunk("pub", ecdsa->pub);
+		DBG_dump_hunk("ecParams", ecdsa->ecParams);
 	}
 }
 
-static void ECDSA_extract_pubkey_content(union pubkey_content *pkc,
-					 keyid_t *keyid, ckaid_t *ckaid, size_t *size,
-					 SECKEYPublicKey *pubkey_nss,
-					 SECItem *ckaid_nss)
+static void extract_pubkey_content(union pubkey_content *pkc,
+				   keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+				   SECKEYPublicKey *seckey_public,
+				   SECItem *ckaid_nss)
 {
-	ECDSA_extract_public_key(&pkc->ecdsa, keyid, ckaid, size, pubkey_nss, ckaid_nss);
+	ECDSA_extract_pubkey_content(&pkc->ecdsa, keyid, ckaid, size, seckey_public, ckaid_nss);
 }
 
 static void ECDSA_extract_private_key_pubkey_content(struct private_key_stuff *pks,
 						     keyid_t *keyid, ckaid_t *ckaid, size_t *size,
-						     SECKEYPublicKey *pubkey_nss,
+						     SECKEYPublicKey *seckey_public,
 						     SECItem *ckaid_nss)
 {
 	struct ECDSA_public_key *pubkey = &pks->u.pubkey.ecdsa;
-	ECDSA_extract_public_key(pubkey, keyid, ckaid, size,
-				 pubkey_nss, ckaid_nss);
+	ECDSA_extract_pubkey_content(pubkey, keyid, ckaid, size,
+				     seckey_public, ckaid_nss);
 }
 
 static void ECDSA_free_secret_content(struct private_key_stuff *pks)
@@ -243,7 +285,7 @@ const struct pubkey_type pubkey_type_ecdsa = {
 	.extract_private_key_pubkey_content = ECDSA_extract_private_key_pubkey_content,
 	.free_secret_content = ECDSA_free_secret_content,
 	.secret_sane = ECDSA_secret_sane,
-	.extract_pubkey_content = ECDSA_extract_pubkey_content,
+	.extract_pubkey_content = extract_pubkey_content,
 	.digital_signature_signer = {
 		[DIGITAL_SIGNATURE_ECDSA_BLOB] = &pubkey_signer_ecdsa,
 	}
