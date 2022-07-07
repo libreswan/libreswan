@@ -41,12 +41,12 @@ enum {
 };
 
 enum binary {
-	binary_per_kilo = 1024UL,
-	binary_per_mega = 1024UL * binary_per_kilo,
-	binary_per_giga = 1024UL * binary_per_mega,
-	binary_per_tera = 1024UL * binary_per_giga,
-	binary_per_peta = 1024UL * binary_per_tera,
-	binary_per_exa  = 1024UL * binary_per_peta, /* 2^64 s 16 Exa */
+	binary_per_kilo = UINT64_C(1024),
+	binary_per_mega = UINT64_C(1024) * binary_per_kilo,
+	binary_per_giga = UINT64_C(1024) * binary_per_mega,
+	binary_per_tera = UINT64_C(1024) * binary_per_giga,
+	binary_per_peta = UINT64_C(1024) * binary_per_tera,
+	binary_per_exa  = UINT64_C(1024) * binary_per_peta, /* 2^64 s 16 Exa */
 };
 
 /*

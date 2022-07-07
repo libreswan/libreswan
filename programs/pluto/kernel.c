@@ -1956,7 +1956,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 						   c->sa_ipsec_max_packets,
 						   margin_packets,
 						   c->sa_rekey_fuzz);
-		dbg("%s %d #%lu ipsec-max-bytes %lu/%lu ipsec-max-packets %lu/%lu margin bytes %lu margin mackets %lu IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE %u", __func__, __LINE__,  st->st_serialno,  sa_ipsec_soft_bytes, c->sa_ipsec_max_bytes, sa_ipsec_soft_packets, c->sa_ipsec_max_packets, margin_bytes, margin_packets, IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE);
+		dbg("%s %d #%lu ipsec-max-bytes %"PRIu64"/%"PRIu64" ipsec-max-packets %"PRIu64"/%"PRIu64" margin bytes %"PRIu64" margin mackets %"PRIu64" IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE %u", __func__, __LINE__,  st->st_serialno,  sa_ipsec_soft_bytes, c->sa_ipsec_max_bytes, sa_ipsec_soft_packets, c->sa_ipsec_max_packets, margin_bytes, margin_packets, IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE);
 	}
 	const struct kernel_sa said_boilerplate = {
 		.src.address = &kernel_policy.src.host,

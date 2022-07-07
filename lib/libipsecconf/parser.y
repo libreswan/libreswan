@@ -340,7 +340,7 @@ statement_kw:
 	| BINARYWORD EQUAL STRING {
 		struct keyword *kw = &$1;
 		const char *const str = $3;
-		unsigned long b;
+		uint64_t b;
 
 		diag_t diag = ttobinary(str, &b, 0 /* no B prefix */);
 		if (diag != NULL) {
@@ -352,13 +352,13 @@ statement_kw:
 	}
 	| BYTEWORD EQUAL INTEGER {
 		struct keyword *kw = &$1;
-		unsigned long b = $3;
+		uint64_t b = $3;
 		new_parser_kw(kw, NULL, b);
 	}
 	| BYTEWORD EQUAL STRING {
 		struct keyword *kw = &$1;
 		const char *const str = $3;
-		unsigned long b;
+		uint64_t b;
 
 		diag_t diag = ttobinary(str, &b, 1 /* with B prefix */);
 		if (diag != NULL) {

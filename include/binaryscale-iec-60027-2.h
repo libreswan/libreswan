@@ -23,7 +23,7 @@
 
 struct binaryscale {
 	const char *suffix;
-	uintmax_t b;
+	uint64_t b;
 };
 
 extern const struct binaryscale bin_default;

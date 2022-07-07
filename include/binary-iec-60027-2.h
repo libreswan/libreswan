@@ -19,6 +19,6 @@
 
 #include "diag.h"
 
-diag_t ttobinary(const char *t, unsigned long *b, bool prefix_B);
+diag_t ttobinary(const char *t,  uint64_t *b, bool prefix_B);
 
 #endif
