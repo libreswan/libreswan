@@ -137,13 +137,12 @@ static err_t ECDSA_dnssec_pubkey_to_pubkey_content(struct ECDSA_public_key *ecds
 	}
 
 	/*
-	 * Maintain old fields.
+	 * Maintain magic values.
 	 */
 
-	ecdsa->pub = clone_secitem_as_chunk(ec->publicValue, "EC key");
-
 	/* should this include EC? */
-	e = form_ckaid_ecdsa(ecdsa->pub, ckaid);
+	chunk_t pub = same_secitem_as_chunk(ec->publicValue);
+	e = form_ckaid_ecdsa(pub, ckaid);
 	if (e != NULL) {
 		PORT_FreeArena(arena, /*zero?*/PR_FALSE);
 		return e;
@@ -162,14 +161,14 @@ static err_t ECDSA_dnssec_pubkey_to_pubkey_content(struct ECDSA_public_key *ecds
 	ecdsa->seckey_public = seckey;
 	dbg_alloc("ecdsa->seckey_public", seckey, HERE);
 
-	*size = ecdsa->pub.len;
+	*size = pub.len;
 
 	if (DBGP(DBG_BASE)) {
 		/* pubkey information isn't DBG_PRIVATE */
 		DBG_log("ECDSA Key:");
 		DBG_log("keyid: *%s", str_keyid(*keyid));
 		DBG_log("  size: %zu", *size);
-		DBG_dump_hunk("pub", ecdsa->pub);
+		DBG_dump_hunk("pub", pub);
 		DBG_dump_hunk("CKAID", *ckaid);
 	}
 
@@ -186,9 +185,10 @@ static err_t dnssec_pubkey_to_pubkey_content(chunk_t dnssec_pubkey,
 static err_t ECDSA_pubkey_content_to_dnssec_pubkey(const struct ECDSA_public_key *ecdsa,
 						   chunk_t *dnssec_pubkey)
 {
-	passert((ecdsa->pub.len & 1) == 1);
-	passert(ecdsa->pub.ptr[0] == EC_POINT_FORM_UNCOMPRESSED);
-	*dnssec_pubkey = clone_bytes_as_chunk(ecdsa->pub.ptr + 1, ecdsa->pub.len - 1, "EC POINTS (even)");
+	const SECKEYECPublicKey *ec = &ecdsa->seckey_public->u.ec;
+	passert((ec->publicValue.len & 1) == 1);
+	passert(ec->publicValue.data[0] == EC_POINT_FORM_UNCOMPRESSED);
+	*dnssec_pubkey = clone_bytes_as_chunk(ec->publicValue.data + 1, ec->publicValue.len - 1, "EC POINTS (even)");
 	return NULL;
 }
 
@@ -200,7 +200,6 @@ static err_t pubkey_content_to_dnssec_pubkey(const union pubkey_content *u,
 
 static void ECDSA_free_pubkey_content(struct ECDSA_public_key *ecdsa)
 {
-	free_chunk_content(&ecdsa->pub);
 	dbg_free("ecdsa->seckey_public", ecdsa->seckey_public, HERE);
 	SECKEY_DestroyPublicKey(ecdsa->seckey_public);
 	ecdsa->seckey_public = NULL;
@@ -216,10 +215,10 @@ static void ECDSA_extract_pubkey_content(struct ECDSA_public_key *ecdsa,
 					 SECKEYPublicKey *seckey_public,
 					 SECItem *ckaid_nss)
 {
-	ecdsa->pub = clone_secitem_as_chunk(seckey_public->u.ec.publicValue, "ECDSA pub");
 	ecdsa->seckey_public = SECKEY_CopyPublicKey(seckey_public);
+	SECKEYECPublicKey *ec = &ecdsa->seckey_public->u.ec;
 	dbg_alloc("ecdsa->seckey_public", ecdsa->seckey_public, HERE);
-	*size = seckey_public->u.ec.publicValue.len;
+	*size = ec->publicValue.len;
 	*ckaid = ckaid_from_secitem(ckaid_nss);
 	/* keyid; make this up */
 	err_t e = keyblob_to_keyid(ckaid->ptr, ckaid->len, keyid);
@@ -230,7 +229,6 @@ static void ECDSA_extract_pubkey_content(struct ECDSA_public_key *ecdsa,
 		DBG_log("ECDSA keyid *%s", str_keyid(*keyid));
 		DBG_log("ECDSA keyid *%s", str_ckaid(ckaid, &cb));
 		DBG_log("ECDSA size: %zu", *size);
-		DBG_dump_hunk("pub", ecdsa->pub);
 	}
 }
 

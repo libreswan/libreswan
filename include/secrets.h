@@ -53,7 +53,6 @@ struct RSA_public_key {
 
 struct ECDSA_public_key {
 	SECKEYPublicKey *seckey_public;
-	chunk_t pub; /* includes EC_POINT_FORM_COMPRESSED */
 };
 
 union pubkey_content {
