@@ -358,48 +358,7 @@ static bool ECDSA_authenticate_signature(const struct crypt_mac *hash, shunk_t s
 					 diag_t *fatal_diag,
 					 struct logger *logger)
 {
-	PRArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
-	if (arena == NULL) {
-		*fatal_diag = diag_nss_error("allocating ECDSA arena");
-		return false;
-	}
-
-	/*
-	 * convert K(R) into a public key
-	 */
-
-	/* allocate the pubkey */
-	const struct ECDSA_public_key *k = &kr->u.ecdsa;
-	SECKEYPublicKey *publicKey = (SECKEYPublicKey *)
-		PORT_ArenaZAlloc(arena, sizeof(SECKEYPublicKey));
-	if (publicKey == NULL) {
-		*fatal_diag = diag_nss_error("allocating ECDSA pubkey arena");
-		PORT_FreeArena(arena, PR_FALSE);
-		return false;
-	}
-
-	publicKey->arena = arena;
-	publicKey->keyType = ecKey;
-	publicKey->pkcs11Slot = NULL;
-	publicKey->pkcs11ID = CK_INVALID_HANDLE;
-
-	/*
-	 * Copy k and ec params into the arena / publicKey.
-	 */
-
-	SECItem k_pub = same_chunk_as_secitem(k->pub, siBuffer);
-	if (SECITEM_CopyItem(arena, &publicKey->u.ec.publicValue, &k_pub) != SECSuccess) {
-		*fatal_diag = diag_nss_error("copying 'k' to EDSA public key");
-		PORT_FreeArena(arena, PR_FALSE);
-		return false;
-	}
-
-	SECItem k_ecParams = same_chunk_as_secitem(k->ecParams, siBuffer);
-	if (SECITEM_CopyItem(arena, &publicKey->u.ec.DEREncodedParams, &k_ecParams) != SECSuccess) {
-		*fatal_diag = diag_nss_error("copying ecParams to ECDSA public key");
-		PORT_FreeArena(arena, PR_FALSE);
-		return false;
-	}
+	const struct ECDSA_public_key *ecdsa = &kr->u.ecdsa;
 
 	/*
 	 * Convert the signature into raw form (NSS doesn't do const).
@@ -418,12 +377,11 @@ static bool ECDSA_authenticate_signature(const struct crypt_mac *hash, shunk_t s
 	}
 
 	SECItem *raw_signature = DSAU_DecodeDerSigToLen(&der_signature,
-							SECKEY_SignatureLen(publicKey));
+							SECKEY_SignatureLen(ecdsa->seckey_public));
 	if (raw_signature == NULL) {
 		/* not fatal as dependent on key being tried */
 		llog_nss_error(DEBUG_STREAM, logger,
 			       "unpacking DER encoded ECDSA signature using DSAU_DecodeDerSigToLen()");
-		PORT_FreeArena(arena, PR_FALSE);
 		*fatal_diag = NULL;
 		return false;
 	}
@@ -448,12 +406,11 @@ static bool ECDSA_authenticate_signature(const struct crypt_mac *hash, shunk_t s
 		.len = hash_data.len,
 	};
 
-	if (PK11_Verify(publicKey, raw_signature, &hash_item,
+	if (PK11_Verify(ecdsa->seckey_public, raw_signature, &hash_item,
 			lsw_nss_get_password_context(logger)) != SECSuccess) {
 		llog_nss_error(DEBUG_STREAM, logger,
 			       "verifying AUTH hash using PK11_Verify() failed:");
-		PORT_FreeArena(arena, PR_FALSE);
-		SECITEM_FreeItem(raw_signature, PR_TRUE);
+		SECITEM_FreeItem(raw_signature, PR_TRUE/*and-pointer*/);
 		*fatal_diag = NULL;
 		return false;
 	}
