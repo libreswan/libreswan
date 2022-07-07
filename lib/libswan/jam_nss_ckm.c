@@ -45,7 +45,7 @@ const char *str_nss_ckm(CK_MECHANISM_TYPE mechanism, enum_buf *buf)
 		CASE(CKM_AES_GCM);
 		CASE(CKM_AES_MAC);
 		CASE(CKM_AES_ECB);
-#ifdef CKM_AES_XCBC_MAC
+#ifdef CKM_AES_XCBC_MAC /* print whenever defined */
 		CASE(CKM_AES_XCBC_MAC);
 #endif
 
@@ -72,16 +72,16 @@ const char *str_nss_ckm(CK_MECHANISM_TYPE mechanism, enum_buf *buf)
 		CASE(CKM_DH_PKCS_DERIVE);
 		CASE(CKM_ECDH1_DERIVE);
 
-#ifdef CKM_NSS_IKE_PRF_DERIVE
+#ifdef CKM_NSS_IKE_PRF_DERIVE /* print whenever defined */
 		CASE(CKM_NSS_IKE_PRF_DERIVE);
 #endif
-#ifdef CKM_NSS_IKE1_PRF_DERIVE
+#ifdef CKM_NSS_IKE1_PRF_DERIVE /* print whenever defined */
 		CASE(CKM_NSS_IKE1_PRF_DERIVE);
 #endif
-#ifdef CKM_NSS_IKE_PRF_PLUS_DERIVE
+#ifdef CKM_NSS_IKE_PRF_PLUS_DERIVE /* print whenever defined */
 		CASE(CKM_NSS_IKE_PRF_PLUS_DERIVE);
 #endif
-#ifdef CKM_NSS_IKE1_APP_B_PRF_DERIVE
+#ifdef CKM_NSS_IKE1_APP_B_PRF_DERIVE /* print whenever defined */
 		CASE(CKM_NSS_IKE1_APP_B_PRF_DERIVE);
 #endif
 
