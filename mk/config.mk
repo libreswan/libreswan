@@ -728,9 +728,11 @@ ifeq ($(USE_PRF_AES_XCBC),true)
 USERLAND_CFLAGS += -DUSE_PRF_AES_XCBC
 endif
 
-# Use the NSS Key Derivation Function (KDF) instead of using the NSS
-# secure hash functions to build our own PRF. With this enabled,
-# libreswan itself no longer needs to be FIPS validated.
+# Use NSS's FIPS compliant Key Derivation Function (KDF).
+#
+# With this enabled, libreswan itself no longer needs to be FIPS
+# validated.  With this disabled, libreswan will use it's own KDF
+# code.
 #
 # Requires NSS >= 3.52
 # NSS 3.44 - 3.51 can be used if the following NSS upstream commit
@@ -748,7 +750,6 @@ ifdef USE_NSS_PRF
 $(error ERROR: Deprecated USE_NSS_PRF variable set, use USE_NSS_KDF instead)
 endif
 
-# This is required for FIPS, but required a recent nss (see comment above)
 USE_NSS_KDF ?= true
 ifeq ($(USE_NSS_KDF),true)
 USERLAND_CFLAGS += -DUSE_NSS_KDF
