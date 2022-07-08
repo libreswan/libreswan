@@ -66,8 +66,10 @@ char usage[] =
 	"   showhostkey --version\n"
 	"   showhostkey { --dump | --list }\n"
 	"   showhostkey { --left | --right }\n"
+	"               [ --pubkey ]\n"
 	"               { --rsaid <rsaid> | --ckaid <ckaid> }\n"
 	"   showhostkey --ipseckey\n"
+	"               [ --pubkey ]\n"
 	"               { --rsaid <rsaid> | --ckaid <ckaid> }\n"
 	"               [ --precedence <precedence> ] \n"
 	"               [ --gateway <gateway> ]\n"
@@ -103,6 +105,7 @@ enum opt {
 	OPT_CKAID,
 	OPT_DEBUG,
 	OPT_PEM,
+	OPT_PUBKEY,
 };
 
 const char short_opts[] = "v?d:lrg";
@@ -125,6 +128,7 @@ struct option long_opts[] = {
 	{ "nssdir",     required_argument,      NULL,   OPT_NSSDIR, }, /* nss-tools use -d */
 	{ "password",   required_argument,      NULL,   OPT_PASSWORD, },
 	{ "pem",        no_argument,            NULL,   OPT_PEM, },
+	{ "pubkey",     no_argument,            NULL,   OPT_PUBKEY, },
 	{ 0,            0,                      NULL,   0, }
 };
 
@@ -270,8 +274,8 @@ static char *base64_from_chunk(chunk_t chunk)
 	return base64;
 }
 
-static char *base64_dnssec_pubkey_from_pks(struct private_key_stuff *pks,
-					   enum ipseckey_algorithm_type *ipseckey_algorithm)
+static char *base64_ipseckey_rdata_from_pks(struct private_key_stuff *pks,
+					    enum ipseckey_algorithm_type *ipseckey_algorithm)
 {
 	chunk_t ipseckey_pubkey = empty_chunk; /* must free */
 	err_t e = pks->pubkey_type->pubkey_content_to_ipseckey_rdata(&pks->u.pubkey,
@@ -287,9 +291,24 @@ static char *base64_dnssec_pubkey_from_pks(struct private_key_stuff *pks,
 	return base64;
 }
 
-static int show_dnskey(struct private_key_stuff *pks,
-		       int precedence,
-		       char *gateway)
+static char *base64_pem_from_pks(struct private_key_stuff *pks)
+{
+	chunk_t der = empty_chunk; /* must free */
+	diag_t d = private_key_stuff_to_pubkey_der(pks, &der);
+	if (d != NULL) {
+		fprintf(stderr, "%s: %s\n", progname, str_diag(d));
+		pfree_diag(&d);
+		exit(5);
+	}
+
+	char *pem = base64_from_chunk(der);
+	free_chunk_content(&der);
+	return pem;
+}
+
+static int show_ipseckey(struct private_key_stuff *pks,
+			 int precedence, char *gateway,
+			 bool pubkey_flg)
 {
 	char qname[256];
 	int gateway_type = 0;
@@ -297,7 +316,13 @@ static int show_dnskey(struct private_key_stuff *pks,
 	gethostname(qname, sizeof(qname));
 
 	enum ipseckey_algorithm_type ipseckey_algorithm = 0;
-	char *base64 = base64_dnssec_pubkey_from_pks(pks, &ipseckey_algorithm);
+	char *base64 = NULL;
+	if (pubkey_flg) {
+		base64 = base64_pem_from_pks(pks);
+		ipseckey_algorithm = IPSECKEY_ALGORITHM_X_PUBKEY;
+	} else {
+		base64 = base64_ipseckey_rdata_from_pks(pks, &ipseckey_algorithm);
+	}
 	if (base64 == NULL) {
 		return 5;
 	}
@@ -325,16 +350,7 @@ static int show_dnskey(struct private_key_stuff *pks,
 
 static int show_pem(struct private_key_stuff *pks)
 {
-	chunk_t der = empty_chunk; /* must free */
-	diag_t d = private_key_stuff_to_pubkey_der(pks, &der);
-	if (d != NULL) {
-		fprintf(stderr, "%s: %s\n", progname, str_diag(d));
-		pfree_diag(&d);
-		return 5;
-	}
-
-	char *pem = base64_from_chunk(der);
-	free_chunk_content(&der);
+	char *pem = base64_pem_from_pks(pks);
 
 	printf("-----BEGIN PUBLIC KEY-----\n");
 	printf("%s\n", pem);
@@ -350,10 +366,10 @@ static int show_pem(struct private_key_stuff *pks)
 	return 0;
 }
 
-static int show_confkey(struct private_key_stuff *pks,
-			char *side)
+static int show_leftright(struct private_key_stuff *pks,
+			  char *side, bool pubkey_flg)
 {
-	if (pks->kind != PKK_RSA && pks->kind != PKK_ECDSA) {
+	if (pks->pubkey_type == NULL) {
 		char *enumstr = "gcc is crazy";
 		switch (pks->kind) {
 		case PKK_PSK:
@@ -370,31 +386,36 @@ static int show_confkey(struct private_key_stuff *pks,
 		return 5;
 	}
 
-	enum ipseckey_algorithm_type ipseckey_algorithm;
-	char *base64 = base64_dnssec_pubkey_from_pks(pks, &ipseckey_algorithm);
+	char *base64 = NULL;
+	if (pubkey_flg) {
+		base64 = base64_pem_from_pks(pks);
+	} else {
+		enum ipseckey_algorithm_type ipseckey_algorithm;
+		base64 = base64_ipseckey_rdata_from_pks(pks, &ipseckey_algorithm);
+	}
 	if (base64 == NULL) {
 		return 5;
 	}
 
-	switch (pks->kind) {
-	case PKK_RSA:
-		printf("\t# rsakey %s\n",
-		       pks->keyid.keyid);
-		printf("\t%srsasigkey=0s%s\n", side,
-		       base64);
-		pfree(base64);
-		break;
-	case PKK_ECDSA:
-		printf("\t# ecdsakey %s\n",
-		       pks->keyid.keyid);
-		printf("\t%secdsakey=0s%s\n", side,
-		       base64);
-		pfree(base64);
-		break;
-	default:
-		passert(false);
+	if (pubkey_flg) {
+		printf("\t%spubkey=", side);
+	} else {
+		switch (pks->kind) {
+		case PKK_RSA:
+			printf("\t# rsakey %s\n", pks->keyid.keyid);
+			printf("\t%srsasigkey=0s", side);
+			break;
+		case PKK_ECDSA:
+			printf("\t# ecdsakey %s\n", pks->keyid.keyid);
+			printf("\t%secdsakey=0s", side);
+			break;
+		default:
+			passert(false);
+		}
 	}
 
+	printf("%s\n", base64);
+	pfree(base64);
 	return 0;
 }
 
@@ -523,6 +544,7 @@ int main(int argc, char *argv[])
 	bool list_flg = false;
 	bool ipseckey_flg = false;
 	bool pem_flg = false;
+	bool pubkey_flg = false;
 	char *gateway = NULL;
 	int precedence = 10;
 	char *ckaid = NULL;
@@ -551,6 +573,10 @@ int main(int argc, char *argv[])
 
 		case OPT_PEM:
 			pem_flg = true;
+			break;
+
+		case OPT_PUBKEY:
+			pubkey_flg = true;
 			break;
 
 		case OPT_PRECIDENCE:
@@ -686,17 +712,17 @@ int main(int argc, char *argv[])
 	}
 
 	if (left_flg) {
-		status = show_confkey(pks, "left");
+		status = show_leftright(pks, "left", pubkey_flg);
 		goto out;
 	}
 
 	if (right_flg) {
-		status = show_confkey(pks, "right");
+		status = show_leftright(pks, "right", pubkey_flg);
 		goto out;
 	}
 
 	if (ipseckey_flg) {
-		status = show_dnskey(pks, precedence, gateway);
+		status = show_ipseckey(pks, precedence, gateway, pubkey_flg);
 		goto out;
 	}
 
