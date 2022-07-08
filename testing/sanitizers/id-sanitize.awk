@@ -61,9 +61,11 @@ func find(name, pattern,
 
     find("RAW-PUBKEY", "rsasigkey=0s([+=0-9a-zA-Z/]+)")
     find("RAW-PUBKEY", "ecdsakey=0s([+=0-9a-zA-Z/]+)")
-    # RSA's algorithm is 2; ECDSA pretents to be 3
+    find("PEM-PUBKEY", "pubkey=([+=0-9a-zA-Z/]+)")
+
+    # RSA's algorithm is 2; ECDSA is 3; 4 is made up
     find("RAW-PUBKEY", "IPSECKEY +[0-9]+ +[0-9]+ +[23] +[.:0-9a-f]+ +([+=0-9a-zA-Z/]+)$")
-    find("PUBKEY", "pubkey=(0s[+=0-9a-zA-Z/]+)")
+    find("PEM-PUBKEY", "IPSECKEY +[0-9]+ +[0-9]+ +4 +[.:0-9a-f]+ +([+=0-9a-zA-Z/]+)$")
 
     find("KEYID", "keyid: ([+=0-9a-zA-Z/]+)")
     find("KEYID", "# ecdsakey ([+=0-9a-zA-Z/]+)")
@@ -75,7 +77,7 @@ func find(name, pattern,
 	name = values[value]
 	debug("value: " value)
 	debug("name: " name)
-	new = gensub("( |=0s)(" value ")([ ']|$)", "\\1" name "\\3", "g", old)
+	new = gensub("( |=0s|=)(" value ")([ ']|$)", "\\1" name "\\3", "g", old)
 	debug("old: " old)
 	debug("new: " new)
 	old = new

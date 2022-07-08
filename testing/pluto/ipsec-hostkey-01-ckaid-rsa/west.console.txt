@@ -17,8 +17,14 @@ west #
 	# rsakey <<KEYID#1>>
 	leftrsasigkey=0s<<RAW-PUBKEY#1>>
 west #
+ ipsec showhostkey --left --pubkey --ckaid "${ckaid}"
+	leftpubkey=<<PEM-PUBKEY#1>>
+west #
  ipsec showhostkey --ipseckey --ckaid "${ckaid}"
 west.    IN    IPSECKEY  10 0 2 . <<RAW-PUBKEY#1>>
+west #
+ ipsec showhostkey --ipseckey --pubkey --ckaid "${ckaid}"
+west.    IN    IPSECKEY  10 0 4 . <<PEM-PUBKEY#1>>
 west #
  # see description.txt for why they are different
 west #
