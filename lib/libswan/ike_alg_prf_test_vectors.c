@@ -27,6 +27,7 @@
 #include "pk11pub.h"
 #include "crypt_prf.h"
 #include "crypt_symkey.h"
+#include "ikev2_prf.h"
 
 #include "lswlog.h"
 
@@ -276,102 +277,44 @@ static bool test_kdf_vector(const struct prf_desc *prf,
 		decode_to_chunk(__func__, test->skeyseed_rekey);
 	chunk_t chunk_dkm = decode_to_chunk(__func__, test->dkm);
 	passert(chunk_dkm.len == test->dkm_size);
-	SECItem params = { 0, };
 	bool ok = true;
 
 
 	/* SKEYSEED = prf(Ni | Nr, g^ir) */
-#if 0
-	static PK11SymKey *ike_sa_skeyseed(const struct prf_desc *prf_desc,
-					   const chunk_t Ni, const chunk_t Nr,
-					   PK11SymKey *dh_secret,
-					   struct logger *logger);
-#else
 	PK11SymKey *gir = symkey_from_hunk("gir symkey", chunk_gir, logger);
-	CK_NSS_IKE_PRF_DERIVE_PARAMS ike_prf_params = {
-		.prfMechanism = prf->nss.mechanism,
-		.bDataAsKey = CK_TRUE,
-		.bRekey = CK_FALSE,
-		.pNi = chunk_ni.ptr,
-		.ulNiLen = chunk_ni.len,
-		.pNr = chunk_nr.ptr,
-		.ulNrLen = chunk_nr.len,
-	};
-	params.data = (unsigned char *)&ike_prf_params;
-	params.len = sizeof(ike_prf_params);
-	PK11SymKey *skeyseed =
-		crypt_derive(gir, CKM_NSS_IKE_PRF_DERIVE, &params,
-			     "skeyseed", CKM_NSS_IKE_PRF_PLUS_DERIVE,
-			     CKA_DERIVE, /*keysize*/0, /*flags*/0,
-			     HERE, logger);
-#endif
+	PK11SymKey *skeyseed = ikev2_ike_sa_skeyseed(prf, chunk_ni, chunk_nr,
+						     gir, logger);
 	if (!verify_symkey(test->description, chunk_skeyseed, skeyseed,
 			   logger)) {
 		ok = false;
 	}
 
 	/* prf+ (SKEYSEED, Ni | Nr | SPIi | SPIr) */
-#if 0
-	static PK11SymKey *ike_sa_keymat(const struct prf_desc *prf_desc,
-					 PK11SymKey *skeyseed,
-					 const chunk_t Ni, const chunk_t Nr,
-					 shunk_t SPIi, shunk_t SPIr,
-					 size_t required_bytes,
-					 struct logger *logger);
-#else
-	chunk_t chunk_seed_data = clone_hunk_hunk(chunk_ni, chunk_nr,
-						  "seed_data = Ni || Nr");
-	append_chunk_hunk("seed_data = Nir || SPIi",
-			  &chunk_seed_data, chunk_spii);
-	append_chunk_hunk("seed_data = Nir || SPIir",
-			  &chunk_seed_data, chunk_spir);
-
-	CK_NSS_IKE_PRF_PLUS_DERIVE_PARAMS ike_prf_plus_params = {
-		.pSeedData = chunk_seed_data.ptr,
-		.ulSeedDataLen = chunk_seed_data.len,
-		.prfMechanism = prf->nss.mechanism,
-		.bHasSeedKey = CK_FALSE,
-	};
-	params.data = (unsigned char *)&ike_prf_plus_params;
-	params.len = sizeof(ike_prf_plus_params);
-
-	PK11SymKey *dkm = crypt_derive(skeyseed,
-				       CKM_NSS_IKE_PRF_PLUS_DERIVE, &params,
-				       "prfplus", CKM_EXTRACT_KEY_FROM_KEY,
-				       CKA_DERIVE,
-				       /*keysize*/test->dkm_size, /*flags*/0,
-				       HERE, logger);
-#endif
+	ike_spis_t spi_ir;
+	passert(sizeof(spi_ir.initiator.bytes) == chunk_spii.len);
+	memcpy(spi_ir.initiator.bytes, chunk_spii.ptr, chunk_spii.len);
+	passert(sizeof(spi_ir.responder.bytes) == chunk_spir.len);
+	memcpy(spi_ir.responder.bytes, chunk_spir.ptr, chunk_spir.len);
+	PK11SymKey *dkm = ikev2_ike_sa_keymat(prf, skeyseed,
+					      chunk_ni, chunk_nr,
+					      &spi_ir,
+					      test->dkm_size,
+					      logger);
 
 	if (!verify_symkey(test->description, chunk_dkm, dkm, logger)) {
 		ok = false;
 	}
 
 	/* SKEYSEED = prf(SK_d (old), g^ir (new) | Ni | Nr) */
-	PK11SymKey *gir_new = symkey_from_hunk("gir_new symkey", chunk_gir_new,
-					       logger);
-
-	CK_NSS_IKE_PRF_DERIVE_PARAMS ike_prf_params_rekey = {
-		.prfMechanism = prf->nss.mechanism,
-		.bDataAsKey = CK_FALSE,
-		.bRekey = CK_TRUE,
-		.hNewKey = PK11_GetSymKeyHandle(gir_new),
-		.pNi = chunk_ni.ptr,
-		.ulNiLen = chunk_ni.len,
-		.pNr = chunk_nr.ptr,
-		.ulNrLen = chunk_nr.len,
-	};
-	params.data = (unsigned char *)&ike_prf_params_rekey;
-	params.len = sizeof(ike_prf_params_rekey);
-
 	PK11SymKey *skd = key_from_symkey_bytes("SK_d", dkm,
                                                  0, prf->prf_key_size,
                                                  HERE, logger);
+	PK11SymKey *gir_new = symkey_from_hunk("gir_new symkey", chunk_gir_new,
+					       logger);
 	PK11SymKey *skeyseed_rekey =
-		crypt_derive(skd, CKM_NSS_IKE_PRF_DERIVE, &params,
-			     "skeyseed_rekey", CKM_NSS_IKE_PRF_PLUS_DERIVE,
-			     CKA_DERIVE, /*key-size*/0, /*flags*/0,
-			     HERE, logger);
+		ikev2_ike_sa_rekey_skeyseed(prf, skd, gir_new,
+					    chunk_ni, chunk_nr,
+					    logger);
 	if (!verify_symkey(test->description, chunk_skeyseed_rekey,
 			   skeyseed_rekey, logger)) {
 		ok = false;
@@ -393,7 +336,6 @@ static bool test_kdf_vector(const struct prf_desc *prf,
 	free_chunk_content(&chunk_gir_new);
 	free_chunk_content(&chunk_spii);
 	free_chunk_content(&chunk_spir);
-	free_chunk_content(&chunk_seed_data);
 	free_chunk_content(&chunk_skeyseed);
 	free_chunk_content(&chunk_skeyseed_rekey);
 	free_chunk_content(&chunk_dkm);

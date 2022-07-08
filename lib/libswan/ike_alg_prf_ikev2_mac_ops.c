@@ -42,19 +42,19 @@ static PK11SymKey *prfplus(const struct prf_desc *prf_desc,
 	uint8_t count = 1;
 
 	/* T1(prfplus) = prf(KEY, SEED|1) */
-	PK11SymKey *result;
+	PK11SymKey *concatenated;
 	{
 		struct crypt_prf *prf = crypt_prf_init_symkey("prf+0", prf_desc,
 							      "key", key,
 							      logger);
 		crypt_prf_update_symkey(prf, "seed", seed);
 		crypt_prf_update_byte(prf, "1++", count++);
-		result = crypt_prf_final_symkey(&prf);
+		concatenated = crypt_prf_final_symkey(&prf);
 	}
 
 	/* make a copy to keep things easy */
-	PK11SymKey *old_t = reference_symkey(__func__, "old_t[1]", result);
-	while (sizeof_symkey(result) < required_keymat) {
+	PK11SymKey *old_t = reference_symkey(__func__, "old_t[1]", concatenated);
+	while (sizeof_symkey(concatenated) < required_keymat) {
 		/* Tn = prf(KEY, Tn-1|SEED|n) */
 		struct crypt_prf *prf = crypt_prf_init_symkey("prf+N", prf_desc,
 							      "key", key, logger);
@@ -62,11 +62,17 @@ static PK11SymKey *prfplus(const struct prf_desc *prf_desc,
 		crypt_prf_update_symkey(prf, "seed", seed);
 		crypt_prf_update_byte(prf, "N++", count++);
 		PK11SymKey *new_t = crypt_prf_final_symkey(&prf);
-		append_symkey_symkey(&result, new_t, logger);
+		append_symkey_symkey(&concatenated, new_t, logger);
 		release_symkey(__func__, "old_t[N]", &old_t);
 		old_t = new_t;
 	}
 	release_symkey(__func__, "old_t[final]", &old_t);
+
+	/* truncate the result to match the length with required_keymat */
+	PK11SymKey *result = key_from_symkey_bytes("result", concatenated,
+						   0, required_keymat,
+						   HERE, logger);
+	release_symkey(__func__, "concatenated", &concatenated);
 	return result;
 }
 
