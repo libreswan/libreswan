@@ -1082,14 +1082,16 @@ bool same_RSA_public_key(const struct RSA_public_key *a,
 	 * redundant?  The direct n==n test would pick up the
 	 * difference.
 	 */
+	bool e = hunk_eq(same_secitem_as_shunk(a->seckey_public->u.rsa.publicExponent),
+			 same_secitem_as_shunk(b->seckey_public->u.rsa.publicExponent));
+	bool n = hunk_eq(same_secitem_as_shunk(a->seckey_public->u.rsa.modulus),
+			 same_secitem_as_shunk(b->seckey_public->u.rsa.modulus));
 	if (DBGP(DBG_CRYPT)) {
-	    DBG_log("n did %smatch", hunk_eq(a->n, b->n) ? "" : "NOT ");
-	    DBG_log("e did %smatch", hunk_eq(a->e, b->e) ? "" : "NOT ");
+		DBG_log("n did %smatch", n ? "" : "NOT ");
+		DBG_log("e did %smatch", e ? "" : "NOT ");
 	}
 
-	return a == b ||
-		(hunk_eq(a->n, b->n) &&
-		 hunk_eq(a->e, b->e));
+	return a == b || (e && n);
 }
 
 /*

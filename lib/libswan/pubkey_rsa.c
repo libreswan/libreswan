@@ -38,10 +38,10 @@
  * Deal with RFC Resource Records as defined in rfc3110 (nee rfc2537).
  */
 
-static err_t RSA_pubkey_content_to_dnssec_pubkey(const struct RSA_public_key *rsa, chunk_t *dnssec_pubkey)
+static err_t RSA_pubkey_content_to_dnssec_pubkey(SECKEYRSAPublicKey *rsa, chunk_t *dnssec_pubkey)
 {
-	chunk_t exponent = rsa->e;
-	chunk_t modulus = rsa->n;
+	chunk_t exponent = same_secitem_as_chunk(rsa->publicExponent);
+	chunk_t modulus = same_secitem_as_chunk(rsa->modulus);
 	*dnssec_pubkey = EMPTY_CHUNK;
 
 	/*
@@ -78,7 +78,7 @@ static err_t RSA_pubkey_content_to_dnssec_pubkey(const struct RSA_public_key *rs
 
 static err_t pubkey_content_to_dnssec_pubkey(const union pubkey_content *pkc, chunk_t *dnssec_pubkey)
 {
-	return RSA_pubkey_content_to_dnssec_pubkey(&pkc->rsa, dnssec_pubkey);
+	return RSA_pubkey_content_to_dnssec_pubkey(&pkc->rsa.seckey_public->u.rsa, dnssec_pubkey);
 }
 
 /*
@@ -211,8 +211,6 @@ static err_t RSA_dnssec_pubkey_to_pubkey_content(struct RSA_public_key *rsak,
 	}
 
 	*size = modulus.len;
-	rsak->e = clone_hunk(exponent, "e");
-	rsak->n = clone_hunk(modulus, "n");
 	rsak->seckey_public = seckey;
 	dbg_alloc("rsa->seckey_public", rsak->seckey_public, HERE);
 
@@ -239,8 +237,6 @@ static err_t dnssec_pubkey_to_pubkey_content(chunk_t dnssec_pubkey,
 
 static void RSA_free_pubkey_content(struct RSA_public_key *rsa)
 {
-	free_chunk_content(&rsa->n);
-	free_chunk_content(&rsa->e);
 	SECKEY_DestroyPublicKey(rsa->seckey_public);
 	dbg_free("rsa->seckey_pubkey", rsa->seckey_public, HERE);
 	rsa->seckey_public = NULL;
@@ -253,17 +249,15 @@ static void free_pubkey_content(union pubkey_content *u)
 
 static void RSA_extract_pubkey_content(struct RSA_public_key *pub,
 				       keyid_t *keyid, ckaid_t *ckaid, size_t *size,
-				       SECKEYPublicKey *pubk,
+				       SECKEYPublicKey *seckey_public,
 				       SECItem *cert_ckaid)
 {
-	pub->seckey_public = SECKEY_CopyPublicKey(pubk);
+	pub->seckey_public = SECKEY_CopyPublicKey(seckey_public);
 	dbg_alloc("rsa->seckey_public", pub->seckey_public, HERE);
-	pub->e = clone_bytes_as_chunk(pubk->u.rsa.publicExponent.data,
-				      pubk->u.rsa.publicExponent.len, "e");
-	pub->n = clone_bytes_as_chunk(pubk->u.rsa.modulus.data,
-				      pubk->u.rsa.modulus.len, "n");
 	*ckaid = ckaid_from_secitem(cert_ckaid);
-	form_keyid(pub->e, pub->n, keyid, size);
+	chunk_t exponent = same_secitem_as_chunk(seckey_public->u.rsa.publicExponent);
+	chunk_t modulus = same_secitem_as_chunk(seckey_public->u.rsa.modulus);
+	form_keyid(exponent, modulus, keyid, size);
 }
 
 static void extract_pubkey_content(union pubkey_content *pkc,
@@ -276,12 +270,12 @@ static void extract_pubkey_content(union pubkey_content *pkc,
 
 static void RSA_extract_private_key_pubkey_content(struct private_key_stuff *pks,
 						   keyid_t *keyid, ckaid_t *ckaid, size_t *size,
-						   SECKEYPublicKey *pubkey_nss,
+						   SECKEYPublicKey *seckey_public,
 						   SECItem *ckaid_nss)
 {
 	struct RSA_public_key *pubkey = &pks->u.pubkey.rsa;
 	RSA_extract_pubkey_content(pubkey, keyid, ckaid, size,
-				   pubkey_nss, ckaid_nss);
+				   seckey_public, ckaid_nss);
 }
 
 static void RSA_free_secret_content(struct private_key_stuff *pks)

@@ -47,9 +47,6 @@ struct cert;
 
 struct RSA_public_key {
 	SECKEYPublicKey *seckey_public;
-	/* public: */
-	chunk_t n;	/* modulus: p * q */
-	chunk_t e;	/* exponent: relatively prime to (p-1) * (q-1) [probably small] */
 };
 
 struct ECDSA_public_key {
