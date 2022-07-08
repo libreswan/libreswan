@@ -325,16 +325,21 @@ Some things, annoyingly, don't quite work right:
 
 # Archiving
 
-mkdir ~/v4.5-v4.6
-mv v4.5-* ~/v4.5-v4.6
-cp -r v4.6-0-* ~/v4.5-v4.6
-find * -name 'debug.log.gz' | xargs rm
-find ~/v4.5-v4.6 -name 'pluto.log' -print | xargs rm
-find ~/v4.5-v4.6 -name 'iked.log' -print | xargs rm
-find ~/v4.5-v4.6 -name '*.log.gz' -print | xargs rm
-find ~/v4.5-v4.6 -name '.log' -print # delete?
-find ~/v4.5-v4.6 -name '.log.gz' -print # delete?
-cd script-dir && make KVM_SUMMARYDIR=~/v4.5-v4.6 web-summarydir
+
+For instance:
+
+ mkdir ~/v4.6-v4.7
+ mv v4.6-* ~/v4.6-v4.7
+ cp -r v4.7-0-* ~/v4.6-v4.7
+ find * -name 'debug.log.gz' | xargs rm
+ find ~/v4.6-v4.7 -name 'pluto.log' -print | xargs rm
+ find ~/v4.6-v4.7 -name 'iked.log' -print | xargs rm
+ find ~/v4.6-v4.7 -name 'charon.log' -print | xargs rm
+ find ~/v4.6-v4.7 -name '*.log.gz' -print | xargs rm
+ find ~/v4.6-v4.7 -name '.log' -print # delete?
+ find ~/v4.6-v4.7 -name '.log.gz' -print # delete?
+ cd ~/libreswan-web/script-repo/ && make KVM_SUMMARYDIR=~/v4.6-v4.7 web-summarydir
+
 
 # Improvements
 
