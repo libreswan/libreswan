@@ -1,0 +1,49 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ :> /etc/ipsec.secrets
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ # US vs THEM
+west #
+ us=$(hostname | cut -d. -f1)
+west #
+ them=$(case $us in east ) echo west ;; west ) echo east ;; esac)
+west #
+ leftright=$(case $us in east ) echo right ;; west ) echo left ;; esac)
+west #
+ echo us=${us} them=${them} leftright=${leftright}
+us=west them=east leftright=left
+west #
+ # generate the host key and save it
+west #
+ ckaid=$(ipsec newhostkey --keytype ecdsa 2>&1 | grep "showhostkey" | sed "s/^.*ckaid //")
+west #
+ # sanitizing brought to you by id-sanitize.sed
+west #
+ ipsec showhostkey --${leftright} --pubkey --ckaid "${ckaid}" > OUTPUT/$us.hostkey
+west #
+ # install config file
+west #
+ cp ipsec.conf /etc/ipsec.conf
+west #
+ cat OUTPUT/east.hostkey >>/etc/ipsec.conf
+west #
+ cat OUTPUT/west.hostkey >>/etc/ipsec.conf
+west #
+ ipsec auto --add hostkey
+002 "hostkey": added IKEv2 connection
+west #
+ ipsec auto --up hostkey
+1v2 "hostkey" #1: initiating IKEv2 connection
+1v2 "hostkey" #1: sent IKE_SA_INIT request
+1v2 "hostkey" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "hostkey" #1: initiator established IKE SA; authenticated using ECDSA with SHA2_512 and preloaded certificate '192.1.2.23'
+004 "hostkey" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ 
+
