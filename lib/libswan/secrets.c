@@ -161,11 +161,12 @@ const struct pubkey_type *pubkey_alg_type(enum ipseckey_algorithm_type alg)
 	static const struct pubkey_type *pubkey_types[] = {
 		[IPSECKEY_ALGORITHM_RSA] = &pubkey_type_rsa,
 		[IPSECKEY_ALGORITHM_ECDSA] = &pubkey_type_ecdsa,
+		[IPSECKEY_ALGORITHM_X_PUBKEY] = NULL,
 	};
-	passert(alg < elemsof(pubkey_types));
-	const struct pubkey_type *type = pubkey_types[alg];
-	pexpect(type != NULL);
-	return type;
+	if (alg < elemsof(pubkey_types)) {
+		return pubkey_types[alg];
+	}
+	return NULL;
 }
 
 const keyid_t *pubkey_keyid(const struct pubkey *pk)
@@ -1158,10 +1159,22 @@ err_t unpack_dnssec_pubkey(const struct id *id, /* ASKK */
 	keyid_t keyid;
 	ckaid_t ckaid;
 	size_t size;
-	err_t err = type->ipseckey_rdata_to_pubkey_content(dnssec_pubkey, &scratch_pkc,
-							   &keyid, &ckaid, &size);
-	if (err != NULL) {
-		return err;
+
+	if (type == NULL) {
+		diag_t d = pubkey_der_to_pubkey_content(HUNK_AS_SHUNK(dnssec_pubkey),
+							&scratch_pkc,
+							&keyid, &ckaid, &size, &type);
+		if (d != NULL) {
+			pfree_diag(&d);
+			return "invalid pubkey";
+		}
+	} else {
+		err_t err = type->ipseckey_rdata_to_pubkey_content(dnssec_pubkey,
+								   &scratch_pkc,
+								   &keyid, &ckaid, &size);
+		if (err != NULL) {
+			return err;
+		}
 	}
 
 	struct pubkey *pubkey = alloc_pubkey(id, dns_auth_level, type,

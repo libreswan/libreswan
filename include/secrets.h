@@ -109,6 +109,9 @@ struct private_key_stuff {
 };
 
 diag_t private_key_stuff_to_pubkey_der(struct private_key_stuff *pks, chunk_t *der);
+diag_t pubkey_der_to_pubkey_content(shunk_t pubkey_der, union pubkey_content *pkc,
+				    keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+				    const struct pubkey_type **type);
 
 extern struct private_key_stuff *lsw_get_pks(struct secret *s);
 extern struct id_list *lsw_get_idlist(const struct secret *s);

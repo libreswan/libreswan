@@ -272,25 +272,43 @@ static void do_whacklisten(struct logger *logger)
  */
 static void key_add_request(const struct whack_message *msg, struct logger *logger)
 {
-	/* A (public) key requires a (key) type and a type requires a key */
-
-	const struct pubkey_type *type = pubkey_alg_type(msg->pubkey_alg);
-	bool given_key = type != NULL;	/* were we given a key by the whack command? */
-
-	passert(given_key == (msg->keyval.len != 0));
-
-	/* --addkey always requires a key */
-	if (msg->whack_addkey && !given_key) {
-		llog(RC_LOG_SERIOUS, logger,
-			    "error: key to add is empty (needs DNS lookup?)");
-		return;
+	/*
+	 * A (public) key requires a (key) type and a type requires a
+	 * key; except when it is a pubkey.
+	 */
+	bool given_key = msg->keyval.len > 0;
+	const char *name; /* enumname? */
+	const struct pubkey_type *type;
+	switch (msg->pubkey_alg) {
+	case IPSECKEY_ALGORITHM_RSA:
+		name = "rsasigkey";
+		type = &pubkey_type_rsa;
+		break;
+	case IPSECKEY_ALGORITHM_ECDSA:
+		name = "ecdsakey";
+		type = &pubkey_type_ecdsa;
+		break;
+	case IPSECKEY_ALGORITHM_X_PUBKEY:
+		name = "pubkey";
+		type = NULL;
+		break;
+	default:
+		/* --addkey always requires a key */
+		if (msg->whack_addkey && !given_key) {
+			llog(RC_LOG_SERIOUS, logger,
+			     "error: key to add is empty (needs DNS lookup?)");
+			return;
+		}
+		type = NULL;
+		name = "no-key";
 	}
+	dbg("processing %s key", name);
 
 	struct id keyid;
 	err_t ugh = atoid(msg->keyid, &keyid); /* must free keyid */
 	if (ugh != NULL) {
 		llog(RC_BADID, logger,
-			    "bad --keyid \"%s\": %s", msg->keyid, ugh);
+		     "bad --keyid \"%s\": %s", msg->keyid, ugh);
 		return;
 	}
 
@@ -299,7 +317,7 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 		if (!given_key) {
 			/* XXX: this gets called by "add" so be silent */
 			llog(LOG_STREAM/*not-whack*/, logger,
-				    "delete keyid %s", msg->keyid);
+			     "delete keyid %s", msg->keyid);
 		}
 		delete_public_keys(&pluto_pubkeys, &keyid, type);
 		/* XXX: what about private keys; suspect not easy as not 1:1? */
@@ -309,7 +327,7 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 	if (given_key) {
 		/* XXX: this gets called by "add" so be silent */
 		llog(LOG_STREAM/*not-whack*/, logger,
-			    "add keyid %s", msg->keyid);
+		     "add keyid %s", msg->keyid);
 		DBG_dump_hunk(NULL, msg->keyval);
 
 		/* add the public key */

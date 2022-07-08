@@ -446,15 +446,28 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 
 		case PUBKEY_PREEXCHANGED:
 		{
-			const char *name = (end->pubkey_alg == IPSECKEY_ALGORITHM_RSA ? "rsasigkey" :
-					    end->pubkey_alg == IPSECKEY_ALGORITHM_ECDSA ? "ecdsakey" :
-					    end->pubkey_alg == IPSECKEY_ALGORITHM_DSA ? "dsakey" :
-					    end->pubkey_alg == IPSECKEY_ALGORITHM_X_PUBKEY ? "pubkey" :
-					    NULL);
-			err = ttodatav(end->pubkey, 0, 0, keyspace,
-				sizeof(keyspace),
-				&msg.keyval.len,
-				err_buf, sizeof(err_buf), 0);
+			const char *name; /* enumname? */
+			int base;
+			switch (end->pubkey_alg) {
+			case IPSECKEY_ALGORITHM_RSA:
+				name = "rsasigkey";
+				base = 0; /* figure it out */
+				break;
+			case IPSECKEY_ALGORITHM_ECDSA:
+				name = "ecdsakey";
+				base = 0; /* figure it out */
+				break;
+			case IPSECKEY_ALGORITHM_X_PUBKEY:
+				name = "pubkey";
+				base = 64; /* dam it */
+				break;
+			default:
+				bad_case(end->pubkey_alg);
+			}
+			err = ttodatav(end->pubkey, 0, base,
+				       keyspace, sizeof(keyspace),
+				       &msg.keyval.len,
+				       err_buf, sizeof(err_buf), 0);
 			if (err) {
 				passert(name != NULL);
 				starter_log(LOG_LEVEL_ERR,

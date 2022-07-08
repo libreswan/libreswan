@@ -432,9 +432,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "id",  kv_conn | kv_leftright,  kt_idtype,  KSCF_ID, NULL, NULL, },
   { "rsasigkey",  kv_conn | kv_leftright,  kt_pubkey,  KSCF_RSASIGKEY,  kw_pubkey_list, NULL, },
   { "ecdsakey",  kv_conn | kv_leftright,  kt_pubkey,  KSCF_ECDSAKEY,  kw_pubkey_list, NULL, },
-#if 0
   { "pubkey",  kv_conn | kv_leftright,  kt_pubkey,  KSCF_PUBKEY,  kw_pubkey_list, NULL, },
-#endif
   { "cert",  kv_conn | kv_leftright,  kt_filename,  KSCF_CERT, NULL, NULL, },
   { "ckaid",  kv_conn | kv_leftright,  kt_string,  KSCF_CKAID, NULL, NULL, },
   { "sendcert",  kv_conn | kv_leftright,  kt_enum,  KNCF_SENDCERT,  kw_sendcert_list, NULL, },
