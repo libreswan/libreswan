@@ -1226,8 +1226,8 @@ kvmplutotest	ikev2-leak-01-db_v2_prop_conj	good
 kvmplutotest	ikev2-leak-02-no-psk		good
 
 # seccomp
-kvmplutotest	seccomp-01-enabled		good
-kvmplutotest	seccomp-02-tolerant		good
+kvmplutotest	seccomp-01-enabled		wip	github/795
+kvmplutotest	seccomp-02-tolerant		wip	github/795
 kvmplutotest	seccomp-03-updown		wip
 
 # Utility tests like "ipsec showhostkey"
