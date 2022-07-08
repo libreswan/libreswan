@@ -86,36 +86,30 @@ static err_t pubkey_content_to_dnssec_pubkey(const union pubkey_content *pkc, ch
  *
  * See https://www.rfc-editor.org/rfc/rfc3110#section-2
  */
-static err_t pubkey_dnssec_pubkey_to_rsa_pubkey(chunk_t rr, chunk_t *e, chunk_t *n)
+static err_t pubkey_dnssec_pubkey_to_rsa_pubkey(chunk_t rr, shunk_t *e, shunk_t *n)
 {
-	*e = EMPTY_CHUNK;
-	*n = EMPTY_CHUNK;
+	*e = null_shunk;
+	*n = null_shunk;
 
 	/*
 	 * Step 1: find the bounds of the exponent and modulus within
 	 * the resource record and verify that they are sane.
 	 */
 
-	chunk_t exponent;
+	shunk_t exponent;
 	if (rr.len >= 2 && rr.ptr[0] != 0x00) {
 		/*
 		 * Exponent length is one-byte, followed by that many
 		 * exponent bytes
 		 */
-		exponent = (chunk_t) {
-			.ptr = rr.ptr + 1,
-			.len = rr.ptr[0]
-		};
+		exponent = shunk2(rr.ptr + 1, rr.ptr[0]);
 	} else if (rr.len >= 3 && rr.ptr[0] == 0x00) {
 		/*
 		 * Exponent length is 0x00 followed by 2 bytes of
 		 * length (big-endian), followed by that many exponent
 		 * bytes
 		 */
-		exponent = (chunk_t) {
-			.ptr = rr.ptr + 3,
-			.len = (rr.ptr[1] << BITS_PER_BYTE) + rr.ptr[2],
-		};
+		exponent = shunk2(rr.ptr + 3, (rr.ptr[1] << BITS_PER_BYTE) + rr.ptr[2]);
 	} else {
 		/* not even room for length! */
 		return "RSA public key resource record way too short";
@@ -124,7 +118,7 @@ static err_t pubkey_dnssec_pubkey_to_rsa_pubkey(chunk_t rr, chunk_t *e, chunk_t 
 	/*
 	 * Does the exponent fall off the end of the resource record?
 	 */
-	uint8_t *const exponent_end = exponent.ptr + exponent.len;
+	const uint8_t *const exponent_end = exponent.ptr + exponent.len;
 	uint8_t *const rr_end = rr.ptr + rr.len;
 	if (exponent_end > rr_end) {
 		return "truncated RSA public key resource record exponent";
@@ -133,10 +127,7 @@ static err_t pubkey_dnssec_pubkey_to_rsa_pubkey(chunk_t rr, chunk_t *e, chunk_t 
 	/*
 	 * What is left over forms the modulus.
 	 */
-	chunk_t modulus = {
-		.ptr = exponent_end,
-		.len = rr_end - exponent_end,
-	};
+	shunk_t modulus = shunk2(exponent_end, rr_end - exponent_end);
 
 	if (modulus.len < RSA_MIN_OCTETS_RFC) {
 		return "RSA public key resource record modulus too short";
@@ -156,31 +147,74 @@ static err_t pubkey_dnssec_pubkey_to_rsa_pubkey(chunk_t rr, chunk_t *e, chunk_t 
 	return NULL;
 }
 
-static err_t RSA_dnssec_pubkey_to_pubkey_content(struct RSA_public_key *rsa,
+static err_t RSA_dnssec_pubkey_to_pubkey_content(struct RSA_public_key *rsak,
 						 keyid_t *keyid, ckaid_t *ckaid, size_t *size,
 						 chunk_t dnssec_pubkey)
 {
 	/* unpack */
-	chunk_t exponent;
-	chunk_t modulus;
+	shunk_t exponent;
+	shunk_t modulus;
 	err_t rrerr = pubkey_dnssec_pubkey_to_rsa_pubkey(dnssec_pubkey, &exponent, &modulus);
 	if (rrerr != NULL) {
 		return rrerr;
 	}
 
-	err_t ckerr = form_ckaid_rsa(modulus, ckaid);
+	/*
+	 * Allocate the public key, giving it its own arena.
+	 *
+	 * Since the arena contains everything allocated to the
+	 * seckey, error recovery just requires freeing that.
+	 */
+
+	PRArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
+	if (arena == NULL) {
+		return "allocating RSA arena";
+	}
+
+	SECKEYPublicKey *seckey = PORT_ArenaZNew(arena, SECKEYPublicKey);
+	if (seckey == NULL) {
+		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
+		return "allocating RSA SECKEYPublicKey";
+	}
+
+	seckey->arena = arena;
+	seckey->keyType = rsaKey;
+	seckey->pkcs11Slot = NULL;
+	seckey->pkcs11ID = CK_INVALID_HANDLE;
+	SECKEYRSAPublicKey *rsa = &seckey->u.rsa;
+
+	/*
+	 * Copy n and e to form the public key in the SECKEYPublicKey
+	 * data structure
+	 */
+
+	if (SECITEM_MakeItem(arena, &rsa->modulus, modulus.ptr, modulus.len) != SECSuccess) {
+		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
+		return "copying 'n' (modulus) to RSA SECKEYPublicKey";
+	}
+
+	if (SECITEM_MakeItem(arena, &rsa->publicExponent, exponent.ptr, exponent.len) != SECSuccess) {
+		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
+		return "copying 'e' (exponent) to RSA public key";
+	}
+
+	err_t ckerr = form_ckaid_rsa(same_secitem_as_chunk(rsa->modulus), ckaid);
 	if (ckerr != NULL) {
+		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
 		return ckerr;
 	}
 
 	err_t e = keyblob_to_keyid(dnssec_pubkey.ptr, dnssec_pubkey.len, keyid);
 	if (e != NULL) {
+		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
 		return e;
 	}
 
 	*size = modulus.len;
-	rsa->e = clone_hunk(exponent, "e");
-	rsa->n = clone_hunk(modulus, "n");
+	rsak->e = clone_hunk(exponent, "e");
+	rsak->n = clone_hunk(modulus, "n");
+	rsak->seckey_public = seckey;
+	dbg_alloc("rsa->seckey_public", rsak->seckey_public, HERE);
 
 	/* generate the CKAID */
 
@@ -188,8 +222,8 @@ static err_t RSA_dnssec_pubkey_to_pubkey_content(struct RSA_public_key *rsa,
 		/* pubkey information isn't DBG_PRIVATE */
 		DBG_log("keyid: *%s", str_keyid(*keyid));
 		DBG_log("  size: %zu", *size);
-		DBG_dump_hunk("  n", rsa->n);
-		DBG_dump_hunk("  e", rsa->e);
+		DBG_dump_hunk("  n", modulus);
+		DBG_dump_hunk("  e", exponent);
 		DBG_dump_hunk("  CKAID", *ckaid);
 	}
 
@@ -207,6 +241,9 @@ static void RSA_free_pubkey_content(struct RSA_public_key *rsa)
 {
 	free_chunk_content(&rsa->n);
 	free_chunk_content(&rsa->e);
+	SECKEY_DestroyPublicKey(rsa->seckey_public);
+	dbg_free("rsa->seckey_pubkey", rsa->seckey_public, HERE);
+	rsa->seckey_public = NULL;
 }
 
 static void free_pubkey_content(union pubkey_content *u)
@@ -219,6 +256,8 @@ static void RSA_extract_pubkey_content(struct RSA_public_key *pub,
 				       SECKEYPublicKey *pubk,
 				       SECItem *cert_ckaid)
 {
+	pub->seckey_public = SECKEY_CopyPublicKey(pubk);
+	dbg_alloc("rsa->seckey_public", pub->seckey_public, HERE);
 	pub->e = clone_bytes_as_chunk(pubk->u.rsa.publicExponent.data,
 				      pubk->u.rsa.publicExponent.len, "e");
 	pub->n = clone_bytes_as_chunk(pubk->u.rsa.modulus.data,
