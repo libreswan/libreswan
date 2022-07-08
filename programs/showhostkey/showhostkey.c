@@ -323,7 +323,7 @@ static int show_dnskey(struct private_key_stuff *pks,
 static int show_pem(struct private_key_stuff *pks)
 {
 	chunk_t der = empty_chunk; /* must free */
-	diag_t d = private_key_stuff_to_der(pks, &der);
+	diag_t d = private_key_stuff_to_pubkey_der(pks, &der);
 	if (d != NULL) {
 		fprintf(stderr, "%s: %s\n", progname, str_diag(d));
 		pfree_diag(&d);

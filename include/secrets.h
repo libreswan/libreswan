@@ -108,7 +108,7 @@ struct private_key_stuff {
 	ckaid_t ckaid;
 };
 
-diag_t private_key_stuff_to_der(struct private_key_stuff *pks, chunk_t *der);
+diag_t private_key_stuff_to_pubkey_der(struct private_key_stuff *pks, chunk_t *der);
 
 extern struct private_key_stuff *lsw_get_pks(struct secret *s);
 extern struct id_list *lsw_get_idlist(const struct secret *s);
