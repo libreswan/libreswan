@@ -94,10 +94,10 @@ static err_t ECDSA_dnssec_pubkey_to_pubkey_content(struct ECDSA_public_key *ecds
 		return "allocating ECDSA arena";
 	}
 
-	SECKEYPublicKey *seckey = (SECKEYPublicKey *) PORT_ArenaZAlloc(arena, sizeof(SECKEYPublicKey));
+	SECKEYPublicKey *seckey = PORT_ArenaZNew(arena, SECKEYPublicKey);
 	if (seckey == NULL) {
-		PORT_FreeArena(arena, /*zero?*/PR_FALSE);
-		return "allocating ECDSA pubkey arena";
+		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
+		return "allocating ECDSA SECKEYPublicKey";
 	}
 
 	seckey->arena = arena;
@@ -112,7 +112,7 @@ static err_t ECDSA_dnssec_pubkey_to_pubkey_content(struct ECDSA_public_key *ecds
 	 */
 
 	if (SECITEM_AllocItem(arena, &ec->publicValue, raw.len + 1) == NULL) {
-		PORT_FreeArena(arena, /*zero?*/PR_FALSE);
+		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
 		return "copying 'k' to EDSA public key";
 	}
 	ec->publicValue.data[0] = EC_POINT_FORM_UNCOMPRESSED;
@@ -126,13 +126,13 @@ static err_t ECDSA_dnssec_pubkey_to_pubkey_content(struct ECDSA_public_key *ecds
 	 */
 	const SECOidData *ec_oid = SECOID_FindOIDByTag(group->nss_oid); /*static*/
 	if (ec_oid == NULL) {
-		PORT_FreeArena(arena, /*zero?*/PR_FALSE);
+		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
 		return "lookup of EC OID failed";
 	}
 
 	if (SEC_ASN1EncodeItem(arena, &ec->DEREncodedParams,
 			       &ec_oid->oid, SEC_ObjectIDTemplate) == NULL) {
-		PORT_FreeArena(arena, /*zero?*/PR_FALSE);
+		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
 		return "ASN.1 encoding of EC OID failed";
 	}
 
@@ -144,7 +144,7 @@ static err_t ECDSA_dnssec_pubkey_to_pubkey_content(struct ECDSA_public_key *ecds
 	chunk_t pub = same_secitem_as_chunk(ec->publicValue);
 	e = form_ckaid_ecdsa(pub, ckaid);
 	if (e != NULL) {
-		PORT_FreeArena(arena, /*zero?*/PR_FALSE);
+		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
 		return e;
 	}
 
@@ -154,7 +154,7 @@ static err_t ECDSA_dnssec_pubkey_to_pubkey_content(struct ECDSA_public_key *ecds
 	 */
 	e = keyblob_to_keyid(ckaid->ptr, ckaid->len, keyid);
 	if (e != NULL) {
-		PORT_FreeArena(arena, /*zero?*/PR_FALSE);
+		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
 		return e;
 	}
 
