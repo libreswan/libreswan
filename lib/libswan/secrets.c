@@ -156,11 +156,11 @@ void form_keyid(chunk_t e, chunk_t n, keyid_t *keyid, size_t *keysize)
 	*keysize = n.len;
 }
 
-const struct pubkey_type *pubkey_alg_type(enum pubkey_alg alg)
+const struct pubkey_type *pubkey_alg_type(enum ipseckey_algorithm_type alg)
 {
 	static const struct pubkey_type *pubkey_types[] = {
-		[PUBKEY_ALG_RSA] = &pubkey_type_rsa,
-		[PUBKEY_ALG_ECDSA] = &pubkey_type_ecdsa,
+		[IPSECKEY_ALGORITHM_RSA] = &pubkey_type_rsa,
+		[IPSECKEY_ALGORITHM_ECDSA] = &pubkey_type_ecdsa,
 	};
 	passert(alg < elemsof(pubkey_types));
 	const struct pubkey_type *type = pubkey_types[alg];
@@ -168,21 +168,9 @@ const struct pubkey_type *pubkey_alg_type(enum pubkey_alg alg)
 	return type;
 }
 
-/*
- * XXX: Go for a simplicity - a switch is easier than adding to
- * pubkey_type - especially when the fields could end up moving to
- * struct pubkey proper (we can but dream).
- */
-
 const keyid_t *pubkey_keyid(const struct pubkey *pk)
 {
-	switch (pk->type->alg) {
-	case PUBKEY_ALG_RSA:
-	case PUBKEY_ALG_ECDSA:
-		return &pk->keyid;
-	default:
-		bad_case(pk->type->alg);
-	}
+	return &pk->keyid;
 }
 
 const ckaid_t *pubkey_ckaid(const struct pubkey *pk)
@@ -201,15 +189,9 @@ const ckaid_t *secret_ckaid(const struct secret *secret)
 
 const keyid_t *secret_keyid(const struct secret *secret)
 {
-
 	if (secret->pks.pubkey_type != NULL) {
-		switch (secret->pks.pubkey_type->alg) {
-		case PUBKEY_ALG_RSA:
-		case PUBKEY_ALG_ECDSA:
-			return &secret->pks.keyid;
-		default:
-			bad_case(secret->pks.pubkey_type->alg);
-		}
+		/* some sort of PKI */
+		return &secret->pks.keyid;
 	} else {
 		return NULL;
 	}
@@ -217,13 +199,7 @@ const keyid_t *secret_keyid(const struct secret *secret)
 
 unsigned pubkey_size(const struct pubkey *pk)
 {
-	switch (pk->type->alg) {
-	case PUBKEY_ALG_RSA:
-	case PUBKEY_ALG_ECDSA:
-		return pk->size;
-	default:
-		bad_case(pk->type->alg);
-	}
+	return pk->size;
 }
 
 struct secret *lsw_foreach_secret(struct secret *secrets,
@@ -1182,8 +1158,8 @@ err_t unpack_dnssec_pubkey(const struct id *id, /* ASKK */
 	keyid_t keyid;
 	ckaid_t ckaid;
 	size_t size;
-	err_t err = type->dnssec_pubkey_to_pubkey_content(dnssec_pubkey, &scratch_pkc,
-							  &keyid, &ckaid, &size);
+	err_t err = type->ipseckey_rdata_to_pubkey_content(dnssec_pubkey, &scratch_pkc,
+							   &keyid, &ckaid, &size);
 	if (err != NULL) {
 		return err;
 	}

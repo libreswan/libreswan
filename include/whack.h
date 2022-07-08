@@ -88,7 +88,7 @@ struct whack_end {
 	char *cert;
 	char *ckaid;
 	char *pubkey;
-	enum pubkey_alg pubkey_alg; /* 0 means PUBKEY is PEM */
+	enum ipseckey_algorithm_type pubkey_alg;
 
 	enum keyword_auth auth;
 
@@ -270,7 +270,7 @@ struct whack_message {
 	bool whack_key;
 	bool whack_addkey;
 	char *keyid;	/* string 8 */
-	enum pubkey_alg pubkey_alg;
+	enum ipseckey_algorithm_type pubkey_alg;
 	chunk_t keyval;	/* chunk */
 
 	/* for REMOTE_HOST */

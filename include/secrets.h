@@ -138,15 +138,15 @@ struct hash_signature {
 
 struct pubkey_type {
 	const char *name;
-	enum pubkey_alg alg;
 	enum private_key_kind private_key_kind;
 	void (*free_pubkey_content)(union pubkey_content *pkc);
-	/* to/from the blob in DNSKEY's Public Key field */
-	err_t (*dnssec_pubkey_to_pubkey_content)(chunk_t dnskey_pubkey,
-						 union pubkey_content *pkc,
-						 keyid_t *keyid, ckaid_t *ckaid, size_t *size);
-	err_t (*pubkey_content_to_dnssec_pubkey)(const union pubkey_content *pkc,
-						 chunk_t *dnssec_pubkey);
+	/* to/from the blob in DNS's IPSECKEY's Public Key field */
+	err_t (*ipseckey_rdata_to_pubkey_content)(chunk_t ipseckey_pubkey,
+						  union pubkey_content *pkc,
+						  keyid_t *keyid, ckaid_t *ckaid, size_t *size);
+	err_t (*pubkey_content_to_ipseckey_rdata)(const union pubkey_content *pkc,
+						  chunk_t *ipseckey_pubkey,
+						  enum ipseckey_algorithm_type *ipseckey_algorithm);
 	/* nss */
 	void (*extract_pubkey_content)(union pubkey_content *pkc,
 				       keyid_t *keyid, ckaid_t *ckaid, size_t *size,
@@ -190,7 +190,7 @@ extern const struct pubkey_signer pubkey_signer_pkcs1_1_5_rsa;
 extern const struct pubkey_signer pubkey_signer_rsassa_pss;
 extern const struct pubkey_signer pubkey_signer_ecdsa;
 
-const struct pubkey_type *pubkey_alg_type(enum pubkey_alg alg);
+const struct pubkey_type *pubkey_alg_type(enum ipseckey_algorithm_type alg);
 
 /* public key machinery */
 struct pubkey {

@@ -1332,7 +1332,7 @@ int main(int argc, char **argv)
 					 ugh);
 				diagq(ugh_space, optarg);
 			}
-			msg.pubkey_alg = PUBKEY_ALG_RSA;
+			msg.pubkey_alg = IPSECKEY_ALGORITHM_RSA;
 			msg.keyval.ptr = (unsigned char *)keyspace;
 		}
 			continue;
@@ -1358,7 +1358,7 @@ int main(int argc, char **argv)
 					 ugh);
 				diagq(ugh_space, optarg);
 			}
-			msg.pubkey_alg = PUBKEY_ALG_ECDSA;
+			msg.pubkey_alg = IPSECKEY_ALGORITHM_ECDSA;
 			msg.keyval.ptr = (unsigned char *)keyspace;
 		}
 			continue;

@@ -445,32 +445,30 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 			break;
 
 		case PUBKEY_PREEXCHANGED:
+		{
+			const char *name = (end->pubkey_alg == IPSECKEY_ALGORITHM_RSA ? "rsasigkey" :
+					    end->pubkey_alg == IPSECKEY_ALGORITHM_ECDSA ? "ecdsakey" :
+					    end->pubkey_alg == IPSECKEY_ALGORITHM_DSA ? "dsakey" :
+					    end->pubkey_alg == IPSECKEY_ALGORITHM_X_PUBKEY ? "pubkey" :
+					    NULL);
 			err = ttodatav(end->pubkey, 0, 0, keyspace,
 				sizeof(keyspace),
 				&msg.keyval.len,
 				err_buf, sizeof(err_buf), 0);
 			if (err) {
+				passert(name != NULL);
 				starter_log(LOG_LEVEL_ERR,
 					    "conn %s: %s%s malformed [%s]",
-					    connection_name(conn), lr,
-					    (end->pubkey_alg == PUBKEY_ALG_RSA ? "rsasigkey" :
-					     end->pubkey_alg == PUBKEY_ALG_ECDSA ? "ecdsakey" :
-					     end->pubkey_alg == PUBKEY_ALG_DSA ? "dsakey" :
-					     "pubkey"),
-					    err);
+					    connection_name(conn), lr, name, err);
 				return 1;
 			}
 
 			starter_log(LOG_LEVEL_DEBUG,
 				    "\tsending %s %s%s=%s",
-				    connection_name(conn), lr,
-				    (end->pubkey_alg == PUBKEY_ALG_RSA ? "rsasigkey" :
-				     end->pubkey_alg == PUBKEY_ALG_ECDSA ? "ecdsakey" :
-				     end->pubkey_alg == PUBKEY_ALG_DSA ? "dsakey" :
-				     "pubkey"),
-				    end->pubkey);
+				    connection_name(conn), lr, name, end->pubkey);
 			msg.keyval.ptr = (unsigned char *)keyspace;
 			ret = send_whack_msg(&msg, cfg->ctlsocket);
+		}
 		}
 	}
 

@@ -600,13 +600,13 @@ static bool validate_end(struct starter_conn *conn_st,
 	}
 
 	static const struct {
-		enum pubkey_alg alg;
+		enum ipseckey_algorithm_type alg;
 		enum keyword_string_conn_field kscf;
 		const char *name;
 	} keys[] = {
-		{ .alg = PUBKEY_ALG_RSA, KSCF_RSASIGKEY, "rsasigkey", },
-		{ .alg = PUBKEY_ALG_ECDSA, KSCF_ECDSAKEY, "ecdsakey", },
-		{ .alg = 0, KSCF_PUBKEY, "pubkey", },
+		{ .alg = IPSECKEY_ALGORITHM_RSA, KSCF_RSASIGKEY, "rsasigkey", },
+		{ .alg = IPSECKEY_ALGORITHM_ECDSA, KSCF_ECDSAKEY, "ecdsakey", },
+		{ .alg = IPSECKEY_ALGORITHM_X_PUBKEY, KSCF_PUBKEY, "pubkey", },
 	};
 
 	FOR_EACH_ELEMENT(key, keys) {

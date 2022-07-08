@@ -270,17 +270,20 @@ static char *base64_from_chunk(chunk_t chunk)
 	return base64;
 }
 
-static char *base64_dnssec_pubkey_from_pks(struct private_key_stuff *pks)
+static char *base64_dnssec_pubkey_from_pks(struct private_key_stuff *pks,
+					   enum ipseckey_algorithm_type *ipseckey_algorithm)
 {
-	chunk_t chunk = empty_chunk; /* must free */
-	err_t e = pks->pubkey_type->pubkey_content_to_dnssec_pubkey(&pks->u.pubkey, &chunk);
+	chunk_t ipseckey_pubkey = empty_chunk; /* must free */
+	err_t e = pks->pubkey_type->pubkey_content_to_ipseckey_rdata(&pks->u.pubkey,
+								     &ipseckey_pubkey,
+								     ipseckey_algorithm);
 	if (e != NULL) {
 		fprintf(stderr, "%s: %s\n", progname, e);
 		return NULL;
 	}
 
-	char *base64 = base64_from_chunk(chunk);
-	free_chunk_content(&chunk);
+	char *base64 = base64_from_chunk(ipseckey_pubkey);
+	free_chunk_content(&ipseckey_pubkey);
 	return base64;
 }
 
@@ -293,7 +296,8 @@ static int show_dnskey(struct private_key_stuff *pks,
 
 	gethostname(qname, sizeof(qname));
 
-	char *base64 = base64_dnssec_pubkey_from_pks(pks);
+	enum ipseckey_algorithm_type ipseckey_algorithm = 0;
+	char *base64 = base64_dnssec_pubkey_from_pks(pks, &ipseckey_algorithm);
 	if (base64 == NULL) {
 		return 5;
 	}
@@ -313,8 +317,7 @@ static int show_dnskey(struct private_key_stuff *pks,
 	}
 
 	printf("%s.    IN    IPSECKEY  %d %d %d %s %s\n",
-	       qname, precedence, gateway_type,
-	       pks->pubkey_type->alg,
+	       qname, precedence, gateway_type, ipseckey_algorithm,
 	       (gateway == NULL) ? "." : gateway, base64);
 	pfree(base64);
 	return 0;
@@ -367,7 +370,8 @@ static int show_confkey(struct private_key_stuff *pks,
 		return 5;
 	}
 
-	char *base64 = base64_dnssec_pubkey_from_pks(pks);
+	enum ipseckey_algorithm_type ipseckey_algorithm;
+	char *base64 = base64_dnssec_pubkey_from_pks(pks, &ipseckey_algorithm);
 	if (base64 == NULL) {
 		return 5;
 	}

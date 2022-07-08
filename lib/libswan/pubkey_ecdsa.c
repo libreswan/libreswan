@@ -44,9 +44,9 @@
 #include "ike_alg_dh.h"		/* for OID and size of EC algorithms */
 #include "refcnt.h"		/* for dbg_{alloc,free}() */
 
-static err_t ECDSA_dnssec_pubkey_to_pubkey_content(struct ECDSA_public_key *ecdsa,
-						   keyid_t *keyid, ckaid_t *ckaid, size_t *size,
-						   const chunk_t dnssec_pubkey)
+static err_t ECDSA_ipseckey_rdata_to_pubkey_content(struct ECDSA_public_key *ecdsa,
+						    keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+						    const chunk_t ipseckey_pubkey)
 {
 	err_t e;
 
@@ -57,24 +57,24 @@ static err_t ECDSA_dnssec_pubkey_to_pubkey_content(struct ECDSA_public_key *ecds
 	};
 
 	/*
-	 * The raw DNSSEC_PUBKEY, fed to us by a user, could include
+	 * The raw IPSECKEY_PUBKEY, fed to us by a user, could include
 	 * the EC_POINT_FORM_UNCOMPRESSED prefix.  Strip that off.
 	 */
 
 	const struct dh_desc *group = NULL;
 	shunk_t raw = {0};
 	FOR_EACH_ELEMENT(e, dh) {
-		if (dnssec_pubkey.len == (*e)->bytes) {
+		if (ipseckey_pubkey.len == (*e)->bytes) {
 			group = (*e);
-			raw = HUNK_AS_SHUNK(dnssec_pubkey);
+			raw = HUNK_AS_SHUNK(ipseckey_pubkey);
 			break;
 		}
 		if (group->nss_adds_ec_point_form_uncompressed &&
-		    dnssec_pubkey.len == (*e)->bytes + 1 &&
-		    dnssec_pubkey.ptr[0] == EC_POINT_FORM_UNCOMPRESSED) {
+		    ipseckey_pubkey.len == (*e)->bytes + 1 &&
+		    ipseckey_pubkey.ptr[0] == EC_POINT_FORM_UNCOMPRESSED) {
 			group = (*e);
 			/* ignore prefix */
-			raw = shunk2(dnssec_pubkey.ptr + 1, dnssec_pubkey.len - 1);
+			raw = shunk2(ipseckey_pubkey.ptr + 1, ipseckey_pubkey.len - 1);
 			break;
 		}
 	}
@@ -175,27 +175,30 @@ static err_t ECDSA_dnssec_pubkey_to_pubkey_content(struct ECDSA_public_key *ecds
        return NULL;
 }
 
-static err_t dnssec_pubkey_to_pubkey_content(chunk_t dnssec_pubkey,
-						   union pubkey_content *u,
-						   keyid_t *keyid, ckaid_t *ckaid, size_t *size)
+static err_t ipseckey_rdata_to_pubkey_content(chunk_t ipseckey_pubkey,
+					      union pubkey_content *u,
+					      keyid_t *keyid, ckaid_t *ckaid, size_t *size)
 {
-	return ECDSA_dnssec_pubkey_to_pubkey_content(&u->ecdsa, keyid, ckaid, size, dnssec_pubkey);
+	return ECDSA_ipseckey_rdata_to_pubkey_content(&u->ecdsa, keyid, ckaid, size, ipseckey_pubkey);
 }
 
-static err_t ECDSA_pubkey_content_to_dnssec_pubkey(const struct ECDSA_public_key *ecdsa,
-						   chunk_t *dnssec_pubkey)
+static err_t ECDSA_pubkey_content_to_ipseckey_rdata(const struct ECDSA_public_key *ecdsa,
+						    chunk_t *ipseckey_pubkey,
+						    enum ipseckey_algorithm_type *ipseckey_algorithm)
 {
 	const SECKEYECPublicKey *ec = &ecdsa->seckey_public->u.ec;
 	passert((ec->publicValue.len & 1) == 1);
 	passert(ec->publicValue.data[0] == EC_POINT_FORM_UNCOMPRESSED);
-	*dnssec_pubkey = clone_bytes_as_chunk(ec->publicValue.data + 1, ec->publicValue.len - 1, "EC POINTS (even)");
+	*ipseckey_pubkey = clone_bytes_as_chunk(ec->publicValue.data + 1, ec->publicValue.len - 1, "EC POINTS (even)");
+	*ipseckey_algorithm = IPSECKEY_ALGORITHM_ECDSA;
 	return NULL;
 }
 
-static err_t pubkey_content_to_dnssec_pubkey(const union pubkey_content *u,
-					     chunk_t *dnssec_pubkey)
+static err_t pubkey_content_to_ipseckey_rdata(const union pubkey_content *u,
+					      chunk_t *ipseckey_pubkey,
+					      enum ipseckey_algorithm_type *ipseckey_algorithm)
 {
-	return ECDSA_pubkey_content_to_dnssec_pubkey(&u->ecdsa, dnssec_pubkey);
+	return ECDSA_pubkey_content_to_ipseckey_rdata(&u->ecdsa, ipseckey_pubkey, ipseckey_algorithm);
 }
 
 static void ECDSA_free_pubkey_content(struct ECDSA_public_key *ecdsa)
@@ -269,11 +272,10 @@ static err_t ECDSA_secret_sane(struct private_key_stuff *pks_unused UNUSED)
 }
 
 const struct pubkey_type pubkey_type_ecdsa = {
-	.alg = PUBKEY_ALG_ECDSA,
 	.name = "ECDSA",
 	.private_key_kind = PKK_ECDSA,
-	.dnssec_pubkey_to_pubkey_content = dnssec_pubkey_to_pubkey_content,
-	.pubkey_content_to_dnssec_pubkey = pubkey_content_to_dnssec_pubkey,
+	.ipseckey_rdata_to_pubkey_content = ipseckey_rdata_to_pubkey_content,
+	.pubkey_content_to_ipseckey_rdata = pubkey_content_to_ipseckey_rdata,
 	.free_pubkey_content = free_pubkey_content,
 	.extract_private_key_pubkey_content = ECDSA_extract_private_key_pubkey_content,
 	.free_secret_content = ECDSA_free_secret_content,

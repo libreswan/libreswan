@@ -38,11 +38,14 @@
  * Deal with RFC Resource Records as defined in rfc3110 (nee rfc2537).
  */
 
-static err_t RSA_pubkey_content_to_dnssec_pubkey(SECKEYRSAPublicKey *rsa, chunk_t *dnssec_pubkey)
+static err_t RSA_pubkey_content_to_ipseckey_rdata(SECKEYRSAPublicKey *rsa,
+						  chunk_t *ipseckey_pubkey,
+						  enum ipseckey_algorithm_type *ipseckey_algorithm)
 {
 	chunk_t exponent = same_secitem_as_chunk(rsa->publicExponent);
 	chunk_t modulus = same_secitem_as_chunk(rsa->modulus);
-	*dnssec_pubkey = EMPTY_CHUNK;
+	*ipseckey_pubkey = EMPTY_CHUNK;
+	*ipseckey_algorithm = 0;
 
 	/*
 	 * Since exponent length field is either 1 or 3 bytes in size,
@@ -68,7 +71,8 @@ static err_t RSA_pubkey_content_to_dnssec_pubkey(SECKEYRSAPublicKey *rsa, chunk_
 	memcpy(p, modulus.ptr, modulus.len);
 	p += modulus.len;
 
-	*dnssec_pubkey = (chunk_t) {
+	*ipseckey_algorithm = IPSECKEY_ALGORITHM_RSA;
+	*ipseckey_pubkey = (chunk_t) {
 		.ptr = buf,
 		.len = p - buf,
 	};
@@ -76,9 +80,12 @@ static err_t RSA_pubkey_content_to_dnssec_pubkey(SECKEYRSAPublicKey *rsa, chunk_
 	return NULL;
 }
 
-static err_t pubkey_content_to_dnssec_pubkey(const union pubkey_content *pkc, chunk_t *dnssec_pubkey)
+static err_t pubkey_content_to_ipseckey_rdata(const union pubkey_content *pkc,
+					      chunk_t *ipseckey_pubkey,
+					      enum ipseckey_algorithm_type *ipseckey_algorithm)
 {
-	return RSA_pubkey_content_to_dnssec_pubkey(&pkc->rsa.seckey_public->u.rsa, dnssec_pubkey);
+	return RSA_pubkey_content_to_ipseckey_rdata(&pkc->rsa.seckey_public->u.rsa,
+						    ipseckey_pubkey, ipseckey_algorithm);
 }
 
 /*
@@ -86,7 +93,7 @@ static err_t pubkey_content_to_dnssec_pubkey(const union pubkey_content *pkc, ch
  *
  * See https://www.rfc-editor.org/rfc/rfc3110#section-2
  */
-static err_t pubkey_dnssec_pubkey_to_rsa_pubkey(chunk_t rr, shunk_t *e, shunk_t *n)
+static err_t pubkey_ipseckey_rdata_to_rsa_pubkey(chunk_t rr, shunk_t *e, shunk_t *n)
 {
 	*e = null_shunk;
 	*n = null_shunk;
@@ -147,14 +154,14 @@ static err_t pubkey_dnssec_pubkey_to_rsa_pubkey(chunk_t rr, shunk_t *e, shunk_t 
 	return NULL;
 }
 
-static err_t RSA_dnssec_pubkey_to_pubkey_content(struct RSA_public_key *rsak,
-						 keyid_t *keyid, ckaid_t *ckaid, size_t *size,
-						 chunk_t dnssec_pubkey)
+static err_t RSA_ipseckey_rdata_to_pubkey_content(struct RSA_public_key *rsak,
+						  keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+						  chunk_t ipseckey_pubkey)
 {
 	/* unpack */
 	shunk_t exponent;
 	shunk_t modulus;
-	err_t rrerr = pubkey_dnssec_pubkey_to_rsa_pubkey(dnssec_pubkey, &exponent, &modulus);
+	err_t rrerr = pubkey_ipseckey_rdata_to_rsa_pubkey(ipseckey_pubkey, &exponent, &modulus);
 	if (rrerr != NULL) {
 		return rrerr;
 	}
@@ -204,7 +211,7 @@ static err_t RSA_dnssec_pubkey_to_pubkey_content(struct RSA_public_key *rsak,
 		return ckerr;
 	}
 
-	err_t e = keyblob_to_keyid(dnssec_pubkey.ptr, dnssec_pubkey.len, keyid);
+	err_t e = keyblob_to_keyid(ipseckey_pubkey.ptr, ipseckey_pubkey.len, keyid);
 	if (e != NULL) {
 		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
 		return e;
@@ -228,11 +235,11 @@ static err_t RSA_dnssec_pubkey_to_pubkey_content(struct RSA_public_key *rsak,
 	return NULL;
 }
 
-static err_t dnssec_pubkey_to_pubkey_content(chunk_t dnssec_pubkey,
-					     union pubkey_content *u,
-					     keyid_t *keyid, ckaid_t *ckaid, size_t *size)
+static err_t ipseckey_rdata_to_pubkey_content(chunk_t ipseckey_pubkey,
+					      union pubkey_content *u,
+					      keyid_t *keyid, ckaid_t *ckaid, size_t *size)
 {
-	return RSA_dnssec_pubkey_to_pubkey_content(&u->rsa, keyid, ckaid, size, dnssec_pubkey);
+	return RSA_ipseckey_rdata_to_pubkey_content(&u->rsa, keyid, ckaid, size, ipseckey_pubkey);
 }
 
 static void RSA_free_pubkey_content(struct RSA_public_key *rsa)
@@ -303,12 +310,11 @@ static err_t RSA_secret_sane(struct private_key_stuff *pks)
 }
 
 const struct pubkey_type pubkey_type_rsa = {
-	.alg = PUBKEY_ALG_RSA,
 	.name = "RSA",
 	.private_key_kind = PKK_RSA,
 	.free_pubkey_content = free_pubkey_content,
-	.dnssec_pubkey_to_pubkey_content = dnssec_pubkey_to_pubkey_content,
-	.pubkey_content_to_dnssec_pubkey = pubkey_content_to_dnssec_pubkey,
+	.ipseckey_rdata_to_pubkey_content = ipseckey_rdata_to_pubkey_content,
+	.pubkey_content_to_ipseckey_rdata = pubkey_content_to_ipseckey_rdata,
 	.extract_pubkey_content = extract_pubkey_content,
 	.extract_private_key_pubkey_content = RSA_extract_private_key_pubkey_content,
 	.free_secret_content = RSA_free_secret_content,

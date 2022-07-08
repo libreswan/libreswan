@@ -944,9 +944,9 @@ static int extract_end(struct connection *c,
 			llog(RC_LOG, logger,
 			     "warning: ignoring %s %s '%s' and using %s certificate '%s'",
 			     leftright,
-			     (src->pubkey_alg == PUBKEY_ALG_RSA ? "rsasigkey" :
-			      src->pubkey_alg == PUBKEY_ALG_ECDSA ? "ecdsakey" :
-			      src->pubkey_alg == PUBKEY_ALG_DSA ? "dsakey" :
+			     (src->pubkey_alg == IPSECKEY_ALGORITHM_RSA ? "rsasigkey" :
+			      src->pubkey_alg == IPSECKEY_ALGORITHM_ECDSA ? "ecdsakey" :
+			      src->pubkey_alg == IPSECKEY_ALGORITHM_DSA ? "dsakey" :
 			      src->pubkey_alg == 0 ? "pubkey" :
 			      "???"),
 			     src->pubkey,
@@ -973,9 +973,9 @@ static int extract_end(struct connection *c,
 			llog(RC_LOG, logger,
 			     "warning: ignoring %s ckaid '%s' and using %s %s",
 			     leftright, src->ckaid, leftright,
-			     (src->pubkey_alg == PUBKEY_ALG_RSA ? "rsasigkey" :
-			      src->pubkey_alg == PUBKEY_ALG_ECDSA ? "ecdsakey" :
-			      src->pubkey_alg == PUBKEY_ALG_DSA ? "dsakey" :
+			     (src->pubkey_alg == IPSECKEY_ALGORITHM_RSA ? "rsasigkey" :
+			      src->pubkey_alg == IPSECKEY_ALGORITHM_ECDSA ? "ecdsakey" :
+			      src->pubkey_alg == IPSECKEY_ALGORITHM_DSA ? "dsakey" :
 			      src->pubkey_alg == 0 ? "pubkey" :
 			      "???"));
 		}
@@ -995,9 +995,9 @@ static int extract_end(struct connection *c,
 			llog(RC_FATAL, logger,
 			     "failed to add connection: %s %s raw public key invalid: %s",
 			     leftright,
-			     (src->pubkey_alg == PUBKEY_ALG_RSA ? "rsasigkey" :
-			      src->pubkey_alg == PUBKEY_ALG_ECDSA ? "ecdsakey" :
-			      src->pubkey_alg == PUBKEY_ALG_DSA ? "dsakey" :
+			     (src->pubkey_alg == IPSECKEY_ALGORITHM_RSA ? "rsasigkey" :
+			      src->pubkey_alg == IPSECKEY_ALGORITHM_ECDSA ? "ecdsakey" :
+			      src->pubkey_alg == IPSECKEY_ALGORITHM_DSA ? "dsakey" :
 			      src->pubkey_alg == 0 ? "pubkey" :
 			      "???"), err);
 			return -1;
@@ -1008,23 +1008,23 @@ static int extract_end(struct connection *c,
 		ckaid_t ckaid;
 		size_t size;
 		const struct pubkey_type *type =
-			(src->pubkey_alg == PUBKEY_ALG_RSA ? &pubkey_type_rsa :
-			 src->pubkey_alg == PUBKEY_ALG_ECDSA ? &pubkey_type_ecdsa :
+			(src->pubkey_alg == IPSECKEY_ALGORITHM_RSA ? &pubkey_type_rsa :
+			 src->pubkey_alg == IPSECKEY_ALGORITHM_ECDSA ? &pubkey_type_ecdsa :
 			 NULL);
 		if (type == NULL) {
 			llog(RC_FATAL, logger,
 			     "failed to add connection: %s %s raw public key unsupported",
 			     leftright,
-			     (src->pubkey_alg == PUBKEY_ALG_RSA ? "rsasigkey" :
-			      src->pubkey_alg == PUBKEY_ALG_ECDSA ? "ecdsakey" :
-			      src->pubkey_alg == PUBKEY_ALG_DSA ? "dsakey" :
+			     (src->pubkey_alg == IPSECKEY_ALGORITHM_RSA ? "rsasigkey" :
+			      src->pubkey_alg == IPSECKEY_ALGORITHM_ECDSA ? "ecdsakey" :
+			      src->pubkey_alg == IPSECKEY_ALGORITHM_DSA ? "dsakey" :
 			      src->pubkey_alg == 0 ? "pubkey" :
 			      "???"));
 			return -1;
 		}
 
-		err = type->dnssec_pubkey_to_pubkey_content(chunk2(keyspace, keylen),
-							    &pkc, &pubkey, &ckaid, &size);
+		err = type->ipseckey_rdata_to_pubkey_content(chunk2(keyspace, keylen),
+							     &pkc, &pubkey, &ckaid, &size);
 		if (err != NULL) {
 			llog(RC_FATAL, logger,
 				    "failed to add connection: %s raw public key invalid: %s",

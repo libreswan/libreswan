@@ -1675,11 +1675,14 @@ enum gw_identity_type {
 #define MAX_REDIRECTS 5
 #define REDIRECT_LOOP_DETECT_PERIOD 300
 
-/* Public key algorithm number in IPSECKEY DNS RR. See RFC 4025 2.4 */
-enum pubkey_alg {
-	PUBKEY_ALG_DSA = 1,
-	PUBKEY_ALG_RSA = 2,
-	PUBKEY_ALG_ECDSA = 3,
+/*
+ * Public key algorithm number in IPSECKEY DNS RR. See RFC 4025 2.4.
+ */
+enum ipseckey_algorithm_type {
+	IPSECKEY_ALGORITHM_DSA = 1,
+	IPSECKEY_ALGORITHM_RSA = 2,
+	IPSECKEY_ALGORITHM_ECDSA = 3,
+	IPSECKEY_ALGORITHM_X_PUBKEY = 4, /* Subject Public Key Info - guess */
 };
 
 /*
