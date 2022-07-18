@@ -2,6 +2,7 @@ BSD_VARIANT=freebsd
 # sketch out pkgsrc
 PKG_BASE ?= /usr/local
 
+# See: https://github.com/llvm/llvm-project/issues/55963
 # See: https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=264288
 # See: https://github.com/libreswan/libreswan/issues/735
 CC=gcc
