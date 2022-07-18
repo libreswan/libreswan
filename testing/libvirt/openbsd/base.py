@@ -31,21 +31,26 @@ print("pooldir", pooldir)
 print("command", command)
 
 def es(child,expect,send,t=60):
-	try:
-		child.expect(expect,timeout=t)
-		child.send(send+'\n')
-	except:
-		print("==> Error Executing "+send+" Command <==")
-		print("==> Error <==\n"+child.before+"\n ==========")
+    try:
+        print("expecting", expect);
+        child.expect(expect,timeout=t)
+        print("sending", send);
+        child.send(send+'\n')
+    except:
+        print("==> Error Executing "+send+" Command <==")
+        print("==> Error <==\n"+child.before+"\n ==========")
+        sys.exit(1)
 
+print("creating domain")
 try:
     child = pexpect.spawn(command[0], command[1:], logfile=sys.stdout.buffer, echo=False)
-    child.expect('boot>')
 except:
-    print("==> Error Creating the OpenBSD-base machine <==")
-    print(child.before)
-    print('==> Exiting the program...!')
-    sys.exit(0)
+    print("==> Error spawning OpenBSD-base machine <==")
+    print(command)
+    sys.exit(1)
+
+print("waiting for boot");
+child.expect('boot>', timeout=180)
 
 #sleep for 10 seconds so that all those initial boot log loads
 time.sleep(10)
@@ -65,8 +70,10 @@ es(child,'# ','umount /mnt')
 #Installing by taking answers from install.conf file
 es(child,'# ','install -af /base.conf')
 #This is to check if all the installation files got copied(it's slow on some systems)
-while(child.expect([".*install has been successfully completed!", pexpect.EOF, pexpect.TIMEOUT],timeout=10)!=0):
-        continue
+while child.expect([".*install has been successfully completed!",
+            pexpect.EOF,
+            pexpect.TIMEOUT], timeout=10) != 0:
+    continue
 
 # customize the install
 es(child,'# ','/bin/sh -x /base.sh')
