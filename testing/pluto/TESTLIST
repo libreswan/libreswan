@@ -1318,9 +1318,6 @@ kvmplutotest	ikev2-crossing-streams-01		wip	github:557
 kvmplutotest	ikev2-crossing-streams-02		good
 kvmplutotest	ikev2-crossing-streams-03-iface		wip	github:557
 
-# uses bsdkame; reference test
-kvmplutotest	bsdkame-initiator-tunnel-esp-ikev2		netbsd
-
 # uses the kernel-pfkeyv2.c code
 
 kvmplutotest	pfkeyv2-transport-ipv4-ah-ipcomp-ikev2	netbsd
