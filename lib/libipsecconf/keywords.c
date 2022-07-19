@@ -136,7 +136,7 @@ static const struct sparse_name kw_ddos_list[] = {
 	SPARSE_NULL
 };
 
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 static const struct sparse_name kw_seccomp_list[] = {
 	{ "enabled", SECCOMP_ENABLED },
 	{ "disabled", SECCOMP_DISABLED },
@@ -383,7 +383,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "ocsp-method",  kv_config | kv_processed,  kt_enum,  KBF_OCSP_METHOD,  kw_ocsp_method_list, NULL, },
 
   { "ddos-mode",  kv_config | kv_processed ,  kt_enum,  KBF_DDOS_MODE,  kw_ddos_list, NULL, },
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
   { "seccomp",  kv_config | kv_processed ,  kt_enum,  KBF_SECCOMP,  kw_seccomp_list, NULL, },
 #endif
   { "ddos-ike-threshold",  kv_config,  kt_number,  KBF_DDOS_IKE_THRESHOLD, NULL, NULL, },

@@ -206,7 +206,7 @@ static void help(void)
 		"\n"
 		"refresh dns: whack --ddns\n"
 		"\n"
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 		"testing: whack --seccomp-crashtest (CAREFUL!)\n"
 		"\n"
 #endif
@@ -341,7 +341,7 @@ enum option_enums {
 	OPT_BRIEF_STATUS,
 	OPT_PROCESS_STATUS,
 
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 	OPT_SECCOMP_CRASHTEST,
 #endif
 
@@ -626,7 +626,7 @@ static const struct option long_opts[] = {
 	{ "briefstatus", no_argument, NULL, OPT_BRIEF_STATUS + OO },
 	{ "processstatus", no_argument, NULL, OPT_PROCESS_STATUS + OO },
 	{ "showstates", no_argument, NULL, OPT_SHOW_STATES + OO },
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 	{ "seccomp-crashtest", no_argument, NULL, OPT_SECCOMP_CRASHTEST + OO },
 #endif
 	{ "shutdown", no_argument, NULL, OPT_SHUTDOWN + OO },
@@ -1527,7 +1527,7 @@ int main(int argc, char **argv)
 			msg.whack_show_states = true;
 			ignore_errors = true;
 			continue;
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 		case OPT_SECCOMP_CRASHTEST:	/* --seccomp-crashtest */
 			msg.whack_seccomp_crashtest = true;
 			continue;

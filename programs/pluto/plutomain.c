@@ -91,7 +91,7 @@
 #include "dnssec.h"
 #endif
 
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 #include "pluto_seccomp.h"
 #endif
 
@@ -218,7 +218,7 @@ static const char compile_time_interop_options[] = ""
 	" LABELED_IPSEC"
 	" (SELINUX)"
 #endif
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 	" SECCOMP"
 #endif
 #ifdef HAVE_LIBCAP_NG
@@ -544,7 +544,7 @@ static const struct option long_opts[] = {
 	{ "ikev1-secctx-attr-type\0<number>", required_argument, NULL, 'w' },
 	{ "ikev1-reject\0", no_argument, NULL, 'k' },
 	{ "ikev1-drop\0", no_argument, NULL, 'l' },
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 	{ "seccomp-enabled\0", no_argument, NULL, '3' },
 	{ "seccomp-tolerant\0", no_argument, NULL, '4' },
 #endif
@@ -966,7 +966,7 @@ int main(int argc, char **argv)
 			pluto_ddos_mode = DDOS_FORCE_UNLIMITED;
 			continue;
 
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 		case '3':	/* --seccomp-enabled */
 			pluto_seccomp_mode = SECCOMP_ENABLED;
 			continue;
@@ -1226,7 +1226,7 @@ int main(int argc, char **argv)
 				pluto_ikev1_pol = GLOBAL_IKEv1_DROP;
 			}
 #endif
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 			pluto_seccomp_mode = cfg->setup.options[KBF_SECCOMP];
 #endif
 			if (cfg->setup.options[KBF_FORCEBUSY]) {

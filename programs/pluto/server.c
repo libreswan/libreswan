@@ -83,7 +83,7 @@
 
 #include "lswfips.h"
 
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 # include "pluto_seccomp.h"
 #endif
 
@@ -189,7 +189,7 @@ enum global_ikev1_policy pluto_ikev1_pol =
 	GLOBAL_IKEv1_DROP;
 #endif
 
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 enum seccomp_mode pluto_seccomp_mode = SECCOMP_DISABLED;
 #endif
 unsigned int pluto_max_halfopen = DEFAULT_MAXIMUM_HALFOPEN_IKE_SA;
@@ -411,7 +411,7 @@ struct signal_handler {
 
 static signal_handler_cb termhandler_cb;
 static signal_handler_cb huphandler_cb;
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 static signal_handler_cb syshandler_cb;
 #endif
 
@@ -419,7 +419,7 @@ static struct signal_handler signal_handlers[] = {
 	{ .signal = SIGCHLD, .cb = server_fork_sigchld_handler, .persist = true, .name = "PLUTO_SIGCHLD", },
 	{ .signal = SIGTERM, .cb = termhandler_cb, .persist = false, .name = "PLUTO_SIGTERM", },
 	{ .signal = SIGHUP, .cb = huphandler_cb, .persist = true, .name = "PLUTO_SIGHUP", },
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 	{ .signal = SIGSYS, .cb = syshandler_cb, .persist = true, .name = "PLUTO_SIGSYS", },
 #endif
 };
@@ -931,7 +931,7 @@ static void termhandler_cb(struct logger *logger)
 	shutdown_pluto(logger, PLUTO_EXIT_OK);
 }
 
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 static void syshandler_cb(struct logger *logger)
 {
 	llog(RC_LOG_SERIOUS, logger, "pluto received SIGSYS - possible SECCOMP violation!");
@@ -1058,7 +1058,7 @@ void run_server(char *conffile, struct logger *logger)
 
 	/* parent continues */
 
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 	init_seccomp_main(logger);
 #else
 	llog(RC_LOG, logger, "seccomp security not supported");

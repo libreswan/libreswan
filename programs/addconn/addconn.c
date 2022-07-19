@@ -39,7 +39,7 @@
 # include "dnssec.h"
 #endif
 
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 #include "lswseccomp.h"
 #endif
 
@@ -71,7 +71,7 @@ static void resolve_default_routes(struct starter_conn *conn UNUSED, struct logg
 	resolve_default_route(&conn->right, &conn->left, verbose_rc_flags, logger);
 }
 
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 static void init_seccomp_addconn(uint32_t def_action, struct logger *logger)
 {
 	scmp_filter_ctx ctx = seccomp_init(def_action);
@@ -375,7 +375,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 	switch (cfg->setup.options[KBF_SECCOMP]) {
 		case SECCOMP_ENABLED:
 			init_seccomp_addconn(SCMP_ACT_KILL, logger);

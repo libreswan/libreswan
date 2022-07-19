@@ -43,7 +43,7 @@
 #include "kernel_xfrm_interface.h"
 #include "iface.h"
 #include "show.h"
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 #include "pluto_seccomp.h"
 #endif
 
@@ -180,7 +180,7 @@ static void show_system_security(struct show *s)
 	show_comment(s, "fips mode=%s;", fips ? "enabled" : "disabled");
 	show_comment(s, "SElinux=%s",
 		selinux == 0 ? "disabled" : selinux == 1 ? "enabled" : "indeterminate");
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 	show_comment(s, "seccomp=%s",
 		     pluto_seccomp_mode == SECCOMP_ENABLED ? "enabled" :
 		     pluto_seccomp_mode == SECCOMP_TOLERANT ? "tolerant" : "disabled");

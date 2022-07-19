@@ -77,7 +77,7 @@
 #include "iface.h"
 #include "show.h"
 #include "impair_message.h"
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 #include "pluto_seccomp.h"
 #endif
 #include "server_fork.h"		/* for show_process_status() */
@@ -916,7 +916,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "stop: showstates");
 	}
 
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 	if (m->whack_seccomp_crashtest) {
 		dbg_whack(s, "start: seccomp_crashtest");
 		/*

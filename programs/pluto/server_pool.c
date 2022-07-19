@@ -42,7 +42,7 @@
 #include "list_entry.h"
 #include "pluto_timing.h"
 
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 # include "pluto_seccomp.h"
 #endif
 
@@ -195,7 +195,7 @@ static void *helper_thread(void *arg)
 	const struct helper_thread *w = arg;
 	ldbg(w->logger, "starting thread");
 
-#ifdef HAVE_SECCOMP
+#ifdef USE_SECCOMP
 	init_seccomp_cryptohelper(w->helper_id, w->logger);
 #else
 	llog(RC_LOG, w->logger, "seccomp security for helper not supported");
