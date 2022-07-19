@@ -30,9 +30,6 @@ USE_DNSSEC = false
 
 INITSYSTEM=rc.d
 
-HAVE_IPTABLES = false
-HAVE_NFTABLES = false
-
 # not /run/pluto
 FINALRUNDIR=/var/run/pluto
 

@@ -22,9 +22,6 @@ USE_LIBCAP_NG = false
 
 INITSYSTEM=rc.d
 
-HAVE_IPTABLES = false
-HAVE_NFTABLES = false
-
 USE_DNSSEC = true
 DEFAULT_DNSSEC_ROOTKEY_FILE = /usr/pkg/etc/unbound/root.key
 

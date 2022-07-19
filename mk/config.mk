@@ -19,6 +19,20 @@
 ifndef config.mk
 config.mk = true
 
+#
+# Configuration options.
+#
+# Sometimes the make variable is called USE_<feature> and the C macro
+# is called HAVE_<feature>, but not always.
+#
+# USE_  assume a package and enable corresponding feature
+#
+#       For instance USE_SECCOMP assumes the seccomp library and
+#       enables the seccomp code.
+#
+# HAVE_ variables let you tell Libreswan what system related libraries
+#       you may or maynot have
+
 # A Makefile wanting to test variables defined below has two choides:
 #
 # - include config.mk early and use GNU-make's 'ifeq' statement
@@ -268,11 +282,6 @@ INITDDIR ?= $(DESTDIR)$(FINALINITDDIR)
 # PYTHON_BINARY is used for python scripts shebang
 PYTHON_BINARY ?= /usr/bin/python3
 
-# iptables for CAT, or NFLOG, look, barf, verify
-HAVE_IPTABLES ?= true
-# nft nflog-all(nflog not yet), look, barf, verfiy
-HAVE_NFTABLES ?= false
-
 # SHELL_BINARY is used for sh scripts shebang
 SHELL_BINARY ?= /bin/sh
 
@@ -370,13 +379,6 @@ ASAN ?=
 
 # look for POD2MAN command
 POD2MAN ?= $(shell which pod2man | grep / | head -n1)
-
-## build environment variations
-#
-# USE_ variables determine if features are compiled into Libreswan.
-#       these let you turn on/off specific features
-# HAVE_ variables let you tell Libreswan what system related libraries
-#       you may or maynot have
 
 # Enable or disable support for IKEv1. When disabled, the ike-policy= value
 # will be ignored and all IKEv1 packets will be dropped.
@@ -547,13 +549,6 @@ ifeq ($(USE_EFENCE),true)
 USERLAND_CFLAGS += -DUSE_EFENCE
 USERLAND_LDFLAGS += -lefence
 endif
-
-#
-# Configuration options.
-#
-# Sometimes the make variable is called USE_<feature> and the C macro
-# is called HAVE_<feature>, but not always.
-#
 
 #
 # Kernel support
@@ -769,10 +764,14 @@ ifdef RETRANSMIT_INTERVAL_DEFAULT
 USERLAND_CFLAGS += -DRETRANSMIT_INTERVAL_DEFAULT_MS="$(RETRANSMIT_INTERVAL_DEFAULT)"
 endif
 
+# iptables for CAT, or NFLOG, look, barf, verify
+HAVE_IPTABLES ?= false
 ifeq ($(HAVE_IPTABLES),true)
 USERLAND_CFLAGS += -DHAVE_IPTABLES
 endif
 
+# nft nflog-all(nflog not yet), look, barf, verfiy
+HAVE_NFTABLES ?= false
 ifeq ($(HAVE_NFTABLES),true)
 USERLAND_CFLAGS += -DHAVE_NFTABLES
 endif
