@@ -189,7 +189,7 @@ static xfrm_address_t xfrm_from_address(const ip_address *addr)
 
 #define SELECTOR_TO_XFRM(CLIENT, REQ, L)				\
 	{								\
-		ip_selector client_ = *(CLIENT);			\
+		ip_selector client_ = (CLIENT);				\
 		ip_address address = selector_prefix(client_);		\
 		(REQ).L##addr = xfrm_from_address(&address);		\
 		(REQ).prefixlen_##L = selector_prefix_bits(client_);	\
@@ -595,8 +595,8 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	dbg("%s() using family %s (%d)", __func__, dst_client_afi->ip_name, family);
 
 	/* .[sd]addr, .prefixlen_[sd], .[sd]port */
-	SELECTOR_TO_XFRM(src_client, req.u.p.sel, s);
-	SELECTOR_TO_XFRM(dst_client, req.u.p.sel, d);
+	SELECTOR_TO_XFRM(*src_client, req.u.p.sel, s);
+	SELECTOR_TO_XFRM(*dst_client, req.u.p.sel, d);
 
 	/*
 	 * Munge .[sd]port?
@@ -852,14 +852,14 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 static void set_migration_attr(const struct kernel_sa *sa,
 			       struct xfrm_user_migrate *m)
 {
-	m->old_saddr = xfrm_from_address(sa->src.address);
-	m->old_daddr = xfrm_from_address(sa->dst.address);
+	m->old_saddr = xfrm_from_address(&sa->src.address);
+	m->old_daddr = xfrm_from_address(&sa->dst.address);
 	m->new_saddr = xfrm_from_address(&sa->src.new_address);
 	m->new_daddr = xfrm_from_address(&sa->dst.new_address);
 	m->mode = (sa->level == 0 && sa->tunnel ? ENCAPSULATION_MODE_TUNNEL : XFRM_MODE_TRANSPORT);
 	m->proto = sa->proto->ipproto;
 	m->reqid = sa->reqid;
-	m->old_family = m->new_family = address_type(sa->src.address)->af;
+	m->old_family = m->new_family = address_info(sa->src.address)->af;
 }
 
 /*
@@ -945,15 +945,15 @@ static bool create_xfrm_migrate_sa(struct state *st,
 		.story = story->buf,	/* content will evolve */
 		.spi = dst->spi,
 		.src = {
-			.address = &src->end->host->addr,
+			.address = src->end->host->addr,
 			.new_address = src->end->host->addr,	/* may change */
-			.client = &src->end->client,
+			.client = src->end->client,
 			.encap_port = endpoint_hport(src->endpoint),	/* may change */
 		},
 		.dst = {
-			.address = &dst->end->host->addr,
+			.address = dst->end->host->addr,
 			.new_address = dst->end->host->addr,	/* may change */
-			.client = &dst->end->client,
+			.client = dst->end->client,
 			.encap_port = endpoint_hport(dst->endpoint),	/* may change */
 		},
 		/* WWW what about sec_label? */
@@ -1013,7 +1013,7 @@ static bool migrate_xfrm_sa(const struct kernel_sa *sa,
 	zero(&req);
 
 	req.id.dir = sa->xfrm_dir;
-	req.id.sel.family = address_type(sa->src.address)->af;
+	req.id.sel.family = address_info(sa->src.address)->af;
 	/* .[sd]addr, .prefixlen_[sd], .[sd]port */
 	SELECTOR_TO_XFRM(sa->src.client, req.id.sel, s);
 	SELECTOR_TO_XFRM(sa->dst.client, req.id.sel, d);
@@ -1237,12 +1237,12 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 	req.n.nlmsg_type = replace ? XFRM_MSG_UPDSA : XFRM_MSG_NEWSA;
 
-	req.p.saddr = xfrm_from_address(sa->src.address);
-	req.p.id.daddr = xfrm_from_address(sa->dst.address);
+	req.p.saddr = xfrm_from_address(&sa->src.address);
+	req.p.id.daddr = xfrm_from_address(&sa->dst.address);
 
 	req.p.id.spi = sa->spi;
 	req.p.id.proto = esatype2proto(sa->esatype);
-	req.p.family = address_type(sa->src.address)->af;
+	req.p.family = address_info(sa->src.address)->af;
 	/*
 	 * This requires ipv6 modules. It is required to support 6in4
 	 * and 4in6 tunnels in linux 2.6.25+
@@ -1304,7 +1304,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		req.p.sel.sport_mask = req.p.sel.sport == 0 ? 0 : ~0;
 		req.p.sel.dport_mask = req.p.sel.dport == 0 ? 0 : ~0;
 		req.p.sel.proto = sa->transport_proto;
-		req.p.sel.family = selector_type(sa->src.client)->af;
+		req.p.sel.family = selector_info(sa->src.client)->af;
 	}
 
 	req.p.reqid = sa->reqid;
@@ -1334,7 +1334,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 	 * (XFRM_STATE_ALIGN4) do change original behavior.
 	*/
 	if (sa->esatype == ET_AH &&
-	    address_type(sa->src.address) == &ipv4_info) {
+	    address_info(sa->src.address) == &ipv4_info) {
 		dbg("xfrm: aligning IPv4 AH to 32bits as per RFC-4302, Section 3.3.3.2.1");
 		req.p.flags |= XFRM_STATE_ALIGN4;
 	}
@@ -1543,7 +1543,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 	if (sa->nic_offload_dev) {
 		struct xfrm_user_offload xuo = {
 			.flags = ((sa->inbound ? XFRM_OFFLOAD_INBOUND : 0) |
-				  (address_type(sa->src.address) == &ipv6_info ? XFRM_OFFLOAD_IPV6 : 0)),
+				  (address_info(sa->src.address) == &ipv6_info ? XFRM_OFFLOAD_IPV6 : 0)),
 			.ifindex = if_nametoindex(sa->nic_offload_dev),
 		};
 
@@ -2185,10 +2185,10 @@ static bool netlink_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
 	req.n.nlmsg_flags = NLM_F_REQUEST;
 	req.n.nlmsg_type = XFRM_MSG_GETSA;
 
-	req.id.daddr = xfrm_from_address(sa->dst.address);
+	req.id.daddr = xfrm_from_address(&sa->dst.address);
 
 	req.id.spi = sa->spi;
-	req.id.family = address_type(sa->src.address)->af;
+	req.id.family = address_info(sa->src.address)->af;
 	req.id.proto = sa->proto->ipproto;
 
 	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));

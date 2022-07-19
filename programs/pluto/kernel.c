@@ -1959,10 +1959,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		dbg("%s %d #%lu ipsec-max-bytes %"PRIu64"/%"PRIu64" ipsec-max-packets %"PRIu64"/%"PRIu64" margin bytes %"PRIu64" margin mackets %"PRIu64" IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE %u", __func__, __LINE__,  st->st_serialno,  sa_ipsec_soft_bytes, c->sa_ipsec_max_bytes, sa_ipsec_soft_packets, c->sa_ipsec_max_packets, margin_bytes, margin_packets, IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE);
 	}
 	const struct kernel_sa said_boilerplate = {
-		.src.address = &kernel_policy.src.host,
-		.dst.address = &kernel_policy.dst.host,
-		.src.client = &kernel_policy.src.route,
-		.dst.client = &kernel_policy.dst.route,
+		.src.address = kernel_policy.src.host,
+		.dst.address = kernel_policy.dst.host,
+		.src.client = kernel_policy.src.route,
+		.dst.client = kernel_policy.dst.route,
 		.inbound = inbound,
 		.tunnel = (kernel_policy.mode == ENCAP_MODE_TUNNEL),
 		.transport_proto = c->spd.this.client.ipproto,
@@ -1983,13 +1983,13 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	dbg("kernel: %s() %s %s-%s->[%s=%s=>%s]-%s->%s sec_label="PRI_SHUNK"%s",
 	    __func__,
 	    said_boilerplate.inbound ? "inbound" : "outbound",
-	    str_selector_subnet_port(said_boilerplate.src.client, &scb),
+	    str_selector_subnet_port(&said_boilerplate.src.client, &scb),
 	    protocol_by_ipproto(said_boilerplate.transport_proto)->name,
-	    str_address(said_boilerplate.src.address, &sab),
+	    str_address(&said_boilerplate.src.address, &sab),
 	    encap_mode_name(kernel_policy.mode),
-	    str_address(said_boilerplate.dst.address, &dab),
+	    str_address(&said_boilerplate.dst.address, &dab),
 	    protocol_by_ipproto(said_boilerplate.transport_proto)->name,
-	    str_selector_subnet_port(said_boilerplate.dst.client, &dcb),
+	    str_selector_subnet_port(&said_boilerplate.dst.client, &dcb),
 	    /* see above */
 	    pri_shunk(said_boilerplate.sec_label),
 	    (st->st_v1_seen_sec_label.len > 0 ? " (IKEv1 seen)" :
@@ -2363,8 +2363,8 @@ fail:
 		if (said_next->proto != NULL) {
 			kernel_ops_del_ipsec_spi(said_next->spi,
 						 said_next->proto,
-						 said_next->src.address,
-						 said_next->dst.address,
+						 &said_next->src.address,
+						 &said_next->dst.address,
 						 st->st_logger);
 		}
 	}
@@ -3423,15 +3423,15 @@ bool get_sa_bundle_info(struct state *st, bool inbound, monotime_t *last_contact
 		c->spd.that.host->port = endpoint_hport(st->st_remote_endpoint);
 	}
 
-	const ip_address *src, *dst;
+	ip_address src, dst;
 	ipsec_spi_t spi;
 	if (inbound) {
-		src = &c->remote->host.addr;
-		dst = &c->local->host.addr;
+		src = c->remote->host.addr;
+		dst = c->local->host.addr;
 		spi = pi->our_spi;
 	} else {
-		src = &c->local->host.addr;
-		dst = &c->remote->host.addr;
+		src = c->local->host.addr;
+		dst = c->remote->host.addr;
 		spi = pi->attrs.spi;
 	}
 
@@ -3441,7 +3441,7 @@ bool get_sa_bundle_info(struct state *st, bool inbound, monotime_t *last_contact
 		.proto = proto,
 		.src.address = src,
 		.dst.address = dst,
-		.story = said_str(*dst, proto, spi, &sb),
+		.story = said_str(dst, proto, spi, &sb),
 	};
 
 	dbg("kernel: get_sa_bundle_info %s", sa.story);

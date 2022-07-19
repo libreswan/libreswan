@@ -764,8 +764,8 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 
 	/* address(SD) */
 
-	put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, *k->src.address);
-	put_sadb_address(&req, SADB_EXT_ADDRESS_DST, *k->dst.address);
+	put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, k->src.address);
+	put_sadb_address(&req, SADB_EXT_ADDRESS_DST, k->dst.address);
 
 	/* (address(P)) */
 
@@ -852,8 +852,8 @@ static bool pfkeyv2_get_sa(const struct kernel_sa *k,
 
 	/* address(SD) */
 
-	put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, *k->src.address);
-	put_sadb_address(&req, SADB_EXT_ADDRESS_DST, *k->dst.address);
+	put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, k->src.address);
+	put_sadb_address(&req, SADB_EXT_ADDRESS_DST, k->dst.address);
 
 	struct inbuf resp;
 	if (!msg_sendrecv(&req, base, &resp)) {

@@ -250,13 +250,13 @@ struct kernel_end {
 	 *
 	 * XXX: why is this a pointer and not simply the value?
 	 */
-	const ip_address *address;
+	ip_address address;
 	int encap_port;
 	/*
 	 * This is not the subnet you're looking for: the transport
 	 * selector or packet filter.
 	 */
-	const ip_selector *client;
+	ip_selector client;
 	/*
 	 * XXX: for mobike? does this need a port or is the port
 	 * optional or unchanging? perhaps the port is assumed to be
