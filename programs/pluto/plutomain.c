@@ -165,9 +165,6 @@ static const char compile_time_interop_options[] = ""
 #ifdef USE_IKEv1
 	" IKEv1"
 #endif
-#ifdef KERNEL_BSDKAME
-	" BSDKAME"
-#endif
 #ifdef KERNEL_PFKEYV2
 	" PFKEYV2"
 #endif
@@ -513,9 +510,6 @@ static const struct option long_opts[] = {
 	{ "crlcheckinterval\0", required_argument, NULL, 'x' },
 	{ "uniqueids\0", no_argument, NULL, 'u' },
 	{ "no-dnssec\0", no_argument, NULL, 'R' },
-#ifdef KERNEL_BSDKAME
-	{ "use-bsdkame\0",   no_argument, NULL, 'F' },
-#endif
 #ifdef KERNEL_PFKEYV2
 	{ "use-pfkeyv2\0",   no_argument, NULL, 'P' },
 #endif
@@ -946,11 +940,7 @@ int main(int argc, char **argv)
 		}
 
 		case 'F':	/* --use-bsdkame */
-#ifdef KERNEL_BSDKAME
-			kernel_ops = &bsdkame_kernel_ops;
-#else
 			llog(RC_LOG, logger, "--use-bsdkame not supported");
-#endif
 			continue;
 
 		case 'P':	/* --use-pfkeyv2 */

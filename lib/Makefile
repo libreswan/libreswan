@@ -23,8 +23,4 @@ include $(top_srcdir)/mk/config.mk
 SUBDIRS=libswan libwhack libipsecconf
 SUBDIRS += liblswtool
 
-ifeq ($(USE_BSDKAME),true)
-SUBDIRS+=libbsdpfkey
-endif
-
 include $(top_srcdir)/mk/targets.mk

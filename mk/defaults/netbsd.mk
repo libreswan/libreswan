@@ -17,7 +17,6 @@ NSPR_LDFLAGS = -L$(PKG_BASE)/lib/nspr -Wl,-rpath,$(PKG_BASE)/lib/nspr -lnspr4
 CRYPT_LDFLAGS =
 
 LIBEVENT_LDFLAGS = -levent -levent_pthreads
-USE_BSDKAME = true
 USE_PFKEYV2 = true
 USE_LIBCAP_NG = false
 

@@ -15,7 +15,8 @@
 
 #ifndef LSW_PFKEYV2_H
 #define LSW_PFKEYV2_H
-#if defined(KERNEL_BSDKAME) || defined(KERNEL_PFKEYV2)
+
+#if defined(KERNEL_PFKEYV2)
 
 /*
  * See: https://tools.ietf.org/html/rfc2367
@@ -134,5 +135,5 @@
 # define sadb_x_policy_priority sadb_x_policy_priority	/* was sadb_x_policy_reserved2 */
 #endif
 
-#endif /* KERNEL_BSDKAME | KERNEL_PFKEYV2 */
-#endif /* LSW_PFKEYV2_H */
+#endif /* KERNEL_PFKEYV2 */
+#endif

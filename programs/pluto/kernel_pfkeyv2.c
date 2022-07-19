@@ -1212,9 +1212,7 @@ static void pfkeyv2_process_msg(int fd UNUSED, struct logger *logger)
 static const char *pfkeyv2_protostack_names[] = {
 	"pfkeyv2",
 	"pfkey",
-#ifndef KERNEL_BSDKAME /* provide compatible name */
-	"bsdkame",
-#endif
+	"bsdkame", /* provide compatible name */
 	NULL,
 };
 

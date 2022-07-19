@@ -105,7 +105,7 @@ OBJS += kernel.o
 OBJS += kernel_ops.o
 OBJS += kernel_alg.o
 
-ifeq ($(filter true, $(sort $(USE_BSDKAME) $(USE_PFKEYV2))),true)
+ifeq ($(USE_PFKEYV2),true)
 OBJS += kernel_sadb.o
 OBJS += kernel_sadb_names.o
 OBJS += kernel_sadb_logger.o
@@ -116,10 +116,6 @@ OBJS += kernel_xfrm.o
 ifeq ($(USE_XFRM_INTERFACE),true)
 OBJS += kernel_xfrm_interface.o
 endif
-endif
-
-ifeq ($(USE_BSDKAME),true)
-OBJS += kernel_bsdkame.o
 endif
 
 ifeq ($(USE_PFKEYV2),true)
@@ -269,8 +265,5 @@ OBJS += $(LIBRESWANLIB)
 OBJS += $(WHACKLIB)
 OBJS += $(IPSECCONFLIB)
 OBJS += $(LIBRESWANLIB)
-ifeq ($(USE_BSDKAME),true)
-OBJS += $(BSDPFKEYLIB)
-endif
 
 include $(top_srcdir)/mk/program.mk

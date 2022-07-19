@@ -564,9 +564,7 @@ endif
 
 # support Linux kernel's XFRM (aka NETKEY)
 USE_XFRM ?= false
-# support BSD/KAME kernels (on *BSD and OSX)?
-USE_BSDKAME ?= false
-# support pfkey v2 (probably implemented using KAME derived code)
+# support pfkey v2 interface (typically KAME derived)
 USE_PFKEYV2 ?= false
 
 ifeq ($(USE_XFRM),true)
@@ -575,10 +573,6 @@ USERLAND_CFLAGS += -DKERNEL_XFRM
 ifeq ($(USE_XFRM_INTERFACE), true)
 USERLAND_CFLAGS += -DUSE_XFRM_INTERFACE
 endif
-endif
-
-ifeq ($(USE_BSDKAME),true)
-USERLAND_CFLAGS += -DKERNEL_BSDKAME
 endif
 
 ifeq ($(USE_PFKEYV2),true)

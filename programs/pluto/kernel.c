@@ -2514,9 +2514,6 @@ const struct kernel_ops *const kernel_stacks[] = {
 #ifdef KERNEL_PFKEYV2
 	&pfkeyv2_kernel_ops,
 #endif
-#ifdef KERNEL_BSDKAME
-	&bsdkame_kernel_ops,
-#endif
 	NULL,
 };
 
