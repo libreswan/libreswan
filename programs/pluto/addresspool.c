@@ -181,7 +181,7 @@ struct lease {
 	struct list reusable_bucket;
 };
 
-struct ip_pool {
+struct addresspool {
 	unsigned pool_refcount;	/* reference counted! */
 	ip_range r;
 	uint32_t size; /* number of addresses within range */
@@ -198,10 +198,10 @@ struct ip_pool {
 	 */
 	struct lease *leases;
 
-	struct ip_pool *next;	/* next pool */
+	struct addresspool *next;	/* next pool */
 };
 
-static struct ip_pool *pluto_pools = NULL;
+static struct addresspool *pluto_pools = NULL;
 
 static void free_lease_content(struct lease *lease)
 {
@@ -222,35 +222,35 @@ static unsigned hasher(const char *name)
 	return hash;
 }
 
-static struct lease *lease_id_bucket(struct ip_pool *pool, const char *name)
+static struct lease *lease_id_bucket(struct addresspool *pool, const char *name)
 {
 	unsigned hash = hasher(name);
 	return &pool->leases[hash % pool->nr_leases];
 }
 
-static void hash_lease_id(struct ip_pool *pool, struct lease *lease)
+static void hash_lease_id(struct addresspool *pool, struct lease *lease)
 {
 	struct lease *bucket = lease_id_bucket(pool, lease->reusable_name);
 	APPEND(bucket, reusable_bucket, reusable_entry, lease);
 	pool->nr_reusable++;
 }
 
-static void unhash_lease_id(struct ip_pool *pool, struct lease *lease)
+static void unhash_lease_id(struct addresspool *pool, struct lease *lease)
 {
 	struct lease *bucket = lease_id_bucket(pool, lease->reusable_name);
 	REMOVE(bucket, reusable_bucket, reusable_entry, lease);
 	pool->nr_reusable--;
 }
 
-static err_t pool_lease_to_address(const struct ip_pool *pool, const struct lease *lease,
+static err_t pool_lease_to_address(const struct addresspool *pool, const struct lease *lease,
 				   ip_address *address)
 {
 	return range_offset_to_address(pool->r, lease - pool->leases, address);
 }
 
-static void DBG_pool(bool verbose, const struct ip_pool *pool,
+static void DBG_pool(bool verbose, const struct addresspool *pool,
 		     const char *format, ...) PRINTF_LIKE(3);
-static void DBG_pool(bool verbose, const struct ip_pool *pool,
+static void DBG_pool(bool verbose, const struct addresspool *pool,
 		     const char *format, ...)
 {
 	LSWLOG_DEBUG(buf) {
@@ -269,9 +269,9 @@ static void DBG_pool(bool verbose, const struct ip_pool *pool,
 	}
 }
 
-static void DBG_lease(bool verbose, const struct ip_pool *pool, const struct lease *lease,
+static void DBG_lease(bool verbose, const struct addresspool *pool, const struct lease *lease,
 		      const char *format, ...) PRINTF_LIKE(4);
-static void DBG_lease(bool verbose, const struct ip_pool *pool, const struct lease *lease,
+static void DBG_lease(bool verbose, const struct addresspool *pool, const struct lease *lease,
 		      const char *format, ...)
 {
 	LSWLOG_DEBUG(buf) {
@@ -387,7 +387,7 @@ static struct lease *connection_lease(struct connection *c)
 	 * Therefore a single test against size will indicate
 	 * membership in the range.
 	 */
-	struct ip_pool *pool = c->pool;
+	struct addresspool *pool = c->pool;
 	ip_address prefix = selector_prefix(c->spd.that.client);
 	uintmax_t offset;
 	err_t err = address_to_range_offset(pool->r, prefix, &offset);
@@ -448,7 +448,7 @@ void free_that_address_lease(struct connection *c)
 		return;
 	}
 
-	struct ip_pool *pool = c->pool;
+	struct addresspool *pool = c->pool;
 	if (lease->reusable_name != NULL) {
 		/* the lease is reusable, leave it lingering */
 		APPEND(pool, free_list, free_entry, lease);
@@ -480,7 +480,7 @@ void free_that_address_lease(struct connection *c)
 
 static struct lease *recover_lease(const struct connection *c, const char *that_name)
 {
-	struct ip_pool *pool = c->pool;
+	struct addresspool *pool = c->pool;
 	if (pool->nr_leases == 0) {
 		return NULL;
 	}
@@ -530,7 +530,7 @@ err_t lease_that_address(struct connection *c, const struct state *st)
 		return NULL;
 	}
 
-	struct ip_pool *pool = c->pool;
+	struct addresspool *pool = c->pool;
 	const struct id *that_id = &c->remote->host.id;
 	bool reusable = client_can_reuse_lease(c);
 
@@ -672,14 +672,14 @@ err_t lease_that_address(struct connection *c, const struct state *st)
 	return NULL;
 }
 
-static void free_addresspool(struct ip_pool *pool)
+static void free_addresspool(struct addresspool *pool)
 {
 
 	/* search for pool in list of pools so we can unlink it */
 	if (pool == NULL)
 		return;
 
-	for (struct ip_pool **pp = &pluto_pools; *pp != NULL; pp = &(*pp)->next) {
+	for (struct addresspool **pp = &pluto_pools; *pp != NULL; pp = &(*pp)->next) {
 		if (*pp == pool) {
 			*pp = pool->next;	/* unlink pool */
 			for (unsigned l = 0; l < pool->nr_leases; l++) {
@@ -697,7 +697,7 @@ static void free_addresspool(struct ip_pool *pool)
 
 void unreference_addresspool(struct connection *c)
 {
-	struct ip_pool *pool = c->pool;
+	struct addresspool *pool = c->pool;
 
 	if (DBGP(DBG_BASE)) {
 		DBG_pool(true, pool, "unreference addresspool of conn %s[%lu] kind %s refcnt %u",
@@ -722,7 +722,7 @@ void unreference_addresspool(struct connection *c)
 
 void reference_addresspool(struct connection *c)
 {
-	struct ip_pool *pool = c->pool;
+	struct addresspool *pool = c->pool;
 	pool->pool_refcount++;
 	if (DBGP(DBG_BASE)) {
 		connection_buf cb;
@@ -739,9 +739,9 @@ void reference_addresspool(struct connection *c)
  * set to the entry found; NULL if none found.
  */
 
-diag_t find_addresspool(const ip_range pool_range, struct ip_pool **pool)
+diag_t find_addresspool(const ip_range pool_range, struct addresspool **pool)
 {
-	struct ip_pool *h;
+	struct addresspool *h;
 
 	*pool = NULL;	/* nothing found (yet) */
 	for (h = pluto_pools; h != NULL; h = h->next) {
@@ -768,7 +768,7 @@ diag_t find_addresspool(const ip_range pool_range, struct ip_pool **pool)
  * Create an address pool for POOL_RANGE.  Reject invalid ranges.
  */
 
-diag_t install_addresspool(const ip_range pool_range, struct ip_pool **pool)
+diag_t install_addresspool(const ip_range pool_range, struct addresspool **pool)
 {
 	*pool = NULL;
 
@@ -798,7 +798,7 @@ diag_t install_addresspool(const ip_range pool_range, struct ip_pool **pool)
 	}
 
 	/* can't overlap or duplicate */
-	struct ip_pool **head = &pluto_pools;
+	struct addresspool **head = &pluto_pools;
 	diag_t d = find_addresspool(pool_range, pool);
 	if (d != NULL) {
 		return d;
@@ -813,7 +813,7 @@ diag_t install_addresspool(const ip_range pool_range, struct ip_pool **pool)
 	}
 
 	/* make a new pool */
-	struct ip_pool *new_pool = alloc_thing(struct ip_pool, "addresspool entry");
+	struct addresspool *new_pool = alloc_thing(struct addresspool, "addresspool entry");
 	new_pool->pool_refcount = 0;
 	new_pool->r = pool_range;
 	new_pool->size = pool_size;
@@ -842,7 +842,7 @@ void show_addresspool_status(struct show *s)
 			     "" #A " (%u) does not match " #B " (%u)",	\
 			     A, B);					\
 	}
-	for (struct ip_pool *pool = pluto_pools;
+	for (struct addresspool *pool = pluto_pools;
 	     pool != NULL; pool = pool->next) {
 		range_buf rb;
 		show_comment(s, "address pool %s: %u addresses, %u leases, %u in-use, %u free (%u reusable)",

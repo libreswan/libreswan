@@ -872,7 +872,7 @@ static int extract_end(struct connection *c,
 
 	/* XXX: still nasty; just less low-level */
 	if (range_size(src->pool_range) > 0) {
-		struct ip_pool *pool; /* ignore */
+		struct addresspool *pool; /* ignore */
 		diag_t d = find_addresspool(src->pool_range, &pool);
 		if (d != NULL) {
 			llog_diag(RC_FATAL, logger, &d, "failed to add connection: ");

@@ -517,7 +517,7 @@ struct connection {
 
 	enum send_ca_policy send_ca;
 
-	struct ip_pool *pool; /* IPv4 addresspool as a range, start end */
+	struct addresspool *pool; /* IPv4 addresspool as a range, start end */
 
 	uint32_t metric;	/* metric for tunnel routes */
 	uint16_t connmtu;	/* mtu for tunnel routes */
