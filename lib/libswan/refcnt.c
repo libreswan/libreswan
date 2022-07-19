@@ -96,7 +96,7 @@ void refcnt_addref_where(const char *what, const void *pointer,
  * look at refcnt atomically
  * This is a bit slow but it is used rarely.
  */
-unsigned refcnt_peek(refcnt_t *refcnt)
+unsigned refcnt_peek(const refcnt_t *refcnt)
 {
 	unsigned val;
 	pthread_mutex_lock(&refcnt_mutex);

@@ -58,7 +58,7 @@ void refcnt_init(const void *pointer, struct refcnt *refcnt,
 	refcnt_overalloc(THING, /*extra*/0, FREE, WHERE)
 
 /* look at refcnt atomically */
-unsigned refcnt_peek(refcnt_t *refcnt);
+unsigned refcnt_peek(const refcnt_t *refcnt);
 
 /*
  * Add a reference.
