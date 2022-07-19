@@ -328,17 +328,20 @@ Some things, annoyingly, don't quite work right:
 
 For instance:
 
- mkdir ~/v4.6-v4.7
- mv v4.6-* ~/v4.6-v4.7
- cp -r v4.7-0-* ~/v4.6-v4.7
+ cd ~/results
+ o=v4.6
+ n=v4.7
+ mkdir ~/${o}-${n}
+ mv ${o}-* ~/${o}-${n}
+ cp -r ${n}-0-* ~/${o}-${n}
  find * -name 'debug.log.gz' | xargs rm
- find ~/v4.6-v4.7 -name 'pluto.log' -print | xargs rm
- find ~/v4.6-v4.7 -name 'iked.log' -print | xargs rm
- find ~/v4.6-v4.7 -name 'charon.log' -print | xargs rm
- find ~/v4.6-v4.7 -name '*.log.gz' -print | xargs rm
- find ~/v4.6-v4.7 -name '.log' -print # delete?
- find ~/v4.6-v4.7 -name '.log.gz' -print # delete?
- cd ~/libreswan-web/script-repo/ && make KVM_SUMMARYDIR=~/v4.6-v4.7 web-summarydir
+ find ~/${o}-${n} -name 'pluto.log' -print | xargs rm
+ find ~/${o}-${n} -name 'iked.log' -print | xargs rm
+ find ~/${o}-${n} -name 'charon.log' -print | xargs rm
+ find ~/${o}-${n} -name '*.log.gz' -print | xargs rm
+ find ~/${o}-${n} -name '.log' -print # delete?
+ find ~/${o}-${n} -name '.log.gz' -print # delete?
+ cd ~/libreswan-web/script-repo/ && make WEB_SUMMARYDIR=~/${o}-${n} web-summarydir
 
 
 # Improvements
