@@ -3,6 +3,7 @@ See also https://libreswan.org/
 
 v4.8 (unreleased)
 * showhostkey: add --pem option to print PEM encoded public key [Andrew]
+* BSD: delete old BSDKAME code replaced by PFKEYV2 code [Andrew]
 * BSD: fix replay window byte vs bit math [Andrew]
 * BSD: support large replay window when available; github/756 [Andrew]
 * BSD: support ESN when available; github/721 [Andrew]
