@@ -114,6 +114,9 @@ static void init_seccomp(uint32_t def_action, bool main, struct logger *logger)
 		LSW_SECCOMP_ADD(readlinkat);
 		LSW_SECCOMP_ADD(recvfrom);
 		LSW_SECCOMP_ADD(recvmsg);
+#if SCMP_SYS(rseq)
+		LSW_SECCOMP_ADD(rseq);
+#endif
 		LSW_SECCOMP_ADD(select);
 		LSW_SECCOMP_ADD(sendmsg);
 		LSW_SECCOMP_ADD(set_robust_list);
