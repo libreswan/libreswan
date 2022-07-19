@@ -909,17 +909,16 @@ static bool add_xauth_addresspool(struct connection *c,
 	/* delete existing pool if it exists */
 	if (c->pool != NULL) {
 		free_that_address_lease(c);
-		unreference_addresspool(c);
+		addresspool_delref(&c->pool);
 	}
 
-	diag_t d = install_addresspool(pool_range, &c->pool);
+	diag_t d = install_addresspool(pool_range, c);
 	if (d != NULL) {
 		llog_diag(RC_CLASH, logger, &d, "XAUTH: invalid addresspool for the conn %s user %s: ",
 			 c->name, userid);
 		return false;
 	}
 
-	reference_addresspool(c);
 	return true;
 }
 

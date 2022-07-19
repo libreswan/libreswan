@@ -38,6 +38,7 @@
 #include "ip_address.h"
 #include "ip_range.h"
 #include "log.h"
+#include "refcnt.h"
 
 #define SENTINEL (unsigned)-1
 #define ENTRY_UNUSED (unsigned)-2
@@ -182,7 +183,7 @@ struct lease {
 };
 
 struct addresspool {
-	unsigned pool_refcount;	/* reference counted! */
+	struct refcnt refcnt;
 	ip_range r;
 	uint32_t size; /* number of addresses within range */
 
@@ -263,7 +264,7 @@ static void DBG_pool(bool verbose, const struct addresspool *pool,
 		va_end(args);
 		if (verbose) {
 			jam(buf, "; pool-refcount %u size %u leases %u in-use %u free %u reusable %u",
-			    pool->pool_refcount, pool->size, pool->nr_leases,
+			    refcnt_peek(&pool->refcnt), pool->size, pool->nr_leases,
 			    pool->nr_in_use, pool->free_list.nr, pool->nr_reusable);
 		}
 	}
@@ -672,8 +673,9 @@ err_t lease_that_address(struct connection *c, const struct state *st)
 	return NULL;
 }
 
-static void free_addresspool(struct addresspool *pool)
+static void free_addresspool(void *p, where_t where UNUSED)
 {
+	struct addresspool *pool = p;
 
 	/* search for pool in list of pools so we can unlink it */
 	if (pool == NULL)
@@ -695,41 +697,14 @@ static void free_addresspool(struct addresspool *pool)
 	}
 }
 
-void unreference_addresspool(struct connection *c)
+void addresspool_delref(struct addresspool **pool)
 {
-	struct addresspool *pool = c->pool;
-
-	if (DBGP(DBG_BASE)) {
-		DBG_pool(true, pool, "unreference addresspool of conn %s[%lu] kind %s refcnt %u",
-			 c->name, c->instance_serial,
-			 enum_name(&connection_kind_names,
-				   c->kind), pool->pool_refcount);
-	}
-
-	passert(pool->pool_refcount > 0);
-
-	pool->pool_refcount--;
-	if (pool->pool_refcount == 0) {
-		if (DBGP(DBG_BASE)) {
-			DBG_pool(false, pool, "freeing memory for addresspool ptr %p",
-				 pool);
-		}
-		free_addresspool(pool);
-	}
-
-	c->pool = NULL;
+	delref(pool);
 }
 
-void reference_addresspool(struct connection *c)
+struct addresspool *addresspool_addref(struct addresspool *pool)
 {
-	struct addresspool *pool = c->pool;
-	pool->pool_refcount++;
-	if (DBGP(DBG_BASE)) {
-		connection_buf cb;
-		DBG_pool(false, pool, "adding connection "PRI_CONNECTION" of kind %s",
-			pri_connection(c, &cb),
-			enum_name(&connection_kind_names, c->kind));
-	}
+	return addref(pool);
 }
 
 /*
@@ -768,9 +743,9 @@ diag_t find_addresspool(const ip_range pool_range, struct addresspool **pool)
  * Create an address pool for POOL_RANGE.  Reject invalid ranges.
  */
 
-diag_t install_addresspool(const ip_range pool_range, struct addresspool **pool)
+diag_t install_addresspool(const ip_range pool_range, struct connection *c)
 {
-	*pool = NULL;
+	pexpect(c->pool == NULL);
 
 	/* can't be empty */
 	uintmax_t pool_size = range_size(pool_range);
@@ -798,23 +773,23 @@ diag_t install_addresspool(const ip_range pool_range, struct addresspool **pool)
 	}
 
 	/* can't overlap or duplicate */
-	struct addresspool **head = &pluto_pools;
-	diag_t d = find_addresspool(pool_range, pool);
+	struct addresspool *existing_pool = NULL;
+	diag_t d = find_addresspool(pool_range, &existing_pool);
 	if (d != NULL) {
 		return d;
 	}
 
-	if (*pool != NULL) {
+	if (existing_pool != NULL) {
 		/* re-use existing pool */
 		if (DBGP(DBG_BASE)) {
-			DBG_pool(true, *pool, "reusing existing address pool@%p", *pool);
+			DBG_pool(true, existing_pool, "reusing existing address pool@%p", existing_pool);
 		}
+		c->pool = addresspool_addref(existing_pool);
 		return NULL;
 	}
 
 	/* make a new pool */
-	struct addresspool *new_pool = alloc_thing(struct addresspool, "addresspool entry");
-	new_pool->pool_refcount = 0;
+	struct addresspool *new_pool = refcnt_alloc(struct addresspool, free_addresspool, HERE);
 	new_pool->r = pool_range;
 	new_pool->size = pool_size;
 	new_pool->nr_in_use = 0;
@@ -822,14 +797,14 @@ diag_t install_addresspool(const ip_range pool_range, struct addresspool **pool)
 	new_pool->free_list = empty_list;
 	new_pool->leases = NULL;
 
-	/* insert */
-	new_pool->next = *head;
-	*head = new_pool;
+	/* insert at front */
+	new_pool->next = pluto_pools;
+	pluto_pools = new_pool;
 
 	if (DBGP(DBG_BASE)) {
 		DBG_pool(false, new_pool, "creating new address pool@%p", new_pool);
 	}
-	*pool = new_pool;
+	c->pool = new_pool;
 	return NULL;
 }
 

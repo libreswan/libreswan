@@ -200,8 +200,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	if (c->kind == CK_GROUP)
 		delete_group(c);
 
-	if (c->pool != NULL)
-		unreference_addresspool(c);
+	addresspool_delref(&c->pool);
 
 	if (IS_XFRMI && c->xfrmi != NULL)
 		unreference_xfrmi(c);
@@ -797,8 +796,7 @@ static void unshare_connection(struct connection *c, struct connection *t/*empla
 		end->host.id = clone_id(&end->host.id, "unshare connection id");
 	}
 
-	if (c->pool !=  NULL)
-		reference_addresspool(c);
+	c->pool = addresspool_addref(t->pool);
 
 	if (IS_XFRMI && c->xfrmi != NULL)
 		reference_xfrmi(c);
@@ -1371,7 +1369,7 @@ static int extract_end(struct connection *c,
 			llog(RC_LOG_SERIOUS, logger, "both left and right define address pools");
 			return -1;
 		}
-		diag_t d = install_addresspool(src->pool_range, &c->pool);
+		diag_t d = install_addresspool(src->pool_range, c);
 		if (d != NULL) {
 			llog_diag(RC_LOG_SERIOUS, c->logger, &d,
 				 "invalid %saddresspool: ", leftright);
@@ -2427,9 +2425,6 @@ static bool extract_connection(const struct whack_message *wm,
 		if (wild_side->virt != NULL)
 			wild_side->has_client = true;
 	}
-
-	if (c->pool !=  NULL)
-		reference_addresspool(c);
 
 	/* non configurable */
 	c->ike_window = IKE_V2_OVERLAPPING_WINDOW_SIZE;
