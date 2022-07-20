@@ -350,18 +350,24 @@ static int show_ipseckey(struct private_key_stuff *pks,
 
 static int show_pem(struct private_key_stuff *pks)
 {
-	char *pem = base64_pem_from_pks(pks);
-
-	printf("-----BEGIN PUBLIC KEY-----\n");
-	printf("%s\n", pem);
-	printf("-----END PUBLIC KEY-----\n");
+	chunk_t der = empty_chunk; /* must free */
+	diag_t d = private_key_stuff_to_pubkey_der(pks, &der);
+	if (d != NULL) {
+		fprintf(stderr, "%s: %s\n", progname, str_diag(d));
+		pfree_diag(&d);
+		exit(5);
+	}
 
 	/*
 	 * The output should be accepted by
 	 * openssl pkey -in /tmp/x -inform PEM -pubin -noout -text
 	 */
 
-	pfreeany(pem);
+	llog(PRINTF_FLAGS, &global_logger, "-----BEGIN PUBLIC KEY-----");
+	llog_base64_hunk(PRINTF_FLAGS, &global_logger, der);
+	llog(PRINTF_FLAGS, &global_logger, "-----END PUBLIC KEY-----");
+
+	free_chunk_content(&der);
 
 	return 0;
 }
