@@ -148,6 +148,7 @@ OBJS += DBG_dump.o
 OBJS += DBG_log.o
 OBJS += DBG_va_list.o
 
+OBJS += llog_base64_bytes.o
 OBJS += llog_errno.o
 OBJS += log_error.o
 OBJS += fatal.o
@@ -158,6 +159,7 @@ OBJS += lswglob.o
 OBJS += global_logger.o
 OBJS += jambuf.o
 OBJS += jam_bytes.o
+OBJS += jam_base64_bytes.o
 OBJS += llog.o
 OBJS += llog_dump.o
 OBJS += llog_va_list.o

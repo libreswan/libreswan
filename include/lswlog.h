@@ -185,6 +185,7 @@ enum stream {
 	 * typically via -v).
 	 */
 #define ERROR_FLAGS (ERROR_STREAM|RC_LOG_SERIOUS)
+#define PRINTF_FLAGS (NO_PREFIX|WHACK_STREAM)
 };
 
 /*
@@ -267,6 +268,16 @@ void llog_dump(lset_t rc_flags,
 	{								\
 		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
 		llog_dump(RC_FLAGS, LOGGER, hunk_->ptr, hunk_->len);	\
+	}
+
+
+void llog_base64_bytes(lset_t rc_flags,
+		       const struct logger *log,
+		       const void *p, size_t len);
+#define llog_base64_hunk(RC_FLAGS, LOGGER, HUNK)			\
+	{								\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
+		llog_base64_bytes(RC_FLAGS, LOGGER, hunk_->ptr, hunk_->len); \
 	}
 
 /*

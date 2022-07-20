@@ -191,6 +191,17 @@ jam_bytes_fn jam_dump_bytes;
 	})
 
 /*
+ * bytes as base64 ...
+ */
+
+jam_bytes_fn jam_base64_bytes;
+#define jam_base64_hunk(BUF, HUNK)					\
+	({								\
+		typeof(HUNK) hunk_ = (HUNK); /* evaluate once */	\
+		jam_base64_bytes(BUF, hunk_.ptr, hunk_.len);		\
+	})
+
+/*
  * bytes as a string.
  */
 

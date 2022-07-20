@@ -16,6 +16,9 @@
 
 
 #include "jambuf.h"
+#include "chunk.h"
+#include "ttodata.h"	/* for datatot() */
+#include "passert.h"
 
 size_t jam_hex_bytes(struct jambuf *buf, const void *ptr, size_t size)
 {
