@@ -362,10 +362,7 @@ static int show_pem(struct private_key_stuff *pks)
 	 * The output should be accepted by
 	 * openssl pkey -in /tmp/x -inform PEM -pubin -noout -text
 	 */
-
-	llog(PRINTF_FLAGS, &global_logger, "-----BEGIN PUBLIC KEY-----");
-	llog_base64_hunk(PRINTF_FLAGS, &global_logger, der);
-	llog(PRINTF_FLAGS, &global_logger, "-----END PUBLIC KEY-----");
+	llog_pem_hunk(PRINTF_FLAGS, &global_logger, "PUBLIC KEY", der);
 
 	free_chunk_content(&der);
 

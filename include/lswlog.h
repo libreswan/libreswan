@@ -270,7 +270,6 @@ void llog_dump(lset_t rc_flags,
 		llog_dump(RC_FLAGS, LOGGER, hunk_->ptr, hunk_->len);	\
 	}
 
-
 void llog_base64_bytes(lset_t rc_flags,
 		       const struct logger *log,
 		       const void *p, size_t len);
@@ -278,6 +277,16 @@ void llog_base64_bytes(lset_t rc_flags,
 	{								\
 		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
 		llog_base64_bytes(RC_FLAGS, LOGGER, hunk_->ptr, hunk_->len); \
+	}
+
+void llog_pem_bytes(lset_t rc_flags,
+		    const struct logger *log,
+		    const char *name,
+		    const void *p, size_t len);
+#define llog_pem_hunk(RC_FLAGS, LOGGER, NAME, HUNK)			\
+	{								\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
+		llog_pem_bytes(RC_FLAGS, LOGGER, NAME, hunk_->ptr, hunk_->len); \
 	}
 
 /*

@@ -149,6 +149,7 @@ OBJS += DBG_log.o
 OBJS += DBG_va_list.o
 
 OBJS += llog_base64_bytes.o
+OBJS += llog_pem_bytes.o
 OBJS += llog_errno.o
 OBJS += log_error.o
 OBJS += fatal.o
