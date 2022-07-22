@@ -44,6 +44,7 @@
 #include "root_certs.h"
 #include "ip_info.h"
 #include "log.h"
+#include "log_limiter.h"
 
 static bool crl_is_current(CERTSignedCrl *crl)
 {
@@ -366,13 +367,18 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 							PR_TRUE /* copyDER */);
 	if (cert == NULL) {
 		/*
-		 * XXX: need to log something here.  When the certs
-		 * are rejected, pluto stumbles on, eventually
-		 * rejecting the connection for some seamingly
-		 * unrelated reason.
+		 * XXX: need to log something here.
+		 *
+		 * When the certificate payload is rejected pluto
+		 * stumbles on, only to eventually reject the peer's
+		 * auth for some for some seamingly unrelated reason.
 		 */
-		llog_nss_error(RC_LOG_SERIOUS, logger,
-			       "NSS: decoding certificate using CERT_NewTempCertificate() failed");
+		llog_nss_error(RC_LOG, logger,
+			       "NSS: decoding certificate payload using CERT_NewTempCertificate() failed");
+		if (PR_GetError() == SEC_ERROR_REUSED_ISSUER_AND_SERIAL &&
+		    !log_is_limited(logger, &certificate_log_limiter)) {
+			llog_pem_bytes(RC_LOG, logger, "CERTIFICATE", der_cert.data, der_cert.len);
+		}
 		return;
 	}
 	dbg("decoded cert: %s", cert->subjectName);
