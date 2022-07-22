@@ -46,7 +46,6 @@ extern const struct log_param default_log_param;
  */
 
 extern void pluto_init_log(struct log_param);
-void init_rate_log_timer(void);
 extern void close_log(void);
 
 extern bool log_to_audit;

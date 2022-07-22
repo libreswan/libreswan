@@ -196,8 +196,8 @@ enum global_timer {
 	EVENT_FREE_ROOT_CERTS,
 #define FREE_ROOT_CERTS_TIMEOUT		deltatime(5 * secs_per_minute)
 
-	EVENT_RESET_LOG_RATE_LIMIT,	/* set nr. rate limited log messages back to 0 */
-#define RESET_LOG_RATE_LIMIT		deltatime(secs_per_hour)
+	EVENT_RESET_LOG_LIMITER,	/* set rate limited log message count back to 0 */
+#define RESET_LOG_LIMITER_FREQUENCY	deltatime(secs_per_hour)
 
 	EVENT_NAT_T_KEEPALIVE,		/* NAT Traversal Keepalive */
 

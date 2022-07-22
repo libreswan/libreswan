@@ -50,6 +50,7 @@
 #include "server.h"
 #include "kernel.h"	/* needs connections.h */
 #include "log.h"
+#include "log_limiter.h"	/* for init_log_limiter() */
 #include "keys.h"
 #include "secrets.h"    /* for free_remembered_public_keys() */
 #include "rnd.h"
@@ -1762,7 +1763,7 @@ int main(int argc, char **argv)
 	init_server(logger);
 
 	/* server initialized; timers can follow */
-	init_rate_log_timer();
+	init_log_limiter();
 	init_nat_traversal_timer(keep_alive, logger);
 	init_revival_timer();
 	init_connections_timer();
