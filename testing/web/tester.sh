@@ -126,12 +126,28 @@ while true ; do
 
     ${status} "looking for work"
     if ! commit=$(${bindir}/gime-work.sh ${summarydir} ${repodir} ${earliest_commit}) ; then \
-	# Seemlingly nothing to do; github gets updated up every 15
-	# minutes so sleep for less than that
-	seconds=$(expr 10 \* 60)
+	# Seemlingly nothing to do ...
+
+	# github gets updated up every 15 minutes so sleep for less
+	# than that
+	delay=$(expr 10 \* 60)
 	now=$(date +%s)
-	future=$(expr ${now} + ${seconds})
-	${status} "idle; will retry $(date -u -d @${future} +%H:%M)"
+	future=$(expr ${now} + ${delay})
+
+	# do something productive
+	${status} "idle; deleting debug.log.gz files older than 30 days"
+	find ${summarydir} -type f -name 'debug.log.gz' -mtime +30 -print0 | \
+	    xargs -0 --no-run-if-empty rm -v
+
+	# is there still time?
+	now=$(date +%s)
+	if test ${future} -lt ${now} ; then
+	    ${status} "the future (${future}) is now (${now})"
+	    continue
+	fi
+
+	seconds=$(expr ${future} - ${now})
+	${status} "idle at $(date -u -d @${now} +%H:%H); will retry in ${seconds} seconds at $(date -u -d @${future} +%H:%M) "
 	sleep ${seconds}
 	continue
     fi
