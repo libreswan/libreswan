@@ -147,7 +147,7 @@ while true ; do
 	fi
 
 	seconds=$(expr ${future} - ${now})
-	${status} "idle at $(date -u -d @${now} +%H:%H); will retry in ${seconds} seconds at $(date -u -d @${future} +%H:%M) "
+	${status} "idle; will retry at $(date -u -d @${future} +%H:%M) ($(date -u -d @${now} +%H:%M) + ${seconds}s)"
 	sleep ${seconds}
 	continue
     fi
@@ -205,6 +205,21 @@ while true ; do
 	    exec $0 ${repodir} ${summarydir}
 	fi
     done
+
+    # Eliminate any files in the repo and the latest results directory
+    # that are identical.
+    #
+    # Trying to do much more than this exceeds either hardlink's
+    # internal cache of checksums (causing hardlink opportunities to
+    # be missed); or the kernel's file cache (causing catatonic
+    # performance).
+    #
+    # It is assumed that git, when switching checkouts, creates new
+    # files, and not modifies in-place.
+
+    ${status} "hardlink $(basename ${repodir}) $(${resultsdir})"
+    hardlink -v ${repodir} ${resultsdir}
+
 
     # Check that the test VMs are ok
     #
