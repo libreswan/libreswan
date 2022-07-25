@@ -5,18 +5,26 @@
 # assignment needs to be wrapped in 'ifndef'.
 
 ifndef LINUX_VARIANT
+  # ID+ID_LIKE, for instance:
+  #   Debian: ID=debian
+  #   Fedora: ID=fedora
+  #   Red Hat: ID=redhat ID_LIKE=fedora? => redhat fedora?
+  #   Mint: ID=linuxmint ID_LIKE=ubuntu => linuxmint ubuntu
+  # $(sort) gets rid of duplicates (needed?)
   export LINUX_VARIANT := $(sort $(shell sed -n -e 's/"//g' -e 's/^ID_LIKE=//p' -e 's/^ID=//p' /etc/os-release))
 endif
 
 ifndef LINUX_VERSION_CODENAME
- # examples
- # on debian and its derivatives VERSION_CODENAME=buster
- # on fedora VERSION_CODENAME=""
-  LINUX_VERSION_CODENAME := $(shell sed -n -e 's/^VERSION_CODENAME=//p' /etc/os-release)
+  # VERSION_CODENAME+UBUNTU_CODENAME, for instance:
+  #  Debian: VERSION_CODENAME=buster
+  #  Fedora: VERSION_CODENAME=""
+  #  Mint: UBUNTU_CODENAME=focal VERSION_CODENAME=una => focal una
+  # $(sort) gets rid of duplicates (needed?)
+  export LINUX_VERSION_CODENAME := $(sort $(shell sed -n -e 's/^VERSION_CODENAME=//p' -e 's/^UBUNTU_CODENAME=//p' /etc/os-release))
 endif
 
 ifndef LINUX_VERSION_ID
-  LINUX_VERSION_ID = $(shell sed -n -e 's/^VERSION_ID=//p' /etc/os-release)
+  export LINUX_VERSION_ID := $(shell sed -n -e 's/^VERSION_ID=//p' /etc/os-release)
 endif
 
 #(info LINUX_VARIANT=$(LINUX_VARIANT))
@@ -24,10 +32,10 @@ endif
 #(info LINUX_VERSION_CODENAME=$(LINUX_VERSION_CODENAME))
 
 #
-# Debian derived
+# Debian derived; ubuntu derived
 #
 
-ifneq ($(filter debian,$(LINUX_VARIANT)),)
+ifneq ($(filter debian ubuntu,$(LINUX_VARIANT)),)
   DEFAULT_DNSSEC_ROOTKEY_FILE ?= /usr/share/dns/root.key
   ifeq ($(LINUX_VERSION_CODENAME),buster) # Debian 10 (Buster); until June 2024
     USE_NSS_KDF ?= false
