@@ -60,7 +60,8 @@ KVM_GROUP ?= qemu
 #KVM_PYTHON ?= PYTHONPATH=/home/python/pexpect:/home/python/ptyprocess /home/python/v3.8/bin/python3
 KVM_PIDFILE ?= kvmrunner.pid
 KVM_UID ?= $(shell id -u)
-KVM_GID ?= $(shell id -g $(KVM_GROUP))
+# get the group's group not the user's group; needed?
+KVM_GID ?= $(shell getent group $(KVM_GROUP) | cut -d: -f3)
 
 KVM_TRANSMOGRIFY = \
 	sed \
