@@ -345,9 +345,11 @@ $(KVM_HOST_QEMUDIR_OK): | $(KVM_POOLDIR)
 		echo ;							\
 		echo "  The directory:" ;				\
 		echo ;							\
-		echo "     $(shell ls -ld $(KVM_HOST_QEMUDIR))" ;	\
+		echo "     $(KVM_HOST_QEMUDIR) (KVM_HOST_QEMUDIR)" ;	\
 		echo ;							\
-		echo "  is not writeable." ;				\
+		echo "  is not writeable vis:" ;			\
+		echo ;							\
+		echo -n "     " ; ls -ld $(KVM_HOST_QEMUDIR) ;		\
 		echo ;							\
 		echo "  This will break virsh which is"	;		\
 		echo "  used to manipulate the domains." ;		\
