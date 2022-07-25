@@ -4,6 +4,9 @@ set -e
 
 # possible hostnames, always implies first
 
+# gmake isn't on debian?
+gnumake=make
+
 platforms="fedora freebsd netbsd openbsd"
 
 buildhosts=${platforms}
@@ -255,11 +258,11 @@ fi
 
 declare -a ops
 
-kvm_baseline=$(gmake print-kvm-baseline)
-kvm_test_status=$(gmake print-kvm-test-status)
-kvm_test_flags=$(gmake print-kvm-test-flags)
-kvm_prefixes=($(gmake print-kvm-prefixes))
-kvm_testingdir=$(gmake print-kvm-testingdir)
+kvm_baseline=$(${gnumake} print-kvm-baseline)
+kvm_test_status=$(${gnumake} print-kvm-test-status)
+kvm_test_flags=$(${gnumake} print-kvm-test-flags)
+kvm_prefixes=($(${gnumake} print-kvm-prefixes))
+kvm_testingdir=$(${gnumake} print-kvm-testingdir)
 
 modified=
 baseline=
@@ -396,20 +399,20 @@ for op in "${ops[@]}" ; do
 
 	add ) git add "$@" ;;
 
-	kill ) gmake kvm-${op} ;;
+	kill ) ${gnumake} kvm-${op} ;;
 	base* | upgrade* | transmogrify* | downgrade* | build* )
 	    # downgrade-netbsd -> netbsd-downgrade
 	    o=$(echo ${op} | sed -e 's/\([a-z]*\)-\([a-z]*\)/\2-\1/')
-	    echo gmake kvm-${o}
-	    gmake kvm-${o} || exit $?
+	    echo ${gnumake} kvm-${o}
+	    ${gnumake} kvm-${o} || exit $?
 	    ;;
 	demolish | purge | status | check-clean | shutdown | uninstall* | install* )
-	    echo gmake kvm-${op}
-	    gmake kvm-${op} || exit $?
+	    echo ${gnumake} kvm-${op}
+	    ${gnumake} kvm-${op} || exit $?
 	    ;;
 	check | recheck )
 	    echo ${op}: "$@"
-	    gmake kvm-${op} KVM_TESTS="$*" || exit $?
+	    ${gnumake} kvm-${op} KVM_TESTS="$*" || exit $?
 	    ;;
 	diffs )
 	    diffs_command "$@"
@@ -421,7 +424,7 @@ for op in "${ops[@]}" ; do
 	    diffs_command "$@" | patch -p1
 	    ;;
 	keys )
-	    gmake kvm-keys-clean kvm-keys
+	    ${gnumake} kvm-keys-clean kvm-keys
     esac
 done
 
