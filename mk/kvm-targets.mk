@@ -735,7 +735,7 @@ $(KVM_POOLDIR_PREFIX)%-base: | \
 		$(VIRT_INSTALL) \
 			$(VIRT_INSTALL_FLAGS) \
 			--name=$(notdir $@) \
-			--os-variant=$(KVM_$($*)_OS_VARIANT) \
+			$(if $(KVM_$($*)_OS_VARIANT), --os-variant=$(KVM_$($*)_OS_VARIANT)) \
 			--disk=path=$@.qcow2,size=$(VIRT_DISK_SIZE_GB),bus=virtio,format=qcow2 \
 			$(KVM_$($*)_VIRT_INSTALL_FLAGS)
 	:
