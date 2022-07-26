@@ -124,4 +124,27 @@ systemctl enable ip6tables.service
 sed -i $'s/enabled=1/enabled=1\\\nexclude=NetworkManager*/g' /etc/yum.repos.d/fedora.repo
 sed -i $'s/enabled=1/enabled=1\\\nexclude=NetworkManager*/g' /etc/yum.repos.d/fedora-updates.repo
 
+# minimal prompt
+
+# Simple .bashrc; see also testing/libvirt/bashrc
+
+cat <<EOF > /root/.bashrc
+# don't flood output with bracket characters
+bind 'set enable-bracketed-paste off'
+# simple path
+PATH=/bin:/sbin:/usr/local/bin:/usr/local/sbin:/testing/guestbin
+# editor
+export EDITOR=vim
+# git stuff
+export GIT_PS1_SHOWDIRTYSTATE=true
+alias git-log-p='git log --pretty=format:"%h %ad%x09%an%x09%s" --date=short'
+# stop systemd adding control characters
+export LC_CTYPE=C
+export SYSTEMD_COLOURS=false
+# don't wander into the weeds looking for debug info
+unset DEBUGINFOD_URLS
+# include status in the prompt
+PS1='[\u@\h \W \$?]\\$ '
+EOF
+
 %end
