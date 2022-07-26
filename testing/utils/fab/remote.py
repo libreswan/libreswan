@@ -20,7 +20,6 @@ import pexpect
 import time
 
 from fab import virsh
-from fab import shell
 from fab import timing
 from fab import logutil
 

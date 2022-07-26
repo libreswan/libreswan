@@ -20,7 +20,7 @@ import logging
 import re
 import os
 
-from fab import shell
+from fab import console
 from fab import logutil
 from fab import timing
 
@@ -168,7 +168,7 @@ class Domain:
         # self._console is None
         command_args = _VIRSH + ["console", "--force", self.domain_name]
         self.logger.info("spawning: %s", " ".join(command_args))
-        self._console = shell.Remote(command_args, self.logger, hostname=self.host_name)
+        self._console = console.Remote(command_args, self.logger, hostname=self.host_name)
         # Give the virsh process a chance set up its control-c
         # handler.  Otherwise something like control-c as the first
         # character sent might kill it.  If the machine is down, it
