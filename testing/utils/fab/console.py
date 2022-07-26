@@ -40,62 +40,42 @@ BASENAME_GROUP = "basename"
 STATUS_GROUP = "status"
 DOLLAR_GROUP = "dollar"
 
-def compile_prompt(logger, username=None, hostname=None):
-    """Create a regex that matches PS1.
+# XXX:
+#
+# There's this new fangled thing called "bracketed paste mode"
+# which throws magic escape characters into the output stream.
+# The below will match them letting KVMSH login.  This doesn't do
+# anything for *.console.verbose.txt that will likely also be full
+# of it.
+#
+# Can't anchor this pattern to the end-of-buffer using $ as other
+# random output may appear.
+#
+# Construct the regex as a STRING, and then convert it to BYTEs.
+# The regex code indexes the group dictionary using the string
+# name so this is hopefully easier?
 
-    Known fields get hard wired.  Unknown or variable fields match
-    wild-card patterns.
+_PROMPT_PATTERN = (r'(|\x1b\[\?2004h)' + # bracketed paste mode prefix!
+                   r'(' +
+                   ( # HOSTNAME#
+                       r'[-a-z0-9]+'
+                   ) +
+                   r'|' +
+                   ( # [USER@HOST DIRECTORY [STATUS]]#
+                       r'\[' +
+                       r'(?P<' + USERNAME_GROUP + r'>[-.a-z0-9]+)' +
+                       r'@' +
+                       r'(?P<' + HOSTNAME_GROUP + r'>[-a-z0-9]+)' +
+                       r' ' +
+                       r'(?P<' + BASENAME_GROUP + r'>[-+=:,\.a-z0-9A-Z_~]+)' +
+                       r'(| (?P<' + STATUS_GROUP + r'>[0-9]+))' +
+                       r'\]'
+                   ) +
+                   r')' +
+                   r'(?P<' + DOLLAR_GROUP + r'>[#\$])' +
+                   r' ').encode()
 
-    """
-
-    # Fix up dollar when username known
-    dollar = None
-    if username:
-        if username == "root":
-            dollar = "#"
-        else:
-            dollar = "$"
-
-    # XXX:
-    #
-    # There's this new fangled thing called "bracketed paste mode"
-    # which throws magic escape characters into the output stream.
-    # The below will match them letting KVMSH login.  This doesn't do
-    # anything for *.console.verbose.txt that will likely also be full
-    # of it.
-    #
-    # Can't anchor this pattern to the end-of-buffer using $ as other
-    # random output may appear.
-    #
-    # Construct the regex as a STRING, and then convert it to BYTEs.
-    # The regex code indexes the group dictionary using the string
-    # name so this is hopefully easier?
-
-    prompt = (r'(|\x1b\[\?2004h)' + # bracketed paste mode prefix!
-              r'(' +
-              (
-                  # HOSTNAME#
-                  (hostname or r'[-a-z0-9]+')
-              ) +
-              r'|' +
-              (
-                  # [USER@HOST DIR STATUS]#
-                  r'\[' +
-                  r'(?P<' + USERNAME_GROUP + r'>' + (username or r'[-.a-z0-9]+') + r')' +
-                  r'@' +
-                  r'(?P<' + HOSTNAME_GROUP + r'>' + (hostname or r'[-a-z0-9]+') + r')' +
-                  r' ' +
-                  r'(?P<' + BASENAME_GROUP + r'>' + r'[-+=:,\.a-z0-9A-Z_~]+)' +
-                  r'(| (?P<' + STATUS_GROUP + r'>[0-9]+))' +
-                  r'\]'
-              ) +
-              r')' +
-              r'(?P<' + DOLLAR_GROUP + r'>' + (dollar or r'[#\$]') + r')' +
-              r' ')
-    logger.debug("prompt '%s'", prompt)
-    # byte regex
-    return re.compile(prompt.encode())
-
+_PROMPT_REGEX = re.compile(_PROMPT_PATTERN)
 
 def _check_prompt_group(logger, match, field, expected):
     if expected:
@@ -154,7 +134,7 @@ class Remote:
         self.basename = None
         self.hostname = hostname
         self.username = username
-        self.prompt = compile_prompt(self.logger, hostname=hostname, username=username)
+        self.prompt = _PROMPT_REGEX
         # Create the child: configure -ve timeout parameters to act
         # like poll, and give all methods an explicit default of
         # TIMEOUT seconds; leave searchwindowsize set to the infinite
@@ -186,7 +166,6 @@ class Remote:
         # Update the expected prompt
         self.hostname = hostname
         self.username = username
-        self.prompt = compile_prompt(self.logger, hostname=self.hostname, username=self.username)
 
         # Sync with the remote end by matching a known and unique
         # pattern.  Strictly match PATTERN+PROMPT so that earlier
