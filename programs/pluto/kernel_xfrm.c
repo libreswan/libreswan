@@ -1984,7 +1984,7 @@ static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
 	 */
 	const struct xfrm_user_polexpire *upe = /* insufficiently aligned */
 		nlmsg_data(n, sizeof(*upe), logger, HERE);
-	if (upe != NULL) {
+	if (upe == NULL) {
 		return;
 	}
 
