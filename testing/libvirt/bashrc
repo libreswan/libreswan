@@ -1,0 +1,24 @@
+# don't flood output with bracket characters
+bind 'set enable-bracketed-paste off'
+
+# simple path
+# - on BSD /bin and /usr/bin are different; on linux they are the same
+# - BSDs have both /usr/local/bin and /usr/pkg/bin
+PATH=/bin:/usr/bin:/sbin:/usr/pkg/bin:/usr/local/bin:/usr/local/sbin:/testing/guestbin
+
+# editor
+export EDITOR=vim
+
+# git stuff
+export GIT_PS1_SHOWDIRTYSTATE=true
+alias git-log-p='git log --pretty=format:"%h %ad%x09%an%x09%s" --date=short'
+
+# stop systemd adding control characters
+export LC_CTYPE=C
+export SYSTEMD_COLOURS=false
+
+# don't wander into the weeds looking for debug info
+unset DEBUGINFOD_URLS
+
+# include status in the prompt when non-zero
+PS1='[\u@\h \W$(s=${?#0};echo "${s:+ $s}")]\$ '

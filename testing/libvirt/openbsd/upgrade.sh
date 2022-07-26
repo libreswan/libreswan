@@ -25,3 +25,4 @@ add libldns
 add xmlto
 add curl
 add git
+add bash

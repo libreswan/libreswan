@@ -26,6 +26,7 @@ for mount in source testing ; do
 ${mount} /${mount} 9p defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0,x-systemd.automount 0 0
 EOF
     mkdir /${mount}
+    # XXX: broken; should copy from /pool.
     mount /${mount}
 done
 
@@ -192,22 +193,9 @@ restorecon -R /root/.ssh /etc/ssh
 
 title replace root/.bashrc
 
-cat <<EOF > /root/.bashrc
-# don't flood output with bracket characters
-bind 'set enable-bracketed-paste off'
-# simple path
-PATH=/bin:/sbin:/usr/local/bin:/usr/local/sbin:/testing/guestbin
-# editor
-export EDITOR=vim
-# git stuff
-export GIT_PS1_SHOWDIRTYSTATE=true
-alias git-log-p='git log --pretty=format:"%h %ad%x09%an%x09%s" --date=short'
-# stop systemd adding control characters
-export LC_CTYPE=C
-export SYSTEMD_COLOURS=false
-# don't wander into the weeds looking for debug info
-unset DEBUGINFOD_URLS
-EOF
+# XXX: broken; should copy from /pool.
+# Simple .bashrc; see also base.ks
+cp -v /testing/libvirt/bashrc /root/.bashrc
 
 title files mysteriously needed for systemd-networkd too
 
