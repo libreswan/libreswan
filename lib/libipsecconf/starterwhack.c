@@ -25,7 +25,6 @@
  */
 
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/un.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -33,7 +32,8 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "sysdep.h"
+#include "lsw_socket.h"
+
 #include "ttodata.h"
 
 #include "ipsecconf/starterwhack.h"
@@ -225,7 +225,7 @@ static int send_whack_msg(struct whack_message *msg, char *ctlsocket)
 	len = wp.str_next - (unsigned char *)msg;
 
 	/* Connect to pluto ctl */
-	sock = socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC, 0);
+	sock = cloexec_socket(AF_UNIX, SOCK_STREAM, 0);
 	if (sock < 0) {
 		starter_log(LOG_LEVEL_ERR, "socket() failed: %s",
 			strerror(errno));

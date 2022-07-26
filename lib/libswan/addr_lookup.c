@@ -30,6 +30,8 @@
 #include <ifaddrs.h>
 #include <netdb.h>
 
+#include "lsw_socket.h"
+
 #include "constants.h"
 #include "lswalloc.h"
 #include "ipsecconf/confread.h"
@@ -183,7 +185,7 @@ static void netlink_query_add(struct nlmsghdr *nlmsg, int rta_type,
  */
 static ssize_t netlink_query(struct nlmsghdr **nlmsgp, size_t bufsize)
 {
-	int sock = socket(PF_NETLINK, SOCK_DGRAM|SOCK_CLOEXEC, NETLINK_ROUTE);
+	int sock = cloexec_socket(PF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE);
 
 	if (sock < 0) {
 		int e = errno;

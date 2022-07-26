@@ -39,8 +39,6 @@
 #include <fcntl.h>
 #include <string.h>
 
-#include <sys/socket.h>
-
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <stdint.h>
@@ -60,6 +58,8 @@
 #include <linux/if_link.h>
 
 #include "linux/xfrm.h" /* local (if configured) or system copy */
+
+#include "lsw_socket.h"
 
 #include "sysdep.h"
 #include "constants.h"
@@ -198,7 +198,7 @@ static xfrm_address_t xfrm_from_address(const ip_address *addr)
 
 static void init_netlink_route_fd(struct logger *logger)
 {
-	nl_route_fd = socket(AF_NETLINK, SOCK_RAW|SOCK_CLOEXEC|SOCK_NONBLOCK, NETLINK_ROUTE);
+	nl_route_fd = cloexec_socket(AF_NETLINK, SOCK_RAW|SOCK_NONBLOCK, NETLINK_ROUTE);
 	if (nl_route_fd < 0) {
 		fatal_errno(PLUTO_EXIT_FAIL, logger, errno, "socket()");
 	}
@@ -236,14 +236,14 @@ static void init_netlink(struct logger *logger)
 
 	struct sockaddr_nl addr;
 
-	nl_send_fd = socket(AF_NETLINK, SOCK_DGRAM|SOCK_CLOEXEC, NETLINK_XFRM);
+	nl_send_fd = cloexec_socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
 
 	if (nl_send_fd < 0) {
 		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
 			    "socket() in init_netlink()");
 	}
 
-	nl_xfrm_fd = socket(AF_NETLINK, SOCK_DGRAM|SOCK_CLOEXEC|SOCK_NONBLOCK, NETLINK_XFRM);
+	nl_xfrm_fd = cloexec_socket(AF_NETLINK, SOCK_DGRAM|SOCK_NONBLOCK, NETLINK_XFRM);
 	if (nl_xfrm_fd < 0) {
 		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
 			    "socket() for bcast in init_netlink()");
@@ -2323,7 +2323,7 @@ static bool qry_xfrm_mirgrate_support(struct nlmsghdr *hdr, struct logger *logge
 	size_t len;
 	ssize_t r;
 	struct sockaddr_nl addr;
-	int nl_fd = socket(AF_NETLINK, SOCK_DGRAM|SOCK_CLOEXEC|SOCK_NONBLOCK, NETLINK_XFRM);
+	int nl_fd = cloexec_socket(AF_NETLINK, SOCK_DGRAM|SOCK_NONBLOCK, NETLINK_XFRM);
 
 	if (nl_fd < 0) {
 		llog_error(logger, errno,

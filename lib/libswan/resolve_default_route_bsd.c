@@ -15,13 +15,14 @@
  * for more details.
  */
 
-#include <sys/socket.h>
 #include <net/if.h>
 #include <net/if_dl.h>
 #include <unistd.h>
 #include <errno.h>
 
 #include <net/route.h>
+
+#include "lsw_socket.h"
 
 /* NetBSD defines RT_ADVANCE(); FreeBSD SA_SIZE(); OpenBSD nada */
 #ifndef RT_ADVANCE
@@ -199,10 +200,10 @@ enum route_status get_route(ip_address dst, struct ip_route *route, struct logge
 {
 	zero(route);
 	const struct ip_info *afi = address_type(&dst);
-	int s = socket(PF_ROUTE, SOCK_RAW|SOCK_CLOEXEC, afi->af);
+	int s = cloexec_socket(PF_ROUTE, SOCK_RAW, afi->af);
 	if (s < 0) {
 		llog_errno(ERROR_FLAGS, logger, errno,
-			   "socket(PF_ROUTE, SOCK_RAW|SOCK_CLOEXEC, %s) failed",
+			   "cloexec_socket(PF_ROUTE, SOCK_RAW, %s) failed",
 			   afi->ip_name);
 		return ROUTE_FATAL;
 	}

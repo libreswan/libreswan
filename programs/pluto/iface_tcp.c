@@ -38,6 +38,8 @@
 #define TCP_ULP 31
 #endif
 
+#include "lsw_socket.h"
+
 #include "ip_address.h"
 #include "ip_sockaddr.h"
 
@@ -496,9 +498,9 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_dev *local_dev,
 {
 	dbg("TCP: opening socket");
 	const struct ip_info *afi = endpoint_type(&remote_endpoint);
-	int fd = socket(afi->socket.domain, SOCK_STREAM|SOCK_CLOEXEC, IPPROTO_TCP);
+	int fd = cloexec_socket(afi->socket.domain, SOCK_STREAM, IPPROTO_TCP);
 	if (fd < 0) {
-		llog_error(logger, errno, "TCP: socket(%s,SOCK_STREAM|SOCK_CLOEXEC,IPPROTO_TCP) failed",
+		llog_error(logger, errno, "TCP: cloexec_socket(%s,SOCK_STREAM,IPPROTO_TCP) failed",
 			   afi->socket.domain_name);
 		return NULL;
 	}

@@ -18,7 +18,9 @@
 
 #include <fcntl.h>
 #include <sys/types.h>
-#include <sys/socket.h>
+
+#include "lsw_socket.h"
+
 
 #include "ip_info.h"
 #include "chunk.h"
@@ -505,7 +507,7 @@ static void pfkeyv2_init(struct logger *logger)
 	pfkeyv2_pid = getpid();
 
 	/* initialize everything */
-	pfkeyv2_fd = socket(PF_KEY, SOCK_RAW|SOCK_CLOEXEC, PF_KEY_V2);
+	pfkeyv2_fd = cloexec_socket(PF_KEY, SOCK_RAW, PF_KEY_V2);
 	if (pfkeyv2_fd < 0) {
 		fatal_errno(PLUTO_EXIT_KERNEL_FAIL, logger, errno,
 			    "opening PF_KEY_V2 socket failed");

@@ -36,6 +36,8 @@
 # include <netinet/in.h> 	/* for IP_RECVERR */
 #endif
 
+#include "lsw_socket.h"
+
 #include "defs.h"
 
 #include "iface.h"
@@ -281,9 +283,9 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd,
 		return NULL;
 	}
 
-	int fd = socket(afi->socket.domain, io->socket.type|SOCK_CLOEXEC|SOCK_NONBLOCK, io->protocol->ipproto);
+	int fd = cloexec_socket(afi->socket.domain, io->socket.type|SOCK_NONBLOCK, io->protocol->ipproto);
 	if (fd < 0) {
-		BIND_ERROR("socket(%s, %s|SOCK_CLOEXEC|SOCK_NONBLOCK, %s)",
+		BIND_ERROR("cloexec_socket(%s, %s|SOCK_NONBLOCK, %s)",
 			   afi->socket.domain_name, io->socket.type_name, io->protocol->name);
 		return NULL;
 	}

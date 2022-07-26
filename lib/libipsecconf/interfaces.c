@@ -14,7 +14,6 @@
  * for more details.
  */
 
-#include <sys/socket.h>
 #include <sys/ioctl.h>
 #include <net/if.h>
 #include <stdlib.h>
@@ -23,7 +22,8 @@
 #include <unistd.h>
 #include <errno.h>
 
-#include "sysdep.h"
+#include "lsw_socket.h"
+
 #include "constants.h"
 #include "ip_endpoint.h"
 #include "ip_address.h"
@@ -45,7 +45,7 @@ bool starter_iface_find(const char *iface, const struct ip_info *family,
 	if (iface == NULL)
 		return false;	/* ??? can this ever happen? */
 
-	int sock = socket(family->af, SOCK_DGRAM|SOCK_CLOEXEC, 0);
+	int sock = cloexec_socket(family->af, SOCK_DGRAM, 0);
 	if (sock < 0)
 		return false;
 

@@ -33,7 +33,6 @@
 #include <signal.h>
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/socket.h>
 #include <sys/un.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -51,7 +50,8 @@
 #include <event2/event_struct.h>
 #include <event2/thread.h>
 
-#include "sysdep.h"
+#include "lsw_socket.h"
+
 #include "constants.h"
 #include "defs.h"
 #include "state.h"
@@ -124,7 +124,7 @@ struct sockaddr_un ctl_addr = {
 diag_t init_ctl_socket(struct logger *logger UNUSED/*maybe*/)
 {
 	delete_ctl_socket();    /* preventative medicine */
-	ctl_fd = socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC, 0);
+	ctl_fd = cloexec_socket(AF_UNIX, SOCK_STREAM, 0);
 	if (ctl_fd == -1) {
 		return diag_errno(errno, "could not create control socket"/*: */);
 	}

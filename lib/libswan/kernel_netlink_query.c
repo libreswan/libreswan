@@ -14,7 +14,6 @@
 
 #include <errno.h>
 #include <fcntl.h>
-#include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <unistd.h>
@@ -22,12 +21,13 @@
 #include <linux/rtnetlink.h>
 #include "kernel_netlink_query.h"
 
+#include "lsw_socket.h"
 #include "lswlog.h"
 
 /* returns a file descriptor on success; -1 on error */
 int nl_send_query(const struct nlmsghdr *req, int protocol, struct logger *logger)
 {
-	int nl_fd = socket(AF_NETLINK, SOCK_DGRAM|SOCK_CLOEXEC|SOCK_NONBLOCK, protocol);
+	int nl_fd = cloexec_socket(AF_NETLINK, SOCK_DGRAM|SOCK_NONBLOCK, protocol);
 
 	if (nl_fd < 0) {
 		llog_error(logger, errno, "socket() in nl_send_query() protocol %d", protocol);

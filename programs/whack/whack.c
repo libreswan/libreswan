@@ -37,7 +37,6 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/un.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -45,10 +44,11 @@
 #include <assert.h>
 #include <limits.h>	/* for INT_MAX */
 
+#include "lsw_socket.h"
+
 #include "ttodata.h"
 #include "lswversion.h"
 #include "lswtool.h"
-#include "sysdep.h"
 #include "constants.h"
 #include "lswlog.h"
 #include "whack.h"
@@ -2746,7 +2746,7 @@ int main(int argc, char **argv)
 		exit(RC_WHACK_PROBLEM);
 	}
 
-	int sock = socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC, 0);
+	int sock = cloexec_socket(AF_UNIX, SOCK_STREAM, 0);
 	int exit_status = 0;
 	ssize_t len = wp.str_next - (unsigned char *)&msg;
 

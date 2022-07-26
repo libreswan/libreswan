@@ -29,6 +29,8 @@
 #include <errno.h>
 #include <unistd.h>
 
+#include "lsw_socket.h"
+
 #include "ip_info.h"
 
 #include "defs.h"
@@ -52,10 +54,10 @@ struct raw_iface *find_raw_ifaces(const struct ip_info *afi, struct logger *logg
 	dbg("finding raw interfaces of type %s", afi->ip_name);
 
 
-	int udp_sock = socket(afi->socket.domain, SOCK_DGRAM|SOCK_CLOEXEC, IPPROTO_UDP);
+	int udp_sock = cloexec_socket(afi->socket.domain, SOCK_DGRAM, IPPROTO_UDP);
 	if (udp_sock == -1) {
 		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-			    "find %s interfaces failed calling socket(%s, SOCK_DGRAM|SOCK_CLOEXEC, IPPROTO_UDP)",
+			    "find %s interfaces failed calling cloexec_socket(%s, SOCK_DGRAM, IPPROTO_UDP)",
 			    afi->ip_name, afi->socket.domain_name);
 	}
 
