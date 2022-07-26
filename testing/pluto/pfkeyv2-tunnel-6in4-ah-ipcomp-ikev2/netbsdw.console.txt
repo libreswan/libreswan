@@ -1,33 +1,33 @@
 # note swan-prep does not yet support BSD
-netbsdw #
+west #
  ../../guestbin/netbsd-prep.sh
 ipsec.conf -> PATH/etc/ipsec.conf
 ipsec.secrets -> PATH/etc/ipsec.secrets
-netbsdw #
+west #
  ipsec start
 Redirecting to: [initsystem]
 Initializing NSS database
 Starting pluto.
-netbsdw #
+west #
  ../../guestbin/wait-until-pluto-started
-netbsdw #
+west #
  ipsec auto --add eastnet-westnet-ikev2
 002 "eastnet-westnet-ikev2": kernel interface does not support ESN so disabling
 002 "eastnet-westnet-ikev2": added IKEv2 connection
-netbsdw #
+west #
  echo "initdone"
 initdone
-netbsdw #
+west #
  ../../guestbin/ping-once.sh --down -I 2001:db8:0:1::254 2001:db8:0:2::254
 down
-netbsdw #
+west #
  ipsec auto --up eastnet-westnet-ikev2
 1v2 "eastnet-westnet-ikev2" #1: initiating IKEv2 connection
 1v2 "eastnet-westnet-ikev2" #1: sent IKE_SA_INIT request
 1v2 "eastnet-westnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [2001:db8:0:1::-2001:db8:0:1:ffff:ffff:ffff:ffff:0-65535 0] -> [2001:db8:0:2::-2001:db8:0:2:ffff:ffff:ffff:ffff:0-65535 0] {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP DPD=passive}
-netbsdw #
+west #
  setkey -DP
 2001:db8:0:2::/64[any] 2001:db8:0:1::/64[any] 255(reserved)
 	in ipsec
@@ -41,10 +41,10 @@ netbsdw #
 	ah/transport//require
 	spid=2 seq=0 pid=PID
 	refcnt=0
-netbsdw #
+west #
  ../../guestbin/ping-once.sh --up -I 2001:db8:0:1::254 2001:db8:0:2::254
 up
-netbsdw #
+west #
  setkey -D
 192.1.2.23 192.1.2.45 
 	ah mode=any spi=SPISPI(0xSPISPI) reqid=16388(0x00004004)
@@ -84,10 +84,10 @@ netbsdw #
 	current: 124(bytes)	hard: 0(bytes)	soft: 0(bytes)
 	allocated: 1	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=0
-netbsdw #
+west #
  ../../guestbin/ping-once.sh --medium --up -I 2001:db8:0:1::254 2001:db8:0:2::254
 up
-netbsdw #
+west #
  setkey -D
 192.1.2.23 192.1.2.45 
 	ah mode=any spi=SPISPI(0xSPISPI) reqid=16388(0x00004004)
@@ -127,7 +127,7 @@ netbsdw #
 	current: 1192(bytes)	hard: 0(bytes)	soft: 0(bytes)
 	allocated: 2	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=0
-netbsdw #
+west #
  dmesg | grep ipsec
-netbsdw #
+west #
  

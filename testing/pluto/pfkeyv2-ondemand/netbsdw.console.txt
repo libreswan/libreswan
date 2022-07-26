@@ -1,41 +1,41 @@
 # note swan-prep does not yet support BSD
-netbsdw #
+west #
  ../../guestbin/netbsd-prep.sh
 ipsec.conf -> PATH/etc/ipsec.conf
 ipsec.secrets -> PATH/etc/ipsec.secrets
-netbsdw #
+west #
  ipsec start
 Redirecting to: [initsystem]
 Initializing NSS database
 Starting pluto.
-netbsdw #
+west #
  ipsec auto --add eastnet-westnet-ikev2
 002 "eastnet-westnet-ikev2": kernel interface does not support ESN so disabling
 002 "eastnet-westnet-ikev2": added IKEv2 connection
-netbsdw #
+west #
  echo "initdone"
 initdone
-netbsdw #
+west #
  ipsec auto --route eastnet-westnet-ikev2
-netbsdw #
+west #
  setkey -D
 No SAD entries.
-netbsdw #
+west #
  setkey -DP
 192.0.1.0/24[any] 192.0.2.0/24[any] 255(reserved)
 	out ipsec
 	esp/transport//require
 	spid=1 seq=0 pid=PID
 	refcnt=0
-netbsdw #
+west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 unexpected status 2
 # ping -n -c 1  -i 6 -w 5   -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254): 56 data bytes ----192.0.2.254 PING Statistics---- 1 packets transmitted, 0 packets received, 100.0% packet loss
-netbsdw #
+west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 unexpected status 2
 # ping -n -c 1  -i 6 -w 5   -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254): 56 data bytes ----192.0.2.254 PING Statistics---- 1 packets transmitted, 0 packets received, 100.0% packet loss
-netbsdw #
+west #
  

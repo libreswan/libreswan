@@ -7,7 +7,7 @@ else
     mac=$(ifconfig vioif1 | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
     case "$mac" in
 	'12:00:00:64:64:23' ) # For East machine
-	    hostname=netbsde
+	    hostname=east
 	    # eth1
 	    vioif1v4=192.1.2.23
 	    vioif1v6=2001:db8:1:2::23
@@ -16,7 +16,7 @@ else
 	    vioif2v6=2001:db8:0:2::254
 	    ;;
 	'12:00:00:64:64:45') # For West machine
-	    hostname=netbsdw
+	    hostname=west
 	    # eth1
 	    vioif1v4=192.1.2.45
 	    vioif1v6=2001:db8:1:2::45

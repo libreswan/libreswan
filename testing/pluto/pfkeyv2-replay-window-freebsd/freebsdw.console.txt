@@ -1,33 +1,33 @@
 # note swan-prep does not yet support BSD
-freebsdw #
+west #
  ../../guestbin/netbsd-prep.sh
 ipsec.conf -> PATH/etc/ipsec.conf
 ipsec.secrets -> PATH/etc/ipsec.secrets
-freebsdw #
+west #
  ipsec start
 Redirecting to: [initsystem]
 Initializing NSS database
 Starting pluto.
-freebsdw #
+west #
  ipsec auto --add overflow # should fail
 036 "overflow": failed to add connection: replay-window=18446744073709551614 exceeds PF_KEY v2 limit of 4294967263
-freebsdw #
+west #
  ipsec auto --add eastnet-westnet-ikev2
 002 "eastnet-westnet-ikev2": added IKEv2 connection
-freebsdw #
+west #
  echo "initdone"
 initdone
-freebsdw #
+west #
  ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
-freebsdw #
+west #
  ipsec auto --up eastnet-westnet-ikev2
 1v2 "eastnet-westnet-ikev2" #1: initiating IKEv2 connection
 1v2 "eastnet-westnet-ikev2" #1: sent IKE_SA_INIT request
 1v2 "eastnet-westnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
-freebsdw #
+west #
  setkey -DP
 192.0.2.0/24[any] 192.0.1.0/24[any] any
 	in ipsec
@@ -39,10 +39,10 @@ freebsdw #
 	esp/tunnel/192.1.2.45-192.1.2.23/require
 	spid=2 seq=0 pid=PID scope=global 
 	refcnt=1
-freebsdw #
+west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
-freebsdw #
+west #
  setkey -D
 192.1.2.45 192.1.2.23
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
@@ -66,10 +66,10 @@ freebsdw #
 	current: 84(bytes)	hard: 0(bytes)	soft: 0(bytes)
 	allocated: 1	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=1
-freebsdw #
+west #
  ../../guestbin/ping-once.sh --medium --up -I 192.0.1.254 192.0.2.254
 up
-freebsdw #
+west #
  setkey -D
 192.1.2.45 192.1.2.23
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
@@ -93,7 +93,7 @@ freebsdw #
 	current: 1112(bytes)	hard: 0(bytes)	soft: 0(bytes)
 	allocated: 2	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=1
-freebsdw #
+west #
  dmesg | grep ipsec
-freebsdw #
+west #
  

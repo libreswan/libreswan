@@ -17,7 +17,7 @@ else
 	    echo 'up'                                    >> /etc/hostname.vio1
 	    echo 'inet 192.0.2.254 255.255.255.0 NONE'   >  /etc/hostname.vio2
 	    echo 'inet6 2001:db8:0:2::254 64'            >> /etc/hostname.vio2
-	    echo 'openbsde'                              > /etc/myname
+	    echo 'east'                                  > /etc/myname
 	    echo '192.1.2.254'                           > /etc/mygate
 	    echo 'nameserver 192.1.2.254'                >> /etc/resolv.conf
 	    ;;
@@ -28,7 +28,7 @@ else
 	    echo 'up'                                    >> /etc/hostname.vio1
 	    echo 'inet 192.0.1.254 255.255.255.0 NONE'   >  /etc/hostname.vio2
 	    echo 'inet6 2001:db8:0:1::254 64'            >> /etc/hostname.vio2
-	    echo 'openbsdw'                              > /etc/myname
+	    echo 'west'                                  > /etc/myname
 	    echo '192.1.2.254'                           > /etc/mygate
 	    echo 'nameserver 192.1.2.254'                >> /etc/resolv.conf
 	    ;;

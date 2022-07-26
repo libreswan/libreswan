@@ -1,23 +1,23 @@
 # note swan-prep does not yet support BSD
-netbsde #
+east #
  ../../guestbin/netbsd-prep.sh
 ipsec.conf -> PATH/etc/ipsec.conf
 ipsec.secrets -> PATH/etc/ipsec.secrets
-netbsde #
+east #
  ipsec start
 Redirecting to: [initsystem]
 Initializing NSS database
 Starting pluto.
-netbsde #
+east #
  ../../guestbin/wait-until-pluto-started
-netbsde #
+east #
  ipsec auto --add eastnet-westnet-ikev2
 002 "eastnet-westnet-ikev2": kernel interface does not support ESN so disabling
 002 "eastnet-westnet-ikev2": added IKEv2 connection
-netbsde #
+east #
  ipsec whack --impair suppress-retransmits
-netbsde #
+east #
  echo "initdone"
 initdone
-netbsde #
+east #
  
