@@ -431,7 +431,6 @@ static void add_new_ifaces(struct logger *logger)
 		 * Port 500 must not add the ESP encapsulation prefix.
 		 * And, when NAT is detected, float away.
 		 */
-
 		if (pluto_listen_udp) {
 			if (bind_iface_endpoint(ifd, &udp_iface_io,
 						ip_hport(IKE_UDP_PORT),
@@ -441,34 +440,24 @@ static void add_new_ifaces(struct logger *logger)
 				ifd->ifd_change = IFD_DELETE;
 				continue;
 			}
-
-			/*
-			 * From linux's xfrm: right now, we do not support
-			 * NAT-T on IPv6, because the kernel did not support
-			 * it, and gave an error it one tried to turn it on.
-			 *
-			 * From bsd's kame: right now, we do not support NAT-T
-			 * on IPv6, because the kernel did not support it, and
-			 * gave an error it one tried to turn it on.
-			 *
-			 * XXX: Who should we believe?
-			 *
-			 * Port 4500 can add the ESP encapsulation prefix.
-			 * Let it float to itself - code might rely on it?
-			 */
-			if (address_type(&ifd->id_address) == &ipv4_info) {
-				bind_iface_endpoint(ifd, &udp_iface_io,
-						    ip_hport(NAT_IKE_UDP_PORT),
-						    true /*esp_encapsulation_enabled*/,
-						    true /*float_nat_initiator*/,
-						    logger);
-			}
 		}
 
 		/*
-		 * An explicit {left,right}IKEPORT can't float away.
-		 *
-		 * An explicit {left,right}IKEPORT must enable
+		 * Port 4500 must add the ESP encapsulation
+		 * prefix.  Let it float to itself - code
+		 * might rely on it?
+		 */
+		if (pluto_listen_udp) {
+			/* XXX: ignore any errors!?! */
+			bind_iface_endpoint(ifd, &udp_iface_io,
+					    ip_hport(NAT_IKE_UDP_PORT),
+					    true /*esp_encapsulation_enabled*/,
+					    true /*float_nat_initiator*/,
+					    logger);
+		}
+
+		/*
+		 * An explicit {left,right} IKE TCP PORT must enable
 		 * ESPINUDP so that it can tunnel NAT.  This means
 		 * that incoming packets must add the ESP=0 prefix,
 		 * which in turn means that it can't interop with port
@@ -477,6 +466,7 @@ static void add_new_ifaces(struct logger *logger)
 		 * See comments in iface.h.
 		 */
 		if (pluto_listen_tcp) {
+			/* XXX: ignore any errors!?! */
 			bind_iface_endpoint(ifd, &iketcp_iface_io,
 					    ip_hport(NAT_IKE_UDP_PORT),
 					    true /*esp_encapsulation_enabled*/,
