@@ -2,6 +2,7 @@
 See also https://libreswan.org/
 
 v4.8 (unreleased)
+* IPv6: open IPv6 IKE port 4500 github/800 [Andrew]
 * showhostkey: add --pem option to print PEM encoded public key [Andrew]
 * BSD: delete old BSDKAME code replaced by PFKEYV2 code [Andrew]
 * BSD: fix replay window byte vs bit math [Andrew]
@@ -14,7 +15,7 @@ v4.8 (unreleased)
             Debian stretch
             Ubuntu cosmic, xenial
             RHEL6 was removed in v4.5
-            Add SUSE and Arch
+            Add SUSE, Arch, Mint
 
 v4.7 (May 24, 2022)
 * IKEv2: EAPTLS support [Timo Teräs / Andrew]
