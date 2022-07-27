@@ -208,6 +208,8 @@ kvmplutotest	ikev2-ikeport-03-responder		good
 kvmplutotest	ikev2-ikeport-04-rw-nat-initiator	good
 kvmplutotest	ikev2-ikeport-05-rw-nat-responder	good
 kvmplutotest	ikev2-ikeport-06-host-to-host		good
+kvmplutotest	ikev2-ikeport-4500-initiator-ipv4	good
+kvmplutotest	ikev2-ikeport-4500-initiator-ipv6	good
 
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good

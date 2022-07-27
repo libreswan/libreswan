@@ -1,0 +1,6 @@
+West initiates IKEv2 connection on IPv4:4500
+
+East is configured to accept all all addresses and ports.
+
+West is configured to hit east's IPv4:4500 port only.
+
