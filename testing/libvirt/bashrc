@@ -2,8 +2,8 @@
 bind 'set enable-bracketed-paste off'
 
 # simple path
-# - on BSD /bin and /usr/bin are different; on linux they are the same
-# - BSDs have both /usr/local/bin and /usr/pkg/bin
+# - on BSD /bin and /usr/bin are different beasts
+# - BSDs have packages in either /usr/local/bin or /usr/pkg/bin
 PATH=/bin:/usr/bin:/sbin:/usr/pkg/bin:/usr/local/bin:/usr/local/sbin:/testing/guestbin
 
 # editor
@@ -22,3 +22,10 @@ unset DEBUGINFOD_URLS
 
 # include status in the prompt when non-zero
 PS1='[\u@\h \W$(s=${?#0};echo "${s:+ $s}")]\$ '
+
+# Force where OBJDIR is
+if test -r /etc/os-release ; then
+    export OBJDIR=OBJ.kvm.$(. /etc/os-release ; echo ${ID})
+else
+    export OBJDIR=OBJ.kvm.$(uname | tr [A-Z] [a-z])
+fi
