@@ -10,5 +10,6 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec whack --impair suppress-retransmits
+ipsec whack --impair revival
 ipsec auto --add ikev2-westnet-eastnet-x509-cr
 echo "initdone"
