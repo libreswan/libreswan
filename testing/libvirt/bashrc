@@ -4,7 +4,7 @@ bind 'set enable-bracketed-paste off'
 # simple path
 # - on BSD /bin and /usr/bin are different beasts
 # - BSDs have packages in either /usr/local/bin or /usr/pkg/bin
-PATH=/bin:/usr/bin:/sbin:/usr/pkg/bin:/usr/local/bin:/usr/local/sbin:/testing/guestbin
+PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/pkg/bin:/usr/pkg/sbin:/usr/local/bin:/usr/local/sbin:/testing/guestbin
 
 # editor
 export EDITOR=vim
