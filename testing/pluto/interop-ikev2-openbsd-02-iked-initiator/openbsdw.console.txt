@@ -1,34 +1,34 @@
 set +o emacs
 set +o emacs
-openbsdw #
+west #
  set +o vi
-openbsdw #
+west #
  set +o gmacs
-openbsdw #
+west #
  # note swan-prep does not yet support iked
-openbsdw #
+west #
  cp openbsdw.conf /etc/iked.conf
-openbsdw #
+west #
  chmod 600 /etc/iked.conf
-openbsdw #
+west #
  /sbin/iked -dvvv > /tmp/iked.log 2>&1 &
 [x] PID
-openbsdw #
+west #
  echo "initdone"
 initdone
-openbsdw #
+west #
  ping -n -q -c 1 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254): 56 data bytes
 --- 192.0.2.254 ping statistics ---
 1 packets transmitted, 0 packets received, 100.0% packet loss
-openbsdw #
+west #
  sleep 3
-openbsdw #
+west #
  ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254): 56 data bytes
 --- 192.0.2.254 ping statistics ---
 4 packets transmitted, 4 packets received, 0.0% packet loss
-openbsdw #
+west #
  ipsecctl -s all | sort
 FLOWS:
 SAD:
@@ -40,7 +40,7 @@ flow esp in from 192.1.2.23 to 192.0.1.0/24 peer 192.1.2.23 srcid FQDN/west dsti
 flow esp out from 192.0.1.0/24 to 192.0.2.0/24 peer 192.1.2.23 srcid FQDN/west dstid FQDN/east type require
 flow esp out from 192.0.1.0/24 to 192.1.2.23 peer 192.1.2.23 srcid FQDN/west dstid FQDN/east type require
 flow esp out from 192.1.2.45 to 192.0.2.0/24 peer 192.1.2.23 srcid FQDN/west dstid FQDN/east type require
-openbsdw #
+west #
  if [ -f /tmp/iked.log ]; then cp /tmp/iked.log OUTPUT/openbsdw.iked.log ; fi
-openbsdw #
+west #
  

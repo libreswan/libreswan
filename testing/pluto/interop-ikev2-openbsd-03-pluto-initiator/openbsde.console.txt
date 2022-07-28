@@ -1,28 +1,28 @@
 set +o emacs
 set +o emacs
-openbsde #
+east #
  set +o vi
-openbsde #
+east #
  set +o gmacs
-openbsde #
+east #
  # note swan-prep does not yet support iked
-openbsde #
+east #
  #/testing/guestbin/swan-prep
-openbsde #
+east #
  cp openbsde.conf /etc/iked.conf
-openbsde #
+east #
  chmod 600 /etc/iked.conf
-openbsde #
+east #
  rm -f /tmp/iked.log
-openbsde #
+east #
  ln -s $PWD/OUTPUT/openbsde.iked.log /tmp/iked.log
-openbsde #
+east #
  /sbin/iked -dvvv > /tmp/iked.log 2>&1 &
 [x] PID
-openbsde #
+east #
  echo "initdone"
 initdone
-openbsde #
+east #
  ipsecctl -v -v -k -s all
 FLOWS:
 @0 flow esp in from 192.0.1.0/24 to 192.0.2.0/24 peer 192.1.2.45 srcid FQDN/east dstid FQDN/west type require
@@ -80,5 +80,5 @@ SAD:
 		0 packets dropped on input
 		0 packets dropped on output
 	replay: rpl 2
-openbsde #
+east #
  

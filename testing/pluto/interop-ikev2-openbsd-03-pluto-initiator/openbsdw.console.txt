@@ -2,33 +2,33 @@
 ../../guestbin/netbstbin/netbsd-prep.sh
 openbsdw.conf -> PATH/etc/ipsec.conf
 openbsdw.secrets -> PATH/etc/ipsec.secrets
-openbsdw #
+west #
  # confirm that the network is alive
 # confirm that the nthat the network is alive
-openbsdw #
+west #
  ../../guestbin/wait-until-alive -I 192.1.2.45 192.1.2.23
 ../../guestbin/wait-tbin/wait-until-alive -I 192.1.2.45 192.1.2.23
 destination -I 192.1.2.45 192.1.2.23 is alive
-openbsdw #
+west #
  ipsec start
 ipsec start
 Redirecting to: [initsystem]
 pluto(ok)
-openbsdw #
+west #
  ../../guestbin/wait-until-pluto-started
 ../../guestbin/wait-tbin/wait-until-pluto-started
-openbsdw #
+west #
  ipsec whack --impair suppress-retransmits
 ipsec whack --impairk --impair suppress-retransmits
-openbsdw #
+west #
  ipsec auto --add eastnet-westnet-ikev2
 ipsec auto --add eas --add eastnet-westnet-ikev2
 002 "eastnet-westnet-ikev2": added IKEv2 connection
-openbsdw #
+west #
  echo "initdone"
 echo "initdone"
 initdone
-openbsdw #
+west #
  ipsec auto --up eastnet-westnet-ikev2
 ipsec auto --up east --up eastnet-westnet-ikev2
 1v2 "eastnet-westnet-ikev2" #1: initiating IKEv2 connection
@@ -36,7 +36,7 @@ ipsec auto --up east --up eastnet-westnet-ikev2
 1v2 "eastnet-westnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH31}
 003 "eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP0xESPESP xfrm=NULL-HMAC_SHA2_256_128 DPD=passive}
-openbsdw #
+west #
  ipsecctl -v -v -k -s all
 ipsecctl -v -v -k -sv -v -k -s all
 FLOWS:
@@ -87,11 +87,11 @@ SAD:
 		0 packets dropped on input
 		0 packets dropped on output
 	replay: rpl 1
-openbsdw #
+west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 ../../guestbin/ping-tbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
-openbsdw #
+west #
  ipsecctl -v -v -k -s all
 ipsecctl -v -v -k -sv -v -k -s all
 FLOWS:
@@ -144,13 +144,13 @@ SAD:
 		0 packets dropped on input
 		0 packets dropped on output
 	replay: rpl 1
-openbsdw #
+west #
  ipsec trafficstatus
 ipsec trafficstatus
 006 #2: "eastnet-westnet-ikev2", type=ESP, add_time=1234567890, id='@east'
-openbsdw #
+west #
  echo done
 echo done
 done
-openbsdw #
+west #
  
