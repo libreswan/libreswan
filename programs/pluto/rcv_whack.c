@@ -332,7 +332,7 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 
 		/* add the public key */
 		struct pubkey *pubkey = NULL; /* must-delref */
-		err_t ugh = unpack_dnssec_pubkey(&keyid, PUBKEY_LOCAL, type,
+		err_t ugh = unpack_dnssec_pubkey(&keyid, PUBKEY_LOCAL, msg->pubkey_alg,
 						 /*install_time*/realnow(),
 						 /*until_time*/realtime_epoch,
 						 /*ttl*/0,

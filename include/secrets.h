@@ -238,14 +238,16 @@ extern struct pubkey_list *pubkeys;	/* keys from ipsec.conf */
 
 extern struct pubkey_list *free_public_keyentry(struct pubkey_list *p);
 extern void free_public_keys(struct pubkey_list **keys);
+
 err_t unpack_dnssec_pubkey(const struct id *id, /* ASKK */
 			   enum dns_auth_level dns_auth_level,
-			   const struct pubkey_type *type,
+			   enum ipseckey_algorithm_type algorithm_type,
 			   realtime_t install_time, realtime_t until_time,
 			   uint32_t ttl,
 			   chunk_t dnssec_pubkey,
 			   struct pubkey **pubkey,
 			   struct pubkey_list **head);
+
 void replace_public_key(struct pubkey_list **pubkey_db,
 			struct pubkey **pk);
 void delete_public_keys(struct pubkey_list **head,

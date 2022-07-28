@@ -9,7 +9,7 @@ typedef void dnsr_cb_fn(struct p_dns_req *);
 
 struct dns_pubkey {
 	/* ID? */
-	const struct pubkey_type *type;
+	enum ipseckey_algorithm_type algorithm_type;
 	struct dns_pubkey *next;
 	uint32_t ttl;
 	/* chunk_t like */

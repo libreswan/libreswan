@@ -35,9 +35,6 @@
 #include "ikev2_ipseckey.h" /* for dns_status */
 #include "ikev2_ipseckey_dnsr.h"
 
-/* Do not include secrets.h as it will cause conflicts via NSS/OPENSSL headers */
-extern const struct pubkey_type pubkey_type_rsa;
-
 struct p_dns_req *pluto_dns_list = NULL; /* DNS queries linked list */
 
 void free_ipseckey_dns(struct p_dns_req *d)
@@ -195,7 +192,7 @@ static bool extract_dns_pubkey(struct p_dns_req *dnsr, ldns_rdf *rdf, uint32_t t
 		size_t len = strlen(pubkey);
 		struct dns_pubkey *dns_pubkey = alloc_bytes(sizeof(struct dns_pubkey) + len,
 							    "temp pubkey bin store");
-		dns_pubkey->type = &pubkey_type_rsa;
+		dns_pubkey->algorithm_type = IPSECKEY_ALGORITHM_RSA;
 		dns_pubkey->ttl = ttl;
 
 		char err_buf[TTODATAV_BUF];
