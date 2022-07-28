@@ -1,11 +1,4 @@
-set +o emacs
-set +o emacs
-west #
- set +o vi
-west #
- set +o gmacs
-west #
- # note swan-prep does not yet support iked
+# note swan-prep does not yet support iked
 west #
  cp openbsdw.conf /etc/iked.conf
 west #

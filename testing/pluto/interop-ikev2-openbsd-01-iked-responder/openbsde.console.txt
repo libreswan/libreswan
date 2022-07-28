@@ -1,13 +1,4 @@
-set +o emacs
-set +o emacs
-east #
- set +o vi
-east #
- set +o gmacs
-east #
- # note swan-prep does not yet support iked
-east #
- #/testing/guestbin/swan-prep
+# note swan-prep does not yet support iked
 east #
  cp openbsde.conf /etc/iked.conf
 east #
