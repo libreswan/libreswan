@@ -2,6 +2,7 @@
 See also https://libreswan.org/
 
 v4.8 (unreleased)
+* Crypto: add test of interface to NSS's KDF [Daiki]
 * IPv6: open IPv6 IKE port 4500 github/800 [Andrew]
 * showhostkey: add --pem option to print PEM encoded public key [Andrew]
 * BSD: delete old BSDKAME code replaced by PFKEYV2 code [Andrew]
