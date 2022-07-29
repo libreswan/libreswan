@@ -373,6 +373,7 @@ static bool set_whack_end(struct whack_end *w,
 		 * be used for the CKAID.
 		 */
 		passert(l->pubkey != NULL);
+		passert(l->pubkey_alg != 0);
 		w->pubkey_alg = l->pubkey_alg;
 		w->pubkey = l->pubkey;
 	}
@@ -416,15 +417,13 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 				    const struct starter_conn *conn,
 				    const struct starter_end *end)
 {
-	const char *err;
-	char err_buf[TTODATAV_BUF];
-	char keyspace[1024 + 4];
 	int ret = 0;
 	const char *lr = end->leftright;
 
 	struct whack_message msg = empty_whack_message;
 	msg.whack_key = true;
 	msg.pubkey_alg = end->pubkey_alg;
+
 	if (end->id && end->pubkey != NULL) {
 		msg.keyid = end->id;
 
@@ -464,11 +463,11 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 			default:
 				bad_case(end->pubkey_alg);
 			}
-			err = ttodatav(end->pubkey, 0, base,
-				       keyspace, sizeof(keyspace),
-				       &msg.keyval.len,
-				       err_buf, sizeof(err_buf), 0);
-			if (err) {
+			char keyspace[1024 + 4];
+			err_t err = ttodata(end->pubkey, /*strlen*/0, base,
+					    keyspace, sizeof(keyspace),
+					    &msg.keyval.len);
+			if (err != NULL) {
 				passert(name != NULL);
 				starter_log(LOG_LEVEL_ERR,
 					    "conn %s: %s%s malformed [%s]",
