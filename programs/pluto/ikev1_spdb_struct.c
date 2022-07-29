@@ -2794,7 +2794,6 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 			  struct_desc *trans_desc,              /* descriptor for this transformation */
 			  pb_stream *trans_pbs,                 /* PBS for incoming transform */
 			  const struct spd_route *sr,           /* host details for the association */
-			  bool tunnel_mode UNUSED,              /* true for inner most tunnel SA */
 			  struct logger *logger)
 {
 	pb_stream r_proposal_pbs;
@@ -2921,8 +2920,6 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 			ah_seen = false,
 			esp_seen = false,
 			ipcomp_seen = false;
-		const ip_protocol *inner_proto = NULL;
-		bool tunnel_mode = false;
 		const struct ipcomp_desc *well_known_cpi = NULL;
 
 		pb_stream
@@ -3199,9 +3196,6 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 				continue;
 			}
 			ah_attrs.spi = ah_spi;
-			inner_proto = &ip_protocol_ah;
-			if (ah_attrs.mode == ENCAPSULATION_MODE_TUNNEL)
-				tunnel_mode = true;
 		}
 
 		if (esp_seen) {
@@ -3261,9 +3255,6 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 				continue; /* we didn't find a nice one */
 
 			esp_attrs.spi = esp_spi;
-			inner_proto = &ip_protocol_esp;
-			if (esp_attrs.mode == ENCAPSULATION_MODE_TUNNEL)
-				tunnel_mode = true;
 		} else if (st->st_policy & POLICY_ENCRYPT) {
 			connection_buf cib;
 			address_buf b;
@@ -3357,9 +3348,6 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 				continue; /* we didn't find a nice one */
 
 			ipcomp_attrs.spi = ipcomp_cpi;
-			inner_proto = &ip_protocol_ipcomp;
-			if (ipcomp_attrs.mode == ENCAPSULATION_MODE_TUNNEL)
-				tunnel_mode = true;
 		}
 
 		/* Eureka: we liked what we saw -- accept it. */
@@ -3381,8 +3369,6 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 					      &isakmp_ah_transform_desc,
 					      &ah_trans_pbs,
 					      &c->spd,
-						tunnel_mode &&
-					      inner_proto == &ip_protocol_ah,
 					      st->st_logger);
 			}
 
@@ -3396,8 +3382,6 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 					      &isakmp_esp_transform_desc,
 					      &esp_trans_pbs,
 					      &c->spd,
-					      tunnel_mode &&
-						inner_proto == &ip_protocol_esp,
 					      st->st_logger);
 			}
 
@@ -3411,8 +3395,6 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 					      &isakmp_ipcomp_transform_desc,
 					      &ipcomp_trans_pbs,
 					      &c->spd,
-					      tunnel_mode &&
-						inner_proto == &ip_protocol_ipcomp,
 					      st->st_logger);
 			}
 
