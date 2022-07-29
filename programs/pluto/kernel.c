@@ -464,12 +464,11 @@ static const char *said_str(const ip_address dst,
 ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
 			  const struct ip_protocol *proto,
 			  const struct spd_route *sr,
-			  bool tunnel,
 			  struct logger *logger)
 {
 	passert(proto == &ip_protocol_ah || proto == &ip_protocol_esp);
 	return kernel_ops_get_ipsec_spi(avoid, &sr->that.host->addr,
-					&sr->this.host->addr, proto, tunnel,
+					&sr->this.host->addr, proto,
 					get_proto_reqid(sr->reqid, proto),
 					IPSEC_DOI_SPI_OUR_MIN, 0xffffffffU,
 					"SPI", logger);
@@ -483,14 +482,12 @@ ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
  * If we can't find one easily, return 0 (a bad SPI,
  * no matter what order) indicating failure.
  */
-ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel,
-		       struct logger *logger)
+ipsec_spi_t get_ipsec_cpi(const struct spd_route *sr, struct logger *logger)
 {
 	return kernel_ops_get_ipsec_spi(0,
 					&sr->that.host->addr,
 					&sr->this.host->addr,
 					&ip_protocol_ipcomp,
-					tunnel,
 					get_proto_reqid(sr->reqid, &ip_protocol_ipcomp),
 					IPCOMP_FIRST_NEGOTIATED,
 					IPCOMP_LAST_NEGOTIATED,

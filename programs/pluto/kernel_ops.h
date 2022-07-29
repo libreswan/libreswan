@@ -42,7 +42,6 @@ ipsec_spi_t kernel_ops_get_ipsec_spi(ipsec_spi_t avoid,
 				     const ip_address *src,
 				     const ip_address *dst,
 				     const struct ip_protocol *proto,
-				     bool tunnel_mode,
 				     reqid_t reqid,
 				     uintmax_t min, uintmax_t max,
 				     const char *story,	/* often SAID string */

@@ -1026,14 +1026,6 @@ bool ikev1_out_sa(pb_stream *outs,
 			pb_stream proposal_pbs;
 
 			/*
-			 * set the tunnel_mode bit on the last proposal only, and
-			 * only if we are trying to negotiate tunnel mode in the first
-			 * place.
-			 */
-			const bool tunnel_mode = (valid_prop_cnt == 1) &&
-				      (st->st_policy & POLICY_TUNNEL);
-
-			/*
 			 * pick the part of the proposal we are trying to work on
 			 */
 
@@ -1135,9 +1127,8 @@ bool ikev1_out_sa(pb_stream *outs,
 					 */
 					if (!ipcomp_cpi_generated) {
 						st->st_ipcomp.our_spi =
-							get_my_cpi(&c->spd,
-								   tunnel_mode,
-								   st->st_logger);
+							get_ipsec_cpi(&c->spd,
+								      st->st_logger);
 						if (st->st_ipcomp.our_spi == 0)
 							goto fail; /* problem generating CPI */
 
@@ -1161,10 +1152,8 @@ bool ikev1_out_sa(pb_stream *outs,
 
 				if (spi_ptr != NULL) {
 					if (!*spi_generated) {
-						*spi_ptr = get_ipsec_spi(0,
-									 proto,
+						*spi_ptr = get_ipsec_spi(0, proto,
 									 &c->spd,
-									 tunnel_mode,
 									 st->st_logger);
 						*spi_generated = true;
 					}
@@ -2805,7 +2794,7 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 			  struct_desc *trans_desc,              /* descriptor for this transformation */
 			  pb_stream *trans_pbs,                 /* PBS for incoming transform */
 			  const struct spd_route *sr,           /* host details for the association */
-			  bool tunnel_mode,                     /* true for inner most tunnel SA */
+			  bool tunnel_mode UNUSED,              /* true for inner most tunnel SA */
 			  struct logger *logger)
 {
 	pb_stream r_proposal_pbs;
@@ -2824,7 +2813,7 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 		 * Note: we may fail to generate a satisfactory CPI,
 		 * but we'll ignore that.
 		 */
-		pi->our_spi = get_my_cpi(sr, tunnel_mode, logger);
+		pi->our_spi = get_ipsec_cpi(sr, logger);
 		passert(out_raw((uint8_t *) &pi->our_spi +
 				IPSEC_DOI_SPI_SIZE - IPCOMP_CPI_SIZE,
 				IPCOMP_CPI_SIZE,
@@ -2833,9 +2822,7 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 		pi->our_spi = get_ipsec_spi(pi->attrs.spi,
 					    r_proposal.isap_protoid == PROTO_IPSEC_AH ?
 						&ip_protocol_ah : &ip_protocol_esp,
-					    sr,
-					    tunnel_mode,
-					    logger);
+					    sr, logger);
 		/* XXX should check for errors */
 		passert(out_raw((uint8_t *) &pi->our_spi, IPSEC_DOI_SPI_SIZE,
 				&r_proposal_pbs, "SPI"));

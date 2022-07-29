@@ -525,7 +525,6 @@ static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 					 const ip_address *src,
 					 const ip_address *dst,
 					 const struct ip_protocol *proto,
-					 bool tunnel_mode_u UNUSED,
 					 reqid_t reqid,
 					 uintmax_t min, uintmax_t max,
 					 const char *story UNUSED,	/* often SAID string */

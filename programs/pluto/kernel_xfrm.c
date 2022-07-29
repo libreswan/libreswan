@@ -2117,7 +2117,6 @@ static ipsec_spi_t xfrm_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 				      const ip_address *src,
 				      const ip_address *dst,
 				      const struct ip_protocol *proto,
-				      bool tunnel_mode,
 				      reqid_t reqid,
 				      uintmax_t min, uintmax_t max,
 				      const char *story,
@@ -2135,7 +2134,7 @@ static ipsec_spi_t xfrm_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 
 	req.spi.info.saddr = xfrm_from_address(src);
 	req.spi.info.id.daddr = xfrm_from_address(dst);
-	req.spi.info.mode = tunnel_mode;
+	req.spi.info.mode = 0;/*transport mode*/
 	req.spi.info.reqid = reqid;
 	req.spi.info.id.proto = proto->ipproto;
 	req.spi.info.family = address_type(src)->af;

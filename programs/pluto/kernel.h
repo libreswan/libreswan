@@ -431,7 +431,6 @@ struct kernel_ops {
 				     const ip_address *src,
 				     const ip_address *dst,
 				     const struct ip_protocol *proto,
-				     bool tunnel_mode,
 				     reqid_t reqid,
 				     uintmax_t min, uintmax_t max,
 				     const char *story,	/* often SAID string */
@@ -530,14 +529,11 @@ extern bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 
 extern enum policy_spi shunt_policy_spi(enum shunt_policy);
 
-struct state;   /* forward declaration of tag */
 extern ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
 				 const struct ip_protocol *proto,
 				 const struct spd_route *sr,
-				 bool tunnel_mode,
 				 struct logger *logger);
-extern ipsec_spi_t get_my_cpi(const struct spd_route *sr, bool tunnel_mode,
-			      struct logger *logger);
+extern ipsec_spi_t get_ipsec_cpi(const struct spd_route *sr, struct logger *logger);
 
 extern bool install_inbound_ipsec_sa(struct state *st);
 extern bool install_ipsec_sa(struct state *st, bool inbound_also);
