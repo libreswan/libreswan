@@ -107,7 +107,7 @@ static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *
 			    enum_name(&dns_auth_level_names, al));
 		}
 
-		chunk_t keyval = chunk2(dns_pubkey->ptr, dns_pubkey->len);
+		shunk_t keyval = shunk2(dns_pubkey->ptr, dns_pubkey->len);
 		err_t ugh = unpack_dnssec_pubkey(keyid, /*dns_auth_level*/al,
 						 IPSECKEY_ALGORITHM_RSA,
 						 install_time, realtimesum(install_time, deltatime(ttl_used)),

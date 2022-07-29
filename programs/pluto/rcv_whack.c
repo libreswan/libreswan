@@ -336,7 +336,7 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 						 /*install_time*/realnow(),
 						 /*until_time*/realtime_epoch,
 						 /*ttl*/0,
-						 msg->keyval,
+						 HUNK_AS_SHUNK(msg->keyval),
 						 &pubkey/*new-public-key:must-delref*/,
 						 &pluto_pubkeys);
 		if (ugh != NULL) {

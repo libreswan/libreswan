@@ -1029,7 +1029,7 @@ static int extract_end(struct connection *c,
 				return -1;
 			}
 		} else {
-			err = type->ipseckey_rdata_to_pubkey_content(chunk2(keyspace, keylen),
+			err = type->ipseckey_rdata_to_pubkey_content(shunk2(keyspace, keylen),
 								     &pkc, &keyid, &ckaid, &size);
 			if (err != NULL) {
 				llog(RC_FATAL, logger,

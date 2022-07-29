@@ -93,7 +93,7 @@ static err_t pubkey_content_to_ipseckey_rdata(const union pubkey_content *pkc,
  *
  * See https://www.rfc-editor.org/rfc/rfc3110#section-2
  */
-static err_t pubkey_ipseckey_rdata_to_rsa_pubkey(chunk_t rr, shunk_t *e, shunk_t *n)
+static err_t pubkey_ipseckey_rdata_to_rsa_pubkey(shunk_t rr, shunk_t *e, shunk_t *n)
 {
 	*e = null_shunk;
 	*n = null_shunk;
@@ -104,19 +104,20 @@ static err_t pubkey_ipseckey_rdata_to_rsa_pubkey(chunk_t rr, shunk_t *e, shunk_t
 	 */
 
 	shunk_t exponent;
-	if (rr.len >= 2 && rr.ptr[0] != 0x00) {
+	const uint8_t *const rr_ptr = rr.ptr;
+	if (rr.len >= 2 && rr_ptr[0] != 0x00) {
 		/*
 		 * Exponent length is one-byte, followed by that many
 		 * exponent bytes
 		 */
-		exponent = shunk2(rr.ptr + 1, rr.ptr[0]);
-	} else if (rr.len >= 3 && rr.ptr[0] == 0x00) {
+		exponent = shunk2(rr_ptr + 1, rr_ptr[0]);
+	} else if (rr.len >= 3 && rr_ptr[0] == 0x00) {
 		/*
 		 * Exponent length is 0x00 followed by 2 bytes of
 		 * length (big-endian), followed by that many exponent
 		 * bytes
 		 */
-		exponent = shunk2(rr.ptr + 3, (rr.ptr[1] << BITS_PER_BYTE) + rr.ptr[2]);
+		exponent = shunk2(rr_ptr + 3, (rr_ptr[1] << BITS_PER_BYTE) + rr_ptr[2]);
 	} else {
 		/* not even room for length! */
 		return "RSA public key resource record way too short";
@@ -126,7 +127,7 @@ static err_t pubkey_ipseckey_rdata_to_rsa_pubkey(chunk_t rr, shunk_t *e, shunk_t
 	 * Does the exponent fall off the end of the resource record?
 	 */
 	const uint8_t *const exponent_end = exponent.ptr + exponent.len;
-	uint8_t *const rr_end = rr.ptr + rr.len;
+	const uint8_t *const rr_end = rr_ptr + rr.len;
 	if (exponent_end > rr_end) {
 		return "truncated RSA public key resource record exponent";
 	}
@@ -154,9 +155,9 @@ static err_t pubkey_ipseckey_rdata_to_rsa_pubkey(chunk_t rr, shunk_t *e, shunk_t
 	return NULL;
 }
 
-static err_t RSA_ipseckey_rdata_to_pubkey_content(struct RSA_public_key *rsak,
-						  keyid_t *keyid, ckaid_t *ckaid, size_t *size,
-						  chunk_t ipseckey_pubkey)
+static err_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
+						  struct RSA_public_key *rsak,
+						  keyid_t *keyid, ckaid_t *ckaid, size_t *size)
 {
 	/* unpack */
 	shunk_t exponent;
@@ -235,11 +236,11 @@ static err_t RSA_ipseckey_rdata_to_pubkey_content(struct RSA_public_key *rsak,
 	return NULL;
 }
 
-static err_t ipseckey_rdata_to_pubkey_content(chunk_t ipseckey_pubkey,
+static err_t ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 					      union pubkey_content *u,
 					      keyid_t *keyid, ckaid_t *ckaid, size_t *size)
 {
-	return RSA_ipseckey_rdata_to_pubkey_content(&u->rsa, keyid, ckaid, size, ipseckey_pubkey);
+	return RSA_ipseckey_rdata_to_pubkey_content(ipseckey_pubkey, &u->rsa, keyid, ckaid, size);
 }
 
 static void RSA_free_pubkey_content(struct RSA_public_key *rsa)

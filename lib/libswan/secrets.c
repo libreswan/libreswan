@@ -1150,7 +1150,7 @@ err_t unpack_dnssec_pubkey(const struct id *id, /* ASKK */
 			   enum ipseckey_algorithm_type algorithm_type,
 			   realtime_t install_time, realtime_t until_time,
 			   uint32_t ttl,
-			   const chunk_t dnssec_pubkey,
+			   const shunk_t dnssec_pubkey,
 			   struct pubkey **pkp,
 			   struct pubkey_list **head)
 {
@@ -1162,7 +1162,7 @@ err_t unpack_dnssec_pubkey(const struct id *id, /* ASKK */
 
 	const struct pubkey_type *type = NULL;
 	if (algorithm_type == IPSECKEY_ALGORITHM_X_PUBKEY) {
-		diag_t d = pubkey_der_to_pubkey_content(HUNK_AS_SHUNK(dnssec_pubkey), &scratch_pkc,
+		diag_t d = pubkey_der_to_pubkey_content(dnssec_pubkey, &scratch_pkc,
 							&keyid, &ckaid, &size, &type);
 		if (d != NULL) {
 			pfree_diag(&d);
@@ -1182,8 +1182,8 @@ err_t unpack_dnssec_pubkey(const struct id *id, /* ASKK */
 	}
 
 	err_t e = type->ipseckey_rdata_to_pubkey_content(dnssec_pubkey,
-							  &scratch_pkc,
-							  &keyid, &ckaid, &size);
+							 &scratch_pkc,
+							 &keyid, &ckaid, &size);
 	if (e != NULL) {
 		return e;
 	}

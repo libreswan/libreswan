@@ -44,9 +44,9 @@
 #include "ike_alg_dh.h"		/* for OID and size of EC algorithms */
 #include "refcnt.h"		/* for dbg_{alloc,free}() */
 
-static err_t ECDSA_ipseckey_rdata_to_pubkey_content(struct ECDSA_public_key *ecdsa,
-						    keyid_t *keyid, ckaid_t *ckaid, size_t *size,
-						    const chunk_t ipseckey_pubkey)
+static err_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubkey,
+						    struct ECDSA_public_key *ecdsa,
+						    keyid_t *keyid, ckaid_t *ckaid, size_t *size)
 {
 	err_t e;
 
@@ -63,6 +63,7 @@ static err_t ECDSA_ipseckey_rdata_to_pubkey_content(struct ECDSA_public_key *ecd
 
 	const struct dh_desc *group = NULL;
 	shunk_t raw = {0};
+	const uint8_t *const ipseckey_pubkey_ptr = ipseckey_pubkey.ptr;
 	FOR_EACH_ELEMENT(e, dh) {
 		if (ipseckey_pubkey.len == (*e)->bytes) {
 			group = (*e);
@@ -71,10 +72,10 @@ static err_t ECDSA_ipseckey_rdata_to_pubkey_content(struct ECDSA_public_key *ecd
 		}
 		if (group->nss_adds_ec_point_form_uncompressed &&
 		    ipseckey_pubkey.len == (*e)->bytes + 1 &&
-		    ipseckey_pubkey.ptr[0] == EC_POINT_FORM_UNCOMPRESSED) {
+		    ipseckey_pubkey_ptr[0] == EC_POINT_FORM_UNCOMPRESSED) {
 			group = (*e);
 			/* ignore prefix */
-			raw = shunk2(ipseckey_pubkey.ptr + 1, ipseckey_pubkey.len - 1);
+			raw = shunk2(ipseckey_pubkey_ptr + 1, ipseckey_pubkey.len - 1);
 			break;
 		}
 	}
@@ -175,11 +176,11 @@ static err_t ECDSA_ipseckey_rdata_to_pubkey_content(struct ECDSA_public_key *ecd
        return NULL;
 }
 
-static err_t ipseckey_rdata_to_pubkey_content(chunk_t ipseckey_pubkey,
+static err_t ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 					      union pubkey_content *u,
 					      keyid_t *keyid, ckaid_t *ckaid, size_t *size)
 {
-	return ECDSA_ipseckey_rdata_to_pubkey_content(&u->ecdsa, keyid, ckaid, size, ipseckey_pubkey);
+	return ECDSA_ipseckey_rdata_to_pubkey_content(ipseckey_pubkey, &u->ecdsa, keyid, ckaid, size);
 }
 
 static err_t ECDSA_pubkey_content_to_ipseckey_rdata(const struct ECDSA_public_key *ecdsa,
