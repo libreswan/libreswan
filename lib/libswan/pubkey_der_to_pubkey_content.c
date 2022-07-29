@@ -30,7 +30,12 @@ static diag_t seckey_to_pubkey_content(SECKEYPublicKey *seckey,
 	{
 		chunk_t exponent = same_secitem_as_chunk(seckey->u.rsa.publicExponent);
 		chunk_t modulus = same_secitem_as_chunk(seckey->u.rsa.modulus);
-		form_ckaid_rsa(modulus, ckaid);
+		SECItem *nss_ckaid = PK11_MakeIDFromPubKey(&seckey->u.rsa.modulus);
+		if (nss_ckaid == NULL) {
+			return diag("unable to compute 'CKAID' from modulus");
+		}
+		*ckaid = ckaid_from_secitem(nss_ckaid);
+		SECITEM_FreeItem(nss_ckaid, PR_TRUE);
 		form_keyid(exponent, modulus, keyid, size);
 		*type = &pubkey_type_rsa;
 		pkc->rsa.seckey_public = seckey;
@@ -39,7 +44,12 @@ static diag_t seckey_to_pubkey_content(SECKEYPublicKey *seckey,
 	}
 	case ecKey:
 	{
-		form_ckaid_ecdsa(same_secitem_as_chunk(seckey->u.ec.publicValue), ckaid);
+		SECItem *nss_ckaid = PK11_MakeIDFromPubKey(&seckey->u.ec.publicValue);
+		if (nss_ckaid == NULL) {
+			return diag("unable to compute 'CKAID' from public value");
+		}
+		*ckaid = ckaid_from_secitem(nss_ckaid);
+		SECITEM_FreeItem(nss_ckaid, PR_TRUE);
 		err_t e = keyblob_to_keyid(ckaid->ptr, ckaid->len, keyid);
 		if (e != NULL) {
 			return diag("%s", e);
@@ -52,6 +62,10 @@ static diag_t seckey_to_pubkey_content(SECKEYPublicKey *seckey,
 	}
 	default:
 		return diag("decoded Public Key has unknown type %d", key_type);
+	}
+
+	if (DBGP(DBG_BASE)) {
+		DBG_dump_hunk("computed ecdsa CKAID", *ckaid);
 	}
 
 	return NULL;

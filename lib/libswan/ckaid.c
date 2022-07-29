@@ -95,46 +95,6 @@ SECItem same_ckaid_as_secitem(const ckaid_t *ckaid)
 	return nss_ckaid;
 }
 
-err_t form_ckaid_rsa(chunk_t modulus, ckaid_t *ckaid)
-{
-	/*
-	 * Compute the CKAID directly using the modulus. - keep old
-	 * configurations hobbling along.
-	 */
-	SECItem nss_modulus = same_chunk_as_secitem(modulus, siBuffer);
-	SECItem *nss_ckaid = PK11_MakeIDFromPubKey(&nss_modulus);
-	if (nss_ckaid == NULL) {
-		return "unable to compute 'CKAID' from modulus";
-	}
-	if (DBGP(DBG_BASE)) {
-		DBG_dump("computed rsa CKAID",
-			 nss_ckaid->data, nss_ckaid->len);
-	}
-	*ckaid = ckaid_from_secitem(nss_ckaid);
-	SECITEM_FreeItem(nss_ckaid, PR_TRUE);
-	return NULL;
-}
-
-err_t form_ckaid_ecdsa(chunk_t pub_value, ckaid_t *ckaid)
-{
-	/*
-	 * Compute the CKAID directly using the public value. - keep old
-	 * configurations hobbling along.
-	 */
-	SECItem nss_pub_value = same_chunk_as_secitem(pub_value, siBuffer);
-	SECItem *nss_ckaid = PK11_MakeIDFromPubKey(&nss_pub_value);
-	if (nss_ckaid == NULL) {
-		return "unable to compute 'CKAID' from public value";
-	}
-	if (DBGP(DBG_BASE)) {
-		DBG_dump("computed ecdsa CKAID",
-			 nss_ckaid->data, nss_ckaid->len);
-	}
-	*ckaid = ckaid_from_secitem(nss_ckaid);
-	SECITEM_FreeItem(nss_ckaid, PR_TRUE);
-	return NULL;
-}
-
 /* convert hex string ckaid to binary bin */
 
 err_t string_to_ckaid(const char *string, ckaid_t *ckaid)

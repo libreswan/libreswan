@@ -142,12 +142,13 @@ static err_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubke
 	 */
 
 	/* should this include EC? */
-	chunk_t pub = same_secitem_as_chunk(ec->publicValue);
-	e = form_ckaid_ecdsa(pub, ckaid);
-	if (e != NULL) {
+	SECItem *nss_ckaid = PK11_MakeIDFromPubKey(&ec->publicValue);
+	if (nss_ckaid == NULL) {
 		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
-		return e;
+		return "unable to compute 'CKAID' from public value";
 	}
+	*ckaid = ckaid_from_secitem(nss_ckaid);
+	SECITEM_FreeItem(nss_ckaid, PR_TRUE);
 
 	/*
 	 * Use the ckaid since that digested the entire pubkey (this
@@ -162,18 +163,18 @@ static err_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubke
 	ecdsa->seckey_public = seckey;
 	dbg_alloc("ecdsa->seckey_public", seckey, HERE);
 
-	*size = pub.len;
+	*size = ec->publicValue.len;
 
 	if (DBGP(DBG_BASE)) {
 		/* pubkey information isn't DBG_PRIVATE */
 		DBG_log("ECDSA Key:");
 		DBG_log("keyid: *%s", str_keyid(*keyid));
 		DBG_log("  size: %zu", *size);
-		DBG_dump_hunk("pub", pub);
+		DBG_dump("pub", ec->publicValue.data, ec->publicValue.len);
 		DBG_dump_hunk("CKAID", *ckaid);
 	}
 
-       return NULL;
+	return NULL;
 }
 
 static err_t ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,

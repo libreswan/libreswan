@@ -206,11 +206,18 @@ static err_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 		return "copying 'e' (exponent) to RSA public key";
 	}
 
-	err_t ckerr = form_ckaid_rsa(same_secitem_as_chunk(rsa->modulus), ckaid);
-	if (ckerr != NULL) {
+	/* ckaid */
+	SECItem *nss_ckaid = PK11_MakeIDFromPubKey(&rsa->modulus);
+	if (nss_ckaid == NULL) {
 		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
-		return ckerr;
+		return "unable to compute 'CKAID' from modulus";
 	}
+	if (DBGP(DBG_BASE)) {
+		DBG_dump("computed rsa CKAID",
+			 nss_ckaid->data, nss_ckaid->len);
+	}
+	*ckaid = ckaid_from_secitem(nss_ckaid);
+	SECITEM_FreeItem(nss_ckaid, PR_TRUE);
 
 	err_t e = keyblob_to_keyid(ipseckey_pubkey.ptr, ipseckey_pubkey.len, keyid);
 	if (e != NULL) {
