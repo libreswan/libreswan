@@ -1312,16 +1312,12 @@ int main(int argc, char **argv)
 
 		case OPT_PUBKEYRSA:	/* --pubkeyrsa <key> */
 		{
-			char mydiag_space[TTODATAV_BUF];
-
 			if (msg.keyval.ptr != NULL)
 				diagq("only one RSA public-key allowed", optarg);
 
-			ugh = ttodatav(optarg, 0, 0,
-				       keyspace, sizeof(keyspace),
-				       &msg.keyval.len,
-				       mydiag_space, sizeof(mydiag_space),
-				       LEMPTY);
+			ugh = ttodata(optarg, 0, 0,
+				      keyspace, sizeof(keyspace),
+				      &msg.keyval.len);
 
 			if (ugh != NULL) {
 				/* perhaps enough space */
@@ -1338,16 +1334,12 @@ int main(int argc, char **argv)
 			continue;
 		case OPT_PUBKEYECDSA:	/* --pubkeyecdsa <key> */
 		{
-			char mydiag_space[TTODATAV_BUF];
-
 			if (msg.keyval.ptr != NULL)
 				diagq("only one ECDSA public-key allowed", optarg);
 
-			ugh = ttodatav(optarg, 0, 0,
-				       keyspace, sizeof(keyspace),
-				       &msg.keyval.len,
-				       mydiag_space, sizeof(mydiag_space),
-				       LEMPTY);
+			ugh = ttodata(optarg, 0, 0,
+				      keyspace, sizeof(keyspace),
+				      &msg.keyval.len);
 
 			if (ugh != NULL) {
 				/* perhaps enough space */

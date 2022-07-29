@@ -25,7 +25,7 @@
 static int unhex(const char *, char *, size_t);
 static int unb64(const char *, char *, size_t);
 static int untext(const char *, char *, size_t);
-static const char *badch(const char *, int, char *, size_t);
+static err_t badch(void);
 
 /* internal error codes for converters */
 #define SHORT (-2)	/* internal buffer too short */
@@ -44,15 +44,15 @@ static const char *badch(const char *, int, char *, size_t);
  *
  * Return NULL on success, else literal or errp
  */
-const char *ttodatav(const char *src,
-		     size_t srclen,	/* 0 means apply strlen() */
-		     int base,		/* 0 means figure it out */
-		     char *dst,		/* need not be valid if dstlen is 0 */
-		     size_t dstlen,
-		     size_t *lenp,	/* where to record length (NULL is nowhere) */
-		     char *errp,	/* error buffer */
-		     size_t errlen,
-		     lset_t flags)
+#define TTODATAV_IGNORE_BASE64_SPACES  (1 << 1)  /* ignore spaces in base64 encodings */
+
+static const char *ttodatav(const char *src,
+			    size_t srclen,	/* 0 means apply strlen() */
+			    int base,		/* 0 means figure it out */
+			    char *dst,		/* need not be valid if dstlen is 0 */
+			    size_t dstlen,
+			    size_t *lenp,	/* where to record length (NULL is nowhere) */
+			    lset_t flags	/*XXX: always LEMPTY*/)
 {
 	size_t ingroup;	/* number of input bytes converted at once */
 	char buf[4];	/* output from conversion */
@@ -141,7 +141,7 @@ const char *ttodatav(const char *src,
 		case BADCH1:
 		case BADCH2:
 		case BADCH3:
-			return badch(stage, nbytes, errp, errlen);
+			return badch();
 
 		case SHORT:
 			return "internal buffer too short (\"can't happen\")";
@@ -189,7 +189,7 @@ const char *ttodata(const char *src,
 		    size_t dstlen,
 		    size_t *lenp)	/* where to record length (NULL is nowhere) */
 {
-	return ttodatav(src, srclen, base, dst, dstlen, lenp, (char *)NULL, (size_t)0, LEMPTY);
+	return ttodatav(src, srclen, base, dst, dstlen, lenp, LEMPTY);
 }
 
 /*
@@ -319,12 +319,20 @@ static int untext(const char *src,	/* known to be full length */
  * size, that means the TTODATAV_BUF constant has been set too small.
  *
  * Return literal or errp
+ *
+ * Rewrite to return diag_t.
  */
-static const char *badch(const char *src,
-			 int errcode,
-			 char *errp,	/* might be NULL */
-			 size_t errlen)
+static err_t badch(void)
+/*
+  (const char *src,
+   int errcode,
+   char *errp,	// might be NULL
+   size_t errlen)
+*/
 {
+#if 1
+	return "unknown character in input";
+#else
 	static const char pre[] = "unknown character (`";
 	static const char suf[] = "') in input";
 	char buf[5];
@@ -357,6 +365,7 @@ static const char *badch(const char *src,
 	strcat(errp, buf);
 	strcat(errp, suf);
 	return (const char *)errp;
+#endif
 }
 
 #ifdef TTODATA_MAIN
