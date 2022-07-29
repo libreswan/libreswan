@@ -67,7 +67,7 @@ west #
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
-	proto comp spi 0xSPISPI reqid REQID mode tunnel
+	proto comp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
 	sel src 192.1.2.23/32 dst 192.1.2.45/32 
 src 192.1.2.23 dst 192.1.2.45
