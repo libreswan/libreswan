@@ -114,10 +114,12 @@ conn westnet-eastnet
 	also=westnet-eastnet-ipv4
 
 conn westnet-eastnet-ipv4-psk
-	also=west-east-base-id-psk
 	also=west-east-base-ipv4
 	leftsubnet=192.0.1.0/24
 	rightsubnet=192.0.2.0/24
+	leftid=@west
+	rightid=@east
+	authby=secret
 
 conn westnet-eastnet-ipv4
 	also=west-east-base-id-nss
@@ -207,11 +209,6 @@ conn north-east-base-ipv6
 	right=2001:db8:1:2::23
 	rightnexthop=2001:db8:1:2::45
 	also=north-east-base-id-nss
-
-conn west-east-base-id-psk
-	leftid=@west
-	rightid=@east
-	authby=secret
 
 conn east-rightrsasigkey
         rightrsasigkey=0sAQO9bJbr33iJs+13DaF/e+UWwsnkfZIKkJ1VQ7RiEwOFeuAme1QfygmTz/8lyQJMeMqU5T6s0fmo5bt/zCCE4CHJ8A3FRLrzSGRhWPYPYw3SZx5Zi+zzUDlx+znaEWS2Ys1f040uwVDtnG4iDDmnzmK1r4qADy5MBVyCx40pAi67I1/b8p61feIgcBpj845drEfwXCZOsdBCYFJKsHclzuCYK0P0x1kaZAGD6k7jGiqSuFWrY91LcEcp3Om0YL9DTViPZHOVcKw1ibLCnNRiwF9WX60b5d1Jk2r1I4Lt1OfV8VXyLaImpjZTL5T7mSJcR8xtgDCIljgM9fLtN9AJ1QePae+pmc5NGneeOcQ488VRUUjv
