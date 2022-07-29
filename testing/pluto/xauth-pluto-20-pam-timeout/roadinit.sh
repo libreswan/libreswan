@@ -4,4 +4,5 @@ iptables -A INPUT -p icmp --icmp-type echo-reply -j DROP
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add xauth-road-eastnet
+ipsec whack --impair revival
 echo done
