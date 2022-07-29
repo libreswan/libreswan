@@ -107,11 +107,13 @@ static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *
 			    enum_name(&dns_auth_level_names, al));
 		}
 
-		shunk_t keyval = shunk2(dns_pubkey->ptr, dns_pubkey->len);
 		err_t ugh = unpack_dnssec_pubkey(keyid, /*dns_auth_level*/al,
 						 IPSECKEY_ALGORITHM_RSA,
-						 install_time, realtimesum(install_time, deltatime(ttl_used)),
-						 ttl, keyval, NULL/*don't-return-pubkey*/, &pluto_pubkeys);
+						 install_time,
+						 realtimesum(install_time, deltatime(ttl_used)),
+						 ttl,
+						 dns_pubkey->pubkey,
+						 NULL/*don't-return-pubkey*/, &pluto_pubkeys);
 		if (ugh != NULL) {
 			id_buf thatidbuf;
 			llog(RC_LOG_SERIOUS, dnsr->logger,

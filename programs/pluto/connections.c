@@ -1002,12 +1002,10 @@ static int extract_end(struct connection *c,
 		}
 
 		/* XXX: lifted from starter_whack_add_pubkey() */
-		char err_buf[TTODATAV_BUF];
 		char keyspace[1024 + 4];
 		size_t keylen;
-		err_t err = ttodatav(src->pubkey, 0, base,
-				     keyspace, sizeof(keyspace),
-				     &keylen, err_buf, sizeof(err_buf), 0);
+		err_t err = ttodata(src->pubkey, /*strlen*/0, base,
+				    keyspace, sizeof(keyspace), &keylen);
 		if (err != NULL) {
 			llog(RC_FATAL, logger,
 			     "failed to add connection: %s%s invalid: %s",

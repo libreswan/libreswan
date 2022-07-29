@@ -188,20 +188,23 @@ static bool extract_dns_pubkey(struct p_dns_req *dnsr, ldns_rdf *rdf, uint32_t t
 			break;
 		}
 
-		/* over-allocate space to hold the key */
-		size_t len = strlen(pubkey);
-		struct dns_pubkey *dns_pubkey = alloc_bytes(sizeof(struct dns_pubkey) + len,
-							    "temp pubkey bin store");
+		/*
+		 * over-allocate structure so that there is space for
+		 * the key.
+		 */
+		size_t pubkey_len = strlen(pubkey); /* over estimate; decoded is less */
+		struct dns_pubkey *dns_pubkey = overalloc_thing(struct dns_pubkey, pubkey_len,
+								"temp pubkey bin store + pubkey");
 		dns_pubkey->algorithm_type = IPSECKEY_ALGORITHM_RSA;
 		dns_pubkey->ttl = ttl;
-
-		char err_buf[TTODATAV_BUF];
-		ugh = ttodatav(pubkey, len, 64, (char*)dns_pubkey->ptr, len, &dns_pubkey->len,
-			       err_buf, sizeof(err_buf), 0);
+		/* store the pubkey after the struct */
+		char *pubkey_ptr = (void*)(dns_pubkey+1);
+		ugh = ttodata(pubkey, pubkey_len, 64, pubkey_ptr, pubkey_len, &pubkey_len);
 		if (ugh != NULL) {
 			pfree(dns_pubkey);
 			break;
 		}
+		dns_pubkey->pubkey = shunk2(pubkey_ptr, pubkey_len);
 
 		/*
 		 * Sort the keys before inserting; sort key is
@@ -217,11 +220,7 @@ static bool extract_dns_pubkey(struct p_dns_req *dnsr, ldns_rdf *rdf, uint32_t t
 		 */
 		while (*dns_pubkeys != NULL) {
 			/* XXX: hunk_cmp()!?! */
-			if (memcmp((*dns_pubkeys)->ptr, dns_pubkey->ptr,
-				   min((*dns_pubkeys)->len, dns_pubkey->len)) < 0) {
-				break;
-			}
-			if ((*dns_pubkeys)->len < dns_pubkey->len) {
+			if (hunk_cmp((*dns_pubkeys)->pubkey, dns_pubkey->pubkey) < 0) {
 				break;
 			}
 			dns_pubkeys = &(*dns_pubkeys)->next;

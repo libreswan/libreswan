@@ -12,9 +12,8 @@ struct dns_pubkey {
 	enum ipseckey_algorithm_type algorithm_type;
 	struct dns_pubkey *next;
 	uint32_t ttl;
-	/* chunk_t like */
-	size_t len;
-	uint8_t ptr[];
+	/* memory allocated with this struct */
+	shunk_t pubkey;
 };
 
 typedef void dnsr_pubkeys_cb_fn(struct p_dns_req *dnsr,
