@@ -1319,9 +1319,9 @@ int main(int argc, char **argv)
 
 			ugh = ttodatav(optarg, 0, 0,
 				       keyspace, sizeof(keyspace),
-				       &msg.keyval.len, mydiag_space,
-				       sizeof(mydiag_space),
-				       TTODATAV_SPACECOUNTS);
+				       &msg.keyval.len,
+				       mydiag_space, sizeof(mydiag_space),
+				       LEMPTY);
 
 			if (ugh != NULL) {
 				/* perhaps enough space */
@@ -1345,9 +1345,9 @@ int main(int argc, char **argv)
 
 			ugh = ttodatav(optarg, 0, 0,
 				       keyspace, sizeof(keyspace),
-				       &msg.keyval.len, mydiag_space,
-				       sizeof(mydiag_space),
-				       TTODATAV_SPACECOUNTS);
+				       &msg.keyval.len,
+				       mydiag_space, sizeof(mydiag_space),
+				       LEMPTY);
 
 			if (ugh != NULL) {
 				/* perhaps enough space */

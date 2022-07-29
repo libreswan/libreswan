@@ -23,6 +23,7 @@
 
 
 #include "ip_info.h"
+#include "ip_encap.h"
 #include "chunk.h"
 #include "hunk.h"
 
@@ -48,7 +49,9 @@ static int pfkeyv2_fd;
 #define SIZEOF_SADB_X_POLICY (sizeof(struct sadb_x_policy) + SIZEOF_SADB_X_IPSECREQUEST * 2)
 #define SIZEOF_SADB_X_SA2 sizeof(struct sadb_x_sa2)
 #define SIZEOF_SADB_X_IPSECREQUEST (sizeof(struct sadb_x_ipsecrequest) + SIZEOF_SADB_ADDRESS * 2)
-#define SIZEOF_SADB_X_SA_REPLAY sizeof(struct sadb_x_sa_replay)
+#define SIZEOF_SADB_X_SA_REPLAY sizeof(struct sadb_x_sa_replay) /* FreeBSD */
+#define SIZEOF_SADB_PROTOCOL (sizeof(struct sadb_protocol)) /* OpenBSD */
+#define SIZEOF_SADB_X_UDPENCAP (sizeof(struct sadb_x_udpencap)) /* OpenBSD */
 
 struct outbuf {
 	const char *what;
@@ -683,6 +686,9 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 #ifdef SADB_X_EXT_SA_REPLAY /* FreeBSD */
 		       SIZEOF_SADB_X_SA_REPLAY +
 #endif
+#ifdef SADB_X_EXT_UDPENCAP /* OpenBSD */
+		       SIZEOF_SADB_X_UDPENCAP +
+#endif
 		       SIZEOF_SADB_SENS +
 		       0];
 	struct outbuf req;
@@ -699,6 +705,28 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 	 */
 	if (k->esn) {
 		saflags |= SADB_X_SAFLAGS_ESN;
+	}
+#endif
+#ifdef SADB_X_SAFLAGS_TUNNEL /* OpenBSD */
+	/*
+	 * FreeBSD and NetBSD use a field in SADB_SA2 to convey this
+	 * information.
+	 *
+	 * OpenBSD instead uses this bit.
+	 */
+	if (k->tunnel) {
+		saflags |= SADB_X_SAFLAGS_TUNNEL;
+	}
+#endif
+#ifdef SADB_X_EXT_UDPENCAP /* OpenBSD */
+	/*
+	 * NetBSD and FreeBSD use a system call on the open IKE
+	 * socket.
+	 *
+	 * OpenBSD instead sets the below bit.
+	 */
+	if (k->encap_type == &ip_encap_esp_in_udp) {
+		saflags |= SADB_X_SAFLAGS_UDPENCAP;
 	}
 #endif
 
@@ -808,6 +836,32 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 	}
 #endif
 
+	/* udpencap (continued) */
+
+#ifdef SADB_X_EXT_UDPENCAP /* OpenBSD */
+	/*
+	 * XXX: Can OpenBSD adopt the more common setsockopt
+	 * UDP_ENCAP_ESPINUDP?
+	 *
+	 * + this specifies the destination port; it would appear that
+	 * the source port is always be 4500?!?
+	 *
+	 * On OpenBSD, SADB_X_SAFLAGS_UDPENCAP indicates that the SA
+	 * is encapsulated within UDP, the port assumed to be 4500 (or
+	 * what ever was configured).  The below forces any
+	 * destination port to work.
+	 */
+	if (k->encap_type == &ip_encap_esp_in_udp) {
+		if (k->src.encap_port != 4500) {
+			llog(RC_LOG_SERIOUS, logger,
+			     "SADB_X_EXT_UDPENCAP assumes the source port is 4500, not %d",
+			     k->src.encap_port);
+		}
+		put_sadb_ext(&req, sadb_x_udpencap, sadb_x_ext_udpencap,
+			     .sadb_x_udpencap_port = htons(k->dst.encap_port));
+	}
+#endif
+
 	/* UPDATE */
         /* <base, SA, (lifetime(HSC),) address(SD), (address(P),)
 	   (identity(SD),) (sensitivity)> */
@@ -902,6 +956,15 @@ static bool pfkeyv2_get_sa(const struct kernel_sa *k,
 		case SADB_EXT_LIFETIME_SOFT:
 #ifdef SADB_X_EXT_SA_REPLAY /* FreeBSD */
 		case SADB_X_EXT_SA_REPLAY:
+#endif
+#ifdef SADB_X_EXT_LIFETIME_LASTUSE /* OpenBSD */
+		case SADB_X_EXT_LIFETIME_LASTUSE:
+#endif
+#ifdef SADB_X_EXT_COUNTER /* OpenBSD */
+		case  SADB_X_EXT_COUNTER:
+#endif
+#ifdef SADB_X_EXT_REPLAY /* OpenBSD */
+		case SADB_X_EXT_REPLAY:
 #endif
 			/* ignore these */
 			break;
@@ -1008,7 +1071,115 @@ static bool pfkeyv2_raw_policy(enum kernel_policy_op op,
 			       struct logger *logger)
 {
 #ifdef __OpenBSD__
-	return false;
+
+	enum sadb_type type = ((op & KERNEL_POLICY_ADD) ? SADB_X_ADDFLOW :
+			       (op & KERNEL_POLICY_DELETE) ? SADB_X_DELFLOW :
+			       (op & KERNEL_POLICY_REPLACE) ? SADB_X_ADDFLOW :
+			       pexpect(0));
+
+	enum sadb_satype satype =
+		(kernel_policy == NULL ? SADB_SATYPE_UNSPEC :
+		 kernel_policy->rule[1].proto == ENCAP_PROTO_ESP ? SADB_SATYPE_ESP :
+		 kernel_policy->rule[1].proto == ENCAP_PROTO_AH ? SADB_SATYPE_AH :
+		 kernel_policy->rule[1].proto == ENCAP_PROTO_IPCOMP ? SADB_X_SATYPE_IPCOMP :
+		 pexpect(0));
+
+	uint8_t reqbuf[SIZEOF_SADB_BASE +
+		       SIZEOF_SADB_PROTOCOL + /*flow*/
+		       SIZEOF_SADB_ADDRESS * 2 + /*src/dst addr*/
+		       SIZEOF_SADB_ADDRESS * 4 + /*src/dst addr/mask*/
+		       SIZEOF_SADB_PROTOCOL + /*flow*/
+		       0];
+
+	struct outbuf req;
+	struct sadb_msg *base = msg_base(&req, __func__,
+					 chunk2(reqbuf, sizeof(reqbuf)),
+					 type, satype, logger);
+
+	/* flow type */
+
+	enum kernel_policy_dir op_direction =
+		(op & (KERNEL_POLICY_INBOUND|KERNEL_POLICY_OUTBOUND));
+
+	unsigned policy_direction =
+		(op_direction == KERNEL_POLICY_INBOUND ? IPSP_DIRECTION_IN :
+		 op_direction == KERNEL_POLICY_OUTBOUND ? IPSP_DIRECTION_OUT :
+		 pexpect(0));
+
+	enum sadb_x_flow_type policy_type = UINT_MAX;
+	switch (shunt_policy) {
+	case SHUNT_PASS:
+		policy_type = SADB_X_FLOW_TYPE_BYPASS;
+		break;
+	case SHUNT_UNSET:
+		policy_type = SADB_X_FLOW_TYPE_REQUIRE;
+		/* XXX: XFRM also considers delete here? */
+		break;
+	case SHUNT_HOLD:
+		pexpect(0);
+		return true; /* lie */
+	case SHUNT_TRAP:
+		policy_type = SADB_X_FLOW_TYPE_ACQUIRE;
+		break;
+	case SHUNT_DROP:
+	case SHUNT_REJECT:
+	case SHUNT_NONE:
+		policy_type = SADB_X_FLOW_TYPE_DENY;
+		break;
+	}
+	pexpect(policy_type != UINT_MAX);
+
+	put_sadb_ext(&req, sadb_protocol, SADB_X_EXT_FLOW_TYPE,
+		     .sadb_protocol_direction = policy_direction,
+		     .sadb_protocol_proto = policy_type);
+
+	/* host_addr */
+
+	if (kernel_policy != NULL && kernel_policy->nr_rules > 1) {
+		/*
+		 * For IPcomp+ESP where two policies need to
+		 * installed, OpenBSD instead: installs a flow with
+		 * one policy (i guess the first); SA pairs for IPsec
+		 * and ESP; bundle (SADB_X_EXT_GRPSPIs) to group the
+		 * two SAs.
+		 */
+		llog_pexpect(logger, HERE,
+			     "multiple policies using SADB_X_EXT_GRPSPIS (GRouP SPI S) not implemented");
+		return false;
+	}
+
+	if (kernel_policy != NULL && kernel_policy->nr_rules > 0) {
+		/*
+		 * XXX: needing to look at OP_DIRECTION to decide
+		 * which is SRC/DST sure feels like a bug.
+		 */
+		switch (op_direction) {
+		case KERNEL_POLICY_INBOUND:
+			/* XXX: notice how DST gets SRC's value et.al. */
+			put_sadb_address(&req, SADB_EXT_ADDRESS_DST, kernel_policy->src.host);
+			put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, kernel_policy->dst.host);
+			break;
+		case KERNEL_POLICY_OUTBOUND:
+			put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, kernel_policy->src.host);
+			put_sadb_address(&req, SADB_EXT_ADDRESS_DST, kernel_policy->dst.host);
+			break;
+		}
+	}
+
+	/* selectors */
+
+	put_sadb_address(&req, SADB_X_EXT_SRC_FLOW, selector_prefix(*src_client));
+	put_sadb_address(&req, SADB_X_EXT_SRC_MASK, selector_prefix_mask(*src_client));
+	put_sadb_address(&req, SADB_X_EXT_DST_FLOW, selector_prefix(*dst_client));
+	put_sadb_address(&req, SADB_X_EXT_DST_MASK, selector_prefix_mask(*dst_client));
+
+	/* which protocol? */
+
+	put_sadb_ext(&req, sadb_protocol, SADB_X_EXT_PROTOCOL,
+		     .sadb_protocol_proto = selector_protocol(*src_client)->ipproto);
+
+	/* sa_srcd, sa_dstid: identity (sec_label?) */
+
 #else
 
 	/* SPDADD: <base, policy, address(SD), [lifetime(HS)]> */
@@ -1064,6 +1235,8 @@ static bool pfkeyv2_raw_policy(enum kernel_policy_op op,
 
 	put_sadb_x_policy(&req, op, policy_type, kernel_policy);
 
+#endif
+
 	/* send/req */
 
 	struct inbuf resp;
@@ -1080,7 +1253,6 @@ static bool pfkeyv2_raw_policy(enum kernel_policy_op op,
 	}
 
 	return true;
-#endif
 }
 
 static bool process_address(shunk_t *ext_cursor, ip_address *addr, ip_port *port, struct logger *logger)

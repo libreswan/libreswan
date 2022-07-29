@@ -52,7 +52,7 @@ const char *ttodatav(const char *src,
 		     size_t *lenp,	/* where to record length (NULL is nowhere) */
 		     char *errp,	/* error buffer */
 		     size_t errlen,
-		     unsigned int flags)
+		     lset_t flags)
 {
 	size_t ingroup;	/* number of input bytes converted at once */
 	char buf[4];	/* output from conversion */
@@ -62,7 +62,7 @@ const char *ttodatav(const char *src,
 	int ndone;
 	int i;
 	int underscoreok;
-	int skipSpace = 0;
+	bool skipSpace = false;
 
 	if (srclen == 0)
 		srclen = strlen(src);
@@ -105,8 +105,8 @@ const char *ttodatav(const char *src,
 		decode = unb64;
 		underscoreok = 0;
 		ingroup = 4;
-		if (flags & TTODATAV_IGNORESPACE)
-			skipSpace = 1;
+		if (flags & TTODATAV_IGNORE_BASE64_SPACES)
+			skipSpace = true;
 		break;
 
 	case 256:
@@ -189,8 +189,7 @@ const char *ttodata(const char *src,
 		    size_t dstlen,
 		    size_t *lenp)	/* where to record length (NULL is nowhere) */
 {
-	return ttodatav(src, srclen, base, dst, dstlen, lenp, (char *)NULL,
-			(size_t)0, TTODATAV_SPACECOUNTS);
+	return ttodatav(src, srclen, base, dst, dstlen, lenp, (char *)NULL, (size_t)0, LEMPTY);
 }
 
 /*
@@ -400,7 +399,7 @@ int main(int argc, char *argv[])
 	}
 
 	oops = ttodatav(argv[1], 0, 0, buf, sizeof(buf), &n,
-			err, sizeof(err), TTODATAV_IGNORESPACE);
+			err, sizeof(err), LEMPTY);
 	if (oops != NULL) {
 		fprintf(stderr, "%s: ttodata error `%s' in `%s'\n", pgm,
 			oops, argv[1]);
@@ -675,12 +674,12 @@ char *pgm;
 				ttodatav(r->ascii, 0, base, buf, sizeof(buf),
 					&n,
 					NULL,
-					0, TTODATAV_IGNORESPACE), &status);
+					0, TTODATAV_IGNORE_BASE64_SPACES), &status);
 			if (xbase != 0)
 				check(r, buf, n,
 					ttodatav(r->ascii + 2, 0, xbase, buf,
 						sizeof(buf), &n, NULL, 0,
-						TTODATAV_IGNORESPACE), &status);
+						TTODATAV_IGNORE_BASE64_SPACES), &status);
 		} else {
 			check(r, buf, n,
 				ttodata(r->ascii, 0, base, buf, sizeof(buf),
@@ -690,7 +689,7 @@ char *pgm;
 					ttodatav(r->ascii, 0, base, buf,
 						sizeof(buf),
 						&n, NULL, 0,
-						TTODATAV_IGNORESPACE), &status);
+						TTODATAV_IGNORE_BASE64_SPACES), &status);
 
 			if (xbase != 0) {
 				check(r, buf, n,
@@ -702,7 +701,7 @@ char *pgm;
 							buf,
 							sizeof(buf), &n, NULL,
 							0,
-							TTODATAV_IGNORESPACE),
+							TTODATAV_IGNORE_BASE64_SPACES),
 						&status);
 			}
 		}

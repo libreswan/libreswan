@@ -507,7 +507,7 @@ static err_t process_psk_secret(struct file_lex_position *flp, chunk_t *psk)
 		ugh = ttodatav(flp->tok, flp->cur - flp->tok, 0, buf,
 			       sizeof(buf), &sz,
 			       diag_space, sizeof(diag_space),
-			       TTODATAV_SPACECOUNTS);
+			       LEMPTY);
 		if (ugh != NULL) {
 			/* ttodata didn't like PSK data */
 			ugh = builddiag("PSK data malformed (%s): %s", ugh,
@@ -544,8 +544,7 @@ static err_t process_xauth_secret(struct file_lex_position *flp, chunk_t *xauth)
 
 		ugh = ttodatav(flp->tok, flp->cur - flp->tok, 0, buf,
 			       sizeof(buf), &sz,
-			       diag_space, sizeof(diag_space),
-			       TTODATAV_SPACECOUNTS);
+			       diag_space, sizeof(diag_space), LEMPTY);
 		if (ugh != NULL) {
 			/* ttodata didn't like PSK data */
 			ugh = builddiag("PSK data malformed (%s): %s", ugh,
@@ -597,7 +596,7 @@ static err_t process_ppk_static_secret(struct file_lex_position *flp,
 		ugh = ttodatav(flp->tok, flp->cur - flp->tok, 0, buf,
 			       sizeof(buf), &sz,
 			       diag_space, sizeof(diag_space),
-			       TTODATAV_SPACECOUNTS);
+			       LEMPTY);
 		if (ugh != NULL) {
 			/* ttodata didn't like PPK data */
 			ugh = builddiag("PPK data malformed (%s): %s", ugh,

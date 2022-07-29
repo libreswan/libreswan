@@ -22,6 +22,7 @@
 #include <stddef.h>		/* for size_t */
 
 #include "err.h"
+#include "lset.h"
 
 /*
  * new IPv6-compatible functions
@@ -37,11 +38,10 @@ extern size_t ultot(unsigned long src, int format, char *buf, size_t buflen);
 extern err_t ttodata(const char *src, size_t srclen, int base, char *buf,
 	      size_t buflen, size_t *needed);
 extern err_t ttodatav(const char *src, size_t srclen, int base,
-	       char *buf,  size_t buflen, size_t *needed,
-	       char *errp, size_t errlen, unsigned int flags);
+		      char *buf,  size_t buflen, size_t *needed,
+		      char *errp, size_t errlen, lset_t flags);
 #define TTODATAV_BUF    40              /* ttodatav's largest non-literal message */
-#define TTODATAV_IGNORESPACE  (1 << 1)  /* ignore spaces in base64 encodings */
-#define TTODATAV_SPACECOUNTS  0         /* do not ignore spaces in base64 */
+#define TTODATAV_IGNORE_BASE64_SPACES  (1 << 1)  /* ignore spaces in base64 encodings */
 
 extern size_t datatot(const unsigned char *src, size_t srclen, int format,
 	       char *buf, size_t buflen);
