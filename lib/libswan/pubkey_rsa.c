@@ -93,7 +93,7 @@ static err_t pubkey_content_to_ipseckey_rdata(const union pubkey_content *pkc,
  *
  * See https://www.rfc-editor.org/rfc/rfc3110#section-2
  */
-static err_t pubkey_ipseckey_rdata_to_rsa_pubkey(shunk_t rr, shunk_t *e, shunk_t *n)
+static diag_t pubkey_ipseckey_rdata_to_rsa_pubkey(shunk_t rr, shunk_t *e, shunk_t *n)
 {
 	*e = null_shunk;
 	*n = null_shunk;
@@ -101,9 +101,11 @@ static err_t pubkey_ipseckey_rdata_to_rsa_pubkey(shunk_t rr, shunk_t *e, shunk_t
 	/*
 	 * Step 1: find the bounds of the exponent and modulus within
 	 * the resource record and verify that they are sane.
+	 *
+	 * XXX: this isn't an ASN.1 encoded length so what is it?
 	 */
 
-	shunk_t exponent;
+	shunk_t exponent = null_shunk;
 	const uint8_t *const rr_ptr = rr.ptr;
 	if (rr.len >= 2 && rr_ptr[0] != 0x00) {
 		/*
@@ -120,7 +122,8 @@ static err_t pubkey_ipseckey_rdata_to_rsa_pubkey(shunk_t rr, shunk_t *e, shunk_t
 		exponent = shunk2(rr_ptr + 3, (rr_ptr[1] << BITS_PER_BYTE) + rr_ptr[2]);
 	} else {
 		/* not even room for length! */
-		return "RSA public key resource record way too short";
+		return diag("%zu byte raw RSA public is way too short",
+			    rr.len);
 	}
 
 	/*
@@ -129,22 +132,28 @@ static err_t pubkey_ipseckey_rdata_to_rsa_pubkey(shunk_t rr, shunk_t *e, shunk_t
 	const uint8_t *const exponent_end = exponent.ptr + exponent.len;
 	const uint8_t *const rr_end = rr_ptr + rr.len;
 	if (exponent_end > rr_end) {
-		return "truncated RSA public key resource record exponent";
+		return diag("%zu byte raw RSA public key is too short for exponent of length %zu",
+			    rr.len, exponent.len);
 	}
 
 	/*
 	 * What is left over forms the modulus.
+	 *
+	 * XXX: This overlaps RSA_secret_sane.
 	 */
 	shunk_t modulus = shunk2(exponent_end, rr_end - exponent_end);
 
 	if (modulus.len < RSA_MIN_OCTETS_RFC) {
-		return "RSA public key resource record modulus too short";
+		return diag("%zu byte raw RSA public key %zu byte modulus is shorter than RFC minimum %d",
+			    rr.len, modulus.len, RSA_MIN_OCTETS_RFC);
 	}
 	if (modulus.len < RSA_MIN_OCTETS) {
-		return RSA_MIN_OCTETS_UGH;
+		return diag("%zu byte raw RSA public key %zu byte modulus is shorter than minimum %d",
+			    rr.len, modulus.len, RSA_MIN_OCTETS);
 	}
 	if (modulus.len > RSA_MAX_OCTETS) {
-		return RSA_MAX_OCTETS_UGH;
+		return diag("%zu byte raw RSA public key %zu byte modulus is longer than maximum %d",
+			    rr.len, modulus.len, RSA_MAX_OCTETS);
 	}
 
 	/*
@@ -155,16 +164,16 @@ static err_t pubkey_ipseckey_rdata_to_rsa_pubkey(shunk_t rr, shunk_t *e, shunk_t
 	return NULL;
 }
 
-static err_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
-						  struct RSA_public_key *rsak,
-						  keyid_t *keyid, ckaid_t *ckaid, size_t *size)
+static diag_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
+						   struct RSA_public_key *rsak,
+						   keyid_t *keyid, ckaid_t *ckaid, size_t *size)
 {
 	/* unpack */
 	shunk_t exponent;
 	shunk_t modulus;
-	err_t rrerr = pubkey_ipseckey_rdata_to_rsa_pubkey(ipseckey_pubkey, &exponent, &modulus);
-	if (rrerr != NULL) {
-		return rrerr;
+	diag_t d = pubkey_ipseckey_rdata_to_rsa_pubkey(ipseckey_pubkey, &exponent, &modulus);
+	if (d != NULL) {
+		return d;
 	}
 
 	/*
@@ -176,13 +185,14 @@ static err_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 
 	PRArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 	if (arena == NULL) {
-		return "allocating RSA arena";
+		return diag_nss_error("allocating RSA arena");
 	}
 
 	SECKEYPublicKey *seckey = PORT_ArenaZNew(arena, SECKEYPublicKey);
 	if (seckey == NULL) {
+		diag_t d = diag_nss_error("allocating RSA SECKEYPublicKey");
 		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
-		return "allocating RSA SECKEYPublicKey";
+		return d;
 	}
 
 	seckey->arena = arena;
@@ -197,20 +207,23 @@ static err_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 	 */
 
 	if (SECITEM_MakeItem(arena, &rsa->modulus, modulus.ptr, modulus.len) != SECSuccess) {
+		diag_t d = diag_nss_error("copying 'n' (modulus) to RSA SECKEYPublicKey");
 		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
-		return "copying 'n' (modulus) to RSA SECKEYPublicKey";
+		return d;
 	}
 
 	if (SECITEM_MakeItem(arena, &rsa->publicExponent, exponent.ptr, exponent.len) != SECSuccess) {
+		diag_t d = diag_nss_error("copying 'e' (exponent) to RSA public key");
 		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
-		return "copying 'e' (exponent) to RSA public key";
+		return d;
 	}
 
 	/* ckaid */
 	SECItem *nss_ckaid = PK11_MakeIDFromPubKey(&rsa->modulus);
 	if (nss_ckaid == NULL) {
+		diag_t d = diag_nss_error("unable to compute 'CKAID' from modulus");
 		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
-		return "unable to compute 'CKAID' from modulus";
+		return d;
 	}
 	if (DBGP(DBG_BASE)) {
 		DBG_dump("computed rsa CKAID",
@@ -219,10 +232,11 @@ static err_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 	*ckaid = ckaid_from_secitem(nss_ckaid);
 	SECITEM_FreeItem(nss_ckaid, PR_TRUE);
 
-	err_t e = keyblob_to_keyid(ipseckey_pubkey.ptr, ipseckey_pubkey.len, keyid);
-	if (e != NULL) {
+	err_t kberr = keyblob_to_keyid(ipseckey_pubkey.ptr, ipseckey_pubkey.len, keyid);
+	if (kberr != NULL) {
+		diag_t d = diag("%s", kberr);
 		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
-		return e;
+		return d;
 	}
 
 	*size = modulus.len;
@@ -243,9 +257,9 @@ static err_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 	return NULL;
 }
 
-static err_t ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
-					      union pubkey_content *u,
-					      keyid_t *keyid, ckaid_t *ckaid, size_t *size)
+static diag_t ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
+					       union pubkey_content *u,
+					       keyid_t *keyid, ckaid_t *ckaid, size_t *size)
 {
 	return RSA_ipseckey_rdata_to_pubkey_content(ipseckey_pubkey, &u->rsa, keyid, ckaid, size);
 }
@@ -307,6 +321,7 @@ static err_t RSA_secret_sane(struct private_key_stuff *pks)
 	 *
 	 * We actually require more (for security).
 	 */
+
 	if (pks->size < RSA_MIN_OCTETS)
 		return RSA_MIN_OCTETS_UGH;
 

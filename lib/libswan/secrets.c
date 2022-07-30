@@ -1133,7 +1133,7 @@ static struct pubkey *alloc_pubkey(const struct id *id, /* ASKK */
 	return pk;
 }
 
-err_t unpack_dnssec_pubkey(const struct id *id, /* ASKK */
+diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
 			   enum dns_auth_level dns_auth_level,
 			   enum ipseckey_algorithm_type algorithm_type,
 			   realtime_t install_time, realtime_t until_time,
@@ -1142,20 +1142,21 @@ err_t unpack_dnssec_pubkey(const struct id *id, /* ASKK */
 			   struct pubkey **pkp,
 			   struct pubkey_list **head)
 {
-	/* first: algorithm-specific decoding of key chunk */
+	/*
+	 * First: unpack the raw public key.
+	 */
+
 	union pubkey_content scratch_pkc;
 	keyid_t keyid;
 	ckaid_t ckaid;
 	size_t size;
-
 	const struct pubkey_type *pubkey_type = NULL; /* TBD */
 
 	if (algorithm_type == IPSECKEY_ALGORITHM_X_PUBKEY) {
 		diag_t d = pubkey_der_to_pubkey_content(dnssec_pubkey, &scratch_pkc,
 							&keyid, &ckaid, &size, &pubkey_type);
 		if (d != NULL) {
-			pfree_diag(&d);
-			return "invalid pubkey";
+			return d;
 		}
 		passert(pubkey_type != NULL);
 	} else {
@@ -1168,16 +1169,20 @@ err_t unpack_dnssec_pubkey(const struct id *id, /* ASKK */
 			pubkey_type = &pubkey_type_ecdsa;
 			break;
 		default:
-			return "invalid IPSECKEY Algorithm Type";
+			return diag("invalid IPSECKEY Algorithm Type %u", algorithm_type);
 		}
 
-		err_t e = pubkey_type->ipseckey_rdata_to_pubkey_content(dnssec_pubkey,
+		diag_t d = pubkey_type->ipseckey_rdata_to_pubkey_content(dnssec_pubkey,
 									&scratch_pkc,
 									&keyid, &ckaid, &size);
-		if (e != NULL) {
-			return e;
+		if (d != NULL) {
+			return d;
 		}
 	}
+
+	/*
+	 * Second: use extracted information to create the pubkey.
+	 */
 
 	struct pubkey *pubkey = alloc_pubkey(id, dns_auth_level, pubkey_type,
 					     install_time, until_time, ttl,

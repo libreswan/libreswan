@@ -332,15 +332,15 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 
 		/* add the public key */
 		struct pubkey *pubkey = NULL; /* must-delref */
-		err_t ugh = unpack_dnssec_pubkey(&keyid, PUBKEY_LOCAL, msg->pubkey_alg,
-						 /*install_time*/realnow(),
-						 /*until_time*/realtime_epoch,
-						 /*ttl*/0,
-						 HUNK_AS_SHUNK(msg->keyval),
-						 &pubkey/*new-public-key:must-delref*/,
-						 &pluto_pubkeys);
-		if (ugh != NULL) {
-			llog(RC_LOG_SERIOUS, logger, "%s", ugh);
+		diag_t d = unpack_dns_ipseckey(&keyid, PUBKEY_LOCAL, msg->pubkey_alg,
+					       /*install_time*/realnow(),
+					       /*until_time*/realtime_epoch,
+					       /*ttl*/0,
+					       HUNK_AS_SHUNK(msg->keyval),
+					       &pubkey/*new-public-key:must-delref*/,
+					       &pluto_pubkeys);
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
 			free_id_content(&keyid);
 			return;
 		}

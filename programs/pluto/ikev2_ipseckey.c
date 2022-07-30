@@ -107,19 +107,19 @@ static void add_dns_pubkeys_to_pluto(struct p_dns_req *dnsr, struct dns_pubkey *
 			    enum_name(&dns_auth_level_names, al));
 		}
 
-		err_t ugh = unpack_dnssec_pubkey(keyid, /*dns_auth_level*/al,
-						 dns_pubkey->algorithm_type,
-						 install_time,
-						 realtimesum(install_time, deltatime(ttl_used)),
-						 ttl,
-						 dns_pubkey->pubkey,
-						 NULL/*don't-return-pubkey*/, &pluto_pubkeys);
-		if (ugh != NULL) {
+		diag_t d = unpack_dns_ipseckey(keyid, /*dns_auth_level*/al,
+					       dns_pubkey->algorithm_type,
+					       install_time,
+					       realtimesum(install_time, deltatime(ttl_used)),
+					       ttl,
+					       dns_pubkey->pubkey,
+					       NULL/*don't-return-pubkey*/, &pluto_pubkeys);
+		if (d != NULL) {
 			id_buf thatidbuf;
-			llog(RC_LOG_SERIOUS, dnsr->logger,
-			     "add publickey failed %s, %s, %s", ugh,
-			     str_id(&st->st_connection->remote->host.id, &thatidbuf),
-			     dnsr->log_buf);
+			llog_diag(RC_LOG_SERIOUS, dnsr->logger, &d,
+				  "add %s publickey failed, %s",
+				  str_id(&st->st_connection->remote->host.id, &thatidbuf),
+				  dnsr->log_buf);
 		}
 	}
 }

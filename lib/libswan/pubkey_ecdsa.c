@@ -44,12 +44,10 @@
 #include "ike_alg_dh.h"		/* for OID and size of EC algorithms */
 #include "refcnt.h"		/* for dbg_{alloc,free}() */
 
-static err_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubkey,
+static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubkey,
 						    struct ECDSA_public_key *ecdsa,
 						    keyid_t *keyid, ckaid_t *ckaid, size_t *size)
 {
-	err_t e;
-
 	static const struct dh_desc *dh[] = {
 		&ike_alg_dh_secp256r1,
 		&ike_alg_dh_secp384r1,
@@ -57,34 +55,48 @@ static err_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubke
 	};
 
 	/*
-	 * The raw IPSECKEY_PUBKEY, fed to us by a user, could include
-	 * the EC_POINT_FORM_UNCOMPRESSED prefix.  Strip that off.
+	 * Look for an EC curve with the same length as
+	 * ipseckey_pubkey.
+	 *
+	 * Raw EC pubkeys contain the EC point (or points).
 	 */
 
 	const struct dh_desc *group = NULL;
-	shunk_t raw = {0};
+	shunk_t raw = null_shunk;
 	const uint8_t *const ipseckey_pubkey_ptr = ipseckey_pubkey.ptr;
 	FOR_EACH_ELEMENT(e, dh) {
+		/*
+		 * A simple match, the buffer cnotains just the key.
+		 */
 		if (ipseckey_pubkey.len == (*e)->bytes) {
-			group = (*e);
 			raw = HUNK_AS_SHUNK(ipseckey_pubkey);
+			group = (*e);
 			break;
 		}
+		/*
+		 * The raw IPSECKEY_PUBKEY, which could come from the
+		 * internet or a config file, can include the
+		 * EC_POINT_FORM_UNCOMPRESSED prefix.
+		 *
+		 * Allow for and strip that off when necessary.
+		 */
 		if (group->nss_adds_ec_point_form_uncompressed &&
 		    ipseckey_pubkey.len == (*e)->bytes + 1 &&
 		    ipseckey_pubkey_ptr[0] == EC_POINT_FORM_UNCOMPRESSED) {
-			group = (*e);
 			/* ignore prefix */
 			raw = shunk2(ipseckey_pubkey_ptr + 1, ipseckey_pubkey.len - 1);
+			group = (*e);
 			break;
 		}
 	}
 	if (group == NULL) {
-		return "unrecognized EC pubkey";
+		return diag("unrecognized EC Public Key with length %zu", ipseckey_pubkey.len);
 	}
 
+	passert(raw.ptr != NULL && raw.len > 0);
+
 	/*
-	 * Allocate the public key, giving it its own arena.
+	 * Allocate the public key, giving it its own NSS arena.
 	 *
 	 * Since the arena contains everything allocated to the
 	 * seckey, error recovery just requires freeing that.
@@ -92,13 +104,14 @@ static err_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubke
 
 	PRArenaPool *arena = PORT_NewArena(DER_DEFAULT_CHUNKSIZE);
 	if (arena == NULL) {
-		return "allocating ECDSA arena";
+		return diag_nss_error("allocating ECDSA arena");
 	}
 
 	SECKEYPublicKey *seckey = PORT_ArenaZNew(arena, SECKEYPublicKey);
 	if (seckey == NULL) {
+		diag_t d = diag_nss_error("allocating ECDSA SECKEYPublicKey");
 		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
-		return "allocating ECDSA SECKEYPublicKey";
+		return d;
 	}
 
 	seckey->arena = arena;
@@ -113,8 +126,9 @@ static err_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubke
 	 */
 
 	if (SECITEM_AllocItem(arena, &ec->publicValue, raw.len + 1) == NULL) {
+		diag_t d = diag_nss_error("copying 'k' to EDSA public key");
 		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
-		return "copying 'k' to EDSA public key";
+		return d;
 	}
 	ec->publicValue.data[0] = EC_POINT_FORM_UNCOMPRESSED;
 	memcpy(ec->publicValue.data + 1, raw.ptr, raw.len);
@@ -127,14 +141,16 @@ static err_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubke
 	 */
 	const SECOidData *ec_oid = SECOID_FindOIDByTag(group->nss_oid); /*static*/
 	if (ec_oid == NULL) {
+		diag_t d = diag_nss_error("lookup of EC OID failed");
 		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
-		return "lookup of EC OID failed";
+		return d;
 	}
 
 	if (SEC_ASN1EncodeItem(arena, &ec->DEREncodedParams,
 			       &ec_oid->oid, SEC_ObjectIDTemplate) == NULL) {
+		diag_t d = diag_nss_error("ASN.1 encoding of EC OID failed");
 		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
-		return "ASN.1 encoding of EC OID failed";
+		return d;
 	}
 
 	/*
@@ -144,8 +160,9 @@ static err_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubke
 	/* should this include EC? */
 	SECItem *nss_ckaid = PK11_MakeIDFromPubKey(&ec->publicValue);
 	if (nss_ckaid == NULL) {
+		diag_t d = diag_nss_error("unable to compute 'CKAID' from public value");
 		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
-		return "unable to compute 'CKAID' from public value";
+		return d;
 	}
 	*ckaid = ckaid_from_secitem(nss_ckaid);
 	SECITEM_FreeItem(nss_ckaid, PR_TRUE);
@@ -154,10 +171,11 @@ static err_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubke
 	 * Use the ckaid since that digested the entire pubkey (this
 	 * is made up)
 	 */
-	e = keyblob_to_keyid(ckaid->ptr, ckaid->len, keyid);
+	err_t e = keyblob_to_keyid(ckaid->ptr, ckaid->len, keyid);
 	if (e != NULL) {
+		diag_t d = diag("%s", e);
 		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
-		return e;
+		return d;
 	}
 
 	ecdsa->seckey_public = seckey;
@@ -177,7 +195,7 @@ static err_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubke
 	return NULL;
 }
 
-static err_t ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
+static diag_t ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 					      union pubkey_content *u,
 					      keyid_t *keyid, ckaid_t *ckaid, size_t *size)
 {

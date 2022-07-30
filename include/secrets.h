@@ -144,9 +144,9 @@ struct pubkey_type {
 	enum private_key_kind private_key_kind;
 	void (*free_pubkey_content)(union pubkey_content *pkc);
 	/* to/from the blob in DNS's IPSECKEY's Public Key field */
-	err_t (*ipseckey_rdata_to_pubkey_content)(shunk_t ipseckey_pubkey,
-						  union pubkey_content *pkc,
-						  keyid_t *keyid, ckaid_t *ckaid, size_t *size);
+	diag_t (*ipseckey_rdata_to_pubkey_content)(shunk_t ipseckey_pubkey,
+						   union pubkey_content *pkc,
+						   keyid_t *keyid, ckaid_t *ckaid, size_t *size);
 	err_t (*pubkey_content_to_ipseckey_rdata)(const union pubkey_content *pkc,
 						  chunk_t *ipseckey_pubkey,
 						  enum ipseckey_algorithm_type *ipseckey_algorithm);
@@ -239,7 +239,7 @@ extern struct pubkey_list *pubkeys;	/* keys from ipsec.conf */
 extern struct pubkey_list *free_public_keyentry(struct pubkey_list *p);
 extern void free_public_keys(struct pubkey_list **keys);
 
-err_t unpack_dnssec_pubkey(const struct id *id, /* ASKK */
+diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
 			   enum dns_auth_level dns_auth_level,
 			   enum ipseckey_algorithm_type algorithm_type,
 			   realtime_t install_time, realtime_t until_time,
