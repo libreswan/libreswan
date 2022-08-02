@@ -261,22 +261,23 @@ static void do_whacklisten(struct logger *logger)
 /*
  * Handle: whack --keyid <id> [--addkey] [--pubkeyrsa <key>]\n"
  *
- * whack --keyid <id>
+ *                                               key  addkey pubkey
+ * whack --keyid <id>                             y      n      n
  *     delete <id> key
- * whack --keyid <id> --pubkeyrsa ...
+ * whack --keyid <id> --pubkeyrsa ...             y      n      y
  *     replace <id> key
- * whack --keyid <id> --addkey --pubkeyrsa ...
+ * whack --keyid <id> --addkey --pubkeyrsa ...    y      y      y
  *     add <id> key (keeping any old key)
  * whack --keyid <id> --addkey
  *     invalid as public key is missing (keyval.len is 0)
  */
 static void key_add_request(const struct whack_message *msg, struct logger *logger)
 {
-	/*
-	 * A (public) key requires a (key) type and a type requires a
-	 * key; except when it is a pubkey.
-	 */
 	bool given_key = msg->keyval.len > 0;
+
+	/*
+	 * Figure out the key type.
+	 */
 	const char *name; /* enumname? */
 	const struct pubkey_type *type;
 	switch (msg->pubkey_alg) {
@@ -293,18 +294,30 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 		type = NULL;
 		break;
 	default:
-		/* --addkey always requires a key */
-		if (msg->whack_addkey && !given_key) {
-			llog(RC_LOG_SERIOUS, logger,
-			     "error: key to add is empty (needs DNS lookup?)");
+		if (msg->pubkey_alg != 0) {
+			llog_pexpect(logger, HERE, "unrecognized algorithm type %u", msg->pubkey_alg);
 			return;
 		}
 		type = NULL;
 		name = "no-key";
 	}
-	dbg("processing %s key", name);
 
-	struct id keyid;
+	dbg("processing key=%s addkey=%s given_key=%s alg=%s(%d)",
+	    bool_str(msg->whack_key),
+	    bool_str(msg->whack_addkey),
+	    bool_str(given_key),
+	    name, msg->pubkey_alg);
+
+	/*
+	 * Adding must have a public key.
+	 */
+	if (msg->whack_addkey && !given_key) {
+		llog(RC_LOG_SERIOUS, logger,
+		     "error: key to add is empty (needs DNS lookup?)");
+		return;
+	}
+
+	struct id keyid; /* must free keyid */
 	err_t ugh = atoid(msg->keyid, &keyid); /* must free keyid */
 	if (ugh != NULL) {
 		llog(RC_BADID, logger,
@@ -312,7 +325,12 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 		return;
 	}
 
-	/* if no --addkey: delete any preexisting keys */
+	/*
+	 * Delete any old key.
+	 *
+	 * No --addkey just means that is no existing key to delete.
+	 * For instance !add with a key means replace.
+	 */
 	if (!msg->whack_addkey) {
 		if (!given_key) {
 			/* XXX: this gets called by "add" so be silent */
@@ -323,12 +341,23 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 		/* XXX: what about private keys; suspect not easy as not 1:1? */
 	}
 
-	/* if a key was given: add it */
-	if (given_key) {
-		/* XXX: this gets called by "add" so be silent */
+	/*
+	 * Add the new key.
+	 *
+	 * No --addkey with a key means replace.
+	 */
+ 	if (given_key) {
+
+		/*
+		 * A key was given: add it.
+		 *
+		 * XXX: this gets called by "add" so be silent.
+		 */
 		llog(LOG_STREAM/*not-whack*/, logger,
 		     "add keyid %s", msg->keyid);
-		DBG_dump_hunk(NULL, msg->keyval);
+		if (DBGP(DBG_BASE)) {
+			DBG_dump_hunk(NULL, msg->keyval);
+		}
 
 		/* add the public key */
 		struct pubkey *pubkey = NULL; /* must-delref */
