@@ -34,7 +34,7 @@ west #
 west #
  ipsec auto --up ikev2-westnet-eastnet
 1v2 "ikev2-westnet-eastnet" #1: initiating IKEv2 connection
-1v2 "ikev2-westnet-eastnet" #1: sent IKE_SA_INIT request
+1v2 "ikev2-westnet-eastnet" #1: sent IKE_SA_INIT request to 192.1.2.23:4500
 003 "ikev2-westnet-eastnet" #1: legacy RSA-SHA1 is not allowed but peer supports nothing else
 002 "ikev2-westnet-eastnet" #1: authentication method IKEv2_AUTH_RESERVED not supported
 036 "ikev2-westnet-eastnet" #1: encountered fatal error in state STATE_V2_PARENT_I1

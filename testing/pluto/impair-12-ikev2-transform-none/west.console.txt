@@ -28,7 +28,7 @@ west #
  ../../guestbin/libreswan-up-down.sh ike,esp=aes_gcm  -I 192.0.1.254 192.0.2.254
 002 "ike,esp=aes_gcm": added IKEv2 connection
 1v2 "ike,esp=aes_gcm" #1: initiating IKEv2 connection
-1v2 "ike,esp=aes_gcm" #1: sent IKE_SA_INIT request
+1v2 "ike,esp=aes_gcm" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "ike,esp=aes_gcm" #1: sent IKE_AUTH request {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
 003 "ike,esp=aes_gcm" #1: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "ike,esp=aes_gcm" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
@@ -47,7 +47,7 @@ west #
 1v2 "ike,esp=aes_gcm" #3: initiating IKEv2 connection
 002 "ike,esp=aes_gcm" #3: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
 002 "ike,esp=aes_gcm" #3: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
-1v2 "ike,esp=aes_gcm" #3: sent IKE_SA_INIT request
+1v2 "ike,esp=aes_gcm" #3: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "ike,esp=aes_gcm" #3: IMPAIR: proposal 1 transform INTEG=NONE included when counting transforms
 002 "ike,esp=aes_gcm" #3: IMPAIR: proposal 1 transform INTEG=NONE included when emitting proposal
 1v2 "ike,esp=aes_gcm" #3: sent IKE_AUTH request {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
@@ -68,7 +68,7 @@ west #
 1v2 "ike,esp=aes_gcm" #5: initiating IKEv2 connection
 002 "ike,esp=aes_gcm" #5: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
 002 "ike,esp=aes_gcm" #5: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
-1v2 "ike,esp=aes_gcm" #5: sent IKE_SA_INIT request
+1v2 "ike,esp=aes_gcm" #5: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "ike,esp=aes_gcm" #5: IMPAIR: proposal 1 transform INTEG=NONE excluded when counting transforms
 002 "ike,esp=aes_gcm" #5: IMPAIR: proposal 1 transform INTEG=NONE excluded when emitting proposal
 1v2 "ike,esp=aes_gcm" #5: sent IKE_AUTH request {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
@@ -89,7 +89,7 @@ west #
  ../../guestbin/libreswan-up-down.sh ike,esp=aes_gcm  -I 192.0.1.254 192.0.2.254
 002 "ike,esp=aes_gcm": added IKEv2 connection
 1v2 "ike,esp=aes_gcm" #7: initiating IKEv2 connection
-1v2 "ike,esp=aes_gcm" #7: sent IKE_SA_INIT request
+1v2 "ike,esp=aes_gcm" #7: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "ike,esp=aes_gcm" #7: sent IKE_AUTH request {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
 003 "ike,esp=aes_gcm" #7: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "ike,esp=aes_gcm" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
@@ -106,7 +106,7 @@ west #
  ../../guestbin/libreswan-up-down.sh ike,esp=aes_gcm  -I 192.0.1.254 192.0.2.254
 002 "ike,esp=aes_gcm": added IKEv2 connection
 1v2 "ike,esp=aes_gcm" #9: initiating IKEv2 connection
-1v2 "ike,esp=aes_gcm" #9: sent IKE_SA_INIT request
+1v2 "ike,esp=aes_gcm" #9: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "ike,esp=aes_gcm" #9: IMPAIR: proposal 1 transform DH=NONE included when counting transforms
 002 "ike,esp=aes_gcm" #9: IMPAIR: proposal 1 transform DH=NONE included when emitting proposal
 1v2 "ike,esp=aes_gcm" #9: sent IKE_AUTH request {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}
@@ -125,7 +125,7 @@ west #
  ../../guestbin/libreswan-up-down.sh ike,esp=aes_gcm  -I 192.0.1.254 192.0.2.254
 002 "ike,esp=aes_gcm": added IKEv2 connection
 1v2 "ike,esp=aes_gcm" #11: initiating IKEv2 connection
-1v2 "ike,esp=aes_gcm" #11: sent IKE_SA_INIT request
+1v2 "ike,esp=aes_gcm" #11: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "ike,esp=aes_gcm" #11: IMPAIR: proposal 1 transform DH=NONE excluded when counting transforms
 002 "ike,esp=aes_gcm" #11: IMPAIR: proposal 1 transform DH=NONE excluded when emitting proposal
 1v2 "ike,esp=aes_gcm" #11: sent IKE_AUTH request {cipher=AES_GCM_16_128 integ=n/a prf=HMAC_SHA1 group=MODP2048}

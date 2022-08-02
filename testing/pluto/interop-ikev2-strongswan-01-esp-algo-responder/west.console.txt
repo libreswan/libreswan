@@ -27,7 +27,7 @@ west #
  ../../guestbin/libreswan-up-down.sh esp=null-md5 -I 192.0.1.254 192.0.2.254
 002 "esp=null-md5": added IKEv2 connection
 1v2 "esp=null-md5" #1: initiating IKEv2 connection
-1v2 "esp=null-md5" #1: sent IKE_SA_INIT request
+1v2 "esp=null-md5" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "esp=null-md5" #1: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "esp=null-md5" #1: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "esp=null-md5" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=NULL-HMAC_MD5_96 DPD=passive}
@@ -40,7 +40,7 @@ west #
  ../../guestbin/libreswan-up-down.sh esp=null-sha1 -I 192.0.1.254 192.0.2.254
 002 "esp=null-sha1": added IKEv2 connection
 1v2 "esp=null-sha1" #3: initiating IKEv2 connection
-1v2 "esp=null-sha1" #3: sent IKE_SA_INIT request
+1v2 "esp=null-sha1" #3: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "esp=null-sha1" #3: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "esp=null-sha1" #3: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "esp=null-sha1" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=NULL-HMAC_SHA1_96 DPD=passive}
@@ -53,7 +53,7 @@ west #
  ../../guestbin/libreswan-up-down.sh esp=null_auth_aes_gmac-null -I 192.0.1.254 192.0.2.254
 002 "esp=null_auth_aes_gmac-null": added IKEv2 connection
 1v2 "esp=null_auth_aes_gmac-null" #5: initiating IKEv2 connection
-1v2 "esp=null_auth_aes_gmac-null" #5: sent IKE_SA_INIT request
+1v2 "esp=null_auth_aes_gmac-null" #5: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "esp=null_auth_aes_gmac-null" #5: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "esp=null_auth_aes_gmac-null" #5: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "esp=null_auth_aes_gmac-null" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=NULL_AUTH_AES_GMAC_128-NONE DPD=passive}
@@ -66,7 +66,7 @@ west #
  modinfo chacha20poly1305 > /dev/null && ../../guestbin/libreswan-up-down.sh esp=chacha20_poly1305-null -I 192.0.1.254 192.0.2.254 || true
 002 "esp=chacha20_poly1305-null": added IKEv2 connection
 1v2 "esp=chacha20_poly1305-null" #7: initiating IKEv2 connection
-1v2 "esp=chacha20_poly1305-null" #7: sent IKE_SA_INIT request
+1v2 "esp=chacha20_poly1305-null" #7: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "esp=chacha20_poly1305-null" #7: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "esp=chacha20_poly1305-null" #7: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "esp=chacha20_poly1305-null" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=CHACHA20_POLY1305-NONE DPD=passive}

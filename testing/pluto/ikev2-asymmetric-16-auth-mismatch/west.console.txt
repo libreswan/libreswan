@@ -56,7 +56,7 @@ west #
 west #
  ipsec auto --up westnet-eastnet-ikev2
 1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
-1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request
+1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "westnet-eastnet-ikev2" #1: authentication failed: peer attempted NULL authentication but we want rsasig
 002 "westnet-eastnet-ikev2" #1: deleting state (STATE_V2_PARENT_I2) and sending notification

@@ -17,7 +17,7 @@ west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 "aes128": added IKEv2 connection
 1v2 "aes128" #1: initiating IKEv2 connection
-1v2 "aes128" #1: sent IKE_SA_INIT request
+1v2 "aes128" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "aes128" #1: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "aes128" #1: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "aes128" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
@@ -39,7 +39,7 @@ west #
 002 "aes128": added IKEv2 connection
 1v2 "aes128" #3: initiating IKEv2 connection
 002 "aes128" #3: IMPAIR: emitting fixed-length key-length attribute with 0 key
-1v2 "aes128" #3: sent IKE_SA_INIT request
+1v2 "aes128" #3: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "aes128" #3: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "aes128" #3: IMPAIR: retransmit so deleting SA
 002 "aes128" #3: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
@@ -54,7 +54,7 @@ west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 "aes128": added IKEv2 connection
 1v2 "aes128" #5: initiating IKEv2 connection
-1v2 "aes128" #5: sent IKE_SA_INIT request
+1v2 "aes128" #5: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "aes128" #5: IMPAIR: emitting fixed-length key-length attribute with 0 key
 1v2 "aes128" #5: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "aes128" #5: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
@@ -72,7 +72,7 @@ west #
 002 "aes128": added IKEv2 connection
 1v2 "aes128" #7: initiating IKEv2 connection
 002 "aes128" #7: IMPAIR: duplicating key-length attribute
-1v2 "aes128" #7: sent IKE_SA_INIT request
+1v2 "aes128" #7: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "aes128" #7: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "aes128" #7: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "aes128" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
@@ -91,7 +91,7 @@ west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 "aes128": added IKEv2 connection
 1v2 "aes128" #9: initiating IKEv2 connection
-1v2 "aes128" #9: sent IKE_SA_INIT request
+1v2 "aes128" #9: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "aes128" #9: IMPAIR: duplicating key-length attribute
 1v2 "aes128" #9: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "aes128" #9: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
@@ -114,7 +114,7 @@ west #
 002 "aes128": added IKEv2 connection
 1v2 "aes128" #11: initiating IKEv2 connection
 002 "aes128" #11: IMPAIR: omitting fixed-size key-length attribute
-1v2 "aes128" #11: sent IKE_SA_INIT request
+1v2 "aes128" #11: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "aes128" #11: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "aes128" #11: IMPAIR: retransmit so deleting SA
 002 "aes128" #11: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
@@ -129,7 +129,7 @@ west #
  ../../guestbin/libreswan-up-down.sh aes128 -I 192.0.1.254 192.0.2.254
 002 "aes128": added IKEv2 connection
 1v2 "aes128" #13: initiating IKEv2 connection
-1v2 "aes128" #13: sent IKE_SA_INIT request
+1v2 "aes128" #13: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "aes128" #13: IMPAIR: omitting fixed-size key-length attribute
 1v2 "aes128" #13: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "aes128" #13: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
@@ -150,7 +150,7 @@ west #
 1v2 "aes128" #15: initiating IKEv2 connection
 002 "aes128" #15: IMPAIR: emitting variable-size key-length attribute with no key
 002 "aes128" #15: IMPAIR: emitting af+type of IKEv2 Attribute Substructure Payload has an unknown value: 0x0+14 (0xe)
-1v2 "aes128" #15: sent IKE_SA_INIT request
+1v2 "aes128" #15: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "aes128" #15: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "aes128" #15: IMPAIR: retransmit so deleting SA
 002 "aes128" #15: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
@@ -169,7 +169,7 @@ west #
 1v2 "aes128" #17: initiating IKEv2 connection
 002 "aes128" #17: IMPAIR: emitting variable-size key-length attribute with no key
 002 "aes128" #17: IMPAIR: emitting af+type of IKEv2 Attribute Substructure Payload has an unknown value: 0x0+14 (0xe)
-1v2 "aes128" #17: sent IKE_SA_INIT request
+1v2 "aes128" #17: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "aes128" #17: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "aes128" #17: IMPAIR: retransmit so deleting SA
 002 "aes128" #17: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
@@ -184,7 +184,7 @@ west #
  ../../guestbin/libreswan-up-down.sh 3des -I 192.0.1.254 192.0.2.254
 002 "3des": added IKEv2 connection
 1v2 "3des" #19: initiating IKEv2 connection
-1v2 "3des" #19: sent IKE_SA_INIT request
+1v2 "3des" #19: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "3des" #19: sent IKE_AUTH request {cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "3des" #19: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "3des" #20: initiator established Child SA using #19; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
@@ -206,7 +206,7 @@ west #
 002 "3des": added IKEv2 connection
 1v2 "3des" #21: initiating IKEv2 connection
 002 "3des" #21: IMPAIR: emitting fixed-length key-length attribute with 0 key
-1v2 "3des" #21: sent IKE_SA_INIT request
+1v2 "3des" #21: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "3des" #21: sent IKE_AUTH request {cipher=3DES_CBC_192 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "3des" #21: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "3des" #22: initiator established Child SA using #21; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
@@ -228,7 +228,7 @@ west #
 002 "3des": added IKEv2 connection
 1v2 "3des" #23: initiating IKEv2 connection
 002 "3des" #23: IMPAIR: emitting fixed-length key-length attribute with 192 key
-1v2 "3des" #23: sent IKE_SA_INIT request
+1v2 "3des" #23: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "3des" #23: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "3des" #23: IMPAIR: retransmit so deleting SA
 002 "3des" #23: deleting state (STATE_V2_PARENT_I1) and NOT sending notification

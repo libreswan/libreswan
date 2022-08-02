@@ -576,6 +576,24 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	 */
 	enum stream log_stream = ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) ? ALL_STREAMS : WHACK_STREAM;
 
+	/*
+	 * XXX: this is the first of two IKE_SA_INIT messages that are
+	 * logged when building and sending an IKE_SA_INIT request:
+	 *
+	 * 1. initiating IKEv2 connection
+	 *
+	 *    The state has been started and the first task has been
+	 *    off-loaded.  Since the connection is oriented, it is
+	 *    assumed that the peer's address has been resolved.
+	 *
+	 *    XXX: can the dns lookup be resolved here as part of the
+	 *    off load?
+	 *
+	 * 2. sending IKE_SA_INIT request ...
+	 *
+	 *    The message has been constructed and sent
+	 */
+
 	if (predecessor != NULL) {
 		const char *what;
 		if (IS_CHILD_SA_ESTABLISHED(predecessor)) {
@@ -607,8 +625,11 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 
 	if (IS_LIBUNBOUND && id_ipseckey_allowed(ike, IKEv2_AUTH_RESERVED)) {
 		/*
-		 * This runs in the background?  How is it ever
+		 * This submits a background task?  How is it ever
 		 * synced?
+		 *
+		 * The value returned (the PUBKEY) is required during
+		 * IKE AUTH.
 		 */
 		if (!initiator_fetch_idr_ipseckey(ike)) {
 			llog_sa(RC_LOG_SERIOUS, ike,

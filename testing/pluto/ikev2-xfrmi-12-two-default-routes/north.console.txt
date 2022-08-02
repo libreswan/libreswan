@@ -20,7 +20,7 @@ initdone
 north #
  ipsec auto --up north-west
 1v2 "north-west" #1: initiating IKEv2 connection
-1v2 "north-west" #1: sent IKE_SA_INIT request
+1v2 "north-west" #1: sent IKE_SA_INIT request to 192.1.2.45:500
 1v2 "north-west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "north-west" #1: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@west'
 002 "north-west" #2: route-client output: leftsubnet == rightsubnet = 0.0.0.0/0 cannot add route
@@ -55,7 +55,7 @@ north #
 north #
  ipsec auto --up north-east
 1v2 "north-east" #3: initiating IKEv2 connection
-1v2 "north-east" #3: sent IKE_SA_INIT request
+1v2 "north-east" #3: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "north-east" #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "north-east" #3: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "north-east" #4: initiator established Child SA using #3; IPsec tunnel [0.0.0.0-255.255.255.255:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
