@@ -42,12 +42,6 @@ extern void complete_v2_state_transition(struct ike_sa *ike,
 void schedule_reinitiate_v2_ike_sa_init(struct ike_sa *ike,
 					stf_status (*resume)(struct ike_sa *ike));
 
-extern bool ikev2_calculate_rsa_hash(struct ike_sa *ike,
-				     const struct crypt_mac *idhash,
-				     pb_stream *a_pbs,
-				     chunk_t *no_ppk_auth /* optional output */,
-				     const struct hash_desc *hash_algo);
-
 struct crypt_mac ikev2_rsa_sha1_hash(const struct crypt_mac *hash);
 
 extern bool ikev2_emit_psk_auth(enum keyword_auth authby,
