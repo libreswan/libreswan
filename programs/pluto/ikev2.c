@@ -163,6 +163,24 @@ void llog_v2_success_exchange(struct ike_sa *ike)
 	}
 }
 
+/* sent MESSAGE {request,response} to <address> */
+void llog_v2_success_sent_message_to(struct ike_sa *ike)
+{
+	enum rc_type w = RC_NEW_V2_STATE + ike->sa.st_state->kind;
+	LLOG_JAMBUF(w, ike->sa.st_logger, buf) {
+		jam_string(buf, "sent ");
+		jam_enum_short(buf, &ikev2_exchange_names, ike->sa.st_v2_transition->exchange);
+		jam_string(buf, " ");
+		switch (ike->sa.st_v2_transition->send_role) {
+		case MESSAGE_REQUEST: jam_string(buf, "request"); break;
+		case MESSAGE_RESPONSE: jam_string(buf, "response"); break;
+		case NO_MESSAGE: jam_string(buf, "INTERNAL ERROR"); break;
+		}
+		jam_string(buf, " to ");
+		jam_endpoint_sensitive(buf, &ike->sa.st_remote_endpoint);
+	}
+}
+
 void llog_v2_success_story_details(struct ike_sa *ike)
 {
 	enum rc_type w = RC_NEW_V2_STATE + ike->sa.st_state->kind;
@@ -257,14 +275,14 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	/* no state:   --> I1
 	 * HDR, SAi1, KEi, Ni -->
 	 */
-	{ .story      = "initiate IKE_SA_INIT",
+	{ .story      = "initiating IKE_SA_INIT",
 	  .state      = STATE_V2_PARENT_I0,
 	  .next_state = STATE_V2_PARENT_I1,
 	  .flags      = LEMPTY,
 	  .exchange   = ISAKMP_v2_IKE_SA_INIT,
 	  .send_role  = MESSAGE_REQUEST,
 	  .processor  = NULL, /* XXX: should be set */
-	  .llog_success = llog_v2_success_story,
+	  .llog_success = llog_v2_success_sent_message_to,
 	  .timeout_event = EVENT_RETRANSMIT, },
 
 	/* STATE_V2_PARENT_I1: R1B --> I1B
