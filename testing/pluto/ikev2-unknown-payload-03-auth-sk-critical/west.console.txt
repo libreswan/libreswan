@@ -13,7 +13,7 @@ west #
  ../../guestbin/libreswan-up-down.sh westnet-eastnet-ipv4-psk-ikev2 -I 192.0.1.254 192.0.2.254
 002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection
-1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request
+1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "westnet-eastnet-ipv4-psk-ikev2" #1: message response contained an unknown critical payload type (255??)
 036 "westnet-eastnet-ipv4-psk-ikev2" #1: encountered fatal error in state STATE_V2_PARENT_I2

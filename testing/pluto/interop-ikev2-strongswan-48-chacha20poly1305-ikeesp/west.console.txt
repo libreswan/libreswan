@@ -31,7 +31,7 @@ initdone
 west #
  ipsec auto --up chacha
 1v2 "chacha" #1: initiating IKEv2 connection
-1v2 "chacha" #1: sent IKE_SA_INIT request
+1v2 "chacha" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "chacha" #1: sent IKE_AUTH request {cipher=CHACHA20_POLY1305_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "chacha" #1: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
 004 "chacha" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=CHACHA20_POLY1305-NONE DPD=passive}

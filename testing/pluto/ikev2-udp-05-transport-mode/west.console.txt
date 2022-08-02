@@ -13,7 +13,7 @@ initdone
 west #
  ipsec auto --up ikev2-west-east
 1v2 "ikev2-west-east" #1: initiating IKEv2 connection
-1v2 "ikev2-west-east" #1: sent IKE_SA_INIT request
+1v2 "ikev2-west-east" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "ikev2-west-east" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "ikev2-west-east" #1: initiator established IKE SA; authenticated using RSASSA-PSS with SHA2_512 and preloaded certificate '@east'
 004 "ikev2-west-east" #2: initiator established Child SA using #1; IPsec transport [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}

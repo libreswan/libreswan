@@ -19,7 +19,7 @@ north #
 000 initiating all conns with alias='northnet-eastnets'
 1v2 "northnet-eastnets/0x2" #1: initiating IKEv2 connection
 000 "northnet-eastnets/0x1": queue Child SA; waiting on IKE SA "northnet-eastnets/0x2" #1 negotiating with 192.1.2.23
-1v2 "northnet-eastnets/0x2" #1: sent IKE_SA_INIT request
+1v2 "northnet-eastnets/0x2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "northnet-eastnets/0x2" #1: switching CHILD #2 to pending connection "northnet-eastnets/0x1"
 1v2 "northnet-eastnets/0x2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "northnet-eastnets/0x2" #1: initiator established IKE SA; authenticated using RSASSA-PSS with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'

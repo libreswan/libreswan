@@ -17,7 +17,7 @@ west #
 west #
  ipsec auto --up westnet-eastnet-ikev2 #retransmits
 1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
-1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request
+1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 010 "westnet-eastnet-ikev2" #1: STATE_V2_PARENT_I1: retransmission; will wait 1 seconds for response
 010 "westnet-eastnet-ikev2" #1: STATE_V2_PARENT_I1: retransmission; will wait 2 seconds for response
 010 "westnet-eastnet-ikev2" #1: STATE_V2_PARENT_I1: retransmission; will wait 4 seconds for response

@@ -34,9 +34,9 @@ west #
 west #
  ipsec auto --up ikev2-westnet-eastnet
 1v2 "ikev2-westnet-eastnet" #1: initiating IKEv2 connection
-1v2 "ikev2-westnet-eastnet" #1: sent IKE_SA_INIT request
+1v2 "ikev2-westnet-eastnet" #1: sent IKE_SA_INIT request to 192.1.2.23:4500
 002 "ikev2-westnet-eastnet" #1: Received unauthenticated INVALID_KE_PAYLOAD response to DH MODP1536; resending with suggested DH MODP2048
-1v2 "ikev2-westnet-eastnet" #1: sent IKE_SA_INIT request
+1v2 "ikev2-westnet-eastnet" #1: sent IKE_SA_INIT request to 192.1.2.23:4500
 1v2 "ikev2-westnet-eastnet" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP2048}
 003 "ikev2-westnet-eastnet" #1: initiator established IKE SA; authenticated using RSASSA-PSS with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 004 "ikev2-westnet-eastnet" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESPinTCP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}

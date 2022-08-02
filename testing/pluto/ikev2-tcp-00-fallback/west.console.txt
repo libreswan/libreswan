@@ -38,7 +38,7 @@ west #
 west #
  ipsec auto --up ikev2-westnet-eastnet
 1v2 "ikev2-westnet-eastnet" #1: initiating IKEv2 connection
-1v2 "ikev2-westnet-eastnet" #1: sent IKE_SA_INIT request
+1v2 "ikev2-westnet-eastnet" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 031 "ikev2-westnet-eastnet" #1: STATE_V2_PARENT_I1: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 000 "ikev2-westnet-eastnet" #1: starting keying attempt 2 of an unlimited number, but releasing whack
 west #
