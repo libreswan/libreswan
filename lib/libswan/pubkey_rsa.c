@@ -342,10 +342,6 @@ const struct pubkey_type pubkey_type_rsa = {
 	.extract_private_key_pubkey_content = RSA_extract_private_key_pubkey_content,
 	.free_secret_content = RSA_free_secret_content,
 	.secret_sane = RSA_secret_sane,
-	.digital_signature_signer = {
-		[DIGITAL_SIGNATURE_RSASSA_PSS_BLOB] = &pubkey_signer_rsassa_pss,
-		[DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB] = &pubkey_signer_pkcs1_1_5_rsa,
-	},
 };
 
 /* returns the length of the result on success; 0 on failure */

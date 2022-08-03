@@ -159,7 +159,6 @@ struct pubkey_type {
 						   SECKEYPublicKey *pubk, SECItem *cert_ckaid);
 	void (*free_secret_content)(struct private_key_stuff *pks);
 	err_t (*secret_sane)(struct private_key_stuff *pks);
-	const struct pubkey_signer *digital_signature_signer[DIGITAL_SIGNATURE_BLOB_ROOF];
 };
 
 struct pubkey_signer {
