@@ -187,10 +187,13 @@ struct pubkey_signer {
 extern const struct pubkey_type pubkey_type_rsa;
 extern const struct pubkey_type pubkey_type_ecdsa;
 
-extern const struct pubkey_signer pubkey_signer_raw_rsa;
-extern const struct pubkey_signer pubkey_signer_pkcs1_1_5_rsa;
-extern const struct pubkey_signer pubkey_signer_rsassa_pss;
-extern const struct pubkey_signer pubkey_signer_ecdsa;
+extern const struct pubkey_signer pubkey_signer_raw_rsa;		/* IKEv1 */
+extern const struct pubkey_signer pubkey_signer_raw_pkcs1_1_5_rsa;	/* rfc7296 */
+extern const struct pubkey_signer pubkey_signer_raw_ecdsa;		/* rfc4754 */
+
+extern const struct pubkey_signer pubkey_signer_digsig_pkcs1_1_5_rsa;	/* rfc7427 */
+extern const struct pubkey_signer pubkey_signer_digsig_rsassa_pss;	/* rfc7427 */
+extern const struct pubkey_signer pubkey_signer_digsig_ecdsa;		/* rfc7427 */
 
 const struct pubkey_type *pubkey_alg_type(enum ipseckey_algorithm_type alg);
 

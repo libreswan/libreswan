@@ -303,10 +303,10 @@ const struct pubkey_type pubkey_type_ecdsa = {
 	.extract_pubkey_content = extract_pubkey_content,
 };
 
-static struct hash_signature ECDSA_sign_hash(const struct private_key_stuff *pks,
-					     const uint8_t *hash_val, size_t hash_len,
-					     const struct hash_desc *hash_algo_unused UNUSED,
-					     struct logger *logger)
+static struct hash_signature ECDSA_raw_sign_hash(const struct private_key_stuff *pks,
+						 const uint8_t *hash_val, size_t hash_len,
+						 const struct hash_desc *hash_algo_unused UNUSED,
+						 struct logger *logger)
 {
 
 	if (!pexpect(pks->private_key != NULL)) {
@@ -364,11 +364,11 @@ static struct hash_signature ECDSA_sign_hash(const struct private_key_stuff *pks
 	return signature;
 }
 
-static bool ECDSA_authenticate_signature(const struct crypt_mac *hash, shunk_t signature,
-					 struct pubkey *kr,
-					 const struct hash_desc *unused_hash_algo UNUSED,
-					 diag_t *fatal_diag,
-					 struct logger *logger)
+static bool ECDSA_raw_authenticate_signature(const struct crypt_mac *hash, shunk_t signature,
+					     struct pubkey *kr,
+					     const struct hash_desc *unused_hash_algo UNUSED,
+					     diag_t *fatal_diag,
+					     struct logger *logger)
 {
 	const struct ECDSA_public_key *ecdsa = &kr->u.ecdsa;
 
@@ -434,10 +434,149 @@ static bool ECDSA_authenticate_signature(const struct crypt_mac *hash, shunk_t s
 	return true;
 }
 
-const struct pubkey_signer pubkey_signer_ecdsa = {
+const struct pubkey_signer pubkey_signer_raw_ecdsa = {
+	.name = "ECDSA", /* name from RFC 7427 */
+	.type = &pubkey_type_ecdsa,
+	.digital_signature_blob = DIGITAL_SIGNATURE_BLOB_ROOF,
+	.sign_hash = ECDSA_raw_sign_hash,
+	.authenticate_signature = ECDSA_raw_authenticate_signature,
+};
+
+static struct hash_signature ECDSA_digsig_sign_hash(const struct private_key_stuff *pks,
+						    const uint8_t *hash_val, size_t hash_len,
+						    const struct hash_desc *hash_algo_unused UNUSED,
+						    struct logger *logger)
+{
+
+	if (!pexpect(pks->private_key != NULL)) {
+		dbg("no private key!");
+		return (struct hash_signature) { .len = 0, };
+	}
+
+	DBGF(DBG_CRYPT, "ECDSA_sign_hash: Started using NSS");
+
+	/* point HASH to sign at HASH_VAL */
+	SECItem hash_to_sign = {
+		.type = siBuffer,
+		.len = hash_len,
+		.data = DISCARD_CONST(uint8_t *, hash_val),
+	};
+
+	/* point signature at the SIG_VAL buffer */
+	uint8_t raw_signature_data[sizeof(struct hash_signature)];
+	SECItem raw_signature = {
+		.type = siBuffer,
+		.len = PK11_SignatureLen(pks->private_key),
+		.data = raw_signature_data,
+	};
+	passert(raw_signature.len <= sizeof(raw_signature_data));
+	dbg("ECDSA signature.len %d", raw_signature.len);
+
+	/* create the raw signature */
+	SECStatus s = PK11_Sign(pks->private_key, &raw_signature, &hash_to_sign);
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump("sig_from_nss", raw_signature.data, raw_signature.len);
+	}
+	if (s != SECSuccess) {
+		/* PR_GetError() returns the thread-local error */
+		llog_nss_error(RC_LOG_SERIOUS, logger,
+			       "ECDSA sign function failed");
+		return (struct hash_signature) { .len = 0, };
+	}
+
+	SECItem encoded_signature = {0,};	/* must be initialized*/
+	if (DSAU_EncodeDerSigWithLen(&encoded_signature, &raw_signature,
+				     raw_signature.len) != SECSuccess) {
+		/* PR_GetError() returns the thread-local error */
+		llog_nss_error(RC_LOG, logger,
+			       "NSS: constructing DER encoded ECDSA signature using DSAU_EncodeDerSigWithLen() failed:");
+		return (struct hash_signature) { .len = 0, };
+	}
+	struct hash_signature signature = {
+		.len = encoded_signature.len,
+	};
+	passert(encoded_signature.len <= sizeof(signature.ptr/*an-array*/));
+	memcpy(signature.ptr, encoded_signature.data, encoded_signature.len);
+	SECITEM_FreeItem(&encoded_signature, PR_FALSE);
+
+	DBGF(DBG_CRYPT, "ECDSA_sign_hash: Ended using NSS");
+	return signature;
+}
+
+static bool ECDSA_digsig_authenticate_signature(const struct crypt_mac *hash, shunk_t signature,
+						struct pubkey *kr,
+						const struct hash_desc *unused_hash_algo UNUSED,
+						diag_t *fatal_diag,
+						struct logger *logger)
+{
+	const struct ECDSA_public_key *ecdsa = &kr->u.ecdsa;
+
+	/*
+	 * Convert the signature into raw form (NSS doesn't do const).
+	 */
+	SECItem der_signature = {
+		.type = siBuffer,
+		.data = DISCARD_CONST(unsigned char *, signature.ptr),/*NSS doesn't do const*/
+		.len = signature.len
+	};
+	if (DBGP(DBG_BASE)) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam(buf, "%d-byte DER encoded ECDSA signature: ",
+			    der_signature.len);
+			jam_nss_secitem(buf, &der_signature);
+		}
+	}
+
+	SECItem *raw_signature = DSAU_DecodeDerSigToLen(&der_signature,
+							SECKEY_SignatureLen(ecdsa->seckey_public));
+	if (raw_signature == NULL) {
+		/* not fatal as dependent on key being tried */
+		llog_nss_error(DEBUG_STREAM, logger,
+			       "unpacking DER encoded ECDSA signature using DSAU_DecodeDerSigToLen()");
+		*fatal_diag = NULL;
+		return false;
+	}
+
+	if (DBGP(DBG_BASE)) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam(buf, "%d-byte raw ESCSA signature: ",
+			    raw_signature->len);
+			jam_nss_secitem(buf, raw_signature);
+		}
+	}
+
+	/*
+	 * put the hash somewhere writable; so it can later be logged?
+	 *
+	 * XXX: cast away const?
+	 */
+	struct crypt_mac hash_data = *hash;
+	SECItem hash_item = {
+		.type = siBuffer,
+		.data = hash_data.ptr,
+		.len = hash_data.len,
+	};
+
+	if (PK11_Verify(ecdsa->seckey_public, raw_signature, &hash_item,
+			lsw_nss_get_password_context(logger)) != SECSuccess) {
+		llog_nss_error(DEBUG_STREAM, logger,
+			       "verifying AUTH hash using PK11_Verify() failed:");
+		SECITEM_FreeItem(raw_signature, PR_TRUE/*and-pointer*/);
+		*fatal_diag = NULL;
+		return false;
+	}
+
+	dbg("NSS: verified signature");
+	SECITEM_FreeItem(raw_signature, PR_TRUE);
+
+	*fatal_diag = NULL;
+	return true;
+}
+
+const struct pubkey_signer pubkey_signer_digsig_ecdsa = {
 	.name = "ECDSA", /* name from RFC 7427 */
 	.type = &pubkey_type_ecdsa,
 	.digital_signature_blob = DIGITAL_SIGNATURE_ECDSA_BLOB,
-	.sign_hash = ECDSA_sign_hash,
-	.authenticate_signature = ECDSA_authenticate_signature,
+	.sign_hash = ECDSA_digsig_sign_hash,
+	.authenticate_signature = ECDSA_digsig_authenticate_signature,
 };

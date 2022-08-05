@@ -184,7 +184,7 @@ bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 				/* RSA with SHA1 without Digsig: no oid blob appended */
 				if (!ikev2_calculate_hash(ike, id_hash, NULL, no_ppk_auth,
 							  &ike_alg_hash_sha1,
-							  &pubkey_signer_pkcs1_1_5_rsa)) {
+							  &pubkey_signer_raw_pkcs1_1_5_rsa)) {
 					return false;
 				}
 				return true;
@@ -205,7 +205,7 @@ bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 
 		chunk_t hashval = NULL_HUNK;
 		if (!ikev2_calculate_hash(ike, id_hash, NULL, &hashval,
-					  hash_algo, &pubkey_signer_rsassa_pss)) {
+					  hash_algo, &pubkey_signer_digsig_rsassa_pss)) {
 			return false;
 		}
 

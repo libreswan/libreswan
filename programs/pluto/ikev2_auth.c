@@ -431,27 +431,27 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 							  ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha1,
-							  &pubkey_signer_pkcs1_1_5_rsa);
+							  &pubkey_signer_raw_pkcs1_1_5_rsa);
 
 	case IKEv2_AUTH_ECDSA_SHA2_256_P256:
 		return verify_v2AUTH_and_log_using_pubkey((struct authby) { .ecdsa = true, },
 							  ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha2_256,
-							  &pubkey_signer_ecdsa/*_p256*/);
+							  &pubkey_signer_raw_ecdsa/*_p256*/);
 
 	case IKEv2_AUTH_ECDSA_SHA2_384_P384:
 		return verify_v2AUTH_and_log_using_pubkey((struct authby) { .ecdsa = true, },
 							  ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha2_384,
-							  &pubkey_signer_ecdsa/*_p384*/);
+							  &pubkey_signer_raw_ecdsa/*_p384*/);
 	case IKEv2_AUTH_ECDSA_SHA2_512_P521:
 		return verify_v2AUTH_and_log_using_pubkey((struct authby) { .ecdsa = true, },
 							  ike, idhash_in,
 							  signature_pbs,
 							  &ike_alg_hash_sha2_512,
-							  &pubkey_signer_ecdsa/*_p521*/);
+							  &pubkey_signer_raw_ecdsa/*_p521*/);
 
 	case IKEv2_AUTH_PSK:
 	{
@@ -528,9 +528,9 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 				const struct pubkey_signer *signer;
 				struct authby authby;
 			} signers[] = {
-				{ &pubkey_signer_ecdsa, { .ecdsa = true, }, },
-				{ &pubkey_signer_rsassa_pss, { .rsasig = true, }, },
-				{ &pubkey_signer_pkcs1_1_5_rsa, { .rsasig_v1_5 = true, }, }
+				{ &pubkey_signer_digsig_ecdsa, { .ecdsa = true, }, },
+				{ &pubkey_signer_digsig_rsassa_pss, { .rsasig = true, }, },
+				{ &pubkey_signer_digsig_pkcs1_1_5_rsa, { .rsasig_v1_5 = true, }, }
 			};
 
 			FOR_EACH_ELEMENT(s, signers) {
