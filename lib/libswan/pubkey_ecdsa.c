@@ -308,13 +308,13 @@ static struct hash_signature ECDSA_raw_sign_hash(const struct private_key_stuff 
 						 const struct hash_desc *hash_algo_unused UNUSED,
 						 struct logger *logger)
 {
+	DBGF(DBG_CRYPT, "%s: started using NSS", __func__);
 
 	if (!pexpect(pks->private_key != NULL)) {
 		dbg("no private key!");
 		return (struct hash_signature) { .len = 0, };
 	}
 
-	DBGF(DBG_CRYPT, "ECDSA_sign_hash: Started using NSS");
 
 	/* point HASH to sign at HASH_VAL */
 	SECItem hash_to_sign = {
@@ -324,19 +324,19 @@ static struct hash_signature ECDSA_raw_sign_hash(const struct private_key_stuff 
 	};
 
 	/* point signature at the SIG_VAL buffer */
-	uint8_t raw_signature_data[sizeof(struct hash_signature)];
+	struct hash_signature signature = {0};
 	SECItem raw_signature = {
 		.type = siBuffer,
 		.len = PK11_SignatureLen(pks->private_key),
-		.data = raw_signature_data,
+		.data = signature.ptr/*array*/,
 	};
-	passert(raw_signature.len <= sizeof(raw_signature_data));
+	passert(raw_signature.len <= sizeof(signature.ptr/*array*/));
 	dbg("ECDSA signature.len %d", raw_signature.len);
 
 	/* create the raw signature */
 	SECStatus s = PK11_Sign(pks->private_key, &raw_signature, &hash_to_sign);
 	if (DBGP(DBG_CRYPT)) {
-		DBG_dump("sig_from_nss", raw_signature.data, raw_signature.len);
+		DBG_dump("PK11_Sign()", raw_signature.data, raw_signature.len);
 	}
 	if (s != SECSuccess) {
 		/* PR_GetError() returns the thread-local error */
@@ -345,22 +345,10 @@ static struct hash_signature ECDSA_raw_sign_hash(const struct private_key_stuff 
 		return (struct hash_signature) { .len = 0, };
 	}
 
-	SECItem encoded_signature = {0,};	/* must be initialized*/
-	if (DSAU_EncodeDerSigWithLen(&encoded_signature, &raw_signature,
-				     raw_signature.len) != SECSuccess) {
-		/* PR_GetError() returns the thread-local error */
-		llog_nss_error(RC_LOG, logger,
-			       "NSS: constructing DER encoded ECDSA signature using DSAU_EncodeDerSigWithLen() failed:");
-		return (struct hash_signature) { .len = 0, };
-	}
-	struct hash_signature signature = {
-		.len = encoded_signature.len,
-	};
-	passert(encoded_signature.len <= sizeof(signature.ptr/*an-array*/));
-	memcpy(signature.ptr, encoded_signature.data, encoded_signature.len);
-	SECITEM_FreeItem(&encoded_signature, PR_FALSE);
+	passert(sizeof(signature.ptr/*array*/) >= raw_signature.len);
+	signature.len = raw_signature.len;
 
-	DBGF(DBG_CRYPT, "ECDSA_sign_hash: Ended using NSS");
+	dbg("%s: signed hash", __func__);
 	return signature;
 }
 
@@ -373,62 +361,44 @@ static bool ECDSA_raw_authenticate_signature(const struct crypt_mac *hash, shunk
 	const struct ECDSA_public_key *ecdsa = &kr->u.ecdsa;
 
 	/*
-	 * Convert the signature into raw form (NSS doesn't do const).
+	 * Turn the signature and hash into SECItem/s (NSS doesn't do
+	 * const, but it does pretend).
 	 */
-	SECItem der_signature = {
+	const SECItem raw_signature = {
 		.type = siBuffer,
-		.data = DISCARD_CONST(unsigned char *, signature.ptr),/*NSS doesn't do const*/
+		.data = DISCARD_CONST(uint8_t *, signature.ptr),/*NSS doesn't do const*/
 		.len = signature.len
 	};
-	if (DBGP(DBG_BASE)) {
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam(buf, "%d-byte DER encoded ECDSA signature: ",
-			    der_signature.len);
-			jam_nss_secitem(buf, &der_signature);
-		}
-	}
 
-	SECItem *raw_signature = DSAU_DecodeDerSigToLen(&der_signature,
-							SECKEY_SignatureLen(ecdsa->seckey_public));
-	if (raw_signature == NULL) {
-		/* not fatal as dependent on key being tried */
-		llog_nss_error(DEBUG_STREAM, logger,
-			       "unpacking DER encoded ECDSA signature using DSAU_DecodeDerSigToLen()");
-		*fatal_diag = NULL;
-		return false;
-	}
-
-	if (DBGP(DBG_BASE)) {
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam(buf, "%d-byte raw ESCSA signature: ",
-			    raw_signature->len);
-			jam_nss_secitem(buf, raw_signature);
-		}
-	}
-
-	/*
-	 * put the hash somewhere writable; so it can later be logged?
-	 *
-	 * XXX: cast away const?
-	 */
-	struct crypt_mac hash_data = *hash;
-	SECItem hash_item = {
+	const SECItem hash_item = {
 		.type = siBuffer,
-		.data = hash_data.ptr,
-		.len = hash_data.len,
+		.data = DISCARD_CONST(uint8_t *, hash->ptr),/*NSS doesn't do const*/
+		.len = hash->len,
 	};
 
-	if (PK11_Verify(ecdsa->seckey_public, raw_signature, &hash_item,
+	if (DBGP(DBG_CRYPT)) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam(buf, "%d-byte raw ESCSA signature: ",
+			    raw_signature.len);
+			jam_nss_secitem(buf, &raw_signature);
+		}
+
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam(buf, "%d-byte hash: ",
+			    hash_item.len);
+			jam_nss_secitem(buf, &hash_item);
+		}
+	}
+
+	if (PK11_Verify(ecdsa->seckey_public, &raw_signature, &hash_item,
 			lsw_nss_get_password_context(logger)) != SECSuccess) {
 		llog_nss_error(DEBUG_STREAM, logger,
 			       "verifying AUTH hash using PK11_Verify() failed:");
-		SECITEM_FreeItem(raw_signature, PR_TRUE/*and-pointer*/);
 		*fatal_diag = NULL;
 		return false;
 	}
 
-	dbg("NSS: verified signature");
-	SECITEM_FreeItem(raw_signature, PR_TRUE);
+	dbg("%s: verified signature", __func__);
 
 	*fatal_diag = NULL;
 	return true;
