@@ -513,12 +513,22 @@ static bool RSA_authenticate_signature_raw_rsa(const struct crypt_mac *expected_
 	return true;
 }
 
+static size_t RSA_jam_auth_method(struct jambuf *buf,
+				  const struct pubkey_signer *signer,
+				  const struct pubkey *pubkey UNUSED,
+				  const struct hash_desc *hash)
+{
+	return jam(buf, "%s with %s",
+		   signer->name, hash->common.fqn);
+}
+
 const struct pubkey_signer pubkey_signer_raw_rsa = {
 	.name = "RSA",
 	.digital_signature_blob = DIGITAL_SIGNATURE_BLOB_ROOF,
 	.type = &pubkey_type_rsa,
 	.sign_hash = RSA_sign_hash_raw_rsa,
 	.authenticate_signature = RSA_authenticate_signature_raw_rsa,
+	.jam_auth_method = RSA_jam_auth_method,
 };
 
 const struct pubkey_signer pubkey_signer_raw_pkcs1_1_5_rsa = {
@@ -527,6 +537,7 @@ const struct pubkey_signer pubkey_signer_raw_pkcs1_1_5_rsa = {
 	.type = &pubkey_type_rsa,
 	.sign_hash = RSA_sign_hash_pkcs1_1_5_rsa,
 	.authenticate_signature = RSA_authenticate_signature_raw_rsa,
+	.jam_auth_method = RSA_jam_auth_method,
 };
 
 const struct pubkey_signer pubkey_signer_digsig_pkcs1_1_5_rsa = {
@@ -535,6 +546,7 @@ const struct pubkey_signer pubkey_signer_digsig_pkcs1_1_5_rsa = {
 	.type = &pubkey_type_rsa,
 	.sign_hash = RSA_sign_hash_pkcs1_1_5_rsa,
 	.authenticate_signature = RSA_authenticate_signature_raw_rsa,
+	.jam_auth_method = RSA_jam_auth_method,
 };
 
 /* returns the length of the result on success; 0 on failure */
@@ -664,4 +676,5 @@ const struct pubkey_signer pubkey_signer_digsig_rsassa_pss = {
 	.digital_signature_blob = DIGITAL_SIGNATURE_RSASSA_PSS_BLOB,
 	.sign_hash = RSA_sign_hash_rsassa_pss,
 	.authenticate_signature = RSA_authenticate_signature_rsassa_pss,
+	.jam_auth_method = RSA_jam_auth_method,
 };

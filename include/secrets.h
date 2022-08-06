@@ -182,6 +182,10 @@ struct pubkey_signer {
 				       const struct hash_desc *hash_algo,
 				       diag_t *fatal_diag,
 				       struct logger *logger);
+	size_t (*jam_auth_method)(struct jambuf *,
+				  const struct pubkey_signer *,
+				  const struct pubkey *,
+				  const struct hash_desc *);
 };
 
 extern const struct pubkey_type pubkey_type_rsa;

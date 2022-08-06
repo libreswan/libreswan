@@ -387,7 +387,7 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 		jam_string(buf, "authenticated peer ");
 		/* what is the AUTH method ... */
 		jam_string(buf, "'");
-		jam(buf, "%s with %s", signer->name, hash_algo->common.fqn);
+		signer->jam_auth_method(buf, signer, s.key, hash_algo);
 		jam_string(buf, "'");
 		if (signature_payload_name != NULL) {
 			jam(buf, " %s", signature_payload_name);

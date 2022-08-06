@@ -404,12 +404,22 @@ static bool ECDSA_raw_authenticate_signature(const struct crypt_mac *hash, shunk
 	return true;
 }
 
+static size_t ECDSA_jam_auth_method(struct jambuf *buf,
+				    const struct pubkey_signer *signer,
+				    const struct pubkey *pubkey UNUSED,
+				    const struct hash_desc *hash)
+{
+	return jam(buf, "%s with %s",
+		   signer->name, hash->common.fqn);
+}
+
 const struct pubkey_signer pubkey_signer_raw_ecdsa = {
 	.name = "ECDSA", /* name from RFC 7427 */
 	.type = &pubkey_type_ecdsa,
 	.digital_signature_blob = DIGITAL_SIGNATURE_BLOB_ROOF,
 	.sign_hash = ECDSA_raw_sign_hash,
 	.authenticate_signature = ECDSA_raw_authenticate_signature,
+	.jam_auth_method = ECDSA_jam_auth_method,
 };
 
 static struct hash_signature ECDSA_digsig_sign_hash(const struct private_key_stuff *pks,
@@ -549,4 +559,5 @@ const struct pubkey_signer pubkey_signer_digsig_ecdsa = {
 	.digital_signature_blob = DIGITAL_SIGNATURE_ECDSA_BLOB,
 	.sign_hash = ECDSA_digsig_sign_hash,
 	.authenticate_signature = ECDSA_digsig_authenticate_signature,
+	.jam_auth_method = ECDSA_jam_auth_method,
 };
