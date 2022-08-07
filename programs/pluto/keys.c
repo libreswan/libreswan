@@ -373,22 +373,33 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 	pexpect(s.tried_cnt > 0);
 	LLOG_JAMBUF(RC_LOG_SERIOUS, ike->sa.st_logger, buf) {
 		if (ike->sa.st_ike_version == IKEv2) {
+			/*
+			 * IKEv2 only; IKEv1 logs established as a
+			 * separate line.
+			 */
 			jam(buf, "%s established IKE SA; ",
 			    (ike->sa.st_sa_role == SA_INITIATOR ? "initiator" :
 			     ike->sa.st_sa_role == SA_RESPONDER ? "responder" :
 			     "?"));
 		}
-		jam(buf, "authenticated using %s with %s and %s certificate ",
-		    signer->name, hash_algo->common.fqn,
-		    s.cert_origin);
-		jam(buf, "'");
+		/* all methods log this string */
+		jam_string(buf, "authenticated peer ");
+		/* what is the AUTH method ... */
+		jam_string(buf, "'");
+		jam(buf, "%s with %s", signer->name, hash_algo->common.fqn);
+		jam_string(buf, "'");
+		jam(buf, " signature");
+		/* ... and what was used to authenticate it */
+		jam(buf, " using %s certificate ", s.cert_origin);
+		jam_string(buf, "'");
 		jam_id_bytes(buf, &s.key->id, jam_sanitized_bytes);
-		jam(buf, "'");
+		jam_string(buf, "'");
 		/* this is so that the cert verified line can be deleted */
 		if (s.key->issuer.ptr != NULL) {
-			jam(buf, " issued by CA '");
+			jam_string(buf, " issued by CA ");
+			jam_string(buf, "'");
 			jam_dn(buf, s.key->issuer, jam_sanitized_bytes);
-			jam(buf, "'");
+			jam_string(buf, "'");
 		}
 	}
 	pubkey_delref(&ike->sa.st_peer_pubkey);
