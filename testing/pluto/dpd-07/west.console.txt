@@ -29,7 +29,7 @@ west #
 003 "west-east" #1: Deleting previous proposal in the hopes of selecting DH 2 or DH 5
 1v1 "west-east" #1: sent Aggressive Mode request
 002 "west-east" #1: Peer ID is ID_FQDN: '@east'
-003 "west-east" #1: authenticated using RSA with SHA1 and preloaded certificate '@east'
+003 "west-east" #1: authenticated peer 'RSA with SHA1' signature using preloaded certificate '@east'
 004 "west-east" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA1 group=MODP1536}
 002 "west-east" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "west-east" #2: sent Quick Mode request

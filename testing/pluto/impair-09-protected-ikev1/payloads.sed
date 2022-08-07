@@ -30,7 +30,7 @@
 # G;p appends the empty-hold-space + NL to pattern space; and then
 # prints it
 
-/^[^|].* authenticated using RSA/ {G;p}
+/^[^|].* authenticated peer / {G;p}
 /received .* message HASH[^ ]* data / {G;p}
 /received .* message SIG[^ ]* data / {G;p}
 /^[^|].* message for STATE_INFO_PROTECTED is missing payloads HASH/ {G;p}

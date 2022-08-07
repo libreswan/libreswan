@@ -28,7 +28,7 @@ west #
 1v2 "labeled" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "labeled" #1: omitting CHILD SA payloads
 1v2 "labeled" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "labeled" #1: initiator established IKE SA; authenticated using RSASSA-PSS with SHA2_512 and preloaded certificate '@east'
+003 "labeled" #1: initiator established IKE SA; authenticated peer 'RSASSA-PSS with SHA2_512' signature using preloaded certificate '@east'
 west #
  # expect policy but no states
 west #
