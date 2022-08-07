@@ -22,7 +22,7 @@ west #
 1v2 "san" #1: initiating IKEv2 connection
 1v2 "san" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "san" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "san" #1: initiator established IKE SA; authenticated peer 'RSASSA-PSS with SHA2_512' signature using peer certificate 'east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+003 "san" #1: initiator established IKE SA; authenticated peer 'RSASSA-PSS with SHA2_512' digital signature using peer certificate 'east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 004 "san" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  echo "done"

@@ -111,11 +111,9 @@ road #
 road #
  if [ -f /sbin/ausearch ]; then ausearch -r -m avc -ts recent ; fi
 road #
- >>>>>>>>>> post-mortem >>>>>>>>>>../../guestbin/post-mortem.sh
    PPID     PID    PGID     SID TTY        TPGID STAT   UID   TIME COMMAND
       1    1208    1208    1208 ?             -1 Zsl      0   0:00 [pluto] <defunct>
 :
 : checking shutting down pluto
 :
 ipsec whack --shutdown
->>>>>>>>>> TIMEOUT while running script ../../guestbin/post-mortem.sh <<<<<<<<<<
