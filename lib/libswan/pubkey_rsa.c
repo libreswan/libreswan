@@ -515,10 +515,11 @@ static bool RSA_authenticate_signature_raw_rsa(const struct crypt_mac *expected_
 
 static size_t RSA_jam_auth_method(struct jambuf *buf,
 				  const struct pubkey_signer *signer,
-				  const struct pubkey *pubkey UNUSED,
+				  const struct pubkey *pubkey,
 				  const struct hash_desc *hash)
 {
-	return jam(buf, "%s with %s",
+	return jam(buf, "%d-bit %s with %s",
+		   SECKEY_PublicKeyStrengthInBits(pubkey->u.rsa.seckey_public),
 		   signer->name, hash->common.fqn);
 }
 
