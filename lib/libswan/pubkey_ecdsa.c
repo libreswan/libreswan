@@ -406,11 +406,13 @@ static bool ECDSA_raw_authenticate_signature(const struct crypt_mac *hash, shunk
 
 static size_t ECDSA_jam_auth_method(struct jambuf *buf,
 				    const struct pubkey_signer *signer,
-				    const struct pubkey *pubkey UNUSED,
+				    const struct pubkey *pubkey,
 				    const struct hash_desc *hash)
 {
-	return jam(buf, "%s with %s",
-		   signer->name, hash->common.fqn);
+	return jam(buf, "P-%d %s with %s",
+		   SECKEY_PublicKeyStrengthInBits(pubkey->u.ecdsa.seckey_public),
+		   signer->name,
+		   hash->common.fqn);
 }
 
 const struct pubkey_signer pubkey_signer_raw_ecdsa = {
