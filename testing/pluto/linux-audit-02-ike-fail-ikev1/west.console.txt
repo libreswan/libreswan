@@ -17,7 +17,7 @@ west #
  ipsec auto --add ikev1-aggr-failtest
 002 "ikev1-aggr-failtest": added IKEv1 connection
 west #
- #ipsec whack --impair delete-on-retransmit
+ ipsec whack --impair revival
 west #
  echo "initdone"
 initdone
@@ -33,28 +33,22 @@ west #
 010 "ikev1-failtest" #1: STATE_MAIN_I1: retransmission; will wait 1 seconds for response
 031 "ikev1-failtest" #1: STATE_MAIN_I1: 2 second timeout exceeded after 2 retransmits. No response (or no acceptable response) to our first IKEv1 message
 002 "ikev1-failtest" #1: deleting state (STATE_MAIN_I1) and NOT sending notification
-002 "ikev1-failtest" #1: deleting ISAKMP SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+002 "ikev1-failtest" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  ipsec auto --delete ikev1-failtest
 002 "ikev1-failtest": terminating SAs using this connection
-002 "ikev1-failtest" #2: deleting state (STATE_MAIN_I1) and NOT sending notification
 west #
  ipsec auto --up ikev1-aggr-failtest # sanitize-retransmits
-002 "ikev1-aggr-failtest" #3: initiating IKEv1 Aggressive Mode connection
-1v1 "ikev1-aggr-failtest" #3: sent Aggressive Mode request
-002 "ikev1-aggr-failtest" #3: Peer ID is ID_FQDN: '@east-v1'
-003 "ikev1-aggr-failtest" #3: authentication failed: using RSA with SHA1 for '@east-v1' tried preloaded: *000000000
-217 "ikev1-aggr-failtest" #3: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
-002 "ikev1-aggr-failtest" #3: deleting state (STATE_AGGR_I1) and NOT sending notification
-002 "ikev1-aggr-failtest" #3: deleting ISAKMP SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+002 "ikev1-aggr-failtest" #2: initiating IKEv1 Aggressive Mode connection
+1v1 "ikev1-aggr-failtest" #2: sent Aggressive Mode request
+002 "ikev1-aggr-failtest" #2: Peer ID is ID_FQDN: '@east-v1'
+003 "ikev1-aggr-failtest" #2: authentication failed: using RSA with SHA1 for '@east-v1' tried preloaded: *000000000
+217 "ikev1-aggr-failtest" #2: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
+002 "ikev1-aggr-failtest" #2: deleting state (STATE_AGGR_I1) and NOT sending notification
+002 "ikev1-aggr-failtest" #2: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  ipsec auto --delete ikev1-aggr-failtest
 002 "ikev1-aggr-failtest": terminating SAs using this connection
-002 "ikev1-aggr-failtest" #4: deleting state (STATE_AGGR_I1) and NOT sending notification
-west #
- # IKEv2 fail tests
-west #
- ipsec whack --impair revival
 west #
  echo done
 done
@@ -65,9 +59,7 @@ west #
  grep -E -i "IKE|ipsec-" /var/log/audit/audit.log
 type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev1-failtest" connstate=1 ike-version=1 auth=RSA_SIG cipher=none ksize=0 integ=none prf=none pfs=none raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
 type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev1-failtest" connstate=1 ike-version=1 auth=RSA_SIG cipher=none ksize=0 integ=none prf=none pfs=none raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
-type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev1-failtest" connstate=2 ike-version=1 auth=RSA_SIG cipher=none ksize=0 integ=none prf=none pfs=none raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
-type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev1-aggr-failtest" connstate=3 ike-version=1 auth=RSA_SIG cipher=aes ksize=256 integ=sha1 prf=sha1 pfs=MODP1536 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
-type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev1-aggr-failtest" connstate=3 ike-version=1 auth=RSA_SIG cipher=aes ksize=256 integ=sha1 prf=sha1 pfs=MODP1536 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
-type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev1-aggr-failtest" connstate=4 ike-version=1 auth=RSA_SIG cipher=aes ksize=256 integ=sha1 prf=sha1 pfs=MODP1536 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
+type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev1-aggr-failtest" connstate=2 ike-version=1 auth=RSA_SIG cipher=aes ksize=256 integ=sha1 prf=sha1 pfs=MODP1536 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
+type=CRYPTO_IKE_SA msg=audit(XXX): pid=PID uid=0 auid=AUID ses=SES subj=system_u:system_r:unconfined_service_t:s0 msg='op=start direction=initiator conn-name="ikev1-aggr-failtest" connstate=2 ike-version=1 auth=RSA_SIG cipher=aes ksize=256 integ=sha1 prf=sha1 pfs=MODP1536 raddr=192.1.2.23 exe="PATH/libexec/ipsec/pluto" hostname=? addr=192.1.2.45 terminal=? res=failed'^]UID="root" AUID="unset"
 west #
  
