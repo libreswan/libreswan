@@ -23,7 +23,7 @@ west #
 1v2 "westnet-eastnet-foo" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-foo" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-foo" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-foo" #1: initiator established IKE SA; authenticated peer 'RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@eastfoo'
+003 "westnet-eastnet-foo" #1: initiator established IKE SA; authenticated peer '2192-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@eastfoo'
 004 "westnet-eastnet-foo" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  ipsec auto --up westnet-eastnet-bar

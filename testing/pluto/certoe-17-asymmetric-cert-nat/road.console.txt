@@ -27,7 +27,7 @@ road #
  ipsec whack --oppohere 192.1.3.209 --oppothere 192.1.2.23
 002 initiate on-demand for packet 192.1.3.209:8-ICMP->192.1.2.23:0 by whack
 1v2 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiating IKEv2 connection
-003 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer 'RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+003 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer '3072-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 002 "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 10.0.10.1
 004 "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [10.0.10.1-10.0.10.1:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
 road #
@@ -156,6 +156,6 @@ OUTPUT/road.pluto.log:| parsing 2 raw bytes of IKEv2 Notify Payload into hash al
 OUTPUT/road.pluto.log:| hash algorithm identifier (network ordered)
 OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_NULL (0xd)
 OUTPUT/road.pluto.log:|    auth method: IKEv2_AUTH_DIGSIG (0xe)
-OUTPUT/road.pluto.log:"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer 'RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+OUTPUT/road.pluto.log:"private-or-clear#192.1.2.0/24"[1] ...192.1.2.23 #1: initiator established IKE SA; authenticated peer '3072-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 road #
  

@@ -56,7 +56,7 @@ west #
 1v1 "westnet-eastnet-x509-nosend" #1: sent Main Mode I2
 1v1 "westnet-eastnet-x509-nosend" #1: sent Main Mode I3
 002 "westnet-eastnet-x509-nosend" #1: Peer ID is ID_DER_ASN1_DN: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-003 "westnet-eastnet-x509-nosend" #1: authenticated peer 'RSA with SHA1' signature using preloaded certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+003 "westnet-eastnet-x509-nosend" #1: authenticated peer '3072-bit RSA with SHA1' signature using preloaded certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 004 "westnet-eastnet-x509-nosend" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "westnet-eastnet-x509-nosend" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "westnet-eastnet-x509-nosend" #2: sent Quick Mode request

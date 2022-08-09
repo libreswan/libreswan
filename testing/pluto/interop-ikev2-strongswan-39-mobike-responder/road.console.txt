@@ -123,6 +123,7 @@ road #
 road #
  ip route show scope global
 default via 192.1.33.254 dev eth0
+192.0.2.0/24 via 192.1.33.254 dev eth0 src 192.0.3.1
 road #
  ip addr show scope global
 2: eth0: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 state UP
