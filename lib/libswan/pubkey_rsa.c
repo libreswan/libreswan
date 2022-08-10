@@ -387,55 +387,6 @@ static struct hash_signature RSA_sign_hash_raw_rsa(const struct private_key_stuf
 	return sig;
 }
 
-/* returns the length of the result on success; 0 on failure */
-static struct hash_signature RSA_sign_hash_pkcs1_1_5_rsa(const struct private_key_stuff *pks,
-							 const uint8_t *hash_val, size_t hash_len,
-							 const struct hash_desc *hash_algo,
-							 struct logger *logger)
-{
-	dbg("%s: started using NSS", __func__);
-
-	if (!pexpect(pks->private_key != NULL)) {
-		dbg("no private key!");
-		return (struct hash_signature) { .len = 0, };
-	}
-
-	SECItem digest = {
-		.type = siBuffer,
-		.len = hash_len,
-		.data = DISCARD_CONST(uint8_t *, hash_val),
-	};
-
-	/*
-	 * XXX: the call expects the OID TAG for the hash algorithm
-	 * used to generate the signature.
-	 */
-	SECItem signature_result = {0};
-	SECStatus s = SGN_Digest(pks->private_key,
-				 hash_algo->nss.oid_tag,
-				 &signature_result, &digest);
-	if (s != SECSuccess) {
-		/* PR_GetError() returns the thread-local error */
-		enum_buf tb;
-		llog_nss_error(RC_LOG_SERIOUS, logger,
-			       "SGN_Digest(%s) function failed",
-			       str_nss_oid(hash_algo->nss.oid_tag, &tb));
-		return (struct hash_signature) { .len = 0, };
-	}
-
-	/* save the signature, free the returned pointer */
-
-	struct hash_signature signature = {
-		.len = PK11_SignatureLen(pks->private_key),
-	};
-	passert(signature.len <= sizeof(signature.ptr/*array*/));
-	memcpy(signature.ptr, signature_result.data, signature.len);
-	PORT_Free(signature_result.data);
-
-	dbg("%s: ended using NSS", __func__);
-	return signature;
-}
-
 static bool RSA_authenticate_signature_raw_rsa(const struct crypt_mac *expected_hash,
 					       shunk_t signature,
 					       struct pubkey *pubkey,
@@ -532,12 +483,138 @@ const struct pubkey_signer pubkey_signer_raw_rsa = {
 	.jam_auth_method = RSA_jam_auth_method,
 };
 
+/* returns the length of the result on success; 0 on failure */
+static struct hash_signature RSA_sign_hash_pkcs1_1_5_rsa(const struct private_key_stuff *pks,
+							 const uint8_t *hash_val, size_t hash_len,
+							 const struct hash_desc *hash_algo,
+							 struct logger *logger)
+{
+	dbg("%s: started using NSS", __func__);
+
+	if (!pexpect(pks->private_key != NULL)) {
+		dbg("no private key!");
+		return (struct hash_signature) { .len = 0, };
+	}
+
+	SECItem digest = {
+		.type = siBuffer,
+		.len = hash_len,
+		.data = DISCARD_CONST(uint8_t *, hash_val),
+	};
+
+	/*
+	 * XXX: the call expects the OID TAG for the hash algorithm
+	 * used to generate the signature.
+	 */
+	SECItem signature_result = {0};
+	SECStatus s = SGN_Digest(pks->private_key,
+				 hash_algo->nss.oid_tag,
+				 &signature_result, &digest);
+	if (s != SECSuccess) {
+		/* PR_GetError() returns the thread-local error */
+		enum_buf tb;
+		llog_nss_error(RC_LOG_SERIOUS, logger,
+			       "SGN_Digest(%s) function failed",
+			       str_nss_oid(hash_algo->nss.oid_tag, &tb));
+		return (struct hash_signature) { .len = 0, };
+	}
+
+	/* save the signature, free the returned pointer */
+
+	struct hash_signature signature = {
+		.len = PK11_SignatureLen(pks->private_key),
+	};
+	passert(signature.len <= sizeof(signature.ptr/*array*/));
+	memcpy(signature.ptr, signature_result.data, signature.len);
+	PORT_Free(signature_result.data);
+
+	dbg("%s: ended using NSS", __func__);
+	return signature;
+}
+
+static bool RSA_authenticate_signature_pkcs1_1_5_rsa(const struct crypt_mac *expected_hash,
+						     shunk_t signature,
+						     struct pubkey *pubkey,
+						     const struct hash_desc *unused_hash_algo UNUSED,
+						     diag_t *fatal_diag,
+						     struct logger *logger)
+{
+	SECKEYPublicKey *seckey_public = pubkey->u.rsa.seckey_public;
+
+	/* decrypt the signature -- reversing RSA_sign_hash */
+	if (signature.len != pubkey->size) {
+		/* XXX notification: INVALID_KEY_INFORMATION */
+		*fatal_diag = NULL;
+		return false;
+	}
+
+	if (DBGP(DBG_BASE)) {
+		DBG_dump_hunk("NSS RSA: verifying that decrypted signature matches hash: ",
+			      *expected_hash);
+	}
+
+	/*
+	 * Use the same space used by the out going hash.
+	 */
+
+	SECItem decrypted_signature = {
+		.type = siBuffer,
+	};
+
+	if (SECITEM_AllocItem(NULL, &decrypted_signature, signature.len) == NULL) {
+		llog_nss_error(RC_LOG, logger, "allocating space for decrypted RSA signature");
+		return false;
+	}
+
+	/* NSS doesn't do const */
+	const SECItem encrypted_signature = {
+		.type = siBuffer,
+		.data = DISCARD_CONST(unsigned char *, signature.ptr),
+		.len  = signature.len,
+	};
+
+	if (PK11_VerifyRecover(seckey_public, &encrypted_signature, &decrypted_signature,
+			       lsw_nss_get_password_context(logger)) != SECSuccess) {
+		SECITEM_FreeItem(&decrypted_signature, PR_FALSE/*not-pointer*/);
+		dbg("NSS RSA verify: decrypting signature is failed");
+		*fatal_diag = NULL;
+		return false;
+	}
+
+	if (DBGP(DBG_CRYPT)) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam_string(buf, "NSS RSA verify: decrypted sig: ");
+			jam_nss_secitem(buf, &decrypted_signature);
+		}
+	}
+
+	/*
+	 * Expect the matching hash to appear at the end.  See above
+	 * for length check.  It may, or may not, be prefixed by a
+	 * PKCS#1 1.5 RSA ASN.1 blob.
+	 */
+	passert(decrypted_signature.len >= expected_hash->len);
+	uint8_t *start = (decrypted_signature.data
+			  + decrypted_signature.len
+			  - expected_hash->len);
+	if (!memeq(start, expected_hash->ptr, expected_hash->len)) {
+		dbg("RSA Signature NOT verified");
+		SECITEM_FreeItem(&decrypted_signature, PR_FALSE/*not-pointer*/);
+		*fatal_diag = NULL;
+		return false;
+	}
+
+	SECITEM_FreeItem(&decrypted_signature, PR_FALSE/*not-pointer*/);
+	*fatal_diag = NULL;
+	return true;
+}
+
 const struct pubkey_signer pubkey_signer_raw_pkcs1_1_5_rsa = {
 	.name = "PKCS#1 1.5 RSA", /* name from RFC 7427 */
 	.digital_signature_blob = DIGITAL_SIGNATURE_BLOB_ROOF,
 	.type = &pubkey_type_rsa,
 	.sign_hash = RSA_sign_hash_pkcs1_1_5_rsa,
-	.authenticate_signature = RSA_authenticate_signature_raw_rsa,
+	.authenticate_signature = RSA_authenticate_signature_pkcs1_1_5_rsa,
 	.jam_auth_method = RSA_jam_auth_method,
 };
 
@@ -546,7 +623,7 @@ const struct pubkey_signer pubkey_signer_digsig_pkcs1_1_5_rsa = {
 	.digital_signature_blob = DIGITAL_SIGNATURE_PKCS1_1_5_RSA_BLOB,
 	.type = &pubkey_type_rsa,
 	.sign_hash = RSA_sign_hash_pkcs1_1_5_rsa,
-	.authenticate_signature = RSA_authenticate_signature_raw_rsa,
+	.authenticate_signature = RSA_authenticate_signature_pkcs1_1_5_rsa,
 	.jam_auth_method = RSA_jam_auth_method,
 };
 
