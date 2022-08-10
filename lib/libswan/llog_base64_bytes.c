@@ -27,9 +27,11 @@ void llog_base64_bytes(lset_t rc_flags,
 	 * for \0.  Plus some extra for the trailing === and rounding.
 	 */
 	chunk_t base64 = alloc_chunk(size * 8 / 6 + 1 + 10, "base64");
-	size_t length = datatot(ptr, size, 64, (void*)base64.ptr, base64.len);
-	passert(length < base64.len);
-	shunk_t rest = shunk2(base64.ptr, length);
+	size_t base64_size = datatot(ptr, size, 64, (void*)base64.ptr, base64.len);
+	/* BASE64_SIZE includes '\0' */
+	passert(base64_size <= base64.len);
+	passert(base64_size > 0);
+	shunk_t rest = shunk2(base64.ptr, base64_size - 1);
 	while (true) {
 		shunk_t line = shunk_slice(rest, 0, min((size_t)64, rest.len));
 		if (line.len == 0) break;
