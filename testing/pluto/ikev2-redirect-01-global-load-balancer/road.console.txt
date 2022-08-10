@@ -27,7 +27,7 @@ road #
 002 "road-east" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 1v2 "road-east" #2: sent IKE_SA_INIT request to 192.1.2.45:500
 1v2 "road-east" #2: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "road-east" #2: initiator established IKE SA; authenticated using RSASSA-PSS with SHA2_512 and peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+003 "road-east" #2: initiator established IKE SA; authenticated peer '3072-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 002 "road-east" #3: received INTERNAL_IP4_ADDRESS 192.0.2.101
 002 "road-east" #3: received INTERNAL_IP4_DNS 1.2.3.4
 002 "road-east" #3: received INTERNAL_IP4_DNS 5.6.7.8

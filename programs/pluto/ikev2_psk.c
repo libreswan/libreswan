@@ -308,15 +308,23 @@ diag_t verify_v2AUTH_and_log_using_psk(enum keyword_auth authby,
 			    str_id(&ike->sa.st_connection->remote->host.id, &idb));
 	}
 
-	id_buf idb;
-	esb_buf kb;
-	llog_sa(RC_LOG_SERIOUS, ike,
-		"%s established IKE SA; authenticated using authby=%s and peer %s '%s'",
-		(ike->sa.st_sa_role == SA_INITIATOR ? "initiator" :
-		 ike->sa.st_sa_role == SA_RESPONDER ? "responder" :
-		 "?"),
-		enum_name(&keyword_auth_names, authby),
-		enum_show(&ike_id_type_names, ike->sa.st_connection->remote->host.id.kind, &kb),
-		str_id(&ike->sa.st_connection->remote->host.id, &idb));
+	LLOG_JAMBUF(RC_LOG_SERIOUS, ike->sa.st_logger, buf) {
+		jam(buf, "%s established IKE SA; ",
+		    (ike->sa.st_sa_role == SA_INITIATOR ? "initiator" :
+		     ike->sa.st_sa_role == SA_RESPONDER ? "responder" :
+		     "?"));
+		/* all methods log this string */
+		jam_string(buf, "authenticated peer ");
+		/* what was in the AUTH payload */
+		/* XXX: log prf(prf(hash based on null or secret)) how? */
+		/* now it was authenticated */
+		jam_string(buf, "using authby=");
+		jam_enum(buf, &keyword_auth_names, authby);
+		jam_string(buf, " and ");
+		jam_enum(buf, &ike_id_type_names, ike->sa.st_connection->remote->host.id.kind);
+		jam_string(buf, " '");
+		jam_id_bytes(buf, &ike->sa.st_connection->remote->host.id, jam_raw_bytes);
+		jam_string(buf, "'");
+	}
 	return NULL;
 }

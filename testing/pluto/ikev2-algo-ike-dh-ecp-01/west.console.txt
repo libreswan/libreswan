@@ -31,7 +31,7 @@ west #
 1v2 "ikev2-ike=aes128-sha1-dh19" #1: initiating IKEv2 connection
 1v2 "ikev2-ike=aes128-sha1-dh19" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "ikev2-ike=aes128-sha1-dh19" #1: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH19}
-003 "ikev2-ike=aes128-sha1-dh19" #1: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
+003 "ikev2-ike=aes128-sha1-dh19" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 004 "ikev2-ike=aes128-sha1-dh19" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 up
 002 "ikev2-ike=aes128-sha1-dh19": terminating SAs using this connection
@@ -44,7 +44,7 @@ west #
 1v2 "ikev2-ike=aes128-sha1-dh20" #3: initiating IKEv2 connection
 1v2 "ikev2-ike=aes128-sha1-dh20" #3: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "ikev2-ike=aes128-sha1-dh20" #3: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH20}
-003 "ikev2-ike=aes128-sha1-dh20" #3: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
+003 "ikev2-ike=aes128-sha1-dh20" #3: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 004 "ikev2-ike=aes128-sha1-dh20" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 up
 002 "ikev2-ike=aes128-sha1-dh20": terminating SAs using this connection
@@ -57,7 +57,7 @@ west #
 1v2 "ikev2-ike=aes128-sha1-dh21" #5: initiating IKEv2 connection
 1v2 "ikev2-ike=aes128-sha1-dh21" #5: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "ikev2-ike=aes128-sha1-dh21" #5: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH21}
-003 "ikev2-ike=aes128-sha1-dh21" #5: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
+003 "ikev2-ike=aes128-sha1-dh21" #5: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 004 "ikev2-ike=aes128-sha1-dh21" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 up
 002 "ikev2-ike=aes128-sha1-dh21": terminating SAs using this connection

@@ -75,6 +75,7 @@ extern diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 					   const struct crypt_mac *hash,
 					   shunk_t signature,
 					   const struct hash_desc *hash_algo,
-					   const struct pubkey_signer *signer);
+					   const struct pubkey_signer *signer,
+					   const char *signature_payload_name);
 
 #endif /* _KEYS_H */

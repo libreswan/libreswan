@@ -33,6 +33,6 @@ east #
 initdone
 east #
  grep -e "^[^|].* established IKE SA" /tmp/pluto.log
-"westnet-eastnet-ikev2" #1: responder established IKE SA; authenticated using authby=secret and peer ID_FQDN '@west'
+"westnet-eastnet-ikev2" #1: responder established IKE SA; authenticated peer using authby=secret and ID_FQDN '@west'
 east #
  

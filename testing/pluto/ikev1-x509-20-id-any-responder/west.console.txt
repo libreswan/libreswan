@@ -28,7 +28,7 @@ west #
 1v1 "ikev2-westnet-eastnet-x509-cr" #1: sent Main Mode I3
 003 "ikev2-westnet-eastnet-x509-cr" #1: peer certificate contains no subjectAltName extension to match ID_IPV4_ADDR '192.1.2.23'
 002 "ikev2-westnet-eastnet-x509-cr" #1: X509: connection allows unmatched IKE ID and certificate SAN
-003 "ikev2-westnet-eastnet-x509-cr" #1: authenticated using RSA with SHA1 and peer certificate '192.1.2.23' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+003 "ikev2-westnet-eastnet-x509-cr" #1: authenticated peer '3072-bit RSA with SHA1' signature using peer certificate '192.1.2.23' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 004 "ikev2-westnet-eastnet-x509-cr" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 002 "ikev2-westnet-eastnet-x509-cr" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+ALLOW_NO_SAN+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "ikev2-westnet-eastnet-x509-cr" #2: sent Quick Mode request

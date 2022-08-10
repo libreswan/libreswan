@@ -19,7 +19,7 @@ west #
 002 "westnet-eastnet-mismatch" #1: WARNING: '@west' PSK length of 6 bytes is too short for PRF HMAC_SHA2_512 in FIPS mode (32 bytes required)
 1v2 "westnet-eastnet-mismatch" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 002 "westnet-eastnet-mismatch" #1: WARNING: '@west' PSK length of 6 bytes is too short for PRF HMAC_SHA2_512 in FIPS mode (32 bytes required)
-003 "westnet-eastnet-mismatch" #1: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
+003 "westnet-eastnet-mismatch" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 003 "westnet-eastnet-mismatch" #2: IKE_AUTH response rejected Child SA with TS_UNACCEPTABLE
 west #
  echo done

@@ -21,7 +21,7 @@ west #
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: omitting CHILD SA payloads
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_256 group=MODP2048}
-003 "westnet-eastnet-ipv4-psk-ikev2" #1: initiator established IKE SA; authenticated using authby=secret and peer ID_FQDN '@east'
+003 "westnet-eastnet-ipv4-psk-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: as expected, IKE_AUTH response omitted CHILD SA payloads
 west #
  echo done

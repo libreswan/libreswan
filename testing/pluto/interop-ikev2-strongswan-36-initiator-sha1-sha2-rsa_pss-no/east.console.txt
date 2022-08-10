@@ -17,14 +17,22 @@ east NOW
 XFRM state:
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
+	replay-window 0 flag af-unspec
 	auth-trunc hmac(sha512) 0xHASHKEY 256
 	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
 src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
+	replay-window 0 flag af-unspec
 	auth-trunc hmac(sha512) 0xHASHKEY 256
 	enc cbc(aes) 0xENCKEY
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
 XFRM policy:
 src 192.0.1.0/24 dst 192.0.2.0/24
 	dir fwd priority PRIORITY ptype main
@@ -66,8 +74,8 @@ west-ec                                                      P,,
 east #
  # expect state #2, state #1 responded with INVALID_KE
 east #
- if [ -f /var/run/pluto/pluto.pid ]; then grep "authenticated using RSA" /tmp/pluto.log ; fi
-"westnet-eastnet-ikev2" #2: responder established IKE SA; authenticated using RSASSA-PSS with SHA2_256
+ if [ -f /var/run/pluto/pluto.pid ]; then grep " authenticated peer " /tmp/pluto.log ; fi
+"westnet-eastnet-ikev2" #2: responder established IKE SA; authenticated peer 'PKCS#1 1.5 RSA with SHA2_256' signature using preloaded certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 east #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 east #

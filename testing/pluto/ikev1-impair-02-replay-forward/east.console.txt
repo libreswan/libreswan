@@ -85,7 +85,7 @@ packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 2 of
 packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 2 of 3
 packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 3 of 3 (332 bytes)
 "westnet-eastnet" #1: Peer ID is ID_FQDN: '@west'
-"westnet-eastnet" #1: authenticated using RSA with SHA1 and preloaded certificate '@west'
+"westnet-eastnet" #1: authenticated peer '2192-bit RSA with SHA1' signature using preloaded certificate '@west'
 "westnet-eastnet" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
 packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 3 of 3
 packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 1 of 4 (792 bytes)
