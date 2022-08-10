@@ -57,11 +57,11 @@ west #
 003 "westnet-eastnet-ipv4-psk" #2: KE has 0 byte DH public value; 256 required
 217 "westnet-eastnet-ipv4-psk" #2: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 031 "westnet-eastnet-ipv4-psk" #2: STATE_MAIN_I2: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv1 message
-000 "westnet-eastnet-ipv4-psk" #2: starting keying attempt 2 of an unlimited number, but releasing whack
+002 "westnet-eastnet-ipv4-psk" #2: deleting state (STATE_MAIN_I2) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk" #2: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  ipsec auto --delete westnet-eastnet-ipv4-psk
 002 "westnet-eastnet-ipv4-psk": terminating SAs using this connection
-002 "westnet-eastnet-ipv4-psk" #3: deleting state (STATE_MAIN_I1) and NOT sending notification
 west #
  grep INVALID_KEY_INFORMATION /tmp/pluto.log
 |    Notify Message Type: v1N_INVALID_KEY_INFORMATION (0x11)
