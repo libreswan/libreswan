@@ -21,7 +21,7 @@ road #
 1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sending INITIAL_CONTACT
 1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer '3072-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+003 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.1
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 8.8.8.8
@@ -60,7 +60,7 @@ road #
 1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sending INITIAL_CONTACT
 1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer '3072-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+003 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.0.2.1
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 1.2.3.4
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #2: received INTERNAL_IP4_DNS 8.8.8.8

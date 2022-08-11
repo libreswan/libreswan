@@ -22,7 +22,7 @@ west #
 1v2 "westnet-eastnet-aes-default" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-aes-default" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-aes-default" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-003 "westnet-eastnet-aes-default" #1: initiator established IKE SA; authenticated peer '2192-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
+003 "westnet-eastnet-aes-default" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
 004 "westnet-eastnet-aes-default" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-aes-default
@@ -39,7 +39,7 @@ west #
 1v2 "westnet-eastnet-aes-128" #3: initiating IKEv2 connection
 1v2 "westnet-eastnet-aes-128" #3: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-aes-128" #3: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-003 "westnet-eastnet-aes-128" #3: initiator established IKE SA; authenticated peer '2192-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
+003 "westnet-eastnet-aes-128" #3: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
 004 "westnet-eastnet-aes-128" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-aes-128
@@ -56,7 +56,7 @@ west #
 1v2 "westnet-eastnet-aes-256" #5: initiating IKEv2 connection
 1v2 "westnet-eastnet-aes-256" #5: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-aes-256" #5: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-003 "westnet-eastnet-aes-256" #5: initiator established IKE SA; authenticated peer '2192-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
+003 "westnet-eastnet-aes-256" #5: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
 004 "westnet-eastnet-aes-256" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec auto --delete westnet-eastnet-aes-256
@@ -73,7 +73,7 @@ west #
 1v2 "westnet-eastnet-aes-mix-1" #7: initiating IKEv2 connection
 1v2 "westnet-eastnet-aes-mix-1" #7: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-aes-mix-1" #7: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-003 "westnet-eastnet-aes-mix-1" #7: initiator established IKE SA; authenticated peer '2192-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
+003 "westnet-eastnet-aes-mix-1" #7: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
 004 "westnet-eastnet-aes-mix-1" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_256-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec auto --delete  westnet-eastnet-aes-mix-1
@@ -90,7 +90,7 @@ west #
 1v2 "westnet-eastnet-aes-mix-2" #9: initiating IKEv2 connection
 1v2 "westnet-eastnet-aes-mix-2" #9: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-aes-mix-2" #9: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
-003 "westnet-eastnet-aes-mix-2" #9: initiator established IKE SA; authenticated peer '2192-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
+003 "westnet-eastnet-aes-mix-2" #9: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
 004 "westnet-eastnet-aes-mix-2" #10: initiator established Child SA using #9; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
  ipsec auto --delete  westnet-eastnet-aes-mix-2

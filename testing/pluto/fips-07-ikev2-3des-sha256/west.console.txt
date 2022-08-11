@@ -35,7 +35,7 @@ west #
 1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request {cipher=3DES_CBC_192 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=MODP2048}
-003 "westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer '2192-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
+003 "westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
 004 "westnet-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA2_256_128 DPD=passive}
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254

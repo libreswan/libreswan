@@ -34,7 +34,7 @@ road #
 1v2 "road/0x8" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "road/0x8" #1: switching CHILD #2 to pending connection "road/0x1"
 1v2 "road/0x8" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "road/0x8" #1: initiator established IKE SA; authenticated peer '3072-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+003 "road/0x8" #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
 004 "road/0x1" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.23:4500 DPD=passive}
 002 "road/0x2" #3: initiating Child SA using IKE SA #1
 002 "road/0x3" #4: initiating Child SA using IKE SA #1
