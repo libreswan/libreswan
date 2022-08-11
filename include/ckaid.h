@@ -33,9 +33,17 @@ struct jambuf;
  *
  * Field names are so that it is chunk_t like.
  *
- * Assume SHA1 is being used for the CKAID
+ * Sane backend uses SHA1 (or eventually SHA2) to generate the CKAID.
+ * However, if a certificate has SubjectKeyIdentifier then that value
+ * is used and it can be anything (even an ASCII string).  Ulgh.
+ *
+ * NSS's certutil command has an internal and hard-wired upper limit
+ * of 40 bytes, hence that value here.
+ *
+ * XXX: should CKAID go back to being dynamic?
  */
-#define CKAID_SIZE BYTES_FOR_BITS(160)
+
+#define CKAID_SIZE 40
 
 typedef struct {
 	size_t len;

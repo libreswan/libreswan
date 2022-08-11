@@ -77,10 +77,12 @@ const char *str_ckaid(const ckaid_t *ckaid, ckaid_buf *buf)
 
 ckaid_t ckaid_from_secitem(const SECItem *const nss_ckaid)
 {
+	size_t nss_ckaid_len = nss_ckaid->len;
 	ckaid_t ckaid = {
-		.len = nss_ckaid->len,
+		.len = min(nss_ckaid_len, sizeof(ckaid.ptr/*array*/)),
 	};
-	passert(ckaid.len <= sizeof(ckaid.ptr/*an-array*/));
+	/* should not be truncated but can be */
+	pexpect(ckaid.len == nss_ckaid_len);
 	memmove(ckaid.ptr, nss_ckaid->data, ckaid.len);
 	return ckaid;
 }
