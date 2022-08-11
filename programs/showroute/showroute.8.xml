@@ -14,6 +14,7 @@
       </authorblurb>
     </author>
   </refentryinfo>
+
   <refmeta>
     <refentrytitle>IPSEC_SHOWROUTE</refentrytitle>
     <manvolnum>8</manvolnum>
@@ -21,6 +22,7 @@
     <refmiscinfo class="source">libreswan</refmiscinfo>
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
+
   <refnamediv id='name'>
     <refname>ipsec showroute</refname>
     <refpurpose>show route to given address</refpurpose>
@@ -30,8 +32,11 @@
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
       <command>ipsec</command>
-      <arg choice='plain'><replaceable>showroute</replaceable></arg>
-      <arg choice='req'><replaceable>ip address</replaceable></arg>
+      <arg choice='plain'>showroute</arg>
+      <arg choice='opt'>--source</arg>
+      <arg choice='opt'>--gateway</arg>
+      <arg choice='opt'>--destination</arg>
+      <arg choice='req'><replaceable>IP address</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>
 
@@ -39,7 +44,7 @@
     <title>DESCRIPTION</title>
     <para>
       <emphasis remap='I'>showroute</emphasis> outputs (on standard
-      output) the host, gateway, and destination address for the
+      output) the source, gateway, and destination address for the
       specified IP address.
     </para>
   </refsect1>

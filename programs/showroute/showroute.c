@@ -19,21 +19,61 @@
 #include "ip_address.h"
 #include "stdlib.h"
 
+#include "getopt.h"
+
 int main(int argc, char **argv)
 {
 	struct logger *logger = tool_init_log(argv[0]);
 
 	if (argc == 1) {
 		llog(WHACK_STREAM|NO_PREFIX, logger, "Usage:");
-		llog(WHACK_STREAM|NO_PREFIX, logger, "  ipsec showroute <destination-address>");
+		llog(WHACK_STREAM|NO_PREFIX, logger, "  ipsec showroute [--source|--gateway|--destination] <destination>");
 		llog(WHACK_STREAM|NO_PREFIX, logger, "prints:");
-		llog(WHACK_STREAM|NO_PREFIX, logger, "  <host-interface> <gateway> <destination-address>");
-		llog(WHACK_STREAM|NO_PREFIX, logger, "for the given <destination-address>");
+		llog(WHACK_STREAM|NO_PREFIX, logger, "  <source-address> <gateway-address> <destination-address>");
+		llog(WHACK_STREAM|NO_PREFIX, logger, "for the given <destination>");
 		exit(1);
 	}
 
+	int show_source = false;
+	int show_gateway = false;
+	int show_destination = false;
+
+	const struct option options[] = {
+		{ "source", no_argument, &show_source, true, },
+		{ "gateway", no_argument, &show_gateway, true, },
+		{ "destination", no_argument, &show_destination, true, },
+		{0},
+	};
+
+	while (true) {
+		opterr = 0;
+		int option_index;
+		int c = getopt_long(argc, argv, "", options, &option_index);
+		if (c == -1) {
+			break;
+		}
+		if (c == '?') {
+			llog(ERROR_STREAM, logger, "invalid option: %s", argv[optind]);
+			exit(1);
+		}
+	}
+
+	if (optind == argc) {
+		llog(ERROR_STREAM, logger, "missing destination");
+		exit(1);
+	}
+
+	if (optind + 1 < argc) {
+		llog(ERROR_STREAM, logger, "extra parameter %s", argv[optind + 1]);
+		exit(1);
+	}
+
+	if (!show_source && !show_gateway && !show_destination) {
+		show_source = show_gateway = show_destination = true;
+	}
+
 	ip_address dst;
-	err_t e = ttoaddress_dns(shunk1(argv[1]), NULL, &dst);
+	err_t e = ttoaddress_dns(shunk1(argv[optind]), NULL, &dst);
 	if (e != NULL) {
 		llog(WHACK_STREAM, logger, "%s: %s", argv[1], e);
 		exit(1);
@@ -43,11 +83,21 @@ int main(int argc, char **argv)
 	switch (get_route(dst, &route, logger)) {
 	case ROUTE_SUCCESS:
 	{
-		address_buf sb, gb, ab;
-		llog(WHACK_STREAM|NO_PREFIX, logger, "%s %s %s",
-		     str_address(&route.source, &sb),
-		     str_address(&route.gateway, &gb),
-		     str_address(&dst, &ab));
+		LLOG_JAMBUF(WHACK_STREAM|NO_PREFIX, logger, buf) {
+			const char *sep = "";
+			if (show_source) {
+				jam_string(buf, sep); sep = " ";
+				jam_address(buf, &route.source);
+			}
+			if (show_gateway) {
+				jam_string(buf, sep); sep = " ";
+				jam_address(buf, &route.gateway);
+			}
+			if (show_destination) {
+				jam_string(buf, sep); sep = " ";
+				jam_address(buf, &dst);
+			}
+		}
 		exit(0);
 	}
 	case ROUTE_GATEWAY_FAILED:
