@@ -38,25 +38,25 @@ SUBDIRS += cavp
 SUBDIRS += ecdsasigkey
 SUBDIRS += ipsec
 SUBDIRS += letsencrypt
-SUBDIRS += look
+
+ifneq ($(LINUX_VARIANT),)
+SUBDIRS += look.linux
+endif
+
 SUBDIRS += newhostkey
 SUBDIRS += readwriteconf
 SUBDIRS += rsasigkey
 SUBDIRS += setup
 
-ifneq ($(BSD_VARIANT),)
-SUBDIRS += show.bsd
-else
-SUBDIRS += show
+ifneq ($(LINUX_VARIANT),)
+SUBDIRS += show.linux
 endif
 
 SUBDIRS += showhostkey
 SUBDIRS += showroute
 
-ifneq ($(BSD_VARIANT),)
-SUBDIRS += verify.bsd
-else
-SUBDIRS += verify
+ifneq ($(LINUX_VARIANT),)
+SUBDIRS += verify.linux
 endif
 
 ifeq ($(USE_PORTEXCLUDES),true)
