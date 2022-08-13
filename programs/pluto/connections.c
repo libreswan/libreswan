@@ -3819,20 +3819,6 @@ static void show_one_sr(struct show *s,
 	}
 }
 
-static void jam_humber_max(struct jambuf *buf,
-			   const char *prefix,
-			   uint64_t val,
-			   const char *suffix)
-{
-	jam_string(buf, prefix);
-	if (val == (uint64_t)IPSEC_SA_MAX_DEFAULT) {
-		jam_string(buf, IPSEC_SA_MAX_STRING);
-	} else {
-		jam_humber(buf, val);
-	}
-	jam_string(buf, suffix);
-}
-
 static void show_one_connection(struct show *s,
 				const struct connection *c)
 {

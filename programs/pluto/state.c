@@ -2037,6 +2037,20 @@ void state_eroute_usage(const ip_selector *ours, const ip_selector *peers,
 	}
 }
 
+void jam_humber_max(struct jambuf *buf,
+		    const char *prefix,
+		    uint64_t val,
+		    const char *suffix)
+{
+	jam_string(buf, prefix);
+	if (val == (uint64_t)IPSEC_SA_MAX_DEFAULT) {
+		jam_string(buf, IPSEC_SA_MAX_STRING);
+	} else {
+		jam_humber(buf, val);
+	}
+	jam_string(buf, suffix);
+}
+
 /* note: this mutates *st by calling get_sa_bundle_info */
 static void jam_state_traffic(struct jambuf *buf, struct state *st)
 {
@@ -2061,15 +2075,12 @@ static void jam_state_traffic(struct jambuf *buf, struct state *st)
 	}
 
 	if (get_sa_bundle_info(st, false, NULL)) {
-		unsigned outb = (st->st_esp.present ? st->st_esp.peer_bytes :
-				 st->st_ah.present ? st->st_ah.peer_bytes :
-				 st->st_ipcomp.present ? st->st_ipcomp.peer_bytes : 0);
-		jam(buf, ", outBytes=%u", outb);
-
+		uintmax_t outb = (st->st_esp.present ? st->st_esp.peer_bytes :
+				  st->st_ah.present ? st->st_ah.peer_bytes :
+				  st->st_ipcomp.present ? st->st_ipcomp.peer_bytes : 0);
+		jam(buf, ", outBytes=%ju", outb);
 		if (c->sa_ipsec_max_bytes != 0) {
-			char bytesbuf[strlen(" 18446744073709551616 ") + strlen(" Ki B ")];
-			readable_humber(c->sa_ipsec_max_bytes, bytesbuf, bytesbuf + sizeof(bytesbuf), "", "B");
-			jam(buf, ", maxBytes=%s", bytesbuf);
+			jam_humber_max(buf, ", maxBytes=", c->sa_ipsec_max_bytes, "B");
 		}
 	}
 

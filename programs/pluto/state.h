@@ -965,4 +965,9 @@ extern void set_sa_expire_next_event(enum event_type next_event, struct state *s
 extern char *readable_humber(uint64_t num, char *buf, const char *buf_roof,
 			     const char *prefix, char *suffix2);
 
+void jam_humber_max(struct jambuf *buf,
+		    const char *prefix,
+		    uint64_t val,
+		    const char *suffix);
+
 #endif /* _STATE_H */
