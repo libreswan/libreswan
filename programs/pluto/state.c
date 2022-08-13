@@ -907,6 +907,25 @@ void delete_state(struct state *st)
 	delete_state_tail(st);
 }
 
+static void log_traffic(struct state *st, const char *name, struct ipsec_proto_info *traffic)
+{
+	LLOG_JAMBUF(RC_INFORMATIONAL, st->st_logger, buf) {
+		jam(buf, "%s traffic information:", name);
+		/* in */
+		jam_string(buf, " in=");
+		jam_humber(buf, traffic->our_bytes);
+		jam_string(buf, "B");
+		/* out */
+		jam_string(buf, " out=");
+		jam_humber(buf, traffic->peer_bytes);
+		jam_string(buf, "B");
+		if (st->st_xauth_username[0] != '\0') {
+			jam_string(buf, " XAUTHuser=");
+			jam_string(buf, st->st_xauth_username);
+		}
+	}
+}
+
 void delete_state_tail(struct state *st)
 {
 	pstat_sa_deleted(st);
@@ -987,21 +1006,7 @@ void delete_state_tail(struct state *st)
 		 * ESP/AH/IPCOMP
 		 */
 		if (st->st_esp.present) {
-			char statebuf[1024];
-			char *sbcp = readable_humber(st->st_esp.our_bytes,
-					       statebuf,
-					       statebuf + sizeof(statebuf),
-					       "ESP traffic information: in=",
-						"B");
-
-			(void)readable_humber(st->st_esp.peer_bytes,
-					       sbcp,
-					       statebuf + sizeof(statebuf),
-					       " out=", "B");
-			log_state(RC_INFORMATIONAL, st, "%s%s%s",
-				  statebuf,
-				  st->st_xauth_username[0] != '\0' ? " XAUTHuser=" : "",
-				  st->st_xauth_username);
+			log_traffic(st, "ESP", &st->st_esp);
 			pstats_ipsec_in_bytes += st->st_esp.our_bytes;
 			pstats_ipsec_out_bytes += st->st_esp.peer_bytes;
 		}
