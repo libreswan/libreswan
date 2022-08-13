@@ -3819,6 +3819,20 @@ static void show_one_sr(struct show *s,
 	}
 }
 
+static void jam_humber_max(struct jambuf *buf,
+			   const char *prefix,
+			   uint64_t val,
+			   const char *suffix)
+{
+	jam_string(buf, prefix);
+	if (val == (uint64_t)IPSEC_SA_MAX_DEFAULT) {
+		jam_string(buf, IPSEC_SA_MAX_STRING);
+	} else {
+		jam_humber(buf, val);
+	}
+	jam_string(buf, suffix);
+}
+
 static void show_one_connection(struct show *s,
 				const struct connection *c)
 {
@@ -3874,20 +3888,8 @@ static void show_one_connection(struct show *s,
 		jam(buf, PRI_CONNECTION":  ", c->name, instance);
 		jam(buf, " ike_life: %jds;", deltasecs(c->sa_ike_life_seconds));
 		jam(buf, " ipsec_life: %jds;", deltasecs(c->sa_ipsec_life_seconds));
-		jam_string(buf, " ipsec_max_bytes: ");
-		if (c->sa_ipsec_max_bytes == (uint64_t) IPSEC_SA_MAX_DEFAULT) {
-			jam_string(buf, IPSEC_SA_MAX_STRING);
-		} else {
-			jam_humber(buf, c->sa_ipsec_max_bytes);
-		}
-		jam_string(buf, "B;");
-		jam_string(buf, " ipsec_max_packets: ");
-		if (c->sa_ipsec_max_bytes == (uint64_t) IPSEC_SA_MAX_DEFAULT) {
-			jam_string(buf, IPSEC_SA_MAX_STRING);
-		} else {
-			jam_humber(buf, c->sa_ipsec_max_packets);
-		}
-		jam_string(buf, ";");
+		jam_humber_max(buf, " ipsec_max_bytes: ", c->sa_ipsec_max_bytes, "B;");
+		jam_humber_max(buf, " ipsec_max_packets: ", c->sa_ipsec_max_packets, ";");
 		jam(buf, " replay_window: %u;", c->sa_replay_window);
 		jam(buf, " rekey_margin: %jds;", deltasecs(c->sa_rekey_margin));
 		jam(buf, " rekey_fuzz: %lu%%;", c->sa_rekey_fuzz);
