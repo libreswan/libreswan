@@ -1018,20 +1018,7 @@ void delete_state_tail(struct state *st)
 		}
 
 		if (st->st_ipcomp.present) {
-			char statebuf[1024];
-			char *sbcp = readable_humber(st->st_ipcomp.peer_bytes,
-					       statebuf,
-					       statebuf + sizeof(statebuf),
-					       "IPCOMP traffic information: in=", "B");
-
-			(void)readable_humber(st->st_ipcomp.our_bytes,
-					       sbcp,
-					       statebuf + sizeof(statebuf),
-					       " out=",  "B");
-			log_state(RC_INFORMATIONAL, st, "%s%s%s",
-				  statebuf,
-				  st->st_xauth_username[0] != '\0' ? " XAUTHuser=" : "",
-				  st->st_xauth_username);
+			log_traffic(st, "IPCOMP", &st->st_ipcomp);
 			pstats_ipsec_in_bytes += st->st_ipcomp.peer_bytes;
 			pstats_ipsec_out_bytes += st->st_ipcomp.our_bytes;
 		}
