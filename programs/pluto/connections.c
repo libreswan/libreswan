@@ -3819,8 +3819,8 @@ static void show_one_sr(struct show *s,
 	}
 }
 
-void show_one_connection(struct show *s,
-			 const struct connection *c)
+static void show_one_connection(struct show *s,
+				const struct connection *c)
 {
 	const char *ifn;
 	char ifnstr[2 *  IFNAMSIZ + 2];  /* id_rname@id_vname\0 */
@@ -3830,8 +3830,6 @@ void show_one_connection(struct show *s,
 	char satfcstr[13];
 	char nflogstr[8];
 	char markstr[2 * (2 * strlen("0xffffffff") + strlen("/")) + strlen(", ") ];
-	char bytesbuf[strlen(" 18446744073709551616 ") + strlen(" Ki B ")];
-	char packetsbuf[sizeof(bytesbuf)];
 
 	if (oriented(c)) {
 		if (c->xfrmi != NULL && c->xfrmi->name != NULL) {
@@ -3872,17 +3870,29 @@ void show_one_connection(struct show *s,
 			     str_dn_or_null(ASN1(c->remote->config->host.ca), "%any", &that_ca));
 	}
 
-	readable_humber(c->sa_ipsec_max_bytes, bytesbuf, bytesbuf + sizeof(bytesbuf), "", "B");
-	readable_humber(c->sa_ipsec_max_packets, packetsbuf, packetsbuf + sizeof(packetsbuf), "", "");
-	show_comment(s, PRI_CONNECTION":   ike_life: %jds; ipsec_life: %jds; ipsec_max_bytes: %s; ipsec_max_packets: %s; replay_window: %u; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu;",
-		     c->name, instance,
-		     deltasecs(c->sa_ike_life_seconds),
-		     deltasecs(c->sa_ipsec_life_seconds),
-		     bytesbuf, packetsbuf,
-		     c->sa_replay_window,
-		     deltasecs(c->sa_rekey_margin),
-		     c->sa_rekey_fuzz,
-		     c->sa_keying_tries);
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		jam(buf, PRI_CONNECTION":  ", c->name, instance);
+		jam(buf, " ike_life: %jds;", deltasecs(c->sa_ike_life_seconds));
+		jam(buf, " ipsec_life: %jds;", deltasecs(c->sa_ipsec_life_seconds));
+		jam_string(buf, " ipsec_max_bytes: ");
+		if (c->sa_ipsec_max_bytes == (uint64_t) IPSEC_SA_MAX_DEFAULT) {
+			jam_string(buf, IPSEC_SA_MAX_STRING);
+		} else {
+			jam_humber(buf, c->sa_ipsec_max_bytes);
+		}
+		jam_string(buf, "B;");
+		jam_string(buf, " ipsec_max_packets: ");
+		if (c->sa_ipsec_max_bytes == (uint64_t) IPSEC_SA_MAX_DEFAULT) {
+			jam_string(buf, IPSEC_SA_MAX_STRING);
+		} else {
+			jam_humber(buf, c->sa_ipsec_max_packets);
+		}
+		jam_string(buf, ";");
+		jam(buf, " replay_window: %u;", c->sa_replay_window);
+		jam(buf, " rekey_margin: %jds;", deltasecs(c->sa_rekey_margin));
+		jam(buf, " rekey_fuzz: %lu%%;", c->sa_rekey_fuzz);
+		jam(buf, " keyingtries: %lu;", c->sa_keying_tries);
+	}
 
 	show_comment(s, PRI_CONNECTION":   retransmit-interval: %jdms; retransmit-timeout: %jds; iketcp:%s; iketcp-port:%d;",
 		     c->name, instance,

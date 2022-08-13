@@ -350,28 +350,26 @@ static char *readable_humber_iec_60027_2(uint64_t num, char *buf, const char *bu
 	if (num < 1024) {
 		suffix = "";
 	} else if (num >= binary_per_kilo && num < binary_per_mega) {
-			to_print /= binary_per_kilo;
-			suffix = "Ki";
+		to_print /= binary_per_kilo;
+		suffix = "Ki";
 	} else if (num >= binary_per_mega && num < binary_per_giga) {
-			to_print /= binary_per_mega;
-			suffix = "Mi";
+		to_print /= binary_per_mega;
+		suffix = "Mi";
 	} else if (num >= binary_per_giga && num < binary_per_tera) {
-			to_print /= binary_per_giga;
-			suffix = "Gi";
+		to_print /= binary_per_giga;
+		suffix = "Gi";
 	} else if (num >= binary_per_tera && num < binary_per_peta) {
-			to_print /= binary_per_tera;
-			suffix = "Ti";
+		to_print /= binary_per_tera;
+		suffix = "Ti";
 	} else if (num >= binary_per_peta && num < binary_per_exa) {
-			to_print /= binary_per_peta;
-			suffix = "Pi";
-	} else if (num == (uint64_t) IPSEC_SA_MAX_DEFAULT) {
-			suffix = "16Ei";
+		to_print /= binary_per_peta;
+		suffix = "Pi";
 	} else if (num >= binary_per_exa) {
-			to_print /= binary_per_exa;
-			suffix = "Ei";
+		to_print /= binary_per_exa;
+		suffix = "Ei";
 	}
 	if (num == (uint64_t) IPSEC_SA_MAX_DEFAULT) {
-		ret = snprintf(buf, buf_len, "%s%s%s", prefix, suffix, suffix2);
+		ret = snprintf(buf, buf_len, "%s%s%s", prefix, IPSEC_SA_MAX_STRING, suffix2);
 	} else {
 		ret = snprintf(buf, buf_len, "%s%" PRIu64 "%s%s", prefix, to_print,
 			       suffix, suffix2);

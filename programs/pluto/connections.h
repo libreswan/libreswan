@@ -669,8 +669,6 @@ struct spd_route *eclipsing(const struct spd_route *sr);
 
 /* print connection status */
 
-extern void show_one_connection(struct show *s,
-				const struct connection *c);
 extern void show_connections_status(struct show *s);
 extern int connection_compare(const struct connection *ca,
 			      const struct connection *cb);
