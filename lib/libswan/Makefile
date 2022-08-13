@@ -160,6 +160,7 @@ OBJS += lswglob.o
 
 OBJS += global_logger.o
 OBJS += jambuf.o
+OBJS += jam_humber.o
 OBJS += jam_bytes.o
 OBJS += jam_base64_bytes.o
 OBJS += llog.o

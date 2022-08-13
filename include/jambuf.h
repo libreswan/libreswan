@@ -222,6 +222,18 @@ jam_bytes_fn jam_shell_quoted_bytes;
 	})
 
 /*
+ * jam_humber():
+ *
+ * Make large numbers clearer by expressing them as Ki, Mi, Gi, Ti,
+ * Pi, Ei and 2^64 will be 16Ei based on
+ * https://en.wikipedia.org/wiki/Binary_prefix IEC 60027-2 standard.
+ * The prefix and suffix2 are literally copied into the output.
+ * e.g. use sufix2 "B" for Bytes.
+ */
+
+size_t jam_humber(struct jambuf *buf, uint64_t num);
+
+/*
  * Code wrappers that cover up the details of allocating,
  * initializing, de-allocating (and possibly logging) a 'struct
  * jambuf' buffer.
