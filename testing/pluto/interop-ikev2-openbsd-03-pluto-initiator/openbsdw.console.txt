@@ -1,36 +1,27 @@
 ../../guestbin/netbsd-prep.sh
-../../guestbin/netbstbin/netbsd-prep.sh
-openbsdw.conf -> PATH/etc/ipsec.conf
-openbsdw.secrets -> PATH/etc/ipsec.secrets
+west.conf -> PATH/etc/ipsec.conf
+west.secrets -> PATH/etc/ipsec.secrets
 west #
  # confirm that the network is alive
-# confirm that the nthat the network is alive
 west #
  ../../guestbin/wait-until-alive -I 192.1.2.45 192.1.2.23
-../../guestbin/wait-tbin/wait-until-alive -I 192.1.2.45 192.1.2.23
 destination -I 192.1.2.45 192.1.2.23 is alive
 west #
  ipsec start
-ipsec start
 Redirecting to: [initsystem]
 pluto(ok)
 west #
  ../../guestbin/wait-until-pluto-started
-../../guestbin/wait-tbin/wait-until-pluto-started
 west #
  ipsec whack --impair suppress-retransmits
-ipsec whack --impairk --impair suppress-retransmits
 west #
  ipsec auto --add eastnet-westnet-ikev2
-ipsec auto --add eas --add eastnet-westnet-ikev2
 002 "eastnet-westnet-ikev2": added IKEv2 connection
 west #
  echo "initdone"
-echo "initdone"
 initdone
 west #
  ipsec auto --up eastnet-westnet-ikev2
-ipsec auto --up east --up eastnet-westnet-ikev2
 1v2 "eastnet-westnet-ikev2" #1: initiating IKEv2 connection
 1v2 "eastnet-westnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "eastnet-westnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH31}
@@ -38,22 +29,21 @@ ipsec auto --up east --up eastnet-westnet-ikev2
 004 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP0xESPESP xfrm=NULL-HMAC_SHA2_256_128 DPD=passive}
 west #
  ipsecctl -v -v -k -s all
-ipsecctl -v -v -k -sv -v -k -s all
 FLOWS:
-@0 flow esp in from 192.0.2.0/24 to 192.0.1.0/24 peer 192.1.2.23 type require
-@1 flow esp out from 192.0.1.0/24 to 192.0.2.0/24 peer 192.1.2.23 type require
+@0 flow esp in from 192.0.2.0/24 to 192.0.1.0/24 local 192.1.2.45 peer 192.1.2.23 type require
+@1 flow esp out from 192.0.1.0/24 to 192.0.2.0/24 local 192.1.2.45 peer 192.1.2.23 type require
 SAD:
 @0 esp tunnel from 192.1.2.45 to 192.1.2.23 spi 0xSPISPI auth hmac-sha2-256 enc null \
-	authkey 0xb984d175d10d0cda427e11ca1c5ff3cb3db1f60c7da1d1e0ccb1d659d567b72e \
+	authkey 0x756f69395b19faa41fb7534bf8d62880d94420d05ea9353564bc4f56aa55b716 \
 	enckey 0x
 	sa: spi 0xSPISPI auth hmac-sha2-256 enc null
-		state mature replay 64 flags 0x404tunnel,esn>
-	lifetime_cur: alloc 0 bytes 0 add 1654350422 first 0
+		state mature replay 8 flags 0x404tunnel,esn>
+	lifetime_cur: alloc 0 bytes 0 add 1660505907 first 0
 	lifetime_hard: alloc 0 bytes 0 add 28800 first 0
 	lifetime_soft: alloc 0 bytes 0 add 28800 first 0
 	address_src: 192.1.2.45
 	address_dst: 192.1.2.23
-	key_auth: bits 256: b984d175d10d0cda427e11ca1c5ff3cb3db1f60c7da1d1e0ccb1d659d567b72e
+	key_auth: bits 256: 756f69395b19faa41fb7534bf8d62880d94420d05ea9353564bc4f56aa55b716
 	key_encrypt: bits 0: 
 	counter: 
 		0 input packets
@@ -66,16 +56,16 @@ SAD:
 		0 packets dropped on output
 	replay: rpl 1
 @0 esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI auth hmac-sha2-256 enc null \
-	authkey 0x3560c6c3f0ed9bde68f660d55bfe92a4101368eca68ee5c66acb39fabdbef0da \
+	authkey 0x7a2c294fc5c5f203c87604aa85774153b0a803a2b2edd7496263b46ad57903bd \
 	enckey 0x
 	sa: spi 0xSPISPI auth hmac-sha2-256 enc null
-		state mature replay 64 flags 0x404tunnel,esn>
-	lifetime_cur: alloc 0 bytes 0 add 1654350422 first 0
+		state mature replay 8 flags 0x404tunnel,esn>
+	lifetime_cur: alloc 0 bytes 0 add 1660505907 first 0
 	lifetime_hard: alloc 0 bytes 0 add 28800 first 0
 	lifetime_soft: alloc 0 bytes 0 add 28800 first 0
 	address_src: 192.1.2.23
 	address_dst: 192.1.2.45
-	key_auth: bits 256: 3560c6c3f0ed9bde68f660d55bfe92a4101368eca68ee5c66acb39fabdbef0da
+	key_auth: bits 256: 7a2c294fc5c5f203c87604aa85774153b0a803a2b2edd7496263b46ad57903bd
 	key_encrypt: bits 0: 
 	counter: 
 		0 input packets
@@ -89,28 +79,26 @@ SAD:
 	replay: rpl 1
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-../../guestbin/ping-tbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
  ipsecctl -v -v -k -s all
-ipsecctl -v -v -k -sv -v -k -s all
 FLOWS:
-@0 flow esp in from 192.0.2.0/24 to 192.0.1.0/24 peer 192.1.2.23 type require
-@1 flow esp out from 192.0.1.0/24 to 192.0.2.0/24 peer 192.1.2.23 type require
+@0 flow esp in from 192.0.2.0/24 to 192.0.1.0/24 local 192.1.2.45 peer 192.1.2.23 type require
+@1 flow esp out from 192.0.1.0/24 to 192.0.2.0/24 local 192.1.2.45 peer 192.1.2.23 type require
 SAD:
 @0 esp tunnel from 192.1.2.45 to 192.1.2.23 spi 0xSPISPI auth hmac-sha2-256 enc null \
-	authkey 0xb984d175d10d0cda427e11ca1c5ff3cb3db1f60c7da1d1e0ccb1d659d567b72e \
+	authkey 0x756f69395b19faa41fb7534bf8d62880d94420d05ea9353564bc4f56aa55b716 \
 	enckey 0x
 	sa: spi 0xSPISPI auth hmac-sha2-256 enc null
-		state mature replay 64 flags 0x404tunnel,esn>
-	lifetime_cur: alloc 0 bytes 84 add 1654350422 first 1654350432
+		state mature replay 8 flags 0x404tunnel,esn>
+	lifetime_cur: alloc 0 bytes 84 add 1660505907 first 1660505917
 	lifetime_hard: alloc 0 bytes 0 add 28800 first 0
 	lifetime_soft: alloc 0 bytes 0 add 28800 first 0
 	address_src: 192.1.2.45
 	address_dst: 192.1.2.23
-	key_auth: bits 256: b984d175d10d0cda427e11ca1c5ff3cb3db1f60c7da1d1e0ccb1d659d567b72e
+	key_auth: bits 256: 756f69395b19faa41fb7534bf8d62880d94420d05ea9353564bc4f56aa55b716
 	key_encrypt: bits 0: 
-	lifetime_lastuse: alloc 0 bytes 0 add 0 first 1654350432
+	lifetime_lastuse: alloc 0 bytes 0 add 0 first 1660505917
 	counter: 
 		0 input packets
 		1 output packet
@@ -122,18 +110,18 @@ SAD:
 		0 packets dropped on output
 	replay: rpl 2
 @0 esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI auth hmac-sha2-256 enc null \
-	authkey 0x3560c6c3f0ed9bde68f660d55bfe92a4101368eca68ee5c66acb39fabdbef0da \
+	authkey 0x7a2c294fc5c5f203c87604aa85774153b0a803a2b2edd7496263b46ad57903bd \
 	enckey 0x
 	sa: spi 0xSPISPI auth hmac-sha2-256 enc null
-		state mature replay 64 flags 0x404tunnel,esn>
-	lifetime_cur: alloc 0 bytes 88 add 1654350422 first 1654350432
+		state mature replay 8 flags 0x404tunnel,esn>
+	lifetime_cur: alloc 0 bytes 88 add 1660505907 first 1660505917
 	lifetime_hard: alloc 0 bytes 0 add 28800 first 0
 	lifetime_soft: alloc 0 bytes 0 add 28800 first 0
 	address_src: 192.1.2.23
 	address_dst: 192.1.2.45
-	key_auth: bits 256: 3560c6c3f0ed9bde68f660d55bfe92a4101368eca68ee5c66acb39fabdbef0da
+	key_auth: bits 256: 7a2c294fc5c5f203c87604aa85774153b0a803a2b2edd7496263b46ad57903bd
 	key_encrypt: bits 0: 
-	lifetime_lastuse: alloc 0 bytes 0 add 0 first 1654350432
+	lifetime_lastuse: alloc 0 bytes 0 add 0 first 1660505917
 	counter: 
 		1 input packet
 		0 output packets
@@ -146,11 +134,9 @@ SAD:
 	replay: rpl 1
 west #
  ipsec trafficstatus
-ipsec trafficstatus
 006 #2: "eastnet-westnet-ikev2", type=ESP, add_time=1234567890, id='@east'
 west #
  echo done
-echo done
 done
 west #
  
