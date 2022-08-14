@@ -332,61 +332,6 @@ void change_v2_state(struct state *st)
 	}
 }
 
-/*
- * readable_humber: make large numbers clearer by expressing them
- * as Ki,Mi,Gi,Ti,Pi,Ei and 2^64 will be 16Ei based on
- * https://en.wikipedia.org/wiki/Binary_prefix IEC 60027-2 standard.
- * The prefix and suffix2 are literally copied into the output.
- * e.g. use sufix2 "B" for Bytes.
- */
-static char *readable_humber_iec_60027_2(uint64_t num, char *buf, const char *buf_roof,
-			     const char *prefix, char *suffix2)
-{
-	size_t buf_len = buf_roof - buf;
-	uint64_t to_print = num;
-	const char *suffix;
-	int ret;
-
-	if (num < 1024) {
-		suffix = "";
-	} else if (num >= binary_per_kilo && num < binary_per_mega) {
-		to_print /= binary_per_kilo;
-		suffix = "Ki";
-	} else if (num >= binary_per_mega && num < binary_per_giga) {
-		to_print /= binary_per_mega;
-		suffix = "Mi";
-	} else if (num >= binary_per_giga && num < binary_per_tera) {
-		to_print /= binary_per_giga;
-		suffix = "Gi";
-	} else if (num >= binary_per_tera && num < binary_per_peta) {
-		to_print /= binary_per_tera;
-		suffix = "Ti";
-	} else if (num >= binary_per_peta && num < binary_per_exa) {
-		to_print /= binary_per_peta;
-		suffix = "Pi";
-	} else if (num >= binary_per_exa) {
-		to_print /= binary_per_exa;
-		suffix = "Ei";
-	}
-	if (num == (uint64_t) IPSEC_SA_MAX_DEFAULT) {
-		ret = snprintf(buf, buf_len, "%s%s%s", prefix, IPSEC_SA_MAX_STRING, suffix2);
-	} else {
-		ret = snprintf(buf, buf_len, "%s%" PRIu64 "%s%s", prefix, to_print,
-			       suffix, suffix2);
-	}
-	if (ret < 0 || (size_t) ret >= buf_len)
-		return buf;
-
-	return buf + ret;
-}
-
-char *readable_humber(uint64_t num, char *buf, const char *buf_roof,
-			     const char *prefix, char *suffix2)
-{
-	return readable_humber_iec_60027_2(num, buf, buf_roof, prefix, suffix2);
-}
-
-
 static size_t jam_readable_humber(struct jambuf *buf, uint64_t num, bool kilos)
 {
 	uint64_t to_print = num;
