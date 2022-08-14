@@ -1288,7 +1288,7 @@ kvmplutotest	ikev2-tcp-04-ikeport					good
 kvmplutotest	ikev2-tcp-06-fail-ike-sa-init-cookie			good
 kvmplutotest	ikev2-tcp-06-fail-ike-sa-init-invalid-ke		good
 kvmplutotest	ikev2-tcp-06-fail-ike-sa-init-redirect			good
-kvmplutotest	ikev2-tcp-07-fail-ike-auth-authentication-failed	good
+kvmplutotest	ikev2-tcp-07-fail-ike-auth-authentication		good
 kvmplutotest	ikev2-tcp-07-fail-ike-auth-redirect			good
 kvmplutotest	ikev2-tcp-10-rekey-child				good
 kvmplutotest	ikev2-tcp-10-rekey-ike					good
