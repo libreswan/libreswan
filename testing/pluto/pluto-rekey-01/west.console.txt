@@ -43,20 +43,19 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- # wait for an IKE rekey
+ # wait for an IKE rekey which happens at the 1m mark
 west #
  sleep 45
 west #
- sleep 45
+ ../../guestbin/wait-for.sh --match '#3: initiating IKEv1 Main Mode connection to replace #1' -- cat /tmp/pluto.log
+"westnet-eastnet-ipv4-psk-ikev2" #3: initiating IKEv1 Main Mode connection to replace #1
 west #
- # confirm rekey
-west #
- ipsec whack --showstates
-000 #2: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; ISAKMP SA #1; idle;
-000 #2: "westnet-eastnet-ipv4-psk-ikev2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B ESPmax=4194303B 
+ ../../guestbin/wait-for.sh --match '#3.*IKE SA established' -- ipsec whack --showstates
 000 #3: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_MAIN_I4 (IKE SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
-000 #4: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #3; idle;
-000 #4: "westnet-eastnet-ipv4-psk-ikev2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=4194303B 
+west #
+ # because both ends are fighting over who is establishing the ISAKMP
+west #
+ # SA, showstates is always changing.
 west #
  # ready for shutdown test in final.sh
 west #
