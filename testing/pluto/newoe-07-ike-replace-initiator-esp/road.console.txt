@@ -36,49 +36,45 @@ road #
  ipsec whack --trafficstatus
 006 #2: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='ID_NULL'
 road #
- # Wait for a rekey.  Can't sit idle as the lack of traffic will result
+ # Kill some time while waiting for a rekey.  With a lifetime of 60s,
 road #
- # in the connection being shutdown; hence the pings.
+ # margin of 10s, and fuzz of 100% it will happen somewhere between
 road #
- sleep 20
+ # 40s-50s so 60s is safe.
 road #
- ping -n -q -c 4 -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ #
 road #
- sleep 20
+ # To stop the re-key declaring the connection idle, send a ping.
 road #
- ping -n -q -c 4 -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ # Without this the re-key will see that there's been no traffic since
 road #
- sleep 20
+ # the above <<ipsec whack --trafficstatus>> which is well beyond
 road #
- ping -n -q -c 4 -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ # REKEY_MARGIN.
 road #
- sleep 20
+ #
 road #
- ping -n -q -c 4 -I 192.1.3.209 192.1.2.23
-PING 192.1.2.23 (192.1.2.23) from 192.1.3.209 : 56(84) bytes of data.
---- 192.1.2.23 ping statistics ---
-4 packets transmitted, 4 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+ # (remember everytime <<ipsec whack --trafficstatus>> runs and sees
+road #
+ # that traffic has followed it sets last-traffic time to "now").
+road #
+ sleep 30
+road #
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
+road #
+ sleep 30
 road #
  ../../guestbin/wait-for.sh --match '#3' -- ipsec whack --trafficstatus
-006 #3: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=16EiB, id='ID_NULL'
+006 #3: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='ID_NULL'
 road #
- # Should show state #4 to indicate it has rekeyed
+ ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
+up
+road #
+ # Should show state #3 to indicate it has rekeyed
 road #
  ipsec whack --trafficstatus
-006 #3: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=16EiB, id='ID_NULL'
+006 #3: "private-or-clear#192.1.2.0/24"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='ID_NULL'
 road #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
