@@ -291,6 +291,33 @@ static err_t ECDSA_secret_sane(struct private_key_stuff *pks_unused UNUSED)
 	return NULL;
 }
 
+static bool ECDSA_pubkey_same(const union pubkey_content *lhs,
+			    const union pubkey_content *rhs)
+{
+	/*
+	 * The "adjusted" length of modulus n in octets:
+	 * [RSA_MIN_OCTETS, RSA_MAX_OCTETS].
+	 *
+	 * According to form_keyid() this is the modulus length less
+	 * any leading byte added by DER encoding.
+	 *
+	 * The adjusted length is used in sign_hash() as the signature
+	 * length - wouldn't PK11_SignatureLen be better?
+	 *
+	 * The adjusted length is used in same_RSA_public_key() as
+	 * part of comparing two keys - but wouldn't that be
+	 * redundant?  The direct n==n test would pick up the
+	 * difference.
+	 */
+	bool e = hunk_eq(same_secitem_as_shunk(lhs->ecdsa.seckey_public->u.ec.publicValue),
+			 same_secitem_as_shunk(rhs->ecdsa.seckey_public->u.ec.publicValue));
+	if (DBGP(DBG_CRYPT)) {
+		DBG_log("e did %smatch", e ? "" : "NOT ");
+	}
+
+	return lhs == rhs || e;
+}
+
 const struct pubkey_type pubkey_type_ecdsa = {
 	.name = "ECDSA",
 	.private_key_kind = PKK_ECDSA,
@@ -301,6 +328,7 @@ const struct pubkey_type pubkey_type_ecdsa = {
 	.free_secret_content = ECDSA_free_secret_content,
 	.secret_sane = ECDSA_secret_sane,
 	.extract_pubkey_content = extract_pubkey_content,
+	.pubkey_same = ECDSA_pubkey_same,
 };
 
 static struct hash_signature ECDSA_raw_sign_hash(const struct private_key_stuff *pks,

@@ -242,6 +242,20 @@ static struct secret *find_secret_by_pubkey_ckaid_1(struct secret *secrets,
 	return NULL;
 }
 
+bool secret_pubkey_same(struct secret *lhs, struct secret *rhs)
+{
+ 	if (lhs->pks.pubkey_type == NULL ||
+	    rhs->pks.pubkey_type == NULL) {
+		return false;
+	}
+
+	if (lhs->pks.pubkey_type != rhs->pks.pubkey_type) {
+		return false;
+	}
+
+	return lhs->pks.pubkey_type->pubkey_same(&lhs->pks.u.pubkey, &rhs->pks.u.pubkey);
+}
+
 struct secret *lsw_find_secret_by_id(struct secret *secrets,
 				     enum private_key_kind kind,
 				     const struct id *local_id,
@@ -249,15 +263,15 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 				     bool asym)
 {
 	enum {
-		match_none = 000,
+		match_none = 0,
 
 		/* bits */
-		match_default = 001,
-		match_any = 002,
-		match_remote = 004,
-		match_local = 010
+		match_default = 1,
+		match_any = 2,
+		match_remote = 4,
+		match_local = 8
 	};
-	unsigned int best_match = match_none;
+	lset_t best_match = match_none;
 	struct secret *best = NULL;
 
 	for (struct secret *s = secrets; s != NULL; s = s->next) {
@@ -270,170 +284,159 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 				enum_name(&private_key_kind_names, s->pks.kind));
 		}
 
-		if (s->pks.kind == kind) {
-			unsigned int match = match_none;
+		if (s->pks.kind != kind) {
+			dbg("  wrong kind");
+			continue;
+		}
 
-			if (s->ids == NULL) {
-				/*
-				 * a default (signified by lack of ids):
-				 * accept if no more specific match found
-				 */
-				match = match_default;
-			} else {
-				/* check if both ends match ids */
-				struct id_list *i;
-				int idnum = 0;
+		lset_t match = match_none;
 
-				for (i = s->ids; i != NULL; i = i->next) {
-					idnum++;
-					if (id_is_any(&i->id)) {
-						/*
-						 * match any will
-						 * automatically match
-						 * local and remote so
-						 * treat it as its own
-						 * match type so that
-						 * specific matches
-						 * get a higher
-						 * "match" value and
-						 * are used in
-						 * preference to "any"
-						 * matches.
-						 */
-						match |= match_any;
-					} else {
-						if (same_id(&i->id, local_id)) {
-							match |= match_local;
-						}
+		if (s->ids == NULL) {
+			/*
+			 * a default (signified by lack of ids):
+			 * accept if no more specific match found
+			 */
+			match = match_default;
+		} else {
+			/* check if both ends match ids */
+			struct id_list *i;
+			int idnum = 0;
 
-						if (remote_id != NULL &&
-						    same_id(&i->id, remote_id)) {
-							match |= match_remote;
-						}
-					}
-
-					if (DBGP(DBG_BASE)) {
-						id_buf idi;
-						id_buf idl;
-						id_buf idr;
-						DBG_log("%d: compared key %s to %s / %s -> 0%02o",
-							idnum,
-							str_id(&i->id, &idi),
-							str_id(local_id, &idl),
-							(remote_id == NULL ? "" : str_id(remote_id, &idr)),
-							match);
-					}
-				}
-
-				/*
-				 * If our end matched the only id in the list,
-				 * default to matching any peer.
-				 * A more specific match will trump this.
-				 */
-				if (match == match_local &&
-				    s->ids->next == NULL)
-					match |= match_default;
-			}
-
-			dbg("line %d: match=0%02o", s->pks.line, match);
-
-			if (match == match_none) {
-				continue;
-			}
-
-			if (match == best_match) {
-				/*
-				 * two good matches are equally good:
-				 * do they agree?
-				 */
-				bool same = false;
-
-				switch (kind) {
-				case PKK_NULL:
-					same = true;
-					break;
-				case PKK_PSK:
-					same = hunk_eq(s->pks.u.preshared_secret,
-						       best->pks.u.preshared_secret);
-					break;
-				case PKK_RSA:
+			for (i = s->ids; i != NULL; i = i->next) {
+				idnum++;
+				if (id_is_any(&i->id)) {
 					/*
-					 * Dirty trick: since we have
-					 * code to compare RSA public
-					 * keys, but not private keys,
-					 * we make the assumption that
-					 * equal public keys mean
-					 * equal private keys. This
-					 * ought to work.
+					 * match any will
+					 * automatically match
+					 * local and remote so
+					 * treat it as its own
+					 * match type so that
+					 * specific matches
+					 * get a higher
+					 * "match" value and
+					 * are used in
+					 * preference to "any"
+					 * matches.
 					 */
-					same = same_RSA_public_key(&s->pks.u.pubkey.rsa,
-								   &best->pks.u.pubkey.rsa);
-					break;
-				case PKK_ECDSA:
-					/* there are no ECDSA kind of secrets */
-					/* ??? this seems not to be the case */
-					break;
-				case PKK_XAUTH:
-					/*
-					 * We don't support this yet,
-					 * but no need to die.
-					 */
-					break;
-				case PKK_PPK:
-					same = hunk_eq(s->pks.ppk,
-						       best->pks.ppk);
-					break;
-				default:
-					bad_case(kind);
-				}
-				if (!same) {
-					dbg("multiple ipsec.secrets entries with distinct secrets match endpoints: first secret used");
-					/*
-					 * list is backwards: take
-					 * latest in list
-					 */
-					best = s;
-				}
-				continue;
-			}
-
-			if (match == match_local && !asym) {
-				/*
-				 * Only when this is an asymmetric
-				 * (eg. public key) system, allow
-				 * this-side-only match to count, even
-				 * when there are other ids in the
-				 * list.
-				 */
-				continue;
-			}
-
-			switch (match) {
-			case match_local:
-			case match_default:	/* default all */
-			case match_any:	/* a wildcard */
-			case match_local | match_default:	/* default peer */
-			case match_local | match_any: /* %any/0.0.0.0 and local */
-			case match_remote | match_any: /* %any/0.0.0.0 and remote */
-			case match_local | match_remote:	/* explicit */
-				/*
-				 * XXX: what combinations are missing?
-				 */
-				if (match > best_match) {
-					dbg("match 0%02o beats previous best_match 0%02o match=%p (line=%d)",
-					    match, best_match, s, s->pks.line);
-					/* this is the best match so far */
-					best_match = match;
-					best = s;
+					match |= match_any;
 				} else {
-					dbg("match 0%02o loses to best_match 0%02o",
-					    match, best_match);
+					if (same_id(&i->id, local_id)) {
+						match |= match_local;
+					}
+
+					if (remote_id != NULL &&
+					    same_id(&i->id, remote_id)) {
+						match |= match_remote;
+					}
 				}
+
+				if (DBGP(DBG_BASE)) {
+					id_buf idi;
+					id_buf idl;
+					id_buf idr;
+					DBG_log("%d: compared key %s to %s / %s -> "PRI_LSET,
+						idnum,
+						str_id(&i->id, &idi),
+						str_id(local_id, &idl),
+						(remote_id == NULL ? "" : str_id(remote_id, &idr)),
+						match);
+				}
+			}
+
+			/*
+			 * If our end matched the only id in the list,
+			 * default to matching any peer.
+			 * A more specific match will trump this.
+			 */
+			if (match == match_local &&
+			    s->ids->next == NULL)
+				match |= match_default;
+		}
+
+		if (match == match_none) {
+			dbg("  id didn't match");
+			continue;
+		}
+
+		dbg("  match="PRI_LSET, match);
+		if (match == best_match) {
+			/*
+			 * Two good matches are equally good: do they
+			 * agree?
+			 */
+			bool same = false;
+
+			switch (kind) {
+			case PKK_NULL:
+				same = true;
+				break;
+			case PKK_PSK:
+				same = hunk_eq(s->pks.u.preshared_secret,
+					       best->pks.u.preshared_secret);
+				break;
+			case PKK_RSA:
+			case PKK_ECDSA:
+				same = secret_pubkey_same(s, best);
+				break;
+			case PKK_XAUTH:
+				/*
+				 * We don't support this yet,
+				 * but no need to die.
+				 */
+				break;
+			case PKK_PPK:
+				same = hunk_eq(s->pks.ppk, best->pks.ppk);
+				break;
+			default:
+				bad_case(kind);
+			}
+			if (!same) {
+				dbg("  multiple ipsec.secrets entries with distinct secrets match endpoints: first secret used");
+				/*
+				 * list is backwards: take latest in
+				 * list
+				 */
+				best = s;
+			}
+			continue;
+		}
+
+		if (match == match_local && !asym) {
+			/*
+			 * Only when this is an asymmetric (eg. public
+			 * key) system, allow this-side-only match to
+			 * count, even when there are other ids in the
+			 * list.
+			 */
+			dbg("  local match not asymetric");
+			continue;
+		}
+
+		switch (match) {
+		case match_local:
+		case match_default:	/* default all */
+		case match_any:	/* a wildcard */
+		case match_local | match_default:	/* default peer */
+		case match_local | match_any: /* %any/0.0.0.0 and local */
+		case match_remote | match_any: /* %any/0.0.0.0 and remote */
+		case match_local | match_remote:	/* explicit */
+			/*
+			 * XXX: what combinations are missing?
+			 */
+			if (match > best_match) {
+				dbg("  match "PRI_LSET" beats previous best_match "PRI_LSET" match=%p (line=%d)",
+				    match, best_match, s, s->pks.line);
+				/* this is the best match so far */
+				best_match = match;
+				best = s;
+			} else {
+				dbg("  match "PRI_LSET" loses to best_match "PRI_LSET,
+				    match, best_match);
 			}
 		}
 	}
 
-	dbg("concluding with best_match=0%02o best=%p (lineno=%d)",
+	dbg("concluding with best_match="PRI_LSET" best=%p (lineno=%d)",
 	    best_match, best,
 	    best == NULL ? -1 : best->pks.line);
 
@@ -1027,36 +1030,6 @@ void free_public_keys(struct pubkey_list **keys)
 {
 	while (*keys != NULL)
 		*keys = free_public_keyentry(*keys);
-}
-
-bool same_RSA_public_key(const struct RSA_public_key *a,
-			 const struct RSA_public_key *b)
-{
-	/*
-	 * The "adjusted" length of modulus n in octets:
-	 * [RSA_MIN_OCTETS, RSA_MAX_OCTETS].
-	 *
-	 * According to form_keyid() this is the modulus length less
-	 * any leading byte added by DER encoding.
-	 *
-	 * The adjusted length is used in sign_hash() as the signature
-	 * length - wouldn't PK11_SignatureLen be better?
-	 *
-	 * The adjusted length is used in same_RSA_public_key() as
-	 * part of comparing two keys - but wouldn't that be
-	 * redundant?  The direct n==n test would pick up the
-	 * difference.
-	 */
-	bool e = hunk_eq(same_secitem_as_shunk(a->seckey_public->u.rsa.publicExponent),
-			 same_secitem_as_shunk(b->seckey_public->u.rsa.publicExponent));
-	bool n = hunk_eq(same_secitem_as_shunk(a->seckey_public->u.rsa.modulus),
-			 same_secitem_as_shunk(b->seckey_public->u.rsa.modulus));
-	if (DBGP(DBG_CRYPT)) {
-		DBG_log("n did %smatch", n ? "" : "NOT ");
-		DBG_log("e did %smatch", e ? "" : "NOT ");
-	}
-
-	return a == b || (e && n);
 }
 
 /*
