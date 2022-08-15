@@ -91,7 +91,6 @@ struct private_key_stuff {
 	/* for PKI */
 	const struct pubkey_type *pubkey_type;
 	SECKEYPrivateKey *private_key;
-	size_t size;
 	keyid_t keyid;
 
 	/*

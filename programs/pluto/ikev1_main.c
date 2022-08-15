@@ -307,14 +307,8 @@ struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 		return (struct hash_signature) { .len = 0, }; /* failure: no key to use */
 	}
 
-	size_t sz = pks->size;
-	struct hash_signature sig;
-	passert(RSA_MIN_OCTETS <= sz &&
-		4 + hash->len < sz &&
-		sz <= sizeof(sig.ptr/*array*/));
-	sig = pubkey_signer_raw_rsa.sign_hash(pks, hash->ptr, hash->len,
-					      &ike_alg_hash_sha1, logger);
-	passert(sig.len == 0 || sz == sig.len);
+	struct hash_signature sig = pubkey_signer_raw_rsa.sign_hash(pks, hash->ptr, hash->len,
+								    &ike_alg_hash_sha1, logger);
 	return sig;
 }
 

@@ -1202,8 +1202,9 @@ static err_t add_private_key(struct secret **secrets, const struct private_key_s
 	s->pks.line = 0;
 	/* make an unpacked copy of the private key */
 	s->pks.private_key = copy_private_key(private_key);
+	size_t size;
 	err_t err = type->extract_pubkey_content(&s->pks.u.pubkey,
-						 &s->pks.keyid, &s->pks.ckaid, &s->pks.size,
+						 &s->pks.keyid, &s->pks.ckaid, &size,
 						 pubk, ckaid_nss);
 	if (err != NULL) {
 		/* extract should leave pubkey_content clean */
