@@ -307,13 +307,6 @@ static void RSA_extract_private_key_pubkey_content(struct private_key_stuff *pks
 				   seckey_public, ckaid_nss);
 }
 
-static void RSA_free_secret_content(struct private_key_stuff *pks)
-{
-	SECKEY_DestroyPrivateKey(pks->private_key);
-	struct RSA_public_key *pubkey = &pks->u.pubkey.rsa;
-	RSA_free_pubkey_content(pubkey);
-}
-
 static err_t RSA_secret_sane(struct private_key_stuff *pks)
 {
 	/*
@@ -370,7 +363,6 @@ const struct pubkey_type pubkey_type_rsa = {
 	.pubkey_content_to_ipseckey_rdata = pubkey_content_to_ipseckey_rdata,
 	.extract_pubkey_content = extract_pubkey_content,
 	.extract_private_key_pubkey_content = RSA_extract_private_key_pubkey_content,
-	.free_secret_content = RSA_free_secret_content,
 	.secret_sane = RSA_secret_sane,
 	.pubkey_same = RSA_pubkey_same,
 };

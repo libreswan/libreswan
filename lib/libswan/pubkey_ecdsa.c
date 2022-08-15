@@ -273,13 +273,6 @@ static void ECDSA_extract_private_key_pubkey_content(struct private_key_stuff *p
 				     seckey_public, ckaid_nss);
 }
 
-static void ECDSA_free_secret_content(struct private_key_stuff *pks)
-{
-	SECKEY_DestroyPrivateKey(pks->private_key);
-	struct ECDSA_public_key *pubkey = &pks->u.pubkey.ecdsa;
-	ECDSA_free_pubkey_content(pubkey);
-}
-
 /*
  * The only unsafe (according to FIPS) curve is p192, and NSS does not
  * implement this, so there is no ECDSA curve that libreswan needs to
@@ -325,7 +318,6 @@ const struct pubkey_type pubkey_type_ecdsa = {
 	.pubkey_content_to_ipseckey_rdata = pubkey_content_to_ipseckey_rdata,
 	.free_pubkey_content = free_pubkey_content,
 	.extract_private_key_pubkey_content = ECDSA_extract_private_key_pubkey_content,
-	.free_secret_content = ECDSA_free_secret_content,
 	.secret_sane = ECDSA_secret_sane,
 	.extract_pubkey_content = extract_pubkey_content,
 	.pubkey_same = ECDSA_pubkey_same,

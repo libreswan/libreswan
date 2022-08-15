@@ -512,7 +512,8 @@ static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval f
 			break;
 		}
 
-		type->free_secret_content(&pks);
+		SECKEY_DestroyPrivateKey(pks.private_key); /* destory reference */
+		type->free_pubkey_content(&pks.u.pubkey);
 
 		if (ret < 0) {
 			break;

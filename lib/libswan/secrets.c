@@ -966,7 +966,8 @@ void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *logger)
 			case PKK_RSA:
 			case PKK_ECDSA:
 				/* Note: pub is all there is */
-				s->pks.pubkey_type->free_secret_content(&s->pks);
+				SECKEY_DestroyPrivateKey(s->pks.private_key);
+				s->pks.pubkey_type->free_pubkey_content(&s->pks.u.pubkey);
 				break;
 			default:
 				bad_case(s->pks.kind);
@@ -1211,7 +1212,8 @@ static err_t add_private_key(struct secret **secrets, const struct private_key_s
 
 	err_t err = type->secret_sane(&s->pks);
 	if (err != NULL) {
-		type->free_secret_content(&s->pks);
+		type->free_pubkey_content(&s->pks.u.pubkey);
+		SECKEY_DestroyPrivateKey(s->pks.private_key); /* allocated above */
 		pfree(s);
 		return err;
 	}
