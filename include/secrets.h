@@ -154,9 +154,6 @@ struct pubkey_type {
 	void (*extract_pubkey_content)(union pubkey_content *pkc,
 				       keyid_t *keyid, ckaid_t *ckaid, size_t *size,
 				       SECKEYPublicKey *pubkey_nss, SECItem *ckaid_nss);
-	void (*extract_private_key_pubkey_content)(struct private_key_stuff *pks,
-						   keyid_t *keyid, ckaid_t *ckaid, size_t *size,
-						   SECKEYPublicKey *pubk, SECItem *cert_ckaid);
 	err_t (*secret_sane)(struct private_key_stuff *pks);
 	bool (*pubkey_same)(const union pubkey_content *lhs, const union pubkey_content *rhs);
 };

@@ -297,16 +297,6 @@ static void extract_pubkey_content(union pubkey_content *pkc,
 	RSA_extract_pubkey_content(&pkc->rsa, keyid, ckaid, size, pubkey_nss, ckaid_nss);
 }
 
-static void RSA_extract_private_key_pubkey_content(struct private_key_stuff *pks,
-						   keyid_t *keyid, ckaid_t *ckaid, size_t *size,
-						   SECKEYPublicKey *seckey_public,
-						   SECItem *ckaid_nss)
-{
-	struct RSA_public_key *pubkey = &pks->u.pubkey.rsa;
-	RSA_extract_pubkey_content(pubkey, keyid, ckaid, size,
-				   seckey_public, ckaid_nss);
-}
-
 static err_t RSA_secret_sane(struct private_key_stuff *pks)
 {
 	/*
@@ -362,7 +352,6 @@ const struct pubkey_type pubkey_type_rsa = {
 	.ipseckey_rdata_to_pubkey_content = ipseckey_rdata_to_pubkey_content,
 	.pubkey_content_to_ipseckey_rdata = pubkey_content_to_ipseckey_rdata,
 	.extract_pubkey_content = extract_pubkey_content,
-	.extract_private_key_pubkey_content = RSA_extract_private_key_pubkey_content,
 	.secret_sane = RSA_secret_sane,
 	.pubkey_same = RSA_pubkey_same,
 };

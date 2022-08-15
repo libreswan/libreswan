@@ -1207,8 +1207,9 @@ static err_t add_private_key(struct secret **secrets, const struct private_key_s
 	s->pks.line = 0;
 	/* make an unpacked copy of the private key */
 	s->pks.private_key = copy_private_key(private_key);
-	type->extract_private_key_pubkey_content(&s->pks, &s->pks.keyid, &s->pks.ckaid, &s->pks.size,
-						 pubk, ckaid_nss);
+	type->extract_pubkey_content(&s->pks.u.pubkey,
+				     &s->pks.keyid, &s->pks.ckaid, &s->pks.size,
+				     pubk, ckaid_nss);
 
 	err_t err = type->secret_sane(&s->pks);
 	if (err != NULL) {
