@@ -1050,7 +1050,6 @@ static struct pubkey *alloc_pubkey(const struct id *id, /* ASKK */
 				   const keyid_t *keyid,
 				   const ckaid_t *ckaid,
 				   shunk_t issuer,
-				   size_t size,
 				   where_t where)
 {
 	struct pubkey *pk = refcnt_overalloc(struct pubkey, issuer.len,
@@ -1064,7 +1063,6 @@ static struct pubkey *alloc_pubkey(const struct id *id, /* ASKK */
 	pk->dns_ttl = ttl;
 	pk->keyid = *keyid;
 	pk->ckaid = *ckaid;
-	pk->size = size;
 
 	/* Append any issuer to the end */
 	if (issuer.len > 0) {
@@ -1091,12 +1089,11 @@ diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
 	union pubkey_content scratch_pkc;
 	keyid_t keyid;
 	ckaid_t ckaid;
-	size_t size;
 	const struct pubkey_type *pubkey_type = NULL; /* TBD */
 
 	if (algorithm_type == IPSECKEY_ALGORITHM_X_PUBKEY) {
 		diag_t d = pubkey_der_to_pubkey_content(dnssec_pubkey, &scratch_pkc,
-							&keyid, &ckaid, &size, &pubkey_type);
+							&keyid, &ckaid, &pubkey_type);
 		if (d != NULL) {
 			return d;
 		}
@@ -1116,7 +1113,7 @@ diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
 
 		diag_t d = pubkey_type->ipseckey_rdata_to_pubkey_content(dnssec_pubkey,
 									&scratch_pkc,
-									&keyid, &ckaid, &size);
+									&keyid, &ckaid);
 		if (d != NULL) {
 			return d;
 		}
@@ -1130,7 +1127,7 @@ diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
 					     install_time, until_time, ttl,
 					     &scratch_pkc, &keyid, &ckaid,
 					     null_shunk,	/* raw keys have no issuer */
-					     size, HERE);
+					     HERE);
 	if (pkp != NULL) {
 		*pkp = pubkey_addref(pubkey);
 	}
@@ -1175,9 +1172,8 @@ static err_t add_private_key(struct secret **secrets, const struct private_key_s
 	s->pks.line = 0;
 	/* make an unpacked copy of the private key */
 	s->pks.private_key = copy_private_key(private_key);
-	size_t size;
 	err_t err = type->extract_pubkey_content(&s->pks.u.pubkey,
-						 &s->pks.keyid, &s->pks.ckaid, &size,
+						 &s->pks.keyid, &s->pks.ckaid,
 						 pubk, ckaid_nss);
 	if (err != NULL) {
 		/* extract should leave pubkey_content clean */
@@ -1363,9 +1359,7 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 	union pubkey_content pkc = {0};
 	keyid_t keyid;
 	ckaid_t ckaid;
-	size_t size;
-	err_t err = type->extract_pubkey_content(&pkc,
-						 &keyid, &ckaid, &size,
+	err_t err = type->extract_pubkey_content(&pkc, &keyid, &ckaid,
 						 pubkey_nss, ckaid_nss);
 	if (err != NULL) {
 		SECITEM_FreeItem(ckaid_nss, PR_TRUE);
@@ -1384,7 +1378,7 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 			   type, install_time, until_time,
 			   /*ttl*/0, &pkc, &keyid, &ckaid,
 			   same_secitem_as_shunk(cert->derIssuer),
-			   size, HERE);
+			   HERE);
 	SECITEM_FreeItem(ckaid_nss, PR_TRUE);
 	return NULL;
 }

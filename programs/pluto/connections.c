@@ -1014,10 +1014,9 @@ static int extract_end(struct connection *c,
 		union pubkey_content pkc;
 		ckaid_t ckaid;
 		keyid_t keyid;
-		size_t size;
 		if (type == NULL) {
 			diag_t d = pubkey_der_to_pubkey_content(HUNK_AS_SHUNK(keyspace), &pkc,
-								&keyid, &ckaid, &size, &type);
+								&keyid, &ckaid, &type);
 			if (d != NULL) {
 				free_chunk_content(&keyspace);
 				llog_diag(RC_FATAL, logger, &d,
@@ -1027,7 +1026,7 @@ static int extract_end(struct connection *c,
 			}
 		} else {
 			diag_t d = type->ipseckey_rdata_to_pubkey_content(HUNK_AS_SHUNK(keyspace),
-									  &pkc, &keyid, &ckaid, &size);
+									  &pkc, &keyid, &ckaid);
 			if (d != NULL) {
 				free_chunk_content(&keyspace);
 				llog_diag(RC_FATAL, logger, &d,

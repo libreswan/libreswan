@@ -485,9 +485,8 @@ static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval f
 			.private_key = SECKEY_CopyPrivateKey(private_key), /* add reference */
 		};
 
-		size_t size;
 		type->extract_pubkey_content(&pks.u.pubkey,
-					     &pks.keyid, &pks.ckaid, &size,
+					     &pks.keyid, &pks.ckaid,
 					     pubk, ckaid_nss);
 
 		/*

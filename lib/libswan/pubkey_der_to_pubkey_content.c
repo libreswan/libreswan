@@ -21,7 +21,7 @@
 
 static diag_t seckey_to_pubkey_content(SECKEYPublicKey *seckey,
 				       union pubkey_content *pkc,
-				       keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+				       keyid_t *keyid, ckaid_t *ckaid,
 				       const struct pubkey_type **type)
 {
 	KeyType key_type = seckey->keyType;
@@ -36,7 +36,8 @@ static diag_t seckey_to_pubkey_content(SECKEYPublicKey *seckey,
 		}
 		*ckaid = ckaid_from_secitem(nss_ckaid);
 		SECITEM_FreeItem(nss_ckaid, PR_TRUE);
-		form_keyid(exponent, modulus, keyid, size);
+		size_t size;
+		form_keyid(exponent, modulus, keyid, &size);
 		*type = &pubkey_type_rsa;
 		pkc->rsa.seckey_public = seckey;
 		dbg_alloc("ecdsa->seckey_pubkey", seckey, HERE);
@@ -55,7 +56,6 @@ static diag_t seckey_to_pubkey_content(SECKEYPublicKey *seckey,
 			return diag("%s", e);
 		}
 		*type = &pubkey_type_ecdsa;
-		*size = seckey->u.ec.publicValue.len;
 		pkc->ecdsa.seckey_public = seckey;
 		dbg_alloc("ecdsa->seckey_pubkey", seckey, HERE);
 		break;
@@ -73,7 +73,7 @@ static diag_t seckey_to_pubkey_content(SECKEYPublicKey *seckey,
 
 static diag_t spki_to_pubkey_content(CERTSubjectPublicKeyInfo *spki,
 				     union pubkey_content *pkc,
-				     keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+				     keyid_t *keyid, ckaid_t *ckaid,
 				     const struct pubkey_type **type)
 {
 	SECKEYPublicKey *seckey = SECKEY_ExtractPublicKey(spki);
@@ -81,7 +81,7 @@ static diag_t spki_to_pubkey_content(CERTSubjectPublicKeyInfo *spki,
 		return diag_nss_error("extracting Public Key from Subject Public Key Info");
 	}
 
-	diag_t d = seckey_to_pubkey_content(seckey, pkc, keyid, ckaid, size, type);
+	diag_t d = seckey_to_pubkey_content(seckey, pkc, keyid, ckaid, type);
 	if (d != NULL) {
 		SECKEY_DestroyPublicKey(seckey);
 	}
@@ -89,7 +89,7 @@ static diag_t spki_to_pubkey_content(CERTSubjectPublicKeyInfo *spki,
 }
 
 diag_t pubkey_der_to_pubkey_content(shunk_t der, union pubkey_content *pkc,
-				    keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+				    keyid_t *keyid, ckaid_t *ckaid,
 				    const struct pubkey_type **type)
 {
 	SECItem der_item = same_shunk_as_secitem(der, siBuffer);/*loose const */
@@ -98,7 +98,7 @@ diag_t pubkey_der_to_pubkey_content(shunk_t der, union pubkey_content *pkc,
 		return diag_nss_error("decoding Subject Public Key Info DER");
 	}
 
-	diag_t d = spki_to_pubkey_content(spki, pkc, keyid, ckaid, size, type);
+	diag_t d = spki_to_pubkey_content(spki, pkc, keyid, ckaid, type);
 	SECKEY_DestroySubjectPublicKeyInfo(spki);
 	return d;
 }

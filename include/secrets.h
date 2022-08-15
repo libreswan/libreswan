@@ -109,7 +109,7 @@ struct private_key_stuff {
 
 diag_t private_key_stuff_to_pubkey_der(struct private_key_stuff *pks, chunk_t *der);
 diag_t pubkey_der_to_pubkey_content(shunk_t pubkey_der, union pubkey_content *pkc,
-				    keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+				    keyid_t *keyid, ckaid_t *ckaid,
 				    const struct pubkey_type **type);
 
 extern struct private_key_stuff *lsw_get_pks(struct secret *s);
@@ -152,13 +152,13 @@ struct pubkey_type {
 	/* to/from the blob in DNS's IPSECKEY's Public Key field */
 	diag_t (*ipseckey_rdata_to_pubkey_content)(shunk_t ipseckey_pubkey,
 						   union pubkey_content *pkc,
-						   keyid_t *keyid, ckaid_t *ckaid, size_t *size);
+						   keyid_t *keyid, ckaid_t *ckaid);
 	err_t (*pubkey_content_to_ipseckey_rdata)(const union pubkey_content *pkc,
 						  chunk_t *ipseckey_pubkey,
 						  enum ipseckey_algorithm_type *ipseckey_algorithm);
 	/* nss */
 	err_t (*extract_pubkey_content)(union pubkey_content *pkc,
-					keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+					keyid_t *keyid, ckaid_t *ckaid,
 					SECKEYPublicKey *pubkey_nss, SECItem *ckaid_nss);
 	bool (*pubkey_same)(const union pubkey_content *lhs, const union pubkey_content *rhs);
 #define pubkey_strength_in_bits(PUBKEY) ((PUBKEY)->type->strength_in_bits(PUBKEY))
@@ -211,7 +211,6 @@ struct pubkey {
 	struct id id;
 	keyid_t keyid;	/* see ipsec_keyblobtoid(3) */
 	ckaid_t ckaid;
-	size_t size;
 	enum dns_auth_level dns_auth_level;
 	realtime_t installed_time;
 	realtime_t until_time;

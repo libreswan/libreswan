@@ -168,7 +168,7 @@ static diag_t pubkey_ipseckey_rdata_to_rsa_pubkey(shunk_t rr, shunk_t *e, shunk_
 
 static diag_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 						   struct RSA_public_key *rsak,
-						   keyid_t *keyid, ckaid_t *ckaid, size_t *size)
+						   keyid_t *keyid, ckaid_t *ckaid)
 {
 	/* unpack */
 	shunk_t exponent;
@@ -241,7 +241,6 @@ static diag_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 		return d;
 	}
 
-	*size = modulus.len;
 	rsak->seckey_public = seckey;
 	dbg_alloc("rsa->seckey_public", rsak->seckey_public, HERE);
 
@@ -250,7 +249,6 @@ static diag_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 	if (DBGP(DBG_BASE)) {
 		/* pubkey information isn't DBG_PRIVATE */
 		DBG_log("keyid: *%s", str_keyid(*keyid));
-		DBG_log("  size: %zu", *size);
 		DBG_dump_hunk("  n", modulus);
 		DBG_dump_hunk("  e", exponent);
 		DBG_dump_hunk("  CKAID", *ckaid);
@@ -261,9 +259,9 @@ static diag_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 
 static diag_t ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 					       union pubkey_content *u,
-					       keyid_t *keyid, ckaid_t *ckaid, size_t *size)
+					       keyid_t *keyid, ckaid_t *ckaid)
 {
-	return RSA_ipseckey_rdata_to_pubkey_content(ipseckey_pubkey, &u->rsa, keyid, ckaid, size);
+	return RSA_ipseckey_rdata_to_pubkey_content(ipseckey_pubkey, &u->rsa, keyid, ckaid);
 }
 
 static void RSA_free_pubkey_content(struct RSA_public_key *rsa)
@@ -279,13 +277,14 @@ static void free_pubkey_content(union pubkey_content *u)
 }
 
 static err_t RSA_extract_pubkey_content(struct RSA_public_key *pub,
-					keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+					keyid_t *keyid, ckaid_t *ckaid,
 					SECKEYPublicKey *seckey_public,
 					SECItem *cert_ckaid)
 {
 	chunk_t exponent = same_secitem_as_chunk(seckey_public->u.rsa.publicExponent);
 	chunk_t modulus = same_secitem_as_chunk(seckey_public->u.rsa.modulus);
-	form_keyid(exponent, modulus, keyid, size);
+	size_t size;
+	form_keyid(exponent, modulus, keyid, &size);
 	/* up to this point nothing has been allocated */
 
 	/*
@@ -294,7 +293,7 @@ static err_t RSA_extract_pubkey_content(struct RSA_public_key *pub,
 	 *
 	 * We actually require more (for security).
 	 */
-	if (*size < RSA_MIN_OCTETS)
+	if (size < RSA_MIN_OCTETS)
 		return RSA_MIN_OCTETS_UGH;
 	/*
 	 * We picked a max modulus size to simplify buffer allocation.
@@ -313,12 +312,12 @@ static err_t RSA_extract_pubkey_content(struct RSA_public_key *pub,
 }
 
 static err_t extract_pubkey_content(union pubkey_content *pkc,
-				    keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+				    keyid_t *keyid, ckaid_t *ckaid,
 				    SECKEYPublicKey *pubkey_nss,
 				    SECItem *ckaid_nss)
 {
 	return RSA_extract_pubkey_content(&pkc->rsa,
-					  keyid, ckaid, size,
+					  keyid, ckaid,
 					  pubkey_nss, ckaid_nss);
 }
 
@@ -421,7 +420,7 @@ static bool RSA_authenticate_signature_raw_rsa(const struct crypt_mac *expected_
 	SECKEYPublicKey *seckey_public = pubkey->u.rsa.seckey_public;
 
 	/* decrypt the signature -- reversing RSA_sign_hash */
-	if (signature.len != pubkey->size) {
+	if (signature.len != (size_t)seckey_public->u.rsa.modulus.len) {
 		/* XXX notification: INVALID_KEY_INFORMATION */
 		*fatal_diag = NULL;
 		return false;
@@ -566,7 +565,7 @@ static bool RSA_authenticate_signature_pkcs1_1_5_rsa(const struct crypt_mac *exp
 	SECKEYPublicKey *seckey_public = pubkey->u.rsa.seckey_public;
 
 	/* decrypt the signature -- reversing RSA_sign_hash */
-	if (signature.len != pubkey->size) {
+	if (signature.len != (size_t)seckey_public->u.rsa.modulus.len) {
 		/* XXX notification: INVALID_KEY_INFORMATION */
 		*fatal_diag = NULL;
 		return false;
@@ -714,7 +713,7 @@ static bool RSA_authenticate_signature_rsassa_pss(const struct crypt_mac *expect
 	SECKEYPublicKey *seckey_public = pubkey->u.rsa.seckey_public;
 
 	/* decrypt the signature -- reversing RSA_sign_hash */
-	if (signature.len != pubkey->size) {
+	if (signature.len != (size_t)seckey_public->u.rsa.modulus.len) {
 		/* XXX notification: INVALID_KEY_INFORMATION */
 		*fatal_diag = NULL;
 		return false;

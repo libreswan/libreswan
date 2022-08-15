@@ -46,7 +46,7 @@
 
 static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubkey,
 						    struct ECDSA_public_key *ecdsa,
-						    keyid_t *keyid, ckaid_t *ckaid, size_t *size)
+						    keyid_t *keyid, ckaid_t *ckaid)
 {
 	static const struct dh_desc *dh[] = {
 		&ike_alg_dh_secp256r1,
@@ -181,13 +181,10 @@ static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubk
 	ecdsa->seckey_public = seckey;
 	dbg_alloc("ecdsa->seckey_public", seckey, HERE);
 
-	*size = ec->publicValue.len;
-
 	if (DBGP(DBG_BASE)) {
 		/* pubkey information isn't DBG_PRIVATE */
 		DBG_log("ECDSA Key:");
 		DBG_log("keyid: *%s", str_keyid(*keyid));
-		DBG_log("  size: %zu", *size);
 		DBG_dump("pub", ec->publicValue.data, ec->publicValue.len);
 		DBG_dump_hunk("CKAID", *ckaid);
 	}
@@ -197,9 +194,9 @@ static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubk
 
 static diag_t ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 					      union pubkey_content *u,
-					      keyid_t *keyid, ckaid_t *ckaid, size_t *size)
+					      keyid_t *keyid, ckaid_t *ckaid)
 {
-	return ECDSA_ipseckey_rdata_to_pubkey_content(ipseckey_pubkey, &u->ecdsa, keyid, ckaid, size);
+	return ECDSA_ipseckey_rdata_to_pubkey_content(ipseckey_pubkey, &u->ecdsa, keyid, ckaid);
 }
 
 static err_t ECDSA_pubkey_content_to_ipseckey_rdata(const struct ECDSA_public_key *ecdsa,
@@ -234,14 +231,12 @@ static void free_pubkey_content(union pubkey_content *u)
 }
 
 static err_t ECDSA_extract_pubkey_content(struct ECDSA_public_key *ecdsa,
-					  keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+					  keyid_t *keyid, ckaid_t *ckaid,
 					  SECKEYPublicKey *seckey_public,
 					  SECItem *ckaid_nss)
 {
 	ecdsa->seckey_public = SECKEY_CopyPublicKey(seckey_public);
-	SECKEYECPublicKey *ec = &ecdsa->seckey_public->u.ec;
 	dbg_alloc("ecdsa->seckey_public", ecdsa->seckey_public, HERE);
-	*size = ec->publicValue.len;
 	*ckaid = ckaid_from_secitem(ckaid_nss);
 	/* keyid; make this up */
 	err_t e = keyblob_to_keyid(ckaid->ptr, ckaid->len, keyid);
@@ -251,7 +246,6 @@ static err_t ECDSA_extract_pubkey_content(struct ECDSA_public_key *ecdsa,
 		ckaid_buf cb;
 		DBG_log("ECDSA keyid *%s", str_keyid(*keyid));
 		DBG_log("ECDSA keyid *%s", str_ckaid(ckaid, &cb));
-		DBG_log("ECDSA size: %zu", *size);
 	}
 
 	/*
@@ -263,12 +257,12 @@ static err_t ECDSA_extract_pubkey_content(struct ECDSA_public_key *ecdsa,
 }
 
 static err_t extract_pubkey_content(union pubkey_content *pkc,
-				    keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+				    keyid_t *keyid, ckaid_t *ckaid,
 				    SECKEYPublicKey *seckey_public,
 				    SECItem *ckaid_nss)
 {
 	return ECDSA_extract_pubkey_content(&pkc->ecdsa,
-					    keyid, ckaid, size,
+					    keyid, ckaid,
 					    seckey_public, ckaid_nss);
 }
 
