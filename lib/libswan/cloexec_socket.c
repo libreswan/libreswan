@@ -14,12 +14,13 @@
  *
  */
 
+#include "lsw_socket.h"
+
 #ifndef SOCK_CLOEXEC
 #include <errno.h>
 #include <fcntl.h>
+#include <unistd.h>	/* for close() */
 #endif
-
-#include "lsw_socket.h"
 
 /*
  * Hack to get around Darwin's (Apple's) lack of SOCK_CLOEXEC.
