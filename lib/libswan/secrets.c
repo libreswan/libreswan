@@ -1207,13 +1207,11 @@ static err_t add_private_key(struct secret **secrets, const struct private_key_s
 	s->pks.line = 0;
 	/* make an unpacked copy of the private key */
 	s->pks.private_key = copy_private_key(private_key);
-	type->extract_pubkey_content(&s->pks.u.pubkey,
-				     &s->pks.keyid, &s->pks.ckaid, &s->pks.size,
-				     pubk, ckaid_nss);
-
-	err_t err = type->secret_sane(&s->pks);
+	err_t err = type->extract_pubkey_content(&s->pks.u.pubkey,
+						 &s->pks.keyid, &s->pks.ckaid, &s->pks.size,
+						 pubk, ckaid_nss);
 	if (err != NULL) {
-		type->free_pubkey_content(&s->pks.u.pubkey);
+		/* extract should leave pubkey_content clean */
 		SECKEY_DestroyPrivateKey(s->pks.private_key); /* allocated above */
 		pfree(s);
 		return err;
@@ -1393,11 +1391,17 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 			    cert->nickname);
 	}
 
-	union pubkey_content pkc;
+	union pubkey_content pkc = {0};
 	keyid_t keyid;
 	ckaid_t ckaid;
 	size_t size;
-	type->extract_pubkey_content(&pkc, &keyid, &ckaid, &size, pubkey_nss, ckaid_nss);
+	err_t err = type->extract_pubkey_content(&pkc,
+						 &keyid, &ckaid, &size,
+						 pubkey_nss, ckaid_nss);
+	if (err != NULL) {
+		SECITEM_FreeItem(ckaid_nss, PR_TRUE);
+		return diag("NSS: could not extract pubkey content: %s", err);
+	}
 
 	realtime_t install_time = realnow();
 	realtime_t until_time;

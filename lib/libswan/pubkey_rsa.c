@@ -276,43 +276,47 @@ static void free_pubkey_content(union pubkey_content *u)
 	RSA_free_pubkey_content(&u->rsa);
 }
 
-static void RSA_extract_pubkey_content(struct RSA_public_key *pub,
-				       keyid_t *keyid, ckaid_t *ckaid, size_t *size,
-				       SECKEYPublicKey *seckey_public,
-				       SECItem *cert_ckaid)
+static err_t RSA_extract_pubkey_content(struct RSA_public_key *pub,
+					keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+					SECKEYPublicKey *seckey_public,
+					SECItem *cert_ckaid)
 {
-	pub->seckey_public = SECKEY_CopyPublicKey(seckey_public);
-	dbg_alloc("rsa->seckey_public", pub->seckey_public, HERE);
-	*ckaid = ckaid_from_secitem(cert_ckaid);
 	chunk_t exponent = same_secitem_as_chunk(seckey_public->u.rsa.publicExponent);
 	chunk_t modulus = same_secitem_as_chunk(seckey_public->u.rsa.modulus);
 	form_keyid(exponent, modulus, keyid, size);
-}
+	/* up to this point nothing has been allocated */
 
-static void extract_pubkey_content(union pubkey_content *pkc,
-				   keyid_t *keyid, ckaid_t *ckaid, size_t *size,
-				   SECKEYPublicKey *pubkey_nss,
-				   SECItem *ckaid_nss)
-{
-	RSA_extract_pubkey_content(&pkc->rsa, keyid, ckaid, size, pubkey_nss, ckaid_nss);
-}
-
-static err_t RSA_secret_sane(struct private_key_stuff *pks)
-{
 	/*
-	 * PKCS#1 1.5 section 6 requires modulus to have at least 12 octets.
+	 * PKCS#1 1.5 section 6 requires modulus to have at least 12
+	 * octets.
 	 *
 	 * We actually require more (for security).
 	 */
-
-	if (pks->size < RSA_MIN_OCTETS)
+	if (*size < RSA_MIN_OCTETS)
 		return RSA_MIN_OCTETS_UGH;
-
-	/* we picked a max modulus size to simplify buffer allocation */
-	if (pks->size > RSA_MAX_OCTETS)
+	/*
+	 * We picked a max modulus size to simplify buffer allocation.
+	 *
+	 * XXX: Huh!!?
+	 */
+	if (*size > RSA_MAX_OCTETS)
 		return RSA_MAX_OCTETS_UGH;
 
+	/* now allocate */
+	pub->seckey_public = SECKEY_CopyPublicKey(seckey_public);
+	dbg_alloc("rsa->seckey_public", pub->seckey_public, HERE);
+	*ckaid = ckaid_from_secitem(cert_ckaid);
 	return NULL;
+}
+
+static err_t extract_pubkey_content(union pubkey_content *pkc,
+				    keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+				    SECKEYPublicKey *pubkey_nss,
+				    SECItem *ckaid_nss)
+{
+	return RSA_extract_pubkey_content(&pkc->rsa,
+					  keyid, ckaid, size,
+					  pubkey_nss, ckaid_nss);
 }
 
 static bool RSA_pubkey_same(const union pubkey_content *lhs,
@@ -352,7 +356,6 @@ const struct pubkey_type pubkey_type_rsa = {
 	.ipseckey_rdata_to_pubkey_content = ipseckey_rdata_to_pubkey_content,
 	.pubkey_content_to_ipseckey_rdata = pubkey_content_to_ipseckey_rdata,
 	.extract_pubkey_content = extract_pubkey_content,
-	.secret_sane = RSA_secret_sane,
 	.pubkey_same = RSA_pubkey_same,
 };
 

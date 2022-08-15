@@ -151,10 +151,9 @@ struct pubkey_type {
 						  chunk_t *ipseckey_pubkey,
 						  enum ipseckey_algorithm_type *ipseckey_algorithm);
 	/* nss */
-	void (*extract_pubkey_content)(union pubkey_content *pkc,
-				       keyid_t *keyid, ckaid_t *ckaid, size_t *size,
-				       SECKEYPublicKey *pubkey_nss, SECItem *ckaid_nss);
-	err_t (*secret_sane)(struct private_key_stuff *pks);
+	err_t (*extract_pubkey_content)(union pubkey_content *pkc,
+					keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+					SECKEYPublicKey *pubkey_nss, SECItem *ckaid_nss);
 	bool (*pubkey_same)(const union pubkey_content *lhs, const union pubkey_content *rhs);
 };
 

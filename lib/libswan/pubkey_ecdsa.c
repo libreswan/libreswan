@@ -233,10 +233,10 @@ static void free_pubkey_content(union pubkey_content *u)
 	ECDSA_free_pubkey_content(&u->ecdsa);
 }
 
-static void ECDSA_extract_pubkey_content(struct ECDSA_public_key *ecdsa,
-					 keyid_t *keyid, ckaid_t *ckaid, size_t *size,
-					 SECKEYPublicKey *seckey_public,
-					 SECItem *ckaid_nss)
+static err_t ECDSA_extract_pubkey_content(struct ECDSA_public_key *ecdsa,
+					  keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+					  SECKEYPublicKey *seckey_public,
+					  SECItem *ckaid_nss)
 {
 	ecdsa->seckey_public = SECKEY_CopyPublicKey(seckey_public);
 	SECKEYECPublicKey *ec = &ecdsa->seckey_public->u.ec;
@@ -253,25 +253,23 @@ static void ECDSA_extract_pubkey_content(struct ECDSA_public_key *ecdsa,
 		DBG_log("ECDSA keyid *%s", str_ckaid(ckaid, &cb));
 		DBG_log("ECDSA size: %zu", *size);
 	}
-}
 
-static void extract_pubkey_content(union pubkey_content *pkc,
-				   keyid_t *keyid, ckaid_t *ckaid, size_t *size,
-				   SECKEYPublicKey *seckey_public,
-				   SECItem *ckaid_nss)
-{
-	ECDSA_extract_pubkey_content(&pkc->ecdsa, keyid, ckaid, size, seckey_public, ckaid_nss);
-}
-
-/*
- * The only unsafe (according to FIPS) curve is p192, and NSS does not
- * implement this, so there is no ECDSA curve that libreswan needs to
- * disallow for security reasons
- */
-static err_t ECDSA_secret_sane(struct private_key_stuff *pks_unused UNUSED)
-{
-	dbg("ECDSA is assumed to be sane");
+	/*
+	 * The only unsafe (according to FIPS) curve is p192, and NSS
+	 * does not implement this, so there is no ECDSA curve that
+	 * libreswan needs to disallow for security reasons
+	 */
 	return NULL;
+}
+
+static err_t extract_pubkey_content(union pubkey_content *pkc,
+				    keyid_t *keyid, ckaid_t *ckaid, size_t *size,
+				    SECKEYPublicKey *seckey_public,
+				    SECItem *ckaid_nss)
+{
+	return ECDSA_extract_pubkey_content(&pkc->ecdsa,
+					    keyid, ckaid, size,
+					    seckey_public, ckaid_nss);
 }
 
 static bool ECDSA_pubkey_same(const union pubkey_content *lhs,
@@ -307,7 +305,6 @@ const struct pubkey_type pubkey_type_ecdsa = {
 	.ipseckey_rdata_to_pubkey_content = ipseckey_rdata_to_pubkey_content,
 	.pubkey_content_to_ipseckey_rdata = pubkey_content_to_ipseckey_rdata,
 	.free_pubkey_content = free_pubkey_content,
-	.secret_sane = ECDSA_secret_sane,
 	.extract_pubkey_content = extract_pubkey_content,
 	.pubkey_same = ECDSA_pubkey_same,
 };
