@@ -37,9 +37,9 @@ road #
 000  
 000 List of Public Keys:
 000  
-000 TIMESTAMP, 2192 RSA Key AQBBBBBBB (no private key), until --- -- --:--:-- ---- ok (expires never)
+000 TIMESTAMP, 2191 RSA Key AQBBBBBBB (no private key), until --- -- --:--:-- ---- ok (expires never)
 000        ID_IPV4_ADDR '192.1.2.23'
-000 TIMESTAMP, 2192 RSA Key AQAAAAAAA (no private key), until --- -- --:--:-- ---- ok (expires never)
+000 TIMESTAMP,    0 RSA Key AQAAAAAAA (no private key), until --- -- --:--:-- ---- ok (expires never)
 000        ID_IPV4_ADDR '192.1.2.23'
 road #
  echo "initdone"
