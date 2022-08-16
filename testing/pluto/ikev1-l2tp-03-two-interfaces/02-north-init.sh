@@ -14,6 +14,6 @@ ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add l2tp-north-to-east-on-north
 
-(cd /tmp && xl2tpd -D 2>/tmp/xl2tpd.log ) &
+../../guestbin/l2tpd.sh
 ipsec auto --route l2tp-north-to-east-on-north
 echo done

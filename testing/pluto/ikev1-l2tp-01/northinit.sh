@@ -11,6 +11,6 @@ iptables -A INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add north-east-l2tp
-(cd /tmp && xl2tpd -D 2>/tmp/xl2tpd.log ) &
+../../guestbin/l2tpd.sh
 ipsec auto --route north-east-l2tp
 echo done

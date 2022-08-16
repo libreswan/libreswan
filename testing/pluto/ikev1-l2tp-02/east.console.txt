@@ -18,8 +18,7 @@ east #
 east #
  iptables -A OUTPUT -m policy --dir out --pol ipsec -j ACCEPT
 east #
- (cd /tmp && xl2tpd -D 2>/tmp/xl2tpd.log 1>&2 ) &
-[B] PID
+ ../../guestbin/l2tpd.sh
 east #
  ../../guestbin/echod.sh
 listening on IPv4 port 7

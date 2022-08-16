@@ -26,8 +26,7 @@ north #
  ipsec auto --add north-east-l2tp
 002 "north-east-l2tp": added IKEv1 connection
 north #
- (cd /tmp && xl2tpd -D 2>/tmp/xl2tpd.log ) &
-[B] PID
+ ../../guestbin/l2tpd.sh
 north #
  ipsec auto --route north-east-l2tp
 north #

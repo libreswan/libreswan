@@ -7,6 +7,6 @@ iptables -A INPUT  -i eth1 -d 192.1.2.23 -m policy --dir in --pol none -p udp --
 iptables -A INPUT -m policy --dir in --pol ipsec -j ACCEPT
 iptables -A OUTPUT -o eth1 -s 192.1.2.23 -m policy --dir out --pol none -p udp --sport 1701 -j REJECT
 iptables -A OUTPUT -m policy --dir out --pol ipsec -j ACCEPT
-(cd /tmp && xl2tpd -D 2>/tmp/xl2tpd.log ) &
+../../guestbin/l2tpd.sh
 ../../guestbin/echod.sh
 echo done
