@@ -2081,11 +2081,6 @@ enum digital_signature_blob {
 #define RSA_MAX_OCTETS BYTES_FOR_BITS(8192)
 #define RSA_MAX_OCTETS_UGH "RSA modulus too large: more than 8192 bits"
 
-/* Note: RFC 2537 encoding adds a few bytes. If you use a small
- * modulus like 3, the overhead is only 2 bytes
- */
-#define RSA_MAX_ENCODING_BYTES (RSA_MAX_OCTETS + 2)
-
 #define ISA_MAJ_SHIFT 4
 #define ISA_MIN_MASK (~((~0u) << ISA_MAJ_SHIFT))
 
