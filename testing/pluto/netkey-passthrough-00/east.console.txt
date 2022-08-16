@@ -13,7 +13,7 @@ east #
  ipsec auto --add west-east
 002 "west-east": added IKEv1 connection
 east #
- ../../guestbin/echo.sh
+ ../../guestbin/echod.sh
 listening on IPv4 port 7
 east #
  echo "initdone"

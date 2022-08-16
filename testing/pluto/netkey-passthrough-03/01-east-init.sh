@@ -6,5 +6,5 @@ ipsec auto --add west-east-passthrough-b
 ipsec auto --route west-east-passthrough-a
 ipsec auto --route west-east-passthrough-b
 ipsec auto --add west-east
-../../guestbin/echo.sh
+../../guestbin/echod.sh
 echo "initdone"

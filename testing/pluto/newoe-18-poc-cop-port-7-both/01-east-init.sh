@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep
-../../guestbin/echo.sh
+../../guestbin/echod.sh
 cp east-ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
 cp policies/* /etc/ipsec.d/policies/
 # the order is changed in newoe-18-poc-cop-port-7-both-reorder

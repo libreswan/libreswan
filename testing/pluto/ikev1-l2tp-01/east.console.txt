@@ -21,7 +21,7 @@ east #
  (cd /tmp && xl2tpd -D 2>/tmp/xl2tpd.log ) &
 [B] PID
 east #
- ../../guestbin/echo.sh
+ ../../guestbin/echod.sh
 listening on IPv4 port 7
 east #
  echo done

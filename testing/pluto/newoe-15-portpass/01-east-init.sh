@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep
-../../guestbin/echo.sh
+../../guestbin/echod.sh
 cp policies/* /etc/ipsec.d/policies/
 echo "192.1.3.0/24"  >> /etc/ipsec.d/policies/private-or-clear
 ipsec start
