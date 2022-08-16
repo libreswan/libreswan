@@ -198,11 +198,6 @@ const keyid_t *secret_keyid(const struct secret *secret)
 	}
 }
 
-unsigned pubkey_size(const struct pubkey *pk)
-{
-	return pk->size;
-}
-
 struct secret *lsw_foreach_secret(struct secret *secrets,
 				secret_eval func, void *uservoid)
 {

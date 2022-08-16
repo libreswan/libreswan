@@ -349,6 +349,11 @@ static bool RSA_pubkey_same(const union pubkey_content *lhs,
 	return lhs == rhs || (e && n);
 }
 
+static size_t RSA_strength_in_bits(const struct pubkey *pubkey)
+{
+	return SECKEY_PublicKeyStrengthInBits(pubkey->u.rsa.seckey_public);
+}
+
 const struct pubkey_type pubkey_type_rsa = {
 	.name = "RSA",
 	.private_key_kind = PKK_RSA,
@@ -357,6 +362,7 @@ const struct pubkey_type pubkey_type_rsa = {
 	.pubkey_content_to_ipseckey_rdata = pubkey_content_to_ipseckey_rdata,
 	.extract_pubkey_content = extract_pubkey_content,
 	.pubkey_same = RSA_pubkey_same,
+	.strength_in_bits = RSA_strength_in_bits,
 };
 
 /* returns the length of the result on success; 0 on failure */

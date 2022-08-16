@@ -752,7 +752,7 @@ static void show_pubkey(struct show *s, struct pubkey *key, bool utc, const char
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		jam_realtime(buf, key->installed_time, utc);
 		jam(buf, ",");
-		jam(buf, " %4zd", 8 * key->size);
+		jam(buf, " %4zd", pubkey_strength_in_bits(key));
 		jam(buf, " %s", key->type->name);
 		jam(buf, " Key %s", str_keyid(key->keyid));
 		jam(buf, " (%s private key),",

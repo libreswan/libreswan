@@ -299,6 +299,11 @@ static bool ECDSA_pubkey_same(const union pubkey_content *lhs,
 	return lhs == rhs || e;
 }
 
+static size_t ECDSA_strength_in_bits(const struct pubkey *pubkey)
+{
+	return SECKEY_PublicKeyStrengthInBits(pubkey->u.ecdsa.seckey_public);
+}
+
 const struct pubkey_type pubkey_type_ecdsa = {
 	.name = "ECDSA",
 	.private_key_kind = PKK_ECDSA,
@@ -307,6 +312,7 @@ const struct pubkey_type pubkey_type_ecdsa = {
 	.free_pubkey_content = free_pubkey_content,
 	.extract_pubkey_content = extract_pubkey_content,
 	.pubkey_same = ECDSA_pubkey_same,
+	.strength_in_bits = ECDSA_strength_in_bits,
 };
 
 static struct hash_signature ECDSA_raw_sign_hash(const struct private_key_stuff *pks,
