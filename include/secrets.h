@@ -155,6 +155,8 @@ struct pubkey_type {
 					keyid_t *keyid, ckaid_t *ckaid, size_t *size,
 					SECKEYPublicKey *pubkey_nss, SECItem *ckaid_nss);
 	bool (*pubkey_same)(const union pubkey_content *lhs, const union pubkey_content *rhs);
+#define pubkey_strength_in_bits(PUBKEY) ((PUBKEY)->type->strength_in_bits(PUBKEY))
+	size_t (*strength_in_bits)(const struct pubkey *pubkey);
 };
 
 struct pubkey_signer {
@@ -226,7 +228,6 @@ struct pubkey {
 
 const ckaid_t *pubkey_ckaid(const struct pubkey *pk);
 const keyid_t *pubkey_keyid(const struct pubkey *pk);
-unsigned pubkey_size(const struct pubkey *pk);
 
 const ckaid_t *secret_ckaid(const struct secret *);
 const keyid_t *secret_keyid(const struct secret *);
