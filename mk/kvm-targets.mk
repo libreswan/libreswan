@@ -175,7 +175,7 @@ KVM_FREEBSD ?=
 KVM_NETBSD ?=
 KVM_OPENBSD ?=
 
-# so that $($*) conversts % to upper case
+# so that $($*) converts % to upper case
 debian = DEBIAN
 fedora = FEDORA
 freebsd = FREEBSD
