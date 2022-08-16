@@ -1021,11 +1021,21 @@ $(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
 	: Do not use upgrade.sh from $(KVM_SOURCEDIR) which can be different
 	: and is only used for building pluto.
 	$(KVM_TRANSMOGRIFY) testing/libvirt/$*/transmogrify.sh > $@.transmogrify.sh
+	for f in testing/libvirt/bash_profile $(KVM_$($*)_TRANSMOGRIFY_FILES); do \
+		cp -v $$f $@.$$(basename $$f) ; \
+	done
 	$(KVMSH) $(notdir $@) -- \
 		/bin/sh -x /pool/$(notdir $@).transmogrify.sh $(KVM_$($*)_TRANSMOGRIFY_FLAGS)
 	: only shutdown after transmogrify succeeds
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
+
+KVM_FEDORA_TRANSMOGRIFY_FILES += testing/libvirt/fedora/sysctl.conf
+KVM_FEDORA_TRANSMOGRIFY_FILES += $(wildcard testing/libvirt/fedora/network/*.network)
+KVM_FREEBSD_TRANSMOGRIFY_FILES += testing/libvirt/freebsd/rc.conf
+KVM_NETBSD_TRANSMOGRIFY_FILES += testing/libvirt/netbsd/rc.local
+KVM_OPENBSD_TRANSMOGRIFY_FILES += testing/libvirt/openbsd/rc.local
+
 
 ##
 ## Build/Install libreswan into the build domain.
@@ -1181,8 +1191,7 @@ kvm-uninstall: $(patsubst %, kvm-uninstall-%, $(KVM_OS))
 kvm-clean: kvm-uninstall
 kvm-clean: kvm-clean-keys
 kvm-clean: kvm-clean-check
-	rm -rf $(patsubst %, OBJ.*.%/, $(KVM_PLATFORM))
-	rm -rf OBJ.*.swanbase
+	rm -rf OBJ.kvm.*
 
 .PHONY: kvm-purge
 kvm-purge: kvm-clean

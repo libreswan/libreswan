@@ -31,15 +31,9 @@ if test -r $k ; then
     cp -v $k /netbsd
 fi
 
-# XXX: broken; should copy from /pool.
-# mount testing to get more files
-mount /testing
+cp -v /pool/${PREFIX}netbsd.rc.local /etc/rc.local
 
-# XXX: broken; should copy from /pool.
-cp -v /testing/libvirt/netbsd/rc.local /etc/
-
-# XXX: broken; should copy from /pool.
 chsh -s /usr/pkg/bin/bash root
-cp -v /testing/libvirt/bashrc /root/.bash_profile
+cp -v /pool/${PREFIX}netbsd.bash_profile /root/.bash_profile
 
 exit 0
