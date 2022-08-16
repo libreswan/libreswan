@@ -61,10 +61,10 @@ west #
 000  
 000 List of Public Keys:
 000  
-000 TIMESTAMP,  776 ECDSA Key BXXXXXXXX (has private key), until TIMESTAMP ok
+000 TIMESTAMP,  384 ECDSA Key BXXXXXXXX (has private key), until TIMESTAMP ok
 000        ID_DER_ASN1_DN 'C=CH, O=strongSwan, CN=strongWest'
 000        Issuer 'C=CH, O=strongSwan, CN=strongSwan CA'
-000 TIMESTAMP,  776 ECDSA Key BXXXXXXXX (has private key), until TIMESTAMP ok
+000 TIMESTAMP,  384 ECDSA Key BXXXXXXXX (has private key), until TIMESTAMP ok
 000        ID_FQDN '@west.testing.libreswan.org'
 000        Issuer 'C=CH, O=strongSwan, CN=strongSwan CA'
 west #
