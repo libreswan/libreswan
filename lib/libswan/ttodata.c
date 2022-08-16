@@ -20,6 +20,7 @@
 #include "ttodata.h"
 
 #include "hunk.h"		/* for char_to_lower() */
+#include "passert.h"
 
 /* converters and misc */
 static int unhex(const char *, char *, size_t);
@@ -46,8 +47,7 @@ static err_t badch(void);
  */
 #define TTODATAV_IGNORE_BASE64_SPACES  (1 << 1)  /* ignore spaces in base64 encodings */
 
-static const char *ttodatav(const char *src,
-			    size_t srclen,	/* 0 means apply strlen() */
+static const char *ttodatav(const char *src, size_t srclen,
 			    int base,		/* 0 means figure it out */
 			    char *dst,		/* need not be valid if dstlen is 0 */
 			    size_t dstlen,
@@ -64,8 +64,6 @@ static const char *ttodatav(const char *src,
 	int underscoreok;
 	bool skipSpace = false;
 
-	if (srclen == 0)
-		srclen = strlen(src);
 	if (dstlen == 0)
 		dst = buf;	/* point it somewhere valid */
 	stop = dst + dstlen;
@@ -189,7 +187,27 @@ const char *ttodata(const char *src,
 		    size_t dstlen,
 		    size_t *lenp)	/* where to record length (NULL is nowhere) */
 {
+	/* zero means apply strlen() */
+	if (srclen == 0)
+		srclen = strlen(src);
 	return ttodatav(src, srclen, base, dst, dstlen, lenp, LEMPTY);
+}
+
+const char *ttochunk(shunk_t src,
+		     int base,		/* 0 means figure it out */
+		     chunk_t *dst)
+{
+	size_t size = 0;
+	err_t err = ttodatav(src.ptr, src.len, base, NULL/*dst*/, 0/*dstlen*/, &size, LEMPTY);
+	if (err != NULL) {
+		return err;
+	}
+	passert(size > 0); /* see pdone variable above */
+	*dst = alloc_chunk(size, "ttochunk");
+	err = ttodatav(src.ptr, src.len, base, (char*)dst->ptr, dst->len, &size, LEMPTY);
+	passert(err == NULL);
+	passert(dst->len == size);
+	return NULL;
 }
 
 /*

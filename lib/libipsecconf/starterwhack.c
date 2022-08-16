@@ -463,10 +463,8 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 			default:
 				bad_case(end->pubkey_alg);
 			}
-			char keyspace[1024 + 4];
-			err_t err = ttodata(end->pubkey, /*strlen*/0, base,
-					    keyspace, sizeof(keyspace),
-					    &msg.keyval.len);
+			chunk_t keyspace = NULL_HUNK; /* must free */
+			err_t err = ttochunk(shunk1(end->pubkey), base, &keyspace);
 			if (err != NULL) {
 				passert(name != NULL);
 				starter_log(LOG_LEVEL_ERR,
@@ -478,8 +476,9 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 			starter_log(LOG_LEVEL_DEBUG,
 				    "\tsending %s %s%s=%s",
 				    connection_name(conn), lr, name, end->pubkey);
-			msg.keyval.ptr = (unsigned char *)keyspace;
+			msg.keyval = keyspace;
 			ret = send_whack_msg(&msg, cfg->ctlsocket);
+			free_chunk_content(&keyspace);
 		}
 		}
 	}

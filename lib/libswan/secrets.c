@@ -493,21 +493,12 @@ static err_t process_psk_secret(struct file_lex_position *flp, chunk_t *psk)
 		*psk = clone_bytes_as_chunk(flp->tok, len, "PSK");
 		shift(flp);
 	} else {
-		char buf[RSA_MAX_ENCODING_BYTES];	/*
-							 * limit on size of
-							 * binary
-							 * representation
-							 * of key
-							 */
-		size_t sz;
-		ugh = ttodata(flp->tok, flp->cur - flp->tok, 0, buf,
-			      sizeof(buf), &sz);
+		ugh = ttochunk(shunk2(flp->tok, flp->cur - flp->tok), 0, psk);
 		if (ugh != NULL) {
 			/* ttodata didn't like PSK data */
 			ugh = builddiag("PSK data malformed (%s): %s", ugh,
 					flp->tok);
 		} else {
-			*psk = clone_bytes_as_chunk(buf, sz, "PSK");
 			shift(flp);
 		}
 	}
@@ -527,21 +518,12 @@ static err_t process_xauth_secret(struct file_lex_position *flp, chunk_t *xauth)
 		*xauth = clone_bytes_as_chunk(flp->tok, strlen(flp->tok), "XAUTH");
 		shift(flp);
 	} else {
-		char buf[RSA_MAX_ENCODING_BYTES];	/*
-							 * limit on size of
-							 * binary
-							 * representation
-							 * of key
-							 */
-		size_t sz;
-		ugh = ttodata(flp->tok, flp->cur - flp->tok, 0, buf,
-			       sizeof(buf), &sz);
+		ugh = ttochunk(shunk2(flp->tok, flp->cur - flp->tok), 0, xauth);
 		if (ugh != NULL) {
 			/* ttodata didn't like PSK data */
 			ugh = builddiag("PSK data malformed (%s): %s", ugh,
 					flp->tok);
 		} else {
-			*xauth = clone_bytes_as_chunk(buf, sz, "XAUTH");
 			shift(flp);
 		}
 	}
@@ -575,22 +557,13 @@ static err_t process_ppk_static_secret(struct file_lex_position *flp,
 		*ppk = clone_bytes_as_chunk(flp->tok, strlen(flp->tok), "PPK");
 		shift(flp);
 	} else {
-		char buf[RSA_MAX_ENCODING_BYTES];	/*
-							 * limit on size of
-							 * binary
-							 * representation
-							 * of key
-							 */
-		size_t sz;
-		ugh = ttodata(flp->tok, flp->cur - flp->tok, 0, buf,
-			      sizeof(buf), &sz);
+		ugh = ttochunk(shunk2(flp->tok, flp->cur - flp->tok), 0, ppk);
 		if (ugh != NULL) {
 			/* ttodata didn't like PPK data */
 			ugh = builddiag("PPK data malformed (%s): %s", ugh,
 					flp->tok);
 			free_chunk_content(ppk_id);
 		} else {
-			*ppk = clone_bytes_as_chunk(buf, sz, "PPK");
 			shift(flp);
 		}
 	}

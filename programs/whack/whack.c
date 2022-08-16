@@ -1013,9 +1013,6 @@ int main(int argc, char **argv)
 		end_seen = LEMPTY,
 		algo_seen = LEMPTY;
 
-	/* space for at most one RSA key */
-	char keyspace[RSA_MAX_ENCODING_BYTES];
-
 	char xauthusername[MAX_XAUTH_USERNAME_LEN];
 	char xauthpass[XAUTH_MAX_PASS_LENGTH];
 	int usernamelen = 0;
@@ -1311,14 +1308,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_PUBKEYRSA:	/* --pubkeyrsa <key> */
-		{
 			if (msg.keyval.ptr != NULL)
 				diagq("only one RSA public-key allowed", optarg);
 
-			ugh = ttodata(optarg, 0, 0,
-				      keyspace, sizeof(keyspace),
-				      &msg.keyval.len);
-
+			/* let msg.keyval leak */
+			ugh = ttochunk(shunk1(optarg), 0, &msg.keyval);
 			if (ugh != NULL) {
 				/* perhaps enough space */
 				char ugh_space[80];
@@ -1329,18 +1323,14 @@ int main(int argc, char **argv)
 				diagq(ugh_space, optarg);
 			}
 			msg.pubkey_alg = IPSECKEY_ALGORITHM_RSA;
-			msg.keyval.ptr = (unsigned char *)keyspace;
-		}
 			continue;
+
 		case OPT_PUBKEYECDSA:	/* --pubkeyecdsa <key> */
-		{
 			if (msg.keyval.ptr != NULL)
 				diagq("only one ECDSA public-key allowed", optarg);
 
-			ugh = ttodata(optarg, 0, 0,
-				      keyspace, sizeof(keyspace),
-				      &msg.keyval.len);
-
+			/* let msg.keyval leak */
+			ugh = ttochunk(shunk1(optarg), 0, &msg.keyval);
 			if (ugh != NULL) {
 				/* perhaps enough space */
 				char ugh_space[80];
@@ -1351,8 +1341,6 @@ int main(int argc, char **argv)
 				diagq(ugh_space, optarg);
 			}
 			msg.pubkey_alg = IPSECKEY_ALGORITHM_ECDSA;
-			msg.keyval.ptr = (unsigned char *)keyspace;
-		}
 			continue;
 
 		case OPT_ROUTE:	/* --route */

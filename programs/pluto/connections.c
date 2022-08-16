@@ -1002,10 +1002,8 @@ static int extract_end(struct connection *c,
 		}
 
 		/* XXX: lifted from starter_whack_add_pubkey() */
-		char keyspace[1024 + 4];
-		size_t keylen;
-		err_t err = ttodata(src->pubkey, /*strlen*/0, base,
-				    keyspace, sizeof(keyspace), &keylen);
+		chunk_t keyspace = NULL_HUNK; /* must free */
+		err_t err = ttochunk(shunk1(src->pubkey), base, &keyspace);
 		if (err != NULL) {
 			llog(RC_FATAL, logger,
 			     "failed to add connection: %s%s invalid: %s",
@@ -1018,24 +1016,28 @@ static int extract_end(struct connection *c,
 		keyid_t keyid;
 		size_t size;
 		if (type == NULL) {
-			diag_t d = pubkey_der_to_pubkey_content(shunk2(keyspace, keylen), &pkc,
+			diag_t d = pubkey_der_to_pubkey_content(HUNK_AS_SHUNK(keyspace), &pkc,
 								&keyid, &ckaid, &size, &type);
 			if (d != NULL) {
+				free_chunk_content(&keyspace);
 				llog_diag(RC_FATAL, logger, &d,
 					  "failed to add connection: %s%s invalid",
 					  leftright, name);
 				return -1;
 			}
 		} else {
-			diag_t d = type->ipseckey_rdata_to_pubkey_content(shunk2(keyspace, keylen),
+			diag_t d = type->ipseckey_rdata_to_pubkey_content(HUNK_AS_SHUNK(keyspace),
 									  &pkc, &keyid, &ckaid, &size);
 			if (d != NULL) {
+				free_chunk_content(&keyspace);
 				llog_diag(RC_FATAL, logger, &d,
 					  "failed to add connection: %s%s invalid",
 					  leftright, name);
 				return -1;
 			}
 		}
+
+		free_chunk_content(&keyspace);
 
 		ckaid_buf ckb;
 		dbg("saving CKAID %s extracted from %s%s",

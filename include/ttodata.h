@@ -23,6 +23,8 @@
 
 #include "err.h"
 #include "lset.h"
+#include "chunk.h"
+#include "shunk.h"
 
 /*
  * new IPv6-compatible functions
@@ -37,6 +39,8 @@ extern size_t ultot(unsigned long src, int format, char *buf, size_t buflen);
 
 extern err_t ttodata(const char *src, size_t srclen, int base, char *buf,
 	      size_t buflen, size_t *needed);
+
+extern err_t ttochunk(shunk_t src, int base, chunk_t *chunk);
 
 extern size_t datatot(const unsigned char *src, size_t srclen, int format,
 	       char *buf, size_t buflen);
