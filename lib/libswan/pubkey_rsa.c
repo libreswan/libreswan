@@ -151,9 +151,11 @@ static diag_t pubkey_ipseckey_rdata_to_rsa_pubkey(shunk_t rr, shunk_t *e, shunk_
 		return diag("%zu byte raw RSA public key %zu byte modulus is shorter than minimum %d",
 			    rr.len, modulus.len, RSA_MIN_OCTETS);
 	}
-	if (modulus.len > RSA_MAX_OCTETS) {
-		return diag("%zu byte raw RSA public key %zu byte modulus is longer than maximum %d",
-			    rr.len, modulus.len, RSA_MAX_OCTETS);
+	struct hash_signature scratch_signature;
+	size_t max_hash_size = sizeof(scratch_signature.ptr/*array*/);
+	if (modulus.len > max_hash_size) {
+		return diag("%zu byte raw RSA public key %zu byte modulus is longer than maximum %zu",
+			    rr.len, modulus.len, max_hash_size);
 	}
 
 	/*
@@ -296,11 +298,12 @@ static err_t RSA_extract_pubkey_content(struct RSA_public_key *pub,
 		return RSA_MIN_OCTETS_UGH;
 	/*
 	 * We picked a max modulus size to simplify buffer allocation.
-	 *
-	 * XXX: Huh!!?
 	 */
-	if (*size > RSA_MAX_OCTETS)
-		return RSA_MAX_OCTETS_UGH;
+	struct hash_signature scratch_signature;
+	size_t max_hash_size = sizeof(scratch_signature.ptr/*array*/);
+	if (modulus.len > max_hash_size) {
+		return "RSA modulus too large for signature buffer";
+	}
 
 	/* now allocate */
 	pub->seckey_public = SECKEY_CopyPublicKey(seckey_public);

@@ -2078,9 +2078,6 @@ enum digital_signature_blob {
 #define RSA_MIN_OCTETS_UGH \
 	"RSA modulus too small for security: less than 512 bits"
 
-#define RSA_MAX_OCTETS BYTES_FOR_BITS(8192)
-#define RSA_MAX_OCTETS_UGH "RSA modulus too large: more than 8192 bits"
-
 #define ISA_MAJ_SHIFT 4
 #define ISA_MIN_MASK (~((~0u) << ISA_MAJ_SHIFT))
 

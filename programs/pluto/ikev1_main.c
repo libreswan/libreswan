@@ -1097,7 +1097,6 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 		} else {
 			/* SIG_I out */
 			struct hash_signature sig;
-			passert(sizeof(sig.ptr/*array*/) >= RSA_MAX_OCTETS);
 			sig = v1_sign_hash_RSA(c, &hash, st->st_logger);
 			if (sig.len == 0) {
 				/* already logged */
@@ -1315,7 +1314,6 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 		} else {
 			/* SIG_R out */
 			struct hash_signature sig;
-			passert(sizeof(sig.ptr/*array*/) >= RSA_MAX_OCTETS);
 			sig = v1_sign_hash_RSA(c, &hash, st->st_logger);
 			if (sig.len == 0) {
 				/* already logged */

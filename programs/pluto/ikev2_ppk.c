@@ -145,7 +145,6 @@ static bool ikev2_calculate_hash(struct ike_sa *ike,
 	/* now generate signature blob */
 	statetime_t sign_time = statetime_start(&ike->sa);
 	struct hash_signature sig;
-	passert(sizeof(sig.ptr/*array*/) >= RSA_MAX_OCTETS);
 	sig = signer->sign_hash(pks, idhash->ptr, idhash->len,
 				hash_algo, ike->sa.st_logger);
 	statetime_stop(&sign_time, "%s() calling sign_hash_RSA()", __func__);

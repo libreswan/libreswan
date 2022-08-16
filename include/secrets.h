@@ -130,12 +130,19 @@ extern struct secret *lsw_foreach_secret(struct secret *secrets,
 struct hash_signature {
 	size_t len;
 	/*
-	 * XXX: See https://tools.ietf.org/html/rfc4754#section-7 for
-	 * where 1056 is coming from.
-	 * It is the largest of the signature lengths amongst
-	 * ECDSA 256, 384, and 521.
+	 * For ECDSA, see https://tools.ietf.org/html/rfc4754#section-7
+	 * for where 1056 is coming from (it is the largest of the
+	 * signature lengths amongst ECDSA 256, 384, and 521).
+	 *
+	 * For RSA this needs to be big enough to fit the modulus.
+	 * Because the modulus in the SECItem is signed (but the raw
+	 * value is unsigned), the modulus may have been prepended
+	 * with an additional zero byte.  Hence the +1 to accomodate
+	 * fuzzy checks against modulus.len.
+	 *
+	 * New code should just ask NSS for the signature length.
 	 */
-	uint8_t ptr[PMAX(RSA_MAX_OCTETS, BYTES_FOR_BITS(1056))];
+	uint8_t ptr[PMAX(BYTES_FOR_BITS(8192)+1/*RSA*/, BYTES_FOR_BITS(1056)/*ECDSA*/)];
 };
 
 struct pubkey_type {
