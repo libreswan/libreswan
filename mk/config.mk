@@ -143,8 +143,10 @@ endif
 # Options that really belong in CFLAGS (making for an intuitive way to
 # override them).
 #
-# Unfortunately this file is shared with the kernel which seems to
-# have its own ideas on CFLAGS.
+# AUTOCONF dogma is to put debug and optimization options such as the
+# DEBUG_CFLAGS, WARNING_CFLAGS and OPTIMIZE_CFLAGS below, in CFLAGS
+# making them easy to tweak.  Stuff that shouldn change such as
+# include paths are then put elsewhere (such as USERLAND_CFLAGS).
 #
 
 DEBUG_CFLAGS ?= -g
@@ -167,14 +169,15 @@ USERLAND_CFLAGS += $(OPTIMIZE_CFLAGS)
 USERCOMPILE ?= -fstack-protector-all -fno-strict-aliasing -fPIE -DPIE
 USERLAND_CFLAGS += $(USERCOMPILE)
 
-# Basic linking flags
-USERLINK ?= -Wl,-z,relro,-z,now -pie
-USERLAND_LDFLAGS += -Wl,--as-needed
-USERLAND_LDFLAGS += $(USERLINK) $(ASAN)
+# pick up any generated headers
+USERLAND_INCLUDES += -I$(builddir)
+# pick up libreswan's includes
+USERLAND_INCLUDES += -I$(top_srcdir)/include
 
-# Accumulate values in these fields.
-# is -pthread CFLAG or LDFLAG
-USERLAND_INCLUDES += -I$(srcdir) -I$(builddir) -I$(top_srcdir)/include
+# Basic linking flags
+USERLAND_LDFLAGS += -Wl,--as-needed
+USERLINK ?= -Wl,-z,relro,-z,now -pie
+USERLAND_LDFLAGS += $(USERLINK)
 
 
 ### install pathnames
@@ -370,6 +373,7 @@ USE_PORTEXCLUDES ?= false
 # run pluto with --leak-detective
 # ASAN = -fsanitize=address
 ASAN ?=
+USERLAND_LDFLAGS += $(ASAN)
 
 ### misc configuration, included here in hopes that other files will not
 ### have to be changed for common customizations.
