@@ -1002,7 +1002,7 @@ static void free_pubkey(void *obj, where_t where UNUSED)
 	struct pubkey *pk = obj;
 	free_id_content(&pk->id);
 	/* algorithm-specific freeing */
-	pk->type->free_pubkey_content(&pk->content);
+	pk->content.type->free_pubkey_content(&pk->content);
 	pfree(pk);
 }
 
@@ -1055,7 +1055,7 @@ void delete_public_keys(struct pubkey_list **head,
 	for (pp = head; (p = *pp) != NULL; ) {
 		struct pubkey *pk = p->key;
 
-		if (same_id(id, &pk->id) && pk->type == type)
+		if (same_id(id, &pk->id) && pk->content.type == type)
 			*pp = free_public_keyentry(p);
 		else
 			pp = &p->next;
@@ -1066,7 +1066,7 @@ void replace_public_key(struct pubkey_list **pubkey_db,
 			struct pubkey **pk)
 {
 	/* ??? clang 3.5 thinks pk might be NULL */
-	delete_public_keys(pubkey_db, &(*pk)->id, (*pk)->type);
+	delete_public_keys(pubkey_db, &(*pk)->id, (*pk)->content.type);
 	install_public_key(pk, pubkey_db);
 	passert(*pk == NULL); /* stolen */
 }
@@ -1086,7 +1086,6 @@ static struct pubkey *alloc_pubkey(const struct id *id, /* ASKK */
 	pk->content = *pkc;
 	pk->id = clone_id(id, "public key id");
 	pk->dns_auth_level = dns_auth_level;
-	pk->type = pkc->type;
 	pk->installed_time = install_time;
 	pk->until_time = until_time;
 	pk->dns_ttl = ttl;

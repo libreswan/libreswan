@@ -162,7 +162,7 @@ struct pubkey_type {
 					keyid_t *keyid, ckaid_t *ckaid,
 					SECKEYPublicKey *pubkey_nss, SECItem *ckaid_nss);
 	bool (*pubkey_same)(const struct pubkey_content *lhs, const struct pubkey_content *rhs);
-#define pubkey_strength_in_bits(PUBKEY) ((PUBKEY)->type->strength_in_bits(PUBKEY))
+#define pubkey_strength_in_bits(PUBKEY) ((PUBKEY)->content.type->strength_in_bits(PUBKEY))
 	size_t (*strength_in_bits)(const struct pubkey *pubkey);
 };
 
@@ -222,7 +222,6 @@ struct pubkey {
 	realtime_t until_time;
 	uint32_t dns_ttl; /* from wire. until_time is derived using this */
 	asn1_t issuer;
-	const struct pubkey_type *type;
 	struct pubkey_content content;
 	/* for overalloc of issuer */
 	uint8_t end[0];

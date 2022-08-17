@@ -946,8 +946,8 @@ bool remote_has_preloaded_pubkey(const struct state *st)
 		     p = p->next) {
 			const struct pubkey *key = p->key;
 
-			if ((key->type == &pubkey_type_rsa ||
-			     key->type == &pubkey_type_ecdsa) &&
+			if ((key->content.type == &pubkey_type_rsa ||
+			     key->content.type == &pubkey_type_ecdsa) &&
 			    same_id(&c->remote->host.id, &key->id) &&
 			    is_realtime_epoch(key->until_time)) {
 				/* found a preloaded public key */

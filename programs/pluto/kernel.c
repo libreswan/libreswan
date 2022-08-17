@@ -605,7 +605,7 @@ bool fmt_common_shell_out(char *buf,
 	for (struct pubkey_list *p = pluto_pubkeys; p != NULL; p = p->next) {
 		struct pubkey *key = p->key;
 		int pathlen;	/* value ignored */
-		if (key->type == &pubkey_type_rsa &&
+		if (key->content.type == &pubkey_type_rsa &&
 		    same_id(&c->remote->host.id, &key->id) &&
 		    trusted_ca(key->issuer, ASN1(sr->that.config->host.ca), &pathlen)) {
 			jam_dn_or_null(&jb, key->issuer, "", jam_shell_quoted_bytes);
