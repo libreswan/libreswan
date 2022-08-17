@@ -358,7 +358,7 @@ static size_t RSA_strength_in_bits(const struct pubkey *pubkey)
 
 const struct pubkey_type pubkey_type_rsa = {
 	.name = "RSA",
-	.private_key_kind = PKK_RSA,
+	.private_key_kind = SECRET_RSA, /* XXX: delete field */
 	.free_pubkey_content = free_pubkey_content,
 	.ipseckey_rdata_to_pubkey_content = ipseckey_rdata_to_pubkey_content,
 	.pubkey_content_to_ipseckey_rdata = pubkey_content_to_ipseckey_rdata,

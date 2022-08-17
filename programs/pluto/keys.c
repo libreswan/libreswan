@@ -88,16 +88,16 @@ static int print_secrets(struct secret *secret,
 
 	const char *kind;
 	switch (pks->kind) {
-	case PKK_PSK:
+	case SECRET_PSK:
 		kind = "PSK";
 		break;
-	case PKK_RSA:
+	case SECRET_RSA:
 		kind = "RSA";
 		break;
-	case PKK_XAUTH:
+	case SECRET_XAUTH:
 		kind = "XAUTH";
 		break;
-	case PKK_ECDSA:
+	case SECRET_ECDSA:
 		kind = "ECDSA";
 		break;
 	default:
@@ -419,7 +419,7 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
  */
 
 static struct secret *lsw_get_secret(const struct connection *c,
-				     enum private_key_kind kind,
+				     enum secret_kind kind,
 				     bool asym)
 {
 	/* under certain conditions, override that_id to %ANYADDR */
@@ -436,7 +436,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 
 	    /* case 2 */
 	    ( c->remote->config->host.authby.psk &&
-	      kind == PKK_PSK /*shared-secret*/ &&
+	      kind == SECRET_PSK /*shared-secret*/ &&
 	      ( ( c->kind == CK_TEMPLATE &&
 		  c->remote->host.id.kind == ID_NONE ) ||
 		( c->kind == CK_INSTANCE &&
@@ -465,7 +465,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	    __func__,
 	    str_id(this_id, &this_buf),
 	    str_id(that_id, &that_buf),
-	    enum_name(&private_key_kind_names, kind));
+	    enum_name(&secret_kind_names, kind));
 
 	return lsw_find_secret_by_id(pluto_secrets, kind,
 				     this_id, that_id, asym);
@@ -489,7 +489,7 @@ struct secret *lsw_get_xauthsecret(char *xauthname)
 	};
 
 	best = lsw_find_secret_by_id(pluto_secrets,
-				     PKK_XAUTH,
+				     SECRET_XAUTH,
 				     &xa_id, NULL, true);
 
 	return best;
@@ -504,7 +504,7 @@ struct secret *lsw_get_xauthsecret(char *xauthname)
 
 const chunk_t *get_connection_psk(const struct connection *c)
 {
-	struct secret *s = lsw_get_secret(c, PKK_PSK, false);
+	struct secret *s = lsw_get_secret(c, SECRET_PSK, false);
 	if (s == NULL) {
 		dbg("no PreShared Key Found");
 		return NULL;
@@ -522,7 +522,7 @@ const chunk_t *get_connection_psk(const struct connection *c)
 
 chunk_t *get_connection_ppk(const struct connection *c, chunk_t **ppk_id)
 {
-	struct secret *s = lsw_get_secret(c, PKK_PPK, false);
+	struct secret *s = lsw_get_secret(c, SECRET_PPK, false);
 
 	if (s == NULL) {
 		*ppk_id = NULL;

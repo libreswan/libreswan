@@ -161,16 +161,16 @@ static void print(struct secret_stuff *pks,
 	}
 
 	switch (pks->kind) {
-	case PKK_PSK:
+	case SECRET_PSK:
 		print_secret("PSK", "psk", idb, pks->u.preshared_secret, disclose);
 		break;
 
-	case PKK_XAUTH:
+	case SECRET_XAUTH:
 		print_secret("XAUTH", "xauth", idb, pks->u.preshared_secret, disclose);
 		break;
 
-	case PKK_RSA:
-	case PKK_ECDSA:
+	case SECRET_RSA:
+	case SECRET_ECDSA:
 	{
 		printf("%s", pks->pubkey_type->name);
 		keyid_t keyid = pks->keyid;
@@ -184,15 +184,15 @@ static void print(struct secret_stuff *pks,
 		break;
 	}
 
-	case PKK_PPK:
+	case SECRET_PPK:
 		break;
 
-	case PKK_NULL:
+	case SECRET_NULL:
 		/* can't happen but the compiler does not know that */
 		printf("NULL authentication -- cannot happen: %s\n", idb);
 		abort();
 
-	case PKK_INVALID:
+	case SECRET_INVALID:
 		printf("Invalid or unknown key: %s\n", idb);
 		exit(1);
 	}
@@ -237,7 +237,7 @@ static int pick_by_rsaid(struct secret *secret UNUSED,
 {
 	char *rsaid = (char *)uservoid;
 
-	if (pks->kind == PKK_RSA && streq(pks->keyid.keyid, rsaid)) {
+	if (pks->kind == SECRET_RSA && streq(pks->keyid.keyid, rsaid)) {
 		/* stop */
 		return 0;
 	} else {
@@ -251,7 +251,7 @@ static int pick_by_ckaid(struct secret *secret UNUSED,
 			 void *uservoid)
 {
 	char *start = (char *)uservoid;
-	if ((pks->kind == PKK_RSA || pks->kind == PKK_ECDSA) &&
+	if ((pks->kind == SECRET_RSA || pks->kind == SECRET_ECDSA) &&
 	    ckaid_starts_with(&pks->ckaid, start)) {
 		/* stop */
 		return 0;
@@ -373,19 +373,9 @@ static int show_leftright(struct secret_stuff *pks,
 			  char *side, bool pubkey_flg)
 {
 	if (pks->pubkey_type == NULL) {
-		char *enumstr = "gcc is crazy";
-		switch (pks->kind) {
-		case PKK_PSK:
-			enumstr = "PKK_PSK";
-			break;
-		case PKK_XAUTH:
-			enumstr = "PKK_XAUTH";
-			break;
-		default:
-			sscanf(enumstr, "UNKNOWN (%d)", (int *)pks->kind);
-		}
-		fprintf(stderr, "%s: wrong kind of key %s in show_confkey. Expected PKK_RSA.\n",
-			progname, enumstr);
+		enum_buf eb;
+		fprintf(stderr, "%s: wrong kind of key %s in show_confkey. Expected RSA.\n",
+			progname, str_enum_short(&secret_kind_names, pks->kind, &eb));
 		return 5;
 	}
 
@@ -404,11 +394,11 @@ static int show_leftright(struct secret_stuff *pks,
 		printf("\t%spubkey=", side);
 	} else {
 		switch (pks->kind) {
-		case PKK_RSA:
+		case SECRET_RSA:
 			printf("\t# rsakey %s\n", pks->keyid.keyid);
 			printf("\t%srsasigkey=0s", side);
 			break;
-		case PKK_ECDSA:
+		case SECRET_ECDSA:
 			printf("\t# ecdsakey %s\n", pks->keyid.keyid);
 			printf("\t%secdsakey=0s", side);
 			break;

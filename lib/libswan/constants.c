@@ -2118,21 +2118,21 @@ enum_names ikev2_trans_attr_descs = {
 	NULL
 };
 
-static const char *const pkk_name[] = {
-	"PKK_PSK",
-	"PKK_RSA",
-	"PKK_XAUTH",
-	"PKK_PPK",
-	"PKK_ECDSA",
-	"PKK_NULL",
-	"PKK_INVALID",
+static const char *const secret_kind_name[] = {
+	"SECRET_PSK",
+	"SECRET_RSA",
+	"SECRET_XAUTH",
+	"SECRET_PPK",
+	"SECRET_ECDSA",
+	"SECRET_NULL",
+	"SECRET_INVALID",
 };
 
-enum_names private_key_kind_names = {
-	PKK_PSK,
-	PKK_INVALID,
-	ARRAY_REF(pkk_name),
-	NULL, /* prefix */
+enum_names secret_kind_names = {
+	SECRET_PSK,
+	SECRET_INVALID,
+	ARRAY_REF(secret_kind_name),
+	"SECRET_", /* prefix */
 	NULL
 };
 
@@ -2704,7 +2704,7 @@ static const enum_names *en_checklist[] = {
 	&ikev2_trans_type_esn_names,
 	&ikev2_trans_type_names,
 	&ikev2_trans_attr_descs,
-	&private_key_kind_names,
+	&secret_kind_names,
 	&ikev2_ppk_id_type_names,
 	&ikev2_redirect_gw_names,
 	&ip_protocol_id_names,

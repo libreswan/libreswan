@@ -221,7 +221,7 @@ static struct secret *find_secret_by_pubkey_ckaid_1(struct secret *secrets,
 	for (struct secret *s = secrets; s != NULL; s = s->next) {
 		const struct secret_stuff *pks = &s->stuff;
 		dbg("trying secret %s:%s",
-		    enum_name(&private_key_kind_names, pks->kind),
+		    enum_name(&secret_kind_names, pks->kind),
 		    str_keyid(pks->keyid));
 		if (type == NULL/*wildcard*/ ||
 		    s->stuff.pubkey_type == type) {
@@ -252,7 +252,7 @@ bool secret_pubkey_same(struct secret *lhs, struct secret *rhs)
 }
 
 struct secret *lsw_find_secret_by_id(struct secret *secrets,
-				     enum private_key_kind kind,
+				     enum secret_kind kind,
 				     const struct id *local_id,
 				     const struct id *remote_id,
 				     bool asym)
@@ -274,9 +274,9 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 			id_buf idl;
 			DBG_log("line %d: key type %s(%s) to type %s",
 				s->stuff.line,
-				enum_name(&private_key_kind_names, kind),
+				enum_name(&secret_kind_names, kind),
 				str_id(local_id, &idl),
-				enum_name(&private_key_kind_names, s->stuff.kind));
+				enum_name(&secret_kind_names, s->stuff.kind));
 		}
 
 		if (s->stuff.kind != kind) {
@@ -362,24 +362,24 @@ struct secret *lsw_find_secret_by_id(struct secret *secrets,
 			bool same = false;
 
 			switch (kind) {
-			case PKK_NULL:
+			case SECRET_NULL:
 				same = true;
 				break;
-			case PKK_PSK:
+			case SECRET_PSK:
 				same = hunk_eq(s->stuff.u.preshared_secret,
 					       best->stuff.u.preshared_secret);
 				break;
-			case PKK_RSA:
-			case PKK_ECDSA:
+			case SECRET_RSA:
+			case SECRET_ECDSA:
 				same = secret_pubkey_same(s, best);
 				break;
-			case PKK_XAUTH:
+			case SECRET_XAUTH:
 				/*
 				 * We don't support this yet,
 				 * but no need to die.
 				 */
 				break;
-			case PKK_PPK:
+			case SECRET_PPK:
 				same = hunk_eq(s->stuff.ppk, best->stuff.ppk);
 				break;
 			default:
@@ -578,7 +578,7 @@ struct secret *lsw_get_ppk_by_id(struct secret *s, chunk_t ppk_id)
 {
 	while (s != NULL) {
 		struct secret_stuff pks = s->stuff;
-		if (pks.kind == PKK_PPK && hunk_eq(pks.ppk_id, ppk_id))
+		if (pks.kind == SECRET_PPK && hunk_eq(pks.ppk_id, ppk_id))
 			return s;
 		s = s->next;
 	}
@@ -673,17 +673,17 @@ static void process_secret(struct file_lex_position *flp,
 	err_t ugh = NULL;
 
 	if (tokeqword(flp, "psk")) {
-		s->stuff.kind = PKK_PSK;
+		s->stuff.kind = SECRET_PSK;
 		/* preshared key: quoted string or ttodata format */
 		ugh = !shift(flp) ? "ERROR: unexpected end of record in PSK" :
 			process_psk_secret(flp, &s->stuff.u.preshared_secret);
 	} else if (tokeqword(flp, "xauth")) {
 		/* xauth key: quoted string or ttodata format */
-		s->stuff.kind = PKK_XAUTH;
+		s->stuff.kind = SECRET_XAUTH;
 		ugh = !shift(flp) ? "ERROR: unexpected end of record in PSK" :
 			process_xauth_secret(flp, &s->stuff.u.preshared_secret);
 	} else if (tokeqword(flp, "ppks")) {
-		s->stuff.kind = PKK_PPK;
+		s->stuff.kind = SECRET_PPK;
 		ugh = !shift(flp) ? "ERROR: unexpected end of record in static PPK" :
 			process_ppk_static_secret(flp, &s->stuff.ppk, &s->stuff.ppk_id);
 	} else {
@@ -781,7 +781,7 @@ static void process_secret_records(struct file_lex_position *flp,
 			struct secret *s = alloc_thing(struct secret, "secret");
 
 			s->ids = NULL;
-			s->stuff.kind = PKK_PSK;	/* default */
+			s->stuff.kind = SECRET_PSK;	/* default */
 			s->stuff.u.preshared_secret = EMPTY_CHUNK;
 			s->stuff.line = flp->lino;
 			s->next = NULL;
@@ -832,7 +832,7 @@ static void process_secret_records(struct file_lex_position *flp,
 					s->ids = i;
 					id_buf b;
 					dbg("id type added to secret(%p) %s: %s",
-					    s, enum_name(&private_key_kind_names, s->stuff.kind),
+					    s, enum_name(&secret_kind_names, s->stuff.kind),
 					    str_id(&id, &b));
 				}
 				if (!shift(flp)) {
@@ -921,18 +921,18 @@ void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *logger)
 				pfree(i);
 			}
 			switch (s->stuff.kind) {
-			case PKK_PSK:
+			case SECRET_PSK:
 				pfree(s->stuff.u.preshared_secret.ptr);
 				break;
-			case PKK_PPK:
+			case SECRET_PPK:
 				pfree(s->stuff.ppk.ptr);
 				pfree(s->stuff.ppk_id.ptr);
 				break;
-			case PKK_XAUTH:
+			case SECRET_XAUTH:
 				pfree(s->stuff.u.preshared_secret.ptr);
 				break;
-			case PKK_RSA:
-			case PKK_ECDSA:
+			case SECRET_RSA:
+			case SECRET_ECDSA:
 				/* Note: pub is all there is */
 				SECKEY_DestroyPrivateKey(s->stuff.private_key);
 				s->stuff.pubkey_type->free_pubkey_content(&s->stuff.u.pubkey);

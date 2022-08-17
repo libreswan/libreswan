@@ -104,7 +104,7 @@ extern uint16_t secctx_attr_type;
 
 extern enum_names natt_method_names;
 
-extern enum_names private_key_kind_names;
+extern enum_names secret_kind_names;
 extern enum_names ikev2_ppk_id_type_names;
 
 /* natt traversal types */
