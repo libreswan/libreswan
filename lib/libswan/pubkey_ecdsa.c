@@ -45,7 +45,7 @@
 #include "refcnt.h"		/* for dbg_{alloc,free}() */
 
 static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubkey,
-						    struct ECDSA_public_key *ecdsa,
+						    struct pubkey_content *ecdsa,
 						    keyid_t *keyid, ckaid_t *ckaid)
 {
 	static const struct dh_desc *dh[] = {
@@ -178,8 +178,8 @@ static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubk
 		return d;
 	}
 
-	ecdsa->seckey_public = seckey;
-	dbg_alloc("ecdsa->seckey_public", seckey, HERE);
+	ecdsa->public_key = seckey;
+	dbg_alloc("ecdsa->public_key", seckey, HERE);
 
 	if (DBGP(DBG_BASE)) {
 		/* pubkey information isn't DBG_PRIVATE */
@@ -192,18 +192,11 @@ static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubk
 	return NULL;
 }
 
-static diag_t ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
-					      union pubkey_content *u,
-					      keyid_t *keyid, ckaid_t *ckaid)
-{
-	return ECDSA_ipseckey_rdata_to_pubkey_content(ipseckey_pubkey, &u->ecdsa, keyid, ckaid);
-}
-
-static err_t ECDSA_pubkey_content_to_ipseckey_rdata(const struct ECDSA_public_key *ecdsa,
+static err_t ECDSA_pubkey_content_to_ipseckey_rdata(const struct pubkey_content *ecdsa,
 						    chunk_t *ipseckey_pubkey,
 						    enum ipseckey_algorithm_type *ipseckey_algorithm)
 {
-	const SECKEYECPublicKey *ec = &ecdsa->seckey_public->u.ec;
+	const SECKEYECPublicKey *ec = &ecdsa->public_key->u.ec;
 	passert((ec->publicValue.len & 1) == 1);
 	passert(ec->publicValue.data[0] == EC_POINT_FORM_UNCOMPRESSED);
 	*ipseckey_pubkey = clone_bytes_as_chunk(ec->publicValue.data + 1, ec->publicValue.len - 1, "EC POINTS (even)");
@@ -211,32 +204,20 @@ static err_t ECDSA_pubkey_content_to_ipseckey_rdata(const struct ECDSA_public_ke
 	return NULL;
 }
 
-static err_t pubkey_content_to_ipseckey_rdata(const union pubkey_content *u,
-					      chunk_t *ipseckey_pubkey,
-					      enum ipseckey_algorithm_type *ipseckey_algorithm)
+static void ECDSA_free_pubkey_content(struct pubkey_content *ecdsa)
 {
-	return ECDSA_pubkey_content_to_ipseckey_rdata(&u->ecdsa, ipseckey_pubkey, ipseckey_algorithm);
+	dbg_free("ecdsa->public_key", ecdsa->public_key, HERE);
+	SECKEY_DestroyPublicKey(ecdsa->public_key);
+	ecdsa->public_key = NULL;
 }
 
-static void ECDSA_free_pubkey_content(struct ECDSA_public_key *ecdsa)
-{
-	dbg_free("ecdsa->seckey_public", ecdsa->seckey_public, HERE);
-	SECKEY_DestroyPublicKey(ecdsa->seckey_public);
-	ecdsa->seckey_public = NULL;
-}
-
-static void free_pubkey_content(union pubkey_content *u)
-{
-	ECDSA_free_pubkey_content(&u->ecdsa);
-}
-
-static err_t ECDSA_extract_pubkey_content(struct ECDSA_public_key *ecdsa,
+static err_t ECDSA_extract_pubkey_content(struct pubkey_content *ecdsa,
 					  keyid_t *keyid, ckaid_t *ckaid,
 					  SECKEYPublicKey *seckey_public,
 					  SECItem *ckaid_nss)
 {
-	ecdsa->seckey_public = SECKEY_CopyPublicKey(seckey_public);
-	dbg_alloc("ecdsa->seckey_public", ecdsa->seckey_public, HERE);
+	ecdsa->public_key = SECKEY_CopyPublicKey(seckey_public);
+	dbg_alloc("ecdsa->public_key", ecdsa->public_key, HERE);
 	*ckaid = ckaid_from_secitem(ckaid_nss);
 	/* keyid; make this up */
 	err_t e = keyblob_to_keyid(ckaid->ptr, ckaid->len, keyid);
@@ -256,18 +237,8 @@ static err_t ECDSA_extract_pubkey_content(struct ECDSA_public_key *ecdsa,
 	return NULL;
 }
 
-static err_t extract_pubkey_content(union pubkey_content *pkc,
-				    keyid_t *keyid, ckaid_t *ckaid,
-				    SECKEYPublicKey *seckey_public,
-				    SECItem *ckaid_nss)
-{
-	return ECDSA_extract_pubkey_content(&pkc->ecdsa,
-					    keyid, ckaid,
-					    seckey_public, ckaid_nss);
-}
-
-static bool ECDSA_pubkey_same(const union pubkey_content *lhs,
-			    const union pubkey_content *rhs)
+static bool ECDSA_pubkey_same(const struct pubkey_content *lhs,
+			    const struct pubkey_content *rhs)
 {
 	/*
 	 * The "adjusted" length of modulus n in octets:
@@ -284,8 +255,8 @@ static bool ECDSA_pubkey_same(const union pubkey_content *lhs,
 	 * redundant?  The direct n==n test would pick up the
 	 * difference.
 	 */
-	bool e = hunk_eq(same_secitem_as_shunk(lhs->ecdsa.seckey_public->u.ec.publicValue),
-			 same_secitem_as_shunk(rhs->ecdsa.seckey_public->u.ec.publicValue));
+	bool e = hunk_eq(same_secitem_as_shunk(lhs->public_key->u.ec.publicValue),
+			 same_secitem_as_shunk(rhs->public_key->u.ec.publicValue));
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("e did %smatch", e ? "" : "NOT ");
 	}
@@ -295,16 +266,16 @@ static bool ECDSA_pubkey_same(const union pubkey_content *lhs,
 
 static size_t ECDSA_strength_in_bits(const struct pubkey *pubkey)
 {
-	return SECKEY_PublicKeyStrengthInBits(pubkey->u.ecdsa.seckey_public);
+	return SECKEY_PublicKeyStrengthInBits(pubkey->content.public_key);
 }
 
 const struct pubkey_type pubkey_type_ecdsa = {
 	.name = "ECDSA",
 	.private_key_kind = SECRET_ECDSA, /* XXX: delete field */
-	.ipseckey_rdata_to_pubkey_content = ipseckey_rdata_to_pubkey_content,
-	.pubkey_content_to_ipseckey_rdata = pubkey_content_to_ipseckey_rdata,
-	.free_pubkey_content = free_pubkey_content,
-	.extract_pubkey_content = extract_pubkey_content,
+	.ipseckey_rdata_to_pubkey_content = ECDSA_ipseckey_rdata_to_pubkey_content,
+	.pubkey_content_to_ipseckey_rdata = ECDSA_pubkey_content_to_ipseckey_rdata,
+	.free_pubkey_content = ECDSA_free_pubkey_content,
+	.extract_pubkey_content = ECDSA_extract_pubkey_content,
 	.pubkey_same = ECDSA_pubkey_same,
 	.strength_in_bits = ECDSA_strength_in_bits,
 };
@@ -364,7 +335,7 @@ static bool ECDSA_raw_authenticate_signature(const struct crypt_mac *hash, shunk
 					     diag_t *fatal_diag,
 					     struct logger *logger)
 {
-	const struct ECDSA_public_key *ecdsa = &kr->u.ecdsa;
+	const struct pubkey_content *ecdsa = &kr->content;
 
 	/*
 	 * Turn the signature and hash into SECItem/s (NSS doesn't do
@@ -396,7 +367,7 @@ static bool ECDSA_raw_authenticate_signature(const struct crypt_mac *hash, shunk
 		}
 	}
 
-	if (PK11_Verify(ecdsa->seckey_public, &raw_signature, &hash_item,
+	if (PK11_Verify(ecdsa->public_key, &raw_signature, &hash_item,
 			lsw_nss_get_password_context(logger)) != SECSuccess) {
 		llog_nss_error(DEBUG_STREAM, logger,
 			       "verifying AUTH hash using PK11_Verify() failed:");
@@ -416,7 +387,7 @@ static size_t ECDSA_jam_auth_method(struct jambuf *buf,
 				    const struct hash_desc *hash)
 {
 	return jam(buf, "P-%d %s with %s",
-		   SECKEY_PublicKeyStrengthInBits(pubkey->u.ecdsa.seckey_public),
+		   SECKEY_PublicKeyStrengthInBits(pubkey->content.public_key),
 		   signer->name,
 		   hash->common.fqn);
 }
@@ -492,12 +463,12 @@ static struct hash_signature ECDSA_digsig_sign_hash(const struct secret_stuff *p
 }
 
 static bool ECDSA_digsig_authenticate_signature(const struct crypt_mac *hash, shunk_t signature,
-						struct pubkey *kr,
+						struct pubkey *pubkey,
 						const struct hash_desc *unused_hash_algo UNUSED,
 						diag_t *fatal_diag,
 						struct logger *logger)
 {
-	const struct ECDSA_public_key *ecdsa = &kr->u.ecdsa;
+	const struct pubkey_content *ecdsa = &pubkey->content;
 
 	/*
 	 * Convert the signature into raw form (NSS doesn't do const).
@@ -516,7 +487,7 @@ static bool ECDSA_digsig_authenticate_signature(const struct crypt_mac *hash, sh
 	}
 
 	SECItem *raw_signature = DSAU_DecodeDerSigToLen(&der_signature,
-							SECKEY_SignatureLen(ecdsa->seckey_public));
+							SECKEY_SignatureLen(ecdsa->public_key));
 	if (raw_signature == NULL) {
 		/* not fatal as dependent on key being tried */
 		llog_nss_error(DEBUG_STREAM, logger,
@@ -545,7 +516,7 @@ static bool ECDSA_digsig_authenticate_signature(const struct crypt_mac *hash, sh
 		.len = hash_data.len,
 	};
 
-	if (PK11_Verify(ecdsa->seckey_public, raw_signature, &hash_item,
+	if (PK11_Verify(ecdsa->public_key, raw_signature, &hash_item,
 			lsw_nss_get_password_context(logger)) != SECSuccess) {
 		llog_nss_error(DEBUG_STREAM, logger,
 			       "verifying AUTH hash using PK11_Verify() failed:");

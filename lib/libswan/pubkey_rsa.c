@@ -38,10 +38,11 @@
  * Deal with RFC Resource Records as defined in rfc3110 (nee rfc2537).
  */
 
-static err_t RSA_pubkey_content_to_ipseckey_rdata(SECKEYRSAPublicKey *rsa,
+static err_t RSA_pubkey_content_to_ipseckey_rdata(const struct pubkey_content *pkc,
 						  chunk_t *ipseckey_pubkey,
 						  enum ipseckey_algorithm_type *ipseckey_algorithm)
 {
+	SECKEYRSAPublicKey *rsa = &pkc->public_key->u.rsa;
 	chunk_t exponent = same_secitem_as_chunk(rsa->publicExponent);
 	chunk_t modulus = same_secitem_as_chunk(rsa->modulus);
 	*ipseckey_pubkey = EMPTY_CHUNK;
@@ -78,14 +79,6 @@ static err_t RSA_pubkey_content_to_ipseckey_rdata(SECKEYRSAPublicKey *rsa,
 	};
 
 	return NULL;
-}
-
-static err_t pubkey_content_to_ipseckey_rdata(const union pubkey_content *pkc,
-					      chunk_t *ipseckey_pubkey,
-					      enum ipseckey_algorithm_type *ipseckey_algorithm)
-{
-	return RSA_pubkey_content_to_ipseckey_rdata(&pkc->rsa.seckey_public->u.rsa,
-						    ipseckey_pubkey, ipseckey_algorithm);
 }
 
 /*
@@ -167,7 +160,7 @@ static diag_t pubkey_ipseckey_rdata_to_rsa_pubkey(shunk_t rr, shunk_t *e, shunk_
 }
 
 static diag_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
-						   struct RSA_public_key *rsak,
+						   struct pubkey_content *rsak,
 						   keyid_t *keyid, ckaid_t *ckaid)
 {
 	/* unpack */
@@ -241,8 +234,8 @@ static diag_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 		return d;
 	}
 
-	rsak->seckey_public = seckey;
-	dbg_alloc("rsa->seckey_public", rsak->seckey_public, HERE);
+	rsak->public_key = seckey;
+	dbg_alloc("rsa->public_key", rsak->public_key, HERE);
 
 	/* generate the CKAID */
 
@@ -257,26 +250,14 @@ static diag_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 	return NULL;
 }
 
-static diag_t ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
-					       union pubkey_content *u,
-					       keyid_t *keyid, ckaid_t *ckaid)
+static void RSA_free_pubkey_content(struct pubkey_content *rsa)
 {
-	return RSA_ipseckey_rdata_to_pubkey_content(ipseckey_pubkey, &u->rsa, keyid, ckaid);
+	SECKEY_DestroyPublicKey(rsa->public_key);
+	dbg_free("rsa->public_key", rsa->public_key, HERE);
+	rsa->public_key = NULL;
 }
 
-static void RSA_free_pubkey_content(struct RSA_public_key *rsa)
-{
-	SECKEY_DestroyPublicKey(rsa->seckey_public);
-	dbg_free("rsa->seckey_pubkey", rsa->seckey_public, HERE);
-	rsa->seckey_public = NULL;
-}
-
-static void free_pubkey_content(union pubkey_content *u)
-{
-	RSA_free_pubkey_content(&u->rsa);
-}
-
-static err_t RSA_extract_pubkey_content(struct RSA_public_key *pub,
+static err_t RSA_extract_pubkey_content(struct pubkey_content *pub,
 					keyid_t *keyid, ckaid_t *ckaid,
 					SECKEYPublicKey *seckey_public,
 					SECItem *cert_ckaid)
@@ -305,24 +286,14 @@ static err_t RSA_extract_pubkey_content(struct RSA_public_key *pub,
 	}
 
 	/* now allocate */
-	pub->seckey_public = SECKEY_CopyPublicKey(seckey_public);
-	dbg_alloc("rsa->seckey_public", pub->seckey_public, HERE);
+	pub->public_key = SECKEY_CopyPublicKey(seckey_public);
+	dbg_alloc("rsa->public_key", pub->public_key, HERE);
 	*ckaid = ckaid_from_secitem(cert_ckaid);
 	return NULL;
 }
 
-static err_t extract_pubkey_content(union pubkey_content *pkc,
-				    keyid_t *keyid, ckaid_t *ckaid,
-				    SECKEYPublicKey *pubkey_nss,
-				    SECItem *ckaid_nss)
-{
-	return RSA_extract_pubkey_content(&pkc->rsa,
-					  keyid, ckaid,
-					  pubkey_nss, ckaid_nss);
-}
-
-static bool RSA_pubkey_same(const union pubkey_content *lhs,
-			    const union pubkey_content *rhs)
+static bool RSA_pubkey_same(const struct pubkey_content *lhs,
+			    const struct pubkey_content *rhs)
 {
 	/*
 	 * The "adjusted" length of modulus n in octets:
@@ -339,10 +310,10 @@ static bool RSA_pubkey_same(const union pubkey_content *lhs,
 	 * redundant?  The direct n==n test would pick up the
 	 * difference.
 	 */
-	bool e = hunk_eq(same_secitem_as_shunk(lhs->rsa.seckey_public->u.rsa.publicExponent),
-			 same_secitem_as_shunk(rhs->rsa.seckey_public->u.rsa.publicExponent));
-	bool n = hunk_eq(same_secitem_as_shunk(lhs->rsa.seckey_public->u.rsa.modulus),
-			 same_secitem_as_shunk(rhs->rsa.seckey_public->u.rsa.modulus));
+	bool e = hunk_eq(same_secitem_as_shunk(lhs->public_key->u.rsa.publicExponent),
+			 same_secitem_as_shunk(rhs->public_key->u.rsa.publicExponent));
+	bool n = hunk_eq(same_secitem_as_shunk(lhs->public_key->u.rsa.modulus),
+			 same_secitem_as_shunk(rhs->public_key->u.rsa.modulus));
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("n did %smatch", n ? "" : "NOT ");
 		DBG_log("e did %smatch", e ? "" : "NOT ");
@@ -353,16 +324,16 @@ static bool RSA_pubkey_same(const union pubkey_content *lhs,
 
 static size_t RSA_strength_in_bits(const struct pubkey *pubkey)
 {
-	return SECKEY_PublicKeyStrengthInBits(pubkey->u.rsa.seckey_public);
+	return SECKEY_PublicKeyStrengthInBits(pubkey->content.public_key);
 }
 
 const struct pubkey_type pubkey_type_rsa = {
 	.name = "RSA",
 	.private_key_kind = SECRET_RSA, /* XXX: delete field */
-	.free_pubkey_content = free_pubkey_content,
-	.ipseckey_rdata_to_pubkey_content = ipseckey_rdata_to_pubkey_content,
-	.pubkey_content_to_ipseckey_rdata = pubkey_content_to_ipseckey_rdata,
-	.extract_pubkey_content = extract_pubkey_content,
+	.free_pubkey_content = RSA_free_pubkey_content,
+	.ipseckey_rdata_to_pubkey_content = RSA_ipseckey_rdata_to_pubkey_content,
+	.pubkey_content_to_ipseckey_rdata = RSA_pubkey_content_to_ipseckey_rdata,
+	.extract_pubkey_content = RSA_extract_pubkey_content,
 	.pubkey_same = RSA_pubkey_same,
 	.strength_in_bits = RSA_strength_in_bits,
 };
@@ -417,7 +388,7 @@ static bool RSA_authenticate_signature_raw_rsa(const struct crypt_mac *expected_
 					       diag_t *fatal_diag,
 					       struct logger *logger)
 {
-	SECKEYPublicKey *seckey_public = pubkey->u.rsa.seckey_public;
+	SECKEYPublicKey *seckey_public = pubkey->content.public_key;
 
 	/* decrypt the signature -- reversing RSA_sign_hash */
 	if (signature.len != (size_t)seckey_public->u.rsa.modulus.len) {
@@ -493,7 +464,7 @@ static size_t RSA_jam_auth_method(struct jambuf *buf,
 				  const struct hash_desc *hash)
 {
 	return jam(buf, "%d-bit %s with %s",
-		   SECKEY_PublicKeyStrengthInBits(pubkey->u.rsa.seckey_public),
+		   SECKEY_PublicKeyStrengthInBits(pubkey->content.public_key),
 		   signer->name, hash->common.fqn);
 }
 
@@ -562,7 +533,7 @@ static bool RSA_authenticate_signature_pkcs1_1_5_rsa(const struct crypt_mac *exp
 						     diag_t *fatal_diag,
 						     struct logger *logger)
 {
-	SECKEYPublicKey *seckey_public = pubkey->u.rsa.seckey_public;
+	SECKEYPublicKey *seckey_public = pubkey->content.public_key;
 
 	/* decrypt the signature -- reversing RSA_sign_hash */
 	if (signature.len != (size_t)seckey_public->u.rsa.modulus.len) {
@@ -710,7 +681,7 @@ static bool RSA_authenticate_signature_rsassa_pss(const struct crypt_mac *expect
 						  diag_t *fatal_diag,
 						  struct logger *logger)
 {
-	SECKEYPublicKey *seckey_public = pubkey->u.rsa.seckey_public;
+	SECKEYPublicKey *seckey_public = pubkey->content.public_key;
 
 	/* decrypt the signature -- reversing RSA_sign_hash */
 	if (signature.len != (size_t)seckey_public->u.rsa.modulus.len) {

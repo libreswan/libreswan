@@ -40,22 +40,20 @@ struct logger;
 struct state;	/* forward declaration */
 struct secret;	/* opaque definition, private to secrets.c */
 struct pubkey;		/* forward */
-union pubkey_content;	/* forward */
+struct pubkey_content;	/* forward */
 struct pubkey_type;	/* forward */
 struct hash_desc;
 struct cert;
 
-struct RSA_public_key {
-	SECKEYPublicKey *seckey_public;
-};
+/*
+ * The raw public key.
+ *
+ * While this is abstracted as a SECKEYPublicKey, it can be thought of
+ * as the Subject Public Key Info.
+ */
 
-struct ECDSA_public_key {
-	SECKEYPublicKey *seckey_public;
-};
-
-union pubkey_content {
-	struct RSA_public_key rsa;
-	struct ECDSA_public_key ecdsa;
+struct pubkey_content {
+	SECKEYPublicKey *public_key;
 };
 
 /*
@@ -82,7 +80,7 @@ struct secret_stuff {
 	int line;
 	union {
 		chunk_t preshared_secret;
-		union pubkey_content pubkey;
+		struct pubkey_content pubkey;
 		/* struct smartcard *smartcard; */
 	} u;
 
@@ -108,7 +106,7 @@ struct secret_stuff {
 };
 
 diag_t secret_pubkey_stuff_to_pubkey_der(struct secret_stuff *pks, chunk_t *der);
-diag_t pubkey_der_to_pubkey_content(shunk_t pubkey_der, union pubkey_content *pkc,
+diag_t pubkey_der_to_pubkey_content(shunk_t pubkey_der, struct pubkey_content *pkc,
 				    keyid_t *keyid, ckaid_t *ckaid,
 				    const struct pubkey_type **type);
 
@@ -148,19 +146,19 @@ struct hash_signature {
 struct pubkey_type {
 	const char *name;
 	enum secret_kind private_key_kind;
-	void (*free_pubkey_content)(union pubkey_content *pkc);
+	void (*free_pubkey_content)(struct pubkey_content *pkc);
 	/* to/from the blob in DNS's IPSECKEY's Public Key field */
 	diag_t (*ipseckey_rdata_to_pubkey_content)(shunk_t ipseckey_pubkey,
-						   union pubkey_content *pkc,
+						   struct pubkey_content *pkc,
 						   keyid_t *keyid, ckaid_t *ckaid);
-	err_t (*pubkey_content_to_ipseckey_rdata)(const union pubkey_content *pkc,
+	err_t (*pubkey_content_to_ipseckey_rdata)(const struct pubkey_content *pkc,
 						  chunk_t *ipseckey_pubkey,
 						  enum ipseckey_algorithm_type *ipseckey_algorithm);
 	/* nss */
-	err_t (*extract_pubkey_content)(union pubkey_content *pkc,
+	err_t (*extract_pubkey_content)(struct pubkey_content *pkc,
 					keyid_t *keyid, ckaid_t *ckaid,
 					SECKEYPublicKey *pubkey_nss, SECItem *ckaid_nss);
-	bool (*pubkey_same)(const union pubkey_content *lhs, const union pubkey_content *rhs);
+	bool (*pubkey_same)(const struct pubkey_content *lhs, const struct pubkey_content *rhs);
 #define pubkey_strength_in_bits(PUBKEY) ((PUBKEY)->type->strength_in_bits(PUBKEY))
 	size_t (*strength_in_bits)(const struct pubkey *pubkey);
 };
@@ -205,7 +203,12 @@ extern const struct pubkey_signer pubkey_signer_digsig_ecdsa;		/* rfc7427 */
 
 const struct pubkey_type *pubkey_alg_type(enum ipseckey_algorithm_type alg);
 
-/* public key machinery */
+/*
+ * Public Key Machinery.
+ *
+ * This is a mashup of fields taken both from the certificate and the
+ * subject public key info.
+ */
 struct pubkey {
 	refcnt_t refcnt;	/* reference counted! */
 	struct id id;
@@ -217,7 +220,7 @@ struct pubkey {
 	uint32_t dns_ttl; /* from wire. until_time is derived using this */
 	asn1_t issuer;
 	const struct pubkey_type *type;
-	union pubkey_content u;
+	struct pubkey_content content;
 	/* for overalloc of issuer */
 	uint8_t end[0];
 };

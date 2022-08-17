@@ -20,7 +20,7 @@
 
 
 static diag_t seckey_to_pubkey_content(SECKEYPublicKey *seckey,
-				       union pubkey_content *pkc,
+				       struct pubkey_content *pkc,
 				       keyid_t *keyid, ckaid_t *ckaid,
 				       const struct pubkey_type **type)
 {
@@ -39,8 +39,8 @@ static diag_t seckey_to_pubkey_content(SECKEYPublicKey *seckey,
 		size_t size;
 		form_keyid(exponent, modulus, keyid, &size);
 		*type = &pubkey_type_rsa;
-		pkc->rsa.seckey_public = seckey;
-		dbg_alloc("ecdsa->seckey_pubkey", seckey, HERE);
+		pkc->public_key = seckey;
+		dbg_alloc("ecdsa->public_key", seckey, HERE);
 		break;
 	}
 	case ecKey:
@@ -56,8 +56,8 @@ static diag_t seckey_to_pubkey_content(SECKEYPublicKey *seckey,
 			return diag("%s", e);
 		}
 		*type = &pubkey_type_ecdsa;
-		pkc->ecdsa.seckey_public = seckey;
-		dbg_alloc("ecdsa->seckey_pubkey", seckey, HERE);
+		pkc->public_key = seckey;
+		dbg_alloc("ecdsa->public_key", seckey, HERE);
 		break;
 	}
 	default:
@@ -72,7 +72,7 @@ static diag_t seckey_to_pubkey_content(SECKEYPublicKey *seckey,
 }
 
 static diag_t spki_to_pubkey_content(CERTSubjectPublicKeyInfo *spki,
-				     union pubkey_content *pkc,
+				     struct pubkey_content *pkc,
 				     keyid_t *keyid, ckaid_t *ckaid,
 				     const struct pubkey_type **type)
 {
@@ -88,7 +88,7 @@ static diag_t spki_to_pubkey_content(CERTSubjectPublicKeyInfo *spki,
 	return d;
 }
 
-diag_t pubkey_der_to_pubkey_content(shunk_t der, union pubkey_content *pkc,
+diag_t pubkey_der_to_pubkey_content(shunk_t der, struct pubkey_content *pkc,
 				    keyid_t *keyid, ckaid_t *ckaid,
 				    const struct pubkey_type **type)
 {

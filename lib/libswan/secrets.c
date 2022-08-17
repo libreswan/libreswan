@@ -972,7 +972,7 @@ static void free_pubkey(void *obj, where_t where UNUSED)
 	struct pubkey *pk = obj;
 	free_id_content(&pk->id);
 	/* algorithm-specific freeing */
-	pk->type->free_pubkey_content(&pk->u);
+	pk->type->free_pubkey_content(&pk->content);
 	pfree(pk);
 }
 
@@ -1046,7 +1046,7 @@ static struct pubkey *alloc_pubkey(const struct id *id, /* ASKK */
 				   const struct pubkey_type *type,
 				   realtime_t install_time, realtime_t until_time,
 				   uint32_t ttl,
-				   const union pubkey_content *pkc,
+				   const struct pubkey_content *pkc,
 				   const keyid_t *keyid,
 				   const ckaid_t *ckaid,
 				   shunk_t issuer,
@@ -1054,7 +1054,7 @@ static struct pubkey *alloc_pubkey(const struct id *id, /* ASKK */
 {
 	struct pubkey *pk = refcnt_overalloc(struct pubkey, issuer.len,
 					     free_pubkey, where);
-	pk->u = *pkc;
+	pk->content = *pkc;
 	pk->id = clone_id(id, "public key id");
 	pk->dns_auth_level = dns_auth_level;
 	pk->type = type;
@@ -1086,7 +1086,7 @@ diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
 	 * First: unpack the raw public key.
 	 */
 
-	union pubkey_content scratch_pkc;
+	struct pubkey_content scratch_pkc;
 	keyid_t keyid;
 	ckaid_t ckaid;
 	const struct pubkey_type *pubkey_type = NULL; /* TBD */
@@ -1356,7 +1356,7 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 			    cert->nickname);
 	}
 
-	union pubkey_content pkc = {0};
+	struct pubkey_content pkc = {0};
 	keyid_t keyid;
 	ckaid_t ckaid;
 	err_t err = type->extract_pubkey_content(&pkc, &keyid, &ckaid,

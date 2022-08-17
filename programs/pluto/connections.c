@@ -1011,7 +1011,7 @@ static int extract_end(struct connection *c,
 			return -1;
 		}
 
-		union pubkey_content pkc;
+		struct pubkey_content pkc;
 		ckaid_t ckaid;
 		keyid_t keyid;
 		if (type == NULL) {

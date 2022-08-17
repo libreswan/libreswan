@@ -33,7 +33,7 @@
 
 struct connection;
 struct RSA_private_key;
-struct RSA_public_key;
+struct pubkey_content;
 struct pubkey;
 struct pubkey_type;
 struct crypt_mac;
