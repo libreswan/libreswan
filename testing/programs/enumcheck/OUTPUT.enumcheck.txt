@@ -2933,49 +2933,56 @@ IETF registry enum_names:
          short_name 26: IKEv2_INTERNAL_DNSSEC_TA OK
          jam_enum_short 26: IKEv2_INTERNAL_DNSSEC_TA OK
 
-  private_key_kind_names:
-    1 -> PKK_PSK
-         jam_enum 1: PKK_PSK OK
-         search PKK_PSK: OK
-         match PKK_PSK: OK
-         short_name 1: PKK_PSK OK
-         jam_enum_short 1: PKK_PSK OK
-    2 -> PKK_RSA
-         jam_enum 2: PKK_RSA OK
-         search PKK_RSA: OK
-         match PKK_RSA: OK
-         short_name 2: PKK_RSA OK
-         jam_enum_short 2: PKK_RSA OK
-    3 -> PKK_XAUTH
-         jam_enum 3: PKK_XAUTH OK
-         search PKK_XAUTH: OK
-         match PKK_XAUTH: OK
-         short_name 3: PKK_XAUTH OK
-         jam_enum_short 3: PKK_XAUTH OK
-    4 -> PKK_PPK
-         jam_enum 4: PKK_PPK OK
-         search PKK_PPK: OK
-         match PKK_PPK: OK
-         short_name 4: PKK_PPK OK
-         jam_enum_short 4: PKK_PPK OK
-    5 -> PKK_ECDSA
-         jam_enum 5: PKK_ECDSA OK
-         search PKK_ECDSA: OK
-         match PKK_ECDSA: OK
-         short_name 5: PKK_ECDSA OK
-         jam_enum_short 5: PKK_ECDSA OK
-    6 -> PKK_NULL
-         jam_enum 6: PKK_NULL OK
-         search PKK_NULL: OK
-         match PKK_NULL: OK
-         short_name 6: PKK_NULL OK
-         jam_enum_short 6: PKK_NULL OK
-    7 -> PKK_INVALID
-         jam_enum 7: PKK_INVALID OK
-         search PKK_INVALID: OK
-         match PKK_INVALID: OK
-         short_name 7: PKK_INVALID OK
-         jam_enum_short 7: PKK_INVALID OK
+  secret_kind_names:
+    1 -> SECRET_PSK
+         jam_enum 1: SECRET_PSK OK
+         search SECRET_PSK: OK
+         match SECRET_PSK: OK
+         short_name 1: PSK OK
+         jam_enum_short 1: PSK OK
+         match PSK [short]: OK
+    2 -> SECRET_RSA
+         jam_enum 2: SECRET_RSA OK
+         search SECRET_RSA: OK
+         match SECRET_RSA: OK
+         short_name 2: RSA OK
+         jam_enum_short 2: RSA OK
+         match RSA [short]: OK
+    3 -> SECRET_XAUTH
+         jam_enum 3: SECRET_XAUTH OK
+         search SECRET_XAUTH: OK
+         match SECRET_XAUTH: OK
+         short_name 3: XAUTH OK
+         jam_enum_short 3: XAUTH OK
+         match XAUTH [short]: OK
+    4 -> SECRET_PPK
+         jam_enum 4: SECRET_PPK OK
+         search SECRET_PPK: OK
+         match SECRET_PPK: OK
+         short_name 4: PPK OK
+         jam_enum_short 4: PPK OK
+         match PPK [short]: OK
+    5 -> SECRET_ECDSA
+         jam_enum 5: SECRET_ECDSA OK
+         search SECRET_ECDSA: OK
+         match SECRET_ECDSA: OK
+         short_name 5: ECDSA OK
+         jam_enum_short 5: ECDSA OK
+         match ECDSA [short]: OK
+    6 -> SECRET_NULL
+         jam_enum 6: SECRET_NULL OK
+         search SECRET_NULL: OK
+         match SECRET_NULL: OK
+         short_name 6: NULL OK
+         jam_enum_short 6: NULL OK
+         match NULL [short]: OK
+    7 -> SECRET_INVALID
+         jam_enum 7: SECRET_INVALID OK
+         search SECRET_INVALID: OK
+         match SECRET_INVALID: OK
+         short_name 7: INVALID OK
+         jam_enum_short 7: INVALID OK
+         match INVALID [short]: OK
 
   enc_mode_names:
     1 -> ENCAPSULATION_MODE_TUNNEL
