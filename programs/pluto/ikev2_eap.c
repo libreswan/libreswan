@@ -234,7 +234,7 @@ static bool start_eap(struct ike_sa *ike, struct pbs_out *pbs)
 	if (!mycert)
 		return false;
 
-	const struct private_key_stuff *pks = get_local_private_key(c, &pubkey_type_rsa,
+	const struct secret_stuff *pks = get_local_private_key(c, &pubkey_type_rsa,
 								    ike->sa.st_logger);
 	if (!pks) {
 		llog_sa(RC_LOG, ike, "private key for connection not found");

@@ -57,7 +57,7 @@ OBJS += constants.o \
 	alg_byname.o
 
 OBJS += cloexec_socket.o
-OBJS += private_key_stuff_to_pubkey_der.o
+OBJS += secret_pubkey_stuff_to_pubkey_der.o
 OBJS += pubkey_der_to_pubkey_content.o
 OBJS += clone_shunk_tokens.o
 OBJS += secrets.o

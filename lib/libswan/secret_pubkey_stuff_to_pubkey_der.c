@@ -30,7 +30,7 @@ static diag_t seckey_pubkey_to_der(SECKEYPublicKey *seckey_pubkey, chunk_t *der)
 	return NULL;
 }
 
-diag_t private_key_stuff_to_pubkey_der(struct private_key_stuff *pks, chunk_t *der)
+diag_t secret_pubkey_stuff_to_pubkey_der(struct secret_stuff *pks, chunk_t *der)
 {
 	SECKEYPublicKey *seckey_pubkey = SECKEY_ConvertToPublicKey(pks->private_key);
 	if (seckey_pubkey == NULL) {

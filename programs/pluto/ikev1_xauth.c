@@ -2016,8 +2016,7 @@ static stf_status xauth_client_resp(struct state *st,
 						    st->st_xauth_username,
 						    s);
 						if (s != NULL) {
-							struct private_key_stuff
-								*pks = lsw_get_pks(s);
+							struct secret_stuff *pks = get_secret_stuff(s);
 
 							st->st_xauth_password = clone_hunk(pks->u.preshared_secret,
 											   "saved xauth password");
