@@ -935,7 +935,7 @@ void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *logger)
 			case SECRET_RSA:
 			case SECRET_ECDSA:
 				/* Note: pub is all there is */
-				SECKEY_DestroyPrivateKey(s->stuff.private_key);
+				SECKEY_DestroyPrivateKey(s->stuff.u.pubkey.private_key);
 				s->stuff.pubkey_type->free_pubkey_content(&s->stuff.u.pubkey.content);
 				break;
 			default:
@@ -1172,13 +1172,13 @@ static err_t add_private_key(struct secret **secrets, const struct secret_stuff 
 	s->stuff.kind = type->private_key_kind;
 	s->stuff.line = 0;
 	/* make an unpacked copy of the private key */
-	s->stuff.private_key = copy_private_key(private_key);
+	s->stuff.u.pubkey.private_key = copy_private_key(private_key);
 	err_t err = type->extract_pubkey_content(&s->stuff.u.pubkey.content,
 						 &s->stuff.keyid, &s->stuff.ckaid,
 						 pubk, ckaid_nss);
 	if (err != NULL) {
 		/* extract should leave pubkey_content clean */
-		SECKEY_DestroyPrivateKey(s->stuff.private_key); /* allocated above */
+		SECKEY_DestroyPrivateKey(s->stuff.u.pubkey.private_key); /* allocated above */
 		pfree(s);
 		return err;
 	}

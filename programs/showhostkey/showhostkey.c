@@ -472,7 +472,7 @@ static struct secret_stuff *foreach_nss_private_key(secret_eval func,
 			.pubkey_type = type,
 			.kind = type->private_key_kind,
 			.line = 0,
-			.private_key = SECKEY_CopyPrivateKey(private_key), /* add reference */
+			.u.pubkey.private_key = SECKEY_CopyPrivateKey(private_key), /* add reference */
 		};
 
 		type->extract_pubkey_content(&pks.u.pubkey.content,
@@ -503,7 +503,7 @@ static struct secret_stuff *foreach_nss_private_key(secret_eval func,
 			break;
 		}
 
-		SECKEY_DestroyPrivateKey(pks.private_key); /* destory reference */
+		SECKEY_DestroyPrivateKey(pks.u.pubkey.private_key); /* destory reference */
 		type->free_pubkey_content(&pks.u.pubkey.content);
 
 		if (ret < 0) {

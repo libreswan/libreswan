@@ -71,9 +71,7 @@ enum secret_kind {
 };
 
 struct secret_pubkey_stuff {
-#if 0
 	SECKEYPrivateKey *private_key;
-#endif
 	struct pubkey_content content;
 };
 
@@ -94,7 +92,6 @@ struct secret_stuff {
 	chunk_t ppk_id;
 	/* for PKI */
 	const struct pubkey_type *pubkey_type;
-	SECKEYPrivateKey *private_key;
 	keyid_t keyid;
 
 	/*

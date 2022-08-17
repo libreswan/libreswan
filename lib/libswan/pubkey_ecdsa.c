@@ -287,7 +287,7 @@ static struct hash_signature ECDSA_raw_sign_hash(const struct secret_stuff *pks,
 {
 	DBGF(DBG_CRYPT, "%s: started using NSS", __func__);
 
-	if (!pexpect(pks->private_key != NULL)) {
+	if (!pexpect(pks->u.pubkey.private_key != NULL)) {
 		dbg("no private key!");
 		return (struct hash_signature) { .len = 0, };
 	}
@@ -304,14 +304,14 @@ static struct hash_signature ECDSA_raw_sign_hash(const struct secret_stuff *pks,
 	struct hash_signature signature = {0};
 	SECItem raw_signature = {
 		.type = siBuffer,
-		.len = PK11_SignatureLen(pks->private_key),
+		.len = PK11_SignatureLen(pks->u.pubkey.private_key),
 		.data = signature.ptr/*array*/,
 	};
 	passert(raw_signature.len <= sizeof(signature.ptr/*array*/));
 	dbg("ECDSA signature.len %d", raw_signature.len);
 
 	/* create the raw signature */
-	SECStatus s = PK11_Sign(pks->private_key, &raw_signature, &hash_to_sign);
+	SECStatus s = PK11_Sign(pks->u.pubkey.private_key, &raw_signature, &hash_to_sign);
 	if (DBGP(DBG_CRYPT)) {
 		DBG_dump("PK11_Sign()", raw_signature.data, raw_signature.len);
 	}
@@ -407,7 +407,7 @@ static struct hash_signature ECDSA_digsig_sign_hash(const struct secret_stuff *p
 						    struct logger *logger)
 {
 
-	if (!pexpect(pks->private_key != NULL)) {
+	if (!pexpect(pks->u.pubkey.private_key != NULL)) {
 		dbg("no private key!");
 		return (struct hash_signature) { .len = 0, };
 	}
@@ -425,14 +425,14 @@ static struct hash_signature ECDSA_digsig_sign_hash(const struct secret_stuff *p
 	uint8_t raw_signature_data[sizeof(struct hash_signature)];
 	SECItem raw_signature = {
 		.type = siBuffer,
-		.len = PK11_SignatureLen(pks->private_key),
+		.len = PK11_SignatureLen(pks->u.pubkey.private_key),
 		.data = raw_signature_data,
 	};
 	passert(raw_signature.len <= sizeof(raw_signature_data));
 	dbg("ECDSA signature.len %d", raw_signature.len);
 
 	/* create the raw signature */
-	SECStatus s = PK11_Sign(pks->private_key, &raw_signature, &hash_to_sign);
+	SECStatus s = PK11_Sign(pks->u.pubkey.private_key, &raw_signature, &hash_to_sign);
 	if (DBGP(DBG_CRYPT)) {
 		DBG_dump("sig_from_nss", raw_signature.data, raw_signature.len);
 	}
