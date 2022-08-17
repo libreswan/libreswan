@@ -91,8 +91,8 @@ struct secret_stuff {
 
 	chunk_t ppk;
 	chunk_t ppk_id;
+
 	/* for PKI */
-	const struct pubkey_type *pubkey_type;
 	keyid_t keyid;
 
 	/*

@@ -172,7 +172,7 @@ static void print(struct secret_stuff *pks,
 	case SECRET_RSA:
 	case SECRET_ECDSA:
 	{
-		printf("%s", pks->pubkey_type->name);
+		printf("%s", pks->u.pubkey.content.type->name);
 		keyid_t keyid = pks->keyid;
 		printf(" keyid: %s", str_keyid(keyid)[0] ? str_keyid(keyid) : "<missing-pubkey>");
 		if (id) {
@@ -274,13 +274,13 @@ static char *base64_from_chunk(chunk_t chunk)
 	return base64;
 }
 
-static char *base64_ipseckey_rdata_from_pks(struct secret_stuff *pks,
-					    enum ipseckey_algorithm_type *ipseckey_algorithm)
+static char *base64_ipseckey_rdata_from_pubkey_secret(struct secret_stuff *pks,
+						      enum ipseckey_algorithm_type *ipseckey_algorithm)
 {
 	chunk_t ipseckey_pubkey = empty_chunk; /* must free */
-	err_t e = pks->pubkey_type->pubkey_content_to_ipseckey_rdata(&pks->u.pubkey.content,
-								     &ipseckey_pubkey,
-								     ipseckey_algorithm);
+	err_t e = pks->u.pubkey.content.type->pubkey_content_to_ipseckey_rdata(&pks->u.pubkey.content,
+									       &ipseckey_pubkey,
+									       ipseckey_algorithm);
 	if (e != NULL) {
 		fprintf(stderr, "%s: %s\n", progname, e);
 		return NULL;
@@ -321,7 +321,7 @@ static int show_ipseckey(struct secret_stuff *pks,
 		base64 = base64_pem_from_pks(pks);
 		ipseckey_algorithm = IPSECKEY_ALGORITHM_X_PUBKEY;
 	} else {
-		base64 = base64_ipseckey_rdata_from_pks(pks, &ipseckey_algorithm);
+		base64 = base64_ipseckey_rdata_from_pubkey_secret(pks, &ipseckey_algorithm);
 	}
 	if (base64 == NULL) {
 		return 5;
@@ -385,14 +385,14 @@ static int show_leftright(struct secret_stuff *pks,
 	}
 	}
 
-	passert(pks->pubkey_type != NULL);
+	passert(pks->u.pubkey.content.type != NULL);
 
 	char *base64 = NULL;
 	if (pubkey_flg) {
 		base64 = base64_pem_from_pks(pks);
 	} else {
 		enum ipseckey_algorithm_type ipseckey_algorithm;
-		base64 = base64_ipseckey_rdata_from_pks(pks, &ipseckey_algorithm);
+		base64 = base64_ipseckey_rdata_from_pubkey_secret(pks, &ipseckey_algorithm);
 	}
 	if (base64 == NULL) {
 		return 5;
@@ -477,7 +477,6 @@ static struct secret_stuff *foreach_nss_private_key(secret_eval func,
 		}
 
 		struct secret_stuff pks = {
-			.pubkey_type = type,
 			.kind = type->private_key_kind,
 			.line = 0,
 			.u.pubkey.private_key = SECKEY_CopyPrivateKey(private_key), /* add reference */
