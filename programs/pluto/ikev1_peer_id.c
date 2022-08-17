@@ -37,6 +37,7 @@
 #include "ike_alg_hash.h"
 #include "secrets.h"
 #include "peer_id.h"
+#include "ikev1_cert.h"
 
 static bool decode_peer_id(struct state *st, struct msg_digest *md, struct id *peer);
 

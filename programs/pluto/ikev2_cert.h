@@ -1,5 +1,4 @@
-/* IKEv2 CERT/CERTREQ payload routes, for libreswan
- * defined in x509.c
+/* IKEv2 CERT payload, for libreswan
  *
  * Copyright (C) 2000 Andreas Hess, Patric Lichtsteiner, Roger Wegmann
  * Copyright (C) 2001 Marco Bertossa, Andreas Schleiss
@@ -29,23 +28,7 @@ struct ike_sa;
 struct msg_digest;
 struct connection;
 
-/*
- * CERTREQ payloads are sent in the message just prior to the CERT:
- *
- * + in the IKE_SA_INIT response so that the initiator knows to
- * include its certificate in the IKE_AUTH request
- *
- * + in the IKE_AUTH request so that the responder knows to include
- * the certificate in its IKE_AUTH response
- */
-
-bool need_v2CERTREQ_in_IKE_AUTH_request(const struct ike_sa *ike);
-bool need_v2CERTREQ_in_IKE_SA_INIT_response(const struct ike_sa *ike);
-
-stf_status emit_v2CERTREQ(struct ike_sa *ike, struct msg_digest *md,
-			  struct pbs_out *outpbs);
-
 bool ikev2_send_cert_decision(const struct ike_sa *ike);
 stf_status emit_v2CERT(const struct connection *c, struct pbs_out *outpbs);
 
-#endif /* _PLUTO_X509_H */
+#endif

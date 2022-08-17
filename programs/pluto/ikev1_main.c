@@ -100,6 +100,7 @@
 #include "ikev1_peer_id.h"
 #include "lswnss.h"
 #include "ikev1_vendorid.h"
+#include "ikev1_cert.h"
 
 /*
  * Initiate an Oakley Main Mode exchange.

@@ -61,9 +61,6 @@ struct hash_signature v1_sign_hash_RSA(const struct connection *c,
 struct crypt_mac main_mode_hash(struct state *st, enum sa_role role,
 				const pb_stream *idpl);  /* ID payload, as PBS; cur must be at end */
 
-extern bool ikev1_ship_chain(chunk_t *chain, int n, pb_stream *outs,
-			     uint8_t type);
-
 void doi_log_cert_thinking(uint16_t auth,
 			   enum ike_cert_type certtype,
 			   enum certpolicy policy,

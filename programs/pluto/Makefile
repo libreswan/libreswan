@@ -51,6 +51,7 @@ OBJS =
 OBJS += send.o
 
 ifeq ($(USE_IKEv1),true)
+OBJS += ikev1_cert.o
 OBJS += ikev1_send.o
 OBJS += ikev1_peer_id.o
 endif
@@ -65,6 +66,7 @@ OBJS += ikev2_create_child_sa.o
 OBJS += ikev2_informational.o
 # payloads
 OBJS += ikev2_cert.o
+OBJS += ikev2_certreq.o
 OBJS += ikev2_notify.o
 OBJS += ikev2_cp.o
 OBJS += ikev2_ts.o
@@ -122,6 +124,7 @@ ifeq ($(USE_PFKEYV2),true)
 OBJS += kernel_pfkeyv2.o
 endif
 
+# PKIX: Public-Key Infrastructure using X.509
 OBJS += x509.o
 OBJS += fetch.o
 OBJS += crl_queue.o

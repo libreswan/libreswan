@@ -2878,17 +2878,6 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 	}
 }
 
-bool ikev1_ship_chain(chunk_t *chain, int n, pb_stream *outs,
-		      uint8_t type)
-{
-	for (int i = 0; i < n; i++) {
-		if (!ikev1_ship_CERT(type, HUNK_AS_SHUNK(chain[i]), outs))
-			return false;
-	}
-
-	return true;
-}
-
 void doi_log_cert_thinking(uint16_t auth,
 			   enum ike_cert_type certtype,
 			   enum certpolicy policy,

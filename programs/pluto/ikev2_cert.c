@@ -1,4 +1,4 @@
-/* Support for IKEv2 CERT/CERTREQ payloads, for libreswan
+/* Support for IKEv2 CERT payloads, for libreswan
  *
  * Copyright (C) 2000 Andreas Hess, Patric Lichtsteiner, Roger Wegmann
  * Copyright (C) 2001 Marco Bertossa, Andreas Schleiss
@@ -28,8 +28,6 @@
  */
 
 #include "lswnss.h"
-#include "crypt_hash.h"
-#include "ike_alg_hash.h"
 
 #include "defs.h"
 
@@ -39,175 +37,7 @@
 #include "nss_cert_verify.h"
 #include "ikev2_message.h"
 #include "log.h"
-#include "pluto_x509.h"		/* for collect_rw_candidates()+remote_has_preloaded_pubkey() */
-
-/*
- * Instead of ikev2_hash_ca_keys use this for now. A single key
- * hash.
- */
-static chunk_t ikev2_hash_nss_cert_key(CERTCertificate *cert,
-				       struct logger *logger)
-{
-	unsigned char sighash[SHA1_DIGEST_SIZE];
-	zero(&sighash);
-
-	/*
-	 * TODO: This should use SHA1 even if USE_SHA1 is disabled for
-	 * IKE/IPsec.
-	 */
-	struct crypt_hash *ctx = crypt_hash_init("SHA-1 of Certificate Public Key",
-						 &ike_alg_hash_sha1, logger);
-	crypt_hash_digest_bytes(ctx, "pubkey",
-				cert->derPublicKey.data,
-				cert->derPublicKey.len);
-	crypt_hash_final_bytes(&ctx, sighash, sizeof(sighash));
-	chunk_t result = clone_bytes_as_chunk(sighash, SHA1_DIGEST_SIZE, "pkey hash");
-
-	return result;
-}
-
-static bool build_and_emit_v2CERTREQ(enum ike_cert_type type,
-				     chunk_t ca, struct pbs_out *outs)
-{
-	/*
-	 * CERT_GetDefaultCertDB() simply returns the contents of a
-	 * static variable set by NSS_Initialize().  It doesn't check
-	 * the value and doesn't set PR error.  Short of calling
-	 * CERT_SetDefaultCertDB(NULL), the value can never be NULL.
-	 */
-	CERTCertDBHandle *handle = CERT_GetDefaultCertDB();
-	passert(handle != NULL);
-
-	pb_stream cr_pbs;
-	struct ikev2_certreq cr_hd = {
-		.isacertreq_critical =  ISAKMP_PAYLOAD_NONCRITICAL,
-		.isacertreq_enc = type,
-	};
-
-	/* build CR header */
-	if (!out_struct(&cr_hd, &ikev2_certificate_req_desc, outs, &cr_pbs))
-		return false;
-	/*
-	 * The Certificate Encoding field has the same values as those defined
-	 * in Section 3.6.  The Certification Authority field contains an
-	 * indicator of trusted authorities for this certificate type.  The
-	 * Certification Authority value is a concatenated list of SHA-1 hashes
-	 * of the public keys of trusted Certification Authorities (CAs).  Each
-	 * is encoded as the SHA-1 hash of the Subject Public Key Info element
-	 * (see section 4.1.2.7 of [PKIX]) from each Trust Anchor certificate.
-	 * The 20-octet hashes are concatenated and included with no other
-	 * formatting.
-	 *
-	 * How are multiple trusted CAs chosen?
-	 */
-
-	if (ca.ptr != NULL) {
-		SECItem caname = same_shunk_as_dercert_secitem(ASN1(ca));
-
-		CERTCertificate *cacert =
-			CERT_FindCertByName(handle, &caname);
-
-		if (cacert != NULL && CERT_IsCACert(cacert, NULL)) {
-			dbg("located CA cert %s for CERTREQ", cacert->subjectName);
-			/*
-			 * build CR body containing the concatenated SHA-1 hashes of the
-			 * CA's public key. This function currently only uses a single CA
-			 * and should support more in the future
-			 * */
-			chunk_t cr_full_hash = ikev2_hash_nss_cert_key(cacert,
-								       outs->outs_logger);
-
-			if (!out_hunk(cr_full_hash, &cr_pbs, "CA cert public key hash")) {
-				free_chunk_content(&cr_full_hash);
-				return false;
-			}
-			free_chunk_content(&cr_full_hash);
-		} else {
-			LSWDBGP(DBG_BASE, buf) {
-				jam(buf, "NSS: locating CA cert \'");
-				jam_dn(buf, ASN1(ca), jam_sanitized_bytes);
-				jam(buf, "\' for CERTREQ using CERT_FindCertByName() failed: ");
-				jam_nss_error_code(buf, PR_GetError());
-			}
-		}
-	}
-	/*
-	 * can it be empty?
-	 * this function's returns need fixing
-	 * */
-	close_output_pbs(&cr_pbs);
-	return true;
-}
-
-stf_status emit_v2CERTREQ(struct ike_sa *ike, struct msg_digest *md,
-			  struct pbs_out *outpbs)
-{
-	if (ike->sa.st_connection->kind == CK_PERMANENT) {
-		dbg("connection->kind is CK_PERMANENT so send CERTREQ");
-
-		if (!build_and_emit_v2CERTREQ(CERT_X509_SIGNATURE,
-					      ike->sa.st_connection->remote->config->host.ca,
-					      outpbs))
-			return STF_INTERNAL_ERROR;
-	} else {
-		dbg("connection->kind is not CK_PERMANENT (instance), so collect CAs");
-
-		generalName_t *gn = collect_rw_ca_candidates(md);
-
-		if (gn != NULL) {
-			dbg("connection is RW, lookup CA candidates");
-
-			for (generalName_t *ca = gn; ca != NULL; ca = ca->next) {
-				if (!build_and_emit_v2CERTREQ(CERT_X509_SIGNATURE,
-							      ca->name, outpbs)) {
-					free_generalNames(gn, false);
-					return STF_INTERNAL_ERROR;
-				}
-			}
-			free_generalNames(gn, false);
-		} else {
-			dbg("not a roadwarrior instance, sending empty CA in CERTREQ");
-			if (!build_and_emit_v2CERTREQ(CERT_X509_SIGNATURE,
-						       EMPTY_CHUNK, outpbs)) {
-				return STF_INTERNAL_ERROR;
-			}
-		}
-	}
-	return STF_OK;
-}
-
-bool need_v2CERTREQ_in_IKE_SA_INIT_response(const struct ike_sa *ike)
-{
-	struct authby authby = ike->sa.st_connection->remote->config->host.authby;
-	return (authby_has_digsig(authby) && !remote_has_preloaded_pubkey(&ike->sa));
-}
-
-bool need_v2CERTREQ_in_IKE_AUTH_request(const struct ike_sa *ike)
-{
-	dbg("IKEv2 CERTREQ: send a cert request?");
-
-	const struct connection *c = ike->sa.st_connection;
-
-	if (!authby_has_digsig(c->remote->config->host.authby)) {
-		dbg("IKEv2 CERTREQ: responder has no auth method requiring them to send back their cert");
-		return false;
-	}
-
-	if (remote_has_preloaded_pubkey(&ike->sa)) {
-		dbg("IKEv2 CERTREQ: public key already known");
-		return false;
-	}
-
-	if (c->remote->config->host.ca.ptr == NULL ||
-	    c->remote->config->host.ca.len < 1) {
-		dbg("IKEv2 CERTREQ: no CA DN known to send");
-		return false;
-	}
-
-	dbg("IKEv2 CERTREQ: OK to send a certificate request");
-
-	return true;
-}
+#include "pluto_x509.h"		/* for get_auth_chain() */
 
 /* Send v2 CERT and possible CERTREQ (which should be separated eventually) */
 stf_status emit_v2CERT(const struct connection *c, struct pbs_out *outpbs)

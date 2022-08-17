@@ -62,6 +62,7 @@
 #include "ikev2_cp.h"
 #include "kernel.h"			/* for install_sec_label_connection_policies() */
 #include "ikev2_delete.h"		/* for submit_v2_delete_exchange() */
+#include "ikev2_certreq.h"
 
 static stf_status process_v2_IKE_AUTH_request_tail(struct state *st,
 						   struct msg_digest *md,
