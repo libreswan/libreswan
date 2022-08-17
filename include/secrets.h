@@ -70,6 +70,13 @@ enum secret_kind {
 	SECRET_INVALID,
 };
 
+struct secret_pubkey_stuff {
+#if 0
+	SECKEYPrivateKey *private_key;
+#endif
+	struct pubkey_content content;
+};
+
 struct secret_stuff {
 	enum secret_kind kind;
 	/*
@@ -80,8 +87,7 @@ struct secret_stuff {
 	int line;
 	union {
 		chunk_t preshared_secret;
-		struct pubkey_content pubkey;
-		/* struct smartcard *smartcard; */
+		struct secret_pubkey_stuff pubkey;
 	} u;
 
 	chunk_t ppk;

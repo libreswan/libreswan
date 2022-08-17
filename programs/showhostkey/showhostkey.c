@@ -278,7 +278,7 @@ static char *base64_ipseckey_rdata_from_pks(struct secret_stuff *pks,
 					    enum ipseckey_algorithm_type *ipseckey_algorithm)
 {
 	chunk_t ipseckey_pubkey = empty_chunk; /* must free */
-	err_t e = pks->pubkey_type->pubkey_content_to_ipseckey_rdata(&pks->u.pubkey,
+	err_t e = pks->pubkey_type->pubkey_content_to_ipseckey_rdata(&pks->u.pubkey.content,
 								     &ipseckey_pubkey,
 								     ipseckey_algorithm);
 	if (e != NULL) {
@@ -475,7 +475,7 @@ static struct secret_stuff *foreach_nss_private_key(secret_eval func,
 			.private_key = SECKEY_CopyPrivateKey(private_key), /* add reference */
 		};
 
-		type->extract_pubkey_content(&pks.u.pubkey,
+		type->extract_pubkey_content(&pks.u.pubkey.content,
 					     &pks.keyid, &pks.ckaid,
 					     pubk, ckaid_nss);
 
@@ -504,7 +504,7 @@ static struct secret_stuff *foreach_nss_private_key(secret_eval func,
 		}
 
 		SECKEY_DestroyPrivateKey(pks.private_key); /* destory reference */
-		type->free_pubkey_content(&pks.u.pubkey);
+		type->free_pubkey_content(&pks.u.pubkey.content);
 
 		if (ret < 0) {
 			break;

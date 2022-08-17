@@ -248,7 +248,8 @@ bool secret_pubkey_same(struct secret *lhs, struct secret *rhs)
 		return false;
 	}
 
-	return lhs->stuff.pubkey_type->pubkey_same(&lhs->stuff.u.pubkey, &rhs->stuff.u.pubkey);
+	return lhs->stuff.pubkey_type->pubkey_same(&lhs->stuff.u.pubkey.content,
+						   &rhs->stuff.u.pubkey.content);
 }
 
 struct secret *lsw_find_secret_by_id(struct secret *secrets,
@@ -935,7 +936,7 @@ void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *logger)
 			case SECRET_ECDSA:
 				/* Note: pub is all there is */
 				SECKEY_DestroyPrivateKey(s->stuff.private_key);
-				s->stuff.pubkey_type->free_pubkey_content(&s->stuff.u.pubkey);
+				s->stuff.pubkey_type->free_pubkey_content(&s->stuff.u.pubkey.content);
 				break;
 			default:
 				bad_case(s->stuff.kind);
@@ -1172,7 +1173,7 @@ static err_t add_private_key(struct secret **secrets, const struct secret_stuff 
 	s->stuff.line = 0;
 	/* make an unpacked copy of the private key */
 	s->stuff.private_key = copy_private_key(private_key);
-	err_t err = type->extract_pubkey_content(&s->stuff.u.pubkey,
+	err_t err = type->extract_pubkey_content(&s->stuff.u.pubkey.content,
 						 &s->stuff.keyid, &s->stuff.ckaid,
 						 pubk, ckaid_nss);
 	if (err != NULL) {
