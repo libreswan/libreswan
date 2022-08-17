@@ -81,23 +81,23 @@ void free_preshared_secrets(struct logger *logger)
 }
 
 static int print_secrets(struct secret *secret,
-			 struct private_key_stuff *pks UNUSED,
+			 struct secret_stuff *pks UNUSED,
 			 void *uservoid)
 {
 	struct show *s = uservoid;
 
 	const char *kind;
 	switch (pks->kind) {
-	case PKK_PSK:
+	case SECRET_PSK:
 		kind = "PSK";
 		break;
-	case PKK_RSA:
+	case SECRET_RSA:
 		kind = "RSA";
 		break;
-	case PKK_XAUTH:
+	case SECRET_XAUTH:
 		kind = "XAUTH";
 		break;
-	case PKK_ECDSA:
+	case SECRET_ECDSA:
 		kind = "ECDSA";
 		break;
 	default:
@@ -143,7 +143,7 @@ void list_psks(struct show *s)
 	show_comment(s, "List of Pre-shared secrets (from %s)",
 		     oco->secretsfile);
 	show_blank(s);
-	lsw_foreach_secret(pluto_secrets, print_secrets, s);
+	foreach_secret(pluto_secrets, print_secrets, s);
 }
 
 /*
@@ -419,7 +419,7 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
  */
 
 static struct secret *lsw_get_secret(const struct connection *c,
-				     enum private_key_kind kind,
+				     enum secret_kind kind,
 				     bool asym)
 {
 	/* under certain conditions, override that_id to %ANYADDR */
@@ -436,7 +436,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 
 	    /* case 2 */
 	    ( c->remote->config->host.authby.psk &&
-	      kind == PKK_PSK /*shared-secret*/ &&
+	      kind == SECRET_PSK /*shared-secret*/ &&
 	      ( ( c->kind == CK_TEMPLATE &&
 		  c->remote->host.id.kind == ID_NONE ) ||
 		( c->kind == CK_INSTANCE &&
@@ -465,7 +465,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	    __func__,
 	    str_id(this_id, &this_buf),
 	    str_id(that_id, &that_buf),
-	    enum_name(&private_key_kind_names, kind));
+	    enum_name(&secret_kind_names, kind));
 
 	return lsw_find_secret_by_id(pluto_secrets, kind,
 				     this_id, that_id, asym);
@@ -489,7 +489,7 @@ struct secret *lsw_get_xauthsecret(char *xauthname)
 	};
 
 	best = lsw_find_secret_by_id(pluto_secrets,
-				     PKK_XAUTH,
+				     SECRET_XAUTH,
 				     &xa_id, NULL, true);
 
 	return best;
@@ -504,13 +504,13 @@ struct secret *lsw_get_xauthsecret(char *xauthname)
 
 const chunk_t *get_connection_psk(const struct connection *c)
 {
-	struct secret *s = lsw_get_secret(c, PKK_PSK, false);
+	struct secret *s = lsw_get_secret(c, SECRET_PSK, false);
 	if (s == NULL) {
 		dbg("no PreShared Key Found");
 		return NULL;
 	}
 
-	const chunk_t *psk = &lsw_get_pks(s)->u.preshared_secret;
+	const chunk_t *psk = &get_secret_stuff(s)->u.preshared_secret;
 	if (DBGP(DBG_CRYPT)) {
 		DBG_dump_hunk("PreShared Key", *psk);
 	}
@@ -522,14 +522,14 @@ const chunk_t *get_connection_psk(const struct connection *c)
 
 chunk_t *get_connection_ppk(const struct connection *c, chunk_t **ppk_id)
 {
-	struct secret *s = lsw_get_secret(c, PKK_PPK, false);
+	struct secret *s = lsw_get_secret(c, SECRET_PPK, false);
 
 	if (s == NULL) {
 		*ppk_id = NULL;
 		return NULL;
 	}
 
-	struct private_key_stuff *pks = lsw_get_pks(s);
+	struct secret_stuff *pks = get_secret_stuff(s);
 	*ppk_id = &pks->ppk_id;
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("Found PPK");
@@ -548,7 +548,7 @@ const chunk_t *get_ppk_by_id(const chunk_t *ppk_id)
 	struct secret *s = lsw_get_ppk_by_id(pluto_secrets, *ppk_id);
 
 	if (s != NULL) {
-		const struct private_key_stuff *pks = lsw_get_pks(s);
+		const struct secret_stuff *pks = get_secret_stuff(s);
 		if (DBGP(DBG_CRYPT)) {
 			DBG_dump_hunk("Found PPK:", pks->ppk);
 			DBG_dump_hunk("with PPK_ID:", *ppk_id);
@@ -564,7 +564,7 @@ const chunk_t *get_ppk_by_id(const chunk_t *ppk_id)
  * indicated by a NULL pointer.
  */
 
-const struct private_key_stuff *get_local_private_key(const struct connection *c,
+const struct secret_stuff *get_local_private_key(const struct connection *c,
 						      const struct pubkey_type *type,
 						      struct logger *logger)
 {
@@ -579,7 +579,7 @@ const struct private_key_stuff *get_local_private_key(const struct connection *c
 		    str_id(&c->remote->host.id, &that_buf),
 		    type->name);
 
-		const struct private_key_stuff *pks = NULL;
+		const struct secret_stuff *pks = NULL;
 		bool load_needed;
 		err_t err = find_or_load_private_key_by_cert(&pluto_secrets,
 							     &c->local->config->host.cert,
@@ -623,7 +623,7 @@ const struct private_key_stuff *get_local_private_key(const struct connection *c
 		    str_id(&c->remote->host.id, &that_buf),
 		    type->name);
 
-		const struct private_key_stuff *pks;
+		const struct secret_stuff *pks;
 		bool load_needed;
 		err_t err = find_or_load_private_key_by_ckaid(&pluto_secrets, c->local->config->host.ckaid,
 							      &pks, &load_needed, logger);
@@ -669,7 +669,7 @@ const struct private_key_stuff *get_local_private_key(const struct connection *c
 		return NULL;
 	}
 
-	const struct private_key_stuff *pks = lsw_get_pks(s);
+	const struct secret_stuff *pks = get_secret_stuff(s);
 	passert(pks != NULL);
 
 	dbg("connection %s's %s private key found",
@@ -804,7 +804,7 @@ void show_pubkeys(struct show *s, bool utc, enum keys_to_show keys_to_show)
 err_t preload_private_key_by_cert(const struct cert *cert, bool *load_needed, struct logger *logger)
 {
 	threadtime_t start = threadtime_start();
-	const struct private_key_stuff *pks;
+	const struct secret_stuff *pks;
 	err_t err = find_or_load_private_key_by_cert(&pluto_secrets, cert,
 						     &pks, load_needed, logger);
 	threadtime_stop(&start, SOS_NOBODY, "%s() loading private key %s", __func__,
@@ -815,7 +815,7 @@ err_t preload_private_key_by_cert(const struct cert *cert, bool *load_needed, st
 err_t preload_private_key_by_ckaid(const ckaid_t *ckaid, bool *load_needed, struct logger *logger)
 {
 	threadtime_t start = threadtime_start();
-	const struct private_key_stuff *pks;
+	const struct secret_stuff *pks;
 	err_t err = find_or_load_private_key_by_ckaid(&pluto_secrets, ckaid,
 						      &pks, load_needed, logger);
 	threadtime_stop(&start, SOS_NOBODY, "%s() loading private key using CKAID", __func__);

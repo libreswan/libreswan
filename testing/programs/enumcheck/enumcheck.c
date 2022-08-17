@@ -321,7 +321,7 @@ int main(int argc UNUSED, char *argv[])
 	test_enums("ikev2_ts_type_names", &ikev2_ts_type_names);
 	test_enums("ikev2_cp_type_names", &ikev2_cp_type_names);
 	test_enums("ikev2_cp_attribute_type_names", &ikev2_cp_attribute_type_names);
-	test_enums("private_key_kind_names", &private_key_kind_names);
+	test_enums("secret_kind_names", &secret_kind_names);
 	test_enum_range("enc_mode_names", &encapsulation_mode_names, 0, 256);
 	test_enums("auth_alg_names", &auth_alg_names);
 	test_enums("xauth_type_names", &xauth_type_names);

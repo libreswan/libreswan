@@ -61,19 +61,19 @@ union pubkey_content {
 /*
  * private key types
  */
-enum private_key_kind {
+enum secret_kind {
 	/* start at one so accidental 0 will not match */
-	PKK_PSK = 1,
-	PKK_RSA,
-	PKK_XAUTH,
-	PKK_PPK,
-	PKK_ECDSA, /* should not be needed */
-	PKK_NULL,
-	PKK_INVALID,
+	SECRET_PSK = 1,
+	SECRET_RSA,
+	SECRET_XAUTH,
+	SECRET_PPK,
+	SECRET_ECDSA, /* should not be needed */
+	SECRET_NULL,
+	SECRET_INVALID,
 };
 
-struct private_key_stuff {
-	enum private_key_kind kind;
+struct secret_stuff {
+	enum secret_kind kind;
 	/*
 	 * This replaced "int lsw_secretlineno()", which assumes only
 	 * one file (no includes) and isn't applicable to NSS.  For
@@ -107,12 +107,12 @@ struct private_key_stuff {
 	ckaid_t ckaid;
 };
 
-diag_t private_key_stuff_to_pubkey_der(struct private_key_stuff *pks, chunk_t *der);
+diag_t secret_pubkey_stuff_to_pubkey_der(struct secret_stuff *pks, chunk_t *der);
 diag_t pubkey_der_to_pubkey_content(shunk_t pubkey_der, union pubkey_content *pkc,
 				    keyid_t *keyid, ckaid_t *ckaid,
 				    const struct pubkey_type **type);
 
-extern struct private_key_stuff *lsw_get_pks(struct secret *s);
+extern struct secret_stuff *get_secret_stuff(struct secret *s);
 extern struct id_list *lsw_get_idlist(const struct secret *s);
 
 /*
@@ -121,11 +121,11 @@ extern struct id_list *lsw_get_idlist(const struct secret *s);
  * return -1 to return NULL
  */
 typedef int (*secret_eval)(struct secret *secret,
-			   struct private_key_stuff *pks,
+			   struct secret_stuff *pks,
 			   void *uservoid);
 
-extern struct secret *lsw_foreach_secret(struct secret *secrets,
-					 secret_eval func, void *uservoid);
+struct secret *foreach_secret(struct secret *secrets,
+			      secret_eval func, void *uservoid);
 
 struct hash_signature {
 	size_t len;
@@ -147,7 +147,7 @@ struct hash_signature {
 
 struct pubkey_type {
 	const char *name;
-	enum private_key_kind private_key_kind;
+	enum secret_kind private_key_kind;
 	void (*free_pubkey_content)(union pubkey_content *pkc);
 	/* to/from the blob in DNS's IPSECKEY's Public Key field */
 	diag_t (*ipseckey_rdata_to_pubkey_content)(shunk_t ipseckey_pubkey,
@@ -169,7 +169,7 @@ struct pubkey_signer {
 	const char *name;
 	enum digital_signature_blob digital_signature_blob;
 	const struct pubkey_type *type;
-	struct hash_signature (*sign_hash)(const struct private_key_stuff *pks,
+	struct hash_signature (*sign_hash)(const struct secret_stuff *pks,
 					   const uint8_t *hash_octets, size_t hash_len,
 					   const struct hash_desc *hash_algo,
 					   struct logger *logger);
@@ -275,7 +275,7 @@ extern void lsw_load_preshared_secrets(struct secret **psecrets, const char *sec
 extern void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *logger);
 
 extern struct secret *lsw_find_secret_by_id(struct secret *secrets,
-					    enum private_key_kind kind,
+					    enum secret_kind kind,
 					    const struct id *my_id,
 					    const struct id *his_id,
 					    bool asym);
@@ -284,10 +284,10 @@ extern struct secret *lsw_get_ppk_by_id(struct secret *secrets, chunk_t ppk_id);
 
 /* err_t!=NULL -> neither found nor loaded; loaded->just pulled in */
 err_t find_or_load_private_key_by_cert(struct secret **secrets, const struct cert *cert,
-				       const struct private_key_stuff **pks, bool *load_needed,
+				       const struct secret_stuff **pks, bool *load_needed,
 				       struct logger *logger);
 err_t find_or_load_private_key_by_ckaid(struct secret **secrets, const ckaid_t *ckaid,
-					const struct private_key_stuff **pks, bool *load_needed,
+					const struct secret_stuff **pks, bool *load_needed,
 					struct logger *logger);
 
 diag_t create_pubkey_from_cert(const struct id *id,

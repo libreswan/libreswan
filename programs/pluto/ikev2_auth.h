@@ -28,7 +28,7 @@ struct hash_signature;
 struct msg_digest;
 struct hash_desc;
 struct logger;
-struct private_key_stuff;
+struct secret_stuff;
 enum perspective;
 struct pubkey_signer;
 

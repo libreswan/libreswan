@@ -358,7 +358,7 @@ static size_t RSA_strength_in_bits(const struct pubkey *pubkey)
 
 const struct pubkey_type pubkey_type_rsa = {
 	.name = "RSA",
-	.private_key_kind = PKK_RSA,
+	.private_key_kind = SECRET_RSA, /* XXX: delete field */
 	.free_pubkey_content = free_pubkey_content,
 	.ipseckey_rdata_to_pubkey_content = ipseckey_rdata_to_pubkey_content,
 	.pubkey_content_to_ipseckey_rdata = pubkey_content_to_ipseckey_rdata,
@@ -368,7 +368,7 @@ const struct pubkey_type pubkey_type_rsa = {
 };
 
 /* returns the length of the result on success; 0 on failure */
-static struct hash_signature RSA_sign_hash_raw_rsa(const struct private_key_stuff *pks,
+static struct hash_signature RSA_sign_hash_raw_rsa(const struct secret_stuff *pks,
 						   const uint8_t *hash_val, size_t hash_len,
 						   const struct hash_desc *hash_algo,
 						   struct logger *logger)
@@ -507,7 +507,7 @@ const struct pubkey_signer pubkey_signer_raw_rsa = {
 };
 
 /* returns the length of the result on success; 0 on failure */
-static struct hash_signature RSA_sign_hash_pkcs1_1_5_rsa(const struct private_key_stuff *pks,
+static struct hash_signature RSA_sign_hash_pkcs1_1_5_rsa(const struct secret_stuff *pks,
 							 const uint8_t *hash_val, size_t hash_len,
 							 const struct hash_desc *hash_algo,
 							 struct logger *logger)
@@ -651,7 +651,7 @@ const struct pubkey_signer pubkey_signer_digsig_pkcs1_1_5_rsa = {
 };
 
 /* returns the length of the result on success; 0 on failure */
-static struct hash_signature RSA_sign_hash_rsassa_pss(const struct private_key_stuff *pks,
+static struct hash_signature RSA_sign_hash_rsassa_pss(const struct secret_stuff *pks,
 						      const uint8_t *hash_val, size_t hash_len,
 						      const struct hash_desc *hash_algo,
 						      struct logger *logger)

@@ -38,13 +38,13 @@ struct pubkey;
 struct pubkey_type;
 struct crypt_mac;
 struct packet_byte_stream;
-struct private_key_stuff;
+struct secret_stuff;
 struct hash_desc;
 struct show;
 struct ike_sa;
 struct pubkey_signer;
 
-const struct private_key_stuff *get_local_private_key(const struct connection *c,
+const struct secret_stuff *get_local_private_key(const struct connection *c,
 						      const struct pubkey_type *type,
 						      struct logger *logger);
 

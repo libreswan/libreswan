@@ -143,7 +143,7 @@ static void print_secret(const char *kind, const char *name,
 	}
 }
 
-static void print(struct private_key_stuff *pks,
+static void print(struct secret_stuff *pks,
 		  int count, struct id *id, bool disclose)
 {
 	id_buf idbuf = { "n/a", };
@@ -161,16 +161,16 @@ static void print(struct private_key_stuff *pks,
 	}
 
 	switch (pks->kind) {
-	case PKK_PSK:
+	case SECRET_PSK:
 		print_secret("PSK", "psk", idb, pks->u.preshared_secret, disclose);
 		break;
 
-	case PKK_XAUTH:
+	case SECRET_XAUTH:
 		print_secret("XAUTH", "xauth", idb, pks->u.preshared_secret, disclose);
 		break;
 
-	case PKK_RSA:
-	case PKK_ECDSA:
+	case SECRET_RSA:
+	case SECRET_ECDSA:
 	{
 		printf("%s", pks->pubkey_type->name);
 		keyid_t keyid = pks->keyid;
@@ -184,22 +184,22 @@ static void print(struct private_key_stuff *pks,
 		break;
 	}
 
-	case PKK_PPK:
+	case SECRET_PPK:
 		break;
 
-	case PKK_NULL:
+	case SECRET_NULL:
 		/* can't happen but the compiler does not know that */
 		printf("NULL authentication -- cannot happen: %s\n", idb);
 		abort();
 
-	case PKK_INVALID:
+	case SECRET_INVALID:
 		printf("Invalid or unknown key: %s\n", idb);
 		exit(1);
 	}
 }
 
 static void print_key(struct secret *secret,
-		      struct private_key_stuff *pks,
+		      struct secret_stuff *pks,
 		      bool disclose)
 {
 	if (secret) {
@@ -216,7 +216,7 @@ static void print_key(struct secret *secret,
 }
 
 static int list_key(struct secret *secret,
-		    struct private_key_stuff *pks,
+		    struct secret_stuff *pks,
 		    void *uservoid UNUSED)
 {
 	print_key(secret, pks, false);
@@ -224,7 +224,7 @@ static int list_key(struct secret *secret,
 }
 
 static int dump_key(struct secret *secret,
-		    struct private_key_stuff *pks,
+		    struct secret_stuff *pks,
 		    void *uservoid UNUSED)
 {
 	print_key(secret, pks, true);
@@ -232,12 +232,12 @@ static int dump_key(struct secret *secret,
 }
 
 static int pick_by_rsaid(struct secret *secret UNUSED,
-			 struct private_key_stuff *pks,
+			 struct secret_stuff *pks,
 			 void *uservoid)
 {
 	char *rsaid = (char *)uservoid;
 
-	if (pks->kind == PKK_RSA && streq(pks->keyid.keyid, rsaid)) {
+	if (pks->kind == SECRET_RSA && streq(pks->keyid.keyid, rsaid)) {
 		/* stop */
 		return 0;
 	} else {
@@ -247,11 +247,11 @@ static int pick_by_rsaid(struct secret *secret UNUSED,
 }
 
 static int pick_by_ckaid(struct secret *secret UNUSED,
-			 struct private_key_stuff *pks,
+			 struct secret_stuff *pks,
 			 void *uservoid)
 {
 	char *start = (char *)uservoid;
-	if ((pks->kind == PKK_RSA || pks->kind == PKK_ECDSA) &&
+	if ((pks->kind == SECRET_RSA || pks->kind == SECRET_ECDSA) &&
 	    ckaid_starts_with(&pks->ckaid, start)) {
 		/* stop */
 		return 0;
@@ -274,7 +274,7 @@ static char *base64_from_chunk(chunk_t chunk)
 	return base64;
 }
 
-static char *base64_ipseckey_rdata_from_pks(struct private_key_stuff *pks,
+static char *base64_ipseckey_rdata_from_pks(struct secret_stuff *pks,
 					    enum ipseckey_algorithm_type *ipseckey_algorithm)
 {
 	chunk_t ipseckey_pubkey = empty_chunk; /* must free */
@@ -291,10 +291,10 @@ static char *base64_ipseckey_rdata_from_pks(struct private_key_stuff *pks,
 	return base64;
 }
 
-static char *base64_pem_from_pks(struct private_key_stuff *pks)
+static char *base64_pem_from_pks(struct secret_stuff *pks)
 {
 	chunk_t der = empty_chunk; /* must free */
-	diag_t d = private_key_stuff_to_pubkey_der(pks, &der);
+	diag_t d = secret_pubkey_stuff_to_pubkey_der(pks, &der);
 	if (d != NULL) {
 		fprintf(stderr, "%s: %s\n", progname, str_diag(d));
 		pfree_diag(&d);
@@ -306,7 +306,7 @@ static char *base64_pem_from_pks(struct private_key_stuff *pks)
 	return pem;
 }
 
-static int show_ipseckey(struct private_key_stuff *pks,
+static int show_ipseckey(struct secret_stuff *pks,
 			 int precedence, char *gateway,
 			 bool pubkey_flg)
 {
@@ -348,10 +348,10 @@ static int show_ipseckey(struct private_key_stuff *pks,
 	return 0;
 }
 
-static int show_pem(struct private_key_stuff *pks)
+static int show_pem(struct secret_stuff *pks)
 {
 	chunk_t der = empty_chunk; /* must free */
-	diag_t d = private_key_stuff_to_pubkey_der(pks, &der);
+	diag_t d = secret_pubkey_stuff_to_pubkey_der(pks, &der);
 	if (d != NULL) {
 		fprintf(stderr, "%s: %s\n", progname, str_diag(d));
 		pfree_diag(&d);
@@ -369,23 +369,13 @@ static int show_pem(struct private_key_stuff *pks)
 	return 0;
 }
 
-static int show_leftright(struct private_key_stuff *pks,
+static int show_leftright(struct secret_stuff *pks,
 			  char *side, bool pubkey_flg)
 {
 	if (pks->pubkey_type == NULL) {
-		char *enumstr = "gcc is crazy";
-		switch (pks->kind) {
-		case PKK_PSK:
-			enumstr = "PKK_PSK";
-			break;
-		case PKK_XAUTH:
-			enumstr = "PKK_XAUTH";
-			break;
-		default:
-			sscanf(enumstr, "UNKNOWN (%d)", (int *)pks->kind);
-		}
-		fprintf(stderr, "%s: wrong kind of key %s in show_confkey. Expected PKK_RSA.\n",
-			progname, enumstr);
+		enum_buf eb;
+		fprintf(stderr, "%s: wrong kind of key %s in show_confkey. Expected RSA.\n",
+			progname, str_enum_short(&secret_kind_names, pks->kind, &eb));
 		return 5;
 	}
 
@@ -404,11 +394,11 @@ static int show_leftright(struct private_key_stuff *pks,
 		printf("\t%spubkey=", side);
 	} else {
 		switch (pks->kind) {
-		case PKK_RSA:
+		case SECRET_RSA:
 			printf("\t# rsakey %s\n", pks->keyid.keyid);
 			printf("\t%srsasigkey=0s", side);
 			break;
-		case PKK_ECDSA:
+		case SECRET_ECDSA:
 			printf("\t# ecdsakey %s\n", pks->keyid.keyid);
 			printf("\t%secdsakey=0s", side);
 			break;
@@ -422,9 +412,9 @@ static int show_leftright(struct private_key_stuff *pks,
 	return 0;
 }
 
-static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval func,
-								   void *uservoid,
-								   struct logger *logger)
+static struct secret_stuff *foreach_nss_private_key(secret_eval func,
+						    void *uservoid,
+						    struct logger *logger)
 {
 	PK11SlotInfo *slot = lsw_nss_get_authenticated_slot(logger);
 	if (slot == NULL) {
@@ -441,7 +431,7 @@ static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval f
 
 	int line = 1;
 
-	struct private_key_stuff *result = NULL;
+	struct secret_stuff *result = NULL;
 
 	SECKEYPrivateKeyListNode *node;
 	for (node = PRIVKEY_LIST_HEAD(list);
@@ -478,7 +468,7 @@ static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval f
 			continue;
 		}
 
-		struct private_key_stuff pks = {
+		struct secret_stuff pks = {
 			.pubkey_type = type,
 			.kind = type->private_key_kind,
 			.line = 0,
@@ -527,9 +517,9 @@ static struct private_key_stuff *lsw_nss_foreach_private_key_stuff(secret_eval f
 	return result; /* could be NULL */
 }
 
-static struct private_key_stuff *foreach_secret(secret_eval func, void *uservoid, struct logger *logger)
+static struct secret_stuff *foreach_secret_stuff(secret_eval func, void *uservoid, struct logger *logger)
 {
-	struct private_key_stuff *pks = lsw_nss_foreach_private_key_stuff(func, uservoid, logger);
+	struct secret_stuff *pks = foreach_nss_private_key(func, uservoid, logger);
 	if (pks == NULL) {
 		/* already logged any error */
 		return NULL;
@@ -683,27 +673,27 @@ int main(int argc, char *argv[])
 	/* options that apply to entire files */
 	if (dump_flg) {
 		/* dumps private key info too */
-		foreach_secret(dump_key, NULL, logger);
+		foreach_secret_stuff(dump_key, NULL, logger);
 		goto out;
 	}
 
 	if (list_flg) {
-		foreach_secret(list_key, NULL, logger);
+		foreach_secret_stuff(list_key, NULL, logger);
 		goto out;
 	}
 
-	struct private_key_stuff *pks;
+	struct secret_stuff *pks;
 	if (rsaid != NULL) {
 		if (log_to_stderr)
 			printf("%s picking by rsaid=%s\n",
 			       ipseckey_flg ? ";" : "\t#", rsaid);
-		pks = foreach_secret(pick_by_rsaid, rsaid, logger);
+		pks = foreach_secret_stuff(pick_by_rsaid, rsaid, logger);
 	} else if (ckaid != NULL) {
 		if (log_to_stderr) {
 			printf("%s picking by ckaid=%s\n",
 			       ipseckey_flg ? ";" : "\t#", ckaid);
 		}
-		pks = foreach_secret(pick_by_ckaid, ckaid, logger);
+		pks = foreach_secret_stuff(pick_by_ckaid, ckaid, logger);
 	} else {
 		fprintf(stderr, "%s: nothing to do\n", progname);
 		status = 1;

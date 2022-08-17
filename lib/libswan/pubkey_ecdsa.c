@@ -300,7 +300,7 @@ static size_t ECDSA_strength_in_bits(const struct pubkey *pubkey)
 
 const struct pubkey_type pubkey_type_ecdsa = {
 	.name = "ECDSA",
-	.private_key_kind = PKK_ECDSA,
+	.private_key_kind = SECRET_ECDSA, /* XXX: delete field */
 	.ipseckey_rdata_to_pubkey_content = ipseckey_rdata_to_pubkey_content,
 	.pubkey_content_to_ipseckey_rdata = pubkey_content_to_ipseckey_rdata,
 	.free_pubkey_content = free_pubkey_content,
@@ -309,7 +309,7 @@ const struct pubkey_type pubkey_type_ecdsa = {
 	.strength_in_bits = ECDSA_strength_in_bits,
 };
 
-static struct hash_signature ECDSA_raw_sign_hash(const struct private_key_stuff *pks,
+static struct hash_signature ECDSA_raw_sign_hash(const struct secret_stuff *pks,
 						 const uint8_t *hash_val, size_t hash_len,
 						 const struct hash_desc *hash_algo_unused UNUSED,
 						 struct logger *logger)
@@ -430,7 +430,7 @@ const struct pubkey_signer pubkey_signer_raw_ecdsa = {
 	.jam_auth_method = ECDSA_jam_auth_method,
 };
 
-static struct hash_signature ECDSA_digsig_sign_hash(const struct private_key_stuff *pks,
+static struct hash_signature ECDSA_digsig_sign_hash(const struct secret_stuff *pks,
 						    const uint8_t *hash_val, size_t hash_len,
 						    const struct hash_desc *hash_algo_unused UNUSED,
 						    struct logger *logger)
