@@ -372,12 +372,20 @@ static int show_pem(struct secret_stuff *pks)
 static int show_leftright(struct secret_stuff *pks,
 			  char *side, bool pubkey_flg)
 {
-	if (pks->pubkey_type == NULL) {
+	switch (pks->kind) {
+	case SECRET_RSA:
+	case SECRET_ECDSA:
+		break;
+	default:
+	{
 		enum_buf eb;
-		fprintf(stderr, "%s: wrong kind of key %s in show_confkey. Expected RSA.\n",
+		fprintf(stderr, "%s: wrong kind of key %s in show_confkey, expected RSA or ECDSA.\n",
 			progname, str_enum_short(&secret_kind_names, pks->kind, &eb));
 		return 5;
 	}
+	}
+
+	passert(pks->pubkey_type != NULL);
 
 	char *base64 = NULL;
 	if (pubkey_flg) {

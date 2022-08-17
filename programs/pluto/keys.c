@@ -607,9 +607,10 @@ const struct secret_stuff *get_local_private_key(const struct connection *c,
 		 * If we don't find the right keytype (RSA, ECDSA,
 		 * etc) then best will end up as NULL
 		 */
-		dbg("connection %s's %s private key found in NSS DB using cert",
-		    c->name, pks->pubkey_type->name);
+		pexpect(pks->kind == type->private_key_kind);
 		pexpect(pks->pubkey_type == type);
+		dbg("connection %s's %s private key found in NSS DB using cert",
+		    c->name, type->name);
 		return pks;
 	}
 
@@ -654,9 +655,10 @@ const struct secret_stuff *get_local_private_key(const struct connection *c,
 		 * If we don't find the right keytype (RSA, ECDSA,
 		 * etc) then best will end up as NULL
 		 */
-		dbg("connection %s's %s private key found in NSS DB using CKAID",
-		    c->name, pks->pubkey_type->name);
+		pexpect(pks->kind == type->private_key_kind);
 		pexpect(pks->pubkey_type == type);
+		dbg("connection %s's %s private key found in NSS DB using CKAID",
+		    c->name, type->name);
 		return pks;
 	}
 
@@ -672,9 +674,10 @@ const struct secret_stuff *get_local_private_key(const struct connection *c,
 	const struct secret_stuff *pks = get_secret_stuff(s);
 	passert(pks != NULL);
 
-	dbg("connection %s's %s private key found",
-	    c->name, pks->pubkey_type->name);
+	pexpect(pks->kind == type->private_key_kind);
 	pexpect(pks->pubkey_type == type);
+	dbg("connection %s's %s private key found",
+	    c->name, type->name);
 	return pks;
 }
 

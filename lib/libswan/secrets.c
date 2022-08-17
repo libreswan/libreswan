@@ -181,19 +181,24 @@ const ckaid_t *pubkey_ckaid(const struct pubkey *pk)
 
 const ckaid_t *secret_ckaid(const struct secret *secret)
 {
-	if (secret->stuff.pubkey_type != NULL) {
+	switch (secret->stuff.kind) {
+	case SECRET_RSA:
+	case SECRET_ECDSA:
+		/* some sort of PKI */
 		return &secret->stuff.ckaid;
-	} else {
+	default:
 		return NULL;
 	}
 }
 
 const keyid_t *secret_keyid(const struct secret *secret)
 {
-	if (secret->stuff.pubkey_type != NULL) {
+	switch (secret->stuff.kind) {
+	case SECRET_RSA:
+	case SECRET_ECDSA:
 		/* some sort of PKI */
 		return &secret->stuff.keyid;
-	} else {
+	default:
 		return NULL;
 	}
 }
@@ -223,24 +228,48 @@ static struct secret *find_secret_by_pubkey_ckaid_1(struct secret *secrets,
 		dbg("trying secret %s:%s",
 		    enum_name(&secret_kind_names, pks->kind),
 		    str_keyid(pks->keyid));
-		if (type == NULL/*wildcard*/ ||
-		    s->stuff.pubkey_type == type) {
-			/* only public/private key pairs have a CKAID */
-			const ckaid_t *sckaid = secret_ckaid(s);
-			if (sckaid != NULL &&
-			    ckaid_eq_nss(sckaid, pubkey_ckaid)) {
-				dbg("matched");
-				return s;
-			}
+		/* should be == SECRET_PKI */
+		switch (pks->kind) {
+		case SECRET_RSA:
+		case SECRET_ECDSA:
+			/* some sort of PKI */
+			break;
+		default:
+			dbg("  not PKI");
+			continue;
 		}
+		if (type != NULL && pks->pubkey_type != type) {
+			/* need exact or wildcard */
+			dbg("  not %s", type->name);
+			continue;
+		}
+		if (!ckaid_eq_nss(&pks->ckaid, pubkey_ckaid)) {
+			dbg("  wrong ckaid");
+			continue;
+		}
+		dbg("  matched");
+		return s;
 	}
 	return NULL;
 }
 
 bool secret_pubkey_same(struct secret *lhs, struct secret *rhs)
 {
- 	if (lhs->stuff.pubkey_type == NULL ||
-	    rhs->stuff.pubkey_type == NULL) {
+	/* should be == SECRET_PKI */
+	switch (lhs->stuff.kind) {
+	case SECRET_RSA:
+	case SECRET_ECDSA:
+		break;
+	default:
+		return false;
+	}
+
+	/* should be == SECRET_PKI */
+	switch (rhs->stuff.kind) {
+	case SECRET_RSA:
+	case SECRET_ECDSA:
+		break;
+	default:
 		return false;
 	}
 
