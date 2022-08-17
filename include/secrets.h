@@ -53,6 +53,7 @@ struct cert;
  */
 
 struct pubkey_content {
+	const struct pubkey_type *type;
 	SECKEYPublicKey *public_key;
 };
 
@@ -110,8 +111,7 @@ struct secret_stuff {
 
 diag_t secret_pubkey_stuff_to_pubkey_der(struct secret_stuff *pks, chunk_t *der);
 diag_t pubkey_der_to_pubkey_content(shunk_t pubkey_der, struct pubkey_content *pkc,
-				    keyid_t *keyid, ckaid_t *ckaid,
-				    const struct pubkey_type **type);
+				    keyid_t *keyid, ckaid_t *ckaid);
 
 extern struct secret_stuff *get_secret_stuff(struct secret *s);
 extern struct id_list *lsw_get_idlist(const struct secret *s);

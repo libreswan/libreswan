@@ -864,6 +864,7 @@ static int extract_end(struct connection *c,
 		       const struct ip_info *client_afi,
 		       struct logger *logger/*connection "..."*/)
 {
+	err_t err;
 	passert(dst->config == config_end);
 	const char *leftright = dst->config->leftright;
 	bool same_ca = false;
@@ -970,25 +971,6 @@ static int extract_end(struct connection *c,
 		 * second message, this code just extracts the ckaid.
 		 */
 
-		const struct pubkey_type *type;
-		int base;
-		switch (src->pubkey_alg) {
-		case IPSECKEY_ALGORITHM_RSA:
-			type = &pubkey_type_rsa;
-			base = 0; /* figure it out */
-			break;
-		case IPSECKEY_ALGORITHM_ECDSA:
-			type = &pubkey_type_ecdsa;
-			base = 0; /* figure it out */
-			break;
-		case IPSECKEY_ALGORITHM_X_PUBKEY:
-			type = NULL;
-			base = 64; /* dam it */
-			break;
-		default:
-			bad_case(src->pubkey_alg);
-		}
-
 		if (src->ckaid != NULL) {
 			enum_buf pkb;
 			llog(RC_LOG, logger,
@@ -997,24 +979,23 @@ static int extract_end(struct connection *c,
 			     leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
 		}
 
-		/* XXX: lifted from starter_whack_add_pubkey() */
 		chunk_t keyspace = NULL_HUNK; /* must free */
-		err_t err = ttochunk(shunk1(src->pubkey), base, &keyspace);
-		if (err != NULL) {
-			enum_buf pkb;
-			llog(RC_FATAL, logger,
-			     "failed to add connection: %s%s invalid: %s",
-			     leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
-			     err);
-			return -1;
-		}
-
 		struct pubkey_content pkc;
 		ckaid_t ckaid;
 		keyid_t keyid;
-		if (type == NULL) {
+		if (src->pubkey_alg == IPSECKEY_ALGORITHM_X_PUBKEY) {
+			/* XXX: lifted from starter_whack_add_pubkey() */
+			err = ttochunk(shunk1(src->pubkey), 64/*damit*/, &keyspace);
+			if (err != NULL) {
+				enum_buf pkb;
+				llog(RC_FATAL, logger,
+				     "failed to add connection: %s%s invalid: %s",
+				     leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
+				     err);
+				return -1;
+			}
 			diag_t d = pubkey_der_to_pubkey_content(HUNK_AS_SHUNK(keyspace), &pkc,
-								&keyid, &ckaid, &type);
+								&keyid, &ckaid);
 			if (d != NULL) {
 				free_chunk_content(&keyspace);
 				enum_buf pkb;
@@ -1024,6 +1005,28 @@ static int extract_end(struct connection *c,
 				return -1;
 			}
 		} else {
+			/* XXX: lifted from starter_whack_add_pubkey() */
+			err = ttochunk(shunk1(src->pubkey), 0/*figure-it-out*/, &keyspace);
+			if (err != NULL) {
+				enum_buf pkb;
+				llog(RC_FATAL, logger,
+				     "failed to add connection: %s%s invalid: %s",
+				     leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
+				     err);
+				return -1;
+			}
+			const struct pubkey_type *type;
+			switch (src->pubkey_alg) {
+			case IPSECKEY_ALGORITHM_RSA:
+				type = &pubkey_type_rsa;
+				break;
+			case IPSECKEY_ALGORITHM_ECDSA:
+				type = &pubkey_type_ecdsa;
+				break;
+			default:
+				bad_case(src->pubkey_alg);
+			}
+
 			diag_t d = type->ipseckey_rdata_to_pubkey_content(HUNK_AS_SHUNK(keyspace),
 									  &pkc, &keyid, &ckaid);
 			if (d != NULL) {
@@ -1036,7 +1039,7 @@ static int extract_end(struct connection *c,
 			}
 		}
 
-		free_chunk_content(&keyspace);
+		passert(pkc.type != NULL);
 
 		ckaid_buf ckb;
 		enum_buf pkb;
@@ -1044,7 +1047,8 @@ static int extract_end(struct connection *c,
 		    str_ckaid(&ckaid, &ckb),
 		    leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
 		config_end->host.ckaid = clone_const_thing(ckaid, "raw pubkey's ckaid");
-		type->free_pubkey_content(&pkc);
+		free_chunk_content(&keyspace);
+		pkc.type->free_pubkey_content(&pkc);
 
 		/* try to pre-load the private key */
 		bool load_needed;

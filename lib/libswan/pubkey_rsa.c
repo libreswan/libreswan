@@ -234,6 +234,7 @@ static diag_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 		return d;
 	}
 
+	rsak->type = &pubkey_type_rsa;
 	rsak->public_key = seckey;
 	dbg_alloc("rsa->public_key", rsak->public_key, HERE);
 
@@ -286,6 +287,7 @@ static err_t RSA_extract_pubkey_content(struct pubkey_content *pub,
 	}
 
 	/* now allocate */
+	pub->type = &pubkey_type_rsa;
 	pub->public_key = SECKEY_CopyPublicKey(seckey_public);
 	dbg_alloc("rsa->public_key", pub->public_key, HERE);
 	*ckaid = ckaid_from_secitem(cert_ckaid);

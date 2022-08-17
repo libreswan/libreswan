@@ -1073,7 +1073,6 @@ void replace_public_key(struct pubkey_list **pubkey_db,
 
 static struct pubkey *alloc_pubkey(const struct id *id, /* ASKK */
 				   enum dns_auth_level dns_auth_level,
-				   const struct pubkey_type *type,
 				   realtime_t install_time, realtime_t until_time,
 				   uint32_t ttl,
 				   const struct pubkey_content *pkc,
@@ -1087,7 +1086,7 @@ static struct pubkey *alloc_pubkey(const struct id *id, /* ASKK */
 	pk->content = *pkc;
 	pk->id = clone_id(id, "public key id");
 	pk->dns_auth_level = dns_auth_level;
-	pk->type = type;
+	pk->type = pkc->type;
 	pk->installed_time = install_time;
 	pk->until_time = until_time;
 	pk->dns_ttl = ttl;
@@ -1119,17 +1118,15 @@ diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
 	struct pubkey_content scratch_pkc;
 	keyid_t keyid;
 	ckaid_t ckaid;
-	const struct pubkey_type *pubkey_type = NULL; /* TBD */
 
 	if (algorithm_type == IPSECKEY_ALGORITHM_X_PUBKEY) {
 		diag_t d = pubkey_der_to_pubkey_content(dnssec_pubkey, &scratch_pkc,
-							&keyid, &ckaid, &pubkey_type);
+							&keyid, &ckaid);
 		if (d != NULL) {
 			return d;
 		}
-		passert(pubkey_type != NULL);
 	} else {
-
+		const struct pubkey_type *pubkey_type = NULL; /* TBD */
 		switch (algorithm_type) {
 		case IPSECKEY_ALGORITHM_RSA:
 			pubkey_type = &pubkey_type_rsa;
@@ -1142,18 +1139,19 @@ diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
 		}
 
 		diag_t d = pubkey_type->ipseckey_rdata_to_pubkey_content(dnssec_pubkey,
-									&scratch_pkc,
-									&keyid, &ckaid);
+									 &scratch_pkc,
+									 &keyid, &ckaid);
 		if (d != NULL) {
 			return d;
 		}
 	}
+	passert(scratch_pkc.type != NULL);
 
 	/*
 	 * Second: use extracted information to create the pubkey.
 	 */
 
-	struct pubkey *pubkey = alloc_pubkey(id, dns_auth_level, pubkey_type,
+	struct pubkey *pubkey = alloc_pubkey(id, dns_auth_level,
 					     install_time, until_time, ttl,
 					     &scratch_pkc, &keyid, &ckaid,
 					     null_shunk,	/* raw keys have no issuer */
@@ -1395,6 +1393,7 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 		SECITEM_FreeItem(ckaid_nss, PR_TRUE);
 		return diag("NSS: could not extract pubkey content: %s", err);
 	}
+	passert(pkc.type != NULL);
 
 	realtime_t install_time = realnow();
 	realtime_t until_time;
@@ -1405,7 +1404,7 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 		until_time = realtime(not_after / PR_USEC_PER_SEC);
 	}
 	*pk = alloc_pubkey(id, /*dns_auth_level*/0/*default*/,
-			   type, install_time, until_time,
+			   install_time, until_time,
 			   /*ttl*/0, &pkc, &keyid, &ckaid,
 			   same_secitem_as_shunk(cert->derIssuer),
 			   HERE);
