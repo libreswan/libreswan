@@ -445,19 +445,13 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 
 		case PUBKEY_PREEXCHANGED:
 		{
-			const char *name; /* enumname? */
 			int base;
 			switch (end->pubkey_alg) {
 			case IPSECKEY_ALGORITHM_RSA:
-				name = "rsasigkey";
-				base = 0; /* figure it out */
-				break;
 			case IPSECKEY_ALGORITHM_ECDSA:
-				name = "ecdsakey";
 				base = 0; /* figure it out */
 				break;
 			case IPSECKEY_ALGORITHM_X_PUBKEY:
-				name = "pubkey";
 				base = 64; /* dam it */
 				break;
 			default:
@@ -466,16 +460,21 @@ static int starter_whack_add_pubkey(struct starter_config *cfg,
 			chunk_t keyspace = NULL_HUNK; /* must free */
 			err_t err = ttochunk(shunk1(end->pubkey), base, &keyspace);
 			if (err != NULL) {
-				passert(name != NULL);
+				enum_buf pkb;
 				starter_log(LOG_LEVEL_ERR,
 					    "conn %s: %s%s malformed [%s]",
-					    connection_name(conn), lr, name, err);
+					    connection_name(conn), lr,
+					    str_enum(&ipseckey_algorithm_config_names, end->pubkey_alg, &pkb),
+					    err);
 				return 1;
 			}
 
+			enum_buf pkb;
 			starter_log(LOG_LEVEL_DEBUG,
 				    "\tsending %s %s%s=%s",
-				    connection_name(conn), lr, name, end->pubkey);
+				    connection_name(conn), lr,
+				    str_enum(&ipseckey_algorithm_config_names, end->pubkey_alg, &pkb),
+				    end->pubkey);
 			msg.keyval = keyspace;
 			ret = send_whack_msg(&msg, cfg->ctlsocket);
 			free_chunk_content(&keyspace);

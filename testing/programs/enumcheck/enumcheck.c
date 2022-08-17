@@ -343,6 +343,8 @@ int main(int argc UNUSED, char *argv[])
 	test_enum_range("ike_id_type_names", &ike_id_type_names, -10, 256);
 	test_enums("ikev2_ike_id_type_names", &ikev1_ike_id_type_names);
 	test_enums("ikev2_ike_id_type_names", &ikev2_ike_id_type_names);
+	test_enums("ipseckey_algorithm_type_names", &ipseckey_algorithm_type_names);
+	test_enums("ipseckey_algorithm_config_names", &ipseckey_algorithm_config_names);
 
 	/*
 	 * Some hard-wired checks of enum_enum_name.  If a lookup

@@ -278,19 +278,16 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 	/*
 	 * Figure out the key type.
 	 */
-	const char *name; /* enumname? */
+
 	const struct pubkey_type *type;
 	switch (msg->pubkey_alg) {
 	case IPSECKEY_ALGORITHM_RSA:
-		name = "rsasigkey";
 		type = &pubkey_type_rsa;
 		break;
 	case IPSECKEY_ALGORITHM_ECDSA:
-		name = "ecdsakey";
 		type = &pubkey_type_ecdsa;
 		break;
 	case IPSECKEY_ALGORITHM_X_PUBKEY:
-		name = "pubkey";
 		type = NULL;
 		break;
 	default:
@@ -299,14 +296,15 @@ static void key_add_request(const struct whack_message *msg, struct logger *logg
 			return;
 		}
 		type = NULL;
-		name = "no-key";
 	}
 
+	enum_buf pkb;
 	dbg("processing key=%s addkey=%s given_key=%s alg=%s(%d)",
 	    bool_str(msg->whack_key),
 	    bool_str(msg->whack_addkey),
 	    bool_str(given_key),
-	    name, msg->pubkey_alg);
+	    str_enum(&ipseckey_algorithm_config_names, msg->pubkey_alg, &pkb),
+	    msg->pubkey_alg);
 
 	/*
 	 * Adding must have a public key.

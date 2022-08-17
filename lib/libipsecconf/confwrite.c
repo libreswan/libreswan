@@ -346,13 +346,10 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 	}
 
 	if (end->pubkey != NULL && end->pubkey[0] != '\0') {
-		const char *name = (end->pubkey_alg == IPSECKEY_ALGORITHM_RSA ? "rsasigkey" :
-				    end->pubkey_alg == IPSECKEY_ALGORITHM_ECDSA ? "ecdsakey" :
-				    end->pubkey_alg == IPSECKEY_ALGORITHM_DSA ? "dsakey" :
-				    end->pubkey_alg == IPSECKEY_ALGORITHM_X_PUBKEY ? "pubkey" :
-				    NULL);
-		passert(name != NULL);
-		fprintf(out, "\t%s%s=%s\n", side, name, end->pubkey);
+		enum_buf pkb;
+		fprintf(out, "\t%s%s=%s\n", side,
+			str_enum(&ipseckey_algorithm_config_names, end->pubkey_alg, &pkb),
+			end->pubkey);
 	}
 
 	if (end->protoport.is_set) {

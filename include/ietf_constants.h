@@ -1678,12 +1678,17 @@ enum gw_identity_type {
 /*
  * Public key algorithm number in IPSECKEY DNS RR. See RFC 4025 2.4.
  */
+
 enum ipseckey_algorithm_type {
 	IPSECKEY_ALGORITHM_DSA = 1,
 	IPSECKEY_ALGORITHM_RSA = 2,
 	IPSECKEY_ALGORITHM_ECDSA = 3,
+	/* E*D*DSA? */
 	IPSECKEY_ALGORITHM_X_PUBKEY = 4, /* Subject Public Key Info - guess */
 };
+
+extern const struct enum_names ipseckey_algorithm_type_names;
+extern const struct enum_names ipseckey_algorithm_config_names; /* in ipsec.conf */
 
 /*
  * IKEv1 Identification type values

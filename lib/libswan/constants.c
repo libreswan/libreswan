@@ -2716,6 +2716,8 @@ static const enum_names *en_checklist[] = {
 	&policy_spi_names,
 	&eaptls_flag_names,
 	&pluto_exit_code_names,
+	&ipseckey_algorithm_type_names,
+	&ipseckey_algorithm_config_names,
 };
 
 void check_enum_names(enum_names *checklist[], size_t tl)
