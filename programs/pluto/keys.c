@@ -209,10 +209,10 @@ static bool try_all_keys(const char *cert_origin,
 	for (struct pubkey_list *p = pubkey_db; p != NULL; p = p->next) {
 		struct pubkey *key = p->key;
 
-		if (key->type != s->signer->type) {
+		if (key->content.type != s->signer->type) {
 			id_buf printkid;
 			dbg("  skipping '%s' with type %s",
-			    str_id(&key->id, &printkid), key->type->name);
+			    str_id(&key->id, &printkid), key->content.type->name);
 			continue;
 		}
 
@@ -336,7 +336,7 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 			id_buf printkid;
 			log_state(RC_LOG_SERIOUS, &ike->sa,
 				  "cached %s public key '%s' has expired and has been deleted",
-				  key->type->name, str_id(&key->id, &printkid));
+				  key->content.type->name, str_id(&key->id, &printkid));
 			*pp = free_public_keyentry(*(pp));
 			continue; /* continue with next public key */
 		}
@@ -607,9 +607,10 @@ const struct secret_stuff *get_local_private_key(const struct connection *c,
 		 * If we don't find the right keytype (RSA, ECDSA,
 		 * etc) then best will end up as NULL
 		 */
+		pexpect(pks->kind == type->private_key_kind);
+		pexpect(pks->u.pubkey.content.type == type);
 		dbg("connection %s's %s private key found in NSS DB using cert",
-		    c->name, pks->pubkey_type->name);
-		pexpect(pks->pubkey_type == type);
+		    c->name, type->name);
 		return pks;
 	}
 
@@ -654,9 +655,10 @@ const struct secret_stuff *get_local_private_key(const struct connection *c,
 		 * If we don't find the right keytype (RSA, ECDSA,
 		 * etc) then best will end up as NULL
 		 */
+		pexpect(pks->kind == type->private_key_kind);
+		pexpect(pks->u.pubkey.content.type == type);
 		dbg("connection %s's %s private key found in NSS DB using CKAID",
-		    c->name, pks->pubkey_type->name);
-		pexpect(pks->pubkey_type == type);
+		    c->name, type->name);
 		return pks;
 	}
 
@@ -672,9 +674,10 @@ const struct secret_stuff *get_local_private_key(const struct connection *c,
 	const struct secret_stuff *pks = get_secret_stuff(s);
 	passert(pks != NULL);
 
+	pexpect(pks->kind == type->private_key_kind);
+	pexpect(pks->u.pubkey.content.type == type);
 	dbg("connection %s's %s private key found",
-	    c->name, pks->pubkey_type->name);
-	pexpect(pks->pubkey_type == type);
+	    c->name, type->name);
 	return pks;
 }
 
@@ -753,7 +756,7 @@ static void show_pubkey(struct show *s, struct pubkey *key, bool utc, const char
 		jam_realtime(buf, key->installed_time, utc);
 		jam(buf, ",");
 		jam(buf, " %4zd", pubkey_strength_in_bits(key));
-		jam(buf, " %s", key->type->name);
+		jam(buf, " %s", key->content.type->name);
 		jam(buf, " Key %s", str_keyid(key->keyid));
 		jam(buf, " (%s private key),",
 		    (load_err != NULL ? "no" :

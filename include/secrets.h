@@ -53,6 +53,7 @@ struct cert;
  */
 
 struct pubkey_content {
+	const struct pubkey_type *type;
 	SECKEYPublicKey *public_key;
 };
 
@@ -90,8 +91,8 @@ struct secret_stuff {
 
 	chunk_t ppk;
 	chunk_t ppk_id;
+
 	/* for PKI */
-	const struct pubkey_type *pubkey_type;
 	keyid_t keyid;
 
 	/*
@@ -110,8 +111,7 @@ struct secret_stuff {
 
 diag_t secret_pubkey_stuff_to_pubkey_der(struct secret_stuff *pks, chunk_t *der);
 diag_t pubkey_der_to_pubkey_content(shunk_t pubkey_der, struct pubkey_content *pkc,
-				    keyid_t *keyid, ckaid_t *ckaid,
-				    const struct pubkey_type **type);
+				    keyid_t *keyid, ckaid_t *ckaid);
 
 extern struct secret_stuff *get_secret_stuff(struct secret *s);
 extern struct id_list *lsw_get_idlist(const struct secret *s);
@@ -162,7 +162,7 @@ struct pubkey_type {
 					keyid_t *keyid, ckaid_t *ckaid,
 					SECKEYPublicKey *pubkey_nss, SECItem *ckaid_nss);
 	bool (*pubkey_same)(const struct pubkey_content *lhs, const struct pubkey_content *rhs);
-#define pubkey_strength_in_bits(PUBKEY) ((PUBKEY)->type->strength_in_bits(PUBKEY))
+#define pubkey_strength_in_bits(PUBKEY) ((PUBKEY)->content.type->strength_in_bits(PUBKEY))
 	size_t (*strength_in_bits)(const struct pubkey *pubkey);
 };
 
@@ -222,7 +222,6 @@ struct pubkey {
 	realtime_t until_time;
 	uint32_t dns_ttl; /* from wire. until_time is derived using this */
 	asn1_t issuer;
-	const struct pubkey_type *type;
 	struct pubkey_content content;
 	/* for overalloc of issuer */
 	uint8_t end[0];

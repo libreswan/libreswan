@@ -45,8 +45,8 @@
 #include "refcnt.h"		/* for dbg_{alloc,free}() */
 
 static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubkey,
-						    struct pubkey_content *ecdsa,
-						    keyid_t *keyid, ckaid_t *ckaid)
+						     struct pubkey_content *ecdsa,
+						     keyid_t *keyid, ckaid_t *ckaid)
 {
 	static const struct dh_desc *dh[] = {
 		&ike_alg_dh_secp256r1,
@@ -178,6 +178,7 @@ static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubk
 		return d;
 	}
 
+	ecdsa->type = &pubkey_type_ecdsa;
 	ecdsa->public_key = seckey;
 	dbg_alloc("ecdsa->public_key", seckey, HERE);
 
@@ -216,6 +217,7 @@ static err_t ECDSA_extract_pubkey_content(struct pubkey_content *ecdsa,
 					  SECKEYPublicKey *seckey_public,
 					  SECItem *ckaid_nss)
 {
+	ecdsa->type = &pubkey_type_ecdsa;
 	ecdsa->public_key = SECKEY_CopyPublicKey(seckey_public);
 	dbg_alloc("ecdsa->public_key", ecdsa->public_key, HERE);
 	*ckaid = ckaid_from_secitem(ckaid_nss);

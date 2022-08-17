@@ -105,7 +105,7 @@ static asn1_t get_peer_ca(struct pubkey_list *const *pubkey_db,
 
 	for (p = *pubkey_db; p != NULL; p = p->next) {
 		struct pubkey *key = p->key;
-		if (key->type == &pubkey_type_rsa && same_id(peer_id, &key->id))
+		if (key->content.type == &pubkey_type_rsa && same_id(peer_id, &key->id))
 			return key->issuer;
 	}
 	return null_shunk;

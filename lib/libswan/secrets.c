@@ -181,19 +181,24 @@ const ckaid_t *pubkey_ckaid(const struct pubkey *pk)
 
 const ckaid_t *secret_ckaid(const struct secret *secret)
 {
-	if (secret->stuff.pubkey_type != NULL) {
+	switch (secret->stuff.kind) {
+	case SECRET_RSA:
+	case SECRET_ECDSA:
+		/* some sort of PKI */
 		return &secret->stuff.ckaid;
-	} else {
+	default:
 		return NULL;
 	}
 }
 
 const keyid_t *secret_keyid(const struct secret *secret)
 {
-	if (secret->stuff.pubkey_type != NULL) {
+	switch (secret->stuff.kind) {
+	case SECRET_RSA:
+	case SECRET_ECDSA:
 		/* some sort of PKI */
 		return &secret->stuff.keyid;
-	} else {
+	default:
 		return NULL;
 	}
 }
@@ -223,33 +228,57 @@ static struct secret *find_secret_by_pubkey_ckaid_1(struct secret *secrets,
 		dbg("trying secret %s:%s",
 		    enum_name(&secret_kind_names, pks->kind),
 		    str_keyid(pks->keyid));
-		if (type == NULL/*wildcard*/ ||
-		    s->stuff.pubkey_type == type) {
-			/* only public/private key pairs have a CKAID */
-			const ckaid_t *sckaid = secret_ckaid(s);
-			if (sckaid != NULL &&
-			    ckaid_eq_nss(sckaid, pubkey_ckaid)) {
-				dbg("matched");
-				return s;
-			}
+		/* should be == SECRET_PKI */
+		switch (pks->kind) {
+		case SECRET_RSA:
+		case SECRET_ECDSA:
+			/* some sort of PKI */
+			break;
+		default:
+			dbg("  not PKI");
+			continue;
 		}
+		if (type != NULL && pks->u.pubkey.content.type != type) {
+			/* need exact or wildcard */
+			dbg("  not %s", type->name);
+			continue;
+		}
+		if (!ckaid_eq_nss(&pks->ckaid, pubkey_ckaid)) {
+			dbg("  wrong ckaid");
+			continue;
+		}
+		dbg("  matched");
+		return s;
 	}
 	return NULL;
 }
 
 bool secret_pubkey_same(struct secret *lhs, struct secret *rhs)
 {
- 	if (lhs->stuff.pubkey_type == NULL ||
-	    rhs->stuff.pubkey_type == NULL) {
+	/* should be == SECRET_PKI */
+	switch (lhs->stuff.kind) {
+	case SECRET_RSA:
+	case SECRET_ECDSA:
+		break;
+	default:
 		return false;
 	}
 
-	if (lhs->stuff.pubkey_type != rhs->stuff.pubkey_type) {
+	/* should be == SECRET_PKI */
+	switch (rhs->stuff.kind) {
+	case SECRET_RSA:
+	case SECRET_ECDSA:
+		break;
+	default:
 		return false;
 	}
 
-	return lhs->stuff.pubkey_type->pubkey_same(&lhs->stuff.u.pubkey.content,
-						   &rhs->stuff.u.pubkey.content);
+	if (lhs->stuff.u.pubkey.content.type != rhs->stuff.u.pubkey.content.type) {
+		return false;
+	}
+
+	return lhs->stuff.u.pubkey.content.type->pubkey_same(&lhs->stuff.u.pubkey.content,
+							    &rhs->stuff.u.pubkey.content);
 }
 
 struct secret *lsw_find_secret_by_id(struct secret *secrets,
@@ -936,7 +965,7 @@ void lsw_free_preshared_secrets(struct secret **psecrets, struct logger *logger)
 			case SECRET_ECDSA:
 				/* Note: pub is all there is */
 				SECKEY_DestroyPrivateKey(s->stuff.u.pubkey.private_key);
-				s->stuff.pubkey_type->free_pubkey_content(&s->stuff.u.pubkey.content);
+				s->stuff.u.pubkey.content.type->free_pubkey_content(&s->stuff.u.pubkey.content);
 				break;
 			default:
 				bad_case(s->stuff.kind);
@@ -973,7 +1002,7 @@ static void free_pubkey(void *obj, where_t where UNUSED)
 	struct pubkey *pk = obj;
 	free_id_content(&pk->id);
 	/* algorithm-specific freeing */
-	pk->type->free_pubkey_content(&pk->content);
+	pk->content.type->free_pubkey_content(&pk->content);
 	pfree(pk);
 }
 
@@ -1026,7 +1055,7 @@ void delete_public_keys(struct pubkey_list **head,
 	for (pp = head; (p = *pp) != NULL; ) {
 		struct pubkey *pk = p->key;
 
-		if (same_id(id, &pk->id) && pk->type == type)
+		if (same_id(id, &pk->id) && pk->content.type == type)
 			*pp = free_public_keyentry(p);
 		else
 			pp = &p->next;
@@ -1037,14 +1066,13 @@ void replace_public_key(struct pubkey_list **pubkey_db,
 			struct pubkey **pk)
 {
 	/* ??? clang 3.5 thinks pk might be NULL */
-	delete_public_keys(pubkey_db, &(*pk)->id, (*pk)->type);
+	delete_public_keys(pubkey_db, &(*pk)->id, (*pk)->content.type);
 	install_public_key(pk, pubkey_db);
 	passert(*pk == NULL); /* stolen */
 }
 
 static struct pubkey *alloc_pubkey(const struct id *id, /* ASKK */
 				   enum dns_auth_level dns_auth_level,
-				   const struct pubkey_type *type,
 				   realtime_t install_time, realtime_t until_time,
 				   uint32_t ttl,
 				   const struct pubkey_content *pkc,
@@ -1058,7 +1086,6 @@ static struct pubkey *alloc_pubkey(const struct id *id, /* ASKK */
 	pk->content = *pkc;
 	pk->id = clone_id(id, "public key id");
 	pk->dns_auth_level = dns_auth_level;
-	pk->type = type;
 	pk->installed_time = install_time;
 	pk->until_time = until_time;
 	pk->dns_ttl = ttl;
@@ -1090,17 +1117,15 @@ diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
 	struct pubkey_content scratch_pkc;
 	keyid_t keyid;
 	ckaid_t ckaid;
-	const struct pubkey_type *pubkey_type = NULL; /* TBD */
 
 	if (algorithm_type == IPSECKEY_ALGORITHM_X_PUBKEY) {
 		diag_t d = pubkey_der_to_pubkey_content(dnssec_pubkey, &scratch_pkc,
-							&keyid, &ckaid, &pubkey_type);
+							&keyid, &ckaid);
 		if (d != NULL) {
 			return d;
 		}
-		passert(pubkey_type != NULL);
 	} else {
-
+		const struct pubkey_type *pubkey_type = NULL; /* TBD */
 		switch (algorithm_type) {
 		case IPSECKEY_ALGORITHM_RSA:
 			pubkey_type = &pubkey_type_rsa;
@@ -1113,18 +1138,19 @@ diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
 		}
 
 		diag_t d = pubkey_type->ipseckey_rdata_to_pubkey_content(dnssec_pubkey,
-									&scratch_pkc,
-									&keyid, &ckaid);
+									 &scratch_pkc,
+									 &keyid, &ckaid);
 		if (d != NULL) {
 			return d;
 		}
 	}
+	passert(scratch_pkc.type != NULL);
 
 	/*
 	 * Second: use extracted information to create the pubkey.
 	 */
 
-	struct pubkey *pubkey = alloc_pubkey(id, dns_auth_level, pubkey_type,
+	struct pubkey *pubkey = alloc_pubkey(id, dns_auth_level,
 					     install_time, until_time, ttl,
 					     &scratch_pkc, &keyid, &ckaid,
 					     null_shunk,	/* raw keys have no issuer */
@@ -1168,7 +1194,6 @@ static err_t add_private_key(struct secret **secrets, const struct secret_stuff 
 			     const struct pubkey_type *type, SECKEYPrivateKey *private_key)
 {
 	struct secret *s = alloc_thing(struct secret, "pubkey secret");
-	s->stuff.pubkey_type = type;
 	s->stuff.kind = type->private_key_kind;
 	s->stuff.line = 0;
 	/* make an unpacked copy of the private key */
@@ -1183,6 +1208,7 @@ static err_t add_private_key(struct secret **secrets, const struct secret_stuff 
 		return err;
 	}
 
+	passert(s->stuff.u.pubkey.content.type == type);
 	add_secret(secrets, s, "lsw_add_rsa_secret");
 	*pks = &s->stuff;
 	return NULL;
@@ -1366,6 +1392,7 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 		SECITEM_FreeItem(ckaid_nss, PR_TRUE);
 		return diag("NSS: could not extract pubkey content: %s", err);
 	}
+	passert(pkc.type != NULL);
 
 	realtime_t install_time = realnow();
 	realtime_t until_time;
@@ -1376,7 +1403,7 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 		until_time = realtime(not_after / PR_USEC_PER_SEC);
 	}
 	*pk = alloc_pubkey(id, /*dns_auth_level*/0/*default*/,
-			   type, install_time, until_time,
+			   install_time, until_time,
 			   /*ttl*/0, &pkc, &keyid, &ckaid,
 			   same_secitem_as_shunk(cert->derIssuer),
 			   HERE);
