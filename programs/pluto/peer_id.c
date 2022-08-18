@@ -178,7 +178,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 
 	indent = 1;
 
-	const generalName_t *requested_ca = st->st_requested_ca;
+	const generalName_t *requested_ca = st->st_v1_requested_ca;
 
 	passert(!LHAS(proposed_authbys, AUTH_NEVER));
 	passert(!LHAS(proposed_authbys, AUTH_UNSET));

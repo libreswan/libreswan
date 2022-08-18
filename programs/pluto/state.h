@@ -196,9 +196,10 @@ struct hidden_variables {
 	bool st_modecfg_server_done;
 	bool st_modecfg_vars_set;
 	/*
-	 * XXX: suspect this is redundant and instead .st_requested_ca
-	 * ca be chedk.  One possible got-ya is if IKEv1 sets this in
-	 * the ISAKMP SA but tests it in a cloned IPsec SA.
+	 * XXX: suspect this is redundant and instead .st_v1_requested_ca
+	 * ca be checked for !=NULL.  One possible got-ya is if IKEv1
+	 * sets this in the ISAKMP SA but tests it in a cloned IPsec
+	 * SA.
 	 */
 	bool st_v1_got_certrequest;
 	bool st_modecfg_started;
@@ -750,7 +751,7 @@ struct state {
 	bool st_seen_and_use_transport_mode;	/* did we receive USE_TRANSPORT_MODE */
 	bool st_seen_redirect_sup;		/* did we receive IKEv2_REDIRECT_SUPPORTED */
 	bool st_sent_redirect;			/* did we send IKEv2_REDIRECT in IKE_AUTH (response) */
-	generalName_t *st_requested_ca;		/* collected certificate requests */
+	generalName_t *st_v1_requested_ca;	/* collected certificate requests */
 	uint8_t st_reply_xchg;
 	bool st_peer_wants_null;		/* We received IDr payload of type ID_NULL (and we allow auth=NULL / authby=NULL */
 

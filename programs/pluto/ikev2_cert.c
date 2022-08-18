@@ -161,7 +161,7 @@ bool ikev2_send_cert_decision(const struct ike_sa *ike)
 	}
 
 	if (c->local->config->host.sendcert == CERT_SENDIFASKED &&
-	    ike->sa.st_requested_ca != NULL) {
+	    ike->sa.st_v1_requested_ca != NULL) {
 		dbg("IKEv2 CERT: OK to send certificate (send if asked)");
 		return true;
 	}

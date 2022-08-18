@@ -695,7 +695,7 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 	/* decode certificate requests */
 	decode_v1_certificate_requests(st, md);
 
-	if (st->st_requested_ca != NULL)
+	if (st->st_v1_requested_ca != NULL)
 		st->hidden_variables.st_v1_got_certrequest = true;
 
 	ikev1_natd_init(st, md);
@@ -933,7 +933,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 	/* decode certificate requests */
 	decode_v1_certificate_requests(st, md);
 
-	if (st->st_requested_ca != NULL)
+	if (st->st_v1_requested_ca != NULL)
 		st->hidden_variables.st_v1_got_certrequest = true;
 
 	/*

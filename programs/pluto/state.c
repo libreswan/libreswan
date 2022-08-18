@@ -1147,7 +1147,7 @@ void delete_state_tail(struct state *st)
 	release_certs(&st->st_remote_certs.verified);
 	free_public_keys(&st->st_remote_certs.pubkey_db);
 
-	free_generalNames(st->st_requested_ca, true);
+	free_generalNames(st->st_v1_requested_ca, true);
 
 	free_chunk_content(&st->st_firstpacket_me);
 	free_chunk_content(&st->st_firstpacket_peer);

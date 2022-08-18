@@ -214,8 +214,8 @@ static void decode_certificate_request(struct state *st, enum ike_cert_type cert
 			generalName_t *gn = alloc_thing(generalName_t, "generalName");
 			gn->name = clone_hunk(ca_name, "ca name");
 			gn->kind = GN_DIRECTORY_NAME;
-			gn->next = st->st_requested_ca;
-			st->st_requested_ca = gn;
+			gn->next = st->st_v1_requested_ca;
+			st->st_v1_requested_ca = gn;
 		}
 
 		if (DBGP(DBG_BASE)) {

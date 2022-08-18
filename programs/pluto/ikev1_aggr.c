@@ -298,7 +298,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 	/* decode certificate requests */
 	decode_v1_certificate_requests(st, md);
 
-	if (st->st_requested_ca != NULL)
+	if (st->st_v1_requested_ca != NULL)
 		st->hidden_variables.st_v1_got_certrequest = true;
 
 	/*
@@ -622,7 +622,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 	/* decode certificate requests */
 	decode_v1_certificate_requests(st, md);
 
-	if (st->st_requested_ca != NULL)
+	if (st->st_v1_requested_ca != NULL)
 		st->hidden_variables.st_v1_got_certrequest = true;
 
 	/*
