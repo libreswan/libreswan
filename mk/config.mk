@@ -33,7 +33,7 @@ config.mk = true
 # HAVE_ variables let you tell Libreswan what system related libraries
 #       you may or maynot have
 
-# A Makefile wanting to test variables defined below has two choides:
+# A Makefile wanting to test variables defined below has two choices:
 #
 # - include config.mk early and use GNU-make's 'ifeq' statement
 #
