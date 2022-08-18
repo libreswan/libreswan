@@ -45,8 +45,7 @@
 #include "refcnt.h"		/* for dbg_{alloc,free}() */
 
 static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubkey,
-						     struct pubkey_content *ecdsa,
-						     keyid_t *keyid, ckaid_t *ckaid)
+						     struct pubkey_content *pkc)
 {
 	static const struct dh_desc *dh[] = {
 		&ike_alg_dh_secp256r1,
@@ -164,30 +163,30 @@ static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubk
 		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
 		return d;
 	}
-	*ckaid = ckaid_from_secitem(nss_ckaid);
+	pkc->ckaid = ckaid_from_secitem(nss_ckaid);
 	SECITEM_FreeItem(nss_ckaid, PR_TRUE);
 
 	/*
 	 * Use the ckaid since that digested the entire pubkey (this
 	 * is made up)
 	 */
-	err_t e = keyblob_to_keyid(ckaid->ptr, ckaid->len, keyid);
+	err_t e = keyblob_to_keyid(pkc->ckaid.ptr, pkc->ckaid.len, &pkc->keyid);
 	if (e != NULL) {
 		diag_t d = diag("%s", e);
 		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
 		return d;
 	}
 
-	ecdsa->type = &pubkey_type_ecdsa;
-	ecdsa->public_key = seckey;
-	dbg_alloc("ecdsa->public_key", seckey, HERE);
+	pkc->type = &pubkey_type_ecdsa;
+	pkc->public_key = seckey;
+	dbg_alloc("pkc->public_key(ecdsa)", seckey, HERE);
 
 	if (DBGP(DBG_BASE)) {
 		/* pubkey information isn't DBG_PRIVATE */
 		DBG_log("ECDSA Key:");
-		DBG_log("keyid: *%s", str_keyid(*keyid));
+		DBG_log("keyid: *%s", str_keyid(pkc->keyid));
 		DBG_dump("pub", ec->publicValue.data, ec->publicValue.len);
-		DBG_dump_hunk("CKAID", *ckaid);
+		DBG_dump_hunk("CKAID", pkc->ckaid);
 	}
 
 	return NULL;
@@ -212,23 +211,22 @@ static void ECDSA_free_pubkey_content(struct pubkey_content *ecdsa)
 	ecdsa->public_key = NULL;
 }
 
-static err_t ECDSA_extract_pubkey_content(struct pubkey_content *ecdsa,
-					  keyid_t *keyid, ckaid_t *ckaid,
+static err_t ECDSA_extract_pubkey_content(struct pubkey_content *pkc,
 					  SECKEYPublicKey *seckey_public,
 					  SECItem *ckaid_nss)
 {
-	ecdsa->type = &pubkey_type_ecdsa;
-	ecdsa->public_key = SECKEY_CopyPublicKey(seckey_public);
-	dbg_alloc("ecdsa->public_key", ecdsa->public_key, HERE);
-	*ckaid = ckaid_from_secitem(ckaid_nss);
+	pkc->type = &pubkey_type_ecdsa;
+	pkc->public_key = SECKEY_CopyPublicKey(seckey_public);
+	dbg_alloc("pkc->public_key(ecdsa)", pkc->public_key, HERE);
+	pkc->ckaid = ckaid_from_secitem(ckaid_nss);
 	/* keyid; make this up */
-	err_t e = keyblob_to_keyid(ckaid->ptr, ckaid->len, keyid);
+	err_t e = keyblob_to_keyid(pkc->ckaid.ptr, pkc->ckaid.len, &pkc->keyid);
 	passert(e == NULL);
 
 	if (DBGP(DBG_BASE)) {
 		ckaid_buf cb;
-		DBG_log("ECDSA keyid *%s", str_keyid(*keyid));
-		DBG_log("ECDSA keyid *%s", str_ckaid(ckaid, &cb));
+		DBG_log("ECDSA keyid *%s", str_keyid(pkc->keyid));
+		DBG_log("ECDSA keyid *%s", str_ckaid(&pkc->ckaid, &cb));
 	}
 
 	/*

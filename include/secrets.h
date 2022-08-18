@@ -54,6 +54,8 @@ struct cert;
 
 struct pubkey_content {
 	const struct pubkey_type *type;
+	keyid_t keyid;	/* see ipsec_keyblobtoid(3) */
+	ckaid_t ckaid;
 	SECKEYPublicKey *public_key;
 };
 
@@ -91,27 +93,10 @@ struct secret_stuff {
 
 	chunk_t ppk;
 	chunk_t ppk_id;
-
-	/* for PKI */
-	keyid_t keyid;
-
-	/*
-	 * NSS's(?) idea of a unique ID for a public private key pair.
-	 * For RSA it is something like the SHA1 of the modulus.  It
-	 * replaces KEYID.
-	 *
-	 * This is the value returned by
-	 * PK11_GetLowLevelKeyIDForCert() or
-	 * PK11_GetLowLevelKeyIDForPrivateKey() (see
-	 * form_ckaid_nss()), or computed by brute force from the
-	 * modulus (see form_ckaid_rsa()).
-	 */
-	ckaid_t ckaid;
 };
 
 diag_t secret_pubkey_stuff_to_pubkey_der(struct secret_stuff *pks, chunk_t *der);
-diag_t pubkey_der_to_pubkey_content(shunk_t pubkey_der, struct pubkey_content *pkc,
-				    keyid_t *keyid, ckaid_t *ckaid);
+diag_t pubkey_der_to_pubkey_content(shunk_t pubkey_der, struct pubkey_content *pkc);
 
 extern struct secret_stuff *get_secret_stuff(struct secret *s);
 extern struct id_list *lsw_get_idlist(const struct secret *s);
@@ -152,14 +137,12 @@ struct pubkey_type {
 	void (*free_pubkey_content)(struct pubkey_content *pkc);
 	/* to/from the blob in DNS's IPSECKEY's Public Key field */
 	diag_t (*ipseckey_rdata_to_pubkey_content)(shunk_t ipseckey_pubkey,
-						   struct pubkey_content *pkc,
-						   keyid_t *keyid, ckaid_t *ckaid);
+						   struct pubkey_content *pkc);
 	err_t (*pubkey_content_to_ipseckey_rdata)(const struct pubkey_content *pkc,
 						  chunk_t *ipseckey_pubkey,
 						  enum ipseckey_algorithm_type *ipseckey_algorithm);
 	/* nss */
 	err_t (*extract_pubkey_content)(struct pubkey_content *pkc,
-					keyid_t *keyid, ckaid_t *ckaid,
 					SECKEYPublicKey *pubkey_nss, SECItem *ckaid_nss);
 	bool (*pubkey_same)(const struct pubkey_content *lhs, const struct pubkey_content *rhs);
 #define pubkey_strength_in_bits(PUBKEY) ((PUBKEY)->content.type->strength_in_bits(PUBKEY))
@@ -215,8 +198,6 @@ const struct pubkey_type *pubkey_alg_type(enum ipseckey_algorithm_type alg);
 struct pubkey {
 	refcnt_t refcnt;	/* reference counted! */
 	struct id id;
-	keyid_t keyid;	/* see ipsec_keyblobtoid(3) */
-	ckaid_t ckaid;
 	enum dns_auth_level dns_auth_level;
 	realtime_t installed_time;
 	realtime_t until_time;

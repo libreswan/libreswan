@@ -171,12 +171,12 @@ const struct pubkey_type *pubkey_alg_type(enum ipseckey_algorithm_type alg)
 
 const keyid_t *pubkey_keyid(const struct pubkey *pk)
 {
-	return &pk->keyid;
+	return &pk->content.keyid;
 }
 
 const ckaid_t *pubkey_ckaid(const struct pubkey *pk)
 {
-	return &pk->ckaid;
+	return &pk->content.ckaid;
 }
 
 const ckaid_t *secret_ckaid(const struct secret *secret)
@@ -185,7 +185,7 @@ const ckaid_t *secret_ckaid(const struct secret *secret)
 	case SECRET_RSA:
 	case SECRET_ECDSA:
 		/* some sort of PKI */
-		return &secret->stuff.ckaid;
+		return &secret->stuff.u.pubkey.content.ckaid;
 	default:
 		return NULL;
 	}
@@ -197,7 +197,7 @@ const keyid_t *secret_keyid(const struct secret *secret)
 	case SECRET_RSA:
 	case SECRET_ECDSA:
 		/* some sort of PKI */
-		return &secret->stuff.keyid;
+		return &secret->stuff.u.pubkey.content.keyid;
 	default:
 		return NULL;
 	}
@@ -225,9 +225,10 @@ static struct secret *find_secret_by_pubkey_ckaid_1(struct secret *secrets,
 {
 	for (struct secret *s = secrets; s != NULL; s = s->next) {
 		const struct secret_stuff *pks = &s->stuff;
+		id_buf idb;
 		dbg("trying secret %s:%s",
 		    enum_name(&secret_kind_names, pks->kind),
-		    str_keyid(pks->keyid));
+		    (pexpect(s->ids != NULL) ? str_id(&s->ids->id, &idb) : "<NULL-ID-LIST>"));
 		/* should be == SECRET_PKI */
 		switch (pks->kind) {
 		case SECRET_RSA:
@@ -243,7 +244,7 @@ static struct secret *find_secret_by_pubkey_ckaid_1(struct secret *secrets,
 			dbg("  not %s", type->name);
 			continue;
 		}
-		if (!ckaid_eq_nss(&pks->ckaid, pubkey_ckaid)) {
+		if (!ckaid_eq_nss(&pks->u.pubkey.content.ckaid, pubkey_ckaid)) {
 			dbg("  wrong ckaid");
 			continue;
 		}
@@ -1076,11 +1077,12 @@ static struct pubkey *alloc_pubkey(const struct id *id, /* ASKK */
 				   realtime_t install_time, realtime_t until_time,
 				   uint32_t ttl,
 				   const struct pubkey_content *pkc,
-				   const keyid_t *keyid,
-				   const ckaid_t *ckaid,
 				   shunk_t issuer,
 				   where_t where)
 {
+	pexpect(pkc->keyid.keyid[0] != '\0');
+	pexpect(pkc->ckaid.len > 0);
+
 	struct pubkey *pk = refcnt_overalloc(struct pubkey, issuer.len,
 					     free_pubkey, where);
 	pk->content = *pkc;
@@ -1089,8 +1091,6 @@ static struct pubkey *alloc_pubkey(const struct id *id, /* ASKK */
 	pk->installed_time = install_time;
 	pk->until_time = until_time;
 	pk->dns_ttl = ttl;
-	pk->keyid = *keyid;
-	pk->ckaid = *ckaid;
 
 	/* Append any issuer to the end */
 	if (issuer.len > 0) {
@@ -1115,12 +1115,9 @@ diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
 	 */
 
 	struct pubkey_content scratch_pkc;
-	keyid_t keyid;
-	ckaid_t ckaid;
 
 	if (algorithm_type == IPSECKEY_ALGORITHM_X_PUBKEY) {
-		diag_t d = pubkey_der_to_pubkey_content(dnssec_pubkey, &scratch_pkc,
-							&keyid, &ckaid);
+		diag_t d = pubkey_der_to_pubkey_content(dnssec_pubkey, &scratch_pkc);
 		if (d != NULL) {
 			return d;
 		}
@@ -1138,8 +1135,7 @@ diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
 		}
 
 		diag_t d = pubkey_type->ipseckey_rdata_to_pubkey_content(dnssec_pubkey,
-									 &scratch_pkc,
-									 &keyid, &ckaid);
+									 &scratch_pkc);
 		if (d != NULL) {
 			return d;
 		}
@@ -1152,7 +1148,7 @@ diag_t unpack_dns_ipseckey(const struct id *id, /* ASKK */
 
 	struct pubkey *pubkey = alloc_pubkey(id, dns_auth_level,
 					     install_time, until_time, ttl,
-					     &scratch_pkc, &keyid, &ckaid,
+					     &scratch_pkc,
 					     null_shunk,	/* raw keys have no issuer */
 					     HERE);
 	if (pkp != NULL) {
@@ -1199,7 +1195,6 @@ static err_t add_private_key(struct secret **secrets, const struct secret_stuff 
 	/* make an unpacked copy of the private key */
 	s->stuff.u.pubkey.private_key = copy_private_key(private_key);
 	err_t err = type->extract_pubkey_content(&s->stuff.u.pubkey.content,
-						 &s->stuff.keyid, &s->stuff.ckaid,
 						 pubk, ckaid_nss);
 	if (err != NULL) {
 		/* extract should leave pubkey_content clean */
@@ -1209,6 +1204,9 @@ static err_t add_private_key(struct secret **secrets, const struct secret_stuff 
 	}
 
 	passert(s->stuff.u.pubkey.content.type == type);
+	pexpect(s->stuff.u.pubkey.content.ckaid.len > 0);
+	pexpect(s->stuff.u.pubkey.content.keyid.keyid[0] != '\0');
+
 	add_secret(secrets, s, "lsw_add_rsa_secret");
 	*pks = &s->stuff;
 	return NULL;
@@ -1384,10 +1382,7 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 	}
 
 	struct pubkey_content pkc = {0};
-	keyid_t keyid;
-	ckaid_t ckaid;
-	err_t err = type->extract_pubkey_content(&pkc, &keyid, &ckaid,
-						 pubkey_nss, ckaid_nss);
+	err_t err = type->extract_pubkey_content(&pkc, pubkey_nss, ckaid_nss);
 	if (err != NULL) {
 		SECITEM_FreeItem(ckaid_nss, PR_TRUE);
 		return diag("NSS: could not extract pubkey content: %s", err);
@@ -1404,7 +1399,7 @@ static diag_t create_pubkey_from_cert_1(const struct id *id,
 	}
 	*pk = alloc_pubkey(id, /*dns_auth_level*/0/*default*/,
 			   install_time, until_time,
-			   /*ttl*/0, &pkc, &keyid, &ckaid,
+			   /*ttl*/0, &pkc,
 			   same_secitem_as_shunk(cert->derIssuer),
 			   HERE);
 	SECITEM_FreeItem(ckaid_nss, PR_TRUE);

@@ -981,8 +981,6 @@ static int extract_end(struct connection *c,
 
 		chunk_t keyspace = NULL_HUNK; /* must free */
 		struct pubkey_content pkc;
-		ckaid_t ckaid;
-		keyid_t keyid;
 		if (src->pubkey_alg == IPSECKEY_ALGORITHM_X_PUBKEY) {
 			/* XXX: lifted from starter_whack_add_pubkey() */
 			err = ttochunk(shunk1(src->pubkey), 64/*damit*/, &keyspace);
@@ -994,8 +992,7 @@ static int extract_end(struct connection *c,
 				     err);
 				return -1;
 			}
-			diag_t d = pubkey_der_to_pubkey_content(HUNK_AS_SHUNK(keyspace), &pkc,
-								&keyid, &ckaid);
+			diag_t d = pubkey_der_to_pubkey_content(HUNK_AS_SHUNK(keyspace), &pkc);
 			if (d != NULL) {
 				free_chunk_content(&keyspace);
 				enum_buf pkb;
@@ -1027,8 +1024,7 @@ static int extract_end(struct connection *c,
 				bad_case(src->pubkey_alg);
 			}
 
-			diag_t d = type->ipseckey_rdata_to_pubkey_content(HUNK_AS_SHUNK(keyspace),
-									  &pkc, &keyid, &ckaid);
+			diag_t d = type->ipseckey_rdata_to_pubkey_content(HUNK_AS_SHUNK(keyspace), &pkc);
 			if (d != NULL) {
 				free_chunk_content(&keyspace);
 				enum_buf pkb;
@@ -1044,9 +1040,9 @@ static int extract_end(struct connection *c,
 		ckaid_buf ckb;
 		enum_buf pkb;
 		dbg("saving CKAID %s extracted from %s%s",
-		    str_ckaid(&ckaid, &ckb),
+		    str_ckaid(&pkc.ckaid, &ckb),
 		    leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
-		config_end->host.ckaid = clone_const_thing(ckaid, "raw pubkey's ckaid");
+		config_end->host.ckaid = clone_const_thing(pkc.ckaid, "raw pubkey's ckaid");
 		free_chunk_content(&keyspace);
 		pkc.type->free_pubkey_content(&pkc);
 

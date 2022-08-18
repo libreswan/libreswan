@@ -160,8 +160,7 @@ static diag_t pubkey_ipseckey_rdata_to_rsa_pubkey(shunk_t rr, shunk_t *e, shunk_
 }
 
 static diag_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
-						   struct pubkey_content *rsak,
-						   keyid_t *keyid, ckaid_t *ckaid)
+						   struct pubkey_content *pkc)
 {
 	/* unpack */
 	shunk_t exponent;
@@ -224,28 +223,28 @@ static diag_t RSA_ipseckey_rdata_to_pubkey_content(shunk_t ipseckey_pubkey,
 		DBG_dump("computed rsa CKAID",
 			 nss_ckaid->data, nss_ckaid->len);
 	}
-	*ckaid = ckaid_from_secitem(nss_ckaid);
+	pkc->ckaid = ckaid_from_secitem(nss_ckaid);
 	SECITEM_FreeItem(nss_ckaid, PR_TRUE);
 
-	err_t kberr = keyblob_to_keyid(ipseckey_pubkey.ptr, ipseckey_pubkey.len, keyid);
+	err_t kberr = keyblob_to_keyid(ipseckey_pubkey.ptr, ipseckey_pubkey.len, &pkc->keyid);
 	if (kberr != NULL) {
 		diag_t d = diag("%s", kberr);
 		PORT_FreeArena(arena, /*zero?*/PR_TRUE);
 		return d;
 	}
 
-	rsak->type = &pubkey_type_rsa;
-	rsak->public_key = seckey;
-	dbg_alloc("rsa->public_key", rsak->public_key, HERE);
+	pkc->type = &pubkey_type_rsa;
+	pkc->public_key = seckey;
+	dbg_alloc("rsa->public_key", pkc->public_key, HERE);
 
 	/* generate the CKAID */
 
 	if (DBGP(DBG_BASE)) {
 		/* pubkey information isn't DBG_PRIVATE */
-		DBG_log("keyid: *%s", str_keyid(*keyid));
+		DBG_log("keyid: *%s", str_keyid(pkc->keyid));
 		DBG_dump_hunk("  n", modulus);
 		DBG_dump_hunk("  e", exponent);
-		DBG_dump_hunk("  CKAID", *ckaid);
+		DBG_dump_hunk("  CKAID", pkc->ckaid);
 	}
 
 	return NULL;
@@ -258,15 +257,14 @@ static void RSA_free_pubkey_content(struct pubkey_content *rsa)
 	rsa->public_key = NULL;
 }
 
-static err_t RSA_extract_pubkey_content(struct pubkey_content *pub,
-					keyid_t *keyid, ckaid_t *ckaid,
+static err_t RSA_extract_pubkey_content(struct pubkey_content *pkc,
 					SECKEYPublicKey *seckey_public,
 					SECItem *cert_ckaid)
 {
 	chunk_t exponent = same_secitem_as_chunk(seckey_public->u.rsa.publicExponent);
 	chunk_t modulus = same_secitem_as_chunk(seckey_public->u.rsa.modulus);
 	size_t size;
-	form_keyid(exponent, modulus, keyid, &size);
+	form_keyid(exponent, modulus, &pkc->keyid, &size);
 	/* up to this point nothing has been allocated */
 
 	/*
@@ -287,10 +285,10 @@ static err_t RSA_extract_pubkey_content(struct pubkey_content *pub,
 	}
 
 	/* now allocate */
-	pub->type = &pubkey_type_rsa;
-	pub->public_key = SECKEY_CopyPublicKey(seckey_public);
-	dbg_alloc("rsa->public_key", pub->public_key, HERE);
-	*ckaid = ckaid_from_secitem(cert_ckaid);
+	pkc->type = &pubkey_type_rsa;
+	pkc->public_key = SECKEY_CopyPublicKey(seckey_public);
+	dbg_alloc("rsa->public_key", pkc->public_key, HERE);
+	pkc->ckaid = ckaid_from_secitem(cert_ckaid);
 	return NULL;
 }
 

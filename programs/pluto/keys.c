@@ -746,36 +746,36 @@ static const char *check_expiry(realtime_t expiration_date, time_t warning_inter
 	return eb->buf;
 }
 
-static void show_pubkey(struct show *s, struct pubkey *key, bool utc, const char *expiry_message)
+static void show_pubkey(struct show *s, struct pubkey *pubkey, bool utc, const char *expiry_message)
 {
 	bool load_needed;
-	err_t load_err = preload_private_key_by_ckaid(&key->ckaid,
+	err_t load_err = preload_private_key_by_ckaid(&pubkey->content.ckaid,
 						      &load_needed,
 						      show_logger(s));
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		jam_realtime(buf, key->installed_time, utc);
+		jam_realtime(buf, pubkey->installed_time, utc);
 		jam(buf, ",");
-		jam(buf, " %4zd", pubkey_strength_in_bits(key));
-		jam(buf, " %s", key->content.type->name);
-		jam(buf, " Key %s", str_keyid(key->keyid));
+		jam(buf, " %4zd", pubkey_strength_in_bits(pubkey));
+		jam(buf, " %s", pubkey->content.type->name);
+		jam(buf, " Key %s", str_keyid(pubkey->content.keyid));
 		jam(buf, " (%s private key),",
 		    (load_err != NULL ? "no" :
 		     load_needed ? "loaded" : "has"));
 		jam(buf, " until ");
-		jam_realtime(buf, key->until_time, utc);
+		jam_realtime(buf, pubkey->until_time, utc);
 		jam(buf, " %s", expiry_message == NULL ? "ok" : expiry_message);
 	}
 
 	id_buf idb;
 	esb_buf b;
 	show_comment(s, "       %s '%s'",
-		     enum_show(&ike_id_type_names, key->id.kind, &b),
-		     str_id(&key->id, &idb));
+		     enum_show(&ike_id_type_names, pubkey->id.kind, &b),
+		     str_id(&pubkey->id, &idb));
 
-	if (key->issuer.len > 0) {
+	if (pubkey->issuer.len > 0) {
 		dn_buf b;
 		show_comment(s, "       Issuer '%s'",
-			     str_dn(key->issuer, &b));
+			     str_dn(pubkey->issuer, &b));
 	}
 }
 

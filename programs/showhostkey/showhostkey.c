@@ -173,13 +173,13 @@ static void print(struct secret_stuff *pks,
 	case SECRET_ECDSA:
 	{
 		printf("%s", pks->u.pubkey.content.type->name);
-		keyid_t keyid = pks->keyid;
+		keyid_t keyid = pks->u.pubkey.content.keyid;
 		printf(" keyid: %s", str_keyid(keyid)[0] ? str_keyid(keyid) : "<missing-pubkey>");
 		if (id) {
 			printf(" id: %s", idb);
 		}
 		ckaid_buf cb;
-		ckaid_t *ckaid = &pks->ckaid;
+		const ckaid_t *ckaid = &pks->u.pubkey.content.ckaid;
 		printf(" ckaid: %s\n", str_ckaid(ckaid, &cb));
 		break;
 	}
@@ -237,7 +237,7 @@ static int pick_by_rsaid(struct secret *secret UNUSED,
 {
 	char *rsaid = (char *)uservoid;
 
-	if (pks->kind == SECRET_RSA && streq(pks->keyid.keyid, rsaid)) {
+	if (pks->kind == SECRET_RSA && streq(pks->u.pubkey.content.keyid.keyid, rsaid)) {
 		/* stop */
 		return 0;
 	} else {
@@ -251,14 +251,19 @@ static int pick_by_ckaid(struct secret *secret UNUSED,
 			 void *uservoid)
 {
 	char *start = (char *)uservoid;
-	if ((pks->kind == SECRET_RSA || pks->kind == SECRET_ECDSA) &&
-	    ckaid_starts_with(&pks->ckaid, start)) {
-		/* stop */
-		return 0;
-	} else {
-		/* try again */
-		return 1;
+	switch (pks->kind) {
+	case SECRET_RSA:
+	case SECRET_ECDSA:
+		if (ckaid_starts_with(&pks->u.pubkey.content.ckaid, start)) {
+			/* stop */
+			return 0;
+		}
+		break;
+	default:
+		break;
 	}
+	/* try again */
+	return 1;
 }
 
 static char *base64_from_chunk(chunk_t chunk)
@@ -403,11 +408,11 @@ static int show_leftright(struct secret_stuff *pks,
 	} else {
 		switch (pks->kind) {
 		case SECRET_RSA:
-			printf("\t# rsakey %s\n", pks->keyid.keyid);
+			printf("\t# rsakey %s\n", pks->u.pubkey.content.keyid.keyid);
 			printf("\t%srsasigkey=0s", side);
 			break;
 		case SECRET_ECDSA:
-			printf("\t# ecdsakey %s\n", pks->keyid.keyid);
+			printf("\t# ecdsakey %s\n", pks->u.pubkey.content.keyid.keyid);
 			printf("\t%secdsakey=0s", side);
 			break;
 		default:
@@ -482,9 +487,7 @@ static struct secret_stuff *foreach_nss_private_key(secret_eval func,
 			.u.pubkey.private_key = SECKEY_CopyPrivateKey(private_key), /* add reference */
 		};
 
-		type->extract_pubkey_content(&pks.u.pubkey.content,
-					     &pks.keyid, &pks.ckaid,
-					     pubk, ckaid_nss);
+		type->extract_pubkey_content(&pks.u.pubkey.content, pubk, ckaid_nss);
 
 		/*
 		 * Only count private keys that get processed.
