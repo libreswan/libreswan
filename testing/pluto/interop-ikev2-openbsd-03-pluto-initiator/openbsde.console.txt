@@ -19,47 +19,21 @@ FLOWS:
 @0 flow esp in from 192.0.1.0/24 to 192.0.2.0/24 peer 192.1.2.45 srcid FQDN/east dstid FQDN/west type require
 @1 flow esp out from 192.0.2.0/24 to 192.0.1.0/24 peer 192.1.2.45 srcid FQDN/east dstid FQDN/west type require
 SAD:
-@0 esp tunnel from 192.1.2.45 to 192.1.2.23 spi 0x8de4fbda auth hmac-sha2-256 enc null \
-	authkey 0x756f69395b19faa41fb7534bf8d62880d94420d05ea9353564bc4f56aa55b716 \
+@0 esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI auth hmac-sha2-256 enc null \
+	authkey 0xX...X \
 	enckey 0x
-	sa: spi 0x8de4fbda auth hmac-sha2-256 enc null
+	sa: spi 0xSPISPI auth hmac-sha2-256 enc null
 		state mature replay 64 flags 0x404<tunnel,esn>
-	lifetime_cur: alloc 0 bytes 88 add 1660505906 first 1660505917
+	lifetime_cur: alloc 0 bytes 84 add NNNNNNNNNN first NNNNNNNNNN
 	lifetime_hard: alloc 0 bytes 2147483648 add 10800 first 0
-	lifetime_soft: alloc 0 bytes 1969242505 add 9903 first 0
-	address_src: 192.1.2.45
-	address_dst: 192.1.2.23
-	key_auth: bits 256: 756f69395b19faa41fb7534bf8d62880d94420d05ea9353564bc4f56aa55b716
-	key_encrypt: bits 0: 
-	identity_src: type fqdn id 0: FQDN/west
-	identity_dst: type fqdn id 0: FQDN/east
-	lifetime_lastuse: alloc 0 bytes 0 add 0 first 1660505917
-	tag: IKED
-	counter: 
-		1 input packet
-		0 output packets
-		220 input bytes
-		0 output bytes
-		104 input bytes, decompressed
-		0 output bytes, uncompressed
-		0 packets dropped on input
-		0 packets dropped on output
-	replay: rpl 1
-@0 esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xac9ba9fa auth hmac-sha2-256 enc null \
-	authkey 0x7a2c294fc5c5f203c87604aa85774153b0a803a2b2edd7496263b46ad57903bd \
-	enckey 0x
-	sa: spi 0xac9ba9fa auth hmac-sha2-256 enc null
-		state mature replay 64 flags 0x404<tunnel,esn>
-	lifetime_cur: alloc 0 bytes 84 add 1660505906 first 1660505917
-	lifetime_hard: alloc 0 bytes 2147483648 add 10800 first 0
-	lifetime_soft: alloc 0 bytes 2037961981 add 10249 first 0
+	lifetime_soft: alloc 0 bytes NNNNNNNNNN add NNNN first 0
 	address_src: 192.1.2.23
 	address_dst: 192.1.2.45
-	key_auth: bits 256: 7a2c294fc5c5f203c87604aa85774153b0a803a2b2edd7496263b46ad57903bd
+	key_auth: bits 256: X...X
 	key_encrypt: bits 0: 
 	identity_src: type fqdn id 0: FQDN/east
 	identity_dst: type fqdn id 0: FQDN/west
-	lifetime_lastuse: alloc 0 bytes 0 add 0 first 1660505917
+	lifetime_lastuse: alloc 0 bytes 0 add 0 first NNNNNNNNNN
 	tag: IKED
 	counter: 
 		0 input packets
@@ -71,5 +45,31 @@ SAD:
 		0 packets dropped on input
 		0 packets dropped on output
 	replay: rpl 2
+@0 esp tunnel from 192.1.2.45 to 192.1.2.23 spi 0xSPISPI auth hmac-sha2-256 enc null \
+	authkey 0xX...X \
+	enckey 0x
+	sa: spi 0xSPISPI auth hmac-sha2-256 enc null
+		state mature replay 64 flags 0x404<tunnel,esn>
+	lifetime_cur: alloc 0 bytes 88 add NNNNNNNNNN first NNNNNNNNNN
+	lifetime_hard: alloc 0 bytes 2147483648 add 10800 first 0
+	lifetime_soft: alloc 0 bytes NNNNNNNNNN add NNNN first 0
+	address_src: 192.1.2.45
+	address_dst: 192.1.2.23
+	key_auth: bits 256: X...X
+	key_encrypt: bits 0: 
+	identity_src: type fqdn id 0: FQDN/west
+	identity_dst: type fqdn id 0: FQDN/east
+	lifetime_lastuse: alloc 0 bytes 0 add 0 first NNNNNNNNNN
+	tag: IKED
+	counter: 
+		1 input packet
+		0 output packets
+		220 input bytes
+		0 output bytes
+		104 input bytes, decompressed
+		0 output bytes, uncompressed
+		0 packets dropped on input
+		0 packets dropped on output
+	replay: rpl 1
 east #
  

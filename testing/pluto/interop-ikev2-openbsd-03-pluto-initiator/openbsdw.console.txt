@@ -26,24 +26,24 @@ west #
 1v2 "eastnet-westnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "eastnet-westnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA2_256_128 prf=HMAC_SHA2_256 group=DH31}
 003 "eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-004 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP0xESPESP xfrm=NULL-HMAC_SHA2_256_128 DPD=passive}
+004 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=NULL-HMAC_SHA2_256_128 DPD=passive}
 west #
  ipsecctl -v -v -k -s all
 FLOWS:
 @0 flow esp in from 192.0.2.0/24 to 192.0.1.0/24 local 192.1.2.45 peer 192.1.2.23 type require
 @1 flow esp out from 192.0.1.0/24 to 192.0.2.0/24 local 192.1.2.45 peer 192.1.2.23 type require
 SAD:
-@0 esp tunnel from 192.1.2.45 to 192.1.2.23 spi 0xSPISPI auth hmac-sha2-256 enc null \
-	authkey 0x756f69395b19faa41fb7534bf8d62880d94420d05ea9353564bc4f56aa55b716 \
+@0 esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI auth hmac-sha2-256 enc null \
+	authkey 0xX...X \
 	enckey 0x
 	sa: spi 0xSPISPI auth hmac-sha2-256 enc null
-		state mature replay 8 flags 0x404tunnel,esn>
-	lifetime_cur: alloc 0 bytes 0 add 1660505907 first 0
+		state mature replay 8 flags 0x404<tunnel,esn>
+	lifetime_cur: alloc 0 bytes 0 add NNNNNNNNNN first 0
 	lifetime_hard: alloc 0 bytes 0 add 28800 first 0
-	lifetime_soft: alloc 0 bytes 0 add 28800 first 0
-	address_src: 192.1.2.45
-	address_dst: 192.1.2.23
-	key_auth: bits 256: 756f69395b19faa41fb7534bf8d62880d94420d05ea9353564bc4f56aa55b716
+	lifetime_soft: alloc 0 bytes 0 add NNNN first 0
+	address_src: 192.1.2.23
+	address_dst: 192.1.2.45
+	key_auth: bits 256: X...X
 	key_encrypt: bits 0: 
 	counter: 
 		0 input packets
@@ -55,17 +55,17 @@ SAD:
 		0 packets dropped on input
 		0 packets dropped on output
 	replay: rpl 1
-@0 esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI auth hmac-sha2-256 enc null \
-	authkey 0x7a2c294fc5c5f203c87604aa85774153b0a803a2b2edd7496263b46ad57903bd \
+@0 esp tunnel from 192.1.2.45 to 192.1.2.23 spi 0xSPISPI auth hmac-sha2-256 enc null \
+	authkey 0xX...X \
 	enckey 0x
 	sa: spi 0xSPISPI auth hmac-sha2-256 enc null
-		state mature replay 8 flags 0x404tunnel,esn>
-	lifetime_cur: alloc 0 bytes 0 add 1660505907 first 0
+		state mature replay 8 flags 0x404<tunnel,esn>
+	lifetime_cur: alloc 0 bytes 0 add NNNNNNNNNN first 0
 	lifetime_hard: alloc 0 bytes 0 add 28800 first 0
-	lifetime_soft: alloc 0 bytes 0 add 28800 first 0
-	address_src: 192.1.2.23
-	address_dst: 192.1.2.45
-	key_auth: bits 256: 7a2c294fc5c5f203c87604aa85774153b0a803a2b2edd7496263b46ad57903bd
+	lifetime_soft: alloc 0 bytes 0 add NNNN first 0
+	address_src: 192.1.2.45
+	address_dst: 192.1.2.23
+	key_auth: bits 256: X...X
 	key_encrypt: bits 0: 
 	counter: 
 		0 input packets
@@ -86,42 +86,19 @@ FLOWS:
 @0 flow esp in from 192.0.2.0/24 to 192.0.1.0/24 local 192.1.2.45 peer 192.1.2.23 type require
 @1 flow esp out from 192.0.1.0/24 to 192.0.2.0/24 local 192.1.2.45 peer 192.1.2.23 type require
 SAD:
-@0 esp tunnel from 192.1.2.45 to 192.1.2.23 spi 0xSPISPI auth hmac-sha2-256 enc null \
-	authkey 0x756f69395b19faa41fb7534bf8d62880d94420d05ea9353564bc4f56aa55b716 \
-	enckey 0x
-	sa: spi 0xSPISPI auth hmac-sha2-256 enc null
-		state mature replay 8 flags 0x404tunnel,esn>
-	lifetime_cur: alloc 0 bytes 84 add 1660505907 first 1660505917
-	lifetime_hard: alloc 0 bytes 0 add 28800 first 0
-	lifetime_soft: alloc 0 bytes 0 add 28800 first 0
-	address_src: 192.1.2.45
-	address_dst: 192.1.2.23
-	key_auth: bits 256: 756f69395b19faa41fb7534bf8d62880d94420d05ea9353564bc4f56aa55b716
-	key_encrypt: bits 0: 
-	lifetime_lastuse: alloc 0 bytes 0 add 0 first 1660505917
-	counter: 
-		0 input packets
-		1 output packet
-		0 input bytes
-		132 output bytes
-		0 input bytes, decompressed
-		104 output bytes, uncompressed
-		0 packets dropped on input
-		0 packets dropped on output
-	replay: rpl 2
 @0 esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI auth hmac-sha2-256 enc null \
-	authkey 0x7a2c294fc5c5f203c87604aa85774153b0a803a2b2edd7496263b46ad57903bd \
+	authkey 0xX...X \
 	enckey 0x
 	sa: spi 0xSPISPI auth hmac-sha2-256 enc null
-		state mature replay 8 flags 0x404tunnel,esn>
-	lifetime_cur: alloc 0 bytes 88 add 1660505907 first 1660505917
+		state mature replay 8 flags 0x404<tunnel,esn>
+	lifetime_cur: alloc 0 bytes 88 add NNNNNNNNNN first NNNNNNNNNN
 	lifetime_hard: alloc 0 bytes 0 add 28800 first 0
-	lifetime_soft: alloc 0 bytes 0 add 28800 first 0
+	lifetime_soft: alloc 0 bytes 0 add NNNN first 0
 	address_src: 192.1.2.23
 	address_dst: 192.1.2.45
-	key_auth: bits 256: 7a2c294fc5c5f203c87604aa85774153b0a803a2b2edd7496263b46ad57903bd
+	key_auth: bits 256: X...X
 	key_encrypt: bits 0: 
-	lifetime_lastuse: alloc 0 bytes 0 add 0 first 1660505917
+	lifetime_lastuse: alloc 0 bytes 0 add 0 first NNNNNNNNNN
 	counter: 
 		1 input packet
 		0 output packets
@@ -132,6 +109,29 @@ SAD:
 		0 packets dropped on input
 		0 packets dropped on output
 	replay: rpl 1
+@0 esp tunnel from 192.1.2.45 to 192.1.2.23 spi 0xSPISPI auth hmac-sha2-256 enc null \
+	authkey 0xX...X \
+	enckey 0x
+	sa: spi 0xSPISPI auth hmac-sha2-256 enc null
+		state mature replay 8 flags 0x404<tunnel,esn>
+	lifetime_cur: alloc 0 bytes 84 add NNNNNNNNNN first NNNNNNNNNN
+	lifetime_hard: alloc 0 bytes 0 add 28800 first 0
+	lifetime_soft: alloc 0 bytes 0 add NNNN first 0
+	address_src: 192.1.2.45
+	address_dst: 192.1.2.23
+	key_auth: bits 256: X...X
+	key_encrypt: bits 0: 
+	lifetime_lastuse: alloc 0 bytes 0 add 0 first NNNNNNNNNN
+	counter: 
+		0 input packets
+		1 output packet
+		0 input bytes
+		132 output bytes
+		0 input bytes, decompressed
+		104 output bytes, uncompressed
+		0 packets dropped on input
+		0 packets dropped on output
+	replay: rpl 2
 west #
  ipsec trafficstatus
 006 #2: "eastnet-westnet-ikev2", type=ESP, add_time=1234567890, id='@east'

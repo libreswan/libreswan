@@ -10,17 +10,13 @@ west #
  echo "initdone"
 initdone
 west #
- ping -n -q -c 1 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254): 56 data bytes
---- 192.0.2.254 ping statistics ---
-1 packets transmitted, 0 packets received, 100.0% packet loss
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
 west #
  sleep 3
 west #
- ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254): 56 data bytes
---- 192.0.2.254 ping statistics ---
-4 packets transmitted, 4 packets received, 0.0% packet loss
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
 west #
  ipsecctl -s all | sort
 FLOWS:

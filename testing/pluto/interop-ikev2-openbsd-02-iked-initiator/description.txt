@@ -1,4 +1,4 @@
-Basic pluto with IKEv2 using PSK with libreswan on the initiator (west), and openbsd on the responder.
+IKEv2+PSK with iked on the initiator (west, openbsd), and libreswan on the responder (east, linux).
 
 This is not meant (yet) to run automatically
 
