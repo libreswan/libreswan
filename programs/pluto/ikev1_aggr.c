@@ -297,20 +297,16 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 
 	/* decode certificate requests */
 	decode_v1_certificate_requests(st, md);
-
-	if (st->st_v1_requested_ca != NULL)
-		st->hidden_variables.st_v1_got_certrequest = true;
+	bool cert_requested = (st->st_v1_requested_ca != NULL);
 
 	/*
 	 * send certificate if we have one and auth is RSA, and we were
 	 * told we can send one if asked, and we were asked, or we were told
 	 * to always send one.
 	 */
-	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG &&
-			  mycert != NULL &&
-			  ((c->local->config->host.sendcert == CERT_SENDIFASKED &&
-			    st->hidden_variables.st_v1_got_certrequest) ||
-			   c->local->config->host.sendcert == CERT_ALWAYSSEND));
+	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG && mycert != NULL &&
+			  ((c->local->config->host.sendcert == CERT_SENDIFASKED && cert_requested) ||
+			   (c->local->config->host.sendcert == CERT_ALWAYSSEND)));
 
 	bool send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
 
@@ -331,8 +327,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 	}
 
 	doi_log_cert_thinking(st->st_oakley.auth, cert_ike_type(mycert),
-			      c->local->config->host.sendcert,
-			      st->hidden_variables.st_v1_got_certrequest,
+			      c->local->config->host.sendcert, cert_requested,
 			      send_cert, send_authcerts);
 
 	/* send certificate request, if we don't have a preloaded RSA public key */
@@ -621,20 +616,16 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 
 	/* decode certificate requests */
 	decode_v1_certificate_requests(st, md);
-
-	if (st->st_v1_requested_ca != NULL)
-		st->hidden_variables.st_v1_got_certrequest = true;
+	bool cert_requested = (st->st_v1_requested_ca != NULL);
 
 	/*
 	 * send certificate if we have one and auth is RSA, and we were
 	 * told we can send one if asked, and we were asked, or we were told
 	 * to always send one.
 	 */
-	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG &&
-			  mycert != NULL &&
-			  ((c->local->config->host.sendcert == CERT_SENDIFASKED &&
-			    st->hidden_variables.st_v1_got_certrequest) ||
-			   c->local->config->host.sendcert == CERT_ALWAYSSEND));
+	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG && mycert != NULL &&
+			  ((c->local->config->host.sendcert == CERT_SENDIFASKED && cert_requested) ||
+			   (c->local->config->host.sendcert == CERT_ALWAYSSEND)));
 
 	bool send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
 
@@ -655,8 +646,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 	}
 
 	doi_log_cert_thinking(st->st_oakley.auth, cert_ike_type(mycert),
-			      c->local->config->host.sendcert,
-			      st->hidden_variables.st_v1_got_certrequest,
+			      c->local->config->host.sendcert, cert_requested,
 			      send_cert, send_authcerts);
 
 	/**************** build output packet: HDR, HASH_I/SIG_I **************/

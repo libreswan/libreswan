@@ -695,9 +695,6 @@ stf_status main_inI2_outR2(struct state *st, struct msg_digest *md)
 	/* decode certificate requests */
 	decode_v1_certificate_requests(st, md);
 
-	if (st->st_v1_requested_ca != NULL)
-		st->hidden_variables.st_v1_got_certrequest = true;
-
 	ikev1_natd_init(st, md);
 
 	submit_ke_and_nonce(st, st->st_oakley.ta_dh,
@@ -932,20 +929,16 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 
 	/* decode certificate requests */
 	decode_v1_certificate_requests(st, md);
-
-	if (st->st_v1_requested_ca != NULL)
-		st->hidden_variables.st_v1_got_certrequest = true;
+	bool cert_requested = (st->st_v1_requested_ca != NULL);
 
 	/*
 	 * send certificate if we have one and auth is RSA, and we were
 	 * told we can send one if asked, and we were asked, or we were told
 	 * to always send one.
 	 */
-	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG &&
-			  mycert != NULL &&
-			  ((c->local->config->host.sendcert == CERT_SENDIFASKED &&
-			    st->hidden_variables.st_v1_got_certrequest) ||
-			   c->local->config->host.sendcert == CERT_ALWAYSSEND));
+	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG && mycert != NULL &&
+			  ((c->local->config->host.sendcert == CERT_SENDIFASKED && cert_requested) ||
+			   (c->local->config->host.sendcert == CERT_ALWAYSSEND)));
 
 	bool send_authcerts = (send_cert &&
 			  c->send_ca != CA_SEND_NONE);
@@ -966,8 +959,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 	}
 
 	doi_log_cert_thinking(st->st_oakley.auth, cert_ike_type(mycert),
-			      c->local->config->host.sendcert,
-			      st->hidden_variables.st_v1_got_certrequest,
+			      c->local->config->host.sendcert, cert_requested,
 			      send_cert, send_authcerts);
 
 	/*
@@ -1192,14 +1184,13 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	/* send certificate if we have one and auth is RSA */
 	const struct cert *mycert = c->local->config->host.cert.nss_cert != NULL ? &c->local->config->host.cert : NULL;
 
-	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG &&
-			  mycert != NULL &&
-			  ((c->local->config->host.sendcert == CERT_SENDIFASKED &&
-			    st->hidden_variables.st_v1_got_certrequest) ||
-			   c->local->config->host.sendcert == CERT_ALWAYSSEND));
+	pexpect(st->st_clonedfrom == SOS_NOBODY); /* ISAKMP */
+	bool cert_requested = (st->st_v1_requested_ca != NULL);
+	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG && mycert != NULL &&
+			  ((c->local->config->host.sendcert == CERT_SENDIFASKED && cert_requested) ||
+			   (c->local->config->host.sendcert == CERT_ALWAYSSEND)));
 
-	bool send_authcerts = (send_cert &&
-			  c->send_ca != CA_SEND_NONE);
+	bool send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
 
 	/*****
 	 * From here on, if send_authcerts, we are obligated to:
@@ -1217,8 +1208,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	}
 
 	doi_log_cert_thinking(st->st_oakley.auth, cert_ike_type(mycert),
-			      c->local->config->host.sendcert,
-			      st->hidden_variables.st_v1_got_certrequest,
+			      c->local->config->host.sendcert, cert_requested,
 			      send_cert, send_authcerts);
 
 	/*
