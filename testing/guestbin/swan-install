@@ -3,7 +3,7 @@
 # we run with -x so : works instead of echo for output (not logging)
 set -eux
 
-if [ -r LIBRESWAN-GPG-KEY.txt ]; then
+if [ -r LIBRESWAN-OPENPGP-KEY.txt ]; then
     cat <<EOF
 
 $PWD is a top-level source directory.
