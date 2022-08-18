@@ -91,14 +91,6 @@ diag_t ikev2_responder_decode_initiator_id(struct ike_sa *ike, struct msg_digest
 	}
 
 	/*
-	 * Process any CERTREQ payloads.
-	 *
-	 * These are used as hints when selecting a better connection
-	 * based on ID.
-	 */
-	decode_v2_certificate_requests(&ike->sa, md);
-
-	/*
 	 * Convert the proposed connections into something this
 	 * responder might accept.
 	 *
@@ -177,9 +169,6 @@ diag_t ikev2_initiator_decode_responder_id(struct ike_sa *ike, struct msg_digest
 	if (d != NULL) {
 		return d;
 	}
-
-	/* process any CERTREQ payloads */
-	decode_v2_certificate_requests(&ike->sa, md);
 
 	/* start considering connection */
 	return update_peer_id(ike, &responder_id, NULL/*tarzan isn't interesting*/);
