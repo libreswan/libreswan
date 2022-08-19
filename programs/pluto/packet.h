@@ -293,8 +293,8 @@ bool pbs_out_zero(struct pbs_out *outs, size_t len, const char *name) MUST_USE_R
 bool pbs_out_repeated_byte(struct pbs_out *pbs, uint8_t byte, size_t len,
 			   const char *name) MUST_USE_RESULT;
 
-diag_t pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len,
-		   const char *name) MUST_USE_RESULT;
+bool pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len,
+		 const char *name) MUST_USE_RESULT;
 
 #define out_hunk(HUNK, OUTS, NAME) pbs_out_hunk(OUTS, HUNK, NAME)
 
@@ -302,9 +302,7 @@ diag_t pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len,
 	({								\
 		typeof(HUNK) hunk_ = HUNK; /* evaluate once */		\
 		struct pbs_out *outs_ = OUTS;				\
-		diag_t d_ = pbs_out_raw(outs_, hunk_.ptr, hunk_.len, (NAME)); \
-		pbs_out_diag(outs_, HERE, &d_);				\
-		d_ == NULL;						\
+		pbs_out_raw(outs_, hunk_.ptr, hunk_.len, (NAME));	\
 	})
 
 

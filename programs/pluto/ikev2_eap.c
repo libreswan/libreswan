@@ -131,9 +131,8 @@ static PRInt32 eaptls_io_send(PRFileDesc *fd, const void *buf, PRInt32 amount,
 			      PRIntn flags UNUSED, PRIntervalTime timeout UNUSED)
 {
 	struct eap_state *eap = (void*)fd->secret;
-	diag_t d = pbs_out_raw(&eap->eaptls_outbuf, buf, amount, "EAP data");
-	if (d != NULL) {
-		llog_diag(RC_LOG, eap->logger, &d, "%s", "");
+	if (!pbs_out_raw(&eap->eaptls_outbuf, buf, amount, "EAP data")) {
+		/* already logged */
 		return PR_FAILURE;
 	}
 	llog_eap(RC_LOG, eap, "NSS: I/O send(%d): ok", amount);
@@ -321,7 +320,6 @@ static stf_status send_eap_fragment_response(struct ike_sa *ike, struct msg_dige
 					     uint8_t eap_code, uint32_t max_frag)
 {
 	struct eap_state *eap = ike->sa.st_eap;
-	diag_t d;
 
 	/* make sure HDR is at start of a clean buffer */
 
@@ -365,17 +363,21 @@ static stf_status send_eap_fragment_response(struct ike_sa *ike, struct msg_dige
 
 	if (eaptls.eaptls_flags & EAPTLS_FLAGS_LENGTH) {
 		uint32_t msglen = htonl(eap->eaptls_chunk.len);
-		d = pbs_out_raw(&eap_data, &msglen, sizeof(msglen), "TLS Message length");
-		if (d != NULL) goto err_diag;
+		if (!pbs_out_raw(&eap_data, &msglen, sizeof(msglen), "TLS Message length")) {
+			/* already logged */
+			goto err;
+		}
 	}
+
 
 	llog_sa(RC_LOG, ike, "responding with %d bytes of %zd EAP data",
 		max_frag, eap->eaptls_chunk.len);
 
 	if (max_frag) {
-		d = pbs_out_raw(&eap_data, eap->eaptls_chunk.ptr + eap->eaptls_pos, max_frag, "EAP-TLS data");
-		if (d != NULL)
-			goto err_diag;
+		if (!pbs_out_raw(&eap_data, eap->eaptls_chunk.ptr + eap->eaptls_pos, max_frag, "EAP-TLS data")) {
+			/* already logged */
+			goto err;
+		}
 		eap->eaptls_pos += max_frag;
 
 		if (!(eaptls.eaptls_flags & EAPTLS_FLAGS_MORE)) {
@@ -395,8 +397,7 @@ static stf_status send_eap_fragment_response(struct ike_sa *ike, struct msg_dige
 
 	return STF_OK;
 
-err_diag:
-	llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
+err:
 	return STF_FATAL;
 }
 

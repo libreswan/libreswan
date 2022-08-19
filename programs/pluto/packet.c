@@ -2791,9 +2791,9 @@ bool ikev1_out_generic_raw(struct_desc *sd,
 	if (!ikev1_out_generic(sd, outs, &pbs)) {
 		return false;
 	}
-	diag_t d = pbs_out_raw(&pbs, bytes, len, name);
-	if (d != NULL) {
-		return pbs_out_diag(&pbs, HERE, &d);
+	if (!pbs_out_raw(&pbs, bytes, len, name)) {
+		/* already logged */
+		return false;
 	}
 
 	close_output_pbs(&pbs);
@@ -2846,11 +2846,11 @@ static diag_t space_for(size_t len, pb_stream *outs, const char *fmt, ...)
 	return d;
 }
 
-diag_t pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len, const char *name)
+bool pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len, const char *name)
 {
 	diag_t d = space_for(len, outs, "%zu raw bytes of %s", len, name);
 	if (d != NULL) {
-		return d;
+		return pbs_out_diag(outs, HERE, &d);
 	}
 
 	if (DBGP(DBG_BASE)) {
@@ -2866,7 +2866,7 @@ diag_t pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len, const ch
 	}
 	memcpy(outs->cur, bytes, len);
 	outs->cur += len;
-	return NULL;
+	return true;
 }
 
 bool pbs_out_repeated_byte(struct pbs_out *outs, uint8_t byte, size_t len, const char *name)

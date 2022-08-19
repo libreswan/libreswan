@@ -35,12 +35,10 @@ struct isakmp_ipsec_id build_v1_id_payload(const struct end *end, shunk_t *body)
 
 bool out_raw(const void *bytes, size_t len, pb_stream *outs, const char *name)
 {
-	diag_t d = pbs_out_raw(outs, bytes, len, name);
-	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+	if (!pbs_out_raw(outs, bytes, len, name)) {
+		/* already logged */
 		return false;
 	}
-
 	return true;
 }
 

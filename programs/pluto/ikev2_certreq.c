@@ -146,9 +146,7 @@ static bool emit_v2CERTREQ_ca_hash(struct pbs_out *cr_pbs,
 	pexpect(ctx == NULL);
 
 
-	diag_t d = pbs_out_raw(cr_pbs, sighash, sizeof(sighash), "Certification Authority hash");
-	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, cr_pbs->outs_logger, &d, "%s", "");
+	if (!pbs_out_raw(cr_pbs, sighash, sizeof(sighash), "Certification Authority hash")) {
 		return false;
 	}
 

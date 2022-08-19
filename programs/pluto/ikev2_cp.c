@@ -72,9 +72,8 @@ static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
 
 	if (attr.len == INTERNAL_IP6_ADDRESS_SIZE) { /* IPv6 address add prefix */
 		uint8_t ipv6_prefix_len = INTERNL_IP6_PREFIX_LEN;
-		diag_t d = pbs_out_raw(&a_pbs, &ipv6_prefix_len, sizeof(uint8_t), "INTERNL_IP6_PREFIX_LEN");
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
+		if (!pbs_out_raw(&a_pbs, &ipv6_prefix_len, sizeof(uint8_t), "INTERNL_IP6_PREFIX_LEN")) {
+			/* already logged */
 			return STF_INTERNAL_ERROR;
 		}
 	}

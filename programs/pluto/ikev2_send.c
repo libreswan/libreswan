@@ -179,9 +179,8 @@ bool emit_v2Nsa_pl(v2_notification_t ntype,
 	if (!out_struct(&n, &ikev2_notify_desc, outs, &pls))
 		return false;
 	if (spi != NULL) {
-		diag_t d = pbs_out_raw(&pls, spi, sizeof(*spi), "SPI");
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+		if (!pbs_out_raw(&pls, spi, sizeof(*spi), "SPI")) {
+			/* already logged */
 			return false;
 		}
 	}
@@ -211,9 +210,8 @@ bool emit_v2N_bytes(v2_notification_t ntype,
 		return false;
 	}
 
-	diag_t d = pbs_out_raw(&pl, bytes, size, "Notify data");
-	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+	if (!pbs_out_raw(&pl, bytes, size, "Notify data")) {
+		/* already logged */
 		return false;
 	}
 
@@ -242,10 +240,9 @@ bool emit_v2N_SIGNATURE_HASH_ALGORITHMS(lset_t sighash_policy,
 	if (sighash_policy & POLICY) {					\
 		uint16_t hash_id = htons(ID);				\
 		passert(sizeof(hash_id) == RFC_7427_HASH_ALGORITHM_IDENTIFIER_SIZE); \
-		diag_t d = pbs_out_raw(&n_pbs, &hash_id, sizeof(hash_id), \
-				       "hash algorithm identifier "#ID);\
-		if (d != NULL) {					\
-			llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", ""); \
+		if (!pbs_out_raw(&n_pbs, &hash_id, sizeof(hash_id),	\
+				 "hash algorithm identifier "#ID)) {	\
+			/* already logged */				\
 			return false;					\
 		}							\
 	}

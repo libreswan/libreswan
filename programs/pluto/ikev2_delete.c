@@ -70,10 +70,9 @@ bool record_v2_delete(struct ike_sa *ike, struct state *st)
 
 		/* Emit values of spi to be sent to the peer */
 		if (IS_CHILD_SA(st)) {
-			diag_t d = pbs_out_raw(&del_pbs, &st->st_esp.inbound.spi,
-					       sizeof(ipsec_spi_t), "local spis");
-			if (d != NULL) {
-				llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
+			if (!pbs_out_raw(&del_pbs, &st->st_esp.inbound.spi,
+					 sizeof(ipsec_spi_t), "local spis")) {
+				/* already logged */
 				return false;
 			}
 		}
@@ -347,12 +346,9 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 					pbs,
 					&del_pbs))
 				return false;
-			diag_t d = pbs_out_raw(&del_pbs,
-					       spi_buf,
-					       j * sizeof(spi_buf[0]),
-					       "local SPIs");
-			if (d != NULL) {
-				llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
+			if (!pbs_out_raw(&del_pbs, spi_buf,
+					 j * sizeof(spi_buf[0]), "local SPIs")) {
+				/* already logged */
 				return false;
 			}
 
