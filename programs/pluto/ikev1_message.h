@@ -18,7 +18,6 @@
 
 struct isakmp_ipsec_id build_v1_id_payload(const struct end *end, shunk_t *body);
 
-extern bool out_zero(size_t len, pb_stream *outs, const char *name) MUST_USE_RESULT;
 extern bool out_repeated_byte(uint8_t, size_t len, pb_stream *outs, const char *name) MUST_USE_RESULT;
 extern bool out_raw(const void *bytes, size_t len, pb_stream *outs, const char *name) MUST_USE_RESULT;
 

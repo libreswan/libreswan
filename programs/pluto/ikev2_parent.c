@@ -317,10 +317,9 @@ bool emit_v2KE(chunk_t g, const struct dh_desc *group,
 		}
 	} else if (impair.ke_payload == IMPAIR_EMIT_EMPTY) {
 		llog(RC_LOG, outs->outs_logger, "IMPAIR: sending an empty KE value");
-		diag_t d = pbs_out_zero(&kepbs, 0, "ikev2 impair KE (g^x) == empty");
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
-			return false;
+		if (!pbs_out_zero(&kepbs, 0, "ikev2 impair KE (g^x) == empty")) {
+			/* already logged */
+			return false; /*fatal*/
 		}
 	} else {
 		if (!out_hunk(g, &kepbs, "ikev2 g^x"))

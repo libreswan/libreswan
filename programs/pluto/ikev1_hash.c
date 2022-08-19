@@ -51,8 +51,10 @@ bool emit_v1_HASH(enum v1_hash_type hash_type, const char *what,
 	} else {
 		/* reserve space for HASH data */
 		fixup->hash_data = chunk2(hash_pbs.cur, st->st_oakley.ta_prf->prf_output_size);
-		if (!out_zero(fixup->hash_data.len, &hash_pbs, "HASH DATA"))
-			return false;
+		if (!pbs_out_zero(&hash_pbs, fixup->hash_data.len, "HASH DATA")) {
+			/* already logged */
+			return false; /*fatal*/
+		}
 	}
 	close_output_pbs(&hash_pbs);
 	/* save start of rest of message for later */

@@ -340,8 +340,10 @@ bool ikev1_encrypt_message(pb_stream *pbs, struct state *st)
 		size_t padding = pad_up(enc_len, e->enc_blocksize);
 
 		if (padding != 0) {
-			if (!out_zero(padding, pbs, "encryption padding"))
-				return false;
+			if (!pbs_out_zero(pbs, padding, "encryption padding")) {
+				/* already logged */
+				return false; /*fatal*/
+			}
 
 			enc_len += padding;
 		}
@@ -404,8 +406,10 @@ bool ikev1_close_message(pb_stream *pbs, const struct state *st)
 		    padding);
 	} else {
 		dbg("padding IKEv1 message with %zu bytes", padding);
-		if (!out_zero(padding, pbs, "message padding"))
-			return false;
+		if (!pbs_out_zero(pbs, padding, "message padding")) {
+			/* already logged */
+			return false; /*fatal*/
+		}
 	}
 
 	close_output_pbs(pbs);
@@ -642,8 +646,10 @@ static stf_status main_inR1_outI2_continue(struct state *st,
 					&vid_pbs))
 			return STF_INTERNAL_ERROR;
 
-		if (!out_zero(1500 /*MTU?*/, &vid_pbs, "Filler VID"))
+		if (!pbs_out_zero(&vid_pbs, 1500/*MTU?*/, "Filler VID")) {
+			/* already logged */
 			return STF_INTERNAL_ERROR;
+		}
 
 		close_output_pbs(&vid_pbs);
 	}
@@ -788,8 +794,11 @@ static stf_status main_inI2_outR2_continue1(struct state *st,
 		if (!ikev1_out_generic(&isakmp_vendor_id_desc, &rbody,
 				       &vid_pbs))
 			return STF_INTERNAL_ERROR;
-		if (!out_zero(1500 /*MTU?*/, &vid_pbs, "Filler VID"))
+		if (!pbs_out_zero(&vid_pbs, 1500/*MTU?*/, "Filler VID")) {
+			/* already logged */
 			return STF_INTERNAL_ERROR;
+		}
+
 		close_output_pbs(&vid_pbs);
 	}
 

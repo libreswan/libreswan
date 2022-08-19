@@ -33,17 +33,6 @@ struct isakmp_ipsec_id build_v1_id_payload(const struct end *end, shunk_t *body)
 	return id_hd;
 }
 
-bool out_zero(size_t len, pb_stream *outs, const char *name)
-{
-	diag_t d = pbs_out_zero(outs, len, name);
-	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
-		return false;
-	}
-
-	return true;
-}
-
 bool out_repeated_byte(uint8_t byte, size_t len, pb_stream *outs, const char *name)
 {
 	diag_t d = pbs_out_repeated_byte(outs, byte, len, name);

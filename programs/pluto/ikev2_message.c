@@ -231,10 +231,9 @@ static bool emit_v2SK_iv(struct v2SK_payload *sk)
 	/* compute location/size */
 	sk->iv = chunk2(sk->pbs.cur, sk->ike->sa.st_oakley.ta_encrypt->wire_iv_size);
 	/* make space */
-	diag_t d = pbs_out_zero(&sk->pbs, sk->iv.len, "IV");
-	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, sk->logger, &d, "%s", "");
-		return false;
+	if (!pbs_out_zero(&sk->pbs, sk->iv.len, "IV")) {
+		/* already logged */
+		return false; /*fatal*/
 	}
 	/* scribble on it */
 	fill_rnd_chunk(sk->iv);
@@ -329,10 +328,9 @@ static bool close_v2SK_payload(struct v2SK_payload *sk)
 		return false;
 	}
 	sk->integrity = chunk2(sk->pbs.cur, integ_size);
-	diag_t d = pbs_out_zero(&sk->pbs, integ_size, "length of truncated HMAC/KEY");
-	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, sk->logger, &d, "%s", "");
-		return false;
+	if (!pbs_out_zero(&sk->pbs, integ_size, "length of truncated HMAC/KEY")) {
+		/* already logged */
+		return false; /*fatal*/
 	}
 
 	/* close the SK payload */

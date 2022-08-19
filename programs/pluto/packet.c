@@ -2881,16 +2881,16 @@ diag_t pbs_out_repeated_byte(struct pbs_out *outs, uint8_t byte, size_t len, con
 	return NULL;
 }
 
-diag_t pbs_out_zero(struct pbs_out *outs, size_t len, const char *name)
+bool pbs_out_zero(struct pbs_out *outs, size_t len, const char *name)
 {
 	diag_t d = space_for(len, outs, "%zu zero bytes of %s", len, name);
 	if (d != NULL) {
-		return d;
+		return pbs_out_diag(outs, HERE, &d);
 	}
 
 	memset(outs->cur, 0, len);
 	outs->cur += len;
-	return NULL;
+	return true;
 }
 
 /*

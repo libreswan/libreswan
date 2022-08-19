@@ -245,6 +245,11 @@ diag_t pbs_in_raw(struct pbs_in *pbs, void *bytes, size_t len,
 
 /*
  * Output PBS
+ *
+ * + struct pbs_out contains an embedded logger
+ *
+ * + should the function fail then an internal error is logged and
+ * false returned (they really shouldn't fail).
  */
 
 #define pbs_out packet_byte_stream /* outs */
@@ -283,8 +288,7 @@ extern bool ikev1_out_generic_raw(struct_desc *sd,
 #define ikev1_out_generic_chunk(sd, outs, ch, name) \
 	ikev1_out_generic_raw((sd), (outs), (ch).ptr, (ch).len, (name))
 
-diag_t pbs_out_zero(struct pbs_out *outs, size_t len,
-		    const char *name) MUST_USE_RESULT;
+bool pbs_out_zero(struct pbs_out *outs, size_t len, const char *name) MUST_USE_RESULT;
 
 diag_t pbs_out_repeated_byte(struct pbs_out *pbs, uint8_t, size_t len,
 			     const char *name) MUST_USE_RESULT;
