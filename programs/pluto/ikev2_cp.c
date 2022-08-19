@@ -84,9 +84,9 @@ static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
 	return STF_OK;
 }
 
-static diag_t emit_v2CP_attribute(struct pbs_out *outpbs,
-				  uint16_t type, shunk_t attrib,
-				  const char *story)
+static bool emit_v2CP_attribute(struct pbs_out *outpbs,
+				uint16_t type, shunk_t attrib,
+				const char *story)
 {
 	diag_t d;
 	struct ikev2_cp_attribute attr = {
@@ -98,18 +98,18 @@ static diag_t emit_v2CP_attribute(struct pbs_out *outpbs,
 	d = pbs_out_struct(outpbs, &ikev2_cp_attribute_desc,
 			   &attr, sizeof(attr), &a_pbs);
 	if (d != NULL) {
-		return d;
+		return pbs_out_diag(outpbs, HERE, &d);
 	}
 
 	if (attrib.len > 0) {
 		diag_t d = pbs_out_hunk(&a_pbs, attrib, story);
 		if (d != NULL) {
-			return d;
+			return pbs_out_diag(outpbs, HERE, &d);
 		}
 	}
 
 	close_output_pbs(&a_pbs);
-	return NULL;
+	return true;
 }
 
 /*
@@ -159,13 +159,11 @@ bool emit_v2_child_configuration_payload(const struct child_sa *child, struct pb
 
 		for (const shunk_t *domain = c->config->modecfg.domains;
 		     domain != NULL && domain->ptr != NULL; domain++) {
-			diag_t d = emit_v2CP_attribute(&cp_pbs,
-						       IKEv2_INTERNAL_DNS_DOMAIN,
-						       *domain,
-						       "IKEv2_INTERNAL_DNS_DOMAIN");
-			if (d != NULL) {
-				llog_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d,
-					  "%s", "");
+			if (!emit_v2CP_attribute(&cp_pbs,
+						 IKEv2_INTERNAL_DNS_DOMAIN,
+						 *domain,
+						 "IKEv2_INTERNAL_DNS_DOMAIN")) {
+				/* already logged */
 				return false;
 			}
 		}
