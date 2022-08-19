@@ -994,6 +994,19 @@ delvti() {
 }
 
 # Client Address Translation CAT
+
+add_nftables_cat() {
+  nft add table ip ipsec-nat
+  nft add chain ip ipsec-nat ipsec-postrouting "{ type filter hook postrouting  priority 100; policy accept;}"
+  nft add chain ip ipsec-nat ipsec-prerouting "{ type filter hook prerouting priority -100; policy accept;}"
+  # outgoing
+  # keep of order of saddr daddr expression.
+  # The order is used to grep handle while deleting the rule
+  nft add rule ip ipsec-nat ipsec-postrouting rt ipsec exists ip daddr ${PLUTO_PEER_CLIENT} ip saddr ${PLUTO_ME} ip saddr set ${PLUTO_MY_CLIENT_NET} notrack counter accept
+  # incoming
+  nft add rule ip ipsec-nat ipsec-prerouting meta ipsec exists ip daddr ${PLUTO_MY_CLIENT_NET} ip saddr ${PLUTO_PEER_CLIENT} ip daddr set ${PLUTO_ME} notrack counter accept
+}
+
 addcat() {
     firewall_cmd
     if [ "${FIREWALL}" = IPTABLES -a -n "${CAT}" -a "${PLUTO_MY_CLIENT_NET}" != "0.0.0.0" ] ; then
@@ -1002,6 +1015,8 @@ addcat() {
 	iptables -t nat -I PREROUTING -m policy --dir in --pol ipsec \
 	    -d ${PLUTO_MY_CLIENT_NET} -s ${PLUTO_PEER_CLIENT} \
 	    -j DNAT --to-destination ${PLUTO_ME}
+    elif [ "${FIREWALL}" = NFTABLES -a -n "${CAT}" ]; then
+        add_nftables_cat
     fi
 }
 
@@ -1013,6 +1028,9 @@ delcat() {
 	        -j DNAT --to-destination ${PLUTO_ME}
 	    iptables -t nat -D POSTROUTING -m policy --dir out --pol ipsec \
 	        -d ${PLUTO_PEER_CLIENT} -j SNAT --to-source ${PLUTO_MY_CLIENT_NET}
+    elif [ "${FIREWALL}" = NFTABLES -a -n "${CAT}" ]; then
+	nftables_delete_rule ipsec-nat ipsec-postrouting "ip daddr ${PLUTO_PEER_CLIENT} ip saddr ${PLUTO_ME} ip saddr set ${PLUTO_MY_CLIENT_NET} notrack counter"
+	nftables_delete_rule ipsec-nat ipsec-prerouting "ip daddr ${PLUTO_MY_CLIENT_NET} ip saddr ${PLUTO_PEER_CLIENT} ip daddr set ${PLUTO_ME} notrack counter"
     fi
 }
 
