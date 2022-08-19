@@ -297,7 +297,6 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 
 	case IKEv2_AUTH_DIGSIG:
 	{
-		diag_t d;
 		/* saved during signing */
 		const struct hash_desc *hash_alg = ike->sa.st_v2_digsig.hash;
 		const struct pubkey_signer *signer = ike->sa.st_v2_digsig.signer;
@@ -306,17 +305,13 @@ bool emit_local_v2AUTH(struct ike_sa *ike,
 			return false;
 		}
 
-		d = pbs_out_hunk(&auth_pbs, b, "OID of ASN.1 Algorithm Identifier");
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d,
-				  "DigSig: failed to emit OID of ASN.1 Algorithm Identifier");
+		if (!pbs_out_hunk(&auth_pbs, b, "OID of ASN.1 Algorithm Identifier")) {
+			/* already logged */
 			return false;
 		}
 
-		d = pbs_out_hunk(&auth_pbs, *auth_sig, "signature");
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d,
-				  "DigSig: failed to emit HASH");
+		if (!pbs_out_hunk(&auth_pbs, *auth_sig, "signature")) {
+			/* already logged */
 			return false;
 		}
 		break;

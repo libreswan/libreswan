@@ -101,9 +101,9 @@ static bool emit_v2CP_attribute(struct pbs_out *outpbs,
 	}
 
 	if (attrib.len > 0) {
-		diag_t d = pbs_out_hunk(&a_pbs, attrib, story);
-		if (d != NULL) {
-			return pbs_out_diag(outpbs, HERE, &d);
+		if (!pbs_out_hunk(&a_pbs, attrib, story)) {
+			/* already logged */
+			return false;
 		}
 	}
 

@@ -2990,9 +2990,9 @@ diag_t pbs_in_address(struct pbs_in *input_pbs,
 bool pbs_out_address(struct pbs_out *out_pbs, const ip_address address, const char *what)
 {
 	shunk_t as = address_as_shunk(&address);
-	diag_t d = pbs_out_hunk(out_pbs, as, what);
-	if (d != NULL) {
-		return pbs_out_diag(out_pbs, HERE, &d);
+	if (!pbs_out_hunk(out_pbs, as, what)) {
+		/* already logged */
+		return false;
 	}
 	return true;
 }

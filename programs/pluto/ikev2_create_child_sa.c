@@ -354,9 +354,8 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
 		chunk_t local_nonce = ((larval_ike->sa.st_sa_role == SA_INITIATOR) ? larval_ike->sa.st_ni :
 				       (larval_ike->sa.st_sa_role == SA_RESPONDER) ? larval_ike->sa.st_nr :
 				       empty_chunk);
-		d = pbs_out_hunk(&nr_pbs, local_nonce, "IKEv2 nonce");
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, larval_ike->sa.st_logger, &d, "%s", "");
+		if (!pbs_out_hunk(&nr_pbs, local_nonce, "IKEv2 nonce")) {
+			/* already logged */
 			return false;
 		}
 

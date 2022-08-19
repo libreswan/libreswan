@@ -296,7 +296,9 @@ bool pbs_out_repeated_byte(struct pbs_out *pbs, uint8_t byte, size_t len,
 diag_t pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len,
 		   const char *name) MUST_USE_RESULT;
 
-#define out_hunk(HUNK, OUTS, NAME)					\
+#define out_hunk(HUNK, OUTS, NAME) pbs_out_hunk(OUTS, HUNK, NAME)
+
+#define pbs_out_hunk(OUTS, HUNK, NAME)					\
 	({								\
 		typeof(HUNK) hunk_ = HUNK; /* evaluate once */		\
 		struct pbs_out *outs_ = OUTS;				\
@@ -305,12 +307,6 @@ diag_t pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len,
 		d_ == NULL;						\
 	})
 
-#define pbs_out_hunk(OUTS, HUNK, NAME)					\
-	({								\
-		typeof(HUNK) hunk_ = HUNK; /* evaluate once */		\
-		struct pbs_out *outs_ = OUTS;				\
-		pbs_out_raw(outs_, hunk_.ptr, hunk_.len, (NAME));	\
-	})
 
 /* ISAKMP Header: for all messages
  * layout from RFC 2408 "ISAKMP" section 3.1

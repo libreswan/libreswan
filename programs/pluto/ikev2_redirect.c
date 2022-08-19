@@ -154,9 +154,8 @@ static shunk_t build_redirect_notification_data_common(enum gw_identity_type gwi
 	if (!out_struct(&gwi, &ikev2_redirect_desc, &gwid_pbs, NULL)) {
 		return empty_shunk;
 	}
-	diag_t d = pbs_out_hunk(&gwid_pbs, id, "redirect ID");
-	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
+	if (!pbs_out_hunk(&gwid_pbs, id, "redirect ID")) {
+		/* already logged */
 		return empty_shunk;
 	}
 	if (nonce == NULL || out_hunk(*nonce, &gwid_pbs, "nonce in redirect notify"))

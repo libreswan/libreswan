@@ -199,9 +199,8 @@ bool emit_v2_child_request_payloads(const struct child_sa *larval_child,
 			return false;
 		}
 
-		d = pbs_out_hunk(&pb_nr, larval_child->sa.st_ni, "IKEv2 nonce");
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, larval_child->sa.st_logger, &d, "%s", "");
+		if (!pbs_out_hunk(&pb_nr, larval_child->sa.st_ni, "IKEv2 nonce")) {
+			/* already logged */
 			return false;
 		}
 		close_output_pbs(&pb_nr);
@@ -467,9 +466,8 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 			return false;
 		}
 
-		d = pbs_out_hunk(&pb_nr, larval_child->sa.st_nr, "IKEv2 nonce");
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, larval_child->sa.st_logger, &d, "%s", "");
+		if (!pbs_out_hunk(&pb_nr, larval_child->sa.st_nr, "IKEv2 nonce")) {
+			/* already logged */
 			return false;
 		}
 

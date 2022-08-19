@@ -70,9 +70,9 @@ static bool emit_v2V_raw(struct pbs_out *outs, shunk_t vid, const char *descr)
 		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
 		return false;
 	}
-	d = pbs_out_hunk(&pbs, vid, descr);
-	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+
+	if (!pbs_out_hunk(&pbs, vid, descr)) {
+		/* already logged */
 		return false;
 	}
 	close_output_pbs(&pbs);

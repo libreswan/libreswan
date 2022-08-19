@@ -296,9 +296,8 @@ static stf_status emit_v2TS(struct pbs_out *outpbs,
 
 		dbg("emitting sec_label="PRI_SHUNK, pri_shunk(ts->sec_label));
 
-		diag_t d = pbs_out_hunk(&ts_label_pbs, ts->sec_label, "output Security label");
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
+		if (!pbs_out_hunk(&ts_label_pbs, ts->sec_label, "output Security label")) {
+			/* already logged */
 			return STF_INTERNAL_ERROR;
 		}
 

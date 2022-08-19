@@ -1498,7 +1498,6 @@ static bool emit_proposal(struct pbs_out *sa_pbs,
 			  enum ikev2_last_proposal last_proposal,
 			  bool allow_single_transform_none)
 {
-	diag_t d;
 	int numtrans = walk_transforms(NULL, -1, proposal, propnum,
 				       allow_single_transform_none, sa_pbs->outs_logger);
 	if (numtrans < 0) {
@@ -1520,9 +1519,8 @@ static bool emit_proposal(struct pbs_out *sa_pbs,
 
 	if (local_spi.len > 0) {
 		pexpect(local_spi.len == proto_spi_size(proposal->protoid));
-		d = pbs_out_hunk(&proposal_pbs, local_spi, "our spi");
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, sa_pbs->outs_logger, &d, "%s", "");
+		if (!pbs_out_hunk(&proposal_pbs, local_spi, "our spi")) {
+			/* already logged */
 			return false;
 		}
 	}
