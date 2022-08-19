@@ -192,7 +192,7 @@ extern const pb_stream empty_pbs;
  * For an input PBS:
  *	pbs_offset is amount of stream processed.
  *	pbs_room is size of stream.
- *	pbs_left is amount of stream remaining
+ *	pbs_in_remaining is amount of stream remaining
  *
  * For an output PBS:
  *	pbs_offset is current size of stream.
@@ -205,6 +205,7 @@ extern const pb_stream empty_pbs;
 #define pbs_offset(pbs) ((size_t)((pbs)->cur - (pbs)->start))
 #define pbs_room(pbs) ((size_t)((pbs)->roof - (pbs)->start))
 #define pbs_left(pbs) ((size_t)((pbs)->roof - (pbs)->cur))
+#define pbs_in_remaining(pbs) pbs_left(pbs)
 
 #define DBG_dump_pbs(pbs) DBG_dump((pbs)->name, (pbs)->start, pbs_offset(pbs))
 
