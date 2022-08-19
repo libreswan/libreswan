@@ -107,4 +107,6 @@ endif
 USE_XFRM ?= true
 USERLAND_CFLAGS += -DTimeZoneOffset=timezone
 USE_DNSSEC ?= true
-HAVE_IPTABLES ?= true
+ifneq ($(HAVE_NFTABLES), true)
+  HAVE_IPTABLES ?= true
+endif
