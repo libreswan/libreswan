@@ -408,7 +408,7 @@ for op in "${ops[@]}" ; do
 	    echo ${gnumake} kvm-${o}
 	    ${gnumake} kvm-${o} || exit $?
 	    ;;
-	demolish | purge | status | check-clean | shutdown | uninstall* | install* )
+	demolish | purge | status | check-clean | clean | shutdown | uninstall* | install* )
 	    echo ${gnumake} kvm-${op}
 	    ${gnumake} kvm-${op} || exit $?
 	    ;;
