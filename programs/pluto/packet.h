@@ -273,9 +273,9 @@ extern void close_output_pbs(struct pbs_out *pbs);
 extern shunk_t same_pbs_out_as_shunk(pb_stream *pbs);
 extern chunk_t clone_pbs_out_as_chunk(pb_stream *pbs, const char *name);
 
-diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
-		      const void *struct_ptr, size_t struct_size,
-		      struct pbs_out *obj_pbs) MUST_USE_RESULT;
+bool pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
+		    const void *struct_ptr, size_t struct_size,
+		    struct pbs_out *obj_pbs) MUST_USE_RESULT;
 
 bool out_struct(const void *struct_ptr, struct_desc *sd,
 		struct pbs_out *outs, struct pbs_out *obj_pbs) MUST_USE_RESULT;

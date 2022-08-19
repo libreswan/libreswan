@@ -207,10 +207,9 @@ static struct pbs_out open_v2_message_body(struct pbs_out *message,
 	}
 
 	struct pbs_out body;
-	diag_t d = pbs_out_struct(message, &isakmp_hdr_desc, &hdr, sizeof(hdr), &body);
-	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
-		return empty_pbs;
+	if (!pbs_out_struct(message, &isakmp_hdr_desc, &hdr, sizeof(hdr), &body)) {
+		/* already logged */
+		return empty_pbs; /*fatal*/
 	}
 	if (impair.add_unknown_v2_payload_to == exchange_type &&
 	    !emit_v2UNKNOWN("request", exchange_type, &body)) {

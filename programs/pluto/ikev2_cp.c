@@ -86,17 +86,16 @@ static bool emit_v2CP_attribute(struct pbs_out *outpbs,
 				uint16_t type, shunk_t attrib,
 				const char *story)
 {
-	diag_t d;
 	struct ikev2_cp_attribute attr = {
 		.type = type,
 		.len = attrib.len,
 	};
 
 	pb_stream a_pbs;
-	d = pbs_out_struct(outpbs, &ikev2_cp_attribute_desc,
-			   &attr, sizeof(attr), &a_pbs);
-	if (d != NULL) {
-		return pbs_out_diag(outpbs, HERE, &d);
+	if (!pbs_out_struct(outpbs, &ikev2_cp_attribute_desc,
+			    &attr, sizeof(attr), &a_pbs)) {
+		/* already logged */
+		return false; /*fatal*/
 	}
 
 	if (attrib.len > 0) {

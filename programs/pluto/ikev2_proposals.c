@@ -1241,13 +1241,12 @@ static bool emit_transform_header(struct pbs_out *proposal_pbs,
 		.isat_transid = transform_id,
 		.isat_lt = is_last_transform ? v2_TRANSFORM_LAST : v2_TRANSFORM_NON_LAST,
 	};
-	diag_t d = pbs_out_struct(proposal_pbs, &ikev2_trans_desc,
-				  &trans, sizeof(trans), transform_pbs);
-	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, proposal_pbs->outs_logger, &d,
-			 "out_struct() of transform failed: ");
-		return false;
+	if (!pbs_out_struct(proposal_pbs, &ikev2_trans_desc,
+			    &trans, sizeof(trans), transform_pbs)) {
+		/* already logged */
+		return false; /*fatal*/
 	}
+
 	return true;
 }
 

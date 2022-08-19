@@ -344,11 +344,10 @@ static bool record_v2_rekey_ike_message(struct ike_sa *ike,
 			.isag_critical = build_ikev2_critical(false, larval_ike->sa.st_logger),
 		};
 		struct pbs_out nr_pbs;
-		diag_t d;
-		d = pbs_out_struct(message.pbs, &ikev2_nonce_desc, &in, sizeof(in), &nr_pbs);
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, larval_ike->sa.st_logger, &d, "%s", "");
-			return false;
+
+		if (!pbs_out_struct(message.pbs, &ikev2_nonce_desc, &in, sizeof(in), &nr_pbs)) {
+			/* already logged */
+			return false; /*fatal*/
 		}
 
 		chunk_t local_nonce = ((larval_ike->sa.st_sa_role == SA_INITIATOR) ? larval_ike->sa.st_ni :

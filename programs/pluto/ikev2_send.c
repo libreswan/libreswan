@@ -95,7 +95,6 @@ void record_v2_message(struct ike_sa *ike,
 bool emit_v2UNKNOWN(const char *victim, enum isakmp_xchg_type exchange_type,
 		    struct pbs_out *outs)
 {
-	diag_t d;
 	llog(RC_LOG, outs->outs_logger,
 	     "IMPAIR: adding an unknown%s payload of type %d to %s %s",
 	     impair.unknown_v2_payload_critical ? " critical" : "",
@@ -106,10 +105,9 @@ bool emit_v2UNKNOWN(const char *victim, enum isakmp_xchg_type exchange_type,
 		.isag_critical = build_ikev2_critical(impair.unknown_v2_payload_critical, outs->outs_logger),
 	};
 	struct pbs_out pbs;
-	d = pbs_out_struct(outs, &ikev2_unknown_payload_desc, &gen, sizeof(gen), &pbs);
-	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
-		return false;
+	if (!pbs_out_struct(outs, &ikev2_unknown_payload_desc, &gen, sizeof(gen), &pbs)) {
+		/* already logged */
+		return false; /*fatal*/
 	}
 	close_output_pbs(&pbs);
 	return true;

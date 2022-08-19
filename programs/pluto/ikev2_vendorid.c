@@ -60,15 +60,14 @@ void handle_v2_vendorid(shunk_t vid, struct logger *logger)
 
 static bool emit_v2V_raw(struct pbs_out *outs, shunk_t vid, const char *descr)
 {
-	diag_t d;
 	struct ikev2_generic gen = {
 		.isag_np = 0,
 	};
+
 	struct pbs_out pbs;
-	d = pbs_out_struct(outs, &ikev2_vendor_id_desc, &gen, sizeof(gen), &pbs);
-	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
-		return false;
+	if (!pbs_out_struct(outs, &ikev2_vendor_id_desc, &gen, sizeof(gen), &pbs)) {
+		/* already logged */
+		return false; /*fatal*/
 	}
 
 	if (!pbs_out_hunk(&pbs, vid, descr)) {

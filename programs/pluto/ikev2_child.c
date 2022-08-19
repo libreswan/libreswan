@@ -131,11 +131,9 @@ static bool emit_v2N_ipcomp_supported(const struct child_sa *child, struct pbs_o
 		return false;
 	}
 
-	diag_t d;
-	d = pbs_out_struct(&d_pbs, &ikev2notify_ipcomp_data_desc, &id, sizeof(id), NULL);
-	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, child->sa.st_logger, &d, "%s", "");
-		return false;
+	if (!pbs_out_struct(&d_pbs, &ikev2notify_ipcomp_data_desc, &id, sizeof(id), NULL)) {
+		/* already logged */
+		return false; /*fatal */
 	}
 
 	close_output_pbs(&d_pbs);
@@ -191,12 +189,10 @@ bool emit_v2_child_request_payloads(const struct child_sa *larval_child,
 		struct ikev2_generic in = {
 			.isag_critical = build_ikev2_critical(false, larval_child->sa.st_logger),
 		};
-		diag_t d;
 		struct pbs_out pb_nr;
-		d = pbs_out_struct(pbs, &ikev2_nonce_desc, &in, sizeof(in), &pb_nr);
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, larval_child->sa.st_logger, &d, "%s", "");
-			return false;
+		if (!pbs_out_struct(pbs, &ikev2_nonce_desc, &in, sizeof(in), &pb_nr)) {
+			/* already logged */
+			return false; /*fatal*/
 		}
 
 		if (!pbs_out_hunk(&pb_nr, larval_child->sa.st_ni, "IKEv2 nonce")) {
@@ -458,12 +454,10 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 			.isag_critical = build_ikev2_critical(false, ike->sa.st_logger),
 		};
 		pb_stream pb_nr;
-		diag_t d;
 
-		d = pbs_out_struct(outpbs, &ikev2_nonce_desc, &in, sizeof(in), &pb_nr);
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, larval_child->sa.st_logger, &d, "%s", "");
-			return false;
+		if (!pbs_out_struct(outpbs, &ikev2_nonce_desc, &in, sizeof(in), &pb_nr)) {
+			/* already logged */
+			return false; /*fatal*/
 		}
 
 		if (!pbs_out_hunk(&pb_nr, larval_child->sa.st_nr, "IKEv2 nonce")) {

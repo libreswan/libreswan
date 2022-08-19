@@ -2596,9 +2596,9 @@ static diag_t pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 	return NULL;
 }
 
-diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
-		      const void *struct_ptr, size_t struct_size,
-		      struct pbs_out *obj_pbs)
+bool pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
+		    const void *struct_ptr, size_t struct_size,
+		    struct pbs_out *obj_pbs)
 {
 	const u_int8_t *inp = struct_ptr;
 	u_int8_t *cur = outs->cur;
@@ -2610,7 +2610,9 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 	}
 
 	if (outs->roof - cur < (ptrdiff_t)sd->size) {
-		return diag("not enough room left in output packet to place %s", sd->name);
+		llog_pexpect(outs->outs_logger, HERE,
+			     "not enough room left in output packet to place %s", sd->name);
+		return false;
 	}
 
 
@@ -2711,7 +2713,7 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 			/* immediate form is just like a number */
 			diag_t d = pbs_out_number(outs, sd, &inp, &cur, fp, &immediate);
 			if (d != NULL) {
-				return d;
+				return pbs_out_diag(outs, HERE, &d);
 			}
 			break;
 
@@ -2725,7 +2727,7 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 		{
 			diag_t d = pbs_out_number(outs, sd, &inp, &cur, fp, &immediate);
 			if (d != NULL) {
-				return d;
+				return pbs_out_diag(outs, HERE, &d);
 			}
 			break;
 		}
@@ -2754,7 +2756,7 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 
 				*obj_pbs = obj;
 			}
-			return NULL;
+			return true;
 
 		default:
 			bad_case(fp->field_type);
@@ -2767,8 +2769,7 @@ diag_t pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 bool out_struct(const void *struct_ptr, struct_desc *sd,
 		struct pbs_out *outs, struct pbs_out *obj_pbs)
 {
-	diag_t d = pbs_out_struct(outs, sd, struct_ptr, 0, obj_pbs);
-	return pbs_out_diag(outs, HERE, &d);
+	return pbs_out_struct(outs, sd, struct_ptr, 0, obj_pbs);
 }
 
 bool ikev1_out_generic(struct_desc *sd,
