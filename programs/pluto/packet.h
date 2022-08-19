@@ -290,8 +290,8 @@ extern bool ikev1_out_generic_raw(struct_desc *sd,
 
 bool pbs_out_zero(struct pbs_out *outs, size_t len, const char *name) MUST_USE_RESULT;
 
-diag_t pbs_out_repeated_byte(struct pbs_out *pbs, uint8_t, size_t len,
-			     const char *name) MUST_USE_RESULT;
+bool pbs_out_repeated_byte(struct pbs_out *pbs, uint8_t byte, size_t len,
+			   const char *name) MUST_USE_RESULT;
 
 diag_t pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len,
 		   const char *name) MUST_USE_RESULT;

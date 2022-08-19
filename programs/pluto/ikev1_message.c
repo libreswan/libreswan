@@ -33,17 +33,6 @@ struct isakmp_ipsec_id build_v1_id_payload(const struct end *end, shunk_t *body)
 	return id_hd;
 }
 
-bool out_repeated_byte(uint8_t byte, size_t len, pb_stream *outs, const char *name)
-{
-	diag_t d = pbs_out_repeated_byte(outs, byte, len, name);
-	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
-		return false;
-	}
-
-	return true;
-}
-
 bool out_raw(const void *bytes, size_t len, pb_stream *outs, const char *name)
 {
 	diag_t d = pbs_out_raw(outs, bytes, len, name);
@@ -110,7 +99,7 @@ bool ikev1_justship_KE(struct logger *logger, chunk_t *g, pb_stream *outs)
 		llog(RC_LOG, logger, "IMPAIR: sending bogus KE (g^x) == %u value to break DH calculations", byte);
 		/* Only used to test sending/receiving bogus g^x */
 		return ikev1_out_generic(&isakmp_keyex_desc, outs, &z) &&
-			out_repeated_byte(byte, g->len, &z, "fake g^x") &&
+			pbs_out_repeated_byte(&z, byte, g->len, "fake g^x") &&
 			(close_output_pbs(&z), true);
 	}
 	}

@@ -310,10 +310,9 @@ bool emit_v2KE(chunk_t g, const struct dh_desc *group,
 		llog(RC_LOG, outs->outs_logger,
 			    "IMPAIR: sending bogus KE (g^x) == %u value to break DH calculations", byte);
 		/* Only used to test sending/receiving bogus g^x */
-		diag_t d = pbs_out_repeated_byte(&kepbs, byte, g.len, "ikev2 impair KE (g^x) == 0");
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
-			return false;
+		if (!pbs_out_repeated_byte(&kepbs, byte, g.len, "ikev2 impair KE (g^x) == 0")) {
+			/* already logged */
+			return false; /*fatal*/
 		}
 	} else if (impair.ke_payload == IMPAIR_EMIT_EMPTY) {
 		llog(RC_LOG, outs->outs_logger, "IMPAIR: sending an empty KE value");

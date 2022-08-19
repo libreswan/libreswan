@@ -2869,16 +2869,16 @@ diag_t pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len, const ch
 	return NULL;
 }
 
-diag_t pbs_out_repeated_byte(struct pbs_out *outs, uint8_t byte, size_t len, const char *name)
+bool pbs_out_repeated_byte(struct pbs_out *outs, uint8_t byte, size_t len, const char *name)
 {
 	diag_t d = space_for(len, outs, "%zu 0x%02x repeated bytes of %s", len, byte, name);
 	if (d != NULL) {
-		return d;
+		return pbs_out_diag(outs, HERE, &d);
 	}
 
 	memset(outs->cur, byte, len);
 	outs->cur += len;
-	return NULL;
+	return true;
 }
 
 bool pbs_out_zero(struct pbs_out *outs, size_t len, const char *name)

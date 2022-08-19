@@ -307,12 +307,9 @@ static bool close_v2SK_payload(struct v2SK_payload *sk)
 	dbg("adding %zd bytes of padding (including 1 byte padding-length)",
 	    padding);
 	for (unsigned i = 0; i < padding; i++) {
-		diag_t d = pbs_out_repeated_byte(&sk->pbs, i, 1, "padding and length");
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, sk->logger, &d,
-				 "error initializing padding for encrypted %s payload: ",
-				 sk->pbs.container->name);
-			return false;
+		if (!pbs_out_repeated_byte(&sk->pbs, i, 1, "padding and length")) {
+			/* already logged */
+			return false; /*fatal*/
 		}
 	}
 
