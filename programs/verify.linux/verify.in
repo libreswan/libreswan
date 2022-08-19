@@ -161,15 +161,15 @@ def cmdchecks():
 	if "true" in iptables:
 		printfun("Checking 'iptables' command")
 
-		if which(iptables):
+		if which("iptables"):
 			print_result("OK","OK")
 		else:
 			print_result("WARN","MISSING")
 
 	if "true" in nftables:
 		printfun("Checking 'nft' command")
-
-		if which(nftables):
+		nft = which("nft")
+		if nft:
 			print_result("OK","OK")
 		else:
 			print_result("WARN","MISSING")
