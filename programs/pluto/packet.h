@@ -249,6 +249,8 @@ diag_t pbs_in_raw(struct pbs_in *pbs, void *bytes, size_t len,
 
 #define pbs_out packet_byte_stream /* outs */
 
+bool pbs_out_diag(struct pbs_out *pbs, where_t where, diag_t *d);
+
 /*
  * Initializers; point PBS at a pre-allocated (or static) buffer.
  *
@@ -295,9 +297,7 @@ diag_t pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len,
 		typeof(HUNK) hunk_ = HUNK; /* evaluate once */		\
 		struct pbs_out *outs_ = OUTS;				\
 		diag_t d_ = pbs_out_raw(outs_, hunk_.ptr, hunk_.len, (NAME)); \
-		if (d_ != NULL) {					\
-			llog_diag(RC_LOG_SERIOUS, outs_->outs_logger, &d_, "%s", ""); \
-		}							\
+		pbs_out_diag(outs_, HERE, &d_);				\
 		d_ == NULL;						\
 	})
 

@@ -1806,6 +1806,17 @@ void init_pbs(pb_stream *pbs, uint8_t *start, size_t len, const char *name)
 	};
 }
 
+bool pbs_out_diag(struct pbs_out *pbs, where_t where, diag_t *d)
+{
+	if (*d != NULL) {
+		llog_pexpect(pbs->outs_logger, where, "%s", str_diag(*d));
+		pfree_diag(d);
+		return false;
+	} else {
+		return true;
+	}
+}
+
 struct pbs_out open_pbs_out(const char *name, uint8_t *buffer, size_t sizeof_buffer,
 			    struct logger *logger)
 {
@@ -2757,12 +2768,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 		struct pbs_out *outs, struct pbs_out *obj_pbs)
 {
 	diag_t d = pbs_out_struct(outs, sd, struct_ptr, 0, obj_pbs);
-	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
-		return false;
-	}
-
-	return true;
+	return pbs_out_diag(outs, HERE, &d);
 }
 
 bool ikev1_out_generic(struct_desc *sd,
@@ -2787,8 +2793,7 @@ bool ikev1_out_generic_raw(struct_desc *sd,
 	}
 	diag_t d = pbs_out_raw(&pbs, bytes, len, name);
 	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
-		return false;
+		return pbs_out_diag(&pbs, HERE, &d);
 	}
 
 	close_output_pbs(&pbs);
