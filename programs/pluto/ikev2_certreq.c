@@ -12,7 +12,7 @@
  * Copyright (C) 2013 Matt Rogers <mrogers@redhat.com>
  * Copyright (C) 2013-2019 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2013 Kim B. Heino <b@bbbs.net>
- * Copyright (C) 2018-2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2018-2019,2022 Andrew Cagney
  * Copyright (C) 2018 Sahana Prasad <sahana.prasad07@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -42,71 +42,83 @@
 #include "pluto_x509.h"
 
 /*
- * Decode the CR payload of Phase 1.
+ * https://www.rfc-editor.org/rfc/rfc4945#section-3.2.6
  *
- *  https://tools.ietf.org/html/rfc4945
- *  3.2.4. PKCS #7 wrapped X.509 certificate
+ *   When in-band exchange of certificate keying materials is desired,
+ *   implementations MUST inform the peer of this by sending at least one
+ *   CERTREQ.  In other words, an implementation that does not send any
+ *   CERTREQs during an exchange SHOULD NOT expect to receive any CERT
+ *   payloads.
  *
- *  This ID type defines a particular encoding (not a particular
- *  certificate type); some current implementations may ignore CERTREQs
- *  they receive that contain this ID type, and the editors are unaware
- *  of any implementations that generate such CERTREQ messages.
- *  Therefore, the use of this type is deprecated.  Implementations
- *  SHOULD NOT require CERTREQs that contain this Certificate Type.
- *  Implementations that receive CERTREQs that contain this ID type MAY
- *  treat such payloads as synonymous with "X.509 Certificate -
- *  Signature".
+ * i.e., the absence of CERTREQ is a hint to not send certs
+ *
+ * https://datatracker.ietf.org/doc/html/rfc7296#section-3.7
+ * 3.7.  Certificate Request Payload
+ *
+ *   The Certificate Encoding field has the same values as those
+ *   defined in Section 3.6.  The Certification Authority field
+ *   contains an indicator of trusted authorities for this certificate
+ *   type.  The Certification Authority value is a concatenated list
+ *   of SHA-1 hashes of the public keys of trusted Certification
+ *   Authorities (CAs).  Each is encoded as the SHA-1 hash of the
+ *   Subject Public Key Info element (see Section 4.1.2.7 of [PKIX])
+ *   from each Trust Anchor certificate.  The 20-octet hashes are
+ *   concatenated and included with no other formatting.
+ *
+ * The code below hashes the .derPublicKey field; correct?
  */
 
-static void decode_certificate_request(struct state *st, enum ike_cert_type cert_type,
-				       const struct pbs_in *pbs)
+void process_v2CERTREQ_payload(struct ike_sa *ike, struct msg_digest *md)
 {
-	switch (cert_type) {
+	/* XXX: there should only be one! */
+	struct payload_digest *p = md->chain[ISAKMP_NEXT_v2CERTREQ];
+	if (p == NULL) {
+		ldbg(ike->sa.st_logger, "no CERTREQ");
+		return;
+	}
+
+	if (p->next != NULL) {
+		ldbg(ike->sa.st_logger, "ignoring duplicate CERTREQ");
+		/* stumble on */
+	}
+
+	const struct ikev2_certreq *const cr = &p->payload.v2certreq;
+	switch (cr->isacertreq_enc) {
 	case CERT_X509_SIGNATURE:
 	{
-		asn1_t ca_name = pbs_in_left_as_shunk(pbs);
-
-		if (DBGP(DBG_BASE)) {
-			DBG_dump_hunk("CR", ca_name);
-		}
-
-		if (ca_name.len > 0) {
-			err_t e = asn1_ok(ca_name);
-			if (e != NULL) {
-				llog(RC_LOG_SERIOUS, st->st_logger,
-				     "ignoring CERTREQ payload that is not ASN1: %s", e);
+		struct pbs_in pbs = p->pbs;
+		unsigned count = 0;
+		/*
+		 * https://www.rfc-editor.org/rfc/rfc4945#section-3.2.7.2
+		 * 3.2.7.2.  Empty Certification Authority Field
+		 *
+		 * i.e., during IKE_SA_INIT, the responder has no clue
+		 * as to the initiator's true identity and hence no
+		 * clue as to which cert chain to ask for.  As a
+		 * work-around allow empty CERTREQ payloads.
+		 */
+		while (pbs_in_remaining(&pbs) > 0) {
+			ckaid_t hash = { .len = SHA1_DIGEST_SIZE, /*see RFC*/};
+			diag_t d = pbs_in_raw(&pbs, hash.ptr, hash.len, "Certification Authority hash");
+			if (d != NULL) {
+				llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d,
+					  "ignoring CERTREQ payload: ");
 				return;
 			}
-
-			generalName_t *gn = alloc_thing(generalName_t, "generalName");
-			gn->name = clone_hunk(ca_name, "ca name");
-			gn->kind = GN_DIRECTORY_NAME;
-			gn->next = st->st_v1_requested_ca;
-			st->st_v1_requested_ca = gn;
+			count++;
 		}
-
-		if (DBGP(DBG_BASE)) {
-			dn_buf buf;
-			DBG_log("requested CA: '%s'",
-				str_dn_or_null(ca_name, "%any", &buf));
-		}
+		ldbg(ike->sa.st_logger, "found %d CERTREQ Certification Authority hashes", count);
+		/* both are non-zero */
+		ike->sa.st_v2_ike_seen_certreq = (count == 0 ? SEEN_EMPTY_v2CERTREQ : SEEN_FULL_v2CERTREQ);
 		break;
 	}
 	default:
 	{
 		enum_buf b;
-		llog(RC_LOG_SERIOUS, st->st_logger,
-		     "ignoring CERTREQ payload of unsupported type %s",
-		     str_enum(&ikev2_cert_type_names, cert_type, &b));
+		llog_sa(RC_LOG_SERIOUS, ike,
+			"ignoring CERTREQ payload of unsupported type %s",
+			str_enum(&ikev2_cert_type_names, cr->isacertreq_enc, &b));
 	}
-	}
-}
-
-void decode_v2_certificate_requests(struct state *st, struct msg_digest *md)
-{
-	for (struct payload_digest *p = md->chain[ISAKMP_NEXT_v2CERTREQ]; p != NULL; p = p->next) {
-		const struct ikev2_certreq *const cr = &p->payload.v2certreq;
-		decode_certificate_request(st, cr->isacertreq_enc, &p->pbs);
 	}
 }
 

@@ -39,7 +39,11 @@
 #include "log.h"
 #include "pluto_x509.h"		/* for get_auth_chain() */
 
-/* Send v2 CERT and possible CERTREQ (which should be separated eventually) */
+/*
+ * Send v2 CERT and possible CERTREQ (which should be separated
+ * eventually).
+ */
+
 stf_status emit_v2CERT(const struct connection *c, struct pbs_out *outpbs)
 {
 	const struct cert *mycert = c->local->config->host.cert.nss_cert != NULL ? &c->local->config->host.cert : NULL;
@@ -161,7 +165,7 @@ bool ikev2_send_cert_decision(const struct ike_sa *ike)
 	}
 
 	if (c->local->config->host.sendcert == CERT_SENDIFASKED &&
-	    ike->sa.st_v1_requested_ca != NULL) {
+	    ike->sa.st_v2_ike_seen_certreq) {
 		dbg("IKEv2 CERT: OK to send certificate (send if asked)");
 		return true;
 	}

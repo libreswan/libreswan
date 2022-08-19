@@ -1545,6 +1545,13 @@ stf_status process_v2_IKE_SA_INIT_response_continue(struct state *ike_sa,
 	rehash_state(&ike->sa, &md->hdr.isa_ike_responder_spi);
 
 	/*
+	 * Parse any CERTREQ in the IKE_SA_INIT response so that it is
+	 * available to initiate_v2_IKE_AUTH_request() (possibly after
+	 * several IKE_INTERMEDIATE exchanges).
+	 */
+	process_v2CERTREQ_payload(ike, md);
+
+	/*
 	 * The IKE_SA_INIT response has been processed, now dispatch
 	 * the next request.
 	 */

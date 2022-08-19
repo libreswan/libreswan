@@ -757,6 +757,12 @@ struct state {
 	bool st_ike_seen_v2n_mobike_supported;	/* did we receive MOBIKE_SUPPORTED */
 	bool st_ike_seen_v2n_initial_contact;	/* did we receive INITIAL_CONTACT */
 	bool st_v2_childless_ikev2_supported;	/* childless exchange? */
+	/* this a fuzzy bool */
+	enum {
+		SEEN_NO_v2CERTREQ = 0,
+		SEEN_EMPTY_v2CERTREQ = 1,
+		SEEN_FULL_v2CERTREQ = 2,
+	} st_v2_ike_seen_certreq;
 };
 
 /*

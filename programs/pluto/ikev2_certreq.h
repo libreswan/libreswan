@@ -29,10 +29,14 @@ struct state;
  * CERTREQ payloads are sent in the message just prior to the CERT:
  *
  * + in the IKE_SA_INIT response so that the initiator knows to
- * include its certificate in the IKE_AUTH request
+ * include its certificate in the IKE_AUTH request; except, at this
+ * point, the responder has no clue who the initiator is
  *
  * + in the IKE_AUTH request so that the responder knows to include
- * the certificate in its IKE_AUTH response
+ * the certificate in its IKE_AUTH response; hopefully the initiator
+ * knows which responder they are expecting
+ *
+ * Returning FALSE here indicates STF_INTERNAL_ERROR.
  */
 
 bool need_v2CERTREQ_in_IKE_AUTH_request(const struct ike_sa *ike);
@@ -41,6 +45,6 @@ bool need_v2CERTREQ_in_IKE_SA_INIT_response(const struct ike_sa *ike);
 stf_status emit_v2CERTREQ(struct ike_sa *ike, struct msg_digest *md,
 			  struct pbs_out *outpbs);
 
-void decode_v2_certificate_requests(struct state *st, struct msg_digest *md);
+void process_v2CERTREQ_payload(struct ike_sa *ike, struct msg_digest *md);
 
 #endif

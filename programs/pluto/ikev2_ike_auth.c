@@ -81,6 +81,8 @@ static stf_status process_v2_IKE_AUTH_request_ipseckey_continue(struct ike_sa *i
 
 static stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_digest *md);
 
+static v2_auth_signature_cb process_v2_IKE_AUTH_request_auth_signature_continue; /* type check */
+
 static stf_status submit_v2_IKE_AUTH_request_signature(struct ike_sa *ike,
 						       const struct v2_id_payload *id_payload,
 						       const struct hash_desc *hash_algo,
@@ -634,6 +636,26 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 
 	nat_traversal_change_port_lookup(md, &ike->sa); /* shouldn't this be ike? */
 
+	/*
+	 * Decode any certificate requests sent by the initiator.
+	 *
+	 * This acts as little more than a hint to the responder that
+	 * it should include it's CERT chain with its
+	 * proof-of-identity.
+	 *
+	 * The RFCs do discuss the idea of using this to refine the
+	 * connection.  Since the ID is available, why bother.
+	 */
+	process_v2CERTREQ_payload(ike, md);
+
+	/*
+	 * This both decodes the initiator's ID and, when necessary,
+	 * switches connection based on that ID.
+	 *
+	 * Conceivably, in a multi-homed scenario, it could also
+	 * switch based on the contents of the CERTREQ.
+	 */
+
 	diag_t d = ikev2_responder_decode_initiator_id(ike, md);
 	if (d != NULL) {
 		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
@@ -893,8 +915,6 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 
 	return process_v2_IKE_AUTH_request_tail(&ike->sa, md, true);
 }
-
-static v2_auth_signature_cb process_v2_IKE_AUTH_request_auth_signature_continue; /* type check */
 
 static stf_status submit_v2_IKE_AUTH_response_signature(struct ike_sa *ike, struct msg_digest *md,
 							const struct v2_id_payload *id_payload,
