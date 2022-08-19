@@ -259,15 +259,12 @@ static stf_status emit_v2TS(struct pbs_out *outpbs,
 		if (!out_struct(&ts_ports, &ikev2_ts_portrange_desc, &ts_range_pbs, NULL))
 			return STF_INTERNAL_ERROR;
 
-		diag_t d;
-		d = pbs_out_address(&ts_range_pbs, range_start(ts->net), "IP start");
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
+		if (!pbs_out_address(&ts_range_pbs, range_start(ts->net), "IP start")) {
+			/* already logged */
 			return STF_INTERNAL_ERROR;
 		}
-		d = pbs_out_address(&ts_range_pbs, range_end(ts->net), "IP end");
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, outpbs->outs_logger, &d, "%s", "");
+		if (!pbs_out_address(&ts_range_pbs, range_end(ts->net), "IP end")) {
+			/* already logged */
 			return STF_INTERNAL_ERROR;
 		}
 		close_output_pbs(&ts_range_pbs);

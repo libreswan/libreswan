@@ -210,9 +210,8 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 	switch (attr_type) {
 	case INTERNAL_IP4_ADDRESS:
 	{
-		diag_t d = pbs_out_address(&attrval, ia, "IP_addr");
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
+		if (!pbs_out_address(&attrval, ia, "IP_addr")) {
+			/* already logged */
 			return STF_INTERNAL_ERROR;
 		}
 		break;
@@ -220,17 +219,14 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 
 	case INTERNAL_IP4_SUBNET:
 	{
-		diag_t d;
 		ip_address addr = selector_prefix(c->spd.this.client);
-		d = pbs_out_address(&attrval, addr, "IP4_subnet(address)");
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
+		if (!pbs_out_address(&attrval, addr, "IP4_subnet(address)")) {
+			/* already logged */
 			return STF_INTERNAL_ERROR;
 		}
 		ip_address mask = selector_prefix_mask(c->spd.this.client);
-		d = pbs_out_address(&attrval, mask, "IP4_subnet(mask)");
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
+		if (!pbs_out_address(&attrval, mask, "IP4_subnet(mask)")) {
+			/* already logged */
 			return STF_INTERNAL_ERROR;
 		}
 		break;
@@ -238,11 +234,9 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 
 	case INTERNAL_IP4_NETMASK:
 	{
-		diag_t d;
 		ip_address mask = selector_prefix_mask(c->spd.this.client);
-		d = pbs_out_address(&attrval, mask, "IP4_netmask");
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
+		if (!pbs_out_address(&attrval, mask, "IP4_netmask")) {
+			/* already logged */
 			return STF_INTERNAL_ERROR;
 		}
 		break;
@@ -262,9 +256,8 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 		     dns != NULL && dns->is_set; dns++) {
 
 			/* emit attribute's value */
-			diag_t d = pbs_out_address(&attrval, *dns, "IP4_dns");
-			if (d != NULL) {
-				llog_diag(RC_LOG_SERIOUS, attrval.outs_logger, &d, "%s", "");
+			if (!pbs_out_address(&attrval, *dns, "IP4_dns")) {
+				/* already logged */
 				return STF_INTERNAL_ERROR;
 			}
 

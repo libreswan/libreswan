@@ -341,9 +341,8 @@ static bool emit_one_natoa(struct pbs_out *outs,
 		return false;
 	}
 
-	diag_t d = pbs_out_address(&pbs, ip, nm);
-	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+	if (!pbs_out_address(&pbs, ip, nm)) {
+		/* already logged */
 		return false;
 	}
 

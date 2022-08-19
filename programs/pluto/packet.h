@@ -1252,8 +1252,8 @@ extern uint8_t reply_buffer[MAX_OUTPUT_UDP_SIZE];
 diag_t pbs_in_address(struct pbs_in *input_pbs,
 		      ip_address *address, const struct ip_info *af,
 		      const char *WHAT) MUST_USE_RESULT;
-diag_t pbs_out_address(struct pbs_out *output_pbs, const ip_address address,
-		       const char *what) MUST_USE_RESULT;
+bool pbs_out_address(struct pbs_out *output_pbs, const ip_address address,
+		     const char *what) MUST_USE_RESULT;
 
 int pbs_peek_byte(const struct pbs_in *ins);
 

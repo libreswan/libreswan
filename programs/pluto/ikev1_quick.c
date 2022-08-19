@@ -174,17 +174,15 @@ static bool emit_subnet_id(const ip_subnet net,
 		return false;
 
 	ip_address tp = subnet_prefix(net);
-	diag_t d = pbs_out_address(&id_pbs, tp, "client network");
-	if (d != NULL) {
-		llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+	if (!pbs_out_address(&id_pbs, tp, "client network")) {
+		/* already logged */
 		return false;
 	}
 
 	if (!usehost) {
 		ip_address tm = subnet_prefix_mask(net);
-		diag_t d = pbs_out_address(&id_pbs, tm, "client mask");
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, outs->outs_logger, &d, "%s", "");
+		if (!pbs_out_address(&id_pbs, tm, "client mask")) {
+			/* already logged */
 			return false;
 		}
 	}

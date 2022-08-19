@@ -64,9 +64,8 @@ static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
 		return STF_INTERNAL_ERROR;
 
 	if (attr.len > 0) {
-		diag_t d = pbs_out_address(&a_pbs, *ip, story);
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, a_pbs.outs_logger, &d, "%s", "");
+		if (!pbs_out_address(&a_pbs, *ip, story)) {
+			/* already logged */
 			return STF_INTERNAL_ERROR;
 		}
 	}
