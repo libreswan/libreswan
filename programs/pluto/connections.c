@@ -4048,10 +4048,11 @@ static void show_one_connection(struct show *s,
 	}
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		jam(buf, PRI_CONNECTION":   newest ISAKMP SA: #%lu; newest IPsec SA: #%lu; conn serial: "PRI_CO"",
+		jam(buf, PRI_CONNECTION":   newest %s: #%lu; newest IPsec SA: #%lu; conn serial: "PRI_CO"",
 		    c->name, instance,
+		    c->config->ike_info->sa_type_name[IKE_SA],
 		    c->newest_ike_sa,
-		    c->newest_ipsec_sa,
+		    c->newest_ipsec_sa, /* IPsec SA or Child SA? */
 		    pri_co(c->serialno));
 		if (c->serial_from != UNSET_CO_SERIAL) {
 			jam(buf, ", instantiated from: "PRI_CO";",

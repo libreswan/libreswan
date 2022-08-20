@@ -132,8 +132,12 @@ struct config_end {
 };
 
 struct ike_info {
+	/* 1|2 */
 	enum ike_version version;
+	/* IKEv1|IKEv2 */
 	const char *version_name;
+	/* [IKE_SA] = ISAKMP SA | IKE SA */
+	/* [IPSEC_SA = IPsec SA | Child SA */
 	const char *sa_type_name[SA_TYPE_ROOF];
 };
 
