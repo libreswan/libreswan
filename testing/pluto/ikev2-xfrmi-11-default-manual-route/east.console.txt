@@ -119,7 +119,7 @@ east #
 000 "westnet-eastnet":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "westnet-eastnet":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet":   nat-traversal: encaps:auto; keepalive:20s
-000 "westnet-eastnet":   newest ISAKMP SA: #1; newest IPsec SA: #2; conn serial: $1;
+000 "westnet-eastnet":   newest IKE SA: #1; newest IPsec SA: #2; conn serial: $1;
 000 "westnet-eastnet":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048
 000 "westnet-eastnet":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
 000  

@@ -165,7 +165,7 @@ east #
 000 "clear":   our idtype: ID_IPV4_ADDR; our id=192.1.2.23; their idtype: %none; their id=(none)
 000 "clear":   liveness: passive; dpdaction:disabled; dpddelay:0s; retransmit-timeout:0s
 000 "clear":   nat-traversal: encaps:no; keepalive:no
-000 "clear":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $3;
+000 "clear":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $3;
 000 "clear#192.1.2.254/32": 192.1.2.23---192.1.2.254...%any===192.1.2.254/32; prospective erouted; eroute owner: #0
 000 "clear#192.1.2.254/32":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "clear#192.1.2.254/32":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -182,7 +182,7 @@ east #
 000 "clear#192.1.2.254/32":   our idtype: ID_IPV4_ADDR; our id=192.1.2.23; their idtype: %none; their id=(none)
 000 "clear#192.1.2.254/32":   liveness: passive; dpdaction:disabled; dpddelay:0s; retransmit-timeout:0s
 000 "clear#192.1.2.254/32":   nat-traversal: encaps:no; keepalive:no
-000 "clear#192.1.2.254/32":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $6, instantiated from: $3;
+000 "clear#192.1.2.254/32":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $6, instantiated from: $3;
 000 "private": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.254...%opportunisticgroup[%fromcert]; unrouted; eroute owner: #0
 000 "private":     oriented; my_ip=unset; their_ip=unset; mycert=east; my_updown=ipsec _updown;
 000 "private":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -200,7 +200,7 @@ east #
 000 "private":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 000 "private":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:2s
 000 "private":   nat-traversal: encaps:auto; keepalive:20s
-000 "private":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "private":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "private#10.1.0.0/24": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.254...%opportunistic[%fromcert]===10.1.0.0/24; prospective erouted; eroute owner: #0
 000 "private#10.1.0.0/24":     oriented; my_ip=unset; their_ip=unset; mycert=east; my_updown=ipsec _updown;
 000 "private#10.1.0.0/24":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -218,7 +218,7 @@ east #
 000 "private#10.1.0.0/24":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 000 "private#10.1.0.0/24":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:2s
 000 "private#10.1.0.0/24":   nat-traversal: encaps:auto; keepalive:20s
-000 "private#10.1.0.0/24":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $4, instantiated from: $1;
+000 "private#10.1.0.0/24":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $4, instantiated from: $1;
 000 "private-or-clear": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.254...%opportunisticgroup[%fromcert]; unrouted; eroute owner: #0
 000 "private-or-clear":     oriented; my_ip=unset; their_ip=unset; mycert=east; my_updown=ipsec _updown;
 000 "private-or-clear":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -236,7 +236,7 @@ east #
 000 "private-or-clear":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 000 "private-or-clear":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:2s
 000 "private-or-clear":   nat-traversal: encaps:auto; keepalive:20s
-000 "private-or-clear":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $2;
+000 "private-or-clear":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $2;
 000 "private-or-clear#192.1.2.0/24": 192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]---192.1.2.254...%opportunistic[%fromcert]===192.1.2.0/24; prospective erouted; eroute owner: #0
 000 "private-or-clear#192.1.2.0/24":     oriented; my_ip=unset; their_ip=unset; mycert=east; my_updown=ipsec _updown;
 000 "private-or-clear#192.1.2.0/24":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -254,7 +254,7 @@ east #
 000 "private-or-clear#192.1.2.0/24":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 000 "private-or-clear#192.1.2.0/24":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:2s
 000 "private-or-clear#192.1.2.0/24":   nat-traversal: encaps:auto; keepalive:20s
-000 "private-or-clear#192.1.2.0/24":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $5, instantiated from: $2;
+000 "private-or-clear#192.1.2.0/24":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $5, instantiated from: $2;
 000  
 000 Total IPsec connections: loaded 6, active 0
 000  

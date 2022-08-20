@@ -168,7 +168,7 @@ west #
 000 "west":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "west":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
 000 "west":   nat-traversal: encaps:auto; keepalive:20s
-000 "west":   newest ISAKMP SA: #1; newest IPsec SA: #2; conn serial: $1;
+000 "west":   newest IKE SA: #1; newest IPsec SA: #2; conn serial: $1;
 000 "west":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048
 000 "west":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
 000  

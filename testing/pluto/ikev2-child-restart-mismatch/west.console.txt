@@ -88,7 +88,7 @@ west #
 000 "westnet-eastnet-ikev2b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-ikev2b":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-ikev2b":   nat-traversal: encaps:auto; keepalive:20s
-000 "westnet-eastnet-ikev2b":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $2;
+000 "westnet-eastnet-ikev2b":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $2;
 000 "westnet-eastnet-ikev2c": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.201.0/24; unrouted; eroute owner: #0
 000 "westnet-eastnet-ikev2c":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 000 "westnet-eastnet-ikev2c":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
@@ -105,7 +105,7 @@ west #
 000 "westnet-eastnet-ikev2c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-ikev2c":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-ikev2c":   nat-traversal: encaps:auto; keepalive:20s
-000 "westnet-eastnet-ikev2c":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $3;
+000 "westnet-eastnet-ikev2c":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $3;
 west #
  echo done
 done

@@ -29,7 +29,7 @@ east #
 000 "nss-cert-chain":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east_chain_endcert.testing.libreswan.org, E=east_chain_endcert@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 000 "nss-cert-chain":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
 000 "nss-cert-chain":   nat-traversal: encaps:auto; keepalive:20s
-000 "nss-cert-chain":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "nss-cert-chain":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
 east #
  echo "initdone"
 initdone

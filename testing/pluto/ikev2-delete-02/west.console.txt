@@ -147,7 +147,7 @@ west #
 000 "west-east-delete1":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "west-east-delete1":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
 000 "west-east-delete1":   nat-traversal: encaps:auto; keepalive:20s
-000 "west-east-delete1":   newest ISAKMP SA: #1; newest IPsec SA: #2; conn serial: $1;
+000 "west-east-delete1":   newest IKE SA: #1; newest IPsec SA: #2; conn serial: $1;
 000 "west-east-delete1":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048
 000 "west-east-delete1":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
 000  
@@ -281,7 +281,7 @@ west #
 000 "west-east-delete1":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "west-east-delete1":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
 000 "west-east-delete1":   nat-traversal: encaps:auto; keepalive:20s
-000 "west-east-delete1":   newest ISAKMP SA: #1; newest IPsec SA: #0; conn serial: $1;
+000 "west-east-delete1":   newest IKE SA: #1; newest IPsec SA: #0; conn serial: $1;
 000 "west-east-delete1":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048
 000  
 000 Total IPsec connections: loaded 1, active 0
@@ -408,7 +408,7 @@ west #
 000 "west-east-delete1":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "west-east-delete1":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
 000 "west-east-delete1":   nat-traversal: encaps:auto; keepalive:20s
-000 "west-east-delete1":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "west-east-delete1":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  

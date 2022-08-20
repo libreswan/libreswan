@@ -134,7 +134,7 @@ west #
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   nat-traversal: encaps:auto; keepalive:20s
-000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $2;
+000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $2;
 000 "westnet-eastnet-ipv4-psk-ikev2-ccm-a":   ESP algorithms: AES_CCM_8_128-NONE
 000  
 000 Total IPsec connections: loaded 1, active 0

@@ -17,6 +17,6 @@ east #
  # there should be no instance connections
 east #
  ipsec status | grep "conn serial"
-000 "road-eastnet-ikev2":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "road-eastnet-ikev2":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
 east #
  

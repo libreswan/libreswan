@@ -25,7 +25,7 @@ east #
 000 "westnet-eastnet-ikev2":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
 000 "westnet-eastnet-ikev2":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-ikev2":   nat-traversal: encaps:auto; keepalive:20s
-000 "westnet-eastnet-ikev2":   newest ISAKMP SA: #4; newest IPsec SA: #2; conn serial: $1;
+000 "westnet-eastnet-ikev2":   newest IKE SA: #4; newest IPsec SA: #2; conn serial: $1;
 000 "westnet-eastnet-ikev2":   IKE algorithms: AES_CBC_256-HMAC_SHA2_512-MODP2048
 000 "westnet-eastnet-ikev2":   IKEv2 algorithm newest: AES_CBC_256-HMAC_SHA2_512-MODP2048
 000 "westnet-eastnet-ikev2":   ESP algorithms: AES_CBC_256-HMAC_SHA2_512_256-MODP2048

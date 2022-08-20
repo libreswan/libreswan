@@ -25,7 +25,7 @@ east #
 000 "road-east":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@road.testing.libreswan.org
 000 "road-east":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
 000 "road-east":   nat-traversal: encaps:auto; keepalive:20s
-000 "road-east":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "road-east":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
 east #
  # eash should have only one pub key not road.
 east #

@@ -34,7 +34,7 @@ west #
 000 "westnet-eastnet-ikev1":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=west.testing.libreswan.org, E=user-west@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
 000 "westnet-eastnet-ikev1":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-ikev1":   nat-traversal: encaps:auto; keepalive:20s
-000 "westnet-eastnet-ikev1":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "westnet-eastnet-ikev1":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
 west #
  ipsec whack --impair suppress-retransmits
 west #

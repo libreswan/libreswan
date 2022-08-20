@@ -115,7 +115,7 @@ east #
 000 "west-rsasigkey-east-ckaid":   our idtype: ID_IPV4_ADDR; our id=192.1.2.23; their idtype: ID_IPV4_ADDR; their id=192.1.2.45
 000 "west-rsasigkey-east-ckaid":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
 000 "west-rsasigkey-east-ckaid":   nat-traversal: encaps:auto; keepalive:20s
-000 "west-rsasigkey-east-ckaid":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
+000 "west-rsasigkey-east-ckaid":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
 000  
 000 Total IPsec connections: loaded 1, active 0
 000  
