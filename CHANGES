@@ -3,9 +3,18 @@ See also https://libreswan.org/
 
 v4.8 (unreleased)
 * release: remote SHA1 bindings from LIBRESWAN OpenPGP key [dkg/Paul]
+* pluto: Various internal crypto struct changes [Andrew]
+* pluto: Fix traffic counters for AH and IPCOMP [Andrew]
+* pluto: Improve logging of duplicate serial cert error [Andrew]
+* pluto: Support for maxbytes/maxpacket counters [Antony/Paul]
+* pluto: Handle HW tokens usgin 2+ bytes of CKAID [Andrew]
+* ikev2: emit one CERTREQ payload with all the hashes [Andrew]
+* addconn/whack: add support for {left,right}pubkey= [Andrew]
+* showhostkey: add support for pubkey (for ECDSA) [Andrew]
 * Crypto: add test of interface to NSS's KDF [Daiki]
 * IPv6: open IPv6 IKE port 4500 github/800 [Andrew]
 * showhostkey: add --pem option to print PEM encoded public key [Andrew]
+* _unbound-hook converted from python to shell [Andrew]
 * BSD: delete old BSDKAME code replaced by PFKEYV2 code [Andrew]
 * BSD: fix replay window byte vs bit math [Andrew]
 * BSD: support large replay window when available; github/756 [Andrew]
