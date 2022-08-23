@@ -41,7 +41,6 @@
  * Indices for .setup.strings[], .setup.strings_set[]
  */
 enum keyword_string_config_field {
-	KSF_INTERFACES, /* loose_enum eventually */
 	KSF_CURLIFACE,
 	KSF_VIRTUALPRIVATE,
 	KSF_SYSLOG,

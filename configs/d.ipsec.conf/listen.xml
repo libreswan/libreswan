@@ -1,7 +1,7 @@
   <varlistentry>
   <term><emphasis remap='B'>listen</emphasis></term>
   <listitem>
-<para>IP address to listen on (default depends on <emphasis remap='B'>interfaces=</emphasis> setting).
+<para>IP address to listen on, defaults to ANY.
 Currently only accepts one IP address.
 </para>
   </listitem>
