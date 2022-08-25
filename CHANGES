@@ -2,7 +2,7 @@
 See also https://libreswan.org/
 
 v4.8 (unreleased)
-* release: remote SHA1 bindings from LIBRESWAN OpenPGP key [dkg/Paul]
+* release: remove SHA1 bindings from LIBRESWAN OpenPGP key [dkg/Paul]
 * pluto: Various internal crypto struct changes [Andrew]
 * pluto: Fix traffic counters for AH and IPCOMP [Andrew]
 * pluto: Improve logging of duplicate serial cert error [Andrew]
