@@ -100,7 +100,7 @@ Libreswan is based on Openswan-2.6.38 which in turn is based on FreeS/WAN-2.04
 sed -i "s:#[ ]*include \(.*\)\(/crypto-policies/back-ends/libreswan.config\)$:include \1\2:" configs/ipsec.conf.in
 
 %build
-make %{?_smp_mflags} \
+%make_build \
 %if 0%{with_development}
     OPTIMIZE_CFLAGS="%{?_hardened_cflags}" \
 %else
@@ -117,10 +117,8 @@ FS=$(pwd)
 
 
 %install
-make \
-    DESTDIR=%{buildroot} \
+%make_install \
     %{libreswan_config} \
-    install
 FS=$(pwd)
 rm -rf %{buildroot}/usr/share/doc/libreswan
 rm -rf %{buildroot}%{_libexecdir}/ipsec/*check
