@@ -51,19 +51,20 @@ BuildRequires: audit-libs-devel
 BuildRequires: bison
 BuildRequires: curl-devel
 BuildRequires: flex
-BuildRequires: gcc make
+BuildRequires: gcc
+BuildRequires: hostname
 BuildRequires: ldns-devel
 BuildRequires: libcap-ng-devel
 BuildRequires: libevent-devel
 BuildRequires: libseccomp-devel
 BuildRequires: libselinux-devel
+BuildRequires: make
 BuildRequires: nspr-devel
 BuildRequires: nss-devel >= %{nss_version}
 BuildRequires: nss-tools
 BuildRequires: openldap-devel
 BuildRequires: pam-devel
 BuildRequires: pkgconfig
-BuildRequires: hostname
 BuildRequires: redhat-rpm-config
 BuildRequires: systemd-devel
 BuildRequires: unbound-devel >= %{unbound_version}
