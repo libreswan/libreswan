@@ -112,6 +112,7 @@ kvmplutotest	libipsecconf-07				good
 kvmplutotest	libipsecconf-08-system-crypto-policies	good
 kvmplutotest	libipsecconf-09-time-prefix		wip
 kvmplutotest	libipsecconf-10-percentage-prefix	wip
+kvmplutotest	libipsecconf-11-default-key		good
 
 
 #################################################################
