@@ -1,0 +1,21 @@
+/testing/guestbin/swan-prep
+west #
+ ip addr add 192.1.2.46/24 dev eth1
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ echo "initdone"
+initdone
+west #
+ # should not show: addconn, in config '/etc/ipsec.conf', duplicate public key
+west #
+ ipsec auto --add test1
+002 "test1": added IKEv2 connection
+west #
+ ipsec auto --add test2
+002 "test2": added IKEv2 connection
+west #
+ 
