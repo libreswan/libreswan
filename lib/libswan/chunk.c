@@ -35,8 +35,10 @@ chunk_t alloc_chunk(size_t count, const char *name)
 
 void free_chunk_content(chunk_t *chunk)
 {
-	pfreeany(chunk->ptr);
-	*chunk = EMPTY_CHUNK;
+	if (chunk->ptr != NULL) {
+		pfree(chunk->ptr);
+	}
+	*chunk = empty_chunk;
 }
 
 void replace_chunk(chunk_t *dest, chunk_t src)
