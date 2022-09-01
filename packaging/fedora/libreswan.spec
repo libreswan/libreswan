@@ -5,8 +5,6 @@
 %global with_cavstests 1
 %global nss_version 3.52
 %global unbound_version 1.6.6
-# Crypto selftests crash if lto is enabled, so disable lto
-%global _lto_cflags %nil
 # Libreswan config options
 %global libreswan_config \\\
     FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
@@ -109,7 +107,6 @@ sed -i "s:#[ ]*include \(.*\)\(/crypto-policies/back-ends/libreswan.config\)$:in
 %else
     OPTIMIZE_CFLAGS="%{optflags}" \
 %endif
-    WERROR_CFLAGS="-Werror -Wno-missing-field-initializers -Wno-lto-type-mismatch -Wno-maybe-uninitialized" \
 %if 0%{with_efence}
     USE_EFENCE=true \
 %endif
