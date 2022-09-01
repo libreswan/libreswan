@@ -231,19 +231,43 @@ void *alloc_bytes(size_t size, const char *name)
  */
 void *clone_bytes(const void *orig, size_t size, const char *name)
 {
-	void *p;
 	if (orig == NULL) {
 		passert(size == 0);
-		p = NULL;
-	} else {
-		/* even when size is 0, allocate something */
-		p = uninitialized_malloc(size, name);
-		if (size > 0) {
-			/* size must be > 0 */
-			memcpy(p, orig, size);
-		}
+		return NULL;
+	}
+
+	/* even when size is 0, allocate something */
+	void *p = uninitialized_malloc(size, name);
+	if (size > 0) {
+		/* size must be > 0 */
+		memcpy(p, orig, size);
 	}
 	return p;
+}
+
+void *clone_bytes_bytes(const void *lhs_ptr, size_t lhs_len,
+			const void *rhs_ptr, size_t rhs_len,
+			const char *name)
+{
+	if (lhs_ptr == NULL && rhs_ptr == NULL) {
+		passert(lhs_len == 0);
+		passert(rhs_len == 0);
+		return NULL;
+	}
+
+	/*
+	 * Even when the total length is zero; provided one PTR is
+	 * non-NULL allocate something.
+	 */
+	size_t size = lhs_len + rhs_len;
+	void *new = uninitialized_malloc(size, name);
+	if (lhs_len > 0) {
+		memcpy(new, lhs_ptr, lhs_len);
+	}
+	if (rhs_len > 0) {
+		memcpy(new + lhs_len, rhs_ptr, rhs_len);
+	}
+	return new;
 }
 
 /*

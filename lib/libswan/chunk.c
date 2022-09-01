@@ -57,24 +57,18 @@ chunk_t clone_bytes_as_chunk(const void *bytes, size_t sizeof_bytes, const char 
 	return chunk2(clone_bytes(bytes, sizeof_bytes, name), sizeof_bytes);
 }
 
-chunk_t clone_bytes_bytes_as_chunk(const void *lhs_ptr, size_t lhs_size,
-				   const void *rhs_ptr, size_t rhs_size,
+chunk_t clone_bytes_bytes_as_chunk(const void *lhs_ptr, size_t lhs_len,
+				   const void *rhs_ptr, size_t rhs_len,
 				   const char *name)
 {
-	size_t size = lhs_size + rhs_size;
-	uint8_t *bytes = alloc_things(uint8_t, size, name);
-	memcpy(bytes, lhs_ptr, lhs_size);
-	memcpy(bytes + lhs_size, rhs_ptr, rhs_size);
-	return chunk2(bytes, size);
+	void *new = clone_bytes_bytes(lhs_ptr, lhs_len, rhs_ptr, rhs_len, name);
+	return chunk2(new, lhs_len + rhs_len);
 }
 
 void append_chunk_bytes(const char *name, chunk_t *lhs,
-			const void *rhs, size_t sizeof_rhs)
+			const void *rhs_ptr, size_t rhs_len)
 {
-	size_t len = lhs->len + sizeof_rhs;
-	chunk_t new = alloc_chunk(len, name);
-	memcpy(new.ptr, lhs->ptr, lhs->len);
-	memcpy(new.ptr + lhs->len, rhs, sizeof_rhs);
+	chunk_t new = clone_bytes_bytes_as_chunk(lhs->ptr, lhs->len, rhs_ptr, rhs_len, name);
 	replace_chunk(lhs, new);
 }
 
