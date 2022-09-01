@@ -265,7 +265,9 @@ static struct prf_context *nss_xcbc_init_bytes(const struct prf_desc *prf_desc,
 static void nss_xcbc_digest_symkey(struct prf_context *prf,
 				  const char *symkey_name, PK11SymKey *symkey)
 {
-	append_chunk_symkey(symkey_name, &prf->bytes, symkey, prf->logger);
+	chunk_t symkey_chunk = chunk_from_symkey(symkey_name, symkey, prf->logger);
+	append_chunk_hunk(symkey_name, &prf->bytes, symkey_chunk);
+	free_chunk_content(&symkey_chunk);
 }
 
 static void nss_xcbc_digest_bytes(struct prf_context *prf, const char *name,

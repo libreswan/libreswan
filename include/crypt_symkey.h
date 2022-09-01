@@ -81,9 +81,6 @@ void prepend_bytes_to_symkey(const char *result,
 void append_symkey_byte(PK11SymKey **lhs, uint8_t rhs,
 			struct logger *logger);
 
-void append_chunk_symkey(const char *name, chunk_t *lhs, PK11SymKey *rhs,
-			 struct logger *logger);
-
 /*
  * Extract SIZEOF_SYMKEY bytes of keying material as an ALG key (i.e.,
  * can be used to implement ALG).
