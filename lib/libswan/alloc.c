@@ -238,7 +238,10 @@ void *clone_bytes(const void *orig, size_t size, const char *name)
 	} else {
 		/* even when size is 0, allocate something */
 		p = uninitialized_malloc(size, name);
-		memcpy(p, orig, size);
+		if (size > 0) {
+			/* size must be > 0 */
+			memcpy(p, orig, size);
+		}
 	}
 	return p;
 }

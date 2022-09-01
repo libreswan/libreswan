@@ -181,7 +181,7 @@ USERLAND_LDFLAGS += $(USERLINK)
 
 # make LTO easier to tame?
 ifeq ($(USE_LTO),true)
-USERLAND_CFLAGS += -flto -Wno-error=stringop-overflow
+USERLAND_CFLAGS += -flto
 #USERLAND_LDFLAGS += -flto
 endif
 
