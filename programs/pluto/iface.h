@@ -200,7 +200,6 @@ struct iface_endpoint *alloc_iface_endpoint(int fd,
 					    where_t where);
 
 extern char *pluto_listen;	/* from --listen flag */
-extern bool use_interface(const char *rifn);
 
 extern void shutdown_ifaces(struct logger *logger);
 

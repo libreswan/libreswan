@@ -73,7 +73,7 @@
 #include "crypt_symkey.h"	/* for init_crypt_symkey() */
 #include "crl_queue.h"		/* for free_crl_queue() */
 #include "pending.h"		/* for init_pending() */
-#include "iface.h"		/* for use_interface() */
+#include "iface.h"		/* for pluto_listen; */
 #include "server_pool.h"
 
 #ifndef IPSECDIR
@@ -456,9 +456,12 @@ uint16_t secctx_attr_type = SECCTX;
  * We never find that letting getopt set an option makes sense
  * so flag is always NULL.
  *
- * Trick: we split each "name" string with an explicit '\0'.
- * Before the '\0' is the option name, as seen by getopt_long.
- * After the '\0' is meta-information:
+ * Trick:
+ *
+ * Each "name" string is split by an explicit '\0'.  Before the '\0'
+ * is the option name, as seen by getopt_long.  After the '\0' is
+ * meta-information where:
+ *
  * - _ means: obsolete due to _ in name: replace _ with -
  * - > means: obsolete spelling; use spelling from rest of string
  * - ! means: obsolete and ignored (no replacement)
@@ -466,7 +469,6 @@ uint16_t secctx_attr_type = SECCTX;
  *   If it starts with ^, that means start a newline in the --help output.
  *
  * The table should be ordered to maximize the clarity of --help.
- *
  */
 
 enum {
@@ -517,7 +519,7 @@ static const struct option long_opts[] = {
 #ifdef KERNEL_XFRM
 	{ "use-xfrm\0", no_argument, NULL, 'K' },
 #endif
-	{ "interface\0<ifname|ifaddr>", required_argument, NULL, 'i' },
+	{ "interface\0!<ifname|ifaddr>", required_argument, NULL, 'i' }, /* reserved; not implemented */
 	{ "curl-iface\0<ifname|ifaddr>", required_argument, NULL, 'Z' },
 	{ "curl-timeout\0<secs>", required_argument, NULL, 'I' },
 	{ "listen\0<ifaddr>", required_argument, NULL, 'L' },
@@ -1080,9 +1082,6 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'i':	/* --interface <ifname|ifaddr> */
-			if (!use_interface(optarg)) {
-				fatal_opt(longindex, logger, "too many --interface specifications");
-			}
 			continue;
 
 		case '1':	/* --ike-socket-no-errqueue */

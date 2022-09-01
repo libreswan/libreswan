@@ -604,23 +604,6 @@ void show_ifaces_status(struct show *s)
 	}
 }
 
-/* Called to handle --interface <ifname>
- * Semantics: if specified, only these (real) interfaces are considered.
- */
-
-static const char *pluto_ifn[10];
-static int pluto_ifn_roof = 0;
-
-bool use_interface(const char *rifn)
-{
-	if (pluto_ifn_roof >= (int)elemsof(pluto_ifn)) {
-		return false;
-	} else {
-		pluto_ifn[pluto_ifn_roof++] = rifn;
-		return true;
-	}
-}
-
 void shutdown_ifaces(struct logger *logger)
 {
 	/* clean up public interfaces */
