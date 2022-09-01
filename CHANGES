@@ -21,6 +21,7 @@ v4.8 (unreleased)
 * BSD: support ESN when available; github/721 [Andrew]
 * BSD: make code finding interfaces more portable; github/728 [Andrew]
 * BSD: always build using GCC; freebsd/264288 llvm/55963 [Andrew]
+* building: Fixes for -flto compiling with leak-detective [Andrew]
 * building: dropped default build and packaging support for:
   	    Fedora 22, 28, 29, 30
             Debian stretch
