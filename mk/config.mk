@@ -179,6 +179,12 @@ USERLAND_LDFLAGS += -Wl,--as-needed
 USERLINK ?= -Wl,-z,relro,-z,now -pie
 USERLAND_LDFLAGS += $(USERLINK)
 
+# make LTO easier to tame?
+ifeq ($(USE_LTO),true)
+USERLAND_CFLAGS += -flto -Wno-error=stringop-overflow
+#USERLAND_LDFLAGS += -flto
+endif
+
 
 ### install pathnames
 
