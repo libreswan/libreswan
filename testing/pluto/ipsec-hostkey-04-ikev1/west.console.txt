@@ -27,13 +27,34 @@ west #
 west #
  ipsec showhostkey --${leftright} --ckaid "${ckaid}" > OUTPUT/$us.hostkey
 west #
- # install config file
+ # fix/add hostkey config
 west #
  cp ipsec.conf /etc/ipsec.conf
 west #
  cat OUTPUT/east.hostkey >>/etc/ipsec.conf
 west #
  cat OUTPUT/west.hostkey >>/etc/ipsec.conf
+west #
+ cat /etc/ipsec.conf
+# /etc/ipsec.conf - Libreswan IPsec configuration file
+config setup
+	# put the logs in /tmp for the UMLs, so that we can operate
+	# without syslogd, which seems to break on UMLs
+	logfile=/tmp/pluto.log
+	logtime=no
+	logappend=no
+	dumpdir=/tmp
+	plutodebug=all
+conn hostkey
+	ikev2=no
+	left=192.1.2.45
+	leftsubnet=192.0.1.0/24
+	right=192.1.2.23
+	rightsubnet=192.0.2.0/24
+	# rsakey <<KEYID#1>>
+	rightrsasigkey=0s<<RAW-PUBKEY#1>>
+	# rsakey <<KEYID#2>>
+	leftrsasigkey=0s<<RAW-PUBKEY#2>>
 west #
  ipsec auto --add hostkey
 002 "hostkey": added IKEv1 connection
