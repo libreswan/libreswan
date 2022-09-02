@@ -236,10 +236,16 @@ void *clone_bytes(const void *orig, size_t size, const char *name)
 		return NULL;
 	}
 
-	/* even when size is 0, allocate something */
+	/*
+	 * Even when size is 0, allocate something.
+	 *
+	 * Note: memcpy(DST,NULL,*) is undefined.  Since size>0
+	 * implies !NULL use that (string code can end up with
+	 * {!NULL,0}.
+	 */
 	void *p = uninitialized_malloc(size, name);
 	if (size > 0) {
-		/* size must be > 0 */
+		passert(orig != NULL); /* per above */
 		memcpy(p, orig, size);
 	}
 	return p;
@@ -256,15 +262,20 @@ void *clone_bytes_bytes(const void *lhs_ptr, size_t lhs_len,
 	}
 
 	/*
-	 * Even when the total length is zero; provided one PTR is
-	 * non-NULL allocate something.
+	 * When at least one PTR is non-NULL allocate something (even
+	 * though SIZE can be zero).
+	 *
+	 * Note: memcpy(DST,NULL,*) is undefined.  Since LEN>0 implies
+	 * !NULL use that (string code can end up with {!NULL,0}.
 	 */
 	size_t size = lhs_len + rhs_len;
 	void *new = uninitialized_malloc(size, name);
 	if (lhs_len > 0) {
+		passert(lhs_ptr != NULL);
 		memcpy(new, lhs_ptr, lhs_len);
 	}
 	if (rhs_len > 0) {
+		passert(rhs_ptr != NULL);
 		memcpy(new + lhs_len, rhs_ptr, rhs_len);
 	}
 	return new;
