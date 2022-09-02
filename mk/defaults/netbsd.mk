@@ -36,4 +36,4 @@ FINALMANDIR=$(PREFIX)/man
 
 # LTO seems either broken or confused
 USE_LTO ?= false
-!
+
