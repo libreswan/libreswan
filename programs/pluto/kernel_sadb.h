@@ -25,13 +25,15 @@
 
 /*
  * struct sadb_x_policy requires these definitions, but OpenBSD
- * doesn't use any of that - it's SADB_X_EXT_POLICY is totally
- * different.
+ * doesn't use any of that.  OpenBSD's SADB_X_EXT_POLICY is a total
+ * rewrite.
  */
 
-#ifdef SADB_X_EXT_POLICY
-# ifdef __linux__
+#if defined SADB_X_EXT_POLICY
+# if defined __linux__
 #  include <linux/ipsec.h>
+# elif defined __APPLE__
+#  include <netinet6/ipsec.h>	/* guess */
 # else
 #  include <netipsec/ipsec.h>
 # endif
