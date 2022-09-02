@@ -110,3 +110,10 @@ USE_DNSSEC ?= true
 ifneq ($(HAVE_NFTABLES), true)
   HAVE_IPTABLES ?= true
 endif
+
+#
+# Enable LTO by default
+#
+
+LTO_CFLAGS ?= -flto
+LTO_LDFLAGS ?=

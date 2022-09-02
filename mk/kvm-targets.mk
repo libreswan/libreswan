@@ -99,7 +99,6 @@ KVM_USE_SECCOMP ?= true
 KVM_USE_LABELED_IPSEC ?= true
 KVM_SD_RESTART_TYPE ?= no
 KVM_USE_FIPSCHECK ?= false
-KVM_USE_LTO ?= true
 KVM_FINALNSSDIR ?= $(FINALCONFDIR)/ipsec.d
 KVM_FEDORA_NSS_CFLAGS ?=
 KVM_FEDORA_NSS_LDFLAGS ?=
@@ -115,7 +114,6 @@ KVM_FEDORA_MAKEFLAGS = \
 	USE_NSS_KDF=$(KVM_USE_NSS_KDF) \
 	FINALNSSDIR=$(KVM_FINALNSSDIR) \
 	USE_FIPSCHECK=$(KVM_USE_FIPSCHECK) \
-	USE_LTO=$(KVM_USE_LTO) \
 	$(if $(KVM_FEDORA_NSS_CFLAGS),NSS_CFLAGS="$(KVM_FEDORA_NSS_CFLAGS)") \
 	$(if $(KVM_FEDORA_NSS_LDFLAGS),NSS_LDFLAGS="$(KVM_FEDORA_NSS_LDFLAGS)") \
 	$(NULL)
@@ -284,7 +282,7 @@ KVMRUNNER ?= $(KVM_PYTHON) testing/utils/kvmrunner.py
 KVMRESULTS ?= $(KVM_PYTHON) testing/utils/kvmresults.py
 KVMTEST ?= $(KVM_PYTHON) testing/utils/kvmtest.py
 
-RPM_VERSION = $(shell make --no-print-directory showrpmversion)
+RPM_VERSION = $(shell $(MAKE) --no-print-directory showrpmversion)
 RPM_PREFIX  = libreswan-$(RPM_VERSION)
 RPM_BUILD_CLEAN ?= --rmsource --rmspec --clean
 

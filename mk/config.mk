@@ -179,11 +179,9 @@ USERLAND_LDFLAGS += -Wl,--as-needed
 USERLINK ?= -Wl,-z,relro,-z,now -pie
 USERLAND_LDFLAGS += $(USERLINK)
 
-# make LTO easier to tame?
-ifeq ($(USE_LTO),true)
-USERLAND_CFLAGS += -flto
-#USERLAND_LDFLAGS += -flto
-endif
+# LTO
+USERLAND_CFLAGS += $(LTO_CFLAGS)
+USERLAND_LDFLAGS += $(LTO_LDFLAGS)
 
 
 ### install pathnames
