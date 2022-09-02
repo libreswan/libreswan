@@ -179,9 +179,19 @@ USERLAND_LDFLAGS += -Wl,--as-needed
 USERLINK ?= -Wl,-z,relro,-z,now -pie
 USERLAND_LDFLAGS += $(USERLINK)
 
-# LTO
+#
+# Enable LTO by default
+#
+# Should only need USERLAND_CFLAGS+=-flto.  Unfortunately this doesn't
+# work on BSD.  Hence the extra knobs to allow developers to play.
+
+USE_LTO ?= true
+LTO_CFLAGS ?= -flto
+LTO_LDFLAGS ?=
+ifeq ($(USE_LTO),true)
 USERLAND_CFLAGS += $(LTO_CFLAGS)
 USERLAND_LDFLAGS += $(LTO_LDFLAGS)
+endif
 
 
 ### install pathnames
