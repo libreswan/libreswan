@@ -60,7 +60,7 @@ diag_t diag_nss_error(const char *message, ...)
 	return diag_jambuf(&buf);
 }
 
-void passert_nss_error(struct logger *logger, where_t where,
+void passert_nss_error(const struct logger *logger, where_t where,
 		       const char *message, ...)
 {
 	char scratch[LOG_WIDTH];

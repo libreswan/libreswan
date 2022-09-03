@@ -74,7 +74,7 @@ void llog_nss_error_code(lset_t rc_log, struct logger *logger,
 
 diag_t diag_nss_error(const char *message, ...) PRINTF_LIKE(1);
 
-void passert_nss_error(struct logger *logger, where_t where,
+void passert_nss_error(const struct logger *logger, where_t where,
 		       const char *message, ...) PRINTF_LIKE(3) NEVER_RETURNS;
 
 void pexpect_nss_error(struct logger *logger, where_t where,
