@@ -71,7 +71,7 @@ void fill_rnd_chunk(chunk_t chunk)
 	get_rnd_bytes(chunk.ptr, chunk.len);
 }
 
-chunk_t get_rnd_chunk(size_t size, const char *name)
+chunk_t alloc_rnd_chunk(size_t size, const char *name)
 {
 	chunk_t chunk = alloc_chunk(size, name);
 	fill_rnd_chunk(chunk);

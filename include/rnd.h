@@ -25,6 +25,6 @@ struct logger;
 
 extern void fill_rnd_chunk(chunk_t chunk);
 extern void get_rnd_bytes(void *buffer, size_t size);
-extern chunk_t get_rnd_chunk(size_t size, const char *name);
+extern chunk_t alloc_rnd_chunk(size_t size, const char *name);
 
 #endif
