@@ -50,6 +50,7 @@
 
 #include <arpa/nameser.h> /* for NS_MAXDNAME */
 
+#include "rnd.h"
 #include "ttodata.h"
 #include "constants.h"
 #include "lswversion.h"
@@ -100,7 +101,7 @@ char *device = DEVICE;          /* where to get randomness */
 int nrounds = 30;               /* rounds of prime checking; 25 is good */
 
 /* forwards */
-void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco, struct logger *logger);
+void rsasigkey(int nbits, int seedbits, struct logger *logger);
 void lsw_random(size_t nbytes, unsigned char *buf, struct logger *logger);
 static const char *conv(const unsigned char *bits, size_t nbytes, int format);
 
@@ -184,19 +185,28 @@ int main(int argc, char *argv[])
 		}
 
 	/*
+	 * Don't fetch the config options until after they have been
+	 * processed, and really are "constant".
+	 */
+	const struct lsw_conf_options *oco = lsw_init_options();
+
+	diag_t d = lsw_nss_setup(oco->nssdir, 0, logger);
+	if (d != NULL) {
+		fatal_diag(1, logger, &d, "%s", "");
+	}
+
+	/*
 	 * RSA-PSS requires keysize to be a multiple of 8 bits
 	 * (see PCS#1 v2.1).
+	 *
 	 * We require a multiple of 16.  (??? why?)
 	 */
 	if (argv[optind] == NULL) {
-		/* default keysize: a multiple of 16 in [3072,4096) */
 		/*
-		 * coverity scan:
-		 * "dont_call: rand should not be used for security-related applications, because linear congruential algorithms are too easy to break."
-		 * This randomizing of keysize doesn't seem to have security issues.
+		 * Pick a default keysize in [3072, 3072+512+256);
+		 * multiple of 16; don't roll the top digit.
 		 */
-		srand(time(NULL));
-		nbits = 3072 + 16 * (rand() % (1024 / 16));
+		nbits = 3072 + get_rnd((512 + 256) / 16) * 16;
 	} else {
 		unsigned long u;
 		err_t ugh = ttoulb(argv[optind], 0, 10, INT_MAX, &u);
@@ -227,12 +237,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	/*
-	 * Don't fetch the config options until after they have been
-	 * processed, and really are "constant".
-	 */
-	const struct lsw_conf_options *oco = lsw_init_options();
-	rsasigkey(nbits, seedbits, oco, logger);
+	rsasigkey(nbits, seedbits, logger);
 	exit(0);
 }
 
@@ -241,19 +246,13 @@ int main(int argc, char *argv[])
  *
  * e is fixed at F4.
  */
-void rsasigkey(int nbits, int seedbits, const struct lsw_conf_options *oco, struct logger *logger)
+void rsasigkey(int nbits, int seedbits, struct logger *logger)
 {
 	PK11RSAGenParams rsaparams = { nbits, (long) F4 };
-	PK11SlotInfo *slot = NULL;
 	SECKEYPrivateKey *privkey = NULL;
 	SECKEYPublicKey *pubkey = NULL;
 
-	diag_t d = lsw_nss_setup(oco->nssdir, 0, logger);
-	if (d != NULL) {
-		fatal_diag(1, logger, &d, "%s", "");
-	}
-
-	slot = lsw_nss_get_authenticated_slot(logger);
+	PK11SlotInfo *slot = lsw_nss_get_authenticated_slot(logger);
 	if (slot == NULL) {
 		/* already logged */
 		lsw_nss_shutdown();
