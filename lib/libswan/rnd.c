@@ -69,6 +69,13 @@ void get_rnd_bytes(void *buffer, size_t length)
 	}
 }
 
+unsigned get_rnd(unsigned roof)
+{
+	unsigned rnd;
+	get_rnd_bytes(&rnd, sizeof(rnd));
+	return rnd % roof;
+}
+
 void fill_rnd_chunk(chunk_t chunk)
 {
 	get_rnd_bytes(chunk.ptr, chunk.len);
