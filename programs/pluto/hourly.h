@@ -1,4 +1,4 @@
-/* randomness machinery
+/* hourly machinery
  *
  * Copyright (C) 1998, 1999  D. Hugh Redelmeier.
  * Copyright (C) 2018 Andrew Cagney
@@ -14,18 +14,10 @@
  * for more details.
  */
 
-#ifndef PLUTO_RND_H
-#define PLUTO_RND_H
-
-#include <stddef.h>	/* for size_t */
-
-#include "chunk.h"
+#ifndef HOURLY_H
+#define HOURLY_H
 
 struct logger;
-
-extern void fill_rnd_chunk(chunk_t chunk);
-extern void get_rnd_bytes(void *buffer, size_t size);
-extern chunk_t get_rnd_chunk(size_t size, const char *name);
 
 extern void init_secret_timer(struct logger *logger);
 

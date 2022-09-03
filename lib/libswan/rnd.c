@@ -22,13 +22,7 @@
 #include <pk11pub.h>
 
 #include "rnd.h"
-#include "lswnss.h"
-#include "ike_spi.h"		/* for refresh_ike_spi_secret() */
-#include "ikev2_cookie.h"	/* for refresh_v2_cookie_secret() */
-
-#include "defs.h"
-#include "server.h"
-#include "log.h"
+#include "passert.h"
 
 /* A true random number generator (we hope)
  *
@@ -82,21 +76,4 @@ chunk_t get_rnd_chunk(size_t size, const char *name)
 	chunk_t chunk = alloc_chunk(size, name);
 	fill_rnd_chunk(chunk);
 	return chunk;
-}
-
-static void refresh_secrets(struct logger *unused_logger UNUSED)
-{
-	/*
-	 * Generate the secret value for responder cookies, and
-	 * schedule an event for refresh.
-	 */
-	refresh_ike_spi_secret();
-	refresh_v2_cookie_secret();
-}
-
-void init_secret_timer(struct logger *logger)
-{
-	enable_periodic_timer(EVENT_REINIT_SECRET, refresh_secrets,
-			      deltatime(EVENT_REINIT_SECRET_DELAY));
-	refresh_secrets(logger);
 }

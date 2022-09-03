@@ -53,7 +53,7 @@
 #include "log_limiter.h"	/* for init_log_limiter() */
 #include "keys.h"
 #include "secrets.h"    /* for free_remembered_public_keys() */
-#include "rnd.h"
+#include "hourly.h"
 #include "fetch.h"
 #include "ipsecconf/confread.h"
 #include "crypto.h"
