@@ -22,7 +22,8 @@
 #include <pk11pub.h>
 
 #include "rnd.h"
-#include "passert.h"
+#include "lswlog.h"		/* for global_logger */
+#include "lswnss.h"		/* for passert_nss_error() */
 
 /* A true random number generator (we hope)
  *
@@ -63,7 +64,9 @@
 
 void get_rnd_bytes(void *buffer, size_t length)
 {
-	passert(PK11_GenerateRandom(buffer, length) == SECSuccess);
+	if (PK11_GenerateRandom(buffer, length) != SECSuccess) {
+		passert_nss_error(&global_logger, HERE, "generating %zu random bytes", length);
+	}
 }
 
 void fill_rnd_chunk(chunk_t chunk)
