@@ -5,7 +5,7 @@ if test $# -lt 1 ; then
 
 Usage:
 
-    $0 [ --json <json> ] --logdir <logdir> <make-target> ....
+    $0 [ --json <json> ] --resultsdir <logdir> <make-target> ....
 
 Update the <json> file with the list of make targets and corresponding
 log files (found in <logdir>).  If <json> isn't specified write to
