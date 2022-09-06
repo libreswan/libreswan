@@ -19,6 +19,7 @@
     PREFIX=%{_prefix} \\\
     PYTHON_BINARY=%{__python3} \\\
     SHELL_BINARY=%{_bindir}/sh \\\
+    USE_AUTHPAM=true \\\
     USE_DNSSEC=true \\\
     USE_FIPSCHECK=false \\\
     USE_LABELED_IPSEC=true \\\
@@ -26,10 +27,10 @@
     USE_LIBCAP_NG=true \\\
     USE_LIBCURL=true \\\
     USE_LINUX_AUDIT=true \\\
+    USE_LTO=false \\\
     USE_NM=true \\\
     USE_NSS_KDF=true \\\
     USE_SECCOMP=true \\\
-    USE_AUTHPAM=true \\\
 %{nil}
 
 #global prever dr1

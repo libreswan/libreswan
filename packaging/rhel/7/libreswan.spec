@@ -17,17 +17,18 @@
     PREFIX=%{_prefix} \\\
     PYTHON_BINARY=%{__python2} \\\
     SHELL_BINARY=/bin/sh \\\
+    USE_AUTHPAM=true \\\
     USE_DNSSEC=%{USE_DNSSEC} \\\
     USE_FIPSCHECK=true \\\
     USE_LABELED_IPSEC=true \\\
     USE_LDAP=true \\\
     USE_LIBCAP_NG=true \\\
     USE_LIBCURL=true \\\
+    USE_LTO=false \\\
     USE_NM=true \\\
     USE_NSS_IPSEC_PROFILE=true \\\
     USE_NSS_KDF=false \\\
     USE_SECCOMP=true \\\
-    USE_AUTHPAM=true \\\
     USE_XFRM_INTERFACE_IFLA_HEADER=true \\\
 %{nil}
 
