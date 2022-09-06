@@ -1,6 +1,6 @@
-Basic IKEv2 PSK test with --impair-jacob-two-two set.
+Basic IKEv2 PSK test with --impair jacob-two-two set.
 
-West sends IKE_INIT twice, east receives the retransmit and should
-retransmit the previous. Some versions mistakenly send v2N_INVALID_MSGID
+West sends both IKE_SA_INIT and IKE_AUTH twice.  East receives the
+retransmits and should retransmit the previous message.
 
-
+Some versions mistakenly send v2N_INVALID_MSGID
