@@ -207,12 +207,17 @@ while true ; do
     targets="${targets} ${kvm_setup}"
     kvm_setup=kvm-shutdown # for next time round
 
-    targets="${targets} kvm-transmogrify kvm-keys"
+    # kvm-install triggers kvm-transmogrify, kvm-keys,
+    # kvm-install-... so break each of these steps down.
+    targets="${targets} kvm-transmogrify"
+    targets="${targets} kvm-keys"
     targets="${targets} kvm-install-fedora"
-    # leading - means ignore failure; like make
-    # targets="${targets} -kvm-install-freebsd"
-    # targets="${targets} -kvm-install-openbsd"
-    # targets="${targets} -kvm-install-netbsd"
+    # leading "-" means ignore failure; kind of like commands in make
+    # rules
+    targets="${targets} -kvm-install-freebsd"
+    targets="${targets} -kvm-install-openbsd"
+    targets="${targets} -kvm-install-netbsd"
+
     targets="${targets} kvm-check"
 
     # list of raw results; will be converted to an array
