@@ -21,7 +21,7 @@ v4.8 (unreleased)
 * FreeBSD: support large replay window; github/756 [Andrew]
 * FreeBSD: support ESN; github/721 [Andrew]
 * building: on BSD, always use GCC; freebsd/264288 llvm/55963 [Andrew]
-* building: on Linux, enable LTO; github/836 github/834 [Andrew]
+* building: enable LTO when USE_LTO=true; github/836 github/834 [Andrew]
 * building: dropped default build and packaging support for:
   	    Fedora 22, 28, 29, 30
             Debian stretch
