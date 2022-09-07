@@ -489,11 +489,12 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "ms-dh-downgrade",  kv_conn,  kt_bool,  KNCF_MSDH_DOWNGRADE, NULL, NULL, },
   { "require-id-on-certificate",  kv_conn,  kt_bool,  KNCF_SAN_ON_CERT, NULL, NULL, },
   { "dns-match-id,",  kv_conn,  kt_bool,  KNCF_DNS_MATCH_ID, NULL, NULL, },
-  { "keylife",  kv_conn | kv_alias,  kt_time,  KNCF_SALIFETIME_MS, NULL, NULL, },
-  { "lifetime",  kv_conn | kv_alias,  kt_time,  KNCF_SALIFETIME_MS, NULL, NULL, },
-  { "salifetime",  kv_conn,  kt_time,  KNCF_SALIFETIME_MS, NULL, NULL, },
   { "ipsec-max-bytes",  kv_conn,  kt_byte,  KNCF_IPSEC_MAXBYTES, NULL, NULL, },
-  { "ipsec-max-packets",  kv_conn,  kt_binary,  KNCF_IPSEC_PACKETS, NULL, NULL, },
+  { "ipsec-lifetime",  kv_conn,  kt_time,  KNCF_IPSEC_LIFETIME_MS, NULL, NULL, },
+  { "keylife",  kv_conn | kv_alias,  kt_time,  KNCF_IPSEC_LIFETIME_MS, NULL, NULL, }, /* old name */
+  { "lifetime",  kv_conn | kv_alias,  kt_time,  KNCF_IPSEC_LIFETIME_MS, NULL, NULL, }, /* old name */
+  { "salifetime",  kv_conn,  kt_time,  KNCF_IPSEC_LIFETIME_MS, NULL, NULL, }, /* old name */
+  { "ipsec-max-packets",  kv_conn,  kt_binary,  KNCF_IPSEC_MAXPACKETS, NULL, NULL, },
 
   { "retransmit-timeout",  kv_conn,  kt_time,  KNCF_RETRANSMIT_TIMEOUT_MS, NULL, NULL, },
   { "retransmit-interval",  kv_conn|kv_milliseconds,  kt_time,  KNCF_RETRANSMIT_INTERVAL_MS, NULL, NULL, },
@@ -543,7 +544,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "rekeyfuzz",  kv_conn,  kt_percent,  KNCF_REKEYFUZZ, NULL, NULL, },
   { "keyingtries",  kv_conn,  kt_number,  KNCF_KEYINGTRIES, NULL, NULL, },
   { "replay-window",  kv_conn,  kt_number,  KNCF_REPLAY_WINDOW, NULL, NULL, },
-  { "ikelifetime",  kv_conn,  kt_time,  KNCF_IKELIFETIME_MS, NULL, NULL, },
+  { "ikelifetime",  kv_conn,  kt_time,  KNCF_IKE_LIFETIME_MS, NULL, NULL, },
   { "failureshunt",  kv_conn,  kt_enum,  KNCF_FAILURESHUNT,  kw_failureshunt_list, NULL, },
   { "negotiationshunt",  kv_conn,  kt_enum,  KNCF_NEGOTIATIONSHUNT,  kw_negotiationshunt_list, NULL, },
 
