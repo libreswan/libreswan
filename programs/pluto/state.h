@@ -873,7 +873,7 @@ extern void initialize_new_state(struct state *st,
 
 extern void show_traffic_status(struct show *s, const char *name);
 extern void show_brief_status(struct show *s);
-extern void show_states(struct show *s);
+extern void show_states(struct show *s, const monotime_t now);
 
 void v2_migrate_children(struct ike_sa *from, struct child_sa *to);
 
@@ -919,7 +919,7 @@ extern bool uniqueIDs;  /* --uniqueids? */
 void suppress_delete_notify(const struct ike_sa *ike,
 			    const char *what, so_serial_t so);
 
-void list_state_events(struct show *s, monotime_t now);
+void list_state_events(struct show *s, const monotime_t now);
 struct child_sa *find_v2_child_sa_by_spi(ipsec_spi_t spi, int8_t protoid,
 					 ip_address *dst);
 

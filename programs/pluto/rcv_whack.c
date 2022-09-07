@@ -885,7 +885,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_status) {
 		dbg_whack(s, "start: status");
-		show_status(s);
+		show_status(s, now);
 		dbg_whack(s, "stop: status");
 	}
 
@@ -939,7 +939,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_show_states) {
 		dbg_whack(s, "start: showstates");
-		show_states(s);
+		show_states(s, now);
 		dbg_whack(s, "stop: showstates");
 	}
 
@@ -1104,7 +1104,7 @@ static void whack_handle(struct fd *whackfd, struct logger *whack_logger)
 			/* Only basic commands.  Simpler inter-version compatibility. */
 			if (msg.whack_status) {
 				struct show *s = alloc_show(whack_logger);
-				show_status(s);
+				show_status(s, mononow());
 				free_show(&s);
 			}
 			/* bail early, but without complaint */

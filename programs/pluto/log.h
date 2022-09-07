@@ -24,6 +24,7 @@
 #include "lswlog.h"
 #include "fd.h"
 #include "ip_endpoint.h"
+#include "monotime.h"
 
 struct state;
 struct connection;
@@ -150,7 +151,7 @@ void rate_log(const struct msg_digest *md,
 
 void whack_log(enum rc_type rc, const struct fd *whackfd, const char *message, ...) PRINTF_LIKE(3);
 
-extern void show_status(struct show *s);
+extern void show_status(struct show *s, const monotime_t now);
 extern void show_setup_plutomain(struct show *s);
 extern void show_setup_natt(struct show *s);
 extern void show_global_status(struct show *s);

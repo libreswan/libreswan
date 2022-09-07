@@ -79,7 +79,8 @@ static void schedule_liveness(struct child_sa *child, deltatime_t time_since_las
 	event_schedule(EVENT_v2_LIVENESS, delay, &child->sa);
 }
 
-static bool recent_last_contact(struct child_sa *child, monotime_t now,
+static bool recent_last_contact(struct child_sa *child,
+				const monotime_t now,
 				monotime_t last_contact,
 				const char *reason)
 {
@@ -131,7 +132,7 @@ static bool recent_last_contact(struct child_sa *child, monotime_t now,
 
 void liveness_check(struct state *st)
 {
-	monotime_t now = mononow();
+	const monotime_t now = mononow();
 
 	passert(st->st_ike_version == IKEv2);
 	struct ike_sa *ike = ike_sa(st, HERE);

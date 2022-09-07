@@ -1885,7 +1885,7 @@ bool ikev2_viable_parent(const struct ike_sa *ike)
 	if (ike->sa.st_ike_version != IKEv2)
 		return true;
 
-	monotime_t now = mononow();
+	const monotime_t now = mononow();
 	const struct state_event *ev = ike->sa.st_v2_lifetime_event;
 	deltatime_t lifetime = monotimediff(ev->ev_time, now);
 
@@ -2117,8 +2117,9 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 			/* ??? why is printing -1 better than 0? */
 			/* XXX: because config uses -1 for disabled? */
 			jam(buf, " lastdpd=%jds(seq in:%u out:%u);",
-			    !is_monotime_epoch(st->st_last_dpd) ?
-			    deltasecs(monotimediff(mononow(), st->st_last_dpd)) : (intmax_t)-1,
+			    (!is_monotime_epoch(st->st_last_dpd) ?
+			     deltasecs(monotimediff(now, st->st_last_dpd)) :
+			     (intmax_t)-1),
 			    st->st_dpd_seqno,
 			    st->st_dpd_expectseqno);
 		} else if (dpd_active_locally(st->st_connection) && (st->st_ike_version == IKEv2)) {
@@ -2127,7 +2128,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 				struct state *pst = state_by_serialno(st->st_clonedfrom);
 				if (pst != NULL) {
 					jam(buf, " lastlive=%jds;",
-					    deltasecs(monotimediff(mononow(), pst->st_v2_msgid_windows.last_recv)));
+					    deltasecs(monotimediff(now, pst->st_v2_msgid_windows.last_recv)));
 				}
 			}
 		} else if (st->st_ike_version == IKEv1) {
@@ -2145,7 +2146,8 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 	}
 }
 
-static void show_established_child_details(struct show *s, struct state *st)
+static void show_established_child_details(struct show *s, struct state *st,
+					   const monotime_t now)
 {
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		const struct connection *c = st->st_connection;
@@ -2160,8 +2162,7 @@ static void show_established_child_details(struct show *s, struct state *st)
 		if (c->spd.eroute_owner == st->st_serialno &&
 		    st->st_outbound_count != 0) {
 			jam(buf, " used %jds ago;",
-			    deltasecs(monotimediff(mononow(),
-						   st->st_outbound_time)));
+			    deltasecs(monotimediff(now , st->st_outbound_time)));
 		}
 
 #define add_said(ADDRESS, PROTOCOL, SPI)				\
@@ -2444,13 +2445,12 @@ void show_brief_status(struct show *s)
 		  cat_count_child_sa[CAT_ANONYMOUS]);
 }
 
-void show_states(struct show *s)
+void show_states(struct show *s, const monotime_t now)
 {
 	show_separator(s);
 	struct state **array = sort_states(state_compare_connection, HERE);
 
 	if (array != NULL) {
-		monotime_t now = mononow();
 		/* now print sorted results */
 		int i;
 		for (i = 0; array[i] != NULL; i++) {
@@ -2458,7 +2458,7 @@ void show_states(struct show *s)
 			show_state(s, st, now);
 			if (IS_IPSEC_SA_ESTABLISHED(st)) {
 				/* print out SPIs if SAs are established */
-				show_established_child_details(s, st);
+				show_established_child_details(s, st, now);
 			}  else if (IS_IKE_SA(st)) {
 				/* show any associated pending Phase 2s */
 				show_pending_child_details(s, st->st_connection,
@@ -3119,7 +3119,7 @@ void suppress_delete_notify(const struct ike_sa *ike,
 }
 
 static void list_state_event(struct show *s, struct state *st,
-			     struct state_event *pe, monotime_t now)
+			     struct state_event *pe, const monotime_t now)
 {
 	if (pe != NULL) {
 		pexpect(st == pe->ev_state);
@@ -3138,7 +3138,7 @@ static void list_state_event(struct show *s, struct state *st,
 	}
 }
 
-void list_state_events(struct show *s, monotime_t now)
+void list_state_events(struct show *s, const monotime_t now)
 {
 	struct state_filter sf = {
 		.where = HERE,

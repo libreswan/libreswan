@@ -184,7 +184,7 @@ static const struct v2_msgid_windows empty_v2_msgid_windows = {
 
 void v2_msgid_init_ike(struct ike_sa *ike)
 {
-	monotime_t now = mononow();
+	const monotime_t now = mononow();
 	struct v2_msgid_windows old_windows = ike->sa.st_v2_msgid_windows;
 	ike->sa.st_v2_msgid_windows = empty_v2_msgid_windows;
 	ike->sa.st_v2_msgid_windows.last_sent = now;
