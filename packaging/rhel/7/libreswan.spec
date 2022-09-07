@@ -24,7 +24,6 @@
     USE_LDAP=true \\\
     USE_LIBCAP_NG=true \\\
     USE_LIBCURL=true \\\
-    USE_LTO=false \\\
     USE_NM=true \\\
     USE_NSS_IPSEC_PROFILE=true \\\
     USE_NSS_KDF=false \\\
