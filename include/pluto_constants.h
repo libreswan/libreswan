@@ -67,8 +67,8 @@ enum ike_version {
  *
  * May be add support for uint64_t
  */
-#define IPSEC_SA_MAX_DEFAULT ~(int64_t)0	/* XFRM_INF, including xfrm.h is probably over doing it */
-#define IPSEC_SA_MAX_STRING "16Ei"		/* how to print IPSEC_SA_MAX_DEFAULT */
+#define IPSEC_SA_MAX_DEFAULT 4294967296
+#define IPSEC_SA_MAX_STRING "2^32"		/* how to print IPSEC_SA_MAX_DEFAULT */
 #define IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE 90 /* let the wise men pick this % until we implement soft_limit */
 
 #define PLUTO_SHUNT_LIFE_DURATION_DEFAULT (15 * secs_per_minute)
