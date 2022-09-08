@@ -140,6 +140,7 @@ OBJS += timescale.o
 OBJS += deltatime.o
 OBJS += realtime.o
 OBJS += monotime.o
+OBJS += ttodeltatime.o
 
 OBJS += refcnt.o
 OBJS += debug.o
