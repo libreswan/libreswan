@@ -25,6 +25,6 @@ east #
  # we should see conn other being up
 east #
  ipsec whack --trafficstatus
-006 #2: "other"[1] 192.1.2.45, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@otherwest.other.libreswan.org'
+006 #2: "other"[1] 192.1.2.45, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@otherwest.other.libreswan.org'
 east #
  

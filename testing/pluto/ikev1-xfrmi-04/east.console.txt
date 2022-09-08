@@ -31,8 +31,8 @@ east #
 "northnet-eastnet" #4: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 east #
  ipsec whack --trafficstatus
-006 #4: "northnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=16EiB, id='@north'
-006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=16EiB, id='@west'
+006 #4: "northnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^32B, id='@north'
+006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^32B, id='@west'
 east #
  ip -s link show ipsec1
 X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN

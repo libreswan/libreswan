@@ -94,7 +94,7 @@ libnsock nsock_iod_delete(): nsock_iod_delete (IOD #1)
 libnsock nsock_iod_delete(): nsock_iod_delete (IOD #2)
 west #
  ../../guestbin/wait-for.sh --match 'labeled..2.' ipsec trafficstatus
-006 #3: "labeled"[2] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=164, outBytes=0, maxBytes=16EiB, id='@east'
+006 #3: "labeled"[2] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=164, outBytes=0, maxBytes=2^32B, id='@east'
 west #
  # no shunts; two transports; two x two states
 west #
@@ -212,7 +212,7 @@ libnsock nsock_iod_delete(): nsock_iod_delete (IOD #1)
 libnsock nsock_iod_delete(): nsock_iod_delete (IOD #2)
 west #
  ../../guestbin/wait-for.sh --match 'labeled..3.' ipsec trafficstatus
-006 #4: "labeled"[3] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=377, outBytes=429, maxBytes=16EiB, id='@east'
+006 #4: "labeled"[3] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=377, outBytes=429, maxBytes=2^32B, id='@east'
 west #
  # there should be no shunts
 west #

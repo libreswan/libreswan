@@ -44,7 +44,7 @@ PING 192.0.22.254 (192.0.22.254) from 192.0.3.254 : 56(84) bytes of data.
 2 packets transmitted, 0 received, 100% packet loss, time XXXX
 north #
  ipsec whack --trafficstatus
-006 #2: "north-a-dpd", type=ESP, add_time=1234567890, inBytes=0, outBytes=168, maxBytes=16EiB, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+006 #2: "north-a-dpd", type=ESP, add_time=1234567890, inBytes=0, outBytes=168, maxBytes=2^32B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 north #
  #
 north #
@@ -64,7 +64,7 @@ north #
 000 "north-a-dpd":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "north-a-dpd":   sec_label:unset;
 000 "north-a-dpd":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-000 "north-a-dpd":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "north-a-dpd":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^32B; ipsec_max_packets: 2^32; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "north-a-dpd":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "north-a-dpd":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "north-a-dpd":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -91,8 +91,8 @@ north #
  # state number should be higher than the previous one
 north #
  ipsec whack --trafficstatus
-006 #4: "north-a-dpd", type=ESP, add_time=1234567890, inBytes=0, outBytes=168, maxBytes=16EiB, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-006 #5: "northnet-eastnet-b", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+006 #4: "north-a-dpd", type=ESP, add_time=1234567890, inBytes=0, outBytes=168, maxBytes=2^32B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+006 #5: "northnet-eastnet-b", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 north #
  echo done
 done

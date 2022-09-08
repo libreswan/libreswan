@@ -54,9 +54,9 @@ west #
  # show the tunnel
 west #
  ipsec whack --trafficstatus
-006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@east'
-006 #3: "west-eastnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@east'
-006 #4: "westnet-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@east'
+006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
+006 #3: "west-eastnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@east'
+006 #4: "westnet-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@east'
 west #
  # Let R_U_THERE packets flow
 west #
@@ -77,7 +77,7 @@ west #
  # wait for west-east
 west #
  ../../guestbin/wait-for.sh --match '"west-east"' -- ipsec whack --trafficstatus
-006 #6: "west-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@east'
+006 #6: "west-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@east'
 west #
  ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
 up
@@ -88,7 +88,7 @@ west #
 down
 west #
  ../../guestbin/wait-for.sh --match '"westnet-east"' -- ipsec whack --trafficstatus
-006 #7: "westnet-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@east'
+006 #7: "westnet-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@east'
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.1.2.23
 up
@@ -102,7 +102,7 @@ west #
 down
 west #
  ../../guestbin/wait-for.sh --match '"west-eastnet"' -- ipsec whack --trafficstatus
-006 #8: "west-eastnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@east'
+006 #8: "west-eastnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@east'
 west #
  ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.0.2.254
 up
@@ -116,9 +116,9 @@ west #
  # Tunnels should be back up now
 west #
  ipsec whack --trafficstatus
-006 #6: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@east'
-006 #8: "west-eastnet", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=16EiB, id='@east'
-006 #7: "westnet-east", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=16EiB, id='@east'
+006 #6: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
+006 #8: "west-eastnet", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2^32B, id='@east'
+006 #7: "westnet-east", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^32B, id='@east'
 west #
  echo done
 done

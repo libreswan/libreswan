@@ -27,7 +27,7 @@ east #
  # confirm tunnel is up
 east #
  ipsec whack --trafficstatus
-006 #2: "clear-or-private#192.1.2.254/32"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='ID_NULL', lease=10.0.10.1/32
+006 #2: "clear-or-private#192.1.2.254/32"[1] ...192.1.2.254===10.0.10.1/32, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='ID_NULL', lease=10.0.10.1/32
 east #
  # killing service ipsec
 east #

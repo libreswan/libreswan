@@ -45,7 +45,7 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-006 #2: "ikev2-westnet-eastnet-x509-cr", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='192.1.2.23'
+006 #2: "ikev2-westnet-eastnet-x509-cr", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='192.1.2.23'
 west #
  echo "done"
 done

@@ -59,7 +59,7 @@ west #
 down
 west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-vti", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@east'
+006 #2: "westnet-eastnet-vti", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@east'
 west #
  ip route add 192.0.2.0/24 dev vti0
 west #
@@ -69,7 +69,7 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-vti", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@east'
+006 #2: "westnet-eastnet-vti", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
 west #
  # ensure no error on delete
 west #

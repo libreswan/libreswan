@@ -17,7 +17,7 @@ east #
  # should be an attempt for the deleted IPsec SA to be restarted
 east #
  ipsec whack --trafficstatus
-006 #2: "west-east-auto2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@west'
+006 #2: "west-east-auto2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@west'
 east #
  ipsec showstates | grep west-east
 000 #5: "west-east-auto":500 STATE_MAIN_I4 (IKE SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;

@@ -61,7 +61,7 @@ west #
 done
 west #
  ipsec whack --trafficstatus
-006 #2: "west", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=16EiB, id='@east'
+006 #2: "west", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^32B, id='@east'
 west #
  : ==== tuc ====
 west #
@@ -158,7 +158,7 @@ west #
 000 "west":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "west":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "west":   sec_label:unset;
-000 "west":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "west":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^32B; ipsec_max_packets: 2^32; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "west":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "west":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;

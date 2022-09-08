@@ -64,7 +64,7 @@ Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east #
  if [ -f /var/run/pluto/pluto.pid ]; then ipsec whack --trafficstatus ; fi
-006 #2: "westnet-eastnet-ikev2"[1] 192.1.3.34, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=16EiB, id='@north'
+006 #2: "westnet-eastnet-ikev2"[1] 192.1.3.34, type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^32B, id='@north'
 east #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan status ; fi
 east #

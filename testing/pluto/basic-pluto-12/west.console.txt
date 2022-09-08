@@ -33,7 +33,7 @@ west #
  # counters are zero
 west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@east'
+006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@east'
 west #
  echo take-passthrough-unencrpted | nc -s 192.0.1.254 192.0.2.254 7
 take-passthrough-unencrpted
@@ -41,7 +41,7 @@ west #
  # still zero
 west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@east'
+006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@east'
 west #
  echo take-conn-encrypted | nc -s 192.0.1.254 192.0.2.254 222
 Ncat: Connection refused.

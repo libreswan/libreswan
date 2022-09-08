@@ -12,6 +12,6 @@ east #
 initdone
 east #
  ipsec whack --trafficstatus
-006 #2: "north-east-default", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=16EiB, id='@north'
+006 #2: "north-east-default", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^32B, id='@north'
 east #
  

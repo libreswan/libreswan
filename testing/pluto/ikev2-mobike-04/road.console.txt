@@ -87,7 +87,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.3.10 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  ipsec whack --trafficstatus
-006 #2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=16EiB, id='192.1.2.23', lease=192.0.3.10/32
+006 #2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^32B, id='192.1.2.23', lease=192.0.3.10/32
 road #
  sleep 5
 road #
@@ -159,7 +159,7 @@ road #
 done
 road #
  ipsec whack --trafficstatus
-006 #2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=504, outBytes=504, maxBytes=16EiB, id='192.1.2.23', lease=192.0.3.10/32
+006 #2: "road-eastnet"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=504, outBytes=504, maxBytes=2^32B, id='192.1.2.23', lease=192.0.3.10/32
 road #
  ip xfrm state
 src 192.1.2.23 dst 192.1.33.209

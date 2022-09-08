@@ -47,7 +47,7 @@ west #
  # show the tunnel!
 west #
  ipsec whack --trafficstatus
-006 #2: "SAwest-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=16EiB, id='@east'
+006 #2: "SAwest-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^32B, id='@east'
 west #
  # "Time to shut down my computer!"...
 west #
