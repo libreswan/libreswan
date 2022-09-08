@@ -1961,13 +1961,13 @@ void state_eroute_usage(const ip_selector *ours, const ip_selector *peers,
 }
 
 void jam_humber_max(struct jambuf *buf,
-		    const char *prefix,
-		    uint64_t val,
-		    const char *suffix)
+		    const char *prefix, uintmax_t val, const char *suffix)
 {
 	jam_string(buf, prefix);
-	if (val == (uint64_t)IPSEC_SA_MAX_DEFAULT) {
-		jam_string(buf, IPSEC_SA_MAX_STRING);
+	if (/*double-negative*/ !(pexpect(val <= IPSEC_SA_MAX_OPERATIONS))) {
+		jam(buf, "%ju", val);
+	} else if (val == IPSEC_SA_MAX_OPERATIONS) {
+		jam_string(buf, IPSEC_SA_MAX_OPERATIONS_STRING);
 	} else {
 		jam_humber(buf, val);
 	}

@@ -1073,8 +1073,8 @@ int main(int argc, char **argv)
 	msg.nic_offload = yna_auto;
 	msg.sa_ike_life_seconds = deltatime(IKE_SA_LIFETIME_DEFAULT);
 	msg.sa_ipsec_life_seconds = deltatime(IPSEC_SA_LIFETIME_DEFAULT);
-	msg.sa_ipsec_max_bytes = IPSEC_SA_MAX_DEFAULT; /* max uint_64_t */
-	msg.sa_ipsec_max_packets = IPSEC_SA_MAX_DEFAULT; /* max uint_64_t */
+	msg.sa_ipsec_max_bytes = IPSEC_SA_MAX_OPERATIONS; /* max uint_64_t */
+	msg.sa_ipsec_max_packets = IPSEC_SA_MAX_OPERATIONS; /* max uint_64_t */
 	msg.sa_rekey_margin = deltatime(SA_REPLACEMENT_MARGIN_DEFAULT);
 	msg.sa_rekey_fuzz = SA_REPLACEMENT_FUZZ_DEFAULT;
 	msg.sa_keying_tries = SA_REPLACEMENT_RETRIES_DEFAULT;
@@ -1102,7 +1102,7 @@ int main(int argc, char **argv)
 
 	for (;;) {
 		/* numeric argument for some flags */
-		unsigned long opt_whole = 0;
+		uintmax_t opt_whole = 0;
 
 		/*
 		 * Note: we don't like the way short options get parsed
@@ -1117,9 +1117,11 @@ int main(int argc, char **argv)
 		if (0 <= c) {
 			if (c & NUMERIC_ARG) {
 				c -= NUMERIC_ARG;
-				if (ttoul(optarg, 0, 0, &opt_whole) != NULL)
-					diagq("badly formed numeric argument",
-					      optarg);
+				diagq(shunk_to_uintmax(shunk1(optarg),
+						       /*cursor:use-entire-string*/NULL,
+						       /*base:figure-it-out*/0, &opt_whole,
+						       /*ceiling:no*/0),
+				      optarg);
 			}
 			if (c >= (1 << AUX_SHIFT)) {
 				aux = c >> AUX_SHIFT;

@@ -2099,15 +2099,17 @@ static bool extract_connection(const struct whack_message *wm,
 			 * Note "invocations" is not "bytes" or "packets", but the safest assumption is
 			 * the most wasteful invocations which is 1 byte per packet.
 			 */
-			if (c->sa_ipsec_max_bytes > 4294967296) /* 2^32 */ {
+			if (c->sa_ipsec_max_bytes > IPSEC_SA_MAX_OPERATIONS) /* 2^32 */ {
 				llog(RC_LOG_SERIOUS, c->logger,
-				     "IPsec max bytes limited to the maximum allowed 2^32");
-				c->sa_ipsec_max_bytes = 4294967296;
+				     "IPsec max bytes limited to the maximum allowed %s",
+				     IPSEC_SA_MAX_OPERATIONS_STRING);
+				c->sa_ipsec_max_bytes = IPSEC_SA_MAX_OPERATIONS;
 			}
-			if (c->sa_ipsec_max_packets > 4294967296) /* 2^32 */ {
+			if (c->sa_ipsec_max_packets > IPSEC_SA_MAX_OPERATIONS) /* 2^32 */ {
 				llog(RC_LOG_SERIOUS, c->logger,
-				     "IPsec max packets limited to the maximum allowed 2^32");
-				c->sa_ipsec_max_packets = 4294967296; /* 2^32 */
+				     "IPsec max packets limited to the maximum allowed %s",
+				     IPSEC_SA_MAX_OPERATIONS_STRING);
+				c->sa_ipsec_max_packets = IPSEC_SA_MAX_OPERATIONS; /* 2^32 */
 			}
 		}
 
@@ -3902,14 +3904,8 @@ static void show_one_connection(struct show *s,
 		jam(buf, PRI_CONNECTION":  ", c->name, instance);
 		jam(buf, " ike_life: %jds;", deltasecs(c->sa_ike_life_seconds));
 		jam(buf, " ipsec_life: %jds;", deltasecs(c->sa_ipsec_life_seconds));
-#if 0
 		jam_humber_max(buf, " ipsec_max_bytes: ", c->sa_ipsec_max_bytes, "B;");
 		jam_humber_max(buf, " ipsec_max_packets: ", c->sa_ipsec_max_packets, ";");
-#endif
-		jam(buf, " ipsec_max_bytes: %"PRIu64";",
-			c->sa_ipsec_max_bytes == ~(uint64_t)0 ? 0 : c->sa_ipsec_max_bytes);
-		jam(buf, " ipsec_max_packets: %"PRIu64";",
-			c->sa_ipsec_max_packets == ~(uint64_t)0 ? 0 : c->sa_ipsec_max_packets);
 		jam(buf, " replay_window: %u;", c->sa_replay_window);
 		jam(buf, " rekey_margin: %jds;", deltasecs(c->sa_rekey_margin));
 		jam(buf, " rekey_fuzz: %lu%%;", c->sa_rekey_fuzz);
