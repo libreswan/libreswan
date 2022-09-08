@@ -40,6 +40,8 @@
 #include <getopt.h>
 #include <unistd.h>	/* for unlink(), write(), close(), access(), et.al. */
 
+#include "deltatime.h"
+#include "timescale.h"
 #include "lswversion.h"
 #include "lswconf.h"
 #include "lswfips.h"
@@ -595,6 +597,13 @@ static void check_err(err_t ugh, int longindex, struct logger *logger)
 	}
 }
 
+static void check_diag(diag_t d, int longindex, struct logger *logger)
+{
+	if (d != NULL) {
+		fatal_opt(longindex, logger, "%s", str_diag(d));
+	}
+}
+
 /* print full usage (from long_opts[]) */
 static void usage(FILE *stream)
 {
@@ -999,13 +1008,9 @@ int main(int argc, char **argv)
 			continue;
 
 		case 'x':	/* --crlcheckinterval <seconds> */
-		{
-			unsigned long u;
-			check_err(ttoulb(optarg, /*not lower-bound*/0, 10, (unsigned long) TIME_T_MAX, &u),
-				  longindex, logger);
-			crl_check_interval = deltatime(u);
+			check_diag(ttodeltatime(optarg, &crl_check_interval, &timescale_seconds),
+				   longindex, logger);
 			continue;
-		}
 
 		case 'o':
 			ocsp_strict = true;
