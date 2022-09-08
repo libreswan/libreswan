@@ -656,7 +656,7 @@ int main(int argc, char *argv[])
 			default:
 				if (cfg->setup.options[kd->field] ||
 					cfg->setup.options_set[kd->field]) {
-					printf("%s %s%s='%d'\n",
+					printf("%s %s%s='%jd'\n",
 						export, varprefix, safe_kwname,
 						cfg->setup.options[kd->field]);
 				}

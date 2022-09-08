@@ -352,16 +352,17 @@ static int parser_y_eof(void)
 	return 0;
 }
 
-static unsigned parser_lex_number(const char *yytext)
+/* XXX: assumes YYTEXT is [0-9]+; see rule */
+static uintmax_t parser_lex_unsigned(const char *yytext)
 {
-	errno = 0; /* must clear, see strtoul(3) */
-	unsigned long val = strtoul(yytext, NULL, 10);
-	if (errno != 0 || val > UINT_MAX) {
+	uintmax_t val;
+	err_t err = shunk_to_uintmax(shunk1(yytext), NULL, /*base*/10,
+				     &val, /*ceiling*/0);
+	if (err != NULL) {
 		char ebuf[128];
 
 		snprintf(ebuf, sizeof(ebuf),
-			 "number too large: %s",
-			 yytext);
+			 "%s: %s", err, yytext);
 		yyerror(ebuf);
 	}
 	return val;
@@ -430,7 +431,7 @@ static unsigned parser_lex_number(const char *yytext)
 
 <INITIAL,VALUE>[0-9]+	{
 				/* process a number */
-				yylval.num = parser_lex_number(yytext);
+				yylval.num = parser_lex_unsigned(yytext);
 				BEGIN INITIAL;
 				return INTEGER;
 			}

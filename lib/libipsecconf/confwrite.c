@@ -165,7 +165,7 @@ static void confwrite_int(FILE *out,
 		case kt_byte:
 		case kt_number:
 			if (options_set[k->field])
-				fprintf(out, "\t%s%s=%d\n", side, k->keyname,
+				fprintf(out, "\t%s%s=%jd\n", side, k->keyname,
 					options[k->field]);
 		}
 	}
