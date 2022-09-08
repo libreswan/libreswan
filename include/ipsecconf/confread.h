@@ -48,7 +48,7 @@ enum keyword_set {
 	k_default = 2
 };
 typedef char *ksf[KEY_STRINGS_ROOF];
-typedef long int knf[KEY_NUMERIC_ROOF];
+typedef intmax_t knf[KEY_NUMERIC_ROOF];
 typedef enum keyword_set str_set[KEY_STRINGS_ROOF];
 typedef enum keyword_set int_set[KEY_NUMERIC_ROOF];
 
