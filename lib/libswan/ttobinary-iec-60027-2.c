@@ -13,7 +13,6 @@
  * for more details.
  */
 
-#include <stdlib.h>		/* for strtol() */
 #include <limits.h>
 
 #include "lswcdefs.h"		/* for elemsof() */

@@ -14,7 +14,6 @@
  */
 
 #include <netdb.h>		/* for getprotobyname() */
-#include <stdlib.h>		/* for strtol() */
 #include <netinet/in.h>		/* for IPPROTO_* */
 
 #include "lswcdefs.h"		/* for elemsof() */
