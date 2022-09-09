@@ -21,13 +21,12 @@
 
 /*
  * ttoul - convert text substring to unsigned long number
+ *
+ * NULL for success, else static string literal
  */
-err_t	/* NULL for success, else string literal */
-ttoul(src, srclen, base, resultp)
-const char *src;
-size_t srclen;	/* 0 means strlen(src) */
-int base;	/* 0 means figure it out */
-unsigned long *resultp;
+static err_t ttoul(const char *src, size_t srclen,
+		   int base,		/* 0 means figure it out */
+		   unsigned long *resultp)
 {
 	const char *stop;
 	static const char hex[] = "0123456789abcdef";
@@ -39,8 +38,6 @@ unsigned long *resultp;
 	unsigned long rlimit;
 	int dlimit;
 
-	if (srclen == 0)
-		srclen = strlen(src);
 	if (srclen == 0)
 		return "empty string";
 
@@ -97,14 +94,16 @@ unsigned long *resultp;
 	return NULL;
 }
 
-err_t	/* NULL for success, else string literal */
-ttoulb(src, srclen, base, upb, resultp)
-const char *src;
-size_t srclen;	/* 0 means strlen(src) */
-int base;	/* 0 means figure it out */
-unsigned long upb;	/* upper bound */
-unsigned long *resultp;
+/* NULL for success, else string literal */
+err_t ttoulb(const char *src,
+	     size_t srclen,	/* 0 means strlen(src) */
+	     int base,		/* 0 means figure it out */
+	     unsigned long upb,	/* upper bound */
+	     unsigned long *resultp)
 {
+	if (srclen == 0)
+		srclen = strlen(src);
+
 	const char *ugh = ttoul(src, srclen, base, resultp);
 
 	return ugh != NULL ? ugh : *resultp > upb ? "too large" : NULL;
