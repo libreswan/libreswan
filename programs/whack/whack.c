@@ -452,7 +452,7 @@ enum option_enums {
 	CD_REKEYMARGIN,
 	CD_RKFUZZ,
 	CD_KTRIES,
-	CD_REPLAY_W,
+	CD_REPLAY_WINDOW,
 	CD_DPDDELAY,
 	CD_DPDTIMEOUT,
 	CD_DPDACTION,
@@ -786,7 +786,7 @@ static const struct option long_opts[] = {
 	{ "rekeywindow", required_argument, NULL, CD_REKEYMARGIN + OO + NUMERIC_ARG },
 	{ "rekeyfuzz", required_argument, NULL, CD_RKFUZZ + OO + NUMERIC_ARG },
 	{ "keyingtries", required_argument, NULL, CD_KTRIES + OO + NUMERIC_ARG },
-	{ "replay-window", required_argument, NULL, CD_REPLAY_W + OO + NUMERIC_ARG },
+	{ "replay-window", required_argument, NULL, CD_REPLAY_WINDOW + OO },
 	{ "ike",    required_argument, NULL, CD_IKE + OO },
 	{ "ikealg", required_argument, NULL, CD_IKE + OO },
 	{ "pfsgroup", required_argument, NULL, CD_PFSGROUP + OO },
@@ -1924,14 +1924,14 @@ int main(int argc, char **argv)
 			msg.sa_keying_tries = opt_whole;
 			continue;
 
-		case CD_REPLAY_W: /* --replay-window <num> */
+		case CD_REPLAY_WINDOW: /* --replay-window <num> */
 			/*
-			 * ??? what values are legitimate?
-			 * 32 and often 64, but what else?
-			 * Not so large that the
-			 * number of bits overflows uint32_t.
+			 * Upper bound is determined by the kernel.
+			 * Pluto will check against this when
+			 * processing the message.  The value is
+			 * relatively small.
 			 */
-			msg.sa_replay_window = opt_whole;
+			optarg_to_uintmax(&msg.sa_replay_window);
 			continue;
 
 		case CD_SEND_CA:	/* --sendca */
