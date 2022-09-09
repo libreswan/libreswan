@@ -926,7 +926,15 @@ static void optarg_to_deltatime(deltatime_t *deltatime, const struct timescale *
 {
 	diag_t diag = ttodeltatime(optarg, deltatime, timescale);
 	if (diag != NULL) {
-		diagw(str_diag(diag));
+		diagq(str_diag(diag), optarg);
+	}
+}
+
+static void optarg_to_uintmax(uintmax_t *val)
+{
+	err_t err = shunk_to_uintmax(shunk1(optarg), NULL, /*base*/0, val, /*ceiling:unlimited*/0);
+	if (err != NULL) {
+		diagq(err, optarg);
 	}
 }
 
@@ -1095,7 +1103,7 @@ int main(int argc, char **argv)
 
 	for (;;) {
 		/* numeric argument for some flags */
-		unsigned long opt_whole = 0;
+		uintmax_t opt_whole = 0;
 
 		/*
 		 * Note: we don't like the way short options get parsed
@@ -1110,9 +1118,7 @@ int main(int argc, char **argv)
 		if (0 <= c) {
 			if (c & NUMERIC_ARG) {
 				c -= NUMERIC_ARG;
-				if (ttoul(optarg, 0, 0, &opt_whole) != NULL)
-					diagq("badly formed numeric argument",
-					      optarg);
+				optarg_to_uintmax(&opt_whole);
 			}
 			if (c >= (1 << AUX_SHIFT)) {
 				aux = c >> AUX_SHIFT;
