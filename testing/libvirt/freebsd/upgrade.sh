@@ -1,10 +1,12 @@
 #!/bin/sh
 
-set -xe
+set -xe ; exec < /dev/null
 
-# download /usr/local/etc/pkg.conf
+# Download /usr/local/etc/pkg.conf so it can be edited;
+# IGNORE_OSVERSION=yes is to stop PKG complaining that there is a
+# newer version of pkg (see github/846).
 
-pkg bootstrap -y
+IGNORE_OSVERSION=yes pkg bootstrap -y
 
 # Enable the cache
 
