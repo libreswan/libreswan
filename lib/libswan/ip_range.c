@@ -115,9 +115,12 @@ err_t ttorange(const char *src, const struct ip_info *afi, ip_range *dst)
 	{
 		/* START/MASK */
 		uintmax_t maskbits = afi->mask_cnt;
-		err = shunk_to_uintmax(cursor, NULL, 0, &maskbits, afi->mask_cnt);
+		err = shunk_to_uintmax(cursor, NULL, 0, &maskbits);
 		if (err != NULL) {
 			return err;
+		}
+		if (maskbits > afi->mask_cnt) {
+			return "too large";
 		}
 		/* XXX: should this reject bad addresses */
 		*dst = range_from_raw(HERE, afi->ip_version,

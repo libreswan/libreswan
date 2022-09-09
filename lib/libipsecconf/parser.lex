@@ -356,8 +356,7 @@ static int parser_y_eof(void)
 static uintmax_t parser_lex_unsigned(const char *yytext)
 {
 	uintmax_t val;
-	err_t err = shunk_to_uintmax(shunk1(yytext), NULL, /*base*/10,
-				     &val, /*ceiling*/0);
+	err_t err = shunk_to_uintmax(shunk1(yytext), NULL, /*base*/10, &val);
 	if (err != NULL) {
 		char ebuf[128];
 

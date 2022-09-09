@@ -104,7 +104,7 @@ diag_t ttosaid(shunk_t src, ip_said *said)
 
 	uintmax_t hspi;
 	shunk_t spis = input;
-	oops = shunk_to_uintmax(input, &input, base, &hspi, 0);
+	oops = shunk_to_uintmax(input, &input, base, &hspi);
 	if (oops != NULL) {
 		return diag("SPI "PRI_SHUNK" invalid: %s", pri_shunk(spis), oops);
 	}

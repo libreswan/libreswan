@@ -615,9 +615,12 @@ err_t numeric_to_selector(shunk_t input,
 
 	uintmax_t prefix_bits = afi->mask_cnt;
 	if (prefix_bits_token.len > 0) {
-		oops = shunk_to_uintmax(prefix_bits_token, NULL, 0, &prefix_bits, afi->mask_cnt);
+		oops = shunk_to_uintmax(prefix_bits_token, NULL, 0, &prefix_bits);
 		if (oops != NULL) {
 			return oops;
+		}
+		if (prefix_bits > afi->mask_cnt) {
+			return "too large";
 		}
 	} else if (prefix_bits_token.ptr != NULL) {
 		/* found but empty */
@@ -666,9 +669,12 @@ err_t numeric_to_selector(shunk_t input,
 	ip_port port = unset_port;
 	if (port_token.len > 0) {
 		uintmax_t hport;
-		err_t oops = shunk_to_uintmax(port_token, NULL, 0, &hport, 0xFFFF);
+		err_t oops = shunk_to_uintmax(port_token, NULL, 0, &hport);
 		if (oops != NULL) {
 			return oops;
+		}
+		if (hport > 65535) {
+			return "too large";
 		}
 		if (protocol == &ip_protocol_all && hport != 0) {
 			return "a non-zero port requires a valid protocol";

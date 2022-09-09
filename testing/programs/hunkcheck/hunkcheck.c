@@ -601,90 +601,85 @@ static void check_shunk_to_uintmax(void)
 	static const struct test {
 		const char *s;
 		unsigned base;
-		uintmax_t ceiling;
 		uintmax_t u;
 		const char *o;
 	} tests[] = {
 
 		/* empty */
-		{ "",      0, 0, 0, NULL, },
-		{ "",      2, 0, 0, NULL, },
-		{ "",      8, 0, 0, NULL, },
-		{ "",     10, 0, 0, NULL, },
-		{ "",     16, 0, 0x0, NULL, },
+		{ "",      0, 0, NULL, },
+		{ "",      2, 0, NULL, },
+		{ "",      8, 0, NULL, },
+		{ "",     10, 0, NULL, },
+		{ "",     16, 0, NULL, },
 
 		/* '0' - 1 */
-		{ "/",     0, 0, 0, NULL, },
-		{ "/",     2, 0, 0, NULL, },
-		{ "/",     8, 0, 0, NULL, },
-		{ "/",    10, 0, 0, NULL, },
-		{ "/",    16, 0, 0x0, NULL, },
+		{ "/",     0, 0, NULL, },
+		{ "/",     2, 0, NULL, },
+		{ "/",     8, 0, NULL, },
+		{ "/",    10, 0, NULL, },
+		{ "/",    16, 0, NULL, },
 
 		/* base */
-		{ ":",     0, 0, 0, NULL, },
-		{ "2",     2, 0, 0, NULL, },
-		{ "8",     8, 0, 0, NULL, },
-		{ ":",     10, 0, 0, NULL, },
-		{ "g",     16, 0, 0x0, NULL, },
+		{ ":",     0, 0, NULL, },
+		{ "2",     2, 0, NULL, },
+		{ "8",     8, 0, NULL, },
+		{ ":",    10, 0, NULL, },
+		{ "g",    16, 0, NULL, },
 
 		/* 0 because prefix isn't valid */
-		{ "0:",    0, 0, 0, ":", },
-		{ "08",    0, 0, 0, "8", },
-		{ "0b",    0, 0, 0, "b", },
-		{ "0B2",   0, 0, 0, "B2", },
-		{ "0x",    0, 0, 0, "x", },
-		{ "0Xg",   0, 0, 0, "Xg", },
+		{ "0:",    0, 0, ":", },
+		{ "08",    0, 0, "8", },
+		{ "0b",    0, 0, "b", },
+		{ "0B2",   0, 0, "B2", },
+		{ "0x",    0, 0, "x", },
+		{ "0Xg",   0, 0, "Xg", },
 
 		/* 0 */
-		{ "0",     0, 0, 0, "", },
-		{ "0",     2, 0, 00, "", },
-		{ "0",     8, 0, 00, "", },
-		{ "0",    10, 0, 0, "", },
-		{ "0",    16, 0, 0x0, "", },
+		{ "0",     0, 0, "", },
+		{ "0",     2, 0, "", },
+		{ "0",     8, 0, "", },
+		{ "0",    10, 0, "", },
+		{ "0",    16, 0, "", },
 
 		/* 1 */
-		{ "1",     0, 0, 1, "", },
-		{ "1",     2, 0, 1, "", },
-		{ "1",     8, 0, 1, "", },
-		{ "1",    10, 0, 1, "", },
-		{ "1",    16, 0, 1, "", },
+		{ "1",     0, 1, "", },
+		{ "1",     2, 1, "", },
+		{ "1",     8, 1, "", },
+		{ "1",    10, 1, "", },
+		{ "1",    16, 1, "", },
 
 		/* 1 .. base */
-		{ "123456789:", 0, 0, UINTMAX_C(123456789), ":", },
-		{ "12",   2, 0, UINTMAX_C(1), "2", },
-		{ "12345678",   8, 0, UINTMAX_C(01234567), "8", },
-		{ "123456789:",  10, 0, UINTMAX_C(123456789), ":", },
-		{ "123456789abcdefg",   16, 0, UINTMAX_C(0x123456789abcdef), "g", },
-		{ "123456789ABCDEFG",   16, 0, UINTMAX_C(0X123456789ABCDEF), "G", },
+		{ "123456789:",        0, UINTMAX_C(123456789), ":", },
+		{ "12",                2, UINTMAX_C(1), "2", },
+		{ "12345678",          8, UINTMAX_C(01234567), "8", },
+		{ "123456789:",       10, UINTMAX_C(123456789), ":", },
+		{ "123456789abcdefg", 16, UINTMAX_C(0x123456789abcdef), "g", },
+		{ "123456789ABCDEFG", 16, UINTMAX_C(0X123456789ABCDEF), "G", },
 
 		/* base-1 .. / */
-		{ "9876543210/", 0, 0, UINTMAX_C(9876543210), "/", },
-		{ "10/",   2, 0, UINTMAX_C(2), "/", },
-		{ "76543210/",   8, 0, UINTMAX_C(076543210), "/", },
-		{ "9876543210/",  10, 0, UINTMAX_C(9876543210), "/", },
-		{ "fedcba9876543210/", 16, 0, UINTMAX_C(0xfedcba9876543210), "/", },
-		{ "FEDCBA9876543210/", 16, 0, UINTMAX_C(0XFEDCBA9876543210), "/", },
+		{ "9876543210/",        0, UINTMAX_C(9876543210), "/", },
+		{ "10/",                2, UINTMAX_C(2), "/", },
+		{ "76543210/",          8, UINTMAX_C(076543210), "/", },
+		{ "9876543210/",       10, UINTMAX_C(9876543210), "/", },
+		{ "fedcba9876543210/", 16, UINTMAX_C(0xfedcba9876543210), "/", },
+		{ "FEDCBA9876543210/", 16, UINTMAX_C(0XFEDCBA9876543210), "/", },
 
 		/* auto select - stopchar */
-		{ "0b012",    0, 0, 1, "2", },
-		{ "012345678",    0, 0, UINTMAX_C(01234567), "8", },
-		{ "0012345678",    0, 0, UINTMAX_C(01234567), "8", },
-		{ "0x0123f56789abcdefg",    0, 0, UINTMAX_C(0x0123f56789abcdef), "g", },
+		{ "0b012",               0, 1, "2", },
+		{ "012345678",           0, UINTMAX_C(01234567), "8", },
+		{ "0012345678",          0, UINTMAX_C(01234567), "8", },
+		{ "0x0123f56789abcdefg", 0, UINTMAX_C(0x0123f56789abcdef), "g", },
 
-		/* limits */
-		{ "1",     0, 1, 1, "", },
-		{ "2",     0, 1, 0, NULL, },
-		{ "18446744073709551615", 0, UINTMAX_MAX, UINTMAX_MAX, "", },
 		/* overflow */
-		{ "0177777777777777777777", 0, 0, UINTMAX_MAX/8, "", },
-		{ "01777777777777777777777", 0, 0, UINTMAX_MAX, "", },
-		{ "02000000000000000000000", 0, 0, 0, NULL, },
-		{ "1844674407370955161", 0, 0, UINTMAX_MAX/10, "", },
-		{ "18446744073709551615", 0, 0, UINTMAX_MAX, "", },
-		{ "18446744073709551616", 0, 0, 0, NULL, },
-		{ "0xfffffffffffffff", 0, 0, UINTMAX_MAX/16, "", },
-		{ "0xffffffffffffffff", 0, 0, UINTMAX_MAX, "", },
-		{ "0x10000000000000000", 0, 0, 0, NULL, },
+		{ "0177777777777777777777",  0, UINTMAX_MAX/8, "", },
+		{ "01777777777777777777777", 0, UINTMAX_MAX, "", },
+		{ "02000000000000000000000", 0, 0, NULL, },
+		{ "1844674407370955161",     0, UINTMAX_MAX/10, "", },
+		{ "18446744073709551615",    0, UINTMAX_MAX, "", },
+		{ "18446744073709551616",    0, 0, NULL, },
+		{ "0xfffffffffffffff",       0, UINTMAX_MAX/16, "", },
+		{ "0xffffffffffffffff",      0, UINTMAX_MAX, "", },
+		{ "0x10000000000000000",     0, 0, NULL, },
 	};
 
 	for (size_t ti = 0; ti < elemsof(tests); ti++) {
@@ -698,7 +693,7 @@ static void check_shunk_to_uintmax(void)
 		shunk_t t_s = shunk1(t->s);
 
 		/* must use entire buffer */
-		err = shunk_to_uintmax(t_s, NULL, t->base, &u, t->ceiling);
+		err = shunk_to_uintmax(t_s, NULL, t->base, &u);
 		/* OK when test expects entire buffer to be consumed */
 		bool t_ok = t->o != NULL && t->o[0] == '\0';
 		if (err != NULL) {
@@ -721,7 +716,7 @@ static void check_shunk_to_uintmax(void)
 
 		/* remainder left in O */
 		shunk_t o;
-		err = shunk_to_uintmax(t_s, &o, t->base, &u, t->ceiling);
+		err = shunk_to_uintmax(t_s, &o, t->base, &u);
 		bool t_o_ok = t->o != NULL;
 		if ((err == NULL) != t_o_ok) {
 			FAIL_S("shunk_to_uintmax(&cursor) returned '%s', expecting '%s'",

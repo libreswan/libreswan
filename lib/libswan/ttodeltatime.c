@@ -26,7 +26,7 @@ diag_t ttodeltatime(const char *t, deltatime_t *d, const struct timescale *defau
 	shunk_t cursor = shunk1(t);
 
 	/* <NUMBER>[<SCALE>] => TIME + [<SCALE>] */
-	err_t err = shunk_to_uintmax(cursor, &cursor, 10/*base*/, &time, 0/*ceiling*/);
+	err_t err = shunk_to_uintmax(cursor, &cursor, 10/*base*/, &time);
 	if (err != NULL) {
 		return diag("bad duration value \"%s\": %s", t, err);
 	}

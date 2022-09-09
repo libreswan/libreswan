@@ -36,8 +36,12 @@ err_t ttoprotocol(shunk_t text, const ip_protocol **proto)
 
 	/* failed, now try it by number in [0,255]*/
 	uintmax_t p;
-	err_t err = shunk_to_uintmax(text, NULL, 0, &p, 255);
+	err_t err = shunk_to_uintmax(text, NULL, 0, &p);
 	if (err == NULL) {
+		/* possible success */
+		if (p > 255) {
+			return "numeric protocol must be <= 255";
+		}
 		*proto = protocol_by_ipproto(p);
 		passert(*proto != NULL);
 		return NULL;

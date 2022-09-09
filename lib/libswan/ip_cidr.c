@@ -127,7 +127,7 @@ err_t numeric_to_cidr(shunk_t src, const struct ip_info *afi, ip_cidr *cidr)
 	/* parse MASK */
 	uintmax_t maskbits = afi->mask_cnt;/*anything*/
 	/* don't use bound - error is confusing */
-	err = shunk_to_uintmax(mask, NULL, 0, &maskbits, 0);
+	err = shunk_to_uintmax(mask, NULL, 0, &maskbits);
 	if (err != NULL) {
 		/* not a number */
 		return err;

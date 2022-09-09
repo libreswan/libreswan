@@ -1114,10 +1114,14 @@ const struct ip_protocol *protocol_by_shunk(shunk_t token)
 	}
 	/* try the number */
 	uintmax_t ipproto;
-	if (shunk_to_uintmax(token, NULL, 10, &ipproto, 255) == NULL) {
-		return protocol_by_ipproto(ipproto);
+	err_t err = shunk_to_uintmax(token, NULL, 10, &ipproto);
+	if (err != NULL) {
+		return NULL; /* not found */
 	}
-	return NULL;
+	if (ipproto > 255) {
+		return NULL;
+	}
+	return protocol_by_ipproto(ipproto);
 }
 
 const struct ip_protocol *protocol_by_ipproto(unsigned ipproto)

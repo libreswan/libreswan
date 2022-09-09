@@ -268,12 +268,18 @@ static unsigned parse_biased_unsigned(shunk_t string, const struct impairment *c
 {
 	unsigned bias = cr->how_keywords != NULL ? cr->how_keywords->nr_values : 1;
 	uintmax_t u;
-	err_t err = shunk_to_uintmax(string, NULL, 0/*base*/, &u, UINTMAX_MAX - bias/*ceiling*/);
-	if (err == NULL) {
-		return u + bias;
-	} else {
+	err_t err = shunk_to_uintmax(string, NULL, 0/*base*/, &u);
+	/*
+	 * Since, after bias, value must be non-zero, this acts as an
+	 * error flag.
+	 */
+	if (err != NULL) {
 		return 0;
 	}
+	if (u > UINTMAX_MAX - bias) {
+		return 0; /* i.e., u+bias overflows */
+	}
+	return u + bias;
 }
 
 #define IMPAIR_DISABLE (elemsof(impairments) + 0)

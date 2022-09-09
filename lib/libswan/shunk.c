@@ -166,8 +166,7 @@ bool shunk_strcaseeat(shunk_t *shunk, const char *dinner)
  *
  * If CEILING is non-ZERO, *dest can't be greater than CEILING.
  */
-err_t shunk_to_uintmax(shunk_t input, shunk_t *output, unsigned draft_base,
-		       uintmax_t *dest, uintmax_t ceiling)
+err_t shunk_to_uintmax(shunk_t input, shunk_t *output, unsigned draft_base, uintmax_t *dest)
 {
 	*dest = 0;
 	if (output != NULL) {
@@ -289,11 +288,6 @@ err_t shunk_to_uintmax(shunk_t input, shunk_t *output, unsigned draft_base,
 				return "non-digit in number";
 			}
 		}
-	}
-
-	/* in range? */
-	if (ceiling > 0 && u > ceiling) {
-		return "too large";
 	}
 
 	*dest = u;

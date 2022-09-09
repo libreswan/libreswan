@@ -78,8 +78,8 @@ err_t ttosubnet(shunk_t src,
 
 	/* parse MASK */
 	uintmax_t prefix_bits;
-	oops = shunk_to_uintmax(mask, NULL, 10, &prefix_bits, afi->mask_cnt);
-	if (oops != NULL) {
+	oops = shunk_to_uintmax(mask, NULL, 10, &prefix_bits);
+	if (oops != NULL || prefix_bits > afi->mask_cnt) {
 		if (afi == &ipv4_info) {
 			ip_address masktmp;
 			oops = ttoaddress_num(mask, afi, &masktmp);

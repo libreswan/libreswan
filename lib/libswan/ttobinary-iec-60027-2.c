@@ -32,7 +32,7 @@ diag_t ttobinary(const char *t, uint64_t *r, bool prefix_B)
 	*r = 0;
 	uint64_t v;
 	shunk_t cursor = shunk1(t);
-	err_t err = shunk_to_uintmax(cursor, &cursor, 10/*any-base*/, &v, 0/*ceiling*/);
+	err_t err = shunk_to_uintmax(cursor, &cursor, 10/*any-base*/, &v);
 
 	if (err != NULL) {
 		return diag("bad binary%s value \"%s\": %s",

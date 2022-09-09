@@ -125,10 +125,20 @@ bool shunk_streat(shunk_t *lhs, const char *string);
 bool shunk_strcaseeat(shunk_t *lhs, const char *string);
 
 /*
- * Number conversion.  like strtoul() et.al.
+ * Number conversion; loosely based on strtoul(START, END, BASE).
+ *
+ * Parse INPUT according to BASE (see strtoul()). Should the numeric
+ * value be missing or invalid, or the value overflow uintmax_t then
+ * an error is returned.
+ *
+ * If CURSOR is NULL, having text following the numeric value is
+ * considered an error (strtoul() silently ignores trailing junk when
+ * END=NULL).
+ *
+ * If CURSOR is non-NULL, it is set to the text following the numeric
+ * value.
  */
-err_t shunk_to_uintmax(shunk_t input, shunk_t *cursor, unsigned base,
-		       uintmax_t *value, uintmax_t ceiling);
+err_t shunk_to_uintmax(shunk_t input, shunk_t *cursor, unsigned base, uintmax_t *value);
 
 /*
  * To print, use: printf(PRI_SHUNK, pri_shunk(shunk));

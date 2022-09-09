@@ -939,7 +939,7 @@ static void optarg_to_deltatime(deltatime_t *deltatime, const struct timescale *
 
 static void optarg_to_uintmax(uintmax_t *val)
 {
-	err_t err = shunk_to_uintmax(shunk1(optarg), NULL, /*base*/0, val, /*ceiling:unlimited*/0);
+	err_t err = shunk_to_uintmax(shunk1(optarg), NULL, /*base*/0, val);
 	if (err != NULL) {
 		diagq(err, optarg);
 	}
