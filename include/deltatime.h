@@ -31,17 +31,6 @@ struct jambuf;
 struct timescale;
 
 /*
- * XXX: This value isn't typed so what is it really the max of?
- *
- * XXX: One use, the intent seems to be to set a bound on
- * --crlcheckinterval <seconds>.  Because deltatime_t, when converted
- * to milliseconds, needs to be representable as a intmax_t the below
- * is two big.
- */
-
-#define TIME_T_MAX  ((time_t) ((1ull << (sizeof(time_t) * BITS_PER_BYTE - 1)) - 1))
-
-/*
  * deltatime_t: relative time between events.  Presumed continuous.
  *
  * A struct initializer for an object of static storage duration

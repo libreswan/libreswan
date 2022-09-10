@@ -185,7 +185,7 @@ USERLAND_LDFLAGS += $(USERLINK)
 # Should only need USERLAND_CFLAGS+=-flto.  Unfortunately this doesn't
 # work on BSD.  Hence the extra knobs to allow developers to play.
 
-USE_LTO ?= true
+USE_LTO ?= false
 LTO_CFLAGS ?= -flto
 LTO_LDFLAGS ?=
 ifeq ($(USE_LTO),true)

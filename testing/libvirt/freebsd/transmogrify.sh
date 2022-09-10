@@ -1,6 +1,6 @@
 #!/bin/sh
 
-set -ex
+set -xe ; exec < /dev/null
 
 GATEWAY=@@GATEWAY@@
 POOLDIR=@@POOLDIR@@

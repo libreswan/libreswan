@@ -933,7 +933,15 @@ static void optarg_to_deltatime(deltatime_t *deltatime, const struct timescale *
 {
 	diag_t diag = ttodeltatime(optarg, deltatime, timescale);
 	if (diag != NULL) {
-		diagw(str_diag(diag));
+		diagq(str_diag(diag), optarg);
+	}
+}
+
+static void optarg_to_uintmax(uintmax_t *val)
+{
+	err_t err = shunk_to_uintmax(shunk1(optarg), NULL, /*base*/0, val, /*ceiling:unlimited*/0);
+	if (err != NULL) {
+		diagq(err, optarg);
 	}
 }
 
@@ -1117,11 +1125,7 @@ int main(int argc, char **argv)
 		if (0 <= c) {
 			if (c & NUMERIC_ARG) {
 				c -= NUMERIC_ARG;
-				diagq(shunk_to_uintmax(shunk1(optarg),
-						       /*cursor:use-entire-string*/NULL,
-						       /*base:figure-it-out*/0, &opt_whole,
-						       /*ceiling:no*/0),
-				      optarg);
+				optarg_to_uintmax(&opt_whole);
 			}
 			if (c >= (1 << AUX_SHIFT)) {
 				aux = c >> AUX_SHIFT;

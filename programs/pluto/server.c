@@ -372,7 +372,7 @@ static void free_global_timers(void)
 	}
 }
 
-static void list_global_timers(struct show *s, monotime_t now)
+static void list_global_timers(struct show *s, const monotime_t now)
 {
 	for (unsigned u = 0; u < elemsof(global_timers); u++) {
 		struct global_timer_desc *gt = &global_timers[u];
@@ -881,7 +881,7 @@ void detach_fd_accept_listener(struct fd_accept_listener **fdl)
 /*
  * dump list of events to whacklog
  */
-void list_timers(struct show *s, monotime_t now)
+void list_timers(struct show *s, const monotime_t now)
 {
 	show_comment(s, "it is now: %jd seconds since monotonic epoch",
 		     monosecs(now));

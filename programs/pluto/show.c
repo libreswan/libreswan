@@ -195,7 +195,7 @@ void show_global_status(struct show *s)
 	show_pluto_stats(s);
 }
 
-void show_status(struct show *s)
+void show_status(struct show *s, const monotime_t now)
 {
 	show_kernel_interface(s);
 	show_ifaces_status(s);
@@ -209,7 +209,7 @@ void show_status(struct show *s)
 	show_db_ops_status(s);
 	show_connections_status(s);
 	show_brief_status(s);
-	show_states(s);
+	show_states(s, now);
 #if defined(KERNEL_XFRM)
 	show_shunt_status(s);
 #endif

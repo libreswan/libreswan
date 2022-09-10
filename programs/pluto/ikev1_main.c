@@ -1542,16 +1542,16 @@ static void send_v1_notification(struct logger *logger,
 				 uint8_t protoid)
 {
 	pb_stream r_hdr_pbs;
-	monotime_t n = mononow();
+	const monotime_t now = mononow();
 
 	switch (type) {
 	case v1N_PAYLOAD_MALFORMED:
 		/* only send one per second. */
 		/* ??? this depends on monotime_t having a one-second granularity */
-		if (monobefore(last_malformed, n))
+		if (monobefore(last_malformed, now))
 			return;
 
-		last_malformed = n;
+		last_malformed = now;
 
 		/*
 		 * If a state gets too many of these, delete it.

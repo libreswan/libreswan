@@ -28,9 +28,9 @@ bindir=$(dirname $0)
 makedir=$(cd ${bindir}/../.. && pwd)
 utilsdir=${makedir}/testing/utils
 
-# start with new shiny domains
+# start with new shiny new just upgraded domains
 
-kvm_setup=kvm-purge
+kvm_setup="kvm-purge kvm-upgrade"
 
 # Select the oldest commit to test.
 #
@@ -180,30 +180,98 @@ while true ; do
 	 WEB_RESULTSDIR=${resultsdir} \
 	 WEB_SUMMARYDIR=${summarydir}
 
+    #
+    # Clenup ready for the new run
+    #
+
+    ${status} "running distclean"
+    run distclean
+
+    #
     # Run the testsuite
     #
-    # This list should match results.html.  Should a table be
-    # generated?
+    # This list should match the hardwired list in results.html.
+    # Should a table be generated?
+    #
+    # XXX: should run ./kvm
     #
     # ${kvm_setup} starts out as kvm-purge but then flips to
     # kvm-shutdown.  For kvm-purge, since it is only invoked when the
     # script is first changing and the REPO is at HEAD, the upgrade /
     # transmogrify it triggers will always be for the latest changes.
 
-    targets="distclean ${kvm_setup} kvm-transmogrify kvm-keys kvm-install kvm-test"
-    kvm_setup=kvm-shutdown
-    for target in ${targets}; do
+    targets=""
+    finished=""
+
+    # NOTE: kvm_setup={kvm-shutdown,kvm-purge}
+    targets="${targets} ${kvm_setup}"
+    kvm_setup=kvm-shutdown # for next time round
+
+    # kvm-install triggers kvm-transmogrify, kvm-keys,
+    # kvm-install-... so break each of these steps down.
+    targets="${targets} kvm-transmogrify"
+    targets="${targets} kvm-keys"
+    targets="${targets} kvm-install-fedora"
+    # leading "-" means ignore failure; kind of like commands in make
+    # rules
+    targets="${targets} -kvm-install-freebsd"
+    targets="${targets} -kvm-install-openbsd"
+    targets="${targets} -kvm-install-netbsd"
+
+    targets="${targets} kvm-check"
+
+    # list of raw results; will be converted to an array
+    cp /dev/null ${resultsdir}/build.json.in
+
+    for t in ${targets} ; do
+
+	# ignorable?
+	target=$(expr "${t}" : '-\?\(.*\)')
+	ignore=$(test "${target}" == "${t}" && echo false || echo true)
+	finished="${finished} ${target}"
+	logfile=${resultsdir}/${target}.log
+	cp /dev/null ${logfile}
+
 	# generate json of the progress
-	touch ${resultsdir}/${target}.log
-	${bindir}/json-make.sh --json ${resultsdir}/make.json --resultsdir ${resultsdir} ${targets}
+	{
+	    cat ${resultsdir}/build.json.in
+	    # same command further down
+	    jq --null-input \
+	       --arg target "${target}" \
+	       --arg status running \
+	       '{ target: $target, status: $status }'
+	} | jq -s . > ${resultsdir}/build.json
+
 	# run the target on hand
-	if ! run ${target} ; then
+	if run ${target} ; then
+	    result=ok
+	elif ${ignore} ; then
+	    # ex -kvm-install-openbsd = kvm-install-openbsd?
+	    result=ignored
+	else
+	    result=failed
+	fi
+
+	# generate json of the final result
+
+	# same command further up
+	{
+	    jq --null-input \
+	       --arg target "${target}" \
+	       --arg status "${result}" \
+	       '{ target: $target, status: $status }'
+	} >> ${resultsdir}/build.json.in
+	# convert raw list to an array
+	jq -s . < ${resultsdir}/build.json.in > ${resultsdir}/build.json
+
+	if test "${status}" = failed ; then
 	    # force the next run to test HEAD++ using rebuilt and
 	    # updated domains; hopefully that will contain the fix (or
 	    # at least contain the damage).
 	    ${status} "${target} barfed, restarting with HEAD"
 	    exec $0 ${repodir} ${summarydir}
 	fi
+
     done
 
     # Eliminate any files in the repo and the latest results directory

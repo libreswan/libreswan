@@ -241,11 +241,11 @@ stf_status dpd_init(struct state *st)
  * Only schedule a new timeout if there isn't one currently,
  * or if it would be sooner than the current timeout.
  */
-static void dpd_sched_timeout(struct state *p1st, monotime_t nw, deltatime_t timeout)
+static void dpd_sched_timeout(struct state *p1st, const monotime_t now, deltatime_t timeout)
 {
 	passert(deltasecs(timeout) > 0);
 	if (p1st->st_v1_dpd_event == NULL ||
-	    monobefore(monotime_add(nw, timeout), p1st->st_v1_dpd_event->ev_time)) {
+	    monobefore(monotime_add(now, timeout), p1st->st_v1_dpd_event->ev_time)) {
 		dbg("DPD: scheduling timeout to %jd", deltasecs(timeout));
 		event_delete(EVENT_v1_DPD, p1st);
 		event_schedule(EVENT_v1_DPD_TIMEOUT, timeout, p1st);
@@ -282,7 +282,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	}
 
 	/* find out when now is */
-	monotime_t nw = mononow();
+	const monotime_t now = mononow();
 
 	/*
 	 * pick least recent activity value, since with multiple phase 2s,
@@ -300,14 +300,14 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 		p1st->st_last_dpd : st->st_last_dpd;
 
 	monotime_t next_time = monotime_add(last, delay);
-	deltatime_t next_delay = monotimediff(next_time, nw);
+	deltatime_t next_delay = monotimediff(next_time, now);
 
 	/* has there been enough activity of late? */
 	if (deltatime_cmp(next_delay, >, deltatime(0))) {
 		/* Yes, just reschedule "phase 2" */
 		monotime_buf mb1, mb2;
 		dbg("DPD: not yet time for dpd event: %s < %s",
-		    str_monotime(nw, &mb1),
+		    str_monotime(now, &mb1),
 		    str_monotime(next_time, &mb2));
 		event_schedule(EVENT_v1_DPD, next_delay, st);
 		return;
@@ -325,7 +325,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 		dbg("DPD: out event not sent, phase 2 active");
 
 		/* update phase 2 time stamp only */
-		st->st_last_dpd = nw;
+		st->st_last_dpd = now;
 
 		/*
 		 * Since there was activity, kill any
@@ -366,7 +366,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	 * because the send may fail due to network issues, etc, and
 	 * the timeout has to occur anyway
 	 */
-	dpd_sched_timeout(p1st, nw, timeout);
+	dpd_sched_timeout(p1st, now, timeout);
 
 	endpoint_buf b;
 	dbg("DPD: sending R_U_THERE %u to %s (state #%lu)",
@@ -381,8 +381,8 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 		return;
 	}
 
-	st->st_last_dpd = nw;
-	p1st->st_last_dpd = nw;
+	st->st_last_dpd = now;
+	p1st->st_last_dpd = now;
 	p1st->st_dpd_expectseqno = p1st->st_dpd_seqno++;
 	pstats_ike_dpd_sent++;
 }
@@ -442,7 +442,7 @@ stf_status dpd_inI_outR(struct state *p1st,
 			struct isakmp_notification *const n,
 			pb_stream *pbs)
 {
-	monotime_t nw = mononow();
+	const monotime_t now = mononow();
 	uint32_t seqno;
 
 	if (!IS_V1_ISAKMP_SA_ESTABLISHED(p1st)) {
@@ -505,7 +505,7 @@ stf_status dpd_inI_outR(struct state *p1st,
 	monotime_buf nwb;
 	connection_buf cib;
 	dbg("DPD: received R_U_THERE seq:%u monotime: %s (state=#%lu name="PRI_CONNECTION")",
-	    seqno, str_monotime(nw, &nwb),
+	    seqno, str_monotime(now, &nwb),
 	    p1st->st_serialno,
 	    pri_connection(p1st->st_connection, &cib));
 
@@ -519,7 +519,7 @@ stf_status dpd_inI_outR(struct state *p1st,
 	}
 
 	/* update the time stamp */
-	p1st->st_last_dpd = nw;
+	p1st->st_last_dpd = now;
 
 	pstats_ike_dpd_replied++;
 

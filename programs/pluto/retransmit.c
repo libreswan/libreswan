@@ -191,7 +191,7 @@ enum retransmit_status retransmit(struct state *st)
 	 * CLOCK_BOOTTIME (and/or CLOCK_MONOTONIC), while the
 	 * event-loop library is still using gettimeofday.
 	 */
-	monotime_t now = mononow();
+	const monotime_t now = mononow();
 	unsigned long nr_retransmits = retransmit_count(st);
 	bool retransmit_count_exceeded = nr_retransmits >= rt->limit;
 	bool deltatime_exceeds_limit = deltatime_cmp(rt->delays, >=, rt->timeout);
@@ -281,7 +281,7 @@ void suppress_retransmits(struct state *st)
 		return;
 	}
 
-	monotime_t now = mononow();
+	const monotime_t now = mononow();
 	rt->delay = monotimediff(monotime_add(rt->start, rt->timeout), now);
 	rt->delays = deltatime_add(rt->delays, rt->delay);
 	event_delete(EVENT_RETRANSMIT, st);

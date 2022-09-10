@@ -1,30 +1,21 @@
 # Example
 
-
 See: http://testing.libreswan.org/
 
 
 # Manual Setup
 
-
 To publish the results from running `make kvm-results` as a web page,
-point the make variable `LSW_WEBDIR` at the web page's HTML directory.
-For instance, either by adding it to Makefile.inc.local:
+point the make variable `WEB_SUMMARYDIR` at the web page's HTML
+directory.  For instance, either by adding it to Makefile.inc.local:
 
    $ mkdir /var/www/html/results
-   echo LSW_WEBDIR=/var/www/html/results >> Makefile.inc.local
-
-or your .profile:
-
-   $ echo export LSW_WEBDIR=/var/www/html/results >> ~/.profile
-
+   echo WEB_SUMMARYDIR=/var/www/html/results >> Makefile.inc.local
 
 
 # Automated Testing
 
-
 ## Setup
-
 
 Lets assume everything is being set up under ~/libreswan-web/:
 
@@ -32,15 +23,15 @@ Lets assume everything is being set up under ~/libreswan-web/:
 
 With the following layout:
 
-      ~/libreswan-web/test-repo/     - repository/directory under test
-      ~/libreswan-web/script-repo/   - repostory/directory with scripts
-      ~/libreswan-web/pool/          - directory containing VM disks et.al.
-      ~/libreswan-web/results/       - directory containing published results
+      ~/libreswan-web/repo-under-test/   # repository/directory under test
+      ~/libreswan-web/testbench-repo/    # repostory/directory driving the tests
+      ~/libreswan-web/pool/              # directory containing VM disks et.al.
+      ~/libreswan-web/results/           # directory containing published results
 
 and optionally:
 
-      /tmp/pool                      - tmpfs containing test vm disks
-
+      /tmp/pool                          # tmpfs containing test vm disks
+      ~/libreswan-web/scratch-repo/      # only used when rebuilding the world
 
 - check that the host machine is correctly configured, see:
 
@@ -61,49 +52,42 @@ and optionally:
       $ cd ~/libreswan-web/
       $ mkdir -p pool/
 
-- checkout a dedicated repository for running tests (aka test-repo/)
+- checkout a dedicated repository for running tests (aka repo-under-test/)
 
   In addition to regular updates using "git fetch + git rebase", this
   repository is switched to the commit being tested using "git reset
   --hard".
 
       $ cd ~/libreswan-web/
-      $ git clone https://github.com/libreswan/libreswan.git test-repo/
+      $ git clone https://github.com/libreswan/libreswan.git repo-under-test/
 
-- configure the dedicated test repository as desired
+- configure the repo-under-test
 
   increase the number of reboots allowed in parallel (since a reboot
   seems to tie up two cores a rule of thumb is number-cores/2):
 
-      $ echo 'KVM_WORKERS=2' >> test-repo/Makefile.inc.local
+      $ echo 'KVM_WORKERS=2' >> repo-under-test/Makefile.inc.local
 
   increase the number of test domains (and give them unique prefixes
   so that they don't run with the default domain names):
 
-      $ echo 'KVM_PREFIXES=w1. w2.' >> test-repo/Makefile.inc.local
+      $ echo 'KVM_PREFIXES=w1. w2.' >> repo-under-test/Makefile.inc.local
 
   enable the wip tests:
 
-      $ echo "KVM_TEST_FLAGS=--test-status 'good|wip'" >> test-repo/Makefile.inc.local
+      $ echo "KVM_TEST_FLAGS=--test-status 'good|wip'" >> repo-under-test/Makefile.inc.local
 
   move the test domains to /tmp (tmpfs):
 
-      $ echo 'KVM_LOCALDIR=/tmp/pool' >> test-repo/Makefile.inc.local
+      $ echo 'KVM_LOCALDIR=/tmp/pool' >> repo-under-test/Makefile.inc.local
 
-- checkout a repository for the web sources and scripts (aka script-repo/)
-
-      $ cd ~/libreswan-web/
-      $ git clone https://github.com/libreswan/libreswan.git script-repo/
-
-- create the base domain (creating the base domain requires a TTY;
-  blame kvm):
+- checkout a repository for the web sources and scripts (aka testbench-repo/)
 
       $ cd ~/libreswan-web/
-      $ ( cd test-repo/ && make kvm-install-base-domain )
+      $ git clone https://github.com/libreswan/libreswan.git testbench-repo/
 
 
 ## Running
-
 
 Assuming results are to be published in the directory
 libreswan-web/results/ (see above), the testing script is invoked as:
@@ -112,18 +96,17 @@ Either:
 
     $ cd libreswan-web/
     $ rm -f nohup.out
-    $ nohup script-repo/testing/web/tester.sh test-repo/ results/ &
+    $ nohup testbench-repo/testing/web/tester.sh repo-under-test/ results/ &
     $ tail -f nohup.out
 
 or:
 
     $ rm -f nohup.out
-    $ nohup ./libreswan-web/script-repo/testing/web/tester.sh libreswan-web/test-repo libreswan-web/results/ &
+    $ nohup ./libreswan-web/testbench-repo/testing/web/tester.sh libreswan-web/repo-under-test libreswan-web/results/ &
     $ tail -f nohup.out
 
 
 ## Restarting and Maintenance
-
 
 The following things seem to go wrong:
 
@@ -165,27 +148,27 @@ with "restart"):
   crash it by running the following a few times:
 
       $ cd libreswan-web/
-      $ ( cd test-repo/ && make kvm-uninstall )
+      $ ( cd repo-under-test/ && make kvm-uninstall )
 
 - (optional, but recommended) upgrade and reboot the test machine:
 
       $ sudo dnf upgrade -y
       $ sudo reboot
 
-- (optional) cleanup and update the test-repo/ (tester.sh will do this
+- (optional) cleanup and update the repo-under-test/ (tester.sh will do this
   anyway)
 
       $ cd libreswan-web/
-      $ ( cd test-repo/ && git clean -f )
-      $ ( cd test-repo/ && git pull --ff-only )
+      $ ( cd repo-under-test/ && git clean -f )
+      $ ( cd repo-under-test/ && git pull --ff-only )
 
-- (optional) update the script-repo/ repository:
+- (optional) update the testbench-repo/ repository:
 
   Remember to first check for local changes:
 
       $ cd libreswan-web/
-      $ ( cd script-repo/ && git status )
-      $ ( cd script-repo/ && git pull --ff-only )
+      $ ( cd testbench-repo/ && git status )
+      $ ( cd testbench-repo/ && git pull --ff-only )
 
 - (optional) examine, and perhaps delete, any test runs where tests
   have 'missing-output':
@@ -205,7 +188,7 @@ with "restart"):
     a list of test runs along with their commit and "interest" level
     (see below):
 
-        $ ./script-repo/testing/web/gime-work.sh results test-repo/ 2>&1 | tee commits.tmp
+        $ ./testbench-repo/testing/web/gime-work.sh results repo-under-test/ 2>&1 | tee commits.tmp
 
   - strip the raw list of everything but test runs; also exclude the
     most recent test run (so the latest result isn't deleted):
@@ -233,7 +216,6 @@ with "restart"):
 
 
 ## Rebuilding
-
 
 From time-to-time the web site may require a partial or full rebuild.
 
@@ -294,7 +276,6 @@ of the results, a dedicated git repository is needed).
 
 # Nuances
 
-
 Some things, annoyingly, don't quite work right:
 
 - comparisons sometimes loose a result
@@ -325,7 +306,6 @@ Some things, annoyingly, don't quite work right:
 
 # Archiving
 
-
 For instance:
 
  cd ~/results
@@ -341,11 +321,10 @@ For instance:
  find ~/${o}-${n} -name '*.log.gz' -print | xargs rm
  find ~/${o}-${n} -name '.log' -print # delete?
  find ~/${o}-${n} -name '.log.gz' -print # delete?
- cd ~/libreswan-web/script-repo/ && make WEB_SUMMARYDIR=~/${o}-${n} web-summarydir
+ cd ~/libreswan-web/testbench-repo/ && make WEB_SUMMARYDIR=~/${o}-${n} web-summarydir
 
 
 # Improvements
-
 
 Some things could work better:
 

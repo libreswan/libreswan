@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+
 <html>
   <head>
     <meta charset="utf-8">
@@ -10,9 +11,9 @@
     <link rel="stylesheet" type="text/css" href="results.css"> </link>
     <script type="text/javascript" src="results.js"></script>
     <script>
-        window.addEventListener('load', function() {
-            results("results", "results.json")
-	})
+      window.addEventListener('load', function() {
+          results("results", "results.json")
+      })
     </script>
 
     <script type="text/javascript" src="lsw-summary-load.js"></script>
@@ -21,35 +22,26 @@
     <link rel="stylesheet" type="text/css" href="lsw-summary-graph.css"> </link>
     <link rel="stylesheet" type="text/css" href="lsw-table.css"> </link>
     <script>
-        window.addEventListener('load', function() {
-            lsw_summary_load("../", function(summary) {
-                lsw_summary_graph("graph", "results", summary)
-            })
-	})
+      window.addEventListener('load', function() {
+          lsw_summary_load("../", function(summary) {
+              lsw_summary_graph("graph", "results", summary)
+          })
+      })
     </script>
 
+    <script "type=test/javascript" src="build.js"></script>
+    <script>build_summary("build-summary", "build.json")</script>
+
   </head>
+
   <body>
     <center>
       <div id="graph"></div>
       <br/>
-      <div id="title">
-	<!-- tester.sh generates make.json, this should use it? -->
-	<h3>build logs (some may be missing)</h3>
-	<a href="distclean.log">make distclean</a>
-	&amp;&amp;
-	<a href="kvm-purge.log">make kvm-purge</a> or <a href="kvm-shutdown.log">make kvm-shutdown</a>
-	&amp;&amp;
-	<a href="kvm-transmogrify.log">make kvm-transmogrify</a>
-	&amp;&amp;
-	<a href="kvm-keys.log">make kvm-keys</a>
-	&amp;&amp;
-	<a href="kvm-install.log">make kvm-install</a>
-	&amp;&amp;
-	<a href="kvm-test.log">make kvm-test</a>
-      </div>
+      <div id="build-summary"></div>
       <br/>
       <div id="results"></div>
     </center>
   </body>
+
 </html>
