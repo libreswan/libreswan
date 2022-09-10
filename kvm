@@ -78,13 +78,6 @@ pass2help()
     install[-PLATFORM]
 	build and install libreswan on the build domains, and then
 	create the test domains
-    uninstall[-PLATFORM]
-	delete the build and test domains
-	(but leave the build trees and base domains alone)
-
-    build[-PLATFORM]
-	build libreswan on the build domains
-        (normally install is used)
 
   Run tests, examine results:
 
@@ -125,6 +118,20 @@ pass2help()
 
   Clean up the test environment
 
+    shutdown[-PLATFORM]
+	shutdown the domains
+    uninstall[-PLATFORM]
+	delete the build and test domains
+	(but leave the build trees and base domains alone)
+    downgrade[-PLATFORM]
+	delete the build and test domains
+	remove any updates to the base domains
+    purge[-PLATFORM]
+	delete base, build and test domains
+	delete any build trees
+    demolish[-PLATFORM]
+	delete all domains and all builds
+
     base[-PLATFORM]
 	(re)build the base domain
 	creates: ${basehosts}
@@ -134,18 +141,12 @@ pass2help()
     transmogrify[-PLATFORM]
 	transmogrify the upgraded domains
 	creates: ${platforms}
+    build[-PLATFORM]
+	install libreswan on the build domains
+        (normally install is used)
+    install[-PLATFORM]
+	install libreswan on all the test domains
 
-    downgrade[-PLATFORM]
-	delete the build and test domains
-	remove any updates to the base domains
-
-    purge
-	delete base, build and test domains
-	delete any build trees
-    demolish
-	delete all domains and all builds
-    shutdown
-	shutdown the domains
 EOF
 }
 
@@ -402,13 +403,9 @@ for op in "${ops[@]}" ; do
 	add ) git add "$@" ;;
 
 	kill ) ${gnumake} kvm-${op} ;;
-	base* | upgrade* | transmogrify* | downgrade* | build* )
-	    # downgrade-netbsd -> netbsd-downgrade
-	    o=$(echo ${op} | sed -e 's/\([a-z]*\)-\([a-z]*\)/\2-\1/')
-	    echo ${gnumake} kvm-${o}
-	    ${gnumake} kvm-${o} || exit $?
-	    ;;
-	demolish | purge | status | check-clean | clean | shutdown | uninstall* | install* )
+	base* | upgrade* | transmogrify* | build* | install* | \
+        shutdown* | uninstall* | downgrade* | demolish* | \
+        status | check-clean | clean )
 	    echo ${gnumake} kvm-${op}
 	    ${gnumake} kvm-${op} || exit $?
 	    ;;
