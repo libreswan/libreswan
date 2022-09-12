@@ -2058,32 +2058,20 @@ static bool extract_connection(const struct whack_message *wm,
 		config->retransmit_timeout = wm->retransmit_timeout;
 		config->retransmit_interval = wm->retransmit_interval;
 
-		if (deltatime_cmp(c->sa_rekey_margin, >=, c->sa_ipsec_life_seconds)) {
-			deltatime_t new_rkm = deltatimescale(1, 2, c->sa_ipsec_life_seconds);
-
-			llog(RC_LOG, c->logger,
-			     "rekeymargin (%jds) >= salifetime (%jds); reducing rekeymargin to %jds seconds",
-			     deltasecs(c->sa_rekey_margin),
-			     deltasecs(c->sa_ipsec_life_seconds),
-			     deltasecs(new_rkm));
-
-			c->sa_rekey_margin = new_rkm;
-		}
-
 		{
 			/* http://csrc.nist.gov/publications/nistpubs/800-77/sp800-77.pdf */
 			time_t max_ike_life = libreswan_fipsmode() ? FIPS_IKE_SA_LIFETIME_MAXIMUM : IKE_SA_LIFETIME_MAXIMUM;
 			time_t max_ipsec_life = libreswan_fipsmode() ? FIPS_IPSEC_SA_LIFETIME_MAXIMUM : IPSEC_SA_LIFETIME_MAXIMUM;
 
-			if (deltasecs(c->sa_ike_life_seconds) > max_ike_life) {
-				llog(RC_LOG_SERIOUS, c->logger,
-				     "IKE lifetime limited to the maximum allowed %jds",
+			if (deltatime_cmp(c->sa_ike_life_seconds, ==, deltatime_zero) || deltasecs(c->sa_ike_life_seconds) > max_ike_life) {
+				llog(RC_LOG, c->logger,
+				     "IKE lifetime set to the maximum allowed %jds",
 				     (intmax_t) max_ike_life);
 				c->sa_ike_life_seconds = deltatime(max_ike_life);
 			}
-			if (deltasecs(c->sa_ipsec_life_seconds) > max_ipsec_life) {
-				llog(RC_LOG_SERIOUS, c->logger,
-				     "IPsec lifetime limited to the maximum allowed %jds",
+			if (deltatime_cmp(c->sa_ipsec_life_seconds, ==, deltatime_zero) || deltasecs(c->sa_ipsec_life_seconds) > max_ipsec_life) {
+				llog(RC_LOG, c->logger,
+				     "IPsec lifetime set to the maximum allowed %jds",
 				     (intmax_t) max_ipsec_life);
 				c->sa_ipsec_life_seconds = deltatime(max_ipsec_life);
 			}
@@ -2111,6 +2099,18 @@ static bool extract_connection(const struct whack_message *wm,
 				     IPSEC_SA_MAX_OPERATIONS_STRING);
 				c->sa_ipsec_max_packets = IPSEC_SA_MAX_OPERATIONS; /* 2^32 */
 			}
+		}
+
+		if (deltatime_cmp(c->sa_rekey_margin, >=, c->sa_ipsec_life_seconds)) {
+			deltatime_t new_rkm = deltatimescale(1, 2, c->sa_ipsec_life_seconds);
+
+			llog(RC_LOG, c->logger,
+			     "rekeymargin (%jds) >= salifetime (%jds); reducing rekeymargin to %jds seconds",
+			     deltasecs(c->sa_rekey_margin),
+			     deltasecs(c->sa_ipsec_life_seconds),
+			     deltasecs(new_rkm));
+
+			c->sa_rekey_margin = new_rkm;
 		}
 
 		/* IKEv1's RFC 3706 DPD */
