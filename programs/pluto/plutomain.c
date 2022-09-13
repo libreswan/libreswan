@@ -1297,8 +1297,10 @@ int main(int argc, char **argv)
 			/* only causes nflog nmber to show in ipsec status */
 			pluto_nflog_group = cfg->setup.options[KBF_NFLOG_ALL];
 
+#ifdef XFRM_LIFETIME_DEFAULT
 			/* only causes nflog nmber to show in ipsec status */
 			pluto_xfrmlifetime = cfg->setup.options[KBF_XFRMLIFETIME];
+#endif
 
 			/* no config option: rundir */
 			/* secretsfile= */
@@ -1849,18 +1851,17 @@ void show_setup_plutomain(struct show *s)
 		pluto_vendorid,
 		bool_str(log_to_audit));
 
-	show_comment(s,
-		"nhelpers=%d, uniqueids=%s, "
-		"dnssec-enable=%s, "
-		"logappend=%s, logip=%s, shuntlifetime=%jds, xfrmlifetime=%jds",
-		nhelpers,
-		bool_str(uniqueIDs),
-		bool_str(do_dnssec),
-		bool_str(log_append),
-		bool_str(log_ip),
-		deltasecs(pluto_shunt_lifetime),
-		(intmax_t) pluto_xfrmlifetime
-	);
+	SHOW_JAMBUF(RC_COMMENT, s, buf) {
+		jam(buf, "nhelpers=%d", nhelpers);
+		jam(buf, ", uniqueids=%s", bool_str(uniqueIDs));
+		jam(buf, ", dnssec-enable=%s", bool_str(do_dnssec));
+		jam(buf, ", logappend=%s", bool_str(log_append));
+		jam(buf, ", logip=%s", bool_str(log_ip));
+		jam(buf, ", shuntlifetime=%jds", deltasecs(pluto_shunt_lifetime));
+#ifdef XFRM_LIFETIME_DEFAULT
+		jam(buf, ", xfrmlifetime=%jds", (intmax_t) pluto_xfrmlifetime);
+#endif
+	}
 
 	show_comment(s,
 		"ddos-cookies-threshold=%d, ddos-max-halfopen=%d, ddos-mode=%s, ikev1-policy=%s",

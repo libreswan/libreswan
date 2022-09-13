@@ -86,7 +86,9 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	SOPT(KBF_IKEBUF, IKE_BUF_AUTO);
 	SOPT(KBF_IKE_ERRQUEUE, true);
 	SOPT(KBF_NFLOG_ALL, 0); /* disabled per default */
+#ifdef XFRM_LIFETIME_DEFAULT
 	SOPT(KBF_XFRMLIFETIME, XFRM_LIFETIME_DEFAULT); /* not used by pluto itself */
+#endif
 	SOPT(KBF_NHELPERS, -1); /* see also plutomain.c */
 
 	SOPT(KBF_KEEPALIVE, 0);                  /* config setup */

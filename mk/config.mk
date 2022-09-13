@@ -364,9 +364,8 @@ endif
 # that do not ship linux/xfrm.h, or when the shipped version is too
 # old. Since we ship some not-yet merged ipsec-next offload code, this
 # is currently true for basically all distro's
+
 USE_XFRM_HEADER_COPY ?= true
-XFRM_LIFETIME_DEFAULT ?= 30
-USERLAND_CFLAGS += -DXFRM_LIFETIME_DEFAULT=$(XFRM_LIFETIME_DEFAULT)
 
 USE_XFRM_INTERFACE_IFLA_HEADER ?= false
 
@@ -590,6 +589,11 @@ endif
 
 ifeq ($(USE_PFKEYV2),true)
 USERLAND_CFLAGS += -DKERNEL_PFKEYV2
+endif
+
+ifeq ($(USE_XFRM),true)
+XFRM_LIFETIME_DEFAULT ?= 30
+USERLAND_CFLAGS += -DXFRM_LIFETIME_DEFAULT=$(XFRM_LIFETIME_DEFAULT)
 endif
 
 # Enable support for DNSSEC. This requires the unbound and ldns
