@@ -24,8 +24,8 @@ testhosts=$(echo $($(dirname $0)/testing/utils/kvmhosts.sh))
 
 hosts="${testhosts} ${buildhosts} ${basehosts} ${upgradehosts}"
 
-# Anything matching '^____[-a-z]' is considered a command (_ denotes a
-# space).
+# Anything matching '^____[-a-z]' is considered a command ('_' denotes
+# a space).
 
 pass1help()
 {
@@ -73,18 +73,18 @@ pass1=$(pass1help | awk '/^    [-a-z]/ { printf " %s ", $1 }' ; echo ${host})
 pass2help()
 {
     cat <<EOF
-  Set up the test environment:
+  Set up the test environment, run the testsuite:
 
     install[-PLATFORM]
-	build and install libreswan on the build domains, and then
-	create the test domains
-
-  Run tests, examine results:
-
+	if needed, create the build domains
+	install libreswan on the build domains
+	clone the build domains to create the test domains
+	control with Makefile.inc.local:KVM_{FEDORA,FREEBSD,NETBSD,OPENBSD}=true
     check [ <test-directory> ... ]
 	run the testsuite
-    recheck [ <test-directory> ... ]
-	re-run the testsuite
+
+  Examine the test results:
+
     diffs [ <test-directory> ... ]
 	show differences (for the specified tests)
 	exit non-zero when differences are found
@@ -92,8 +92,10 @@ pass2help()
 	list test results (for the specified tests)
 	exit non-zero when failures are found
 
-  Prepare for a clean test run:
+  Re-run, or run a-new the testsuite:
 
+    recheck [ <test-directory> ... ]
+	re-run the testsuite
     clean
 	clean the test environment (delete test and build domains and
 	build trees)
@@ -101,6 +103,11 @@ pass2help()
 	delete the test results (leave the build trees and domains alone)
     keys
 	update the keys used for testing
+
+    purge
+	delete build and test domains
+	delete any build trees
+	delete any keys
 
   Update the expected test results (and GIT repository):
 
@@ -116,36 +123,39 @@ pass2help()
     kill
 	kill the running testsuite
 
-  Clean up the test environment
-
-    shutdown[-PLATFORM]
-	shutdown the domains
-    uninstall[-PLATFORM]
-	delete the build and test domains
-	(but leave the build trees and base domains alone)
-    downgrade[-PLATFORM]
-	delete the build and test domains
-	remove any updates to the base domains
-    purge[-PLATFORM]
-	delete base, build and test domains
-	delete any build trees
-    demolish[-PLATFORM]
-	delete all domains and all builds
+  Step wize create/delete the domains (just use ./kvm install):
 
     base[-PLATFORM]
-	(re)build the base domain
+	(re)create a domain containing the base OS
 	creates: ${basehosts}
     upgrade[-PLATFORM]
+	(re)create the upgrade domain from the base domain
 	installs missing + upgrades existing packages on base domain
 	creates: ${upgradehosts}
     transmogrify[-PLATFORM]
-	transmogrify the upgraded domains
+	(re)create the build domain from the upgrade domain
+	transmogrifies the domain ready for building and testing
 	creates: ${platforms}
     build[-PLATFORM]
-	install libreswan on the build domains
-        (normally install is used)
+	build/install libreswan on the build domains
+	uses: ${platforms}
     install[-PLATFORM]
-	install libreswan on all the test domains
+	build/install libreswan
+	clones build domains to create the test domains
+
+  Stepwize delete the domains (just use ./kvm purge):
+
+    shutdown[-PLATFORM]
+	shutdown all domains
+    uninstall[-PLATFORM]
+	delete test-domains, PLATFORM
+	(but leave the build trees and base domains alone)
+    downgrade[-PLATFORM]
+	delete test-domains, PLATFORM, PLATFORM.upgrade
+	remove any updates to the base domains
+    demolish[-PLATFORM]
+	delete test-domains, PLATFORM, PLATFORM.upgrade, PLATFORM.base
+	delete all domains and all builds
 
 EOF
 }
