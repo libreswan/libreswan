@@ -2558,7 +2558,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 	switch (transition->send_role) {
 	case MESSAGE_REQUEST:
 	case MESSAGE_RESPONSE:
-		send_recorded_v2_message(ike, finite_states[from_state]->name,
+		send_recorded_v2_message(ike, transition->story,
 					 transition->send_role);
 		break;
 	case NO_MESSAGE:
