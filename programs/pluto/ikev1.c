@@ -2574,23 +2574,15 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 
 		/* if requested, send the new reply packet */
 		if (smc->flags & SMF_REPLY) {
-			endpoint_buf b;
-			endpoint_buf b2;
-			dbg("sending reply packet to %s (from %s)",
-			    str_endpoint(&st->st_remote_endpoint, &b),
-			    str_endpoint(&st->st_iface_endpoint->local_endpoint, &b2));
-
 			close_output_pbs(&reply_stream); /* good form, but actually a no-op */
 
 			if (st->st_state->kind == STATE_MAIN_R2 &&
-				impair.send_no_main_r2) {
+			    impair.send_no_main_r2) {
 				/* record-only so we properly emulate packet drop */
-				record_outbound_v1_ike_msg(st, &reply_stream,
-							   finite_states[from_state]->name);
+				record_outbound_v1_ike_msg(st, &reply_stream, smc->message);
 				log_state(RC_LOG, st, "IMPAIR: Skipped sending STATE_MAIN_R2 response packet");
 			} else {
-				record_and_send_v1_ike_msg(st, &reply_stream,
-							   finite_states[from_state]->name);
+				record_and_send_v1_ike_msg(st, &reply_stream, smc->message);
 			}
 		}
 
