@@ -411,6 +411,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "ikev1-secctx-attr-type",  kv_config,  kt_number,  KBF_SECCTX, NULL, NULL, },  /* obsolete: not a value, a type */
   { "secctx-attr-type",  kv_config | kv_alias,  kt_number,  KBF_SECCTX, NULL, NULL, },
 #endif
+  { "interfaces",  kv_config, kt_obsolete, KNCF_WARNIGNORE, NULL, NULL, }, /* obsoleted but often present keyword */
 
   /* these options are obsoleted (and not old aliases) */
 
