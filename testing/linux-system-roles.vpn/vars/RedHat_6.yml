@@ -1,3 +1,0 @@
----
-__vpn_ikev2: 'no'
-__vpn_nss_location: '/etc/ipsec.d'
