@@ -1,0 +1,65 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ # scrub any password file
+west #
+ :> /etc/ipsec.secrets
+west #
+ # start
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ # generate fresh keys
+west #
+ ../../guestbin/genhostkey.sh $PWD
+raw rsa
+us=west them=east leftright=left
+west #
+ # fix/add hostkey config
+west #
+ cp ipsec.conf /etc/ipsec.conf
+west #
+ cat OUTPUT/east.hostkey >>/etc/ipsec.conf
+west #
+ cat OUTPUT/west.hostkey >>/etc/ipsec.conf
+west #
+ cat /etc/ipsec.conf
+# /etc/ipsec.conf - Libreswan IPsec configuration file
+config setup
+	# put the logs in /tmp for the UMLs, so that we can operate
+	# without syslogd, which seems to break on UMLs
+	logfile=/tmp/pluto.log
+	logtime=no
+	logappend=no
+	dumpdir=/tmp
+	plutodebug=all
+conn hostkey
+	ikev2=no
+	left=192.1.2.45
+	leftsubnet=192.0.1.0/24
+	right=192.1.2.23
+	rightsubnet=192.0.2.0/24
+	# rsakey <<KEYID#1>>
+	rightrsasigkey=0s<<RAW-PUBKEY#1>>
+	# rsakey <<KEYID#2>>
+	leftrsasigkey=0s<<RAW-PUBKEY#2>>
+west #
+ ipsec auto --add hostkey
+002 "hostkey": added IKEv1 connection
+west #
+ ipsec auto --up hostkey
+002 "hostkey" #1: initiating IKEv1 Main Mode connection
+1v1 "hostkey" #1: sent Main Mode request
+1v1 "hostkey" #1: sent Main Mode I2
+1v1 "hostkey" #1: sent Main Mode I3
+003 "hostkey" #1: authenticated peer '3nnn-bit RSA with SHA1' signature using preloaded certificate '192.1.2.23'
+004 "hostkey" #1: IKE SA established {auth=RSA_SIG cipher=AES_CBC_256 integ=HMAC_SHA2_256 group=MODP2048}
+002 "hostkey" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
+1v1 "hostkey" #2: sent Quick Mode request
+004 "hostkey" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
+west #
+ 
+
