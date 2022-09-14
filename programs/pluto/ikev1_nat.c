@@ -64,7 +64,7 @@ bool nat_traversal_insert_vid(pb_stream *outs, const struct connection *c)
 		return out_v1VID(outs, VID_NATT_RFC);
 
 	case NATT_BOTH:
-		dbg("sending draft and RFC NATT VIDs");
+		dbg("emitting draft and RFC NATT VIDs");
 		return (out_v1VID(outs, VID_NATT_RFC) &&
 			/* drafts */
 			out_v1VID(outs, VID_NATT_IETF_03) &&
@@ -79,7 +79,7 @@ bool nat_traversal_insert_vid(pb_stream *outs, const struct connection *c)
 
 	case NATT_NONE:
 		/* This should never be reached, but makes compiler happy */
-		dbg("not sending any NATT VID's");
+		dbg("not emitting any NATT VID's");
 		return true;
 
 	default:
@@ -210,7 +210,7 @@ bool ikev1_nat_traversal_add_natd(pb_stream *outs,
 
 	passert(st->st_oakley.ta_prf != NULL);
 
-	dbg("sending NAT-D payloads");
+	dbg("emitting NAT-D payloads");
 
 	unsigned remote_port = endpoint_hport(st->st_remote_endpoint);
 	unsigned short local_port = endpoint_hport(st->st_interface->local_endpoint);
