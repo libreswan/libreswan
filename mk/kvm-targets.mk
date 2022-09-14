@@ -1032,7 +1032,6 @@ $(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
 
-KVM_FEDORA_TRANSMOGRIFY_FILES += testing/libvirt/fedora/sysctl.conf
 KVM_FEDORA_TRANSMOGRIFY_FILES += $(wildcard testing/libvirt/fedora/network/*.network)
 KVM_FREEBSD_TRANSMOGRIFY_FILES += testing/libvirt/freebsd/rc.conf
 KVM_NETBSD_TRANSMOGRIFY_FILES += testing/libvirt/netbsd/rc.local
