@@ -27,7 +27,7 @@ int main(int argc, char **argv)
 
 	if (argc == 1) {
 		llog(WHACK_STREAM|NO_PREFIX, logger, "Usage:");
-		llog(WHACK_STREAM|NO_PREFIX, logger, "  ipsec showroute [--source|--gateway|--destination] <destination>");
+		llog(WHACK_STREAM|NO_PREFIX, logger, "  ipsec showroute [--debug] [--source|--gateway|--destination] <destination>");
 		llog(WHACK_STREAM|NO_PREFIX, logger, "prints:");
 		llog(WHACK_STREAM|NO_PREFIX, logger, "  <source-address> <gateway-address> <destination-address>");
 		llog(WHACK_STREAM|NO_PREFIX, logger, "for the given <destination>");
@@ -42,19 +42,47 @@ int main(int argc, char **argv)
 		{ "source", no_argument, &show_source, true, },
 		{ "gateway", no_argument, &show_gateway, true, },
 		{ "destination", no_argument, &show_destination, true, },
+		{ "debug", no_argument, NULL, 'd', },
+#if 0
+		{ "verbose", no_argument, NULL, 'v', },
+#endif
 		{0},
 	};
 
+	opterr = 0; /* handle options locally */
+
 	while (true) {
-		opterr = 0;
+		/*
+		 * Need to save current optind before call (after it
+		 * points to next entry); optind can be 0 at start.
+		 */
+		int current_optind = optind > 0 ? optind : 1;
 		int option_index;
-		int c = getopt_long(argc, argv, "", options, &option_index);
+		int c = getopt_long(argc, argv, "vd", options, &option_index);
 		if (c == -1) {
 			break;
 		}
-		if (c == '?') {
-			llog(ERROR_STREAM, logger, "invalid option: %s", argv[optind]);
+		switch (c) {
+		case 'd':
+			cur_debugging = DBG_ALL;
+			break;
+#if 0
+		case 'v':
+			verbose = true;
+			break;
+#endif
+		case 0:
+			break;
+		case '?':
+			llog(ERROR_STREAM, logger, "invalid option: %s", argv[current_optind]);
 			exit(1);
+#if 0
+		case ':'
+			llog(ERROR_STREAM, logger, "missing parameter: %s", argv[current_optind]);
+			exit(1);
+#endif
+		default:
+			bad_case(c);
 		}
 	}
 
