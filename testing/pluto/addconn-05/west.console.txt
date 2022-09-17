@@ -14,10 +14,10 @@ Loading conn west
 Loading conn west-bogus
 Loading conn east
 loading named conns: west
-resolving family = IPv4 src = %eth1 gateway = <not-set> peer 192.1.2.23
-  seeking nothing
-resolving family = IPv4 src = 192.1.2.23 gateway = <not-set> peer %eth1
-  seeking nothing
+resolving family=IPv4 src=%eth1 gateway=<not-set> peer 192.1.2.23
+  seeking NOTHING
+resolving family=IPv4 src=192.1.2.23 gateway=<not-set> peer %eth1
+  seeking NOTHING
 conn: "west" modecfgdns=<unset>
 conn: "west" modecfgdomains=<unset>
 conn: "west" modecfgbanner=<unset>
@@ -40,10 +40,10 @@ Loading conn west
 Loading conn west-bogus
 Loading conn east
 loading named conns: west-bogus
-resolving family = IPv4 src = %bogus1 gateway = <not-set> peer 192.1.2.23
-  seeking nothing
-resolving family = IPv4 src = 192.1.2.23 gateway = <not-set> peer %bogus1
-  seeking nothing
+resolving family=IPv4 src=%bogus1 gateway=<not-set> peer 192.1.2.23
+  seeking NOTHING
+resolving family=IPv4 src=192.1.2.23 gateway=<not-set> peer %bogus1
+  seeking NOTHING
 conn: "west-bogus" modecfgdns=<unset>
 conn: "west-bogus" modecfgdomains=<unset>
 conn: "west-bogus" modecfgbanner=<unset>
