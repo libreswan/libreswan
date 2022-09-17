@@ -13,13 +13,15 @@
  * License for more details.
  */
 
+#include <stdlib.h>
+#include <getopt.h>
+
+
 #include "lswtool.h"
 #include "lswlog.h"
 #include "addr_lookup.h"
 #include "ip_address.h"
-#include "stdlib.h"
-
-#include "getopt.h"
+#include "ip_info.h"
 
 int main(int argc, char **argv)
 {
@@ -27,7 +29,7 @@ int main(int argc, char **argv)
 
 	if (argc == 1) {
 		llog(WHACK_STREAM|NO_PREFIX, logger, "Usage:");
-		llog(WHACK_STREAM|NO_PREFIX, logger, "  ipsec showroute [--debug] [--source|--gateway|--destination] <destination>");
+		llog(WHACK_STREAM|NO_PREFIX, logger, "  ipsec showroute [-4|-6] [--debug] [--source|--gateway|--destination] <destination>");
 		llog(WHACK_STREAM|NO_PREFIX, logger, "prints:");
 		llog(WHACK_STREAM|NO_PREFIX, logger, "  <source-address> <gateway-address> <destination-address>");
 		llog(WHACK_STREAM|NO_PREFIX, logger, "for the given <destination>");
@@ -43,6 +45,8 @@ int main(int argc, char **argv)
 		{ "gateway", no_argument, &show_gateway, true, },
 		{ "destination", no_argument, &show_destination, true, },
 		{ "debug", no_argument, NULL, 'd', },
+		{ "ipv4", no_argument, NULL, '4', },
+		{ "ipv6", no_argument, NULL, '6', },
 #if 0
 		{ "verbose", no_argument, NULL, 'v', },
 #endif
@@ -51,6 +55,8 @@ int main(int argc, char **argv)
 
 	opterr = 0; /* handle options locally */
 
+	const struct ip_info *afi = NULL;
+
 	while (true) {
 		/*
 		 * Need to save current optind before call (after it
@@ -58,13 +64,19 @@ int main(int argc, char **argv)
 		 */
 		int current_optind = optind > 0 ? optind : 1;
 		int option_index;
-		int c = getopt_long(argc, argv, "vd", options, &option_index);
+		int c = getopt_long(argc, argv, "vd46", options, &option_index);
 		if (c == -1) {
 			break;
 		}
 		switch (c) {
 		case 'd':
 			cur_debugging = DBG_ALL;
+			break;
+		case '4':
+			afi = &ipv4_info;
+			break;
+		case '6':
+			afi = &ipv6_info;
 			break;
 #if 0
 		case 'v':
@@ -101,7 +113,7 @@ int main(int argc, char **argv)
 	}
 
 	ip_address dst;
-	err_t e = ttoaddress_dns(shunk1(argv[optind]), NULL, &dst);
+	err_t e = ttoaddress_dns(shunk1(argv[optind]), afi, &dst);
 	if (e != NULL) {
 		llog(WHACK_STREAM, logger, "%s: %s", argv[1], e);
 		exit(1);

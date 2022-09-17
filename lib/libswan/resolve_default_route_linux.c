@@ -44,13 +44,25 @@
 #include "ip_info.h"
 #include "lswlog.h"
 
-#define verbose(FMT, ...) if (verbose_rc_flags) llog(verbose_rc_flags, logger, FMT, ##__VA_ARGS__)
+struct verbose {
+	struct logger *logger;
+	lset_t rc_flags;
+	int level;
+};
+
+#define vlog(FMT, ...)							\
+	{								\
+		if (verbose.rc_flags) {					\
+			llog(verbose.rc_flags, verbose.logger,		\
+			     "%*s"FMT,					\
+			     verbose.level * 2, "", ##__VA_ARGS__);	\
+		}							\
+	}
 
 static void resolve_point_to_point_peer(const char *interface,
 					const struct ip_info *afi,
 					ip_address *peer,
-					lset_t verbose_rc_flags,
-					struct logger *logger)
+					struct verbose verbose)
 {
 	struct ifaddrs *ifap;
 
@@ -76,13 +88,13 @@ static void resolve_point_to_point_peer(const char *interface,
 		err_t err = sockaddr_to_address_port(sa, afi->sockaddr_size,
 						     peer, NULL/*ignore port*/);
 		if (err != NULL) {
-			verbose("  interface %s had invalid sockaddr: %s",
+			vlog("interface %s had invalid sockaddr: %s",
 				interface, err);
 			continue;
 		}
 
 		address_buf ab;
-		verbose("  found peer %s to interface %s",
+		vlog("found peer %s to interface %s",
 			str_address(peer, &ab), interface);
 		break;
 	}
@@ -108,8 +120,7 @@ static void resolve_point_to_point_peer(const char *interface,
 
 static struct nlmsghdr *netlink_query_init(const struct ip_info *afi,
 					   char type, int flags,
-					   lset_t verbose_rc_flags,
-					   struct logger *logger)
+					   struct verbose verbose)
 {
 	struct nlmsghdr *nlmsg = alloc_bytes(RTNL_BUFSIZE, "netlink query");
 	struct rtmsg *rtmsg;
@@ -130,12 +141,12 @@ static struct nlmsghdr *netlink_query_init(const struct ip_info *afi,
 	rtmsg->rtm_dst_len = 0;
 	rtmsg->rtm_tos = 0;
 
-	verbose("  query %s%s%s%s",
-		(type == RTM_GETROUTE ? "getroute" : "?"),
-		(flags & NLM_F_REQUEST ? " +REQUEST" : ""),
+	vlog("query %s%s%s%s",
+		(type == RTM_GETROUTE ? "GETROUTE" : "?"),
+		(flags & NLM_F_REQUEST ? "+REQUEST" : ""),
 		/*NLM_F_DUMP==NLM_F_ROOT|NLM_F_MATCH*/
-		(flags & NLM_F_ROOT ? " +ROOT" : ""),
-		(flags & NLM_F_MATCH ? " +MATCH" : ""));
+		(flags & NLM_F_ROOT ? "+ROOT" : ""),
+		(flags & NLM_F_MATCH ? "+MATCH" : ""));
 
 	return nlmsg;
 }
@@ -145,7 +156,7 @@ static struct nlmsghdr *netlink_query_init(const struct ip_info *afi,
  */
 static void netlink_query_add(struct nlmsghdr *nlmsg, int rta_type,
 			      const ip_address *addr, const char *what,
-			      lset_t verbose_rc_flags, struct logger *logger)
+			      struct verbose verbose)
 {
 	struct rtmsg *rtmsg;
 	struct rtattr *rtattr;
@@ -171,11 +182,11 @@ static void netlink_query_add(struct nlmsghdr *nlmsg, int rta_type,
 	nlmsg->nlmsg_len += rtattr->rta_len;
 
 	address_buf ab;
-	verbose("  add %s %s (%s)",
-		(rta_type == RTA_DST ? "dst" :
-		 rta_type == RTA_GATEWAY ? "gateway" :
-		 rta_type == RTA_SRC ? "src" :
-		 rta_type == RTA_PREFSRC ? "prefsrc" :
+	vlog("add RTA_%s %s (%s)",
+		(rta_type == RTA_DST ? "DST" :
+		 rta_type == RTA_GATEWAY ? "GATEWAY" :
+		 rta_type == RTA_SRC ? "SRC" :
+		 rta_type == RTA_PREFSRC ? "PREFSRC" :
 		 "???"),
 		str_address(addr, &ab), what);
 }
@@ -248,8 +259,7 @@ enum resolve_status {
 
 static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 						    struct starter_end *peer,
-						    lset_t verbose_rc_flags,
-						    struct logger *logger)
+						    struct verbose verbose)
 {
 	/*
 	 * "left="         == host->addrtype and host->addr
@@ -258,11 +268,12 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 	const struct ip_info *afi = host->host_family;
 
 	address_buf ab, gb, pb;
-	verbose("resolving family = %s src = %s gateway = %s peer %s",
+	vlog("resolving family=%s src=%s gateway=%s peer %s",
 		(afi == NULL ? "<unset>" : afi->ip_name),
 		pa(host->addrtype, host->addr, host->strings[KSCF_IP], &ab),
 		pa(host->nexttype, host->nexthop, host->strings[KSCF_NEXTHOP], &gb),
 		pa(peer->addrtype, peer->addr, peer->strings[KSCF_IP], &pb));
+	verbose.level = 1;
 
 	/*
 	 * Can only resolve one at a time.
@@ -285,11 +296,12 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 		= (host->nexttype == KH_DEFAULTROUTE ? GATEWAY :
 		   host->addrtype == KH_DEFAULTROUTE ? PREFSRC :
 		   NOTHING);
-	verbose("  seeking %s",
-		(seeking == NOTHING ? "nothing" :
-		 seeking == PREFSRC ? "prefsrc" :
-		 seeking == GATEWAY ? "gateway" :
+	vlog("seeking %s",
+		(seeking == NOTHING ? "NOTHING" :
+		 seeking == PREFSRC ? "PREFSRC" :
+		 seeking == GATEWAY ? "GATEWAY" :
 		 "?"));
+	verbose.level = 2;
 	if (seeking == NOTHING) {
 		return RESOLVE_SUCCESS;	/* this end already figured out */
 	}
@@ -302,7 +314,7 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 		netlink_query_init(afi, /*type*/RTM_GETROUTE,
 				   (/*flags*/NLM_F_REQUEST |
 				    (seeking == GATEWAY ? NLM_F_DUMP : 0)),
-				   verbose_rc_flags, logger);
+				   verbose);
 
 	/*
 	 * If known, add a destination address.  Either the peer, or
@@ -326,7 +338,7 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 		 */
 		added_dst = true;
 		netlink_query_add(msgbuf, RTA_DST, &host->nexthop,
-				  "host->nexthop", verbose_rc_flags, logger);
+				  "host->nexthop", verbose);
 	} else if (has_peer) {
 		/*
 		 * Peer IP is specified.
@@ -346,7 +358,7 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 				if (!unbound_resolve(peer->strings[KSCF_IP],
 						     peer->host_family,
 						     &peer->addr,
-						     logger)) {
+						     verbose.logger)) {
 					pfree(msgbuf);
 					return RESOLVE_FAILURE;
 				}
@@ -364,14 +376,13 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 		}
 		added_dst = true;
 		netlink_query_add(msgbuf, RTA_DST, &peer->addr,
-				  "peer->addr", verbose_rc_flags, logger);
+				  "peer->addr", verbose);
 	} else if (host->nexttype == KH_IPADDR &&
 		   (peer->addrtype == KH_GROUP ||
 		    peer->addrtype == KH_OPPOGROUP)) {
 		added_dst = true;
 		netlink_query_add(msgbuf, RTA_DST, &host->nexthop,
-				  "host->nexthop peer=group",
-				  verbose_rc_flags, logger);
+				  "host->nexthop peer=group", verbose);
 	} else {
 		added_dst = false;
 	}
@@ -380,11 +391,12 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 		/* SRC works only with DST */
 		pexpect(seeking == GATEWAY);
 		netlink_query_add(msgbuf, RTA_SRC, &host->addr,
-				  "host->addr", verbose_rc_flags, logger);
+				  "host->addr", verbose);
 	}
 
 	/* Send netlink get_route request */
 	ssize_t len = netlink_query(&msgbuf, RTNL_BUFSIZE);
+	vlog("query returned %zd bytes", len);
 
 	if (len < 0) {
 		pfree(msgbuf);
@@ -392,17 +404,21 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 	}
 
 	/* Parse reply */
-	struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
 
+	verbose.level = 1;
+	vlog("processing response");
+
+	struct nlmsghdr *nlmsg = (struct nlmsghdr *)msgbuf;
 	enum resolve_status status = RESOLVE_FAILURE; /* assume the worst */
 	for (; NLMSG_OK(nlmsg, (size_t)len) && status == RESOLVE_FAILURE;
 	     nlmsg = NLMSG_NEXT(nlmsg, len)) {
+		verbose.level = 2;
 
 		if (nlmsg->nlmsg_type == NLMSG_DONE)
 			break;
 
 		if (nlmsg->nlmsg_type == NLMSG_ERROR) {
-			llog(RC_LOG, logger, "netlink error");
+			llog(RC_LOG, verbose.logger, "netlink error");
 			pfree(msgbuf);
 			return RESOLVE_FAILURE;
 		}
@@ -430,60 +446,59 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 		struct rtattr *rtattr = (struct rtattr *) RTM_RTA(rtmsg);
 		int rtlen = RTM_PAYLOAD(nlmsg);
 
+		vlog("parsing route entry (RTA payloads)");
+		verbose.level = 3;
+
 		while (RTA_OK(rtattr, rtlen)) {
 			const void *data = RTA_DATA(rtattr);
 			unsigned len = RTA_PAYLOAD(rtattr);
-			err_t err;
 			switch (rtattr->rta_type) {
 			case RTA_OIF:
 				if_indextoname(*(int *)RTA_DATA(rtattr),
 					       r_interface);
 				break;
 			case RTA_PREFSRC:
-				err = data_to_address(data, len, afi, &prefsrc);
-				if (err != NULL) {
-					verbose("  unknown prefsrc from kernel: %s", err);
+#define PARSE_ADDRESS(OUT, WHAT)					\
+				{					\
+					err_t err = data_to_address(data, len, afi, OUT); \
+					if (err != NULL) {		\
+						vlog("invalid RTA_%s from kernel: %s", WHAT, err); \
+					} else {			\
+						address_buf ab;		\
+						vlog("RTA_%s=%s", WHAT, str_address(OUT, &ab)); \
+					}				\
 				}
+				PARSE_ADDRESS(&prefsrc, "PREFSRC");
 				break;
 			case RTA_GATEWAY:
-				err = data_to_address(data, len, afi, &gateway);
-				if (err != NULL) {
-					verbose("  unknown gateway from kernel: %s", err);
-				}
+				PARSE_ADDRESS(&gateway, "GATEWAY");
 				break;
 			case RTA_DST:
-				err = data_to_address(data, len, afi, &dst);
-				if (err != NULL) {
-					verbose("  unknown dst from kernel: %s", err);
-				}
+				PARSE_ADDRESS(&dst, "DST");
 				break;
 			case RTA_SRC:
-				err = data_to_address(data, len, afi, &src);
-				if (err != NULL) {
-					verbose("  unknown src from kernel: %s", err);
-				}
+				PARSE_ADDRESS(&src, "SRC");
 				break;
+#undef PARSE_ADDRESS
 			case RTA_PRIORITY:
-				if (len != sizeof(priority)) {
-					verbose("  ignoring PRIORITY with wrong size %d", len);
-					break;
+#define PARSE_NUMBER(OUT, WHAT)						\
+				{					\
+					if (len != sizeof(OUT)) {	\
+						vlog("ignoring RTA_%s with wrong size %d", WHAT, len); \
+					} else {			\
+						memcpy(&OUT, data, len); \
+						vlog("RTA_%s=%d", WHAT, OUT); \
+					}				\
 				}
-				memcpy(&priority, data, len);
+				PARSE_NUMBER(priority, "PRIORITY");
 				break;
 			case RTA_PREF:
-				if (len != sizeof(pref)) {
-					verbose("  ignoring PREF with wrong size %d", len);
-					break;
-				}
-				memcpy(&pref, data, len);
+				PARSE_NUMBER(pref, "PREF");
 				break;
 			case RTA_TABLE:
-				if (len != sizeof(table)) {
-					verbose("  ignoring TABLE with wrong size %d", len);
-					break;
-				}
-				memcpy(&table, data, len);
+				PARSE_NUMBER(table, "TABLE");
 				break;
+#undef PARSE_NUMBER
 			case RTA_CACHEINFO:
 				cacheinfo = " +cacheinfo";
 				break;
@@ -519,7 +534,7 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 				break;
 #endif
 			default:
-				verbose("  ignoring %d", rtattr->rta_type);
+				vlog("ignoring RTA type %d", rtattr->rta_type);
 			}
 			rtattr = RTA_NEXT(rtattr, rtlen);
 		}
@@ -531,24 +546,29 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 		 * XXX: instead of rtm_table, should this be checking
 		 * TABLE?
 		 */
-		const char *ignore = ((rtmsg->rtm_table != RT_TABLE_MAIN) ? "; ignore: wrong table" :
-				      startswith(r_interface, "ipsec") ? "; ignore: ipsec interface" :
-				      startswith(r_interface, "mast") ? "; ignore: mast interface" :
-				      NULL);
-
 		address_buf sb, psb, db, gb;
-		verbose("  src %s prefsrc %s gateway %s dst %s dev %s priority %d pref %d table %d%s%s%s",
+		vlog("using src=%s prefsrc=%s gateway=%s dst=%s dev='%s' priority=%d pref=%d table=%d%s%s",
 			str_address(&src, &sb),
 			str_address(&prefsrc, &psb),
 			str_address(&gateway, &gb),
 			str_address(&dst, &db),
 			(r_interface[0] ? r_interface : "?"),
-			priority, pref, rtmsg->rtm_table,
-			cacheinfo, uid,
-			(ignore != NULL ? ignore : ""));
+			priority, pref,
+			rtmsg->rtm_table,
+			cacheinfo, uid);
+		verbose.level = 2;
 
-		if (ignore != NULL)
+		if (rtmsg->rtm_table != RT_TABLE_MAIN) {
+			vlog("IGNORE: table %d is not main(%d)",
+				rtmsg->rtm_table, RT_TABLE_MAIN);
 			continue;
+		}
+
+		if (startswith(r_interface, "ipsec") ||
+		    startswith(r_interface, "mast")) {
+			vlog("IGNORE: interface %s", r_interface);
+			continue;
+		}
 
 		switch (seeking) {
 		case PREFSRC:
@@ -557,7 +577,7 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 				host->addrtype = KH_IPADDR;
 				host->addr = prefsrc;
 				address_buf ab;
-				verbose("  found prefsrc (host_addr): %s",
+				vlog("found prefsrc(host_addr): %s",
 					str_address(&host->addr, &ab));
 			}
 			break;
@@ -570,8 +590,7 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 					 * as the IP address on the interface.
 					 */
 					resolve_point_to_point_peer(r_interface, host->host_family,
-								    &gateway, verbose_rc_flags,
-								    logger);
+								    &gateway, verbose);
 				}
 				if (!address_is_unset(&gateway)) {
 					/*
@@ -588,7 +607,7 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 					host->nexttype = KH_IPADDR;
 					host->nexthop = gateway;
 					address_buf ab;
-					verbose("  found gateway (host_nexthop): %s",
+					vlog("found gateway(host_nexthop): %s",
 						str_address(&host->nexthop, &ab));
 				}
 			}
@@ -599,13 +618,14 @@ static enum resolve_status resolve_defaultroute_one(struct starter_end *host,
 	}
 	pfree(msgbuf);
 
-	verbose("  %s: src = %s gateway = %s",
-		(status == RESOLVE_FAILURE ? "failure" :
-		 status == RESOLVE_SUCCESS ? "success" :
-		 status == RESOLVE_PLEASE_CALL_AGAIN ? "please-call-again" :
-		 "???"),
-		pa(host->addrtype, host->addr, host->strings[KSCF_IP], &ab),
-		pa(host->nexttype, host->nexthop, host->strings[KSCF_NEXTHOP], &gb));
+	verbose.level = 1;
+	vlog("%s: src=%s gateway=%s",
+	     (status == RESOLVE_FAILURE ? "failure" :
+	      status == RESOLVE_SUCCESS ? "success" :
+	      status == RESOLVE_PLEASE_CALL_AGAIN ? "please-call-again" :
+	      "???"),
+	     pa(host->addrtype, host->addr, host->strings[KSCF_IP], &ab),
+	     pa(host->nexttype, host->nexthop, host->strings[KSCF_NEXTHOP], &gb));
 	return status;
 }
 
@@ -625,14 +645,18 @@ enum route_status get_route(ip_address dest, struct ip_route *route, struct logg
 		.addr = dest,
 	};
 
-	lset_t verbose_rc_flags = DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY;
+	struct verbose verbose = {
+		.logger = logger,
+		.rc_flags = DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY,
+		.level = 0,
+	};
 
 	/*
 	 * mobike need two lookups. one for the gateway and the one
 	 * for the source address.
 	 */
 
-	switch (resolve_defaultroute_one(&this, &that, verbose_rc_flags, logger)) {
+	switch (resolve_defaultroute_one(&this, &that, verbose)) {
 	case RESOLVE_FAILURE:
 		return ROUTE_GATEWAY_FAILED;
 	case RESOLVE_SUCCESS:
@@ -647,7 +671,7 @@ enum route_status get_route(ip_address dest, struct ip_route *route, struct logg
 		break;
 	}
 
-	switch (resolve_defaultroute_one(&this, &that, verbose_rc_flags, logger)) {
+	switch (resolve_defaultroute_one(&this, &that, verbose)) {
 	case RESOLVE_FAILURE:
 		return ROUTE_SOURCE_FAILED;
 	case RESOLVE_SUCCESS:
@@ -671,7 +695,13 @@ void resolve_default_route(struct starter_end *host,
 			   lset_t verbose_rc_flags,
 			   struct logger *logger)
 {
-	switch (resolve_defaultroute_one(host, peer, verbose_rc_flags, logger)) {
+	struct verbose verbose = {
+		.rc_flags = verbose_rc_flags,
+		.logger = logger,
+		.level = 0,
+	};
+
+	switch (resolve_defaultroute_one(host, peer, verbose)) {
 	case RESOLVE_FAILURE:
 		return;
 	case RESOLVE_SUCCESS:
@@ -680,5 +710,5 @@ void resolve_default_route(struct starter_end *host,
 		break;
 	}
 
-	resolve_defaultroute_one(host, peer, verbose_rc_flags, logger);
+	resolve_defaultroute_one(host, peer, verbose);
 }
