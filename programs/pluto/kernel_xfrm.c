@@ -1399,25 +1399,36 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 
 		/*
 		 * According to RFC-4868 the hash should be nnn/2, so
-		 * 128 bits for SHA256 and 256 for SHA512. The XFRM
+		 * 128 bits for SHA256 and 256 for SHA512.  The XFRM
 		 * kernel uses a default of 96, which was the value in
-		 * an earlier draft. The kernel then introduced a new struct
-		 * xfrm_algo_auth to replace struct xfrm_algo to deal with
-		 * this.
+		 * an earlier draft. The kernel then introduced a new
+		 * struct xfrm_algo_auth to replace struct xfrm_algo
+		 * to deal with this.
+		 *
+		 * Populate XFRM_ALGO_AUTH structure up to, but not
+		 * including, .alg_key[] using the stack.  Can't
+		 * populate RTA_DATA(attr) directly as it may not be
+		 * correctly aligned.
 		 */
-
+		size_t alg_key_offset = offsetof(struct xfrm_algo_auth, alg_key);
 		struct xfrm_algo_auth algo = {
 			.alg_key_len = sa->integ->integ_keymat_size * BITS_PER_BYTE,
 			.alg_trunc_len = sa->integ->integ_output_size * BITS_PER_BYTE,
 		};
+		fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
+
+		/*
+		 * Now copy all of XFRM_ALGO_AEAD structure up to, but
+		 * not including, .alg_key[], to RTA_DATA(attr), and
+		 * then append the encryption key at .alg_key[]'s
+		 * offset.
+		 */
 
 		attr->rta_type = XFRMA_ALG_AUTH_TRUNC;
-		attr->rta_len = RTA_LENGTH(sizeof(algo) + sa->authkeylen);
+		attr->rta_len = RTA_LENGTH(alg_key_offset + sa->authkeylen);
 
-		fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
-		memcpy(RTA_DATA(attr), &algo, sizeof(algo));
-		memcpy((char *)RTA_DATA(attr) + sizeof(algo),
-			sa->authkey, sa->authkeylen);
+		memcpy(RTA_DATA(attr), &algo, alg_key_offset);
+		memcpy((char *)RTA_DATA(attr) + alg_key_offset, sa->authkey, sa->authkeylen);
 
 		req.n.nlmsg_len += attr->rta_len;
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
@@ -1463,37 +1474,58 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		}
 
 		if (encrypt_desc_is_aead(sa->encrypt)) {
-			struct xfrm_algo_aead algo;
+			/*
+			 * Populate XFRM_ALGO_AEAD structure up to,
+			 * but not including, .alg_key[] using the
+			 * stack.  Can't populate RTA_DATA(attr)
+			 * directly as it may not be correctly
+			 * aligned.
+			 */
+			size_t alg_key_offset = offsetof(struct xfrm_algo_aead, alg_key);
+			struct xfrm_algo_aead algo = {
+				.alg_key_len = sa->enckeylen * BITS_PER_BYTE,
+				.alg_icv_len = sa->encrypt->aead_tag_size * BITS_PER_BYTE,
+			};
+			fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
 
-			fill_and_terminate(algo.alg_name, name,
-					sizeof(algo.alg_name));
-			algo.alg_key_len = sa->enckeylen * BITS_PER_BYTE;
-			algo.alg_icv_len = sa->encrypt->aead_tag_size * BITS_PER_BYTE;
-
+			/*
+			 * Now copy all of XFRM_ALGO_AEAD structure up
+			 * to, but not including, .alg_key[], to
+			 * RTA_DATA(attr), and then append the
+			 * encryption key at .alg_key[]'s offset.
+			 */
 			attr->rta_type = XFRMA_ALG_AEAD;
-			attr->rta_len = RTA_LENGTH(sizeof(algo) + sa->enckeylen);
+			attr->rta_len = RTA_LENGTH(alg_key_offset + sa->enckeylen);
 
-			memcpy(RTA_DATA(attr), &algo, sizeof(algo));
-			memcpy((char *)RTA_DATA(attr) + sizeof(algo),
-				sa->enckey, sa->enckeylen);
+			memcpy(RTA_DATA(attr), &algo, alg_key_offset);
+			memcpy((char *)RTA_DATA(attr) + alg_key_offset, sa->enckey, sa->enckeylen);
 
 			req.n.nlmsg_len += attr->rta_len;
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
 
 		} else {
-			struct xfrm_algo algo;
+			/*
+			 * Populate XFRM_ALGO structure up to, but not
+			 * including, .alg_key[] using the stack.
+			 * Can't populate RTA_DATA(attr) directly as
+			 * it may not be correctly aligned.
+			 */
+			size_t alg_key_offset = offsetof(struct xfrm_algo, alg_key);
+			struct xfrm_algo algo = {
+				.alg_key_len = sa->enckeylen * BITS_PER_BYTE,
+			};
+			fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
 
-			fill_and_terminate(algo.alg_name, name,
-					sizeof(algo.alg_name));
-			algo.alg_key_len = sa->enckeylen * BITS_PER_BYTE;
-
+			/*
+			 * Now copy all of XFRM_ALGO structure up to,
+			 * but not including, .alg_key[], to
+			 * RTA_DATA(attr), and then append the
+			 * encryption key at .alg_key[]'s offset.
+			 */
 			attr->rta_type = XFRMA_ALG_CRYPT;
-			attr->rta_len = RTA_LENGTH(sizeof(algo) + sa->enckeylen);
-
-			memcpy(RTA_DATA(attr), &algo, sizeof(algo));
-			memcpy((char *)RTA_DATA(attr) + sizeof(algo),
-				sa->enckey,
-			sa->enckeylen);
+			attr->rta_len = RTA_LENGTH(alg_key_offset + sa->enckeylen);
+			memcpy(RTA_DATA(attr), &algo, alg_key_offset);
+			memcpy((char *)RTA_DATA(attr) + alg_key_offset, sa->enckey, sa->enckeylen);
 
 			req.n.nlmsg_len += attr->rta_len;
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
