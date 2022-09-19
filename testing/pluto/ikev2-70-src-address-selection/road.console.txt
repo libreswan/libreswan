@@ -28,22 +28,33 @@ end of file /etc/ipsec.conf
 Loading conn road
 starter: left is KH_DEFAULTROUTE
 loading named conns: road
-resolving family = IPv4 src = <defaultroute> gateway = <defaultroute> peer 192.1.2.23
-  seeking gateway
-  query getroute +REQUEST +ROOT +MATCH
-  add dst 192.1.2.23 (peer->addr)
-  src <unset-address> prefsrc <unset-address> gateway 192.1.3.254 dst <unset-address> dev eth0 priority -1 pref -1 table 254
-  found gateway (host_nexthop): 192.1.3.254
-  please-call-again: src = <defaultroute> gateway = 192.1.3.254
-resolving family = IPv4 src = <defaultroute> gateway = 192.1.3.254 peer 192.1.2.23
-  seeking prefsrc
-  query getroute +REQUEST
-  add dst 192.1.3.254 (host->nexthop)
-  src <unset-address> prefsrc 192.1.3.209 gateway <unset-address> dst 192.1.3.254 dev eth0 priority -1 pref -1 table 254 +cacheinfo +uid
-  found prefsrc (host_addr): 192.1.3.209
-  success: src = 192.1.3.209 gateway = 192.1.3.254
-resolving family = IPv4 src = 192.1.2.23 gateway = <not-set> peer 192.1.3.209
-  seeking nothing
+resolving family=IPv4 src=<defaultroute> gateway=<defaultroute> peer 192.1.2.23
+  seeking GATEWAY
+    query GETROUTE+REQUEST+ROOT+MATCH
+    add RTA_DST 192.1.2.23 (peer->addr)
+    query returned 432 bytes
+  processing response
+    parsing route entry (RTA payloads)
+      RTA_TABLE=254
+      RTA_GATEWAY=192.1.3.254
+      using src=<unset-address> prefsrc=<unset-address> gateway=192.1.3.254 dst=<unset-address> dev='eth0' priority=-1 pref=-1 table=254
+    found gateway(host_nexthop): 192.1.3.254
+  please-call-again: src=<defaultroute> gateway=192.1.3.254
+resolving family=IPv4 src=<defaultroute> gateway=192.1.3.254 peer 192.1.2.23
+  seeking PREFSRC
+    query GETROUTE+REQUEST
+    add RTA_DST 192.1.3.254 (host->nexthop)
+    query returned 104 bytes
+  processing response
+    parsing route entry (RTA payloads)
+      RTA_TABLE=254
+      RTA_DST=192.1.3.254
+      RTA_PREFSRC=192.1.3.209
+      using src=<unset-address> prefsrc=192.1.3.209 gateway=<unset-address> dst=192.1.3.254 dev='eth0' priority=-1 pref=-1 table=254 +cacheinfo +uid
+    found prefsrc(host_addr): 192.1.3.209
+  success: src=192.1.3.209 gateway=192.1.3.254
+resolving family=IPv4 src=192.1.2.23 gateway=<not-set> peer 192.1.3.209
+  seeking NOTHING
 conn: "road" modecfgdns=<unset>
 conn: "road" modecfgdomains=<unset>
 conn: "road" modecfgbanner=<unset>
@@ -101,23 +112,39 @@ end of file /etc/ipsec.conf
 Loading conn road
 starter: left is KH_DEFAULTROUTE
 loading named conns: road
-resolving family = IPv4 src = <defaultroute> gateway = <defaultroute> peer 192.1.2.23
-  seeking gateway
-  query getroute +REQUEST +ROOT +MATCH
-  add dst 192.1.2.23 (peer->addr)
-  src <unset-address> prefsrc 192.0.3.1 gateway 192.1.3.254 dst 0.0.0.0 dev eth0 priority -1 pref -1 table 254
-  src <unset-address> prefsrc <unset-address> gateway 192.1.3.254 dst <unset-address> dev eth0 priority -1 pref -1 table 254
-  found gateway (host_nexthop): 192.1.3.254
-  please-call-again: src = <defaultroute> gateway = 192.1.3.254
-resolving family = IPv4 src = <defaultroute> gateway = 192.1.3.254 peer 192.1.2.23
-  seeking prefsrc
-  query getroute +REQUEST
-  add dst 192.1.3.254 (host->nexthop)
-  src <unset-address> prefsrc 192.1.3.209 gateway <unset-address> dst 192.1.3.254 dev eth0 priority -1 pref -1 table 254 +cacheinfo +uid
-  found prefsrc (host_addr): 192.1.3.209
-  success: src = 192.1.3.209 gateway = 192.1.3.254
-resolving family = IPv4 src = 192.1.2.23 gateway = <not-set> peer 192.1.3.209
-  seeking nothing
+resolving family=IPv4 src=<defaultroute> gateway=<defaultroute> peer 192.1.2.23
+  seeking GATEWAY
+    query GETROUTE+REQUEST+ROOT+MATCH
+    add RTA_DST 192.1.2.23 (peer->addr)
+    query returned 628 bytes
+  processing response
+    parsing route entry (RTA payloads)
+      RTA_TABLE=254
+      RTA_DST=0.0.0.0
+      RTA_PREFSRC=192.0.3.1
+      RTA_GATEWAY=192.1.3.254
+      using src=<unset-address> prefsrc=192.0.3.1 gateway=192.1.3.254 dst=0.0.0.0 dev='eth0' priority=-1 pref=-1 table=254
+    parsing route entry (RTA payloads)
+      RTA_TABLE=254
+      RTA_GATEWAY=192.1.3.254
+      using src=<unset-address> prefsrc=<unset-address> gateway=192.1.3.254 dst=<unset-address> dev='eth0' priority=-1 pref=-1 table=254
+    found gateway(host_nexthop): 192.1.3.254
+  please-call-again: src=<defaultroute> gateway=192.1.3.254
+resolving family=IPv4 src=<defaultroute> gateway=192.1.3.254 peer 192.1.2.23
+  seeking PREFSRC
+    query GETROUTE+REQUEST
+    add RTA_DST 192.1.3.254 (host->nexthop)
+    query returned 104 bytes
+  processing response
+    parsing route entry (RTA payloads)
+      RTA_TABLE=254
+      RTA_DST=192.1.3.254
+      RTA_PREFSRC=192.1.3.209
+      using src=<unset-address> prefsrc=192.1.3.209 gateway=<unset-address> dst=192.1.3.254 dev='eth0' priority=-1 pref=-1 table=254 +cacheinfo +uid
+    found prefsrc(host_addr): 192.1.3.209
+  success: src=192.1.3.209 gateway=192.1.3.254
+resolving family=IPv4 src=192.1.2.23 gateway=<not-set> peer 192.1.3.209
+  seeking NOTHING
 conn: "road" modecfgdns=<unset>
 conn: "road" modecfgdomains=<unset>
 conn: "road" modecfgbanner=<unset>

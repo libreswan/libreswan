@@ -8,6 +8,8 @@ road #
 road #
  iptables -I INPUT -p udp -m length --length 0x5dc:0xffff -j DROP
 road #
+ ipsec whack --impair revival
+road #
  ipsec auto --add x509
 002 "x509": added IKEv1 connection
 road #
@@ -25,13 +27,12 @@ road #
 1v1 "x509" #1: sent Main Mode I3
 002 "x509" #1: IMPAIR: retransmit so deleting SA
 002 "x509" #1: deleting state (STATE_MAIN_I3) and NOT sending notification
-002 "x509" #1: deleting ISAKMP SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+002 "x509" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 road #
  echo done
 done
 road #
  grep "fragment" /tmp/pluto.log
-| peer supports fragmentation
 | peer supports fragmentation
 road #
  

@@ -36,6 +36,9 @@
       <arg choice='opt'>--source</arg>
       <arg choice='opt'>--gateway</arg>
       <arg choice='opt'>--destination</arg>
+      <arg choice='opt'>--debug</arg>
+      <arg choice='opt'>--ipv4</arg>
+      <arg choice='opt'>--ipv6</arg>
       <arg choice='req'><replaceable>IP address</replaceable></arg>
     </cmdsynopsis>
   </refsynopsisdiv>

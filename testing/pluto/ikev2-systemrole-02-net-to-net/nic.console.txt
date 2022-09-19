@@ -1,7 +1,5 @@
 # nic is used as the System Role provisioning host
 nic #
- /testing/guestbin/nic-vpn-role-tmp
-nic #
  ansible-playbook --skip-tags packages -i ansible-inventory.yml test-east-west.yml > OUTPUT/ansible.out 2>&1
 nic #
  grep -e '^ok:.*>' OUTPUT/ansible.out

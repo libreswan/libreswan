@@ -1,9 +1,0 @@
-all:
-  hosts:
-    host1.example.com:
-    host2.example.com:
-  vars:
-    vpn_connections:
-      - hosts:
-          host1.example.com:
-          host2.example.com:

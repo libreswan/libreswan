@@ -360,16 +360,6 @@ ifeq ($(USE_NSS_IPSEC_PROFILE),true)
 USERLAND_CFLAGS += -DNSS_IPSEC_PROFILE
 endif
 
-# Use a local copy of xfrm.h. This can be needed on older systems
-# that do not ship linux/xfrm.h, or when the shipped version is too
-# old. Since we ship some not-yet merged ipsec-next offload code, this
-# is currently true for basically all distro's
-USE_XFRM_HEADER_COPY ?= true
-XFRM_LIFETIME_DEFAULT ?= 30
-USERLAND_CFLAGS += -DXFRM_LIFETIME_DEFAULT=$(XFRM_LIFETIME_DEFAULT)
-
-USE_XFRM_INTERFACE_IFLA_HEADER ?= false
-
 # When compiling on a system where unbound is missing the required unbound-event.h
 # include file, enable this workaround option that will enable an included copy of
 # this file as shipped with libreswan. The copy is taken from unbound 1.6.0.
@@ -581,6 +571,16 @@ USE_XFRM ?= false
 USE_PFKEYV2 ?= false
 
 ifeq ($(USE_XFRM),true)
+USERLAND_CFLAGS += -DKERNEL_XFRM
+endif
+
+ifeq ($(USE_PFKEYV2),true)
+USERLAND_CFLAGS += -DKERNEL_PFKEYV2
+endif
+
+# extra XFRM options
+
+ifeq ($(USE_XFRM),true)
 USE_XFRM_INTERFACE ?= true
 USERLAND_CFLAGS += -DKERNEL_XFRM
 ifeq ($(USE_XFRM_INTERFACE), true)
@@ -588,8 +588,17 @@ USERLAND_CFLAGS += -DUSE_XFRM_INTERFACE
 endif
 endif
 
-ifeq ($(USE_PFKEYV2),true)
-USERLAND_CFLAGS += -DKERNEL_PFKEYV2
+# Use a local copy of xfrm.h. This can be needed on older systems
+# that do not ship linux/xfrm.h, or when the shipped version is too
+# old. Since we ship some not-yet merged ipsec-next offload code, this
+# is currently true for basically all distro's
+
+USE_XFRM_HEADER_COPY ?= false
+USE_XFRM_INTERFACE_IFLA_HEADER ?= false
+
+ifeq ($(USE_XFRM),true)
+XFRM_LIFETIME_DEFAULT ?= 30
+USERLAND_CFLAGS += -DXFRM_LIFETIME_DEFAULT=$(XFRM_LIFETIME_DEFAULT)
 endif
 
 # Enable support for DNSSEC. This requires the unbound and ldns

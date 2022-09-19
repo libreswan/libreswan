@@ -30,7 +30,7 @@ utilsdir=${makedir}/testing/utils
 
 # start with new shiny new just upgraded domains
 
-kvm_setup="kvm-purge kvm-upgrade"
+build_kvms=true
 
 # Select the oldest commit to test.
 #
@@ -188,36 +188,45 @@ while true ; do
     run distclean
 
     #
-    # Run the testsuite
+    # Build / update / test the repo
     #
     # This list should match the hardwired list in results.html.
     # Should a table be generated?
     #
     # XXX: should run ./kvm
     #
-    # ${kvm_setup} starts out as kvm-purge but then flips to
-    # kvm-shutdown.  For kvm-purge, since it is only invoked when the
-    # script is first changing and the REPO is at HEAD, the upgrade /
-    # transmogrify it triggers will always be for the latest changes.
+    # - kvm-install triggers kvm-keys and kvm-install- et.al.,
+    #   kvm-install-... so break each of these steps down.
+    #
+    # - make targets like upgrade explicit so it is clear where things
+    #   fail
+    #
+    # - always transmogrify so current config is picked up
+    #
+    # - the leading "-" means ignore failure; kind of like commands in
+    #   make rules
 
     targets=""
     finished=""
 
-    # NOTE: kvm_setup={kvm-shutdown,kvm-purge}
-    targets="${targets} ${kvm_setup}"
-    kvm_setup=kvm-shutdown # for next time round
+    if ${build_kvms} ; then
+	targets="${targets} kvm-purge"
+	setup="upgrade transmogrify install"
+    else
+	targets="${targets} kvm-shutdown"
+	setup="transmogrify install"
+    fi
+    build_kvms=false # for next time round
 
-    # kvm-install triggers kvm-transmogrify, kvm-keys,
-    # kvm-install-... so break each of these steps down.
-    targets="${targets} kvm-transmogrify"
+    p=
+    for os in fedora freebsd netbsd openbsd ; do
+	for s in ${setup} ; do
+	    targets="${targets} ${p}kvm-${s}-${os}"
+	done
+	p=-
+    done
+
     targets="${targets} kvm-keys"
-    targets="${targets} kvm-install-fedora"
-    # leading "-" means ignore failure; kind of like commands in make
-    # rules
-    targets="${targets} -kvm-install-freebsd"
-    targets="${targets} -kvm-install-openbsd"
-    targets="${targets} -kvm-install-netbsd"
-
     targets="${targets} kvm-check"
 
     # list of raw results; will be converted to an array

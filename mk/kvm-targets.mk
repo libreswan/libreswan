@@ -699,11 +699,11 @@ $(KVM_LOCALDIR)/%.net: | $(KVM_LOCALDIR)
 .PHONY: kvm-networks kvm-gateway
 kvm-gateway: $(KVM_GATEWAY_FILE)
 kvm-networks: $(KVM_TEST_NETWORKS)
-.PHONY: kvm-purge-networks kvm-purge-gateway
-kvm-purge-networks:
+.PHONY: kvm-uninstall-networks kvm-uninstall-gateway
+kvm-uninstall-networks:
 	$(foreach network, $(KVM_TEST_NETWORKS), \
 		$(call destroy-kvm-network, $(network)))
-kvm-demolish-gateway:
+kvm-uninstall-gateway:
 	$(call destroy-kvm-network, $(KVM_GATEWAY_FILE))
 
 
@@ -714,10 +714,10 @@ kvm-demolish-gateway:
 ##
 
 .PHONY: kvm-base
-kvm-base: $(patsubst %, kvm-%-base, $(KVM_OS))
+kvm-base: $(patsubst %, kvm-base-%, $(KVM_OS))
 
-$(patsubst %, kvm-%-base, $(KVM_PLATFORM)): \
-kvm-%-base:
+$(patsubst %, kvm-base-%, $(KVM_PLATFORM)): \
+kvm-base-%:
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)-base
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)-base.*
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-base
@@ -808,7 +808,6 @@ $(KVM_FEDORA_BASE_DOMAIN): | $(KVM_FEDORA_KICKSTART_FILE)
 # - uses a modified install CD
 #
 
-KVM_FREEBSD_ISO_URL = https://download.freebsd.org/releases/amd64/amd64/ISO-IMAGES/13.0/FreeBSD-13.0-RELEASE-amd64-disc1.iso
 KVM_FREEBSD_ISO_URL ?= https://download.freebsd.org/releases/amd64/amd64/ISO-IMAGES/13.1/FreeBSD-13.1-RELEASE-amd64-disc1.iso
 KVM_FREEBSD_ISO ?= $(KVM_POOLDIR)/$(notdir $(KVM_FREEBSD_ISO_URL))
 
@@ -846,10 +845,10 @@ $(KVM_FREEBSD_BASE_ISO): testing/libvirt/freebsd/base.conf
 # - needs a second serial console boot iso
 #
 
-KVM_NETBSD_BOOT_ISO_URL ?= https://cdn.netbsd.org/pub/NetBSD/NetBSD-9.2/i386/installation/cdrom/boot-com.iso
+KVM_NETBSD_BOOT_ISO_URL ?= https://cdn.netbsd.org/pub/NetBSD/NetBSD-9.3/i386/installation/cdrom/boot-com.iso
 KVM_NETBSD_BOOT_ISO ?= $(basename $(KVM_NETBSD_INSTALL_ISO))-boot.iso
 
-KVM_NETBSD_INSTALL_ISO_URL ?= https://cdn.netbsd.org/pub/NetBSD/NetBSD-9.2/images/NetBSD-9.2-i386.iso
+KVM_NETBSD_INSTALL_ISO_URL ?= https://cdn.netbsd.org/pub/NetBSD/NetBSD-9.3/images/NetBSD-9.2-i386.iso
 KVM_NETBSD_INSTALL_ISO ?= $(KVM_POOLDIR)/$(notdir $(KVM_NETBSD_INSTALL_ISO_URL))
 
 kvm-iso: $(KVM_NETBSD_BOOT_ISO)
@@ -952,14 +951,14 @@ $(KVM_OPENBSD_BASE_ISO): testing/libvirt/openbsd/base.disk
 ## accessible (/source and /testing which may point elsewhere are not
 ## accessable, see above and below).
 
-$(patsubst %, kvm-%-upgrade, $(KVM_PLATFORM)): \
-kvm-%-upgrade:
+.PHONY: kvm-upgrade
+kvm-upgrade: $(patsubst %, kvm-upgrade-%, $(KVM_OS))
+
+$(patsubst %, kvm-upgrade-%, $(KVM_PLATFORM)): \
+kvm-upgrade-%:
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade.*
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-upgrade
-
-.PHONY: kvm-upgrade
-kvm-upgrade: $(patsubst %, kvm-%-upgrade, $(KVM_OS))
 
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade, $(KVM_PLATFORM)): \
 $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-base \
@@ -995,10 +994,10 @@ $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-base \
 ## and not a full domain rebuild.
 
 .PHONY: kvm-transmogrify
-kvm-transmogrify: $(patsubst %, kvm-%-transmogrify, $(KVM_OS))
+kvm-transmogrify: $(patsubst %, kvm-transmogrify-%, $(KVM_OS))
 
-$(patsubst %, kvm-%-transmogrify, $(KVM_PLATFORM)): \
-kvm-%-transmogrify:
+$(patsubst %, kvm-transmogrify-%, $(KVM_PLATFORM)): \
+kvm-transmogrify-%:
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)
 	rm -f $(KVM_POOLDIR_PREFIX)$(*).*
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)
@@ -1033,7 +1032,6 @@ $(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
 
-KVM_FEDORA_TRANSMOGRIFY_FILES += testing/libvirt/fedora/sysctl.conf
 KVM_FEDORA_TRANSMOGRIFY_FILES += $(wildcard testing/libvirt/fedora/network/*.network)
 KVM_FREEBSD_TRANSMOGRIFY_FILES += testing/libvirt/freebsd/rc.conf
 KVM_NETBSD_TRANSMOGRIFY_FILES += testing/libvirt/netbsd/rc.local
@@ -1061,42 +1059,29 @@ ifneq ($(KVM_INSTALL_RPM),true)
 KVM_INSTALL_PLATFORM += fedora
 endif
 
-$(patsubst %, kvm-%-build, $(KVM_INSTALL_PLATFORM)): \
-kvm-%-build: $(KVM_POOLDIR_PREFIX)%
-	: $(MAKE) $(patsubst %, kvm-undefine-%, $(call add-kvm-prefixes, $(KVM_$($*)_HOST_NAMES)))
-	$(KVMSH) $(KVMSH_FLAGS) \
-		--chdir /source \
-		$(notdir $<) \
-		-- \
-		gmake base $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS)
-
 .PHONY: kvm-build
-kvm-build: $(foreach os, $(KVM_OS), kvm-$(os)-build)
+kvm-build: $(foreach os, $(KVM_OS), kvm-build-$(os))
 
-$(patsubst %, kvm-%-install, $(KVM_INSTALL_PLATFORM)): \
-kvm-%-install: $(KVM_POOLDIR_PREFIX)%
+$(patsubst %, kvm-build-%, $(KVM_INSTALL_PLATFORM)): \
+kvm-build-%: $(KVM_POOLDIR_PREFIX)%
+	: $(MAKE) $(patsubst %, kvm-undefine-%, $(call add-kvm-prefixes, $(KVM_$($*)_HOST_NAMES)))
 	$(KVMSH) $(KVMSH_FLAGS) \
 		--chdir /source \
 		$(notdir $<) \
 		-- \
 		gmake install-base $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS)
 
-$(patsubst %, kvm-install-%, $(KVM_PLATFORM)): \
-kvm-install-%:
-	$(MAKE) $(patsubst %, kvm-undefine-%, $(call add-kvm-prefixes, $(KVM_$($*)_HOST_NAMES)))
-	$(MAKE) kvm-$*-install
-	$(KVMSH) --shutdown $(KVM_FIRST_PREFIX)$*
-	$(MAKE) $(call add-kvm-localdir-prefixes, $(KVM_$($*)_HOST_NAMES))
-
-$(patsubst %, kvm-uninstall-%, $(KVM_PLATFORM)): \
-kvm-uninstall-%:
-	$(MAKE) $(patsubst %, kvm-undefine-%, $(call add-kvm-prefixes, $(KVM_$($*)_HOST_NAMES)))
-	$(MAKE) kvm-undefine-$(KVM_FIRST_PREFIX)$*
-
 
 .PHONY: kvm-install
 kvm-install: $(foreach os, $(KVM_OS), kvm-install-$(os))
 	$(MAKE) $(KVM_KEYS)
+
+$(patsubst %, kvm-install-%, $(KVM_PLATFORM)): \
+kvm-install-%:
+	$(MAKE) $(patsubst %, kvm-undefine-%, $(call add-kvm-prefixes, $(KVM_$($*)_HOST_NAMES)))
+	$(MAKE) kvm-build-$*
+	$(KVMSH) --shutdown $(KVM_FIRST_PREFIX)$*
+	$(MAKE) $(call add-kvm-localdir-prefixes, $(KVM_$($*)_HOST_NAMES))
 
 
 #
@@ -1183,13 +1168,6 @@ kvm-undefine-%:
 	rm -f $(KVM_POOLDIR)/$*.qcow2 $(KVM_LOCALDIR)/$*.qcow2
 kvm-undefine: $(patsubst %, kvm-undefine-%, $(KVM_PLATFORM_DOMAIN_NAMES))
 
-.PHONY: kvm-define
-kvm-define: $(addprefix $(KVM_POOLDIR)/,$(KVM_PLATFORM_BUILD_DOMAIN_NAMES))
-kvm-define: $(addprefix $(KVM_LOCALDIR)/,$(KVM_PLATFORM_TEST_DOMAIN_NAMES))
-
-.PHONY: kvm-uninstall
-kvm-uninstall: $(patsubst %, kvm-uninstall-%, $(KVM_OS))
-
 .PHONY: kvm-clean
 kvm-clean: kvm-uninstall
 kvm-clean: kvm-clean-keys
@@ -1198,14 +1176,35 @@ kvm-clean: kvm-clean-check
 
 .PHONY: kvm-purge
 kvm-purge: kvm-clean
-kvm-purge: kvm-purge-networks
-kvm-purge: $(patsubst %, kvm-undefine-$(KVM_FIRST_PREFIX)%-upgrade, $(KVM_OS))
+kvm-purge: kvm-uninstall-networks
+kvm-purge: kvm-downgrade
 	rm -f $(KVM_HOST_OK)
 
+.PHONY: kvm-uninstall
+kvm-uninstall: $(patsubst %, kvm-uninstall-%, $(KVM_OS))
+
+$(patsubst %, kvm-uninstall-%, $(KVM_PLATFORM)): \
+kvm-uninstall-%:
+	$(MAKE) $(patsubst %, kvm-undefine-%, $(call add-kvm-prefixes, $(KVM_$($*)_HOST_NAMES)))
+	$(MAKE) kvm-undefine-$(KVM_FIRST_PREFIX)$*
+
+.PHONY: kvm-downgrade
+kvm-downgrade: $(foreach os, $(KVM_OS), kvm-downgrade-$(os))
+
+$(patsubst %, kvm-downgrade-%, $(KVM_PLATFORM)): \
+kvm-downgrade-%:
+	$(MAKE) kvm-uninstall-$*
+	$(MAKE) kvm-undefine-$(KVM_FIRST_PREFIX)$*-upgrade
+
 .PHONY: kvm-demolish
-kvm-demolish: kvm-purge
-kvm-demolish: $(patsubst %, kvm-undefine-$(KVM_FIRST_PREFIX)%-base, $(KVM_OS))
-kvm-demolish: kvm-demolish-gateway
+kvm-demolish: kvm-uninstall-gateway
+kvm-demolish: $(foreach os, $(KVM_OS), kvm-demolish-$(os))
+
+$(patsubst %, kvm-demolish-%, $(KVM_PLATFORM)): \
+kvm-demolish-%:
+	$(MAKE) kvm-downgrade-$*
+	$(MAKE) kvm-undefine-$(KVM_FIRST_PREFIX)$*-base
+
 
 #
 # Create an RPM for the test domains
@@ -1266,12 +1265,6 @@ kvmsh-%: $(KVM_LOCALDIR)/% | $(KVM_HOST_OK)
 $(patsubst %, kvmsh-%, $(KVM_BUILD_DOMAIN_NAMES)) : \
 kvmsh-%: $(KVM_POOLDIR)/% | $(KVM_HOST_OK)
 	$(KVMSH) $(KVMSH_FLAGS) $* $(KVMSH_COMMAND)
-
-.PHONY: kvmsh-base
-kvmsh-base: kvmsh-$(KVM_FIRST_PREFIX)fedora-base
-
-.PHONY: kvmsh-build
-kvmsh-build: kvmsh-$(KVM_FIRST_PREFIX)fedora
 
 
 #
@@ -1448,7 +1441,7 @@ Standard targets and operations:
   Delete the installed KVMs and networks so that the next kvm-install
   will create new versions:
 
-    kvm-purge:
+    kvm-downgrade:
         - delete test domains
 	- delete test build
         - delete test results
@@ -1459,7 +1452,6 @@ Standard targets and operations:
 
   Manipulating and accessing (logging into) domains:
 
-    kvmsh-build
     kvmsh-HOST ($(filter-out build, $(KVM_TEST_HOST_NAMES)))
         - use 'virsh console' to login to the given domain
 	- for HOST login to the first domain vis:

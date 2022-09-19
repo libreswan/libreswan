@@ -126,7 +126,6 @@ kvmplutotest	whack-02-globalstatus			good
 # IKEv2 tests
 #################################################################
 kvmplutotest	ikev2-03-basic-rawrsa			good
-kvmplutotest	ikev2-03-basic-rawrsa-ckaid		good
 kvmplutotest	ikev2-03-basic-rawrsa-rsasigkey		good
 kvmplutotest	ikev2-03-basic-rawrsa-pem		good
 kvmplutotest	ikev2-04-basic-x509			good
@@ -1239,11 +1238,11 @@ kvmplutotest	ipsec-hostkey-01-ckaid-rsa		good
 kvmplutotest	ipsec-hostkey-01-ckaid-ecdsa		good
 kvmplutotest	ipsec-hostkey-02-ckaid-fips		good
 kvmplutotest	ipsec-hostkey-03-ckaid-nsspw		good
-kvmplutotest	ipsec-hostkey-04-ikev1			good
-kvmplutotest	ipsec-hostkey-05-ikev2-raw-rsa		good
-kvmplutotest	ipsec-hostkey-05-ikev2-raw-ecdsa	good
-kvmplutotest	ipsec-hostkey-06-ikev2-pem-rsa		good
-kvmplutotest	ipsec-hostkey-06-ikev2-pem-ecdsa	good
+kvmplutotest	ipsec-hostkey-04-ikev1-rawkey-rsa	good
+kvmplutotest	ipsec-hostkey-05-ikev2-rawkey-rsa	good
+kvmplutotest	ipsec-hostkey-05-ikev2-rawkey-ecdsa	good
+kvmplutotest	ipsec-hostkey-06-ikev2-pubkey-rsa	good
+kvmplutotest	ipsec-hostkey-06-ikev2-pubkey-ecdsa	good
 
 # PPK
 kvmplutotest	ikev2-ppk-dynamic-01				wip

@@ -1,3 +1,0 @@
-# SPDX-License-Identifier: MIT
-
-# Write requirements for running your custom commands in tox here:

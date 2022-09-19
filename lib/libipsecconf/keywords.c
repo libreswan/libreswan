@@ -392,7 +392,9 @@ const struct keyword_def ipsec_conf_keywords[] = {
 #if defined(HAVE_IPTABLES) || defined(HAVE_NFTABLES)
   { "nflog-all",  kv_config,  kt_number,  KBF_NFLOG_ALL, NULL, NULL, },
 #endif
+#ifdef XFRM_LIFETIME_DEFAULT
   { "xfrmlifetime",  kv_config,  kt_number,  KBF_XFRMLIFETIME, NULL, NULL, },
+#endif
   { "virtual-private",  kv_config,  kt_string,  KSF_VIRTUALPRIVATE, NULL, NULL, },
   { "virtual_private",  kv_config,  kt_string,  KSF_VIRTUALPRIVATE, NULL, NULL, }, /* obsolete variant, very common */
   { "seedbits",  kv_config,  kt_number,  KBF_SEEDBITS, NULL, NULL, },
@@ -409,6 +411,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "ikev1-secctx-attr-type",  kv_config,  kt_number,  KBF_SECCTX, NULL, NULL, },  /* obsolete: not a value, a type */
   { "secctx-attr-type",  kv_config | kv_alias,  kt_number,  KBF_SECCTX, NULL, NULL, },
 #endif
+  { "interfaces",  kv_config, kt_obsolete, KNCF_WARNIGNORE, NULL, NULL, }, /* obsoleted but often present keyword */
 
   /* these options are obsoleted (and not old aliases) */
 

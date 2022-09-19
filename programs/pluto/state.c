@@ -77,11 +77,13 @@ bool uniqueIDs = false;
  */
 uint16_t pluto_nflog_group = 0;
 
+#ifdef XFRM_LIFETIME_DEFAULT
 /*
  * Note: variable is only used to display in ipsec status
  * actual work is done outside pluto, by ipsec _stackmanager
  */
 uint16_t pluto_xfrmlifetime = 30;
+#endif
 
 /*
  * Handle for each and every state.

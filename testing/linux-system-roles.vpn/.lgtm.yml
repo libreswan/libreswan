@@ -1,5 +1,0 @@
----
-extraction:
-  python:
-    python_setup:
-      version: 2

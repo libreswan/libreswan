@@ -1,14 +1,12 @@
 # nic is used as the System Role provisioning host
 nic #
- /testing/guestbin/nic-vpn-role-tmp
-nic #
  # save all output
 nic #
  ansible-playbook --skip-tags packages -i ansible-inventory.yml test-east-west.yml > OUTPUT/$(hostname).ansible.log 2>&1
 nic #
  sed -n -e '/PLAY RECAP/,$ p' -e '/^failed:/ p' OUTPUT/$(hostname).ansible.log
 PLAY RECAP *********************************************************************
-east                       : ok=15   changed=4    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
-west                       : ok=19   changed=4    unreachable=0    failed=0    skipped=6    rescued=0    ignored=0   
+east                       : ok=16   changed=4    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0   
+west                       : ok=20   changed=4    unreachable=0    failed=0    skipped=6    rescued=0    ignored=0   
 nic #
  

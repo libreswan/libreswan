@@ -83,7 +83,6 @@ OBJS += reqid.o
 OBJS += keyid.o
 
 ifneq ($(LINUX_VARIANT),)
-OBJS += addr_lookup.o
 OBJS += kernel_netlink_reply.o
 OBJS += kernel_netlink_query.o
 ifeq ($(USE_XFRM_INTERFACE), true)
@@ -91,6 +90,10 @@ OBJS += netlink_attrib.o
 endif
 endif
 
+# implement resolve_default_route()
+ifneq ($(LINUX_VARIANT),)
+OBJS += resolve_default_route_linux.o
+endif
 ifneq ($(BSD_VARIANT),)
 OBJS += resolve_default_route_bsd.o
 endif
