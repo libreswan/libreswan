@@ -55,7 +55,7 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='C=CH, O=strongSwan, CN=strongEast'
+006 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='C=CH, O=strongSwan, CN=strongEast'
 west #
  ipsec whack --listpubkeys
 000  

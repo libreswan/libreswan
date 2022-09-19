@@ -18,6 +18,7 @@
  * Copyright (C) 2015-2020 Paul Wouters <pwouters@redhat.com>
  * Copyright (C) 2016-2020 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
+ * Copyright (C) 20212-2022 Paul Wouters <paul.wouters@aiven.io>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -2057,6 +2058,49 @@ static bool extract_connection(const struct whack_message *wm,
 		config->retransmit_timeout = wm->retransmit_timeout;
 		config->retransmit_interval = wm->retransmit_interval;
 
+		{
+			/* http://csrc.nist.gov/publications/nistpubs/800-77/sp800-77.pdf */
+			time_t max_ike_life = libreswan_fipsmode() ? FIPS_IKE_SA_LIFETIME_MAXIMUM : IKE_SA_LIFETIME_MAXIMUM;
+			time_t max_ipsec_life = libreswan_fipsmode() ? FIPS_IPSEC_SA_LIFETIME_MAXIMUM : IPSEC_SA_LIFETIME_MAXIMUM;
+
+			if (deltatime_cmp(c->sa_ike_life_seconds, ==, deltatime_zero) || deltasecs(c->sa_ike_life_seconds) > max_ike_life) {
+				llog(RC_LOG, c->logger,
+				     "IKE lifetime set to the maximum allowed %jds",
+				     (intmax_t) max_ike_life);
+				c->sa_ike_life_seconds = deltatime(max_ike_life);
+			}
+			if (deltatime_cmp(c->sa_ipsec_life_seconds, ==, deltatime_zero) || deltasecs(c->sa_ipsec_life_seconds) > max_ipsec_life) {
+				llog(RC_LOG, c->logger,
+				     "IPsec lifetime set to the maximum allowed %jds",
+				     (intmax_t) max_ipsec_life);
+				c->sa_ipsec_life_seconds = deltatime(max_ipsec_life);
+			}
+			/*
+			 * A 1500 mtu packet requires 1500/16 ~= 90 crypto operations.
+			 * Always use NIST maximums for bytes/packets.
+			 *
+			 * https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf
+			 * "The total number of invocations of the authenticated encryption function
+			 * shall not exceed 2^32 , including all IV lengths and all instances of the
+			 * authenticated encryption function with the given key."
+			 *
+			 * Note "invocations" is not "bytes" or "packets", but the safest assumption is
+			 * the most wasteful invocations which is 1 byte per packet.
+			 */
+			if (c->sa_ipsec_max_bytes > IPSEC_SA_MAX_OPERATIONS) /* 2^32 */ {
+				llog(RC_LOG_SERIOUS, c->logger,
+				     "IPsec max bytes limited to the maximum allowed %s",
+				     IPSEC_SA_MAX_OPERATIONS_STRING);
+				c->sa_ipsec_max_bytes = IPSEC_SA_MAX_OPERATIONS;
+			}
+			if (c->sa_ipsec_max_packets > IPSEC_SA_MAX_OPERATIONS) /* 2^32 */ {
+				llog(RC_LOG_SERIOUS, c->logger,
+				     "IPsec max packets limited to the maximum allowed %s",
+				     IPSEC_SA_MAX_OPERATIONS_STRING);
+				c->sa_ipsec_max_packets = IPSEC_SA_MAX_OPERATIONS; /* 2^32 */
+			}
+		}
+
 		if (deltatime_cmp(c->sa_rekey_margin, >=, c->sa_ipsec_life_seconds)) {
 			deltatime_t new_rkm = deltatimescale(1, 2, c->sa_ipsec_life_seconds);
 
@@ -2067,25 +2111,6 @@ static bool extract_connection(const struct whack_message *wm,
 			     deltasecs(new_rkm));
 
 			c->sa_rekey_margin = new_rkm;
-		}
-
-		{
-			/* http://csrc.nist.gov/publications/nistpubs/800-77/sp800-77.pdf */
-			time_t max_ike = libreswan_fipsmode() ? FIPS_IKE_SA_LIFETIME_MAXIMUM : IKE_SA_LIFETIME_MAXIMUM;
-			time_t max_ipsec = libreswan_fipsmode() ? FIPS_IPSEC_SA_LIFETIME_MAXIMUM : IPSEC_SA_LIFETIME_MAXIMUM;
-
-			if (deltasecs(c->sa_ike_life_seconds) > max_ike) {
-				llog(RC_LOG_SERIOUS, c->logger,
-				     "IKE lifetime limited to the maximum allowed %jds",
-				     (intmax_t) max_ike);
-				c->sa_ike_life_seconds = deltatime(max_ike);
-			}
-			if (deltasecs(c->sa_ipsec_life_seconds) > max_ipsec) {
-				llog(RC_LOG_SERIOUS, c->logger,
-				     "IPsec lifetime limited to the maximum allowed %jds",
-				     (intmax_t) max_ipsec);
-				c->sa_ipsec_life_seconds = deltatime(max_ipsec);
-			}
 		}
 
 		/* IKEv1's RFC 3706 DPD */

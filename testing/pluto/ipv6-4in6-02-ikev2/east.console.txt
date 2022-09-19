@@ -12,7 +12,7 @@ east #
 initdone
 east #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-4in6", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@west'
+006 #2: "westnet-eastnet-4in6", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@west'
 east #
  ip xfrm state
 src 2001:db8:1:2::45 dst 2001:db8:1:2::23

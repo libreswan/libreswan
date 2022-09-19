@@ -118,8 +118,8 @@ libnsock nsock_iod_delete(): nsock_iod_delete (IOD #1)
 libnsock nsock_iod_delete(): nsock_iod_delete (IOD #2)
 west #
  ipsec trafficstatus
-006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@east'
-006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=104, outBytes=173, maxBytes=16EiB, id='@east'
+006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@east'
+006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=104, outBytes=173, maxBytes=2^32B, id='@east'
 west #
  ping -n -q -c 4 -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
@@ -134,8 +134,8 @@ west #
  # we are expecting three tunnels now (main one with 0 byte counters)
 west #
  ipsec trafficstatus
-006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@east'
-006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=104, outBytes=173, maxBytes=16EiB, id='@east'
+006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@east'
+006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=104, outBytes=173, maxBytes=2^32B, id='@east'
 west #
  echo done
 done

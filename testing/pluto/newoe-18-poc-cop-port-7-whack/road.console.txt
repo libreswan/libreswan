@@ -32,7 +32,7 @@ road #
  # should show tunnel and no shunts, and zero traffic count
 road #
  ipsec whack --trafficstatus
-006 #2: "private-or-clear#192.1.2.0/24-(0--6--7)"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='ID_NULL'
+006 #2: "private-or-clear#192.1.2.0/24-(0--6--7)"[1] ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='ID_NULL'
 road #
  ipsec whack --shuntstatus
 000 Bare Shunt list:

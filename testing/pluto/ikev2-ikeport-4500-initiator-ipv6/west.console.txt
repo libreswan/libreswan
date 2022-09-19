@@ -24,7 +24,7 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-006 #2: "west", type=ESP, add_time=1234567890, inBytes=104, outBytes=104, maxBytes=16EiB, id='@east'
+006 #2: "west", type=ESP, add_time=1234567890, inBytes=104, outBytes=104, maxBytes=2^32B, id='@east'
 west #
  echo done
 done

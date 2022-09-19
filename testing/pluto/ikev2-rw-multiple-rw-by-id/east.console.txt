@@ -18,7 +18,7 @@ east #
  # ensure both clients are up
 east #
  ipsec trafficstatus
-006 #4: "north-any"[2] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org', lease=100.64.0.2/32
-006 #2: "road-any"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org', lease=100.64.0.1/32
+006 #4: "north-any"[2] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=north.testing.libreswan.org, E=user-north@testing.libreswan.org', lease=100.64.0.2/32
+006 #2: "road-any"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org', lease=100.64.0.1/32
 east #
  

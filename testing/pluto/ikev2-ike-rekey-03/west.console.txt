@@ -72,9 +72,9 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@east'
-006 #3: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@east'
-006 #4: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@east'
+006 #2: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
+006 #3: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
+006 #4: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
 west #
  ipsec showstates
 000 #1: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
@@ -103,9 +103,9 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-006 #5: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@east'
-006 #6: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@east'
-006 #7: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@east'
+006 #5: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
+006 #6: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
+006 #7: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
 west #
  ipsec showstates|sort
 000 #1: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
@@ -141,9 +141,9 @@ west #
 done
 west #
  ipsec whack --trafficstatus
-006 #8: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@east'
-006 #9: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@east'
-006 #10: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@east'
+006 #8: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
+006 #9: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
+006 #10: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
 west #
  ipsec showstates | sort
 000 #10: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #11; idle;

@@ -21,7 +21,7 @@ east #
 initdone
 east #
  hostname | grep nic > /dev/null || ipsec whack --trafficstatus
-006 #2: "road-east-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@road'
+006 #2: "road-east-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@road'
 east #
  # this should show IKE and IPsec state for "road-east-ikev2" and not an OE group
 east #

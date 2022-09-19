@@ -25,7 +25,7 @@ west #
 002 "replay": added IKEv2 connection
 west #
  ipsec auto --status |grep replay_window
-000 "replay":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "replay":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^32B; ipsec_max_packets: 2^32; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 west #
  ipsec whack --impair suppress-retransmits
 west #

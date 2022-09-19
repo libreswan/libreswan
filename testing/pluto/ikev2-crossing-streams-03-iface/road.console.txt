@@ -10,7 +10,7 @@ road #
  # their reqid cannot be the same.
 road #
  ipsec trafficstatus
-006 #2: "static", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@east'
+006 #2: "static", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@east'
 road #
  ip xfrm state
 src 192.1.2.23 dst 192.1.3.209
@@ -80,7 +80,7 @@ road #
  # did it split over two IPsec SA's or not? just curious
 road #
  ipsec trafficstatus
-006 #2: "static", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=16EiB, id='@east'
+006 #2: "static", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^32B, id='@east'
 road #
  # stop ipsec for a bit, then restart. see what happens
 road #
@@ -101,7 +101,7 @@ PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 road #
  ipsec trafficstatus
-006 #2: "static", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=16EiB, id='@east'
+006 #2: "static", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^32B, id='@east'
 road #
  ipsec status |grep STATE_
 000 #1: "static":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;

@@ -20,7 +20,7 @@ west #
  # east should have brought up tunnel again
 west #
  ipsec trafficstatus
-006 #4: "west-east-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@east'
+006 #4: "west-east-auto", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@east'
 west #
  # confirm traffic flow over proper IPsec SA
 west #

@@ -57,9 +57,9 @@ west #
 004 "westnet-eastnet-ikev2c" #4: initiator established Child SA using #1; IPsec tunnel [192.0.101.0-192.0.101.255:0-65535 0] -> [192.0.201.0-192.0.201.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA2_512_256 DPD=passive}
 west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@east'
-006 #3: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@east'
-006 #4: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@east'
+006 #2: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
+006 #3: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
+006 #4: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@east'
 west #
  ipsec status | grep westnet-eastnet-ikev2
 000 "westnet-eastnet-ikev2a": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.2.0/24; erouted; eroute owner: #2
@@ -68,7 +68,7 @@ west #
 000 "westnet-eastnet-ikev2a":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet-ikev2a":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-ikev2a":   sec_label:unset;
-000 "westnet-eastnet-ikev2a":   ike_life: 45s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 15s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ikev2a":   ike_life: 45s; ipsec_life: 28800s; ipsec_max_bytes: 2^32B; ipsec_max_packets: 2^32; replay_window: 128; rekey_margin: 15s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-ikev2a":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-ikev2a":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-ikev2a":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+UP+ESN_NO+ESN_YES;
@@ -89,7 +89,7 @@ west #
 000 "westnet-eastnet-ikev2b":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet-ikev2b":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-ikev2b":   sec_label:unset;
-000 "westnet-eastnet-ikev2b":   ike_life: 45s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 15s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ikev2b":   ike_life: 45s; ipsec_life: 28800s; ipsec_max_bytes: 2^32B; ipsec_max_packets: 2^32; replay_window: 128; rekey_margin: 15s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-ikev2b":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-ikev2b":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-ikev2b":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+UP+ESN_NO+ESN_YES;
@@ -109,7 +109,7 @@ west #
 000 "westnet-eastnet-ikev2c":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet-ikev2c":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-ikev2c":   sec_label:unset;
-000 "westnet-eastnet-ikev2c":   ike_life: 45s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 15s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ikev2c":   ike_life: 45s; ipsec_life: 28800s; ipsec_max_bytes: 2^32B; ipsec_max_packets: 2^32; replay_window: 128; rekey_margin: 15s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-ikev2c":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-ikev2c":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-ikev2c":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+UP+ESN_NO+ESN_YES;

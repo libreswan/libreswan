@@ -18,6 +18,7 @@
  * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2019 Tuomo Soini <tis@foobar.fi>
  * Copyright (C) 2020 Yulia Kuzovkova <ukuzovkova@gmail.com>
+ * Copyright (C) 20212-2022 Paul Wouters <paul.wouters@aiven.io>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -98,12 +99,13 @@ static void help(void)
 		"	[--pfsgroup <modp1024 | modp1536 | modp2048 | \\\n"
 		"		modp3072 | modp4096 | modp6144 | modp8192 \\\n"
 		"		dh22 | dh23 | dh24>] \\\n"
-		"	[--ikelifetime <seconds>] [--ipseclifetime <seconds>] \\\n"
+		"	[--ike-lifetime <seconds>] [--ipsec-lifetime <seconds>] \\\n"
+		"	[--ipsec-max-bytes <num>] [--ipsec-max-packets <num>] \\\n"
 		"	[--rekeymargin <seconds>] [--rekeyfuzz <percentage>] \\\n"
 		"	[--retransmit-timeout <seconds>] \\\n"
 		"	[--retransmit-interval <msecs>] \\\n"
-		"	[--send-redirect] [--redirect-to] \\\n"
-		"	[--accept-redirect] [--accept-redirect-to] \\\n"
+		"	[--send-redirect] [--redirect-to <ip>] \\\n"
+		"	[--accept-redirect] [--accept-redirect-to <ip>] \\\n"
 		"	[--keyingtries <count>] \\\n"
 		"	[--replay-window <num>] \\\n"
 		"	[--esp <esp-algos>] \\\n"
@@ -443,8 +445,10 @@ enum option_enums {
 
 	CD_RETRANSMIT_TIMEOUT,
 	CD_RETRANSMIT_INTERVAL,
-	CD_IKELIFETIME,
-	CD_IPSECLIFETIME,
+	CD_IKE_LIFETIME,
+	CD_IPSEC_LIFETIME,
+	CD_IPSEC_MAX_BYTES,
+	CD_IPSEC_MAX_PACKETS,
 	CD_REKEYMARGIN,
 	CD_RKFUZZ,
 	CD_KTRIES,
@@ -770,8 +774,11 @@ static const struct option long_opts[] = {
 	{ "sendca", required_argument, NULL, CD_SEND_CA + OO },
 	{ "ipv4", no_argument, NULL, CD_CONNIPV4 + OO },
 	{ "ipv6", no_argument, NULL, CD_CONNIPV6 + OO },
-	{ "ikelifetime", required_argument, NULL, CD_IKELIFETIME + OO },
-	{ "ipseclifetime", required_argument, NULL, CD_IPSECLIFETIME + OO },
+	{ "ikelifetime", required_argument, NULL, CD_IKE_LIFETIME + OO },
+	{ "ipseclifetime", required_argument, NULL, CD_IPSEC_LIFETIME + OO }, /* backwards compat */
+	{ "ipsec-lifetime", required_argument, NULL, CD_IPSEC_LIFETIME + OO },
+	{ "ipsec-max-bytes", required_argument, NULL, CD_IPSEC_MAX_BYTES + OO + NUMERIC_ARG},
+	{ "ipsec-max-packets", required_argument, NULL, CD_IPSEC_MAX_PACKETS + OO + NUMERIC_ARG},
 	{ "retransmit-timeout", required_argument, NULL, CD_RETRANSMIT_TIMEOUT + OO },
 	{ "retransmit-interval", required_argument, NULL, CD_RETRANSMIT_INTERVAL + OO },
 	{ "rekeymargin", required_argument, NULL, CD_REKEYMARGIN + OO },
@@ -1074,8 +1081,8 @@ int main(int argc, char **argv)
 	msg.nic_offload = yna_auto;
 	msg.sa_ike_life_seconds = deltatime(IKE_SA_LIFETIME_DEFAULT);
 	msg.sa_ipsec_life_seconds = deltatime(IPSEC_SA_LIFETIME_DEFAULT);
-	msg.sa_ipsec_max_bytes = IPSEC_SA_MAX_DEFAULT;
-	msg.sa_ipsec_max_packets = IPSEC_SA_MAX_DEFAULT;
+	msg.sa_ipsec_max_bytes = IPSEC_SA_MAX_OPERATIONS; /* max uint_64_t */
+	msg.sa_ipsec_max_packets = IPSEC_SA_MAX_OPERATIONS; /* max uint_64_t */
 	msg.sa_rekey_margin = deltatime(SA_REPLACEMENT_MARGIN_DEFAULT);
 	msg.sa_rekey_fuzz = SA_REPLACEMENT_FUZZ_DEFAULT;
 	msg.sa_keying_tries = SA_REPLACEMENT_RETRIES_DEFAULT;
@@ -1889,12 +1896,20 @@ int main(int argc, char **argv)
 			optarg_to_deltatime(&msg.retransmit_interval, &timescale_milliseconds);
 			continue;
 
-		case CD_IKELIFETIME:	/* --ikelifetime <seconds> */
+		case CD_IKE_LIFETIME:	/* --ike-lifetime <seconds> */
 			optarg_to_deltatime(&msg.sa_ike_life_seconds, &timescale_seconds);
 			continue;
 
-		case CD_IPSECLIFETIME:	/* --ipseclifetime <seconds> */
+		case CD_IPSEC_LIFETIME:	/* --ipsec-lifetime <seconds> */
 			optarg_to_deltatime(&msg.sa_ipsec_life_seconds, &timescale_seconds);
+			continue;
+
+		case CD_IPSEC_MAX_BYTES:	/* --ipsec-max-bytes <bytes> */
+			msg.sa_ipsec_max_bytes = opt_whole; /* TODO accept K/M/G/T etc */
+			continue;
+
+		case CD_IPSEC_MAX_PACKETS:	/* --ipsec-max-packets <packets> */
+			msg.sa_ipsec_max_packets = opt_whole; /* TODO accept K/M/G/T etc */
 			continue;
 
 		case CD_REKEYMARGIN:	/* --rekeymargin <seconds> */
@@ -2650,10 +2665,10 @@ int main(int argc, char **argv)
 		diagw("rekeymargin or rekeyfuzz values are so large that they cause overflow");
 
 	check_life_time(msg.sa_ike_life_seconds, IKE_SA_LIFETIME_MAXIMUM,
-			"ikelifetime", &msg);
+			"ike-lifetime", &msg);
 
 	check_life_time(msg.sa_ipsec_life_seconds, IPSEC_SA_LIFETIME_MAXIMUM,
-			"ipseclifetime", &msg);
+			"ipsec-lifetime", &msg);
 
 	switch (msg.ike_version) {
 	case IKEv1:

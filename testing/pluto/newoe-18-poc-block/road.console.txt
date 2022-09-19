@@ -19,8 +19,8 @@ road #
 000 Total IPsec connections: loaded 10, active 0
 road #
  ipsec status | grep private- | grep keyingtries:
-000 "private-or-clear":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
-000 "private-or-clear#192.1.2.0/24":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 16EiB; ipsec_max_packets: 16Ei; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
+000 "private-or-clear":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^32B; ipsec_max_packets: 2^32; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
+000 "private-or-clear#192.1.2.0/24":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^32B; ipsec_max_packets: 2^32; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
 road #
  ip -s xfrm monitor > /tmp/xfrm-monitor.out &
 [x] PID

@@ -21,7 +21,7 @@ west #
  # should show non-zero traffic counters
 west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB, id='@east'
+006 #2: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
 west #
  # sending delete/notify should cause east to re-initiate
 west #
@@ -40,6 +40,6 @@ west #
  # traffic counters should be zero
 west #
  ipsec whack --trafficstatus
-006 #4: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB, id='@east'
+006 #4: "westnet-eastnet", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@east'
 west #
  
