@@ -165,9 +165,9 @@ west #
 000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4; conn serial: $1;
 000 "TUNNEL-C":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 #2: "TUNNEL-A":500 STATE_QUICK_I2 (IPsec SA established); REPLACE_IF_USED in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-000 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=4194303B 
+000 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=2^32B 
 000 #4: "TUNNEL-C":500 STATE_QUICK_I2 (IPsec SA established); REPLACE_IF_USED in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-000 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=4194303B 
+000 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=2^32B 
 west #
  ipsec auto --delete TUNNEL-B
 002 "TUNNEL-B": terminating SAs using this connection
@@ -212,9 +212,9 @@ west #
 000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4; conn serial: $1;
 000 "TUNNEL-C":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 #2: "TUNNEL-A":500 STATE_QUICK_I2 (IPsec SA established); REPLACE_IF_USED in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-000 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=4194303B 
+000 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=2^32B 
 000 #4: "TUNNEL-C":500 STATE_QUICK_I2 (IPsec SA established); REPLACE_IF_USED in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-000 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=4194303B 
+000 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=2^32B 
 west #
  echo done
 done

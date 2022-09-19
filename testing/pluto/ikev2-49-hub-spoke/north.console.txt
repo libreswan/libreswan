@@ -132,7 +132,7 @@ north #
 000  
 000 #1: "northnet-westnet-ipv4-psk":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 000 #2: "northnet-westnet-ipv4-psk":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-000 #2: "northnet-westnet-ipv4-psk" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.33 tun.0@192.1.2.23 tun.0@192.1.3.33 Traffic: ESPin=0B ESPout=0B ESPmax=0B 
+000 #2: "northnet-westnet-ipv4-psk" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.33 tun.0@192.1.2.23 tun.0@192.1.3.33 Traffic: ESPin=0B ESPout=0B ESPmax=2^32B 
 000  
 000 Bare Shunt list:
 000  

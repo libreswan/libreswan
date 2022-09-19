@@ -32,11 +32,11 @@ east #
 east #
  ipsec showstates
 000 #13: "westnet-eastnet-a":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #17; idle;
-000 #13: "westnet-eastnet-a" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 Traffic: ESPin=0B ESPout=0B ESPmax=0B 
+000 #13: "westnet-eastnet-a" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 Traffic: ESPin=0B ESPout=0B ESPmax=2^32B 
 000 #15: "westnet-eastnet-b":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #17; idle;
-000 #15: "westnet-eastnet-b" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 Traffic: ESPin=0B ESPout=0B ESPmax=0B 
+000 #15: "westnet-eastnet-b" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 Traffic: ESPin=0B ESPout=0B ESPmax=2^32B 
 000 #14: "westnet-eastnet-c":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #17; idle;
-000 #14: "westnet-eastnet-c" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 Traffic: ESPin=0B ESPout=0B ESPmax=0B 
+000 #14: "westnet-eastnet-c" esp.ESPSPIi@192.1.2.45 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.45 tun.0@192.1.2.23 Traffic: ESPin=0B ESPout=0B ESPmax=2^32B 
 000 #17: "westnet-eastnet-c":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 east #
  # there should be only one IKE_SA_INIT exchange

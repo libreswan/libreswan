@@ -61,11 +61,11 @@ west #
  ipsec showstates # expect: IKE #1 Child #2 #3 #4
 000 #1: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 000 #2: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); LIVENESS in XXs; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-000 #2: "westnet-eastnet-ikev2a" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=0B 
+000 #2: "westnet-eastnet-ikev2a" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^32B 
 000 #3: "westnet-eastnet-ikev2b":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); LIVENESS in XXs; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-000 #3: "westnet-eastnet-ikev2b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=0B 
+000 #3: "westnet-eastnet-ikev2b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^32B 
 000 #4: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); LIVENESS in XXs; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-000 #4: "westnet-eastnet-ikev2c" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=0B 
+000 #4: "westnet-eastnet-ikev2c" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^32B 
 west #
  # wait for Child SAs to rekey
 west #
@@ -74,11 +74,11 @@ west #
  ipsec showstates # expect: IKE #1 Child #5 #6 #7
 000 #1: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 000 #5: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); LIVENESS in XXs; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-000 #5: "westnet-eastnet-ikev2a" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=0B 
+000 #5: "westnet-eastnet-ikev2a" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^32B 
 000 #6: "westnet-eastnet-ikev2b":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); LIVENESS in XXs; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-000 #6: "westnet-eastnet-ikev2b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=0B 
+000 #6: "westnet-eastnet-ikev2b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^32B 
 000 #7: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); LIVENESS in XXs; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-000 #7: "westnet-eastnet-ikev2c" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=0B 
+000 #7: "westnet-eastnet-ikev2c" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^32B 
 west #
  # wait for IKE SA to rekey
 west #
@@ -87,11 +87,11 @@ west #
  ipsec showstates # expect: IKE #8 Child #9 #10 #11
 000 #8: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 000 #9: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); LIVENESS in XXs; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #8; idle;
-000 #9: "westnet-eastnet-ikev2a" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=0B 
+000 #9: "westnet-eastnet-ikev2a" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^32B 
 000 #10: "westnet-eastnet-ikev2b":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); LIVENESS in XXs; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #8; idle;
-000 #10: "westnet-eastnet-ikev2b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=0B 
+000 #10: "westnet-eastnet-ikev2b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^32B 
 000 #11: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); LIVENESS in XXs; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #8; idle;
-000 #11: "westnet-eastnet-ikev2c" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=0B 
+000 #11: "westnet-eastnet-ikev2c" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^32B 
 west #
  # wait for Child SAs to rekey again
 west #
@@ -100,11 +100,11 @@ west #
  ipsec showstates # expect: IKE #8 Child #12 #13 #14
 000 #8: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 000 #12: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); LIVENESS in XXs; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #8; idle;
-000 #12: "westnet-eastnet-ikev2a" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=0B 
+000 #12: "westnet-eastnet-ikev2a" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^32B 
 000 #13: "westnet-eastnet-ikev2b":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); LIVENESS in XXs; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #8; idle;
-000 #13: "westnet-eastnet-ikev2b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=0B 
+000 #13: "westnet-eastnet-ikev2b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^32B 
 000 #14: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); LIVENESS in XXs; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #8; idle;
-000 #14: "westnet-eastnet-ikev2c" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=0B 
+000 #14: "westnet-eastnet-ikev2c" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^32B 
 west #
  echo done
 done
@@ -112,11 +112,11 @@ west #
  ipsec showstates
 000 #8: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 000 #12: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); LIVENESS in XXs; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #8; idle;
-000 #12: "westnet-eastnet-ikev2a" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=0B 
+000 #12: "westnet-eastnet-ikev2a" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^32B 
 000 #13: "westnet-eastnet-ikev2b":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); LIVENESS in XXs; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #8; idle;
-000 #13: "westnet-eastnet-ikev2b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=0B 
+000 #13: "westnet-eastnet-ikev2b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^32B 
 000 #14: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); LIVENESS in XXs; REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #8; idle;
-000 #14: "westnet-eastnet-ikev2c" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=0B 
+000 #14: "westnet-eastnet-ikev2c" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^32B 
 west #
  # there should be only one IKE_INIT exchange
 west #

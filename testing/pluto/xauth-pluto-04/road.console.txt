@@ -45,7 +45,7 @@ road #
  ipsec showstates
 000 #1: "xauth-road-eastnet-psk":500 STATE_AGGR_I2 (IKE SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
 000 #2: "xauth-road-eastnet-psk":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-000 #2: "xauth-road-eastnet-psk" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 Traffic: ESPin=84B ESPout=84B ESPmax=4194303B username=use2
+000 #2: "xauth-road-eastnet-psk" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.209 tun.0@192.1.2.23 tun.0@192.1.3.209 Traffic: ESPin=84B ESPout=84B ESPmax=2^32B username=use2
 road #
  echo done
 done

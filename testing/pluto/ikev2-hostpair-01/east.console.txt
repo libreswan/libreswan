@@ -56,7 +56,7 @@ east #
 000 #1: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:PORT STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; idle;
 000 #3: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:PORT STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 000 #4: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254:PORT STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #3; idle;
-000 #4: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254 esp.ESPSPIi@192.1.2.254 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.254 tun.0@192.1.2.23 Traffic: ESPin=84B ESPout=84B ESPmax=0B 
+000 #4: "roadnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.254 esp.ESPSPIi@192.1.2.254 esp.ESPSPIi@192.1.2.23 tun.0@192.1.2.254 tun.0@192.1.2.23 Traffic: ESPin=84B ESPout=84B ESPmax=2^32B 
 east #
  # should show no hits
 east #

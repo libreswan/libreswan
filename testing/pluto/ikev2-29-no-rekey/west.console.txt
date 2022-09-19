@@ -175,7 +175,7 @@ west #
 000  
 000 #1: "westnet-eastnet-ikev2":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); EXPIRE in XXs; newest; idle;
 000 #2: "westnet-eastnet-ikev2":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); EXPIRE in XXs; newest; eroute owner; IKE SA #1; idle;
-000 #2: "westnet-eastnet-ikev2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B ESPmax=0B 
+000 #2: "westnet-eastnet-ikev2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B ESPmax=2^32B 
 000  
 000 Bare Shunt list:
 000  
