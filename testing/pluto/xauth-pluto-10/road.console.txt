@@ -30,13 +30,13 @@ road #
 004 "xauth-road-eastnet" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive username=use1}
 road #
  ipsec whack --trafficstatus
-006 #2: "xauth-road-eastnet", username=use1, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=16EiB
+006 #2: "xauth-road-eastnet", username=use1, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B
 road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 road #
  ipsec whack --trafficstatus
-006 #2: "xauth-road-eastnet", username=use1, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=16EiB
+006 #2: "xauth-road-eastnet", username=use1, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B
 road #
  echo done
 done
