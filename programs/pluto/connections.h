@@ -466,13 +466,6 @@ struct connection {
 	struct pluto_xfrmi *xfrmi; /* pointer to possibly shared interface */
 
 	reqid_t sa_reqid;
-	/*
-	 * XXX: this field is used by the kernel to remember the mode
-	 * that the IPsec SA was installed as so that the delete knows
-	 * how to delete it.  Shouldn't that be part of the CHILD SA's
-	 * state?
-	 */
-	int ipsec_mode;			/* tunnel or transport or IKEv1 ... */
 
 	bool nat_keepalive;		/* Send NAT-T Keep-Alives if we are behind NAT */
 	bool mobike;			/* Allow MOBIKE */
