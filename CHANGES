@@ -3,11 +3,14 @@ See also https://libreswan.org/
 
 v4.8 (unreleased)
 * release: remove SHA1 bindings from LIBRESWAN OpenPGP key [dkg/Paul]
+* pluto: ignore obsoleted unused interfaces= / --iface [Paul/Andrew]
 * pluto: various internal crypto struct changes [Andrew]
 * pluto: fix traffic counters for AH and IPCOMP [Andrew]
 * pluto: improve logging of duplicate serial cert error [Andrew]
 * pluto: support for maxbytes/maxpacket counters [Antony/Paul]
 * pluto: handle HW tokens using strange CKAIDs; github/815 [Andrew]
+* pluto: added --ipsec-max-bytes / --ipsec-max-packets support [Antony]
+* libipsecconf: added ipsec-max-bytes= and ipsec-max-packets= options [Paul]
 * IKEv2: emit one CERTREQ payload with all the hashes [Andrew]
 * addconn/whack: add support for {left,right}pubkey= [Andrew]
 * showhostkey: add support for ECDSA pubkeys [Andrew]
@@ -20,6 +23,7 @@ v4.8 (unreleased)
 * BSD: fix code finding interfaces; github/728 [Andrew]
 * FreeBSD: support large replay window; github/756 [Andrew]
 * FreeBSD: support ESN; github/721 [Andrew]
+* linux: update copy of xfrm.h header [Paul]
 * building: on BSD, always use GCC; freebsd/264288 llvm/55963 [Andrew]
 * building: enable LTO when USE_LTO=true; github/836 github/834 [Andrew]
 * building: dropped default build and packaging support for:
