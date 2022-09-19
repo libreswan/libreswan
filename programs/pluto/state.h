@@ -116,7 +116,6 @@ struct trans_attrs {
 	bool esn_enabled;               /* IKEv2 ESN (extended sequence numbers) */
 
 	deltatime_t life_seconds;	/* max life of this SA in seconds */
-	uint32_t life_kilobytes;	/* max life of this SA in kilobytes */
 
 	/* negotiated crypto-suite */
 	const struct encrypt_desc *ta_encrypt;	/* package of encryption routines */
@@ -151,7 +150,6 @@ struct ipsec_trans_attrs {
 	struct trans_attrs transattrs;
 	ipsec_spi_t spi;                /* their SPI */
 	deltatime_t life_seconds;	/* max life of this SA in seconds */
-	uint32_t life_kilobytes;	/* max life of this SA in kilobytes */
 	enum encapsulation_mode mode;	/* transport or tunnel or ... */
 };
 

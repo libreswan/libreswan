@@ -222,10 +222,10 @@ west #
 000 "westnet-eastnet-2":   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
 000 #1: "westnet-eastnet-0":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 000 #2: "westnet-eastnet-0":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-000 #2: "westnet-eastnet-0" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=0B 
+000 #2: "westnet-eastnet-0" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^32B 
 000 #4: "westnet-eastnet-1":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-000 #4: "westnet-eastnet-1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=168B ESPout=168B ESPmax=0B 
+000 #4: "westnet-eastnet-1" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=168B ESPout=168B ESPmax=2^32B 
 000 #3: "westnet-eastnet-2":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-000 #3: "westnet-eastnet-2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=168B ESPout=168B ESPmax=0B 
+000 #3: "westnet-eastnet-2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=168B ESPout=168B ESPmax=2^32B 
 west #
  

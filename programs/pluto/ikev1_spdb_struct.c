@@ -2059,7 +2059,7 @@ rsasig_common:
 					ta.life_seconds = deltatime(val);
 					break;
 				case OAKLEY_LIFE_KILOBYTES:
-					ta.life_kilobytes = val;
+					dbg("ignoring OAKLEY_LIFE_KILOBYTES=%"PRIu32, val);
 					break;
 				default:
 					bad_case(life_type);
@@ -2300,7 +2300,6 @@ bool init_aggr_st_oakley(struct ike_sa *ike)
 	struct trans_attrs ta = {
 		/* When this SA expires (seconds) */
 		.life_seconds = c->sa_ike_life_seconds,
-		.life_kilobytes = 1000000,
 		.ta_encrypt = ikev1_get_ike_encrypt_desc(enc->val)
 	};
 
@@ -2414,7 +2413,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	*attrs = (struct ipsec_trans_attrs) {
 		.spi = 0,                                               /* spi */
 		.life_seconds = DELTATIME_INIT(IPSEC_SA_LIFETIME_DEFAULT),	/* life_seconds */
-		.life_kilobytes = SA_LIFE_DURATION_K_DEFAULT,           /* life_kilobytes */
 		.mode = ENCAPSULATION_MODE_UNSPECIFIED,        /* encapsulation */
 	};
 
@@ -2558,7 +2556,7 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 				break;
 			}
 			case SA_LIFE_TYPE_KBYTES:
-				attrs->life_kilobytes = val;
+				dbg("ignoring SA_LIFE_TYPE_KBYTES=%"PRIu32, val);
 				break;
 			default:
 				bad_case(life_type);
