@@ -78,8 +78,6 @@ enum ike_version {
 #define SA_REPLACEMENT_FUZZ_DEFAULT 100 /* (IPSEC & IKE) 100% of MARGIN */
 #define SA_REPLACEMENT_RETRIES_DEFAULT 0 /* (IPSEC & IKE) */
 
-#define SA_LIFE_DURATION_K_DEFAULT 0xFFFFFFFFlu
-
 #define IKE_BUF_AUTO 0 /* use system values for IKE socket buffer size */
 
 #define DEFAULT_XFRM_IF_NAME "ipsec1"
