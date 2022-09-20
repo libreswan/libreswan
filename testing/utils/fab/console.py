@@ -22,12 +22,6 @@ from fab import timing
 
 TIMEOUT = 10
 
-# The following prompt is assumed.
-# - it only displays status when it is non-zero
-# - \h \u \W don't work on NetBSD
-# - OpenBSD doesn't define ${HOST} or ${HOSTNAME}
-PS1='[$USER@$(hostname|sed -e s/\\\\..*//) \\$(s=\\$?;p=\\${PWD##*/};echo \\${p:-/} \\${s#0})]# '
-
 # Names for each of the groups in the above (used below).
 #
 # Note that these are STRINGS and not BYTES.  Even though any names in
@@ -176,18 +170,7 @@ class Remote:
         self.sendline("echo " + sync)
         self.expect(sync.encode() + rb'\s+' + self.prompt.pattern, timeout=timeout)
 
-        # Fix the prompt
-        self.run("expr $SHELL : '.*/sh' > /dev/null && set -o promptcmds")
-        self.run("PS1=\"" + PS1 + "\"")
-
-        # Re-sync with the prompt; the string setting the prompt
-        # confuses the prompt match code.  OOPS.
-        number = str(random.randrange(10000, 1000000))
-        sync = "sync=" + number + "=cnyc"
-        self.sendline("echo " + sync)
-        self.expect(sync.encode() + rb'\s+' + self.prompt.pattern, timeout=timeout)
-
-        # Set noecho the PTY inside the VM (not pexpect's PTY).
+        # Set the PTY inside the VM to no-echo
         self.run("export TERM=dumb; unset LS_COLORS; stty sane -echo -onlcr")
 
     def stty_sane(self, term="dumb", rows=24, columns=80):
