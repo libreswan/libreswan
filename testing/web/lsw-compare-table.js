@@ -6,6 +6,8 @@ var lsw_compare_table_id = "compare-results"
 
 function lsw_compare_test_runs(test_runs) {
 
+    console.log("compare test runs", test_runs)
+
     // Filter out the "current" row?
 
     let queue = d3.queue()
@@ -39,6 +41,31 @@ function lsw_compare_test_runs(test_runs) {
 }
 
 function lsw_compare_table(test_runs) {
+
+    // Edit the URL adding "?run=RUN&run=RUN..." so that a copied URL
+    // includes the currently selected test results (the load code
+    // knows how to parse this).
+    //
+    // It seems that passing in "" doesn't reset the suffix but ".",
+    // seemingly, does!?!
+
+    let url = ""
+    let sep = "?"
+    for (const run of test_runs) {
+	if (run.directory !== undefined) {
+	    url = url + sep + "run=" + run.directory
+	    sep = "&"
+	}
+    }
+    if (history.state === null) {
+	if (url.length > 0) {
+	    history.pushState("here", '', url)
+	}
+    } else if (url.length === 0) {
+	history.back()
+    } else {
+	history.replaceState("here", '', url)
+    }
 
     // Create a test_dictionary mapping each test name onto a
     // (possibly sparse) array of directory results.
