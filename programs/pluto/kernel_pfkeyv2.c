@@ -291,8 +291,14 @@ static struct ip_sockaddr *put_ip_sockaddr(struct outbuf *msg,
 }
 
 #ifndef __OpenBSD__
+/*
+ * XXX: OpenBSD uses address+mask, instead of address/prefixlen;
+ * protocol and prefix length were dropped from the structure.
+ *
+ * Ulgh!
+ */
 static struct sadb_address *put_sadb_selector(struct outbuf *msg,
-					      enum sadb_exttype srcdst,
+					      enum sadb_exttype srcdst_exttype,
 					      const ip_selector selector)
 {
 	const struct ip_protocol *protocol = selector_protocol(selector);
@@ -302,7 +308,7 @@ static struct sadb_address *put_sadb_selector(struct outbuf *msg,
 	ip_address prefix = selector_prefix(selector);
 	unsigned prefix_len = selector_prefix_bits(selector);
 	struct sadb_address *address =
-		put_sadb_ext(msg, sadb_address, srcdst,
+		put_sadb_ext(msg, sadb_address, srcdst_exttype,
 			     .sadb_address_proto = proto,
 			     .sadb_address_prefixlen = prefix_len);
 	put_ip_sockaddr(msg, prefix);
@@ -317,6 +323,13 @@ static struct sadb_address *put_sadb_address(struct outbuf *msg,
 {
 	const struct ip_info *afi = address_info(addr);
 #ifdef __OpenBSD__
+	/*
+	 * XXX: OpenBSD uses address+mask, instead of
+	 * address/prefixlen; protocol and prefix length were dropped
+	 * from the structure.
+	 *
+	 * Ulgh!
+	 */
 	struct sadb_address *address =
 		put_sadb_ext(msg, sadb_address, srcdst);
 #else
@@ -720,10 +733,20 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 #endif
 #ifdef SADB_X_EXT_UDPENCAP /* OpenBSD */
 	/*
-	 * NetBSD and FreeBSD use a system call on the open IKE
-	 * socket.
+	 * NetBSD and FreeBSD, like Linux, call setsockopt
+	 * UDP_ENCAP_ESPINUDP on the IKE UDP socket when it is first
+	 * opened/accepted.
 	 *
-	 * OpenBSD instead sets the below bit.
+	 * -> this means that the socket is always in UDPENCAP mode;
+	 *    presumably the non-ESP marker doesn't change (always
+	 *    stripped)
+	 *
+	 * OpenBSD instead uses the UDPENCAP bit when adding the SA to
+	 * the kernel.
+	 *
+	 * -> this means that the kernel only finds out that the
+	 *    socket is UDPENCAP when the SA is added; does this mean
+	 *    that non-ESP marker handling changes?
 	 */
 	if (k->encap_type == &ip_encap_esp_in_udp) {
 		saflags |= SADB_X_SAFLAGS_UDPENCAP;
@@ -733,41 +756,54 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 	/*
 	 * Determine the size of the replay window:
 	 *
-	 * + The field .replay_window specifies the size in packets.
+	 * -> the field kernel_sa .replay_window is the size of the
+	 *    replay window in packets
 	 *
-	 * + PF KEY v2's .sadb_sa_replay expects the size in 8-packet
-	 *   bytes.  FreeBSD's setkey describes it as "one eighth of
-	 *   the anti-replay window size in packets".
+	 * -> PF KEY v2's .sadb_sa_replay is the number of bytes
+	 *    needed to store the register window bit-mask (one bit
+	 *    per-packet)
 	 *
-	 * Hence the jugging with byte vs bit below.
+	 *    FreeBSD's setkey describes it as "one eighth of the
+	 *    anti-replay window size in packets".
 	 *
-	 * What about values larger than UINT8_MAX*8 (~2k)?
+	 * Hence the strange conversion below.
 	 *
-	 * FreeBSD: supports both .sadb_sa_replay and the
-	 * SADB_X_EXT_SA_REPLAY extension.  When .replay_window
-	 * exceeds UINT8_MAX*8, .sadb_sa_replay is set to UINT8_MAX
-	 * and a SADB_X_EXT_SA_REPLAY payload is added containing
-	 * .replay_window (in packets not bytes).
+	 * What about a replay window larger than UINT8_MAX*8 (~2k
+	 * packets)?
 	 *
-	 * NetBSD: supports .sadb_sa_replay.
+	 * FreeBSD:
 	 *
-	 * OpenBSD: supports .sadb_sa_replay, the kernel enforces an
-	 * additional a hardwired limit of 64 (*8).  Also, on the way
-	 * in, IKED hardwires the value to 65(*8), IPSECCTL can't set
-	 * the value at all, and ISAKMPD does have a parameter.
+	 *   Supports both the original .sadb_sa_replay and the
+	 *   SADB_X_EXT_SA_REPLAY extension.  When .replay_window
+	 *   exceeds UINT8_MAX*8, .sadb_sa_replay is set to UINT8_MAX
+	 *   and a SADB_X_EXT_SA_REPLAY payload is added containing
+	 *   .replay_window (in packets not bytes).
 	 *
-	 * Note: OpenBSD also defines SADB_X_EXT_REPLAY but that is
-	 * unrelated.  It contains a count of the number of replays
-	 * that the kernel detected?
+	 * NetBSD:
+	 *
+	 *   Supports the original .sadb_sa_replay.
+	 *
+	 * OpenBSD:
+	 *
+	 *   Supports the original .sadb_sa_replay.  The kernel
+	 *   enforces an additional hardwired limit of 64 (*8).  Also,
+	 *   on the way in, IKED hardwires the value to 65(*8),
+	 *   IPSECCTL can't set the value at all, but ISAKMPD does
+	 *   have a parameter.
+	 *
+	 *   Note: OpenBSD defines SADB_X_EXT_REPLAY but it has
+	 *   nothing to do with this code.  It seems to be used by the
+	 *   kernel to return the number of replays that were
+	 *   detected.
 	 */
 	unsigned bytes_for_replay_window = BYTES_FOR_BITS(k->replay_window);
+	unsigned saturated_bytes_for_replay_window =
+		(bytes_for_replay_window > UINT8_MAX ? UINT8_MAX : bytes_for_replay_window);
 
 	put_sadb_sa(&req, k->spi,
 		    base->sadb_msg_satype,
 		    SADB_SASTATE_MATURE,
-		    /*sadb_sa_replay*/
-		    (bytes_for_replay_window > UINT8_MAX ? UINT8_MAX :
-		     bytes_for_replay_window),
+		    /*sadb_sa_replay*/saturated_bytes_for_replay_window,
 		    saflags,
 		    k->integ, k->encrypt, k->ipcomp);
 
@@ -789,8 +825,23 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 #endif
 	/* (k->level == 0 && k->tunnel ?  ipsec_mode_tunnel : ipsec_mode_transport), */
 
-	/* address(SD) */
-
+	/*
+	 * address(SD)
+	 *
+	 * XXX: this is the host address _without_ the socket:
+	 *
+	 * -> OpenBSD passes the UDP encapsulated destination port
+	 *    using SADB_X_EXT_UDPENCAP; there doesn't seem to be a
+	 *    way to pass the source port.
+	 *
+	 * -> Linux passes the UDP encapsulated source and destination
+	 *    ports using using XFRMA_ENCAP.
+	 *
+	 * -> NetBSD and FreeBSD do what?!?
+	 *
+	 * XXX: why not just include the protocol/socket!?!  There's
+	 * space, well except for OpenBSD.
+	 */
 	put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, k->src.address);
 	put_sadb_address(&req, SADB_EXT_ADDRESS_DST, k->dst.address);
 
@@ -840,16 +891,15 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 
 #ifdef SADB_X_EXT_UDPENCAP /* OpenBSD */
 	/*
-	 * XXX: Can OpenBSD adopt the more common setsockopt
-	 * UDP_ENCAP_ESPINUDP?
+	 * OpenBSD(BUG): This mechanism only provides a way to specify
+	 * the destination port.  The source port is fixed at 4500 (or
+	 * what ever is configured in the kernel).
 	 *
-	 * + this specifies the destination port; it would appear that
-	 * the source port is always be 4500?!?
+	 * Linux's XFRMA_ENCAP includes both the source and
+	 * destination port.
 	 *
-	 * On OpenBSD, SADB_X_SAFLAGS_UDPENCAP indicates that the SA
-	 * is encapsulated within UDP, the port assumed to be 4500 (or
-	 * what ever was configured).  The below forces any
-	 * destination port to work.
+	 * FreeBSD and NetBSD do what?  It looks like they provide
+	 * SADB_X_EXT_NAT_T_[SD]PORT?!?
 	 */
 	if (k->encap_type == &ip_encap_esp_in_udp) {
 		if (k->src.encap_port != 4500) {

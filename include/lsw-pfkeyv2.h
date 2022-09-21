@@ -71,6 +71,7 @@
  * Work-around OpenBSD which defines SADB_X_EXT_SA2 but not struct
  * sadb_x_sa2 (it doesn't even use that structure).
  */
+
 #ifdef __OpenBSD__
 # ifdef SADB_X_EXT_SA2
 #  if SADB_X_EXT_SA2 != 23
@@ -82,7 +83,7 @@
 
 /*
  * Work-around OpenBSD which completely re-defined struct
- * sadb_x_policy - the fields are not the same - the way it is used is
+ * sadb_x_policy: the fields are not the same; the way it is used is
  * not the same.
  */
 
@@ -96,22 +97,28 @@
 #endif
 
 /*
- * Work-around OpenBSD dropping _all_ the sadb_address fields and not
- * definining a new structure?
+ * Work-around OpenBSD gutting struct sadb_address:
  *
- * XXX: it isn't clear why this change was made
+ * -> dropped sadb_address_proto
+ * -> dropped sadb_address_prefixlen
  *
- * XXX: I suspect one reason for not defining a new strcture is that
- * sadb_address is being used by both the existing SADB_SRC_ADDRESS
- * et.al. macros and OpenBSD's new SADB_X_SRC_MASK et.al. macros -
- * there's no obvious hook to indicate one or the other.
+ * XXX: HOW?
+ *
+ * XXX: But why?  Since OpenBSD uses address+mask and not
+ * address/prefixlen when specifying child selectors, I'm guessing
+ * that the extra seemingly unused fields were simply dropped.
+ *
+ * The thing is that, even at the time, code was starting to use
+ * /prefixlen, and IKEv2 introduced start-end.  The IKEv1 mask was on
+ * the way out!
  */
 
-/* XXX: how? */
 
 /*
  * Work-around various OSs reusing / renaming fields of existing
  * strctures.
+ *
+ * Use the macro expands to itself hack.
  */
 
 #ifdef __OpenBSD__
