@@ -21,7 +21,6 @@
 
 #include "lsw_socket.h"
 
-
 #include "ip_info.h"
 #include "ip_encap.h"
 #include "chunk.h"
@@ -283,12 +282,26 @@ static struct sadb_sa *put_sadb_sa(struct outbuf *msg,
 	return sa;
 }
 
-static struct ip_sockaddr *put_ip_sockaddr(struct outbuf *msg,
-					   const ip_address addr)
+static struct sockaddr *put_address_sockaddr(struct outbuf *msg,
+					     const ip_address addr)
 {
 	ip_sockaddr sa = sockaddr_from_address(addr);
-	return hunk_put(msg, &sa.sa, sa.len);
+	return hunk_put(msg, &sa.sa.sa, sa.len);
 }
+
+/*
+ * XXX: the BSDs embed the host's port (when UDP) in the SA/SPD's host
+ * address.
+ */
+
+#if 0
+static struct sockaddr *put_endpoint_sockaddr(struct outbuf *msg,
+					      const ip_endpoint endpoint)
+{
+	ip_sockaddr sa = sockaddr_from_endpoint(endpoint);
+	return hunk_put(msg, &sa.sa.sa, sa.len);
+}
+#endif
 
 #ifndef __OpenBSD__
 /*
@@ -311,14 +324,14 @@ static struct sadb_address *put_sadb_selector(struct outbuf *msg,
 		put_sadb_ext(msg, sadb_address, srcdst_exttype,
 			     .sadb_address_proto = proto,
 			     .sadb_address_prefixlen = prefix_len);
-	put_ip_sockaddr(msg, prefix);
+	put_address_sockaddr(msg, prefix);
 	padup_sadb(msg, address);
 	return address;
 }
 #endif
 
 static struct sadb_address *put_sadb_address(struct outbuf *msg,
-					     enum sadb_exttype srcdst,
+					     enum sadb_exttype srcdst_exttype,
 					     const ip_address addr)
 {
 	const struct ip_info *afi = address_info(addr);
@@ -331,17 +344,52 @@ static struct sadb_address *put_sadb_address(struct outbuf *msg,
 	 * Ulgh!
 	 */
 	struct sadb_address *address =
-		put_sadb_ext(msg, sadb_address, srcdst);
+		put_sadb_ext(msg, sadb_address, srcdst_exttype);
 #else
 	struct sadb_address *address =
-		put_sadb_ext(msg, sadb_address, srcdst,
+		put_sadb_ext(msg, sadb_address, srcdst_exttype,
 			     .sadb_address_proto = IPSEC_PROTO_ANY/*255*/,
 			     .sadb_address_prefixlen = afi->mask_cnt);
 #endif
-	put_ip_sockaddr(msg, addr);
+	put_address_sockaddr(msg, addr);
 	padup_sadb(msg, address);
 	return address;
 }
+
+/*
+ * XXX: the BSDs embed the host's port (when UDP) in the SA/SADB host
+ * address.
+ */
+
+#if 0
+static struct sadb_address *put_sadb_endpoint(struct outbuf *msg,
+					      enum sadb_exttype srcdst_exttype,
+					      const ip_endpoint endpoint)
+{
+	pexpect(srcdst_exttype == SADB_EXT_ADDRESS_SRC ||
+		srcdst_exttype == SADB_EXT_ADDRESS_DST);
+	const struct ip_info *afi = endpoint_info(endpoint);
+#ifdef __OpenBSD__
+	/*
+	 * XXX: OpenBSD uses address+mask, instead of
+	 * address/prefixlen; protocol and prefix length were dropped
+	 * from the structure.
+	 *
+	 * Ulgh!
+	 */
+	struct sadb_address *address =
+		put_sadb_ext(msg, sadb_address, srcdst_exttype);
+#else
+	struct sadb_address *address =
+		put_sadb_ext(msg, sadb_address, srcdst_exttype,
+			     .sadb_address_proto = IPSEC_PROTO_ANY/*255*/,
+			     .sadb_address_prefixlen = afi->mask_cnt);
+#endif
+	put_endpoint_sockaddr(msg, endpoint);
+	padup_sadb(msg, address);
+	return address;
+}
+#endif
 
 static struct sadb_key *put_sadb_key(struct outbuf *msg,
 				     enum sadb_exttype key_alg,
@@ -828,8 +876,6 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 	/*
 	 * address(SD)
 	 *
-	 * XXX: this is the host address _without_ the socket:
-	 *
 	 * -> OpenBSD passes the UDP encapsulated destination port
 	 *    using SADB_X_EXT_UDPENCAP; there doesn't seem to be a
 	 *    way to pass the source port.
@@ -837,10 +883,8 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 	 * -> Linux passes the UDP encapsulated source and destination
 	 *    ports using using XFRMA_ENCAP.
 	 *
-	 * -> NetBSD and FreeBSD do what?!?
-	 *
-	 * XXX: why not just include the protocol/socket!?!  There's
-	 * space, well except for OpenBSD.
+	 * -> NetBSD, FreeBSD, and OpenBSD(?) can handle the address
+	 *    including the port.
 	 */
 	put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, k->src.address);
 	put_sadb_address(&req, SADB_EXT_ADDRESS_DST, k->dst.address);
@@ -891,15 +935,16 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 
 #ifdef SADB_X_EXT_UDPENCAP /* OpenBSD */
 	/*
-	 * OpenBSD(BUG): This mechanism only provides a way to specify
-	 * the destination port.  The source port is fixed at 4500 (or
+	 * OpenBSD: This mechanism only provides a way to specify the
+	 * destination port.  The source port is fixed at 4500 (or
 	 * what ever is configured in the kernel).
 	 *
 	 * Linux's XFRMA_ENCAP includes both the source and
 	 * destination port.
 	 *
 	 * FreeBSD and NetBSD do what?  It looks like they provide
-	 * SADB_X_EXT_NAT_T_[SD]PORT?!?
+	 * SADB_X_EXT_NAT_T_[SD]PORT and expect the SA/SPD host
+	 * addresses to also include the port and protocol?
 	 */
 	if (k->encap_type == &ip_encap_esp_in_udp) {
 		if (k->src.encap_port != 4500) {
@@ -1054,8 +1099,8 @@ static struct sadb_x_ipsecrequest *put_sadb_x_ipsecrequest(struct outbuf *msg,
 	 * additional addresses are specified.
 	 */
 	if (mode == IPSEC_MODE_TUNNEL) {
-		put_ip_sockaddr(msg, kernel_policy->src.host);
-		put_ip_sockaddr(msg, kernel_policy->dst.host);
+		put_address_sockaddr(msg, kernel_policy->src.host);
+		put_address_sockaddr(msg, kernel_policy->dst.host);
 	}
 	padup_sadb(msg, x_ipsecrequest);
 	/* patch up mess? */
