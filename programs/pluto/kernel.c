@@ -1940,20 +1940,20 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		return false;
 	}
 
-	uint64_t sa_ipsec_soft_bytes =  c->sa_ipsec_max_bytes;
-	uint64_t sa_ipsec_soft_packets = c->sa_ipsec_max_packets;
+	uint64_t sa_ipsec_soft_bytes =  c->config->sa_ipsec_max_bytes;
+	uint64_t sa_ipsec_soft_packets = c->config->sa_ipsec_max_packets;
 
 	if (!LIN(POLICY_DONT_REKEY, c->policy)) {
-		uint64_t margin_bytes = c->sa_ipsec_max_bytes -  c->sa_ipsec_max_bytes * IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE / 100;
-		uint64_t margin_packets = c->sa_ipsec_max_packets - c->sa_ipsec_max_packets * IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE / 100;
+		uint64_t margin_bytes = c->config->sa_ipsec_max_bytes -  c->config->sa_ipsec_max_bytes * IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE / 100;
+		uint64_t margin_packets = c->config->sa_ipsec_max_packets - c->config->sa_ipsec_max_packets * IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE / 100;
 		sa_ipsec_soft_bytes = soft_limit(st->st_sa_role == SA_INITIATOR,
-						 c->sa_ipsec_max_bytes, margin_bytes,
+						 c->config->sa_ipsec_max_bytes, margin_bytes,
 						 c->sa_rekey_fuzz);
 		sa_ipsec_soft_packets = soft_limit((st->st_sa_role == SA_INITIATOR),
-						   c->sa_ipsec_max_packets,
+						   c->config->sa_ipsec_max_packets,
 						   margin_packets,
 						   c->sa_rekey_fuzz);
-		dbg("%s %d #%lu ipsec-max-bytes %"PRIu64"/%"PRIu64" ipsec-max-packets %"PRIu64"/%"PRIu64" margin bytes %"PRIu64" margin mackets %"PRIu64" IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE %u", __func__, __LINE__,  st->st_serialno,  sa_ipsec_soft_bytes, c->sa_ipsec_max_bytes, sa_ipsec_soft_packets, c->sa_ipsec_max_packets, margin_bytes, margin_packets, IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE);
+		dbg("%s %d #%lu ipsec-max-bytes %"PRIu64"/%"PRIu64" ipsec-max-packets %"PRIu64"/%"PRIu64" margin bytes %"PRIu64" margin mackets %"PRIu64" IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE %u", __func__, __LINE__,  st->st_serialno,  sa_ipsec_soft_bytes, c->config->sa_ipsec_max_bytes, sa_ipsec_soft_packets, c->config->sa_ipsec_max_packets, margin_bytes, margin_packets, IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE);
 	}
 	const struct kernel_sa said_boilerplate = {
 		.src.address = kernel_policy.src.host,
@@ -1966,8 +1966,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		.sa_lifetime = c->sa_ipsec_life_seconds,
 		.sa_max_soft_bytes = sa_ipsec_soft_bytes,
 		.sa_max_soft_packets = sa_ipsec_soft_packets,
-		.sa_ipsec_max_bytes = c->sa_ipsec_max_bytes,
-		.sa_ipsec_max_packets = c->sa_ipsec_max_packets,
+		.sa_ipsec_max_bytes = c->config->sa_ipsec_max_bytes,
+		.sa_ipsec_max_packets = c->config->sa_ipsec_max_packets,
 		.sec_label = (st->st_v1_seen_sec_label.len > 0 ? st->st_v1_seen_sec_label :
 			      st->st_v1_acquired_sec_label.len > 0 ? st->st_v1_acquired_sec_label :
 			      c->spd.this.sec_label /* assume connection outlive their kernel_sa's */),

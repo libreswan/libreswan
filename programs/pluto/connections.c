@@ -2047,8 +2047,6 @@ static bool extract_connection(const struct whack_message *wm,
 		config->nic_offload = wm->nic_offload;
 		c->sa_ike_life_seconds = wm->sa_ike_life_seconds;
 		c->sa_ipsec_life_seconds = wm->sa_ipsec_life_seconds;
-		c->sa_ipsec_max_bytes = wm->sa_ipsec_max_bytes;
-		c->sa_ipsec_max_packets = wm->sa_ipsec_max_packets;
 		c->sa_rekey_margin = wm->sa_rekey_margin;
 		c->sa_rekey_fuzz = wm->sa_rekey_fuzz;
 		c->sa_keying_tries = wm->sa_keying_tries;
@@ -2075,30 +2073,36 @@ static bool extract_connection(const struct whack_message *wm,
 				     (intmax_t) max_ipsec_life);
 				c->sa_ipsec_life_seconds = deltatime(max_ipsec_life);
 			}
-			/*
-			 * A 1500 mtu packet requires 1500/16 ~= 90 crypto operations.
-			 * Always use NIST maximums for bytes/packets.
-			 *
-			 * https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf
-			 * "The total number of invocations of the authenticated encryption function
-			 * shall not exceed 2^32 , including all IV lengths and all instances of the
-			 * authenticated encryption function with the given key."
-			 *
-			 * Note "invocations" is not "bytes" or "packets", but the safest assumption is
-			 * the most wasteful invocations which is 1 byte per packet.
-			 */
-			if (c->sa_ipsec_max_bytes > IPSEC_SA_MAX_OPERATIONS) /* 2^32 */ {
-				llog(RC_LOG_SERIOUS, c->logger,
-				     "IPsec max bytes limited to the maximum allowed %s",
-				     IPSEC_SA_MAX_OPERATIONS_STRING);
-				c->sa_ipsec_max_bytes = IPSEC_SA_MAX_OPERATIONS;
-			}
-			if (c->sa_ipsec_max_packets > IPSEC_SA_MAX_OPERATIONS) /* 2^32 */ {
-				llog(RC_LOG_SERIOUS, c->logger,
-				     "IPsec max packets limited to the maximum allowed %s",
-				     IPSEC_SA_MAX_OPERATIONS_STRING);
-				c->sa_ipsec_max_packets = IPSEC_SA_MAX_OPERATIONS; /* 2^32 */
-			}
+		}
+		/*
+		 * A 1500 mtu packet requires 1500/16 ~= 90 crypto
+		 * operations.  Always use NIST maximums for
+		 * bytes/packets.
+		 *
+		 * https://nvlpubs.nist.gov/nistpubs/Legacy/SP/nistspecialpublication800-38d.pdf
+		 * "The total number of invocations of the
+		 * authenticated encryption function shall not exceed
+		 * 2^32 , including all IV lengths and all instances
+		 * of the authenticated encryption function with the
+		 * given key."
+		 *
+		 * Note "invocations" is not "bytes" or "packets", but
+		 * the safest assumption is the most wasteful
+		 * invocations which is 1 byte per packet.
+		 */
+		config->sa_ipsec_max_bytes = wm->sa_ipsec_max_bytes;
+		if (wm->sa_ipsec_max_bytes > IPSEC_SA_MAX_OPERATIONS) /* 2^32 */ {
+			llog(RC_LOG_SERIOUS, c->logger,
+			     "IPsec max bytes limited to the maximum allowed %s",
+			     IPSEC_SA_MAX_OPERATIONS_STRING);
+			config->sa_ipsec_max_bytes = IPSEC_SA_MAX_OPERATIONS;
+		}
+		config->sa_ipsec_max_packets = wm->sa_ipsec_max_packets;
+		if (wm->sa_ipsec_max_packets > IPSEC_SA_MAX_OPERATIONS) /* 2^32 */ {
+			llog(RC_LOG_SERIOUS, c->logger,
+			     "IPsec max packets limited to the maximum allowed %s",
+			     IPSEC_SA_MAX_OPERATIONS_STRING);
+			config->sa_ipsec_max_packets = IPSEC_SA_MAX_OPERATIONS; /* 2^32 */
 		}
 
 		if (deltatime_cmp(c->sa_rekey_margin, >=, c->sa_ipsec_life_seconds)) {
@@ -2521,8 +2525,8 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 	    c->sa_keying_tries,
 	    c->sa_replay_window,
 	    str_connection_policies(c, &pb),
-	    c->sa_ipsec_max_bytes,
-	    c->sa_ipsec_max_packets);
+	    c->config->sa_ipsec_max_bytes,
+	    c->config->sa_ipsec_max_packets);
 	char topo[CONN_BUF_LEN];
 	dbg("%s", format_connection(topo, sizeof(topo), c, &c->spd));
 	/* XXX: something better? */
@@ -3904,8 +3908,8 @@ static void show_one_connection(struct show *s,
 		jam(buf, PRI_CONNECTION":  ", c->name, instance);
 		jam(buf, " ike_life: %jds;", deltasecs(c->sa_ike_life_seconds));
 		jam(buf, " ipsec_life: %jds;", deltasecs(c->sa_ipsec_life_seconds));
-		jam_humber_max(buf, " ipsec_max_bytes: ", c->sa_ipsec_max_bytes, "B;");
-		jam_humber_max(buf, " ipsec_max_packets: ", c->sa_ipsec_max_packets, ";");
+		jam_humber_max(buf, " ipsec_max_bytes: ", c->config->sa_ipsec_max_bytes, "B;");
+		jam_humber_max(buf, " ipsec_max_packets: ", c->config->sa_ipsec_max_packets, ";");
 		jam(buf, " replay_window: %u;", c->sa_replay_window);
 		jam(buf, " rekey_margin: %jds;", deltasecs(c->sa_rekey_margin));
 		jam(buf, " rekey_fuzz: %lu%%;", c->sa_rekey_fuzz);

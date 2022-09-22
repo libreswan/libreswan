@@ -2004,8 +2004,8 @@ static void jam_state_traffic(struct jambuf *buf, struct state *st)
 				  st->st_ah.present ? st->st_ah.peer_bytes :
 				  st->st_ipcomp.present ? st->st_ipcomp.peer_bytes : 0);
 		jam(buf, ", outBytes=%ju", outb);
-		if (c->sa_ipsec_max_bytes != 0) {
-			jam_humber_max(buf, ", maxBytes=", c->sa_ipsec_max_bytes, "B");
+		if (c->config->sa_ipsec_max_bytes != 0) {
+			jam_humber_max(buf, ", maxBytes=", c->config->sa_ipsec_max_bytes, "B");
 		}
 	}
 
@@ -2244,7 +2244,7 @@ static void show_established_child_details(struct show *s, struct state *st,
 				jam(buf, " AHout=");
 				jam_readable_humber(buf, first_sa->peer_bytes, false);
 			}
-			jam_humber_max(buf, " AHmax=", c->sa_ipsec_max_bytes, "B");
+			jam_humber_max(buf, " AHmax=", c->config->sa_ipsec_max_bytes, "B");
 		}
 		if (st->st_esp.present) {
 			if (in_info) {
@@ -2255,7 +2255,7 @@ static void show_established_child_details(struct show *s, struct state *st,
 				jam(buf, " ESPout=");
 				jam_readable_humber(buf, first_sa->peer_bytes, false);
 			}
-			jam_humber_max(buf, " ESPmax=", c->sa_ipsec_max_bytes, "B");
+			jam_humber_max(buf, " ESPmax=", c->config->sa_ipsec_max_bytes, "B");
 		}
 		if (st->st_ipcomp.present) {
 			if (in_info) {
@@ -2266,7 +2266,7 @@ static void show_established_child_details(struct show *s, struct state *st,
 				jam(buf, " IPCOMPout=");
 				jam_readable_humber(buf, first_sa->peer_bytes, false);
 			}
-			jam_humber_max(buf, " IPCOMPmax=", c->sa_ipsec_max_bytes, "B");
+			jam_humber_max(buf, " IPCOMPmax=", c->config->sa_ipsec_max_bytes, "B");
 		}
 
 		jam(buf, " "); /* TBD: trailing blank */

@@ -150,6 +150,8 @@ struct config {
 
 	deltatime_t retransmit_interval; /* initial retransmit time, doubles each time */
 	deltatime_t retransmit_timeout; /* max time for one packet exchange attempt */
+	uintmax_t sa_ipsec_max_bytes;
+	uintmax_t sa_ipsec_max_packets;
 
 	lset_t sighash_policy;
 	enum shunt_policy prospective_shunt;	/* before */
@@ -451,8 +453,6 @@ struct connection {
 	deltatime_t sa_ike_life_seconds;
 	deltatime_t sa_ipsec_life_seconds;
 	deltatime_t sa_rekey_margin;
-	uintmax_t sa_ipsec_max_bytes;
-	uintmax_t sa_ipsec_max_packets;
 	unsigned long sa_rekey_fuzz;
 	unsigned long sa_keying_tries;
 	uint32_t sa_priority;
