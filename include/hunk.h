@@ -233,7 +233,8 @@ bool case_eq(const void *l_ptr, size_t l_len,
 			hp_hunk_->len -= hp_len_;			\
 			hp_hunk_->ptr += hp_len_;			\
 		}							\
-		hp_dst_;						\
+		/* XXX: can't assume alignment; but */			\
+		(typeof(PTR)) hp_dst_;					\
 	})
 
 #define hunk_put_hunk(HUNK, DATA)					\
