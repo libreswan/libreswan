@@ -951,7 +951,7 @@ static void check_life_time(deltatime_t life, time_t raw_limit,
 			    const struct whack_message *msg)
 {
 	deltatime_t limit = deltatime(raw_limit);
-	deltatime_t mint = deltatimescale(100 + msg->sa_rekey_fuzz, 100, msg->sa_rekey_margin);
+	deltatime_t mint = deltatime_scale(msg->sa_rekey_margin, 100 + msg->sa_rekey_fuzz/*percent*/, 100);
 
 	if (deltatime_cmp(limit, <, life)) {
 		char buf[200];	/* arbitrary limit */

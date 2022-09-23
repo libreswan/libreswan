@@ -74,7 +74,7 @@ deltatime_t deltatime_divu(deltatime_t a, unsigned scalar);
 
 intmax_t deltamillisecs(deltatime_t d);
 intmax_t deltasecs(deltatime_t d);
-deltatime_t deltatimescale(int num, int denom, deltatime_t d);
+deltatime_t deltatime_scale(deltatime_t d, int num, int denom);
 
 /* Convert to/from struct timeval - time used by libevent. */
 struct timeval timeval_from_deltatime(deltatime_t);

@@ -2108,7 +2108,7 @@ static bool extract_connection(const struct whack_message *wm,
 		}
 
 		if (deltatime_cmp(c->sa_rekey_margin, >=, c->sa_ipsec_life_seconds)) {
-			deltatime_t new_rkm = deltatimescale(1, 2, c->sa_ipsec_life_seconds);
+			deltatime_t new_rkm = deltatime_scale(c->sa_ipsec_life_seconds, 1, 2);
 
 			llog(RC_LOG, c->logger,
 			     "rekeymargin (%jds) >= salifetime (%jds); reducing rekeymargin to %jds seconds",

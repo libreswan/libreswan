@@ -391,7 +391,7 @@ static bool pending_check_timeout(const struct connection *c)
 		if (deltasecs(c->config->dpd.timeout) > 0) {
 			if (!monobefore(mononow(),
 				monotime_add(p->pend_time,
-					deltatimescale(3, 1, c->config->dpd.timeout)))) {
+					     deltatime_scale(c->config->dpd.timeout, 3, 1)))) {
 				connection_buf cib;
 				dbg("connection "PRI_CONNECTION" stuck, restarting",
 				    pri_connection(c, &cib));
