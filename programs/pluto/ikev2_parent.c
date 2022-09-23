@@ -499,7 +499,6 @@ void schedule_v2_replace_event(struct state *st)
 	case IPSEC_SA: lifetime = c->sa_ipsec_life_seconds; break;
 	default: bad_case(st->st_establishing_sa);
 	}
-	intmax_t delay = deltasecs(lifetime);
 
 	enum event_type kind;
 	const char *story;
@@ -514,22 +513,26 @@ void schedule_v2_replace_event(struct state *st)
 		kind = EVENT_SA_REPLACE;
 		story = "IKE SA with policy re-authenticate";
 	} else {
-		time_t marg_s = fuzz_margin((st->st_sa_role == SA_INITIATOR),
-					    deltasecs(c->sa_rekey_margin),
-					    c->sa_rekey_fuzz);
+		deltatime_t marg = fuzz_rekey_margin(st->st_sa_role,
+						     c->sa_rekey_margin,
+						     c->sa_rekey_fuzz/*percent*/);
 
-		intmax_t rekey_delay = delay;
-		if (delay > marg_s)
-			rekey_delay = delay - marg_s;
-		else
-			marg_s = 0;
-		deltatime_t marg = deltatime(marg_s);
+		deltatime_t rekey_delay;
+		if (deltatime_cmp(lifetime, >, marg)) {
+			rekey_delay = deltatime_sub(lifetime, marg);
+		} else {
+			rekey_delay = lifetime;
+			marg = deltatime(0);
+		}
 		st->st_replace_margin = marg;
 
 		/* Time to rekey/reauth; scheduled once during a state's lifetime.*/
-		dbg("#%lu will start re-keying in %jd seconds (replace in %jd seconds)",
-		    st->st_serialno, rekey_delay, delay);
-		event_schedule(EVENT_v2_REKEY, deltatime(rekey_delay), st);
+		deltatime_buf rdb, lb;
+		dbg(PRI_SO" will start re-keying in %s seconds (replace in %s seconds)",
+		    st->st_serialno,
+		    str_deltatime(rekey_delay, &rdb),
+		    str_deltatime(lifetime, &lb));
+		event_schedule(EVENT_v2_REKEY, rekey_delay, st);
 		pexpect(st->st_v2_refresh_event->ev_type == EVENT_v2_REKEY);
 		story = "attempting re-key";
 
@@ -540,16 +543,17 @@ void schedule_v2_replace_event(struct state *st)
 	 * This is the drop-dead event.
 	 */
 	passert(kind == EVENT_SA_REPLACE || kind == EVENT_SA_EXPIRE);
-	dbg("#%lu will %s in %jd seconds (%s)",
+	deltatime_buf lb;
+	dbg(PRI_SO" will %s in %s seconds (%s)",
 	    st->st_serialno,
 	    kind == EVENT_SA_EXPIRE ? "expire" : "be replaced",
-	    delay, story);
+	    str_deltatime(lifetime, &lb), story);
 
 	/*
 	 * Schedule the lifetime (death) event.  Only happens once
 	 * when the state is established.
 	 */
-	event_schedule(kind, deltatime(delay), st);
+	event_schedule(kind, lifetime, st);
 	pexpect(st->st_v2_lifetime_event->ev_type == kind);
 }
 

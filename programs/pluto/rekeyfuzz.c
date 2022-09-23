@@ -14,32 +14,43 @@
  *
  */
 
-#include <stdint.h>
-#include <stdbool.h>
-#include <stdlib.h>
-#include <limits.h>
-
 #include "constants.h"		/* for enum sa_role */
 #include "lswlog.h"
 #include "rnd.h"
 
+#include "rnd.h"		/* for fips get_rnd() */
+#include "constants.h"		/* for enum sa_role */
+#include "lswlog.h"		/* for bad_case() */
+
 #include "rekeyfuzz.h"
 
-uint64_t fuzz_margin(bool initiator, unsigned long marg,  unsigned long fuzz)
+deltatime_t fuzz_rekey_margin(enum sa_role role, deltatime_t marg,  unsigned fuzz_percent)
 {
 	/*
-	 * Important policy lies buried here. For example, we favour the
-	 * initiator over the responder by making the initiator start
-	 * rekeying sooner.
+	 * Important policy lies buried here.
 	 */
 
-	if (initiator) {
-		marg += marg * fuzz / 100.E0 * (rand() / (RAND_MAX + 1.E0));
-	} else {
-		marg /= 2;
+	switch (role) {
+	case SA_INITIATOR:
+		/*
+		 * Favour the initiator by giving it a larger margin
+		 * (so it rekeys earlier).
+		 *
+		 * marg + marg * fuzz%;
+		 */
+		return deltatime_scale(marg,
+				       100 + /*[0..FUZZ_PERCENT]*/get_rnd(/*roof*/fuzz_percent + 1),
+				       100);
+	case SA_RESPONDER:
+		/*
+		 * Disfavour the responder by halving its margin which
+		 * means it will wait longer before starting a
+		 * rekey/replace.
+		 */
+		return deltatime_scale(marg, 1, 2);
+	default:
+		bad_case(role);
 	}
-
-	return marg;
 }
 
 uintmax_t fuzz_soft_limit(const char *what, enum sa_role role,

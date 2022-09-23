@@ -19,6 +19,8 @@
 
 #include <stdint.h>
 
+#include "deltatime.h"
+
 struct logger;
 enum sa_role;
 
@@ -26,6 +28,6 @@ extern uintmax_t fuzz_soft_limit(const char *what, enum sa_role,
 				 uintmax_t hard_limit, unsigned soft_limit_percent,
 				 struct logger *logger);
 
-extern uint64_t fuzz_margin(bool initiator, unsigned long marg,  unsigned long fuzz);
+extern deltatime_t fuzz_rekey_margin(enum sa_role, deltatime_t marg,  unsigned fuzz_percent);
 
 #endif

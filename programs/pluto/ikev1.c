@@ -2620,15 +2620,13 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 					      EVENT_SA_EXPIRE);
 			}
 			if (event_type != EVENT_SA_EXPIRE) {
-				time_t marg_s =  fuzz_margin((smc->flags & SMF_INITIATOR),
-							     deltasecs(c->sa_rekey_margin),
-							     c->sa_rekey_fuzz);
-				deltatime_t marg = deltatime(marg_s);
+				deltatime_t marg = fuzz_rekey_margin(st->st_sa_role,
+								     c->sa_rekey_margin,
+								     c->sa_rekey_fuzz/*percent*/);
 				if (deltatime_cmp(event_delay, >, marg)) {
 					st->st_replace_margin = marg;
 				} else {
-					marg_s = 0;
-					marg = deltatime(marg_s);
+					marg = deltatime(0);
 				}
 				event_delay = deltatime_sub(event_delay, marg);
 			}
