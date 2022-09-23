@@ -42,7 +42,7 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ipv4-psk-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
+006 #2: "westnet-eastnet-ipv4-psk-ikev2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ipsec auto --status
 000 using kernel interface: xfrm
@@ -137,7 +137,7 @@ west #
 000 "westnet-eastnet-ipv4-psk-ikev2":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet-ipv4-psk-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-ipv4-psk-ikev2":   sec_label:unset;
-000 "westnet-eastnet-ipv4-psk-ikev2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^32B; ipsec_max_packets: 2^32; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ipv4-psk-ikev2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-ipv4-psk-ikev2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-ipv4-psk-ikev2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-ipv4-psk-ikev2":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -159,7 +159,7 @@ west #
 000  
 000 #1: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 000 #2: "westnet-eastnet-ipv4-psk-ikev2":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-000 #2: "westnet-eastnet-ipv4-psk-ikev2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B ESPmax=2^32B 
+000 #2: "westnet-eastnet-ipv4-psk-ikev2" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
 000  
 000 Bare Shunt list:
 000  
@@ -264,7 +264,7 @@ west #
 000 "westnet-eastnet-ipv4-psk-ikev2":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet-ipv4-psk-ikev2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-ipv4-psk-ikev2":   sec_label:unset;
-000 "westnet-eastnet-ipv4-psk-ikev2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^32B; ipsec_max_packets: 2^32; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ipv4-psk-ikev2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-ipv4-psk-ikev2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-ipv4-psk-ikev2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-ipv4-psk-ikev2":   policy: IKEv2+PSK+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;

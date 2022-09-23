@@ -72,9 +72,9 @@ west #
  # expect Child #2 #3 #4
 west #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
-006 #3: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
-006 #4: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
+006 #2: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+006 #3: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+006 #4: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  # rekey to Child #5 #6 #7
 west #
@@ -110,9 +110,9 @@ west #
  # expect Child #5 #6 #7
 west #
  ipsec whack --trafficstatus
-006 #5: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
-006 #6: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
-006 #7: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
+006 #5: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+006 #6: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+006 #7: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  # rekey to Child #8 #9 #10
 west #
@@ -148,25 +148,25 @@ west #
  # expect Child #8 #9 #10
 west #
  ipsec whack --trafficstatus
-006 #8: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
-006 #9: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
-006 #10: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
+006 #8: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+006 #9: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+006 #10: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  echo done
 done
 west #
  ipsec whack --trafficstatus
-006 #8: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
-006 #9: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
-006 #10: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
+006 #8: "westnet-eastnet-ikev2a", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+006 #9: "westnet-eastnet-ikev2b", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+006 #10: "westnet-eastnet-ikev2c", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  ipsec showstates
 000 #1: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 000 #8: "westnet-eastnet-ikev2a":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-000 #8: "westnet-eastnet-ikev2a" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B ESPmax=2^32B 
+000 #8: "westnet-eastnet-ikev2a" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
 000 #9: "westnet-eastnet-ikev2b":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-000 #9: "westnet-eastnet-ikev2b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B ESPmax=2^32B 
+000 #9: "westnet-eastnet-ikev2b" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
 000 #10: "westnet-eastnet-ikev2c":500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-000 #10: "westnet-eastnet-ikev2c" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B ESPmax=2^32B 
+000 #10: "westnet-eastnet-ikev2c" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
 west #
  

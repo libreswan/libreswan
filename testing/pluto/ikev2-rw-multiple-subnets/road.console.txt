@@ -10,10 +10,10 @@ road #
 initdone
 road #
  ../../guestbin/wait-for.sh --match road/0x1 -- ipsec whack --trafficstatus
-006 #2: "road/0x1", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+006 #2: "road/0x1", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 road #
  ../../guestbin/wait-for.sh --match road/0x2 -- ipsec whack --trafficstatus
-006 #3: "road/0x2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+006 #3: "road/0x2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
@@ -25,8 +25,8 @@ road #
 done
 road #
  ipsec trafficstatus
-006 #2: "road/0x1", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
-006 #3: "road/0x2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+006 #2: "road/0x1", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
+006 #3: "road/0x2", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 road #
  ../../guestbin/ipsec-look.sh
 road NOW

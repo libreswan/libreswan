@@ -32,8 +32,8 @@ west #
 004 "two" #3: initiator established Child SA using #1; IPsec tunnel [192.1.2.45-192.1.2.45:0-65535 17] -> [192.1.2.23-192.1.2.23:6081-6081 17] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
 west #
  ipsec whack --trafficstatus
-006 #2: "one", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@east'
-006 #3: "two", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@east'
+006 #2: "one", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+006 #3: "two", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  echo done
 done

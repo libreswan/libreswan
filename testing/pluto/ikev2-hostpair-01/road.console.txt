@@ -32,7 +32,7 @@ road #
 up
 road #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.1/32
+006 #2: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.1/32
 road #
  # change ip, emulating sudden switching network
 road #
@@ -73,7 +73,7 @@ road #
 up
 road #
  ipsec whack --trafficstatus
-006 #2: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.1/32
+006 #2: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.1/32
 road #
  echo done
 done
@@ -86,7 +86,7 @@ road #
 000 "westnet-eastnet-ipv4-psk-ikev2":   modecfg info: us:client, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-ipv4-psk-ikev2":   sec_label:unset;
 000 "westnet-eastnet-ipv4-psk-ikev2":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-000 "westnet-eastnet-ipv4-psk-ikev2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^32B; ipsec_max_packets: 2^32; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ipv4-psk-ikev2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-ipv4-psk-ikev2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-ipv4-psk-ikev2":   initial-contact:yes; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-ipv4-psk-ikev2":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -104,7 +104,7 @@ road #
 000 "westnet-eastnet-ipv4-psk-ikev2"[1]:   modecfg info: us:client, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet-ipv4-psk-ikev2"[1]:   sec_label:unset;
 000 "westnet-eastnet-ipv4-psk-ikev2"[1]:   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-000 "westnet-eastnet-ipv4-psk-ikev2"[1]:   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^32B; ipsec_max_packets: 2^32; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet-ipv4-psk-ikev2"[1]:   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet-ipv4-psk-ikev2"[1]:   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet-ipv4-psk-ikev2"[1]:   initial-contact:yes; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet-ipv4-psk-ikev2"[1]:   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+UP+IKEV2_ALLOW_NARROWING+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -119,7 +119,7 @@ road #
 000 "westnet-eastnet-ipv4-psk-ikev2"[1]:   ESP algorithm newest: AES_GCM_16_256-NONE; pfsgroup=<Phase1>
 000 #1: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23:4500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
 000 #2: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23:4500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; eroute owner; IKE SA #1; idle;
-000 #2: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.210 tun.0@192.1.2.23 tun.0@192.1.3.210 Traffic: ESPin=84B ESPout=84B ESPmax=2^32B 
+000 #2: "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.3.210 tun.0@192.1.2.23 tun.0@192.1.3.210 Traffic: ESPin=84B ESPout=84B ESPmax=2^63B 
 road #
  # should show no hits
 road #

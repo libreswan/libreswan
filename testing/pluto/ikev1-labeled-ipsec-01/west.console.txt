@@ -98,7 +98,7 @@ src 0.0.0.0/0 dst 0.0.0.0/0
 	socket in priority 0 ptype main 
 west #
  ipsec trafficstatus
-006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@east'
+006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  # trigger acquire using the predefined ping_t context
 west #
@@ -106,7 +106,7 @@ west #
 fired and forgotten
 west #
  ../../guestbin/wait-for.sh --match '#3' -- ipsec trafficstatus
-006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@east'
+006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  sleep 5 # allow for IKEv1 protocol sillyness
 west #
@@ -116,8 +116,8 @@ west #
  # there should be 2 tunnel in each direction
 west #
  ipsec trafficstatus
-006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@east'
-006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=64, outBytes=64, maxBytes=2^32B, id='@east'
+006 #2: "labeled", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+006 #3: "labeled", type=ESP, add_time=1234567890, inBytes=64, outBytes=64, maxBytes=2^63B, id='@east'
 west #
  echo done
 done

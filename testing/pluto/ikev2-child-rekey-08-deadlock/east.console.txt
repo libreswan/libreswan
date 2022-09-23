@@ -18,10 +18,10 @@ east #
 initdone
 east #
  ipsec whack --trafficstatus
-006 #6: "west-east/1x0", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@west'
-006 #7: "west-east/2x0", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@west'
-006 #8: "west-east/3x0", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@west'
-006 #9: "west-east/4x0", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@west'
+006 #6: "west-east/1x0", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
+006 #7: "west-east/2x0", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
+006 #8: "west-east/3x0", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
+006 #9: "west-east/4x0", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west'
 east #
  # policies and state should be multiple
 east #

@@ -34,7 +34,7 @@ north #
 Ncat: Connection refused.
 north #
  ipsec trafficstatus
-006 #2: "north-east-7", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@east'
+006 #2: "north-east-7", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 north #
  # port 7 goes over ipsec, traffic counters should be non-zero
 north #
@@ -42,7 +42,7 @@ north #
 Ncat: Connection refused.
 north #
  ipsec trafficstatus
-006 #2: "north-east-7", type=ESP, add_time=1234567890, inBytes=20, outBytes=40, maxBytes=2^32B, id='@east'
+006 #2: "north-east-7", type=ESP, add_time=1234567890, inBytes=20, outBytes=40, maxBytes=2^63B, id='@east'
 north #
  echo done
 done

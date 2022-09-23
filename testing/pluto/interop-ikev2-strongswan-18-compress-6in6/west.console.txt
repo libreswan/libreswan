@@ -59,7 +59,7 @@ west #
  # mangled traffic status
 west #
  ipsec whack --trafficstatus | sed -e 's/Bytes=\([0-9]\)[0-9][0-9],/Bytes=\1nn,/g'
-006 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=3nn, outBytes=3nn, maxBytes=2^32B, id='@east'
+006 #2: "westnet-eastnet-ikev2", type=ESP, add_time=1234567890, inBytes=3nn, outBytes=3nn, maxBytes=2^63B, id='@east'
 west #
  # should see ipcomp entries
 west #

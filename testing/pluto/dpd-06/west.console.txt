@@ -40,7 +40,7 @@ west #
  : show the tunnel
 west #
  ipsec whack --trafficstatus
-006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
+006 #2: "west-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  : Let R_U_THERE packets flow
 west #
@@ -70,7 +70,7 @@ west #
  # Tunnel should be back up now
 west #
  ipsec whack --trafficstatus
-006 #5: "west-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@east'
+006 #5: "west-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  echo done
 done

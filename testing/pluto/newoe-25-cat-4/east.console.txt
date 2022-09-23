@@ -20,7 +20,7 @@ east #
 initdone
 east #
  ipsec whack --trafficstatus
-006 #2: "clear-or-private#192.1.2.0/24"[1] ...192.1.2.254===192.1.2.45/32, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='ID_NULL', lease=192.1.2.45/32
+006 #2: "clear-or-private#192.1.2.0/24"[1] ...192.1.2.254===192.1.2.45/32, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='ID_NULL', lease=192.1.2.45/32
 east #
  iptables -t nat -L -n
 Chain PREROUTING (policy ACCEPT)

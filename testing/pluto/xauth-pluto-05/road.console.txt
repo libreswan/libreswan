@@ -26,7 +26,7 @@ road #
 000 "modecfg-road-eastnet-psk":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "modecfg-road-eastnet-psk":   modecfg info: us:client, them:server, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "modecfg-road-eastnet-psk":   sec_label:unset;
-000 "modecfg-road-eastnet-psk":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^32B; ipsec_max_packets: 2^32; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "modecfg-road-eastnet-psk":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "modecfg-road-eastnet-psk":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "modecfg-road-eastnet-psk":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "modecfg-road-eastnet-psk":   policy: IKEv1+PSK+ENCRYPT+TUNNEL+PFS+XAUTH+AGGRESSIVE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -62,13 +62,13 @@ road #
 004 "modecfg-road-eastnet-psk" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive username=use3}
 road #
  ipsec whack --trafficstatus
-006 #2: "modecfg-road-eastnet-psk", username=use3, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B
+006 #2: "modecfg-road-eastnet-psk", username=use3, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B
 road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 road #
  ipsec whack --trafficstatus
-006 #2: "modecfg-road-eastnet-psk", username=use3, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B
+006 #2: "modecfg-road-eastnet-psk", username=use3, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B
 road #
  echo done
 done

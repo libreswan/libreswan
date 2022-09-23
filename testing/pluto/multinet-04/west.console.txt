@@ -56,8 +56,8 @@ west #
 up
 west #
  ipsec whack --trafficstatus
-006 #2: "westnets-eastnet/1x0", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
-006 #3: "westnets-eastnet/2x0", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^32B, id='@east'
+006 #2: "westnets-eastnet/1x0", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+006 #3: "westnets-eastnet/2x0", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
  echo done
 done

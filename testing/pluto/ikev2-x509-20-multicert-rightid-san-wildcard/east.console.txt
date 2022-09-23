@@ -27,7 +27,7 @@ east #
  # we should see conn other being up
 east #
  ipsec whack --trafficstatus
-006 #2: "main-east"[1] 192.1.2.45, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='@west.testing.libreswan.org'
+006 #2: "main-east"[1] 192.1.2.45, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@west.testing.libreswan.org'
 east #
  # On east, we should see it has switched
 east #

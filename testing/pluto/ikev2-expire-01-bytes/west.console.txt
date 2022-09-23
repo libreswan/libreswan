@@ -11,7 +11,7 @@ west #
  # confirm max bytes for IPsec SA is set
 west #
  ipsec status |grep ipsec_max_bytes
-000 "west":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2KiB; ipsec_max_packets: 2^32; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "west":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2KiB; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 west #
  echo "initdone"
 initdone

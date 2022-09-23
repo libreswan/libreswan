@@ -118,7 +118,7 @@ west #
 000 "TUNNEL-A":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "TUNNEL-A":   sec_label:unset;
 000 "TUNNEL-A":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-000 "TUNNEL-A":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^32B; ipsec_max_packets: 2^32; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "TUNNEL-A":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-A":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "TUNNEL-A":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "TUNNEL-A":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -136,7 +136,7 @@ west #
 000 "TUNNEL-B":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "TUNNEL-B":   sec_label:unset;
 000 "TUNNEL-B":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-000 "TUNNEL-B":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^32B; ipsec_max_packets: 2^32; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "TUNNEL-B":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-B":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "TUNNEL-B":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "TUNNEL-B":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -153,7 +153,7 @@ west #
 000 "TUNNEL-C":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "TUNNEL-C":   sec_label:unset;
 000 "TUNNEL-C":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-000 "TUNNEL-C":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^32B; ipsec_max_packets: 2^32; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "TUNNEL-C":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-C":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "TUNNEL-C":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "TUNNEL-C":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -165,9 +165,9 @@ west #
 000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4; conn serial: $1;
 000 "TUNNEL-C":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 #2: "TUNNEL-A":500 STATE_QUICK_I2 (IPsec SA established); REPLACE_IF_USED in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-000 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=2^32B 
+000 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=2^63B 
 000 #4: "TUNNEL-C":500 STATE_QUICK_I2 (IPsec SA established); REPLACE_IF_USED in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-000 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=2^32B 
+000 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=2^63B 
 west #
  ipsec auto --delete TUNNEL-B
 002 "TUNNEL-B": terminating SAs using this connection
@@ -182,7 +182,7 @@ west #
 000 "TUNNEL-A":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "TUNNEL-A":   sec_label:unset;
 000 "TUNNEL-A":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-000 "TUNNEL-A":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^32B; ipsec_max_packets: 2^32; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "TUNNEL-A":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-A":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "TUNNEL-A":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "TUNNEL-A":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -200,7 +200,7 @@ west #
 000 "TUNNEL-C":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "TUNNEL-C":   sec_label:unset;
 000 "TUNNEL-C":   CAs: 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'...'%any'
-000 "TUNNEL-C":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^32B; ipsec_max_packets: 2^32; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "TUNNEL-C":   ike_life: 60s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "TUNNEL-C":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "TUNNEL-C":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "TUNNEL-C":   policy: IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+DONT_REKEY+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -212,9 +212,9 @@ west #
 000 "TUNNEL-C":   newest ISAKMP SA: #0; newest IPsec SA: #4; conn serial: $1;
 000 "TUNNEL-C":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
 000 #2: "TUNNEL-A":500 STATE_QUICK_I2 (IPsec SA established); REPLACE_IF_USED in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-000 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=2^32B 
+000 #2: "TUNNEL-A" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=2^63B 
 000 #4: "TUNNEL-C":500 STATE_QUICK_I2 (IPsec SA established); REPLACE_IF_USED in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-000 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=2^32B 
+000 #4: "TUNNEL-C" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=336B ESPout=336B ESPmax=2^63B 
 west #
  echo done
 done

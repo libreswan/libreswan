@@ -21,7 +21,7 @@ west #
 000 "west-east":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "west-east":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "west-east":   sec_label:unset;
-000 "west-east":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^32B; ipsec_max_packets: 2^32; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "west-east":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "west-east":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "west-east":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "west-east":   policy: IKEv1+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -37,7 +37,7 @@ west #
 000 "westnet-eastnet":   our auth:secret, their auth:secret, our autheap:none, their autheap:none;
 000 "westnet-eastnet":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
 000 "westnet-eastnet":   sec_label:unset;
-000 "westnet-eastnet":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^32B; ipsec_max_packets: 2^32; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
+000 "westnet-eastnet":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
 000 "westnet-eastnet":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "westnet-eastnet":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
 000 "westnet-eastnet":   policy: IKEv1+PSK+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
@@ -85,6 +85,6 @@ west #
  ipsec showstates
 000 #1: "west-east":500 STATE_MAIN_I4 (IKE SA established); REPLACE in XXs; newest; lastdpd=-1s(seq in:0 out:0); idle;
 000 #3: "westnet-eastnet":500 STATE_QUICK_I2 (IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
-000 #3: "westnet-eastnet" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^32B 
+000 #3: "westnet-eastnet" esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 tun.0@192.1.2.23 tun.0@192.1.2.45 Traffic: ESPin=0B ESPout=0B ESPmax=2^63B 
 west #
  

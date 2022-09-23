@@ -28,6 +28,6 @@ north #
  sleep 3
 north #
  ipsec whack --trafficstatus | sed -e "s/#./#X/" -e "s/\[[0-9]\]/[X]/" -e "s/192.0.2.10./192.0.2.10X/" | sort
-006 #X: "north-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^32B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.10X/32
+006 #X: "north-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.10X/32
 north #
 
