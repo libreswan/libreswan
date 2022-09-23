@@ -42,7 +42,7 @@ const struct prf_desc ike_alg_prf_sha1 = {
 			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = IKEv2_PRF_HMAC_SHA1,
 		},
-		.fips = true,
+		.fips.approved = true,
 	},
 	.nss = {
 		.mechanism = CKM_SHA_1_HMAC,
@@ -74,7 +74,7 @@ const struct integ_desc ike_alg_integ_sha1 = {
 			[SADB_ALG_ID] = SADB_AALG_SHA1HMAC,
 #endif
 		},
-		.fips = true,
+		.fips.approved = true,
 	},
 	.integ_keymat_size = SHA1_DIGEST_SIZE,
 	.integ_output_size = SHA1_DIGEST_SIZE_96,

@@ -35,6 +35,6 @@ const struct hash_desc ike_alg_hash_identity = {
 			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = IKEv2_HASH_ALGORITHM_IDENTITY,
 		},
-		.fips = true,
+		.fips.approved = true,
 	},
 };

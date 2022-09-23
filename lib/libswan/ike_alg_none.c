@@ -91,7 +91,7 @@ const struct integ_desc ike_alg_integ_none = {
 		* Other code gets the job of rejecting "none" when not
 		* AEAD.
 		*/
-		.fips = true,
+		.fips.approved = true,
 	},
 	.integ_netlink_xfrm_name = "digest_null",
 	.integ_tcpdump_name = "none",
@@ -120,7 +120,7 @@ const struct dh_desc ike_alg_dh_none = {
 		 *
 		 * Other code gets the job of rejecting "none".
 		 */
-		.fips = true,
+		.fips.approved = true,
 	},
 	.group = OAKLEY_GROUP_NONE,
 	/*

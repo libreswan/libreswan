@@ -55,7 +55,7 @@ const struct hash_desc ike_alg_hash_sha2_256 = {
 			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = IKEv2_HASH_ALGORITHM_SHA2_256,
 		},
-		.fips = true,
+		.fips = { .approved = true, },
 	},
 	.nss = {
 		.oid_tag = SEC_OID_SHA256,

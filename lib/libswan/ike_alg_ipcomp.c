@@ -40,7 +40,7 @@ const struct ipcomp_desc ike_alg_ipcomp_deflate = {
 			[SADB_ALG_ID] = SADB_X_CALG_DEFLATE,
 #endif
 		},
-		.fips = true, /* it's meaningless */
+		.fips.approved = true, /* it's meaningless */
 	},
 	.kernel = {
 		.xfrm_name = "deflate",
@@ -60,7 +60,7 @@ const struct ipcomp_desc ike_alg_ipcomp_lzs = {
 			[SADB_ALG_ID] = SADB_X_CALG_LZS,
 #endif
 		},
-		.fips = true, /* it's meaningless */
+		.fips.approved = true, /* it's meaningless */
 	},
 	.kernel = {
 		.xfrm_name = "lzs",
@@ -81,7 +81,7 @@ const struct ipcomp_desc ike_alg_ipcomp_lzjh = {
 			[SADB_ALG_ID] = SADB_X_CALG_LZJH,
 #endif
 		},
-		.fips = true, /* it's meaningless */
+		.fips.approved = true, /* it's meaningless */
 	},
 	.kernel = {
 		.xfrm_name = "lzjh",

@@ -48,7 +48,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_cbc = {
 			[SADB_ALG_ID] = SADB_X_EALG_AESCBC,  /* also FreeBSD; ulgh */
 #endif
 		},
-		.fips = true,
+		.fips.approved = true,
 	},
 	.nss = {
 		.mechanism = CKM_AES_CBC,
@@ -79,7 +79,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ctr =
 			[SADB_ALG_ID] = SADB_X_EALG_AESCTR,
 #endif
 		},
-		.fips = true,
+		.fips.approved = true,
 	},
 	.nss = {
 		.mechanism = CKM_AES_CTR,
@@ -118,7 +118,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 			[SADB_ALG_ID] = SADB_X_EALG_AESGCM8, /* NetBSD */
 #endif
 		},
-		.fips = true,
+		.fips.approved = true,
 	},
 	.nss = {
 		.mechanism = CKM_AES_GCM,
@@ -157,7 +157,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 			[SADB_ALG_ID] = SADB_X_EALG_AESGCM12, /* NetBSD */
 #endif
 		},
-		.fips = true,
+		.fips.approved = true,
 	},
 	.nss = {
 		.mechanism = CKM_AES_GCM,
@@ -197,7 +197,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 			[SADB_ALG_ID] = SADB_X_EALG_AESGCM16, /* NetBSD */
 #endif
 		},
-		.fips = true,
+		.fips.approved = true,
 	},
 	.nss = {
 		.mechanism = CKM_AES_GCM,
@@ -237,7 +237,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_8 =
 			[SADB_ALG_ID] = SADB_X_EALG_AES_CCM_ICV8,
 #endif
 		},
-		.fips = true,
+		.fips.approved = true,
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
 	.salt_size = 3,
@@ -267,7 +267,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_12 =
 			[SADB_ALG_ID] = SADB_X_EALG_AES_CCM_ICV12,
 #endif
 		},
-		.fips = true,
+		.fips.approved = true,
 	},
 	.enc_blocksize =  AES_BLOCK_SIZE,
 	.salt_size = 3,
@@ -297,7 +297,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_ccm_16 =
 			[SADB_ALG_ID] = SADB_X_EALG_AES_CCM_ICV16,
 #endif
 		},
-		.fips = true,
+		.fips.approved = true,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.salt_size = 3,
@@ -324,7 +324,7 @@ const struct prf_desc ike_alg_prf_aes_xcbc = {
 			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = IKEv2_PRF_AES128_XCBC,
 		},
-		.fips = false,
+		.fips.approved = false,
 	},
 	.nss = {
 		.mechanism = CKM_AES_ECB,
@@ -351,7 +351,7 @@ const struct integ_desc ike_alg_integ_aes_xcbc = {
 			[SADB_ALG_ID] = SADB_X_AALG_AES_XCBC_MAC,
 #endif
 		},
-		.fips = false,
+		.fips.approved = false,
 	},
 	.integ_keymat_size = AES_XCBC_DIGEST_SIZE,
 	.integ_output_size = AES_XCBC_DIGEST_SIZE_TRUNC, /* XXX 96 */
@@ -378,7 +378,7 @@ const struct integ_desc ike_alg_integ_aes_cmac = {
 			[SADB_ALG_ID] = SADB_X_AALG_AES_CMAC_96,
 #endif
 		},
-		.fips = true,
+		.fips.approved = true,
 	},
 	.integ_keymat_size = BYTES_FOR_BITS(128),
 	.integ_output_size = BYTES_FOR_BITS(96), /* truncated */
@@ -409,7 +409,7 @@ const struct encrypt_desc ike_alg_encrypt_null_integ_aes_gmac = {
 			[SADB_ALG_ID] = SADB_X_EALG_AESGMAC,
 #endif
 		},
-		.fips = true,
+		.fips.approved = true,
 	},
 	.enc_blocksize = AES_BLOCK_SIZE,
 	.wire_iv_size = 8,

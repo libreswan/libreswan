@@ -76,7 +76,7 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_4 = {
 	.common = {
 		.fqn = "AES_GCM",
 		.algo_type =   IKE_ALG_ENCRYPT,
-		.fips = true,
+		.fips.approved = true,
 	},
 	.nss = {
 		.mechanism = CKM_AES_GCM,
@@ -94,7 +94,7 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_13 = {
 	.common = {
 		.fqn = "AES_GCM",
 		.algo_type =   IKE_ALG_ENCRYPT,
-		.fips = true,
+		.fips.approved = true,
 	},
 	.nss = {
 		.mechanism = CKM_AES_GCM,
@@ -112,7 +112,7 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_14 = {
 	.common = {
 		.fqn = "AES_GCM",
 		.algo_type =   IKE_ALG_ENCRYPT,
-		.fips = true,
+		.fips.approved = true,
 	},
 	.nss = {
 		.mechanism = CKM_AES_GCM,
@@ -130,7 +130,7 @@ static struct encrypt_desc ike_alg_encrypt_aes_gcm_15 = {
 	.common = {
 		.fqn = "AES_GCM",
 		.algo_type =   IKE_ALG_ENCRYPT,
-		.fips = true,
+		.fips.approved = true,
 	},
 	.nss = {
 		.mechanism = CKM_AES_GCM,

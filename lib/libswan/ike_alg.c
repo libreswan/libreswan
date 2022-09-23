@@ -1215,7 +1215,7 @@ static void jam_ike_alg_details(struct jambuf *buf, size_t name_width,
 	jam_string(buf, (v2_ah
 			 ? " AH"
 			 : "   "));
-	jam_string(buf, (alg->fips
+	jam_string(buf, (alg->fips.approved
 			 ? "  FIPS"
 			 : "      "));
 
@@ -1297,7 +1297,7 @@ static void strip_nonfips(const struct ike_alg_type *type, struct logger *logger
 		/*
 		 * Check FIPS before trying to run any tests.
 		 */
-		if (!alg->fips) {
+		if (!alg->fips.approved) {
 			llog(RC_LOG, logger,
 				    "%s algorithm %s disabled; not FIPS compliant",
 				    type->Name, alg->fqn);

@@ -35,7 +35,7 @@ const struct encrypt_desc ike_alg_encrypt_3des_cbc =
 			[SADB_ALG_ID] = SADB_EALG_3DESCBC,
 #endif
 		},
-		.fips = true,
+		.fips.approved = true,
 	},
 	.nss = {
 		.mechanism = CKM_DES3_CBC,

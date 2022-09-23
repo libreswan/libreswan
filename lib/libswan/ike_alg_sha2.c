@@ -44,7 +44,7 @@ const struct prf_desc ike_alg_prf_sha2_256 = {
 			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = IKEv2_PRF_HMAC_SHA2_256,
 		},
-		.fips = true,
+		.fips.approved = true,
 	},
 	.nss = {
 		.mechanism = CKM_SHA256_HMAC,
@@ -79,7 +79,7 @@ const struct integ_desc ike_alg_integ_sha2_256 = {
 			[SADB_ALG_ID] = SADB_X_AALG_SHA2_256,
 #endif
 		},
-		.fips = true,
+		.fips.approved = true,
 	},
 	.integ_keymat_size = SHA2_256_DIGEST_SIZE,
 	.integ_output_size = SHA2_256_DIGEST_SIZE / 2,
@@ -104,7 +104,7 @@ const struct integ_desc ike_alg_integ_hmac_sha2_256_truncbug = {
 			[SADB_ALG_ID] = SADB_X_AALG_SHA2_256HMAC_TRUNCBUG,
 #endif
 		},
-		.fips = false,
+		.fips.approved = false,
 	},
 	.integ_keymat_size = SHA2_256_DIGEST_SIZE,
 	.integ_output_size = BYTES_FOR_BITS(96),
@@ -146,7 +146,7 @@ const struct hash_desc ike_alg_hash_sha2_384 = {
 			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] =  IKEv2_HASH_ALGORITHM_SHA2_384,
 		},
-		.fips = true,
+		.fips.approved = true,
 	},
 	.nss = {
 		.oid_tag = SEC_OID_SHA384,
@@ -175,7 +175,7 @@ const struct prf_desc ike_alg_prf_sha2_384 = {
 			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = IKEv2_PRF_HMAC_SHA2_384,
 		},
-		.fips = true,
+		.fips.approved = true,
 	},
 	.nss = {
 		.mechanism = CKM_SHA384_HMAC,
@@ -210,7 +210,7 @@ const struct integ_desc ike_alg_integ_sha2_384 = {
 			[SADB_ALG_ID] = SADB_X_AALG_SHA2_384,
 #endif
 		},
-		.fips = true,
+		.fips.approved = true,
 	},
 	.integ_keymat_size = SHA2_384_DIGEST_SIZE,
 	.integ_output_size = SHA2_384_DIGEST_SIZE / 2,
@@ -253,7 +253,7 @@ const struct hash_desc ike_alg_hash_sha2_512 = {
 			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = IKEv2_HASH_ALGORITHM_SHA2_512,
 		},
-		.fips = true,
+		.fips.approved = true,
 	},
 	.nss = {
 		.oid_tag = SEC_OID_SHA512,
@@ -282,7 +282,7 @@ const struct prf_desc ike_alg_prf_sha2_512 = {
 			[IKEv1_ESP_ID] = -1,
 			[IKEv2_ALG_ID] = IKEv2_PRF_HMAC_SHA2_512,
 		},
-		.fips = true,
+		.fips.approved = true,
 	},
 	.nss = {
 		.mechanism = CKM_SHA512_HMAC,
@@ -317,7 +317,7 @@ const struct integ_desc ike_alg_integ_sha2_512 = {
 			[SADB_ALG_ID] = SADB_X_AALG_SHA2_512,
 #endif
 		},
-		.fips = true,
+		.fips.approved = true,
 	},
 	.integ_keymat_size = SHA2_512_DIGEST_SIZE,
 	.integ_output_size = SHA2_512_DIGEST_SIZE / 2,

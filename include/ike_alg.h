@@ -310,7 +310,10 @@ struct ike_alg {
 	 * Is this algorithm FIPS approved (i.e., can be enabled in
 	 * FIPS mode)?
 	 */
-	const bool fips;
+	struct {
+		const bool approved;
+		uintmax_t operation_limit;
+	} fips;
 };
 
 /*
