@@ -14,6 +14,18 @@
  *
  */
 
-extern uint64_t soft_limit(bool initiator, uint64_t max, unsigned long margin,
-				   unsigned long fuzz);
+#ifndef REKEYFUZZ_H
+#define REKEYFUZZ_H
+
+#include <stdint.h>
+
+struct logger;
+enum sa_role;
+
+extern uintmax_t fuzz_soft_limit(const char *what, enum sa_role,
+				 uintmax_t hard_limit, unsigned soft_limit_percent,
+				 struct logger *logger);
+
 extern uint64_t fuzz_margin(bool initiator, unsigned long marg,  unsigned long fuzz);
+
+#endif

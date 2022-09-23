@@ -1944,16 +1944,14 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	uint64_t sa_ipsec_soft_packets = c->config->sa_ipsec_max_packets;
 
 	if (!LIN(POLICY_DONT_REKEY, c->policy)) {
-		uint64_t margin_bytes = c->config->sa_ipsec_max_bytes -  c->config->sa_ipsec_max_bytes * IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE / 100;
-		uint64_t margin_packets = c->config->sa_ipsec_max_packets - c->config->sa_ipsec_max_packets * IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE / 100;
-		sa_ipsec_soft_bytes = soft_limit(st->st_sa_role == SA_INITIATOR,
-						 c->config->sa_ipsec_max_bytes, margin_bytes,
-						 c->sa_rekey_fuzz);
-		sa_ipsec_soft_packets = soft_limit((st->st_sa_role == SA_INITIATOR),
-						   c->config->sa_ipsec_max_packets,
-						   margin_packets,
-						   c->sa_rekey_fuzz);
-		dbg("%s %d #%lu ipsec-max-bytes %"PRIu64"/%"PRIu64" ipsec-max-packets %"PRIu64"/%"PRIu64" margin bytes %"PRIu64" margin mackets %"PRIu64" IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE %u", __func__, __LINE__,  st->st_serialno,  sa_ipsec_soft_bytes, c->config->sa_ipsec_max_bytes, sa_ipsec_soft_packets, c->config->sa_ipsec_max_packets, margin_bytes, margin_packets, IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE);
+		sa_ipsec_soft_bytes = fuzz_soft_limit("ipsec-max-bytes",st->st_sa_role,
+						      c->config->sa_ipsec_max_bytes,
+						      IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE,
+						      st->st_logger);
+		sa_ipsec_soft_packets = fuzz_soft_limit("ipsec-max-packets", st->st_sa_role,
+							c->config->sa_ipsec_max_packets,
+							IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE,
+							st->st_logger);
 	}
 	const struct kernel_sa said_boilerplate = {
 		.src.address = kernel_policy.src.host,
