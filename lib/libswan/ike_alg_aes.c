@@ -119,6 +119,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_8 =
 #endif
 		},
 		.fips.approved = true,
+		.fips.operation_limit = UINTMAX_C(1) << 32,
 	},
 	.nss = {
 		.mechanism = CKM_AES_GCM,
@@ -158,6 +159,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_12 =
 #endif
 		},
 		.fips.approved = true,
+		.fips.operation_limit = UINTMAX_C(1) << 32,
 	},
 	.nss = {
 		.mechanism = CKM_AES_GCM,
@@ -198,6 +200,7 @@ const struct encrypt_desc ike_alg_encrypt_aes_gcm_16 =
 #endif
 		},
 		.fips.approved = true,
+		.fips.operation_limit = UINTMAX_C(1) << 32,
 	},
 	.nss = {
 		.mechanism = CKM_AES_GCM,
