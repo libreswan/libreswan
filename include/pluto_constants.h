@@ -59,17 +59,12 @@ enum ike_version {
 #define FIPS_MIN_RSA_KEY_SIZE 2048 /* 112 bits, see SP800-131A */
 
 /*
- * XFRM_INF is ~(uint64_t)0 insted using ~(int64_)0 here.
- * cfg->conn_default.options[kbf] only support int.
- * ~(uint64_t)0 would cause error.
- * error: overflow in conversion from ‘long unsigned int’ to ‘int’ changes value
- * from ‘18446744073709551615’ to ‘-1’ [-Werror=overflow]
- *
- * May be add support for uint64_t
+ * XFRM_INF is a uint64_t, hence use that to define upper bound of
+ * constant.
  */
-#define IPSEC_SA_MAX_OPERATIONS ((uintmax_t)4294967296)
-#define IPSEC_SA_MAX_OPERATIONS_STRING "2^32"		/* how to print IPSEC_SA_MAX_OPERATIONS */
-#define IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE 90 /* let the wise men pick this % until we implement soft_limit */
+#define IPSEC_SA_MAX_OPERATIONS (UINT64_C(1) << 63)
+#define IPSEC_SA_MAX_OPERATIONS_STRING "2^63"		/* how to print IPSEC_SA_MAX_OPERATIONS */
+#define IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE 50
 
 #define PLUTO_SHUNT_LIFE_DURATION_DEFAULT (15 * secs_per_minute)
 #define PLUTO_HALFOPEN_SA_LIFE (secs_per_minute )

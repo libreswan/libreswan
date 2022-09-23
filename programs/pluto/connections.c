@@ -2089,20 +2089,22 @@ static bool extract_connection(const struct whack_message *wm,
 		 * Note "invocations" is not "bytes" or "packets", but
 		 * the safest assumption is the most wasteful
 		 * invocations which is 1 byte per packet.
+		 *
+		 * XXX: this code isn't yet doing this.
 		 */
 		config->sa_ipsec_max_bytes = wm->sa_ipsec_max_bytes;
-		if (wm->sa_ipsec_max_bytes > IPSEC_SA_MAX_OPERATIONS) /* 2^32 */ {
+		if (wm->sa_ipsec_max_bytes > IPSEC_SA_MAX_OPERATIONS) {
 			llog(RC_LOG_SERIOUS, c->logger,
 			     "IPsec max bytes limited to the maximum allowed %s",
 			     IPSEC_SA_MAX_OPERATIONS_STRING);
 			config->sa_ipsec_max_bytes = IPSEC_SA_MAX_OPERATIONS;
 		}
 		config->sa_ipsec_max_packets = wm->sa_ipsec_max_packets;
-		if (wm->sa_ipsec_max_packets > IPSEC_SA_MAX_OPERATIONS) /* 2^32 */ {
+		if (wm->sa_ipsec_max_packets > IPSEC_SA_MAX_OPERATIONS) {
 			llog(RC_LOG_SERIOUS, c->logger,
 			     "IPsec max packets limited to the maximum allowed %s",
 			     IPSEC_SA_MAX_OPERATIONS_STRING);
-			config->sa_ipsec_max_packets = IPSEC_SA_MAX_OPERATIONS; /* 2^32 */
+			config->sa_ipsec_max_packets = IPSEC_SA_MAX_OPERATIONS;
 		}
 
 		if (deltatime_cmp(c->sa_rekey_margin, >=, c->sa_ipsec_life_seconds)) {
