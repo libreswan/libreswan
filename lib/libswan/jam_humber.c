@@ -25,7 +25,7 @@
  * e.g. use sufix2 "B" for Bytes.
  */
 
-size_t jam_humber(struct jambuf *buf, uint64_t num)
+size_t jam_humber(struct jambuf *buf, uintmax_t num)
 {
 	const char *suffix;
 	uint64_t to_print;
@@ -53,5 +53,12 @@ size_t jam_humber(struct jambuf *buf, uint64_t num)
 		suffix = "";
 	}
 
-	return jam(buf, "%"PRIu64"%s", to_print, suffix);
+	return jam(buf, "%ju%s", to_print, suffix);
+}
+
+const char *str_humber(uintmax_t num, humber_buf *buf)
+{
+	struct jambuf jb = ARRAY_AS_JAMBUF(buf->buf);
+	jam_humber(&jb, num);
+	return buf->buf;
 }

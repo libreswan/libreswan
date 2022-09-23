@@ -231,7 +231,13 @@ jam_bytes_fn jam_shell_quoted_bytes;
  * e.g. use sufix2 "B" for Bytes.
  */
 
-size_t jam_humber(struct jambuf *buf, uint64_t num);
+typedef struct {
+	/* lets say 3 decimal digits per byte which is way over */
+	char buf[sizeof(uintmax_t)*3 + 2/*Gi*/ + 1/*NUL*/ + 1/*CANARY*/];
+}  humber_buf;
+
+size_t jam_humber(struct jambuf *buf, uintmax_t num);
+const char *str_humber(uintmax_t num, humber_buf *b);
 
 /*
  * Code wrappers that cover up the details of allocating,
