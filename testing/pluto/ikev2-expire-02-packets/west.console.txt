@@ -23,46 +23,51 @@ west #
 003 "west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 004 "west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- # pings will not trigger rekey
+ # find out the actual number of packets
 west #
- ping -n -q -c 16 -I 192.0.1.254 192.0.2.254
+ actual=$(sed -n -e 's/.* ipsec-max-packets.* actual-limit=\([0-9]\).*/\1/ p' /tmp/pluto.log | head -1)
+west #
+ echo $actual
+2
+west #
+ # $actual-1 pings will not trigger rekey; expect #2 to remain
+west #
+ ping -n -q -c $((actual - 1)) -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
-16 packets transmitted, 16 received, 0% packet loss, time XXXX
+1 packets transmitted, 1 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
- # expect #2 IPsec original Child SA
-west #
  ipsec trafficstatus
-006 #2: "west", type=ESP, add_time=1234567890, inBytes=1344, outBytes=1344, maxBytes=2^63B, id='@east'
+006 #2: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
- # next pings will go over and initiate a rekey
+ # next ping will go over and initiate a rekey; and then further pings
 west #
- ping -n -q -c 8 -I 192.0.1.254 192.0.2.254
+ # go to #3
+west #
+ ping -n -q -c ${actual} -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
-8 packets transmitted, 8 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
-west #
- sleep 5
-west #
- # expect only #3 IPsec first rekeyed Child SA
-west #
- ipsec trafficstatus
-006 #3: "west", type=ESP, add_time=1234567890, inBytes=504, outBytes=504, maxBytes=2^63B, id='@east'
-west #
- ping -n -q -c 10 -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-10 packets transmitted, 10 received, 0% packet loss, time XXXX
+2 packets transmitted, 2 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  sleep 5
 west #
- # expect only #4 IPsec second rekeyed Child SA
+ ipsec trafficstatus
+006 #3: "west", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+west #
+ # and again
+west #
+ ping -n -q -c ${actual} -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+--- 192.0.2.254 ping statistics ---
+2 packets transmitted, 2 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ sleep 5
 west #
  ipsec trafficstatus
-006 #3: "west", type=ESP, add_time=1234567890, inBytes=1344, outBytes=1344, maxBytes=2^63B, id='@east'
+006 #3: "west", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2^63B, id='@east'
 west #
  echo done
 done
@@ -86,7 +91,7 @@ src 192.1.2.45 dst 192.1.2.23
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
 	 00000000 00000000 00000000 XXXXXXXX 
-src 192.1.2.45 dst 192.1.2.23
+src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
