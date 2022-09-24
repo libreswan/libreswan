@@ -1,7 +1,7 @@
 ipsec auto --up west
 
 # find out the actual number of packets
-actual=$(sed -n -e 's/.* ipsec-max-packets.* actual-limit=\([0-9]\).*/\1/ p' /tmp/pluto.log | head -1)
+actual=$(sed -n -e 's/.* ipsec-max-packets.* actual-limit=\([0-9]*\).*/\1/ p' /tmp/pluto.log | head -1)
 echo $actual
 
 # $actual-1 pings will not trigger rekey; expect #2 to remain
