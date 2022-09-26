@@ -28,7 +28,7 @@ west #
  actual=$(sed -n -e 's/.* ipsec-max-bytes.* actual-limit=\([0-9]*\).*/\1/ p' /tmp/pluto.log | head -1)
 west #
  echo $actual
-504
+291
 west #
  # pings will get to almost rekey, but rekey wouldn't trigger; expect
 west #
@@ -39,11 +39,11 @@ west #
  ping -n -q -c $((actual / 84)) -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
-6 packets transmitted, 6 received, 0% packet loss, time XXXX
+3 packets transmitted, 3 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec trafficstatus
-006 #3: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2KiB, id='@east'
+006 #2: "west", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2KiB, id='@east'
 west #
  # next pings will go over and initiate a rekey expect only #3 IPsec
 west #
@@ -52,26 +52,26 @@ west #
  ping -n -q -c $((actual / 84)) -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
-6 packets transmitted, 6 received, 0% packet loss, time XXXX
+3 packets transmitted, 3 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  sleep 5
 west #
  ipsec trafficstatus
-006 #4: "west", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2KiB, id='@east'
+006 #3: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2KiB, id='@east'
 west #
  # expect only #4 IPsec second rekeyed Child SA
 west #
  ping -n -q -c $((actual / 84)) -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
-6 packets transmitted, 6 received, 0% packet loss, time XXXX
+3 packets transmitted, 3 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  sleep 5
 west #
  ipsec trafficstatus
-006 #5: "west", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2KiB, id='@east'
+006 #3: "west", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2KiB, id='@east'
 west #
  echo done
 done
@@ -80,30 +80,6 @@ west #
 west NOW
 XFRM state:
 src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-src 192.1.2.45 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-src 192.1.2.23 dst 192.1.2.45
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec esn
-	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
@@ -154,8 +130,6 @@ west #
 west #
  grep "initiating rekey to replace Child SA" OUTPUT/$(hostname).pluto.log
 "west" #3: initiating rekey to replace Child SA #2
-"west" #4: initiating rekey to replace Child SA #3
-"west" #5: initiating rekey to replace Child SA #4
 west #
  # should be absent
 west #
@@ -164,9 +138,7 @@ success
 west #
  # should hit twice on west only
 west #
- grep "received soft EXPIRE " OUTPUT/$(hostname).pluto.log | sed 's/for SPI 0x.*$/for SPI .../'
-"west" #2: received soft EXPIRE for outbound SPI 3000149d bytes 336 packets 4 rekey=yes; replacing
-"west" #3: received soft EXPIRE for outbound SPI 5651e9fa bytes 336 packets 4 rekey=yes; replacing
-"west" #4: received soft EXPIRE for inbound SPI 1389d192 bytes 420 packets 5 rekey=yes; replacing
+ grep "received .* EXPIRE " OUTPUT/$(hostname).pluto.log | sed 's/for SPI 0x.*$/for SPI .../'
+"west" #2: received soft EXPIRE for outbound SPI 6fd219e3 bytes 336 packets 4 rekey=yes; replacing
 west #
  
