@@ -854,7 +854,7 @@ void delete_state(struct state *st)
 	delete_state_tail(st);
 }
 
-static void log_traffic(struct state *st, const char *name, struct ipsec_proto_info *traffic)
+static void log_and_update_traffic(struct state *st, const char *name, struct ipsec_proto_info *traffic)
 {
 	LLOG_JAMBUF(RC_INFORMATIONAL, st->st_logger, buf) {
 		jam(buf, "%s traffic information:", name);
@@ -871,6 +871,13 @@ static void log_traffic(struct state *st, const char *name, struct ipsec_proto_i
 			jam_string(buf, st->st_xauth_username);
 		}
 	}
+	/*
+	 * XXX: this double counts ESP+IPCOMP; or would if IPCOMP
+	 * returned the correct byte-count (instead of zero) when
+	 * wrapped in ESP.
+	 */
+	pstats_ipsec_in_bytes += traffic->our_bytes;
+	pstats_ipsec_out_bytes += traffic->peer_bytes;
 }
 
 void delete_state_tail(struct state *st)
@@ -953,21 +960,15 @@ void delete_state_tail(struct state *st)
 		 * ESP/AH/IPCOMP
 		 */
 		if (st->st_esp.present) {
-			log_traffic(st, "ESP", &st->st_esp);
-			pstats_ipsec_in_bytes += st->st_esp.our_bytes;
-			pstats_ipsec_out_bytes += st->st_esp.peer_bytes;
+			log_and_update_traffic(st, "ESP", &st->st_esp);
 		}
 
 		if (st->st_ah.present) {
-			log_traffic(st, "AH", &st->st_ah);
-			pstats_ipsec_in_bytes += st->st_ah.peer_bytes;
-			pstats_ipsec_out_bytes += st->st_ah.our_bytes;
+			log_and_update_traffic(st, "AH", &st->st_ah);
 		}
 
 		if (st->st_ipcomp.present) {
-			log_traffic(st, "IPCOMP", &st->st_ipcomp);
-			pstats_ipsec_in_bytes += st->st_ipcomp.peer_bytes;
-			pstats_ipsec_out_bytes += st->st_ipcomp.our_bytes;
+			log_and_update_traffic(st, "IPCOMP", &st->st_ipcomp);
 		}
 	}
 
