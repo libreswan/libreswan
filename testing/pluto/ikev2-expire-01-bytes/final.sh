@@ -4,4 +4,4 @@ grep "initiating rekey to replace Child SA" OUTPUT/$(hostname).pluto.log
 # should be absent
 grep "initiating Child SA using IKE SA" OUTPUT/$(hostname).pluto.log || echo "success"
 # should hit twice on west only
-grep "Received soft EXPIRE " OUTPUT/$(hostname).pluto.log | sed 's/for SPI 0x.*$/for SPI .../'
+grep "received soft EXPIRE " OUTPUT/$(hostname).pluto.log | sed 's/for SPI 0x.*$/for SPI .../'
