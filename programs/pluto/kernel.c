@@ -3756,7 +3756,12 @@ void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address *dst,
 				    (pr->our_kernel_sa_expired & SA_HARD_EXPIRED));
 
 	enum sa_expire_kind expire = hard ? SA_HARD_EXPIRED : SA_SOFT_EXPIRED;
-	const bool inbound = (pr->attrs.spi == spi);
+
+	/*
+	 * OUR_SPI was sent by us to our peer, so that our peer can
+	 * include it in all inbound IPsec messages.
+	 */
+	const bool inbound = (pr->our_spi == spi);
 
 	llog_sa(RC_LOG, child,
 		"received %s EXPIRE for %s SPI "PRI_IPSEC_SPI" bytes %" PRIu64 " packets %" PRIu64 " rekey=%s%s%s%s%s",
