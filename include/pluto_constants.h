@@ -1029,11 +1029,12 @@ extern enum_names pluto_exit_code_names;
  * EXPIRE type events from the kernel.
  * Based on these, different actions can be taken, eg skipping delete SPI
  */
+
 enum sa_expire_kind {
 	/* 0 reserved */
-	SA_ACTIVE = 1,
-	SA_SOFT_EXPIRED = 2,
-	SA_HARD_EXPIRED = 3,
+	SA_ACTIVE = 1 << 1,
+	SA_SOFT_EXPIRED = 1 << 2,
+	SA_HARD_EXPIRED = 1 << 3,
 };
 
 #define SWAN_MAX_DOMAIN_LEN 256 /* includes nul termination */
