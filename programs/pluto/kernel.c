@@ -3720,57 +3720,65 @@ void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address *dst,
 		       bool hard, uint64_t bytes, uint64_t packets, uint64_t add_time)
 {
 	struct child_sa *child = find_v2_child_sa_by_spi(spi, protoid, dst);
-	address_buf a;
-	const struct connection *c;
 
 	if (child == NULL) {
-		dbg("Received kernel %s EXPIRE event for IPsec SPI 0x%x, but there is no connection with this SPI and dst %s bytes %" PRIu64 " packets %" PRIu64,
+		address_buf a;
+		dbg("received kernel %s EXPIRE event for IPsec SPI 0x%x, but there is no connection with this SPI and dst %s bytes %" PRIu64 " packets %" PRIu64,
 		     hard ? "hard" : "soft",
 		     ntohl(spi), str_address(dst, &a), bytes, packets);
 		return;
 	}
 
-	c = child->sa.st_connection;
+	const struct connection *c = child->sa.st_connection;
 
 	if ((hard && impair.ignore_hard_expire) ||
 	    (!hard && impair.ignore_soft_expire)) {
-		llog(RC_LOG, c->logger, "IMPAIR: suppressing a %s EXPIRE event spi 0x%x dst %s bytes %" PRIu64 " packets %" PRIu64,
-		     hard ? "hard" : "soft", ntohl(spi), str_address(dst, &a),
-		     bytes, packets);
+		address_buf a;
+		llog_sa(RC_LOG, child,
+			"IMPAIR: suppressing a %s EXPIRE event spi 0x%x dst %s bytes %" PRIu64 " packets %" PRIu64,
+			hard ? "hard" : "soft", ntohl(spi), str_address(dst, &a),
+			bytes, packets);
 		return;
 	}
 
 	bool rekey = !LIN(POLICY_DONT_REKEY, c->policy);
 	bool newest = c->newest_ipsec_sa == child->sa.st_serialno;
 	struct state *st =  &child->sa;
-	struct ipsec_proto_info *pr = st->st_esp.present ? &st->st_esp : st->st_ah.present ? &st->st_ah : st->st_ipcomp.present ? &st->st_ipcomp : NULL;
+	struct ipsec_proto_info *pr = (st->st_esp.present ? &st->st_esp :
+				       st->st_ah.present ? &st->st_ah :
+				       st->st_ipcomp.present ? &st->st_ipcomp :
+				       NULL);
 
-	bool softexpired = ((pr->peer_kernel_sa_expired & SA_SOFT_EXPIRED) ||
-			(pr->our_kernel_sa_expired & SA_SOFT_EXPIRED));
+	bool already_softexpired = ((pr->peer_kernel_sa_expired & SA_SOFT_EXPIRED) ||
+				    (pr->our_kernel_sa_expired & SA_SOFT_EXPIRED));
 
-	bool hardexpired = ((pr->peer_kernel_sa_expired & SA_HARD_EXPIRED) ||
-			(pr->our_kernel_sa_expired & SA_HARD_EXPIRED));
+	bool already_hardexpired = ((pr->peer_kernel_sa_expired & SA_HARD_EXPIRED) ||
+				    (pr->our_kernel_sa_expired & SA_HARD_EXPIRED));
 
 	enum sa_expire_kind expire = hard ? SA_HARD_EXPIRED : SA_SOFT_EXPIRED;
+	const bool inbound = (pr->attrs.spi == spi);
 
-	llog(RC_LOG, c->logger, "Received %s EXPIRE for SPI 0x%x bytes %" PRIu64 " packets %" PRIu64 " %s rekey=%s%s%s%s",
-	     hard ? "hard" : "soft", ntohl(spi), bytes, packets,
-             newest ? "for the newest SA" : "for old SA. Delete it or it is about to expire.",
-	     rekey ?  "yes" : "no",
-	     softexpired ? " one of SA was soft expired ignore this expire." : ".",
-	     hardexpired ? " one of SA was hard expired ignore this expire." : ".",
-             (newest && rekey && !softexpired && !hardexpired) ? " Replace this SA" : "");
+	llog_sa(RC_LOG, child,
+		"received %s EXPIRE for %s SPI "PRI_IPSEC_SPI" bytes %" PRIu64 " packets %" PRIu64 " rekey=%s%s%s%s%s",
+		hard ? "hard" : "soft",
+		(inbound ? "inbound" : "outbound"), pri_ipsec_spi(spi),
+		bytes, packets,
+		rekey ?  "yes" : "no",
+		already_softexpired ? "; already soft expired" : "",
+		already_hardexpired ? "; already hard expired" : "",
+		(newest ? "" : "; deleting old SA"),
+		(newest && rekey && !already_softexpired && !already_hardexpired) ? "; replacing" : "");
 
-	if ((softexpired && expire == SA_SOFT_EXPIRED)  ||
-	    (hardexpired && expire == SA_HARD_EXPIRED)) {
+	if ((already_softexpired && expire == SA_SOFT_EXPIRED)  ||
+	    (already_hardexpired && expire == SA_HARD_EXPIRED)) {
 		dbg("#%lu one of the SA has already expired ignore this %s EXPIRE",
 		    child->sa.st_serialno, hard ? "hard" : "soft");
 		/*
 		 * likely the other direction SA EXPIRED, it triggered a rekey first.
 		 * It should be safe to ignore the second one. No need to log.
 		 */
-	} else if (!hardexpired && expire == SA_HARD_EXPIRED) {
-		if (pr->attrs.spi == spi) {
+	} else if (!already_hardexpired && expire == SA_HARD_EXPIRED) {
+		if (inbound) {
 			pr->our_kernel_sa_expired |= expire;
 			set_sa_info(pr, bytes, add_time, true /* inbound */, NULL);
 		} else {
@@ -3778,15 +3786,15 @@ void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address *dst,
 			set_sa_info(pr, bytes, add_time, false /* outbound */, NULL);
 		}
 		set_sa_expire_next_event(EVENT_SA_EXPIRE, &child->sa);
-	} else if (newest && rekey && !hardexpired && !softexpired && expire == SA_SOFT_EXPIRED) {
-		if (pr->attrs.spi == spi) {
+	} else if (newest && rekey && !already_hardexpired && !already_softexpired && expire == SA_SOFT_EXPIRED) {
+		if (inbound) {
 			set_sa_info(pr, bytes, add_time, true /* inbound */, NULL);
 			pr->peer_kernel_sa_expired |= expire;
 		} else {
 			pr->our_kernel_sa_expired |= expire;
 			set_sa_info(pr, bytes, add_time, false /* outbound */, NULL);
 		}
-		set_sa_expire_next_event(EVENT_NULL, &child->sa);
+		set_sa_expire_next_event(EVENT_NULL/*either v2 REKEY or v1 REPLACE*/, &child->sa);
 	} else {
 		/*
 		 * 'if' and multiple 'else if's are using multiple variables.
