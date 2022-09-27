@@ -171,7 +171,6 @@ struct ipsec_proto_info {
 	struct ipsec_flow inbound;
 	struct ipsec_flow outbound;
 	ipsec_spi_t our_spi;
-	uint16_t keymat_len;           /* same for both */
 	uint64_t add_time;
 };
 

@@ -78,14 +78,14 @@ void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child)
 	const struct encrypt_desc *encrypt = ipi->attrs.transattrs.ta_encrypt;
 	size_t encrypt_salt_size = (encrypt != NULL ? encrypt->salt_size : 0);
 
-	ipi->keymat_len = integ_key_size + encrypt_key_size + encrypt_salt_size;
+	size_t keymat_len = integ_key_size + encrypt_key_size + encrypt_salt_size;
 
-	dbg("integ=%s: .key_size=%zu encrypt=%s: .key_size=%zu .salt_size=%zu keymat_len=%" PRIu16,
+	dbg("integ=%s: .key_size=%zu encrypt=%s: .key_size=%zu .salt_size=%zu keymat_len=%zu",
 	    integ != NULL ? integ->common.fqn : "N/A",
 	    integ_key_size,
 	    encrypt != NULL ? encrypt->common.fqn : "N/A",
 	    encrypt_key_size, encrypt_salt_size,
-	    ipi->keymat_len);
+	    keymat_len);
 
 	/*
 	 *
@@ -118,18 +118,17 @@ void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child)
 						   shared,
 						   child->sa.st_ni,
 						   child->sa.st_nr,
-						   ipi->keymat_len * 2,
+						   keymat_len * 2,
 						   child->sa.st_logger);
 	PK11SymKey *ikey = key_from_symkey_bytes("initiator to responder key",
-						 keymat, 0, ipi->keymat_len,
+						 keymat, 0, keymat_len,
 						 HERE, child->sa.st_logger);
 	ikeymat = chunk_from_symkey("initiator to responder keys", ikey,
 				    child->sa.st_logger);
 	release_symkey(__func__, "ikey", &ikey);
 
 	PK11SymKey *rkey = key_from_symkey_bytes("responder to initiator key",
-						 keymat, ipi->keymat_len,
-						 ipi->keymat_len,
+						 keymat, keymat_len, keymat_len,
 						 HERE, child->sa.st_logger);
 	rkeymat = chunk_from_symkey("responder to initiator keys:", rkey,
 				    child->sa.st_logger);

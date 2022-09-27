@@ -2020,8 +2020,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	if (st->st_esp.present) {
 		ipsec_spi_t esp_spi =
 			inbound ? st->st_esp.our_spi : st->st_esp.attrs.spi;
-		uint8_t *esp_dst_keymat =
-			inbound ? st->st_esp.inbound.keymat.ptr : st->st_esp.outbound.keymat.ptr;
+		chunk_t esp_dst_keymat = (inbound ? st->st_esp.inbound.keymat :
+					  st->st_esp.outbound.keymat);
 		const struct trans_attrs *ta = &st->st_esp.attrs.transattrs;
 
 		const struct ip_encap *encap_type = NULL;
@@ -2101,10 +2101,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		size_t integ_keymat_size = ta->ta_integ->integ_keymat_size; /* BYTES */
 
-		dbg("kernel: st->st_esp.keymat_len=%" PRIu16 " is encrypt_keymat_size=%zu + integ_keymat_size=%zu",
-		    st->st_esp.keymat_len, encrypt_keymat_size, integ_keymat_size);
+		dbg("kernel: st->st_esp.keymat_len=%zu is encrypt_keymat_size=%zu + integ_keymat_size=%zu",
+		    esp_dst_keymat.len, encrypt_keymat_size, integ_keymat_size);
 
-		passert(st->st_esp.keymat_len == encrypt_keymat_size + integ_keymat_size);
+		passert(esp_dst_keymat.len == encrypt_keymat_size + integ_keymat_size);
 
 		*said_next = said_boilerplate;
 		said_next->spi = esp_spi;
@@ -2168,9 +2168,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		said_next->encrypt = ta->ta_encrypt;
 
 		/* divide up keying material */
-		said_next->enckey = esp_dst_keymat;
+		said_next->enckey = esp_dst_keymat.ptr;
 		said_next->enckeylen = encrypt_keymat_size; /* BYTES */
-		said_next->authkey = esp_dst_keymat + encrypt_keymat_size;
+		said_next->authkey = esp_dst_keymat.ptr + encrypt_keymat_size;
 		said_next->authkeylen = integ_keymat_size; /* BYTES */
 
 		said_next->level = said_next - said;
@@ -2217,8 +2217,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	if (st->st_ah.present) {
 		ipsec_spi_t ah_spi =
 			inbound ? st->st_ah.our_spi : st->st_ah.attrs.spi;
-		uint8_t *ah_dst_keymat =
-			inbound ? st->st_ah.inbound.keymat.ptr : st->st_ah.outbound.keymat.ptr;
+		chunk_t ah_dst_keymat = (inbound ? st->st_ah.inbound.keymat :
+					 st->st_ah.outbound.keymat);
 
 		const struct integ_desc *integ = st->st_ah.attrs.transattrs.ta_integ;
 		size_t keymat_size = integ->integ_keymat_size;
@@ -2230,14 +2230,14 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			goto fail;
 		}
 
-		passert(st->st_ah.keymat_len == keymat_size);
+		passert(ah_dst_keymat.len == keymat_size);
 
 		*said_next = said_boilerplate;
 		said_next->spi = ah_spi;
 		said_next->esatype = ET_AH;
 		said_next->integ = integ;
-		said_next->authkeylen = st->st_ah.keymat_len;
-		said_next->authkey = ah_dst_keymat;
+		said_next->authkeylen = ah_dst_keymat.len;
+		said_next->authkey = ah_dst_keymat.ptr;
 		said_next->level = said_next - said;
 		said_next->reqid = reqid_ah(c->spd.reqid);
 		said_next->story = said_str(kernel_policy.dst.host,

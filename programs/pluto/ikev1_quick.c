@@ -327,8 +327,6 @@ static void compute_proto_keymat(struct state *st,
 		bad_case(protoid);
 	}
 
-	pi->keymat_len = needed_len;
-
 	free_chunk_content(&pi->inbound.keymat);
 	pi->inbound.keymat = ikev1_section_5_keymat(st->st_oakley.ta_prf,
 						st->st_skeyid_d_nss,
