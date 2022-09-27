@@ -3343,17 +3343,17 @@ static void set_sa_info(struct ipsec_proto_info *p2, uint64_t bytes,
 	if (inbound) {
 		if (bytes > p2->inbound.bytes) {
 			p2->inbound.bytes = bytes;
-			p2->our_lastused = mononow();
+			p2->inbound.last_used = mononow();
 		}
 		if (ago != NULL)
-			*ago = monotimediff(mononow(), p2->our_lastused);
+			*ago = monotimediff(mononow(), p2->inbound.last_used);
 	} else {
 		if (bytes > p2->outbound.bytes) {
 			p2->outbound.bytes = bytes;
-			p2->peer_lastused = mononow();
+			p2->outbound.last_used = mononow();
 		}
 		if (ago != NULL)
-			*ago = monotimediff(mononow(), p2->peer_lastused);
+			*ago = monotimediff(mononow(), p2->outbound.last_used);
 	}
 }
 
@@ -3451,11 +3451,11 @@ bool get_sa_bundle_info(struct state *st, bool inbound, monotime_t *last_contact
 	pi->add_time = add_time;
 
 	/* field has been set? */
-	passert(!is_monotime_epoch(pi->our_lastused));
-	passert(!is_monotime_epoch(pi->peer_lastused));
+	passert(!is_monotime_epoch(pi->inbound.last_used));
+	passert(!is_monotime_epoch(pi->outbound.last_used));
 
 	uint64_t *pb = inbound ? &pi->inbound.bytes : &pi->outbound.bytes;
-	monotime_t *plu = inbound ? &pi->our_lastused : &pi->peer_lastused;
+	monotime_t *plu = inbound ? &pi->inbound.last_used : &pi->outbound.last_used;
 
 	if (bytes > *pb) {
 		*pb = bytes;

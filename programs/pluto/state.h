@@ -160,6 +160,7 @@ struct ipsec_trans_attrs {
 struct ipsec_flow {
 	lset_t kernel_sa_expired;
 	uint64_t bytes;
+	monotime_t last_used;
 };
 
 struct ipsec_proto_info {
@@ -172,8 +173,6 @@ struct ipsec_proto_info {
 	uint16_t keymat_len;           /* same for both */
 	uint8_t *our_keymat;
 	uint8_t *peer_keymat;
-	monotime_t our_lastused;
-	monotime_t peer_lastused;
 	uint64_t add_time;
 };
 

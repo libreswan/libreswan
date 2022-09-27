@@ -3406,22 +3406,22 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 		st->st_ah.present = ah_seen;
 		if (ah_seen) {
 			st->st_ah.attrs = ah_attrs;
-			st->st_ah.our_lastused = now;
-			st->st_ah.peer_lastused = now;
+			st->st_ah.inbound.last_used = now;
+			st->st_ah.outbound.last_used = now;
 		}
 
 		st->st_esp.present = esp_seen;
 		if (esp_seen) {
 			st->st_esp.attrs = esp_attrs;
-			st->st_esp.our_lastused = now;
-			st->st_esp.peer_lastused = now;
+			st->st_esp.inbound.last_used = now;
+			st->st_esp.outbound.last_used = now;
 		}
 
 		st->st_ipcomp.present = ipcomp_seen;
 		if (ipcomp_seen) {
 			st->st_ipcomp.attrs = ipcomp_attrs;
-			st->st_ipcomp.our_lastused = now;
-			st->st_ipcomp.peer_lastused = now;
+			st->st_ipcomp.inbound.last_used = now;
+			st->st_ipcomp.outbound.last_used = now;
 		}
 
 		return v1N_NOTHING_WRONG;	/* accept this transform! */

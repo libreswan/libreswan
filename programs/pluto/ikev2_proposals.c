@@ -1738,6 +1738,8 @@ bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
 				  struct ipsec_proto_info *proto_info,
 				  struct logger *logger)
 {
+	const monotime_t now = mononow();
+
 	/*
 	 * Start with ZERO for everything.
 	 */
@@ -1757,8 +1759,8 @@ bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
 
 	proto_info->attrs.transattrs = ta;
 	proto_info->present = true;
-	proto_info->our_lastused = mononow();
-	proto_info->peer_lastused = mononow();
+	proto_info->inbound.last_used = now;
+	proto_info->outbound.last_used = now;
 
 	proto_info->attrs.mode = ENCAPSULATION_MODE_TUNNEL;
 
