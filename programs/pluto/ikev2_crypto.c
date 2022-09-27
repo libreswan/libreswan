@@ -148,16 +148,16 @@ void ikev2_derive_child_keys(struct ike_sa *ike, struct child_sa *child)
 			    DBG_dump_hunk("our  keymat", ikeymat);
 			    DBG_dump_hunk("peer keymat", rkeymat);
 		}
-		ipi->our_keymat = ikeymat.ptr;
-		ipi->peer_keymat = rkeymat.ptr;
+		ipi->inbound.keymat = ikeymat;
+		ipi->outbound.keymat = rkeymat;
 		break;
 	case SA_INITIATOR:
 		if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
 			DBG_dump_hunk("our  keymat", rkeymat);
 			DBG_dump_hunk("peer keymat", ikeymat);
 		}
-		ipi->peer_keymat = ikeymat.ptr;
-		ipi->our_keymat = rkeymat.ptr;
+		ipi->outbound.keymat = ikeymat;
+		ipi->inbound.keymat = rkeymat;
 		break;
 	default:
 		bad_case(child->sa.st_sa_role);

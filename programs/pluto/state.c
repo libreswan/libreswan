@@ -1189,6 +1189,19 @@ void delete_state_tail(struct state *st)
 	free_chunk_content(&st->st_skey_chunk_SK_pi);
 	free_chunk_content(&st->st_skey_chunk_SK_pr);
 
+#define wipe_any_chunk(C)				\
+	{						\
+		if (C.ptr != NULL) {			\
+			memset(C.ptr, 0, C.len);	\
+			free_chunk_content(&(C));	\
+		}					\
+	}
+	wipe_any_chunk(st->st_ah.inbound.keymat);
+	wipe_any_chunk(st->st_ah.outbound.keymat);
+	wipe_any_chunk(st->st_esp.inbound.keymat);
+	wipe_any_chunk(st->st_esp.outbound.keymat);
+#undef wipe_any_chunk
+
 #   define wipe_any(p, l) { \
 		if ((p) != NULL) { \
 			memset((p), 0x00, (l)); \
@@ -1196,11 +1209,6 @@ void delete_state_tail(struct state *st)
 			(p) = NULL; \
 		} \
 	}
-	wipe_any(st->st_ah.our_keymat, st->st_ah.keymat_len);
-	wipe_any(st->st_ah.peer_keymat, st->st_ah.keymat_len);
-	wipe_any(st->st_esp.our_keymat, st->st_esp.keymat_len);
-	wipe_any(st->st_esp.peer_keymat, st->st_esp.keymat_len);
-
 	wipe_any(st->st_xauth_password.ptr, st->st_xauth_password.len);
 #   undef wipe_any
 

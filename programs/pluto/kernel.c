@@ -2021,8 +2021,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		ipsec_spi_t esp_spi =
 			inbound ? st->st_esp.our_spi : st->st_esp.attrs.spi;
 		uint8_t *esp_dst_keymat =
-			inbound ? st->st_esp.our_keymat : st->st_esp.
-			peer_keymat;
+			inbound ? st->st_esp.inbound.keymat.ptr : st->st_esp.outbound.keymat.ptr;
 		const struct trans_attrs *ta = &st->st_esp.attrs.transattrs;
 
 		const struct ip_encap *encap_type = NULL;
@@ -2219,7 +2218,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		ipsec_spi_t ah_spi =
 			inbound ? st->st_ah.our_spi : st->st_ah.attrs.spi;
 		uint8_t *ah_dst_keymat =
-			inbound ? st->st_ah.our_keymat : st->st_ah.peer_keymat;
+			inbound ? st->st_ah.inbound.keymat.ptr : st->st_ah.outbound.keymat.ptr;
 
 		const struct integ_desc *integ = st->st_ah.attrs.transattrs.ta_integ;
 		size_t keymat_size = integ->integ_keymat_size;
