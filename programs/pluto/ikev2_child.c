@@ -83,7 +83,7 @@ static bool has_v2_IKE_AUTH_child_sa_payloads(const struct msg_digest *md)
 static bool compute_v2_child_ipcomp_cpi(struct child_sa *larval_child)
 {
 	const struct connection *cc = larval_child->sa.st_connection;
-	pexpect(larval_child->sa.st_ipcomp.our_spi == 0);
+	pexpect(larval_child->sa.st_ipcomp.inbound.spi == 0);
 	/* CPI is stored in network low order end of an ipsec_spi_t */
 	ipsec_spi_t n_ipcomp_cpi = get_ipsec_cpi(&cc->spd,
 						 larval_child->sa.st_logger);
@@ -95,7 +95,7 @@ static bool compute_v2_child_ipcomp_cpi(struct child_sa *larval_child)
 			"kernel failed to calculate compression CPI (CPI=%d)", h_ipcomp_cpi);
 		return false;
 	}
-	larval_child->sa.st_ipcomp.our_spi = n_ipcomp_cpi;
+	larval_child->sa.st_ipcomp.inbound.spi = n_ipcomp_cpi;
 	return true;
 }
 
@@ -104,19 +104,19 @@ static bool compute_v2_child_spi(struct child_sa *larval_child)
 	struct connection *cc = larval_child->sa.st_connection;
 	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(larval_child);
 	/* XXX: should "avoid" be set to the peer's SPI when known? */
-	pexpect(proto_info->our_spi == 0);
-	proto_info->our_spi = get_ipsec_spi(0 /* avoid this # */,
+	pexpect(proto_info->inbound.spi == 0);
+	proto_info->inbound.spi = get_ipsec_spi(0 /* avoid this # */,
 					    proto_info->protocol,
 					    &cc->spd,
 					    larval_child->sa.st_logger);
-	return proto_info->our_spi != 0;
+	return proto_info->inbound.spi != 0;
 }
 
 static bool emit_v2N_ipcomp_supported(const struct child_sa *child, struct pbs_out *s)
 {
 	dbg("Initiator child policy is compress=yes, sending v2N_IPCOMP_SUPPORTED for DEFLATE");
 
-	ipsec_spi_t h_cpi = (uint16_t)ntohl(child->sa.st_ipcomp.our_spi);
+	ipsec_spi_t h_cpi = (uint16_t)ntohl(child->sa.st_ipcomp.inbound.spi);
 	if (!pexpect(h_cpi != 0)) {
 		return false;
 	}
@@ -180,7 +180,7 @@ bool emit_v2_child_request_payloads(const struct child_sa *larval_child,
 	/* SA - security association */
 
 	const struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(larval_child);
-	shunk_t local_spi = THING_AS_SHUNK(proto_info->our_spi);
+	shunk_t local_spi = THING_AS_SHUNK(proto_info->inbound.spi);
 	if (!ikev2_emit_sa_proposals(pbs, child_proposals, local_spi)) {
 		return false;
 	}
@@ -348,8 +348,8 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 			}
 
 			dbg("received v2N_IPCOMP_SUPPORTED with compression CPI=%d", htonl(n_ipcomp.ikev2_cpi));
-			//child->sa.st_ipcomp.attrs.spi = uniquify_peer_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), cst, 0);
-			larval_child->sa.st_ipcomp.attrs.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
+			//child->sa.st_ipcomp.outbound.spi = uniquify_peer_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), cst, 0);
+			larval_child->sa.st_ipcomp.outbound.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
 			larval_child->sa.st_ipcomp.attrs.transattrs.ta_ipcomp = ikev2_get_ipcomp_desc(n_ipcomp.ikev2_notify_ipcomp_trans);
 			larval_child->sa.st_ipcomp.attrs.mode = encapsulation_mode;
 			larval_child->sa.st_ipcomp.present = true;
@@ -444,7 +444,7 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 	{
 		/* ??? this code won't support AH + ESP */
 		const struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(larval_child);
-		shunk_t local_spi = THING_AS_SHUNK(proto_info->our_spi);
+		shunk_t local_spi = THING_AS_SHUNK(proto_info->inbound.spi);
 		if (!ikev2_emit_sa_proposal(outpbs,
 					    larval_child->sa.st_v2_accepted_proposal,
 					    local_spi)) {
@@ -1043,8 +1043,8 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		}
 		dbg("Received compression CPI=%d", n_ipcomp.ikev2_cpi);
 
-		//child->sa.st_ipcomp.attrs.spi = uniquify_peer_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), st, 0);
-		child->sa.st_ipcomp.attrs.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
+		//child->sa.st_ipcomp.outbound.spi = uniquify_peer_cpi((ipsec_spi_t)htonl(n_ipcomp.ikev2_cpi), st, 0);
+		child->sa.st_ipcomp.outbound.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
 		child->sa.st_ipcomp.attrs.transattrs.ta_ipcomp =
 			ikev2_get_ipcomp_desc(n_ipcomp.ikev2_notify_ipcomp_trans);
 		child->sa.st_ipcomp.attrs.mode = encapsulation_mode;

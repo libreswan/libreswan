@@ -908,13 +908,13 @@ static bool create_xfrm_migrate_sa(struct state *st,
 	const struct end_info local = {
 		.end = &c->spd.this,
 		.endpoint = st->st_interface->local_endpoint,
-		.spi = proto_info->our_spi,
+		.spi = proto_info->inbound.spi,
 	};
 
 	const struct end_info remote = {
 		.end = &c->spd.that,
 		.endpoint = st->st_remote_endpoint,
-		.spi = proto_info->attrs.spi,
+		.spi = proto_info->outbound.spi,
 	};
 
 	const struct end_info *src, *dst;

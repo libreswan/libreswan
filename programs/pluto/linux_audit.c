@@ -273,14 +273,14 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 
 		/* note: each arg appears twice because it is printed two ways */
 		jam(&buf, " in-spi=%" PRIu32 "(0x%08" PRIu32 ") out-spi=%" PRIu32 "(0x%08" PRIu32 ") in-ipcomp=%" PRIu32 "(0x%08" PRIu32 ") out-ipcomp=%" PRIu32 "(0x%08" PRIu32 ")",
-		    ntohl(pi->attrs.spi),
-		    ntohl(pi->attrs.spi),
-		    ntohl(pi->our_spi),
-		    ntohl(pi->our_spi),
-		    ntohl(st->st_ipcomp.attrs.spi),	/* zero if missing */
-		    ntohl(st->st_ipcomp.attrs.spi),	/* zero if missing */
-		    ntohl(st->st_ipcomp.our_spi),	/* zero if missing */
-		    ntohl(st->st_ipcomp.our_spi));	/* zero if missing */
+		    ntohl(pi->outbound.spi),
+		    ntohl(pi->outbound.spi),
+		    ntohl(pi->inbound.spi),
+		    ntohl(pi->inbound.spi),
+		    ntohl(st->st_ipcomp.outbound.spi),	/* zero if missing */
+		    ntohl(st->st_ipcomp.outbound.spi),	/* zero if missing */
+		    ntohl(st->st_ipcomp.inbound.spi),	/* zero if missing */
+		    ntohl(st->st_ipcomp.inbound.spi));	/* zero if missing */
 		break;
 	}
 	default:

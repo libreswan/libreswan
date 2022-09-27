@@ -138,17 +138,17 @@ enum send_delete {
 	DO_SEND_DELETE,
 };
 
-/* IPsec (Phase 2 / Quick Mode) transform and attributes
- * This is a flattened/decoded version of what is represented
- * by a Transaction Payload.  There may be one for AH, one
- * for ESP, and a funny one for IPCOMP.
+/*
+ * IPsec (Phase 2 / Quick Mode) transform and attributes This is a
+ * flattened/decoded version of what is represented by a Transaction
+ * Payload.  There may be one for AH, one for ESP, and a funny one for
+ * IPCOMP.
  *
- * Yes, this is screwy -- we keep different direction information
- * in different places. Fix it up sometime.
+ * Yes, this is screwy -- we keep different direction information in
+ * different places. Fix it up sometime.
  */
 struct ipsec_trans_attrs {
 	struct trans_attrs transattrs;
-	ipsec_spi_t spi;                /* their SPI */
 	deltatime_t life_seconds;	/* max life of this SA in seconds */
 	enum encapsulation_mode mode;	/* transport or tunnel or ... */
 };
@@ -162,6 +162,7 @@ struct ipsec_flow {
 	uint64_t bytes;
 	monotime_t last_used;
 	chunk_t keymat;
+	ipsec_spi_t spi;
 };
 
 struct ipsec_proto_info {

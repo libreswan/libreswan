@@ -1569,7 +1569,7 @@ static struct state *duplicate_state(struct connection *c,
 	/* we should really split the NOTIFY loop in two cleaner ones */
 	nst->st_ipcomp.attrs = st->st_ipcomp.attrs;
 	nst->st_ipcomp.present = st->st_ipcomp.present;
-	nst->st_ipcomp.our_spi = st->st_ipcomp.our_spi;
+	nst->st_ipcomp.inbound.spi = st->st_ipcomp.inbound.spi;
 
 	if (sa_type == IPSEC_SA) {
 #   define clone_nss_symkey_field(field) nst->field = reference_symkey(__func__, #field, st->field)
@@ -1713,7 +1713,7 @@ struct ike_sa *find_v2_ike_sa_by_initiator_spi(const ike_spi_t *ike_initiator_sp
 struct v2_spi_filter {
 	uint8_t protoid;
 	ipsec_spi_t outbound_spi;
-	ipsec_spi_t our_spi;
+	ipsec_spi_t inbound_spi;
 	ip_address *dst;
 };
 
@@ -1735,7 +1735,7 @@ static bool v2_spi_predicate(struct state *st, void *context)
 	}
 
 	if (pr->present) {
-		if (pr->attrs.spi == filter->outbound_spi) {
+		if (pr->outbound.spi == filter->outbound_spi) {
 			dbg("v2 CHILD SA #%lu found using their inbound (our outbound) SPI, in %s",
 			    st->st_serialno, st->st_state->name);
 			ret = true;
@@ -1745,8 +1745,8 @@ static bool v2_spi_predicate(struct state *st, void *context)
 					     filter->dst))
 					ret = true;
 			}
-		} else if (filter->our_spi > 0 &&
-				filter->our_spi == pr->our_spi) {
+		} else if (filter->inbound_spi > 0 &&
+				filter->inbound_spi == pr->inbound.spi) {
 			dbg("v2 CHILD SA #%lu found using their our SPI, in %s",
 			    st->st_serialno, st->st_state->name);
 			ret = true;
@@ -1759,7 +1759,7 @@ static bool v2_spi_predicate(struct state *st, void *context)
 		}
 #if 0
 		/* see function description above */
-		if (pr->our_spi == filter->outbound_spi) {
+		if (pr->inbound.spi == filter->outbound_spi) {
 			dbg("v2 CHILD SA #%lu found using our inbound (their outbound) !?! SPI, in %s",
 			    st->st_serialno,
 			    st->st_state->name);
@@ -1777,7 +1777,7 @@ struct child_sa *find_v2_child_sa_by_spi(ipsec_spi_t spi, int8_t protoid,
 		.protoid = protoid,
 		.outbound_spi = spi,
 		/* fill the same spi, the kernel expire has no direction */
-		.our_spi = spi,
+		.inbound_spi = spi,
 		.dst = dst,
 	};
 	struct state_filter sf = { .where = HERE, };
@@ -1870,12 +1870,12 @@ struct state *find_phase2_state_to_delete(const struct state *p1st,
 					&st->st_ah : &st->st_esp;
 
 			if (pr->present) {
-				if (pr->attrs.spi == spi) {
+				if (pr->outbound.spi == spi) {
 					*bogus = false;
 					return st;
 				}
 
-				if (pr->our_spi == spi) {
+				if (pr->inbound.spi == spi) {
 					*bogus = true;
 					bogusst = st;
 					/* don't return! */
@@ -2190,26 +2190,26 @@ static void show_established_child_details(struct show *s, struct state *st,
 		if (st->st_ah.present) {
 			add_said(c->remote->host.addr,
 				 &ip_protocol_ah,
-				 st->st_ah.attrs.spi);
+				 st->st_ah.outbound.spi);
 			add_said(c->local->host.addr,
 				 &ip_protocol_ah,
-				 st->st_ah.our_spi);
+				 st->st_ah.inbound.spi);
 		}
 		if (st->st_esp.present) {
 			add_said(c->remote->host.addr,
 				 &ip_protocol_esp,
-				 st->st_esp.attrs.spi);
+				 st->st_esp.outbound.spi);
 			add_said(c->local->host.addr,
 				 &ip_protocol_esp,
-				 st->st_esp.our_spi);
+				 st->st_esp.inbound.spi);
 		}
 		if (st->st_ipcomp.present) {
 			add_said(c->remote->host.addr,
 				 &ip_protocol_ipcomp,
-				 st->st_ipcomp.attrs.spi);
+				 st->st_ipcomp.outbound.spi);
 			add_said(c->local->host.addr,
 				 &ip_protocol_ipcomp,
-				 st->st_ipcomp.our_spi);
+				 st->st_ipcomp.inbound.spi);
 		}
 #if defined(KERNEL_XFRM)
 		if (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
@@ -2496,7 +2496,7 @@ startover:
 	while (next_state_new2old(&sf)) {
 		struct state *st = sf.st;
 		if (st->st_ipcomp.present) {
-			cpi_t c = ntohl(st->st_ipcomp.our_spi) - base;
+			cpi_t c = ntohl(st->st_ipcomp.inbound.spi) - base;
 
 			if (c < closest) {
 				if (c == 0) {
@@ -2552,7 +2552,7 @@ ipsec_spi_t uniquify_peer_cpi(ipsec_spi_t cpi, const struct state *st, int tries
 		if (s->st_ipcomp.present &&
 		    sameaddr(&s->st_connection->remote->host.addr,
 			     &st->st_connection->remote->host.addr) &&
-		    cpi == s->st_ipcomp.attrs.spi)
+		    cpi == s->st_ipcomp.outbound.spi)
 		{
 			if (++tries == 20)
 				return 0; /* FAILURE */

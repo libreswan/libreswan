@@ -247,8 +247,8 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 		    tcp ? "inTCP" : nat ? "inUDP" : "",
 		    esn ? "/ESN" : "",
 		    tfc ? "/TFC" : "",
-		    ntohl(st->st_esp.attrs.spi),
-		    ntohl(st->st_esp.our_spi));
+		    ntohl(st->st_esp.outbound.spi),
+		    ntohl(st->st_esp.inbound.spi));
 		jam(buf, " xfrm=%s", st->st_esp.attrs.transattrs.ta_encrypt->common.fqn);
 		/* log keylen when it is required and/or "interesting" */
 		if (!st->st_esp.attrs.transattrs.ta_encrypt->keylen_omitted ||
@@ -269,8 +269,8 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 		ini = " ";
 		jam(buf, "AH%s=>0x%08" PRIx32 " <0x%08" PRIx32 " xfrm=%s",
 		    st->st_ah.attrs.transattrs.esn_enabled ? "/ESN" : "",
-		    ntohl(st->st_ah.attrs.spi),
-		    ntohl(st->st_ah.our_spi),
+		    ntohl(st->st_ah.outbound.spi),
+		    ntohl(st->st_ah.inbound.spi),
 		    st->st_ah.attrs.transattrs.ta_integ->common.fqn);
 	}
 
@@ -278,8 +278,8 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 		jam_string(buf, ini);
 		ini = " ";
 		jam(buf, "IPCOMP=>0x%08" PRIx32 " <0x%08" PRIx32,
-		    ntohl(st->st_ipcomp.attrs.spi),
-		    ntohl(st->st_ipcomp.our_spi));
+		    ntohl(st->st_ipcomp.outbound.spi),
+		    ntohl(st->st_ipcomp.inbound.spi));
 	}
 
 	if (address_is_specified(st->hidden_variables.st_nat_oa)) {

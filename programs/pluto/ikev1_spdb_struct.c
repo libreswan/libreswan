@@ -1096,7 +1096,7 @@ bool ikev1_out_sa(pb_stream *outs,
 					attr_desc =
 						&isakmp_ipsec_attribute_desc;
 					attr_val_descs = ipsec_attr_val_descs;
-					spi_ptr = &st->st_ah.our_spi;
+					spi_ptr = &st->st_ah.inbound.spi;
 					spi_generated = &ah_spi_generated;
 					proto = &ip_protocol_ah;
 					break;
@@ -1108,7 +1108,7 @@ bool ikev1_out_sa(pb_stream *outs,
 					attr_desc =
 						&isakmp_ipsec_attribute_desc;
 					attr_val_descs = ipsec_attr_val_descs;
-					spi_ptr = &st->st_esp.our_spi;
+					spi_ptr = &st->st_esp.inbound.spi;
 					spi_generated = &esp_spi_generated;
 					proto = &ip_protocol_esp;
 					break;
@@ -1126,10 +1126,10 @@ bool ikev1_out_sa(pb_stream *outs,
 					 * so we use specialized code to emit it.
 					 */
 					if (!ipcomp_cpi_generated) {
-						st->st_ipcomp.our_spi =
+						st->st_ipcomp.inbound.spi =
 							get_ipsec_cpi(&c->spd,
 								      st->st_logger);
-						if (st->st_ipcomp.our_spi == 0)
+						if (st->st_ipcomp.inbound.spi == 0)
 							goto fail; /* problem generating CPI */
 
 						ipcomp_cpi_generated = true;
@@ -1138,7 +1138,7 @@ bool ikev1_out_sa(pb_stream *outs,
 					 * CPI is stored in network low order end of an
 					 * ipsec_spi_t.  So we start a couple of bytes in.
 					 */
-					if (!out_raw((uint8_t *)&st->st_ipcomp.our_spi +
+					if (!out_raw((uint8_t *)&st->st_ipcomp.inbound.spi +
 						     IPSEC_DOI_SPI_SIZE -
 						     IPCOMP_CPI_SIZE,
 						     IPCOMP_CPI_SIZE,
@@ -2411,7 +2411,6 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 	}
 
 	*attrs = (struct ipsec_trans_attrs) {
-		.spi = 0,                                               /* spi */
 		.life_seconds = DELTATIME_INIT(IPSEC_SA_LIFETIME_DEFAULT),	/* life_seconds */
 		.mode = ENCAPSULATION_MODE_UNSPECIFIED,        /* encapsulation */
 	};
@@ -2810,18 +2809,18 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 		 * Note: we may fail to generate a satisfactory CPI,
 		 * but we'll ignore that.
 		 */
-		pi->our_spi = get_ipsec_cpi(sr, logger);
-		passert(out_raw((uint8_t *) &pi->our_spi +
+		pi->inbound.spi = get_ipsec_cpi(sr, logger);
+		passert(out_raw((uint8_t *) &pi->inbound.spi +
 				IPSEC_DOI_SPI_SIZE - IPCOMP_CPI_SIZE,
 				IPCOMP_CPI_SIZE,
 				&r_proposal_pbs, "CPI"));
 	} else {
-		pi->our_spi = get_ipsec_spi(pi->attrs.spi,
-					    r_proposal.isap_protoid == PROTO_IPSEC_AH ?
+		pi->inbound.spi = get_ipsec_spi(pi->outbound.spi,
+						r_proposal.isap_protoid == PROTO_IPSEC_AH ?
 						&ip_protocol_ah : &ip_protocol_esp,
-					    sr, logger);
+						sr, logger);
 		/* XXX should check for errors */
-		passert(out_raw((uint8_t *) &pi->our_spi, IPSEC_DOI_SPI_SIZE,
+		passert(out_raw((uint8_t *) &pi->inbound.spi, IPSEC_DOI_SPI_SIZE,
 				&r_proposal_pbs, "SPI"));
 	}
 
@@ -3132,6 +3131,10 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 		struct isakmp_transform esp_trans;
 		struct isakmp_transform ipcomp_trans;
 
+		ipsec_spi_t ah_attrs_spi = 0;
+		ipsec_spi_t esp_attrs_spi = 0;
+		ipsec_spi_t ipcomp_attrs_cpi = 0;
+
 		if (ah_seen) {
 			int previous_transnum = -1;
 			int tn;
@@ -3194,7 +3197,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 			if (!ikev1_verify_ah(c, &ah_attrs.transattrs, st->st_logger)) {
 				continue;
 			}
-			ah_attrs.spi = ah_spi;
+			ah_attrs_spi = ah_spi;
 		}
 
 		if (esp_seen) {
@@ -3253,7 +3256,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 			if (tn == esp_proposal.isap_notrans)
 				continue; /* we didn't find a nice one */
 
-			esp_attrs.spi = esp_spi;
+			esp_attrs_spi = esp_spi;
 		} else if (st->st_policy & POLICY_ENCRYPT) {
 			connection_buf cib;
 			address_buf b;
@@ -3346,7 +3349,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 			if (tn == ipcomp_proposal.isap_notrans)
 				continue; /* we didn't find a nice one */
 
-			ipcomp_attrs.spi = ipcomp_cpi;
+			ipcomp_attrs_cpi = ipcomp_cpi;
 		}
 
 		/* Eureka: we liked what we saw -- accept it. */
@@ -3407,6 +3410,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 		st->st_ah.present = ah_seen;
 		if (ah_seen) {
 			st->st_ah.attrs = ah_attrs;
+			st->st_ah.outbound.spi = ah_attrs_spi;
 			st->st_ah.inbound.last_used = now;
 			st->st_ah.outbound.last_used = now;
 		}
@@ -3414,6 +3418,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 		st->st_esp.present = esp_seen;
 		if (esp_seen) {
 			st->st_esp.attrs = esp_attrs;
+			st->st_esp.outbound.spi = esp_attrs_spi;
 			st->st_esp.inbound.last_used = now;
 			st->st_esp.outbound.last_used = now;
 		}
@@ -3421,6 +3426,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 		st->st_ipcomp.present = ipcomp_seen;
 		if (ipcomp_seen) {
 			st->st_ipcomp.attrs = ipcomp_attrs;
+			st->st_ipcomp.outbound.spi = ipcomp_attrs_cpi;
 			st->st_ipcomp.inbound.last_used = now;
 			st->st_ipcomp.outbound.last_used = now;
 		}

@@ -1743,11 +1743,11 @@ bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
 	/*
 	 * Start with ZERO for everything.
 	 */
-	if (!pexpect(sizeof(proto_info->attrs.spi) == proposal->remote_spi.size))
+	if (!pexpect(sizeof(proto_info->outbound.spi) == proposal->remote_spi.size))
 		return false;
 
-	memcpy(&proto_info->attrs.spi, proposal->remote_spi.bytes,
-	       sizeof(proto_info->attrs.spi));
+	memcpy(&proto_info->outbound.spi, proposal->remote_spi.bytes,
+	       sizeof(proto_info->outbound.spi));
 
 	/*
 	 * Use generic code to convert everything.

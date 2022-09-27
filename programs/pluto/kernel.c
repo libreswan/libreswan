@@ -711,8 +711,8 @@ bool fmt_common_shell_out(char *buf,
 	}
 
 	jam(&jb, "SPI_IN=0x%x SPI_OUT=0x%x " /* SPI_IN SPI_OUT */,
-		first_pi == NULL ? 0 : ntohl(first_pi->attrs.spi),
-		first_pi == NULL ? 0 : ntohl(first_pi->our_spi));
+		first_pi == NULL ? 0 : ntohl(first_pi->outbound.spi),
+		first_pi == NULL ? 0 : ntohl(first_pi->inbound.spi));
 
 	return jambuf_ok(&jb);
 
@@ -1995,8 +1995,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	/* set up IPCOMP SA, if any */
 
 	if (st->st_ipcomp.present) {
-		ipsec_spi_t ipcomp_spi =
-			inbound ? st->st_ipcomp.our_spi : st->st_ipcomp.attrs.spi;
+		ipsec_spi_t ipcomp_spi = (inbound ? st->st_ipcomp.inbound.spi :
+					  st->st_ipcomp.outbound.spi);
 		*said_next = said_boilerplate;
 		said_next->spi = ipcomp_spi;
 		said_next->esatype = ET_IPCOMP;
@@ -2018,8 +2018,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	/* set up ESP SA, if any */
 
 	if (st->st_esp.present) {
-		ipsec_spi_t esp_spi =
-			inbound ? st->st_esp.our_spi : st->st_esp.attrs.spi;
+		ipsec_spi_t esp_spi = (inbound ? st->st_esp.inbound.spi :
+				       st->st_esp.outbound.spi);
 		chunk_t esp_dst_keymat = (inbound ? st->st_esp.inbound.keymat :
 					  st->st_esp.outbound.keymat);
 		const struct trans_attrs *ta = &st->st_esp.attrs.transattrs;
@@ -2215,8 +2215,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	/* set up AH SA, if any */
 
 	if (st->st_ah.present) {
-		ipsec_spi_t ah_spi =
-			inbound ? st->st_ah.our_spi : st->st_ah.attrs.spi;
+		ipsec_spi_t ah_spi = (inbound ? st->st_ah.inbound.spi :
+				      st->st_ah.outbound.spi);
 		chunk_t ah_dst_keymat = (inbound ? st->st_ah.inbound.keymat :
 					 st->st_ah.outbound.keymat);
 
@@ -2387,11 +2387,11 @@ static unsigned append_teardown(struct dead_sa *dead, bool inbound,
 				ip_address host_addr, ip_address effective_remote_address)
 {
 	bool present = proto->present;
-	if (!present && inbound && proto->our_spi != 0 && proto->attrs.spi == 0) {
-		dbg("kernel: forcing inbound delete of %s as .our_spi: "PRI_IPSEC_SPI"; attrs.spi: "PRI_IPSEC_SPI,
+	if (!present && inbound && proto->inbound.spi != 0 && proto->outbound.spi == 0) {
+		dbg("kernel: forcing inbound delete of %s as .inbound.spi: "PRI_IPSEC_SPI"; attrs.spi: "PRI_IPSEC_SPI,
 		    proto->protocol->name,
-		    pri_ipsec_spi(proto->our_spi),
-		    pri_ipsec_spi(proto->attrs.spi));
+		    pri_ipsec_spi(proto->inbound.spi),
+		    pri_ipsec_spi(proto->outbound.spi));
 		present = true;
 	}
 	if (present) {
@@ -2399,19 +2399,19 @@ static unsigned append_teardown(struct dead_sa *dead, bool inbound,
 		if (inbound) {
 			if (proto->inbound.kernel_sa_expired & SA_HARD_EXPIRED) {
 				dbg("kernel expired SPI 0x%x skip deleting",
-				    ntohl(proto->our_spi));
+				    ntohl(proto->inbound.spi));
 				return 0;
 			}
-			dead->spi = proto->our_spi; /* incoming */
+			dead->spi = proto->inbound.spi; /* incoming */
 			dead->src = effective_remote_address;
 			dead->dst = host_addr;
 		} else {
 			if (proto->outbound.kernel_sa_expired & SA_HARD_EXPIRED) {
 				dbg("kernel hard expired SPI 0x%x skip deleting",
-				    ntohl(proto->attrs.spi));
+				    ntohl(proto->outbound.spi));
 				return 0;
 			}
-			dead->spi = proto->attrs.spi; /* outgoing */
+			dead->spi = proto->outbound.spi; /* outgoing */
 			dead->src = host_addr;
 			dead->dst = effective_remote_address;
 		}
@@ -3391,13 +3391,13 @@ bool get_sa_bundle_info(struct state *st, bool inbound, monotime_t *last_contact
 	if (inbound) {
 		if (pi->inbound.kernel_sa_expired & SA_HARD_EXPIRED) {
 			dbg("kernel expired inbound SA SPI "PRI_IPSEC_SPI" skip get_sa_info()",
-			    pri_ipsec_spi(pi->our_spi));
+			    pri_ipsec_spi(pi->inbound.spi));
 			return true; /* all is well use the last known info */
 		}
 	} else {
 		if (pi->outbound.kernel_sa_expired & SA_HARD_EXPIRED) {
 			dbg("kernel expired outbound SA SPI "PRI_IPSEC_SPI" get_sa_info()",
-			    pri_ipsec_spi(pi->attrs.spi));
+			    pri_ipsec_spi(pi->outbound.spi));
 			return true; /* all is well use last known info */
 		}
 	}
@@ -3424,11 +3424,11 @@ bool get_sa_bundle_info(struct state *st, bool inbound, monotime_t *last_contact
 	if (inbound) {
 		src = c->remote->host.addr;
 		dst = c->local->host.addr;
-		spi = pi->our_spi;
+		spi = pi->inbound.spi;
 	} else {
 		src = c->local->host.addr;
 		dst = c->remote->host.addr;
-		spi = pi->attrs.spi;
+		spi = pi->outbound.spi;
 	}
 
 	said_buf sb;
@@ -3762,7 +3762,7 @@ void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address *dst,
 	 * OUR_SPI was sent by us to our peer, so that our peer can
 	 * include it in all inbound IPsec messages.
 	 */
-	const bool inbound = (pr->our_spi == spi);
+	const bool inbound = (pr->inbound.spi == spi);
 
 	llog_sa(RC_LOG, child,
 		"received %s EXPIRE for %s SPI "PRI_IPSEC_SPI" bytes %" PRIu64 " packets %" PRIu64 " rekey=%s%s%s%s%s",
