@@ -2398,7 +2398,7 @@ static unsigned append_teardown(struct dead_sa *dead, bool inbound,
 	if (present) {
 		dead->protocol = proto->protocol;
 		if (inbound) {
-			if (proto->peer_kernel_sa_expired & SA_HARD_EXPIRED) {
+			if (proto->inbound.kernel_sa_expired & SA_HARD_EXPIRED) {
 				dbg("kernel expired SPI 0x%x skip deleting",
 				    ntohl(proto->our_spi));
 				return 0;
@@ -2407,7 +2407,7 @@ static unsigned append_teardown(struct dead_sa *dead, bool inbound,
 			dead->src = effective_remote_address;
 			dead->dst = host_addr;
 		} else {
-			if (proto->our_kernel_sa_expired & SA_HARD_EXPIRED) {
+			if (proto->outbound.kernel_sa_expired & SA_HARD_EXPIRED) {
 				dbg("kernel hard expired SPI 0x%x skip deleting",
 				    ntohl(proto->attrs.spi));
 				return 0;
@@ -3390,13 +3390,15 @@ bool get_sa_bundle_info(struct state *st, bool inbound, monotime_t *last_contact
 	}
 
 	if (inbound) {
-		if (pi->peer_kernel_sa_expired & SA_HARD_EXPIRED) {
-			dbg("kernel expired peer SA SPI 0x%x skip get_sa_info()", ntohl(pi->attrs.spi));
+		if (pi->inbound.kernel_sa_expired & SA_HARD_EXPIRED) {
+			dbg("kernel expired inbound SA SPI "PRI_IPSEC_SPI" skip get_sa_info()",
+			    pri_ipsec_spi(pi->our_spi));
 			return true; /* all is well use the last known info */
 		}
 	} else {
-		if (pi->our_kernel_sa_expired & SA_HARD_EXPIRED) {
-			dbg("kernel expired our SA SPI 0x%x get_sa_info()", ntohl(pi->our_spi));
+		if (pi->outbound.kernel_sa_expired & SA_HARD_EXPIRED) {
+			dbg("kernel expired outbound SA SPI "PRI_IPSEC_SPI" get_sa_info()",
+			    pri_ipsec_spi(pi->attrs.spi));
 			return true; /* all is well use last known info */
 		}
 	}
@@ -3749,11 +3751,11 @@ void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address *dst,
 				       st->st_ipcomp.present ? &st->st_ipcomp :
 				       NULL);
 
-	bool already_softexpired = ((pr->peer_kernel_sa_expired & SA_SOFT_EXPIRED) ||
-				    (pr->our_kernel_sa_expired & SA_SOFT_EXPIRED));
+	bool already_softexpired = ((pr->inbound.kernel_sa_expired & SA_SOFT_EXPIRED) ||
+				    (pr->outbound.kernel_sa_expired & SA_SOFT_EXPIRED));
 
-	bool already_hardexpired = ((pr->peer_kernel_sa_expired & SA_HARD_EXPIRED) ||
-				    (pr->our_kernel_sa_expired & SA_HARD_EXPIRED));
+	bool already_hardexpired = ((pr->inbound.kernel_sa_expired & SA_HARD_EXPIRED) ||
+				    (pr->outbound.kernel_sa_expired & SA_HARD_EXPIRED));
 
 	enum sa_expire_kind expire = hard ? SA_HARD_EXPIRED : SA_SOFT_EXPIRED;
 
@@ -3784,19 +3786,19 @@ void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address *dst,
 		 */
 	} else if (!already_hardexpired && expire == SA_HARD_EXPIRED) {
 		if (inbound) {
-			pr->our_kernel_sa_expired |= expire;
+			pr->inbound.kernel_sa_expired |= expire;
 			set_sa_info(pr, bytes, add_time, true /* inbound */, NULL);
 		} else {
-			pr->peer_kernel_sa_expired |= expire;
+			pr->outbound.kernel_sa_expired |= expire;
 			set_sa_info(pr, bytes, add_time, false /* outbound */, NULL);
 		}
 		set_sa_expire_next_event(EVENT_SA_EXPIRE, &child->sa);
 	} else if (newest && rekey && !already_hardexpired && !already_softexpired && expire == SA_SOFT_EXPIRED) {
 		if (inbound) {
+			pr->inbound.kernel_sa_expired |= expire;
 			set_sa_info(pr, bytes, add_time, true /* inbound */, NULL);
-			pr->peer_kernel_sa_expired |= expire;
 		} else {
-			pr->our_kernel_sa_expired |= expire;
+			pr->outbound.kernel_sa_expired |= expire;
 			set_sa_info(pr, bytes, add_time, false /* outbound */, NULL);
 		}
 		set_sa_expire_next_event(EVENT_NULL/*either v2 REKEY or v1 REPLACE*/, &child->sa);

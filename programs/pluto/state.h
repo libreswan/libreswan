@@ -153,19 +153,26 @@ struct ipsec_trans_attrs {
 	enum encapsulation_mode mode;	/* transport or tunnel or ... */
 };
 
-/* IPsec per protocol state information */
+/*
+ * IPsec per protocol state information.
+ */
+
+struct ipsec_flow {
+	lset_t kernel_sa_expired;
+};
+
 struct ipsec_proto_info {
 	const struct ip_protocol *protocol;	/* ESP, AH, COMP, ... */
 	bool present;				/* was this transform negotiated? */
 	struct ipsec_trans_attrs attrs; /* info on remote */
+	struct ipsec_flow inbound;
+	struct ipsec_flow outbound;
 	ipsec_spi_t our_spi;
 	uint16_t keymat_len;           /* same for both */
 	uint8_t *our_keymat;
 	uint8_t *peer_keymat;
 	uint64_t our_bytes;
 	uint64_t peer_bytes;
-	enum sa_expire_kind our_kernel_sa_expired;  /* received expire out */
-	enum sa_expire_kind peer_kernel_sa_expired;  /* received expire in */
 	monotime_t our_lastused;
 	monotime_t peer_lastused;
 	uint64_t add_time;
