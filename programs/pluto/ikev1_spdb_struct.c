@@ -2902,42 +2902,29 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 	/* for each conjunction of proposals... */
 	while (next_full) {
 		int propno = next_proposal.isap_proposal;
-		pb_stream
-			ah_prop_pbs,
-			esp_prop_pbs,
-			ipcomp_prop_pbs;
-		struct isakmp_proposal
-			ah_proposal,
-			esp_proposal,
-			ipcomp_proposal;
-		ipsec_spi_t
-			ah_spi = 0,
-			esp_spi = 0,
-			ipcomp_cpi = 0;
-		bool
-			ah_seen = false,
-			esp_seen = false,
-			ipcomp_seen = false;
+
+		struct pbs_in ah_prop_pbs;
+		struct pbs_in esp_prop_pbs;
+		struct pbs_in ipcomp_prop_pbs;
+
+		struct isakmp_proposal ah_proposal = {0};
+		struct isakmp_proposal esp_proposal = {0};
+		struct isakmp_proposal ipcomp_proposal = {0};
+
+		ipsec_spi_t ah_spi = 0;
+		ipsec_spi_t esp_spi = 0;
+		ipsec_spi_t ipcomp_cpi = 0;
+
+		bool ah_seen = false;
+		bool esp_seen = false;
+		bool ipcomp_seen = false;
+
 		const struct ipcomp_desc *well_known_cpi = NULL;
 
-		pb_stream
-			ah_trans_pbs,
-			esp_trans_pbs,
-			ipcomp_trans_pbs;
-		struct isakmp_transform
-			ah_trans,
-			esp_trans,
-			ipcomp_trans;
-		struct ipsec_trans_attrs
-			ah_attrs,
-			esp_attrs,
-			ipcomp_attrs;
+		/*
+		 * For each proposal in the conjunction.
+		 */
 
-		zero(&ah_proposal);	/* OK: no pointer fields */
-		zero(&esp_proposal);	/* OK: no pointer fields */
-		zero(&ipcomp_proposal);	/* OK: no pointer fields */
-
-		/* for each proposal in the conjunction */
 		do {
 			if (next_proposal.isap_protoid == PROTO_IPCOMP) {
 				/* IPCOMP CPI */
@@ -3121,15 +3108,29 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 			}
 		} while (next_proposal.isap_proposal == propno);
 
-		/* Now that we have all conjuncts, we should try
-		 * the Cartesian product of each's transforms!
-		 * At the moment, we take short-cuts on account of
-		 * our rudimentary hard-wired policy.
-		 * For now, we find an acceptable AH (if any)
-		 * and then an acceptable ESP.  The only interaction
-		 * is that the ESP acceptance can know whether there
-		 * was an acceptable AH and hence not require an AUTH.
+		/*
+		 * Now that we have all conjuncts, we should try the
+		 * Cartesian product of each's transforms!
+		 *
+		 * At the moment, we take short-cuts on account of our
+		 * rudimentary hard-wired policy.  For now, we find an
+		 * acceptable AH (if any) and then an acceptable ESP.
+		 * The only interaction is that the ESP acceptance can
+		 * know whether there was an acceptable AH and hence
+		 * not require an AUTH.
 		 */
+
+		struct ipsec_trans_attrs ah_attrs;
+		struct ipsec_trans_attrs esp_attrs;
+		struct ipsec_trans_attrs ipcomp_attrs;
+
+		struct pbs_in ah_trans_pbs;
+		struct pbs_in esp_trans_pbs;
+		struct pbs_in ipcomp_trans_pbs;
+
+		struct isakmp_transform ah_trans;
+		struct isakmp_transform esp_trans;
+		struct isakmp_transform ipcomp_trans;
 
 		if (ah_seen) {
 			int previous_transnum = -1;
