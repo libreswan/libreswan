@@ -666,10 +666,10 @@ bool fmt_common_shell_out(char *buf,
 		 * be a single "atomic" call?
 		 */
 		if (get_sa_bundle_info(st, true, NULL)) {
-			JDuint64("PLUTO_INBYTES", first_pi->our_bytes);
+			JDuint64("PLUTO_INBYTES", first_pi->inbound.bytes);
 		}
 		if (get_sa_bundle_info(st, false, NULL)) {
-			JDuint64("PLUTO_OUTBYTES", first_pi->peer_bytes);
+			JDuint64("PLUTO_OUTBYTES", first_pi->outbound.bytes);
 		}
 	}
 
@@ -3341,15 +3341,15 @@ static void set_sa_info(struct ipsec_proto_info *p2, uint64_t bytes,
 	pexpect(p2->add_time == add_time);
 
 	if (inbound) {
-		if (bytes > p2->our_bytes) {
-			p2->our_bytes = bytes;
+		if (bytes > p2->inbound.bytes) {
+			p2->inbound.bytes = bytes;
 			p2->our_lastused = mononow();
 		}
 		if (ago != NULL)
 			*ago = monotimediff(mononow(), p2->our_lastused);
 	} else {
-		if (bytes > p2->peer_bytes) {
-			p2->peer_bytes = bytes;
+		if (bytes > p2->outbound.bytes) {
+			p2->outbound.bytes = bytes;
 			p2->peer_lastused = mononow();
 		}
 		if (ago != NULL)
@@ -3454,7 +3454,7 @@ bool get_sa_bundle_info(struct state *st, bool inbound, monotime_t *last_contact
 	passert(!is_monotime_epoch(pi->our_lastused));
 	passert(!is_monotime_epoch(pi->peer_lastused));
 
-	uint64_t *pb = inbound ? &pi->our_bytes : &pi->peer_bytes;
+	uint64_t *pb = inbound ? &pi->inbound.bytes : &pi->outbound.bytes;
 	monotime_t *plu = inbound ? &pi->our_lastused : &pi->peer_lastused;
 
 	if (bytes > *pb) {

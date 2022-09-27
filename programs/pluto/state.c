@@ -860,11 +860,11 @@ static void log_and_update_traffic(struct state *st, const char *name, struct ip
 		jam(buf, "%s traffic information:", name);
 		/* in */
 		jam_string(buf, " in=");
-		jam_humber(buf, traffic->our_bytes);
+		jam_humber(buf, traffic->inbound.bytes);
 		jam_string(buf, "B");
 		/* out */
 		jam_string(buf, " out=");
-		jam_humber(buf, traffic->peer_bytes);
+		jam_humber(buf, traffic->outbound.bytes);
 		jam_string(buf, "B");
 		if (st->st_xauth_username[0] != '\0') {
 			jam_string(buf, " XAUTHuser=");
@@ -876,8 +876,8 @@ static void log_and_update_traffic(struct state *st, const char *name, struct ip
 	 * returned the correct byte-count (instead of zero) when
 	 * wrapped in ESP.
 	 */
-	pstats_ipsec_in_bytes += traffic->our_bytes;
-	pstats_ipsec_out_bytes += traffic->peer_bytes;
+	pstats_ipsec_in_bytes += traffic->inbound.bytes;
+	pstats_ipsec_out_bytes += traffic->outbound.bytes;
 }
 
 void delete_state_tail(struct state *st)
@@ -1994,16 +1994,16 @@ static void jam_state_traffic(struct jambuf *buf, struct state *st)
 	    st->st_esp.add_time);
 
 	if (get_sa_bundle_info(st, true, NULL)) {
-		unsigned inb = (st->st_esp.present ? st->st_esp.our_bytes:
-				st->st_ah.present ? st->st_ah.our_bytes :
-				st->st_ipcomp.present ? st->st_ipcomp.our_bytes : 0);
+		unsigned inb = (st->st_esp.present ? st->st_esp.inbound.bytes:
+				st->st_ah.present ? st->st_ah.inbound.bytes :
+				st->st_ipcomp.present ? st->st_ipcomp.inbound.bytes : 0);
 		jam(buf, ", inBytes=%u", inb);
 	}
 
 	if (get_sa_bundle_info(st, false, NULL)) {
-		uintmax_t outb = (st->st_esp.present ? st->st_esp.peer_bytes :
-				  st->st_ah.present ? st->st_ah.peer_bytes :
-				  st->st_ipcomp.present ? st->st_ipcomp.peer_bytes : 0);
+		uintmax_t outb = (st->st_esp.present ? st->st_esp.outbound.bytes :
+				  st->st_ah.present ? st->st_ah.outbound.bytes :
+				  st->st_ipcomp.present ? st->st_ipcomp.outbound.bytes : 0);
 		jam(buf, ", outBytes=%ju", outb);
 		if (c->config->sa_ipsec_max_bytes != 0) {
 			jam_humber_max(buf, ", maxBytes=", c->config->sa_ipsec_max_bytes, "B");
@@ -2239,33 +2239,33 @@ static void show_established_child_details(struct show *s, struct state *st,
 		if (st->st_ah.present) {
 			if (in_info) {
 				jam(buf, " AHin=");
-				jam_readable_humber(buf, first_sa->our_bytes, false);
+				jam_readable_humber(buf, first_sa->inbound.bytes, false);
 			}
 			if (out_info) {
 				jam(buf, " AHout=");
-				jam_readable_humber(buf, first_sa->peer_bytes, false);
+				jam_readable_humber(buf, first_sa->outbound.bytes, false);
 			}
 			jam_humber_max(buf, " AHmax=", c->config->sa_ipsec_max_bytes, "B");
 		}
 		if (st->st_esp.present) {
 			if (in_info) {
 				jam(buf, " ESPin=");
-				jam_readable_humber(buf, first_sa->our_bytes, false);
+				jam_readable_humber(buf, first_sa->inbound.bytes, false);
 			}
 			if (out_info) {
 				jam(buf, " ESPout=");
-				jam_readable_humber(buf, first_sa->peer_bytes, false);
+				jam_readable_humber(buf, first_sa->outbound.bytes, false);
 			}
 			jam_humber_max(buf, " ESPmax=", c->config->sa_ipsec_max_bytes, "B");
 		}
 		if (st->st_ipcomp.present) {
 			if (in_info) {
 				jam(buf, " IPCOMPin=");
-				jam_readable_humber(buf, first_sa->our_bytes, false);
+				jam_readable_humber(buf, first_sa->inbound.bytes, false);
 			}
 			if (out_info) {
 				jam(buf, " IPCOMPout=");
-				jam_readable_humber(buf, first_sa->peer_bytes, false);
+				jam_readable_humber(buf, first_sa->outbound.bytes, false);
 			}
 			jam_humber_max(buf, " IPCOMPmax=", c->config->sa_ipsec_max_bytes, "B");
 		}
