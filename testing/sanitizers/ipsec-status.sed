@@ -12,6 +12,8 @@ s/esp\.[a-z1-9]@/esp.ESPSPIi@/g
 s/ah\.[a-z1-9]@/ah.AHSPIi@/g
 s/comp\.[a-z1-9]@/comp.COMPSPIi@/g
 
+s/ SPI [a-z0-9][a-z0-9]* / SPI SPISPI /
+
 s/esp\.[a-z0-9]\{2,8\}@/esp.ESPSPIi@/g
 s/ah\.[a-z0-9]\{2,8\}@/ah.AHSPIi@/g
 s/comp\.[a-z0-9]\{2,8\}@/comp.COMPSPIi@/g

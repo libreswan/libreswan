@@ -28,7 +28,7 @@ west #
  actual=$(sed -n -e 's/.* ipsec-max-bytes.* actual-limit=\([0-9]*\).*/\1/ p' /tmp/pluto.log | head -1)
 west #
  echo $actual
-291
+512
 west #
  # pings will get to almost rekey, but rekey wouldn't trigger; expect
 west #
@@ -39,11 +39,11 @@ west #
  ping -n -q -c $((actual / 84)) -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
-3 packets transmitted, 3 received, 0% packet loss, time XXXX
+6 packets transmitted, 6 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  ipsec trafficstatus
-006 #2: "west", type=ESP, add_time=1234567890, inBytes=252, outBytes=252, maxBytes=2KiB, id='@east'
+006 #2: "west", type=ESP, add_time=1234567890, inBytes=504, outBytes=504, maxBytes=2KiB, id='@east'
 west #
  # next pings will go over and initiate a rekey expect only #3 IPsec
 west #
@@ -52,26 +52,26 @@ west #
  ping -n -q -c $((actual / 84)) -I 192.0.1.254 192.0.2.254
 PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
 --- 192.0.2.254 ping statistics ---
-3 packets transmitted, 3 received, 0% packet loss, time XXXX
-rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
-west #
- sleep 5
-west #
- ipsec trafficstatus
-006 #3: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2KiB, id='@east'
-west #
- # expect only #4 IPsec second rekeyed Child SA
-west #
- ping -n -q -c $((actual / 84)) -I 192.0.1.254 192.0.2.254
-PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
---- 192.0.2.254 ping statistics ---
-3 packets transmitted, 3 received, 0% packet loss, time XXXX
+6 packets transmitted, 6 received, 0% packet loss, time XXXX
 rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 west #
  sleep 5
 west #
  ipsec trafficstatus
 006 #3: "west", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2KiB, id='@east'
+west #
+ # expect only #4 IPsec second rekeyed Child SA
+west #
+ ping -n -q -c $((actual / 84)) -I 192.0.1.254 192.0.2.254
+PING 192.0.2.254 (192.0.2.254) from 192.0.1.254 : 56(84) bytes of data.
+--- 192.0.2.254 ping statistics ---
+6 packets transmitted, 6 received, 0% packet loss, time XXXX
+rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
+west #
+ sleep 5
+west #
+ ipsec trafficstatus
+006 #4: "west", type=ESP, add_time=1234567890, inBytes=168, outBytes=168, maxBytes=2KiB, id='@east'
 west #
  echo done
 done
@@ -130,6 +130,7 @@ west #
 west #
  grep "initiating rekey to replace Child SA" OUTPUT/$(hostname).pluto.log
 "west" #3: initiating rekey to replace Child SA #2
+"west" #4: initiating rekey to replace Child SA #3
 west #
  # should be absent
 west #
@@ -139,6 +140,9 @@ west #
  # should hit twice on west only
 west #
  grep "received .* EXPIRE " OUTPUT/$(hostname).pluto.log | sed 's/for SPI 0x.*$/for SPI .../'
-"west" #2: received soft EXPIRE for outbound SPI 6fd219e3 bytes 336 packets 4 rekey=yes; replacing
+"west" #2: received soft EXPIRE for outbound SPI SPISPI bytes 588 packets 7 rekey=yes; replacing
+"west" #2: received soft EXPIRE for inbound SPI SPISPI bytes 588 packets 7 rekey=yes; already soft expired
+"west" #3: received soft EXPIRE for outbound SPI SPISPI bytes 588 packets 7 rekey=yes; replacing
+"west" #3: received soft EXPIRE for inbound SPI SPISPI bytes 588 packets 7 rekey=yes; already soft expired
 west #
  
