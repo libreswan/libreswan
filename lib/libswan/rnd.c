@@ -69,9 +69,9 @@ void get_rnd_bytes(void *buffer, size_t length)
 	}
 }
 
-unsigned get_rnd(unsigned roof)
+uintmax_t get_rnd_uintmax(uintmax_t roof)
 {
-	unsigned rnd;
+	uintmax_t rnd;
 	get_rnd_bytes(&rnd, sizeof(rnd));
 	return rnd % roof;
 }

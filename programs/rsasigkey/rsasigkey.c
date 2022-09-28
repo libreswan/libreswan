@@ -206,7 +206,7 @@ int main(int argc, char *argv[])
 		 * Pick a default keysize in [3072, 3072+512+256);
 		 * multiple of 16; don't roll the top digit.
 		 */
-		nbits = 3072 + get_rnd((512 + 256) / 16) * 16;
+		nbits = 3072 + get_rnd_uintmax((512 + 256) / 16) * 16;
 	} else {
 		unsigned long u;
 		err_t ugh = ttoulb(argv[optind], 0, 10, INT_MAX, &u);

@@ -39,7 +39,7 @@ deltatime_t fuzz_rekey_margin(enum sa_role role, deltatime_t marg,  unsigned fuz
 		 * marg + marg * fuzz%;
 		 */
 		return deltatime_scale(marg,
-				       100 + /*[0..FUZZ_PERCENT]*/get_rnd(/*roof*/fuzz_percent + 1),
+				       100 + /*[0..FUZZ_PERCENT]*/get_rnd_uintmax(/*roof*/fuzz_percent + 1),
 				       100);
 	case SA_RESPONDER:
 		/*
@@ -102,7 +102,7 @@ uintmax_t fuzz_soft_limit(const char *what, enum sa_role role,
 		 * smaller limitL 25%-50% of SOFT_LIMIT.
 		 */
 		role_name = "initiator";
-		actual_limit = quarter_limit + get_rnd(/*roof*/quarter_limit);
+		actual_limit = quarter_limit + get_rnd_uintmax(/*roof*/quarter_limit);
 		break;
 	case SA_RESPONDER:
 		/*
@@ -110,7 +110,7 @@ uintmax_t fuzz_soft_limit(const char *what, enum sa_role role,
 		 * limit: 75%-100% of SOFT_LIMIT.
 		 */
 		role_name = "responder";
-		actual_limit = soft_limit - get_rnd(/*roof*/quarter_limit);
+		actual_limit = soft_limit - get_rnd_uintmax(/*roof*/quarter_limit);
 		break;
 	default:
 		bad_case(role);

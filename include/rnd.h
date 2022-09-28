@@ -17,6 +17,7 @@
 #ifndef PLUTO_RND_H
 #define PLUTO_RND_H
 
+#include <stdint.h>	/* for uintmax_t */
 #include <stddef.h>	/* for size_t */
 
 #include "chunk.h"
@@ -25,7 +26,7 @@ struct logger;
 
 extern void fill_rnd_chunk(chunk_t chunk);
 extern void get_rnd_bytes(void *buffer, size_t size);
-extern unsigned get_rnd(unsigned roof);
+extern uintmax_t get_rnd_uintmax(uintmax_t roof);
 extern chunk_t alloc_rnd_chunk(size_t size, const char *name);
 
 #endif
