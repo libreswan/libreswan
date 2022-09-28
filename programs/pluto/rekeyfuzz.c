@@ -24,28 +24,31 @@
 
 #include "rekeyfuzz.h"
 
+/*
+ * Important policy lies buried here.
+ *
+ * The initiator is made to rekey earlier, either with a smaller limit
+ * or bigger margin before a replace.
+ */
+
 deltatime_t fuzz_rekey_margin(enum sa_role role, deltatime_t marg,  unsigned fuzz_percent)
 {
-	/*
-	 * Important policy lies buried here.
-	 */
 
 	switch (role) {
 	case SA_INITIATOR:
 		/*
-		 * Favour the initiator by giving it a larger margin
-		 * (so it rekeys earlier).
-		 *
-		 * marg + marg * fuzz%;
+		 * Give the initiator a larger margin so that its
+		 * rekey event is scheduled earlier (relative to the
+		 * replace event).
 		 */
 		return deltatime_scale(marg,
 				       100 + /*[0..FUZZ_PERCENT]*/get_rnd_uintmax(/*roof*/fuzz_percent + 1),
 				       100);
 	case SA_RESPONDER:
 		/*
-		 * Disfavour the responder by halving its margin which
-		 * means it will wait longer before starting a
-		 * rekey/replace.
+		 * Give the responder a smaller margin so that its
+		 * rekey event is scheduled later (relative to the
+		 * replace event).
 		 */
 		return deltatime_scale(marg, 1, 2);
 	default:
@@ -59,7 +62,7 @@ uintmax_t fuzz_soft_limit(const char *what, enum sa_role role,
 {
 	/*
 	 * Can't use c->sa_rekey_fuzz as configuration allows values
-	 * >100%.  For a limit calculation that is a disaster.
+	 * >100%.  For a limit calculation that would be a disaster.
 	 */
 	if (!pexpect(hard_limit > 1)) {
 		return hard_limit;
@@ -68,62 +71,76 @@ uintmax_t fuzz_soft_limit(const char *what, enum sa_role role,
 	passert(soft_limit_percentage <= 100);
 
 	/*
-	 * XXX: this math is horrible.
+	 * Convert the HARD_LIMIT into a soft limit; being careful of
+	 * underflow and overflow:
 	 *
-	 * When HARD_FLOAT is small H*P/100 is best as H/100*P
-	 * underflows.
+	 * - when HARD_LIMIT is small use H*P/100 as H/100 in H/100*P
+	 * will underflow
 	 *
-	 * When HARD_FLOAT is huge H/100*P is best as H*P/100
-	 * overflows (even when using double).
+	 * - when HARD_LIMIT is large compute H/100*P as HP*P in
+	 * H*P/100 will overflow
 	 */
-
 	uintmax_t soft_limit;
-	if (hard_limit < 100*100) {
-		/* avoid underflow */
+	if (hard_limit < 1000*100) {
 		soft_limit = hard_limit * soft_limit_percentage / 100;
 	} else {
-		/* avoid overflow */
 		soft_limit = (hard_limit / 100) * soft_limit_percentage;
 	}
 
-	uintmax_t quarter_limit = soft_limit / 4;
-	if (quarter_limit == 0) {
-		/* give up */
-		return hard_limit - 1;
+	/*
+	 * Give the SOFT_LIMIT a little fuzz in the range
+	 * [SOFT_LIMIT..SOFT_LIMIT/8], however don't fuzz small values
+	 * (i.e., make the value deterministic, presumably it is for
+	 * testing).
+	 *
+	 * SOFT_LIMIT/8 is somewhat arbitrary, it ensures that
+	 * SOFT_LIMIT/2+FUZZ < SOFT_LIMIT-FUZZ.
+	 *
+	 * +1 is not arbitrary, without it get_rnd_uintmax()
+	 * would barf when soft_limit/8==0.
+	 */
+	uintmax_t fuzz;
+	if (hard_limit < 16384/*magic*/) {
+		fuzz = 0;
+	} else {
+
+		fuzz = get_rnd_uintmax(/*roof*/soft_limit / 8 + 1);
 	}
 
-	uintmax_t actual_limit;
-
 	const char *role_name;
+	uintmax_t softer_limit;
+	uintmax_t actual_limit;
 	switch (role) {
 	case SA_INITIATOR:
 		/*
-		 * Make the initiator rekey first by giving it the
-		 * smaller limitL 25%-50% of SOFT_LIMIT.
+		 * Make the initiator rekey first by further dividing
+		 * the soft limit.
 		 */
 		role_name = "initiator";
-		actual_limit = quarter_limit + get_rnd_uintmax(/*roof*/quarter_limit);
+		softer_limit = soft_limit/2;
+		actual_limit = softer_limit + fuzz;
 		break;
 	case SA_RESPONDER:
 		/*
-		 * Make the responder rekey last by giving it a larger
-		 * limit: 75%-100% of SOFT_LIMIT.
+		 * Make the responder rekey last by giving it
+		 * the larger ~SOFT_LIMIT.
 		 */
 		role_name = "responder";
-		actual_limit = soft_limit - get_rnd_uintmax(/*roof*/quarter_limit);
+		softer_limit = soft_limit;
+		actual_limit = softer_limit - fuzz;
 		break;
 	default:
 		bad_case(role);
 	}
 
 	/* just don't reduce a hard-limit to 0 */
-	if (actual_limit == 0 && hard_limit > 0) {
+	if (actual_limit == 0) {
 		actual_limit = 1;
 	}
 
 	if (DBGP(DBG_BASE)) {
-		ldbg(logger, "%s %s: hard-limit=%ju soft-limit=%ju actual-limit=%ju",
-		     role_name, what, hard_limit, soft_limit, actual_limit);
+		ldbg(logger, "%s %s: hard-limit=%ju soft-limit=%ju softer-limit=%ju fuzz=%ju actual-limit=%ju",
+		     role_name, what, hard_limit, soft_limit, softer_limit, fuzz, actual_limit);
 	}
 
 	return actual_limit;
