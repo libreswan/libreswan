@@ -11,19 +11,17 @@ acceptable values are an integer optionally followed by
   <emphasis remap='B'>TiB</emphasis>,
   <emphasis remap='B'>PiB</emphasis> or
   <emphasis remap='B'>EiB</emphasis> to signify kilobytes, megabytes, gigabytes,
-  terabytes, petabytes or exabytes.
+  terabytes, petabytes or exabytes. The default is 2^63 bytes.
 
-This is in addition time based rekey.
 Normally, the connection is renegotiated (via the IKE SA) before ipsec-max-bytes value is reached.
 This option is not negotiated and both ends use their own value for this option.
 </para>
 <para>
 	The value set two triggers. The number of bytes allowed to be encrypted with the same key, ie hard expire
-        and a soft limit. The soft limit is 80% of ipsec-max-bytes + random value derived using rekeyfuzz. An IPsec
-	SA uses a different key for inbound and outbound. Thus a value of 1GiB means that no rekey
-	is triggered yet when the inbound is 600MiB and the outbound is 500MiB - while the
-	interface has seen 1.1GiB of traffic. Soft limit will trigger when traffic in direction exceeds
-	800MiB (plus random 10-20%).  Also the initiator is preferred to rekey before the responder.
+        and a soft limit. The soft limit is 50% of ipsec-max-bytes + random value derived using rekeyfuzz that will
+	slightly prefer an initiator over a responder so that hopefully the original initiator will keep initiating.
+	An IPsec SA contains two keys, a key for inbound and outbound traffic. Thus a value of 1GiB means a rekey is
+	triggered when either inbound or outbound traffic hits the configured value. These values are not added up.
 </para>
   </listitem>
   </varlistentry>

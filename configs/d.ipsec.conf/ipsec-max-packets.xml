@@ -4,7 +4,7 @@
   <para>how many packets can be sent/received on a particular instance of a connection
   (a set of encryption/authentication keys for user packets) ,
   from successful negotiation to expiry. Default values and caveats are the same as for
-  <emphasis remap='B'>ipsec-max-bytes</emphasis>. This option use prefix without "B" for bytes.
+  <emphasis remap='B'>ipsec-max-bytes</emphasis>. This option uses a prefix without "B" for bytes.
 </para>
   </listitem>
   </varlistentry>
