@@ -975,7 +975,7 @@ static bool create_xfrm_migrate_sa(struct state *st,
 		new_ep = st->st_mobike_remote_endpoint;
 	}
 
-	struct kernel_end *changing_ke = (old_ei == src) ? &sa.src : &sa.dst;
+	struct kernel_state_end *changing_ke = (old_ei == src) ? &sa.src : &sa.dst;
 
 	changing_ke->new_address = endpoint_address(new_ep);
 	changing_ke->encap_port = endpoint_hport(new_ep);

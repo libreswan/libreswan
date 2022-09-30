@@ -242,7 +242,7 @@ enum eroute_type {
  * The CHILD (IPsec, kernel) SA has two IP ends.
  */
 
-struct kernel_end {
+struct kernel_state_end {
 	/*
 	 * For ESP/AH which is carried by raw IP packets, only an
 	 * address is needed to identify an end.  However when
@@ -266,8 +266,8 @@ struct kernel_end {
 };
 
 struct kernel_sa {
-	struct kernel_end src;
-	struct kernel_end dst;
+	struct kernel_state_end src;
+	struct kernel_state_end dst;
 
 	/*
 	 * Is the stack using tunnel mode; and if it is does this SA
