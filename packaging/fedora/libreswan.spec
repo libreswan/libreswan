@@ -59,6 +59,7 @@ BuildRequires: nss-tools >= %{nss_version}
 BuildRequires: openldap-devel
 BuildRequires: pam-devel
 BuildRequires: pkgconfig
+BuildRequires: systemd
 BuildRequires: systemd-devel
 BuildRequires: systemd-rpm-macros
 BuildRequires: unbound-devel >= %{unbound_version}
