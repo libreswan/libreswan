@@ -220,25 +220,6 @@ struct kernel_policy bare_kernel_policy(const ip_selector *src,
 					const ip_selector *dst);
 
 /*
- * Replaces SADB_X_SATYPE_* for non-KLIPS code. Assumes normal
- * SADB_SATYPE values
- *
- * XXX: Seems largely redundant.  Only place that eroute and
- * ip_protocol have different "values" is when netkey is inserting a
- * shunt - and that looks like a bug.
- */
-enum eroute_type {
-	ET_UNSPEC = 0,
-	ET_AH    = 51,	/* SA_AH,      (51)  authentication */
-	ET_ESP   = 50,	/* SA_ESP,     (50)  encryption/auth */
-	ET_IPCOMP= 108,	/* SA_COMP,    (108) compression */
-	ET_INT   = 61,	/* SA_INT,     (61)  internal type */
-	ET_IPIP  = 4,	/* SA_IPIP,    (4)   turn on tunnel type */
-};
-#define esatype2proto(X) ((int)(X))
-#define proto2esatype(X) ((enum eroute_type)(X))
-
-/*
  * The CHILD (IPsec, kernel) SA has two IP ends.
  */
 
@@ -287,8 +268,8 @@ struct kernel_sa {
 	bool nopmtudisc;
 	uint32_t tfcpad;
 	ipsec_spi_t spi;
-	const struct ip_protocol *proto;
-	enum eroute_type esatype;
+	const struct ip_protocol *proto;	/* ESP, AH, IPCOMP */
+	const struct ip_encap *encap_type;	/* ESP-in-TCP, ESP-in-UDP; or NULL */
 	unsigned replay_window;
 	reqid_t reqid;
 
@@ -301,7 +282,6 @@ struct kernel_sa {
 	unsigned enckeylen;
 	unsigned char *enckey;
 
-	const struct ip_encap *encap_type;		/* ESP in TCP or UDP; or NULL */
 	ip_address *natt_oa;
 	const char *story;
 	chunk_t sec_label;

@@ -447,7 +447,7 @@ static struct sadb_msg *msg_base(struct outbuf *msg, const char *what,
 	return base;
 }
 
-static enum sadb_satype proto_satype(const struct ip_protocol *proto)
+static enum sadb_satype sadb_satype_from_protocol(const struct ip_protocol *proto)
 {
 	return (proto == &ip_protocol_esp ? SADB_SATYPE_ESP :
 		proto == &ip_protocol_ah ? SADB_SATYPE_AH :
@@ -493,15 +493,17 @@ static bool register_alg(shunk_t *msgext, const struct ike_alg_type *type,
 	return true;
 }
 
-static void register_satype(const struct ip_protocol *proto, struct logger *logger)
+static void register_satype(const struct ip_protocol *protocol, struct logger *logger)
 {
-	ldbg(logger, "sending %s request", proto->name);
+	ldbg(logger, "sending %s request", protocol->name);
 
 	uint8_t reqbuf[SIZEOF_SADB_BASE];
 	struct outbuf req;
 	struct sadb_msg *base = msg_base(&req, __func__,
 					 chunk2(reqbuf, sizeof(reqbuf)),
-					 SADB_REGISTER, proto_satype(proto), logger);
+					 SADB_REGISTER,
+					 sadb_satype_from_protocol(protocol),
+					 logger);
 
 	struct inbuf resp;
 	if (!msg_sendrecv(&req, base, &resp)) {
@@ -588,7 +590,7 @@ static void pfkeyv2_init(struct logger *logger)
 static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 					 const ip_address *src,
 					 const ip_address *dst,
-					 const struct ip_protocol *proto,
+					 const struct ip_protocol *protocol,
 					 reqid_t reqid,
 					 uintmax_t min, uintmax_t max,
 					 const char *story UNUSED,	/* often SAID string */
@@ -607,7 +609,9 @@ static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 	struct outbuf req;
 	struct sadb_msg *base = msg_base(&req, __func__,
 					 chunk2(reqbuf, sizeof(reqbuf)),
-					 SADB_GETSPI, proto_satype(proto), logger);
+					 SADB_GETSPI,
+					 sadb_satype_from_protocol(protocol),
+					 logger);
 
 	/*
 	 * XXX: the original PF_KEY_V2 RFC didn't leave space to
@@ -673,7 +677,7 @@ static ipsec_spi_t pfkeyv2_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 }
 
 static bool pfkeyv2_del_ipsec_spi(ipsec_spi_t spi,
-				  const struct ip_protocol *proto,
+				  const struct ip_protocol *protocol,
 				  const ip_address *src_address,
 				  const ip_address *dst_address,
 				  const char *story UNUSED,
@@ -691,7 +695,9 @@ static bool pfkeyv2_del_ipsec_spi(ipsec_spi_t spi,
 	struct outbuf req;
 	struct sadb_msg *base = msg_base(&req, __func__,
 					 chunk2(reqbuf, sizeof(reqbuf)),
-					 SADB_DELETE, proto_satype(proto), logger);
+					 SADB_DELETE,
+					 sadb_satype_from_protocol(protocol),
+					 logger);
 
 	/* SA(*) */
 
@@ -723,21 +729,6 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 
 	enum sadb_type type = (replace ? SADB_UPDATE : SADB_ADD);
 
-	/*
-	 * .esatype:
-	 *
-	 * Will IPCOMP ever happen, since sensible code will compress
-	 * than encrypt, it should be either AH or ESP on the wire
-	 * (but contradicting this is a setkey examples showing how to
-	 * do the reverse - compress the encrypted payload - ewww).
-	 *
-	 * Technicall, it can be UDP that goes over the wire, not
-	 * AH/ESP.
-	 */
-	const struct ip_protocol *proto = (k->esatype == ET_IPCOMP ? &ip_protocol_ipcomp :
-					   k->esatype == ET_AH ? &ip_protocol_ah :
-					   k->esatype == ET_ESP ? &ip_protocol_esp :
-					   NULL);
 	uint8_t reqbuf[SIZEOF_SADB_BASE +
 		       SIZEOF_SADB_SA +
 		       SIZEOF_SADB_LIFETIME * 3 +
@@ -755,7 +746,9 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 	struct outbuf req;
 	struct sadb_msg *base = msg_base(&req, __func__,
 					 chunk2(reqbuf, sizeof(reqbuf)),
-					 type, proto_satype(proto), logger);
+					 type,
+					 sadb_satype_from_protocol(k->proto),
+					 logger);
 
 	/* SA */
 
@@ -991,7 +984,9 @@ static bool pfkeyv2_get_sa(const struct kernel_sa *k,
 	struct outbuf req;
 	struct sadb_msg *base = msg_base(&req, __func__,
 					 chunk2(reqbuf, sizeof(reqbuf)),
-					 SADB_GET, proto_satype(k->proto), logger);
+					 SADB_GET,
+					 sadb_satype_from_protocol(k->proto),
+					 logger);
 
 	/* SA(*) */
 

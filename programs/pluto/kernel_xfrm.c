@@ -939,7 +939,6 @@ static bool create_xfrm_migrate_sa(struct state *st,
 		.xfrm_dir = dir,
 		.proto = proto,
 		.reqid = reqid_esp(c->spd.reqid),
-		.encap_type = encap_type,
 		.tunnel = (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
 			   st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL),
 		.story = story->buf,	/* content will evolve */
@@ -1241,7 +1240,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 	req.p.id.daddr = xfrm_from_address(&sa->dst.address);
 
 	req.p.id.spi = sa->spi;
-	req.p.id.proto = esatype2proto(sa->esatype);
+	req.p.id.proto = sa->proto->ipproto;
 	req.p.family = address_info(sa->src.address)->af;
 	/*
 	 * This requires ipv6 modules. It is required to support 6in4
@@ -1331,13 +1330,13 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 	 * To avoid breaking backward compatibility, we use a new flag
 	 * (XFRM_STATE_ALIGN4) do change original behavior.
 	*/
-	if (sa->esatype == ET_AH &&
+	if (sa->proto == &ip_protocol_ah &&
 	    address_info(sa->src.address) == &ipv4_info) {
 		dbg("xfrm: aligning IPv4 AH to 32bits as per RFC-4302, Section 3.3.3.2.1");
 		req.p.flags |= XFRM_STATE_ALIGN4;
 	}
 
-	if (sa->esatype != ET_IPCOMP) {
+	if (sa->proto != &ip_protocol_ipcomp) {
 		if (sa->esn) {
 			dbg("xfrm: enabling ESN");
 			req.p.flags |= XFRM_STATE_ESN;
@@ -1415,7 +1414,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 	 * ??? why does IPCOMP trump aead and ESP?
 	 *  Shouldn't all be bundled?
 	 */
-	if (sa->esatype == ET_IPCOMP) {
+	if (sa->proto == &ip_protocol_ipcomp) {
 
 		if (!pexpect(sa->ipcomp != NULL)) {
 			return false;
@@ -1440,7 +1439,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		req.n.nlmsg_len += attr->rta_len;
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
 
-	} else if (sa->esatype == ET_ESP) {
+	} else if (sa->proto == &ip_protocol_esp) {
 		const char *name = sa->encrypt->encrypt_netlink_xfrm_name;
 
 		if (name == NULL) {

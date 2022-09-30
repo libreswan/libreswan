@@ -1996,7 +1996,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 					  st->st_ipcomp.outbound.spi);
 		*said_next = said_boilerplate;
 		said_next->spi = ipcomp_spi;
-		said_next->esatype = ET_IPCOMP;
+		said_next->proto = &ip_protocol_ipcomp;
 
 		said_next->ipcomp = st->st_ipcomp.attrs.transattrs.ta_ipcomp;
 		said_next->level = said_next - said;
@@ -2105,7 +2105,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		*said_next = said_boilerplate;
 		said_next->spi = esp_spi;
-		said_next->esatype = ET_ESP;
+		said_next->proto = &ip_protocol_esp;
 		said_next->replay_window = c->sa_replay_window;
 		dbg("kernel: setting IPsec SA replay-window to %d", c->sa_replay_window);
 
@@ -2231,7 +2231,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 		*said_next = said_boilerplate;
 		said_next->spi = ah_spi;
-		said_next->esatype = ET_AH;
+		said_next->proto = &ip_protocol_ah;
 		said_next->integ = integ;
 		said_next->authkeylen = ah_dst_keymat.len;
 		said_next->authkey = ah_dst_keymat.ptr;

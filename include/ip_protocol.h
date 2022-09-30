@@ -82,17 +82,6 @@ extern const struct ip_protocol ip_protocols[256];
 #define ip_protocol_ipcomp ip_protocols[IPCOMP_IPPROTO]		/* IP Payload Compression Protocol */
 #define ip_protocol_internal ip_protocols[INTERNAL_IPPROTO]	/* any host internal protocol */
 
-#if 0
-enum eroute_type {
-	ET_UNSPEC = 0,
-	ET_AH    = SA_AH,       /* (51)  authentication */
-	ET_ESP   = SA_ESP,      /* (50)  encryption/auth */
-	ET_IPCOMP= SA_COMP,     /* (108) compression */
-	ET_INT   = SA_INT,      /* (61)  internal type */
-	ET_IPIP  = SA_IPIP,     /* (4)   turn on tunnel type */
-};
-#endif
-
 /* match then eat the start of prefix */
 const struct ip_protocol *protocol_by_caseeat_prefix(shunk_t *prefix);
 
