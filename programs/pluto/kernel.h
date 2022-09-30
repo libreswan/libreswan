@@ -288,7 +288,6 @@ struct kernel_sa {
 	uint32_t tfcpad;
 	ipsec_spi_t spi;
 	const struct ip_protocol *proto;
-	unsigned int transport_proto;
 	enum eroute_type esatype;
 	unsigned replay_window;
 	reqid_t reqid;

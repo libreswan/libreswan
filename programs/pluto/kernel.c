@@ -1960,7 +1960,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		.dst.client = kernel_policy.dst.route,
 		.inbound = inbound,
 		.tunnel = (kernel_policy.mode == ENCAP_MODE_TUNNEL),
-		.transport_proto = c->spd.this.client.ipproto,
 		.sa_lifetime = c->sa_ipsec_life_seconds,
 		.sa_max_soft_bytes = sa_ipsec_soft_bytes,
 		.sa_max_soft_packets = sa_ipsec_soft_packets,
@@ -1975,16 +1974,14 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 
 	address_buf sab, dab;
 	selector_buf scb, dcb;
-	dbg("kernel: %s() %s %s-%s->[%s=%s=>%s]-%s->%s sec_label="PRI_SHUNK"%s",
+	dbg("kernel: %s() %s %s->[%s=%s=>%s]->%s sec_label="PRI_SHUNK"%s",
 	    __func__,
 	    said_boilerplate.inbound ? "inbound" : "outbound",
-	    str_selector_subnet_port(&said_boilerplate.src.client, &scb),
-	    protocol_by_ipproto(said_boilerplate.transport_proto)->name,
+	    str_selector(&said_boilerplate.src.client, &scb),
 	    str_address(&said_boilerplate.src.address, &sab),
 	    encap_mode_name(kernel_policy.mode),
 	    str_address(&said_boilerplate.dst.address, &dab),
-	    protocol_by_ipproto(said_boilerplate.transport_proto)->name,
-	    str_selector_subnet_port(&said_boilerplate.dst.client, &dcb),
+	    str_selector(&said_boilerplate.dst.client, &dcb),
 	    /* see above */
 	    pri_shunk(said_boilerplate.sec_label),
 	    (st->st_v1_seen_sec_label.len > 0 ? " (IKEv1 seen)" :

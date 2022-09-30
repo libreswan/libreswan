@@ -1271,6 +1271,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		/* .[sd]addr, .prefixlen_[sd], .[sd]port */
 		SELECTOR_TO_XFRM(sa->src.client, req.p.sel, s);
 		SELECTOR_TO_XFRM(sa->dst.client, req.p.sel, d);
+		const struct ip_protocol *client_protocol = selector_protocol(sa->src.client);
 
 		/*
 		 * Munge .[sd]port?
@@ -1289,21 +1290,18 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 		 * extracts upper 8 bits and lower 8 bits and puts
 		 * into source and destination ports before passing to XFRM.
 		 */
-		if (IPPROTO_ICMP == sa->transport_proto ||
-			IPPROTO_ICMPV6 == sa->transport_proto) {
-			uint16_t icmp_type;
-			uint16_t icmp_code;
-
-			icmp_type = ntohs(req.p.sel.sport) >> 8;
-			icmp_code = ntohs(req.p.sel.sport) & 0xFF;
-
+		if (client_protocol == &ip_protocol_icmp ||
+		    client_protocol == &ip_protocol_icmpv6) {
+			uint16_t sport = hport(selector_port(sa->src.client));
+			uint16_t icmp_type = sport >> 8;
+			uint16_t icmp_code = sport & 0xFF;
 			req.p.sel.sport = htons(icmp_type);
 			req.p.sel.dport = htons(icmp_code);
 		}
 
 		req.p.sel.sport_mask = req.p.sel.sport == 0 ? 0 : ~0;
 		req.p.sel.dport_mask = req.p.sel.dport == 0 ? 0 : ~0;
-		req.p.sel.proto = sa->transport_proto;
+		req.p.sel.proto = client_protocol->ipproto;
 		req.p.sel.family = selector_info(sa->src.client)->af;
 	}
 

@@ -150,7 +150,6 @@ bool kernel_ops_add_sa(const struct kernel_sa *sa, bool replace, struct logger *
 		const ip_protocol *src_proto = selector_protocol(sa->src.client);
 		const ip_protocol *dst_proto = selector_protocol(sa->dst.client);
 		const ip_protocol *esa_proto = protocol_by_ipproto(sa->esatype);
-		const ip_protocol *transport_proto = protocol_by_ipproto(sa->transport_proto);
 
 		jam(buf, "kernel: add_sa()");
 
@@ -177,7 +176,6 @@ bool kernel_ops_add_sa(const struct kernel_sa *sa, bool replace, struct logger *
 		if (sa->nopmtudisc) jam(buf, " +nopmtudisc");
 
 		jam(buf, " replay_window=%d", sa->replay_window);
-		jam(buf, " transport_proto=%s", transport_proto->name);
 
 		if (sa->ipcomp != NULL) {
 			jam(buf, " %s", sa->ipcomp->common.fqn);
