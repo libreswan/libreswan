@@ -64,7 +64,6 @@ KVM_GID ?= $(shell stat --format=%g $(KVM_HOST_QEMUDIR))
 
 KVM_TRANSMOGRIFY = \
 	sed \
-	-e 's;@@POOLDIR@@;$(KVM_POOLDIR);' \
 	-e 's;@@GATEWAY@@;$(KVM_GATEWAY_ADDRESS);' \
 	-e 's;@@POOLDIR@@;$(KVM_POOLDIR);' \
 	-e 's;@@SOURCEDIR@@;$(KVM_SOURCEDIR);' \
