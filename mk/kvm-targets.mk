@@ -1187,6 +1187,8 @@ $(patsubst %, kvm-uninstall-%, $(KVM_PLATFORM)): \
 kvm-uninstall-%:
 	$(MAKE) $(patsubst %, kvm-undefine-%, $(call add-kvm-prefixes, $(KVM_$($*)_HOST_NAMES)))
 	$(MAKE) kvm-undefine-$(KVM_FIRST_PREFIX)$*
+	rm -f $(KVM_POOLDIR_PREFIX)$*
+	rm -f $(KVM_POOLDIR_PREFIX)$*.*
 
 .PHONY: kvm-downgrade
 kvm-downgrade: $(foreach os, $(KVM_OS), kvm-downgrade-$(os))
@@ -1195,6 +1197,8 @@ $(patsubst %, kvm-downgrade-%, $(KVM_PLATFORM)): \
 kvm-downgrade-%:
 	$(MAKE) kvm-uninstall-$*
 	$(MAKE) kvm-undefine-$(KVM_FIRST_PREFIX)$*-upgrade
+	rm -f $(KVM_POOLDIR_PREFIX)$*-upgrade
+	rm -f $(KVM_POOLDIR_PREFIX)$*-upgrade.*
 
 .PHONY: kvm-demolish
 kvm-demolish: kvm-uninstall-gateway
@@ -1204,6 +1208,8 @@ $(patsubst %, kvm-demolish-%, $(KVM_PLATFORM)): \
 kvm-demolish-%:
 	$(MAKE) kvm-downgrade-$*
 	$(MAKE) kvm-undefine-$(KVM_FIRST_PREFIX)$*-base
+	rm -f $(KVM_POOLDIR_PREFIX)$*-base
+	rm -f $(KVM_POOLDIR_PREFIX)$*-base.*
 
 
 #
