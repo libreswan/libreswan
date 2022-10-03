@@ -1930,12 +1930,15 @@ static void netlink_kernel_sa_expire(struct nlmsghdr *n, struct logger *logger)
 	address_buf b;
 	xfrm2ip(&ue->state.saddr, &src, ue->state.family);
 	xfrm2ip(&ue->state.id.daddr, &dst, ue->state.family);
-	dbg("%s spi 0x%x src %s dst %s %s mode %u proto %d bytes %llu packets %llu%s",
+	dbg("%s spi 0x%x src %s dst %s %s mode %u proto %d bytes %"PRIu64" packets %"PRIu64"%s",
 	    __func__, ntohl(ue->state.id.spi),
 	    str_address(&src, &a), str_address(&dst, &b), ue->hard ? "hard" : "soft",
-	    ue->state.mode, ue->state.id.proto, ue->state.curlft.bytes,
-	    ue->state.curlft.packets,
-	    ue->state.id.spi == 0 ? " ACQUIRE state expired discard this message" : "")
+	    ue->state.mode, ue->state.id.proto,
+	    /* XXX: on linux __u64 is either long, or long long
+	     * conflicting with either PRIu64 or %ll */
+	    (uint64_t) ue->state.curlft.bytes,
+	    (uint64_t) ue->state.curlft.packets,
+	    (ue->state.id.spi == 0 ? " ACQUIRE state expired discard this message" : ""))
 
 	uint8_t protoid = PROTO_RESERVED;
 	switch (ue->state.id.proto) {
