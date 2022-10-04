@@ -255,7 +255,7 @@ static bool bare_policy_op(enum kernel_policy_opd opd,
 	pexpect(opd & KERNEL_POLICY_DIR_OUTBOUND);
 	struct kernel_policy outbound_kernel_policy =
 		bare_kernel_policy(&sr->this.client, &sr->that.client);
-	if (!raw_policy(opd,
+	if (!raw_policy(KERNEL_POLICY_OPD(opd),
 			EXPECT_KERNEL_POLICY_OK,
 			&outbound_kernel_policy.src.client,
 			&outbound_kernel_policy.dst.client,
@@ -293,7 +293,8 @@ static bool bare_policy_op(enum kernel_policy_opd opd,
 	 */
 	struct kernel_policy inbound_kernel_policy =
 		bare_kernel_policy(&sr->that.client, &sr->this.client);
-	return raw_policy(opd, expect_kernel_policy,
+	return raw_policy(KERNEL_POLICY_OPD(opd),
+			  expect_kernel_policy,
 			  &inbound_kernel_policy.src.client,
 			  &inbound_kernel_policy.dst.client,
 			  shunt_policy,
@@ -1491,7 +1492,8 @@ static bool delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 	dbg("kernel: deleting bare shunt %s from kernel "PRI_WHERE,
 	    str_selectors(&src, &dst, &sb), pri_where(where));
 	/* assume low code logged action */
-	return raw_policy(KP_DELETE_OUTBOUND,
+	return raw_policy(KERNEL_POLICY_OP_DELETE,
+			  KERNEL_POLICY_DIR_OUTBOUND,
 			  EXPECT_KERNEL_POLICY_OK,
 			  &src, &dst,
 			  SHUNT_PASS,
@@ -1556,7 +1558,9 @@ bool flush_bare_shunt(const ip_address *src_address,
 	dbg("kernel: deleting bare shunt %s from kernel for %s",
 	    str_selectors(&src, &dst, &sb), why);
 	/* assume low code logged action */
-	bool ok = raw_policy(KP_DELETE_OUTBOUND, expect_kernel_policy,
+	bool ok = raw_policy(KERNEL_POLICY_OP_DELETE,
+			     KERNEL_POLICY_DIR_OUTBOUND,
+			     expect_kernel_policy,
 			     &src, &dst,
 			     SHUNT_PASS,
 			     /*kernel_policy*/NULL/*delete->no-policy-rules*/,
@@ -1633,7 +1637,8 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 			/* XXX: log? */
 			return false;
 		}
-		if (!raw_policy(inbound ? KP_ADD_INBOUND : KP_ADD_OUTBOUND,
+		if (!raw_policy(KERNEL_POLICY_OP_ADD,
+				(inbound ? KERNEL_POLICY_DIR_INBOUND : KERNEL_POLICY_DIR_OUTBOUND),
 				EXPECT_KERNEL_POLICY_OK,
 				&kernel_policy.src.client, &kernel_policy.dst.client,
 				SHUNT_UNSET,
@@ -1656,7 +1661,8 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 				 */
 				dbg("pulling previously installed outbound policy");
 				pexpect(direction == ENCAP_DIRECTION_INBOUND);
-				raw_policy(KP_DELETE_OUTBOUND,
+				raw_policy(KERNEL_POLICY_OP_DELETE,
+					   KERNEL_POLICY_DIR_OUTBOUND,
 					   EXPECT_KERNEL_POLICY_OK,
 					   &c->spd.this.client, &c->spd.that.client,
 					   SHUNT_UNSET,
@@ -1689,7 +1695,9 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 			struct end *src = inbound ? &c->spd.that : &c->spd.this;
 			struct end *dst = inbound ? &c->spd.this : &c->spd.that;
 			/* ignore result */
-			raw_policy(inbound ? KP_DELETE_INBOUND : KP_DELETE_OUTBOUND,
+			raw_policy(KERNEL_POLICY_OP_DELETE,
+				   (inbound ? KERNEL_POLICY_DIR_INBOUND :
+				    KERNEL_POLICY_DIR_OUTBOUND),
 				   EXPECT_KERNEL_POLICY_OK,
 				   &src->client, &dst->client,
 				   SHUNT_PASS,
@@ -1721,7 +1729,8 @@ bool eroute_connection(enum kernel_policy_opd opd, const char *opname,
 {
 	if (sr->this.has_cat) {
 		ip_selector client = selector_from_address(sr->this.host->addr);
-		bool t = raw_policy(opd, EXPECT_KERNEL_POLICY_OK,
+		bool t = raw_policy(KERNEL_POLICY_OPD(opd),
+				    EXPECT_KERNEL_POLICY_OK,
 				    &client, &kernel_policy->dst.route,
 				    shunt_policy,
 				    kernel_policy,
@@ -1739,7 +1748,7 @@ bool eroute_connection(enum kernel_policy_opd opd, const char *opname,
 		dbg("kernel: %s CAT extra route added return=%d", __func__, t);
 	}
 
-	return raw_policy(opd,
+	return raw_policy(KERNEL_POLICY_OPD(opd),
 			  EXPECT_KERNEL_POLICY_OK,
 			  &kernel_policy->src.route, &kernel_policy->dst.route,
 			  shunt_policy,
@@ -2294,7 +2303,8 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		struct kernel_policy kernel_policy =
 			kernel_policy_from_state(st, &c->spd,
 						 ENCAP_DIRECTION_INBOUND);
-		if (!raw_policy(KP_ADD_INBOUND,
+		if (!raw_policy(KERNEL_POLICY_OP_ADD,
+				KERNEL_POLICY_DIR_INBOUND,
 				EXPECT_KERNEL_POLICY_OK,
 				&kernel_policy.src.route,	/* src_client */
 				&kernel_policy.dst.route,	/* dst_client */
@@ -2893,7 +2903,8 @@ bool route_and_eroute(struct connection *c,
 				struct kernel_policy outbound_kernel_policy =
 					bare_kernel_policy(&bs->our_client,
 							   &bs->peer_client);
-				if (!raw_policy(KP_REPLACE_OUTBOUND,
+				if (!raw_policy(KERNEL_POLICY_OP_REPLACE,
+						KERNEL_POLICY_DIR_OUTBOUND,
 						EXPECT_KERNEL_POLICY_OK,
 						&outbound_kernel_policy.src.client,
 						&outbound_kernel_policy.dst.client,
@@ -3098,7 +3109,7 @@ static void teardown_kernel_policies(enum kernel_policy_opd outbound_opd,
 	 */
 	struct kernel_policy outbound_kernel_policy =
 		bare_kernel_policy(&out->this.client, &out->that.client);
-	if (!raw_policy(outbound_opd,
+	if (!raw_policy(KERNEL_POLICY_OPD(outbound_opd),
 			EXPECT_KERNEL_POLICY_OK,
 			&outbound_kernel_policy.src.client,
 			&outbound_kernel_policy.dst.client,
@@ -3115,7 +3126,9 @@ static void teardown_kernel_policies(enum kernel_policy_opd outbound_opd,
 	}
 	dbg("kernel: %s() calling raw_policy(delete-inbound), eroute_owner==NOBODY",
 	    __func__);
-	if (!raw_policy(KP_DELETE_INBOUND, expect_kernel_policy,
+	if (!raw_policy(KERNEL_POLICY_OP_DELETE,
+			KERNEL_POLICY_DIR_INBOUND,
+			expect_kernel_policy,
 			&in->that.client, &in->this.client,
 			SHUNT_UNSET,
 			NULL/*no-policy-template as delete*/,
@@ -3575,7 +3588,8 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 
 			struct kernel_policy outbound_kernel_policy =
 				bare_kernel_policy(&src, &dst);
-			bool ok = raw_policy(KP_REPLACE_OUTBOUND,
+			bool ok = raw_policy(KERNEL_POLICY_OP_REPLACE,
+					     KERNEL_POLICY_DIR_OUTBOUND,
 					     EXPECT_KERNEL_POLICY_OK,
 					     &outbound_kernel_policy.src.client,
 					     &outbound_kernel_policy.dst.client,

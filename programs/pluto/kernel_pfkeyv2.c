@@ -1147,7 +1147,8 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 }
 #endif
 
-static bool pfkeyv2_raw_policy(enum kernel_policy_opd opd,
+static bool pfkeyv2_raw_policy(enum kernel_policy_op op,
+			       enum kernel_policy_dir dir,
 			       enum expect_kernel_policy expect_kernel_policy,
 			       const ip_selector *src_client,
 			       const ip_selector *dst_client,
@@ -1160,6 +1161,7 @@ static bool pfkeyv2_raw_policy(enum kernel_policy_opd opd,
 			       const shunk_t sec_label UNUSED,
 			       struct logger *logger)
 {
+	enum kernel_policy_opd opd = op|dir;
 #ifdef __OpenBSD__
 
 	enum sadb_type type = ((opd & KERNEL_POLICY_OP_ADD) ? SADB_X_ADDFLOW :

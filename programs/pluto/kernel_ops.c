@@ -26,7 +26,8 @@
  * There's lots of redundancy here, see debug log lines below.
  */
 
-bool raw_policy(enum kernel_policy_opd opd,
+bool raw_policy(enum kernel_policy_op op,
+		enum kernel_policy_dir dir,
 		enum expect_kernel_policy expect_kernel_policy,
 		const ip_selector *src_client,
 		const ip_selector *dst_client,
@@ -46,10 +47,19 @@ bool raw_policy(enum kernel_policy_opd opd,
 	LSWDBGP(DBG_BASE, buf) {
 
 		jam(buf, "kernel: %s() ", __func__);
-		jam_enum_short(buf, &kernel_policy_opd_names, opd);
+
+		jam_enum_short(buf, &kernel_policy_op_names, op);
+		jam_string(buf, "+");
+		jam_enum_short(buf, &kernel_policy_dir_names, dir);
+
 		if (kernel_policy != NULL &&
 		    kernel_policy->nr_rules > 0 &&
-		    (opd == KP_DELETE_OUTBOUND || opd == KP_DELETE_INBOUND)) {
+		    op == KERNEL_POLICY_OP_DELETE) {
+			/*
+			 * XXX: when deleting a kernel policy, why
+			 * include encapsulation information?  Is it
+			 * used?
+			 */
 			jam(buf, ",ENCAP!=NULL");
 		}
 
@@ -120,17 +130,19 @@ bool raw_policy(enum kernel_policy_opd opd,
 		dbg("kernel: %s() SPI_HOLD implemented as no-op", __func__);
 		return true;
 	case SHUNT_TRAP:
-		if (opd == KP_ADD_INBOUND ||
-		    opd == KP_DELETE_INBOUND) {
-			dbg("kernel: %s() SPI_TRAP inbound implemented as no-op", __func__);
+		if ((op == KERNEL_POLICY_OP_ADD && dir == KERNEL_POLICY_DIR_INBOUND) ||
+		    (op == KERNEL_POLICY_OP_DELETE && dir == KERNEL_POLICY_DIR_INBOUND)) {
+			dbg("kernel: %s() SPI_TRAP add|delete inbound implemented as no-op", __func__);
 			return true;
 		}
+		/* XXX: what about KERNEL_POLICY_OP_REPLACE? */
 		break;
 	default:
 		break;
 	}
 
-	bool result = kernel_ops->raw_policy(opd, expect_kernel_policy,
+	bool result = kernel_ops->raw_policy(op, dir,
+					     expect_kernel_policy,
 					     src_client, dst_client,
 					     shunt_policy,
 					     kernel_policy,

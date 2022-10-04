@@ -498,7 +498,8 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
  * @param story char *
  * @return boolean True if successful
  */
-static bool xfrm_raw_policy(enum kernel_policy_opd opd,
+static bool xfrm_raw_policy(enum kernel_policy_op op,
+			    enum kernel_policy_dir dir,
 			    enum expect_kernel_policy what_about_inbound,
 			    const ip_selector *src_client,
 			    const ip_selector *dst_client,
@@ -511,6 +512,7 @@ static bool xfrm_raw_policy(enum kernel_policy_opd opd,
 			    const shunk_t sec_label,
 			    struct logger *logger)
 {
+	enum kernel_policy_opd opd = op|dir;
 	const char *op_str = enum_name(&kernel_policy_opd_names, opd);
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
 	pexpect(selector_protocol(*dst_client) == client_proto);
