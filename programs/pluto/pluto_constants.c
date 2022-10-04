@@ -283,31 +283,31 @@ enum_names dns_auth_level_names = {
 
 static const char *kernel_policy_op_name[] = {
 #define S(E) [E] = #E
-	S(KERNEL_POLICY_ADD),
-	S(KERNEL_POLICY_DELETE),
-	S(KERNEL_POLICY_REPLACE),
+	S(KERNEL_POLICY_OP_ADD),
+	S(KERNEL_POLICY_OP_DELETE),
+	S(KERNEL_POLICY_OP_REPLACE),
 #undef S
 };
 
 enum_names kernel_policy_op_names = {
 	0, elemsof(kernel_policy_op_name)-1,
 	ARRAY_REF(kernel_policy_op_name),
-	.en_prefix = "KERNEL_POLICY_",
+	.en_prefix = "KERNEL_POLICY_OP_",
 };
 
 /* enum kernel_policy_dir_names */
 
 static const char *kernel_policy_dir_name[] = {
 #define S(E) [E] = #E
-	S(KERNEL_POLICY_OUTBOUND),
-	S(KERNEL_POLICY_INBOUND),
+	S(KERNEL_POLICY_DIR_OUTBOUND),
+	S(KERNEL_POLICY_DIR_INBOUND),
 #undef S
 };
 
 enum_names kernel_policy_dir_names = {
 	0, elemsof(kernel_policy_dir_name)-1,
 	ARRAY_REF(kernel_policy_dir_name),
-	.en_prefix = "KERNEL_POLICY_",
+	.en_prefix = "KERNEL_POLICY_DIR_",
 };
 
 /* enum kernel_policy_opd_names */

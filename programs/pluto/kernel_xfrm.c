@@ -803,7 +803,7 @@ static bool xfrm_raw_policy(enum kernel_policy_opd opd,
 	}
 
 	bool ok = sendrecv_xfrm_policy(&req.n, what_about_inbound, policy_name,
-				       ((opd & KERNEL_POLICY_OUTBOUND) ? "(out)" : "(in)"),
+				       ((opd & KERNEL_POLICY_DIR_OUTBOUND) ? "(out)" : "(in)"),
 				       logger);
 
 	/*

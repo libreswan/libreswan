@@ -1112,8 +1112,8 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 {
 
 	enum ipsec_dir policy_dir =
-		((opd & KERNEL_POLICY_INBOUND) ? IPSEC_DIR_INBOUND :
-		 (opd & KERNEL_POLICY_OUTBOUND) ? IPSEC_DIR_OUTBOUND :
+		((opd & KERNEL_POLICY_DIR_INBOUND) ? IPSEC_DIR_INBOUND :
+		 (opd & KERNEL_POLICY_DIR_OUTBOUND) ? IPSEC_DIR_OUTBOUND :
 		 pexpect(0));
 
 	struct sadb_x_policy *x_policy =
@@ -1122,8 +1122,8 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 			     .sadb_x_policy_dir = policy_dir);
 
 	if (kernel_policy != NULL && kernel_policy->nr_rules > 0) {
-		pexpect((opd & KERNEL_POLICY_ADD) ||
-			(opd & KERNEL_POLICY_REPLACE));
+		pexpect((opd & KERNEL_POLICY_OP_ADD) ||
+			(opd & KERNEL_POLICY_OP_REPLACE));
 		pexpect(policy_type == IPSEC_POLICY_IPSEC);
 		/*
 		 * XXX: Only the first rule gets the worm; er tunnel
@@ -1139,7 +1139,7 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 			mode = IPSEC_MODE_TRANSPORT;
 		}
 	} else if (policy_type == IPSEC_POLICY_IPSEC) {
-		pexpect(opd & KERNEL_POLICY_DELETE);
+		pexpect(opd & KERNEL_POLICY_OP_DELETE);
 	}
 
 	padup_sadb(req, x_policy);
@@ -1162,9 +1162,9 @@ static bool pfkeyv2_raw_policy(enum kernel_policy_opd opd,
 {
 #ifdef __OpenBSD__
 
-	enum sadb_type type = ((opd & KERNEL_POLICY_ADD) ? SADB_X_ADDFLOW :
-			       (opd & KERNEL_POLICY_DELETE) ? SADB_X_DELFLOW :
-			       (opd & KERNEL_POLICY_REPLACE) ? SADB_X_ADDFLOW :
+	enum sadb_type type = ((opd & KERNEL_POLICY_OP_ADD) ? SADB_X_ADDFLOW :
+			       (opd & KERNEL_POLICY_OP_DELETE) ? SADB_X_DELFLOW :
+			       (opd & KERNEL_POLICY_OP_REPLACE) ? SADB_X_ADDFLOW :
 			       pexpect(0));
 
 	enum sadb_satype satype =
@@ -1189,11 +1189,11 @@ static bool pfkeyv2_raw_policy(enum kernel_policy_opd opd,
 	/* flow type */
 
 	enum kernel_policy_dir op_direction =
-		(opd & (KERNEL_POLICY_INBOUND|KERNEL_POLICY_OUTBOUND));
+		(opd & (KERNEL_POLICY_DIR_INBOUND|KERNEL_POLICY_DIR_OUTBOUND));
 
 	unsigned policy_direction =
-		(op_direction == KERNEL_POLICY_INBOUND ? IPSP_DIRECTION_IN :
-		 op_direction == KERNEL_POLICY_OUTBOUND ? IPSP_DIRECTION_OUT :
+		(op_direction == KERNEL_POLICY_DIR_INBOUND ? IPSP_DIRECTION_IN :
+		 op_direction == KERNEL_POLICY_DIR_OUTBOUND ? IPSP_DIRECTION_OUT :
 		 pexpect(0));
 
 	enum sadb_x_flow_type policy_type = UINT_MAX;
@@ -1244,12 +1244,12 @@ static bool pfkeyv2_raw_policy(enum kernel_policy_opd opd,
 		 * which is SRC/DST sure feels like a bug.
 		 */
 		switch (op_direction) {
-		case KERNEL_POLICY_INBOUND:
+		case KERNEL_POLICY_DIR_INBOUND:
 			/* XXX: notice how DST gets SRC's value et.al. */
 			put_sadb_address(&req, SADB_EXT_ADDRESS_DST, kernel_policy->src.host);
 			put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, kernel_policy->dst.host);
 			break;
-		case KERNEL_POLICY_OUTBOUND:
+		case KERNEL_POLICY_DIR_OUTBOUND:
 			put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, kernel_policy->src.host);
 			put_sadb_address(&req, SADB_EXT_ADDRESS_DST, kernel_policy->dst.host);
 			break;
@@ -1274,9 +1274,9 @@ static bool pfkeyv2_raw_policy(enum kernel_policy_opd opd,
 
 	/* SPDADD: <base, policy, address(SD), [lifetime(HS)]> */
 
-	enum sadb_type type = ((opd & KERNEL_POLICY_ADD) ? SADB_X_SPDADD :
-			       (opd & KERNEL_POLICY_DELETE) ? SADB_X_SPDDELETE :
-			       (opd & KERNEL_POLICY_REPLACE) ? SADB_X_SPDUPDATE :
+	enum sadb_type type = ((opd & KERNEL_POLICY_OP_ADD) ? SADB_X_SPDADD :
+			       (opd & KERNEL_POLICY_OP_DELETE) ? SADB_X_SPDDELETE :
+			       (opd & KERNEL_POLICY_OP_REPLACE) ? SADB_X_SPDUPDATE :
 			       pexpect(0));
 	/* what NetBSD expects */
 	enum sadb_satype satype = SADB_SATYPE_UNSPEC;

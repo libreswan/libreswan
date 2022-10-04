@@ -250,9 +250,9 @@ static bool bare_policy_op(enum kernel_policy_opd opd,
 	 * Use raw_policy() as it gives a better log result.
 	 */
 
-	bool delete = (opd & KERNEL_POLICY_DELETE);
+	bool delete = (opd & KERNEL_POLICY_OP_DELETE);
 
-	pexpect(opd & KERNEL_POLICY_OUTBOUND);
+	pexpect(opd & KERNEL_POLICY_DIR_OUTBOUND);
 	struct kernel_policy outbound_kernel_policy =
 		bare_kernel_policy(&sr->this.client, &sr->that.client);
 	if (!raw_policy(opd,
@@ -1304,7 +1304,7 @@ static bool sag_eroute(const struct state *st,
 	/* check for no transform at all */
 	passert(kernel_policy.nr_rules > 0);
 
-	pexpect(opd & KERNEL_POLICY_OUTBOUND);
+	pexpect(opd & KERNEL_POLICY_DIR_OUTBOUND);
 
 	/* hack */
 	char why[256];
@@ -1825,7 +1825,7 @@ bool assign_holdpass(const struct connection *c,
 				reason = "assign_holdpass() add broad %pass or %hold";
 			}
 
-			pexpect(opd & KERNEL_POLICY_OUTBOUND);
+			pexpect(opd & KERNEL_POLICY_DIR_OUTBOUND);
 
 			struct kernel_policy outbound_kernel_policy =
 				bare_kernel_policy(&sr->this.client, &sr->that.client);
