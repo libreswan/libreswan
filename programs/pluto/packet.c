@@ -1806,17 +1806,6 @@ void init_pbs(pb_stream *pbs, uint8_t *start, size_t len, const char *name)
 	};
 }
 
-bool pbs_out_diag(struct pbs_out *pbs, where_t where, diag_t *d)
-{
-	if (*d != NULL) {
-		llog_pexpect(pbs->outs_logger, where, "%s", str_diag(*d));
-		pfree_diag(d);
-		return false;
-	} else {
-		return true;
-	}
-}
-
 struct pbs_out open_pbs_out(const char *name, uint8_t *buffer, size_t sizeof_buffer,
 			    struct logger *logger)
 {

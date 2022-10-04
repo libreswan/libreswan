@@ -254,8 +254,6 @@ diag_t pbs_in_raw(struct pbs_in *pbs, void *bytes, size_t len,
 
 #define pbs_out packet_byte_stream /* outs */
 
-bool pbs_out_diag(struct pbs_out *pbs, where_t where, diag_t *d);
-
 /*
  * Initializers; point PBS at a pre-allocated (or static) buffer.
  *
