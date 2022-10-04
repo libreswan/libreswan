@@ -2514,11 +2514,11 @@ static void update_next_payload_chain(pb_stream *outs,
  * This routine returns TRUE iff it succeeds.
  */
 
-static diag_t pbs_out_number(struct pbs_out *outs, struct_desc *sd,
-			     const uint8_t **inp,
-			     uint8_t **cur,
-			     field_desc *fp,
-			     bool *immediate)
+static bool pbs_out_number(struct pbs_out *outs, struct_desc *sd,
+			   const uint8_t **inp,
+			   uint8_t **cur,
+			   field_desc *fp,
+			   bool *immediate)
 {
 
 	uint32_t n;
@@ -2541,8 +2541,7 @@ static diag_t pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 
 	case ft_af_loose_enum: /* Attribute Format + value from an enumeration */
 	case ft_af_enum: /* Attribute Format + value from an enumeration */
-		*immediate = ((n & ISAKMP_ATTR_AF_MASK) ==
-			      ISAKMP_ATTR_AF_TV);
+		*immediate = ((n & ISAKMP_ATTR_AF_MASK) == ISAKMP_ATTR_AF_TV);
 		if (fp->field_type == ft_af_enum &&
 		    enum_name(fp->desc, n) == NULL) {
 #define MSG "%s of %s has an unknown value: 0x%x+%" PRIu32 " (0x%" PRIx32 ")", \
@@ -2552,7 +2551,8 @@ static diag_t pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 				n & ~ISAKMP_ATTR_AF_MASK,		\
 				n
 			if (!impair.emitting) {
-				return diag(MSG);
+				llog_pexpect(outs->outs_logger, HERE, MSG);
+				return false;
 			}
 			llog(RC_LOG, outs->outs_logger, "IMPAIR: emitting "MSG);
 		}
@@ -2560,9 +2560,11 @@ static diag_t pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 
 	case ft_enum:   /* value from an enumeration */
 		if (enum_name(fp->desc, n) == NULL) {
-			return diag("%s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
-				    fp->name, sd->name,
-				    n, n);
+			llog_pexpect(outs->outs_logger, HERE,
+				     "%s of %s has an unknown value: %" PRIu32 " (0x%" PRIx32 ")",
+				     fp->name, sd->name,
+				     n, n);
+			return false;
 		}
 		break;
 
@@ -2575,10 +2577,12 @@ static diag_t pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 	case ft_lset:           /* bits representing set */
 		if (!test_lset(fp->desc, n)) {
 			lset_buf lb;
-			return diag("bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
-				    fp->name, sd->name,
-				    str_lset(fp->desc, n, &lb),
-				    n);
+			llog_pexpect(outs->outs_logger, HERE,
+				     "bitset %s of %s has unknown member(s): %s (0x%" PRIx32 ")",
+				     fp->name, sd->name,
+				     str_lset(fp->desc, n, &lb),
+				     n);
+			return false;
 		}
 		break;
 
@@ -2593,7 +2597,7 @@ static diag_t pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 	}
 	(*inp) += fp->size;
 	(*cur) += fp->size;
-	return NULL;
+	return true;
 }
 
 bool pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
@@ -2711,9 +2715,9 @@ bool pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 			}
 
 			/* immediate form is just like a number */
-			diag_t d = pbs_out_number(outs, sd, &inp, &cur, fp, &immediate);
-			if (d != NULL) {
-				return pbs_out_diag(outs, HERE, &d);
+			if (!pbs_out_number(outs, sd, &inp, &cur, fp, &immediate)) {
+				/* already logged */
+				return false;
 			}
 			break;
 
@@ -2724,13 +2728,11 @@ bool pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 		case ft_af_enum:        /* Attribute Format + value from an enumeration */
 		case ft_af_loose_enum:  /* Attribute Format + value from an enumeration */
 		case ft_lset:           /* bits representing set */
-		{
-			diag_t d = pbs_out_number(outs, sd, &inp, &cur, fp, &immediate);
-			if (d != NULL) {
-				return pbs_out_diag(outs, HERE, &d);
+			if (!pbs_out_number(outs, sd, &inp, &cur, fp, &immediate)) {
+				/* already logged */
+				return false;
 			}
 			break;
-		}
 
 		case ft_raw: /* bytes to be left in network-order */
 			for (; i != 0; i--)
