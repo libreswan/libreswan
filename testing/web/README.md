@@ -308,20 +308,36 @@ Some things, annoyingly, don't quite work right:
 
 For instance:
 
- cd ~/results
- o=v4.6
- n=v4.7
- mkdir ~/${o}-${n}
- mv ${o}-* ~/${o}-${n}
- cp -r ${n}-0-* ~/${o}-${n}
- find * -name 'debug.log.gz' | xargs rm
- find ~/${o}-${n} -name 'pluto.log' -print | xargs rm
- find ~/${o}-${n} -name 'iked.log' -print | xargs rm
- find ~/${o}-${n} -name 'charon.log' -print | xargs rm
- find ~/${o}-${n} -name '*.log.gz' -print | xargs rm
- find ~/${o}-${n} -name '.log' -print # delete?
- find ~/${o}-${n} -name '.log.gz' -print # delete?
- cd ~/libreswan-web/testbench-repo/ && make WEB_SUMMARYDIR=~/${o}-${n} web-summarydir
+  o=v4.7
+  n=v4.8
+
+Make things easier:
+
+  cd ~/results
+
+Create the archive directory:
+
+  mkdir ~/${o}-${n}
+
+Move results from previous release:
+
+  mv ${o}-* ~/${o}-${n}
+
+and copy result from latest relese (so results are bookended with by
+releases) (tester.sh given a chance will seek out and test ${n}-0):
+
+  cp -r ${n}-0-* ~/${o}-${n}
+
+  find ~/${o}-${n} -name 'debug.log.gz' | xargs rm -v
+  find ~/${o}-${n} -name 'pluto.log' -print | xargs rm -v
+  find ~/${o}-${n} -name 'iked.log' -print | xargs rm -v
+  find ~/${o}-${n} -name 'charon.log' -print | xargs rm -v
+  find ~/${o}-${n} -name '*.log.gz' -print # delete?
+  find ~/${o}-${n} -name '.log' -print # delete?
+
+Finally re-generate the pages:
+
+  cd ~/libreswan-web/testbench-repo/ && make WEB_SUMMARYDIR=~/${o}-${n} web-summarydir
 
 
 # Improvements
