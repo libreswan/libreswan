@@ -26,7 +26,7 @@
  * There's lots of redundancy here, see debug log lines below.
  */
 
-bool raw_policy(enum kernel_policy_op op,
+bool raw_policy(enum kernel_policy_opd opd,
 		enum expect_kernel_policy expect_kernel_policy,
 		const ip_selector *src_client,
 		const ip_selector *dst_client,
@@ -46,10 +46,10 @@ bool raw_policy(enum kernel_policy_op op,
 	LSWDBGP(DBG_BASE, buf) {
 
 		jam(buf, "kernel: %s() ", __func__);
-		jam_enum_short(buf, &kernel_policy_op_names, op);
+		jam_enum_short(buf, &kernel_policy_opd_names, opd);
 		if (kernel_policy != NULL &&
 		    kernel_policy->nr_rules > 0 &&
-		    (op == KP_DELETE_OUTBOUND || op == KP_DELETE_INBOUND)) {
+		    (opd == KP_DELETE_OUTBOUND || opd == KP_DELETE_INBOUND)) {
 			jam(buf, ",ENCAP!=NULL");
 		}
 
@@ -120,8 +120,8 @@ bool raw_policy(enum kernel_policy_op op,
 		dbg("kernel: %s() SPI_HOLD implemented as no-op", __func__);
 		return true;
 	case SHUNT_TRAP:
-		if (op == KP_ADD_INBOUND ||
-		    op == KP_DELETE_INBOUND) {
+		if (opd == KP_ADD_INBOUND ||
+		    opd == KP_DELETE_INBOUND) {
 			dbg("kernel: %s() SPI_TRAP inbound implemented as no-op", __func__);
 			return true;
 		}
@@ -130,7 +130,7 @@ bool raw_policy(enum kernel_policy_op op,
 		break;
 	}
 
-	bool result = kernel_ops->raw_policy(op, expect_kernel_policy,
+	bool result = kernel_ops->raw_policy(opd, expect_kernel_policy,
 					     src_client, dst_client,
 					     shunt_policy,
 					     kernel_policy,

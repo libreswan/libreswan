@@ -62,7 +62,7 @@ enum kernel_policy_dir {
 	KERNEL_POLICY_OUTBOUND = 16,
 };
 
-enum kernel_policy_op {
+enum kernel_policy_opd {
 	KP_ADD_OUTBOUND =     (KERNEL_POLICY_ADD    |KERNEL_POLICY_OUTBOUND),
 	KP_ADD_INBOUND =      (KERNEL_POLICY_ADD    |KERNEL_POLICY_INBOUND),
 	KP_DELETE_OUTBOUND =  (KERNEL_POLICY_DELETE |KERNEL_POLICY_OUTBOUND),
@@ -71,7 +71,7 @@ enum kernel_policy_op {
 	KP_REPLACE_INBOUND =  (KERNEL_POLICY_REPLACE|KERNEL_POLICY_INBOUND),
 };
 
-extern const struct enum_names kernel_policy_op_names;
+extern const struct enum_names kernel_policy_opd_names;
 
 /*
  * The protocol used to encapsulate.
@@ -366,7 +366,7 @@ struct kernel_ops {
 	void (*shutdown)(struct logger *logger);
 	void (*process_queue)(void);
 	void (*process_msg)(int, struct logger *);
-	bool (*raw_policy)(enum kernel_policy_op op,
+	bool (*raw_policy)(enum kernel_policy_opd opd,
 			   enum expect_kernel_policy expect_kernel_policy,
 			   const ip_selector *src_client,
 			   const ip_selector *dst_client,

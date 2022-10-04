@@ -498,7 +498,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
  * @param story char *
  * @return boolean True if successful
  */
-static bool xfrm_raw_policy(enum kernel_policy_op op,
+static bool xfrm_raw_policy(enum kernel_policy_opd opd,
 			    enum expect_kernel_policy what_about_inbound,
 			    const ip_selector *src_client,
 			    const ip_selector *dst_client,
@@ -511,7 +511,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 			    const shunk_t sec_label,
 			    struct logger *logger)
 {
-	const char *op_str = enum_name(&kernel_policy_op_names, op);
+	const char *op_str = enum_name(&kernel_policy_opd_names, opd);
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
 	pexpect(selector_protocol(*dst_client) == client_proto);
 
@@ -572,7 +572,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 		policy_name = "%discard(discard)";
 		break;
 	case SHUNT_TRAP:
-		if (op == KP_ADD_INBOUND || op == KP_DELETE_INBOUND) {
+		if (opd == KP_ADD_INBOUND || opd == KP_DELETE_INBOUND) {
 			dbg("%s() inbound SHUNT_TRAP implemented as no-op", __func__);
 			return true;
 		}
@@ -583,7 +583,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 		bad_case(shunt_policy);
 	}
 
-	const unsigned xfrm_dir = (op == KP_ADD_INBOUND || op == KP_DELETE_INBOUND) ? XFRM_POLICY_IN : XFRM_POLICY_OUT;
+	const unsigned xfrm_dir = (opd == KP_ADD_INBOUND || opd == KP_DELETE_INBOUND) ? XFRM_POLICY_IN : XFRM_POLICY_OUT;
 	dbg("%s() policy=%s action=%d dir=%d op=%s",
 	    __func__, policy_name, xfrm_action, xfrm_dir, op_str);
 
@@ -630,8 +630,8 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	req.u.p.sel.proto = client_proto->ipproto;
 	req.u.p.sel.family = family;
 
-	if (op == KP_DELETE_OUTBOUND ||
-	    op == KP_DELETE_INBOUND) {
+	if (opd == KP_DELETE_OUTBOUND ||
+	    opd == KP_DELETE_INBOUND) {
 		req.u.id.dir = xfrm_dir;
 		req.n.nlmsg_type = XFRM_MSG_DELPOLICY;
 		req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.u.id)));
@@ -675,8 +675,8 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	 * is needed.  Lets find out.
 	 */
 	if (kernel_policy != NULL &&
-	    op != KP_DELETE_OUTBOUND &&
-	    op != KP_DELETE_INBOUND) {
+	    opd != KP_DELETE_OUTBOUND &&
+	    opd != KP_DELETE_INBOUND) {
 		struct xfrm_user_tmpl tmpls[4] = {0};
 
 		/* remember; kernel_policy.rule[] is 1 based */
@@ -803,7 +803,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	}
 
 	bool ok = sendrecv_xfrm_policy(&req.n, what_about_inbound, policy_name,
-				       ((op & KERNEL_POLICY_OUTBOUND) ? "(out)" : "(in)"),
+				       ((opd & KERNEL_POLICY_OUTBOUND) ? "(out)" : "(in)"),
 				       logger);
 
 	/*
@@ -814,7 +814,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	 *
 	 * XXX: and yes, the code below doesn't exactly do just that.
 	 */
-	switch (op) {
+	switch (opd) {
 	case KP_DELETE_INBOUND:
 		/*
 		 * ??? we will call netlink_policy even if !ok.

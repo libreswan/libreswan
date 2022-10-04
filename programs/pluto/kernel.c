@@ -90,7 +90,7 @@ static bool route_and_eroute(struct connection *c,
 			     /* st or c */
 			     struct logger *logger);
 
-static bool eroute_connection(enum kernel_policy_op op, const char *opname,
+static bool eroute_connection(enum kernel_policy_opd opd, const char *opname,
 			      const struct spd_route *sr,
 			      enum shunt_policy shunt_policy,
 			      const struct kernel_policy *kernel_policy,
@@ -117,7 +117,7 @@ static bool invoke_command(const char *verb, const char *verb_suffix,
  * kernel state.
  */
 
-static bool bare_policy_op(enum kernel_policy_op op,
+static bool bare_policy_op(enum kernel_policy_opd opd,
 			   enum expect_kernel_policy expect_kernel_policy,
 			   const struct connection *c,
 			   const struct spd_route *sr,
@@ -141,7 +141,7 @@ static bool bare_policy_op(enum kernel_policy_op op,
 
 	LSWDBGP(DBG_BASE, buf) {
 		jam(buf, "kernel: %s() ", __func__);
-		jam_enum_short(buf, &kernel_policy_op_names, op);
+		jam_enum_short(buf, &kernel_policy_opd_names, opd);
 
 		jam_string(buf, " ");
 		jam_string(buf, expect_kernel_policy_name(expect_kernel_policy));
@@ -174,10 +174,10 @@ static bool bare_policy_op(enum kernel_policy_op op,
 		 * We're supposed to end up with no policy: rejig op
 		 * and opname.
 		 */
-		switch (op) {
+		switch (opd) {
 		case KP_REPLACE_OUTBOUND:
 			/* replace with nothing == delete */
-			op = KP_DELETE_OUTBOUND;
+			opd = KP_DELETE_OUTBOUND;
 			opname = "delete";
 			break;
 		case KP_ADD_OUTBOUND:
@@ -192,7 +192,7 @@ static bool bare_policy_op(enum kernel_policy_op op,
 		case KP_REPLACE_INBOUND:
 		case KP_DELETE_INBOUND:
 			/* never inbound */
-			bad_case(op);
+			bad_case(opd);
 		}
 	}
 
@@ -202,10 +202,10 @@ static bool bare_policy_op(enum kernel_policy_op op,
 		 * Adjust the request and account for eclipses.
 		 */
 		passert(eclipsable(sr));
-		switch (op) {
+		switch (opd) {
 		case KP_REPLACE_OUTBOUND:
 			/* really an add */
-			op = KP_ADD_OUTBOUND;
+			opd = KP_ADD_OUTBOUND;
 			opname = "replace eclipsed";
 			break;
 		case KP_DELETE_OUTBOUND:
@@ -220,9 +220,9 @@ static bool bare_policy_op(enum kernel_policy_op op,
 		case KP_REPLACE_INBOUND:
 		case KP_DELETE_INBOUND:
 			/* never inbound */
-			bad_case(op);
+			bad_case(opd);
 		}
-	} else if (op == KP_DELETE_OUTBOUND) {
+	} else if (opd == KP_DELETE_OUTBOUND) {
 		/* maybe we are uneclipsing something */
 		struct spd_route *esr = eclipsing(sr);
 		if (esr != NULL) {
@@ -250,12 +250,12 @@ static bool bare_policy_op(enum kernel_policy_op op,
 	 * Use raw_policy() as it gives a better log result.
 	 */
 
-	bool delete = (op & KERNEL_POLICY_DELETE);
+	bool delete = (opd & KERNEL_POLICY_DELETE);
 
-	pexpect(op & KERNEL_POLICY_OUTBOUND);
+	pexpect(opd & KERNEL_POLICY_OUTBOUND);
 	struct kernel_policy outbound_kernel_policy =
 		bare_kernel_policy(&sr->this.client, &sr->that.client);
-	if (!raw_policy(op,
+	if (!raw_policy(opd,
 			EXPECT_KERNEL_POLICY_OK,
 			&outbound_kernel_policy.src.client,
 			&outbound_kernel_policy.dst.client,
@@ -269,12 +269,12 @@ static bool bare_policy_op(enum kernel_policy_op op,
 			"%s() outbound shunt for %s", __func__, opname))
 		return false;
 
-	switch (op) {
+	switch (opd) {
 	case KP_ADD_OUTBOUND:
-		op = KP_ADD_INBOUND;
+		opd = KP_ADD_INBOUND;
 		break;
 	case KP_DELETE_OUTBOUND:
-		op = KP_DELETE_INBOUND;
+		opd = KP_DELETE_INBOUND;
 		break;
 	case KP_REPLACE_OUTBOUND:
 	case KP_ADD_INBOUND:
@@ -293,7 +293,7 @@ static bool bare_policy_op(enum kernel_policy_op op,
 	 */
 	struct kernel_policy inbound_kernel_policy =
 		bare_kernel_policy(&sr->that.client, &sr->this.client);
-	return raw_policy(op, expect_kernel_policy,
+	return raw_policy(opd, expect_kernel_policy,
 			  &inbound_kernel_policy.src.client,
 			  &inbound_kernel_policy.dst.client,
 			  shunt_policy,
@@ -1289,7 +1289,7 @@ bool trap_connection(struct connection *c)
 
 static bool sag_eroute(const struct state *st,
 		       const struct spd_route *sr,
-		       enum kernel_policy_op op,
+		       enum kernel_policy_opd opd,
 		       const char *opname)
 {
 	struct connection *c = st->st_connection;
@@ -1304,13 +1304,13 @@ static bool sag_eroute(const struct state *st,
 	/* check for no transform at all */
 	passert(kernel_policy.nr_rules > 0);
 
-	pexpect(op & KERNEL_POLICY_OUTBOUND);
+	pexpect(opd & KERNEL_POLICY_OUTBOUND);
 
 	/* hack */
 	char why[256];
 	snprintf(why, sizeof(why), "%s() %s", __func__, opname);
 
-	return eroute_connection(op, why, sr, SHUNT_UNSET,
+	return eroute_connection(opd, why, sr, SHUNT_UNSET,
 				 &kernel_policy,
 				 calculate_sa_prio(c, false),
 				 &c->sa_marks, c->xfrmi,
@@ -1709,7 +1709,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	return true;
 }
 
-bool eroute_connection(enum kernel_policy_op op, const char *opname,
+bool eroute_connection(enum kernel_policy_opd opd, const char *opname,
 		       const struct spd_route *sr,
 		       enum shunt_policy shunt_policy,
 		       const struct kernel_policy *kernel_policy,
@@ -1721,7 +1721,7 @@ bool eroute_connection(enum kernel_policy_op op, const char *opname,
 {
 	if (sr->this.has_cat) {
 		ip_selector client = selector_from_address(sr->this.host->addr);
-		bool t = raw_policy(op, EXPECT_KERNEL_POLICY_OK,
+		bool t = raw_policy(opd, EXPECT_KERNEL_POLICY_OK,
 				    &client, &kernel_policy->dst.route,
 				    shunt_policy,
 				    kernel_policy,
@@ -1739,7 +1739,7 @@ bool eroute_connection(enum kernel_policy_op op, const char *opname,
 		dbg("kernel: %s CAT extra route added return=%d", __func__, t);
 	}
 
-	return raw_policy(op,
+	return raw_policy(opd,
 			  EXPECT_KERNEL_POLICY_OK,
 			  &kernel_policy->src.route, &kernel_policy->dst.route,
 			  shunt_policy,
@@ -1814,22 +1814,22 @@ bool assign_holdpass(const struct connection *c,
 		 * Once the broad %hold is in place, delete the narrow one.
 		 */
 		if (rn != ro) {
-			int op;
+			enum kernel_policy_opd opd;
 			const char *reason;
 
 			if (erouted(ro)) {
-				op = KP_REPLACE_OUTBOUND;
+				opd = KP_REPLACE_OUTBOUND;
 				reason = "assign_holdpass() replace %trap with broad %pass or %hold";
 			} else {
-				op = KP_ADD_OUTBOUND;
+				opd = KP_ADD_OUTBOUND;
 				reason = "assign_holdpass() add broad %pass or %hold";
 			}
 
-			pexpect(op & KERNEL_POLICY_OUTBOUND);
+			pexpect(opd & KERNEL_POLICY_OUTBOUND);
 
 			struct kernel_policy outbound_kernel_policy =
 				bare_kernel_policy(&sr->this.client, &sr->that.client);
-			if (eroute_connection(op, reason, sr, negotiation_shunt,
+			if (eroute_connection(opd, reason, sr, negotiation_shunt,
 					      &outbound_kernel_policy,
 					      calculate_sa_prio(c, false),
 					      NULL, 0 /* xfrm_if_id */,
@@ -3084,26 +3084,26 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
  * out.
  */
 
-static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
+static void teardown_kernel_policies(enum kernel_policy_opd outbound_opd,
 				     enum shunt_policy outbound_shunt,
 				     struct spd_route *out,
 				     struct spd_route *in,
 				     enum expect_kernel_policy expect_kernel_policy,
 				     struct logger *logger, const char *story)
 {
-	pexpect(outbound_op == KP_DELETE_OUTBOUND || outbound_op == KP_REPLACE_OUTBOUND);
+	pexpect(outbound_opd == KP_DELETE_OUTBOUND || outbound_opd == KP_REPLACE_OUTBOUND);
 	/*
 	 * The restored policy uses TRANSPORT mode (the host
 	 * .{src,dst} provides the family but the address isn't used).
 	 */
 	struct kernel_policy outbound_kernel_policy =
 		bare_kernel_policy(&out->this.client, &out->that.client);
-	if (!raw_policy(outbound_op,
+	if (!raw_policy(outbound_opd,
 			EXPECT_KERNEL_POLICY_OK,
 			&outbound_kernel_policy.src.client,
 			&outbound_kernel_policy.dst.client,
 			outbound_shunt,
-			(outbound_op == KP_REPLACE_OUTBOUND ? &outbound_kernel_policy : NULL),
+			(outbound_opd == KP_REPLACE_OUTBOUND ? &outbound_kernel_policy : NULL),
 			deltatime(0),
 			calculate_sa_prio(out->connection, false),
 			&out->connection->sa_marks, out->connection->xfrmi,

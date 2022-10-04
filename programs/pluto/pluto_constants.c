@@ -279,9 +279,9 @@ enum_names dns_auth_level_names = {
 	NULL
 };
 
-/* enum kernel_policy_op_names */
+/* enum kernel_policy_opd_names */
 
-static const char *kernel_policy_op_name[] = {
+static const char *kernel_policy_opd_name[] = {
 	[0] = "KP_INVALID",
 #define S(E) [E] = #E
 	S(KP_ADD_OUTBOUND),
@@ -293,9 +293,9 @@ static const char *kernel_policy_op_name[] = {
 #undef S
 };
 
-enum_names kernel_policy_op_names = {
-	0, elemsof(kernel_policy_op_name)-1,
-	ARRAY_REF(kernel_policy_op_name),
+enum_names kernel_policy_opd_names = {
+	0, elemsof(kernel_policy_opd_name)-1,
+	ARRAY_REF(kernel_policy_opd_name),
 	.en_prefix = "KP_",
 };
 
@@ -365,7 +365,7 @@ static const enum_names *pluto_enum_names_checklist[] = {
 #endif
 	&perspective_names,
 	&sa_policy_bit_names,
-	&kernel_policy_op_names,
+	&kernel_policy_opd_names,
 	&shunt_policy_names,
 	&keyword_auth_names,
 	&keyword_host_names,
