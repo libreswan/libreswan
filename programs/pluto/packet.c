@@ -2835,17 +2835,17 @@ bool pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len, const char
 	}
 
 	if (DBGP(DBG_BASE)) {
+		DBG_log("emitting %zu raw bytes of %s into %s", len, name, outs->name);
 		if (len > 16) { /* arbitrary */
-			DBG_log("emitting %zu bytes of %s into %s:", len, name, outs->name);
 			DBG_dump(NULL, bytes, len);
 		} else {
 			LSWLOG_DEBUG(buf) {
-				jam(buf, "emitting %zu bytes of %s into %s: ", len, name, outs->name);
 				jam(buf, "%s: ", name);
 				jam_dump_bytes(buf, bytes, len);
 			}
 		}
 	}
+
 	memcpy(outs->cur, bytes, len);
 	outs->cur += len;
 	return true;
