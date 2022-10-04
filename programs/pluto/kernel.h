@@ -49,18 +49,22 @@ struct show;
  * limited to appropriate source and destination addresses.
  */
 
-enum kernel_policy_ops {
+enum kernel_policy_op {
 	/* three bits */
 	KERNEL_POLICY_ADD = 1,
 	KERNEL_POLICY_DELETE = 2,
 	KERNEL_POLICY_REPLACE = 4,
 };
 
+extern const struct enum_names kernel_policy_op_names;
+
 enum kernel_policy_dir {
 	/* two bits */
 	KERNEL_POLICY_INBOUND = 8,
 	KERNEL_POLICY_OUTBOUND = 16,
 };
+
+extern const struct enum_names kernel_policy_dir_names;
 
 enum kernel_policy_opd {
 	KP_ADD_OUTBOUND =     (KERNEL_POLICY_ADD    |KERNEL_POLICY_OUTBOUND),
