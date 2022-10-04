@@ -306,38 +306,64 @@ Some things, annoyingly, don't quite work right:
 
 # Archiving
 
-For instance:
+After the release, save the results to elsewhere.
+
+- shut down the tester (with out this it will likely try to test
+  results that have been archived)
+
+- delete results/commits*; this will be rebuilt
+
+- set up the variables
 
   o=v4.7
   n=v4.8
 
-Make things easier:
+- make some paths easier:
 
-  cd ~/results
-
-Create the archive directory:
+- create the archive directory:
 
   mkdir ~/${o}-${n}
 
-Move results from previous release:
+- move results from previous release:
 
-  mv ${o}-* ~/${o}-${n}
+  mv ~/results/${o}-* ~/${o}-${n}
 
-and copy result from latest relese (so results are bookended with by
-releases) (tester.sh given a chance will seek out and test ${n}-0):
+- copy result from latest relese (so results are bookended with by
+  releases) (tester.sh given a chance will seek out and test ${n}-0):
 
-  cp -r ${n}-0-* ~/${o}-${n}
+  cp -r ~/results/${n}-0-* ~/${o}-${n}
+
+- now clean the archive of old logs (these should match the pattern
+  OUTPUT/*):
 
   find ~/${o}-${n} -name 'debug.log.gz' | xargs rm -v
   find ~/${o}-${n} -name 'pluto.log' -print | xargs rm -v
   find ~/${o}-${n} -name 'iked.log' -print | xargs rm -v
   find ~/${o}-${n} -name 'charon.log' -print | xargs rm -v
+
+- check for other files:
+
   find ~/${o}-${n} -name '*.log.gz' -print # delete?
+
+  this finds some bonus stuff in OUTPUT which should be added to
+  above
+
+- check for stray logs:
+
   find ~/${o}-${n} -name '.log' -print # delete?
 
-Finally re-generate the pages:
+  this finds things like kvm-check.log which should be compressed
 
-  cd ~/libreswan-web/testbench-repo/ && make WEB_SUMMARYDIR=~/${o}-${n} web-summarydir
+- finally re-generate the pages in the archive:
+
+  ( cd ~/libreswan-web/testbench-repo/ && make WEB_SUMMARYDIR=~/${o}-${n} web-summarydir )
+
+- and restart tester.sh
+
+  Note the addition of ${n} to specify the commit to start from.
+
+  cp /dev/null nohup.out ; nohup ;
+  ./libreswan-web/testbench-repo/testing/web/tester.sh libreswan-web/test-repo results ${n} &
 
 
 # Improvements
