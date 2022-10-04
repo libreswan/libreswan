@@ -2803,65 +2803,55 @@ bool ikev1_out_generic_raw(struct_desc *sd,
 	return true;
 }
 
-static diag_t space_for(size_t len, pb_stream *outs, const char *fmt, ...) PRINTF_LIKE(3) MUST_USE_RESULT;
-static diag_t space_for(size_t len, pb_stream *outs, const char *fmt, ...)
+static bool space_for(struct pbs_out *outs, size_t len, const char *what, const char *name, where_t where)
 {
-	/* nothing to do, or at least one byte spare */
-	if (len == 0 || pbs_left(outs) > len) {
-		LSWDBGP(DBG_BASE, buf) {
-			jam_string(buf, "emitting ");
-			va_list ap;
-			va_start(ap, fmt);
-			jam_va_list(buf, fmt, ap);
-			va_end(ap);
-			jam(buf, " into %s", outs->name);
-		}
-		return NULL;
+	/*
+	 * Is there more than enough space for LEN?  The +1 is to
+	 * ensure that there is always one byte of space spare.
+	 */
+	if (pbs_left(outs) >= len + 1) {
+		/* logged by caller */
+		return true;
 	}
 
-	if (pbs_left(outs) == 0) {
-		/* should this be a DBGLOG? */
-		diag_t d;
-		JAMBUF(buf) {
-			jam(buf, "%s is already full; discarding ", outs->name);
-			va_list ap;
-			va_start(ap, fmt);
-			jam_va_list(buf, fmt, ap);
-			va_end(ap);
-			d = diag(PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
-		}
-		return d;
+	if (pbs_left(outs) > 0) {
+		/*
+		 * Overflowing.
+		 */
+		pexpect(pbs_left(outs) <= len);
+		llog_pexpect(outs->outs_logger, where,
+			     "buffer is full; unable to emit %zu %s bytes of %s into %s",
+			     len, what, name, outs->name);
+		/* overflow the buffer */
+		outs->cur += pbs_left(outs);
+		return false;
 	}
 
-	/* never exactly fill - reserve space for a trailing byte */
-	pexpect(pbs_left(outs) <= len);
-	diag_t d;
-	JAMBUF(buf) {
-		jam(buf, "%s is full; unable to emit ", outs->name);
-		va_list ap;
-		va_start(ap, fmt);
-		jam_va_list(buf, fmt, ap);
-		va_end(ap);
-			d = diag(PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
-	}
-	/* overflow the buffer */
-	outs->cur += pbs_left(outs);
-	return d;
+	/*
+	 * Already overflowing.
+	 */
+	pexpect(pbs_left(outs) == 0);
+	llog_pexpect(outs->outs_logger, where,
+		     "buffer is overflowing; unable to emit %zu %s bytes of %s into %s",
+		     len, what, name, outs->name);
+	return false;
+
 }
 
 bool pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len, const char *name)
 {
-	diag_t d = space_for(len, outs, "%zu raw bytes of %s", len, name);
-	if (d != NULL) {
-		return pbs_out_diag(outs, HERE, &d);
+	if (!space_for(outs, len, "raw", name, HERE)) {
+		/* already logged */
+		return false;
 	}
 
 	if (DBGP(DBG_BASE)) {
 		if (len > 16) { /* arbitrary */
-			DBG_log("%s:", name);
+			DBG_log("emitting %zu bytes of %s into %s:", len, name, outs->name);
 			DBG_dump(NULL, bytes, len);
 		} else {
 			LSWLOG_DEBUG(buf) {
+				jam(buf, "emitting %zu bytes of %s into %s: ", len, name, outs->name);
 				jam(buf, "%s: ", name);
 				jam_dump_bytes(buf, bytes, len);
 			}
@@ -2874,11 +2864,12 @@ bool pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len, const char
 
 bool pbs_out_repeated_byte(struct pbs_out *outs, uint8_t byte, size_t len, const char *name)
 {
-	diag_t d = space_for(len, outs, "%zu 0x%02x repeated bytes of %s", len, byte, name);
-	if (d != NULL) {
-		return pbs_out_diag(outs, HERE, &d);
+	if (!space_for(outs, len, "repeated", name, HERE)) {
+		/* already logged */
+		return false;
 	}
 
+	dbg("emitting %"PRIu8" as %zu bytes of %s into %s", byte, len, name, outs->name);
 	memset(outs->cur, byte, len);
 	outs->cur += len;
 	return true;
@@ -2886,11 +2877,12 @@ bool pbs_out_repeated_byte(struct pbs_out *outs, uint8_t byte, size_t len, const
 
 bool pbs_out_zero(struct pbs_out *outs, size_t len, const char *name)
 {
-	diag_t d = space_for(len, outs, "%zu zero bytes of %s", len, name);
-	if (d != NULL) {
-		return pbs_out_diag(outs, HERE, &d);
+	if (!space_for(outs, len, "zero", name, HERE)) {
+		/* already logged */
+		return false;
 	}
 
+	dbg("emitting %zu zero bytes of %s into %s", len, name, outs->name);
 	memset(outs->cur, 0, len);
 	outs->cur += len;
 	return true;
