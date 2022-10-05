@@ -512,8 +512,9 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 			    const shunk_t sec_label,
 			    struct logger *logger)
 {
-	enum kernel_policy_opd opd = op|dir;
-	const char *op_str = enum_name(&kernel_policy_opd_names, opd);
+	const char *op_str = enum_name_short(&kernel_policy_op_names, op);
+	const char *dir_str = enum_name_short(&kernel_policy_dir_names, dir);
+
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
 	pexpect(selector_protocol(*dst_client) == client_proto);
 
@@ -574,7 +575,8 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 		policy_name = "%discard(discard)";
 		break;
 	case SHUNT_TRAP:
-		if (opd == KP_ADD_INBOUND || opd == KP_DELETE_INBOUND) {
+		if ((op == KERNEL_POLICY_OP_ADD && dir == KERNEL_POLICY_DIR_INBOUND) ||
+		    (op == KERNEL_POLICY_OP_DELETE && dir == KERNEL_POLICY_DIR_INBOUND)) {
 			dbg("%s() inbound SHUNT_TRAP implemented as no-op", __func__);
 			return true;
 		}
@@ -585,9 +587,14 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 		bad_case(shunt_policy);
 	}
 
-	const unsigned xfrm_dir = (opd == KP_ADD_INBOUND || opd == KP_DELETE_INBOUND) ? XFRM_POLICY_IN : XFRM_POLICY_OUT;
-	dbg("%s() policy=%s action=%d dir=%d op=%s",
-	    __func__, policy_name, xfrm_action, xfrm_dir, op_str);
+	/* XXX: notice how this ignores KERNEL_OP_REPLACE!?! */
+	const unsigned xfrm_dir =
+		(((op == KERNEL_POLICY_OP_ADD && dir == KERNEL_POLICY_DIR_INBOUND) ||
+		  (op == KERNEL_POLICY_OP_DELETE && dir == KERNEL_POLICY_DIR_INBOUND))
+		 ? XFRM_POLICY_IN
+		 : XFRM_POLICY_OUT);
+	dbg("%s() policy=%s action=%d xfrm_dir=%d op=%s dir=%s",
+	    __func__, policy_name, xfrm_action, xfrm_dir, op_str, dir_str);
 
 	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
@@ -632,8 +639,8 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	req.u.p.sel.proto = client_proto->ipproto;
 	req.u.p.sel.family = family;
 
-	if (opd == KP_DELETE_OUTBOUND ||
-	    opd == KP_DELETE_INBOUND) {
+	if ((op == KERNEL_POLICY_OP_DELETE && dir == KERNEL_POLICY_DIR_OUTBOUND) ||
+	    (op == KERNEL_POLICY_OP_DELETE && dir == KERNEL_POLICY_DIR_INBOUND)) {
 		req.u.id.dir = xfrm_dir;
 		req.n.nlmsg_type = XFRM_MSG_DELPOLICY;
 		req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.u.id)));
@@ -677,8 +684,8 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	 * is needed.  Lets find out.
 	 */
 	if (kernel_policy != NULL &&
-	    opd != KP_DELETE_OUTBOUND &&
-	    opd != KP_DELETE_INBOUND) {
+	    !(op == KERNEL_POLICY_OP_DELETE && dir == KERNEL_POLICY_DIR_OUTBOUND) &&
+	    !(op == KERNEL_POLICY_OP_DELETE && dir == KERNEL_POLICY_DIR_INBOUND)) {
 		struct xfrm_user_tmpl tmpls[4] = {0};
 
 		/* remember; kernel_policy.rule[] is 1 based */
@@ -724,19 +731,19 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 
 	} else if (DBGP(DBG_BASE)) {
 		if (kernel_policy == NULL) {
-			DBG_log("%s() ignoring xfrm_user_tmpl because NULL, op=%s",
-				__func__, op_str);
+			DBG_log("%s() ignoring xfrm_user_tmpl because NULL, op=%s dir=%s",
+				__func__, op_str, dir_str);
 		} else {
 			/*
 			 * Dump ignored proto_info[].
 			 */
 			for (unsigned i = 1; i <= kernel_policy->nr_rules; i++) {
 				const struct kernel_policy_rule *rule = &kernel_policy->rule[i];
-				DBG_log("%s() ignoring xfrm_user_tmpl reqid=%d proto=%s %s because op=%s",
+				DBG_log("%s() ignoring xfrm_user_tmpl reqid=%d proto=%s %s because op=%s dir=%s",
 					__func__, rule->reqid,
 					protocol_by_ipproto(rule->proto)->name,
 					encap_mode_name(kernel_policy->mode),
-					op_str);
+					op_str, dir_str);
 			}
 		}
 	}
@@ -805,7 +812,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	}
 
 	bool ok = sendrecv_xfrm_policy(&req.n, what_about_inbound, policy_name,
-				       ((opd & KERNEL_POLICY_DIR_OUTBOUND) ? "(out)" : "(in)"),
+				       (dir == KERNEL_POLICY_DIR_OUTBOUND ? "(out)" : "(in)"),
 				       logger);
 
 	/*
@@ -816,37 +823,40 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	 *
 	 * XXX: and yes, the code below doesn't exactly do just that.
 	 */
-	switch (opd) {
-	case KP_DELETE_INBOUND:
-		/*
-		 * ??? we will call netlink_policy even if !ok.
-		 *
-		 * XXX: It's also called when transport mode!
-		 *
-		 * Presumably this is trying to also delete earlier
-		 * SNAFUs.
-		 */
-		dbg("xfrm: %s() deleting policy forward (even when there may not be one)",
-		    __func__);
-		req.u.id.dir = XFRM_POLICY_FWD;
-		ok &= sendrecv_xfrm_policy(&req.n, IGNORE_KERNEL_POLICY_MISSING,
-					   policy_name, "(fwd)", logger);
-		break;
-	case KP_ADD_INBOUND:
-		if (!ok) {
+	if (dir == KERNEL_POLICY_DIR_INBOUND) {
+		switch (op) {
+		case KERNEL_POLICY_OP_DELETE:
+			/*
+			 * ??? we will call netlink_policy even if
+			 * !ok.
+			 *
+			 * XXX: It's also called when transport mode!
+			 *
+			 * Presumably this is trying to also delete
+			 * earlier SNAFUs.
+			 */
+			dbg("xfrm: %s() deleting policy forward (even when there may not be one)",
+			    __func__);
+			req.u.id.dir = XFRM_POLICY_FWD;
+			ok &= sendrecv_xfrm_policy(&req.n, IGNORE_KERNEL_POLICY_MISSING,
+						   policy_name, "(fwd)", logger);
 			break;
-		}
-		if (shunt_policy == SHUNT_UNSET &&
-		    kernel_policy != NULL && kernel_policy->mode == ENCAP_MODE_TRANSPORT) {
+		case KERNEL_POLICY_OP_ADD:
+			if (!ok) {
+				break;
+			}
+			if (shunt_policy == SHUNT_UNSET &&
+			    kernel_policy != NULL && kernel_policy->mode == ENCAP_MODE_TRANSPORT) {
+				break;
+			}
+			dbg("xfrm: %s() adding policy forward (suspect a tunnel)", __func__);
+			req.u.p.dir = XFRM_POLICY_FWD;
+			ok &= sendrecv_xfrm_policy(&req.n, what_about_inbound,
+						   policy_name, "(fwd)", logger);
 			break;
+		default:
+			break; /*no-op*/
 		}
-		dbg("xfrm: %s() adding policy forward (suspect a tunnel)", __func__);
-		req.u.p.dir = XFRM_POLICY_FWD;
-		ok &= sendrecv_xfrm_policy(&req.n, what_about_inbound,
-					   policy_name, "(fwd)", logger);
-		break;
-	default:
-		break; /*no-op*/
 	}
 	return ok;
 }
