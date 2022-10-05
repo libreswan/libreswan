@@ -54,7 +54,6 @@ enum kernel_policy_op {
 	KERNEL_POLICY_OP_ADD = 1,
 	KERNEL_POLICY_OP_DELETE = 2,
 	KERNEL_POLICY_OP_REPLACE = 4,
-#define KERNEL_POLICY_OP(OPD) ((enum kernel_policy_op) ((OPD) & (KERNEL_POLICY_OP_ADD|KERNEL_POLICY_OP_DELETE|KERNEL_POLICY_OP_REPLACE)))
 };
 
 extern const struct enum_names kernel_policy_op_names;
@@ -63,23 +62,9 @@ enum kernel_policy_dir {
 	/* two bits */
 	KERNEL_POLICY_DIR_INBOUND = 8,
 	KERNEL_POLICY_DIR_OUTBOUND = 16,
-#define KERNEL_POLICY_DIR(OPD) ((enum kernel_policy_dir) ((OPD) & (KERNEL_POLICY_DIR_INBOUND|KERNEL_POLICY_DIR_OUTBOUND)))
 };
 
 extern const struct enum_names kernel_policy_dir_names;
-
-enum kernel_policy_opd {
-	KP_ADD_OUTBOUND =     (KERNEL_POLICY_OP_ADD    |KERNEL_POLICY_DIR_OUTBOUND),
-	KP_ADD_INBOUND =      (KERNEL_POLICY_OP_ADD    |KERNEL_POLICY_DIR_INBOUND),
-	KP_DELETE_OUTBOUND =  (KERNEL_POLICY_OP_DELETE |KERNEL_POLICY_DIR_OUTBOUND),
-	KP_DELETE_INBOUND =   (KERNEL_POLICY_OP_DELETE |KERNEL_POLICY_DIR_INBOUND),
-	KP_REPLACE_OUTBOUND = (KERNEL_POLICY_OP_REPLACE|KERNEL_POLICY_DIR_OUTBOUND),
-	KP_REPLACE_INBOUND =  (KERNEL_POLICY_OP_REPLACE|KERNEL_POLICY_DIR_INBOUND),
-#define KERNEL_POLICY_OPD(OPD)						\
-	KERNEL_POLICY_OP(OPD), KERNEL_POLICY_DIR(OPD)
-};
-
-extern const struct enum_names kernel_policy_opd_names;
 
 /*
  * The protocol used to encapsulate.

@@ -310,26 +310,6 @@ enum_names kernel_policy_dir_names = {
 	.en_prefix = "KERNEL_POLICY_DIR_",
 };
 
-/* enum kernel_policy_opd_names */
-
-static const char *kernel_policy_opd_name[] = {
-	[0] = "KP_INVALID",
-#define S(E) [E] = #E
-	S(KP_ADD_OUTBOUND),
-	S(KP_REPLACE_OUTBOUND),
-	S(KP_DELETE_OUTBOUND),
-	S(KP_ADD_INBOUND),
-	S(KP_REPLACE_INBOUND),
-	S(KP_DELETE_INBOUND),
-#undef S
-};
-
-enum_names kernel_policy_opd_names = {
-	0, elemsof(kernel_policy_opd_name)-1,
-	ARRAY_REF(kernel_policy_opd_name),
-	.en_prefix = "KP_",
-};
-
 /* */
 
 static const char *const perspective_name[] = {
@@ -398,7 +378,6 @@ static const enum_names *pluto_enum_names_checklist[] = {
 	&sa_policy_bit_names,
 	&kernel_policy_op_names,
 	&kernel_policy_dir_names,
-	&kernel_policy_opd_names,
 	&shunt_policy_names,
 	&keyword_auth_names,
 	&keyword_host_names,
