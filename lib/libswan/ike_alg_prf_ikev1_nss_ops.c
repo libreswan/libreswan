@@ -291,6 +291,7 @@ static chunk_t section_5_keymat(const struct prf_desc *prf,
 				       /*flags*/CKF_DECRYPT|CKF_ENCRYPT,
 				       HERE, logger);
 	chunk_t keymat = chunk_from_symkey("section 5 keymat", key, logger);
+	PASSERT(logger, keymat.len == required_keymat);
 	release_symkey("section 5 keymat", "keymat", &key);
 	pfree(extra);
 	return keymat;
