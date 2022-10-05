@@ -1338,15 +1338,15 @@ kvmplutotest	pfkeyv2-tunnel-4in4-ah-ikev2		netbsd
 kvmplutotest	pfkeyv2-tunnel-4in4-esp-ipcomp-ikev2	netbsd
 kvmplutotest	pfkeyv2-tunnel-4in4-esp-ikev2		netbsd
 
-kvmplutotest	pfkeyv2-tunnel-4in6-ah-ipcomp-ikev2	freebsd	github/713
-kvmplutotest	pfkeyv2-tunnel-4in6-ah-ikev2		freebsd
-kvmplutotest	pfkeyv2-tunnel-4in6-esp-ipcomp-ikev2	freebsd	github/713
-kvmplutotest	pfkeyv2-tunnel-4in6-esp-ikev2		freebsd
+kvmplutotest	pfkeyv2-tunnel-4in6-ah-ipcomp-ikev2	netbsd	github/713
+kvmplutotest	pfkeyv2-tunnel-4in6-ah-ikev2		netbsd
+kvmplutotest	pfkeyv2-tunnel-4in6-esp-ipcomp-ikev2	netbsd	github/713
+kvmplutotest	pfkeyv2-tunnel-4in6-esp-ikev2		netbsd
 
-kvmplutotest	pfkeyv2-tunnel-6in4-ah-ipcomp-ikev2	freebsd	github/713
-kvmplutotest	pfkeyv2-tunnel-6in4-ah-ikev2		freebsd
-kvmplutotest	pfkeyv2-tunnel-6in4-esp-ipcomp-ikev2	freebsd	github/713
-kvmplutotest	pfkeyv2-tunnel-6in4-esp-ikev2		freebsd
+kvmplutotest	pfkeyv2-tunnel-6in4-ah-ipcomp-ikev2	netbsd	github/713
+kvmplutotest	pfkeyv2-tunnel-6in4-ah-ikev2		netbsd
+kvmplutotest	pfkeyv2-tunnel-6in4-esp-ipcomp-ikev2	netbsd	github/713
+kvmplutotest	pfkeyv2-tunnel-6in4-esp-ikev2		netbsd
 
 kvmplutotest	pfkeyv2-tunnel-6in6-ah-ipcomp-ikev2	netbsd	github/713
 kvmplutotest	pfkeyv2-tunnel-6in6-ah-ikev2		netbsd
@@ -1355,8 +1355,9 @@ kvmplutotest	pfkeyv2-tunnel-6in6-esp-ikev2		netbsd
 
 kvmplutotest	pfkeyv2-esn-esp-freebsd			freebsd
 kvmplutotest	pfkeyv2-esn-ah-freebsd			freebsd
-kvmplutotest	pfkeyv2-ondemand			skiptest #netbsd-wip
 kvmplutotest	pfkeyv2-replay-window-freebsd		freebsd
+
+kvmplutotest	pfkeyv2-ondemand			skiptest #netbsd-wip
 
 # OpenBSD interop
 kvmplutotest	interop-ikev2-openbsd-01-iked-responder		openbsd
