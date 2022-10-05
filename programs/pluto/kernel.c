@@ -107,19 +107,19 @@ static bool invoke_command(const char *verb, const char *verb_suffix,
 			   const char *cmd, struct logger *logger);
 
 /*
- * Add/replace/delete a shunt eroute.
+ * Add/replace/delete an outbound bare kernel policy, aka shunt.
  *
- * Such an eroute determines the fate of packets without the use
- * of any SAs.  These are defaults, in effect.
- * If a negotiation has not been attempted, use %trap.
- * If negotiation has failed, the choice between %trap/%pass/%drop/%reject
- * is specified in the policy of connection c.
+ * Such a kernel policy determines the fate of packets without the use
+ * of any SAs.  These are defaults, in effect.  If a negotiation has
+ * not been attempted, use %trap.  If negotiation has failed, the
+ * choice between %trap/%pass/%drop/%reject is specified in the policy
+ * of connection c.
  *
- * The kernel policy is bare (naked, global) it is not paired with a
- * kernel state.
+ * The kernel policy is refered to as bare (naked, global) as it is
+ * not paired with a kernel state.
  */
 
-static bool bare_policy_op(enum kernel_policy_opd opd,
+static bool bare_policy_op(enum kernel_policy_op op,
 			   enum expect_kernel_policy expect_kernel_policy,
 			   const struct connection *c,
 			   const struct spd_route *sr,
@@ -143,7 +143,8 @@ static bool bare_policy_op(enum kernel_policy_opd opd,
 
 	LSWDBGP(DBG_BASE, buf) {
 		jam(buf, "kernel: %s() ", __func__);
-		jam_enum_short(buf, &kernel_policy_opd_names, opd);
+
+		jam_enum_short(buf, &kernel_policy_op_names, op);
 
 		jam_string(buf, " ");
 		jam_string(buf, expect_kernel_policy_name(expect_kernel_policy));
@@ -171,6 +172,7 @@ static bool bare_policy_op(enum kernel_policy_opd opd,
 		}
 	}
 
+	enum kernel_policy_opd opd = op|KERNEL_POLICY_DIR_OUTBOUND;
 	if (shunt_policy == SHUNT_NONE) {
 		/*
 		 * We're supposed to end up with no policy: rejig op
@@ -229,7 +231,7 @@ static bool bare_policy_op(enum kernel_policy_opd opd,
 		struct spd_route *esr = eclipsing(sr);
 		if (esr != NULL) {
 			set_spd_routing(esr, RT_ROUTED_PROSPECTIVE);
-			return bare_policy_op(KP_REPLACE_OUTBOUND,
+			return bare_policy_op(KERNEL_POLICY_OP_REPLACE,
 					      EXPECT_KERNEL_POLICY_OK,
 					      esr->connection, esr,
 					      RT_ROUTED_PROSPECTIVE,
@@ -1376,7 +1378,7 @@ void unroute_connection(struct connection *c)
 			 * in fact the connection shouldn't even have
 			 * inbound policies, just the state.
 			 */
-			bare_policy_op(KP_DELETE_OUTBOUND,
+			bare_policy_op(KERNEL_POLICY_OP_DELETE,
 				       EXPECT_NO_INBOUND,
 				       c, sr, RT_UNROUTED,
 				       "unrouting connection",
@@ -2732,7 +2734,7 @@ bool route_and_eroute(struct connection *c,
 		dbg("kernel: we are replacing an eroute");
 		/* if no state provided, then install a shunt for later */
 		if (st == NULL) {
-			eroute_installed = bare_policy_op(KP_REPLACE_OUTBOUND,
+			eroute_installed = bare_policy_op(KERNEL_POLICY_OP_REPLACE,
 							  EXPECT_KERNEL_POLICY_OK,
 							  c, sr, RT_ROUTED_PROSPECTIVE,
 							  "route_and_eroute() replace shunt",
@@ -2758,7 +2760,7 @@ bool route_and_eroute(struct connection *c,
 
 		/* if no state provided, then install a shunt for later */
 		if (st == NULL) {
-			eroute_installed = bare_policy_op(KP_ADD_OUTBOUND,
+			eroute_installed = bare_policy_op(KERNEL_POLICY_OP_ADD,
 							  EXPECT_KERNEL_POLICY_OK,
 							  c, sr, RT_ROUTED_PROSPECTIVE,
 							  "route_and_eroute() add",
@@ -2929,7 +2931,7 @@ bool route_and_eroute(struct connection *c,
 				/* restore ero's former glory */
 				if (esr->eroute_owner == SOS_NOBODY) {
 					/* note: normal or eclipse case */
-					if (!bare_policy_op(KP_REPLACE_OUTBOUND,
+					if (!bare_policy_op(KERNEL_POLICY_OP_REPLACE,
 							    EXPECT_KERNEL_POLICY_OK,
 							    ero, esr, esr->routing,
 							    "route_and_eroute() restore",
@@ -2961,7 +2963,7 @@ bool route_and_eroute(struct connection *c,
 			} else {
 				/* there was no previous eroute: delete whatever we installed */
 				if (st == NULL) {
-					if (!bare_policy_op(KP_DELETE_OUTBOUND,
+					if (!bare_policy_op(KERNEL_POLICY_OP_DELETE,
 							    EXPECT_KERNEL_POLICY_OK,
 							    c, sr, sr->routing,
 							    "route_and_eroute() delete",
@@ -3685,7 +3687,7 @@ static void expire_bare_shunts(struct logger *logger)
 				 */
 				struct connection *c = connection_by_serialno(bsp->from_serialno);
 				if (c != NULL) {
-					if (!bare_policy_op(KP_ADD_OUTBOUND,
+					if (!bare_policy_op(KERNEL_POLICY_OP_ADD,
 							    EXPECT_KERNEL_POLICY_OK,
 							    c, &c->spd,
 							    RT_ROUTED_PROSPECTIVE,
