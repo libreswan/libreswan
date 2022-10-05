@@ -327,25 +327,25 @@ static void compute_proto_keymat(struct state *st,
 
 	free_chunk_content(&pi->inbound.keymat);
 	pi->inbound.keymat = ikev1_section_5_keymat(st->st_oakley.ta_prf,
-						st->st_skeyid_d_nss,
-						st->st_dh_shared_secret,
-						protoid,
-						THING_AS_SHUNK(pi->inbound.spi),
-						st->st_ni, st->st_nr,
-						needed_len,
-						st->st_logger);
-	passert(pi->inbound.keymat.len == needed_len); /* 0 allowed */
+						    st->st_skeyid_d_nss,
+						    st->st_dh_shared_secret,
+						    protoid,
+						    THING_AS_SHUNK(pi->inbound.spi),
+						    st->st_ni, st->st_nr,
+						    needed_len,
+						    st->st_logger);
+	PASSERT(st->st_logger, pi->inbound.keymat.len == needed_len);
 
 	free_chunk_content(&pi->outbound.keymat);
 	pi->outbound.keymat = ikev1_section_5_keymat(st->st_oakley.ta_prf,
-						 st->st_skeyid_d_nss,
-						 st->st_dh_shared_secret,
-						 protoid,
-						 THING_AS_SHUNK(pi->outbound.spi),
-						 st->st_ni, st->st_nr,
-						 needed_len,
-						 st->st_logger);
-	passert(pi->outbound.keymat.len == needed_len); /* 0 allowed */
+						     st->st_skeyid_d_nss,
+						     st->st_dh_shared_secret,
+						     protoid,
+						     THING_AS_SHUNK(pi->outbound.spi),
+						     st->st_ni, st->st_nr,
+						     needed_len,
+						     st->st_logger);
+	PASSERT(st->st_logger, pi->outbound.keymat.len == needed_len);
 
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("%s KEYMAT", satypename);

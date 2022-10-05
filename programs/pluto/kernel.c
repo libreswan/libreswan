@@ -2112,7 +2112,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		dbg("kernel: st->st_esp.keymat_len=%zu is encrypt_keymat_size=%zu + integ_keymat_size=%zu",
 		    esp_dst_keymat.len, encrypt_keymat_size, integ_keymat_size);
 
-		passert(esp_dst_keymat.len == encrypt_keymat_size + integ_keymat_size);
+		PASSERT(st->st_logger, esp_dst_keymat.len == encrypt_keymat_size + integ_keymat_size);
 
 		*said_next = said_boilerplate;
 		said_next->spi = esp_spi;
@@ -2238,7 +2238,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			goto fail;
 		}
 
-		passert(ah_dst_keymat.len == keymat_size);
+		PASSERT(st->st_logger, ah_dst_keymat.len == keymat_size);
 
 		*said_next = said_boilerplate;
 		said_next->spi = ah_spi;
