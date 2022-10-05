@@ -172,31 +172,24 @@ static bool bare_policy_op(enum kernel_policy_op op,
 		}
 	}
 
-	enum kernel_policy_opd opd = op|KERNEL_POLICY_DIR_OUTBOUND;
 	if (shunt_policy == SHUNT_NONE) {
 		/*
 		 * We're supposed to end up with no policy: rejig op
 		 * and opname.
 		 */
-		switch (opd) {
-		case KP_REPLACE_OUTBOUND:
+		switch (op) {
+		case KERNEL_POLICY_OP_REPLACE:
 			/* replace with nothing == delete */
-			opd = KP_DELETE_OUTBOUND;
+			op = KERNEL_POLICY_OP_DELETE;
 			opname = "delete";
 			break;
-		case KP_ADD_OUTBOUND:
+		case KERNEL_POLICY_OP_ADD:
 			/* add nothing == do nothing */
 			return true;
 
-		case KP_DELETE_OUTBOUND:
+		case KERNEL_POLICY_OP_DELETE:
 			/* delete remains delete */
 			break;
-
-		case KP_ADD_INBOUND:
-		case KP_REPLACE_INBOUND:
-		case KP_DELETE_INBOUND:
-			/* never inbound */
-			bad_case(opd);
 		}
 	}
 
@@ -206,27 +199,23 @@ static bool bare_policy_op(enum kernel_policy_op op,
 		 * Adjust the request and account for eclipses.
 		 */
 		passert(eclipsable(sr));
-		switch (opd) {
-		case KP_REPLACE_OUTBOUND:
+		switch (op) {
+		case KERNEL_POLICY_OP_REPLACE:
 			/* really an add */
-			opd = KP_ADD_OUTBOUND;
+			op = KERNEL_POLICY_OP_ADD;
 			opname = "replace eclipsed";
 			break;
-		case KP_DELETE_OUTBOUND:
+		case KERNEL_POLICY_OP_DELETE:
 			/*
 			 * delete unnecessary:
 			 * we don't actually have an eroute
 			 */
 			return true;
-
-		case KP_ADD_OUTBOUND: /*never eclipsed add*/
-		case KP_ADD_INBOUND:
-		case KP_REPLACE_INBOUND:
-		case KP_DELETE_INBOUND:
-			/* never inbound */
-			bad_case(opd);
+		case KERNEL_POLICY_OP_ADD:
+			/*never eclipsed add*/
+			bad_case(op);
 		}
-	} else if (opd == KP_DELETE_OUTBOUND) {
+	} else if (op == KERNEL_POLICY_OP_DELETE) {
 		/* maybe we are uneclipsing something */
 		struct spd_route *esr = eclipsing(sr);
 		if (esr != NULL) {
@@ -254,12 +243,11 @@ static bool bare_policy_op(enum kernel_policy_op op,
 	 * Use raw_policy() as it gives a better log result.
 	 */
 
-	bool delete = (opd & KERNEL_POLICY_OP_DELETE);
+	bool delete = (op == KERNEL_POLICY_OP_DELETE);
 
-	pexpect(opd & KERNEL_POLICY_DIR_OUTBOUND);
 	struct kernel_policy outbound_kernel_policy =
 		bare_kernel_policy(&sr->this.client, &sr->that.client);
-	if (!raw_policy(KERNEL_POLICY_OPD(opd),
+	if (!raw_policy(op, KERNEL_POLICY_DIR_OUTBOUND,
 			EXPECT_KERNEL_POLICY_OK,
 			&outbound_kernel_policy.src.client,
 			&outbound_kernel_policy.dst.client,
@@ -273,17 +261,11 @@ static bool bare_policy_op(enum kernel_policy_op op,
 			"%s() outbound shunt for %s", __func__, opname))
 		return false;
 
-	switch (opd) {
-	case KP_ADD_OUTBOUND:
-		opd = KP_ADD_INBOUND;
+	switch (op) {
+	case KERNEL_POLICY_OP_ADD:
+	case KERNEL_POLICY_OP_DELETE:
 		break;
-	case KP_DELETE_OUTBOUND:
-		opd = KP_DELETE_INBOUND;
-		break;
-	case KP_REPLACE_OUTBOUND:
-	case KP_ADD_INBOUND:
-	case KP_REPLACE_INBOUND:
-	case KP_DELETE_INBOUND:
+	case KERNEL_POLICY_OP_REPLACE:
 		return true;
 	}
 
@@ -297,7 +279,7 @@ static bool bare_policy_op(enum kernel_policy_op op,
 	 */
 	struct kernel_policy inbound_kernel_policy =
 		bare_kernel_policy(&sr->that.client, &sr->this.client);
-	return raw_policy(KERNEL_POLICY_OPD(opd),
+	return raw_policy(op, KERNEL_POLICY_DIR_INBOUND,
 			  expect_kernel_policy,
 			  &inbound_kernel_policy.src.client,
 			  &inbound_kernel_policy.dst.client,
