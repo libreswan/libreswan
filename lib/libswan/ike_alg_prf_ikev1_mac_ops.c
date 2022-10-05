@@ -21,6 +21,8 @@
 #include "ike_alg_prf_ikev1_ops.h"
 #include "crypt_prf.h"
 #include "crypt_symkey.h"
+#include "passert.h"
+#include "lswlog.h"		/* for pexpect() */
 
 /*
  * Compute: SKEYID = prf(Ni_b | Nr_b, g^xy)
@@ -207,6 +209,12 @@ static chunk_t section_5_keymat(const struct prf_desc *prf,
 		/* gro */
 		append_chunk_hunk("KEYMAT += KEYMAT_n", &keymat, keymat_n);
 	} while (keymat.len < required_keymat);
+	/*
+	 * XXX: truncate the returned value back to what was
+	 * requested, rather than what was generated.
+	 */
+	PASSERT(logger, keymat.len >= required_keymat);
+	keymat.len = required_keymat;
 	return keymat;
 }
 
