@@ -204,9 +204,9 @@ static const char compile_time_interop_options[] = ""
 	" (IPsec profile)"
 #endif
 #ifdef USE_NSS_KDF
-	" (NSS-PRF)"
+	" (NSS-KDF)"
 #else
-	" (native-PRF)"
+	" (native-KDF)"
 #endif
 #ifdef USE_DNSSEC
 	" DNSSEC"
