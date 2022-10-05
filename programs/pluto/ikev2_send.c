@@ -68,12 +68,12 @@ bool send_recorded_v2_message(struct ike_sa *ike,
 }
 
 void record_v2_outgoing_fragment(struct pbs_out *pbs,
-				 const char *what,
+				 const char *what UNUSED,
 				 struct v2_outgoing_fragment **frags)
 {
 	pexpect(*frags == NULL);
 	shunk_t frag = same_pbs_out_as_shunk(pbs);
-	*frags = alloc_bytes(sizeof(struct v2_outgoing_fragment) + frag.len, what);
+	*frags = over_alloc_thing(struct v2_outgoing_fragment, frag.len);
 	(*frags)->len = frag.len;
 	memcpy((*frags)->ptr/*array*/, frag.ptr, frag.len);
 }

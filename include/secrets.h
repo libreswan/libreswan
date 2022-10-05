@@ -205,7 +205,7 @@ struct pubkey {
 	asn1_t issuer;
 	struct pubkey_content content;
 	/* for overalloc of issuer */
-	uint8_t end[0];
+	uint8_t end[];
 };
 
 /*

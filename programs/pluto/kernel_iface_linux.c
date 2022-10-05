@@ -215,8 +215,8 @@ struct raw_iface *find_raw_ifaces6(struct logger *unused_logger UNUSED)
 			happy(ttoaddress_num(shunk1(sb), &ipv6_info, &ifaddr));
 
 			if (address_is_specified(ifaddr)) {
-				struct raw_iface *ri = over_alloc_thing(struct raw_iface,
-									strlen(ifname) + 1);
+				struct raw_iface *ri =
+					over_alloc_thing(struct raw_iface, strlen(ifname) + 1);
 				ri->addr = ifaddr;
 				strcpy(ri->name, ifname);
 				ri->next = rifaces;

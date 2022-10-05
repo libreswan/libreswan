@@ -243,8 +243,8 @@ struct raw_iface *find_raw_ifaces(const struct ip_info *afi, struct logger *logg
 		}
 #endif
 
-		struct raw_iface *ri = over_alloc_thing(struct raw_iface,
-							strlen(ifname) + 1);
+		struct raw_iface *ri =
+			over_alloc_thing(struct raw_iface, strlen(ifname) + 1);
 		ri->addr = addr;
 		strcpy(ri->name, ifname);
 		ri->next = rifaces;

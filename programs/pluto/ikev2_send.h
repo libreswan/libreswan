@@ -75,12 +75,11 @@ struct v2_incoming_fragments {
 	struct v2_incoming_fragment frags[MAX_IKE_FRAGMENTS + 1];
 };
 
-/* hunk like */
-
 struct v2_outgoing_fragment {
 	struct v2_outgoing_fragment *next;
+	/* hunk like */
 	size_t len;
-	uint8_t ptr[1]; /* can be bigger */
+	uint8_t ptr[]; /* can be bigger */
 };
 
 /*

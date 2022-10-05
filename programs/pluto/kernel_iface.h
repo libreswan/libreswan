@@ -24,7 +24,7 @@ struct logger;
 struct raw_iface {
 	ip_address addr;
 	struct raw_iface *next;
-	char name[1]; /* MUST BE LAST; overalloc hack */
+	char name[]; /* MUST BE LAST; overalloc hack */
 };
 
 extern struct raw_iface *find_raw_ifaces(const struct ip_info *afi, struct logger *logger);
