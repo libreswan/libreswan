@@ -230,6 +230,8 @@ ifeq ($(USE_SHA1),true)
 OBJS += ike_alg_sha1.o
 endif
 
+# used by Cookies
+OBJS += ike_alg_hash_sha2_256.o
 ifeq ($(USE_SHA2),true)
 OBJS += ike_alg_sha2.o
 endif
