@@ -216,6 +216,7 @@ ifeq ($(USE_CAMELLIA),true)
 OBJS += ike_alg_camellia.o
 endif
 
+OBJS += ike_alg_hash_md5.o
 ifeq ($(USE_MD5),true)
 OBJS += ike_alg_md5.o
 endif

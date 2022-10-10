@@ -22,55 +22,27 @@
 
 #include "constants.h"		/* for BYTES_FOR_BITS() */
 #include "ietf_constants.h"
+
 #include "ike_alg.h"
 #include "ike_alg_hash.h"
-#include "ike_alg_prf.h"
 #include "ike_alg_hash_ops.h"
-#include "ike_alg_prf_mac_ops.h"
-#include "ike_alg_prf_ikev1_ops.h"
-#include "ike_alg_prf_ikev2_ops.h"
-#include "lsw-pfkeyv2.h"	/* for SADB_*ALG_* */
 
-const struct prf_desc ike_alg_prf_hmac_md5 = {
+const struct hash_desc ike_alg_hash_md5 = {
 	.common = {
-		.fqn = "HMAC_MD5",
-		.names = "md5,hmac_md5",
-		.algo_type = IKE_ALG_PRF,
+		.fqn = "MD5",
+		.names = "md5",
+		.algo_type = IKE_ALG_HASH,
 		.id = {
 			[IKEv1_OAKLEY_ID] = OAKLEY_MD5,
 			[IKEv1_ESP_ID] = -1,
-			[IKEv2_ALG_ID] = IKEv2_PRF_HMAC_MD5,
+			[IKEv2_ALG_ID] = -1,
 		},
 	},
-	.prf_key_size = MD5_DIGEST_SIZE,
-	.prf_output_size = MD5_DIGEST_SIZE,
-	.hasher = &ike_alg_hash_md5,
-	.prf_mac_ops = &ike_alg_prf_mac_hmac_ops,
-	.prf_ikev1_ops = &ike_alg_prf_ikev1_mac_ops,
-	.prf_ikev2_ops = &ike_alg_prf_ikev2_mac_ops,
-	.prf_ike_audit_name = "md5",
-};
-
-const struct integ_desc ike_alg_integ_hmac_md5_96 = {
-	.common = {
-		.fqn = "HMAC_MD5_96",
-		.names = "md5,hmac_md5,hmac_md5_96",
-		.algo_type = IKE_ALG_INTEG,
-		.id = {
-			[IKEv1_OAKLEY_ID] = OAKLEY_MD5,
-			[IKEv1_ESP_ID] = AUTH_ALGORITHM_HMAC_MD5,
-			[IKEv2_ALG_ID] = IKEv2_INTEG_HMAC_MD5_96,
-#ifdef SADB_AALG_MD5HMAC
-			[SADB_ALG_ID] = SADB_AALG_MD5HMAC,
-#endif
-		},
+	.nss = {
+		.oid_tag = SEC_OID_MD5,
+		.derivation_mechanism = CKM_MD5_KEY_DERIVATION,
 	},
-	.integ_keymat_size = MD5_DIGEST_SIZE,
-	.integ_output_size = MD5_DIGEST_SIZE_96,
-	.integ_ikev1_ah_transform = AH_MD5,
-	.prf = &ike_alg_prf_hmac_md5,
-	.integ_netlink_xfrm_name = "md5",
-	.integ_tcpdump_name = "md5",
-	.integ_ike_audit_name = "md5",
-	.integ_kernel_audit_name = "HMAC_MD5",
+	.hash_digest_size = MD5_DIGEST_SIZE,
+	.hash_block_size = 64,	/* B from RFC 2104 */
+	.hash_ops = &ike_alg_hash_nss_ops,
 };
