@@ -18,9 +18,7 @@
 #ifndef IKE_ALG_HASH_H
 #define IKE_ALG_HASH_H
 
-#ifdef USE_SHA1
-extern const struct hash_desc ike_alg_hash_sha1;
-#endif
+extern const struct hash_desc ike_alg_hash_sha1;	/* also used for NAT */
 
 extern const struct hash_desc ike_alg_hash_sha2_256;	/* also used for cookies */
 #ifdef USE_SHA2

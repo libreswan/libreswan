@@ -216,6 +216,7 @@ ifeq ($(USE_CAMELLIA),true)
 OBJS += ike_alg_camellia.o
 endif
 
+# used by Vendor ID
 OBJS += ike_alg_hash_md5.o
 ifeq ($(USE_MD5),true)
 OBJS += ike_alg_md5.o
@@ -223,6 +224,8 @@ endif
 
 OBJS += ike_alg_none.o
 
+# used by NAT
+OBJS += ike_alg_hash_sha1.o
 ifeq ($(USE_SHA1),true)
 OBJS += ike_alg_sha1.o
 endif
