@@ -2310,8 +2310,6 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	/* If there are multiple SPIs, group them. */
 
 	if (kernel_ops->grp_sa != NULL && said_next > &said[1]) {
-		struct kernel_sa *s;
-
 		/*
 		 * group SAs, two at a time, inner to outer (backwards in
 		 * said[])
@@ -2321,7 +2319,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 *
 		 * the grouping would be ipip:esp, esp:ah.
 		 */
-		for (s = said; s < said_next - 1; s++) {
+		for (struct kernel_sa *s = said; s < said_next - 1; s++) {
 			dbg("kernel: grouping %s and %s",
 			    s[0].story, s[1].story);
 			if (!kernel_ops->grp_sa(s + 1, s)) {
