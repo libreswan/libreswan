@@ -1,3 +1,4 @@
+
 /* tables of names for values defined in constants.h
  *
  * Copyright (C) 2022 Andrew Cagney
@@ -13,22 +14,24 @@
  * for more details.
  */
 
+#include "linux/xfrm.h"		/* either local copy or system header */
+
 #include "lswcdefs.h"		/* for ARRAY_REF() */
 #include "enum_names.h"
-#include "ietf_constants.h"	/* for enum ipseckey_algorithm_type */
 
-static const char *ipseckey_algorithm_type_name[] = {
-#define S(E) [E - IPSECKEY_ALGORITHM_DSA] = #E
-	S(IPSECKEY_ALGORITHM_DSA),
-	S(IPSECKEY_ALGORITHM_RSA),
-	S(IPSECKEY_ALGORITHM_ECDSA),
-	S(IPSECKEY_ALGORITHM_X_PUBKEY),
+/* XFRM POLICY direction names */
+
+static const char *const xfrm_policy_name[] = {
+#define S(E) [E] = #E
+	S(XFRM_POLICY_IN),
+	S(XFRM_POLICY_OUT),
+	S(XFRM_POLICY_FWD),
 #undef S
 };
 
-const struct enum_names ipseckey_algorithm_type_names = {
-	IPSECKEY_ALGORITHM_DSA,
-	IPSECKEY_ALGORITHM_X_PUBKEY,
-	ARRAY_REF(ipseckey_algorithm_type_name),
-	"IPSECKEY_ALGORITHM_", NULL,
+const struct enum_names xfrm_policy_names = {
+	XFRM_POLICY_IN, XFRM_POLICY_FWD,
+	ARRAY_REF(xfrm_policy_name),
+	"XFRM_POLICY_", /* prefix */
+	NULL
 };

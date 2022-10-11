@@ -266,6 +266,9 @@ OBJS += enum_names.o
 OBJS += pluto_exit_code_names.o
 OBJS += ipseckey_algorithm_type_names.o
 OBJS += ipseckey_algorithm_config_names.o
+ifneq ($(LINUX_VARIANT),)
+OBJS += xfrm_policy_names.o
+endif
 
 OBJS += $(abs_builddir)/version.o
 

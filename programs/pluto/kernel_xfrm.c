@@ -1000,10 +1000,10 @@ static bool create_xfrm_migrate_sa(struct state *st,
 
 	endpoint_buf ra_old, ra_new;
 	jam(&story_jb, ":%s to %s reqid=%u %s",
-		 str_endpoint(&old_ei->endpoint, &ra_old),
-		 str_endpoint(&new_ep, &ra_new),
-		 sa.reqid,
-		 enum_name(&netkey_sa_dir_names, dir));
+	    str_endpoint(&old_ei->endpoint, &ra_old),
+	    str_endpoint(&new_ep, &ra_new),
+	    sa.reqid,
+	    enum_name(&xfrm_policy_names, dir));
 
 	dbg("%s", story->buf);
 

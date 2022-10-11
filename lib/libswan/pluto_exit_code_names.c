@@ -13,9 +13,9 @@
  * for more details.
  */
 
-#include "lswcdefs.h"	/* for ARRAY_REF() */
-#include "constants.h"
+#include "lswcdefs.h"		/* for ARRAY_REF() */
 #include "enum_names.h"
+#include "constants.h"	/* for enum pluto_exit_code in pluto_constants.h */
 
 static const char *pluto_exit_code_name_hi[] = {
 #define S(E) [E - PLUTO_EXIT_GIT_BISECT_CAN_NOT_TEST] = #E

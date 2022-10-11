@@ -22,13 +22,6 @@
  * checking by code that only includes constants.h.
  */
 
-#include <stddef.h>
-#include <string.h>
-#include <stdio.h>
-#include <netinet/in.h>
-#ifdef KERNEL_XFRM
-#include "linux/xfrm.h" /* local (if configured) or system copy */
-#endif
 #include "passert.h"
 
 #include "jambuf.h"
@@ -62,22 +55,6 @@ enum_names dpd_action_names = {
 	"action:", /* prefix */
 	NULL
 };
-
-#ifdef KERNEL_XFRM
-/* netkey SA direction names */
-static const char *const netkey_sa_dir_name[] = {
-	"XFRM_IN",
-	"XFRM_OUT",
-	"XFRM_FWD",
-};
-
-enum_names netkey_sa_dir_names = {
-	XFRM_POLICY_IN, XFRM_POLICY_FWD,
-	ARRAY_REF(netkey_sa_dir_name),
-	NULL, /* prefix */
-	NULL
-};
-#endif
 
 /* systemd watchdog action names */
 static const char *const sd_action_name[] = {
@@ -371,9 +348,6 @@ static const enum_names *pluto_enum_names_checklist[] = {
 	&natt_method_names,
 	&routing_story,
 	&stf_status_names,
-#ifdef KERNEL_XFRM
-	&netkey_sa_dir_names,
-#endif
 	&perspective_names,
 	&sa_policy_bit_names,
 	&kernel_policy_op_names,

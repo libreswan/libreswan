@@ -13,9 +13,9 @@
  * for more details.
  */
 
-#include "lswcdefs.h"	/* for ARRAY_REF() */
-#include "constants.h"
+#include "lswcdefs.h"		/* for ARRAY_REF() */
 #include "enum_names.h"
+#include "ietf_constants.h"	/* for enum ipseckey_algorithm_type_names */
 
 static const char *ipseckey_algorithm_config_name[] = {
 #define S(E,S) [E - IPSECKEY_ALGORITHM_RSA] = S
@@ -25,7 +25,7 @@ static const char *ipseckey_algorithm_config_name[] = {
 #undef S
 };
 
-enum_names ipseckey_algorithm_config_names = {
+const struct enum_names ipseckey_algorithm_config_names = {
 	IPSECKEY_ALGORITHM_RSA,
 	IPSECKEY_ALGORITHM_X_PUBKEY,
 	ARRAY_REF(ipseckey_algorithm_config_name),
