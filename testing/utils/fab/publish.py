@@ -104,6 +104,28 @@ def _mkdir_test_output(logger, args, result):
         logger.debug("directory %s already exists", outdir)
     return outdir
 
+def _copy_new_file(src, dst, logger):
+    if not os.path.isfile(src):
+        logger.error("source file '%s' does not exist; we're confused", src)
+        return
+    if os.path.isdir(dst):
+        logger.error("destination file '%s' is a directory; we're confused", dst)
+        return
+    # .samefile() only works when dst exists
+    if os.path.isfile(dst) \
+    and os.path.samefile(src, dst):
+        return
+    # heuristic to avoid re-copy; since mtime is being preserved
+    # identical files should have identical mtimes (or that failed and
+    # dst, as a copy, is newer).
+    if os.path.isfile(dst) \
+    and os.path.getsize(src) == os.path.getsize(dst) \
+    and os.path.getmtime(src) <= os.path.getmtime(dst):
+        return
+    logger.info("copying '%s' to '%s'", src, dst)
+    # copy file while preserving mtime et.al.
+    shutil.copy2(src, dst)
+    return
 
 def test_files(logger, args, result):
     if not args.publish_results:
@@ -116,16 +138,7 @@ def test_files(logger, args, result):
             continue
         src = os.path.join(test.directory, name)
         dst = os.path.join(dstdir, name)
-        if not os.path.isfile(src):
-            continue
-        if os.path.isfile(dst) and os.path.samefile(src, dst):
-            continue
-        if os.path.isfile(dst) \
-        and os.path.getsize(src) == os.path.getsize(dst) \
-        and os.path.getmtime(src) < os.path.getmtime(dst):
-            continue
-        logger.info("copying '%s' to '%s'", src, dst)
-        shutil.copyfile(src, dst)
+        _copy_new_file(src, dst, logger)
     return dstdir
 
 
@@ -137,32 +150,27 @@ def test_output_files(logger, args, result):
     if not dstdir:
         return
     # copy plain text files
-    good = re.compile(r"(\.txt|\.diff|^RESULT)$")
-    log = re.compile(r"(\.log)$")
+    text_name = re.compile(r"(\.txt|\.diff|^RESULT)$")
+    log_name = re.compile(r"(\.log)$")
     for name in os.listdir(result.output_directory):
         # copy simple files
         src = os.path.join(result.output_directory, name)
         dst = os.path.join(dstdir, name)
-        if os.path.isfile(dst) and os.path.samefile(src, dst):
-            continue
-        if os.path.isfile(dst) \
-        and os.path.getmtime(src) < os.path.getmtime(dst):
-            continue
-        if good.search(name):
-            logger.info("copying '%s' to '%s'", src, dst)
-            shutil.copyfile(src, dst)
+        if text_name.search(name):
+            _copy_new_file(src, dst, logger)
             continue
         # copy compressed files; gzip is used as that works with the
         # web's deflate?!?
-        dst = dst + ".gz"
-        if os.path.isfile(dst) \
-        and os.path.getmtime(src) < os.path.getmtime(dst):
-            continue
-        if log.search(name):
-            logger.info("compressing '%s' to '%s'", src, dst)
+        if log_name.search(name):
+            dst_gz = dst + ".gz"
+            # heuristic to avoid re-compression
+            if os.path.isfile(dst) \
+            and os.path.getmtime(src) < os.path.getmtime(dst_gz):
+                continue
+            logger.info("compressing '%s' to '%s'", src, dst_gz)
             with open(src, "rb") as f:
                 data = f.read()
-            with gzip.open(dst, "wb") as f:
+            with gzip.open(dst_gz, "wb") as f:
                 f.write(data)
             continue
 
