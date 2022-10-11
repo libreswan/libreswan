@@ -581,7 +581,7 @@ enum perspective {
 	REMOTE_PERSPECTIVE,
 };
 
-extern enum_names perspective_names;
+extern const struct enum_names perspective_names;
 
 /*
  * The IKEv2 message role.  Is this message a request or a response
@@ -1024,7 +1024,7 @@ enum pluto_exit_code {
 	PLUTO_EXIT_SHELL_COMMAND_NOT_EXECUTABLE = 127,
 };
 
-extern enum_names pluto_exit_code_names;
+extern const struct enum_names pluto_exit_code_names;
 /*
  * EXPIRE type events from the kernel.
  * Based on these, different actions can be taken, eg skipping delete SPI
