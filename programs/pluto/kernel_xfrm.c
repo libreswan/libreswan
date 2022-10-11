@@ -950,6 +950,7 @@ static bool create_xfrm_migrate_sa(struct state *st,
 	struct kernel_sa sa = {
 		.xfrm_dir = dir,
 		.proto = proto,
+		.encap_type = encap_type,
 		.reqid = reqid_esp(c->spd.reqid),
 		.tunnel = (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
 			   st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL),
