@@ -25,37 +25,27 @@
  *
  */
 
-#include <sys/types.h>
-#include <netinet/udp.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <unistd.h>
-
-#include <event2/listener.h>
+#include <unistd.h>		/* for read() */
 
 #include <netinet/tcp.h>	/* for TCP_ULP (hopefully) */
 #ifndef TCP_ULP
 #define TCP_ULP 31
 #endif
 
-#include "lsw_socket.h"
-
+#include "lsw_socket.h"		/* for cloexec_socket() */
 #include "ip_address.h"
 #include "ip_sockaddr.h"
 
 #include "defs.h"
-#include "kernel.h"
-#include "server.h"		/* for pluto_sock_bufsize */
+#include "kernel.h"		/* for kernel_ops.poke...() */
+#include "server.h"		/* for detach_fd_read_listener() */
 #include "iface.h"
-#include "demux.h"
+#include "demux.h"		/* for alloc_md() */
 #include "log.h"
 #include "ip_info.h"
 #include "pluto_stats.h"
-
-/* for xfrm_userpolicy_info */
-#ifdef __linux__
-# include "linux/xfrm.h" /* local (if configured) or system copy */
-#endif
 
 static void accept_ike_in_tcp_cb(int accepted_fd, ip_sockaddr *sockaddr,
 				 void *arg, struct logger *logger);
@@ -300,35 +290,13 @@ static struct msg_digest *iketcp_read_packet(struct iface_endpoint **ifp,
 				iketcp_shutdown(ifp); /* i.e., delete IFP */
 				return NULL;
 			}
-#ifdef __linux__
-			int af = address_type(&(*ifp)->ip_dev->id_address)->af;
-			struct xfrm_userpolicy_info policy_in = {
-				.action = XFRM_POLICY_ALLOW,
-				.sel.family = af,
-				.dir = XFRM_POLICY_IN,
-			};
-			if (setsockopt((*ifp)->fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_in, sizeof(policy_in))) {
-				int e = errno;
-				llog_iketcp(RC_LOG, logger, *ifp, e,
-					    "closing socket; setsockopt(%d, SOL_TCP, IP_XFRM_POLICY, \"policy_in\") failed: ",
-					    (*ifp)->fd);
-				iketcp_shutdown(ifp); /* i.e., delete IFP */
-				return NULL;
-			}
-			struct xfrm_userpolicy_info policy_out = {
-				.action = XFRM_POLICY_ALLOW,
-				.sel.family = af,
-				.dir = XFRM_POLICY_OUT,
-			};
-			if (setsockopt((*ifp)->fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_out, sizeof(policy_out))) {
-				int e = errno;
-				llog_iketcp(RC_LOG, logger, *ifp, e,
-					    "closing socket; setsockopt(%d, SOL_TCP, IP_XFRM_POLICY, \"policy_out\") failed: ",
-					    (*ifp)->fd);
-				iketcp_shutdown(ifp); /* i.e., delete IFP */
-				return NULL;
-			}
-#endif
+		}
+
+		if (kernel_ops->poke_ipsec_policy_hole != NULL &&
+		    !kernel_ops->poke_ipsec_policy_hole((*ifp)->fd, address_type(&(*ifp)->ip_dev->id_address), logger)) {
+			/* already logged */
+			iketcp_shutdown(ifp); /* i.e., delete IFP */
+			return NULL;
 		}
 
 		/*
@@ -581,33 +549,13 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_dev *local_dev,
 			close(fd);
 			return NULL;
 		}
-#ifdef __linux__
-		int af = endpoint_type(&remote_endpoint)->af;
-		struct xfrm_userpolicy_info policy_in = {
-			.action = XFRM_POLICY_ALLOW,
-			.sel.family = af,
-			.dir = XFRM_POLICY_IN,
-		};
-		struct xfrm_userpolicy_info policy_out = {
-			.action = XFRM_POLICY_ALLOW,
-			.sel.family = af,
-			.dir = XFRM_POLICY_OUT,
-		};
-		if (setsockopt(fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_in, sizeof(policy_in))) {
-			llog_error(logger, errno,
-				   "setsockopt(IPROTO_IP, IP_XFRM_POLICY(in)) failed "PRI_WHERE,
-				   pri_where(HERE));
-			close(fd);
-			return NULL;
-		}
-		if (setsockopt(fd, IPPROTO_IP, IP_XFRM_POLICY, &policy_out, sizeof(policy_out))) {
-			llog_error(logger, errno,
-				   "setsockopt(PPROTO_IP, IP_XFRM_POLICY(out)) failed "PRI_WHERE,
-				   pri_where(HERE));
-			close(fd);
-			return NULL;
-		}
-#endif
+	}
+
+	if (kernel_ops->poke_ipsec_policy_hole != NULL &&
+	    !kernel_ops->poke_ipsec_policy_hole(fd, afi, logger)) {
+		/* already logged */
+		close(fd);
+		return NULL;
 	}
 
 	struct iface_endpoint *ifp =

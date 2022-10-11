@@ -2462,21 +2462,24 @@ static err_t netlink_migrate_sa_check(struct logger *logger)
 
 static bool netlink_poke_ipsec_policy_hole(int fd, const struct ip_info *afi, struct logger *logger)
 {
+	int af = afi->af;
 	struct xfrm_userpolicy_info policy = {
 		.action = XFRM_POLICY_ALLOW,
-		.sel = {
-			.family = afi->af,
-		}
+		.sel.family = af,
 	};
 
 	int opt, sol;
-
-	if (afi == &ipv6_info) {
-		sol = IPPROTO_IPV6;
-		opt = IPV6_XFRM_POLICY;
-	} else {
+	switch (af) {
+	case AF_INET:
 		sol = SOL_IP;
 		opt = IP_XFRM_POLICY;
+		break;
+	case AF_INET6:
+		sol = IPPROTO_IPV6;
+		opt = IPV6_XFRM_POLICY;
+		break;
+	default:
+		bad_case(af);
 	}
 
 	policy.dir = XFRM_POLICY_IN;
