@@ -30,33 +30,31 @@
  * for more details.
  */
 
-#ifndef _STATE_H
-#define _STATE_H
+#ifndef STATE_H
+#define STATE_H
 
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include "quirks.h"
+#include <stddef.h>		/* for size_t */
+#include <stdbool.h>
+
+#include <pk11pub.h>
+#include <x509.h>
 
 #include "deltatime.h"
 #include "monotime.h"
 #include "reqid.h"
 #include "fd.h"
 #include "crypt_mac.h"
+#include "ip_subnet.h"
+#include "ip_endpoint.h"
+#include "ip_selector.h"
 
-#include <pk11pub.h>
-#include <x509.h>
-
+#include "quirks.h"
 #include "list_entry.h"
 #include "retransmit.h"
 #include "ikev2_ts.h"		/* for struct traffic_selector */
-#include "ip_subnet.h"
 #include "ike_spi.h"
 #include "pluto_timing.h"	/* for statetime_t */
 #include "ikev2_msgid.h"
-#include "ip_endpoint.h"
-#include "ip_selector.h"
-#include "crypt_mac.h"
 
 struct v2_state_transition;
 struct ikev2_ipseckey_dns; /* forward declaration of tag */
@@ -971,4 +969,4 @@ void jam_humber_max(struct jambuf *buf,
 		    uint64_t val,
 		    const char *suffix);
 
-#endif /* _STATE_H */
+#endif /* STATE_H */
