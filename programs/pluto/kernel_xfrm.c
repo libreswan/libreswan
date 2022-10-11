@@ -868,7 +868,7 @@ static void set_migration_attr(const struct kernel_sa *sa,
 	m->old_daddr = xfrm_from_address(&sa->dst.address);
 	m->new_saddr = xfrm_from_address(&sa->src.new_address);
 	m->new_daddr = xfrm_from_address(&sa->dst.new_address);
-	m->mode = (sa->level == 0 && sa->tunnel ? ENCAPSULATION_MODE_TUNNEL : XFRM_MODE_TRANSPORT);
+	m->mode = (sa->level == 0 && sa->tunnel ? XFRM_MODE_TUNNEL : XFRM_MODE_TRANSPORT);
 	m->proto = sa->proto->ipproto;
 	m->reqid = sa->reqid;
 	m->old_family = m->new_family = address_info(sa->src.address)->af;
