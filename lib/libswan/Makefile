@@ -262,6 +262,7 @@ ifeq ($(USE_UNBOUND_EVENT_H_COPY),true)
 USERLAND_INCLUDES += -I$(top_srcdir)/include/unbound
 endif
 
+OBJS += enum_names.o
 OBJS += pluto_exit_code_names.o
 OBJS += ipseckey_algorithm_type_names.o
 OBJS += ipseckey_algorithm_config_names.o
