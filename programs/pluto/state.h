@@ -57,7 +57,6 @@
 #include "ip_endpoint.h"
 #include "ip_selector.h"
 #include "crypt_mac.h"
-#include "show.h"
 
 struct v2_state_transition;
 struct ikev2_ipseckey_dns; /* forward declaration of tag */

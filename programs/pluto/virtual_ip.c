@@ -26,6 +26,7 @@
 #include "nat_traversal.h"		/* for nat_traversal_enabled */
 #include "refcnt.h"
 #include "ip_info.h"
+#include "show.h"
 
 #define F_VIRTUAL_NO		1	/* %no (subnet must be host/32) */
 #define F_VIRTUAL_PRIVATE	2	/* %priv (list held in private_net_{incl,excl} */

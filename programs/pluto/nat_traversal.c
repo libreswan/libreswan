@@ -40,6 +40,7 @@
 #include "send.h"
 #include "iface.h"
 #include "state_db.h"		/* for state_by_ike_spis() */
+#include "show.h"
 
 /* As per https://tools.ietf.org/html/rfc3948#section-4 */
 #define DEFAULT_KEEP_ALIVE_SECS  20

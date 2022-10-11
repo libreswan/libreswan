@@ -37,6 +37,8 @@
 #include "ike_alg.h"
 #include "pluto_stats.h"
 #include "nat_traversal.h"
+#include "show.h"
+
 
 unsigned long pstats_ipsec_sa;
 unsigned long pstats_ikev1_sa;

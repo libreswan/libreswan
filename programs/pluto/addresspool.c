@@ -39,6 +39,7 @@
 #include "ip_range.h"
 #include "log.h"
 #include "refcnt.h"
+#include "show.h"
 
 #define SENTINEL (unsigned)-1
 #define ENTRY_UNUSED (unsigned)-2

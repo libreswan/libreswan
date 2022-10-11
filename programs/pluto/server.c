@@ -74,6 +74,7 @@
 #include "iface.h"
 #include "server_fork.h"
 #include "pluto_shutdown.h"
+#include "show.h"
 
 #ifdef USE_XFRM_INTERFACE
 #include "kernel_xfrm_interface.h"

@@ -64,6 +64,7 @@
 #include "log.h"
 #include "whack.h"
 #include "ikev1_db_ops.h"
+#include "show.h"
 
 /*
  * stats: do accounting for allocations displayed in db_ops_show_status()

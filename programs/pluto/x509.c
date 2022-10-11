@@ -68,6 +68,7 @@
 #include "certs.h"
 #include "root_certs.h"
 #include "iface.h"
+#include "show.h"
 
 /* new NSS code */
 #include "pluto_x509.h"

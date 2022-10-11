@@ -77,6 +77,7 @@
 #include "pending.h"		/* for init_pending() */
 #include "iface.h"		/* for pluto_listen; */
 #include "server_pool.h"
+#include "show.h"
 
 #ifndef IPSECDIR
 #define IPSECDIR "/etc/ipsec.d"

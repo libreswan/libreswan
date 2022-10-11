@@ -41,6 +41,7 @@
 #include "log.h"
 #include "whack.h"
 #include "ikev1.h"	/* for ikev1_quick_dh() */
+#include "show.h"
 
 void show_kernel_alg_status(struct show *s)
 {

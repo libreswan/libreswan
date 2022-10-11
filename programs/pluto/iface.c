@@ -52,6 +52,7 @@
 #include "ip_encap.h"
 #include "kernel.h"			/* for kernel_ops_detect_offload() */
 #include "nat_traversal.h"		/* for nat_traversal_enabled which seems like a broken idea */
+#include "show.h"
 
 char *pluto_listen = NULL;		/* from --listen flag */
 struct iface_endpoint *interfaces = NULL;  /* public interfaces */

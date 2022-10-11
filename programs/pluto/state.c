@@ -67,6 +67,7 @@
 #include "ikev2_proposals.h"		/* for free_ikev2_proposal() */
 #include "ikev2_eap.h"			/* for free_eap_state() */
 #include "lswfips.h"			/* for libreswan_fipsmode() */
+#include "show.h"
 
 bool uniqueIDs = false;
 

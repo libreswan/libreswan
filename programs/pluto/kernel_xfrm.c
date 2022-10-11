@@ -45,12 +45,7 @@
 #include <linux/ethtool.h>
 #include <linux/sockios.h>
 
-#include <linux/udp.h>			/* for TCP_ENCAP_ESPINTCP and UDP_ENCAP_ESPINUDP */
-#ifndef TCP_ENCAP_ESPINTCP
-#define TCP_ENCAP_ESPINTCP 7
-#endif
-
-#include <unistd.h>
+#include <unistd.h>		/* for write() */
 #include <sys/stat.h>
 
 #include <linux/rtnetlink.h>

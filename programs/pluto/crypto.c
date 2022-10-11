@@ -24,8 +24,6 @@
 #include <string.h>
 #include <stddef.h>
 #include <sys/types.h>
-
-
 #include <errno.h>
 
 #include "constants.h"
@@ -38,6 +36,7 @@
 #include "connections.h"
 #include "ike_alg_integ.h"
 #include "kernel_alg.h"
+#include "show.h"
 
 /*
  *      Show IKE algorithms for

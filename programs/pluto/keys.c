@@ -66,6 +66,7 @@
 #include "secrets.h"
 #include "ike_alg_hash.h"
 #include "pluto_timing.h"
+#include "show.h"
 
 static struct secret *pluto_secrets = NULL;
 

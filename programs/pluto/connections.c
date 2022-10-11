@@ -96,6 +96,7 @@
 #include "orient.h"
 #include "ikev2_proposals.h"
 #include "lswnss.h"
+#include "show.h"
 
 #define MINIMUM_IPSEC_SA_RANDOM_MARK 65536
 static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
