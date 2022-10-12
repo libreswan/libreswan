@@ -270,10 +270,6 @@ kvmplutotest	ikev2-algo-sha2-08-truncbug		good
 
 kvmplutotest	ikev2-nat-pluto-03			good
 
-# dh tests
-kvmplutotest	ikev1-algo-ike-dh-ecp-01		good
-kvmplutotest	ikev2-algo-ike-dh-ecp-01		good
-
 kvmplutotest	ikev2-child-re-up-01			wip
 
 # various IKE SHA2 tests (sha2/sha2_128/sha2_192/sha2_256)
@@ -796,6 +792,15 @@ kvmplutotest	nat-dpd-pluto-01	wip
 kvmplutotest	ikev1-algo-ike-aes-01	good
 kvmplutotest	ikev1-algo-ike-aes-02	good
 
+# ECP DH tests
+kvmplutotest	algo-ikev1-aes128-sha1-ecp256		good
+kvmplutotest	algo-ikev2-aes128-sha1-ecp256		good
+kvmplutotest	algo-ikev1-aes128-sha1-ecp384		good
+kvmplutotest	algo-ikev2-aes128-sha1-ecp384		good
+kvmplutotest	algo-ikev1-aes128-sha1-ecp521		good
+kvmplutotest	algo-ikev2-aes128-sha1-ecp521		good
+
+# MD5 as PRF (regression in 4.8)
 kvmplutotest	algo-ikev1-aes-md5-esp-3des-sha1	good
 kvmplutotest	algo-ikev2-aes-md5-esp-3des-sha1	good
 

@@ -1,0 +1,44 @@
+../../guestbin/algo.sh
+/etc/ipsec.conf ...
+config setup
+	# put the logs in /tmp for the UMLs, so that we can operate
+	# without syslogd, which seems to break on UMLs
+	logfile=/tmp/pluto.log
+	logtime=no
+	logappend=no
+	dumpdir=/tmp
+	plutodebug=all
+conn base
+	left=192.1.2.45
+	leftid=@west
+	leftsubnet=192.0.1.0/24
+	right=192.1.2.23
+	rightid=@east
+	rightsubnet=192.0.2.0/24
+	authby=secret
+conn algo
+	ikev2=yes
+	ike=aes128-sha1-ecp256
+	#phase2=
+	#phase2alg=
+	also=base
+/etc/ipsec.d/ipsec.secrets ...
+@west @east : PSK "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+starting pluto ...
+Redirecting to: [initsystem]
+002 "algo": added IKEv2 connection
+west #
+ ipsec auto --up algo
+1v2 "algo" #1: initiating IKEv2 connection
+1v2 "algo" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+1v2 "algo" #1: sent IKE_AUTH request {cipher=AES_CBC_128 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=DH19}
+003 "algo" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+004 "algo" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec whack --trafficstatus
+006 #2: "algo", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ 

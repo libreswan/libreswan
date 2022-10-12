@@ -2,8 +2,10 @@
 
 if test $# -gt 0 ; then
     d=$1
+    install=false
 else
     d=$(basename $(pwd))
+    install=true
 fi
 
 case $d in
@@ -13,6 +15,8 @@ esac
 
 ike=$(echo $d | sed -n -e 's/-esp-.*//' -e 's/-ah-//' -e 's/.*-ikev[0-9]*-\(.*\)/\1/p')
 
+phase2=
+phase2alg=
 case $d in
     *-esp-*)
 	phase2=esp
@@ -24,7 +28,14 @@ case $d in
 	;;
 esac
 
-cat <<EOF
+if ${install} ; then
+    ../../guestbin/swan-prep
+fi
+
+echo /etc/ipsec.conf ...
+
+{
+    cat <<EOF
 config setup
 	# put the logs in /tmp for the UMLs, so that we can operate
 	# without syslogd, which seems to break on UMLs
@@ -43,8 +54,38 @@ conn base
 	authby=secret
 conn algo
 	ikev2=${ikev2}
-	ike=${ike}
-	phase2=${phase2}
-	phase2alg=${phase2alg}
+	$(test -n "${ike}" || echo '#')ike=${ike}
+	$(test -n "${phase2}" || echo '#')phase2=${phase2}
+	$(test -n "${phase2alg}" || echo '#')phase2alg=${phase2alg}
 	also=base
 EOF
+} | {
+    if ${install} ; then
+	tee /etc/ipsec.conf
+    else
+	cat
+    fi
+}
+
+echo /etc/ipsec.d/ipsec.secrets ...
+
+{
+    cat <<EOF
+@west @east : PSK "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+EOF
+
+} | {
+    if ${install} ; then
+	tee /etc/ipsec.d/ipsec.secrets
+    else
+	cat
+    fi
+}
+
+echo starting pluto ...
+
+if ${install} ; then
+    ipsec start
+    ../../guestbin/wait-until-pluto-started
+    ipsec auto --add algo
+fi
