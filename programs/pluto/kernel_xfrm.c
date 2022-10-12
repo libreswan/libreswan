@@ -35,28 +35,50 @@
  * for more details.
  */
 
+/* system headers */
+
 #include <errno.h>
 #include <fcntl.h>
 #include <string.h>
-
+#include <unistd.h>		/* for write() */
+#include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <stdint.h>
+
+/*
+ * GRRR:
+ *
+ * GLIBC/Linux and MUSL/Linux define sockaddr_in et.al. in
+ * <netinet/in.h>, and the generic network code uses this.
+ * Unfortunately (cough) the Linux kernel headers also provide
+ * definitions of those structures in <linux/in.h> et.al. which,
+ * depending on header include order can result in conflicting
+ * definitions.  For instance, if sockaddr_in is not defined,
+ * <linux/xfrm.h> will include the definition in <linux/in.h> but that
+ * will then clash with a later include of <netinet/in.h>.
+ *
+ * GLIBC/Linux has hacks on hacks to work-around this, not MUSL.
+ * Fortunately, including <netinet/in.h> first will force the Linux
+ * kernel headers to use that definition.
+ *
+ * XXX: include this before any other Linux kernel headers try to
+ * include the conflicting definition.
+ */
+#include <netinet/in.h>
+
+#include "linux/xfrm.h"		/* local (if configured) or system copy */
+
 #include <linux/ethtool.h>
 #include <linux/sockios.h>
-
-#include <unistd.h>		/* for write() */
-#include <sys/stat.h>
 
 #include <linux/rtnetlink.h>
 #include <linux/if_addr.h>
 #include <linux/if_link.h>
 
-#include "linux/xfrm.h" /* local (if configured) or system copy */
+/* libreswan headers */
 
 #include "lsw_socket.h"
-
-#include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
 #include "id.h"

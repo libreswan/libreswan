@@ -25,6 +25,30 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
+#ifdef HAVE_LABELED_IPSEC
+/*
+ * GRRR:
+ *
+ * GLIBC/Linux and MUSL/Linux define sockaddr_in et.al. in
+ * <netinet/in.h>, and the generic network code uses this.
+ * Unfortunately (cough) the Linux kernel headers also provide
+ * definitions of those structures in <linux/in.h> et.al. which,
+ * depending on header include order can result in conflicting
+ * definitions.  For instance, if sockaddr_in is not defined,
+ * <linux/xfrm.h> will include the definition in <linux/in.h> but that
+ * will then clash with a later include of <netinet/in.h>.
+ *
+ * GLIBC/Linux has hacks on hacks to work-around this, not MUSL.
+ * Fortunately, including <netinet/in.h> first will force the Linux
+ * kernel headers to use that definition.
+ *
+ * XXX: on the one hand, this labeled ipsec code should be moved to
+ * its own file, but on the other hand this is IKEv1.
+ */
+#include <netinet/in.h>
+#include "linux/xfrm.h" /* local (if configured) or system copy; for XFRM_SC_DOI_LSM and XFRM_SC_ALG_SELINUX */
+#endif
+
 #include "sysdep.h"
 #include "constants.h"
 
@@ -69,7 +93,7 @@ static bool parse_secctx_attr(pb_stream *pbs UNUSED, struct state *st)
 }
 #else
 #include "ikev1_labeled_ipsec.h"
-#include <linux/xfrm.h> /* for XFRM_SC_DOI_LSM and XFRM_SC_ALG_SELINUX */
+
 static bool parse_secctx_attr(struct pbs_in *pbs, struct state *st)
 {
 	const struct connection *c = st->st_connection;
