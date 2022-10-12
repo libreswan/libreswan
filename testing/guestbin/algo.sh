@@ -13,23 +13,59 @@ case $d in
     *ikev2*) ikev2=yes ;;
 esac
 
-ike=$(echo $d | sed -n -e 's/-esp-.*//' -e 's/-ah-//' -e 's/.*-ikev[0-9]*-\(.*\)/\1/p')
+ike=$(echo $d | sed -n -e 's/-esp.*//' -e 's/-ah.*//' -e 's/.*-ikev[0-9]*-\(.*\)/\1/p')
 
 phase2=
+case $d in
+    *-esp*) phase2=esp ;;
+    *-ah*) phase2=ah ;;
+esac
+
 phase2alg=
 case $d in
-    *-esp-*)
-	phase2=esp
-	phase2alg=$(echo $d | sed -n -e 's/.*-esp-\(.*\)/\1/p')
+    *-esp-*) phase2alg=$(echo $d | sed -n -e 's/.*-esp-\(.*\)/\1/p') ;;
+    *-ah-*) phase2alg=$(echo $d | sed -n -e 's/.*-ah-\(.*\)/\1/p') ;;
+esac
+
+type= # aka mode
+case $d in
+    *transport*) type=transport ;;
+    *tunnel*) type=tunnel ;;
+esac
+
+compress= # aka mode
+case $d in
+    *ipcomp*) compress=yes ;;
+esac
+
+left=
+right=
+case $d in
+    *ipv6* | *4in6* | *6in6* )
+	left=2001:db8:1:2::45
+	right=2001:db8:1:2::23
 	;;
-    *-ah-*)
-	phase2=ah
-	phase2alg=$(echo $d | sed -n -e 's/.*-ah-\(.*\)/\1/p')
+    *ipv4* | *6in4* | *4in4* | * )
+	left=192.1.2.45
+	right=192.1.2.23
+	;;
+esac
+
+leftsubnet=
+rightsubnet=
+case $d in
+    *ipv6* | *6in4* | *6in6* )
+	leftsubnet=2001:db8:0:1::/64
+	rightsubnet=2001:db8:0:2::/64
+	;;
+    *ipv4* | *4in6* | *4in4* | * )
+	leftsubnet=192.0.1.0/24
+	rightsubnet=192.0.2.0/24
 	;;
 esac
 
 if ${install} ; then
-    ../../guestbin/swan-prep
+    ../../guestbin/swan-prep --46
 fi
 
 echo /etc/ipsec.conf ...
@@ -44,20 +80,22 @@ config setup
 	logappend=no
 	dumpdir=/tmp
 	plutodebug=all
-conn base
-	left=192.1.2.45
-	leftid=@west
-	leftsubnet=192.0.1.0/24
-	right=192.1.2.23
-	rightid=@east
-	rightsubnet=192.0.2.0/24
-	authby=secret
 conn algo
+	# IKE
 	ikev2=${ikev2}
 	$(test -n "${ike}" || echo '#')ike=${ike}
+	left=${left}
+	right=${right}
+	authby=secret
+	leftid=@west
+	rightid=@east
+	# CHILD
+	leftsubnet=${leftsubnet}
+	rightsubnet=${rightsubnet}
 	$(test -n "${phase2}" || echo '#')phase2=${phase2}
 	$(test -n "${phase2alg}" || echo '#')phase2alg=${phase2alg}
-	also=base
+	$(test -n "${type}" || echo '#')type=${type}
+	$(test -n "${compress}" || echo '#')compress=${compress}
 EOF
 } | {
     if ${install} ; then
