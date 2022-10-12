@@ -205,16 +205,6 @@ conn road-east-base-x509
         rightrsasigkey=%cert
         rightcert=east
 
-conn rw-west-base-x509
-        left=%any
-        leftrsasigkey=%cert
-        leftid=%fromcert
-        # Right security gateway, subnet behind it,toward left.
-        right=192.1.2.45
-        rightid=%fromcert
-        rightrsasigkey=%cert
-        rightcert=west
-
 conn rw-east-base-x509
         left=%any
         leftrsasigkey=%cert
