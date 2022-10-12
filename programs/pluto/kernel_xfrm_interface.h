@@ -14,6 +14,11 @@
  * for more details.
  */
 
+#ifndef KERNEL_XFRM_INTERFACE_H
+#define KERNEL_XFRM_INTERFACE_H
+
+#include <stdbool.h>
+
 #include "err.h"
 
 #if defined(linux) && defined(KERNEL_XFRM) && defined(USE_XFRM_INTERFACE)
@@ -48,3 +53,5 @@ extern err_t xfrm_iface_supported(struct logger *logger);
 extern void free_xfrmi_ipsec1(struct logger *logger);
 extern void unreference_xfrmi(struct connection *c);
 extern void reference_xfrmi(struct connection *c);
+
+#endif

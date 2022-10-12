@@ -13,6 +13,12 @@
  *
  */
 
+#ifndef KERNEL_NETLINK_QUERY_H
+#define KERNEL_NETLINK_QUERY_H
+
 struct logger;
+struct nlmsghdr;
 
 int nl_send_query(const struct nlmsghdr *req, int protocol, struct logger *logger);
+
+#endif
