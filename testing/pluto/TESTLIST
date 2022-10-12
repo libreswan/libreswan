@@ -796,6 +796,9 @@ kvmplutotest	nat-dpd-pluto-01	wip
 kvmplutotest	ikev1-algo-ike-aes-01	good
 kvmplutotest	ikev1-algo-ike-aes-02	good
 
+kvmplutotest	algo-ikev1-aes-md5-esp-3des-sha1	good
+kvmplutotest	algo-ikev2-aes-md5-esp-3des-sha1	good
+
 # CAP_DAC_OVERRIDE
 kvmplutotest	basic-pluto-06		good
 

@@ -1,0 +1,37 @@
+../../guestbin/algo.sh
+/etc/ipsec.conf ...
+config setup
+	# put the logs in /tmp for the UMLs, so that we can operate
+	# without syslogd, which seems to break on UMLs
+	logfile=/tmp/pluto.log
+	logtime=no
+	logappend=no
+	dumpdir=/tmp
+	plutodebug=all
+conn base
+	left=192.1.2.45
+	leftid=@west
+	leftsubnet=192.0.1.0/24
+	right=192.1.2.23
+	rightid=@east
+	rightsubnet=192.0.2.0/24
+	authby=secret
+conn algo
+	ikev2=no
+	ike=aes-md5
+	phase2=esp
+	phase2alg=3des-sha1
+	also=base
+/etc/ipsec.d/ipsec.secrets ...
+@west @east : PSK "ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890"
+starting pluto ...
+Redirecting to: [initsystem]
+002 "algo": added IKEv1 connection
+east #
+ ../../guestbin/wait-for.sh --match '#2: .* established' -- cat /tmp/pluto.log
+"algo" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
+east #
+ ipsec whack --trafficstatus
+006 #2: "algo", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@west'
+east #
+ 
