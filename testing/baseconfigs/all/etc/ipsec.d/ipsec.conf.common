@@ -63,16 +63,6 @@ conn west-east
 	also=west-east-base-id-nss
 	#auto=start
 
-# and this one
-conn westnet-eastnet-6in6
-	also=west-east-base-id-nss
-	#also=west-east-base-ipv6
-	left=2001:db8:1:2::45
-	leftnexthop=2001:db8:1:2::23
-	right=2001:db8:1:2::23
-	rightnexthop=2001:db8:1:2::45
-	also=westnet-eastnet-ipv6
-
 # alias for the testcases
 conn westnet-eastnet
 	also=westnet-eastnet-ipv4
@@ -107,12 +97,6 @@ conn road-eastnet
 	also=road-east-base
 	also=road-east-base-id-nss
 	rightsubnet=192.0.2.0/24
-
-# this has no base because it is included with a base of 6 or 4
-conn westnet-eastnet-ipv6
-	leftsubnet=2001:db8:0:1::/64
-	rightsubnet=2001:db8:0:2::/64
-	#auto=start
 
 conn westnet-eastnet-x509
 	leftsubnet=192.0.1.0/24
