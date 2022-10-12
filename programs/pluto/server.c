@@ -840,15 +840,17 @@ struct fd_accept_listener {
 };
 
 static void fd_accept_listener(struct evconnlistener *efc UNUSED,
-			       evutil_socket_t fd, struct sockaddr *sockaddr, int sockaddr_len,
+			       evutil_socket_t fd,
+			       struct sockaddr *sockaddr, int sockaddr_len,
 			       void *arg)
 {
 	struct logger logger[1] = { global_logger, }; /* event-handler */
 	struct fd_accept_listener *fdl = arg;
 	ip_sockaddr sa = {
 		.len = sockaddr_len,
-		.sa.sa = *sockaddr,
 	};
+	passert(sockaddr_len >= 0 && (size_t)sockaddr_len <= sizeof(sa.sa));
+	memcpy(&sa.sa, sockaddr, sockaddr_len);
 	fdl->cb(fd, &sa, fdl->arg, logger);
 }
 
