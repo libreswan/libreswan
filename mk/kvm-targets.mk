@@ -35,10 +35,11 @@ endef
 # The guest operating system.
 #
 
-include testing/libvirt/fedora/fedora.mk
-include testing/libvirt/freebsd/freebsd.mk
-include testing/libvirt/netbsd/netbsd.mk
-include testing/libvirt/openbsd/openbsd.mk
+#include testing/libvirt/debian/kvm.mk
+include testing/libvirt/fedora/kvm.mk
+include testing/libvirt/freebsd/kvm.mk
+include testing/libvirt/netbsd/kvm.mk
+include testing/libvirt/openbsd/kvm.mk
 
 #
 # where things live and what gets created
