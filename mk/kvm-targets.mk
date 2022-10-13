@@ -88,17 +88,19 @@ VIRSH = sudo virsh --connect=$(KVM_CONNECTION)
 #
 # Makeflags passed to the KVM build
 #
-# Note that $($*) in KVM_MAKEFLAGS expands to DEBIAN, FEDORA, FREEBSD,
-# NETBSD, OPENBSD, ...  so that each platform has their own flags.
-# For instance:
+# For each setting two flags are checked:
 #
-#    KVM_$($*)_NSS_CFLAGS
+#   KVM_<OS>_<FLAG>
+#   KVM_<FLAG>
 #
-# becomes:
+# for instance:
 #
-#    KVM_FEDORA_NSS_CFLAGS KVM_FREEBSD_NSS_CFLAGS et.al.
-
-KVM_ALL_ALGS ?= false
+#   KVM_FEDORA_ALL_ALGS
+#   KVM_ALL_ALGS
+#
+# In KVM-MAKEFLAG, the macro $(KVM_$($*)_$(strip $(1))) expands to
+# $(KVM_<OS>_<FLAG>) and $(KVM_$(strip $(1))) expands to
+# $(KVM_<FLAG>).
 
 # On Fedora, overide linux defaults
 KVM_FEDORA_FINALNSSDIR ?= $(FINALCONFDIR)/ipsec.d
@@ -107,19 +109,23 @@ KVM_FEDORA_USE_EFENCE ?= true
 KVM_FEDORA_USE_LABELED_IPSEC ?= true
 KVM_FEDORA_USE_SECCOMP ?= true
 
-KVM_MAKEFLAGS ?= \
+KVM-MAKEFLAG = \
+	$(if $(KVM_$($*)_$(strip $(1))), $(strip $(1))=$(KVM_$($*)_$(strip $(1))), \
+	      $(if $(KVM_$(strip $(1))), $(strip $(1))=$(KVM_$(strip $(1)))) )
+
+KVM_MAKEFLAGS ?= $(strip \
 	-j$(shell expr $(KVM_WORKERS) + 1) \
-	$(if $(KVM_ALL_ALGS),ALL_ALGS=$(KVM_ALL_ALGS)) \
-	$(if $(KVM_$($*)_FINALNSSDIR),FINALNSSDIR="$(KVM_$($*)_FINALNSSDIR)") \
-	$(if $(KVM_$($*)_NSS_CFLAGS),NSS_CFLAGS="$(KVM_$($*)_NSS_CFLAGS)") \
-	$(if $(KVM_$($*)_NSS_LDFLAGS),NSS_LDFLAGS="$(KVM_$($*)_NSS_LDFLAGS)") \
-	$(if $(KVM_$($*)_SD_RESTART_TYPE),SD_RESTART_TYPE="$(KVM_$($*)_SD_RESTART_TYPE)") \
-	$(if $(KVM_$($*)_USE_EFENCE),USE_EFENCE="$(KVM_$($*)_USE_EFENCE)") \
-	$(if $(KVM_$($*)_USE_LABELED_IPSEC),USE_LABELED_IPSEC="$(KVM_$($*)_USE_LABELED_IPSEC)") \
-	$(if $(KVM_$($*)_USE_LTO),USE_LTO="$(KVM_$($*)_USE_LTO)") \
-	$(if $(KVM_$($*)_USE_NSS_KDF),USE_NSS_KDF="$(KVM_$($*)_USE_NSS_KDF)") \
-	$(if $(KVM_$($*)_USE_SECCOMP),USE_SECCOMP="$(KVM_$($*)_USE_SECCOMP)") \
-	$(NULL)
+	$(call KVM-MAKEFLAG, ALL_ARGS) \
+	$(call KVM-MAKEFLAG, FINALNSSDIR) \
+	$(call KVM-MAKEFLAG, NSS_CFLAGS) \
+	$(call KVM-MAKEFLAG, NSS_LDFLAGS) \
+	$(call KVM-MAKEFLAG, SD_RESTART_TYPE) \
+	$(call KVM-MAKEFLAG, USE_EFENCE) \
+	$(call KVM-MAKEFLAG, USE_LABELED_IPSEC) \
+	$(call KVM-MAKEFLAG, USE_LTO) \
+	$(call KVM-MAKEFLAG, USE_NSS_KDF) \
+	$(call KVM-MAKEFLAG, USE_SECCOMP) \
+	)
 
 # Fine-tune the BASE and BUILD machines.
 #
