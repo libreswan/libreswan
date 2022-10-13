@@ -253,6 +253,8 @@ print-kvm-test-flags: ; @echo '$(KVM_TEST_FLAGS)'
 print-kvm-testingdir: ; @echo '$(KVM_TESTINGDIR)'
 .PHONY: print-kvm-baseline
 print-kvm-baseline: ; @echo '$(KVM_BASELINE)'
+.PHONY: print-kvm-platform
+print-kvm-platform: ; @echo '$(KVM_PLATFORM)'
 
 KVM_BUILD_DOMAIN_NAMES = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_BUILD_HOST_NAMES))
 KVM_TEST_DOMAIN_NAMES = $(call add-kvm-prefixes, $(KVM_TEST_HOST_NAMES))

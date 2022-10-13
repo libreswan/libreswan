@@ -9,12 +9,12 @@ set -e
 # gmake isn't on debian?
 gnumake=make
 
-platforms="fedora freebsd netbsd openbsd"
+kvm_platform=$(${gnumake} print-kvm-platform)
 
-buildhosts=${platforms}
+buildhosts=${kvm_platform}
 basehosts=
 upgradehosts=
-for p in ${platforms} ; do
+for p in ${kvm_platform} ; do
     basehosts="${basehosts} ${p}-base ${p}-upgrade"
     upgradehosts="${upgradehosts} ${p}-upgrade ${p}-upgrade"
 done
@@ -59,7 +59,7 @@ Modifiers:
     sh <host> [ <command> ]
 	start a shell on <host> which can be a:
 	  test domain: ${testhosts}
-	  build domain: ${platforms}
+	  build domain: ${kvm_platform}
 	  base domain: ${basehosts}
 	  upgrade domain: ${upgradehosts}
 EOF
@@ -135,10 +135,10 @@ pass2help()
     transmogrify[-PLATFORM]
 	(re)create the build domain from the upgrade domain
 	transmogrifies the domain ready for building and testing
-	creates: ${platforms}
+	creates: ${kvm_platform}
     build[-PLATFORM]
 	build/install libreswan on the build domains
-	uses: ${platforms}
+	uses: ${kvm_platform}
     install[-PLATFORM]
 	build/install libreswan
 	clones build domains to create the test domains
@@ -160,7 +160,7 @@ pass2help()
 EOF
 }
 
-pass2=$(pass2help | awk -v "plat=${platforms}" -- '
+pass2=$(pass2help | awk -v "plat=${kvm_platform}" -- '
 BEGIN {
 	split(plat, platforms)
 }
