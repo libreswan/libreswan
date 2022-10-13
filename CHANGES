@@ -2,8 +2,8 @@
 See also https://libreswan.org/
 
 v4.9 (Unreleased)
+* IKEv1: fix crasher triggered when USE_NSS_KDF=false and/or MD5 [Andrew]
 * IKEv2: fix RFC 8229 IKE/ESP over IPv6 TCP [Andrew]
-* pluto: fix crasher when built with USE_NSS_KDF=false [Andrew]
 
 v4.8 (October 2, 2022)
 * release: remove SHA1 bindings from LIBRESWAN OpenPGP key [dkg/Paul]
