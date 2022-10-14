@@ -21,7 +21,7 @@ ipsec.secrets.INSTFLAGS = -m 0600
 CONFFILES += ipsec.conf
 CONFFILES += ipsec.secrets
 
-LOGROTATECONFFILE += libreswan
+LOGROTATEDCONFFILES += libreswan
 
 CONFDSUBDIR = policies
 CONFDSUBDIRFILES = clear clear-or-private private-or-clear private block portexcludes.conf
@@ -33,13 +33,18 @@ include $(top_srcdir)/mk/config.mk
 include $(top_srcdir)/mk/targets.mk
 include $(top_srcdir)/mk/rules.mk
 include $(top_srcdir)/mk/manpages.mk
+include $(top_srcdir)/mk/install.mk
 
-local-base: $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATECONFFILE)
+local-base: $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATEDCONFFILES)
 
 local-clean-base:
-	rm -f $(foreach file, $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATECONFFILE), $(builddir)/$(file))
+	rm -f $(foreach file, $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATEDCONFFILES), $(builddir)/$(file))
 
-local-install-base: $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATECONFFILE)
+# For each group of files; first copy to the examples directory and
+# then, optionally, install the examples copy into /etc (but only when
+# INSTALL_CONFIGS=true, and only when not already present).
+
+local-install-base: $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATEDCONFFILES)
 	@if test ! -d $(CONFDDIR) ; then \
 		mkdir -p $(CONFDDIR) ; \
 		chmod 0700 $(CONFDDIR) ; \
@@ -47,9 +52,6 @@ local-install-base: $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATECONFFILE)
 	@if test ! -d $(CONFDDIR)/$(CONFDSUBDIR) ; then \
 		mkdir -p $(CONFDDIR)/$(CONFDSUBDIR) ; \
 		chmod 0700 $(CONFDDIR)/$(CONFDSUBDIR) ; \
-	fi
-	@if test ! -d $(LOGROTATEDDIR) ; then \
-		mkdir -p $(LOGROTATEDDIR) ; \
 	fi
 	@set -eu ; $(foreach file, $(CONFFILES), \
 		src=$(builddir)/$(file) ; \
@@ -75,14 +77,17 @@ local-install-base: $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATECONFFILE)
 			$(INSTALL) $(INSTCONFFLAGS) $${src} $${dst} ; \
 		fi ; \
 	)
-	@set -eu ; $(foreach file, $(LOGROTATECONFFILE), \
-		src=$(builddir)/$(file) ; \
-		dst=$(LOGROTATEDDIR)/$(file) ; \
-		if [ ! -f $${dst} ]; then \
-			echo $${src} '->' $${dst} ; \
-			$(INSTALL) $(INSTCONFFLAGS) $${src} $${dst} ; \
-		fi ; \
+	@: LOGROTATED
+	@set -eu ; $(call install-directory, $(EXAMPLELOGROTATEDDIR))
+	@set -eu ; $(foreach file, $(LOGROTATEDCONFFILES), \
+		$(call install-file, $(builddir)/$(file), $(EXAMPLELOGROTATEDDIR)/$(file)) ; \
 	)
+ifeq ($(INSTALL_CONFIGS),true)
+	@set -eu ; $(call install-directory, $(LOGROTATEDDIR))
+	@set -eu ; $(foreach file, $(LOGROTATEDCONFFILES), \
+		$(call install-missing-file, $(EXAMPLELOGROTATEDDIR)/$(file), $(LOGROTATEDDIR)/$(file)) ; \
+	)
+endif
 	@if test ! -d $(NSSDIR) ; then \
 		mkdir -p $(NSSDIR) ; \
 		chmod 0700 $(NSSDIR) ; \

@@ -266,8 +266,14 @@ FINALLOGDIR ?= $(FINALVARDIR)/log
 LOGDIR ?= $(DESTDIR)$(FINALLOGDIR)
 
 # Directory for logrotate config
+
 FINALLOGROTATEDDIR ?= $(FINALSYSCONFDIR)/logrotate.d
 LOGROTATEDDIR ?= $(DESTDIR)$(FINALLOGROTATEDDIR)
+TRANSFORMS += -e 's:@LOGROTATEDDIR@:$(FINALLOGROTATEDDIR):g'
+
+FINALEXAMPLELOGROTATEDDIR ?= $(FINALEXAMPLECONFDIR)/logrotate.d
+EXAMPLELOGROTATEDDIR ?= $(DESTDIR)$(FINALEXAMPLELOGROTATEDDIR)
+TRANSFORMS += -e 's:@EXAMPLELOGROTATEDDIR@:$(FINALEXAMPLELOGROTATEDDIR):g'
 
 # Where nss databases go
 FINALNSSDIR ?= $(FINALVARDIR)/lib/ipsec/nss
@@ -325,6 +331,13 @@ INSTBINFLAGS ?= -b
 # The -m flag is more portable than --mode=.
 INSTMANFLAGS ?= -m 0644
 INSTCONFFLAGS ?= -m 0644
+
+# For "make install", should stuff be installed into /etc?  PKGSRC,
+# for instance, wants everything copied into examples/ but not
+# installed into /etc.
+INSTALL_CONFIGS ?= true
+#INSTALL_INITSYSTEM ?= true
+
 
 # must be before all uses; invoking is expensive called once
 PKG_CONFIG ?= pkg-config
@@ -537,7 +550,7 @@ TRANSFORM_VARIABLES = sed \
 			-e "s:@USE_DEFAULT_CONNS@:$(USE_DEFAULT_CONNS):g" \
 			-e "s:@HAVE_IPTABLES@:$(HAVE_IPTABLES):g" \
 			-e "s:@HAVE_NFTABLES@:$(HAVE_NFTABLES):g" \
-			$(NULL)
+			$(TRANSFORMS)
 
 # For KVM testing setup
 #POOL ?= ${LIBRESWANSRCDIR}/pool
