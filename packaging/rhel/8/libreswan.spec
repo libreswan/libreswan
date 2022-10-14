@@ -37,7 +37,7 @@
 Name: libreswan
 Summary: IPsec implementation with IKEv1 and IKEv2 keying protocols
 # version is generated in the release script
-Version: 4.8
+Version: 4.9
 Release: %{?prever:0.}1%{?prever:.%{prever}}%{?dist}
 License: GPLv2
 Url: https://libreswan.org/
@@ -200,5 +200,5 @@ certutil -N -d sql:$tmpdir --empty-password
 %attr(0644,root,root) %doc %{_mandir}/*/*
 
 %changelog
-* Sun Oct 02 2022 Team Libreswan <team@libreswan.org> - 4.8-1
+* Thu Oct 13 2022 Team Libreswan <team@libreswan.org> - 4.9-1
 - Automated build from release tar ball
