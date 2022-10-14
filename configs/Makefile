@@ -92,6 +92,15 @@ endif
 		mkdir -p $(NSSDIR) ; \
 		chmod 0700 $(NSSDIR) ; \
 	fi
+ifeq ($(USE_AUTHPAM),true)
+	@: PAM
+	@set -eu ; $(call install-directory, $(EXAMPLEPAMCONFDIR))
+	@set -eu ; $(call install-file, pam.d/pluto, $(EXAMPLEPAMCONFDIR)/pluto)
+ ifeq ($(INSTALL_CONFIGS),true)
+	@set -eu ; $(call install-directory, $(PAMCONFDIR))
+	@set -eu ; $(call install-missing-file, $(EXAMPLEPAMCONFDIR)/pluto, $(PAMCONFDIR)/pluto)
+ endif
+endif
 	@if test -z "$(DESTDIR)" -a -x /usr/sbin/selinuxenabled -a $(SBINDIR) != "$(DESTDIR)/usr/sbin" ; then \
 	if /usr/sbin/selinuxenabled ; then  \
 		echo -e "\n************************** WARNING ***********************************" ; \
@@ -107,17 +116,6 @@ endif
 		echo -e "**********************************************************************\n" ; \
 	fi \
 	fi
-ifeq ($(USE_AUTHPAM),true)
-	@if test ! -f $(DESTDIR)/etc/pam.d/pluto ; then \
-		mkdir -p $(DESTDIR)/etc/pam.d/ ; \
-		$(INSTALL) $(INSTCONFFLAGS) pam.d/pluto $(DESTDIR)/etc/pam.d/pluto ; \
-	else \
-		echo -e "\n************************** WARNING ***********************************" ; \
-		echo "We are not installing a new copy of the pam.d/pluto file, as one" ; \
-		echo "was already present.  You may wish to update it yourself if desired." ; \
-		echo -e "**********************************************************************\n" ; \
-	fi
-endif
 
 list-local-base:
 	@set -eu ; $(foreach file, $(CONFFILES), \
