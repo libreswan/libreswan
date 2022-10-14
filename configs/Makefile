@@ -101,6 +101,8 @@ ifeq ($(USE_AUTHPAM),true)
 	@set -eu ; $(call install-missing-file, $(EXAMPLEPAMCONFDIR)/pluto, $(PAMCONFDIR)/pluto)
  endif
 endif
+	@: $(SELINUX)
+ifeq ($(INSTALL_CONFIGS),true)
 	@if test -z "$(DESTDIR)" -a -x /usr/sbin/selinuxenabled -a $(SBINDIR) != "$(DESTDIR)/usr/sbin" ; then \
 	if /usr/sbin/selinuxenabled ; then  \
 		echo -e "\n************************** WARNING ***********************************" ; \
@@ -116,6 +118,7 @@ endif
 		echo -e "**********************************************************************\n" ; \
 	fi \
 	fi
+endif
 
 list-local-base:
 	@set -eu ; $(foreach file, $(CONFFILES), \
