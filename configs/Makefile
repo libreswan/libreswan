@@ -79,10 +79,10 @@ ifeq ($(INSTALL_CONFIGS),true)
 		$(call install-missing-file, $(EXAMPLELOGROTATEDDIR)/$(file), $(LOGROTATEDDIR)/$(file)) ; \
 	)
 endif
-	@if test ! -d $(NSSDIR) ; then \
-		mkdir -p $(NSSDIR) ; \
-		chmod 0700 $(NSSDIR) ; \
-	fi
+	@: NSSDIR install
+ifeq ($(INSTALL_CONFIGS),true)
+	@set -eu ; $(call install-directory, $(NSSDIR), 0700)
+endif
 ifeq ($(USE_AUTHPAM),true)
 	@: PAM
 	@set -eu ; $(call install-directory, $(EXAMPLEPAMCONFDIR))
