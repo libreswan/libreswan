@@ -49,10 +49,6 @@ local-install-base: $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATEDCONFFILES)
 		mkdir -p $(CONFDDIR) ; \
 		chmod 0700 $(CONFDDIR) ; \
 	fi
-	@if test ! -d $(CONFDDIR)/$(CONFDSUBDIR) ; then \
-		mkdir -p $(CONFDDIR)/$(CONFDSUBDIR) ; \
-		chmod 0700 $(CONFDDIR)/$(CONFDSUBDIR) ; \
-	fi
 	@set -eu ; $(foreach file, $(CONFFILES), \
 		src=$(builddir)/$(file) ; \
 		dst=$(CONFDIR)/$(file) ; \
@@ -69,14 +65,18 @@ local-install-base: $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATEDCONFFILES)
 		mkdir -p $(EXAMPLECONFDIR) ; \
 		$(INSTALL) $(INSTCONFFLAGS) $${src} $${dst} ; \
 	)
+	@: CONFDSUBDIR
+	@set -eu ; $(call install-directory, $(EXAMPLECONFDDIR), 0700)
+	@set -eu ; $(call install-directory, $(EXAMPLECONFDDIR)/$(CONFDSUBDIR), 0700)
 	@set -eu ; $(foreach file, $(CONFDSUBDIRFILES), \
-		src=$(builddir)/$(file) ; \
-		dst=$(CONFDDIR)/$(CONFDSUBDIR)/$(file) ; \
-		if [ ! -f $${dst} ]; then \
-			echo $${src} '->' $${dst} ; \
-			$(INSTALL) $(INSTCONFFLAGS) $${src} $${dst} ; \
-		fi ; \
+		$(call install-file, $(builddir)/$(file), $(EXAMPLECONFDDIR)/$(CONFDSUBDIR)/$(file)) ; \
 	)
+ifeq ($(INSTALL_CONFIGS),true)
+	@set -eu ; $(call install-directory, $(CONFDDIR)/$(CONFDSUBDIR), 0700)
+	@set -eu ; $(foreach file, $(CONFDSUBDIRFILES), \
+		$(call install-missing-file, $(EXAMPLECONFDDIR)/$(CONFDSUBDIR)/$(file), $(CONFDDIR)/$(CONFDSUBDIR)/$(file)) ; \
+	)
+endif
 	@: LOGROTATED
 	@set -eu ; $(call install-directory, $(EXAMPLELOGROTATEDDIR))
 	@set -eu ; $(foreach file, $(LOGROTATEDCONFFILES), \
