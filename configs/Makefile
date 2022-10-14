@@ -45,26 +45,17 @@ local-clean-base:
 # INSTALL_CONFIGS=true, and only when not already present).
 
 local-install-base: $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATEDCONFFILES)
-	@if test ! -d $(CONFDDIR) ; then \
-		mkdir -p $(CONFDDIR) ; \
-		chmod 0700 $(CONFDDIR) ; \
-	fi
+	@: CONFDDIR - EXAMPLECONFDIR not EXAMPLECONFDDIR and sample suffix
+	@set -eu ; $(call install-directory, $(EXAMPLECONFDIR))
 	@set -eu ; $(foreach file, $(CONFFILES), \
-		src=$(builddir)/$(file) ; \
-		dst=$(CONFDIR)/$(file) ; \
-		if [ ! -f $${dst} ]; then \
-			echo $${src} '->' $${dst} ; \
-			mkdir -p $(CONFDIR) ; \
-			$(INSTALL) $(INSTCONFFLAGS) $($(file).INSTFLAGS) $${src} $${dst} ; \
-		fi ; \
+		$(call install-file, $(builddir)/$(file), $(EXAMPLECONFDIR)/$(file)-sample, $($(file).INSTFLAGS)) ; \
 	)
+ifeq ($(INSTALL_CONFIGS),true)
+	@set -eu ; $(call install-directory, $(CONFDDIR), 0700)
 	@set -eu ; $(foreach file, $(CONFFILES), \
-		src=$(builddir)/$(file) ; \
-		dst=$(EXAMPLECONFDIR)/$(file)-sample ; \
-		echo $${src} '->' $${dst} ; \
-		mkdir -p $(EXAMPLECONFDIR) ; \
-		$(INSTALL) $(INSTCONFFLAGS) $${src} $${dst} ; \
+		$(call install-missing-file, $(EXAMPLECONFDIR)/$(file)-sample, $(CONFDIR)/$(file), $($(file).INSTFLAGS)) ; \
 	)
+endif
 	@: CONFDSUBDIR
 	@set -eu ; $(call install-directory, $(EXAMPLECONFDDIR), 0700)
 	@set -eu ; $(call install-directory, $(EXAMPLECONFDDIR)/$(CONFDSUBDIR), 0700)
