@@ -19,15 +19,15 @@ install-directory = \
 		test -z "$(strip $(2))" || chmod $(strip $(2)) $(strip $(1)) ; \
 	fi
 
-# $(call install-file, <SRC>, <DST>, <FLAGS>)
+# $(call install-file, <FLAGS>, <SRC>, <DST>)
 install-file = \
-	echo $(strip $(1)) '->' $(strip $(2)) ; \
-	$(INSTALL) $(INSTCONFFLAGS) $(strip $(3)) $(strip $(1)) $(strip $(2))
+	echo $(strip $(2)) '->' $(strip $(3)) ; \
+	$(INSTALL) $(strip $(1)) $(strip $(2)) $(strip $(3))
 
-# $(call install-missing-file, <SRC>, <DST>, <FLAGS>)
+# $(call install-missing-file, <FLAGS>, <SRC>, <DST>)
 install-missing-file = \
-	if [ ! -f $(strip $(2)) ]; then \
+	if [ ! -f $(strip $(3)) ]; then \
 		$(call install-file, $(1), $(2), $(3)); \
 	else \
-		echo "WARNING: $(strip $(2)): skipping update, new version is in $(strip $(1))" 1>&2 ; \
+		echo "WARNING: $(strip $(3)): skipping update, new version is in $(strip $(2))" 1>&2 ; \
 	fi

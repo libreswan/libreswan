@@ -48,35 +48,41 @@ local-install-base: $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATEDCONFFILES)
 	@: CONFDDIR - EXAMPLECONFDIR not EXAMPLECONFDDIR and sample suffix
 	@set -eu ; $(call install-directory, $(EXAMPLECONFDIR))
 	@set -eu ; $(foreach file, $(CONFFILES), \
-		$(call install-file, $(builddir)/$(file), $(EXAMPLECONFDIR)/$(file)-sample, $($(file).INSTFLAGS)) ; \
+		$(call install-file, $(INSTCONFFLAGS) $($(file).INSTFLAGS), \
+			$(builddir)/$(file), $(EXAMPLECONFDIR)/$(file)-sample) ; \
 	)
 ifeq ($(INSTALL_CONFIGS),true)
 	@set -eu ; $(call install-directory, $(CONFDDIR), 0700)
 	@set -eu ; $(foreach file, $(CONFFILES), \
-		$(call install-missing-file, $(EXAMPLECONFDIR)/$(file)-sample, $(CONFDIR)/$(file), $($(file).INSTFLAGS)) ; \
+		$(call install-missing-file, $(INSTCONFFLAGS) $($(file).INSTFLAGS), \
+			$(EXAMPLECONFDIR)/$(file)-sample, $(CONFDIR)/$(file)) ; \
 	)
 endif
 	@: CONFDSUBDIR
 	@set -eu ; $(call install-directory, $(EXAMPLECONFDDIR), 0700)
 	@set -eu ; $(call install-directory, $(EXAMPLECONFDDIR)/$(CONFDSUBDIR), 0700)
 	@set -eu ; $(foreach file, $(CONFDSUBDIRFILES), \
-		$(call install-file, $(builddir)/$(file), $(EXAMPLECONFDDIR)/$(CONFDSUBDIR)/$(file)) ; \
+		$(call install-file, $(INSTCONFFLAGS), \
+			$(builddir)/$(file), $(EXAMPLECONFDDIR)/$(CONFDSUBDIR)/$(file)) ; \
 	)
 ifeq ($(INSTALL_CONFIGS),true)
 	@set -eu ; $(call install-directory, $(CONFDDIR)/$(CONFDSUBDIR), 0700)
 	@set -eu ; $(foreach file, $(CONFDSUBDIRFILES), \
-		$(call install-missing-file, $(EXAMPLECONFDDIR)/$(CONFDSUBDIR)/$(file), $(CONFDDIR)/$(CONFDSUBDIR)/$(file)) ; \
+		$(call install-missing-file, $(INSTCONFFLAGS), \
+			$(EXAMPLECONFDDIR)/$(CONFDSUBDIR)/$(file), $(CONFDDIR)/$(CONFDSUBDIR)/$(file)) ; \
 	)
 endif
 	@: LOGROTATED
 	@set -eu ; $(call install-directory, $(EXAMPLELOGROTATEDDIR))
 	@set -eu ; $(foreach file, $(LOGROTATEDCONFFILES), \
-		$(call install-file, $(builddir)/$(file), $(EXAMPLELOGROTATEDDIR)/$(file)) ; \
+		$(call install-file, $(INSTCONFFLAGS), \
+			$(builddir)/$(file), $(EXAMPLELOGROTATEDDIR)/$(file)) ; \
 	)
 ifeq ($(INSTALL_CONFIGS),true)
 	@set -eu ; $(call install-directory, $(LOGROTATEDDIR))
 	@set -eu ; $(foreach file, $(LOGROTATEDCONFFILES), \
-		$(call install-missing-file, $(EXAMPLELOGROTATEDDIR)/$(file), $(LOGROTATEDDIR)/$(file)) ; \
+		$(call install-missing-file, $(INSTCONFFLAGS), \
+			$(EXAMPLELOGROTATEDDIR)/$(file), $(LOGROTATEDDIR)/$(file)) ; \
 	)
 endif
 	@: NSSDIR install
@@ -86,10 +92,12 @@ endif
 ifeq ($(USE_AUTHPAM),true)
 	@: PAM
 	@set -eu ; $(call install-directory, $(EXAMPLEPAMCONFDIR))
-	@set -eu ; $(call install-file, pam.d/pluto, $(EXAMPLEPAMCONFDIR)/pluto)
+	@set -eu ; $(call install-file, $(INSTCONFFLAGS), \
+			pam.d/pluto, $(EXAMPLEPAMCONFDIR)/pluto)
  ifeq ($(INSTALL_CONFIGS),true)
 	@set -eu ; $(call install-directory, $(PAMCONFDIR))
-	@set -eu ; $(call install-missing-file, $(EXAMPLEPAMCONFDIR)/pluto, $(PAMCONFDIR)/pluto)
+	@set -eu ; $(call install-missing-file, $(INSTCONFFLAGS), \
+			$(EXAMPLEPAMCONFDIR)/pluto, $(PAMCONFDIR)/pluto)
  endif
 endif
 	@: $(SELINUX)
