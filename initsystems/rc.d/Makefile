@@ -1,7 +1,9 @@
 ifndef top_srcdir
 include ../../mk/dirs.mk
 endif
+
 include $(top_srcdir)/mk/config.mk
+include $(top_srcdir)/mk/install.mk
 
 INSTINITSYSTEMFLAGS ?= $(INSTBINFLAGS)
 
@@ -12,20 +14,19 @@ PROGRAM_MANPAGE=
 
 local-base: $(INITSYSTEMFILES)
 local-install-base: $(INITSYSTEMFILES)
-	@set -eu $(foreach file, $(INITSYSTEMFILES), ; \
-		if test ! -f $(INITSYSTEMDIR)/$(file) ; then \
-			echo $(builddir)$(file) '->' $(INITSYSTEMDIR)/$(file) ; \
-			mkdir -p $(INITSYSTEMDIR) ; \
-			$(INSTALL) $(INSTBINFLAGS) $(builddir)/$(file) $(INITSYSTEMDIR)/$(file) ; \
-		else \
-			echo "#" $(builddir)/$(file) '->' $(INITSYSTEMDIR)/$(file) ; \
-		fi \
+	@set -eu ; $(call install-directory, $(EXAMPLEINITSYSTEMDIR))
+	@set -eu ; $(foreach file, $(INITSYSTEMFILES), \
+		$(call install-file, $(INSTBINFLAGS), \
+			$(builddir)/$(file), $(EXAMPLEINITSYSTEMDIR)/$(file)) ; \
 	)
-	@set -eu $(foreach file, $(INITSYSTEMFILES), ; \
-		echo $(builddir)$(file) '->' $(INITSYSTEMEXAMPLESDIR)/$(file) ; \
-		mkdir -p $(INITSYSTEMEXAMPLESDIR) ; \
-		$(INSTALL) $(INSTBINFLAGS) $(builddir)/$(file) $(INITSYSTEMEXAMPLESDIR)/$(file) ; \
+ifeq ($(INSTALL_INITSYSTEM),true)
+	@set -ue ; $(call install-directory, $(INITSYSTEMDIR))
+	@set -eu ; $(foreach file, $(INITSYSTEMFILES), \
+		$(call install-missing-file, $(INSTBINFLAGS), \
+			$(EXAMPLEINITSYSTEMDIR)/$(file), $(INITSYSTEMDIR)/$(file)) ; \
 	)
+endif
+ifeq ($(INSTALL_INITSYSTEM),true)
 ifneq ($(BSD_VARIANT),openbsd)
 	@. /etc/rc.subr ; \
 	load_rc_config pluto ; \
@@ -43,6 +44,7 @@ ifneq ($(BSD_VARIANT),openbsd)
 		echo "" ; \
 		;; \
 	esac
+endif
 endif
 
 list-local-base:

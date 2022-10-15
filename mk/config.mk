@@ -223,11 +223,21 @@ MANDIR ?= $(DESTDIR)$(FINALMANDIR)
 # where configuration files go
 FINALSYSCONFDIR ?= /etc
 
-# where INITSYSTEM files go
+#
+# INITSYSTEM
+#
+# Selects directory under initsystems/.  The below defines where to
+# install it (and their examples).
+
+INSTALL_INITSYSTEM ?= true
+
 FINALINITSYSTEMDIR ?= $(FINALSYSCONFDIR)/$(INITSYSTEM)
 INITSYSTEMDIR ?= $(DESTDIR)$(FINALINITSYSTEMDIR)
-FINALINITSYSTEMEXAMPLESDIR ?= $(PREFIX)/share/examples/$(INITSYSTEM)
-INITSYSTEMEXAMPLESDIR ?= $(DESTDIR)$(FINALINITSYSTEMEXAMPLESDIR)
+TRANSFORMS += -e 's:@FINALINITSYSTEMDIR@:$(FINALINITSYSTEMDIR):g'
+
+FINALEXAMPLEINITSYSTEMDIR ?= $(FINALEXAMPLECONFDIR)/$(INITSYSTEM)
+EXAMPLEINITSYSTEMDIR ?= $(DESTDIR)$(FINALEXAMPLEINITSYSTEMDIR)
+TRANSFORMS += -e 's:@FINALEXAMPLEINITSYSTEMDIR@:$(FINALEXAMPLEINITSYSTEMDIR):g'
 
 # run dir - defaults to /run/pluto
 # Some older systems might need to set this to /var/run/pluto
@@ -293,6 +303,10 @@ DOCKER_PLUTONOFORK ?= --nofork
 # If none of those exists (or INITDDIRS is empty), INITDDIR_DEFAULT gets them.
 # With a non-null DESTDIR, INITDDIR_DEFAULT will be used unless one of the
 # INITDDIRS directories has been pre-created under DESTDIR.
+
+# XXX: setup.in uses the hardwired path /etc/init.d making all the
+# below magic pointless.
+
 INITDDIRS ?= /etc/rc.d/init.d /etc/init.d
 INITDDIR_DEFAULT ?= /etc/init.d
 
@@ -341,7 +355,6 @@ INSTCONFFLAGS ?= -m 0644
 # for instance, wants everything copied into examples/ but not
 # installed into /etc.
 INSTALL_CONFIGS ?= true
-#INSTALL_INITSYSTEM ?= true
 
 
 # must be before all uses; invoking is expensive called once
@@ -523,8 +536,6 @@ TRANSFORM_VARIABLES = sed \
 			-e "s:@FINALDOCDIR@:$(FINALDOCDIR):g" \
 			-e "s:@FINALEXAMPLECONFDIR@:$(FINALEXAMPLECONFDIR):g" \
 			-e "s:@FINALINITDDIR@:$(FINALINITDDIR):g" \
-			-e "s:@FINALINITSYSTEMDIR@:$(FINALINITSYSTEMDIR):g" \
-			-e "s:@FINALINITSYSTEMEXAMPLESDIR@:$(FINALINITSYSTEMEXAMPLESDIR):g" \
 			-e "s:@FINALLIBEXECDIR@:$(FINALLIBEXECDIR):g" \
 			-e "s:@FINALLOGDIR@:$(FINALLOGDIR):g" \
 			-e "s:@FINALLOGROTATEDDIR@:$(FINALLOGROTATEDDIR):g" \
