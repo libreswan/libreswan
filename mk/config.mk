@@ -228,6 +228,13 @@ FINALSYSCONFDIR ?= /etc
 #
 # Selects directory under initsystems/.  The below defines where to
 # install it (and their examples).
+#
+# Unlike ifndef INITSYSTEM, $(origin INITSYSTEM) consideres
+# INITSYSTEM= to be defined.
+
+ifeq ($(origin INITSYSTEM),undefined)
+$(error INITSYSTEM not defined)
+endif
 
 INSTALL_INITSYSTEM ?= true
 
