@@ -510,6 +510,9 @@ static void prf_desc_check(const struct ike_alg *alg, struct logger *logger)
 	/* all or none */
 	pexpect_ike_alg(logger, alg, (prf->prf_mac_ops != NULL) == (prf->prf_ikev1_ops != NULL));
 	pexpect_ike_alg(logger, alg, (prf->prf_mac_ops != NULL) == (prf->prf_ikev2_ops != NULL));
+	/* Using NSS implies mechanism */
+	pexpect_ike_alg(logger, alg,
+			(prf->prf_mac_ops == &ike_alg_prf_mac_nss_ops) /*implies*/<= (prf->nss.mechanism > 0))
 
 	if (prf->prf_mac_ops != NULL) {
 		pexpect_ike_alg(logger, alg, prf->prf_mac_ops->backend != NULL);

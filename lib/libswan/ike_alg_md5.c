@@ -42,6 +42,9 @@ const struct prf_desc ike_alg_prf_hmac_md5 = {
 			[IKEv2_ALG_ID] = IKEv2_PRF_HMAC_MD5,
 		},
 	},
+	.nss = {
+		.mechanism = CKM_MD5_HMAC,
+	},
 	.prf_key_size = MD5_DIGEST_SIZE,
 	.prf_output_size = MD5_DIGEST_SIZE,
 	.hasher = &ike_alg_hash_md5,
