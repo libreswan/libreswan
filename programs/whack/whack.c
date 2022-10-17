@@ -946,9 +946,9 @@ static void optarg_to_uintmax(uintmax_t *val)
 }
 
 /* ??? there seems to be no consequence for invalid life_time. */
-static void check_life_time(deltatime_t life, time_t raw_limit,
-			    const char *which,
-			    const struct whack_message *msg)
+static void check_max_lifetime(deltatime_t life, time_t raw_limit,
+			       const char *which,
+			       const struct whack_message *msg)
 {
 	deltatime_t limit = deltatime(raw_limit);
 	deltatime_t mint = deltatime_scale(msg->sa_rekey_margin, 100 + msg->sa_rekey_fuzz/*percent*/, 100);
@@ -1079,10 +1079,10 @@ int main(int argc, char **argv)
 	msg.modecfg_banner = NULL;
 
 	msg.nic_offload = yna_auto;
-	msg.sa_ike_life_seconds = deltatime(IKE_SA_LIFETIME_DEFAULT);
-	msg.sa_ipsec_life_seconds = deltatime(IPSEC_SA_LIFETIME_DEFAULT);
 	msg.sa_ipsec_max_bytes = IPSEC_SA_MAX_OPERATIONS; /* max uint_64_t */
 	msg.sa_ipsec_max_packets = IPSEC_SA_MAX_OPERATIONS; /* max uint_64_t */
+	msg.sa_ike_max_lifetime = deltatime(IKE_SA_LIFETIME_DEFAULT);
+	msg.sa_ipsec_max_lifetime = deltatime(IPSEC_SA_LIFETIME_DEFAULT);
 	msg.sa_rekey_margin = deltatime(SA_REPLACEMENT_MARGIN_DEFAULT);
 	msg.sa_rekey_fuzz = SA_REPLACEMENT_FUZZ_DEFAULT;
 	msg.sa_keying_tries = SA_REPLACEMENT_RETRIES_DEFAULT;
@@ -1897,11 +1897,11 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_IKE_LIFETIME:	/* --ike-lifetime <seconds> */
-			optarg_to_deltatime(&msg.sa_ike_life_seconds, &timescale_seconds);
+			optarg_to_deltatime(&msg.sa_ike_max_lifetime, &timescale_seconds);
 			continue;
 
 		case CD_IPSEC_LIFETIME:	/* --ipsec-lifetime <seconds> */
-			optarg_to_deltatime(&msg.sa_ipsec_life_seconds, &timescale_seconds);
+			optarg_to_deltatime(&msg.sa_ipsec_max_lifetime, &timescale_seconds);
 			continue;
 
 		case CD_IPSEC_MAX_BYTES:	/* --ipsec-max-bytes <bytes> */
@@ -2664,11 +2664,8 @@ int main(int argc, char **argv)
 	    deltasecs(msg.sa_rekey_margin) > (time_t)(INT_MAX / (100 + msg.sa_rekey_fuzz)))
 		diagw("rekeymargin or rekeyfuzz values are so large that they cause overflow");
 
-	check_life_time(msg.sa_ike_life_seconds, IKE_SA_LIFETIME_MAXIMUM,
-			"ike-lifetime", &msg);
-
-	check_life_time(msg.sa_ipsec_life_seconds, IPSEC_SA_LIFETIME_MAXIMUM,
-			"ipsec-lifetime", &msg);
+	check_max_lifetime(msg.sa_ike_max_lifetime, IKE_SA_LIFETIME_MAXIMUM, "ike-lifetime", &msg);
+	check_max_lifetime(msg.sa_ipsec_max_lifetime, IPSEC_SA_LIFETIME_MAXIMUM, "ipsec-lifetime", &msg);
 
 	switch (msg.ike_version) {
 	case IKEv1:

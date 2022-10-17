@@ -153,6 +153,9 @@ struct config {
 	uintmax_t sa_ipsec_max_bytes;
 	uintmax_t sa_ipsec_max_packets;
 
+	deltatime_t sa_ike_max_lifetime;
+	deltatime_t sa_ipsec_max_lifetime;
+
 	lset_t sighash_policy;
 	enum shunt_policy prospective_shunt;	/* before */
 	enum shunt_policy negotiation_shunt;	/* during */
@@ -450,8 +453,6 @@ struct connection {
 	struct logger *logger;
 	char *foodgroup;
 	lset_t policy;
-	deltatime_t sa_ike_life_seconds;
-	deltatime_t sa_ipsec_life_seconds;
 	deltatime_t sa_rekey_margin;
 	unsigned long sa_rekey_fuzz;
 	unsigned long sa_keying_tries;

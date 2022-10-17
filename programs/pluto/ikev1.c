@@ -2566,7 +2566,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 				 * initiate rekeying.  The negative
 				 * consequences seem minor.
 				 */
-				event_delay = c->sa_ike_life_seconds;
+				event_delay = c->config->sa_ike_max_lifetime;
 				if ((c->policy & POLICY_DONT_REKEY) ||
 				    deltatime_cmp(event_delay, >=, st->st_oakley.life_seconds)) {
 					agreed_time = true;
@@ -2579,7 +2579,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 				 * Delay is min of up to four things:
 				 * each can limit the lifetime.
 				 */
-				event_delay = c->sa_ipsec_life_seconds;
+				event_delay = c->config->sa_ipsec_max_lifetime;
 
 #define clamp_delay(trans)						\
 				{					\

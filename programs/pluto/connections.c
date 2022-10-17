@@ -2046,8 +2046,8 @@ static bool extract_connection(const struct whack_message *wm,
 		dbg("skipping over misc settings");
 	} else {
 		config->nic_offload = wm->nic_offload;
-		c->sa_ike_life_seconds = wm->sa_ike_life_seconds;
-		c->sa_ipsec_life_seconds = wm->sa_ipsec_life_seconds;
+		config->sa_ike_max_lifetime = wm->sa_ike_max_lifetime;
+		config->sa_ipsec_max_lifetime = wm->sa_ipsec_max_lifetime;
 		c->sa_rekey_margin = wm->sa_rekey_margin;
 		c->sa_rekey_fuzz = wm->sa_rekey_fuzz;
 		c->sa_keying_tries = wm->sa_keying_tries;
@@ -2062,17 +2062,17 @@ static bool extract_connection(const struct whack_message *wm,
 			time_t max_ike_life = libreswan_fipsmode() ? FIPS_IKE_SA_LIFETIME_MAXIMUM : IKE_SA_LIFETIME_MAXIMUM;
 			time_t max_ipsec_life = libreswan_fipsmode() ? FIPS_IPSEC_SA_LIFETIME_MAXIMUM : IPSEC_SA_LIFETIME_MAXIMUM;
 
-			if (deltatime_cmp(c->sa_ike_life_seconds, ==, deltatime_zero) || deltasecs(c->sa_ike_life_seconds) > max_ike_life) {
+			if (deltatime_cmp(c->config->sa_ike_max_lifetime, ==, deltatime_zero) || deltasecs(c->config->sa_ike_max_lifetime) > max_ike_life) {
 				llog(RC_LOG, c->logger,
 				     "IKE lifetime set to the maximum allowed %jds",
 				     (intmax_t) max_ike_life);
-				c->sa_ike_life_seconds = deltatime(max_ike_life);
+				config->sa_ike_max_lifetime = deltatime(max_ike_life);
 			}
-			if (deltatime_cmp(c->sa_ipsec_life_seconds, ==, deltatime_zero) || deltasecs(c->sa_ipsec_life_seconds) > max_ipsec_life) {
+			if (deltatime_cmp(c->config->sa_ipsec_max_lifetime, ==, deltatime_zero) || deltasecs(c->config->sa_ipsec_max_lifetime) > max_ipsec_life) {
 				llog(RC_LOG, c->logger,
 				     "IPsec lifetime set to the maximum allowed %jds",
 				     (intmax_t) max_ipsec_life);
-				c->sa_ipsec_life_seconds = deltatime(max_ipsec_life);
+				config->sa_ipsec_max_lifetime = deltatime(max_ipsec_life);
 			}
 		}
 		/*
@@ -2108,13 +2108,13 @@ static bool extract_connection(const struct whack_message *wm,
 			config->sa_ipsec_max_packets = IPSEC_SA_MAX_OPERATIONS;
 		}
 
-		if (deltatime_cmp(c->sa_rekey_margin, >=, c->sa_ipsec_life_seconds)) {
-			deltatime_t new_rkm = deltatime_scale(c->sa_ipsec_life_seconds, 1, 2);
+		if (deltatime_cmp(c->sa_rekey_margin, >=, c->config->sa_ipsec_max_lifetime)) {
+			deltatime_t new_rkm = deltatime_scale(c->config->sa_ipsec_max_lifetime, 1, 2);
 
 			llog(RC_LOG, c->logger,
 			     "rekeymargin (%jds) >= salifetime (%jds); reducing rekeymargin to %jds seconds",
 			     deltasecs(c->sa_rekey_margin),
-			     deltasecs(c->sa_ipsec_life_seconds),
+			     deltasecs(c->config->sa_ipsec_max_lifetime),
 			     deltasecs(new_rkm));
 
 			c->sa_rekey_margin = new_rkm;
@@ -2521,8 +2521,8 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 	llog(RC_LOG, c->logger, "added %s connection", what);
 	policy_buf pb;
 	dbg("ike_life: %jd; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s ipsec_max_bytes: %" PRIu64 " ipsec_max_packets %" PRIu64,
-	    deltasecs(c->sa_ike_life_seconds),
-	    deltasecs(c->sa_ipsec_life_seconds),
+	    deltasecs(c->config->sa_ike_max_lifetime),
+	    deltasecs(c->config->sa_ipsec_max_lifetime),
 	    deltasecs(c->sa_rekey_margin),
 	    c->sa_rekey_fuzz,
 	    c->sa_keying_tries,
@@ -3909,8 +3909,8 @@ static void show_one_connection(struct show *s,
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		jam(buf, PRI_CONNECTION":  ", c->name, instance);
-		jam(buf, " ike_life: %jds;", deltasecs(c->sa_ike_life_seconds));
-		jam(buf, " ipsec_life: %jds;", deltasecs(c->sa_ipsec_life_seconds));
+		jam(buf, " ike_life: %jds;", deltasecs(c->config->sa_ike_max_lifetime));
+		jam(buf, " ipsec_life: %jds;", deltasecs(c->config->sa_ipsec_max_lifetime));
 		jam_humber_max(buf, " ipsec_max_bytes: ", c->config->sa_ipsec_max_bytes, "B;");
 		jam_humber_max(buf, " ipsec_max_packets: ", c->config->sa_ipsec_max_packets, ";");
 		jam(buf, " replay_window: %u;", c->sa_replay_window);

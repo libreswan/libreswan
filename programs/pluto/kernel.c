@@ -1955,7 +1955,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		.dst.client = kernel_policy.dst.route,
 		.inbound = inbound,
 		.tunnel = (kernel_policy.mode == ENCAP_MODE_TUNNEL),
-		.sa_lifetime = c->sa_ipsec_life_seconds,
+		.sa_lifetime = c->config->sa_ipsec_max_lifetime,
 		.sa_max_soft_bytes = sa_ipsec_soft_bytes,
 		.sa_max_soft_packets = sa_ipsec_soft_packets,
 		.sa_ipsec_max_bytes = c->config->sa_ipsec_max_bytes,

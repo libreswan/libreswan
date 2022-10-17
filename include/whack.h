@@ -180,12 +180,14 @@ struct whack_message {
 	enum shunt_policy negotiation_shunt;
 	enum shunt_policy failure_shunt;
 
-	deltatime_t sa_ike_life_seconds;
-	deltatime_t sa_ipsec_life_seconds;
-	deltatime_t sa_rekey_margin;
 	uintmax_t sa_ipsec_max_bytes;
 	uintmax_t sa_ipsec_max_packets;
+
+	deltatime_t sa_ike_max_lifetime;
+	deltatime_t sa_ipsec_max_lifetime;
+	deltatime_t sa_rekey_margin;
 	unsigned long sa_rekey_fuzz;
+
 	unsigned long sa_keying_tries;
 	uintmax_t sa_replay_window;
 	deltatime_t retransmit_timeout;
