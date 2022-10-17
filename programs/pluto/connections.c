@@ -2115,13 +2115,13 @@ static bool extract_connection(const struct whack_message *wm,
 			config->sa_ipsec_max_packets = IPSEC_SA_MAX_OPERATIONS;
 		}
 
-		if (deltatime_cmp(c->config->sa_rekey_margin, >=, c->config->sa_ipsec_max_lifetime)) {
-			deltatime_t new_rkm = deltatime_scale(c->config->sa_ipsec_max_lifetime, 1, 2);
+		if (deltatime_cmp(config->sa_rekey_margin, >=, config->sa_ipsec_max_lifetime)) {
+			deltatime_t new_rkm = deltatime_scale(config->sa_ipsec_max_lifetime, 1, 2);
 
 			llog(RC_LOG, c->logger,
 			     "rekeymargin (%jds) >= salifetime (%jds); reducing rekeymargin to %jds seconds",
-			     deltasecs(c->config->sa_rekey_margin),
-			     deltasecs(c->config->sa_ipsec_max_lifetime),
+			     deltasecs(config->sa_rekey_margin),
+			     deltasecs(config->sa_ipsec_max_lifetime),
 			     deltasecs(new_rkm));
 
 			config->sa_rekey_margin = new_rkm;
