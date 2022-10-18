@@ -1544,6 +1544,26 @@ static void mark_parse(/*const*/ char *wmmark,
  * least shouldn't be) (look for strange free() vs delref() sequence).
  */
 
+static void extract_max_sa_lifetime(const char *sa_name,
+				    deltatime_t *lifetime, deltatime_t whack_lifetime,
+				    time_t fips_lifetime_max, time_t lifetime_max,
+				    struct logger *logger)
+{
+	/* http://csrc.nist.gov/publications/nistpubs/800-77/sp800-77.pdf */
+	deltatime_t max_lifetime =
+		deltatime(libreswan_fipsmode() ? fips_lifetime_max : lifetime_max);
+
+	if (deltatime_cmp(whack_lifetime, ==, deltatime_zero) ||
+	    deltatime_cmp(whack_lifetime, >, max_lifetime)) {
+		llog(RC_LOG, logger,
+		     "%s lifetime set to the maximum allowed %jds",
+		     sa_name, deltasecs(max_lifetime));
+		*lifetime = max_lifetime;
+	} else {
+		*lifetime = whack_lifetime;
+	}
+}
+
 static bool extract_connection(const struct whack_message *wm,
 			       struct connection *c)
 {
@@ -2045,9 +2065,13 @@ static bool extract_connection(const struct whack_message *wm,
 	if (NEVER_NEGOTIATE(wm->policy)) {
 		dbg("skipping over misc settings");
 	} else {
+		/* http://csrc.nist.gov/publications/nistpubs/800-77/sp800-77.pdf */
+		extract_max_sa_lifetime("IKE", &config->sa_ike_max_lifetime, wm->sa_ike_max_lifetime,
+					FIPS_IKE_SA_LIFETIME_MAXIMUM, IKE_SA_LIFETIME_MAXIMUM, c->logger);
+		extract_max_sa_lifetime("IPsec", &config->sa_ipsec_max_lifetime, wm->sa_ipsec_max_lifetime,
+					FIPS_IPSEC_SA_LIFETIME_MAXIMUM, IPSEC_SA_LIFETIME_MAXIMUM, c->logger);
+
 		config->nic_offload = wm->nic_offload;
-		config->sa_ike_max_lifetime = wm->sa_ike_max_lifetime;
-		config->sa_ipsec_max_lifetime = wm->sa_ipsec_max_lifetime;
 		config->sa_rekey_margin = wm->sa_rekey_margin;
 		config->sa_rekey_fuzz = wm->sa_rekey_fuzz;
 
@@ -2058,24 +2082,6 @@ static bool extract_connection(const struct whack_message *wm,
 		config->retransmit_timeout = wm->retransmit_timeout;
 		config->retransmit_interval = wm->retransmit_interval;
 
-		{
-			/* http://csrc.nist.gov/publications/nistpubs/800-77/sp800-77.pdf */
-			time_t max_ike_life = libreswan_fipsmode() ? FIPS_IKE_SA_LIFETIME_MAXIMUM : IKE_SA_LIFETIME_MAXIMUM;
-			time_t max_ipsec_life = libreswan_fipsmode() ? FIPS_IPSEC_SA_LIFETIME_MAXIMUM : IPSEC_SA_LIFETIME_MAXIMUM;
-
-			if (deltatime_cmp(c->config->sa_ike_max_lifetime, ==, deltatime_zero) || deltasecs(c->config->sa_ike_max_lifetime) > max_ike_life) {
-				llog(RC_LOG, c->logger,
-				     "IKE lifetime set to the maximum allowed %jds",
-				     (intmax_t) max_ike_life);
-				config->sa_ike_max_lifetime = deltatime(max_ike_life);
-			}
-			if (deltatime_cmp(c->config->sa_ipsec_max_lifetime, ==, deltatime_zero) || deltasecs(c->config->sa_ipsec_max_lifetime) > max_ipsec_life) {
-				llog(RC_LOG, c->logger,
-				     "IPsec lifetime set to the maximum allowed %jds",
-				     (intmax_t) max_ipsec_life);
-				config->sa_ipsec_max_lifetime = deltatime(max_ipsec_life);
-			}
-		}
 		/*
 		 * A 1500 mtu packet requires 1500/16 ~= 90 crypto
 		 * operations.  Always use NIST maximums for
