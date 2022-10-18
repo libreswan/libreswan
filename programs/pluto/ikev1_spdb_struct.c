@@ -2534,7 +2534,8 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 
 		case SA_LIFE_DURATION | ISAKMP_ATTR_AF_TLV:
 		case SA_LIFE_DURATION | ISAKMP_ATTR_AF_TV:
-			val = decode_life_duration(&a, &attr_pbs);
+		{
+			deltatime_t val = deltatime(decode_life_duration(&a, &attr_pbs));
 			ipcomp_inappropriate = false;
 			if (!LHAS(seen_attrs, SA_LIFE_TYPE)) {
 				log_state(RC_LOG_SERIOUS, st,
@@ -2550,41 +2551,24 @@ static bool parse_ipsec_transform(struct isakmp_transform *trans,
 			{
 				/*
 				 * Silently limit duration to our maximum.
-				 *
-				 * Note:
-				 *
-				 * GCC now complains about comparisons between
-				 * signed and unsigned values.  This is good:
-				 * should the comparison be done as if the
-				 * unsigned representation were signed or as if
-				 * the signed representation were unsigned?
-				 * The C standard has an arbitrary answer.
-				 * So GCC's warning should be heeded.
-				 *
-				 * We know that time_t can represent all
-				 * values between 0 and SA_LIFE_DURATION_MAXIMUM.
-				 * It is safe to cast val (of type uint32_t)
-				 * to time_t (some signed type) AFTER checking
-				 * that val does not exceed
-				 * SA_LIFE_DURATION_MAXIMUM.
 				 */
-				unsigned int lifemax = IPSEC_SA_LIFETIME_MAXIMUM;
-				if (libreswan_fipsmode())
-					lifemax = FIPS_IPSEC_SA_LIFETIME_MAXIMUM;
-				attrs->life_seconds = val > lifemax ?
-					deltatime(lifemax) :
-				    (time_t)val > deltasecs(st->st_connection->config->sa_ipsec_max_lifetime) ?
-					st->st_connection->config->sa_ipsec_max_lifetime :
-				    deltatime(val);
+				deltatime_t lifemax =
+					deltatime(libreswan_fipsmode() ? FIPS_IPSEC_SA_LIFETIME_MAXIMUM :
+						  IPSEC_SA_LIFETIME_MAXIMUM);
+				attrs->life_seconds =
+					(deltatime_cmp(val, >, lifemax) ? lifemax :
+					 deltatime_cmp(val, >, st->st_connection->config->sa_ipsec_max_lifetime) ? st->st_connection->config->sa_ipsec_max_lifetime :
+					 val);
 				break;
 			}
 			case SA_LIFE_TYPE_KBYTES:
-				dbg("ignoring SA_LIFE_TYPE_KBYTES=%"PRIu32, val);
+				dbg("ignoring SA_LIFE_TYPE_KBYTES=%ju", deltasecs(val));
 				break;
 			default:
 				bad_case(life_type);
 			}
 			break;
+		}
 
 		case GROUP_DESCRIPTION | ISAKMP_ATTR_AF_TV:
 			if (proto == PROTO_IPCOMP) {
