@@ -308,7 +308,8 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 				dbg("not replacing stale %s SA %lu; #%lu will do",
 				    satype, st->st_serialno, newer_sa);
 			} else if (event_type == EVENT_v1_REPLACE_IF_USED &&
-				   !monobefore(mononow(), monotime_add(st->st_outbound_time, c->sa_rekey_margin))) {
+				   !monobefore(mononow(), monotime_add(st->st_outbound_time,
+								       c->config->sa_rekey_margin))) {
 				/*
 				 * we observed no recent use: no need to replace
 				 *

@@ -462,12 +462,12 @@ static bool expire_ike_because_child_not_used(struct state *st)
 	    ike->sa.st_serialno, cst->st_serialno);
 
 	/* not sure why idleness is set to rekey margin? */
-	if (was_eroute_idle(cst, c->sa_rekey_margin)) {
+	if (was_eroute_idle(cst, c->config->sa_rekey_margin)) {
 		/* we observed no traffic, let IPSEC SA and IKE SA expire */
 		dbg("expiring IKE SA #%lu as CHILD SA #%lu has been idle for more than %jds",
 		    ike->sa.st_serialno,
 		    ike->sa.st_serialno,
-		    deltasecs(c->sa_rekey_margin));
+		    deltasecs(c->config->sa_rekey_margin));
 		return true;
 	}
 	return false;
@@ -512,8 +512,8 @@ void schedule_v2_replace_event(struct state *st)
 		story = "IKE SA with policy re-authenticate";
 	} else {
 		deltatime_t marg = fuzz_rekey_margin(st->st_sa_role,
-						     c->sa_rekey_margin,
-						     c->sa_rekey_fuzz/*percent*/);
+						     c->config->sa_rekey_margin,
+						     c->config->sa_rekey_fuzz/*percent*/);
 
 		deltatime_t rekey_delay;
 		if (deltatime_cmp(lifetime, >, marg)) {

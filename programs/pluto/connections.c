@@ -2048,8 +2048,9 @@ static bool extract_connection(const struct whack_message *wm,
 		config->nic_offload = wm->nic_offload;
 		config->sa_ike_max_lifetime = wm->sa_ike_max_lifetime;
 		config->sa_ipsec_max_lifetime = wm->sa_ipsec_max_lifetime;
-		c->sa_rekey_margin = wm->sa_rekey_margin;
-		c->sa_rekey_fuzz = wm->sa_rekey_fuzz;
+		config->sa_rekey_margin = wm->sa_rekey_margin;
+		config->sa_rekey_fuzz = wm->sa_rekey_fuzz;
+
 		c->sa_keying_tries = wm->sa_keying_tries;
 
 		c->sa_replay_window = wm->sa_replay_window;
@@ -2108,16 +2109,16 @@ static bool extract_connection(const struct whack_message *wm,
 			config->sa_ipsec_max_packets = IPSEC_SA_MAX_OPERATIONS;
 		}
 
-		if (deltatime_cmp(c->sa_rekey_margin, >=, c->config->sa_ipsec_max_lifetime)) {
+		if (deltatime_cmp(c->config->sa_rekey_margin, >=, c->config->sa_ipsec_max_lifetime)) {
 			deltatime_t new_rkm = deltatime_scale(c->config->sa_ipsec_max_lifetime, 1, 2);
 
 			llog(RC_LOG, c->logger,
 			     "rekeymargin (%jds) >= salifetime (%jds); reducing rekeymargin to %jds seconds",
-			     deltasecs(c->sa_rekey_margin),
+			     deltasecs(c->config->sa_rekey_margin),
 			     deltasecs(c->config->sa_ipsec_max_lifetime),
 			     deltasecs(new_rkm));
 
-			c->sa_rekey_margin = new_rkm;
+			config->sa_rekey_margin = new_rkm;
 		}
 
 		/* IKEv1's RFC 3706 DPD */
@@ -2523,8 +2524,8 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 	dbg("ike_life: %jd; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s ipsec_max_bytes: %" PRIu64 " ipsec_max_packets %" PRIu64,
 	    deltasecs(c->config->sa_ike_max_lifetime),
 	    deltasecs(c->config->sa_ipsec_max_lifetime),
-	    deltasecs(c->sa_rekey_margin),
-	    c->sa_rekey_fuzz,
+	    deltasecs(c->config->sa_rekey_margin),
+	    c->config->sa_rekey_fuzz,
 	    c->sa_keying_tries,
 	    c->sa_replay_window,
 	    str_connection_policies(c, &pb),
@@ -3914,8 +3915,8 @@ static void show_one_connection(struct show *s,
 		jam_humber_max(buf, " ipsec_max_bytes: ", c->config->sa_ipsec_max_bytes, "B;");
 		jam_humber_max(buf, " ipsec_max_packets: ", c->config->sa_ipsec_max_packets, ";");
 		jam(buf, " replay_window: %u;", c->sa_replay_window);
-		jam(buf, " rekey_margin: %jds;", deltasecs(c->sa_rekey_margin));
-		jam(buf, " rekey_fuzz: %lu%%;", c->sa_rekey_fuzz);
+		jam(buf, " rekey_margin: %jds;", deltasecs(c->config->sa_rekey_margin));
+		jam(buf, " rekey_fuzz: %lu%%;", c->config->sa_rekey_fuzz);
 		jam(buf, " keyingtries: %lu;", c->sa_keying_tries);
 	}
 

@@ -2621,8 +2621,8 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			}
 			if (event_type != EVENT_SA_EXPIRE) {
 				deltatime_t marg = fuzz_rekey_margin(st->st_sa_role,
-								     c->sa_rekey_margin,
-								     c->sa_rekey_fuzz/*percent*/);
+								     c->config->sa_rekey_margin,
+								     c->config->sa_rekey_fuzz/*percent*/);
 				if (deltatime_cmp(event_delay, >, marg)) {
 					st->st_replace_margin = marg;
 				} else {
