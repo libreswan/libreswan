@@ -6,8 +6,8 @@ expected, and then start PLUTO checking its algorithm table.
 Differences from the expected output from algparse can be displayed on
 the host (or guest) using something like:
 
-  host$ ./testing/pluto/bin/algparse.sh OBJ.linux.x86_64/programs/algparse/algparse
+  host$ ./testing/guestbin/algparse.sh OBJ.linux.x86_64.*/programs/algparse/algparse
 
 this can then be fed to patch vis:
 
-  host$ ./testing/pluto/bin/algparse.sh OBJ.linux.x86_64/programs/algparse/algparse | patch -p1
+  host$ ./testing/guestbin/algparse.sh OBJ.linux.x86_64.*/programs/algparse/algparse | patch -p1

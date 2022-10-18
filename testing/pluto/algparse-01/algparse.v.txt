@@ -21,14 +21,14 @@ algparse:   SHA2_384                          IKEv1: IKE         IKEv2: IKE     
 algparse:   SHA2_512                          IKEv1: IKE         IKEv2: IKE         FIPS NSS          sha512
 algparse:   IDENTITY                          IKEv1:             IKEv2:             FIPS             
 algparse: PRF algorithms:
-algparse:   HMAC_MD5                          IKEv1: IKE         IKEv2: IKE              native(HMAC) md5
+algparse:   HMAC_MD5                          IKEv1: IKE         IKEv2: IKE              NSS          md5
 algparse:   HMAC_SHA1                         IKEv1: IKE         IKEv2: IKE         FIPS NSS          sha, sha1
 algparse:   HMAC_SHA2_256                     IKEv1: IKE         IKEv2: IKE         FIPS NSS          sha2, sha256, sha2_256
 algparse:   HMAC_SHA2_384                     IKEv1: IKE         IKEv2: IKE         FIPS NSS          sha384, sha2_384
 algparse:   HMAC_SHA2_512                     IKEv1: IKE         IKEv2: IKE         FIPS NSS          sha512, sha2_512
 algparse:   AES_XCBC                          IKEv1:             IKEv2: IKE              native(XCBC) aes128_xcbc
 algparse: Integrity algorithms:
-algparse:   HMAC_MD5_96                       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH       native(HMAC) md5, hmac_md5
+algparse:   HMAC_MD5_96                       IKEv1: IKE ESP AH  IKEv2: IKE ESP AH       NSS          md5, hmac_md5
 algparse:   HMAC_SHA1_96                      IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS NSS          sha, sha1, sha1_96, hmac_sha1
 algparse:   HMAC_SHA2_512_256                 IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS NSS          sha512, sha2_512, sha2_512_256, hmac_sha2_512
 algparse:   HMAC_SHA2_384_192                 IKEv1: IKE ESP AH  IKEv2: IKE ESP AH  FIPS NSS          sha384, sha2_384, sha2_384_192, hmac_sha2_384
