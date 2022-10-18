@@ -2266,7 +2266,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_ADDRESSPOOL:	/* --addresspool */
-			diagq(ttorange(optarg, NULL, &end->pool_range), optarg);
+			end->addresspool = strdup(optarg);
 			continue;
 
 		case CD_MODECFGDNS:	/* --modecfgdns */

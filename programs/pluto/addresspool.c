@@ -711,8 +711,14 @@ struct addresspool *addresspool_addref(struct addresspool *pool)
 /*
  * Finds an ip_pool that has exactly matching bounds.
  *
- * If a pool overlaps, a diagnostic is returned.  Regardless *POOL is
- * set to the entry found; NULL if none found.
+ * If POOL_RANGE exactly matches an existing address pool, return NULL
+ * and set *POOL.
+ *
+ * If POOL_RANGE overlaps an existing pool return a diagnostic
+ * describing the existing pool's conflict (i.e., assume caller will
+ * include the new pool), and *POOL=NULL.
+ *
+ * Otherwise (nothing matches), return NULL and *POOL=NULL.
  */
 
 diag_t find_addresspool(const ip_range pool_range, struct addresspool **pool)
@@ -730,10 +736,8 @@ diag_t find_addresspool(const ip_range pool_range, struct addresspool **pool)
 
 		if (range_overlaps_range(pool_range, h->r)) {
 			/* bad */
-			range_buf prbuf;
 			range_buf hbuf;
-			return diag("new addresspool %s INEXACTLY OVERLAPS with existing one %s.",
-				    str_range(&pool_range, &prbuf),
+			return diag("range INEXACTLY OVERLAPS existing address pool %s.",
 				    str_range(&h->r, &hbuf));
 		}
 	}

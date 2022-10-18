@@ -84,7 +84,7 @@ struct starter_end {
 	char *ckaid;
 	char *ca;
 	char *updown;
-	ip_range pool_range;    /* store start of v4 addresspool */
+	char *addresspool;
 	ksf strings;
 	knf options;
 

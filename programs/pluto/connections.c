@@ -879,15 +879,6 @@ static diag_t extract_end(struct connection *c,
 	passert(dst->config == config_end);
 	const char *leftright = dst->config->leftright;
 
-	/* XXX: still nasty; just less low-level */
-	if (range_size(src->pool_range) > 0) {
-		struct addresspool *pool; /* ignore */
-		diag_t d = find_addresspool(src->pool_range, &pool);
-		if (d != NULL) {
-			return d;
-		}
-	}
-
 	/*
 	 * decode id, if any
 	 *
@@ -1117,7 +1108,6 @@ static diag_t extract_end(struct connection *c,
 	config_end->client.host_vtiip = src->host_vtiip;
 	config_end->client.ifaceip = src->ifaceip;
 	dst->cat = src->cat;
-	dst->pool_range = src->pool_range;
 
 	config_end->host.xauth.server = src->xauth_server;
 	config_end->host.xauth.client = src->xauth_client;
@@ -1343,13 +1333,34 @@ static diag_t extract_end(struct connection *c,
 	dst->modecfg_server = dst->modecfg_server || src->modecfg_server;
 	dst->modecfg_client = dst->modecfg_client || src->modecfg_client;
 
-	if (range_size(src->pool_range) > 0) {
-		if (c->pool != NULL) {
-			return diag("both left and right define address pools");
+	if (src->addresspool != NULL) {
+
+		/* both ends can't add an address pool */
+		passert(c->pool == NULL);
+
+		err_t e = ttorange(src->addresspool, NULL, &dst->pool_range);
+		if (e != NULL) {
+			return diag("invalid %saddresspool=%s, %s", leftright, src->addresspool, e);
 		}
-		diag_t d = install_addresspool(src->pool_range, c);
+
+		if (range_type(&dst->pool_range) == &ipv6_info && !dst->pool_range.is_subnet) {
+			return diag("invalid %saddresspool=%s, IPv6 range is not a subnet",
+				    leftright, src->addresspool);
+		}
+
+		/* Check for overlap with existing pools */
+		diag_t d;
+		struct addresspool *pool; /* ignore */
+		d = find_addresspool(dst->pool_range, &pool);
 		if (d != NULL) {
-			return diag_diag(&d, "invalid %saddresspool: ", leftright);
+			return diag_diag(&d, "invalid %saddresspool=%s, ",
+					 leftright, src->addresspool);
+		}
+
+		d = install_addresspool(dst->pool_range, c);
+		if (d != NULL) {
+			return diag_diag(&d, "invalid %saddresspool=%s, ",
+					 leftright, src->addresspool);
 		}
 		other_end->modecfg_server = true;
 		dst->modecfg_client = true;
@@ -2257,6 +2268,11 @@ static bool extract_connection(const struct whack_message *wm,
 			return false;
 		}
 		config->sec_label = clone_hunk(sec_label, "struct config sec_label");
+	}
+
+	if (wm->left.addresspool != NULL && wm->right.addresspool != NULL) {
+		llog(RC_FATAL, c->logger, ADD_FAILED_PREFIX"both left and right define addresspool=");
+		return false;
 	}
 
 	/*

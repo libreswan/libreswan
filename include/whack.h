@@ -106,7 +106,7 @@ struct whack_end {
 	bool key_from_DNS_on_demand;
 	char *updown;		/* string */
 	char *virt;
-	ip_range pool_range;	/* store start of v4 addresspool */
+	char *addresspool;
 	bool xauth_server;	/* for XAUTH */
 	bool xauth_client;
 	char *xauth_username;

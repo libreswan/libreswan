@@ -727,16 +727,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			    "connection's %saddresspool set to: %s",
 			    leftright, end->strings[KSCF_ADDRESSPOOL] );
 
-		er = ttorange(addresspool, NULL, &end->pool_range);
-		if (er != NULL)
-			ERR_FOUND("bad %saddresspool=%s [%s]", leftright,
-					addresspool, er);
-
-		if (range_type(&end->pool_range) == &ipv6_info &&
-		    !end->pool_range.is_subnet) {
-			ERR_FOUND("bad IPv6 %saddresspool=%s not subnet", leftright,
-					addresspool);
-		}
+		end->addresspool = addresspool;
 	}
 
 	if (end->strings_set[KSCF_INTERFACE_IP]) {
