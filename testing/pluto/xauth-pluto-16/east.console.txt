@@ -14,10 +14,10 @@ east #
  # these should fail due to overlapping address pools
 east #
  ipsec auto --add modecfg-east-20
-036 "modecfg-east-20": failed to add connection: new addresspool 192.0.2.100-192.0.2.200 INEXACTLY OVERLAPS with existing one 192.0.2.1-192.0.2.200.
+036 "modecfg-east-20": failed to add connection: invalid leftaddresspool=192.0.2.100-192.0.2.200, range INEXACTLY OVERLAPS existing address pool 192.0.2.1-192.0.2.200.
 east #
  ipsec auto --add modecfg-road-east
-036 "modecfg-road-east": failed to add connection: new addresspool 192.0.2.100-192.0.2.200 INEXACTLY OVERLAPS with existing one 192.0.2.1-192.0.2.200.
+036 "modecfg-road-east": failed to add connection: invalid leftaddresspool=192.0.2.100-192.0.2.200, range INEXACTLY OVERLAPS existing address pool 192.0.2.1-192.0.2.200.
 east #
  echo initdone
 initdone
