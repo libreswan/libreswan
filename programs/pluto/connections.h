@@ -362,8 +362,6 @@ struct /*spd_*/end {
 
 	struct virtual_ip *virt;
 
-	ip_range pool_range;	/* store start of v4 addresspool */
-
 	/*
 	 * Track lease addresses.
 	 *

@@ -1338,12 +1338,13 @@ static diag_t extract_end(struct connection *c,
 		/* both ends can't add an address pool */
 		passert(c->pool == NULL);
 
-		err_t e = ttorange(src->addresspool, NULL, &dst->pool_range);
+		ip_range pool_range;
+		err_t e = ttorange(src->addresspool, NULL, &pool_range);
 		if (e != NULL) {
 			return diag("invalid %saddresspool=%s, %s", leftright, src->addresspool, e);
 		}
 
-		if (range_type(&dst->pool_range) == &ipv6_info && !dst->pool_range.is_subnet) {
+		if (range_info(pool_range) == &ipv6_info && !pool_range.is_subnet) {
 			return diag("invalid %saddresspool=%s, IPv6 range is not a subnet",
 				    leftright, src->addresspool);
 		}
@@ -1351,13 +1352,13 @@ static diag_t extract_end(struct connection *c,
 		/* Check for overlap with existing pools */
 		diag_t d;
 		struct addresspool *pool; /* ignore */
-		d = find_addresspool(dst->pool_range, &pool);
+		d = find_addresspool(pool_range, &pool);
 		if (d != NULL) {
 			return diag_diag(&d, "invalid %saddresspool=%s, ",
 					 leftright, src->addresspool);
 		}
 
-		d = install_addresspool(dst->pool_range, c);
+		d = install_addresspool(pool_range, c);
 		if (d != NULL) {
 			return diag_diag(&d, "invalid %saddresspool=%s, ",
 					 leftright, src->addresspool);
