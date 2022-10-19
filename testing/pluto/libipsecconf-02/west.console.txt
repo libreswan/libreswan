@@ -30,7 +30,7 @@ west #
 002 "6in6-protoport": added IKEv2 connection
 west #
  ipsec auto --add 4in6-base # also bad
-003 "4in6-base": failed to add connection: host protocol IPv6 conflicts with client protocol IPv4
+036 "4in6-base": failed to add connection: host protocol IPv6 conflicts with client protocol IPv4
 west #
  ipsec auto --add 4in6-good
 002 "4in6-good": added IKEv2 connection
@@ -39,10 +39,10 @@ west #
 036 "4in6-bad": failed to add connection: client address family IPv4 from leftsubnet=1.2.3.0/24 conflicts with rightsubnet=::/0
 west #
  ipsec auto --add 4in6-protoport
-003 "4in6-protoport": failed to add connection: host protocol IPv6 conflicts with client protocol IPv4
+036 "4in6-protoport": failed to add connection: host protocol IPv6 conflicts with client protocol IPv4
 west #
  ipsec auto --add 6in4-base # also bad
-003 "6in4-base": failed to add connection: host protocol IPv4 conflicts with client protocol IPv6
+036 "6in4-base": failed to add connection: host protocol IPv4 conflicts with client protocol IPv6
 west #
  ipsec auto --add 6in4-good
 002 "6in4-good": added IKEv2 connection
@@ -51,7 +51,7 @@ west #
 036 "6in4-bad": failed to add connection: client address family IPv6 from leftsubnet=1:2:3::/64 conflicts with rightsubnet=0.0.0.0/0
 west #
  ipsec auto --add 6in4-protoport
-003 "6in4-protoport": failed to add connection: host protocol IPv4 conflicts with client protocol IPv6
+036 "6in4-protoport": failed to add connection: host protocol IPv4 conflicts with client protocol IPv6
 west #
  ipsec status | grep unrouted
 000 "4in4-base": 1.2.3.0/24===10.11.12.13...20.21.22.23; unrouted; eroute owner: #0

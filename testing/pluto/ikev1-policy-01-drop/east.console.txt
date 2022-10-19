@@ -11,7 +11,7 @@ east #
  # should fail
 east #
  ipsec auto --add ikev1
-036 "ikev1": failed to add IKEv1 connection: global ikev1-policy does not allow IKEv1 connections
+036 "ikev1": failed to add connection: global ikev1-policy does not allow IKEv1 connections
 east #
  # should work but unused
 east #
