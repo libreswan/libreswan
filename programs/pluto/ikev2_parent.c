@@ -333,7 +333,8 @@ bool need_v2_configuration_payload(const struct connection *const cc,
 				   const lset_t st_nat_traversal)
 {
 	return (cc->spd.this.config->client.modecfg_client &&
-		(!cc->spd.this.cat || LHAS(st_nat_traversal, NATED_HOST)));
+		(!cc->spd.this.config->client.address_translation ||
+		 LHAS(st_nat_traversal, NATED_HOST)));
 }
 
 struct crypt_mac v2_hash_id_payload(const char *id_name, struct ike_sa *ike,

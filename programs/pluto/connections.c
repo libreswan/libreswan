@@ -663,7 +663,7 @@ static void jam_end_id(struct jambuf *buf, const struct end *this)
 			jam_string(buf, "MS");
 		if (this->config->client.modecfg_client)
 			jam_string(buf, "+MC");
-		if (this->cat)
+		if (this->config->client.address_translation)
 			jam_string(buf, "+CAT");
 		if (this->config->host.xauth.server)
 			jam_string(buf, "+XS");
@@ -1107,7 +1107,7 @@ static diag_t extract_end(struct connection *c,
 	dst->host_srcip = src->host_srcip;
 	config_end->client.host_vtiip = src->host_vtiip;
 	config_end->client.ifaceip = src->ifaceip;
-	dst->cat = src->cat;
+	config_end->client.address_translation = src->cat;
 
 	config_end->host.xauth.server = src->xauth_server;
 	config_end->host.xauth.client = src->xauth_client;
@@ -3831,7 +3831,7 @@ static void show_one_sr(struct show *s,
 			}
 		}
 
-		jam(buf, " cat:%s;", sr->this.cat ? "set" : "unset");
+		jam(buf, " cat:%s;", sr->this.config->client.address_translation ? "set" : "unset");
 	}
 
 #undef COMBO
