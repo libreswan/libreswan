@@ -161,6 +161,7 @@ static ip_port port_from_ipv6_sockaddr(const ip_sockaddr sa)
 const struct ip_info ipv4_info = {
 
 	.ip_version = IPv4,
+	.ip_index = IPv4_INDEX,
 	.ip_size = sizeof(struct in_addr),
 	.ip_name = "IPv4",
 	.mask_cnt = 32,
@@ -217,6 +218,7 @@ const struct ip_info ipv4_info = {
 const struct ip_info ipv6_info = {
 
 	.ip_version = IPv6,
+	.ip_index = IPv6_INDEX,
 	.ip_size = sizeof(struct in6_addr),
 	.ip_name = "IPv6",
 	.mask_cnt = 128,

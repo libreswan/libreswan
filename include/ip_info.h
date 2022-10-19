@@ -9,12 +9,15 @@
 #include "ip_subnet.h"
 #include "ip_selector.h"
 #include "ip_sockaddr.h"
+#include "ip_version.h"
+#include "ip_index.h"
 
 struct ip_info {
 	/*
 	 * address family
 	 */
 	enum ip_version ip_version; /* 4 or 6 */
+	enum ip_index ip_index; /* 1 or 2 (never 0) */
 	const char *ip_name; /* "IPv4" or "IPv6" */
 	size_t ip_size; /* 4 or 16 */
 	unsigned mask_cnt; /* 32 or 128 */
