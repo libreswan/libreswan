@@ -382,6 +382,7 @@ struct connection *first_pending(const struct ike_sa *ike,
 
 static bool pending_check_timeout(const struct connection *c)
 {
+	const monotime_t now = mononow();
 	for (struct pending *p, **pp = host_pair_first_pending(c);
 	     pp != NULL && (p = *pp) != NULL; /*see-below*/) {
 		deltatime_t waited = monotimediff(mononow(), p->pend_time);
@@ -390,9 +391,11 @@ static bool pending_check_timeout(const struct connection *c)
 		    pri_connection(c, &cib), deltasecs(waited),
 		    deltasecs(c->config->dpd.timeout));
 		if (deltasecs(c->config->dpd.timeout) > 0) {
-			if (!monobefore(mononow(),
-				monotime_add(p->pend_time,
-					     deltatime_scale(c->config->dpd.timeout, 3, 1)))) {
+			/* patience = 3 * c->config->dpd.timeout */
+			deltatime_t patience = deltatime_scale(c->config->dpd.timeout, 3, 1);
+			monotime_t pending_patience = monotime_add(p->pend_time, patience);
+			/* run out of patience? */
+			if (monotime_cmp(now, >=, pending_patience)) {
 				connection_buf cib;
 				dbg("connection "PRI_CONNECTION" stuck, restarting",
 				    pri_connection(c, &cib));
