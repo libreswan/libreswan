@@ -29,6 +29,7 @@
 #include "ip_address.h"
 #include "ip_endpoint.h"
 #include "ip_bytes.h"
+#include "ip_version.h"
 #include "err.h"
 
 struct jambuf;

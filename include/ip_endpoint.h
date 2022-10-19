@@ -25,6 +25,7 @@
 #include "ip_port.h"
 #include "ip_protoport.h"
 #include "ip_bytes.h"
+#include "ip_version.h"
 
 struct jambuf;
 struct ip_protocol;

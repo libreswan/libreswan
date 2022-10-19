@@ -25,6 +25,7 @@
 #include "err.h"
 #include "where.h"
 #include "ip_bytes.h"
+#include "ip_version.h"
 
 struct in_addr;
 struct in6_addr;

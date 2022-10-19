@@ -24,6 +24,7 @@
 #include "ip_protocol.h"
 #include "ip_range.h"
 #include "ip_bytes.h"
+#include "ip_version.h"
 
 struct jambuf;
 

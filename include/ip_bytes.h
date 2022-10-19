@@ -20,11 +20,7 @@
 #include <stdint.h>		/* for uint8_t */
 
 struct ip_info;
-
-enum ip_version {
-	IPv4 = 4,
-	IPv6 = 6,
-};
+enum ip_version;
 
 /*
  * We need something that makes static IPv4 initializers possible

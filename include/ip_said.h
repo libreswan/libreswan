@@ -23,6 +23,7 @@
 #include "ipsec_spi.h"		/* for ipsec_spi_t */
 #include "ttodata.h"
 #include "ip_protocol.h"
+#include "ip_version.h"
 
 struct jambuf;
 

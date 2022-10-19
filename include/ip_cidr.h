@@ -23,7 +23,9 @@
  * Unlike ip_subnet, this allows a non-zero host_identifier.
  */
 
-#include "ip_address.h"		/* for ip_bytes */
+#include "ip_bytes.h"
+#include "ip_version.h"
+#include "ip_address.h"
 
 struct jambuf;
 

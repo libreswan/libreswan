@@ -22,6 +22,7 @@
 #include "err.h"
 #include "ip_address.h"
 #include "ip_subnet.h"
+#include "ip_version.h"
 
 typedef struct {
 	bool is_set;
