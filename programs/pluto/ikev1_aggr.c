@@ -769,7 +769,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 		st->hidden_variables.st_xauth_client_done = true;
 		st->st_oakley.doing_xauth = false;
 
-		if (c->spd.this.modecfg_client) {
+		if (c->spd.this.config->client.modecfg_client) {
 			dbg("skipping XAUTH for rekey for Cisco Peer compatibility.");
 			st->hidden_variables.st_modecfg_vars_set = true;
 			st->hidden_variables.st_modecfg_started = true;
@@ -782,7 +782,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 		st->hidden_variables.st_xauth_client_done = true;
 		st->st_oakley.doing_xauth = false;
 
-		if (c->spd.this.modecfg_client) {
+		if (c->spd.this.config->client.modecfg_client) {
 			dbg("this seems to be rekey, and MODECFG is not supposed to be done again");
 			st->hidden_variables.st_modecfg_vars_set = true;
 			st->hidden_variables.st_modecfg_started = true;
@@ -922,7 +922,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 		st->hidden_variables.st_xauth_client_done = true;
 		st->st_oakley.doing_xauth = false;
 
-		if (st->st_connection->spd.this.modecfg_client) {
+		if (st->st_connection->spd.this.config->client.modecfg_client) {
 			dbg("skipping ModeCFG for rekey for Cisco Peer compatibility.");
 			st->hidden_variables.st_modecfg_vars_set = true;
 			st->hidden_variables.st_modecfg_started = true;
@@ -936,7 +936,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 		st->hidden_variables.st_xauth_client_done = true;
 		st->st_oakley.doing_xauth = false;
 
-		if (st->st_connection->spd.this.modecfg_client) {
+		if (st->st_connection->spd.this.config->client.modecfg_client) {
 			dbg("this seems to be rekey, and MODECFG is not supposed to be done again");
 			st->hidden_variables.st_modecfg_vars_set = true;
 			st->hidden_variables.st_modecfg_started = true;

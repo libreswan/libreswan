@@ -122,6 +122,11 @@ struct config_client_end {
 	 */
 	ip_cidr host_vtiip;
 	ip_cidr ifaceip;
+	/*
+	 * How to handle CP packets (or MODECFG packets in IKEv1).
+	 */
+	bool modecfg_server;	/* Give local addresses to tunnel's end */
+	bool modecfg_client;	/* request address for local end */
 };
 
 struct config_end {
@@ -376,8 +381,6 @@ struct /*spd_*/end {
 	 */
 	bool has_lease;		/* server gave out lease from address pool */
 	bool has_internal_address;
-	bool modecfg_server;	/* Give local addresses to tunnel's end */
-	bool modecfg_client;	/* request address for local end */
 	bool cat;		/* IPv4 Client Address Translation */
 	bool has_cat;		/* add a CAT iptable rule when a valid INTERNAL_IP4_ADDRESS
 				   is received */

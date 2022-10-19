@@ -646,8 +646,8 @@ static void jam_end_id(struct jambuf *buf, const struct end *this)
 		jam_id_bytes(buf, &this->host->id, jam_sanitized_bytes);
 	}
 
-	if (this->modecfg_server ||
-	    this->modecfg_client ||
+	if (this->config->client.modecfg_server ||
+	    this->config->client.modecfg_client ||
 	    this->config->host.xauth.server ||
 	    this->config->host.xauth.client ||
 	    this->config->host.sendcert != cert_defaultcertpolicy) {
@@ -659,9 +659,9 @@ static void jam_end_id(struct jambuf *buf, const struct end *this)
 			jam_string(buf, "[");
 		}
 
-		if (this->modecfg_server)
+		if (this->config->client.modecfg_server)
 			jam_string(buf, "MS");
-		if (this->modecfg_client)
+		if (this->config->client.modecfg_client)
 			jam_string(buf, "+MC");
 		if (this->cat)
 			jam_string(buf, "+CAT");
@@ -864,9 +864,9 @@ static diag_t extract_client_afi(const struct whack_message *wm,
  */
 
 static diag_t extract_end(struct connection *c,
-			  struct config_end *config_end,
 			  struct end *dst,
-			  struct end *other_end,
+			  struct config_end *config_end,
+			  struct config_end *other_config_end,
 			  const struct whack_message *wm,
 			  const struct whack_end *src,
 			  const struct whack_end *other_src,
@@ -1328,10 +1328,12 @@ static diag_t extract_end(struct connection *c,
 	 *
 	 * Need to also merge in the client/server options provided by
 	 * whack - sometimes they are set, sometimes they are not.
+	 *
+	 * XXX: HUH!
 	 */
 
-	dst->modecfg_server = dst->modecfg_server || src->modecfg_server;
-	dst->modecfg_client = dst->modecfg_client || src->modecfg_client;
+	config_end->client.modecfg_server = config_end->client.modecfg_server || src->modecfg_server;
+	config_end->client.modecfg_client = config_end->client.modecfg_client || src->modecfg_client;
 
 	if (src->addresspool != NULL) {
 
@@ -1363,8 +1365,10 @@ static diag_t extract_end(struct connection *c,
 			return diag_diag(&d, "invalid %saddresspool=%s, ",
 					 leftright, src->addresspool);
 		}
-		other_end->modecfg_server = true;
-		dst->modecfg_client = true;
+
+		/* force settings */
+		other_config_end->client.modecfg_server = true;
+		config_end->client.modecfg_client = true;
 	}
 
 	return NULL;
@@ -2296,8 +2300,8 @@ static bool extract_connection(const struct whack_message *wm,
 
 	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
 		int that = (this + 1) % LEFT_RIGHT_ROOF;
-		diag_t d = extract_end(c, &config->end[this],
-				       client_spd[this], client_spd[that],
+		diag_t d = extract_end(c, client_spd[this],
+				       &config->end[this], &config->end[that],
 				       wm, whack_ends[this], whack_ends[that],
 				       host_afi, client_afi, &same_ca[this],
 				       c->logger);
@@ -3798,8 +3802,8 @@ static void show_one_sr(struct show *s,
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		jam(buf, PRI_CONNECTION":   modecfg info:", c->name, instance);
-		jam(buf, " us:%s,", COMBO(sr->this, modecfg_server, modecfg_client));
-		jam(buf, " them:%s,", COMBO(sr->that, modecfg_server, modecfg_client));
+		jam(buf, " us:%s,", COMBO(sr->this.config->client, modecfg_server, modecfg_client));
+		jam(buf, " them:%s,", COMBO(sr->that.config->client, modecfg_server, modecfg_client));
 		jam(buf, " modecfg policy:%s,", (c->policy & POLICY_MODECFG_PULL ? "pull" : "push"));
 
 		jam_string(buf, " dns:");
