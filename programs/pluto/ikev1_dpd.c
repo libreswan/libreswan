@@ -296,8 +296,7 @@ static void dpd_outI(struct state *p1st, struct state *st, bool eroute_care,
 	 *
 	 * ??? the code actually picks the most recent.  So much for comments.
 	 */
-	monotime_t last = !monobefore(p1st->st_last_dpd, st->st_last_dpd) ?
-		p1st->st_last_dpd : st->st_last_dpd;
+	monotime_t last = monotime_max(p1st->st_last_dpd, st->st_last_dpd);
 
 	monotime_t next_time = monotime_add(last, delay);
 	deltatime_t next_delay = monotimediff(next_time, now);

@@ -58,6 +58,7 @@ extern const monotime_t monotime_epoch;
 bool is_monotime_epoch(monotime_t t);
 
 monotime_t mononow(void);
+monotime_t monotime_max(monotime_t t, monotime_t d);
 monotime_t monotime_add(monotime_t t, deltatime_t d);
 monotime_t monotime_sub(monotime_t t, deltatime_t d);
 

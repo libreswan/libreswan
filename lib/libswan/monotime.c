@@ -89,6 +89,15 @@ intmax_t monosecs(monotime_t m)
 	return m.mt.tv_sec;
 }
 
+monotime_t monotime_max(monotime_t l, monotime_t r)
+{
+	if (timercmp(&l.mt, &r.mt, >)) {
+		return l;
+	} else {
+		return r;
+	}
+}
+
 monotime_t monotime_add(monotime_t t, deltatime_t d)
 {
 	monotime_t s = MONOTIME_EPOCH;
