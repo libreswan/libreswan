@@ -245,7 +245,7 @@ static void dpd_sched_timeout(struct state *p1st, const monotime_t now, deltatim
 {
 	passert(deltasecs(timeout) > 0);
 	if (p1st->st_v1_dpd_event == NULL ||
-	    monobefore(monotime_add(now, timeout), p1st->st_v1_dpd_event->ev_time)) {
+	    monotime_cmp(monotime_add(now, timeout), <, p1st->st_v1_dpd_event->ev_time)) {
 		dbg("DPD: scheduling timeout to %jd", deltasecs(timeout));
 		event_delete(EVENT_v1_DPD, p1st);
 		event_schedule(EVENT_v1_DPD_TIMEOUT, timeout, p1st);
