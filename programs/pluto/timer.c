@@ -235,6 +235,7 @@ static void timer_event_cb(void *arg, struct logger *logger)
 static void dispatch_event(struct state *st, enum event_type event_type,
 			   deltatime_t event_delay)
 {
+	const monotime_t now = mononow();
 	/*
 	 * Check that st is as expected for the event type.
 	 *
@@ -308,8 +309,8 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 				dbg("not replacing stale %s SA %lu; #%lu will do",
 				    satype, st->st_serialno, newer_sa);
 			} else if (event_type == EVENT_v1_REPLACE_IF_USED &&
-				   !monobefore(mononow(), monotime_add(st->st_outbound_time,
-								       c->config->sa_rekey_margin))) {
+				   monotime_cmp(now, >=, monotime_add(st->st_outbound_time,
+								      c->config->sa_rekey_margin))) {
 				/*
 				 * we observed no recent use: no need to replace
 				 *
@@ -326,7 +327,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 				 * at stake.
 				 */
 				dbg("not replacing stale %s SA: inactive for %jds",
-				    satype, deltasecs(monotimediff(mononow(), st->st_outbound_time)));
+				    satype, deltasecs(monotimediff(now, st->st_outbound_time)));
 			} else {
 				dbg("replacing stale %s SA",
 				    IS_IKE_SA(st) ? "ISAKMP" : "IPsec");
