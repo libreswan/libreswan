@@ -4,7 +4,8 @@ set -xe ; exec < /dev/null
 
 # create a package cache directory
 
-export PKG_CACHE=/pool/pkg.openbsd
+export PKG_CACHE=/pool/pkg.openbsd.$(uname -r)
+echo PKG_CACHE=${PKG_CACHE}
 mkdir -p ${PKG_CACHE}
 
 export PKG_PATH=${PKG_CACHE}:installpath

@@ -904,23 +904,18 @@ $(KVM_NETBSD_BASE_ISO): testing/libvirt/netbsd/base.sh
 
 # Give the OpenBSD ISO a meaningful name.
 
-KVM_OPENBSD_URL ?= https://cdn.openbsd.org/pub/OpenBSD/7.1
-KVM_OPENBSD_ISO_URL ?= $(KVM_OPENBSD_URL)/amd64/install71.iso
-KVM_OPENBSD_SRC_URL += $(KVM_OPENBSD_URL)/src.tar.gz
-KVM_OPENBSD_SRC_URL += $(KVM_OPENBSD_URL)/sys.tar.gz
+KVM_OPENBSD_VERSION ?= 7.2
+KVM_OPENBSD_URL_BASE ?= https://cdn.openbsd.org/pub/OpenBSD/$(KVM_OPENBSD_VERSION)
+KVM_OPENBSD_ISO_URL ?= $(KVM_OPENBSD_URL_BASE)/amd64/install$(subst .,,$(KVM_OPENBSD_VERSION)).iso
+KVM_OPENBSD_ISO_SHA256 ?= 2af162b06672870118b5fbd38bf93bd27a4909fe6570c71d2cb6ba33f8798870
 # not openbsd... as gets deleted by rm openbsd.*
-KVM_OPENBSD_POOLPREFIX = $(KVM_POOLDIR)/OpenBSD-$(notdir $(KVM_OPENBSD_URL))
+KVM_OPENBSD_POOLPREFIX = $(KVM_POOLDIR)/OpenBSD-$(notdir $(KVM_OPENBSD_URL_BASE))
 KVM_OPENBSD_ISO = $(KVM_OPENBSD_POOLPREFIX)-install.iso
-KVM_OPENBSD_SRC_TGZ = $(addprefix $(KVM_OPENBSD_POOLPREFIX)-, $(notdir $(KVM_OPENBSD_SRC_URL)))
 
 kvm-iso: $(KVM_OPENBSD_ISO)
 $(KVM_OPENBSD_ISO): | $(KVM_POOLDIR)
 	wget --output-document $@.tmp --no-clobber -- $(KVM_OPENBSD_ISO_URL)
-	mv $@.tmp $@
-kvm-iso: $(KVM_OPENBSD_SRC_TGZ)
-$(KVM_OPENBSD_SRC_TGZ): \
-$(KVM_OPENBSD_POOLPREFIX)-%: | $(KVM_POOLDIR)
-	wget --output-document $@.tmp --no-clobber -- $(KVM_OPENBSD_URL)/$(*)
+	echo 'SHA256 ($@.tmp) = $(KVM_OPENBSD_ISO_SHA256)' | cksum -c
 	mv $@.tmp $@
 
 KVM_OPENBSD_BASE_DOMAIN = $(KVM_POOLDIR_PREFIX)openbsd-base
@@ -931,7 +926,6 @@ $(KVM_OPENBSD_BASE_DOMAIN): | $(KVM_OPENBSD_BASE_ISO)
 
 kvm-iso: $(KVM_OPENBSD_BASE_ISO)
 $(KVM_OPENBSD_BASE_ISO): $(KVM_OPENBSD_ISO)
-$(KVM_OPENBSD_BASE_ISO): $(KVM_OPENBSD_SRC_TGZ)
 $(KVM_OPENBSD_BASE_ISO): testing/libvirt/openbsd/base.conf
 $(KVM_OPENBSD_BASE_ISO): testing/libvirt/openbsd/boot.conf
 $(KVM_OPENBSD_BASE_ISO): testing/libvirt/openbsd/base.sh
@@ -949,9 +943,7 @@ $(KVM_OPENBSD_BASE_ISO): testing/libvirt/openbsd/base.disk
 		/base.conf="testing/libvirt/openbsd/base.conf" \
 		/etc/boot.conf="testing/libvirt/openbsd/boot.conf" \
 		/base.sh=$(KVM_OPENBSD_BASE_DOMAIN).base.sh \
-		/base.disk=testing/libvirt/openbsd/base.disk \
-		/src.tar.gz=$(KVM_OPENBSD_POOLPREFIX)-src.tar.gz \
-		/sys.tar.gz=$(KVM_OPENBSD_POOLPREFIX)-sys.tar.gz
+		/base.disk=testing/libvirt/openbsd/base.disk
 	mv $@.tmp $@
 
 
