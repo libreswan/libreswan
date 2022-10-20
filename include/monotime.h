@@ -66,7 +66,6 @@ monotime_t monotime_sub(monotime_t t, deltatime_t d);
 int monotime_sub_sign(monotime_t l, monotime_t r);
 #define monotime_cmp(L, OP, R) (monotime_sub_sign(L, R) OP 0)
 
-bool monobefore(monotime_t a, monotime_t b);
 deltatime_t monotimediff(monotime_t a, monotime_t b);
 intmax_t monosecs(monotime_t m);
 

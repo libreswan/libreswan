@@ -112,11 +112,6 @@ monotime_t monotime_sub(monotime_t t, deltatime_t d)
 	return s;
 }
 
-bool monobefore(monotime_t a, monotime_t b)
-{
-	return timercmp(&a.mt, &b.mt, <);
-}
-
 int monotime_sub_sign(monotime_t l, monotime_t r)
 {
 	return timeval_sub_sign(l.mt, r.mt);
