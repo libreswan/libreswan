@@ -1562,6 +1562,8 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 			c->spd.this.client = selector_from_address(a);
 
 			c->spd.this.has_client = true;
+			c->spd.this.has_internal_address = true;
+
 			subnet_buf caddr;
 			str_selector_subnet(&c->spd.this.client, &caddr);
 			log_state(RC_LOG, st, "Received IP address %s", caddr.buf);
@@ -1722,6 +1724,8 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				c->spd.this.client = selector_from_address(a);
 
 				c->spd.this.has_client = true;
+				c->spd.this.has_internal_address = true;
+
 				subnet_buf caddr;
 				str_selector_subnet(&c->spd.this.client, &caddr);
 				log_state(RC_INFORMATIONAL, st,
