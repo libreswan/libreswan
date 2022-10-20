@@ -282,7 +282,7 @@ const struct pubkey_type pubkey_type_ecdsa = {
 
 static struct hash_signature ECDSA_raw_sign_hash(const struct secret_stuff *pks,
 						 const uint8_t *hash_val, size_t hash_len,
-						 const struct hash_desc *hash_algo_unused UNUSED,
+						 const struct hash_desc *hash_alg,
 						 struct logger *logger)
 {
 	DBGF(DBG_CRYPT, "%s: started using NSS", __func__);
@@ -302,28 +302,27 @@ static struct hash_signature ECDSA_raw_sign_hash(const struct secret_stuff *pks,
 
 	/* point signature at the SIG_VAL buffer */
 	struct hash_signature signature = {0};
-	SECItem raw_signature = {
-		.type = siBuffer,
-		.len = PK11_SignatureLen(pks->u.pubkey.private_key),
-		.data = signature.ptr/*array*/,
-	};
-	passert(raw_signature.len <= sizeof(signature.ptr/*array*/));
-	dbg("ECDSA signature.len %d", raw_signature.len);
-
-	/* create the raw signature */
-	SECStatus s = PK11_Sign(pks->u.pubkey.private_key, &raw_signature, &hash_to_sign);
-	if (DBGP(DBG_CRYPT)) {
-		DBG_dump("PK11_Sign()", raw_signature.data, raw_signature.len);
-	}
+	SECItem raw_signature;
+	SECStatus s = SGN_Digest(pks->u.pubkey.private_key,
+				 hash_alg->nss.oid_tag,
+				 &raw_signature, &hash_to_sign);
 	if (s != SECSuccess) {
 		/* PR_GetError() returns the thread-local error */
 		llog_nss_error(RC_LOG_SERIOUS, logger,
-			       "ECDSA sign function failed");
+			       "ECDSA SGN_Digest function failed");
 		return (struct hash_signature) { .len = 0, };
 	}
-
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump("SGN_Digest()", raw_signature.data, raw_signature.len);
+	}
 	passert(sizeof(signature.ptr/*array*/) >= raw_signature.len);
+	memcpy(signature.ptr, raw_signature.data, raw_signature.len);
 	signature.len = raw_signature.len;
+	SECITEM_FreeItem(&raw_signature, PR_FALSE/*only-data*/);
+
+	if (DBGP(DBG_CRYPT)) {
+		DBG_dump_hunk("PK11_Sign()", signature);
+	}
 
 	dbg("%s: signed hash", __func__);
 	return signature;
