@@ -332,8 +332,8 @@ bool emit_v2KE(chunk_t g, const struct dh_desc *group,
 bool need_v2_configuration_payload(const struct connection *const cc,
 				   const lset_t st_nat_traversal)
 {
-	return (cc->spd.this.config->client.modecfg_client &&
-		(!cc->spd.this.config->client.address_translation ||
+	return (cc->local->config->client.modecfg_client &&
+		(!cc->local->config->client.address_translation ||
 		 LHAS(st_nat_traversal, NATED_HOST)));
 }
 

@@ -1393,18 +1393,18 @@ stf_status xauth_inR1(struct state *st, struct msg_digest *md UNUSED)
 	/* Back to where we were */
 	st->st_oakley.doing_xauth = false;
 
-	if (!st->st_connection->spd.this.config->client.modecfg_server) {
+	if (!st->st_connection->local->config->client.modecfg_server) {
 		dbg("not server, starting new exchange");
 		st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	}
 
-	if (st->st_connection->spd.this.config->client.modecfg_server &&
+	if (st->st_connection->local->config->client.modecfg_server &&
 	    st->hidden_variables.st_modecfg_vars_set) {
 		dbg("modecfg server, vars are set. Starting new exchange.");
 		st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	}
 
-	if (st->st_connection->spd.this.config->client.modecfg_server &&
+	if (st->st_connection->local->config->client.modecfg_server &&
 	    st->st_connection->policy & POLICY_MODECFG_PULL) {
 		dbg("modecfg server, pull mode. Starting new exchange.");
 		st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;

@@ -1352,7 +1352,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 		st->hidden_variables.st_xauth_client_done = true;
 		st->st_oakley.doing_xauth = false;
 
-		if (c->spd.this.config->client.modecfg_client) {
+		if (c->local->config->client.modecfg_client) {
 			dbg("Skipping ModeCFG for rekey for Cisco Peer compatibility.");
 			st->hidden_variables.st_modecfg_vars_set = true;
 			st->hidden_variables.st_modecfg_started = true;
@@ -1418,7 +1418,7 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 		st->hidden_variables.st_xauth_client_done = true;
 		st->st_oakley.doing_xauth = false;
 
-		if (c->spd.this.config->client.modecfg_client) {
+		if (c->local->config->client.modecfg_client) {
 			dbg("Skipping ModeCFG for rekey for Cisco Peer compatibility.");
 			st->hidden_variables.st_modecfg_vars_set = true;
 			st->hidden_variables.st_modecfg_started = true;

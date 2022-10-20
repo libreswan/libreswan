@@ -1149,7 +1149,7 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike)
 
 	/* send response */
 	if (LIN(POLICY_MOBIKE, c->policy) && ike->sa.st_ike_seen_v2n_mobike_supported) {
-		if (c->spd.that.config->host.type == KH_ANY) {
+		if (c->remote->config->host.type == KH_ANY) {
 			/* only allow %any connection to mobike */
 			ike->sa.st_ike_sent_v2n_mobike_supported = true;
 		} else {

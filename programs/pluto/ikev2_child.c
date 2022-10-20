@@ -615,7 +615,7 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs, struct child_sa 
 	c->spd.this.has_client = true;
 	c->spd.this.has_internal_address = true;
 
-	if (c->spd.this.config->client.address_translation) {
+	if (c->local->config->client.address_translation) {
 		dbg("CAT is set, not setting host source IP address to %s",
 		    ipstr(&ip, &ip_str));
 		ip_address this_client_prefix = selector_prefix(c->spd.this.client);

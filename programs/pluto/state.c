@@ -2702,7 +2702,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	case MESSAGE_RESPONSE:
 		/* MOBIKE initiator processing response */
 		c->local->host.addr = endpoint_address(child->sa.st_mobike_local_endpoint);
-		dbg("%s() %s.host_port: %u->%u", __func__, c->spd.this.config->leftright,
+		dbg("%s() %s.host_port: %u->%u", __func__, c->local->config->leftright,
 		    c->spd.this.host->port, endpoint_hport(child->sa.st_mobike_local_endpoint));
 		c->spd.this.host->port = endpoint_hport(child->sa.st_mobike_local_endpoint);
 		c->spd.this.host->nexthop = child->sa.st_mobike_host_nexthop;
@@ -2710,7 +2710,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 	case MESSAGE_REQUEST:
 		/* MOBIKE responder processing request */
 		c->remote->host.addr = endpoint_address(md->sender);
-		dbg("%s() %s.host_port: %u->%u", __func__, c->spd.that.config->leftright,
+		dbg("%s() %s.host_port: %u->%u", __func__, c->remote->config->leftright,
 		    c->spd.that.host->port, endpoint_hport(md->sender));
 		c->spd.that.host->port = endpoint_hport(md->sender);
 

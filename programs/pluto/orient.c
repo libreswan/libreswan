@@ -235,7 +235,7 @@ bool orient(struct connection *c, struct logger *logger)
 			endpoint_buf eb;
 			dbg("  interface endpoint %s does not match %s(THIS) or %s(THAT)",
 			    str_endpoint(&ifp->local_endpoint, &eb),
-			    c->spd.this.config->leftright, c->spd.that.config->leftright);
+			    c->local->config->leftright, c->remote->config->leftright);
 			continue;
 		}
 
@@ -280,14 +280,14 @@ bool orient(struct connection *c, struct logger *logger)
 			endpoint_buf eb;
 			dbg("  interface endpoint %s matches %s(THIS); orienting",
 			    str_endpoint(&ifp->local_endpoint, &eb),
-			    c->spd.this.config->leftright);
+			    c->local->config->leftright);
 			matching_swaps_end = false;
 		}
 		if (that) {
 			endpoint_buf eb;
 			dbg("  interface endpoint %s matches %s(THAT); orienting and swapping",
 			    str_endpoint(&ifp->local_endpoint, &eb),
-			    c->spd.that.config->leftright);
+			    c->remote->config->leftright);
 			matching_swaps_end = true;
 		}
 	}
@@ -297,7 +297,7 @@ bool orient(struct connection *c, struct logger *logger)
 		c->interface = iface_endpoint_addref(matching_ifp);
 		if (matching_swaps_end) {
 			dbg("  swapping ends so that %s(THAT) is oriented as (THIS)",
-			    c->spd.that.config->leftright);
+			    c->remote->config->leftright);
 			swap_ends(c);
 		}
 		return true;

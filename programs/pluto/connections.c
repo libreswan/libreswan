@@ -2394,7 +2394,7 @@ static bool extract_connection(const struct whack_message *wm,
 	 */
 	struct end *wild_side =
 		(!address_is_specified(c->local->host.addr) ||
-		 c->spd.this.config->client.protoport.has_port_wildcard ||
+		 c->local->config->client.protoport.has_port_wildcard ||
 		 id_has_wildcards(&c->local->host.id) ? &c->spd.this : &c->spd.that);
 
 	/* force all oppo connections to have a client */

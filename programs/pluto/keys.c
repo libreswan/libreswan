@@ -601,7 +601,7 @@ const struct secret_stuff *get_local_private_key(const struct connection *c,
 			 */
 			llog(RC_LOG|LOG_STREAM/*not-whack-grrr*/, logger,
 				    "reloaded private key matching %s certificate '%s'",
-				    c->spd.this.config->leftright, nickname);
+				    c->local->config->leftright, nickname);
 		}
 
 		/*
@@ -648,7 +648,7 @@ const struct secret_stuff *get_local_private_key(const struct connection *c,
 			ckaid_buf ckb;
 			llog(RC_LOG|LOG_STREAM/*not-whack-grr*/, logger,
 				    "reloaded private key matching %s CKAID %s",
-				    c->spd.this.config->leftright, str_ckaid(c->local->config->host.ckaid, &ckb));
+				    c->local->config->leftright, str_ckaid(c->local->config->host.ckaid, &ckb));
 		}
 
 
