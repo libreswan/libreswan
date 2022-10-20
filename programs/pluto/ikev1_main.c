@@ -1556,8 +1556,7 @@ static void send_v1_notification(struct logger *logger,
 	switch (type) {
 	case v1N_PAYLOAD_MALFORMED:
 		/* only send one per second. */
-		/* ??? this depends on monotime_t having a one-second granularity */
-		if (monobefore(last_malformed, now))
+		if (monotime_cmp(monotime_add(last_malformed, deltatime(1)), <, now))
 			return;
 
 		last_malformed = now;
@@ -1740,15 +1739,14 @@ void send_v1_notification_from_state(struct state *st, enum state_kind from_stat
 void send_v1_notification_from_md(struct msg_digest *md, v1_notification_t type)
 {
 	pb_stream r_hdr_pbs;
-	monotime_t n = mononow();
+	const monotime_t now = mononow();
 
 	switch (type) {
 	case v1N_PAYLOAD_MALFORMED:
 		/* only send one per second. */
-		/* ??? this depends on monotime_t having a one-second granularity */
-		if (monobefore(last_malformed, n))
+		if (monotime_cmp(monotime_add(last_malformed, deltatime(1)), <, now))
 			return;
-		last_malformed = n;
+		last_malformed = now;
 		break;
 
 	case v1N_INVALID_FLAGS:
