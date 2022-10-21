@@ -186,8 +186,10 @@ void delete_connection(struct connection **cp)
 			     c->newest_ike_sa, c->newest_ipsec_sa);
 		}
 		c->kind = CK_GOING_AWAY;
-		if (c->pool != NULL) {
-			free_that_address_lease(c);
+		for (enum ip_index i = IP_INDEX_FLOOR; i < IP_INDEX_ROOF; i++) {
+			if (c->pool[i] != NULL) {
+				free_that_address_lease(c);
+			}
 		}
 	}
 	release_connection(c);
@@ -202,7 +204,9 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	if (c->kind == CK_GROUP)
 		delete_group(c);
 
-	addresspool_delref(&c->pool);
+	for (enum ip_index i = IP_INDEX_FLOOR; i < IP_INDEX_ROOF; i++) {
+		addresspool_delref(&c->pool[i]);
+	}
 
 	if (IS_XFRMI && c->xfrmi != NULL)
 		unreference_xfrmi(c);
@@ -798,7 +802,9 @@ static void unshare_connection(struct connection *c, struct connection *t/*empla
 		end->host.id = clone_id(&end->host.id, "unshare connection id");
 	}
 
-	c->pool = addresspool_addref(t->pool);
+	for (enum ip_index i = IP_INDEX_FLOOR; i < IP_INDEX_ROOF; i++) {
+		c->pool[i] = addresspool_addref(t->pool[i]);
+	}
 
 	if (IS_XFRMI && c->xfrmi != NULL)
 		reference_xfrmi(c);
@@ -1338,7 +1344,8 @@ static diag_t extract_end(struct connection *c,
 	if (src->addresspool != NULL) {
 
 		/* both ends can't add an address pool */
-		passert(c->pool == NULL);
+		passert(c->pool[IPv4_INDEX] == NULL &&
+			c->pool[IPv6_INDEX] == NULL);
 
 		ip_range pool_range;
 		err_t e = ttorange(src->addresspool, NULL, &pool_range);

@@ -1098,14 +1098,17 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 	 * the TS content which can cause a connection to steal
 	 * another connection's lease.
 	 */
-	if (child->sa.st_connection->pool != NULL &&
-	    md->chain[ISAKMP_NEXT_v2CP] != NULL) {
+	const struct ip_info *pool_afi =
+		(child->sa.st_connection->pool[IPv4_INDEX] != NULL ? &ipv4_info :
+		 child->sa.st_connection->pool[IPv6_INDEX] != NULL ? &ipv6_info :
+		 NULL);
+	if (md->chain[ISAKMP_NEXT_v2CP] != NULL && pool_afi != NULL) {
 		/*
 		 * See ikev2-hostpair-02 where the connection is
 		 * constantly clawed back as the SA keeps trying to
 		 * establish / replace / rekey.
 		 */
-		err_t e = lease_that_address(child->sa.st_connection, &child->sa);
+		err_t e = lease_that_address(child->sa.st_connection, &child->sa, pool_afi);
 		if (e != NULL) {
 			log_state(RC_LOG, &child->sa, "ikev2 lease_an_address failure %s", e);
 			/* already logged */

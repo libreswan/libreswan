@@ -37,6 +37,7 @@
 #include "monotime.h"
 #include "ip_address.h"
 #include "ip_range.h"
+#include "ip_info.h"
 #include "log.h"
 #include "refcnt.h"
 #include "show.h"
@@ -381,6 +382,9 @@ static struct lease *connection_lease(struct connection *c)
 		return NULL;
 	}
 
+	const struct ip_info *afi = selector_info(c->spd.that.client);
+	struct addresspool *pool = c->pool[afi->ip_index];
+
 	/*
 	 * "i" is index of client.addr within pool's range.
 	 *
@@ -389,7 +393,6 @@ static struct lease *connection_lease(struct connection *c)
 	 * Therefore a single test against size will indicate
 	 * membership in the range.
 	 */
-	struct addresspool *pool = c->pool;
 	ip_address prefix = selector_prefix(c->spd.that.client);
 	uintmax_t offset;
 	err_t err = address_to_range_offset(pool->r, prefix, &offset);
@@ -450,7 +453,9 @@ void free_that_address_lease(struct connection *c)
 		return;
 	}
 
-	struct addresspool *pool = c->pool;
+	const struct ip_info *afi = selector_info(c->spd.that.client);
+	struct addresspool *pool = c->pool[afi->ip_index];
+
 	if (lease->reusable_name != NULL) {
 		/* the lease is reusable, leave it lingering */
 		APPEND(pool, free_list, free_entry, lease);
@@ -480,9 +485,9 @@ void free_that_address_lease(struct connection *c)
  * return previous lease if there is one lingering for the same ID
  */
 
-static struct lease *recover_lease(const struct connection *c, const char *that_name)
+static struct lease *recover_lease(const struct connection *c, const char *that_name, const struct ip_info *afi)
 {
-	struct addresspool *pool = c->pool;
+	struct addresspool *pool = c->pool[afi->ip_index];
 	if (pool->nr_leases == 0) {
 		return NULL;
 	}
@@ -524,7 +529,7 @@ static struct lease *recover_lease(const struct connection *c, const char *that_
 	return NULL;
 }
 
-err_t lease_that_address(struct connection *c, const struct state *st)
+err_t lease_that_address(struct connection *c, const struct state *st, const struct ip_info *afi)
 {
 	if (c->spd.that.has_lease &&
 	    connection_lease(c) != NULL) {
@@ -532,7 +537,7 @@ err_t lease_that_address(struct connection *c, const struct state *st)
 		return NULL;
 	}
 
-	struct addresspool *pool = c->pool;
+	struct addresspool *pool = c->pool[afi->ip_index];
 	const struct id *that_id = &c->remote->host.id;
 	bool reusable = client_can_reuse_lease(c);
 
@@ -565,7 +570,7 @@ err_t lease_that_address(struct connection *c, const struct state *st)
 	struct lease *new_lease = NULL;
 	const char *story;
 	if (reusable) {
-		new_lease = recover_lease(c, thatstr);
+		new_lease = recover_lease(c, thatstr, afi);
 		story = "recovered";
 	}
 	if (new_lease == NULL) {
@@ -750,7 +755,9 @@ diag_t find_addresspool(const ip_range pool_range, struct addresspool **pool)
 
 diag_t install_addresspool(const ip_range pool_range, struct connection *c)
 {
-	pexpect(c->pool == NULL);
+	for (enum ip_index i = IP_INDEX_FLOOR; i < IP_INDEX_ROOF; i++) {
+		pexpect(c->pool[i] == NULL);
+	}
 
 	/* can't be empty */
 	uintmax_t pool_size = range_size(pool_range);
@@ -784,12 +791,14 @@ diag_t install_addresspool(const ip_range pool_range, struct connection *c)
 		return d;
 	}
 
+	const struct ip_info *afi = range_info(pool_range);
+
 	if (existing_pool != NULL) {
 		/* re-use existing pool */
 		if (DBGP(DBG_BASE)) {
 			DBG_pool(true, existing_pool, "reusing existing address pool@%p", existing_pool);
 		}
-		c->pool = addresspool_addref(existing_pool);
+		c->pool[afi->ip_index] = addresspool_addref(existing_pool);
 		return NULL;
 	}
 
@@ -809,7 +818,7 @@ diag_t install_addresspool(const ip_range pool_range, struct connection *c)
 	if (DBGP(DBG_BASE)) {
 		DBG_pool(false, new_pool, "creating new address pool@%p", new_pool);
 	}
-	c->pool = new_pool;
+	c->pool[afi->ip_index] = new_pool;
 	return NULL;
 }
 

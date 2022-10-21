@@ -45,6 +45,7 @@
 #include "diag.h"
 #include "ckaid.h"
 #include "authby.h"
+#include "ip_index.h"
 
 /*
  * Note that we include this even if not X509, because we do not want
@@ -516,7 +517,7 @@ struct connection {
 
 	enum send_ca_policy send_ca;
 
-	struct addresspool *pool; /* IPv4 addresspool as a range, start end */
+	struct addresspool *pool[IP_INDEX_ROOF];
 
 	uint32_t metric;	/* metric for tunnel routes */
 	uint16_t connmtu;	/* mtu for tunnel routes */

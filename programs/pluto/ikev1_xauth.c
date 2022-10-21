@@ -383,12 +383,14 @@ static stf_status modecfg_resp(struct state *st,
 		 *
 		 * XXX: like for ikev2-hostpair-02, could this be
 		 * re-assigning the same address?
+		 *
+		 * XXX: IKEv1 only implements IPv4 leases.
 		 */
 
 		ip_address ia;
 		if (use_modecfg_addr_as_client_addr &&
-		    c->pool != NULL) {
-			err_t e = lease_that_address(c, st);
+		    c->pool[IPv4_INDEX] != NULL) {
+			err_t e = lease_that_address(c, st, &ipv4_info);
 			if (e != NULL) {
 				log_state(RC_LOG, st, "lease_an_address failure %s", e);
 				return STF_INTERNAL_ERROR;
@@ -900,9 +902,9 @@ static bool add_xauth_addresspool(struct connection *c,
 	/* install new addresspool */
 
 	/* delete existing pool if it exists */
-	if (c->pool != NULL) {
+	if (c->pool[IPv4_INDEX] != NULL) {
 		free_that_address_lease(c);
-		addresspool_delref(&c->pool);
+		addresspool_delref(&c->pool[IPv4_INDEX]);
 	}
 
 	diag_t d = install_addresspool(pool_range, c);
