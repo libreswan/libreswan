@@ -242,19 +242,20 @@ add-kvm-prefixes = \
 		$(addprefix $(call strip-prefix,$(prefix)),$(1)))
 KVM_FIRST_PREFIX = $(call strip-prefix,$(firstword $(KVM_PREFIXES)))
 
-# targets for dumping the above
+# targets for dumping the above; $(info) value to stdout when
+# evaluating the command @: gives make real work.
 .PHONY: print-kvm-prefixes
-print-kvm-prefixes: ; @echo '$(KVM_PREFIXES)'
+print-kvm-prefixes: ; @:$(info $(KVM_PREFIXES))
 .PHONY: print-kvm-test-status
-print-kvm-test-status: ; @echo '$(STRIPPED_KVM_TEST_STATUS)'
+print-kvm-test-status: ; @:$(info $(STRIPPED_KVM_TEST_STATUS))
 .PHONY: print-kvm-test-flags
-print-kvm-test-flags: ; @echo '$(KVM_TEST_FLAGS)'
+print-kvm-test-flags: ; @:$(info $(KVM_TEST_FLAGS))
 .PHONY: print-kvm-testingdir
-print-kvm-testingdir: ; @echo '$(KVM_TESTINGDIR)'
+print-kvm-testingdir: ; @:$(info $(KVM_TESTINGDIR))
 .PHONY: print-kvm-baseline
-print-kvm-baseline: ; @echo '$(KVM_BASELINE)'
+print-kvm-baseline: ; @:$(info $(KVM_BASELINE))
 .PHONY: print-kvm-platform
-print-kvm-platform: ; @echo '$(KVM_PLATFORM)'
+print-kvm-platform: ; @:$(info $(KVM_PLATFORM))
 
 KVM_BUILD_DOMAIN_NAMES = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_BUILD_HOST_NAMES))
 KVM_TEST_DOMAIN_NAMES = $(call add-kvm-prefixes, $(KVM_TEST_HOST_NAMES))
