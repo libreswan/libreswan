@@ -60,9 +60,6 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike,
 
 void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child);
 
-v2_notification_t assign_v2_responders_child_client(struct child_sa *child,
-						    struct msg_digest *md);
-
 v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *ike,
 								 struct msg_digest *md);
 

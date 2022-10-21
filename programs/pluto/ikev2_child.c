@@ -931,39 +931,6 @@ void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child)
 	unpend(ike, child->sa.st_connection);
 }
 
-/*
- * Deal with either CP or TS.
- *
- * A CREATE_CHILD_SA can, technically, include a CP (Configuration)
- * payload.  However no one does it.  Allow it here so that the code
- * paths are consistent (and it seems that pluto has supported it).
- */
-
-v2_notification_t assign_v2_responders_child_client(struct child_sa *child,
-						    struct msg_digest *md)
-{
-	struct connection *c = child->sa.st_connection;
-
-	if (c->pool != NULL && md->chain[ISAKMP_NEXT_v2CP] != NULL) {
-		/*
-		 * See ikev2-hostpair-02 where the connection is
-		 * constantly clawed back as the SA keeps trying to
-		 * establish / replace / rekey.
-		 */
-		err_t e = lease_that_address(c, &child->sa);
-		if (e != NULL) {
-			log_state(RC_LOG, &child->sa, "ikev2 lease_an_address failure %s", e);
-			return v2N_INTERNAL_ADDRESS_FAILURE;
-		}
-	} else {
-		if (!v2_process_request_ts_payloads(child, md)) {
-			/* already logged? */
-			return v2N_TS_UNACCEPTABLE;
-		}
-	}
-	return v2N_NOTHING_WRONG;
-}
-
 v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct child_sa *child,
 						     struct msg_digest *md)
 {
@@ -1086,6 +1053,8 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 								struct msg_digest *md,
 								struct pbs_out *sk_pbs)
 {
+	v2_notification_t n;
+
 	if (impair.omit_v2_ike_auth_child) {
 		/* only omit when missing */
 		if (has_v2_IKE_AUTH_child_sa_payloads(md)) {
@@ -1122,14 +1091,38 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 						    null_fd);
 
 	/*
-	 * Danger! This call can change the child's connection.
+	 * Deal with either CP xor TS.
+	 *
+	 * The CP payload's result should be checked against the TS
+	 * payload except libreswan will change connection based on
+	 * the TS content which can cause a connection to steal
+	 * another connection's lease.
 	 */
-
-	v2_notification_t n = assign_v2_responders_child_client(child, md);
-	if (n != v2N_NOTHING_WRONG) {
-		/* already logged */
-		delete_state(&child->sa);
-		return n;
+	if (child->sa.st_connection->pool != NULL &&
+	    md->chain[ISAKMP_NEXT_v2CP] != NULL) {
+		/*
+		 * See ikev2-hostpair-02 where the connection is
+		 * constantly clawed back as the SA keeps trying to
+		 * establish / replace / rekey.
+		 */
+		err_t e = lease_that_address(child->sa.st_connection, &child->sa);
+		if (e != NULL) {
+			log_state(RC_LOG, &child->sa, "ikev2 lease_an_address failure %s", e);
+			/* already logged */
+			delete_state(&child->sa);
+			ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
+			return v2N_INTERNAL_ADDRESS_FAILURE;
+		}
+	} else {
+		/*
+		 * Danger! This TS call can change the child's connection.
+		 */
+		if (!v2_process_request_ts_payloads(child, md)) {
+			/* already logged? */
+			delete_state(&child->sa);
+			ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
+			return v2N_TS_UNACCEPTABLE;
+		}
 	}
 
 	n = process_v2_childs_sa_payload("IKE_AUTH responder matching remote ESP/AH proposals",

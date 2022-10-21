@@ -843,11 +843,24 @@ stf_status process_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 	/* state m/c created CHILD SA */
 	pexpect(larval_child->sa.st_v2_ike_pred == SOS_NOBODY);
 	pexpect(larval_child->sa.st_v2_rekey_pred == SOS_NOBODY);
-	v2_notification_t n = assign_v2_responders_child_client(larval_child, md);
-	if (n != v2N_NOTHING_WRONG) {
+
+	/*
+	 * Deal with either CP or TS.
+	 *
+	 * A CREATE_CHILD_SA can, technically, include both CP
+	 * (configuration) and TS (traffic selector) payloads however
+	 * it's not known to exist in the wild.
+	 */
+
+	if (md->chain[ISAKMP_NEXT_v2CP] != NULL) {
+		llog_sa(RC_LOG, larval_child, "ignoring CREATE_CHILD_SA CP payload");
+	}
+
+	if (!v2_process_request_ts_payloads(larval_child, md)) {
 		/* already logged */
 		record_v2N_response(larval_child->sa.st_logger, ike, md,
-				    n, NULL/*no-data*/, ENCRYPTED_PAYLOAD);
+				    v2N_TS_UNACCEPTABLE,
+				    NULL/*no-data*/, ENCRYPTED_PAYLOAD);
 		delete_state(&larval_child->sa);
 		ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
 		return STF_OK; /*IKE*/
