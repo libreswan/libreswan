@@ -1181,16 +1181,16 @@ static const char *const modecfg_microsoft_attr_name[] = {
 	"INTERNAL_IP6_SERVER",
 };
 static enum_names modecfg_microsoft_attr_names = {
-	INTERNAL_IP4_SERVER,
-	INTERNAL_IP6_SERVER,
+	IKEv1_INTERNAL_IP4_SERVER,
+	IKEv1_INTERNAL_IP6_SERVER,
 	ARRAY_REF(modecfg_microsoft_attr_name),
 	NULL, /* prefix */
 	&modecfg_cisco_attr_names
 };
 
 enum_names modecfg_attr_names = {
-	INTERNAL_IP4_ADDRESS,
-	HOME_AGENT_ADDRESS,
+	IKEv1_INTERNAL_IP4_ADDRESS,
+	IKEv1_HOME_AGENT_ADDRESS,
 	ARRAY_REF(modecfg_attr_name_draft),
 	NULL, /* prefix */
 	&xauth_attr_names

@@ -54,7 +54,7 @@ static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
 	if (afi == NULL) {
 		attr.len = 0;
 	} else if (afi == &ipv6_info) {
-		attr.len = INTERNAL_IP6_ADDRESS_SIZE; /* RFC hack to append IPv6 prefix len */
+		attr.len = IKEv2_INTERNAL_IP6_ADDRESS_SIZE; /* RFC hack to append IPv6 prefix len */
 	} else {
 		attr.len = address_type(ip)->ip_size;
 	}
@@ -70,9 +70,9 @@ static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
 		}
 	}
 
-	if (attr.len == INTERNAL_IP6_ADDRESS_SIZE) { /* IPv6 address add prefix */
-		uint8_t ipv6_prefix_len = INTERNL_IP6_PREFIX_LEN;
-		if (!pbs_out_raw(&a_pbs, &ipv6_prefix_len, sizeof(uint8_t), "INTERNL_IP6_PREFIX_LEN")) {
+	if (attr.len == IKEv2_INTERNAL_IP6_ADDRESS_SIZE) { /* IPv6 address add prefix */
+		uint8_t ipv6_prefix_len = IKEv2_INTERNAL_IP6_PREFIX_LEN;
+		if (!pbs_out_raw(&a_pbs, &ipv6_prefix_len, sizeof(uint8_t), "INTERNAL_IP6_PREFIX_LEN")) {
 			/* already logged */
 			return STF_INTERNAL_ERROR;
 		}

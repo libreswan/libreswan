@@ -208,7 +208,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 		return STF_INTERNAL_ERROR;
 
 	switch (attr_type) {
-	case INTERNAL_IP4_ADDRESS:
+	case IKEv1_INTERNAL_IP4_ADDRESS:
 	{
 		if (!pbs_out_address(&attrval, ia, "IP_addr")) {
 			/* already logged */
@@ -217,7 +217,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 		break;
 	}
 
-	case INTERNAL_IP4_SUBNET:
+	case IKEv1_INTERNAL_IP4_SUBNET:
 	{
 		ip_address addr = selector_prefix(c->spd.this.client);
 		if (!pbs_out_address(&attrval, addr, "IP4_subnet(address)")) {
@@ -232,7 +232,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 		break;
 	}
 
-	case INTERNAL_IP4_NETMASK:
+	case IKEv1_INTERNAL_IP4_NETMASK:
 	{
 		ip_address mask = selector_prefix_mask(c->spd.this.client);
 		if (!pbs_out_address(&attrval, mask, "IP4_netmask")) {
@@ -242,7 +242,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 		break;
 	}
 
-	case INTERNAL_IP4_DNS:
+	case IKEv1_INTERNAL_IP4_DNS:
 	{
 		/*
 		 * Emit one attribute per DNS IP (all other cases emit
@@ -374,7 +374,7 @@ static stf_status modecfg_resp(struct state *st,
 		}
 
 		/*
-		 * Get an inside IP address, INTERNAL_IP4_ADDRESS and
+		 * Get an inside IP address, IKEv1_INTERNAL_IP4_ADDRESS and
 		 * DNS if any for a connection
 		 *
 		 * XXX: since the code that follows only saves the
@@ -405,9 +405,9 @@ static stf_status modecfg_resp(struct state *st,
 
 		/* If we got DNS addresses, answer with those */
 		if (c->config->modecfg.dns != NULL)
-			resp |= LELEM(INTERNAL_IP4_DNS);
+			resp |= LELEM(IKEv1_INTERNAL_IP4_DNS);
 		else
-			resp &= ~LELEM(INTERNAL_IP4_DNS);
+			resp &= ~LELEM(IKEv1_INTERNAL_IP4_DNS);
 
 		/* Send the attributes requested by the client. */
 		attr_type = 0;
@@ -511,9 +511,9 @@ static stf_status modecfg_send_set(struct state *st)
 #endif
 
 /* XXX This does not include IPv6 at this point */
-#define MODECFG_SET_ITEM (LELEM(INTERNAL_IP4_ADDRESS) | \
-			  LELEM(INTERNAL_IP4_SUBNET) | \
-			  LELEM(INTERNAL_IP4_DNS))
+#define MODECFG_SET_ITEM (LELEM(IKEv1_INTERNAL_IP4_ADDRESS) | \
+			  LELEM(IKEv1_INTERNAL_IP4_SUBNET) | \
+			  LELEM(IKEv1_INTERNAL_IP4_DNS))
 
 	stf_status stat = modecfg_resp(st,
 		     MODECFG_SET_ITEM,
@@ -728,8 +728,8 @@ stf_status modecfg_send_request(struct state *st)
 
 		/* generate LOT of empty attributes */
 		static const uint16_t at[] = {
-			INTERNAL_IP4_ADDRESS, INTERNAL_IP4_NETMASK,
-			INTERNAL_IP4_DNS, MODECFG_BANNER, MODECFG_DOMAIN,
+			IKEv1_INTERNAL_IP4_ADDRESS, IKEv1_INTERNAL_IP4_NETMASK,
+			IKEv1_INTERNAL_IP4_DNS, MODECFG_BANNER, MODECFG_DOMAIN,
 			CISCO_SPLIT_INC, 0  };
 
 		for (const uint16_t *p = at; *p != 0; p++) {
@@ -1468,13 +1468,13 @@ stf_status modecfg_inR0(struct state *st, struct msg_digest *md)
 				return STF_FAIL_v1N;
 			}
 			switch (attr.isaat_af_type) {
-			case INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
-			case INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
-			case INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
-			case INTERNAL_IP4_SUBNET | ISAKMP_ATTR_AF_TLV:
+			case IKEv1_INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
+			case IKEv1_INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
+			case IKEv1_INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
+			case IKEv1_INTERNAL_IP4_SUBNET | ISAKMP_ATTR_AF_TLV:
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
-			case INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
+			case IKEv1_INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
 				/* ignore */
 				break;
 
@@ -1549,7 +1549,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 		}
 
 		switch (attr.isaat_af_type) {
-		case INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
+		case IKEv1_INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
 		{
 			struct connection *c = st->st_connection;
 
@@ -1579,12 +1579,12 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 			break;
 		}
 
-		case INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
-		case INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
-		case INTERNAL_IP4_SUBNET | ISAKMP_ATTR_AF_TLV:
+		case IKEv1_INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
+		case IKEv1_INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
+		case IKEv1_INTERNAL_IP4_SUBNET | ISAKMP_ATTR_AF_TLV:
 			resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 			break;
-		case INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
+		case IKEv1_INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
 			/* ignore */
 			break;
 		case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
@@ -1676,14 +1676,14 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			}
 
 			switch (attr.isaat_af_type) {
-			case INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
-			case INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
-			case INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
-			case INTERNAL_IP4_SUBNET | ISAKMP_ATTR_AF_TLV:
+			case IKEv1_INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
+			case IKEv1_INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
+			case IKEv1_INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
+			case IKEv1_INTERNAL_IP4_SUBNET | ISAKMP_ATTR_AF_TLV:
 				resp |= LELEM(attr.isaat_af_type & ISAKMP_ATTR_RTYPE_MASK);
 				break;
 
-			case INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
+			case IKEv1_INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
 				/* ignore */
 				break;
 			case MODECFG_DOMAIN | ISAKMP_ATTR_AF_TLV:
@@ -1713,7 +1713,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			}
 
 			switch (attr.isaat_af_type) {
-			case INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
+			case IKEv1_INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
 			{
 				struct connection *c = st->st_connection;
 
@@ -1738,7 +1738,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				break;
 			}
 
-			case INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
+			case IKEv1_INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
 			{
 				ip_address a;
 				diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
@@ -1753,7 +1753,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				break;
 			}
 
-			case INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
+			case IKEv1_INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
 			{
 				ip_address a;
 				diag_t d = pbs_in_address(&strattr, &a, &ipv4_info, "addr");
@@ -1857,8 +1857,8 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				break;
 			}
 
-			case INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
-			case INTERNAL_IP6_NBNS | ISAKMP_ATTR_AF_TLV:
+			case IKEv1_INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
+			case IKEv1_INTERNAL_IP6_NBNS | ISAKMP_ATTR_AF_TLV:
 			{
 				log_state(RC_LOG, st, "Received and ignored obsoleted Cisco NetBEUI NS info");
 				break;
@@ -2235,23 +2235,23 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 			xauth_resp |= XAUTHLELEM(XAUTH_USER_PASSWORD);
 			break;
 
-		case INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
+		case IKEv1_INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
 			dbg("received Cisco Internal IPv4 address");
 			break;
 
-		case INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
+		case IKEv1_INTERNAL_IP4_NETMASK | ISAKMP_ATTR_AF_TLV:
 			dbg("received Cisco Internal IPv4 netmask");
 			break;
 
-		case INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
+		case IKEv1_INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
 			dbg("received Cisco IPv4 DNS info");
 			break;
 
-		case INTERNAL_IP4_SUBNET | ISAKMP_ATTR_AF_TV:
+		case IKEv1_INTERNAL_IP4_SUBNET | ISAKMP_ATTR_AF_TV:
 			dbg("received Cisco IPv4 Subnet info");
 			break;
 
-		case INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TV:
+		case IKEv1_INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TV:
 			dbg("received Cisco NetBEUI NS info");
 			break;
 
