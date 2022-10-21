@@ -1104,7 +1104,7 @@ static diag_t extract_end(struct connection *c,
 	dst->host->addr = src->host_addr;
 	config_end->host.addr_name = clone_str(src->host_addr_name, "host ip");
 	dst->host->nexthop = src->host_nexthop;
-	dst->host_srcip = src->host_srcip;
+	config_end->client.sourceip = src->sourceip;
 	config_end->client.host_vtiip = src->host_vtiip;
 	config_end->client.ifaceip = src->ifaceip;
 	config_end->client.address_translation = src->cat;
@@ -3690,6 +3690,30 @@ static int connection_compare_qsort(const void *a, const void *b)
 				*(const struct connection *const *)b);
 }
 
+ip_address spd_route_end_sourceip(enum ike_version ike_version, const struct end *end)
+{
+	if (address_is_specified(end->config->client.sourceip)) {
+		/* XXX: .is_set sufficient? needs unspec rejected */
+		return end->config->client.sourceip;
+	}
+	switch (ike_version) {
+	case IKEv1:
+		if (end->has_internal_address) {
+			return selector_prefix(end->client);
+		}
+		break;
+	case IKEv2:
+		if (end->has_internal_address &&
+		    !end->config->client.address_translation) {
+			return selector_prefix(end->client);
+		}
+		break;
+	default:
+		bad_case(ike_version);
+	}
+	return unset_address;
+}
+
 static void show_one_sr(struct show *s,
 			const struct connection *c,
 			const struct spd_route *sr,
@@ -3709,11 +3733,14 @@ static void show_one_sr(struct show *s,
 		/* note: this macro generates a pair of arguments */
 #define OPT_PREFIX_STR(pre, s) (s) == NULL ? "" : (pre), (s) == NULL? "" : (s)
 
+	ip_address this_sourceip = spd_route_end_sourceip(c->config->ike_version, &c->spd.this);
+	ip_address that_sourceip = spd_route_end_sourceip(c->config->ike_version, &c->spd.that);
+
 	show_comment(s, PRI_CONNECTION":     %s; my_ip=%s; their_ip=%s%s%s%s%s; my_updown=%s;",
 		     c->name, instance,
 		     oriented(c) ? "oriented" : "unoriented",
-		     OPT_HOST(c->spd.this.host_srcip, thisipb),
-		     OPT_HOST(c->spd.that.host_srcip, thatipb),
+		     OPT_HOST(this_sourceip, thisipb),
+		     OPT_HOST(that_sourceip, thatipb),
 		     OPT_PREFIX_STR("; mycert=", cert_nickname(&c->local->config->host.cert)),
 		     OPT_PREFIX_STR("; peercert=", cert_nickname(&c->remote->config->host.cert)),
 		     ((sr->this.config->client.updown == NULL ||

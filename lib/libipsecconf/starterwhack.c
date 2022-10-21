@@ -339,7 +339,7 @@ static bool set_whack_end(struct whack_end *w,
 	}
 
 	if (address_is_specified(l->sourceip))
-		w->host_srcip = l->sourceip;
+		w->sourceip = l->sourceip;
 
 	if (cidr_is_specified(l->vti_ip))
 		w->host_vtiip = l->vti_ip;

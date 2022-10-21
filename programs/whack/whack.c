@@ -1734,7 +1734,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_SRCIP:	/* --srcip <ip-address> */
-			opt_to_address(&host_family, &end->host_srcip);
+			opt_to_address(&host_family, &end->sourceip);
 			continue;
 
 		case END_VTIIP:	/* --vtiip <ip-address/mask> */

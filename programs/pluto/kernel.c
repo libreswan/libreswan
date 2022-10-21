@@ -621,11 +621,13 @@ bool fmt_common_shell_out(char *buf,
 		JDemitter("PLUTO_USERNAME", jam_clean_xauth_username(&jb, st->st_xauth_username, st->st_logger));
 	}
 
-	if (address_is_specified(sr->this.host_srcip)) {
-		JDipaddr("PLUTO_MY_SOURCEIP", sr->this.host_srcip);
-		if (st != NULL)
+	ip_address sourceip = spd_route_end_sourceip(c->config->ike_version, &sr->this);
+	if (sourceip.is_set) {
+		JDipaddr("PLUTO_MY_SOURCEIP", sourceip);
+		if (st != NULL) {
 			JDstr("PLUTO_MOBIKE_EVENT",
-			    st->st_mobike_del_src_ip ? "yes" : "");
+			      st->st_mobike_del_src_ip ? "yes" : "");
+		}
 	}
 
 	JDuint("PLUTO_IS_PEER_CISCO", c->remotepeertype /* ??? kind of odd printing an enum with %u */);

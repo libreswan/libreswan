@@ -115,6 +115,8 @@ struct config_client_end {
 	ip_protoport protoport;
 	char *updown;
 
+	ip_address sourceip;
+
 	/*
 	 * Weired host related client stuff.
 	 *
@@ -348,10 +350,7 @@ struct connection_end {
 	struct client_end client;
 };
 
-struct /*spd_*/end {
-	ip_address
-		host_srcip;
-
+struct /*spd_route*/end {
 	ip_selector client;
 
 	/*
@@ -765,5 +764,7 @@ void rehash_db_connection_that_id(struct connection *c);
 void rehash_db_spd_route_remote_client(struct spd_route *sr);
 
 bool dpd_active_locally(const struct connection *c);
+
+ip_address spd_route_end_sourceip(enum ike_version ike_version, const struct end *end);
 
 #endif

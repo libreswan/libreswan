@@ -96,7 +96,7 @@ struct whack_end {
 	ip_address host_addr;
 	unsigned host_ikeport;
 	ip_address host_nexthop;
-	ip_address host_srcip;
+	ip_address sourceip;
 	ip_cidr host_vtiip;
 	ip_cidr ifaceip;
 

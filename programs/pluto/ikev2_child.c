@@ -633,12 +633,6 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs, struct child_sa 
 		}
 	} else {
 		c->spd.this.client = selector_from_address(ip);
-		/* only set sourceip= value if unset in configuration */
-		if (!address_is_specified(c->spd.this.host_srcip)) {
-			dbg("setting host source IP address to %s",
-			    ipstr(&ip, &ip_str));
-			c->spd.this.host_srcip = ip;
-		}
 	}
 
 	return true;
