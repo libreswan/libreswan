@@ -156,7 +156,16 @@ bool prep_v2_child_for_request(struct child_sa *larval_child)
 	return true;
 }
 
-bool emit_v2_child_request_payloads(const struct child_sa *larval_child,
+static bool need_v2_configuration_payload(const struct connection *const cc,
+					  const lset_t st_nat_traversal)
+{
+	return (cc->local->config->client.modecfg_client &&
+		(!cc->local->config->client.address_translation ||
+		 LHAS(st_nat_traversal, NATED_HOST)));
+}
+
+bool emit_v2_child_request_payloads(const struct ike_sa *ike,
+				    const struct child_sa *larval_child,
 				    const struct ikev2_proposals *child_proposals,
 				    struct pbs_out *pbs)
 {
@@ -207,6 +216,19 @@ bool emit_v2_child_request_payloads(const struct child_sa *larval_child,
 	if (larval_child->sa.st_pfs_group != NULL &&
 	    !emit_v2KE(larval_child->sa.st_gi, larval_child->sa.st_pfs_group, pbs)) {
 		return false;
+	}
+
+	/* CP[CFG_REQUEST) - only IKE_AUTH exchange for now */
+
+	if (!ike_auth_exchange) {
+		dbg("skipping CP, not IKE_AUTH request");
+	} else if (need_v2_configuration_payload(larval_child->sa.st_connection,
+						 ike->sa.hidden_variables.st_nat_traversal) ||
+		   cc->config->modecfg.domains != NULL ||
+		   cc->config->modecfg.dns != NULL) {
+		if (!emit_v2CP_request(larval_child, pbs)) {
+			return false;
+		}
 	}
 
 	/* TS[ir] - traffic selectors */

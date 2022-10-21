@@ -457,30 +457,14 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 			return STF_INTERNAL_ERROR;
 		}
 
-		/* XXX: look further down, you're seeing double */
-		if (need_v2_configuration_payload(child->sa.st_connection,
-						  ike->sa.hidden_variables.st_nat_traversal)) {
-			if (!emit_v2CP_request(child, request.pbs)) {
-				return STF_INTERNAL_ERROR;
-			}
-		}
-
 		/*
 		 * A CHILD_SA established during an AUTH exchange does
 		 * not propose DH - the IKE SA's SKEYSEED is always
 		 * used.
 		 */
 		const struct ikev2_proposals *child_proposals = cc->config->v2_ike_auth_child_proposals;
-		if (!emit_v2_child_request_payloads(child, child_proposals, request.pbs)) {
+		if (!emit_v2_child_request_payloads(ike, child, child_proposals, request.pbs)) {
 			return STF_INTERNAL_ERROR;
-		}
-
-		/* XXX: look further up, your seeing double */
-		if (cc->config->modecfg.domains != NULL ||
-		    cc->config->modecfg.dns != NULL) {
-			if (!emit_v2CP_request(child, request.pbs)) {
-				return STF_INTERNAL_ERROR;
-			}
 		}
 	}
 

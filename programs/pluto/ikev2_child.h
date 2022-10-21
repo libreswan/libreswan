@@ -46,7 +46,8 @@ v2_notification_t process_v2_childs_sa_payload(const char *what, struct ike_sa *
 
 bool prep_v2_child_for_request(struct child_sa *larval_child);
 
-bool emit_v2_child_request_payloads(const struct child_sa *larval_child,
+bool emit_v2_child_request_payloads(const struct ike_sa *ike,
+				    const struct child_sa *larval_child,
 				    const struct ikev2_proposals *child_proposals,
 				    struct pbs_out *outpbs);
 v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,

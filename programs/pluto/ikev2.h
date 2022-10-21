@@ -145,8 +145,6 @@ bool v2_accept_ke_for_proposal(struct ike_sa *ike,
 			       struct msg_digest *md,
 			       const struct dh_desc *accepted_dh,
 			       enum payload_security security);
-bool need_v2_configuration_payload(const struct connection *const pc,
-				   const lset_t st_nat_traversal);
 void ikev2_rekey_expire_predecessor(const struct child_sa *larval_sa, so_serial_t pred);
 
 struct crypt_mac v2_id_hash(struct ike_sa *ike, const char *why,
