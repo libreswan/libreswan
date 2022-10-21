@@ -352,13 +352,12 @@ static bool ECDSA_raw_authenticate_signature(const struct crypt_mac *hash, shunk
 		.len = hash->len,
 	};
 
-	if (DBGP(DBG_CRYPT)) {
+	if (DBGP(DBG_BASE)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam(buf, "%d-byte raw ESCSA signature: ",
 			    raw_signature.len);
 			jam_nss_secitem(buf, &raw_signature);
 		}
-
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam(buf, "%d-byte hash: ",
 			    hash_item.len);
@@ -366,6 +365,11 @@ static bool ECDSA_raw_authenticate_signature(const struct crypt_mac *hash, shunk
 		}
 	}
 
+	/*
+	 * PK11_Verify() expects a raw signature like supplied here;
+	 * VFY_Verify*() also expects a der encoded prefix so doesn't
+	 * work.
+	 */
 	if (PK11_Verify(ecdsa->public_key, &raw_signature, &hash_item,
 			lsw_nss_get_password_context(logger)) != SECSuccess) {
 		llog_nss_error(DEBUG_STREAM, logger,
@@ -463,69 +467,48 @@ static struct hash_signature ECDSA_digsig_sign_hash(const struct secret_stuff *p
 
 static bool ECDSA_digsig_authenticate_signature(const struct crypt_mac *hash, shunk_t signature,
 						struct pubkey *pubkey,
-						const struct hash_desc *unused_hash_algo UNUSED,
+						const struct hash_desc *hash_alg,
 						diag_t *fatal_diag,
 						struct logger *logger)
 {
 	const struct pubkey_content *ecdsa = &pubkey->content;
 
-	/*
-	 * Convert the signature into raw form (NSS doesn't do const).
-	 */
-	SECItem der_signature = {
+	SECItem signature_item = {
 		.type = siBuffer,
 		.data = DISCARD_CONST(unsigned char *, signature.ptr),/*NSS doesn't do const*/
 		.len = signature.len
 	};
+
+	const SECItem hash_item = {
+		.type = siBuffer,
+		.data = DISCARD_CONST(uint8_t *, hash->ptr),/*NSS doesn't do const*/
+		.len = hash->len,
+	};
+
 	if (DBGP(DBG_BASE)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam(buf, "%d-byte DER encoded ECDSA signature: ",
-			    der_signature.len);
-			jam_nss_secitem(buf, &der_signature);
+			    signature_item.len);
+			jam_nss_secitem(buf, &signature_item);
 		}
-	}
-
-	SECItem *raw_signature = DSAU_DecodeDerSigToLen(&der_signature,
-							SECKEY_SignatureLen(ecdsa->public_key));
-	if (raw_signature == NULL) {
-		/* not fatal as dependent on key being tried */
-		llog_nss_error(DEBUG_STREAM, logger,
-			       "unpacking DER encoded ECDSA signature using DSAU_DecodeDerSigToLen()");
-		*fatal_diag = NULL;
-		return false;
-	}
-
-	if (DBGP(DBG_BASE)) {
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam(buf, "%d-byte raw ESCSA signature: ",
-			    raw_signature->len);
-			jam_nss_secitem(buf, raw_signature);
+			jam(buf, "%d-byte hash: ",
+			    hash_item.len);
+			jam_nss_secitem(buf, &hash_item);
 		}
 	}
 
-	/*
-	 * put the hash somewhere writable; so it can later be logged?
-	 *
-	 * XXX: cast away const?
-	 */
-	struct crypt_mac hash_data = *hash;
-	SECItem hash_item = {
-		.type = siBuffer,
-		.data = hash_data.ptr,
-		.len = hash_data.len,
-	};
-
-	if (PK11_Verify(ecdsa->public_key, raw_signature, &hash_item,
-			lsw_nss_get_password_context(logger)) != SECSuccess) {
+	if (VFY_VerifyDigestDirect(&hash_item, ecdsa->public_key, &signature_item,
+				   /*pubkey algorithm*/SEC_OID_ANSIX962_EC_PUBLIC_KEY,
+				   /*signature hash algorithm*/hash_alg->nss.oid_tag,
+				   lsw_nss_get_password_context(logger)) != SECSuccess) {
 		llog_nss_error(DEBUG_STREAM, logger,
-			       "verifying AUTH hash using PK11_Verify() failed:");
-		SECITEM_FreeItem(raw_signature, PR_TRUE/*and-pointer*/);
-		*fatal_diag = NULL;
-		return false;
-	}
-
-	dbg("NSS: verified signature");
-	SECITEM_FreeItem(raw_signature, PR_TRUE);
+			       "verifying AUTH hash using VFY_VerifyDigestDirect(%s,%s) failed: ",
+			       ecdsa->type->name,
+			       hash_alg->common.fqn);
+ 		*fatal_diag = NULL;
+ 		return false;
+ 	}
 
 	*fatal_diag = NULL;
 	return true;
