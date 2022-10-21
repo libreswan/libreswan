@@ -21,6 +21,7 @@
 struct child_sa;
 struct pbs_out;
 
-bool emit_v2_child_configuration_payload(const struct child_sa *child, struct pbs_out *outpbs);
+bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs);
+bool emit_v2CP_response(const struct child_sa *child, struct pbs_out *outpbs);
 
 #endif

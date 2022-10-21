@@ -457,10 +457,10 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 			return STF_INTERNAL_ERROR;
 		}
 
-		/* XXX: look further down you're seeing double */
+		/* XXX: look further down, you're seeing double */
 		if (need_v2_configuration_payload(child->sa.st_connection,
 						  ike->sa.hidden_variables.st_nat_traversal)) {
-			if (!emit_v2_child_configuration_payload(child, request.pbs)) {
+			if (!emit_v2CP_request(child, request.pbs)) {
 				return STF_INTERNAL_ERROR;
 			}
 		}
@@ -475,10 +475,10 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 			return STF_INTERNAL_ERROR;
 		}
 
-		/* send CP payloads */
+		/* XXX: look further up, your seeing double */
 		if (cc->config->modecfg.domains != NULL ||
 		    cc->config->modecfg.dns != NULL) {
-			if (!emit_v2_child_configuration_payload(child, request.pbs)) {
+			if (!emit_v2CP_request(child, request.pbs)) {
 				return STF_INTERNAL_ERROR;
 			}
 		}

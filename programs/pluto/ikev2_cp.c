@@ -110,68 +110,82 @@ static bool emit_v2CP_attribute(struct pbs_out *outpbs,
 }
 
 /*
- * CHILD is asking for configuration; hence log against child.
+ * CHILD is negotiating configuration; hence log against child.
  */
 
-bool emit_v2_child_configuration_payload(const struct child_sa *child, struct pbs_out *outpbs)
+bool emit_v2CP_response(const struct child_sa *child, struct pbs_out *outpbs)
 {
 	struct connection *c = child->sa.st_connection;
 	pb_stream cp_pbs;
-	bool cfg_reply = c->spd.that.has_lease;
 	struct ikev2_cp cp = {
 		.isacp_critical = ISAKMP_PAYLOAD_NONCRITICAL,
-		.isacp_type = cfg_reply ? IKEv2_CP_CFG_REPLY : IKEv2_CP_CFG_REQUEST,
+		.isacp_type = IKEv2_CP_CFG_REPLY,
 	};
 
-	dbg("Send Configuration Payload %s ",
-	    cfg_reply ? "reply" : "request");
+	dbg("send %s Configuration Payload", enum_name(&ikev2_cp_type_names, cp.isacp_type));
 
 	if (!out_struct(&cp, &ikev2_cp_desc, outpbs, &cp_pbs))
 		return false;
 
-	if (cfg_reply) {
-		ip_address that_client_address = selector_prefix(c->spd.that.client);
-		ikev2_ship_cp_attr_ip(selector_type(&c->spd.that.client) == &ipv4_info ?
-				      IKEv2_INTERNAL_IP4_ADDRESS : IKEv2_INTERNAL_IP6_ADDRESS,
-				      &that_client_address, "Internal IP Address", &cp_pbs);
+	ip_address that_client_address = selector_prefix(c->spd.that.client);
+	ikev2_ship_cp_attr_ip(selector_type(&c->spd.that.client) == &ipv4_info ?
+			      IKEv2_INTERNAL_IP4_ADDRESS : IKEv2_INTERNAL_IP6_ADDRESS,
+			      &that_client_address, "Internal IP Address", &cp_pbs);
 
-		for (ip_address *dns = c->config->modecfg.dns;
-		     dns != NULL && dns->is_set; dns++) {
-			const struct ip_info *afi = address_type(dns);
-			switch (afi->ip_version) {
-			case IPv4:
-				if (ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_DNS, dns,
-							  "IP4_DNS", &cp_pbs) != STF_OK) {
-					return false;
-				}
-				break;
-			case IPv6:
-				if (ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_DNS, dns,
-							  "IP6_DNS", &cp_pbs) != STF_OK) {
-					return false;
-				}
-				break;
-			}
-		}
-
-		for (const shunk_t *domain = c->config->modecfg.domains;
-		     domain != NULL && domain->ptr != NULL; domain++) {
-			if (!emit_v2CP_attribute(&cp_pbs,
-						 IKEv2_INTERNAL_DNS_DOMAIN,
-						 *domain,
-						 "IKEv2_INTERNAL_DNS_DOMAIN")) {
-				/* already logged */
+	for (ip_address *dns = c->config->modecfg.dns;
+	     dns != NULL && dns->is_set; dns++) {
+		const struct ip_info *afi = address_type(dns);
+		switch (afi->ip_version) {
+		case IPv4:
+			if (ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_DNS, dns,
+						  "IP4_DNS", &cp_pbs) != STF_OK) {
 				return false;
 			}
+			break;
+		case IPv6:
+			if (ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_DNS, dns,
+						  "IP6_DNS", &cp_pbs) != STF_OK) {
+				return false;
+			}
+			break;
 		}
-	} else { /* cfg request */
-		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_ADDRESS, NULL, "IPV4 Address", &cp_pbs);
-		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_DNS, NULL, "DNSv4", &cp_pbs);
-		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_ADDRESS, NULL, "IPV6 Address", &cp_pbs);
-		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_DNS, NULL, "DNSv6", &cp_pbs);
-		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_DNS_DOMAIN, NULL, "Domain", &cp_pbs);
+	}
+
+	for (const shunk_t *domain = c->config->modecfg.domains;
+	     domain != NULL && domain->ptr != NULL; domain++) {
+		if (!emit_v2CP_attribute(&cp_pbs,
+					 IKEv2_INTERNAL_DNS_DOMAIN,
+					 *domain,
+					 "IKEv2_INTERNAL_DNS_DOMAIN")) {
+			/* already logged */
+			return false;
+		}
 	}
 
 	close_output_pbs(&cp_pbs);
 	return true;
 }
+
+bool emit_v2CP_request(const struct child_sa *unused_child UNUSED, struct pbs_out *outpbs)
+{
+	pb_stream cp_pbs;
+	struct ikev2_cp cp = {
+		.isacp_critical = ISAKMP_PAYLOAD_NONCRITICAL,
+		.isacp_type = IKEv2_CP_CFG_REQUEST,
+	};
+
+	dbg("send %s Configuration Payload", enum_name(&ikev2_cp_type_names, cp.isacp_type));
+
+	if (!out_struct(&cp, &ikev2_cp_desc, outpbs, &cp_pbs))
+		return false;
+
+	ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_ADDRESS, NULL, "IPV4 Address", &cp_pbs);
+	ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_DNS, NULL, "DNSv4", &cp_pbs);
+	ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_ADDRESS, NULL, "IPV6 Address", &cp_pbs);
+	ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_DNS, NULL, "DNSv6", &cp_pbs);
+	ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_DNS_DOMAIN, NULL, "Domain", &cp_pbs);
+
+	close_output_pbs(&cp_pbs);
+	return true;
+}
+
