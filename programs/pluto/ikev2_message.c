@@ -200,7 +200,7 @@ static struct pbs_out open_v2_message_body(struct pbs_out *message,
 	}
 
 	if (impair.bad_ike_auth_xchg) {
-		log_state(RC_LOG, &ike->sa, "IMPAIR: Instead of replying with IKE_AUTH, forging an INFORMATIONAL reply");
+		llog_sa(RC_LOG, ike, "IMPAIR: Instead of replying with IKE_AUTH, forging an INFORMATIONAL reply");
 		if ((hdr.isa_flags & ISAKMP_FLAGS_v2_MSG_R) && exchange_type == ISAKMP_v2_IKE_AUTH) {
 			hdr.isa_xchg = ISAKMP_v2_INFORMATIONAL;
 		}
@@ -533,7 +533,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 	 */
 	uint8_t *payload_end = text.ptr + text.len;
 	if (payload_end < (wire_iv_start + wire_iv_size + 1 + integ_size)) {
-		log_state(RC_LOG, &ike->sa,
+		llog_sa(RC_LOG, ike,
 			  "encrypted payload impossibly short (%tu)",
 			  payload_end - wire_iv_start);
 		return false;
@@ -559,7 +559,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 	bool pad_to_blocksize = ike->sa.st_oakley.ta_encrypt->pad_to_blocksize;
 	if (pad_to_blocksize) {
 		if (enc_size % enc_blocksize != 0) {
-			log_state(RC_LOG, &ike->sa,
+			llog_sa(RC_LOG, ike,
 				  "discarding invalid packet: %zu octet payload length is not a multiple of encryption block-size (%zu)",
 				  enc_size, enc_blocksize);
 			return false;
@@ -636,7 +636,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 		struct crypt_mac td = crypt_prf_final_mac(&ctx, ike->sa.st_oakley.ta_integ);
 
 		if (!hunk_memeq(td, integ_start, integ_size)) {
-			log_state(RC_LOG, &ike->sa, "failed to match authenticator");
+			llog_sa(RC_LOG, ike, "failed to match authenticator");
 			return false;
 		}
 
@@ -679,7 +679,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 	 */
 	uint8_t padlen = enc_start[enc_size - 1] + 1;
 	if (padlen > enc_size) {
-		log_state(RC_LOG, &ike->sa,
+		llog_sa(RC_LOG, ike,
 			  "discarding invalid packet: padding-length %u (octet 0x%02x) is larger than %zu octet payload length",
 			  padlen, padlen - 1, enc_size);
 		return false;
@@ -1064,13 +1064,13 @@ bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md)
 	 * decrypted in-place (but only once).
 	 */
 	if (impair.replay_encrypted && !md->fake_clone) {
-		log_state(RC_LOG, &ike->sa,
+		llog_sa(RC_LOG, ike,
 			  "IMPAIR: cloning incoming encrypted message and scheduling its replay");
 		schedule_md_event("replay encrypted message",
 				  clone_raw_md(md, HERE));
 	}
 	if (impair.corrupt_encrypted && !md->fake_clone) {
-		log_state(RC_LOG, &ike->sa,
+		llog_sa(RC_LOG, ike,
 			  "IMPAIR: corrupting incoming encrypted message's SK payload's first byte");
 		*sk_pbs->cur = ~(*sk_pbs->cur);
 	}

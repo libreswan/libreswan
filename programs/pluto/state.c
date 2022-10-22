@@ -589,7 +589,7 @@ void v2_expire_unused_ike_sa(struct ike_sa *ike)
 
 	connection_buf cib;
 	struct connection *c = ike->sa.st_connection;
-	log_state(RC_INFORMATIONAL, &ike->sa, "expire unused IKE SA #%lu "PRI_CONNECTION,
+	llog_sa(RC_INFORMATIONAL, ike, "expire unused IKE SA #%lu "PRI_CONNECTION,
 		  ike->sa.st_serialno,
 		  pri_connection(c, &cib));
 	event_force(EVENT_SA_EXPIRE, &ike->sa);
@@ -1908,7 +1908,7 @@ bool ikev2_viable_parent(const struct ike_sa *ike)
 	}
 
 	deltatime_buf lb, rb;
-	log_state(RC_LOG_SERIOUS, &ike->sa,
+	llog_sa(RC_LOG_SERIOUS, ike,
 		  "no new CREATE_CHILD_SA exchange using #%lu. Parent lifetime %s < st_margin %s",
 		  ike->sa.st_serialno,
 		  str_deltatime(lifetime, &lb),
@@ -2634,7 +2634,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 
 	/* check for all conditions before updating IPsec SA's */
 	if (afi != address_type(&c->remote->host.addr)) {
-		log_state(RC_LOG, &ike->sa,
+		llog_sa(RC_LOG, ike,
 			  "MOBIKE: AF change switching between v4 and v6 not supported");
 		return false;
 	}
@@ -2683,7 +2683,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 		if (md_role == MESSAGE_REQUEST) {
 			/* on responder NAT could hide end-to-end change */
 			endpoint_buf b;
-			log_state(RC_LOG, &ike->sa,
+			llog_sa(RC_LOG, ike,
 				  "MOBIKE success no change to kernel SA same IP address and port %s",
 				  str_endpoint_sensitive(&old_endpoint, &b));
 
@@ -2696,7 +2696,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 		return false;
 	}
 
-	log_state(RC_LOG, &ike->sa, " success %s", buf);
+	llog_sa(RC_LOG, ike, " success %s", buf);
 
 	switch (md_role) {
 	case MESSAGE_RESPONSE:
@@ -3115,7 +3115,7 @@ void suppress_delete_notify(const struct ike_sa *ike,
 {
 	struct state *st = state_by_serialno(so);
 	if (st == NULL) {
-		log_state(RC_LOG, &ike->sa,
+		llog_sa(RC_LOG, ike,
 			  "did not find old %s state #%lu to mark for suppressing delete",
 			  what, so);
 		return;

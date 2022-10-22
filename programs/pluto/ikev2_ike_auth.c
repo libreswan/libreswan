@@ -135,15 +135,15 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 					&ike->sa.st_skey_pi_nss,
 					&ike->sa.st_skey_pr_nss,
 					ike->sa.st_logger);
-			log_state(RC_LOG, &ike->sa,
+			llog_sa(RC_LOG, ike,
 				  "PPK AUTH calculated as initiator");
 		} else {
 			if (pc->policy & POLICY_PPK_INSIST) {
-				log_state(RC_LOG_SERIOUS, &ike->sa,
+				llog_sa(RC_LOG_SERIOUS, ike,
 					  "connection requires PPK, but we didn't find one");
 				return STF_FATAL;
 			} else {
-				log_state(RC_LOG, &ike->sa,
+				llog_sa(RC_LOG, ike,
 					  "failed to find PPK and PPK_ID, continuing without PPK");
 				/* we should omit sending any PPK Identity, so we pretend we didn't see USE_PPK */
 				ike->sa.st_seen_ppk = false;
@@ -307,7 +307,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 				pc->remote->host.id.kind == ID_NULL); /* me tarzan, you jane */
 
 	if (impair.send_no_idr) {
-		log_state(RC_LOG, &ike->sa, "IMPAIR: omitting IDr payload");
+		llog_sa(RC_LOG, ike, "IMPAIR: omitting IDr payload");
 		send_idr = false;
 	}
 
@@ -387,7 +387,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 
 	bool ic = (pc->config->send_initial_contact && (ike->sa.st_v2_ike_pred == SOS_NOBODY));
 	if (ic) {
-		log_state(RC_LOG, &ike->sa, "sending INITIAL_CONTACT");
+		llog_sa(RC_LOG, ike, "sending INITIAL_CONTACT");
 		if (!emit_v2N(v2N_INITIAL_CONTACT, request.pbs))
 			return STF_INTERNAL_ERROR;
 	} else {
@@ -448,7 +448,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		if (cc != pc) {
 			/* lie */
 			connection_buf cib;
-			log_state(RC_LOG, &ike->sa,
+			llog_sa(RC_LOG, ike,
 				  "switching CHILD #%lu to pending connection "PRI_CONNECTION,
 				  child->sa.st_serialno, pri_connection(cc, &cib));
 		}
@@ -518,7 +518,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		if (!ikev2_create_psk_auth(AUTH_NULL, ike,
 					   &ike->sa.st_v2_id_payload.mac,
 					   &null_auth)) {
-			log_state(RC_LOG_SERIOUS, &ike->sa,
+			llog_sa(RC_LOG_SERIOUS, ike,
 				  "Failed to calculate additional NULL_AUTH");
 			return STF_FATAL;
 		}
@@ -583,7 +583,7 @@ stf_status process_v2_IKE_AUTH_request(struct ike_sa *ike,
 
 	/* for testing only */
 	if (impair.send_no_ikev2_auth) {
-		log_state(RC_LOG, &ike->sa,
+		llog_sa(RC_LOG, ike,
 			  "IMPAIR_SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
 		return STF_IGNORE;
 	}
@@ -679,10 +679,10 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 					&ike->sa.st_skey_pr_nss,
 					ike->sa.st_logger);
 			ike->sa.st_ppk_used = true;
-			log_state(RC_LOG, &ike->sa,
+			llog_sa(RC_LOG, ike,
 				  "PPK AUTH calculated as responder");
 		} else {
-			log_state(RC_LOG, &ike->sa,
+			llog_sa(RC_LOG, ike,
 				  "ignored received PPK_IDENTITY - connection does not require PPK or PPKID not found");
 		}
 	}
@@ -721,7 +721,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 		free_chunk_content(&ike->sa.st_no_ppk_auth);
 
 	if (!found_ppk && LIN(POLICY_PPK_INSIST, policy)) {
-		log_state(RC_LOG_SERIOUS, &ike->sa, "Requested PPK_ID not found and connection requires a valid PPK");
+		llog_sa(RC_LOG_SERIOUS, ike, "Requested PPK_ID not found and connection requires a valid PPK");
 		record_v2N_response(ike->sa.st_logger, ike, md,
 				    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
 				    ENCRYPTED_PAYLOAD);
@@ -1137,7 +1137,7 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike)
 			/* only allow %any connection to mobike */
 			ike->sa.st_ike_sent_v2n_mobike_supported = true;
 		} else {
-			log_state(RC_LOG, &ike->sa,
+			llog_sa(RC_LOG, ike,
 				  "not responding with v2N_MOBIKE_SUPPORTED, that end is not %%any");
 		}
 	}
@@ -1149,7 +1149,7 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike)
 	     (!LIN(POLICY_SEND_REDIRECT_NEVER, c->policy) &&
 	      require_ddos_cookies()))) {
 		if (c->config->redirect.to == NULL) {
-			log_state(RC_LOG_SERIOUS, &ike->sa,
+			llog_sa(RC_LOG_SERIOUS, ike,
 				  "redirect-to is not specified, can't redirect requests");
 		} else {
 			send_redirect = true;
@@ -1364,7 +1364,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	    LIN(POLICY_PPK_ALLOW, c->policy)) {
 		/* discard the PPK based calculations */
 
-		log_state(RC_LOG, &ike->sa, "peer wants to continue without PPK - switching to NO_PPK");
+		llog_sa(RC_LOG, ike, "peer wants to continue without PPK - switching to NO_PPK");
 
 		release_symkey(__func__, "st_skey_d_nss",  &ike->sa.st_skey_d_nss);
 		ike->sa.st_skey_d_nss = reference_symkey(__func__, "used sk_d from no ppk", ike->sa.st_sk_d_no_ppk);
@@ -1551,7 +1551,7 @@ stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 			v2_notification_t n = md->pd[pd]->payload.v2n.isan_type;
 			pstat(ikev2_recv_notifies_e, n);
 			const char *why = enum_name_short(&v2_notification_names, n);
-			log_state(RC_LOG_SERIOUS, &ike->sa,
+			llog_sa(RC_LOG_SERIOUS, ike,
 				  "IKE SA authentication request rejected by peer: %s", why);
 			logged_something_serious = true;
 			break;
@@ -1624,7 +1624,7 @@ stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 	}
 
 	if (!logged_something_serious) {
-		log_state(RC_LOG_SERIOUS, &ike->sa,
+		llog_sa(RC_LOG_SERIOUS, ike,
 			  "IKE SA authentication request rejected by peer: unrecognized response");
 	}
 

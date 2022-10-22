@@ -118,7 +118,7 @@ void add_revival_if_needed(struct state *st)
 	    c->newest_ipsec_sa == st->st_serialno &&
 	    (c->policy & POLICY_UP)) {
 		struct ike_sa *ike = ike_sa(st, HERE);
-		log_state(RC_LOG_SERIOUS, &ike->sa,
+		llog_sa(RC_LOG_SERIOUS, ike,
 			  "received Delete SA payload: replace CHILD SA #%lu now",
 			  st->st_serialno);
 		st->st_replace_margin = deltatime(0);

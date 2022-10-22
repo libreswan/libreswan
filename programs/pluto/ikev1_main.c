@@ -133,9 +133,9 @@ void main_outI1(struct fd *whack_sock,
 	}
 
 	if (predecessor == NULL) {
-		log_state(RC_LOG, &ike->sa, "initiating IKEv1 Main Mode connection");
+		llog_sa(RC_LOG, ike, "initiating IKEv1 Main Mode connection");
 	} else {
-		log_state(RC_LOG, &ike->sa, "initiating IKEv1 Main Mode connection to replace #%lu",
+		llog_sa(RC_LOG, ike, "initiating IKEv1 Main Mode connection to replace #%lu",
 			  predecessor->st_serialno);
 	}
 
@@ -208,12 +208,12 @@ void main_outI1(struct fd *whack_sock,
 
 	if (predecessor != NULL) {
 		update_pending(pexpect_ike_sa(predecessor), pexpect_ike_sa(st));
-		log_state(RC_NEW_V1_STATE + st->st_state->kind, &ike->sa,
+		llog_sa(RC_NEW_V1_STATE + st->st_state->kind, ike,
 			  "%s, replacing #%lu",
 			  st->st_state->story,
 			  predecessor->st_serialno);
 	} else {
-		log_state(RC_NEW_V1_STATE + st->st_state->kind, &ike->sa,
+		llog_sa(RC_NEW_V1_STATE + st->st_state->kind, ike,
 			  "%s", st->st_state->story);
 	}
 

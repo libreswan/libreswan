@@ -191,7 +191,7 @@ static struct child_sa *find_v2N_REKEY_SA_child(struct ike_sa *ike,
 	/* XXX: this would require a separate .pd_next link? */
 	if (rekey_sa_payload->next != NULL) {
 		/* will tolerate multiple */
-		log_state(RC_LOG_SERIOUS, &ike->sa,
+		llog_sa(RC_LOG_SERIOUS, ike,
 			  "ignoring duplicate v2N_REKEY_SA in exchange");
 	}
 #endif
@@ -206,7 +206,7 @@ static struct child_sa *find_v2N_REKEY_SA_child(struct ike_sa *ike,
 	    enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));
 
 	if (rekey_notify->isan_spisize != sizeof(ipsec_spi_t)) {
-		log_state(RC_LOG, &ike->sa,
+		llog_sa(RC_LOG, ike,
 			  "CREATE_CHILD_SA IPsec SA rekey invalid spi size %u",
 			  rekey_notify->isan_spisize);
 		record_v2N_response(ike->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
@@ -225,7 +225,7 @@ static struct child_sa *find_v2N_REKEY_SA_child(struct ike_sa *ike,
 	}
 
 	if (spi == 0) {
-		log_state(RC_LOG, &ike->sa,
+		llog_sa(RC_LOG, ike,
 			  "CREATE_CHILD_SA IPsec SA rekey contains zero SPI");
 		record_v2N_response(ike->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,
 				    NULL/*empty data*/, ENCRYPTED_PAYLOAD);
@@ -235,7 +235,7 @@ static struct child_sa *find_v2N_REKEY_SA_child(struct ike_sa *ike,
 	if (rekey_notify->isan_protoid != PROTO_IPSEC_ESP &&
 	    rekey_notify->isan_protoid != PROTO_IPSEC_AH) {
 		esb_buf b;
-		log_state(RC_LOG, &ike->sa,
+		llog_sa(RC_LOG, ike,
 			  "CREATE_CHILD_SA IPsec SA rekey invalid Protocol ID %s",
 			  enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));
 		record_v2N_spi_response(ike->sa.st_logger, ike, md,
@@ -262,7 +262,7 @@ static struct child_sa *find_v2N_REKEY_SA_child(struct ike_sa *ike,
 	struct child_sa *replaced_child = find_v2_child_sa_by_outbound_spi(ike, rekey_notify->isan_protoid, spi);
 	if (replaced_child == NULL) {
 		esb_buf b;
-		log_state(RC_LOG, &ike->sa,
+		llog_sa(RC_LOG, ike,
 			  "CREATE_CHILD_SA no such IPsec SA to rekey SA(0x%08" PRIx32 ") Protocol %s",
 			  ntohl((uint32_t) spi),
 			  enum_show(&ikev2_notify_protocol_id_names, rekey_notify->isan_protoid, &b));

@@ -366,7 +366,7 @@ stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 	 * the "newest". Should > be replaced with !=   ?
 	 */
 	if (c->newest_ipsec_sa > ike->sa.st_serialno) {
-		log_state(RC_LOG, &ike->sa,
+		llog_sa(RC_LOG, ike,
 			  "state superseded by #%lu try=%lu, drop this negotiation",
 			  c->newest_ipsec_sa, ike->sa.st_try);
 		return STF_FATAL;

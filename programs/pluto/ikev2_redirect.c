@@ -634,7 +634,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ike,
 	struct pbs_in redirect_pbs = md->pd[PD_v2N_REDIRECT]->pbs;
 
 	if (!LIN(POLICY_ACCEPT_REDIRECT_YES, ike->sa.st_connection->policy)) {
-		log_state(RC_LOG, &ike->sa,
+		llog_sa(RC_LOG, ike,
 			  "ignoring v2N_REDIRECT, we don't accept being redirected");
 		return STF_IGNORE;
 	}
@@ -646,7 +646,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_REDIRECT(struct ike_sa *ike,
 					   &redirect_ip,
 					   ike->sa.st_logger);
 	if (err != NULL) {
-		log_state(RC_LOG_SERIOUS, &ike->sa,
+		llog_sa(RC_LOG_SERIOUS, ike,
 			  "warning: parsing of v2N_REDIRECT payload failed: %s", err);
 		return STF_IGNORE;
 	}

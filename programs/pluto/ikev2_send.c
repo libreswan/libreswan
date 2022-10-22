@@ -46,11 +46,11 @@ bool send_recorded_v2_message(struct ike_sa *ike,
 {
 	struct v2_outgoing_fragment *frags = ike->sa.st_v2_outgoing[message];
 	if (ike->sa.st_interface == NULL) {
-		log_state(RC_LOG, &ike->sa, "cannot send packet - interface vanished!");
+		llog_sa(RC_LOG, ike, "cannot send packet - interface vanished!");
 		return false;
 	}
 	if (frags == NULL) {
-		log_state(RC_LOG, &ike->sa, "no %s message to send", where);
+		llog_sa(RC_LOG, ike, "no %s message to send", where);
 		return false;
 	}
 

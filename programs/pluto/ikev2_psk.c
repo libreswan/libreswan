@@ -177,7 +177,7 @@ static diag_t ikev2_calculate_psk_sighash(bool verify,
 			}
 
 			id_buf idb;
-			log_state(RC_LOG, &ike->sa,
+			llog_sa(RC_LOG, ike,
 				  "WARNING: '%s' PSK length of %zu bytes is too short for PRF %s in FIPS mode (%zu bytes required)",
 				  str_id(&c->local->host.id, &idb),
 				  psk->len,

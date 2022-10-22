@@ -378,7 +378,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
 		/* XXX: keep test results happy */
 		if (md->fake_clone) {
-			log_state(RC_LOG, &ike->sa, "IMPAIR: processing a fake (cloned) message");
+			llog_sa(RC_LOG, ike, "IMPAIR: processing a fake (cloned) message");
 		}
 		v2_dispatch(ike, md, transition);
 		statetime_stop(&start, "%s()", __func__);
@@ -607,12 +607,12 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		} else {
 			what = "establishing Child SA";
 		}
-		log_state(log_stream | (RC_NEW_V2_STATE + STATE_V2_PARENT_I1), &ike->sa,
+		llog_sa(log_stream | (RC_NEW_V2_STATE + STATE_V2_PARENT_I1), ike,
 			  "initiating IKEv2 connection to replace %s #%lu",
 			  what, predecessor->st_serialno);
 		update_pending(ike_sa(predecessor, HERE), ike);
 	} else {
-		log_state(log_stream | (RC_NEW_V2_STATE + STATE_V2_PARENT_I1), &ike->sa,
+		llog_sa(log_stream | (RC_NEW_V2_STATE + STATE_V2_PARENT_I1), ike,
 			  "initiating IKEv2 connection");
 	}
 
@@ -647,7 +647,7 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	const struct ikev2_proposals *ike_proposals = c->config->v2_ike_proposals;
 	ike->sa.st_oakley.ta_dh = ikev2_proposals_first_dh(ike_proposals);
 	if (ike->sa.st_oakley.ta_dh == NULL) {
-		log_state(RC_LOG, &ike->sa, "proposals do not contain a valid DH");
+		llog_sa(RC_LOG, ike, "proposals do not contain a valid DH");
 		delete_state(&ike->sa);
 		return;
 	}
@@ -784,7 +784,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	 * final.
 	 */
 	if (impair.omit_v2N_SIGNATURE_HASH_ALGORITHMS) {
-		log_state(RC_LOG, &ike->sa,
+		llog_sa(RC_LOG, ike,
 			  "IMPAIR: omitting the SIGNATURE_HASH_ALGORITHM notification in IKE_SA_INIT request");
 	} else if (authby_has_digsig(c->remote->config->host.authby) &&
 		   (c->config->sighash_policy != LEMPTY)) {
@@ -905,7 +905,7 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 	 */
 	if (!ikev2_proposal_to_trans_attrs(ike->sa.st_v2_accepted_proposal,
 					   &ike->sa.st_oakley, ike->sa.st_logger)) {
-		log_state(RC_LOG_SERIOUS, &ike->sa, "IKE responder accepted an unsupported algorithm");
+		llog_sa(RC_LOG_SERIOUS, ike, "IKE responder accepted an unsupported algorithm");
 		/* STF_INTERNAL_ERROR doesn't delete ST */
 		return STF_FATAL;
 	}
@@ -1285,7 +1285,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD(struct ike_sa 
 	 */
 	const struct dh_desc *new_group = ikev2_get_dh_desc(sg.sg_group);
 	passert(new_group != NULL);
-	log_state(RC_LOG, &ike->sa,
+	llog_sa(RC_LOG, ike,
 		  "Received unauthenticated INVALID_KE_PAYLOAD response to DH %s; resending with suggested DH %s",
 		  ike->sa.st_oakley.ta_dh->common.fqn,
 		  new_group->common.fqn);
@@ -1320,7 +1320,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 
 	/* for testing only */
 	if (impair.send_no_ikev2_auth) {
-		log_state(RC_LOG, &ike->sa,
+		llog_sa(RC_LOG, ike,
 			  "IMPAIR_SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
 		return STF_IGNORE;
 	}
@@ -1341,7 +1341,7 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	 * the "newest". Should > be replaced with !=   ?
 	 */
 	if (c->newest_ipsec_sa > ike->sa.st_serialno) {
-		log_state(RC_LOG, &ike->sa,
+		llog_sa(RC_LOG, ike,
 			  "state superseded by #%lu try=%lu, drop this negotiation",
 			  c->newest_ipsec_sa, ike->sa.st_try);
 		return STF_FATAL;

@@ -155,7 +155,7 @@ void retransmit_v2_msg(struct state *ike_sa)
 	 */
 
 	if (!IS_IKE_SA_ESTABLISHED(&ike->sa) && c->newest_ike_sa > ike->sa.st_serialno) {
-		log_state(RC_LOG, &ike->sa,
+		llog_sa(RC_LOG, ike,
 			  "suppressing retransmit because IKE SA was superseded #%lu try=%lu; drop this negotiation",
 			  c->newest_ike_sa, ike->sa.st_try);
 		pstat_sa_failed(&ike->sa, REASON_SUPERSEDED_BY_NEW_SA);
@@ -216,13 +216,13 @@ void retransmit_v2_msg(struct state *ike_sa)
 			 * Release whack because the observer will
 			 * get bored.
 			 */
-			log_state(RC_COMMENT, &ike->sa,
+			llog_sa(RC_COMMENT, ike,
 				  "%s, but releasing whack",
 				  story);
 			release_pending_whacks(&ike->sa, story);
 		} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 			/* no whack: just log to syslog */
-			log_state(RC_LOG, &ike->sa, "%s", story);
+			llog_sa(RC_LOG, ike, "%s", story);
 		}
 
 		ipsecdoi_replace(&ike->sa, try);

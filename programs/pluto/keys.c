@@ -335,7 +335,7 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 		if (!is_realtime_epoch(key->until_time) &&
 		    realtime_cmp(key->until_time, <, s.now)) {
 			id_buf printkid;
-			log_state(RC_LOG_SERIOUS, &ike->sa,
+			llog_sa(RC_LOG_SERIOUS, ike,
 				  "cached %s public key '%s' has expired and has been deleted",
 				  key->content.type->name, str_id(&key->id, &printkid));
 			*pp = free_public_keyentry(*(pp));

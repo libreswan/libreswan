@@ -1764,7 +1764,7 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 	struct traffic_selector_payloads their_tsp = empty_traffic_selectors;
 
 	if (!v2_parse_tsp(md, &their_tsp, child->sa.st_logger)) {
-		log_state(RC_LOG_SERIOUS, &child->sa,
+		llog_sa(RC_LOG_SERIOUS, child,
 			  "received malformed TSi/TSr payload(s)");
 		return false;
 	}
@@ -1787,7 +1787,7 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 		 *    OR
 		 *  - Security label *not* required, but found.
 		 */
-		log_state(RC_LOG_SERIOUS, &child->sa,
+		llog_sa(RC_LOG_SERIOUS, child,
 			  "rekey: received Traffic Selectors mismatch configured selectors for Security Label");
 		return false;
 	}
@@ -1795,7 +1795,7 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 	struct best_score score = score_ends(responder_fit, c, &ends, &their_tsp, indent);
 
 	if (!score.ok) {
-		log_state(RC_LOG_SERIOUS, &child->sa,
+		llog_sa(RC_LOG_SERIOUS, child,
 			  "rekey: received Traffic Selectors does not contain existing IPsec SA Traffic Selectors");
 		return false;
 	}

@@ -167,7 +167,7 @@ static stf_status cert_decode_completed(struct state *st,
 		pexpect(ike->sa.st_remote_certs.verified == NULL);
 		pexpect(ike->sa.st_remote_certs.pubkey_db == NULL);
 		/* NSS: already logged details */
-		log_state(RC_LOG, &ike->sa, "X509: certificate payload rejected for this connection");
+		llog_sa(RC_LOG, ike, "X509: certificate payload rejected for this connection");
 		if (ike->sa.st_sa_role == SA_INITIATOR) {
 			/*
 			 * One of the certs was bad; no point switching

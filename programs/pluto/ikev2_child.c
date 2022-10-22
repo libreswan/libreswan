@@ -538,7 +538,7 @@ static void ikev2_set_domain(struct pbs_in *cp_a_pbs, struct child_sa *child)
 			append_st_cfg_domain(&child->sa, safestr);
 		}
 	} else {
-		log_state(RC_LOG, &child->sa,
+		llog_sa(RC_LOG, child,
 			  "initiator INTERNAL_DNS_DOMAIN CP ignored");
 	}
 }
@@ -550,7 +550,7 @@ static bool ikev2_set_dns(struct pbs_in *cp_a_pbs, struct child_sa *child,
 	bool ignore = LIN(POLICY_IGNORE_PEER_DNS, c->policy);
 
 	if (c->policy & POLICY_OPPORTUNISTIC) {
-		log_state(RC_LOG, &child->sa,
+		llog_sa(RC_LOG, child,
 			  "ignored INTERNAL_IP%d_DNS CP payload for Opportunistic IPsec",
 			  af->ip_version);
 		return true;
@@ -566,7 +566,7 @@ static bool ikev2_set_dns(struct pbs_in *cp_a_pbs, struct child_sa *child,
 	/* i.e. all zeros */
 	if (!address_is_specified(ip)) {
 		address_buf ip_str;
-		log_state(RC_LOG, &child->sa,
+		llog_sa(RC_LOG, child,
 			  "ERROR INTERNAL_IP%d_DNS %s is invalid",
 			  af->ip_version, str_address(&ip, &ip_str));
 		return false;
@@ -577,14 +577,14 @@ static bool ikev2_set_dns(struct pbs_in *cp_a_pbs, struct child_sa *child,
 		address_buf ip_buf;
 		const char *ip_str = ipstr(&ip, &ip_buf);
 
-		log_state(RC_LOG, &child->sa,
+		llog_sa(RC_LOG, child,
 			  "received %sINTERNAL_IP%d_DNS %s",
 			  ignore ? "and ignored " : "",
 			  af->ip_version, ip_str);
 		if (!ignore)
 			append_st_cfg_dns(&child->sa, ip_str);
 	} else {
-		log_state(RC_LOG, &child->sa,
+		llog_sa(RC_LOG, child,
 			  "initiator INTERNAL_IP%d_DNS CP ignored",
 			  af->ip_version);
 	}
@@ -611,21 +611,21 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs, struct child_sa 
 
 	if (!address_is_specified(ip)) {
 		address_buf ip_str;
-		log_state(RC_LOG, &child->sa,
+		llog_sa(RC_LOG, child,
 			  "ERROR INTERNAL_IP%d_ADDRESS %s is invalid",
 			  af->ip_version, str_address(&ip, &ip_str));
 		return false;
 	}
 
 	ipstr_buf ip_str;
-	log_state(RC_LOG, &child->sa,
+	llog_sa(RC_LOG, child,
 		  "received INTERNAL_IP%d_ADDRESS %s%s",
 		  af->ip_version, ipstr(&ip, &ip_str),
 		  *seen_an_address ? "; discarded" : "");
 
 	bool responder = (child->sa.st_sa_role == SA_RESPONDER);
 	if (responder) {
-		log_state(RC_LOG, &child->sa, "bogus responder CP ignored");
+		llog_sa(RC_LOG, child, "bogus responder CP ignored");
 		return true;
 	}
 
@@ -672,7 +672,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child)
 	switch (child->sa.st_sa_role) {
 	case SA_INITIATOR:
 		if (cp->isacp_type != IKEv2_CP_CFG_REPLY) {
-			log_state(RC_LOG_SERIOUS, &child->sa,
+			llog_sa(RC_LOG_SERIOUS, child,
 				  "ERROR expected IKEv2_CP_CFG_REPLY got a %s",
 				  enum_name(&ikev2_cp_type_names, cp->isacp_type));
 			return false;
@@ -680,7 +680,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child)
 		break;
 	case SA_RESPONDER:
 		if (cp->isacp_type != IKEv2_CP_CFG_REQUEST) {
-			log_state(RC_LOG_SERIOUS, &child->sa,
+			llog_sa(RC_LOG_SERIOUS, child,
 				  "ERROR expected IKEv2_CP_CFG_REQUEST got a %s",
 				  enum_name(&ikev2_cp_type_names, cp->isacp_type));
 			return false;
@@ -707,7 +707,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child)
 		case IKEv2_INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
 			if (!ikev2_set_internal_address(&cp_a_pbs, child, &ipv4_info,
 							&seen_internal_address)) {
-				log_state(RC_LOG_SERIOUS, &child->sa,
+				llog_sa(RC_LOG_SERIOUS, child,
 					  "ERROR malformed INTERNAL_IP4_ADDRESS attribute");
 				return false;
 			}
@@ -715,7 +715,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child)
 
 		case IKEv2_INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
 			if (!ikev2_set_dns(&cp_a_pbs, child, &ipv4_info)) {
-				log_state(RC_LOG_SERIOUS, &child->sa,
+				llog_sa(RC_LOG_SERIOUS, child,
 					  "ERROR malformed INTERNAL_IP4_DNS attribute");
 				return false;
 			}
@@ -724,7 +724,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child)
 		case IKEv2_INTERNAL_IP6_ADDRESS | ISAKMP_ATTR_AF_TLV:
 			if (!ikev2_set_internal_address(&cp_a_pbs, child, &ipv6_info,
 							&seen_internal_address)) {
-				log_state(RC_LOG_SERIOUS, &child->sa,
+				llog_sa(RC_LOG_SERIOUS, child,
 					  "ERROR malformed INTERNAL_IP6_ADDRESS attribute");
 				return false;
 			}
@@ -732,7 +732,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child)
 
 		case IKEv2_INTERNAL_IP6_DNS | ISAKMP_ATTR_AF_TLV:
 			if (!ikev2_set_dns(&cp_a_pbs, child, &ipv6_info)) {
-				log_state(RC_LOG_SERIOUS, &child->sa,
+				llog_sa(RC_LOG_SERIOUS, child,
 					  "ERROR malformed INTERNAL_IP6_DNS attribute");
 				return false;
 			}
@@ -743,7 +743,7 @@ bool ikev2_parse_cp_r_body(struct payload_digest *cp_pd, struct child_sa *child)
 			break;
 
 		default:
-			log_state(RC_LOG, &child->sa,
+			llog_sa(RC_LOG, child,
 				  "unknown attribute %s length %u",
 				  enum_name(&ikev2_cp_attribute_type_names, cp_a.type),
 				  cp_a.len);
@@ -957,7 +957,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 	 */
 	if (md->v2N_error != v2N_NOTHING_WRONG) {
 		esb_buf esb;
-		log_state(RC_LOG_SERIOUS, &child->sa, "received ERROR NOTIFY (%d): %s ",
+		llog_sa(RC_LOG_SERIOUS, child, "received ERROR NOTIFY (%d): %s ",
 			  md->v2N_error,
 			  enum_show(&v2_notification_names, md->v2N_error, &esb));
 		return md->v2N_error;
@@ -992,7 +992,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 
 		dbg("received v2N_IPCOMP_SUPPORTED of length %zd", len);
 		if ((c->policy & POLICY_COMPRESS) == LEMPTY) {
-			log_state(RC_LOG_SERIOUS, &child->sa,
+			llog_sa(RC_LOG_SERIOUS, child,
 				  "Unexpected IPCOMP request as our connection policy did not indicate support for it");
 			return v2N_NO_PROPOSAL_CHOSEN;
 		}
@@ -1005,14 +1005,14 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		}
 
 		if (n_ipcomp.ikev2_notify_ipcomp_trans != IPCOMP_DEFLATE) {
-			log_state(RC_LOG_SERIOUS, &child->sa,
+			llog_sa(RC_LOG_SERIOUS, child,
 				  "Unsupported IPCOMP compression method %d",
 			       n_ipcomp.ikev2_notify_ipcomp_trans); /* enum_name this later */
 			return v2N_INVALID_SYNTAX; /* fatal */
 		}
 
 		if (n_ipcomp.ikev2_cpi < IPCOMP_FIRST_NEGOTIATED) {
-			log_state(RC_LOG_SERIOUS, &child->sa,
+			llog_sa(RC_LOG_SERIOUS, child,
 				  "Illegal IPCOMP CPI %d", n_ipcomp.ikev2_cpi);
 			return v2N_INVALID_SYNTAX; /* fatal */
 		}
@@ -1110,7 +1110,7 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 		 */
 		err_t e = lease_that_address(child->sa.st_connection, &child->sa, pool_afi);
 		if (e != NULL) {
-			log_state(RC_LOG, &child->sa, "ikev2 lease_an_address failure %s", e);
+			llog_sa(RC_LOG, child, "ikev2 lease_an_address failure %s", e);
 			/* already logged */
 			delete_state(&child->sa);
 			ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
@@ -1250,13 +1250,13 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 	if (response_md->pd[PD_v2N_USE_TRANSPORT_MODE] != NULL) {
 		/* FIXME: use new RFC logic turning this into a request, not requirement */
 		if (LIN(POLICY_TUNNEL, child->sa.st_connection->policy)) {
-			log_state(RC_LOG_SERIOUS, &child->sa,
+			llog_sa(RC_LOG_SERIOUS, child,
 				  "local policy requires Tunnel Mode but peer requires required Transport Mode");
 			return v2N_TS_UNACCEPTABLE;
 		}
 	} else {
 		if (!LIN(POLICY_TUNNEL, child->sa.st_connection->policy)) {
-			log_state(RC_LOG_SERIOUS, &child->sa,
+			llog_sa(RC_LOG_SERIOUS, child,
 				  "local policy requires Transport Mode but peer requires required Tunnel Mode");
 			return v2N_TS_UNACCEPTABLE;
 		}
@@ -1283,7 +1283,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 			 * not really anything to here... but it would
 			 * be worth unpending again.
 			 */
-			log_state(RC_LOG_SERIOUS, &child->sa,
+			llog_sa(RC_LOG_SERIOUS, child,
 				  "missing v2CP reply, not attempting to setup child SA");
 			return v2N_TS_UNACCEPTABLE;
 		}

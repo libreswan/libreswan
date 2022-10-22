@@ -73,11 +73,11 @@ bool extract_v2N_ppk_identity(const struct pbs_in *notify_pbs,
 	int idtype;
 
 	if (len > PPK_ID_MAXLEN) {
-		log_state(RC_LOG_SERIOUS, &ike->sa, "PPK ID length is too big");
+		llog_sa(RC_LOG_SERIOUS, ike, "PPK ID length is too big");
 		return false;
 	}
 	if (len <= 1) {
-		log_state(RC_LOG_SERIOUS, &ike->sa, "PPK ID data must be at least 1 byte (received %zd bytes including ppk type byte)",
+		llog_sa(RC_LOG_SERIOUS, ike, "PPK ID data must be at least 1 byte (received %zd bytes including ppk type byte)",
 			  len);
 		return false;
 	}
@@ -100,7 +100,7 @@ bool extract_v2N_ppk_identity(const struct pbs_in *notify_pbs,
 
 	case PPK_ID_OPAQUE:
 	default:
-		log_state(RC_LOG_SERIOUS, &ike->sa, "PPK_ID type %d (%s) not supported",
+		llog_sa(RC_LOG_SERIOUS, ike, "PPK_ID type %d (%s) not supported",
 			  idtype, enum_name(&ikev2_ppk_id_type_names, idtype));
 		return false;
 	}
@@ -128,7 +128,7 @@ static bool ikev2_calculate_hash(struct ike_sa *ike,
 	const struct secret_stuff *pks = get_local_private_key(c, type,
 								    ike->sa.st_logger);
 	if (pks == NULL) {
-		log_state(RC_LOG, &ike->sa, "No %s private key found", type->name);
+		llog_sa(RC_LOG, ike, "No %s private key found", type->name);
 		return false; /* failure: no key to use */
 	}
 
@@ -186,7 +186,7 @@ bool ikev2_calc_no_ppk_auth(struct ike_sa *ike,
 				}
 				return true;
 			} else {
-				log_state(RC_LOG_SERIOUS, &ike->sa,
+				llog_sa(RC_LOG_SERIOUS, ike,
 					  "no compatible hash algo");
 				return false;
 			}

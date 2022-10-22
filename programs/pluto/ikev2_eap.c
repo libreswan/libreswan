@@ -409,7 +409,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 {
 	/* for testing only */
 	if (impair.send_no_ikev2_auth) {
-		log_state(RC_LOG, &ike->sa,
+		llog_sa(RC_LOG, ike,
 			  "IMPAIR_SEND_NO_IKEV2_AUTH set - not sending IKE_AUTH packet");
 		return STF_IGNORE;
 	}
@@ -434,13 +434,13 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 
 	const struct connection *c = ike->sa.st_connection;
 	if (c->remote->config->host.auth != AUTH_EAPONLY) {
-		log_state(RC_LOG, &ike->sa,
+		llog_sa(RC_LOG, ike,
 			  "Peer attempted EAP authentication, but IKE_AUTH is required");
 		goto auth_fail;
 	}
 	if (c->local->config->host.eap != IKE_EAP_TLS ||
 	    c->remote->config->host.eap != IKE_EAP_TLS) {
-		log_state(RC_LOG, &ike->sa,
+		llog_sa(RC_LOG, ike,
 			  "Peer attempted EAP authentication, but EAP is not allowed");
 		goto auth_fail;
 	}

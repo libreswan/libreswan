@@ -111,7 +111,7 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 
 	if (ntfy_update_sa) {
 		if (LHAS(ike->sa.hidden_variables.st_nat_traversal, NATED_HOST)) {
-			log_state(RC_LOG, &ike->sa,
+			llog_sa(RC_LOG, ike,
 				  "Ignoring MOBIKE UPDATE_SA since we are behind NAT");
 		} else {
 			if (!update_mobike_endpoints(ike, md))
@@ -131,7 +131,7 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 	}
 
 	if (ntfy_update_sa) {
-		log_state(RC_LOG, &ike->sa,
+		llog_sa(RC_LOG, ike,
 			  "MOBIKE request: updating IPsec SA by request");
 	} else {
 		dbg("MOBIKE request: not updating IPsec SA");
@@ -172,7 +172,7 @@ void process_v2N_mobike_responses(struct ike_sa *ike, struct msg_digest *md)
 		return;
 	}
 
-	log_state(RC_LOG, &ike->sa, "MOBIKE response: updating IPsec SA");
+	llog_sa(RC_LOG, ike, "MOBIKE response: updating IPsec SA");
 	update_ike_endpoints(ike, md); /* update state sender so we can find it for IPsec SA */
 	return;
 }

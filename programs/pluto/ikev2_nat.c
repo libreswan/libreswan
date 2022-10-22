@@ -182,7 +182,7 @@ bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 		struct iface_endpoint *i = find_iface_endpoint_by_local_endpoint(new_local_endpoint);
 		if (i == NULL) {
 			endpoint_buf b2;
-			log_state(RC_LOG/*fatal!*/, &ike->sa,
+			llog_sa(RC_LOG/*fatal!*/, ike,
 				  "NAT: cannot float to %s as no such interface",
 				  str_endpoint(&new_local_endpoint, &b2));
 			return false; /* must enable NAT */
@@ -197,7 +197,7 @@ bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 		ike->sa.st_interface = iface_endpoint_addref(i);
 	} else {
 		endpoint_buf b1;
-		log_state(RC_LOG/*fatal!*/, &ike->sa,
+		llog_sa(RC_LOG/*fatal!*/, ike,
 			  "NAT: cannot switch to NAT port and interface %s does not support NAT",
 			  str_endpoint(&ike->sa.st_interface->local_endpoint, &b1));
 		return false;

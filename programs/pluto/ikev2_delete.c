@@ -192,13 +192,13 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 		switch (v2del->isad_protoid) {
 		case PROTO_ISAKMP:
 			if (*del_ike) {
-				log_state(RC_LOG, &ike->sa,
+				llog_sa(RC_LOG, ike,
 					  "Error: INFORMATIONAL Exchange with more than one Delete Payload for the IKE SA");
 				return false;
 			}
 
 			if (v2del->isad_nrspi != 0 || v2del->isad_spisize != 0) {
-				log_state(RC_LOG, &ike->sa,
+				llog_sa(RC_LOG, ike,
 					  "IKE SA Delete has non-zero SPI size or number of SPIs");
 				return false;
 			}
@@ -209,14 +209,14 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 		case PROTO_IPSEC_AH:
 		case PROTO_IPSEC_ESP:
 			if (v2del->isad_spisize != sizeof(ipsec_spi_t)) {
-				log_state(RC_LOG, &ike->sa,
+				llog_sa(RC_LOG, ike,
 					  "IPsec Delete Notification has invalid SPI size %u",
 					  v2del->isad_spisize);
 				return false;
 			}
 
 			if (v2del->isad_nrspi * v2del->isad_spisize != pbs_left(&p->pbs)) {
-				log_state(RC_LOG, &ike->sa,
+				llog_sa(RC_LOG, ike,
 					  "IPsec Delete Notification payload size is %zu but %u is required",
 					  pbs_left(&p->pbs),
 					  v2del->isad_nrspi * v2del->isad_spisize);
@@ -227,13 +227,13 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 			break;
 
 		default:
-			log_state(RC_LOG, &ike->sa,
+			llog_sa(RC_LOG, ike,
 				  "Ignored bogus delete protoid '%d'", v2del->isad_protoid);
 		}
 	}
 
 	if (*del_ike && ndp != 0) {
-		log_state(RC_LOG, &ike->sa,
+		llog_sa(RC_LOG, ike,
 			  "Odd: INFORMATIONAL Exchange deletes IKE SA and yet also deletes some IPsec SA");
 	}
 
@@ -300,7 +300,7 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 
 				if (child == NULL) {
 					esb_buf b;
-					log_state(RC_LOG, &ike->sa,
+					llog_sa(RC_LOG, ike,
 						  "received delete request for %s SA(0x%08" PRIx32 ") but corresponding state not found",
 						  enum_show(&ikev2_delete_protocol_id_names,
 							    v2del->isad_protoid, &b),
@@ -323,7 +323,7 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 						spi_buf[j] = pr->inbound.spi;
 						j++;
 					} else {
-						log_state(RC_LOG, &ike->sa,
+						llog_sa(RC_LOG, ike,
 							  "too many SPIs in Delete Notification payload; ignoring 0x%08" PRIx32,
 							  ntohl(spi));
 					}
@@ -381,14 +381,14 @@ bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md)
 			uint16_t i;
 
 			if (v2del->isad_spisize != sizeof(ipsec_spi_t)) {
-				log_state(RC_LOG, &ike->sa,
+				llog_sa(RC_LOG, ike,
 					  "IPsec Delete Notification has invalid SPI size %u",
 					  v2del->isad_spisize);
 				return false;
 			}
 
 			if (v2del->isad_nrspi * v2del->isad_spisize != pbs_left(&p->pbs)) {
-				log_state(RC_LOG, &ike->sa,
+				llog_sa(RC_LOG, ike,
 					  "IPsec Delete Notification payload size is %zu but %u is required",
 					  pbs_left(&p->pbs),
 					  v2del->isad_nrspi * v2del->isad_spisize);
@@ -428,7 +428,7 @@ bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md)
 
 				if (dst == NULL) {
 					esb_buf b;
-					log_state(RC_LOG, &ike->sa,
+					llog_sa(RC_LOG, ike,
 						  "received delete request for %s SA(0x%08" PRIx32 ") but corresponding state not found",
 						  enum_show(&ikev2_delete_protocol_id_names,
 							    v2del->isad_protoid, &b),
