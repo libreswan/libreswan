@@ -16,7 +16,9 @@ include $(top_srcdir)/mk/config.mk
 
 local-base: $(builddir)/$(UNITFILE) $(builddir)/$(TMPFILESCONFIG)
 
+ifeq ($(INSTALL_INITSYSTEM),true)
 local-install-base: installsystemdservice oldinitdcheck postcheck
+endif
 
 installtmpfilesconfig: local-base | $(TMPFILESDIR)
 	$(INSTALL) $(INSTCONFFLAGS) $(builddir)/$(TMPFILESCONFIG) $(TMPFILESDIR)
