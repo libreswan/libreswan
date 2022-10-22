@@ -15,8 +15,8 @@
 # $(call install-directory, <DIRECTORY>[, <UMASK>])
 install-directory = \
 	if test ! -d $(strip $(1)) ; then \
-		mkdir -p $(strip $(1)) ; \
-		test -z "$(strip $(2))" || chmod $(strip $(2)) $(strip $(1)) ; \
+		echo mkdir $(if $(2), -m $(strip $(2))) -p $(strip $(1)) ; \
+		     mkdir $(if $(2), -m $(strip $(2))) -p $(strip $(1)) ; \
 	fi
 
 # $(call install-file, <FLAGS>, <SRC>, <DST>)
@@ -26,7 +26,7 @@ install-file = \
 
 # $(call install-missing-file, <FLAGS>, <SRC>, <DST>)
 install-missing-file = \
-	if [ ! -f $(strip $(3)) ]; then \
+	if test ! -f $(strip $(3)) ; then \
 		$(call install-file, $(1), $(2), $(3)); \
 	else \
 		echo "WARNING: $(strip $(3)): skipping update, new version is in $(strip $(2))" 1>&2 ; \
