@@ -66,12 +66,12 @@ case "$1" in
 		exec rc-service ipsec start
 		;;
 	    sysvinit )
-		echo "Redirecting to: /etc/init.d/ipsec start"
-		exec /etc/init.d/ipsec start
+		echo "Redirecting to: @INIT_D_DIR@/ipsec start"
+		exec @INIT_D_DIR@/ipsec start
 		;;
 	    docker )
-		echo "Redirecting to: /etc/init.d/ipsec start"
-		exec /etc/init.d/ipsec start
+		echo "Redirecting to: @INIT_D_DIR@/ipsec start"
+		exec @INIT_D_DIR@/ipsec start
 		;;
 	    rc.d )
 		echo "Redirecting to: @RC_D_DIR@/pluto onestart"
@@ -117,12 +117,12 @@ case "$1" in
 		exec rc-service ipsec stop
 		;;
 	    sysvinit )
-		echo "Redirecting to: /etc/init.d/ipsec stop"
-		exec /etc/init.d/ipsec stop
+		echo "Redirecting to: @INIT_D_DIR@/ipsec stop"
+		exec @INIT_D_DIR@/ipsec stop
 		;;
 	    docker )
-		echo "Redirecting to: /etc/init.d/ipsec stop"
-		exec /etc/init.d/ipsec stop
+		echo "Redirecting to: @INIT_D_DIR@/ipsec stop"
+		exec @INIT_D_DIR@/ipsec stop
 		;;
 	    rc.d )
 		echo "Redirecting to: @RC_D_DIR@/pluto onestop"
@@ -184,8 +184,8 @@ case "$1" in
 		exec rc-service ipsec status
 		;;
 	    sysvinit )
-		echo "Redirecting to: /etc/init.d/ipsec status"
-		exec /etc/init.d/ipsec status
+		echo "Redirecting to: @INIT_D_DIR@/ipsec status"
+		exec @INIT_D_DIR@/ipsec status
 		;;
 	    rc.d )
 		echo "Redirecting to: @RC_D_DIR@/pluto onestatus"
@@ -220,12 +220,12 @@ case "$1" in
 		exec rc-service ipsec restart
 		;;
 	    sysvinit )
-		echo "Redirecting to: /etc/init.d/ipsec restart"
-		exec /etc/init.d/ipsec restart
+		echo "Redirecting to: @INIT_D_DIR@/ipsec restart"
+		exec @INIT_D_DIR@/ipsec restart
 		;;
 	    docker )
-		echo "Redirecting to: /etc/init.d/ipsec restart"
-		exec /etc/init.d/ipsec restart
+		echo "Redirecting to: @INIT_D_DIR@/ipsec restart"
+		exec @INIT_D_DIR@/ipsec restart
 		;;
 	    rc.d )
 		echo "Redirecting to: @RC_D_DIR@/pluto onerestart"

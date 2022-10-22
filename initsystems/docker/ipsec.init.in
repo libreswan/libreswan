@@ -36,8 +36,8 @@
 # ipsec	        sysv style init.d script for starting and stopping
 #		the IPsec security subsystem (XFRM and Pluto).
 #
-# This script becomes /etc/init.d/ipsec
-# and is also accessible as "ipsec setup"
+# This script becomes @INIT_D_DIR@/ipsec (/etc/init.d/ipsec) and is
+# also accessible as "ipsec setup"
 #
 # The startup and shutdown times are a difficult compromise (in particular,
 # it is almost impossible to reconcile them with the insanely early/late

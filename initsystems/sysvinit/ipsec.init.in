@@ -35,8 +35,8 @@
 # ipsec		sysv style init.d script for starting and stopping
 #		the IPsec security subsystem (KLIPS and Pluto).
 #
-# This script becomes @FINALINITDDIR@/ipsec
-# and is also accessible as "ipsec setup"
+# This script becomes @INIT_D_DIR@/ipsec (/etc/init.d/ipsec) and is
+# also accessible as "ipsec setup"
 #
 # The startup and shutdown times are a difficult compromise (in particular,
 # it is almost impossible to reconcile them with the insanely early/late
@@ -50,8 +50,8 @@
 test ${IPSEC_INIT_SCRIPT_DEBUG} && set -v -x
 
 # Source function library.
-if [ -f @FINALINITDDIR@/functions ]; then
-    . @FINALINITDDIR@/functions
+if [ -f @INIT_D_DIR@/functions ]; then
+    . @INIT_D_DIR@/functions
 elif [ -f /lib/lsb/init-functions ]; then
     . /lib/lsb/init-functions
 fi

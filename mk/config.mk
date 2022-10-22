@@ -132,11 +132,11 @@ $(error ERROR: Deprecated INC_DOCDIR variable is set, use FINALDOCDIR instead)
 endif
 
 ifdef INC_RCDIRS
-$(error ERROR: Deprecated variable INC_RCDIRS is set, use INITDDIRS instead
+$(error ERROR: Deprecated variable INC_RCDIRS is set, use INIT_D_DIR instead
 endif
 
 ifdef INC_RCDEFAULT
-$(error ERROR: Deprecated variable INC_RCDEFAULT is set, use INITDDIR_DEFAULT instead)
+$(error ERROR: Deprecated variable INC_RCDEFAULT is set, use INIT_D_DIR instead)
 endif
 
 #
@@ -240,13 +240,24 @@ endif
 
 INSTALL_INITSYSTEM ?= true
 
-# Where do the INITSYSTEM=rc.d boot/shutdown scripts and examples go?
+# Where the INITSYSTEM=rc.d boot/shutdown scripts and examples go.
+# During install the $(DESTDIR) prefix is added.
 
 RC_D_DIR ?= $(SYSCONF_DIR)/rc.d
 TRANSFORMS += 's:@RC_D_DIR@:$(RC_D_DIR):g'
 
 EXAMPLE_RC_D_DIR ?= $(FINALEXAMPLECONFDIR)/$(notdir $(RC_D_DIR))
 TRANSFORMS += 's:@EXAMPLE_RC_D_DIR@:$(EXAMPLE_RC_D_DIR):g'
+
+# Where the INITSYSTEM=init.d scripts and examples go.  During install
+# $(DESTDIR) prefix is added.
+
+INIT_D_DIR ?= /etc/init.d
+TRANSFORMS += 's:@INIT_D_DIR@:$(INIT_D_DIR):g'
+
+EXAMPLE_INIT_D_DIR ?= $(FINALEXAMPLECONFDIR)/$(notdir $(INIT_D_DIR))
+TRANSFORMS += 's:@EXAMPLE_INIT_D_DIR@:$(EXAMPLE_INIT_D_DIR):g'
+
 
 # run dir - defaults to /run/pluto
 # Some older systems might need to set this to /var/run/pluto
@@ -306,29 +317,6 @@ FINALNSSDIR ?= $(FINALVARDIR)/lib/ipsec/nss
 NSSDIR ?= $(DESTDIR)$(FINALNSSDIR)
 
 DOCKER_PLUTONOFORK ?= --nofork
-
-# An attempt is made to automatically figure out where boot/shutdown scripts
-# will finally go:  the first directory in INITDDIRS that exists gets them.
-# If none of those exists (or INITDDIRS is empty), INITDDIR_DEFAULT gets them.
-# With a non-null DESTDIR, INITDDIR_DEFAULT will be used unless one of the
-# INITDDIRS directories has been pre-created under DESTDIR.
-
-# XXX: setup.in uses the hardwired path /etc/init.d making all the
-# below magic pointless.
-
-INITDDIRS ?= /etc/rc.d/init.d /etc/init.d
-INITDDIR_DEFAULT ?= /etc/init.d
-
-# INITDDIR is where boot/shutdown scripts go; FINALINITDDIR is where they think
-# will finally be (so utils/Makefile can create a symlink in LIBEXECDIR to
-# the place where the boot/shutdown script will finally be, rather than
-# the place where it is installed).
-FINALINITDDIR ?= $(shell for d in $(INITDDIRS) ; \
-		do if test -d $(DESTDIR)/$$d ; \
-		then echo $$d ; exit 0 ; \
-		fi ; done ; echo $(INITDDIR_DEFAULT) )
-# XXX: overlaps FINALINITSYSTEMDIR
-INITDDIR ?= $(DESTDIR)$(FINALINITDDIR)
 
 # PYTHON_BINARY is used for python scripts shebang
 PYTHON_BINARY ?= /usr/bin/python3
@@ -544,7 +532,6 @@ TRANSFORM_VARIABLES = sed \
 			-e "s:@FINALCONFFILE@:$(FINALCONFFILE):g" \
 			-e "s:@FINALDOCDIR@:$(FINALDOCDIR):g" \
 			-e "s:@FINALEXAMPLECONFDIR@:$(FINALEXAMPLECONFDIR):g" \
-			-e "s:@FINALINITDDIR@:$(FINALINITDDIR):g" \
 			-e "s:@FINALLIBEXECDIR@:$(FINALLIBEXECDIR):g" \
 			-e "s:@FINALLOGDIR@:$(FINALLOGDIR):g" \
 			-e "s:@FINALLOGROTATEDDIR@:$(FINALLOGROTATEDDIR):g" \

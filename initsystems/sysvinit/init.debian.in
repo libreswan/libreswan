@@ -40,8 +40,8 @@ FIXME
 # ipsec         init.d script for starting and stopping
 #               the IPsec security subsystem (KLIPS and Pluto).
 #
-# This script becomes /etc/rc.d/init.d/ipsec (or possibly /etc/init.d/ipsec)
-# and is also accessible as "ipsec setup" (the preferred route for human
+# This script becomes INIT_D_DIR@/ipsec (/etc/init.d/ipsec) and is
+# also accessible as "ipsec setup" (the preferred route for human
 # invocation).
 #
 # The startup and shutdown times are a difficult compromise (in particular,
@@ -54,7 +54,7 @@ FIXME
 # NETKEY/KLIPS is the kernel half of it, Pluto is the user-level management daemon.
 
 # Source function library.
-. /etc/init.d/functions
+. @INIT_D_DIR@/functions
 
 # Check that networking is up.
 [ "${NETWORKING}" = "no" ] && exit 6
@@ -164,7 +164,7 @@ restart() {
 
 condrestart() {
     verify_config
-    /etc/init.d/ipsec status || exit 0
+    @INIT_D_DIR@/ipsec status || exit 0
     restart
 }
 

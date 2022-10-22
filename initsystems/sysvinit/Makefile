@@ -2,16 +2,15 @@ ifndef top_srcdir
 include ../../mk/dirs.mk
 endif
 
-LIBRESWANSRCDIR?=$(shell cd ../..; pwd)
-SRCDIR?=${LIBRESWANSRCDIR}/initsystems/sysvinit/
-
-INITDFILE=$(builddir)/ipsec.init
+INIT_D_FILE=ipsec.init
 SYSCONFIGFILE=$(builddir)/sysconfig.pluto
 SUBDIRS=
 SYSCONFIGDIR=$(SYSCONFDIR)/sysconfig
 SYSVINIT_DEFAULT_START?=
 
 include $(top_srcdir)/mk/config.mk
+include $(top_srcdir)/mk/install.mk
+include $(top_srcdir)/mk/install.init.d.mk
 
 # Use dependencies to force the order.
 #
@@ -19,12 +18,8 @@ include $(top_srcdir)/mk/config.mk
 # like local-base and installinitfiles and checkenabled are allowed to
 # run in parallel)
 
-local-base:     $(INITDFILE) $(SYSCONFIGFILE)
-local-install-base: installinitfiles installsysconfig checkenabled
-
-installinitfiles: local-base
-	mkdir -p $(INITDDIR)
-	$(INSTALL) $(INITDFILE) $(INITDDIR)/ipsec
+local-base: $(SYSCONFIGFILE)
+local-install-base: installsysconfig checkenabled
 
 installsysconfig: local-base
 	mkdir -p $(SYSCONFIGDIR)
@@ -32,7 +27,7 @@ installsysconfig: local-base
 		$(INSTALL) $(INSTCONFFLAGS) $(SYSCONFIGFILE) $(SYSCONFIGDIR)/pluto ; \
 	fi
 
-checkenabled: installinitfiles installsysconfig
+checkenabled: install.init.d installsysconfig
 	@count=0 ; \
 	for dir in $(DESTDIR)/etc/rc?.d ; do \
 		if test -f $$dir/S??ipsec.init ; then \
