@@ -5,24 +5,22 @@ endif
 include $(top_srcdir)/mk/config.mk
 include $(top_srcdir)/mk/install.mk
 
-RC_D_FILES = pluto
+RC_D_FILE = pluto
 
 # XXX: Hack to suppress the man page.  Should one be added?
 PROGRAM_MANPAGE=
 
-local-base: $(RC_D_FILES)
-local-install-base: $(RC_D_FILES)
+local-base: $(RC_D_FILE)
+local-install-base: $(RC_D_FILE) local-base
 	@set -eu ; $(call install-directory, $(DESTDIR)$(EXAMPLE_RC_D_DIR))
-	@set -eu ; $(foreach file, $(RC_D_FILES), \
-		$(call install-file, $(INSTBINFLAGS), \
-			$(builddir)/$(file), $(DESTDIR)$(EXAMPLE_RC_D_DIR)/$(file)) ; \
-	)
+	@set -eu ; $(call install-file, $(INSTBINFLAGS), \
+		$(builddir)/$(RC_D_FILE), \
+		$(DESTDIR)$(EXAMPLE_RC_D_DIR)/$(RC_D_FILE))
 ifeq ($(INSTALL_INITSYSTEM),true)
 	@set -ue ; $(call install-directory, $(DESTDIR)$(RC_D_DIR))
-	@set -eu ; $(foreach file, $(RC_D_FILES), \
-		$(call install-missing-file, $(INSTBINFLAGS), \
-			$(DESTDIR)$(EXAMPLE_RC_D_DIR)/$(file), $(DESTDIR)$(RC_D_DIR)/$(file)) ; \
-	)
+	@set -eu ; $(call install-missing-file, $(INSTBINFLAGS), \
+		$(DESTDIR)$(EXAMPLE_RC_D_DIR)/$(RC_D_FILE), \
+		$(DESTDIR)$(RC_D_DIR)/$(RC_D_FILE))
 endif
 ifeq ($(INSTALL_INITSYSTEM),true)
 ifneq ($(BSD_VARIANT),openbsd)
@@ -46,8 +44,10 @@ endif
 endif
 
 list-local-base:
-	@set -eu $(foreach file, $(RC_D_FILES), ; echo $(RC_D_DIR)/$(file))
-	@set -eu $(foreach file, $(RC_D_FILES), ; echo $(EXAMPLE_RC_D_DIR)/$(file))
+	@set -eu ; echo $(EXAMPLE_RC_D_DIR)/$(RC_D_FILE)
+ifeq ($(INSTALL_INITSYSTEM),true)
+	@set -eu ; echo $(RC_D_DIR)/$(RC_D_FILE)
+endif
 
 include $(top_srcdir)/mk/targets.mk
 include $(top_srcdir)/mk/rules.mk
