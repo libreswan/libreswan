@@ -871,8 +871,8 @@ static diag_t extract_client_afi(const struct whack_message *wm,
 
 static diag_t extract_end(struct connection *c,
 			  struct end *dst,
-			  struct config_end *config_end,
-			  struct config_end *other_config_end,
+			  struct end_config *end_config,
+			  struct end_config *other_end_config,
 			  const struct whack_message *wm,
 			  const struct whack_end *src,
 			  const struct whack_end *other_src,
@@ -882,7 +882,7 @@ static diag_t extract_end(struct connection *c,
 			  struct logger *logger/*connection "..."*/)
 {
 	err_t err;
-	passert(dst->config == config_end);
+	passert(dst->config == end_config);
 	const char *leftright = dst->config->leftright;
 
 	/*
@@ -903,7 +903,7 @@ static diag_t extract_end(struct connection *c,
 	}
 
 	/* decode CA distinguished name, if any */
-	config_end->host.ca = empty_chunk;
+	end_config->host.ca = empty_chunk;
 	if (src->ca != NULL) {
 		if (streq(src->ca, "%same")) {
 			*same_ca = true;
@@ -911,19 +911,19 @@ static diag_t extract_end(struct connection *c,
 			err_t ugh;
 
 			/* convert the CA into a DN blob */
-			ugh = atodn(src->ca, &config_end->host.ca);
+			ugh = atodn(src->ca, &end_config->host.ca);
 			if (ugh != NULL) {
 				llog(RC_LOG, logger,
 				     "bad %s CA string '%s': %s (ignored)",
 				     leftright, src->ca, ugh);
 			} else {
 				/* now try converting it back; isn't failing this a bug? */
-				ugh = parse_dn(ASN1(config_end->host.ca));
+				ugh = parse_dn(ASN1(end_config->host.ca));
 				if (ugh != NULL) {
 					llog(RC_LOG, logger,
 					     "error parsing %s CA converted to DN: %s",
 					     leftright, ugh);
-					DBG_dump_hunk(NULL, config_end->host.ca);
+					DBG_dump_hunk(NULL, end_config->host.ca);
 				}
 			}
 
@@ -960,7 +960,7 @@ static diag_t extract_end(struct connection *c,
 				    leftright, src->cert);
 		}
 		diag_t diag = add_end_cert_and_preload_private_key(cert,
-								   dst, config_end,
+								   dst, end_config,
 								   *same_ca/*preserve_ca*/,
 								   logger);
 		if (diag != NULL) {
@@ -1037,24 +1037,24 @@ static diag_t extract_end(struct connection *c,
 		dbg("saving CKAID %s extracted from %s%s",
 		    str_ckaid(&pkc.ckaid, &ckb),
 		    leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
-		config_end->host.ckaid = clone_const_thing(pkc.ckaid, "raw pubkey's ckaid");
+		end_config->host.ckaid = clone_const_thing(pkc.ckaid, "raw pubkey's ckaid");
 		free_chunk_content(&keyspace);
 		pkc.type->free_pubkey_content(&pkc);
 
 		/* try to pre-load the private key */
 		bool load_needed;
-		err = preload_private_key_by_ckaid(config_end->host.ckaid, &load_needed, logger);
+		err = preload_private_key_by_ckaid(end_config->host.ckaid, &load_needed, logger);
 		if (err != NULL) {
 			ckaid_buf ckb;
 			dbg("no private key matching %s CKAID %s: %s",
-			    leftright, str_ckaid(config_end->host.ckaid, &ckb), err);
+			    leftright, str_ckaid(end_config->host.ckaid, &ckb), err);
 		} else if (load_needed) {
 			ckaid_buf ckb;
 			enum_buf pkb;
 			llog(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
 			     "loaded private key matching %s%s CKAID %s",
 			     leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
-			     str_ckaid(config_end->host.ckaid, &ckb));
+			     str_ckaid(end_config->host.ckaid, &ckb));
 		}
 	} else if (src->ckaid != NULL) {
 		ckaid_t ckaid;
@@ -1069,7 +1069,7 @@ static diag_t extract_end(struct connection *c,
 		 * Always save the CKAID so lazy load of the private
 		 * key will work.
 		 */
-		config_end->host.ckaid = clone_thing(ckaid, "end ckaid");
+		end_config->host.ckaid = clone_thing(ckaid, "end ckaid");
 		/*
 		 * See if there's a certificate matching the CKAID, if
 		 * not assume things will later find the private key.
@@ -1077,7 +1077,7 @@ static diag_t extract_end(struct connection *c,
 		CERTCertificate *cert = get_cert_by_ckaid_from_nss(&ckaid, logger);
 		if (cert != NULL) {
 			diag_t diag = add_end_cert_and_preload_private_key(cert,
-									   dst, config_end,
+									   dst, end_config,
 									   *same_ca/*preserve_ca*/,
 									   logger);
 			if (diag != NULL) {
@@ -1094,31 +1094,31 @@ static diag_t extract_end(struct connection *c,
 				ckaid_buf ckb;
 				dbg("no private key matching %s CKAID %s: %s",
 				    leftright,
-				    str_ckaid(config_end->host.ckaid, &ckb), err);
+				    str_ckaid(end_config->host.ckaid, &ckb), err);
 			} else {
 				ckaid_buf ckb;
 				llog(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
 				     "loaded private key matching %s CKAID %s",
 				     leftright,
-				     str_ckaid(config_end->host.ckaid, &ckb));
+				     str_ckaid(end_config->host.ckaid, &ckb));
 			}
 		}
 	}
 
 	/* the rest is simple copying of corresponding fields */
-	config_end->host.type = src->host_type;
+	end_config->host.type = src->host_type;
 	dst->host->addr = src->host_addr;
-	config_end->host.addr_name = clone_str(src->host_addr_name, "host ip");
+	end_config->host.addr_name = clone_str(src->host_addr_name, "host ip");
 	dst->host->nexthop = src->host_nexthop;
-	config_end->client.sourceip = src->sourceip;
-	config_end->client.host_vtiip = src->host_vtiip;
-	config_end->client.ifaceip = src->ifaceip;
-	config_end->client.address_translation = src->cat;
+	end_config->client.sourceip = src->sourceip;
+	end_config->client.host_vtiip = src->host_vtiip;
+	end_config->client.ifaceip = src->ifaceip;
+	end_config->client.address_translation = src->cat;
 
-	config_end->host.xauth.server = src->xauth_server;
-	config_end->host.xauth.client = src->xauth_client;
-	config_end->host.xauth.username = clone_str(src->xauth_username, "xauth username");
-	config_end->host.eap = src->eap;
+	end_config->host.xauth.server = src->xauth_server;
+	end_config->host.xauth.client = src->xauth_client;
+	end_config->host.xauth.username = clone_str(src->xauth_username, "xauth username");
+	end_config->host.eap = src->eap;
 
 	if (src->eap == IKE_EAP_NONE && src->auth == AUTH_EAPONLY) {
 		return diag("leftauth/rightauth can only be 'eaponly' when using leftautheap/rightautheap is not 'none'");
@@ -1233,8 +1233,8 @@ static diag_t extract_end(struct connection *c,
 	    src->leftright, str_enum_short(&keyword_auth_names, auth, &eab),
 	    src->leftright, str_authby(authby, &eabb),
 	    str_authby(wm->authby, &wabb));
-	config_end->host.auth = auth;
-	config_end->host.authby = authby;
+	end_config->host.auth = auth;
+	end_config->host.authby = authby;
 
 	if (src->id != NULL && streq(src->id, "%fromcert")) {
 		if (auth == AUTH_PSK || auth == AUTH_NULL) {
@@ -1243,8 +1243,8 @@ static diag_t extract_end(struct connection *c,
 	}
 
 	/* save some defaults */
-	config_end->client.subnet = src->client;
-	config_end->client.protoport = src->protoport;
+	end_config->client.subnet = src->client;
+	end_config->client.protoport = src->protoport;
 
 	if (src->protoport.ipproto == 0 && src->protoport.hport != 0) {
 		return diag("%sprotoport cannot specify non-zero port %d for prototcol 0",
@@ -1291,15 +1291,15 @@ static diag_t extract_end(struct connection *c,
 							     src->protoport);
 	}
 
-	config_end->host.key_from_DNS_on_demand = src->key_from_DNS_on_demand;
-	config_end->client.updown = clone_str(src->updown, "config_end.client.updown");
-	config_end->host.sendcert = src->sendcert == 0 ? CERT_SENDIFASKED : src->sendcert;
-	config_end->host.ikeport = src->host_ikeport;
+	end_config->host.key_from_DNS_on_demand = src->key_from_DNS_on_demand;
+	end_config->client.updown = clone_str(src->updown, "end_config.client.updown");
+	end_config->host.sendcert = src->sendcert == 0 ? CERT_SENDIFASKED : src->sendcert;
+	end_config->host.ikeport = src->host_ikeport;
 	if (src->host_ikeport > 65535) {
 		llog(RC_BADID, logger,
 			    "%sikeport=%u must be between 1..65535, ignored",
 			    leftright, src->host_ikeport);
-		config_end->host.ikeport = 0;
+		end_config->host.ikeport = 0;
 	}
 
 	/*
@@ -1310,13 +1310,13 @@ static diag_t extract_end(struct connection *c,
 	switch (dst->config->host.type) {
 	case KH_IPHOSTNAME:
 	{
-		err_t er = ttoaddress_dns(shunk1(config_end->host.addr_name),
+		err_t er = ttoaddress_dns(shunk1(end_config->host.addr_name),
 					  address_type(&dst->host->addr),
 					  &dst->host->addr);
 		if (er != NULL) {
 			llog(RC_COMMENT, logger,
 			     "failed to convert '%s' at load time: %s",
-			     config_end->host.addr_name, er);
+			     end_config->host.addr_name, er);
 		}
 		break;
 	}
@@ -1338,8 +1338,8 @@ static diag_t extract_end(struct connection *c,
 	 * XXX: HUH!
 	 */
 
-	config_end->host.modecfg.server = config_end->host.modecfg.server || src->modecfg_server;
-	config_end->host.modecfg.client = config_end->host.modecfg.client || src->modecfg_client;
+	end_config->host.modecfg.server = end_config->host.modecfg.server || src->modecfg_server;
+	end_config->host.modecfg.client = end_config->host.modecfg.client || src->modecfg_client;
 
 	if (src->addresspool != NULL) {
 
@@ -1374,8 +1374,8 @@ static diag_t extract_end(struct connection *c,
 		}
 
 		/* force settings */
-		other_config_end->host.modecfg.server = true;
-		config_end->host.modecfg.client = true;
+		other_end_config->host.modecfg.server = true;
+		end_config->host.modecfg.client = true;
 	}
 
 	return NULL;
@@ -1383,7 +1383,7 @@ static diag_t extract_end(struct connection *c,
 
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 					    struct end *end,
-					    struct config_end *config_end,
+					    struct end_config *end_config,
 					    bool preserve_ca,
 					    struct logger *logger)
 {
@@ -1430,17 +1430,17 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 			    leftright, nickname);
 	}
 
-	config_end->host.cert.nss_cert = cert;
+	end_config->host.cert.nss_cert = cert;
 
 	/*
 	 * If no CA is defined, use issuer as default; but only when
 	 * update is ok.
 	 *
 	 */
-	if (preserve_ca || config_end->host.ca.ptr != NULL) {
+	if (preserve_ca || end_config->host.ca.ptr != NULL) {
 		dbg("preserving existing %s ca", leftright);
 	} else {
-		config_end->host.ca = clone_secitem_as_chunk(cert->derIssuer, "issuer ca");
+		end_config->host.ca = clone_secitem_as_chunk(cert->derIssuer, "issuer ca");
 	}
 
 	/*
@@ -1456,7 +1456,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	 */
 	dbg("preload cert/secret for connection: %s", cert->nickname);
 	bool load_needed;
-	err_t ugh = preload_private_key_by_cert(&config_end->host.cert, &load_needed, logger);
+	err_t ugh = preload_private_key_by_cert(&end_config->host.cert, &load_needed, logger);
 	if (ugh != NULL) {
 		dbg("no private key matching %s certificate %s: %s",
 		    leftright, nickname, ugh);

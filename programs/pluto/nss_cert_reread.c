@@ -9,16 +9,16 @@
 #include "whack.h"
 
 static void reread_end_cert(struct end *end,
-			    struct config_end *config_end,
+			    struct end_config *end_config,
 			    struct logger *logger)
 {
-	if (config_end->host.cert.nss_cert == NULL) {
+	if (end_config->host.cert.nss_cert == NULL) {
 		dbg("no cert exists for %s; nothing to do",
 		    end->config->leftright);
 		return;
 	}
 
-	const char *nickname = cert_nickname(&config_end->host.cert);
+	const char *nickname = cert_nickname(&end_config->host.cert);
 	if (nickname == NULL) {
 		llog(RC_BADID, logger,
 		     "reloading %scert failed: cannot be reread due to unknown nickname",
@@ -34,11 +34,11 @@ static void reread_end_cert(struct end *end,
 		return;
 	}
 
-	CERTCertificate *old_cert = config_end->host.cert.nss_cert; /* must free/save */
-	config_end->host.cert.nss_cert = NULL;
+	CERTCertificate *old_cert = end_config->host.cert.nss_cert; /* must free/save */
+	end_config->host.cert.nss_cert = NULL;
 
 	diag_t diag = add_end_cert_and_preload_private_key(new_cert,
-							   end, config_end,
+							   end, end_config,
 							   true/*preserve existing ca?!?*/,
 							   logger);
 	if (diag != NULL) {
@@ -46,16 +46,16 @@ static void reread_end_cert(struct end *end,
 			 "reloading %scert='%s' failed: ",
 			  end->config->leftright, nickname);
 		CERT_DestroyCertificate(new_cert);
-		config_end->host.cert.nss_cert = old_cert;
+		end_config->host.cert.nss_cert = old_cert;
 		return;
 	}
 
 	CERT_DestroyCertificate(old_cert);
-	config_end->host.cert.nss_cert = new_cert;
+	end_config->host.cert.nss_cert = new_cert;
 
 	llog(RC_COMMENT, logger,
 	     "reloaded %scert='%s'",
-	     end->config->leftright, cert_nickname(&config_end->host.cert));
+	     end->config->leftright, cert_nickname(&end_config->host.cert));
 }
 
 static void reread_cert(struct connection *c, struct logger *logger)
@@ -67,8 +67,8 @@ static void reread_cert(struct connection *c, struct logger *logger)
 	c->logger->global_whackfd = fd_addref(logger->global_whackfd);
 
 	FOR_EACH_THING(end, &c->spd.this, &c->spd.that) {
-		struct config_end *config_end = &c->root_config->end[end->config->index];
-		reread_end_cert(end, config_end, c->logger);
+		struct end_config *end_config = &c->root_config->end[end->config->index];
+		reread_end_cert(end, end_config, c->logger);
 	}
 
 	/* XXX: something better? */

@@ -285,12 +285,14 @@ struct connection *alloc_connection(const char *name, where_t where)
 			 NULL);
 		passert(leftright != NULL);
 		struct connection_end *end = &c->end[lr];
-		struct config_end *config_end = &config->end[lr];
-		config_end->leftright = leftright;
-		config_end->index = lr;
-		end->config = config_end;
+		struct end_config *end_config = &config->end[lr];
+		end_config->leftright = leftright;
+		end_config->index = lr;
+		end->config = end_config;
+		end->host.config = &end_config->host;
 		end->client.spd->host = &end->host; /*clone must update*/
-		end->client.spd->config = config_end;
+		end->client.spd->config = end_config;
+		end->client.config = &end_config->client;
 	}
 
 	finish_connection(c, name, 0/*no template*/, where);

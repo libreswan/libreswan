@@ -57,6 +57,8 @@
 #include "state.h"
 #include "whack.h"
 
+struct host_pair;	/* opaque type */
+
 /*
  * Fast access to a connection.
  */
@@ -78,7 +80,7 @@ enum left_right { LEFT_END, RIGHT_END, };
  * then authenticate the IKE SA.
  */
 
-struct config_host_end {
+struct host_end_config {
 	char *addr_name;	/* string version from whack */
 
 	unsigned ikeport;
@@ -119,7 +121,7 @@ struct config_host_end {
  * connection.
  */
 
-struct config_client_end {
+struct child_end_config {
 	ip_subnet subnet;
 	ip_protoport protoport;
 	char *updown;
@@ -137,11 +139,11 @@ struct config_client_end {
 	bool address_translation;		/* aka CAT */
 };
 
-struct config_end {
+struct end_config {
 	enum left_right index;
 	const char *leftright;
-	struct config_host_end host;
-	struct config_client_end client;
+	struct host_end_config host;
+	struct child_end_config client;
 };
 
 struct ike_info {
@@ -225,7 +227,7 @@ struct config {
 	bool send_vid_fake_strongswan;		/* Send the unversioned strongswan VID */
 	bool send_vid_cisco_unity;		/* Send Unity VID for cisco compatibility */
 
-	struct config_end end[LEFT_RIGHT_ROOF];
+	struct end_config end[LEFT_RIGHT_ROOF];
 };
 
 /* There are two kinds of connections:
@@ -333,10 +335,8 @@ typedef struct {
 size_t jam_policy_prio(struct jambuf *buf, policy_prio_t pp);
 const char *str_policy_prio(policy_prio_t pp, policy_prio_buf *buf);
 
-struct host_pair;	/* opaque type */
-
 struct host_end {
-	const struct config_end *config;
+	const struct host_end_config *config;
 	bool encap;			/* are packets encapsulated */
 	uint16_t port;			/* where the IKE port is */
 	ip_address nexthop;		/* identifes interface to send packets */
@@ -344,14 +344,15 @@ struct host_end {
 	ip_address addr;
 };
 
-struct client_end {
+struct child_end {
+	const struct child_end_config *config;
 	struct end *spd;
 };
 
 struct connection_end {
-	const struct config_end *config;
+	const struct end_config *config;
 	struct host_end host;
-	struct client_end client;
+	struct child_end client;
 };
 
 struct /*spd_route*/end {
@@ -364,7 +365,7 @@ struct /*spd_route*/end {
 	 * Danger: for a connection instance, this point into the
 	 * parent connection.
 	 */
-	const struct config_end *config;
+	const struct end_config *config;
 	struct host_end *host;
 
 	chunk_t sec_label;
@@ -699,7 +700,7 @@ so_serial_t get_newer_sa_from_connection(struct state *st);
 
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 					    struct end *end,
-					    struct config_end *config_end,
+					    struct end_config *end_config,
 					    bool preserve_ca,
 					    struct logger *logger);
 
