@@ -1403,8 +1403,8 @@ void process_v1_packet(struct msg_digest *md)
 			    enum_show(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
 			    this->config->host.xauth.server ? " xauthserver" : "",
 			    this->config->host.xauth.client ? " xauthclient" : "",
-			    this->config->client.modecfg_server ? " modecfgserver" : "",
-			    this->config->client.modecfg_client ? " modecfgclient" : "");
+			    this->config->host.modecfg.server ? " modecfgserver" : "",
+			    this->config->host.modecfg.client ? " modecfgclient" : "");
 
 			if (!IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 				dbg("Mode Config message is unacceptable because it is for an incomplete ISAKMP SA (state=%s)",
@@ -1456,12 +1456,12 @@ void process_v1_packet(struct msg_digest *md)
 				from_state = STATE_XAUTH_I0;
 				dbg(" set from_state to %s this is xauthclient and state == STATE_XAUTH_I1",
 				    st->st_state->name);
-			} else if (this->config->client.modecfg_server &&
+			} else if (this->config->host.modecfg.server &&
 				   IS_V1_PHASE1(st->st_state->kind)) {
 				from_state = STATE_MODE_CFG_R0;
 				dbg(" set from_state to %s this is modecfgserver and IS_PHASE1() is TRUE",
 				    st->st_state->name);
-			} else if (this->config->client.modecfg_client &&
+			} else if (this->config->host.modecfg.client &&
 				   IS_V1_PHASE1(st->st_state->kind)) {
 				from_state = STATE_MODE_CFG_R1;
 				dbg(" set from_state to %s this is modecfgclient and IS_PHASE1() is TRUE",
@@ -1472,8 +1472,8 @@ void process_v1_packet(struct msg_digest *md)
 				    enum_show(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
 				    st->st_connection ->local->config->host.xauth.server ? " xauthserver" : "",
 				    st->st_connection->local->config->host.xauth.client ? " xauthclient" : "",
-				    st->st_connection->local->config->client.modecfg_server ? " modecfgserver" : "",
-				    st->st_connection->local->config->client.modecfg_client ? " modecfgclient" : "",
+				    st->st_connection->local->config->host.modecfg.server ? " modecfgserver" : "",
+				    st->st_connection->local->config->host.modecfg.client ? " modecfgclient" : "",
 				    st->st_state->name);
 				return;
 			}
@@ -2457,7 +2457,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 */
 		if (st->st_connection->local->config->host.xauth.client &&
 		    st->hidden_variables.st_xauth_client_done &&
-		    !st->st_connection->local->config->client.modecfg_client &&
+		    !st->st_connection->local->config->host.modecfg.client &&
 		    st->st_state->kind == STATE_XAUTH_I1)
 		{
 			bool aggrmode = LHAS(st->st_connection->policy, POLICY_AGGRESSIVE_IX);
@@ -2537,7 +2537,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		/* fixup in case of state machine jump for xauth without modecfg */
 		if (c->local->config->host.xauth.client &&
 		    st->hidden_variables.st_xauth_client_done &&
-		    !c->local->config->client.modecfg_client &&
+		    !c->local->config->host.modecfg.client &&
 		    (st->st_state->kind == STATE_MAIN_I4 || st->st_state->kind == STATE_AGGR_I2)) {
 			dbg("fixup XAUTH without ModeCFG event from EVENT_RETRANSMIT to EVENT_SA_REPLACE");
 			event_type = EVENT_SA_REPLACE;
@@ -2717,10 +2717,10 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		     "quirk-poll" : "noquirk"),
 		    (st->st_connection->policy & POLICY_MODECFG_PULL) ?
 		    "pull" : "push",
-		    (st->st_connection->local->config->client.modecfg_client ?
+		    (st->st_connection->local->config->host.modecfg.client ?
 		     "modecfg-client" : "not-client"));
 
-		if (st->st_connection->local->config->client.modecfg_client &&
+		if (st->st_connection->local->config->host.modecfg.client &&
 		    IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
 		    (st->quirks.modecfg_pull_mode ||
 		     st->st_connection->policy & POLICY_MODECFG_PULL) &&
@@ -2733,7 +2733,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		}
 
 		/* Should we set the peer's IP address regardless? */
-		if (st->st_connection->local->config->client.modecfg_server &&
+		if (st->st_connection->local->config->host.modecfg.server &&
 		    IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
 		    !st->hidden_variables.st_modecfg_vars_set &&
 		    !(st->st_connection->policy & POLICY_MODECFG_PULL)) {
@@ -2749,7 +2749,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		}
 
 		/* wait for modecfg_set */
-		if (st->st_connection->local->config->client.modecfg_client &&
+		if (st->st_connection->local->config->host.modecfg.client &&
 		    IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
 		    !st->hidden_variables.st_modecfg_vars_set) {
 			dbg("waiting for modecfg set from server");

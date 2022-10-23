@@ -650,8 +650,8 @@ static void jam_end_id(struct jambuf *buf, const struct end *this)
 		jam_id_bytes(buf, &this->host->id, jam_sanitized_bytes);
 	}
 
-	if (this->config->client.modecfg_server ||
-	    this->config->client.modecfg_client ||
+	if (this->config->host.modecfg.server ||
+	    this->config->host.modecfg.client ||
 	    this->config->host.xauth.server ||
 	    this->config->host.xauth.client ||
 	    this->config->host.sendcert != cert_defaultcertpolicy) {
@@ -663,9 +663,9 @@ static void jam_end_id(struct jambuf *buf, const struct end *this)
 			jam_string(buf, "[");
 		}
 
-		if (this->config->client.modecfg_server)
+		if (this->config->host.modecfg.server)
 			jam_string(buf, "MS");
-		if (this->config->client.modecfg_client)
+		if (this->config->host.modecfg.client)
 			jam_string(buf, "+MC");
 		if (this->config->client.address_translation)
 			jam_string(buf, "+CAT");
@@ -1338,8 +1338,8 @@ static diag_t extract_end(struct connection *c,
 	 * XXX: HUH!
 	 */
 
-	config_end->client.modecfg_server = config_end->client.modecfg_server || src->modecfg_server;
-	config_end->client.modecfg_client = config_end->client.modecfg_client || src->modecfg_client;
+	config_end->host.modecfg.server = config_end->host.modecfg.server || src->modecfg_server;
+	config_end->host.modecfg.client = config_end->host.modecfg.client || src->modecfg_client;
 
 	if (src->addresspool != NULL) {
 
@@ -1374,8 +1374,8 @@ static diag_t extract_end(struct connection *c,
 		}
 
 		/* force settings */
-		other_config_end->client.modecfg_server = true;
-		config_end->client.modecfg_client = true;
+		other_config_end->host.modecfg.server = true;
+		config_end->host.modecfg.client = true;
 	}
 
 	return NULL;
@@ -3836,8 +3836,8 @@ static void show_one_sr(struct show *s,
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		jam(buf, PRI_CONNECTION":   modecfg info:", c->name, instance);
-		jam(buf, " us:%s,", COMBO(sr->this.config->client, modecfg_server, modecfg_client));
-		jam(buf, " them:%s,", COMBO(sr->that.config->client, modecfg_server, modecfg_client));
+		jam(buf, " us:%s,", COMBO(sr->this.config->host, modecfg.server, modecfg.client));
+		jam(buf, " them:%s,", COMBO(sr->that.config->host, modecfg.server, modecfg.client));
 		jam(buf, " modecfg policy:%s,", (c->policy & POLICY_MODECFG_PULL ? "pull" : "push"));
 
 		jam_string(buf, " dns:");

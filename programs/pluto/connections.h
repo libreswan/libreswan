@@ -94,6 +94,14 @@ struct config_host_end {
 	chunk_t ca;			/* CA distinguished name of the end certificate's issuer */
 	ckaid_t *ckaid;
 
+	/*
+	 * How to handle CP packets (or MODECFG packets in IKEv1).
+	 */
+	struct {
+		bool server;	/* give local addresses to tunnel's end */
+		bool client;	/* request address for local end */
+	} modecfg;
+
 	struct {
 		bool server;
 		bool client;
@@ -125,11 +133,6 @@ struct config_client_end {
 	 */
 	ip_cidr host_vtiip;
 	ip_cidr ifaceip;
-	/*
-	 * How to handle CP packets (or MODECFG packets in IKEv1).
-	 */
-	bool modecfg_server;	/* Give local addresses to tunnel's end */
-	bool modecfg_client;	/* request address for local end */
 
 	bool address_translation;		/* aka CAT */
 };
