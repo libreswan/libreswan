@@ -1321,8 +1321,8 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 
 				if (!(same_id(&c->local->host.id, &d->local->host.id) &&
 				      match_id("ts:       ", &c->remote->host.id, &d->remote->host.id, &wildcards) &&
-				      trusted_ca(ASN1(c->remote->config->host.ca),
-						 ASN1(d->remote->config->host.ca), &pathlen))) {
+				      trusted_ca(ASN1(c->remote->host.config->ca),
+						 ASN1(d->remote->host.config->ca), &pathlen))) {
 					connection_buf cb;
 					dbg_ts("skipping "PRI_CONNECTION" does not match IDs or CA of current connection \"%s\"",
 					       pri_connection(d, &cb), c->name);

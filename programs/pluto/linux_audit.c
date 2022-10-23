@@ -169,7 +169,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			 * XXX: is this reliable; it's the intent not
 			 * result.  Is local correct?
 			 */
-			struct authby authby = c->local->config->host.authby;
+			struct authby authby = c->local->host.config->authby;
 			jam_string(&buf, ((authby.psk) ? "PRESHARED_KEY" :
 					  (authby.rsasig) ? "RSA_SIG" :
 					  (authby.rsasig_v1_5) ? "RSA_SIG" :

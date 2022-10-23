@@ -308,7 +308,7 @@ generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 		/* we require a road warrior connection */
 		if (d->kind != CK_TEMPLATE ||
 		    (d->policy & POLICY_OPPORTUNISTIC) ||
-		    d->remote->config->host.ca.ptr == NULL) {
+		    d->remote->host.config->ca.ptr == NULL) {
 			continue;
 		}
 
@@ -317,12 +317,12 @@ generalName_t *collect_rw_ca_candidates(struct msg_digest *md)
 				/* prepend a new gn for D */
 				gn = alloc_thing(generalName_t, "generalName");
 				gn->kind = GN_DIRECTORY_NAME;
-				gn->name = d->remote->config->host.ca;
+				gn->name = d->remote->host.config->ca;
 				gn->next = top;
 				top = gn;
 				break;
 			}
-			if (same_dn(ASN1(gn->name), ASN1(d->remote->config->host.ca))) {
+			if (same_dn(ASN1(gn->name), ASN1(d->remote->host.config->ca))) {
 				/* D's CA already in list */
 				break;
 			}
@@ -560,18 +560,18 @@ int get_auth_chain(chunk_t *out_chain, int chain_max,
  */
 bool find_crl_fetch_dn(chunk_t *issuer_dn, struct connection *c)
 {
-	if (c->remote->config->host.ca.ptr != NULL && c->remote->config->host.ca.len > 0) {
-		*issuer_dn = c->remote->config->host.ca;
+	if (c->remote->host.config->ca.ptr != NULL && c->remote->host.config->ca.len > 0) {
+		*issuer_dn = c->remote->host.config->ca;
 		return true;
 	}
 
-	if (c->remote->config->host.cert.nss_cert != NULL) {
-		*issuer_dn = same_secitem_as_chunk(c->remote->config->host.cert.nss_cert->derIssuer);
+	if (c->remote->host.config->cert.nss_cert != NULL) {
+		*issuer_dn = same_secitem_as_chunk(c->remote->host.config->cert.nss_cert->derIssuer);
 		return true;
 	}
 
-	if (c->local->config->host.ca.ptr != NULL && c->local->config->host.ca.len > 0) {
-		*issuer_dn = c->local->config->host.ca;
+	if (c->local->host.config->ca.ptr != NULL && c->local->host.config->ca.len > 0) {
+		*issuer_dn = c->local->host.config->ca;
 		return true;
 	}
 

@@ -238,10 +238,10 @@ bool id_ipseckey_allowed(struct ike_sa *ike, enum ikev2_auth_method atype)
 	const struct connection *c = ike->sa.st_connection;
 	struct id id = c->remote->host.id;
 
-	if (!c->remote->config->host.key_from_DNS_on_demand)
+	if (!c->remote->host.config->key_from_DNS_on_demand)
 		return false;
 
-	if (c->remote->config->host.auth == AUTH_RSASIG &&
+	if (c->remote->host.config->auth == AUTH_RSASIG &&
 	    (id.kind == ID_FQDN || id_is_ipaddr(&id)))
 {
 		switch (atype) {
@@ -677,12 +677,12 @@ void wipe_old_v2_connections(const struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
 	bool new_remote_is_authnull =
-		(c->remote->config->host.authby.null ||
+		(c->remote->host.config->authby.null ||
 		 /*XXX: redundant? */
-		 c->remote->config->host.auth == AUTH_NULL);
+		 c->remote->host.config->auth == AUTH_NULL);
 
-	if (c->local->config->host.xauth.server &&
-	    c->remote->config->host.authby.psk) {
+	if (c->local->host.config->xauth.server &&
+	    c->remote->host.config->authby.psk) {
 		/*
 		 * If we are a server and authenticate all clients
 		 * using PSK then all clients use the same group ID
@@ -725,9 +725,9 @@ void wipe_old_v2_connections(const struct ike_sa *ike)
 			continue;
 		}
 
-		bool old_remote_is_nullauth = (d->remote->config->host.authby.null ||
+		bool old_remote_is_nullauth = (d->remote->host.config->authby.null ||
 					       /* XXX: redundant? */
-					       d->remote->config->host.auth == AUTH_NULL);
+					       d->remote->host.config->auth == AUTH_NULL);
 		if (!old_remote_is_nullauth && new_remote_is_authnull) {
 			llog_sa(RC_LOG, ike, "cannot replace old authenticated connection with authnull connection");
 			continue;

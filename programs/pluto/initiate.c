@@ -712,7 +712,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		packet_buf pb;
 		enum_buf hab;
 		dbg("initiated on demand using security label and %s %s",
-		    str_enum_short(&keyword_auth_names, c->local->config->host.auth, &hab),
+		    str_enum_short(&keyword_auth_names, c->local->host.config->auth, &hab),
 		    str_packet(&b->packet, &pb));
 
 		return;
@@ -829,7 +829,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		packet_buf pb;
 		enum_buf hab;
 		dbg("initiated on demand using %s %s",
-		    str_enum_short(&keyword_auth_names, c->local->config->host.auth, &hab),
+		    str_enum_short(&keyword_auth_names, c->local->host.config->auth, &hab),
 		    str_packet(&b->packet, &pb));
 
 		return;

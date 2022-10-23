@@ -786,7 +786,7 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	if (impair.omit_v2N_SIGNATURE_HASH_ALGORITHMS) {
 		llog_sa(RC_LOG, ike,
 			  "IMPAIR: omitting the SIGNATURE_HASH_ALGORITHM notification in IKE_SA_INIT request");
-	} else if (authby_has_digsig(c->remote->config->host.authby) &&
+	} else if (authby_has_digsig(c->remote->host.config->authby) &&
 		   (c->config->sighash_policy != LEMPTY)) {
 		if (!emit_v2N_SIGNATURE_HASH_ALGORITHMS(c->config->sighash_policy, request.pbs))
 			return false;
@@ -817,8 +817,8 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	 *
 	 * XXX: should this check POLICY_OPPORTUNISTIC?
 	 */
-	if (c->local->config->host.authby.null ||
-	    c->remote->config->host.authby.null) {
+	if (c->local->host.config->authby.null ||
+	    c->remote->host.config->authby.null) {
 		if (!emit_v2VID(request.pbs, VID_OPPORTUNISTIC))
 			return STF_INTERNAL_ERROR;
 	}
@@ -1190,8 +1190,8 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	 *
 	 * XXX: should this check POLICY_OPPORTUNISTIC?
 	 */
-	if (c->local->config->host.authby.null ||
-	    c->remote->config->host.authby.null) {
+	if (c->local->host.config->authby.null ||
+	    c->remote->host.config->authby.null) {
 		if (!emit_v2VID(response.pbs, VID_OPPORTUNISTIC))
 			return STF_INTERNAL_ERROR;
 	}

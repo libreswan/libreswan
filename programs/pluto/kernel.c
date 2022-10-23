@@ -594,7 +594,7 @@ bool fmt_common_shell_out(char *buf,
 		int pathlen;	/* value ignored */
 		if (key->content.type == &pubkey_type_rsa &&
 		    same_id(&c->remote->host.id, &key->id) &&
-		    trusted_ca(key->issuer, ASN1(sr->that.config->host.ca), &pathlen)) {
+		    trusted_ca(key->issuer, ASN1(sr->that.host->config->ca), &pathlen)) {
 			jam_dn_or_null(&jb, key->issuer, "", jam_shell_quoted_bytes);
 			break;
 		}
@@ -634,8 +634,8 @@ bool fmt_common_shell_out(char *buf,
 	JDstr("PLUTO_PEER_DNS_INFO", (st != NULL && st->st_seen_cfg_dns != NULL) ? st->st_seen_cfg_dns : "");
 	JDstr("PLUTO_PEER_DOMAIN_INFO", (st != NULL && st->st_seen_cfg_domains != NULL) ? st->st_seen_cfg_domains : "");
 	JDstr("PLUTO_PEER_BANNER", (st != NULL && st->st_seen_cfg_banner != NULL) ? st->st_seen_cfg_banner : "");
-	JDuint("PLUTO_CFG_SERVER", sr->this.config->host.modecfg.server);
-	JDuint("PLUTO_CFG_CLIENT", sr->this.config->host.modecfg.client);
+	JDuint("PLUTO_CFG_SERVER", sr->this.host->config->modecfg.server);
+	JDuint("PLUTO_CFG_CLIENT", sr->this.host->config->modecfg.client);
 #ifdef HAVE_NM
 	JDuint("PLUTO_NM_CONFIGURED", c->nmconfigured);
 #endif

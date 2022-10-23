@@ -46,7 +46,7 @@
 
 stf_status emit_v2CERT(const struct connection *c, struct pbs_out *outpbs)
 {
-	const struct cert *mycert = c->local->config->host.cert.nss_cert != NULL ? &c->local->config->host.cert : NULL;
+	const struct cert *mycert = c->local->host.config->cert.nss_cert != NULL ? &c->local->host.config->cert : NULL;
 	bool send_authcerts = c->send_ca != CA_SEND_NONE;
 	bool send_full_chain = send_authcerts && c->send_ca == CA_SEND_ALL;
 
@@ -145,32 +145,32 @@ bool ikev2_send_cert_decision(const struct ike_sa *ike)
 		return false;
 	}
 
-	if (c->local->config->host.auth == AUTH_EAPONLY) {
+	if (c->local->host.config->auth == AUTH_EAPONLY) {
 		dbg("IKEv2 CERT: not sending cert: local %sauth==EAPONLY",
 		    c->local->config->leftright)
 		return false;
 	}
 
-	if (!authby_has_digsig(c->local->config->host.authby)) {
+	if (!authby_has_digsig(c->local->host.config->authby)) {
 		authby_buf pb;
 		dbg("IKEv2 CERT: not sending cert: local %sauthby=%s does not have RSA or ECDSA",
 		    c->local->config->leftright,
-		    str_authby(c->local->config->host.authby, &pb));
+		    str_authby(c->local->host.config->authby, &pb));
 		return false;
 	}
 
-	if (this->config->host.cert.nss_cert == NULL) {
+	if (this->host->config->cert.nss_cert == NULL) {
 		dbg("IKEv2 CERT: not sending cert: there is no local certificate to send");
 		return false;
 	}
 
-	if (c->local->config->host.sendcert == CERT_SENDIFASKED &&
+	if (c->local->host.config->sendcert == CERT_SENDIFASKED &&
 	    ike->sa.st_v2_ike_seen_certreq) {
 		dbg("IKEv2 CERT: OK to send certificate (send if asked)");
 		return true;
 	}
 
-	if (c->local->config->host.sendcert == CERT_ALWAYSSEND) {
+	if (c->local->host.config->sendcert == CERT_ALWAYSSEND) {
 		dbg("IKEv2 CERT: OK to send a certificate (always)");
 		return true;
 	}

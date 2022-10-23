@@ -228,7 +228,7 @@ static bool start_eap(struct ike_sa *ike, struct pbs_out *pbs)
 	};
 
 	const struct connection *c = ike->sa.st_connection;
-	const struct cert *mycert = c->local->config->host.cert.nss_cert != NULL ? &c->local->config->host.cert : NULL;
+	const struct cert *mycert = c->local->host.config->cert.nss_cert != NULL ? &c->local->host.config->cert : NULL;
 
 	if (!mycert)
 		return false;
@@ -433,13 +433,13 @@ stf_status process_v2_IKE_AUTH_request_EAP_start(struct ike_sa *ike,
 	ike->sa.st_remote_certs.harmless = true;
 
 	const struct connection *c = ike->sa.st_connection;
-	if (c->remote->config->host.auth != AUTH_EAPONLY) {
+	if (c->remote->host.config->auth != AUTH_EAPONLY) {
 		llog_sa(RC_LOG, ike,
 			  "Peer attempted EAP authentication, but IKE_AUTH is required");
 		goto auth_fail;
 	}
-	if (c->local->config->host.eap != IKE_EAP_TLS ||
-	    c->remote->config->host.eap != IKE_EAP_TLS) {
+	if (c->local->host.config->eap != IKE_EAP_TLS ||
+	    c->remote->host.config->eap != IKE_EAP_TLS) {
 		llog_sa(RC_LOG, ike,
 			  "Peer attempted EAP authentication, but EAP is not allowed");
 		goto auth_fail;
@@ -521,7 +521,7 @@ static stf_status process_v2_IKE_AUTH_request_EAP_start_signature_continue(struc
 	}
 
 	/* now send AUTH payload */
-	if (c->local->config->host.auth == AUTH_EAPONLY) {
+	if (c->local->host.config->auth == AUTH_EAPONLY) {
 		dbg("EAP: skipping AUTH payload as our proof-of-identity is eap-only");
 	} else if (!emit_local_v2AUTH(ike, auth_sig, &ike->sa.st_v2_id_payload.mac, response.pbs)) {
 		return STF_INTERNAL_ERROR;

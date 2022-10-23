@@ -82,7 +82,7 @@ static void swap_ends(struct connection *c)
 
 static bool orient_new_iface_endpoint(struct connection *c, struct end *end)
 {
-	if (end->config->host.ikeport == 0) {
+	if (end->host->config->ikeport == 0) {
 		return false;
 	}
 	if (address_is_unset(&end->host->addr)) {
@@ -114,7 +114,7 @@ static bool orient_new_iface_endpoint(struct connection *c, struct end *end)
 	case IKE_TCP_NO:
 		if (pluto_listen_udp) {
 			ifp = bind_iface_endpoint(dev, &udp_iface_io,
-						  ip_hport(end->config->host.ikeport),
+						  ip_hport(end->host->config->ikeport),
 						  esp_encapsulation_enabled,
 						  float_nat_initiator,
 						  c->logger);
@@ -128,7 +128,7 @@ static bool orient_new_iface_endpoint(struct connection *c, struct end *end)
 	case IKE_TCP_ONLY:
 		if (pluto_listen_tcp) {
 			ifp = bind_iface_endpoint(dev, &iketcp_iface_io,
-						  ip_hport(end->config->host.ikeport),
+						  ip_hport(end->host->config->ikeport),
 						  esp_encapsulation_enabled,
 						  float_nat_initiator,
 						  c->logger);
@@ -182,10 +182,10 @@ static void DBG_orient_end(const char *thisthat, struct end *end, struct end *ot
 	enum_buf enb;
 	DBG_log("  %s(%s) host type=%s address=%s port="PRI_HPORT" ikeport=%d encap=%s",
 		end->config->leftright, thisthat,
-		str_enum_short(&keyword_host_names, end->config->host.type, &enb),
+		str_enum_short(&keyword_host_names, end->host->config->type, &enb),
 		str_address(&end->host->addr, &ab),
 		pri_hport(end_host_port(end, other_end)),
-		end->config->host.ikeport,
+		end->host->config->ikeport,
 		bool_str(end->host->encap));
 }
 

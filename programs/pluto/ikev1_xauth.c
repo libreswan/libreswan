@@ -1395,18 +1395,18 @@ stf_status xauth_inR1(struct state *st, struct msg_digest *md UNUSED)
 	/* Back to where we were */
 	st->st_oakley.doing_xauth = false;
 
-	if (!st->st_connection->local->config->host.modecfg.server) {
+	if (!st->st_connection->local->host.config->modecfg.server) {
 		dbg("not server, starting new exchange");
 		st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	}
 
-	if (st->st_connection->local->config->host.modecfg.server &&
+	if (st->st_connection->local->host.config->modecfg.server &&
 	    st->hidden_variables.st_modecfg_vars_set) {
 		dbg("modecfg server, vars are set. Starting new exchange.");
 		st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
 	}
 
-	if (st->st_connection->local->config->host.modecfg.server &&
+	if (st->st_connection->local->host.config->modecfg.server &&
 	    st->st_connection->policy & POLICY_MODECFG_PULL) {
 		dbg("modecfg server, pull mode. Starting new exchange.");
 		st->st_v1_msgid.phase15 = v1_MAINMODE_MSGID;
@@ -2296,13 +2296,13 @@ stf_status xauth_inI0(struct state *st, struct msg_digest *md)
 			XAUTHLELEM(XAUTH_USER_NAME) |
 			XAUTHLELEM(XAUTH_USER_PASSWORD)))
 		{
-			if (st->st_connection->local->config->host.xauth.client) {
+			if (st->st_connection->local->host.config->xauth.client) {
 				log_state(RC_LOG, st,
 					"XAUTH: No username or password request was received.");
 				return STF_IGNORE;
 			}
 		} else {
-			if (!st->st_connection->local->config->host.xauth.client) {
+			if (!st->st_connection->local->host.config->xauth.client) {
 				log_state(RC_LOG, st,
 					"XAUTH: Username or password request was received, but XAUTH client mode not enabled.");
 				return STF_IGNORE;

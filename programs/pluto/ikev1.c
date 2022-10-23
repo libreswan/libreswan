@@ -1401,10 +1401,10 @@ void process_v1_packet(struct msg_digest *md)
 			esb_buf b;
 			dbg(" processing received isakmp_xchg_type %s; this is a%s%s%s%s",
 			    enum_show(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
-			    this->config->host.xauth.server ? " xauthserver" : "",
-			    this->config->host.xauth.client ? " xauthclient" : "",
-			    this->config->host.modecfg.server ? " modecfgserver" : "",
-			    this->config->host.modecfg.client ? " modecfgclient" : "");
+			    this->host->config->xauth.server ? " xauthserver" : "",
+			    this->host->config->xauth.client ? " xauthclient" : "",
+			    this->host->config->modecfg.server ? " modecfgserver" : "",
+			    this->host->config->modecfg.client ? " modecfgclient" : "");
 
 			if (!IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 				dbg("Mode Config message is unacceptable because it is for an incomplete ISAKMP SA (state=%s)",
@@ -1436,18 +1436,18 @@ void process_v1_packet(struct msg_digest *md)
 			 *
 			 */
 
-			if (this->config->host.xauth.server &&
+			if (this->host->config->xauth.server &&
 			    st->st_state->kind == STATE_XAUTH_R1 &&
 			    st->quirks.xauth_ack_msgid) {
 				from_state = STATE_XAUTH_R1;
 				dbg(" set from_state to %s state is STATE_XAUTH_R1 and quirks.xauth_ack_msgid is TRUE",
 				    st->st_state->name);
-			} else if (this->config->host.xauth.client &&
+			} else if (this->host->config->xauth.client &&
 				   IS_V1_PHASE1(st->st_state->kind)) {
 				from_state = STATE_XAUTH_I0;
 				dbg(" set from_state to %s this is xauthclient and IS_PHASE1() is TRUE",
 				    st->st_state->name);
-			} else if (this->config->host.xauth.client &&
+			} else if (this->host->config->xauth.client &&
 				   st->st_state->kind == STATE_XAUTH_I1) {
 				/*
 				 * in this case, we got a new MODECFG message after I0, maybe
@@ -1456,12 +1456,12 @@ void process_v1_packet(struct msg_digest *md)
 				from_state = STATE_XAUTH_I0;
 				dbg(" set from_state to %s this is xauthclient and state == STATE_XAUTH_I1",
 				    st->st_state->name);
-			} else if (this->config->host.modecfg.server &&
+			} else if (this->host->config->modecfg.server &&
 				   IS_V1_PHASE1(st->st_state->kind)) {
 				from_state = STATE_MODE_CFG_R0;
 				dbg(" set from_state to %s this is modecfgserver and IS_PHASE1() is TRUE",
 				    st->st_state->name);
-			} else if (this->config->host.modecfg.client &&
+			} else if (this->host->config->modecfg.client &&
 				   IS_V1_PHASE1(st->st_state->kind)) {
 				from_state = STATE_MODE_CFG_R1;
 				dbg(" set from_state to %s this is modecfgclient and IS_PHASE1() is TRUE",
@@ -1470,15 +1470,15 @@ void process_v1_packet(struct msg_digest *md)
 				esb_buf b;
 				dbg("received isakmp_xchg_type %s; this is a%s%s%s%s in state %s. Reply with UNSUPPORTED_EXCHANGE_TYPE",
 				    enum_show(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
-				    st->st_connection ->local->config->host.xauth.server ? " xauthserver" : "",
-				    st->st_connection->local->config->host.xauth.client ? " xauthclient" : "",
-				    st->st_connection->local->config->host.modecfg.server ? " modecfgserver" : "",
-				    st->st_connection->local->config->host.modecfg.client ? " modecfgclient" : "",
+				    st->st_connection ->local->host.config->xauth.server ? " xauthserver" : "",
+				    st->st_connection->local->host.config->xauth.client ? " xauthclient" : "",
+				    st->st_connection->local->host.config->modecfg.server ? " modecfgserver" : "",
+				    st->st_connection->local->host.config->modecfg.client ? " modecfgclient" : "",
 				    st->st_state->name);
 				return;
 			}
 		} else {
-			if (st->st_connection->local->config->host.xauth.server &&
+			if (st->st_connection->local->host.config->xauth.server &&
 			    IS_V1_PHASE1(st->st_state->kind)) {
 				/* Switch from Phase1 to Mode Config */
 				dbg("We were in phase 1, with no state, so we went to XAUTH_R0");
@@ -2455,9 +2455,9 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 * we have XAUTH but not ModeCFG. We move it to the established
 		 * state, so the regular state machine picks up the Quick Mode.
 		 */
-		if (st->st_connection->local->config->host.xauth.client &&
+		if (st->st_connection->local->host.config->xauth.client &&
 		    st->hidden_variables.st_xauth_client_done &&
-		    !st->st_connection->local->config->host.modecfg.client &&
+		    !st->st_connection->local->host.config->modecfg.client &&
 		    st->st_state->kind == STATE_XAUTH_I1)
 		{
 			bool aggrmode = LHAS(st->st_connection->policy, POLICY_AGGRESSIVE_IX);
@@ -2535,9 +2535,9 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		struct connection *c = st->st_connection;
 
 		/* fixup in case of state machine jump for xauth without modecfg */
-		if (c->local->config->host.xauth.client &&
+		if (c->local->host.config->xauth.client &&
 		    st->hidden_variables.st_xauth_client_done &&
-		    !c->local->config->host.modecfg.client &&
+		    !c->local->host.config->modecfg.client &&
 		    (st->st_state->kind == STATE_MAIN_I4 || st->st_state->kind == STATE_AGGR_I2)) {
 			dbg("fixup XAUTH without ModeCFG event from EVENT_RETRANSMIT to EVENT_SA_REPLACE");
 			event_type = EVENT_SA_REPLACE;
@@ -2685,7 +2685,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		}
 
 		/* Special case for XAUTH server */
-		if (st->st_connection->local->config->host.xauth.server) {
+		if (st->st_connection->local->host.config->xauth.server) {
 			if (st->st_oakley.doing_xauth &&
 			    IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 				dbg("XAUTH: Sending XAUTH Login/Password Request");
@@ -2701,7 +2701,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		 * stay in this state, and let the server query us
 		 */
 		if (!IS_V1_QUICK(st->st_state->kind) &&
-		    st->st_connection->local->config->host.xauth.client &&
+		    st->st_connection->local->host.config->xauth.client &&
 		    !st->hidden_variables.st_xauth_client_done) {
 			dbg("XAUTH client is not yet authenticated");
 			break;
@@ -2717,10 +2717,10 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		     "quirk-poll" : "noquirk"),
 		    (st->st_connection->policy & POLICY_MODECFG_PULL) ?
 		    "pull" : "push",
-		    (st->st_connection->local->config->host.modecfg.client ?
+		    (st->st_connection->local->host.config->modecfg.client ?
 		     "modecfg-client" : "not-client"));
 
-		if (st->st_connection->local->config->host.modecfg.client &&
+		if (st->st_connection->local->host.config->modecfg.client &&
 		    IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
 		    (st->quirks.modecfg_pull_mode ||
 		     st->st_connection->policy & POLICY_MODECFG_PULL) &&
@@ -2733,7 +2733,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		}
 
 		/* Should we set the peer's IP address regardless? */
-		if (st->st_connection->local->config->host.modecfg.server &&
+		if (st->st_connection->local->host.config->modecfg.server &&
 		    IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
 		    !st->hidden_variables.st_modecfg_vars_set &&
 		    !(st->st_connection->policy & POLICY_MODECFG_PULL)) {
@@ -2749,7 +2749,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		}
 
 		/* wait for modecfg_set */
-		if (st->st_connection->local->config->host.modecfg.client &&
+		if (st->st_connection->local->host.config->modecfg.client &&
 		    IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
 		    !st->hidden_variables.st_modecfg_vars_set) {
 			dbg("waiting for modecfg set from server");
@@ -2939,10 +2939,10 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 	 * AUTH_NULL here, for the remote end means that the remote
 	 * end used AUTH NULL.
 	 */
-	bool new_uses_authnull = c->remote->config->host.auth == AUTH_NULL;
+	bool new_uses_authnull = c->remote->host.config->auth == AUTH_NULL;
 
-	if (c->local->config->host.xauth.server &&
-	    c->remote->config->host.auth == AUTH_PSK) {
+	if (c->local->host.config->xauth.server &&
+	    c->remote->host.config->auth == AUTH_PSK) {
 		/*
 		 * If we are a server and require the peer to use PSK,
 		 * all clients use the same group ID Note that
@@ -2970,7 +2970,7 @@ void ISAKMP_SA_established(const struct ike_sa *ike)
 			    streq(c->name, d->name) &&
 			    same_id(&c->local->host.id, &d->local->host.id) &&
 			    same_id(&c->remote->host.id, &d->remote->host.id)) {
-				bool old_uses_nullauth = d->remote->config->host.auth == AUTH_NULL;
+				bool old_uses_nullauth = d->remote->host.config->auth == AUTH_NULL;
 				bool same_remote_ip = sameaddr(&c->remote->host.addr, &d->remote->host.addr);
 
 				if (same_remote_ip &&

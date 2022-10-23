@@ -669,24 +669,24 @@ static struct db_sa IKEv1_oakley_aggr_mode_db_sa_table[16] = {
 struct db_sa *IKEv1_oakley_main_mode_db_sa(const struct connection *c)
 {
 	/* IKEv1 is symmetric */
-	struct authby authby = c->local->config->host.authby;
-	pexpect(authby_eq(authby, c->remote->config->host.authby));
+	struct authby authby = c->local->host.config->authby;
+	pexpect(authby_eq(authby, c->remote->host.config->authby));
 	int index = ((authby.psk ? 1 : 0) |
 		     (authby.rsasig ? 2 : 0) |
-		     (c->local->config->host.xauth.server ? 4 : 0) |
-		     (c->local->config->host.xauth.client ? 8 : 0));
+		     (c->local->host.config->xauth.server ? 4 : 0) |
+		     (c->local->host.config->xauth.client ? 8 : 0));
 	return &IKEv1_oakley_main_mode_db_sa_table[index];
 }
 
 struct db_sa *IKEv1_oakley_aggr_mode_db_sa(const struct connection *c)
 {
 	/* IKEv1 is symmetric */
-	enum keyword_auth auth = c->local->config->host.auth;
-	pexpect(auth == c->remote->config->host.auth);
+	enum keyword_auth auth = c->local->host.config->auth;
+	pexpect(auth == c->remote->host.config->auth);
 	int index = ((auth == AUTH_PSK ? 1 :
 		      auth == AUTH_RSASIG ? 2 : 0) |
-		     (c->local->config->host.xauth.server ? 4 : 0) |
-		     (c->local->config->host.xauth.client ? 8 : 0));
+		     (c->local->host.config->xauth.server ? 4 : 0) |
+		     (c->local->host.config->xauth.client ? 8 : 0));
 	return &IKEv1_oakley_aggr_mode_db_sa_table[index];
 }
 

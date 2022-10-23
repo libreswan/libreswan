@@ -121,7 +121,7 @@ static bool match_v1_connection(struct connection *c, struct authby authby,
 	 *
 	 * Order matters.  First match, be it RSA or PSK is accepted.
 	 */
-	switch (c->remote->config->host.auth) {
+	switch (c->remote->host.config->auth) {
 	case AUTH_RSASIG:
 		if (!authby.rsasig) {
 			connection_buf cb;
@@ -144,7 +144,7 @@ static bool match_v1_connection(struct connection *c, struct authby authby,
 		enum_buf eb;
 		dbg("  skipping "PRI_CONNECTION", %s is never proposed",
 		    pri_connection(c, &cb),
-		    str_enum(&keyword_auth_names, c->remote->config->host.auth, &eb));
+		    str_enum(&keyword_auth_names, c->remote->host.config->auth, &eb));
 		return false;
 	}
 	}

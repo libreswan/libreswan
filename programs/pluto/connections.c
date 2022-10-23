@@ -389,13 +389,13 @@ void delete_every_connection(void)
 ip_port end_host_port(const struct end *end, const struct end *other)
 {
 	unsigned port;
-	if (end->config->host.ikeport != 0) {
+	if (end->host->config->ikeport != 0) {
 		/*
 		 * The END's IKEPORT was specified in the config file.
 		 * Use that.
 		 */
-		port = end->config->host.ikeport;
-	} else if (other->config->host.ikeport != 0) {
+		port = end->host->config->ikeport;
+	} else if (other->host->config->ikeport != 0) {
 		/*
 		 * The other end's IKEPORT was specified in the config
 		 * file.  Since specifying an IKEPORT implies ESP
@@ -533,9 +533,9 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 {
 	/* HOST */
 	if (!address_is_specified(this->host->addr)) {
-		if (this->config->host.type == KH_IPHOSTNAME) {
+		if (this->host->config->type == KH_IPHOSTNAME) {
 			jam_string(buf, "%dns");
-			jam(buf, "<%s>", this->config->host.addr_name);
+			jam(buf, "<%s>", this->host->config->addr_name);
 		} else {
 			switch (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC)) {
 			case POLICY_GROUP:
@@ -575,7 +575,7 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 		 * valid, any hardwired IKEPORT or a port other than
 		 * IKE_UDP_PORT.
 		 */
-		bool include_port = (this->config->host.ikeport != 0 ||
+		bool include_port = (this->host->config->ikeport != 0 ||
 				     this->host->port != IKE_UDP_PORT);
 		if (!log_ip) {
 			/* ADDRESS(SENSITIVE) */
@@ -590,10 +590,10 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 		}
 		/* [<HOSTNAME>] */
 		address_buf ab;
-		if (this->config->host.addr_name != NULL &&
+		if (this->host->config->addr_name != NULL &&
 		    !streq(str_address(&this->host->addr, &ab),
-			   this->config->host.addr_name)) {
-			jam(buf, "<%s>", this->config->host.addr_name);
+			   this->host->config->addr_name)) {
+			jam(buf, "<%s>", this->host->config->addr_name);
 		}
 	}
 }
@@ -650,11 +650,11 @@ static void jam_end_id(struct jambuf *buf, const struct end *this)
 		jam_id_bytes(buf, &this->host->id, jam_sanitized_bytes);
 	}
 
-	if (this->config->host.modecfg.server ||
-	    this->config->host.modecfg.client ||
-	    this->config->host.xauth.server ||
-	    this->config->host.xauth.client ||
-	    this->config->host.sendcert != cert_defaultcertpolicy) {
+	if (this->host->config->modecfg.server ||
+	    this->host->config->modecfg.client ||
+	    this->host->config->xauth.server ||
+	    this->host->config->xauth.client ||
+	    this->host->config->sendcert != cert_defaultcertpolicy) {
 
 		if (open_paren) {
 			jam_string(buf, ",");
@@ -663,18 +663,18 @@ static void jam_end_id(struct jambuf *buf, const struct end *this)
 			jam_string(buf, "[");
 		}
 
-		if (this->config->host.modecfg.server)
+		if (this->host->config->modecfg.server)
 			jam_string(buf, "MS");
-		if (this->config->host.modecfg.client)
+		if (this->host->config->modecfg.client)
 			jam_string(buf, "+MC");
 		if (this->config->client.address_translation)
 			jam_string(buf, "+CAT");
-		if (this->config->host.xauth.server)
+		if (this->host->config->xauth.server)
 			jam_string(buf, "+XS");
-		if (this->config->host.xauth.client)
+		if (this->host->config->xauth.client)
 			jam_string(buf, "+XC");
 
-		switch (this->config->host.sendcert) {
+		switch (this->host->config->sendcert) {
 		case CERT_NEVERSEND:
 			jam(buf, "+S-C");
 			break;
@@ -2327,7 +2327,7 @@ static bool extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	if (c->local->config->host.xauth.server || c->remote->config->host.xauth.server)
+	if (c->local->host.config->xauth.server || c->remote->host.config->xauth.server)
 		c->policy |= POLICY_XAUTH;
 
 	update_ends_from_this_host_addr(&c->spd.this, &c->spd.that);
@@ -2339,13 +2339,13 @@ static bool extract_connection(const struct whack_message *wm,
 
 	if (NEVER_NEGOTIATE(c->policy)) {
 		if (!PEXPECT(c->logger,
-			     c->local->config->host.auth == AUTH_NEVER &&
-			     c->remote->config->host.auth == AUTH_NEVER)) {
+			     c->local->host.config->auth == AUTH_NEVER &&
+			     c->remote->host.config->auth == AUTH_NEVER)) {
 			return false;
 		}
 	} else {
-		if (c->local->config->host.auth == AUTH_UNSET ||
-		    c->remote->config->host.auth == AUTH_UNSET) {
+		if (c->local->host.config->auth == AUTH_UNSET ||
+		    c->remote->host.config->auth == AUTH_UNSET) {
 			/*
 			 * Since an unset auth is set from authby,
 			 * authby= must have somehow been blanked out
@@ -2357,14 +2357,14 @@ static bool extract_connection(const struct whack_message *wm,
 			return false;
 		}
 
-		if ((c->local->config->host.auth == AUTH_PSK && c->remote->config->host.auth == AUTH_NULL) ||
-		    (c->local->config->host.auth == AUTH_NULL && c->remote->config->host.auth == AUTH_PSK)) {
+		if ((c->local->host.config->auth == AUTH_PSK && c->remote->host.config->auth == AUTH_NULL) ||
+		    (c->local->host.config->auth == AUTH_NULL && c->remote->host.config->auth == AUTH_PSK)) {
 			llog(RC_FATAL, c->logger,
 			     ADD_FAILED_PREFIX"cannot mix PSK and NULL authentication (%sauth=%s and %sauth=%s)",
 			     c->local->config->leftright,
-			     enum_name(&keyword_auth_names, c->local->config->host.auth),
+			     enum_name(&keyword_auth_names, c->local->host.config->auth),
 			     c->remote->config->leftright,
-			     enum_name(&keyword_auth_names, c->remote->config->host.auth));
+			     enum_name(&keyword_auth_names, c->remote->host.config->auth));
 			return false;
 		}
 	}
@@ -2943,7 +2943,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 
 	lset_t policy = c->policy;
 
-	struct authby authby = c->local->config->host.authby;
+	struct authby authby = c->local->host.config->authby;
 	if (authby_is_set(authby)) {
 		s += jam_string(buf, sep);
 		s += jam_authby(buf, authby);
@@ -3748,8 +3748,8 @@ static void show_one_sr(struct show *s,
 		     oriented(c) ? "oriented" : "unoriented",
 		     OPT_HOST(this_sourceip, thisipb),
 		     OPT_HOST(that_sourceip, thatipb),
-		     OPT_PREFIX_STR("; mycert=", cert_nickname(&c->local->config->host.cert)),
-		     OPT_PREFIX_STR("; peercert=", cert_nickname(&c->remote->config->host.cert)),
+		     OPT_PREFIX_STR("; mycert=", cert_nickname(&c->local->host.config->cert)),
+		     OPT_PREFIX_STR("; peercert=", cert_nickname(&c->remote->host.config->cert)),
 		     ((sr->this.config->client.updown == NULL ||
 		       streq(sr->this.config->client.updown, "%disabled")) ? "<disabled>"
 		      : sr->this.config->client.updown));
@@ -3772,18 +3772,18 @@ static void show_one_sr(struct show *s,
 		      * Both should not be set, but if they are, we
 		      * want to know.
 		      */
-		     COMBO(sr->this, config->host.xauth.server, config->host.xauth.client),
-		     COMBO(sr->that, config->host.xauth.server, config->host.xauth.client),
+		     COMBO(sr->this.host->config->xauth, server, client),
+		     COMBO(sr->that.host->config->xauth, server, client),
 		     /* should really be an enum name */
-		     (sr->this.config->host.xauth.server ?
+		     (sr->this.host->config->xauth.server ?
 		      c->config->xauthby == XAUTHBY_FILE ? "xauthby:file;" :
 		      c->config->xauthby == XAUTHBY_PAM ? "xauthby:pam;" :
 		      "xauthby:alwaysok;" :
 		      ""),
-		     (sr->this.config->host.xauth.username == NULL ? "[any]" :
-		      sr->this.config->host.xauth.username),
-		     (sr->that.config->host.xauth.username == NULL ? "[any]" :
-		      sr->that.config->host.xauth.username));
+		     (sr->this.host->config->xauth.username == NULL ? "[any]" :
+		      sr->this.host->config->xauth.username),
+		     (sr->that.host->config->xauth.username == NULL ? "[any]" :
+		      sr->that.host->config->xauth.username));
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		const char *who;
@@ -3836,8 +3836,8 @@ static void show_one_sr(struct show *s,
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		jam(buf, PRI_CONNECTION":   modecfg info:", c->name, instance);
-		jam(buf, " us:%s,", COMBO(sr->this.config->host, modecfg.server, modecfg.client));
-		jam(buf, " them:%s,", COMBO(sr->that.config->host, modecfg.server, modecfg.client));
+		jam(buf, " us:%s,", COMBO(sr->this.host->config->modecfg, server, client));
+		jam(buf, " them:%s,", COMBO(sr->that.host->config->modecfg, server, client));
 		jam(buf, " modecfg policy:%s,", (c->policy & POLICY_MODECFG_PULL ? "pull" : "push"));
 
 		jam_string(buf, " dns:");
@@ -3941,12 +3941,12 @@ static void show_one_connection(struct show *s,
 	}
 
 	/* Show CAs */
-	if (c->local->config->host.ca.ptr != NULL || c->remote->config->host.ca.ptr != NULL) {
+	if (c->local->host.config->ca.ptr != NULL || c->remote->host.config->ca.ptr != NULL) {
 		dn_buf this_ca, that_ca;
 		show_comment(s, PRI_CONNECTION":   CAs: '%s'...'%s'",
 			     c->name, instance,
-			     str_dn_or_null(ASN1(c->local->config->host.ca), "%any", &this_ca),
-			     str_dn_or_null(ASN1(c->remote->config->host.ca), "%any", &that_ca));
+			     str_dn_or_null(ASN1(c->local->host.config->ca), "%any", &this_ca),
+			     str_dn_or_null(ASN1(c->remote->host.config->ca), "%any", &that_ca));
 	}
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
@@ -3986,13 +3986,13 @@ static void show_one_connection(struct show *s,
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		jam(buf, PRI_CONNECTION":   policy: ", c->name, instance);
 		jam_connection_policies(buf, c);
-		if (c->local->config->host.key_from_DNS_on_demand ||
-		    c->remote->config->host.key_from_DNS_on_demand) {
+		if (c->local->host.config->key_from_DNS_on_demand ||
+		    c->remote->host.config->key_from_DNS_on_demand) {
 			jam_string(buf, "; ");
-			if (c->local->config->host.key_from_DNS_on_demand) {
+			if (c->local->host.config->key_from_DNS_on_demand) {
 				jam_string(buf, "+lKOD");
 			}
-			if (c->remote->config->host.key_from_DNS_on_demand) {
+			if (c->remote->host.config->key_from_DNS_on_demand) {
 				jam_string(buf, "+rKOD");
 			}
 		}
@@ -4344,7 +4344,7 @@ uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt)
 	/* Determine the base priority (2 bits) (0 is manual by user). */
 	unsigned base;
 	if (LIN(POLICY_GROUPINSTANCE, c->policy)) {
-		if (c->remote->config->host.authby.null) {
+		if (c->remote->host.config->authby.null) {
 			base = 3; /* opportunistic anonymous */
 		} else {
 			base = 2; /* opportunistic */

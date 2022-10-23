@@ -1952,8 +1952,8 @@ static struct connection *fc_try(const struct connection *c,
 		      streq(c->config->connalias, d->config->connalias))) {
 			if (!(same_id(&c->local->host.id, &d->local->host.id) &&
 			      match_id("", &c->remote->host.id, &d->remote->host.id, &wildcards) &&
-			      trusted_ca(ASN1(c->remote->config->host.ca),
-					 ASN1(d->remote->config->host.ca), &pathlen))) {
+			      trusted_ca(ASN1(c->remote->host.config->ca),
+					 ASN1(d->remote->host.config->ca), &pathlen))) {
 				continue;
 			}
 		}
@@ -2116,7 +2116,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 		int wildcards, pathlen;
 		if (!(same_id(&c->local->host.id, &d->local->host.id) &&
 		      match_id("", &c->remote->host.id, &d->remote->host.id, &wildcards) &&
-		      trusted_ca(ASN1(c->remote->config->host.ca), ASN1(d->remote->config->host.ca), &pathlen))) {
+		      trusted_ca(ASN1(c->remote->host.config->ca), ASN1(d->remote->host.config->ca), &pathlen))) {
 			continue;
 		}
 

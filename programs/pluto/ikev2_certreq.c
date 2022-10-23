@@ -234,7 +234,7 @@ stf_status emit_v2CERTREQ(const struct ike_sa *ike,
 
 	if (ike->sa.st_connection->kind == CK_PERMANENT) {
 		dbg("connection->kind is CK_PERMANENT so send (possibly empty) CERTREQ");
-		chunk_t ca = ike->sa.st_connection->remote->config->host.ca;
+		chunk_t ca = ike->sa.st_connection->remote->host.config->ca;
 		if (ca.len > 0) {
 			if (!emit_v2CERTREQ_ca(&cr_pbs, ca)) {
 				/* already logged */
@@ -267,7 +267,7 @@ stf_status emit_v2CERTREQ(const struct ike_sa *ike,
 
 bool need_v2CERTREQ_in_IKE_SA_INIT_response(const struct ike_sa *ike)
 {
-	struct authby authby = ike->sa.st_connection->remote->config->host.authby;
+	struct authby authby = ike->sa.st_connection->remote->host.config->authby;
 	return (authby_has_digsig(authby) && !remote_has_preloaded_pubkey(&ike->sa));
 }
 
@@ -277,7 +277,7 @@ bool need_v2CERTREQ_in_IKE_AUTH_request(const struct ike_sa *ike)
 
 	const struct connection *c = ike->sa.st_connection;
 
-	if (!authby_has_digsig(c->remote->config->host.authby)) {
+	if (!authby_has_digsig(c->remote->host.config->authby)) {
 		dbg("IKEv2 CERTREQ: responder has no auth method requiring them to send back their cert");
 		return false;
 	}
@@ -287,8 +287,8 @@ bool need_v2CERTREQ_in_IKE_AUTH_request(const struct ike_sa *ike)
 		return false;
 	}
 
-	if (c->remote->config->host.ca.ptr == NULL ||
-	    c->remote->config->host.ca.len < 1) {
+	if (c->remote->host.config->ca.ptr == NULL ||
+	    c->remote->host.config->ca.len < 1) {
 		dbg("IKEv2 CERTREQ: no CA DN known to send");
 		return false;
 	}

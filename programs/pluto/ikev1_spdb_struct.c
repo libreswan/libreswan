@@ -1655,15 +1655,15 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 			 * this is the initiator, we have proposed, they have answered,
 			 * and we must decide if they proposed what we wanted.
 			 */
-			xauth_init |= spd->this.config->host.xauth.client;
-			xauth_resp |= spd->this.config->host.xauth.server;
+			xauth_init |= spd->this.host->config->xauth.client;
+			xauth_resp |= spd->this.host->config->xauth.server;
 		} else {
 			/*
 			 * this is the responder, they have proposed to us, what
 			 * are we willing to be?
 			 */
-			xauth_init |= spd->this.config->host.xauth.server;
-			xauth_resp |= spd->this.config->host.xauth.client;
+			xauth_init |= spd->this.host->config->xauth.server;
+			xauth_resp |= spd->this.host->config->xauth.client;
 		}
 	}
 
@@ -1941,7 +1941,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 					}
 psk_common:
 
-					if (c->remote->config->host.auth != AUTH_PSK) {
+					if (c->remote->host.config->auth != AUTH_PSK) {
 						UGH("policy does not allow OAKLEY_PRESHARED_KEY authentication");
 					} else {
 						/* check that we can find a proper preshared secret */
@@ -1994,7 +1994,7 @@ psk_common:
 					}
 rsasig_common:
 					/* Accept if policy specifies RSASIG or is default */
-					if (c->remote->config->host.auth != AUTH_RSASIG) {
+					if (c->remote->host.config->auth != AUTH_RSASIG) {
 						UGH("policy does not allow OAKLEY_RSA_SIG authentication");
 					} else {
 						/* We'd like to check
@@ -2131,7 +2131,7 @@ rsasig_common:
 
 		while (ok) {
 
-			if (c->remote->config->host.auth == AUTH_PSK &&
+			if (c->remote->host.config->auth == AUTH_PSK &&
 			    pss != &empty_chunk &&
 			    pss != NULL &&
 			    ta.ta_prf != NULL) {

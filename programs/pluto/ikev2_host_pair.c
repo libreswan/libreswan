@@ -89,7 +89,7 @@ static bool match_connection(const struct connection *c,
 	/*
 	 * Require all the bits to match (there's actually ony one).
 	 */
-	if (!authby_le(remote_authby, c->remote->config->host.authby)) {
+	if (!authby_le(remote_authby, c->remote->host.config->authby)) {
 		connection_buf cb;
 		dbg("  skipping "PRI_CONNECTION", missing authby",
 		    pri_connection(c, &cb));
@@ -360,7 +360,7 @@ struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
 	ldbg(md->md_logger,
 	     "found connection: "PRI_CONNECTION" with remote authby %s",
 	     pri_connection(c, &ci),
-	     str_authby(c->remote->config->host.authby, &pb));
+	     str_authby(c->remote->host.config->authby, &pb));
 
 	/*
 	 * Did we overlook a type=passthrough foodgroup?

@@ -176,7 +176,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 	 * Aggressive Mode and PSK (IKEv1 authentication is symmetric
 	 * so also applies to this end).
 	 */
-	if (c->remote->config->host.auth == AUTH_PSK && LIN(POLICY_AGGRESSIVE, c->policy)) {
+	if (c->remote->host.config->auth == AUTH_PSK && LIN(POLICY_AGGRESSIVE, c->policy)) {
 		llog_sa(RC_LOG_SERIOUS, ike,
 			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
 	}
@@ -191,8 +191,8 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 	 * preference for PSK over RSASIG is the reverse of
 	 * auth_from_authby() which is used to set host.auth.
 	 */
-	ike->sa.st_oakley.auth = (c->remote->config->host.auth == AUTH_PSK ? OAKLEY_PRESHARED_KEY :
-				  c->remote->config->host.auth == AUTH_RSASIG ? OAKLEY_RSA_SIG :
+	ike->sa.st_oakley.auth = (c->remote->host.config->auth == AUTH_PSK ? OAKLEY_PRESHARED_KEY :
+				  c->remote->host.config->auth == AUTH_RSASIG ? OAKLEY_RSA_SIG :
 				  0);	/* we don't really know */
 
 	if (!v1_decode_certs(md)) {
@@ -284,7 +284,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 
 	const struct connection *c = st->st_connection;
 	struct payload_digest *const sa_pd = md->chain[ISAKMP_NEXT_SA];
-	const struct cert *mycert = c->local->config->host.cert.nss_cert != NULL ? &c->local->config->host.cert : NULL;
+	const struct cert *mycert = c->local->host.config->cert.nss_cert != NULL ? &c->local->host.config->cert : NULL;
 
 	/* parse_isakmp_sa also spits out a winning SA into our reply,
 	 * so we have to build our reply_stream and emit HDR before calling it.
@@ -305,8 +305,8 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 	 * to always send one.
 	 */
 	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG && mycert != NULL &&
-			  ((c->local->config->host.sendcert == CERT_SENDIFASKED && cert_requested) ||
-			   (c->local->config->host.sendcert == CERT_ALWAYSSEND)));
+			  ((c->local->host.config->sendcert == CERT_SENDIFASKED && cert_requested) ||
+			   (c->local->host.config->sendcert == CERT_ALWAYSSEND)));
 
 	bool send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
 
@@ -327,7 +327,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 	}
 
 	doi_log_cert_thinking(st->st_oakley.auth, cert_ike_type(mycert),
-			      c->local->config->host.sendcert, cert_requested,
+			      c->local->host.config->sendcert, cert_requested,
 			      send_cert, send_authcerts);
 
 	/* send certificate request, if we don't have a preloaded RSA public key */
@@ -446,7 +446,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 	/* CERTREQ out */
 	if (send_cr) {
 		log_state(RC_LOG, st, "I am sending a certificate request");
-		if (!ikev1_build_and_ship_CR(cert_ike_type(mycert), c->remote->config->host.ca, &rbody))
+		if (!ikev1_build_and_ship_CR(cert_ike_type(mycert), c->remote->host.config->ca, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 
@@ -608,7 +608,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 		return r;
 	}
 
-	const struct cert *mycert = c->local->config->host.cert.nss_cert != NULL ? &c->local->config->host.cert : NULL;
+	const struct cert *mycert = c->local->host.config->cert.nss_cert != NULL ? &c->local->host.config->cert : NULL;
 
 	enum next_payload_types_ikev1 auth_payload =
 		st->st_oakley.auth == OAKLEY_PRESHARED_KEY ?
@@ -624,8 +624,8 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 	 * to always send one.
 	 */
 	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG && mycert != NULL &&
-			  ((c->local->config->host.sendcert == CERT_SENDIFASKED && cert_requested) ||
-			   (c->local->config->host.sendcert == CERT_ALWAYSSEND)));
+			  ((c->local->host.config->sendcert == CERT_SENDIFASKED && cert_requested) ||
+			   (c->local->host.config->sendcert == CERT_ALWAYSSEND)));
 
 	bool send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
 
@@ -646,7 +646,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 	}
 
 	doi_log_cert_thinking(st->st_oakley.auth, cert_ike_type(mycert),
-			      c->local->config->host.sendcert, cert_requested,
+			      c->local->host.config->sendcert, cert_requested,
 			      send_cert, send_authcerts);
 
 	/**************** build output packet: HDR, HASH_I/SIG_I **************/
@@ -763,26 +763,26 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 	/* It seems as per Cisco implementation, XAUTH and MODECFG
 	 * are not supposed to be performed again during rekey
 	 */
-	if (c->newest_ike_sa != SOS_NOBODY && c->local->config->host.xauth.client &&
+	if (c->newest_ike_sa != SOS_NOBODY && c->local->host.config->xauth.client &&
 	    c->remotepeertype == CISCO) {
 		dbg("skipping XAUTH for rekey for Cisco Peer compatibility.");
 		st->hidden_variables.st_xauth_client_done = true;
 		st->st_oakley.doing_xauth = false;
 
-		if (c->local->config->host.modecfg.client) {
+		if (c->local->host.config->modecfg.client) {
 			dbg("skipping XAUTH for rekey for Cisco Peer compatibility.");
 			st->hidden_variables.st_modecfg_vars_set = true;
 			st->hidden_variables.st_modecfg_started = true;
 		}
 	}
 
-	if (c->newest_ike_sa != SOS_NOBODY && c->local->config->host.xauth.client &&
+	if (c->newest_ike_sa != SOS_NOBODY && c->local->host.config->xauth.client &&
 	    c->remotepeertype == CISCO) {
 		dbg("this seems to be rekey, and XAUTH is not supposed to be done again");
 		st->hidden_variables.st_xauth_client_done = true;
 		st->st_oakley.doing_xauth = false;
 
-		if (c->local->config->host.modecfg.client) {
+		if (c->local->host.config->modecfg.client) {
 			dbg("this seems to be rekey, and MODECFG is not supposed to be done again");
 			st->hidden_variables.st_modecfg_vars_set = true;
 			st->hidden_variables.st_modecfg_started = true;
@@ -916,13 +916,13 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	 * are not supposed to be performed again during rekey
 	 */
 	if (c->newest_ike_sa != SOS_NOBODY &&
-	    st->st_connection->local->config->host.xauth.client &&
+	    st->st_connection->local->host.config->xauth.client &&
 	    st->st_connection->remotepeertype == CISCO) {
 		dbg("skipping XAUTH for rekey for Cisco Peer compatibility.");
 		st->hidden_variables.st_xauth_client_done = true;
 		st->st_oakley.doing_xauth = false;
 
-		if (st->st_connection->local->config->host.modecfg.client) {
+		if (st->st_connection->local->host.config->modecfg.client) {
 			dbg("skipping ModeCFG for rekey for Cisco Peer compatibility.");
 			st->hidden_variables.st_modecfg_vars_set = true;
 			st->hidden_variables.st_modecfg_started = true;
@@ -930,13 +930,13 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	}
 
 	if (c->newest_ike_sa != SOS_NOBODY &&
-	    st->st_connection->local->config->host.xauth.client &&
+	    st->st_connection->local->host.config->xauth.client &&
 	    st->st_connection->remotepeertype == CISCO) {
 		dbg("this seems to be rekey, and XAUTH is not supposed to be done again");
 		st->hidden_variables.st_xauth_client_done = true;
 		st->st_oakley.doing_xauth = false;
 
-		if (st->st_connection->local->config->host.modecfg.client) {
+		if (st->st_connection->local->host.config->modecfg.client) {
 			dbg("this seems to be rekey, and MODECFG is not supposed to be done again");
 			st->hidden_variables.st_modecfg_vars_set = true;
 			st->hidden_variables.st_modecfg_started = true;
@@ -995,7 +995,7 @@ void aggr_outI1(struct fd *whack_sock,
 	change_v1_state(&ike->sa, STATE_AGGR_I1);
 	initialize_new_state(&ike->sa, policy, try);
 
-	if (c->local->config->host.auth == AUTH_PSK && LIN(POLICY_AGGRESSIVE, c->policy)) {
+	if (c->local->host.config->auth == AUTH_PSK && LIN(POLICY_AGGRESSIVE, c->policy)) {
 		llog_sa(RC_LOG_SERIOUS, ike,
 			"IKEv1 Aggressive Mode with PSK is vulnerable to dictionary attacks and is cracked on large scale by TLA's");
 	}
@@ -1061,11 +1061,11 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 {
 	passert(unused_md == NULL); /* no packet */
 	struct connection *c = st->st_connection;
-	const struct cert *mycert = c->local->config->host.cert.nss_cert != NULL ? &c->local->config->host.cert : NULL;
+	const struct cert *mycert = c->local->host.config->cert.nss_cert != NULL ? &c->local->host.config->cert : NULL;
 	bool send_cr = (mycert != NULL &&
 			!remote_has_preloaded_pubkey(st) &&
-			(c->local->config->host.sendcert == CERT_SENDIFASKED ||
-			 c->local->config->host.sendcert == CERT_ALWAYSSEND));
+			(c->local->host.config->sendcert == CERT_SENDIFASKED ||
+			 c->local->host.config->sendcert == CERT_ALWAYSSEND));
 
 	dbg("aggr_outI1_tail for #%lu", st->st_serialno);
 
@@ -1130,7 +1130,7 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 	/* CERTREQ out */
 	if (send_cr) {
 		log_state(RC_LOG, st, "I am sending a certificate request");
-		if (!ikev1_build_and_ship_CR(cert_ike_type(mycert), c->remote->config->host.ca, &rbody))
+		if (!ikev1_build_and_ship_CR(cert_ike_type(mycert), c->remote->host.config->ca, &rbody))
 			return STF_INTERNAL_ERROR;
 	}
 

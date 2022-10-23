@@ -770,7 +770,7 @@ static stf_status main_inI2_outR2_continue1(struct state *st,
 
 	send_cr = (st->st_oakley.auth == OAKLEY_RSA_SIG) &&
 		!remote_has_preloaded_pubkey(st) &&
-		st->st_connection->remote->config->host.ca.ptr != NULL;
+		st->st_connection->remote->host.config->ca.ptr != NULL;
 
 	/* HDR out */
 	struct pbs_out rbody;
@@ -806,7 +806,7 @@ static stf_status main_inI2_outR2_continue1(struct state *st,
 	if (send_cr) {
 		if (st->st_connection->kind == CK_PERMANENT) {
 			if (!ikev1_build_and_ship_CR(CERT_X509_SIGNATURE,
-						     st->st_connection->remote->config->host.ca,
+						     st->st_connection->remote->host.config->ca,
 						     &rbody))
 				return STF_INTERNAL_ERROR;
 		} else {
@@ -934,7 +934,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 				       rbody, st->st_logger);
 
 	const struct connection *c = st->st_connection;
-	const struct cert *mycert = c->local->config->host.cert.nss_cert != NULL ? &c->local->config->host.cert : NULL;
+	const struct cert *mycert = c->local->host.config->cert.nss_cert != NULL ? &c->local->host.config->cert : NULL;
 
 	/* decode certificate requests */
 	decode_v1_certificate_requests(st, md);
@@ -946,8 +946,8 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 	 * to always send one.
 	 */
 	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG && mycert != NULL &&
-			  ((c->local->config->host.sendcert == CERT_SENDIFASKED && cert_requested) ||
-			   (c->local->config->host.sendcert == CERT_ALWAYSSEND)));
+			  ((c->local->host.config->sendcert == CERT_SENDIFASKED && cert_requested) ||
+			   (c->local->host.config->sendcert == CERT_ALWAYSSEND)));
 
 	bool send_authcerts = (send_cert &&
 			  c->send_ca != CA_SEND_NONE);
@@ -968,7 +968,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 	}
 
 	doi_log_cert_thinking(st->st_oakley.auth, cert_ike_type(mycert),
-			      c->local->config->host.sendcert, cert_requested,
+			      c->local->host.config->sendcert, cert_requested,
 			      send_cert, send_authcerts);
 
 	/*
@@ -1081,7 +1081,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 	if (send_cr) {
 		log_state(RC_LOG, st, "I am sending a certificate request");
 		if (!ikev1_build_and_ship_CR(cert_ike_type(mycert),
-					     c->remote->config->host.ca,
+					     c->remote->host.config->ca,
 					     rbody))
 			return STF_INTERNAL_ERROR;
 	}
@@ -1191,13 +1191,13 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	struct connection *c = st->st_connection; /* may have changed */
 
 	/* send certificate if we have one and auth is RSA */
-	const struct cert *mycert = c->local->config->host.cert.nss_cert != NULL ? &c->local->config->host.cert : NULL;
+	const struct cert *mycert = c->local->host.config->cert.nss_cert != NULL ? &c->local->host.config->cert : NULL;
 
 	pexpect(st->st_clonedfrom == SOS_NOBODY); /* ISAKMP */
 	bool cert_requested = (st->st_v1_requested_ca != NULL);
 	bool send_cert = (st->st_oakley.auth == OAKLEY_RSA_SIG && mycert != NULL &&
-			  ((c->local->config->host.sendcert == CERT_SENDIFASKED && cert_requested) ||
-			   (c->local->config->host.sendcert == CERT_ALWAYSSEND)));
+			  ((c->local->host.config->sendcert == CERT_SENDIFASKED && cert_requested) ||
+			   (c->local->host.config->sendcert == CERT_ALWAYSSEND)));
 
 	bool send_authcerts = (send_cert && c->send_ca != CA_SEND_NONE);
 
@@ -1217,7 +1217,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 	}
 
 	doi_log_cert_thinking(st->st_oakley.auth, cert_ike_type(mycert),
-			      c->local->config->host.sendcert, cert_requested,
+			      c->local->host.config->sendcert, cert_requested,
 			      send_cert, send_authcerts);
 
 	/*
@@ -1347,12 +1347,12 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 
 	if (c->remotepeertype == CISCO &&
 	    c->newest_ike_sa != SOS_NOBODY &&
-	    c->local->config->host.xauth.client) {
+	    c->local->host.config->xauth.client) {
 		dbg("Skipping XAUTH for rekey for Cisco Peer compatibility.");
 		st->hidden_variables.st_xauth_client_done = true;
 		st->st_oakley.doing_xauth = false;
 
-		if (c->local->config->host.modecfg.client) {
+		if (c->local->host.config->modecfg.client) {
 			dbg("Skipping ModeCFG for rekey for Cisco Peer compatibility.");
 			st->hidden_variables.st_modecfg_vars_set = true;
 			st->hidden_variables.st_modecfg_started = true;
@@ -1413,12 +1413,12 @@ stf_status main_inR3(struct state *st, struct msg_digest *md)
 	 */
 	if (c->remotepeertype == CISCO &&
 		c->newest_ike_sa != SOS_NOBODY &&
-		c->local->config->host.xauth.client) {
+		c->local->host.config->xauth.client) {
 		dbg("Skipping XAUTH for rekey for Cisco Peer compatibility.");
 		st->hidden_variables.st_xauth_client_done = true;
 		st->st_oakley.doing_xauth = false;
 
-		if (c->local->config->host.modecfg.client) {
+		if (c->local->host.config->modecfg.client) {
 			dbg("Skipping ModeCFG for rekey for Cisco Peer compatibility.");
 			st->hidden_variables.st_modecfg_vars_set = true;
 			st->hidden_variables.st_modecfg_started = true;

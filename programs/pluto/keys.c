@@ -320,7 +320,7 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 
 	dn_buf buf;
 	dbg("CA is '%s' for %s key using %s signature",
-	    str_dn_or_null(ASN1(c->remote->config->host.ca), "%any", &buf),
+	    str_dn_or_null(ASN1(c->remote->host.config->ca), "%any", &buf),
 	    signer->type->name, signer->name);
 
 	passert(ike->sa.st_remote_certs.processed);
@@ -436,7 +436,7 @@ static struct secret *lsw_get_secret(const struct connection *c,
 	      !address_is_specified(c->remote->host.addr) ) ||
 
 	    /* case 2 */
-	    ( c->remote->config->host.authby.psk &&
+	    ( c->remote->host.config->authby.psk &&
 	      kind == SECRET_PSK /*shared-secret*/ &&
 	      ( ( c->kind == CK_TEMPLATE &&
 		  c->remote->host.id.kind == ID_NONE ) ||
@@ -570,8 +570,8 @@ const struct secret_stuff *get_local_private_key(const struct connection *c,
 						      struct logger *logger)
 {
 	/* is there a certificate assigned to this connection? */
-	if (c->local->config->host.cert.nss_cert != NULL) {
-		const char *nickname = cert_nickname(&c->local->config->host.cert);
+	if (c->local->host.config->cert.nss_cert != NULL) {
+		const char *nickname = cert_nickname(&c->local->host.config->cert);
 
 		id_buf this_buf, that_buf;
 		dbg("%s() using certificate %s to find private key for %s->%s of kind %s",
@@ -583,7 +583,7 @@ const struct secret_stuff *get_local_private_key(const struct connection *c,
 		const struct secret_stuff *pks = NULL;
 		bool load_needed;
 		err_t err = find_or_load_private_key_by_cert(&pluto_secrets,
-							     &c->local->config->host.cert,
+							     &c->local->host.config->cert,
 							     &pks, &load_needed, logger);
 		if (err != NULL) {
 			dbg("private key for certificate %s not found in NSS DB",
@@ -616,24 +616,24 @@ const struct secret_stuff *get_local_private_key(const struct connection *c,
 	}
 
 	/* is there a CKAID assigned to this connection? */
-	if (c->local->config->host.ckaid != NULL) {
+	if (c->local->host.config->ckaid != NULL) {
 		ckaid_buf ckb;
 		id_buf this_buf, that_buf;
 		dbg("%s() using CKAID %s to find private key for %s->%s of kind %s",
-		    __func__, str_ckaid(c->local->config->host.ckaid, &ckb),
+		    __func__, str_ckaid(c->local->host.config->ckaid, &ckb),
 		    str_id(&c->local->host.id, &this_buf),
 		    str_id(&c->remote->host.id, &that_buf),
 		    type->name);
 
 		const struct secret_stuff *pks;
 		bool load_needed;
-		err_t err = find_or_load_private_key_by_ckaid(&pluto_secrets, c->local->config->host.ckaid,
+		err_t err = find_or_load_private_key_by_ckaid(&pluto_secrets, c->local->host.config->ckaid,
 							      &pks, &load_needed, logger);
 		if (err != NULL) {
 			ckaid_buf ckb;
 			llog(RC_LOG_SERIOUS, logger,
 				    "private key matching CKAID '%s' not found: %s",
-				    str_ckaid(c->local->config->host.ckaid, &ckb), err);
+				    str_ckaid(c->local->host.config->ckaid, &ckb), err);
 			return NULL;
 		} else if (load_needed) {
 			/*
@@ -648,7 +648,7 @@ const struct secret_stuff *get_local_private_key(const struct connection *c,
 			ckaid_buf ckb;
 			llog(RC_LOG|LOG_STREAM/*not-whack-grr*/, logger,
 				    "reloaded private key matching %s CKAID %s",
-				    c->local->config->leftright, str_ckaid(c->local->config->host.ckaid, &ckb));
+				    c->local->config->leftright, str_ckaid(c->local->host.config->ckaid, &ckb));
 		}
 
 

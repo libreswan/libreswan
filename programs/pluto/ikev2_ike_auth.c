@@ -348,7 +348,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		if (DBGP(DBG_BASE)) {
 			dn_buf buf;
 			DBG_log("Sending [CERTREQ] of %s",
-				str_dn(ASN1(ike->sa.st_connection->remote->config->host.ca), &buf));
+				str_dn(ASN1(ike->sa.st_connection->remote->host.config->ca), &buf));
 		}
 		emit_v2CERTREQ(ike, md, request.pbs);
 	}
@@ -511,8 +511,8 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	 * NULL_AUTH in separate chunk. This is only done on the
 	 * initiator in IKE_AUTH, and not repeated in rekeys.
 	 */
-	if (authby_has_digsig(pc->local->config->host.authby) &&
-	    pc->local->config->host.authby.null) {
+	if (authby_has_digsig(pc->local->host.config->authby) &&
+	    pc->local->host.config->authby.null) {
 		/* store in null_auth */
 		chunk_t null_auth = NULL_HUNK;
 		if (!ikev2_create_psk_auth(AUTH_NULL, ike,
@@ -797,8 +797,8 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 
 	/* process AUTH payload */
 
-	enum keyword_auth remote_auth = ike->sa.st_connection->remote->config->host.auth;
-	struct authby remote_authby = ike->sa.st_connection->remote->config->host.authby;
+	enum keyword_auth remote_auth = ike->sa.st_connection->remote->host.config->auth;
+	struct authby remote_authby = ike->sa.st_connection->remote->host.config->authby;
 	passert(remote_auth != AUTH_NEVER && remote_auth != AUTH_UNSET);
 	bool remote_can_authby_null = remote_authby.null;
 	bool remote_can_authby_digsig = authby_has_digsig(remote_authby);
@@ -1097,8 +1097,8 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike)
 		 *
 		 * CREATE_CHILD_SA children should also be cleaned up.
 		 */
-		if (c->local->config->host.xauth.server &&
-		    c->remote->config->host.authby.psk) {
+		if (c->local->host.config->xauth.server &&
+		    c->remote->host.config->authby.psk) {
 			/*
 			 * If we are a server and expect remote
 			 * clients to authenticate using PSK, then all
@@ -1133,7 +1133,7 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike)
 
 	/* send response */
 	if (LIN(POLICY_MOBIKE, c->policy) && ike->sa.st_ike_seen_v2n_mobike_supported) {
-		if (c->remote->config->host.type == KH_ANY) {
+		if (c->remote->host.config->type == KH_ANY) {
 			/* only allow %any connection to mobike */
 			ike->sa.st_ike_sent_v2n_mobike_supported = true;
 		} else {
@@ -1334,7 +1334,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	}
 
 	struct connection *c = ike->sa.st_connection;
-	enum keyword_auth that_authby = c->remote->config->host.auth;
+	enum keyword_auth that_authby = c->remote->host.config->auth;
 
 	passert(that_authby != AUTH_NEVER && that_authby != AUTH_UNSET);
 

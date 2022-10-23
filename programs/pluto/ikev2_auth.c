@@ -120,7 +120,7 @@ enum keyword_auth local_v2_auth(struct ike_sa *ike)
 		return AUTH_NULL;
 	}
 	const struct connection *c = ike->sa.st_connection;
-	enum keyword_auth authby = c->local->config->host.auth;
+	enum keyword_auth authby = c->local->host.config->auth;
 	pexpect(authby != AUTH_UNSET);
 	return authby;
 }
@@ -150,7 +150,7 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		 * Method, and local policy was ok with the
 		 * suggestion.
 		 */
-		pexpect(authby_has_rsasig(c->local->config->host.authby));
+		pexpect(authby_has_rsasig(c->local->host.config->authby));
 		if (ike->sa.st_v2_digsig.negotiated_hashes != LEMPTY) {
 			return IKEv2_AUTH_DIGSIG;
 		}
@@ -159,7 +159,7 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		 * Local policy allows proof-of-identity using legacy
 		 * RSASIG_v1_5.
 		 */
-		if (c->local->config->host.authby.rsasig_v1_5) {
+		if (c->local->host.config->authby.rsasig_v1_5) {
 			return IKEv2_AUTH_RSA;
 		}
 
@@ -182,7 +182,7 @@ enum ikev2_auth_method local_v2AUTH_method(struct ike_sa *ike,
 		 * Method, and local policy was ok with the
 		 * suggestion.
 		 */
-		pexpect(authby_has_ecdsa(c->local->config->host.authby));
+		pexpect(authby_has_ecdsa(c->local->host.config->authby));
 		if (ike->sa.st_v2_digsig.negotiated_hashes != LEMPTY) {
 			return IKEv2_AUTH_DIGSIG;
 		}
@@ -386,7 +386,7 @@ static diag_t verify_v2AUTH_and_log_using_pubkey(struct authby authby,
 			    hash_algo->common.fqn);
 	}
 
-	if (!authby_le(authby, c->remote->config->host.authby)) {
+	if (!authby_le(authby, c->remote->host.config->authby)) {
 		authby_buf pb;
 		return diag("authentication failed: peer authentication requires policy %s",
 			    str_authby(authby, &pb));
@@ -479,7 +479,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 		 * redundant?
 		 */
 		if (that_auth != AUTH_NULL &&
-		    !ike->sa.st_connection->remote->config->host.authby.null) {
+		    !ike->sa.st_connection->remote->host.config->authby.null) {
 			return diag("authentication failed: peer attempted NULL authentication but we want %s",
 				    enum_name(&keyword_auth_names, that_auth));
 		}

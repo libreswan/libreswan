@@ -55,9 +55,9 @@ static bool idr_wildmatch(const struct end *this, const struct id *idr, struct l
 	/* cert_VerifySubjectAltName, if called, will [debug]log any errors */
 	/* XXX:  calling cert_VerifySubjectAltName with ID_DER_ASN1_DN futile? */
 	/* ??? if cert matches we don't actually do any further ID matching, wildcard or not */
-	if (this->config->host.cert.nss_cert != NULL &&
+	if (this->host->config->cert.nss_cert != NULL &&
 	    (idr->kind == ID_FQDN || idr->kind == ID_DER_ASN1_DN)) {
-		diag_t d = cert_verify_subject_alt_name(this->config->host.cert.nss_cert, idr);
+		diag_t d = cert_verify_subject_alt_name(this->host->config->cert.nss_cert, idr);
 		if (d == NULL) {
 			return true;
 		}
@@ -307,13 +307,13 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			 * correct.
 			 */
 
-			if (d->local->config->host.xauth.server != c->local->config->host.xauth.server) {
+			if (d->local->host.config->xauth.server != c->local->host.config->xauth.server) {
 				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
 				dbg_rhc("skipping because mismatched xauth_server");
 				continue;
 			}
 
-			if (d->local->config->host.xauth.client != c->local->config->host.xauth.client) {
+			if (d->local->host.config->xauth.client != c->local->host.config->xauth.client) {
 				/* Disallow IKEv2 CP or IKEv1 XAUTH mismatch */
 				dbg_rhc("skipping because mismatched xauth_client");
 				continue;
@@ -355,7 +355,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 					continue;	/* differ about aggressive mode */
 				}
 				if (LHAS(proposed_authbys, AUTH_PSK)) {
-					if (!(d->remote->config->host.auth == AUTH_PSK)) {
+					if (!(d->remote->host.config->auth == AUTH_PSK)) {
 						/* there needs to be a key */
 						dbg_rhc("skipping because no PSK in POLICY");
 						continue;
@@ -367,7 +367,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 					}
 				}
 				if (LHAS(proposed_authbys, AUTH_RSASIG)) {
-					if (!(d->remote->config->host.auth == AUTH_RSASIG)) {
+					if (!(d->remote->host.config->auth == AUTH_RSASIG)) {
 						dbg_rhc("skipping because not RSASIG in POLICY");
 						continue;	/* no key */
 					}
@@ -396,12 +396,12 @@ static struct connection *refine_host_connection_on_responder(int indent,
 				 * (prefered) the below will reject
 				 * ECDSA?
 				 */
-				if (!LHAS(proposed_authbys, d->remote->config->host.auth)) {
+				if (!LHAS(proposed_authbys, d->remote->host.config->auth)) {
 					dbg_rhc("skipping because mismatched authby");
 					continue;
 				}
 				/* check that the chosen one has a key */
-				switch (d->remote->config->host.auth) {
+				switch (d->remote->host.config->auth) {
 				case AUTH_PSK:
 					/*
 					 * XXX: This tries to find the
@@ -482,11 +482,11 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			 */
 			int peer_pathlen;
 			bool matching_peer_ca = trusted_ca(peer_ca,
-							   ASN1(d->remote->config->host.ca),
+							   ASN1(d->remote->host.config->ca),
 							   &peer_pathlen);
 			int our_pathlen;
 			bool matching_requested_ca = match_requested_ca(requested_ca,
-									d->local->config->host.ca,
+									d->local->host.config->ca,
 									&our_pathlen);
 			dbg_rhc("matching_peer_ca=%s(%d)/matching_request_ca=%s(%d))",
 				bool_str(matching_peer_ca), peer_pathlen,
@@ -679,7 +679,7 @@ diag_t update_peer_id(struct ike_sa *ike, const struct id *peer_id, const struct
 		id_buf idb;
 		dbg("rhc: peer ID matches and no certificate payload - continuing with peer ID %s",
 		    str_id(peer_id, &idb));
-	} else if (c->remote->config->host.authby.null &&
+	} else if (c->remote->host.config->authby.null &&
 		   tarzan_id != NULL && tarzan_id->kind == ID_NULL) {
 		id_buf peer_idb;
 		llog_sa(RC_LOG, ike,
