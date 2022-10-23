@@ -41,8 +41,8 @@
 static bool need_v2_configuration_payload(const struct connection *const cc,
 					  const lset_t st_nat_traversal)
 {
-	return (cc->local->config->host.modecfg.client &&
-		(!cc->local->config->child.address_translation ||
+	return (cc->local->host.config->modecfg.client &&
+		(!cc->local->child.config->address_translation ||
 		 LHAS(st_nat_traversal, NATED_HOST)));
 }
 
@@ -343,7 +343,7 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs, struct child_sa 
 	c->spd.this.has_client = true;
 	c->spd.this.has_internal_address = true;
 
-	if (c->local->config->child.address_translation) {
+	if (c->local->child.config->address_translation) {
 		dbg("CAT is set, not setting host source IP address to %s",
 		    ipstr(&ip, &ip_str));
 		ip_address this_client_prefix = selector_prefix(c->spd.this.client);

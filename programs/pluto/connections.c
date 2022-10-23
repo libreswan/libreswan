@@ -3759,8 +3759,8 @@ static void show_one_sr(struct show *s,
 		     oriented(c) ? "oriented" : "unoriented",
 		     OPT_HOST(this_sourceip, thisipb),
 		     OPT_HOST(that_sourceip, thatipb),
-		     OPT_PREFIX_STR("; mycert=", cert_nickname(&c->local->config->host.cert)),
-		     OPT_PREFIX_STR("; peercert=", cert_nickname(&c->remote->config->host.cert)),
+		     OPT_PREFIX_STR("; mycert=", cert_nickname(&c->local->host.config->cert)),
+		     OPT_PREFIX_STR("; peercert=", cert_nickname(&c->remote->host.config->cert)),
 		     ((sr->this.config->child.updown == NULL ||
 		       streq(sr->this.config->child.updown, "%disabled")) ? "<disabled>"
 		      : sr->this.config->child.updown));
@@ -3813,18 +3813,18 @@ static void show_one_sr(struct show *s,
 		 * actually ignored - it's AUTHBY that counts.
 		 */
 		who = "our";
-		FOR_EACH_THING(end, &c->local->config->host, &c->remote->config->host) {
+		FOR_EACH_THING(end, c->local->host.config, c->remote->host.config) {
 			jam(buf, "%s auth:", who);
 			/*
 			 * EXPECT everything except rsasig_v1_5.
 			 */
 			struct authby expect = authby_from_auth(end->auth);
-			struct authby mask = (oriented(c) && end == &c->local->config->host ? expect : AUTHBY_ALL);
+			struct authby mask = (oriented(c) && end == c->local->host.config ? expect : AUTHBY_ALL);
 			expect.rsasig_v1_5 = false;
 			struct authby authby = authby_and(end->authby, mask);
 			if (authby_eq(authby, expect)) {
 				jam_enum_short(buf, &keyword_auth_names, end->auth);
-			} else if (oriented(c) && end == &c->remote->config->host) {
+			} else if (oriented(c) && end == c->remote->host.config) {
 				jam_authby(buf, end->authby);
 			} else {
 				jam_enum_short(buf, &keyword_auth_names, end->auth);
@@ -3836,7 +3836,7 @@ static void show_one_sr(struct show *s,
 		}
 		/* eap */
 		who = ", our";
-		FOR_EACH_THING(end, &c->local->config->host, &c->remote->config->host) {
+		FOR_EACH_THING(end, c->local->host.config, c->remote->host.config) {
 			jam(buf, "%s autheap:%s", who,
 			    (end->eap == IKE_EAP_NONE ? "none" :
 			     end->eap == IKE_EAP_TLS ? "tls" : "???"));
