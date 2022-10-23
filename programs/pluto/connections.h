@@ -355,7 +355,7 @@ struct child_end {
 struct connection_end {
 	const struct end_config *config;
 	struct host_end host;
-	struct child_end client;
+	struct child_end child;
 };
 
 struct /*spd_route*/end {

@@ -2292,9 +2292,9 @@ static bool extract_connection(const struct whack_message *wm,
 	 * This choice of left/right must match alloc_connection().
 	 */
 
-	struct end *client_spd[] = {
-		[LEFT_END] = c->end[LEFT_END].client.spd,
-		[RIGHT_END] = c->end[RIGHT_END].client.spd,
+	struct end *child_spd[] = {
+		[LEFT_END] = c->end[LEFT_END].child.spd,
+		[RIGHT_END] = c->end[RIGHT_END].child.spd,
 	};
 
 	const struct whack_end *whack_ends[] = {
@@ -2306,7 +2306,7 @@ static bool extract_connection(const struct whack_message *wm,
 
 	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
 		int that = (this + 1) % LEFT_RIGHT_ROOF;
-		diag_t d = extract_end(c, client_spd[this],
+		diag_t d = extract_end(c, child_spd[this],
 				       &config->end[this], &config->end[that],
 				       wm, whack_ends[this], whack_ends[that],
 				       host_afi, client_afi, &same_ca[this],

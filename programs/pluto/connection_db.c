@@ -274,8 +274,8 @@ struct connection *alloc_connection(const char *name, where_t where)
 	c->config = c->root_config = config;
 	c->local = &c->end[LEFT_END]; /* this; clone must update */
 	c->remote = &c->end[RIGHT_END]; /* that; clone must update */
-	c->local->client.spd = &c->spd.this;
-	c->remote->client.spd = &c->spd.that;
+	c->local->child.spd = &c->spd.this;
+	c->remote->child.spd = &c->spd.that;
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		/* "left" or "right" */
@@ -292,9 +292,9 @@ struct connection *alloc_connection(const char *name, where_t where)
 		end_config->child.leftright = leftright;
 		end->config = end_config;
 		end->host.config = &end_config->host;
-		end->client.spd->host = &end->host; /*clone must update*/
-		end->client.spd->config = end_config;
-		end->client.config = &end_config->child;
+		end->child.spd->host = &end->host; /*clone must update*/
+		end->child.spd->config = end_config;
+		end->child.config = &end_config->child;
 	}
 
 	finish_connection(c, name, 0/*no template*/, where);
@@ -310,8 +310,8 @@ struct connection *clone_connection(const char *name, struct connection *t, wher
 	/* point local pointers at local structure */
 	c->local = &c->end[t->local->config->index];
 	c->remote = &c->end[t->remote->config->index];
-	c->local->client.spd = &c->spd.this;
-	c->remote->client.spd = &c->spd.that;
+	c->local->child.spd = &c->spd.this;
+	c->remote->child.spd = &c->spd.that;
 
 	finish_connection(c, name, t->serialno, where);
 	return c;
