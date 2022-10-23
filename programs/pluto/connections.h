@@ -146,7 +146,7 @@ struct end_config {
 	enum left_right index;
 	const char *leftright;
 	struct host_end_config host;
-	struct child_end_config client;
+	struct child_end_config child;
 };
 
 struct ike_info {

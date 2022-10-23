@@ -289,12 +289,12 @@ struct connection *alloc_connection(const char *name, where_t where)
 		end_config->leftright = leftright;
 		end_config->index = lr;
 		end_config->host.leftright = leftright;
-		end_config->client.leftright = leftright;
+		end_config->child.leftright = leftright;
 		end->config = end_config;
 		end->host.config = &end_config->host;
 		end->client.spd->host = &end->host; /*clone must update*/
 		end->client.spd->config = end_config;
-		end->client.config = &end_config->client;
+		end->client.config = &end_config->child;
 	}
 
 	finish_connection(c, name, 0/*no template*/, where);

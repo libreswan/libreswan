@@ -180,7 +180,7 @@ struct traffic_selector traffic_selector_from_end(const struct end *e, const cha
 	 * ICMPv6(58) we only support providing Type, not Code, eg
 	 * protoport=1/1
 	 */
-	if (e->client.hport == 0 || e->config->client.protoport.has_port_wildcard) {
+	if (e->client.hport == 0 || e->config->child.protoport.has_port_wildcard) {
 		ts.startport = 0;
 		ts.endport = 65535;
 	} else {

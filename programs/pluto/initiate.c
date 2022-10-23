@@ -1084,7 +1084,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 		return;
 	}
 
-	if (c->remote->config->client.protoport.has_port_wildcard ||
+	if (c->remote->config->child.protoport.has_port_wildcard ||
 	    (c->config->prospective_shunt == SHUNT_TRAP &&
 	     id_has_wildcards(&c->remote->host.id))) {
 		connection_buf cib;

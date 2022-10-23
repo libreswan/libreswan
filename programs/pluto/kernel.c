@@ -548,12 +548,12 @@ bool fmt_common_shell_out(char *buf,
 	JDipaddr("PLUTO_MY_CLIENT_NET", selector_prefix(sr->this.client));
 	JDipaddr("PLUTO_MY_CLIENT_MASK", selector_prefix_mask(sr->this.client));
 
-	if (cidr_is_specified(c->local->config->client.host_vtiip)) {
-		JDemitter("VTI_IP", jam_cidr(&jb, &c->local->config->client.host_vtiip));
+	if (cidr_is_specified(c->local->config->child.host_vtiip)) {
+		JDemitter("VTI_IP", jam_cidr(&jb, &c->local->config->child.host_vtiip));
 	}
 
-	if (cidr_is_specified(c->local->config->client.ifaceip)) {
-		JDemitter("INTERFACE_IP", jam_cidr(&jb, &c->local->config->client.ifaceip));
+	if (cidr_is_specified(c->local->config->child.ifaceip)) {
+		JDemitter("INTERFACE_IP", jam_cidr(&jb, &c->local->config->child.ifaceip));
 	}
 
 	JDuint("PLUTO_MY_PORT", sr->this.client.hport);
@@ -723,7 +723,7 @@ bool do_command(const struct connection *c,
 	 * Support for skipping updown, eg leftupdown=""
 	 * Useful on busy servers that do not need to use updown for anything
 	 */
-	const char *updown = sr->this.config->client.updown;
+	const char *updown = sr->this.config->child.updown;
 	if (updown == NULL || streq(updown, "%disabled")) {
 		dbg("kernel: skipped updown %s command - disabled per policy", verb);
 		return true;

@@ -257,7 +257,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		pfreeany(config->redirect.to);
 		pfreeany(config->redirect.accept);
 		FOR_EACH_ELEMENT(end, config->end) {
-			pfreeany(end->client.updown);
+			pfreeany(end->child.updown);
 			if (end->host.cert.nss_cert != NULL) {
 				CERT_DestroyCertificate(end->host.cert.nss_cert);
 			}
@@ -474,7 +474,7 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
 		 * specified protoport; merge that.
 		 */
 		ip_selector client = selector_from_address_protoport(this->host->addr,
-								     this->config->client.protoport);
+								     this->config->child.protoport);
 		selector_buf old, new;
 		dbg("  updated %s.client from %s to %s",
 		    this->config->leftright,
@@ -667,7 +667,7 @@ static void jam_end_id(struct jambuf *buf, const struct end *this)
 			jam_string(buf, "MS");
 		if (this->host->config->modecfg.client)
 			jam_string(buf, "+MC");
-		if (this->config->client.address_translation)
+		if (this->config->child.address_translation)
 			jam_string(buf, "+CAT");
 		if (this->host->config->xauth.server)
 			jam_string(buf, "+XS");
@@ -1110,11 +1110,10 @@ static diag_t extract_end(struct connection *c,
 	dst->host->addr = src->host_addr;
 	end_config->host.addr_name = clone_str(src->host_addr_name, "host ip");
 	dst->host->nexthop = src->host_nexthop;
-	end_config->client.sourceip = src->sourceip;
-	end_config->client.host_vtiip = src->host_vtiip;
-	end_config->client.ifaceip = src->ifaceip;
-	end_config->client.address_translation = src->cat;
-
+	end_config->child.sourceip = src->sourceip;
+	end_config->child.host_vtiip = src->host_vtiip;
+	end_config->child.ifaceip = src->ifaceip;
+	end_config->child.address_translation = src->cat;
 	end_config->host.xauth.server = src->xauth_server;
 	end_config->host.xauth.client = src->xauth_client;
 	end_config->host.xauth.username = clone_str(src->xauth_username, "xauth username");
@@ -1243,8 +1242,8 @@ static diag_t extract_end(struct connection *c,
 	}
 
 	/* save some defaults */
-	end_config->client.subnet = src->client;
-	end_config->client.protoport = src->protoport;
+	end_config->child.subnet = src->client;
+	end_config->child.protoport = src->protoport;
 
 	if (src->protoport.ipproto == 0 && src->protoport.hport != 0) {
 		return diag("%sprotoport cannot specify non-zero port %d for prototcol 0",
@@ -1292,7 +1291,7 @@ static diag_t extract_end(struct connection *c,
 	}
 
 	end_config->host.key_from_DNS_on_demand = src->key_from_DNS_on_demand;
-	end_config->client.updown = clone_str(src->updown, "end_config.client.updown");
+	end_config->child.updown = clone_str(src->updown, "end_config.client.updown");
 	end_config->host.sendcert = src->sendcert == 0 ? CERT_SENDIFASKED : src->sendcert;
 	end_config->host.ikeport = src->host_ikeport;
 	if (src->host_ikeport > 65535) {
@@ -2401,7 +2400,7 @@ static bool extract_connection(const struct whack_message *wm,
 	 */
 	struct end *wild_side =
 		(!address_is_specified(c->local->host.addr) ||
-		 c->local->config->client.protoport.has_port_wildcard ||
+		 c->local->config->child.protoport.has_port_wildcard ||
 		 id_has_wildcards(&c->local->host.id) ? &c->spd.this : &c->spd.that);
 
 	/* force all oppo connections to have a client */
@@ -2430,7 +2429,7 @@ static bool extract_connection(const struct whack_message *wm,
 		   !address_is_specified(wild_side->host->addr)) {
 		dbg("connection is template: no remote address yet policy negotiate");
 		c->kind = CK_TEMPLATE;
-	} else if (wild_side->config->client.protoport.has_port_wildcard) {
+	} else if (wild_side->config->child.protoport.has_port_wildcard) {
 		dbg("connection is template: remote has wildcard port");
 		c->kind = CK_TEMPLATE;
 	} else if (c->config->ike_version == IKEv2 && c->config->sec_label.len > 0) {
@@ -3699,9 +3698,9 @@ static int connection_compare_qsort(const void *a, const void *b)
 
 ip_address spd_route_end_sourceip(enum ike_version ike_version, const struct end *end)
 {
-	if (address_is_specified(end->config->client.sourceip)) {
+	if (address_is_specified(end->config->child.sourceip)) {
 		/* XXX: .is_set sufficient? needs unspec rejected */
-		return end->config->client.sourceip;
+		return end->config->child.sourceip;
 	}
 	switch (ike_version) {
 	case IKEv1:
@@ -3711,7 +3710,7 @@ ip_address spd_route_end_sourceip(enum ike_version ike_version, const struct end
 		break;
 	case IKEv2:
 		if (end->has_internal_address &&
-		    !end->config->client.address_translation) {
+		    !end->config->child.address_translation) {
 			return selector_prefix(end->client);
 		}
 		break;
@@ -3748,11 +3747,11 @@ static void show_one_sr(struct show *s,
 		     oriented(c) ? "oriented" : "unoriented",
 		     OPT_HOST(this_sourceip, thisipb),
 		     OPT_HOST(that_sourceip, thatipb),
-		     OPT_PREFIX_STR("; mycert=", cert_nickname(&c->local->host.config->cert)),
-		     OPT_PREFIX_STR("; peercert=", cert_nickname(&c->remote->host.config->cert)),
-		     ((sr->this.config->client.updown == NULL ||
-		       streq(sr->this.config->client.updown, "%disabled")) ? "<disabled>"
-		      : sr->this.config->client.updown));
+		     OPT_PREFIX_STR("; mycert=", cert_nickname(&c->local->config->host.cert)),
+		     OPT_PREFIX_STR("; peercert=", cert_nickname(&c->remote->config->host.cert)),
+		     ((sr->this.config->child.updown == NULL ||
+		       streq(sr->this.config->child.updown, "%disabled")) ? "<disabled>"
+		      : sr->this.config->child.updown));
 
 #undef OPT_HOST
 #undef OPT_PREFIX_STR
@@ -3865,7 +3864,7 @@ static void show_one_sr(struct show *s,
 			}
 		}
 
-		jam(buf, " cat:%s;", sr->this.config->client.address_translation ? "set" : "unset");
+		jam(buf, " cat:%s;", sr->this.config->child.address_translation ? "set" : "unset");
 	}
 
 #undef COMBO
