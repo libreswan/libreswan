@@ -822,9 +822,15 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 	return v2N_NOTHING_WRONG;
 }
 
-v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *ike,
-								struct msg_digest *md,
-								struct pbs_out *sk_pbs)
+/*
+ * Try to create child in .wip_sa.  Return NOTHING_WRONG, non-fatal,
+ * or fatal notification.  Caller will handle notifies and child
+ * cleanup.
+ */
+
+static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *ike,
+								       struct msg_digest *md,
+								       struct pbs_out *sk_pbs)
 {
 	v2_notification_t n;
 
@@ -857,11 +863,17 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 		return v2N_NOTHING_WRONG;
 	}
 
-	/* above confirmed there's enough to build a Child SA */
-	struct child_sa *child = new_v2_child_state(ike->sa.st_connection, ike,
-						    IPSEC_SA, SA_RESPONDER,
-						    STATE_V2_IKE_AUTH_CHILD_R0,
-						    null_fd);
+	/*
+	 * There's enough to build a Child SA.  Save it in .WIP_SA, if
+	 * this function fails call will clean it up.
+	 */
+
+	struct child_sa *child =
+		ike->sa.st_v2_msgid_windows.responder.wip_sa =
+		new_v2_child_state(ike->sa.st_connection, ike,
+				   IPSEC_SA, SA_RESPONDER,
+				   STATE_V2_IKE_AUTH_CHILD_R0,
+				   null_fd);
 
 	/*
 	 * Deal with either CP xor TS.
@@ -881,9 +893,7 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 		 NULL);
 	if (md->chain[ISAKMP_NEXT_v2CP] != NULL && pool_afi != NULL) {
 		if (!process_v2CP_request_payload(ike, child, md->chain[ISAKMP_NEXT_v2CP])) {
-			/* already logged */
-			delete_state(&child->sa);
-			ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
+			/* already logged; caller cleans up */
 			return v2N_INTERNAL_ADDRESS_FAILURE;
 		}
 	} else {
@@ -891,9 +901,7 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 		 * Danger! This TS call can change the child's connection.
 		 */
 		if (!v2_process_request_ts_payloads(child, md)) {
-			/* already logged? */
-			delete_state(&child->sa);
-			ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
+			/* already logged; caller, below, cleans up */
 			return v2N_TS_UNACCEPTABLE;
 		}
 	}
@@ -904,19 +912,48 @@ v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *i
 					 /*expect-accepted-proposal?*/false);
 	dbg("process_v2_childs_sa_payload returned %s", enum_name(&v2_notification_names, n));
 	if (n != v2N_NOTHING_WRONG) {
-		/* already logged */
-		delete_state(&child->sa);
+		/* already logged; caller, below, cleans up */
 		return n;
 	}
 
 	n = process_v2_child_request_payloads(ike, child, md, sk_pbs);
 	if (n != v2N_NOTHING_WRONG) {
-		/* already logged */
-		delete_state(&child->sa);
+		/* already logged; caller, below, cleans up */
 		return n;
 	}
 
 	return v2N_NOTHING_WRONG;
+}
+
+/*
+ * When required, create a Child SA.
+ *
+ * Returning FALSE means major SNAFU and caller should abort
+ * connection; reply, if any, will already be recorded.
+ */
+
+bool process_any_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *ike,
+						       struct msg_digest *md,
+						       struct pbs_out *sk_pbs)
+{
+	pexpect(ike->sa.st_v2_msgid_windows.responder.wip_sa == NULL);
+	v2_notification_t cn = process_v2_IKE_AUTH_request_child_sa_payloads(ike, md, sk_pbs);
+	if (cn != v2N_NOTHING_WRONG) {
+		/* XXX: add delete_any_child_sa()? */
+		if (ike->sa.st_v2_msgid_windows.responder.wip_sa != NULL) {
+			delete_state(&ike->sa.st_v2_msgid_windows.responder.wip_sa->sa);
+			ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL;
+		}
+		if (v2_notification_fatal(cn)) {
+			record_v2N_response(ike->sa.st_logger, ike, md,
+					    cn, NULL/*no-data*/,
+					    ENCRYPTED_PAYLOAD);
+			return false;
+		}
+		emit_v2N(cn, sk_pbs);
+	}
+	ike->sa.st_v2_msgid_windows.responder.wip_sa = NULL; /* all done */
+	return true;
 }
 
 v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *ike,

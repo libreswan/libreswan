@@ -743,17 +743,9 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 
 	if (send_redirect) {
 		dbg("skipping child; redirect response");
-	} else {
-		v2_notification_t cn = process_v2_IKE_AUTH_request_child_sa_payloads(ike, ike->sa.st_eap_sa_md,
-										     response.pbs);
-		if (v2_notification_fatal(cn)) {
-			record_v2N_response(ike->sa.st_logger, ike, md,
-					    cn, NULL/*no-data*/,
-					    ENCRYPTED_PAYLOAD);
-			return STF_FATAL;
-		} else if (cn != v2N_NOTHING_WRONG) {
-			emit_v2N(cn, response.pbs);
-		}
+	} else if (!process_any_v2_IKE_AUTH_request_child_sa_payloads(ike, md, response.pbs)) {
+		/* already logged; already recorded */
+		return STF_FATAL;
 	}
 
 	if (!close_and_record_v2_message(&response)) {

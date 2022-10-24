@@ -63,9 +63,9 @@ void v2_child_sa_established(struct ike_sa *ike, struct child_sa *child);
 v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *ike,
 								 struct msg_digest *md);
 
-v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *ike,
-								struct msg_digest *md,
-								struct pbs_out *sk_pbs);
+bool process_any_v2_IKE_AUTH_request_child_sa_payloads(struct ike_sa *ike,
+						       struct msg_digest *md,
+						       struct pbs_out *sk_pbs);
 
 #define ikev2_child_sa_proto_info(SA)					\
 	({								\
