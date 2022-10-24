@@ -288,6 +288,8 @@ struct connection *alloc_connection(const char *name, where_t where)
 		struct end_config *end_config = &config->end[lr];
 		end_config->leftright = leftright;
 		end_config->index = lr;
+		end_config->host.leftright = leftright;
+		end_config->client.leftright = leftright;
 		end->config = end_config;
 		end->host.config = &end_config->host;
 		end->client.spd->host = &end->host; /*clone must update*/

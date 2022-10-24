@@ -960,7 +960,7 @@ static diag_t extract_end(struct connection *c,
 				    leftright, src->cert);
 		}
 		diag_t diag = add_end_cert_and_preload_private_key(cert,
-								   dst, end_config,
+								   dst, &end_config->host,
 								   *same_ca/*preserve_ca*/,
 								   logger);
 		if (diag != NULL) {
@@ -1077,7 +1077,7 @@ static diag_t extract_end(struct connection *c,
 		CERTCertificate *cert = get_cert_by_ckaid_from_nss(&ckaid, logger);
 		if (cert != NULL) {
 			diag_t diag = add_end_cert_and_preload_private_key(cert,
-									   dst, end_config,
+									   dst, &end_config->host,
 									   *same_ca/*preserve_ca*/,
 									   logger);
 			if (diag != NULL) {
@@ -1383,7 +1383,7 @@ static diag_t extract_end(struct connection *c,
 
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 					    struct end *end,
-					    struct end_config *end_config,
+					    struct host_end_config *host_end_config,
 					    bool preserve_ca,
 					    struct logger *logger)
 {
@@ -1430,17 +1430,17 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 			    leftright, nickname);
 	}
 
-	end_config->host.cert.nss_cert = cert;
+	host_end_config->cert.nss_cert = cert;
 
 	/*
 	 * If no CA is defined, use issuer as default; but only when
 	 * update is ok.
 	 *
 	 */
-	if (preserve_ca || end_config->host.ca.ptr != NULL) {
+	if (preserve_ca || host_end_config->ca.ptr != NULL) {
 		dbg("preserving existing %s ca", leftright);
 	} else {
-		end_config->host.ca = clone_secitem_as_chunk(cert->derIssuer, "issuer ca");
+		host_end_config->ca = clone_secitem_as_chunk(cert->derIssuer, "issuer ca");
 	}
 
 	/*
@@ -1456,7 +1456,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	 */
 	dbg("preload cert/secret for connection: %s", cert->nickname);
 	bool load_needed;
-	err_t ugh = preload_private_key_by_cert(&end_config->host.cert, &load_needed, logger);
+	err_t ugh = preload_private_key_by_cert(&host_end_config->cert, &load_needed, logger);
 	if (ugh != NULL) {
 		dbg("no private key matching %s certificate %s: %s",
 		    leftright, nickname, ugh);

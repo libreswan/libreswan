@@ -81,6 +81,8 @@ enum left_right { LEFT_END, RIGHT_END, };
  */
 
 struct host_end_config {
+	const char *leftright;
+
 	char *addr_name;	/* string version from whack */
 
 	unsigned ikeport;
@@ -122,6 +124,7 @@ struct host_end_config {
  */
 
 struct child_end_config {
+	const char *leftright;
 	ip_subnet subnet;
 	ip_protoport protoport;
 	char *updown;
@@ -700,7 +703,7 @@ so_serial_t get_newer_sa_from_connection(struct state *st);
 
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 					    struct end *end,
-					    struct end_config *end_config,
+					    struct host_end_config *host_end_config,
 					    bool preserve_ca,
 					    struct logger *logger);
 

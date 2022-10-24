@@ -9,16 +9,16 @@
 #include "whack.h"
 
 static void reread_end_cert(struct end *end,
-			    struct end_config *end_config,
+			    struct host_end_config *host_end_config,
 			    struct logger *logger)
 {
-	if (end_config->host.cert.nss_cert == NULL) {
+	if (host_end_config->cert.nss_cert == NULL) {
 		dbg("no cert exists for %s; nothing to do",
 		    end->config->leftright);
 		return;
 	}
 
-	const char *nickname = cert_nickname(&end_config->host.cert);
+	const char *nickname = cert_nickname(&host_end_config->cert);
 	if (nickname == NULL) {
 		llog(RC_BADID, logger,
 		     "reloading %scert failed: cannot be reread due to unknown nickname",
@@ -34,11 +34,11 @@ static void reread_end_cert(struct end *end,
 		return;
 	}
 
-	CERTCertificate *old_cert = end_config->host.cert.nss_cert; /* must free/save */
-	end_config->host.cert.nss_cert = NULL;
+	CERTCertificate *old_cert = host_end_config->cert.nss_cert; /* must free/save */
+	host_end_config->cert.nss_cert = NULL;
 
 	diag_t diag = add_end_cert_and_preload_private_key(new_cert,
-							   end, end_config,
+							   end, host_end_config,
 							   true/*preserve existing ca?!?*/,
 							   logger);
 	if (diag != NULL) {
@@ -46,16 +46,16 @@ static void reread_end_cert(struct end *end,
 			 "reloading %scert='%s' failed: ",
 			  end->config->leftright, nickname);
 		CERT_DestroyCertificate(new_cert);
-		end_config->host.cert.nss_cert = old_cert;
+		host_end_config->cert.nss_cert = old_cert;
 		return;
 	}
 
 	CERT_DestroyCertificate(old_cert);
-	end_config->host.cert.nss_cert = new_cert;
+	host_end_config->cert.nss_cert = new_cert;
 
 	llog(RC_COMMENT, logger,
 	     "reloaded %scert='%s'",
-	     end->config->leftright, cert_nickname(&end_config->host.cert));
+	     end->config->leftright, cert_nickname(&host_end_config->cert));
 }
 
 static void reread_cert(struct connection *c, struct logger *logger)
@@ -67,8 +67,9 @@ static void reread_cert(struct connection *c, struct logger *logger)
 	c->logger->global_whackfd = fd_addref(logger->global_whackfd);
 
 	FOR_EACH_THING(end, &c->spd.this, &c->spd.that) {
-		struct end_config *end_config = &c->root_config->end[end->config->index];
-		reread_end_cert(end, end_config, c->logger);
+		struct host_end_config *host_end_config =
+			&c->root_config->end[end->config->index].host;
+		reread_end_cert(end, host_end_config, c->logger);
 	}
 
 	/* XXX: something better? */
