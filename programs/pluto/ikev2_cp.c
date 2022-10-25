@@ -188,23 +188,51 @@ bool emit_v2CP_response(const struct child_sa *child, struct pbs_out *outpbs)
 	return true;
 }
 
-bool emit_v2CP_request(const struct child_sa *unused_child UNUSED, struct pbs_out *outpbs)
+bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 {
-	pb_stream cp_pbs;
+	struct pbs_out cp_pbs;
 	struct ikev2_cp cp = {
 		.isacp_critical = ISAKMP_PAYLOAD_NONCRITICAL,
 		.isacp_type = IKEv2_CP_CFG_REQUEST,
 	};
 
-	dbg("send %s Configuration Payload", enum_name(&ikev2_cp_type_names, cp.isacp_type));
+	dbg("emit %s Configuration Payload", enum_name(&ikev2_cp_type_names, cp.isacp_type));
 
 	if (!out_struct(&cp, &ikev2_cp_desc, outpbs, &cp_pbs))
 		return false;
 
-	ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_ADDRESS, NULL, "IPV4 Address", &cp_pbs);
-	ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_DNS, NULL, "DNSv4", &cp_pbs);
-	ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_ADDRESS, NULL, "IPV6 Address", &cp_pbs);
-	ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_DNS, NULL, "DNSv6", &cp_pbs);
+	struct connection *cc = child->sa.st_connection;
+	lset_t ipset = LEMPTY;
+
+	FOR_EACH_THING(afi, &ipv4_info, &ipv6_info) {
+		if (cc->pool[afi->ip_index] != NULL) {
+			dbg("pool says to ask for %s", afi->ip_name);
+			ipset |= LELEM(afi->ip_index);
+		}
+	}
+
+	for (struct spd_route *spd = &cc->spd; spd != NULL; spd = spd->spd_next) {
+		const struct ip_info *afi = selector_info(spd->this.client);
+		if (afi != NULL) {
+			dbg("SPD says to ask for %s", afi->ip_name);
+			ipset |= LELEM(afi->ip_index);
+		}
+	}
+
+	if (ipset == LEMPTY) {
+		llog_pexpect(child->sa.st_logger, HERE,
+			     "can't figure out which internal address is needed");
+		return false;
+	}
+
+	if (ipset & LELEM(ipv4_info.ip_index)) {
+		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_ADDRESS, NULL, "IPv4 address", &cp_pbs);
+		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_DNS, NULL, "IPv4 DNS", &cp_pbs);
+	}
+	if (ipset & LELEM(ipv6_info.ip_index)) {
+		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_ADDRESS, NULL, "IPv6 address", &cp_pbs);
+		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_DNS, NULL, "IPv6 DNS", &cp_pbs);
+	}
 	ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_DNS_DOMAIN, NULL, "Domain", &cp_pbs);
 
 	close_output_pbs(&cp_pbs);
