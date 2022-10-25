@@ -156,14 +156,6 @@ bool prep_v2_child_for_request(struct child_sa *larval_child)
 	return true;
 }
 
-static bool need_v2_configuration_payload(const struct connection *const cc,
-					  const lset_t st_nat_traversal)
-{
-	return (cc->local->config->host.modecfg.client &&
-		(!cc->local->config->child.address_translation ||
-		 LHAS(st_nat_traversal, NATED_HOST)));
-}
-
 bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 				    const struct child_sa *larval_child,
 				    const struct ikev2_proposals *child_proposals,
@@ -222,10 +214,7 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 
 	if (!ike_auth_exchange) {
 		dbg("skipping CP, not IKE_AUTH request");
-	} else if (need_v2_configuration_payload(larval_child->sa.st_connection,
-						 ike->sa.hidden_variables.st_nat_traversal) ||
-		   cc->config->modecfg.domains != NULL ||
-		   cc->config->modecfg.dns != NULL) {
+	} else if (need_v2CP_request(cc, ike->sa.hidden_variables.st_nat_traversal)) {
 		if (!emit_v2CP_request(larval_child, pbs)) {
 			return false;
 		}
@@ -1141,8 +1130,7 @@ v2_notification_t process_v2_IKE_AUTH_response_child_sa_payloads(struct ike_sa *
 	 * IP parameters on rekey MUST be identical, so CP payloads
 	 * not needed.
 	 */
-	if (need_v2_configuration_payload(child->sa.st_connection,
-					  ike->sa.hidden_variables.st_nat_traversal)) {
+	if (expect_v2CP_response(child->sa.st_connection, ike->sa.hidden_variables.st_nat_traversal)) {
 		if (response_md->chain[ISAKMP_NEXT_v2CP] == NULL) {
 			/*
 			 * not really anything to here... but it would

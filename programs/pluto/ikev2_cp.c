@@ -38,6 +38,28 @@
 #include "addresspool.h"
 #include "ikev2_cp.h"
 
+static bool need_v2_configuration_payload(const struct connection *const cc,
+					  const lset_t st_nat_traversal)
+{
+	return (cc->local->config->host.modecfg.client &&
+		(!cc->local->config->child.address_translation ||
+		 LHAS(st_nat_traversal, NATED_HOST)));
+}
+
+bool expect_v2CP_response(const struct connection *const cc,
+		       const lset_t st_nat_traversal)
+{
+	return need_v2_configuration_payload(cc, st_nat_traversal);
+}
+
+bool need_v2CP_request(const struct connection *const cc,
+		       const lset_t st_nat_traversal)
+{
+	return (need_v2_configuration_payload(cc, st_nat_traversal) ||
+		cc->config->modecfg.domains != NULL ||
+		cc->config->modecfg.dns != NULL);
+}
+
 /* Misleading name, also used for NULL sized type's */
 static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
 					const char *story, struct pbs_out *outpbs)
