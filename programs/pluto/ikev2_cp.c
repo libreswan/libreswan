@@ -411,7 +411,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 		}
 
 		switch (cp_a.type) {
-		case IKEv2_INTERNAL_IP4_ADDRESS | ISAKMP_ATTR_AF_TLV:
+		case IKEv2_INTERNAL_IP4_ADDRESS:
 			if (!ikev2_set_internal_address(&cp_a_pbs, child, &ipv4_info,
 							&seen_internal_address)) {
 				llog_sa(RC_LOG_SERIOUS, child,
@@ -420,7 +420,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 			}
 			break;
 
-		case IKEv2_INTERNAL_IP4_DNS | ISAKMP_ATTR_AF_TLV:
+		case IKEv2_INTERNAL_IP4_DNS:
 			if (!ikev2_set_dns(&cp_a_pbs, child, &ipv4_info)) {
 				llog_sa(RC_LOG_SERIOUS, child,
 					  "ERROR malformed INTERNAL_IP4_DNS attribute");
@@ -428,7 +428,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 			}
 			break;
 
-		case IKEv2_INTERNAL_IP6_ADDRESS | ISAKMP_ATTR_AF_TLV:
+		case IKEv2_INTERNAL_IP6_ADDRESS:
 			if (!ikev2_set_internal_address(&cp_a_pbs, child, &ipv6_info,
 							&seen_internal_address)) {
 				llog_sa(RC_LOG_SERIOUS, child,
@@ -437,7 +437,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 			}
 			break;
 
-		case IKEv2_INTERNAL_IP6_DNS | ISAKMP_ATTR_AF_TLV:
+		case IKEv2_INTERNAL_IP6_DNS:
 			if (!ikev2_set_dns(&cp_a_pbs, child, &ipv6_info)) {
 				llog_sa(RC_LOG_SERIOUS, child,
 					  "ERROR malformed INTERNAL_IP6_DNS attribute");
@@ -445,7 +445,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 			}
 			break;
 
-		case IKEv2_INTERNAL_DNS_DOMAIN | ISAKMP_ATTR_AF_TLV:
+		case IKEv2_INTERNAL_DNS_DOMAIN:
 			ikev2_set_domain(&cp_a_pbs, child); /* can't fail */
 			break;
 
