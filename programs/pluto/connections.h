@@ -106,6 +106,8 @@ struct host_end_config {
 		bool client;	/* request address for local end */
 	} modecfg;
 
+	bool client_address_translation;		/* aka CAT */
+
 	struct {
 		bool server;
 		bool client;
@@ -138,8 +140,6 @@ struct child_end_config {
 	 */
 	ip_cidr host_vtiip;
 	ip_cidr ifaceip;
-
-	bool address_translation;		/* aka CAT */
 };
 
 struct end_config {

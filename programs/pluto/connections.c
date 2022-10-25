@@ -667,7 +667,7 @@ static void jam_end_id(struct jambuf *buf, const struct end *this)
 			jam_string(buf, "MS");
 		if (this->host->config->modecfg.client)
 			jam_string(buf, "+MC");
-		if (this->config->child.address_translation)
+		if (this->host->config->client_address_translation)
 			jam_string(buf, "+CAT");
 		if (this->host->config->xauth.server)
 			jam_string(buf, "+XS");
@@ -1113,7 +1113,7 @@ static diag_t extract_end(struct connection *c,
 	end_config->child.sourceip = src->sourceip;
 	end_config->child.host_vtiip = src->host_vtiip;
 	end_config->child.ifaceip = src->ifaceip;
-	end_config->child.address_translation = src->cat;
+	end_config->host.client_address_translation = src->cat;
 	end_config->host.xauth.server = src->xauth_server;
 	end_config->host.xauth.client = src->xauth_client;
 	end_config->host.xauth.username = clone_str(src->xauth_username, "xauth username");
@@ -3722,7 +3722,7 @@ ip_address spd_route_end_sourceip(enum ike_version ike_version, const struct end
 		break;
 	case IKEv2:
 		if (end->has_internal_address &&
-		    !end->config->child.address_translation) {
+		    !end->host->config->client_address_translation) {
 			return selector_prefix(end->client);
 		}
 		break;
@@ -3876,7 +3876,7 @@ static void show_one_sr(struct show *s,
 			}
 		}
 
-		jam(buf, " cat:%s;", sr->this.config->child.address_translation ? "set" : "unset");
+		jam(buf, " cat:%s;", sr->this.host->config->client_address_translation ? "set" : "unset");
 	}
 
 #undef COMBO
