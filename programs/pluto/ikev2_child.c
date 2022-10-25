@@ -876,26 +876,84 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 				   null_fd);
 
 	/*
-	 * Deal with either CP xor TS.
+	 * Parse the CP payloads if needed (need child so that rants
+	 * can be logged against child).
+	 *
+	 * 2.19.  Requesting an Internal Address on a Remote Network
+	 *
+	 * When is CP allowed?
+	 *
+	 *   A request for such a temporary address can be included in
+	 *   any request to create a Child SA (including the implicit
+	 *   request in message 3) by including a CP payload.
+	 *
+	 * i.e., a childless IKE_AUTH exchange must not have CP
+	 * payload and, hence, this code comes after above check for
+	 * Child SA payloads.
+	 *
+	 * When is CP required?
+	 *
+	 *   In the case where the IRAS's [IPsec Remote Access Server]
+	 *   configuration requires that CP be used for a given
+	 *   identity IDi, but IRAC has failed to send a
+	 *   CP(CFG_REQUEST), IRAS MUST fail the request, and
+	 *   terminate the Child SA creation with a FAILED_CP_REQUIRED
+	 *   error.
+	 *
+	 * The IKE SA's authenticated so IDi has been confirmed for
+	 * the connection.  So lets boldly assume that the IKE's
+	 * modecfg.server (also set when peer has an addresspool)
+	 * implies IRAS.
+	 *
+	 * Why is all this ignored?
+	 *
+	 * OE defines client connections but then expects them to
+	 * behave like a server when the peer is the one initiating.
+	 */
+
+	pexpect(ike->sa.st_connection == child->sa.st_connection);
+	const struct host_end_config *local = ike->sa.st_connection->local->host.config;
+	const struct host_end_config *remote = ike->sa.st_connection->remote->host.config;
+	const struct ip_info *pool_afi =
+		(child->sa.st_connection->pool[IPv4_INDEX] != NULL ? &ipv4_info :
+		 child->sa.st_connection->pool[IPv6_INDEX] != NULL ? &ipv6_info :
+		 NULL);
+	bool oe_server = ((ike->sa.st_connection->policy & POLICY_OPPORTUNISTIC) &&
+			  md->chain[ISAKMP_NEXT_v2CP] != NULL && pool_afi != NULL);
+
+	dbg("oe_server=%s; local: %s client=%s, server=%s; remote: %s client=%s, server=%s",
+	    bool_str(oe_server),
+	    /**/
+	    local->leftright, bool_str(local->modecfg.client), bool_str(local->modecfg.server),
+	    /**/
+	    remote->leftright, bool_str(remote->modecfg.client), bool_str(remote->modecfg.server));
+
+	if (local->modecfg.server) {
+		if (md->chain[ISAKMP_NEXT_v2CP] == NULL) {
+			llog_sa(RC_LOG, ike,
+				"IKE_AUTH request does not include a CP payload required by %smodecfgserver=true; Child SA ignored",
+				local->leftright);
+			/* just logged; caller, below, cleans up */
+			return v2N_FAILED_CP_REQUIRED;
+		}
+		if (!process_v2_IKE_AUTH_request_v2CP_payload(ike, child, md->chain[ISAKMP_NEXT_v2CP])) {
+			/* already logged; caller, below, cleans up */
+			return v2N_INTERNAL_ADDRESS_FAILURE;
+		}
+	}
+
+	/*
+	 * Process TS (but only when there's no CP); what woh no way!
 	 *
 	 * The CP payload's result should be checked against the TS
 	 * payload except libreswan will change connection based on
 	 * the TS content which can cause a connection to steal
 	 * another connection's lease.
 	 *
-	 * XXX: this is doubly wrong.  The result of CP is something
-	 * tied to the IKE SA which one or more Child SAs may then use
-	 * via their TS payload.
+	 * Clearly a bug.
 	 */
-	const struct ip_info *pool_afi =
-		(child->sa.st_connection->pool[IPv4_INDEX] != NULL ? &ipv4_info :
-		 child->sa.st_connection->pool[IPv6_INDEX] != NULL ? &ipv6_info :
-		 NULL);
-	if (md->chain[ISAKMP_NEXT_v2CP] != NULL && pool_afi != NULL) {
-		if (!process_v2CP_request_payload(ike, child, md->chain[ISAKMP_NEXT_v2CP])) {
-			/* already logged; caller cleans up */
-			return v2N_INTERNAL_ADDRESS_FAILURE;
-		}
+	if (local->modecfg.server || oe_server) {
+		dbg("skipping TS processing, mainly to stop a connection flip!?!");
 	} else {
 		/*
 		 * Danger! This TS call can change the child's connection.

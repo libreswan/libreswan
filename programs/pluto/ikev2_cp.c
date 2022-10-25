@@ -189,17 +189,10 @@ bool emit_v2CP_request(const struct child_sa *unused_child UNUSED, struct pbs_ou
 	return true;
 }
 
-bool process_v2CP_request_payload(struct ike_sa *ike UNUSED, struct child_sa *child,
-				  struct payload_digest *cp_pd UNUSED)
+bool process_v2_IKE_AUTH_request_v2CP_payload(struct ike_sa *ike, struct child_sa *child,
+					      struct payload_digest *cp_pd UNUSED)
 {
-	/*
-	 * Deal with either CP xor TS.
-	 *
-	 * The CP payload's result should be checked against the TS
-	 * payload except libreswan will change connection based on
-	 * the TS content which can cause a connection to steal
-	 * another connection's lease.
-	 */
+	pexpect(ike->sa.st_connection == child->sa.st_connection);
 	const struct ip_info *pool_afi =
 		(child->sa.st_connection->pool[IPv4_INDEX] != NULL ? &ipv4_info :
 		 child->sa.st_connection->pool[IPv6_INDEX] != NULL ? &ipv6_info :

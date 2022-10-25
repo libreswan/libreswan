@@ -1325,20 +1325,26 @@ static diag_t extract_end(struct connection *c,
 	}
 
 	/*
-	 * How to add addresspool only for responder?  It is not
-	 * necessary on the initiator
+	 * Should the address pool only be added to the modecfg
+	 * .server?  Is it necessary on the initiator?
 	 *
-	 * Note that, possibly confusingly, it is the client's end
-	 * that has the address pool.  I.e., set OTHER_END to server.
+	 * OE orients things so that local modecfg is the client
+	 * .client (presumably so that it can initiate connections
+	 * on-demand), BUT also makes that same connection act like a
+	 * server accepting incoming OE connections.
 	 *
-	 * Need to also merge in the client/server options provided by
-	 * whack - sometimes they are set, sometimes they are not.
+	 * Note that, possibly confusingly, in the config file the
+	 * client end specifies the address pool (instead of being
+	 * given a subnet).  Presumably it is saying this is where the
+	 * ends addresses come from.
 	 *
-	 * XXX: HUH!
+	 * Can a client also be a server, per above, OE seems to think
+	 * so (but without actually setting the bits).
 	 */
 
-	end_config->host.modecfg.server = end_config->host.modecfg.server || src->modecfg_server;
-	end_config->host.modecfg.client = end_config->host.modecfg.client || src->modecfg_client;
+	/* only update, may already be set below */
+	end_config->host.modecfg.server |= src->modecfg_server;
+	end_config->host.modecfg.client |= src->modecfg_client;
 
 	if (src->addresspool != NULL) {
 
@@ -1372,9 +1378,15 @@ static diag_t extract_end(struct connection *c,
 					 leftright, src->addresspool);
 		}
 
-		/* force settings */
+		/*
+		 * Addresspool implies the end is a client (and other
+		 * is a server), force settings.
+		 */
 		other_end_config->host.modecfg.server = true;
 		end_config->host.modecfg.client = true;
+		dbg("forced %s modecfg client=%s %s modecfg server=%s",
+		    end_config->leftright, bool_str(end_config->leftright),
+		    other_end_config->leftright, bool_str(other_end_config->leftright));
 	}
 
 	return NULL;
