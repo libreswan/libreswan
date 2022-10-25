@@ -582,11 +582,11 @@ kvmplutotest 	newoe-20-ipv6				good
 kvmplutotest 	newoe-21-liveness-clear			wip
 kvmplutotest	newoe-22-nat-poc-cop			good
 kvmplutotest	newoe-24-poc-poc-fast			wip
-kvmplutotest	newoe-25-cat-1				good
-kvmplutotest	newoe-25-cat-2				good
-kvmplutotest	newoe-25-cat-3-4-way			good
-kvmplutotest	newoe-25-cat-4				good
-kvmplutotest 	newoe-25-cat-5				good
+kvmplutotest	newoe-25-cat-1				wip	github/896
+kvmplutotest	newoe-25-cat-2				wip	github/896
+kvmplutotest	newoe-25-cat-3-4-way			wip	github/896
+kvmplutotest	newoe-25-cat-4				wip	github/896
+kvmplutotest 	newoe-25-cat-5				wip	github/896
 kvmplutotest 	newoe-26-poc-poc-host			good
 kvmplutotest 	newoe-27-replace-sa-auth-authnull	good
 kvmplutotest 	newoe-27-replace-sa-authnull-authnull	good
@@ -597,9 +597,9 @@ kvmplutotest 	certoe-03-cop-whack			good
 kvmplutotest 	certoe-03-poc-whack			good
 kvmplutotest	certoe-04-poc-packet			good
 kvmplutotest	certoe-05-poc-reverse			good
-kvmplutotest	certoe-06-nat-packet-cop		good
-kvmplutotest	certoe-07-nat-2-clients			good
-kvmplutotest	certoe-08-nat-packet-cop-restart	good
+kvmplutotest	certoe-06-nat-packet-cop		wip	github/896
+kvmplutotest	certoe-07-nat-2-clients			wip	github/896
+kvmplutotest	certoe-08-nat-packet-cop-restart	wip	github/896
 kvmplutotest	certoe-09-packet-host			good
 kvmplutotest	certoe-09-packet-host-2			good
 kvmplutotest	certoe-10-symmetric-cert-whack		good
