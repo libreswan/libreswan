@@ -876,8 +876,6 @@ static diag_t extract_end(struct connection *c,
 			  const struct whack_message *wm,
 			  const struct whack_end *src,
 			  const struct whack_end *other_src,
-			  const struct ip_info *host_afi,
-			  const struct ip_info *client_afi,
 			  bool *same_ca,
 			  struct logger *logger/*connection "..."*/)
 {
@@ -1249,46 +1247,6 @@ static diag_t extract_end(struct connection *c,
 			    src->leftright, src->protoport.hport);
 	}
 
-	if (src->client.is_set) {
-		/*
-		 * end.has_client seems to mean that the .client
-		 * selector is pinned (when false .client can be
-		 * refined).
-		 *
-		 * Of course if NARROWING is allowed, this can be
-		 * refined regardless of .has_client.
-		 */
-		end->child.spd->has_client = true;
-		end->child.spd->client = selector_from_subnet_protoport(src->client,
-									src->protoport);
-	} else if (host_afi != client_afi) {
-		/*
-		 * If {left,right}subnet isn't specified in the
-		 * configuration file then it defaults to the HOST's
-		 * address.
-		 *
-		 * Except at this point the host's address may not be
-		 * known (DNS, %any).  This is "fixed" by
-		 * update_ends().  Fortunately (if nothing else, by
-		 * forcing it), at least the host address family is
-		 * known.
-		 */
-		return diag("host protocol %s conflicts with client protocol %s",
-			    host_afi->ip_name, client_afi->ip_name);
-	} else if (src->protoport.is_set) {
-		/*
-		 * There's no client subnet _yet_ there is a client
-		 * protoport.  There must be a client.
-		 *
-		 * Per above, the client will be formed from
-		 * HOST+PROTOPORT.  Problem is, HOST probably isn't
-		 * yet known, use host family's .all as a stand in.
-		 * Calling update_ends*() will then try to fix it.
-		 */
-		end->child.spd->client = selector_from_subnet_protoport(host_afi->subnet.all,
-									src->protoport);
-	}
-
 	end_config->host.key_from_DNS_on_demand = src->key_from_DNS_on_demand;
 	end_config->child.updown = clone_str(src->updown, "end_config.client.updown");
 	end_config->host.sendcert = src->sendcert == 0 ? CERT_SENDIFASKED : src->sendcert;
@@ -1346,6 +1304,7 @@ static diag_t extract_end(struct connection *c,
 	end_config->host.modecfg.client |= src->modecfg_client;
 
 	if (src->addresspool != NULL) {
+
 
 		/* both ends can't add an address pool */
 		passert(c->pool[IPv4_INDEX] == NULL &&
@@ -2315,8 +2274,7 @@ static bool extract_connection(const struct whack_message *wm,
 		diag_t d = extract_end(c, &c->end[this],
 				       &config->end[this], &config->end[that],
 				       wm, whack_ends[this], whack_ends[that],
-				       host_afi, client_afi, &same_ca[this],
-				       c->logger);
+				       &same_ca[this], c->logger);
 		if (d != NULL) {
 			llog_diag(RC_FATAL, c->logger, &d, ADD_FAILED_PREFIX);
 			return false;
@@ -2329,6 +2287,54 @@ static bool extract_connection(const struct whack_message *wm,
 			config->end[that].host.ca = clone_hunk(config->end[this].host.ca,
 							       "same ca");
 			break;
+		}
+	}
+
+	/*
+	 * Fill in the child SPDs.
+	 */
+	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
+		const struct whack_end *src = whack_ends[this];
+		struct end *spd_end = c->end[this].child.spd;
+		if (src->client.is_set) {
+			/*
+			 * end.has_client seems to mean that the
+			 * .client selector is pinned (when false
+			 * .client can be refined).
+			 *
+			 * Of course if NARROWING is allowed, this can
+			 * be refined regardless of .has_client.
+			 */
+			spd_end->has_client = true;
+			spd_end->client = selector_from_subnet_protoport(src->client,
+									 src->protoport);
+		} else if (host_afi != client_afi) {
+			/*
+			 * If {left,right}subnet isn't specified in the
+			 * configuration file then it defaults to the HOST's
+			 * address.
+			 *
+			 * Except at this point the host's address may
+			 * not be known (DNS, %any).  This is "fixed"
+			 * by update_ends().  Fortunately (if nothing
+			 * else, by forcing it), at least the host
+			 * address family is known.
+			 */
+			return diag("host protocol %s conflicts with client protocol %s",
+				    host_afi->ip_name, client_afi->ip_name);
+		} else if (src->protoport.is_set) {
+			/*
+			 * There's no client subnet _yet_ there is a client
+			 * protoport.  There must be a client.
+			 *
+			 * Per above, the client will be formed from
+			 * HOST+PROTOPORT.  Problem is, HOST probably
+			 * isn't yet known, use host family's .all as
+			 * a stand in.  Calling update_ends*() will
+			 * then try to fix it.
+			 */
+			spd_end->client = selector_from_subnet_protoport(host_afi->subnet.all,
+									 src->protoport);
 		}
 	}
 
