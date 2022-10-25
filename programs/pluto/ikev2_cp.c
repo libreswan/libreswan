@@ -211,24 +211,86 @@ bool emit_v2CP_request(const struct child_sa *unused_child UNUSED, struct pbs_ou
 	return true;
 }
 
-bool process_v2_IKE_AUTH_request_v2CP_payload(struct ike_sa *ike, struct child_sa *child,
-					      struct payload_digest *cp_pd UNUSED)
+bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike, struct child_sa *child,
+						      struct payload_digest *cp_digest)
 {
 	pexpect(ike->sa.st_connection == child->sa.st_connection);
-	const struct ip_info *pool_afi =
-		(child->sa.st_connection->pool[IPv4_INDEX] != NULL ? &ipv4_info :
-		 child->sa.st_connection->pool[IPv6_INDEX] != NULL ? &ipv6_info :
-		 NULL);
-	/*
-	 * See ikev2-hostpair-02 where the connection is
-	 * constantly clawed back as the SA keeps trying to
-	 * establish / replace / rekey.
-	 */
-	err_t e = lease_that_address(child->sa.st_connection, &child->sa, pool_afi);
-	if (e != NULL) {
-		llog_sa(RC_LOG, child, "ikev2 lease_an_address failure %s", e);
+	struct connection *cc = child->sa.st_connection;
+
+	struct ikev2_cp *cp =  &cp_digest->payload.v2cp;
+	struct pbs_in *cp_pbs = &cp_digest->pbs;
+
+	ldbg(child->sa.st_logger, "parsing ISAKMP_NEXT_v2CP payload");
+
+	if (cp->isacp_type != IKEv2_CP_CFG_REQUEST) {
+		llog_sa(RC_LOG_SERIOUS, child,
+			"ERROR: expected IKEv2_CP_CFG_REQUEST got a %s",
+			enum_name(&ikev2_cp_type_names, cp->isacp_type));
 		return false;
 	}
+
+	lset_t seen = LEMPTY;
+	static const struct ip_info *internal_to_info[] = {
+		[IKEv2_INTERNAL_IP4_ADDRESS] = &ipv4_info,
+		[IKEv2_INTERNAL_IP6_ADDRESS] = &ipv6_info,
+	};
+
+	while (pbs_left(cp_pbs) > 0) {
+
+		struct ikev2_cp_attribute cp_attr;
+		struct pbs_in cp_attr_pbs;
+		diag_t d = pbs_in_struct(cp_pbs, &ikev2_cp_attribute_desc,
+					 &cp_attr, sizeof(cp_attr), &cp_attr_pbs);
+		if (d != NULL) {
+			llog_diag(RC_LOG_SERIOUS, child->sa.st_logger, &d,
+				 "ERROR: malformed CP attribute");
+			return false;
+		}
+
+		enum ikev2_cp_attribute_type type = cp_attr.type; 
+		switch (type) {
+		case IKEv2_INTERNAL_IP4_ADDRESS:
+		case IKEv2_INTERNAL_IP6_ADDRESS:
+		{
+			const struct ip_info *afi = internal_to_info[type];
+			passert(afi != NULL);
+			const struct addresspool *pool = cc->pool[afi->ip_index];
+			if (pool == NULL) {
+				enum_buf eb;
+				ldbg(child->sa.st_logger, "ignoring %s, no pool",
+				     str_enum_short(&ikev2_cp_attribute_type_names, type, &eb));
+			} else {
+				err_t e = lease_that_address(child->sa.st_connection, &child->sa, afi);
+				if (e != NULL) {
+					enum_buf eb;
+					llog_sa(RC_LOG, child, "%s lease_an_address failure %s",
+						str_enum_short(&ikev2_cp_attribute_type_names, type, &eb),
+						e);
+					return false;
+				}
+				seen |= type;
+			}
+			break;
+		}
+
+		default:
+		{
+			enum_buf eb;
+			ldbg(child->sa.st_logger,
+			     "ignoring attribute %s length %u",
+			     str_enum_short(&ikev2_cp_attribute_type_names, type, &eb),
+			     cp_attr.len);
+			break;
+		}
+		}
+	}
+
+	if (seen == LEMPTY) {
+		llog_sa(RC_LOG_SERIOUS, child,
+			"ERROR: no valid internal address request");
+		return false;
+	}
+
 	return true;
 }
 

@@ -925,7 +925,7 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 			/* just logged; caller, below, cleans up */
 			return v2N_FAILED_CP_REQUIRED;
 		}
-		if (!process_v2_IKE_AUTH_request_v2CP_payload(ike, child, md->chain[ISAKMP_NEXT_v2CP])) {
+		if (!process_v2_IKE_AUTH_request_v2CP_request_payload(ike, child, md->chain[ISAKMP_NEXT_v2CP])) {
 			/* already logged; caller, below, cleans up */
 			return v2N_INTERNAL_ADDRESS_FAILURE;
 		}

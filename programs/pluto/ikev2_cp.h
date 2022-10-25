@@ -27,8 +27,8 @@ bool expect_v2CP_response(const struct connection *cc, const lset_t st_nat_trave
 bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs);
 bool emit_v2CP_response(const struct child_sa *child, struct pbs_out *outpbs);
 
-bool process_v2_IKE_AUTH_request_v2CP_payload(struct ike_sa *ike, struct child_sa *child,
-					      struct payload_digest *cp_pd);
+bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike, struct child_sa *child,
+						      struct payload_digest *cp_payload);
 bool process_v2CP_response_payload(struct ike_sa *ike, struct child_sa *child, struct payload_digest *cp_pd);
 
 #endif
