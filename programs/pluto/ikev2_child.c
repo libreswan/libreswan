@@ -952,7 +952,7 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 	 *
 	 * Clearly a bug.
 	 */
-	if (local->modecfg.server || oe_server) {
+	if (local->modecfg.server) {
 		dbg("skipping TS processing, mainly to stop a connection flip!?!");
 	} else {
 		/*
