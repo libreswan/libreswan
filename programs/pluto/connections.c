@@ -870,7 +870,7 @@ static diag_t extract_client_afi(const struct whack_message *wm,
  */
 
 static diag_t extract_end(struct connection *c,
-			  struct end *dst,
+			  struct connection_end *end,
 			  struct end_config *end_config,
 			  struct end_config *other_end_config,
 			  const struct whack_message *wm,
@@ -882,8 +882,7 @@ static diag_t extract_end(struct connection *c,
 			  struct logger *logger/*connection "..."*/)
 {
 	err_t err;
-	passert(dst->config == end_config);
-	const char *leftright = dst->config->leftright;
+	const char *leftright = end->config->leftright;
 
 	/*
 	 * decode id, if any
@@ -891,7 +890,7 @@ static diag_t extract_end(struct connection *c,
 	 * For %fromcert, the load_end_cert*() call will update it.
 	 */
 	if (src->id == NULL) {
-		dst->host->id.kind = ID_NONE;
+		end->host.id.kind = ID_NONE;
 	} else {
 		/*
 		 * Cannot report errors due to low level nesting of functions,
@@ -899,7 +898,7 @@ static diag_t extract_end(struct connection *c,
 		 * atoid() will log real failures like illegal DNS chars already,
 		 * and for @string ID's all chars are valid without processing.
 		 */
-		atoid(src->id, &dst->host->id);
+		atoid(src->id, &end->host.id);
 	}
 
 	/* decode CA distinguished name, if any */
@@ -960,7 +959,7 @@ static diag_t extract_end(struct connection *c,
 				    leftright, src->cert);
 		}
 		diag_t diag = add_end_cert_and_preload_private_key(cert,
-								   dst, &end_config->host,
+								   &end->host, &end_config->host,
 								   *same_ca/*preserve_ca*/,
 								   logger);
 		if (diag != NULL) {
@@ -1077,7 +1076,7 @@ static diag_t extract_end(struct connection *c,
 		CERTCertificate *cert = get_cert_by_ckaid_from_nss(&ckaid, logger);
 		if (cert != NULL) {
 			diag_t diag = add_end_cert_and_preload_private_key(cert,
-									   dst, &end_config->host,
+									   &end->host, &end_config->host,
 									   *same_ca/*preserve_ca*/,
 									   logger);
 			if (diag != NULL) {
@@ -1107,9 +1106,9 @@ static diag_t extract_end(struct connection *c,
 
 	/* the rest is simple copying of corresponding fields */
 	end_config->host.type = src->host_type;
-	dst->host->addr = src->host_addr;
+	end->host.addr = src->host_addr;
 	end_config->host.addr_name = clone_str(src->host_addr_name, "host ip");
-	dst->host->nexthop = src->host_nexthop;
+	end->host.nexthop = src->host_nexthop;
 	end_config->child.sourceip = src->sourceip;
 	end_config->child.host_vtiip = src->host_vtiip;
 	end_config->child.ifaceip = src->ifaceip;
@@ -1259,9 +1258,9 @@ static diag_t extract_end(struct connection *c,
 		 * Of course if NARROWING is allowed, this can be
 		 * refined regardless of .has_client.
 		 */
-		dst->has_client = true;
-		dst->client = selector_from_subnet_protoport(src->client,
-							     src->protoport);
+		end->child.spd->has_client = true;
+		end->child.spd->client = selector_from_subnet_protoport(src->client,
+									src->protoport);
 	} else if (host_afi != client_afi) {
 		/*
 		 * If {left,right}subnet isn't specified in the
@@ -1286,8 +1285,8 @@ static diag_t extract_end(struct connection *c,
 		 * yet known, use host family's .all as a stand in.
 		 * Calling update_ends*() will then try to fix it.
 		 */
-		dst->client = selector_from_subnet_protoport(host_afi->subnet.all,
-							     src->protoport);
+		end->child.spd->client = selector_from_subnet_protoport(host_afi->subnet.all,
+									src->protoport);
 	}
 
 	end_config->host.key_from_DNS_on_demand = src->key_from_DNS_on_demand;
@@ -1306,12 +1305,12 @@ static diag_t extract_end(struct connection *c,
 	 * XXX this is WRONG, we should do this asynchronously, as part of
 	 * the normal loading process
 	 */
-	switch (dst->config->host.type) {
+	switch (end_config->host.type) {
 	case KH_IPHOSTNAME:
 	{
 		err_t er = ttoaddress_dns(shunk1(end_config->host.addr_name),
-					  address_type(&dst->host->addr),
-					  &dst->host->addr);
+					  address_type(&end->host.addr),
+					  &end->host.addr);
 		if (er != NULL) {
 			llog(RC_COMMENT, logger,
 			     "failed to convert '%s' at load time: %s",
@@ -1393,14 +1392,14 @@ static diag_t extract_end(struct connection *c,
 }
 
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
-					    struct end *end,
+					    struct host_end *host_end,
 					    struct host_end_config *host_end_config,
 					    bool preserve_ca,
 					    struct logger *logger)
 {
 	passert(cert != NULL);
 	const char *nickname = cert->nickname;
-	const char *leftright = end->config->leftright;
+	const char *leftright = host_end_config->leftright;
 
 	/*
 	 * A copy of this code lives in nss_cert_verify.c :/
@@ -1425,7 +1424,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	}
 
 	/* XXX: should this be after validity check? */
-	select_nss_cert_id(cert, &end->host->id);
+	select_nss_cert_id(cert, &host_end->id);
 
 	/* check validity of cert */
 	if (CERT_CheckCertValidTimes(cert, PR_Now(), false) !=
@@ -1435,7 +1434,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	}
 
 	dbg("loading %s certificate \'%s\' pubkey", leftright, nickname);
-	if (!add_pubkey_from_nss_cert(&pluto_pubkeys, &end->host->id, cert, logger)) {
+	if (!add_pubkey_from_nss_cert(&pluto_pubkeys, &host_end->id, cert, logger)) {
 		/* XXX: push diag_t into add_pubkey_from_nss_cert()? */
 		return diag("%s certificate \'%s\' pubkey could not be loaded",
 			    leftright, nickname);
@@ -2304,11 +2303,6 @@ static bool extract_connection(const struct whack_message *wm,
 	 * This choice of left/right must match alloc_connection().
 	 */
 
-	struct end *child_spd[] = {
-		[LEFT_END] = c->end[LEFT_END].child.spd,
-		[RIGHT_END] = c->end[RIGHT_END].child.spd,
-	};
-
 	const struct whack_end *whack_ends[] = {
 		[LEFT_END] = &wm->left,
 		[RIGHT_END] = &wm->right,
@@ -2318,7 +2312,7 @@ static bool extract_connection(const struct whack_message *wm,
 
 	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
 		int that = (this + 1) % LEFT_RIGHT_ROOF;
-		diag_t d = extract_end(c, child_spd[this],
+		diag_t d = extract_end(c, &c->end[this],
 				       &config->end[this], &config->end[that],
 				       wm, whack_ends[this], whack_ends[that],
 				       host_afi, client_afi, &same_ca[this],
