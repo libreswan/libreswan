@@ -1755,6 +1755,8 @@ static bool extract_connection(const struct whack_message *wm,
 		client_afi = host_afi;
 	}
 
+	dbg("host_afi=%s client_afi=%s", host_afi->ip_name, client_afi->ip_name);
+
 	/*
 	 * When the other side is wildcard: we must check if other
 	 * conditions met.
@@ -2313,6 +2315,7 @@ static bool extract_connection(const struct whack_message *wm,
 	/*
 	 * Fill in the child SPDs.
 	 */
+	dbg("host_afi=%s client_afi=%s", host_afi->ip_name, client_afi->ip_name);
 	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
 		const struct whack_end *src = whack_ends[this];
 		struct end *spd_end = c->end[this].child.spd;
@@ -2325,6 +2328,8 @@ static bool extract_connection(const struct whack_message *wm,
 			 * Of course if NARROWING is allowed, this can
 			 * be refined regardless of .has_client.
 			 */
+			dbg("%s %s child spd src->client.is_set",
+			    c->name, src->leftright);
 			spd_end->has_client = true;
 			spd_end->client = selector_from_subnet_protoport(src->client,
 									 src->protoport);
@@ -2340,8 +2345,10 @@ static bool extract_connection(const struct whack_message *wm,
 			 * else, by forcing it), at least the host
 			 * address family is known.
 			 */
-			return diag("host protocol %s conflicts with client protocol %s",
-				    host_afi->ip_name, client_afi->ip_name);
+			llog(RC_FATAL, c->logger,
+			     ADD_FAILED_PREFIX"host protocol %s conflicts with client protocol %s",
+			     host_afi->ip_name, client_afi->ip_name);
+			return false;
 		} else if (src->protoport.is_set) {
 			/*
 			 * There's no client subnet _yet_ there is a client
@@ -2353,8 +2360,13 @@ static bool extract_connection(const struct whack_message *wm,
 			 * a stand in.  Calling update_ends*() will
 			 * then try to fix it.
 			 */
+			dbg("%s %s child spd src->protoport.is_set",
+			    c->name, src->leftright);
 			spd_end->client = selector_from_subnet_protoport(host_afi->subnet.all,
 									 src->protoport);
+		} else {
+			dbg("%s %s child spd unset",
+			    c->name, src->leftright);
 		}
 	}
 
