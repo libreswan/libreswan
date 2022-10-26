@@ -2,6 +2,8 @@
 
 set -xe ; exec < /dev/null
 
+PREFIX=@@PREFIX@@
+
 # create a package cache directory
 
 export PKG_CACHE=/pool/pkg.openbsd.$(uname -r)

@@ -2,6 +2,8 @@
 
 set -xe ; exec < /dev/null
 
+PREFIX=@@PREFIX@@
+
 # Download /usr/local/etc/pkg.conf so it can be edited;
 # IGNORE_OSVERSION=yes is to stop PKG complaining that there is a
 # newer version of pkg (see github/846).

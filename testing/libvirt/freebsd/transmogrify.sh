@@ -3,19 +3,14 @@
 set -xe ; exec < /dev/null
 
 GATEWAY=@@GATEWAY@@
+PREFIX=@@PREFIX@@
+BENCHDIR=@@BENCHDIR@@
 POOLDIR=@@POOLDIR@@
 SOURCEDIR=@@SOURCEDIR@@
 TESTINGDIR=@@TESTINGDIR@@
-PREFIX=@@PREFIX@@
-
-echo GATEWAY=${GATEWAY}
-echo POOLDIR=${POOLDIR}
-echo SOURCEDIR=${SOURCEDIR}
-echo TESTINGDIR=${TESTINGDIR}
-
 
 # update /etc/fstab with current /source and /testing
-mkdir -p /pool /source /testing
+mkdir -p /source /testing
 sed -e '/source/d' -e '/testing/d' /etc/fstab > /tmp/fstab
 cat <<EOF | tee -a /tmp/fstab
 ${GATEWAY}:${SOURCEDIR}   /source         nfs     rw
@@ -28,11 +23,11 @@ mv /tmp/fstab /etc/fstab
 # Test scripts assume an SH like shell; but FreeBSD defaults to CSH.
 
 chsh -s /usr/local/bin/bash root
-cp -v /pool/${PREFIX}freebsd.bash_profile /root/.bash_profile
+cp -v /bench/testing/libvirt/bash_profile /root/.bash_profile
 
 # supress motd
 touch /root/.hushlogin
 
-cp -v /pool/${PREFIX}freebsd.rc.conf /etc/rc.conf
+cp -v /bench/testing/libvirt/freebsd/rc.conf /etc/rc.conf
 
 exit 0

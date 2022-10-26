@@ -48,6 +48,7 @@ include testing/libvirt/openbsd/kvm.mk
 # can be a separate directories
 KVM_SOURCEDIR ?= $(abs_top_srcdir)
 KVM_TESTINGDIR ?= $(abs_top_srcdir)/testing
+KVM_BENCHDIR ?= $(abs_top_srcdir)
 
 # An educated guess ...
 KVM_POOLDIR ?= $(abspath $(abs_top_srcdir)/../pool)
@@ -66,9 +67,10 @@ KVM_GID ?= $(shell stat --format=%g $(KVM_HOST_QEMUDIR))
 KVM_TRANSMOGRIFY = \
 	sed \
 	-e 's;@@GATEWAY@@;$(KVM_GATEWAY_ADDRESS);' \
+	-e 's;@@BENCHDIR@@;$(KVM_BENCHDIR);' \
+	-e 's;@@LOCALDIR@@;$(KVM_LOCALDIR);' \
 	-e 's;@@POOLDIR@@;$(KVM_POOLDIR);' \
 	-e 's;@@SOURCEDIR@@;$(KVM_SOURCEDIR);' \
-	-e 's;@@LOCALDIR@@;$(KVM_LOCALDIR);' \
 	-e 's;@@TESTINGDIR@@;$(KVM_TESTINGDIR);' \
 	-e 's;@@USER@@;$(KVM_UID);' \
 	-e 's;@@GROUP@@;$(KVM_GID);' \
@@ -151,6 +153,7 @@ VIRT_DISK_SIZE_GB ?= 10
 VIRT_RND ?= --rng=type=random,device=/dev/random
 VIRT_SECURITY ?= --security=type=static,model=dac,label='$(KVM_UID):$(KVM_GID)',relabel=yes
 VIRT_GATEWAY ?= --network=network:$(KVM_GATEWAY),model=virtio
+VIRT_BENCHDIR ?= --filesystem=target=bench,type=mount,accessmode=squash,source=$(KVM_BENCHDIR)
 VIRT_POOLDIR ?= --filesystem=target=pool,type=mount,accessmode=squash,source=$(KVM_POOLDIR)
 VIRT_SOURCEDIR ?= --filesystem=target=source,type=mount,accessmode=squash,source=$(KVM_SOURCEDIR)
 VIRT_TESTINGDIR ?= --filesystem=target=testing,type=mount,accessmode=squash,source=$(KVM_TESTINGDIR)
@@ -168,8 +171,7 @@ VIRT_INSTALL_FLAGS = \
 	$(VIRT_CPU) \
 	$(VIRT_GATEWAY) \
 	$(VIRT_RND) \
-	$(VIRT_SECURITY) \
-	$(VIRT_POOLDIR)
+	$(VIRT_SECURITY)
 
 #
 # Platforms / OSs
@@ -380,7 +382,7 @@ KVM_HOST_NFS_OK = $(KVM_POOLDIR_PREFIX)nfs.ok
 $(KVM_HOST_NFS_OK): testing/libvirt/nfs.sh
 $(KVM_HOST_NFS_OK): $(KVM_FRESH_BOOT_FILE)
 $(KVM_HOST_NFS_OK): | $(KVM_POOLDIR)
-	sh testing/libvirt/nfs.sh $(KVM_POOLDIR) $(KVM_SOURCEDIR) $(KVM_TESTINGDIR)
+	sh testing/libvirt/nfs.sh $(KVM_BENCHDIR) $(KVM_POOLDIR) $(KVM_SOURCEDIR) $(KVM_TESTINGDIR)
 	touch $@
 
 KVM_HOST_OK += $(KVM_HOST_NFS_OK)
@@ -746,6 +748,7 @@ $(KVM_POOLDIR_PREFIX)%-base: | \
 	$(KVM_PYTHON) testing/libvirt/$*/base.py \
 		$(VIRT_INSTALL) \
 			$(VIRT_INSTALL_FLAGS) \
+			$(VIRT_POOLDIR) \
 			--name=$(notdir $@) \
 			$(if $(KVM_$($*)_OS_VARIANT), --os-variant=$(KVM_$($*)_OS_VARIANT)) \
 			--disk=path=$@.qcow2,size=$(VIRT_DISK_SIZE_GB),bus=virtio,format=qcow2 \
@@ -973,20 +976,21 @@ $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-base \
 	$(QEMU_IMG) create -f qcow2 -F qcow2 -b $<.qcow2 $@.qcow2
 	$(VIRT_INSTALL) \
 		$(VIRT_INSTALL_FLAGS) \
+		$(VIRT_POOLDIR) \
+		$(VIRT_BENCHDIR) \
 		--name=$(notdir $@) \
 		--os-variant=$(KVM_$($*)_OS_VARIANT) \
 		--disk=cache=writeback,path=$@.qcow2 \
 		--import \
 		--noautoconsole
-
-	: Copy/transmogrify upgrade.sh in this directory - $(srcdir) - to
-	: $(KVMPOOLDIR) where it can be run from within the VM.
-	: Do not use upgrade.sh from $(KVM_SOURCEDIR) which can be different
-	: and is only used for building pluto.
+	: Copy/transmogrify upgrade.sh in this directory, KVM_BENCHDIR,
+	: to KVM_POOLDIR where it can be run from within the VM.
+	: Do not use transmogrify.sh from KVM_TESTINGDIR where tests live,
+	: or KVM_SOURCEDIR where pluto sources live.
 	$(KVM_TRANSMOGRIFY) testing/libvirt/$*/upgrade.sh > $@.upgrade.sh
 	$(KVMSH) $(notdir $@) -- \
 		/bin/sh -x /pool/$(notdir $@).upgrade.sh $(KVM_$($*)_UPGRADE_FLAGS)
-	: only shutdown when upgrade works
+	: only shutdown after upgrade succeeds
 	$(KVMSH) --shutdown $(notdir $@)
 	touch $@
 
@@ -1014,8 +1018,11 @@ $(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
 		$(KVM_HOST_OK)
 	$(MAKE) kvm-undefine-$(notdir $@)
 	$(QEMU_IMG) create -f qcow2 -F qcow2 -b $<.qcow2 $@.qcow2
+	: fedora runs chcon TESTINGDIR
 	$(VIRT_INSTALL) \
 		$(VIRT_INSTALL_FLAGS) \
+		$(VIRT_BENCHDIR) \
+		$(VIRT_POOLDIR) \
 		$(VIRT_SOURCEDIR) \
 		$(VIRT_TESTINGDIR) \
 		--name=$(notdir $@) \
@@ -1023,14 +1030,11 @@ $(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
 		--disk=cache=writeback,path=$@.qcow2 \
 		--import \
 		--noautoconsole
-	: Copy/transmogrify transmogrify.sh in this directory - $(srcdir) - to
-	: $(KVMPOOLDIR) where it can be run from within the VM.
-	: Do not use upgrade.sh from $(KVM_SOURCEDIR) which can be different
-	: and is only used for building pluto.
+	: Copy/transmogrify transmogrify.sh in this directory, KVM_BENCHDIR,
+	: to KVM_POOLDIR where it can be run from within the VM.
+	: Do not use transmogrify.sh from KVM_TESTINGDIR where tests live,
+	: or KVM_SOURCEDIR where pluto sources live.
 	$(KVM_TRANSMOGRIFY) testing/libvirt/$*/transmogrify.sh > $@.transmogrify.sh
-	for f in testing/libvirt/bash_profile $(KVM_$($*)_TRANSMOGRIFY_FILES); do \
-		cp -v $$f $@.$$(basename $$f) ; \
-	done
 	$(KVMSH) $(notdir $@) -- \
 		/bin/sh -x /pool/$(notdir $@).transmogrify.sh $(KVM_$($*)_TRANSMOGRIFY_FLAGS)
 	: only shutdown after transmogrify succeeds

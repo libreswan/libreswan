@@ -19,9 +19,10 @@ rm /mnt/etc/rc.firsttime
 
 echo '====> Mounting /pool <===='
 
-mkdir -p /mnt/pool
+mkdir -p /mnt/pool /mnt/bench
 cat <<EOF | tee -a /mnt/etc/fstab
-@@GATEWAY@@:@@POOLDIR@@ /pool nfs rw,tcp 0 0
+@@GATEWAY@@:@@POOLDIR@@  /pool  nfs rw,tcp 0 0
+@@GATEWAY@@:@@BENCHDIR@@ /bench nfs rw,tcp 0 0
 EOF
 
 # Tweak the (korn) shell prompt et.al.

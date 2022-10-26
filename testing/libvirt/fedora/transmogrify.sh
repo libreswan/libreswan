@@ -3,16 +3,11 @@
 set -xe ; exec < /dev/null
 
 GATEWAY=@@GATEWAY@@
+PREFIX=@@PREFIX@@
+BENCHDIR=@@BENCHDIR@@
 POOLDIR=@@POOLDIR@@
 SOURCEDIR=@@SOURCEDIR@@
 TESTINGDIR=@@TESTINGDIR@@
-PREFIX=@@PREFIX@@
-
-echo GATEWAY=${GATEWAY}
-echo POOLDIR=${POOLDIR}
-echo SOURCEDIR=${SOURCEDIR}
-echo TESTINGDIR=${TESTINGDIR}
-
 
 title()
 {
@@ -36,8 +31,6 @@ for mount in source testing ; do
 ${mount} /${mount} 9p defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0,x-systemd.automount 0 0
 EOF
     mkdir /${mount}
-    # XXX: broken; should copy from /pool or during install
-    mount /${mount}
 done
 
 
@@ -68,7 +61,7 @@ systemctl enable systemd-networkd-wait-online.service
 systemctl disable systemd-resolved
 systemctl disable NetworkManager
 
-cp -v /pool/${PREFIX}fedora.*.network /etc/systemd/network/
+cp -v /bench/testing/libvirt/fedora/network/* /etc/systemd/network/
 restorecon -R /etc/systemd/network
 
 
@@ -185,7 +178,7 @@ title bind
 # should be copied over during the install or swan-pref step?
 
 mkdir -p /etc/bind
-cp -av /testing/baseconfigs/all/etc/bind/* /etc/bind/
+cp -av /bench/testing/baseconfigs/all/etc/bind/* /etc/bind/
 restorecon -R /etc/bind
 
 
@@ -195,9 +188,8 @@ mkdir -p /etc/ssh
 chown -v 755 /etc/ssh
 mkdir -p /root/.ssh
 chown -v 700 /root/.ssh
-# XXX: copy from /pool or copy during install? or drop?
-cp -av /testing/baseconfigs/all/etc/ssh/*key* /etc/ssh/
-cp -av /testing/baseconfigs/all/root/.ssh/* /root/.ssh/
+cp -av /bench/testing/baseconfigs/all/etc/ssh/*key* /etc/ssh/
+cp -av /bench/testing/baseconfigs/all/root/.ssh/* /root/.ssh/
 chmod -v 600 /etc/ssh/*key* /root/.ssh/*
 # enable password root logins (f32 disables these per default)
 echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
@@ -208,14 +200,14 @@ restorecon -R /root/.ssh /etc/ssh
 
 title replace root/.bash_profile
 
-cp -v /pool/${PREFIX}fedora.bash_profile /root/.bash_profile
+cp -v /bench/testing/libvirt/bash_profile /root/.bash_profile
 
 
 title files mysteriously needed for systemd-networkd too
 
 # XXX: are these config files are tied to the test run and hence
 # should be copied over during the install or swan-pref step?
-for fname in /testing/baseconfigs/all/etc/sysconfig/* ; do
+for fname in /bench/testing/baseconfigs/all/etc/sysconfig/* ; do
     cp -av "${fname}" /etc/sysconfig/
 done
 restorecon -R /etc/sysconfig/
@@ -225,7 +217,7 @@ title fixup /etc/sysctl.conf
 
 # XXX: are these config files are tied to the test run and hence
 # should be copied over during the install or swan-pref step?
-cp -av /testing/baseconfigs/all/etc/sysctl.conf /etc/
+cp -av /bench/testing/baseconfigs/all/etc/sysctl.conf /etc/
 sysctl -q -p || true # expected to fail
 restorecon -R /etc/sysctl.conf
 sysctl -q -p || true # still expected to fail!
@@ -256,4 +248,5 @@ run systemctl mask user-runtime-dir@0.service
 
 title finally ... SElinux fixup with errors in /tmp/chcon.log
 
+mount /testing
 chcon -R --reference /var/log /testing/pluto > /tmp/chcon.log 2>&1 || true

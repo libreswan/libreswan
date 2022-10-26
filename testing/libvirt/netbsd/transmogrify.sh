@@ -3,16 +3,11 @@
 set -xe ; exec < /dev/null
 
 GATEWAY=@@GATEWAY@@
+PREFIX=@@PREFIX@@
+BENCHDIR=@@BENCHDIR@@
 POOLDIR=@@POOLDIR@@
 SOURCEDIR=@@SOURCEDIR@@
 TESTINGDIR=@@TESTINGDIR@@
-PREFIX=@@PREFIX@@
-
-echo GATEWAY=${GATEWAY}
-echo POOLDIR=${POOLDIR}
-echo SOURCEDIR=${SOURCEDIR}
-echo TESTINGDIR=${TESTINGDIR}
-
 
 # update /etc/fstab with current /source and /testing
 
@@ -31,9 +26,9 @@ if test -r $k ; then
     cp -v $k /netbsd
 fi
 
-cp -v /pool/${PREFIX}netbsd.rc.local /etc/rc.local
-
 chsh -s /usr/pkg/bin/bash root
-cp -v /pool/${PREFIX}netbsd.bash_profile /root/.bash_profile
+cp -v /bench/testing/libvirt/bash_profile /root/.bash_profile
+
+cp -v /bench/testing/libvirt/netbsd/rc.local /etc/rc.locan
 
 exit 0

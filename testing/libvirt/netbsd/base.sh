@@ -57,7 +57,7 @@ cd /
 # sed -i -e "s/root:[^:]*:/root:$(cat /tmp/pwd):/"  /etc/master.passwd
 # sed -i -e "s/toor:[^:]*:/toor::/"  /etc/master.passwd
 
-mkdir /targetroot/kern /targetroot/proc /targetroot/pool
+mkdir /targetroot/kern /targetroot/proc /targetroot/pool /targetroot/bench
 
 cat <<EOF | tee /targetroot/etc/fstab
 ROOT.a          /               ffs     rw,noatime      1 1
@@ -67,6 +67,7 @@ procfs          /proc           procfs  rw
 tmpfs           /var/shm        tmpfs   rw,-m1777,-sram%25
 tmpfs           /tmp            tmpfs   rw
 @@GATEWAY@@:@@POOLDIR@@ /pool   nfs     rw
+@@GATEWAY@@:@@BENCHDIR@@ /bench nfs     rw
 EOF
 
 # booting

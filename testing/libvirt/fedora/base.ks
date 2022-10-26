@@ -91,7 +91,7 @@ cat << EOD > /etc/modules-load.d/9pnet_virtio.conf
 EOD
 
 
-# Mount /pool
+# Mount /pool and /bench
 #
 # Full KVM snapshots (saves) don't work with NFS/9p mounts.  Hence use
 # automount so that things are only mounted after the VM has booted
@@ -108,11 +108,12 @@ EOD
 # are setup during transmogrify).  Not setting them now makes it
 # harder to accidently use a file from a wrong directory.
 
-mkdir /pool
-
+mkdir /pool /bench
 cat <<EOF >>/etc/fstab
-pool /pool 9p defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0,x-systemd.automount 0 0
+pool  /pool  9p defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0,x-systemd.automount 0 0
+bench /bench 9p defaults,trans=virtio,version=9p2000.L,context=system_u:object_r:usr_t:s0,x-systemd.automount 0 0
 EOF
+
 
 systemctl enable iptables.service
 systemctl enable ip6tables.service

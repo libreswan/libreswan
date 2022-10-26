@@ -34,7 +34,7 @@ def i():
     sys.exit(0)
 
 def rs(r, s):
-    child.expect(r)
+    child.expect(r, timeout=None)
     for c in s:
         child.send(c)
 
