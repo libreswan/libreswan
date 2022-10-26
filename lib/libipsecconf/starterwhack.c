@@ -347,12 +347,7 @@ static bool set_whack_end(struct whack_end *w,
 	if (cidr_is_specified(l->ifaceip))
 		w->ifaceip = l->ifaceip;
 
-	if (l->has_client) {
-		w->client = l->subnet;
-	} else {
-		w->client = unset_subnet;
-	}
-
+	w->client = l->subnet;
 	w->host_ikeport = l->options[KNCF_IKEPORT];
 	w->protoport = l->protoport;
 
@@ -873,10 +868,7 @@ static int starter_permutate_conns(int
 		 * that has_client is set.
 		 */
 		sc.left.subnet = left.subnet;
-		sc.left.has_client = true;
-
 		sc.right.subnet = right.subnet;
-		sc.right.has_client = true;
 
 		char tmpconnname[256];
 		snprintf(tmpconnname, sizeof(tmpconnname), "%s/%ux%u",

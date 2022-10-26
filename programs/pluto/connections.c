@@ -2322,8 +2322,8 @@ static bool extract_connection(const struct whack_message *wm,
 		if (src->client.is_set) {
 			/*
 			 * end.has_client seems to mean that the
-			 * .client selector is pinned (when false
-			 * .client can be refined).
+			 * .child selector is pinned (when false
+			 * .child can be refined).
 			 *
 			 * Of course if NARROWING is allowed, this can
 			 * be refined regardless of .has_client.
@@ -2333,6 +2333,24 @@ static bool extract_connection(const struct whack_message *wm,
 			spd_end->has_client = true;
 			spd_end->client = selector_from_subnet_protoport(src->client,
 									 src->protoport);
+		} else if (src->sourceip.is_set) {
+			/*
+			 * No subnet=, construct one using .sourceip
+			 * (if there was a subnet it would need to be
+			 * within it).
+			 *
+			 * end.has_client seems to mean that the
+			 * .child selector is pinned (when false
+			 * .child can be refined).
+			 *
+			 * Of course if NARROWING is allowed, this can
+			 * be refined regardless of .has_client.
+			 */
+			dbg("%s %s child spd src->sourceip.is_set",
+			    c->name, src->leftright);
+			spd_end->has_client = true;
+			ip_subnet subnet = subnet_from_address(src->sourceip);
+			spd_end->client = selector_from_subnet_protoport(subnet, src->protoport);
 		} else if (host_afi != client_afi) {
 			/*
 			 * If {left,right}subnet isn't specified in the

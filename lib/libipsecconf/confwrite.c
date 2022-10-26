@@ -320,12 +320,10 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 		break;
 	}
 
-	if (end->has_client) {
-		if (!subnet_eq_address(end->subnet, end->addr)) {
-			subnet_buf as;
-			fprintf(out, "\t%ssubnet=%s\n", side,
-				str_subnet(&end->subnet, &as));
-		}
+	if (end->subnet.is_set) {
+		subnet_buf as;
+		fprintf(out, "\t%ssubnet=%s\n", side,
+			str_subnet(&end->subnet, &as));
 	}
 
 	if (cidr_is_specified(end->vti_ip)) {

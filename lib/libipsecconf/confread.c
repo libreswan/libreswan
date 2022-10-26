@@ -531,8 +531,7 @@ static bool validate_end(struct starter_conn *conn_st,
 			er = NULL;
 			end->virt = clone_str(value, "validate_end item");
 		} else {
-			end->has_client = true;
-			er = ttosubnet(shunk1(value), AF_UNSPEC, '0',
+			er = ttosubnet(shunk1(value), NULL, '0',
 				       &end->subnet, logger);
 		}
 		if (er != NULL)
@@ -669,10 +668,6 @@ static bool validate_end(struct starter_conn *conn_st,
 		}
 #endif
 		end->sourceip = sourceip;
-		if (!end->has_client) {
-			end->subnet = subnet_from_address(end->sourceip);
-			end->has_client = true;
-		}
 		if (end->strings_set[KSCF_INTERFACE_IP]) {
 			ERR_FOUND("cannot specify  %sinterface-ip=%s and  %sssourceip=%s",
 					leftright,
