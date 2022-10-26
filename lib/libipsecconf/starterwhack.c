@@ -664,10 +664,10 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 
 #endif
 
-	if (conn->strings_set[KSCF_SA_SEC_LABEL]) {
+	if (conn->strings_set[KSCF_SEC_LABEL]) {
 		msg.sec_label = conn->sec_label;
 		starter_log(LOG_LEVEL_DEBUG, "conn: \"%s\" sec_label=%s",
-			conn->name, msg.sec_label);
+			    conn->name, msg.sec_label);
 	}
 
 	msg.modecfg_dns = conn->modecfg_dns;

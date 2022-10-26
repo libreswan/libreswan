@@ -298,11 +298,6 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 	if (end->strings_set[KSCF_ID] && end->id)
 		fprintf(out, "\t%sid=\"%s\"\n",     side, end->id);
 
-	/*
-	 * We don't write out end->strings_set[KSCF_SEC_LABEL] as it is printed
-	 * from the symmetric conn option "policylabel"
-	 */
-
 	switch (end->nexttype) {
 	case KH_NOTSET:
 		/* nothing! */

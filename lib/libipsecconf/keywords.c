@@ -505,8 +505,8 @@ const struct keyword_def ipsec_conf_keywords[] = {
   {"ikepad",  kv_conn,  kt_bool,  KNCF_IKEPAD, NULL, NULL, },
   { "nat-ikev1-method",  kv_conn | kv_processed,  kt_enum,  KNCF_IKEV1_NATT,  kw_ikev1natt_list, NULL, },
 
-  { "policy-label",  kv_conn,  kt_string,  KSCF_SA_SEC_LABEL, NULL, NULL, }, /* obsolete variant */
-  { "sec-label",  kv_conn,  kt_string,  KSCF_SA_SEC_LABEL, NULL, NULL, }, /* really stored into struct end */
+  { "policy-label",  kv_conn,  kt_string,  KSCF_SEC_LABEL, NULL, NULL, }, /* obsolete variant */
+  { "sec-label",  kv_conn,  kt_string,  KSCF_SEC_LABEL, NULL, NULL, },
 
   /* Cisco interop: remote peer type */
   { "remote-peer-type",  kv_conn,  kt_enum,  KNCF_REMOTEPEERTYPE,  kw_remote_peer_type_list, NULL, },

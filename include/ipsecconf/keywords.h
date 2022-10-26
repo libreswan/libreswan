@@ -135,7 +135,6 @@ enum keyword_string_conn_field {
 
 	KSCF_UPDOWN,	/* left/right */
 	KSCF_ID,	/* left/right */
-	KSCF_SEC_LABEL,	/* left/right */
 	KSCF_CERT,	/* left/right */
 	KSCF_CKAID,	/* left/right */
 	KSCF_CA,	/* left/right */
@@ -147,7 +146,8 @@ enum keyword_string_conn_field {
 	KSCF_ADDRESSPOOL,	/* left/right */
 	KSCF_SUBNET,	/* left/right */
 	KSCF_SUBNETS,	/* left/right */
-		KSCF_last_leftright = KSCF_SUBNETS,
+
+	KSCF_last_leftright = KSCF_SUBNETS,
 
 	KSCF_AUTHBY,
 	KSCF_MODECFGDNS,
@@ -160,7 +160,7 @@ enum keyword_string_conn_field {
 	KSCF_REDIRECT_TO,
 	KSCF_ACCEPT_REDIRECT_TO,
 	KSCF_CONNALIAS,
-	KSCF_SA_SEC_LABEL,
+	KSCF_SEC_LABEL,
 	KSCF_CONN_MARK_BOTH,
 	KSCF_CONN_MARK_IN,
 	KSCF_CONN_MARK_OUT,

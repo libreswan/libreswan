@@ -401,9 +401,8 @@ static bool load_setup(struct starter_config *cfg,
  * Validate that yes in fact we are one side of the tunnel
  *
  * The function checks that IP addresses are valid, nexthops are
- * present (if needed) as well as policies, and sets the leftID
- * from the left= if it isn't set. It sets the conn's sec_label
- * into its left/right struct end options
+ * present (if needed) as well as policies, and sets the leftID from
+ * the left= if it isn't set.
  *
  * @param conn_st a connection definition
  * @param end a connection end
@@ -1306,7 +1305,7 @@ static bool load_conn(struct starter_conn *conn,
 	str_to_conn(modecfg_domains, KSCF_MODECFGDOMAINS);
 	str_to_conn(modecfg_banner, KSCF_MODECFGBANNER);
 
-	str_to_conn(sec_label, KSCF_SA_SEC_LABEL); /* copied to left/right later */
+	str_to_conn(sec_label, KSCF_SEC_LABEL);
 
 	str_to_conn(conn_mark_both, KSCF_CONN_MARK_BOTH);
 	str_to_conn(conn_mark_in, KSCF_CONN_MARK_IN);
