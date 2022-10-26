@@ -1305,36 +1305,56 @@ static diag_t extract_end(struct connection *c,
 
 	if (src->addresspool != NULL) {
 
-
 		/* both ends can't add an address pool */
 		passert(c->pool[IPv4_INDEX] == NULL &&
 			c->pool[IPv6_INDEX] == NULL);
 
-		ip_range pool_range;
-		err_t e = ttorange_num(shunk1(src->addresspool), NULL, &pool_range);
+		ip_range *pool_ranges = NULL; /* must pfree() */
+		err_t e = ttorange_num_list(shunk1(src->addresspool), ", ", NULL, &pool_ranges);
 		if (e != NULL) {
 			return diag("invalid %saddresspool=%s, %s", leftright, src->addresspool, e);
 		}
 
-		if (range_info(pool_range) == &ipv6_info && !pool_range.is_subnet) {
-			return diag("invalid %saddresspool=%s, IPv6 range is not a subnet",
-				    leftright, src->addresspool);
+		for (const ip_range *pool_range = pool_ranges; pool_range->is_set; pool_range++) {
+			const struct ip_info *pool_afi = range_type(pool_range);
+
+			if (c->pool[pool_afi->ip_index] != NULL) {
+				diag_t d= diag("invalid %saddresspool=%s, multiple %s ranges",
+					       leftright, src->addresspool, pool_afi->ip_name);
+				pfreeany(pool_ranges);
+				return d;
+			}
+
+			if (pool_afi == &ipv6_info && !pool_range->is_subnet) {
+				range_buf rb;
+				diag_t d = diag("invalid %saddresspool=%s, IPv6 range %s is not a subnet",
+						leftright, src->addresspool,
+						str_range(pool_range, &rb));
+				pfreeany(pool_ranges);
+				return d;
+			}
+
+			/* Check for overlap with existing pools */
+			diag_t d;
+			struct addresspool *pool; /* ignore */
+			d = find_addresspool(*pool_range, &pool);
+			if (d != NULL) {
+				d = diag_diag(&d, "invalid %saddresspool=%s, ",
+					      leftright, src->addresspool);
+				pfreeany(pool_ranges);
+				return d;
+			}
+
+			d = install_addresspool(*pool_range, c);
+			if (d != NULL) {
+				d = diag_diag(&d, "invalid %saddresspool=%s, ",
+					      leftright, src->addresspool);
+				pfreeany(pool_ranges);
+				return d;
+			}
 		}
 
-		/* Check for overlap with existing pools */
-		diag_t d;
-		struct addresspool *pool; /* ignore */
-		d = find_addresspool(pool_range, &pool);
-		if (d != NULL) {
-			return diag_diag(&d, "invalid %saddresspool=%s, ",
-					 leftright, src->addresspool);
-		}
-
-		d = install_addresspool(pool_range, c);
-		if (d != NULL) {
-			return diag_diag(&d, "invalid %saddresspool=%s, ",
-					 leftright, src->addresspool);
-		}
+		pfreeany(pool_ranges);
 
 		/*
 		 * Addresspool implies the end is a client (and other
