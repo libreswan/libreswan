@@ -90,7 +90,7 @@ err_t ttoaddress_num(shunk_t src, const struct ip_info *type, ip_address *dst);
 err_t ttoaddress_dns(shunk_t src, const struct ip_info *type, ip_address *dst);
 
 /* assumes list addresses in dotted / colon notation */
-err_t ttoaddress_list_num(shunk_t input, const char *delim,
+err_t ttoaddress_num_list(shunk_t input, const char *delim,
 			  const struct ip_info *type, ip_address **output);
 
 /*

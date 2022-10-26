@@ -66,8 +66,9 @@ OBJS += pubkey_rsa.o
 OBJS += pubkey_ecdsa.o
 
 OBJS += sparse_names.o
-OBJS += ttoaddress.o
-OBJS += ttoaddress_list_num.o
+OBJS += ttoaddress_dns.o
+OBJS += ttoaddress_num.o
+OBJS += ttoaddress_num_list.o
 OBJS += ttoprotocol.o
 OBJS += ttobinary-iec-60027-2.o
 OBJS += binaryscale-iec-60027-2.o

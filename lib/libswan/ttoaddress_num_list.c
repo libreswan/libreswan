@@ -20,7 +20,7 @@
 #include "lswlog.h"		/* for dbg() */
 #include "ip_address.h"
 
-err_t ttoaddress_list_num(shunk_t input, const char *delims,
+err_t ttoaddress_num_list(shunk_t input, const char *delims,
 			  const struct ip_info *type,
 			  ip_address **output)
 {

@@ -2129,7 +2129,7 @@ static bool extract_connection(const struct whack_message *wm,
 		config->xauthby = wm->xauthby;
 		config->xauthfail = wm->xauthfail;
 
-		err_t e = ttoaddress_list_num(shunk1(wm->modecfg_dns), ", ",
+		err_t e = ttoaddress_num_list(shunk1(wm->modecfg_dns), ", ",
 					      /* IKEv1 doesn't do IPv6 */
 					      (wm->ike_version == IKEv1 ? &ipv4_info : NULL),
 					      &config->modecfg.dns);
