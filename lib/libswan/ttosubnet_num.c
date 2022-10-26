@@ -30,11 +30,11 @@
  * ttosubnet - convert text "addr/mask" to address and mask
  * Mask can be integer bit count.
  */
-err_t ttosubnet(shunk_t src,
-		const struct ip_info *afi, /* could be NULL */
-		int clash,  /* '0' zero host-part bits, 'x' die on them, '6' die on IPv6 and warn on IPv4 */
-		ip_subnet *dst,
-		struct logger *logger)
+err_t ttosubnet_num(shunk_t src,
+		    const struct ip_info *afi, /* could be NULL */
+		    enum host_part clash,
+		    ip_subnet *dst,
+		    struct logger *logger)
 {
 	err_t oops;
 
@@ -97,16 +97,17 @@ err_t ttosubnet(shunk_t src,
 		}
 	}
 
+	passert(afi != NULL); /* determined above */
 	bool die = false;
 	bool warn = 0;
 	switch (clash) {
-	case '0':
+	case HOST_PART_ZERO:
 		die = 0;
 		break;
-	case 'x':
+	case HOST_PART_DIE:
 		die = 1;
 		break;
-	case '6':
+	case HOST_PART_DIE6:
 		if (afi == &ipv6_info)
 			die = 1;
 		warn = 1;

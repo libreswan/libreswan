@@ -51,7 +51,6 @@ OBJS += constants.o \
 	sameaddr.o \
 	subnettypeof.o ttodata.o \
 	ttosaid.o \
-	ttosubnet.o \
 	ttoul.o \
 	secitem_chunk.o \
 	lswnss.o \
@@ -74,6 +73,7 @@ OBJS += ttorange_num.o
 OBJS += ttorange_num_list.o
 OBJS += ttoselector_num.o
 OBJS += ttoselector_num_list.o
+OBJS += ttosubnet_num.o
 
 OBJS += ttobinary-iec-60027-2.o
 OBJS += binaryscale-iec-60027-2.o

@@ -900,7 +900,8 @@ static void opt_to_cidr(struct family *family, ip_cidr *cidr)
 
 static void opt_to_subnet(struct family *family, ip_subnet *subnet, struct logger *logger)
 {
-	diagq(ttosubnet(shunk1(optarg), family->type, '6', subnet, logger), optarg);
+	diagq(ttosubnet_num(shunk1(optarg), family->type,
+			    HOST_PART_DIE6, subnet, logger), optarg);
 	if (family->type == NULL) {
 		family->type = subnet_type(subnet);
 		family->used_by = long_opts[long_index].name;

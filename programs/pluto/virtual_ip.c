@@ -91,8 +91,8 @@ static bool read_subnet(const char *src, size_t len,
 	if (dstexcl != NULL)
 		*isincl = incl = !eat(p, "!");
 
-	err_t ugh = ttosubnet(shunk2(p, len - (p - src)), afi, 'x',
-			      incl ? dst : dstexcl, logger);
+	err_t ugh = ttosubnet_num(shunk2(p, len - (p - src)), afi,
+				  HOST_PART_DIE, (incl ? dst : dstexcl), logger);
 	if (ugh != NULL) {
 		llog(RC_LOG_SERIOUS, logger,
 			    "virtual-private entry is not a proper subnet: %s", ugh);

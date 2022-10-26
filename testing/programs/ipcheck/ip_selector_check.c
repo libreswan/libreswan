@@ -150,8 +150,8 @@ static err_t do_selector_from_subnet_protoport(const struct selector *s,
 	}
 
 	ip_subnet subnet;
-	err_t err = ttosubnet(shunk1(s->addresses), IP_TYPE(s->family), '6',
-			      &subnet, logger);
+	err_t err = ttosubnet_num(shunk1(s->addresses), IP_TYPE(s->family),
+				  HOST_PART_DIE6, &subnet, logger);
 	if (err != NULL) {
 		return err;
 	}

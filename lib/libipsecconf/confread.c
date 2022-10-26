@@ -531,8 +531,8 @@ static bool validate_end(struct starter_conn *conn_st,
 			er = NULL;
 			end->virt = clone_str(value, "validate_end item");
 		} else {
-			er = ttosubnet(shunk1(value), NULL, '0',
-				       &end->subnet, logger);
+			er = ttosubnet_num(shunk1(value), NULL, HOST_PART_ZERO,
+					   &end->subnet, logger);
 		}
 		if (er != NULL)
 			ERR_FOUND("bad subnet %ssubnet=%s [%s]", leftright,

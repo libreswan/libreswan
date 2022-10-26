@@ -785,9 +785,9 @@ static bool next_subnet(struct subnets *sn)
 		subnets++;
 	}
 
-	sn->error = ttosubnet(shunk2(eln, subnets - eln),
-			      sn->end->host_family,
-			      '6', &sn->subnet, sn->logger);
+	sn->error = ttosubnet_num(shunk2(eln, subnets - eln),
+				  sn->end->host_family,
+				  HOST_PART_DIE6, &sn->subnet, sn->logger);
 	if (sn->error != NULL) {
 		starter_log(LOG_LEVEL_ERR,
 			    "conn: \"%s\" warning '%s' is not a subnet declaration. (%ssubnets): %s",

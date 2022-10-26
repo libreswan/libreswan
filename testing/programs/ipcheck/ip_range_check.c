@@ -247,7 +247,8 @@ static void check_range_from_subnet(struct logger *logger)
 		PRINT("%s '%s' -> '%s'..'%s'", pri_family(t->family), t->in, t->start, t->end);
 
 		ip_subnet tmp, *subnet = &tmp;
-		oops = ttosubnet(shunk1(t->in), IP_TYPE(t->family), '6', subnet, logger);
+		oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family),
+				     HOST_PART_DIE6, subnet, logger);
 		if (oops != NULL) {
 			FAIL("ttosubnet() failed: %s", oops);
 		}
