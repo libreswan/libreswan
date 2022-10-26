@@ -876,7 +876,7 @@ static bool add_xauth_addresspool(struct connection *c,
 	/* allows <address>, <address>-<address> and <address>/bits */
 
 	ip_range pool_range;
-	err_t err = ttorange(addresspool, &ipv4_info, &pool_range);
+	err_t err = ttorange_num(shunk1(addresspool), &ipv4_info, &pool_range);
 	if (err != NULL) {
 		llog(RC_LOG, logger,
 		     "XAUTH IP addresspool %s for the conn %s user %s is not valid: %s",

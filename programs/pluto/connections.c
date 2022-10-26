@@ -1311,7 +1311,7 @@ static diag_t extract_end(struct connection *c,
 			c->pool[IPv6_INDEX] == NULL);
 
 		ip_range pool_range;
-		err_t e = ttorange(src->addresspool, NULL, &pool_range);
+		err_t e = ttorange_num(shunk1(src->addresspool), NULL, &pool_range);
 		if (e != NULL) {
 			return diag("invalid %saddresspool=%s, %s", leftright, src->addresspool, e);
 		}

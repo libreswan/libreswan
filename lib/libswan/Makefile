@@ -70,6 +70,7 @@ OBJS += ttoaddress_dns.o
 OBJS += ttoaddress_num.o
 OBJS += ttoaddress_num_list.o
 OBJS += ttoprotocol.o
+OBJS += ttorange_num.o
 OBJS += ttobinary-iec-60027-2.o
 OBJS += binaryscale-iec-60027-2.o
 OBJS += alloc.o

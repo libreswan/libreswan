@@ -188,7 +188,7 @@ static void check_ttorange__to__str_range(void)
 		const char *oops = NULL;
 
 		ip_range tmp, *range = &tmp;
-		oops = ttorange(t->in, IP_TYPE(t->family), range);
+		oops = ttorange_num(shunk1(t->in), IP_TYPE(t->family), range);
 		if (oops != NULL && t->str == NULL) {
 			/* Error was expected, do nothing */
 			continue;
@@ -388,7 +388,7 @@ static void check_range_op_range(void)
 #define TT(R)								\
 		ip_range R;						\
 		if (t->R != NULL) {					\
-			oops = ttorange(t->R, 0, &R);			\
+			oops = ttorange_num(shunk1(t->R), 0, &R);	\
 			if (oops != NULL) {				\
 				FAIL("ttorange(%s) failed: %s", t->R, oops); \
 			}						\
@@ -450,7 +450,7 @@ static void check_range_to_address(void)
 
 		/* convert it *to* internal format */
 		ip_range range;
-		err = ttorange(t->range, NULL/*auto-detect*/, &range);
+		err = ttorange_num(shunk1(t->range), NULL/*auto-detect*/, &range);
 		if (err != NULL) {
 			FAIL("ttorange(%s) failed: %s", t->range, err);
 		}
@@ -501,7 +501,7 @@ static void check_range_to_offset(void)
 		      t->offset, bool_str(t->ok));
 
 		ip_range range;
-		err = ttorange(t->range, NULL/*auto-detect*/, &range);
+		err = ttorange_num(shunk1(t->range), NULL/*auto-detect*/, &range);
 		if (err != NULL) {
 			FAIL("ttorange(%s) failed: %s", t->range, err);
 		}
