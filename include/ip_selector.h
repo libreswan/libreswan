@@ -108,6 +108,8 @@ ip_selector selector_from_subnet_protoport(const ip_subnet subnet,
 					   const ip_protoport protoport);
 
 err_t ttoselector_num(shunk_t src, const struct ip_info *afi, ip_selector *dst);
+err_t ttoselector_num_list(shunk_t input, const char *delim,
+			   const struct ip_info *type, ip_selector **output) MUST_USE_RESULT;
 
 /*
  * Magic values.
