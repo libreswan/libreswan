@@ -204,7 +204,7 @@ static err_t do_numeric_to_selector(const struct selector *s,
 		return NULL;
 	}
 
-	return numeric_to_selector(shunk1(s->addresses), IP_TYPE(s->family), selector);
+	return ttoselector_num(shunk1(s->addresses), IP_TYPE(s->family), selector);
 }
 
 static void check_numeric_to_selector(struct logger *logger)
@@ -416,13 +416,13 @@ static void check_selector_op_selector(void)
 		      bool_str(t->endpoint));
 
 		ip_selector inner_selector;
-		err = numeric_to_selector(shunk1(t->inner), NULL, &inner_selector);
+		err = ttoselector_num(shunk1(t->inner), NULL, &inner_selector);
 		if (err != NULL) {
 			FAIL("numeric_to_selector(%s) failed: %s", t->inner, err);
 		}
 
 		ip_selector outer_selector;
-		err = numeric_to_selector(shunk1(t->outer), NULL, &outer_selector);
+		err = ttoselector_num(shunk1(t->outer), NULL, &outer_selector);
 		if (err != NULL) {
 			FAIL("numeric_to_selector(%s) failed: %s", t->outer, err);
 		}
