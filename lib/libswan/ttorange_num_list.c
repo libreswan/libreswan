@@ -1,4 +1,4 @@
-/* cloning an address list, for libreswan
+/* cloning an range list, for libreswan
  *
  * Copyright (C) 2022 Andrew Cagney
  *
@@ -46,8 +46,8 @@ err_t ttorange_num_list(shunk_t input, const char *delims,
 			continue;
 		}
 		/* validate during first pass */
-		ip_address tmp;
-		err_t e = ttoaddress_num(token, type, &tmp);
+		ip_range tmp;
+		err_t e = ttorange_num(token, type, &tmp);
 		if (e != NULL) {
 			return e;
 		}
