@@ -1754,7 +1754,7 @@ static bool is_virtual_net_used(struct connection *c,
 		case CK_INSTANCE:
 
 			if (d->kind == CK_TEMPLATE &&
-			    !d->remote->child.config->subnet.is_set) {
+			    !d->remote->child.config->v1_config_subnet_specified) {
 				/*
 				 * For instance when the template''s
 				 * peer's protoport=udp/%any but

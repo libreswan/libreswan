@@ -127,7 +127,6 @@ struct host_end_config {
 
 struct child_end_config {
 	const char *leftright;
-	ip_subnet subnet;
 	ip_protoport protoport;
 	char *updown;
 
@@ -140,6 +139,9 @@ struct child_end_config {
 	 */
 	ip_cidr host_vtiip;
 	ip_cidr ifaceip;
+
+	/* Did ...subnet=... appear in the config file? */
+	bool v1_config_subnet_specified;
 };
 
 struct end_config {

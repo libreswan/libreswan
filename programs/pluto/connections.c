@@ -1239,7 +1239,7 @@ static diag_t extract_end(struct connection *c,
 	}
 
 	/* save some defaults */
-	end_config->child.subnet = src->client;
+	end_config->child.v1_config_subnet_specified = src->client.is_set;
 	end_config->child.protoport = src->protoport;
 
 	if (src->protoport.ipproto == 0 && src->protoport.hport != 0) {
