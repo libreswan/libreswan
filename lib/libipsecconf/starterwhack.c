@@ -729,7 +729,6 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
  */
 
 struct subnets {
-	const char *leftright;
 	const struct starter_end *end;
 	const struct starter_conn *conn;
 	struct logger *logger;
@@ -743,18 +742,40 @@ struct subnets {
 
 static bool next_subnet(struct subnets *sn);
 
+
+/*
+ * The first combination is the current leftsubnet/rightsubnet value,
+ * and then each iteration of rightsubnets, and then each permutation
+ * of leftsubnets X rightsubnets.
+ *
+ * If both subnet= is set and subnets=, then it is as if an extra
+ * element of subnets= has been added, so subnets= for only one side
+ * will do the right thing, as will some combinations of also=
+ */
+
 static bool first_subnet(struct subnets *sn)
 {
-	sn->subnets = (sn->end->strings_set[KSCF_SUBNETS]) ? sn->end->strings[KSCF_SUBNETS] : "";
-	sn->count = 0;
-	sn->subnet = unset_subnet;
-	if (sn->end->strings_set[KSCF_SUBNET]) {
-		sn->subnet = sn->end->subnet;
-		/* .count == 0 */
-		return true;
+	const char *subnets;
+	int count;
+	if (sn->end->strings_set[KSCF_SUBNETS] &&
+	    sn->end->strings_set[KSCF_SUBNET]) {
+		subnets = alloc_printf("%s,%s",
+				       sn->end->strings[KSCF_SUBNET],
+				       sn->end->strings[KSCF_SUBNETS]);
+		count = -1; /* becomes 0 below */
+	} else if (sn->end->strings_set[KSCF_SUBNETS]) {
+		subnets = sn->end->strings[KSCF_SUBNETS];
+		count = 0; /* becomes 1 below */
+	} else if (sn->end->strings_set[KSCF_SUBNET]) {
+		subnets = sn->end->strings[KSCF_SUBNET];
+		count = -1; /* becomes 0 below */
+	} else {
+		return false;
 	}
-
-	/* advances .count to 1 */
+	sn->subnet = unset_subnet;
+	sn->subnets = subnets;
+	sn->count = count;
+	/* advances .count to 0(subnet) or 1(subnets) */
 	return next_subnet(sn);
 }
 
@@ -790,9 +811,10 @@ static bool next_subnet(struct subnets *sn)
 				  HOST_PART_DIE6, &sn->subnet, sn->logger);
 	if (sn->error != NULL) {
 		starter_log(LOG_LEVEL_ERR,
-			    "conn: \"%s\" warning '%s' is not a subnet declaration. (%ssubnets): %s",
+			    "conn: \"%s\" warning '%s' is not a subnet declaration. (%s%s): %s",
 			    sn->conn->name,
-			    eln, sn->leftright,
+			    eln, sn->end->leftright,
+			    (sn->count == 0 ? "subnet" : "subnets"),
 			    sn->error);
 		return false;
 	}
@@ -839,7 +861,6 @@ static int starter_permutate_conns(int
 		.logger = logger,
 		.conn = conn,
 		.end = &conn->left,
-		.leftright = "left",
 	};
 	if (!first_subnet(&left)) {
 		/* no subnets at all!?! */
@@ -847,16 +868,16 @@ static int starter_permutate_conns(int
 	}
 	pexpect(left.count >= 0);
 
-	struct subnets right = {
+	struct subnets first_right = {
 		.logger = logger,
 		.conn = conn,
 		.end = &conn->right,
-		.leftright = "right",
 	};
-	if (!first_subnet(&right)) {
+	if (!first_subnet(&first_right)) {
 		/* no subnets at all!?! */
 		return 1;
 	}
+	struct subnets right = first_right;
 	pexpect(right.count >= 0);
 
 	for (;;) {
@@ -893,9 +914,7 @@ static int starter_permutate_conns(int
 				return 1;
 			}
 			/* reset right, and advance left! */
-			if (!first_subnet(&right)) {
-				return 1;
-			}
+			right = first_right;
 			/* left */
 			if (!next_subnet(&left)) {
 				if (left.error != NULL) {
