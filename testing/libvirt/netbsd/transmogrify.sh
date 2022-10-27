@@ -29,6 +29,6 @@ fi
 chsh -s /usr/pkg/bin/bash root
 cp -v /bench/testing/libvirt/bash_profile /root/.bash_profile
 
-cp -v /bench/testing/libvirt/netbsd/rc.local /etc/rc.locan
+cp -v /bench/testing/libvirt/netbsd/rc.local /etc/rc.local
 
 exit 0
