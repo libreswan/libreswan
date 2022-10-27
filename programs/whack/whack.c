@@ -898,16 +898,6 @@ static void opt_to_cidr(struct family *family, ip_cidr *cidr)
 	}
 }
 
-static void opt_to_subnet(struct family *family, ip_subnet *subnet, struct logger *logger)
-{
-	diagq(ttosubnet_num(shunk1(optarg), family->type,
-			    HOST_PART_DIE6, subnet, logger), optarg);
-	if (family->type == NULL) {
-		family->type = subnet_type(subnet);
-		family->used_by = long_opts[long_index].name;
-	}
-}
-
 static const struct ip_info *get_address_family(struct family *family)
 {
 	if (family->type == NULL) {
@@ -975,27 +965,6 @@ static void check_max_lifetime(deltatime_t life, time_t raw_limit,
 			 msg->sa_rekey_fuzz,
 			 (long)deltasecs(mint));
 		diagw(buf);
-	}
-}
-
-static void check_end(struct whack_end *this, struct whack_end *that,
-		      const struct ip_info *haf, const struct ip_info *caf)
-{
-	if (haf != NULL && haf != address_type(&this->host_addr))
-		diagw("address family of host inconsistent");
-
-	if (this->client.is_set) {
-		if (caf != subnet_type(&this->client))
-			diagw("address family of client subnet inconsistent");
-	} else {
-		/* fill in anyaddr-anyaddr aka ::/128 as (missing) client subnet */
-		this->client = unset_subnet;
-	}
-
-	/* check protocol */
-	if (this->protoport.ipproto != that->protoport.ipproto) {
-		diagq("the protocol for leftprotoport and rightprotoport must be the same",
-			NULL);
 	}
 }
 
@@ -1650,17 +1619,6 @@ int main(int argc, char **argv)
 
 			msg.policy |= new_policy;
 
-			if (new_policy & (POLICY_OPPORTUNISTIC | POLICY_GROUP)) {
-				if (!LHAS(end_seen, END_CLIENT - END_FIRST)) {
-					/*
-					 * set host to 0.0.0.0 and
-					 * --client to 0.0.0.0/0
-					 * or IPV6 equivalent
-					 */
-					end->client = get_address_family(&client_family)->subnet.all;
-				}
-				pexpect(end->client.is_set);
-			}
 			if (new_policy & POLICY_GROUP) {
 				/*
 				 * client subnet must not be specified by
@@ -1774,7 +1732,8 @@ int main(int argc, char **argv)
 			    startswith(optarg, "vnet:")) {
 				end->virt = optarg;
 			} else {
-				opt_to_subnet(&client_family, &end->client, logger);
+				diagq(ttosubnet_num(shunk1(optarg), NULL, HOST_PART_DIE6,
+						    &end->client, logger), optarg);
 				pexpect(end->client.is_set);
 			}
 			msg.policy |= POLICY_TUNNEL;	/* client => tunnel */
@@ -2573,13 +2532,6 @@ int main(int argc, char **argv)
 			if ((msg.policy & POLICY_ENCRYPT) == 0)
 				diagw("encryption required for opportunism");
 		}
-
-		check_end(&msg.left, &msg.right, host_family.type, client_family.type);
-		check_end(&msg.right, &msg.left, host_family.type, client_family.type);
-
-		if (subnet_type(&msg.left.client) !=
-		    subnet_type(&msg.right.client))
-			diagw("endpoints clash: one is IPv4 and the other is IPv6");
 
 		if (msg.authby.never) {
 			if (msg.prospective_shunt == SHUNT_TRAP ||
