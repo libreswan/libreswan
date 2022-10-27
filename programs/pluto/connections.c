@@ -1310,9 +1310,9 @@ static diag_t extract_end(struct connection *c,
 			c->pool[IPv6_INDEX] == NULL);
 
 		ip_range *pool_ranges = NULL; /* must pfree() */
-		err_t e = ttorange_num_list(shunk1(src->addresspool), ", ", NULL, &pool_ranges);
-		if (e != NULL) {
-			return diag("invalid %saddresspool=%s, %s", leftright, src->addresspool, e);
+		diag_t d = ttorange_num_list(shunk1(src->addresspool), ", ", NULL, &pool_ranges);
+		if (d != NULL) {
+			return diag_diag(&d, "invalid %saddresspool=%s, ", leftright, src->addresspool);
 		}
 
 		for (const ip_range *pool_range = pool_ranges; pool_range->is_set; pool_range++) {
@@ -2151,14 +2151,14 @@ static bool extract_connection(const struct whack_message *wm,
 		config->xauthby = wm->xauthby;
 		config->xauthfail = wm->xauthfail;
 
-		err_t e = ttoaddress_num_list(shunk1(wm->modecfg_dns), ", ",
-					      /* IKEv1 doesn't do IPv6 */
-					      (wm->ike_version == IKEv1 ? &ipv4_info : NULL),
-					      &config->modecfg.dns);
-		if (e != NULL) {
-			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"modecfgdns=%s invalid: %s",
-			     wm->modecfg_dns, e);
+		diag_t d = ttoaddress_num_list(shunk1(wm->modecfg_dns), ", ",
+					       /* IKEv1 doesn't do IPv6 */
+					       (wm->ike_version == IKEv1 ? &ipv4_info : NULL),
+					       &config->modecfg.dns);
+		if (d != NULL) {
+			llog_diag(RC_FATAL, c->logger, &d,
+				  ADD_FAILED_PREFIX"modecfgdns=%s invalid: ",
+				  wm->modecfg_dns);
 			/* caller will free C */
 			return false;
 		}

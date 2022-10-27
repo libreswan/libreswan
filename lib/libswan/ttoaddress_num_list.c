@@ -20,9 +20,9 @@
 #include "lswlog.h"		/* for dbg() */
 #include "ip_address.h"
 
-err_t ttoaddress_num_list(shunk_t input, const char *delims,
-			  const struct ip_info *type,
-			  ip_address **output)
+diag_t ttoaddress_num_list(shunk_t input, const char *delims,
+			   const struct ip_info *afi,
+			   ip_address **output)
 {
 	*output = NULL;
 
@@ -47,9 +47,10 @@ err_t ttoaddress_num_list(shunk_t input, const char *delims,
 		}
 		/* validate during first pass */
 		ip_address tmp;
-		err_t e = ttoaddress_num(token, type, &tmp);
+		err_t e = ttoaddress_num(token, afi, &tmp);
 		if (e != NULL) {
-			return e;
+			return diag(PRI_SHUNK" invalid, %s",
+				    pri_shunk(token), e);
 		}
 		nr_tokens++;
 	}
@@ -75,7 +76,7 @@ err_t ttoaddress_num_list(shunk_t input, const char *delims,
 		if (token.len == 0) {
 			continue;
 		}
-		err_t e = ttoaddress_num(token, type, address);
+		err_t e = ttoaddress_num(token, afi, address);
 		passert(e == NULL);
 		address_buf ab;
 		dbg("%s() %s", __func__, str_address(address, &ab));

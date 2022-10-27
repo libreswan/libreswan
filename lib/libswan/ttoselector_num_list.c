@@ -20,9 +20,9 @@
 #include "lswlog.h"		/* for dbg() */
 #include "ip_selector.h"
 
-err_t ttoselector_num_list(shunk_t input, const char *delims,
-			const struct ip_info *type,
-			ip_selector **output)
+diag_t ttoselector_num_list(shunk_t input, const char *delims,
+			    const struct ip_info *afi,
+			    ip_selector **output)
 {
 	*output = NULL;
 
@@ -47,9 +47,10 @@ err_t ttoselector_num_list(shunk_t input, const char *delims,
 		}
 		/* validate during first pass */
 		ip_selector tmp;
-		err_t e = ttoselector_num(token, type, &tmp);
+		err_t e = ttoselector_num(token, afi, &tmp);
 		if (e != NULL) {
-			return e;
+			return diag(PRI_SHUNK" invalid, %s",
+				    pri_shunk(token), e);
 		}
 		nr_tokens++;
 	}
@@ -75,7 +76,7 @@ err_t ttoselector_num_list(shunk_t input, const char *delims,
 		if (token.len == 0) {
 			continue;
 		}
-		err_t e = ttoselector_num(token, type, selector);
+		err_t e = ttoselector_num(token, afi, selector);
 		passert(e == NULL);
 		selector_buf b;
 		dbg("%s() %s", __func__, str_selector(selector, &b));

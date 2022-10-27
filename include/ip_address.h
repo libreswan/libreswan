@@ -23,6 +23,7 @@
 #include "shunk.h"
 #include "chunk.h"
 #include "err.h"
+#include "diag.h"
 #include "where.h"
 #include "ip_bytes.h"
 #include "ip_version.h"
@@ -90,8 +91,9 @@ err_t ttoaddress_num(shunk_t src, const struct ip_info *type, ip_address *dst);
 err_t ttoaddress_dns(shunk_t src, const struct ip_info *type, ip_address *dst);
 
 /* assumes list addresses in dotted / colon notation */
-err_t ttoaddress_num_list(shunk_t input, const char *delim,
-			  const struct ip_info *type, ip_address **output);
+diag_t ttoaddress_num_list(shunk_t input, const char *delims,
+			   const struct ip_info *afi,
+			   ip_address **output);
 
 /*
  * Convert an address to a string:

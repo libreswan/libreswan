@@ -20,9 +20,9 @@
 #include "lswlog.h"		/* for dbg() */
 #include "ip_range.h"
 
-err_t ttorange_num_list(shunk_t input, const char *delims,
-			const struct ip_info *type,
-			ip_range **output)
+diag_t ttorange_num_list(shunk_t input, const char *delims,
+			 const struct ip_info *afi,
+			 ip_range **output)
 {
 	*output = NULL;
 
@@ -47,9 +47,10 @@ err_t ttorange_num_list(shunk_t input, const char *delims,
 		}
 		/* validate during first pass */
 		ip_range tmp;
-		err_t e = ttorange_num(token, type, &tmp);
+		err_t e = ttorange_num(token, afi, &tmp);
 		if (e != NULL) {
-			return e;
+			return diag(PRI_SHUNK" invalid, %s",
+				    pri_shunk(token), e);
 		}
 		nr_tokens++;
 	}
@@ -75,7 +76,7 @@ err_t ttorange_num_list(shunk_t input, const char *delims,
 		if (token.len == 0) {
 			continue;
 		}
-		err_t e = ttorange_num(token, type, range);
+		err_t e = ttorange_num(token, afi, range);
 		passert(e == NULL);
 		range_buf b;
 		dbg("%s() %s", __func__, str_range(range, &b));
