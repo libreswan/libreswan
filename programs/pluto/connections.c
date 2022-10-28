@@ -257,7 +257,6 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		pfreeany(config->redirect.to);
 		pfreeany(config->redirect.accept);
 		FOR_EACH_ELEMENT(end, config->end) {
-			pfreeany(end->child.updown);
 			if (end->host.cert.nss_cert != NULL) {
 				CERT_DestroyCertificate(end->host.cert.nss_cert);
 			}
@@ -265,6 +264,9 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 			pfreeany(end->host.ckaid);
 			pfreeany(end->host.xauth.username);
 			pfreeany(end->host.addr_name);
+			/* child */
+			pfreeany(end->child.updown);
+			pfreeany(end->child.selectors);
 		}
 		pfree(c->root_config);
 	}
@@ -840,6 +842,7 @@ static diag_t extract_host_afi(const struct whack_message *wm,
  */
 
 static diag_t extract_end(struct connection *c,
+			  const struct ip_info *host_afi,
 			  struct connection_end *end,
 			  struct end_config *end_config,
 			  struct end_config *other_end_config,
@@ -1335,6 +1338,98 @@ static diag_t extract_end(struct connection *c,
 		dbg("forced %s modecfg client=%s %s modecfg server=%s",
 		    end_config->leftright, bool_str(end_config->leftright),
 		    other_end_config->leftright, bool_str(other_end_config->leftright));
+	}
+
+	/*
+	 * Figure out the end's child selectors.  These are an array
+	 * terminated by !.is_set.
+	 */
+	if ((c->config->ike_version == IKEv1 && src->client != NULL) ||
+	    (c->config->ike_version == IKEv2 && src->client != NULL && src->protoport.is_set)) {
+		/*
+		 * Legacy syntax.
+		 *
+		 * end.has_client seems to mean that the .child
+		 * selector is pinned (when false .child can be
+		 * refined).
+		 *
+		 * Of course if NARROWING is allowed, this can be
+		 * refined regardless of .has_client.
+		 */
+		dbg("%s %s child selectors from %subnet + protoport",
+		    c->name, src->leftright, src->leftright);
+		ip_subnet subnet;
+		err_t e = ttosubnet_num(shunk1(src->client), NULL,
+					HOST_PART_ZERO, &subnet, c->logger);
+		if (e != NULL) {
+			return diag("%ssubnet=%s invalid, %s",
+				    src->leftright, src->client, e);
+		}
+		end_config->child.selectors_field = "subnet";
+		end_config->child.selectors_are_client = true;
+		end_config->child.selectors = alloc_things(ip_selector, 2, "selectors");
+		end_config->child.selectors[0] =
+			selector_from_subnet_protoport(subnet, src->protoport);
+	} else if (src->client != NULL) {
+		/*
+		 * New syntax.  protoport is gone.
+		 *
+		 * end.has_client seems to mean that the .child
+		 * selector is pinned (when false .child can be
+		 * refined).
+		 *
+		 * Of course if NARROWING is allowed, this can be
+		 * refined regardless of .has_client.
+		 */
+		dbg("%s %s child selectors from %subnet (selector)",
+		    c->name, src->leftright, src->leftright);
+		passert(c->config->ike_version == IKEv2);
+		end_config->child.selectors_field = "subnet";
+		end_config->child.selectors_are_client = true;
+		diag_t d = ttoselector_num_list(shunk1(src->client), ", ", NULL, &end_config->child.selectors);
+		if (d != NULL) {
+			return diag_diag(&d, "%ssubnet=%s invalid, ",
+					 src->leftright, src->client);
+		}
+	} else if (src->sourceip.is_set) {
+		/*
+		 * No subnet=, construct one using .sourceip (if there
+		 * was a subnet it would need to be within it).
+		 *
+		 * end.has_client seems to mean that the .child
+		 * selector is pinned (when false .child can be
+		 * refined).
+		 *
+		 * Of course if NARROWING is allowed, this can be
+		 * refined regardless of .has_client.
+		 */
+		dbg("%s %s child selectors from %ssourceip",
+		    c->name, src->leftright, src->leftright);
+		end_config->child.selectors_field = "sourceip";
+		end_config->child.selectors_are_client = true;
+		end_config->child.selectors = alloc_things(ip_selector, 2, "selectors");
+		end_config->child.selectors[0] =
+			selector_from_address_protoport(src->sourceip, src->protoport);
+	} else if (src->protoport.is_set) {
+		/*
+		 * There's no client subnet _yet_ there is a client
+		 * protoport.  There must be a client.
+		 *
+		 * Per above, the client will be formed from
+		 * HOST+PROTOPORT.  Problem is, HOST probably isn't
+		 * yet known, use host family's .all as a stand in.
+		 * Calling update_ends*() will then try to fix it.
+		 */
+		dbg("%s %s child selectors from %sprotoport + host AFI",
+		    c->name, src->leftright, src->leftright);
+		end_config->child.selectors_field = "";/*i.e., left""= right""=*/
+		end_config->child.selectors_are_client = false;
+		end_config->child.selectors = alloc_things(ip_selector, 2, "selectors");
+		end_config->child.selectors[0] =
+			selector_from_subnet_protoport(host_afi->subnet.all, src->protoport);
+	} else {
+		dbg("%s %s child selectors unknown; probably derived from host?!?",
+		    c->name, src->leftright);
 	}
 
 	return NULL;
@@ -2250,7 +2345,7 @@ static bool extract_connection(const struct whack_message *wm,
 
 	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
 		int that = (this + 1) % LEFT_RIGHT_ROOF;
-		diag_t d = extract_end(c, &c->end[this],
+		diag_t d = extract_end(c, host_afi, &c->end[this],
 				       &config->end[this], &config->end[that],
 				       wm, whack_ends[this], whack_ends[that],
 				       &same_ca[this], c->logger);
@@ -2270,93 +2365,44 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	/*
-	 * Fill in the child SPDs.
+	 * Fill in the child SPDs using the previously parsed
+	 * selectors.
 	 */
 
 	const struct ip_info *child_afi[LEFT_RIGHT_ROOF] = {0};
-	const char *child_source[LEFT_RIGHT_ROOF] = {0};
-	const char *child_value[LEFT_RIGHT_ROOF] = {0};
 	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
-		const struct whack_end *src = whack_ends[this];
-		struct end *spd_end = c->end[this].child.spd;
-		if (src->client != NULL) {
-			/*
-			 * end.has_client seems to mean that the
-			 * .child selector is pinned (when false
-			 * .child can be refined).
-			 *
-			 * Of course if NARROWING is allowed, this can
-			 * be refined regardless of .has_client.
-			 */
-			dbg("%s %s child spd src->client.is_set",
-			    c->name, src->leftright);
-			ip_subnet subnet;
-			err_t e = ttosubnet_num(shunk1(src->client), NULL,
-						HOST_PART_ZERO, &subnet, c->logger);
-			if (e != NULL) {
+		const struct whack_end *we = whack_ends[this];
+		const struct child_end_config *ce = c->end[this].child.config;
+		struct end *spd = c->end[this].child.spd;
+		if (ce->selectors != NULL) {
+			dbg("%s %s child spd from selectors",
+			    c->name, ce->leftright);
+			passert(ce->selectors[0].is_set); /* at least 1 */
+			if (ce->selectors[1].is_set) {
+				/* only way to get >1 selector is with subnet= */
 				llog(RC_FATAL, c->logger,
-				     ADD_FAILED_PREFIX"%ssubnet=%s invalid, %s",
-				     src->leftright, src->client, e);
+				     ADD_FAILED_PREFIX"rejecting additional selectors in %ssubnet=%s",
+				     we->leftright, we->client);
 				return false;
 			}
-			spd_end->has_client = true;
-			spd_end->client = selector_from_subnet_protoport(subnet,
-									 src->protoport);
-			child_source[this] = "subnet";
-			child_value[this] = src->client;
-		} else if (src->sourceip.is_set) {
-			/*
-			 * No subnet=, construct one using .sourceip
-			 * (if there was a subnet it would need to be
-			 * within it).
-			 *
-			 * end.has_client seems to mean that the
-			 * .child selector is pinned (when false
-			 * .child can be refined).
-			 *
-			 * Of course if NARROWING is allowed, this can
-			 * be refined regardless of .has_client.
-			 */
-			dbg("%s %s child spd src->sourceip.is_set",
-			    c->name, src->leftright);
-			spd_end->has_client = true;
-			ip_subnet subnet = subnet_from_address(src->sourceip);
-			spd_end->client = selector_from_subnet_protoport(subnet, src->protoport);
-			child_source[this] = "sourceip";
-			child_value[this] = "...";
-		} else if (src->protoport.is_set) {
-			/*
-			 * There's no client subnet _yet_ there is a client
-			 * protoport.  There must be a client.
-			 *
-			 * Per above, the client will be formed from
-			 * HOST+PROTOPORT.  Problem is, HOST probably
-			 * isn't yet known, use host family's .all as
-			 * a stand in.  Calling update_ends*() will
-			 * then try to fix it.
-			 */
-			dbg("%s %s child spd src->protoport.is_set",
-			    c->name, src->leftright);
-			spd_end->client = selector_from_subnet_protoport(host_afi->subnet.all,
-									 src->protoport);
-			child_source[this] = "";/*i.e., left""= right""=*/
-			child_value[this] = "...";
+			spd->has_client = ce->selectors_are_client;
+			spd->client = ce->selectors[0];
 		} else {
 			dbg("%s %s child spd unset",
-			    c->name, src->leftright);
-			pexpect(!spd_end->client.is_set);
+			    c->name, ce->leftright);
+			pexpect(!spd->client.is_set);
 		}
-		child_afi[this] = selector_info(spd_end->client); /* could be NULL */
+		child_afi[this] = selector_info(spd->client); /* could be NULL */
 	}
 
 	if (child_afi[LEFT_END] != NULL && child_afi[RIGHT_END] != NULL) {
 		if (child_afi[LEFT_END] != child_afi[RIGHT_END]) {
 			/* XXX: not really client */
 			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"address family %s from left%s=%s conflicts with right%s=%s",
+			     ADD_FAILED_PREFIX"address family %s from left%s= conflicts with right%s=",
 			     child_afi[LEFT_END]->ip_name,
-			     child_source[LEFT_END], child_value[LEFT_END],
-			     child_source[RIGHT_END], child_value[RIGHT_END]);
+			     c->end[LEFT_END].child.config->selectors_field,
+			     c->end[RIGHT_END].child.config->selectors_field);
 			return false;
 		}
 	} else if (child_afi[LEFT_END] != NULL || child_afi[RIGHT_END] != NULL) {
