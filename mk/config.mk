@@ -108,7 +108,7 @@ $(error ERROR: Deprecated INC_USRLOCAL variable is set, use PREFIX instead)
 endif
 
 ifdef MANTREE
-$(error ERROR: Deprecated MANTREE variable is set, use FINALMANDIR instead)
+$(error ERROR: Deprecated MANTREE variable is set, use MANDIR instead)
 endif
 
 ifdef USE_XAUTHPAM
@@ -141,6 +141,10 @@ endif
 
 ifdef FINALLIBEXECDIR
 $(error ERROR: deprecated variable FINALLIBEXECDIR is set, use LIBEXECDIR instead)
+endif
+
+ifdef FINALMANDIR
+$(error ERROR: deprecated variable FINALMANDIR is set, use MANDIR instead)
 endif
 
 
@@ -223,9 +227,8 @@ FINALSBINDIR ?= $(PREFIX)/sbin
 SBINDIR ?= $(DESTDIR)$(FINALSBINDIR)
 
 # where the appropriate manpage tree is located
-FINALMANDIR ?= $(PREFIX)/share/man
-# the full pathname
-MANDIR ?= $(DESTDIR)$(FINALMANDIR)
+MANDIR ?= $(PREFIX)/share/man
+TRANSFORMS += 's:@@MANDIR@@:$(MANDIR):'
 
 # where configuration files go
 FINALSYSCONFDIR ?= /etc

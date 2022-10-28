@@ -32,7 +32,7 @@ FINALRUNDIR=/var/run/pluto
 FINALSYSCONFDIR=$(PREFIX)/etc
 FINALNSSDIR=$(PREFIX)/etc/ipsec.d
 FINALEXAMPLECONFDIR=$(PREFIX)/share/examples/libreswan
-FINALMANDIR=$(PREFIX)/man
+MANDIR=$(PREFIX)/man
 
 # LTO seems either broken or confused
 USE_LTO ?= false

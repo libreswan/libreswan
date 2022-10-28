@@ -11,7 +11,7 @@
 # and NSS needs to be FIPS validated.
 %global libreswan_config \\\
     LIBEXECDIR=%{_libexecdir}/ipsec \\\
-    FINALMANDIR=%{_mandir} \\\
+    MANDIR=%{_mandir} \\\
     FINALNSSDIR=%{_sysconfdir}/ipsec.d \\\
     INITSYSTEM=systemd \\\
     NSS_HAS_IPSEC_PROFILE=true \\\

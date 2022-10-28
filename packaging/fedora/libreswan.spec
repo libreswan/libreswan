@@ -8,7 +8,7 @@
 # Libreswan config options
 %global libreswan_config \\\
     LIBEXECDIR=%{_libexecdir}/ipsec \\\
-    FINALMANDIR=%{_mandir} \\\
+    MANDIR=%{_mandir} \\\
     PREFIX=%{_prefix} \\\
     INITSYSTEM=systemd \\\
     PYTHON_BINARY=%{__python3} \\\

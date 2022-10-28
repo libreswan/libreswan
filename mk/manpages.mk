@@ -42,7 +42,7 @@ local-manpages: $(addprefix $(builddir)/,$(addsuffix .man,$(MANPAGES)))
 local-install-manpages: local-manpages
 	@set -eu $(foreach manpage,$(MANPAGES), \
 		$(foreach refname,$(call refnames,$(builddir)/$(manpage).tmp), \
-		$(foreach destdir,$(MANDIR$(suffix $(refname))), \
+		$(foreach destdir,$(DESTDIR)$(MANDIR$(suffix $(refname))), \
 		; src=$(builddir)/$(refname) \
 		; echo $$src '->' $(destdir) \
 		; mkdir -p $(destdir) \
@@ -51,7 +51,7 @@ local-install-manpages: local-manpages
 list-local-manpages: $(TRANSFORMED_MANPAGES)
 	@set -eu $(foreach manpage,$(MANPAGES), \
 		$(foreach refname,$(call refnames,$(builddir)/$(manpage).tmp), \
-		; echo $(MANDIR$(suffix $(refname)))/$(refname)))
+		; echo $(DESTDIR)$(MANDIR$(suffix $(refname)))/$(refname)))
 
 local-clean-manpages:
 	rm -f $(builddir)/*.[1-8]
