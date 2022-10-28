@@ -34,7 +34,7 @@ override_dh_auto_build:
 		ARCH=$(DEB_HOST_ARCH) \
 		IPSECVERSION=$(DEB_VERSION_UPSTREAM_REVISION) \
 		PREFIX=/usr \
-		FINALLIBEXECDIR=/usr/libexec/ipsec \
+		LIBEXECDIR=/usr/libexec/ipsec \
 		FINALNSSDIR=/var/lib/ipsec/nss \
 		USE_LDAP=true \
 		USE_FIPSCHECK=false \
@@ -49,7 +49,7 @@ override_dh_auto_install-arch:
 		ARCH=$(DEB_HOST_ARCH) \
 		IPSECVERSION=$(DEB_VERSION_UPSTREAM_REVISION) \
 		PREFIX=/usr \
-		FINALLIBEXECDIR=/usr/libexec/ipsec \
+		LIBEXECDIR=/usr/libexec/ipsec \
 		FINALNSSDIR=/var/lib/ipsec/nss \
 		USE_LDAP=true \
 		USE_FIPSCHECK=false \

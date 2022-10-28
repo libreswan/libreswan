@@ -139,6 +139,11 @@ ifdef INC_RCDEFAULT
 $(error ERROR: Deprecated variable INC_RCDEFAULT is set, use INIT_D_DIR instead)
 endif
 
+ifdef FINALLIBEXECDIR
+$(error ERROR: deprecated variable FINALLIBEXECDIR is set, use LIBEXECDIR instead)
+endif
+
+
 #
 # Options that really belong in CFLAGS (making for an intuitive way to
 # override them).
@@ -206,10 +211,12 @@ DESTDIR ?=
 # "PREFIX" part of tree, used in building other pathnames.
 PREFIX ?= /usr/local
 
-# LIBEXECDIR is where sub-commands get put, FINALLIBEXECDIR is where
-# the "ipsec" command will look for them when it is run.
-FINALLIBEXECDIR ?= $(PREFIX)/libexec/ipsec
-LIBEXECDIR ?= $(DESTDIR)$(FINALLIBEXECDIR)
+# LIBEXECDIR is where sub-commands get put.  the "ipsec" command will
+# look for them when it is run.
+LIBEXECDIR ?= $(PREFIX)/libexec/ipsec
+TRANSFORMS += 's:@@LIBEXECDIR@@:$(LIBEXECDIR):g'
+TRANSFORMS += 's:@IPSEC_EXECDIR@:$(LIBEXECDIR):g'
+USERLAND_CFLAGS += -DIPSEC_EXECDIR=\"$(LIBEXECDIR)\"
 
 # SBINDIR is where the user interface command goes.
 FINALSBINDIR ?= $(PREFIX)/sbin
@@ -531,7 +538,6 @@ TRANSFORM_VARIABLES = sed \
 			-e "s:@@CONFFILE@@:$(FINALCONFFILE):g" \
 			-e "s:@@DOCDIR@@:$(FINALDOCDIR):g" \
 			-e "s:@@EXAMPLECONFDIR@@:$(FINALEXAMPLECONFDIR):g" \
-			-e "s:@@LIBEXECDIR@@:$(FINALLIBEXECDIR):g" \
 			-e "s:@@LOGDIR@@:$(FINALLOGDIR):g" \
 			-e "s:@@LOGROTATEDDIR@@:$(FINALLOGROTATEDDIR):g" \
 			-e "s:@@SBINDIR@@:$(FINALSBINDIR):g" \
@@ -541,7 +547,6 @@ TRANSFORM_VARIABLES = sed \
 			-e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@IPSEC_CONF@:$(FINALCONFFILE):g" \
 			-e "s:@IPSEC_CONFDDIR@:$(FINALCONFDDIR):g" \
-			-e "s:@IPSEC_EXECDIR@:$(FINALLIBEXECDIR):g" \
 			-e "s:@IPSEC_NSSDIR@:$(FINALNSSDIR):g" \
 			-e "s:@IPSEC_PPKDIR@:$(FINALPPKDIR):g" \
 			-e "s:@IPSEC_RUNDIR@:$(FINALRUNDIR):g" \
@@ -806,7 +811,6 @@ USERLAND_CFLAGS += -DIPSEC_CONF=\"$(FINALCONFFILE)\"
 USERLAND_CFLAGS += -DIPSEC_CONFDDIR=\"$(FINALCONFDDIR)\"
 USERLAND_CFLAGS += -DIPSEC_NSSDIR=\"$(FINALNSSDIR)\"
 USERLAND_CFLAGS += -DIPSEC_CONFDIR=\"$(FINALCONFDIR)\"
-USERLAND_CFLAGS += -DIPSEC_EXECDIR=\"$(FINALLIBEXECDIR)\"
 USERLAND_CFLAGS += -DIPSEC_SBINDIR=\"${FINALSBINDIR}\"
 USERLAND_CFLAGS += -DIPSEC_VARDIR=\"$(FINALVARDIR)\"
 USERLAND_CFLAGS += -DPOLICYGROUPSDIR=\"${FINALCONFDDIR}/policies\"

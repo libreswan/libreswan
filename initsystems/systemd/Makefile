@@ -33,7 +33,7 @@ installsystemdservice: local-base | $(UNITDIR)
 		echo running: systemctl --system daemon-reload; \
 		systemctl --system daemon-reload || echo "failed restart" ; \
 	fi
-	@if test -f $(DESTDIR)/$(FINALLIBEXECDIR)/portexcludes; then \
+	@if test -f $(DESTDIR)/$(LIBEXECDIR)/portexcludes; then \
 		echo fixing port excludes ; \
 		sed -Ei 's@^# (.*/portexcludes)$$@\1@' $(UNITDIR)/$(UNITFILE); \
 	fi

@@ -7,7 +7,7 @@
 %global unbound_version 1.6.6
 # Libreswan config options
 %global libreswan_config \\\
-    FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
+    LIBEXECDIR=%{_libexecdir}/ipsec \\\
     FINALMANDIR=%{_mandir} \\\
     PREFIX=%{_prefix} \\\
     INITSYSTEM=systemd \\\

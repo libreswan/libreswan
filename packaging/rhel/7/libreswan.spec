@@ -8,7 +8,7 @@
 %global nss_version 3.79-4
 # Libreswan config options
 %global libreswan_config \\\
-    FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
+    LIBEXECDIR=%{_libexecdir}/ipsec \\\
     FINALMANDIR=%{_mandir} \\\
     FINALNSSDIR=%{_sysconfdir}/ipsec.d \\\
     INITSYSTEM=systemd \\\

@@ -202,7 +202,7 @@ local-install:
 .PHONY: install-fipshmac
 install-fipshmac:
 ifeq ($(USE_FIPSCHECK),true)
-	fipshmac $(LIBEXECDIR)/pluto
+	fipshmac $(DESTDIR)$(LIBEXECDIR)/pluto
 else
 	@echo "install-fipshmac target requires compiling with USE_FIPSCHECK"
 	@exit 1
