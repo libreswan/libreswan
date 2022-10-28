@@ -30,7 +30,7 @@ FINALRUNDIR=/var/run/pluto
 
 # PREFIX = /usr/local from mk/config.mk
 FINALSYSCONFDIR=$(PREFIX)/etc
-FINALNSSDIR=$(PREFIX)/etc/ipsec.d
+NSSDIR=$(PREFIX)/etc/ipsec.d
 FINALEXAMPLECONFDIR=$(PREFIX)/share/examples/libreswan
 MANDIR=$(PREFIX)/man
 

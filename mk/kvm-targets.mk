@@ -106,7 +106,7 @@ VIRSH = sudo virsh --connect=$(KVM_CONNECTION)
 # $(KVM_<FLAG>).
 
 # On Fedora, overide linux defaults
-KVM_FEDORA_FINALNSSDIR ?= $(FINALCONFDIR)/ipsec.d
+KVM_FEDORA_NSSDIR ?= $(FINALCONFDIR)/ipsec.d
 KVM_FEDORA_SD_RESTART_TYPE ?= no
 KVM_FEDORA_USE_EFENCE ?= true
 KVM_FEDORA_USE_LABELED_IPSEC ?= true
@@ -119,7 +119,7 @@ KVM-MAKEFLAG = \
 KVM_MAKEFLAGS ?= $(strip \
 	-j$(shell expr $(KVM_WORKERS) + 1) \
 	$(call KVM-MAKEFLAG, ALL_ARGS) \
-	$(call KVM-MAKEFLAG, FINALNSSDIR) \
+	$(call KVM-MAKEFLAG, NSSDIR) \
 	$(call KVM-MAKEFLAG, NSS_CFLAGS) \
 	$(call KVM-MAKEFLAG, NSS_LDFLAGS) \
 	$(call KVM-MAKEFLAG, SD_RESTART_TYPE) \

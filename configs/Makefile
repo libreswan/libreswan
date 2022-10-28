@@ -87,7 +87,7 @@ ifeq ($(INSTALL_CONFIGS),true)
 endif
 	@: NSSDIR install
 ifeq ($(INSTALL_CONFIGS),true)
-	@set -eu ; $(call install-directory, $(NSSDIR), 0700)
+	@set -eu ; $(call install-directory, $(DESTDIR)$(NSSDIR), 0700)
 endif
 ifeq ($(USE_AUTHPAM),true)
 	@: PAM

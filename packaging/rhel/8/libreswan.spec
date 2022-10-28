@@ -12,7 +12,7 @@
 %global libreswan_config \\\
     LIBEXECDIR=%{_libexecdir}/ipsec \\\
     MANDIR=%{_mandir} \\\
-    FINALNSSDIR=%{_sysconfdir}/ipsec.d \\\
+    NSSDIR=%{_sysconfdir}/ipsec.d \\\
     INITSYSTEM=systemd \\\
     NSS_HAS_IPSEC_PROFILE=true \\\
     NSS_REQ_AVA_COPY=false \\\
