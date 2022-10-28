@@ -65,7 +65,7 @@ struct starter_end {
 	ip_address addr;
 	ip_address nexthop;
 	ip_address sourceip;
-	ip_subnet subnet;
+	char *subnet;
 	ip_cidr vti_ip;
 	ip_cidr ifaceip;
 	char *iface;

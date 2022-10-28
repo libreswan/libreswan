@@ -848,19 +848,6 @@ static diag_t extract_host_afi(const struct whack_message *wm,
 	return NULL;
 }
 
-static diag_t extract_client_afi(const struct whack_message *wm,
-				 const struct ip_info **afi)
-{
-	*afi = NULL;
-	const char *leftright;
-	const char *name;
-	char value[sizeof(selector_buf)];
-	FOR_EACH_THING(w, &wm->left, &wm->right) {
-		EXTRACT_AFI("client", "subnet", subnet, w->client);
-	}
-	return NULL;
-}
-
 #define ADD_FAILED_PREFIX "failed to add connection: "
 
 /*
@@ -1239,7 +1226,7 @@ static diag_t extract_end(struct connection *c,
 	}
 
 	/* save some defaults */
-	end_config->child.v1_config_subnet_specified = src->client.is_set;
+	end_config->child.v1_config_subnet_specified = src->client != NULL;
 	end_config->child.protoport = src->protoport;
 
 	if (src->protoport.ipproto == 0 && src->protoport.hport != 0) {
@@ -1743,19 +1730,6 @@ static bool extract_connection(const struct whack_message *wm,
 		     ADD_FAILED_PREFIX"host address family unknown");
 		return false;
 	}
-
-	const struct ip_info *client_afi = NULL;
-	d = extract_client_afi(wm, &client_afi);
-	if (d != NULL) {
-		llog_diag(RC_FATAL, c->logger, &d, ADD_FAILED_PREFIX);
-		return false;
-	}
-	if (client_afi == NULL) {
-		dbg("defaulting client afi to host afi");
-		client_afi = host_afi;
-	}
-
-	dbg("host_afi=%s client_afi=%s", host_afi->ip_name, client_afi->ip_name);
 
 	/*
 	 * When the other side is wildcard: we must check if other
@@ -2315,11 +2289,13 @@ static bool extract_connection(const struct whack_message *wm,
 	/*
 	 * Fill in the child SPDs.
 	 */
-	dbg("host_afi=%s client_afi=%s", host_afi->ip_name, client_afi->ip_name);
+
+	const struct ip_info *child_afi[LEFT_RIGHT_ROOF] = {0};
+	const char *source[LEFT_RIGHT_ROOF] = {0};
 	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
 		const struct whack_end *src = whack_ends[this];
 		struct end *spd_end = c->end[this].child.spd;
-		if (src->client.is_set) {
+		if (src->client != NULL) {
 			/*
 			 * end.has_client seems to mean that the
 			 * .child selector is pinned (when false
@@ -2330,9 +2306,19 @@ static bool extract_connection(const struct whack_message *wm,
 			 */
 			dbg("%s %s child spd src->client.is_set",
 			    c->name, src->leftright);
+			ip_subnet subnet;
+			err_t e = ttosubnet_num(shunk1(src->client), NULL,
+						HOST_PART_ZERO, &subnet, c->logger);
+			if (e != NULL) {
+				llog(RC_FATAL, c->logger,
+				     ADD_FAILED_PREFIX"%ssubnet=%s invalid, %s",
+				     src->leftright, src->client, e);
+				return false;
+			}
 			spd_end->has_client = true;
-			spd_end->client = selector_from_subnet_protoport(src->client,
+			spd_end->client = selector_from_subnet_protoport(subnet,
 									 src->protoport);
+			source[this] = "subnet";
 		} else if (src->sourceip.is_set) {
 			/*
 			 * No subnet=, construct one using .sourceip
@@ -2351,22 +2337,7 @@ static bool extract_connection(const struct whack_message *wm,
 			spd_end->has_client = true;
 			ip_subnet subnet = subnet_from_address(src->sourceip);
 			spd_end->client = selector_from_subnet_protoport(subnet, src->protoport);
-		} else if (host_afi != client_afi) {
-			/*
-			 * If {left,right}subnet isn't specified in the
-			 * configuration file then it defaults to the HOST's
-			 * address.
-			 *
-			 * Except at this point the host's address may
-			 * not be known (DNS, %any).  This is "fixed"
-			 * by update_ends().  Fortunately (if nothing
-			 * else, by forcing it), at least the host
-			 * address family is known.
-			 */
-			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"host protocol %s conflicts with client protocol %s",
-			     host_afi->ip_name, client_afi->ip_name);
-			return false;
+			source[this] = "sourceip";
 		} else if (src->protoport.is_set) {
 			/*
 			 * There's no client subnet _yet_ there is a client
@@ -2382,11 +2353,27 @@ static bool extract_connection(const struct whack_message *wm,
 			    c->name, src->leftright);
 			spd_end->client = selector_from_subnet_protoport(host_afi->subnet.all,
 									 src->protoport);
+			source[this] = "host";
 		} else {
 			dbg("%s %s child spd unset",
 			    c->name, src->leftright);
+			pexpect(!spd_end->client.is_set);
 		}
+		child_afi[this] = selector_info(spd_end->client); /* could be NULL */
 	}
+
+	if (child_afi[LEFT_END] != NULL && child_afi[RIGHT_END] != NULL &&
+	    child_afi[LEFT_END] != child_afi[RIGHT_END]) {
+		llog(RC_FATAL, c->logger,
+		     ADD_FAILED_PREFIX"address family %s from left%s conflicts with right%s",
+		     child_afi[LEFT_END]->ip_name,
+		     source[LEFT_END], source[RIGHT_END]);
+		return false;
+	}
+
+	/*
+	 * Cross check the child AFIs.
+	 */
 
 	if (c->local->host.config->xauth.server || c->remote->host.config->xauth.server)
 		c->policy |= POLICY_XAUTH;

@@ -1732,9 +1732,7 @@ int main(int argc, char **argv)
 			    startswith(optarg, "vnet:")) {
 				end->virt = optarg;
 			} else {
-				diagq(ttosubnet_num(shunk1(optarg), NULL, HOST_PART_DIE6,
-						    &end->client, logger), optarg);
-				pexpect(end->client.is_set);
+				end->client = optarg;	/* decoded by Pluto */
 			}
 			msg.policy |= POLICY_TUNNEL;	/* client => tunnel */
 			continue;
@@ -2550,7 +2548,7 @@ int main(int argc, char **argv)
 			 * These interlocking tests should be redone.
 			 */
 			if (!HAS_IPSEC_POLICY(msg.policy) &&
-			    (msg.left.client.is_set || msg.right.client.is_set))
+			    (msg.left.client != NULL || msg.right.client != NULL))
 				diagw("must not specify clients for ISAKMP-only connection");
 		}
 

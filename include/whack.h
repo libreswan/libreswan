@@ -100,7 +100,7 @@ struct whack_end {
 	ip_cidr host_vtiip;
 	ip_cidr ifaceip;
 
-	ip_subnet client;
+	char *client;
 	ip_protoport protoport;
 
 	bool key_from_DNS_on_demand;

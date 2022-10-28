@@ -888,8 +888,11 @@ static int starter_permutate_conns(int
 		/* fix up leftsubnet/rightsubnet properly, make sure
 		 * that has_client is set.
 		 */
-		sc.left.subnet = left.subnet;
-		sc.right.subnet = right.subnet;
+		subnet_buf lb, rb;
+		str_subnet(&left.subnet, &lb);
+		str_subnet(&right.subnet, &rb);
+		sc.left.subnet = lb.buf;
+		sc.right.subnet = rb.buf;
 
 		char tmpconnname[256];
 		snprintf(tmpconnname, sizeof(tmpconnname), "%s/%ux%u",

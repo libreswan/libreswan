@@ -325,6 +325,7 @@ static bool pickle_whack_end(struct whackpacker *wp,
 		PICKLE_CIDR(&end->host_vtiip) &&
 		PICKLE_CIDR(&end->ifaceip) &&
 		PICKLE_STRING(&end->addresspool) &&
+		PICKLE_STRING(&end->client) &&
 		true);
 }
 

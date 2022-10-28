@@ -417,7 +417,6 @@ static bool validate_end(struct starter_conn *conn_st,
 			 struct logger *logger)
 {
 	const char *leftright = end->leftright;
-	err_t er = NULL;
 	bool err = false;
 
 	pexpect(end->host_family == &ipv4_info || end->host_family == &ipv6_info); /* i.e., not NULL */
@@ -455,8 +454,8 @@ static bool validate_end(struct starter_conn *conn_st,
 			break;
 		}
 
-		er = ttoaddress_num(shunk1(end->strings[KNCF_IP]),
-				    end->host_family, &end->addr);
+		err_t er = ttoaddress_num(shunk1(end->strings[KNCF_IP]),
+					  end->host_family, &end->addr);
 		if (er != NULL) {
 			/* not an IP address, so set the type to the string */
 			end->addrtype = KH_IPHOSTNAME;
@@ -527,16 +526,10 @@ static bool validate_end(struct starter_conn *conn_st,
 			if (conn_st->ike_version != IKEv1) {
 				ERR_FOUND("The vnet: and vhost: keywords are only valid for IKEv1 connections");
 			}
-
-			er = NULL;
 			end->virt = clone_str(value, "validate_end item");
 		} else {
-			er = ttosubnet_num(shunk1(value), NULL, HOST_PART_ZERO,
-					   &end->subnet, logger);
+			end->subnet = clone_str(value, "validate_end subnet");
 		}
-		if (er != NULL)
-			ERR_FOUND("bad subnet %ssubnet=%s [%s]", leftright,
-				  value, er);
 	}
 
 	/*
