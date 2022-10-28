@@ -10,13 +10,11 @@
 %global optflags -g
 # Libreswan config options
 %global libreswan_config \\\
-    FINALDOCDIR=%{_pkgdocdir} \\\
-    FINALEXAMPLECONFDIR=%{_pkgdocdir} \\\
-    FINALINITDDIR=%{_initddir} \\\
-    FINALLIBEXECDIR=%{_libexecdir}/ipsec \\\
-    FINALMANDIR=%{_mandir} \\\
-    FINALNSSDIR=%{_sysconfdir}/ipsec.d \\\
-    FINALRUNDIR=%{_rundir}/pluto \\\
+    EXAMPLE_IPSEC_SYSCONFDIR=%{_pkgdocdir} \\\
+    EXAMPLECONFDIR=%{_pkgdocdir} \\\
+    INIT_D_DIR=%{_initddir} \\\
+    LIBEXECDIR=%{_libexecdir}/ipsec \\\
+    MANDIR=%{_mandir} \\\
     INITSYSTEM=%{initsystem} \\\
     IPSECVERSION=%{IPSECVERSION} \\\
     PREFIX=%{_exec_prefix} \\\
