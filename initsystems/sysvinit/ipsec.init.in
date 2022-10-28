@@ -71,7 +71,7 @@ if [ $(ip addr list | grep -c cipsec) -ne 0 ]; then
 fi
 
 # where the private directory and the config files are
-IPSEC_CONF="${IPSEC_CONF:-@FINALCONFFILE@}"
+IPSEC_CONF="${IPSEC_CONF:-@@CONFFILE@@}"
 IPSEC_EXECDIR="${IPSEC_EXECDIR:-@IPSEC_EXECDIR@}"
 IPSEC_SBINDIR="${IPSEC_SBINDIR:-@IPSEC_SBINDIR@}"
 unset PLUTO_OPTIONS
@@ -79,16 +79,16 @@ unset PLUTO_OPTIONS
 rundir=@IPSEC_RUNDIR@
 plutopid=${rundir}/pluto.pid
 plutoctl=${rundir}/pluto.ctl
-lockdir=@FINALVARDIR@/lock/subsys
+lockdir=@@VARDIR@@/lock/subsys
 lockfile=${lockdir}/ipsec
 
-# @FINALSYSCONFDIR@/resolv.conf related paths
+# @@SYSCONFDIR@@/resolv.conf related paths
 LIBRESWAN_RESOLV_CONF=${rundir}/libreswan-resolv-conf-backup
-ORIG_RESOLV_CONF=@FINALSYSCONFDIR@/resolv.conf
+ORIG_RESOLV_CONF=@@SYSCONFDIR@@/resolv.conf
 
 # there is some confusion over the name - just do both
-[ -f @FINALSYSCONFDIR@/sysconfig/ipsec ] && . @FINALSYSCONFDIR@/sysconfig/ipsec
-[ -f @FINALSYSCONFDIR@/sysconfig/pluto ] && . @FINALSYSCONFDIR@/sysconfig/pluto
+[ -f @@SYSCONFDIR@@/sysconfig/ipsec ] && . @@SYSCONFDIR@@/sysconfig/ipsec
+[ -f @@SYSCONFDIR@@/sysconfig/pluto ] && . @@SYSCONFDIR@@/sysconfig/pluto
 
 # misc setup
 umask 022
@@ -143,8 +143,8 @@ start() {
 	rm -f ${lockfile}
     fi
     echo
-    if [ -f @FINALLIBEXECDIR@/portexcludes ] ; then
-	@FINALLIBEXECDIR@/portexcludes
+    if [ -f @@LIBEXECDIR@@/portexcludes ] ; then
+	@@LIBEXECDIR@@/portexcludes
     fi
     return ${RETVAL}
 }

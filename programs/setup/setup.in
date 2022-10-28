@@ -27,7 +27,7 @@ cd /
 
 #/etc/resolv.conf related paths
 LIBRESWAN_RESOLV_CONF=${rundir}/libreswan-resolv-conf-backup
-ORIG_RESOLV_CONF=@FINALSYSCONFDIR@/resolv.conf
+ORIG_RESOLV_CONF=@@SYSCONFDIR@@/resolv.conf
 
 initsystem="@INITSYSTEM@"
 
@@ -80,10 +80,10 @@ case "$1" in
 	    namespaces )
 		echo "Redirecting to: namespaces direct start via ipsec pluto"
 		ipsec --checknflog > /dev/null
-		exec ipsec pluto --config @FINALSYSCONFDIR@/ipsec.conf --leak-detective
+		exec ipsec pluto --config @@SYSCONFDIR@@/ipsec.conf --leak-detective
 		;;
 	    "" )
-		what="ipsec pluto --logfile @FINALLOGDIR@/pluto.log --config @FINALSYSCONFDIR@/ipsec.conf --leak-detective"
+		what="ipsec pluto --logfile @@LOGDIR@@/pluto.log --config @@SYSCONFDIR@@/ipsec.conf --leak-detective"
 		echo "Redirecting to: ${what} [start manually]"
 		exec ${what}
 		;;
@@ -234,7 +234,7 @@ case "$1" in
 	    namespaces )
 		echo "Redirecting to: namespaces"
 		ipsec whack --shutdown
-		exec ipsec pluto --config @FINALSYSCONFDIR@/ipsec.conf --leak-detective
+		exec ipsec pluto --config @@SYSCONFDIR@@/ipsec.conf --leak-detective
 		;;
 	    "" )
 		echo "Redirecting to: [stop start manually]"

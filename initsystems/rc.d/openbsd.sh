@@ -1,12 +1,12 @@
 #!/bin/ksh
 
-daemon="@FINALLIBEXECDIR@/pluto"
-daemon_flags="--logfile @FINALLOGDIR@/pluto.log --config @FINALSYSCONFDIR@/ipsec.conf --leak-detective"
+daemon="@@LIBEXECDIR@@/pluto"
+daemon_flags="--logfile @@LOGDIR@@/pluto.log --config @@SYSCONFDIR@@/ipsec.conf --leak-detective"
 
 . /etc/rc.d/rc.subr
 
 #pidfile="@IPSEC_RUNDIR@/${name}.pid"
-#required_files="@FINALSYSCONFDIR@/ipsec.conf"
+#required_files="@@SYSCONFDIR@@/ipsec.conf"
 
 case $1 in
 onestart ) set start ;;
@@ -15,7 +15,7 @@ esac
 
 rc_pre()
 {
-    @FINALSBINDIR@/ipsec checknss
+    @@SBINDIR@@/ipsec checknss
 }
 
 rc_cmd $1

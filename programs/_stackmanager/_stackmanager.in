@@ -24,8 +24,8 @@
 # These prevent coverity warnings; variables come in via ipsec addconn call
 xfrmlifetime=""
 
-IPSEC_CONF="${IPSEC_CONF:-@FINALCONFFILE@}"
-PATH=@FINALSBINDIR@:${PATH}
+IPSEC_CONF="${IPSEC_CONF:-@@CONFFILE@@}"
+PATH=@@SBINDIR@@:${PATH}
 export PATH
 # export config setup items needs rename of - to _
 eval $(ASAN_OPTIONS=detect_leaks=0 ipsec addconn  --configsetup | grep -v "#" | sed "s/-/_/g")

@@ -7,9 +7,9 @@ description="pluto is an IKE daemon that is used to setup IPSEC VPN connections.
 description_configtest="Run syntax tests for configuration files only."
 description_reload="reloads the configuration - does not affect existing connections"
 
-PLUTO_BINARY=${PLUTO_BINARY:-@FINALLIBEXECDIR@/pluto}
-PLUTO_CONFFILE=${PLUTO_CONFFILE:-@FINALCONFFILE@}
-IPSEC_BINARY=${IPSEC_BINARY:-@FINALSBINDIR@/ipsec}
+PLUTO_BINARY=${PLUTO_BINARY:-@@LIBEXECDIR@@/pluto}
+PLUTO_CONFFILE=${PLUTO_CONFFILE:-@@CONFFILE@@}
+IPSEC_BINARY=${IPSEC_BINARY:-@@SBINDIR@@/ipsec}
 PLUTO_PIDFILE=${PLUTO_PIDFILE:-/var/run/pluto/pluto.pid}
 
 depend() {
@@ -39,8 +39,8 @@ start() {
 	start-stop-daemon --start --pidfile "${PLUTO_PIDFILE}" \
 		--exec "${PLUTO_BINARY}" -- --config "${PLUTO_CONFFILE}" \
 	    -- ${PLUTO_OPTS}
-	if [ -f @FINALLIBEXECDIR@/portexcludes ] ; then
-		@FINALLIBEXECDIR@/portexcludes
+	if [ -f @@LIBEXECDIR@@/portexcludes ] ; then
+		@@LIBEXECDIR@@/portexcludes
 	fi
 	eend $?
 }

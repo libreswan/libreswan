@@ -71,7 +71,7 @@ then
 fi
 
 # where the private directory and the config files are
-IPSEC_CONF="${IPSEC_CONF:-@FINALCONFFILE@}"
+IPSEC_CONF="${IPSEC_CONF:-@@CONFFILE@@}"
 IPSEC_EXECDIR="${IPSEC_EXECDIR:-@IPSEC_EXECDIR@}"
 IPSEC_SBINDIR="${IPSEC_SBINDIR:-@IPSEC_SBINDIR@}"
 
@@ -144,8 +144,8 @@ start() {
 	ipsec _plutorun --config ${IPSEC_CONF} --nofork ${PLUTO_OPTIONS} &
 	RETVAL=$?
 	sleep 2
-	if [ -f @FINALLIBEXECDIR@/portexcludes ] ; then
-		@FINALLIBEXECDIR@/portexcludes
+	if [ -f @@LIBEXECDIR@@/portexcludes ] ; then
+		@@LIBEXECDIR@@/portexcludes
 	fi
 	return $RETVAL
 }

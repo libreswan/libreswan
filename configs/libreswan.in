@@ -1,4 +1,4 @@
-@FINALLOGDIR@/pluto.log {
+@@LOGDIR@@/pluto.log {
     missingok
     notifempty
     copytruncate

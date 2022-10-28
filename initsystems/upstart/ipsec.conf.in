@@ -14,24 +14,24 @@ respawn
 pre-start script
     cd /
     . /etc/default/pluto
-    @FINALSBINDIR@/ipsec addconn --config @FINALCONFFILE@ --checkconfig
+    @@SBINDIR@@/ipsec addconn --config @@CONFFILE@@ --checkconfig
 end script
 
 script
     . /etc/default/pluto
-    @FINALSBINDIR@/ipsec --checknss
-    @FINALSBINDIR@/ipsec --checknflog
-    @FINALSBINDIR@/ipsec _stackmanager start
-    @FINALLIBEXECDIR@/pluto --config @FINALCONFFILE@ --nofork $PLUTO_OPTIONS
-    if [ -f @FINALLIBEXECDIR@/portexcludes ] ; then
-	@FINALLIBEXECDIR@/portexcludes
+    @@SBINDIR@@/ipsec --checknss
+    @@SBINDIR@@/ipsec --checknflog
+    @@SBINDIR@@/ipsec _stackmanager start
+    @@LIBEXECDIR@@/pluto --config @@CONFFILE@@ --nofork $PLUTO_OPTIONS
+    if [ -f @@LIBEXECDIR@@/portexcludes ] ; then
+	@@LIBEXECDIR@@/portexcludes
     fi
 end script
 
 pre-stop script
     # do not run whack --shutdown in pre-stop, it confused stop into restarting
-    # @FINALSBINDIR@/ipsec whack --shutdown
-    @FINALSBINDIR@/ipsec --stopnflog
+    # @@SBINDIR@@/ipsec whack --shutdown
+    @@SBINDIR@@/ipsec --stopnflog
     ip xfrm policy flush
     ip xfrm state flush
 end script

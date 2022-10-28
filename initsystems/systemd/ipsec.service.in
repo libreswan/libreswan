@@ -20,21 +20,21 @@ NotifyAccess=all
 WatchdogSec=@SD_WATCHDOGSEC@
 
 # Check configuration file
-ExecStartPre=@FINALLIBEXECDIR@/addconn --config @FINALCONFFILE@ --checkconfig
+ExecStartPre=@@LIBEXECDIR@@/addconn --config @@CONFFILE@@ --checkconfig
 # Check for kernel modules
-ExecStartPre=@FINALLIBEXECDIR@/_stackmanager start
+ExecStartPre=@@LIBEXECDIR@@/_stackmanager start
 # Check for nss database status and migration
-ExecStartPre=@FINALSBINDIR@/ipsec --checknss
+ExecStartPre=@@SBINDIR@@/ipsec --checknss
 # Check for nflog setup
-ExecStartPre=@FINALSBINDIR@/ipsec --checknflog
+ExecStartPre=@@SBINDIR@@/ipsec --checknflog
 # Start the actual IKE daemon
-ExecStart=@FINALLIBEXECDIR@/pluto @SD_PLUTO_OPTIONS@ --config @FINALCONFFILE@ --nofork
+ExecStart=@@LIBEXECDIR@@/pluto @SD_PLUTO_OPTIONS@ --config @@CONFFILE@@ --nofork
 # Enable for portexcludes support
-# ExecStartPost=@FINALLIBEXECDIR@/portexcludes
-ExecStop=@FINALLIBEXECDIR@/whack --shutdown
+# ExecStartPost=@@LIBEXECDIR@@/portexcludes
+ExecStop=@@LIBEXECDIR@@/whack --shutdown
 # 12 is the exit code of pluto for shutting down "leaving state"
 ExecStopPost=/bin/bash -c 'if test "$EXIT_STATUS" != "12"; then /sbin/ip xfrm policy flush; /sbin/ip xfrm state flush; fi'
-ExecStopPost=@FINALSBINDIR@/ipsec --stopnflog
+ExecStopPost=@@SBINDIR@@/ipsec --stopnflog
 
 [Install]
 WantedBy=multi-user.target

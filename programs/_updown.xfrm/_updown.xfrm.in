@@ -239,15 +239,15 @@ export LC_ALL
 #
 
 # rpm based systems
-if [ -f @FINALSYSCONFDIR@/sysconfig/pluto_updown ]; then
-    . @FINALSYSCONFDIR@/sysconfig/pluto_updown
+if [ -f @@SYSCONFDIR@@/sysconfig/pluto_updown ]; then
+    . @@SYSCONFDIR@@/sysconfig/pluto_updown
 # deb based systems
-elif [ -f @FINALSYSCONFDIR@/default/pluto_updown ]; then
-    . @FINALSYSCONFDIR@/default/pluto_updown
+elif [ -f @@SYSCONFDIR@@/default/pluto_updown ]; then
+    . @@SYSCONFDIR@@/default/pluto_updown
 fi
 
 BACKUP_RESOLV_CONF=@IPSEC_RUNDIR@/libreswan-resolv-conf-backup
-ETC_RESOLV_CONF=@FINALSYSCONFDIR@/resolv.conf
+ETC_RESOLV_CONF=@@SYSCONFDIR@@/resolv.conf
 
 case "${PLUTO_CONN_ADDRFAMILY}" in
     ipv4)

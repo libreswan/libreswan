@@ -14,13 +14,13 @@ desc="Libreswan IKE Daemon"
 required_modules=ipsec
 rcvar=${name}_enable
 
-command="@FINALLIBEXECDIR@/pluto"
-command_args="--logfile @FINALLOGDIR@/pluto.log --config @FINALSYSCONFDIR@/ipsec.conf --leak-detective"
-required_files="@FINALSYSCONFDIR@/ipsec.conf"
+command="@@LIBEXECDIR@@/pluto"
+command_args="--logfile @@LOGDIR@@/pluto.log --config @@SYSCONFDIR@@/ipsec.conf --leak-detective"
+required_files="@@SYSCONFDIR@@/ipsec.conf"
 
 pidfile="@IPSEC_RUNDIR@/${name}.pid"
 
-start_precmd="@FINALSBINDIR@/ipsec checknss"
+start_precmd="@@SBINDIR@@/ipsec checknss"
 
 load_rc_config $name
 run_rc_command "$1"

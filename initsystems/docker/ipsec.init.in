@@ -69,7 +69,7 @@ if [ $(ip addr list | grep -c cipsec) -ne 0 ]; then
 fi
 
 # where the private directory and the config files are
-IPSEC_CONF="${IPSEC_CONF:-@FINALCONFFILE@}"
+IPSEC_CONF="${IPSEC_CONF:-@@CONFFILE@@}"
 IPSEC_EXECDIR="${IPSEC_EXECDIR:-@IPSEC_EXECDIR@}"
 IPSEC_SBINDIR="${IPSEC_SBINDIR:-@IPSEC_SBINDIR@}"
 unset PLUTO_OPTIONS
