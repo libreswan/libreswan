@@ -817,7 +817,7 @@ static void unshare_connection(struct connection *c, struct connection *t/*empla
  * not be determined.
  */
 
-#define EXTRACT_AFI(LEVEL, NAME, TYPE, FIELD)				\
+#define EXTRACT_AFI(NAME, TYPE, FIELD)				\
 	{								\
 		const struct ip_info *wfi = TYPE##_type(&FIELD);	\
 		if (*afi == NULL) {					\
@@ -828,7 +828,7 @@ static void unshare_connection(struct connection *c, struct connection *t/*empla
 			jam_##TYPE(&buf, &FIELD);			\
 		} else if (wfi != NULL && wfi != *afi) {		\
 			TYPE##_buf tb;					\
-			return diag(LEVEL" address family %s from %s%s=%s conflicts with %s%s=%s", \
+			return diag("host address family %s from %s%s=%s conflicts with %s%s=%s", \
 				    (*afi)->ip_name, leftright, name, value, \
 				    w->leftright, NAME, str_##TYPE(&FIELD, &tb)); \
 		}							\
@@ -842,8 +842,8 @@ static diag_t extract_host_afi(const struct whack_message *wm,
 	const char *name;
 	char value[sizeof(selector_buf)];
 	FOR_EACH_THING(w, &wm->left, &wm->right) {
-		EXTRACT_AFI("host", "", address, w->host_addr);
-		EXTRACT_AFI("host", "nexthop", address, w->host_nexthop);
+		EXTRACT_AFI(""/*left""=,right""=*/, address, w->host_addr);
+		EXTRACT_AFI("nexthop", address, w->host_nexthop);
 	}
 	return NULL;
 }
@@ -2291,7 +2291,8 @@ static bool extract_connection(const struct whack_message *wm,
 	 */
 
 	const struct ip_info *child_afi[LEFT_RIGHT_ROOF] = {0};
-	const char *source[LEFT_RIGHT_ROOF] = {0};
+	const char *child_source[LEFT_RIGHT_ROOF] = {0};
+	const char *child_value[LEFT_RIGHT_ROOF] = {0};
 	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
 		const struct whack_end *src = whack_ends[this];
 		struct end *spd_end = c->end[this].child.spd;
@@ -2318,7 +2319,8 @@ static bool extract_connection(const struct whack_message *wm,
 			spd_end->has_client = true;
 			spd_end->client = selector_from_subnet_protoport(subnet,
 									 src->protoport);
-			source[this] = "subnet";
+			child_source[this] = "subnet";
+			child_value[this] = src->client;
 		} else if (src->sourceip.is_set) {
 			/*
 			 * No subnet=, construct one using .sourceip
@@ -2337,7 +2339,8 @@ static bool extract_connection(const struct whack_message *wm,
 			spd_end->has_client = true;
 			ip_subnet subnet = subnet_from_address(src->sourceip);
 			spd_end->client = selector_from_subnet_protoport(subnet, src->protoport);
-			source[this] = "sourceip";
+			child_source[this] = "sourceip";
+			child_value[this] = "...";
 		} else if (src->protoport.is_set) {
 			/*
 			 * There's no client subnet _yet_ there is a client
@@ -2353,7 +2356,8 @@ static bool extract_connection(const struct whack_message *wm,
 			    c->name, src->leftright);
 			spd_end->client = selector_from_subnet_protoport(host_afi->subnet.all,
 									 src->protoport);
-			source[this] = "host";
+			child_source[this] = "";/*i.e., left""= right""=*/
+			child_value[this] = "...";
 		} else {
 			dbg("%s %s child spd unset",
 			    c->name, src->leftright);
@@ -2362,13 +2366,31 @@ static bool extract_connection(const struct whack_message *wm,
 		child_afi[this] = selector_info(spd_end->client); /* could be NULL */
 	}
 
-	if (child_afi[LEFT_END] != NULL && child_afi[RIGHT_END] != NULL &&
-	    child_afi[LEFT_END] != child_afi[RIGHT_END]) {
-		llog(RC_FATAL, c->logger,
-		     ADD_FAILED_PREFIX"address family %s from left%s conflicts with right%s",
-		     child_afi[LEFT_END]->ip_name,
-		     source[LEFT_END], source[RIGHT_END]);
-		return false;
+	if (child_afi[LEFT_END] != NULL && child_afi[RIGHT_END] != NULL) {
+		if (child_afi[LEFT_END] != child_afi[RIGHT_END]) {
+			/* XXX: not really client */
+			llog(RC_FATAL, c->logger,
+			     ADD_FAILED_PREFIX"address family %s from left%s=%s conflicts with right%s=%s",
+			     child_afi[LEFT_END]->ip_name,
+			     child_source[LEFT_END], child_value[LEFT_END],
+			     child_source[RIGHT_END], child_value[RIGHT_END]);
+			return false;
+		}
+	} else if (child_afi[LEFT_END] != NULL || child_afi[RIGHT_END] != NULL) {
+		/*
+		 * One is using IKE one is using Child.  Should set
+		 * child imply unset child instead?
+		 */
+		if ((child_afi[LEFT_END] != NULL && child_afi[LEFT_END] != host_afi) ||
+		    (child_afi[RIGHT_END] != NULL && child_afi[RIGHT_END] != host_afi)) {
+			llog(RC_FATAL, c->logger,
+			     ADD_FAILED_PREFIX"host protocol %s conflicts with client protocol %s",
+			     host_afi->ip_name,
+			     (child_afi[LEFT_END] != NULL ? child_afi[LEFT_END]->ip_name :
+			      child_afi[RIGHT_END] != NULL ? child_afi[RIGHT_END]->ip_name :
+			      "???"));
+			return false;
+		}
 	}
 
 	/*
