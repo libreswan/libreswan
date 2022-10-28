@@ -1024,7 +1024,7 @@ static stf_status main_inR2_outI3_continue(struct state *st,
 		 * allows build_id_payload() to work for both phases.
 		 */
 		shunk_t id_b;
-		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->spd.this, &id_b);
+		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->spd->local, &id_b);
 		if (!out_struct(&id_hd,
 				&isakmp_ipsec_identification_desc,
 				rbody,
@@ -1253,7 +1253,7 @@ stf_status main_inI3_outR3(struct state *st, struct msg_digest *md)
 		 * allows build_id_payload() to work for both phases.
 		 */
 		shunk_t id_b;
-		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->spd.this, &id_b);
+		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->spd->local, &id_b);
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 					&rbody, &r_id_pbs) ||
 		    !out_hunk(id_b, &r_id_pbs, "my identity")) {

@@ -201,12 +201,12 @@ void add_revival_if_needed(struct state *st)
 		 */
 		dbg("updating connection for remote port %d", st->st_remote_endpoint.hport);
 		dbg("%s() %s.host_port: %u->%u (that)", __func__, c->remote->config->leftright,
-		    c->spd.that.host->port, st->st_remote_endpoint.hport);
-		c->spd.that.host->port = st->st_remote_endpoint.hport;
+		    c->spd->remote.host->port, st->st_remote_endpoint.hport);
+		c->spd->remote.host->port = st->st_remote_endpoint.hport;
 		/*
 		 * Need to force the host to use the encap port.
 		 */
-		c->spd.that.host->encap =
+		c->spd->remote.host->encap =
 			(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED ||
 			 st->st_interface->io->protocol == &ip_protocol_tcp);
 	}

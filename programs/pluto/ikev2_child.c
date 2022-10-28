@@ -85,7 +85,7 @@ static bool compute_v2_child_ipcomp_cpi(struct child_sa *larval_child)
 	const struct connection *cc = larval_child->sa.st_connection;
 	pexpect(larval_child->sa.st_ipcomp.inbound.spi == 0);
 	/* CPI is stored in network low order end of an ipsec_spi_t */
-	ipsec_spi_t n_ipcomp_cpi = get_ipsec_cpi(&cc->spd,
+	ipsec_spi_t n_ipcomp_cpi = get_ipsec_cpi(cc->spd,
 						 larval_child->sa.st_logger);
 	ipsec_spi_t h_ipcomp_cpi = (uint16_t)ntohl(n_ipcomp_cpi);
 	dbg("calculated compression CPI=%d", h_ipcomp_cpi);
@@ -107,7 +107,7 @@ static bool compute_v2_child_spi(struct child_sa *larval_child)
 	pexpect(proto_info->inbound.spi == 0);
 	proto_info->inbound.spi = get_ipsec_spi(0 /* avoid this # */,
 					    proto_info->protocol,
-					    &cc->spd,
+					    cc->spd,
 					    larval_child->sa.st_logger);
 	return proto_info->inbound.spi != 0;
 }
@@ -436,7 +436,7 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 	struct connection *cc = larval_child->sa.st_connection;
 
 	if (request_md->chain[ISAKMP_NEXT_v2CP] != NULL) {
-		if (cc->spd.that.has_lease) {
+		if (cc->spd->remote.has_lease) {
 			if (!emit_v2CP_response(larval_child, outpbs)) {
 				return false;
 			}
@@ -628,8 +628,8 @@ void llog_v2_child_sa_established(struct ike_sa *ike UNUSED, struct child_sa *ch
 		}
 		jam(buf, " using "PRI_SO"; ", pri_so(child->sa.st_clonedfrom));
 		/* log Child SA Traffic Selector details for admin's pleasure */
-		const struct traffic_selector a = traffic_selector_from_end(&c->spd.this, "this");
-		const struct traffic_selector b = traffic_selector_from_end(&c->spd.that, "that");
+		const struct traffic_selector a = traffic_selector_from_end(&c->spd->local, "this");
+		const struct traffic_selector b = traffic_selector_from_end(&c->spd->remote, "that");
 		range_buf ba, bb;
 		jam(buf, "IPsec %s [%s:%d-%d %d] -> [%s:%d-%d %d]",
 		    (c->policy & POLICY_TUNNEL ? "tunnel" : "transport"),

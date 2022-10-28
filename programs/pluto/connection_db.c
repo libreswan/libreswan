@@ -106,7 +106,7 @@ static void jam_spd_route(struct jambuf *buf, const struct spd_route *sr)
 {
 	jam_connection(buf, sr->connection);
 	jam_string(buf, " ");
-	jam_selectors(buf, &sr->this.client, &sr->that.client);
+	jam_selectors(buf, &sr->local.client, &sr->remote.client);
 }
 
 static void jam_spd_route_remote_client(struct jambuf *buf, const struct spd_route *sr)
@@ -119,7 +119,7 @@ static hash_t hash_spd_route_remote_client(const ip_selector *sr)
 	return hash_thing(sr->bytes, zero_hash);
 }
 
-HASH_TABLE(spd_route, remote_client, .that.client, STATE_TABLE_SIZE);
+HASH_TABLE(spd_route, remote_client, .remote.client, STATE_TABLE_SIZE);
 
 HASH_DB(spd_route,
 	&spd_route_remote_client_hash_table);
@@ -148,7 +148,7 @@ static struct list_head *spd_route_filter_head(struct spd_route_filter *filter)
 static bool matches_spd_route_filter(struct spd_route *spd, struct spd_route_filter *filter)
 {
 	if (filter->remote_client_range != NULL &&
-	    !selector_range_eq_selector_range(*filter->remote_client_range, spd->that.client)) {
+	    !selector_range_eq_selector_range(*filter->remote_client_range, spd->remote.client)) {
 		return false;
 	}
 	return true;
@@ -189,20 +189,20 @@ bool next_spd_route(enum chrono order, struct spd_route_filter *filter)
 struct spd_route *clone_spd_route(struct connection *c, where_t where)
 {
 	/* always first!?! */
-	struct spd_route *sr = clone_thing(c->spd, where->func);
+	struct spd_route *sr = clone_thing(*c->spd, where->func);
 	sr->spd_next = NULL;
 	pexpect(sr->connection == c);
 	/* unshare pointers */
 	c->local->host.id.name = null_shunk;
 	c->remote->host.id.name = null_shunk;
-	sr->this.virt = NULL;
-	sr->that.virt = NULL;
+	sr->local.virt = NULL;
+	sr->remote.virt = NULL;
 
 	zero_thing(sr->hash_table_entries); /* keep init_list_entry() happy */
 	init_db_spd_route(sr);
 
-	unshare_connection_spd_end(c, &sr->this);
-	unshare_connection_spd_end(c, &sr->that);
+	unshare_connection_spd_end(c, &sr->local);
+	unshare_connection_spd_end(c, &sr->remote);
 
 	add_db_spd_route(sr);
 	return sr;
@@ -231,10 +231,10 @@ static void finish_connection(struct connection *c, const char *name,
 	/* logger is GO! */
 
 	/* needed by jam_spd_route_*() */
-	c->spd.connection = c;
+	c->spd->connection = c;
 
 	init_db_connection(c);
-	init_db_spd_route(&c->spd);
+	init_db_spd_route(c->spd);
 
 	/*
 	 * Update counter, set serialno and add to serialno list.
@@ -274,11 +274,12 @@ struct connection *alloc_connection(const char *name, where_t where)
 	 */
 
 	struct config *config = alloc_thing(struct config, "root config");
+	c->spd = alloc_thing(struct spd_route, where->func);
 	c->config = c->root_config = config;
 	c->local = &c->end[LEFT_END]; /* this; clone must update */
 	c->remote = &c->end[RIGHT_END]; /* that; clone must update */
-	c->local->child.spd = &c->spd.this;
-	c->remote->child.spd = &c->spd.that;
+	c->local->child.spd = &c->spd->local;
+	c->remote->child.spd = &c->spd->remote;
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		/* "left" or "right" */
@@ -315,21 +316,19 @@ static void unshare_connection_spd(struct connection *c, where_t where)
 {
 	struct spd_route *head;
 	struct spd_route **dst = &head;
-	struct spd_route *src = &c->spd;
+	struct spd_route *src = c->spd;
 	while (src != NULL) {
 		(*dst) = clone_thing(*src, where->func);
 		zero_thing((*dst)->hash_table_entries); /* keep init_list_entry() happy */
 		(*dst)->connection = c;
 		(*dst)->spd_next = NULL;
-		unshare_connection_spd_end(c, &(*dst)->this);
-		unshare_connection_spd_end(c, &(*dst)->that);
+		unshare_connection_spd_end(c, &(*dst)->local);
+		unshare_connection_spd_end(c, &(*dst)->remote);
 		/* step forward */
 		src = src->spd_next;
 		dst = &(*dst)->spd_next;
 	}
-	/* scribble first clone over embedded spd */
-	c->spd = *head;
-	pfree(head);
+	c->spd = head;
 }
 
 struct connection *clone_connection(const char *name, struct connection *t, where_t where)
@@ -341,8 +340,8 @@ struct connection *clone_connection(const char *name, struct connection *t, wher
 	/* point local pointers at local structure */
 	c->local = &c->end[t->local->config->index];
 	c->remote = &c->end[t->remote->config->index];
-	c->local->child.spd = &c->spd.this;
-	c->remote->child.spd = &c->spd.that;
+	c->local->child.spd = &c->spd->local;
+	c->remote->child.spd = &c->spd->remote;
 
 	finish_connection(c, name, t->serialno, where);
 	return c;

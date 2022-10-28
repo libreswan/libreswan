@@ -439,9 +439,9 @@ void update_host_pairs(struct connection *c)
 			 * If the client is the peer, also update the
 			 * client info
 			 */
-			if (!d->spd.that.has_client) {
-				d->spd.that.client = selector_from_address(new_addr);
-				rehash_db_spd_route_remote_client(&d->spd);
+			if (!d->spd->remote.has_client) {
+				d->spd->remote.client = selector_from_address(new_addr);
+				rehash_db_spd_route_remote_client(d->spd);
 			}
 
 			d->remote->host.addr = new_addr;

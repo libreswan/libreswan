@@ -745,12 +745,12 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	struct state *isakmp_sa = state_by_serialno(st->st_clonedfrom);
 	struct connection *c = st->st_connection;
 	pb_stream rbody;
-	bool has_client = (c->spd.this.has_client ||
-			   c->spd.that.has_client ||
-			   c->spd.this.client.ipproto != 0 ||
-			   c->spd.that.client.ipproto != 0 ||
-			   c->spd.this.client.hport != 0 ||
-			   c->spd.that.client.hport != 0);
+	bool has_client = (c->spd->local.has_client ||
+			   c->spd->remote.has_client ||
+			   c->spd->local.client.ipproto != 0 ||
+			   c->spd->remote.client.ipproto != 0 ||
+			   c->spd->local.client.hport != 0 ||
+			   c->spd->remote.client.hport != 0);
 
 	if (isakmp_sa == NULL) {
 		/* phase1 state got deleted while cryptohelper was working */
@@ -836,12 +836,12 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	/* [ IDci, IDcr ] out */
 	if (has_client) {
 		/* IDci (we are initiator), then IDcr (peer is responder) */
-		if (!emit_subnet_id(selector_subnet(c->spd.this.client),
-				    c->spd.this.client.ipproto,
-				    c->spd.this.client.hport, &rbody) ||
-		    !emit_subnet_id(selector_subnet(c->spd.that.client),
-				    c->spd.that.client.ipproto,
-				    c->spd.that.client.hport, &rbody)) {
+		if (!emit_subnet_id(selector_subnet(c->spd->local.client),
+				    c->spd->local.client.ipproto,
+				    c->spd->local.client.hport, &rbody) ||
+		    !emit_subnet_id(selector_subnet(c->spd->remote.client),
+				    c->spd->remote.client.ipproto,
+				    c->spd->remote.client.hport, &rbody)) {
 			return STF_INTERNAL_ERROR;
 		}
 	}
@@ -979,7 +979,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 
 		/*
 		 * if there is a NATOA payload, then use it as
-		 *    &st->st_connection->spd.that.client, if the type
+		 *    &st->st_connection->spd->remote.client, if the type
 		 * of the ID was FQDN
 		 *
 		 * We actually do NATOA calculation again later on,
@@ -1076,14 +1076,14 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 				 * as we can.
 				 */
 
-				struct spd_end local = c->spd.this;
+				struct spd_end local = c->spd->local;
 				local.client = *local_client;
 				local.has_client = !selector_eq_address(*local_client, local.host->addr);
 				jam_end(buf, &local, NULL, LEFT_END, LEMPTY, oriented(c));
 
 				jam(buf, "...");
 
-				struct spd_end remote = c->spd.that;
+				struct spd_end remote = c->spd->remote;
 				remote.client = *remote_client;
 				remote.has_client = !selector_eq_address(*remote_client, remote.host->addr);
 				jam_end(buf, &remote, NULL, RIGHT_END, LEMPTY, oriented(c));
@@ -1121,30 +1121,30 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 		/* fill in the client's true ip address/subnet */
 		dbg("client: %s  port wildcard: %s  virtual: %s",
-		    bool_str(c->spd.that.has_client),
+		    bool_str(c->spd->remote.has_client),
 		    bool_str(c->remote->child.config->protoport.has_port_wildcard),
 		    bool_str(is_virtual_connection(c)));
 
 		/* fill in the client's true port */
 		if (c->remote->child.config->protoport.has_port_wildcard) {
 			int port = selector_port(*remote_client).hport;
-			update_selector_hport(&c->spd.that.client, port);
+			update_selector_hport(&c->spd->remote.client, port);
 		}
 
 		if (is_virtual_connection(c)) {
 
-			c->spd.that.client = *remote_client;
-			rehash_db_spd_route_remote_client(&c->spd);
-			c->spd.that.has_client = true;
-			virtual_ip_delref(&c->spd.that.virt);
+			c->spd->remote.client = *remote_client;
+			rehash_db_spd_route_remote_client(c->spd);
+			c->spd->remote.has_client = true;
+			virtual_ip_delref(&c->spd->remote.virt);
 
 			if (selector_eq_address(*remote_client, c->remote->host.addr)) {
-				c->spd.that.has_client = false;
+				c->spd->remote.has_client = false;
 			}
 
 			LSWDBGP(DBG_BASE, buf) {
 				jam(buf, "setting phase 2 virtual values to ");
-				jam_end(buf, &c->spd.that, NULL, LEFT_END, LEMPTY, oriented(c));
+				jam_end(buf, &c->spd->remote, NULL, LEFT_END, LEMPTY, oriented(c));
 			}
 		}
 	}
@@ -1383,10 +1383,10 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 	LLOG_JAMBUF(RC_LOG, st->st_logger, buf) {
 		jam(buf, "    us: ");
 		const struct connection *c = st->st_connection;
-		const struct spd_route *sr = &c->spd;
-		jam_end(buf, &sr->this, &sr->that, LEFT_END, LEMPTY, oriented(c));
+		const struct spd_route *sr = c->spd;
+		jam_end(buf, &sr->local, &sr->remote, LEFT_END, LEMPTY, oriented(c));
 		jam(buf, "  them: ");
-		jam_end(buf, &sr->that, &sr->this, RIGHT_END, LEMPTY, oriented(c));
+		jam_end(buf, &sr->remote, &sr->local, RIGHT_END, LEMPTY, oriented(c));
 	}
 
 	/**** finish reply packet: Nr [, KE ] [, IDci, IDcr ] ****/
@@ -1555,9 +1555,9 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 
 			/* IDci (we are initiator) */
 			if (!check_net_id(&IDci->payload.ipsec_id, &IDci->pbs,
-					  c->spd.this.client.ipproto,
-					  c->spd.this.client.hport,
-					  selector_subnet(st->st_connection->spd.this.client),
+					  c->spd->local.client.ipproto,
+					  c->spd->local.client.hport,
+					  selector_subnet(st->st_connection->spd->local.client),
 					  "our client", st->st_logger))
 				return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 
@@ -1568,15 +1568,15 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 			/* IDcr (responder is peer) */
 
 			if (!check_net_id(&IDcr->payload.ipsec_id, &IDcr->pbs,
-					  c->spd.that.client.ipproto,
-					  c->spd.that.client.hport,
-					  selector_subnet(st->st_connection->spd.that.client),
+					  c->spd->remote.client.ipproto,
+					  c->spd->remote.client.hport,
+					  selector_subnet(st->st_connection->spd->remote.client),
 					  "peer client", st->st_logger))
 				return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 
 			/*
 			 * if there is a NATOA payload, then use it as
-			 *    &st->st_connection->spd.that.client, if the type
+			 *    &st->st_connection->spd->remote.client, if the type
 			 * of the ID was FQDN
 			 */
 			if ((st->hidden_variables.st_nat_traversal &
@@ -1585,13 +1585,13 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 			     NAT_T_WITH_NATOA) &&
 			    IDcr->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
 				shunk_t idfqdn = pbs_in_left_as_shunk(&IDcr->pbs);
-				st->st_connection->spd.that.client =
+				st->st_connection->spd->remote.client =
 					selector_from_address(st->hidden_variables.st_nat_oa);
 				LLOG_JAMBUF(RC_LOG_SERIOUS, st->st_logger, buf) {
 					jam(buf, "IDcr was FQDN: ");
 					jam_sanitized_hunk(buf, idfqdn);
 					jam(buf, ", using NAT_OA=");
-					jam_selector_subnet(buf, &st->st_connection->spd.that.client);
+					jam_selector_subnet(buf, &st->st_connection->spd->remote.client);
 					jam(buf, " as IDcr");
 				}
 			}
@@ -1600,8 +1600,8 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 			 * No IDci, IDcr: we must check that the
 			 * defaults match our proposal.
 			 */
-			if (!selector_eq_address(c->spd.this.client, c->local->host.addr) ||
-			    !selector_eq_address(c->spd.that.client, c->remote->host.addr)) {
+			if (!selector_eq_address(c->spd->local.client, c->local->host.addr) ||
+			    !selector_eq_address(c->spd->remote.client, c->remote->host.addr)) {
 				log_state(RC_LOG_SERIOUS, st,
 					  "IDci, IDcr payloads missing in message but default does not match proposal");
 				return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
@@ -1774,7 +1774,7 @@ static bool is_virtual_net_used(struct connection *c,
 				continue;
 			}
 
-			if (!selector_overlaps_selector(*peer_net, d->spd.that.client)) {
+			if (!selector_overlaps_selector(*peer_net, d->spd->remote.client)) {
 				/*
 				 * For instance when PEER_NET is IPv6
 				 * and remote .client is IPv4 (but can
@@ -1809,7 +1809,7 @@ static bool is_virtual_net_used(struct connection *c,
 				llog(RC_LOG_SERIOUS, c->logger,
 				     "peer Virtual IP %s overlapping %s from "PRI_CONNECTION" is not supported by the kernel interface %s",
 				     str_selector_subnet(peer_net, &pcb),
-				     str_selector_subnet(&d->spd.that.client, &dcb),
+				     str_selector_subnet(&d->spd->remote.client, &dcb),
 				     pri_connection(d, &cbuf),
 				     kernel_ops->interface_name);
 				return true;
@@ -1822,7 +1822,7 @@ static bool is_virtual_net_used(struct connection *c,
 				     "peer Virtual IP %s overlapping %s from "PRI_CONNECTION" permitted by mutual consent (and kernel support)",
 				     str_selector_subnet(peer_net, &pcb),
 				     pri_connection(d, &cbuf),
-				     str_selector_subnet(&d->spd.that.client, &dcb));
+				     str_selector_subnet(&d->spd->remote.client, &dcb));
 				/*
 				 * Look for another overlap to report
 				 * on.
@@ -1843,7 +1843,7 @@ static bool is_virtual_net_used(struct connection *c,
 				     "peer Virtual IP %s overlapping %s fobidden by "PRI_CONNECTION" policy",
 				     str_selector_subnet(peer_net, &pcb),
 				     pri_connection(d, &cbuf),
-				     str_selector_subnet(&d->spd.that.client, &dcb));
+				     str_selector_subnet(&d->spd->remote.client, &dcb));
 			} else if (LIN(POLICY_OVERLAPIP, d->policy)) {
 				/* not D; must be C objecting */
 				connection_buf cbuf;
@@ -1852,7 +1852,7 @@ static bool is_virtual_net_used(struct connection *c,
 				     "policy forbids peer Virtual IP %s overlapping %s from "PRI_CONNECTION"",
 				     str_selector_subnet(peer_net, &pcb),
 				     pri_connection(d, &cbuf),
-				     str_selector_subnet(&d->spd.that.client, &dcb));
+				     str_selector_subnet(&d->spd->remote.client, &dcb));
 			} else {
 				/* must be both D and C objecting */
 				connection_buf cbuf;
@@ -1860,7 +1860,7 @@ static bool is_virtual_net_used(struct connection *c,
 				llog(RC_LOG_SERIOUS, c->logger,
 				     "peer Virtual IP %s overlapping %s from "PRI_CONNECTION" is forbidden (neither agrees)",
 				     str_selector_subnet(peer_net, &pcb),
-				     str_selector_subnet(&d->spd.that.client, &dcb),
+				     str_selector_subnet(&d->spd->remote.client, &dcb),
 				     pri_connection(d, &cbuf));
 			}
 
@@ -1935,7 +1935,7 @@ static struct connection *fc_try(const struct connection *c,
 
 		selectors_buf sb;
 		dbg("  fc_try: looking at %s",
-		    str_selectors(&d->spd.this.client, &d->spd.that.client, &sb));
+		    str_selectors(&d->spd->local.client, &d->spd->remote.client, &sb));
 
 		/*
 		 * ??? what should wildcards and pathlen default to?
@@ -1963,12 +1963,12 @@ static struct connection *fc_try(const struct connection *c,
 		unsigned remote_protocol = remote_client->ipproto;
 		int local_port = local_client->hport;
 		int remote_port = remote_client->hport;
-		if (!(d->spd.this.client.ipproto == local_protocol &&
-		      d->spd.that.client.ipproto == remote_protocol &&
-		      (d->spd.this.client.hport == 0 ||
-		       d->spd.this.client.hport == local_port) &&
+		if (!(d->spd->local.client.ipproto == local_protocol &&
+		      d->spd->remote.client.ipproto == remote_protocol &&
+		      (d->spd->local.client.hport == 0 ||
+		       d->spd->local.client.hport == local_port) &&
 		      (d->remote->child.config->protoport.has_port_wildcard ||
-		       d->spd.that.client.hport == remote_port))) {
+		       d->spd->remote.client.hport == remote_port))) {
 			continue;
 		}
 
@@ -1985,7 +1985,7 @@ static struct connection *fc_try(const struct connection *c,
 		 * If d has no peer client, remote_net must just have peer itself.
 		 */
 
-		for (const struct spd_route *sr = &d->spd;
+		for (const struct spd_route *sr = d->spd;
 		     best != d && sr != NULL; sr = sr->spd_next) {
 
 			if (DBGP(DBG_BASE)) {
@@ -1994,40 +1994,40 @@ static struct connection *fc_try(const struct connection *c,
 				DBG_log("  fc_try trying %s:%s:%d/%d -> %s:%d/%d%s vs %s:%s:%d/%d -> %s:%d/%d%s",
 					c->name,
 					str_selector_subnet_port(local_client, &s1),
-					c->spd.this.client.ipproto,
-					c->spd.this.client.hport,
+					c->spd->local.client.ipproto,
+					c->spd->local.client.hport,
 					str_selector_subnet_port(remote_client, &d1),
-					c->spd.that.client.ipproto,
-					c->spd.that.client.hport,
+					c->spd->remote.client.ipproto,
+					c->spd->remote.client.hport,
 					is_virtual_connection(c) ?
 					"(virt)" : "", d->name,
-					str_selector_subnet_port(&sr->this.client, &s3),
-					sr->this.client.ipproto,
-					sr->this.client.hport,
-					str_selector_subnet_port(&sr->that.client, &d3),
-					sr->that.client.ipproto,
-					sr->that.client.hport,
+					str_selector_subnet_port(&sr->local.client, &s3),
+					sr->local.client.ipproto,
+					sr->local.client.hport,
+					str_selector_subnet_port(&sr->remote.client, &d3),
+					sr->remote.client.ipproto,
+					sr->remote.client.hport,
 					is_virtual_sr(sr) ? "(virt)" : "");
 			}
 
-			if (!selector_range_eq_selector_range(sr->this.client, *local_client)) {
+			if (!selector_range_eq_selector_range(sr->local.client, *local_client)) {
 				if (DBGP(DBG_BASE)) {
 					selector_buf s1, s3;
 					DBG_log("   our client (%s) not in local_net (%s)",
-						str_selector_subnet_port(&sr->this.client, &s3),
+						str_selector_subnet_port(&sr->local.client, &s3),
 						str_selector_subnet_port(local_client, &s1));
 				}
 				continue;
 			}
 
-			if (sr->that.has_client) {
+			if (sr->remote.has_client) {
 
-				if (!selector_range_eq_selector_range(sr->that.client, *remote_client) &&
+				if (!selector_range_eq_selector_range(sr->remote.client, *remote_client) &&
 				    !is_virtual_sr(sr)) {
 					if (DBGP(DBG_BASE)) {
 						selector_buf d1, d3;
 						DBG_log("   their client (%s) not in same remote_net (%s)",
-							str_selector_subnet_port(&sr->that.client, &d3),
+							str_selector_subnet_port(&sr->remote.client, &d3),
 							str_selector_subnet_port(remote_client, &d1));
 					}
 					continue;
@@ -2035,12 +2035,12 @@ static struct connection *fc_try(const struct connection *c,
 
 				virtualwhy = check_virtual_net_allowed(d,
 								       selector_subnet(*remote_client),
-								       sr->that.host->addr);
+								       sr->remote.host->addr);
 
 				if (is_virtual_sr(sr) &&
 				    (virtualwhy != NULL ||
 				     is_virtual_net_used(d, remote_client,
-							 &sr->that.host->id))) {
+							 &sr->remote.host->id))) {
 					dbg("   virtual net not allowed");
 					continue;
 				}
@@ -2125,24 +2125,24 @@ static struct connection *fc_try_oppo(const struct connection *c,
 		unsigned remote_protocol = selector_protocol(*remote_client)->ipproto;
 		int local_port = hport(selector_port(*local_client));
 		int remote_port = hport(selector_port(*remote_client));
-		if (d->spd.this.client.ipproto != local_protocol ||
-			(d->spd.this.client.hport &&
-			 d->spd.this.client.hport != local_port) ||
-			d->spd.that.client.ipproto != remote_protocol ||
-			(d->spd.that.client.hport != remote_port &&
+		if (d->spd->local.client.ipproto != local_protocol ||
+			(d->spd->local.client.hport &&
+			 d->spd->local.client.hport != local_port) ||
+			d->spd->remote.client.ipproto != remote_protocol ||
+			(d->spd->remote.client.hport != remote_port &&
 			 !d->remote->child.config->protoport.has_port_wildcard))
 			continue;
 
 		/*
 		 * Opportunistic case:
-		 * local_net must be inside d->spd.this.client
-		 * and remote_net must be inside d->spd.that.client
+		 * local_net must be inside d->spd->local.client
+		 * and remote_net must be inside d->spd->remote.client
 		 * Note: this host_pair chain also has shunt
 		 * eroute conns (clear, drop), but they won't
 		 * be marked as opportunistic.
 		 */
 
-		for (const struct spd_route *sr = &d->spd;
+		for (const struct spd_route *sr = d->spd;
 		     sr != NULL; sr = sr->spd_next) {
 
 			if (DBGP(DBG_BASE)) {
@@ -2153,12 +2153,12 @@ static struct connection *fc_try_oppo(const struct connection *c,
 				DBG_log("  fc_try_oppo trying %s:%s -> %s vs %s:%s -> %s",
 					c->name, str_selector_subnet_port(local_client, &s1),
 					str_selector_subnet_port(remote_client, &d1),
-					d->name, str_selector_subnet_port(&sr->this.client, &s3),
-					str_selector_subnet_port(&sr->that.client, &d3));
+					d->name, str_selector_subnet_port(&sr->local.client, &s3),
+					str_selector_subnet_port(&sr->remote.client, &d3));
 			}
 
-			if (!selector_range_in_selector_range(*local_client, sr->this.client) ||
-			    !selector_range_in_selector_range(*remote_client, sr->that.client))
+			if (!selector_range_in_selector_range(*local_client, sr->local.client) ||
+			    !selector_range_in_selector_range(*remote_client, sr->remote.client))
 				continue;
 
 			/*
@@ -2223,7 +2223,7 @@ struct connection *find_v1_client_connection(struct connection *const c,
 		struct connection *unrouted = NULL;
 		int srnum = -1;
 
-		for (const struct spd_route *sr = &c->spd; unrouted == NULL && sr != NULL;
+		for (const struct spd_route *sr = c->spd; unrouted == NULL && sr != NULL;
 			sr = sr->spd_next) {
 			srnum++;
 
@@ -2231,22 +2231,22 @@ struct connection *find_v1_client_connection(struct connection *const c,
 				selector_buf s2;
 				selector_buf d2;
 				DBG_log("  concrete checking against sr#%d %s -> %s", srnum,
-					str_selector_subnet_port(&sr->this.client, &s2),
-					str_selector_subnet_port(&sr->that.client, &d2));
+					str_selector_subnet_port(&sr->local.client, &s2),
+					str_selector_subnet_port(&sr->remote.client, &d2));
 			}
 
 			unsigned local_protocol = selector_protocol(*local_client)->ipproto;
 			int local_port = selector_port(*local_client).hport;
 			unsigned remote_protocol = selector_protocol(*remote_client)->ipproto;
 			int remote_port = selector_port(*remote_client).hport;
-			if (selector_range_eq_selector_range(sr->this.client, *local_client) &&
-			    selector_range_eq_selector_range(sr->that.client, *remote_client) &&
-			    sr->this.client.ipproto == local_protocol &&
-			    (!sr->this.client.hport ||
-			     sr->this.client.hport == local_port) &&
-			    (sr->that.client.ipproto == remote_protocol) &&
-			    (!sr->that.client.hport ||
-			     sr->that.client.hport == remote_port)) {
+			if (selector_range_eq_selector_range(sr->local.client, *local_client) &&
+			    selector_range_eq_selector_range(sr->remote.client, *remote_client) &&
+			    sr->local.client.ipproto == local_protocol &&
+			    (!sr->local.client.hport ||
+			     sr->local.client.hport == local_port) &&
+			    (sr->remote.client.ipproto == remote_protocol) &&
+			    (!sr->remote.client.hport ||
+			     sr->remote.client.hport == remote_port)) {
 				if (routed(sr->routing))
 					return c;
 
@@ -2277,17 +2277,17 @@ struct connection *find_v1_client_connection(struct connection *const c,
 		 * look for an abstract connection to match
 		 */
 		ip_address local_address = unset_address;
-		for (const struct spd_route *sra = &c->spd;
+		for (const struct spd_route *sra = c->spd;
 		     sra != NULL && !address_is_specified(local_address);
 		     sra = sra->spd_next) {
-			FOR_EACH_HOST_PAIR_CONNECTION(sra->this.host->addr,
+			FOR_EACH_HOST_PAIR_CONNECTION(sra->local.host->addr,
 						      unset_address, ignore) {
-				local_address = sra->this.host->addr;
+				local_address = sra->local.host->addr;
 				selector_buf s2;
 				selector_buf d2;
 				DBG_log("  checking hostpair %s -> %s",
-					str_selector_subnet_port(&sra->this.client, &s2),
-					str_selector_subnet_port(&sra->that.client, &d2));
+					str_selector_subnet_port(&sra->local.client, &s2),
+					str_selector_subnet_port(&sra->remote.client, &d2));
 				break;
 			}
 		}

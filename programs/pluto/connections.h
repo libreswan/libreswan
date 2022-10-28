@@ -403,8 +403,8 @@ struct spd_end {
 
 struct spd_route {
 	struct spd_route *spd_next;
-	struct spd_end this;
-	struct spd_end that;
+	struct spd_end local;
+	struct spd_end remote;
 	struct connection *connection;
 
 	so_serial_t eroute_owner;
@@ -504,7 +504,7 @@ struct connection {
 	FILE *log_file;				/* possibly open FILE */
 	bool log_file_err;			/* only bitch once */
 
-	struct spd_route spd;
+	struct spd_route *spd;
 
 	/* internal fields: */
 
@@ -677,8 +677,8 @@ extern void connection_delete_unused_instance(struct connection **cp, struct sta
  * an eroute for an instance IFF the template is a /32 -> /32.  This
  * requires some special casing.
  */
-#define eclipsable(sr) (selector_contains_one_address((sr)->this.client) && \
-			selector_contains_one_address((sr)->that.client))
+#define eclipsable(sr) (selector_contains_one_address((sr)->local.client) && \
+			selector_contains_one_address((sr)->remote.client))
 struct spd_route *eclipsing(const struct spd_route *sr);
 
 /* print connection status */

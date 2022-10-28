@@ -144,7 +144,7 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 			if (IS_IKE_SA_ESTABLISHED(st))
 				log_state(RC_LOG, st, "initiate reauthentication of IKE SA");
 			initiate_v2_IKE_SA_INIT_request(c, st, policy, try, &inception,
-							HUNK_AS_SHUNK(c->spd.this.sec_label),
+							HUNK_AS_SHUNK(c->spd->local.sec_label),
 							/*background?*/false, st->st_logger);
 			break;
 #ifdef USE_IKEv1
@@ -152,11 +152,11 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 			if (policy & POLICY_AGGRESSIVE) {
 				aggr_outI1(st->st_logger->object_whackfd, c, st,
 					   policy, try, &inception,
-					   HUNK_AS_SHUNK(c->spd.this.sec_label));
+					   HUNK_AS_SHUNK(c->spd->local.sec_label));
 			} else {
 				main_outI1(st->st_logger->object_whackfd, c, st,
 					   policy, try, &inception,
-					   HUNK_AS_SHUNK(c->spd.this.sec_label));
+					   HUNK_AS_SHUNK(c->spd->local.sec_label));
 			}
 			break;
 #endif
@@ -200,7 +200,7 @@ void initialize_new_state(struct state *st,
 	passert(st->st_interface != NULL);
 	st->st_remote_endpoint = endpoint_from_address_protocol_port(c->remote->host.addr,
 								     c->interface->io->protocol,
-								     ip_hport(c->spd.that.host->port));
+								     ip_hport(c->spd->remote.host->port));
 	endpoint_buf eb;
 	dbg("in %s with remote endpoint set to %s",
 	    __func__, str_endpoint(&st->st_remote_endpoint, &eb));
@@ -208,13 +208,13 @@ void initialize_new_state(struct state *st,
 	st->st_policy = policy & ~POLICY_IPSEC_MASK;        /* clear bits */
 	st->st_try = try;
 
-	for (const struct spd_route *sr = &c->spd;
+	for (const struct spd_route *sr = c->spd;
 	     sr != NULL; sr = sr->spd_next) {
-		if (sr->this.host->config->xauth.client) {
-			if (sr->this.host->config->xauth.username != NULL) {
+		if (sr->local.host->config->xauth.client) {
+			if (sr->local.host->config->xauth.username != NULL) {
 				jam_str(st->st_xauth_username,
 					sizeof(st->st_xauth_username),
-					sr->this.host->config->xauth.username);
+					sr->local.host->config->xauth.username);
 				break;
 			}
 		}
@@ -238,7 +238,7 @@ void jam_child_sa_details(struct jambuf *buf, struct state *st)
 
 		if (nat)
 			dbg("NAT-T: NAT Traversal detected - their IKE port is '%d'",
-			     c->spd.that.host->port);
+			     c->spd->remote.host->port);
 
 		dbg("NAT-T: encaps is '%s'",
 		     c->encaps == yna_auto ? "auto" : bool_str(c->encaps == yna_yes));

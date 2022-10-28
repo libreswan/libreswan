@@ -1151,7 +1151,7 @@ bool ikev1_out_sa(pb_stream *outs,
 					 */
 					if (!ipcomp_cpi_generated) {
 						st->st_ipcomp.inbound.spi =
-							get_ipsec_cpi(&c->spd,
+							get_ipsec_cpi(c->spd,
 								      st->st_logger);
 						if (st->st_ipcomp.inbound.spi == 0)
 							goto fail; /* problem generating CPI */
@@ -1177,7 +1177,7 @@ bool ikev1_out_sa(pb_stream *outs,
 				if (spi_ptr != NULL) {
 					if (!*spi_generated) {
 						*spi_ptr = get_ipsec_spi(0, proto,
-									 &c->spd,
+									 c->spd,
 									 st->st_logger);
 						*spi_generated = true;
 					}
@@ -1647,23 +1647,22 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 	passert(c != NULL);
 
 	/* calculate the per-end policy that might apply */
-	const struct spd_route *spd;
 
-	for (spd = &c->spd; spd != NULL; spd = spd->spd_next) {
+	for (const struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
 		if (selection) {
 			/*
 			 * this is the initiator, we have proposed, they have answered,
 			 * and we must decide if they proposed what we wanted.
 			 */
-			xauth_init |= spd->this.host->config->xauth.client;
-			xauth_resp |= spd->this.host->config->xauth.server;
+			xauth_init |= spd->local.host->config->xauth.client;
+			xauth_resp |= spd->local.host->config->xauth.server;
 		} else {
 			/*
 			 * this is the responder, they have proposed to us, what
 			 * are we willing to be?
 			 */
-			xauth_init |= spd->this.host->config->xauth.server;
-			xauth_resp |= spd->this.host->config->xauth.client;
+			xauth_init |= spd->local.host->config->xauth.server;
+			xauth_resp |= spd->local.host->config->xauth.client;
 		}
 	}
 
@@ -3378,7 +3377,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 					      &st->st_ah,
 					      &isakmp_ah_transform_desc,
 					      &ah_trans_pbs,
-					      &c->spd,
+					      c->spd,
 					      st->st_logger);
 			}
 
@@ -3391,7 +3390,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 					      &st->st_esp,
 					      &isakmp_esp_transform_desc,
 					      &esp_trans_pbs,
-					      &c->spd,
+					      c->spd,
 					      st->st_logger);
 			}
 
@@ -3404,7 +3403,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 					      &st->st_ipcomp,
 					      &isakmp_ipcomp_transform_desc,
 					      &ipcomp_trans_pbs,
-					      &c->spd,
+					      c->spd,
 					      st->st_logger);
 			}
 

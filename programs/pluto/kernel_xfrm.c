@@ -935,13 +935,13 @@ static bool create_xfrm_migrate_sa(struct state *st,
 	};
 
 	const struct spd_end_info local = {
-		.end = &c->spd.this,
+		.end = &c->spd->local,
 		.endpoint = st->st_interface->local_endpoint,
 		.spi = proto_info->inbound.spi,
 	};
 
 	const struct spd_end_info remote = {
-		.end = &c->spd.that,
+		.end = &c->spd->remote,
 		.endpoint = st->st_remote_endpoint,
 		.spi = proto_info->outbound.spi,
 	};
@@ -968,7 +968,7 @@ static bool create_xfrm_migrate_sa(struct state *st,
 		.xfrm_dir = dir,
 		.proto = proto,
 		.encap_type = encap_type,
-		.reqid = reqid_esp(c->spd.reqid),
+		.reqid = reqid_esp(c->spd->reqid),
 		.tunnel = (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
 			   st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL),
 		.story = story->buf,	/* content will evolve */

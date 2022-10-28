@@ -1397,7 +1397,7 @@ void process_v1_packet(struct msg_digest *md)
 			}
 
 
-			const struct spd_end *this = &st->st_connection->spd.this;
+			const struct spd_end *this = &st->st_connection->spd->local;
 			esb_buf b;
 			dbg(" processing received isakmp_xchg_type %s; this is a%s%s%s%s",
 			    enum_show(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
@@ -2806,7 +2806,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		if (st->st_connection->remotepeertype == CISCO &&
 		    st->st_connection->nmconfigured) {
 			if (!do_command(st->st_connection,
-					&st->st_connection->spd,
+					st->st_connection->spd,
 					"disconnectNM",
 					st, st->st_logger))
 				dbg("sending disconnect to NM failed, you may need to do it manually");
@@ -2860,7 +2860,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		if (st->st_connection->remotepeertype == CISCO &&
 		    st->st_connection->nmconfigured) {
 			if (!do_command(st->st_connection,
-					&st->st_connection->spd,
+					st->st_connection->spd,
 					"disconnectNM",
 					st, st->st_logger))
 				dbg("sending disconnect to NM failed, you may need to do it manually");

@@ -218,12 +218,11 @@ static int whack_unroute_connection(struct connection *c,
 				    void *unused_arg UNUSED,
 				    struct logger *logger)
 {
-	const struct spd_route *sr;
 	int fail = 0;
 
 	passert(c != NULL);
 
-	for (sr = &c->spd; sr != NULL; sr = sr->spd_next) {
+	for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
 		if (sr->routing >= RT_ROUTED_TUNNEL)
 			fail++;
 	}
