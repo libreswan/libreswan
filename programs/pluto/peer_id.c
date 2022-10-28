@@ -49,7 +49,7 @@
  * This is to support certificates with SAN using wildcard, eg SAN
  * contains DNS:*.vpnservice.com where our leftid=*.vpnservice.com
  */
-static bool idr_wildmatch(const struct end *this, const struct id *idr, struct logger *logger)
+static bool idr_wildmatch(const struct spd_end *this, const struct id *idr, struct logger *logger)
 {
 	/* check if received IDr is a valid SAN of our cert */
 	/* cert_VerifySubjectAltName, if called, will [debug]log any errors */

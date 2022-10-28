@@ -149,7 +149,7 @@ struct child_end_config {
 	bool v1_config_subnet_specified;
 };
 
-struct end_config {
+struct spd_end_config {
 	enum left_right index;
 	const char *leftright;
 	struct host_end_config host;
@@ -237,7 +237,7 @@ struct config {
 	bool send_vid_fake_strongswan;		/* Send the unversioned strongswan VID */
 	bool send_vid_cisco_unity;		/* Send Unity VID for cisco compatibility */
 
-	struct end_config end[LEFT_RIGHT_ROOF];
+	struct spd_end_config end[LEFT_RIGHT_ROOF];
 };
 
 /* There are two kinds of connections:
@@ -356,16 +356,16 @@ struct host_end {
 
 struct child_end {
 	const struct child_end_config *config;
-	struct end *spd;
+	struct spd_end *spd;
 };
 
 struct connection_end {
-	const struct end_config *config;
+	const struct spd_end_config *config;
 	struct host_end host;
 	struct child_end child;
 };
 
-struct /*spd_route*/end {
+struct spd_end {
 	ip_selector client;
 
 	/*
@@ -375,7 +375,7 @@ struct /*spd_route*/end {
 	 * Danger: for a connection instance, this point into the
 	 * parent connection.
 	 */
-	const struct end_config *config;
+	const struct spd_end_config *config;
 	struct host_end *host;
 
 	chunk_t sec_label;
@@ -403,8 +403,8 @@ struct /*spd_route*/end {
 
 struct spd_route {
 	struct spd_route *spd_next;
-	struct end this;
-	struct end that;
+	struct spd_end this;
+	struct spd_end that;
 	struct connection *connection;
 
 	so_serial_t eroute_owner;
@@ -574,13 +574,13 @@ extern bool same_peer_ids(const struct connection *c,
  * Largest left end looks like: client === host : port [ host_id ] ---
  * hop Note: if that==NULL, skip nexthop
  */
-void jam_end(struct jambuf *buf, const struct end *this, const struct end *that,
+void jam_end(struct jambuf *buf, const struct spd_end *this, const struct spd_end *that,
 	     enum left_right left_right, lset_t policy, bool filter_rnh);
 
 struct whack_message;   /* forward declaration of tag whack_msg */
 extern void add_connection(const struct whack_message *wm, struct logger *logger);
 
-void update_ends_from_this_host_addr(struct end *this, struct end *that);
+void update_ends_from_this_host_addr(struct spd_end *this, struct spd_end *that);
 extern void restart_connections_by_peer(struct connection *c, struct logger *logger);
 extern void flush_revival(const struct connection *c);
 
@@ -712,7 +712,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 					    bool preserve_ca,
 					    struct logger *logger);
 
-ip_port end_host_port(const struct end *end, const struct end *other);
+ip_port end_host_port(const struct spd_end *end, const struct spd_end *other);
 
 /*
  * For iterating over the connection DB.
@@ -778,6 +778,6 @@ void rehash_db_spd_route_remote_client(struct spd_route *sr);
 
 bool dpd_active_locally(const struct connection *c);
 
-ip_address spd_route_end_sourceip(enum ike_version ike_version, const struct end *end);
+ip_address spd_route_end_sourceip(enum ike_version ike_version, const struct spd_end *end);
 
 #endif

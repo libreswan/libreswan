@@ -166,7 +166,7 @@ struct tac_state {
 	const struct hash_desc *hash_algo;
 	realtime_t now;
 	struct logger *logger;
-	const struct end *remote;
+	const struct spd_end *remote;
 	const char *cert_origin;
 
 	/*

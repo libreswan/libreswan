@@ -16,7 +16,7 @@
 #ifndef IKEV1_MESSAGE_H
 #define IKEV1_MESSAGE_H
 
-struct isakmp_ipsec_id build_v1_id_payload(const struct end *end, shunk_t *body);
+struct isakmp_ipsec_id build_v1_id_payload(const struct spd_end *end, shunk_t *body);
 
 extern bool out_raw(const void *bytes, size_t len, pb_stream *outs, const char *name) MUST_USE_RESULT;
 

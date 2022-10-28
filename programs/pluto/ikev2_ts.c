@@ -27,7 +27,7 @@
 
 #include "log.h"
 #include "ikev2_ts.h"
-#include "connections.h"	/* for struct end */
+#include "connections.h"	/* for struct spd_end */
 #include "demux.h"
 #include "virtual_ip.h"
 #include "host_pair.h"
@@ -90,9 +90,9 @@ static const struct traffic_selector_payloads empty_traffic_selectors = {
 	},
 };
 
-struct ends {
-	const struct end *i;
-	const struct end *r;
+struct spd_ends {
+	const struct spd_end *i;
+	const struct spd_end *r;
 };
 
 enum fit {
@@ -138,7 +138,7 @@ void dbg_v2_ts(const struct traffic_selector *ts, const char *prefix, ...)
 }
 
 static void traffic_selector_to_end(const struct narrowed_traffic_selector *n,
-				    struct end *end, const char *story)
+				    struct spd_end *end, const char *story)
 {
 	range_buf rb;
 	dbg("%s() %s; protocol=%s port=%d range=%s",
@@ -153,7 +153,7 @@ static void traffic_selector_to_end(const struct narrowed_traffic_selector *n,
 /* For now, note the struct traffic_selector can contain
  * two selectors - an IPvX range and a sec_label
  */
-struct traffic_selector traffic_selector_from_end(const struct end *e, const char *what)
+struct traffic_selector traffic_selector_from_end(const struct spd_end *e, const char *what)
 {
 	struct traffic_selector ts = {
 		/*
@@ -193,7 +193,7 @@ struct traffic_selector traffic_selector_from_end(const struct end *e, const cha
 }
 
 /*
- * A struct end is converted to a struct traffic_selector.
+ * A struct spd_end is converted to a struct traffic_selector.
  *
  * This (currently) can contain both an IP range AND a SEC_LABEL,
  * which will get output here as two Traffic Selectors. The label is
@@ -569,7 +569,7 @@ static bool v2_parse_tsp(const struct msg_digest *md,
  * protocol (ts_proto).
  */
 
-static const struct ip_protocol *narrow_protocol(const struct end *end,
+static const struct ip_protocol *narrow_protocol(const struct spd_end *end,
 						 const struct traffic_selectors *tss,
 						 enum fit fit, unsigned index,
 						 indent_t indent)
@@ -613,11 +613,11 @@ static const struct ip_protocol *narrow_protocol(const struct end *end,
  *
  * Returns 0 (all ports), a specific port number, or -1 (no luck).
  *
- * Since 'struct end' only describes all-ports or a single port; can
+ * Since 'struct spd_end' only describes all-ports or a single port; can
  * only narrow to that.
  */
 
-static int narrow_port(const struct end *end,
+static int narrow_port(const struct spd_end *end,
 		       const struct traffic_selectors *tss,
 		       enum fit fit, unsigned index,
 		       indent_t indent)
@@ -680,7 +680,7 @@ static int narrow_port(const struct end *end,
  *       a single CIDR
  */
 
-static ip_range narrow_range(const struct end *end,
+static ip_range narrow_range(const struct spd_end *end,
 			     const struct traffic_selectors *tss,
 			     enum fit fit,
 			     unsigned index, indent_t indent)
@@ -726,7 +726,7 @@ static ip_range narrow_range(const struct end *end,
 }
 
 static bool narrow_ts_end(struct narrowed_traffic_selector *n,
-			  const struct end *end,
+			  const struct spd_end *end,
 			  const struct traffic_selectors *tss,
 			  enum fit fit, unsigned index,
 			  indent_t indent)
@@ -766,7 +766,7 @@ static bool narrow_ts_end(struct narrowed_traffic_selector *n,
 	return true;
 }
 
-static struct narrowed_traffic_selectors narrow_tss_ends(struct ends *ends,
+static struct narrowed_traffic_selectors narrow_tss_ends(struct spd_ends *ends,
 							 const struct traffic_selector_payloads *tsp,
 							 enum fit fit, unsigned index,
 							 indent_t indent)
@@ -1000,7 +1000,7 @@ static bool score_gt(const struct best_score *score, const struct best_score *be
 
 static struct best_score score_ends(enum fit fit,
 				    const struct connection *d,
-				    const struct ends *ends,
+				    const struct spd_ends *ends,
 				    const struct traffic_selector_payloads *tsp,
 				    indent_t indent)
 {
@@ -1361,7 +1361,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			     sr != NULL; sr = sr->spd_next) {
 
 				/* responder */
-				const struct ends ends = {
+				const struct spd_ends ends = {
 					.i = &sr->that,
 					.r = &sr->this,
 				};
@@ -1563,7 +1563,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			enum fit responder_fit = END_EQUALS_TS;
 
 			/* responder: THIS=RESPONDER; THAT=INITIATOR */
-			struct ends ends = {
+			struct spd_ends ends = {
 				.i = &t->spd.that,
 				.r = &t->spd.this,
 			};
@@ -1687,7 +1687,7 @@ bool v2_process_ts_response(struct child_sa *child,
 
 	/* initiator */
 	const struct spd_route *sra = &c->spd;
-	const struct ends e = {
+	const struct spd_ends e = {
 		.i = &sra->this,
 		.r = &sra->that,
 	};
@@ -1769,7 +1769,7 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 		return false;
 	}
 
-	const struct ends ends = {
+	const struct spd_ends ends = {
 		.i = &c->spd.that,
 		.r = &c->spd.this,
 	};

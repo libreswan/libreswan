@@ -928,25 +928,25 @@ static bool create_xfrm_migrate_sa(struct state *st,
 		return false;
 	}
 
-	struct end_info {
-		const struct end *end;
+	struct spd_end_info {
+		const struct spd_end *end;
 		const ip_endpoint endpoint;
 		const ipsec_spi_t spi;
 	};
 
-	const struct end_info local = {
+	const struct spd_end_info local = {
 		.end = &c->spd.this,
 		.endpoint = st->st_interface->local_endpoint,
 		.spi = proto_info->inbound.spi,
 	};
 
-	const struct end_info remote = {
+	const struct spd_end_info remote = {
 		.end = &c->spd.that,
 		.endpoint = st->st_remote_endpoint,
 		.spi = proto_info->outbound.spi,
 	};
 
-	const struct end_info *src, *dst;
+	const struct spd_end_info *src, *dst;
 
 	switch (dir) {
 	case XFRM_POLICY_OUT:
@@ -991,7 +991,7 @@ static bool create_xfrm_migrate_sa(struct state *st,
 	passert(endpoint_is_specified(st->st_mobike_local_endpoint) != endpoint_is_specified(st->st_mobike_remote_endpoint));
 
 	struct jambuf story_jb = ARRAY_AS_JAMBUF(story->buf);
-	const struct end_info *old_ei;
+	const struct spd_end_info *old_ei;
 	ip_endpoint new_ep;
 
 	if (endpoint_is_specified(st->st_mobike_local_endpoint)) {

@@ -55,7 +55,7 @@ static void swap_ends(struct connection *c)
 	/*
 	 * This swaps the SPD content, not pointers.
 	 */
-	struct end this = sr->this;
+	struct spd_end this = sr->this;
 	sr->this = sr->that;
 	sr->that = this;
 
@@ -80,7 +80,7 @@ static void swap_ends(struct connection *c)
 	}
 }
 
-static bool orient_new_iface_endpoint(struct connection *c, struct end *end)
+static bool orient_new_iface_endpoint(struct connection *c, struct spd_end *end)
 {
 	if (end->host->config->ikeport == 0) {
 		return false;
@@ -156,8 +156,8 @@ static bool orient_new_iface_endpoint(struct connection *c, struct end *end)
 	return true;
 }
 
-static bool end_matches_iface_endpoint(const struct end *end,
-				       const struct end *other_end,
+static bool end_matches_iface_endpoint(const struct spd_end *end,
+				       const struct spd_end *other_end,
 				       const struct iface_endpoint *ifp)
 {
 	ip_address host_addr = end->host->addr;
@@ -176,7 +176,7 @@ static bool end_matches_iface_endpoint(const struct end *end,
 	return endpoint_eq_endpoint(host_end, ifp->local_endpoint);
 }
 
-static void DBG_orient_end(const char *thisthat, struct end *end, struct end *other_end)
+static void DBG_orient_end(const char *thisthat, struct spd_end *end, struct spd_end *other_end)
 {
 	address_buf ab;
 	enum_buf enb;

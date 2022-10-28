@@ -24,7 +24,7 @@ struct msg_digest;
 struct dh_desc;
 struct ike_sa;
 struct state;
-struct end;
+struct spd_end;
 struct v2_incoming_fragments;
 
 /*
@@ -96,7 +96,7 @@ struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments
 
 bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md);
 
-struct ikev2_id build_v2_id_payload(const struct end *end, shunk_t *body,
+struct ikev2_id build_v2_id_payload(const struct spd_end *end, shunk_t *body,
 				    const char *what, struct logger *logger);
 
 #endif

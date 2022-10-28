@@ -1364,7 +1364,7 @@ static stf_status record_v2SK_message(struct pbs_out *msg,
 	return STF_OK;
 }
 
-struct ikev2_id build_v2_id_payload(const struct end *end, shunk_t *body,
+struct ikev2_id build_v2_id_payload(const struct spd_end *end, shunk_t *body,
 				    const char *what, struct logger *logger)
 {
 	struct ikev2_id id_header = {

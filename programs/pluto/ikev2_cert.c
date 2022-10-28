@@ -137,7 +137,7 @@ stf_status emit_v2CERT(const struct connection *c, struct pbs_out *outpbs)
 bool ikev2_send_cert_decision(const struct ike_sa *ike)
 {
 	const struct connection *c = ike->sa.st_connection;
-	const struct end *this = &c->spd.this;
+	const struct spd_end *this = &c->spd.this;
 
 	if (ike->sa.st_peer_wants_null) {
 		/* XXX: only ever true on responder */

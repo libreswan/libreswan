@@ -1076,14 +1076,14 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 				 * as we can.
 				 */
 
-				struct end local = c->spd.this;
+				struct spd_end local = c->spd.this;
 				local.client = *local_client;
 				local.has_client = !selector_eq_address(*local_client, local.host->addr);
 				jam_end(buf, &local, NULL, LEFT_END, LEMPTY, oriented(c));
 
 				jam(buf, "...");
 
-				struct end remote = c->spd.that;
+				struct spd_end remote = c->spd.that;
 				remote.client = *remote_client;
 				remote.has_client = !selector_eq_address(*remote_client, remote.host->addr);
 				jam_end(buf, &remote, NULL, RIGHT_END, LEMPTY, oriented(c));

@@ -319,7 +319,7 @@ struct virtual_ip *create_virtual(const char *string, struct logger *logger)
  * @param that end structure
  * @return bool True if we do
  */
-bool is_virtual_end(const struct end *that)
+bool is_virtual_end(const struct spd_end *that)
 {
 	return that->virt != NULL;
 }
@@ -358,7 +358,7 @@ bool is_virtual_sr(const struct spd_route *sr)
  * @param that end structure
  * @return bool True if we do
  */
-bool is_virtual_vhost(const struct end *that)
+bool is_virtual_vhost(const struct spd_end *that)
 {
 	return that->virt != NULL && (that->virt->flags & F_VIRTUAL_HOST) != 0;
 }

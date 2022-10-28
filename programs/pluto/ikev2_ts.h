@@ -21,7 +21,7 @@
 
 struct msg_digest;
 struct traffic_selector;
-struct end;
+struct spd_end;
 struct connection;
 struct child_sa;
 struct state;
@@ -54,7 +54,7 @@ bool v2_process_ts_response(struct child_sa *child,
 bool v2_process_request_ts_payloads(struct child_sa *child,
 				    const struct msg_digest *md);
 
-struct traffic_selector traffic_selector_from_end(const struct end *e, const char *what);
+struct traffic_selector traffic_selector_from_end(const struct spd_end *e, const char *what);
 
 stf_status emit_v2TS_payloads(struct pbs_out *outpbs, const struct child_sa *cst);
 

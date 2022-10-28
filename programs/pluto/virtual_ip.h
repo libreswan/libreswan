@@ -21,7 +21,7 @@
 
 struct connection;
 struct spd_route;
-struct end;
+struct spd_end;
 struct show;
 
 extern void show_virtual_private(struct show *s);
@@ -35,10 +35,10 @@ struct virtual_ip *virtual_ip_addref_where(struct virtual_ip *vip, where_t where
 void virtual_ip_delref_where(struct virtual_ip **vip, where_t where);
 #define virtual_ip_delref(IP) virtual_ip_delref_where(IP, HERE)
 
-extern bool is_virtual_end(const struct end *that);
+extern bool is_virtual_end(const struct spd_end *that);
 extern bool is_virtual_connection(const struct connection *c);
 extern bool is_virtual_sr(const struct spd_route *sr);
-extern bool is_virtual_vhost(const struct end *that);
+extern bool is_virtual_vhost(const struct spd_end *that);
 extern err_t check_virtual_net_allowed(const struct connection *c,
 				       const ip_subnet peer_net,
 				       const ip_address peers_addr);

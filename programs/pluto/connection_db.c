@@ -20,7 +20,7 @@
 #include "refcnt.h"
 #include "virtual_ip.h"		/* for virtual_ip_addref() */
 
-static void unshare_connection_spd_end(struct connection *c, struct end *e);
+static void unshare_connection_spd_end(struct connection *c, struct spd_end *e);
 
 /*
  * A table hashed by serialno.
@@ -288,7 +288,7 @@ struct connection *alloc_connection(const char *name, where_t where)
 			 NULL);
 		passert(leftright != NULL);
 		struct connection_end *end = &c->end[lr];
-		struct end_config *end_config = &config->end[lr];
+		struct spd_end_config *end_config = &config->end[lr];
 		end_config->leftright = leftright;
 		end_config->index = lr;
 		end_config->host.leftright = leftright;
@@ -304,7 +304,7 @@ struct connection *alloc_connection(const char *name, where_t where)
 	return c;
 }
 
-static void unshare_connection_spd_end(struct connection *c, struct end *e)
+static void unshare_connection_spd_end(struct connection *c, struct spd_end *e)
 {
 	e->virt = virtual_ip_addref(e->virt);
 	pexpect(e->sec_label.ptr == NULL);

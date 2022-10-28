@@ -941,8 +941,8 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 		bad_case(mode);
 	}
 
-	const struct end *src;
-	const struct end *dst;
+	const struct spd_end *src;
+	const struct spd_end *dst;
 	ip_selector src_route, dst_route;
 	switch (direction) {
 	case ENCAP_DIRECTION_INBOUND:
@@ -1679,8 +1679,8 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 		dbg("kernel: %s() pulling policies", __func__);
 		for (unsigned i = 0; i < 2; i++) {
 			bool inbound = (i > 0);
-			struct end *src = inbound ? &c->spd.that : &c->spd.this;
-			struct end *dst = inbound ? &c->spd.this : &c->spd.that;
+			struct spd_end *src = inbound ? &c->spd.that : &c->spd.this;
+			struct spd_end *dst = inbound ? &c->spd.this : &c->spd.that;
 			/* ignore result */
 			raw_policy(KERNEL_POLICY_OP_DELETE,
 				   (inbound ? KERNEL_POLICY_DIR_INBOUND :

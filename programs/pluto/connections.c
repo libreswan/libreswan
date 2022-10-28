@@ -140,7 +140,7 @@ void release_connection(struct connection *c)
 }
 
 /* Delete a connection */
-static void delete_end(struct end *e)
+static void delete_end(struct spd_end *e)
 {
 	free_chunk_content(&e->sec_label);
 	virtual_ip_delref(&e->virt);
@@ -388,7 +388,7 @@ void delete_every_connection(void)
 	}
 }
 
-ip_port end_host_port(const struct end *end, const struct end *other)
+ip_port end_host_port(const struct spd_end *end, const struct spd_end *other)
 {
 	unsigned port;
 	if (end->host->config->ikeport != 0) {
@@ -418,7 +418,7 @@ ip_port end_host_port(const struct end *end, const struct end *other)
 	return ip_hport(port);
 }
 
-void update_ends_from_this_host_addr(struct end *this, struct end *that)
+void update_ends_from_this_host_addr(struct spd_end *this, struct spd_end *that)
 {
 	address_buf hab;
 	dbg("updating ends from %s.host_addr %s",
@@ -531,7 +531,7 @@ void update_ends_from_this_host_addr(struct end *this, struct end *that)
  * result (length excludes NUL at end).
  */
 
-static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t policy)
+static void jam_end_host(struct jambuf *buf, const struct spd_end *this, lset_t policy)
 {
 	/* HOST */
 	if (!address_is_specified(this->host->addr)) {
@@ -600,7 +600,7 @@ static void jam_end_host(struct jambuf *buf, const struct end *this, lset_t poli
 	}
 }
 
-static void jam_end_client(struct jambuf *buf, const struct end *this,
+static void jam_end_client(struct jambuf *buf, const struct spd_end *this,
 			   lset_t policy, enum left_right left_right)
 {
 	/* left: [CLIENT/PROTOCOL:PORT===] or right: [===CLIENT/PROTOCOL:PORT] */
@@ -640,7 +640,7 @@ static void jam_end_client(struct jambuf *buf, const struct end *this,
 	}
 }
 
-static void jam_end_id(struct jambuf *buf, const struct end *this)
+static void jam_end_id(struct jambuf *buf, const struct spd_end *this)
 {
 	/* id, if different from host */
 	bool open_paren = false;
@@ -696,8 +696,8 @@ static void jam_end_id(struct jambuf *buf, const struct end *this)
 	}
 }
 
-static void jam_end_nexthop(struct jambuf *buf, const struct end *this,
-			    const struct end *that, bool skip_next_hop,
+static void jam_end_nexthop(struct jambuf *buf, const struct spd_end *this,
+			    const struct spd_end *that, bool skip_next_hop,
 			    enum left_right left_right)
 {
 	/* [---hop] */
@@ -714,7 +714,7 @@ static void jam_end_nexthop(struct jambuf *buf, const struct end *this,
 	}
 }
 
-void jam_end(struct jambuf *buf, const struct end *this, const struct end *that,
+void jam_end(struct jambuf *buf, const struct spd_end *this, const struct spd_end *that,
 	     enum left_right left_right, lset_t policy, bool skip_next_hop)
 {
 	switch (left_right) {
@@ -844,8 +844,8 @@ static diag_t extract_host_afi(const struct whack_message *wm,
 static diag_t extract_end(struct connection *c,
 			  const struct ip_info *host_afi,
 			  struct connection_end *end,
-			  struct end_config *end_config,
-			  struct end_config *other_end_config,
+			  struct spd_end_config *end_config,
+			  struct spd_end_config *other_end_config,
 			  const struct whack_message *wm,
 			  const struct whack_end *src,
 			  const struct whack_end *other_src,
@@ -2373,7 +2373,7 @@ static bool extract_connection(const struct whack_message *wm,
 	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
 		const struct whack_end *we = whack_ends[this];
 		const struct child_end_config *ce = c->end[this].child.config;
-		struct end *spd = c->end[this].child.spd;
+		struct spd_end *spd = c->end[this].child.spd;
 		if (ce->selectors != NULL) {
 			dbg("%s %s child spd from selectors",
 			    c->name, ce->leftright);
@@ -2498,7 +2498,7 @@ static bool extract_connection(const struct whack_message *wm,
 	 * determine the wild side (the side that likely won't
 	 * orient).
 	 */
-	struct end *wild_side =
+	struct spd_end *wild_side =
 		(!address_is_specified(c->local->host.addr) ||
 		 c->local->config->child.protoport.has_port_wildcard ||
 		 id_has_wildcards(&c->local->host.id) ? &c->spd.this : &c->spd.that);
@@ -3796,7 +3796,7 @@ static int connection_compare_qsort(const void *a, const void *b)
 				*(const struct connection *const *)b);
 }
 
-ip_address spd_route_end_sourceip(enum ike_version ike_version, const struct end *end)
+ip_address spd_route_end_sourceip(enum ike_version ike_version, const struct spd_end *end)
 {
 	if (address_is_specified(end->config->child.sourceip)) {
 		/* XXX: .is_set sufficient? needs unspec rejected */
