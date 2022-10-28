@@ -18,6 +18,9 @@
 #include "log.h"
 #include "hash_table.h"
 #include "refcnt.h"
+#include "virtual_ip.h"		/* for virtual_ip_addref() */
+
+static void unshare_connection_spd_end(struct connection *c, struct end *e);
 
 /*
  * A table hashed by serialno.
@@ -198,8 +201,8 @@ struct spd_route *clone_spd_route(struct connection *c, where_t where)
 	zero_thing(sr->hash_table_entries); /* keep init_list_entry() happy */
 	init_db_spd_route(sr);
 
-	unshare_connection_end(c, &sr->this);
-	unshare_connection_end(c, &sr->that);
+	unshare_connection_spd_end(c, &sr->this);
+	unshare_connection_spd_end(c, &sr->that);
 
 	add_db_spd_route(sr);
 	return sr;
@@ -301,11 +304,39 @@ struct connection *alloc_connection(const char *name, where_t where)
 	return c;
 }
 
+static void unshare_connection_spd_end(struct connection *c, struct end *e)
+{
+	e->virt = virtual_ip_addref(e->virt);
+	pexpect(e->sec_label.ptr == NULL);
+	e->host = &c->end[e->config->index].host;
+}
+
+static void unshare_connection_spd(struct connection *c, where_t where)
+{
+	struct spd_route *head;
+	struct spd_route **dst = &head;
+	struct spd_route *src = &c->spd;
+	while (src != NULL) {
+		(*dst) = clone_thing(*src, where->func);
+		zero_thing((*dst)->hash_table_entries); /* keep init_list_entry() happy */
+		(*dst)->connection = c;
+		(*dst)->spd_next = NULL;
+		unshare_connection_spd_end(c, &(*dst)->this);
+		unshare_connection_spd_end(c, &(*dst)->that);
+		/* step forward */
+		src = src->spd_next;
+		dst = &(*dst)->spd_next;
+	}
+	/* scribble first clone over embedded spd */
+	c->spd = *head;
+	pfree(head);
+}
+
 struct connection *clone_connection(const char *name, struct connection *t, where_t where)
 {
 	struct connection *c = clone_thing(*t, where->func);
 	zero_thing(c->hash_table_entries); /* keep init_list_entry() happy */
-	zero_thing(c->spd.hash_table_entries); /* keep init_list_entry() happy */
+	unshare_connection_spd(c, where);
 
 	/* point local pointers at local structure */
 	c->local = &c->end[t->local->config->index];

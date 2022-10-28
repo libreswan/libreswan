@@ -758,14 +758,6 @@ static char *format_connection(char *buf, size_t buf_len,
 	return buf;
 }
 
-/* spd_route's with end's get copied in xauth.c */
-void unshare_connection_end(struct connection *c, struct end *e)
-{
-	e->virt = virtual_ip_addref(e->virt);
-	pexpect(e->sec_label.ptr == NULL);
-	e->host = &c->end[e->config->index].host;
-}
-
 /*
  * unshare_connection: after a struct connection has been copied,
  * duplicate anything it references so that unshareable resources
@@ -788,15 +780,6 @@ static void unshare_connection(struct connection *c, struct connection *t/*empla
 	c->vti_iface = clone_str(c->vti_iface, "connection vti_iface");
 
 	c->interface = iface_endpoint_addref(t->interface);
-
-	for (struct spd_route *sr = &c->spd; sr != NULL; sr = sr->spd_next) {
-		unshare_connection_end(c, &sr->this);
-		unshare_connection_end(c, &sr->that);
-		sr->connection = c;
-		if (sr->spd_next != NULL) {
-			sr->spd_next = clone_thing(*sr->spd_next, "spd clone");
-		}
-	}
 
 	FOR_EACH_THING(end, c->local, c->remote) {
 		end->host.id = clone_id(&end->host.id, "unshare connection id");
