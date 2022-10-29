@@ -918,6 +918,8 @@ kvmplutotest	ikev2-rw-multiple-subnets-3			wip	gitgub:520
 kvmplutotest	ikev2-rw-multiple-subnets-4-mismatch		good
 kvmplutotest	ikev2-rw-multiple-subnets-4-mismatch-split-up	good
 kvmplutotest	ikev2-rw-multiple-subnets-5-mismatch-frst	good
+kvmplutotest	ikev2-rw-multiple-subnets-6-44in4		good
+kvmplutotest	ikev2-rw-multiple-subnets-6-44in6		wip
 kvmplutotest	ikev2-rw-multiple-rw-by-id			wip
 
 # transport mode related tests

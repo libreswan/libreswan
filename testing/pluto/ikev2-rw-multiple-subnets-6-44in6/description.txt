@@ -1,0 +1,1 @@
+IPv6 IKEv2 RW with two subnets=IPv4,IPv4
