@@ -806,8 +806,7 @@ static bool next_subnet(struct subnets *sn)
 		subnets++;
 	}
 
-	sn->error = ttosubnet_num(shunk2(eln, subnets - eln),
-				  sn->end->host_family,
+	sn->error = ttosubnet_num(shunk2(eln, subnets - eln), NULL/*any-AFI*/,
 				  HOST_PART_DIE6, &sn->subnet, sn->logger);
 	if (sn->error != NULL) {
 		starter_log(LOG_LEVEL_ERR,
@@ -901,10 +900,19 @@ static int starter_permutate_conns(int
 
 		sc.connalias = conn->name;
 
-		int fail = (*operation)(cfg, &sc);
-		if (fail != 0) {
-			/* Fail at first failure?  I think so. */
-			return fail;
+		const struct ip_info *left_afi = subnet_info(left.subnet);
+		const struct ip_info *right_afi = subnet_info(right.subnet);
+		if (left_afi == right_afi) {
+			int fail = (*operation)(cfg, &sc);
+			if (fail != 0) {
+				/* Fail at first failure?  I think so. */
+				return fail;
+			}
+		} else {
+			subnet_buf lb, rb;
+			starter_log(LOG_LEVEL_DEBUG, "skipping mismatched subnets %s %s",
+				    str_subnet(&left.subnet, &lb),
+				    str_subnet(&right.subnet, &rb));
 		}
 
 		/*
