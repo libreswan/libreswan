@@ -47,16 +47,12 @@ local-clean-base:
 local-install-base: $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATEDCONFFILES)
 	@: CONFDDIR - EXAMPLECONFDIR not EXAMPLECONFDDIR and sample suffix
 	@set -eu ; $(call install-directory, $(EXAMPLECONFDIR))
-	@set -eu ; $(foreach file, $(CONFFILES), \
-		$(call install-file, $(INSTCONFFLAGS) $($(file).INSTFLAGS), \
-			$(builddir)/$(file), $(EXAMPLECONFDIR)/$(file)-sample) ; \
-	)
+	@set -eu ; $(call install-file, $(INSTCONFFLAGS) $(ipsec.conf.INSTFLAGS),    $(builddir)/ipsec.conf,    $(DESTDIR)$(FINALEXAMPLECONFDIR)/$(notdir $(IPSEC_CONF))-sample)
+	@set -eu ; $(call install-file, $(INSTCONFFLAGS) $(ipsec.secrets.INSTFLAGS), $(builddir)/ipsec.secrets, $(DESTDIR)$(FINALEXAMPLECONFDIR)/$(notdir $(IPSEC_SECRETS))-sample)
 ifeq ($(INSTALL_CONFIGS),true)
 	@set -eu ; $(call install-directory, $(CONFDDIR), 0700)
-	@set -eu ; $(foreach file, $(CONFFILES), \
-		$(call install-missing-file, $(INSTCONFFLAGS) $($(file).INSTFLAGS), \
-			$(EXAMPLECONFDIR)/$(file)-sample, $(CONFDIR)/$(file)) ; \
-	)
+	@set -eu ; $(call install-missing-file, $(INSTCONFFLAGS) $(ipsec.conf.INSTFLAGS),    $(DESTDIR)$(EXAMPLECONFDIR)/$(notdir $(IPSEC_CONF))-sample,         $(DESTDIR)$(IPSEC_CONF))
+	@set -eu ; $(call install-missing-file, $(INSTCONFFLAGS) $(ipsec.secrets.INSTFLAGS), $(DESTDIR)$(FINALEXAMPLECONFDIR)/$(notdir $(IPSEC_SECRETS))-sample, $(DESTDIR)$(IPSEC_SECRETS))
 endif
 	@: CONFDSUBDIR
 	@set -eu ; $(call install-directory, $(EXAMPLECONFDDIR), 0700)

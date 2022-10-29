@@ -20,7 +20,7 @@ NotifyAccess=all
 WatchdogSec=@SD_WATCHDOGSEC@
 
 # Check configuration file
-ExecStartPre=@@LIBEXECDIR@@/addconn --config @@CONFFILE@@ --checkconfig
+ExecStartPre=@@LIBEXECDIR@@/addconn --config @@IPSEC_CONF@@ --checkconfig
 # Check for kernel modules
 ExecStartPre=@@LIBEXECDIR@@/_stackmanager start
 # Check for nss database status and migration
@@ -28,7 +28,7 @@ ExecStartPre=@@SBINDIR@@/ipsec --checknss
 # Check for nflog setup
 ExecStartPre=@@SBINDIR@@/ipsec --checknflog
 # Start the actual IKE daemon
-ExecStart=@@LIBEXECDIR@@/pluto @SD_PLUTO_OPTIONS@ --config @@CONFFILE@@ --nofork
+ExecStart=@@LIBEXECDIR@@/pluto @SD_PLUTO_OPTIONS@ --config @@IPSEC_CONF@@ --nofork
 # Enable for portexcludes support
 # ExecStartPost=@@LIBEXECDIR@@/portexcludes
 ExecStop=@@LIBEXECDIR@@/whack --shutdown

@@ -14,7 +14,7 @@ respawn
 pre-start script
     cd /
     . /etc/default/pluto
-    @@SBINDIR@@/ipsec addconn --config @@CONFFILE@@ --checkconfig
+    @@SBINDIR@@/ipsec addconn --config @@IPSEC_CONF@@ --checkconfig
 end script
 
 script
@@ -22,7 +22,7 @@ script
     @@SBINDIR@@/ipsec --checknss
     @@SBINDIR@@/ipsec --checknflog
     @@SBINDIR@@/ipsec _stackmanager start
-    @@LIBEXECDIR@@/pluto --config @@CONFFILE@@ --nofork $PLUTO_OPTIONS
+    @@LIBEXECDIR@@/pluto --config @@IPSEC_CONF@@ --nofork $PLUTO_OPTIONS
     if [ -f @@LIBEXECDIR@@/portexcludes ] ; then
 	@@LIBEXECDIR@@/portexcludes
     fi

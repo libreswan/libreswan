@@ -147,6 +147,22 @@ ifdef FINALMANDIR
 $(error ERROR: deprecated variable FINALMANDIR is set, use MANDIR instead)
 endif
 
+ifdef FINALCONFFILE
+$(error ERROR: deprecated variable FINALCONFFILE is set, use IPSEC_CONF instead)
+endif
+
+ifdef CONFFILE
+$(error ERROR: deprecated variable CONFFILE is set, use IPSEC_CONF instead)
+endif
+
+ifdef IPSEC_CONF
+$(error ERROR: deprecated variable IPSEC_CONF is set, use IPSEC_CONF instead)
+endif
+
+ifdef IPSEC_SECRETS_FILE
+$(error ERROR: deprecated variable IPSEC_SECRETS_FILE is set, use IPSEC_SECRETS instead)
+endif
+
 
 #
 # Options that really belong in CFLAGS (making for an intuitive way to
@@ -275,8 +291,15 @@ FINALRUNDIR ?= /run/pluto
 RUNDIR ?= $(DESTDIR)$(FINALRUNDIR)
 
 # final configuration file
-FINALCONFFILE ?= $(FINALSYSCONFDIR)/ipsec.conf
-CONFFILE ?= $(DESTDIR)$(FINALCONFFILE)
+IPSEC_CONF ?= $(FINALSYSCONFDIR)/ipsec.conf
+TRANSFORMS += 's:@@IPSEC_CONF@@:$(IPSEC_CONF):g'
+USERLAND_CFLAGS += -DIPSEC_CONF=\"$(IPSEC_CONF)\"
+
+# final secrets file
+IPSEC_SECRETS ?= $(FINALCONFDIR)/ipsec.secrets
+TRANSFORMS += 's:@@IPSEC_SECRETS@@:$(IPSEC_SECRETS):g'
+USERLAND_CFLAGS += -DIPSEC_SECRETS=\"$(IPSEC_SECRETS)\"
+
 
 FINALCONFDIR ?= $(FINALSYSCONFDIR)
 
@@ -532,14 +555,11 @@ export LIBSWANDIR LIBRESWANSRCDIR
 export LIBRESWANLIB LSWTOOLLIB
 export WHACKLIB IPSECCONFLIB
 
-IPSEC_SECRETS_FILE ?= $(FINALCONFDIR)/ipsec.secrets
-
 # how to do variable substitution in sed-transformed files
 TRANSFORM_VARIABLES = sed \
 			-e "/@${OSDEP}_START@/,/@${OSDEP}_END@/d" \
 			-e "s:@DOCKER_PLUTONOFORK@:$(DOCKER_PLUTONOFORK):g" \
 			-e "s:@@CONFDIR@@:$(FINALCONFDIR):g" \
-			-e "s:@@CONFFILE@@:$(FINALCONFFILE):g" \
 			-e "s:@@DOCDIR@@:$(FINALDOCDIR):g" \
 			-e "s:@@EXAMPLECONFDIR@@:$(FINALEXAMPLECONFDIR):g" \
 			-e "s:@@LOGDIR@@:$(FINALLOGDIR):g" \
@@ -549,12 +569,10 @@ TRANSFORM_VARIABLES = sed \
 			-e "s:@@VARDIR@@:$(FINALVARDIR):g" \
 			-e "s:@INITSYSTEM@:$(INITSYSTEM):g" \
 			-e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
-			-e "s:@IPSEC_CONF@:$(FINALCONFFILE):g" \
 			-e "s:@IPSEC_CONFDDIR@:$(FINALCONFDDIR):g" \
 			-e "s:@IPSEC_PPKDIR@:$(FINALPPKDIR):g" \
 			-e "s:@IPSEC_RUNDIR@:$(FINALRUNDIR):g" \
 			-e "s:@IPSEC_SBINDIR@:$(FINALSBINDIR):g" \
-			-e "s:@IPSEC_SECRETS_FILE@:$(IPSEC_SECRETS_FILE):g" \
 			-e "s:@IPSEC_VARDIR@:$(FINALVARDIR):g" \
 			-e "s:@MODPROBEARGS@:$(MODPROBEARGS):g" \
 			-e "s:@MODPROBEBIN@:$(MODPROBEBIN):g" \
@@ -810,13 +828,11 @@ USERLAND_CFLAGS += -DUSE_NSS_KDF
 endif
 
 USERLAND_CFLAGS += -DDEFAULT_RUNDIR=\"$(FINALRUNDIR)\"
-USERLAND_CFLAGS += -DIPSEC_CONF=\"$(FINALCONFFILE)\"
 USERLAND_CFLAGS += -DIPSEC_CONFDDIR=\"$(FINALCONFDDIR)\"
 USERLAND_CFLAGS += -DIPSEC_CONFDIR=\"$(FINALCONFDIR)\"
 USERLAND_CFLAGS += -DIPSEC_SBINDIR=\"${FINALSBINDIR}\"
 USERLAND_CFLAGS += -DIPSEC_VARDIR=\"$(FINALVARDIR)\"
 USERLAND_CFLAGS += -DPOLICYGROUPSDIR=\"${FINALCONFDDIR}/policies\"
-USERLAND_CFLAGS += -DIPSEC_SECRETS_FILE=\"$(IPSEC_SECRETS_FILE)\"
 # Ensure that calls to NSPR's PR_ASSERT() really do abort.  While all
 # calls should have been eliminated (replaced by passert()), keep this
 # definition just in case.

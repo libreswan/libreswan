@@ -24,7 +24,7 @@
 # These prevent coverity warnings; variables come in via ipsec addconn call
 xfrmlifetime=""
 
-IPSEC_CONF="${IPSEC_CONF:-@@CONFFILE@@}"
+IPSEC_CONF="${IPSEC_CONF:-@@IPSEC_CONF@@}"
 PATH=@@SBINDIR@@:${PATH}
 export PATH
 # export config setup items needs rename of - to _

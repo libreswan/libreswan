@@ -116,7 +116,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 
 	cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE] = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "default dnssec rootkey file");
 	cfg->setup.strings[KSF_NSSDIR] = clone_str(IPSEC_NSSDIR, "default ipsec nssdir");
-	cfg->setup.strings[KSF_SECRETSFILE] = clone_str(IPSEC_SECRETS_FILE, "default ipsec.secrets file");
+	cfg->setup.strings[KSF_SECRETSFILE] = clone_str(IPSEC_SECRETS, "default ipsec.secrets file");
 	cfg->setup.strings[KSF_DUMPDIR] = clone_str(DEFAULT_RUNDIR, "default dumpdir");
 	cfg->setup.strings[KSF_IPSECDIR] = clone_str(IPSEC_CONFDDIR, "default ipsec.d dir");
 

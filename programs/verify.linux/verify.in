@@ -27,7 +27,7 @@ from shutil import which
 
 retcode = 0
 
-conffile = "@@CONFFILE@@"
+conffile = "@@IPSEC_CONF@@"
 confdir = "@@CONFDIR@@"
 ipsecbin = "@IPSEC_SBINDIR@/ipsec"
 iptables = "@HAVE_IPTABLES@"

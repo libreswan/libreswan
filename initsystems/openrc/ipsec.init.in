@@ -8,7 +8,7 @@ description_configtest="Run syntax tests for configuration files only."
 description_reload="reloads the configuration - does not affect existing connections"
 
 PLUTO_BINARY=${PLUTO_BINARY:-@@LIBEXECDIR@@/pluto}
-PLUTO_CONFFILE=${PLUTO_CONFFILE:-@@CONFFILE@@}
+PLUTO_CONFFILE=${PLUTO_CONFFILE:-@@IPSEC_CONF@@}
 IPSEC_BINARY=${IPSEC_BINARY:-@@SBINDIR@@/ipsec}
 PLUTO_PIDFILE=${PLUTO_PIDFILE:-/var/run/pluto/pluto.pid}
 

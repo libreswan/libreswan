@@ -205,9 +205,9 @@ _________________________ ps
 # -i ppid picks up the header
 ps alxwf | grep -E -i 'ppid|pluto|ipsec'
 _________________________ ipsec/conf
-ipsec readwriteconf --config @IPSEC_CONF@
+ipsec readwriteconf --config @@IPSEC_CONF@@
 _________________________ ipsec/secrets
-cat @IPSEC_SECRETS_FILE@ | ipsec _secretcensor
+cat @@IPSEC_SECRETS@@ | ipsec _secretcensor
 _________________________ ipsec/listall
 ipsec whack --listall
 _________________________ nss/contents
