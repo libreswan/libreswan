@@ -732,30 +732,41 @@ bool do_command(const struct connection *c,
 
 	/*
 	 * Figure out which verb suffix applies.
-	 * NOTE: this is a duplicate of code in mast_do_command_vs.
 	 */
 	const char *verb_suffix;
 
 	{
-		const char *hs, *cs;
-		const struct ip_info *afi = address_type(&sr->local.host->addr);
-		if (afi == NULL) {
+		const struct ip_info *host_afi = address_info(sr->local.host->addr);
+		const struct ip_info *child_afi = selector_info(sr->local.client);
+		if (host_afi == NULL || child_afi == NULL) {
 			llog_pexpect(logger, HERE, "unknown address family");
 			return false;
 		}
 
-		switch (afi->af) {
+		const char *hs;
+		switch (host_afi->af) {
 		case AF_INET:
 			hs = "-host";
-			cs = "-client";
 			break;
 		case AF_INET6:
 			hs = "-host-v6";
-			cs = "-client-v6";
 			break;
 		default:
-			bad_case(afi->af);
+			bad_case(host_afi->af);
 		}
+
+		const char *cs;
+		switch (child_afi->af) {
+		case AF_INET:
+			cs = "-client"; /* really child; legacy name */
+			break;
+		case AF_INET6:
+			cs = "-client-v6"; /* really child; legacy name */
+			break;
+		default:
+			bad_case(child_afi->af);
+		}
+
 		verb_suffix = selector_range_eq_address(sr->local.client, sr->local.host->addr) ? hs : cs;
 	}
 
