@@ -51,7 +51,7 @@ local-install-base: $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATEDCONFFILES)
 	@set -eu ; $(call install-file, $(INSTCONFFLAGS) $(ipsec.secrets.INSTFLAGS), $(builddir)/ipsec.secrets, $(DESTDIR)$(FINALEXAMPLECONFDIR)/$(notdir $(IPSEC_SECRETS))-sample)
 ifeq ($(INSTALL_CONFIGS),true)
 	@set -eu ; $(call install-directory, $(CONFDDIR), 0700)
-	@set -eu ; $(call install-missing-file, $(INSTCONFFLAGS) $(ipsec.conf.INSTFLAGS),    $(DESTDIR)$(EXAMPLECONFDIR)/$(notdir $(IPSEC_CONF))-sample,         $(DESTDIR)$(IPSEC_CONF))
+	@set -eu ; $(call install-missing-file, $(INSTCONFFLAGS) $(ipsec.conf.INSTFLAGS),    $(DESTDIR)$(FINALEXAMPLECONFDIR)/$(notdir $(IPSEC_CONF))-sample,         $(DESTDIR)$(IPSEC_CONF))
 	@set -eu ; $(call install-missing-file, $(INSTCONFFLAGS) $(ipsec.secrets.INSTFLAGS), $(DESTDIR)$(FINALEXAMPLECONFDIR)/$(notdir $(IPSEC_SECRETS))-sample, $(DESTDIR)$(IPSEC_SECRETS))
 endif
 	@: CONFDSUBDIR
