@@ -41,7 +41,7 @@ local-clean-base:
 	rm -f $(foreach file, $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATEDCONFFILES), $(builddir)/$(file))
 
 # For each group of files; first copy to the examples directory and
-# then, optionally, install the examples copy into /etc (but only when
+# then, optionally, install into /etc (but only when
 # INSTALL_CONFIGS=true, and only when not already present).
 
 local-install-base: $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATEDCONFFILES)
@@ -51,8 +51,8 @@ local-install-base: $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATEDCONFFILES)
 	@set -eu ; $(call install-file, $(INSTCONFFLAGS) $(ipsec.secrets.INSTFLAGS), $(builddir)/ipsec.secrets, $(DESTDIR)$(FINALEXAMPLECONFDIR)/$(notdir $(IPSEC_SECRETS))-sample)
 ifeq ($(INSTALL_CONFIGS),true)
 	@set -eu ; $(call install-directory, $(CONFDDIR), 0700)
-	@set -eu ; $(call install-missing-file, $(INSTCONFFLAGS) $(ipsec.conf.INSTFLAGS),    $(DESTDIR)$(FINALEXAMPLECONFDIR)/$(notdir $(IPSEC_CONF))-sample,         $(DESTDIR)$(IPSEC_CONF))
-	@set -eu ; $(call install-missing-file, $(INSTCONFFLAGS) $(ipsec.secrets.INSTFLAGS), $(DESTDIR)$(FINALEXAMPLECONFDIR)/$(notdir $(IPSEC_SECRETS))-sample, $(DESTDIR)$(IPSEC_SECRETS))
+	@set -eu ; $(call install-missing-file, $(INSTCONFFLAGS) $(ipsec.conf.INSTFLAGS),    $(builddir)/ipsec.conf,    $(DESTDIR)$(IPSEC_CONF))
+	@set -eu ; $(call install-missing-file, $(INSTCONFFLAGS) $(ipsec.secrets.INSTFLAGS), $(builddir)/ipsec.secrets, $(DESTDIR)$(IPSEC_SECRETS))
 endif
 	@: CONFDSUBDIR
 	@set -eu ; $(call install-directory, $(EXAMPLECONFDDIR), 0700)
