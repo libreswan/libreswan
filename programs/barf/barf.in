@@ -22,7 +22,7 @@ me="ipsec barf"
 
 # kludge to produce no barf output mentioning policygroups if none are present.
 # This will not catch ".file" policygroups.
-PREPOLICIES=@IPSEC_CONFDDIR@/policies
+PREPOLICIES=@@IPSEC_CONFDDIR@@/policies
 if [ -n "$(ls ${PREPOLICIES} 2>/dev/null)" ]; then
     POLICIES=${PREPOLICIES}
 fi

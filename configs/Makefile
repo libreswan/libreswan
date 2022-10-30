@@ -50,22 +50,22 @@ local-install-base: $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATEDCONFFILES)
 	@set -eu ; $(call install-file, $(INSTCONFFLAGS) $(ipsec.conf.INSTFLAGS),    $(builddir)/ipsec.conf,    $(DESTDIR)$(FINALEXAMPLECONFDIR)/$(notdir $(IPSEC_CONF))-sample)
 	@set -eu ; $(call install-file, $(INSTCONFFLAGS) $(ipsec.secrets.INSTFLAGS), $(builddir)/ipsec.secrets, $(DESTDIR)$(FINALEXAMPLECONFDIR)/$(notdir $(IPSEC_SECRETS))-sample)
 ifeq ($(INSTALL_CONFIGS),true)
-	@set -eu ; $(call install-directory, $(CONFDDIR), 0700)
+	@set -eu ; $(call install-directory, $(DESTDIR)$(IPSEC_CONFDDIR), 0700)
 	@set -eu ; $(call install-missing-file, $(INSTCONFFLAGS) $(ipsec.conf.INSTFLAGS),    $(builddir)/ipsec.conf,    $(DESTDIR)$(IPSEC_CONF))
 	@set -eu ; $(call install-missing-file, $(INSTCONFFLAGS) $(ipsec.secrets.INSTFLAGS), $(builddir)/ipsec.secrets, $(DESTDIR)$(IPSEC_SECRETS))
 endif
 	@: CONFDSUBDIR
-	@set -eu ; $(call install-directory, $(EXAMPLECONFDDIR), 0700)
-	@set -eu ; $(call install-directory, $(EXAMPLECONFDDIR)/$(CONFDSUBDIR), 0700)
+	@set -eu ; $(call install-directory, $(DESTDIR)$(EXAMPLE_IPSEC_CONFDDIR), 0700)
+	@set -eu ; $(call install-directory, $(DESTDIR)$(EXAMPLE_IPSEC_CONFDDIR)/$(CONFDSUBDIR), 0700)
 	@set -eu ; $(foreach file, $(CONFDSUBDIRFILES), \
 		$(call install-file, $(INSTCONFFLAGS), \
-			$(builddir)/$(file), $(EXAMPLECONFDDIR)/$(CONFDSUBDIR)/$(file)) ; \
+			$(builddir)/$(file), $(DESTDIR)$(EXAMPLE_IPSEC_CONFDDIR)/$(CONFDSUBDIR)/$(file)) ; \
 	)
 ifeq ($(INSTALL_CONFIGS),true)
-	@set -eu ; $(call install-directory, $(CONFDDIR)/$(CONFDSUBDIR), 0700)
+	@set -eu ; $(call install-directory, $(DESTDIR)$(IPSEC_CONFDDIR)/$(CONFDSUBDIR), 0700)
 	@set -eu ; $(foreach file, $(CONFDSUBDIRFILES), \
 		$(call install-missing-file, $(INSTCONFFLAGS), \
-			$(EXAMPLECONFDDIR)/$(CONFDSUBDIR)/$(file), $(CONFDDIR)/$(CONFDSUBDIR)/$(file)) ; \
+			$(DESTDIR)$(EXAMPLE_IPSEC_CONFDDIR)/$(CONFDSUBDIR)/$(file), $(DESTDIR)$(IPSEC_CONFDDIR)/$(CONFDSUBDIR)/$(file)) ; \
 	)
 endif
 	@: LOGROTATED
@@ -123,7 +123,7 @@ list-local-base:
 		echo $(EXAMPLECONFDIR)/$(file)-sample ; \
 	)
 	@set -eu ; $(foreach file, $(CONFDSUBDIRFILES), \
-		echo $(CONFDDIR)/$(CONFDSUBDIR)/$${file} ; \
+		echo $(DESTDIR)$(IPSEC_CONFDDIR)/$(CONFDSUBDIR)/$${file} ; \
 	)
 
 # Since man page is generated, override the default rule for

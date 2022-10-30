@@ -143,12 +143,12 @@ setup() {
     fi
 
     echo "Saving the required configuration"
-    cp "${configFile}" "@IPSEC_CONFDDIR@/"
+    cp "${configFile}" "@@IPSEC_CONFDDIR@@/"
 
-    # restoring the security context of @IPSEC_CONFDDIR@/$configFileName using restorecon.
+    # restoring the security context of @@IPSEC_CONFDDIR@@/$configFileName using restorecon.
     checkRestorecon=$(which restorecon 2>/dev/null)
     if [ -n "${checkRestorecon}" -a -x "${checkRestorecon}" ]; then
-	restorecon "@IPSEC_CONFDDIR@/$configFileName"
+	restorecon "@@IPSEC_CONFDDIR@@/$configFileName"
     fi
 
     # Removing the temporary directories
@@ -278,10 +278,10 @@ manual_cert_renew() {
     fi
 }
 
-# function to disable ipsec by deleting the conf file in @IPSEC_CONFDDIR@
+# function to disable ipsec by deleting the conf file in @@IPSEC_CONFDDIR@@
 disable_ipsec() {
     # Deleting the configuration files present in /etc/ipsec.d directory
-    rm -f "@IPSEC_CONFDDIR@"/oe-letsencrypt-*.conf
+    rm -f "@@IPSEC_CONFDDIR@@"/oe-letsencrypt-*.conf
     echo "Please restart the IPsec service using 'ipsec restart' for changes to take effect."
 }
 

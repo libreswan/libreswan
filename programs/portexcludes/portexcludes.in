@@ -37,7 +37,7 @@ import sys
 import time
 
 
-PORTFILE = "@IPSEC_CONFDDIR@/policies/portexcludes.conf"
+PORTFILE = "@@IPSEC_CONFDDIR@@/policies/portexcludes.conf"
 VERBOSE = False
 INWHACK = ("ipsec whack --name portexclude-DIRECTION-FAMILY-LINENR "
            "--ipv4 --priority PRIORITY --pass --host 127.0.0.1 "

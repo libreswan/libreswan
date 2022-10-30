@@ -37,5 +37,5 @@ config setup
 # include /etc/crypto-policies/back-ends/libreswan.config
 
 # It is best to add your IPsec connections as separate files
-# in @IPSEC_CONFDDIR@/
-include @IPSEC_CONFDDIR@/*.conf
+# in @@IPSEC_CONFDDIR@@/
+include @@IPSEC_CONFDDIR@@/*.conf
