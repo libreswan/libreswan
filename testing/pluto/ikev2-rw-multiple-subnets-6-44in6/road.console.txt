@@ -1,6 +1,10 @@
 /testing/guestbin/swan-prep --46 --x509
 Preparing X.509 files
 road #
+ ip addr show eth0 | grep global | sort
+    inet 192.1.3.209/24 scope global eth0
+    inet6 2001:db8:1:3::209/64 scope global
+road #
  ipsec start
 Redirecting to: [initsystem]
 road #

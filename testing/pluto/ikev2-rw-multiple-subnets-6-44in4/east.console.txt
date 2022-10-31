@@ -5,6 +5,12 @@ east #
 east #
  ip addr add 2001:db8:0:20::256/64 dev eth0
 east #
+ ip addr show eth0 | grep global | sort
+    inet 192.0.20.254/24 scope global eth0
+    inet 192.0.2.254/24 scope global eth0
+    inet6 2001:db8:0:20::256/64 scope global tentative
+    inet6 2001:db8:0:2::254/64 scope global
+east #
  ipsec start
 Redirecting to: [initsystem]
 east #
