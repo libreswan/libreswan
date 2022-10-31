@@ -26,6 +26,7 @@ void check_connection_db(struct logger *logger);
 
 struct connection *alloc_connection(const char *name, where_t where);
 struct connection *clone_connection(const char *name, struct connection *template, where_t where);
+void append_spd_route(struct connection *c, struct spd_route **spd);
 
 void init_db_connection(struct connection *c);
 void check_db_connection(struct connection *c, struct logger *logger, where_t where);

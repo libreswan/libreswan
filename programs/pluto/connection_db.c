@@ -20,8 +20,6 @@
 #include "refcnt.h"
 #include "virtual_ip.h"		/* for virtual_ip_addref() */
 
-static void unshare_connection_spd_end(struct connection *c, struct spd_end *e);
-
 /*
  * A table hashed by serialno.
  */
@@ -186,28 +184,6 @@ bool next_spd_route(enum chrono order, struct spd_route_filter *filter)
 	return false;
 }
 
-struct spd_route *clone_spd_route(struct connection *c, where_t where)
-{
-	/* always first!?! */
-	struct spd_route *sr = clone_thing(*c->spd, where->func);
-	sr->spd_next = NULL;
-	pexpect(sr->connection == c);
-	/* unshare pointers */
-	c->local->host.id.name = null_shunk;
-	c->remote->host.id.name = null_shunk;
-	sr->local.virt = NULL;
-	sr->remote.virt = NULL;
-
-	zero_thing(sr->hash_table_entries); /* keep init_list_entry() happy */
-	init_db_spd_route(sr);
-
-	unshare_connection_spd_end(c, &sr->local);
-	unshare_connection_spd_end(c, &sr->remote);
-
-	add_db_spd_route(sr);
-	return sr;
-}
-
 /*
  * Maintain the contents of the hash tables.
  */
@@ -230,11 +206,7 @@ static void finish_connection(struct connection *c, const char *name,
 	c->logger = alloc_logger(c, &logger_connection_vec, where);
 	/* logger is GO! */
 
-	/* needed by jam_spd_route_*() */
-	c->spd->connection = c;
-
 	init_db_connection(c);
-	init_db_spd_route(c->spd);
 
 	/*
 	 * Update counter, set serialno and add to serialno list.
@@ -274,7 +246,6 @@ struct connection *alloc_connection(const char *name, where_t where)
 	 */
 
 	struct config *config = alloc_thing(struct config, "root config");
-	c->spd = alloc_thing(struct spd_route, where->func);
 	c->config = c->root_config = config;
 	c->local = &c->end[LEFT_END]; /* this; clone must update */
 	c->remote = &c->end[RIGHT_END]; /* that; clone must update */
@@ -297,14 +268,22 @@ struct connection *alloc_connection(const char *name, where_t where)
 		end->child.config = &end_config->child;
 	}
 
-	/* XXX: brute force; see above for left-right choice */
-	c->spd->local.host = &c->local->host;		/*clone must update*/
-	c->spd->remote.host = &c->remote->host;		/*clone must update*/
-	c->spd->local.config = c->local->config;
-	c->spd->remote.config = c->remote->config;
-
 	finish_connection(c, name, 0/*no template*/, where);
 	return c;
+}
+
+void append_spd_route(struct connection *c, struct spd_route **spd)
+{
+	passert(*spd == NULL);
+	(*spd) = alloc_thing(struct spd_route, "spd_route");
+	(*spd)->connection = c;
+	/* XXX: brute force; see alloc_connection() for left-right choice */
+	(*spd)->local.host = &c->local->host;		/*clone must update*/
+	(*spd)->remote.host = &c->remote->host;		/*clone must update*/
+	(*spd)->local.config = c->local->config;
+	(*spd)->remote.config = c->remote->config;
+	/* db; will be updated */
+	init_db_spd_route((*spd));
 }
 
 static void unshare_connection_spd_end(struct connection *c, struct spd_end *e)
@@ -312,6 +291,28 @@ static void unshare_connection_spd_end(struct connection *c, struct spd_end *e)
 	e->virt = virtual_ip_addref(e->virt);
 	pexpect(e->sec_label.ptr == NULL);
 	e->host = &c->end[e->config->index].host;
+}
+
+struct spd_route *clone_spd_route(struct connection *c, where_t where)
+{
+	/* always first!?! */
+	struct spd_route *sr = clone_thing(*c->spd, where->func);
+	sr->spd_next = NULL;
+	pexpect(sr->connection == c);
+	/* unshare pointers */
+	c->local->host.id.name = null_shunk;
+	c->remote->host.id.name = null_shunk;
+	sr->local.virt = NULL;
+	sr->remote.virt = NULL;
+
+	zero_thing(sr->hash_table_entries); /* keep init_list_entry() happy */
+	init_db_spd_route(sr);
+
+	unshare_connection_spd_end(c, &sr->local);
+	unshare_connection_spd_end(c, &sr->remote);
+
+	add_db_spd_route(sr);
+	return sr;
 }
 
 static void unshare_connection_spd(struct connection *c, where_t where)
@@ -326,6 +327,7 @@ static void unshare_connection_spd(struct connection *c, where_t where)
 		(*dst)->spd_next = NULL;
 		unshare_connection_spd_end(c, &(*dst)->local);
 		unshare_connection_spd_end(c, &(*dst)->remote);
+		init_db_spd_route((*dst));
 		/* step forward */
 		src = src->spd_next;
 		dst = &(*dst)->spd_next;

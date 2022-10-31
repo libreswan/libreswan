@@ -31,7 +31,7 @@
 				jam_list_entry(buf, (ENTRY));		\
 				jam(buf, ": %s", #ASSERTION);		\
 				/* XXX: hack: double copy */		\
-				llog_pexpect(&global_logger, HERE,	\
+				llog_passert(&global_logger, HERE,	\
 					     PRI_SHUNK,			\
 					     pri_shunk(jambuf_as_shunk(buf))); \
 			}						\

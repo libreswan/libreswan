@@ -104,8 +104,9 @@ static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 static void hash_connection(struct connection *c)
 {
 	add_db_connection(c);
-	passert(c->spd->spd_next == NULL);
-	add_db_spd_route(c->spd);
+	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+		add_db_spd_route(spd);
+	}
 }
 
 /*
@@ -216,9 +217,9 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 
 	del_db_connection(c, connection_valid);
 
-	passert(c->spd->local.virt == NULL);
 	for (struct spd_route *sr = c->spd, *next = NULL; sr != NULL; sr = next) {
-		next = sr->spd_next;
+		next = sr->spd_next; /*step-off*/
+		pexpect(sr->local.virt == NULL);
 		delete_spd_route(&sr, connection_valid);
 	}
 
@@ -2365,6 +2366,7 @@ static bool extract_connection(const struct whack_message *wm,
 	 */
 
 	const struct ip_info *child_afi[LEFT_RIGHT_ROOF] = {0};
+	append_spd_route(c, &c->spd);
 	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
 		const struct whack_end *we = whack_ends[this];
 		const struct child_end_config *ce = c->end[this].child.config;
