@@ -183,6 +183,10 @@ ifdef FINALLOGDIR
 $(error ERROR: deprecated variable FINALLOGDIR is set, use LOGDIR instead)
 endif
 
+ifdef FINALSBINDIR
+$(error ERROR: deprecated variable FINALSBINDIR is set, use SBINDIR instead)
+endif
+
 #
 # Options that really belong in CFLAGS (making for an intuitive way to
 # override them).
@@ -258,8 +262,9 @@ TRANSFORMS += 's:@IPSEC_EXECDIR@:$(LIBEXECDIR):g'
 USERLAND_CFLAGS += -DIPSEC_EXECDIR=\"$(LIBEXECDIR)\"
 
 # SBINDIR is where the user interface command goes.
-FINALSBINDIR ?= $(PREFIX)/sbin
-SBINDIR ?= $(DESTDIR)$(FINALSBINDIR)
+SBINDIR ?= $(PREFIX)/sbin
+TRANSFORMS += 's:@@SBINDIR@@:$(SBINDIR):g'
+USERLAND_CFLAGS += -DIPSEC_SBINDIR=\"$(SBINDIR)\"
 
 # where the appropriate manpage tree is located
 MANDIR ?= $(PREFIX)/share/man
@@ -581,14 +586,12 @@ TRANSFORM_VARIABLES = sed \
 			-e "s:@@DOCDIR@@:$(FINALDOCDIR):g" \
 			-e "s:@@EXAMPLECONFDIR@@:$(FINALEXAMPLECONFDIR):g" \
 			-e "s:@@LOGROTATEDDIR@@:$(FINALLOGROTATEDDIR):g" \
-			-e "s:@@SBINDIR@@:$(FINALSBINDIR):g" \
 			-e "s:@@SYSCONFDIR@@:$(FINALSYSCONFDIR):g" \
 			-e "s:@@VARDIR@@:$(FINALVARDIR):g" \
 			-e "s:@INITSYSTEM@:$(INITSYSTEM):g" \
 			-e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@IPSEC_PPKDIR@:$(FINALPPKDIR):g" \
 			-e "s:@IPSEC_RUNDIR@:$(FINALRUNDIR):g" \
-			-e "s:@IPSEC_SBINDIR@:$(FINALSBINDIR):g" \
 			-e "s:@IPSEC_VARDIR@:$(FINALVARDIR):g" \
 			-e "s:@MODPROBEARGS@:$(MODPROBEARGS):g" \
 			-e "s:@MODPROBEBIN@:$(MODPROBEBIN):g" \
@@ -845,7 +848,6 @@ endif
 
 USERLAND_CFLAGS += -DDEFAULT_RUNDIR=\"$(FINALRUNDIR)\"
 USERLAND_CFLAGS += -DIPSEC_CONFDIR=\"$(FINALCONFDIR)\"
-USERLAND_CFLAGS += -DIPSEC_SBINDIR=\"${FINALSBINDIR}\"
 USERLAND_CFLAGS += -DIPSEC_VARDIR=\"$(FINALVARDIR)\"
 USERLAND_CFLAGS += -DPOLICYGROUPSDIR=\"$(IPSEC_CONFDDIR)/policies\"
 # Ensure that calls to NSPR's PR_ASSERT() really do abort.  While all

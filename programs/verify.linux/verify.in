@@ -29,7 +29,7 @@ retcode = 0
 
 conffile = "@@IPSEC_CONF@@"
 confdir = "@@CONFDIR@@"
-ipsecbin = "@IPSEC_SBINDIR@/ipsec"
+ipsecbin = "@@SBINDIR@@/ipsec"
 iptables = "@HAVE_IPTABLES@"
 nftables = "@HAVE_NFTABLES@"
 
