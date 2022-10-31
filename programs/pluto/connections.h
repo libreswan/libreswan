@@ -356,7 +356,6 @@ struct host_end {
 
 struct child_end {
 	const struct child_end_config *config;
-	struct spd_end *spd;
 };
 
 struct connection_end {
@@ -406,7 +405,6 @@ struct spd_route {
 	struct spd_end local;
 	struct spd_end remote;
 	struct connection *connection;
-
 	so_serial_t eroute_owner;
 #define set_spd_owner(SPD, SO)						\
 	{								\

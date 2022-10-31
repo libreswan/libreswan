@@ -2329,8 +2329,6 @@ static bool extract_connection(const struct whack_message *wm,
 
 	/*
 	 * Unpack and verify the ends.
-	 *
-	 * This choice of left/right must match alloc_connection().
 	 */
 
 	const struct whack_end *whack_ends[] = {
@@ -2370,7 +2368,10 @@ static bool extract_connection(const struct whack_message *wm,
 	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
 		const struct whack_end *we = whack_ends[this];
 		const struct child_end_config *ce = c->end[this].child.config;
-		struct spd_end *spd = c->end[this].child.spd;
+		/* XXX: brute force left-local; see alloc_connection() */
+		struct spd_end *spd = (this == LEFT_END ? &c->spd->local :
+				       this == RIGHT_END ? &c->spd->remote :
+				       NULL);
 		if (ce->selectors != NULL) {
 			dbg("%s %s child spd from selectors",
 			    c->name, ce->leftright);

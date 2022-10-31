@@ -50,29 +50,25 @@ bool oriented(const struct connection *c)
  */
 static void swap_ends(struct connection *c)
 {
-	struct spd_route *sr = c->spd;
-
-	/*
-	 * This swaps the SPD content, not pointers.
-	 */
-	struct spd_end local = sr->local;
-	sr->local = sr->remote;
-	sr->remote = local;
-
-	/*
-	 * ... which means the SPD pointers into the above also need
-	 * updating as their target moved; ulgh!
-	 */
-	c->local->child.spd = &c->spd->local;
-	c->remote->child.spd = &c->spd->remote;
-
-	/* This is all that should be needed; getting there slowly */
-	struct connection_end *tmp = c->local;
+	struct connection_end *local = c->local;
 	c->local = c->remote;
-	c->remote = tmp;
+	c->remote = local;
 
-	/* re-compute the base policy priority using the swapped left/right */
+	for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
+		/*
+		 * This swaps the SPD content, not pointers.
+		 */
+		struct spd_end local = sr->local;
+		sr->local = sr->remote;
+		sr->remote = local;
+	}
+
+	/*
+	 * Re-compute the base policy priority using the swapped
+	 * left/right.
+	 */
 	set_policy_prio(c);
+
 	/* rehash end dependent hashes */
 	rehash_db_connection_that_id(c);
 	for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
