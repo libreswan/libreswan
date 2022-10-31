@@ -922,6 +922,7 @@ kvmplutotest	ikev2-rw-multiple-subnets-6-44in4		good
 kvmplutotest	ikev2-rw-multiple-subnets-6-44in6		wip
 kvmplutotest	ikev2-rw-multiple-subnets-6-46in4		wip
 kvmplutotest	ikev2-rw-multiple-subnets-6-46in6		wip
+kvmplutotest	ikev2-rw-multiple-subnets-6-66in4		wip
 kvmplutotest	ikev2-rw-multiple-subnets-6-66in6		wip
 kvmplutotest	ikev2-rw-multiple-rw-by-id			wip
 
