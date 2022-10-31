@@ -179,6 +179,9 @@ ifdef EXAMPLEFINALCONFDDIR
 $(error ERROR: deprecated variable EXAMPLEFINALCONFDDIR is set, use EXAMPLE_IPSEC_CONFDDIR instead)
 endif
 
+ifdef FINALLOGDIR
+$(error ERROR: deprecated variable FINALLOGDIR is set, use LOGDIR instead)
+endif
 
 #
 # Options that really belong in CFLAGS (making for an intuitive way to
@@ -345,8 +348,8 @@ EXAMPLECONFDIR ?= $(DESTDIR)$(FINALEXAMPLECONFDIR)
 # where per-conn pluto logs go
 FINALVARDIR ?= /var
 VARDIR ?= $(DESTDIR)$(FINALVARDIR)
-FINALLOGDIR ?= $(FINALVARDIR)/log
-LOGDIR ?= $(DESTDIR)$(FINALLOGDIR)
+LOGDIR ?= $(FINALVARDIR)/log
+TRANSFORMS += 's:@@LOGDIR@@:$(LOGDIR):g'
 
 # Directory for logrotate config
 
@@ -577,7 +580,6 @@ TRANSFORM_VARIABLES = sed \
 			-e "s:@@CONFDIR@@:$(FINALCONFDIR):g" \
 			-e "s:@@DOCDIR@@:$(FINALDOCDIR):g" \
 			-e "s:@@EXAMPLECONFDIR@@:$(FINALEXAMPLECONFDIR):g" \
-			-e "s:@@LOGDIR@@:$(FINALLOGDIR):g" \
 			-e "s:@@LOGROTATEDDIR@@:$(FINALLOGROTATEDDIR):g" \
 			-e "s:@@SBINDIR@@:$(FINALSBINDIR):g" \
 			-e "s:@@SYSCONFDIR@@:$(FINALSYSCONFDIR):g" \
