@@ -13,7 +13,7 @@
 # for more details.
 
 PROGRAM=ipsec
-PROGRAMDIR=${SBINDIR}
+PROGRAMDIR=$(DESTDIR)$(SBINDIR)
 # Do not prefix $(PROGRAM) man page with "ipsec_"
 MANPROGPREFIX=
 
