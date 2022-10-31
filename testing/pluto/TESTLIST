@@ -919,7 +919,7 @@ kvmplutotest	ikev2-rw-multiple-subnets-4-mismatch		good
 kvmplutotest	ikev2-rw-multiple-subnets-4-mismatch-split-up	good
 kvmplutotest	ikev2-rw-multiple-subnets-5-mismatch-frst	good
 kvmplutotest	ikev2-rw-multiple-subnets-6-44in4		good
-kvmplutotest	ikev2-rw-multiple-subnets-6-44in6		wip
+kvmplutotest	ikev2-rw-multiple-subnets-6-44in6		good
 kvmplutotest	ikev2-rw-multiple-subnets-6-46in4		wip
 kvmplutotest	ikev2-rw-multiple-subnets-6-46in6		wip
 kvmplutotest	ikev2-rw-multiple-subnets-6-66in4		wip
