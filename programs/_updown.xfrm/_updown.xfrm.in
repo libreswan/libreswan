@@ -88,6 +88,9 @@ export LC_ALL
 #		host's own IP address / mask (where max	is  32	for
 #		IPv4 and 128 for IPv6).
 #
+#	PLUTO_MY_FAMILY
+#		is the child (client) family type, "ipv4" or "ipv6"
+#
 #	PLUTO_MY_CLIENT_NET
 #		is the IP address of our client net.  If the client
 #		is just the host, this will be the  host's  own	 IP
@@ -159,7 +162,7 @@ export LC_ALL
 #		is NetworkManager used for resolv.conf update
 #
 #	PLUTO_CONN_ADDRFAMILY
-#		is the family type, "ipv4" or "ipv6"
+#		is the host family type, "ipv4" or "ipv6"
 #
 #	PLUTO_CONN_KIND
 #		is the "kind" of connection (CK_PERMANENT, CK_INSTANCE, etc)
@@ -251,6 +254,24 @@ ETC_RESOLV_CONF=@@SYSCONFDIR@@/resolv.conf
 
 case "${PLUTO_CONN_ADDRFAMILY}" in
     ipv4)
+	HOST_FAMILY=4
+	HOST_MAX_CIDR=32
+	HOST_SCOPE=50	# Use scope 50 to verify ip was added by addsource()
+	;;
+    ipv6)
+	HOST_FAMILY=6
+	HOST_MAX_CIDR=128
+	HOST_SCOPE=global
+	;;
+    *)
+	echo "unknown address family \"${PLUTO_CONN_ADDRFAMILY}\"" >&2
+	exit 1
+	;;
+esac
+export HOST_FAMILY HOST_MAX_CIDR HOST_SCOPE
+
+case "${PLUTO_MY_FAMILY}" in
+    ipv4)
 	FAMILY=4
 	MAX_CIDR=32
 	SCOPE=50	# Use scope 50 to verify ip was added by addsource()
@@ -330,19 +351,19 @@ updateresolvconf() {
 	return ${rc}
     fi
     if [ -n "$(pidof unbound)" -a \
-	-n "${PLUTO_PEER_DNS_INFO}" -a \
-	-n "${PLUTO_PEER_DOMAIN_INFO}" ]
+	    -n "${PLUTO_PEER_DNS_INFO}" -a \
+	    -n "${PLUTO_PEER_DOMAIN_INFO}" ]
     then
 	for domain in ${PLUTO_PEER_DOMAIN_INFO}; do
 	    echo "updating local nameserver for ${domain} with ${PLUTO_PEER_DNS_INFO}"
 	    unbound-control forward_add ${domain} \
-		${PLUTO_PEER_DNS_INFO}
+			    ${PLUTO_PEER_DNS_INFO}
 	    unbound-control flush_zone ${domain}
 	    unbound-control flush_requestlist
 	done
 	rc=$?
     elif [ 0${PLUTO_NM_CONFIGURED} -eq 0 -a \
-	-n "${PLUTO_PEER_DNS_INFO}" ]
+	    -n "${PLUTO_PEER_DNS_INFO}" ]
     then
 	echo "updating resolvconf"
 
@@ -369,7 +390,7 @@ updateresolvconf() {
 	    awk '{ print $2 }')"
 
 	orig_search=$(grep ^search "${ETC_RESOLV_CONF}" 2>/dev/null | \
-	    sed 's/^search[[:space:]]\+//;s/[[:space:]]*\#.*//')
+			  sed 's/^search[[:space:]]\+//;s/[[:space:]]*\#.*//')
 
 	if [ -n "${orig_domain}" ]; then
 	    new_resolv_conf="${new_resolv_conf}
@@ -396,7 +417,7 @@ search ${new_search}"
 	fi
 
 	orig_nameserver=$(grep -m 1 ^nameserver "${ETC_RESOLV_CONF}" | \
-	    sed 's/^nameserver[[:space:]]\+//;s/[[:space:]]*\#.*//')
+			      sed 's/^nameserver[[:space:]]\+//;s/[[:space:]]*\#.*//')
 	if [ -n "${orig_nameserver}" ]; then
 	    new_nameserver=$(echo $(echo "${PLUTO_PEER_DNS_INFO} ${orig_nameserver}" | tr [:space:] '\n' | awk '!a[$0]++'))
 	else
@@ -422,8 +443,8 @@ restoreresolvconf() {
 	return ${rc}
     fi
     if [ -n "$(pidof unbound)" -a \
-	-n "${PLUTO_PEER_DNS_INFO}" -a \
-	-n "${PLUTO_PEER_DOMAIN_INFO}" ]
+	    -n "${PLUTO_PEER_DNS_INFO}" -a \
+	    -n "${PLUTO_PEER_DOMAIN_INFO}" ]
     then
 	for domain in ${PLUTO_PEER_DOMAIN_INFO}; do
 	    echo "flushing local nameserver of ${domain}"
@@ -721,7 +742,7 @@ doroute() {
 	    sed "s/^.*dev \([^ ]*\) .*/\1/")
     fi
 
-    esp_peer_interface=$(ip -${FAMILY} -o route get ${PLUTO_NEXT_HOP} \
+    esp_peer_interface=$(ip -${HOST_FAMILY} -o route get ${PLUTO_NEXT_HOP} \
 	from ${PLUTO_ME} | sed "s/^.*\(dev [^ ]*\) .*/\1/")
     if [ -z "${esp_peer_interface}" ]; then
 	esp_peer_interface="dev ${PLUTO_INTERFACE}"
@@ -781,7 +802,7 @@ doroute() {
     fi
 
     if [ "${xfrmi_rule}" = "yes" ]; then
-	espipro="ip -${FAMILY} route ${cmd} ${PLUTO_PEER}/${MAX_CIDR} ${esp_nexthop} ${esp_peer_interface%:*} table ${route_table}"
+	espipro="ip -${HOST_FAMILY} route ${cmd} ${PLUTO_PEER}/${HOST_MAX_CIDR} ${esp_nexthop} ${esp_peer_interface%:*} table ${route_table}"
 	do_ip "${espipro}"
 
 	st=$?
@@ -794,7 +815,7 @@ doroute() {
 	    iprulecmd="add"
 	fi
 
-	ipru="ip -${FAMILY} rule ${iprulecmd} prio 100 to ${parms}"
+	ipru="ip -${HOST_FAMILY} rule ${iprulecmd} prio 100 to ${parms}"
 	ipru="${ipru} fwmark ${PLUTO_XFRMI_FWMARK} lookup ${route_table}"
 
 	do_ip "${ipru}"

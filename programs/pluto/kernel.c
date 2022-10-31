@@ -544,6 +544,7 @@ bool fmt_common_shell_out(char *buf,
 
 	JDipaddr("PLUTO_ME", sr->local.host->addr);
 	JDemitter("PLUTO_MY_ID", jam_id_bytes(&jb, &c->local->host.id, jam_shell_quoted_bytes));
+	jam(&jb, "PLUTO_MY_FAMILY='ipv%d' ", selector_info(sr->local.client)->ip_version);
 	JDemitter("PLUTO_MY_CLIENT", jam_selector_subnet(&jb, &sr->local.client));
 	JDipaddr("PLUTO_MY_CLIENT_NET", selector_prefix(sr->local.client));
 	JDipaddr("PLUTO_MY_CLIENT_MASK", selector_prefix_mask(sr->local.client));
