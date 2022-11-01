@@ -38,12 +38,8 @@
 #include "ip_cidr.h"
 #include "authby.h"
 
-#ifndef DEFAULT_RUNDIR
-# define DEFAULT_RUNDIR "/run/pluto/"
-#endif
-
 #ifndef DEFAULT_CTL_SOCKET
-# define DEFAULT_CTL_SOCKET DEFAULT_RUNDIR "/pluto.ctl"
+# define DEFAULT_CTL_SOCKET IPSEC_RUNDIR "/pluto.ctl"
 #endif
 
 

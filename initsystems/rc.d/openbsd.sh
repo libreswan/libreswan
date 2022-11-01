@@ -5,7 +5,7 @@ daemon_flags="--logfile @@LOGDIR@@/pluto.log --config @@SYSCONFDIR@@/ipsec.conf 
 
 . /etc/rc.d/rc.subr
 
-#pidfile="@IPSEC_RUNDIR@/${name}.pid"
+#pidfile="@@RUNDIR@@/${name}.pid"
 #required_files="@@SYSCONFDIR@@/ipsec.conf"
 
 case $1 in

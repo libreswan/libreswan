@@ -1,1 +1,1 @@
-d @IPSEC_RUNDIR@ 755 root root -
+d @@RUNDIR@@ 755 root root -

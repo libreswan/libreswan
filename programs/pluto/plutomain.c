@@ -733,13 +733,13 @@ int main(int argc, char **argv)
 	struct logger *logger = string_logger(null_fd, HERE, "%s: ", pluto_name); /* must free */
 
 	conffile = clone_str(IPSEC_CONF, "conffile in main()");
-	coredir = clone_str(DEFAULT_RUNDIR, "coredir in main()");
-	rundir = clone_str(DEFAULT_RUNDIR, "rundir");
+	coredir = clone_str(IPSEC_RUNDIR, "coredir in main()");
+	rundir = clone_str(IPSEC_RUNDIR, "rundir");
 	pluto_vendorid = clone_str(ipsec_version_vendorid(), "vendorid in main()");
 #ifdef USE_DNSSEC
 	pluto_dnssec_rootkey_file = clone_str(DEFAULT_DNSSEC_ROOTKEY_FILE, "root.key file");
 #endif
-	pluto_lock_filename = clone_str(DEFAULT_RUNDIR "/pluto.pid", "lock file");
+	pluto_lock_filename = clone_str(IPSEC_RUNDIR "/pluto.pid", "lock file");
 
 	deltatime_t keep_alive = DELTATIME_INIT(0);
 

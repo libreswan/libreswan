@@ -80,7 +80,7 @@ def clear_portrules():
 def main():
     """Big Main Program."""
     # pylint: disable=too-many-branches
-    if not os.path.isfile("@IPSEC_RUNDIR@/pluto.pid"):
+    if not os.path.isfile("@@RUNDIR@@/pluto.pid"):
         sys.exit("libreswan service is not running")
 
     try:

@@ -15,7 +15,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-IPSEC_RUNDIR="${IPSEC_RUNDIR:-@IPSEC_RUNDIR@}"
+IPSEC_RUNDIR="${IPSEC_RUNDIR:-@@RUNDIR@@}"
 CTLSOCKET="${IPSEC_RUNDIR}/pluto.ctl"
 
 me='ipsec auto'

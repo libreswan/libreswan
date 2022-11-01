@@ -11,7 +11,7 @@ $_rc_subr_loaded . /etc/rc.subr
 
 name="pluto"
 rcvar=$name
-pidfile="@IPSEC_RUNDIR@/${name}.pid"
+pidfile="@@RUNDIR@@/${name}.pid"
 command="@@LIBEXECDIR@@/pluto"
 command_args="--logfile @@LOGDIR@@/pluto.log --config @@SYSCONFDIR@@/ipsec.conf --leak-detective"
 required_files="@@SYSCONFDIR@@/ipsec.conf"

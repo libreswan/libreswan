@@ -31,7 +31,7 @@ USE_DNSSEC = false
 INITSYSTEM=rc.d
 
 # not /run/pluto
-FINALRUNDIR=/var/run/pluto
+RUNDIR=/var/run/pluto
 
 # PREFIX = /usr/local from mk/config.mk
 FINALSYSCONFDIR=$(PREFIX)/etc

@@ -32,7 +32,7 @@ DEFAULT_DNSSEC_ROOTKEY_FILE = /var/unbound/db/root.key
 INITSYSTEM=rc.d
 
 # not /run/pluto
-FINALRUNDIR=/var/run/pluto
+RUNDIR=/var/run/pluto
 
 # PREFIX = /usr/local from mk/config.mk
 FINALSYSCONFDIR=$(PREFIX)/etc

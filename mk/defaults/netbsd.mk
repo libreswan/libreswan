@@ -26,7 +26,7 @@ USE_DNSSEC = true
 DEFAULT_DNSSEC_ROOTKEY_FILE = /usr/pkg/etc/unbound/root.key
 
 # not /run/pluto
-FINALRUNDIR=/var/run/pluto
+RUNDIR=/var/run/pluto
 
 # PREFIX = /usr/local from mk/config.mk
 FINALSYSCONFDIR=$(PREFIX)/etc

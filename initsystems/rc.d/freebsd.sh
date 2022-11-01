@@ -18,7 +18,7 @@ command="@@LIBEXECDIR@@/pluto"
 command_args="--logfile @@LOGDIR@@/pluto.log --config @@SYSCONFDIR@@/ipsec.conf --leak-detective"
 required_files="@@SYSCONFDIR@@/ipsec.conf"
 
-pidfile="@IPSEC_RUNDIR@/${name}.pid"
+pidfile="@@RUNDIR@@/${name}.pid"
 
 start_precmd="@@SBINDIR@@/ipsec checknss"
 

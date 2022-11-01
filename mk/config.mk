@@ -311,8 +311,9 @@ TRANSFORMS += 's:@EXAMPLE_INIT_D_DIR@:$(EXAMPLE_INIT_D_DIR):g'
 
 # run dir - defaults to /run/pluto
 # Some older systems might need to set this to /var/run/pluto
-FINALRUNDIR ?= /run/pluto
-RUNDIR ?= $(DESTDIR)$(FINALRUNDIR)
+RUNDIR ?= /run/pluto
+TRANSFORMS += 's:@@RUNDIR@@:$(RUNDIR):g'
+USERLAND_CFLAGS += -DIPSEC_RUNDIR=\"$(RUNDIR)\"
 
 # final configuration file
 IPSEC_CONF ?= $(FINALSYSCONFDIR)/ipsec.conf
@@ -591,7 +592,6 @@ TRANSFORM_VARIABLES = sed \
 			-e "s:@INITSYSTEM@:$(INITSYSTEM):g" \
 			-e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@IPSEC_PPKDIR@:$(FINALPPKDIR):g" \
-			-e "s:@IPSEC_RUNDIR@:$(FINALRUNDIR):g" \
 			-e "s:@IPSEC_VARDIR@:$(FINALVARDIR):g" \
 			-e "s:@MODPROBEARGS@:$(MODPROBEARGS):g" \
 			-e "s:@MODPROBEBIN@:$(MODPROBEBIN):g" \
@@ -846,7 +846,6 @@ ifeq ($(USE_NSS_KDF),true)
 USERLAND_CFLAGS += -DUSE_NSS_KDF
 endif
 
-USERLAND_CFLAGS += -DDEFAULT_RUNDIR=\"$(FINALRUNDIR)\"
 USERLAND_CFLAGS += -DIPSEC_CONFDIR=\"$(FINALCONFDIR)\"
 USERLAND_CFLAGS += -DIPSEC_VARDIR=\"$(FINALVARDIR)\"
 USERLAND_CFLAGS += -DPOLICYGROUPSDIR=\"$(IPSEC_CONFDDIR)/policies\"

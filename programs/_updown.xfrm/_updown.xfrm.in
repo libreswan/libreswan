@@ -249,7 +249,7 @@ elif [ -f @@SYSCONFDIR@@/default/pluto_updown ]; then
     . @@SYSCONFDIR@@/default/pluto_updown
 fi
 
-BACKUP_RESOLV_CONF=@IPSEC_RUNDIR@/libreswan-resolv-conf-backup
+BACKUP_RESOLV_CONF=@@RUNDIR@@/libreswan-resolv-conf-backup
 ETC_RESOLV_CONF=@@SYSCONFDIR@@/resolv.conf
 
 case "${PLUTO_CONN_ADDRFAMILY}" in
