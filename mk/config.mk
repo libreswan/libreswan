@@ -211,6 +211,14 @@ ifdef CONFDIR
 $(error ERROR: deprecated variable CONFDIR is set, use SYSCONFDIR instead)
 endif
 
+ifdef FINALDOCDIR
+$(error ERROR: deprecated variable FINALDOCDIR is set, use EXAMPLECONFDIR instead)
+endif
+
+ifdef DOCDIR
+$(error ERROR: deprecated variable DOCDIR is set, use EXAMPLECONFDIR instead)
+endif
+
 #
 # Options that really belong in CFLAGS (making for an intuitive way to
 # override them).
@@ -355,12 +363,8 @@ USERLAND_CFLAGS += -DIPSEC_CONFDDIR=\"$(IPSEC_CONFDDIR)\"
 EXAMPLE_IPSEC_CONFDDIR ?= $(FINALEXAMPLECONFDIR)/ipsec.d
 TRANSFORMS += 's:@@EXAMPLE_IPSEC_CONFDDIR@@:$(EXAMPLE_IPSEC_CONFDDIR):g'
 
-# Documentation directory
-FINALDOCDIR ?= $(PREFIX)/share/doc/libreswan
-DOCDIR ?= $(DESTDIR)$(FINALDOCDIR)
-
 # sample configuration files go into
-FINALEXAMPLECONFDIR ?= $(FINALDOCDIR)
+FINALEXAMPLECONFDIR ?= $(PREFIX)/share/doc/libreswan
 EXAMPLECONFDIR ?= $(DESTDIR)$(FINALEXAMPLECONFDIR)
 
 
