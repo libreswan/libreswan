@@ -4,11 +4,9 @@ See also https://libreswan.org/
 v4.10 (Unreleased)
 
 * install: overhaul [Andrew]
-  - INSTALL_INITSYSTEM=false to prevent update of /etc/<initsystem>
-  - INSTALL_CONFIGS=false prevents update of /etc/ipsec.d et.al.
-  - INITSYSTEM=rc.d uses $(DESTDIR)$(RC_D_DIR)
-  - INITSYSTEM={docker,sysvinit,openrc} use $(DESTDIR)$(INIT_D_DIR)
-  - install config file and init system examples
+  - use INSTALL_INITSYSTEM=false to prevent update of /etc/<initsystem>
+  - use INSTALL_CONFIGS=false prevents update of /etc/ipsec.d et.al.
+  - drop FINAL* make variables; see mk/config.mk for alternatives
 
 v4.9 (October 13, 2022)
 * IKEv1: fix crasher (introduced in 4.8) when USE_NSS_KDF=false or MD5 [Andrew]
