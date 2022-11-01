@@ -83,13 +83,13 @@ ifeq ($(INSTALL_CONFIGS),true)
 endif
 ifeq ($(USE_AUTHPAM),true)
 	@: PAM
-	@set -eu ; $(call install-directory, $(EXAMPLEPAMCONFDIR))
+	@set -eu ; $(call install-directory, $(DESTDIR)$(EXAMPLE_PAMCONFDIR))
 	@set -eu ; $(call install-file, $(INSTCONFFLAGS), \
-			pam.d/pluto, $(EXAMPLEPAMCONFDIR)/pluto)
+			pam.d/pluto, $(DESTDIR)$(EXAMPLE_PAMCONFDIR)/pluto)
  ifeq ($(INSTALL_CONFIGS),true)
-	@set -eu ; $(call install-directory, $(PAMCONFDIR))
+	@set -eu ; $(call install-directory, $(DESTDIR)$(PAMCONFDIR))
 	@set -eu ; $(call install-missing-file, $(INSTCONFFLAGS), \
-			$(EXAMPLEPAMCONFDIR)/pluto, $(PAMCONFDIR)/pluto)
+			$(DESTDIR)$(EXAMPLE_PAMCONFDIR)/pluto, $(DESTDIR)$(PAMCONFDIR)/pluto)
  endif
 endif
 	@: $(SELINUX)
