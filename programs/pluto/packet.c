@@ -1136,7 +1136,7 @@ struct_desc ikev2_cp_desc = {
 };
 
 static field_desc ikev2_cp_attrbute_fields[] = {
-	{ ft_enum, 16 / BITS_PER_BYTE, "Attribute Type", &ikev2_cp_attribute_type_names },
+	{ ft_loose_enum, 16 / BITS_PER_BYTE, "Attribute Type", &ikev2_cp_attribute_type_names },
 	{ ft_lv, 16 / BITS_PER_BYTE, "length/value", NULL },
 	{ ft_end,  0, NULL, NULL }
 };
