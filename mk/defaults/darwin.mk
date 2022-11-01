@@ -34,6 +34,6 @@ INITSYSTEM=rc.d
 RUNDIR=/var/run/pluto
 
 # PREFIX = /usr/local from mk/config.mk
-FINALSYSCONFDIR=$(PREFIX)/etc
+SYSCONFDIR=$(PREFIX)/etc
 NSSDIR=$(PREFIX)/etc/ipsec.d
 FINALEXAMPECONFDIR=$(PREFIX)/share/examples/libreswan

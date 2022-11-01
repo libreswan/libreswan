@@ -4,7 +4,7 @@ endif
 
 INIT_D_FILE=ipsec.init
 SYSCONFIGFILE=$(builddir)/sysconfig.pluto
-SYSCONFIGDIR=$(SYSCONFDIR)/sysconfig
+SYSCONFIGDIR=$(DESTDIR)$(SYSCONFDIR)/sysconfig
 SYSVINIT_DEFAULT_START?=
 
 include $(top_srcdir)/mk/config.mk

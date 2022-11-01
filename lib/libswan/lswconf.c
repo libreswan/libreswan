@@ -49,7 +49,7 @@ static bool lsw_conf_setdefault(void)
 	/* copy everything to the heap for consistency. */
 	global_oco.rootdir = clone_str("", "rootdir");
 
-	global_oco.confdir = clone_str(IPSEC_CONFDIR, "default conf ipsec_conf_dir");
+	global_oco.confdir = clone_str(IPSEC_SYSCONFDIR, "default conf ipsec_conf_dir");
 	global_oco.conffile = clone_str(IPSEC_CONF, "default conf conffile");
 	global_oco.secretsfile = clone_str(IPSEC_SECRETS, "default ipsec.secrets");
 

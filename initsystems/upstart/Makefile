@@ -8,8 +8,8 @@ SRCDIR?=${LIBRESWANSRCDIR}/initsystems/systemd/
 UPSTARTFILE=$(builddir)/ipsec.conf
 DEFAULTFILE=$(builddir)/default.pluto
 SUBDIRS=
-UPSTARTDIR=$(SYSCONFDIR)/init
-DEFAULTDIR=$(SYSCONFDIR)/default
+UPSTARTDIR=$(DESTDIR)$(SYSCONFDIR)/init
+DEFAULTDIR=$(DESTDIR)$(SYSCONFDIR)/default
 
 include $(top_srcdir)/mk/config.mk
 

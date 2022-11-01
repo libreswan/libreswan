@@ -29,7 +29,7 @@ DEFAULT_DNSSEC_ROOTKEY_FILE = /usr/pkg/etc/unbound/root.key
 RUNDIR=/var/run/pluto
 
 # PREFIX = /usr/local from mk/config.mk
-FINALSYSCONFDIR=$(PREFIX)/etc
+SYSCONFDIR=$(PREFIX)/etc
 NSSDIR=$(PREFIX)/etc/ipsec.d
 FINALEXAMPLECONFDIR=$(PREFIX)/share/examples/libreswan
 MANDIR=$(PREFIX)/man

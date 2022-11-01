@@ -117,7 +117,7 @@ endif
 
 list-local-base:
 	@set -eu ; $(foreach file, $(CONFFILES), \
-		echo $(CONFDIR)/$(file) ; \
+		echo $(DESTDIR)$(SYSCONFDIR)/$(file) ; \
 	)
 	@set -eu ; $(foreach file, $(CONFFILES), \
 		echo $(EXAMPLECONFDIR)/$(file)-sample ; \

@@ -199,6 +199,18 @@ ifdef PPKDIR
 $(error ERROR: deprecated variable PPKDIR is set)
 endif
 
+ifdef FINALSYSCONFDIR
+$(error ERROR: deprecated variable FINALSYSCONFDIR is set, use SYSCONFDIR instead)
+endif
+
+ifdef FINALCONFDIR
+$(error ERROR: deprecated variable FINALCONFDIR is set, use SYSCONFDIR instead)
+endif
+
+ifdef CONFDIR
+$(error ERROR: deprecated variable CONFDIR is set, use SYSCONFDIR instead)
+endif
+
 #
 # Options that really belong in CFLAGS (making for an intuitive way to
 # override them).
@@ -282,10 +294,9 @@ USERLAND_CFLAGS += -DIPSEC_SBINDIR=\"$(SBINDIR)\"
 MANDIR ?= $(PREFIX)/share/man
 TRANSFORMS += 's:@@MANDIR@@:$(MANDIR):'
 
-# where configuration files go
-FINALSYSCONFDIR ?= /etc
-# notice _DIR
-SYSCONF_DIR = $(FINALSYSCONFDIR)
+# where readonly configuration files go
+SYSCONFDIR ?= /etc
+TRANSFORMS += 's:@@SYSCONFDIR@@:$(SYSCONFDIR):g'
 
 #
 # INITSYSTEM
@@ -305,7 +316,7 @@ INSTALL_INITSYSTEM ?= true
 # Where the INITSYSTEM=rc.d boot/shutdown scripts and examples go.
 # During install the $(DESTDIR) prefix is added.
 
-RC_D_DIR ?= $(SYSCONF_DIR)/rc.d
+RC_D_DIR ?= $(SYSCONFDIR)/rc.d
 TRANSFORMS += 's:@RC_D_DIR@:$(RC_D_DIR):g'
 
 EXAMPLE_RC_D_DIR ?= $(FINALEXAMPLECONFDIR)/$(notdir $(RC_D_DIR))
@@ -328,22 +339,16 @@ TRANSFORMS += 's:@@RUNDIR@@:$(RUNDIR):g'
 USERLAND_CFLAGS += -DIPSEC_RUNDIR=\"$(RUNDIR)\"
 
 # final configuration file
-IPSEC_CONF ?= $(FINALSYSCONFDIR)/ipsec.conf
+IPSEC_CONF ?= $(SYSCONFDIR)/ipsec.conf
 TRANSFORMS += 's:@@IPSEC_CONF@@:$(IPSEC_CONF):g'
 USERLAND_CFLAGS += -DIPSEC_CONF=\"$(IPSEC_CONF)\"
 
 # final secrets file
-IPSEC_SECRETS ?= $(FINALCONFDIR)/ipsec.secrets
+IPSEC_SECRETS ?= $(SYSCONFDIR)/ipsec.secrets
 TRANSFORMS += 's:@@IPSEC_SECRETS@@:$(IPSEC_SECRETS):g'
 USERLAND_CFLAGS += -DIPSEC_SECRETS=\"$(IPSEC_SECRETS)\"
 
-
-FINALCONFDIR ?= $(FINALSYSCONFDIR)
-
-CONFDIR ?= $(DESTDIR)$(FINALCONFDIR)
-SYSCONFDIR ?= $(DESTDIR)$(FINALSYSCONFDIR)
-
-IPSEC_CONFDDIR ?= $(FINALCONFDIR)/ipsec.d
+IPSEC_CONFDDIR ?= $(SYSCONFDIR)/ipsec.d
 TRANSFORMS += 's:@@IPSEC_CONFDDIR@@:$(IPSEC_CONFDDIR):g'
 USERLAND_CFLAGS += -DIPSEC_CONFDDIR=\"$(IPSEC_CONFDDIR)\"
 
@@ -369,7 +374,7 @@ TRANSFORMS += 's:@@LOGDIR@@:$(LOGDIR):g'
 
 # Directory for logrotate config
 
-FINALLOGROTATEDDIR ?= $(FINALSYSCONFDIR)/logrotate.d
+FINALLOGROTATEDDIR ?= $(SYSCONFDIR)/logrotate.d
 LOGROTATEDDIR ?= $(DESTDIR)$(FINALLOGROTATEDDIR)
 TRANSFORMS += 's:@LOGROTATEDDIR@:$(FINALLOGROTATEDDIR):g'
 
@@ -593,11 +598,8 @@ export WHACKLIB IPSECCONFLIB
 TRANSFORM_VARIABLES = sed \
 			-e "/@${OSDEP}_START@/,/@${OSDEP}_END@/d" \
 			-e "s:@DOCKER_PLUTONOFORK@:$(DOCKER_PLUTONOFORK):g" \
-			-e "s:@@CONFDIR@@:$(FINALCONFDIR):g" \
-			-e "s:@@DOCDIR@@:$(FINALDOCDIR):g" \
 			-e "s:@@EXAMPLECONFDIR@@:$(FINALEXAMPLECONFDIR):g" \
 			-e "s:@@LOGROTATEDDIR@@:$(FINALLOGROTATEDDIR):g" \
-			-e "s:@@SYSCONFDIR@@:$(FINALSYSCONFDIR):g" \
 			-e "s:@INITSYSTEM@:$(INITSYSTEM):g" \
 			-e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@MODPROBEARGS@:$(MODPROBEARGS):g" \
@@ -743,7 +745,7 @@ USERLAND_CFLAGS += -DUSE_PAM_AUTH
 AUTHPAM_LDFLAGS ?= -lpam
 endif
 
-FINALPAMCONFDIR ?= $(FINALSYSCONFDIR)/pam.d
+FINALPAMCONFDIR ?= $(SYSCONFDIR)/pam.d
 PAMCONFDIR ?= $(DESTDIR)$(FINALPAMCONFDIR)
 TRANSFORMS += 's:@PAMCONFDIR@:$(FINALPAMCONFDIR):g'
 
@@ -853,7 +855,7 @@ ifeq ($(USE_NSS_KDF),true)
 USERLAND_CFLAGS += -DUSE_NSS_KDF
 endif
 
-USERLAND_CFLAGS += -DIPSEC_CONFDIR=\"$(FINALCONFDIR)\"
+USERLAND_CFLAGS += -DIPSEC_SYSCONFDIR=\"$(SYSCONFDIR)\"
 USERLAND_CFLAGS += -DPOLICYGROUPSDIR=\"$(IPSEC_CONFDDIR)/policies\"
 # Ensure that calls to NSPR's PR_ASSERT() really do abort.  While all
 # calls should have been eliminated (replaced by passert()), keep this
