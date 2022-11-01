@@ -36,4 +36,4 @@ RUNDIR=/var/run/pluto
 # PREFIX = /usr/local from mk/config.mk
 SYSCONFDIR=$(PREFIX)/etc
 NSSDIR=$(PREFIX)/etc/ipsec.d
-FINALEXAMPECONFDIR=$(PREFIX)/share/examples/libreswan
+EXAMPLE_IPSEC_SYSCONFDIR=$(PREFIX)/share/examples/libreswan

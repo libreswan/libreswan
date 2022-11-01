@@ -135,10 +135,10 @@ setup() {
 
     # Copying the required configuration
     if [ "${ServerClient}" = "--server" ]; then
-	configFile="@@EXAMPLECONFDIR@@/letsencrypt/oe-letsencrypt-server.conf"
+	configFile="@@EXAMPLE_IPSEC_SYSCONFDIR@@/letsencrypt/oe-letsencrypt-server.conf"
 	configFileName="oe-letsencrypt-server.conf"
     else
-	configFile="@@EXAMPLECONFDIR@@/letsencrypt/oe-letsencrypt-client.conf"
+	configFile="@@EXAMPLE_IPSEC_SYSCONFDIR@@/letsencrypt/oe-letsencrypt-client.conf"
 	configFileName="oe-letsencrypt-client.conf"
     fi
 
