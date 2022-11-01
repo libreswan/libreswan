@@ -21,7 +21,7 @@ ipsec.secrets.INSTFLAGS = -m 0600
 CONFFILES += ipsec.conf
 CONFFILES += ipsec.secrets
 
-LOGROTATEDCONFFILES += libreswan
+LOGROTATEDFILE += libreswan
 
 CONFDSUBDIR = policies
 CONFDSUBDIRFILES = clear clear-or-private private-or-clear private block portexcludes.conf
@@ -35,16 +35,16 @@ include $(top_srcdir)/mk/rules.mk
 include $(top_srcdir)/mk/manpages.mk
 include $(top_srcdir)/mk/install.mk
 
-local-base: $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATEDCONFFILES)
+local-base: $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATEDFILE)
 
 local-clean-base:
-	rm -f $(foreach file, $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATEDCONFFILES), $(builddir)/$(file))
+	rm -f $(foreach file, $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATEDFILE), $(builddir)/$(file))
 
 # For each group of files; first copy to the examples directory and
 # then, optionally, install into /etc (but only when
 # INSTALL_CONFIGS=true, and only when not already present).
 
-local-install-base: $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATEDCONFFILES)
+local-install-base: $(CONFFILES) $(CONFDSUBDIRFILES) $(LOGROTATEDFILE)
 	@: CONFDDIR - EXAMPLECONFDIR not EXAMPLECONFDDIR and sample suffix
 	@set -eu ; $(call install-directory, $(DESTDIR)$(EXAMPLE_IPSEC_SYSCONFDIR))
 	@set -eu ; $(call install-file, $(INSTCONFFLAGS) $(ipsec.conf.INSTFLAGS),    $(builddir)/ipsec.conf,    $(DESTDIR)$(EXAMPLE_IPSEC_SYSCONFDIR)/$(notdir $(IPSEC_CONF))-sample)
@@ -69,17 +69,13 @@ ifeq ($(INSTALL_CONFIGS),true)
 	)
 endif
 	@: LOGROTATED
-	@set -eu ; $(call install-directory, $(EXAMPLELOGROTATEDDIR))
-	@set -eu ; $(foreach file, $(LOGROTATEDCONFFILES), \
-		$(call install-file, $(INSTCONFFLAGS), \
-			$(builddir)/$(file), $(EXAMPLELOGROTATEDDIR)/$(file)) ; \
-	)
+	@set -eu ; $(call install-directory, $(DESTDIR)$(EXAMPLE_LOGROTATEDDIR))
+	@set -eu ; $(call install-file, $(INSTCONFFLAGS), \
+		$(builddir)/$(LOGROTATEDFILE), $(DESTDIR)$(EXAMPLE_LOGROTATEDDIR)/$(LOGROTATEDFILE))
 ifeq ($(INSTALL_CONFIGS),true)
-	@set -eu ; $(call install-directory, $(LOGROTATEDDIR))
-	@set -eu ; $(foreach file, $(LOGROTATEDCONFFILES), \
-		$(call install-missing-file, $(INSTCONFFLAGS), \
-			$(EXAMPLELOGROTATEDDIR)/$(file), $(LOGROTATEDDIR)/$(file)) ; \
-	)
+	@set -eu ; $(call install-directory, $(DESTDIR)$(LOGROTATEDDIR))
+	@set -eu ; $(call install-missing-file, $(INSTCONFFLAGS), \
+		$(builddir)/$(LOGROTATEDFILE), $(DESTDIR)$(LOGROTATEDDIR)/$(LOGROTATEDFILE))
 endif
 	@: NSSDIR install
 ifeq ($(INSTALL_CONFIGS),true)
