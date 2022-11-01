@@ -191,6 +191,14 @@ ifdef FINALVARDIR
 $(error ERROR: deprecated variable FINALVARDIR is set, use VARDIR instead)
 endif
 
+ifdef FINALPPKDIR
+$(error ERROR: deprecated variable FINALPPKDIR is set)
+endif
+
+ifdef PPKDIR
+$(error ERROR: deprecated variable PPKDIR is set)
+endif
+
 #
 # Options that really belong in CFLAGS (making for an intuitive way to
 # override them).
@@ -341,10 +349,6 @@ USERLAND_CFLAGS += -DIPSEC_CONFDDIR=\"$(IPSEC_CONFDDIR)\"
 
 EXAMPLE_IPSEC_CONFDDIR ?= $(FINALEXAMPLECONFDIR)/ipsec.d
 TRANSFORMS += 's:@@EXAMPLE_IPSEC_CONFDDIR@@:$(EXAMPLE_IPSEC_CONFDDIR):g'
-
-# where dynamic PPKs go, for now
-FINALPPKDIR ?= $(IPSEC_CONFDDIR)
-PPKDIR ?= $(DESTDIR)$(FINALPPKDIR)
 
 # Documentation directory
 FINALDOCDIR ?= $(PREFIX)/share/doc/libreswan
@@ -596,7 +600,6 @@ TRANSFORM_VARIABLES = sed \
 			-e "s:@@SYSCONFDIR@@:$(FINALSYSCONFDIR):g" \
 			-e "s:@INITSYSTEM@:$(INITSYSTEM):g" \
 			-e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
-			-e "s:@IPSEC_PPKDIR@:$(FINALPPKDIR):g" \
 			-e "s:@MODPROBEARGS@:$(MODPROBEARGS):g" \
 			-e "s:@MODPROBEBIN@:$(MODPROBEBIN):g" \
 			-e "s:@OSDEP@:${OSDEP}:g" \
