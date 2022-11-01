@@ -187,6 +187,10 @@ ifdef FINALSBINDIR
 $(error ERROR: deprecated variable FINALSBINDIR is set, use SBINDIR instead)
 endif
 
+ifdef FINALVARDIR
+$(error ERROR: deprecated variable FINALVARDIR is set, use VARDIR instead)
+endif
+
 #
 # Options that really belong in CFLAGS (making for an intuitive way to
 # override them).
@@ -352,9 +356,11 @@ EXAMPLECONFDIR ?= $(DESTDIR)$(FINALEXAMPLECONFDIR)
 
 
 # where per-conn pluto logs go
-FINALVARDIR ?= /var
-VARDIR ?= $(DESTDIR)$(FINALVARDIR)
-LOGDIR ?= $(FINALVARDIR)/log
+VARDIR ?= /var
+TRANSFORMS += 's:@@VARDIR@@:$(VARDIR):g'
+USERLAND_CFLAGS += -DIPSEC_VARDIR=\"$(VARDIR)\"
+
+LOGDIR ?= $(VARDIR)/log
 TRANSFORMS += 's:@@LOGDIR@@:$(LOGDIR):g'
 
 # Directory for logrotate config
@@ -368,7 +374,7 @@ EXAMPLELOGROTATEDDIR ?= $(DESTDIR)$(FINALEXAMPLELOGROTATEDDIR)
 TRANSFORMS += 's:@EXAMPLELOGROTATEDDIR@:$(FINALEXAMPLELOGROTATEDDIR):g'
 
 # Where nss databases go
-NSSDIR ?= $(FINALVARDIR)/lib/ipsec/nss
+NSSDIR ?= $(VARDIR)/lib/ipsec/nss
 # RHEL/CentOS <= 8 and Fedora <= 32 uses /etc/ipsec.d
 # NSSDIR ?= /etc/ipsec.d
 TRANSFORMS += 's:@IPSEC_NSSDIR@:$(NSSDIR):g'
@@ -588,11 +594,9 @@ TRANSFORM_VARIABLES = sed \
 			-e "s:@@EXAMPLECONFDIR@@:$(FINALEXAMPLECONFDIR):g" \
 			-e "s:@@LOGROTATEDDIR@@:$(FINALLOGROTATEDDIR):g" \
 			-e "s:@@SYSCONFDIR@@:$(FINALSYSCONFDIR):g" \
-			-e "s:@@VARDIR@@:$(FINALVARDIR):g" \
 			-e "s:@INITSYSTEM@:$(INITSYSTEM):g" \
 			-e "s:@IPSECVERSION@:$(IPSECVERSION):g" \
 			-e "s:@IPSEC_PPKDIR@:$(FINALPPKDIR):g" \
-			-e "s:@IPSEC_VARDIR@:$(FINALVARDIR):g" \
 			-e "s:@MODPROBEARGS@:$(MODPROBEARGS):g" \
 			-e "s:@MODPROBEBIN@:$(MODPROBEBIN):g" \
 			-e "s:@OSDEP@:${OSDEP}:g" \
@@ -847,7 +851,6 @@ USERLAND_CFLAGS += -DUSE_NSS_KDF
 endif
 
 USERLAND_CFLAGS += -DIPSEC_CONFDIR=\"$(FINALCONFDIR)\"
-USERLAND_CFLAGS += -DIPSEC_VARDIR=\"$(FINALVARDIR)\"
 USERLAND_CFLAGS += -DPOLICYGROUPSDIR=\"$(IPSEC_CONFDDIR)/policies\"
 # Ensure that calls to NSPR's PR_ASSERT() really do abort.  While all
 # calls should have been eliminated (replaced by passert()), keep this
