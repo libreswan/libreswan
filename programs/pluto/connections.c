@@ -264,7 +264,8 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 			pfreeany(end->host.addr_name);
 			/* child */
 			pfreeany(end->child.updown);
-			pfreeany(end->child.selectors);
+			pfreeany(end->child.selectors.list);
+			pfreeany(end->child.selectors.string);
 		}
 		pfree(c->root_config);
 	}
@@ -1363,10 +1364,11 @@ static diag_t extract_end(struct connection *c,
 			return diag("%ssubnet=%s invalid, %s",
 				    src->leftright, src->client, e);
 		}
-		end_config->child.selectors_field = "subnet";
-		end_config->child.selectors_are_client = true;
-		end_config->child.selectors = alloc_things(ip_selector, 2, "selectors");
-		end_config->child.selectors[0] =
+		end_config->child.selectors.field = "subnet";
+		end_config->child.selectors.string = clone_str(src->client, "client");
+		end_config->child.selectors.are_client = true;
+		end_config->child.selectors.list = alloc_things(ip_selector, 2, "selectors");
+		end_config->child.selectors.list[0] =
 			selector_from_subnet_protoport(subnet, src->protoport);
 	} else if (src->client != NULL) {
 		/*
@@ -1382,9 +1384,10 @@ static diag_t extract_end(struct connection *c,
 		dbg("%s %s child selectors from %subnet (selector)",
 		    c->name, src->leftright, src->leftright);
 		passert(c->config->ike_version == IKEv2);
-		end_config->child.selectors_field = "subnet";
-		end_config->child.selectors_are_client = true;
-		diag_t d = ttoselector_num_list(shunk1(src->client), ", ", NULL, &end_config->child.selectors);
+		end_config->child.selectors.field = "subnet";
+		end_config->child.selectors.string = clone_str(src->client, "client");
+		end_config->child.selectors.are_client = true;
+		diag_t d = ttoselector_num_list(shunk1(src->client), ", ", NULL, &end_config->child.selectors.list);
 		if (d != NULL) {
 			return diag_diag(&d, "%ssubnet=%s invalid, ",
 					 src->leftright, src->client);
@@ -1401,12 +1404,15 @@ static diag_t extract_end(struct connection *c,
 		 * Of course if NARROWING is allowed, this can be
 		 * refined regardless of .has_client.
 		 */
-		dbg("%s %s child selectors from %ssourceip",
-		    c->name, src->leftright, src->leftright);
-		end_config->child.selectors_field = "sourceip";
-		end_config->child.selectors_are_client = true;
-		end_config->child.selectors = alloc_things(ip_selector, 2, "selectors");
-		end_config->child.selectors[0] =
+		address_buf sb;
+		const char *s = str_address(&src->sourceip, &sb);
+		dbg("%s %s child selectors from %ssourceip=%s",
+		    c->name, src->leftright, src->leftright, s);
+		end_config->child.selectors.field = "sourceip";
+		end_config->child.selectors.string = clone_str(s, "sourceip");
+		end_config->child.selectors.are_client = true;
+		end_config->child.selectors.list = alloc_things(ip_selector, 2, "selectors");
+		end_config->child.selectors.list[0] =
 			selector_from_address_protoport(src->sourceip, src->protoport);
 	} else if (src->protoport.is_set) {
 		/*
@@ -1420,10 +1426,11 @@ static diag_t extract_end(struct connection *c,
 		 */
 		dbg("%s %s child selectors from %sprotoport + host AFI",
 		    c->name, src->leftright, src->leftright);
-		end_config->child.selectors_field = "";/*i.e., left""= right""=*/
-		end_config->child.selectors_are_client = false;
-		end_config->child.selectors = alloc_things(ip_selector, 2, "selectors");
-		end_config->child.selectors[0] =
+		end_config->child.selectors.field = "";/*i.e., left""= right""=*/
+		end_config->child.selectors.string = clone_str("...", "...");
+		end_config->child.selectors.are_client = false;
+		end_config->child.selectors.list = alloc_things(ip_selector, 2, "selectors");
+		end_config->child.selectors.list[0] =
 			selector_from_subnet_protoport(host_afi->subnet.all, src->protoport);
 	} else {
 		dbg("%s %s child selectors unknown; probably derived from host?!?",
@@ -2367,7 +2374,7 @@ static bool extract_connection(const struct whack_message *wm,
 
 	const ip_selector *selectors[END_ROOF] = {0};
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		selectors[end] = c->end[end].child.config->selectors;
+		selectors[end] = c->end[end].child.config->selectors.list;
 	}
 	struct spd_route **spd_end = &c->spd;
 	do /*LEFT*/ {
@@ -2399,16 +2406,16 @@ static bool extract_connection(const struct whack_message *wm,
 					if (se != NULL) {
 						dbg("%s %s child spd from selectors",
 						    c->name, ce->leftright);
-						passert(ce->selectors[0].is_set); /* at least 1 */
-						if (ce->selectors[1].is_set) {
+						passert(ce->selectors.list[0].is_set); /* at least 1 */
+						if (ce->selectors.list[1].is_set) {
 							/* only way to get >1 selector is with subnet= */
 							llog(RC_FATAL, c->logger,
 							     ADD_FAILED_PREFIX"rejecting additional selectors in %ssubnet=%s",
 							     we->leftright, we->client);
 							return false;
 						}
-						spd_end->has_client = ce->selectors_are_client;
-						spd_end->client = ce->selectors[0];
+						spd_end->has_client = ce->selectors.are_client;
+						spd_end->client = ce->selectors.list[0];
 					} else {
 						dbg("%s %s child spd unset",
 						    c->name, ce->leftright);
@@ -2424,8 +2431,8 @@ static bool extract_connection(const struct whack_message *wm,
 	} while(selectors[LEFT_END] != NULL && selectors[LEFT_END]->is_set);
 
 	if (c->spd == NULL) {
-		if (c->end[LEFT_END].child.config->selectors != NULL &&
-		    c->end[RIGHT_END].child.config->selectors != NULL) {
+		if (c->end[LEFT_END].child.config->selectors.list != NULL &&
+		    c->end[RIGHT_END].child.config->selectors.list != NULL) {
 			/*
 			 * Both ends used child AFIs.
 			 *
@@ -2434,10 +2441,12 @@ static bool extract_connection(const struct whack_message *wm,
 			 * say.
 			 */
 			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"address family %s from left%s= conflicts with right%s=",
-			     selector_type(c->end[LEFT_END].child.config->selectors)->ip_name,
-			     c->end[LEFT_END].child.config->selectors_field,
-			     c->end[RIGHT_END].child.config->selectors_field);
+			     ADD_FAILED_PREFIX"address family %s from left%s=%s conflicts with right%s=%s",
+			     selector_type(c->end[LEFT_END].child.config->selectors.list)->ip_name,
+			     c->end[LEFT_END].child.config->selectors.field,
+			     c->end[LEFT_END].child.config->selectors.string,
+			     c->end[RIGHT_END].child.config->selectors.field,
+			     c->end[RIGHT_END].child.config->selectors.string);
 		} else {
 			/*
 			 * One end used a child AFI, and the other
@@ -2456,9 +2465,11 @@ static bool extract_connection(const struct whack_message *wm,
 			passert(host_end != NULL);
 			passert(child_end != NULL);
 			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"%s host address family %s conflicts with %s%s=",
+			     ADD_FAILED_PREFIX"%s host address family %s conflicts with %s%s=%s",
 			     host_end, host_afi->ip_name,
-			     child_end->leftright, child_end->selectors_field);
+			     child_end->leftright,
+			     child_end->selectors.field,
+			     child_end->selectors.string);
 		}
 		return false;
 	}

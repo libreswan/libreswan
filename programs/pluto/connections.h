@@ -130,10 +130,13 @@ struct child_end_config {
 	ip_protoport protoport;
 	char *updown;
 
-	ip_selector *selectors;
-	/* log "{.leftright}${.selectors_field}=... */
-	const char *selectors_field;
-	bool selectors_are_client;
+	struct {
+		ip_selector *list;
+		/* log "{.leftright}${.selectors_field}=${.selectors_string} */
+		const char *field;
+		char *string;
+		bool are_client;
+	} selectors;
 
 	ip_address sourceip;
 
