@@ -348,9 +348,9 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 		 * Opportunistic or Shunt:
 		 * pick tightest match
 		 */
-		if (endpoint_in_selector(md->sender, d->spd->remote.client) &&
-		    (c == NULL || selector_in_selector(c->spd->remote.client,
-						       d->spd->remote.client))) {
+		if (endpoint_in_selector(md->sender, d->spd->remote->client) &&
+		    (c == NULL || selector_in_selector(c->spd->remote->client,
+						       d->spd->remote->client))) {
 			c = d;
 		}
 	}

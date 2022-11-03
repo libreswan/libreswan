@@ -333,7 +333,7 @@ bool is_virtual_end(const struct spd_end *that)
 bool is_virtual_connection(const struct connection *c)
 {
 	for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next)
-		if (sr->remote.virt != NULL)
+		if (sr->remote->virt != NULL)
 			return true;
 
 	return false;
@@ -347,7 +347,7 @@ bool is_virtual_connection(const struct connection *c)
  */
 bool is_virtual_sr(const struct spd_route *sr)
 {
-	return is_virtual_end(&sr->remote);
+	return is_virtual_end(sr->remote);
 }
 
 /*
@@ -392,7 +392,7 @@ err_t check_virtual_net_allowed(const struct connection *c,
 				const ip_subnet peer_net,
 				const ip_address peers_addr)
 {
-	const struct virtual_ip *virt = c->spd->remote.virt;
+	const struct virtual_ip *virt = c->spd->remote->virt;
 	if (virt == NULL)
 		return NULL;
 

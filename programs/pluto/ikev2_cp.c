@@ -149,8 +149,8 @@ bool emit_v2CP_response(const struct child_sa *child, struct pbs_out *outpbs)
 	if (!out_struct(&cp, &ikev2_cp_desc, outpbs, &cp_pbs))
 		return false;
 
-	ip_address that_client_address = selector_prefix(c->spd->remote.client);
-	ikev2_ship_cp_attr_ip(selector_type(&c->spd->remote.client) == &ipv4_info ?
+	ip_address that_client_address = selector_prefix(c->spd->remote->client);
+	ikev2_ship_cp_attr_ip(selector_type(&c->spd->remote->client) == &ipv4_info ?
 			      IKEv2_INTERNAL_IP4_ADDRESS : IKEv2_INTERNAL_IP6_ADDRESS,
 			      &that_client_address, "Internal IP Address", &cp_pbs);
 
@@ -212,7 +212,7 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 	}
 
 	for (struct spd_route *spd = cc->spd; spd != NULL; spd = spd->spd_next) {
-		const struct ip_info *afi = selector_info(spd->local.client);
+		const struct ip_info *afi = selector_info(spd->local->client);
 		if (afi != NULL) {
 			dbg("SPD says to ask for %s", afi->ip_name);
 			ipset |= LELEM(afi->ip_index);
@@ -430,27 +430,27 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs, struct child_sa 
 	}
 
 	*seen_an_address = true;
-	c->spd->local.has_client = true;
-	c->spd->local.has_internal_address = true;
+	c->spd->local->has_client = true;
+	c->spd->local->has_internal_address = true;
 
 	if (c->local->host.config->client_address_translation) {
 		dbg("CAT is set, not setting host source IP address to %s",
 		    ipstr(&ip, &ip_str));
-		ip_address this_client_prefix = selector_prefix(c->spd->local.client);
+		ip_address this_client_prefix = selector_prefix(c->spd->local->client);
 		if (address_eq_address(this_client_prefix, ip)) {
 			/*
 			 * The address we received is same as this
 			 * side should we also check the host_srcip.
 			 */
-			dbg("#%lu %s[%lu] received INTERNAL_IP%d_ADDRESS that is same as this.client.addr %s. Will not add CAT iptable rules",
+			dbg("#%lu %s[%lu] received INTERNAL_IP%d_ADDRESS that is same as this->client.addr %s. Will not add CAT iptable rules",
 			    child->sa.st_serialno, c->name, c->instance_serial,
 			    af->ip_version, ipstr(&ip, &ip_str));
 		} else {
-			c->spd->local.client = selector_from_address(ip);
-			c->spd->local.has_cat = true; /* create iptable entry */
+			c->spd->local->client = selector_from_address(ip);
+			c->spd->local->has_cat = true; /* create iptable entry */
 		}
 	} else {
-		c->spd->local.client = selector_from_address(ip);
+		c->spd->local->client = selector_from_address(ip);
 	}
 
 	return true;

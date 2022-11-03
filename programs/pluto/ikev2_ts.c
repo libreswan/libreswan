@@ -341,8 +341,8 @@ stf_status emit_v2TS_payloads(struct pbs_out *outpbs, const struct child_sa *chi
 
 	switch (child->sa.st_sa_role) {
 	case SA_INITIATOR:
-		ts_i = traffic_selector_from_end(&child->sa.st_connection->spd->local, "this TSi");
-		ts_r = traffic_selector_from_end(&child->sa.st_connection->spd->remote, "that TSr");
+		ts_i = traffic_selector_from_end(child->sa.st_connection->spd->local, "this TSi");
+		ts_r = traffic_selector_from_end(child->sa.st_connection->spd->remote, "that TSr");
 		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
 		    impair.rekey_initiate_supernet) {
 			ts_i = ts_r = impair_ts_to_supernet(ts_i);
@@ -366,8 +366,8 @@ stf_status emit_v2TS_payloads(struct pbs_out *outpbs, const struct child_sa *chi
 
 		break;
 	case SA_RESPONDER:
-		ts_i = traffic_selector_from_end(&child->sa.st_connection->spd->remote, "that TSi");
-		ts_r = traffic_selector_from_end(&child->sa.st_connection->spd->local, "this TSr");
+		ts_i = traffic_selector_from_end(child->sa.st_connection->spd->remote, "that TSi");
+		ts_r = traffic_selector_from_end(child->sa.st_connection->spd->local, "this TSr");
 		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
 		    impair.rekey_respond_subnet) {
 			ts_i = impair_ts_to_subnet(ts_i);
@@ -1134,8 +1134,8 @@ static void scribble_request_ts_on_connection(struct child_sa *child,
 	 * THAT=INITIATOR.
 	 */
 	dbg_ts("XXX: updating best connection's ports/protocols");
-	c->spd->local.client = selector_from_range_protocol_port(n.r.range, n.r.protocol, ip_hport(n.r.port));
-	c->spd->remote.client = selector_from_range_protocol_port(n.i.range, n.i.protocol, ip_hport(n.i.port));
+	c->spd->local->client = selector_from_range_protocol_port(n.r.range, n.r.protocol, ip_hport(n.r.port));
+	c->spd->remote->client = selector_from_range_protocol_port(n.i.range, n.i.protocol, ip_hport(n.i.port));
 }
 
 /*
@@ -1362,8 +1362,8 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 
 				/* responder */
 				const struct spd_ends ends = {
-					.i = &sr->remote,
-					.r = &sr->local,
+					.i = sr->remote,
+					.r = sr->local,
 				};
 
 				struct best_score score = score_ends(responder_fit, d/*note D*/,
@@ -1546,13 +1546,13 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			 * being chosen because it had the narrowest
 			 * client selector?
 			 */
-			if (!selector_in_selector(c->spd->remote.client, t->spd->remote.client)) {
+			if (!selector_in_selector(c->spd->remote->client, t->spd->remote->client)) {
 				dbg_ts("skipping; current connection's initiator subnet is not <= template");
 				continue;
 			}
 			/* require responder address match; why? */
-			ip_address c_this_client_address = selector_prefix(c->spd->local.client);
-			ip_address t_this_client_address = selector_prefix(t->spd->local.client);
+			ip_address c_this_client_address = selector_prefix(c->spd->local->client);
+			ip_address t_this_client_address = selector_prefix(t->spd->local->client);
 			if (!address_eq_address(c_this_client_address, t_this_client_address)) {
 				dbg_ts("skipping; responder addresses don't match");
 				continue;
@@ -1564,8 +1564,8 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 
 			/* responder: THIS=RESPONDER; THAT=INITIATOR */
 			struct spd_ends ends = {
-				.i = &t->spd->remote,
-				.r = &t->spd->local,
+				.i = t->spd->remote,
+				.r = t->spd->local,
 			};
 
 			struct narrowed_traffic_selectors n = narrow_tss_ends(&ends, &tsp,
@@ -1628,7 +1628,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 		if (best.connection->config->sec_label.len > 0) {
 			pexpect(best.connection == child->sa.st_connection); /* big circle */
 			pexpect(best.selected_sec_label.len > 0);
-			pexpect(best.connection->spd->local.sec_label.len == 0);
+			pexpect(best.connection->spd->local->sec_label.len == 0);
 		}
 
 		/*
@@ -1688,8 +1688,8 @@ bool v2_process_ts_response(struct child_sa *child,
 	/* initiator */
 	const struct spd_route *sra = c->spd;
 	const struct spd_ends e = {
-		.i = &sra->local,
-		.r = &sra->remote,
+		.i = sra->local,
+		.r = sra->remote,
 	};
 
 	/*
@@ -1722,9 +1722,9 @@ bool v2_process_ts_response(struct child_sa *child,
 		return false;
 	}
 
-	traffic_selector_to_end(&best.n.i, &c->spd->local,
+	traffic_selector_to_end(&best.n.i, c->spd->local,
 				"scribble accepted TSi response on initiator's this");
-	traffic_selector_to_end(&best.n.r, &c->spd->remote,
+	traffic_selector_to_end(&best.n.r, c->spd->remote,
 				"scribble accepted TSr response on initiator's that");
 	rehash_db_spd_route_remote_client(c->spd);
 
@@ -1770,8 +1770,8 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 	}
 
 	const struct spd_ends ends = {
-		.i = &c->spd->remote,
-		.r = &c->spd->local,
+		.i = c->spd->remote,
+		.r = c->spd->local,
 	};
 
 	enum fit responder_fit = END_NARROWER_THAN_TS;

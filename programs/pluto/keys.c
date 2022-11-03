@@ -308,7 +308,7 @@ diag_t authsig_and_log_using_pubkey(struct ike_sa *ike,
 		.now = realnow(),
 		.signature = signature,
 		.hash_algo = hash_algo,
-		.remote = &c->spd->remote,
+		.remote = c->spd->remote,
 		/* out */
 		.tried_cnt = 0,
 		.key = NULL,
