@@ -150,8 +150,8 @@ static void delete_spd_end(struct spd_end *e)
 static void delete_spd_route(struct spd_route **sr, bool valid)
 {
 	del_db_spd_route(*sr, valid);
-	delete_spd_end(&(*sr)->local);
-	delete_spd_end(&(*sr)->remote);
+	delete_spd_end((*sr)->local);
+	delete_spd_end((*sr)->remote);
 	pfreeany(*sr);
 }
 
@@ -219,7 +219,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 
 	for (struct spd_route *sr = c->spd, *next = NULL; sr != NULL; sr = next) {
 		next = sr->spd_next; /*step-off*/
-		pexpect(sr->local.virt == NULL);
+		pexpect(sr->local->virt == NULL);
 		delete_spd_route(&sr, connection_valid);
 	}
 
@@ -752,9 +752,9 @@ static char *format_connection(char *buf, size_t buf_len,
 			       const struct spd_route *sr)
 {
 	struct jambuf b = array_as_jambuf(buf, buf_len);
-	jam_end(&b, &sr->local, &sr->remote, LEFT_END, LEMPTY, false);
+	jam_end(&b, sr->local, sr->remote, LEFT_END, LEMPTY, false);
 	jam(&b, "...");
-	jam_end(&b, &sr->remote, &sr->local, RIGHT_END, c->policy, oriented(c));
+	jam_end(&b, sr->remote, sr->local, RIGHT_END, c->policy, oriented(c));
 	return buf;
 }
 
@@ -2395,10 +2395,7 @@ static bool extract_connection(const struct whack_message *wm,
 					const struct whack_end *we = whack_ends[end];
 					const struct child_end_config *ce = c->end[end].child.config;
 					const ip_selector *se = selectors[end];
-					/* XXX: brute force left-local; see alloc_connection() */
-					struct spd_end *spd_end = (end == LEFT_END ? &spd->local :
-								   end == RIGHT_END ? &spd->remote :
-								   NULL);
+					struct spd_end *spd_end = &spd->end[end];
 					if (se != NULL) {
 						dbg("%s %s child spd from selectors",
 						    c->name, ce->leftright);
@@ -2473,8 +2470,8 @@ static bool extract_connection(const struct whack_message *wm,
 	if (c->local->host.config->xauth.server || c->remote->host.config->xauth.server)
 		c->policy |= POLICY_XAUTH;
 
-	update_ends_from_this_host_addr(&c->spd->local, &c->spd->remote);
-	update_ends_from_this_host_addr(&c->spd->remote, &c->spd->local);
+	update_ends_from_this_host_addr(c->spd->local, c->spd->remote);
+	update_ends_from_this_host_addr(c->spd->remote, c->spd->local);
 
 	/*
 	 * Cross-check the auth= vs authby= results.
@@ -2545,7 +2542,7 @@ static bool extract_connection(const struct whack_message *wm,
 	struct spd_end *wild_side =
 		(!address_is_specified(c->local->host.addr) ||
 		 c->local->config->child.protoport.has_port_wildcard ||
-		 id_has_wildcards(&c->local->host.id) ? &c->spd->local : &c->spd->remote);
+		 id_has_wildcards(&c->local->host.id) ? c->spd->local : c->spd->remote);
 
 	/* force all oppo connections to have a client */
 	if (c->policy & POLICY_OPPORTUNISTIC) {
@@ -2735,25 +2732,25 @@ struct connection *add_group_instance(struct connection *group,
 	t->foodgroup = t->name; /* XXX: DANGER: unshare_connection() will clone this */
 
 	/* suppress virt before unsharing */
-	passert(t->spd->local.virt == NULL);
+	passert(t->spd->local->virt == NULL);
 
 	pexpect(t->spd->spd_next == NULL);	/* we only handle top spd */
 
-	if (t->spd->remote.virt != NULL) {
+	if (t->spd->remote->virt != NULL) {
 		DBG_log("virtual_ip not supported in group instance; ignored");
-		virtual_ip_delref(&t->spd->remote.virt);
+		virtual_ip_delref(&t->spd->remote->virt);
 	}
 
 	unshare_connection(t, group);
 	passert(t->foodgroup != t->name); /* XXX: see DANGER above */
 
-	t->spd->remote.client = *target;	/* hashed below */
+	t->spd->remote->client = *target;	/* hashed below */
 	if (proto != 0) {
 		/* if foodgroup entry specifies protoport, override protoport= settings */
-		update_selector_ipproto(&t->spd->local.client, proto);
-		update_selector_ipproto(&t->spd->remote.client, proto);
-		update_selector_hport(&t->spd->local.client, sport);
-		update_selector_hport(&t->spd->remote.client, dport);
+		update_selector_ipproto(&t->spd->local->client, proto);
+		update_selector_ipproto(&t->spd->remote->client, proto);
+		update_selector_hport(&t->spd->local->client, sport);
+		update_selector_hport(&t->spd->remote->client, dport);
 	}
 	t->policy &= ~(POLICY_GROUP | POLICY_GROUTED);
 	t->policy |= POLICY_GROUPINSTANCE; /* mark as group instance for later */
@@ -2864,14 +2861,14 @@ struct connection *instantiate(struct connection *c,
 	if (peer_addr != NULL) {
 		d->remote->host.addr = *peer_addr;
 	}
-	update_ends_from_this_host_addr(&d->spd->remote, &d->spd->local);
+	update_ends_from_this_host_addr(d->spd->remote, d->spd->local);
 
 	/*
 	 * We cannot guess what our next_hop should be, but if it was
 	 * explicitly specified as 0.0.0.0, we set it to be peer.
 	 * (whack will not allow nexthop to be elided in RW case.)
 	 */
-	update_ends_from_this_host_addr(&d->spd->local, &d->spd->remote);
+	update_ends_from_this_host_addr(d->spd->local, d->spd->remote);
 	d->spd->spd_next = NULL;
 
 	d->spd->reqid = c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid;
@@ -2918,7 +2915,7 @@ struct connection *instantiate(struct connection *c,
 		 * Install the sec_label from either an acquire or
 		 * child payload into both ends.
 		 */
-		FOR_EACH_THING(end, &d->spd->local, &d->spd->remote) {
+		FOR_EACH_THING(end, d->spd->local, d->spd->remote) {
 			pexpect(end->sec_label.ptr == NULL);
 			end->sec_label = clone_hunk(sec_label, "instantiate() sec_label");
 		}
@@ -2936,7 +2933,7 @@ struct connection *instantiate(struct connection *c,
 	    enum_name(&connection_kind_names, d->kind),
 	    peer_addr != NULL ? str_address(peer_addr, &pab) : "N/A",
 	    peer_id != NULL ? str_id(peer_id, &pib) : "N/A",
-	    pri_shunk(d->spd->local.sec_label));
+	    pri_shunk(d->spd->local->sec_label));
 
 	return d;
 }
@@ -2949,10 +2946,10 @@ struct connection *rw_instantiate(struct connection *c,
 	struct connection *d = instantiate(c, peer_addr, peer_id, null_shunk);
 
 	if (peer_subnet != NULL && is_virtual_connection(c)) {
-		d->spd->remote.client = *peer_subnet;
+		d->spd->remote->client = *peer_subnet;
 		rehash_db_spd_route_remote_client(d->spd);
 		if (selector_eq_address(*peer_subnet, *peer_addr))
-			d->spd->remote.has_client = false;
+			d->spd->remote->has_client = false;
 	}
 
 	if (d->policy & POLICY_OPPORTUNISTIC) {
@@ -2962,7 +2959,7 @@ struct connection *rw_instantiate(struct connection *c,
 		 * from trying to use this connection to get to a particular
 		 * client
 		 */
-		d->spd->remote.client = selector_type(&d->spd->remote.client)->selector.zero;
+		d->spd->remote->client = selector_type(&d->spd->remote->client)->selector.zero;
 		rehash_db_spd_route_remote_client(d->spd);
 	}
 	connection_buf inst;
@@ -2993,8 +2990,8 @@ const char *str_policy_prio(policy_prio_t pp, policy_prio_buf *buf)
 
 void set_policy_prio(struct connection *c)
 {
-	c->policy_prio = (((policy_prio_t)c->spd->local.client.maskbits << 17) |
-			  ((policy_prio_t)c->spd->remote.client.maskbits << 8) |
+	c->policy_prio = (((policy_prio_t)c->spd->local->client.maskbits << 17) |
+			  ((policy_prio_t)c->spd->remote->client.maskbits << 8) |
 			  ((policy_prio_t)1));
 }
 
@@ -3040,12 +3037,12 @@ size_t jam_connection_instance(struct jambuf *buf, const struct connection *c)
 	}
 	if (c->policy & POLICY_OPPORTUNISTIC) {
 		s += jam_connection_client(buf, " ", "===",
-					   c->spd->local.client,
+					   c->spd->local->client,
 					   c->local->host.addr);
 		s += jam_string(buf, " ...");
 		s += jam_address(buf, &c->remote->host.addr);
 		s += jam_connection_client(buf, "===", "",
-					   c->spd->remote.client,
+					   c->spd->remote->client,
 					   c->remote->host.addr);
 	} else {
 		s += jam_string(buf, " ");
@@ -3242,7 +3239,7 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 				selectors_buf sb;
 				dbg("    skipping "PRI_CONNECTION" %s; !routed,!instance_initiation_ok,!sec_label",
 				    pri_connection(c, &cb),
-				    str_selectors(&c->spd->local.client, &c->spd->remote.client, &sb));
+				    str_selectors(&c->spd->local->client, &c->spd->remote->client, &sb));
 				continue;
 			}
 
@@ -3260,24 +3257,24 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 			 * DST, OTOH, is a proper endpoint.
 			 */
 
-			if (!selector_in_selector(packet_src, sr->local.client)) {
+			if (!selector_in_selector(packet_src, sr->local->client)) {
 				connection_buf cb;
 				selectors_buf sb;
 				selector_buf psb;
 				dbg("    skipping "PRI_CONNECTION" %s; packet src %s not in range",
 				    pri_connection(c, &cb),
-				    str_selectors(&c->spd->local.client, &c->spd->remote.client, &sb),
+				    str_selectors(&c->spd->local->client, &c->spd->remote->client, &sb),
 				    str_selector(&packet_src, &psb));
 				continue;
 			}
 
-			if (!endpoint_in_selector(packet_dst, sr->remote.client)) {
+			if (!endpoint_in_selector(packet_dst, sr->remote->client)) {
 				connection_buf cb;
 				selectors_buf sb;
 				endpoint_buf eb;
 				dbg("    skipping "PRI_CONNECTION" %s; packet dst %s not in range",
 				    pri_connection(c, &cb),
-				    str_selectors(&c->spd->local.client, &c->spd->remote.client, &sb),
+				    str_selectors(&c->spd->local->client, &c->spd->remote->client, &sb),
 				    str_endpoint(&packet_dst, &eb));
 				continue;
 			}
@@ -3290,9 +3287,9 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 			 */
 			policy_prio_t priority =
 				(8 * (c->policy_prio + (c->kind == CK_INSTANCE)) +
-				 2 * (sr->local.client.hport == packet.src.hport) +
-				 2 * (sr->remote.client.hport == packet.dst.hport) +
-				 1 * (sr->local.client.ipproto == packet.protocol->ipproto));
+				 2 * (sr->local->client.hport == packet.src.hport) +
+				 2 * (sr->remote->client.hport == packet.dst.hport) +
+				 1 * (sr->local->client.ipproto == packet.protocol->ipproto));
 
 			if (best_connection != NULL &&
 			    priority <= best_priority) {
@@ -3300,10 +3297,10 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 				selectors_buf sb, bsb;
 				dbg("    skipping "PRI_CONNECTION" %s priority %"PRIu32"; doesn't best "PRI_CONNECTION" %s priority %"PRIu32,
 				    pri_connection(c, &cb),
-				    str_selectors(&c->spd->local.client, &c->spd->remote.client, &sb),
+				    str_selectors(&c->spd->local->client, &c->spd->remote->client, &sb),
 				    priority,
 				    pri_connection(best_connection, &bcb),
-				    str_selectors(&best_sr->local.client, &best_sr->remote.client, &bsb),
+				    str_selectors(&best_sr->local->client, &best_sr->remote->client, &bsb),
 				    best_priority);
 				continue;
 			}
@@ -3314,7 +3311,7 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 				selectors_buf sb;
 				dbg("    choosing "PRI_CONNECTION" %s priority %"PRIu32" child %s; as first best",
 				    pri_connection(c, &cb),
-				    str_selectors(&c->spd->local.client, &c->spd->remote.client, &sb),
+				    str_selectors(&c->spd->local->client, &c->spd->remote->client, &sb),
 				    priority,
 				    (c->policy_next != NULL ? c->policy_next->name : "none"));
 			} else {
@@ -3322,11 +3319,11 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 				selectors_buf sb, bsb;
 				dbg("    choosing "PRI_CONNECTION" %s priority %"PRIu32" child %s; as bests "PRI_CONNECTION" %s priority %"PRIu32,
 				    pri_connection(c, &cb),
-				    str_selectors(&c->spd->local.client, &c->spd->remote.client, &sb),
+				    str_selectors(&c->spd->local->client, &c->spd->remote->client, &sb),
 				    priority,
 				    (c->policy_next != NULL ? c->policy_next->name : "none"),
 				    pri_connection(best_connection, &bcb),
-				    str_selectors(&best_sr->local.client, &best_sr->remote.client, &bsb),
+				    str_selectors(&best_sr->local->client, &best_sr->remote->client, &bsb),
 				    best_priority);
 			}
 
@@ -3349,7 +3346,7 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 		enum_buf kb;
 		dbg("  concluding with "PRI_CONNECTION" %s priority %" PRIu32 " kind=%s",
 		    pri_connection(best_connection, &cib),
-		    str_selectors(&best_sr->local.client, &best_sr->remote.client, &sb),
+		    str_selectors(&best_sr->local->client, &best_sr->remote->client, &sb),
 		    best_priority,
 		    str_enum_short(&connection_kind_names, best_connection->kind, &kb));
 	} else {
@@ -3384,25 +3381,25 @@ struct connection *oppo_instantiate(struct connection *c,
 	 * Fill in (or fix up) our client side.
 	 */
 
-	const struct ip_protocol *local_protocol = selector_protocol(c->spd->local.client);
-	ip_port local_port = selector_port(c->spd->local.client);
+	const struct ip_protocol *local_protocol = selector_protocol(c->spd->local->client);
+	ip_port local_port = selector_port(c->spd->local->client);
 	dbg("oppo local(c) protocol %s port %d",
 	    local_protocol->name,
 	    local_port.hport);
 
-	if (d->spd->local.has_client) {
+	if (d->spd->local->has_client) {
 		/*
 		 * There was a client in the abstract connection so we
 		 * demand that either ...
 		 */
 
 		/* opportunistic connections do not use port selectors */
-		if (address_in_selector_range(*local_address, d->spd->local.client)) {
+		if (address_in_selector_range(*local_address, d->spd->local->client)) {
 			/*
 			 * the required client is within that subnet
 			 * narrow it(?), ...
 			*/
-			d->spd->local.client =
+			d->spd->local->client =
 				selector_from_address_protocol_port(*local_address,
 								    local_protocol,
 								    local_port);
@@ -3411,7 +3408,7 @@ struct connection *oppo_instantiate(struct connection *c,
 			 * or that it is our private ip in case we are
 			 * behind a port forward.
 			 */
-			update_selector_hport(&d->spd->local.client, 0);
+			update_selector_hport(&d->spd->local->client, 0);
 		} else {
 			llog_passert(c->logger, HERE,
 				     "local address does not match the host or client");
@@ -3430,15 +3427,15 @@ struct connection *oppo_instantiate(struct connection *c,
 		 */
 		dbg("oppo local has no client; patching damage by instantiate()");
 		passert(address_eq_address(*local_address, d->local->host.addr));
-		d->spd->local.client =
+		d->spd->local->client =
 			selector_from_address_protocol_port(*local_address,
 							    local_protocol,
 							    local_port);
 	}
 
 	dbg("oppo local(d) protocol %s port %d",
-	    selector_protocol(d->spd->local.client)->name,
-	    selector_port(d->spd->local.client).hport);
+	    selector_protocol(d->spd->local->client)->name,
+	    selector_port(d->spd->local->client).hport);
 
 	/*
 	 * Fill in peer's client side.
@@ -3446,24 +3443,24 @@ struct connection *oppo_instantiate(struct connection *c,
 	 */
 
 	dbg("oppo remote(c) protocol %s port %d",
-	    selector_protocol(c->spd->remote.client)->name,
-	    selector_port(c->spd->remote.client).hport);
+	    selector_protocol(c->spd->remote->client)->name,
+	    selector_port(c->spd->remote->client).hport);
 
-	const struct ip_protocol *remote_protocol = selector_protocol(c->spd->remote.client);
-	ip_port remote_port = selector_port(c->spd->remote.client);
+	const struct ip_protocol *remote_protocol = selector_protocol(c->spd->remote->client);
+	ip_port remote_port = selector_port(c->spd->remote->client);
 	passert(d->policy & POLICY_OPPORTUNISTIC);
-	passert(address_in_selector_range(*remote_address, d->spd->remote.client));
-	d->spd->remote.client = selector_from_address_protocol_port(*remote_address,
+	passert(address_in_selector_range(*remote_address, d->spd->remote->client));
+	d->spd->remote->client = selector_from_address_protocol_port(*remote_address,
 								 remote_protocol,
 								 remote_port);
 	rehash_db_spd_route_remote_client(d->spd);
 
 	dbg("oppo remote(d) protocol %s port %d",
-	    selector_protocol(d->spd->remote.client)->name,
-	    selector_port(d->spd->remote.client).hport);
+	    selector_protocol(d->spd->remote->client)->name,
+	    selector_port(d->spd->remote->client).hport);
 
 	if (address_eq_address(*remote_address, d->remote->host.addr))
-		d->spd->remote.has_client = false;
+		d->spd->remote->has_client = false;
 
 	/*
 	 * Adjust routing if something is eclipsing c.
@@ -3601,8 +3598,8 @@ struct connection *find_outgoing_opportunistic_template(const ip_packet packet)
 				 */
 				ip_selector src = packet_src_selector(packet);
 				ip_endpoint dst = packet_dst_endpoint(packet);
-				if (!selector_in_selector(src, sr->local.client) ||
-				    !endpoint_in_selector(dst, sr->remote.client)) {
+				if (!selector_in_selector(src, sr->local->client) ||
+				    !endpoint_in_selector(dst, sr->remote->client)) {
 					continue;
 				}
 
@@ -3615,7 +3612,7 @@ struct connection *find_outgoing_opportunistic_template(const ip_packet packet)
 				 * ??? not elegant, not symmetric.
 				 * Possible replacement test:
 				 *   best_spd_route->this.client.maskbits + best_spd_route->that.client.maskbits >
-				 *   sr->local.client.maskbits + sr->remote.client.maskbits
+				 *   sr->local->client.maskbits + sr->remote->client.maskbits
 				 * but this knows too much about the representation of ip_subnet.
 				 * What is the correct semantics?
 				 *
@@ -3625,7 +3622,7 @@ struct connection *find_outgoing_opportunistic_template(const ip_packet packet)
 				 */
 
 				if (best_spd_route != NULL &&
-				    selector_in_selector(best_spd_route->local.client, sr->local.client)) {
+				    selector_in_selector(best_spd_route->local->client, sr->local->client)) {
 					/*
 					 * BEST_SPD_ROUTE is better.
 					 *
@@ -3635,8 +3632,8 @@ struct connection *find_outgoing_opportunistic_template(const ip_packet packet)
 					continue;
 				}
 				if (best_spd_route != NULL &&
-				    selector_eq_selector(best_spd_route->local.client, sr->local.client) &&
-				    selector_in_selector(best_spd_route->remote.client, sr->remote.client)) {
+				    selector_eq_selector(best_spd_route->local->client, sr->local->client) &&
+				    selector_in_selector(best_spd_route->remote->client, sr->remote->client)) {
 					/*
 					 * BEST_SPD_ROUTE is better.
 					 *
@@ -3700,7 +3697,7 @@ struct connection *route_owner(struct connection *c,
 	     c_spd != NULL; c_spd = c_spd->spd_next) {
 
 		struct spd_route_filter srf = {
-			.remote_client_range = &c_spd->remote.client,
+			.remote_client_range = &c_spd->remote->client,
 			.where = HERE,
 		};
 		while (next_spd_route(NEW2OLD, &srf)) {
@@ -3716,12 +3713,12 @@ struct connection *route_owner(struct connection *c,
 			if (d_spd->routing == RT_UNROUTED)
 				continue;
 
-			pexpect(selector_range_eq_selector_range(c_spd->remote.client, d_spd->remote.client));
-			if (c_spd->remote.client.ipproto != d_spd->remote.client.ipproto)
+			pexpect(selector_range_eq_selector_range(c_spd->remote->client, d_spd->remote->client));
+			if (c_spd->remote->client.ipproto != d_spd->remote->client.ipproto)
 				continue;
-			if (c_spd->remote.client.hport != d_spd->remote.client.hport)
+			if (c_spd->remote->client.hport != d_spd->remote->client.hport)
 				continue;
-			if (!sameaddr(&c_spd->local.host->addr, &d_spd->local.host->addr))
+			if (!sameaddr(&c_spd->local->host->addr, &d_spd->local->host->addr))
 				continue;
 
 			/*
@@ -3751,9 +3748,9 @@ struct connection *route_owner(struct connection *c,
 				best_routing = d_spd->routing;
 			}
 
-			if (selector_range_eq_selector_range(c_spd->local.client, d_spd->local.client) &&
-			    c_spd->local.client.ipproto == d_spd->local.client.ipproto &&
-			    c_spd->local.client.hport == d_spd->local.client.hport &&
+			if (selector_range_eq_selector_range(c_spd->local->client, d_spd->local->client) &&
+			    c_spd->local->client.ipproto == d_spd->local->client.ipproto &&
+			    c_spd->local->client.hport == d_spd->local->client.hport &&
 			    d_spd->routing > best_erouting) {
 				best_ero = d;
 				best_esr = d_spd;
@@ -3883,8 +3880,8 @@ static void show_one_sr(struct show *s,
 		/* note: this macro generates a pair of arguments */
 #define OPT_PREFIX_STR(pre, s) (s) == NULL ? "" : (pre), (s) == NULL? "" : (s)
 
-	ip_address this_sourceip = spd_route_end_sourceip(c->config->ike_version, &c->spd->local);
-	ip_address that_sourceip = spd_route_end_sourceip(c->config->ike_version, &c->spd->remote);
+	ip_address this_sourceip = spd_route_end_sourceip(c->config->ike_version, c->spd->local);
+	ip_address that_sourceip = spd_route_end_sourceip(c->config->ike_version, c->spd->remote);
 
 	show_comment(s, PRI_CONNECTION":     %s; my_ip=%s; their_ip=%s%s%s%s%s; my_updown=%s;",
 		     c->name, instance,
@@ -3893,9 +3890,9 @@ static void show_one_sr(struct show *s,
 		     OPT_HOST(that_sourceip, thatipb),
 		     OPT_PREFIX_STR("; mycert=", cert_nickname(&c->local->host.config->cert)),
 		     OPT_PREFIX_STR("; peercert=", cert_nickname(&c->remote->host.config->cert)),
-		     ((sr->local.config->child.updown == NULL ||
-		       streq(sr->local.config->child.updown, "%disabled")) ? "<disabled>"
-		      : sr->local.config->child.updown));
+		     ((sr->local->config->child.updown == NULL ||
+		       streq(sr->local->config->child.updown, "%disabled")) ? "<disabled>"
+		      : sr->local->config->child.updown));
 
 #undef OPT_HOST
 #undef OPT_PREFIX_STR
@@ -3915,18 +3912,18 @@ static void show_one_sr(struct show *s,
 		      * Both should not be set, but if they are, we
 		      * want to know.
 		      */
-		     COMBO(sr->local.host->config->xauth, server, client),
-		     COMBO(sr->remote.host->config->xauth, server, client),
+		     COMBO(sr->local->host->config->xauth, server, client),
+		     COMBO(sr->remote->host->config->xauth, server, client),
 		     /* should really be an enum name */
-		     (sr->local.host->config->xauth.server ?
+		     (sr->local->host->config->xauth.server ?
 		      c->config->xauthby == XAUTHBY_FILE ? "xauthby:file;" :
 		      c->config->xauthby == XAUTHBY_PAM ? "xauthby:pam;" :
 		      "xauthby:alwaysok;" :
 		      ""),
-		     (sr->local.host->config->xauth.username == NULL ? "[any]" :
-		      sr->local.host->config->xauth.username),
-		     (sr->remote.host->config->xauth.username == NULL ? "[any]" :
-		      sr->remote.host->config->xauth.username));
+		     (sr->local->host->config->xauth.username == NULL ? "[any]" :
+		      sr->local->host->config->xauth.username),
+		     (sr->remote->host->config->xauth.username == NULL ? "[any]" :
+		      sr->remote->host->config->xauth.username));
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		const char *who;
@@ -3979,8 +3976,8 @@ static void show_one_sr(struct show *s,
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		jam(buf, PRI_CONNECTION":   modecfg info:", c->name, instance);
-		jam(buf, " us:%s,", COMBO(sr->local.host->config->modecfg, server, client));
-		jam(buf, " them:%s,", COMBO(sr->remote.host->config->modecfg, server, client));
+		jam(buf, " us:%s,", COMBO(sr->local->host->config->modecfg, server, client));
+		jam(buf, " them:%s,", COMBO(sr->remote->host->config->modecfg, server, client));
 		jam(buf, " modecfg policy:%s,", (c->policy & POLICY_MODECFG_PULL ? "pull" : "push"));
 
 		jam_string(buf, " dns:");
@@ -4008,7 +4005,7 @@ static void show_one_sr(struct show *s,
 			}
 		}
 
-		jam(buf, " cat:%s;", sr->local.host->config->client_address_translation ? "set" : "unset");
+		jam(buf, " cat:%s;", sr->local->host->config->client_address_translation ? "set" : "unset");
 	}
 
 #undef COMBO
@@ -4026,11 +4023,11 @@ static void show_one_sr(struct show *s,
 	 *
 	 * XXX: IKEv1 stores the negotiated sec_label in the state.
 	 */
-	if (sr->local.sec_label.len > 0) {
+	if (sr->local->sec_label.len > 0) {
 		/* negotiated (IKEv2) */
 		show_comment(s, PRI_CONNECTION":   sec_label:"PRI_SHUNK,
 			     c->name, instance,
-			     pri_shunk(sr->local.sec_label));
+			     pri_shunk(sr->local->sec_label));
 	} else if (c->config->sec_label.len > 0) {
 		/* configured */
 		show_comment(s, "\"%s\"%s:   sec_label:"PRI_SHUNK,
@@ -4439,8 +4436,8 @@ struct spd_route *eclipsing(const struct spd_route *sr)
 		 */
 		pexpect(srue->spd_next == NULL);
 		pexpect(eclipsable(srue));
-		pexpect(selector_range_eq_selector_range(sr->local.client, srue->local.client));
-		pexpect(selector_range_eq_selector_range(sr->remote.client, srue->remote.client));
+		pexpect(selector_range_eq_selector_range(sr->local->client, srue->local->client));
+		pexpect(selector_range_eq_selector_range(sr->remote->client, srue->remote->client));
 		connection_buf cb, ub;
 		dbg(PRI_CONNECTION" eclipsing "PRI_CONNECTION,
 		    pri_connection(sr->connection, &cb),
@@ -4501,12 +4498,12 @@ uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt)
 
 	/* Penalize wildcard ports (2 bits). */
 	unsigned portsw =
-		((c->spd->local.client.hport == 0 ? 1 : 0) +
-		 (c->spd->remote.client.hport == 0 ? 1 : 0));
+		((c->spd->local->client.hport == 0 ? 1 : 0) +
+		 (c->spd->remote->client.hport == 0 ? 1 : 0));
 	prio = (prio << 2) | portsw;
 
 	/* Penalize wildcard protocol (1 bit). */
-	unsigned protow = c->spd->local.client.ipproto == 0 ? 1 : 0;
+	unsigned protow = c->spd->local->client.ipproto == 0 ? 1 : 0;
 	prio = (prio << 1) | protow;
 
 	/*
@@ -4516,11 +4513,11 @@ uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt)
 	 * A longer prefix wins over a shorter prefix, hence the
 	 * reversal.  Value needs to fit 0-128, hence 8 bits.
 	 */
-	unsigned srcw = 128 - c->spd->local.client.maskbits;
+	unsigned srcw = 128 - c->spd->local->client.maskbits;
 	prio = (prio << 8) | srcw;
 
 	/* if opportunistic, dial up dstw TO THE MAX aka 0 */
-	unsigned dstw = 128 - c->spd->remote.client.maskbits;
+	unsigned dstw = 128 - c->spd->remote->client.maskbits;
 	if (oe_shunt) {
 		dstw = 0;
 	}

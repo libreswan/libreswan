@@ -162,9 +162,9 @@ static bool bare_policy_op(enum kernel_policy_op op,
 		    str_enum_short(&shunt_policy_names, shunt_policy, &spb));
 
 		jam(buf, " ");
-		jam_selector_subnet_port(buf, &sr->local.client);
-		jam(buf, "-%s->", selector_protocol(sr->local.client)->name);
-		jam_selector_subnet_port(buf, &sr->remote.client);
+		jam_selector_subnet_port(buf, &sr->local->client);
+		jam(buf, "-%s->", selector_protocol(sr->local->client)->name);
+		jam_selector_subnet_port(buf, &sr->remote->client);
 
 		jam(buf, " (config)sec_label=");
 		if (c->config->sec_label.len > 0) {
@@ -246,7 +246,7 @@ static bool bare_policy_op(enum kernel_policy_op op,
 	bool delete = (op == KERNEL_POLICY_OP_DELETE);
 
 	struct kernel_policy outbound_kernel_policy =
-		bare_kernel_policy(&sr->local.client, &sr->remote.client);
+		bare_kernel_policy(&sr->local->client, &sr->remote->client);
 	if (!raw_policy(op, KERNEL_POLICY_DIR_OUTBOUND,
 			EXPECT_KERNEL_POLICY_OK,
 			&outbound_kernel_policy.src.client,
@@ -278,7 +278,7 @@ static bool bare_policy_op(enum kernel_policy_op op,
 	 * policy installed.
 	 */
 	struct kernel_policy inbound_kernel_policy =
-		bare_kernel_policy(&sr->remote.client, &sr->local.client);
+		bare_kernel_policy(&sr->remote->client, &sr->local->client);
 	return raw_policy(op, KERNEL_POLICY_DIR_INBOUND,
 			  expect_kernel_policy,
 			  &inbound_kernel_policy.src.client,
@@ -454,8 +454,8 @@ ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
 			  struct logger *logger)
 {
 	passert(proto == &ip_protocol_ah || proto == &ip_protocol_esp);
-	return kernel_ops_get_ipsec_spi(avoid, &sr->remote.host->addr,
-					&sr->local.host->addr, proto,
+	return kernel_ops_get_ipsec_spi(avoid, &sr->remote->host->addr,
+					&sr->local->host->addr, proto,
 					get_proto_reqid(sr->reqid, proto),
 					IPSEC_DOI_SPI_OUR_MIN, 0xffffffffU,
 					"SPI", logger);
@@ -472,8 +472,8 @@ ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
 ipsec_spi_t get_ipsec_cpi(const struct spd_route *sr, struct logger *logger)
 {
 	return kernel_ops_get_ipsec_spi(0,
-					&sr->remote.host->addr,
-					&sr->local.host->addr,
+					&sr->remote->host->addr,
+					&sr->local->host->addr,
 					&ip_protocol_ipcomp,
 					get_proto_reqid(sr->reqid, &ip_protocol_ipcomp),
 					IPCOMP_FIRST_NEGOTIATED,
@@ -538,16 +538,16 @@ bool fmt_common_shell_out(char *buf,
 	JDstr("PLUTO_INTERFACE", c->interface == NULL ? "NULL" : c->interface->ip_dev->id_rname);
 	JDstr("PLUTO_XFRMI_ROUTE",  (c->xfrmi != NULL && c->xfrmi->if_id > 0) ? "yes" : "");
 
-	if (address_is_specified(sr->local.host->nexthop)) {
-		JDipaddr("PLUTO_NEXT_HOP", sr->local.host->nexthop);
+	if (address_is_specified(sr->local->host->nexthop)) {
+		JDipaddr("PLUTO_NEXT_HOP", sr->local->host->nexthop);
 	}
 
-	JDipaddr("PLUTO_ME", sr->local.host->addr);
+	JDipaddr("PLUTO_ME", sr->local->host->addr);
 	JDemitter("PLUTO_MY_ID", jam_id_bytes(&jb, &c->local->host.id, jam_shell_quoted_bytes));
-	jam(&jb, "PLUTO_MY_FAMILY='ipv%d' ", selector_info(sr->local.client)->ip_version);
-	JDemitter("PLUTO_MY_CLIENT", jam_selector_subnet(&jb, &sr->local.client));
-	JDipaddr("PLUTO_MY_CLIENT_NET", selector_prefix(sr->local.client));
-	JDipaddr("PLUTO_MY_CLIENT_MASK", selector_prefix_mask(sr->local.client));
+	jam(&jb, "PLUTO_MY_FAMILY='ipv%d' ", selector_info(sr->local->client)->ip_version);
+	JDemitter("PLUTO_MY_CLIENT", jam_selector_subnet(&jb, &sr->local->client));
+	JDipaddr("PLUTO_MY_CLIENT_NET", selector_prefix(sr->local->client));
+	JDipaddr("PLUTO_MY_CLIENT_MASK", selector_prefix_mask(sr->local->client));
 
 	if (cidr_is_specified(c->local->child.config->host_vtiip)) {
 		JDemitter("VTI_IP", jam_cidr(&jb, &c->local->child.config->host_vtiip));
@@ -557,8 +557,8 @@ bool fmt_common_shell_out(char *buf,
 		JDemitter("INTERFACE_IP", jam_cidr(&jb, &c->local->child.config->ifaceip));
 	}
 
-	JDuint("PLUTO_MY_PORT", sr->local.client.hport);
-	JDuint("PLUTO_MY_PROTOCOL", sr->local.client.ipproto);
+	JDuint("PLUTO_MY_PORT", sr->local->client.hport);
+	JDuint("PLUTO_MY_PROTOCOL", sr->local->client.ipproto);
 	JDuint("PLUTO_SA_REQID", sr->reqid);
 	JDstr("PLUTO_SA_TYPE",
 		st == NULL ? "none" :
@@ -567,27 +567,27 @@ bool fmt_common_shell_out(char *buf,
 		st->st_ipcomp.present ? "IPCOMP" :
 		"unknown?");
 
-	JDipaddr("PLUTO_PEER", sr->remote.host->addr);
+	JDipaddr("PLUTO_PEER", sr->remote->host->addr);
 	JDemitter("PLUTO_PEER_ID", jam_id_bytes(&jb, &c->remote->host.id, jam_shell_quoted_bytes));
 
 	/* for transport mode, things are complicated */
 	jam_string(&jb, "PLUTO_PEER_CLIENT='");
 	if (!tunneling && st != NULL && LHAS(st->hidden_variables.st_nat_traversal, NATED_PEER)) {
-		/* pexpect(selector_eq_address(sr->remote.client, sr->remote.host->addr)); */
-		jam_address(&jb, &sr->remote.host->addr);
-		jam(&jb, "/%d", address_type(&sr->local.host->addr)->mask_cnt/*32 or 128*/);
+		/* pexpect(selector_eq_address(sr->remote->client, sr->remote->host->addr)); */
+		jam_address(&jb, &sr->remote->host->addr);
+		jam(&jb, "/%d", address_type(&sr->local->host->addr)->mask_cnt/*32 or 128*/);
 	} else {
-		jam_selector_subnet(&jb, &sr->remote.client);
+		jam_selector_subnet(&jb, &sr->remote->client);
 	}
 	jam_string(&jb, "' ");
 
 	JDipaddr("PLUTO_PEER_CLIENT_NET",
 		(!tunneling && st != NULL && LHAS(st->hidden_variables.st_nat_traversal, NATED_PEER)) ?
-			sr->remote.host->addr : selector_prefix(sr->remote.client));
+			sr->remote->host->addr : selector_prefix(sr->remote->client));
 
-	JDipaddr("PLUTO_PEER_CLIENT_MASK", selector_prefix_mask(sr->remote.client));
-	JDuint("PLUTO_PEER_PORT", sr->remote.client.hport);
-	JDuint("PLUTO_PEER_PROTOCOL", sr->remote.client.ipproto);
+	JDipaddr("PLUTO_PEER_CLIENT_MASK", selector_prefix_mask(sr->remote->client));
+	JDuint("PLUTO_PEER_PORT", sr->remote->client.hport);
+	JDuint("PLUTO_PEER_PROTOCOL", sr->remote->client.ipproto);
 
 	jam_string(&jb, "PLUTO_PEER_CA='");
 	for (struct pubkey_list *p = pluto_pubkeys; p != NULL; p = p->next) {
@@ -595,7 +595,7 @@ bool fmt_common_shell_out(char *buf,
 		int pathlen;	/* value ignored */
 		if (key->content.type == &pubkey_type_rsa &&
 		    same_id(&c->remote->host.id, &key->id) &&
-		    trusted_ca(key->issuer, ASN1(sr->remote.host->config->ca), &pathlen)) {
+		    trusted_ca(key->issuer, ASN1(sr->remote->host->config->ca), &pathlen)) {
 			jam_dn_or_null(&jb, key->issuer, "", jam_shell_quoted_bytes);
 			break;
 		}
@@ -615,14 +615,14 @@ bool fmt_common_shell_out(char *buf,
 	JDuint64("PLUTO_ADDTIME", st == NULL ? (uint64_t)0 : st->st_esp.add_time);
 	JDemitter("PLUTO_CONN_POLICY",	jam_connection_policies(&jb, c));
 	JDemitter("PLUTO_CONN_KIND", jam_enum(&jb, &connection_kind_names, c->kind));
-	jam(&jb, "PLUTO_CONN_ADDRFAMILY='ipv%d' ", address_type(&sr->local.host->addr)->ip_version);
+	jam(&jb, "PLUTO_CONN_ADDRFAMILY='ipv%d' ", address_type(&sr->local->host->addr)->ip_version);
 	JDuint("XAUTH_FAILED", (st != NULL && st->st_xauth_soft) ? 1 : 0);
 
 	if (st != NULL && st->st_xauth_username[0] != '\0') {
 		JDemitter("PLUTO_USERNAME", jam_clean_xauth_username(&jb, st->st_xauth_username, st->st_logger));
 	}
 
-	ip_address sourceip = spd_route_end_sourceip(c->config->ike_version, &sr->local);
+	ip_address sourceip = spd_route_end_sourceip(c->config->ike_version, sr->local);
 	if (sourceip.is_set) {
 		JDipaddr("PLUTO_MY_SOURCEIP", sourceip);
 		if (st != NULL) {
@@ -635,8 +635,8 @@ bool fmt_common_shell_out(char *buf,
 	JDstr("PLUTO_PEER_DNS_INFO", (st != NULL && st->st_seen_cfg_dns != NULL) ? st->st_seen_cfg_dns : "");
 	JDstr("PLUTO_PEER_DOMAIN_INFO", (st != NULL && st->st_seen_cfg_domains != NULL) ? st->st_seen_cfg_domains : "");
 	JDstr("PLUTO_PEER_BANNER", (st != NULL && st->st_seen_cfg_banner != NULL) ? st->st_seen_cfg_banner : "");
-	JDuint("PLUTO_CFG_SERVER", sr->local.host->config->modecfg.server);
-	JDuint("PLUTO_CFG_CLIENT", sr->local.host->config->modecfg.client);
+	JDuint("PLUTO_CFG_SERVER", sr->local->host->config->modecfg.server);
+	JDuint("PLUTO_CFG_CLIENT", sr->local->host->config->modecfg.client);
 #ifdef HAVE_NM
 	JDuint("PLUTO_NM_CONFIGURED", c->nmconfigured);
 #endif
@@ -680,15 +680,15 @@ bool fmt_common_shell_out(char *buf,
 			/* user configured XFRMI_SET_MARK (a.k.a. output mark) add it */
 			jam(&jb, "PLUTO_XFRMI_FWMARK='%" PRIu32 "/%#08" PRIx32 "' ",
 			    c->sa_marks.out.val, c->sa_marks.out.mask);
-		} else if (address_in_selector_range(sr->remote.host->addr, sr->remote.client)) {
+		} else if (address_in_selector_range(sr->remote->host->addr, sr->remote->client)) {
 			jam(&jb, "PLUTO_XFRMI_FWMARK='%" PRIu32 "/0xffffffff' ",
 			    c->xfrmi->if_id);
 		} else {
 			address_buf bpeer;
 			selector_buf peerclient_str;
 			dbg("not adding PLUTO_XFRMI_FWMARK. PLUTO_PEER=%s is not inside PLUTO_PEER_CLIENT=%s",
-			    str_address(&sr->remote.host->addr, &bpeer),
-			    str_selector_subnet_port(&sr->remote.client, &peerclient_str));
+			    str_address(&sr->remote->host->addr, &bpeer),
+			    str_selector_subnet_port(&sr->remote->client, &peerclient_str));
 			jam(&jb, "PLUTO_XFRMI_FWMARK='' ");
 		}
 	}
@@ -696,7 +696,7 @@ bool fmt_common_shell_out(char *buf,
 	JDstr("VTI_ROUTING", bool_str(c->vti_routing));
 	JDstr("VTI_SHARED", bool_str(c->vti_shared));
 
-	if (sr->local.has_cat) {
+	if (sr->local->has_cat) {
 		jam_string(&jb, "CAT='YES' ");
 	}
 
@@ -724,7 +724,7 @@ bool do_command(const struct connection *c,
 	 * Support for skipping updown, eg leftupdown=""
 	 * Useful on busy servers that do not need to use updown for anything
 	 */
-	const char *updown = sr->local.config->child.updown;
+	const char *updown = sr->local->config->child.updown;
 	if (updown == NULL || streq(updown, "%disabled")) {
 		dbg("kernel: skipped updown %s command - disabled per policy", verb);
 		return true;
@@ -737,8 +737,8 @@ bool do_command(const struct connection *c,
 	const char *verb_suffix;
 
 	{
-		const struct ip_info *host_afi = address_info(sr->local.host->addr);
-		const struct ip_info *child_afi = selector_info(sr->local.client);
+		const struct ip_info *host_afi = address_info(sr->local->host->addr);
+		const struct ip_info *child_afi = selector_info(sr->local->client);
 		if (host_afi == NULL || child_afi == NULL) {
 			llog_pexpect(logger, HERE, "unknown address family");
 			return false;
@@ -768,7 +768,7 @@ bool do_command(const struct connection *c,
 			bad_case(child_afi->af);
 		}
 
-		verb_suffix = selector_range_eq_address(sr->local.client, sr->local.host->addr) ? hs : cs;
+		verb_suffix = selector_range_eq_address(sr->local->client, sr->local->host->addr) ? hs : cs;
 	}
 
 	dbg("kernel: command executing %s%s", verb, verb_suffix);
@@ -942,12 +942,12 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 	ip_selector remote_client;
 	switch (mode) {
 	case ENCAP_MODE_TUNNEL:
-		remote_client = spd->remote.client;
+		remote_client = spd->remote->client;
 		break;
 	case ENCAP_MODE_TRANSPORT:
-		remote_client = selector_from_address_protocol_port(spd->remote.host->addr,
-								    selector_protocol(spd->remote.client),
-								    selector_port(spd->remote.client));
+		remote_client = selector_from_address_protocol_port(spd->remote->host->addr,
+								    selector_protocol(spd->remote->client),
+								    selector_port(spd->remote->client));
 		break;
 	default:
 		bad_case(mode);
@@ -958,14 +958,14 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 	ip_selector src_route, dst_route;
 	switch (direction) {
 	case ENCAP_DIRECTION_INBOUND:
-		src = &spd->remote;
-		dst = &spd->local;
+		src = spd->remote;
+		dst = spd->local;
 		src_route = remote_client;
 		dst_route = dst->client;
 		break;
 	case ENCAP_DIRECTION_OUTBOUND:
-		src = &spd->local;
-		dst = &spd->remote;
+		src = spd->local;
+		dst = spd->remote;
 		src_route = src->client;
 		dst_route = remote_client;
 		break;
@@ -1109,9 +1109,9 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 	dbg("kernel: could_route called for %s; kind=%s that.has_client=%s oppo=%s this.host_port=%u sec_label="PRI_SHUNK,
 	    c->name,
 	    enum_show(&connection_kind_names, c->kind, &b),
-	    bool_str(c->spd->remote.has_client),
+	    bool_str(c->spd->remote->has_client),
 	    bool_str(c->policy & POLICY_OPPORTUNISTIC),
-	    c->spd->local.host->port,
+	    c->spd->local->host->port,
 	    pri_shunk(c->config->sec_label));
 
 	/* it makes no sense to route a connection that is ISAKMP-only */
@@ -1133,7 +1133,7 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 	 * However, opportunistic and sec_label templates can be
 	 * routed (as in install the policy).
 	 */
-	if (!c->spd->remote.has_client &&
+	if (!c->spd->remote->has_client &&
 	    c->kind == CK_TEMPLATE &&
 	    !(c->policy & POLICY_OPPORTUNISTIC) &&
 	    c->config->sec_label.len == 0) {
@@ -1663,7 +1663,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 				raw_policy(KERNEL_POLICY_OP_DELETE,
 					   KERNEL_POLICY_DIR_OUTBOUND,
 					   EXPECT_KERNEL_POLICY_OK,
-					   &c->spd->local.client, &c->spd->remote.client,
+					   &c->spd->local->client, &c->spd->remote->client,
 					   SHUNT_UNSET,
 					   /*kernel_policy*/NULL/*delete->no-policy-rules*/,
 					   /*use_lifetime*/deltatime(0),
@@ -1691,8 +1691,8 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 		dbg("kernel: %s() pulling policies", __func__);
 		for (unsigned i = 0; i < 2; i++) {
 			bool inbound = (i > 0);
-			struct spd_end *src = inbound ? &c->spd->remote : &c->spd->local;
-			struct spd_end *dst = inbound ? &c->spd->local : &c->spd->remote;
+			struct spd_end *src = inbound ? c->spd->remote : c->spd->local;
+			struct spd_end *dst = inbound ? c->spd->local : c->spd->remote;
 			/* ignore result */
 			raw_policy(KERNEL_POLICY_OP_DELETE,
 				   (inbound ? KERNEL_POLICY_DIR_INBOUND :
@@ -1728,8 +1728,8 @@ bool eroute_connection(enum kernel_policy_op op,
 		       shunk_t sec_label,
 		       struct logger *logger)
 {
-	if (sr->local.has_cat) {
-		ip_selector client = selector_from_address(sr->local.host->addr);
+	if (sr->local->has_cat) {
+		ip_selector client = selector_from_address(sr->local->host->addr);
 		bool t = raw_policy(op, dir,
 				    EXPECT_KERNEL_POLICY_OK,
 				    &client, &kernel_policy->dst.route,
@@ -1800,7 +1800,7 @@ bool assign_holdpass(const struct connection *c,
 		 * Although %hold or %pass is appropriately broad, it will
 		 * no longer be bare so we must ditch it from the bare table
 		 */
-		struct bare_shunt **old = bare_shunt_ptr(&sr->local.client, &sr->remote.client,
+		struct bare_shunt **old = bare_shunt_ptr(&sr->local->client, &sr->remote->client,
 							 "assign_holdpass");
 
 		if (old == NULL) {
@@ -1836,7 +1836,7 @@ bool assign_holdpass(const struct connection *c,
 			}
 
 			struct kernel_policy outbound_kernel_policy =
-				bare_kernel_policy(&sr->local.client, &sr->remote.client);
+				bare_kernel_policy(&sr->local->client, &sr->remote->client);
 			if (eroute_connection(op, KERNEL_POLICY_DIR_OUTBOUND,
 					      reason, sr, negotiation_shunt,
 					      &outbound_kernel_policy,
@@ -1976,7 +1976,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		.sa_ipsec_max_packets = c->config->sa_ipsec_max_packets,
 		.sec_label = (st->st_v1_seen_sec_label.len > 0 ? st->st_v1_seen_sec_label :
 			      st->st_v1_acquired_sec_label.len > 0 ? st->st_v1_acquired_sec_label :
-			      c->spd->local.sec_label /* assume connection outlive their kernel_sa's */),
+			      c->spd->local->sec_label /* assume connection outlive their kernel_sa's */),
 	};
 
 
@@ -1995,7 +1995,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	    pri_shunk(said_boilerplate.sec_label),
 	    (st->st_v1_seen_sec_label.len > 0 ? " (IKEv1 seen)" :
 	     st->st_v1_acquired_sec_label.len > 0 ? " (IKEv1 acquired)" :
-	     c->spd->local.sec_label.len > 0 ? " (IKEv2 this)" :
+	     c->spd->local->sec_label.len > 0 ? " (IKEv2 this)" :
 	     ""))
 
 	/* set up IPCOMP SA, if any */
@@ -2593,7 +2593,7 @@ bool install_inbound_ipsec_sa(struct state *st)
 	 * the only case in which we can tell that a connection is obsolete.
 	 */
 	passert(c->kind == CK_PERMANENT || c->kind == CK_INSTANCE);
-	if (c->spd->remote.has_client) {
+	if (c->spd->remote->has_client) {
 		for (;; ) {
 			struct spd_route *esr;	/* value is ignored */
 			struct connection *o = route_owner(c, c->spd, &esr,
@@ -2688,8 +2688,8 @@ bool route_and_eroute(struct connection *c,
 {
 	selectors_buf sb;
 	dbg("kernel: route_and_eroute() for %s; proto %d, and source port %d dest port %d sec_label",
-	    str_selectors(&sr->local.client, &sr->remote.client, &sb),
-	    sr->local.client.ipproto, sr->local.client.hport, sr->remote.client.hport);
+	    str_selectors(&sr->local->client, &sr->remote->client, &sb),
+	    sr->local->client.ipproto, sr->local->client.hport, sr->remote->client.hport);
 
 	struct spd_route *esr, *rosr;
 	struct connection *ero;
@@ -2709,8 +2709,8 @@ bool route_and_eroute(struct connection *c,
 	/* we should look for dest port as well? */
 	/* ports are now switched to the ones in this.client / that.client ??????? */
 	/* but port set is sr->this.port and sr.that.port ! */
-	struct bare_shunt **bspp = ((ero == NULL) ? bare_shunt_ptr(&sr->local.client,
-								   &sr->remote.client,
+	struct bare_shunt **bspp = ((ero == NULL) ? bare_shunt_ptr(&sr->local->client,
+								   &sr->remote->client,
 								   "route and eroute") :
 				    NULL);
 
@@ -2820,8 +2820,8 @@ bool route_and_eroute(struct connection *c,
 		 * This reduces the "window of vulnerability" when packets
 		 * might flow in the clear.
 		 */
-		if (sameaddr(&sr->local.host->nexthop,
-			     &esr->local.host->nexthop)) {
+		if (sameaddr(&sr->local->host->nexthop,
+			     &esr->local->host->nexthop)) {
 			if (!do_command(ro, sr, "unroute", st, logger)) {
 				dbg("kernel: unroute command returned an error");
 			}
@@ -2866,7 +2866,7 @@ bool route_and_eroute(struct connection *c,
 			set_spd_routing(sr, RT_ROUTED_TUNNEL);
 			set_spd_owner(sr, st->st_serialno);
 			/* clear host shunts that clash with freshly installed route */
-			clear_narrow_holds(&sr->local.client, &sr->remote.client, logger);
+			clear_narrow_holds(&sr->local->client, &sr->remote->client, logger);
 		}
 
 #ifdef IPSEC_CONNECTION_LIMIT
@@ -3036,7 +3036,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 	/* for (sr = &st->st_connection->spd; sr != NULL; sr = sr->next) */
 	struct connection *c = st->st_connection;
 	if (c->config->ike_version == IKEv2 &&
-	    c->spd->local.sec_label.len > 0) {
+	    c->spd->local->sec_label.len > 0) {
 		dbg("kernel: %s() skipping route_and_eroute(st) as security label", __func__);
 	} else {
 		for (; sr != NULL; sr = sr->spd_next) {
@@ -3110,7 +3110,7 @@ static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
 	 * .{src,dst} provides the family but the address isn't used).
 	 */
 	struct kernel_policy outbound_kernel_policy =
-		bare_kernel_policy(&out->local.client, &out->remote.client);
+		bare_kernel_policy(&out->local->client, &out->remote->client);
 	if (!raw_policy(outbound_op,
 			KERNEL_POLICY_DIR_OUTBOUND,
 			EXPECT_KERNEL_POLICY_OK,
@@ -3133,7 +3133,7 @@ static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
 	if (!raw_policy(KERNEL_POLICY_OP_DELETE,
 			KERNEL_POLICY_DIR_INBOUND,
 			expect_kernel_policy,
-			&in->remote.client, &in->local.client,
+			&in->remote->client, &in->local->client,
 			SHUNT_UNSET,
 			NULL/*no-policy-template as delete*/,
 			deltatime(0),
@@ -3428,9 +3428,9 @@ bool get_sa_bundle_info(struct state *st, bool inbound, monotime_t *last_contact
 	    address_is_specified(c->temp_vars.redirect_ip)) {
 		redirected = true;
 		tmp_host_addr = c->remote->host.addr;
-		tmp_host_port = c->spd->remote.host->port; /* XXX: needed? */
+		tmp_host_port = c->spd->remote->host->port; /* XXX: needed? */
 		c->remote->host.addr = endpoint_address(st->st_remote_endpoint);
-		c->spd->remote.host->port = endpoint_hport(st->st_remote_endpoint);
+		c->spd->remote->host->port = endpoint_hport(st->st_remote_endpoint);
 	}
 
 	ip_address src, dst;
@@ -3479,7 +3479,7 @@ bool get_sa_bundle_info(struct state *st, bool inbound, monotime_t *last_contact
 
 	if (redirected) {
 		c->remote->host.addr = tmp_host_addr;
-		c->spd->remote.host->port = tmp_host_port;
+		c->spd->remote->host->port = tmp_host_port;
 	}
 
 	return true;
@@ -3499,7 +3499,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 	}
 
 	dbg("kernel: orphan_holdpass() called for %s with transport_proto '%d' and sport %d and dport %d",
-	    c->name, sr->local.client.ipproto, sr->local.client.hport, sr->remote.client.hport);
+	    c->name, sr->local->client.ipproto, sr->local->client.hport, sr->remote->client.hport);
 
 	passert(LHAS(LELEM(CK_PERMANENT) | LELEM(CK_INSTANCE) |
 				LELEM(CK_GOING_AWAY), c->kind));
@@ -3530,8 +3530,8 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 
 	{
 		/* are we replacing a bare shunt ? */
-		struct bare_shunt **old = bare_shunt_ptr(&sr->local.client,
-							 &sr->remote.client,
+		struct bare_shunt **old = bare_shunt_ptr(&sr->local->client,
+							 &sr->remote->client,
 							 "orphan holdpass");
 		if (old != NULL) {
 			free_bare_shunt(old);
@@ -3542,7 +3542,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 		/*
 		 * Create the bare shunt and ...
 		 */
-		add_bare_shunt(&sr->local.client, &sr->remote.client,
+		add_bare_shunt(&sr->local->client, &sr->remote->client,
 			       negotiation_shunt,
 			       ((strstr(c->name, "/32") != NULL ||
 				 strstr(c->name, "/128") != NULL) ? c->serialno : 0),
@@ -3560,15 +3560,15 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 			dbg("kernel: replacing negotiation_shunt with failure_shunt");
 
 			/* fudge up parameter list */
-			const ip_address *src_address = &sr->local.host->addr;
-			const ip_address *dst_address = &sr->remote.host->addr;
+			const ip_address *src_address = &sr->local->host->addr;
+			const ip_address *dst_address = &sr->remote->host->addr;
 			policy_prio_t policy_prio = BOTTOM_PRIO;	/* of replacing shunt*/
 			const char *why = "oe-failed";
 
 			/* fudge up replace_bare_shunt() */
 			const struct ip_info *afi = address_type(src_address);
 			passert(afi == address_type(dst_address));
-			const ip_protocol *protocol = protocol_by_ipproto(sr->local.client.ipproto);
+			const ip_protocol *protocol = protocol_by_ipproto(sr->local->client.ipproto);
 			/* ports? assumed wide? */
 			ip_selector src = selector_from_address_protocol(*src_address, protocol);
 			ip_selector dst = selector_from_address_protocol(*dst_address, protocol);

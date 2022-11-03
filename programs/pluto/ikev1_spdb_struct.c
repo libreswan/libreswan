@@ -1654,15 +1654,15 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 			 * this is the initiator, we have proposed, they have answered,
 			 * and we must decide if they proposed what we wanted.
 			 */
-			xauth_init |= spd->local.host->config->xauth.client;
-			xauth_resp |= spd->local.host->config->xauth.server;
+			xauth_init |= spd->local->host->config->xauth.client;
+			xauth_resp |= spd->local->host->config->xauth.server;
 		} else {
 			/*
 			 * this is the responder, they have proposed to us, what
 			 * are we willing to be?
 			 */
-			xauth_init |= spd->local.host->config->xauth.server;
-			xauth_resp |= spd->local.host->config->xauth.client;
+			xauth_init |= spd->local->host->config->xauth.server;
+			xauth_resp |= spd->local->host->config->xauth.client;
 		}
 	}
 

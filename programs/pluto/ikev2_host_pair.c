@@ -151,8 +151,8 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		 * (eg. vnet=)
 		 */
 		/* vnet=/vhost= should have set CK_TEMPLATE on connection loading */
-		passert(c->spd->local.virt == NULL);
-		if (c->kind == CK_TEMPLATE && c->spd->remote.virt != NULL) {
+		passert(c->spd->local->virt == NULL);
+		if (c->kind == CK_TEMPLATE && c->spd->remote->virt != NULL) {
 			ldbg(md->md_logger,
 			     "local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation");
 			return rw_instantiate(c, &remote_address, NULL, NULL);
@@ -214,29 +214,29 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		 * when connections include protocol / port).
 		 */
 
-		if (!address_in_selector_range(remote_address, d->spd->remote.client)) {
+		if (!address_in_selector_range(remote_address, d->spd->remote->client)) {
 			address_buf ab;
 			selector_buf sb;
 			dbg("  skipping as %s is-not in range:%s",
 			    str_address(&remote_address, &ab),
-			    str_selector(&d->spd->remote.client, &sb));
+			    str_selector(&d->spd->remote->client, &sb));
 			continue;
 		}
 
 		if (c != NULL &&
-		    selector_range_in_selector_range(c->spd->remote.client,
-						     d->spd->remote.client)) {
+		    selector_range_in_selector_range(c->spd->remote->client,
+						     d->spd->remote->client)) {
 			selector_buf s1, s2;
 			dbg("  skipping as best range of %s is narrower than %s",
-			    str_selector(&c->spd->remote.client, &s1),
-			    str_selector(&d->spd->remote.client, &s2));
+			    str_selector(&c->spd->remote->client, &s1),
+			    str_selector(&d->spd->remote->client, &s2));
 			continue;
 		}
 
 		selector_buf s1, s2;
 		dbg("  saving oppo %s for later, previous %s",
-		    str_selector(&d->spd->remote.client, &s1),
-		    c == NULL ? "n/a" : str_selector(&c->spd->remote.client, &s2));
+		    str_selector(&d->spd->remote->client, &s1),
+		    c == NULL ? "n/a" : str_selector(&c->spd->remote->client, &s2));
 		c = d;
 		/* keep looking */
 	}
@@ -384,18 +384,18 @@ struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
 			continue;
 		}
 		ip_address sender = endpoint_address(md->sender);
-		if (!address_in_selector_range(sender, tmp->spd->remote.client)) {
+		if (!address_in_selector_range(sender, tmp->spd->remote->client)) {
 			continue;
 		}
 		ldbg(md->md_logger,
 		     "passthrough conn %s also matches - check which has longer prefix match", tmp->name);
-		if (c->spd->remote.client.maskbits >= tmp->spd->remote.client.maskbits) {
+		if (c->spd->remote->client.maskbits >= tmp->spd->remote->client.maskbits) {
 			continue;
 		}
 		ldbg(md->md_logger,
 		     "passthrough conn was a better match (%d bits versus conn %d bits) - suppressing NO_PROPSAL_CHOSEN reply",
-		     tmp->spd->remote.client.maskbits,
-		     c->spd->remote.client.maskbits);
+		     tmp->spd->remote->client.maskbits,
+		     c->spd->remote->client.maskbits);
 		return NULL;
 	}
 	return c;
