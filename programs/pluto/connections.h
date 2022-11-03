@@ -715,7 +715,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 					    bool preserve_ca,
 					    struct logger *logger);
 
-ip_port end_host_port(const struct spd_end *end, const struct spd_end *other);
+ip_port end_host_port(const struct host_end *this, const struct host_end *that);
 
 /*
  * For iterating over the connection DB.

@@ -387,16 +387,16 @@ void delete_every_connection(void)
 	}
 }
 
-ip_port end_host_port(const struct spd_end *end, const struct spd_end *other)
+ip_port end_host_port(const struct host_end *this, const struct host_end *that)
 {
 	unsigned port;
-	if (end->host->config->ikeport != 0) {
+	if (this->config->ikeport != 0) {
 		/*
 		 * The END's IKEPORT was specified in the config file.
 		 * Use that.
 		 */
-		port = end->host->config->ikeport;
-	} else if (other->host->config->ikeport != 0) {
+		port = this->config->ikeport;
+	} else if (that->config->ikeport != 0) {
 		/*
 		 * The other end's IKEPORT was specified in the config
 		 * file.  Since specifying an IKEPORT implies ESP
@@ -405,7 +405,7 @@ ip_port end_host_port(const struct spd_end *end, const struct spd_end *other)
 		 * NAT_IKE_UDP_PORT.
 		 */
 		port = NAT_IKE_UDP_PORT;
-	} else if (other->host->encap) {
+	} else if (that->encap) {
 		/*
 		 * See above.  Presumably an instance which previously
 		 * had a natted port and is being revived.
@@ -453,7 +453,7 @@ void update_ends_from_this_host_addr(struct spd_end *this, struct spd_end *that)
 	 * prefixed), then THIS must send from either IKEPORT or the
 	 * NAT port (and also ESP=0 prefix messages).
 	 */
-	unsigned host_port = hport(end_host_port(this, that));
+	unsigned host_port = hport(end_host_port(this->host, that->host));
 	dbg("  updated %s.host_port from %u to %u",
 	    this->config->leftright,
 	    this->host->port, host_port);

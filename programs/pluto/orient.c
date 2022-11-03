@@ -162,7 +162,7 @@ static bool end_matches_iface_endpoint(const struct spd_end *end,
 	/*
 	 * which port?
 	 */
-	ip_port port = end_host_port(end, other_end);
+	ip_port port = end_host_port(end->host, other_end->host);
 	ip_endpoint host_end = endpoint_from_address_protocol_port(host_addr,
 								   ifp->io->protocol,
 								   port);
@@ -177,7 +177,7 @@ static void DBG_orient_end(const char *thisthat, struct spd_end *end, struct spd
 		end->config->leftright, thisthat,
 		str_enum_short(&keyword_host_names, end->host->config->type, &enb),
 		str_address(&end->host->addr, &ab),
-		pri_hport(end_host_port(end, other_end)),
+		pri_hport(end_host_port(end->host, other_end->host)),
 		end->host->config->ikeport,
 		bool_str(end->host->encap));
 }
