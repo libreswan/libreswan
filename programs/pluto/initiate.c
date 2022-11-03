@@ -259,7 +259,7 @@ bool initiate_connection_3(struct connection *c, bool background, const threadti
 	 */
 
 	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception,
-			  (c->config->ike_version == IKEv1 ? HUNK_AS_SHUNK(c->spd->local->sec_label) : null_shunk),
+			  (c->config->ike_version == IKEv1 ? HUNK_AS_SHUNK(c->spd->local.sec_label) : null_shunk),
 			  background, c->logger);
 	return true;
 }
@@ -887,21 +887,21 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 *
 	 * XXX: should local/remote shunts be computed independently?
 	 */
-	pexpect(selector_protocol(c->spd->local->client) == selector_protocol(c->spd->remote->client));
+	pexpect(selector_protocol(c->spd->local.client) == selector_protocol(c->spd->remote.client));
 	ip_selector local_shunt = shunt_from_address_and_selector("local",
 								  packet_src_address(b->packet),
-								  c->spd->local->client);
+								  c->spd->local.client);
 	ip_selector remote_shunt = shunt_from_address_and_selector("remote",
 								   packet_dst_address(b->packet),
-								   c->spd->remote->client);
+								   c->spd->remote.client);
 	pexpect(selector_protocol(local_shunt) == selector_protocol(remote_shunt));
 	selector_buf ls, rs;
 	packet_buf pb;
 	selector_buf lc, rc;
 	dbg("packet %s + %s->%s = %s+%s",
 	    str_packet(&b->packet, &pb),
-	    str_selector(&c->spd->local->client, &lc),
-	    str_selector(&c->spd->remote->client, &rc),
+	    str_selector(&c->spd->local.client, &lc),
+	    str_selector(&c->spd->remote.client, &rc),
 	    str_selector(&local_shunt, &ls),
 	    str_selector(&remote_shunt, &rs));
 
@@ -945,8 +945,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	    str_selectors(&local_shunt, &remote_shunt, &sb),
 	    enum_name_short(&shunt_policy_names, b->negotiation_shunt));
 
-	pexpect(selector_eq_selector(c->spd->local->client, local_shunt));
-	pexpect(selector_eq_selector(c->spd->remote->client, remote_shunt));
+	pexpect(selector_eq_selector(c->spd->local.client, local_shunt));
+	pexpect(selector_eq_selector(c->spd->remote.client, remote_shunt));
 
 	/*
 	 * PAUL: should this use shunt_eroute() instead of API
@@ -986,8 +986,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	/*
 	 * Save the selector in .client.
 	 */
-	c->spd->local->client = local_shunt;
-	c->spd->remote->client = remote_shunt;
+	c->spd->local.client = local_shunt;
+	c->spd->remote.client = remote_shunt;
 	rehash_db_spd_route_remote_client(c->spd);
 
 	if (b->by_acquire) {
@@ -1039,8 +1039,8 @@ struct connection *shunt_owner(const ip_selector *ours, const ip_selector *peers
 		struct connection *c = cf.c;
 		for (const struct spd_route *sr = c->spd; sr; sr = sr->spd_next) {
 			if (shunt_erouted(sr->routing) &&
-			    selector_range_eq_selector_range(*ours, sr->local->client) &&
-			    selector_range_eq_selector_range(*peers, sr->remote->client))
+			    selector_range_eq_selector_range(*ours, sr->local.client) &&
+			    selector_range_eq_selector_range(*peers, sr->remote.client))
 				return c;
 		}
 	}
@@ -1150,7 +1150,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	    str_address_sensitive(&c->remote->host.addr, &old),
 	    str_address_sensitive(&new_addr, &new));
 	c->remote->host.addr = new_addr;
-	update_ends_from_this_host_addr(c->spd->remote, c->spd->local);
+	update_ends_from_this_host_addr(&c->spd->remote, &c->spd->local);
 
 	/*
 	 * reduce the work we do by updating all connections waiting for this

@@ -219,12 +219,12 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 
 	case IKEv1_INTERNAL_IP4_SUBNET:
 	{
-		ip_address addr = selector_prefix(c->spd->local->client);
+		ip_address addr = selector_prefix(c->spd->local.client);
 		if (!pbs_out_address(&attrval, addr, "IP4_subnet(address)")) {
 			/* already logged */
 			return STF_INTERNAL_ERROR;
 		}
-		ip_address mask = selector_prefix_mask(c->spd->local->client);
+		ip_address mask = selector_prefix_mask(c->spd->local.client);
 		if (!pbs_out_address(&attrval, mask, "IP4_subnet(mask)")) {
 			/* already logged */
 			return STF_INTERNAL_ERROR;
@@ -234,7 +234,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 
 	case IKEv1_INTERNAL_IP4_NETMASK:
 	{
-		ip_address mask = selector_prefix_mask(c->spd->local->client);
+		ip_address mask = selector_prefix_mask(c->spd->local.client);
 		if (!pbs_out_address(&attrval, mask, "IP4_netmask")) {
 			/* already logged */
 			return STF_INTERNAL_ERROR;
@@ -299,9 +299,9 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 	/* XXX: not sending if our end is 0.0.0.0/0 equals previous previous behaviour */
 	case CISCO_SPLIT_INC:
 	{
-		/* XXX: bitstomask(c->spd->local->client.maskbits), */
-		ip_address mask = selector_prefix_mask(c->spd->local->client);
-		ip_address addr = selector_prefix(c->spd->local->client);
+		/* XXX: bitstomask(c->spd->local.client.maskbits), */
+		ip_address mask = selector_prefix_mask(c->spd->local.client);
+		ip_address addr = selector_prefix(c->spd->local.client);
 		struct CISCO_split_item i = {
 			.cs_addr = { htonl(ntohl_address(&addr)), },
 			.cs_mask = { htonl(ntohl_address(&mask)), },
@@ -395,12 +395,12 @@ static stf_status modecfg_resp(struct state *st,
 				log_state(RC_LOG, st, "lease_an_address failure %s", e);
 				return STF_INTERNAL_ERROR;
 			}
-			ia = selector_prefix(c->spd->remote->client);
+			ia = selector_prefix(c->spd->remote.client);
 			address_buf iab;
 			dbg("a lease %s", str_address(&ia, &iab));
 		} else {
-			pexpect(!selector_is_unset(&c->spd->remote->client));
-			ia = selector_prefix(c->spd->remote->client);
+			pexpect(!selector_is_unset(&c->spd->remote.client));
+			ia = selector_prefix(c->spd->remote.client);
 			address_buf iab;
 			dbg("a client %s", str_address(&ia, &iab));
 		}
@@ -449,8 +449,8 @@ static stf_status modecfg_resp(struct state *st,
 			dbg("We are not sending a banner");
 		}
 
-		if (selector_is_unset(&c->spd->local->client) ||
-		    selector_is_all(c->spd->local->client)) {
+		if (selector_is_unset(&c->spd->local.client) ||
+		    selector_is_all(c->spd->local.client)) {
 			dbg("We are 0.0.0.0/0 so not sending CISCO_SPLIT_INC");
 		} else {
 			dbg("We are sending our subnet as CISCO_SPLIT_INC");
@@ -1561,17 +1561,17 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				return STF_FATAL;
 			}
-			c->spd->local->client = selector_from_address(a);
+			c->spd->local.client = selector_from_address(a);
 
-			c->spd->local->has_client = true;
-			c->spd->local->has_internal_address = true;
+			c->spd->local.has_client = true;
+			c->spd->local.has_internal_address = true;
 
 			subnet_buf caddr;
-			str_selector_subnet(&c->spd->local->client, &caddr);
+			str_selector_subnet(&c->spd->local.client, &caddr);
 			log_state(RC_LOG, st, "Received IP address %s", caddr.buf);
 
 			if (!address_is_specified(c->local->child.config->sourceip)) {
-				ip_address sourceip = spd_route_end_sourceip(IKEv1, c->spd->local);
+				ip_address sourceip = spd_route_end_sourceip(IKEv1, &c->spd->local);
 				pexpect(address_eq_address(a, sourceip));
 				log_state(RC_LOG, st, "setting ip source address to %s",
 					  caddr.buf);
@@ -1725,13 +1725,13 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 					return STF_FATAL;
 				}
-				c->spd->local->client = selector_from_address(a);
+				c->spd->local.client = selector_from_address(a);
 
-				c->spd->local->has_client = true;
-				c->spd->local->has_internal_address = true;
+				c->spd->local.has_client = true;
+				c->spd->local.has_internal_address = true;
 
 				subnet_buf caddr;
-				str_selector_subnet(&c->spd->local->client, &caddr);
+				str_selector_subnet(&c->spd->local.client, &caddr);
 				log_state(RC_INFORMATIONAL, st,
 					  "Received IPv4 address: %s",
 					  caddr.buf);
@@ -1798,10 +1798,10 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				struct connection *c = st->st_connection;
 
 				/* make sure that other side isn't an endpoint */
-				if (!c->spd->remote->has_client) {
+				if (!c->spd->remote.has_client) {
 					passert(c->spd->spd_next == NULL);
-					c->spd->remote->has_client = true;
-					c->spd->remote->client = ipv4_info.selector.all;
+					c->spd->remote.has_client = true;
+					c->spd->remote.client = ipv4_info.selector.all;
 					rehash_db_spd_route_remote_client(c->spd);
 				}
 
@@ -1836,7 +1836,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 						  pretty_subnet.buf);
 
 					for (struct spd_route *sr = c->spd; ; sr = sr->spd_next) {
-						if (selector_range_eq_selector_range(wire_selector, sr->remote->client)) {
+						if (selector_range_eq_selector_range(wire_selector, sr->remote.client)) {
 							/* duplicate entry: ignore */
 							log_state(RC_INFORMATIONAL, st,
 								  "Subnet %s already has an spd_route - ignoring",
@@ -1845,7 +1845,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 						} else if (sr->spd_next == NULL) {
 							/* new entry: add at end*/
 							sr->spd_next = clone_spd_route(c, HERE);
-							sr->remote->client = wire_selector;
+							sr->remote.client = wire_selector;
 							rehash_db_spd_route_remote_client(sr);
 							break;
 						}

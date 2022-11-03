@@ -106,7 +106,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 			   struct fg_targets **new_targets)
 {
 	const char *fgn = g->connection->name;
-	const ip_selector *lsn = &g->connection->spd->local->client;
+	const ip_selector *lsn = &g->connection->spd->local.client;
 	const struct lsw_conf_options *oco = lsw_init_options();
 	char *fg_path = alloc_printf("%s/%s", oco->policies_dir, fgn); /* must free */
 
@@ -241,7 +241,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 				r = -1; /* end of list is infinite */
 				break;
 			}
-			r = subnetcmp(*lsn, (*pp)->group->connection->spd->local->client);
+			r = subnetcmp(*lsn, (*pp)->group->connection->spd->local.client);
 			if (r == 0) {
 				r = subnetcmp(sn, (*pp)->subnet);
 			}
@@ -311,7 +311,7 @@ void load_groups(struct logger *logger)
 			selector_buf asource;
 			selector_buf atarget;
 			DBG_log("  %s->%s %d sport %d dport %d %s",
-				str_selector_subnet_port(&t->group->connection->spd->local->client, &asource),
+				str_selector_subnet_port(&t->group->connection->spd->local.client, &asource),
 				str_selector_subnet_port(&t->subnet, &atarget),
 				t->proto, t->sport, t->dport,
 				t->group->connection->name);
@@ -322,7 +322,7 @@ void load_groups(struct logger *logger)
 			selector_buf asource;
 			selector_buf atarget;
 			DBG_log("  %s->%s %d sport %d dport %d %s",
-				str_selector_subnet_port(&t->group->connection->spd->local->client, &asource),
+				str_selector_subnet_port(&t->group->connection->spd->local.client, &asource),
 				str_selector_subnet_port(&t->subnet, &atarget),
 				t->proto, t->sport, t->dport,
 				t->group->connection->name);
@@ -350,8 +350,8 @@ void load_groups(struct logger *logger)
 				r = -1; /* no more new; next is old */
 			}
 			if (r == 0)
-				r = subnetcmp(op->group->connection->spd->local->client,
-					      np->group->connection->spd->local->client);
+				r = subnetcmp(op->group->connection->spd->local.client,
+					      np->group->connection->spd->local.client);
 			if (r == 0)
 				r = subnetcmp(op->subnet, np->subnet);
 			if (r == 0)

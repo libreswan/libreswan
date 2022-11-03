@@ -436,7 +436,7 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 	struct connection *cc = larval_child->sa.st_connection;
 
 	if (request_md->chain[ISAKMP_NEXT_v2CP] != NULL) {
-		if (cc->spd->remote->has_lease) {
+		if (cc->spd->remote.has_lease) {
 			if (!emit_v2CP_response(larval_child, outpbs)) {
 				return false;
 			}
@@ -628,8 +628,8 @@ void llog_v2_child_sa_established(struct ike_sa *ike UNUSED, struct child_sa *ch
 		}
 		jam(buf, " using "PRI_SO"; ", pri_so(child->sa.st_clonedfrom));
 		/* log Child SA Traffic Selector details for admin's pleasure */
-		const struct traffic_selector a = traffic_selector_from_end(c->spd->local, "this");
-		const struct traffic_selector b = traffic_selector_from_end(c->spd->remote, "that");
+		const struct traffic_selector a = traffic_selector_from_end(&c->spd->local, "this");
+		const struct traffic_selector b = traffic_selector_from_end(&c->spd->remote, "that");
 		range_buf ba, bb;
 		jam(buf, "IPsec %s [%s:%d-%d %d] -> [%s:%d-%d %d]",
 		    (c->policy & POLICY_TUNNEL ? "tunnel" : "transport"),

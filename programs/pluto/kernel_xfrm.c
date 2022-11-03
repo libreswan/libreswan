@@ -935,13 +935,13 @@ static bool create_xfrm_migrate_sa(struct state *st,
 	};
 
 	const struct spd_end_info local = {
-		.end = c->spd->local,
+		.end = &c->spd->local,
 		.endpoint = st->st_interface->local_endpoint,
 		.spi = proto_info->inbound.spi,
 	};
 
 	const struct spd_end_info remote = {
-		.end = c->spd->remote,
+		.end = &c->spd->remote,
 		.endpoint = st->st_remote_endpoint,
 		.spi = proto_info->outbound.spi,
 	};

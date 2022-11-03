@@ -162,7 +162,7 @@ stf_status initiate_v2_IKE_AUTH_request(struct ike_sa *ike, struct msg_digest *m
 
 	{
 		shunk_t data;
-		ike->sa.st_v2_id_payload.header = build_v2_id_payload(pc->spd->local, &data,
+		ike->sa.st_v2_id_payload.header = build_v2_id_payload(&pc->spd->local, &data,
 								      "my IDi", ike->sa.st_logger);
 		ike->sa.st_v2_id_payload.data = clone_hunk(data, "my IDi");
 	}
@@ -363,7 +363,7 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		case ID_NULL:
 		{
 			shunk_t id_b;
-			struct ikev2_id r_id = build_v2_id_payload(pc->spd->remote, &id_b,
+			struct ikev2_id r_id = build_v2_id_payload(&pc->spd->remote, &id_b,
 								   "their IDr",
 								   ike->sa.st_logger);
 			pb_stream r_id_pbs;
@@ -937,7 +937,7 @@ stf_status generate_v2_responder_auth(struct ike_sa *ike, struct msg_digest *md,
 		ike->sa.st_v2_id_payload.data = empty_chunk;
 	} else {
 		shunk_t data;
-		ike->sa.st_v2_id_payload.header = build_v2_id_payload(c->spd->local, &data,
+		ike->sa.st_v2_id_payload.header = build_v2_id_payload(&c->spd->local, &data,
 								      "my IDr",
 								      ike->sa.st_logger);
 		ike->sa.st_v2_id_payload.data = clone_hunk(data, "my IDr");
@@ -1158,7 +1158,7 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike)
 
 	if (c->config->sec_label.len > 0) {
 		pexpect(c->kind == CK_TEMPLATE);
-		pexpect(c->spd->local->sec_label.len == 0);
+		pexpect(c->spd->local.sec_label.len == 0);
 		if (!install_sec_label_connection_policies(c, ike->sa.st_logger)) {
 			return STF_FATAL;
 		}
@@ -1435,7 +1435,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 
 	if (c->config->sec_label.len > 0) {
 		pexpect(c->kind == CK_TEMPLATE);
-		pexpect(c->spd->local->sec_label.len == 0);
+		pexpect(c->spd->local.sec_label.len == 0);
 		if (!install_sec_label_connection_policies(c, ike->sa.st_logger)) {
 			return STF_FATAL;
 		}

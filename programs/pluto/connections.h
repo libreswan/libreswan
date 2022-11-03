@@ -402,10 +402,8 @@ struct spd_end {
 
 struct spd_route {
 	struct spd_route *spd_next;
-	struct spd_end end[END_ROOF];
-	/* point into above */
-	struct spd_end *local;		/* must update after clone */
-	struct spd_end *remote;		/* must update after clone */
+	struct spd_end local;
+	struct spd_end remote;
 	struct connection *connection;
 	so_serial_t eroute_owner;
 #define set_spd_owner(SPD, SO)						\
@@ -677,8 +675,8 @@ extern void connection_delete_unused_instance(struct connection **cp, struct sta
  * an eroute for an instance IFF the template is a /32 -> /32.  This
  * requires some special casing.
  */
-#define eclipsable(sr) (selector_contains_one_address((sr)->local->client) && \
-			selector_contains_one_address((sr)->remote->client))
+#define eclipsable(sr) (selector_contains_one_address((sr)->local.client) && \
+			selector_contains_one_address((sr)->remote.client))
 struct spd_route *eclipsing(const struct spd_route *sr);
 
 /* print connection status */

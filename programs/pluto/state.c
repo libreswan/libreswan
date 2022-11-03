@@ -1954,8 +1954,8 @@ void state_eroute_usage(const ip_selector *ours, const ip_selector *peers,
 		if (IS_IPSEC_SA_ESTABLISHED(st) &&
 		    c->spd->eroute_owner == st->st_serialno &&
 		    c->spd->routing == RT_ROUTED_TUNNEL &&
-		    selector_range_eq_selector_range(c->spd->local->client, *ours) &&
-		    selector_range_eq_selector_range(c->spd->remote->client, *peers)) {
+		    selector_range_eq_selector_range(c->spd->local.client, *ours) &&
+		    selector_range_eq_selector_range(c->spd->remote.client, *peers)) {
 			if (st->st_outbound_count != count) {
 				st->st_outbound_count = count;
 				st->st_outbound_time = nw;
@@ -2025,20 +2025,20 @@ static void jam_state_traffic(struct jambuf *buf, struct state *st)
 		jam(buf, "'");
 	}
 
-	if (c->spd->remote->has_lease) {
+	if (c->spd->remote.has_lease) {
 		/*
 		 * "this" gave "that" a lease from "this" address
 		 * pool.
 		 */
 		jam(buf, ", lease=");
-		jam_selector_subnet(buf, &c->spd->remote->client);
-	} else if (c->spd->local->has_internal_address) {
+		jam_selector_subnet(buf, &c->spd->remote.client);
+	} else if (c->spd->local.has_internal_address) {
 		/*
 		 * "this" received an internal address from "that";
 		 * presumably from "that"'s address pool.
 		 */
 		jam(buf, ", lease=");
-		jam_selector_subnet(buf, &c->spd->local->client);
+		jam_selector_subnet(buf, &c->spd->local.client);
 	}
 }
 
@@ -2703,16 +2703,16 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 		/* MOBIKE initiator processing response */
 		c->local->host.addr = endpoint_address(child->sa.st_mobike_local_endpoint);
 		dbg("%s() %s.host_port: %u->%u", __func__, c->local->config->leftright,
-		    c->spd->local->host->port, endpoint_hport(child->sa.st_mobike_local_endpoint));
-		c->spd->local->host->port = endpoint_hport(child->sa.st_mobike_local_endpoint);
-		c->spd->local->host->nexthop = child->sa.st_mobike_host_nexthop;
+		    c->spd->local.host->port, endpoint_hport(child->sa.st_mobike_local_endpoint));
+		c->spd->local.host->port = endpoint_hport(child->sa.st_mobike_local_endpoint);
+		c->spd->local.host->nexthop = child->sa.st_mobike_host_nexthop;
 		break;
 	case MESSAGE_REQUEST:
 		/* MOBIKE responder processing request */
 		c->remote->host.addr = endpoint_address(md->sender);
 		dbg("%s() %s.host_port: %u->%u", __func__, c->remote->config->leftright,
-		    c->spd->remote->host->port, endpoint_hport(md->sender));
-		c->spd->remote->host->port = endpoint_hport(md->sender);
+		    c->spd->remote.host->port, endpoint_hport(md->sender));
+		c->spd->remote.host->port = endpoint_hport(md->sender);
 
 		/* for the consistency, correct output in ipsec status */
 		child->sa.st_remote_endpoint = ike->sa.st_remote_endpoint = md->sender;

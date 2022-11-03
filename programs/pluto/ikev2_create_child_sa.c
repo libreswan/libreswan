@@ -117,7 +117,7 @@ static void queue_v2_CREATE_CHILD_SA_initiator(struct state *larval_sa,
 
 	dbg("adding larval SA #%lu to IKE SA #%lu message initiator queue; sec_label="PRI_SHUNK,
 	    larval->sa.st_serialno, ike->sa.st_serialno,
-	    pri_shunk(larval->sa.st_connection->spd->local->sec_label));
+	    pri_shunk(larval->sa.st_connection->spd->local.sec_label));
 
 	/*
 	 * Note: larval SA -> IKE SA hop
@@ -429,7 +429,7 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	    str_policy(larval_child->sa.st_policy, &pb),
 	    (larval_child->sa.st_pfs_group == NULL ? "no-pfs" :
 	     larval_child->sa.st_pfs_group->common.fqn),
-	    pri_shunk(c->spd->local->sec_label));
+	    pri_shunk(c->spd->local.sec_label));
 
 	submit_ke_and_nonce(&larval_child->sa, larval_child->sa.st_pfs_group /*possibly-null*/,
 			    queue_v2_CREATE_CHILD_SA_rekey_child_request, HERE);

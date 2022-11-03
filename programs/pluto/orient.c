@@ -55,7 +55,10 @@ static void swap_ends(struct connection *c)
 	c->remote = local;
 
 	for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
-		struct spd_end *local = sr->local;
+		/*
+		 * This swaps the SPD content, not pointers.
+		 */
+		struct spd_end local = sr->local;
 		sr->local = sr->remote;
 		sr->remote = local;
 	}
@@ -192,8 +195,8 @@ bool orient(struct connection *c, struct logger *logger)
 	if (DBGP(DBG_BASE)) {
 		connection_buf cb;
 		DBG_log("orienting "PRI_CONNECTION, pri_connection(c, &cb));
-		DBG_orient_end("this", c->spd->local, c->spd->remote);
-		DBG_orient_end("that", c->spd->remote, c->spd->local);
+		DBG_orient_end("this", &c->spd->local, &c->spd->remote);
+		DBG_orient_end("that", &c->spd->remote, &c->spd->local);
 	}
 
 	set_policy_prio(c); /* for updates */
@@ -210,8 +213,8 @@ bool orient(struct connection *c, struct logger *logger)
 	for (struct iface_endpoint *ifp = interfaces; ifp != NULL; ifp = ifp->next) {
 
 		/* XXX: check connection allows p->protocol? */
-		bool this = end_matches_iface_endpoint(c->spd->local, c->spd->remote, ifp);
-		bool that = end_matches_iface_endpoint(c->spd->remote, c->spd->local, ifp);
+		bool this = end_matches_iface_endpoint(&c->spd->local, &c->spd->remote, ifp);
+		bool that = end_matches_iface_endpoint(&c->spd->remote, &c->spd->local, ifp);
 
 		if (this && that) {
 			/* too many choices */
@@ -300,11 +303,11 @@ bool orient(struct connection *c, struct logger *logger)
 	 * No existing interface worked, create a new one?
 	 */
 
-	if (orient_new_iface_endpoint(c, c->spd->local)) {
+	if (orient_new_iface_endpoint(c, &c->spd->local)) {
 		return true;
 	}
 
-	if (orient_new_iface_endpoint(c, c->spd->remote)) {
+	if (orient_new_iface_endpoint(c, &c->spd->remote)) {
 		dbg("  swapping to that; new interface");
 		swap_ends(c);
 		return true;

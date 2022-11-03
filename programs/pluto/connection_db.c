@@ -104,7 +104,7 @@ static void jam_spd_route(struct jambuf *buf, const struct spd_route *sr)
 {
 	jam_connection(buf, sr->connection);
 	jam_string(buf, " ");
-	jam_selectors(buf, &sr->local->client, &sr->remote->client);
+	jam_selectors(buf, &sr->local.client, &sr->remote.client);
 }
 
 static void jam_spd_route_remote_client(struct jambuf *buf, const struct spd_route *sr)
@@ -117,7 +117,7 @@ static hash_t hash_spd_route_remote_client(const ip_selector *sr)
 	return hash_thing(sr->bytes, zero_hash);
 }
 
-HASH_TABLE(spd_route, remote_client, .remote->client, STATE_TABLE_SIZE);
+HASH_TABLE(spd_route, remote_client, .remote.client, STATE_TABLE_SIZE);
 
 HASH_DB(spd_route,
 	&spd_route_remote_client_hash_table);
@@ -146,7 +146,7 @@ static struct list_head *spd_route_filter_head(struct spd_route_filter *filter)
 static bool matches_spd_route_filter(struct spd_route *spd, struct spd_route_filter *filter)
 {
 	if (filter->remote_client_range != NULL &&
-	    !selector_range_eq_selector_range(*filter->remote_client_range, spd->remote->client)) {
+	    !selector_range_eq_selector_range(*filter->remote_client_range, spd->remote.client)) {
 		return false;
 	}
 	return true;
@@ -282,13 +282,10 @@ struct spd_route *append_spd_route(struct connection *c, struct spd_route ***spd
 	passert(**spd_end == NULL);
 	/* back link */
 	spd->connection = c;
-	/* local link */
-	spd->local = &spd->end[c->local->config->index];	/*clone must update*/
-	spd->remote = &spd->end[c->remote->config->index];	/*clone must update*/
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		spd->end[end].host = &c->end[end].host;		/*clone must update*/
-		spd->end[end].config = c->end[end].config;
-	}
+	spd->local.host = &c->local->host;		/*clone must update*/
+	spd->remote.host = &c->remote->host;		/*clone must update*/
+	spd->local.config = c->local->config;
+	spd->remote.config = c->remote->config;
 	/* db; will be updated */
 	init_db_spd_route(spd);
 	return spd;
@@ -304,29 +301,23 @@ static void unshare_connection_spd_end(struct connection *c, struct spd_end *e)
 struct spd_route *clone_spd_route(struct connection *c, where_t where)
 {
 	/* always first!?! */
-	struct spd_route *spd = clone_thing(*c->spd, where->func);
-	spd->spd_next = NULL;
-	pexpect(spd->connection == c);
-
-	/* XXX: why!?! this is not SPD */
+	struct spd_route *sr = clone_thing(*c->spd, where->func);
+	sr->spd_next = NULL;
+	pexpect(sr->connection == c);
+	/* unshare pointers */
 	c->local->host.id.name = null_shunk;
 	c->remote->host.id.name = null_shunk;
+	sr->local.virt = NULL;
+	sr->remote.virt = NULL;
 
-	/* update internal pointers */
-	spd->local = &spd->end[c->local->config->index];
-	spd->remote = &spd->end[c->remote->config->index];
+	zero_thing(sr->hash_table_entries); /* keep init_list_entry() happy */
+	init_db_spd_route(sr);
 
-	/* unshare pointers */
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		spd->end[end].virt = NULL;	/* don't inherit?!? */
-		unshare_connection_spd_end(c, &spd->end[end]);
-	}
+	unshare_connection_spd_end(c, &sr->local);
+	unshare_connection_spd_end(c, &sr->remote);
 
-	zero_thing(spd->hash_table_entries); /* keep init_list_entry() happy */
-	init_db_spd_route(spd);
-	add_db_spd_route(spd);
-
-	return spd;
+	add_db_spd_route(sr);
+	return sr;
 }
 
 static void unshare_connection_spd(struct connection *c, where_t where)
@@ -339,8 +330,8 @@ static void unshare_connection_spd(struct connection *c, where_t where)
 		zero_thing((*dst)->hash_table_entries); /* keep init_list_entry() happy */
 		(*dst)->connection = c;
 		(*dst)->spd_next = NULL;
-		unshare_connection_spd_end(c, (*dst)->local);
-		unshare_connection_spd_end(c, (*dst)->remote);
+		unshare_connection_spd_end(c, &(*dst)->local);
+		unshare_connection_spd_end(c, &(*dst)->remote);
 		init_db_spd_route((*dst));
 		/* step forward */
 		src = src->spd_next;

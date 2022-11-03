@@ -410,7 +410,7 @@ static stf_status aggr_inI1_outR1_continue2(struct state *st,
 
 	{
 		shunk_t id_b;
-		struct isakmp_ipsec_id id_hd = build_v1_id_payload(c->spd->local, &id_b);
+		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->spd->local, &id_b);
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,
 				&rbody, &r_id_pbs) ||
 		    !out_hunk(id_b, &r_id_pbs, "my identity")) {
@@ -718,7 +718,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 
 		/* first build an ID payload as a raw material */
 		shunk_t id_b;
-		struct isakmp_ipsec_id id_hd = build_v1_id_payload(c->spd->local, &id_b);
+		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->spd->local, &id_b);
 
 		uint8_t idbuf[1024]; /* fits all possible identity payloads? */
 		struct pbs_out id_pbs = open_pbs_out("identity payload", idbuf, sizeof(idbuf), st->st_logger);
@@ -828,7 +828,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 		pb_stream id_pbs;
 
 		shunk_t id_b;
-		struct isakmp_ipsec_id id_hd = build_v1_id_payload(c->spd->remote, &id_b);
+		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->spd->remote, &id_b);
 
 		uint8_t idbuf[1024];	/* ??? enough room for reconstructed peer ID payload? */
 		struct pbs_out pbs = open_pbs_out("identity payload", idbuf, sizeof(idbuf), st->st_logger);
@@ -1116,7 +1116,7 @@ static stf_status aggr_outI1_continue_tail(struct state *st,
 	/* IDii out */
 	{
 		shunk_t id_b;
-		struct isakmp_ipsec_id id_hd = build_v1_id_payload(c->spd->local, &id_b);
+		struct isakmp_ipsec_id id_hd = build_v1_id_payload(&c->spd->local, &id_b);
 
 		pb_stream id_pbs;
 		if (!out_struct(&id_hd, &isakmp_ipsec_identification_desc,

@@ -336,7 +336,7 @@ static struct connection *refine_host_connection_on_responder(int indent,
 				    str_id(&d->local->host.id, &usb),
 				    enum_show(&ike_id_type_names, d->local->host.id.kind, &usesb));
 				/* ??? pexpect(d->spd->spd_next == NULL); */
-				if (!idr_wildmatch(d->spd->local, tarzan_id, st->st_logger)) {
+				if (!idr_wildmatch(&d->spd->local, tarzan_id, st->st_logger)) {
 					dbg_rhc("skipping because peer IDr payload does not match our expected ID");
 					continue;
 				}

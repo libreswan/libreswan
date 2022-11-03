@@ -1397,7 +1397,7 @@ void process_v1_packet(struct msg_digest *md)
 			}
 
 
-			const struct spd_end *this = st->st_connection->spd->local;
+			const struct spd_end *this = &st->st_connection->spd->local;
 			esb_buf b;
 			dbg(" processing received isakmp_xchg_type %s; this is a%s%s%s%s",
 			    enum_show(&ikev1_exchange_names, md->hdr.isa_xchg, &b),
