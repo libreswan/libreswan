@@ -2520,9 +2520,6 @@ static bool extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	c->spd->spd_next = NULL;
-	c->spd->connection = c;
-
 	/* set internal fields */
 	c->instance_serial = 0;
 	c->interface = NULL; /* initializing */
