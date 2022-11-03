@@ -2422,6 +2422,12 @@ static bool extract_connection(const struct whack_message *wm,
 						pexpect(!spd_end->client.is_set);
 					}
 				}
+				/* default values */
+				passert(spd->routing == RT_UNROUTED);
+				passert(spd->eroute_owner == SOS_NOBODY);
+				/* leave a debug-log breadcrumb */
+				set_spd_routing(spd, RT_UNROUTED);
+				set_spd_owner(spd, SOS_NOBODY);
 			}
 			/* advance */
 			selectors[RIGHT_END] = (selectors[RIGHT_END] != NULL ? selectors[RIGHT_END]+1 : NULL);
@@ -2523,13 +2529,6 @@ static bool extract_connection(const struct whack_message *wm,
 	/* set internal fields */
 	c->instance_serial = 0;
 	c->interface = NULL; /* initializing */
-
-	/* should be true */
-	pexpect(c->spd->routing == RT_UNROUTED);
-	pexpect(c->spd->eroute_owner == SOS_NOBODY);
-	/* leave a breadcrumb */
-	set_spd_routing(c->spd, RT_UNROUTED);
-	set_spd_owner(c->spd, SOS_NOBODY);
 
 	c->newest_ike_sa = SOS_NOBODY;
 	c->newest_ipsec_sa = SOS_NOBODY;
