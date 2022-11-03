@@ -405,7 +405,7 @@ domain ${orig_domain}"
 
 	if [ -n "${PLUTO_PEER_DOMAIN_INFO}" ]; then
 	    if [ -n "${new_search}" ]; then
-		new_search=$(echo $(echo "${new_search} ${PLUTO_PEER_DOMAIN_INFO}" | tr [:space:] '\n' | awk '!a[$0]++'))
+		new_search=$(echo $(echo "${PLUTO_PEER_DOMAIN_INFO} ${new_search}" | tr [:space:] '\n' | awk '!a[$0]++'))
 	    else
 		new_search="${PLUTO_PEER_DOMAIN_INFO}"
 	    fi
