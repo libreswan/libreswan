@@ -131,7 +131,7 @@ struct child_end_config {
 	char *updown;
 
 	ip_selector *selectors;
-	/* log "{leftright}${FIELD}=... */
+	/* log "{.leftright}${.selectors_field}=... */
 	const char *selectors_field;
 	bool selectors_are_client;
 

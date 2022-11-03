@@ -2365,61 +2365,105 @@ static bool extract_connection(const struct whack_message *wm,
 	 * selectors.
 	 */
 
-	const struct ip_info *child_afi[LEFT_RIGHT_ROOF] = {0};
-	append_spd_route(c, &c->spd);
-	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
-		const struct whack_end *we = whack_ends[this];
-		const struct child_end_config *ce = c->end[this].child.config;
-		/* XXX: brute force left-local; see alloc_connection() */
-		struct spd_end *spd = (this == LEFT_END ? &c->spd->local :
-				       this == RIGHT_END ? &c->spd->remote :
-				       NULL);
-		if (ce->selectors != NULL) {
-			dbg("%s %s child spd from selectors",
-			    c->name, ce->leftright);
-			passert(ce->selectors[0].is_set); /* at least 1 */
-			if (ce->selectors[1].is_set) {
-				/* only way to get >1 selector is with subnet= */
-				llog(RC_FATAL, c->logger,
-				     ADD_FAILED_PREFIX"rejecting additional selectors in %ssubnet=%s",
-				     we->leftright, we->client);
-				return false;
-			}
-			spd->has_client = ce->selectors_are_client;
-			spd->client = ce->selectors[0];
-		} else {
-			dbg("%s %s child spd unset",
-			    c->name, ce->leftright);
-			pexpect(!spd->client.is_set);
-		}
-		child_afi[this] = selector_info(spd->client); /* could be NULL */
+	const ip_selector *selectors[LEFT_RIGHT_ROOF] = {0};
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		selectors[end] = c->end[end].child.config->selectors;
 	}
+	struct spd_route **spd_end = &c->spd;
+	do /*LEFT*/ {
+		do /*RIGHT*/ {
+			selector_buf leftb, rightb;
+			dbg("adding spd %s<->%s",
+			    (selectors[LEFT_END] != NULL ? str_selector(selectors[LEFT_END], &leftb) : "<left>"),
+			    (selectors[RIGHT_END] != NULL ? str_selector(selectors[RIGHT_END], &rightb) : "<right>"));
+			/*
+			 * XXX: Try to filter out IPv4 vs IPv6.  When
+			 * selector is NULL, the host's address family
+			 * is used.
+			 */
+			const struct ip_info *afi[LEFT_RIGHT_ROOF];
+			FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+				if (selectors[end] == NULL) {
+					afi[end] = host_afi;
+				} else {
+					afi[end] = selector_type(selectors[end]);
+				}
+			}
+			if (afi[LEFT_END] == afi[RIGHT_END]) {
+				struct spd_route *spd = append_spd_route(c, &spd_end);
+				FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+					const struct whack_end *we = whack_ends[end];
+					const struct child_end_config *ce = c->end[end].child.config;
+					const ip_selector *se = selectors[end];
+					/* XXX: brute force left-local; see alloc_connection() */
+					struct spd_end *spd_end = (end == LEFT_END ? &spd->local :
+								   end == RIGHT_END ? &spd->remote :
+								   NULL);
+					if (se != NULL) {
+						dbg("%s %s child spd from selectors",
+						    c->name, ce->leftright);
+						passert(ce->selectors[0].is_set); /* at least 1 */
+						if (ce->selectors[1].is_set) {
+							/* only way to get >1 selector is with subnet= */
+							llog(RC_FATAL, c->logger,
+							     ADD_FAILED_PREFIX"rejecting additional selectors in %ssubnet=%s",
+							     we->leftright, we->client);
+							return false;
+						}
+						spd_end->has_client = ce->selectors_are_client;
+						spd_end->client = ce->selectors[0];
+					} else {
+						dbg("%s %s child spd unset",
+						    c->name, ce->leftright);
+						pexpect(!spd_end->client.is_set);
+					}
+				}
+			}
+			/* advance */
+			selectors[RIGHT_END] = (selectors[RIGHT_END] != NULL ? selectors[RIGHT_END]+1 : NULL);
+		} while (selectors[RIGHT_END] != NULL && selectors[RIGHT_END]->is_set);
+		/* advance */
+		selectors[LEFT_END] = (selectors[LEFT_END] != NULL ? selectors[LEFT_END]+1 : NULL);
+	} while(selectors[LEFT_END] != NULL && selectors[LEFT_END]->is_set);
 
-	if (child_afi[LEFT_END] != NULL && child_afi[RIGHT_END] != NULL) {
-		if (child_afi[LEFT_END] != child_afi[RIGHT_END]) {
-			/* XXX: not really client */
+	if (c->spd == NULL) {
+		if (c->end[LEFT_END].child.config->selectors != NULL &&
+		    c->end[RIGHT_END].child.config->selectors != NULL) {
+			/*
+			 * Both ends used child AFIs.
+			 *
+			 * Since no permutation was valid one end must
+			 * be pure IPv4 and the other end pure IPv6
+			 * say.
+			 */
 			llog(RC_FATAL, c->logger,
 			     ADD_FAILED_PREFIX"address family %s from left%s= conflicts with right%s=",
-			     child_afi[LEFT_END]->ip_name,
+			     selector_type(c->end[LEFT_END].child.config->selectors)->ip_name,
 			     c->end[LEFT_END].child.config->selectors_field,
 			     c->end[RIGHT_END].child.config->selectors_field);
-			return false;
-		}
-	} else if (child_afi[LEFT_END] != NULL || child_afi[RIGHT_END] != NULL) {
-		/*
-		 * One is using IKE one is using Child.  Should set
-		 * child imply unset child instead?
-		 */
-		if ((child_afi[LEFT_END] != NULL && child_afi[LEFT_END] != host_afi) ||
-		    (child_afi[RIGHT_END] != NULL && child_afi[RIGHT_END] != host_afi)) {
+		} else {
+			/*
+			 * One end used a child AFI, and the other
+			 * used the host's AFI.  If both ends used the
+			 * host AFI then the AFIs would have matched.
+			 */
+			const char *host_end = NULL;
+			const struct child_end_config *child_end = NULL;
+			FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+				if (selectors[end] == NULL) {
+					host_end = c->end[end].host.config->leftright;
+				} else {
+					child_end = c->end[end].child.config;
+				}
+			}
+			passert(host_end != NULL);
+			passert(child_end != NULL);
 			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"host protocol %s conflicts with client protocol %s",
-			     host_afi->ip_name,
-			     (child_afi[LEFT_END] != NULL ? child_afi[LEFT_END]->ip_name :
-			      child_afi[RIGHT_END] != NULL ? child_afi[RIGHT_END]->ip_name :
-			      "???"));
-			return false;
+			     ADD_FAILED_PREFIX"%s host address family %s conflicts with %s%s=",
+			     host_end, host_afi->ip_name,
+			     child_end->leftright, child_end->selectors_field);
 		}
+		return false;
 	}
 
 	/*

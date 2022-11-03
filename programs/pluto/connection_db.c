@@ -272,18 +272,23 @@ struct connection *alloc_connection(const char *name, where_t where)
 	return c;
 }
 
-void append_spd_route(struct connection *c, struct spd_route **spd)
+struct spd_route *append_spd_route(struct connection *c, struct spd_route ***spd_end)
 {
-	passert(*spd == NULL);
-	(*spd) = alloc_thing(struct spd_route, "spd_route");
-	(*spd)->connection = c;
-	/* XXX: brute force; see alloc_connection() for left-right choice */
-	(*spd)->local.host = &c->local->host;		/*clone must update*/
-	(*spd)->remote.host = &c->remote->host;		/*clone must update*/
-	(*spd)->local.config = c->local->config;
-	(*spd)->remote.config = c->remote->config;
+	struct spd_route *spd = alloc_thing(struct spd_route, "spd_route");
+	/* append; too much redirection */
+	passert(**spd_end == NULL);
+	**spd_end = spd;
+	*spd_end = &spd->spd_next;
+	passert(**spd_end == NULL);
+	/* back link */
+	spd->connection = c;
+	spd->local.host = &c->local->host;		/*clone must update*/
+	spd->remote.host = &c->remote->host;		/*clone must update*/
+	spd->local.config = c->local->config;
+	spd->remote.config = c->remote->config;
 	/* db; will be updated */
-	init_db_spd_route((*spd));
+	init_db_spd_route(spd);
+	return spd;
 }
 
 static void unshare_connection_spd_end(struct connection *c, struct spd_end *e)
