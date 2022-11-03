@@ -2428,6 +2428,15 @@ static bool extract_connection(const struct whack_message *wm,
 				/* leave a debug-log breadcrumb */
 				set_spd_routing(spd, RT_UNROUTED);
 				set_spd_owner(spd, SOS_NOBODY);
+				/*
+				 * Is spd.reqid necessary for all c?
+				 * CK_INSTANCE or CK_PERMANENT need
+				 * one.  Does CK_TEMPLATE need one?
+				 */
+				spd->reqid = (c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid);
+				dbg(PRI_CONNECTION" spd->reqid=%d because c->sa_reqid=%d",
+				    pri_connection(c, &cb),
+				    c->spd->reqid, c->sa_reqid);
 			}
 			/* advance */
 			selectors[RIGHT_END] = (selectors[RIGHT_END] != NULL ? selectors[RIGHT_END]+1 : NULL);
@@ -2533,14 +2542,6 @@ static bool extract_connection(const struct whack_message *wm,
 	c->newest_ike_sa = SOS_NOBODY;
 	c->newest_ipsec_sa = SOS_NOBODY;
 	c->temp_vars.num_redirects = 0;
-	/*
-	 * is spd.reqid necessary for all c? CK_INSTANCE or CK_PERMANENT
-	 * need one. Does CK_TEMPLATE need one?
-	 */
-	c->spd->reqid = c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid;
-	dbg(PRI_CONNECTION" c->spd->reqid=%d because c->sa_reqid=%d",
-	    pri_connection(c, &cb),
-	    c->spd->reqid, c->sa_reqid);
 
 	/*
 	 * determine the wild side (the side that likely won't
