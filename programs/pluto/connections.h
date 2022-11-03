@@ -71,7 +71,7 @@ struct connection *connection_by_serialno(co_serial_t serialno);
  */
 
 enum left_right { LEFT_END, RIGHT_END, };
-#define LEFT_RIGHT_ROOF 2
+#define END_ROOF 2
 
 /*
  * IKE SA configuration.
@@ -237,7 +237,7 @@ struct config {
 	bool send_vid_fake_strongswan;		/* Send the unversioned strongswan VID */
 	bool send_vid_cisco_unity;		/* Send Unity VID for cisco compatibility */
 
-	struct spd_end_config end[LEFT_RIGHT_ROOF];
+	struct spd_end_config end[END_ROOF];
 };
 
 /* There are two kinds of connections:
@@ -561,7 +561,7 @@ struct connection {
 
 	struct connection_end *local;
 	struct connection_end *remote;
-	struct connection_end end[LEFT_RIGHT_ROOF];
+	struct connection_end end[END_ROOF];
 };
 
 extern bool same_peer_ids(const struct connection *c,

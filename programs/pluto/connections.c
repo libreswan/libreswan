@@ -2337,10 +2337,10 @@ static bool extract_connection(const struct whack_message *wm,
 		[RIGHT_END] = &wm->right,
 	};
 
-	bool same_ca[LEFT_RIGHT_ROOF] = { false, };
+	bool same_ca[END_ROOF] = { false, };
 
 	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
-		int that = (this + 1) % LEFT_RIGHT_ROOF;
+		int that = (this + 1) % END_ROOF;
 		diag_t d = extract_end(c, host_afi, &c->end[this],
 				       &config->end[this], &config->end[that],
 				       wm, whack_ends[this], whack_ends[that],
@@ -2352,7 +2352,7 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
-		int that = (this + 1) % LEFT_RIGHT_ROOF;
+		int that = (this + 1) % END_ROOF;
 		if (same_ca[that]) {
 			config->end[that].host.ca = clone_hunk(config->end[this].host.ca,
 							       "same ca");
@@ -2365,7 +2365,7 @@ static bool extract_connection(const struct whack_message *wm,
 	 * selectors.
 	 */
 
-	const ip_selector *selectors[LEFT_RIGHT_ROOF] = {0};
+	const ip_selector *selectors[END_ROOF] = {0};
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		selectors[end] = c->end[end].child.config->selectors;
 	}
@@ -2381,7 +2381,7 @@ static bool extract_connection(const struct whack_message *wm,
 			 * selector is NULL, the host's address family
 			 * is used.
 			 */
-			const struct ip_info *afi[LEFT_RIGHT_ROOF];
+			const struct ip_info *afi[END_ROOF];
 			FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 				if (selectors[end] == NULL) {
 					afi[end] = host_afi;
