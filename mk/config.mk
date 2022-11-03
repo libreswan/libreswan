@@ -124,11 +124,11 @@ $(error ERROR: Deprecated USE_KLIPS variable is set, migrate to use USE_XFRM ins
 endif
 
 ifdef INC_MANDIR
-$(error ERROR: Deprecated INC_MANDIR variable is set, use FINALMANDIR instead)
+$(error ERROR: Deprecated INC_MANDIR variable is set, use MANDIR instead)
 endif
 
 ifdef INC_DOCDIR
-$(error ERROR: Deprecated INC_DOCDIR variable is set, use FINALDOCDIR instead)
+$(error ERROR: Deprecated INC_DOCDIR variable is set, use EXAMPLE_IPSEC_SYSCONFDIR instead)
 endif
 
 ifdef INC_RCDIRS
@@ -217,6 +217,14 @@ endif
 
 ifdef DOCDIR
 $(error ERROR: deprecated variable DOCDIR is set, use EXAMPLE_IPSEC_SYSCONFDIR instead)
+endif
+
+ifdef FINALINITDDIR
+$(error ERROR: deprecated variable FINALINITDDIR is set, use INIT_D_DIR instead)
+endif
+
+ifdef FINALRUNDIR
+$(error ERROR: deprecated variable FINALRUNDIR is set, use RUNDIR instead)
 endif
 
 ifdef FINALLOGROTATEDDIR
