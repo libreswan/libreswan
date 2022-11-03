@@ -30,7 +30,7 @@ west #
 002 "6in6-protoport": added IKEv2 connection
 west #
  ipsec auto --add 4in6-base # also bad
-036 "4in6-base": failed to add connection: host protocol IPv6 conflicts with client protocol IPv4
+036 "4in6-base": failed to add connection: right host address family IPv6 conflicts with leftsubnet=
 west #
  ipsec auto --add 4in6-good
 002 "4in6-good": added IKEv2 connection
@@ -42,7 +42,7 @@ west #
 036 "4in6-protoport": failed to add connection: address family IPv4 from leftsubnet= conflicts with right=
 west #
  ipsec auto --add 6in4-base # also bad
-036 "6in4-base": failed to add connection: host protocol IPv4 conflicts with client protocol IPv6
+036 "6in4-base": failed to add connection: right host address family IPv4 conflicts with leftsubnet=
 west #
  ipsec auto --add 6in4-good
 002 "6in4-good": added IKEv2 connection
