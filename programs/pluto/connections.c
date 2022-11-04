@@ -1628,6 +1628,58 @@ static void extract_max_sa_lifetime(const char *sa_name,
 	}
 }
 
+static enum connection_kind extract_connection_kind(const struct whack_message *wm,
+						    struct logger *logger)
+{
+	if (wm->policy & POLICY_GROUP) {
+		ldbg(logger, "connection is group: by policy");
+		return CK_GROUP;
+	}
+	if (wm->ike_version == IKEv2 && wm->sec_label != NULL) {
+		ldbg(logger, "connection is template: IKEv2 and has security label: %s", wm->sec_label);
+		return CK_TEMPLATE;
+	}
+	if(wm->policy & POLICY_IKEV2_ALLOW_NARROWING) {
+		ldbg(logger, "connection is template: POLICY_IKEV2_ALLOW_NARROWING");
+		return CK_TEMPLATE;
+	}
+	FOR_EACH_THING(we, &wm->left, &wm->right) {
+		if (we->virt != NULL) {
+			/*
+			 * If we have a subnet=vnet: needing
+			 * instantiation so we can accept
+			 * multiple subnets from the remote
+			 * peer.
+			 */
+			dbg("connection is template: %s has vnets at play",
+			    we->leftright);
+			return CK_TEMPLATE;
+		}
+	}
+	FOR_EACH_THING(we, &wm->left, &wm->right) {
+		if (!NEVER_NEGOTIATE(wm->policy) &&
+		    !address_is_specified(we->host_addr)) {
+			dbg("connection is template: unspecified %s address yet policy negotiate",
+			    we->leftright);
+			return CK_TEMPLATE;
+		}
+		if (we->protoport.has_port_wildcard) {
+			dbg("connection is template: %s child has wildcard protoport",
+			    we->leftright);
+			return CK_TEMPLATE;
+		}
+#if 0
+		if (id_has_wildcards(&c->end[end]->host.id)) {
+			dbg("connection is permenant: %s ID is wild yet host addr child ports are not",
+			    leftright);
+			return CK_PERMENANT;
+		}
+#endif
+	}
+	dbg("connection is permanent: by default");
+	return CK_PERMANENT;
+}
+
 static bool extract_connection(const struct whack_message *wm,
 			       struct connection *c)
 {
@@ -2450,6 +2502,11 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	/*
+	 * Determine the connection KIND from the wm.
+	 */
+	c->kind = extract_connection_kind(wm, c->logger);
+
+	/*
 	 * Fill in the child SPDs using the previously parsed
 	 * selectors.
 	 */
@@ -2588,35 +2645,8 @@ static bool extract_connection(const struct whack_message *wm,
 		wild_side->client.maskbits = 0; /* ??? shouldn't this be 32 for v4? */
 	}
 
-	if (c->policy & POLICY_GROUP) {
-		dbg("connection is group: by policy");
-		c->kind = CK_GROUP;
+	if (c->kind == CK_GROUP) {
 		add_group(c);
-	} else if (!NEVER_NEGOTIATE(c->policy) &&
-		   !address_is_specified(wild_side->host->addr)) {
-		dbg("connection is template: no remote address yet policy negotiate");
-		c->kind = CK_TEMPLATE;
-	} else if (wild_side->config->child.protoport.has_port_wildcard) {
-		dbg("connection is template: remote has wildcard port");
-		c->kind = CK_TEMPLATE;
-	} else if (c->config->ike_version == IKEv2 && c->config->sec_label.len > 0) {
-		dbg("connection is template: has security label: "PRI_SHUNK,
-		    pri_shunk(c->config->sec_label));
-		c->kind = CK_TEMPLATE;
-	} else if (wm->left.virt != NULL || wm->right.virt != NULL) {
-		/*
-		 * If we have a subnet=vnet: needing instantiation
-		 * so we can accept multiple subnets from
-		 * the remote peer.
-		 */
-		dbg("connection is template: there are vnets at play");
-		c->kind = CK_TEMPLATE;
-	} else if (c->policy & POLICY_IKEV2_ALLOW_NARROWING) {
-		dbg("connection is template: POLICY_IKEV2_ALLOW_NARROWING");
-		c->kind = CK_TEMPLATE;
-	} else {
-		dbg("connection is permanent: by default");
-		c->kind = CK_PERMANENT;
 	}
 
 	set_policy_prio(c); /* must be after kind is set */
