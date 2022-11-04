@@ -1369,8 +1369,7 @@ static diag_t extract_end(struct connection *c,
 		dbg("%s %s child selectors from %subnet + protoport",
 		    c->name, src->leftright, src->leftright);
 		ip_subnet subnet;
-		err_t e = ttosubnet_num(shunk1(src->client), NULL,
-					HOST_PART_ZERO, &subnet, c->logger);
+		err_t e = ttosubnet_num_zero(shunk1(src->client), NULL, &subnet);
 		if (e != NULL) {
 			return diag("%ssubnet=%s invalid, %s",
 				    src->leftright, src->client, e);

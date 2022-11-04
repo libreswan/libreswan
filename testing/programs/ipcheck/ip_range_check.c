@@ -216,7 +216,7 @@ static void check_ttorange__to__str_range(void)
 	}
 }
 
-static void check_range_from_subnet(struct logger *logger)
+static void check_range_from_subnet(void)
 {
 	static const struct test {
 		int line;
@@ -247,8 +247,7 @@ static void check_range_from_subnet(struct logger *logger)
 		PRINT("%s '%s' -> '%s'..'%s'", pri_family(t->family), t->in, t->start, t->end);
 
 		ip_subnet tmp, *subnet = &tmp;
-		oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family),
-				     HOST_PART_DIE6, subnet, logger);
+		oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family), subnet);
 		if (oops != NULL) {
 			FAIL("ttosubnet() failed: %s", oops);
 		}
@@ -537,11 +536,11 @@ static void check_range_to_offset(void)
 	}
 }
 
-void ip_range_check(struct logger *logger)
+void ip_range_check(struct logger *logger UNUSED)
 {
 	check_iprange_bits();
 	check_ttorange__to__str_range();
-	check_range_from_subnet(logger);
+	check_range_from_subnet();
 	check_range_is();
 	check_range_op_range();
 	check_range_to_address();

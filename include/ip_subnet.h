@@ -125,14 +125,8 @@ ip_address subnet_prefix_mask(const ip_subnet subnet);
 unsigned subnet_prefix_bits(const ip_subnet subnet);
 uintmax_t subnet_size(const ip_subnet subnet);
 
-enum host_part {
-	HOST_PART_ZERO = '0',
-	HOST_PART_DIE = 'x', /* die when host-part is non-zero */
-	HOST_PART_DIE6 = '6', /*warn on IPv4*/
-};
-
-extern err_t ttosubnet_num(shunk_t src, const struct ip_info *afi,
-			   enum host_part clash,
-			   ip_subnet *dst, struct logger *logger);
+extern err_t ttosubnet_num(shunk_t src, const struct ip_info *afi, ip_subnet *dst);
+extern err_t ttosubnet_num_zero(shunk_t src, const struct ip_info *afi, ip_subnet *dst);
+extern err_t ttosubnet_num_die6(shunk_t src, const struct ip_info *afi, ip_subnet *dst, struct logger *logger);
 
 #endif

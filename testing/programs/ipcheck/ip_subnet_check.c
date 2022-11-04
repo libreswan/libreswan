@@ -22,7 +22,7 @@
 #include "ip_subnet.h"
 #include "ip_selector.h"	/* should be in ip_selector_check.c */
 
-static void check_str_subnet(struct logger *logger)
+static void check_str_subnet(struct logger *logger UNUSED)
 {
 	static const struct test {
 		int line;
@@ -110,8 +110,7 @@ static void check_str_subnet(struct logger *logger)
 		      t->str == NULL ? "<error>" : t->str);
 
 		ip_subnet tmp, *subnet = &tmp;
-		oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family),
-				     HOST_PART_DIE6, subnet, logger);
+		oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family), subnet);
 		if (oops != NULL && t->str == NULL) {
 			/* Error was expected, do nothing */
 			continue;
@@ -128,7 +127,7 @@ static void check_str_subnet(struct logger *logger)
 	}
 }
 
-static void check_subnet_mask(struct logger *logger)
+static void check_subnet_mask(void)
 {
 	static const struct test {
 		int line;
@@ -155,8 +154,7 @@ static void check_subnet_mask(struct logger *logger)
 		PRINT("%s '%s' -> %s", pri_family(t->family), t->in, t->mask);
 
 		ip_subnet tmp, *subnet = &tmp;
-		err_t oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family),
-					   HOST_PART_DIE6, subnet, logger);
+		err_t oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family), subnet);
 		if (oops != NULL) {
 			FAIL("ttosubnet() failed: %s", oops);
 		}
@@ -176,7 +174,7 @@ static void check_subnet_mask(struct logger *logger)
 	}
 }
 
-static void check_subnet_prefix(struct logger *logger)
+static void check_subnet_prefix(void)
 {
 	static const struct test {
 		int line;
@@ -205,8 +203,7 @@ static void check_subnet_prefix(struct logger *logger)
 		PRINT("%s '%s' -> %s", pri_family(t->family), t->in, t->out);
 
 		ip_subnet tmp, *subnet = &tmp;
-		err_t oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family),
-					   HOST_PART_DIE6, subnet, logger);
+		err_t oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family), subnet);
 		if (oops != NULL) {
 			FAIL("ttosubnet() failed: %s", oops);
 		}
@@ -225,7 +222,7 @@ static void check_subnet_prefix(struct logger *logger)
 	}
 }
 
-static void check_subnet_is(struct logger *logger)
+static void check_subnet_is(void)
 {
 	static const struct test {
 		int line;
@@ -264,8 +261,7 @@ static void check_subnet_is(struct logger *logger)
 
 		ip_subnet tmp = unset_subnet, *subnet = &tmp;
 		if (t->family != 0) {
-			err_t oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family),
-						   HOST_PART_DIE6, &tmp, logger);
+			err_t oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family), &tmp);
 			if (oops != NULL) {
 				FAIL("ttosubnet() failed: %s", oops);
 			}
@@ -419,9 +415,9 @@ static void check_address_mask_to_subnet(void)
 void ip_subnet_check(struct logger *logger)
 {
 	check_str_subnet(logger);
-	check_subnet_prefix(logger);
-	check_subnet_mask(logger);
-	check_subnet_is(logger);
+	check_subnet_prefix();
+	check_subnet_mask();
+	check_subnet_is();
 	check_subnet_from_address();
 	check_address_mask_to_subnet();
 }

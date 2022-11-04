@@ -30,11 +30,17 @@
  * ttosubnet - convert text "addr/mask" to address and mask
  * Mask can be integer bit count.
  */
-err_t ttosubnet_num(shunk_t src,
-		    const struct ip_info *afi, /* could be NULL */
-		    enum host_part clash,
-		    ip_subnet *dst,
-		    struct logger *logger)
+enum host_part {
+	HOST_PART_ZERO = '0',
+	HOST_PART_DIE = 'x', /* die when host-part is non-zero */
+	HOST_PART_DIE6 = '6', /*warn on IPv4*/
+};
+
+static err_t ttosubnet_num_host_part(shunk_t src,
+				     const struct ip_info *afi, /* could be NULL */
+				     enum host_part clash,
+				     ip_subnet *dst,
+				     struct logger *logger)
 {
 	err_t oops;
 
@@ -98,19 +104,19 @@ err_t ttosubnet_num(shunk_t src,
 	}
 
 	passert(afi != NULL); /* determined above */
-	bool die = false;
-	bool warn = 0;
+	bool die;
 	switch (clash) {
 	case HOST_PART_ZERO:
-		die = 0;
+		die = false;
 		break;
 	case HOST_PART_DIE:
-		die = 1;
+		die = true;
 		break;
 	case HOST_PART_DIE6:
 		if (afi == &ipv6_info)
-			die = 1;
-		warn = 1;
+			die = true;
+		else
+			die = false;
 		break;
 	default:
 		return "unknown clash-control value in initsubnet";
@@ -134,13 +140,12 @@ err_t ttosubnet_num(shunk_t src,
 	if (n > 0 && c != 0)	/* partial byte */
 		m >>= c;
 
-	bool warning = false;
+	bool nonzero_host_part = false;
 	for (; n > 0; n--) {
 		if ((*p & m) != 0) {
 			if (die)
 				return "improper subnet, host-part bits on";
-			if (warn && !warning)
-				warning = true;
+			nonzero_host_part = true;
 			*p &= ~m;
 		}
 		m = 0xff;
@@ -149,9 +154,9 @@ err_t ttosubnet_num(shunk_t src,
 
 	*dst = subnet_from_address_prefix_bits(addrtmp, prefix_bits);
 
-	if (warning) {
+	if (nonzero_host_part && logger != NULL) {
 		LLOG_JAMBUF(RC_LOG, logger, buf) {
-			jam(buf, "WARNING:improper subnet mask, host-part bits on input ");
+			jam(buf, "WARNING: improper subnet mask, host-part bits on input ");
 			jam_address(buf, &addrtmp);
 			jam(buf, "/%ju ", prefix_bits);
 			jam(buf, " extracted subnet ");
@@ -160,4 +165,19 @@ err_t ttosubnet_num(shunk_t src,
 	}
 
 	return NULL;
+}
+
+err_t ttosubnet_num(shunk_t src, const struct ip_info *afi, ip_subnet *dst)
+{
+	return ttosubnet_num_host_part(src, afi, HOST_PART_DIE, dst, NULL/*no-logger:barf*/);
+}
+
+err_t ttosubnet_num_zero(shunk_t src, const struct ip_info *afi, ip_subnet *dst)
+{
+	return ttosubnet_num_host_part(src, afi, HOST_PART_ZERO, dst, NULL/*no-logger:ignore*/);
+}
+
+err_t ttosubnet_num_die6(shunk_t src, const struct ip_info *afi, ip_subnet *dst, struct logger *logger)
+{
+	return ttosubnet_num_host_part(src, afi, HOST_PART_DIE6, dst, logger/*log-non-zero*/);
 }

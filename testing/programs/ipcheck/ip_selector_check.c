@@ -39,9 +39,7 @@ struct from_test {
 
 static void check_selector_from(const struct from_test *tests, unsigned nr_tests,
 				const char *what,
-				err_t (*to_selector)(const struct selector *from,
-						     ip_selector *out, struct logger *logger),
-				struct logger *logger)
+				err_t (*to_selector)(const struct selector *from, ip_selector *out))
 {
 
 	for (size_t ti = 0; ti < nr_tests; ti++) {
@@ -56,7 +54,7 @@ static void check_selector_from(const struct from_test *tests, unsigned nr_tests
 		      t->nport[0], t->nport[1]);
 
 		ip_selector tmp, *selector = &tmp;
-		err_t err = to_selector(&t->from, selector, logger);
+		err_t err = to_selector(&t->from, selector);
 		if (t->range != NULL) {
 			if (err != NULL) {
 				FAIL("to_selector() failed: %s", err);
@@ -106,8 +104,7 @@ static void check_selector_from(const struct from_test *tests, unsigned nr_tests
 }
 
 static err_t do_selector_from_address(const struct selector *s,
-				      ip_selector *selector,
-				      struct logger *logger_unused UNUSED)
+				      ip_selector *selector)
 {
 	if (s->family == 0) {
 		*selector = unset_selector;
@@ -130,19 +127,18 @@ static err_t do_selector_from_address(const struct selector *s,
 	return NULL;
 }
 
-static void check_selector_from_address(struct logger *logger)
+static void check_selector_from_address(void)
 {
 	static const struct from_test tests[] = {
 		{ LN, { 4, "128.0.0.0", "0/0", }, "128.0.0.0/32", "128.0.0.0-128.0.0.0", 0, 0, { 0, 0, }, },
 		{ LN, { 6, "8000::", "16/10", }, "8000::/128", "8000::-8000::", 16, 10, { 0, 10, }, },
 	};
 	check_selector_from(tests, elemsof(tests), "address",
-			    do_selector_from_address, logger);
+			    do_selector_from_address);
 }
 
 static err_t do_selector_from_subnet_protoport(const struct selector *s,
-					       ip_selector *selector,
-					       struct logger *logger)
+					       ip_selector *selector)
 {
 	if (s->family == 0) {
 		*selector = unset_selector;
@@ -150,8 +146,7 @@ static err_t do_selector_from_subnet_protoport(const struct selector *s,
 	}
 
 	ip_subnet subnet;
-	err_t err = ttosubnet_num(shunk1(s->addresses), IP_TYPE(s->family),
-				  HOST_PART_DIE6, &subnet, logger);
+	err_t err = ttosubnet_num(shunk1(s->addresses), IP_TYPE(s->family), &subnet);
 	if (err != NULL) {
 		return err;
 	}
@@ -166,7 +161,7 @@ static err_t do_selector_from_subnet_protoport(const struct selector *s,
 	return NULL;
 }
 
-static void check_selector_from_subnet_protoport(struct logger *logger)
+static void check_selector_from_subnet_protoport(void)
 {
 	static const struct from_test tests[] = {
 		/* zero port implied */
@@ -192,12 +187,11 @@ static void check_selector_from_subnet_protoport(struct logger *logger)
 		{ LN, { 6, "1001:1002:1003:1004:1005:1006:1007:1008/128", "16/65534", }, "1001:1002:1003:1004:1005:1006:1007:1008/128", "1001:1002:1003:1004:1005:1006:1007:1008-1001:1002:1003:1004:1005:1006:1007:1008", 16, 65534, { 255, 254, }, },
 	};
 	check_selector_from(tests, elemsof(tests), "subnet",
-			    do_selector_from_subnet_protoport, logger);
+			    do_selector_from_subnet_protoport);
 }
 
 static err_t do_numeric_to_selector(const struct selector *s,
-				    ip_selector *selector,
-				    struct logger *logger_ UNUSED)
+				    ip_selector *selector)
 {
 	if (s->family == 0) {
 		*selector = unset_selector;
@@ -207,7 +201,7 @@ static err_t do_numeric_to_selector(const struct selector *s,
 	return ttoselector_num(shunk1(s->addresses), IP_TYPE(s->family), selector);
 }
 
-static void check_numeric_to_selector(struct logger *logger)
+static void check_numeric_to_selector(void)
 {
 	static const struct from_test tests[] = {
 		/* missing prefix-bits */
@@ -246,10 +240,10 @@ static void check_numeric_to_selector(struct logger *logger)
 	};
 
 	check_selector_from(tests, elemsof(tests), "selector",
-			    do_numeric_to_selector, logger);
+			    do_numeric_to_selector);
 }
 
-static void check_selector_is(struct logger *logger)
+static void check_selector_is(void)
 {
 	static const struct test {
 		int line;
@@ -288,7 +282,7 @@ static void check_selector_is(struct logger *logger)
 		      bool_str(t->contains_one_address));
 
 		ip_selector tmp, *selector = &tmp;
-		err = do_numeric_to_selector(&t->from, selector, logger);
+		err = do_numeric_to_selector(&t->from, selector);
 		if (err != NULL) {
 			FAIL("to_selector() failed: %s", err);
 		}
@@ -465,11 +459,11 @@ static void check_selector_op_selector(void)
 	}
 }
 
-void ip_selector_check(struct logger *logger)
+void ip_selector_check(struct logger *logger UNUSED)
 {
-	check_selector_from_address(logger);
-	check_selector_from_subnet_protoport(logger);
-	check_selector_is(logger);
-	check_numeric_to_selector(logger);
+	check_selector_from_address();
+	check_selector_from_subnet_protoport();
+	check_selector_is();
+	check_numeric_to_selector();
 	check_selector_op_selector();
 }
