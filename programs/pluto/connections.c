@@ -845,25 +845,18 @@ static diag_t extract_host_afi(const struct whack_message *wm,
 
 #define ADD_FAILED_PREFIX "failed to add connection: "
 
-/*
- * Return -1 when fatal error.
- * Return 0 when ok.
- * Return >0(true) when %same
- */
-
-static diag_t extract_end(struct connection *c,
-			  const struct ip_info *host_afi,
-			  struct connection_end *end,
-			  struct spd_end_config *end_config,
-			  struct spd_end_config *other_end_config,
-			  const struct whack_message *wm,
-			  const struct whack_end *src,
-			  const struct whack_end *other_src,
-			  bool *same_ca,
-			  struct logger *logger/*connection "..."*/)
+static diag_t extract_host_end(struct connection *c, /* for POOL */
+			       struct host_end *host,
+			       struct host_end_config *host_config,
+			       struct host_end_config *other_host_config,
+			       const struct whack_message *wm,
+			       const struct whack_end *src,
+			       const struct whack_end *other_src,
+			       bool *same_ca,
+			       struct logger *logger/*connection "..."*/)
 {
 	err_t err;
-	const char *leftright = end->config->leftright;
+	const char *leftright = host_config->leftright;
 
 	/*
 	 * decode id, if any
@@ -871,7 +864,7 @@ static diag_t extract_end(struct connection *c,
 	 * For %fromcert, the load_end_cert*() call will update it.
 	 */
 	if (src->id == NULL) {
-		end->host.id.kind = ID_NONE;
+		host->id.kind = ID_NONE;
 	} else {
 		/*
 		 * Cannot report errors due to low level nesting of functions,
@@ -879,11 +872,11 @@ static diag_t extract_end(struct connection *c,
 		 * atoid() will log real failures like illegal DNS chars already,
 		 * and for @string ID's all chars are valid without processing.
 		 */
-		atoid(src->id, &end->host.id);
+		atoid(src->id, &host->id);
 	}
 
 	/* decode CA distinguished name, if any */
-	end_config->host.ca = empty_chunk;
+	host_config->ca = empty_chunk;
 	if (src->ca != NULL) {
 		if (streq(src->ca, "%same")) {
 			*same_ca = true;
@@ -891,19 +884,19 @@ static diag_t extract_end(struct connection *c,
 			err_t ugh;
 
 			/* convert the CA into a DN blob */
-			ugh = atodn(src->ca, &end_config->host.ca);
+			ugh = atodn(src->ca, &host_config->ca);
 			if (ugh != NULL) {
 				llog(RC_LOG, logger,
 				     "bad %s CA string '%s': %s (ignored)",
 				     leftright, src->ca, ugh);
 			} else {
 				/* now try converting it back; isn't failing this a bug? */
-				ugh = parse_dn(ASN1(end_config->host.ca));
+				ugh = parse_dn(ASN1(host_config->ca));
 				if (ugh != NULL) {
 					llog(RC_LOG, logger,
 					     "error parsing %s CA converted to DN: %s",
 					     leftright, ugh);
-					DBG_dump_hunk(NULL, end_config->host.ca);
+					DBG_dump_hunk(NULL, host_config->ca);
 				}
 			}
 
@@ -939,8 +932,7 @@ static diag_t extract_end(struct connection *c,
 			return diag("%s certificate '%s' not found in the NSS database",
 				    leftright, src->cert);
 		}
-		diag_t diag = add_end_cert_and_preload_private_key(cert,
-								   &end->host, &end_config->host,
+		diag_t diag = add_end_cert_and_preload_private_key(cert, host, host_config,
 								   *same_ca/*preserve_ca*/,
 								   logger);
 		if (diag != NULL) {
@@ -1017,24 +1009,24 @@ static diag_t extract_end(struct connection *c,
 		dbg("saving CKAID %s extracted from %s%s",
 		    str_ckaid(&pkc.ckaid, &ckb),
 		    leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
-		end_config->host.ckaid = clone_const_thing(pkc.ckaid, "raw pubkey's ckaid");
+		host_config->ckaid = clone_const_thing(pkc.ckaid, "raw pubkey's ckaid");
 		free_chunk_content(&keyspace);
 		pkc.type->free_pubkey_content(&pkc);
 
 		/* try to pre-load the private key */
 		bool load_needed;
-		err = preload_private_key_by_ckaid(end_config->host.ckaid, &load_needed, logger);
+		err = preload_private_key_by_ckaid(host_config->ckaid, &load_needed, logger);
 		if (err != NULL) {
 			ckaid_buf ckb;
 			dbg("no private key matching %s CKAID %s: %s",
-			    leftright, str_ckaid(end_config->host.ckaid, &ckb), err);
+			    leftright, str_ckaid(host_config->ckaid, &ckb), err);
 		} else if (load_needed) {
 			ckaid_buf ckb;
 			enum_buf pkb;
 			llog(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
 			     "loaded private key matching %s%s CKAID %s",
 			     leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb),
-			     str_ckaid(end_config->host.ckaid, &ckb));
+			     str_ckaid(host_config->ckaid, &ckb));
 		}
 	} else if (src->ckaid != NULL) {
 		ckaid_t ckaid;
@@ -1049,15 +1041,14 @@ static diag_t extract_end(struct connection *c,
 		 * Always save the CKAID so lazy load of the private
 		 * key will work.
 		 */
-		end_config->host.ckaid = clone_thing(ckaid, "end ckaid");
+		host_config->ckaid = clone_thing(ckaid, "end ckaid");
 		/*
 		 * See if there's a certificate matching the CKAID, if
 		 * not assume things will later find the private key.
 		 */
 		CERTCertificate *cert = get_cert_by_ckaid_from_nss(&ckaid, logger);
 		if (cert != NULL) {
-			diag_t diag = add_end_cert_and_preload_private_key(cert,
-									   &end->host, &end_config->host,
+			diag_t diag = add_end_cert_and_preload_private_key(cert, host, host_config,
 									   *same_ca/*preserve_ca*/,
 									   logger);
 			if (diag != NULL) {
@@ -1074,30 +1065,27 @@ static diag_t extract_end(struct connection *c,
 				ckaid_buf ckb;
 				dbg("no private key matching %s CKAID %s: %s",
 				    leftright,
-				    str_ckaid(end_config->host.ckaid, &ckb), err);
+				    str_ckaid(host_config->ckaid, &ckb), err);
 			} else {
 				ckaid_buf ckb;
 				llog(RC_LOG|LOG_STREAM/*not-whack-for-now*/, logger,
 				     "loaded private key matching %s CKAID %s",
 				     leftright,
-				     str_ckaid(end_config->host.ckaid, &ckb));
+				     str_ckaid(host_config->ckaid, &ckb));
 			}
 		}
 	}
 
 	/* the rest is simple copying of corresponding fields */
-	end_config->host.type = src->host_type;
-	end->host.addr = src->host_addr;
-	end_config->host.addr_name = clone_str(src->host_addr_name, "host ip");
-	end->host.nexthop = src->host_nexthop;
-	end_config->child.sourceip = src->sourceip;
-	end_config->child.host_vtiip = src->host_vtiip;
-	end_config->child.ifaceip = src->ifaceip;
-	end_config->host.client_address_translation = src->cat;
-	end_config->host.xauth.server = src->xauth_server;
-	end_config->host.xauth.client = src->xauth_client;
-	end_config->host.xauth.username = clone_str(src->xauth_username, "xauth username");
-	end_config->host.eap = src->eap;
+	host_config->type = src->host_type;
+	host->addr = src->host_addr;
+	host_config->addr_name = clone_str(src->host_addr_name, "host ip");
+	host->nexthop = src->host_nexthop;
+	host_config->client_address_translation = src->cat;
+	host_config->xauth.server = src->xauth_server;
+	host_config->xauth.client = src->xauth_client;
+	host_config->xauth.username = clone_str(src->xauth_username, "xauth username");
+	host_config->eap = src->eap;
 
 	if (src->eap == IKE_EAP_NONE && src->auth == AUTH_EAPONLY) {
 		return diag("leftauth/rightauth can only be 'eaponly' when using leftautheap/rightautheap is not 'none'");
@@ -1212,8 +1200,8 @@ static diag_t extract_end(struct connection *c,
 	    src->leftright, str_enum_short(&keyword_auth_names, auth, &eab),
 	    src->leftright, str_authby(authby, &eabb),
 	    str_authby(wm->authby, &wabb));
-	end_config->host.auth = auth;
-	end_config->host.authby = authby;
+	host_config->auth = auth;
+	host_config->authby = authby;
 
 	if (src->id != NULL && streq(src->id, "%fromcert")) {
 		if (auth == AUTH_PSK || auth == AUTH_NULL) {
@@ -1221,24 +1209,19 @@ static diag_t extract_end(struct connection *c,
 		}
 	}
 
-	/* save some defaults */
-	end_config->child.v1_config_subnet_specified = src->client != NULL;
-	end_config->child.protoport = src->protoport;
-
 	if (src->protoport.ipproto == 0 && src->protoport.hport != 0) {
 		return diag("%sprotoport cannot specify non-zero port %d for prototcol 0",
 			    src->leftright, src->protoport.hport);
 	}
 
-	end_config->host.key_from_DNS_on_demand = src->key_from_DNS_on_demand;
-	end_config->child.updown = clone_str(src->updown, "end_config.client.updown");
-	end_config->host.sendcert = src->sendcert == 0 ? CERT_SENDIFASKED : src->sendcert;
-	end_config->host.ikeport = src->host_ikeport;
+	host_config->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
+	host_config->sendcert = src->sendcert == 0 ? CERT_SENDIFASKED : src->sendcert;
+	host_config->ikeport = src->host_ikeport;
 	if (src->host_ikeport > 65535) {
 		llog(RC_BADID, logger,
 			    "%sikeport=%u must be between 1..65535, ignored",
 			    leftright, src->host_ikeport);
-		end_config->host.ikeport = 0;
+		host_config->ikeport = 0;
 	}
 
 	/*
@@ -1246,16 +1229,16 @@ static diag_t extract_end(struct connection *c,
 	 * XXX this is WRONG, we should do this asynchronously, as part of
 	 * the normal loading process
 	 */
-	switch (end_config->host.type) {
+	switch (host_config->type) {
 	case KH_IPHOSTNAME:
 	{
-		err_t er = ttoaddress_dns(shunk1(end_config->host.addr_name),
-					  address_type(&end->host.addr),
-					  &end->host.addr);
+		err_t er = ttoaddress_dns(shunk1(host_config->addr_name),
+					  address_type(&host->addr),
+					  &host->addr);
 		if (er != NULL) {
 			llog(RC_COMMENT, logger,
 			     "failed to convert '%s' at load time: %s",
-			     end_config->host.addr_name, er);
+			     host_config->addr_name, er);
 		}
 		break;
 	}
@@ -1283,8 +1266,8 @@ static diag_t extract_end(struct connection *c,
 	 */
 
 	/* only update, may already be set below */
-	end_config->host.modecfg.server |= src->modecfg_server;
-	end_config->host.modecfg.client |= src->modecfg_client;
+	host_config->modecfg.server |= src->modecfg_server;
+	host_config->modecfg.client |= src->modecfg_client;
 
 	if (src->addresspool != NULL) {
 
@@ -1343,19 +1326,35 @@ static diag_t extract_end(struct connection *c,
 		 * Addresspool implies the end is a client (and other
 		 * is a server), force settings.
 		 */
-		other_end_config->host.modecfg.server = true;
-		end_config->host.modecfg.client = true;
+		other_host_config->modecfg.server = true;
+		host_config->modecfg.client = true;
 		dbg("forced %s modecfg client=%s %s modecfg server=%s",
-		    end_config->leftright, bool_str(end_config->leftright),
-		    other_end_config->leftright, bool_str(other_end_config->leftright));
+		    host_config->leftright, bool_str(host_config->modecfg.client),
+		    other_host_config->leftright, bool_str(other_host_config->modecfg.server));
 	}
+	return NULL;
+}
+
+static diag_t extract_child_end(const struct whack_message *wm,
+				const struct whack_end *src,
+				const struct ip_info *host_afi,
+				struct child_end_config *child_config)
+{
+	child_config->sourceip = src->sourceip;
+	child_config->host_vtiip = src->host_vtiip;
+	child_config->ifaceip = src->ifaceip;
+
+	/* save some defaults */
+	child_config->v1_config_subnet_specified = src->client != NULL;
+	child_config->protoport = src->protoport;
+	child_config->updown = clone_str(src->updown, "end_config.client.updown");
 
 	/*
 	 * Figure out the end's child selectors.  These are an array
 	 * terminated by !.is_set.
 	 */
-	if ((c->config->ike_version == IKEv1 && src->client != NULL) ||
-	    (c->config->ike_version == IKEv2 && src->client != NULL && src->protoport.is_set)) {
+	if ((wm->ike_version == IKEv1 && src->client != NULL) ||
+	    (wm->ike_version == IKEv2 && src->client != NULL && src->protoport.is_set)) {
 		/*
 		 * Legacy syntax.
 		 *
@@ -1367,18 +1366,18 @@ static diag_t extract_end(struct connection *c,
 		 * refined regardless of .has_client.
 		 */
 		dbg("%s %s child selectors from %subnet + protoport",
-		    c->name, src->leftright, src->leftright);
+		    wm->name, src->leftright, src->leftright);
 		ip_subnet subnet;
 		err_t e = ttosubnet_num_zero(shunk1(src->client), NULL, &subnet);
 		if (e != NULL) {
 			return diag("%ssubnet=%s invalid, %s",
 				    src->leftright, src->client, e);
 		}
-		end_config->child.selectors.field = "subnet";
-		end_config->child.selectors.string = clone_str(src->client, "client");
-		end_config->child.selectors.are_client = true;
-		end_config->child.selectors.list = alloc_things(ip_selector, 2, "selectors");
-		end_config->child.selectors.list[0] =
+		child_config->selectors.field = "subnet";
+		child_config->selectors.string = clone_str(src->client, "client");
+		child_config->selectors.are_client = true;
+		child_config->selectors.list = alloc_things(ip_selector, 2, "selectors");
+		child_config->selectors.list[0] =
 			selector_from_subnet_protoport(subnet, src->protoport);
 	} else if (src->client != NULL) {
 		/*
@@ -1392,12 +1391,12 @@ static diag_t extract_end(struct connection *c,
 		 * refined regardless of .has_client.
 		 */
 		dbg("%s %s child selectors from %subnet (selector)",
-		    c->name, src->leftright, src->leftright);
-		passert(c->config->ike_version == IKEv2);
-		end_config->child.selectors.field = "subnet";
-		end_config->child.selectors.string = clone_str(src->client, "client");
-		end_config->child.selectors.are_client = true;
-		diag_t d = ttoselector_num_list(shunk1(src->client), ", ", NULL, &end_config->child.selectors.list);
+		    wm->name, src->leftright, src->leftright);
+		passert(wm->ike_version == IKEv2);
+		child_config->selectors.field = "subnet";
+		child_config->selectors.string = clone_str(src->client, "client");
+		child_config->selectors.are_client = true;
+		diag_t d = ttoselector_num_list(shunk1(src->client), ", ", NULL, &child_config->selectors.list);
 		if (d != NULL) {
 			return diag_diag(&d, "%ssubnet=%s invalid, ",
 					 src->leftright, src->client);
@@ -1417,12 +1416,12 @@ static diag_t extract_end(struct connection *c,
 		address_buf sb;
 		const char *s = str_address(&src->sourceip, &sb);
 		dbg("%s %s child selectors from %ssourceip=%s",
-		    c->name, src->leftright, src->leftright, s);
-		end_config->child.selectors.field = "sourceip";
-		end_config->child.selectors.string = clone_str(s, "sourceip");
-		end_config->child.selectors.are_client = true;
-		end_config->child.selectors.list = alloc_things(ip_selector, 2, "selectors");
-		end_config->child.selectors.list[0] =
+		    wm->name, src->leftright, src->leftright, s);
+		child_config->selectors.field = "sourceip";
+		child_config->selectors.string = clone_str(s, "sourceip");
+		child_config->selectors.are_client = true;
+		child_config->selectors.list = alloc_things(ip_selector, 2, "selectors");
+		child_config->selectors.list[0] =
 			selector_from_address_protoport(src->sourceip, src->protoport);
 	} else if (src->protoport.is_set) {
 		/*
@@ -1435,16 +1434,16 @@ static diag_t extract_end(struct connection *c,
 		 * Calling update_ends*() will then try to fix it.
 		 */
 		dbg("%s %s child selectors from %sprotoport + host AFI",
-		    c->name, src->leftright, src->leftright);
-		end_config->child.selectors.field = "";/*i.e., left""= right""=*/
-		end_config->child.selectors.string = clone_str("...", "...");
-		end_config->child.selectors.are_client = false;
-		end_config->child.selectors.list = alloc_things(ip_selector, 2, "selectors");
-		end_config->child.selectors.list[0] =
+		    wm->name, src->leftright, src->leftright);
+		child_config->selectors.field = "";/*i.e., left""= right""=*/
+		child_config->selectors.string = clone_str("...", "...");
+		child_config->selectors.are_client = false;
+		child_config->selectors.list = alloc_things(ip_selector, 2, "selectors");
+		child_config->selectors.list[0] =
 			selector_from_subnet_protoport(host_afi->subnet.all, src->protoport);
 	} else {
 		dbg("%s %s child selectors unknown; probably derived from host?!?",
-		    c->name, src->leftright);
+		    wm->name, src->leftright);
 	}
 
 	return NULL;
@@ -2406,11 +2405,18 @@ static bool extract_connection(const struct whack_message *wm,
 	bool same_ca[END_ROOF] = { false, };
 
 	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
+		diag_t d;
 		int that = (this + 1) % END_ROOF;
-		diag_t d = extract_end(c, host_afi, &c->end[this],
-				       &config->end[this], &config->end[that],
-				       wm, whack_ends[this], whack_ends[that],
-				       &same_ca[this], c->logger);
+		d = extract_host_end(c, &c->end[this].host,
+				     &config->end[this].host, &config->end[that].host,
+				     wm, whack_ends[this], whack_ends[that],
+				     &same_ca[this], c->logger);
+		if (d != NULL) {
+			llog_diag(RC_FATAL, c->logger, &d, ADD_FAILED_PREFIX);
+			return false;
+		}
+		d = extract_child_end(wm, whack_ends[this], host_afi,
+				      &config->end[this].child);
 		if (d != NULL) {
 			llog_diag(RC_FATAL, c->logger, &d, ADD_FAILED_PREFIX);
 			return false;
