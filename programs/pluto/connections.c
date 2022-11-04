@@ -2119,7 +2119,7 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	if (NEVER_NEGOTIATE(wm->policy)) {
-		dbg("skipping over misc settings");
+		dbg("skipping over misc settings as NEVER_NEGOTIATE");
 	} else {
 		/* http://csrc.nist.gov/publications/nistpubs/800-77/sp800-77.pdf */
 		extract_max_sa_lifetime("IKE", &config->sa_ike_max_lifetime, wm->sa_ike_max_lifetime,
@@ -2130,9 +2130,6 @@ static bool extract_connection(const struct whack_message *wm,
 		config->nic_offload = wm->nic_offload;
 		config->sa_rekey_margin = wm->sa_rekey_margin;
 		config->sa_rekey_fuzz = wm->sa_rekey_fuzz;
-
-		c->sa_keying_tries = wm->sa_keying_tries;
-
 		c->sa_replay_window = wm->sa_replay_window;
 
 		config->retransmit_timeout = wm->retransmit_timeout;
@@ -2435,6 +2432,24 @@ static bool extract_connection(const struct whack_message *wm,
 	c->extra_debugging = wm->debugging;
 
 	/*
+	 * We cannot have unlimited keyingtries for Opportunistic, or
+	 * else we gain infinite partial IKE SA's. But also, more than
+	 * one makes no sense, since it will be installing a
+	 * failureshunt (not negotiationshunt) on the 2nd keyingtry,
+	 * and try to re-install another negotiation or failure shunt
+	 */
+	if (NEVER_NEGOTIATE(wm->policy)) {
+		dbg("skipping sa_keying_tries as NEVER_NEGOTIATE");
+	} else if ((wm->policy & POLICY_OPPORTUNISTIC) &&
+		   wm->sa_keying_tries == 0) {
+		c->sa_keying_tries = 1;
+		llog(RC_LOG, c->logger,
+		     "the connection is Opportunistic, but used keyingtries=0. The specified value was changed to 1");
+	} else {
+		c->sa_keying_tries = wm->sa_keying_tries;
+	}
+
+	/*
 	 * Fill in the child SPDs using the previously parsed
 	 * selectors.
 	 */
@@ -2571,18 +2586,6 @@ static bool extract_connection(const struct whack_message *wm,
 	if (c->policy & POLICY_OPPORTUNISTIC) {
 		wild_side->has_client = true;
 		wild_side->client.maskbits = 0; /* ??? shouldn't this be 32 for v4? */
-		/*
-		 * We cannot have unlimited keyingtries for Opportunistic, or else
-		 * we gain infinite partial IKE SA's. But also, more than one makes
-		 * no sense, since it will be installing a failureshunt (not
-		 * negotiationshunt) on the 2nd keyingtry, and try to re-install another
-		 * negotiation or failure shunt
-		 */
-		if (c->sa_keying_tries == 0) {
-			c->sa_keying_tries = 1;
-			llog(RC_LOG, c->logger,
-			     "the connection is Opportunistic, but used keyingtries=0. The specified value was changed to 1");
-		}
 	}
 
 	if (c->policy & POLICY_GROUP) {
