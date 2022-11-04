@@ -73,15 +73,15 @@ static void swap_ends(struct connection *c)
 	}
 }
 
-static bool orient_new_iface_endpoint(struct connection *c, struct spd_end *end)
+static bool orient_new_iface_endpoint(struct connection *c, struct host_end *end)
 {
-	if (end->host->config->ikeport == 0) {
+	if (end->config->ikeport == 0) {
 		return false;
 	}
-	if (address_is_unset(&end->host->addr)) {
+	if (address_is_unset(&end->addr)) {
 		return false;
 	}
-	struct iface_dev *dev = find_iface_dev_by_address(&end->host->addr);
+	struct iface_dev *dev = find_iface_dev_by_address(&end->addr);
 	if (dev == NULL) {
 		return false;
 	}
@@ -107,7 +107,7 @@ static bool orient_new_iface_endpoint(struct connection *c, struct spd_end *end)
 	case IKE_TCP_NO:
 		if (pluto_listen_udp) {
 			ifp = bind_iface_endpoint(dev, &udp_iface_io,
-						  ip_hport(end->host->config->ikeport),
+						  ip_hport(end->config->ikeport),
 						  esp_encapsulation_enabled,
 						  float_nat_initiator,
 						  c->logger);
@@ -121,7 +121,7 @@ static bool orient_new_iface_endpoint(struct connection *c, struct spd_end *end)
 	case IKE_TCP_ONLY:
 		if (pluto_listen_tcp) {
 			ifp = bind_iface_endpoint(dev, &iketcp_iface_io,
-						  ip_hport(end->host->config->ikeport),
+						  ip_hport(end->config->ikeport),
 						  esp_encapsulation_enabled,
 						  float_nat_initiator,
 						  c->logger);
@@ -149,12 +149,12 @@ static bool orient_new_iface_endpoint(struct connection *c, struct spd_end *end)
 	return true;
 }
 
-static bool end_matches_iface_endpoint(const struct spd_end *end,
-				       const struct spd_end *other_end,
+static bool end_matches_iface_endpoint(const struct host_end *this,
+				       const struct host_end *that,
 				       const struct iface_endpoint *ifp)
 {
-	ip_address host_addr = end->host->addr;
-	if (!address_is_specified(host_addr)) {
+	ip_address this_host_addr = this->addr;
+	if (!address_is_specified(this_host_addr)) {
 		/* %any, unknown, or unset */
 		return false;
 	}
@@ -162,24 +162,25 @@ static bool end_matches_iface_endpoint(const struct spd_end *end,
 	/*
 	 * which port?
 	 */
-	ip_port port = end_host_port(end->host, other_end->host);
-	ip_endpoint host_end = endpoint_from_address_protocol_port(host_addr,
-								   ifp->io->protocol,
-								   port);
-	return endpoint_eq_endpoint(host_end, ifp->local_endpoint);
+	ip_port this_host_port = end_host_port(this, that);
+	ip_endpoint this_host_endpoint =
+		endpoint_from_address_protocol_port(this_host_addr,
+						    ifp->io->protocol,
+						    this_host_port);
+	return endpoint_eq_endpoint(this_host_endpoint, ifp->local_endpoint);
 }
 
-static void DBG_orient_end(const char *thisthat, struct spd_end *end, struct spd_end *other_end)
+static void DBG_orient_end(const char *thisthat, struct host_end *this, struct host_end *that)
 {
 	address_buf ab;
 	enum_buf enb;
 	DBG_log("  %s(%s) host type=%s address=%s port="PRI_HPORT" ikeport=%d encap=%s",
-		end->config->leftright, thisthat,
-		str_enum_short(&keyword_host_names, end->host->config->type, &enb),
-		str_address(&end->host->addr, &ab),
-		pri_hport(end_host_port(end->host, other_end->host)),
-		end->host->config->ikeport,
-		bool_str(end->host->encap));
+		this->config->leftright, thisthat,
+		str_enum_short(&keyword_host_names, this->config->type, &enb),
+		str_address(&this->addr, &ab),
+		pri_hport(end_host_port(this, that)),
+		this->config->ikeport,
+		bool_str(this->encap));
 }
 
 bool orient(struct connection *c, struct logger *logger)
@@ -192,8 +193,8 @@ bool orient(struct connection *c, struct logger *logger)
 	if (DBGP(DBG_BASE)) {
 		connection_buf cb;
 		DBG_log("orienting "PRI_CONNECTION, pri_connection(c, &cb));
-		DBG_orient_end("this", c->spd->local, c->spd->remote);
-		DBG_orient_end("that", c->spd->remote, c->spd->local);
+		DBG_orient_end("this", &c->local->host, &c->remote->host);
+		DBG_orient_end("that", &c->remote->host, &c->local->host);
 	}
 
 	set_policy_prio(c); /* for updates */
@@ -210,8 +211,8 @@ bool orient(struct connection *c, struct logger *logger)
 	for (struct iface_endpoint *ifp = interfaces; ifp != NULL; ifp = ifp->next) {
 
 		/* XXX: check connection allows p->protocol? */
-		bool this = end_matches_iface_endpoint(c->spd->local, c->spd->remote, ifp);
-		bool that = end_matches_iface_endpoint(c->spd->remote, c->spd->local, ifp);
+		bool this = end_matches_iface_endpoint(&c->local->host, &c->remote->host, ifp);
+		bool that = end_matches_iface_endpoint(&c->remote->host, &c->local->host, ifp);
 
 		if (this && that) {
 			/* too many choices */
@@ -300,11 +301,11 @@ bool orient(struct connection *c, struct logger *logger)
 	 * No existing interface worked, create a new one?
 	 */
 
-	if (orient_new_iface_endpoint(c, c->spd->local)) {
+	if (orient_new_iface_endpoint(c, &c->local->host)) {
 		return true;
 	}
 
-	if (orient_new_iface_endpoint(c, c->spd->remote)) {
+	if (orient_new_iface_endpoint(c, &c->remote->host)) {
 		dbg("  swapping to that; new interface");
 		swap_ends(c);
 		return true;
