@@ -1150,7 +1150,8 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	    str_address_sensitive(&c->remote->host.addr, &old),
 	    str_address_sensitive(&new_addr, &new));
 	c->remote->host.addr = new_addr;
-	update_ends_from_this_host_addr(c->spd->remote, c->spd->local);
+	update_host_ends_from_this_host_addr(&c->remote->host, &c->local->host);
+	update_spd_ends_from_this_host_addr(c->spd->remote, c->spd->local);
 
 	/*
 	 * reduce the work we do by updating all connections waiting for this
