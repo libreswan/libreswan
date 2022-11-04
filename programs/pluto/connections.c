@@ -2378,6 +2378,62 @@ static bool extract_connection(const struct whack_message *wm,
 		}
 	}
 
+	if (c->local->host.config->xauth.server || c->remote->host.config->xauth.server)
+		c->policy |= POLICY_XAUTH;
+
+	update_host_ends_from_this_host_addr(&c->local->host, &c->remote->host);
+	update_host_ends_from_this_host_addr(&c->remote->host, &c->local->host);
+
+
+	/*
+	 * Cross-check the auth= vs authby= results.
+	 */
+
+	if (NEVER_NEGOTIATE(c->policy)) {
+		if (!PEXPECT(c->logger,
+			     c->local->host.config->auth == AUTH_NEVER &&
+			     c->remote->host.config->auth == AUTH_NEVER)) {
+			return false;
+		}
+	} else {
+		if (c->local->host.config->auth == AUTH_UNSET ||
+		    c->remote->host.config->auth == AUTH_UNSET) {
+			/*
+			 * Since an unset auth is set from authby,
+			 * authby= must have somehow been blanked out
+			 * or left with something useless (such as
+			 * never).
+			 */
+			llog(RC_FATAL, c->logger,
+			     ADD_FAILED_PREFIX"no authentication (auth=, authby=) was set");
+			return false;
+		}
+
+		if ((c->local->host.config->auth == AUTH_PSK && c->remote->host.config->auth == AUTH_NULL) ||
+		    (c->local->host.config->auth == AUTH_NULL && c->remote->host.config->auth == AUTH_PSK)) {
+			llog(RC_FATAL, c->logger,
+			     ADD_FAILED_PREFIX"cannot mix PSK and NULL authentication (%sauth=%s and %sauth=%s)",
+			     c->local->config->leftright,
+			     enum_name(&keyword_auth_names, c->local->host.config->auth),
+			     c->remote->config->leftright,
+			     enum_name(&keyword_auth_names, c->remote->host.config->auth));
+			return false;
+		}
+	}
+
+	/* set internal fields */
+	c->instance_serial = 0;
+	c->interface = NULL; /* initializing */
+
+	c->newest_ike_sa = SOS_NOBODY;
+	c->newest_ipsec_sa = SOS_NOBODY;
+	c->temp_vars.num_redirects = 0;
+
+	/* non configurable */
+	c->ike_window = IKE_V2_OVERLAPPING_WINDOW_SIZE;
+
+	c->extra_debugging = wm->debugging;
+
 	/*
 	 * Fill in the child SPDs using the previously parsed
 	 * selectors.
@@ -2448,6 +2504,8 @@ static bool extract_connection(const struct whack_message *wm,
 				dbg(PRI_CONNECTION" spd->reqid=%d because c->sa_reqid=%d",
 				    pri_connection(c, &cb),
 				    c->spd->reqid, c->sa_reqid);
+				update_spd_ends_from_this_host_addr(spd->local, spd->remote);
+				update_spd_ends_from_this_host_addr(spd->remote, spd->local);
 			}
 			/* advance */
 			selectors[RIGHT_END] = (selectors[RIGHT_END] != NULL ? selectors[RIGHT_END]+1 : NULL);
@@ -2499,62 +2557,6 @@ static bool extract_connection(const struct whack_message *wm,
 		}
 		return false;
 	}
-
-	/*
-	 * Cross check the child AFIs.
-	 */
-
-	if (c->local->host.config->xauth.server || c->remote->host.config->xauth.server)
-		c->policy |= POLICY_XAUTH;
-
-	update_host_ends_from_this_host_addr(&c->local->host, &c->remote->host);
-	update_spd_ends_from_this_host_addr(c->spd->local, c->spd->remote);
-	update_host_ends_from_this_host_addr(&c->remote->host, &c->local->host);
-	update_spd_ends_from_this_host_addr(c->spd->remote, c->spd->local);
-
-	/*
-	 * Cross-check the auth= vs authby= results.
-	 */
-
-	if (NEVER_NEGOTIATE(c->policy)) {
-		if (!PEXPECT(c->logger,
-			     c->local->host.config->auth == AUTH_NEVER &&
-			     c->remote->host.config->auth == AUTH_NEVER)) {
-			return false;
-		}
-	} else {
-		if (c->local->host.config->auth == AUTH_UNSET ||
-		    c->remote->host.config->auth == AUTH_UNSET) {
-			/*
-			 * Since an unset auth is set from authby,
-			 * authby= must have somehow been blanked out
-			 * or left with something useless (such as
-			 * never).
-			 */
-			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"no authentication (auth=, authby=) was set");
-			return false;
-		}
-
-		if ((c->local->host.config->auth == AUTH_PSK && c->remote->host.config->auth == AUTH_NULL) ||
-		    (c->local->host.config->auth == AUTH_NULL && c->remote->host.config->auth == AUTH_PSK)) {
-			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"cannot mix PSK and NULL authentication (%sauth=%s and %sauth=%s)",
-			     c->local->config->leftright,
-			     enum_name(&keyword_auth_names, c->local->host.config->auth),
-			     c->remote->config->leftright,
-			     enum_name(&keyword_auth_names, c->remote->host.config->auth));
-			return false;
-		}
-	}
-
-	/* set internal fields */
-	c->instance_serial = 0;
-	c->interface = NULL; /* initializing */
-
-	c->newest_ike_sa = SOS_NOBODY;
-	c->newest_ipsec_sa = SOS_NOBODY;
-	c->temp_vars.num_redirects = 0;
 
 	/*
 	 * determine the wild side (the side that likely won't
@@ -2616,8 +2618,6 @@ static bool extract_connection(const struct whack_message *wm,
 
 	set_policy_prio(c); /* must be after kind is set */
 
-	c->extra_debugging = wm->debugging;
-
 	/* at most one virt can be present */
 	passert(wm->left.virt == NULL || wm->right.virt == NULL);
 
@@ -2636,9 +2636,6 @@ static bool extract_connection(const struct whack_message *wm,
 		if (wild_side->virt != NULL)
 			wild_side->has_client = true;
 	}
-
-	/* non configurable */
-	c->ike_window = IKE_V2_OVERLAPPING_WINDOW_SIZE;
 
 	/*
 	 * All done, enter it into the databases.  Since orient() may
