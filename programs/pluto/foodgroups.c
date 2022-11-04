@@ -410,7 +410,7 @@ void load_groups(struct logger *logger)
 	}
 }
 
-void add_group(struct connection *c)
+void add_to_groups(struct connection *c)
 {
 	struct fg_groups *g = alloc_thing(struct fg_groups, "policy group");
 

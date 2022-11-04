@@ -2506,6 +2506,10 @@ static bool extract_connection(const struct whack_message *wm,
 	 */
 	c->kind = extract_connection_kind(wm, c->logger);
 
+	if (c->kind == CK_GROUP) {
+		add_to_groups(c);
+	}
+
 	/*
 	 * Fill in the child SPDs using the previously parsed
 	 * selectors.
@@ -2643,10 +2647,6 @@ static bool extract_connection(const struct whack_message *wm,
 	if (c->policy & POLICY_OPPORTUNISTIC) {
 		wild_side->has_client = true;
 		wild_side->client.maskbits = 0; /* ??? shouldn't this be 32 for v4? */
-	}
-
-	if (c->kind == CK_GROUP) {
-		add_group(c);
 	}
 
 	set_policy_prio(c); /* must be after kind is set */
