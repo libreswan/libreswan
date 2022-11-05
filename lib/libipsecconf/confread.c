@@ -414,7 +414,7 @@ static bool load_setup(struct starter_config *cfg,
 static bool validate_end(struct starter_conn *conn_st,
 			 struct starter_end *end,
 			 starter_errors_t *perrl,
-			 struct logger *logger)
+			 struct logger *logger UNUSED/*used by dnssec*/)
 {
 	const char *leftright = end->leftright;
 	bool err = false;
