@@ -59,46 +59,41 @@ static int private_net_excl_len = 0;
  *
  * @param src String in format (see above)
  * @param len Length of src string
- * @param dst out: IP Subnet * Destination
- * @param dstexcl out: IP Subnet * for ! form (required if ! is to be accepted)
- * @param isincl out: bool * inclusive form or not
- * @return bool If the format string is valid.
+ * @param dst out: IP Subnet Destination
+ * @param isincl out: bool; inclusive form or not (required if ! is to be accepted)
+ * @return err_t NULL if the format string is valid.
  */
-static bool read_subnet(const char *src, size_t len,
-			ip_subnet *dst,
-			ip_subnet *dstexcl,
-			bool *isincl,
-			struct logger *logger)
+
+static err_t read_subnet(shunk_t src, ip_subnet *dst, bool *isincl)
 {
-	const char *p = src;	/* cursor */
+	shunk_t cursor = src;
 
 	/*
-	 * Note: len might not be sufficient for each of these strncmp calls
-	 * but that's OK because the character in src[len] is either ',' or '\0'
-	 * so the result will be a non-match, safely and correctly.
+	 * Note: len might not be sufficient for each of these strncmp
+	 * calls but that's OK because the character in src[len] is
+	 * either ',' or '\0' so the result will be a non-match,
+	 * safely and correctly.
 	 */
 	const struct ip_info *afi;
-	if (eat(p, "%v4:")) {
+	if (shunk_strcaseeat(&cursor, "%v4:")) {
 		afi = &ipv4_info;
-	} else if (eat(p, "%v6:")) {
+	} else if (shunk_strcaseeat(&cursor, "%v6:")) {
 		afi = &ipv6_info;
 	} else {
 		afi = NULL;	/* "guess from src" */
 	}
 
-	bool incl = true;
-
-	if (dstexcl != NULL)
-		*isincl = incl = !eat(p, "!");
-
-	err_t ugh = ttosubnet_num(shunk2(p, len - (p - src)), afi, (incl ? dst : dstexcl));
-	if (ugh != NULL) {
-		llog(RC_LOG_SERIOUS, logger,
-			    "virtual-private entry is not a proper subnet: %s", ugh);
-		return false;
+	/*
+	 * Only allow exclude when ISINCL!=NULL.
+	 */
+	bool incl = !shunk_strcaseeat(&cursor, "!");
+	if (isincl != NULL) {
+		*isincl = incl;
+	} else if (!incl) {
+		return "! invalid";
 	}
 
-	return true;
+	return ttosubnet_num(cursor, afi, dst);
 }
 
 void free_virtual_ip(void)
@@ -134,7 +129,7 @@ void init_virtual_ip(const char *private_list,
 		bool incl = false;
 		ip_subnet sub;	/* sink: value never used */
 
-		if (read_subnet(str, next - str, &sub, &sub, &incl, logger)) {
+		if (read_subnet(shunk2(str, next - str), &sub, &incl) == NULL/*no-err*/) {
 			if (incl)
 				private_net_incl_len++;
 			else
@@ -169,14 +164,14 @@ void init_virtual_ip(const char *private_list,
 				next = str + strlen(str);
 
 			bool incl = false;
-			if (read_subnet(str, next - str,
-					&(private_net_incl[i_incl]),
-					&(private_net_excl[i_excl]),
-					&incl, logger)) {
-				if (incl)
-					i_incl++;
-				else
-					i_excl++;
+			ip_subnet sub;
+			if (read_subnet(shunk2(str, next - str),
+					&sub, &incl) == NULL/*no-err*/) {
+				if (incl) {
+					private_net_incl[i_incl++] = sub;
+				} else {
+					private_net_excl[i_excl++] = sub;
+				}
 			}
 			str = *next != '\0' ? next + 1 : NULL;
 		}
@@ -217,11 +212,9 @@ static void virtual_ip_free(void *obj, where_t where UNUSED)
 	pfree(vip);
 }
 
-struct virtual_ip *create_virtual(const char *string, struct logger *logger)
+diag_t create_virtual(const char *leftright, const char *string, struct virtual_ip **vip)
 {
-
-	if (string == NULL || string[0] == '\0')
-		return NULL;
+	passert(string != NULL && string[0] != '\0');
 
 	unsigned short flags = 0;
 	const char *str = string;
@@ -231,22 +224,22 @@ struct virtual_ip *create_virtual(const char *string, struct logger *logger)
 	} else if (eat(str, "vnet:")) {
 		/* represented in flags by the absence of F_VIRTUAL_HOST */
 	} else {
-		llog(RC_LOG, logger,
-			    "virtual string \"%s\" is missing \"vhost:\" or \"vnet:\" - virtual selection is disabled for connection",
-			    string);
-		return NULL;
+		return diag("virtual %ssubnet=%s invalid, missing \"vhost:\" or \"vnet:\"",
+			    leftright, string);
 	}
 
 	/*
-	 * Parse string: fill flags & count subnets
+	 * Pass 1 of 2.
+	 *
+	 * Parse string filling in flags & count subnets.
 	 */
 
-	unsigned short n_net = 0;
+	unsigned n_net = 0;
 	const char *first_net = NULL;
 
 	while (*str != '\0') {
+		/* point NEXT at ',' or '\0' */
 		const char *next = strchr(str, ',');
-
 		if (next == NULL)
 			next = str + strlen(str);
 
@@ -259,29 +252,32 @@ struct virtual_ip *create_virtual(const char *string, struct logger *logger)
 			flags |= F_VIRTUAL_PRIVATE;
 		} else if (eat(str, "%all")) {
 			flags |= F_VIRTUAL_ALL;
-		} else if (read_subnet(str, len, &sub, NULL,
-				       NULL, logger)) {
+		} else {
+			/* don't allow ! form */
+			err_t e = read_subnet(shunk2(str, len), &sub, NULL);
+			if (e != NULL) {
+				return diag("virtual %ssubnet=%s invalid, %s",
+					    leftright, string, e);
+			}
 			n_net++;
 			if (first_net == NULL)
 				first_net = str;
 			str += len;
-		} else {
-			/* nothing matched: force failure */
-			str = NULL;
 		}
 		if (str != next) {
-			llog(RC_LOG, logger,
-				    "invalid virtual string \"%s\" - virtual selection is disabled for connection",
-				    string);
-			return NULL;
+			return diag("virtual %ssubnet=%s invalid, contains trailing garbage '%s'",
+				    leftright, string, str);
 		}
 		/* clang 3.5 thinks that next might be NULL; wrong */
 		if (*next == '\0')
 			break;
+		/* skip comma */
 		str = next + 1;
 	}
 
 	/*
+	 * Pass 2 of 2.
+	 *
 	 * Allocate struct plus space for the .net[] array (using the
 	 * array at end of struct hack).
 	 */
@@ -291,25 +287,36 @@ struct virtual_ip *create_virtual(const char *string, struct logger *logger)
 
 	v->flags = flags;
 	v->n_net = n_net;
-	if (n_net != 0 && first_net != NULL) {
+	if (n_net > 0) {
+		passert(first_net != NULL);
 		/*
 		 * Save subnets in newly allocated struct
 		 */
-		int i = 0;
+		unsigned i = 0;
 
-		for (str = first_net; str != NULL && *str != '\0'; ) {
+		for (const char *str = first_net; str != NULL && *str != '\0'; ) {
+			/* point NEXT at ',' or '\0' */
 			const char *next = strchr(str, ',');
-
 			if (next == NULL)
 				next = str + strlen(str);
-			if (read_subnet(str, next - str, &(v->net[i]), NULL,
-					NULL, logger))
-				i++;
-			str = *next == '\0' ? NULL : next + 1;
+
+			/* don't allow ! form; stumble over %entries */
+			ip_subnet sub;
+			if (read_subnet(shunk2(str, next - str), &sub, NULL) == NULL/*no-err*/) {
+				passert(i < n_net);
+				v->net[i++] = sub;
+			}
+			/* clang 3.5 thinks that next might be NULL; wrong */
+			if (*next == '\0')
+				break;
+			/* skip comma */
+			str = next + 1;
 		}
+		passert(i == n_net);
 	}
 
-	return v;
+	*vip = v;
+	return NULL;
 }
 
 /*

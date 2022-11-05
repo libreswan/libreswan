@@ -29,7 +29,7 @@ extern void show_virtual_private(struct show *s);
 extern void init_virtual_ip(const char *private_list, struct logger *logger);
 extern void free_virtual_ip(void);
 
-struct virtual_ip *create_virtual(const char *string, struct logger *logger);
+diag_t create_virtual(const char *leftright, const char *string, struct virtual_ip **);
 struct virtual_ip *virtual_ip_addref_where(struct virtual_ip *vip, where_t where);
 #define virtual_ip_addref(VIP) virtual_ip_addref_where(VIP, HERE)
 void virtual_ip_delref_where(struct virtual_ip **vip, where_t where);

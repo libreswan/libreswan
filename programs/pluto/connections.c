@@ -2662,11 +2662,14 @@ static bool extract_connection(const struct whack_message *wm,
 		 * passert(!address_is_specified(wild_side->host->addr))
 		 */
 		passert(wild_side->virt == NULL);
-		wild_side->virt =
-			create_virtual(wm->left.virt != NULL ? wm->left.virt : wm->right.virt,
-				       c->logger);
-		if (wild_side->virt != NULL)
-			wild_side->has_client = true;
+		const struct whack_end *we = (wm->left.virt != NULL ? &wm->left : &wm->right);
+		passert(we->virt != NULL);
+		diag_t d = create_virtual(we->leftright, we->virt, &wild_side->virt);
+		if (d != NULL) {
+			llog_diag(RC_FATAL, c->logger, &d, ADD_FAILED_PREFIX);
+			return false;
+		}
+		wild_side->has_client = true;
 	}
 
 	/*
