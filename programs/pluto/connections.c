@@ -2394,6 +2394,33 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	/*
+	 * Determine the connection KIND from the wm.
+	 *
+	 * Save it in a local variable so code can use that (and be
+	 * forced to only use value after it's been determined).  Yea,
+	 * hack.
+	 */
+	const enum connection_kind connection_kind =
+		c->kind = extract_connection_kind(wm, c->logger);
+
+	if (connection_kind == CK_GROUP) {
+		add_to_groups(c);
+	}
+
+	if (wm->left.virt != NULL && wm->right.virt != NULL) {
+		llog(RC_FATAL, c->logger,
+		     ADD_FAILED_PREFIX"both left and right define virtual subnets");
+		return false;
+	}
+
+	if (connection_kind == CK_GROUP &&
+	    (wm->left.virt != NULL || wm->right.virt != NULL)) {
+		llog(RC_FATAL, c->logger,
+		     ADD_FAILED_PREFIX"connection groups do not support virtual subnets");
+		return false;
+	}
+
+	/*
 	 * Unpack and verify the ends.
 	 */
 
@@ -2504,15 +2531,6 @@ static bool extract_connection(const struct whack_message *wm,
 		     "the connection is Opportunistic, but used keyingtries=0. The specified value was changed to 1");
 	} else {
 		c->sa_keying_tries = wm->sa_keying_tries;
-	}
-
-	/*
-	 * Determine the connection KIND from the wm.
-	 */
-	c->kind = extract_connection_kind(wm, c->logger);
-
-	if (c->kind == CK_GROUP) {
-		add_to_groups(c);
 	}
 
 	/*
