@@ -413,8 +413,7 @@ static bool load_setup(struct starter_config *cfg,
 
 static bool validate_end(struct starter_conn *conn_st,
 			 struct starter_end *end,
-			 starter_errors_t *perrl,
-			 struct logger *logger)
+			 starter_errors_t *perrl)
 {
 	const char *leftright = end->leftright;
 	bool err = false;
@@ -1028,8 +1027,7 @@ static bool load_conn(struct starter_conn *conn,
 		      struct section_list *sl,
 		      bool alsoprocessing,
 		      bool defaultconn,
-		      starter_errors_t *perrl,
-		      struct logger *logger)
+		      starter_errors_t *perrl)
 {
 	bool err;
 
@@ -1576,8 +1574,8 @@ static bool load_conn(struct starter_conn *conn,
 	}
 	conn->left.host_family = conn->right.host_family = afi;
 
-	err |= validate_end(conn, &conn->left, perrl, logger);
-	err |= validate_end(conn, &conn->right, perrl, logger);
+	err |= validate_end(conn, &conn->left, perrl);
+	err |= validate_end(conn, &conn->right, perrl);
 
 	/*
 	 * TODO:
@@ -1680,15 +1678,14 @@ static bool init_load_conn(struct starter_config *cfg,
 			   const struct config_parsed *cfgp,
 			   struct section_list *sconn,
 			   bool defaultconn,
-			   starter_errors_t *perrl,
-			   struct logger *logger)
+			   starter_errors_t *perrl)
 {
 	starter_log(LOG_LEVEL_DEBUG, "Loading conn %s", sconn->name);
 
 	struct starter_conn *conn = alloc_add_conn(cfg, sconn->name);
 
 	bool connerr = load_conn(conn, cfgp, sconn, true,
-				 defaultconn, perrl, logger);
+				 defaultconn, perrl);
 
 	if (connerr) {
 		starter_log(LOG_LEVEL_INFO, "while loading '%s': %s",
@@ -1703,8 +1700,7 @@ static bool init_load_conn(struct starter_config *cfg,
 struct starter_config *confread_load(const char *file,
 				     starter_errors_t *perrl,
 				     const char *ctlsocket,
-				     bool setuponly,
-				     struct logger *logger)
+				     bool setuponly)
 {
 	bool err = false;
 
@@ -1759,7 +1755,7 @@ struct starter_config *confread_load(const char *file,
 				err |= load_conn(&cfg->conn_default,
 						 cfgp, sconn, false,
 						 true/*default conn*/,
-						 perrl, logger);
+						 perrl);
 			}
 		}
 
@@ -1771,7 +1767,7 @@ struct starter_config *confread_load(const char *file,
 			if (!streq(sconn->name, "%default"))
 				err |= init_load_conn(cfg, cfgp, sconn,
 						      false/*default conn*/,
-						      perrl, logger);
+						      perrl);
 		}
 	}
 
