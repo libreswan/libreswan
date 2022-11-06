@@ -266,6 +266,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 			pfreeany(end->child.updown);
 			pfreeany(end->child.selectors.list);
 			pfreeany(end->child.selectors.string);
+			virtual_ip_delref(&end->child.virt);
 		}
 		pfree(c->root_config);
 	}
@@ -1446,6 +1447,25 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		    wm->name, src->leftright);
 	}
 
+	/*
+	 * Also extract .virt.
+	 *
+	 * While subnet= can only specify .virt XOR .client, the end
+	 * result can be that both .virt and .client are set.
+	 */
+	if (src->virt != NULL) {
+		if (wm->ike_version > IKEv1) {
+			return diag("IKEv%d does not support virtual subnets",
+				    wm->ike_version);
+		}
+		dbg("%s %s child has a virt-end", wm->name, src->leftright);
+		diag_t d = create_virtual(src->leftright, src->virt,
+					  &child_config->virt);
+		if (d != NULL) {
+			return d;
+		}
+	}
+
 	return NULL;
 }
 
@@ -2565,27 +2585,45 @@ static bool extract_connection(const struct whack_message *wm,
 			if (afi[LEFT_END] == afi[RIGHT_END]) {
 				struct spd_route *spd = append_spd_route(c, &spd_end);
 				FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-					const struct whack_end *we = whack_ends[end];
-					const struct child_end_config *ce = c->end[end].child.config;
-					const ip_selector *se = selectors[end];
+					const struct whack_end *whack_end = whack_ends[end];
+					const struct child_end_config *child_end = c->end[end].child.config;
+					const ip_selector *selector = selectors[end];
 					struct spd_end *spd_end = &spd->end[end];
-					if (se != NULL) {
-						dbg("%s %s child spd from selectors",
-						    c->name, ce->leftright);
-						passert(ce->selectors.list[0].is_set); /* at least 1 */
-						if (ce->selectors.list[1].is_set) {
+					if (selector != NULL) {
+						selector_buf sb;
+						dbg("%s %s child spd from selectors %s %s",
+						    c->name, child_end->leftright,
+						    str_selector(selector, &sb),
+						    bool_str(child_end->selectors.are_client));
+						passert(selector->is_set);
+						if (selector[1].is_set) {
 							/* only way to get >1 selector is with subnet= */
 							llog(RC_FATAL, c->logger,
 							     ADD_FAILED_PREFIX"rejecting additional selectors in %ssubnet=%s",
-							     we->leftright, we->client);
+							     whack_end->leftright, whack_end->client);
 							return false;
 						}
-						spd_end->has_client = ce->selectors.are_client;
-						spd_end->client = ce->selectors.list[0];
+						spd_end->has_client = child_end->selectors.are_client;
+						spd_end->client = *selector;
 					} else {
 						dbg("%s %s child spd unset",
-						    c->name, ce->leftright);
+						    c->name, child_end->leftright);
 						pexpect(!spd_end->client.is_set);
+					}
+					/*
+					 * Set things based both on
+					 * virt and on selectors.
+					 */
+					if (child_end->virt != NULL) {
+						selector_buf sb;
+						dbg("%s %s child spd should add a virt-side to %s %s",
+						    c->name, child_end->leftright,
+						    str_selector(&spd_end->client, &sb),
+						    bool_str(spd_end->has_client));
+#if 0
+						spd_end->virt = virtual_ip_addref(child_end->virt);
+						spd_end->has_client = true;
+#endif
 					}
 				}
 				/* default values */
@@ -2674,10 +2712,28 @@ static bool extract_connection(const struct whack_message *wm,
 
 	set_policy_prio(c); /* must be after kind is set */
 
-	/* at most one virt can be present */
-	passert(wm->left.virt == NULL || wm->right.virt == NULL);
-
-	if (wm->left.virt != NULL || wm->right.virt != NULL) {
+	/*
+	 * When there's a virtual interface this code can cross the
+	 * virtual streams.
+	 *
+	 * See github/905.
+	 */
+	struct spd_end *virt_side =
+		(!address_is_specified(c->local->host.addr) ||
+		 c->local->config->child.protoport.has_port_wildcard ||
+		 id_has_wildcards(&c->local->host.id) ? c->spd->local : c->spd->remote);
+	const struct child_end_config *virt_end =
+		(c->local ->config->child.virt != NULL ? &c->local ->config->child :
+		 c->remote->config->child.virt != NULL ? &c->remote->config->child :
+		 NULL);
+	if (virt_end != NULL) {
+		dbg("virt-side is %s virt-end is %s",
+		    virt_side->config->leftright, virt_end->leftright);
+		selector_buf sb;
+		dbg("virt-side %s %s child spd adding virt to %s %s",
+		    c->name, virt_side->config->leftright,
+		    str_selector(&virt_side->client, &sb),
+		    bool_str(virt_side->has_client));
 		/*
 		 * This now happens with wildcards on
 		 * non-instantiations, such as rightsubnet=vnet:%priv
@@ -2685,15 +2741,13 @@ static bool extract_connection(const struct whack_message *wm,
 		 *
 		 * passert(!address_is_specified(wild_side->host->addr))
 		 */
-		passert(wild_side->virt == NULL);
-		const struct whack_end *we = (wm->left.virt != NULL ? &wm->left : &wm->right);
-		passert(we->virt != NULL);
-		diag_t d = create_virtual(we->leftright, we->virt, &wild_side->virt);
+		passert(virt_side->virt == NULL);
+		virt_side->virt = virtual_ip_addref(virt_end->virt);
 		if (d != NULL) {
 			llog_diag(RC_FATAL, c->logger, &d, ADD_FAILED_PREFIX);
 			return false;
 		}
-		wild_side->has_client = true;
+		virt_side->has_client = true;
 	}
 
 	/*
