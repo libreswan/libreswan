@@ -16,6 +16,7 @@
  * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
  * for more details.
  */
+
 #ifndef USE_DNSSEC
 # error this file should only be compiled when using DNSSEC
 #endif
@@ -31,7 +32,7 @@
 #include <errno.h>
 #include <event2/event.h>	/* deb:libevent-dev */
 #include <unbound.h>		/* rpm:unbound-devel deb:libunbound-dev */
-#include <unbound-event.h>	/* see USE_UNBOUND_EVENT_H_COPY */
+#include <unbound-event.h>	/* ditto */
 
 #include "lswglob.h"
 #include "dnssec.h"

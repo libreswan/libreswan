@@ -29,7 +29,6 @@ FIRST_TARGET ?=$@	# keep track of original target
 DISTRO ?= fedora	# default distro
 DISTRO_REL ?= 32	# default release
 
-D_USE_UNBOUND_EVENT_H_COPY ?= true
 D_USE_DNSSEC ?= false
 D_USE_NSS_IPSEC_PROFILE ?= flase
 D_USE_NSS_AVA_COPY ?= true

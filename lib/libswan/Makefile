@@ -264,9 +264,6 @@ endif
 ifeq ($(USE_DNSSEC),true)
 OBJS += unbound.o
 endif
-ifeq ($(USE_UNBOUND_EVENT_H_COPY),true)
-USERLAND_INCLUDES += -I$(top_srcdir)/include/unbound
-endif
 
 OBJS += enum_names.o
 OBJS += pluto_exit_code_names.o

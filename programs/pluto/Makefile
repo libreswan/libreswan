@@ -162,10 +162,6 @@ USERLAND_LDFLAGS += $(SYSTEMD_WATCHDOG_LDFLAGS)
 
 USERLAND_LDFLAGS += $(CURL_LDFLAGS)
 
-ifeq ($(USE_UNBOUND_EVENT_H_COPY),true)
-USERLAND_INCLUDES += -I${LIBRESWANSRCDIR}/include/unbound
-endif
-
 OBJS += ikev1_db_ops.o
 
 # libefence is a free memory allocation debugger

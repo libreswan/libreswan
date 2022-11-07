@@ -22,9 +22,6 @@ USE_PFKEYV2 = true
 USE_LIBCAP_NG = false
 USE_PTHREAD_SETSCHEDPRIO = false
 
-USE_UNBOUND = false
-#USE_UNBOUND_EVENT_H_COPY = true
-
 USE_DNSSEC = false
 #DEFAULT_DNSSEC_ROOTKEY_FILE = /usr/local/etc/unbound/root.key
 

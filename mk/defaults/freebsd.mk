@@ -20,10 +20,9 @@ NSPR_LDFLAGS = -L$(PKG_BASE)/lib/nspr -Wl,-rpath,$(PKG_BASE)/lib/nspr -lnspr4
 USE_PFKEYV2 = true
 
 USE_LIBCAP_NG = false
-USE_UNBOUND_EVENT_H_COPY = true
 USE_PTHREAD_SETSCHEDPRIO = false
 
-USE_DNSSEC = true
+USE_DNSSEC = false
 DEFAULT_DNSSEC_ROOTKEY_FILE = /usr/local/etc/unbound/root.key
 
 INITSYSTEM=rc.d

@@ -484,11 +484,6 @@ ifeq ($(USE_NSS_IPSEC_PROFILE),true)
 USERLAND_CFLAGS += -DNSS_IPSEC_PROFILE
 endif
 
-# When compiling on a system where unbound is missing the required unbound-event.h
-# include file, enable this workaround option that will enable an included copy of
-# this file as shipped with libreswan. The copy is taken from unbound 1.6.0.
-USE_UNBOUND_EVENT_H_COPY ?= false
-
 # -levent can mean two things?
 LIBEVENT_LDFLAGS ?= -levent_core -levent_pthreads
 
