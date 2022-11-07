@@ -1359,9 +1359,9 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		/*
 		 * Legacy syntax.
 		 *
-		 * end.has_client seems to mean that the .child
-		 * selector is pinned (when false .child can be
-		 * refined).
+		 * end.has_client seems to mean that the Child's
+		 * selector is pinned (when false the Child's selector
+		 * can be refined).
 		 *
 		 * Of course if NARROWING is allowed, this can be
 		 * refined regardless of .has_client.
@@ -1374,18 +1374,18 @@ static diag_t extract_child_end(const struct whack_message *wm,
 			return diag("%ssubnet=%s invalid, %s",
 				    src->leftright, src->client, e);
 		}
+		child_config->has_client = true;
 		child_config->selectors.field = "subnet";
 		child_config->selectors.string = clone_str(src->client, "client");
-		child_config->selectors.are_client = true;
 		child_config->selectors.list = alloc_things(ip_selector, 2, "selectors");
 		child_config->selectors.list[0] =
 			selector_from_subnet_protoport(subnet, src->protoport);
 	} else if (src->client != NULL) {
 		/*
-		 * New syntax.  protoport is gone.
+		 * Parse new syntax (protoport= is not used).
 		 *
-		 * end.has_client seems to mean that the .child
-		 * selector is pinned (when false .child can be
+		 * end.has_client seems to mean that the Child's
+		 * selector is pinned (when false the Child can be
 		 * refined).
 		 *
 		 * Of course if NARROWING is allowed, this can be
@@ -1394,9 +1394,9 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		dbg("%s %s child selectors from %subnet (selector)",
 		    wm->name, src->leftright, src->leftright);
 		passert(wm->ike_version == IKEv2);
+		child_config->has_client = true;
 		child_config->selectors.field = "subnet";
 		child_config->selectors.string = clone_str(src->client, "client");
-		child_config->selectors.are_client = true;
 		diag_t d = ttoselector_num_list(shunk1(src->client), ", ", NULL, &child_config->selectors.list);
 		if (d != NULL) {
 			return diag_diag(&d, "%ssubnet=%s invalid, ",
@@ -1404,12 +1404,12 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		}
 	} else if (src->sourceip.is_set) {
 		/*
-		 * No subnet=, construct one using .sourceip (if there
-		 * was a subnet it would need to be within it).
+		 * No subnet=, construct one using SOURCEIP (since the
+		 * SUBNET needs to contain SOURCEIP anyway).
 		 *
-		 * end.has_client seems to mean that the .child
-		 * selector is pinned (when false .child can be
-		 * refined).
+		 * end.has_client seems to mean that the Child's
+		 * selector is pinned (when false the Child's selector
+		 * can be refined).
 		 *
 		 * Of course if NARROWING is allowed, this can be
 		 * refined regardless of .has_client.
@@ -1418,16 +1418,20 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		const char *s = str_address(&src->sourceip, &sb);
 		dbg("%s %s child selectors from %ssourceip=%s",
 		    wm->name, src->leftright, src->leftright, s);
+		child_config->has_client = true;
 		child_config->selectors.field = "sourceip";
 		child_config->selectors.string = clone_str(s, "sourceip");
-		child_config->selectors.are_client = true;
 		child_config->selectors.list = alloc_things(ip_selector, 2, "selectors");
 		child_config->selectors.list[0] =
 			selector_from_address_protoport(src->sourceip, src->protoport);
 	} else if (src->protoport.is_set) {
 		/*
-		 * There's no client subnet _yet_ there is a client
-		 * protoport.  There must be a client.
+		 * There's no child subnet _yet_ there is a child
+		 * client protoport.  Hence, there must be a child so
+		 * construct its SELECTOR using an address wild-card.
+		 *
+		 * Now since it is a wildcard, and can be refined
+		 * (i.e., not pinned), don't set .has_client.
 		 *
 		 * Per above, the client will be formed from
 		 * HOST+PROTOPORT.  Problem is, HOST probably isn't
@@ -1436,12 +1440,24 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		 */
 		dbg("%s %s child selectors from %sprotoport + host AFI",
 		    wm->name, src->leftright, src->leftright);
+		child_config->has_client = false;
 		child_config->selectors.field = "";/*i.e., left""= right""=*/
 		child_config->selectors.string = clone_str("...", "...");
-		child_config->selectors.are_client = false;
 		child_config->selectors.list = alloc_things(ip_selector, 2, "selectors");
 		child_config->selectors.list[0] =
 			selector_from_subnet_protoport(host_afi->subnet.all, src->protoport);
+	} else if ((wm->policy & POLICY_OPPORTUNISTIC) &&
+		   !address_is_specified(src->host_addr)) {
+		/*
+		 * The check for unspecified HOST_ADDR is pretty weak
+		 * (it comes from older code).  For instance, the
+		 * HOST_ADDR could be unspecified because
+		 * host=DNS-NAME didn't resolve or host=%defaultroute
+		 * is still unknown.
+		 */
+		dbg("%s %s child is opportunistic client as host is unspecified",
+		    wm->name, src->leftright);
+		child_config->has_client = true;
 	} else {
 		dbg("%s %s child selectors unknown; probably derived from host?!?",
 		    wm->name, src->leftright);
@@ -2585,17 +2601,13 @@ static bool extract_connection(const struct whack_message *wm,
 			if (afi[LEFT_END] == afi[RIGHT_END]) {
 				struct spd_route *spd = append_spd_route(c, &spd_end);
 				FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+					const ip_selector *selector = selectors[end];
 					const struct whack_end *whack_end = whack_ends[end];
 					const struct child_end_config *child_end = c->end[end].child.config;
-					const ip_selector *selector = selectors[end];
 					struct spd_end *spd_end = &spd->end[end];
+					spd_end->has_client = child_end->has_client;
 					if (selector != NULL) {
-						selector_buf sb;
-						dbg("%s %s child spd from selectors %s %s",
-						    c->name, child_end->leftright,
-						    str_selector(selector, &sb),
-						    bool_str(child_end->selectors.are_client));
-						passert(selector->is_set);
+						passert(selector->is_set); /* at least 1 */
 						if (selector[1].is_set) {
 							/* only way to get >1 selector is with subnet= */
 							llog(RC_FATAL, c->logger,
@@ -2603,12 +2615,7 @@ static bool extract_connection(const struct whack_message *wm,
 							     whack_end->leftright, whack_end->client);
 							return false;
 						}
-						spd_end->has_client = child_end->selectors.are_client;
 						spd_end->client = *selector;
-					} else {
-						dbg("%s %s child spd unset",
-						    c->name, child_end->leftright);
-						pexpect(!spd_end->client.is_set);
 					}
 					/*
 					 * Set things based both on
@@ -2625,6 +2632,12 @@ static bool extract_connection(const struct whack_message *wm,
 						spd_end->has_client = true;
 #endif
 					}
+					selector_buf sb;
+					dbg("%s %s child spd from selector %s client=%s virt=%s",
+					    c->name, spd_end->config->leftright,
+					    str_selector(&spd_end->client, &sb),
+					    bool_str(spd_end->has_client),
+					    bool_str(spd_end->virt != NULL));
 				}
 				/* default values */
 				passert(spd->routing == RT_UNROUTED);
@@ -2693,21 +2706,6 @@ static bool extract_connection(const struct whack_message *wm,
 			     child_end->selectors.string);
 		}
 		return false;
-	}
-
-	/*
-	 * determine the wild side (the side that likely won't
-	 * orient).
-	 */
-	struct spd_end *wild_side =
-		(!address_is_specified(c->local->host.addr) ||
-		 c->local->config->child.protoport.has_port_wildcard ||
-		 id_has_wildcards(&c->local->host.id) ? c->spd->local : c->spd->remote);
-
-	/* force all oppo connections to have a client */
-	if (c->policy & POLICY_OPPORTUNISTIC) {
-		wild_side->has_client = true;
-		wild_side->client.maskbits = 0; /* ??? shouldn't this be 32 for v4? */
 	}
 
 	set_policy_prio(c); /* must be after kind is set */

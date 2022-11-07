@@ -130,12 +130,16 @@ struct child_end_config {
 	ip_protoport protoport;
 	char *updown;
 
+	/*
+	 * This means something, although exactly what isn't clear.
+	 */
+	bool has_client;
+
 	struct {
 		ip_selector *list;
 		/* log "{.leftright}${.selectors_field}=${.selectors_string} */
 		const char *field;
 		char *string;
-		bool are_client;
 	} selectors;
 
 	ip_address sourceip;
