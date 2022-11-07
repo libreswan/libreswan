@@ -2743,10 +2743,6 @@ static bool extract_connection(const struct whack_message *wm,
 		 */
 		passert(virt_side->virt == NULL);
 		virt_side->virt = virtual_ip_addref(virt_end->virt);
-		if (d != NULL) {
-			llog_diag(RC_FATAL, c->logger, &d, ADD_FAILED_PREFIX);
-			return false;
-		}
 		virt_side->has_client = true;
 	}
 
