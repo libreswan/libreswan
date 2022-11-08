@@ -2922,7 +2922,6 @@ struct connection *instantiate(struct connection *c,
 			       shunk_t sec_label)
 {
 	passert(c->kind == CK_TEMPLATE);
-	passert(c->spd->spd_next == NULL);
 
 	/*
 	 * Is the new connection still a template?
@@ -2988,7 +2987,6 @@ struct connection *instantiate(struct connection *c,
 	 */
 	update_host_ends_from_this_host_addr(&d->local->host, &d->remote->host);
 	update_spd_ends_from_this_host_addr(d->spd->local, d->spd->remote);
-	d->spd->spd_next = NULL;
 
 	d->spd->reqid = c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid;
 	dbg("%s d->spd->reqid=%d because c->sa_reqid=%d",
