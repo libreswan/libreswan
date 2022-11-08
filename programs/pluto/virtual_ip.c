@@ -327,7 +327,11 @@ diag_t create_virtual(const char *leftright, const char *string, struct virtual_
  */
 bool is_virtual_end(const struct spd_end *that)
 {
-	return that->virt != NULL;
+	bool virt = (that->virt != NULL);
+	dbg("virt: %s() that spd=%s config=%s",
+	     __func__, bool_str(virt),
+	     bool_str(that->config->child.virt != NULL));
+	return virt;
 }
 
 /*
@@ -338,11 +342,20 @@ bool is_virtual_end(const struct spd_end *that)
  */
 bool is_virtual_connection(const struct connection *c)
 {
-	for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next)
-		if (sr->remote->virt != NULL)
-			return true;
-
-	return false;
+	bool virt = false;
+	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+		if (spd->remote->virt != NULL) {
+			virt = true;
+			break;
+		}
+	}
+	ldbg(c->logger, "virt: %s() %s spd %s/%s; config %s/%s",
+	     __func__, bool_str(virt),
+	     bool_str(c->local->child.config->virt != NULL),
+	     bool_str(c->spd->local->virt != NULL),
+	     bool_str(c->spd->remote->virt != NULL),
+	     bool_str(c->remote->child.config->virt != NULL));
+	return virt;
 }
 
 /*
@@ -364,7 +377,7 @@ bool is_virtual_sr(const struct spd_route *sr)
  */
 bool is_virtual_vhost(const struct spd_end *that)
 {
-	return that->virt != NULL && (that->virt->flags & F_VIRTUAL_HOST) != 0;
+	return is_virtual_end(that) && (that->virt->flags & F_VIRTUAL_HOST) != 0;
 }
 
 /*
@@ -398,6 +411,12 @@ err_t check_virtual_net_allowed(const struct connection *c,
 				const ip_subnet peer_net,
 				const ip_address peers_addr)
 {
+	ldbg(c->logger, "virt: %s() spd %s/%s; config %s/%s",
+	     __func__,
+	     bool_str(c->spd->local->virt != NULL),
+	     bool_str(c->spd->remote->virt != NULL),
+	     bool_str(c->local->child.config->virt != NULL),
+	     bool_str(c->remote->child.config->virt != NULL));
 	const struct virtual_ip *virt = c->spd->remote->virt;
 	if (virt == NULL)
 		return NULL;
