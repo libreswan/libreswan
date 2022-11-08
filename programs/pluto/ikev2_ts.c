@@ -29,7 +29,6 @@
 #include "ikev2_ts.h"
 #include "connections.h"	/* for struct spd_end */
 #include "demux.h"
-#include "virtual_ip.h"
 #include "host_pair.h"
 #include "ip_info.h"
 #include "ip_selector.h"
@@ -999,15 +998,13 @@ static bool score_gt(const struct best_score *score, const struct best_score *be
 }
 
 static struct best_score score_ends(enum fit fit,
-				    const struct connection *d,
 				    const struct spd_ends *ends,
 				    const struct traffic_selector_payloads *tsp,
 				    indent_t indent)
 {
 	selector_buf ei3;
 	selector_buf er3;
-	dbg_ts("evaluating%s END %s=%s:%d/%d %s=%s:%d/%d %s TS:",
-	       (is_virtual_connection(d) ? " (virt)" : ""),
+	dbg_ts("evaluating END %s=%s:%d/%d %s=%s:%d/%d %s TS:",
 	       tsp->i.end_name, str_selector_subnet_port(&ends->i->client, &ei3),
 	       ends->i->client.ipproto,
 	       ends->i->client.hport,
@@ -1366,7 +1363,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 					.r = sr->local,
 				};
 
-				struct best_score score = score_ends(responder_fit, d/*note D*/,
+				struct best_score score = score_ends(responder_fit,
 								     &ends, &tsp, indent);
 				if (!score.ok) {
 					continue;
@@ -1714,7 +1711,7 @@ bool v2_process_ts_response(struct child_sa *child,
 		return false;
 	}
 
-	struct best_score best = score_ends(initiator_fit, c, &e, &tsp, indent);
+	struct best_score best = score_ends(initiator_fit, &e, &tsp, indent);
 
 	if (!best.ok) {
 		dbg_ts("reject responder TSi/TSr Traffic Selector");
@@ -1792,7 +1789,7 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 		return false;
 	}
 
-	struct best_score score = score_ends(responder_fit, c, &ends, &their_tsp, indent);
+	struct best_score score = score_ends(responder_fit, &ends, &their_tsp, indent);
 
 	if (!score.ok) {
 		llog_sa(RC_LOG_SERIOUS, child,
