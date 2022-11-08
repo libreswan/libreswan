@@ -7,8 +7,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road
-002 "road/0x1": added IKEv2 connection
-002 "road/0x2": added IKEv2 connection
+002 "road": added IKEv2 connection
 road #
  echo "initdone"
 initdone
