@@ -1,5 +1,5 @@
-/testing/guestbin/swan-prep --46 --x509
-Preparing X.509 files
+/testing/guestbin/swan-prep --46 --nokey
+Creating empty NSS database
 east #
  ip addr add 192.0.20.254/24 dev eth0
 east #
@@ -26,8 +26,8 @@ east #
  # non-zero counts confirm encrypted traffic flowing
 east #
  ipsec trafficstatus
-006 #2: "east/0x1"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='%fromcert'
-006 #3: "east/0x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
+006 #2: "east/0x1"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@road'
+006 #3: "east/0x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@road'
 east #
  # sane values confirm things like src correct
 east #
@@ -132,13 +132,5 @@ default via 2001:db8:1:2::254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-Libreswan test CA for mainca - Libreswan                     CT,, 
-east                                                         u,u,u
-hashsha1                                                     P,,  
-nic                                                          P,,  
-north                                                        P,,  
-road                                                         P,,  
-west                                                         P,,  
-west-ec                                                      P,,  
 east #
  

@@ -1,9 +1,15 @@
-/testing/guestbin/swan-prep --46 --x509
-Preparing X.509 files
+/testing/guestbin/swan-prep --46 --nokey
+Creating empty NSS database
 east #
  ip addr add 192.0.20.254/24 dev eth0
 east #
  ip addr add 2001:db8:0:20::256/64 dev eth0
+east #
+ ip addr show eth0 | grep global | sort
+    inet 192.0.20.254/24 scope global eth0
+    inet 192.0.2.254/24 scope global eth0
+    inet6 2001:db8:0:20::256/64 scope global tentative
+    inet6 2001:db8:0:2::254/64 scope global
 east #
  ipsec start
 Redirecting to: [initsystem]
@@ -19,8 +25,8 @@ east #
  # non-zero counts confirm encrypted traffic flowing
 east #
  ipsec trafficstatus
-006 #2: "east/0x1"[1] 2001:db8:1:3::209, type=ESP, add_time=1234567890, inBytes=104, outBytes=104, maxBytes=2^63B, id='%fromcert'
-006 #3: "east/0x2"[1] 2001:db8:1:3::209, type=ESP, add_time=1234567890, inBytes=104, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
+006 #2: "east"[1] 2001:db8:1:3::209, type=ESP, add_time=1234567890, inBytes=104, outBytes=104, maxBytes=2^63B, id='@road'
+006 #3: "east"[1] 2001:db8:1:3::209, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@road'
 east #
  # sane values confirm things like src correct
 east #
@@ -68,14 +74,6 @@ src 2001:db8:0:2::/64 dst 2001:db8:0:3::/64
 	dir out priority PRIORITY ptype main
 	tmpl src 2001:db8:1:2::23 dst 2001:db8:1:3::209
 		proto esp reqid REQID mode tunnel
-src 2001:db8:0:3::/64 dst 2001:db8:0:20::/64
-	dir fwd priority PRIORITY ptype main
-	tmpl src 2001:db8:1:3::209 dst 2001:db8:1:2::23
-		proto esp reqid REQID mode tunnel
-src 2001:db8:0:3::/64 dst 2001:db8:0:20::/64
-	dir in priority PRIORITY ptype main
-	tmpl src 2001:db8:1:3::209 dst 2001:db8:1:2::23
-		proto esp reqid REQID mode tunnel
 src 2001:db8:0:3::/64 dst 2001:db8:0:2::/64
 	dir fwd priority PRIORITY ptype main
 	tmpl src 2001:db8:1:3::209 dst 2001:db8:1:2::23
@@ -121,13 +119,5 @@ default via 2001:db8:1:2::254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-Libreswan test CA for mainca - Libreswan                     CT,, 
-east                                                         u,u,u
-hashsha1                                                     P,,  
-nic                                                          P,,  
-north                                                        P,,  
-road                                                         P,,  
-west                                                         P,,  
-west-ec                                                      P,,  
 east #
  

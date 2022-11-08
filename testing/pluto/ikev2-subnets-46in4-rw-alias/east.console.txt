@@ -1,9 +1,15 @@
-/testing/guestbin/swan-prep --46 --x509
-Preparing X.509 files
+/testing/guestbin/swan-prep --46 --nokey
+Creating empty NSS database
 east #
  ip addr add 192.0.20.254/24 dev eth0
 east #
  ip addr add 2001:db8:0:20::256/64 dev eth0
+east #
+ ip addr show eth0 | grep global | sort
+    inet 192.0.20.254/24 scope global eth0
+    inet 192.0.2.254/24 scope global eth0
+    inet6 2001:db8:0:20::256/64 scope global tentative
+    inet6 2001:db8:0:2::254/64 scope global
 east #
  ipsec start
 Redirecting to: [initsystem]
@@ -20,27 +26,179 @@ east #
  # non-zero counts confirm encrypted traffic flowing
 east #
  ipsec trafficstatus
-006 #2: "east/1x1"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='%fromcert'
-006 #5: "east/1x1"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='%fromcert'
-006 #3: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
-006 #6: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
-006 #8: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
-006 #10: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
-006 #12: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
-006 #14: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
-006 #16: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
-006 #18: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
-006 #20: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
-006 #22: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
-006 #24: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
-006 #26: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
-006 #28: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
+006 #2: "east/1x1"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+006 #5: "east/1x1"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+006 #3: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+006 #6: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+006 #8: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+006 #10: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+006 #12: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+006 #14: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+006 #16: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+006 #18: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+006 #20: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+006 #22: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+006 #24: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+006 #26: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+006 #28: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+006 #30: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+006 #32: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+006 #34: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+006 #36: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+006 #38: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+006 #40: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+006 #42: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+006 #44: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
 east #
  # sane values confirm things like src correct
 east #
  ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
+src 192.1.2.254 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport EPHEM dport 4500 addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.23 dst 192.1.2.254
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.254 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport EPHEM dport 4500 addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.23 dst 192.1.2.254
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.254 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport EPHEM dport 4500 addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.23 dst 192.1.2.254
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.254 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport EPHEM dport 4500 addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.23 dst 192.1.2.254
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.254 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport EPHEM dport 4500 addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.23 dst 192.1.2.254
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.254 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport EPHEM dport 4500 addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.23 dst 192.1.2.254
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.254 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport EPHEM dport 4500 addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.23 dst 192.1.2.254
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.254 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport EPHEM dport 4500 addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.23 dst 192.1.2.254
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
 src 192.1.2.254 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec esn
@@ -391,13 +549,5 @@ default via 2001:db8:1:2::254 dev eth1
 NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
-Libreswan test CA for mainca - Libreswan                     CT,, 
-east                                                         u,u,u
-hashsha1                                                     P,,  
-nic                                                          P,,  
-north                                                        P,,  
-road                                                         P,,  
-west                                                         P,,  
-west-ec                                                      P,,  
 east #
  

@@ -1,4 +1,4 @@
-/testing/guestbin/swan-prep --46 --x509
+/testing/guestbin/swan-prep --46 --nokey
 
 ip addr show eth0 | grep global | sort
 
