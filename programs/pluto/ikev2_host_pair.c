@@ -147,17 +147,8 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		/*
 		 * We found a non-wildcard connection.
 		 *
-		 * Double check whether it needs instantiation anyway
-		 * (eg. vnet=)
+		 * IKEv2 doesn't have to worry about vnet=/vhost=.
 		 */
-		/* vnet=/vhost= should have set CK_TEMPLATE on connection loading */
-		passert(c->spd->local->virt == NULL);
-		if (c->kind == CK_TEMPLATE && c->spd->remote->virt != NULL) {
-			ldbg(md->md_logger,
-			     "local endpoint has virt (vnet/vhost) set without wildcards - needs instantiation");
-			return rw_instantiate(c, &remote_address, NULL, NULL);
-		}
-
 		if ((c->kind == CK_TEMPLATE) &&
 		    (c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
 			ldbg(md->md_logger,
