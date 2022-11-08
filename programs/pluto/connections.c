@@ -2602,19 +2602,11 @@ static bool extract_connection(const struct whack_message *wm,
 				struct spd_route *spd = append_spd_route(c, &spd_end);
 				FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 					const ip_selector *selector = selectors[end];
-					const struct whack_end *whack_end = whack_ends[end];
 					const struct child_end_config *child_end = c->end[end].child.config;
 					struct spd_end *spd_end = &spd->end[end];
 					spd_end->has_client = child_end->has_client;
 					if (selector != NULL) {
-						passert(selector->is_set); /* at least 1 */
-						if (selector[1].is_set) {
-							/* only way to get >1 selector is with subnet= */
-							llog(RC_FATAL, c->logger,
-							     ADD_FAILED_PREFIX"rejecting additional selectors in %ssubnet=%s",
-							     whack_end->leftright, whack_end->client);
-							return false;
-						}
+						passert(selector->is_set); /* else pointless */
 						spd_end->client = *selector;
 					}
 					/*
