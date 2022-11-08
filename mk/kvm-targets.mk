@@ -1078,7 +1078,7 @@ kvm-build-%: $(KVM_POOLDIR_PREFIX)%
 		--chdir /source \
 		$(notdir $<) \
 		-- \
-		gmake install-base $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS)
+		time gmake install-base $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS)
 
 
 .PHONY: kvm-install
