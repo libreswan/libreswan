@@ -108,8 +108,9 @@ else
 endif
 abs_top_builddir := $(abspath $(top_builddir))
 
-# path down from $(top_srcdir); note that PATH_SRCDIR contains a
-# leading / (else top-level breaks).
+# Path down from $(top_srcdir); Note that for non-top-level
+# directories PATH_SRCDIR contains a leading / so that ${builddir} is
+# built correctly.
 path_srcdir := $(subst $(abs_top_srcdir),,$(abs_srcdir))
 builddir := $(top_builddir)$(path_srcdir)
 abs_builddir := $(abspath $(builddir))

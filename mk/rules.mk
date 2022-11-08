@@ -62,7 +62,7 @@ ifdef OBJS
 .c.o:
 	$(CC) $(USERLAND_CFLAGS) \
 		$(USERLAND_INCLUDES) \
-		-DHERE_FILENAME=\"$(path_srcdir)/$(notdir $<)\" \
+		-DHERE_FILENAME='"$(patsubst /%,%,$(path_srcdir)/$(notdir $<))"' \
 		$(CFLAGS) \
 		-MF $(builddir)/$(basename $(notdir $@)).d \
 		-MP -MMD -MT $@ \
