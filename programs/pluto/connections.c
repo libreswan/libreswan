@@ -2644,9 +2644,7 @@ static bool extract_connection(const struct whack_message *wm,
 						    c->name, child_end->leftright,
 						    str_selector(&spd_end->client, &sb),
 						    bool_str(spd_end->has_client));
-#if 0
 						spd_end->virt = virtual_ip_addref(child_end->virt);
-#endif
 					}
 					selector_buf sb;
 					dbg("%s %s child spd from selector %s client=%s virt=%s",
@@ -2725,39 +2723,6 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	set_policy_prio(c); /* must be after kind is set */
-
-	/*
-	 * When there's a virtual interface this code can cross the
-	 * virtual streams.
-	 *
-	 * See github/905.
-	 */
-	struct spd_end *virt_side =
-		(!address_is_specified(c->local->host.addr) ||
-		 c->local->config->child.protoport.has_port_wildcard ||
-		 id_has_wildcards(&c->local->host.id) ? c->spd->local : c->spd->remote);
-	const struct child_end_config *virt_end =
-		(c->local ->config->child.virt != NULL ? &c->local ->config->child :
-		 c->remote->config->child.virt != NULL ? &c->remote->config->child :
-		 NULL);
-	if (virt_end != NULL) {
-		dbg("virt-side is %s virt-end is %s",
-		    virt_side->config->leftright, virt_end->leftright);
-		selector_buf sb;
-		dbg("virt-side %s %s child spd adding virt to %s %s",
-		    c->name, virt_side->config->leftright,
-		    str_selector(&virt_side->client, &sb),
-		    bool_str(virt_side->has_client));
-		/*
-		 * This now happens with wildcards on
-		 * non-instantiations, such as rightsubnet=vnet:%priv
-		 * or rightprotoport=17/%any
-		 *
-		 * passert(!address_is_specified(wild_side->host->addr))
-		 */
-		passert(virt_side->virt == NULL);
-		virt_side->virt = virtual_ip_addref(virt_end->virt);
-	}
 
 	/*
 	 * All done, enter it into the databases.  Since orient() may
