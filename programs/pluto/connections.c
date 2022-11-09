@@ -1483,6 +1483,9 @@ static diag_t extract_child_end(const struct whack_message *wm,
 	 *
 	 * While subnet= can only specify .virt XOR .client, the end
 	 * result can be that both .virt and .client are set.
+	 *
+	 * XXX: don't set .has_client as update_child_ends*() will see
+	 * it and skip updating the client address from the host.
 	 */
 	if (src->virt != NULL) {
 		if (wm->ike_version > IKEv1) {
@@ -2627,7 +2630,14 @@ static bool extract_connection(const struct whack_message *wm,
 					/*
 					 * Set things based both on
 					 * virt and on selectors.
+					 *
+					 * XXX: don't set .has_client
+					 * as update_child_ends*()
+					 * will see it and skip
+					 * updating the client address
+					 * from the host.
 					 */
+
 					if (child_end->virt != NULL) {
 						selector_buf sb;
 						dbg("%s %s child spd should add a virt-side to %s %s",
@@ -2636,7 +2646,6 @@ static bool extract_connection(const struct whack_message *wm,
 						    bool_str(spd_end->has_client));
 #if 0
 						spd_end->virt = virtual_ip_addref(child_end->virt);
-						spd_end->has_client = true;
 #endif
 					}
 					selector_buf sb;
@@ -2748,7 +2757,6 @@ static bool extract_connection(const struct whack_message *wm,
 		 */
 		passert(virt_side->virt == NULL);
 		virt_side->virt = virtual_ip_addref(virt_end->virt);
-		virt_side->has_client = true;
 	}
 
 	/*
