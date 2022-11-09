@@ -1363,6 +1363,9 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		 * selector is pinned (when false the Child's selector
 		 * can be refined).
 		 *
+		 * end.has_client also means that the end can be
+		 * "routed", see could_route().
+		 *
 		 * Of course if NARROWING is allowed, this can be
 		 * refined regardless of .has_client.
 		 */
@@ -1388,6 +1391,9 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		 * selector is pinned (when false the Child can be
 		 * refined).
 		 *
+		 * end.has_client also means that the end can be
+		 * "routed", see could_route().
+		 *
 		 * Of course if NARROWING is allowed, this can be
 		 * refined regardless of .has_client.
 		 */
@@ -1411,6 +1417,9 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		 * selector is pinned (when false the Child's selector
 		 * can be refined).
 		 *
+		 * end.has_client also means that the end can be
+		 * "routed", see could_route().
+		 *
 		 * Of course if NARROWING is allowed, this can be
 		 * refined regardless of .has_client.
 		 */
@@ -1433,6 +1442,9 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		 * Now since it is a wildcard, and can be refined
 		 * (i.e., not pinned), don't set .has_client.
 		 *
+		 * end.has_client also means that the end can be
+		 * "routed", see could_route().
+		 *
 		 * Per above, the client will be formed from
 		 * HOST+PROTOPORT.  Problem is, HOST probably isn't
 		 * yet known, use host family's .all as a stand in.
@@ -1454,6 +1466,9 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		 * HOST_ADDR could be unspecified because
 		 * host=DNS-NAME didn't resolve or host=%defaultroute
 		 * is still unknown.
+		 *
+		 * end.has_client also means that the end can be
+		 * "routed", see could_route().
 		 */
 		dbg("%s %s child is opportunistic client as host is unspecified",
 		    wm->name, src->leftright);

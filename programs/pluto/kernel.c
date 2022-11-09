@@ -1125,23 +1125,34 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 	 * if this is a transport SA, and overlapping SAs are supported, then
 	 * this route is not necessary at all.
 	 */
-	if (kernel_ops->overlap_supported && !LIN(POLICY_TUNNEL, c->policy))
+	if (kernel_ops->overlap_supported && !LIN(POLICY_TUNNEL, c->policy)) {
+		ldbg(logger, "route-unnecessary: overlap and !tunnel");
 		return route_unnecessary;
+	}
 
 	/*
 	 * If this is a template connection, we cannot route.
+	 *
 	 * However, opportunistic and sec_label templates can be
 	 * routed (as in install the policy).
 	 */
-	if (!c->spd->remote->has_client &&
-	    c->kind == CK_TEMPLATE &&
-	    !(c->policy & POLICY_OPPORTUNISTIC) &&
-	    c->config->sec_label.len == 0) {
-		policy_buf pb;
-		llog(RC_ROUTE, logger,
-		     "cannot route template policy of %s",
-		     str_connection_policies(c, &pb));
-		return route_impossible;
+	if (c->kind == CK_TEMPLATE) {
+		if (c->policy & POLICY_OPPORTUNISTIC) {
+			ldbg(logger, "template-route-possible: opportunistic");
+		} else if (c->config->sec_label.len > 0) {
+			ldbg(logger, "template-route-possible: sec-label");
+		} else if (c->local->config->child.virt != NULL) {
+			ldbg(logger, "template-route-possible: virtual");
+		} else if (c->spd->remote->has_client) {
+			/* see extract_child_end() */
+			ldbg(logger, "template-route-possible: remote has client");
+		} else {
+			policy_buf pb;
+			llog(RC_ROUTE, logger,
+			     "cannot route template policy of %s",
+			     str_connection_policies(c, &pb));
+			return route_impossible;
+		}
 	}
 
 	struct spd_route *esr, *rosr;
