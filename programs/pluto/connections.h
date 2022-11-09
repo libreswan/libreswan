@@ -589,7 +589,7 @@ struct whack_message;   /* forward declaration of tag whack_msg */
 extern void add_connection(const struct whack_message *wm, struct logger *logger);
 
 void update_host_ends_from_this_host_addr(struct host_end *this, struct host_end *that);
-void update_spd_ends_from_this_host_addr(struct spd_end *this, struct spd_end *that);
+void update_spd_ends_from_host_ends(struct connection *c);
 extern void restart_connections_by_peer(struct connection *c, struct logger *logger);
 extern void flush_revival(const struct connection *c);
 

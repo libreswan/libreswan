@@ -486,40 +486,49 @@ void update_host_ends_from_this_host_addr(struct host_end *this, struct host_end
 	}
 }
 
-void update_spd_ends_from_this_host_addr(struct spd_end *this, struct spd_end *that UNUSED)
+void update_spd_ends_from_host_ends(struct connection *c)
 {
-	address_buf hab;
-	dbg("updating spd ends from %s.host_addr %s",
-	    this->host->config->leftright, str_address(&this->host->addr, &hab));
-	if (!address_is_specified(this->host->addr)) {
-		dbg("  %s.host_addr's is unspecified (unset, ::, or 0.0.0.0); skipping",
-		    this->host->config->leftright);
-		return;
-	}
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		const char *leftright = c->end[end].config->leftright;
+		const struct host_end *host = &c->end[end].host;
+		address_buf hab;
+		ldbg(c->logger, "updating %s.spd client(selector) from %s.host.addr %s",
+		     leftright, leftright, str_address(&host->addr, &hab));
+		if (!address_is_specified(host->addr)) {
+			ldbg(c->logger, "  %s.host.addr is unspecified (unset, ::, or 0.0.0.0); skipping",
+			     leftright);
+			continue;
+		}
+		if (c->end[end].child.config->has_client) {
+			ldbg(c->logger, "  %s.spd already has a client(selector); skipping",
+			     leftright);
+			continue;
+		}
 
-	/*
-	 * Default client to subnet containing only self.
-	 *
-	 * XXX: This gets OPPO wrong when instantiating a template
-	 * that has proto/port: it scribbles on the proto/port stored
-	 * in the .client field.  oppo_instantiate() fixes this up
-	 * after instantiate() returns.
-	 */
-	if (!this->has_client) {
-		/*
-		 * Default client to a subnet containing only self.
-		 *
-		 * For instance, the config file omitted subnet, but
-		 * specified protoport; merge that.
-		 */
-		ip_selector client = selector_from_address_protoport(this->host->addr,
-								     this->config->child.protoport);
-		selector_buf old, new;
-		dbg("  updated %s.client from %s to %s",
-		    this->config->leftright,
-		    str_selector_subnet_port(&this->client, &old),
-		    str_selector_subnet_port(&client, &new));
-		this->client = client;
+		for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+			struct spd_end *spde = &spd->end[end];
+			/* per-above */
+			if (!pexpect(!spde->has_client) ||
+			    !pexpect(address_is_specified(host->addr))) {
+				continue;
+			}
+			/*
+			 * Default child selector (client) to subnet
+			 * containing only self based on host.
+			 *
+			 * For instance, the config file omitted
+			 * subnet, but specified protoport; merge
+			 * that.
+			 */
+			ip_selector client = selector_from_address_protoport(host->addr,
+									     spde->config->child.protoport);
+			selector_buf old, new;
+			dbg("  updated %s.spd client(selector) from %s to %s",
+			    leftright,
+			    str_selector_subnet_port(&spde->client, &old),
+			    str_selector_subnet_port(&client, &new));
+			spde->client = client;
+		}
 	}
 }
 
@@ -1359,15 +1368,20 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		/*
 		 * Legacy syntax.
 		 *
-		 * end.has_client seems to mean that the Child's
-		 * selector is pinned (when false the Child's selector
-		 * can be refined).
+		 * When end.has_client:
 		 *
-		 * end.has_client also means that the end can be
-		 * "routed", see could_route().
+		 * - the update SPD code skips updating the spd client
+		 *   (selector) from the host address
 		 *
-		 * Of course if NARROWING is allowed, this can be
-		 * refined regardless of .has_client.
+		 * - could_route() will allow routing even though the
+		 *   connection is a TEMPLATE
+		 *
+		 * - seems to also mean that the Child's selector is
+		 *   pinned (when false the Child's selector can be
+		 *   refined).
+		 *
+		 *   Of course if NARROWING is allowed, this can be
+		 *   refined regardless of .has_client.
 		 */
 		dbg("%s %s child selectors from %subnet + protoport",
 		    wm->name, src->leftright, src->leftright);
@@ -1386,13 +1400,6 @@ static diag_t extract_child_end(const struct whack_message *wm,
 	} else if (src->client != NULL) {
 		/*
 		 * Parse new syntax (protoport= is not used).
-		 *
-		 * end.has_client seems to mean that the Child's
-		 * selector is pinned (when false the Child can be
-		 * refined).
-		 *
-		 * end.has_client also means that the end can be
-		 * "routed", see could_route().
 		 *
 		 * Of course if NARROWING is allowed, this can be
 		 * refined regardless of .has_client.
@@ -1413,15 +1420,20 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		 * No subnet=, construct one using SOURCEIP (since the
 		 * SUBNET needs to contain SOURCEIP anyway).
 		 *
-		 * end.has_client seems to mean that the Child's
-		 * selector is pinned (when false the Child's selector
-		 * can be refined).
+		 * When end.has_client:
 		 *
-		 * end.has_client also means that the end can be
-		 * "routed", see could_route().
+		 * - the update SPD code skips updating the spd client
+		 *   (selector) from the host address
 		 *
-		 * Of course if NARROWING is allowed, this can be
-		 * refined regardless of .has_client.
+		 * - could_route() will allow routing even though the
+		 *   connection is a TEMPLATE
+		 *
+		 * - seems to also mean that the Child's selector is
+		 *   pinned (when false the Child's selector can be
+		 *   refined).
+		 *
+		 *   Of course if NARROWING is allowed, this can be
+		 *   refined regardless of .has_client.
 		 */
 		address_buf sb;
 		const char *s = str_address(&src->sourceip, &sb);
@@ -1442,13 +1454,25 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		 * Now since it is a wildcard, and can be refined
 		 * (i.e., not pinned), don't set .has_client.
 		 *
-		 * end.has_client also means that the end can be
-		 * "routed", see could_route().
-		 *
 		 * Per above, the client will be formed from
 		 * HOST+PROTOPORT.  Problem is, HOST probably isn't
 		 * yet known, use host family's .all as a stand in.
 		 * Calling update_ends*() will then try to fix it.
+		 *
+		 * When end.has_client:
+		 *
+		 * - the update SPD code skips updating the spd client
+		 *   (selector) from the host address
+		 *
+		 * - could_route() will allow routing even though the
+		 *   connection is a TEMPLATE
+		 *
+		 * - seems to also mean that the Child's selector is
+		 *   pinned (when false the Child's selector can be
+		 *   refined).
+		 *
+		 *   Of course if NARROWING is allowed, this can be
+		 *   refined regardless of .has_client.
 		 */
 		dbg("%s %s child selectors from %sprotoport + host AFI",
 		    wm->name, src->leftright, src->leftright);
@@ -1467,8 +1491,20 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		 * host=DNS-NAME didn't resolve or host=%defaultroute
 		 * is still unknown.
 		 *
-		 * end.has_client also means that the end can be
-		 * "routed", see could_route().
+		 * When end.has_client:
+		 *
+		 * - the update SPD code skips updating the spd client
+		 *   (selector) from the host address
+		 *
+		 * - could_route() will allow routing even though the
+		 *   connection is a TEMPLATE
+		 *
+		 * - seems to also mean that the Child's selector is
+		 *   pinned (when false the Child's selector can be
+		 *   refined).
+		 *
+		 *   Of course if NARROWING is allowed, this can be
+		 *   refined regardless of .has_client.
 		 */
 		dbg("%s %s child is opportunistic client as host is unspecified",
 		    wm->name, src->leftright);
@@ -2668,8 +2704,6 @@ static bool extract_connection(const struct whack_message *wm,
 				dbg(PRI_CONNECTION" spd->reqid=%d because c->sa_reqid=%d",
 				    pri_connection(c, &cb),
 				    c->spd->reqid, c->sa_reqid);
-				update_spd_ends_from_this_host_addr(spd->local, spd->remote);
-				update_spd_ends_from_this_host_addr(spd->remote, spd->local);
 			}
 			/* advance */
 			selectors[RIGHT_END] = (selectors[RIGHT_END] != NULL ? selectors[RIGHT_END]+1 : NULL);
@@ -2722,6 +2756,7 @@ static bool extract_connection(const struct whack_message *wm,
 		return false;
 	}
 
+	update_spd_ends_from_host_ends(c);
 	set_policy_prio(c); /* must be after kind is set */
 
 	/*
@@ -2966,7 +3001,6 @@ struct connection *instantiate(struct connection *c,
 		d->remote->host.addr = *peer_addr;
 	}
 	update_host_ends_from_this_host_addr(&d->remote->host, &d->local->host);
-	update_spd_ends_from_this_host_addr(d->spd->remote, d->spd->local);
 
 	/*
 	 * We cannot guess what our next_hop should be, but if it was
@@ -2974,7 +3008,8 @@ struct connection *instantiate(struct connection *c,
 	 * (whack will not allow nexthop to be elided in RW case.)
 	 */
 	update_host_ends_from_this_host_addr(&d->local->host, &d->remote->host);
-	update_spd_ends_from_this_host_addr(d->spd->local, d->spd->remote);
+
+	update_spd_ends_from_host_ends(d);
 
 	d->spd->reqid = c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid;
 	dbg("%s d->spd->reqid=%d because c->sa_reqid=%d",
