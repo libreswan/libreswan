@@ -141,18 +141,19 @@ void release_connection(struct connection *c)
 }
 
 /* Delete a connection */
-static void delete_spd_end(struct spd_end *e)
+static void discard_spd_end(struct spd_end *e)
 {
 	free_chunk_content(&e->sec_label);
 	virtual_ip_delref(&e->virt);
 }
 
-static void delete_spd_route(struct spd_route **sr, bool valid)
+static void discard_spd(struct spd_route **spd, bool valid)
 {
-	del_db_spd_route(*sr, valid);
-	delete_spd_end((*sr)->local);
-	delete_spd_end((*sr)->remote);
-	pfreeany(*sr);
+	del_db_spd_route(*spd, valid);
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		discard_spd_end(&(*spd)->end[end]);
+	}
+	pfreeany(*spd);
 }
 
 /*
@@ -217,10 +218,9 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 
 	del_db_connection(c, connection_valid);
 
-	for (struct spd_route *sr = c->spd, *next = NULL; sr != NULL; sr = next) {
-		next = sr->spd_next; /*step-off*/
-		pexpect(sr->local->virt == NULL);
-		delete_spd_route(&sr, connection_valid);
+	for (struct spd_route *spd = c->spd, *next = NULL; spd != NULL; spd = next) {
+		next = spd->spd_next; /*step-off*/
+		discard_spd(&spd, connection_valid);
 	}
 
 	FOR_EACH_ELEMENT(end, c->end) {
