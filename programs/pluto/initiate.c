@@ -1092,6 +1092,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 		return;
 	}
 
+	/* XXX: blocking call */
 	e = ttoaddress_dns(shunk1(c->config->dnshostname), NULL/*UNSPEC*/, &new_addr);
 	if (e != NULL) {
 		connection_buf cib;
@@ -1149,6 +1150,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	    c->config->dnshostname,
 	    str_address_sensitive(&c->remote->host.addr, &old),
 	    str_address_sensitive(&new_addr, &new));
+	pexpect(!address_is_specified(c->remote->host.addr)); /* per above */
 	c->remote->host.addr = new_addr;
 	update_host_ends_from_this_host_addr(&c->remote->host, &c->local->host);
 	/* just re-do both */
@@ -1163,9 +1165,14 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 		connection_buf cib;
 		dbg("pending ddns: re-initiating connection "PRI_CONNECTION"",
 		    pri_connection(c, &cib));
-		/* XXX: why not call initiate_connection() directly? */
-		initiate_connections_by_name(c->name, /*remote-host*/NULL,
-					     /*background?*/true, logger);
+		/* XXX: something better? */
+		fd_delref(&c->logger->global_whackfd);
+		c->logger->global_whackfd = fd_addref(logger->global_whackfd);
+		if (!initiate_connection(c, /*remote-host*/NULL, /*background?*/true)) {
+			llog(RC_FATAL, c->logger, "failed to initiate connection");
+		}
+		/* XXX: something better? */
+		fd_delref(&c->logger->global_whackfd);
 	} else {
 		connection_buf cib;
 		dbg("pending ddns: connection "PRI_CONNECTION" was updated, but does not want to be up",
@@ -1179,6 +1186,9 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 
 	for (d = c->host_pair->connections; d != NULL; d = d->hp_next) {
 		if (c != d && same_in_some_sense(c, d) && (d->policy & POLICY_UP)) {
+			connection_buf db, cb;
+			ldbg(logger, "pending dns: initiating "PRI_CONNECTION" as same in some sense as "PRI_CONNECTION,
+			     pri_connection(d, &db), pri_connection(c, &cb));
 			initiate_connections_by_name(d->name, /*remote-host*/NULL,
 						     /*background?*/true, logger);
 		}
