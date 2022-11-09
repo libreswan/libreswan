@@ -37,7 +37,6 @@ void virtual_ip_delref_where(struct virtual_ip **vip, where_t where);
 
 extern bool is_virtual_end(const struct spd_end *that);
 extern bool is_virtual_connection(const struct connection *c);
-extern bool is_virtual_sr(const struct spd_route *sr);
 extern bool is_virtual_vhost(const struct spd_end *that);
 extern err_t check_virtual_net_allowed(const struct connection *c,
 				       const ip_subnet peer_net,

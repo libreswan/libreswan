@@ -2014,7 +2014,7 @@ static struct connection *fc_try(const struct connection *c,
 					str_selector_subnet_port(&sr->remote->client, &d3),
 					sr->remote->client.ipproto,
 					sr->remote->client.hport,
-					is_virtual_sr(sr) ? "(virt)" : "");
+					is_virtual_end(sr->remote) ? "(virt)" : "");
 			}
 
 			if (!selector_range_eq_selector_range(sr->local->client, *local_client)) {
@@ -2030,7 +2030,7 @@ static struct connection *fc_try(const struct connection *c,
 			if (sr->remote->has_client) {
 
 				if (!selector_range_eq_selector_range(sr->remote->client, *remote_client) &&
-				    !is_virtual_sr(sr)) {
+				    !is_virtual_end(sr->remote)) {
 					if (DBGP(DBG_BASE)) {
 						selector_buf d1, d3;
 						DBG_log("   their client (%s) not in same remote_net (%s)",
@@ -2044,7 +2044,7 @@ static struct connection *fc_try(const struct connection *c,
 								       selector_subnet(*remote_client),
 								       sr->remote->host->addr);
 
-				if (is_virtual_sr(sr) &&
+				if (is_virtual_end(sr->remote) &&
 				    (virtualwhy != NULL ||
 				     is_virtual_net_used(d, remote_client,
 							 &sr->remote->host->id))) {

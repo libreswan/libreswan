@@ -359,17 +359,6 @@ bool is_virtual_connection(const struct connection *c)
 }
 
 /*
- * Does this spd have a virtual IP ?
- *
- * @param c Active Connection struct
- * @return bool True if we do
- */
-bool is_virtual_sr(const struct spd_route *sr)
-{
-	return is_virtual_end(sr->remote);
-}
-
-/*
  * is_virtual_vhost - is the virt set to a host or a net?
  *
  * @param that end structure
