@@ -325,22 +325,24 @@ diag_t create_virtual(const char *leftright, const char *string, struct virtual_
  * @param that end structure
  * @return bool True if we do
  */
-bool is_virtual_end(const struct spd_end *that)
+bool is_virtual_spd_end(const struct spd_end *end)
 {
-	bool virt = (that->virt != NULL);
-	dbg("virt: %s() that spd=%s config=%s",
-	     __func__, bool_str(virt),
-	     bool_str(that->config->child.virt != NULL));
+	bool virt = (end->virt != NULL);
+	dbg("virt: %s() %s spd=%s config=%s",
+	    __func__, bool_str(virt),
+	    bool_str(end->virt != NULL),
+	    bool_str(end->config->child.virt != NULL));
+	pexpect((end->config->child.virt != NULL) >= (end->virt != NULL));
 	return virt;
 }
 
 /*
- * Does this connection have a virtual IP ?
+ * Does this connection's remote have a Virtual IP?
  *
  * @param c Active Connection struct
  * @return bool True if we do
  */
-bool is_virtual_connection(const struct connection *c)
+bool is_virtual_remote(const struct connection *c)
 {
 	bool virt = false;
 	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
@@ -349,12 +351,13 @@ bool is_virtual_connection(const struct connection *c)
 			break;
 		}
 	}
-	ldbg(c->logger, "virt: %s() %s spd %s/%s; config %s/%s",
+	ldbg(c->logger, "virt: %s() %s local/remote spd %s/%s; config %s/%s",
 	     __func__, bool_str(virt),
-	     bool_str(c->local->child.config->virt != NULL),
 	     bool_str(c->spd->local->virt != NULL),
 	     bool_str(c->spd->remote->virt != NULL),
+	     bool_str(c->local->child.config->virt != NULL),
 	     bool_str(c->remote->child.config->virt != NULL));
+	pexpect((c->remote->child.config->virt != NULL) >= (virt));
 	return virt;
 }
 
@@ -364,9 +367,9 @@ bool is_virtual_connection(const struct connection *c)
  * @param that end structure
  * @return bool True if we do
  */
-bool is_virtual_vhost(const struct spd_end *that)
+bool is_virtual_vhost(const struct spd_end *end)
 {
-	return is_virtual_end(that) && (that->virt->flags & F_VIRTUAL_HOST) != 0;
+	return is_virtual_spd_end(end) && (end->virt->flags & F_VIRTUAL_HOST) != 0;
 }
 
 /*

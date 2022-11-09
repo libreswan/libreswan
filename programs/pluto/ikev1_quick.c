@@ -1123,7 +1123,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 		dbg("client: %s  port wildcard: %s  virtual: %s",
 		    bool_str(c->spd->remote->has_client),
 		    bool_str(c->remote->child.config->protoport.has_port_wildcard),
-		    bool_str(is_virtual_connection(c)));
+		    bool_str(is_virtual_remote(c)));
 
 		/* fill in the client's true port */
 		if (c->remote->child.config->protoport.has_port_wildcard) {
@@ -1131,7 +1131,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 			update_selector_hport(&c->spd->remote->client, port);
 		}
 
-		if (is_virtual_connection(c)) {
+		if (is_virtual_remote(c)) {
 
 			ldbg(c->logger, "virt: %s() spd %s/%s; config %s/%s",
 			     __func__,
@@ -2006,15 +2006,15 @@ static struct connection *fc_try(const struct connection *c,
 					str_selector_subnet_port(remote_client, &d1),
 					c->spd->remote->client.ipproto,
 					c->spd->remote->client.hport,
-					is_virtual_connection(c) ?
-					"(virt)" : "", d->name,
+					(is_virtual_remote(c) ? "(virt)" : ""),
+					d->name,
 					str_selector_subnet_port(&sr->local->client, &s3),
 					sr->local->client.ipproto,
 					sr->local->client.hport,
 					str_selector_subnet_port(&sr->remote->client, &d3),
 					sr->remote->client.ipproto,
 					sr->remote->client.hport,
-					is_virtual_end(sr->remote) ? "(virt)" : "");
+					(is_virtual_spd_end(sr->remote) ? "(virt)" : ""));
 			}
 
 			if (!selector_range_eq_selector_range(sr->local->client, *local_client)) {
@@ -2030,7 +2030,7 @@ static struct connection *fc_try(const struct connection *c,
 			if (sr->remote->has_client) {
 
 				if (!selector_range_eq_selector_range(sr->remote->client, *remote_client) &&
-				    !is_virtual_end(sr->remote)) {
+				    !is_virtual_spd_end(sr->remote)) {
 					if (DBGP(DBG_BASE)) {
 						selector_buf d1, d3;
 						DBG_log("   their client (%s) not in same remote_net (%s)",
@@ -2044,7 +2044,7 @@ static struct connection *fc_try(const struct connection *c,
 								       selector_subnet(*remote_client),
 								       sr->remote->host->addr);
 
-				if (is_virtual_end(sr->remote) &&
+				if (is_virtual_spd_end(sr->remote) &&
 				    (virtualwhy != NULL ||
 				     is_virtual_net_used(d, remote_client,
 							 &sr->remote->host->id))) {

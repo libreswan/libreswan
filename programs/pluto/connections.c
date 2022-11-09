@@ -572,7 +572,7 @@ static void jam_end_host(struct jambuf *buf, const struct spd_end *this, lset_t 
 		if (this->host->port != 0) {
 			jam(buf, ":%u", this->host->port);
 		}
-	} else if (is_virtual_end(this)) {
+	} else if (is_virtual_spd_end(this)) {
 		jam_string(buf, "%virtual");
 		/*
 		 * XXX: only print anomalies: the host is %virtual
@@ -634,7 +634,7 @@ static void jam_end_client(struct jambuf *buf, const struct spd_end *this,
 		jam_string(buf, "===");
 	}
 
-	if (is_virtual_end(this)) {
+	if (is_virtual_spd_end(this)) {
 		if (is_virtual_vhost(this))
 			jam_string(buf, "vhost:?");
 		else
@@ -3050,7 +3050,7 @@ struct connection *rw_instantiate(struct connection *c,
 {
 	struct connection *d = instantiate(c, peer_addr, peer_id, null_shunk);
 
-	if (peer_subnet != NULL && is_virtual_connection(c)) {
+	if (peer_subnet != NULL && is_virtual_remote(c)) {
 		d->spd->remote->client = *peer_subnet;
 		rehash_db_spd_route_remote_client(d->spd);
 		if (selector_eq_address(*peer_subnet, *peer_addr))
