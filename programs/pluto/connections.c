@@ -3979,7 +3979,7 @@ static int connection_compare_qsort(const void *a, const void *b)
 
 ip_address spd_route_end_sourceip(enum ike_version ike_version, const struct spd_end *end)
 {
-	if (address_is_specified(end->config->child.sourceip)) {
+	if (address_in_selector(end->config->child.sourceip, end->client)) {
 		/* XXX: .is_set sufficient? needs unspec rejected */
 		return end->config->child.sourceip;
 	}
