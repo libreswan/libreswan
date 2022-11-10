@@ -43,11 +43,32 @@
 #include "labeled_ipsec.h"		/* for sec_label_within_range() */
 #include "ip_info.h"
 
+static bool initiate_connection_1(struct connection *c, const char *remote_host,
+				  bool background);
 static bool initiate_connection_2(struct connection *c, const char *remote_host,
 				  bool background, const threadtime_t inception);
-static bool initiate_connection_3(struct connection *c, bool background, const threadtime_t inception);
+static bool initiate_connection_3(struct connection *c, bool background,
+				  const threadtime_t inception);
 
-bool initiate_connection(struct connection *c, const char *remote_host, bool background)
+bool initiate_connection(struct connection *c, const char *remote_host,
+			 bool background, bool log_failure, struct logger *logger)
+{
+	/* XXX: something better? */
+	fd_delref(&c->logger->global_whackfd);
+	c->logger->global_whackfd =
+		(/* old IKE SA */ fd_p(logger->object_whackfd) ? fd_addref(logger->object_whackfd) :
+		 /* global */ fd_p(logger->global_whackfd) ? fd_addref(logger->global_whackfd) :
+		 null_fd);
+	bool ok = initiate_connection_1(c, remote_host, background);
+	if (log_failure && !ok) {
+		llog(RC_FATAL, c->logger, "failed to initiate connection");
+	}
+	/* XXX: something better? */
+	fd_delref(&c->logger->global_whackfd);
+	return ok;
+}
+
+bool initiate_connection_1(struct connection *c, const char *remote_host, bool background)
 {
 	connection_buf cb;
 	dbg("%s() for "PRI_CONNECTION" in the %s with "PRI_LOGGER,
@@ -435,16 +456,10 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
 			if (same_host(dnshostname, &host_addr,
 				      d->config->dnshostname,
 				      &d->remote->host.addr)) {
-				/* XXX: something better? */
-				fd_delref(&d->logger->global_whackfd);
-				d->logger->global_whackfd = fd_addref(logger->global_whackfd);
-				int result = initiate_connection(d, NULL/*remote-host*/,
-								 false/*background*/);
-				if (!result) {
-					llog(RC_FATAL, d->logger, "failed to initiate connection");
-				}
-				/* XXX: something better? */
-				fd_delref(&d->logger->global_whackfd);
+				initiate_connection(d, NULL/*remote-host*/,
+						    false/*background*/,
+						    true/*verbose*/,
+						    logger);
 			}
 		}
 	}
@@ -1117,14 +1132,10 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 		connection_buf cib;
 		dbg("pending ddns: re-initiating connection "PRI_CONNECTION"",
 		    pri_connection(c, &cib));
-		/* XXX: something better? */
-		fd_delref(&c->logger->global_whackfd);
-		c->logger->global_whackfd = fd_addref(logger->global_whackfd);
-		if (!initiate_connection(c, /*remote-host*/NULL, /*background?*/true)) {
-			llog(RC_FATAL, c->logger, "failed to initiate connection");
-		}
-		/* XXX: something better? */
-		fd_delref(&c->logger->global_whackfd);
+		initiate_connection(c, /*remote-host-name*/NULL,
+				    /*background*/true,
+				    /*log-failure*/true,
+				    logger);
 	} else {
 		connection_buf cib;
 		dbg("pending ddns: connection "PRI_CONNECTION" was updated, but does not want to be up",

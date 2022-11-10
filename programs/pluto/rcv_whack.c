@@ -106,16 +106,10 @@ static int initiate_a_connection(struct connection *c, void *arg, struct logger 
 	connection_buf cb;
 	dbg("%s() for "PRI_CONNECTION, __func__, pri_connection(c, &cb))
 	const struct initiate_connections_stuff *is = arg;
-	/* XXX: something better? */
-	fd_delref(&c->logger->global_whackfd);
-	c->logger->global_whackfd = fd_addref(logger->global_whackfd);
-	int result = initiate_connection(c, is->remote_host, is->background) ? 1 : 0;
-	if (!result && is->log_failure) {
-		llog(RC_FATAL, c->logger, "failed to initiate connection");
-	}
-	/* XXX: something better? */
-	fd_delref(&c->logger->global_whackfd);
-	return result;
+	return initiate_connection(c, is->remote_host,
+				   is->background,
+				   is->log_failure,
+				   logger);
 }
 
 static void initiate_connections_by_name(const char *name, const char *remote_host,

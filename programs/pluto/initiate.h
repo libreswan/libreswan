@@ -19,7 +19,8 @@
 
 #include "ip_packet.h"
 
-bool initiate_connection(struct connection *c, const char *remote_host, bool background);
+bool initiate_connection(struct connection *c, const char *remote_host,
+			 bool background, bool log_failure, struct logger *logger);
 
 void ipsecdoi_initiate(struct connection *c,
 		       lset_t policy,

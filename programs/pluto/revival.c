@@ -244,10 +244,10 @@ static void revive_conns(struct logger *logger)
 			llog(RC_LOG, c->logger,
 			     "initiating connection '%s' with serial "PRI_CO" which received a Delete/Notify but must remain up per local policy",
 			     c->name, pri_co(c->serialno));
-			if (!initiate_connection(c, NULL, true/*background*/)) {
-				llog(RC_FATAL, c->logger,
-				     "failed to initiate connection");
-			}
+			initiate_connection(c, /*remote-host-name*/NULL,
+					    /*background*/true,
+					    /*log-failure*/true,
+					    logger);
 		}
 		/*
 		 * Danger! The free_revival() call removes head,

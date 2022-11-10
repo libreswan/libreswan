@@ -535,18 +535,10 @@ static void initiate_redirect(const char *story, struct state *ike_sa, void *con
 	/* XXX: only makes sense when IKE_SA_INIT / IKE_AUTH redirect? */
 	flush_pending_by_state(ike);
 
-	/* XXX: something better? */
-	/* XXX: OBJECT->GLOBAL */
-	fd_delref(&c->logger->global_whackfd);
-	c->logger->global_whackfd = fd_addref(ike->sa.st_logger->object_whackfd);
-
-	if (!initiate_connection(c, /*remote_host*/NULL,
-				 /*background?*/false /* try to keep it in the foreground */)) {
-		llog(RC_FATAL, c->logger, "failed to initiate connection");
-	}
-
-	/* XXX: something better? */
-	fd_delref(&c->logger->global_whackfd);
+	initiate_connection(c, /*remote-host-name*/NULL,
+			    /*background*/false /* try to keep it in the foreground */,
+			    /*verbose*/true,
+			    ike->sa.st_logger);
 }
 
 /* helper function for send_v2_informational_request() */

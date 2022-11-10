@@ -473,12 +473,10 @@ void connection_check_phase2(struct logger *logger)
 			}
 		} else {
 			/* start a new connection. Something wanted it up */
-			/* XXX: something better? */
-			fd_delref(&c->logger->global_whackfd);
-			c->logger->global_whackfd = fd_addref(logger->global_whackfd);
-			initiate_connection(c, /*remote-host*/NULL, /*background*/true);
-			/* XXX: something better? */
-			fd_delref(&c->logger->global_whackfd);
+			initiate_connection(c, /*remote-host-name*/NULL,
+					    /*background*/true,
+					    /*log-failure*/false,
+					    logger);
 		}
 	}
 }
