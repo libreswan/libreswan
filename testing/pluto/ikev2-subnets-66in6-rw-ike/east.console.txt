@@ -26,7 +26,6 @@ east #
 east #
  ipsec trafficstatus
 006 #2: "east"[1] 2001:db8:1:3::209, type=ESP, add_time=1234567890, inBytes=104, outBytes=104, maxBytes=2^63B, id='@road'
-006 #3: "east"[1] 2001:db8:1:3::209, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@road'
 east #
  # sane values confirm things like src correct
 east #
