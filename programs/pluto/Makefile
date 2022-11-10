@@ -87,6 +87,7 @@ OBJS += ikev2_eap.o
 
 OBJS += state_db.o
 OBJS += show.o
+OBJS += show_traffic_status.o
 OBJS += retransmit.o
 
 # local (possibly more up to date) copy of <linux/xfrm.h>

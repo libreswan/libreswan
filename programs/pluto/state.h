@@ -969,4 +969,9 @@ void jam_humber_max(struct jambuf *buf,
 		    uint64_t val,
 		    const char *suffix);
 
+/* see implementation for meaning of LHS-RHS  */
+int state_compare_connection(const void *a, const void *b);
+int state_compare_serial(const void *a, const void *b);
+struct state **sort_states(int (*sort_fn)(const void *, const void *), where_t where);
+
 #endif /* STATE_H */

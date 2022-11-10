@@ -1986,78 +1986,6 @@ void jam_humber_max(struct jambuf *buf,
 	jam_string(buf, suffix);
 }
 
-/* note: this mutates *st by calling get_sa_bundle_info */
-static void jam_state_traffic(struct jambuf *buf, struct state *st)
-{
-	jam(buf, "#%lu: ", st->st_serialno);
-	const struct connection *c = st->st_connection;
-	jam_connection(buf, c);
-
-	if (st->st_xauth_username[0] != '\0') {
-		jam(buf, ", username=%s", st->st_xauth_username);
-	}
-
-	/* traffic */
-	jam(buf, ", type=%s, add_time=%"PRIu64,
-	    (st->st_esp.present ? "ESP" : st->st_ah.present ? "AH" : st->st_ipcomp.present ? "IPCOMP" : "UNKNOWN"),
-	    st->st_esp.add_time);
-
-	if (get_sa_bundle_info(st, true, NULL)) {
-		unsigned inb = (st->st_esp.present ? st->st_esp.inbound.bytes:
-				st->st_ah.present ? st->st_ah.inbound.bytes :
-				st->st_ipcomp.present ? st->st_ipcomp.inbound.bytes : 0);
-		jam(buf, ", inBytes=%u", inb);
-	}
-
-	if (get_sa_bundle_info(st, false, NULL)) {
-		uintmax_t outb = (st->st_esp.present ? st->st_esp.outbound.bytes :
-				  st->st_ah.present ? st->st_ah.outbound.bytes :
-				  st->st_ipcomp.present ? st->st_ipcomp.outbound.bytes : 0);
-		jam(buf, ", outBytes=%ju", outb);
-		if (c->config->sa_ipsec_max_bytes != 0) {
-			jam_humber_max(buf, ", maxBytes=", c->config->sa_ipsec_max_bytes, "B");
-		}
-	}
-
-	if (st->st_xauth_username[0] == '\0') {
-		jam(buf, ", id='");
-		jam_id_bytes(buf, &c->remote->host.id, jam_sanitized_bytes);
-		jam(buf, "'");
-	}
-
-	if (c->spd->remote->has_lease) {
-		/*
-		 * "this" gave "that" a lease from "this" address
-		 * pool.
-		 */
-		jam(buf, ", lease=");
-		jam_selector_subnet(buf, &c->spd->remote->client);
-	} else if (c->spd->local->has_internal_address) {
-		/*
-		 * "this" received an internal address from "that";
-		 * presumably from "that"'s address pool.
-		 */
-		jam(buf, ", lease=");
-		jam_selector_subnet(buf, &c->spd->local->client);
-	}
-}
-
-static void show_state_traffic(struct show *s,
-			       enum rc_type rc, struct state *st)
-{
-	if (IS_IKE_SA(st))
-		return; /* ignore non-IPsec states */
-
-	if (!IS_IPSEC_SA_ESTABLISHED(st))
-		return; /* ignore non established states */
-
-	/* whack-log-global - no prefix */
-	SHOW_JAMBUF(rc, s, buf) {
-		/* note: this mutates *st by calling get_sa_bundle_info */
-		jam_state_traffic(buf, st);
-	}
-}
-
 /*
  * Note: st cannot be const because we call get_sa_bundle_info on it
  */
@@ -2292,7 +2220,7 @@ static void show_established_child_details(struct show *s, struct state *st,
  *  state serial no#
  */
 
-static int state_compare_serial(const void *a, const void *b)
+int state_compare_serial(const void *a, const void *b)
 {
 	const struct state *sap = *(const struct state *const *)a;
 	const struct state *sbp = *(const struct state *const *)b;
@@ -2318,7 +2246,8 @@ static int state_compare_serial(const void *a, const void *b)
  *  isakmp_sa (XXX probably wrong)
  *  state_compare_serial above
  */
-static int state_compare_connection(const void *a, const void *b)
+
+int state_compare_connection(const void *a, const void *b)
 {
 	const struct state *sap = *(const struct state *const *)a;
 	struct connection *ca = sap->st_connection;
@@ -2343,8 +2272,8 @@ static int state_compare_connection(const void *a, const void *b)
  *
  * Caller is responsible for freeing the structure.
  */
-static struct state **sort_states(int (*sort_fn)(const void *, const void *),
-				  where_t where)
+
+struct state **sort_states(int (*sort_fn)(const void *, const void *), where_t where)
 {
 	/* COUNT the number of states. */
 	int count = 0;
@@ -2380,58 +2309,6 @@ static struct state **sort_states(int (*sort_fn)(const void *, const void *),
 	qsort(array, count, sizeof(struct state *), sort_fn);
 
 	return array;
-}
-
-static int show_newest_state_traffic(struct connection *c,
-				     void *arg, struct logger *logger UNUSED)
-{
-	struct show *s = arg;
-	struct state *st = state_by_serialno(c->newest_ipsec_sa);
-
-	if (st == NULL)
-		return 0;
-
-	show_state_traffic(s, RC_INFORMATIONAL_TRAFFIC, st);
-	return 1;
-}
-
-void show_traffic_status(struct show *s, const char *name)
-{
-	if (name == NULL) {
-		struct state **array = sort_states(state_compare_serial, HERE);
-
-		/* now print sorted results */
-		if (array != NULL) {
-			int i;
-			for (i = 0; array[i] != NULL; i++) {
-				show_state_traffic(s,
-						   RC_INFORMATIONAL_TRAFFIC,
-						   array[i]);
-			}
-			pfree(array);
-		}
-	} else {
-		struct connection *c = conn_by_name(name, true/*strict*/);
-
-		if (c != NULL) {
-			/* cast away const sillyness */
-			show_newest_state_traffic(c, s, show_logger(s));
-		} else {
-			/* cast away const sillyness */
-			int count = foreach_connection_by_alias(name, show_newest_state_traffic,
-								s, show_logger(s));
-			if (count == 0) {
-				/*
-				 * XXX: don't bother implementing
-				 * show_rc(...) - this is the only
-				 * place where it would be useful.
-				 */
-				SHOW_JAMBUF(RC_UNKNOWN_NAME, s, buf) {
-					jam(buf, "no such connection or aliased connection named \"%s\"", name);
-				}
-			}
-		}
-	}
 }
 
 void show_brief_status(struct show *s)
