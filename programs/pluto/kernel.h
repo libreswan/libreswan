@@ -380,10 +380,10 @@ struct kernel_ops {
 		       struct logger *logger);
 	bool (*grp_sa)(const struct kernel_sa *sa_outer,
 		       const struct kernel_sa *sa_inner);
-	bool (*get_sa)(const struct kernel_sa *sa,
-		       uint64_t *bytes,
-		       uint64_t *add_time,
-		       struct logger *logger);
+	bool (*get_kernel_state)(const struct kernel_sa *sa,
+				 uint64_t *bytes,
+				 uint64_t *add_time,
+				 struct logger *logger);
 
 	/*
 	 * Allocate and delete IPsec ESP/AH (IPCOMP) SPIs. (creating a
@@ -514,7 +514,7 @@ void delete_ipsec_sa(struct state *st);
 void delete_larval_ipsec_sa(struct state *st);
 
 extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
-extern bool get_sa_bundle_info(struct state *st, bool inbound, monotime_t *last_contact /* OUTPUT */);
+extern bool get_ipsec_traffic(struct state *st, struct ipsec_proto_info *sa, enum encap_direction direction);
 extern bool migrate_ipsec_sa(struct child_sa *child);
 
 extern void show_kernel_interface(struct show *s);

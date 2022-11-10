@@ -966,10 +966,10 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 	return true;
 }
 
-static bool pfkeyv2_get_sa(const struct kernel_sa *k,
-			   uint64_t *bytes,
-			   uint64_t *add_time,
-			   struct logger *logger)
+static bool pfkeyv2_get_kernel_state(const struct kernel_sa *k,
+				     uint64_t *bytes,
+				     uint64_t *add_time,
+				     struct logger *logger)
 {
 	/* GET */
 	/* <base, SA(*), address(SD)> */
@@ -1505,7 +1505,7 @@ const struct kernel_ops pfkeyv2_kernel_ops = {
 	.get_ipsec_spi = pfkeyv2_get_ipsec_spi,
 	.del_ipsec_spi = pfkeyv2_del_ipsec_spi,
 	.add_sa = pfkeyv2_add_sa,
-	.get_sa = pfkeyv2_get_sa,
+	.get_kernel_state = pfkeyv2_get_kernel_state,
 	.raw_policy = pfkeyv2_raw_policy,
 	.process_msg = pfkeyv2_process_msg,
 };

@@ -56,18 +56,19 @@ static void jam_state_traffic(struct jambuf *buf, struct state *st)
 	    (st->st_esp.present ? "ESP" : st->st_ah.present ? "AH" : st->st_ipcomp.present ? "IPCOMP" : "UNKNOWN"),
 	    st->st_esp.add_time);
 
-	if (get_sa_bundle_info(st, true, NULL)) {
-		unsigned inb = (st->st_esp.present ? st->st_esp.inbound.bytes:
-				st->st_ah.present ? st->st_ah.inbound.bytes :
-				st->st_ipcomp.present ? st->st_ipcomp.inbound.bytes : 0);
-		jam(buf, ", inBytes=%u", inb);
+	struct ipsec_proto_info *first_ipsec_proto =
+		(st->st_esp.present ? &st->st_esp:
+		 st->st_ah.present ? &st->st_ah :
+		 st->st_ipcomp.present ? &st->st_ipcomp :
+		 NULL);
+	passert(first_ipsec_proto != NULL);
+
+	if (get_ipsec_traffic(st, first_ipsec_proto, ENCAP_DIRECTION_INBOUND)) {
+		jam(buf, ", inBytes=%ju", first_ipsec_proto->inbound.bytes);
 	}
 
-	if (get_sa_bundle_info(st, false, NULL)) {
-		uintmax_t outb = (st->st_esp.present ? st->st_esp.outbound.bytes :
-				  st->st_ah.present ? st->st_ah.outbound.bytes :
-				  st->st_ipcomp.present ? st->st_ipcomp.outbound.bytes : 0);
-		jam(buf, ", outBytes=%ju", outb);
+	if (get_ipsec_traffic(st, first_ipsec_proto, ENCAP_DIRECTION_OUTBOUND)) {
+		jam(buf, ", outBytes=%ju", first_ipsec_proto->outbound.bytes);
 		if (c->config->sa_ipsec_max_bytes != 0) {
 			jam_humber_max(buf, ", maxBytes=", c->config->sa_ipsec_max_bytes, "B");
 		}

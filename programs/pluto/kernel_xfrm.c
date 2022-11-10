@@ -2232,8 +2232,8 @@ static ipsec_spi_t xfrm_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
  * @param add_time timestamp when IPsec SA added
  * @return bool True if successful
  */
-static bool netlink_get_sa(const struct kernel_sa *sa, uint64_t *bytes,
-			   uint64_t *add_time, struct logger *logger)
+static bool xfrm_get_kernel_state(const struct kernel_sa *sa, uint64_t *bytes,
+				  uint64_t *add_time, struct logger *logger)
 {
 	struct {
 		struct nlmsghdr n;
@@ -2537,7 +2537,7 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.process_msg = netlink_process_msg,
 	.raw_policy = xfrm_raw_policy,
 	.add_sa = netlink_add_sa,
-	.get_sa = netlink_get_sa,
+	.get_kernel_state = xfrm_get_kernel_state,
 	.process_queue = NULL,
 	.grp_sa = NULL,
 	.get_ipsec_spi = xfrm_get_ipsec_spi,

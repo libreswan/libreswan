@@ -240,9 +240,17 @@ void liveness_check(struct state *st)
 	 * outgoing data could lost and this traffic is all
 	 * re-transmit requests ...
  	 */
-	monotime_t last_inbound_message;
-	if (get_sa_bundle_info(&child->sa, /*inbound*/true, &last_inbound_message)) {
-		if (recent_last_contact(child, now, last_inbound_message, "recent IPsec traffic")) {
+
+	struct ipsec_proto_info *const first_ipsec_proto =
+		(child == NULL ? NULL :
+		 child->sa.st_esp.present ? &child->sa.st_esp :
+		 child->sa.st_ah.present ? &child->sa.st_ah :
+		 child->sa.st_ipcomp.present ? &child->sa.st_ipcomp :
+		 NULL);
+	if (get_ipsec_traffic(&child->sa, first_ipsec_proto, ENCAP_DIRECTION_INBOUND)) {
+		if (recent_last_contact(child, now,
+					first_ipsec_proto->inbound.last_used,
+					"recent IPsec traffic")) {
 			return;
 		}
 	}

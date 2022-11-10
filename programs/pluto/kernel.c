@@ -641,25 +641,25 @@ bool fmt_common_shell_out(char *buf,
 	JDuint("PLUTO_NM_CONFIGURED", c->nmconfigured);
 #endif
 
-	const struct ipsec_proto_info *const first_pi =
-		st == NULL ? NULL :
-		st->st_esp.present ? &st->st_esp :
-		st->st_ah.present ? &st->st_ah :
-		st->st_ipcomp.present ? &st->st_ipcomp :
-		NULL;
+	struct ipsec_proto_info *const first_ipsec_proto =
+		(st == NULL ? NULL :
+		 st->st_esp.present ? &st->st_esp :
+		 st->st_ah.present ? &st->st_ah :
+		 st->st_ipcomp.present ? &st->st_ipcomp :
+		 NULL);
 
-	if (first_pi != NULL) {
+	if (first_ipsec_proto != NULL) {
 		/*
 		 * note: this mutates *st by calling get_sa_bundle_info
 		 *
 		 * XXX: does the get_sa_bundle_info() call order matter? Should this
 		 * be a single "atomic" call?
 		 */
-		if (get_sa_bundle_info(st, true, NULL)) {
-			JDuint64("PLUTO_INBYTES", first_pi->inbound.bytes);
+		if (get_ipsec_traffic(st, first_ipsec_proto, ENCAP_DIRECTION_INBOUND)) {
+			JDuint64("PLUTO_INBYTES", first_ipsec_proto->inbound.bytes);
 		}
-		if (get_sa_bundle_info(st, false, NULL)) {
-			JDuint64("PLUTO_OUTBYTES", first_pi->outbound.bytes);
+		if (get_ipsec_traffic(st, first_ipsec_proto, ENCAP_DIRECTION_OUTBOUND)) {
+			JDuint64("PLUTO_OUTBYTES", first_ipsec_proto->outbound.bytes);
 		}
 	}
 
@@ -701,8 +701,8 @@ bool fmt_common_shell_out(char *buf,
 	}
 
 	jam(&jb, "SPI_IN=0x%x SPI_OUT=0x%x " /* SPI_IN SPI_OUT */,
-		first_pi == NULL ? 0 : ntohl(first_pi->outbound.spi),
-		first_pi == NULL ? 0 : ntohl(first_pi->inbound.spi));
+		first_ipsec_proto == NULL ? 0 : ntohl(first_ipsec_proto->outbound.spi),
+		first_ipsec_proto == NULL ? 0 : ntohl(first_ipsec_proto->inbound.spi));
 
 	return jambuf_ok(&jb);
 
@@ -3347,12 +3347,17 @@ void delete_larval_ipsec_sa(struct state *st)
 bool was_eroute_idle(struct state *st, deltatime_t since_when)
 {
 	passert(st != NULL);
-	monotime_t last_contact;
-	if (!get_sa_bundle_info(st, /*inbound*/true, &last_contact)) {
+	struct ipsec_proto_info *first_proto_info =
+		(st->st_ah.present ? &st->st_ah :
+		 st->st_esp.present ? &st->st_esp :
+		 st->st_ipcomp.present ? &st->st_ipcomp :
+		 NULL);
+
+	if (!get_ipsec_traffic(st, first_proto_info, ENCAP_DIRECTION_INBOUND)) {
 		/* snafu; assume idle!?! */
 		return true;
 	}
-	deltatime_t idle_time = monotimediff(mononow(), last_contact);
+	deltatime_t idle_time = monotimediff(mononow(), first_proto_info->inbound.last_used);
 	return deltatime_cmp(idle_time, >=, since_when);
 }
 
@@ -3389,108 +3394,77 @@ static void set_sa_info(struct ipsec_proto_info *p2, uint64_t bytes,
  * Note: this mutates *st.
  * Note: this only changes counts in the first SA in the bundle!
  */
-bool get_sa_bundle_info(struct state *st, bool inbound, monotime_t *last_contact /* OUTPUT */)
+bool get_ipsec_traffic(struct state *st,
+		       struct ipsec_proto_info *proto_info,
+		       enum encap_direction direction)
 {
 	struct connection *const c = st->st_connection;
 
-	if (kernel_ops->get_sa == NULL) {
+	if (kernel_ops->get_kernel_state == NULL) {
 		return false;
 	}
-
-	const struct ip_protocol *proto;
-	struct ipsec_proto_info *pi;
-
-	if (st->st_esp.present) {
-		proto = &ip_protocol_esp;
-		pi = &st->st_esp;
-	} else if (st->st_ah.present) {
-		proto = &ip_protocol_ah;
-		pi = &st->st_ah;
-	} else if (st->st_ipcomp.present) {
-		proto = &ip_protocol_ipcomp;
-		pi = &st->st_ipcomp;
-	} else {
-		return false;
-	}
-
-	if (inbound) {
-		if (pi->inbound.kernel_sa_expired & SA_HARD_EXPIRED) {
-			dbg("kernel expired inbound SA SPI "PRI_IPSEC_SPI" skip get_sa_info()",
-			    pri_ipsec_spi(pi->inbound.spi));
-			return true; /* all is well use the last known info */
-		}
-	} else {
-		if (pi->outbound.kernel_sa_expired & SA_HARD_EXPIRED) {
-			dbg("kernel expired outbound SA SPI "PRI_IPSEC_SPI" get_sa_info()",
-			    pri_ipsec_spi(pi->outbound.spi));
-			return true; /* all is well use last known info */
-		}
-	}
-
 	/*
-	 * If we were redirected (using the REDIRECT mechanism),
-	 * change remote->host.addr temporarily, we reset it back
-	 * later.
+	 * If we're being redirected (using the REDIRECT mechanism),
+	 * then use the state's current remote endpoint, and not the
+	 * connection's value.
+	 *
+	 * XXX: why not just use redirect_ip?
 	 */
-	bool redirected = false;
-	ip_address tmp_host_addr = unset_address;
-	unsigned tmp_host_port = 0;
-	if (!endpoint_address_eq_address(st->st_remote_endpoint, c->remote->host.addr) &&
-	    address_is_specified(c->temp_vars.redirect_ip)) {
-		redirected = true;
-		tmp_host_addr = c->remote->host.addr;
-		tmp_host_port = c->spd->remote->host->port; /* XXX: needed? */
-		c->remote->host.addr = endpoint_address(st->st_remote_endpoint);
-		c->spd->remote->host->port = endpoint_hport(st->st_remote_endpoint);
+	bool redirected = (!endpoint_address_eq_address(st->st_remote_endpoint, c->remote->host.addr) &&
+			   address_is_specified(c->temp_vars.redirect_ip));
+	ip_address remote_ip = (redirected ?  endpoint_address(st->st_remote_endpoint) :
+				c->remote->host.addr);
+
+	struct ipsec_flow *flow;
+	ip_address src, dst;
+	const char *flow_name;
+	switch (direction) {
+	case ENCAP_DIRECTION_INBOUND:
+		flow = &proto_info->inbound;
+		src = remote_ip;
+		dst = c->local->host.addr;
+		flow_name = "inbound";
+		break;
+	case ENCAP_DIRECTION_OUTBOUND:
+		flow = &proto_info->outbound;
+		src = c->local->host.addr;
+		dst = remote_ip;
+		flow_name = "outbound";
+		break;
+	default:
+		bad_case(direction);
 	}
 
-	ip_address src, dst;
-	ipsec_spi_t spi;
-	if (inbound) {
-		src = c->remote->host.addr;
-		dst = c->local->host.addr;
-		spi = pi->inbound.spi;
-	} else {
-		src = c->local->host.addr;
-		dst = c->remote->host.addr;
-		spi = pi->outbound.spi;
+	if (flow->kernel_sa_expired & SA_HARD_EXPIRED) {
+		dbg("kernel expired %s SA SPI "PRI_IPSEC_SPI" get_sa_info()",
+		    flow_name, pri_ipsec_spi(flow->spi));
+		return true; /* all is well use last known info */
 	}
 
 	said_buf sb;
 	struct kernel_sa sa = {
-		.spi = spi,
-		.proto = proto,
+		.spi = flow->spi,
+		.proto = proto_info->protocol,
 		.src.address = src,
 		.dst.address = dst,
-		.story = said_str(dst, proto, spi, &sb),
+		.story = said_str(dst, proto_info->protocol, flow->spi, &sb),
 	};
 
 	dbg("kernel: get_sa_bundle_info %s", sa.story);
 
 	uint64_t bytes;
 	uint64_t add_time;
-	if (!kernel_ops->get_sa(&sa, &bytes, &add_time, st->st_logger))
+	if (!kernel_ops->get_kernel_state(&sa, &bytes, &add_time, st->st_logger))
 		return false;
 
-	pi->add_time = add_time;
+	proto_info->add_time = add_time;
 
 	/* field has been set? */
-	passert(!is_monotime_epoch(pi->inbound.last_used));
-	passert(!is_monotime_epoch(pi->outbound.last_used));
+	passert(!is_monotime_epoch(flow->last_used));
 
-	uint64_t *pb = inbound ? &pi->inbound.bytes : &pi->outbound.bytes;
-	monotime_t *plu = inbound ? &pi->inbound.last_used : &pi->outbound.last_used;
-
-	if (bytes > *pb) {
-		*pb = bytes;
-		*plu = mononow();
-	}
-	if (last_contact != NULL)
-		*last_contact = *plu;
-
-	if (redirected) {
-		c->remote->host.addr = tmp_host_addr;
-		c->spd->remote->host->port = tmp_host_port;
+	if (bytes > flow->bytes) {
+		flow->bytes = bytes;
+		flow->last_used = mononow();
 	}
 
 	return true;

@@ -948,11 +948,23 @@ void delete_state_tail(struct state *st)
 
 	if (IS_IPSEC_SA_ESTABLISHED(st) ||
 	    IS_CHILD_SA_ESTABLISHED(st)) {
+		/*
+		 * XXX: should be iterating over ESP, AH, and IPCOMP
+		 * fetching any that matter.
+		 */
+		struct ipsec_proto_info *const first_ipsec_proto =
+			(st == NULL ? NULL :
+			 st->st_esp.present ? &st->st_esp :
+			 st->st_ah.present ? &st->st_ah :
+			 st->st_ipcomp.present ? &st->st_ipcomp :
+			 NULL);
+		passert(first_ipsec_proto != NULL);
+
 		/* pull in the traffic counters into state before they're lost */
-		if (!get_sa_bundle_info(st, false, NULL)) {
+		if (!get_ipsec_traffic(st, first_ipsec_proto, ENCAP_DIRECTION_OUTBOUND)) {
 			log_state(RC_LOG, st, "failed to pull traffic counters from outbound IPsec SA");
 		}
-		if (!get_sa_bundle_info(st, true, NULL)) {
+		if (!get_ipsec_traffic(st, first_ipsec_proto, ENCAP_DIRECTION_INBOUND)) {
 			log_state(RC_LOG, st, "failed to pull traffic counters from inbound IPsec SA");
 		}
 
@@ -2157,52 +2169,53 @@ static void show_established_child_details(struct show *s, struct state *st,
 		jam(buf, " Traffic:");
 
 		/*
-		 * this code is counter-intuitive because counts only appear in
-		 * the first SA in a bundle.  So we ascribe flow in the first
-		 * SA to all of the SAs in a bundle.
+		 * this code is counter-intuitive because counts only
+		 * appear in the first SA in a bundle.  So we ascribe
+		 * flow in the first SA to all of the SAs in a bundle.
 		 *
-		 * This leads to incorrect IPCOMP counts since the number of bytes changes
-		 * with compression.
+		 * This leads to incorrect IPCOMP counts since the
+		 * number of bytes changes with compression.
 		 */
 
-		bool in_info = get_sa_bundle_info(st, true, NULL);
-		bool out_info = get_sa_bundle_info(st, false, NULL);
-		struct ipsec_proto_info *first_sa =
-			st->st_ah.present ? &st->st_ah :
-			st->st_esp.present ? &st->st_esp :
-			st->st_ipcomp.present ? &st->st_ipcomp :
-			NULL;
+		struct ipsec_proto_info *first_proto_info =
+			(st->st_ah.present ? &st->st_ah :
+			 st->st_esp.present ? &st->st_esp :
+			 st->st_ipcomp.present ? &st->st_ipcomp :
+			 NULL);
+
+		bool in_info = get_ipsec_traffic(st, first_proto_info, ENCAP_DIRECTION_INBOUND);
+		bool out_info = get_ipsec_traffic(st, first_proto_info, ENCAP_DIRECTION_OUTBOUND);
 
 		if (st->st_ah.present) {
 			if (in_info) {
 				jam(buf, " AHin=");
-				jam_readable_humber(buf, first_sa->inbound.bytes, false);
+				jam_readable_humber(buf, first_proto_info->inbound.bytes, false);
 			}
 			if (out_info) {
 				jam(buf, " AHout=");
-				jam_readable_humber(buf, first_sa->outbound.bytes, false);
+				jam_readable_humber(buf, first_proto_info->outbound.bytes, false);
 			}
 			jam_humber_max(buf, " AHmax=", c->config->sa_ipsec_max_bytes, "B");
 		}
 		if (st->st_esp.present) {
 			if (in_info) {
 				jam(buf, " ESPin=");
-				jam_readable_humber(buf, first_sa->inbound.bytes, false);
+				jam_readable_humber(buf, first_proto_info->inbound.bytes, false);
 			}
 			if (out_info) {
 				jam(buf, " ESPout=");
-				jam_readable_humber(buf, first_sa->outbound.bytes, false);
+				jam_readable_humber(buf, first_proto_info->outbound.bytes, false);
 			}
 			jam_humber_max(buf, " ESPmax=", c->config->sa_ipsec_max_bytes, "B");
 		}
 		if (st->st_ipcomp.present) {
 			if (in_info) {
 				jam(buf, " IPCOMPin=");
-				jam_readable_humber(buf, first_sa->inbound.bytes, false);
+				jam_readable_humber(buf, first_proto_info->inbound.bytes, false);
 			}
 			if (out_info) {
 				jam(buf, " IPCOMPout=");
-				jam_readable_humber(buf, first_sa->outbound.bytes, false);
+				jam_readable_humber(buf, first_proto_info->outbound.bytes, false);
 			}
 			jam_humber_max(buf, " IPCOMPmax=", c->config->sa_ipsec_max_bytes, "B");
 		}
