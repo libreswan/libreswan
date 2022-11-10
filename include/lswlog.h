@@ -241,6 +241,7 @@ struct logger {
 	where_t where;
 	/* used by timing to nest its logging output */
 	int timing_level;
+	lset_t debugging;
 };
 
 #define PRI_LOGGER "logger@%p/"PRI_FD"/"PRI_FD
@@ -370,13 +371,7 @@ extern lset_t cur_debugging;	/* current debugging level */
 		}						\
 	}
 
-#define ldbg(LOGGER, MESSAGE, ...)			\
-	{						\
-		if (DBGP(DBG_BASE)) {			\
-			llog(DEBUG_STREAM, (LOGGER),	\
-			     MESSAGE, ##__VA_ARGS__);	\
-		}					\
-	}
+void ldbg(const struct logger *logger, const char *message, ...) PRINTF_LIKE(2);
 
 #define LDBGP(LOGGER, COND, BUF)					\
 	/* allocate the buffer */					\

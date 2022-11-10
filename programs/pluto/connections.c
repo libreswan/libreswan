@@ -2603,7 +2603,7 @@ static bool extract_connection(const struct whack_message *wm,
 	/* non configurable */
 	c->ike_window = IKE_V2_OVERLAPPING_WINDOW_SIZE;
 
-	c->extra_debugging = wm->debugging;
+	c->logger->debugging = lmod(cur_debugging, wm->debugging);
 
 	/*
 	 * We cannot have unlimited keyingtries for Opportunistic, or
@@ -4393,11 +4393,11 @@ static void show_one_connection(struct show *s,
 		}
 	}
 
-	if (!lmod_empty(c->extra_debugging)) {
+	if (c->logger->debugging != LEMPTY) {
 		SHOW_JAMBUF(RC_COMMENT, s, buf) {
 			jam(buf, PRI_CONNECTION":   debug: ",
 			    c->name, instance);
-			jam_lmod(buf, &debug_names, "+", c->extra_debugging);
+			jam_lset_short(buf, &debug_names, "+", c->logger->debugging);
 		}
 	}
 

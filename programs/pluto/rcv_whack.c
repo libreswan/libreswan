@@ -448,6 +448,69 @@ static void dbg_whack(struct show *s, const char *fmt, ...)
 	}
 }
 
+static void whack_adjust_options(const struct whack_message *m, struct logger *logger)
+{
+	if (libreswan_fipsmode()) {
+		if (lmod_is_set(m->debugging, DBG_PRIVATE)) {
+			llog(RC_FATAL, logger,
+			     "FIPS: --debug private is not allowed in FIPS mode, aborted");
+			return; /*don't shutdown*/
+		}
+		if (lmod_is_set(m->debugging, DBG_CRYPT)) {
+			llog(RC_FATAL, logger,
+			     "FIPS: --debug crypt is not allowed in FIPS mode, aborted");
+			return; /*don't shutdown*/
+		}
+	}
+	if (m->name == NULL) {
+		/*
+		 * This is done in two two-steps so that if either old
+		 * or new would cause a debug message to print, it
+		 * will be printed.
+		 *
+		 * XXX: why not unconditionally send what was changed
+		 * back to whack?
+		 */
+		lset_t old_debugging = cur_debugging & DBG_MASK;
+		lset_t new_debugging = lmod(old_debugging, m->debugging);
+		set_debugging(cur_debugging | new_debugging);
+		LSWDBGP(DBG_BASE, buf) {
+			jam(buf, "old debugging ");
+			jam_lset_short(buf, &debug_names,
+				       "+", old_debugging);
+			jam(buf, " + ");
+			jam_lmod(buf, &debug_names, "+", m->debugging);
+		}
+		LSWDBGP(DBG_BASE, buf) {
+			jam(buf, "new debugging = ");
+			jam_lset_short(buf, &debug_names,
+				       "+", new_debugging);
+		}
+		set_debugging(new_debugging);
+		for (unsigned i = 0; i < m->nr_impairments; i++) {
+			/* ??? what should we do with return value? */
+			process_impair(&m->impairments[i],
+				       whack_impair_action,
+				       m->whack_async/*background*/,
+				       logger);
+		}
+	} else if (!m->whack_connection) {
+		struct connection *c = conn_by_name(m->name, true/*strict*/);
+		if (c == NULL) {
+			llog(WHACK_STREAM|RC_UNKNOWN_NAME, logger,
+			     "no connection named \"%s\"", m->name);
+		} else {
+			c->logger->debugging = lmod(c->logger->debugging, m->debugging);
+			LSWDBGP(DBG_BASE, buf) {
+				jam(buf, "\"%s\" extra_debugging = ",
+				    c->name);
+				jam_lset_short(buf, &debug_names,
+					       "+", c->logger->debugging);
+			}
+		}
+	}
+}
+
 /*
  * handle a whack message.
  */
@@ -479,66 +542,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "start: options (impair|debug)");
 		switch (m->opt_set) {
 		case WHACK_ADJUSTOPTIONS:
-			if (libreswan_fipsmode()) {
-				if (lmod_is_set(m->debugging, DBG_PRIVATE)) {
-					whack_log(RC_FATAL, whackfd,
-						  "FIPS: --debug private is not allowed in FIPS mode, aborted");
-					return; /*don't shutdown*/
-				}
-				if (lmod_is_set(m->debugging, DBG_CRYPT)) {
-					whack_log(RC_FATAL, whackfd,
-						  "FIPS: --debug crypt is not allowed in FIPS mode, aborted");
-					return; /*don't shutdown*/
-				}
-			}
-			if (m->name == NULL) {
-				/*
-				 * This is done in two two-steps so
-				 * that if either old or new would
-				 * cause a debug message to print, it
-				 * will be printed.
-				 *
-				 * XXX: why not unconditionally send
-				 * what was changed back to whack?
-				 */
-				lset_t old_debugging = cur_debugging & DBG_MASK;
-				lset_t new_debugging = lmod(old_debugging, m->debugging);
-				set_debugging(cur_debugging | new_debugging);
-				LSWDBGP(DBG_BASE, buf) {
-					jam(buf, "old debugging ");
-					jam_lset_short(buf, &debug_names,
-						       "+", old_debugging);
-					jam(buf, " + ");
-					jam_lmod(buf, &debug_names, "+", m->debugging);
-				}
-				LSWDBGP(DBG_BASE, buf) {
-					jam(buf, "new debugging = ");
-					jam_lset_short(buf, &debug_names,
-						       "+", new_debugging);
-				}
-				set_debugging(new_debugging);
-				for (unsigned i = 0; i < m->nr_impairments; i++) {
-					/* ??? what should we do with return value? */
-					process_impair(&m->impairments[i],
-						       whack_impair_action,
-						       m->whack_async/*background*/,
-						       logger);
-				}
-			} else if (!m->whack_connection) {
-				struct connection *c = conn_by_name(m->name, true/*strict*/);
-				if (c == NULL) {
-					whack_log(RC_UNKNOWN_NAME, whackfd,
-						  "no connection named \"%s\"", m->name);
-				} else if (c != NULL) {
-					c->extra_debugging = m->debugging;
-					LSWDBGP(DBG_BASE, buf) {
-						jam(buf, "\"%s\" extra_debugging = ",
-						    c->name);
-						jam_lmod(buf, &debug_names,
-							 "+", c->extra_debugging);
-					}
-				}
-			}
+			whack_adjust_options(m, logger);
 			break;
 
 		case WHACK_SETDUMPDIR:

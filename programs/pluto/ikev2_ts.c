@@ -1395,7 +1395,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 		       pri_connection(c, &cb), pri_so(c->serialno),
 		       pri_connection(best.connection, &bcb), pri_so(best.connection->serialno),
 		       (best.connection->kind == CK_TEMPLATE ? " needs instantiating!" : ""),
-		       (best.connection->policy & POLICY_GROUPINSTANCE ? " group-instance!" : ""))
+		       (best.connection->policy & POLICY_GROUPINSTANCE ? " group-instance!" : ""));
 	}
 
 	/*

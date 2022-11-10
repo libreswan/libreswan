@@ -517,6 +517,7 @@ struct logger *clone_logger(const struct logger *stack, where_t where)
 		.where = stack->where,
 		.object_vec = object_vec,
 		.object = clone_str(prefix, "heap logger prefix"),
+		.debugging = stack->debugging,
 	};
 	/* and clone it */
 	struct logger *l = clone_thing(heap, "heap logger");

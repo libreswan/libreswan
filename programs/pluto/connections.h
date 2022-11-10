@@ -528,8 +528,6 @@ struct connection {
 		newest_ike_sa,
 		newest_ipsec_sa;
 
-	lmod_t extra_debugging;
-
 	/* if multiple policies, next one to apply */
 	struct connection *policy_next;
 

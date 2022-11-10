@@ -1104,18 +1104,9 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 						   remote_client,
 						   &c->remote->host.id);
 			}
-			/* temporarily bump up cur_debugging to get "using..." message
-			 * printed if we'd want it with new connection.
-			 */
-			{
-				lset_t old_cur_debugging = cur_debugging;
-
-				set_debugging(lmod(cur_debugging, p->extra_debugging));
-				connection_buf cib;
-				dbg("using connection "PRI_CONNECTION"",
-				    pri_connection(p, &cib));
-				set_debugging(old_cur_debugging);
-			}
+			connection_buf cib;
+			ldbg(p->logger, "using connection "PRI_CONNECTION"",
+			     pri_connection(p, &cib));
 			c = p;
 		}
 

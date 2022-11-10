@@ -48,7 +48,7 @@ struct lmod_alias {
 };
 
 struct lmod_info {
-	const enum_names *names;
+	const struct enum_names *names;
 	lset_t mask;
 	struct lmod_alias *aliases;
 };
@@ -56,7 +56,7 @@ struct lmod_info {
 bool lmod_arg(lmod_t *mod, const struct lmod_info *info,
 	      const char *optarg, bool enable);
 
-size_t jam_lmod(struct jambuf *buf, const enum_names *names,
+size_t jam_lmod(struct jambuf *buf, const struct enum_names *names,
 		const char *separator, lmod_t mod);
 
 #endif
