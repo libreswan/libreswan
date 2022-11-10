@@ -481,11 +481,21 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
 		/* in simple cases this is a dangling hp */
 		dbg("no connection to restart after termination");
 	} else {
-		for (d = hp->connections; d != NULL; d = d->hp_next) {
+		for (struct connection *d = hp->connections; d != NULL; d = d->hp_next) {
 			if (same_host(dnshostname, &host_addr,
-					d->config->dnshostname, &d->remote->host.addr))
-				initiate_connections_by_name(d->name, /*remote-host*/NULL,
-							     /*background?*/true, logger);
+				      d->config->dnshostname,
+				      &d->remote->host.addr)) {
+				/* XXX: something better? */
+				fd_delref(&d->logger->global_whackfd);
+				d->logger->global_whackfd = fd_addref(logger->global_whackfd);
+				int result = initiate_connection(d, NULL/*remote-host*/,
+								 false/*background*/);
+				if (!result) {
+					llog(RC_FATAL, d->logger, "failed to initiate connection");
+				}
+				/* XXX: something better? */
+				fd_delref(&d->logger->global_whackfd);
+			}
 		}
 	}
 	pfreeany(dnshostname);
