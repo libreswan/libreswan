@@ -376,56 +376,6 @@ void ipsecdoi_initiate(struct connection *c,
 	}
 }
 
-struct initiate_stuff {
-	bool background;
-	const char *remote_host;
-	bool log_failure;
-};
-
-static int initiate_a_connection(struct connection *c, void *arg, struct logger *logger)
-{
-	connection_buf cb;
-	dbg("%s() for "PRI_CONNECTION, __func__, pri_connection(c, &cb))
-	const struct initiate_stuff *is = arg;
-	/* XXX: something better? */
-	fd_delref(&c->logger->global_whackfd);
-	c->logger->global_whackfd = fd_addref(logger->global_whackfd);
-	int result = initiate_connection(c, is->remote_host, is->background) ? 1 : 0;
-	if (!result && is->log_failure) {
-		llog(RC_FATAL, c->logger, "failed to initiate connection");
-	}
-	/* XXX: something better? */
-	fd_delref(&c->logger->global_whackfd);
-	return result;
-}
-
-void initiate_connections_by_name(const char *name, const char *remote_host,
-				  bool background, struct logger *logger)
-{
-	dbg("%s() for %s", __func__, name);
-	passert(name != NULL);
-	struct connection *c = conn_by_name(name, /*strict-match?*/false);
-	if (c != NULL) {
-		struct initiate_stuff is = {
-			.background = background,
-			.remote_host = remote_host,
-			.log_failure = true,
-		};
-		initiate_a_connection(c, &is, logger);
-	} else {
-		struct initiate_stuff is = {
-			.background = background,
-			.remote_host = remote_host,
-			.log_failure = false,
-		};
-		llog(RC_COMMENT, logger, "initiating all conns with alias='%s'", name);
-		int count = foreach_connection_by_alias(name, initiate_a_connection, &is, logger);
-		if (count == 0) {
-			llog(RC_UNKNOWN_NAME, logger, "no connection named \"%s\"", name);
-		}
-	}
-}
-
 static bool same_host(const char *a_dnshostname, const ip_address *a_host_addr,
 		const char *b_dnshostname, const ip_address *b_host_addr)
 {

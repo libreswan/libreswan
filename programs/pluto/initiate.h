@@ -20,8 +20,7 @@
 #include "ip_packet.h"
 
 bool initiate_connection(struct connection *c, const char *remote_host, bool background);
-void initiate_connections_by_name(const char *name, const char *remote_host,
-				  bool background, struct logger *logger);
+
 void ipsecdoi_initiate(struct connection *c,
 		       lset_t policy,
 		       unsigned long try,

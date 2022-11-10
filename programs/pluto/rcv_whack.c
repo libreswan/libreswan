@@ -95,6 +95,56 @@
 #include "orient.h"
 #include "ikev2_create_child_sa.h"	/* for submit_v2_CREATE_CHILD_SA_*() */
 
+struct initiate_connections_stuff {
+	bool background;
+	const char *remote_host;
+	bool log_failure;
+};
+
+static int initiate_a_connection(struct connection *c, void *arg, struct logger *logger)
+{
+	connection_buf cb;
+	dbg("%s() for "PRI_CONNECTION, __func__, pri_connection(c, &cb))
+	const struct initiate_connections_stuff *is = arg;
+	/* XXX: something better? */
+	fd_delref(&c->logger->global_whackfd);
+	c->logger->global_whackfd = fd_addref(logger->global_whackfd);
+	int result = initiate_connection(c, is->remote_host, is->background) ? 1 : 0;
+	if (!result && is->log_failure) {
+		llog(RC_FATAL, c->logger, "failed to initiate connection");
+	}
+	/* XXX: something better? */
+	fd_delref(&c->logger->global_whackfd);
+	return result;
+}
+
+static void initiate_connections_by_name(const char *name, const char *remote_host,
+					 bool background, struct logger *logger)
+{
+	dbg("%s() for %s", __func__, name);
+	passert(name != NULL);
+	struct connection *c = conn_by_name(name, /*strict-match?*/false);
+	if (c != NULL) {
+		struct initiate_connections_stuff is = {
+			.background = background,
+			.remote_host = remote_host,
+			.log_failure = true,
+		};
+		initiate_a_connection(c, &is, logger);
+	} else {
+		struct initiate_connections_stuff is = {
+			.background = background,
+			.remote_host = remote_host,
+			.log_failure = false,
+		};
+		llog(RC_COMMENT, logger, "initiating all conns with alias='%s'", name);
+		int count = foreach_connection_by_alias(name, initiate_a_connection, &is, logger);
+		if (count == 0) {
+			llog(RC_UNKNOWN_NAME, logger, "no connection named \"%s\"", name);
+		}
+	}
+}
+
 static struct state *find_impaired_state(unsigned biased_what,
 					 struct logger *logger)
 {
@@ -832,22 +882,19 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			whack_log(RC_DEAF, whackfd,
 				  "need --listen before --initiate");
 		} else {
-			ip_address testip;
-			const char *oops;
-			bool pass_remote = false;
-
-			if (m->remote_host != NULL) {
-				oops = ttoaddress_dns(shunk1(m->remote_host), NULL/*UNSPEC*/, &testip);
-
+			const char *remote_host = m->remote_host;
+			if (remote_host != NULL) {
+				ip_address testip;
+				const char *oops = ttoaddress_dns(shunk1(m->remote_host),
+								  NULL/*any*/, &testip);
 				if (oops != NULL) {
 					whack_log(RC_NOPEERIP, whackfd,
 						  "remote host IP address '%s' is invalid: %s",
 						  m->remote_host, oops);
-				} else {
-					pass_remote = true;
+					remote_host = NULL;
 				}
 			}
-			initiate_connections_by_name(m->name, pass_remote ? m->remote_host : NULL,
+			initiate_connections_by_name(m->name, remote_host,
 						     m->whack_async, logger);
 		}
 		dbg_whack(s, "stop: initiate");
