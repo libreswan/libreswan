@@ -436,13 +436,6 @@ static bool same_host(const char *a_dnshostname, const ip_address *a_host_addr,
 		b_dnshostname != NULL && streq(a_dnshostname, b_dnshostname);
 }
 
-static bool same_in_some_sense(const struct connection *a,
-			const struct connection *b)
-{
-	return same_host(a->config->dnshostname, &a->remote->host.addr,
-			 b->config->dnshostname, &b->remote->host.addr);
-}
-
 void restart_connections_by_peer(struct connection *const c, struct logger *logger)
 {
 	/*
@@ -1058,7 +1051,6 @@ struct connection *shunt_owner(const ip_selector *ours, const ip_selector *peers
 
 static void connection_check_ddns1(struct connection *c, struct logger *logger)
 {
-	struct connection *d;
 	ip_address new_addr;
 	const char *e;
 
@@ -1177,21 +1169,6 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 		connection_buf cib;
 		dbg("pending ddns: connection "PRI_CONNECTION" was updated, but does not want to be up",
 		    pri_connection(c, &cib));
-	}
-
-	/* no host pairs, no more to do */
-	pexpect(c->host_pair != NULL);	/* ??? surely */
-	if (c->host_pair == NULL)
-		return;
-
-	for (d = c->host_pair->connections; d != NULL; d = d->hp_next) {
-		if (c != d && same_in_some_sense(c, d) && (d->policy & POLICY_UP)) {
-			connection_buf db, cb;
-			ldbg(logger, "pending dns: initiating "PRI_CONNECTION" as same in some sense as "PRI_CONNECTION,
-			     pri_connection(d, &db), pri_connection(c, &cb));
-			initiate_connections_by_name(d->name, /*remote-host*/NULL,
-						     /*background?*/true, logger);
-		}
 	}
 }
 
