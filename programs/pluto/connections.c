@@ -2603,7 +2603,7 @@ static bool extract_connection(const struct whack_message *wm,
 	/* non configurable */
 	c->ike_window = IKE_V2_OVERLAPPING_WINDOW_SIZE;
 
-	c->logger->debugging = lmod(cur_debugging, wm->debugging);
+	c->logger->debugging = lmod(LEMPTY, wm->debugging);
 
 	/*
 	 * We cannot have unlimited keyingtries for Opportunistic, or
