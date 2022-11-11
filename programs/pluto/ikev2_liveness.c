@@ -242,8 +242,7 @@ void liveness_check(struct state *st)
  	 */
 
 	struct ipsec_proto_info *const first_ipsec_proto =
-		(child == NULL ? NULL :
-		 child->sa.st_esp.present ? &child->sa.st_esp :
+		(child->sa.st_esp.present ? &child->sa.st_esp :
 		 child->sa.st_ah.present ? &child->sa.st_ah :
 		 child->sa.st_ipcomp.present ? &child->sa.st_ipcomp :
 		 NULL);

@@ -3389,8 +3389,6 @@ static void set_sa_info(struct ipsec_proto_info *p2, uint64_t bytes,
 /*
  * get information about a given SA bundle
  *
- * ??? needs merging with was_eroute_idle
- *
  * Note: this mutates *st.
  * Note: this only changes counts in the first SA in the bundle!
  */
@@ -3399,6 +3397,11 @@ bool get_ipsec_traffic(struct state *st,
 		       enum encap_direction direction)
 {
 	struct connection *const c = st->st_connection;
+
+	if (!pexpect(proto_info != NULL)) {
+		/* pacify coverity */
+		return false;
+	}
 
 	if (kernel_ops->get_kernel_state == NULL) {
 		return false;

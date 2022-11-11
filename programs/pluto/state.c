@@ -953,8 +953,7 @@ void delete_state_tail(struct state *st)
 		 * fetching any that matter.
 		 */
 		struct ipsec_proto_info *const first_ipsec_proto =
-			(st == NULL ? NULL :
-			 st->st_esp.present ? &st->st_esp :
+			(st->st_esp.present ? &st->st_esp :
 			 st->st_ah.present ? &st->st_ah :
 			 st->st_ipcomp.present ? &st->st_ipcomp :
 			 NULL);
