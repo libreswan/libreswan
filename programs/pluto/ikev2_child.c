@@ -222,7 +222,7 @@ bool emit_v2_child_request_payloads(const struct ike_sa *ike,
 
 	/* TS[ir] - traffic selectors */
 
-	if (emit_v2TS_payloads(pbs, larval_child) != STF_OK) {
+	if (!emit_v2TS_payloads(pbs, larval_child)) {
 		return false;
 	}
 
@@ -492,8 +492,7 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 	 * XXX: see above notes on 'role' - this must be the
 	 * SA_RESPONDER.
 	 */
-	stf_status ret = emit_v2TS_payloads(outpbs, larval_child);
-	if (ret != STF_OK) {
+	if (!emit_v2TS_payloads(outpbs, larval_child)) {
 		return false;
 	}
 

@@ -198,16 +198,17 @@ struct traffic_selector traffic_selector_from_end(const struct spd_end *e, const
  * which will get output here as two Traffic Selectors. The label is
  * optional, the IP range is mandatory.
  */
-static stf_status emit_v2TS(struct pbs_out *outpbs,
-			    const struct_desc *ts_desc,
-			    const struct traffic_selector *ts)
+
+static bool emit_v2TS(struct pbs_out *outpbs,
+		      const struct_desc *ts_desc,
+		      const struct traffic_selector *ts)
 {
 	struct pbs_out ts_pbs;
 	bool with_label = (ts->sec_label.len > 0);
 
 	if (ts->ts_type != IKEv2_TS_IPV4_ADDR_RANGE &&
 	    ts->ts_type != IKEv2_TS_IPV6_ADDR_RANGE) {
-		return STF_INTERNAL_ERROR;
+		return false;
 	}
 
 	{
@@ -228,7 +229,7 @@ static stf_status emit_v2TS(struct pbs_out *outpbs,
 		};
 
 		if (!out_struct(&its, ts_desc, outpbs, &ts_pbs))
-			return STF_INTERNAL_ERROR;
+			return false;
 	}
 
 	{
@@ -247,7 +248,7 @@ static stf_status emit_v2TS(struct pbs_out *outpbs,
 		}
 
 		if (!out_struct(&ts_header, &ikev2_ts_header_desc, &ts_pbs, &ts_range_pbs))
-			return STF_INTERNAL_ERROR;
+			return false;
 
 
 		struct ikev2_ts_portrange ts_ports = {
@@ -256,15 +257,15 @@ static stf_status emit_v2TS(struct pbs_out *outpbs,
 		};
 
 		if (!out_struct(&ts_ports, &ikev2_ts_portrange_desc, &ts_range_pbs, NULL))
-			return STF_INTERNAL_ERROR;
+			return false;
 
 		if (!pbs_out_address(&ts_range_pbs, range_start(ts->net), "IP start")) {
 			/* already logged */
-			return STF_INTERNAL_ERROR;
+			return false;
 		}
 		if (!pbs_out_address(&ts_range_pbs, range_end(ts->net), "IP end")) {
 			/* already logged */
-			return STF_INTERNAL_ERROR;
+			return false;
 		}
 		close_output_pbs(&ts_range_pbs);
 	}
@@ -281,7 +282,7 @@ static stf_status emit_v2TS(struct pbs_out *outpbs,
 		/* Output the header of the TS_SECLABEL substructure payload. */
 		struct pbs_out ts_label_pbs;
 		if (!out_struct(&ts_header, &ikev2_ts_header_desc, &ts_pbs, &ts_label_pbs)) {
-			return STF_INTERNAL_ERROR;
+			return false;
 		}
 
 		/*
@@ -297,14 +298,14 @@ static stf_status emit_v2TS(struct pbs_out *outpbs,
 
 		if (!pbs_out_hunk(&ts_label_pbs, ts->sec_label, "output Security label")) {
 			/* already logged */
-			return STF_INTERNAL_ERROR;
+			return false;
 		}
 
 		close_output_pbs(&ts_label_pbs);
 	}
 
 	close_output_pbs(&ts_pbs);
-	return STF_OK;
+	return true;
 }
 
 static struct traffic_selector impair_ts_to_subnet(const struct traffic_selector ts)
@@ -333,23 +334,23 @@ static struct traffic_selector impair_ts_to_supernet(const struct traffic_select
 	return ts_ret;
 }
 
-stf_status emit_v2TS_payloads(struct pbs_out *outpbs, const struct child_sa *child)
+bool emit_v2TS_payloads(struct pbs_out *outpbs, const struct child_sa *child)
 {
-	stf_status ret;
 	struct traffic_selector ts_i, ts_r;
+	const struct spd_route *spd = child->sa.st_connection->spd;
 
 	switch (child->sa.st_sa_role) {
 	case SA_INITIATOR:
-		ts_i = traffic_selector_from_end(child->sa.st_connection->spd->local, "this TSi");
-		ts_r = traffic_selector_from_end(child->sa.st_connection->spd->remote, "that TSr");
+		ts_i = traffic_selector_from_end(spd->local, "this TSi");
+		ts_r = traffic_selector_from_end(spd->remote, "that TSr");
 		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
 		    impair.rekey_initiate_supernet) {
 			ts_i = ts_r = impair_ts_to_supernet(ts_i);
 			range_buf tsi_buf;
 			range_buf tsr_buf;
 			dbg("rekey-initiate-supernet TSi and TSr set to %s %s",
-					str_range(&ts_i.net, &tsi_buf),
-					str_range(&ts_r.net, &tsr_buf));
+			    str_range(&ts_i.net, &tsi_buf),
+			    str_range(&ts_r.net, &tsr_buf));
 
 		} else if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
 			   impair.rekey_initiate_subnet) {
@@ -358,15 +359,15 @@ stf_status emit_v2TS_payloads(struct pbs_out *outpbs, const struct child_sa *chi
 			range_buf tsi_buf;
 			range_buf tsr_buf;
 			dbg("rekey-initiate-subnet TSi and TSr set to %s %s",
-					str_range(&ts_i.net, &tsi_buf),
-					str_range(&ts_r.net, &tsr_buf));
+			    str_range(&ts_i.net, &tsi_buf),
+			    str_range(&ts_r.net, &tsr_buf));
 
 		}
 
 		break;
 	case SA_RESPONDER:
-		ts_i = traffic_selector_from_end(child->sa.st_connection->spd->remote, "that TSi");
-		ts_r = traffic_selector_from_end(child->sa.st_connection->spd->local, "this TSr");
+		ts_i = traffic_selector_from_end(spd->remote, "that TSi");
+		ts_r = traffic_selector_from_end(spd->local, "this TSr");
 		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
 		    impair.rekey_respond_subnet) {
 			ts_i = impair_ts_to_subnet(ts_i);
@@ -374,8 +375,8 @@ stf_status emit_v2TS_payloads(struct pbs_out *outpbs, const struct child_sa *chi
 			range_buf tsi_buf;
 			range_buf tsr_buf;
 			dbg("rekey-respond-subnet TSi and TSr set to %s %s",
-					str_range(&ts_i.net, &tsi_buf),
-					str_range(&ts_r.net, &tsr_buf));
+			    str_range(&ts_i.net, &tsi_buf),
+			    str_range(&ts_r.net, &tsr_buf));
 		}
 		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
 				impair.rekey_respond_supernet) {
@@ -383,23 +384,23 @@ stf_status emit_v2TS_payloads(struct pbs_out *outpbs, const struct child_sa *chi
 			range_buf tsi_buf;
 			range_buf tsr_buf;
 			dbg("rekey-respond-supernet TSi and TSr set to %s %s",
-					str_range(&ts_i.net, &tsi_buf),
-					str_range(&ts_r.net, &tsr_buf));
+			    str_range(&ts_i.net, &tsi_buf),
+			    str_range(&ts_r.net, &tsr_buf));
 		}
 		break;
 	default:
 		bad_case(child->sa.st_sa_role);
 	}
 
-	ret = emit_v2TS(outpbs, &ikev2_ts_i_desc, &ts_i);
-	if (ret != STF_OK)
-		return ret;
+	if (!emit_v2TS(outpbs, &ikev2_ts_i_desc, &ts_i)) {
+		return false;
+	}
 
-	ret = emit_v2TS(outpbs, &ikev2_ts_r_desc, &ts_r);
-	if (ret != STF_OK)
-		return ret;
+	if (!emit_v2TS(outpbs, &ikev2_ts_r_desc, &ts_r)) {
+		return false;
+	}
 
-	return STF_OK;
+	return true;
 }
 
 /* return success */
