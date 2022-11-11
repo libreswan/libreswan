@@ -2789,8 +2789,8 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 
 	struct connection *c = alloc_connection(wm->name, HERE);
 	/* XXX: something better? */
-	fd_delref(&c->logger->global_whackfd);
-	c->logger->global_whackfd = fd_addref(logger->global_whackfd);
+	fd_delref(&c->logger->object_whackfd);
+	c->logger->object_whackfd = fd_addref(logger->global_whackfd);
 
 	if (!extract_connection(wm, c)) {
 		/* already logged */
@@ -2827,8 +2827,7 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 	    c->config->sa_ipsec_max_packets);
 	char topo[CONN_BUF_LEN];
 	dbg("%s", format_connection(topo, sizeof(topo), c, c->spd));
-	/* XXX: something better? */
-	fd_delref(&c->logger->global_whackfd);
+	release_whack(c->logger, HERE);
 }
 
 /*
