@@ -33,23 +33,22 @@
 #include "server.h"		/* for listening; */
 #include "orient.h"
 
+static bool orient_1(struct connection *c, struct logger *logger);
+
 bool oriented(const struct connection *c)
 {
 	if (!pexpect(c != NULL)) {
 		return false;
 	}
 
-	return c->interface != NULL;
+	return (c->interface != NULL);
 }
 
-/*
- * Swap ends and try again.
- * It is a little tricky to see that this loop will stop.
- * Only continue if the far side matches.
- * If both sides match, there is an error-out.
- */
-static void swap_ends(struct connection *c)
+static void swap_ends(struct connection *c, const char *reason)
 {
+	ldbg(c->logger, "  swapping local=%s remote=%s; %s",
+	     c->local->config->leftright, c->remote->config->leftright,
+	     reason);
 	struct connection_end *local = c->local;
 	c->local = c->remote;
 	c->remote = local;
@@ -60,16 +59,10 @@ static void swap_ends(struct connection *c)
 		sr->remote = local;
 	}
 
-	/*
-	 * Re-compute the base policy priority using the swapped
-	 * left/right.
-	 */
-	set_policy_prio(c);
-
 	/* rehash end dependent hashes */
 	rehash_db_connection_that_id(c);
-	for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
-		rehash_db_spd_route_remote_client(sr);
+	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+		rehash_db_spd_route_remote_client(spd);
 	}
 }
 
@@ -112,7 +105,7 @@ static bool orient_new_iface_endpoint(struct connection *c, struct host_end *end
 						  float_nat_initiator,
 						  c->logger);
 			if (ifp == NULL) {
-				dbg("could not create new UDP interface");
+				ldbg(c->logger, "could not create new UDP interface");
 				return false;
 			}
 		}
@@ -126,7 +119,7 @@ static bool orient_new_iface_endpoint(struct connection *c, struct host_end *end
 						  float_nat_initiator,
 						  c->logger);
 			if (ifp == NULL) {
-				dbg("could not create new TCP interface");
+				ldbg(c->logger, "could not create new TCP interface");
 				return false;
 			}
 		}
@@ -170,41 +163,52 @@ static bool end_matches_iface_endpoint(const struct host_end *this,
 	return endpoint_eq_endpoint(this_host_endpoint, ifp->local_endpoint);
 }
 
-static void DBG_orient_end(const char *thisthat, struct host_end *this, struct host_end *that)
+static void LDBG_orient_end(struct logger *logger, const char *thisthat, struct host_end *this, struct host_end *that)
 {
 	address_buf ab;
 	enum_buf enb;
-	DBG_log("  %s(%s) host type=%s address=%s port="PRI_HPORT" ikeport=%d encap=%s",
-		this->config->leftright, thisthat,
-		str_enum_short(&keyword_host_names, this->config->type, &enb),
-		str_address(&this->addr, &ab),
-		pri_hport(end_host_port(this, that)),
-		this->config->ikeport,
-		bool_str(this->encap));
+	LDBG_log(logger, "  %s(%s) host type=%s address=%s port="PRI_HPORT" ikeport=%d encap=%s",
+		 this->config->leftright, thisthat,
+		 str_enum_short(&keyword_host_names, this->config->type, &enb),
+		 str_address(&this->addr, &ab),
+		 pri_hport(end_host_port(this, that)),
+		 this->config->ikeport,
+		 bool_str(this->encap));
 }
 
 bool orient(struct connection *c, struct logger *logger)
 {
 	if (oriented(c)) {
-		dbg("already oriented");
+		ldbg(c->logger, "already oriented");
 		return true;
 	}
 
-	if (DBGP(DBG_BASE)) {
-		connection_buf cb;
-		DBG_log("orienting "PRI_CONNECTION, pri_connection(c, &cb));
-		DBG_orient_end("this", &c->local->host, &c->remote->host);
-		DBG_orient_end("that", &c->remote->host, &c->local->host);
+	if (!orient_1(c, logger)) {
+		return false;
 	}
 
-	set_policy_prio(c); /* for updates */
+	/* success; update everything */
+	passert(oriented(c));
+	set_policy_prio(c); /* update */
+
+	return true;
+}
+
+bool orient_1(struct connection *c, struct logger *logger)
+{
+	if (DBGP(DBG_BASE)) {
+		connection_buf cb;
+		LDBG_log(c->logger, "orienting "PRI_CONNECTION, pri_connection(c, &cb));
+		LDBG_orient_end(c->logger, "this", &c->local->host, &c->remote->host);
+		LDBG_orient_end(c->logger, "that", &c->remote->host, &c->local->host);
+	}
+	passert(c->interface == NULL); /* aka not oriented */
 
 	/*
 	 * Save match; don't update the connection until all the
 	 * interfaces have been checked.  More than one could match,
 	 * oops!
 	 */
-	pexpect(c->interface == NULL); /* aka not oriented */
 	bool matching_swaps_end = false;
 	struct iface_endpoint *matching_ifp = NULL;
 
@@ -227,9 +231,9 @@ bool orient(struct connection *c, struct logger *logger)
 
 		if (!this && !that) {
 			endpoint_buf eb;
-			dbg("  interface endpoint %s does not match %s(THIS) or %s(THAT)",
-			    str_endpoint(&ifp->local_endpoint, &eb),
-			    c->local->config->leftright, c->remote->config->leftright);
+			ldbg(c->logger, "  interface endpoint %s does not match %s(THIS) or %s(THAT)",
+			     str_endpoint(&ifp->local_endpoint, &eb),
+			     c->local->config->leftright, c->remote->config->leftright);
 			continue;
 		}
 
@@ -272,16 +276,16 @@ bool orient(struct connection *c, struct logger *logger)
 		passert(this != that); /* only one */
 		if (this) {
 			endpoint_buf eb;
-			dbg("  interface endpoint %s matches %s(THIS); orienting",
-			    str_endpoint(&ifp->local_endpoint, &eb),
-			    c->local->config->leftright);
+			ldbg(c->logger, "  interface endpoint %s matches %s(THIS); orienting",
+			     str_endpoint(&ifp->local_endpoint, &eb),
+			     c->local->config->leftright);
 			matching_swaps_end = false;
 		}
 		if (that) {
 			endpoint_buf eb;
-			dbg("  interface endpoint %s matches %s(THAT); orienting and swapping",
-			    str_endpoint(&ifp->local_endpoint, &eb),
-			    c->remote->config->leftright);
+			ldbg(c->logger, "  interface endpoint %s matches %s(THAT); orienting and swapping",
+			     str_endpoint(&ifp->local_endpoint, &eb),
+			     c->remote->config->leftright);
 			matching_swaps_end = true;
 		}
 	}
@@ -290,9 +294,7 @@ bool orient(struct connection *c, struct logger *logger)
 		pexpect(c->interface == NULL); /* wasn't updated */
 		c->interface = iface_endpoint_addref(matching_ifp);
 		if (matching_swaps_end) {
-			dbg("  swapping ends so that %s(THAT) is oriented as (THIS)",
-			    c->remote->config->leftright);
-			swap_ends(c);
+			swap_ends(c, "existing interface");
 		}
 		return true;
 	}
@@ -306,8 +308,7 @@ bool orient(struct connection *c, struct logger *logger)
 	}
 
 	if (orient_new_iface_endpoint(c, &c->remote->host)) {
-		dbg("  swapping to that; new interface");
-		swap_ends(c);
+		swap_ends(c, "new interface");
 		return true;
 	}
 

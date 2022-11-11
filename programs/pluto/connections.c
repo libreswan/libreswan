@@ -3009,13 +3009,12 @@ struct connection *instantiate(struct connection *c,
 	update_host_ends_from_this_host_addr(&d->local->host, &d->remote->host);
 
 	update_spd_ends_from_host_ends(d);
+	pexpect(oriented(d)); /* can't instantiate an unoriented template? */
+	set_policy_prio(d); /* re-compute; may have changed */
 
 	d->spd->reqid = c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid;
 	dbg("%s d->spd->reqid=%d because c->sa_reqid=%d",
 	    d->name, d->spd->reqid, c->sa_reqid);
-
-	/* since both ends updated; presumably already oriented? */
-	set_policy_prio(d);
 
 	/* should still be true */
 #if 0

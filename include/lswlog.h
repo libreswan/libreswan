@@ -399,6 +399,11 @@ void DBG_dump(const char *label, const void *p, size_t len);
 	}
 #define DBG_dump_thing(LABEL, THING) DBG_dump(LABEL, &(THING), sizeof(THING))
 
+/* LDBG_*(logger, ...) are unconditional wrappers */
+#define LDBG_log(LOGGER, ...) llog(DEBUG_STREAM, LOGGER, __VA_ARGS__)
+#define LDBG_va_list(LOGGER, ...) llog_va_list(DEBUG_STREAM, LOGGER, __VA_ARGS__)
+#define LLOG_dump(LOGGER, ...) llog_dump(DEBUG_STREAM, LOGGER, __VA_ARGS__)
+
 /*
  * Code wrappers that cover up the details of allocating,
  * initializing, de-allocating (and possibly logging) a 'struct
