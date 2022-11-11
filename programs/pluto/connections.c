@@ -2603,8 +2603,6 @@ static bool extract_connection(const struct whack_message *wm,
 	/* non configurable */
 	c->ike_window = IKE_V2_OVERLAPPING_WINDOW_SIZE;
 
-	c->logger->debugging = lmod(LEMPTY, wm->debugging);
-
 	/*
 	 * We cannot have unlimited keyingtries for Opportunistic, or
 	 * else we gain infinite partial IKE SA's. But also, more than
@@ -2787,10 +2785,11 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 		return;
 	}
 
-	struct connection *c = alloc_connection(wm->name, HERE);
-	/* XXX: something better? */
-	fd_delref(&c->logger->object_whackfd);
-	c->logger->object_whackfd = fd_addref(logger->global_whackfd);
+	/* will inherit defaults */
+	lset_t debugging = lmod(LEMPTY, wm->debugging);
+	struct connection *c = alloc_connection(wm->name,
+						debugging, logger->global_whackfd,
+						HERE);
 
 	if (!extract_connection(wm, c)) {
 		/* already logged */

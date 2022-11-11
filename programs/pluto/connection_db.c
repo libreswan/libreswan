@@ -197,14 +197,16 @@ HASH_DB(connection,
  */
 
 static void finish_connection(struct connection *c, const char *name,
-			      co_serial_t serial_from, where_t where)
+			      co_serial_t serial_from,
+			      lset_t debugging, struct fd *whackfd,
+			      where_t where)
 {
 	/* announce it (before code below logs its address) */
 	dbg_alloc(name, c, where);
 
 	c->name = clone_str(name, __func__);
-	c->logger = alloc_logger(c, &logger_connection_vec, where);
-	/* logger is GO! */
+	c->logger = alloc_logger(c, &logger_connection_vec,
+				 debugging, whackfd, where);
 
 	init_db_connection(c);
 
@@ -222,7 +224,9 @@ static void finish_connection(struct connection *c, const char *name,
 	c->serial_from = serial_from;
 }
 
-struct connection *alloc_connection(const char *name, where_t where)
+struct connection *alloc_connection(const char *name,
+				    lset_t debugging, struct fd *whackfd,
+				    where_t where)
 {
 	struct connection *c = alloc_thing(struct connection, where->func);
 
@@ -268,7 +272,8 @@ struct connection *alloc_connection(const char *name, where_t where)
 		end->child.config = &end_config->child;
 	}
 
-	finish_connection(c, name, 0/*no template*/, where);
+	finish_connection(c, name, 0/*no template*/,
+			  debugging, whackfd, where);
 	return c;
 }
 
@@ -363,7 +368,9 @@ struct connection *clone_connection(const char *name, struct connection *t, wher
 	c->local = &c->end[t->local->config->index];
 	c->remote = &c->end[t->remote->config->index];
 
-	finish_connection(c, name, t->serialno, where);
+	finish_connection(c, name, t->serialno,
+			  t->logger->debugging, t->logger->object_whackfd,
+			  where);
 	return c;
 }
 

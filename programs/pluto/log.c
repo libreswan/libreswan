@@ -479,12 +479,16 @@ static const struct logger_object_vec logger_string_suppress_vec = {
 	.free_object = true,
 };
 
-struct logger *alloc_logger(void *object, const struct logger_object_vec *vec, where_t where)
+struct logger *alloc_logger(void *object, const struct logger_object_vec *vec,
+			    lset_t debugging, struct fd *whackfd,
+			    where_t where)
 {
 	struct logger logger = {
 		.object = object,
 		.object_vec = vec,
 		.where = where,
+		.debugging = debugging,
+		.object_whackfd = fd_addref(whackfd),
 	};
 	struct logger *l = clone_thing(logger, "logger");
 	dbg_alloc("alloc logger", l, where);

@@ -76,7 +76,9 @@ struct logger *string_logger(struct fd *whackfd, where_t where, const char *fmt,
 	PRINTF_LIKE(3) MUST_USE_RESULT; /* must free */
 
 struct logger logger_from(struct logger *outer, const ip_endpoint *endpoint); /*on-stack*/
-struct logger *alloc_logger(void *object, const struct logger_object_vec *vec, where_t where);
+struct logger *alloc_logger(void *object, const struct logger_object_vec *vec,
+			    lset_t debugging, struct fd *whackfd,
+			    where_t where);
 struct logger *clone_logger(const struct logger *stack, where_t where);
 void free_logger(struct logger **logp, where_t where);
 
