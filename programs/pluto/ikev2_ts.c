@@ -148,27 +148,27 @@ static void traffic_selector_to_end(const struct narrowed_traffic_selector *n,
 	end->has_client = !selector_eq_address(end->client, end->host->addr);
 }
 
-/* rewrite me with address_as_{chunk,shunk}()? */
-/* For now, note the struct traffic_selector can contain
- * two selectors - an IPvX range and a sec_label
- */
-struct traffic_selector traffic_selector_from_end(const struct spd_end *e, const char *what)
+static struct traffic_selector traffic_selector_from_raw(ip_selector selector,
+							 shunk_t sec_label,
+							 const struct child_end_config *config,
+							 const char *name)
 {
 	struct traffic_selector ts = {
 		/*
 		 * Setting ts_type IKEv2_TS_FC_ADDR_RANGE (RFC-4595)
 		 * not yet supported.
 		 */
-		.ts_type = selector_type(&e->client)->ikev2_ts_addr_range_type,
+		.ts_type = selector_type(&selector)->ikev2_ts_addr_range_type,
 		/* subnet => range */
-		.net = selector_range(e->client),
-		.ipprotoid = e->client.ipproto,
+		.net = selector_range(selector),
+		.ipprotoid = selector.ipproto,
 		/*
 		 * Use the 'instance/narrowed' label from the ACQUIRE
 		 * and stored in the connection instance's sends, if
 		 * present.
 		 */
-		.sec_label = HUNK_AS_SHUNK(e->sec_label),
+		.sec_label = sec_label,
+		.name = name,
 	};
 
 	/*
@@ -179,16 +179,22 @@ struct traffic_selector traffic_selector_from_end(const struct spd_end *e, const
 	 * ICMPv6(58) we only support providing Type, not Code, eg
 	 * protoport=1/1
 	 */
-	if (e->client.hport == 0 || e->config->child.protoport.has_port_wildcard) {
+	if (selector.hport == 0 || config->protoport.has_port_wildcard) {
 		ts.startport = 0;
 		ts.endport = 65535;
 	} else {
-		ts.startport = e->client.hport;
-		ts.endport = e->client.hport;
+		ts.startport = selector.hport;
+		ts.endport = selector.hport;
 	}
 
-	dbg_v2_ts(&ts, "%s TS", what);
+	dbg_v2_ts(&ts, "%s", ts.name);
 	return ts;
+}
+
+struct traffic_selector traffic_selector_from_end(const struct spd_end *e, const char *ts_name)
+{
+	return traffic_selector_from_raw(e->client, HUNK_AS_SHUNK(e->sec_label),
+					 &e->config->child, ts_name);
 }
 
 /*
@@ -199,89 +205,58 @@ struct traffic_selector traffic_selector_from_end(const struct spd_end *e, const
  * optional, the IP range is mandatory.
  */
 
-static bool emit_v2TS(struct pbs_out *outpbs,
-		      const struct_desc *ts_desc,
+static bool emit_v2TS(struct pbs_out *ts_pbs,
 		      const struct traffic_selector *ts)
 {
-	struct pbs_out ts_pbs;
-	bool with_label = (ts->sec_label.len > 0);
+	struct ikev2_ts_header ts_range_header = {
+		.isath_ipprotoid = ts->ipprotoid,
+		.isath_type = ts->ts_type,
+	};
 
-	if (ts->ts_type != IKEv2_TS_IPV4_ADDR_RANGE &&
-	    ts->ts_type != IKEv2_TS_IPV6_ADDR_RANGE) {
+	pb_stream ts_range_pbs;
+	if (!pbs_out_struct(ts_pbs, &ikev2_ts_header_desc,
+			    &ts_range_header, sizeof(ts_range_header),
+			    &ts_range_pbs)) {
+		/* already logged */
 		return false;
 	}
 
-	{
-		struct ikev2_ts its = {
-			.isat_critical = ISAKMP_PAYLOAD_NONCRITICAL,
-			/*
-			 * If there is a security label in the Traffic
-			 * Selector, then we must send a TS_SECLABEL
-			 * substructure as part of the Traffic
-			 * Selector (TS) Payload.
-			 *
-			 * That means the TS Payload contains two TS
-			 * substructures:
-			 *  - One for the address/port range
-			 *  - One for the TS_SECLABEL
-			 */
-			.isat_num = with_label ? 2 : 1,
-		};
+	struct ikev2_ts_portrange ts_ports = {
+		.isatpr_startport = ts->startport,
+		.isatpr_endport = ts->endport
+	};
 
-		if (!out_struct(&its, ts_desc, outpbs, &ts_pbs))
-			return false;
+	if (!pbs_out_struct(&ts_range_pbs, &ikev2_ts_portrange_desc,
+			    &ts_ports, sizeof(ts_ports), NULL)) {
+		/* already logged */
+		return false;
 	}
 
-	{
-		pb_stream ts_range_pbs;
-		struct ikev2_ts_header ts_header = {
-			.isath_ipprotoid = ts->ipprotoid
-		};
-
-		switch (ts->ts_type) {
-		case IKEv2_TS_IPV4_ADDR_RANGE:
-			ts_header.isath_type = IKEv2_TS_IPV4_ADDR_RANGE;
-			break;
-		case IKEv2_TS_IPV6_ADDR_RANGE:
-			ts_header.isath_type = IKEv2_TS_IPV6_ADDR_RANGE;
-			break;
-		}
-
-		if (!out_struct(&ts_header, &ikev2_ts_header_desc, &ts_pbs, &ts_range_pbs))
-			return false;
-
-
-		struct ikev2_ts_portrange ts_ports = {
-			.isatpr_startport = ts->startport,
-			.isatpr_endport = ts->endport
-		};
-
-		if (!out_struct(&ts_ports, &ikev2_ts_portrange_desc, &ts_range_pbs, NULL))
-			return false;
-
-		if (!pbs_out_address(&ts_range_pbs, range_start(ts->net), "IP start")) {
-			/* already logged */
-			return false;
-		}
-		if (!pbs_out_address(&ts_range_pbs, range_end(ts->net), "IP end")) {
-			/* already logged */
-			return false;
-		}
-		close_output_pbs(&ts_range_pbs);
+	if (!pbs_out_address(&ts_range_pbs, range_start(ts->net), "IP start")) {
+		/* already logged */
+		return false;
 	}
+	if (!pbs_out_address(&ts_range_pbs, range_end(ts->net), "IP end")) {
+		/* already logged */
+		return false;
+	}
+	close_output_pbs(&ts_range_pbs);
 
 	/*
 	 * Emit the security label, if known.
 	 */
-	if (with_label) {
+	if (ts->sec_label.len > 0) {
 
-		struct ikev2_ts_header ts_header = {
+		struct ikev2_ts_header ts_sec_label_header = {
 			.isath_type = IKEv2_TS_SECLABEL,
 			.isath_ipprotoid = 0 /* really RESERVED, not iprotoid */
 		};
 		/* Output the header of the TS_SECLABEL substructure payload. */
 		struct pbs_out ts_label_pbs;
-		if (!out_struct(&ts_header, &ikev2_ts_header_desc, &ts_pbs, &ts_label_pbs)) {
+		if (!pbs_out_struct(ts_pbs, &ikev2_ts_header_desc,
+				    &ts_sec_label_header, sizeof(ts_sec_label_header),
+				    &ts_label_pbs)) {
+			/* already logged */
 			return false;
 		}
 
@@ -304,6 +279,45 @@ static bool emit_v2TS(struct pbs_out *outpbs,
 		close_output_pbs(&ts_label_pbs);
 	}
 
+	return true;
+}
+
+static bool emit_v2TS_payload(struct pbs_out *outpbs,
+			      const struct_desc *ts_desc,
+			      const struct traffic_selector *ts)
+{
+	struct pbs_out ts_pbs;
+	bool with_label = (ts->sec_label.len > 0);
+
+	if (ts->ts_type != IKEv2_TS_IPV4_ADDR_RANGE &&
+	    ts->ts_type != IKEv2_TS_IPV6_ADDR_RANGE) {
+		return false;
+	}
+
+	struct ikev2_ts its = {
+		.isat_critical = ISAKMP_PAYLOAD_NONCRITICAL,
+		/*
+		 * If there is a security label in the Traffic
+		 * Selector, then we must send a TS_SECLABEL
+		 * substructure as part of the Traffic
+		 * Selector (TS) Payload.
+		 *
+		 * That means the TS Payload contains two TS
+		 * substructures:
+		 *  - One for the address/port range
+		 *  - One for the TS_SECLABEL
+		 */
+		.isat_num = with_label ? 2 : 1,
+	};
+
+	if (!out_struct(&its, ts_desc, outpbs, &ts_pbs)) {
+		return false;
+	}
+
+	if (!emit_v2TS(&ts_pbs, ts)) {
+		return false;
+	}
+
 	close_output_pbs(&ts_pbs);
 	return true;
 }
@@ -322,10 +336,11 @@ static struct traffic_selector impair_ts_to_supernet(const struct traffic_select
 {
 	struct traffic_selector ts_ret = ts;
 
-	if (ts_ret.ts_type == IKEv2_TS_IPV4_ADDR_RANGE)
+	if (ts_ret.ts_type == IKEv2_TS_IPV4_ADDR_RANGE) {
 		ts_ret.net = range_from_subnet(ipv4_info.subnet.all);
-	else if (ts_ret.ts_type == IKEv2_TS_IPV6_ADDR_RANGE)
+	} else if (ts_ret.ts_type == IKEv2_TS_IPV6_ADDR_RANGE) {
 		ts_ret.net = range_from_subnet(ipv6_info.subnet.all);
+	}
 
 	ts_ret.net.is_subnet = true;
 
@@ -364,11 +379,11 @@ bool emit_v2TS_request_payloads(struct pbs_out *outpbs, const struct child_sa *c
 			str_range(&ts_r.net, &tsr_buf));
 	}
 
-	if (!emit_v2TS(outpbs, &ikev2_ts_i_desc, &ts_i)) {
+	if (!emit_v2TS_payload(outpbs, &ikev2_ts_i_desc, &ts_i)) {
 		return false;
 	}
 
-	if (!emit_v2TS(outpbs, &ikev2_ts_r_desc, &ts_r)) {
+	if (!emit_v2TS_payload(outpbs, &ikev2_ts_r_desc, &ts_r)) {
 		return false;
 	}
 
@@ -381,8 +396,8 @@ bool emit_v2TS_response_payloads(struct pbs_out *outpbs, const struct child_sa *
 	const struct spd_route *spd = child->sa.st_connection->spd;
 
 	passert(child->sa.st_sa_role == SA_RESPONDER);
-	ts_i = traffic_selector_from_end(spd->remote, "that TSi");
-	ts_r = traffic_selector_from_end(spd->local, "this TSr");
+	ts_i = traffic_selector_from_end(spd->remote, "remote TSi");
+	ts_r = traffic_selector_from_end(spd->local, "local TSr");
 	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
 	    impair.rekey_respond_subnet) {
 		ts_i = impair_ts_to_subnet(ts_i);
@@ -403,11 +418,11 @@ bool emit_v2TS_response_payloads(struct pbs_out *outpbs, const struct child_sa *
 			str_range(&ts_r.net, &tsr_buf));
 	}
 
-	if (!emit_v2TS(outpbs, &ikev2_ts_i_desc, &ts_i)) {
+	if (!emit_v2TS_payload(outpbs, &ikev2_ts_i_desc, &ts_i)) {
 		return false;
 	}
 
-	if (!emit_v2TS(outpbs, &ikev2_ts_r_desc, &ts_r)) {
+	if (!emit_v2TS_payload(outpbs, &ikev2_ts_r_desc, &ts_r)) {
 		return false;
 	}
 

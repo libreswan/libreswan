@@ -36,6 +36,7 @@ struct traffic_selector {
 	uint16_t startport;
 	uint16_t endport;
 	ip_range net;	/* for now, always happens to be a CIDR */
+	const char *name; /*static*/
 	/*
 	 * shares memory with any of:
 	 * - the struct pbs_in's buffer
