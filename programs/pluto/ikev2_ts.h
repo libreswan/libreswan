@@ -56,7 +56,8 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 
 struct traffic_selector traffic_selector_from_end(const struct spd_end *e, const char *what);
 
-bool emit_v2TS_payloads(struct pbs_out *outpbs, const struct child_sa *cst);
+bool emit_v2TS_response_payloads(struct pbs_out *outpbs, const struct child_sa *cst);
+bool emit_v2TS_request_payloads(struct pbs_out *outpbs, const struct child_sa *cst);
 
 bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md);
 

@@ -334,62 +334,73 @@ static struct traffic_selector impair_ts_to_supernet(const struct traffic_select
 	return ts_ret;
 }
 
-bool emit_v2TS_payloads(struct pbs_out *outpbs, const struct child_sa *child)
+bool emit_v2TS_request_payloads(struct pbs_out *outpbs, const struct child_sa *child)
 {
 	struct traffic_selector ts_i, ts_r;
 	const struct spd_route *spd = child->sa.st_connection->spd;
 
-	switch (child->sa.st_sa_role) {
-	case SA_INITIATOR:
-		ts_i = traffic_selector_from_end(spd->local, "this TSi");
-		ts_r = traffic_selector_from_end(spd->remote, "that TSr");
-		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
-		    impair.rekey_initiate_supernet) {
-			ts_i = ts_r = impair_ts_to_supernet(ts_i);
-			range_buf tsi_buf;
-			range_buf tsr_buf;
-			dbg("rekey-initiate-supernet TSi and TSr set to %s %s",
-			    str_range(&ts_i.net, &tsi_buf),
-			    str_range(&ts_r.net, &tsr_buf));
+	passert(child->sa.st_sa_role == SA_INITIATOR);
 
-		} else if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
-			   impair.rekey_initiate_subnet) {
-			ts_i = impair_ts_to_subnet(ts_i);
-			ts_r = impair_ts_to_subnet(ts_r);
-			range_buf tsi_buf;
-			range_buf tsr_buf;
-			dbg("rekey-initiate-subnet TSi and TSr set to %s %s",
-			    str_range(&ts_i.net, &tsi_buf),
-			    str_range(&ts_r.net, &tsr_buf));
+	ts_i = traffic_selector_from_end(spd->local, "this TSi");
+	ts_r = traffic_selector_from_end(spd->remote, "that TSr");
 
-		}
+	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
+	    impair.rekey_initiate_supernet) {
+		ts_i = ts_r = impair_ts_to_supernet(ts_i);
+		range_buf tsi_buf;
+		range_buf tsr_buf;
+		llog_sa(RC_LOG, child, "IMPAIR: rekey-initiate-supernet TSi and TSr set to %s %s",
+			str_range(&ts_i.net, &tsi_buf),
+			str_range(&ts_r.net, &tsr_buf));
+	}
+	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
+	    impair.rekey_initiate_subnet) {
+		ts_i = impair_ts_to_subnet(ts_i);
+		ts_r = impair_ts_to_subnet(ts_r);
+		range_buf tsi_buf;
+		range_buf tsr_buf;
+		llog_sa(RC_LOG, child, "IMPAIR: rekey-initiate-subnet TSi and TSr set to %s %s",
+			str_range(&ts_i.net, &tsi_buf),
+			str_range(&ts_r.net, &tsr_buf));
+	}
 
-		break;
-	case SA_RESPONDER:
-		ts_i = traffic_selector_from_end(spd->remote, "that TSi");
-		ts_r = traffic_selector_from_end(spd->local, "this TSr");
-		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
-		    impair.rekey_respond_subnet) {
-			ts_i = impair_ts_to_subnet(ts_i);
-			ts_r = impair_ts_to_subnet(ts_r);
-			range_buf tsi_buf;
-			range_buf tsr_buf;
-			dbg("rekey-respond-subnet TSi and TSr set to %s %s",
-			    str_range(&ts_i.net, &tsi_buf),
-			    str_range(&ts_r.net, &tsr_buf));
-		}
-		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
-				impair.rekey_respond_supernet) {
-			ts_i = ts_r = impair_ts_to_supernet(ts_i);
-			range_buf tsi_buf;
-			range_buf tsr_buf;
-			dbg("rekey-respond-supernet TSi and TSr set to %s %s",
-			    str_range(&ts_i.net, &tsi_buf),
-			    str_range(&ts_r.net, &tsr_buf));
-		}
-		break;
-	default:
-		bad_case(child->sa.st_sa_role);
+	if (!emit_v2TS(outpbs, &ikev2_ts_i_desc, &ts_i)) {
+		return false;
+	}
+
+	if (!emit_v2TS(outpbs, &ikev2_ts_r_desc, &ts_r)) {
+		return false;
+	}
+
+	return true;
+}
+
+bool emit_v2TS_response_payloads(struct pbs_out *outpbs, const struct child_sa *child)
+{
+	struct traffic_selector ts_i, ts_r;
+	const struct spd_route *spd = child->sa.st_connection->spd;
+
+	passert(child->sa.st_sa_role == SA_RESPONDER);
+	ts_i = traffic_selector_from_end(spd->remote, "that TSi");
+	ts_r = traffic_selector_from_end(spd->local, "this TSr");
+	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
+	    impair.rekey_respond_subnet) {
+		ts_i = impair_ts_to_subnet(ts_i);
+		ts_r = impair_ts_to_subnet(ts_r);
+		range_buf tsi_buf;
+		range_buf tsr_buf;
+		llog_sa(RC_LOG, child, "IMPAIR: rekey-respond-subnet TSi and TSr set to %s %s",
+			str_range(&ts_i.net, &tsi_buf),
+			str_range(&ts_r.net, &tsr_buf));
+	}
+	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
+	    impair.rekey_respond_supernet) {
+		ts_i = ts_r = impair_ts_to_supernet(ts_i);
+		range_buf tsi_buf;
+		range_buf tsr_buf;
+		llog_sa(RC_LOG, child, "IMPAIR: rekey-respond-supernet TSi and TSr set to %s %s",
+			str_range(&ts_i.net, &tsi_buf),
+			str_range(&ts_r.net, &tsr_buf));
 	}
 
 	if (!emit_v2TS(outpbs, &ikev2_ts_i_desc, &ts_i)) {
