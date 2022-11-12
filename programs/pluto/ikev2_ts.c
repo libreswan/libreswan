@@ -205,8 +205,8 @@ struct traffic_selector traffic_selector_from_end(const struct spd_end *e, const
  * optional, the IP range is mandatory.
  */
 
-static bool emit_v2TS(struct pbs_out *ts_pbs,
-		      const struct traffic_selector *ts)
+static bool emit_v2TS_address_range(struct pbs_out *ts_pbs,
+				    const struct traffic_selector *ts)
 {
 	struct ikev2_ts_header ts_range_header = {
 		.isath_ipprotoid = ts->ipprotoid,
@@ -241,44 +241,41 @@ static bool emit_v2TS(struct pbs_out *ts_pbs,
 		return false;
 	}
 	close_output_pbs(&ts_range_pbs);
+	return true;
+}
 
-	/*
-	 * Emit the security label, if known.
-	 */
-	if (ts->sec_label.len > 0) {
+static bool emit_v2TS_sec_label(struct pbs_out *ts_pbs, shunk_t sec_label)
+{
+	struct ikev2_ts_header ts_sec_label_header = {
+		.isath_type = IKEv2_TS_SECLABEL,
+		.isath_ipprotoid = 0 /* really RESERVED, not iprotoid */
+	};
 
-		struct ikev2_ts_header ts_sec_label_header = {
-			.isath_type = IKEv2_TS_SECLABEL,
-			.isath_ipprotoid = 0 /* really RESERVED, not iprotoid */
-		};
-		/* Output the header of the TS_SECLABEL substructure payload. */
-		struct pbs_out ts_label_pbs;
-		if (!pbs_out_struct(ts_pbs, &ikev2_ts_header_desc,
-				    &ts_sec_label_header, sizeof(ts_sec_label_header),
-				    &ts_label_pbs)) {
-			/* already logged */
-			return false;
-		}
-
-		/*
-		 * Output the security label value of the TS_SECLABEL
-		 * substructure payload.
-		 *
-		 * If we got ACQUIRE, or received a subset TS_LABEL,
-		 * use that one - it is subset of connection policy
-		 * one
-		 */
-
-		dbg("emitting sec_label="PRI_SHUNK, pri_shunk(ts->sec_label));
-
-		if (!pbs_out_hunk(&ts_label_pbs, ts->sec_label, "output Security label")) {
-			/* already logged */
-			return false;
-		}
-
-		close_output_pbs(&ts_label_pbs);
+	/* Output the header of the TS_SECLABEL substructure payload. */
+	struct pbs_out ts_label_pbs;
+	if (!pbs_out_struct(ts_pbs, &ikev2_ts_header_desc,
+			    &ts_sec_label_header, sizeof(ts_sec_label_header),
+			    &ts_label_pbs)) {
+		/* already logged */
+		return false;
 	}
 
+	/*
+	 * Output the security label value of the TS_SECLABEL
+	 * substructure payload.
+	 *
+	 * If we got ACQUIRE, or received a subset TS_LABEL,
+	 * use that one - it is subset of connection policy
+	 * one
+	 */
+
+	dbg("emitting sec_label="PRI_SHUNK, pri_shunk(sec_label));
+	if (!pbs_out_hunk(&ts_label_pbs, sec_label, "output Security label")) {
+		/* already logged */
+		return false;
+	}
+
+	close_output_pbs(&ts_label_pbs);
 	return true;
 }
 
@@ -286,7 +283,6 @@ static bool emit_v2TS_payload(struct pbs_out *outpbs,
 			      const struct_desc *ts_desc,
 			      const struct traffic_selector *ts)
 {
-	struct pbs_out ts_pbs;
 	bool with_label = (ts->sec_label.len > 0);
 
 	if (ts->ts_type != IKEv2_TS_IPV4_ADDR_RANGE &&
@@ -310,11 +306,17 @@ static bool emit_v2TS_payload(struct pbs_out *outpbs,
 		.isat_num = with_label ? 2 : 1,
 	};
 
+	struct pbs_out ts_pbs;
 	if (!out_struct(&its, ts_desc, outpbs, &ts_pbs)) {
 		return false;
 	}
 
-	if (!emit_v2TS(&ts_pbs, ts)) {
+	if (!emit_v2TS_address_range(&ts_pbs, ts)) {
+		return false;
+	}
+
+	if (ts->sec_label.len > 0 &&
+	    !emit_v2TS_sec_label(&ts_pbs, ts->sec_label)) {
 		return false;
 	}
 
@@ -349,41 +351,121 @@ static struct traffic_selector impair_ts_to_supernet(const struct traffic_select
 	return ts_ret;
 }
 
-bool emit_v2TS_request_payloads(struct pbs_out *outpbs, const struct child_sa *child)
+static bool emit_v2TS_request_selector(struct pbs_out *out,
+				       const struct child_sa *child,
+				       shunk_t sec_label,
+				       const struct child_end_config *config,
+				       ip_selector selector,
+				       const char *ts_name)
 {
-	struct traffic_selector ts_i, ts_r;
-	const struct spd_route *spd = child->sa.st_connection->spd;
-
-	passert(child->sa.st_sa_role == SA_INITIATOR);
-
-	ts_i = traffic_selector_from_end(spd->local, "this TSi");
-	ts_r = traffic_selector_from_end(spd->remote, "that TSr");
+	struct traffic_selector ts =
+		traffic_selector_from_raw(selector, sec_label, config, ts_name);
 
 	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
 	    impair.rekey_initiate_supernet) {
-		ts_i = ts_r = impair_ts_to_supernet(ts_i);
-		range_buf tsi_buf;
-		range_buf tsr_buf;
-		llog_sa(RC_LOG, child, "IMPAIR: rekey-initiate-supernet TSi and TSr set to %s %s",
-			str_range(&ts_i.net, &tsi_buf),
-			str_range(&ts_r.net, &tsr_buf));
-	}
-	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
-	    impair.rekey_initiate_subnet) {
-		ts_i = impair_ts_to_subnet(ts_i);
-		ts_r = impair_ts_to_subnet(ts_r);
-		range_buf tsi_buf;
-		range_buf tsr_buf;
-		llog_sa(RC_LOG, child, "IMPAIR: rekey-initiate-subnet TSi and TSr set to %s %s",
-			str_range(&ts_i.net, &tsi_buf),
-			str_range(&ts_r.net, &tsr_buf));
+		ts = impair_ts_to_supernet(ts);
+		range_buf ts_buf;
+		llog_sa(RC_LOG, child,
+			"IMPAIR: rekey-initiate-supernet %s set to %s",
+			ts.name, str_range(&ts.net, &ts_buf));
+	} else if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
+		   impair.rekey_initiate_subnet) {
+		ts = impair_ts_to_subnet(ts);
+		range_buf ts_buf;
+		llog_sa(RC_LOG, child,
+			"IMPAIR: rekey-initiate-subnet %s set to %s",
+			ts.name, str_range(&ts.net, &ts_buf));
+
 	}
 
-	if (!emit_v2TS_payload(outpbs, &ikev2_ts_i_desc, &ts_i)) {
+	if (!emit_v2TS_address_range(out, &ts)) {
 		return false;
 	}
 
-	if (!emit_v2TS_payload(outpbs, &ikev2_ts_r_desc, &ts_r)) {
+	if (sec_label.len > 0 &&
+	    !emit_v2TS_sec_label(out, sec_label)) {
+		return false;
+	}
+
+	return true;
+}
+
+static bool emit_v2TS_request_end_payloads(struct pbs_out *out,
+					   const struct child_sa *child,
+					   enum left_right end,
+					   const struct_desc *ts_desc,
+					   const char *ts_name)
+{
+	struct connection *c = child->sa.st_connection;
+	const struct child_end_config *config = c->end[end].child.config;
+	const ip_selector *selectors = config->selectors.list;
+	const struct spd_end *spde = &c->spd->end[end];
+	shunk_t sec_label = HUNK_AS_SHUNK(c->spd->end[end].sec_label);
+	unsigned nr_ts = 0;
+	if (spde->sec_label.len > 0 || selectors == NULL) {
+		nr_ts++;
+		if (sec_label.len > 0) {
+			nr_ts++;
+		}
+	} else {
+		for (const ip_selector *s = selectors; s->is_set; s++) {
+			nr_ts++;
+		}
+	}
+
+	struct ikev2_ts its = {
+		.isat_critical = ISAKMP_PAYLOAD_NONCRITICAL,
+		/*
+		 * If there is a security label in the Traffic
+		 * Selector, then we must send a TS_SECLABEL
+		 * substructure as part of the Traffic
+		 * Selector (TS) Payload.
+		 *
+		 * That means the TS Payload contains two TS
+		 * substructures:
+		 *  - One for the address/port range
+		 *  - One for the TS_SECLABEL
+		 */
+		.isat_num = nr_ts,
+	};
+	struct pbs_out ts_pbs;
+	if (!out_struct(&its, ts_desc, out, &ts_pbs)) {
+		return false;
+	}
+
+	if (spde->sec_label.len > 0 || selectors == NULL) {
+		if (!emit_v2TS_request_selector(&ts_pbs, child,
+						HUNK_AS_SHUNK(c->spd->end[end].sec_label),
+						config,
+						c->spd->end[end].client, ts_name)) {
+			return false;
+		}
+	} else {
+		for (const ip_selector *s = selectors; s->is_set; s++) {
+			if (!emit_v2TS_request_selector(&ts_pbs, child,
+							null_shunk, config,
+							*s, ts_name)) {
+				return false;
+			}
+		}
+	}
+
+	close_output_pbs(&ts_pbs);
+	return true;
+}
+
+bool emit_v2TS_request_payloads(struct pbs_out *out, const struct child_sa *child)
+{
+	pexpect(child->sa.st_sa_role == SA_INITIATOR);
+	struct connection *c = child->sa.st_connection;
+
+	if (!emit_v2TS_request_end_payloads(out, child, c->local->config->index,
+					    &ikev2_ts_i_desc, "local TSi")) {
+		return false;
+	}
+
+	if (!emit_v2TS_request_end_payloads(out, child, c->remote->config->index,
+					    &ikev2_ts_r_desc, "remote TSr")) {
 		return false;
 	}
 
