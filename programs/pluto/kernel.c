@@ -1106,13 +1106,13 @@ static enum routability note_nearconflict(struct connection *outside,	/* CK_PERM
 static enum routability could_route(struct connection *c, struct logger *logger)
 {
 	esb_buf b;
-	dbg("kernel: could_route called for %s; kind=%s that.has_client=%s oppo=%s this.host_port=%u sec_label="PRI_SHUNK,
-	    c->name,
-	    enum_show(&connection_kind_names, c->kind, &b),
-	    bool_str(c->spd->remote->has_client),
-	    bool_str(c->policy & POLICY_OPPORTUNISTIC),
-	    c->spd->local->host->port,
-	    pri_shunk(c->config->sec_label));
+	ldbg(c->logger,
+	     "kernel: could_route called; kind=%s remote %s.has_client=%s oppo=%s this.host_port=%u sec_label="PRI_SHUNK,
+	     enum_show(&connection_kind_names, c->kind, &b),
+	     c->spd->remote->config->leftright, bool_str(c->spd->remote->has_client),
+	     bool_str(c->policy & POLICY_OPPORTUNISTIC),
+	     c->spd->local->host->port,
+	     pri_shunk(c->config->sec_label));
 
 	/* it makes no sense to route a connection that is ISAKMP-only */
 	if (!NEVER_NEGOTIATE(c->policy) && !HAS_IPSEC_POLICY(c->policy)) {
@@ -1140,12 +1140,13 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 		if (c->policy & POLICY_OPPORTUNISTIC) {
 			ldbg(logger, "template-route-possible: opportunistic");
 		} else if (c->config->sec_label.len > 0) {
-			ldbg(logger, "template-route-possible: sec-label");
+			ldbg(logger, "template-route-possible: has sec-label");
 		} else if (c->local->config->child.virt != NULL) {
-			ldbg(logger, "template-route-possible: virtual");
+			ldbg(logger, "template-route-possible: local is virtual");
 		} else if (c->spd->remote->has_client) {
 			/* see extract_child_end() */
-			ldbg(logger, "template-route-possible: remote has client");
+			ldbg(logger, "template-route-possible: remote %s.spd.has_client==true",
+			     c->spd->remote->config->leftright);
 		} else {
 			policy_buf pb;
 			llog(RC_ROUTE, logger,

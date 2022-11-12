@@ -494,24 +494,40 @@ void update_spd_ends_from_host_ends(struct connection *c)
 		address_buf hab;
 		ldbg(c->logger, "updating %s.spd client(selector) from %s.host.addr %s",
 		     leftright, leftright, str_address(&host->addr, &hab));
+
 		if (!address_is_specified(host->addr)) {
 			ldbg(c->logger, "  %s.host.addr is unspecified (unset, ::, or 0.0.0.0); skipping",
 			     leftright);
 			continue;
 		}
-		if (c->end[end].child.config->has_client) {
-			ldbg(c->logger, "  %s.spd already has a client(selector); skipping",
+
+		if (c->end[end].child.config->selectors.list != NULL) {
+			ldbg(c->logger, "  %s.spd already has a hard-wired selectors; skipping",
 			     leftright);
 			continue;
 		}
 
+		if (c->end[end].child.config->has_client) {
+			ldbg(c->logger, "  %s.spd.config.has_client; good to know",
+			     leftright);
+		}
+
 		for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
 			struct spd_end *spde = &spd->end[end];
-			/* per-above */
-			if (!pexpect(!spde->has_client) ||
-			    !pexpect(address_is_specified(host->addr))) {
+
+			if (spde->has_client) {
+				pexpect(c->policy & POLICY_OPPORTUNISTIC);
+				pexpect(c->end[end].child.config->has_client);
+				ldbg(c->logger, "  %s.spd.has_client but no selectors; skipping magic",
+				     leftright);
 				continue;
 			}
+
+			/* per-above */
+			if (!pexpect(address_is_specified(host->addr))) {
+				continue;
+			}
+
 			/*
 			 * Default child selector (client) to subnet
 			 * containing only self based on host.
@@ -1347,9 +1363,10 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 
 static diag_t extract_child_end(const struct whack_message *wm,
 				const struct whack_end *src,
-				const struct ip_info *host_afi UNUSED,
-				struct child_end_config *child_config)
+				struct child_end_config *child_config,
+				struct logger *logger)
 {
+	const char *leftright = src->leftright;
 	child_config->sourceip = src->sourceip;
 	child_config->host_vtiip = src->host_vtiip;
 	child_config->ifaceip = src->ifaceip;
@@ -1383,14 +1400,14 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		 *   Of course if NARROWING is allowed, this can be
 		 *   refined regardless of .has_client.
 		 */
-		dbg("%s %s child selectors from %subnet + protoport",
-		    wm->name, src->leftright, src->leftright);
 		ip_subnet subnet;
 		err_t e = ttosubnet_num_zero(shunk1(src->client), NULL, &subnet);
 		if (e != NULL) {
 			return diag("%ssubnet=%s invalid, %s",
-				    src->leftright, src->client, e);
+				    leftright, src->client, e);
 		}
+		ldbg(logger, "%s child selectors from %ssubnet + %sprotoport; %s.config.has_client=true",
+		     leftright, leftright, leftright, leftright);
 		child_config->has_client = true;
 		child_config->selectors.field = "subnet";
 		child_config->selectors.string = clone_str(src->client, "client");
@@ -1404,8 +1421,8 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		 * Of course if NARROWING is allowed, this can be
 		 * refined regardless of .has_client.
 		 */
-		dbg("%s %s child selectors from %subnet (selector)",
-		    wm->name, src->leftright, src->leftright);
+		ldbg(logger, "%s child selectors from %ssubnet (selector); %s.config.has_client=true",
+		     leftright, leftright, leftright);
 		passert(wm->ike_version == IKEv2);
 		child_config->has_client = true;
 		child_config->selectors.field = "subnet";
@@ -1413,7 +1430,7 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		diag_t d = ttoselector_num_list(shunk1(src->client), ", ", NULL, &child_config->selectors.list);
 		if (d != NULL) {
 			return diag_diag(&d, "%ssubnet=%s invalid, ",
-					 src->leftright, src->client);
+					 leftright, src->client);
 		}
 	} else if (src->sourceip.is_set) {
 		/*
@@ -1437,8 +1454,8 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		 */
 		address_buf sb;
 		const char *s = str_address(&src->sourceip, &sb);
-		dbg("%s %s child selectors from %ssourceip=%s",
-		    wm->name, src->leftright, src->leftright, s);
+		ldbg(logger, "%s child selectors from %ssourceip=%s; %s.config.has_client=true",
+		     leftright, leftright, s, leftright);
 		child_config->has_client = true;
 		child_config->selectors.field = "sourceip";
 		child_config->selectors.string = clone_str(s, "sourceip");
@@ -1474,11 +1491,15 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		 *   Of course if NARROWING is allowed, this can be
 		 *   refined regardless of .has_client.
 		 */
-		dbg("%s %s child selectors from %sprotoport + host AFI",
-		    wm->name, src->leftright, src->leftright);
+		ldbg(logger, "%s child selectors from %sprotoport + host AFI; config.has_client=false",
+		     leftright, leftright);
+		pexpect(child_config->has_client == false);
 	} else if ((wm->policy & POLICY_OPPORTUNISTIC) &&
 		   !address_is_specified(src->host_addr)) {
 		/*
+		 * This heuristic is trying to guess the peer that
+		 * won't orient?!?
+		 *
 		 * The check for unspecified HOST_ADDR is pretty weak
 		 * (it comes from older code).  For instance, the
 		 * HOST_ADDR could be unspecified because
@@ -1500,12 +1521,12 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		 *   Of course if NARROWING is allowed, this can be
 		 *   refined regardless of .has_client.
 		 */
-		dbg("%s %s child is opportunistic client as host is unspecified",
-		    wm->name, src->leftright);
+		ldbg(logger, "%s child is opportunistic client as host is unspecified; config.has_client=true",
+		     leftright);
 		child_config->has_client = true;
 	} else {
-		dbg("%s %s child selectors unknown; probably derived from host?!?",
-		    wm->name, src->leftright);
+		ldbg(logger, "%s child selectors unknown; probably derived from host?!?",
+		     leftright);
 	}
 
 	/*
@@ -1522,8 +1543,8 @@ static diag_t extract_child_end(const struct whack_message *wm,
 			return diag("IKEv%d does not support virtual subnets",
 				    wm->ike_version);
 		}
-		dbg("%s %s child has a virt-end", wm->name, src->leftright);
-		diag_t d = create_virtual(src->leftright, src->virt,
+		dbg("%s %s child has a virt-end", wm->name, leftright);
+		diag_t d = create_virtual(leftright, src->virt,
 					  &child_config->virt);
 		if (d != NULL) {
 			return d;
@@ -2526,8 +2547,9 @@ static bool extract_connection(const struct whack_message *wm,
 			llog_diag(RC_FATAL, c->logger, &d, ADD_FAILED_PREFIX);
 			return false;
 		}
-		d = extract_child_end(wm, whack_ends[this], host_afi,
-				      &config->end[this].child);
+		d = extract_child_end(wm, whack_ends[this],
+				      &config->end[this].child,
+				      c->logger);
 		if (d != NULL) {
 			llog_diag(RC_FATAL, c->logger, &d, ADD_FAILED_PREFIX);
 			return false;
@@ -2650,11 +2672,7 @@ static bool extract_connection(const struct whack_message *wm,
 					const ip_selector *selector = selectors[end];
 					const struct child_end_config *child_end = c->end[end].child.config;
 					struct spd_end *spd_end = &spd->end[end];
-					spd_end->has_client = child_end->has_client;
-					if (selector != NULL) {
-						passert(selector->is_set); /* else pointless */
-						spd_end->client = *selector;
-					}
+					const char *leftright = child_end->leftright;
 					/*
 					 * Set things based both on
 					 * virt and on selectors.
@@ -2665,21 +2683,28 @@ static bool extract_connection(const struct whack_message *wm,
 					 * updating the client address
 					 * from the host.
 					 */
-
-					if (child_end->virt != NULL) {
+					spd_end->has_client = child_end->has_client;
+					if (selector != NULL) {
 						selector_buf sb;
-						dbg("%s %s child spd should add a virt-side to %s %s",
-						    c->name, child_end->leftright,
-						    str_selector(&spd_end->client, &sb),
-						    bool_str(spd_end->has_client));
+						ldbg(c->logger,
+						     "%s %s child spd has selectors; setting client to %s",
+						     c->name, leftright, str_selector(selector, &sb));
+						passert(selector->is_set); /* else pointless */
+						spd_end->client = *selector;
+					}
+					if (child_end->virt != NULL) {
+						ldbg(c->logger,
+						     "%s child spd is virtual; adding virt",
+						     leftright);
 						spd_end->virt = virtual_ip_addref(child_end->virt);
 					}
 					selector_buf sb;
-					dbg("%s %s child spd from selector %s client=%s virt=%s",
-					    c->name, spd_end->config->leftright,
-					    str_selector(&spd_end->client, &sb),
-					    bool_str(spd_end->has_client),
-					    bool_str(spd_end->virt != NULL));
+					ldbg(c->logger,
+					     "%s child spd from selector %s %s.spd.has_client=%s virt=%s",
+					     spd_end->config->leftright,
+					     str_selector(&spd_end->client, &sb),
+					     leftright, bool_str(spd_end->has_client),
+					     bool_str(spd_end->virt != NULL));
 				}
 				/* default values */
 				passert(spd->routing == RT_UNROUTED);
@@ -2693,9 +2718,8 @@ static bool extract_connection(const struct whack_message *wm,
 				 * one.  Does CK_TEMPLATE need one?
 				 */
 				spd->reqid = (c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid);
-				dbg(PRI_CONNECTION" spd->reqid=%d because c->sa_reqid=%d",
-				    pri_connection(c, &cb),
-				    c->spd->reqid, c->sa_reqid);
+				ldbg(c->logger, "spd->reqid=%d because c->sa_reqid=%d",
+				     c->spd->reqid, c->sa_reqid);
 			}
 			/* advance */
 			selectors[RIGHT_END] = (selectors[RIGHT_END] != NULL ? selectors[RIGHT_END]+1 : NULL);
@@ -3079,8 +3103,11 @@ struct connection *rw_instantiate(struct connection *c,
 	if (peer_subnet != NULL && is_virtual_remote(c)) {
 		d->spd->remote->client = *peer_subnet;
 		rehash_db_spd_route_remote_client(d->spd);
-		if (selector_eq_address(*peer_subnet, *peer_addr))
+		if (selector_eq_address(*peer_subnet, *peer_addr)) {
+			ldbg(c->logger, "forcing remote %s.spd.has_client=false",
+			     d->spd->remote->config->leftright);
 			d->spd->remote->has_client = false;
+		}
 	}
 
 	if (d->policy & POLICY_OPPORTUNISTIC) {
@@ -3526,6 +3553,8 @@ struct connection *oppo_instantiate(struct connection *c,
 
 		/* opportunistic connections do not use port selectors */
 		if (address_in_selector_range(*local_address, d->spd->local->client)) {
+			ldbg(d->logger, "oppo local %s.spd.has_client==true and local address <= client; narrowing local client",
+			     d->spd->local->config->leftright);
 			/*
 			 * the required client is within that subnet
 			 * narrow it(?), ...
@@ -3535,6 +3564,8 @@ struct connection *oppo_instantiate(struct connection *c,
 								    local_protocol,
 								    local_port);
 		} else if (address_eq_address(*local_address, d->local->host.addr)) {
+			ldbg(d->logger, "oppo local %s.spd.has_client==true and local address == host.addr; updating port",
+			     d->spd->local->config->leftright);
 			/*
 			 * or that it is our private ip in case we are
 			 * behind a port forward.
@@ -3556,7 +3587,8 @@ struct connection *oppo_instantiate(struct connection *c,
 		 * XXX: it's all a bit weird.  Should the oppo group
 		 * just set the selector and work with that?
 		 */
-		dbg("oppo local has no client; patching damage by instantiate()");
+		ldbg(d->logger, "oppo local %s.spd.has_client==false; patching damage by instantiate()",
+		     d->spd->local->config->leftright);
 		passert(address_eq_address(*local_address, d->local->host.addr));
 		d->spd->local->client =
 			selector_from_address_protocol_port(*local_address,
@@ -3590,8 +3622,11 @@ struct connection *oppo_instantiate(struct connection *c,
 	    selector_protocol(d->spd->remote->client)->name,
 	    selector_port(d->spd->remote->client).hport);
 
-	if (address_eq_address(*remote_address, d->remote->host.addr))
+	if (address_eq_address(*remote_address, d->remote->host.addr)) {
+		ldbg(d->logger, "oppo and address==remote.host_addr; remote %s.spd.has_client=false",
+		     d->spd->local->config->leftright);
 		d->spd->remote->has_client = false;
+	}
 
 	/*
 	 * Adjust routing if something is eclipsing c.
