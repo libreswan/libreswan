@@ -1347,7 +1347,7 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 
 static diag_t extract_child_end(const struct whack_message *wm,
 				const struct whack_end *src,
-				const struct ip_info *host_afi,
+				const struct ip_info *host_afi UNUSED,
 				struct child_end_config *child_config)
 {
 	child_config->sourceip = src->sourceip;
@@ -1476,12 +1476,6 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		 */
 		dbg("%s %s child selectors from %sprotoport + host AFI",
 		    wm->name, src->leftright, src->leftright);
-		child_config->has_client = false;
-		child_config->selectors.field = "";/*i.e., left""= right""=*/
-		child_config->selectors.string = clone_str("...", "...");
-		child_config->selectors.list = alloc_things(ip_selector, 2, "selectors");
-		child_config->selectors.list[0] =
-			selector_from_subnet_protoport(host_afi->subnet.all, src->protoport);
 	} else if ((wm->policy & POLICY_OPPORTUNISTIC) &&
 		   !address_is_specified(src->host_addr)) {
 		/*
