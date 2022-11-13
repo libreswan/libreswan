@@ -1113,11 +1113,11 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 		/* fill in the client's true ip address/subnet */
 		dbg("client: %s  port wildcard: %s  virtual: %s",
 		    bool_str(c->spd->remote->has_client),
-		    bool_str(c->remote->child.config->protoport.has_port_wildcard),
+		    bool_str(c->remote->config->child.protoport.has_port_wildcard),
 		    bool_str(is_virtual_remote(c)));
 
 		/* fill in the client's true port */
-		if (c->remote->child.config->protoport.has_port_wildcard) {
+		if (c->remote->config->child.protoport.has_port_wildcard) {
 			int port = selector_port(*remote_client).hport;
 			update_selector_hport(&c->spd->remote->client, port);
 		}
@@ -1128,8 +1128,8 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 			     __func__,
 			     bool_str(c->spd->local->virt != NULL),
 			     bool_str(c->spd->remote->virt != NULL),
-			     bool_str(c->local->child.config->virt != NULL),
-			     bool_str(c->remote->child.config->virt != NULL));
+			     bool_str(c->local->config->child.virt != NULL),
+			     bool_str(c->remote->config->child.virt != NULL));
 
 			c->spd->remote->client = *remote_client;
 			rehash_db_spd_route_remote_client(c->spd);
@@ -1752,7 +1752,7 @@ static bool is_virtual_net_used(struct connection *c,
 		case CK_INSTANCE:
 
 			if (d->kind == CK_TEMPLATE &&
-			    !d->remote->child.config->v1_config_subnet_specified) {
+			    !d->remote->config->child.v1_config_subnet_specified) {
 				/*
 				 * For instance when the template''s
 				 * peer's protoport=udp/%any but
@@ -1965,7 +1965,7 @@ static struct connection *fc_try(const struct connection *c,
 		      d->spd->remote->client.ipproto == remote_protocol &&
 		      (d->spd->local->client.hport == 0 ||
 		       d->spd->local->client.hport == local_port) &&
-		      (d->remote->child.config->protoport.has_port_wildcard ||
+		      (d->remote->config->child.protoport.has_port_wildcard ||
 		       d->spd->remote->client.hport == remote_port))) {
 			continue;
 		}
@@ -2128,7 +2128,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 			 d->spd->local->client.hport != local_port) ||
 			d->spd->remote->client.ipproto != remote_protocol ||
 			(d->spd->remote->client.hport != remote_port &&
-			 !d->remote->child.config->protoport.has_port_wildcard))
+			 !d->remote->config->child.protoport.has_port_wildcard))
 			continue;
 
 		/*

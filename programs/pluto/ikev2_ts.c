@@ -400,7 +400,7 @@ static bool emit_v2TS_request_end_payloads(struct pbs_out *out,
 					   const char *ts_name)
 {
 	struct connection *c = child->sa.st_connection;
-	const struct child_end_config *config = c->end[end].child.config;
+	const struct child_end_config *config = &c->end[end].config->child;
 	const ip_selector *selectors = config->selectors.list;
 	shunk_t sec_label = HUNK_AS_SHUNK(c->child.sec_label);
 	unsigned nr_ts = 0;

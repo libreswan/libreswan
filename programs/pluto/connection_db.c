@@ -262,14 +262,13 @@ struct connection *alloc_connection(const char *name,
 			 NULL);
 		passert(leftright != NULL);
 		struct connection_end *end = &c->end[lr];
-		struct spd_end_config *end_config = &config->end[lr];
+		struct config_end *end_config = &config->end[lr];
 		end_config->leftright = leftright;
 		end_config->index = lr;
 		end_config->host.leftright = leftright;
 		end_config->child.leftright = leftright;
 		end->config = end_config;
 		end->host.config = &end_config->host;
-		end->child.config = &end_config->child;
 	}
 
 	finish_connection(c, name, 0/*no template*/,

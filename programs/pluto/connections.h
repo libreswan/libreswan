@@ -157,7 +157,7 @@ struct child_end_config {
 	bool v1_config_subnet_specified;
 };
 
-struct spd_end_config {
+struct config_end {
 	enum left_right index;
 	const char *leftright;
 	struct host_end_config host;
@@ -245,7 +245,7 @@ struct config {
 	bool send_vid_fake_strongswan;		/* Send the unversioned strongswan VID */
 	bool send_vid_cisco_unity;		/* Send Unity VID for cisco compatibility */
 
-	struct spd_end_config end[END_ROOF];
+	struct config_end end[END_ROOF];
 };
 
 /* There are two kinds of connections:
@@ -362,14 +362,9 @@ struct host_end {
 	ip_address addr;
 };
 
-struct child_end {
-	const struct child_end_config *config;
-};
-
 struct connection_end {
-	const struct spd_end_config *config;
+	const struct config_end *config;
 	struct host_end host;
-	struct child_end child;
 };
 
 struct spd_end {
@@ -382,7 +377,7 @@ struct spd_end {
 	 * Danger: for a connection instance, this point into the
 	 * parent connection.
 	 */
-	const struct spd_end_config *config;
+	const struct config_end *config;
 	struct host_end *host;
 
 	bool has_client;
@@ -511,7 +506,7 @@ struct connection {
 	FILE *log_file;				/* possibly open FILE */
 	bool log_file_err;			/* only bitch once */
 
-	struct {
+	struct child {
 		chunk_t sec_label;		/* negotiated sec label */
 	} child;
 	struct spd_route *spd;

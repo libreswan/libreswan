@@ -355,9 +355,9 @@ bool is_virtual_remote(const struct connection *c)
 	     __func__, bool_str(virt),
 	     bool_str(c->spd->local->virt != NULL),
 	     bool_str(c->spd->remote->virt != NULL),
-	     bool_str(c->local->child.config->virt != NULL),
-	     bool_str(c->remote->child.config->virt != NULL));
-	pexpect((c->remote->child.config->virt != NULL) >= (virt));
+	     bool_str(c->local->config->child.virt != NULL),
+	     bool_str(c->remote->config->child.virt != NULL));
+	pexpect((c->remote->config->child.virt != NULL) >= (virt));
 	return virt;
 }
 
@@ -407,8 +407,8 @@ err_t check_virtual_net_allowed(const struct connection *c,
 	     __func__,
 	     bool_str(c->spd->local->virt != NULL),
 	     bool_str(c->spd->remote->virt != NULL),
-	     bool_str(c->local->child.config->virt != NULL),
-	     bool_str(c->remote->child.config->virt != NULL));
+	     bool_str(c->local->config->child.virt != NULL),
+	     bool_str(c->remote->config->child.virt != NULL));
 	const struct virtual_ip *virt = c->spd->remote->virt;
 	if (virt == NULL)
 		return NULL;

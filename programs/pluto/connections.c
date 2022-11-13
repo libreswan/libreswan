@@ -502,13 +502,13 @@ void update_spd_ends_from_host_ends(struct connection *c)
 			continue;
 		}
 
-		if (c->end[end].child.config->selectors.list != NULL) {
+		if (c->end[end].config->child.selectors.list != NULL) {
 			ldbg(c->logger, "  %s.spd already has a hard-wired selectors; skipping",
 			     leftright);
 			continue;
 		}
 
-		if (c->end[end].child.config->has_client) {
+		if (c->end[end].config->child.has_client) {
 			ldbg(c->logger, "  %s.spd.config.has_client; good to know",
 			     leftright);
 		}
@@ -518,7 +518,7 @@ void update_spd_ends_from_host_ends(struct connection *c)
 
 			if (spde->has_client) {
 				pexpect(c->policy & POLICY_OPPORTUNISTIC);
-				pexpect(c->end[end].child.config->has_client);
+				pexpect(c->end[end].config->child.has_client);
 				ldbg(c->logger, "  %s.spd.has_client but no selectors; skipping magic",
 				     leftright);
 				continue;
@@ -2648,7 +2648,7 @@ static bool extract_connection(const struct whack_message *wm,
 
 	const ip_selector *selectors[END_ROOF] = {0};
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		selectors[end] = c->end[end].child.config->selectors.list;
+		selectors[end] = c->end[end].config->child.selectors.list;
 	}
 	struct spd_route **spd_end = &c->spd;
 	do /*LEFT*/ {
@@ -2674,7 +2674,7 @@ static bool extract_connection(const struct whack_message *wm,
 				struct spd_route *spd = append_spd_route(c, &spd_end);
 				FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 					const ip_selector *selector = selectors[end];
-					const struct child_end_config *child_end = c->end[end].child.config;
+					const struct child_end_config *child_end = &c->end[end].config->child;
 					struct spd_end *spd_end = &spd->end[end];
 					const char *leftright = child_end->leftright;
 					/*
@@ -2733,8 +2733,8 @@ static bool extract_connection(const struct whack_message *wm,
 	} while(selectors[LEFT_END] != NULL && selectors[LEFT_END]->is_set);
 
 	if (c->spd == NULL) {
-		if (c->end[LEFT_END].child.config->selectors.list != NULL &&
-		    c->end[RIGHT_END].child.config->selectors.list != NULL) {
+		if (c->end[LEFT_END].config->child.selectors.list != NULL &&
+		    c->end[RIGHT_END].config->child.selectors.list != NULL) {
 			/*
 			 * Both ends used child AFIs.
 			 *
@@ -2744,11 +2744,11 @@ static bool extract_connection(const struct whack_message *wm,
 			 */
 			llog(RC_FATAL, c->logger,
 			     ADD_FAILED_PREFIX"address family %s from left%s=%s conflicts with right%s=%s",
-			     selector_type(c->end[LEFT_END].child.config->selectors.list)->ip_name,
-			     c->end[LEFT_END].child.config->selectors.field,
-			     c->end[LEFT_END].child.config->selectors.string,
-			     c->end[RIGHT_END].child.config->selectors.field,
-			     c->end[RIGHT_END].child.config->selectors.string);
+			     selector_type(c->end[LEFT_END].config->child.selectors.list)->ip_name,
+			     c->end[LEFT_END].config->child.selectors.field,
+			     c->end[LEFT_END].config->child.selectors.string,
+			     c->end[RIGHT_END].config->child.selectors.field,
+			     c->end[RIGHT_END].config->child.selectors.string);
 		} else {
 			/*
 			 * One end used a child AFI, and the other
@@ -2761,7 +2761,7 @@ static bool extract_connection(const struct whack_message *wm,
 				if (selectors[end] == NULL) {
 					host_end = c->end[end].host.config->leftright;
 				} else {
-					child_end = c->end[end].child.config;
+					child_end = &c->end[end].config->child;
 				}
 			}
 			passert(host_end != NULL);
