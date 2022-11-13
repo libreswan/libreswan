@@ -280,7 +280,7 @@ bool initiate_connection_3(struct connection *c, bool background, const threadti
 	 */
 
 	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception,
-			  (c->config->ike_version == IKEv1 ? HUNK_AS_SHUNK(c->spd->local->sec_label) : null_shunk),
+			  (c->config->ike_version == IKEv1 ? HUNK_AS_SHUNK(c->child.sec_label) : null_shunk),
 			  background, c->logger);
 	return true;
 }

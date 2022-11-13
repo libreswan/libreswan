@@ -144,7 +144,7 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 			if (IS_IKE_SA_ESTABLISHED(st))
 				log_state(RC_LOG, st, "initiate reauthentication of IKE SA");
 			initiate_v2_IKE_SA_INIT_request(c, st, policy, try, &inception,
-							HUNK_AS_SHUNK(c->spd->local->sec_label),
+							HUNK_AS_SHUNK(c->child.sec_label),
 							/*background?*/false, st->st_logger);
 			break;
 #ifdef USE_IKEv1
@@ -152,11 +152,11 @@ void ipsecdoi_replace(struct state *st, unsigned long try)
 			if (policy & POLICY_AGGRESSIVE) {
 				aggr_outI1(st->st_logger->object_whackfd, c, st,
 					   policy, try, &inception,
-					   HUNK_AS_SHUNK(c->spd->local->sec_label));
+					   HUNK_AS_SHUNK(c->child.sec_label));
 			} else {
 				main_outI1(st->st_logger->object_whackfd, c, st,
 					   policy, try, &inception,
-					   HUNK_AS_SHUNK(c->spd->local->sec_label));
+					   HUNK_AS_SHUNK(c->child.sec_label));
 			}
 			break;
 #endif

@@ -191,9 +191,12 @@ static struct traffic_selector traffic_selector_from_raw(ip_selector selector,
 	return ts;
 }
 
-struct traffic_selector traffic_selector_from_end(const struct spd_end *e, const char *ts_name)
+struct traffic_selector traffic_selector_from_end(const struct spd_end *e,
+						  chunk_t sec_label,
+						  const char *ts_name)
 {
-	return traffic_selector_from_raw(e->client, HUNK_AS_SHUNK(e->sec_label),
+	return traffic_selector_from_raw(e->client,
+					 HUNK_AS_SHUNK(sec_label),
 					 &e->config->child, ts_name);
 }
 
@@ -399,10 +402,9 @@ static bool emit_v2TS_request_end_payloads(struct pbs_out *out,
 	struct connection *c = child->sa.st_connection;
 	const struct child_end_config *config = c->end[end].child.config;
 	const ip_selector *selectors = config->selectors.list;
-	const struct spd_end *spde = &c->spd->end[end];
-	shunk_t sec_label = HUNK_AS_SHUNK(c->spd->end[end].sec_label);
+	shunk_t sec_label = HUNK_AS_SHUNK(c->child.sec_label);
 	unsigned nr_ts = 0;
-	if (spde->sec_label.len > 0 || selectors == NULL) {
+	if (sec_label.len > 0 || selectors == NULL) {
 		nr_ts++;
 		if (sec_label.len > 0) {
 			nr_ts++;
@@ -433,9 +435,9 @@ static bool emit_v2TS_request_end_payloads(struct pbs_out *out,
 		return false;
 	}
 
-	if (spde->sec_label.len > 0 || selectors == NULL) {
+	if (c->child.sec_label.len > 0 || selectors == NULL) {
 		if (!emit_v2TS_request_selector(&ts_pbs, child,
-						HUNK_AS_SHUNK(c->spd->end[end].sec_label),
+						HUNK_AS_SHUNK(c->child.sec_label),
 						config,
 						c->spd->end[end].client, ts_name)) {
 			return false;
@@ -475,11 +477,12 @@ bool emit_v2TS_request_payloads(struct pbs_out *out, const struct child_sa *chil
 bool emit_v2TS_response_payloads(struct pbs_out *outpbs, const struct child_sa *child)
 {
 	struct traffic_selector ts_i, ts_r;
-	const struct spd_route *spd = child->sa.st_connection->spd;
+	const struct connection *c = child->sa.st_connection;
+	const struct spd_route *spd = c->spd;
 
 	passert(child->sa.st_sa_role == SA_RESPONDER);
-	ts_i = traffic_selector_from_end(spd->remote, "remote TSi");
-	ts_r = traffic_selector_from_end(spd->local, "local TSr");
+	ts_i = traffic_selector_from_end(spd->remote, c->child.sec_label, "remote TSi");
+	ts_r = traffic_selector_from_end(spd->local, c->child.sec_label, "local TSr");
 	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
 	    impair.rekey_respond_subnet) {
 		ts_i = impair_ts_to_subnet(ts_i);
@@ -1734,7 +1737,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 		if (best.connection->config->sec_label.len > 0) {
 			pexpect(best.connection == child->sa.st_connection); /* big circle */
 			pexpect(best.selected_sec_label.len > 0);
-			pexpect(best.connection->spd->local->sec_label.len == 0);
+			pexpect(best.connection->child.sec_label.len == 0);
 		}
 
 		/*

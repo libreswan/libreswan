@@ -1988,7 +1988,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		.sa_ipsec_max_packets = c->config->sa_ipsec_max_packets,
 		.sec_label = (st->st_v1_seen_sec_label.len > 0 ? st->st_v1_seen_sec_label :
 			      st->st_v1_acquired_sec_label.len > 0 ? st->st_v1_acquired_sec_label :
-			      c->spd->local->sec_label /* assume connection outlive their kernel_sa's */),
+			      c->child.sec_label /* assume connection outlive their kernel_sa's */),
 	};
 
 
@@ -2007,7 +2007,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	    pri_shunk(said_boilerplate.sec_label),
 	    (st->st_v1_seen_sec_label.len > 0 ? " (IKEv1 seen)" :
 	     st->st_v1_acquired_sec_label.len > 0 ? " (IKEv1 acquired)" :
-	     c->spd->local->sec_label.len > 0 ? " (IKEv2 this)" :
+	     c->child.sec_label.len > 0 ? " (IKEv2 this)" :
 	     ""))
 
 	/* set up IPCOMP SA, if any */
@@ -3048,7 +3048,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 	/* for (sr = &st->st_connection->spd; sr != NULL; sr = sr->next) */
 	struct connection *c = st->st_connection;
 	if (c->config->ike_version == IKEv2 &&
-	    c->spd->local->sec_label.len > 0) {
+	    c->child.sec_label.len > 0) {
 		dbg("kernel: %s() skipping route_and_eroute(st) as security label", __func__);
 	} else {
 		for (; sr != NULL; sr = sr->spd_next) {

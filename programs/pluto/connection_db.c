@@ -302,7 +302,6 @@ struct spd_route *append_spd_route(struct connection *c, struct spd_route ***spd
 static void unshare_connection_spd_end(struct connection *c, struct spd_end *e)
 {
 	e->virt = virtual_ip_addref(e->virt);
-	pexpect(e->sec_label.ptr == NULL);
 	e->host = &c->end[e->config->index].host;
 }
 

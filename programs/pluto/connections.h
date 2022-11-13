@@ -385,7 +385,6 @@ struct spd_end {
 	const struct spd_end_config *config;
 	struct host_end *host;
 
-	chunk_t sec_label;
 	bool has_client;
 
 	struct virtual_ip *virt;
@@ -512,6 +511,9 @@ struct connection {
 	FILE *log_file;				/* possibly open FILE */
 	bool log_file_err;			/* only bitch once */
 
+	struct {
+		chunk_t sec_label;		/* negotiated sec label */
+	} child;
 	struct spd_route *spd;
 
 	/* internal fields: */

@@ -143,7 +143,6 @@ void release_connection(struct connection *c)
 /* Delete a connection */
 static void discard_spd_end(struct spd_end *e)
 {
-	free_chunk_content(&e->sec_label);
 	virtual_ip_delref(&e->virt);
 }
 
@@ -238,6 +237,8 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	pfreeany(c->foodgroup);
 	pfreeany(c->vti_iface);
 	iface_endpoint_delref(&c->interface);
+
+	free_chunk_content(&c->child.sec_label);
 
 	struct config *config = c->root_config;
 	if (config != NULL) {
@@ -818,6 +819,9 @@ static void unshare_connection(struct connection *c, struct connection *t/*empla
 	c->vti_iface = clone_str(c->vti_iface, "connection vti_iface");
 
 	c->interface = iface_endpoint_addref(t->interface);
+
+	/* can't yet have an assigned SEC_LABEL */
+	pexpect(c->child.sec_label.ptr == NULL);
 
 	FOR_EACH_THING(end, c->local, c->remote) {
 		end->host.id = clone_id(&end->host.id, "unshare connection id");
@@ -3070,10 +3074,8 @@ struct connection *instantiate(struct connection *c,
 		 * Install the sec_label from either an acquire or
 		 * child payload into both ends.
 		 */
-		FOR_EACH_THING(end, d->spd->local, d->spd->remote) {
-			pexpect(end->sec_label.ptr == NULL);
-			end->sec_label = clone_hunk(sec_label, "instantiate() sec_label");
-		}
+		pexpect(c->child.sec_label.ptr == NULL);
+		d->child.sec_label = clone_hunk(sec_label, "instantiate() sec_label");
 	}
 
 	/* all done */
@@ -3088,7 +3090,7 @@ struct connection *instantiate(struct connection *c,
 	    enum_name(&connection_kind_names, d->kind),
 	    peer_addr != NULL ? str_address(peer_addr, &pab) : "N/A",
 	    peer_id != NULL ? str_id(peer_id, &pib) : "N/A",
-	    pri_shunk(d->spd->local->sec_label));
+	    pri_shunk(d->child.sec_label));
 
 	return d;
 }
@@ -4189,15 +4191,16 @@ static void show_one_sr(struct show *s,
 	 *
 	 * XXX: IKEv1 stores the negotiated sec_label in the state.
 	 */
-	if (sr->local->sec_label.len > 0) {
+	if (c->child.sec_label.len > 0) {
 		/* negotiated (IKEv2) */
 		show_comment(s, PRI_CONNECTION":   sec_label:"PRI_SHUNK,
 			     c->name, instance,
-			     pri_shunk(sr->local->sec_label));
+			     pri_shunk(c->child.sec_label));
 	} else if (c->config->sec_label.len > 0) {
 		/* configured */
 		show_comment(s, "\"%s\"%s:   sec_label:"PRI_SHUNK,
-			     c->name, instance, pri_shunk(c->config->sec_label));
+			     c->name, instance,
+			     pri_shunk(c->config->sec_label));
 	} else {
 		show_comment(s, PRI_CONNECTION":   sec_label:unset;",
 			     c->name, instance);
