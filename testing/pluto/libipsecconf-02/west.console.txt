@@ -12,7 +12,7 @@ west #
 002 "4in4-good": added IKEv2 connection
 west #
  ipsec auto --add 4in4-bad
-036 "4in4-bad": failed to add connection: address family IPv4 from leftsubnet=1.2.3.0/24 conflicts with rightsubnet=::/0
+036 "4in4-bad": failed to add connection: address family IPv4 from leftsubnet=1.2.3.0/24 conflicts with IPv6 from rightsubnet=::/0
 west #
  ipsec auto --add 4in4-protoport
 002 "4in4-protoport": added IKEv2 connection
@@ -24,7 +24,7 @@ west #
 002 "6in6-good": added IKEv2 connection
 west #
  ipsec auto --add 6in6-bad
-036 "6in6-bad": failed to add connection: address family IPv6 from leftsubnet=1:2:3::/64 conflicts with rightsubnet=0.0.0.0/0
+036 "6in6-bad": failed to add connection: address family IPv6 from leftsubnet=1:2:3::/64 conflicts with IPv4 from rightsubnet=0.0.0.0/0
 west #
  ipsec auto --add 6in6-protoport
 002 "6in6-protoport": added IKEv2 connection
@@ -36,7 +36,7 @@ west #
 002 "4in6-good": added IKEv2 connection
 west #
  ipsec auto --add 4in6-bad
-036 "4in6-bad": failed to add connection: address family IPv4 from leftsubnet=1.2.3.0/24 conflicts with rightsubnet=::/0
+036 "4in6-bad": failed to add connection: address family IPv4 from leftsubnet=1.2.3.0/24 conflicts with IPv6 from rightsubnet=::/0
 west #
  ipsec auto --add 4in6-protoport
 036 "4in6-protoport": failed to add connection: right host address family IPv6 conflicts with leftsubnet=1.2.3.0/24
@@ -48,7 +48,7 @@ west #
 002 "6in4-good": added IKEv2 connection
 west #
  ipsec auto --add 6in4-bad
-036 "6in4-bad": failed to add connection: address family IPv6 from leftsubnet=1:2:3::/64 conflicts with rightsubnet=0.0.0/0
+036 "6in4-bad": failed to add connection: address family IPv6 from leftsubnet=1:2:3::/64 conflicts with IPv4 from rightsubnet=0.0.0/0
 west #
  ipsec auto --add 6in4-protoport
 036 "6in4-protoport": failed to add connection: right host address family IPv4 conflicts with leftsubnet=1:2:3::/64
