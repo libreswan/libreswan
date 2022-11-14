@@ -160,48 +160,6 @@ static void traffic_selector_to_end(const struct narrowed_traffic_selector *n,
 	end->has_client = !selector_eq_address(end->client, end->host->addr);
 }
 
-static struct traffic_selector traffic_selector_from_raw(ip_selector selector,
-							 const struct child_end_config *config,
-							 const char *name)
-{
-	struct traffic_selector ts = {
-		/*
-		 * Setting ts_type IKEv2_TS_FC_ADDR_RANGE (RFC-4595)
-		 * not yet supported.
-		 */
-		.ts_type = selector_type(&selector)->ikev2_ts_addr_range_type,
-		/* subnet => range */
-		.net = selector_range(selector),
-		.ipprotoid = selector.ipproto,
-		.name = name,
-	};
-
-	/*
-	 * if port is %any or 0 we mean all ports (or all
-	 * iccmp/icmpv6).
-	 *
-	 * See RFC-5996 Section 3.13.1 handling for ICMP(1) and
-	 * ICMPv6(58) we only support providing Type, not Code, eg
-	 * protoport=1/1
-	 */
-	if (selector.hport == 0 || config->protoport.has_port_wildcard) {
-		ts.startport = 0;
-		ts.endport = 65535;
-	} else {
-		ts.startport = selector.hport;
-		ts.endport = selector.hport;
-	}
-
-	dbg_v2_ts(&ts, "%s", ts.name);
-	return ts;
-}
-
-static struct traffic_selector traffic_selector_from_end(const struct spd_end *e,
-						  const char *ts_name)
-{
-	return traffic_selector_from_raw(e->client, &e->config->child, ts_name);
-}
-
 static struct traffic_selector traffic_selector_from_selector(ip_selector selector, const char *name)
 {
 	struct traffic_selector ts = {
@@ -496,8 +454,8 @@ bool emit_v2TS_response_payloads(struct pbs_out *outpbs, const struct child_sa *
 	const struct spd_route *spd = c->spd;
 
 	passert(child->sa.st_sa_role == SA_RESPONDER);
-	ts_i = traffic_selector_from_end(spd->remote, "remote TSi");
-	ts_r = traffic_selector_from_end(spd->local, "local TSr");
+	ts_i = traffic_selector_from_selector(spd->remote->client, "remote TSi");
+	ts_r = traffic_selector_from_selector(spd->local->client, "local TSr");
 	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
 	    impair.rekey_respond_subnet) {
 		ts_i = impair_ts_to_subnet(ts_i);
