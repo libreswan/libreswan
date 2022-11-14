@@ -149,7 +149,6 @@ static void traffic_selector_to_end(const struct narrowed_traffic_selector *n,
 }
 
 static struct traffic_selector traffic_selector_from_raw(ip_selector selector,
-							 shunk_t sec_label,
 							 const struct child_end_config *config,
 							 const char *name)
 {
@@ -162,12 +161,6 @@ static struct traffic_selector traffic_selector_from_raw(ip_selector selector,
 		/* subnet => range */
 		.net = selector_range(selector),
 		.ipprotoid = selector.ipproto,
-		/*
-		 * Use the 'instance/narrowed' label from the ACQUIRE
-		 * and stored in the connection instance's sends, if
-		 * present.
-		 */
-		.sec_label = sec_label,
 		.name = name,
 	};
 
@@ -192,12 +185,28 @@ static struct traffic_selector traffic_selector_from_raw(ip_selector selector,
 }
 
 static struct traffic_selector traffic_selector_from_end(const struct spd_end *e,
-							 chunk_t sec_label,
-							 const char *ts_name)
+						  const char *ts_name)
 {
-	return traffic_selector_from_raw(e->client,
-					 HUNK_AS_SHUNK(sec_label),
-					 &e->config->child, ts_name);
+	return traffic_selector_from_raw(e->client, &e->config->child, ts_name);
+}
+
+static struct traffic_selector traffic_selector_from_selector(ip_selector selector, const char *name)
+{
+	struct traffic_selector ts = {
+		/*
+		 * Setting ts_type IKEv2_TS_FC_ADDR_RANGE (RFC-4595)
+		 * not yet supported.
+		 */
+		.ts_type = selector_type(&selector)->ikev2_ts_addr_range_type,
+		/* subnet => range */
+		.net = selector_range(selector),
+		.ipprotoid = selector.ipproto,
+		.name = name,
+		.startport = selector.hport,
+		.endport = (selector.hport == 0 ? 65535 : selector.hport),
+	};
+	dbg_v2_ts(&ts, "%s", ts.name);
+	return ts;
 }
 
 /*
@@ -284,9 +293,10 @@ static bool emit_v2TS_sec_label(struct pbs_out *ts_pbs, shunk_t sec_label)
 
 static bool emit_v2TS_payload(struct pbs_out *outpbs,
 			      const struct_desc *ts_desc,
-			      const struct traffic_selector *ts)
+			      const struct traffic_selector *ts,
+			      shunk_t sec_label)
 {
-	bool with_label = (ts->sec_label.len > 0);
+	bool with_label = (sec_label.len > 0);
 
 	if (ts->ts_type != IKEv2_TS_IPV4_ADDR_RANGE &&
 	    ts->ts_type != IKEv2_TS_IPV6_ADDR_RANGE) {
@@ -318,8 +328,8 @@ static bool emit_v2TS_payload(struct pbs_out *outpbs,
 		return false;
 	}
 
-	if (ts->sec_label.len > 0 &&
-	    !emit_v2TS_sec_label(&ts_pbs, ts->sec_label)) {
+	if (sec_label.len > 0 &&
+	    !emit_v2TS_sec_label(&ts_pbs, sec_label)) {
 		return false;
 	}
 
@@ -357,12 +367,10 @@ static struct traffic_selector impair_ts_to_supernet(const struct traffic_select
 static bool emit_v2TS_request_selector(struct pbs_out *out,
 				       const struct child_sa *child,
 				       shunk_t sec_label,
-				       const struct child_end_config *config,
 				       ip_selector selector,
 				       const char *ts_name)
 {
-	struct traffic_selector ts =
-		traffic_selector_from_raw(selector, sec_label, config, ts_name);
+	struct traffic_selector ts = traffic_selector_from_selector(selector, ts_name);
 
 	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
 	    impair.rekey_initiate_supernet) {
@@ -438,15 +446,13 @@ static bool emit_v2TS_request_end_payloads(struct pbs_out *out,
 	if (c->child.sec_label.len > 0 || selectors == NULL) {
 		if (!emit_v2TS_request_selector(&ts_pbs, child,
 						HUNK_AS_SHUNK(c->child.sec_label),
-						config,
 						c->spd->end[end].client, ts_name)) {
 			return false;
 		}
 	} else {
 		for (const ip_selector *s = selectors; s->is_set; s++) {
 			if (!emit_v2TS_request_selector(&ts_pbs, child,
-							null_shunk, config,
-							*s, ts_name)) {
+							null_shunk, *s, ts_name)) {
 				return false;
 			}
 		}
@@ -481,8 +487,8 @@ bool emit_v2TS_response_payloads(struct pbs_out *outpbs, const struct child_sa *
 	const struct spd_route *spd = c->spd;
 
 	passert(child->sa.st_sa_role == SA_RESPONDER);
-	ts_i = traffic_selector_from_end(spd->remote, c->child.sec_label, "remote TSi");
-	ts_r = traffic_selector_from_end(spd->local, c->child.sec_label, "local TSr");
+	ts_i = traffic_selector_from_end(spd->remote, "remote TSi");
+	ts_r = traffic_selector_from_end(spd->local, "local TSr");
 	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
 	    impair.rekey_respond_subnet) {
 		ts_i = impair_ts_to_subnet(ts_i);
@@ -503,11 +509,13 @@ bool emit_v2TS_response_payloads(struct pbs_out *outpbs, const struct child_sa *
 			str_range(&ts_r.net, &tsr_buf));
 	}
 
-	if (!emit_v2TS_payload(outpbs, &ikev2_ts_i_desc, &ts_i)) {
+	if (!emit_v2TS_payload(outpbs, &ikev2_ts_i_desc, &ts_i,
+			       HUNK_AS_SHUNK(c->child.sec_label))) {
 		return false;
 	}
 
-	if (!emit_v2TS_payload(outpbs, &ikev2_ts_r_desc, &ts_r)) {
+	if (!emit_v2TS_payload(outpbs, &ikev2_ts_r_desc, &ts_r,
+			       HUNK_AS_SHUNK(c->child.sec_label))) {
 		return false;
 	}
 
