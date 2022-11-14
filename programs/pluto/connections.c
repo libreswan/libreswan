@@ -2642,6 +2642,74 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	/*
+	 * Check that the IP address family of the children is
+	 * plausable.
+	 */
+
+	bool using_ip[END_ROOF][IP_INDEX_ROOF] = {0};
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		if (c->end[end].config->child.selectors.list == NULL) {
+			using_ip[end][host_afi->ip_index] = true;
+		} else {
+			for (const ip_selector *s = c->end[end].config->child.selectors.list;
+			     s->is_set; s++) {
+				const struct ip_info *afi = selector_type(s);
+				using_ip[end][afi->ip_index] = true;
+			}
+		}
+	}
+
+	/* now check there's a match */
+	FOR_EACH_THING(afi, &ipv4_info, &ipv6_info) {
+		enum ip_index i = afi->ip_index;
+		if (using_ip[LEFT_END][i] == using_ip[RIGHT_END][i]) {
+			continue;
+		}
+		if (c->end[LEFT_END].config->child.selectors.list != NULL &&
+		    c->end[RIGHT_END].config->child.selectors.list != NULL) {
+			/*
+			 * Both ends used child AFIs.
+			 *
+			 * Since no permutation was valid one end must
+			 * be pure IPv4 and the other end pure IPv6
+			 * say.
+			 */
+			llog(RC_FATAL, c->logger,
+			     ADD_FAILED_PREFIX"address family %s from left%s=%s conflicts with %s from right%s=%s",
+			     selector_type(c->end[LEFT_END].config->child.selectors.list)->ip_name,
+			     c->end[LEFT_END].config->child.selectors.field,
+			     c->end[LEFT_END].config->child.selectors.string,
+			     selector_type(c->end[RIGHT_END].config->child.selectors.list)->ip_name,
+			     c->end[RIGHT_END].config->child.selectors.field,
+			     c->end[RIGHT_END].config->child.selectors.string);
+		} else {
+			/*
+			 * One end used a child AFI, and the other
+			 * used the host's AFI.  If both ends used the
+			 * host AFI then the AFIs would have matched.
+			 */
+			const char *host_end = NULL;
+			const struct child_end_config *child_end = NULL;
+			FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+				if (c->end[end].config->child.selectors.list == NULL) {
+					host_end = c->end[end].host.config->leftright;
+				} else {
+					child_end = &c->end[end].config->child;
+				}
+			}
+			passert(host_end != NULL);
+			passert(child_end != NULL);
+			llog(RC_FATAL, c->logger,
+			     ADD_FAILED_PREFIX"%s host address family %s conflicts with %s%s=%s",
+			     host_end, host_afi->ip_name,
+			     child_end->leftright,
+			     child_end->selectors.field,
+			     child_end->selectors.string);
+		}
+		return false;
+	}
+
+	/*
 	 * Fill in the child SPDs using the previously parsed
 	 * selectors.
 	 */
@@ -2732,47 +2800,7 @@ static bool extract_connection(const struct whack_message *wm,
 		selectors[LEFT_END] = (selectors[LEFT_END] != NULL ? selectors[LEFT_END]+1 : NULL);
 	} while(selectors[LEFT_END] != NULL && selectors[LEFT_END]->is_set);
 
-	if (c->spd == NULL) {
-		if (c->end[LEFT_END].config->child.selectors.list != NULL &&
-		    c->end[RIGHT_END].config->child.selectors.list != NULL) {
-			/*
-			 * Both ends used child AFIs.
-			 *
-			 * Since no permutation was valid one end must
-			 * be pure IPv4 and the other end pure IPv6
-			 * say.
-			 */
-			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"address family %s from left%s=%s conflicts with right%s=%s",
-			     selector_type(c->end[LEFT_END].config->child.selectors.list)->ip_name,
-			     c->end[LEFT_END].config->child.selectors.field,
-			     c->end[LEFT_END].config->child.selectors.string,
-			     c->end[RIGHT_END].config->child.selectors.field,
-			     c->end[RIGHT_END].config->child.selectors.string);
-		} else {
-			/*
-			 * One end used a child AFI, and the other
-			 * used the host's AFI.  If both ends used the
-			 * host AFI then the AFIs would have matched.
-			 */
-			const char *host_end = NULL;
-			const struct child_end_config *child_end = NULL;
-			FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-				if (selectors[end] == NULL) {
-					host_end = c->end[end].host.config->leftright;
-				} else {
-					child_end = &c->end[end].config->child;
-				}
-			}
-			passert(host_end != NULL);
-			passert(child_end != NULL);
-			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"%s host address family %s conflicts with %s%s=%s",
-			     host_end, host_afi->ip_name,
-			     child_end->leftright,
-			     child_end->selectors.field,
-			     child_end->selectors.string);
-		}
+	if (!pexpect(c->spd != NULL)) {
 		return false;
 	}
 
