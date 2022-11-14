@@ -75,14 +75,6 @@ struct traffic_selector {
 	uint16_t endport;
 	ip_range net;	/* for now, always happens to be a CIDR */
 	const char *name; /*static*/
-	/*
-	 * shares memory with any of:
-	 * - the struct pbs_in's buffer
-	 * - end.sec_label
-	 * - st.*sec_label
-	 * - acquire's sec_label
-	 */
-	shunk_t sec_label;
 };
 
 struct traffic_selectors {
@@ -153,7 +145,6 @@ void dbg_v2_ts(const struct traffic_selector *ts, const char *prefix, ...)
 		DBG_log("  port range: %d-%d", ts->startport, ts->endport);
 		range_buf b;
 		DBG_log("  ip range: %s", str_range(&ts->net, &b));
-		DBG_log("  sec_label: "PRI_SHUNK, pri_shunk(ts->sec_label));
 	}
 }
 
@@ -379,9 +370,6 @@ static struct traffic_selector impair_ts_to_supernet(const struct traffic_select
 	}
 
 	ts_ret.net.is_subnet = true;
-
-	ts_ret.sec_label = ts.sec_label;
-
 	return ts_ret;
 }
 
@@ -548,6 +536,9 @@ static bool v2_parse_tss(struct payload_digest *const ts_pd,
 			 struct traffic_selectors *tss,
 			 struct logger *logger)
 {
+	diag_t d;
+	err_t e;
+
 	dbg("%s: parsing %u traffic selectors",
 	    tss->ts_name, ts_pd->payload.v2ts.isat_num);
 
@@ -558,6 +549,11 @@ static bool v2_parse_tss(struct payload_digest *const ts_pd,
 		return false;
 	}
 
+	/*
+	 * Since tss->ts contains address ranges and not sec-labels,
+	 * this check is a little conservative (otoh, there are hardly
+	 * ever sec-labels).
+	 */
 	if (ts_pd->payload.v2ts.isat_num >= elemsof(tss->ts)) {
 		llog(RC_LOG, logger,
 		     "%s contains %d entries which exceeds hardwired max of %zu",
@@ -565,24 +561,21 @@ static bool v2_parse_tss(struct payload_digest *const ts_pd,
 		return false;	/* won't fit in array */
 	}
 
-	for (tss->nr = 0; tss->nr < ts_pd->payload.v2ts.isat_num; ) {
-		diag_t d;
-		struct traffic_selector *ts = &tss->ts[tss->nr];
-
-		*ts = (struct traffic_selector){0};
+	for (unsigned n = 0; n < ts_pd->payload.v2ts.isat_num; n++) {
 
 		struct ikev2_ts_header ts_h;
 		struct pbs_in ts_body_pbs;
-
 		d = pbs_in_struct(&ts_pd->pbs, &ikev2_ts_header_desc,
-			  &ts_h, sizeof(ts_h), &ts_body_pbs);
+				  &ts_h, sizeof(ts_h), &ts_body_pbs);
+		if (d != NULL) {
+			llog_diag(RC_LOG, logger, &d, "%s", "");
+			return false;
+		}
 
 		switch (ts_h.isath_type) {
 		case IKEv2_TS_IPV4_ADDR_RANGE:
 		case IKEv2_TS_IPV6_ADDR_RANGE:
 		{
-			ts->ipprotoid = ts_h.isath_ipprotoid;
-
 			/* read and fill in port range */
 			struct ikev2_ts_portrange pr;
 
@@ -593,10 +586,7 @@ static bool v2_parse_tss(struct payload_digest *const ts_pd,
 				return false;
 			}
 
-			ts->startport = pr.isatpr_startport;
-			ts->endport = pr.isatpr_endport;
-
-			if (ts->startport > ts->endport) {
+			if (pr.isatpr_startport > pr.isatpr_endport) {
 				llog(RC_LOG, logger,
 				     "%s traffic selector %d has an invalid port range - ignored",
 				     tss->ts_name, tss->nr);
@@ -631,25 +621,42 @@ static bool v2_parse_tss(struct payload_digest *const ts_pd,
 			}
 
 			/* XXX: does this matter? */
-			if (pbs_left(&ts_body_pbs) != 0)
+			if (pbs_left(&ts_body_pbs) != 0) {
 				return false;
+			}
 
-			err_t err = addresses_to_nonzero_range(start, end, &ts->net);
-
-			/* pluto doesn't yet do full ranges; check for subnet */
-			ip_subnet ignore;
-			err = err == NULL ? range_to_subnet(ts->net, &ignore) : err;
-
-			if (err != NULL) {
+			ip_range range;
+			e = addresses_to_nonzero_range(start, end, &range);
+			if (e != NULL) {
 				address_buf sb, eb;
 				llog(RC_LOG, logger, "Traffic Selector range %s-%s invalid: %s",
 				     str_address_sensitive(&start, &sb),
 				     str_address_sensitive(&end, &eb),
-				     err);
+				     e);
 				return false;
 			}
 
-			ts->ts_type = ts_h.isath_type;
+			/* pluto doesn't yet do full ranges; check for subnet */
+			ip_subnet ignore;
+			e = range_to_subnet(range, &ignore);
+			if (e != NULL) {
+				address_buf sb, eb;
+				llog(RC_LOG, logger, "non-CIDR Traffic Selector range %s-%s is not supported (%s)",
+				     str_address_sensitive(&start, &sb),
+				     str_address_sensitive(&end, &eb),
+				     e);
+				return false;
+			}
+
+			passert(tss->nr < elemsof(tss->ts));
+			tss->ts[tss->nr] = (struct traffic_selector) {
+				.net = range,
+				.startport = pr.isatpr_startport,
+				.endport = pr.isatpr_endport,
+				.ipprotoid = ts_h.isath_ipprotoid,
+				.ts_type = ts_h.isath_type,
+			};
+			tss->nr++;
 			break;
 		}
 
@@ -679,8 +686,6 @@ static bool v2_parse_tss(struct payload_digest *const ts_pd,
 				return false;
 			}
 
-			ts->sec_label = sec_label;
-			ts->ts_type = ts_h.isath_type;
 			tss->sec_label = sec_label;
 			break;
 		}
@@ -693,7 +698,6 @@ static bool v2_parse_tss(struct payload_digest *const ts_pd,
 			llog(RC_LOG, logger, "Encountered Traffic Selector of unknown Type");
 			return false;
 		}
-		tss->nr++;
 	}
 
 	dbg("%s: parsed %d traffic selectors", tss->ts_name, tss->nr);
@@ -1072,32 +1076,19 @@ static bool check_tss_sec_label(const struct traffic_selectors *tss,
 				indent_t indent)
 {
 	passert(tss->sec_label.len > 0);
+	passert(vet_seclabel(tss->sec_label) == NULL);
 
-	*selected_sec_label = null_shunk;
-	for (unsigned i = 0; i < tss->nr; i++) {
-		const struct traffic_selector *ts = &tss->ts[i];
-		if (ts->ts_type != IKEv2_TS_SECLABEL) {
-			continue;
-		}
-
-		passert(vet_seclabel(ts->sec_label) == NULL);
-
-		if (!sec_label_within_range("Traffic Selector",
-					    ts->sec_label, config_sec_label, logger)) {
-			dbg_ts("%s sec_label="PRI_SHUNK" is not within range connection sec_label="PRI_SHUNK,
-			       tss->ts_name, pri_shunk(ts->sec_label), pri_shunk(config_sec_label));
-			continue;
-		}
-
-		dbg_ts("received %s label within range of our security label",
-		    tss->ts_name);
-
-		/* XXX we return the first match.  Should we return the best? */
-		*selected_sec_label = ts->sec_label;	/* first match */
-		return true;
+	if (!sec_label_within_range("Traffic Selector",
+				    tss->sec_label, config_sec_label, logger)) {
+		dbg_ts("%s sec_label="PRI_SHUNK" IS NOT within range connection sec_label="PRI_SHUNK,
+		       tss->ts_name, pri_shunk(tss->sec_label), pri_shunk(config_sec_label));
+		return false;
 	}
 
-	return false;
+	dbg_ts("%s sec_label="PRI_SHUNK" IS within range connection sec_label="PRI_SHUNK,
+	       tss->ts_name, pri_shunk(tss->sec_label), pri_shunk(config_sec_label));
+	*selected_sec_label = tss->sec_label;
+	return true;
 }
 
 static bool score_tsp_sec_label(const struct traffic_selector_payloads *tsp,
