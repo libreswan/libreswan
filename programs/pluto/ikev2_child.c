@@ -617,12 +617,12 @@ static void jam_end_selector(struct jambuf *buf, ip_selector s)
 	const ip_range r = selector_range(s);
 	jam_string(buf, "[");
 	jam_range(buf, &r);
+	jam_string(buf, ":");
 	if (s.hport == 0) {
 		jam_string(buf, "0-65535");
 	} else {
 		jam(buf, "%d-%d", s.hport, s.hport);
 	}
-	jam_string(buf, " ");
 	jam(buf, " %d", proto->ipproto);
 	jam_string(buf, "]");
 }
