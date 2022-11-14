@@ -64,10 +64,31 @@ struct narrowed_traffic_selectors {
  * pairs, strongswan, at least, doesn't.
  */
 
+/*
+ * IKEv2, this struct will be mapped into a ikev2_ts1 payload
+ * It contains either a v4/v6 range OR a sec_label
+ */
+struct traffic_selector {
+	uint8_t ts_type;
+	uint8_t ipprotoid;
+	uint16_t startport;
+	uint16_t endport;
+	ip_range net;	/* for now, always happens to be a CIDR */
+	const char *name; /*static*/
+	/*
+	 * shares memory with any of:
+	 * - the struct pbs_in's buffer
+	 * - end.sec_label
+	 * - st.*sec_label
+	 * - acquire's sec_label
+	 */
+	shunk_t sec_label;
+};
+
 struct traffic_selectors {
 	const char *ts_name;
 	const char *end_name;
-	bool contains_sec_label;
+	shunk_t sec_label;
 	unsigned nr;
 	/* ??? is 16 an undocumented limit - IKEv2 has no limit */
 	struct traffic_selector ts[16];
@@ -635,21 +656,32 @@ static bool v2_parse_tss(struct payload_digest *const ts_pd,
 		case IKEv2_TS_SECLABEL:
 		{
 			if (ts_h.isath_ipprotoid != 0) {
-				llog(RC_LOG, logger, "Traffic Selector of type Security Label should not have non-zero IP protocol '%u' - ignored",
-					ts_h.isath_ipprotoid);
+				llog(RC_LOG, logger,
+				     "Traffic Selector of type Security Label should not have non-zero IP protocol '%u' - ignored",
+				     ts_h.isath_ipprotoid);
+				/* do not stumble on; this is SE linux */
+				return false;
 			}
 
 			shunk_t sec_label = pbs_in_left_as_shunk(&ts_body_pbs);
 			err_t ugh = vet_seclabel(sec_label);
 			if (ugh != NULL) {
-				llog(RC_LOG, logger, "Traffic Selector %s", ugh);
-				/* ??? should we just ignore?  If so, use continue */
+				llog(RC_LOG, logger, "Traffic Selector of type Security Label %s", ugh);
+				/* do not stumble on; this is SE linux */
+				return false;
+			}
+
+
+			if (tss->sec_label.len > 0) {
+				llog(RC_LOG, logger,
+				     "duplicate Traffic Selector of type Security Label");
+				/* do not stumble on; this is SE linux */
 				return false;
 			}
 
 			ts->sec_label = sec_label;
 			ts->ts_type = ts_h.isath_type;
-			tss->contains_sec_label = true;
+			tss->sec_label = sec_label;
 			break;
 		}
 
@@ -1039,7 +1071,7 @@ static bool check_tss_sec_label(const struct traffic_selectors *tss,
 				struct logger *logger,
 				indent_t indent)
 {
-	passert(tss->contains_sec_label);
+	passert(tss->sec_label.len > 0);
 
 	*selected_sec_label = null_shunk;
 	for (unsigned i = 0; i < tss->nr; i++) {
@@ -1075,8 +1107,12 @@ static bool score_tsp_sec_label(const struct traffic_selector_payloads *tsp,
 				indent_t indent)
 {
 	if (config_sec_label.len == 0) {
-		/* This endpoint is not configured to use labeled IPsec. */
-		if (tsp->i.contains_sec_label || tsp->r.contains_sec_label) {
+		/*
+		 * This connection is not configured to use labeled
+		 * IPsec yet the traffic selector contains them.
+		 */
+		if (tsp->i.sec_label.len > 0 ||
+		    tsp->r.sec_label.len > 0) {
 			dbg_ts("error: received sec_label but this end is *not* configured to use sec_label");
 			return false;
 		}
@@ -1087,7 +1123,8 @@ static bool score_tsp_sec_label(const struct traffic_selector_payloads *tsp,
 	/* This endpoint is configured to use labeled IPsec. */
 	passert(vet_seclabel(HUNK_AS_SHUNK(config_sec_label)) == NULL);
 
-	if (!tsp->i.contains_sec_label || !tsp->r.contains_sec_label) {
+	if (tsp->i.sec_label.len == 0 ||
+	    tsp->r.sec_label.len == 0) {
 		dbg_ts("error: connection requires sec_label but not received TSi/TSr with sec_label");
 		return false;
 	}
