@@ -611,6 +611,22 @@ v2_notification_t process_v2_childs_sa_payload(const char *what,
 	return v2N_NOTHING_WRONG;
 }
 
+static void jam_end_selector(struct jambuf *buf, ip_selector s)
+{
+	const struct ip_protocol *proto = selector_protocol(s);
+	const ip_range r = selector_range(s);
+	jam_string(buf, "[");
+	jam_range(buf, &r);
+	if (s.hport == 0) {
+		jam_string(buf, "0-65535");
+	} else {
+		jam(buf, "%d-%d", s.hport, s.hport);
+	}
+	jam_string(buf, " ");
+	jam(buf, " %d", proto->ipproto);
+	jam_string(buf, "]");
+}
+
 void llog_v2_child_sa_established(struct ike_sa *ike UNUSED, struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
@@ -627,24 +643,14 @@ void llog_v2_child_sa_established(struct ike_sa *ike UNUSED, struct child_sa *ch
 		}
 		jam(buf, " using "PRI_SO"; ", pri_so(child->sa.st_clonedfrom));
 		/* log Child SA Traffic Selector details for admin's pleasure */
-		const struct traffic_selector a = traffic_selector_from_end(c->spd->local,
-									    c->child.sec_label,
-									    "local TS?");
-		const struct traffic_selector b = traffic_selector_from_end(c->spd->remote,
-									    c->child.sec_label,
-									    "remote TS?");
-		range_buf ba, bb;
-		jam(buf, "IPsec %s [%s:%d-%d %d] -> [%s:%d-%d %d]",
-		    (c->policy & POLICY_TUNNEL ? "tunnel" : "transport"),
-		    str_range(&a.net, &ba),
-		    a.startport,
-		    a.endport,
-		    a.ipprotoid,
-		    str_range(&b.net, &bb),
-		    b.startport,
-		    b.endport,
-		    b.ipprotoid);
-		jam(buf, " ");
+		jam(buf, "IPsec %s", (c->policy & POLICY_TUNNEL ? "tunnel" : "transport"));
+		for (const struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+			jam_string(buf, " ");
+			jam_end_selector(buf, c->spd->local->client);
+			jam_string(buf, " -> ");
+			jam_end_selector(buf, c->spd->remote->client);
+		}
+		jam_string(buf, " ");
 		jam_child_sa_details(buf, &child->sa);
 	}
 }

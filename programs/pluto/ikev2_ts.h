@@ -55,10 +55,6 @@ bool v2_process_ts_response(struct child_sa *child,
 bool v2_process_request_ts_payloads(struct child_sa *child,
 				    const struct msg_digest *md);
 
-struct traffic_selector traffic_selector_from_end(const struct spd_end *e,
-						  chunk_t sec_label,
-						  const char *what);
-
 bool emit_v2TS_response_payloads(struct pbs_out *outpbs, const struct child_sa *cst);
 bool emit_v2TS_request_payloads(struct pbs_out *outpbs, const struct child_sa *cst);
 

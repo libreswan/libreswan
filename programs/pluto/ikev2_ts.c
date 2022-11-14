@@ -191,9 +191,9 @@ static struct traffic_selector traffic_selector_from_raw(ip_selector selector,
 	return ts;
 }
 
-struct traffic_selector traffic_selector_from_end(const struct spd_end *e,
-						  chunk_t sec_label,
-						  const char *ts_name)
+static struct traffic_selector traffic_selector_from_end(const struct spd_end *e,
+							 chunk_t sec_label,
+							 const char *ts_name)
 {
 	return traffic_selector_from_raw(e->client,
 					 HUNK_AS_SHUNK(sec_label),
