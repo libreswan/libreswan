@@ -1561,8 +1561,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				return STF_FATAL;
 			}
-			c->spd->local->client = selector_from_address(a);
-
+			set_first_selector(c, local, selector_from_address(a));
 			c->spd->local->has_client = true;
 			c->spd->local->has_internal_address = true;
 
@@ -1725,8 +1724,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 					return STF_FATAL;
 				}
-				c->spd->local->client = selector_from_address(a);
-
+				set_first_selector(c, local, selector_from_address(a));
 				c->spd->local->has_client = true;
 				c->spd->local->has_internal_address = true;
 
@@ -1801,7 +1799,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				if (!c->spd->remote->has_client) {
 					passert(c->spd->spd_next == NULL);
 					c->spd->remote->has_client = true;
-					c->spd->remote->client = ipv4_info.selector.all;
+					set_first_selector(c, remote, ipv4_info.selector.all);
 					rehash_db_spd_route_remote_client(c->spd);
 				}
 
@@ -1845,7 +1843,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 						} else if (sr->spd_next == NULL) {
 							/* new entry: add at end*/
 							sr->spd_next = clone_spd_route(c, HERE);
-							sr->remote->client = wire_selector;
+							sr->remote->client = wire_selector; /*OK;not first*/
 							rehash_db_spd_route_remote_client(sr);
 							break;
 						}

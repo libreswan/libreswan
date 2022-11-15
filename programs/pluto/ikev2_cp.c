@@ -446,11 +446,11 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs, struct child_sa 
 			    child->sa.st_serialno, c->name, c->instance_serial,
 			    af->ip_version, ipstr(&ip, &ip_str));
 		} else {
-			c->spd->local->client = selector_from_address(ip);
+			set_first_selector(c, local, selector_from_address(ip));
 			c->spd->local->has_cat = true; /* create iptable entry */
 		}
 	} else {
-		c->spd->local->client = selector_from_address(ip);
+		set_first_selector(c, local, selector_from_address(ip));
 	}
 
 	return true;

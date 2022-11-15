@@ -492,6 +492,7 @@ void update_spd_ends_from_host_ends(struct connection *c)
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		const char *leftright = c->end[end].config->leftright;
 		const struct host_end *host = &c->end[end].host;
+		const struct child_end_config *config = &c->end[end].config->child;
 		address_buf hab;
 		ldbg(c->logger, "updating %s.spd client(selector) from %s.host.addr %s",
 		     leftright, leftright, str_address(&host->addr, &hab));
@@ -502,15 +503,15 @@ void update_spd_ends_from_host_ends(struct connection *c)
 			continue;
 		}
 
-		if (c->end[end].config->child.selectors.list != NULL) {
+		if (config->has_client) {
+			ldbg(c->logger, "  %s.spd.config.has_client; good to know",
+			     leftright);
+		}
+
+		if (config->selectors.list != NULL) {
 			ldbg(c->logger, "  %s.spd already has a hard-wired selectors; skipping",
 			     leftright);
 			continue;
-		}
-
-		if (c->end[end].config->child.has_client) {
-			ldbg(c->logger, "  %s.spd.config.has_client; good to know",
-			     leftright);
 		}
 
 		for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
@@ -518,7 +519,7 @@ void update_spd_ends_from_host_ends(struct connection *c)
 
 			if (spde->has_client) {
 				pexpect(c->policy & POLICY_OPPORTUNISTIC);
-				pexpect(c->end[end].config->child.has_client);
+				pexpect(config->has_client);
 				ldbg(c->logger, "  %s.spd.has_client but no selectors; skipping magic",
 				     leftright);
 				continue;
@@ -530,21 +531,31 @@ void update_spd_ends_from_host_ends(struct connection *c)
 			}
 
 			/*
-			 * Default child selector (client) to subnet
-			 * containing only self based on host.
+			 * Default the end's child selector (client)
+			 * to a subnet containing only the end's host
+			 * address.
 			 *
-			 * For instance, the config file omitted
-			 * subnet, but specified protoport; merge
-			 * that.
+			 * For instance, when the config file omitted
+			 * the child's subnet and/or the child's
+			 * sourceip, the host address (merged with any
+			 * protoport) should be used.
+			 *
+			 * If the other end has multiple child subnets
+			 * then the SPD will be a list.
 			 */
-			ip_selector client = selector_from_address_protoport(host->addr,
-									     spde->config->child.protoport);
+			ip_selector selector =
+				selector_from_address_protoport(host->addr, config->protoport);
+
 			selector_buf old, new;
 			dbg("  updated %s.spd client(selector) from %s to %s",
 			    leftright,
 			    str_selector_subnet_port(&spde->client, &old),
-			    str_selector_subnet_port(&client, &new));
-			spde->client = client;
+			    str_selector_subnet_port(&selector, &new));
+			if (spd == c->spd) {
+				set_end_selector(c, end, selector);
+			} else {
+				spde->client = selector; /*set_end_selector()*/
+			}
 		}
 	}
 }
@@ -2762,7 +2773,11 @@ static bool extract_connection(const struct whack_message *wm,
 						     "%s %s child spd has selectors; setting client to %s",
 						     c->name, leftright, str_selector(selector, &sb));
 						passert(selector->is_set); /* else pointless */
-						spd_end->client = *selector;
+						if (spd == c->spd) {
+							set_end_selector(c, end, *selector);
+						} else {
+							spd_end->client = *selector;/*update_end_selector()*/
+						}
 					}
 					if (child_end->virt != NULL) {
 						ldbg(c->logger,
@@ -2940,7 +2955,7 @@ struct connection *add_group_instance(struct connection *group,
 	unshare_connection(t, group);
 	passert(t->foodgroup != t->name); /* XXX: see DANGER above */
 
-	t->spd->remote->client = *target;	/* hashed below */
+	set_first_selector(t, remote, *target);	/* hashed below */
 	if (proto != 0) {
 		/* if foodgroup entry specifies protoport, override protoport= settings */
 		update_first_selector_protocol_port(t, local, proto, sport);
@@ -3137,7 +3152,7 @@ struct connection *rw_instantiate(struct connection *c,
 	struct connection *d = instantiate(c, peer_addr, peer_id, null_shunk);
 
 	if (peer_subnet != NULL && is_virtual_remote(c)) {
-		d->spd->remote->client = *peer_subnet;
+		set_first_selector(d, remote, *peer_subnet);
 		rehash_db_spd_route_remote_client(d->spd);
 		if (selector_eq_address(*peer_subnet, *peer_addr)) {
 			ldbg(c->logger, "forcing remote %s.spd.has_client=false",
@@ -3153,7 +3168,7 @@ struct connection *rw_instantiate(struct connection *c,
 		 * from trying to use this connection to get to a particular
 		 * client
 		 */
-		d->spd->remote->client = selector_type(&d->spd->remote->client)->selector.zero;
+		set_first_selector(d, remote, selector_type(&d->spd->remote->client)->selector.zero);
 		rehash_db_spd_route_remote_client(d->spd);
 	}
 	connection_buf inst;
@@ -3595,10 +3610,10 @@ struct connection *oppo_instantiate(struct connection *c,
 			 * the required client is within that subnet
 			 * narrow it(?), ...
 			*/
-			d->spd->local->client =
-				selector_from_address_protocol_port(*local_address,
-								    local_protocol,
-								    local_port);
+			set_first_selector(d, local,
+				     selector_from_address_protocol_port(*local_address,
+									 local_protocol,
+									 local_port));
 		} else if (address_eq_address(*local_address, d->local->host.addr)) {
 			ldbg(d->logger, "oppo local %s.spd.has_client==true and local address == host.addr; updating port",
 			     d->spd->local->config->leftright);
@@ -3626,10 +3641,10 @@ struct connection *oppo_instantiate(struct connection *c,
 		ldbg(d->logger, "oppo local %s.spd.has_client==false; patching damage by instantiate()",
 		     d->spd->local->config->leftright);
 		passert(address_eq_address(*local_address, d->local->host.addr));
-		d->spd->local->client =
-			selector_from_address_protocol_port(*local_address,
-							    local_protocol,
-							    local_port);
+		set_first_selector(d, local,
+			     selector_from_address_protocol_port(*local_address,
+								 local_protocol,
+								 local_port));
 	}
 
 	dbg("oppo local(d) protocol %s port %d",
@@ -3649,9 +3664,9 @@ struct connection *oppo_instantiate(struct connection *c,
 	ip_port remote_port = selector_port(c->spd->remote->client);
 	passert(d->policy & POLICY_OPPORTUNISTIC);
 	passert(address_in_selector_range(*remote_address, d->spd->remote->client));
-	d->spd->remote->client = selector_from_address_protocol_port(*remote_address,
-								 remote_protocol,
-								 remote_port);
+	set_first_selector(d, remote, selector_from_address_protocol_port(*remote_address,
+								    remote_protocol,
+								    remote_port));
 	rehash_db_spd_route_remote_client(d->spd);
 
 	dbg("oppo remote(d) protocol %s port %d",

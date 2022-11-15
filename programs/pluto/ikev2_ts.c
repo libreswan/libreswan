@@ -379,6 +379,8 @@ static bool emit_v2TS_request_end_payloads(struct pbs_out *out,
 	const ip_selector *selectors = config->selectors.list;
 	shunk_t sec_label = HUNK_AS_SHUNK(c->child.sec_label);
 	unsigned nr_ts = 0;
+	pexpect(selector_eq_selector(c->end[end].child.selector,
+				     c->spd->end[end].client));
 	if (sec_label.len > 0 || selectors == NULL) {
 		nr_ts++;
 		if (sec_label.len > 0) {
@@ -1237,8 +1239,8 @@ static void scribble_request_ts_on_connection(struct child_sa *child,
 	 * THAT=INITIATOR.
 	 */
 	dbg_ts("XXX: updating best connection's ports/protocols");
-	c->spd->local->client = selector_from_range_protocol_port(n.r.range, n.r.protocol, ip_hport(n.r.port));
-	c->spd->remote->client = selector_from_range_protocol_port(n.i.range, n.i.protocol, ip_hport(n.i.port));
+	set_first_selector(c, local, selector_from_range_protocol_port(n.r.range, n.r.protocol, ip_hport(n.r.port)));;
+	set_first_selector(c, remote, selector_from_range_protocol_port(n.i.range, n.i.protocol, ip_hport(n.i.port)));
 }
 
 /*

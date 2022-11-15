@@ -362,28 +362,46 @@ struct host_end {
 	ip_address addr;
 };
 
+struct child_end {
+	ip_selector selector;
+};
+
 struct connection_end {
 	const struct config_end *config;
 	struct host_end host;
+	struct child_end child;
 };
 
 struct spd_end {
 	ip_selector client;
-#define update_first_selector_protocol_port(C, END, PROTOCOL, PORT)	\
+#define set_end_selector(C, END, SELECTOR)				\
 	{								\
-		ip_selector s_ = (C)->spd->END->client;			\
-		ip_range r_ = selector_range(s_);			\
-		(C)->spd->END->client =					\
-			selector_from_range_protocol_port(r_, PROTOCOL, PORT); \
+		selector_buf sb_, cb_, nb_;				\
+		ip_selector n_ = SELECTOR;				\
+		ldbg((C)->logger, "%s.selector: %s / %s -> %s",		\
+		     (C)->end[END].config->leftright,			\
+		     str_selector(&(C)->end[END].child.selector, &sb_), \
+		     str_selector((C)->spd == NULL ? NULL :		\
+				  &(C)->spd->end[END].client, &cb_),	\
+		     str_selector(&n_, &nb_));				\
+		if ((C)->spd != NULL) {					\
+			pexpect(selector_eq_selector((C)->end[END].child.selector, \
+						     (C)->spd->end[END].client)); \
+			(C)->spd->end[END].client = n_;			\
+		}							\
+		(C)->end[END].child.selector = n_;			\
 	}
-#define update_first_selector_port(C, END, PORT)			\
-	{								\
-		ip_selector s_ = (C)->spd->END->client;			\
-		ip_range r_ = selector_range(s_);			\
-		const struct ip_protocol *p_ = selector_protocol(s_);	\
-		(C)->spd->END->client =					\
-			selector_from_range_protocol_port(r_, p_, PORT); \
-	}
+#define set_first_selector(C, LR, SELECTOR)			\
+	set_end_selector(C, (C)->LR->config->index, SELECTOR)
+#define update_first_selector_protocol_port(C, LR, PROTOCOL, PORT)	\
+	set_end_selector(C, (C)->LR->config->index,			\
+			 selector_from_range_protocol_port(selector_range((C)->spd->LR->client), \
+							   PROTOCOL, PORT))
+#define update_first_selector_port(C, LR, PORT)				\
+	set_end_selector(C, (C)->LR->config->index,			\
+			 selector_from_range_protocol_port(selector_range((C)->LR->child.selector), \
+							   selector_protocol((C)->LR->child.selector), \
+							   PORT))
 
 	/*
 	 * An extract of the original configuration information for

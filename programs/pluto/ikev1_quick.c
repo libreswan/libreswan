@@ -1131,7 +1131,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 			     bool_str(c->local->config->child.virt != NULL),
 			     bool_str(c->remote->config->child.virt != NULL));
 
-			c->spd->remote->client = *remote_client;
+			set_first_selector(c, remote, *remote_client);
 			rehash_db_spd_route_remote_client(c->spd);
 			c->spd->remote->has_client = true;
 			virtual_ip_delref(&c->spd->remote->virt);
@@ -1583,8 +1583,8 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 			     NAT_T_WITH_NATOA) &&
 			    IDcr->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
 				shunk_t idfqdn = pbs_in_left_as_shunk(&IDcr->pbs);
-				st->st_connection->spd->remote->client =
-					selector_from_address(st->hidden_variables.st_nat_oa);
+				set_first_selector(st->st_connection, remote,
+					     selector_from_address(st->hidden_variables.st_nat_oa));
 				LLOG_JAMBUF(RC_LOG_SERIOUS, st->st_logger, buf) {
 					jam(buf, "IDcr was FQDN: ");
 					jam_sanitized_hunk(buf, idfqdn);

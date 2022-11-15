@@ -954,8 +954,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	/*
 	 * Save the selector in .client.
 	 */
-	c->spd->local->client = local_shunt;
-	c->spd->remote->client = remote_shunt;
+	set_first_selector(c, local, local_shunt);
+	set_first_selector(c, remote, remote_shunt);
 	rehash_db_spd_route_remote_client(c->spd);
 
 	if (b->by_acquire) {
