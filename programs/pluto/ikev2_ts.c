@@ -413,9 +413,11 @@ static bool emit_v2TS_request_end_payloads(struct pbs_out *out,
 	}
 
 	if (c->child.sec_label.len > 0 || selectors == NULL) {
+		pexpect(c->spd == NULL ||
+			selector_eq_selector(c->spd->end[end].client, c->end[end].child.selector));
 		if (!emit_v2TS_request_selector(&ts_pbs, child,
 						HUNK_AS_SHUNK(c->child.sec_label),
-						c->spd->end[end].client, ts_name)) {
+						c->end[end].child.selector, ts_name)) {
 			return false;
 		}
 	} else {
