@@ -63,17 +63,17 @@ err_t ttoprotoport(const char *src, ip_protoport *protoport)
 	}
 
 	/* is there a port wildcard? */
-	unsigned port;
+	ip_port port;
 	bool port_wildcard;
 	if (service_name[0] == '\0') {
 		/* allow N/ and N; different to N/%any */
-		port = 0;
+		port = unset_port;
 		port_wildcard = false;
 	} else if (streq(service_name, "%any")) {
 		if (protocol->ipproto == 0) {
 			return "port wildcard (%any) requires a valid protocol";
 		}
-		port = 0;
+		port = unset_port;
 		port_wildcard = true;
 	} else {
 		/* Port 0-65535 is different to %any */
@@ -81,7 +81,7 @@ err_t ttoprotoport(const char *src, ip_protoport *protoport)
 		if (err != NULL) {
 			return err;
 		}
-		if (protocol->ipproto == 0 && port != 0) {
+		if (protocol->ipproto == 0 && port.hport != 0) {
 			return "protocol 0 must have 0 port";
 		}
 		port_wildcard = false;
@@ -90,7 +90,7 @@ err_t ttoprotoport(const char *src, ip_protoport *protoport)
 	protoport->is_set = true;
 	protoport->ipproto = protocol->ipproto;
 	protoport->has_port_wildcard = port_wildcard;
-	protoport->hport = port;
+	protoport->hport = port.hport;
 	return NULL;
 }
 

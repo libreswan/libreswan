@@ -75,28 +75,38 @@ const char *str_nport(ip_port port, port_buf *buf)
 	return buf->buf;
 }
 
-err_t ttoport(const char *service_name, unsigned *port)
+err_t ttoport(const char *service_name, ip_port *port)
 {
-	/* extract port by trying to resolve it by name */
+	/*
+	 * Extract port by trying to resolve it by name.
+	 *
+	 * XXX: the getservbyname() call requires a NUL terminated
+	 * SERVICE_NAME; hence this is not a shunk_t.
+	 */
 	const struct servent *service = getservbyname(service_name, NULL);
 	if (service != NULL) {
-		*port = ntohs(service->s_port);
+		/* success */
+		*port = ip_nport(service->s_port/*network-order*/);
 		return NULL;
 	}
 
-	/* failed, now try it by number */
-	char *end;
-	long l = strtol(service_name, &end, 0);
-	if (*service_name && *end) {
-		*port = 0;
-		return "<protocol> is neither a number nor a valid name";
+	/*
+	 * Now try converting it to a number; use SHUNK variant as it
+	 * is more strict.
+	 */
+	uintmax_t l;
+	err_t e = shunk_to_uintmax(shunk1(service_name), NULL/*trailing-chars-not-allowed*/,
+				   0/*any-base*/, &l);
+	if (e != NULL) {
+		*port = unset_port;
+		return e;
 	}
 
-	if (l < 0 || l > 0xffff) {
-		*port = 0;
-		return "<port> must be between 0 and 65535";
+	if (l > 0xffff) {
+		*port = unset_port;
+		return "must be between 0 and 65535";
 	}
 
-	*port = l;
+	*port = ip_hport(l);
 	return NULL;
 }

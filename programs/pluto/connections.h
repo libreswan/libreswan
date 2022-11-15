@@ -596,8 +596,8 @@ extern void delete_every_connection(void);
 struct connection *add_group_instance(struct connection *group,
 				      const ip_selector *target,
 				      uint8_t proto,
-				      uint16_t sport,
-				      uint16_t dport);
+				      ip_port sport,
+				      ip_port dport);
 
 extern struct connection *route_owner(struct connection *c,
 				      const struct spd_route *cur_spd,

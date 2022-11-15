@@ -2887,7 +2887,8 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
  */
 struct connection *add_group_instance(struct connection *group,
 				      const ip_selector *target,
-				      uint8_t proto, uint16_t sport , uint16_t dport)
+				      uint8_t proto,
+				      ip_port sport, ip_port dport)
 {
 	passert(group->kind == CK_GROUP);
 	passert(oriented(group));
@@ -2903,8 +2904,11 @@ struct connection *add_group_instance(struct connection *group,
 	if (proto == 0) {
 		namebuf = alloc_printf("%s#%s", group->name, targetbuf.buf);
 	} else {
-		namebuf = alloc_printf("%s#%s-(%d--%d--%d)", group->name,
-				       targetbuf.buf, sport, proto, dport);
+		namebuf = alloc_printf("%s#%s-("PRI_HPORT"--%d--"PRI_HPORT")", group->name,
+				       targetbuf.buf,
+				       pri_hport(sport),
+				       proto,
+				       pri_hport(dport));
 	}
 
 	if (conn_by_name(namebuf, false/*!strict*/) != NULL) {
@@ -2937,8 +2941,8 @@ struct connection *add_group_instance(struct connection *group,
 		/* if foodgroup entry specifies protoport, override protoport= settings */
 		update_selector_ipproto(&t->spd->local->client, proto);
 		update_selector_ipproto(&t->spd->remote->client, proto);
-		update_selector_hport(&t->spd->local->client, sport);
-		update_selector_hport(&t->spd->remote->client, dport);
+		update_selector_hport(&t->spd->local->client, sport.hport);
+		update_selector_hport(&t->spd->remote->client, dport.hport);
 	}
 	t->policy &= ~(POLICY_GROUP | POLICY_GROUTED);
 	t->policy |= POLICY_GROUPINSTANCE; /* mark as group instance for later */

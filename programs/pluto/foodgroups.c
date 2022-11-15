@@ -67,8 +67,8 @@ struct fg_targets {
 	struct fg_groups *group;
 	ip_selector subnet;
 	uint8_t proto;
-	uint16_t sport;
-	uint16_t dport;
+	ip_port sport;
+	ip_port dport;
 	char *name; /* name of instance of group conn */
 };
 
@@ -168,8 +168,8 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 		}
 
 		unsigned proto = 0;
-		unsigned sport = 0;
-		unsigned dport = 0;
+		ip_port sport = unset_port;
+		ip_port dport = unset_port;
 
 		/* check for: [protocol sport dport] */
 		if (shift(flp)) {
@@ -248,8 +248,8 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 				break;
 
 			if (proto == (*pp)->proto &&
-			    sport == (*pp)->sport &&
-			    dport == (*pp)->dport) {
+			    port_eq(sport, (*pp)->sport) &&
+			    port_eq(dport, (*pp)->dport)) {
 				break;
 			}
 		}
@@ -258,9 +258,9 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 			subnet_buf source;
 			subnet_buf dest;
 			llog(RC_LOG_SERIOUS, flp->logger,
-			     "subnet \"%s\", proto %d, sport %d dport %d, source %s, already \"%s\"",
+			     "subnet \"%s\", proto %d, sport "PRI_HPORT" dport "PRI_HPORT", source %s, already \"%s\"",
 			     str_selector_subnet(&sn, &dest),
-			     proto, sport, dport,
+			     proto, pri_hport(sport), pri_hport(dport),
 			     str_selector_subnet(lsn, &source),
 			     (*pp)->group->connection->name);
 		} else {
@@ -309,10 +309,10 @@ void load_groups(struct logger *logger)
 		for (struct fg_targets *t = targets; t != NULL; t = t->next) {
 			selector_buf asource;
 			selector_buf atarget;
-			DBG_log("  %s->%s %d sport %d dport %d %s",
+			DBG_log("  %s->%s %d sport "PRI_HPORT" dport "PRI_HPORT" %s",
 				str_selector_subnet_port(&t->group->connection->spd->local->client, &asource),
 				str_selector_subnet_port(&t->subnet, &atarget),
-				t->proto, t->sport, t->dport,
+				t->proto, pri_hport(t->sport), pri_hport(t->dport),
 				t->group->connection->name);
 		}
 		/* dump new food groups */
@@ -320,10 +320,10 @@ void load_groups(struct logger *logger)
 		for (struct fg_targets *t = new_targets; t != NULL; t = t->next) {
 			selector_buf asource;
 			selector_buf atarget;
-			DBG_log("  %s->%s %d sport %d dport %d %s",
+			DBG_log("  %s->%s %d sport "PRI_HPORT" dport "PRI_HPORT" %s",
 				str_selector_subnet_port(&t->group->connection->spd->local->client, &asource),
 				str_selector_subnet_port(&t->subnet, &atarget),
-				t->proto, t->sport, t->dport,
+				t->proto, pri_hport(t->sport), pri_hport(t->dport),
 				t->group->connection->name);
 		}
 	}
@@ -356,9 +356,9 @@ void load_groups(struct logger *logger)
 			if (r == 0)
 				r = op->proto - np->proto;
 			if (r == 0)
-				r = op->sport - np->sport;
+				r = hport(op->sport) - hport(np->sport);
 			if (r == 0)
-				r = op->dport - np->dport;
+				r = hport(op->dport) - hport(np->dport);
 
 			if (r == 0 && op->group == np->group) {
 				/* unchanged -- steal name & skip over */
