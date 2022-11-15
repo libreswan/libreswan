@@ -2887,7 +2887,7 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
  */
 struct connection *add_group_instance(struct connection *group,
 				      const ip_selector *target,
-				      uint8_t proto,
+				      const struct ip_protocol *proto,
 				      ip_port sport, ip_port dport)
 {
 	passert(group->kind == CK_GROUP);
@@ -2901,13 +2901,16 @@ struct connection *add_group_instance(struct connection *group,
 	subnet_buf targetbuf;
 	str_selector_subnet(target, &targetbuf);
 
-	if (proto == 0) {
+	if (proto == &ip_protocol_all) {
+		/* all protocols implies all ports */
+		pexpect(sport.hport == 0);
+		pexpect(dport.hport == 0);
 		namebuf = alloc_printf("%s#%s", group->name, targetbuf.buf);
 	} else {
 		namebuf = alloc_printf("%s#%s-("PRI_HPORT"--%d--"PRI_HPORT")", group->name,
 				       targetbuf.buf,
 				       pri_hport(sport),
-				       proto,
+				       proto->ipproto,
 				       pri_hport(dport));
 	}
 
@@ -2939,8 +2942,8 @@ struct connection *add_group_instance(struct connection *group,
 	t->spd->remote->client = *target;	/* hashed below */
 	if (proto != 0) {
 		/* if foodgroup entry specifies protoport, override protoport= settings */
-		update_selector_ipproto(&t->spd->local->client, proto);
-		update_selector_ipproto(&t->spd->remote->client, proto);
+		update_selector_ipproto(&t->spd->local->client, proto->ipproto);
+		update_selector_ipproto(&t->spd->remote->client, proto->ipproto);
 		update_selector_hport(&t->spd->local->client, sport.hport);
 		update_selector_hport(&t->spd->remote->client, dport.hport);
 	}

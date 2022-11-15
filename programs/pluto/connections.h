@@ -595,7 +595,7 @@ extern void delete_connections_by_name(const char *name, bool strict, struct log
 extern void delete_every_connection(void);
 struct connection *add_group_instance(struct connection *group,
 				      const ip_selector *target,
-				      uint8_t proto,
+				      const struct ip_protocol *proto,
 				      ip_port sport,
 				      ip_port dport);
 

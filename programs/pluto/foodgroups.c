@@ -66,7 +66,7 @@ struct fg_targets {
 	struct fg_targets *next;
 	struct fg_groups *group;
 	ip_selector subnet;
-	uint8_t proto;
+	const struct ip_protocol *proto;
 	ip_port sport;
 	ip_port dport;
 	char *name; /* name of instance of group conn */
@@ -167,7 +167,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 			continue;
 		}
 
-		unsigned proto = 0;
+		const struct ip_protocol *proto = &ip_protocol_all;
 		ip_port sport = unset_port;
 		ip_port dport = unset_port;
 
@@ -192,7 +192,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 				     flp->tok, IPPROTO_ESP, IPPROTO_AH);
 				break;
 			}
-			proto = protocol->ipproto;
+			proto = protocol;
 			/* source port */
 			if (!shift(flp)) {
 				llog(RC_LOG_SERIOUS, flp->logger,
@@ -260,7 +260,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 			llog(RC_LOG_SERIOUS, flp->logger,
 			     "subnet \"%s\", proto %d, sport "PRI_HPORT" dport "PRI_HPORT", source %s, already \"%s\"",
 			     str_selector_subnet(&sn, &dest),
-			     proto, pri_hport(sport), pri_hport(dport),
+			     proto->ipproto, pri_hport(sport), pri_hport(dport),
 			     str_selector_subnet(lsn, &source),
 			     (*pp)->group->connection->name);
 		} else {
@@ -309,10 +309,10 @@ void load_groups(struct logger *logger)
 		for (struct fg_targets *t = targets; t != NULL; t = t->next) {
 			selector_buf asource;
 			selector_buf atarget;
-			DBG_log("  %s->%s %d sport "PRI_HPORT" dport "PRI_HPORT" %s",
+			DBG_log("  %s->%s %s sport "PRI_HPORT" dport "PRI_HPORT" %s",
 				str_selector_subnet_port(&t->group->connection->spd->local->client, &asource),
 				str_selector_subnet_port(&t->subnet, &atarget),
-				t->proto, pri_hport(t->sport), pri_hport(t->dport),
+				t->proto->name, pri_hport(t->sport), pri_hport(t->dport),
 				t->group->connection->name);
 		}
 		/* dump new food groups */
@@ -320,10 +320,10 @@ void load_groups(struct logger *logger)
 		for (struct fg_targets *t = new_targets; t != NULL; t = t->next) {
 			selector_buf asource;
 			selector_buf atarget;
-			DBG_log("  %s->%s %d sport "PRI_HPORT" dport "PRI_HPORT" %s",
+			DBG_log("  %s->%s %s sport "PRI_HPORT" dport "PRI_HPORT" %s",
 				str_selector_subnet_port(&t->group->connection->spd->local->client, &asource),
 				str_selector_subnet_port(&t->subnet, &atarget),
-				t->proto, pri_hport(t->sport), pri_hport(t->dport),
+				t->proto->name, pri_hport(t->sport), pri_hport(t->dport),
 				t->group->connection->name);
 		}
 	}
@@ -383,7 +383,8 @@ void load_groups(struct logger *logger)
 					/* XXX: something better? */
 					fd_delref(&g->logger->global_whackfd);
 					g->logger->global_whackfd = fd_addref(logger->global_whackfd);
-					struct connection *ng = add_group_instance(g, &np->subnet, np->proto,
+					struct connection *ng = add_group_instance(g, &np->subnet,
+										   np->proto,
 										   np->sport, np->dport);
 					/* XXX: something better? */
 					fd_delref(&g->logger->global_whackfd);
@@ -411,6 +412,7 @@ void load_groups(struct logger *logger)
 
 void add_to_groups(struct connection *c)
 {
+	passert(c->kind == CK_GROUP);
 	struct fg_groups *g = alloc_thing(struct fg_groups, "policy group");
 
 	g->next = groups;
