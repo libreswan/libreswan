@@ -27,7 +27,7 @@
 
 #include "log.h"
 #include "ikev2_ts.h"
-#include "connections.h"	/* for struct spd_end */
+#include "connections.h"
 #include "demux.h"
 #include "host_pair.h"
 #include "ip_info.h"
@@ -102,9 +102,9 @@ static const struct traffic_selector_payloads empty_traffic_selectors = {
 	},
 };
 
-struct spd_ends {
-	const struct spd_end *i;
-	const struct spd_end *r;
+struct selector_ends {
+	ip_selector i;
+	ip_selector r;
 };
 
 enum fit {
@@ -686,7 +686,7 @@ static bool v2_parse_tsp(const struct msg_digest *md,
  * protocol (ts_proto).
  */
 
-static const struct ip_protocol *narrow_protocol(const struct spd_end *end,
+static const struct ip_protocol *narrow_protocol(ip_selector selector,
 						 const struct traffic_selectors *tss,
 						 enum fit fit, unsigned index,
 						 indent_t indent)
@@ -696,19 +696,19 @@ static const struct ip_protocol *narrow_protocol(const struct spd_end *end,
 
 	switch (fit) {
 	case END_EQUALS_TS:
-		if (end->client.ipproto == ts->ipprotoid) {
-			ipproto = end->client.ipproto;
+		if (selector.ipproto == ts->ipprotoid) {
+			ipproto = selector.ipproto;
 		}
 		break;
 	case END_NARROWER_THAN_TS:
 		if (ts->ipprotoid == 0 /* wild-card */ ||
-		    ts->ipprotoid == end->client.ipproto) {
-			ipproto = end->client.ipproto;
+		    ts->ipprotoid == selector.ipproto) {
+			ipproto = selector.ipproto;
 		}
 		break;
 	case END_WIDER_THAN_TS:
-		if (end->client.ipproto == 0 /* wild-card */ ||
-		    end->client.ipproto == ts->ipprotoid) {
+		if (selector.ipproto == 0 /* wild-card */ ||
+		    selector.ipproto == ts->ipprotoid) {
 			ipproto = ts->ipprotoid;
 		}
 		break;
@@ -717,7 +717,7 @@ static const struct ip_protocol *narrow_protocol(const struct spd_end *end,
 	}
 	const struct ip_protocol *protocol = ipproto >= 0 ? protocol_from_ipproto(ipproto) : NULL;
 	dbg_ts("narrow protocol: END %s.client.ipproto=%s%d %s TS %s[%u]=%s%d ==> %s (%s)",
-	       tss->end_name, end->client.ipproto == 0 ? "*" : "", end->client.ipproto,
+	       tss->end_name, selector.ipproto == 0 ? "*" : "", selector.ipproto,
 	       str_end_fit_ts(fit),
 	       tss->ts_name, index, ts->ipprotoid == 0 ? "*" : "", ts->ipprotoid,
 	       (protocol == NULL ? "<unset>" : protocol->name),
@@ -734,7 +734,7 @@ static const struct ip_protocol *narrow_protocol(const struct spd_end *end,
  * only narrow to that.
  */
 
-static int narrow_port(const struct spd_end *end,
+static int narrow_port(ip_selector selector,
 		       const struct traffic_selectors *tss,
 		       enum fit fit, unsigned index,
 		       indent_t indent)
@@ -742,8 +742,8 @@ static int narrow_port(const struct spd_end *end,
 	passert(index < tss->nr);
 	const struct traffic_selector *ts = &tss->ts[index];
 
-	int end_low = end->client.hport;
-	int end_high = end->client.hport == 0 ? 65535 : end->client.hport;
+	int end_low = selector.hport;
+	int end_high = selector.hport == 0 ? 65535 : selector.hport;
 	int port_low = -1;
 	int port_high = -1;
 
@@ -797,7 +797,7 @@ static int narrow_port(const struct spd_end *end,
  *       a single CIDR
  */
 
-static ip_range narrow_range(const struct spd_end *end,
+static ip_range narrow_range(ip_selector selector,
 			     const struct traffic_selectors *tss,
 			     enum fit fit,
 			     unsigned index, indent_t indent)
@@ -811,7 +811,7 @@ static ip_range narrow_range(const struct spd_end *end,
 	 */
 	const struct traffic_selector *ts = &tss->ts[index];
 	ip_range range = unset_range;
-	ip_range client_range = selector_range(end->client);
+	ip_range client_range = selector_range(selector);
 	switch (fit) {
 	case END_EQUALS_TS:
 		if (range_eq_range(client_range, ts->net)) {
@@ -835,7 +835,7 @@ static ip_range narrow_range(const struct spd_end *end,
 	selector_buf cb;
 	range_buf tsb, rb;
 	dbg_ts("narrow range: END %s.client.selector=%s %s TS %s[%u]=%s ==> %s (%s)",
-	       tss->end_name, str_selector(&end->client, &cb),
+	       tss->end_name, str_selector(&selector, &cb),
 	       str_end_fit_ts(fit),
 	       tss->ts_name, index, str_range(&ts->net, &tsb),
 	       str_range(&range, &rb), str_fit_story(fit));
@@ -843,7 +843,7 @@ static ip_range narrow_range(const struct spd_end *end,
 }
 
 static bool narrow_ts_end(struct narrowed_traffic_selector *n,
-			  const struct spd_end *end,
+			  ip_selector selector,
 			  const struct traffic_selectors *tss,
 			  enum fit fit, unsigned index,
 			  indent_t indent)
@@ -862,19 +862,19 @@ static bool narrow_ts_end(struct narrowed_traffic_selector *n,
 		return false;
 	}
 
-	n->port = narrow_port(end, tss, fit, index, indent);
+	n->port = narrow_port(selector, tss, fit, index, indent);
 	if (n->port < 0) {
 		dbg_ts("skipping; %s port too wide", tss->ts_name);
 		return false;
 	}
 
-	n->protocol = narrow_protocol(end, tss, fit, index, indent);
+	n->protocol = narrow_protocol(selector, tss, fit, index, indent);
 	if (n->protocol == NULL) {
 		dbg_ts("skipping; %s protocol too wide", tss->ts_name);
 		return false;
 	}
 
-	n->range = narrow_range(end, tss, fit, index, indent);
+	n->range = narrow_range(selector, tss, fit, index, indent);
 	if (range_is_unset(&n->range)) {
 		dbg_ts("skipping; %s range too wide", tss->ts_name);
 		return false;
@@ -883,7 +883,7 @@ static bool narrow_ts_end(struct narrowed_traffic_selector *n,
 	return true;
 }
 
-static struct narrowed_traffic_selectors narrow_tss_ends(struct spd_ends *ends,
+static struct narrowed_traffic_selectors narrow_tss_ends(struct selector_ends *ends,
 							 const struct traffic_selector_payloads *tsp,
 							 enum fit fit, unsigned index,
 							 indent_t indent)
@@ -1108,19 +1108,19 @@ static bool score_gt(const struct best_score *score, const struct best_score *be
 }
 
 static struct best_score score_ends(enum fit fit,
-				    const struct spd_ends *ends,
+				    const struct selector_ends *ends,
 				    const struct traffic_selector_payloads *tsp,
 				    indent_t indent)
 {
 	selector_buf ei3;
 	selector_buf er3;
 	dbg_ts("evaluating END %s=%s:%d/%d %s=%s:%d/%d %s TS:",
-	       tsp->i.end_name, str_selector_subnet_port(&ends->i->client, &ei3),
-	       ends->i->client.ipproto,
-	       ends->i->client.hport,
-	       tsp->r.end_name, str_selector_subnet_port(&ends->r->client, &er3),
-	       ends->r->client.ipproto,
-	       ends->r->client.hport,
+	       tsp->i.end_name, str_selector_subnet_port(&ends->i, &ei3),
+	       ends->i.ipproto,
+	       ends->i.hport,
+	       tsp->r.end_name, str_selector_subnet_port(&ends->r, &er3),
+	       ends->r.ipproto,
+	       ends->r.hport,
 	       str_end_fit_ts(fit));
 
 	indent.level++;
@@ -1468,9 +1468,9 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			     sr != NULL; sr = sr->spd_next) {
 
 				/* responder */
-				const struct spd_ends ends = {
-					.i = sr->remote,
-					.r = sr->local,
+				const struct selector_ends ends = {
+					.i = sr->remote->client,
+					.r = sr->local->client,
 				};
 
 				struct best_score score = score_ends(responder_fit,
@@ -1670,9 +1670,9 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			enum fit responder_fit = END_EQUALS_TS;
 
 			/* responder: THIS=RESPONDER; THAT=INITIATOR */
-			struct spd_ends ends = {
-				.i = t->spd->remote,
-				.r = t->spd->local,
+			struct selector_ends ends = {
+				.i = t->spd->remote->client,
+				.r = t->spd->local->client,
 			};
 
 			struct narrowed_traffic_selectors n = narrow_tss_ends(&ends, &tsp,
@@ -1794,9 +1794,9 @@ bool v2_process_ts_response(struct child_sa *child,
 
 	/* initiator */
 	const struct spd_route *sra = c->spd;
-	const struct spd_ends e = {
-		.i = sra->local,
-		.r = sra->remote,
+	const struct selector_ends e = {
+		.i = sra->local->client,
+		.r = sra->remote->client,
 	};
 
 	/*
@@ -1876,9 +1876,9 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 		return false;
 	}
 
-	const struct spd_ends ends = {
-		.i = c->spd->remote,
-		.r = c->spd->local,
+	const struct selector_ends ends = {
+		.i = c->spd->remote->client,
+		.r = c->spd->local->client,
 	};
 
 	enum fit responder_fit = END_NARROWER_THAN_TS;
