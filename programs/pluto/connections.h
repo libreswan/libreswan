@@ -372,36 +372,25 @@ struct connection_end {
 	struct child_end child;
 };
 
+void set_end_selector_where(struct connection *c, enum left_right end, ip_selector s, where_t where);
+
 struct spd_end {
 	ip_selector client;
-#define set_end_selector(C, END, SELECTOR)				\
-	{								\
-		selector_buf sb_, cb_, nb_;				\
-		ip_selector n_ = SELECTOR;				\
-		ldbg((C)->logger, "%s.selector: %s / %s -> %s",		\
-		     (C)->end[END].config->leftright,			\
-		     str_selector(&(C)->end[END].child.selector, &sb_), \
-		     str_selector((C)->spd == NULL ? NULL :		\
-				  &(C)->spd->end[END].client, &cb_),	\
-		     str_selector(&n_, &nb_));				\
-		if ((C)->spd != NULL) {					\
-			pexpect(selector_eq_selector((C)->end[END].child.selector, \
-						     (C)->spd->end[END].client)); \
-			(C)->spd->end[END].client = n_;			\
-		}							\
-		(C)->end[END].child.selector = n_;			\
-	}
-#define set_first_selector(C, LR, SELECTOR)			\
-	set_end_selector(C, (C)->LR->config->index, SELECTOR)
+#define set_end_selector(C, END, SELECTOR)		\
+	set_end_selector_where(C, END, SELECTOR, HERE)
+#define set_first_selector(C, LR, SELECTOR)				\
+	set_end_selector_where(C, (C)->LR->config->index, SELECTOR, HERE)
 #define update_first_selector_protocol_port(C, LR, PROTOCOL, PORT)	\
-	set_end_selector(C, (C)->LR->config->index,			\
-			 selector_from_range_protocol_port(selector_range((C)->spd->LR->client), \
-							   PROTOCOL, PORT))
+	set_end_selector_where(C, (C)->LR->config->index,		\
+			       selector_from_range_protocol_port(selector_range((C)->spd->LR->client), \
+								 PROTOCOL, PORT), \
+			       HERE)
 #define update_first_selector_port(C, LR, PORT)				\
-	set_end_selector(C, (C)->LR->config->index,			\
-			 selector_from_range_protocol_port(selector_range((C)->LR->child.selector), \
-							   selector_protocol((C)->LR->child.selector), \
-							   PORT))
+	set_end_selector_where(C, (C)->LR->config->index,		\
+			       selector_from_range_protocol_port(selector_range((C)->LR->child.selector), \
+								 selector_protocol((C)->LR->child.selector), \
+								 PORT),	\
+			       HERE)
 
 	/*
 	 * An extract of the original configuration information for
