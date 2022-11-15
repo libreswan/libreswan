@@ -2885,6 +2885,7 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
  * of new connection.  NULL on failure (duplicated name).  Caller is
  * responsible for pfreeing name.
  */
+
 struct connection *add_group_instance(struct connection *group,
 				      const ip_selector *target,
 				      const struct ip_protocol *proto,
@@ -2942,10 +2943,8 @@ struct connection *add_group_instance(struct connection *group,
 	t->spd->remote->client = *target;	/* hashed below */
 	if (proto != 0) {
 		/* if foodgroup entry specifies protoport, override protoport= settings */
-		update_selector_ipproto(&t->spd->local->client, proto->ipproto);
-		update_selector_ipproto(&t->spd->remote->client, proto->ipproto);
-		update_selector_hport(&t->spd->local->client, sport.hport);
-		update_selector_hport(&t->spd->remote->client, dport.hport);
+		update_first_selector_protocol_port(t, local, proto, sport);
+		update_first_selector_protocol_port(t, remote, proto, dport);
 	}
 	t->policy &= ~(POLICY_GROUP | POLICY_GROUTED);
 	t->policy |= POLICY_GROUPINSTANCE; /* mark as group instance for later */
@@ -3607,7 +3606,7 @@ struct connection *oppo_instantiate(struct connection *c,
 			 * or that it is our private ip in case we are
 			 * behind a port forward.
 			 */
-			update_selector_hport(&d->spd->local->client, 0);
+			update_first_selector_port(d, local, unset_port);
 		} else {
 			llog_passert(c->logger, HERE,
 				     "local address does not match the host or client");

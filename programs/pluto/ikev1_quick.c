@@ -1118,8 +1118,8 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 		/* fill in the client's true port */
 		if (c->remote->config->child.protoport.has_port_wildcard) {
-			int port = selector_port(*remote_client).hport;
-			update_selector_hport(&c->spd->remote->client, port);
+			ip_port port = selector_port(*remote_client);
+			update_first_selector_port(c, remote, port);
 		}
 
 		if (is_virtual_remote(c)) {

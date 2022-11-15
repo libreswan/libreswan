@@ -369,6 +369,21 @@ struct connection_end {
 
 struct spd_end {
 	ip_selector client;
+#define update_first_selector_protocol_port(C, END, PROTOCOL, PORT)	\
+	{								\
+		ip_selector s_ = (C)->spd->END->client;			\
+		ip_range r_ = selector_range(s_);			\
+		(C)->spd->END->client =					\
+			selector_from_range_protocol_port(r_, PROTOCOL, PORT); \
+	}
+#define update_first_selector_port(C, END, PORT)			\
+	{								\
+		ip_selector s_ = (C)->spd->END->client;			\
+		ip_range r_ = selector_range(s_);			\
+		const struct ip_protocol *p_ = selector_protocol(s_);	\
+		(C)->spd->END->client =					\
+			selector_from_range_protocol_port(r_, p_, PORT); \
+	}
 
 	/*
 	 * An extract of the original configuration information for
