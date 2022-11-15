@@ -77,7 +77,7 @@ diag_t ttosaid(shunk_t src, ip_said *said)
 		input = src;
 	}
 
-	const struct ip_protocol *protocol = protocol_by_caseeat_prefix(&input);
+	const struct ip_protocol *protocol = protocol_from_caseeat_prefix(&input);
 	if (protocol == NULL) {
 		return diag("SA specifier "PRI_SHUNK" lacks valid protocol prefix", pri_shunk(src));
 	}

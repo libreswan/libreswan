@@ -509,7 +509,7 @@ static bool decode_net_id(struct isakmp_ipsec_id *id,
 		bad_case(id_type);
 	}
 
-	const ip_protocol *protocol = protocol_by_ipproto(id->isaiid_protoid);
+	const struct ip_protocol *protocol = protocol_from_ipproto(id->isaiid_protoid);
 	if (!pexpect(protocol != NULL)) {
 		/* things would need to be pretty screwed up */
 		return false;
@@ -948,7 +948,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 			return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 
 		/* for code overwriting above */
-		const ip_protocol *remote_protocol = protocol_by_ipproto(IDci->payload.ipsec_id.isaiid_protoid);
+		const struct ip_protocol *remote_protocol = protocol_from_ipproto(IDci->payload.ipsec_id.isaiid_protoid);
 		ip_port remote_port = ip_hport(IDci->payload.ipsec_id.isaiid_port);
 
 		/* Hack for MS 818043 NAT-T Update.

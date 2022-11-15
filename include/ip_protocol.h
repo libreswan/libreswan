@@ -36,7 +36,7 @@ struct jambuf;
  * Also see ip(7) and socket(IF_INET, SOCK_RAW, protocol).
  */
 
-typedef struct ip_protocol {
+struct ip_protocol {
 	/*
 	 * https://www.iana.org/assignments/protocol-numbers/protocol-numbers.xhtml
 	 *
@@ -59,7 +59,11 @@ typedef struct ip_protocol {
 	const struct ip_encap *encap_esp;
 	/* is a port required? */
 	bool endpoint_requires_non_zero_port;
-} ip_protocol;
+};
+
+#if 0
+typedef const struct ip_protocol *ip_protocol; /* good idea? */
+#endif
 
 #ifdef IPPROTO_COMP
 #define IPCOMP_IPPROTO IPPROTO_COMP /*linux*/
@@ -83,12 +87,12 @@ extern const struct ip_protocol ip_protocols[256];
 #define ip_protocol_internal ip_protocols[INTERNAL_IPPROTO]	/* any host internal protocol */
 
 /* match then eat the start of prefix */
-const struct ip_protocol *protocol_by_caseeat_prefix(shunk_t *prefix);
+const struct ip_protocol *protocol_from_caseeat_prefix(shunk_t *prefix);
 
-const struct ip_protocol *protocol_by_ipproto(unsigned protoid);
-const struct ip_protocol *protocol_by_shunk(shunk_t protocol);
+const struct ip_protocol *protocol_from_ipproto(unsigned protoid);
+const struct ip_protocol *protocol_from_shunk(shunk_t protocol);
 
-err_t ttoprotocol(shunk_t text, const ip_protocol **ipproto);
+err_t ttoprotocol(shunk_t text, const struct ip_protocol **ipproto);
 
 /* these are kind of pointless */
 
@@ -100,8 +104,10 @@ size_t jam_protocol(struct jambuf *, const struct ip_protocol *);
 const char *str_protocol(const struct ip_protocol *);
 
 /* ex: sep='=' gives '=TCP=>' */
-size_t jam_protocols(struct jambuf *buf, const ip_protocol *src, char sep,
-		     const ip_protocol *dst);
+size_t jam_protocols(struct jambuf *buf,
+		     const struct ip_protocol *src,
+		     char sep,
+		     const struct ip_protocol *dst);
 
 /* used to size other buffers */
 

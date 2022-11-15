@@ -1090,7 +1090,7 @@ const struct ip_protocol ip_protocols[256] = {
 	},
 };
 
-const struct ip_protocol *protocol_by_caseeat_prefix(shunk_t *prefix)
+const struct ip_protocol *protocol_from_caseeat_prefix(shunk_t *prefix)
 {
 	for (unsigned ipproto = 0; ipproto < elemsof(ip_protocols); ipproto++) {
 		const struct ip_protocol *p = &ip_protocols[ipproto];
@@ -1102,7 +1102,7 @@ const struct ip_protocol *protocol_by_caseeat_prefix(shunk_t *prefix)
 	return NULL;
 }
 
-const struct ip_protocol *protocol_by_shunk(shunk_t token)
+const struct ip_protocol *protocol_from_shunk(shunk_t token)
 {
 	/* try the name */
 	for (unsigned ipproto = 0; ipproto < elemsof(ip_protocols); ipproto++) {
@@ -1121,10 +1121,10 @@ const struct ip_protocol *protocol_by_shunk(shunk_t token)
 	if (ipproto > 255) {
 		return NULL;
 	}
-	return protocol_by_ipproto(ipproto);
+	return protocol_from_ipproto(ipproto);
 }
 
-const struct ip_protocol *protocol_by_ipproto(unsigned ipproto)
+const struct ip_protocol *protocol_from_ipproto(unsigned ipproto)
 {
 	if (ipproto >= elemsof(ip_protocols)) {
 		return NULL;
@@ -1167,7 +1167,10 @@ const char *str_protocol(const struct ip_protocol *protocol)
 	return protocol->name;
 }
 
-size_t jam_protocols(struct jambuf *buf, const ip_protocol *src, char sep, const ip_protocol *dst)
+size_t jam_protocols(struct jambuf *buf,
+		     const struct ip_protocol *src,
+		     char sep,
+		     const struct ip_protocol *dst)
 {
 	size_t s = 0;
 	/* caller adds ' ' */

@@ -58,7 +58,7 @@ typedef struct {
 		((A)->is_set ? "set" : "unset"),		\
 		(A)->version,					\
 		((A)->ipproto > 255 ? "PROTO>255" :		\
-		 protocol_by_ipproto((A)->ipproto)->name),	\
+		 protocol_from_ipproto((A)->ipproto)->name),	\
 		pri_ip_bytes((A)->bytes),			\
 		(A)->hport
 

@@ -116,6 +116,10 @@ struct ip_info {
 
 };
 
+#if 0
+typedef const struct ip_info *ip_info; /* good idea? */
+#endif
+
 extern const struct ip_info ipv4_info;
 extern const struct ip_info ipv6_info;
 

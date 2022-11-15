@@ -319,7 +319,7 @@ ip_selector selector_from_address_protoport(const ip_address address,
 ip_selector selector_from_subnet_protoport(const ip_subnet subnet,
 					   const ip_protoport protoport)
 {
-	const struct ip_protocol *protocol = protocol_by_ipproto(protoport.ipproto);
+	const struct ip_protocol *protocol = protocol_from_ipproto(protoport.ipproto);
 	const ip_port port = ip_hport(protoport.hport);
 	return selector_from_subnet_protocol_port(subnet, protocol, port);
 }
@@ -353,13 +353,13 @@ ip_port selector_port(const ip_selector selector)
 	return ip_hport(selector.hport);
 }
 
-const ip_protocol *selector_protocol(const ip_selector selector)
+const struct ip_protocol *selector_protocol(const ip_selector selector)
 {
 	if (selector_is_unset(&selector)) {
 		return NULL;
 	}
 
-	return protocol_by_ipproto(selector.ipproto);
+	return protocol_from_ipproto(selector.ipproto);
 }
 
 ip_range selector_range(const ip_selector selector)

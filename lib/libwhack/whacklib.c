@@ -223,7 +223,7 @@ static bool unpack_ip_protocol(struct whackpacker *wp UNUSED,
 			       const char *what UNUSED)
 {
 	/* spell out conversions */
-	*protocol = protocol_by_ipproto((unsigned)(uintptr_t)(const void*)*protocol);
+	*protocol = protocol_from_ipproto((unsigned)(uintptr_t)(const void*)*protocol);
 	return *protocol != NULL;
 }
 

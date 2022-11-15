@@ -1417,7 +1417,7 @@ struct bare_shunt **bare_shunt_ptr(const ip_selector *our_client,
 				   const char *why)
 
 {
-	const struct ip_protocol *transport_proto = protocol_by_ipproto(our_client->ipproto);
+	const struct ip_protocol *transport_proto = protocol_from_ipproto(our_client->ipproto);
 	pexpect(peer_client->ipproto == transport_proto->ipproto);
 
 	selectors_buf sb;
@@ -1525,7 +1525,7 @@ static void clear_narrow_holds(const ip_selector *src_client,
 			       const ip_selector *dst_client,
 			       struct logger *logger)
 {
-	const ip_protocol *transport_proto = protocol_by_ipproto(src_client->ipproto);
+	const struct ip_protocol *transport_proto = protocol_from_ipproto(src_client->ipproto);
 	struct bare_shunt **bspp = &bare_shunts;
 	while (*bspp != NULL) {
 		/*
@@ -3557,7 +3557,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 			/* fudge up replace_bare_shunt() */
 			const struct ip_info *afi = address_type(src_address);
 			passert(afi == address_type(dst_address));
-			const ip_protocol *protocol = protocol_by_ipproto(sr->local->client.ipproto);
+			const struct ip_protocol *protocol = protocol_from_ipproto(sr->local->client.ipproto);
 			/* ports? assumed wide? */
 			ip_selector src = selector_from_address_protocol(*src_address, protocol);
 			ip_selector dst = selector_from_address_protocol(*dst_address, protocol);

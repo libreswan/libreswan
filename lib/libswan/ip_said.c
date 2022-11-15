@@ -94,7 +94,7 @@ size_t jam_said(struct jambuf *buf, const ip_said *said)
 		return jam(buf, "<said-has-no-type");
 	}
 
-	const ip_protocol *proto = protocol_by_ipproto(said->ipproto);
+	const struct ip_protocol *proto = protocol_from_ipproto(said->ipproto);
 
 	if (proto == &ip_protocol_ipip/*TUN*/ &&
 	    said->spi == PASSTHROUGHSPI &&
@@ -161,5 +161,5 @@ const struct ip_protocol *said_protocol(const ip_said said)
 		return NULL;
 	}
 
-	return protocol_by_ipproto(said.ipproto);
+	return protocol_from_ipproto(said.ipproto);
 }

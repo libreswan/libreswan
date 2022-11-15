@@ -99,12 +99,12 @@ err_t ttoselector_num(shunk_t input,
 	shunk_t protocol_token = shunk_token(&input, &protocol_term, "/");
 	/* fprintf(stderr, "protocol="PRI_SHUNK"\n", pri_shunk(protocol_token)); */
 
-	const ip_protocol *protocol = &ip_protocol_all; /*0*/
+	const struct ip_protocol *protocol = &ip_protocol_all; /*0*/
 	if (protocol_token.len > 0) {
 		if (protocol_term != '/') {
 			return "protocol must be followed by '/'";
 		}
-		protocol = protocol_by_shunk(protocol_token);
+		protocol = protocol_from_shunk(protocol_token);
 		if (protocol == NULL) {
 			return "unknown protocol";
 		}

@@ -26,10 +26,10 @@
 #include "ip_encap.h"
 #include "jambuf.h"
 
-err_t ttoprotocol(shunk_t text, const ip_protocol **proto)
+err_t ttoprotocol(shunk_t text, const struct ip_protocol **proto)
 {
 	/* look it up */
-	*proto = protocol_by_caseeat_prefix(&text);
+	*proto = protocol_from_caseeat_prefix(&text);
 	if (*proto != NULL) {
 		return NULL;
 	}
@@ -42,7 +42,7 @@ err_t ttoprotocol(shunk_t text, const ip_protocol **proto)
 		if (p > 255) {
 			return "numeric protocol must be <= 255";
 		}
-		*proto = protocol_by_ipproto(p);
+		*proto = protocol_from_ipproto(p);
 		passert(*proto != NULL);
 		return NULL;
 	}
@@ -52,7 +52,7 @@ err_t ttoprotocol(shunk_t text, const ip_protocol **proto)
 	const struct protoent *protocol = getprotobyname(n);
 	pfree(n);
 	if (protocol != NULL) {
-		*proto = protocol_by_ipproto(protocol->p_proto);
+		*proto = protocol_from_ipproto(protocol->p_proto);
 		return NULL;
 	}
 

@@ -711,7 +711,7 @@ static const struct ip_protocol *narrow_protocol(const struct spd_end *end,
 	default:
 		bad_case(fit);
 	}
-	const struct ip_protocol *protocol = ipproto >= 0 ? protocol_by_ipproto(ipproto) : NULL;
+	const struct ip_protocol *protocol = ipproto >= 0 ? protocol_from_ipproto(ipproto) : NULL;
 	dbg_ts("narrow protocol: END %s.client.ipproto=%s%d %s TS %s[%u]=%s%d ==> %s (%s)",
 	       tss->end_name, end->client.ipproto == 0 ? "*" : "", end->client.ipproto,
 	       str_end_fit_ts(fit),

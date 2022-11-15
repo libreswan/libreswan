@@ -904,7 +904,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			whack_log(RC_DEAF, whackfd,
 				  "need --listen before opportunistic initiation");
 		} else {
-			const ip_protocol *protocol = protocol_by_ipproto(m->oppo.ipproto);
+			const struct ip_protocol *protocol = protocol_from_ipproto(m->oppo.ipproto);
 			ip_packet packet = packet_from_raw(HERE,
 							   address_type(&m->oppo.local.address),
 							   &m->oppo.local.address.bytes,

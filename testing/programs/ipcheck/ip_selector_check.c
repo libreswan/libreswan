@@ -82,7 +82,7 @@ static void check_selector_from(const struct from_test *tests, unsigned nr_tests
 			FAIL("range was %s, expected %s", rb.buf, t->range);
 		}
 
-		const ip_protocol *protocol = selector_protocol(*selector);
+		const struct ip_protocol *protocol = selector_protocol(*selector);
 		if (protocol->ipproto != t->ipproto) {
 			FAIL("ipproto was %u, expected %u", protocol->ipproto, t->ipproto);
 		}
@@ -441,7 +441,7 @@ static void check_selector_op_selector(void)
 			     bool_str(address), bool_str(t->address));
 		}
 
-		const ip_protocol *protocol = selector_protocol(inner_selector);
+		const struct ip_protocol *protocol = selector_protocol(inner_selector);
 		ip_port port = selector_port(inner_selector);
 		if (protocol != &ip_protocol_all && port.hport != 0) {
 			ip_endpoint inner_endpoint = endpoint_from_address_protocol_port(inner_address,

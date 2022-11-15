@@ -554,7 +554,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 		if (kernel_policy != NULL && kernel_policy->nr_rules > 0) {
 			policy_name =
 				(kernel_policy->mode == ENCAP_MODE_TUNNEL ? ip_protocol_ipip.name :
-				 kernel_policy->mode == ENCAP_MODE_TRANSPORT ? protocol_by_ipproto(kernel_policy->rule[kernel_policy->nr_rules].proto)->name :
+				 kernel_policy->mode == ENCAP_MODE_TRANSPORT ? protocol_from_ipproto(kernel_policy->rule[kernel_policy->nr_rules].proto)->name :
 				 "UNKNOWN");
 		} else {
 			/* MUST BE DELETE! */
@@ -758,7 +758,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 				const struct kernel_policy_rule *rule = &kernel_policy->rule[i];
 				DBG_log("%s() ignoring xfrm_user_tmpl reqid=%d proto=%s %s because op=%s dir=%s",
 					__func__, rule->reqid,
-					protocol_by_ipproto(rule->proto)->name,
+					protocol_from_ipproto(rule->proto)->name,
 					encap_mode_name(kernel_policy->mode),
 					op_str, dir_str);
 			}
@@ -1720,7 +1720,7 @@ static ip_address address_from_xfrm(const struct ip_info *afi,
 static ip_packet packet_from_xfrm_selector(const struct ip_info *afi,
 					   const struct xfrm_selector *sel)
 {
-	const ip_protocol *protocol = protocol_by_ipproto(sel->proto);
+	const struct ip_protocol *protocol = protocol_from_ipproto(sel->proto);
 	passert(protocol != NULL); /* sel.proto is a byte, right? */
 
 	struct ip_bytes src_bytes = bytes_from_xfrm_address(afi, &sel->saddr);
@@ -1890,7 +1890,7 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol,
 
 	ip_address src = address_from_xfrm(afi, &pol->sel.saddr);
 	ip_address dst = address_from_xfrm(afi, &pol->sel.daddr);
-	const struct ip_protocol *transport_proto = protocol_by_ipproto(pol->sel.proto);
+	const struct ip_protocol *transport_proto = protocol_from_ipproto(pol->sel.proto);
 
 	if (flush_bare_shunt(&src, &dst, transport_proto, EXPECT_KERNEL_POLICY_OK,
 			     "delete expired bare shunt", logger)) {
@@ -1976,7 +1976,7 @@ static void netlink_kernel_sa_expire(struct nlmsghdr *n, struct logger *logger)
 		return;
 	}
 
-	const ip_protocol *protocol = protocol_by_ipproto(ue->state.id.proto);
+	const struct ip_protocol *protocol = protocol_from_ipproto(ue->state.id.proto);
 	if (protocol == NULL) {
 		llog(RC_LOG, logger,
 		      "XFRM_MSG_EXPIRE message from kernel malformed: protocol %u unknown",

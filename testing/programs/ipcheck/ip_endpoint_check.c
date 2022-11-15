@@ -79,7 +79,7 @@ void ip_endpoint_check()
 		}
 
 		ip_endpoint e, *endpoint = &e;
-		const ip_protocol *protocol = t->hport == 0 ? &ip_protocol_icmp : &ip_protocol_udp;
+		const struct ip_protocol *protocol = t->hport == 0 ? &ip_protocol_icmp : &ip_protocol_udp;
 		if (t->is_specified) {
 			e = endpoint_from_address_protocol_port(a, protocol,
 								ip_hport(t->hport));

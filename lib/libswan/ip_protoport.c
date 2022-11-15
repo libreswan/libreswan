@@ -111,7 +111,7 @@ size_t jam_protoport(struct jambuf *buf, const ip_protoport *protoport)
 	}
 
 	size_t s = 0;
-	s += jam(buf, "%s/", protocol_by_ipproto(protoport->ipproto)->name);
+	s += jam(buf, "%s/", protocol_from_ipproto(protoport->ipproto)->name);
 	if (protoport->has_port_wildcard) {
 		pexpect(protoport->hport == 0);
 		s += jam_string(buf, "%any");

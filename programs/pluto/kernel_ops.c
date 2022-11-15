@@ -41,8 +41,8 @@ bool raw_policy(enum kernel_policy_op op,
 		struct logger *logger,
 		const char *fmt, ...)
 {
-	const ip_protocol *src_client_proto = selector_protocol(*src_client);
-	const ip_protocol *dst_client_proto = selector_protocol(*dst_client);
+	const struct ip_protocol *src_client_proto = selector_protocol(*src_client);
+	const struct ip_protocol *dst_client_proto = selector_protocol(*dst_client);
 
 	LSWDBGP(DBG_BASE, buf) {
 
@@ -91,7 +91,7 @@ bool raw_policy(enum kernel_policy_op op,
 			const char *sep = "";
 			for (unsigned i = 1; i <= kernel_policy->nr_rules; i++) {
 				const struct kernel_policy_rule *rule = &kernel_policy->rule[i];
-				const ip_protocol *rule_proto = protocol_by_ipproto(rule->proto);
+				const struct ip_protocol *rule_proto = protocol_from_ipproto(rule->proto);
 				jam(buf, "%s%s(%d)", sep, rule_proto->name, rule->reqid);
 				sep = ",";
 			}
@@ -159,8 +159,8 @@ bool kernel_ops_add_sa(const struct kernel_sa *sa, bool replace, struct logger *
 {
 	LSWDBGP(DBG_BASE, buf) {
 
-		const ip_protocol *src_proto = selector_protocol(sa->src.client);
-		const ip_protocol *dst_proto = selector_protocol(sa->dst.client);
+		const struct ip_protocol *src_proto = selector_protocol(sa->src.client);
+		const struct ip_protocol *dst_proto = selector_protocol(sa->dst.client);
 
 		jam(buf, "kernel: add_sa()");
 

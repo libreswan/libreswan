@@ -140,7 +140,7 @@ const struct ip_protocol *endpoint_protocol(const ip_endpoint endpoint)
 	if (endpoint_is_unset(&endpoint)) {
 		return NULL;
 	}
-	return protocol_by_ipproto(endpoint.ipproto);
+	return protocol_from_ipproto(endpoint.ipproto);
 }
 
 bool endpoint_is_specified(const ip_endpoint endpoint)
@@ -215,8 +215,8 @@ size_t jam_endpoints(struct jambuf *buf, const ip_endpoint *src, const ip_endpoi
 	s += jam_char(buf, ' ');
 
 
-	const ip_protocol *srcp = src != NULL ? endpoint_protocol(*src) : &ip_protocol_all;
-	const ip_protocol *dstp = src != NULL ? endpoint_protocol(*dst) : &ip_protocol_all;
+	const struct ip_protocol *srcp = src != NULL ? endpoint_protocol(*src) : &ip_protocol_all;
+	const struct ip_protocol *dstp = src != NULL ? endpoint_protocol(*dst) : &ip_protocol_all;
 	s += jam_protocols(buf, srcp, '-', dstp);
 
 	s += jam_char(buf, ' ');
@@ -280,7 +280,7 @@ void pexpect_endpoint(const ip_endpoint *e, where_t where)
 	 * XXX: is [::]:TCP/10 valid?
 	 */
 
-	const ip_protocol *protocol = endpoint_protocol(*e);
+	const struct ip_protocol *protocol = endpoint_protocol(*e);
 	if (e->is_set == false ||
 	    e->version == 0 ||
 	    e->ipproto == 0 ||
