@@ -2998,20 +2998,24 @@ struct connection *add_group_instance(struct connection *group,
 }
 
 /*
- * Common part of instantiating a Road Warrior or Opportunistic connection.
- * peers_id can be used to carry over an ID discovered in Phase 1.
- * It must not disagree with the one in c, but if that is unspecified,
- * the new connection will use peers_id.
- * If peers_id is NULL, and c.that.id is uninstantiated (ID_NONE), the
- * new connection will continue to have an uninstantiated that.id.
- * Note: instantiation does not affect port numbers.
+ * Common code for instantiating a Road Warrior or Opportunistic
+ * connection while also cloning the SPD list.
  *
- * Note that instantiate can only deal with a single SPD/eroute.
+ * peers_id can be used to carry over an ID discovered in Phase 1.  It
+ * must not disagree with the one in c, but if that is unspecified,
+ * the new connection will use peers_id.  If peers_id is NULL, and
+ * c.that.id is uninstantiated (ID_NONE), the new connection will
+ * continue to have an uninstantiated that.id.  Note: instantiation
+ * does not affect port numbers.
+ *
+ * Note that spd_instantiate() can only deal with a single
+ * SPD/eroute?!?.
  */
-struct connection *instantiate(struct connection *c,
-			       const ip_address *peer_addr,
-			       const struct id *peer_id,
-			       shunk_t sec_label)
+
+struct connection *spd_instantiate(struct connection *c,
+				   const ip_address *peer_addr,
+				   const struct id *peer_id,
+				   shunk_t sec_label)
 {
 	passert(c->kind == CK_TEMPLATE);
 
@@ -3149,7 +3153,7 @@ struct connection *rw_instantiate(struct connection *c,
 				  const ip_selector *peer_subnet,
 				  const struct id *peer_id)
 {
-	struct connection *d = instantiate(c, peer_addr, peer_id, null_shunk);
+	struct connection *d = spd_instantiate(c, peer_addr, peer_id, null_shunk);
 
 	if (peer_subnet != NULL && is_virtual_remote(c)) {
 		set_first_selector(d, remote, *peer_subnet);
@@ -3582,7 +3586,7 @@ struct connection *oppo_instantiate(struct connection *c,
 	    pri_connection(c, &cb), enum_name(&routing_story, c->spd->routing),
 	    str_address(local_address, &lb), str_address(remote_address, &rb));
 
-	struct connection *d = instantiate(c, remote_address, remote_id, null_shunk);
+	struct connection *d = spd_instantiate(c, remote_address, remote_id, null_shunk);
 
 	passert(d->spd->spd_next == NULL);
 

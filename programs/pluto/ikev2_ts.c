@@ -1688,8 +1688,8 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			struct connection *s;
 			if (v2_child_connection_probably_shared(child, indent)) {
 				/* instantiate it, filling in peer's ID */
-				s = instantiate(t, &child->sa.st_connection->remote->host.addr,
-						NULL, /*sec_label*/null_shunk);
+				s = spd_instantiate(t, &child->sa.st_connection->remote->host.addr,
+						    NULL, /*sec_label*/null_shunk);
 			} else {
 				s = child->sa.st_connection;
 			}
@@ -1738,9 +1738,9 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 		 * Convert the hybrid sec_label template-instance into
 		 * a proper instance, and then update its selectors.
 		 */
-		struct connection *s = instantiate(best.connection,
-						   &child->sa.st_connection->remote->host.addr,
-						   NULL, best.selected_sec_label);
+		struct connection *s = spd_instantiate(best.connection,
+						       &child->sa.st_connection->remote->host.addr,
+						       NULL, best.selected_sec_label);
 		scribble_request_ts_on_connection(child, s, best.score.n, indent);
 
 		/* switch to instance */

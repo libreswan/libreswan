@@ -646,8 +646,6 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 
 /* instantiating routines */
 
-struct alg_info;        /* forward declaration of tag (defined in alg_info.h) */
-
 extern struct connection *rw_instantiate(struct connection *c,
 					 const ip_address *peer_addr,
 					 const ip_selector *peer_subnet,
@@ -656,10 +654,10 @@ struct connection *oppo_instantiate(struct connection *c,
 				    const struct id *remote_id,
 				    const ip_address *local_address,
 				    const ip_address *remote_address);
-extern struct connection *instantiate(struct connection *c,
-				      const ip_address *peer_addr,
-				      const struct id *peer_id,
-				      shunk_t sec_label);
+extern struct connection *spd_instantiate(struct connection *c,
+					  const ip_address *peer_addr,
+					  const struct id *peer_id,
+					  shunk_t sec_label);
 
 struct connection *find_outgoing_opportunistic_template(const ip_packet packet);
 
