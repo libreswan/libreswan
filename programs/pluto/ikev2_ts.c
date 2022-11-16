@@ -1273,12 +1273,10 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 	 */
 	struct best {
 		struct best_score score;
-		const struct spd_route *spd_route;
 		struct connection *connection;
 		shunk_t selected_sec_label;
 	} best = {
 		.score = NO_SCORE,
-		.spd_route = NULL,
 		.connection = NULL,
 		.selected_sec_label = null_shunk,
 	};
@@ -1464,28 +1462,23 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 				responder_fit = END_EQUALS_TS;
 			}
 
-			for (const struct spd_route *sr = d->spd;
-			     sr != NULL; sr = sr->spd_next) {
+			for (const struct spd_route *spd = d->spd; spd != NULL; spd = spd->spd_next) {
 
 				/* responder */
 				const struct selector_ends ends = {
-					.i = sr->remote->client,
-					.r = sr->local->client,
+					.i = spd->remote->client,
+					.r = spd->local->client,
 				};
 
 				struct best_score score = score_ends(responder_fit,
 								     &ends, &tsp, indent);
-				if (!score.ok) {
-					continue;
-				}
-				if (score_gt(&score, &best.score)) {
+				if (score.ok && score_gt(&score, &best.score)) {
 					connection_buf cb;
 					dbg_ts("protocol fitness found better match "PRI_CONNECTION"",
 					       pri_connection(d, &cb));
 					best = (struct best) {
 						.connection = d,
 						.score = score,
-						.spd_route = sr,
 						.selected_sec_label = selected_sec_label,
 					};
 				}
@@ -1701,7 +1694,6 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			/* switch */
 			best = (struct best) {
 				.connection = s,
-				.spd_route = s->spd,
 				.score = {
 					.n = n,
 				},
@@ -1750,7 +1742,6 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 		/* switch to instance */
 		best = (struct best) {
 			.connection = s,
-			.spd_route = s->spd,
 			.selected_sec_label = best.selected_sec_label,
 		};
 	}
