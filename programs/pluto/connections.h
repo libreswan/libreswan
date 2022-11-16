@@ -363,6 +363,23 @@ struct host_end {
 
 struct child_end {
 	ip_selector selector;
+
+	/*
+	 * Track lease addresses.
+	 *
+	 * HAS_LEASE indicates that "this" sent "that.CLIENT" has an
+	 * address from the address pool.
+	 *
+	 * HAS_INTERNAL_ADDRESS indicates "that" sent "this.CLIENT" is
+	 * an address, presumably from the address pool.
+	 *
+	 * Probably only one field is needed, but then what if the
+	 * same pluto is receiving and giving out addresses?
+	 */
+	bool has_lease;		/* server gave out lease from address pool */
+	bool has_internal_address;
+	bool has_cat;		/* add a CAT iptable rule when a valid
+				   INTERNAL_IP4_ADDRESS is received */
 };
 
 struct connection_end {
@@ -400,27 +417,12 @@ struct spd_end {
 	 */
 	const struct config_end *config;
 	struct host_end *host;
+	struct child_end *child;
 
 	bool has_client;
 
 	struct virtual_ip *virt;
 
-	/*
-	 * Track lease addresses.
-	 *
-	 * HAS_LEASE indicates that "this" sent "that.CLIENT" has an
-	 * address from the address pool.
-	 *
-	 * HAS_INTERNAL_ADDRESS indicates "that" sent "this.CLIENT" is
-	 * an address, presumably from the address pool.
-	 *
-	 * Probably only one field is needed, but then what if the
-	 * same pluto is receiving and giving out addresses?
-	 */
-	bool has_lease;		/* server gave out lease from address pool */
-	bool has_internal_address;
-	bool has_cat;		/* add a CAT iptable rule when a valid INTERNAL_IP4_ADDRESS
-				   is received */
 };
 
 struct spd_route {

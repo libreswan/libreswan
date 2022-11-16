@@ -3114,6 +3114,7 @@ static void clone_connection_spd(struct connection *d, struct connection *t)
 		FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 			new->end[end].virt = virtual_ip_addref(old->end[end].virt);
 			new->end[end].host = &d->end[end].host;
+			new->end[end].child = &d->end[end].child;
 		}
 		/* add to c->spd list ... */
 		*dst = new;
@@ -4115,12 +4116,12 @@ ip_address spd_route_end_sourceip(enum ike_version ike_version, const struct spd
 	}
 	switch (ike_version) {
 	case IKEv1:
-		if (end->has_internal_address) {
+		if (end->child->has_internal_address) {
 			return selector_prefix(end->client);
 		}
 		break;
 	case IKEv2:
-		if (end->has_internal_address &&
+		if (end->child->has_internal_address &&
 		    !end->host->config->client_address_translation) {
 			return selector_prefix(end->client);
 		}

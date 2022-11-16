@@ -1563,7 +1563,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 			}
 			set_first_selector(c, local, selector_from_address(a));
 			c->spd->local->has_client = true;
-			c->spd->local->has_internal_address = true;
+			c->local->child.has_internal_address = true;
 
 			subnet_buf caddr;
 			str_selector_subnet(&c->spd->local->client, &caddr);
@@ -1725,7 +1725,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					return STF_FATAL;
 				}
 				c->spd->local->has_client = true;
-				c->spd->local->has_internal_address = true;
+				c->local->child.has_internal_address = true;
 				set_end_selector(c, c->local->config->index,
 						 selector_from_address(a),
 						 "^*(&^(* IKEv1 doing something with the address it received");

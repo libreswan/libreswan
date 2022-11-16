@@ -431,7 +431,7 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs, struct child_sa 
 
 	*seen_an_address = true;
 	c->spd->local->has_client = true;
-	c->spd->local->has_internal_address = true;
+	c->local->child.has_internal_address = true;
 
 	if (c->local->host.config->client_address_translation) {
 		dbg("CAT is set, not setting host source IP address to %s",
@@ -449,7 +449,7 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs, struct child_sa 
 			set_end_selector(c, c->local->config->index,
 					 selector_from_address(ip),
 					 "CP scribbling on end while ignoring TS");
-			c->spd->local->has_cat = true; /* create iptable entry */
+			c->local->child.has_cat = true; /* create iptable entry */
 		}
 	} else {
 		set_end_selector(c, c->local->config->index,

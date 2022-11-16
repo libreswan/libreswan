@@ -378,7 +378,7 @@ static struct lease *connection_lease(struct connection *c)
 	 * No point looking for a lease when the connection doesn't
 	 * think it has one.
 	 */
-	if (!pexpect(c->spd->remote->has_lease)) {
+	if (!pexpect(c->remote->child.has_lease)) {
 		return NULL;
 	}
 
@@ -441,7 +441,7 @@ void free_that_address_lease(struct connection *c)
 {
 	passert(!selector_is_unset(&c->spd->remote->client));
 
-	if (!c->spd->remote->has_lease) {
+	if (!c->remote->child.has_lease) {
 		dbg("connection has no lease");
 		return;
 	}
@@ -449,7 +449,7 @@ void free_that_address_lease(struct connection *c)
 	struct lease *lease = connection_lease(c);
 	if (lease == NULL) {
 		dbg("connection lost its lease");
-		c->spd->remote->has_lease = false;
+		c->remote->child.has_lease = false;
 		return;
 	}
 
@@ -477,7 +477,7 @@ void free_that_address_lease(struct connection *c)
 	}
 
 	/* break the link */
-	c->spd->remote->has_lease = false;
+	c->remote->child.has_lease = false;
 	lease->assigned_to = UNSET_CO_SERIAL;
 }
 
@@ -531,7 +531,7 @@ static struct lease *recover_lease(const struct connection *c, const char *that_
 
 err_t lease_that_address(struct connection *c, const struct state *st, const struct ip_info *afi)
 {
-	if (c->spd->remote->has_lease &&
+	if (c->remote->child.has_lease &&
 	    connection_lease(c) != NULL) {
 		dbg("connection both thinks it has, and really has a lease");
 		return NULL;
@@ -657,7 +657,7 @@ err_t lease_that_address(struct connection *c, const struct state *st, const str
 	if (err != NULL) {
 		llog_pexpect(st->st_logger, HERE, "%s", err);
 	}
-	c->spd->remote->has_lease = true;
+	c->remote->child.has_lease = true;
 	c->spd->remote->has_client = true;
 	set_first_selector(c, remote, selector_from_address(ia));
 	rehash_db_spd_route_remote_client(c->spd);

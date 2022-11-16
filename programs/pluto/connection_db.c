@@ -290,8 +290,9 @@ struct spd_route *append_spd_route(struct connection *c, struct spd_route ***spd
 	spd->local = &spd->end[c->local->config->index];	/*clone must update*/
 	spd->remote = &spd->end[c->remote->config->index];	/*clone must update*/
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		spd->end[end].host = &c->end[end].host;		/*clone must update*/
 		spd->end[end].config = c->end[end].config;
+		spd->end[end].host = &c->end[end].host;		/*clone must update*/
+		spd->end[end].child = &c->end[end].child;	/*clone must update*/
 	}
 	/* db; will be updated */
 	init_db_spd_route(spd);
@@ -317,6 +318,7 @@ struct spd_route *clone_spd_route(struct connection *c, where_t where)
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		spd->end[end].virt = NULL;	/* don't inherit?!? */
 		spd->end[end].host = &c->end[end].host;
+		spd->end[end].child = &c->end[end].child;
 	}
 
 	zero_thing(spd->hash_table_entries); /* keep init_list_entry() happy */

@@ -696,7 +696,7 @@ bool fmt_common_shell_out(char *buf,
 	JDstr("VTI_ROUTING", bool_str(c->vti_routing));
 	JDstr("VTI_SHARED", bool_str(c->vti_shared));
 
-	if (sr->local->has_cat) {
+	if (c->local->child.has_cat) {
 		jam_string(&jb, "CAT='YES' ");
 	}
 
@@ -1740,7 +1740,7 @@ bool eroute_connection(enum kernel_policy_op op,
 		       shunk_t sec_label,
 		       struct logger *logger)
 {
-	if (sr->local->has_cat) {
+	if (sr->local->child->has_cat) {
 		ip_selector client = selector_from_address(sr->local->host->addr);
 		bool t = raw_policy(op, dir,
 				    EXPECT_KERNEL_POLICY_OK,
