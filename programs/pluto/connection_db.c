@@ -298,12 +298,6 @@ struct spd_route *append_spd_route(struct connection *c, struct spd_route ***spd
 	return spd;
 }
 
-static void unshare_connection_spd_end(struct connection *c, struct spd_end *e)
-{
-	e->virt = virtual_ip_addref(e->virt);
-	e->host = &c->end[e->config->index].host;
-}
-
 struct spd_route *clone_spd_route(struct connection *c, where_t where)
 {
 	/* always first!?! */
@@ -322,7 +316,7 @@ struct spd_route *clone_spd_route(struct connection *c, where_t where)
 	/* unshare pointers */
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		spd->end[end].virt = NULL;	/* don't inherit?!? */
-		unshare_connection_spd_end(c, &spd->end[end]);
+		spd->end[end].host = &c->end[end].host;
 	}
 
 	zero_thing(spd->hash_table_entries); /* keep init_list_entry() happy */
@@ -345,7 +339,8 @@ static void unshare_connection_spd(struct connection *c, where_t where)
 		spd->local = &spd->end[c->local->config->index];
 		spd->remote = &spd->end[c->remote->config->index];
 		FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-			unshare_connection_spd_end(c, &spd->end[end]);
+			spd->end[end].virt = virtual_ip_addref(src->end[end].virt);
+			spd->end[end].host = &c->end[end].host;
 		}
 		init_db_spd_route(spd);
 		/* step forward */
