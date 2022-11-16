@@ -4805,25 +4805,42 @@ bool dpd_active_locally(const struct connection *c)
 }
 
 void set_end_selector_where(struct connection *c, enum left_right end,
-			    ip_selector selector, where_t where)
+			    ip_selector new_selector, where_t where)
 {
+	ip_selector old_selector = c->end[end].child.selector;
 	selector_buf ob, nb;
 	ldbg(c->logger, "%s.child.selector %s -> %s",
 	     c->end[end].config->leftright,
-	     str_selector(&c->end[end].child.selector, &ob),
-	     str_selector(&selector, &nb));
+	     str_selector(&old_selector, &ob),
+	     str_selector(&new_selector, &nb));
 	if (c->spd != NULL) {
-		if (!selector_eq_selector(c->end[end].child.selector,
-					  c->spd->end[end].client)) {
+		ip_selector old_client = c->spd->end[end].client;
+		if (!selector_eq_selector(old_selector, old_client)) {
 			selector_buf sb, cb;
 			llog_pexpect(c->logger, where,
 				     "%s.child.selector %s does not match %s.spd.client %s",
 				     c->end[end].config->leftright,
-				     str_selector(&c->end[end].child.selector, &sb),
+				     str_selector(&old_selector, &sb),
 				     c->end[end].config->leftright,
-				     str_selector(&c->spd->end[end].client, &cb));
+				     str_selector(&old_client, &cb));
 		}
-		c->spd->end[end].client = selector;
+		c->spd->end[end].client = new_selector;
 	}
-	c->end[end].child.selector = selector;
+	c->end[end].child.selector = new_selector;
+	/*
+	 * Allowed to update; but only to same value as first selector
+	 * in list.
+	 */
+	if (c->end[end].config->child.selectors.list != NULL) {
+		ip_selector selector = c->end[end].config->child.selectors.list[0];
+		if (!selector_eq_selector(new_selector, selector)) {
+			selector_buf sb, cb;
+			llog_pexpect(c->logger, where,
+				     "%s.child.selector %s does not match %s.selectors[0] %s",
+				     c->end[end].config->leftright,
+				     str_selector(&new_selector, &sb),
+				     c->end[end].config->leftright,
+				     str_selector(&selector, &cb));
+		}
+	}
 }
