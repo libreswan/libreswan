@@ -326,12 +326,36 @@ struct spd_route *clone_spd_route(struct connection *c, where_t where)
 	return spd;
 }
 
+static void unshare_connection_spd(struct connection *c, where_t where)
+{
+	struct spd_route *head;
+	struct spd_route **dst = &head;
+	struct spd_route *src = c->spd;
+	while (src != NULL) {
+		struct spd_route *spd = clone_thing(*src, where->func);
+		zero_thing(spd->hash_table_entries); /* keep init_list_entry() happy */
+		spd->connection = c;
+		spd->spd_next = NULL;
+		spd->local = &spd->end[c->local->config->index];
+		spd->remote = &spd->end[c->remote->config->index];
+		FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+			spd->end[end].virt = virtual_ip_addref(src->end[end].virt);
+			spd->end[end].host = &c->end[end].host;
+		}
+		init_db_spd_route(spd);
+		/* step forward */
+		src = src->spd_next;
+		*dst = spd;
+		dst = &spd->spd_next;
+	}
+	c->spd = head;
+}
+
 struct connection *clone_connection(const char *name, struct connection *t, where_t where)
 {
 	struct connection *c = clone_thing(*t, where->func);
 	zero_thing(c->hash_table_entries); /* keep init_list_entry() happy */
-	/* caller responsible for cloning this */
-	c->spd = NULL;
+	unshare_connection_spd(c, where);
 
 	/* point local pointers at local structure */
 	c->local = &c->end[t->local->config->index];

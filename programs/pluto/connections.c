@@ -2999,9 +2999,7 @@ struct connection *add_group_instance(struct connection *group,
 
 /*
  * Common code for instantiating a Road Warrior or Opportunistic
- * connection.
- *
- * instantiate() doesn't clone SPDs while spd_instantiate() does.
+ * connection while also cloning the SPD list.
  *
  * peers_id can be used to carry over an ID discovered in Phase 1.  It
  * must not disagree with the one in c, but if that is unspecified,
@@ -3009,12 +3007,15 @@ struct connection *add_group_instance(struct connection *group,
  * c.that.id is uninstantiated (ID_NONE), the new connection will
  * continue to have an uninstantiated that.id.  Note: instantiation
  * does not affect port numbers.
+ *
+ * Note that spd_instantiate() can only deal with a single
+ * SPD/eroute?!?.
  */
 
-struct connection *instantiate(struct connection *t,
-			       const ip_address *peer_addr,
-			       const struct id *peer_id,
-			       shunk_t sec_label)
+struct connection *spd_instantiate(struct connection *t,
+				   const ip_address *peer_addr,
+				   const struct id *peer_id,
+				   shunk_t sec_label)
 {
 	passert(t->kind == CK_TEMPLATE);
 
@@ -3037,18 +3038,13 @@ struct connection *instantiate(struct connection *t,
 		/*
 		 * Either:
 		 *
-		 * - T is the sec_label group template, and D is the
-		 *   IKE connection (also treated like a template);
-		 *   hence CK_TEMPLATE
-		 *
-		 *   The remote address is updated below.
+		 * - C is T, and D is T.IKE (the remote address is
+		 *   updated below) -> CK_TEMPLATE
 		 *
 		 * Or:
 		 *
-		 * - T is the IKE connection and and D is Child
-		 *   connection; hence CK_INSTANCE
-		 *
-		 *   The sec_label is updated below.
+		 * - or C is T.IKE and D is C.CHILD (the sec_label is
+		 *   updated below) -> CK_INSTANCE
 		 */
 		pexpect(address_is_specified(t->remote->host.addr) || peer_addr != NULL);
 		if (sec_label.len == 0) {
@@ -3085,41 +3081,6 @@ struct connection *instantiate(struct connection *t,
 	 * (whack will not allow nexthop to be elided in RW case.)
 	 */
 	update_host_ends_from_this_host_addr(&d->local->host, &d->remote->host);
-	return d;
-}
-
-/*
- * In addition to instantiate() also clone the SPD entries.
- *
- * XXX: it's arguable that SPD entries are being created far too early
- * (currently during connection add).  The IKEv2 TS responder, for
- * instance, ends up throwing away the SPDs creating its own.
- */
-struct connection *spd_instantiate(struct connection *t,
-				   const ip_address *peer_addr,
-				   const struct id *peer_id,
-				   shunk_t sec_label)
-{
-	struct connection *d = instantiate(t, peer_addr, peer_id, sec_label);
-
-	struct spd_route **dst = &d->spd;
-	for (struct spd_route *old = t->spd; old != NULL; old = old->spd_next) {
-		struct spd_route *new = clone_thing(*old, __func__);
-		zero_thing(new->hash_table_entries); /* keep init_list_entry() happy */
-		new->connection = d;
-		new->spd_next = NULL; /* break old chain */
-		/* cross-link */
-		new->local = &new->end[d->local->config->index];
-		new->remote = &new->end[d->remote->config->index];
-		FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-			new->end[end].virt = virtual_ip_addref(old->end[end].virt);
-			new->end[end].host = &d->end[end].host;
-		}
-		init_db_spd_route(new);
-		/* step forward */
-		*dst = new;
-		dst = &new->spd_next;
-	}
 
 	update_spd_ends_from_host_ends(d);
 	pexpect(oriented(d)); /* can't instantiate an unoriented template? */

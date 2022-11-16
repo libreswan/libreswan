@@ -658,10 +658,6 @@ extern struct connection *spd_instantiate(struct connection *t,
 					  const ip_address *peer_addr,
 					  const struct id *peer_id,
 					  shunk_t sec_label);
-extern struct connection *instantiate(struct connection *t,
-				      const ip_address *peer_addr,
-				      const struct id *peer_id,
-				      shunk_t sec_label);
 
 struct connection *find_outgoing_opportunistic_template(const ip_packet packet);
 
