@@ -371,25 +371,25 @@ struct connection_end {
 	struct child_end child;
 };
 
-void set_end_selector_where(struct connection *c, enum left_right end, ip_selector s, where_t where);
+void set_end_selector_where(struct connection *c, enum left_right end, ip_selector s, const char *excuse, where_t where);
 
 struct spd_end {
 	ip_selector client;
-#define set_end_selector(C, END, SELECTOR)		\
-	set_end_selector_where(C, END, SELECTOR, HERE)
+#define set_end_selector(C, END, SELECTOR, EXCUSE)		\
+	set_end_selector_where(C, END, SELECTOR, EXCUSE, HERE)
 #define set_first_selector(C, LR, SELECTOR)				\
-	set_end_selector_where(C, (C)->LR->config->index, SELECTOR, HERE)
+	set_end_selector_where(C, (C)->LR->config->index, SELECTOR, NULL, HERE)
 #define update_first_selector_protocol_port(C, LR, PROTOCOL, PORT)	\
 	set_end_selector_where(C, (C)->LR->config->index,		\
 			       selector_from_range_protocol_port(selector_range((C)->spd->LR->client), \
 								 PROTOCOL, PORT), \
-			       HERE)
+			       NULL, HERE)
 #define update_first_selector_port(C, LR, PORT)				\
 	set_end_selector_where(C, (C)->LR->config->index,		\
 			       selector_from_range_protocol_port(selector_range((C)->LR->child.selector), \
 								 selector_protocol((C)->LR->child.selector), \
 								 PORT),	\
-			       HERE)
+			       NULL, HERE)
 
 	/*
 	 * An extract of the original configuration information for

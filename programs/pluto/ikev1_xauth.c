@@ -1724,9 +1724,11 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 					return STF_FATAL;
 				}
-				set_first_selector(c, local, selector_from_address(a));
 				c->spd->local->has_client = true;
 				c->spd->local->has_internal_address = true;
+				set_end_selector(c, c->local->config->index,
+						 selector_from_address(a),
+						 "^*(&^(* IKEv1 doing something with the address it received");
 
 				subnet_buf caddr;
 				str_selector_subnet(&c->spd->local->client, &caddr);

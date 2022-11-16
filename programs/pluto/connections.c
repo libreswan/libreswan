@@ -552,7 +552,7 @@ void update_spd_ends_from_host_ends(struct connection *c)
 			    str_selector_subnet_port(&spde->client, &old),
 			    str_selector_subnet_port(&selector, &new));
 			if (spd == c->spd) {
-				set_end_selector(c, end, selector);
+				set_end_selector(c, end, selector, NULL);
 			} else {
 				spde->client = selector; /*set_end_selector()*/
 			}
@@ -2774,7 +2774,7 @@ static bool extract_connection(const struct whack_message *wm,
 						     c->name, leftright, str_selector(selector, &sb));
 						passert(selector->is_set); /* else pointless */
 						if (spd == c->spd) {
-							set_end_selector(c, end, *selector);
+							set_end_selector(c, end, *selector, NULL);
 						} else {
 							spd_end->client = *selector;/*update_end_selector()*/
 						}
@@ -4805,7 +4805,8 @@ bool dpd_active_locally(const struct connection *c)
 }
 
 void set_end_selector_where(struct connection *c, enum left_right end,
-			    ip_selector new_selector, where_t where)
+			    ip_selector new_selector,
+			    const char *excuse, where_t where)
 {
 	ip_selector old_selector = c->end[end].child.selector;
 	selector_buf ob, nb;
@@ -4828,14 +4829,34 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 	}
 	c->end[end].child.selector = new_selector;
 	/*
-	 * Allowed to update; but only to same value as first selector
-	 * in list.
+	 * When there's a selectors.list, the child.selector is only
+	 * allowed to update to the first selector in that list?
+	 *
+	 * XXX: the CP payload code violoates this.  It stomps on the
+	 * child.selector without even looking at the traffic
+	 * selectors.
 	 */
 	if (c->end[end].config->child.selectors.list != NULL) {
 		ip_selector selector = c->end[end].config->child.selectors.list[0];
-		if (!selector_eq_selector(new_selector, selector)) {
+		if (selector_eq_selector(new_selector, selector)) {
+			selector_buf sb;
+			ldbg(c->logger,
+			     "%s.child.selector %s matches selectors[0]",
+			     c->end[end].config->leftright,
+			     str_selector(&new_selector, &sb));
+		} else if (excuse != NULL) {
 			selector_buf sb, cb;
-			llog_pexpect(c->logger, where,
+			ldbg(c->logger,
+			     "%s.child.selector %s does not match %s.selectors[0] %s but %s "PRI_WHERE,
+			     c->end[end].config->leftright,
+			     str_selector(&new_selector, &sb),
+			     c->end[end].config->leftright,
+			     str_selector(&selector, &cb),
+			     excuse,
+			     pri_where(where));
+		} else {
+			selector_buf sb, cb;
+			llog_passert(c->logger, where,
 				     "%s.child.selector %s does not match %s.selectors[0] %s",
 				     c->end[end].config->leftright,
 				     str_selector(&new_selector, &sb),

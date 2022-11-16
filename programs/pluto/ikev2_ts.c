@@ -1241,8 +1241,12 @@ static void scribble_request_ts_on_connection(struct child_sa *child,
 	 * THAT=INITIATOR.
 	 */
 	dbg_ts("XXX: updating best connection's ports/protocols");
-	set_first_selector(c, local, selector_from_range_protocol_port(n.r.range, n.r.protocol, ip_hport(n.r.port)));;
-	set_first_selector(c, remote, selector_from_range_protocol_port(n.i.range, n.i.protocol, ip_hport(n.i.port)));
+	set_end_selector(c, c->local->config->index,
+			 selector_from_range_protocol_port(n.r.range, n.r.protocol, ip_hport(n.r.port)),
+			 "scribbling on end of final TS choice");
+	set_end_selector(c, c->remote->config->index,
+			 selector_from_range_protocol_port(n.i.range, n.i.protocol, ip_hport(n.i.port)),
+			 "scribbling on end of final TS choice");
 }
 
 /*
