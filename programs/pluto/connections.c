@@ -3012,12 +3012,12 @@ struct connection *add_group_instance(struct connection *group,
  * SPD/eroute?!?.
  */
 
-struct connection *spd_instantiate(struct connection *c,
+struct connection *spd_instantiate(struct connection *t,
 				   const ip_address *peer_addr,
 				   const struct id *peer_id,
 				   shunk_t sec_label)
 {
-	passert(c->kind == CK_TEMPLATE);
+	passert(t->kind == CK_TEMPLATE);
 
 	/*
 	 * Is the new connection still a template?
@@ -3034,7 +3034,7 @@ struct connection *spd_instantiate(struct connection *c,
 	 *   connection instance C.CHILD
 	 */
 	enum connection_kind kind;
-	if (c->config->sec_label.len > 0) {
+	if (t->config->sec_label.len > 0) {
 		/*
 		 * Either:
 		 *
@@ -3046,20 +3046,20 @@ struct connection *spd_instantiate(struct connection *c,
 		 * - or C is T.IKE and D is C.CHILD (the sec_label is
 		 *   updated below) -> CK_INSTANCE
 		 */
-		pexpect(address_is_specified(c->remote->host.addr) || peer_addr != NULL);
+		pexpect(address_is_specified(t->remote->host.addr) || peer_addr != NULL);
 		if (sec_label.len == 0) {
 			kind = CK_TEMPLATE;
 		} else {
 			kind = CK_INSTANCE;
 		}
 	} else {
-		/* pexpect(address_is_specified(c->remote->host.addr) || peer_addr != NULL); true??? */
+		/* pexpect(address_is_specified(t->remote->host.addr) || peer_addr != NULL); true??? */
 		kind = CK_INSTANCE;
 	}
 
-	c->instance_serial++;
-	struct connection *d = clone_connection(c->name, c, HERE);
-	passert(c->name != d->name); /* see clone_connection() */
+	t->instance_serial++;
+	struct connection *d = clone_connection(t->name, t, HERE);
+	passert(t->name != d->name); /* see clone_connection() */
 	if (peer_id != NULL) {
 		int wildcards;	/* value ignored */
 
@@ -3067,7 +3067,7 @@ struct connection *spd_instantiate(struct connection *c,
 			match_id("", peer_id, &d->remote->host.id, &wildcards));
 		d->remote->host.id = *peer_id;
 	}
-	unshare_connection(d, c);
+	unshare_connection(d, t);
 	d->kind = kind;
 	passert(oriented(d));
 	if (peer_addr != NULL) {
@@ -3086,9 +3086,9 @@ struct connection *spd_instantiate(struct connection *c,
 	pexpect(oriented(d)); /* can't instantiate an unoriented template? */
 	set_policy_prio(d); /* re-compute; may have changed */
 
-	d->spd->reqid = c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid;
-	dbg("%s d->spd->reqid=%d because c->sa_reqid=%d",
-	    d->name, d->spd->reqid, c->sa_reqid);
+	d->spd->reqid = t->sa_reqid == 0 ? gen_reqid() : t->sa_reqid;
+	dbg("%s d->spd->reqid=%d because t->sa_reqid=%d",
+	    d->name, d->spd->reqid, t->sa_reqid);
 
 	/* should still be true */
 #if 0
@@ -3109,7 +3109,7 @@ struct connection *spd_instantiate(struct connection *c,
 	d->log_file = NULL;
 	d->log_file_err = false;
 
-	if (c->sa_marks.in.unique) {
+	if (t->sa_marks.in.unique) {
 		d->sa_marks.in.val = global_marks;
 		d->sa_marks.out.val = global_marks;
 		global_marks++;
@@ -3127,7 +3127,7 @@ struct connection *spd_instantiate(struct connection *c,
 		 * Install the sec_label from either an acquire or
 		 * child payload into both ends.
 		 */
-		pexpect(c->child.sec_label.ptr == NULL);
+		pexpect(t->child.sec_label.ptr == NULL);
 		d->child.sec_label = clone_hunk(sec_label, "instantiate() sec_label");
 	}
 
@@ -3138,7 +3138,7 @@ struct connection *spd_instantiate(struct connection *c,
 	address_buf pab;
 	id_buf pib;
 	dbg("instantiated "PRI_CO" "PRI_CONNECTION" as "PRI_CO" "PRI_CONNECTION" using kind=%s remote_address=%s remote_id=%s sec_label="PRI_SHUNK,
-	    pri_co(c->serialno), pri_connection(c, &cb),
+	    pri_co(t->serialno), pri_connection(t, &cb),
 	    pri_co(d->serialno), pri_connection(d, &db),
 	    enum_name(&connection_kind_names, d->kind),
 	    peer_addr != NULL ? str_address(peer_addr, &pab) : "N/A",
@@ -3148,18 +3148,18 @@ struct connection *spd_instantiate(struct connection *c,
 	return d;
 }
 
-struct connection *rw_instantiate(struct connection *c,
+struct connection *rw_instantiate(struct connection *t,
 				  const ip_address *peer_addr,
 				  const ip_selector *peer_subnet,
 				  const struct id *peer_id)
 {
-	struct connection *d = spd_instantiate(c, peer_addr, peer_id, null_shunk);
+	struct connection *d = spd_instantiate(t, peer_addr, peer_id, null_shunk);
 
-	if (peer_subnet != NULL && is_virtual_remote(c)) {
+	if (peer_subnet != NULL && is_virtual_remote(t)) {
 		set_first_selector(d, remote, *peer_subnet);
 		rehash_db_spd_route_remote_client(d->spd);
 		if (selector_eq_address(*peer_subnet, *peer_addr)) {
-			ldbg(c->logger, "forcing remote %s.spd.has_client=false",
+			ldbg(t->logger, "forcing remote %s.spd.has_client=false",
 			     d->spd->remote->config->leftright);
 			d->spd->remote->has_client = false;
 		}
@@ -3572,7 +3572,7 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 	return best_connection;
 }
 
-struct connection *oppo_instantiate(struct connection *c,
+struct connection *oppo_instantiate(struct connection *t,
 				    const struct id *remote_id,
 				    /* both host and client */
 				    const ip_address *local_address,
@@ -3583,10 +3583,10 @@ struct connection *oppo_instantiate(struct connection *c,
 	address_buf lb, rb;
 	connection_buf cb;
 	dbg("oppo instantiating "PRI_CONNECTION" with routing %s between %s -> %s",
-	    pri_connection(c, &cb), enum_name(&routing_story, c->spd->routing),
+	    pri_connection(t, &cb), enum_name(&routing_story, t->spd->routing),
 	    str_address(local_address, &lb), str_address(remote_address, &rb));
 
-	struct connection *d = spd_instantiate(c, remote_address, remote_id, null_shunk);
+	struct connection *d = spd_instantiate(t, remote_address, remote_id, null_shunk);
 
 	passert(d->spd->spd_next == NULL);
 
@@ -3594,8 +3594,8 @@ struct connection *oppo_instantiate(struct connection *c,
 	 * Fill in (or fix up) our client side.
 	 */
 
-	const struct ip_protocol *local_protocol = selector_protocol(c->spd->local->client);
-	ip_port local_port = selector_port(c->spd->local->client);
+	const struct ip_protocol *local_protocol = selector_protocol(t->spd->local->client);
+	ip_port local_port = selector_port(t->spd->local->client);
 	dbg("oppo local(c) protocol %s port %d",
 	    local_protocol->name,
 	    local_port.hport);
@@ -3627,7 +3627,7 @@ struct connection *oppo_instantiate(struct connection *c,
 			 */
 			update_first_selector_port(d, local, unset_port);
 		} else {
-			llog_passert(c->logger, HERE,
+			llog_passert(t->logger, HERE,
 				     "local address does not match the host or client");
 		}
 	} else {
@@ -3661,11 +3661,11 @@ struct connection *oppo_instantiate(struct connection *c,
 	 */
 
 	dbg("oppo remote(c) protocol %s port %d",
-	    selector_protocol(c->spd->remote->client)->name,
-	    selector_port(c->spd->remote->client).hport);
+	    selector_protocol(t->spd->remote->client)->name,
+	    selector_port(t->spd->remote->client).hport);
 
-	const struct ip_protocol *remote_protocol = selector_protocol(c->spd->remote->client);
-	ip_port remote_port = selector_port(c->spd->remote->client);
+	const struct ip_protocol *remote_protocol = selector_protocol(t->spd->remote->client);
+	ip_port remote_port = selector_port(t->spd->remote->client);
 	passert(d->policy & POLICY_OPPORTUNISTIC);
 	passert(address_in_selector_range(*remote_address, d->spd->remote->client));
 	set_first_selector(d, remote, selector_from_address_protocol_port(*remote_address,
@@ -3688,7 +3688,7 @@ struct connection *oppo_instantiate(struct connection *c,
 	 * It must be a %hold for us (hard to passert this).
 	 * If there was another instance eclipsing, we'd be using it.
 	 */
-	if (c->spd->routing == RT_ROUTED_ECLIPSED)
+	if (t->spd->routing == RT_ROUTED_ECLIPSED)
 		set_spd_routing(d->spd, RT_ROUTED_PROSPECTIVE);
 
 	/*
@@ -3696,7 +3696,7 @@ struct connection *oppo_instantiate(struct connection *c,
 	 * if so, this instance applies for initiation
 	 * even if it is created for responding.
 	 */
-	if (routed(c->spd->routing))
+	if (routed(t->spd->routing))
 		d->instance_initiation_ok = true;
 
 	if (DBGP(DBG_BASE)) {
