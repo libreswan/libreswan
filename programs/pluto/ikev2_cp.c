@@ -211,10 +211,26 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 		}
 	}
 
-	for (struct spd_route *spd = cc->spd; spd != NULL; spd = spd->spd_next) {
-		const struct ip_info *afi = selector_info(spd->local->client);
+	if (cc->local->config->child.selectors.list != NULL) {
+		const ip_selector *const s = cc->local->config->child.selectors.list;
+		for (unsigned i = 0; s[i].is_set; i++) {
+			const struct ip_info *afi = selector_info(s[i]);
+			if (afi != NULL) {
+				selector_buf sb;
+				dbg("local.selectors.list[%u] %s says to ask for %s",
+				    i, str_selector(&s[i], &sb), afi->ip_name);
+				ipset |= LELEM(afi->ip_index);
+			}
+		}
+	} else {
+		const ip_selector s = cc->local->child.selector;
+		const struct ip_info *afi = selector_info(s);
+		pexpect(cc->spd == NULL ||
+			selector_eq_selector(s, cc->spd->local->client));
 		if (afi != NULL) {
-			dbg("SPD says to ask for %s", afi->ip_name);
+			selector_buf sb;
+			dbg("local.child.client %s says to ask for %s",
+			    str_selector(&s, &sb), afi->ip_name);
 			ipset |= LELEM(afi->ip_index);
 		}
 	}
