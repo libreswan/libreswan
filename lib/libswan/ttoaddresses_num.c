@@ -1,4 +1,4 @@
-/* cloning an range list, for libreswan
+/* cloning an address list, for libreswan
  *
  * Copyright (C) 2022 Andrew Cagney
  *
@@ -18,13 +18,15 @@
 #include "lswalloc.h"
 #include "passert.h"
 #include "lswlog.h"		/* for dbg() */
-#include "ip_range.h"
+#include "ip_address.h"
 
-diag_t ttorange_num_list(shunk_t input, const char *delims,
-			 const struct ip_info *afi,
-			 ip_range **output)
+const ip_addresses empty_ip_addresses;
+
+diag_t ttoaddresses_num(shunk_t input, const char *delims,
+			const struct ip_info *afi,
+			ip_addresses *output)
 {
-	*output = NULL;
+	*output = empty_ip_addresses;
 
 	if (input.ptr == NULL) {
 		return NULL;
@@ -46,8 +48,8 @@ diag_t ttorange_num_list(shunk_t input, const char *delims,
 			continue;
 		}
 		/* validate during first pass */
-		ip_range tmp;
-		err_t e = ttorange_num(token, afi, &tmp);
+		ip_address tmp;
+		err_t e = ttoaddress_num(token, afi, &tmp);
 		if (e != NULL) {
 			return diag(PRI_SHUNK" invalid, %s",
 				    pri_shunk(token), e);
@@ -61,13 +63,14 @@ diag_t ttorange_num_list(shunk_t input, const char *delims,
 	 * Allocate.
 	 */
 	dbg("%s() nr tokens %u", __func__, nr_tokens);
-	*output = alloc_things(ip_range, nr_tokens + 1, "ranges");
+	output->len = nr_tokens;
+	output->list = alloc_things(ip_address, nr_tokens, "addresses");
 
 	/*
 	 * pass 2: copy things over.
 	 */
 	cursor = input;
-	ip_range *range = *output;
+	ip_address *dst = output->list;
 	while (true) {
 		shunk_t token = shunk_token(&cursor, NULL/*delim*/, delims);
 		if (token.ptr == NULL) {
@@ -76,12 +79,13 @@ diag_t ttorange_num_list(shunk_t input, const char *delims,
 		if (token.len == 0) {
 			continue;
 		}
-		err_t e = ttorange_num(token, afi, range);
+		passert(dst < output->list + output->len);
+		err_t e = ttoaddress_num(token, afi, dst);
 		passert(e == NULL);
-		range_buf b;
-		dbg("%s() %s", __func__, str_range(range, &b));
-		range++;
+		address_buf ab;
+		dbg("%s() %s", __func__, str_address(dst, &ab));
+		dst++;
 	}
-	*range = unset_range;
+	passert(dst == output->list + output->len);
 	return NULL;
 }

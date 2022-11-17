@@ -25,11 +25,11 @@
 #define elemsof(array) (sizeof(array) / sizeof(*(array)))
 
 /*
- * NOTE: this is by nature a scary macro because it
- * is used to initialized two fields.
- * This has a hacky advantage:
- * if you don't wish to count the last element of
- * the array (say, because it is a NULL there for
+ * NOTE: this is by nature a scary macro because it is used to
+ * initialized two fields.
+ *
+ * This has a hacky advantage: if you don't wish to count the last
+ * element of the array (say, because it is a NULL there for
  * bitnamesof), just use ARRAY_REF()-1!
  */
 #define ARRAY_REF(p) (p), elemsof(p)

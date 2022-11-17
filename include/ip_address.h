@@ -90,10 +90,18 @@ err_t ttoaddress_num(shunk_t src, const struct ip_info *type, ip_address *dst);
 /* if numeric lookup fails, try a DNS lookup */
 err_t ttoaddress_dns(shunk_t src, const struct ip_info *type, ip_address *dst);
 
-/* assumes list addresses in dotted / colon notation */
-diag_t ttoaddress_num_list(shunk_t input, const char *delims,
-			   const struct ip_info *afi,
-			   ip_address **output);
+/* comma/space separated list */
+
+typedef struct {
+	unsigned len;
+	ip_address *list;
+} ip_addresses;
+
+extern const ip_addresses empty_ip_addresses;
+
+diag_t ttoaddresses_num(shunk_t input, const char *delims,
+			const struct ip_info *afi,
+			ip_addresses *output);
 
 /*
  * Convert an address to a string:

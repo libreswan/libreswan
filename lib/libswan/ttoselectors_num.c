@@ -1,4 +1,4 @@
-/* cloning an address list, for libreswan
+/* cloning an selector list, for libreswan
  *
  * Copyright (C) 2022 Andrew Cagney
  *
@@ -18,13 +18,15 @@
 #include "lswalloc.h"
 #include "passert.h"
 #include "lswlog.h"		/* for dbg() */
-#include "ip_address.h"
+#include "ip_selector.h"
 
-diag_t ttoaddress_num_list(shunk_t input, const char *delims,
-			   const struct ip_info *afi,
-			   ip_address **output)
+const ip_selectors empty_ip_selectors;
+
+diag_t ttoselectors_num(shunk_t input, const char *delims,
+			const struct ip_info *afi,
+			ip_selectors *output)
 {
-	*output = NULL;
+	*output = empty_ip_selectors;
 
 	if (input.ptr == NULL) {
 		return NULL;
@@ -46,8 +48,8 @@ diag_t ttoaddress_num_list(shunk_t input, const char *delims,
 			continue;
 		}
 		/* validate during first pass */
-		ip_address tmp;
-		err_t e = ttoaddress_num(token, afi, &tmp);
+		ip_selector tmp;
+		err_t e = ttoselector_num(token, afi, &tmp);
 		if (e != NULL) {
 			return diag(PRI_SHUNK" invalid, %s",
 				    pri_shunk(token), e);
@@ -61,13 +63,14 @@ diag_t ttoaddress_num_list(shunk_t input, const char *delims,
 	 * Allocate.
 	 */
 	dbg("%s() nr tokens %u", __func__, nr_tokens);
-	*output = alloc_things(ip_address, nr_tokens + 1, "addresses");
+	output->len = nr_tokens;
+	output->list = alloc_things(ip_selector, nr_tokens, "selectors");
 
 	/*
 	 * pass 2: copy things over.
 	 */
 	cursor = input;
-	ip_address *address = *output;
+	ip_selector *dst = output->list;
 	while (true) {
 		shunk_t token = shunk_token(&cursor, NULL/*delim*/, delims);
 		if (token.ptr == NULL) {
@@ -76,12 +79,13 @@ diag_t ttoaddress_num_list(shunk_t input, const char *delims,
 		if (token.len == 0) {
 			continue;
 		}
-		err_t e = ttoaddress_num(token, afi, address);
+		passert(dst < output->list + output->len);
+		err_t e = ttoselector_num(token, afi, dst);
 		passert(e == NULL);
-		address_buf ab;
-		dbg("%s() %s", __func__, str_address(address, &ab));
-		address++;
+		selector_buf b;
+		dbg("%s() %s", __func__, str_selector(dst, &b));
+		dst++;
 	}
-	*address = unset_address;
+	passert(dst == output->list + output->len);
 	return NULL;
 }

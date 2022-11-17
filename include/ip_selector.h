@@ -108,9 +108,19 @@ ip_selector selector_from_subnet_protoport(const ip_subnet subnet,
 					   const ip_protoport protoport);
 
 err_t ttoselector_num(shunk_t src, const struct ip_info *afi, ip_selector *dst);
-diag_t ttoselector_num_list(shunk_t input, const char *delims,
-			    const struct ip_info *afi,
-			    ip_selector **output) MUST_USE_RESULT;
+
+/* comma/space separated list */
+
+typedef struct {
+	unsigned len;
+	ip_selector *list;
+} ip_selectors;
+
+extern const ip_selectors empty_ip_selectors;
+
+diag_t ttoselectors_num(shunk_t input, const char *delims,
+			const struct ip_info *afi,
+			ip_selectors *output) MUST_USE_RESULT;
 
 /*
  * Magic values.

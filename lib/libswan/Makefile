@@ -67,12 +67,12 @@ OBJS += pubkey_ecdsa.o
 OBJS += sparse_names.o
 OBJS += ttoaddress_dns.o
 OBJS += ttoaddress_num.o
-OBJS += ttoaddress_num_list.o
+OBJS += ttoaddresses_num.o
 OBJS += ttoprotocol.o
 OBJS += ttorange_num.o
-OBJS += ttorange_num_list.o
+OBJS += ttoranges_num.o
 OBJS += ttoselector_num.o
-OBJS += ttoselector_num_list.o
+OBJS += ttoselectors_num.o
 OBJS += ttosubnet_num.o
 
 OBJS += ttobinary-iec-60027-2.o

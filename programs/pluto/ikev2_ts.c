@@ -376,18 +376,20 @@ static bool emit_v2TS_request_end_payloads(struct pbs_out *out,
 {
 	struct connection *c = child->sa.st_connection;
 	const struct child_end_config *config = &c->end[end].config->child;
-	const ip_selector *selectors = config->selectors.list;
+	const ip_selectors *const selectors = &config->selectors;
 	shunk_t sec_label = HUNK_AS_SHUNK(c->child.sec_label);
 	unsigned nr_ts = 0;
 	pexpect(selector_eq_selector(c->end[end].child.selector,
 				     c->spd->end[end].client));
-	if (sec_label.len > 0 || selectors == NULL) {
+	if (sec_label.len > 0 || selectors->len == 0) {
 		nr_ts++;
 		if (sec_label.len > 0) {
 			nr_ts++;
 		}
 	} else {
-		for (const ip_selector *s = selectors; s->is_set; s++) {
+		for (const ip_selector *s = selectors->list;
+		     s < selectors->list + selectors->len;
+		     s++) {
 			nr_ts++;
 		}
 	}
@@ -412,7 +414,7 @@ static bool emit_v2TS_request_end_payloads(struct pbs_out *out,
 		return false;
 	}
 
-	if (c->child.sec_label.len > 0 || selectors == NULL) {
+	if (c->child.sec_label.len > 0 || selectors->len == 0) {
 		pexpect(c->spd == NULL ||
 			selector_eq_selector(c->spd->end[end].client, c->end[end].child.selector));
 		if (!emit_v2TS_request_selector(&ts_pbs, child,
@@ -421,7 +423,9 @@ static bool emit_v2TS_request_end_payloads(struct pbs_out *out,
 			return false;
 		}
 	} else {
-		for (const ip_selector *s = selectors; s->is_set; s++) {
+		for (const ip_selector *s = selectors->list;
+		     s < selectors->list + selectors->len;
+		     s++) {
 			if (!emit_v2TS_request_selector(&ts_pbs, child,
 							null_shunk, *s, ts_name)) {
 				return false;

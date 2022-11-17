@@ -57,11 +57,11 @@ bool need_v2CP_request(const struct connection *const cc,
 {
 	return (need_v2_configuration_payload(cc, st_nat_traversal) ||
 		cc->config->modecfg.domains != NULL ||
-		cc->config->modecfg.dns != NULL);
+		cc->config->modecfg.dns.len > 0);
 }
 
 /* Misleading name, also used for NULL sized type's */
-static stf_status ikev2_ship_cp_attr_ip(uint16_t type, ip_address *ip,
+static stf_status ikev2_ship_cp_attr_ip(uint16_t type, const ip_address *ip,
 					const char *story, struct pbs_out *outpbs)
 {
 	struct pbs_out a_pbs;
@@ -154,8 +154,9 @@ bool emit_v2CP_response(const struct child_sa *child, struct pbs_out *outpbs)
 			      IKEv2_INTERNAL_IP4_ADDRESS : IKEv2_INTERNAL_IP6_ADDRESS,
 			      &that_client_address, "Internal IP Address", &cp_pbs);
 
-	for (ip_address *dns = c->config->modecfg.dns;
-	     dns != NULL && dns->is_set; dns++) {
+	for (const ip_address *dns = c->config->modecfg.dns.list;
+	     dns < c->config->modecfg.dns.list + c->config->modecfg.dns.len;
+	     dns++) {
 		const struct ip_info *afi = address_type(dns);
 		switch (afi->ip_version) {
 		case IPv4:
@@ -211,14 +212,16 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 		}
 	}
 
-	if (cc->local->config->child.selectors.list != NULL) {
-		const ip_selector *const s = cc->local->config->child.selectors.list;
-		for (unsigned i = 0; s[i].is_set; i++) {
-			const struct ip_info *afi = selector_info(s[i]);
+	const ip_selectors *selectors = &cc->local->config->child.selectors;
+	if (selectors->len > 0) {
+		for (const ip_selector *s = selectors->list;
+		     s < selectors->list + selectors->len;
+		     s++) {
+			const struct ip_info *afi = selector_type(s);
 			if (afi != NULL) {
 				selector_buf sb;
-				dbg("local.selectors.list[%u] %s says to ask for %s",
-				    i, str_selector(&s[i], &sb), afi->ip_name);
+				dbg("local.selectors.list[%zu] %s says to ask for %s",
+				    s - selectors->list, str_selector(s, &sb), afi->ip_name);
 				ipset |= LELEM(afi->ip_index);
 			}
 		}

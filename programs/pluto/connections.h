@@ -134,12 +134,10 @@ struct child_end_config {
 	 */
 	bool has_client;
 
-	struct {
-		ip_selector *list;
-		/* log "{.leftright}${.selectors_field}=${.selectors_string} */
-		const char *field;
-		char *string;
-	} selectors;
+	ip_selectors selectors;
+	/* log "{.leftright}${.selectors_field}=${.selectors_string} */
+	const char *selectors_field;
+	char *selectors_string;
 
 	ip_address sourceip;
 
@@ -225,7 +223,7 @@ struct config {
 	char *dnshostname;
 
 	struct {
-		ip_address *dns;	/* !.is_set terminated list */
+		ip_addresses dns;	/* !.is_set terminated list */
 		shunk_t *domains;	/* NULL terminated list */
 		char *banner;
 	} modecfg;

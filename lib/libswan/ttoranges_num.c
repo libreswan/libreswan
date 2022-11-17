@@ -1,4 +1,4 @@
-/* cloning an selector list, for libreswan
+/* cloning an range list, for libreswan
  *
  * Copyright (C) 2022 Andrew Cagney
  *
@@ -18,13 +18,15 @@
 #include "lswalloc.h"
 #include "passert.h"
 #include "lswlog.h"		/* for dbg() */
-#include "ip_selector.h"
+#include "ip_range.h"
 
-diag_t ttoselector_num_list(shunk_t input, const char *delims,
-			    const struct ip_info *afi,
-			    ip_selector **output)
+const ip_ranges empty_ip_ranges;
+
+diag_t ttoranges_num(shunk_t input, const char *delims,
+		     const struct ip_info *afi,
+		     ip_ranges *output)
 {
-	*output = NULL;
+	*output = empty_ip_ranges;
 
 	if (input.ptr == NULL) {
 		return NULL;
@@ -46,8 +48,8 @@ diag_t ttoselector_num_list(shunk_t input, const char *delims,
 			continue;
 		}
 		/* validate during first pass */
-		ip_selector tmp;
-		err_t e = ttoselector_num(token, afi, &tmp);
+		ip_range tmp;
+		err_t e = ttorange_num(token, afi, &tmp);
 		if (e != NULL) {
 			return diag(PRI_SHUNK" invalid, %s",
 				    pri_shunk(token), e);
@@ -61,13 +63,14 @@ diag_t ttoselector_num_list(shunk_t input, const char *delims,
 	 * Allocate.
 	 */
 	dbg("%s() nr tokens %u", __func__, nr_tokens);
-	*output = alloc_things(ip_selector, nr_tokens + 1, "selectors");
+	output->len = nr_tokens;
+	output->list = alloc_things(ip_range, nr_tokens, "ranges");
 
 	/*
 	 * pass 2: copy things over.
 	 */
 	cursor = input;
-	ip_selector *selector = *output;
+	ip_range *dst = output->list;
 	while (true) {
 		shunk_t token = shunk_token(&cursor, NULL/*delim*/, delims);
 		if (token.ptr == NULL) {
@@ -76,12 +79,13 @@ diag_t ttoselector_num_list(shunk_t input, const char *delims,
 		if (token.len == 0) {
 			continue;
 		}
-		err_t e = ttoselector_num(token, afi, selector);
+		passert(dst < output->list + output->len);
+		err_t e = ttorange_num(token, afi, dst);
 		passert(e == NULL);
-		selector_buf b;
-		dbg("%s() %s", __func__, str_selector(selector, &b));
-		selector++;
+		range_buf b;
+		dbg("%s() %s", __func__, str_range(dst, &b));
+		dst++;
 	}
-	*selector = unset_selector;
+	passert(dst == output->list + output->len);
 	return NULL;
 }

@@ -252,7 +252,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 		free_ikev2_proposals(&config->v2_ike_auth_child_proposals);
 		pfreeany(config->connalias);
 		pfreeany(config->dnshostname);
-		pfreeany(config->modecfg.dns);
+		pfreeany(config->modecfg.dns.list);
 		pfreeany(config->modecfg.domains);
 		pfreeany(config->modecfg.banner);
 		pfreeany(config->redirect.to);
@@ -268,7 +268,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 			/* child */
 			pfreeany(end->child.updown);
 			pfreeany(end->child.selectors.list);
-			pfreeany(end->child.selectors.string);
+			pfreeany(end->child.selectors_string);
 			virtual_ip_delref(&end->child.virt);
 		}
 		pfree(c->root_config);
@@ -510,7 +510,7 @@ void update_spd_ends_from_host_ends(struct connection *c)
 			     leftright);
 		}
 
-		if (config->selectors.list != NULL) {
+		if (config->selectors.len > 0) {
 			ldbg(c->logger, "  %s.spd already has a hard-wired selectors; skipping",
 			     leftright);
 			continue;
@@ -1318,19 +1318,21 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 		passert(c->pool[IPv4_INDEX] == NULL &&
 			c->pool[IPv6_INDEX] == NULL);
 
-		ip_range *pool_ranges = NULL; /* must pfree() */
-		diag_t d = ttorange_num_list(shunk1(src->addresspool), ", ", NULL, &pool_ranges);
+		ip_ranges pool_ranges = {0}; /* must pfree(.list) */
+		diag_t d = ttoranges_num(shunk1(src->addresspool), ", ", NULL, &pool_ranges);
 		if (d != NULL) {
 			return diag_diag(&d, "invalid %saddresspool=%s, ", leftright, src->addresspool);
 		}
 
-		for (const ip_range *pool_range = pool_ranges; pool_range->is_set; pool_range++) {
+		for (const ip_range *pool_range = pool_ranges.list;
+		     pool_range < pool_ranges.list + pool_ranges.len;
+		     pool_range++) {
 			const struct ip_info *pool_afi = range_type(pool_range);
 
 			if (c->pool[pool_afi->ip_index] != NULL) {
 				diag_t d= diag("invalid %saddresspool=%s, multiple %s ranges",
 					       leftright, src->addresspool, pool_afi->ip_name);
-				pfreeany(pool_ranges);
+				pfreeany(pool_ranges.list);
 				return d;
 			}
 
@@ -1339,7 +1341,7 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 				diag_t d = diag("invalid %saddresspool=%s, IPv6 range %s is not a subnet",
 						leftright, src->addresspool,
 						str_range(pool_range, &rb));
-				pfreeany(pool_ranges);
+				pfreeany(pool_ranges.list);
 				return d;
 			}
 
@@ -1350,7 +1352,7 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 			if (d != NULL) {
 				d = diag_diag(&d, "invalid %saddresspool=%s, ",
 					      leftright, src->addresspool);
-				pfreeany(pool_ranges);
+				pfreeany(pool_ranges.list);
 				return d;
 			}
 
@@ -1358,12 +1360,12 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 			if (d != NULL) {
 				d = diag_diag(&d, "invalid %saddresspool=%s, ",
 					      leftright, src->addresspool);
-				pfreeany(pool_ranges);
+				pfreeany(pool_ranges.list);
 				return d;
 			}
 		}
 
-		pfreeany(pool_ranges);
+		pfreeany(pool_ranges.list);
 
 		/*
 		 * Addresspool implies the end is a client (and other
@@ -1426,9 +1428,10 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		ldbg(logger, "%s child selectors from %ssubnet + %sprotoport; %s.config.has_client=true",
 		     leftright, leftright, leftright, leftright);
 		child_config->has_client = true;
-		child_config->selectors.field = "subnet";
-		child_config->selectors.string = clone_str(src->client, "client");
-		child_config->selectors.list = alloc_things(ip_selector, 2, "selectors");
+		child_config->selectors_field = "subnet";
+		child_config->selectors_string = clone_str(src->client, "client");
+		child_config->selectors.len = 1;
+		child_config->selectors.list = alloc_things(ip_selector, 1, "selectors");
 		child_config->selectors.list[0] =
 			selector_from_subnet_protoport(subnet, src->protoport);
 	} else if (src->client != NULL) {
@@ -1442,9 +1445,9 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		     leftright, leftright, leftright);
 		passert(wm->ike_version == IKEv2);
 		child_config->has_client = true;
-		child_config->selectors.field = "subnet";
-		child_config->selectors.string = clone_str(src->client, "client");
-		diag_t d = ttoselector_num_list(shunk1(src->client), ", ", NULL, &child_config->selectors.list);
+		child_config->selectors_field = "subnet";
+		child_config->selectors_string = clone_str(src->client, "client");
+		diag_t d = ttoselectors_num(shunk1(src->client), ", ", NULL, &child_config->selectors);
 		if (d != NULL) {
 			return diag_diag(&d, "%ssubnet=%s invalid, ",
 					 leftright, src->client);
@@ -1474,9 +1477,10 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		ldbg(logger, "%s child selectors from %ssourceip=%s; %s.config.has_client=true",
 		     leftright, leftright, s, leftright);
 		child_config->has_client = true;
-		child_config->selectors.field = "sourceip";
-		child_config->selectors.string = clone_str(s, "sourceip");
-		child_config->selectors.list = alloc_things(ip_selector, 2, "selectors");
+		child_config->selectors_field = "sourceip";
+		child_config->selectors_string = clone_str(s, "sourceip");
+		child_config->selectors.len = 1;
+		child_config->selectors.list = alloc_things(ip_selector, 1, "selectors");
 		child_config->selectors.list[0] =
 			selector_from_address_protoport(src->sourceip, src->protoport);
 	} else if (src->protoport.is_set) {
@@ -2388,10 +2392,10 @@ static bool extract_connection(const struct whack_message *wm,
 		config->xauthby = wm->xauthby;
 		config->xauthfail = wm->xauthfail;
 
-		diag_t d = ttoaddress_num_list(shunk1(wm->modecfg_dns), ", ",
-					       /* IKEv1 doesn't do IPv6 */
-					       (wm->ike_version == IKEv1 ? &ipv4_info : NULL),
-					       &config->modecfg.dns);
+		diag_t d = ttoaddresses_num(shunk1(wm->modecfg_dns), ", ",
+					    /* IKEv1 doesn't do IPv6 */
+					    (wm->ike_version == IKEv1 ? &ipv4_info : NULL),
+					    &config->modecfg.dns);
 		if (d != NULL) {
 			llog_diag(RC_FATAL, c->logger, &d,
 				  ADD_FAILED_PREFIX"modecfgdns=%s invalid: ",
@@ -2661,11 +2665,13 @@ static bool extract_connection(const struct whack_message *wm,
 
 	bool using_ip[END_ROOF][IP_INDEX_ROOF] = {0};
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		if (c->end[end].config->child.selectors.list == NULL) {
+		if (c->end[end].config->child.selectors.len == 0) {
 			using_ip[end][host_afi->ip_index] = true;
 		} else {
-			for (const ip_selector *s = c->end[end].config->child.selectors.list;
-			     s->is_set; s++) {
+			const ip_selectors *const selectors = &c->end[end].config->child.selectors;
+			for (const ip_selector *s = selectors->list;
+			     s < selectors->list + selectors->len;
+			     s++) {
 				const struct ip_info *afi = selector_type(s);
 				using_ip[end][afi->ip_index] = true;
 			}
@@ -2678,23 +2684,25 @@ static bool extract_connection(const struct whack_message *wm,
 		if (using_ip[LEFT_END][i] == using_ip[RIGHT_END][i]) {
 			continue;
 		}
-		if (c->end[LEFT_END].config->child.selectors.list != NULL &&
-		    c->end[RIGHT_END].config->child.selectors.list != NULL) {
+		if (c->end[LEFT_END].config->child.selectors.len > 0 &&
+		    c->end[RIGHT_END].config->child.selectors.len > 0) {
 			/*
 			 * Both ends used child AFIs.
 			 *
 			 * Since no permutation was valid one end must
 			 * be pure IPv4 and the other end pure IPv6
 			 * say.
+			 *
+			 * Use the first list entry to get the AFI.
 			 */
 			llog(RC_FATAL, c->logger,
 			     ADD_FAILED_PREFIX"address family %s from left%s=%s conflicts with %s from right%s=%s",
 			     selector_type(c->end[LEFT_END].config->child.selectors.list)->ip_name,
-			     c->end[LEFT_END].config->child.selectors.field,
-			     c->end[LEFT_END].config->child.selectors.string,
+			     c->end[LEFT_END].config->child.selectors_field,
+			     c->end[LEFT_END].config->child.selectors_string,
 			     selector_type(c->end[RIGHT_END].config->child.selectors.list)->ip_name,
-			     c->end[RIGHT_END].config->child.selectors.field,
-			     c->end[RIGHT_END].config->child.selectors.string);
+			     c->end[RIGHT_END].config->child.selectors_field,
+			     c->end[RIGHT_END].config->child.selectors_string);
 		} else {
 			/*
 			 * One end used a child AFI, and the other
@@ -2704,7 +2712,7 @@ static bool extract_connection(const struct whack_message *wm,
 			const char *host_end = NULL;
 			const struct child_end_config *child_end = NULL;
 			FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-				if (c->end[end].config->child.selectors.list == NULL) {
+				if (c->end[end].config->child.selectors.len == 0) {
 					host_end = c->end[end].host.config->leftright;
 				} else {
 					child_end = &c->end[end].config->child;
@@ -2716,8 +2724,8 @@ static bool extract_connection(const struct whack_message *wm,
 			     ADD_FAILED_PREFIX"%s host address family %s conflicts with %s%s=%s",
 			     host_end, host_afi->ip_name,
 			     child_end->leftright,
-			     child_end->selectors.field,
-			     child_end->selectors.string);
+			     child_end->selectors_field,
+			     child_end->selectors_string);
 		}
 		return false;
 	}
@@ -2727,34 +2735,43 @@ static bool extract_connection(const struct whack_message *wm,
 	 * selectors.
 	 */
 
-	const ip_selector *selectors[END_ROOF] = {0};
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		selectors[end] = c->end[end].config->child.selectors.list;
-	}
+	ldbg(c->logger, "adding spds");
 	struct spd_route **spd_end = &c->spd;
-	do /*LEFT*/ {
-		do /*RIGHT*/ {
-			selector_buf leftb, rightb;
-			dbg("adding spd %s<->%s",
-			    (selectors[LEFT_END] != NULL ? str_selector(selectors[LEFT_END], &leftb) : "<left>"),
-			    (selectors[RIGHT_END] != NULL ? str_selector(selectors[RIGHT_END], &rightb) : "<right>"));
+	struct {
+		const ip_selectors *selectors;
+		const ip_selector *selector;
+		const struct ip_info *afi;
+	} selectors[END_ROOF] = {0};
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		selectors[end].selectors = &c->end[end].config->child.selectors;
+	}
+	selectors[LEFT_END].selector = selectors[LEFT_END].selectors->list; /* could be NULL */
+	while (true) /*LEFT*/ {
+		unsigned indent = 2;
+		selector_buf leftb;
+		ldbg(c->logger, "%*s%s->", indent, "", str_selector(selectors[LEFT_END].selector, &leftb));
+		selectors[RIGHT_END].selector = selectors[RIGHT_END].selectors->list;  /* could be NULL */
+		while (true) /*RIGHT*/ {
+			indent = 4;
+			selector_buf rightb;
+			ldbg(c->logger, "%*s->%s", indent, "", str_selector(selectors[RIGHT_END].selector, &rightb));
 			/*
 			 * XXX: Try to filter out IPv4 vs IPv6.  When
 			 * selector is NULL, the host's address family
 			 * is used.
 			 */
-			const struct ip_info *afi[END_ROOF];
 			FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-				if (selectors[end] == NULL) {
-					afi[end] = host_afi;
+				if (selectors[end].selector == NULL) {
+					selectors[end].afi = host_afi;
 				} else {
-					afi[end] = selector_type(selectors[end]);
+					selectors[end].afi = selector_type(selectors[end].selector);
 				}
 			}
-			if (afi[LEFT_END] == afi[RIGHT_END]) {
+			if (selectors[LEFT_END].afi == selectors[RIGHT_END].afi) {
+				indent = 6;
 				struct spd_route *spd = append_spd_route(c, &spd_end);
 				FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-					const ip_selector *selector = selectors[end];
+					const ip_selector *selector = selectors[end].selector; /* could be NULL */
 					const struct child_end_config *child_end = &c->end[end].config->child;
 					struct spd_end *spd_end = &spd->end[end];
 					const char *leftright = child_end->leftright;
@@ -2772,8 +2789,8 @@ static bool extract_connection(const struct whack_message *wm,
 					if (selector != NULL) {
 						selector_buf sb;
 						ldbg(c->logger,
-						     "%s %s child spd has selectors; setting client to %s",
-						     c->name, leftright, str_selector(selector, &sb));
+						     "%*s%s %s child spd has selectors; setting client to %s",
+						     indent, "", c->name, leftright, str_selector(selector, &sb));
 						passert(selector->is_set); /* else pointless */
 						if (spd == c->spd) {
 							set_end_selector(c, end, *selector, NULL);
@@ -2783,18 +2800,19 @@ static bool extract_connection(const struct whack_message *wm,
 					}
 					if (child_end->virt != NULL) {
 						ldbg(c->logger,
-						     "%s child spd is virtual; adding virt",
-						     leftright);
+						     "%*s%s child spd is virtual; adding virt",
+						     indent, "", leftright);
 						spd_end->virt = virtual_ip_addref(child_end->virt);
 					}
 					selector_buf sb;
 					ldbg(c->logger,
-					     "%s child spd from selector %s %s.spd.has_client=%s virt=%s",
-					     spd_end->config->leftright,
+					     "%*s%s child spd from selector %s %s.spd.has_client=%s virt=%s",
+					     indent, "", spd_end->config->leftright,
 					     str_selector(&spd_end->client, &sb),
 					     leftright, bool_str(spd_end->has_client),
 					     bool_str(spd_end->virt != NULL));
 				}
+				indent = 4;
 				/* default values */
 				passert(spd->routing == RT_UNROUTED);
 				passert(spd->eroute_owner == SOS_NOBODY);
@@ -2807,15 +2825,17 @@ static bool extract_connection(const struct whack_message *wm,
 				 * one.  Does CK_TEMPLATE need one?
 				 */
 				spd->reqid = (c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid);
-				ldbg(c->logger, "spd->reqid=%d because c->sa_reqid=%d",
-				     c->spd->reqid, c->sa_reqid);
+				ldbg(c->logger, "%*sspd->reqid=%d because c->sa_reqid=%d",
+				     indent, "", c->spd->reqid, c->sa_reqid);
 			}
-			/* advance */
-			selectors[RIGHT_END] = (selectors[RIGHT_END] != NULL ? selectors[RIGHT_END]+1 : NULL);
-		} while (selectors[RIGHT_END] != NULL && selectors[RIGHT_END]->is_set);
-		/* advance */
-		selectors[LEFT_END] = (selectors[LEFT_END] != NULL ? selectors[LEFT_END]+1 : NULL);
-	} while(selectors[LEFT_END] != NULL && selectors[LEFT_END]->is_set);
+			/* advance RIGHT (NULL+1>=NULL+0) */
+			if (selectors[RIGHT_END].selector + 1 >= selectors[RIGHT_END].selectors->list + selectors[RIGHT_END].selectors->len) break;
+			selectors[RIGHT_END].selector++;
+		}
+		/* advance LEFT (NULL+1>=NULL+0) */
+		if (selectors[LEFT_END].selector + 1 >= selectors[LEFT_END].selectors->list + selectors[LEFT_END].selectors->len) break;
+		selectors[LEFT_END].selector++;
+	}
 
 	if (!pexpect(c->spd != NULL)) {
 		return false;
@@ -4252,12 +4272,13 @@ static void show_one_sr(struct show *s,
 		jam(buf, " modecfg policy:%s,", (c->policy & POLICY_MODECFG_PULL ? "pull" : "push"));
 
 		jam_string(buf, " dns:");
-		if (c->config->modecfg.dns == NULL) {
+		if (c->config->modecfg.dns.len == 0) {
 			jam_string(buf, "unset,");
 		} else {
 			const char *sep = "";
-			for (const ip_address *dns = c->config->modecfg.dns;
-			     dns->is_set; dns++) {
+			for (const ip_address *dns = c->config->modecfg.dns.list;
+			     dns < c->config->modecfg.dns.list + c->config->modecfg.dns.len;
+			     dns++) {
 				jam_string(buf, sep);
 				sep = ", ";
 				jam_address(buf, dns);
@@ -4889,8 +4910,11 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 	 * XXX: the CP payload code violoates this.  It stomps on the
 	 * child.selector without even looking at the traffic
 	 * selectors.
+	 *
+	 * XXX: the TS code violates this.  It scribbles the result of
+	 * the TS negotiation on the child.selector.
 	 */
-	if (c->end[end].config->child.selectors.list != NULL) {
+	if (c->end[end].config->child.selectors.len > 0) {
 		ip_selector selector = c->end[end].config->child.selectors.list[0];
 		if (selector_eq_selector(new_selector, selector)) {
 			selector_buf sb;

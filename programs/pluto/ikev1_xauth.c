@@ -252,8 +252,9 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 		 * last's is finished at the end so our loop structure
 		 * is odd.
 		 */
-		for (ip_address *dns = c->config->modecfg.dns;
-		     dns != NULL && dns->is_set; dns++) {
+		for (const ip_address *dns = c->config->modecfg.dns.list;
+		     dns < c->config->modecfg.dns.list + c->config->modecfg.dns.len;
+		     dns++) {
 
 			/* emit attribute's value */
 			if (!pbs_out_address(&attrval, *dns, "IP4_dns")) {
@@ -406,7 +407,7 @@ static stf_status modecfg_resp(struct state *st,
 		}
 
 		/* If we got DNS addresses, answer with those */
-		if (c->config->modecfg.dns != NULL)
+		if (c->config->modecfg.dns.len > 0)
 			resp |= LELEM(IKEv1_INTERNAL_IP4_DNS);
 		else
 			resp &= ~LELEM(IKEv1_INTERNAL_IP4_DNS);
