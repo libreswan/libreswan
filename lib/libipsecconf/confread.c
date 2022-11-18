@@ -51,11 +51,6 @@
 
 #include "whack.h" /* for DEFAULT_CTL_SOCKET */
 #include "lswlog.h"
-#ifdef USE_DNSSEC
-# include <unbound.h>
-# include <arpa/inet.h> /* for inet_ntop */
-# include "dnssec.h"
-#endif /* USE_DNSSEC */
 
 /**
  * Set up hardcoded defaults, from data in programs/pluto/constants.h
@@ -1654,8 +1649,7 @@ static bool init_load_conn(struct starter_config *cfg,
 struct starter_config *confread_load(const char *file,
 				     starter_errors_t *perrl,
 				     const char *ctlsocket,
-				     bool setuponly,
-				     struct logger *logger)
+				     bool setuponly)
 {
 	bool err = false;
 
@@ -1691,12 +1685,6 @@ struct starter_config *confread_load(const char *file,
 	}
 
 	if (!setuponly) {
-#ifdef USE_DNSSEC
-		unbound_sync_init(cfg->setup.options[KBF_DO_DNSSEC],
-				  cfg->setup.strings[KSF_PLUTO_DNSSEC_ROOTKEY_FILE],
-				  cfg->setup.strings[KSF_PLUTO_DNSSEC_ANCHORS],
-				  logger);
-#endif
 
 		/*
 		 * Load %default conn
@@ -1727,9 +1715,6 @@ struct starter_config *confread_load(const char *file,
 	}
 
 	parser_free_conf(cfgp);
-#ifdef USE_DNSSEC
-	unbound_ctx_free();
-#endif
 	return cfg;
 }
 

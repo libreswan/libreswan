@@ -58,7 +58,7 @@ static const struct option longopts[] =
 
 int main(int argc, char *argv[])
 {
-	struct logger *logger = tool_init_log(argv[0]);
+	tool_init_log(argv[0]);
 
 	int opt;
 	struct starter_config *cfg = NULL;
@@ -128,7 +128,7 @@ int main(int argc, char *argv[])
 	starter_use_log(verbose != 0, true, verbose == 0);
 
 	starter_errors_t errl = { NULL };
-	cfg = confread_load(configfile, &errl, NULL, false, logger);
+	cfg = confread_load(configfile, &errl, NULL, false);
 
 	if (cfg == NULL) {
 		fprintf(stderr, "%s: config file \"%s\" cannot be loaded: %s\n",
