@@ -539,32 +539,16 @@ static bool validate_end(struct starter_conn *conn_st,
 	end->nexthop = end->host_family->address.unspec;
 	if (end->strings_set[KSCF_NEXTHOP]) {
 		char *value = end->strings[KSCF_NEXTHOP];
-
 		if (strcaseeq(value, "%defaultroute")) {
 			end->nexttype = KH_DEFAULTROUTE;
 		} else {
-			ip_address nexthop = unset_address;
-#ifdef USE_DNSSEC
-			if (ttoaddress_num(shunk1(value),
-					   end->host_family, &nexthop) != NULL) {
-				starter_log(LOG_LEVEL_DEBUG,
-					    "Calling unbound_resolve() for %snexthop value",
-					    leftright);
-				if (!unbound_resolve(value,
-						     end->host_family,
-						     &nexthop, logger))
-					ERR_FOUND("bad value for %snexthop=%s\n",
-						  leftright, value);
-			}
-#else
-			err_t e = ttoaddress_dns(shunk1(value),
-						 end->host_family, &nexthop);
+			err_t e = ttoaddress_num(shunk1(value),
+						 end->host_family,
+						 &end->nexthop);
 			if (e != NULL) {
 				ERR_FOUND("bad value for %snexthop=%s [%s]",
 					  leftright, value, e);
 			}
-#endif
-			end->nexthop = nexthop;
 			end->nexttype = KH_IPADDR;
 		}
 	} else {
