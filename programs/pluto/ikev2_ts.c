@@ -1453,32 +1453,33 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 				responder_fit = END_EQUALS_TS;
 			}
 
-			for (const struct spd_route *spd = d->spd; spd != NULL; spd = spd->spd_next) {
+			const struct spd_route *spd = d->spd;
+			pexpect(spd != NULL);
+			pexpect(spd->spd_next == NULL);
 
-				/* responder */
-				const struct child_selectors ends = {
-					.i = {
-						.name = "remote",
-						.selector = spd->remote->client,
-					},
-					.r = {
-						.name = "local",
-						.selector = spd->local->client,
-					},
+			/* responder */
+			const struct child_selectors ends = {
+				.i = {
+					.name = "remote",
+					.selector = spd->remote->client,
+				},
+				.r = {
+					.name = "local",
+					.selector = spd->local->client,
+				},
+			};
+
+			struct best_score score = score_ends(responder_fit,
+							     &ends, &tsps, indent);
+			if (score.ok && score_gt(&score, &best.score)) {
+				connection_buf cb;
+				dbg_ts("protocol fitness found better match "PRI_CONNECTION"",
+				       pri_connection(d, &cb));
+				best = (struct best) {
+					.connection = d,
+					.score = score,
+					.selected_sec_label = selected_sec_label,
 				};
-
-				struct best_score score = score_ends(responder_fit,
-								     &ends, &tsps, indent);
-				if (score.ok && score_gt(&score, &best.score)) {
-					connection_buf cb;
-					dbg_ts("protocol fitness found better match "PRI_CONNECTION"",
-					       pri_connection(d, &cb));
-					best = (struct best) {
-						.connection = d,
-						.score = score,
-						.selected_sec_label = selected_sec_label,
-					};
-				}
 			}
 		}
 	}
