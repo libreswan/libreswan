@@ -26,8 +26,6 @@ struct connection;
 struct child_sa;
 struct state;
 
-void dbg_v2_ts(const struct traffic_selector *ts, const char *prefix, ...) PRINTF_LIKE(2);
-
 bool v2_process_ts_response(struct child_sa *child,
 			    struct msg_digest *md);
 
