@@ -353,11 +353,9 @@ static void confwrite_side(FILE *out, struct starter_end *end)
 	if (end->certx != NULL)
 		fprintf(out, "\t%scert=%s\n", side, end->certx);
 
-	if (address_is_specified(end->sourceip)) {
-		ipstr_buf as;
-
+	if (end->sourceip != NULL) {
 		fprintf(out, "\t%ssourceip=%s\n",
-			side, ipstr(&end->sourceip, &as));
+			side, end->sourceip);
 	}
 	confwrite_int(out, side,
 		      kv_conn | kv_leftright,

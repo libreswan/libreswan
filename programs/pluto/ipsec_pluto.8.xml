@@ -148,6 +148,7 @@
       <arg choice="opt">--clientprotoport
       <replaceable>protocol</replaceable>/<replaceable>port</replaceable></arg>
 
+      <arg choice="opt">--sourceip <replaceable>ip-address</replaceable></arg>
       <arg choice="opt">--srcip <replaceable>ip-address</replaceable></arg>
 
       <arg choice="opt">--xauthserver</arg>
@@ -210,6 +211,7 @@
       <arg choice="opt">--clientprotoport
       <replaceable>protocol</replaceable>/<replaceable>port</replaceable></arg>
 
+      <arg choice="opt">--sourceip <replaceable>ip-address</replaceable></arg>
       <arg choice="opt">--srcip <replaceable>ip-address</replaceable></arg>
 
       <arg choice="opt">--xauthserver</arg>
@@ -1436,17 +1438,20 @@
         </varlistentry>
 
         <varlistentry>
-          <term><option>--srcip</option>&nbsp;<emphasis
-          remap="I">ip-address</emphasis></term>
+          <term><option>--sourceip</option>&nbsp;<emphasis remap="I">ip-address</emphasis></term>
+          <term><option>--srcip</option>&nbsp;<emphasis remap="I">ip-address</emphasis></term>
 
           <listitem>
-            <para>the IP address for this host to use when transmitting a
-            packet to the remote IPsec gateway itself. This option is used to
-            make the gateway itself use its internal IP, which is part of the
-            <option>--client subnet</option>. Otherwise it will use its
-            nearest IP address, which is its public IP address, which is not
-            part of the subnet-subnet IPsec tunnel, and would therefore not get
-            encrypted.</para>
+            <para>
+	      The IP address for this host to use when transmitting a
+	      packet to the remote IPsec gateway itself.  This option
+	      is used to make the gateway itself use its internal IP,
+	      which is part of the <option>--client
+	      <replaceable>subnet</replaceable></option>.  Otherwise
+	      it will use its nearest IP address, which is its public
+	      IP address, which is not part of the subnet-subnet IPsec
+	      tunnel, and would therefore not get encrypted.
+	    </para>
           </listitem>
         </varlistentry>
 

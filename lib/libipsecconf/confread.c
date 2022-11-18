@@ -631,12 +631,6 @@ static bool validate_end(struct starter_conn *conn_st,
 
 	/* parse KSCF_SOURCEIP */
 	if (end->strings_set[KSCF_SOURCEIP]) {
-		char *value = end->strings[KSCF_SOURCEIP];
-		err_t e = ttoaddress_num(shunk1(value), NULL/*UNSPEC*/, &end->sourceip);
- 		if (e != NULL) {
-			ERR_FOUND("bad addr %ssourceip=%s [%s]",
-				  leftright, value, e);
-		}
 		if (end->strings_set[KSCF_INTERFACE_IP]) {
 			ERR_FOUND("cannot specify %sinterface-ip=%s and %sssourceip=%s",
 				  leftright,
@@ -644,6 +638,7 @@ static bool validate_end(struct starter_conn *conn_st,
 				  leftright,
 				  end->strings[KSCF_SOURCEIP]);
 		}
+		end->sourceip = clone_str(end->strings[KSCF_SOURCEIP], "end->sourceip");
 	}
 
 	/* copy certificate path name */

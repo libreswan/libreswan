@@ -405,7 +405,7 @@ enum option_enums {
 	END_MODECFGSERVER,
 	END_ADDRESSPOOL,
 	END_SENDCERT,
-	END_SRCIP,
+	END_SOURCEIP,
 	END_VTIIP,
 	END_AUTHBY,
 	END_AUTHEAP,
@@ -677,7 +677,8 @@ static const struct option long_opts[] = {
 #ifdef USE_DNSSEC
 	{ "dnskeyondemand", no_argument, NULL, END_DNSKEYONDEMAND + OO },
 #endif
-	{ "srcip",  required_argument, NULL, END_SRCIP + OO },
+	{ "sourceip",  required_argument, NULL, END_SOURCEIP + OO },
+	{ "srcip",  required_argument, NULL, END_SOURCEIP + OO },	/* alias / backwards compat */
 	{ "vtiip",  required_argument, NULL, END_VTIIP + OO },
 	{ "authby",  required_argument, NULL, END_AUTHBY + OO },
 	{ "autheap",  required_argument, NULL, END_AUTHEAP + OO },
@@ -1692,8 +1693,8 @@ int main(int argc, char **argv)
 			}
 			continue;
 
-		case END_SRCIP:	/* --srcip <ip-address> */
-			opt_to_address(&host_family, &end->sourceip);
+		case END_SOURCEIP:	/* --sourceip <ip-address> */
+			end->sourceip = optarg;
 			continue;
 
 		case END_VTIIP:	/* --vtiip <ip-address/mask> */
