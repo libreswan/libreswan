@@ -339,6 +339,14 @@ struct connection *clone_connection(const char *name, struct connection *t, wher
 	c->local = &c->end[t->local->config->index];
 	c->remote = &c->end[t->remote->config->index];
 
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		if (c->end[end].child.selectors.list != c->end[end].config->child.selectors.list) {
+			pexpect(c->end[end].child.selectors.len == 1);
+			pexpect(c->end[end].child.selectors.list == &t->end[end].child.scratch_selector);
+			c->end[end].child.selectors.list = &c->end[end].child.scratch_selector;
+		}
+ 	}
+
 	finish_connection(c, name, t->serialno,
 			  t->logger->debugging, t->logger->object_whackfd,
 			  where);

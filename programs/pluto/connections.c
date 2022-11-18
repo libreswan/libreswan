@@ -2730,6 +2730,16 @@ static bool extract_connection(const struct whack_message *wm,
 		return false;
 	}
 
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		const ip_selectors *const selectors = &c->end[end].config->child.selectors;
+		if (selectors->len > 0) {
+			c->end[end].child.selectors = *selectors;
+		} else {
+			c->end[end].child.selectors.len = 1;
+			c->end[end].child.selectors.list = &c->end[end].child.scratch_selector;
+		}
+	}
+
 	/*
 	 * Fill in the child SPDs using the previously parsed
 	 * selectors.
@@ -4883,7 +4893,7 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 			    ip_selector new_selector,
 			    const char *excuse, where_t where)
 {
-	ip_selector old_selector = c->end[end].child.selector;
+	ip_selector old_selector = c->end[end].child.scratch_selector;
 	selector_buf ob, nb;
 	ldbg(c->logger, "%s.child.selector %s -> %s",
 	     c->end[end].config->leftright,
@@ -4902,7 +4912,18 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 		}
 		c->spd->end[end].client = new_selector;
 	}
-	c->end[end].child.selector = new_selector;
+	/*
+	 * Point the selectors list at and UPDATE the scratch value.
+	 *
+	 * Is the assumption that this is only applied when there is a
+	 * single selector reasonable?  Certainly don't want to
+	 * truncate the selector list.
+	 */
+	pexpect(c->end[end].child.selectors.len == 1);
+	c->end[end].child.scratch_selector = new_selector;
+	c->end[end].child.selectors.list = &c->end[end].child.scratch_selector;
+	c->end[end].child.selectors.len = 1;
+
 	/*
 	 * When there's a selectors.list, the child.selector is only
 	 * allowed to update to the first selector in that list?

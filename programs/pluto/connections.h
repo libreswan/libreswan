@@ -360,7 +360,8 @@ struct host_end {
 };
 
 struct child_end {
-	ip_selector selector;
+	ip_selector scratch_selector;
+	ip_selectors selectors; /* either scratch_selector or config->selectors; do not free */
 
 	/*
 	 * Track lease addresses.
@@ -396,13 +397,13 @@ struct spd_end {
 	set_end_selector_where(C, (C)->LR->config->index, SELECTOR, NULL, HERE)
 #define update_first_selector_protocol_port(C, LR, PROTOCOL, PORT)	\
 	set_end_selector_where(C, (C)->LR->config->index,		\
-			       selector_from_range_protocol_port(selector_range((C)->spd->LR->client), \
+			       selector_from_range_protocol_port(selector_range((C)->LR->child.scratch_selector), \
 								 PROTOCOL, PORT), \
 			       NULL, HERE)
 #define update_first_selector_port(C, LR, PORT)				\
 	set_end_selector_where(C, (C)->LR->config->index,		\
-			       selector_from_range_protocol_port(selector_range((C)->LR->child.selector), \
-								 selector_protocol((C)->LR->child.selector), \
+			       selector_from_range_protocol_port(selector_range((C)->LR->child.scratch_selector), \
+								 selector_protocol((C)->LR->child.scratch_selector), \
 								 PORT),	\
 			       NULL, HERE)
 
