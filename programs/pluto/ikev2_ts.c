@@ -261,10 +261,10 @@ static bool emit_v2TS_sec_label(struct pbs_out *ts_pbs, shunk_t sec_label)
 	return true;
 }
 
-static bool emit_v2TS_payload(struct pbs_out *outpbs,
-			      const struct_desc *ts_desc,
-			      const struct traffic_selector *ts,
-			      shunk_t sec_label)
+static bool emit_v2TS_response_payload(struct pbs_out *outpbs,
+				       const struct_desc *ts_desc,
+				       const struct traffic_selector *ts,
+				       shunk_t sec_label)
 {
 	bool with_label = (sec_label.len > 0);
 
@@ -333,7 +333,6 @@ static struct traffic_selector impair_ts_to_supernet(const struct traffic_select
 
 static bool emit_v2TS_request_selector(struct pbs_out *out,
 				       const struct child_sa *child,
-				       shunk_t sec_label,
 				       ip_selector selector,
 				       const char *ts_name)
 {
@@ -357,11 +356,6 @@ static bool emit_v2TS_request_selector(struct pbs_out *out,
 	}
 
 	if (!emit_v2TS_address_range(out, &ts)) {
-		return false;
-	}
-
-	if (sec_label.len > 0 &&
-	    !emit_v2TS_sec_label(out, sec_label)) {
 		return false;
 	}
 
@@ -418,7 +412,6 @@ static bool emit_v2TS_request_end_payloads(struct pbs_out *out,
 		pexpect(c->spd == NULL ||
 			selector_eq_selector(c->spd->end[end].client, c->end[end].child.selector));
 		if (!emit_v2TS_request_selector(&ts_pbs, child,
-						HUNK_AS_SHUNK(c->child.sec_label),
 						c->end[end].child.selector, ts_name)) {
 			return false;
 		}
@@ -426,11 +419,15 @@ static bool emit_v2TS_request_end_payloads(struct pbs_out *out,
 		for (const ip_selector *s = selectors->list;
 		     s < selectors->list + selectors->len;
 		     s++) {
-			if (!emit_v2TS_request_selector(&ts_pbs, child,
-							null_shunk, *s, ts_name)) {
+			if (!emit_v2TS_request_selector(&ts_pbs, child, *s, ts_name)) {
 				return false;
 			}
 		}
+	}
+
+	if (sec_label.len > 0 &&
+	    !emit_v2TS_sec_label(&ts_pbs, sec_label)) {
+		return false;
 	}
 
 	close_output_pbs(&ts_pbs);
@@ -484,13 +481,13 @@ bool emit_v2TS_response_payloads(struct pbs_out *outpbs, const struct child_sa *
 			str_range(&ts_r.net, &tsr_buf));
 	}
 
-	if (!emit_v2TS_payload(outpbs, &ikev2_ts_i_desc, &ts_i,
-			       HUNK_AS_SHUNK(c->child.sec_label))) {
+	if (!emit_v2TS_response_payload(outpbs, &ikev2_ts_i_desc, &ts_i,
+					HUNK_AS_SHUNK(c->child.sec_label))) {
 		return false;
 	}
 
-	if (!emit_v2TS_payload(outpbs, &ikev2_ts_r_desc, &ts_r,
-			       HUNK_AS_SHUNK(c->child.sec_label))) {
+	if (!emit_v2TS_response_payload(outpbs, &ikev2_ts_r_desc, &ts_r,
+					HUNK_AS_SHUNK(c->child.sec_label))) {
 		return false;
 	}
 
