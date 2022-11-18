@@ -921,18 +921,18 @@ kvmplutotest	ikev2-rw-multiple-subnets-5-mismatch-frst	good
 kvmplutotest	ikev2-rw-multiple-rw-by-id			wip
 
 # tests for using multiple subnets with single ike and alias
-kvmplutotest	ikev2-subnets-44in4-rw-alias		good
-kvmplutotest	ikev2-subnets-44in4-rw-ike		wip
-kvmplutotest	ikev2-subnets-44in6-rw-alias		good
-kvmplutotest	ikev2-subnets-44in6-rw-ike		wip
-kvmplutotest	ikev2-subnets-46in4-rw-alias		wip
-kvmplutotest	ikev2-subnets-46in4-rw-ike		wip
-kvmplutotest	ikev2-subnets-46in6-rw-alias		wip
-kvmplutotest	ikev2-subnets-46in6-rw-ike		wip
-kvmplutotest	ikev2-subnets-66in4-rw-alias		wip
-kvmplutotest	ikev2-subnets-66in4-rw-ike		wip
-kvmplutotest	ikev2-subnets-66in6-rw-alias		wip
-kvmplutotest	ikev2-subnets-66in6-rw-ike		wip
+kvmplutotest	ikev2-selectors-44in4-rw-alias		good
+kvmplutotest	ikev2-selectors-44in4-rw-ike		wip
+kvmplutotest	ikev2-selectors-44in6-rw-alias		good
+kvmplutotest	ikev2-selectors-44in6-rw-ike		wip
+kvmplutotest	ikev2-selectors-46in4-rw-alias		wip
+kvmplutotest	ikev2-selectors-46in4-rw-ike		wip
+kvmplutotest	ikev2-selectors-46in6-rw-alias		wip
+kvmplutotest	ikev2-selectors-46in6-rw-ike		wip
+kvmplutotest	ikev2-selectors-66in4-rw-alias		wip
+kvmplutotest	ikev2-selectors-66in4-rw-ike		wip
+kvmplutotest	ikev2-selectors-66in6-rw-alias		wip
+kvmplutotest	ikev2-selectors-66in6-rw-ike		wip
 
 # transport mode related tests
 kvmplutotest	ikev1-nat-transport-02		good
