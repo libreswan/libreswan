@@ -629,44 +629,20 @@ static bool validate_end(struct starter_conn *conn_st,
 		}
 	}
 
-	/* validate the KSCF_SOURCEIP, if any, and if set,
-	 * set the subnet to same value, if not set.
-	 */
+	/* parse KSCF_SOURCEIP */
 	if (end->strings_set[KSCF_SOURCEIP]) {
 		char *value = end->strings[KSCF_SOURCEIP];
-
-		/*
-		 * XXX: suspect this lookup should be forced to use
-		 * the same family as the client.
-		 */
-		ip_address sourceip = unset_address;
-#ifdef USE_DNSSEC
-		/* try numeric first */
-		err_t e = ttoaddress_num(shunk1(value), NULL/*UNSPEC*/, &sourceip);
-		if (e != NULL) {
-			starter_log(LOG_LEVEL_DEBUG,
-				    "Calling unbound_resolve() for %ssourceip value",
-				    leftright);
-			if (!unbound_resolve(value, &ipv4_info, &end->sourceip, logger) &&
-			    !unbound_resolve(value, &ipv6_info, &end->sourceip, logger))
-				ERR_FOUND("bad value for %ssourceip=%s\n",
-					  leftright, value);
-		}
-#else
-		/* try numeric then DNS */
-		err_t e = ttoaddress_dns(shunk1(value), AF_UNSPEC, &sourceip);
-		if (e != NULL) {
+		err_t e = ttoaddress_num(shunk1(value), NULL/*UNSPEC*/, &end->sourceip);
+ 		if (e != NULL) {
 			ERR_FOUND("bad addr %ssourceip=%s [%s]",
 				  leftright, value, e);
 		}
-#endif
-		end->sourceip = sourceip;
 		if (end->strings_set[KSCF_INTERFACE_IP]) {
-			ERR_FOUND("cannot specify  %sinterface-ip=%s and  %sssourceip=%s",
-					leftright,
-					end->strings[KSCF_INTERFACE_IP],
-					leftright,
-					end->strings[KSCF_SOURCEIP]);
+			ERR_FOUND("cannot specify %sinterface-ip=%s and %sssourceip=%s",
+				  leftright,
+				  end->strings[KSCF_INTERFACE_IP],
+				  leftright,
+				  end->strings[KSCF_SOURCEIP]);
 		}
 	}
 
