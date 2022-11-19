@@ -66,6 +66,7 @@ struct narrowed_selector {
 
 struct narrowed_selector_payload {
 	const char *name;	/* XXX: redundant? */
+	struct score score;
 #if 0
 	shunk_t sec_label;	/* XXX: to-be-done */
 #endif
@@ -1033,8 +1034,6 @@ static bool fit_ts_to_selectors(struct narrowed_selector *ns,
 	return matched;
 }
 
-// #define NEW_TS 1
-#ifdef NEW_TS
 static bool fit_tsp_to_selectors(struct narrowed_selector_payload *nsp,
 				 const struct traffic_selector_payload *tsp,
 				 const ip_selectors *selectors,
@@ -1042,17 +1041,19 @@ static bool fit_tsp_to_selectors(struct narrowed_selector_payload *nsp,
 {
 	bool matched = false;
 	for (unsigned i = 0; i < tsp->nr; i++) {
-		if (fit_ts_to_selectors(&nsp->ts[nsp->nr], &tsp->ts[i],
-					selectors, fit, indent)) {
-			matched = true;
-			nsp->nr++;
+		if (!fit_ts_to_selectors(&nsp->ts[nsp->nr], &tsp->ts[i],
+					 selectors, fit, indent)) {
+			continue;
 		}
+		matched = true;
+		if (score_gt_best(&nsp->ts[nsp->nr].score, &nsp->score)) {
+			nsp->score = nsp->ts[nsp->nr].score;
+		}
+		nsp->nr++;
 	}
 	return matched;
 }
-#endif
 
-#ifdef NEW_TS
 static bool fit_tsps_to_selectors(struct narrowed_selector_payloads *nsps,
 				  const struct traffic_selector_payloads *tsps,
 				  const struct child_selectors *ends,
@@ -1066,7 +1067,6 @@ static bool fit_tsps_to_selectors(struct narrowed_selector_payloads *nsps,
 	}
 	return true;
 }
-#endif
 
 /*
  * Return true for sec_label expected and good XOR not expected and
@@ -1164,12 +1164,13 @@ static bool score_tsp_sec_label(const struct traffic_selector_payloads *tsps,
 
 struct best_score {
 	bool ok;
+	int selectors;
 	int range;
 	int port;
 	int protocol;
 	struct narrowed_selector_payloads n;
 };
-#define  NO_SCORE { .ok = false, .range = -1, .port = -1, .protocol = -1, }
+#define  NO_SCORE { .ok = false, .selectors = -1, .range = -1, .port = -1, .protocol = -1, }
 
 static bool best_score_gt(const struct best_score *score, const struct best_score *best)
 {
@@ -1247,6 +1248,31 @@ static struct best_score score_ends(enum fit fit,
 	}
 
 	return best_score;
+}
+
+static bool score_tsps(struct best_score *score,
+		       enum fit fit,
+		       const struct child_selectors *ends,
+		       const struct traffic_selector_payloads *tsps,
+		       indent_t indent)
+{
+	zero(score);
+	dbg_ts("evaluating END %s:", str_end_fit_ts(fit));
+	indent.level++;
+
+	if (!fit_tsps_to_selectors(&score->n, tsps, ends, fit, indent)) {
+		return false;
+	}
+
+	score->ok = true;
+	/* ??? this objective function is odd and arbitrary */
+	score->range = (score->n.i.score.range << 8) + score->n.r.score.range;
+	/* ??? arbitrary objective function */
+	score->port = (score->n.i.score.port + score->n.r.score.port);
+	/* ??? arbitrary objective function */
+	score->protocol = (score->n.i.score.protocol + score->n.r.score.protocol);
+
+	return true;
 }
 
 static bool v2_child_connection_probably_shared(struct child_sa *child,
@@ -1559,8 +1585,18 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 				.r = &d->local->child.selectors,
 			};
 
+#if 0
 			struct best_score score = score_ends(responder_fit,
 							     &ends, &tsps, indent);
+#else
+			struct best_score score;
+			if (!score_tsps(&score, responder_fit, &ends, &tsps, indent)) {
+				connection_buf cb;
+				dbg_ts("skipping "PRI_CONNECTION" does not sore at all",
+				       pri_connection(d, &cb));
+				continue;
+			}
+#endif
 			if (score.ok && best_score_gt(&score, &best.score)) {
 				connection_buf cb;
 				dbg_ts("protocol fitness found better match "PRI_CONNECTION"",
