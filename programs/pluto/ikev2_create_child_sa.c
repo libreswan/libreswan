@@ -856,7 +856,7 @@ stf_status process_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 		llog_sa(RC_LOG, larval_child, "ignoring CREATE_CHILD_SA CP payload");
 	}
 
-	if (!v2_process_request_ts_payloads(larval_child, md)) {
+	if (!process_v2TS_request_payloads(larval_child, md)) {
 		/* already logged */
 		record_v2N_response(larval_child->sa.st_logger, ike, md,
 				    v2N_TS_UNACCEPTABLE,

@@ -707,7 +707,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 {
 	struct connection *c = child->sa.st_connection;
 
-	if (!v2_process_ts_response(child, md)) {
+	if (!process_v2TS_response_payloads(child, md)) {
 		return v2N_TS_UNACCEPTABLE;
 	}
 
@@ -954,9 +954,10 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 		dbg("skipping TS processing, mainly to stop a connection flip!?!");
 	} else {
 		/*
-		 * Danger! This TS call can change the child's connection.
+		 * Danger! This TS call can change the child's
+		 * connection.
 		 */
-		if (!v2_process_request_ts_payloads(child, md)) {
+		if (!process_v2TS_request_payloads(child, md)) {
 			/* already logged; caller, below, cleans up */
 			return v2N_TS_UNACCEPTABLE;
 		}

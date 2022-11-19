@@ -1354,8 +1354,8 @@ static void scribble_request_ts_on_connection(struct child_sa *child,
  * possibly giving up.
  */
 
-bool v2_process_request_ts_payloads(struct child_sa *child,
-				    const struct msg_digest *md)
+bool process_v2TS_request_payloads(struct child_sa *child,
+				   const struct msg_digest *md)
 {
 	indent_t indent = {child->sa.st_logger, 0};
 	passert(v2_msg_role(md) == MESSAGE_REQUEST);
@@ -1900,8 +1900,8 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 }
 
 /* check TS payloads, response */
-bool v2_process_ts_response(struct child_sa *child,
-			    struct msg_digest *md)
+bool process_v2TS_response_payloads(struct child_sa *child,
+				    struct msg_digest *md)
 {
 	indent_t indent = {child->sa.st_logger, 0};
 
