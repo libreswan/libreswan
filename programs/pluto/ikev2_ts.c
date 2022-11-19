@@ -37,6 +37,8 @@
 #include "iface.h"
 #include "pending.h"		/* for connection_is_pending() */
 
+#define TS_MAX 16 /* arbitrary */
+
 typedef struct {
 	struct logger *logger;
 	unsigned level;
@@ -46,17 +48,28 @@ typedef struct {
 #define ts_indent indent.level*2, ""
 #define dbg_ts(FORMAT, ...) ldbg(indent.logger, TS_INDENT""FORMAT, ts_indent, ##__VA_ARGS__)
 
-struct narrowed_traffic_selector {
+struct narrowed_selector {
 	const char *name;
+	unsigned nr;
+	/* XXX: change to proper selector? */
 	int port;
 	const struct ip_protocol *protocol;
 	ip_range range;
 };
 
-struct narrowed_traffic_selectors {
+struct narrowed_selector_payload {
+	const char *name;	/* XXX: redundant? */
+#if 0
+	shunk_t sec_label;	/* XXX: to-be-done */
+#endif
+	unsigned nr;
+	struct narrowed_selector ts[TS_MAX];
+};
+
+struct narrowed_selector_payloads {
 	bool ok;
-	struct narrowed_traffic_selector i;
-	struct narrowed_traffic_selector r;
+	struct narrowed_selector_payload i;
+	struct narrowed_selector_payload r;
 };
 
 /*
@@ -78,11 +91,11 @@ struct traffic_selector {
 };
 
 struct traffic_selector_payload {
-	const char *name;
+	const char *name;	/* XXX: redundant? */
 	shunk_t sec_label;
 	unsigned nr;
 	/* ??? is 16 an undocumented limit - IKEv2 has no limit */
-	struct traffic_selector ts[16];
+	struct traffic_selector ts[TS_MAX];
 };
 
 struct traffic_selector_payloads {
@@ -151,7 +164,7 @@ PRINTF_LIKE(2) static void dbg_v2_ts(const struct traffic_selector *ts, const ch
 	}
 }
 
-static void traffic_selector_to_end(const struct narrowed_traffic_selector *n,
+static void traffic_selector_to_end(const struct narrowed_selector *n,
 				    struct spd_end *end, const char *story)
 {
 	range_buf rb;
@@ -829,14 +842,14 @@ static ip_range narrow_range(const struct end_selectors *end,
 	return range;
 }
 
-static bool narrow_ts(struct narrowed_traffic_selector *n,
+static bool narrow_ts(struct narrowed_selector *n,
 		      const struct end_selectors *end, ip_selector selector,
 		      const struct traffic_selector_payload *tsp,
 		      const struct traffic_selector *ts,
 		      enum fit fit, indent_t indent)
 {
 	passert(tsp->nr >= 1);
-	*n = (struct narrowed_traffic_selector) {
+	*n = (struct narrowed_selector) {
 		.name = tsp->name,
 	};
 
@@ -869,7 +882,7 @@ static bool narrow_ts(struct narrowed_traffic_selector *n,
 	return true;
 }
 
-static bool narrow_ts_end(struct narrowed_traffic_selector *n,
+static bool narrow_ts_end(struct narrowed_selector *n,
 			  const struct end_selectors *end,
 			  const struct traffic_selector_payload *tsp,
 			  enum fit fit, unsigned index,
@@ -878,20 +891,26 @@ static bool narrow_ts_end(struct narrowed_traffic_selector *n,
 	return narrow_ts(n, end, end->selectors->list[0], tsp, &tsp->ts[index], fit, indent);
 }
 
-static struct narrowed_traffic_selectors narrow_tsp_ends(struct child_selectors *ends,
-							 const struct traffic_selector_payloads *tsp,
-							 enum fit fit, unsigned index,
-							 indent_t indent)
+static struct narrowed_selector_payloads narrow_tsp_ends(struct child_selectors *ends,
+								 const struct traffic_selector_payloads *tsp,
+								 enum fit fit, unsigned index,
+								 indent_t indent)
 {
-	struct narrowed_traffic_selectors n = {
+	struct narrowed_selector_payloads n = {
 		.ok = false, /* until proven */
+		.i = {
+			.name = tsp->i.name,
+		},
+		.r = {
+			.name = tsp->r.name,
+		},
 	};
 
-	if (!narrow_ts_end(&n.i, &ends->i, &tsp->i, fit, index, indent)) {
+	if (!narrow_ts_end(&n.i.ts[0], &ends->i, &tsp->i, fit, index, indent)) {
 		return n;
 	}
 
-	if (!narrow_ts_end(&n.r, &ends->r, &tsp->r, fit, index, indent)) {
+	if (!narrow_ts_end(&n.r.ts[0], &ends->r, &tsp->r, fit, index, indent)) {
 		return n;
 	}
 
@@ -899,7 +918,7 @@ static struct narrowed_traffic_selectors narrow_tsp_ends(struct child_selectors 
 	return n;
 }
 
-static int score_narrowed_protocol(const struct narrowed_traffic_selector *ts,
+static int score_narrowed_protocol(const struct narrowed_selector *ts,
 				   indent_t indent)
 {
 	int f;	/* strength of match */
@@ -924,7 +943,7 @@ static int score_narrowed_protocol(const struct narrowed_traffic_selector *ts,
  * time?
  */
 
-static int score_narrowed_port(const struct narrowed_traffic_selector *ts,
+static int score_narrowed_port(const struct narrowed_selector *ts,
 			       indent_t indent)
 {
 	int f;	/* strength of match */
@@ -941,7 +960,7 @@ static int score_narrowed_port(const struct narrowed_traffic_selector *ts,
 	return f;
 }
 
-static int score_narrowed_range(const struct narrowed_traffic_selector *ts,
+static int score_narrowed_range(const struct narrowed_selector *ts,
 				indent_t indent)
 {
 	int f;
@@ -964,7 +983,7 @@ struct score {
 	int protocol;
 };
 
-static struct score score_narrowed_ts(const struct narrowed_traffic_selector *ts,
+static struct score score_narrowed_ts(const struct narrowed_selector *ts,
 				      indent_t indent)
 {
 	indent.level++;
@@ -1089,7 +1108,7 @@ struct best_score {
 	int range;
 	int port;
 	int protocol;
-	struct narrowed_traffic_selectors n;
+	struct narrowed_selector_payloads n;
 };
 #define  NO_SCORE { .ok = false, .range = -1, .port = -1, .protocol = -1, }
 
@@ -1121,25 +1140,30 @@ static struct best_score score_ends(enum fit fit,
 	/* compare tsi/r array to this/that, evaluating how well it fits */
 	for (unsigned tsi_n = 0; tsi_n < tsp->i.nr; tsi_n++) {
 
-		struct narrowed_traffic_selector narrowed_tsi;
-		if (!narrow_ts_end(&narrowed_tsi, &ends->i, &tsp->i, fit, tsi_n, indent)) {
+		struct narrowed_selector_payload ni = {
+			.name = tsp->i.name,
+		};
+		if (!narrow_ts_end(&ni.ts[0], &ends->i, &tsp->i, fit, tsi_n, indent)) {
 			continue;
 		}
 
 		/* choice hardwired for IPrange and sec_label */
-		struct score score_i = score_narrowed_ts(&narrowed_tsi, indent);
+		struct score score_i = score_narrowed_ts(&ni.ts[0], indent);
 		if (!score_i.ok) {
 			continue;
 		}
 
 		for (unsigned tsr_n = 0; tsr_n < tsp->r.nr; tsr_n++) {
 
-			struct narrowed_traffic_selector narrowed_tsr;
-			if (!narrow_ts_end(&narrowed_tsr, &ends->r, &tsp->r, fit, tsr_n, indent)) {
+			struct narrowed_selector_payload nr = {
+				.name = tsp->r.name,
+			};
+
+			if (!narrow_ts_end(&nr.ts[0], &ends->r, &tsp->r, fit, tsr_n, indent)) {
 				continue;
 			}
 
-			struct score score_r = score_narrowed_ts(&narrowed_tsr, indent);
+			struct score score_r = score_narrowed_ts(&nr.ts[0], indent);
 			if (!score_r.ok) {
 				continue;
 			}
@@ -1154,8 +1178,8 @@ static struct best_score score_ends(enum fit fit,
 				/* which one */
 				.n = {
 					.ok = true,
-					.i = narrowed_tsi,
-					.r = narrowed_tsr,
+					.i = ni,
+					.r = nr,
 				},
 			};
 
@@ -1210,7 +1234,7 @@ static bool v2_child_connection_probably_shared(struct child_sa *child,
 
 static void scribble_request_ts_on_connection(struct child_sa *child,
 					      struct connection *c,
-					      struct narrowed_traffic_selectors n,
+					      const struct narrowed_selector_payloads *n,
 					      indent_t indent)
 {
 	if (c != child->sa.st_connection) {
@@ -1233,10 +1257,14 @@ static void scribble_request_ts_on_connection(struct child_sa *child,
 	 */
 	dbg_ts("XXX: updating best connection's ports/protocols");
 	set_end_selector(c, c->local->config->index,
-			 selector_from_range_protocol_port(n.r.range, n.r.protocol, ip_hport(n.r.port)),
+			 selector_from_range_protocol_port(n->r.ts[0].range,
+							   n->r.ts[0].protocol,
+							   ip_hport(n->r.ts[0].port)),
 			 "scribbling on end of final TS choice");
 	set_end_selector(c, c->remote->config->index,
-			 selector_from_range_protocol_port(n.i.range, n.i.protocol, ip_hport(n.i.port)),
+			 selector_from_range_protocol_port(n->i.ts[0].range,
+							   n->i.ts[0].protocol,
+							   ip_hport(n->i.ts[0].port)),
 			 "scribbling on end of final TS choice");
 }
 
@@ -1694,7 +1722,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 				},
 			};
 
-			struct narrowed_traffic_selectors n = narrow_tsp_ends(&ends, &tsps,
+			struct narrowed_selector_payloads n = narrow_tsp_ends(&ends, &tsps,
 									      responder_fit,
 									      0, indent);
 			if (!n.ok) {
@@ -1715,7 +1743,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			} else {
 				s = child->sa.st_connection;
 			}
-			scribble_request_ts_on_connection(child, s, n, indent);
+			scribble_request_ts_on_connection(child, s, &n, indent);
 
 			/* switch */
 			best = (struct best) {
@@ -1763,7 +1791,7 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 		struct connection *s = spd_instantiate(best.connection,
 						       &child->sa.st_connection->remote->host.addr,
 						       NULL, best.selected_sec_label);
-		scribble_request_ts_on_connection(child, s, best.score.n, indent);
+		scribble_request_ts_on_connection(child, s, &best.score.n, indent);
 
 		/* switch to instance */
 		best = (struct best) {
@@ -1859,9 +1887,9 @@ bool v2_process_ts_response(struct child_sa *child,
 		return false;
 	}
 
-	traffic_selector_to_end(&best.n.i, c->spd->local,
+	traffic_selector_to_end(&best.n.i.ts[0], c->spd->local,
 				"scribble accepted TSi response on initiator's this");
-	traffic_selector_to_end(&best.n.r, c->spd->remote,
+	traffic_selector_to_end(&best.n.r.ts[0], c->spd->remote,
 				"scribble accepted TSr response on initiator's that");
 	rehash_db_spd_route_remote_client(c->spd);
 
