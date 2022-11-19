@@ -101,7 +101,7 @@ static const struct traffic_selector_payloads empty_traffic_selector_payloads = 
 
 struct end_selectors {
 	const char *name;
-	const ip_selector selector;
+	const ip_selectors *selectors;
 };
 
 struct child_selectors {
@@ -673,7 +673,8 @@ static bool v2_parse_tsps(const struct msg_digest *md,
  * protocol (ts_proto).
  */
 
-static const struct ip_protocol *narrow_protocol(ip_selector selector,
+static const struct ip_protocol *narrow_protocol(const struct end_selectors *end,
+						 ip_selector selector,
 						 const struct traffic_selector_payload *tsp,
 						 const struct traffic_selector *ts,
 						 enum fit fit, indent_t indent)
@@ -702,7 +703,8 @@ static const struct ip_protocol *narrow_protocol(ip_selector selector,
 		bad_case(fit);
 	}
 	const struct ip_protocol *protocol = ipproto >= 0 ? protocol_from_ipproto(ipproto) : NULL;
-	dbg_ts("narrow protocol: END selector.ipproto=%s%d %s TS %s[%u]=%s%d ==> %s (%s)",
+	dbg_ts("narrow protocol: END %s.selector.ipproto=%s%d %s TS %s[%u]=%s%d ==> %s (%s)",
+	       end->name,
 	       (selector.ipproto == 0 ? "*" : ""),
 	       selector.ipproto,
 	       str_end_fit_ts(fit),
@@ -721,7 +723,8 @@ static const struct ip_protocol *narrow_protocol(ip_selector selector,
  * only narrow to that.
  */
 
-static int narrow_port(ip_selector selector,
+static int narrow_port(const struct end_selectors *end,
+		       ip_selector selector,
 		       const struct traffic_selector_payload *tsp,
 		       const struct traffic_selector *ts,
 		       enum fit fit, indent_t indent)
@@ -761,8 +764,8 @@ static int narrow_port(ip_selector selector,
 	default:
 		bad_case(fit);
 	}
-	dbg_ts("narrow port: END selector.port=%u..%u %s TS %s[%u]=%u..%u ==> %d..%d(%d) (%s)",
-	       end_low, end_high,
+	dbg_ts("narrow port: END %s.selector.port=%u..%u %s TS %s[%u]=%u..%u ==> %d..%d(%d) (%s)",
+	       end->name, end_low, end_high,
 	       str_end_fit_ts(fit),
 	       tsp->name, ts->nr, ts->startport, ts->endport,
 	       port_low, port_high, port_low,
@@ -781,7 +784,8 @@ static int narrow_port(ip_selector selector,
  *       a single CIDR
  */
 
-static ip_range narrow_range(ip_selector selector,
+static ip_range narrow_range(const struct end_selectors *end,
+			     ip_selector selector,
 			     const struct traffic_selector_payload *tsp,
 			     const struct traffic_selector *ts,
 			     enum fit fit, indent_t indent)
@@ -817,8 +821,8 @@ static ip_range narrow_range(ip_selector selector,
 
 	selector_buf cb;
 	range_buf tsb, rb;
-	dbg_ts("narrow range: END selector=%s %s TS %s[%u]=%s ==> %s (%s)",
-	       str_selector(&selector, &cb),
+	dbg_ts("narrow range: END %s.selector=%s %s TS %s[%u]=%s ==> %s (%s)",
+	       end->name, str_selector(&selector, &cb),
 	       str_end_fit_ts(fit),
 	       tsp->name, ts->nr, str_range(&ts->net, &tsb),
 	       str_range(&range, &rb), str_fit_story(fit));
@@ -826,7 +830,7 @@ static ip_range narrow_range(ip_selector selector,
 }
 
 static bool narrow_ts(struct narrowed_traffic_selector *n,
-		      ip_selector selector,
+		      const struct end_selectors *end, ip_selector selector,
 		      const struct traffic_selector_payload *tsp,
 		      const struct traffic_selector *ts,
 		      enum fit fit, indent_t indent)
@@ -844,19 +848,19 @@ static bool narrow_ts(struct narrowed_traffic_selector *n,
 		return false;
 	}
 
-	n->port = narrow_port(selector, tsp, ts, fit, indent);
+	n->port = narrow_port(end, selector, tsp, ts, fit, indent);
 	if (n->port < 0) {
 		dbg_ts("skipping; %s port too wide", tsp->name);
 		return false;
 	}
 
-	n->protocol = narrow_protocol(selector, tsp, ts, fit, indent);
+	n->protocol = narrow_protocol(end, selector, tsp, ts, fit, indent);
 	if (n->protocol == NULL) {
 		dbg_ts("skipping; %s protocol too wide", tsp->name);
 		return false;
 	}
 
-	n->range = narrow_range(selector, tsp, ts, fit, indent);
+	n->range = narrow_range(end, selector, tsp, ts, fit, indent);
 	if (range_is_unset(&n->range)) {
 		dbg_ts("skipping; %s range too wide", tsp->name);
 		return false;
@@ -871,7 +875,7 @@ static bool narrow_ts_end(struct narrowed_traffic_selector *n,
 			  enum fit fit, unsigned index,
 			  indent_t indent)
 {
-	return narrow_ts(n, end->selector, tsp, &tsp->ts[index], fit, indent);
+	return narrow_ts(n, end, end->selectors->list[0], tsp, &tsp->ts[index], fit, indent);
 }
 
 static struct narrowed_traffic_selectors narrow_tsp_ends(struct child_selectors *ends,
@@ -1105,9 +1109,9 @@ static struct best_score score_ends(enum fit fit,
 	selector_buf er3;
 	dbg_ts("evaluating END %s selector=%s %s selector=%s %s TS:",
 	       tsp->i.name,
-	       str_selector(&ends->i.selector, &ei3),
+	       str_selector(&ends->i.selectors->list[0], &ei3),
 	       tsp->r.name,
-	       str_selector(&ends->r.selector, &er3),
+	       str_selector(&ends->r.selectors->list[0], &er3),
 	       str_end_fit_ts(fit));
 
 	indent.level++;
@@ -1453,19 +1457,29 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 				responder_fit = END_EQUALS_TS;
 			}
 
+			/* responder so cross the streams */
+
 			const struct spd_route *spd = d->spd;
 			pexpect(spd != NULL);
 			pexpect(spd->spd_next == NULL);
 
-			/* responder */
+			pexpect(d->remote->child.selectors.list == &d->remote->child.scratch_selector ||
+				d->remote->child.selectors.list == d->remote->config->child.selectors.list);
+			pexpect(d->local->child.selectors.list == &d->local->child.scratch_selector ||
+				d->local->child.selectors.list == d->local->config->child.selectors.list);
+			pexpect(selector_eq_selector(d->spd->remote->client,
+						     d->remote->child.selectors.list[0]));
+			pexpect(selector_eq_selector(d->spd->local->client,
+						     d->local->child.selectors.list[0]));
+
 			const struct child_selectors ends = {
 				.i = {
 					.name = "remote",
-					.selector = spd->remote->client,
+					.selectors = &d->remote->child.selectors,
 				},
 				.r = {
 					.name = "local",
-					.selector = spd->local->client,
+					.selectors = &d->local->child.selectors,
 				},
 			};
 
@@ -1661,14 +1675,22 @@ bool v2_process_request_ts_payloads(struct child_sa *child,
 			enum fit responder_fit = END_EQUALS_TS;
 
 			/* responder so cross streams */
+			pexpect(t->remote->child.selectors.list == &t->remote->child.scratch_selector ||
+				t->remote->child.selectors.list == t->remote->config->child.selectors.list);
+			pexpect(t->local->child.selectors.list == &t->local->child.scratch_selector ||
+				t->local->child.selectors.list == t->local->config->child.selectors.list);
+			pexpect(selector_eq_selector(t->spd->remote->client,
+						     t->remote->child.selectors.list[0]));
+			pexpect(selector_eq_selector(t->spd->local->client,
+						     t->local->child.selectors.list[0]));
 			struct child_selectors ends = {
 				.i = {
 					.name = "remote",
-					.selector = t->spd->remote->client,
+					.selectors = &t->remote->child.selectors,
 				},
 				.r = {
 					.name = "local",
-					.selector = t->spd->local->client,
+					.selectors = &t->local->child.selectors,
 				},
 			};
 
@@ -1788,15 +1810,22 @@ bool v2_process_ts_response(struct child_sa *child,
 	}
 
 	/* initiator so don't cross streams */
-	const struct spd_route *sra = c->spd;
+	pexpect(c->remote->child.selectors.list == &c->remote->child.scratch_selector ||
+		c->remote->child.selectors.list == c->remote->config->child.selectors.list);
+	pexpect(c->local->child.selectors.list == &c->local->child.scratch_selector ||
+		c->local->child.selectors.list == c->local->config->child.selectors.list);
+	pexpect(selector_eq_selector(c->spd->remote->client,
+				     c->remote->child.selectors.list[0]));
+	pexpect(selector_eq_selector(c->spd->local->client,
+				     c->local->child.selectors.list[0]));
 	const struct child_selectors ends = {
 		.i = {
 			.name = "local",
-			.selector = sra->local->client,
+			.selectors = &c->local->child.selectors,
 		},
 		.r = {
 			.name = "remote",
-			.selector = sra->remote->client,
+			.selectors = &c->remote->child.selectors,
 		},
 	};
 
@@ -1878,14 +1907,22 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 	}
 
 	/* responder so cross streams */
+	pexpect(c->remote->child.selectors.list == &c->remote->child.scratch_selector ||
+		c->remote->child.selectors.list == c->remote->config->child.selectors.list);
+	pexpect(c->local->child.selectors.list == &c->local->child.scratch_selector ||
+		c->local->child.selectors.list == c->local->config->child.selectors.list);
+	pexpect(selector_eq_selector(c->spd->remote->client,
+				     c->remote->child.selectors.list[0]));
+	pexpect(selector_eq_selector(c->spd->local->client,
+				     c->local->child.selectors.list[0]));
 	const struct child_selectors ends = {
 		.i = {
 			.name = "remote",
-			.selector = c->spd->remote->client,
+			.selectors = &c->remote->child.selectors,
 		},
 		.r = {
 			.name = "local",
-			.selector = c->spd->local->client,
+			.selectors = &c->local->child.selectors,
 		},
 	};
 
