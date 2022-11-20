@@ -70,7 +70,7 @@ struct narrowed_selector_payload {
 };
 
 struct narrowed_selector_payloads {
-	bool ok;
+	struct score score;
 	struct narrowed_selector_payload i;
 	struct narrowed_selector_payload r;
 };
@@ -817,43 +817,6 @@ static bool narrow_ts_to_selector(struct narrowed_selector *n,
 	return true;
 }
 
-static bool narrow_ts_end(struct narrowed_selector *n,
-			  const ip_selectors *selectors,
-			  const struct traffic_selector_payload *tsp,
-			  enum fit fit, unsigned index,
-			  indent_t indent)
-{
-	return narrow_ts_to_selector(n, &tsp->ts[index], selectors->list[0], fit, indent);
-}
-
-static struct narrowed_selector_payloads narrow_tsp_ends(const struct child_selector_ends *ends,
-							 const struct traffic_selector_payloads *tsps,
-							 enum fit fit, unsigned index,
-							 indent_t indent)
-{
-	struct narrowed_selector_payloads n = {
-		.ok = false, /* until proven */
-		.i = {
-			.name = tsps->i.name,
-		},
-		.r = {
-			.name = tsps->r.name,
-		},
-	};
-
-	if (!narrow_ts_end(&n.i.ts[0], ends->i.selectors, &tsps->i, fit, index, indent)) {
-		return n;
-	}
-
-	if (!narrow_ts_end(&n.r.ts[0], ends->r.selectors, &tsps->r, fit, index, indent)) {
-		return n;
-	}
-
-	n.ok = true;
-	return n;
-}
-
-
 /*
  * Assign a score to the narrowed port, rationale for score lost in
  * time?
@@ -997,6 +960,7 @@ static bool fit_tsp_to_end(struct narrowed_selector_payload *nsp,
 		return false;
 	}
 	bool matched = false;
+	nsp->nr = 0;
 	for (unsigned i = 0; i < tsp->nr; i++) {
 		if (!fit_ts_to_selectors(&nsp->ts[nsp->nr], &tsp->ts[i],
 					 end->selectors, selector_fit, indent)) {
@@ -1045,47 +1009,33 @@ static bool fit_tsp_to_end(struct narrowed_selector_payload *nsp,
  *   selinux_check_access() requires a "ptarget context").
  */
 
-struct best_score {
-	int range;
-	int port;
-	int protocol;
-	struct narrowed_selector_payloads n;
-};
-#define  NO_SCORE { .range = -1, .port = -1, .protocol = -1, }
-
-static bool best_score_gt(const struct best_score *score, const struct best_score *best)
-{
-	return ((score->range > best->range) ||
-		(score->range == best->range && score->port > best->port) ||
-		(score->range == best->range && score->port == best->port && score->protocol > best->protocol));
-}
-
-static bool fit_tsps_to_ends(struct best_score *score,
+static bool fit_tsps_to_ends(struct narrowed_selector_payloads *nsps,
 			     const struct traffic_selector_payloads *tsps,
 			     const struct child_selector_ends *ends,
 			     enum fit selector_fit,
 			     enum fit sec_label_fit,
 			     indent_t indent)
 {
-	zero(score);
 	dbg_ts("evaluating END %s:", str_end_fit_ts(selector_fit));
 	indent.level++;
 
-	if (!fit_tsp_to_end(&score->n.i, &tsps->i, &ends->i,
+	if (!fit_tsp_to_end(&nsps->i, &tsps->i, &ends->i,
 			    selector_fit, sec_label_fit, indent)) {
 		return false;
 	}
-	if (!fit_tsp_to_end(&score->n.r, &tsps->r, &ends->r,
+	if (!fit_tsp_to_end(&nsps->r, &tsps->r, &ends->r,
 			    selector_fit, sec_label_fit, indent)) {
 		return false;
 	}
 
-	/* ??? this objective function is odd and arbitrary */
-	score->range = (score->n.i.score.range << 8) + score->n.r.score.range;
-	/* ??? arbitrary objective function */
-	score->port = (score->n.i.score.port + score->n.r.score.port);
-	/* ??? arbitrary objective function */
-	score->protocol = (score->n.i.score.protocol + score->n.r.score.protocol);
+	nsps->score = (struct score) {
+		/* ??? this objective function is odd and arbitrary */
+		.range = ((nsps->i.score.range << 8) + nsps->r.score.range),
+		/* ??? arbitrary objective function */
+		.port = (nsps->i.score.port + nsps->r.score.port),
+		/* ??? arbitrary objective function */
+		.protocol = (nsps->i.score.protocol + nsps->r.score.protocol),
+	};
 
 	return true;
 }
@@ -1184,12 +1134,9 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 	 * excluded).
 	 */
 	struct best {
-		struct best_score score;
 		struct connection *connection;
-	} best = {
-		.score = NO_SCORE,
-		.connection = NULL,
-	};
+		struct narrowed_selector_payloads nsps;
+	} best = {0};
 
 #define CONNECTION_POLICIES	(POLICY_DONT_REKEY |		\
 				 POLICY_REAUTH |		\
@@ -1386,8 +1333,8 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 				.r.sec_label = d->config->sec_label,
 			};
 
-			struct best_score score = {0};
-			if (!fit_tsps_to_ends(&score, &tsps, &ends,
+			struct narrowed_selector_payloads nsps = {0};
+			if (!fit_tsps_to_ends(&nsps, &tsps, &ends,
 					      responder_selector_fit,
 					      responder_sec_label_fit,
 					      indent)) {
@@ -1397,13 +1344,13 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 				continue;
 			}
 
-			if (best_score_gt(&score, &best.score)) {
+			if (score_gt_best(&nsps.score, &best.nsps.score)) {
 				connection_buf cb;
 				dbg_ts("protocol fitness found better match "PRI_CONNECTION"",
 				       pri_connection(d, &cb));
 				best = (struct best) {
 					.connection = d,
-					.score = score,
+					.nsps = nsps,
 				};
 			}
 		}
@@ -1569,21 +1516,26 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			 * being chosen because it had the narrowest
 			 * client selector?
 			 */
-			if (!selector_in_selector(cc->spd->remote->client, t->spd->remote->client)) {
+			if (!selector_in_selector(cc->spd->remote->client,
+						  t->spd->remote->client)) {
 				dbg_ts("skipping; current connection's initiator subnet is not <= template");
 				continue;
 			}
 			/* require responder address match; why? */
-			ip_address cc_this_client_address = selector_prefix(cc->spd->local->client);
-			ip_address t_this_client_address = selector_prefix(t->spd->local->client);
-			if (!address_eq_address(cc_this_client_address, t_this_client_address)) {
+			ip_address cc_this_client_address =
+				selector_prefix(cc->spd->local->client);
+			ip_address t_this_client_address =
+				selector_prefix(t->spd->local->client);
+			if (!address_eq_address(cc_this_client_address,
+						t_this_client_address)) {
 				dbg_ts("skipping; responder addresses don't match");
 				continue;
 			}
 
 			/* require a valid narrowed port? */
 			/* exact match; XXX: 'cos that is what old code did */
-			enum fit responder_fit = END_EQUALS_TS;
+			enum fit responder_selector_fit = END_EQUALS_TS;
+			enum fit responder_sec_label_fit = END_EQUALS_TS;
 
 			/* responder so cross streams */
 			pexpect(t->remote->child.selectors.list == &t->remote->child.scratch_selector ||
@@ -1594,6 +1546,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 						     t->remote->child.selectors.list[0]));
 			pexpect(selector_eq_selector(t->spd->local->client,
 						     t->local->child.selectors.list[0]));
+			pexpect(t->config->sec_label.len == 0);
 			struct child_selector_ends ends = {
 				.i.selectors = &t->remote->child.selectors,
 				.i.sec_label = t->config->sec_label,
@@ -1601,10 +1554,9 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 				.r.sec_label = t->config->sec_label,
 			};
 
-			struct narrowed_selector_payloads n = narrow_tsp_ends(&ends, &tsps,
-									      responder_fit,
-									      0, indent);
-			if (!n.ok) {
+			struct narrowed_selector_payloads nsps;
+			if (!fit_tsps_to_ends(&nsps, &tsps, &ends, responder_selector_fit,
+					      responder_sec_label_fit, indent)) {
 				continue;
 			}
 
@@ -1622,14 +1574,12 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			} else {
 				s = child->sa.st_connection;
 			}
-			scribble_request_ts_on_connection(child, s, &n, indent);
+			scribble_request_ts_on_connection(child, s, &nsps, indent);
 
 			/* switch */
 			best = (struct best) {
 				.connection = s,
-				.score = {
-					.n = n,
-				},
+				.nsps = nsps,
 			};
 			break;
 		}
@@ -1659,8 +1609,8 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 
 		if (best.connection->config->sec_label.len > 0) {
 			pexpect(best.connection == child->sa.st_connection); /* big circle */
-			pexpect(best.score.n.i.sec_label.len > 0);
-			pexpect(best.score.n.r.sec_label.len > 0);
+			pexpect(best.nsps.i.sec_label.len > 0);
+			pexpect(best.nsps.r.sec_label.len > 0);
 			pexpect(best.connection->child.sec_label.len == 0);
 		}
 
@@ -1670,8 +1620,8 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		 */
 		struct connection *s = spd_instantiate(best.connection,
 						       &child->sa.st_connection->remote->host.addr,
-						       NULL, best.score.n.i.sec_label);
-		scribble_request_ts_on_connection(child, s, &best.score.n, indent);
+						       NULL, best.nsps.i.sec_label);
+		scribble_request_ts_on_connection(child, s, &best.nsps, indent);
 
 		/* switch to instance; same score */
 		best.connection = s;
@@ -1745,7 +1695,7 @@ bool process_v2TS_response_payloads(struct child_sa *child,
 	 */
 	enum fit initiator_sec_label_fit = END_EQUALS_TS;
 
-	struct best_score best = {0};
+	struct narrowed_selector_payloads best = {0};
 	if (!fit_tsps_to_ends(&best, &tsps, &ends,
 			      initiator_selector_fit,
 			      initiator_sec_label_fit, indent)) {
@@ -1754,9 +1704,9 @@ bool process_v2TS_response_payloads(struct child_sa *child,
 		return false;
 	}
 
-	traffic_selector_to_end(&best.n.i.ts[0], c->spd->local,
+	traffic_selector_to_end(&best.i.ts[0], c->spd->local,
 				"scribble accepted TSi response on initiator's this");
-	traffic_selector_to_end(&best.n.r.ts[0], c->spd->remote,
+	traffic_selector_to_end(&best.r.ts[0], c->spd->remote,
 				"scribble accepted TSr response on initiator's that");
 	rehash_db_spd_route_remote_client(c->spd);
 
@@ -1820,8 +1770,8 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 	enum fit responder_selector_fit = END_NARROWER_THAN_TS;
 	enum fit responder_sec_label_fit = END_EQUALS_TS;
 
-	struct best_score score;
-	if (!fit_tsps_to_ends(&score, &their_tsps, &ends,
+	struct narrowed_selector_payloads best;
+	if (!fit_tsps_to_ends(&best, &their_tsps, &ends,
 			      responder_selector_fit,
 			      responder_sec_label_fit, indent)) {
 		llog_sa(RC_LOG_SERIOUS, child,
