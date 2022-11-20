@@ -58,10 +58,7 @@ struct narrowed_selector {
 	const char *name;
 	unsigned nr;
 	struct score score;
-	/* XXX: change to proper selector? */
-	int port;
-	const struct ip_protocol *protocol;
-	ip_range range;
+	ip_selector selector;
 };
 
 struct narrowed_selector_payload {
@@ -157,11 +154,11 @@ static const char *str_fit_story(enum fit fit)
 static void traffic_selector_to_end(const struct narrowed_selector *n,
 				    struct spd_end *end, const char *story)
 {
-	range_buf rb;
-	dbg("%s() %s; %s[%u] protocol=%s port=%d range=%s",
-	    __func__, story, n->name, n->nr, n->protocol->name, n->port, str_range(&n->range, &rb));
-	ip_port port = ip_hport(n->port);
-	end->client = selector_from_range_protocol_port(n->range, n->protocol, port);
+	selector_buf sb;
+	dbg("%s() %s; %s[%u] selector=%s",
+	    __func__, story, n->name, n->nr,
+	    str_selector(&n->selector, &sb));
+	end->client = n->selector;
 	/* redundant? */
 	end->has_client = !selector_eq_address(end->client, end->host->addr);
 }
@@ -797,24 +794,26 @@ static bool narrow_ts_to_selector(struct narrowed_selector *n,
 		return false;
 	}
 
-	n->port = narrow_port(selector, ts, fit, indent);
-	if (n->port < 0) {
+	int hport = narrow_port(selector, ts, fit, indent);
+	if (hport < 0) {
 		dbg_ts("skipping; %s[%d] port too wide", ts->name, ts->nr);
 		return false;
 	}
 
-	n->protocol = narrow_protocol(selector, ts, fit, indent);
-	if (n->protocol == NULL) {
+	const struct ip_protocol *protocol = narrow_protocol(selector, ts, fit, indent);
+	if (protocol == NULL) {
 		dbg_ts("skipping; %s[%d] protocol too wide", ts->name, ts->nr);
 		return false;
 	}
 
-	n->range = narrow_range(selector, ts, fit, indent);
-	if (range_is_unset(&n->range)) {
+	ip_range range = narrow_range(selector, ts, fit, indent);
+	if (range_is_unset(&range)) {
 		dbg_ts("skipping; %s[%d] range too wide", ts->name, ts->nr);
 		return false;
 	}
 
+	n->selector = selector_from_range_protocol_port(range, protocol,
+							ip_hport(hport));
 	return true;
 }
 
@@ -854,82 +853,40 @@ static struct narrowed_selector_payloads narrow_tsp_ends(const struct child_sele
 	return n;
 }
 
-static int score_narrowed_protocol(const struct narrowed_selector *ts,
-				   indent_t indent)
-{
-	int f;	/* strength of match */
-	if (ts->protocol == NULL) {
-		f = 0;
-	} else if (ts->protocol == &ip_protocol_all) {
-		f = 255;	/* ??? odd value */
-	} else {
-		f = 1;
-	}
-
-	dbg_ts("%s: narrowed %s protocol %s has fitness %d",
-	       (f > 0 ? "YES" : "NO"),
-	       ts->name,
-	       (ts->protocol == NULL ? "<unset>" : ts->protocol->name),
-	       f);
-	return f;
-}
 
 /*
  * Assign a score to the narrowed port, rationale for score lost in
  * time?
  */
 
-static int score_narrowed_port(const struct narrowed_selector *ts,
-			       indent_t indent)
+static bool score_narrowed_selector(struct score *score, const struct narrowed_selector *ts,
+				    indent_t indent)
 {
-	int f;	/* strength of match */
-	if (ts->port > 0) {
-		f = 1;
-	} else if (ts->port == 0) {
-		f = 65536; /* from 1 + 65535-0 */
-	} else {
-		f = 0;
+	if (!pexpect(ts->selector.is_set)) {
+		return false;
 	}
 
-	dbg_ts("%s: narrowed %s port %d has fitness %d",
-	       f > 0 ? "YES" : "NO", ts->name, ts->port, f);
-	return f;
-}
-
-static int score_narrowed_range(const struct narrowed_selector *ts,
-				indent_t indent)
-{
-	int f;
-	if (range_is_unset(&ts->range)) {
-		f = 0;
-	} else {
-		f = range_prefix_len(ts->range) + 1;
-	}
-
-	range_buf rb;
-	dbg_ts("%s: narrowed %s address-range %s has fitness %d",
-	       (f > 0 ? "YES" : "NO"), ts->name, str_range(&ts->range, &rb), f);
-	return f;
-}
-
-static bool score_narrowed_ts(struct score *score, const struct narrowed_selector *ts, indent_t indent)
-{
 	indent.level++;
-
 	zero(score);
 
-	score->range = score_narrowed_range(ts, indent);
-	if (score->range <= 0) {
-		return false;
-	}
-	score->port = score_narrowed_port(ts, indent);
-	if (score->port <= 0) {
-		return false;
-	}
-	score->protocol = score_narrowed_protocol(ts, indent);
-	if (score->protocol <= 0) {
-		return false;
-	}
+	ip_range range = selector_range(ts->selector);
+	score->range = range_prefix_len(range) + 1;
+	range_buf rb;
+	dbg_ts("narrowed %s[%u] address-range %s has fitness %d",
+	       ts->name, ts->nr, str_range(&range, &rb),
+	       score->range);
+
+	score->port = (ts->selector.hport > 0 ? 1 :
+			  65536 /* from 1 + 65535-0 */);
+	dbg_ts("narrowed %s[%u] port %d has fitness %d",
+	       ts->name, ts->nr, ts->selector.hport, score->port);
+
+	/* strength of match; 255: ??? odd value */
+	const struct ip_protocol *protocol = selector_protocol(ts->selector);
+	score->protocol = (protocol == &ip_protocol_all ? 255 : 1);
+	dbg_ts("narrowed %s[%u] protocol %s has fitness %d",
+	       ts->name, ts->nr, protocol->name, score->protocol);
+
 	return true;
 }
 
@@ -949,7 +906,7 @@ static bool fit_ts_to_selector(struct narrowed_selector *ns,
 	if (!narrow_ts_to_selector(ns, ts, selector, fit, indent)) {
 		return false;
 	}
-	if (!score_narrowed_ts(&ns->score, ns, indent)) {
+	if (!score_narrowed_selector(&ns->score, ns, indent)) {
 		return false;
 	}
 	return true;
@@ -1194,15 +1151,9 @@ static void scribble_request_ts_on_connection(struct child_sa *child,
 	 * THAT=INITIATOR.
 	 */
 	dbg_ts("XXX: updating best connection's ports/protocols");
-	set_end_selector(c, c->local->config->index,
-			 selector_from_range_protocol_port(n->r.ts[0].range,
-							   n->r.ts[0].protocol,
-							   ip_hport(n->r.ts[0].port)),
+	set_end_selector(c, c->local->config->index, n->r.ts[0].selector,
 			 "scribbling on end of final TS choice");
-	set_end_selector(c, c->remote->config->index,
-			 selector_from_range_protocol_port(n->i.ts[0].range,
-							   n->i.ts[0].protocol,
-							   ip_hport(n->i.ts[0].port)),
+	set_end_selector(c, c->remote->config->index, n->i.ts[0].selector,
 			 "scribbling on end of final TS choice");
 }
 
