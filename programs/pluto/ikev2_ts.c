@@ -154,22 +154,6 @@ static const char *str_fit_story(enum fit fit)
 	}
 }
 
-PRINTF_LIKE(2) static void dbg_v2_ts(const struct traffic_selector *ts, const char *prefix, ...)
-{
-	if (DBGP(DBG_BASE)) {
-		va_list ap;
-		va_start(ap, prefix);
-		DBG_va_list(prefix, ap);
-		va_end(ap);
-		DBG_log("  %s[%u]:", ts->name, ts->nr);
-		DBG_log("    ts_type: %s", enum_name(&ikev2_ts_type_names, ts->ts_type));
-		DBG_log("    ipprotoid: %d", ts->ipprotoid);
-		DBG_log("    port range: %d-%d", ts->startport, ts->endport);
-		range_buf b;
-		DBG_log("    ip range: %s", str_range(&ts->net, &b));
-	}
-}
-
 static void traffic_selector_to_end(const struct narrowed_selector *n,
 				    struct spd_end *end, const char *story)
 {
@@ -182,26 +166,6 @@ static void traffic_selector_to_end(const struct narrowed_selector *n,
 	end->has_client = !selector_eq_address(end->client, end->host->addr);
 }
 
-static struct traffic_selector traffic_selector_from_selector(ip_selector selector, const char *name)
-{
-	struct traffic_selector ts = {
-		.nr = 0, /* fake TS use 0 */
-		/*
-		 * Setting ts_type IKEv2_TS_FC_ADDR_RANGE (RFC-4595)
-		 * not yet supported.
-		 */
-		.ts_type = selector_type(&selector)->ikev2_ts_addr_range_type,
-		/* subnet => range */
-		.net = selector_range(selector),
-		.ipprotoid = selector.ipproto,
-		.name = name,
-		.startport = selector.hport,
-		.endport = (selector.hport == 0 ? 65535 : selector.hport),
-	};
-	dbg_v2_ts(&ts, "%s", ts.name);
-	return ts;
-}
-
 /*
  * A struct spd_end is converted to a struct traffic_selector.
  *
@@ -210,12 +174,13 @@ static struct traffic_selector traffic_selector_from_selector(ip_selector select
  * optional, the IP range is mandatory.
  */
 
-static bool emit_v2TS_address_range(struct pbs_out *ts_pbs,
-				    const struct traffic_selector *ts)
+static bool emit_v2TS_selector(struct pbs_out *ts_pbs, ip_selector selector)
 {
+	const struct ip_info *afi = selector_info(selector);
+
 	struct ikev2_ts_header ts_range_header = {
-		.isath_ipprotoid = ts->ipprotoid,
-		.isath_type = ts->ts_type,
+		.isath_type = afi->ikev2_ts_addr_range_type,
+		.isath_ipprotoid = selector.ipproto,
 	};
 
 	pb_stream ts_range_pbs;
@@ -227,8 +192,8 @@ static bool emit_v2TS_address_range(struct pbs_out *ts_pbs,
 	}
 
 	struct ikev2_ts_portrange ts_ports = {
-		.isatpr_startport = ts->startport,
-		.isatpr_endport = ts->endport
+		.isatpr_startport = selector.hport,
+		.isatpr_endport = (selector.hport == 0 ? 65535 : selector.hport),
 	};
 
 	if (!pbs_out_struct(&ts_range_pbs, &ikev2_ts_portrange_desc,
@@ -237,11 +202,12 @@ static bool emit_v2TS_address_range(struct pbs_out *ts_pbs,
 		return false;
 	}
 
-	if (!pbs_out_address(&ts_range_pbs, range_start(ts->net), "IP start")) {
+	ip_range range = selector_range(selector);
+	if (!pbs_out_address(&ts_range_pbs, range_start(range), "IP start")) {
 		/* already logged */
 		return false;
 	}
-	if (!pbs_out_address(&ts_range_pbs, range_end(ts->net), "IP end")) {
+	if (!pbs_out_address(&ts_range_pbs, range_end(range), "IP end")) {
 		/* already logged */
 		return false;
 	}
@@ -286,15 +252,9 @@ static bool emit_v2TS_sec_label(struct pbs_out *ts_pbs, shunk_t sec_label)
 
 static bool emit_v2TS_response_payload(struct pbs_out *outpbs,
 				       const struct_desc *ts_desc,
-				       const struct traffic_selector *ts,
-				       shunk_t sec_label)
+				       ip_selector ts, shunk_t sec_label)
 {
 	bool with_label = (sec_label.len > 0);
-
-	if (ts->ts_type != IKEv2_TS_IPV4_ADDR_RANGE &&
-	    ts->ts_type != IKEv2_TS_IPV6_ADDR_RANGE) {
-		return false;
-	}
 
 	struct ikev2_ts its = {
 		.isat_critical = ISAKMP_PAYLOAD_NONCRITICAL,
@@ -317,7 +277,7 @@ static bool emit_v2TS_response_payload(struct pbs_out *outpbs,
 		return false;
 	}
 
-	if (!emit_v2TS_address_range(&ts_pbs, ts)) {
+	if (!emit_v2TS_selector(&ts_pbs, ts)) {
 		return false;
 	}
 
@@ -330,59 +290,18 @@ static bool emit_v2TS_response_payload(struct pbs_out *outpbs,
 	return true;
 }
 
-static struct traffic_selector impair_ts_to_subnet(const struct traffic_selector ts)
+static ip_selector impair_selector_to_subnet(ip_selector ts)
 {
-	struct traffic_selector ts_ret = ts;
-
-	ts_ret.net.end = ts_ret.net.start;
-	ts_ret.net.is_subnet = true;
-
-	return ts_ret;
+	const struct ip_info *afi = selector_info(ts);
+	ts.maskbits = afi->mask_cnt;
+	return ts;
 }
 
-static struct traffic_selector impair_ts_to_supernet(const struct traffic_selector ts)
+static ip_selector impair_selector_to_supernet(ip_selector ts)
 {
-	struct traffic_selector ts_ret = ts;
-
-	if (ts_ret.ts_type == IKEv2_TS_IPV4_ADDR_RANGE) {
-		ts_ret.net = range_from_subnet(ipv4_info.subnet.all);
-	} else if (ts_ret.ts_type == IKEv2_TS_IPV6_ADDR_RANGE) {
-		ts_ret.net = range_from_subnet(ipv6_info.subnet.all);
-	}
-
-	ts_ret.net.is_subnet = true;
-	return ts_ret;
-}
-
-static bool emit_v2TS_request_selector(struct pbs_out *out,
-				       const struct child_sa *child,
-				       ip_selector selector,
-				       const char *ts_name)
-{
-	struct traffic_selector ts = traffic_selector_from_selector(selector, ts_name);
-
-	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
-	    impair.rekey_initiate_supernet) {
-		ts = impair_ts_to_supernet(ts);
-		range_buf ts_buf;
-		llog_sa(RC_LOG, child,
-			"IMPAIR: rekey-initiate-supernet %s set to %s",
-			ts.name, str_range(&ts.net, &ts_buf));
-	} else if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
-		   impair.rekey_initiate_subnet) {
-		ts = impair_ts_to_subnet(ts);
-		range_buf ts_buf;
-		llog_sa(RC_LOG, child,
-			"IMPAIR: rekey-initiate-subnet %s set to %s",
-			ts.name, str_range(&ts.net, &ts_buf));
-
-	}
-
-	if (!emit_v2TS_address_range(out, &ts)) {
-		return false;
-	}
-
-	return true;
+	ts.maskbits = 0;
+	ts.bytes = unset_ip_bytes;
+	return ts;
 }
 
 static bool emit_v2TS_request_end_payloads(struct pbs_out *out,
@@ -424,7 +343,25 @@ static bool emit_v2TS_request_end_payloads(struct pbs_out *out,
 	for (const ip_selector *s = selectors->list;
 	     s < selectors->list + selectors->len;
 	     s++) {
-		if (!emit_v2TS_request_selector(&ts_pbs, child, *s, ts_name)) {
+
+		ip_selector ts = *s;
+		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
+		    impair.rekey_initiate_supernet) {
+			ts = impair_selector_to_supernet(*s);
+			selector_buf tsb;
+			llog_sa(RC_LOG, child,
+				"IMPAIR: rekey-initiate-supernet %s set to %s",
+				ts_name, str_selector(&ts, &tsb));
+		} else if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
+			   impair.rekey_initiate_subnet) {
+			ts = impair_selector_to_subnet(ts);
+			selector_buf tsb;
+			llog_sa(RC_LOG, child,
+				"IMPAIR: rekey-initiate-subnet %s set to %s",
+				ts_name, str_selector(&ts, &tsb));
+		}
+
+		if (!emit_v2TS_selector(&ts_pbs, ts)) {
 			return false;
 		}
 	}
@@ -462,34 +399,35 @@ bool emit_v2TS_response_payloads(struct pbs_out *outpbs, const struct child_sa *
 	const struct spd_route *spd = c->spd;
 
 	passert(child->sa.st_sa_role == SA_RESPONDER);
-	struct traffic_selector ts_i = traffic_selector_from_selector(spd->remote->client, "remote TSi");
-	struct traffic_selector ts_r = traffic_selector_from_selector(spd->local->client, "local TSr");
+
+	ip_selector ts_i = spd->remote->client;
+	ip_selector ts_r = spd->local->client;
 	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
 	    impair.rekey_respond_subnet) {
-		ts_i = impair_ts_to_subnet(ts_i);
-		ts_r = impair_ts_to_subnet(ts_r);
-		range_buf tsi_buf;
-		range_buf tsr_buf;
+		ts_i = impair_selector_to_subnet(ts_i);
+		ts_r = impair_selector_to_subnet(ts_r);
+		selector_buf tsi_buf;
+		selector_buf tsr_buf;
 		llog_sa(RC_LOG, child, "IMPAIR: rekey-respond-subnet TSi and TSr set to %s %s",
-			str_range(&ts_i.net, &tsi_buf),
-			str_range(&ts_r.net, &tsr_buf));
+			str_selector(&ts_i, &tsi_buf),
+			str_selector(&ts_r, &tsr_buf));
 	}
 	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
 	    impair.rekey_respond_supernet) {
-		ts_i = ts_r = impair_ts_to_supernet(ts_i);
-		range_buf tsi_buf;
-		range_buf tsr_buf;
+		ts_i = ts_r = impair_selector_to_supernet(ts_i);
+		selector_buf tsi_buf;
+		selector_buf tsr_buf;
 		llog_sa(RC_LOG, child, "IMPAIR: rekey-respond-supernet TSi and TSr set to %s %s",
-			str_range(&ts_i.net, &tsi_buf),
-			str_range(&ts_r.net, &tsr_buf));
+			str_selector(&ts_i, &tsi_buf),
+			str_selector(&ts_r, &tsr_buf));
 	}
 
-	if (!emit_v2TS_response_payload(outpbs, &ikev2_ts_i_desc, &ts_i,
+	if (!emit_v2TS_response_payload(outpbs, &ikev2_ts_i_desc, ts_i,
 					HUNK_AS_SHUNK(c->child.sec_label))) {
 		return false;
 	}
 
-	if (!emit_v2TS_response_payload(outpbs, &ikev2_ts_r_desc, &ts_r,
+	if (!emit_v2TS_response_payload(outpbs, &ikev2_ts_r_desc, ts_r,
 					HUNK_AS_SHUNK(c->child.sec_label))) {
 		return false;
 	}
