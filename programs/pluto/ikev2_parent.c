@@ -370,8 +370,7 @@ void ikev2_rekey_expire_predecessor(const struct child_sa *larval, so_serial_t p
 {
 	struct state *rst = state_by_serialno(pred);
 	if (rst == NULL) {
-		ldbg(larval->sa.st_logger,
-		     "rekeyed #%lu; the state is already is gone", pred);
+		ldbg_sa(larval, "rekeyed #%lu; the state is already is gone", pred);
 		return;
 	}
 
@@ -385,9 +384,8 @@ void ikev2_rekey_expire_predecessor(const struct child_sa *larval, so_serial_t p
 	}
 
 	deltatime_buf lb;
-	ldbg(larval->sa.st_logger,
-	     "rekeyed #%lu; expire it remaining life %ss",
-	     pred, (rst->st_v2_lifetime_event == NULL ? "<never>" : str_deltatime(lifetime, &lb)));
+	ldbg_sa(larval, "rekeyed #%lu; expire it remaining life %ss",
+		pred, (rst->st_v2_lifetime_event == NULL ? "<never>" : str_deltatime(lifetime, &lb)));
 
 	if (deltatime_cmp(lifetime, >, EXPIRE_OLD_SA_DELAY)) {
 		/* replace the REPLACE/EXPIRE event */

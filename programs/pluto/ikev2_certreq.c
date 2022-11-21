@@ -73,12 +73,12 @@ void process_v2CERTREQ_payload(struct ike_sa *ike, struct msg_digest *md)
 	/* XXX: there should only be one! */
 	struct payload_digest *p = md->chain[ISAKMP_NEXT_v2CERTREQ];
 	if (p == NULL) {
-		ldbg(ike->sa.st_logger, "no CERTREQ");
+		ldbg_sa(ike, "no CERTREQ");
 		return;
 	}
 
 	if (p->next != NULL) {
-		ldbg(ike->sa.st_logger, "ignoring duplicate CERTREQ");
+		ldbg_sa(ike, "ignoring duplicate CERTREQ");
 		/* stumble on */
 	}
 
@@ -107,7 +107,7 @@ void process_v2CERTREQ_payload(struct ike_sa *ike, struct msg_digest *md)
 			}
 			count++;
 		}
-		ldbg(ike->sa.st_logger, "found %d CERTREQ Certification Authority hashes", count);
+		ldbg_sa(ike, "found %d CERTREQ Certification Authority hashes", count);
 		/* both are non-zero */
 		ike->sa.st_v2_ike_seen_certreq = (count == 0 ? SEEN_EMPTY_v2CERTREQ : SEEN_FULL_v2CERTREQ);
 		break;

@@ -254,7 +254,7 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike, struct
 	struct ikev2_cp *cp =  &cp_digest->payload.v2cp;
 	struct pbs_in *cp_pbs = &cp_digest->pbs;
 
-	ldbg(child->sa.st_logger, "parsing ISAKMP_NEXT_v2CP payload");
+	ldbg_sa(child, "parsing ISAKMP_NEXT_v2CP payload");
 
 	if (cp->isacp_type != IKEv2_CP_CFG_REQUEST) {
 		llog_sa(RC_LOG_SERIOUS, child,
@@ -291,8 +291,8 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike, struct
 			const struct addresspool *pool = cc->pool[afi->ip_index];
 			if (pool == NULL) {
 				enum_buf eb;
-				ldbg(child->sa.st_logger, "ignoring %s, no pool",
-				     str_enum_short(&ikev2_cp_attribute_type_names, type, &eb));
+				ldbg_sa(child, "ignoring %s, no pool",
+					str_enum_short(&ikev2_cp_attribute_type_names, type, &eb));
 			} else {
 				err_t e = lease_that_address(child->sa.st_connection, &child->sa, afi);
 				if (e != NULL) {
@@ -310,10 +310,9 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike, struct
 		default:
 		{
 			enum_buf eb;
-			ldbg(child->sa.st_logger,
-			     "ignoring attribute %s length %u",
-			     str_enum_short(&ikev2_cp_attribute_type_names, type, &eb),
-			     cp_attr.len);
+			ldbg_sa(child, "ignoring attribute %s length %u",
+				str_enum_short(&ikev2_cp_attribute_type_names, type, &eb),
+				cp_attr.len);
 			break;
 		}
 		}

@@ -418,9 +418,8 @@ bool emit_v2TS_response_payloads(struct pbs_out *outpbs, const struct child_sa *
 	 */
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		if (c->end[end].child.selectors.accepted.len == 0) {
-			ldbg(child->sa.st_logger,
-			     "connection %s does not have accepted selectors",
-			     c->end[end].config->leftright);
+			ldbg_sa(child, "connection %s does not have accepted selectors",
+				c->end[end].config->leftright);
 		}
 	}
 
