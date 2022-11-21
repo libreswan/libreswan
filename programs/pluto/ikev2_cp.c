@@ -212,7 +212,7 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 		}
 	}
 
-	const ip_selectors *selectors = &cc->local->child.selectors;
+	const ip_selectors *selectors = &cc->local->child.selectors.proposed;
 	for (const ip_selector *s = selectors->list;
 	     s < selectors->list + selectors->len;
 	     s++) {

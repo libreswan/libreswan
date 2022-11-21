@@ -340,10 +340,10 @@ struct connection *clone_connection(const char *name, struct connection *t, wher
 	c->remote = &c->end[t->remote->config->index];
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		if (c->end[end].child.selectors.list != c->end[end].config->child.selectors.list) {
-			pexpect(c->end[end].child.selectors.len == 1);
-			pexpect(c->end[end].child.selectors.list == &t->end[end].child.scratch_selector);
-			c->end[end].child.selectors.list = &c->end[end].child.scratch_selector;
+		if (c->end[end].child.selectors.proposed.list != c->end[end].config->child.selectors.list) {
+			pexpect(c->end[end].child.selectors.proposed.len == 1);
+			pexpect(c->end[end].child.selectors.proposed.list == &t->end[end].child.scratch_selector);
+			c->end[end].child.selectors.proposed.list = &c->end[end].child.scratch_selector;
 		}
  	}
 

@@ -361,7 +361,10 @@ struct host_end {
 
 struct child_end {
 	ip_selector scratch_selector;
-	ip_selectors selectors; /* either scratch_selector or config->selectors; do not free */
+	struct {
+		ip_selectors proposed; /* either scratch_selector or config->selectors; do not free */
+		ip_selectors *accepted; /* must free */
+	} selectors;
 
 	/*
 	 * Track lease addresses.

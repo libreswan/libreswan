@@ -2743,10 +2743,10 @@ static bool extract_connection(const struct whack_message *wm,
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		const ip_selectors *const selectors = &c->end[end].config->child.selectors;
 		if (selectors->len > 0) {
-			c->end[end].child.selectors = *selectors;
+			c->end[end].child.selectors.proposed = *selectors;
 		} else {
-			c->end[end].child.selectors.len = 1;
-			c->end[end].child.selectors.list = &c->end[end].child.scratch_selector;
+			c->end[end].child.selectors.proposed.len = 1;
+			c->end[end].child.selectors.proposed.list = &c->end[end].child.scratch_selector;
 		}
 	}
 
@@ -4929,10 +4929,10 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 	 * single selector reasonable?  Certainly don't want to
 	 * truncate the selector list.
 	 */
-	pexpect(c->end[end].child.selectors.len == 1);
+	pexpect(c->end[end].child.selectors.proposed.len == 1);
 	c->end[end].child.scratch_selector = new_selector;
-	c->end[end].child.selectors.list = &c->end[end].child.scratch_selector;
-	c->end[end].child.selectors.len = 1;
+	c->end[end].child.selectors.proposed.list = &c->end[end].child.scratch_selector;
+	c->end[end].child.selectors.proposed.len = 1;
 
 	/*
 	 * When there's a selectors.list, the child.selector is only

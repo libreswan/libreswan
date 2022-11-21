@@ -308,7 +308,7 @@ static bool emit_v2TS_request_end_payloads(struct pbs_out *out,
 					   const char *ts_name)
 {
 	struct connection *c = child->sa.st_connection;
-	const ip_selectors *const selectors = &c->end[end].child.selectors;
+	const ip_selectors *const selectors = &c->end[end].child.selectors.proposed;
 	shunk_t sec_label = HUNK_AS_SHUNK(c->child.sec_label);
 	pexpect(selector_eq_selector(selectors->list[0], c->spd->end[end].client));
 
@@ -1317,19 +1317,19 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			pexpect(spd != NULL);
 			pexpect(spd->spd_next == NULL);
 
-			pexpect(d->remote->child.selectors.list == &d->remote->child.scratch_selector ||
-				d->remote->child.selectors.list == d->remote->config->child.selectors.list);
-			pexpect(d->local->child.selectors.list == &d->local->child.scratch_selector ||
-				d->local->child.selectors.list == d->local->config->child.selectors.list);
+			pexpect(d->remote->child.selectors.proposed.list == &d->remote->child.scratch_selector ||
+				d->remote->child.selectors.proposed.list == d->remote->config->child.selectors.list);
+			pexpect(d->local->child.selectors.proposed.list == &d->local->child.scratch_selector ||
+				d->local->child.selectors.proposed.list == d->local->config->child.selectors.list);
 			pexpect(selector_eq_selector(d->spd->remote->client,
-						     d->remote->child.selectors.list[0]));
+						     d->remote->child.selectors.proposed.list[0]));
 			pexpect(selector_eq_selector(d->spd->local->client,
-						     d->local->child.selectors.list[0]));
+						     d->local->child.selectors.proposed.list[0]));
 
 			const struct child_selector_ends ends = {
-				.i.selectors = &d->remote->child.selectors,
+				.i.selectors = &d->remote->child.selectors.proposed,
 				.i.sec_label = d->config->sec_label,
-				.r.selectors = &d->local->child.selectors,
+				.r.selectors = &d->local->child.selectors.proposed,
 				.r.sec_label = d->config->sec_label,
 			};
 
@@ -1538,19 +1538,19 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			enum fit responder_sec_label_fit = END_EQUALS_TS;
 
 			/* responder so cross streams */
-			pexpect(t->remote->child.selectors.list == &t->remote->child.scratch_selector ||
-				t->remote->child.selectors.list == t->remote->config->child.selectors.list);
-			pexpect(t->local->child.selectors.list == &t->local->child.scratch_selector ||
-				t->local->child.selectors.list == t->local->config->child.selectors.list);
+			pexpect(t->remote->child.selectors.proposed.list == &t->remote->child.scratch_selector ||
+				t->remote->child.selectors.proposed.list == t->remote->config->child.selectors.list);
+			pexpect(t->local->child.selectors.proposed.list == &t->local->child.scratch_selector ||
+				t->local->child.selectors.proposed.list == t->local->config->child.selectors.list);
 			pexpect(selector_eq_selector(t->spd->remote->client,
-						     t->remote->child.selectors.list[0]));
+						     t->remote->child.selectors.proposed.list[0]));
 			pexpect(selector_eq_selector(t->spd->local->client,
-						     t->local->child.selectors.list[0]));
+						     t->local->child.selectors.proposed.list[0]));
 			pexpect(t->config->sec_label.len == 0);
 			struct child_selector_ends ends = {
-				.i.selectors = &t->remote->child.selectors,
+				.i.selectors = &t->remote->child.selectors.proposed,
 				.i.sec_label = t->config->sec_label,
-				.r.selectors = &t->local->child.selectors,
+				.r.selectors = &t->local->child.selectors.proposed,
 				.r.sec_label = t->config->sec_label,
 			};
 
@@ -1665,20 +1665,20 @@ bool process_v2TS_response_payloads(struct child_sa *child,
 	}
 
 	/* initiator so don't cross streams */
-	pexpect(c->remote->child.selectors.list == &c->remote->child.scratch_selector ||
-		c->remote->child.selectors.list == c->remote->config->child.selectors.list);
-	pexpect(c->local->child.selectors.list == &c->local->child.scratch_selector ||
-		c->local->child.selectors.list == c->local->config->child.selectors.list);
+	pexpect(c->remote->child.selectors.proposed.list == &c->remote->child.scratch_selector ||
+		c->remote->child.selectors.proposed.list == c->remote->config->child.selectors.list);
+	pexpect(c->local->child.selectors.proposed.list == &c->local->child.scratch_selector ||
+		c->local->child.selectors.proposed.list == c->local->config->child.selectors.list);
 	pexpect(selector_eq_selector(c->spd->remote->client,
-				     c->remote->child.selectors.list[0]));
+				     c->remote->child.selectors.proposed.list[0]));
 	pexpect(selector_eq_selector(c->spd->local->client,
-				     c->local->child.selectors.list[0]));
+				     c->local->child.selectors.proposed.list[0]));
 
 	/* the return needs to match what was proposed */
 	const struct child_selector_ends ends = {
-		.i.selectors = &c->local->child.selectors,
+		.i.selectors = &c->local->child.selectors.proposed,
 		.i.sec_label = c->child.sec_label,
-		.r.selectors = &c->remote->child.selectors,
+		.r.selectors = &c->remote->child.selectors.proposed,
 		.r.sec_label = c->child.sec_label,
 	};
 
@@ -1752,18 +1752,18 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 	}
 
 	/* responder so cross streams */
-	pexpect(c->remote->child.selectors.list == &c->remote->child.scratch_selector ||
-		c->remote->child.selectors.list == c->remote->config->child.selectors.list);
-	pexpect(c->local->child.selectors.list == &c->local->child.scratch_selector ||
-		c->local->child.selectors.list == c->local->config->child.selectors.list);
+	pexpect(c->remote->child.selectors.proposed.list == &c->remote->child.scratch_selector ||
+		c->remote->child.selectors.proposed.list == c->remote->config->child.selectors.list);
+	pexpect(c->local->child.selectors.proposed.list == &c->local->child.scratch_selector ||
+		c->local->child.selectors.proposed.list == c->local->config->child.selectors.list);
 	pexpect(selector_eq_selector(c->spd->remote->client,
-				     c->remote->child.selectors.list[0]));
+				     c->remote->child.selectors.proposed.list[0]));
 	pexpect(selector_eq_selector(c->spd->local->client,
-				     c->local->child.selectors.list[0]));
+				     c->local->child.selectors.proposed.list[0]));
 	const struct child_selector_ends ends = {
-		.i.selectors = &c->remote->child.selectors,
+		.i.selectors = &c->remote->child.selectors.proposed,
 		.i.sec_label = c->child.sec_label,
-		.r.selectors = &c->local->child.selectors,
+		.r.selectors = &c->local->child.selectors.proposed,
 		.r.sec_label = c->child.sec_label,
 	};
 
