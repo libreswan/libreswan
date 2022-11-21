@@ -1899,7 +1899,7 @@ enum policy_spi shunt_policy_spi(enum shunt_policy sp)
 	return shunt_spi[sp];
 }
 
-static void setup_esp_nic_offload(struct kernel_sa *sa, struct connection *c,
+static void setup_esp_nic_offload(struct kernel_state *sa, struct connection *c,
 		bool *nic_offload_fallback)
 {
 	if (c->config->nic_offload == yna_no ||
@@ -1934,8 +1934,8 @@ static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 	bool nic_offload_fallback = false;
 
 	/* SPIs, saved for spigrouping or undoing, if necessary */
-	struct kernel_sa said[EM_MAXRELSPIS];
-	struct kernel_sa *said_next = said;
+	struct kernel_state said[EM_MAXRELSPIS];
+	struct kernel_state *said_next = said;
 
 	/* same scope as said[] */
 	said_buf text_ipcomp;
@@ -1966,7 +1966,7 @@ static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 							IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE,
 							st->st_logger);
 	}
-	const struct kernel_sa said_boilerplate = {
+	const struct kernel_state said_boilerplate = {
 		.src.address = kernel_policy.src.host,
 		.dst.address = kernel_policy.dst.host,
 		.src.client = kernel_policy.src.route,
@@ -2344,7 +2344,7 @@ static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 		 *
 		 * the grouping would be ipip:esp, esp:ah.
 		 */
-		for (struct kernel_sa *s = said; s < said_next - 1; s++) {
+		for (struct kernel_state *s = said; s < said_next - 1; s++) {
 			dbg("kernel: grouping %s and %s",
 			    s[0].story, s[1].story);
 			if (!kernel_ops->grp_sa(s + 1, s)) {
@@ -3452,7 +3452,7 @@ bool get_ipsec_traffic(struct state *st,
 	}
 
 	said_buf sb;
-	struct kernel_sa sa = {
+	struct kernel_state sa = {
 		.spi = flow->spi,
 		.proto = proto_info->protocol,
 		.src.address = src,

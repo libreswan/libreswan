@@ -718,7 +718,7 @@ static bool pfkeyv2_del_ipsec_spi(ipsec_spi_t spi,
 	return true;
 }
 
-static bool pfkeyv2_add_sa(const struct kernel_sa *k,
+static bool pfkeyv2_add_sa(const struct kernel_state *k,
 			   bool replace,
 			   struct logger *logger)
 {
@@ -797,7 +797,7 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 	/*
 	 * Determine the size of the replay window:
 	 *
-	 * -> the field kernel_sa .replay_window is the size of the
+	 * -> the field kernel_state .replay_window is the size of the
 	 *    replay window in packets
 	 *
 	 * -> PF KEY v2's .sadb_sa_replay is the number of bytes
@@ -966,7 +966,7 @@ static bool pfkeyv2_add_sa(const struct kernel_sa *k,
 	return true;
 }
 
-static bool pfkeyv2_get_kernel_state(const struct kernel_sa *k,
+static bool pfkeyv2_get_kernel_state(const struct kernel_state *k,
 				     uint64_t *bytes,
 				     uint64_t *add_time,
 				     struct logger *logger)

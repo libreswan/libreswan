@@ -878,7 +878,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	return ok;
 }
 
-static void set_migration_attr(const struct kernel_sa *sa,
+static void set_migration_attr(const struct kernel_state *sa,
 			       struct xfrm_user_migrate *m)
 {
 	m->old_saddr = xfrm_from_address(&sa->src.address);
@@ -904,7 +904,7 @@ typedef struct {
 
 static bool create_xfrm_migrate_sa(struct state *st,
 				   const int dir,	/* netkey SA direction XFRM_POLICY_{IN,OUT,FWD} */
-				   struct kernel_sa *ret_sa,
+				   struct kernel_state *ret_sa,
 				   story_buf *story /* must live as long as *ret_sa */)
 {
 	const struct connection *const c = st->st_connection;
@@ -964,7 +964,7 @@ static bool create_xfrm_migrate_sa(struct state *st,
 		bad_case(dir);
 	}
 
-	struct kernel_sa sa = {
+	struct kernel_state sa = {
 		.xfrm_dir = dir,
 		.proto = proto,
 		.encap_type = encap_type,
@@ -1028,7 +1028,7 @@ static bool create_xfrm_migrate_sa(struct state *st,
 	return true;
 }
 
-static bool migrate_xfrm_sa(const struct kernel_sa *sa,
+static bool migrate_xfrm_sa(const struct kernel_state *sa,
 			    struct logger *logger)
 {
 	struct {
@@ -1108,7 +1108,7 @@ static bool xfrm_migrate_ipsec_sa(struct child_sa *child)
 
 	struct state *st = &child->sa; /* clean up later */
 
-	struct kernel_sa sa;
+	struct kernel_state sa;
 	story_buf story;	/* must live as long as sa */
 
 	return
@@ -1252,7 +1252,7 @@ static bool xfrm_detect_offload(const struct raw_iface *ifp, struct logger *logg
  * @param replace boolean - true if this replaces an existing SA
  * @return bool True if successful
  */
-static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
+static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 			   struct logger *logger)
 {
 	struct {
@@ -2232,7 +2232,7 @@ static ipsec_spi_t xfrm_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
  * @param add_time timestamp when IPsec SA added
  * @return bool True if successful
  */
-static bool xfrm_get_kernel_state(const struct kernel_sa *sa, uint64_t *bytes,
+static bool xfrm_get_kernel_state(const struct kernel_state *sa, uint64_t *bytes,
 				  uint64_t *add_time, struct logger *logger)
 {
 	struct {

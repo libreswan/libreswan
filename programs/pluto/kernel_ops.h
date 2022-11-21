@@ -35,7 +35,7 @@ extern bool raw_policy(enum kernel_policy_op op,
 		       const char *fmt, ...) PRINTF_LIKE(14);
 
 /*kernel_ops_state()? kernel_ops_sad()?*/
-bool kernel_ops_add_sa(const struct kernel_sa *sa,
+bool kernel_ops_add_sa(const struct kernel_state *sa,
 		       bool replace,
 		       struct logger *logger);
 

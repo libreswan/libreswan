@@ -222,7 +222,7 @@ struct kernel_state_end {
 	ip_address new_address;
 };
 
-struct kernel_sa {
+struct kernel_state {
 	struct kernel_state_end src;
 	struct kernel_state_end dst;
 
@@ -358,12 +358,12 @@ struct kernel_ops {
 	/*
 	 * XXX: to delete an SA, delete it's SPI.
 	 */
-	bool (*add_sa)(const struct kernel_sa *sa,
+	bool (*add_sa)(const struct kernel_state *sa,
 		       bool replace,
 		       struct logger *logger);
-	bool (*grp_sa)(const struct kernel_sa *sa_outer,
-		       const struct kernel_sa *sa_inner);
-	bool (*get_kernel_state)(const struct kernel_sa *sa,
+	bool (*grp_sa)(const struct kernel_state *sa_outer,
+		       const struct kernel_state *sa_inner);
+	bool (*get_kernel_state)(const struct kernel_state *sa,
 				 uint64_t *bytes,
 				 uint64_t *add_time,
 				 struct logger *logger);

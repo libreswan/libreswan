@@ -155,7 +155,7 @@ bool raw_policy(enum kernel_policy_op op,
 	return result;
 }
 
-bool kernel_ops_add_sa(const struct kernel_sa *sa, bool replace, struct logger *logger)
+bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logger *logger)
 {
 	LSWDBGP(DBG_BASE, buf) {
 
