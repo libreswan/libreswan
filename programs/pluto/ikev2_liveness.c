@@ -246,7 +246,7 @@ void liveness_check(struct state *st)
 		 child->sa.st_ah.present ? &child->sa.st_ah :
 		 child->sa.st_ipcomp.present ? &child->sa.st_ipcomp :
 		 NULL);
-	if (get_ipsec_traffic(&child->sa, first_ipsec_proto, ENCAP_DIRECTION_INBOUND)) {
+	if (get_ipsec_traffic(&child->sa, first_ipsec_proto, DIRECTION_INBOUND)) {
 		if (recent_last_contact(child, now,
 					first_ipsec_proto->inbound.last_used,
 					"recent IPsec traffic")) {

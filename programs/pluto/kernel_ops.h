@@ -20,7 +20,7 @@
 
 /*kernel_ops_policy() kernel_ops_spd()? */
 extern bool raw_policy(enum kernel_policy_op op,
-		       enum kernel_policy_dir dir,
+		       enum direction dir,
 		       enum expect_kernel_policy expect_kernel_policy,
 		       const ip_selector *this_client,
 		       const ip_selector *that_client,

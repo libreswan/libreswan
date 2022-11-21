@@ -58,12 +58,6 @@ enum kernel_policy_op {
 
 extern const struct enum_names kernel_policy_op_names;
 
-enum kernel_policy_dir {
-	/* two bits */
-	KERNEL_POLICY_DIR_INBOUND = 8,
-	KERNEL_POLICY_DIR_OUTBOUND = 16,
-};
-
 extern const struct enum_names kernel_policy_dir_names;
 
 /*
@@ -110,22 +104,11 @@ enum encap_mode {
 		 "unknown");						\
 	})
 
-/*
- * Direction of packet flow.
- */
-
-enum encap_direction {
-	ENCAP_DIRECTION_OUTBOUND,
-	ENCAP_DIRECTION_INBOUND,
+enum direction {
+	DIRECTION_INBOUND = 2,
+	DIRECTION_OUTBOUND,
 };
 
-#define encap_direction_name(E)					\
-	({							\
-		enum encap_flow e_ = E;				\
-		(e_ == ENCAP_DIRECTION_INBOUND ? "inbound" :	\
-		 e_ == ENCAP_DIRECTION_OUTBOUND ? "outbound" :	\
-		 "unknown");					\
-	})
 
 /*
  * Kernel encapsulation policy.
@@ -254,7 +237,7 @@ struct kernel_sa {
 	bool tunnel;
 	unsigned level;		/* inner-most is 0 */
 
-	bool inbound;
+	enum direction direction;
 	int xfrm_dir;			/* xfrm has 3, in,out & fwd */
 	bool esn;
 	bool decap_dscp;
@@ -360,7 +343,7 @@ struct kernel_ops {
 	void (*process_queue)(void);
 	void (*process_msg)(int, struct logger *);
 	bool (*raw_policy)(enum kernel_policy_op op,
-			   enum kernel_policy_dir dir,
+			   enum direction dir,
 			   enum expect_kernel_policy expect_kernel_policy,
 			   const ip_selector *src_client,
 			   const ip_selector *dst_client,
@@ -514,7 +497,7 @@ void delete_ipsec_sa(struct state *st);
 void delete_larval_ipsec_sa(struct state *st);
 
 extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
-extern bool get_ipsec_traffic(struct state *st, struct ipsec_proto_info *sa, enum encap_direction direction);
+extern bool get_ipsec_traffic(struct state *st, struct ipsec_proto_info *sa, enum direction direction);
 extern bool migrate_ipsec_sa(struct child_sa *child);
 
 extern void show_kernel_interface(struct show *s);

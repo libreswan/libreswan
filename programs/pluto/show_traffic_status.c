@@ -63,11 +63,11 @@ static void jam_state_traffic(struct jambuf *buf, struct state *st)
 		 NULL);
 	passert(first_ipsec_proto != NULL);
 
-	if (get_ipsec_traffic(st, first_ipsec_proto, ENCAP_DIRECTION_INBOUND)) {
+	if (get_ipsec_traffic(st, first_ipsec_proto, DIRECTION_INBOUND)) {
 		jam(buf, ", inBytes=%ju", first_ipsec_proto->inbound.bytes);
 	}
 
-	if (get_ipsec_traffic(st, first_ipsec_proto, ENCAP_DIRECTION_OUTBOUND)) {
+	if (get_ipsec_traffic(st, first_ipsec_proto, DIRECTION_OUTBOUND)) {
 		jam(buf, ", outBytes=%ju", first_ipsec_proto->outbound.bytes);
 		if (c->config->sa_ipsec_max_bytes != 0) {
 			jam_humber_max(buf, ", maxBytes=", c->config->sa_ipsec_max_bytes, "B");

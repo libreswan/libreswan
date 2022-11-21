@@ -1107,13 +1107,13 @@ static struct sadb_x_ipsecrequest *put_sadb_x_ipsecrequest(struct outbuf *msg,
 #ifdef SADB_X_EXT_POLICY /* FreeBSD NetBSD */
 static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 					       enum kernel_policy_op op,
-					       enum kernel_policy_dir dir,
+					       enum direction dir,
 					       enum ipsec_policy policy_type,
 					       const struct kernel_policy *kernel_policy)
 {
 
-	enum ipsec_dir policy_dir = (dir == KERNEL_POLICY_DIR_INBOUND ? IPSEC_DIR_INBOUND :
-				     dir == KERNEL_POLICY_DIR_OUTBOUND ? IPSEC_DIR_OUTBOUND :
+	enum ipsec_dir policy_dir = (dir == DIRECTION_INBOUND ? IPSEC_DIR_INBOUND :
+				     dir == DIRECTION_OUTBOUND ? IPSEC_DIR_OUTBOUND :
 				     pexpect(0));
 
 	struct sadb_x_policy *x_policy =
@@ -1148,7 +1148,7 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 #endif
 
 static bool pfkeyv2_raw_policy(enum kernel_policy_op op,
-			       enum kernel_policy_dir dir,
+			       enum direction dir,
 			       enum expect_kernel_policy expect_kernel_policy,
 			       const ip_selector *src_client,
 			       const ip_selector *dst_client,
@@ -1190,8 +1190,8 @@ static bool pfkeyv2_raw_policy(enum kernel_policy_op op,
 	/* flow type */
 
 	unsigned policy_direction =
-		(dir == KERNEL_POLICY_DIR_INBOUND ? IPSP_DIRECTION_IN :
-		 dir == KERNEL_POLICY_DIR_OUTBOUND ? IPSP_DIRECTION_OUT :
+		(dir == DIRECTION_INBOUND ? IPSP_DIRECTION_IN :
+		 dir == DIRECTION_OUTBOUND ? IPSP_DIRECTION_OUT :
 		 pexpect(0));
 
 	enum sadb_x_flow_type policy_type = UINT_MAX;
@@ -1244,12 +1244,12 @@ static bool pfkeyv2_raw_policy(enum kernel_policy_op op,
 		 * like a bug.
 		 */
 		switch (dir) {
-		case KERNEL_POLICY_DIR_INBOUND:
+		case DIRECTION_INBOUND:
 			/* XXX: notice how DST gets SRC's value et.al. */
 			put_sadb_address(&req, SADB_EXT_ADDRESS_DST, kernel_policy->src.host);
 			put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, kernel_policy->dst.host);
 			break;
-		case KERNEL_POLICY_DIR_OUTBOUND:
+		case DIRECTION_OUTBOUND:
 			put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, kernel_policy->src.host);
 			put_sadb_address(&req, SADB_EXT_ADDRESS_DST, kernel_policy->dst.host);
 			break;

@@ -272,12 +272,12 @@ enum_names kernel_policy_op_names = {
 	.en_prefix = "KERNEL_POLICY_OP_",
 };
 
-/* enum kernel_policy_dir_names */
+/* enum direction_names */
 
 static const char *kernel_policy_dir_name[] = {
 #define S(E) [E] = #E
-	S(KERNEL_POLICY_DIR_OUTBOUND),
-	S(KERNEL_POLICY_DIR_INBOUND),
+	S(DIRECTION_OUTBOUND),
+	S(DIRECTION_INBOUND),
 #undef S
 };
 

@@ -516,7 +516,7 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
  * @return boolean True if successful
  */
 static bool xfrm_raw_policy(enum kernel_policy_op op,
-			    enum kernel_policy_dir dir,
+			    enum direction dir,
 			    enum expect_kernel_policy what_about_inbound,
 			    const ip_selector *src_client,
 			    const ip_selector *dst_client,
@@ -592,8 +592,8 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 		policy_name = "%discard(discard)";
 		break;
 	case SHUNT_TRAP:
-		if ((op == KERNEL_POLICY_OP_ADD && dir == KERNEL_POLICY_DIR_INBOUND) ||
-		    (op == KERNEL_POLICY_OP_DELETE && dir == KERNEL_POLICY_DIR_INBOUND)) {
+		if ((op == KERNEL_POLICY_OP_ADD && dir == DIRECTION_INBOUND) ||
+		    (op == KERNEL_POLICY_OP_DELETE && dir == DIRECTION_INBOUND)) {
 			dbg("%s() inbound SHUNT_TRAP implemented as no-op", __func__);
 			return true;
 		}
@@ -606,8 +606,8 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 
 	/* XXX: notice how this ignores KERNEL_OP_REPLACE!?! */
 	const unsigned xfrm_dir =
-		(((op == KERNEL_POLICY_OP_ADD && dir == KERNEL_POLICY_DIR_INBOUND) ||
-		  (op == KERNEL_POLICY_OP_DELETE && dir == KERNEL_POLICY_DIR_INBOUND))
+		(((op == KERNEL_POLICY_OP_ADD && dir == DIRECTION_INBOUND) ||
+		  (op == KERNEL_POLICY_OP_DELETE && dir == DIRECTION_INBOUND))
 		 ? XFRM_POLICY_IN
 		 : XFRM_POLICY_OUT);
 	dbg("%s() policy=%s action=%d xfrm_dir=%d op=%s dir=%s",
@@ -656,8 +656,8 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	req.u.p.sel.proto = client_proto->ipproto;
 	req.u.p.sel.family = family;
 
-	if ((op == KERNEL_POLICY_OP_DELETE && dir == KERNEL_POLICY_DIR_OUTBOUND) ||
-	    (op == KERNEL_POLICY_OP_DELETE && dir == KERNEL_POLICY_DIR_INBOUND)) {
+	if ((op == KERNEL_POLICY_OP_DELETE && dir == DIRECTION_OUTBOUND) ||
+	    (op == KERNEL_POLICY_OP_DELETE && dir == DIRECTION_INBOUND)) {
 		req.u.id.dir = xfrm_dir;
 		req.n.nlmsg_type = XFRM_MSG_DELPOLICY;
 		req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.u.id)));
@@ -701,8 +701,8 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	 * is needed.  Lets find out.
 	 */
 	if (kernel_policy != NULL &&
-	    !(op == KERNEL_POLICY_OP_DELETE && dir == KERNEL_POLICY_DIR_OUTBOUND) &&
-	    !(op == KERNEL_POLICY_OP_DELETE && dir == KERNEL_POLICY_DIR_INBOUND)) {
+	    !(op == KERNEL_POLICY_OP_DELETE && dir == DIRECTION_OUTBOUND) &&
+	    !(op == KERNEL_POLICY_OP_DELETE && dir == DIRECTION_INBOUND)) {
 		struct xfrm_user_tmpl tmpls[4] = {0};
 
 		/* remember; kernel_policy.rule[] is 1 based */
@@ -829,7 +829,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	}
 
 	bool ok = sendrecv_xfrm_policy(&req.n, what_about_inbound, policy_name,
-				       (dir == KERNEL_POLICY_DIR_OUTBOUND ? "(out)" : "(in)"),
+				       (dir == DIRECTION_OUTBOUND ? "(out)" : "(in)"),
 				       logger);
 
 	/*
@@ -840,7 +840,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	 *
 	 * XXX: and yes, the code below doesn't exactly do just that.
 	 */
-	if (dir == KERNEL_POLICY_DIR_INBOUND) {
+	if (dir == DIRECTION_INBOUND) {
 		switch (op) {
 		case KERNEL_POLICY_OP_DELETE:
 			/*
@@ -1601,7 +1601,7 @@ static bool netlink_add_sa(const struct kernel_sa *sa, bool replace,
 
 	if (sa->nic_offload_dev) {
 		struct xfrm_user_offload xuo = {
-			.flags = ((sa->inbound ? XFRM_OFFLOAD_INBOUND : 0) |
+			.flags = ((sa->direction == DIRECTION_INBOUND ? XFRM_OFFLOAD_INBOUND : 0) |
 				  (address_info(sa->src.address) == &ipv6_info ? XFRM_OFFLOAD_IPV6 : 0)),
 			.ifindex = if_nametoindex(sa->nic_offload_dev),
 		};

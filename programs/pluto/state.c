@@ -960,10 +960,10 @@ void delete_state_tail(struct state *st)
 		passert(first_ipsec_proto != NULL);
 
 		/* pull in the traffic counters into state before they're lost */
-		if (!get_ipsec_traffic(st, first_ipsec_proto, ENCAP_DIRECTION_OUTBOUND)) {
+		if (!get_ipsec_traffic(st, first_ipsec_proto, DIRECTION_OUTBOUND)) {
 			log_state(RC_LOG, st, "failed to pull traffic counters from outbound IPsec SA");
 		}
-		if (!get_ipsec_traffic(st, first_ipsec_proto, ENCAP_DIRECTION_INBOUND)) {
+		if (!get_ipsec_traffic(st, first_ipsec_proto, DIRECTION_INBOUND)) {
 			log_state(RC_LOG, st, "failed to pull traffic counters from inbound IPsec SA");
 		}
 
@@ -2182,8 +2182,8 @@ static void show_established_child_details(struct show *s, struct state *st,
 			 st->st_ipcomp.present ? &st->st_ipcomp :
 			 NULL);
 
-		bool in_info = get_ipsec_traffic(st, first_proto_info, ENCAP_DIRECTION_INBOUND);
-		bool out_info = get_ipsec_traffic(st, first_proto_info, ENCAP_DIRECTION_OUTBOUND);
+		bool in_info = get_ipsec_traffic(st, first_proto_info, DIRECTION_INBOUND);
+		bool out_info = get_ipsec_traffic(st, first_proto_info, DIRECTION_OUTBOUND);
 
 		if (st->st_ah.present) {
 			if (in_info) {

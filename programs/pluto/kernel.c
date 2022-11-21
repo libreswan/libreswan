@@ -91,7 +91,7 @@ static bool route_and_eroute(struct connection *c,
 			     struct logger *logger);
 
 static bool eroute_connection(enum kernel_policy_op op,
-			      enum kernel_policy_dir dir,
+			      enum direction dir,
 			      const char *opname,
 			      const struct spd_route *sr,
 			      enum shunt_policy shunt_policy,
@@ -247,7 +247,7 @@ static bool bare_policy_op(enum kernel_policy_op op,
 
 	struct kernel_policy outbound_kernel_policy =
 		bare_kernel_policy(&sr->local->client, &sr->remote->client);
-	if (!raw_policy(op, KERNEL_POLICY_DIR_OUTBOUND,
+	if (!raw_policy(op, DIRECTION_OUTBOUND,
 			EXPECT_KERNEL_POLICY_OK,
 			&outbound_kernel_policy.src.client,
 			&outbound_kernel_policy.dst.client,
@@ -279,7 +279,7 @@ static bool bare_policy_op(enum kernel_policy_op op,
 	 */
 	struct kernel_policy inbound_kernel_policy =
 		bare_kernel_policy(&sr->remote->client, &sr->local->client);
-	return raw_policy(op, KERNEL_POLICY_DIR_INBOUND,
+	return raw_policy(op, DIRECTION_INBOUND,
 			  expect_kernel_policy,
 			  &inbound_kernel_policy.src.client,
 			  &inbound_kernel_policy.dst.client,
@@ -655,10 +655,10 @@ bool fmt_common_shell_out(char *buf,
 		 * XXX: does the get_sa_bundle_info() call order matter? Should this
 		 * be a single "atomic" call?
 		 */
-		if (get_ipsec_traffic(st, first_ipsec_proto, ENCAP_DIRECTION_INBOUND)) {
+		if (get_ipsec_traffic(st, first_ipsec_proto, DIRECTION_INBOUND)) {
 			JDuint64("PLUTO_INBYTES", first_ipsec_proto->inbound.bytes);
 		}
-		if (get_ipsec_traffic(st, first_ipsec_proto, ENCAP_DIRECTION_OUTBOUND)) {
+		if (get_ipsec_traffic(st, first_ipsec_proto, DIRECTION_OUTBOUND)) {
 			JDuint64("PLUTO_OUTBYTES", first_ipsec_proto->outbound.bytes);
 		}
 	}
@@ -926,7 +926,7 @@ bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd,
 static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 						   const struct spd_route *spd,
 						   enum encap_mode mode,
-						   enum encap_direction direction)
+						   enum direction direction)
 {
 	/*
 	 * With pfkey and transport mode with nat-traversal we need to
@@ -957,13 +957,13 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 	const struct spd_end *dst;
 	ip_selector src_route, dst_route;
 	switch (direction) {
-	case ENCAP_DIRECTION_INBOUND:
+	case DIRECTION_INBOUND:
 		src = spd->remote;
 		dst = spd->local;
 		src_route = remote_client;
 		dst_route = dst->client;
 		break;
-	case ENCAP_DIRECTION_OUTBOUND:
+	case DIRECTION_OUTBOUND:
 		src = spd->local;
 		dst = spd->remote;
 		src_route = src->client;
@@ -1024,7 +1024,7 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 
 static struct kernel_policy kernel_policy_from_state(const struct state *st,
 						     const struct spd_route *spd,
-						     enum encap_direction direction)
+						     enum direction direction)
 {
 	bool tunnel = false;
 	lset_t policy = LEMPTY;
@@ -1313,7 +1313,7 @@ static bool sag_eroute(const struct state *st,
 	 */
 
 	struct kernel_policy kernel_policy =
-		kernel_policy_from_state(st, sr, ENCAP_DIRECTION_OUTBOUND);
+		kernel_policy_from_state(st, sr, DIRECTION_OUTBOUND);
 	/* check for no transform at all */
 	passert(kernel_policy.nr_rules > 0);
 
@@ -1321,7 +1321,7 @@ static bool sag_eroute(const struct state *st,
 	char why[256];
 	snprintf(why, sizeof(why), "%s() %s", __func__, opname);
 
-	return eroute_connection(op, KERNEL_POLICY_DIR_OUTBOUND,
+	return eroute_connection(op, DIRECTION_OUTBOUND,
 				 why, sr, SHUNT_UNSET,
 				 &kernel_policy,
 				 calculate_sa_prio(c, false),
@@ -1504,7 +1504,7 @@ static bool delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 	    str_selectors(&src, &dst, &sb), pri_where(where));
 	/* assume low code logged action */
 	return raw_policy(KERNEL_POLICY_OP_DELETE,
-			  KERNEL_POLICY_DIR_OUTBOUND,
+			  DIRECTION_OUTBOUND,
 			  EXPECT_KERNEL_POLICY_OK,
 			  &src, &dst,
 			  SHUNT_PASS,
@@ -1570,7 +1570,7 @@ bool flush_bare_shunt(const ip_address *src_address,
 	    str_selectors(&src, &dst, &sb), why);
 	/* assume low code logged action */
 	bool ok = raw_policy(KERNEL_POLICY_OP_DELETE,
-			     KERNEL_POLICY_DIR_OUTBOUND,
+			     DIRECTION_OUTBOUND,
 			     expect_kernel_policy,
 			     &src, &dst,
 			     SHUNT_PASS,
@@ -1640,16 +1640,14 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	 * SE installs both an outgoing and incoming policy.  Normal
 	 * connections do not.
 	 */
-	FOR_EACH_THING(direction, ENCAP_DIRECTION_OUTBOUND, ENCAP_DIRECTION_INBOUND) {
-		bool inbound = (direction == ENCAP_DIRECTION_INBOUND);
+	FOR_EACH_THING(direction, DIRECTION_OUTBOUND, DIRECTION_INBOUND) {
 		const struct kernel_policy kernel_policy =
 			kernel_policy_from_spd(c->policy, c->spd, mode, direction);
 		if (kernel_policy.nr_rules == 0) {
 			/* XXX: log? */
 			return false;
 		}
-		if (!raw_policy(KERNEL_POLICY_OP_ADD,
-				(inbound ? KERNEL_POLICY_DIR_INBOUND : KERNEL_POLICY_DIR_OUTBOUND),
+		if (!raw_policy(KERNEL_POLICY_OP_ADD, direction,
 				EXPECT_KERNEL_POLICY_OK,
 				&kernel_policy.src.client, &kernel_policy.dst.client,
 				SHUNT_UNSET,
@@ -1660,7 +1658,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 				/*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
 				/*logger*/logger,
 				"%s() security label policy", __func__)) {
-			if (inbound) {
+			if (direction == DIRECTION_INBOUND) {
 				/*
 				 * Need to pull the just installed
 				 * outbound policy.
@@ -1671,9 +1669,8 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 				 * lame.  raw_policy can handle this.
 				 */
 				dbg("pulling previously installed outbound policy");
-				pexpect(direction == ENCAP_DIRECTION_INBOUND);
-				raw_policy(KERNEL_POLICY_OP_DELETE,
-					   KERNEL_POLICY_DIR_OUTBOUND,
+				pexpect(direction == DIRECTION_INBOUND);
+				raw_policy(KERNEL_POLICY_OP_DELETE, DIRECTION_OUTBOUND,
 					   EXPECT_KERNEL_POLICY_OK,
 					   &c->spd->local->client, &c->spd->remote->client,
 					   SHUNT_UNSET,
@@ -1701,14 +1698,11 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 			dbg("kernel: down command returned an error");
 		}
 		dbg("kernel: %s() pulling policies", __func__);
-		for (unsigned i = 0; i < 2; i++) {
-			bool inbound = (i > 0);
-			struct spd_end *src = inbound ? c->spd->remote : c->spd->local;
-			struct spd_end *dst = inbound ? c->spd->local : c->spd->remote;
+		FOR_EACH_THING(direction, DIRECTION_OUTBOUND, DIRECTION_INBOUND) {
+			struct spd_end *src = (direction == DIRECTION_INBOUND ? c->spd->remote : c->spd->local);
+			struct spd_end *dst = (direction == DIRECTION_INBOUND ? c->spd->local : c->spd->remote);
 			/* ignore result */
-			raw_policy(KERNEL_POLICY_OP_DELETE,
-				   (inbound ? KERNEL_POLICY_DIR_INBOUND :
-				    KERNEL_POLICY_DIR_OUTBOUND),
+			raw_policy(KERNEL_POLICY_OP_DELETE, direction,
 				   EXPECT_KERNEL_POLICY_OK,
 				   &src->client, &dst->client,
 				   SHUNT_PASS,
@@ -1729,7 +1723,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 }
 
 bool eroute_connection(enum kernel_policy_op op,
-		       enum kernel_policy_dir dir,
+		       enum direction dir,
 		       const char *opname,
 		       const struct spd_route *sr,
 		       enum shunt_policy shunt_policy,
@@ -1849,7 +1843,7 @@ bool assign_holdpass(const struct connection *c,
 
 			struct kernel_policy outbound_kernel_policy =
 				bare_kernel_policy(&sr->local->client, &sr->remote->client);
-			if (eroute_connection(op, KERNEL_POLICY_DIR_OUTBOUND,
+			if (eroute_connection(op, DIRECTION_OUTBOUND,
 					      reason, sr, negotiation_shunt,
 					      &outbound_kernel_policy,
 					      calculate_sa_prio(c, false),
@@ -1931,12 +1925,12 @@ static void setup_esp_nic_offload(struct kernel_sa *sa, struct connection *c,
 /*
  * Set up one direction of the SA bundle
  */
-static bool setup_half_ipsec_sa(struct state *st, bool inbound)
+static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 {
 	/* Build an inbound or outbound SA */
 
 	struct connection *c = st->st_connection;
-	bool replace = inbound && (kernel_ops->get_ipsec_spi != NULL);
+	bool replace = (direction == DIRECTION_INBOUND && (kernel_ops->get_ipsec_spi != NULL));
 	bool nic_offload_fallback = false;
 
 	/* SPIs, saved for spigrouping or undoing, if necessary */
@@ -1954,9 +1948,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	 * one rule.
 	 */
 	struct kernel_policy kernel_policy =
-		kernel_policy_from_state(st, c->spd,
-					 (inbound ? ENCAP_DIRECTION_INBOUND :
-					  ENCAP_DIRECTION_OUTBOUND));
+		kernel_policy_from_state(st, c->spd, direction);
 	if (!pexpect(kernel_policy.nr_rules > 0)) {
 		return false;
 	}
@@ -1979,7 +1971,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		.dst.address = kernel_policy.dst.host,
 		.src.client = kernel_policy.src.route,
 		.dst.client = kernel_policy.dst.route,
-		.inbound = inbound,
+		.direction = direction,
 		.tunnel = (kernel_policy.mode == ENCAP_MODE_TUNNEL),
 		.sa_lifetime = c->config->sa_ipsec_max_lifetime,
 		.sa_max_soft_bytes = sa_ipsec_soft_bytes,
@@ -1997,7 +1989,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	selector_buf scb, dcb;
 	dbg("kernel: %s() %s %s->[%s=%s=>%s]->%s sec_label="PRI_SHUNK"%s",
 	    __func__,
-	    said_boilerplate.inbound ? "inbound" : "outbound",
+	    (said_boilerplate.direction == DIRECTION_INBOUND ? "inbound" :
+	     said_boilerplate.direction == DIRECTION_OUTBOUND ? "outbound" :
+	     "???"),
 	    str_selector(&said_boilerplate.src.client, &scb),
 	    str_address(&said_boilerplate.src.address, &sab),
 	    encap_mode_name(kernel_policy.mode),
@@ -2013,7 +2007,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	/* set up IPCOMP SA, if any */
 
 	if (st->st_ipcomp.present) {
-		ipsec_spi_t ipcomp_spi = (inbound ? st->st_ipcomp.inbound.spi :
+		ipsec_spi_t ipcomp_spi = (direction == DIRECTION_INBOUND ? st->st_ipcomp.inbound.spi :
 					  st->st_ipcomp.outbound.spi);
 		*said_next = said_boilerplate;
 		said_next->spi = ipcomp_spi;
@@ -2036,9 +2030,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	/* set up ESP SA, if any */
 
 	if (st->st_esp.present) {
-		ipsec_spi_t esp_spi = (inbound ? st->st_esp.inbound.spi :
+		ipsec_spi_t esp_spi = (direction == DIRECTION_INBOUND ? st->st_esp.inbound.spi :
 				       st->st_esp.outbound.spi);
-		chunk_t esp_dst_keymat = (inbound ? st->st_esp.inbound.keymat :
+		chunk_t esp_dst_keymat = (direction == DIRECTION_INBOUND ? st->st_esp.inbound.keymat :
 					  st->st_esp.outbound.keymat);
 		const struct trans_attrs *ta = &st->st_esp.attrs.transattrs;
 
@@ -2049,12 +2043,17 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		if (st->hidden_variables.st_nat_traversal & NAT_T_DETECTED ||
 		    st->st_interface->io->protocol == &ip_protocol_tcp) {
 			encap_type = st->st_interface->io->protocol->encap_esp;
-			if (inbound) {
+			switch (direction) {
+			case DIRECTION_INBOUND:
 				encap_sport = endpoint_hport(st->st_remote_endpoint);
 				encap_dport = endpoint_hport(st->st_interface->local_endpoint);
-			} else {
+				break;
+			case DIRECTION_OUTBOUND:
 				encap_sport = endpoint_hport(st->st_interface->local_endpoint);
 				encap_dport = endpoint_hport(st->st_remote_endpoint);
+				break;
+			default:
+				bad_case(direction);
 			}
 			natt_oa = st->hidden_variables.st_nat_oa;
 			dbg("kernel: natt/tcp sa encap_type="PRI_IP_ENCAP" sport=%d dport=%d",
@@ -2135,7 +2134,7 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 			said_next->mark_set = c->sa_marks.out;
 		}
 
-		if (!inbound && c->sa_tfcpad != 0 && !st->st_seen_no_tfc) {
+		if (direction == DIRECTION_OUTBOUND && c->sa_tfcpad != 0 && !st->st_seen_no_tfc) {
 			dbg("kernel: Enabling TFC at %d bytes (up to PMTU)", c->sa_tfcpad);
 			said_next->tfcpad = c->sa_tfcpad;
 		}
@@ -2233,9 +2232,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	/* set up AH SA, if any */
 
 	if (st->st_ah.present) {
-		ipsec_spi_t ah_spi = (inbound ? st->st_ah.inbound.spi :
+		ipsec_spi_t ah_spi = (direction == DIRECTION_INBOUND ? st->st_ah.inbound.spi :
 				      st->st_ah.outbound.spi);
-		chunk_t ah_dst_keymat = (inbound ? st->st_ah.inbound.keymat :
+		chunk_t ah_dst_keymat = (direction == DIRECTION_INBOUND ? st->st_ah.inbound.keymat :
 					 st->st_ah.outbound.keymat);
 
 		const struct integ_desc *integ = st->st_ah.attrs.transattrs.ta_integ;
@@ -2294,10 +2293,10 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 	 * Note reversed ends.
 	 * Not much to be done on failure.
 	 */
-	dbg("kernel: %s() is thinking about installing inbound eroute? inbound=%d owner=#%lu %s",
-	    __func__, inbound, c->spd->eroute_owner,
+	dbg("kernel: %s() is thinking about installing inbound eroute? direction=%d owner=#%lu %s",
+	    __func__, direction, c->spd->eroute_owner,
 	    encap_mode_name(kernel_policy.mode));
-	if (inbound &&
+	if (direction == DIRECTION_INBOUND &&
 	    c->spd->eroute_owner == SOS_NOBODY &&
 	    (c->config->sec_label.len == 0 || c->config->ike_version == IKEv1)) {
 		dbg("kernel: %s() is installing inbound eroute", __func__);
@@ -2314,9 +2313,9 @@ static bool setup_half_ipsec_sa(struct state *st, bool inbound)
 		 */
 		struct kernel_policy kernel_policy =
 			kernel_policy_from_state(st, c->spd,
-						 ENCAP_DIRECTION_INBOUND);
+						 DIRECTION_INBOUND);
 		if (!raw_policy(KERNEL_POLICY_OP_ADD,
-				KERNEL_POLICY_DIR_INBOUND,
+				DIRECTION_INBOUND,
 				EXPECT_KERNEL_POLICY_OK,
 				&kernel_policy.src.route,	/* src_client */
 				&kernel_policy.dst.route,	/* dst_client */
@@ -2399,12 +2398,15 @@ struct dead_sa {	/* XXX: this is ip_said+src */
 	ip_address dst;
 };
 
-static unsigned append_teardown(struct dead_sa *dead, bool inbound,
+static unsigned append_teardown(struct dead_sa *dead, enum direction direction,
 				const struct ipsec_proto_info *proto,
 				ip_address host_addr, ip_address effective_remote_address)
 {
 	bool present = proto->present;
-	if (!present && inbound && proto->inbound.spi != 0 && proto->outbound.spi == 0) {
+	if (!present &&
+	    direction == DIRECTION_INBOUND &&
+	    proto->inbound.spi != 0 &&
+	    proto->outbound.spi == 0) {
 		dbg("kernel: forcing inbound delete of %s as .inbound.spi: "PRI_IPSEC_SPI"; attrs.spi: "PRI_IPSEC_SPI,
 		    proto->protocol->name,
 		    pri_ipsec_spi(proto->inbound.spi),
@@ -2413,7 +2415,8 @@ static unsigned append_teardown(struct dead_sa *dead, bool inbound,
 	}
 	if (present) {
 		dead->protocol = proto->protocol;
-		if (inbound) {
+		switch (direction) {
+		case DIRECTION_INBOUND:
 			if (proto->inbound.kernel_sa_expired & SA_HARD_EXPIRED) {
 				dbg("kernel expired SPI 0x%x skip deleting",
 				    ntohl(proto->inbound.spi));
@@ -2422,7 +2425,8 @@ static unsigned append_teardown(struct dead_sa *dead, bool inbound,
 			dead->spi = proto->inbound.spi; /* incoming */
 			dead->src = effective_remote_address;
 			dead->dst = host_addr;
-		} else {
+			break;
+		case DIRECTION_OUTBOUND:
 			if (proto->outbound.kernel_sa_expired & SA_HARD_EXPIRED) {
 				dbg("kernel hard expired SPI 0x%x skip deleting",
 				    ntohl(proto->outbound.spi));
@@ -2431,6 +2435,9 @@ static unsigned append_teardown(struct dead_sa *dead, bool inbound,
 			dead->spi = proto->outbound.spi; /* outgoing */
 			dead->src = host_addr;
 			dead->dst = effective_remote_address;
+			break;
+		default:
+			bad_case(direction);
 		}
 		return 1;
 	}
@@ -2443,7 +2450,7 @@ static unsigned append_teardown(struct dead_sa *dead, bool inbound,
  * Deleting only requires the addresses, protocol, and IPsec SPIs.
  */
 
-static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
+static bool teardown_half_ipsec_sa(struct state *st, enum direction direction)
 {
 	struct connection *const c = st->st_connection;
 
@@ -2466,11 +2473,11 @@ static bool teardown_half_ipsec_sa(struct state *st, bool inbound)
 
 	struct dead_sa dead[3];	/* at most 3 entries */
 	unsigned nr = 0;
-	nr += append_teardown(dead + nr, inbound, &st->st_ah,
+	nr += append_teardown(dead + nr, direction, &st->st_ah,
 			      c->local->host.addr, effective_remote_address);
-	nr += append_teardown(dead + nr, inbound, &st->st_esp,
+	nr += append_teardown(dead + nr, direction, &st->st_esp,
 			      c->local->host.addr, effective_remote_address);
-	nr += append_teardown(dead + nr, inbound, &st->st_ipcomp,
+	nr += append_teardown(dead + nr, direction, &st->st_ipcomp,
 			      c->local->host.addr, effective_remote_address);
 	passert(nr < elemsof(dead));
 
@@ -2675,7 +2682,7 @@ bool install_inbound_ipsec_sa(struct state *st)
 	 */
 	if (!st->st_outbound_done) {
 		dbg("kernel: installing outgoing SA now");
-		if (!setup_half_ipsec_sa(st, false)) {
+		if (!setup_half_ipsec_sa(st, DIRECTION_OUTBOUND)) {
 			dbg("failed to install outgoing SA");
 			return false;
 		}
@@ -2685,7 +2692,7 @@ bool install_inbound_ipsec_sa(struct state *st)
 
 	/* (attempt to) actually set up the SAs */
 
-	return setup_half_ipsec_sa(st, true);
+	return setup_half_ipsec_sa(st, DIRECTION_INBOUND);
 }
 
 /* Install a route and then a prospective shunt eroute or an SA group eroute.
@@ -2917,7 +2924,7 @@ bool route_and_eroute(struct connection *c,
 					bare_kernel_policy(&bs->our_client,
 							   &bs->peer_client);
 				if (!raw_policy(KERNEL_POLICY_OP_REPLACE,
-						KERNEL_POLICY_DIR_OUTBOUND,
+						DIRECTION_OUTBOUND,
 						EXPECT_KERNEL_POLICY_OK,
 						&outbound_kernel_policy.src.client,
 						&outbound_kernel_policy.dst.client,
@@ -3013,7 +3020,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 
 	/* setup outgoing SA if we haven't already */
 	if (!st->st_outbound_done) {
-		if (!setup_half_ipsec_sa(st, false)) {
+		if (!setup_half_ipsec_sa(st, DIRECTION_OUTBOUND)) {
 			return false;
 		}
 
@@ -3023,7 +3030,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 
 	/* now setup inbound SA */
 	if (inbound_also) {
-		if (!setup_half_ipsec_sa(st, true))
+		if (!setup_half_ipsec_sa(st, DIRECTION_INBOUND))
 			return false;
 
 		dbg("kernel: set up incoming SA");
@@ -3096,16 +3103,15 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
  * Delete an IPSEC SA.
  *
  * We may not succeed, but we bull ahead anyway because we cannot do
- * anything better by recognizing failure.  This used to have a
- * parameter bool inbound_only, but the saref code changed to always
- * install inbound before outbound so this it was always false, and
- * thus removed.
+ * anything better by recognizing failure.
  *
- * But this means that while there's now always an outbound policy,
- * there may not yet be an inbound policy!  For instance, IKEv2 IKE
- * AUTH initiator gets rejected.  So what is there, and should this
- * even be called?  EXPECT_KERNEL_POLICY is trying to help sort this
- * out.
+ * This used to have a parameter inbound_only, but the saref code
+ * changed to always install inbound before outbound so this it was
+ * always false, and thus removed.  But this means that while there's
+ * now always an outbound policy, there may not yet be an inbound
+ * policy!  For instance, IKEv2 IKE AUTH initiator gets rejected.  So
+ * what is there, and should this even be called?
+ * EXPECT_KERNEL_POLICY is trying to help sort this out.
  */
 
 static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
@@ -3124,7 +3130,7 @@ static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
 	struct kernel_policy outbound_kernel_policy =
 		bare_kernel_policy(&out->local->client, &out->remote->client);
 	if (!raw_policy(outbound_op,
-			KERNEL_POLICY_DIR_OUTBOUND,
+			DIRECTION_OUTBOUND,
 			EXPECT_KERNEL_POLICY_OK,
 			&outbound_kernel_policy.src.client,
 			&outbound_kernel_policy.dst.client,
@@ -3143,7 +3149,7 @@ static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
 	dbg("kernel: %s() calling raw_policy(delete-inbound), eroute_owner==NOBODY",
 	    __func__);
 	if (!raw_policy(KERNEL_POLICY_OP_DELETE,
-			KERNEL_POLICY_DIR_INBOUND,
+			DIRECTION_INBOUND,
 			expect_kernel_policy,
 			&in->remote->client, &in->local->client,
 			SHUNT_UNSET,
@@ -3309,10 +3315,10 @@ static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy expect
 	}
 
 	dbg("kernel: %s() calling teardown_half_ipsec_sa(outbound)", __func__);
-	teardown_half_ipsec_sa(st, /*inbound?*/false);
+	teardown_half_ipsec_sa(st, DIRECTION_OUTBOUND);
 	/* For larval IPsec SAs this may not exist */
 	dbg("kernel: %s() calling teardown_half_ipsec_sa(inbound)", __func__);
-	teardown_half_ipsec_sa(st, /*inbound*/true);
+	teardown_half_ipsec_sa(st, DIRECTION_INBOUND);
 }
 
 void delete_ipsec_sa(struct state *st)
@@ -3354,7 +3360,7 @@ bool was_eroute_idle(struct state *st, deltatime_t since_when)
 		 st->st_ipcomp.present ? &st->st_ipcomp :
 		 NULL);
 
-	if (!get_ipsec_traffic(st, first_proto_info, ENCAP_DIRECTION_INBOUND)) {
+	if (!get_ipsec_traffic(st, first_proto_info, DIRECTION_INBOUND)) {
 		/* snafu; assume idle!?! */
 		return true;
 	}
@@ -3395,7 +3401,7 @@ static void set_sa_info(struct ipsec_proto_info *p2, uint64_t bytes,
  */
 bool get_ipsec_traffic(struct state *st,
 		       struct ipsec_proto_info *proto_info,
-		       enum encap_direction direction)
+		       enum direction direction)
 {
 	struct connection *const c = st->st_connection;
 
@@ -3423,13 +3429,13 @@ bool get_ipsec_traffic(struct state *st,
 	ip_address src, dst;
 	const char *flow_name;
 	switch (direction) {
-	case ENCAP_DIRECTION_INBOUND:
+	case DIRECTION_INBOUND:
 		flow = &proto_info->inbound;
 		src = remote_ip;
 		dst = c->local->host.addr;
 		flow_name = "inbound";
 		break;
-	case ENCAP_DIRECTION_OUTBOUND:
+	case DIRECTION_OUTBOUND:
 		flow = &proto_info->outbound;
 		src = c->local->host.addr;
 		dst = remote_ip;
@@ -3582,7 +3588,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 			struct kernel_policy outbound_kernel_policy =
 				bare_kernel_policy(&src, &dst);
 			bool ok = raw_policy(KERNEL_POLICY_OP_REPLACE,
-					     KERNEL_POLICY_DIR_OUTBOUND,
+					     DIRECTION_OUTBOUND,
 					     EXPECT_KERNEL_POLICY_OK,
 					     &outbound_kernel_policy.src.client,
 					     &outbound_kernel_policy.dst.client,

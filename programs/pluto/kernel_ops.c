@@ -27,7 +27,7 @@
  */
 
 bool raw_policy(enum kernel_policy_op op,
-		enum kernel_policy_dir dir,
+		enum direction dir,
 		enum expect_kernel_policy expect_kernel_policy,
 		const ip_selector *src_client,
 		const ip_selector *dst_client,
@@ -130,8 +130,8 @@ bool raw_policy(enum kernel_policy_op op,
 		dbg("kernel: %s() SPI_HOLD implemented as no-op", __func__);
 		return true;
 	case SHUNT_TRAP:
-		if ((op == KERNEL_POLICY_OP_ADD && dir == KERNEL_POLICY_DIR_INBOUND) ||
-		    (op == KERNEL_POLICY_OP_DELETE && dir == KERNEL_POLICY_DIR_INBOUND)) {
+		if ((op == KERNEL_POLICY_OP_ADD && dir == DIRECTION_INBOUND) ||
+		    (op == KERNEL_POLICY_OP_DELETE && dir == DIRECTION_INBOUND)) {
 			dbg("kernel: %s() SPI_TRAP add|delete inbound implemented as no-op", __func__);
 			return true;
 		}
@@ -165,7 +165,9 @@ bool kernel_ops_add_sa(const struct kernel_sa *sa, bool replace, struct logger *
 		jam(buf, "kernel: add_sa()");
 
 		jam(buf, " level=%d", sa->level);
-		jam(buf, " %s", sa->inbound ? "inbound" : "outbound");
+		jam(buf, " %s", (sa->direction == DIRECTION_INBOUND ? "inbound" :
+				 sa->direction == DIRECTION_OUTBOUND ? "outbound" :
+				 "???"));
 		jam(buf, " %s", sa->tunnel ? "tunnel" : "transport");
 
 		jam(buf, " ");
