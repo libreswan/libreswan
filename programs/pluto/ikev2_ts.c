@@ -284,46 +284,6 @@ static bool emit_v2TS_sec_label(struct pbs_out *ts_pbs, shunk_t sec_label)
 	return true;
 }
 
-static bool emit_v2TS_response_payload(struct pbs_out *outpbs,
-				       const struct_desc *ts_desc,
-				       ip_selector ts, shunk_t sec_label)
-{
-	bool with_label = (sec_label.len > 0);
-
-	struct ikev2_ts its = {
-		.isat_critical = ISAKMP_PAYLOAD_NONCRITICAL,
-		/*
-		 * If there is a security label in the Traffic
-		 * Selector, then we must send a TS_SECLABEL
-		 * substructure as part of the Traffic
-		 * Selector (TS) Payload.
-		 *
-		 * That means the TS Payload contains two TS
-		 * substructures:
-		 *  - One for the address/port range
-		 *  - One for the TS_SECLABEL
-		 */
-		.isat_num = with_label ? 2 : 1,
-	};
-
-	struct pbs_out ts_pbs;
-	if (!out_struct(&its, ts_desc, outpbs, &ts_pbs)) {
-		return false;
-	}
-
-	if (!emit_v2TS_selector(&ts_pbs, ts)) {
-		return false;
-	}
-
-	if (sec_label.len > 0 &&
-	    !emit_v2TS_sec_label(&ts_pbs, sec_label)) {
-		return false;
-	}
-
-	close_output_pbs(&ts_pbs);
-	return true;
-}
-
 static ip_selector impair_selector_to_subnet(ip_selector ts)
 {
 	const struct ip_info *afi = selector_info(ts);
@@ -338,17 +298,13 @@ static ip_selector impair_selector_to_supernet(ip_selector ts)
 	return ts;
 }
 
-static bool emit_v2TS_request_end_payloads(struct pbs_out *out,
-					   const struct child_sa *child,
-					   enum left_right end,
-					   const struct_desc *ts_desc,
-					   const char *ts_name)
+static bool emit_v2TS_payload(struct pbs_out *outpbs,
+			      const struct child_sa *child,
+			      const struct_desc *ts_desc,
+			      ip_selectors *selectors,
+			      shunk_t sec_label,
+			      const char *name)
 {
-	struct connection *c = child->sa.st_connection;
-	const ip_selectors *const selectors = &c->end[end].child.selectors.proposed;
-	shunk_t sec_label = HUNK_AS_SHUNK(c->child.sec_label);
-	pexpect(selector_eq_selector(selectors->list[0], c->spd->end[end].client));
-
 	unsigned nr_ts = selectors->len;
 	if (sec_label.len > 0) {
 		nr_ts++;
@@ -369,8 +325,9 @@ static bool emit_v2TS_request_end_payloads(struct pbs_out *out,
 		 */
 		.isat_num = nr_ts,
 	};
+
 	struct pbs_out ts_pbs;
-	if (!out_struct(&its, ts_desc, out, &ts_pbs)) {
+	if (!out_struct(&its, ts_desc, outpbs, &ts_pbs)) {
 		return false;
 	}
 
@@ -379,20 +336,35 @@ static bool emit_v2TS_request_end_payloads(struct pbs_out *out,
 	     s++) {
 
 		ip_selector ts = *s;
+		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
+		    impair.rekey_respond_subnet) {
+			ts = impair_selector_to_subnet(ts);
+			selector_buf sb;
+			llog_sa(RC_LOG, child, "IMPAIR: rekey-respond-subnet %s set to %s",
+				name, str_selector(&ts, &sb));
+		}
+		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
+		    impair.rekey_respond_supernet) {
+			ts = impair_selector_to_supernet(ts);
+			selector_buf sb;
+			llog_sa(RC_LOG, child, "IMPAIR: rekey-respond-supernet %s set to %s",
+				name, str_selector(&ts, &sb));
+		}
 		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
 		    impair.rekey_initiate_supernet) {
-			ts = impair_selector_to_supernet(*s);
+			ts = impair_selector_to_supernet(ts);
 			selector_buf tsb;
 			llog_sa(RC_LOG, child,
 				"IMPAIR: rekey-initiate-supernet %s set to %s",
-				ts_name, str_selector(&ts, &tsb));
-		} else if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
-			   impair.rekey_initiate_subnet) {
+				name, str_selector(&ts, &tsb));
+		}
+		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I0 &&
+		    impair.rekey_initiate_subnet) {
 			ts = impair_selector_to_subnet(ts);
 			selector_buf tsb;
 			llog_sa(RC_LOG, child,
 				"IMPAIR: rekey-initiate-subnet %s set to %s",
-				ts_name, str_selector(&ts, &tsb));
+				name, str_selector(&ts, &tsb));
 		}
 
 		if (!emit_v2TS_selector(&ts_pbs, ts)) {
@@ -414,13 +386,17 @@ bool emit_v2TS_request_payloads(struct pbs_out *out, const struct child_sa *chil
 	pexpect(child->sa.st_sa_role == SA_INITIATOR);
 	struct connection *c = child->sa.st_connection;
 
-	if (!emit_v2TS_request_end_payloads(out, child, c->local->config->index,
-					    &ikev2_ts_i_desc, "local TSi")) {
+	if (!emit_v2TS_payload(out, child, &ikev2_ts_i_desc,
+			       &c->local->child.selectors.proposed,
+			       HUNK_AS_SHUNK(c->child.sec_label),
+			       "local TSi")) {
 		return false;
 	}
 
-	if (!emit_v2TS_request_end_payloads(out, child, c->remote->config->index,
-					    &ikev2_ts_r_desc, "remote TSr")) {
+	if (!emit_v2TS_payload(out, child, &ikev2_ts_r_desc,
+			       &c->remote->child.selectors.proposed,
+			       HUNK_AS_SHUNK(c->child.sec_label),
+			       "remote TSr")) {
 		return false;
 	}
 
@@ -430,7 +406,6 @@ bool emit_v2TS_request_payloads(struct pbs_out *out, const struct child_sa *chil
 bool emit_v2TS_response_payloads(struct pbs_out *outpbs, const struct child_sa *child)
 {
 	const struct connection *c = child->sa.st_connection;
-	const struct spd_route *spd = c->spd;
 
 	passert(child->sa.st_sa_role == SA_RESPONDER);
 
@@ -449,35 +424,17 @@ bool emit_v2TS_response_payloads(struct pbs_out *outpbs, const struct child_sa *
 		}
 	}
 
-	ip_selector ts_i = spd->remote->client;
-	ip_selector ts_r = spd->local->client;
-	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
-	    impair.rekey_respond_subnet) {
-		ts_i = impair_selector_to_subnet(ts_i);
-		ts_r = impair_selector_to_subnet(ts_r);
-		selector_buf tsi_buf;
-		selector_buf tsr_buf;
-		llog_sa(RC_LOG, child, "IMPAIR: rekey-respond-subnet TSi and TSr set to %s %s",
-			str_selector(&ts_i, &tsi_buf),
-			str_selector(&ts_r, &tsr_buf));
-	}
-	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&
-	    impair.rekey_respond_supernet) {
-		ts_i = ts_r = impair_selector_to_supernet(ts_i);
-		selector_buf tsi_buf;
-		selector_buf tsr_buf;
-		llog_sa(RC_LOG, child, "IMPAIR: rekey-respond-supernet TSi and TSr set to %s %s",
-			str_selector(&ts_i, &tsi_buf),
-			str_selector(&ts_r, &tsr_buf));
-	}
-
-	if (!emit_v2TS_response_payload(outpbs, &ikev2_ts_i_desc, ts_i,
-					HUNK_AS_SHUNK(c->child.sec_label))) {
+	ip_selectors *accepted_ts_i =
+		(c->remote->child.selectors.accepted.len > 0 ? &c->remote->child.selectors.accepted : &c->remote->child.selectors.proposed);
+	if (!emit_v2TS_payload(outpbs, child, &ikev2_ts_i_desc, accepted_ts_i,
+			       HUNK_AS_SHUNK(c->child.sec_label), "remote TSi")) {
 		return false;
 	}
 
-	if (!emit_v2TS_response_payload(outpbs, &ikev2_ts_r_desc, ts_r,
-					HUNK_AS_SHUNK(c->child.sec_label))) {
+	ip_selectors *accepted_ts_r =
+		(c->local->child.selectors.accepted.len > 0 ? &c->local->child.selectors.accepted : &c->local->child.selectors.proposed);
+	if (!emit_v2TS_payload(outpbs, child, &ikev2_ts_r_desc, accepted_ts_r,
+			       HUNK_AS_SHUNK(c->child.sec_label), "local TSr")) {
 		return false;
 	}
 
