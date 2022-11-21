@@ -226,6 +226,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 
 	FOR_EACH_ELEMENT(end, c->end) {
 		free_id_content(&end->host.id);
+		pfreeany(end->child.selectors.accepted.list);
 	}
 
 	/*
@@ -837,6 +838,7 @@ static void unshare_connection(struct connection *c, struct connection *t/*empla
 	pexpect(c->child.sec_label.ptr == NULL);
 
 	FOR_EACH_THING(end, c->local, c->remote) {
+		pexpect(end->child.selectors.accepted.len == 0);
 		end->host.id = clone_id(&end->host.id, "unshare connection id");
 	}
 
@@ -1442,7 +1444,7 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		child_config->selectors_field = "subnet";
 		child_config->selectors_string = clone_str(src->client, "client");
 		child_config->selectors.len = 1;
-		child_config->selectors.list = alloc_things(ip_selector, 1, "selectors");
+		child_config->selectors.list = alloc_things(ip_selector, 1, "subnet-selectors");
 		child_config->selectors.list[0] =
 			selector_from_subnet_protoport(subnet, src->protoport);
 	} else if (src->client != NULL) {
@@ -1490,7 +1492,7 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		child_config->selectors_field = "sourceip";
 		child_config->selectors_string = clone_str(src->sourceip, "sourceip");
 		child_config->selectors.len = 1;
-		child_config->selectors.list = alloc_things(ip_selector, 1, "selectors");
+		child_config->selectors.list = alloc_things(ip_selector, 1, "sourceip-selectors");
 		child_config->selectors.list[0] =
 			selector_from_address_protoport(sourceip, src->protoport);
 	} else if (src->protoport.is_set) {

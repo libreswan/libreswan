@@ -363,7 +363,7 @@ struct child_end {
 	ip_selector scratch_selector;
 	struct {
 		ip_selectors proposed; /* either scratch_selector or config->selectors; do not free */
-		ip_selectors *accepted; /* must free */
+		ip_selectors accepted; /* must pfree(.list) */
 	} selectors;
 
 	/*

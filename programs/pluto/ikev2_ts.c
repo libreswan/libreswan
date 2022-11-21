@@ -151,16 +151,53 @@ static const char *str_fit_story(enum fit fit)
 	}
 }
 
-static void traffic_selector_to_end(const struct narrowed_selector *n,
-				    struct spd_end *end, const char *story)
+static void scribble_accepted_selectors(ip_selectors *selectors,
+					const struct narrowed_selector_payload *nsp,
+					indent_t indent)
 {
-	selector_buf sb;
-	dbg("%s() %s; %s[%u] selector=%s",
-	    __func__, story, n->name, n->nr,
-	    str_selector(&n->selector, &sb));
-	end->client = n->selector;
+	if (selectors->len > 0) {
+		pexpect(selectors->len > 0);
+		pexpect(selectors->list != NULL);
+		ldbg(indent.logger, "skipping scribble as already scribbled");
+	} else {
+		pexpect(selectors->len == 0);
+		pexpect(selectors->list == NULL);
+		*selectors = (ip_selectors) {
+			.len = nsp->nr,
+			.list = alloc_things(ip_selector, nsp->nr, "accepted-selectors"),
+		};
+		for (unsigned i = 0; i < nsp->nr; i++) {
+			selectors->list[i] = nsp->ts[i].selector;
+		}
+	}
+}
+
+static void scribble_ts_response_on_initiator(struct child_sa *child,
+					      const struct narrowed_selector_payloads *nsps,
+					      indent_t indent)
+{
+	struct connection *c = child->sa.st_connection;
+	ip_selector tsi = nsps->i.ts[0].selector;
+	ip_selector tsr = nsps->r.ts[0].selector;
+	selector_buf si, sr;
+	dbg_ts("scribbling narrowed TSi=%s ...(%u) TSr=%s ...(%u) on initiator",
+	       str_selector(&tsi, &si), nsps->i.nr,
+	       str_selector(&tsr, &sr), nsps->r.nr);
+	/* update */
+	set_end_selector(c, c->local->config->index, tsi,
+			 "scribbling final TSi on end");
+	set_end_selector(c, c->remote->config->index, tsr,
+			 "scribbling final TSr on end");
 	/* redundant? */
-	end->has_client = !selector_eq_address(end->client, end->host->addr);
+	c->spd->local->has_client = !selector_eq_address(c->spd->local->client,
+							 c->local->host.addr);
+	c->spd->remote->has_client = !selector_eq_address(c->spd->remote->client,
+							  c->remote->host.addr);
+	/* end game */
+	scribble_accepted_selectors(&c->local->child.selectors.accepted,
+				    &nsps->i, indent);
+	scribble_accepted_selectors(&c->remote->child.selectors.accepted,
+				    &nsps->r, indent);
 }
 
 /*
@@ -396,6 +433,21 @@ bool emit_v2TS_response_payloads(struct pbs_out *outpbs, const struct child_sa *
 	const struct spd_route *spd = c->spd;
 
 	passert(child->sa.st_sa_role == SA_RESPONDER);
+
+	/*
+	 * XXX: the CP code brokenly bypasses the TS code leaving the
+	 * field unset
+	 *
+	 * XXX: CK_PERMENANT connections don't need to instantiate so
+	 * don't scribble on the TS
+	 */
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		if (c->end[end].child.selectors.accepted.len == 0) {
+			ldbg(child->sa.st_logger,
+			     "connection %s does not have accepted selectors",
+			     c->end[end].config->leftright);
+		}
+	}
 
 	ip_selector ts_i = spd->remote->client;
 	ip_selector ts_r = spd->local->client;
@@ -1077,10 +1129,10 @@ static bool v2_child_connection_probably_shared(struct child_sa *child,
 	return false;
 }
 
-static void scribble_request_ts_on_connection(struct child_sa *child,
-					      struct connection *c,
-					      const struct narrowed_selector_payloads *n,
-					      indent_t indent)
+static void scribble_ts_request_on_responder(struct child_sa *child,
+					     struct connection *c,
+					     const struct narrowed_selector_payloads *nsps,
+					     indent_t indent)
 {
 	if (c != child->sa.st_connection) {
 		connection_buf from, to;
@@ -1097,14 +1149,24 @@ static void scribble_request_ts_on_connection(struct child_sa *child,
 	/*
 	 * hack
 	 *
-	 * Responder processing a request so THIS==RESPONDER and
-	 * THAT=INITIATOR.
+	 * Responder processing a request so LOCAL==RESPONDER and
+	 * REMOTE=INITIATOR.
 	 */
-	dbg_ts("XXX: updating best connection's ports/protocols");
-	set_end_selector(c, c->local->config->index, n->r.ts[0].selector,
-			 "scribbling on end of final TS choice");
-	set_end_selector(c, c->remote->config->index, n->i.ts[0].selector,
-			 "scribbling on end of final TS choice");
+	ip_selector tsi = nsps->i.ts[0].selector;
+	ip_selector tsr = nsps->r.ts[0].selector;
+	selector_buf si, sr;
+	dbg_ts("scribbling narrowed TSi=%s ...(%u) TSr=%s ...(%u) on responder",
+	       str_selector(&tsi, &si), nsps->i.nr,
+	       str_selector(&tsr, &sr), nsps->r.nr);
+	set_end_selector(c, c->local->config->index, tsr,
+			 "scribbling final TSr on end");
+	set_end_selector(c, c->remote->config->index, tsi,
+			 "scribbling final TSr on end");
+	/* end game */
+	scribble_accepted_selectors(&c->local->child.selectors.accepted,
+				    &nsps->r, indent);
+	scribble_accepted_selectors(&c->remote->child.selectors.accepted,
+				    &nsps->i, indent);
 }
 
 /*
@@ -1574,7 +1636,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			} else {
 				s = child->sa.st_connection;
 			}
-			scribble_request_ts_on_connection(child, s, &nsps, indent);
+			scribble_ts_request_on_responder(child, s, &nsps, indent);
 
 			/* switch */
 			best = (struct best) {
@@ -1621,7 +1683,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		struct connection *s = spd_instantiate(best.connection,
 						       &child->sa.st_connection->remote->host.addr,
 						       NULL, best.nsps.i.sec_label);
-		scribble_request_ts_on_connection(child, s, &best.nsps, indent);
+		scribble_ts_request_on_responder(child, s, &best.nsps, indent);
 
 		/* switch to instance; same score */
 		best.connection = s;
@@ -1704,10 +1766,7 @@ bool process_v2TS_response_payloads(struct child_sa *child,
 		return false;
 	}
 
-	traffic_selector_to_end(&best.i.ts[0], c->spd->local,
-				"scribble accepted TSi response on initiator's this");
-	traffic_selector_to_end(&best.r.ts[0], c->spd->remote,
-				"scribble accepted TSr response on initiator's that");
+	scribble_ts_response_on_initiator(child, &best, indent);
 	rehash_db_spd_route_remote_client(c->spd);
 
 	return true;
