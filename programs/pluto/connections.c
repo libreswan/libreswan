@@ -2776,14 +2776,17 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 	selectors[LEFT_END].selector = selectors[LEFT_END].selectors->list; /* could be NULL */
 	while (true) /*LEFT*/ {
-		unsigned indent = 2;
+		unsigned indent = 1;
 		selector_buf leftb;
-		ldbg(c->logger, "%*s%s->", indent, "", str_selector(selectors[LEFT_END].selector, &leftb));
+		ldbg(c->logger, "%*s%s->...", indent, "", str_selector(selectors[LEFT_END].selector, &leftb));
 		selectors[RIGHT_END].selector = selectors[RIGHT_END].selectors->list;  /* could be NULL */
 		while (true) /*RIGHT*/ {
-			indent = 4;
+			indent = 2;
 			selector_buf rightb;
-			ldbg(c->logger, "%*s->%s", indent, "", str_selector(selectors[RIGHT_END].selector, &rightb));
+			ldbg(c->logger, "%*s%s->%s", indent, "",
+			     str_selector(selectors[LEFT_END].selector, &leftb),
+			     str_selector(selectors[RIGHT_END].selector, &rightb));
+			indent = 3;
 			/*
 			 * XXX: Try to filter out IPv4 vs IPv6.  When
 			 * selector is NULL, the host's address family
