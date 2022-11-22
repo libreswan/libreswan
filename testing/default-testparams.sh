@@ -40,14 +40,12 @@ REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS debug.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS impair.sed"
 
 # The following sanitizers are written to only modify specific commands
-REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-setkey.sed"	# NetBSD FreeBSD
-REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-ipsecctl.sed"	# OpenBSD
+REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guestbin-kernel-state.sed"	# includes ip xfrm state
+REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guestbin-kernel-policy.sed"	# includes ip xfrm policy
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS ephemeral-ports.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-ip-route.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-ip-addr.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-ip-link.sed"
-REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-ip-xfrm-state.sed"
-REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-ip-xfrm-policy.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-swan-prep.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-certutil.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-cp.sed"

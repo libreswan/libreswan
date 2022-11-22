@@ -18,10 +18,10 @@ initdone
 west #
  ipsec auto --route eastnet-westnet-ikev2
 west #
- setkey -D
+ ../../guestbin/kernel-state.sh
 No SAD entries.
 west #
- setkey -DP
+ ../../guestbin/kernel-policy.sh
 192.0.1.0/24[any] 192.0.2.0/24[any] 255(reserved)
 	out ipsec
 	esp/transport//require

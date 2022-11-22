@@ -14,26 +14,22 @@ east #
  echo "initdone"
 initdone
 east #
- ipsecctl -v -v -k -s all
-FLOWS:
-@0 flow esp in from 192.0.1.0/24 to 192.0.2.0/24 peer 192.1.2.45 srcid FQDN/east dstid FQDN/west type require
-@1 flow esp out from 192.0.2.0/24 to 192.0.1.0/24 peer 192.1.2.45 srcid FQDN/east dstid FQDN/west type require
-SAD:
+ ../../guestbin/kernel-state.sh
 @0 esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI auth hmac-sha2-256 enc null \
-	authkey 0xX...X \
+	authkey 0xHASHKEY \
 	enckey 0x
 	sa: spi 0xSPISPI auth hmac-sha2-256 enc null
 		state mature replay 64 flags 0x404<tunnel,esn>
-	lifetime_cur: alloc 0 bytes 84 add NNNNNNNNNN first NNNNNNNNNN
-	lifetime_hard: alloc 0 bytes 2147483648 add 10800 first 0
-	lifetime_soft: alloc 0 bytes NNNNNNNNNN add NNNN first 0
+	lifetime_cur: alloc 0 bytes 84 add N first N
+	lifetime_hard: alloc 0 bytes N add N first 0
+	lifetime_soft: alloc 0 bytes N add N first 0
 	address_src: 192.1.2.23
 	address_dst: 192.1.2.45
-	key_auth: bits 256: X...X
-	key_encrypt: bits 0: 
+	key_auth: bits 256: HASHKEY
+	key_encrypt: bits 0: ENCKEY
 	identity_src: type fqdn id 0: FQDN/east
 	identity_dst: type fqdn id 0: FQDN/west
-	lifetime_lastuse: alloc 0 bytes 0 add 0 first NNNNNNNNNN
+	lifetime_lastuse: alloc 0 bytes 0 add 0 first N
 	tag: IKED
 	counter: 
 		0 input packets
@@ -46,20 +42,20 @@ SAD:
 		0 packets dropped on output
 	replay: rpl 2
 @0 esp tunnel from 192.1.2.45 to 192.1.2.23 spi 0xSPISPI auth hmac-sha2-256 enc null \
-	authkey 0xX...X \
+	authkey 0xHASHKEY \
 	enckey 0x
 	sa: spi 0xSPISPI auth hmac-sha2-256 enc null
 		state mature replay 64 flags 0x404<tunnel,esn>
-	lifetime_cur: alloc 0 bytes 88 add NNNNNNNNNN first NNNNNNNNNN
-	lifetime_hard: alloc 0 bytes 2147483648 add 10800 first 0
-	lifetime_soft: alloc 0 bytes NNNNNNNNNN add NNNN first 0
+	lifetime_cur: alloc 0 bytes 88 add N first N
+	lifetime_hard: alloc 0 bytes N add N first 0
+	lifetime_soft: alloc 0 bytes N add N first 0
 	address_src: 192.1.2.45
 	address_dst: 192.1.2.23
-	key_auth: bits 256: X...X
-	key_encrypt: bits 0: 
+	key_auth: bits 256: HASHKEY
+	key_encrypt: bits 0: ENCKEY
 	identity_src: type fqdn id 0: FQDN/west
 	identity_dst: type fqdn id 0: FQDN/east
-	lifetime_lastuse: alloc 0 bytes 0 add 0 first NNNNNNNNNN
+	lifetime_lastuse: alloc 0 bytes 0 add 0 first N
 	tag: IKED
 	counter: 
 		1 input packet
@@ -71,5 +67,9 @@ SAD:
 		0 packets dropped on input
 		0 packets dropped on output
 	replay: rpl 1
+east #
+ ../../guestbin/kernel-policy.sh
+@0 flow esp in from 192.0.1.0/24 to 192.0.2.0/24 peer 192.1.2.45 srcid FQDN/east dstid FQDN/west type require
+@1 flow esp out from 192.0.2.0/24 to 192.0.1.0/24 peer 192.1.2.45 srcid FQDN/east dstid FQDN/west type require
 east #
  

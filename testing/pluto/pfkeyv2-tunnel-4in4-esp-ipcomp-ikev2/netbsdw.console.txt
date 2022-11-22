@@ -26,7 +26,7 @@ west #
 003 "eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 004 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP DPD=passive}
 west #
- setkey -DP
+ ../../guestbin/kernel-policy.sh
 192.0.2.0/24[any] 192.0.1.0/24[any] 255(reserved)
 	in ipsec
 	ipcomp/tunnel/192.1.2.23-192.1.2.45/require
@@ -43,11 +43,11 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- setkey -D
+ ../../guestbin/kernel-state.sh
 192.1.2.23 192.1.2.45 
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
-	E: aes-cbc 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
-	A: hmac-sha1 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	seq=0x00000001 replay=8 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
@@ -66,8 +66,8 @@ west #
 	sadb_seq=2 pid=PID refcnt=0
 192.1.2.45 192.1.2.23 
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
-	E: aes-cbc 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
-	A: hmac-sha1 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	seq=0x00000001 replay=8 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
@@ -88,11 +88,11 @@ west #
  ../../guestbin/ping-once.sh --medium --up -I 192.0.1.254 192.0.2.254
 up
 west #
- setkey -D
+ ../../guestbin/kernel-state.sh
 192.1.2.23 192.1.2.45 
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
-	E: aes-cbc 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
-	A: hmac-sha1 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	seq=0x00000002 replay=8 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
@@ -111,8 +111,8 @@ west #
 	sadb_seq=2 pid=PID refcnt=0
 192.1.2.45 192.1.2.23 
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
-	E: aes-cbc 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
-	A: hmac-sha1 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	seq=0x00000002 replay=8 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)

@@ -1,7 +1,7 @@
 ipsec auto --up eastnet-westnet-ikev2
-setkey -DP
+../../guestbin/kernel-policy.sh
 ../../guestbin/ping-once.sh --up 2001:db8:1:2::23
-setkey -D
+../../guestbin/kernel-state.sh
 ../../guestbin/ping-once.sh --medium --up 2001:db8:1:2::23
-setkey -D
+../../guestbin/kernel-state.sh
 dmesg | grep ipsec

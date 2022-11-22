@@ -5,8 +5,6 @@ east #
  echo "initdone"
 initdone
 east #
- if [ -f /var/run/pluto/pluto.pid ]; then ../../guestbin/ipsec-look.sh ; fi
-east #
  if [ -f /var/run/charon.pid -o -f /var/run/strongswan/charon.pid ]; then strongswan statusall ; fi
 Status of IKE charon daemon (strongSwan VERSION):
   uptime: XXX second, since YYY
@@ -29,5 +27,57 @@ westnet-eastnet-ikev2[1]: IKE proposal: AES_CBC_128/HMAC_SHA1_96/PRF_HMAC_SHA1/M
 westnet-eastnet-ikev2{1}:  INSTALLED, TRANSPORT, reqid 1, ESP SPIs: SPISPI_i SPISPI_o
 westnet-eastnet-ikev2{1}:  AES_CBC_128/HMAC_SHA1_96, XX bytes_i, XX bytes_o, rekeying in XX minutes
 westnet-eastnet-ikev2{1}:   192.1.2.23/32 === 192.1.2.45/32
+east #
+ ../../guestbin/kernel-state.sh
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 0 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	sel src 192.1.2.23/32 dst 192.1.2.45/32 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode transport
+	replay-window 32 
+	auth-trunc hmac(sha1) 0xHASHKEY 96
+	enc cbc(aes) 0xENCKEY
+	sel src 192.1.2.45/32 dst 192.1.2.23/32 
+east #
+ ../../guestbin/kernel-policy.sh
+src 192.1.2.23/32 dst 192.1.2.45/32 
+	dir out priority PRIORITY ptype main 
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp spi 0xSPISPI reqid REQID mode transport
+src 192.1.2.45/32 dst 192.1.2.23/32 
+	dir in priority PRIORITY ptype main 
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid REQID mode transport
+src 192.1.2.0/24 dst 192.1.2.0/24 
+	dir fwd priority PRIORITY ptype main 
+src 192.1.2.0/24 dst 192.1.2.0/24 
+	dir in priority PRIORITY ptype main 
+src 192.1.2.0/24 dst 192.1.2.0/24 
+	dir out priority PRIORITY ptype main 
+src 192.0.2.0/24 dst 192.0.2.0/24 
+	dir fwd priority PRIORITY ptype main 
+src 192.0.2.0/24 dst 192.0.2.0/24 
+	dir in priority PRIORITY ptype main 
+src 192.0.2.0/24 dst 192.0.2.0/24 
+	dir out priority PRIORITY ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket in priority 0 ptype main 
+src 0.0.0.0/0 dst 0.0.0.0/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket in priority 0 ptype main 
+src ::/0 dst ::/0 
+	socket out priority 0 ptype main 
 east #
  

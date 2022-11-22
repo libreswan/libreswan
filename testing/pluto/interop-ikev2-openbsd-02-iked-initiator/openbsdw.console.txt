@@ -18,18 +18,66 @@ west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
 west #
- ipsecctl -s all | sort
-FLOWS:
-SAD:
-esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI auth hmac-sha2-256 enc aes
-esp tunnel from 192.1.2.45 to 192.1.2.23 spi 0xSPISPI auth hmac-sha2-256 enc aes
-flow esp in from 192.0.2.0/24 to 192.0.1.0/24 peer 192.1.2.23 srcid FQDN/west dstid FQDN/east type require
-flow esp in from 192.0.2.0/24 to 192.1.2.45 peer 192.1.2.23 srcid FQDN/west dstid FQDN/east type require
-flow esp in from 192.1.2.23 to 192.0.1.0/24 peer 192.1.2.23 srcid FQDN/west dstid FQDN/east type require
-flow esp out from 192.0.1.0/24 to 192.0.2.0/24 peer 192.1.2.23 srcid FQDN/west dstid FQDN/east type require
-flow esp out from 192.0.1.0/24 to 192.1.2.23 peer 192.1.2.23 srcid FQDN/west dstid FQDN/east type require
-flow esp out from 192.1.2.45 to 192.0.2.0/24 peer 192.1.2.23 srcid FQDN/west dstid FQDN/east type require
+ ../../guestbin/kernel-state.sh
+@0 esp tunnel from 192.1.2.23 to 192.1.2.45 spi 0xSPISPI auth hmac-sha2-256 enc aes \
+	authkey 0xHASHKEY \
+	enckey 0xENCKEY
+	sa: spi 0xSPISPI auth hmac-sha2-256 enc aes
+		state mature replay 64 flags 0x404<tunnel,esn>
+	lifetime_cur: alloc 0 bytes 192 add N first N
+	lifetime_hard: alloc 0 bytes N add N first 0
+	lifetime_soft: alloc 0 bytes N add N first 0
+	address_src: 192.1.2.23
+	address_dst: 192.1.2.45
+	key_auth: bits 256: HASHKEY
+	key_encrypt: bits 128: ENCKEY
+	identity_src: type fqdn id 0: FQDN/east
+	identity_dst: type fqdn id 0: FQDN/west
+	lifetime_lastuse: alloc 0 bytes 0 add 0 first N
+	tag: IKED
+	counter: 
+		2 input packets
+		0 output packets
+		504 input bytes
+		0 output bytes
+		208 input bytes, decompressed
+		0 output bytes, uncompressed
+		0 packets dropped on input
+		0 packets dropped on output
+	replay: rpl 2
+@0 esp tunnel from 192.1.2.45 to 192.1.2.23 spi 0xSPISPI auth hmac-sha2-256 enc aes \
+	authkey 0xHASHKEY \
+	enckey 0xENCKEY
+	sa: spi 0xSPISPI auth hmac-sha2-256 enc aes
+		state mature replay 64 flags 0x404<tunnel,esn>
+	lifetime_cur: alloc 0 bytes 168 add N first N
+	lifetime_hard: alloc 0 bytes N add N first 0
+	lifetime_soft: alloc 0 bytes N add N first 0
+	address_src: 192.1.2.45
+	address_dst: 192.1.2.23
+	key_auth: bits 256: HASHKEY
+	key_encrypt: bits 128: ENCKEY
+	identity_src: type fqdn id 0: FQDN/west
+	identity_dst: type fqdn id 0: FQDN/east
+	lifetime_lastuse: alloc 0 bytes 0 add 0 first N
+	tag: IKED
+	counter: 
+		0 input packets
+		2 output packets
+		0 input bytes
+		312 output bytes
+		0 input bytes, decompressed
+		208 output bytes, uncompressed
+		0 packets dropped on input
+		0 packets dropped on output
+	replay: rpl 3
 west #
- if [ -f /tmp/iked.log ]; then cp /tmp/iked.log OUTPUT/openbsdw.iked.log ; fi
+ ../../guestbin/kernel-policy.sh
+@0 flow esp in from 192.0.2.0/24 to 192.0.1.0/24 peer 192.1.2.23 srcid FQDN/west dstid FQDN/east type require
+@1 flow esp in from 192.0.2.0/24 to 192.1.2.45 peer 192.1.2.23 srcid FQDN/west dstid FQDN/east type require
+@2 flow esp in from 192.1.2.23 to 192.0.1.0/24 peer 192.1.2.23 srcid FQDN/west dstid FQDN/east type require
+@3 flow esp out from 192.0.1.0/24 to 192.0.2.0/24 peer 192.1.2.23 srcid FQDN/west dstid FQDN/east type require
+@4 flow esp out from 192.0.1.0/24 to 192.1.2.23 peer 192.1.2.23 srcid FQDN/west dstid FQDN/east type require
+@5 flow esp out from 192.1.2.45 to 192.0.2.0/24 peer 192.1.2.23 srcid FQDN/west dstid FQDN/east type require
 west #
  
