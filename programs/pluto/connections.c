@@ -1924,6 +1924,13 @@ static bool extract_connection(const struct whack_message *wm,
 		return false;
 	}
 
+	if ((wm->policy & POLICY_MOBIKE) &&
+	    (wm->policy & POLICY_TUNNEL) == LEMPTY) {
+		llog(RC_FATAL, c->logger,
+		     ADD_FAILED_PREFIX"MOBIKE requires tunnel mode");
+		return false;
+	}
+
 	if (wm->policy & POLICY_IKEV2_ALLOW_NARROWING &&
 	    c->config->ike_version < IKEv2) {
 		llog(RC_FATAL, c->logger,

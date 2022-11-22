@@ -898,16 +898,6 @@ struct kernel_migrate {
 		ip_address new_address;
 	} src, dst;
 
-	/*
-	 * Is the stack using tunnel mode; and if it is does this SA
-	 * need the tunnel-mode bit?
-	 *
-	 * In tunnel mode, only the inner-most SA (level==0) should
-	 * have the tunnel-mode bit set.  And in transport mode, all
-	 * SAs get selectors.
-	 */
-	bool tunnel;
-
 	int xfrm_dir;			/* xfrm has 3, in,out & fwd */
 	ipsec_spi_t spi;
 	const struct ip_protocol *proto;	/* ESP, AH, IPCOMP */
@@ -930,6 +920,7 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 				     struct kernel_migrate *migrate)
 {
 	const struct connection *const c = child->sa.st_connection;
+	pexpect(c->policy & POLICY_TUNNEL);
 
 	const struct ip_encap *encap_type =
 		(child->sa.st_interface->io->protocol == &ip_protocol_tcp) ? &ip_encap_esp_in_tcp :
@@ -991,8 +982,6 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 		.proto = proto,
 		.encap_type = encap_type,
 		.reqid = reqid_esp(c->spd->reqid),
-		.tunnel = (child->sa.st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
-			   child->sa.st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL),
 		.spi = dst->spi,
 		.src = {
 			.address = src->end->host->addr,
@@ -1082,7 +1071,7 @@ static bool migrate_xfrm_sa(const struct kernel_migrate *sa, struct logger *logg
 		migrate.old_daddr = xfrm_from_address(&sa->dst.address);
 		migrate.new_saddr = xfrm_from_address(&sa->src.new_address);
 		migrate.new_daddr = xfrm_from_address(&sa->dst.new_address);
-		migrate.mode = sa->tunnel ? XFRM_MODE_TUNNEL : XFRM_MODE_TRANSPORT;
+		migrate.mode = XFRM_MODE_TUNNEL;
 		migrate.proto = sa->proto->ipproto;
 		migrate.reqid = sa->reqid;
 		migrate.old_family = migrate.new_family = address_info(sa->src.address)->af;
