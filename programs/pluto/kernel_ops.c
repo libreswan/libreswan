@@ -193,10 +193,10 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 			jam(buf, " %s", sa->ipcomp->common.fqn);
 		}
 		if (sa->integ != NULL) {
-			jam(buf, " %s:%d", sa->integ->common.fqn, sa->authkeylen);
+			jam(buf, " %s:%zu", sa->integ->common.fqn, sa->integ_key.len);
 		}
 		if (sa->encrypt != NULL) {
-			jam(buf, " %s:%d", sa->encrypt->common.fqn, sa->enckeylen);
+			jam(buf, " %s:%zu", sa->encrypt->common.fqn, sa->encrypt_key.len);
 		}
 	}
 	return kernel_ops->add_sa(sa, replace, logger);

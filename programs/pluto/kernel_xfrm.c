@@ -1427,7 +1427,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 		}
 	}
 
-	if (sa->authkeylen != 0) {
+	if (sa->integ_key.len > 0) {
 		const char *name = sa->integ->integ_netlink_xfrm_name;
 		if (name == NULL) {
 			llog(RC_LOG_SERIOUS, logger,
@@ -1464,10 +1464,10 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 		 */
 
 		attr->rta_type = XFRMA_ALG_AUTH_TRUNC;
-		attr->rta_len = RTA_LENGTH(alg_key_offset + sa->authkeylen);
+		attr->rta_len = RTA_LENGTH(alg_key_offset + sa->integ_key.len);
 
 		memcpy(RTA_DATA(attr), &algo, alg_key_offset);
-		memcpy((char *)RTA_DATA(attr) + alg_key_offset, sa->authkey, sa->authkeylen);
+		memcpy((char *)RTA_DATA(attr) + alg_key_offset, sa->integ_key.ptr, sa->integ_key.len);
 
 		req.n.nlmsg_len += attr->rta_len;
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
@@ -1522,7 +1522,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 			 */
 			size_t alg_key_offset = offsetof(struct xfrm_algo_aead, alg_key);
 			struct xfrm_algo_aead algo = {
-				.alg_key_len = sa->enckeylen * BITS_PER_BYTE,
+				.alg_key_len = sa->encrypt_key.len * BITS_PER_BYTE,
 				.alg_icv_len = sa->encrypt->aead_tag_size * BITS_PER_BYTE,
 			};
 			fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
@@ -1534,10 +1534,10 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 			 * encryption key at .alg_key[]'s offset.
 			 */
 			attr->rta_type = XFRMA_ALG_AEAD;
-			attr->rta_len = RTA_LENGTH(alg_key_offset + sa->enckeylen);
+			attr->rta_len = RTA_LENGTH(alg_key_offset + sa->encrypt_key.len);
 
 			memcpy(RTA_DATA(attr), &algo, alg_key_offset);
-			memcpy((char *)RTA_DATA(attr) + alg_key_offset, sa->enckey, sa->enckeylen);
+			memcpy((char *)RTA_DATA(attr) + alg_key_offset, sa->encrypt_key.ptr, sa->encrypt_key.len);
 
 			req.n.nlmsg_len += attr->rta_len;
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);
@@ -1551,7 +1551,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 			 */
 			size_t alg_key_offset = offsetof(struct xfrm_algo, alg_key);
 			struct xfrm_algo algo = {
-				.alg_key_len = sa->enckeylen * BITS_PER_BYTE,
+				.alg_key_len = sa->encrypt_key.len * BITS_PER_BYTE,
 			};
 			fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
 
@@ -1562,9 +1562,9 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 			 * encryption key at .alg_key[]'s offset.
 			 */
 			attr->rta_type = XFRMA_ALG_CRYPT;
-			attr->rta_len = RTA_LENGTH(alg_key_offset + sa->enckeylen);
+			attr->rta_len = RTA_LENGTH(alg_key_offset + sa->encrypt_key.len);
 			memcpy(RTA_DATA(attr), &algo, alg_key_offset);
-			memcpy((char *)RTA_DATA(attr) + alg_key_offset, sa->enckey, sa->enckeylen);
+			memcpy((char *)RTA_DATA(attr) + alg_key_offset, sa->encrypt_key.ptr, sa->encrypt_key.len);
 
 			req.n.nlmsg_len += attr->rta_len;
 			attr = (struct rtattr *)((char *)attr + attr->rta_len);

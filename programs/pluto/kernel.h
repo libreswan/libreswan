@@ -242,14 +242,11 @@ struct kernel_state {
 	unsigned replay_window;
 	reqid_t reqid;
 
-	const struct integ_desc *integ;
-	unsigned authkeylen;
-	unsigned char *authkey;
-
-	const struct ipcomp_desc *ipcomp;
 	const struct encrypt_desc *encrypt;
-	unsigned enckeylen;
-	unsigned char *enckey;
+	shunk_t encrypt_key;
+	const struct integ_desc *integ;
+	shunk_t integ_key;
+	const struct ipcomp_desc *ipcomp;
 
 	ip_address *natt_oa;
 	const char *story;

@@ -884,13 +884,13 @@ static bool pfkeyv2_add_sa(const struct kernel_state *k,
 
 	/* (address(P)) */
 
-	/* key(AE[C]) (AUTH/INTEG/IPCOMP) */
+	/* key(AE[C]) (AUTH/INTEG/ENCRYPT/IPCOMP) */
 
-	if (k->authkeylen > 0) {
-		put_sadb_key(&req, SADB_EXT_KEY_AUTH, shunk2(k->authkey, k->authkeylen));
+	if (k->integ_key.len > 0) {
+		put_sadb_key(&req, SADB_EXT_KEY_AUTH, k->integ_key);
 	}
-	if (k->enckeylen > 0) {
-		put_sadb_key(&req, SADB_EXT_KEY_ENCRYPT, shunk2(k->enckey, k->enckeylen));
+	if (k->encrypt_key.len > 0) {
+		put_sadb_key(&req, SADB_EXT_KEY_ENCRYPT, k->encrypt_key);
 	}
 
 	/* (lifetime(HSC)) */

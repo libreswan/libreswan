@@ -2032,8 +2032,8 @@ static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 	if (st->st_esp.present) {
 		ipsec_spi_t esp_spi = (direction == DIRECTION_INBOUND ? st->st_esp.inbound.spi :
 				       st->st_esp.outbound.spi);
-		chunk_t esp_dst_keymat = (direction == DIRECTION_INBOUND ? st->st_esp.inbound.keymat :
-					  st->st_esp.outbound.keymat);
+		chunk_t esp_keymat = (direction == DIRECTION_INBOUND ? st->st_esp.inbound.keymat :
+				      st->st_esp.outbound.keymat);
 		const struct trans_attrs *ta = &st->st_esp.attrs.transattrs;
 
 		const struct ip_encap *encap_type = NULL;
@@ -2119,9 +2119,9 @@ static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 		size_t integ_keymat_size = ta->ta_integ->integ_keymat_size; /* BYTES */
 
 		dbg("kernel: st->st_esp.keymat_len=%zu is encrypt_keymat_size=%zu + integ_keymat_size=%zu",
-		    esp_dst_keymat.len, encrypt_keymat_size, integ_keymat_size);
+		    esp_keymat.len, encrypt_keymat_size, integ_keymat_size);
 
-		PASSERT(st->st_logger, esp_dst_keymat.len == encrypt_keymat_size + integ_keymat_size);
+		PASSERT(st->st_logger, esp_keymat.len == encrypt_keymat_size + integ_keymat_size);
 
 		*said_next = said_boilerplate;
 		said_next->spi = esp_spi;
@@ -2185,10 +2185,8 @@ static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 		said_next->encrypt = ta->ta_encrypt;
 
 		/* divide up keying material */
-		said_next->encrypt_key = esp_dst_keymat.ptr;
-		said_next->enckeylen = encrypt_keymat_size; /* BYTES */
-		said_next->authkey = esp_dst_keymat.ptr + encrypt_keymat_size;
-		said_next->authkeylen = integ_keymat_size; /* BYTES */
+		said_next->encrypt_key = shunk2(esp_keymat.ptr, encrypt_keymat_size); /*BYTES*/
+		said_next->integ_key = shunk2(esp_keymat.ptr + encrypt_keymat_size, integ_keymat_size); /*BYTES*/
 
 		said_next->level = said_next - said;
 		said_next->reqid = reqid_esp(c->spd->reqid);
@@ -2202,10 +2200,8 @@ static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 					    esp_spi, &text_esp);
 
 		if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
-			DBG_dump("ESP enckey:",  said_next->enckey,
-				 said_next->enckeylen);
-			DBG_dump("ESP authkey:", said_next->authkey,
-				 said_next->authkeylen);
+			DBG_dump_hunk("ESP encrypt key:",  said_next->encrypt_key);
+			DBG_dump_hunk("ESP integrity key:", said_next->integ_key);
 		}
 
 		setup_esp_nic_offload(said_next, c, &nic_offload_fallback);
@@ -2213,15 +2209,14 @@ static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 		bool ret = kernel_ops_add_sa(said_next, replace, st->st_logger);
 
 		if (!ret && nic_offload_fallback &&
-			said_next->nic_offload_dev != NULL) {
+		    said_next->nic_offload_dev != NULL) {
 			/* Fallback to non-nic-offload crypto */
 			said_next->nic_offload_dev = NULL;
 			ret = kernel_ops_add_sa(said_next, replace, st->st_logger);
 		}
 
 		/* scrub keys from memory */
-		memset(said_next->enckey, 0, said_next->enckeylen);
-		memset(said_next->authkey, 0, said_next->authkeylen);
+		memset(esp_keymat.ptr, 0, esp_keymat.len);
 
 		if (!ret)
 			goto fail;
@@ -2234,27 +2229,24 @@ static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 	if (st->st_ah.present) {
 		ipsec_spi_t ah_spi = (direction == DIRECTION_INBOUND ? st->st_ah.inbound.spi :
 				      st->st_ah.outbound.spi);
-		chunk_t ah_dst_keymat = (direction == DIRECTION_INBOUND ? st->st_ah.inbound.keymat :
-					 st->st_ah.outbound.keymat);
+		chunk_t ah_keymat = (direction == DIRECTION_INBOUND ? st->st_ah.inbound.keymat :
+				     st->st_ah.outbound.keymat);
 
 		const struct integ_desc *integ = st->st_ah.attrs.transattrs.ta_integ;
-		size_t keymat_size = integ->integ_keymat_size;
-		int authalg = integ->integ_ikev1_ah_transform;
-		if (authalg <= 0) {
+		if (integ->integ_ikev1_ah_transform <= 0) {
 			log_state(RC_LOG_SERIOUS, st,
 				  "%s not implemented",
 				  integ->common.fqn);
 			goto fail;
 		}
 
-		PASSERT(st->st_logger, ah_dst_keymat.len == keymat_size);
+		PASSERT(st->st_logger, ah_keymat.len == integ->integ_keymat_size);
 
 		*said_next = said_boilerplate;
 		said_next->spi = ah_spi;
 		said_next->proto = &ip_protocol_ah;
 		said_next->integ = integ;
-		said_next->authkeylen = ah_dst_keymat.len;
-		said_next->authkey = ah_dst_keymat.ptr;
+		said_next->integ_key = shunk2(ah_keymat.ptr, ah_keymat.len);
 		said_next->level = said_next - said;
 		said_next->reqid = reqid_ah(c->spd->reqid);
 		said_next->story = said_str(kernel_policy.dst.host,
@@ -2270,17 +2262,16 @@ static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 		}
 
 		if (DBGP(DBG_PRIVATE) || DBGP(DBG_CRYPT)) {
-			DBG_dump("AH authkey:", said_next->authkey,
-				 said_next->authkeylen);
+			DBG_dump_hunk("AH authkey:", said_next->integ_key);
 		}
 
-		if (!kernel_ops_add_sa(said_next, replace, st->st_logger)) {
-			/* scrub key from memory */
-			memset(said_next->authkey, 0, said_next->authkeylen);
+		bool ret = kernel_ops_add_sa(said_next, replace, st->st_logger);
+		/* scrub key from memory */
+		memset(ah_keymat.ptr, 0, ah_keymat.len);
+
+		if (!ret) {
 			goto fail;
 		}
-		/* scrub key from memory */
-		memset(said_next->authkey, 0, said_next->authkeylen);
 
 		said_next++;
 	}
