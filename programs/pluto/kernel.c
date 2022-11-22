@@ -2185,7 +2185,7 @@ static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 		said_next->encrypt = ta->ta_encrypt;
 
 		/* divide up keying material */
-		said_next->enckey = esp_dst_keymat.ptr;
+		said_next->encrypt_key = esp_dst_keymat.ptr;
 		said_next->enckeylen = encrypt_keymat_size; /* BYTES */
 		said_next->authkey = esp_dst_keymat.ptr + encrypt_keymat_size;
 		said_next->authkeylen = integ_keymat_size; /* BYTES */

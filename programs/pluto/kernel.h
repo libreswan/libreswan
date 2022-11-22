@@ -214,12 +214,6 @@ struct kernel_state_end {
 	 * selector or packet filter.
 	 */
 	ip_selector client;
-	/*
-	 * XXX: for mobike? does this need a port or is the port
-	 * optional or unchanging? perhaps the port is assumed to be
-	 * embedded in the address (making it an endpoint)
-	 */
-	ip_address new_address;
 };
 
 struct kernel_state {
@@ -238,7 +232,6 @@ struct kernel_state {
 	unsigned level;		/* inner-most is 0 */
 
 	enum direction direction;
-	int xfrm_dir;			/* xfrm has 3, in,out & fwd */
 	bool esn;
 	bool decap_dscp;
 	bool nopmtudisc;
