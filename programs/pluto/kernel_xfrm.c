@@ -119,8 +119,6 @@ static int nl_send_fd = NULL_FD; /* to send to NETLINK_XFRM */
 static int nl_xfrm_fd = NULL_FD; /* listen to NETLINK_XFRM broadcast */
 static int nl_route_fd = NULL_FD; /* listen to NETLINK_ROUTE broadcast */
 
-static int kernel_mobike_supprt ; /* kernel xfrm_migrate_support */
-
 #define NE(x) { #x, x }	/* Name Entry -- shorthand for sparse_names */
 
 static sparse_names xfrm_type_names = {
@@ -878,52 +876,76 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	return ok;
 }
 
-static void set_migration_attr(const struct kernel_state *sa,
-			       struct xfrm_user_migrate *m)
-{
-	m->old_saddr = xfrm_from_address(&sa->src.address);
-	m->old_daddr = xfrm_from_address(&sa->dst.address);
-	m->new_saddr = xfrm_from_address(&sa->src.new_address);
-	m->new_daddr = xfrm_from_address(&sa->dst.new_address);
-	m->mode = (sa->level == 0 && sa->tunnel ? XFRM_MODE_TUNNEL : XFRM_MODE_TRANSPORT);
-	m->proto = sa->proto->ipproto;
-	m->reqid = sa->reqid;
-	m->old_family = m->new_family = address_info(sa->src.address)->af;
-}
+struct kernel_migrate {
+	struct kernel_migrate_end {
+		/*
+		 * For ESP/AH which is carried by raw IP packets, only an
+		 * address is needed to identify an end.  However when
+		 * encapsulated (in UDP or TCP) the port is also needed.
+		 */
+		ip_address address;
+		int encap_port;
+		/*
+		 * This is not the subnet you're looking for: the transport
+		 * selector or packet filter.
+		 */
+		ip_selector client;
+		/*
+		 * XXX: for mobike? does this need a port or is the port
+		 * optional or unchanging? perhaps the port is assumed to be
+		 * embedded in the address (making it an endpoint)
+		 */
+		ip_address new_address;
+	} src, dst;
 
-/*
- * size of buffer needed for "story"
- *
- * RFC 1886 old IPv6 reverse-lookup format is the bulkiest.
- *
- * Since the bufs have 2 char padding, this slightly overallocates.
- */
-typedef struct {
-	char buf[16 + sizeof(said_buf) + sizeof(address_reversed_buf)];
-} story_buf;
+	/*
+	 * Is the stack using tunnel mode; and if it is does this SA
+	 * need the tunnel-mode bit?
+	 *
+	 * In tunnel mode, only the inner-most SA (level==0) should
+	 * have the tunnel-mode bit set.  And in transport mode, all
+	 * SAs get selectors.
+	 */
+	bool tunnel;
 
-static bool create_xfrm_migrate_sa(struct state *st,
-				   const int dir,	/* netkey SA direction XFRM_POLICY_{IN,OUT,FWD} */
-				   struct kernel_state *ret_sa,
-				   story_buf *story /* must live as long as *ret_sa */)
+	int xfrm_dir;			/* xfrm has 3, in,out & fwd */
+	ipsec_spi_t spi;
+	const struct ip_protocol *proto;	/* ESP, AH, IPCOMP */
+	const struct ip_encap *encap_type;	/* ESP-in-TCP, ESP-in-UDP; or NULL(transport?) */
+	reqid_t reqid;
+
+	/*
+	 * size of buffer needed for "story"
+	 *
+	 * RFC 1886 old IPv6 reverse-lookup format is the bulkiest.
+	 *
+	 * Since the bufs have 2 char padding, this slightly
+	 * overallocates.
+	 */
+	char story[16 + sizeof(said_buf) + sizeof(address_reversed_buf)];
+};
+
+static bool init_xfrm_kernel_migrate(struct child_sa *child,
+				     const int xfrm_policy_dir,	/* netkey SA direction XFRM_POLICY_{IN,OUT,FWD} */
+				     struct kernel_migrate *migrate)
 {
-	const struct connection *const c = st->st_connection;
+	const struct connection *const c = child->sa.st_connection;
 
 	const struct ip_encap *encap_type =
-		(st->st_interface->io->protocol == &ip_protocol_tcp) ? &ip_encap_esp_in_tcp :
-		(st->hidden_variables.st_nat_traversal & NAT_T_DETECTED) ? &ip_encap_esp_in_udp :
+		(child->sa.st_interface->io->protocol == &ip_protocol_tcp) ? &ip_encap_esp_in_tcp :
+		(child->sa.hidden_variables.st_nat_traversal & NAT_T_DETECTED) ? &ip_encap_esp_in_udp :
 		NULL;
-	dbg("TCP/NAT: encap type "PRI_IP_ENCAP, pri_ip_encap(encap_type));
+	ldbg_sa(child, "TCP/NAT: encap type "PRI_IP_ENCAP, pri_ip_encap(encap_type));
 
 	const struct ip_protocol *proto;
-	struct ipsec_proto_info *proto_info;
+	const struct ipsec_proto_info *proto_info;
 
-	if (st->st_esp.present) {
+	if (child->sa.st_esp.present) {
 		proto = &ip_protocol_esp;
-		proto_info = &st->st_esp;
-	} else if (st->st_ah.present) {
+		proto_info = &child->sa.st_esp;
+	} else if (child->sa.st_ah.present) {
 		proto = &ip_protocol_ah;
-		proto_info = &st->st_ah;
+		proto_info = &child->sa.st_ah;
 	} else {
 		return false;
 	}
@@ -936,19 +958,19 @@ static bool create_xfrm_migrate_sa(struct state *st,
 
 	const struct spd_end_info local = {
 		.end = c->spd->local,
-		.endpoint = st->st_interface->local_endpoint,
+		.endpoint = child->sa.st_interface->local_endpoint,
 		.spi = proto_info->inbound.spi,
 	};
 
 	const struct spd_end_info remote = {
 		.end = c->spd->remote,
-		.endpoint = st->st_remote_endpoint,
+		.endpoint = child->sa.st_remote_endpoint,
 		.spi = proto_info->outbound.spi,
 	};
 
 	const struct spd_end_info *src, *dst;
 
-	switch (dir) {
+	switch (xfrm_policy_dir) {
 	case XFRM_POLICY_OUT:
 		src = &local;
 		dst = &remote;
@@ -961,17 +983,16 @@ static bool create_xfrm_migrate_sa(struct state *st,
 		break;
 
 	default:
-		bad_case(dir);
+		bad_case(xfrm_policy_dir);
 	}
 
-	struct kernel_state sa = {
-		.xfrm_dir = dir,
+	*migrate = (struct kernel_migrate) {
+		.xfrm_dir = xfrm_policy_dir,
 		.proto = proto,
 		.encap_type = encap_type,
 		.reqid = reqid_esp(c->spd->reqid),
-		.tunnel = (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
-			   st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL),
-		.story = story->buf,	/* content will evolve */
+		.tunnel = (child->sa.st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
+			   child->sa.st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL),
 		.spi = dst->spi,
 		.src = {
 			.address = src->end->host->addr,
@@ -988,48 +1009,45 @@ static bool create_xfrm_migrate_sa(struct state *st,
 		/* WWW what about sec_label? */
 	};
 
-	passert(endpoint_is_specified(st->st_mobike_local_endpoint) != endpoint_is_specified(st->st_mobike_remote_endpoint));
+	passert(endpoint_is_specified(child->sa.st_mobike_local_endpoint) != endpoint_is_specified(child->sa.st_mobike_remote_endpoint));
 
-	struct jambuf story_jb = ARRAY_AS_JAMBUF(story->buf);
+	struct jambuf story_jb = ARRAY_AS_JAMBUF(migrate->story);
 	const struct spd_end_info *old_ei;
 	ip_endpoint new_ep;
 
-	if (endpoint_is_specified(st->st_mobike_local_endpoint)) {
+	if (endpoint_is_specified(child->sa.st_mobike_local_endpoint)) {
 		jam_string(&story_jb, "initiator migrate kernel SA ");
 		old_ei = &local;
-		new_ep = st->st_mobike_local_endpoint;
+		new_ep = child->sa.st_mobike_local_endpoint;
 	} else {
 		jam_string(&story_jb, "responder migrate kernel SA ");
 		old_ei = &remote;
-		new_ep = st->st_mobike_remote_endpoint;
+		new_ep = child->sa.st_mobike_remote_endpoint;
 	}
 
-	struct kernel_state_end *changing_ke = (old_ei == src) ? &sa.src : &sa.dst;
+	struct kernel_migrate_end *changing_ke = (old_ei == src) ? &migrate->src : &migrate->dst;
 
 	changing_ke->new_address = endpoint_address(new_ep);
 	changing_ke->encap_port = endpoint_hport(new_ep);
 
 	if (encap_type == NULL)
-		sa.src.encap_port = sa.dst.encap_port = 0;
+		migrate->src.encap_port = migrate->dst.encap_port = 0;
 
-	ip_said said = said_from_address_protocol_spi(dst->end->host->addr, proto, sa.spi);
+	ip_said said = said_from_address_protocol_spi(dst->end->host->addr, proto, migrate->spi);
 	jam_said(&story_jb, &said);
 
 	endpoint_buf ra_old, ra_new;
 	jam(&story_jb, ":%s to %s reqid=%u %s",
 	    str_endpoint(&old_ei->endpoint, &ra_old),
 	    str_endpoint(&new_ep, &ra_new),
-	    sa.reqid,
-	    enum_name(&xfrm_policy_names, dir));
+	    migrate->reqid,
+	    enum_name(&xfrm_policy_names, xfrm_policy_dir));
 
-	dbg("%s", story->buf);
-
-	*ret_sa = sa;
+	ldbg_sa(child, "%s", migrate->story);
 	return true;
 }
 
-static bool migrate_xfrm_sa(const struct kernel_state *sa,
-			    struct logger *logger)
+static bool migrate_xfrm_sa(const struct kernel_migrate *sa, struct logger *logger)
 {
 	struct {
 		struct nlmsghdr n;
@@ -1059,7 +1077,15 @@ static bool migrate_xfrm_sa(const struct kernel_state *sa,
 		attr->rta_type = XFRMA_MIGRATE;
 		attr->rta_len = sizeof(migrate);
 
-		set_migration_attr(sa, &migrate);
+		/* set the migration attributes */
+		migrate.old_saddr = xfrm_from_address(&sa->src.address);
+		migrate.old_daddr = xfrm_from_address(&sa->dst.address);
+		migrate.new_saddr = xfrm_from_address(&sa->src.new_address);
+		migrate.new_daddr = xfrm_from_address(&sa->dst.new_address);
+		migrate.mode = sa->tunnel ? XFRM_MODE_TUNNEL : XFRM_MODE_TRANSPORT;
+		migrate.proto = sa->proto->ipproto;
+		migrate.reqid = sa->reqid;
+		migrate.old_family = migrate.new_family = address_info(sa->src.address)->af;
 
 		memcpy(RTA_DATA(attr), &migrate, attr->rta_len);
 		attr->rta_len = RTA_LENGTH(attr->rta_len);
@@ -1067,9 +1093,9 @@ static bool migrate_xfrm_sa(const struct kernel_state *sa,
 	}
 
 	if (sa->encap_type != NULL) {
-		dbg("adding xfrm_encap_templ when migrating sa encap_type="PRI_IP_ENCAP" sport=%d dport=%d",
-		    pri_ip_encap(sa->encap_type),
-		    sa->src.encap_port, sa->dst.encap_port);
+		ldbg(logger, "adding xfrm_encap_templ when migrating sa encap_type="PRI_IP_ENCAP" sport=%d dport=%d",
+		     pri_ip_encap(sa->encap_type),
+		     sa->src.encap_port, sa->dst.encap_port);
 		attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 		struct xfrm_encap_tmpl natt;
 
@@ -1100,28 +1126,24 @@ static bool migrate_xfrm_sa(const struct kernel_state *sa,
 
 static bool xfrm_migrate_ipsec_sa(struct child_sa *child)
 {
-	/* support ah? if(!st->st_esp.present && !st->st_ah.present)) */
+	/* support ah? if(!child->sa.st_esp.present && !child->sa.st_ah.present)) */
 	if (!child->sa.st_esp.present) {
 		llog_sa(RC_LOG, child, "mobike SA migration only support ESP SA");
 		return false;
 	}
 
-	struct state *st = &child->sa; /* clean up later */
-
-	struct kernel_state sa;
-	story_buf story;	/* must live as long as sa */
+	struct kernel_migrate migrate;
 
 	return
-		create_xfrm_migrate_sa(st, XFRM_POLICY_OUT, &sa, &story) &&
-		migrate_xfrm_sa(&sa, st->st_logger) &&
+		init_xfrm_kernel_migrate(child, XFRM_POLICY_OUT, &migrate) &&
+		migrate_xfrm_sa(&migrate, child->sa.st_logger) &&
 
-		create_xfrm_migrate_sa(st, XFRM_POLICY_IN, &sa, &story) &&
-		migrate_xfrm_sa(&sa, st->st_logger) &&
+		init_xfrm_kernel_migrate(child, XFRM_POLICY_IN, &migrate) &&
+		migrate_xfrm_sa(&migrate, child->sa.st_logger) &&
 
-		create_xfrm_migrate_sa(st, XFRM_POLICY_FWD, &sa, &story) &&
-		migrate_xfrm_sa(&sa, st->st_logger);
+		init_xfrm_kernel_migrate(child, XFRM_POLICY_FWD, &migrate) &&
+		migrate_xfrm_sa(&migrate, child->sa.st_logger);
 }
-
 
 /* see /usr/include/linux/ethtool.h */
 
@@ -2378,8 +2400,33 @@ static void netlink_v6holes(struct logger *logger)
 	}
 }
 
-static bool qry_xfrm_mirgrate_support(struct nlmsghdr *hdr, struct logger *logger)
+static bool qry_xfrm_mirgrate_support(struct logger *logger)
 {
+	/* check the kernel */
+	struct {
+		struct nlmsghdr n;
+		struct xfrm_userpolicy_id id;
+		char data[MAX_NETLINK_DATA_SIZE];
+	} req;
+
+	zero(&req);
+	req.n.nlmsg_flags = NLM_F_REQUEST;
+	req.n.nlmsg_type = XFRM_MSG_MIGRATE;
+	req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
+
+	/* add attrs[XFRM_MSG_MIGRATE] */
+	struct rtattr *attr;
+	struct xfrm_user_migrate migrate;
+
+	zero(&migrate);
+	attr =  (struct rtattr *)((char *)&req + req.n.nlmsg_len);
+	attr->rta_type = XFRMA_MIGRATE;
+	attr->rta_len = sizeof(migrate);
+
+	memcpy(RTA_DATA(attr), &migrate, attr->rta_len);
+	attr->rta_len = RTA_LENGTH(attr->rta_len);
+	req.n.nlmsg_len += attr->rta_len;
+
 	struct nlm_resp rsp;
 	size_t len;
 	ssize_t r;
@@ -2393,16 +2440,19 @@ static bool qry_xfrm_mirgrate_support(struct nlmsghdr *hdr, struct logger *logge
 	}
 
 	/* hdr->nlmsg_seq = ++seq; */
-	len = hdr->nlmsg_len;
+	len = req.n.nlmsg_len;
 	do {
-		r = write(nl_fd, hdr, len);
+		r = write(nl_fd, &req.n, len);
 	} while (r < 0 && errno == EINTR);
+
 	if (r < 0) {
 		llog_error(logger, errno,
 			   "netlink write() xfrm_migrate_support lookup");
 		close(nl_fd);
 		return false;
-	} else if ((size_t)r != len) {
+	}
+
+	if ((size_t)r != len) {
 		llog_error(logger, 0/*no-errno*/,
 			   "netlink write() xfrm_migrate_support message truncated: %zd instead of %zu",
 			    r, len);
@@ -2420,7 +2470,7 @@ static bool qry_xfrm_mirgrate_support(struct nlmsghdr *hdr, struct logger *logge
 				continue;
 			} else if (errno == EAGAIN) {
 				/* old kernel F22 - dos not return proper error ??? */
-				dbg("ignore EAGAIN in %s assume MOBIKE migration is supported", __func__);
+				ldbg(logger, "ignore EAGAIN in %s assume MOBIKE migration is supported", __func__);
 				break;
 			}
 		}
@@ -2430,50 +2480,29 @@ static bool qry_xfrm_mirgrate_support(struct nlmsghdr *hdr, struct logger *logge
 	close(nl_fd);
 
 	if (rsp.n.nlmsg_type == NLMSG_ERROR && rsp.u.e.error == -ENOPROTOOPT) {
-		dbg("MOBIKE will fail got ENOPROTOOPT");
+		ldbg(logger, "MOBIKE will fail got ENOPROTOOPT");
 		return false;
 	}
 
 	return true;
 }
 
-static err_t netlink_migrate_sa_check(struct logger *logger)
+static err_t xfrm_migrate_ipsec_sa_is_enabled(struct logger *logger)
 {
-	if (kernel_mobike_supprt == 0) {
-		/* check the kernel */
-
-		struct {
-			struct nlmsghdr n;
-			struct xfrm_userpolicy_id id;
-			char data[MAX_NETLINK_DATA_SIZE];
-		} req;
-
-		zero(&req);
-		req.n.nlmsg_flags = NLM_F_REQUEST;
-		req.n.nlmsg_type = XFRM_MSG_MIGRATE;
-		req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.id)));
-
-		/* add attrs[XFRM_MSG_MIGRATE] */
-		struct rtattr *attr;
-		struct xfrm_user_migrate migrate;
-
-		zero(&migrate);
-		attr =  (struct rtattr *)((char *)&req + req.n.nlmsg_len);
-		attr->rta_type = XFRMA_MIGRATE;
-		attr->rta_len = sizeof(migrate);
-
-		memcpy(RTA_DATA(attr), &migrate, attr->rta_len);
-		attr->rta_len = RTA_LENGTH(attr->rta_len);
-		req.n.nlmsg_len += attr->rta_len;
-
-		bool ret = qry_xfrm_mirgrate_support(&req.n, logger);
-		kernel_mobike_supprt = ret ? 1 : -1;
-	}
-
-	if (kernel_mobike_supprt > 0) {
+	enum {
+		UNKNOWN, ENABLED, DISABLED,
+	} state = UNKNOWN;
+	static const char disabled_message[] = "requires option CONFIG_XFRM_MIGRATE";
+	switch (state) {
+	case UNKNOWN:
+		state = qry_xfrm_mirgrate_support(logger) ? ENABLED : DISABLED;
+		return state == ENABLED ? NULL : disabled_message;
+	case ENABLED:
 		return NULL;
-	} else {
-		return "CONFIG_XFRM_MIGRATE";
+	case DISABLED:
+		return disabled_message;
+	default:
+		bad_case(state);
 	}
 }
 
@@ -2542,7 +2571,7 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.grp_sa = NULL,
 	.get_ipsec_spi = xfrm_get_ipsec_spi,
 	.del_ipsec_spi = xfrm_del_ipsec_spi,
-	.migrate_sa_check = netlink_migrate_sa_check,
+	.migrate_ipsec_sa_is_enabled = xfrm_migrate_ipsec_sa_is_enabled,
 	.migrate_ipsec_sa = xfrm_migrate_ipsec_sa,
 	.overlap_supported = false,
 	.sha2_truncbug_support = true,

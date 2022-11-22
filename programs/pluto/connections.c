@@ -1939,17 +1939,17 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	if (wm->policy & POLICY_MOBIKE) {
-		if (kernel_ops->migrate_sa_check == NULL) {
+		if (kernel_ops->migrate_ipsec_sa_is_enabled == NULL) {
 			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"MOBIKE not supported by %s interface",
+			     ADD_FAILED_PREFIX"MOBIKE is not supported by %s kernel interface",
 			     kernel_ops->interface_name);
 			return false;
 		}
 		/* probe the interface */
-		err_t err = kernel_ops->migrate_sa_check(c->logger);
+		err_t err = kernel_ops->migrate_ipsec_sa_is_enabled(c->logger);
 		if (err != NULL) {
 			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"MOBIKE kernel support missing for %s interface: %s",
+			     ADD_FAILED_PREFIX"MOBIKE support is not enabled for %s kernel interface: %s",
 			     kernel_ops->interface_name, err);
 			return false;
 		}
