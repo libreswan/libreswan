@@ -19,6 +19,7 @@
 #include "kernel_ops.h"
 #include "log.h"
 #include "kernel_xfrm_interface.h"
+#include "ip_info.h"
 
 /*
  * Setup an IPsec route entry.
@@ -159,9 +160,6 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 {
 	LSWDBGP(DBG_BASE, buf) {
 
-		const struct ip_protocol *src_proto = selector_protocol(sa->src.client);
-		const struct ip_protocol *dst_proto = selector_protocol(sa->dst.client);
-
 		jam(buf, "kernel: add_sa()");
 
 		jam(buf, " level=%d", sa->level);
@@ -171,8 +169,8 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 		jam(buf, " %s", sa->tunnel ? "tunnel" : "transport");
 
 		jam(buf, " ");
-		jam_selector_subnet_port(buf, &sa->src.client);
-		jam(buf, "-%s->", src_proto->name);
+		jam_selector(buf, &sa->src.route);
+		jam_string(buf, "->");
 		jam_address(buf, &sa->src.address);
 		jam(buf, "["PRI_IPSEC_SPI"]", pri_ipsec_spi(sa->spi));
 		if (sa->encap_type != NULL) {
@@ -180,8 +178,8 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 		}
 		jam(buf, "==>");
 		jam_address(buf, &sa->dst.address);
-		jam(buf, "-%s->", dst_proto->name);
-		jam_selector_subnet_port(buf, &sa->dst.client);
+		jam_string(buf, "->");
+		jam_selector(buf, &sa->dst.route);
 
 		if (sa->esn) jam(buf, " +esn");
 		if (sa->decap_dscp) jam(buf, " +decap_dscp");
@@ -197,6 +195,31 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 		}
 		if (sa->encrypt != NULL) {
 			jam(buf, " %s:%zu", sa->encrypt->common.fqn, sa->encrypt_key.len);
+		}
+	}
+
+	if (!sa->tunnel/*i.e., transport-mode*/) {
+		/*
+		 * XXX: since this is for transport mode what is
+		 * allowed to change?
+		 *
+		 * Suspect this code is handling the scenario:
+		 *
+		 *   l.client <-> l.host <-> r.host <-> r.host+client
+		 *
+		 * where src.client and dst.host+client are called the
+		 * ROUTE.
+		 */
+		const struct ip_info *afi = address_info(sa->src.address);
+		pexpect(selector_info(sa->src.route) == afi);
+		pexpect(selector_info(sa->dst.route) == afi);
+		if (DBGP(DBG_BASE)) {
+			/* XXX: no test triggers these!?! */
+			pexpect(selector_prefix_bits(sa->src.route) == afi->mask_cnt);
+			pexpect(selector_prefix_bits(sa->dst.route) == afi->mask_cnt);
+			/* don't know which of .D/.S is .L/.R */
+			pexpect(address_eq_address(sa->src.address, selector_prefix(sa->src.route)));
+			pexpect(address_eq_address(sa->dst.address, selector_prefix(sa->dst.route)));
 		}
 	}
 	return kernel_ops->add_sa(sa, replace, logger);

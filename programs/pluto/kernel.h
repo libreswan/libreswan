@@ -205,15 +205,30 @@ struct kernel_state_end {
 	 * address is needed to identify an end.  However when
 	 * encapsulated (in UDP or TCP) the port is also needed.
 	 *
-	 * XXX: why is this a pointer and not simply the value?
+	 * Why not an endpoint so that it encapsulates the port and,
+	 * for that matter the protocol?
 	 */
 	ip_address address;
 	int encap_port;
 	/*
 	 * This is not the subnet you're looking for: the transport
 	 * selector or packet filter.
+	 *
+	 * XXX: old comment?
+	 *
+	 * The route addresses of the encapsulated packets.
+	 *
+	 * With pfkey and transport mode with nat-traversal we need to
+	 * change the remote IPsec SA to point to external ip of the
+	 * peer.  Here we substitute real client ip with NATD ip.
+	 *
+	 * Bug #1004 fix.
+	 *
+	 * There really isn't "client" with XFRM and transport mode so
+	 * eroute must be done to natted, visible ip. If we don't hide
+	 * internal IP, communication doesn't work.
 	 */
-	ip_selector client;
+	ip_selector route;
 };
 
 struct kernel_state {

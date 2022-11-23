@@ -923,6 +923,100 @@ bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd,
  * the wire.  A -1 entry of the packet to be encapsulated is implied.
  */
 
+struct kernel_route {
+	enum encap_mode mode;
+	struct {
+		ip_address address; /* ip_endpoint? */
+		ip_selector route; /* ip_address? */
+	} src, dst;
+};
+
+static struct kernel_route kernel_route_from_state(const struct state *st, enum direction direction)
+{
+	const struct connection *c = st->st_connection;
+
+	enum encap_mode mode = ENCAP_MODE_TRANSPORT;
+	FOR_EACH_THING(proto, &st->st_esp, &st->st_ah) {
+		if (proto->present && proto->attrs.mode == ENCAPSULATION_MODE_TUNNEL) {
+			mode = ENCAP_MODE_TUNNEL;
+			break;
+		}
+	}
+
+	/*
+	 * With pfkey and transport mode with nat-traversal we need to
+	 * change the remote IPsec SA to point to external ip of the
+	 * peer.  Here we substitute real client ip with NATD ip.
+	 *
+	 * Bug #1004 fix.
+	 *
+	 * There really isn't "client" with XFRM and transport mode so
+	 * eroute must be done to natted, visible ip. If we don't hide
+	 * internal IP, communication doesn't work.
+	 */
+	ip_selector local_route;
+	ip_selector remote_route;
+	switch (mode) {
+	case ENCAP_MODE_TUNNEL:
+		local_route = unset_selector;	/* XXX: kernel_policy has spd->client */
+		remote_route = unset_selector;	/* XXX: kernel_policy has spd->client */
+		break;
+	case ENCAP_MODE_TRANSPORT:
+	{
+		ip_selector remote_client;
+		switch (c->config->ike_version) {
+		case IKEv1:
+			local_route = c->spd->local->client;
+			remote_client = c->spd->remote->client;
+			break;
+		case IKEv2:
+		{
+			const ip_selectors *local = &c->local->child.selectors.accepted;
+			passert(local->len > 0);
+			const ip_selectors *remote = &c->remote->child.selectors.accepted;
+			passert(remote->len > 0);
+			/* only one */
+			pexpect(local->len == 1);
+			local_route = local->list[0];
+			pexpect(remote->len == 1);
+			remote_client = remote->list[0];
+			break;
+		}
+		default:
+			bad_case(c->config->ike_version);
+		}
+		/* reroute remote to pair up with dest */
+		remote_route = selector_from_address_protocol_port(c->remote->host.addr,
+								   selector_protocol(remote_client),
+								   selector_port(remote_client));
+		break;
+	}
+	default:
+		bad_case(mode);
+	}
+
+	switch (direction) {
+	case DIRECTION_INBOUND:
+		return (struct kernel_route) {
+			.mode = mode,
+			.src.address = c->remote->host.addr,
+			.dst.address = c->local->host.addr,
+			.src.route = remote_route,
+			.dst.route = local_route,
+		};
+	case DIRECTION_OUTBOUND:
+		return (struct kernel_route) {
+			.mode = mode,
+			.src.address = c->local->host.addr,
+			.dst.address = c->remote->host.addr,
+			.src.route = local_route,
+			.dst.route = remote_route,
+		};
+	default:
+		bad_case(direction);
+	}
+}
+
 static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 						   const struct spd_route *spd,
 						   enum encap_mode mode,
@@ -961,12 +1055,12 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 		src = spd->remote;
 		dst = spd->local;
 		src_route = remote_client;
-		dst_route = dst->client;
+		dst_route = dst->client;	/* XXX: kernel_route has unset_selector */
 		break;
 	case DIRECTION_OUTBOUND:
 		src = spd->local;
 		dst = spd->remote;
-		src_route = src->client;
+		src_route = src->client;	/* XXX: kernel_route has unset_selector */
 		dst_route = remote_client;
 		break;
 	default:
@@ -1942,17 +2036,6 @@ static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 	said_buf text_esp;
 	said_buf text_ah;
 
-	/*
-	 * Construct the policy policysulation rules; it determines
-	 * tunnel mode as a side effect.  There needs to be at least
-	 * one rule.
-	 */
-	struct kernel_policy kernel_policy =
-		kernel_policy_from_state(st, c->spd, direction);
-	if (!pexpect(kernel_policy.nr_rules > 0)) {
-		return false;
-	}
-
 	uint64_t sa_ipsec_soft_bytes =  c->config->sa_ipsec_max_bytes;
 	uint64_t sa_ipsec_soft_packets = c->config->sa_ipsec_max_packets;
 
@@ -1966,13 +2049,17 @@ static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 							IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE,
 							st->st_logger);
 	}
+
+
+	struct kernel_route route = kernel_route_from_state(st, direction);
+
 	const struct kernel_state said_boilerplate = {
-		.src.address = kernel_policy.src.host,
-		.dst.address = kernel_policy.dst.host,
-		.src.client = kernel_policy.src.route,
-		.dst.client = kernel_policy.dst.route,
+		.src.address = route.src.address,
+		.dst.address = route.dst.address,
+		.src.route = route.src.route,
+		.dst.route = route.dst.route,
 		.direction = direction,
-		.tunnel = (kernel_policy.mode == ENCAP_MODE_TUNNEL),
+		.tunnel = (route.mode == ENCAP_MODE_TUNNEL),
 		.sa_lifetime = c->config->sa_ipsec_max_lifetime,
 		.sa_max_soft_bytes = sa_ipsec_soft_bytes,
 		.sa_max_soft_packets = sa_ipsec_soft_packets,
@@ -1983,8 +2070,6 @@ static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 			      c->child.sec_label /* assume connection outlive their kernel_sa's */),
 	};
 
-
-
 	address_buf sab, dab;
 	selector_buf scb, dcb;
 	dbg("kernel: %s() %s %s->[%s=%s=>%s]->%s sec_label="PRI_SHUNK"%s",
@@ -1992,11 +2077,11 @@ static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 	    (said_boilerplate.direction == DIRECTION_INBOUND ? "inbound" :
 	     said_boilerplate.direction == DIRECTION_OUTBOUND ? "outbound" :
 	     "???"),
-	    str_selector(&said_boilerplate.src.client, &scb),
+	    str_selector(&said_boilerplate.src.route, &scb),
 	    str_address(&said_boilerplate.src.address, &sab),
-	    encap_mode_name(kernel_policy.mode),
+	    encap_mode_name(route.mode),
 	    str_address(&said_boilerplate.dst.address, &dab),
-	    str_selector(&said_boilerplate.dst.client, &dcb),
+	    str_selector(&said_boilerplate.dst.route, &dcb),
 	    /* see above */
 	    pri_shunk(said_boilerplate.sec_label),
 	    (st->st_v1_seen_sec_label.len > 0 ? " (IKEv1 seen)" :
@@ -2016,7 +2101,7 @@ static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 		said_next->ipcomp = st->st_ipcomp.attrs.transattrs.ta_ipcomp;
 		said_next->level = said_next - said;
 		said_next->reqid = reqid_ipcomp(c->spd->reqid);
-		said_next->story = said_str(kernel_policy.dst.host,
+		said_next->story = said_str(route.dst.address,
 					    &ip_protocol_ipcomp,
 					    ipcomp_spi, &text_ipcomp);
 
@@ -2195,7 +2280,7 @@ static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 		said_next->dst.encap_port = encap_dport;
 		said_next->encap_type = encap_type;
 		said_next->natt_oa = &natt_oa;
-		said_next->story = said_str(kernel_policy.dst.host,
+		said_next->story = said_str(route.dst.address,
 					    &ip_protocol_esp,
 					    esp_spi, &text_esp);
 
@@ -2249,7 +2334,7 @@ static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 		said_next->integ_key = shunk2(ah_keymat.ptr, ah_keymat.len);
 		said_next->level = said_next - said;
 		said_next->reqid = reqid_ah(c->spd->reqid);
-		said_next->story = said_str(kernel_policy.dst.host,
+		said_next->story = said_str(route.dst.address,
 					    &ip_protocol_ah,
 					    ah_spi, &text_ah);
 
@@ -2286,7 +2371,7 @@ static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 	 */
 	dbg("kernel: %s() is thinking about installing inbound eroute? direction=%d owner=#%lu %s",
 	    __func__, direction, c->spd->eroute_owner,
-	    encap_mode_name(kernel_policy.mode));
+	    encap_mode_name(route.mode));
 	if (direction == DIRECTION_INBOUND &&
 	    c->spd->eroute_owner == SOS_NOBODY &&
 	    (c->config->sec_label.len == 0 || c->config->ike_version == IKEv1)) {
