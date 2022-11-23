@@ -2412,8 +2412,7 @@ static bool setup_half_kernel_policy(struct state *st, enum direction direction)
 	 */
 	dbg("kernel: %s() is thinking about installing inbound eroute? direction=%d owner=#%lu",
 	    __func__, direction, c->spd->eroute_owner);
-	if (direction == DIRECTION_INBOUND &&
-	    c->spd->eroute_owner == SOS_NOBODY &&
+	if (c->spd->eroute_owner == SOS_NOBODY &&
 	    (c->config->sec_label.len == 0 || c->config->ike_version == IKEv1)) {
 		dbg("kernel: %s() is installing inbound eroute", __func__);
 
@@ -2753,27 +2752,26 @@ bool install_inbound_ipsec_sa(struct state *st)
 	if (!st->st_outbound_done) {
 		dbg("kernel: installing outgoing SA now");
 		if (!setup_half_kernel_state(st, DIRECTION_OUTBOUND)) {
-			dbg("%s() failed to install outbound kernel state", __func__);
+			dbg("kernel: %s() failed to install outbound kernel state", __func__);
 			return false;
 		}
-		if (!setup_half_kernel_policy(st, DIRECTION_OUTBOUND)) {
-			dbg("%s() failed to install outbound kernel policy", __func__);
-			return false;
-		}
+		dbg("kernel: %s() setup outbound SA (kernel policy installed earlier?)", __func__);
 		st->st_outbound_done = true;
 	}
 
 	/* (attempt to) actually set up the SAs */
 
 	if (!setup_half_kernel_state(st, DIRECTION_INBOUND)) {
-		dbg("%s() failed to install inbound kernel state", __func__);
+		dbg("kernel: %s() failed to install inbound kernel state", __func__);
 		return false;
 	}
 
 	if (!setup_half_kernel_policy(st, DIRECTION_INBOUND)) {
-		dbg("%s() failed to install inbound kernel policy", __func__);
+		dbg("kernel: %s() failed to install inbound kernel policy", __func__);
 		return false;
 	}
+
+	dbg("kernel: %s() setup inbound SA", __func__);
 
 	return true;
 }
@@ -3104,30 +3102,24 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 	/* setup outgoing SA if we haven't already */
 	if (!st->st_outbound_done) {
 		if (!setup_half_kernel_state(st, DIRECTION_OUTBOUND)) {
-			dbg("%s() failed to install outbound kernel state", __func__);
+			dbg("kernel: %s() failed to install outbound kernel state", __func__);
 			return false;
 		}
-		if (!setup_half_kernel_policy(st, DIRECTION_OUTBOUND)) {
-			dbg("%s() failed to install outbound kernel policy", __func__);
-			return false;
-		}
-
-		dbg("kernel: set up outgoing SA");
+		dbg("kernel: %s() setup outbound SA (kernel policy installed earlier?)", __func__);
 		st->st_outbound_done = true;
 	}
 
 	/* now setup inbound SA */
 	if (inbound_also) {
 		if (!setup_half_kernel_state(st, DIRECTION_INBOUND)) {
-			dbg("%s() failed to install inbound kernel state", __func__);
+			dbg("kernel: %s() failed to install inbound kernel state", __func__);
 			return false;
 		}
 		if (!setup_half_kernel_policy(st, DIRECTION_INBOUND)) {
-			dbg("%s() failed to install inbound kernel policy", __func__);
+			dbg("kernel: %s() failed to install inbound kernel policy", __func__);
 			return false;
 		}
-
-		dbg("kernel: set up incoming SA");
+		dbg("kernel: %s() setup inbound SA", __func__);
 
 		/*
 		 * We successfully installed an IPsec SA, meaning it is safe
