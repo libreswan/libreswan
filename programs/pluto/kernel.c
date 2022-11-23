@@ -2351,6 +2351,29 @@ static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 		said_next++;
 	}
 
+	/* If there are multiple SPIs, group them. */
+
+	if (kernel_ops->grp_sa != NULL && said_next > &said[1]) {
+		/*
+		 * group SAs, two at a time, inner to outer (backwards in
+		 * said[])
+		 *
+		 * The grouping is by pairs.  So if said[] contains
+		 * ah esp ipip,
+		 *
+		 * the grouping would be ipip:esp, esp:ah.
+		 */
+		for (struct kernel_state *s = said; s < said_next - 1; s++) {
+			dbg("kernel: grouping %s and %s",
+			    s[0].story, s[1].story);
+			if (!kernel_ops->grp_sa(s + 1, s)) {
+				log_state(RC_LOG, st, "grp_sa failed");
+				goto fail;
+			}
+		}
+		/* could update said, but it will not be used */
+	}
+
 	/*
 	 * Add an inbound eroute to enforce an arrival check.
 	 *
@@ -2396,29 +2419,6 @@ static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 			llog(RC_LOG, st->st_logger,
 			     "raw_policy() in setup_half_ipsec_sa() failed to add inbound");
 		}
-	}
-
-	/* If there are multiple SPIs, group them. */
-
-	if (kernel_ops->grp_sa != NULL && said_next > &said[1]) {
-		/*
-		 * group SAs, two at a time, inner to outer (backwards in
-		 * said[])
-		 *
-		 * The grouping is by pairs.  So if said[] contains
-		 * ah esp ipip,
-		 *
-		 * the grouping would be ipip:esp, esp:ah.
-		 */
-		for (struct kernel_state *s = said; s < said_next - 1; s++) {
-			dbg("kernel: grouping %s and %s",
-			    s[0].story, s[1].story);
-			if (!kernel_ops->grp_sa(s + 1, s)) {
-				log_state(RC_LOG, st, "grp_sa failed");
-				goto fail;
-			}
-		}
-		/* could update said, but it will not be used */
 	}
 
 	/* if the impaired is set, pretend this fails */
