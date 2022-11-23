@@ -532,7 +532,7 @@ bool fmt_common_shell_out(char *buf,
 #	define JDipaddr(name, addr)  JDemitter(name, { ip_address ta = addr; jam_address(&jb, &ta); } )
 
 	JDstr("PLUTO_CONNECTION", c->name);
-	JDstr("PLUTO_CONNECTION_TYPE", tunneling ? "tunnel" : "transport");
+	JDstr("PLUTO_CONNECTION_TYPE", (tunneling ? "tunnel" : "transport"));
 	JDstr("PLUTO_VIRT_INTERFACE", (c->xfrmi != NULL && c->xfrmi->name != NULL) ?
 		c->xfrmi->name : "NULL");
 	JDstr("PLUTO_INTERFACE", c->interface == NULL ? "NULL" : c->interface->ip_dev->id_rname);
@@ -2064,12 +2064,10 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 	selector_buf scb, dcb;
 	dbg("kernel: %s() %s %s->[%s=%s=>%s]->%s sec_label="PRI_SHUNK"%s",
 	    __func__,
-	    (said_boilerplate.direction == DIRECTION_INBOUND ? "inbound" :
-	     said_boilerplate.direction == DIRECTION_OUTBOUND ? "outbound" :
-	     "???"),
+	    enum_name_short(&direction_names, said_boilerplate.direction),
 	    str_selector(&said_boilerplate.src.route, &scb),
 	    str_address(&said_boilerplate.src.address, &sab),
-	    encap_mode_name(route.mode),
+	    enum_name_short(&encap_mode_names, route.mode),
 	    str_address(&said_boilerplate.dst.address, &dab),
 	    str_selector(&said_boilerplate.dst.route, &dcb),
 	    /* see above */
@@ -2410,8 +2408,9 @@ static bool setup_half_kernel_policy(struct state *st, enum direction direction)
 	 * Note reversed ends.
 	 * Not much to be done on failure.
 	 */
-	dbg("kernel: %s() is thinking about installing inbound eroute? direction=%d owner=#%lu",
-	    __func__, direction, c->spd->eroute_owner);
+	dbg("kernel: %s() installing kernel-policy direction=%s owner="PRI_SO,
+	    __func__, enum_name_short(&direction_names, direction),
+	    pri_so(c->spd->eroute_owner));
 	if (c->spd->eroute_owner == SOS_NOBODY &&
 	    (c->config->sec_label.len == 0 || c->config->ike_version == IKEv1)) {
 		dbg("kernel: %s() is installing inbound eroute", __func__);
@@ -3513,19 +3512,16 @@ bool get_ipsec_traffic(struct state *st,
 
 	struct ipsec_flow *flow;
 	ip_address src, dst;
-	const char *flow_name;
 	switch (direction) {
 	case DIRECTION_INBOUND:
 		flow = &proto_info->inbound;
 		src = remote_ip;
 		dst = c->local->host.addr;
-		flow_name = "inbound";
 		break;
 	case DIRECTION_OUTBOUND:
 		flow = &proto_info->outbound;
 		src = c->local->host.addr;
 		dst = remote_ip;
-		flow_name = "outbound";
 		break;
 	default:
 		bad_case(direction);
@@ -3533,7 +3529,8 @@ bool get_ipsec_traffic(struct state *st,
 
 	if (flow->kernel_sa_expired & SA_HARD_EXPIRED) {
 		dbg("kernel expired %s SA SPI "PRI_IPSEC_SPI" get_sa_info()",
-		    flow_name, pri_ipsec_spi(flow->spi));
+		    enum_name_short(&direction_names, direction),
+		    pri_ipsec_spi(flow->spi));
 		return true; /* all is well use last known info */
 	}
 

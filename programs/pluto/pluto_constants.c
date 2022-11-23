@@ -274,17 +274,34 @@ enum_names kernel_policy_op_names = {
 
 /* enum direction_names */
 
-static const char *kernel_policy_dir_name[] = {
-#define S(E) [E] = #E
+static const char *direction_name[] = {
+#define S(E) [E-DIRECTION_INBOUND] = #E
 	S(DIRECTION_OUTBOUND),
 	S(DIRECTION_INBOUND),
 #undef S
 };
 
-enum_names kernel_policy_dir_names = {
-	0, elemsof(kernel_policy_dir_name)-1,
-	ARRAY_REF(kernel_policy_dir_name),
-	.en_prefix = "KERNEL_POLICY_DIR_",
+enum_names direction_names = {
+	DIRECTION_INBOUND,
+	DIRECTION_OUTBOUND,
+	ARRAY_REF(direction_name),
+	.en_prefix = "DIRECTION_",
+};
+
+/* enum encap_mode_names */
+
+static const char *encap_mode_name[] = {
+#define S(E) [E-ENCAP_MODE_TRANSPORT] = #E
+	S(ENCAP_MODE_TRANSPORT),
+	S(ENCAP_MODE_TUNNEL),
+#undef S
+};
+
+enum_names encap_mode_names = {
+	ENCAP_MODE_TRANSPORT,
+	ENCAP_MODE_TUNNEL,
+	ARRAY_REF(encap_mode_name),
+	.en_prefix = "ENCAP_MODE_",
 };
 
 /* */
@@ -351,7 +368,8 @@ static const enum_names *pluto_enum_names_checklist[] = {
 	&perspective_names,
 	&sa_policy_bit_names,
 	&kernel_policy_op_names,
-	&kernel_policy_dir_names,
+	&direction_names,
+	&encap_mode_names,
 	&shunt_policy_names,
 	&keyword_auth_names,
 	&keyword_host_names,

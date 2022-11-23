@@ -58,8 +58,6 @@ enum kernel_policy_op {
 
 extern const struct enum_names kernel_policy_op_names;
 
-extern const struct enum_names kernel_policy_dir_names;
-
 /*
  * The protocol used to encapsulate.
  *
@@ -91,23 +89,18 @@ enum encap_proto {
  */
 
 enum encap_mode {
-	ENCAP_MODE_TRANSPORT = 1,
+	ENCAP_MODE_TRANSPORT = 2, /*>true */
 	ENCAP_MODE_TUNNEL,
 };
 
-#define encap_mode_name(E)						\
-	({								\
-		enum encap_mode e_ = E;					\
-		(e_ == ENCAP_MODE_TUNNEL ? "tunnel" :			\
-		 e_ == ENCAP_MODE_TRANSPORT ? "transport" :		\
-		 e_ == 0 ? "any!?!" :					\
-		 "unknown");						\
-	})
+extern const struct enum_names encap_mode_names;
 
 enum direction {
-	DIRECTION_INBOUND = 2,
+	DIRECTION_INBOUND = 2, /*>true*/
 	DIRECTION_OUTBOUND,
 };
+
+extern const struct enum_names direction_names;
 
 
 /*

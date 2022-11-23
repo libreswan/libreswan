@@ -51,7 +51,7 @@ bool raw_policy(enum kernel_policy_op op,
 
 		jam_enum_short(buf, &kernel_policy_op_names, op);
 		jam_string(buf, "+");
-		jam_enum_short(buf, &kernel_policy_dir_names, dir);
+		jam_enum_short(buf, &direction_names, dir);
 
 		if (kernel_policy != NULL &&
 		    kernel_policy->nr_rules > 0 &&
@@ -86,7 +86,8 @@ bool raw_policy(enum kernel_policy_op op,
 			jam_address(buf, &kernel_policy->src.host);
 			jam(buf, "==>");
 			jam_address(buf, &kernel_policy->dst.host);
-			jam(buf, ",mode=%s", encap_mode_name(kernel_policy->mode));
+			jam_string(buf, ",mode=");
+			jam_enum_short(buf, &encap_mode_names, kernel_policy->mode);
 
 			jam_string(buf, "rule=[(inner)");
 			const char *sep = "";
@@ -163,10 +164,9 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 		jam(buf, "kernel: add_sa()");
 
 		jam(buf, " level=%d", sa->level);
-		jam(buf, " %s", (sa->direction == DIRECTION_INBOUND ? "inbound" :
-				 sa->direction == DIRECTION_OUTBOUND ? "outbound" :
-				 "???"));
-		jam(buf, " %s", sa->tunnel ? "tunnel" : "transport");
+		jam_string(buf, " ");
+		jam_enum_short(buf, &direction_names, sa->direction);
+		jam(buf, " %s", (sa->tunnel ? "tunnel" : "transport"));
 
 		jam(buf, " ");
 		jam_selector(buf, &sa->src.route);

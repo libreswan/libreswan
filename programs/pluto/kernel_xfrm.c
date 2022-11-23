@@ -528,7 +528,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 			    struct logger *logger)
 {
 	const char *op_str = enum_name_short(&kernel_policy_op_names, op);
-	const char *dir_str = enum_name_short(&kernel_policy_dir_names, dir);
+	const char *dir_str = enum_name_short(&direction_names, dir);
 
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
 	pexpect(selector_protocol(*dst_client) == client_proto);
@@ -757,7 +757,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 				DBG_log("%s() ignoring xfrm_user_tmpl reqid=%d proto=%s %s because op=%s dir=%s",
 					__func__, rule->reqid,
 					protocol_from_ipproto(rule->proto)->name,
-					encap_mode_name(kernel_policy->mode),
+					enum_name_short(&encap_mode_names, kernel_policy->mode),
 					op_str, dir_str);
 			}
 		}
