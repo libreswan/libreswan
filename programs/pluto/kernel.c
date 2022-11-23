@@ -2009,7 +2009,7 @@ static void setup_esp_nic_offload(struct kernel_state *sa, struct connection *c,
  * Set up one direction of the SA bundle
  */
 
-static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
+static bool setup_half_kernel_state(struct state *st, enum direction direction)
 {
 	/* Build an inbound or outbound SA */
 
@@ -2373,7 +2373,35 @@ static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 		}
 		/* could update said, but it will not be used */
 	}
+	/* if the impaired is set, pretend this fails */
+	if (impair.sa_creation) {
+		DBG_log("Impair SA creation is set, pretending to fail");
+		goto fail;
+	}
+	return true;
 
+fail:
+	log_state(RC_LOG, st, "setup_half_ipsec_sa() hit fail:");
+	/*
+	 * Undo the done SPIs.
+	 *
+	 * Deleting the SPI also deletes any SAs attached to them.
+	 */
+	while (said_next-- != said) {
+		if (said_next->proto != NULL) {
+			kernel_ops_del_ipsec_spi(said_next->spi,
+						 said_next->proto,
+						 &said_next->src.address,
+						 &said_next->dst.address,
+						 st->st_logger);
+		}
+	}
+	return false;
+}
+
+static bool setup_half_kernel_policy(struct state *st, enum direction direction)
+{
+	const struct connection *c = st->st_connection;
 	/*
 	 * Add an inbound eroute to enforce an arrival check.
 	 *
@@ -2382,9 +2410,8 @@ static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 	 * Note reversed ends.
 	 * Not much to be done on failure.
 	 */
-	dbg("kernel: %s() is thinking about installing inbound eroute? direction=%d owner=#%lu %s",
-	    __func__, direction, c->spd->eroute_owner,
-	    encap_mode_name(route.mode));
+	dbg("kernel: %s() is thinking about installing inbound eroute? direction=%d owner=#%lu",
+	    __func__, direction, c->spd->eroute_owner);
 	if (direction == DIRECTION_INBOUND &&
 	    c->spd->eroute_owner == SOS_NOBODY &&
 	    (c->config->sec_label.len == 0 || c->config->ike_version == IKEv1)) {
@@ -2421,30 +2448,7 @@ static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 		}
 	}
 
-	/* if the impaired is set, pretend this fails */
-	if (impair.sa_creation) {
-		DBG_log("Impair SA creation is set, pretending to fail");
-		goto fail;
-	}
 	return true;
-
-fail:
-	log_state(RC_LOG, st, "setup_half_ipsec_sa() hit fail:");
-	/*
-	 * Undo the done SPIs.
-	 *
-	 * Deleting the SPI also deletes any SAs attached to them.
-	 */
-	while (said_next-- != said) {
-		if (said_next->proto != NULL) {
-			kernel_ops_del_ipsec_spi(said_next->spi,
-						 said_next->proto,
-						 &said_next->src.address,
-						 &said_next->dst.address,
-						 st->st_logger);
-		}
-	}
-	return false;
 }
 
 /*
@@ -2748,17 +2752,30 @@ bool install_inbound_ipsec_sa(struct state *st)
 	 */
 	if (!st->st_outbound_done) {
 		dbg("kernel: installing outgoing SA now");
-		if (!setup_half_ipsec_sa(st, DIRECTION_OUTBOUND)) {
-			dbg("failed to install outgoing SA");
+		if (!setup_half_kernel_state(st, DIRECTION_OUTBOUND)) {
+			dbg("%s() failed to install outbound kernel state", __func__);
 			return false;
 		}
-
+		if (!setup_half_kernel_policy(st, DIRECTION_OUTBOUND)) {
+			dbg("%s() failed to install outbound kernel policy", __func__);
+			return false;
+		}
 		st->st_outbound_done = true;
 	}
 
 	/* (attempt to) actually set up the SAs */
 
-	return setup_half_ipsec_sa(st, DIRECTION_INBOUND);
+	if (!setup_half_kernel_state(st, DIRECTION_INBOUND)) {
+		dbg("%s() failed to install inbound kernel state", __func__);
+		return false;
+	}
+
+	if (!setup_half_kernel_policy(st, DIRECTION_INBOUND)) {
+		dbg("%s() failed to install inbound kernel policy", __func__);
+		return false;
+	}
+
+	return true;
 }
 
 /* Install a route and then a prospective shunt eroute or an SA group eroute.
@@ -3086,7 +3103,12 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 
 	/* setup outgoing SA if we haven't already */
 	if (!st->st_outbound_done) {
-		if (!setup_half_ipsec_sa(st, DIRECTION_OUTBOUND)) {
+		if (!setup_half_kernel_state(st, DIRECTION_OUTBOUND)) {
+			dbg("%s() failed to install outbound kernel state", __func__);
+			return false;
+		}
+		if (!setup_half_kernel_policy(st, DIRECTION_OUTBOUND)) {
+			dbg("%s() failed to install outbound kernel policy", __func__);
 			return false;
 		}
 
@@ -3096,8 +3118,14 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 
 	/* now setup inbound SA */
 	if (inbound_also) {
-		if (!setup_half_ipsec_sa(st, DIRECTION_INBOUND))
+		if (!setup_half_kernel_state(st, DIRECTION_INBOUND)) {
+			dbg("%s() failed to install inbound kernel state", __func__);
 			return false;
+		}
+		if (!setup_half_kernel_policy(st, DIRECTION_INBOUND)) {
+			dbg("%s() failed to install inbound kernel policy", __func__);
+			return false;
+		}
 
 		dbg("kernel: set up incoming SA");
 
