@@ -956,41 +956,30 @@ static struct kernel_route kernel_route_from_state(const struct state *st, enum 
 	 */
 	ip_selector local_route;
 	ip_selector remote_route;
+	const ip_selectors *local = &c->local->child.selectors.accepted;
+	const ip_selectors *remote = &c->remote->child.selectors.accepted;
 	switch (mode) {
 	case ENCAP_MODE_TUNNEL:
 		local_route = unset_selector;	/* XXX: kernel_policy has spd->client */
 		remote_route = unset_selector;	/* XXX: kernel_policy has spd->client */
 		break;
 	case ENCAP_MODE_TRANSPORT:
-	{
-		ip_selector remote_client;
-		switch (c->config->ike_version) {
-		case IKEv1:
-			local_route = c->spd->local->client;
-			remote_client = c->spd->remote->client;
-			break;
-		case IKEv2:
-		{
-			const ip_selectors *local = &c->local->child.selectors.accepted;
-			passert(local->len > 0);
-			const ip_selectors *remote = &c->remote->child.selectors.accepted;
-			passert(remote->len > 0);
-			/* only one */
-			pexpect(local->len == 1);
-			local_route = local->list[0];
-			pexpect(remote->len == 1);
-			remote_client = remote->list[0];
-			break;
-		}
-		default:
-			bad_case(c->config->ike_version);
-		}
+		/*
+		 * XXX: need to work around:
+		 *
+		 * - IKEv1 which is clueless to selectors.accepted
+		 * - CP which skips setting TS
+		 * - CK_PERMENANT that doesn't update TS
+		 */
+		local_route = (local->len > 0 ? local->list[0] :
+			       c->spd->local->client);
+		ip_selector remote_client = (remote->len > 0 ? remote->list[0] :
+					     c->spd->remote->client);
 		/* reroute remote to pair up with dest */
 		remote_route = selector_from_address_protocol_port(c->remote->host.addr,
 								   selector_protocol(remote_client),
 								   selector_port(remote_client));
 		break;
-	}
 	default:
 		bad_case(mode);
 	}
@@ -2019,6 +2008,7 @@ static void setup_esp_nic_offload(struct kernel_state *sa, struct connection *c,
 /*
  * Set up one direction of the SA bundle
  */
+
 static bool setup_half_ipsec_sa(struct state *st, enum direction direction)
 {
 	/* Build an inbound or outbound SA */
