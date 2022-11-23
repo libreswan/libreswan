@@ -26,7 +26,7 @@ b end
   	s/\(\s\)[0-9a-f]\{8\}/\1XXXXXXXX/g
   }
   s/\(\s\)pid=[1-9][0-9]*/\1pid=PID/
-  s/\(\s\)diff: [1-9][0-9]*/\1diff: N/
+  s/\(\s\)diff: [0-9]\{1,\}/\1diff: N/
 
   # ipsecctl
 

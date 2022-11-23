@@ -50,7 +50,7 @@ west #
 	ipcomp mode=any spi=SPISPI(0xSPISPI) reqid=16390(0x00004006)
 	C: deflate 	seq=0x00000000 replay=0 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
-	diff: 0(s)	hard: 28800(s)	soft: 28800(s)
+	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
 	current: 0(bytes)	hard: 0(bytes)	soft: 0(bytes)
 	allocated: 0	hard: 0	soft: 0
@@ -61,7 +61,7 @@ west #
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	seq=0x00000001 replay=8 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
-	diff: 0(s)	hard: 28800(s)	soft: 28800(s)
+	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
 	current: 124(bytes)	hard: 0(bytes)	soft: 0(bytes)
 	allocated: 1	hard: 0	soft: 0
@@ -70,7 +70,7 @@ west #
 	ipcomp mode=any spi=SPISPI(0xSPISPI) reqid=16390(0x00004006)
 	C: deflate 	seq=0x00000000 replay=0 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
-	diff: 0(s)	hard: 28800(s)	soft: 28800(s)
+	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
 	current: 124(bytes)	hard: 0(bytes)	soft: 0(bytes)
 	allocated: 1	hard: 0	soft: 0
@@ -95,7 +95,7 @@ west #
 	ipcomp mode=any spi=SPISPI(0xSPISPI) reqid=16390(0x00004006)
 	C: deflate 	seq=0x00000000 replay=0 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
-	diff: 0(s)	hard: 28800(s)	soft: 28800(s)
+	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
 	current: 1068(bytes)	hard: 0(bytes)	soft: 0(bytes)
 	allocated: 1	hard: 0	soft: 0
@@ -106,7 +106,7 @@ west #
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	seq=0x00000002 replay=8 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
-	diff: 0(s)	hard: 28800(s)	soft: 28800(s)
+	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
 	current: 205(bytes)	hard: 0(bytes)	soft: 0(bytes)
 	allocated: 2	hard: 0	soft: 0
@@ -115,7 +115,7 @@ west #
 	ipcomp mode=any spi=SPISPI(0xSPISPI) reqid=16390(0x00004006)
 	C: deflate 	seq=0x00000000 replay=0 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
-	diff: 0(s)	hard: 28800(s)	soft: 28800(s)
+	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
 	current: 205(bytes)	hard: 0(bytes)	soft: 0(bytes)
 	allocated: 2	hard: 0	soft: 0
@@ -126,7 +126,7 @@ west #
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	seq=0x00000002 replay=8 flags=0x00000000 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
-	diff: 0(s)	hard: 28800(s)	soft: 28800(s)
+	diff: N(s)	hard: 28800(s)	soft: 28800(s)
 	last: TIMESTAMP	hard: 0(s)	soft: 0(s)
 	current: 296(bytes)	hard: 0(bytes)	soft: 0(bytes)
 	allocated: 2	hard: 0	soft: 0
