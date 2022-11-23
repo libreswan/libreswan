@@ -2489,13 +2489,13 @@ static bool qry_xfrm_mirgrate_support(struct logger *logger)
 
 static err_t xfrm_migrate_ipsec_sa_is_enabled(struct logger *logger)
 {
-	enum {
+	static enum {
 		UNKNOWN, ENABLED, DISABLED,
 	} state = UNKNOWN;
 	static const char disabled_message[] = "requires option CONFIG_XFRM_MIGRATE";
 	switch (state) {
 	case UNKNOWN:
-		state = qry_xfrm_mirgrate_support(logger) ? ENABLED : DISABLED;
+		state = (qry_xfrm_mirgrate_support(logger) ? ENABLED : DISABLED);
 		return state == ENABLED ? NULL : disabled_message;
 	case ENABLED:
 		return NULL;
