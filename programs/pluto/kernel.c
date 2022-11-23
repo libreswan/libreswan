@@ -2411,25 +2411,39 @@ static bool setup_half_kernel_policy(struct state *st, enum direction direction)
 	dbg("kernel: %s() installing kernel-policy direction=%s owner="PRI_SO,
 	    __func__, enum_name_short(&direction_names, direction),
 	    pri_so(c->spd->eroute_owner));
-	if (c->spd->eroute_owner == SOS_NOBODY &&
-	    (c->config->sec_label.len == 0 || c->config->ike_version == IKEv1)) {
-		dbg("kernel: %s() is installing inbound eroute", __func__);
+	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+		if (spd->eroute_owner != SOS_NOBODY) {
+			selector_buf lb, rb;
+			dbg("kernel: %s() skipping %s SPD for %s<->%s as already has owner "PRI_SO,
+			    __func__,
+			    enum_name_short(&direction_names, direction),
+			    str_selector(&spd->local->client, &lb),
+			    str_selector(&spd->remote->client, &rb),
+			    pri_so(spd->eroute_owner));
+			continue;
+		}
+		if (c->config->sec_label.len > 0 &&
+		    c->config->ike_version == IKEv2) {
+			selector_buf lb, rb;
+			dbg("kernel: %s() skipping %s SPD for %s<->%s as IKEv2 config.sec_label="PRI_SHUNK,
+			    __func__,
+			    enum_name_short(&direction_names, direction),
+			    str_selector(&spd->local->client, &lb),
+			    str_selector(&spd->remote->client, &rb),
+			    pri_shunk(c->config->sec_label));
+			continue;
+		}
 
-		/*
-		 * MCR - should be passed a spd_eroute structure here.
-		 *
-		 * Note: this and that are intentionally reversed
-		 * because the policy is inbound.
-		 *
-		 * XXX: yes, that is redundan - KP_ADD_INBOUND is
-		 * already indicating that the parameters are going to
-		 * need reversing ...
-		 */
 		struct kernel_policy kernel_policy =
-			kernel_policy_from_state(st, c->spd,
-						 DIRECTION_INBOUND);
+			kernel_policy_from_state(st, spd, direction);
+		selector_buf sb, db;
+		dbg("kernel: %s() is installing %s SPD for %s->%s",
+		    __func__, enum_name_short(&direction_names, direction),
+		    str_selector(&kernel_policy.src.client, &sb),
+		    str_selector(&kernel_policy.dst.client, &db));
+
 		if (!raw_policy(KERNEL_POLICY_OP_ADD,
-				DIRECTION_INBOUND,
+				direction,
 				EXPECT_KERNEL_POLICY_OK,
 				&kernel_policy.src.route,	/* src_client */
 				&kernel_policy.dst.route,	/* dst_client */
@@ -2442,7 +2456,10 @@ static bool setup_half_kernel_policy(struct state *st, enum direction direction)
 				st->st_logger,
 				"%s() add inbound Child SA", __func__)) {
 			llog(RC_LOG, st->st_logger,
-			     "raw_policy() in setup_half_ipsec_sa() failed to add inbound");
+			     "kernel: %s() failed to add %s SPD (kernel policy) for %s->%s",
+			     __func__, enum_name_short(&direction_names, direction),
+			     str_selector(&kernel_policy.src.client, &sb),
+			     str_selector(&kernel_policy.dst.client, &db));
 		}
 	}
 
