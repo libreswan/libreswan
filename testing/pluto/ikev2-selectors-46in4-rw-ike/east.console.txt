@@ -1,15 +1,11 @@
 /testing/guestbin/swan-prep --46 --nokey
 Creating empty NSS database
 east #
- ip addr add 192.0.20.254/24 dev eth0
-east #
- ip addr add 2001:db8:0:20::256/64 dev eth0
-east #
- ip addr show eth0 | grep global | sort
+ ../../guestbin/ifconfig.sh eth0 add 192.0.20.254/24
     inet 192.0.20.254/24 scope global eth0
-    inet 192.0.2.254/24 scope global eth0
-    inet6 2001:db8:0:20::256/64 scope global
-    inet6 2001:db8:0:2::254/64 scope global
+east #
+ ../../guestbin/ifconfig.sh eth0 add 2001:db8:0:20::256/64
+    inet6 2001:db8:0:20::256/64 scope global 
 east #
  ipsec start
 Redirecting to: [initsystem]
@@ -25,6 +21,6 @@ east #
  # non-zero counts confirm encrypted traffic flowing
 east #
  ipsec trafficstatus
-006 #2: "east"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=188, outBytes=188, maxBytes=2^63B, id='@road'
+006 #2: "east"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@road'
 east #
  
