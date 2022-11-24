@@ -4,8 +4,8 @@ east #
  ../../guestbin/ifconfig.sh eth0 add 192.0.20.254/24
     inet 192.0.20.254/24 scope global eth0
 east #
- ../../guestbin/ifconfig.sh eth0 add 2001:db8:0:20::256/64
-    inet6 2001:db8:0:20::256/64 scope global 
+ ../../guestbin/ifconfig.sh eth0 add 2001:db8:0:20::254/64
+    inet6 2001:db8:0:20::254/64 scope global 
 east #
  ipsec start
 Redirecting to: [initsystem]

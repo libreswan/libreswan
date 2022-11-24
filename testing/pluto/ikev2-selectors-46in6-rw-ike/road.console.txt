@@ -102,11 +102,12 @@ road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
 road #
+ ../../guestbin/ping-once.sh --up 2001:db8:0:20::254
 up
 road #
  # non-zero counts confirm encrypted traffic flowing
 road #
  ipsec trafficstatus
-006 #2: "road", type=ESP, add_time=1234567890, inBytes=188, outBytes=188, maxBytes=2^63B, id='@east'
+006 #2: "road", type=ESP, add_time=1234567890, inBytes=184, outBytes=184, maxBytes=2^63B, id='@east'
 road #
  
