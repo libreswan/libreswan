@@ -88,7 +88,7 @@ export LC_ALL
 #		host's own IP address / mask (where max	is  32	for
 #		IPv4 and 128 for IPv6).
 #
-#	PLUTO_MY_FAMILY
+#	PLUTO_CLIENT_FAMILY
 #		is the child (client) family type, "ipv4" or "ipv6"
 #
 #	PLUTO_MY_CLIENT_NET
@@ -270,7 +270,7 @@ case "${PLUTO_CONN_ADDRFAMILY}" in
 esac
 export HOST_FAMILY HOST_MAX_CIDR HOST_SCOPE
 
-case "${PLUTO_MY_FAMILY}" in
+case "${PLUTO_CLIENT_FAMILY}" in
     ipv4)
 	FAMILY=4
 	MAX_CIDR=32
