@@ -2505,13 +2505,13 @@ static bool extract_connection(const struct whack_message *wm,
 	 * Since security labels use the same REQID for everything,
 	 * pre-assign it.
 	 */
-	c->sa_reqid = (wm->sa_reqid != 0 ? wm->sa_reqid :
-		       wm->ike_version != IKEv2 ? /*generated later*/0 :
-		       wm->sec_label != NULL ? gen_reqid() :
-		       /*generated later*/0);
+	config->sa_reqid = (wm->sa_reqid != 0 ? wm->sa_reqid :
+			    wm->ike_version != IKEv2 ? /*generated later*/0 :
+			    wm->sec_label != NULL ? gen_reqid() :
+			    /*generated later*/0);
 	dbg(PRI_CONNECTION" c->sa_reqid=%d because wm->sa_reqid=%d and sec-label=%s",
 	    pri_connection(c, &cb),
-	    c->sa_reqid, wm->sa_reqid,
+	    config->sa_reqid, wm->sa_reqid,
 	    (wm->ike_version != IKEv2 ? "not-IKEv2" :
 	     wm->sec_label != NULL ? wm->sec_label :
 	     "n/a"));
@@ -2851,14 +2851,6 @@ static bool extract_connection(const struct whack_message *wm,
 				/* leave a debug-log breadcrumb */
 				set_spd_routing(spd, RT_UNROUTED);
 				set_spd_owner(spd, SOS_NOBODY);
-				/*
-				 * Is spd.reqid necessary for all c?
-				 * CK_INSTANCE or CK_PERMANENT need
-				 * one.  Does CK_TEMPLATE need one?
-				 */
-				spd->reqid = (c->sa_reqid == 0 ? gen_reqid() : c->sa_reqid);
-				ldbg(c->logger, "%*sspd->reqid=%d because c->sa_reqid=%d",
-				     indent, "", c->spd->reqid, c->sa_reqid);
 			}
 			/* advance RIGHT (NULL+1>=NULL+0) */
 			if (selectors[RIGHT_END].selector + 1 >= selectors[RIGHT_END].selectors->list + selectors[RIGHT_END].selectors->len) break;
@@ -2868,6 +2860,15 @@ static bool extract_connection(const struct whack_message *wm,
 		if (selectors[LEFT_END].selector + 1 >= selectors[LEFT_END].selectors->list + selectors[LEFT_END].selectors->len) break;
 		selectors[LEFT_END].selector++;
 	}
+
+	/*
+	 * Is spd.reqid necessary for all c?  CK_INSTANCE or
+	 * CK_PERMANENT need one.  Does CK_TEMPLATE need one?
+	 */
+	c->child.reqid = (c->config->sa_reqid == 0 ? gen_reqid() : c->config->sa_reqid);
+	ldbg(c->logger, "child.reqid=%d because c->sa_reqid=%d (%s)",
+	     c->child.reqid, c->config->sa_reqid,
+	     (c->config->sa_reqid == 0 ? "generate" : "use"));
 
 	if (!pexpect(c->spd != NULL)) {
 		return false;
@@ -3027,9 +3028,10 @@ struct connection *add_group_instance(struct connection *group,
 	t->log_file = NULL;
 	t->log_file_err = false;
 
-	t->spd->reqid = group->sa_reqid == 0 ? gen_reqid() : group->sa_reqid;
-	dbg("%s t->spd->reqid=%d because group->sa_reqid=%d",
-	    t->name, t->spd->reqid, group->sa_reqid);
+	t->child.reqid = (group->config->sa_reqid == 0 ? gen_reqid() : group->config->sa_reqid);
+	dbg("%s t.child.reqid=%d because group->sa_reqid=%d (%s)",
+	    t->name, t->child.reqid, group->config->sa_reqid,
+	    (group->config->sa_reqid == 0 ? "generate" : "use"));
 
 	/* same host_pair as parent: stick after parent on list */
 	/* t->hp_next = group->hp_next; */	/* done by clone_thing */
@@ -3141,6 +3143,12 @@ struct connection *instantiate(struct connection *t,
 	 * (whack will not allow nexthop to be elided in RW case.)
 	 */
 	update_host_ends_from_this_host_addr(&d->local->host, &d->remote->host);
+
+	d->child.reqid = (t->config->sa_reqid == 0 ? gen_reqid() : t->config->sa_reqid);
+	dbg("%s d->spd->reqid=%d because t->sa_reqid=%d (%s)",
+	    d->name, d->child.reqid, t->config->sa_reqid,
+	    (t->config->sa_reqid == 0 ? "generate" : "use"));
+
 	return d;
 }
 
@@ -3187,10 +3195,6 @@ struct connection *spd_instantiate(struct connection *t,
 	update_spd_ends_from_host_ends(d);
 	pexpect(oriented(d)); /* can't instantiate an unoriented template? */
 	set_policy_prio(d); /* re-compute; may have changed */
-
-	d->spd->reqid = t->sa_reqid == 0 ? gen_reqid() : t->sa_reqid;
-	dbg("%s d->spd->reqid=%d because t->sa_reqid=%d",
-	    d->name, d->spd->reqid, t->sa_reqid);
 
 	/* should still be true */
 #if 0

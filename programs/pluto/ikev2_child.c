@@ -85,8 +85,7 @@ static bool compute_v2_child_ipcomp_cpi(struct child_sa *larval_child)
 	const struct connection *cc = larval_child->sa.st_connection;
 	pexpect(larval_child->sa.st_ipcomp.inbound.spi == 0);
 	/* CPI is stored in network low order end of an ipsec_spi_t */
-	ipsec_spi_t n_ipcomp_cpi = get_ipsec_cpi(cc->spd,
-						 larval_child->sa.st_logger);
+	ipsec_spi_t n_ipcomp_cpi = get_ipsec_cpi(cc, larval_child->sa.st_logger);
 	ipsec_spi_t h_ipcomp_cpi = (uint16_t)ntohl(n_ipcomp_cpi);
 	dbg("calculated compression CPI=%d", h_ipcomp_cpi);
 	if (h_ipcomp_cpi < IPCOMP_FIRST_NEGOTIATED) {
@@ -105,11 +104,11 @@ static bool compute_v2_child_spi(struct child_sa *larval_child)
 	struct ipsec_proto_info *proto_info = ikev2_child_sa_proto_info(larval_child);
 	/* XXX: should "avoid" be set to the peer's SPI when known? */
 	pexpect(proto_info->inbound.spi == 0);
-	proto_info->inbound.spi = get_ipsec_spi(0 /* avoid this # */,
-					    proto_info->protocol,
-					    cc->spd,
-					    larval_child->sa.st_logger);
-	return proto_info->inbound.spi != 0;
+	proto_info->inbound.spi = get_ipsec_spi(cc,
+						proto_info->protocol,
+						0 /* avoid this # */,
+						larval_child->sa.st_logger);
+	return (proto_info->inbound.spi != 0);
 }
 
 static bool emit_v2N_ipcomp_supported(const struct child_sa *child, struct pbs_out *s)

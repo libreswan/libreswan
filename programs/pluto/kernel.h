@@ -486,11 +486,12 @@ extern bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 
 extern enum policy_spi shunt_policy_spi(enum shunt_policy);
 
-extern ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
+extern ipsec_spi_t get_ipsec_spi(const struct connection *c,
 				 const struct ip_protocol *proto,
-				 const struct spd_route *sr,
-				 struct logger *logger);
-extern ipsec_spi_t get_ipsec_cpi(const struct spd_route *sr, struct logger *logger);
+				 ipsec_spi_t avoid,
+				 struct logger *logger/*state*/);
+extern ipsec_spi_t get_ipsec_cpi(const struct connection *c,
+				 struct logger *logger/*state*/);
 
 extern bool install_inbound_ipsec_sa(struct state *st);
 extern bool install_ipsec_sa(struct state *st, bool inbound_also);

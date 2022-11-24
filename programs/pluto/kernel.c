@@ -448,15 +448,17 @@ static const char *said_str(const ip_address dst,
 	return str_said(&said, buf);
 }
 
-ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
+ipsec_spi_t get_ipsec_spi(const struct connection *c,
 			  const struct ip_protocol *proto,
-			  const struct spd_route *sr,
+			  ipsec_spi_t avoid,
 			  struct logger *logger)
 {
 	passert(proto == &ip_protocol_ah || proto == &ip_protocol_esp);
-	return kernel_ops_get_ipsec_spi(avoid, &sr->remote->host->addr,
-					&sr->local->host->addr, proto,
-					get_proto_reqid(sr->reqid, proto),
+	return kernel_ops_get_ipsec_spi(avoid,
+					/*src*/&c->remote->host.addr,
+					/*dst*/&c->local->host.addr,
+					proto,
+					get_proto_reqid(c->child.reqid, proto),
 					IPSEC_DOI_SPI_OUR_MIN, 0xffffffffU,
 					"SPI", logger);
 }
@@ -469,13 +471,13 @@ ipsec_spi_t get_ipsec_spi(ipsec_spi_t avoid,
  * If we can't find one easily, return 0 (a bad SPI,
  * no matter what order) indicating failure.
  */
-ipsec_spi_t get_ipsec_cpi(const struct spd_route *sr, struct logger *logger)
+ipsec_spi_t get_ipsec_cpi(const struct connection *c, struct logger *logger)
 {
 	return kernel_ops_get_ipsec_spi(0,
-					&sr->remote->host->addr,
-					&sr->local->host->addr,
+					/*src*/&c->remote->host.addr,
+					/*dst*/&c->local->host.addr,
 					&ip_protocol_ipcomp,
-					get_proto_reqid(sr->reqid, &ip_protocol_ipcomp),
+					get_proto_reqid(c->child.reqid, &ip_protocol_ipcomp),
 					IPCOMP_FIRST_NEGOTIATED,
 					IPCOMP_LAST_NEGOTIATED,
 					"CPI", logger);
@@ -559,7 +561,7 @@ bool fmt_common_shell_out(char *buf,
 
 	JDuint("PLUTO_MY_PORT", sr->local->client.hport);
 	JDuint("PLUTO_MY_PROTOCOL", sr->local->client.ipproto);
-	JDuint("PLUTO_SA_REQID", sr->reqid);
+	JDuint("PLUTO_SA_REQID", c->child.reqid);
 	JDstr("PLUTO_SA_TYPE",
 		st == NULL ? "none" :
 		st->st_esp.present ? "ESP" :
@@ -1007,6 +1009,7 @@ static struct kernel_route kernel_route_from_state(const struct state *st, enum 
 }
 
 static struct kernel_policy kernel_policy_from_spd(lset_t policy,
+						   reqid_t child_reqid,
 						   const struct spd_route *spd,
 						   enum encap_mode mode,
 						   enum direction direction)
@@ -1084,17 +1087,17 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 	struct kernel_policy_rule *last = kernel_policy.rule; /* rule[0] is empty */
 	if (policy & POLICY_COMPRESS) {
 		last++;
-		last->reqid = reqid_ipcomp(spd->reqid);
+		last->reqid = reqid_ipcomp(child_reqid);
 		last->proto = ENCAP_PROTO_IPCOMP;
 	}
 	if (policy & POLICY_ENCRYPT) {
 		last++;
-		last->reqid = reqid_esp(spd->reqid);
+		last->reqid = reqid_esp(child_reqid);
 		last->proto = ENCAP_PROTO_ESP;
 	}
 	if (policy & POLICY_AUTHENTICATE) {
 		last++;
-		last->reqid = reqid_ah(spd->reqid);
+		last->reqid = reqid_ah(child_reqid);
 		last->proto = ENCAP_PROTO_AH;
 	}
 
@@ -1109,6 +1112,7 @@ static struct kernel_policy kernel_policy_from_state(const struct state *st,
 						     const struct spd_route *spd,
 						     enum direction direction)
 {
+	const struct connection *cc = st->st_connection;
 	bool tunnel = false;
 	lset_t policy = LEMPTY;
 	if (st->st_ipcomp.present) {
@@ -1127,7 +1131,9 @@ static struct kernel_policy kernel_policy_from_state(const struct state *st,
 	}
 
 	enum encap_mode mode = (tunnel ? ENCAP_MODE_TUNNEL : ENCAP_MODE_TRANSPORT);
-	struct kernel_policy kernel_policy = kernel_policy_from_spd(policy, spd, mode, direction);
+	struct kernel_policy kernel_policy = kernel_policy_from_spd(policy,
+								    cc->child.reqid,
+								    spd, mode, direction);
 	return kernel_policy;
 }
 
@@ -1725,7 +1731,8 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	 */
 	FOR_EACH_THING(direction, DIRECTION_OUTBOUND, DIRECTION_INBOUND) {
 		const struct kernel_policy kernel_policy =
-			kernel_policy_from_spd(c->policy, c->spd, mode, direction);
+			kernel_policy_from_spd(c->policy, c->child.reqid, c->spd,
+					       mode, direction);
 		if (kernel_policy.nr_rules == 0) {
 			/* XXX: log? */
 			return false;
@@ -2088,7 +2095,7 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 
 		said_next->ipcomp = st->st_ipcomp.attrs.transattrs.ta_ipcomp;
 		said_next->level = said_next - said;
-		said_next->reqid = reqid_ipcomp(c->spd->reqid);
+		said_next->reqid = reqid_ipcomp(c->child.reqid);
 		said_next->story = said_str(route.dst.address,
 					    &ip_protocol_ipcomp,
 					    ipcomp_spi, &text_ipcomp);
@@ -2262,7 +2269,7 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 		said_next->integ_key = shunk2(esp_keymat.ptr + encrypt_keymat_size, integ_keymat_size); /*BYTES*/
 
 		said_next->level = said_next - said;
-		said_next->reqid = reqid_esp(c->spd->reqid);
+		said_next->reqid = reqid_esp(c->child.reqid);
 
 		said_next->src.encap_port = encap_sport;
 		said_next->dst.encap_port = encap_dport;
@@ -2321,7 +2328,7 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 		said_next->integ = integ;
 		said_next->integ_key = shunk2(ah_keymat.ptr, ah_keymat.len);
 		said_next->level = said_next - said;
-		said_next->reqid = reqid_ah(c->spd->reqid);
+		said_next->reqid = reqid_ah(c->child.reqid);
 		said_next->story = said_str(route.dst.address,
 					    &ip_protocol_ah,
 					    ah_spi, &text_ah);

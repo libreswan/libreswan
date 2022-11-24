@@ -1151,8 +1151,7 @@ bool ikev1_out_sa(pb_stream *outs,
 					 */
 					if (!ipcomp_cpi_generated) {
 						st->st_ipcomp.inbound.spi =
-							get_ipsec_cpi(c->spd,
-								      st->st_logger);
+							get_ipsec_cpi(c, st->st_logger);
 						if (st->st_ipcomp.inbound.spi == 0)
 							goto fail; /* problem generating CPI */
 
@@ -1176,8 +1175,7 @@ bool ikev1_out_sa(pb_stream *outs,
 
 				if (spi_ptr != NULL) {
 					if (!*spi_generated) {
-						*spi_ptr = get_ipsec_spi(0, proto,
-									 c->spd,
+						*spi_ptr = get_ipsec_spi(c, proto, 0,
 									 st->st_logger);
 						*spi_generated = true;
 					}
@@ -2816,16 +2814,17 @@ static void echo_proposal(struct isakmp_proposal r_proposal,    /* proposal to e
 		 * Note: we may fail to generate a satisfactory CPI,
 		 * but we'll ignore that.
 		 */
-		pi->inbound.spi = get_ipsec_cpi(sr, logger);
+		pi->inbound.spi = get_ipsec_cpi(sr->connection, logger);
 		passert(out_raw((uint8_t *) &pi->inbound.spi +
 				IPSEC_DOI_SPI_SIZE - IPCOMP_CPI_SIZE,
 				IPCOMP_CPI_SIZE,
 				&r_proposal_pbs, "CPI"));
 	} else {
-		pi->inbound.spi = get_ipsec_spi(pi->outbound.spi,
+		pi->inbound.spi = get_ipsec_spi(sr->connection,
 						r_proposal.isap_protoid == PROTO_IPSEC_AH ?
 						&ip_protocol_ah : &ip_protocol_esp,
-						sr, logger);
+						pi->outbound.spi,
+						logger);
 		/* XXX should check for errors */
 		passert(out_raw((uint8_t *) &pi->inbound.spi, IPSEC_DOI_SPI_SIZE,
 				&r_proposal_pbs, "SPI"));

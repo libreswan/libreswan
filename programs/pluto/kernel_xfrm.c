@@ -981,7 +981,7 @@ static bool init_xfrm_kernel_migrate(struct child_sa *child,
 		.xfrm_dir = xfrm_policy_dir,
 		.proto = proto,
 		.encap_type = encap_type,
-		.reqid = reqid_esp(c->spd->reqid),
+		.reqid = reqid_esp(c->child.reqid),
 		.spi = dst->spi,
 		.src = {
 			.address = src->end->host->addr,

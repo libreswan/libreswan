@@ -196,6 +196,8 @@ struct config {
 	enum keyword_xauthby xauthby;
 	enum keyword_xauthfail xauthfail;
 
+	reqid_t sa_reqid;
+
 	struct {
 		char *to;        /* RFC 5685 */
 		char *accept;
@@ -459,7 +461,6 @@ struct spd_route {
 		    pri_where(HERE));					\
 		(SPD)->routing = RT;					\
 	}
-	reqid_t reqid;
 	struct {
 		struct list_entry list;
 		struct list_entry remote_client;
@@ -509,8 +510,6 @@ struct connection {
 	bool vti_shared; /* should updown leave remote empty and not cleanup device on down */
 	struct pluto_xfrmi *xfrmi; /* pointer to possibly shared interface */
 
-	reqid_t sa_reqid;
-
 	bool nat_keepalive;		/* Send NAT-T Keep-Alives if we are behind NAT */
 	bool mobike;			/* Allow MOBIKE */
 	enum ikev1_natt_policy ikev1_natt; /* whether or not to send IKEv1 draft/rfc NATT VIDs */
@@ -532,6 +531,11 @@ struct connection {
 	bool log_file_err;			/* only bitch once */
 
 	struct child {
+		/*
+		 * This is identical across kernel-states and shared
+		 * by all SPDs.
+		 */
+		reqid_t reqid;
 		chunk_t sec_label;		/* negotiated sec label */
 	} child;
 	struct spd_route *spd;
