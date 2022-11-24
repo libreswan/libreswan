@@ -45,7 +45,7 @@ def main():
     parser.add_argument("--verbose", "-v", action="count", default=0)
     parser.add_argument("--pid-file", default="", help="file to store process id of KVMRUNNER");
 
-    parser.add_argument("directories", metavar="DIRECTORY", nargs="+",
+    parser.add_argument("directories", metavar="DIRECTORY", nargs="*", default=".",
                         help="a testsuite directory, a TESTLIST file, or a list of test directories")
     testsuite.add_arguments(parser)
     runner.add_arguments(parser)
