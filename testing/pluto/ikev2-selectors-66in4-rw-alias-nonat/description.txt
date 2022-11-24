@@ -1,0 +1,3 @@
+IPv4 IKEv2 RW with IPv6 and IPv6 using aliases
+
+avoid using NAT on nic, which apparently complicates matters
