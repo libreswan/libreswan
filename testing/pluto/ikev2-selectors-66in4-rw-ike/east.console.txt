@@ -8,7 +8,7 @@ east #
  ip addr show eth0 | grep global | sort
     inet 192.0.20.254/24 scope global eth0
     inet 192.0.2.254/24 scope global eth0
-    inet6 2001:db8:0:20::256/64 scope global tentative
+    inet6 2001:db8:0:20::256/64 scope global
     inet6 2001:db8:0:2::254/64 scope global
 east #
  ipsec start
@@ -25,7 +25,6 @@ east #
  # non-zero counts confirm encrypted traffic flowing
 east #
  ipsec trafficstatus
-006 #2: "east"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=104, outBytes=104, maxBytes=2^63B, id='@road'
-006 #3: "east"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+006 #2: "east"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=208, outBytes=208, maxBytes=2^63B, id='@road'
 east #
  
