@@ -1,3 +1,6 @@
-sourceip=... should require subnet=...
+check sourceip= vs the subnet=...
+
+- sourceip is only allowed when there's also subnet=
+- sourceip must fall within at least one subnet= entry
 
 github #897

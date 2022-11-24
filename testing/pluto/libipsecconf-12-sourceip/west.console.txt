@@ -5,7 +5,40 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add sourceip-without-subnet
-036 "sourceip-without-subnet": failed to add connection: leftsourceip=1.2.3.4 invalid, requires leftsubnet
+ # fails because there's no subnet=
+west #
+ ipsec auto --add sourceip-without-selector
+036 "sourceip-without-selector": failed to add connection: leftsourceip=1.0.0.1 invalid, requires leftsubnet
+west #
+ ipsec auto --add sourceips-without-selector
+036 "sourceips-without-selector": failed to add connection: leftsourceip=1.0.0.1,1::1 invalid, requires leftsubnet
+west #
+ # fails because sourceip is not within subnet
+west #
+ ipsec auto --add sourceip-outside-selector
+036 "sourceip-outside-selector": failed to add connection: leftsourceip=1.0.0.1 address 1.0.0.1 is not within leftsubnet=2.0.0.0/24
+west #
+ # fails because sourceip is not within subnet
+west #
+ ipsec auto --add sourceips-outside-selectors
+036 "sourceips-outside-selectors": failed to add connection: leftsourceip=1.0.0.1,1::1 address 1::1 is not within leftsubnet=2::/64,1.0.0.0/24
+west #
+ # all good
+west #
+ ipsec auto --add sourceip-inside-selector
+002 "sourceip-inside-selector": added IKEv2 connection
+west #
+ ipsec auto --add sourceips-inside-selectors
+002 "sourceips-inside-selectors": added IKEv2 connection
+west #
+ # subnets= tests can't check inside/outside
+west #
+ ipsec auto --add sourceip-outside-subnets
+west #
+ ipsec auto --add sourceip-inside-subnets
+west #
+ ipsec auto --add sourceips-inside-subnets
+002 "sourceips-inside-subnets/0x1": added IKEv2 connection
+002 "sourceips-inside-subnets/1x2": added IKEv2 connection
 west #
  
