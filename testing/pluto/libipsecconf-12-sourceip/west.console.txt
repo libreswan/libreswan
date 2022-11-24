@@ -1,0 +1,11 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add sourceip-without-subnet
+036 "sourceip-without-subnet": failed to add connection: leftsourceip=1.2.3.4 invalid, requires leftsubnet
+west #
+ 

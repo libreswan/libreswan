@@ -1,0 +1,3 @@
+sourceip=... should require subnet=...
+
+github #897
