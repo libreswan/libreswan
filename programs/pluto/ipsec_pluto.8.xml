@@ -152,6 +152,7 @@
 
       <group choice="opt">
         <arg choice="opt">--client <replaceable>subnet</replaceable></arg>
+        <arg choice="opt">--subnet <replaceable>subnet</replaceable></arg>
       </group>
 
       <arg choice="opt">--clientprotoport
@@ -215,6 +216,7 @@
 
       <arg choice="opt">--nexthop <replaceable>ip-address</replaceable></arg>
 
+      <arg choice="opt">--subnet <replaceable>subnet</replaceable></arg>
       <arg choice="opt">--client <replaceable>subnet</replaceable></arg>
 
       <arg choice="opt">--clientprotoport
@@ -1469,25 +1471,22 @@
 
         <varlistentry>
           <term>
+	    <option>--subnet</option> <replaceable>subnet</replaceable>
+	  </term>
+          <term>
 	    <option>--client</option> <replaceable>subnet</replaceable>
 	  </term>
           <listitem>
             <para>
-	      The subnet for which the IPsec traffic will be
-	      destined. If not specified, the host will be the
-	      client. The subnet can be specified in any of the forms
-	      supported by <citerefentry>
-	      <refentrytitle>ipsec_atosubnet</refentrytitle>
-	      <manvolnum>3</manvolnum> </citerefentry>. The general
-	      form is <emphasis remap="I">address</emphasis>/<emphasis
-	      remap="I">mask</emphasis>.  The <emphasis
-	      remap="I">address</emphasis> can be either a domain name
-	      or four decimal numbers (specifying octets) separated by
-	      dots. The most convenient form of the <emphasis
-	      remap="I">mask</emphasis> is a decimal integer,
-	      specifying the number of leading one bits in the
-	      mask. So, for example, 10.0.0.0/8 would specify the
-	      class A network "Net 10".
+	      The subnet for which the IPsec traffic will be destined.
+	      If not specified, the host will be the client.  The
+	      subnet can be specified using the general form
+	      <replaceable>address</replaceable>/<replaceable>mask</replaceable>.
+	      The most convenient form of the
+	      <replaceable>mask</replaceable> is a decimal integer,
+	      specifying the number of leading one bits in the mask.
+	      So, for example, 10.0.0.0/8 would specify the class A
+	      network "Net 10".
 	    </para>
           </listitem>
         </varlistentry>

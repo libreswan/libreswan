@@ -395,7 +395,7 @@ enum option_enums {
 	END_GROUPS,
 	END_IKEPORT,
 	END_NEXTHOP,
-	END_CLIENT,
+	END_SUBNET,
 	END_CLIENTPROTOPORT,
 	END_DNSKEYONDEMAND,
 	END_XAUTHNAME,
@@ -672,7 +672,8 @@ static const struct option long_opts[] = {
 	{ "groups", required_argument, NULL, END_GROUPS + OO },
 	{ "ikeport", required_argument, NULL, END_IKEPORT + OO + NUMERIC_ARG },
 	{ "nexthop", required_argument, NULL, END_NEXTHOP + OO },
-	{ "client", required_argument, NULL, END_CLIENT + OO },
+	{ "client", required_argument, NULL, END_SUBNET + OO },	/* alias / backward compat */
+	{ "subnet", required_argument, NULL, END_SUBNET + OO },
 	{ "clientprotoport", required_argument, NULL, END_CLIENTPROTOPORT + OO },
 #ifdef USE_DNSSEC
 	{ "dnskeyondemand", no_argument, NULL, END_DNSKEYONDEMAND + OO },
@@ -1625,10 +1626,10 @@ int main(int argc, char **argv)
 				 * client subnet must not be specified by
 				 * user: it will come from the group's file.
 				 */
-				if (LHAS(end_seen, END_CLIENT - END_FIRST))
+				if (LHAS(end_seen, END_SUBNET - END_FIRST))
 					diagw("--host %group clashes with --client");
 
-				end_seen |= LELEM(END_CLIENT - END_FIRST);
+				end_seen |= LELEM(END_SUBNET - END_FIRST);
 			}
 			if (new_policy & POLICY_OPPORTUNISTIC)
 				end->key_from_DNS_on_demand = true;
@@ -1728,12 +1729,12 @@ int main(int argc, char **argv)
 			else diagw("--autheap option is not one of none, tls");
 			continue;
 
-		case END_CLIENT:	/* --client <subnet> */
+		case END_SUBNET: /* --subnet <subnet> | --client <subnet> */
 			if (startswith(optarg, "vhost:") ||
 			    startswith(optarg, "vnet:")) {
 				end->virt = optarg;
 			} else {
-				end->client = optarg;	/* decoded by Pluto */
+				end->subnet = optarg;	/* decoded by Pluto */
 			}
 			msg.policy |= POLICY_TUNNEL;	/* client => tunnel */
 			continue;
@@ -2549,7 +2550,7 @@ int main(int argc, char **argv)
 			 * These interlocking tests should be redone.
 			 */
 			if (!HAS_IPSEC_POLICY(msg.policy) &&
-			    (msg.left.client != NULL || msg.right.client != NULL))
+			    (msg.left.subnet != NULL || msg.right.subnet != NULL))
 				diagw("must not specify clients for ISAKMP-only connection");
 		}
 

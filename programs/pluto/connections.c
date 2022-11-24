@@ -1403,7 +1403,7 @@ static diag_t extract_child_end(const struct whack_message *wm,
 	child_config->ifaceip = src->ifaceip;
 
 	/* save some defaults */
-	child_config->v1_config_subnet_specified = src->client != NULL;
+	child_config->v1_config_subnet_specified = (src->subnet != NULL);
 	child_config->protoport = src->protoport;
 	child_config->updown = clone_str(src->updown, "end_config.client.updown");
 
@@ -1411,8 +1411,8 @@ static diag_t extract_child_end(const struct whack_message *wm,
 	 * Figure out the end's child selectors.  These are an array
 	 * terminated by !.is_set.
 	 */
-	if ((wm->ike_version == IKEv1 && src->client != NULL) ||
-	    (wm->ike_version == IKEv2 && src->client != NULL && src->protoport.is_set)) {
+	if ((wm->ike_version == IKEv1 && src->subnet != NULL) ||
+	    (wm->ike_version == IKEv2 && src->subnet != NULL && src->protoport.is_set)) {
 		/*
 		 * Legacy syntax.
 		 *
@@ -1432,21 +1432,21 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		 *   refined regardless of .has_client.
 		 */
 		ip_subnet subnet;
-		err_t e = ttosubnet_num_zero(shunk1(src->client), NULL, &subnet);
+		err_t e = ttosubnet_num_zero(shunk1(src->subnet), NULL, &subnet);
 		if (e != NULL) {
 			return diag("%ssubnet=%s invalid, %s",
-				    leftright, src->client, e);
+				    leftright, src->subnet, e);
 		}
 		ldbg(logger, "%s child selectors from %ssubnet + %sprotoport; %s.config.has_client=true",
 		     leftright, leftright, leftright, leftright);
 		child_config->has_client = true;
 		child_config->selectors_field = "subnet";
-		child_config->selectors_string = clone_str(src->client, "client");
+		child_config->selectors_string = clone_str(src->subnet, "client");
 		child_config->selectors.len = 1;
 		child_config->selectors.list = alloc_things(ip_selector, 1, "subnet-selectors");
 		child_config->selectors.list[0] =
 			selector_from_subnet_protoport(subnet, src->protoport);
-	} else if (src->client != NULL) {
+	} else if (src->subnet != NULL) {
 		/*
 		 * Parse new syntax (protoport= is not used).
 		 *
@@ -1458,11 +1458,11 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		passert(wm->ike_version == IKEv2);
 		child_config->has_client = true;
 		child_config->selectors_field = "subnet";
-		child_config->selectors_string = clone_str(src->client, "client");
-		diag_t d = ttoselectors_num(shunk1(src->client), ", ", NULL, &child_config->selectors);
+		child_config->selectors_string = clone_str(src->subnet, "client");
+		diag_t d = ttoselectors_num(shunk1(src->subnet), ", ", NULL, &child_config->selectors);
 		if (d != NULL) {
 			return diag_diag(&d, "%ssubnet=%s invalid, ",
-					 leftright, src->client);
+					 leftright, src->subnet);
 		}
 	} else if (src->protoport.is_set) {
 		/*
@@ -1558,7 +1558,7 @@ static diag_t extract_child_end(const struct whack_message *wm,
 	 * least one selector determined above.
 	 */
 
-	if (src->sourceip != NULL && src->client == NULL) {
+	if (src->sourceip != NULL && src->subnet == NULL) {
 		return diag("%ssourceip=%s invalid, requires %ssubnet",
 			    leftright, src->sourceip, leftright);
 	}
@@ -1595,7 +1595,7 @@ static diag_t extract_child_end(const struct whack_message *wm,
 				address_buf sipb;
 				return diag("%ssourceip=%s address %s is not within %ssubnet=%s",
 					    leftright, src->sourceip, str_address(sip, &sipb),
-					    leftright, src->client);
+					    leftright, src->subnet);
 			}
 		}
 	}

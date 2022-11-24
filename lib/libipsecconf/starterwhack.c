@@ -346,7 +346,7 @@ static bool set_whack_end(struct whack_end *w,
 	if (cidr_is_specified(l->ifaceip))
 		w->ifaceip = l->ifaceip;
 
-	w->client = l->subnet;
+	w->subnet = l->subnet;
 	w->host_ikeport = l->options[KNCF_IKEPORT];
 	w->protoport = l->protoport;
 
