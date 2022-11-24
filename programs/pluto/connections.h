@@ -105,8 +105,6 @@ struct host_end_config {
 		bool client;	/* request address for local end */
 	} modecfg;
 
-	bool client_address_translation;		/* aka CAT */
-
 	struct {
 		bool server;
 		bool client;
@@ -134,12 +132,14 @@ struct child_end_config {
 	 */
 	bool has_client;
 
+	bool has_client_address_translation;		/* aka CAT */
+
 	ip_selectors selectors;
 	/* log "{.leftright}${.selectors_field}=${.selectors_string} */
 	const char *selectors_field;
 	char *selectors_string;
 
-	ip_address sourceip;
+	ip_addresses sourceip;
 
 	/*
 	 * Weired host related client stuff.
@@ -362,6 +362,7 @@ struct host_end {
 };
 
 struct child_end {
+	const struct child_end_config *config;
 	ip_selector scratch_selector;
 	struct {
 		ip_selectors proposed; /* either scratch_selector or config->selectors; do not free */
@@ -813,6 +814,6 @@ void rehash_db_spd_route_remote_client(struct spd_route *sr);
 
 bool dpd_active_locally(const struct connection *c);
 
-ip_address spd_route_end_sourceip(enum ike_version ike_version, const struct spd_end *end);
+ip_address spd_end_sourceip(const struct spd_end *spde);
 
 #endif

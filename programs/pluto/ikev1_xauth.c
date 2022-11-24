@@ -1570,8 +1570,8 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 			str_selector_subnet(&c->spd->local->client, &caddr);
 			log_state(RC_LOG, st, "Received IP address %s", caddr.buf);
 
-			if (!address_is_specified(c->local->config->child.sourceip)) {
-				ip_address sourceip = spd_route_end_sourceip(IKEv1, c->spd->local);
+			if (c->local->config->child.sourceip.len > 0) {
+				ip_address sourceip = spd_end_sourceip(c->spd->local);
 				pexpect(address_eq_address(a, sourceip));
 				log_state(RC_LOG, st, "setting ip source address to %s",
 					  caddr.buf);

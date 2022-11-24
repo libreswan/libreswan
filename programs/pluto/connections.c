@@ -270,6 +270,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 			pfreeany(end->child.updown);
 			pfreeany(end->child.selectors.list);
 			pfreeany(end->child.selectors_string);
+			pfreeany(end->child.sourceip.list);
 			virtual_ip_delref(&end->child.virt);
 		}
 		pfree(c->root_config);
@@ -715,7 +716,7 @@ static void jam_end_id(struct jambuf *buf, const struct spd_end *this)
 			jam_string(buf, "MS");
 		if (this->host->config->modecfg.client)
 			jam_string(buf, "+MC");
-		if (this->host->config->client_address_translation)
+		if (this->child->config->has_client_address_translation)
 			jam_string(buf, "+CAT");
 		if (this->host->config->xauth.server)
 			jam_string(buf, "+XS");
@@ -1121,7 +1122,6 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 	host->addr = src->host_addr;
 	host_config->addr_name = clone_str(src->host_addr_name, "host ip");
 	host->nexthop = src->host_nexthop;
-	host_config->client_address_translation = src->cat;
 	host_config->xauth.server = src->xauth_server;
 	host_config->xauth.client = src->xauth_client;
 	host_config->xauth.username = clone_str(src->xauth_username, "xauth username");
@@ -1382,26 +1382,21 @@ static diag_t extract_child_end(const struct whack_message *wm,
 				struct child_end_config *child_config,
 				struct logger *logger)
 {
-	err_t e;
 	const char *leftright = src->leftright;
 
-	if (src->sourceip != NULL && src->client == NULL) {
-		return diag("%ssourceip=%s invalid, requires %ssubnet",
-			    leftright, src->sourceip, leftright);
-	}
-
-	if (src->sourceip != NULL) {
-		ip_address sourceip;
-		e = ttoaddress_num(shunk1(src->sourceip), NULL/*UNSPEC*/, &sourceip);
-		if (e != NULL) {
-			return diag("%ssourceip=%s invalid, %s",
-				    src->leftright, src->sourceip, e);
+	switch (wm->ike_version) {
+	case IKEv2:
+		child_config->has_client_address_translation = src->cat;
+		break;
+	case IKEv1:
+		if (src->cat) {
+			llog(RC_LOG, logger,
+			     "warning: IKEv1, ignoring %scat=%s (client address translation)",
+			     leftright, bool_str(src->cat));
 		}
-		if (!address_is_specified(sourceip)) {
-			return diag("%ssourceip=%s invalid, must be a valid address",
-				    leftright, src->sourceip);
-		}
-		child_config->sourceip = sourceip;
+		break;
+	default:
+		bad_case(wm->ike_version);
 	}
 
 	child_config->host_vtiip = src->host_vtiip;
@@ -1555,6 +1550,53 @@ static diag_t extract_child_end(const struct whack_message *wm,
 					  &child_config->virt);
 		if (d != NULL) {
 			return d;
+		}
+	}
+
+	/*
+	 * Get the SOURCEIPs and check that they all fit within at
+	 * least one selector determined above.
+	 */
+
+	if (src->sourceip != NULL && src->client == NULL) {
+		return diag("%ssourceip=%s invalid, requires %ssubnet",
+			    leftright, src->sourceip, leftright);
+	}
+
+	if (src->sourceip != NULL) {
+		pexpect(child_config->selectors.len > 0);
+		diag_t d = ttoaddresses_num(shunk1(src->sourceip), ", ",
+					    NULL/*UNSPEC*/, &child_config->sourceip);
+		if (d != NULL) {
+			return diag_diag(&d, "%ssourceip=%s invalid, ",
+					 src->leftright, src->sourceip);
+		}
+		/* valid? */
+		for (ip_address *sip = child_config->sourceip.list;
+		     sip < child_config->sourceip.list + child_config->sourceip.len; sip++) {
+			if (!address_is_specified(*sip)) {
+				return diag("%ssourceip=%s invalid, must be a valid address",
+					    leftright, src->sourceip);
+			}
+			/* skip aliases; they hide the selectors list */
+			if (wm->connalias != NULL) {
+				continue;
+			}
+			bool within = false;
+			for (ip_selector *sel = child_config->selectors.list;
+			     sel < child_config->selectors.list + child_config->selectors.len;
+			     sel++) {
+				if (address_in_selector(*sip, *sel)) {
+					within = true;
+					break;
+				}
+			}
+			if (!within) {
+				address_buf sipb;
+				return diag("%ssourceip=%s address %s is not within %ssubnet=%s",
+					    leftright, src->sourceip, str_address(sip, &sipb),
+					    leftright, src->client);
+			}
 		}
 	}
 
@@ -4138,27 +4180,28 @@ static int connection_compare_qsort(const void *a, const void *b)
 				*(const struct connection *const *)b);
 }
 
-ip_address spd_route_end_sourceip(enum ike_version ike_version, const struct spd_end *end)
+ip_address spd_end_sourceip(const struct spd_end *spde)
 {
-	if (address_in_selector(end->config->child.sourceip, end->client)) {
-		/* XXX: .is_set sufficient? needs unspec rejected */
-		return end->config->child.sourceip;
-	}
-	switch (ike_version) {
-	case IKEv1:
-		if (end->child->has_internal_address) {
-			return selector_prefix(end->client);
+	/*
+	 * Find a sourceip within the SPD selector.
+	 */
+	const ip_addresses *sourceip = &spde->child->config->sourceip;
+	for (ip_address *s = sourceip->list; s < sourceip->list + sourceip->len; s++) {
+		if (address_in_selector(*s, spde->client)) {
+			return *s;
 		}
-		break;
-	case IKEv2:
-		if (end->child->has_internal_address &&
-		    !end->host->config->client_address_translation) {
-			return selector_prefix(end->client);
-		}
-		break;
-	default:
-		bad_case(ike_version);
 	}
+
+	/*
+	 * Failing that see if CP is involved.  IKEv1 always leaves
+	 * client_address_translation false.
+	 */
+	if (spde->child->has_internal_address &&
+	    !spde->child->config->has_client_address_translation) {
+		return selector_prefix(spde->client);
+	}
+
+	/* or give up */
 	return unset_address;
 }
 
@@ -4181,8 +4224,8 @@ static void show_one_sr(struct show *s,
 		/* note: this macro generates a pair of arguments */
 #define OPT_PREFIX_STR(pre, s) (s) == NULL ? "" : (pre), (s) == NULL? "" : (s)
 
-	ip_address this_sourceip = spd_route_end_sourceip(c->config->ike_version, c->spd->local);
-	ip_address that_sourceip = spd_route_end_sourceip(c->config->ike_version, c->spd->remote);
+	ip_address this_sourceip = spd_end_sourceip(c->spd->local);
+	ip_address that_sourceip = spd_end_sourceip(c->spd->remote);
 
 	show_comment(s, PRI_CONNECTION":     %s; my_ip=%s; their_ip=%s%s%s%s%s; my_updown=%s;",
 		     c->name, instance,
@@ -4307,7 +4350,7 @@ static void show_one_sr(struct show *s,
 			}
 		}
 
-		jam(buf, " cat:%s;", sr->local->host->config->client_address_translation ? "set" : "unset");
+		jam(buf, " cat:%s;", sr->local->child->config->has_client_address_translation ? "set" : "unset");
 	}
 
 #undef COMBO
@@ -4912,6 +4955,7 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 		}
 		c->spd->end[end].client = new_selector;
 	}
+
 	/*
 	 * Point the selectors list at and UPDATE the scratch value.
 	 *

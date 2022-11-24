@@ -269,6 +269,7 @@ struct connection *alloc_connection(const char *name,
 		end_config->child.leftright = leftright;
 		end->config = end_config;
 		end->host.config = &end_config->host;
+		end->child.config = &end_config->child;
 	}
 
 	finish_connection(c, name, 0/*no template*/,

@@ -624,7 +624,7 @@ bool fmt_common_shell_out(char *buf,
 		JDemitter("PLUTO_USERNAME", jam_clean_xauth_username(&jb, st->st_xauth_username, st->st_logger));
 	}
 
-	ip_address sourceip = spd_route_end_sourceip(c->config->ike_version, sr->local);
+	ip_address sourceip = spd_end_sourceip(sr->local);
 	if (sourceip.is_set) {
 		JDipaddr("PLUTO_MY_SOURCEIP", sourceip);
 		if (st != NULL) {
