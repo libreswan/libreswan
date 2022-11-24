@@ -798,25 +798,37 @@ static bool next_subnet(struct subnets *sn)
 		return false;	/* no more input */
 	}
 
-	const char *eln = subnets;	/* save start */
+	/* save start */
+	const char *start = subnets;
 
 	/* find end of this item */
 	while (*subnets != '\0' && !(char_isspace(*subnets) || *subnets == ',')) {
 		subnets++;
 	}
 
-	sn->error = ttosubnet_num_die6(shunk2(eln, subnets - eln), NULL/*any-AFI*/,
-				       &sn->subnet, sn->logger);
+	shunk_t subnet = shunk2(start, subnets - start);
+	ip_address nonzero_host;
+	sn->error = ttosubnet_num(subnet, NULL/*any-AFI*/,
+				  &sn->subnet, &nonzero_host);
 	if (sn->error != NULL) {
 		starter_log(LOG_LEVEL_ERR,
-			    "conn: \"%s\" warning '%s' is not a subnet declaration. (%s%s): %s",
+			    "conn: \"%s\" warning: '"PRI_SHUNK"' is not a subnet declaration (%s%s): %s",
 			    sn->conn->name,
-			    eln, sn->end->leftright,
+			    pri_shunk(subnet), sn->end->leftright,
 			    (sn->count == 0 ? "subnet" : "subnets"),
 			    sn->error);
 		return false;
 	}
+	if (nonzero_host.is_set) {
+		address_buf hb;
+		starter_log(LOG_LEVEL_ERR,
+			    "conn: \"%s\" warning: zeroing non-zero host identifier %s in '"PRI_SHUNK"' (%s%s)",
+			    sn->conn->name, str_address(&nonzero_host, &hb),
+			    pri_shunk(subnet),
+			    sn->end->leftright, (sn->count == 0 ? "subnet" : "subnets"));
+	}
 
+	/* update pointer ready for next call */
 	sn->subnets = subnets;
 	sn->count++;
 	return true;

@@ -68,12 +68,12 @@ void pexpect_subnet(const ip_subnet *s, where_t where);
  */
 
 ip_subnet subnet_from_raw(where_t where, enum ip_version version,
-			  const struct ip_bytes bytes, unsigned prefix_bits);
+			  const struct ip_bytes prefix, unsigned prefix_length);
 
 /* ADDRESS..ADDRESS */
 ip_subnet subnet_from_address(const ip_address address);
 /* ADDRESS/PREFIX_BITS */
-ip_subnet subnet_from_address_prefix_bits(const ip_address address, unsigned prefixbits);
+ip_subnet subnet_from_address_prefix_bits(const ip_address prefix, unsigned prefix_length);
 
 /* barf if not valid */
 err_t address_mask_to_subnet(const ip_address address, const ip_address mask, ip_subnet *subnet);
@@ -125,8 +125,7 @@ ip_address subnet_prefix_mask(const ip_subnet subnet);
 unsigned subnet_prefix_bits(const ip_subnet subnet);
 uintmax_t subnet_size(const ip_subnet subnet);
 
-extern err_t ttosubnet_num(shunk_t src, const struct ip_info *afi, ip_subnet *dst);
-extern err_t ttosubnet_num_zero(shunk_t src, const struct ip_info *afi, ip_subnet *dst);
-extern err_t ttosubnet_num_die6(shunk_t src, const struct ip_info *afi, ip_subnet *dst, struct logger *logger);
+extern err_t ttosubnet_num(shunk_t src, const struct ip_info *afi,
+			   ip_subnet *dst, ip_address *nonzero_host);
 
 #endif

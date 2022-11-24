@@ -80,7 +80,7 @@ void pexpect_selector(const ip_selector *s, where_t where);
 #define pselector(S) pexpect_selector(S, HERE)
 
 ip_selector selector_from_raw(where_t where, enum ip_version version,
-			      const struct ip_bytes bytes, unsigned prefix_bits,
+			      const struct ip_bytes prefix, unsigned prefix_length,
 			      const struct ip_protocol *protocol, const ip_port port);
 
 ip_selector selector_from_address(const ip_address address);
@@ -107,7 +107,8 @@ ip_selector selector_from_address_protoport(const ip_address address,
 ip_selector selector_from_subnet_protoport(const ip_subnet subnet,
 					   const ip_protoport protoport);
 
-err_t ttoselector_num(shunk_t src, const struct ip_info *afi, ip_selector *dst);
+err_t ttoselector_num(shunk_t src, const struct ip_info *afi,
+		      ip_selector *dst, ip_address *nonzero_host);
 
 /* comma/space separated list */
 
@@ -120,7 +121,7 @@ extern const ip_selectors empty_ip_selectors;
 
 diag_t ttoselectors_num(shunk_t input, const char *delims,
 			const struct ip_info *afi,
-			ip_selectors *output) MUST_USE_RESULT;
+			ip_selectors *output, ip_address *nonzero_host);
 
 /*
  * Magic values.

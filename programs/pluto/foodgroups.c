@@ -147,13 +147,20 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 		} else {
 			const struct ip_info *afi = strchr(flp->tok, ':') == NULL ? &ipv4_info : &ipv6_info;
 			ip_subnet snn;
-			err_t err = ttosubnet_num(shunk1(flp->tok), afi, &snn);
+			ip_address nonzero_host;
+			err_t err = ttosubnet_num(shunk1(flp->tok), afi, &snn, &nonzero_host);
 			if (err != NULL) {
 				llog(RC_LOG_SERIOUS, flp->logger,
-					    "ignored, '%s' is not a subnet: %s",
-					    flp->tok, err);
+				     "ignored, '%s' is not a subnet: %s",
+				     flp->tok, err);
 				flushline(flp, NULL/*shh*/);
 				continue;
+			}
+			if (nonzero_host.is_set) {
+				address_buf hb;
+				llog(RC_LOG, flp->logger,
+				     "zeroing non-zero host identifier %s in '%s'",
+				     str_address(&nonzero_host, &hb), flp->tok);
 			}
 			sn = selector_from_subnet(snn);
 		}

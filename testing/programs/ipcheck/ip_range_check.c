@@ -247,9 +247,14 @@ static void check_range_from_subnet(void)
 		PRINT("%s '%s' -> '%s'..'%s'", pri_family(t->family), t->in, t->start, t->end);
 
 		ip_subnet tmp, *subnet = &tmp;
-		oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family), subnet);
+		ip_address nonzero_host;
+		oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family),
+				     subnet, &nonzero_host);
 		if (oops != NULL) {
-			FAIL("ttosubnet() failed: %s", oops);
+			FAIL("ttosubnet(%s) failed: %s", t->in, oops);
+		}
+		if (nonzero_host.is_set) {
+			FAIL("ttosubnet(%s) failed: non-zero host identifier", t->in);
 		}
 
 		CHECK_TYPE(subnet);

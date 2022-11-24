@@ -146,9 +146,15 @@ static err_t do_selector_from_subnet_protoport(const struct selector *s,
 	}
 
 	ip_subnet subnet;
-	err_t err = ttosubnet_num(shunk1(s->addresses), IP_TYPE(s->family), &subnet);
+	ip_address nonzero_host;
+	err_t err = ttosubnet_num(shunk1(s->addresses), IP_TYPE(s->family),
+				  &subnet, &nonzero_host);
 	if (err != NULL) {
 		return err;
+	}
+
+	if (nonzero_host.is_set) {
+		return "nonzero host identifier";
 	}
 
 	ip_protoport protoport;
@@ -190,18 +196,26 @@ static void check_selector_from_subnet_protoport(void)
 			    do_selector_from_subnet_protoport);
 }
 
-static err_t do_numeric_to_selector(const struct selector *s,
-				    ip_selector *selector)
+static err_t do_ttoselector_num(const struct selector *s, ip_selector *selector)
 {
 	if (s->family == 0) {
 		*selector = unset_selector;
 		return NULL;
 	}
 
-	return ttoselector_num(shunk1(s->addresses), IP_TYPE(s->family), selector);
+	ip_address nonzero_host;
+	err_t e = ttoselector_num(shunk1(s->addresses), IP_TYPE(s->family),
+				  selector, &nonzero_host);
+	if (e != NULL) {
+		return e;
+	}
+	if (nonzero_host.is_set) {
+		return "non-zero host identifier";
+	}
+	return NULL;
 }
 
-static void check_numeric_to_selector(void)
+static void check_ttoselector_num(void)
 {
 	static const struct from_test tests[] = {
 		/* missing prefix-bits */
@@ -240,7 +254,7 @@ static void check_numeric_to_selector(void)
 	};
 
 	check_selector_from(tests, elemsof(tests), "selector",
-			    do_numeric_to_selector);
+			    do_ttoselector_num);
 }
 
 static void check_selector_is(void)
@@ -282,7 +296,7 @@ static void check_selector_is(void)
 		      bool_str(t->contains_one_address));
 
 		ip_selector tmp, *selector = &tmp;
-		err = do_numeric_to_selector(&t->from, selector);
+		err = do_ttoselector_num(&t->from, selector);
 		if (err != NULL) {
 			FAIL("to_selector() failed: %s", err);
 		}
@@ -409,16 +423,26 @@ static void check_selector_op_selector(void)
 		      bool_str(t->address),
 		      bool_str(t->endpoint));
 
+		ip_address nonzero_host;
+
 		ip_selector inner_selector;
-		err = ttoselector_num(shunk1(t->inner), NULL, &inner_selector);
+		err = ttoselector_num(shunk1(t->inner), NULL,
+				      &inner_selector, &nonzero_host);
 		if (err != NULL) {
-			FAIL("numeric_to_selector(%s) failed: %s", t->inner, err);
+			FAIL("ttoselector_num(%s) failed: %s", t->inner, err);
+		}
+		if (nonzero_host.is_set) {
+			FAIL("ttoselector_num(%s) failed: non-zero host identifer", t->inner);
 		}
 
 		ip_selector outer_selector;
-		err = ttoselector_num(shunk1(t->outer), NULL, &outer_selector);
+		err = ttoselector_num(shunk1(t->outer), NULL,
+				      &outer_selector, &nonzero_host);
 		if (err != NULL) {
-			FAIL("numeric_to_selector(%s) failed: %s", t->outer, err);
+			FAIL("ttoselector_num(%s) failed: %s", t->outer, err);
+		}
+		if (nonzero_host.is_set) {
+			FAIL("ttoselector_num(%s) failed: non-zero host identifer", t->outer);
 		}
 
 		bool selector = selector_in_selector(inner_selector, outer_selector);
@@ -464,6 +488,6 @@ void ip_selector_check(struct logger *logger UNUSED)
 	check_selector_from_address();
 	check_selector_from_subnet_protoport();
 	check_selector_is();
-	check_numeric_to_selector();
+	check_ttoselector_num();
 	check_selector_op_selector();
 }

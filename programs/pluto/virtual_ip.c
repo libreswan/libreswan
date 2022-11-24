@@ -93,7 +93,15 @@ static err_t read_subnet(shunk_t src, ip_subnet *dst, bool *isincl)
 		return "! invalid";
 	}
 
-	return ttosubnet_num(cursor, afi, dst);
+	ip_address nonzero_host;
+	err_t e = ttosubnet_num(cursor, afi, dst, &nonzero_host);
+	if (e != NULL) {
+		return e;
+	}
+	if (nonzero_host.is_set) {
+		return "subnet contains non-zero host identifier";
+	}
+	return NULL;
 }
 
 void free_virtual_ip(void)

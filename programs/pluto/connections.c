@@ -1432,7 +1432,14 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		 *   refined regardless of .has_client.
 		 */
 		ip_subnet subnet;
-		err_t e = ttosubnet_num_zero(shunk1(src->subnet), NULL, &subnet);
+		ip_address nonzero_host;
+		err_t e = ttosubnet_num(shunk1(src->subnet), NULL,
+					&subnet, &nonzero_host);
+		if (nonzero_host.is_set) {
+			address_buf hb;
+			llog(RC_LOG, logger, "zeroing non-zero host identifier %s in %ssubnet=%s",
+			     leftright, str_address(&nonzero_host, &hb), src->subnet);
+		}
 		if (e != NULL) {
 			return diag("%ssubnet=%s invalid, %s",
 				    leftright, src->subnet, e);
@@ -1459,10 +1466,18 @@ static diag_t extract_child_end(const struct whack_message *wm,
 		child_config->has_client = true;
 		child_config->selectors_field = "subnet";
 		child_config->selectors_string = clone_str(src->subnet, "client");
-		diag_t d = ttoselectors_num(shunk1(src->subnet), ", ", NULL, &child_config->selectors);
+		ip_address nonzero_host;
+		diag_t d = ttoselectors_num(shunk1(src->subnet), ", ", NULL,
+					    &child_config->selectors, &nonzero_host);
 		if (d != NULL) {
 			return diag_diag(&d, "%ssubnet=%s invalid, ",
 					 leftright, src->subnet);
+		}
+		if (nonzero_host.is_set) {
+			address_buf hb;
+			llog(RC_LOG, logger,
+			     "zeroing non-sero address identifier %s in %ssubnet=%s",
+			     str_address(&nonzero_host, &hb), leftright, src->subnet);
 		}
 	} else if (src->protoport.is_set) {
 		/*

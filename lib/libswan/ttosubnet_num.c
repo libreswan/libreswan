@@ -30,18 +30,12 @@
  * ttosubnet - convert text "addr/mask" to address and mask
  * Mask can be integer bit count.
  */
-enum host_part {
-	HOST_PART_ZERO = '0',
-	HOST_PART_DIE = 'x', /* die when host-part is non-zero */
-	HOST_PART_DIE6 = '6', /*warn on IPv4*/
-};
 
-static err_t ttosubnet_num_host_part(shunk_t src,
-				     const struct ip_info *afi, /* could be NULL */
-				     enum host_part clash,
-				     ip_subnet *dst,
-				     struct logger *logger)
+err_t ttosubnet_num(shunk_t src, const struct ip_info *afi, /* could be NULL */
+		    ip_subnet *dst, ip_address *nonzero_host)
 {
+	*dst = unset_subnet;
+	*nonzero_host = unset_address;
 	err_t oops;
 
 	/*
@@ -68,24 +62,22 @@ static err_t ttosubnet_num_host_part(shunk_t src,
 	}
 
 	/* parse ADDR */
-	ip_address addrtmp;
-	oops = ttoaddress_num(addr, afi, &addrtmp);
+	ip_address address;
+	oops = ttoaddress_num(addr, afi, &address);
 	if (oops != NULL) {
 		return oops;
 	}
 
 	if (afi == NULL) {
-		afi = address_type(&addrtmp);
+		afi = address_info(address);
 	}
-	if (afi == NULL) {
-		/* XXX: pexpect()? */
-		return "unknown address family in ttosubnet";
-	}
+	passert(afi != NULL);
 
 	/* parse MASK */
-	uintmax_t prefix_bits;
-	oops = shunk_to_uintmax(mask, NULL, 10, &prefix_bits);
-	if (oops != NULL || prefix_bits > afi->mask_cnt) {
+
+	uintmax_t prefix_length;
+	oops = shunk_to_uintmax(mask, NULL, 10, &prefix_length);
+	if (oops != NULL || prefix_length > afi->mask_cnt) {
 		if (afi == &ipv4_info) {
 			ip_address masktmp;
 			oops = ttoaddress_num(mask, afi, &masktmp);
@@ -97,87 +89,22 @@ static err_t ttosubnet_num_host_part(shunk_t src,
 			if (i < 0) {
 				return "non-contiguous or otherwise erroneous mask";
 			}
-			prefix_bits = i;
+			prefix_length = i;
 		} else {
 			return "masks are not permitted for IPv6 addresses";
 		}
 	}
 
-	passert(afi != NULL); /* determined above */
-	bool die;
-	switch (clash) {
-	case HOST_PART_ZERO:
-		die = false;
-		break;
-	case HOST_PART_DIE:
-		die = true;
-		break;
-	case HOST_PART_DIE6:
-		if (afi == &ipv6_info)
-			die = true;
-		else
-			die = false;
-		break;
-	default:
-		return "unknown clash-control value in initsubnet";
+	/* check host-part is zero */
+
+	struct ip_bytes routing_prefix = ip_bytes_from_blit(afi, address.bytes,
+							    &keep_bits, &clear_bits,
+							    prefix_length);
+	if (ip_bytes_cmp(afi->ip_version, routing_prefix,
+			 afi->ip_version, address.bytes) != 0) {
+		*nonzero_host = address;
 	}
 
-	chunk_t addr_chunk = address_as_chunk(&addrtmp);
-	unsigned n = addr_chunk.len;
-	uint8_t *p = addr_chunk.ptr; /* cast void* */
-	if (n == 0)
-		return "unknown address family";
-
-	unsigned c = prefix_bits / 8;
-	if (c > n)
-		return "impossible mask count";
-
-	p += c;
-	n -= c;
-
-	unsigned m = 0xff;
-	c = prefix_bits % 8;
-	if (n > 0 && c != 0)	/* partial byte */
-		m >>= c;
-
-	bool nonzero_host_part = false;
-	for (; n > 0; n--) {
-		if ((*p & m) != 0) {
-			if (die)
-				return "improper subnet, host-part bits on";
-			nonzero_host_part = true;
-			*p &= ~m;
-		}
-		m = 0xff;
-		p++;
-	}
-
-	*dst = subnet_from_address_prefix_bits(addrtmp, prefix_bits);
-
-	if (nonzero_host_part && logger != NULL) {
-		LLOG_JAMBUF(RC_LOG, logger, buf) {
-			jam(buf, "WARNING: improper subnet mask, host-part bits on input ");
-			jam_address(buf, &addrtmp);
-			jam(buf, "/%ju ", prefix_bits);
-			jam(buf, " extracted subnet ");
-			jam_subnet(buf, dst);
-		}
-	}
-
+	*dst = subnet_from_raw(HERE, afi->ip_version, routing_prefix, prefix_length);
 	return NULL;
-}
-
-err_t ttosubnet_num(shunk_t src, const struct ip_info *afi, ip_subnet *dst)
-{
-	return ttosubnet_num_host_part(src, afi, HOST_PART_DIE, dst, NULL/*no-logger:barf*/);
-}
-
-err_t ttosubnet_num_zero(shunk_t src, const struct ip_info *afi, ip_subnet *dst)
-{
-	return ttosubnet_num_host_part(src, afi, HOST_PART_ZERO, dst, NULL/*no-logger:ignore*/);
-}
-
-err_t ttosubnet_num_die6(shunk_t src, const struct ip_info *afi, ip_subnet *dst, struct logger *logger)
-{
-	return ttosubnet_num_host_part(src, afi, HOST_PART_DIE6, dst, logger/*log-non-zero*/);
 }

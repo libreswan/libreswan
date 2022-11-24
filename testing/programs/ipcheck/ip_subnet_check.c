@@ -29,77 +29,80 @@ static void check_str_subnet(struct logger *logger UNUSED)
 		int family;
 		char *in;
 		char *str;	/* NULL means error expected */
+		bool zeroed;	/* true means host part was zeroed */
 	} tests[] = {
-		{ LN, 4, "1.2.3.0/255.255.255.0", "1.2.3.0/24" },
-		{ LN, 4, "1.2.3.0/24", "1.2.3.0/24" },
-		{ LN, 4, "1.2.3.0/255.255.255.240", "1.2.3.0/28" },
-		{ LN, 4, "1.2.3.1/32", "1.2.3.1/32" },
-		{ LN, 4, "0.0.0.0/0", "0.0.0.0/0" },
+		{ LN, 4, "1.2.3.0/255.255.255.0", "1.2.3.0/24", false, },
+		{ LN, 4, "1.2.3.0/24", "1.2.3.0/24", false, },
+		{ LN, 4, "1.2.3.0/255.255.255.240", "1.2.3.0/28", false, },
+		{ LN, 4, "1.2.3.1/32", "1.2.3.1/32", false, },
+		{ LN, 4, "1.2.3.1/31", "1.2.3.0/31", true, },
+		{ LN, 4, "0.0.0.0/0", "0.0.0.0/0", false, },
 /*	{4, "1.2.3.0/255.255.127.0",	"1.2.3.0/255.255.127.0"}, */
-		{ LN, 4, "1.2.3.1/255.255.127.0", NULL },
-		{ LN, 4, "128.0007.0000.0032/32", "128.7.0.26/32" },
-		{ LN, 4, "128.0x0f.0.32/32", "128.15.0.32/32", },
-		{ LN, 4, "0x80090020/32", "128.9.0.32/32" },
-		{ LN, 4, "0x800x0020/32", NULL },
-		{ LN, 4, "128.9.0.0/0xffFF0000", "128.9.0.0/16" },
-		{ LN, 4, "128.9.0.32/0xff0000FF", NULL },
-		{ LN, 4, "128.9.0.32/0x0000ffFF", NULL },
-		{ LN, 4, "128.9.0.32/0x00ffFF0000", NULL },
-		{ LN, 4, "128.9.0.32/0xffFF", NULL },
-		{ LN, 4, "128.9.0.32.27/32", NULL },
-		{ LN, 4, "128.9.0k32/32", NULL },
-		{ LN, 4, "328.9.0.32/32", NULL },
-		{ LN, 4, "128.9..32/32", NULL },
-		{ LN, 4, "10/8", "10.0.0.0/8" },
-		{ LN, 4, "10.0/8", "10.0.0.0/8" },
-		{ LN, 4, "10.0.0/8", "10.0.0.0/8" },
-		{ LN, 4, "10.0.1.0/24", "10.0.1.0/24" },
-		{ LN, 4, "_", NULL },
-		{ LN, 4, "_/_", NULL },
-		{ LN, 4, "1.2.3.1", NULL },
-		{ LN, 4, "1.2.3.1/_", NULL },
-		{ LN, 4, "1.2.3.1/24._", NULL },
-		{ LN, 4, "1.2.3.1/99", NULL },
-		{ LN, 4, "localhost/32", NULL },
-		{ LN, 4, "%default", "0.0.0.0/0" },
-		{ LN, 6, "::/0", "::/0" },
-		{ LN, 6, "3049:1::8007:2040/128", "3049:1::8007:2040/128" },
-		{ LN, 6, "3049:1::192.168.0.1/128", NULL },	/*"3049:1::c0a8:1/128",*/
-		{ LN, 6, "3049:1::8007::2040/128", NULL },
-		{ LN, 6, "3049:1::8007:2040/ffff:0", NULL },
-		{ LN, 6, "3049:1::/64", "3049:1::/64" },
-		{ LN, 6, "3049:1::8007:2040/ffff:", NULL },
-		{ LN, 6, "3049:1::8007:2040/0000:ffff::0", NULL },
-		{ LN, 6, "3049:1::8007:2040/ff1f:0", NULL },
-		{ LN, 6, "3049:1::8007:x:2040/128", NULL },
-		{ LN, 6, "3049:1t::8007:2040/128", NULL },
-		{ LN, 6, "3049:1::80071:2040/128", NULL },
-		{ LN, 6, "::/21", "::/21" },
-		{ LN, 6, "::1/128", "::1/128" },
-		{ LN, 6, "1::/21", "1::/21" },
-		{ LN, 6, "1::2/128", "1::2/128" },
-		{ LN, 6, "1:0:0:0:0:0:0:2/128", "1::2/128" },
-		{ LN, 6, "1:0:0:0:3:0:0:2/128", "1::3:0:0:2/128" },
-		{ LN, 6, "1:0:0:3:0:0:0:2/128", "1:0:0:3::2/128" },
-		{ LN, 6, "1:0:3:0:0:0:0:2/128", "1:0:3::2/128" },
-		{ LN, 6, "abcd:ef01:2345:6789:0:00a:000:20/128",
-		  "abcd:ef01:2345:6789:0:a:0:20/128" },
-		{ LN, 6, "3049:1::8007:2040/ffff:ffff:", NULL },
-		{ LN, 6, "3049:1::8007:2040/ffff:88:", NULL },
-		{ LN, 6, "3049:12::9000:3200/ffff:fff0", NULL },
-		{ LN, 6, "3049:10::/28", "3049:10::/28" },
-		{ LN, 6, "3049:12::9000:3200/ff00:", NULL },
-		{ LN, 6, "3049:12::9000:3200/ffff:", NULL },
-		{ LN, 6, "3049:12::9000:3200/128_", NULL },
-		{ LN, 6, "3049:12::9000:3200/", NULL },
-		{ LN, 6, "%default", "::/0" },
+		{ LN, 4, "1.2.3.1/255.255.127.0", NULL, false, },
+		{ LN, 4, "1.2.3.1/255.255.128.0", "1.2.0.0/17", true, },
+		{ LN, 4, "128.0007.0000.0032/32", "128.7.0.26/32", false, },
+		{ LN, 4, "128.0x0f.0.32/32", "128.15.0.32/32", false, },
+		{ LN, 4, "0x80090020/32", "128.9.0.32/32", false, },
+		{ LN, 4, "0x800x0020/32", NULL, false, },
+		{ LN, 4, "128.9.0.0/0xffFF0000", "128.9.0.0/16", false, },
+		{ LN, 4, "128.9.0.32/0xff0000FF", NULL, false, },
+		{ LN, 4, "128.9.0.32/0x0000ffFF", NULL, false, },
+		{ LN, 4, "128.9.0.32/0x00ffFF0000", NULL, false, },
+		{ LN, 4, "128.9.0.32/0xffFF", NULL, false, },
+		{ LN, 4, "128.9.0.32.27/32", NULL, false, },
+		{ LN, 4, "128.9.0k32/32", NULL, false, },
+		{ LN, 4, "328.9.0.32/32", NULL, false, },
+		{ LN, 4, "128.9..32/32", NULL, false, },
+		{ LN, 4, "10/8", "10.0.0.0/8", false, },
+		{ LN, 4, "10.0/8", "10.0.0.0/8", false, },
+		{ LN, 4, "10.0.0/8", "10.0.0.0/8", false, },
+		{ LN, 4, "10.0.1.0/24", "10.0.1.0/24", false, },
+		{ LN, 4, "_", NULL, false, },
+		{ LN, 4, "_/_", NULL, false, },
+		{ LN, 4, "1.2.3.1", NULL, false, },
+		{ LN, 4, "1.2.3.1/_", NULL, false, },
+		{ LN, 4, "1.2.3.1/24._", NULL, false, },
+		{ LN, 4, "1.2.3.1/99", NULL, false, },
+		{ LN, 4, "localhost/32", NULL, false, },
+		{ LN, 4, "%default", "0.0.0.0/0", false, },
+		{ LN, 6, "::/0", "::/0", false, },
+		{ LN, 6, "3049:1::8007:2040/128", "3049:1::8007:2040/128", false, },
+		{ LN, 6, "3049:1::192.168.0.1/128", NULL, false, },	/*"3049:1::c0a8:1/128",*/
+		{ LN, 6, "3049:1::8007::2040/128", NULL, false, },
+		{ LN, 6, "3049:1::8007:2040/ffff:0", NULL, false, },
+		{ LN, 6, "3049:1::/64", "3049:1::/64", false, },
+		{ LN, 6, "3049:1::8007:2040/ffff:", NULL, false, },
+		{ LN, 6, "3049:1::8007:2040/0000:ffff::0", NULL, false, },
+		{ LN, 6, "3049:1::8007:2040/ff1f:0", NULL, false, },
+		{ LN, 6, "3049:1::8007:x:2040/128", NULL, false, },
+		{ LN, 6, "3049:1t::8007:2040/128", NULL, false, },
+		{ LN, 6, "3049:1::80071:2040/128", NULL, false, },
+		{ LN, 6, "::/21", "::/21", false, },
+		{ LN, 6, "::1/128", "::1/128", false, },
+		{ LN, 6, "::1/127", "::/127", true, },
+		{ LN, 6, "1::/21", "1::/21", false, },
+		{ LN, 6, "1::2/128", "1::2/128", false, },
+		{ LN, 6, "1:0:0:0:0:0:0:2/128", "1::2/128", false, },
+		{ LN, 6, "1:0:0:0:3:0:0:2/128", "1::3:0:0:2/128", false, },
+		{ LN, 6, "1:0:0:3:0:0:0:2/128", "1:0:0:3::2/128", false, },
+		{ LN, 6, "1:0:3:0:0:0:0:2/128", "1:0:3::2/128", false, },
+		{ LN, 6, "abcd:ef01:2345:6789:0:00a:000:20/128", "abcd:ef01:2345:6789:0:a:0:20/128", false, },
+		{ LN, 6, "3049:1::8007:2040/ffff:ffff:", NULL, false, },
+		{ LN, 6, "3049:1::8007:2040/ffff:88:", NULL, false, },
+		{ LN, 6, "3049:12::9000:3200/ffff:fff0", NULL, false, },
+		{ LN, 6, "3049:10::/28", "3049:10::/28", false, },
+		{ LN, 6, "3049:12::9000:3200/ff00:", NULL, false, },
+		{ LN, 6, "3049:12::9000:3200/ffff:", NULL, false, },
+		{ LN, 6, "3049:12::9000:3200/128_", NULL, false, },
+		{ LN, 6, "3049:12::9000:3200/", NULL, false, },
+		{ LN, 6, "%default", "::/0", false, },
 
 		/* any:0 */
-		{ LN, 4, "0.0.0.0/0:0", NULL, },
-		{ LN, 6, "::/0:0", NULL, },
+		{ LN, 4, "0.0.0.0/0:0", NULL, false, },
+		{ LN, 6, "::/0:0", NULL, false, },
 		/* longest:port */
-		{ LN, 4, "101.102.103.104/32:65535", NULL, },
-		{ LN, 6, "1001:1002:1003:1004:1005:1006:1007:1008/128:65535", NULL, },
+		{ LN, 4, "101.102.103.104/32:65535", NULL, false, },
+		{ LN, 6, "1001:1002:1003:1004:1005:1006:1007:1008/128:65535", NULL, false, },
 	};
 
 	const char *oops;
@@ -110,7 +113,9 @@ static void check_str_subnet(struct logger *logger UNUSED)
 		      t->str == NULL ? "<error>" : t->str);
 
 		ip_subnet tmp, *subnet = &tmp;
-		oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family), subnet);
+		ip_address nonzero_host;
+		oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family),
+				     subnet, &nonzero_host);
 		if (oops != NULL && t->str == NULL) {
 			/* Error was expected, do nothing */
 			continue;
@@ -120,6 +125,11 @@ static void check_str_subnet(struct logger *logger UNUSED)
 		} else if (oops == NULL && t->str == NULL) {
 			/* If no errors, but we expected one */
 			FAIL("ttosubnet(%s) succeeded unexpectedly", t->in);
+		}
+
+		if (nonzero_host.is_set != t->zeroed) {
+			FAIL("ttosubnet(%s) failed: zeroed %s should be %s",
+			     t->in, bool_str(nonzero_host.is_set), bool_str(t->zeroed));
 		}
 
 		CHECK_TYPE(subnet);
@@ -154,9 +164,14 @@ static void check_subnet_mask(void)
 		PRINT("%s '%s' -> %s", pri_family(t->family), t->in, t->mask);
 
 		ip_subnet tmp, *subnet = &tmp;
-		err_t oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family), subnet);
+		ip_address nonzero_host;
+		err_t oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family),
+					   subnet, &nonzero_host);
 		if (oops != NULL) {
-			FAIL("ttosubnet() failed: %s", oops);
+			FAIL("ttosubnet(%s) failed: %s", t->in, oops);
+		}
+		if (nonzero_host.is_set) {
+			FAIL("ttosubnet(%s) failed: host identifier is non-zero", t->in);
 		}
 
 		CHECK_TYPE(subnet);
@@ -203,9 +218,14 @@ static void check_subnet_prefix(void)
 		PRINT("%s '%s' -> %s", pri_family(t->family), t->in, t->out);
 
 		ip_subnet tmp, *subnet = &tmp;
-		err_t oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family), subnet);
+		ip_address nonzero_host;
+		err_t oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family),
+					   subnet, &nonzero_host);
 		if (oops != NULL) {
-			FAIL("ttosubnet() failed: %s", oops);
+			FAIL("ttosubnet(%s) failed: %s", t->in, oops);
+		}
+		if (nonzero_host.is_set) {
+			FAIL("ttosubnet(%s) failed: host identifier is non-zero", t->in);
 		}
 
 		CHECK_TYPE(subnet);
@@ -261,9 +281,14 @@ static void check_subnet_is(void)
 
 		ip_subnet tmp = unset_subnet, *subnet = &tmp;
 		if (t->family != 0) {
-			err_t oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family), &tmp);
+			ip_address nonzero_host;
+			err_t oops = ttosubnet_num(shunk1(t->in), IP_TYPE(t->family),
+						   &tmp, &nonzero_host);
 			if (oops != NULL) {
-				FAIL("ttosubnet() failed: %s", oops);
+				FAIL("ttosubnet(%s) failed: %s", t->in, oops);
+			}
+			if (nonzero_host.is_set) {
+				FAIL("ttosubnet(%s) failed: non-zero host identifier", t->in);
 			}
 			CHECK_TYPE(subnet);
 		}

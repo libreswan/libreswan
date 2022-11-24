@@ -35,8 +35,10 @@
 
 err_t ttoselector_num(shunk_t input,
 		      const struct ip_info *afi, /* could be NULL */
-		      ip_selector *dst)
+		      ip_selector *dst, ip_address *nonzero_host)
 {
+	*dst = unset_selector;
+	*nonzero_host = unset_address;
 	err_t oops;
 
 	/*
@@ -54,41 +56,40 @@ err_t ttoselector_num(shunk_t input,
 	}
 
 	if (afi == NULL) {
-		afi = address_type(&address);
+		afi = address_info(address);
 	}
-	if (!pexpect(afi != NULL)) {
-		return "confused address family";
-	}
+	passert(afi != NULL);
 
 	/*
 	 * ... <prefix-bits> : ...
 	 */
 
-	char prefix_bits_term;
-	shunk_t prefix_bits_token = shunk_token(&input, &prefix_bits_term, ":");
+	char prefix_length_term;
+	shunk_t prefix_length_token = shunk_token(&input, &prefix_length_term, ":");
 	/* fprintf(stderr, "prefix-bits="PRI_SHUNK"\n", pri_shunk(prefix_bits_token)); */
 
-	uintmax_t prefix_bits = afi->mask_cnt;
-	if (prefix_bits_token.len > 0) {
-		oops = shunk_to_uintmax(prefix_bits_token, NULL, 0, &prefix_bits);
+	uintmax_t prefix_length = afi->mask_cnt;
+	if (prefix_length_token.len > 0) {
+		oops = shunk_to_uintmax(prefix_length_token, NULL, 0, &prefix_length);
 		if (oops != NULL) {
 			return oops;
 		}
-		if (prefix_bits > afi->mask_cnt) {
+		if (prefix_length > afi->mask_cnt) {
 			return "too large";
 		}
-	} else if (prefix_bits_token.ptr != NULL) {
+	} else if (prefix_length_token.ptr != NULL) {
 		/* found but empty */
-		pexpect(prefix_bits_token.len == 0);
+		pexpect(prefix_length_token.len == 0);
 		return "missing prefix bit size";
 	}
 
-	struct ip_bytes host = ip_bytes_from_blit(afi, address.bytes,
-						  /*routing-prefix*/&clear_bits,
-						  /*host-identifier*/&keep_bits,
-						  prefix_bits);
-	if (!thingeq(host, unset_ip_bytes)) {
-		return "host-identifier must be zero";
+	struct ip_bytes routing_prefix = ip_bytes_from_blit(afi, address.bytes,
+							    /*routing-prefix*/&keep_bits,
+							    /*host-identifier*/&clear_bits,
+							    prefix_length);
+	if (ip_bytes_cmp(afi->ip_version, routing_prefix,
+			 afi->ip_version, address.bytes) != 0) {
+		*nonzero_host = address;
 	}
 
 	/*
@@ -141,7 +142,10 @@ err_t ttoselector_num(shunk_t input,
 		return "missing port following protocol/";
 	}
 
-	ip_subnet subnet = subnet_from_address_prefix_bits(address, prefix_bits);
-	*dst = selector_from_subnet_protocol_port(subnet, protocol, port);
+	/* check host-part is zero */
+
+	*dst = selector_from_raw(HERE, afi->ip_version,
+				 routing_prefix, prefix_length,
+				 protocol, port);
 	return NULL;
 }

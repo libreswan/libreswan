@@ -24,9 +24,10 @@ const ip_selectors empty_ip_selectors;
 
 diag_t ttoselectors_num(shunk_t input, const char *delims,
 			const struct ip_info *afi,
-			ip_selectors *output)
+			ip_selectors *output, ip_address *nonzero_host)
 {
 	*output = empty_ip_selectors;
+	*nonzero_host = unset_address;
 
 	if (input.ptr == NULL) {
 		return NULL;
@@ -49,10 +50,14 @@ diag_t ttoselectors_num(shunk_t input, const char *delims,
 		}
 		/* validate during first pass */
 		ip_selector tmp;
-		err_t e = ttoselector_num(token, afi, &tmp);
+		ip_address tmp_nonzero;
+		err_t e = ttoselector_num(token, afi, &tmp, &tmp_nonzero);
 		if (e != NULL) {
 			return diag(PRI_SHUNK" invalid, %s",
 				    pri_shunk(token), e);
+		}
+		if (tmp_nonzero.is_set && !nonzero_host->is_set) {
+			*nonzero_host = tmp_nonzero; /* save first */
 		}
 		nr_tokens++;
 	}
@@ -80,7 +85,8 @@ diag_t ttoselectors_num(shunk_t input, const char *delims,
 			continue;
 		}
 		passert(dst < output->list + output->len);
-		err_t e = ttoselector_num(token, afi, dst);
+		ip_address tmp_nonzero;
+		err_t e = ttoselector_num(token, afi, dst, &tmp_nonzero);
 		passert(e == NULL);
 		selector_buf b;
 		dbg("%s() %s", __func__, str_selector(dst, &b));
