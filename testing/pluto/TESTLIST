@@ -929,6 +929,10 @@ kvmplutotest	ikev2-selectors-46in4-rw-alias		wip
 kvmplutotest	ikev2-selectors-46in4-rw-ike		wip
 kvmplutotest	ikev2-selectors-46in6-rw-alias		wip
 kvmplutotest	ikev2-selectors-46in6-rw-ike		wip
+kvmplutotest	ikev2-selectors-64in4-rw-alias		wip
+kvmplutotest	ikev2-selectors-64in4-rw-ike		wip
+kvmplutotest	ikev2-selectors-64in6-rw-alias		wip
+kvmplutotest	ikev2-selectors-64in6-rw-ike		wip
 kvmplutotest	ikev2-selectors-66in4-rw-alias		wip
 kvmplutotest	ikev2-selectors-66in4-rw-ike		wip
 kvmplutotest	ikev2-selectors-66in6-rw-alias		wip
