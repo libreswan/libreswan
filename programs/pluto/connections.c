@@ -538,11 +538,6 @@ void update_spd_ends_from_host_ends(struct connection *c)
 			 * to a subnet containing only the end's host
 			 * address.
 			 *
-			 * For instance, when the config file omitted
-			 * the child's subnet and/or the child's
-			 * sourceip, the host address (merged with any
-			 * protoport) should be used.
-			 *
 			 * If the other end has multiple child subnets
 			 * then the SPD will be a list.
 			 */
@@ -1390,15 +1385,24 @@ static diag_t extract_child_end(const struct whack_message *wm,
 	err_t e;
 	const char *leftright = src->leftright;
 
-	ip_address sourceip = unset_address;
+	if (src->sourceip != NULL && src->client == NULL) {
+		return diag("%ssourceip=%s invalid, requires %ssubnet",
+			    leftright, src->sourceip, leftright);
+	}
+
 	if (src->sourceip != NULL) {
+		ip_address sourceip;
 		e = ttoaddress_num(shunk1(src->sourceip), NULL/*UNSPEC*/, &sourceip);
 		if (e != NULL) {
 			return diag("%ssourceip=%s invalid, %s",
 				    src->leftright, src->sourceip, e);
 		}
+		if (!address_is_specified(sourceip)) {
+			return diag("%ssourceip=%s invalid, must be a valid address",
+				    leftright, src->sourceip);
+		}
+		child_config->sourceip = sourceip;
 	}
-	child_config->sourceip = sourceip;
 
 	child_config->host_vtiip = src->host_vtiip;
 	child_config->ifaceip = src->ifaceip;
@@ -1465,36 +1469,6 @@ static diag_t extract_child_end(const struct whack_message *wm,
 			return diag_diag(&d, "%ssubnet=%s invalid, ",
 					 leftright, src->client);
 		}
-	} else if (sourceip.is_set) {
-		/*
-		 * No subnet=, construct one using SOURCEIP (since the
-		 * SUBNET needs to contain SOURCEIP anyway).
-		 *
-		 * When end.has_client:
-		 *
-		 * - the update SPD code skips updating the spd client
-		 *   (selector) from the host address
-		 *
-		 * - could_route() will allow routing even though the
-		 *   connection is a TEMPLATE
-		 *
-		 * - seems to also mean that the Child's selector is
-		 *   pinned (when false the Child's selector can be
-		 *   refined).
-		 *
-		 *   Of course if NARROWING is allowed, this can be
-		 *   refined regardless of .has_client.
-		 */
-		address_buf sb;
-		ldbg(logger, "%s child selectors from %ssourceip=%s; %s.config.has_client=true",
-		     leftright, leftright, str_address(&sourceip, &sb), leftright);
-		child_config->has_client = true;
-		child_config->selectors_field = "sourceip";
-		child_config->selectors_string = clone_str(src->sourceip, "sourceip");
-		child_config->selectors.len = 1;
-		child_config->selectors.list = alloc_things(ip_selector, 1, "sourceip-selectors");
-		child_config->selectors.list[0] =
-			selector_from_address_protoport(sourceip, src->protoport);
 	} else if (src->protoport.is_set) {
 		/*
 		 * There's no child subnet _yet_ there is a child
