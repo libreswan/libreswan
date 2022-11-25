@@ -94,7 +94,6 @@ enum_names natt_method_names = {
 static const char *const routing_story_strings[] = {
 	"unrouted",             /* RT_UNROUTED: unrouted */
 	"unrouted HOLD",        /* RT_UNROUTED_HOLD: unrouted, but HOLD shunt installed */
-	"eroute eclipsed",      /* RT_ROUTED_ECLIPSED: RT_ROUTED_PROSPECTIVE except bare HOLD or instance has eroute */
 	"prospective erouted",  /* RT_ROUTED_PROSPECTIVE: routed, and prospective shunt installed */
 	"erouted HOLD",         /* RT_ROUTED_HOLD: routed, and HOLD shunt installed */
 	"fail erouted",         /* RT_ROUTED_FAILURE: routed, and failure-context shunt eroute installed */

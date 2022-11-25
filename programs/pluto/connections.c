@@ -3824,14 +3824,6 @@ struct connection *oppo_instantiate(struct connection *t,
 	}
 
 	/*
-	 * Adjust routing if something is eclipsing c.
-	 * It must be a %hold for us (hard to passert this).
-	 * If there was another instance eclipsing, we'd be using it.
-	 */
-	if (t->spd->routing == RT_ROUTED_ECLIPSED)
-		set_spd_routing(d->spd, RT_ROUTED_PROSPECTIVE);
-
-	/*
 	 * Remember if the template is routed:
 	 * if so, this instance applies for initiation
 	 * even if it is created for responding.
@@ -4756,59 +4748,6 @@ void connection_delete_unused_instance(struct connection **cp,
 	fd_delref(&c->logger->global_whackfd);
 	c->logger->global_whackfd = fd_addref(whackfd);
 	delete_connection(&c);
-}
-
-/*
- * Return the template template connection's eroute that has been
- * eclipsed by either a %hold or an eroute for an instance.
- *
- * This can be the case IFF the template is a /32 -> /32.  This
- * requires some special casing.
- *
- * XXX: Based on the pexpect() it can can be reduced to just walking
- * the from_serial list; since this stuff never has multiple
- * spd_routes, can just assume there's one.
- */
-
-struct spd_route *eclipsing(const struct spd_route *sr)
-{
-	if (sr->connection->kind != CK_INSTANCE &&
-	    sr->connection->kind != CK_GOING_AWAY) {
-		enum_buf kb;
-		connection_buf cb;
-		dbg(PRI_CONNECTION" is not eclipsing, kind %s needs to be an instance (or GOING_AWAY, ugh)",
-		    pri_connection(sr->connection, &cb),
-		    str_enum(&connection_kind_names, sr->connection->kind, &kb));
-		/* don't consider sec_labels */
-		return NULL;
-	}
-
-	/*
-	 * Starting with the SR's connection parent, Walk the parent
-	 * chain looking for a connection with an eclipsed SPD.
-	 */
-	for (struct connection *c = connection_by_serialno(sr->connection->serial_from);
-	     c != NULL;
-	     c = connection_by_serialno(c->serial_from)) {
-		struct spd_route *srue = c->spd;
-		if (srue->routing != RT_ROUTED_ECLIPSED) {
-			continue;
-		}
-		/*
-		 * Eclipsable connections can have only one SPD; rest
-		 * just sanity checks.
-		 */
-		pexpect(srue->spd_next == NULL);
-		pexpect(eclipsable(srue));
-		pexpect(selector_range_eq_selector_range(sr->local->client, srue->local->client));
-		pexpect(selector_range_eq_selector_range(sr->remote->client, srue->remote->client));
-		connection_buf cb, ub;
-		dbg(PRI_CONNECTION" eclipsing "PRI_CONNECTION,
-		    pri_connection(sr->connection, &cb),
-		    pri_connection(srue->connection, &ub));
-		return srue;
-	}
-	return NULL;
 }
 
 /*

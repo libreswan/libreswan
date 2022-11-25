@@ -828,11 +828,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	connection_buf cib;
 	dbg("creating new instance from "PRI_CONNECTION, pri_connection(c, &cib));
 
-	if (sr->routing == RT_ROUTED_PROSPECTIVE && eclipsable(sr)) {
-		dbg("route is eclipsed");
-		set_spd_routing(sr, RT_ROUTED_ECLIPSED);
-	}
-
 	pexpect(c->kind == CK_TEMPLATE);
 	passert(c->policy & POLICY_OPPORTUNISTIC); /* can't initiate Road Warrior connections */
 

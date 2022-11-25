@@ -736,7 +736,6 @@ enum connection_kind {
 enum routing_t {
 	RT_UNROUTED,            /* unrouted */
 	RT_UNROUTED_HOLD,       /* unrouted, but HOLD shunt installed */
-	RT_ROUTED_ECLIPSED,     /* RT_ROUTED_PROSPECTIVE except bare HOLD or instance has eroute */
 	RT_ROUTED_PROSPECTIVE,  /* routed, and prospective shunt installed */
 	RT_ROUTED_HOLD,         /* routed, and HOLD shunt installed */
 	RT_ROUTED_FAILURE,      /* routed, and failure-context shunt installed */

@@ -730,7 +730,6 @@ extern void connection_delete_unused_instance(struct connection **cp, struct sta
  */
 #define eclipsable(sr) (selector_contains_one_address((sr)->local->client) && \
 			selector_contains_one_address((sr)->remote->client))
-struct spd_route *eclipsing(const struct spd_route *sr);
 
 /* print connection status */
 

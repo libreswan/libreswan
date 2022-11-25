@@ -192,42 +192,6 @@ static bool bare_policy_op(enum kernel_policy_op op,
 		}
 	}
 
-	if (sr->routing == RT_ROUTED_ECLIPSED && c->kind == CK_TEMPLATE) {
-		/*
-		 * We think that we have an eroute, but we don't.
-		 * Adjust the request and account for eclipses.
-		 */
-		passert(eclipsable(sr));
-		switch (op) {
-		case KERNEL_POLICY_OP_REPLACE:
-			/* really an add */
-			op = KERNEL_POLICY_OP_ADD;
-			opname = "replace eclipsed";
-			break;
-		case KERNEL_POLICY_OP_DELETE:
-			/*
-			 * delete unnecessary:
-			 * we don't actually have an eroute
-			 */
-			return true;
-		case KERNEL_POLICY_OP_ADD:
-			/*never eclipsed add*/
-			bad_case(op);
-		}
-	} else if (op == KERNEL_POLICY_OP_DELETE) {
-		/* maybe we are uneclipsing something */
-		struct spd_route *esr = eclipsing(sr);
-		if (esr != NULL) {
-			set_spd_routing(esr, RT_ROUTED_PROSPECTIVE);
-			return bare_policy_op(KERNEL_POLICY_OP_REPLACE,
-					      EXPECT_KERNEL_POLICY_OK,
-					      esr->connection, esr,
-					      RT_ROUTED_PROSPECTIVE,
-					      "restoring eclipsed",
-					      logger);
-		}
-	}
-
 	/*
 	 * XXX: the two calls below to raw_policy() seems to be the
 	 * only place where SA_PROTO and ESATYPE disagree - when
@@ -3326,41 +3290,9 @@ static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy expect
 		dbg("kernel: %s() running 'down'", __func__);
 		(void) do_command(sr->connection, sr, "down", st, st->st_logger);
 
-		struct spd_route *esr = eclipsing(sr);
-		if (esr != NULL) {
-
-			/*
-			 * ESR was eclipsed by SR.
-			 *
-			 * Instead of deleting SR's kernel policy,
-			 * replace it with what ever the eclipsed ESR
-			 * connection had before being eclipsed.
-			 *
-			 * The restored policy uses TRANSPORT mode
-			 * (the host .{src,dst} provides the family
-			 * but the address isn't used).
-			 */
-			pexpect(esr->routing == RT_ROUTED_ECLIPSED);
-			set_spd_routing(esr, RT_ROUTED_PROSPECTIVE);
-			teardown_kernel_policies(KERNEL_POLICY_OP_REPLACE,
-						 esr->connection->config->prospective_shunt,
-						 esr, sr, expect_kernel_policy,
-						 st->st_logger,
-						 "restoring eclipsed");
-#ifdef IPSEC_CONNECTION_LIMIT
-			num_ipsec_eroute--;
-#endif
-			/* do now so route_owner() won't find us */
-			set_spd_routing(sr, RT_UNROUTED);
-			/* only unroute if no other connection shares it */
-			if (route_owner(sr->connection, sr, NULL, NULL, NULL) == NULL) {
-				do_command(sr->connection, sr, "unroute", NULL,
-					   sr->connection->logger);
-			}
-
-		} else if (sr->connection->kind == CK_INSTANCE &&
-			   ((sr->connection->policy & POLICY_OPPORTUNISTIC) ||
-			    (sr->connection->policy & POLICY_DONT_REKEY))) {
+		if (sr->connection->kind == CK_INSTANCE &&
+		    ((sr->connection->policy & POLICY_OPPORTUNISTIC) ||
+		     (sr->connection->policy & POLICY_DONT_REKEY))) {
 
 			/*
 			 *
