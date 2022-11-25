@@ -170,6 +170,7 @@ struct kernel_policy {
 	struct kernel_policy_end src;
 	struct kernel_policy_end dst;
 	kernel_priority_t priority;
+	enum shunt_policy shunt;
 	/*
 	 * Index from 1; RULE[0] is always empty; so .nr_rules==0
 	 * implies no rules.
@@ -190,7 +191,8 @@ struct kernel_policy {
 
 struct kernel_policy bare_kernel_policy(const ip_selector *src,
 					const ip_selector *dst,
-					kernel_priority_t priority);
+					kernel_priority_t priority,
+					enum shunt_policy shunt_policy);
 
 /*
  * The CHILD (IPsec, kernel) SA has two IP ends.

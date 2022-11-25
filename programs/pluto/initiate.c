@@ -919,16 +919,16 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 
 	struct kernel_policy outbound_kernel_policy =
 		bare_kernel_policy(&local_shunt, &remote_shunt,
-				   calculate_kernel_priority(c, LIN(POLICY_OPPORTUNISTIC, c->policy)));
+				   calculate_kernel_priority(c, LIN(POLICY_OPPORTUNISTIC, c->policy)),
+				   b->negotiation_shunt);
 
 	if (raw_policy(KERNEL_POLICY_OP_ADD,
 		       DIRECTION_OUTBOUND,
 		       EXPECT_KERNEL_POLICY_OK,
 		       &outbound_kernel_policy.src.client,
 		       &outbound_kernel_policy.dst.client,
-		       b->negotiation_shunt,
-		       (b->negotiation_shunt == SHUNT_PASS ? NULL :
-			&outbound_kernel_policy),
+		       outbound_kernel_policy.shunt,
+		       &outbound_kernel_policy,
 		       deltatime(SHUNT_PATIENCE),
 		       outbound_kernel_policy.priority.value,
 		       NULL, 0 /* xfrm-if-id */,

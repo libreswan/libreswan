@@ -215,7 +215,8 @@ static bool bare_policy_op(enum kernel_policy_op op,
 			   const struct spd_route *sr,
 			   enum routing_t rt_kind,
 			   const char *opname,
-			   struct logger *logger)
+			   struct logger *logger,
+			   where_t where)
 {
 	shunk_t sec_label = HUNK_AS_SHUNK(c->config->sec_label);
 
@@ -230,6 +231,46 @@ static bool bare_policy_op(enum kernel_policy_op op,
 	enum shunt_policy shunt_policy =
 		(rt_kind == RT_ROUTED_PROSPECTIVE ? c->config->prospective_shunt :
 		 c->config->failure_shunt);
+
+	/*
+	 * Are we supposed to end up with no policy?
+	 */
+	if (shunt_policy == SHUNT_NONE && op == KERNEL_POLICY_OP_ADD) {
+		ldbg(c->logger,
+		     "kernel: %s() ADD-NONE: so add nothing "PRI_WHERE,
+		     __func__, pri_where(where));
+		/* add nothing == do nothing */
+		return true;
+	} else if (shunt_policy == SHUNT_NONE && op == KERNEL_POLICY_OP_REPLACE) {
+		ldbg(c->logger,
+		     "kernel: %s() REPLACE-with-NONE: turns into DELETE+UNSET "PRI_WHERE,
+		     __func__, pri_where(where));
+		op = KERNEL_POLICY_OP_DELETE;
+		shunt_policy = SHUNT_UNSET;
+		opname = "delete";
+	} else if (shunt_policy == SHUNT_NONE && op == KERNEL_POLICY_OP_DELETE) {
+		ldbg(c->logger,
+		     "kernel: %s() DELETE-with-NONE: turns into DELETE+UNSET "PRI_WHERE,
+		     __func__, pri_where(where));
+		/* delete remains delete */
+		shunt_policy = SHUNT_UNSET;
+		op = KERNEL_POLICY_OP_DELETE;
+		opname = "delete";
+	} else if (shunt_policy == SHUNT_DROP && op == KERNEL_POLICY_OP_DELETE) {
+		ldbg(c->logger,
+		     "kernel: %s() DELETE-with-DROP: turns into DELETE+UNSET "PRI_WHERE,
+		     __func__, pri_where(where));
+		shunt_policy = SHUNT_UNSET;
+		opname = "delete";
+	} else if (shunt_policy == SHUNT_PASS && op == KERNEL_POLICY_OP_DELETE) {
+		ldbg(c->logger,
+		     "kernel: %s() DELETE-with-PASS: turns into DELETE+UNSET "PRI_WHERE,
+		     __func__, pri_where(where));
+		shunt_policy = SHUNT_UNSET;
+		opname = "delete";
+	} else {
+		ldbg(c->logger, "kernel: %s() no-change to OP+SHUNT", __func__);
+	}
 
 	LSWDBGP(DBG_BASE, buf) {
 		jam(buf, "kernel: %s() ", __func__);
@@ -260,27 +301,8 @@ static bool bare_policy_op(enum kernel_policy_op op,
 		if (c->config->sec_label.len > 0) {
 			jam_sanitized_hunk(buf, sec_label);
 		}
-	}
 
-	if (shunt_policy == SHUNT_NONE) {
-		/*
-		 * We're supposed to end up with no policy: rejig op
-		 * and opname.
-		 */
-		switch (op) {
-		case KERNEL_POLICY_OP_REPLACE:
-			/* replace with nothing == delete */
-			op = KERNEL_POLICY_OP_DELETE;
-			opname = "delete";
-			break;
-		case KERNEL_POLICY_OP_ADD:
-			/* add nothing == do nothing */
-			return true;
-
-		case KERNEL_POLICY_OP_DELETE:
-			/* delete remains delete */
-			break;
-		}
+		jam(buf, PRI_WHERE, pri_where(where));
 	}
 
 	/*
@@ -297,18 +319,18 @@ static bool bare_policy_op(enum kernel_policy_op op,
 	 * Use raw_policy() as it gives a better log result.
 	 */
 
-	bool delete = (op == KERNEL_POLICY_OP_DELETE);
 
 	struct kernel_policy outbound_kernel_policy =
 		bare_kernel_policy(&sr->local->client, &sr->remote->client,
-				   calculate_kernel_priority(c, false));
+				   calculate_kernel_priority(c, false),
+				   shunt_policy);
+
 	if (!raw_policy(op, DIRECTION_OUTBOUND,
 			EXPECT_KERNEL_POLICY_OK,
 			&outbound_kernel_policy.src.client,
 			&outbound_kernel_policy.dst.client,
-			shunt_policy,
-			((delete || shunt_policy == SHUNT_PASS) ? NULL :
-			 &outbound_kernel_policy),
+			outbound_kernel_policy.shunt,
+			(op == KERNEL_POLICY_OP_DELETE ? NULL : &outbound_kernel_policy),
 			deltatime(0),
 			outbound_kernel_policy.priority.value,
 			&c->sa_marks, c->xfrmi,
@@ -334,14 +356,15 @@ static bool bare_policy_op(enum kernel_policy_op op,
 	 */
 	struct kernel_policy inbound_kernel_policy =
 		bare_kernel_policy(&sr->remote->client, &sr->local->client,
-				   calculate_kernel_priority(c, false));
+				   calculate_kernel_priority(c, false),
+				   shunt_policy);
+
 	return raw_policy(op, DIRECTION_INBOUND,
 			  expect_kernel_policy,
 			  &inbound_kernel_policy.src.client,
 			  &inbound_kernel_policy.dst.client,
-			  shunt_policy,
-			  ((delete || shunt_policy == SHUNT_PASS) ? NULL :
-			   &inbound_kernel_policy),
+			  inbound_kernel_policy.shunt,
+			  (op == KERNEL_POLICY_OP_DELETE ? NULL : &inbound_kernel_policy),
 			  deltatime(0),
 			  inbound_kernel_policy.priority.value,
 			  &c->sa_marks, c->xfrmi,
@@ -351,7 +374,8 @@ static bool bare_policy_op(enum kernel_policy_op op,
 
 struct kernel_policy bare_kernel_policy(const ip_selector *src,
 					const ip_selector *dst,
-					kernel_priority_t priority)
+					kernel_priority_t priority,
+					enum shunt_policy shunt_policy)
 {
 	const struct ip_info *child_afi = selector_type(src);
 	pexpect(selector_type(dst) == child_afi);
@@ -362,6 +386,7 @@ struct kernel_policy bare_kernel_policy(const ip_selector *src,
 		.src.route = *src,
 		.dst.route = *dst,
 		.priority = priority,
+		.shunt = shunt_policy,
 		/*
 		 * With transport mode, the encapsulated packet on the
 		 * host interface must have the same family as the raw
@@ -371,12 +396,14 @@ struct kernel_policy bare_kernel_policy(const ip_selector *src,
 		.src.host = child_afi->address.unspec,
 		.dst.host = child_afi->address.unspec,
 		.mode = ENCAP_MODE_TRANSPORT,
-		.nr_rules = 1,
-		.rule[1] = {
+	};
+	if (shunt_policy != SHUNT_PASS) {
+		transport_esp.nr_rules = 1;
+		transport_esp.rule[1] = (struct kernel_policy_rule) {
 			.proto = ENCAP_PROTO_ESP,
 			.reqid = 0,
-		},
-	};
+		};
+	}
 	return transport_esp;
 }
 
@@ -1127,6 +1154,7 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 		.dst.route = dst_route,
 		.priority = priority,
 		.mode = mode,
+		.shunt = SHUNT_UNSET,
 		.nr_rules = 0,
 	};
 
@@ -1473,7 +1501,8 @@ static bool sag_eroute(const struct state *st,
 	char why[256];
 	snprintf(why, sizeof(why), "%s() %s", __func__, opname);
 
-	return eroute_outbound_connection(op, why, sr, SHUNT_UNSET,
+	return eroute_outbound_connection(op, why, sr,
+					  kernel_policy.shunt/*SHUNT_UNSET*/,
 					  &kernel_policy,
 					  kernel_policy.priority.value,
 					  &c->sa_marks, c->xfrmi,
@@ -1541,7 +1570,7 @@ void unroute_connection(struct connection *c)
 				       EXPECT_NO_INBOUND,
 				       c, sr, RT_UNROUTED,
 				       "unrouting connection",
-				       c->logger);
+				       c->logger, HERE);
 #ifdef IPSEC_CONNECTION_LIMIT
 			num_ipsec_eroute--;
 #endif
@@ -1658,7 +1687,7 @@ static void delete_bare_kernel_policy(const struct bare_shunt *bsp,
 			DIRECTION_OUTBOUND,
 			EXPECT_KERNEL_POLICY_OK,
 			&src, &dst,
-			SHUNT_PASS,
+			SHUNT_UNSET,/*delete->ignored*/
 			/*kernel_policy*/NULL/*delete->no-policy-rules*/,
 			deltatime(SHUNT_PATIENCE),
 			0, /* we don't know connection for priority yet */
@@ -1725,7 +1754,7 @@ bool flush_bare_shunt(const ip_address *src_address,
 			     DIRECTION_OUTBOUND,
 			     expect_kernel_policy,
 			     &src, &dst,
-			     SHUNT_PASS,
+			     SHUNT_UNSET,/*delete->ignored*/
 			     /*kernel_policy*/NULL/*delete->no-policy-rules*/,
 			     deltatime(SHUNT_PATIENCE),
 			     0, /* we don't know connection for priority yet */
@@ -1803,7 +1832,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 		if (!raw_policy(KERNEL_POLICY_OP_ADD, direction,
 				EXPECT_KERNEL_POLICY_OK,
 				&kernel_policy.src.client, &kernel_policy.dst.client,
-				SHUNT_UNSET,
+				kernel_policy.shunt/*SHUNT_UNSET*/,
 				&kernel_policy,
 				/*use_lifetime*/deltatime(0),
 				/*sa_priority*/kernel_policy.priority.value,
@@ -1995,8 +2024,11 @@ bool assign_holdpass(const struct connection *c,
 
 			struct kernel_policy outbound_kernel_policy =
 				bare_kernel_policy(&sr->local->client, &sr->remote->client,
-						   calculate_kernel_priority(c, false));
-			if (eroute_outbound_connection(op, reason, sr, negotiation_shunt,
+						   calculate_kernel_priority(c, false),
+						   negotiation_shunt);
+
+			if (eroute_outbound_connection(op, reason, sr,
+						       outbound_kernel_policy.shunt,
 						       &outbound_kernel_policy,
 						       outbound_kernel_policy.priority.value,
 						       NULL, 0 /* xfrm_if_id */,
@@ -2517,7 +2549,7 @@ static bool setup_half_kernel_policy(struct state *st, enum direction direction)
 				EXPECT_KERNEL_POLICY_OK,
 				&kernel_policy.src.route,	/* src_client */
 				&kernel_policy.dst.route,	/* dst_client */
-				SHUNT_UNSET,
+				kernel_policy.shunt/*SHUNT_UNSET*/,
 				&kernel_policy,			/* " */
 				deltatime(0),		/* lifetime */
 				kernel_policy.priority.value,
@@ -2918,7 +2950,7 @@ bool route_and_eroute(struct connection *c,
 							  EXPECT_KERNEL_POLICY_OK,
 							  c, sr, RT_ROUTED_PROSPECTIVE,
 							  "route_and_eroute() replace shunt",
-							  logger);
+							  logger, HERE);
 		} else {
 			eroute_installed = sag_eroute(st, sr,
 						      KERNEL_POLICY_OP_REPLACE,
@@ -2944,7 +2976,7 @@ bool route_and_eroute(struct connection *c,
 							  EXPECT_KERNEL_POLICY_OK,
 							  c, sr, RT_ROUTED_PROSPECTIVE,
 							  "route_and_eroute() add",
-							  logger);
+							  logger, HERE);
 		} else {
 			eroute_installed = sag_eroute(st, sr,
 						      KERNEL_POLICY_OP_ADD,
@@ -3089,13 +3121,15 @@ bool route_and_eroute(struct connection *c,
 				struct bare_shunt *bs = *bspp;
 				struct kernel_policy outbound_kernel_policy =
 					bare_kernel_policy(&bs->our_client, &bs->peer_client,
-							   calculate_kernel_priority(c, false));
+							   calculate_kernel_priority(c, false),
+							   bs->shunt_policy);
+
 				if (!raw_policy(KERNEL_POLICY_OP_REPLACE,
 						DIRECTION_OUTBOUND,
 						EXPECT_KERNEL_POLICY_OK,
 						&outbound_kernel_policy.src.client,
 						&outbound_kernel_policy.dst.client,
-						bs->shunt_policy,
+						outbound_kernel_policy.shunt,
 						&outbound_kernel_policy,
 						deltatime(SHUNT_PATIENCE),
 						outbound_kernel_policy.priority.value,
@@ -3115,7 +3149,7 @@ bool route_and_eroute(struct connection *c,
 							    EXPECT_KERNEL_POLICY_OK,
 							    ero, esr, esr->routing,
 							    "route_and_eroute() restore",
-							    logger)) {
+							    logger, HERE)) {
 						llog(RC_LOG, logger,
 						     "shunt_policy() in route_and_eroute() failed restore/replace");
 					}
@@ -3147,7 +3181,7 @@ bool route_and_eroute(struct connection *c,
 							    EXPECT_KERNEL_POLICY_OK,
 							    c, sr, sr->routing,
 							    "route_and_eroute() delete",
-							    logger)) {
+							    logger, HERE)) {
 						llog(RC_LOG, logger,
 						     "shunt_policy() in route_and_eroute() failed in !st case");
 					}
@@ -3301,15 +3335,16 @@ static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
 	 */
 	struct kernel_policy outbound_kernel_policy =
 		bare_kernel_policy(&out->local->client, &out->remote->client,
-				   calculate_kernel_priority(out->connection, false));
+				   calculate_kernel_priority(out->connection, false),
+				   outbound_shunt);
+
 	if (!raw_policy(outbound_op,
 			DIRECTION_OUTBOUND,
 			EXPECT_KERNEL_POLICY_OK,
 			&outbound_kernel_policy.src.client,
 			&outbound_kernel_policy.dst.client,
-			outbound_shunt,
-			(outbound_op == KERNEL_POLICY_OP_REPLACE ? &outbound_kernel_policy
-			 : NULL),
+			(outbound_op == KERNEL_POLICY_OP_DELETE ? SHUNT_UNSET : outbound_kernel_policy.shunt),
+			(outbound_op == KERNEL_POLICY_OP_DELETE ? NULL : &outbound_kernel_policy),
 			deltatime(0),
 			outbound_kernel_policy.priority.value,
 			&out->connection->sa_marks, out->connection->xfrmi,
@@ -3727,17 +3762,16 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 			struct kernel_policy outbound_kernel_policy =
 				bare_kernel_policy(&src, &dst,
 						   /* we don't know connection for priority yet */
-						   max_kernel_priority);
+						   max_kernel_priority, failure_shunt);
+
 			bool ok = raw_policy(KERNEL_POLICY_OP_REPLACE,
 					     DIRECTION_OUTBOUND,
 					     EXPECT_KERNEL_POLICY_OK,
 					     &outbound_kernel_policy.src.client,
 					     &outbound_kernel_policy.dst.client,
-					     failure_shunt,
-					     (failure_shunt == SHUNT_PASS ? NULL :
-					      &outbound_kernel_policy),
+					     outbound_kernel_policy.shunt,
+					     &outbound_kernel_policy,
 					     deltatime(SHUNT_PATIENCE),
-					     /* 0, we don't know connection for priority yet */
 					     outbound_kernel_policy.priority.value,
 					     /*sa_marks+xfrmi*/NULL,NULL,
 					     null_shunk, logger,
@@ -3823,7 +3857,7 @@ static void expire_bare_shunts(struct logger *logger)
 							    c, c->spd,
 							    RT_ROUTED_PROSPECTIVE,
 							    "expire_bare_shunts() add",
-							    logger)) {
+							    logger, HERE)) {
 						llog(RC_LOG, logger,
 						     "trap shunt install failed ");
 					}

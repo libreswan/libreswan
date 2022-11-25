@@ -698,9 +698,9 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	 * XXX: why not just test proto_info - let caller decide if it
 	 * is needed.  Lets find out.
 	 */
-	if (kernel_policy != NULL &&
-	    !(op == KERNEL_POLICY_OP_DELETE && dir == DIRECTION_OUTBOUND) &&
-	    !(op == KERNEL_POLICY_OP_DELETE && dir == DIRECTION_INBOUND)) {
+	if (kernel_policy != NULL && kernel_policy->nr_rules > 0 &&
+	    pexpect(shunt_policy != SHUNT_PASS) &&
+	    pexpect(op != KERNEL_POLICY_OP_DELETE)) {
 		struct xfrm_user_tmpl tmpls[4] = {0};
 
 		/* remember; kernel_policy.rule[] is 1 based */
