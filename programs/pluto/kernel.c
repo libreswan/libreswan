@@ -90,17 +90,16 @@ static bool route_and_eroute(struct connection *c,
 			     /* st or c */
 			     struct logger *logger);
 
-static bool eroute_connection(enum kernel_policy_op op,
-			      enum direction dir,
-			      const char *opname,
-			      const struct spd_route *sr,
-			      enum shunt_policy shunt_policy,
-			      const struct kernel_policy *kernel_policy,
-			      uint32_t sa_priority,
-			      const struct sa_marks *sa_marks,
-			      const struct pluto_xfrmi *xfrmi,
-			      shunk_t sec_label,
-			      struct logger *logger);
+static bool eroute_outbound_connection(enum kernel_policy_op op,
+				       const char *opname,
+				       const struct spd_route *sr,
+				       enum shunt_policy shunt_policy,
+				       const struct kernel_policy *kernel_policy,
+				       uint32_t sa_priority,
+				       const struct sa_marks *sa_marks,
+				       const struct pluto_xfrmi *xfrmi,
+				       shunk_t sec_label,
+				       struct logger *logger);
 
 static global_timer_cb kernel_scan_shunts;
 static bool invoke_command(const char *verb, const char *verb_suffix,
@@ -1410,13 +1409,12 @@ static bool sag_eroute(const struct state *st,
 	char why[256];
 	snprintf(why, sizeof(why), "%s() %s", __func__, opname);
 
-	return eroute_connection(op, DIRECTION_OUTBOUND,
-				 why, sr, SHUNT_UNSET,
-				 &kernel_policy,
-				 calculate_sa_prio(c, false),
-				 &c->sa_marks, c->xfrmi,
-				 HUNK_AS_SHUNK(c->config->sec_label),
-				 st->st_logger);
+	return eroute_outbound_connection(op, why, sr, SHUNT_UNSET,
+					  &kernel_policy,
+					  calculate_sa_prio(c, false),
+					  &c->sa_marks, c->xfrmi,
+					  HUNK_AS_SHUNK(c->config->sec_label),
+					  st->st_logger);
 }
 
 void migration_up(struct child_sa *child)
@@ -1812,21 +1810,20 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	return true;
 }
 
-bool eroute_connection(enum kernel_policy_op op,
-		       enum direction dir,
-		       const char *opname,
-		       const struct spd_route *sr,
-		       enum shunt_policy shunt_policy,
-		       const struct kernel_policy *kernel_policy,
-		       uint32_t sa_priority,
-		       const struct sa_marks *sa_marks,
-		       const struct pluto_xfrmi *xfrmi,
-		       shunk_t sec_label,
-		       struct logger *logger)
+bool eroute_outbound_connection(enum kernel_policy_op op,
+				const char *opname,
+				const struct spd_route *sr,
+				enum shunt_policy shunt_policy,
+				const struct kernel_policy *kernel_policy,
+				uint32_t sa_priority,
+				const struct sa_marks *sa_marks,
+				const struct pluto_xfrmi *xfrmi,
+				shunk_t sec_label,
+				struct logger *logger)
 {
 	if (sr->local->child->has_cat) {
 		ip_selector client = selector_from_address(sr->local->host->addr);
-		bool t = raw_policy(op, dir,
+		bool t = raw_policy(op, DIRECTION_OUTBOUND,
 				    EXPECT_KERNEL_POLICY_OK,
 				    &client, &kernel_policy->dst.route,
 				    shunt_policy,
@@ -1845,7 +1842,7 @@ bool eroute_connection(enum kernel_policy_op op,
 		dbg("kernel: %s CAT extra route added return=%d", __func__, t);
 	}
 
-	return raw_policy(op, dir,
+	return raw_policy(op, DIRECTION_OUTBOUND,
 			  EXPECT_KERNEL_POLICY_OK,
 			  &kernel_policy->src.route, &kernel_policy->dst.route,
 			  shunt_policy,
@@ -1933,13 +1930,12 @@ bool assign_holdpass(const struct connection *c,
 
 			struct kernel_policy outbound_kernel_policy =
 				bare_kernel_policy(&sr->local->client, &sr->remote->client);
-			if (eroute_connection(op, DIRECTION_OUTBOUND,
-					      reason, sr, negotiation_shunt,
-					      &outbound_kernel_policy,
-					      calculate_sa_prio(c, false),
-					      NULL, 0 /* xfrm_if_id */,
-					      HUNK_AS_SHUNK(c->config->sec_label),
-					      c->logger))
+			if (eroute_outbound_connection(op, reason, sr, negotiation_shunt,
+						       &outbound_kernel_policy,
+						       calculate_sa_prio(c, false),
+						       NULL, 0 /* xfrm_if_id */,
+						       HUNK_AS_SHUNK(c->config->sec_label),
+						       c->logger))
 			{
 				dbg("kernel: assign_holdpass() eroute_connection() done");
 			} else {
