@@ -1755,6 +1755,109 @@ static void mark_parse(/*const*/ char *wmmark,
 	}
 }
 
+static void set_connection_spds(struct connection *c, const struct ip_info *host_afi)
+{
+	ldbg(c->logger, "adding spds");
+	struct spd_route **spd_end = &c->spd;
+	struct {
+		const ip_selectors *selectors;
+		const ip_selector *selector;
+		const struct ip_info *afi;
+	} selectors[END_ROOF] = {0};
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		selectors[end].selectors = &c->end[end].config->child.selectors;
+	}
+	selectors[LEFT_END].selector = selectors[LEFT_END].selectors->list; /* could be NULL */
+	while (true) /*LEFT*/ {
+		unsigned indent = 1;
+		selector_buf leftb;
+		ldbg(c->logger, "%*s%s->...", indent, "", str_selector(selectors[LEFT_END].selector, &leftb));
+		selectors[RIGHT_END].selector = selectors[RIGHT_END].selectors->list;  /* could be NULL */
+		while (true) /*RIGHT*/ {
+			indent = 2;
+			selector_buf rightb;
+			ldbg(c->logger, "%*s%s->%s", indent, "",
+			     str_selector(selectors[LEFT_END].selector, &leftb),
+			     str_selector(selectors[RIGHT_END].selector, &rightb));
+			indent = 3;
+			/*
+			 * XXX: Try to filter out IPv4 vs IPv6.  When
+			 * selector is NULL, the host's address family
+			 * is used.
+			 */
+			FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+				if (selectors[end].selector == NULL) {
+					selectors[end].afi = host_afi;
+				} else {
+					selectors[end].afi = selector_type(selectors[end].selector);
+				}
+			}
+			if (selectors[LEFT_END].afi == selectors[RIGHT_END].afi) {
+				indent = 6;
+				struct spd_route *spd = append_spd_route(c, &spd_end);
+				FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+					const ip_selector *selector = selectors[end].selector; /* could be NULL */
+					const struct child_end_config *child_end = &c->end[end].config->child;
+					struct spd_end *spd_end = &spd->end[end];
+					const char *leftright = child_end->leftright;
+					/*
+					 * Set things based both on
+					 * virt and on selectors.
+					 *
+					 * XXX: don't set .has_client
+					 * as update_child_ends*()
+					 * will see it and skip
+					 * updating the client address
+					 * from the host.
+					 */
+					if (selector != NULL) {
+						selector_buf sb;
+						ldbg(c->logger,
+						     "%*s%s %s child spd has selectors; setting client to %s",
+						     indent, "", c->name, leftright, str_selector(selector, &sb));
+						passert(selector->is_set); /* else pointless */
+						if (spd == c->spd) {
+							set_end_selector(c, end, *selector, NULL);
+						} else {
+							spd_end->client = *selector;/*update_end_selector()*/
+						}
+					}
+					if (child_end->virt != NULL) {
+						ldbg(c->logger,
+						     "%*s%s child spd is virtual; adding virt",
+						     indent, "", leftright);
+						spd_end->virt = virtual_ip_addref(child_end->virt);
+					}
+					selector_buf sb;
+					ldbg(c->logger,
+					     "%*s%s child spd from selector %s %s.spd.has_client=%s virt=%s",
+					     indent, "", spd_end->config->leftright,
+					     str_selector(&spd_end->client, &sb),
+					     leftright,
+					     bool_str(spd_end->child->has_client),
+					     bool_str(spd_end->virt != NULL));
+				}
+				/* default values */
+				passert(spd->routing == RT_UNROUTED);
+				passert(spd->eroute_owner == SOS_NOBODY);
+				/* leave a debug-log breadcrumb */
+				set_spd_routing(spd, RT_UNROUTED);
+				set_spd_owner(spd, SOS_NOBODY);
+			}
+			/* advance RIGHT (NULL+1>=NULL+0) */
+			if (selectors[RIGHT_END].selector + 1 >= selectors[RIGHT_END].selectors->list + selectors[RIGHT_END].selectors->len) break;
+			selectors[RIGHT_END].selector++;
+		}
+		/* advance LEFT (NULL+1>=NULL+0) */
+		if (selectors[LEFT_END].selector + 1 >= selectors[LEFT_END].selectors->list + selectors[LEFT_END].selectors->len) break;
+		selectors[LEFT_END].selector++;
+	}
+
+	update_spd_ends_from_host_ends(c);
+	set_policy_prio(c); /* must be after kind is set */
+}
+
+
 /*
  * Extract the connection detail from the whack message WM and store
  * them in the connection C.
@@ -2788,108 +2891,7 @@ static bool extract_connection(const struct whack_message *wm,
 			c->end[end].child.selectors.proposed.len = 1;
 			c->end[end].child.selectors.proposed.list = &c->end[end].child.scratch_selector;
 		}
-	}
-
-	/*
-	 * Fill in the child SPDs using the previously parsed
-	 * selectors.
-	 */
-
-	ldbg(c->logger, "adding spds");
-	struct spd_route **spd_end = &c->spd;
-	struct {
-		const ip_selectors *selectors;
-		const ip_selector *selector;
-		const struct ip_info *afi;
-	} selectors[END_ROOF] = {0};
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		selectors[end].selectors = &c->end[end].config->child.selectors;
-	}
-	selectors[LEFT_END].selector = selectors[LEFT_END].selectors->list; /* could be NULL */
-	while (true) /*LEFT*/ {
-		unsigned indent = 1;
-		selector_buf leftb;
-		ldbg(c->logger, "%*s%s->...", indent, "", str_selector(selectors[LEFT_END].selector, &leftb));
-		selectors[RIGHT_END].selector = selectors[RIGHT_END].selectors->list;  /* could be NULL */
-		while (true) /*RIGHT*/ {
-			indent = 2;
-			selector_buf rightb;
-			ldbg(c->logger, "%*s%s->%s", indent, "",
-			     str_selector(selectors[LEFT_END].selector, &leftb),
-			     str_selector(selectors[RIGHT_END].selector, &rightb));
-			indent = 3;
-			/*
-			 * XXX: Try to filter out IPv4 vs IPv6.  When
-			 * selector is NULL, the host's address family
-			 * is used.
-			 */
-			FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-				if (selectors[end].selector == NULL) {
-					selectors[end].afi = host_afi;
-				} else {
-					selectors[end].afi = selector_type(selectors[end].selector);
-				}
-			}
-			if (selectors[LEFT_END].afi == selectors[RIGHT_END].afi) {
-				indent = 6;
-				struct spd_route *spd = append_spd_route(c, &spd_end);
-				FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-					const ip_selector *selector = selectors[end].selector; /* could be NULL */
-					const struct child_end_config *child_end = &c->end[end].config->child;
-					struct spd_end *spd_end = &spd->end[end];
-					const char *leftright = child_end->leftright;
-					/*
-					 * Set things based both on
-					 * virt and on selectors.
-					 *
-					 * XXX: don't set .has_client
-					 * as update_child_ends*()
-					 * will see it and skip
-					 * updating the client address
-					 * from the host.
-					 */
-					set_end_child_has_client(c, end, child_end->has_client);
-					if (selector != NULL) {
-						selector_buf sb;
-						ldbg(c->logger,
-						     "%*s%s %s child spd has selectors; setting client to %s",
-						     indent, "", c->name, leftright, str_selector(selector, &sb));
-						passert(selector->is_set); /* else pointless */
-						if (spd == c->spd) {
-							set_end_selector(c, end, *selector, NULL);
-						} else {
-							spd_end->client = *selector;/*update_end_selector()*/
-						}
-					}
-					if (child_end->virt != NULL) {
-						ldbg(c->logger,
-						     "%*s%s child spd is virtual; adding virt",
-						     indent, "", leftright);
-						spd_end->virt = virtual_ip_addref(child_end->virt);
-					}
-					selector_buf sb;
-					ldbg(c->logger,
-					     "%*s%s child spd from selector %s %s.spd.has_client=%s virt=%s",
-					     indent, "", spd_end->config->leftright,
-					     str_selector(&spd_end->client, &sb),
-					     leftright,
-					     bool_str(spd_end->child->has_client),
-					     bool_str(spd_end->virt != NULL));
-				}
-				/* default values */
-				passert(spd->routing == RT_UNROUTED);
-				passert(spd->eroute_owner == SOS_NOBODY);
-				/* leave a debug-log breadcrumb */
-				set_spd_routing(spd, RT_UNROUTED);
-				set_spd_owner(spd, SOS_NOBODY);
-			}
-			/* advance RIGHT (NULL+1>=NULL+0) */
-			if (selectors[RIGHT_END].selector + 1 >= selectors[RIGHT_END].selectors->list + selectors[RIGHT_END].selectors->len) break;
-			selectors[RIGHT_END].selector++;
-		}
-		/* advance LEFT (NULL+1>=NULL+0) */
-		if (selectors[LEFT_END].selector + 1 >= selectors[LEFT_END].selectors->list + selectors[LEFT_END].selectors->len) break;
-		selectors[LEFT_END].selector++;
+		set_end_child_has_client(c, end, c->end[end].config->child.has_client);
 	}
 
 	/*
@@ -2901,12 +2903,15 @@ static bool extract_connection(const struct whack_message *wm,
 	     c->child.reqid, c->config->sa_reqid,
 	     (c->config->sa_reqid == 0 ? "generate" : "use"));
 
+	/*
+	 * Fill in the child SPDs using the previously parsed
+	 * selectors.
+	 */
+
+	set_connection_spds(c, host_afi);
 	if (!pexpect(c->spd != NULL)) {
 		return false;
 	}
-
-	update_spd_ends_from_host_ends(c);
-	set_policy_prio(c); /* must be after kind is set */
 
 	/*
 	 * All done, enter it into the databases.  Since orient() may
