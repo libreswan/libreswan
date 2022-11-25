@@ -2875,7 +2875,6 @@ static bool extract_connection(const struct whack_message *wm,
 					     leftright, bool_str(spd_end->has_client),
 					     bool_str(spd_end->virt != NULL));
 				}
-				indent = 4;
 				/* default values */
 				passert(spd->routing == RT_UNROUTED);
 				passert(spd->eroute_owner == SOS_NOBODY);
