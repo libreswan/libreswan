@@ -2887,7 +2887,7 @@ static bool extract_connection(const struct whack_message *wm,
 			c->end[end].child.selectors.proposed = *selectors;
 		} else {
 			c->end[end].child.selectors.proposed.len = 1;
-			c->end[end].child.selectors.proposed.list = &c->end[end].child.scratch_selector;
+			c->end[end].child.selectors.proposed.list = &c->end[end].child.selectors.acquire_or_host;
 		}
 		set_end_child_has_client(c, end, c->end[end].config->child.has_client);
 	}
@@ -4802,7 +4802,7 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 			    ip_selector new_selector,
 			    const char *excuse, where_t where)
 {
-	ip_selector old_selector = c->end[end].child.scratch_selector;
+	ip_selector old_selector = c->end[end].child.selectors.acquire_or_host;
 	selector_buf ob, nb;
 	ldbg(c->logger, "%s.child.selector %s -> %s",
 	     c->end[end].config->leftright,
@@ -4830,8 +4830,8 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 	 * truncate the selector list.
 	 */
 	pexpect(c->end[end].child.selectors.proposed.len == 1);
-	c->end[end].child.scratch_selector = new_selector;
-	c->end[end].child.selectors.proposed.list = &c->end[end].child.scratch_selector;
+	c->end[end].child.selectors.acquire_or_host = new_selector;
+	c->end[end].child.selectors.proposed.list = &c->end[end].child.selectors.acquire_or_host;
 	c->end[end].child.selectors.proposed.len = 1;
 
 	/*
