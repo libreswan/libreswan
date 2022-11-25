@@ -84,6 +84,97 @@
 #include "show.h"
 #include "rekeyfuzz.h"
 
+/*
+ * The priority assigned to a kernel policy.
+ *
+ * Lowest wins.
+ */
+
+kernel_priority_t max_kernel_priority;
+
+kernel_priority_t calculate_kernel_priority(const struct connection *c, bool oe_shunt)
+{
+	if (c->sa_priority != 0) {
+		ldbg(c->logger,
+		     "priority calculation overruled by connection specification of %"PRIu32" (%#"PRIx32")",
+		     c->sa_priority, c->sa_priority);
+		return (kernel_priority_t) { c->sa_priority, };
+	}
+
+	if (LIN(POLICY_GROUP, c->policy)) {
+		llog_pexpect(c->logger, HERE,
+			     "priority calculation of connection skipped - group template does not install SPDs");
+		return max_kernel_priority;
+	}
+
+	/* XXX: assume unsigned >= 32-bits */
+	PASSERT(c->logger, sizeof(unsigned) >= sizeof(uint32_t));
+
+	/*
+	 * Accumulate the priority.
+	 *
+	 * Add things most-important to least-important. Before ORing
+	 * in the new bits, left-shift PRIO to make space.
+	 */
+	unsigned prio = 0;
+
+	/* Determine the base priority (2 bits) (0 is manual by user). */
+	unsigned base;
+	if (LIN(POLICY_GROUPINSTANCE, c->policy)) {
+		if (c->remote->host.config->authby.null) {
+			base = 3; /* opportunistic anonymous */
+		} else {
+			base = 2; /* opportunistic */
+		}
+	} else {
+		base = 1; /* static connection */
+	}
+
+	/* XXX: yes the shift is pointless (but it is consistent) */
+	prio = (prio << 2) | base;
+
+	/* Penalize wildcard ports (2 bits). */
+	unsigned portsw =
+		((c->spd->local->client.hport == 0 ? 1 : 0) +
+		 (c->spd->remote->client.hport == 0 ? 1 : 0));
+	prio = (prio << 2) | portsw;
+
+	/* Penalize wildcard protocol (1 bit). */
+	unsigned protow = c->spd->local->client.ipproto == 0 ? 1 : 0;
+	prio = (prio << 1) | protow;
+
+	/*
+	 * For transport mode or /32 to /32, the client mask bits are
+	 * set based on the host_addr parameters.
+	 *
+	 * A longer prefix wins over a shorter prefix, hence the
+	 * reversal.  Value needs to fit 0-128, hence 8 bits.
+	 */
+	unsigned srcw = 128 - c->spd->local->client.maskbits;
+	prio = (prio << 8) | srcw;
+
+	/* if opportunistic, dial up dstw TO THE MAX aka 0 */
+	unsigned dstw = 128 - c->spd->remote->client.maskbits;
+	if (oe_shunt) {
+		dstw = 0;
+	}
+	prio = (prio << 8) | dstw;
+
+	/*
+	 * Penalize template (1 bit).
+	 *
+	 * "Ensure an instance always has preference over it's
+	 * template/OE-group always has preference."
+	 */
+	unsigned instw = (c->kind == CK_INSTANCE ? 0 : 1);
+	prio = (prio << 1) | instw;
+
+	ldbg(c->logger,
+	     "priority calculation of is %u (%#x) base=%u portsw=%u protow=%u, srcw=%u dstw=%u instw=%u",
+	     prio, prio, base, portsw, protow, srcw, dstw, instw);
+	return (kernel_priority_t) { prio, };
+}
+
 static bool route_and_eroute(struct connection *c,
 			     struct spd_route *sr,
 			     struct state *st,
@@ -209,7 +300,8 @@ static bool bare_policy_op(enum kernel_policy_op op,
 	bool delete = (op == KERNEL_POLICY_OP_DELETE);
 
 	struct kernel_policy outbound_kernel_policy =
-		bare_kernel_policy(&sr->local->client, &sr->remote->client);
+		bare_kernel_policy(&sr->local->client, &sr->remote->client,
+				   calculate_kernel_priority(c, false));
 	if (!raw_policy(op, DIRECTION_OUTBOUND,
 			EXPECT_KERNEL_POLICY_OK,
 			&outbound_kernel_policy.src.client,
@@ -218,7 +310,7 @@ static bool bare_policy_op(enum kernel_policy_op op,
 			((delete || shunt_policy == SHUNT_PASS) ? NULL :
 			 &outbound_kernel_policy),
 			deltatime(0),
-			calculate_sa_prio(c, false),
+			outbound_kernel_policy.priority.value,
 			&c->sa_marks, c->xfrmi,
 			sec_label, logger,
 			"%s() outbound shunt for %s", __func__, opname))
@@ -241,7 +333,8 @@ static bool bare_policy_op(enum kernel_policy_op op,
 	 * policy installed.
 	 */
 	struct kernel_policy inbound_kernel_policy =
-		bare_kernel_policy(&sr->remote->client, &sr->local->client);
+		bare_kernel_policy(&sr->remote->client, &sr->local->client,
+				   calculate_kernel_priority(c, false));
 	return raw_policy(op, DIRECTION_INBOUND,
 			  expect_kernel_policy,
 			  &inbound_kernel_policy.src.client,
@@ -250,14 +343,15 @@ static bool bare_policy_op(enum kernel_policy_op op,
 			  ((delete || shunt_policy == SHUNT_PASS) ? NULL :
 			   &inbound_kernel_policy),
 			  deltatime(0),
-			  calculate_sa_prio(c, false),
+			  inbound_kernel_policy.priority.value,
 			  &c->sa_marks, c->xfrmi,
 			  sec_label, logger,
 			  "%s() inbound shunt for %s", __func__, opname);
 }
 
 struct kernel_policy bare_kernel_policy(const ip_selector *src,
-					const ip_selector *dst)
+					const ip_selector *dst,
+					kernel_priority_t priority)
 {
 	const struct ip_info *child_afi = selector_type(src);
 	pexpect(selector_type(dst) == child_afi);
@@ -267,6 +361,7 @@ struct kernel_policy bare_kernel_policy(const ip_selector *src,
 		.dst.client = *dst,
 		.src.route = *src,
 		.dst.route = *dst,
+		.priority = priority,
 		/*
 		 * With transport mode, the encapsulated packet on the
 		 * host interface must have the same family as the raw
@@ -975,7 +1070,8 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 						   reqid_t child_reqid,
 						   const struct spd_route *spd,
 						   enum encap_mode mode,
-						   enum direction direction)
+						   enum direction direction,
+						   kernel_priority_t priority)
 {
 	/*
 	 * With pfkey and transport mode with nat-traversal we need to
@@ -1029,6 +1125,7 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 		.dst.host = dst->host->addr,
 		.src.route = src_route,
 		.dst.route = dst_route,
+		.priority = priority,
 		.mode = mode,
 		.nr_rules = 0,
 	};
@@ -1073,7 +1170,8 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 
 static struct kernel_policy kernel_policy_from_state(const struct state *st,
 						     const struct spd_route *spd,
-						     enum direction direction)
+						     enum direction direction,
+						     kernel_priority_t priority)
 {
 	const struct connection *cc = st->st_connection;
 	bool tunnel = false;
@@ -1096,7 +1194,7 @@ static struct kernel_policy kernel_policy_from_state(const struct state *st,
 	enum encap_mode mode = (tunnel ? ENCAP_MODE_TUNNEL : ENCAP_MODE_TRANSPORT);
 	struct kernel_policy kernel_policy = kernel_policy_from_spd(policy,
 								    cc->child.reqid,
-								    spd, mode, direction);
+								    spd, mode, direction, priority);
 	return kernel_policy;
 }
 
@@ -1366,7 +1464,8 @@ static bool sag_eroute(const struct state *st,
 	 */
 
 	struct kernel_policy kernel_policy =
-		kernel_policy_from_state(st, sr, DIRECTION_OUTBOUND);
+		kernel_policy_from_state(st, sr, DIRECTION_OUTBOUND,
+					 calculate_kernel_priority(c, false));
 	/* check for no transform at all */
 	passert(kernel_policy.nr_rules > 0);
 
@@ -1376,7 +1475,7 @@ static bool sag_eroute(const struct state *st,
 
 	return eroute_outbound_connection(op, why, sr, SHUNT_UNSET,
 					  &kernel_policy,
-					  calculate_sa_prio(c, false),
+					  kernel_policy.priority.value,
 					  &c->sa_marks, c->xfrmi,
 					  HUNK_AS_SHUNK(c->config->sec_label),
 					  st->st_logger);
@@ -1687,7 +1786,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	enum encap_mode mode = (c->policy & POLICY_TUNNEL ? ENCAP_MODE_TUNNEL :
 				ENCAP_MODE_TRANSPORT);
 
-	uint32_t priority = calculate_sa_prio(c, /*oe_shunt*/false);
+	kernel_priority_t priority = calculate_kernel_priority(c, /*oe_shunt*/false);
 
 	/*
 	 * SE installs both an outgoing and incoming policy.  Normal
@@ -1696,7 +1795,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	FOR_EACH_THING(direction, DIRECTION_OUTBOUND, DIRECTION_INBOUND) {
 		const struct kernel_policy kernel_policy =
 			kernel_policy_from_spd(c->policy, c->child.reqid, c->spd,
-					       mode, direction);
+					       mode, direction, priority);
 		if (kernel_policy.nr_rules == 0) {
 			/* XXX: log? */
 			return false;
@@ -1707,7 +1806,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 				SHUNT_UNSET,
 				&kernel_policy,
 				/*use_lifetime*/deltatime(0),
-				/*sa_priority*/priority,
+				/*sa_priority*/kernel_policy.priority.value,
 				/*sa_marks+xfrmi*/NULL,NULL,
 				/*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
 				/*logger*/logger,
@@ -1730,7 +1829,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 					   SHUNT_UNSET,
 					   /*kernel_policy*/NULL/*delete->no-policy-rules*/,
 					   /*use_lifetime*/deltatime(0),
-					   /*sa_priority*/priority,
+					   /*sa_priority*/priority.value,
 					   /*sa_marks+xfrmi*/NULL,NULL,
 					   /*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
 					   /*logger*/logger,
@@ -1762,7 +1861,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 				   SHUNT_PASS,
 				   /*kernel_policy*/NULL/*delete->no-policy-rules*/,
 				   /*use_lifetime*/deltatime(0),
-				   /*sa_priority*/priority,
+				   /*sa_priority*/priority.value,
 				   /*sa_marks+xfrmi*/NULL,NULL,
 				   /*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
 				   /*logger*/logger,
@@ -1895,10 +1994,11 @@ bool assign_holdpass(const struct connection *c,
 			}
 
 			struct kernel_policy outbound_kernel_policy =
-				bare_kernel_policy(&sr->local->client, &sr->remote->client);
+				bare_kernel_policy(&sr->local->client, &sr->remote->client,
+						   calculate_kernel_priority(c, false));
 			if (eroute_outbound_connection(op, reason, sr, negotiation_shunt,
 						       &outbound_kernel_policy,
-						       calculate_sa_prio(c, false),
+						       outbound_kernel_policy.priority.value,
 						       NULL, 0 /* xfrm_if_id */,
 						       HUNK_AS_SHUNK(c->config->sec_label),
 						       c->logger))
@@ -2404,7 +2504,8 @@ static bool setup_half_kernel_policy(struct state *st, enum direction direction)
 		}
 
 		struct kernel_policy kernel_policy =
-			kernel_policy_from_state(st, spd, direction);
+			kernel_policy_from_state(st, spd, direction,
+						 calculate_kernel_priority(c, false));
 		selector_buf sb, db;
 		dbg("kernel: %s() is installing %s SPD for %s->%s",
 		    __func__, enum_name_short(&direction_names, direction),
@@ -2419,7 +2520,7 @@ static bool setup_half_kernel_policy(struct state *st, enum direction direction)
 				SHUNT_UNSET,
 				&kernel_policy,			/* " */
 				deltatime(0),		/* lifetime */
-				calculate_sa_prio(c, false),	/* priority */
+				kernel_policy.priority.value,
 				&c->sa_marks, c->xfrmi,		/* IPsec SA marks */
 				HUNK_AS_SHUNK(c->config->sec_label),
 				st->st_logger,
@@ -2987,8 +3088,8 @@ bool route_and_eroute(struct connection *c,
 				 */
 				struct bare_shunt *bs = *bspp;
 				struct kernel_policy outbound_kernel_policy =
-					bare_kernel_policy(&bs->our_client,
-							   &bs->peer_client);
+					bare_kernel_policy(&bs->our_client, &bs->peer_client,
+							   calculate_kernel_priority(c, false));
 				if (!raw_policy(KERNEL_POLICY_OP_REPLACE,
 						DIRECTION_OUTBOUND,
 						EXPECT_KERNEL_POLICY_OK,
@@ -2997,7 +3098,7 @@ bool route_and_eroute(struct connection *c,
 						bs->shunt_policy,
 						&outbound_kernel_policy,
 						deltatime(SHUNT_PATIENCE),
-						calculate_sa_prio(c, false),
+						outbound_kernel_policy.priority.value,
 						/*sa_mars+xfrmi*/NULL,NULL,
 						/* bare shunt are not associated with any connection so no security label */
 						null_shunk, logger,
@@ -3199,7 +3300,8 @@ static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
 	 * .{src,dst} provides the family but the address isn't used).
 	 */
 	struct kernel_policy outbound_kernel_policy =
-		bare_kernel_policy(&out->local->client, &out->remote->client);
+		bare_kernel_policy(&out->local->client, &out->remote->client,
+				   calculate_kernel_priority(out->connection, false));
 	if (!raw_policy(outbound_op,
 			DIRECTION_OUTBOUND,
 			EXPECT_KERNEL_POLICY_OK,
@@ -3209,7 +3311,7 @@ static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
 			(outbound_op == KERNEL_POLICY_OP_REPLACE ? &outbound_kernel_policy
 			 : NULL),
 			deltatime(0),
-			calculate_sa_prio(out->connection, false),
+			outbound_kernel_policy.priority.value,
 			&out->connection->sa_marks, out->connection->xfrmi,
 			HUNK_AS_SHUNK(out->connection->config->sec_label),
 			out->connection->logger,
@@ -3226,7 +3328,7 @@ static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
 			SHUNT_UNSET,
 			NULL/*no-policy-template as delete*/,
 			deltatime(0),
-			calculate_sa_prio(in->connection, false),
+			calculate_kernel_priority(in->connection, false).value,
 			&in->connection->sa_marks,
 			in->connection->xfrmi,
 			/*sec_label:always-null*/null_shunk,
@@ -3623,7 +3725,9 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 			 */
 
 			struct kernel_policy outbound_kernel_policy =
-				bare_kernel_policy(&src, &dst);
+				bare_kernel_policy(&src, &dst,
+						   /* we don't know connection for priority yet */
+						   max_kernel_priority);
 			bool ok = raw_policy(KERNEL_POLICY_OP_REPLACE,
 					     DIRECTION_OUTBOUND,
 					     EXPECT_KERNEL_POLICY_OK,
@@ -3633,7 +3737,8 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 					     (failure_shunt == SHUNT_PASS ? NULL :
 					      &outbound_kernel_policy),
 					     deltatime(SHUNT_PATIENCE),
-					     0, /* we don't know connection for priority yet */
+					     /* 0, we don't know connection for priority yet */
+					     outbound_kernel_policy.priority.value,
 					     /*sa_marks+xfrmi*/NULL,NULL,
 					     null_shunk, logger,
 					     "%s() %s", __func__, why);

@@ -917,7 +917,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 */
 
 	struct kernel_policy outbound_kernel_policy =
-		bare_kernel_policy(&local_shunt, &remote_shunt);
+		bare_kernel_policy(&local_shunt, &remote_shunt,
+				   calculate_kernel_priority(c, LIN(POLICY_OPPORTUNISTIC, c->policy)));
 
 	if (raw_policy(KERNEL_POLICY_OP_ADD,
 		       DIRECTION_OUTBOUND,
@@ -928,7 +929,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		       (b->negotiation_shunt == SHUNT_PASS ? NULL :
 			&outbound_kernel_policy),
 		       deltatime(SHUNT_PATIENCE),
-		       calculate_sa_prio(c, LIN(POLICY_OPPORTUNISTIC, c->policy) ? true : false),
+		       outbound_kernel_policy.priority.value,
 		       NULL, 0 /* xfrm-if-id */,
 		       b->sec_label, b->logger,
 		       "%s() %s", __func__, addwidemsg)) {

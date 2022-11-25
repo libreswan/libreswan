@@ -45,6 +45,7 @@ bool raw_policy(enum kernel_policy_op op,
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
 	pexpect(client_proto == selector_protocol(*dst_client));
 	pexpect((op == KERNEL_POLICY_OP_DELETE) <=/*implies*/ (kernel_policy == NULL || kernel_policy->nr_rules == 0));
+	pexpect(kernel_policy == NULL || kernel_policy->priority.value == sa_priority);
 
 	LSWDBGP(DBG_BASE, buf) {
 

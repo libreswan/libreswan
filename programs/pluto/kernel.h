@@ -28,7 +28,7 @@
 
 #include "monotime.h"
 #include "reqid.h"
-#include "connections.h"	/* for policy_prio_t et.al. */
+#include "connections.h"	/* for kernel_priority_t et.al. */
 #include "ip_said.h"		/* for SA_AH et.al. */
 #include "ip_packet.h"
 
@@ -160,6 +160,8 @@ struct kernel_policy_end {
 	ip_address host;
 };
 
+typedef struct { uint32_t value; } kernel_priority_t;
+
 struct kernel_policy {
 	/*
 	 * The src/dst selector and src/dst host (and apparently
@@ -167,6 +169,7 @@ struct kernel_policy {
 	 */
 	struct kernel_policy_end src;
 	struct kernel_policy_end dst;
+	kernel_priority_t priority;
 	/*
 	 * Index from 1; RULE[0] is always empty; so .nr_rules==0
 	 * implies no rules.
@@ -186,7 +189,8 @@ struct kernel_policy {
 };
 
 struct kernel_policy bare_kernel_policy(const ip_selector *src,
-					const ip_selector *dst);
+					const ip_selector *dst,
+					kernel_priority_t priority);
 
 /*
  * The CHILD (IPsec, kernel) SA has two IP ends.
@@ -522,4 +526,8 @@ extern deltatime_t bare_shunt_interval;
 extern bool kernel_ops_detect_offload(const struct raw_iface *ifp, struct logger *logger);
 extern void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address *dst,
 		      bool hard, uint64_t bytes, uint64_t packets, uint64_t add_time);
+
+extern kernel_priority_t max_kernel_priority;
+kernel_priority_t calculate_kernel_priority(const struct connection *c, bool oe_shunt);
+
 #endif

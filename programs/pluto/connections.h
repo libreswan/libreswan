@@ -752,8 +752,6 @@ extern int foreach_concrete_connection_by_name(const char *name,
 							void *arg, struct logger *logger),
 					       void *arg, struct logger *logger);
 
-extern uint32_t calculate_sa_prio(const struct connection *c, bool oe_shunt);
-
 so_serial_t get_newer_sa_from_connection(struct state *st);
 
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
