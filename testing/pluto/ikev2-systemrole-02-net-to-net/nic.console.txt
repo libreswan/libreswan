@@ -1,14 +1,7 @@
 # nic is used as the System Role provisioning host
 nic #
- ansible-playbook --skip-tags packages -i ansible-inventory.yml test-east-west.yml > OUTPUT/ansible.out 2>&1
-nic #
- grep -e '^ok:.*>' OUTPUT/ansible.out
-ok: [west] => (item=Fedora.yml)
-ok: [east] => (item=Fedora.yml)
-ok: [west -> localhost]
-ok: [west -> localhost]
-ok: [west -> localhost]
-ok: [west] => (item=east)
-ok: [east] => (item=west)
+ ../../guestbin/ansible-playbook.sh --skip-tags packages -i ansible-inventory.yml test-east-west.yml
+east                       : ok=N   changed=3    unreachable=0    failed=0    skipped=N    rescued=0    ignored=0   
+west                       : ok=N   changed=3    unreachable=0    failed=0    skipped=N    rescued=0    ignored=0   
 nic #
  

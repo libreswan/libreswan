@@ -1,7 +1,7 @@
 # nic is used as the System Role provisioning host
 nic #
- ansible-playbook --skip-tags packages -i ansible-inventory.yml test-east-west.yml 2>&1 | tee OUTPUT/ansible.out | grep -v DEPRECATED | tail -3 | sort
-east                       : ok=11   changed=3    unreachable=0    failed=0    skipped=1    rescued=0    ignored=0   
-west                       : ok=14   changed=3    unreachable=0    failed=0    skipped=4    rescued=0    ignored=0   
+ ../../guestbin/ansible-playbook.sh --skip-tags packages -i ansible-inventory.yml test-east-west.yml
+east                       : ok=N   changed=3    unreachable=0    failed=0    skipped=N    rescued=0    ignored=0   
+west                       : ok=N   changed=3    unreachable=0    failed=0    skipped=N    rescued=0    ignored=0   
 nic #
  
