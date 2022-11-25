@@ -1577,31 +1577,35 @@ void show_shunt_status(struct show *s)
 	}
 }
 
-static bool delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
-					    struct logger *logger,
-					    where_t where)
+static void delete_bare_kernel_policy(const struct bare_shunt *bsp,
+				      struct logger *logger,
+				      where_t where)
 {
-	/* this strips the port (but why?) */
+	/*
+	 * XXX: bare_kernel_policy() does not strip the port but this
+	 * code does.
+	 */
 	const struct ip_protocol *transport_proto = bsp->transport_proto;
 	ip_address src_address = selector_prefix(bsp->our_client);
 	ip_address dst_address = selector_prefix(bsp->peer_client);
 	ip_selector src = selector_from_address_protocol(src_address, transport_proto);
 	ip_selector dst = selector_from_address_protocol(dst_address, transport_proto);
-	selectors_buf sb;
-	dbg("kernel: deleting bare shunt %s from kernel "PRI_WHERE,
-	    str_selectors(&src, &dst, &sb), pri_where(where));
 	/* assume low code logged action */
-	return raw_policy(KERNEL_POLICY_OP_DELETE,
-			  DIRECTION_OUTBOUND,
-			  EXPECT_KERNEL_POLICY_OK,
-			  &src, &dst,
-			  SHUNT_PASS,
-			  /*kernel_policy*/NULL/*delete->no-policy-rules*/,
-			  deltatime(SHUNT_PATIENCE),
-			  0, /* we don't know connection for priority yet */
-			  /*sa_marks+xfrmi*/NULL,NULL,
-			  null_shunk, logger,
-			  "%s() %s", __func__, where->func);
+	if (!raw_policy(KERNEL_POLICY_OP_DELETE,
+			DIRECTION_OUTBOUND,
+			EXPECT_KERNEL_POLICY_OK,
+			&src, &dst,
+			SHUNT_PASS,
+			/*kernel_policy*/NULL/*delete->no-policy-rules*/,
+			deltatime(SHUNT_PATIENCE),
+			0, /* we don't know connection for priority yet */
+			/*sa_marks+xfrmi*/NULL,NULL,
+			null_shunk, logger,
+			"%s() deleting bare shunt from kernel "PRI_WHERE,
+			__func__, pri_where(where))) {
+		/* ??? we could not delete a bare shunt */
+		llog_bare_shunt(RC_LOG, logger, bsp, "failed to delete kernel policy");
+	}
 }
 
 /*
@@ -1624,10 +1628,7 @@ static void clear_narrow_holds(const ip_selector *src_client,
 		    transport_proto == bsp->transport_proto &&
 		    selector_in_selector(bsp->our_client, *src_client) &&
 		    selector_in_selector(bsp->peer_client, *dst_client)) {
-			if (!delete_bare_shunt_kernel_policy(bsp, logger, HERE)) {
-				/* ??? we could not delete a bare shunt */
-				llog_bare_shunt(RC_LOG, logger, bsp, "failed to delete");
-			}
+			delete_bare_kernel_policy(bsp, logger, HERE);
 			free_bare_shunt(bspp);
 		} else {
 			bspp = &(*bspp)->next;
@@ -3791,10 +3792,7 @@ static void expire_bare_shunts(struct logger *logger)
 					}
 				}
 			} else {
-				if (!delete_bare_shunt_kernel_policy(bsp, logger, HERE)) {
-					llog_bare_shunt(RC_LOG_SERIOUS, logger, bsp,
-							"failed to delete bare shunt");
-				}
+				delete_bare_kernel_policy(bsp, logger, HERE);
 			}
 			free_bare_shunt(bspp);
 		} else {
@@ -3809,10 +3807,7 @@ static void delete_bare_shunts(struct logger *logger)
 	dbg("kernel: emptying bare shunt table");
 	while (bare_shunts != NULL) { /* nothing left */
 		const struct bare_shunt *bsp = bare_shunts;
-		if (!delete_bare_shunt_kernel_policy(bsp, logger, HERE)) {
-			llog_bare_shunt(RC_LOG_SERIOUS, logger, bsp,
-					"failed to delete bare shunt's kernel policy"); /* big oops */
-		}
+		delete_bare_kernel_policy(bsp, logger, HERE);
 		free_bare_shunt(&bare_shunts); /* also updates BARE_SHUNTS */
 	}
 }
