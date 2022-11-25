@@ -1197,9 +1197,10 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 	ldbg(c->logger,
 	     "kernel: could_route called; kind=%s remote %s.has_client=%s oppo=%s this.host_port=%u sec_label="PRI_SHUNK,
 	     enum_show(&connection_kind_names, c->kind, &b),
-	     c->spd->remote->config->leftright, bool_str(c->spd->remote->has_client),
+	     c->spd->remote->config->leftright,
+	     bool_str(c->remote->child.has_client),
 	     bool_str(c->policy & POLICY_OPPORTUNISTIC),
-	     c->spd->local->host->port,
+	     c->local->host.port,
 	     pri_shunk(c->config->sec_label));
 
 	/* it makes no sense to route a connection that is ISAKMP-only */
@@ -1231,7 +1232,7 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 			ldbg(logger, "template-route-possible: has sec-label");
 		} else if (c->local->config->child.virt != NULL) {
 			ldbg(logger, "template-route-possible: local is virtual");
-		} else if (c->spd->remote->has_client) {
+		} else if (c->remote->child.has_client) {
 			/* see extract_child_end() */
 			ldbg(logger, "template-route-possible: remote %s.spd.has_client==true",
 			     c->spd->remote->config->leftright);
@@ -2700,7 +2701,7 @@ bool install_inbound_ipsec_sa(struct state *st)
 	 * the only case in which we can tell that a connection is obsolete.
 	 */
 	passert(c->kind == CK_PERMANENT || c->kind == CK_INSTANCE);
-	if (c->spd->remote->has_client) {
+	if (c->remote->child.has_client) {
 		for (;; ) {
 			struct spd_route *esr;	/* value is ignored */
 			struct connection *o = route_owner(c, c->spd, &esr,

@@ -745,8 +745,8 @@ static stf_status quick_outI1_continue_tail(struct state *st,
 	struct state *isakmp_sa = state_by_serialno(st->st_clonedfrom);
 	struct connection *c = st->st_connection;
 	pb_stream rbody;
-	bool has_client = (c->spd->local->has_client ||
-			   c->spd->remote->has_client ||
+	bool has_client = (c->local->child.has_client ||
+			   c->remote->child.has_client ||
 			   c->spd->local->client.ipproto != 0 ||
 			   c->spd->remote->client.ipproto != 0 ||
 			   c->spd->local->client.hport != 0 ||
@@ -1078,14 +1078,12 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 				struct spd_end local = *c->spd->local;
 				local.client = *local_client;
-				local.has_client = !selector_eq_address(*local_client, local.host->addr);
 				jam_end(buf, &local, NULL, LEFT_END, LEMPTY, oriented(c));
 
 				jam(buf, "...");
 
 				struct spd_end remote = *c->spd->remote;
 				remote.client = *remote_client;
-				remote.has_client = !selector_eq_address(*remote_client, remote.host->addr);
 				jam_end(buf, &remote, NULL, RIGHT_END, LEMPTY, oriented(c));
 			}
 			return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
@@ -1112,7 +1110,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 		/* fill in the client's true ip address/subnet */
 		dbg("client: %s  port wildcard: %s  virtual: %s",
-		    bool_str(c->spd->remote->has_client),
+		    bool_str(c->remote->child.has_client),
 		    bool_str(c->remote->config->child.protoport.has_port_wildcard),
 		    bool_str(is_virtual_remote(c)));
 
@@ -1133,11 +1131,11 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 			set_first_selector(c, remote, *remote_client);
 			rehash_db_spd_route_remote_client(c->spd);
-			c->spd->remote->has_client = true;
+			set_child_has_client(c, remote, true);
 			virtual_ip_delref(&c->spd->remote->virt);
 
 			if (selector_eq_address(*remote_client, c->remote->host.addr)) {
-				c->spd->remote->has_client = false;
+				set_child_has_client(c, remote, false);
 			}
 
 			LSWDBGP(DBG_BASE, buf) {
@@ -2018,7 +2016,7 @@ static struct connection *fc_try(const struct connection *c,
 				continue;
 			}
 
-			if (sr->remote->has_client) {
+			if (sr->remote->child->has_client) {
 
 				if (!selector_range_eq_selector_range(sr->remote->client, *remote_client) &&
 				    !is_virtual_spd_end(sr->remote)) {

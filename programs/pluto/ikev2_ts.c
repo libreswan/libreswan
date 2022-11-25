@@ -189,10 +189,10 @@ static void scribble_ts_response_on_initiator(struct child_sa *child,
 	set_end_selector(c, c->remote->config->index, tsr,
 			 "scribbling final TSr on end");
 	/* redundant? */
-	c->spd->local->has_client = !selector_eq_address(c->spd->local->client,
-							 c->local->host.addr);
-	c->spd->remote->has_client = !selector_eq_address(c->spd->remote->client,
-							  c->remote->host.addr);
+	set_child_has_client(c, local, !selector_eq_address(c->spd->local->client,
+							    c->local->host.addr));
+	set_child_has_client(c, remote, !selector_eq_address(c->spd->remote->client,
+							     c->remote->host.addr));
 	/* end game */
 	scribble_accepted_selectors(&c->local->child.selectors.accepted,
 				    &nsps->i, indent);

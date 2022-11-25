@@ -1563,7 +1563,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 				return STF_FATAL;
 			}
 			set_first_selector(c, local, selector_from_address(a));
-			c->spd->local->has_client = true;
+			set_child_has_client(c, local, true);
 			c->local->child.has_internal_address = true;
 
 			subnet_buf caddr;
@@ -1729,7 +1729,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 					return STF_FATAL;
 				}
-				c->spd->local->has_client = true;
+				set_child_has_client(c, local, true);
 				c->local->child.has_internal_address = true;
 				set_end_selector(c, c->local->config->index,
 						 selector_from_address(a),
@@ -1803,9 +1803,9 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				struct connection *c = st->st_connection;
 
 				/* make sure that other side isn't an endpoint */
-				if (!c->spd->remote->has_client) {
+				if (!c->remote->child.has_client) {
 					passert(c->spd->spd_next == NULL);
-					c->spd->remote->has_client = true;
+					set_child_has_client(c, remote, true);
 					set_first_selector(c, remote, ipv4_info.selector.all);
 					rehash_db_spd_route_remote_client(c->spd);
 				}

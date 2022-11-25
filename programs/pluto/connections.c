@@ -521,7 +521,7 @@ void update_spd_ends_from_host_ends(struct connection *c)
 		for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
 			struct spd_end *spde = &spd->end[end];
 
-			if (spde->has_client) {
+			if (spde->child->has_client) {
 				pexpect(c->policy & POLICY_OPPORTUNISTIC);
 				pexpect(config->has_client);
 				ldbg(c->logger, "  %s.spd.has_client but no selectors; skipping magic",
@@ -2848,7 +2848,7 @@ static bool extract_connection(const struct whack_message *wm,
 					 * updating the client address
 					 * from the host.
 					 */
-					spd_end->has_client = child_end->has_client;
+					set_end_child_has_client(c, end, child_end->has_client);
 					if (selector != NULL) {
 						selector_buf sb;
 						ldbg(c->logger,
@@ -2872,7 +2872,8 @@ static bool extract_connection(const struct whack_message *wm,
 					     "%*s%s child spd from selector %s %s.spd.has_client=%s virt=%s",
 					     indent, "", spd_end->config->leftright,
 					     str_selector(&spd_end->client, &sb),
-					     leftright, bool_str(spd_end->has_client),
+					     leftright,
+					     bool_str(spd_end->child->has_client),
 					     bool_str(spd_end->virt != NULL));
 				}
 				/* default values */
@@ -3297,7 +3298,7 @@ struct connection *rw_instantiate(struct connection *t,
 		if (selector_eq_address(*peer_subnet, *peer_addr)) {
 			ldbg(t->logger, "forcing remote %s.spd.has_client=false",
 			     d->spd->remote->config->leftright);
-			d->spd->remote->has_client = false;
+			set_child_has_client(d, remote, false);
 		}
 	}
 
@@ -3736,7 +3737,7 @@ struct connection *oppo_instantiate(struct connection *t,
 	    local_protocol->name,
 	    local_port.hport);
 
-	if (d->spd->local->has_client) {
+	if (d->local->child.has_client) {
 		/*
 		 * There was a client in the abstract connection so we
 		 * demand that either ...
@@ -3816,7 +3817,7 @@ struct connection *oppo_instantiate(struct connection *t,
 	if (address_eq_address(*remote_address, d->remote->host.addr)) {
 		ldbg(d->logger, "oppo and address==remote.host_addr; remote %s.spd.has_client=false",
 		     d->spd->local->config->leftright);
-		d->spd->remote->has_client = false;
+		set_child_has_client(d, remote, false);
 	}
 
 	/*

@@ -370,6 +370,27 @@ struct child_end {
 	} selectors;
 
 	/*
+	 * This is important; but it isn't clear why.
+	 */
+	bool has_client;
+#define set_end_child_has_client(C, END, VALUE)				\
+	{								\
+		enum left_right end_ = END;				\
+		where_t where_ = HERE;					\
+		bool has_client_ = VALUE;				\
+		struct connection *c_ = C;				\
+		ldbg(c_->logger,					\
+		     "%s.child.has_client: %s -> %s "PRI_WHERE,		\
+		     c_->end[end_].config->leftright,			\
+		     bool_str(c_->end[end_].child.has_client),		\
+		     bool_str(has_client_),				\
+		     pri_where(where_));				\
+		c_->end[end_].child.has_client = has_client_;		\
+	}
+#define set_child_has_client(C, END, VALUE)				\
+	set_end_child_has_client(C, C->END->config->index, VALUE)
+
+	/*
 	 * Track lease addresses.
 	 *
 	 * HAS_LEASE indicates that "this" sent "that.CLIENT" has an
@@ -424,10 +445,7 @@ struct spd_end {
 	struct host_end *host;
 	struct child_end *child;
 
-	bool has_client;
-
 	struct virtual_ip *virt;
-
 };
 
 struct spd_route {
