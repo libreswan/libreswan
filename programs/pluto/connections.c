@@ -1403,13 +1403,11 @@ static diag_t extract_child_end(const struct whack_message *wm,
 	child_config->ifaceip = src->ifaceip;
 
 	/* save some defaults */
-	child_config->v1_config_subnet_specified = (src->subnet != NULL);
 	child_config->protoport = src->protoport;
 	child_config->updown = clone_str(src->updown, "end_config.client.updown");
 
 	/*
-	 * Figure out the end's child selectors.  These are an array
-	 * terminated by !.is_set.
+	 * Figure out the end's child selectors.
 	 */
 	if ((wm->ike_version == IKEv1 && src->subnet != NULL) ||
 	    (wm->ike_version == IKEv2 && src->subnet != NULL && src->protoport.is_set)) {

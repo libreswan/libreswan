@@ -149,9 +149,6 @@ struct child_end_config {
 	ip_cidr host_vtiip;
 	ip_cidr ifaceip;
 	struct virtual_ip *virt;
-
-	/* Did ...subnet=... appear in the config file? */
-	bool v1_config_subnet_specified;
 };
 
 struct config_end {
