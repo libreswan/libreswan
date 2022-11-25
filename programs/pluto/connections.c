@@ -1923,26 +1923,18 @@ static enum connection_kind extract_connection_kind(const struct whack_message *
 			    we->leftright);
 			return CK_TEMPLATE;
 		}
-	}
-	FOR_EACH_THING(we, &wm->left, &wm->right) {
-		if (!NEVER_NEGOTIATE(wm->policy) &&
-		    !address_is_specified(we->host_addr)) {
-			dbg("connection is template: unspecified %s address yet policy negotiate",
-			    we->leftright);
-			return CK_TEMPLATE;
-		}
 		if (we->protoport.has_port_wildcard) {
 			dbg("connection is template: %s child has wildcard protoport",
 			    we->leftright);
 			return CK_TEMPLATE;
 		}
-#if 0
-		if (id_has_wildcards(&c->end[end]->host.id)) {
-			dbg("connection is permenant: %s ID is wild yet host addr child ports are not",
-			    leftright);
-			return CK_PERMENANT;
+		if (!NEVER_NEGOTIATE(wm->policy) &&
+		    !address_is_specified(we->host_addr) &&
+		    we->host_type != KH_IPHOSTNAME) {
+			dbg("connection is template: unspecified %s address yet policy negotiate",
+			    we->leftright);
+			return CK_TEMPLATE;
 		}
-#endif
 	}
 	dbg("connection is permanent: by default");
 	return CK_PERMANENT;

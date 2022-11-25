@@ -45,8 +45,8 @@
 
 static bool initiate_connection_1(struct connection *c, const char *remote_host,
 				  bool background);
-static bool initiate_connection_2(struct connection *c, const char *remote_host,
-				  bool background, const threadtime_t inception);
+static bool initiate_connection_2(struct connection *c, bool background,
+				  const threadtime_t inception);
 static bool initiate_connection_3(struct connection *c, bool background,
 				  const threadtime_t inception);
 
@@ -68,6 +68,10 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 	return ok;
 }
 
+/*
+ * Resolve remote host, If there's a REMOTE_HOST, convert that into an IP address and the
+ * instantiate C filling in that address as the peer.
+ */
 bool initiate_connection_1(struct connection *c, const char *remote_host, bool background)
 {
 	connection_buf cb;
@@ -78,17 +82,16 @@ bool initiate_connection_1(struct connection *c, const char *remote_host, bool b
 	bool ok;
 
 	/* If whack supplied a remote IP, fill it in if we can */
-	if (remote_host != NULL &&
-	    !address_is_specified(c->remote->host.addr)) {
-		ip_address remote_ip;
-
-		ttoaddress_num(shunk1(remote_host), NULL/*UNSPEC*/, &remote_ip);
+	if (remote_host != NULL && !address_is_specified(c->remote->host.addr)) {
 
 		if (c->kind != CK_TEMPLATE) {
 			llog(RC_NOPEERIP, c->logger,
 			     "cannot instantiate non-template connection to a supplied remote IP address");
 			return 0;
 		}
+
+		ip_address remote_ip;
+		ttoaddress_num(shunk1(remote_host), NULL/*UNSPEC*/, &remote_ip);
 
 		struct connection *d = spd_instantiate(c, &remote_ip, NULL, null_shunk);
 		/* XXX: something better? */
@@ -100,7 +103,7 @@ bool initiate_connection_1(struct connection *c, const char *remote_host, bool b
 		     "instantiated connection with remote IP set to %s", remote_host);
 
 		/* flip cur_connection */
-		ok = initiate_connection_2(d, remote_host, background, inception);
+		ok = initiate_connection_2(d, background, inception);
 		if (!ok) {
 			delete_connection(&d);
 		} else {
@@ -109,13 +112,12 @@ bool initiate_connection_1(struct connection *c, const char *remote_host, bool b
 		}
 	} else {
 		/* now proceed as normal */
-		ok = initiate_connection_2(c, remote_host, background, inception);
+		ok = initiate_connection_2(c, background, inception);
 	}
 	return ok;
 }
 
 bool initiate_connection_2(struct connection *c,
-			   const char *remote_host,
 			   bool background,
 			   const threadtime_t inception)
 {
@@ -140,10 +142,26 @@ bool initiate_connection_2(struct connection *c,
 		return false;
 	}
 
-	if ((remote_host == NULL) &&
-	    (c->kind != CK_PERMANENT) &&
-	    !(c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
-		if (!address_is_specified(c->remote->host.addr)) {
+	if (!address_is_specified(c->remote->host.addr)) {
+		if (c->policy & POLICY_IKEV2_ALLOW_NARROWING) {
+			if (c->config->dnshostname != NULL) {
+				esb_buf b;
+				llog(RC_NOPEERIP, c->logger,
+				     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
+				     enum_show(&connection_kind_names, c->kind, &b),
+				     bool_str((c->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY));
+				dbg("%s() connection '%s' +POLICY_UP", __func__, c->name);
+				c->policy |= POLICY_UP;
+				return true;
+			} else {
+				esb_buf b;
+				llog(RC_NOPEERIP, c->logger,
+				     "cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
+				     enum_show(&connection_kind_names, c->kind, &b),
+				     bool_str((c->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY));
+				return false;
+			}
+		} else {
 			if (c->config->dnshostname != NULL) {
 				esb_buf b;
 				llog(RC_NOPEERIP, c->logger,
@@ -158,30 +176,13 @@ bool initiate_connection_2(struct connection *c,
 				     "cannot initiate connection (serial "PRI_CO") without knowing peer IP address (kind=%s)",
 				     pri_co(c->serialno),
 				     enum_show(&connection_kind_names, c->kind, &b));
+				return false;
 			}
-			return false;
 		}
 	}
 
-	if (!address_is_specified(c->remote->host.addr) &&
-	    (c->policy & POLICY_IKEV2_ALLOW_NARROWING) ) {
-		if (c->config->dnshostname != NULL) {
-			esb_buf b;
-			llog(RC_NOPEERIP, c->logger,
-			     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
-			     enum_show(&connection_kind_names, c->kind, &b),
-			     bool_str((c->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY));
-			dbg("%s() connection '%s' +POLICY_UP", __func__, c->name);
-			c->policy |= POLICY_UP;
-			return true;
-		} else {
-			esb_buf b;
-			llog(RC_NOPEERIP, c->logger,
-			     "cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
-			     enum_show(&connection_kind_names, c->kind, &b),
-			     bool_str((c->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY));
-			return false;
-		}
+	if (!pexpect(address_is_specified(c->remote->host.addr))) {
+		return false;
 	}
 
 	bool ok;
@@ -1094,19 +1095,6 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	}
 
 	/* I think this is OK now we check everything above. */
-
-	/*
-	 * It seems DNS failure puts a connection into CK_TEMPLATE, so once the
-	 * resolve is fixed, it is manually placed in CK_PERMANENT here.
-	 * However, that is questionable, eg. for connections that are templates
-	 * to begin with, such as those with narrowing=yes. These will mistakenly
-	 * be placed into CK_PERMANENT.
-	 */
-
-	connection_buf cib;
-	dbg("pending ddns: changing connection "PRI_CONNECTION" to CK_PERMANENT",
-	    pri_connection(c, &cib));
-	c->kind = CK_PERMANENT;
 
 	address_buf old, new;
 	dbg("pending ddns: updating IP address for %s from %s to %s",
