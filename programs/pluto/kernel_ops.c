@@ -42,8 +42,9 @@ bool raw_policy(enum kernel_policy_op op,
 		struct logger *logger,
 		const char *fmt, ...)
 {
-	const struct ip_protocol *src_client_proto = selector_protocol(*src_client);
-	const struct ip_protocol *dst_client_proto = selector_protocol(*dst_client);
+	const struct ip_protocol *client_proto = selector_protocol(*src_client);
+	pexpect(client_proto == selector_protocol(*dst_client));
+	pexpect((op == KERNEL_POLICY_OP_DELETE) <=/*implies*/ (kernel_policy == NULL || kernel_policy->nr_rules == 0));
 
 	LSWDBGP(DBG_BASE, buf) {
 
@@ -52,17 +53,6 @@ bool raw_policy(enum kernel_policy_op op,
 		jam_enum_short(buf, &kernel_policy_op_names, op);
 		jam_string(buf, "+");
 		jam_enum_short(buf, &direction_names, dir);
-
-		if (kernel_policy != NULL &&
-		    kernel_policy->nr_rules > 0 &&
-		    op == KERNEL_POLICY_OP_DELETE) {
-			/*
-			 * XXX: when deleting a kernel policy, why
-			 * include encapsulation information?  Is it
-			 * used?
-			 */
-			jam(buf, ",ENCAP!=NULL");
-		}
 
 		jam_string(buf, " ");
 		jam_string(buf, expect_kernel_policy_name(expect_kernel_policy));
@@ -86,18 +76,30 @@ bool raw_policy(enum kernel_policy_op op,
 			jam_address(buf, &kernel_policy->src.host);
 			jam(buf, "==>");
 			jam_address(buf, &kernel_policy->dst.host);
-			jam_string(buf, ",mode=");
-			jam_enum_short(buf, &encap_mode_names, kernel_policy->mode);
+			jam_string(buf, ",");
 
-			jam_string(buf, "rule=[(inner)");
-			const char *sep = "";
-			for (unsigned i = 1; i <= kernel_policy->nr_rules; i++) {
+			/*
+			 * Print outer-to-inner and use paren to show
+			 * how each wrapps the next.
+			 *
+			 * XXX: how to also print the encap mode - TCP
+			 * or UDP?
+			 */
+			jam_enum_short(buf, &encap_mode_names, kernel_policy->mode);
+			jam_string(buf, "[");
+			for (unsigned i = kernel_policy->nr_rules; i >= 1; i--) {
 				const struct kernel_policy_rule *rule = &kernel_policy->rule[i];
 				const struct ip_protocol *rule_proto = protocol_from_ipproto(rule->proto);
-				jam(buf, "%s%s(%d)", sep, rule_proto->name, rule->reqid);
-				sep = ",";
+				jam(buf, "%s.%d(", rule_proto->name, rule->reqid);
 			}
-			jam(buf, "(outer)]");
+			if (kernel_policy->nr_rules > 0) {
+				/* XXX: should use stuff from selector */
+				jam_string(buf, client_proto->name);
+			}
+			for (unsigned i = kernel_policy->nr_rules; i >= 1; i--) {
+				jam_string(buf, ")");
+			}
+			jam_string(buf, "]");
 		}
 
 		jam(buf, " lifetime=");
@@ -124,8 +126,6 @@ bool raw_policy(enum kernel_policy_op op,
 		jam_sanitized_hunk(buf, sec_label);
 
 	}
-
-	pexpect(src_client_proto == dst_client_proto);
 
 	switch(shunt_policy) {
 	case SHUNT_HOLD:
