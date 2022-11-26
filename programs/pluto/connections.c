@@ -4198,7 +4198,7 @@ ip_address spd_end_sourceip(const struct spd_end *spde)
 	 * Failing that see if CP is involved.  IKEv1 always leaves
 	 * client_address_translation false.
 	 */
-	if (spde->child->has_internal_address &&
+	if (spde->child->has_lease &&
 	    !spde->child->config->has_client_address_translation) {
 		return selector_prefix(spde->client);
 	}

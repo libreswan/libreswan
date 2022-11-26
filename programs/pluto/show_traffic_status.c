@@ -87,7 +87,7 @@ static void jam_state_traffic(struct jambuf *buf, struct state *st)
 		 */
 		jam(buf, ", lease=");
 		jam_selector_subnet(buf, &c->spd->remote->client);
-	} else if (c->local->child.has_internal_address) {
+	} else if (c->local->child.has_lease) {
 		/*
 		 * "this" received an internal address from "that";
 		 * presumably from "that"'s address pool.

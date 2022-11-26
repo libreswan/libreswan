@@ -436,7 +436,7 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs, struct child_sa 
 
 	*seen_an_address = true;
 	set_child_has_client(c, local, true);
-	c->local->child.has_internal_address = true;
+	c->local->child.has_lease = true;
 
 	if (c->local->child.config->has_client_address_translation) {
 		dbg("CAT is set, not setting host source IP address to %s",
