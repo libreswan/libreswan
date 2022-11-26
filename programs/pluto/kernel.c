@@ -1950,6 +1950,7 @@ bool eroute_outbound_connection(enum kernel_policy_op op,
 }
 
 /* install a bare hold or pass policy to a connection */
+
 bool assign_holdpass(const struct connection *c,
 		     struct spd_route *sr,
 		     enum shunt_policy negotiation_shunt,
@@ -1978,15 +1979,26 @@ bool assign_holdpass(const struct connection *c,
 		break;
 	}
 
-	dbg("kernel: assign hold, routing was %s, needs to be %s",
-	    enum_name(&routing_story, ro),
-	    enum_name(&routing_story, rn));
+	ldbg(c->logger, "kernel: %s() routing was %s, needs to be %s",
+	     __func__,
+	     enum_name(&routing_story, ro),
+	     enum_name(&routing_story, rn));
 
-	if (eclipsable(sr)) {
+	/*
+	 * A template connection's eroute can be eclipsed by either a
+	 * %hold or an eroute for an instance IFF the template is a
+	 * /32 -> /32.  This requires some special casing.
+	 *
+	 * XXX: is this still needed?
+	 */
+	if (selector_contains_one_address((sr)->local->client) &&
+	    selector_contains_one_address((sr)->remote->client)) {
 		/*
-		 * Although %hold or %pass is appropriately broad, it will
-		 * no longer be bare so we must ditch it from the bare table
+		 * Although %hold or %pass is appropriately broad, it
+		 * will no longer be bare so we must ditch it from the
+		 * bare table.
 		 */
+		ldbg(c->logger, "kernel: %s() no longer bare so ditching", __func__);
 		struct bare_shunt **old = bare_shunt_ptr(&sr->local->client, &sr->remote->client,
 							 "assign_holdpass");
 
@@ -2000,7 +2012,7 @@ bool assign_holdpass(const struct connection *c,
 			free_bare_shunt(old);
 		}
 	} else {
-		dbg("kernel: assign_holdpass() need broad(er) shunt");
+		ldbg(c->logger, "kernel: %s() need broad(er) shunt", __func__);
 		/*
 		 * we need a broad %hold, not the narrow one.
 		 * First we ensure that there is a broad %hold.
