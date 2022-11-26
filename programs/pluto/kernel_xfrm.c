@@ -518,10 +518,8 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 			    enum expect_kernel_policy what_about_inbound,
 			    const ip_selector *src_client,
 			    const ip_selector *dst_client,
-			    enum shunt_policy shunt_policy,
 			    const struct kernel_policy *kernel_policy,
 			    deltatime_t use_lifetime UNUSED,
-			    uint32_t sa_priority,
 			    const struct sa_marks *sa_marks,
 			    const struct pluto_xfrmi *xfrmi,
 			    const shunk_t sec_label,
@@ -546,6 +544,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	unsigned xfrm_action;
 	const char *policy_name;
 	/* shunt route */
+	enum shunt_policy shunt_policy = (kernel_policy == NULL ? SHUNT_UNSET : kernel_policy->shunt);
 	switch (shunt_policy) {
 	case SHUNT_UNSET:
 		xfrm_action = XFRM_POLICY_ALLOW;
@@ -654,13 +653,13 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	req.u.p.sel.proto = client_proto->ipproto;
 	req.u.p.sel.family = family;
 
-	if ((op == KERNEL_POLICY_OP_DELETE && dir == DIRECTION_OUTBOUND) ||
-	    (op == KERNEL_POLICY_OP_DELETE && dir == DIRECTION_INBOUND)) {
+	if (op == KERNEL_POLICY_OP_DELETE) {
+		pexpect(kernel_policy == NULL || kernel_policy->nr_rules == 0);
 		req.u.id.dir = xfrm_dir;
 		req.n.nlmsg_type = XFRM_MSG_DELPOLICY;
 		req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.u.id)));
-		pexpect(kernel_policy == NULL);
 	} else {
+		pexpect(kernel_policy != NULL); /*nr_rules >= 0*/
 		/*
 		 * NEW will fail when an existing policy, UPD always
 		 * works.  This seems to happen in cases with NAT'ed
@@ -676,7 +675,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 		req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.u.p)));
 
 		/* The caller should have set the proper priority by now */
-		req.u.p.priority = sa_priority;
+		req.u.p.priority = kernel_policy->priority.value;
 		dbg("%s() IPsec SA SPD priority set to %d", __func__, req.u.p.priority);
 
 		req.u.p.action = xfrm_action;

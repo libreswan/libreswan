@@ -24,15 +24,13 @@ extern bool raw_policy(enum kernel_policy_op op,
 		       enum expect_kernel_policy expect_kernel_policy,
 		       const ip_selector *this_client,
 		       const ip_selector *that_client,
-		       enum shunt_policy shunt_policy,
 		       const struct kernel_policy *policy,
 		       deltatime_t use_lifetime,
-		       uint32_t sa_priority,
 		       const struct sa_marks *sa_marks,
 		       const struct pluto_xfrmi *xfrmi,
 		       const shunk_t sec_label,
 		       struct logger *logger,
-		       const char *fmt, ...) PRINTF_LIKE(14);
+		       const char *fmt, ...) PRINTF_LIKE(12);
 
 /*kernel_ops_state()? kernel_ops_sad()?*/
 bool kernel_ops_add_sa(const struct kernel_state *sa,

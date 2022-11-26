@@ -1152,15 +1152,14 @@ static bool pfkeyv2_raw_policy(enum kernel_policy_op op,
 			       enum expect_kernel_policy expect_kernel_policy,
 			       const ip_selector *src_client,
 			       const ip_selector *dst_client,
-			       enum shunt_policy shunt_policy,
 			       const struct kernel_policy *kernel_policy,
 			       deltatime_t use_lifetime UNUSED,
-			       uint32_t sa_priority UNUSED,
 			       const struct sa_marks *sa_marks UNUSED,
 			       const struct pluto_xfrmi *xfrmi UNUSED,
 			       const shunk_t sec_label UNUSED,
 			       struct logger *logger)
 {
+	enum shunt_policy shunt_policy = (kernel_policy == NULL ? SHUNT_UNSET : kernel_policy->shunt);
 #ifdef __OpenBSD__
 
 	enum sadb_type type = (op == KERNEL_POLICY_OP_ADD ? SADB_X_ADDFLOW :

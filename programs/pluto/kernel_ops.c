@@ -32,10 +32,8 @@ bool raw_policy(enum kernel_policy_op op,
 		enum expect_kernel_policy expect_kernel_policy,
 		const ip_selector *src_client,
 		const ip_selector *dst_client,
-		enum shunt_policy shunt_policy,
 		const struct kernel_policy *policy,
 		deltatime_t use_lifetime,
-		uint32_t sa_priority,
 		const struct sa_marks *sa_marks,
 		const struct pluto_xfrmi *xfrmi,
 		const shunk_t sec_label,
@@ -46,14 +44,10 @@ bool raw_policy(enum kernel_policy_op op,
 	pexpect(client_proto == selector_protocol(*dst_client));
 	if (policy == NULL) {
 		pexpect(op == KERNEL_POLICY_OP_DELETE);
-		pexpect(shunt_policy == SHUNT_UNSET);
-		// not yet: pexpect(sa_priority == 0);
 	} else {
-		pexpect(policy->priority.value == sa_priority);
-		pexpect(policy->shunt == shunt_policy);
-		// not yet: pexpect((op == KERNEL_POLICY_OP_DELETE) <=/*implies*/ (policy->priority.value == 0));
+		pexpect((op == KERNEL_POLICY_OP_DELETE) <=/*implies*/ (policy->priority.value == 0));
 		pexpect((op == KERNEL_POLICY_OP_DELETE) <=/*implies*/ (policy->nr_rules == 0));
-		pexpect((op == KERNEL_POLICY_OP_DELETE) <=/*implies*/ (shunt_policy == SHUNT_UNSET));
+		pexpect((op == KERNEL_POLICY_OP_DELETE) <=/*implies*/ (policy->shunt == SHUNT_UNSET));
 		pexpect((policy->nr_rules == 0) <=/*implies*/ (policy->shunt == SHUNT_UNSET ||
 							       policy->shunt == SHUNT_PASS));
 		/* policies with matching states are SHUNT_UNSET */
@@ -80,7 +74,6 @@ bool raw_policy(enum kernel_policy_op op,
 		jam(buf, " client=");
 		jam_selectors(buf, src_client, dst_client);
 
-		jam(buf, " kernel_policy=");
 		if (policy == NULL) {
 			jam(buf, "<null>");
 		} else {
@@ -105,7 +98,7 @@ bool raw_policy(enum kernel_policy_op op,
 			for (unsigned i = policy->nr_rules; i >= 1; i--) {
 				const struct kernel_policy_rule *rule = &policy->rule[i];
 				const struct ip_protocol *rule_proto = protocol_from_ipproto(rule->proto);
-				jam(buf, "%s.%d(", rule_proto->name, rule->reqid);
+				jam(buf, "%s!%d(", rule_proto->name, rule->reqid);
 			}
 			if (policy->nr_rules > 0) {
 				/* XXX: should use stuff from selector */
@@ -140,28 +133,29 @@ bool raw_policy(enum kernel_policy_op op,
 
 	}
 
-	switch(shunt_policy) {
-	case SHUNT_HOLD:
-		dbg("kernel: %s() SPI_HOLD implemented as no-op", __func__);
-		return true;
-	case SHUNT_TRAP:
-		if ((op == KERNEL_POLICY_OP_ADD && dir == DIRECTION_INBOUND) ||
-		    (op == KERNEL_POLICY_OP_DELETE && dir == DIRECTION_INBOUND)) {
-			dbg("kernel: %s() SPI_TRAP add|delete inbound implemented as no-op", __func__);
+	if (policy != NULL) {
+		switch(policy->shunt) {
+		case SHUNT_HOLD:
+			dbg("kernel: %s() SPI_HOLD implemented as no-op", __func__);
 			return true;
+		case SHUNT_TRAP:
+			if ((op == KERNEL_POLICY_OP_ADD && dir == DIRECTION_INBOUND) ||
+			    (op == KERNEL_POLICY_OP_DELETE && dir == DIRECTION_INBOUND)) {
+				dbg("kernel: %s() SPI_TRAP add|delete inbound implemented as no-op", __func__);
+				return true;
+			}
+			/* XXX: what about KERNEL_POLICY_OP_REPLACE? */
+			break;
+		default:
+			break;
 		}
-		/* XXX: what about KERNEL_POLICY_OP_REPLACE? */
-		break;
-	default:
-		break;
 	}
 
 	bool result = kernel_ops->raw_policy(op, dir,
 					     expect_kernel_policy,
 					     src_client, dst_client,
-					     shunt_policy,
 					     policy,
-					     use_lifetime, sa_priority,
+					     use_lifetime,
 					     sa_marks, xfrmi,
 					     sec_label,
 					     logger);

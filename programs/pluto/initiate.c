@@ -549,11 +549,9 @@ static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const c
 		if (!raw_policy(KERNEL_POLICY_OP_REPLACE,
 				DIRECTION_OUTBOUND,
 				EXPECT_KERNEL_POLICY_OK,
-				&src, &dst,
-				outbound_policy.shunt,
+				&outbound_policy.src.client, &outbound_policy.dst.client,
 				&outbound_policy,
 				deltatime(SHUNT_PATIENCE),
-				outbound_policy.priority.value,
 				NULL, /* sa_marks */
 				0 /* xfrm interface id */,
 				b->sec_label, b->logger,
@@ -933,10 +931,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		       EXPECT_KERNEL_POLICY_OK,
 		       &outbound_kernel_policy.src.client,
 		       &outbound_kernel_policy.dst.client,
-		       outbound_kernel_policy.shunt,
 		       &outbound_kernel_policy,
 		       deltatime(SHUNT_PATIENCE),
-		       outbound_kernel_policy.priority.value,
 		       NULL, 0 /* xfrm-if-id */,
 		       b->sec_label, b->logger,
 		       "%s() %s", __func__, addwidemsg)) {
