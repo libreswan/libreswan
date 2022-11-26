@@ -161,6 +161,8 @@ struct kernel_policy_end {
 };
 
 typedef struct { uint32_t value; } kernel_priority_t;
+#define PRI_KERNEL_PRIORITY PRIu32
+#define pri_kernel_priority(P) (P).value
 
 struct kernel_policy {
 	/*

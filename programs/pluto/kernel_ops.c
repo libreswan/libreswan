@@ -33,7 +33,7 @@ bool raw_policy(enum kernel_policy_op op,
 		const ip_selector *src_client,
 		const ip_selector *dst_client,
 		enum shunt_policy shunt_policy,
-		const struct kernel_policy *kernel_policy,
+		const struct kernel_policy *policy,
 		deltatime_t use_lifetime,
 		uint32_t sa_priority,
 		const struct sa_marks *sa_marks,
@@ -44,11 +44,21 @@ bool raw_policy(enum kernel_policy_op op,
 {
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
 	pexpect(client_proto == selector_protocol(*dst_client));
-	pexpect((op == KERNEL_POLICY_OP_DELETE) <=/*implies*/ (kernel_policy == NULL ||
-							       kernel_policy->nr_rules == 0));
-	pexpect((op == KERNEL_POLICY_OP_DELETE) <=/*implies*/ (shunt_policy == SHUNT_UNSET));
-	pexpect(kernel_policy == NULL || kernel_policy->priority.value == sa_priority);
-	pexpect(kernel_policy == NULL || kernel_policy->shunt == shunt_policy);
+	if (policy == NULL) {
+		pexpect(op == KERNEL_POLICY_OP_DELETE);
+		pexpect(shunt_policy == SHUNT_UNSET);
+		// not yet: pexpect(sa_priority == 0);
+	} else {
+		pexpect(policy->priority.value == sa_priority);
+		pexpect(policy->shunt == shunt_policy);
+		// not yet: pexpect((op == KERNEL_POLICY_OP_DELETE) <=/*implies*/ (policy->priority.value == 0));
+		pexpect((op == KERNEL_POLICY_OP_DELETE) <=/*implies*/ (policy->nr_rules == 0));
+		pexpect((op == KERNEL_POLICY_OP_DELETE) <=/*implies*/ (shunt_policy == SHUNT_UNSET));
+		pexpect((policy->nr_rules == 0) <=/*implies*/ (policy->shunt == SHUNT_UNSET ||
+							       policy->shunt == SHUNT_PASS));
+		/* policies with matching states are SHUNT_UNSET */
+		pexpect((policy->nr_rules > 0) <=/*implies*/ (policy->shunt != SHUNT_PASS));
+	}
 
 	LSWDBGP(DBG_BASE, buf) {
 
@@ -70,18 +80,18 @@ bool raw_policy(enum kernel_policy_op op,
 		jam(buf, " client=");
 		jam_selectors(buf, src_client, dst_client);
 
-		jam_string(buf, " shunt_policy=");
-		jam_enum_short(buf, &shunt_policy_names, shunt_policy);
-
 		jam(buf, " kernel_policy=");
-		if (kernel_policy == NULL) {
+		if (policy == NULL) {
 			jam(buf, "<null>");
 		} else {
-			jam_address(buf, &kernel_policy->src.host);
+			jam_address(buf, &policy->src.host);
 			jam(buf, "==>");
-			jam_address(buf, &kernel_policy->dst.host);
+			jam_address(buf, &policy->dst.host);
 			jam_string(buf, ",");
-
+			jam_enum(buf, &shunt_policy_names, policy->shunt);
+			jam_string(buf, ",");
+			jam(buf, ",priority=%"PRI_KERNEL_PRIORITY,
+			    pri_kernel_priority(policy->priority));
 			/*
 			 * Print outer-to-inner and use paren to show
 			 * how each wrapps the next.
@@ -89,18 +99,19 @@ bool raw_policy(enum kernel_policy_op op,
 			 * XXX: how to also print the encap mode - TCP
 			 * or UDP?
 			 */
-			jam_enum_short(buf, &encap_mode_names, kernel_policy->mode);
+			jam_string(buf, ",");
+			jam_enum_short(buf, &encap_mode_names, policy->mode);
 			jam_string(buf, "[");
-			for (unsigned i = kernel_policy->nr_rules; i >= 1; i--) {
-				const struct kernel_policy_rule *rule = &kernel_policy->rule[i];
+			for (unsigned i = policy->nr_rules; i >= 1; i--) {
+				const struct kernel_policy_rule *rule = &policy->rule[i];
 				const struct ip_protocol *rule_proto = protocol_from_ipproto(rule->proto);
 				jam(buf, "%s.%d(", rule_proto->name, rule->reqid);
 			}
-			if (kernel_policy->nr_rules > 0) {
+			if (policy->nr_rules > 0) {
 				/* XXX: should use stuff from selector */
 				jam_string(buf, client_proto->name);
 			}
-			for (unsigned i = kernel_policy->nr_rules; i >= 1; i--) {
+			for (unsigned i = policy->nr_rules; i >= 1; i--) {
 				jam_string(buf, ")");
 			}
 			jam_string(buf, "]");
@@ -109,8 +120,6 @@ bool raw_policy(enum kernel_policy_op op,
 		jam(buf, " lifetime=");
 		jam_deltatime(buf, use_lifetime);
 		jam(buf, "s");
-
-		jam(buf, " priority=%d", sa_priority);
 
 		if (sa_marks != NULL) {
 			jam(buf, " sa_marks=");
@@ -151,7 +160,7 @@ bool raw_policy(enum kernel_policy_op op,
 					     expect_kernel_policy,
 					     src_client, dst_client,
 					     shunt_policy,
-					     kernel_policy,
+					     policy,
 					     use_lifetime, sa_priority,
 					     sa_marks, xfrmi,
 					     sec_label,
