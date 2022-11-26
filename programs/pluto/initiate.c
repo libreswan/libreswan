@@ -544,7 +544,7 @@ static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const c
 			bare_kernel_policy(&src, &dst,
 					   /* we don't know connection for priority yet */
 					   max_kernel_priority,
-					   b->failure_shunt);
+					   b->failure_shunt, HERE);
 
 		if (!raw_policy(KERNEL_POLICY_OP_REPLACE,
 				DIRECTION_OUTBOUND,
@@ -924,7 +924,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	struct kernel_policy outbound_kernel_policy =
 		bare_kernel_policy(&local_shunt, &remote_shunt,
 				   calculate_kernel_priority(c, LIN(POLICY_OPPORTUNISTIC, c->policy)),
-				   b->negotiation_shunt);
+				   b->negotiation_shunt, HERE);
 
 	if (raw_policy(KERNEL_POLICY_OP_ADD,
 		       DIRECTION_OUTBOUND,
