@@ -540,14 +540,20 @@ static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const c
 		pexpect(b->failure_shunt != SHUNT_UNSET); /* set to something */
 		ip_selector src = packet_src_selector(b->packet);
 		ip_selector dst = packet_dst_selector(b->packet);
+		struct kernel_policy outbound_policy =
+			bare_kernel_policy(&src, &dst,
+					   /* we don't know connection for priority yet */
+					   max_kernel_priority,
+					   b->failure_shunt);
+
 		if (!raw_policy(KERNEL_POLICY_OP_REPLACE,
 				DIRECTION_OUTBOUND,
 				EXPECT_KERNEL_POLICY_OK,
 				&src, &dst,
-				b->failure_shunt,
-				/*encap*/NULL/*no-policy-template*/,
+				outbound_policy.shunt,
+				&outbound_policy,
 				deltatime(SHUNT_PATIENCE),
-				BOTTOM_PRIO, /* we don't know connection for priority yet */
+				outbound_policy.priority.value,
 				NULL, /* sa_marks */
 				0 /* xfrm interface id */,
 				b->sec_label, b->logger,
