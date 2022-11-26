@@ -91,6 +91,9 @@ pass2help()
     results [ <test-directory> ... ]
 	list test results (for the specified tests)
 	exit non-zero when failures are found
+    failed [ <test-directory> ... ]
+	list failed test results (for the specified tests)
+	(XX: broken: exit non-zero when failures are found)
 
   Re-run, or run a-new the testsuite:
 
@@ -302,6 +305,7 @@ while test $# -gt 0 ; do
 		# aliases for pass2 commands
 		diff )   ops[$i]=diffs ;   i=$((i + 1)) ;;
 		result ) ops[$i]=results ; i=$((i + 1)) ;;
+		failed ) ops[$i]=failed ;  i=$((i + 1)) ;;
 		test   ) ops[$i]=check ;   i=$((i + 1)) ;;
 		retest ) ops[$i]=recheck ; i=$((i + 1)) ;;
 		test-clean ) ops[$i]=check-clean ; i=$((i + 1)) ;;
@@ -428,6 +432,9 @@ for op in "${ops[@]}" ; do
 	    ;;
 	results )
 	    results_command "$@"
+	    ;;
+	failed )
+	    results_command "$@" | if grep failed ; then false ; else true ; fi
 	    ;;
 	patch )
 	    diffs_command "$@" | patch -p1
