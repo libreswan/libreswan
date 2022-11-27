@@ -37,8 +37,8 @@ static void reread_end_cert(struct host_end *host_end,
 	CERTCertificate *old_cert = host_end_config->cert.nss_cert; /* must free/save */
 	host_end_config->cert.nss_cert = NULL;
 
-	diag_t diag = add_end_cert_and_preload_private_key(new_cert,
-							   host_end, host_end_config,
+	diag_t diag = add_end_cert_and_preload_private_key(new_cert, &host_end->id,
+							   host_end_config,
 							   true/*preserve existing ca?!?*/,
 							   logger);
 	if (diag != NULL) {
