@@ -1567,12 +1567,16 @@ void unroute_connection(struct connection *c)
 			 * should know if there's an inbound policy,
 			 * in fact the connection shouldn't even have
 			 * inbound policies, just the state.
+			 *
+			 * For sec_label, it's tearing down the route,
+			 * hence that is included.
 			 */
-			bare_policy_op(KERNEL_POLICY_OP_DELETE,
-				       EXPECT_NO_INBOUND,
-				       c, sr, RT_UNROUTED,
-				       "unrouting connection",
-				       c->logger, HERE);
+			delete_kernel_policies(EXPECT_NO_INBOUND,
+					       sr->local->client,
+					       sr->remote->client,
+					       &c->sa_marks, c->xfrmi,
+					       HUNK_AS_SHUNK(c->config->sec_label),
+					       c->logger, HERE, "unrouting connection");
 #ifdef IPSEC_CONNECTION_LIMIT
 			num_ipsec_eroute--;
 #endif
@@ -3156,13 +3160,17 @@ bool route_and_eroute(struct connection *c,
 					}
 				}
 			} else {
-				/* there was no previous eroute: delete whatever we installed */
+				/*
+				 * There was no previous eroute:
+				 * delete whatever we installed.
+				 */
 				if (st == NULL) {
-					if (!bare_policy_op(KERNEL_POLICY_OP_DELETE,
-							    EXPECT_KERNEL_POLICY_OK,
-							    c, sr, sr->routing,
-							    "route_and_eroute() delete",
-							    logger, HERE)) {
+					if (!delete_kernel_policies(EXPECT_KERNEL_POLICY_OK,
+								    sr->local->client,
+								    sr->remote->client,
+								    &c->sa_marks, c->xfrmi,
+								    HUNK_AS_SHUNK(c->config->sec_label),
+								    c->logger, HERE, "deleting route and eroute")) {
 						llog(RC_LOG, logger,
 						     "shunt_policy() in route_and_eroute() failed in !st case");
 					}

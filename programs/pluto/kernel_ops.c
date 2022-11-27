@@ -225,7 +225,7 @@ bool delete_kernel_policy(enum direction dir,
 	return result;
 }
 
-bool delete_kernel_policies(enum expect_kernel_policy expect_kernel_policy,
+bool delete_kernel_policies(enum expect_kernel_policy expect_inbound_kernel_policy,
 			    const ip_selector local_client,
 			    const ip_selector remote_client,
 			    const struct sa_marks *sa_marks,
@@ -233,12 +233,14 @@ bool delete_kernel_policies(enum expect_kernel_policy expect_kernel_policy,
 			    const shunk_t sec_label,
 			    struct logger *logger, where_t where, const char *story)
 {
-	bool out = delete_kernel_policy(DIRECTION_OUTBOUND, expect_kernel_policy,
+	bool out = delete_kernel_policy(DIRECTION_OUTBOUND,
+					EXPECT_KERNEL_POLICY_OK,
 					local_client, remote_client,
 					sa_marks, xfrmi, sec_label,
 					logger, where, story);
 	/* XXX: stumble on */
-	bool in = delete_kernel_policy(DIRECTION_INBOUND, expect_kernel_policy,
+	bool in = delete_kernel_policy(DIRECTION_INBOUND,
+				       expect_inbound_kernel_policy,
 				       remote_client, local_client,
 				       sa_marks, xfrmi, sec_label,
 				       logger, where, story);

@@ -41,7 +41,7 @@ extern bool delete_kernel_policy(enum direction dir,
 				 const struct pluto_xfrmi *xfrmi,
 				 const shunk_t sec_label, /*needed*/
 				 struct logger *logger, where_t where, const char *story);
-extern bool delete_kernel_policies(enum expect_kernel_policy expect_kernel_policy,
+extern bool delete_kernel_policies(enum expect_kernel_policy expect_inbound_kernel_policy,
 				   const ip_selector local_client,
 				   const ip_selector remote_client,
 				   const struct sa_marks *sa_marks,
