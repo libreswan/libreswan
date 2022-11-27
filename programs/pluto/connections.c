@@ -3211,11 +3211,11 @@ static void clone_connection_spd(struct connection *d, struct connection *t)
 }
 
 struct connection *spd_instantiate(struct connection *t,
-				   const ip_address *peer_addr,
+				   const ip_address peer_addr,
 				   const struct id *peer_id,
 				   shunk_t sec_label)
 {
-	struct connection *d = instantiate(t, peer_addr, peer_id, sec_label);
+	struct connection *d = instantiate(t, &peer_addr, peer_id, sec_label);
 	clone_connection_spd(d, t);
 
 	update_spd_ends_from_host_ends(d);
@@ -3273,7 +3273,7 @@ struct connection *spd_instantiate(struct connection *t,
 	    pri_co(t->serialno), pri_connection(t, &cb),
 	    pri_co(d->serialno), pri_connection(d, &db),
 	    enum_name(&connection_kind_names, d->kind),
-	    peer_addr != NULL ? str_address(peer_addr, &pab) : "N/A",
+	    str_address(&peer_addr, &pab),
 	    peer_id != NULL ? str_id(peer_id, &pib) : "N/A",
 	    pri_shunk(d->child.sec_label));
 
@@ -3285,7 +3285,7 @@ struct connection *rw_instantiate(struct connection *t,
 				  const ip_selector *peer_subnet,
 				  const struct id *peer_id)
 {
-	struct connection *d = spd_instantiate(t, &peer_addr, peer_id, null_shunk);
+	struct connection *d = spd_instantiate(t, peer_addr, peer_id, null_shunk);
 
 	if (peer_subnet != NULL && is_virtual_remote(t)) {
 		set_first_selector(d, remote, *peer_subnet);
@@ -3719,7 +3719,7 @@ struct connection *oppo_instantiate(struct connection *t,
 	    str_address(&local_address, &lb),
 	    str_address(&remote_address, &rb));
 
-	struct connection *d = spd_instantiate(t, &remote_address, remote_id, null_shunk);
+	struct connection *d = spd_instantiate(t, remote_address, remote_id, null_shunk);
 
 	passert(d->spd->spd_next == NULL);
 

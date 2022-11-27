@@ -43,15 +43,26 @@
 #include "labeled_ipsec.h"		/* for sec_label_within_range() */
 #include "ip_info.h"
 
-static bool initiate_connection_1(struct connection *c, const char *remote_host,
-				  bool background);
-static bool initiate_connection_2(struct connection *c, bool background,
-				  const threadtime_t inception);
-static bool initiate_connection_3(struct connection *c, bool background,
-				  const threadtime_t inception);
+static bool initiate_connection_1_basics(struct connection *c,
+					 const char *remote_host,
+					 bool background);
+static bool initiate_connection_2_address(struct connection *c,
+					  const char *remote_host,
+					  bool background,
+					  const threadtime_t inception);
+static bool initiate_connection_3_sec_label(struct connection *c,
+					    bool background,
+					    const threadtime_t inception);
+static bool initiate_connection_4_fab(struct connection *c,
+				      bool background,
+				      const threadtime_t inception);
 
-bool initiate_connection(struct connection *c, const char *remote_host,
-			 bool background, bool log_failure, struct logger *logger)
+/* attach FD */
+
+bool initiate_connection(struct connection *c,
+			 const char *remote_host,
+			 bool background, bool log_failure,
+			 struct logger *logger)
 {
 	/* XXX: something better? */
 	fd_delref(&c->logger->global_whackfd);
@@ -59,7 +70,7 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 		(/* old IKE SA */ fd_p(logger->object_whackfd) ? fd_addref(logger->object_whackfd) :
 		 /* global */ fd_p(logger->global_whackfd) ? fd_addref(logger->global_whackfd) :
 		 null_fd);
-	bool ok = initiate_connection_1(c, remote_host, background);
+	bool ok = initiate_connection_1_basics(c, remote_host, background);
 	if (log_failure && !ok) {
 		llog(RC_FATAL, c->logger, "failed to initiate connection");
 	}
@@ -69,61 +80,18 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 }
 
 /*
- * Resolve remote host, If there's a REMOTE_HOST, convert that into an IP address and the
- * instantiate C filling in that address as the peer.
+ * Perform some basic, and presumably cheap, checks on the connection.
+ * No point continuing if the connection isn't viable.
  */
-bool initiate_connection_1(struct connection *c, const char *remote_host, bool background)
+
+static bool initiate_connection_1_basics(struct connection *c,
+					 const char *remote_host,
+					 bool background)
 {
 	connection_buf cb;
 	dbg("%s() for "PRI_CONNECTION" in the %s with "PRI_LOGGER,
-	    __func__, pri_connection(c, &cb), background ? "background" : "foreground",
-	    pri_logger(c->logger));
-	threadtime_t inception = threadtime_start();
-	bool ok;
-
-	/* If whack supplied a remote IP, fill it in if we can */
-	if (remote_host != NULL && !address_is_specified(c->remote->host.addr)) {
-
-		if (c->kind != CK_TEMPLATE) {
-			llog(RC_NOPEERIP, c->logger,
-			     "cannot instantiate non-template connection to a supplied remote IP address");
-			return 0;
-		}
-
-		ip_address remote_ip;
-		ttoaddress_num(shunk1(remote_host), NULL/*UNSPEC*/, &remote_ip);
-
-		struct connection *d = spd_instantiate(c, &remote_ip, NULL, null_shunk);
-		/* XXX: something better? */
-		fd_delref(&d->logger->global_whackfd);
-		d->logger->global_whackfd = fd_addref(c->logger->global_whackfd);
-
-		/* XXX: why not write to the log file? */
-		llog(WHACK_STREAM|RC_LOG, d->logger,
-		     "instantiated connection with remote IP set to %s", remote_host);
-
-		/* flip cur_connection */
-		ok = initiate_connection_2(d, background, inception);
-		if (!ok) {
-			delete_connection(&d);
-		} else {
-			/* XXX: something better? */
-			fd_delref(&d->logger->global_whackfd);
-		}
-	} else {
-		/* now proceed as normal */
-		ok = initiate_connection_2(c, background, inception);
-	}
-	return ok;
-}
-
-bool initiate_connection_2(struct connection *c,
-			   bool background,
-			   const threadtime_t inception)
-{
-	connection_buf cb;
-	dbg("%s() for "PRI_CONNECTION" in the %s with "PRI_LOGGER,
-	    __func__, pri_connection(c, &cb), background ? "background" : "foreground",
+	    __func__, pri_connection(c, &cb),
+	    background ? "background" : "foreground",
 	    pri_logger(c->logger));
 
 	if (!oriented(c)) {
@@ -142,54 +110,149 @@ bool initiate_connection_2(struct connection *c,
 		return false;
 	}
 
+	threadtime_t inception = threadtime_start();
+	return initiate_connection_2_address(c, remote_host, background, inception);
+}
+
+/*
+ * Resolve remote host, If there's a REMOTE_HOST, convert that into an
+ * IP address and the instantiate C filling in that address as the
+ * peer.
+ */
+
+static bool initiate_connection_2_address(struct connection *c,
+					  const char *remote_host,
+					  bool background,
+					  const threadtime_t inception)
+{
+	connection_buf cb;
+	dbg("%s() for "PRI_CONNECTION" in the %s with "PRI_LOGGER,
+	    __func__, pri_connection(c, &cb),
+	    background ? "background" : "foreground",
+	    pri_logger(c->logger));
+
+	if (remote_host != NULL && !address_is_specified(c->remote->host.addr)) {
+
+		/*
+		 * The connection has no remote address but whack
+		 * supplied one.  Assuming it resolves, use that as
+		 * the remote address and then continue.
+		 */
+
+		if (c->kind != CK_TEMPLATE) {
+			llog(RC_NOPEERIP, c->logger,
+			     "cannot instantiate non-template connection to a supplied remote IP address");
+			return false;
+		}
+
+		ip_address remote_ip;
+		err_t e = ttoaddress_dns(shunk1(remote_host), NULL/*UNSPEC*/, &remote_ip);
+		if (e != NULL) {
+			llog(RC_NOPEERIP, c->logger,
+			     "cannot instantiate connection: resolution of \"%s\" failed: %s",
+			     remote_host, e);
+			return false;
+		}
+
+		if (!address_is_specified(remote_ip)) {
+			llog(RC_NOPEERIP, c->logger,
+			     "cannot instantiate connection: \"%s\" resolved to the unspecified address",
+			     remote_host);
+			return false;
+		}
+
+		struct connection *d = spd_instantiate(c, remote_ip, NULL, null_shunk);
+
+		/*
+		 * D could either be an instance, or a sec_label
+		 * connection?
+		 */
+
+		/* XXX: something better? */
+		fd_delref(&d->logger->global_whackfd);
+		d->logger->global_whackfd = fd_addref(c->logger->global_whackfd);
+
+		address_buf ab;
+		llog(RC_LOG, d->logger,
+		     "instantiated connection with remote IP set to %s",
+		     str_address(&remote_ip, &ab));
+
+		/* flip cur_connection */
+		bool ok = initiate_connection_3_sec_label(d, background, inception);
+
+		if (!ok) {
+			/* instance so free to delete */
+			delete_connection(&d);
+		} else {
+			/* XXX: something better? */
+			fd_delref(&d->logger->global_whackfd);
+		}
+		return ok;
+	}
+
 	if (!address_is_specified(c->remote->host.addr)) {
-		if (c->policy & POLICY_IKEV2_ALLOW_NARROWING) {
-			if (c->config->dnshostname != NULL) {
+
+		/*
+		 * Cant proceed; there's no peer address!  However, if
+		 * there's a DNS hostname flip things to up so that
+		 * the DNS code, below, will kick in.  Try to provide
+		 * a really detailed message!!!
+		 */
+
+		if (c->config->dnshostname != NULL) {
+			if (c->policy & POLICY_IKEV2_ALLOW_NARROWING) {
 				esb_buf b;
 				llog(RC_NOPEERIP, c->logger,
 				     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
 				     enum_show(&connection_kind_names, c->kind, &b),
 				     bool_str((c->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY));
-				dbg("%s() connection '%s' +POLICY_UP", __func__, c->name);
-				c->policy |= POLICY_UP;
-				return true;
 			} else {
-				esb_buf b;
-				llog(RC_NOPEERIP, c->logger,
-				     "cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
-				     enum_show(&connection_kind_names, c->kind, &b),
-				     bool_str((c->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY));
-				return false;
-			}
-		} else {
-			if (c->config->dnshostname != NULL) {
 				esb_buf b;
 				llog(RC_NOPEERIP, c->logger,
 				     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
 				     enum_show(&connection_kind_names, c->kind, &b));
-				dbg("%s() connection '%s' +POLICY_UP", __func__, c->name);
-				c->policy |= POLICY_UP;
-				return true;
-			} else {
-				esb_buf b;
-				llog(RC_NOPEERIP, c->logger,
-				     "cannot initiate connection (serial "PRI_CO") without knowing peer IP address (kind=%s)",
-				     pri_co(c->serialno),
-				     enum_show(&connection_kind_names, c->kind, &b));
-				return false;
 			}
+			dbg("%s() connection '%s' +POLICY_UP", __func__, c->name);
+			c->policy |= POLICY_UP;
+			return true;
 		}
-	}
 
-	if (!pexpect(address_is_specified(c->remote->host.addr))) {
+		if (c->policy & POLICY_IKEV2_ALLOW_NARROWING) {
+			esb_buf b;
+			llog(RC_NOPEERIP, c->logger,
+			     "cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
+			     enum_show(&connection_kind_names, c->kind, &b),
+			     bool_str((c->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY));
+		} else {
+			esb_buf b;
+			llog(RC_NOPEERIP, c->logger,
+			     "cannot initiate connection (serial "PRI_CO") without knowing peer IP address (kind=%s)",
+			     pri_co(c->serialno),
+			     enum_show(&connection_kind_names, c->kind, &b));
+		}
 		return false;
 	}
 
-	bool ok;
-	if (c->config->ike_version == IKEv2 &&
-	    (c->policy & POLICY_IKEV2_ALLOW_NARROWING) &&
-	    c->kind == CK_TEMPLATE) {
-		struct connection *d = spd_instantiate(c, NULL, NULL, null_shunk);
+	return initiate_connection_3_sec_label(c, background, inception);
+}
+
+static bool initiate_connection_3_sec_label(struct connection *c,
+					    bool background,
+					    const threadtime_t inception)
+{
+	connection_buf cb;
+	dbg("%s() for "PRI_CONNECTION" in the %s with "PRI_LOGGER,
+	    __func__, pri_connection(c, &cb),
+	    background ? "background" : "foreground",
+	    pri_logger(c->logger));
+
+	passert(address_is_specified(c->remote->host.addr));
+
+	if (c->kind == CK_TEMPLATE &&
+	    c->config->ike_version == IKEv2 &&
+	    (c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
+		struct connection *d = spd_instantiate(c, c->remote->host.addr,
+						       NULL, null_shunk);
 		/* XXX: something better? */
 		fd_delref(&d->logger->global_whackfd);
 		d->logger->global_whackfd = fd_addref(c->logger->global_whackfd);
@@ -199,20 +262,22 @@ bool initiate_connection_2(struct connection *c,
 		 */
 		llog(LOG_STREAM|RC_LOG, d->logger, "instantiated connection");
 		/* flip cur_connection */
-		ok = initiate_connection_3(d, background, inception);
+		bool ok = initiate_connection_4_fab(d, background, inception);
 		if (!ok) {
 			delete_connection(&d);
 		} else {
 			/* XXX: something better? */
 			fd_delref(&d->logger->global_whackfd);
 		}
-	} else {
-		ok = initiate_connection_3(c, background, inception);
+		return ok;
 	}
-	return ok;
+
+	return initiate_connection_4_fab(c, background, inception);
 }
 
-bool initiate_connection_3(struct connection *c, bool background, const threadtime_t inception)
+static bool initiate_connection_4_fab(struct connection *c,
+				      bool background,
+				      const threadtime_t inception)
 {
 	connection_buf cb;
 	dbg("%s() for "PRI_CONNECTION" in the %s with "PRI_LOGGER,
@@ -384,7 +449,7 @@ void ipsecdoi_initiate(struct connection *c,
 				 * connection.
 				 */
 				ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
-				cc = spd_instantiate(c, &remote_addr, NULL, sec_label);
+				cc = spd_instantiate(c, remote_addr, NULL, sec_label);
 			} else {
 				cc = c;
 			}

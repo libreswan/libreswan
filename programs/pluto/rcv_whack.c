@@ -880,19 +880,8 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			whack_log(RC_DEAF, whackfd,
 				  "need --listen before --initiate");
 		} else {
-			const char *remote_host = m->remote_host;
-			if (remote_host != NULL) {
-				ip_address testip;
-				const char *oops = ttoaddress_dns(shunk1(m->remote_host),
-								  NULL/*any*/, &testip);
-				if (oops != NULL) {
-					whack_log(RC_NOPEERIP, whackfd,
-						  "remote host IP address '%s' is invalid: %s",
-						  m->remote_host, oops);
-					remote_host = NULL;
-				}
-			}
-			initiate_connections_by_name(m->name, remote_host,
+			initiate_connections_by_name(m->name,
+						     m->remote_host,
 						     m->whack_async, logger);
 		}
 		dbg_whack(s, "stop: initiate");

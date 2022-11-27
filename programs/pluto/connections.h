@@ -672,7 +672,7 @@ struct connection *oppo_instantiate(struct connection *t,
 				    const ip_address local_address,
 				    const ip_address remote_address);
 extern struct connection *spd_instantiate(struct connection *t,
-					  const ip_address *peer_addr,
+					  const ip_address peer_addr,
 					  const struct id *peer_id,
 					  shunk_t sec_label);
 extern struct connection *instantiate(struct connection *t,
