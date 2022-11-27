@@ -3281,16 +3281,16 @@ struct connection *spd_instantiate(struct connection *t,
 }
 
 struct connection *rw_instantiate(struct connection *t,
-				  const ip_address *peer_addr,
+				  const ip_address peer_addr,
 				  const ip_selector *peer_subnet,
 				  const struct id *peer_id)
 {
-	struct connection *d = spd_instantiate(t, peer_addr, peer_id, null_shunk);
+	struct connection *d = spd_instantiate(t, &peer_addr, peer_id, null_shunk);
 
 	if (peer_subnet != NULL && is_virtual_remote(t)) {
 		set_first_selector(d, remote, *peer_subnet);
 		rehash_db_spd_route_remote_client(d->spd);
-		if (selector_eq_address(*peer_subnet, *peer_addr)) {
+		if (selector_eq_address(*peer_subnet, peer_addr)) {
 			ldbg(t->logger, "forcing remote %s.spd.has_client=false",
 			     d->spd->remote->config->leftright);
 			set_child_has_client(d, remote, false);
@@ -3311,7 +3311,7 @@ struct connection *rw_instantiate(struct connection *t,
 	address_buf b;
 	dbg("rw_instantiate() instantiated "PRI_CONNECTION" for %s",
 	    pri_connection(d, &inst),
-	    str_address(peer_addr, &b));
+	    str_address(&peer_addr, &b));
 	return d;
 }
 
@@ -3707,18 +3707,19 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 struct connection *oppo_instantiate(struct connection *t,
 				    const struct id *remote_id,
 				    /* both host and client */
-				    const ip_address *local_address,
-				    const ip_address *remote_address)
+				    const ip_address local_address,
+				    const ip_address remote_address)
 {
-	passert(local_address != NULL);
-	passert(remote_address != NULL);
+	pexpect(address_is_specified(local_address));
+	pexpect(address_is_specified(remote_address));
 	address_buf lb, rb;
 	connection_buf cb;
 	dbg("oppo instantiating "PRI_CONNECTION" with routing %s between %s -> %s",
 	    pri_connection(t, &cb), enum_name(&routing_story, t->spd->routing),
-	    str_address(local_address, &lb), str_address(remote_address, &rb));
+	    str_address(&local_address, &lb),
+	    str_address(&remote_address, &rb));
 
-	struct connection *d = spd_instantiate(t, remote_address, remote_id, null_shunk);
+	struct connection *d = spd_instantiate(t, &remote_address, remote_id, null_shunk);
 
 	passert(d->spd->spd_next == NULL);
 
@@ -3739,7 +3740,7 @@ struct connection *oppo_instantiate(struct connection *t,
 		 */
 
 		/* opportunistic connections do not use port selectors */
-		if (address_in_selector_range(*local_address, d->spd->local->client)) {
+		if (address_in_selector_range(local_address, d->spd->local->client)) {
 			ldbg(d->logger, "oppo local %s.spd.has_client==true and local address <= client; narrowing local client",
 			     d->spd->local->config->leftright);
 			/*
@@ -3747,10 +3748,10 @@ struct connection *oppo_instantiate(struct connection *t,
 			 * narrow it(?), ...
 			*/
 			set_first_selector(d, local,
-				     selector_from_address_protocol_port(*local_address,
+				     selector_from_address_protocol_port(local_address,
 									 local_protocol,
 									 local_port));
-		} else if (address_eq_address(*local_address, d->local->host.addr)) {
+		} else if (address_eq_address(local_address, d->local->host.addr)) {
 			ldbg(d->logger, "oppo local %s.spd.has_client==true and local address == host.addr; updating port",
 			     d->spd->local->config->leftright);
 			/*
@@ -3776,9 +3777,9 @@ struct connection *oppo_instantiate(struct connection *t,
 		 */
 		ldbg(d->logger, "oppo local %s.spd.has_client==false; patching damage by instantiate()",
 		     d->spd->local->config->leftright);
-		passert(address_eq_address(*local_address, d->local->host.addr));
+		passert(address_eq_address(local_address, d->local->host.addr));
 		set_first_selector(d, local,
-			     selector_from_address_protocol_port(*local_address,
+			     selector_from_address_protocol_port(local_address,
 								 local_protocol,
 								 local_port));
 	}
@@ -3799,17 +3800,17 @@ struct connection *oppo_instantiate(struct connection *t,
 	const struct ip_protocol *remote_protocol = selector_protocol(t->spd->remote->client);
 	ip_port remote_port = selector_port(t->spd->remote->client);
 	passert(d->policy & POLICY_OPPORTUNISTIC);
-	passert(address_in_selector_range(*remote_address, d->spd->remote->client));
-	set_first_selector(d, remote, selector_from_address_protocol_port(*remote_address,
-								    remote_protocol,
-								    remote_port));
+	passert(address_in_selector_range(remote_address, d->spd->remote->client));
+	set_first_selector(d, remote, selector_from_address_protocol_port(remote_address,
+									  remote_protocol,
+									  remote_port));
 	rehash_db_spd_route_remote_client(d->spd);
 
 	dbg("oppo remote(d) protocol %s port %d",
 	    selector_protocol(d->spd->remote->client)->name,
 	    selector_port(d->spd->remote->client).hport);
 
-	if (address_eq_address(*remote_address, d->remote->host.addr)) {
+	if (address_eq_address(remote_address, d->remote->host.addr)) {
 		ldbg(d->logger, "oppo and address==remote.host_addr; remote %s.spd.has_client=false",
 		     d->spd->local->config->leftright);
 		set_child_has_client(d, remote, false);

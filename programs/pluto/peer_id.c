@@ -610,7 +610,7 @@ bool refine_host_connection_of_state_on_responder(struct state *st,
 			 * Instantiate it, filling in peer's
 			 * ID.
 			 */
-			r = rw_instantiate(r, &c->remote->host.addr,
+			r = rw_instantiate(r, c->remote->host.addr,
 					   NULL, peer_id);
 		}
 		/*

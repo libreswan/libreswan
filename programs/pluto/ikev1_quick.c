@@ -1098,7 +1098,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 				/* Plain Road Warrior because no OPPO for IKEv1
 				 * instantiate, carrying over authenticated peer ID
 				 */
-				p = rw_instantiate(p, &c->remote->host.addr,
+				p = rw_instantiate(p, c->remote->host.addr,
 						   remote_client,
 						   &c->remote->host.id);
 			}

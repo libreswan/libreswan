@@ -247,7 +247,7 @@ struct connection *find_v1_aggr_mode_connection(struct msg_digest *md,
 		 * Peers ID isn't declared yet.
 		 */
 		ip_address sender_address = endpoint_address(md->sender);
-		return rw_instantiate(c, &sender_address, NULL, NULL);
+		return rw_instantiate(c, sender_address, NULL, NULL);
 	}
 
 	endpoint_buf b;
@@ -299,7 +299,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 			ldbg(md->md_logger,
 			     "local endpoint needs instantiation");
 			ip_address sender_address = endpoint_address(md->sender);
-			return rw_instantiate(c, &sender_address, NULL, NULL);
+			return rw_instantiate(c, sender_address, NULL, NULL);
 		}
 
 		return c;
@@ -382,5 +382,5 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	ldbg(md->md_logger, "instantiating "PRI_CONNECTION" for initial Main Mode message",
 	     pri_connection(c, &cib));
 	ip_address sender_address = endpoint_address(md->sender);
-	return rw_instantiate(c, &sender_address, NULL, NULL);
+	return rw_instantiate(c, sender_address, NULL, NULL);
 }

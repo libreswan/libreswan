@@ -906,7 +906,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 */
 	ip_address src_address = packet_src_address(b->packet);
 	ip_address dst_address = packet_dst_address(b->packet);
-	c = oppo_instantiate(t, NULL, &src_address, &dst_address);
+	c = oppo_instantiate(t, NULL, src_address, dst_address);
 
 	selectors_buf sb;
 	dbg("going to initiate opportunistic %s, first installing %s negotiationshunt",
