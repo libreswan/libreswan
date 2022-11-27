@@ -163,9 +163,86 @@ bool raw_policy(enum kernel_policy_op op,
 					     sa_marks, xfrmi,
 					     sec_label,
 					     logger);
-	dbg("kernel: policy: result=%s", result ? "success" : "failed");
+	dbg("kernel: %s() result=%s", __func__, (result ? "success" : "failed"));
 
 	return result;
+}
+
+bool delete_kernel_policy(enum direction dir,
+			  enum expect_kernel_policy expect_kernel_policy,
+			  const ip_selector src_client,
+			  const ip_selector dst_client,
+			  const struct sa_marks *sa_marks,
+			  const struct pluto_xfrmi *xfrmi,
+			  const shunk_t sec_label,
+			  struct logger *logger, where_t where, const char *story)
+{
+	const struct ip_protocol *client_proto = selector_protocol(src_client);
+	pexpect(client_proto == selector_protocol(dst_client));
+
+	LSWDBGP(DBG_BASE, buf) {
+
+		jam(buf, "kernel: %s() %s:", __func__, story);
+
+		jam_string(buf, " ");
+		jam_enum_short(buf, &direction_names, dir);
+
+		jam_string(buf, " ");
+		jam_string(buf, expect_kernel_policy_name(expect_kernel_policy));
+
+		jam(buf, " client=");
+		jam_selectors(buf, &src_client, &dst_client);
+
+		if (sa_marks != NULL) {
+			jam(buf, " sa_marks=");
+			const char *dir = "out:";
+			FOR_EACH_THING(mark, &sa_marks->out, &sa_marks->in) {
+				jam(buf, "%s%x/%x%s",
+				    dir, mark->val, mark->mask,
+				    mark->unique ? "/unique" : "");
+				dir = ",in:";
+			}
+		}
+
+		jam(buf, " xfrm_if_id=%d",
+		    xfrmi != NULL ? (int)xfrmi->if_id : -1);
+
+		jam(buf, " sec_label=");
+		jam_sanitized_hunk(buf, sec_label);
+
+		jam_string(buf, " ");
+		jam(buf, PRI_WHERE, pri_where(where));
+	}
+
+	bool result = kernel_ops->raw_policy(KERNEL_POLICY_OP_DELETE, dir,
+					     expect_kernel_policy,
+					     &src_client, &dst_client,
+					     /*policy*/NULL/*delete-not-needed*/,
+					     deltatime(0),
+					     sa_marks, xfrmi, sec_label,
+					     logger);
+	dbg("kernel: %s() result=%s", __func__, (result ? "success" : "failed"));
+	return result;
+}
+
+bool delete_kernel_policies(enum expect_kernel_policy expect_kernel_policy,
+			    const ip_selector local_client,
+			    const ip_selector remote_client,
+			    const struct sa_marks *sa_marks,
+			    const struct pluto_xfrmi *xfrmi,
+			    const shunk_t sec_label,
+			    struct logger *logger, where_t where, const char *story)
+{
+	bool out = delete_kernel_policy(DIRECTION_OUTBOUND, expect_kernel_policy,
+					local_client, remote_client,
+					sa_marks, xfrmi, sec_label,
+					logger, where, story);
+	/* XXX: stumble on */
+	bool in = delete_kernel_policy(DIRECTION_INBOUND, expect_kernel_policy,
+				       remote_client, local_client,
+				       sa_marks, xfrmi, sec_label,
+				       logger, where, story);
+	return (in && out);
 }
 
 bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logger *logger)

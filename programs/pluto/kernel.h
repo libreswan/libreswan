@@ -361,6 +361,7 @@ struct kernel_ops {
 			   const struct pluto_xfrmi *xfrmi,
 			   const shunk_t sec_label,
 			   struct logger *logger);
+
 	/*
 	 * XXX: to delete an SA, delete it's SPI.
 	 */

@@ -1685,17 +1685,13 @@ static void delete_bare_kernel_policy(const struct bare_shunt *bsp,
 	ip_selector src = selector_from_address_protocol(src_address, transport_proto);
 	ip_selector dst = selector_from_address_protocol(dst_address, transport_proto);
 	/* assume low code logged action */
-	if (!raw_policy(KERNEL_POLICY_OP_DELETE,
-			DIRECTION_OUTBOUND,
-			EXPECT_KERNEL_POLICY_OK,
-			&src, &dst,
-			/*kernel_policy*/NULL/*delete->no-policy-rules*/,
-			deltatime(SHUNT_PATIENCE),
-			/*sa_marks+xfrmi*/NULL,NULL,
-			null_shunk,
-			logger,
-			"%s() deleting bare shunt from kernel "PRI_WHERE,
-			__func__, pri_where(where))) {
+	if (!delete_kernel_policy(DIRECTION_OUTBOUND,
+				  EXPECT_KERNEL_POLICY_OK,
+				  src, dst,
+				  /*sa_marks+xfrmi*/NULL,NULL,/*bare-shunt*/
+				  /* bare-shunt: no sec_label XXX: ?!? */
+				  null_shunk,
+				  logger, where, "delete bare shunt")) {
 		/* ??? we could not delete a bare shunt */
 		llog_bare_shunt(RC_LOG, logger, bsp, "failed to delete kernel policy");
 	}
@@ -1740,9 +1736,11 @@ bool flush_bare_shunt(const ip_address *src_address,
 		      enum expect_kernel_policy expect_kernel_policy,
 		      const char *why, struct logger *logger)
 {
+	/*
+	 * Strip the port; i.e., widen to an address.
+	 */
 	const struct ip_info *afi = address_type(src_address);
 	pexpect(afi == address_type(dst_address));
-	/* port? assumed wide? */
 	ip_selector src = selector_from_address_protocol(*src_address, transport_proto);
 	ip_selector dst = selector_from_address_protocol(*dst_address, transport_proto);
 
@@ -1751,16 +1749,12 @@ bool flush_bare_shunt(const ip_address *src_address,
 	dbg("kernel: deleting bare shunt %s from kernel for %s",
 	    str_selectors(&src, &dst, &sb), why);
 	/* assume low code logged action */
-	bool ok = raw_policy(KERNEL_POLICY_OP_DELETE,
-			     DIRECTION_OUTBOUND,
-			     expect_kernel_policy,
-			     &src, &dst,
-			     /*kernel_policy*/NULL/*delete->no-policy-rules*/,
-			     deltatime(SHUNT_PATIENCE),
-			     /*sa_marks+xfrmi*/NULL,NULL,
-			     null_shunk,
-			     logger,
-			     "%s() %s", __func__, why);
+	bool ok = delete_kernel_policy(DIRECTION_OUTBOUND,
+				       expect_kernel_policy,
+				       src, dst,
+				       /*sa_marks+xfrmi*/NULL,NULL,/*bare-shunt*/
+				       /*sec-label*/null_shunk,/*bare-shunt*/
+				       logger, HERE, why);
 	if (!ok) {
 		/* did/should kernel log this? */
 		selectors_buf sb;
@@ -1835,7 +1829,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 				&kernel_policy.src.client, &kernel_policy.dst.client,
 				&kernel_policy,
 				/*use_lifetime*/deltatime(0),
-				/*sa_marks+xfrmi*/NULL,NULL,
+				/*sa_marks+xfrmi*/NULL,NULL,/* XXX: bug? */
 				/*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
 				/*logger*/logger,
 				"%s() security label policy", __func__)) {
@@ -1851,15 +1845,13 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 				 */
 				dbg("pulling previously installed outbound policy");
 				pexpect(direction == DIRECTION_INBOUND);
-				raw_policy(KERNEL_POLICY_OP_DELETE, DIRECTION_OUTBOUND,
-					   EXPECT_KERNEL_POLICY_OK,
-					   &c->spd->local->client, &c->spd->remote->client,
-					   /*kernel_policy*/NULL/*delete->no-policy-rules*/,
-					   /*use_lifetime*/deltatime(0),
-					   /*sa_marks+xfrmi*/NULL,NULL,
-					   /*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
-					   /*logger*/logger,
-					   "%s() security label policy", __func__);
+				delete_kernel_policy(DIRECTION_OUTBOUND,
+						     EXPECT_KERNEL_POLICY_OK,
+						     c->spd->local->client,
+						     c->spd->remote->client,
+						     /*sa_marks+xfrmi*/NULL,NULL,/* XXX: bug? */
+						     /*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
+						     /*logger*/logger, HERE, "security label policy");
 			}
 			return false;
 		}
@@ -1877,20 +1869,13 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 			dbg("kernel: down command returned an error");
 		}
 		dbg("kernel: %s() pulling policies", __func__);
-		FOR_EACH_THING(direction, DIRECTION_OUTBOUND, DIRECTION_INBOUND) {
-			struct spd_end *src = (direction == DIRECTION_INBOUND ? c->spd->remote : c->spd->local);
-			struct spd_end *dst = (direction == DIRECTION_INBOUND ? c->spd->local : c->spd->remote);
-			/* ignore result */
-			raw_policy(KERNEL_POLICY_OP_DELETE, direction,
-				   EXPECT_KERNEL_POLICY_OK,
-				   &src->client, &dst->client,
-				   /*kernel_policy*/NULL/*delete->no-policy-rules*/,
-				   /*use_lifetime*/deltatime(0),
-				   /*sa_marks+xfrmi*/NULL,NULL,
-				   /*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
-				   /*logger*/logger,
-				   "%s() security label policy", __func__);
-		}
+		delete_kernel_policies(EXPECT_KERNEL_POLICY_OK,
+				       c->spd->local->client,
+				       c->spd->remote->client,
+				       /*sa_marks+xfrmi*/NULL,NULL,/* XXX: bug? */
+				       /*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
+				       /*logger*/logger, HERE,
+				       "security label policy");
 		return false;
 	}
 
@@ -3302,7 +3287,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 }
 
 /*
- * Delete an IPSEC SA.
+ * Delete an IPSEC SA's kernel policy.
  *
  * We may not succeed, but we bull ahead anyway because we cannot do
  * anything better by recognizing failure.
@@ -3313,6 +3298,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
  * now always an outbound policy, there may not yet be an inbound
  * policy!  For instance, IKEv2 IKE AUTH initiator gets rejected.  So
  * what is there, and should this even be called?
+ *
  * EXPECT_KERNEL_POLICY is trying to help sort this out.
  */
 
@@ -3334,6 +3320,11 @@ static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
 				   calculate_kernel_priority(out->connection, false),
 				   outbound_shunt, HERE);
 
+	/*
+	 * Since this is tearing down a real policy; all the critical
+	 * parameters from the add need to match.
+	 */
+
 	if (!raw_policy(outbound_op,
 			DIRECTION_OUTBOUND,
 			EXPECT_KERNEL_POLICY_OK,
@@ -3350,21 +3341,33 @@ static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
 	}
 	dbg("kernel: %s() calling raw_policy(delete-inbound), eroute_owner==NOBODY",
 	    __func__);
-	if (!raw_policy(KERNEL_POLICY_OP_DELETE,
-			DIRECTION_INBOUND,
-			expect_kernel_policy,
-			&in->remote->client, &in->local->client,
-			NULL/*no-policy-template as delete*/,
-			deltatime(0),
-			&in->connection->sa_marks,
-			in->connection->xfrmi,
-			/*sec_label:always-null*/null_shunk,
-			in->connection->logger,
-			"%s() inbound kernel policy for %s", __func__, story)) {
+	if (!delete_kernel_policy(DIRECTION_INBOUND,
+				  expect_kernel_policy,
+				  in->remote->client,
+				  in->local->client,
+				  &in->connection->sa_marks,in->connection->xfrmi,/*real*/
+				  /*sec_label*/null_shunk,/*always*/
+				  in->connection->logger, HERE, story)) {
 		llog(RC_LOG, logger,
 		     "kernel: %s() outbound failed %s", __func__, story);
 	}
 }
+
+/*
+ * Delete an IPSEC SA
+ *
+ * We may not succeed, but we bull ahead anyway because we cannot do
+ * anything better by recognizing failure.
+ *
+ * This used to have a parameter inbound_only, but the saref code
+ * changed to always install inbound before outbound so this it was
+ * always false, and thus removed.  But this means that while there's
+ * now always an outbound policy, there may not yet be an inbound
+ * policy!  For instance, IKEv2 IKE AUTH initiator gets rejected.  So
+ * what is there, and should this even be called?
+ *
+ * EXPECT_KERNEL_POLICY is trying to help sort this out.
+ */
 
 static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy expect_kernel_policy)
 {

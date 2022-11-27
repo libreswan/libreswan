@@ -32,6 +32,23 @@ extern bool raw_policy(enum kernel_policy_op op,
 		       struct logger *logger,
 		       const char *fmt, ...) PRINTF_LIKE(12);
 
+/*kernel_ops_policy() kernel_ops_spd()? */
+extern bool delete_kernel_policy(enum direction dir,
+				 enum expect_kernel_policy expect_kernel_policy,
+				 const ip_selector this_client,
+				 const ip_selector that_client,
+				 const struct sa_marks *sa_marks,
+				 const struct pluto_xfrmi *xfrmi,
+				 const shunk_t sec_label, /*needed*/
+				 struct logger *logger, where_t where, const char *story);
+extern bool delete_kernel_policies(enum expect_kernel_policy expect_kernel_policy,
+				   const ip_selector local_client,
+				   const ip_selector remote_client,
+				   const struct sa_marks *sa_marks,
+				   const struct pluto_xfrmi *xfrmi,
+				   const shunk_t sec_label, /*needed*/
+				   struct logger *logger, where_t where, const char *story);
+
 /*kernel_ops_state()? kernel_ops_sad()?*/
 bool kernel_ops_add_sa(const struct kernel_state *sa,
 		       bool replace,
