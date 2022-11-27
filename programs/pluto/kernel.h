@@ -192,11 +192,16 @@ struct kernel_policy {
 	struct kernel_policy_rule rule[5]; /* [0]+IPCOMP+AH+ESP+0 */
 };
 
-struct kernel_policy bare_kernel_policy(const ip_selector *src,
-					const ip_selector *dst,
-					kernel_priority_t priority,
-					enum shunt_policy shunt_policy,
-					where_t where);
+/*
+ * A kernel policy that does not have a state.  Typically constructed
+ * from a bare shunt but can also be for a prospective shunt.
+ */
+
+struct kernel_policy stateless_kernel_policy(const ip_selector *src,
+					     const ip_selector *dst,
+					     kernel_priority_t priority,
+					     enum shunt_policy shunt_policy,
+					     where_t where);
 
 /*
  * The CHILD (IPsec, kernel) SA has two IP ends.

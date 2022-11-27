@@ -243,7 +243,7 @@ bool failure_shunt_ok(enum shunt_policy shunt)
 }
 
 /*
- * Add/replace/delete an outbound bare kernel policy, aka shunt.
+ * Add an outbound bare kernel policy, aka shunt.
  *
  * Such a kernel policy determines the fate of packets without the use
  * of any SAs.  These are defaults, in effect.  If a negotiation has
@@ -255,73 +255,23 @@ bool failure_shunt_ok(enum shunt_policy shunt)
  * not paired with a kernel state.
  */
 
-static bool bare_policy_op(enum kernel_policy_op op,
-			   enum expect_kernel_policy expect_kernel_policy,
-			   const struct connection *c,
-			   const struct spd_route *sr,
-			   enum routing_t rt_kind,
-			   const char *opname,
-			   struct logger *logger,
-			   where_t where)
+static bool add_prospective_policy(enum expect_kernel_policy expect_kernel_policy,
+				   const struct connection *c,
+				   const struct spd_route *sr,
+				   const char *opname,
+				   struct logger *logger,
+				   where_t where)
 {
 	shunk_t sec_label = HUNK_AS_SHUNK(c->config->sec_label);
 
 	/*
-	 * We are constructing a special SAID for the policy.
-	 *
-	 * The destination doesn't seem to matter, but the family
-	 * does.  The protocol is &ip_protocol_internal -- mark this
-	 * as shunt.  The satype has no meaning, but is required for
-	 * PF_KEY header!  The SPI signifies the kind of shunt.
+	 * Only the following shunts are valid.
 	 */
-	enum shunt_policy shunt_policy =
-		(rt_kind == RT_ROUTED_PROSPECTIVE ? c->config->prospective_shunt :
-		 c->config->failure_shunt);
-
-	/*
-	 * Are we supposed to end up with no policy?
-	 */
-	if (shunt_policy == SHUNT_NONE && op == KERNEL_POLICY_OP_ADD) {
-		ldbg(c->logger,
-		     "kernel: %s() ADD-NONE: so add nothing "PRI_WHERE,
-		     __func__, pri_where(where));
-		/* add nothing == do nothing */
-		return true;
-	} else if (shunt_policy == SHUNT_NONE && op == KERNEL_POLICY_OP_REPLACE) {
-		ldbg(c->logger,
-		     "kernel: %s() REPLACE-with-NONE: turns into DELETE+UNSET "PRI_WHERE,
-		     __func__, pri_where(where));
-		op = KERNEL_POLICY_OP_DELETE;
-		shunt_policy = SHUNT_UNSET;
-		opname = "delete";
-	} else if (shunt_policy == SHUNT_NONE && op == KERNEL_POLICY_OP_DELETE) {
-		ldbg(c->logger,
-		     "kernel: %s() DELETE-with-NONE: turns into DELETE+UNSET "PRI_WHERE,
-		     __func__, pri_where(where));
-		/* delete remains delete */
-		shunt_policy = SHUNT_UNSET;
-		op = KERNEL_POLICY_OP_DELETE;
-		opname = "delete";
-	} else if (shunt_policy == SHUNT_DROP && op == KERNEL_POLICY_OP_DELETE) {
-		ldbg(c->logger,
-		     "kernel: %s() DELETE-with-DROP: turns into DELETE+UNSET "PRI_WHERE,
-		     __func__, pri_where(where));
-		shunt_policy = SHUNT_UNSET;
-		opname = "delete";
-	} else if (shunt_policy == SHUNT_PASS && op == KERNEL_POLICY_OP_DELETE) {
-		ldbg(c->logger,
-		     "kernel: %s() DELETE-with-PASS: turns into DELETE+UNSET "PRI_WHERE,
-		     __func__, pri_where(where));
-		shunt_policy = SHUNT_UNSET;
-		opname = "delete";
-	} else {
-		ldbg(c->logger, "kernel: %s() no-change to OP+SHUNT", __func__);
-	}
+	enum shunt_policy prospective_shunt = c->config->prospective_shunt;
+	passert(prospective_shunt_ok(prospective_shunt));
 
 	LSWDBGP(DBG_BASE, buf) {
 		jam(buf, "kernel: %s() ", __func__);
-
-		jam_enum_short(buf, &kernel_policy_op_names, op);
 
 		jam_string(buf, " ");
 		jam_string(buf, expect_kernel_policy_name(expect_kernel_policy));
@@ -330,13 +280,9 @@ static bool bare_policy_op(enum kernel_policy_op op,
 		jam(buf, " ");
 		jam_connection(buf, c);
 
-		enum_buf rtb;
-		jam(buf, " rt_kind '%s'",
-		    str_enum_short(&routing_story, rt_kind, &rtb));
-
 		enum_buf spb;
-		jam(buf, " shunt_policy=%s",
-		    str_enum_short(&shunt_policy_names, shunt_policy, &spb));
+		jam(buf, " prospective_shunt=%s",
+		    str_enum_short(&shunt_policy_names, prospective_shunt, &spb));
 
 		jam(buf, " ");
 		jam_selector_subnet_port(buf, &sr->local->client);
@@ -367,29 +313,21 @@ static bool bare_policy_op(enum kernel_policy_op op,
 
 
 	struct kernel_policy outbound_kernel_policy =
-		bare_kernel_policy(&sr->local->client, &sr->remote->client,
-				   calculate_kernel_priority(c, false),
-				   shunt_policy, HERE);
+		stateless_kernel_policy(&sr->local->client, &sr->remote->client,
+					calculate_kernel_priority(c, false),
+					prospective_shunt, where);
 
-	if (!raw_policy(op, DIRECTION_OUTBOUND,
+	if (!raw_policy(KERNEL_POLICY_OP_ADD, DIRECTION_OUTBOUND,
 			EXPECT_KERNEL_POLICY_OK,
 			&outbound_kernel_policy.src.client,
 			&outbound_kernel_policy.dst.client,
-			(op == KERNEL_POLICY_OP_DELETE ? NULL : &outbound_kernel_policy),
+			&outbound_kernel_policy,
 			deltatime(0),
 			&c->sa_marks, c->xfrmi,
 			sec_label,
 			logger,
 			"%s() outbound shunt for %s", __func__, opname))
 		return false;
-
-	switch (op) {
-	case KERNEL_POLICY_OP_ADD:
-	case KERNEL_POLICY_OP_DELETE:
-		break;
-	case KERNEL_POLICY_OP_REPLACE:
-		return true;
-	}
 
 	/*
 	 * Note the crossed streams since inbound.
@@ -400,15 +338,15 @@ static bool bare_policy_op(enum kernel_policy_op op,
 	 * policy installed.
 	 */
 	struct kernel_policy inbound_kernel_policy =
-		bare_kernel_policy(&sr->remote->client, &sr->local->client,
-				   calculate_kernel_priority(c, false),
-				   shunt_policy, HERE);
+		stateless_kernel_policy(&sr->remote->client, &sr->local->client,
+					calculate_kernel_priority(c, false),
+					prospective_shunt, where);
 
-	return raw_policy(op, DIRECTION_INBOUND,
+	return raw_policy(KERNEL_POLICY_OP_ADD, DIRECTION_INBOUND,
 			  expect_kernel_policy,
 			  &inbound_kernel_policy.src.client,
 			  &inbound_kernel_policy.dst.client,
-			  (op == KERNEL_POLICY_OP_DELETE ? NULL : &inbound_kernel_policy),
+			  &inbound_kernel_policy,
 			  deltatime(0),
 			  &c->sa_marks, c->xfrmi,
 			  sec_label,
@@ -472,9 +410,9 @@ static bool strip_stateful_policy(enum expect_kernel_policy expect_kernel_policy
 	 */
 	if (shunt_policy == SHUNT_NONE) {
 		struct kernel_policy outbound_policy =
-			bare_kernel_policy(&sr->local->client, &sr->remote->client,
-					   calculate_kernel_priority(c, false),
-					   shunt_policy, where);
+			stateless_kernel_policy(&sr->local->client, &sr->remote->client,
+						calculate_kernel_priority(c, false),
+						shunt_policy, where);
 		if (!raw_policy(KERNEL_POLICY_OP_REPLACE,
 				DIRECTION_OUTBOUND,
 				EXPECT_KERNEL_POLICY_OK,
@@ -509,11 +447,11 @@ static bool strip_stateful_policy(enum expect_kernel_policy expect_kernel_policy
 				      logger, where, opname);
 }
 
-struct kernel_policy bare_kernel_policy(const ip_selector *src,
-					const ip_selector *dst,
-					kernel_priority_t priority,
-					enum shunt_policy shunt_policy,
-					where_t where)
+struct kernel_policy stateless_kernel_policy(const ip_selector *src,
+					     const ip_selector *dst,
+					     kernel_priority_t priority,
+					     enum shunt_policy shunt_policy,
+					     where_t where)
 {
 	const struct ip_info *child_afi = selector_type(src);
 	pexpect(selector_type(dst) == child_afi);
@@ -2154,9 +2092,9 @@ bool assign_holdpass(const struct connection *c,
 			}
 
 			struct kernel_policy outbound_kernel_policy =
-				bare_kernel_policy(&sr->local->client, &sr->remote->client,
-						   calculate_kernel_priority(c, false),
-						   negotiation_shunt, HERE);
+				stateless_kernel_policy(&sr->local->client, &sr->remote->client,
+							calculate_kernel_priority(c, false),
+							negotiation_shunt, HERE);
 
 			if (eroute_outbound_connection(op, reason, sr,
 						       &outbound_kernel_policy,
@@ -3106,11 +3044,11 @@ bool route_and_eroute(struct connection *c,
 
 		/* if no state provided, then install a shunt for later */
 		if (st == NULL) {
-			eroute_installed = bare_policy_op(KERNEL_POLICY_OP_ADD,
-							  EXPECT_KERNEL_POLICY_OK,
-							  c, sr, RT_ROUTED_PROSPECTIVE,
-							  "route_and_eroute() add",
-							  logger, HERE);
+			eroute_installed =
+				add_prospective_policy(EXPECT_KERNEL_POLICY_OK,
+						       c, sr,
+						       "route_and_eroute() add",
+						       logger, HERE);
 		} else {
 			eroute_installed = sag_eroute(st, sr,
 						      KERNEL_POLICY_OP_ADD,
@@ -3254,9 +3192,9 @@ bool route_and_eroute(struct connection *c,
 				 */
 				struct bare_shunt *bs = *bspp;
 				struct kernel_policy outbound_kernel_policy =
-					bare_kernel_policy(&bs->our_client, &bs->peer_client,
-							   calculate_kernel_priority(c, false),
-							   bs->shunt_policy, HERE);
+					stateless_kernel_policy(&bs->our_client, &bs->peer_client,
+								calculate_kernel_priority(c, false),
+								bs->shunt_policy, HERE);
 
 				if (!raw_policy(KERNEL_POLICY_OP_REPLACE,
 						DIRECTION_OUTBOUND,
@@ -3473,9 +3411,9 @@ static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
 	 * .{src,dst} provides the family but the address isn't used).
 	 */
 	struct kernel_policy outbound_kernel_policy =
-		bare_kernel_policy(&out->local->client, &out->remote->client,
-				   calculate_kernel_priority(out->connection, false),
-				   outbound_shunt, HERE);
+		stateless_kernel_policy(&out->local->client, &out->remote->client,
+					calculate_kernel_priority(out->connection, false),
+					outbound_shunt, HERE);
 
 	/*
 	 * Since this is tearing down a real policy; all the critical
@@ -3912,10 +3850,10 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 			 */
 
 			struct kernel_policy outbound_kernel_policy =
-				bare_kernel_policy(&src, &dst,
-						   /* we don't know connection for priority yet */
-						   max_kernel_priority,
-						   failure_shunt, HERE);
+				stateless_kernel_policy(&src, &dst,
+							/* we don't know connection for priority yet */
+							max_kernel_priority,
+							failure_shunt, HERE);
 
 			bool ok = raw_policy(KERNEL_POLICY_OP_REPLACE,
 					     DIRECTION_OUTBOUND,
@@ -4003,12 +3941,10 @@ static void expire_bare_shunts(struct logger *logger)
 				 */
 				struct connection *c = connection_by_serialno(bsp->from_serialno);
 				if (c != NULL) {
-					if (!bare_policy_op(KERNEL_POLICY_OP_ADD,
-							    EXPECT_KERNEL_POLICY_OK,
-							    c, c->spd,
-							    RT_ROUTED_PROSPECTIVE,
-							    "expire_bare_shunts() add",
-							    logger, HERE)) {
+					if (!add_prospective_policy(EXPECT_KERNEL_POLICY_OK,
+								    c, c->spd,
+								    "expire_bare_shunts() add",
+								    logger, HERE)) {
 						llog(RC_LOG, logger,
 						     "trap shunt install failed ");
 					}
