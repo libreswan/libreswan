@@ -988,7 +988,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 
 	struct kernel_policy outbound_kernel_policy =
 		stateless_kernel_policy(&local_shunt, &remote_shunt,
-					calculate_kernel_priority(c, LIN(POLICY_OPPORTUNISTIC, c->policy)),
+					calculate_kernel_priority(c),
 					b->negotiation_shunt, HERE);
 
 	if (raw_policy(KERNEL_POLICY_OP_ADD,

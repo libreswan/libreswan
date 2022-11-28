@@ -92,7 +92,7 @@
 
 kernel_priority_t max_kernel_priority;
 
-kernel_priority_t calculate_kernel_priority(const struct connection *c, bool oe_shunt)
+kernel_priority_t calculate_kernel_priority(const struct connection *c)
 {
 	if (c->sa_priority != 0) {
 		ldbg(c->logger,
@@ -152,21 +152,7 @@ kernel_priority_t calculate_kernel_priority(const struct connection *c, bool oe_
 	 */
 	unsigned srcw = 128 - c->spd->local->client.maskbits;
 	prio = (prio << 8) | srcw;
-
-	/*
-	 * If opportunistic, give this a higher priority (here 0).
-	 */
 	unsigned dstw = 128 - c->spd->remote->client.maskbits;
-	if (oe_shunt) {
-		/*
-		 * But with OE this is an intance with the client
-		 * already forced to the highest priority.
-		 */
-		PEXPECT(c->logger, c->policy & POLICY_OPPORTUNISTIC);
-		PEXPECT(c->logger, c->kind == CK_INSTANCE);
-		PEXPECT(c->logger, c->spd->remote->client.maskbits == selector_info(c->spd->remote->client)->mask_cnt);
-		dstw = 0;
-	}
 	prio = (prio << 8) | dstw;
 
 	/*
@@ -323,7 +309,7 @@ static bool add_prospective_policy(enum expect_kernel_policy expect_kernel_polic
 
 	struct kernel_policy outbound_kernel_policy =
 		stateless_kernel_policy(&sr->local->client, &sr->remote->client,
-					calculate_kernel_priority(c, false),
+					calculate_kernel_priority(c),
 					prospective_shunt, where);
 
 	if (!raw_policy(KERNEL_POLICY_OP_ADD, DIRECTION_OUTBOUND,
@@ -348,7 +334,7 @@ static bool add_prospective_policy(enum expect_kernel_policy expect_kernel_polic
 	 */
 	struct kernel_policy inbound_kernel_policy =
 		stateless_kernel_policy(&sr->remote->client, &sr->local->client,
-					calculate_kernel_priority(c, false),
+					calculate_kernel_priority(c),
 					prospective_shunt, where);
 
 	return raw_policy(KERNEL_POLICY_OP_ADD, DIRECTION_INBOUND,
@@ -420,7 +406,7 @@ static bool strip_stateful_policy(enum expect_kernel_policy expect_kernel_policy
 	if (shunt_policy == SHUNT_NONE) {
 		struct kernel_policy outbound_policy =
 			stateless_kernel_policy(&sr->local->client, &sr->remote->client,
-						calculate_kernel_priority(c, false),
+						calculate_kernel_priority(c),
 						shunt_policy, where);
 		if (!raw_policy(KERNEL_POLICY_OP_REPLACE,
 				DIRECTION_OUTBOUND,
@@ -1584,7 +1570,7 @@ static bool sag_eroute(const struct state *st,
 
 	struct kernel_policy kernel_policy =
 		kernel_policy_from_state(st, sr, DIRECTION_OUTBOUND,
-					 calculate_kernel_priority(c, false),
+					 calculate_kernel_priority(c),
 					 HERE);
 	/* check for no transform at all */
 	passert(kernel_policy.nr_rules > 0);
@@ -1901,7 +1887,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	enum encap_mode mode = (c->policy & POLICY_TUNNEL ? ENCAP_MODE_TUNNEL :
 				ENCAP_MODE_TRANSPORT);
 
-	kernel_priority_t priority = calculate_kernel_priority(c, /*oe_shunt*/false);
+	kernel_priority_t priority = calculate_kernel_priority(c);
 
 	/*
 	 * SE installs both an outgoing and incoming policy.  Normal
@@ -2102,7 +2088,7 @@ bool assign_holdpass(const struct connection *c,
 
 			struct kernel_policy outbound_kernel_policy =
 				stateless_kernel_policy(&sr->local->client, &sr->remote->client,
-							calculate_kernel_priority(c, false),
+							calculate_kernel_priority(c),
 							negotiation_shunt, HERE);
 
 			if (eroute_outbound_connection(op, reason, sr,
@@ -2613,7 +2599,7 @@ static bool setup_half_kernel_policy(struct state *st, enum direction direction)
 
 		struct kernel_policy kernel_policy =
 			kernel_policy_from_state(st, spd, direction,
-						 calculate_kernel_priority(c, false),
+						 calculate_kernel_priority(c),
 						 HERE);
 		selector_buf sb, db;
 		dbg("kernel: %s() is installing %s SPD for %s->%s",
@@ -3202,7 +3188,7 @@ bool route_and_eroute(struct connection *c,
 				struct bare_shunt *bs = *bspp;
 				struct kernel_policy outbound_kernel_policy =
 					stateless_kernel_policy(&bs->our_client, &bs->peer_client,
-								calculate_kernel_priority(c, false),
+								calculate_kernel_priority(c),
 								bs->shunt_policy, HERE);
 
 				if (!raw_policy(KERNEL_POLICY_OP_REPLACE,
@@ -3421,7 +3407,7 @@ static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
 	 */
 	struct kernel_policy outbound_kernel_policy =
 		stateless_kernel_policy(&out->local->client, &out->remote->client,
-					calculate_kernel_priority(out->connection, false),
+					calculate_kernel_priority(out->connection),
 					outbound_shunt, HERE);
 
 	/*
