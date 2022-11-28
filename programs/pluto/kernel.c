@@ -1589,12 +1589,12 @@ static bool sag_eroute(const struct state *st,
 void migration_up(struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
+	/* do now so route_owner won't find us */
+	set_child_routing(c, RT_ROUTED_TUNNEL);
 	for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
 #ifdef IPSEC_CONNECTION_LIMIT
 		num_ipsec_eroute++;
 #endif
-		/* do now so route_owner won't find us */
-		set_spd_routing(sr, RT_ROUTED_TUNNEL);
 		do_command(c, sr, "up", &child->sa, child->sa.st_logger);
 		do_command(c, sr, "route", &child->sa, child->sa.st_logger);
 	}
@@ -1603,16 +1603,14 @@ void migration_up(struct child_sa *child)
 void migration_down(struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
+	/* do now so route_owner won't find us */
+	enum routing cr = c->child.routing;
+	set_child_routing(c, RT_UNROUTED);
 	for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
-		enum routing cr = sr->connection->child.routing;
-
 #ifdef IPSEC_CONNECTION_LIMIT
 		if (erouted(cr))
 			num_ipsec_eroute--;
 #endif
-		/* do now so route_owner won't find us */
-		set_spd_routing(sr, RT_UNROUTED);
-
 		/* only unroute if no other connection shares it */
 		if (routed(cr) && route_owner(c, sr, NULL, NULL, NULL) == NULL) {
 			do_command(c, sr, "down", &child->sa, child->sa.st_logger);
@@ -1629,10 +1627,9 @@ void migration_down(struct child_sa *child)
  */
 void unroute_connection(struct connection *c)
 {
-	for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
-		enum routing cr = sr->connection->child.routing;
-
-		if (erouted(cr)) {
+	enum routing cr = c->child.routing;
+	if (erouted(cr)) {
+		for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
 			/* cannot handle a live one */
 			passert(cr != RT_ROUTED_TUNNEL);
 			/*
@@ -1655,13 +1652,17 @@ void unroute_connection(struct connection *c)
 			num_ipsec_eroute--;
 #endif
 		}
+	}
 
-		/* do now so route_owner won't find us */
-		set_spd_routing(sr, RT_UNROUTED);
+	/* do now so route_owner won't find us */
+	set_child_routing(c, RT_UNROUTED);
 
-		/* only unroute if no other connection shares it */
-		if (routed(cr) && route_owner(c, sr, NULL, NULL, NULL) == NULL) {
-			do_command(c, sr, "unroute", NULL, c->logger);
+	if (routed(cr)) {
+		for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
+			/* only unroute if no other connection shares it */
+			if (route_owner(c, sr, NULL, NULL, NULL) == NULL) {
+				do_command(c, sr, "unroute", NULL, c->logger);
+			}
 		}
 	}
 }

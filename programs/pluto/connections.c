@@ -3205,14 +3205,14 @@ struct connection *spd_instantiate(struct connection *t,
 	pexpect(oriented(d)); /* can't instantiate an unoriented template? */
 	set_policy_prio(d); /* re-compute; may have changed */
 
-	/* should still be true */
+	/* should still be true; reset so it leaves a bread crumb */
 #if 0
 	pexpect(d->child.routing == RT_UNROUTED); /* CK_INSTANCE? */
 	pexpect(d->child.routing == RT_PROSPECTIVE_EROUTED);  /* CK_GROUPINSTANCE? */
 #endif
 	pexpect(d->spd->eroute_owner == SOS_NOBODY);
 	/* leave another breadcrumb */
-	set_spd_routing(d->spd, RT_UNROUTED);
+	set_child_routing(d, RT_UNROUTED);
 	set_spd_owner(d->spd, SOS_NOBODY);
 
 	d->newest_ike_sa = SOS_NOBODY;

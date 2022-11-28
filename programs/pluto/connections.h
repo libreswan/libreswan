@@ -540,6 +540,17 @@ struct connection {
 
 	struct child {
 		enum routing routing; /* level of routing in place */
+#define set_child_routing(C, RT)					\
+		{							\
+			connection_buf cb;				\
+			enum_buf ob, nb;				\
+			dbg("kernel: spd routing: "PRI_CONNECTION" %s->%s "PRI_WHERE, \
+			    pri_connection((C), &cb),			\
+			    str_enum(&routing_story, (C)->child.routing, &ob), \
+			    str_enum(&routing_story, RT, &nb),		\
+			    pri_where(HERE));				\
+			(C)->child.routing = RT;			\
+		}
 		/*
 		 * This is identical across kernel-states and shared
 		 * by all SPDs.
