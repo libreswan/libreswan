@@ -423,71 +423,76 @@ ip_port end_host_port(const struct host_end *this, const struct host_end *that)
 	return ip_hport(port);
 }
 
-void update_host_ends_from_this_host_addr(struct host_end *this, struct host_end *that)
+void update_hosts_from_end_host_addr(struct connection *c, struct connection_end *ce)
 {
+	struct host_end *end = &ce->host;
+	struct host_end *other_end = &c->end[!ce->config->index].host;
+
 	address_buf hab;
-	dbg("updating host ends from %s.host_addr %s",
-	    this->config->leftright, str_address(&this->addr, &hab));
-	if (!address_is_specified(this->addr)) {
-		dbg("  %s.host_addr's is unspecified (unset, ::, or 0.0.0.0); skipping",
-		    this->config->leftright);
+	ldbg(c->logger, "updating host ends from %s.host.addr %s",
+	     end->config->leftright, str_address(&end->addr, &hab));
+
+	if (!address_is_specified(end->addr)) {
+		ldbg(c->logger,
+		     "  %s.host_addr's is unspecified (unset, ::, or 0.0.0.0); skipping",
+		     end->config->leftright);
 		return;
 	}
 
-	const struct ip_info *afi = address_type(&this->addr);
+	const struct ip_info *afi = address_type(&end->addr);
 	passert(afi != NULL); /* since specified */
 
 	/*
 	 * Default ID to IP (but only if not NO_IP -- WildCard).
 	 */
-	if (this->id.kind == ID_NONE) {
+	if (end->id.kind == ID_NONE) {
 		struct id id = {
 			.kind = afi->id_ip_addr,
-			.ip_addr = this->addr,
+			.ip_addr = end->addr,
 		};
 		id_buf old, new;
 		dbg("  updated %s.id from %s to %s",
-		    this->config->leftright,
-		    str_id(&this->id, &old),
+		    end->config->leftright,
+		    str_id(&end->id, &old),
 		    str_id(&id, &new));
-		this->id = id;
+		end->id = id;
 	}
 
 	/*
-	 * If THAT has an IKEPORT (which means messages are ESP=0
-	 * prefixed), then THIS must send from either IKEPORT or the
+	 * If END has an IKEPORT (which means messages are ESP=0
+	 * prefixed), then END must send from either IKEPORT or the
 	 * NAT port (and also ESP=0 prefix messages).
 	 */
-	unsigned host_port = hport(end_host_port(this, that));
+	unsigned host_port = hport(end_host_port(end, other_end));
 	dbg("  updated %s.host_port from %u to %u",
-	    this->config->leftright,
-	    this->port, host_port);
-	this->port = host_port;
+	    end->config->leftright,
+	    end->port, host_port);
+	end->port = host_port;
 
 	/*
-	 * Propagate this.HOST_ADDR to that.NEXTHOP.
-	 * As in: THAT -> that.NEXTHOP -> THIS.
+	 * Propagate end.HOST_ADDR to other_end.NEXTHOP.
+	 * As in: other_end.addr -> other_end.NEXTHOP -> END.
 	 */
-	if (!address_is_specified(that->nexthop)) {
+	if (!address_is_specified(other_end->nexthop)) {
 		address_buf old, new;
 		dbg("  updated %s.host_nexthop from %s to %s",
-		    that->config->leftright,
-		    str_address(&that->nexthop, &old),
-		    str_address(&this->addr, &new));
-		that->nexthop = this->addr;
+		    other_end->config->leftright,
+		    str_address(&other_end->nexthop, &old),
+		    str_address(&end->addr, &new));
+		other_end->nexthop = end->addr;
 	}
 
 	/*
-	 * Propagate this.HOST_ADDR's address family to
-	 * that.HOST_ADDR.
+	 * Propagate end.HOST_ADDR's address family to
+	 * end.HOST_ADDR.
 	 */
-	if (!address_is_specified(that->addr)) {
+	if (!address_is_specified(other_end->addr)) {
 		address_buf old, new;
-		dbg("  updated %s.host_addr from %s to %s",
-		    that->config->leftright,
-		    str_address(&that->addr, &old),
-		    str_address(&afi->address.unspec, &new));
-		that->addr = afi->address.unspec;
+		ldbg(c->logger, "  updated %s.host_addr from %s to %s",
+		     other_end->config->leftright,
+		     str_address(&other_end->addr, &old),
+		     str_address(&afi->address.unspec, &new));
+		other_end->addr = afi->address.unspec;
 	}
 }
 
@@ -2710,8 +2715,8 @@ static bool extract_connection(const struct whack_message *wm,
 	if (c->local->host.config->xauth.server || c->remote->host.config->xauth.server)
 		c->policy |= POLICY_XAUTH;
 
-	update_host_ends_from_this_host_addr(&c->local->host, &c->remote->host);
-	update_host_ends_from_this_host_addr(&c->remote->host, &c->local->host);
+	update_hosts_from_end_host_addr(c, c->remote);
+	update_hosts_from_end_host_addr(c, c->local);
 
 
 	/*
@@ -3139,14 +3144,14 @@ struct connection *instantiate(struct connection *t,
 	if (peer_addr != NULL) {
 		d->remote->host.addr = *peer_addr;
 	}
-	update_host_ends_from_this_host_addr(&d->remote->host, &d->local->host);
 
 	/*
 	 * We cannot guess what our next_hop should be, but if it was
 	 * explicitly specified as 0.0.0.0, we set it to be peer.
 	 * (whack will not allow nexthop to be elided in RW case.)
 	 */
-	update_host_ends_from_this_host_addr(&d->local->host, &d->remote->host);
+	update_hosts_from_end_host_addr(d, d->local);
+	update_hosts_from_end_host_addr(d, d->remote);
 
 	d->child.reqid = (t->config->sa_reqid == 0 ? gen_reqid() : t->config->sa_reqid);
 	dbg("%s d->spd->reqid=%d because t->sa_reqid=%d (%s)",

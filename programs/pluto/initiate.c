@@ -1170,7 +1170,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	    str_address_sensitive(&new_addr, &new));
 	pexpect(!address_is_specified(c->remote->host.addr)); /* per above */
 	c->remote->host.addr = new_addr;
-	update_host_ends_from_this_host_addr(&c->remote->host, &c->local->host);
+	update_hosts_from_end_host_addr(c, c->remote);
 	/* just re-do both */
 	update_spd_ends_from_host_ends(c);
 
