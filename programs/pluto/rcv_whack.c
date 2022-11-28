@@ -267,7 +267,7 @@ static int whack_unroute_connection(struct connection *c,
 	passert(c != NULL);
 
 	for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
-		if (sr->routing >= RT_ROUTED_TUNNEL)
+		if (sr->connection->child.routing >= RT_ROUTED_TUNNEL)
 			fail++;
 	}
 	if (fail > 0) {

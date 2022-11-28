@@ -1013,7 +1013,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	passert(HAS_IPSEC_POLICY(c->policy));
 	passert(LHAS(LELEM(RT_UNROUTED) |
 		     LELEM(RT_ROUTED_PROSPECTIVE),
-		     c->spd->routing));
+		     c->child.routing));
 	/*
 	 * Save the selector in .client.
 	 */
@@ -1069,7 +1069,7 @@ struct connection *shunt_owner(const ip_selector *ours, const ip_selector *peers
 	while (next_connection_new2old(&cf)) {
 		struct connection *c = cf.c;
 		for (const struct spd_route *sr = c->spd; sr; sr = sr->spd_next) {
-			if (shunt_erouted(sr->routing) &&
+			if (shunt_erouted(sr->connection->child.routing) &&
 			    selector_range_eq_selector_range(*ours, sr->local->client) &&
 			    selector_range_eq_selector_range(*peers, sr->remote->client))
 				return c;

@@ -1467,7 +1467,7 @@ void delete_states_by_connection(struct connection **cp)
 			llog_pexpect(c->logger, HERE, "eroute owner "PRI_SO" should be 0",
 				     pri_so(sr->eroute_owner));
 		}
-		if (sr->routing == RT_ROUTED_TUNNEL) {
+		if (sr->connection->child.routing == RT_ROUTED_TUNNEL) {
 			llog_pexpect(c->logger, HERE, "routing should not be ROUTED_TUNNEL (what should it be?)");
 		}
 	}
@@ -1964,7 +1964,7 @@ void state_eroute_usage(const ip_selector *ours, const ip_selector *peers,
 		/* XXX spd-enum */
 		if (IS_IPSEC_SA_ESTABLISHED(st) &&
 		    c->spd->eroute_owner == st->st_serialno &&
-		    c->spd->routing == RT_ROUTED_TUNNEL &&
+		    c->child.routing == RT_ROUTED_TUNNEL &&
 		    selector_range_eq_selector_range(c->spd->local->client, *ours) &&
 		    selector_range_eq_selector_range(c->spd->remote->client, *peers)) {
 			if (st->st_outbound_count != count) {

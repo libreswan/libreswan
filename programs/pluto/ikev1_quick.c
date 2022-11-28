@@ -2064,7 +2064,7 @@ static struct connection *fc_try(const struct connection *c,
 			 * - given that, not switching is preferred
 			 */
 			policy_prio_t prio =
-				PRIO_WEIGHT * routed(sr->routing) +
+				PRIO_WEIGHT * routed(sr->connection->child.routing) +
 				WILD_WEIGHT * (MAX_WILDCARDS - wildcards) +
 				PATH_WEIGHT * (MAX_CA_PATH_LEN - pathlen) +
 				(c == d ? 1 : 0) +
@@ -2177,7 +2177,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 			 * - given that, the shortest CA pathlength is preferred
 			 */
 			policy_prio_t prio =
-				PRIO_WEIGHT * (d->policy_prio + routed(sr->routing)) +
+				PRIO_WEIGHT * (d->policy_prio + routed(sr->connection->child.routing)) +
 				WILD_WEIGHT * (MAX_WILDCARDS - wildcards) +
 				PATH_WEIGHT * (MAX_CA_PATH_LEN - pathlen);
 
@@ -2249,7 +2249,7 @@ struct connection *find_v1_client_connection(struct connection *const c,
 			    (sr->remote->client.ipproto == remote_protocol) &&
 			    (!sr->remote->client.hport ||
 			     sr->remote->client.hport == remote_port)) {
-				if (routed(sr->routing))
+				if (routed(sr->connection->child.routing))
 					return c;
 
 				unrouted = c;

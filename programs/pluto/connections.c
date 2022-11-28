@@ -1803,7 +1803,7 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 					     bool_str(spd_end->virt != NULL));
 				}
 				/* default values */
-				passert(spd->routing == RT_UNROUTED);
+				passert(spd->connection->child.routing == RT_UNROUTED);
 				passert(spd->eroute_owner == SOS_NOBODY);
 				/* leave a debug-log breadcrumb */
 				set_spd_routing(spd, RT_UNROUTED);
@@ -3207,8 +3207,8 @@ struct connection *spd_instantiate(struct connection *t,
 
 	/* should still be true */
 #if 0
-	pexpect(d->spd->routing == RT_UNROUTED); /* CK_INSTANCE? */
-	pexpect(d->spd->routing == RT_PROSPECTIVE_EROUTED);  /* CK_GROUPINSTANCE? */
+	pexpect(d->child.routing == RT_UNROUTED); /* CK_INSTANCE? */
+	pexpect(d->child.routing == RT_PROSPECTIVE_EROUTED);  /* CK_GROUPINSTANCE? */
 #endif
 	pexpect(d->spd->eroute_owner == SOS_NOBODY);
 	/* leave another breadcrumb */
@@ -3573,7 +3573,7 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 			 * IKEv2 sec-labeled connection should have
 			 * been routed by now?
 			 */
-			if (!routed(sr->routing) &&
+			if (!routed(sr->connection->child.routing) &&
 			    !c->instance_initiation_ok &&
 			    c->config->sec_label.len == 0) {
 				connection_buf cb;
@@ -3711,7 +3711,7 @@ struct connection *oppo_instantiate(struct connection *t,
 	address_buf lb, rb;
 	connection_buf cb;
 	dbg("oppo instantiating "PRI_CONNECTION" with routing %s between %s -> %s",
-	    pri_connection(t, &cb), enum_name(&routing_story, t->spd->routing),
+	    pri_connection(t, &cb), enum_name(&routing_story, t->child.routing),
 	    str_address(&local_address, &lb),
 	    str_address(&remote_address, &rb));
 
@@ -3817,7 +3817,7 @@ struct connection *oppo_instantiate(struct connection *t,
 	 * if so, this instance applies for initiation
 	 * even if it is created for responding.
 	 */
-	if (routed(t->spd->routing))
+	if (routed(t->child.routing))
 		d->instance_initiation_ok = true;
 
 	if (DBGP(DBG_BASE)) {
@@ -3825,7 +3825,7 @@ struct connection *oppo_instantiate(struct connection *t,
 		connection_buf inst;
 		DBG_log("oppo_instantiate() instantiated "PRI_CONNECTION" with routing %s: %s",
 			pri_connection(d, &inst),
-			enum_name(&routing_story, d->spd->routing),
+			enum_name(&routing_story, d->child.routing),
 			format_connection(topo, sizeof(topo), d, d->spd));
 	}
 	return d;
@@ -3921,7 +3921,7 @@ struct connection *find_outgoing_opportunistic_template(const ip_packet packet)
 			 * match!
 			 */
 			for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
-				if (!routed(sr->routing)) {
+				if (!routed(sr->connection->child.routing)) {
 					continue;
 				}
 
@@ -4029,7 +4029,7 @@ struct connection *route_owner(struct connection *c,
 
 	struct connection *best_routing_connection = c;
 	struct spd_route *best_routing_spd = NULL;
-	enum routing best_routing = cur_spd->routing;
+	enum routing best_routing = cur_spd->connection->child.routing;
 
 	struct connection *best_ero = c;
 	struct spd_route *best_esr = NULL;
@@ -4052,7 +4052,7 @@ struct connection *route_owner(struct connection *c,
 			if (!oriented(d))
 				continue;
 
-			if (d_spd->routing == RT_UNROUTED)
+			if (d_spd->connection->child.routing == RT_UNROUTED)
 				continue;
 
 			pexpect(selector_range_eq_selector_range(c_spd->remote->client, d_spd->remote->client));
@@ -4084,19 +4084,19 @@ struct connection *route_owner(struct connection *c,
 			     (c->sa_marks.out.val & c->sa_marks.out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask) )
 				continue;
 
-			if (d_spd->routing > best_routing) {
+			if (d_spd->connection->child.routing > best_routing) {
 				best_routing_connection = d;
 				best_routing_spd = d_spd;
-				best_routing = d_spd->routing;
+				best_routing = d_spd->connection->child.routing;
 			}
 
 			if (selector_range_eq_selector_range(c_spd->local->client, d_spd->local->client) &&
 			    c_spd->local->client.ipproto == d_spd->local->client.ipproto &&
 			    c_spd->local->client.hport == d_spd->local->client.hport &&
-			    d_spd->routing > best_erouting) {
+			    d_spd->connection->child.routing > best_erouting) {
 				best_ero = d;
 				best_esr = d_spd;
-				best_erouting = d_spd->routing;
+				best_erouting = d_spd->connection->child.routing;
 			}
 
 		}
@@ -4106,7 +4106,7 @@ struct connection *route_owner(struct connection *c,
 		connection_buf cib;
 		jam(buf, "route owner of \"%s\"%s %s: ",
 		    pri_connection(c, &cib),
-		    enum_name(&routing_story, cur_spd->routing));
+		    enum_name(&routing_story, cur_spd->connection->child.routing));
 
 		if (!routed(best_routing)) {
 			jam(buf, "NULL");
@@ -4121,7 +4121,7 @@ struct connection *route_owner(struct connection *c,
 
 		if (erop != NULL) {
 			jam(buf, "; eroute owner: ");
-			if (!erouted(best_ero->spd->routing)) {
+			if (!erouted(best_ero->child.routing)) {
 				jam(buf, "NULL");
 			} else if (best_ero == c) {
 				jam(buf, "self");
@@ -4129,7 +4129,7 @@ struct connection *route_owner(struct connection *c,
 				connection_buf cib;
 				jam(buf, ""PRI_CONNECTION" %s",
 				    pri_connection(best_ero, &cib),
-				    enum_name(&routing_story, best_ero->spd->routing));
+				    enum_name(&routing_story, best_ero->child.routing));
 			}
 		}
 	}
@@ -4215,7 +4215,7 @@ static void show_one_sr(struct show *s,
 	show_comment(s, PRI_CONNECTION": %s; %s; eroute owner: #%lu",
 		     c->name, instance,
 		     format_connection(topo, sizeof(topo), c, sr),
-		     enum_name(&routing_story, sr->routing),
+		     enum_name(&routing_story, sr->connection->child.routing),
 		     sr->eroute_owner);
 
 #define OPT_HOST(h, ipb)  (address_is_specified(h) ? str_address(&h, &ipb) : "unset")
@@ -4644,7 +4644,7 @@ void show_connections_status(struct show *s)
 	while (next_connection_new2old(&cq)) {
 		struct connection *c = cq.c;
 		count++;
-		if (c->spd->routing == RT_ROUTED_TUNNEL)
+		if (c->child.routing == RT_ROUTED_TUNNEL)
 			active++;
 	}
 

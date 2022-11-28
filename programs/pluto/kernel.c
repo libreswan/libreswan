@@ -1528,7 +1528,7 @@ bool trap_connection(struct connection *c)
 			 */
 			dbg("kernel: installing SE trap policy");
 			return install_sec_label_connection_policies(c, c->logger);
-		} else if (c->spd->routing >= RT_ROUTED_TUNNEL) {
+		} else if (c->child.routing >= RT_ROUTED_TUNNEL) {
 			/*
 			 * RT_ROUTED_TUNNEL is treated specially: we
 			 * don't override because we don't want to
@@ -1604,7 +1604,7 @@ void migration_down(struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
 	for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
-		enum routing cr = sr->routing;
+		enum routing cr = sr->connection->child.routing;
 
 #ifdef IPSEC_CONNECTION_LIMIT
 		if (erouted(cr))
@@ -1630,7 +1630,7 @@ void migration_down(struct child_sa *child)
 void unroute_connection(struct connection *c)
 {
 	for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
-		enum routing cr = sr->routing;
+		enum routing cr = sr->connection->child.routing;
 
 		if (erouted(cr)) {
 			/* cannot handle a live one */
@@ -1870,7 +1870,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	dbg("kernel: %s() "PRI_CO" "PRI_CO" "PRI_CONNECTION" routed %s sec_label="PRI_SHUNK,
 	    __func__, pri_co(c->serialno), pri_co(c->serial_from),
 	    pri_connection(c, &cb),
-	    enum_name(&routing_story, c->spd->routing),
+	    enum_name(&routing_story, c->child.routing),
 	    pri_shunk(c->config->sec_label));
 
 	if (!pexpect(c->config->ike_version == IKEv2) ||
@@ -1879,7 +1879,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 		return false;
 	}
 
-	if (c->spd->routing != RT_UNROUTED) {
+	if (c->child.routing != RT_UNROUTED) {
 		dbg("kernel: %s() connection already routed", __func__);
 		return true;
 	}
@@ -2014,7 +2014,7 @@ bool assign_holdpass(const struct connection *c,
 	 * Beware: this %hold might be already handled, but still squeak
 	 * through because of a race.
 	 */
-	enum routing ro = sr->routing;	/* routing, old */
+	enum routing ro = sr->connection->child.routing;	/* routing, old */
 	enum routing rn = ro;			/* routing, new */
 
 	passert(LHAS(LELEM(CK_PERMANENT) | LELEM(CK_INSTANCE), c->kind));
@@ -3084,7 +3084,7 @@ bool route_and_eroute(struct connection *c,
 		route_installed = do_command(c, sr, "route", st, logger);
 		if (!route_installed)
 			dbg("kernel: route command returned an error");
-	} else if (routed(sr->routing)) {
+	} else if (routed(sr->connection->child.routing)) {
 		route_installed = true; /* nothing to be done */
 	} else if (ro->interface->ip_dev == c->interface->ip_dev &&
 		   address_eq_address(ro->local->host.nexthop, c->local->host.nexthop)) {
@@ -3126,9 +3126,9 @@ bool route_and_eroute(struct connection *c,
 		/* record unrouting */
 		if (route_installed) {
 			do {
-				dbg("kernel: installed route: ro name=%s, rosr->routing was %s",
-				    ro->name, enum_name(&routing_story, rosr->routing));
-				pexpect(!erouted(rosr->routing)); /* warn for now - requires fixing */
+				dbg("kernel: installed route: ro name=%s, rosr->connection->child.routing was %s",
+				    ro->name, enum_name(&routing_story, rosr->connection->child.routing));
+				pexpect(!erouted(rosr->connection->child.routing)); /* warn for now - requires fixing */
 				set_spd_routing(rosr, RT_UNROUTED);
 				/* no need to keep old value */
 				ro = route_owner(c, sr, &rosr, NULL, NULL);
@@ -3211,7 +3211,7 @@ bool route_and_eroute(struct connection *c,
 				if (esr->eroute_owner == SOS_NOBODY) {
 					/* note: normal or eclipse case */
 					enum shunt_policy shunt_policy =
-						(esr->routing == RT_ROUTED_PROSPECTIVE ? c->config->prospective_shunt :
+						(esr->connection->child.routing == RT_ROUTED_PROSPECTIVE ? c->config->prospective_shunt :
 						 c->config->failure_shunt);
 					if (!strip_stateful_policy(EXPECT_KERNEL_POLICY_OK,
 								   ero, esr, shunt_policy,
@@ -3337,7 +3337,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 	} else {
 		for (; sr != NULL; sr = sr->spd_next) {
 			dbg("kernel: sr for #%lu: %s", st->st_serialno,
-			    enum_name(&routing_story, sr->routing));
+			    enum_name(&routing_story, sr->connection->child.routing));
 
 			/*
 			 * if the eroute owner is not us, then make it
@@ -3345,10 +3345,10 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 			 * pluto-rekey-01, pluto-unit-02/oppo-twice
 			 */
 			pexpect(sr->eroute_owner == SOS_NOBODY ||
-				sr->routing >= RT_ROUTED_TUNNEL);
+				sr->connection->child.routing >= RT_ROUTED_TUNNEL);
 
 			if (sr->eroute_owner != st->st_serialno &&
-			    sr->routing != RT_UNROUTED_KEYED) {
+			    sr->connection->child.routing != RT_UNROUTED_KEYED) {
 				if (!route_and_eroute(st->st_connection, sr, st, st->st_logger)) {
 					delete_ipsec_sa(st);
 					/*
@@ -3367,7 +3367,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 
 		if (srcisco != NULL) {
 			set_spd_owner(st->st_connection->spd, srcisco->eroute_owner);
-			set_spd_routing(st->st_connection->spd, srcisco->routing);
+			set_spd_routing(st->st_connection->spd, srcisco->connection->child.routing);
 		}
 	}
 
@@ -3481,10 +3481,10 @@ static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy expect
 			continue;
 		}
 
-		if (sr->routing != RT_ROUTED_TUNNEL) {
+		if (sr->connection->child.routing != RT_ROUTED_TUNNEL) {
 			enum_buf rb;
 			dbg("kernel: %s() skipping, routing %s isn't TUNNEL",
-			    __func__, str_enum_short(&routing_story, sr->routing, &rb));
+			    __func__, str_enum_short(&routing_story, sr->connection->child.routing, &rb));
 			continue;
 		}
 
@@ -3742,8 +3742,8 @@ bool get_ipsec_traffic(struct state *st,
 bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 		     enum shunt_policy failure_shunt, struct logger *logger)
 {
-	enum routing ro = sr->routing;        /* routing, old */
-	enum routing rn = sr->routing;        /* routing, new */
+	enum routing ro = sr->connection->child.routing;        /* routing, old */
+	enum routing rn = sr->connection->child.routing;        /* routing, new */
 	enum shunt_policy negotiation_shunt = c->config->negotiation_shunt;
 
 	if (negotiation_shunt != failure_shunt ) {
