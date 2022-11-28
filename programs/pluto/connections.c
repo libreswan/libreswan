@@ -4029,11 +4029,11 @@ struct connection *route_owner(struct connection *c,
 
 	struct connection *best_routing_connection = c;
 	struct spd_route *best_routing_spd = NULL;
-	enum routing_t best_routing = cur_spd->routing;
+	enum routing best_routing = cur_spd->routing;
 
 	struct connection *best_ero = c;
 	struct spd_route *best_esr = NULL;
-	enum routing_t best_erouting = best_routing;
+	enum routing best_erouting = best_routing;
 
 	for (const struct spd_route *c_spd = c->spd;
 	     c_spd != NULL; c_spd = c_spd->spd_next) {

@@ -733,7 +733,7 @@ enum connection_kind {
  */
 
 /* note that this is assumed to be ordered! */
-enum routing_t {
+enum routing {
 	RT_UNROUTED,            /* unrouted */
 	RT_UNROUTED_HOLD,       /* unrouted, but HOLD shunt installed */
 	RT_ROUTED_PROSPECTIVE,  /* routed, and prospective shunt installed */

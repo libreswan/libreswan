@@ -458,7 +458,7 @@ struct spd_route {
 		(SPD)->eroute_owner = SO;				\
 	}
 
-	enum routing_t routing; /* level of routing in place */
+	enum routing routing; /* level of routing in place */
 #define set_spd_routing(SPD, RT)					\
 	{								\
 		connection_buf cb;					\

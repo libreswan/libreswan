@@ -1604,7 +1604,7 @@ void migration_down(struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
 	for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
-		enum routing_t cr = sr->routing;
+		enum routing cr = sr->routing;
 
 #ifdef IPSEC_CONNECTION_LIMIT
 		if (erouted(cr))
@@ -1630,7 +1630,7 @@ void migration_down(struct child_sa *child)
 void unroute_connection(struct connection *c)
 {
 	for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
-		enum routing_t cr = sr->routing;
+		enum routing cr = sr->routing;
 
 		if (erouted(cr)) {
 			/* cannot handle a live one */
@@ -2014,8 +2014,8 @@ bool assign_holdpass(const struct connection *c,
 	 * Beware: this %hold might be already handled, but still squeak
 	 * through because of a race.
 	 */
-	enum routing_t ro = sr->routing;	/* routing, old */
-	enum routing_t rn = ro;			/* routing, new */
+	enum routing ro = sr->routing;	/* routing, old */
+	enum routing rn = ro;			/* routing, new */
 
 	passert(LHAS(LELEM(CK_PERMANENT) | LELEM(CK_INSTANCE), c->kind));
 	/* figure out what routing should become */
@@ -3500,7 +3500,7 @@ static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy expect
 			 * right back to RT_ROUTED_PROSPECTIVE as if
 			 * no failure happened.
 			 */
-			enum routing_t new_routing =
+			enum routing new_routing =
 				(sr->connection->config->failure_shunt == SHUNT_NONE ? RT_ROUTED_PROSPECTIVE :
 				 RT_ROUTED_FAILURE);
 			set_spd_routing(sr, new_routing);
@@ -3557,7 +3557,7 @@ static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy expect
 			 * but the address isn't used).  The actual
 			 * connection might be TUNNEL.
 			 */
-			enum routing_t new_routing = (sr->connection->config->failure_shunt == SHUNT_NONE ?
+			enum routing new_routing = (sr->connection->config->failure_shunt == SHUNT_NONE ?
 						      RT_ROUTED_PROSPECTIVE :
 						      RT_ROUTED_FAILURE);
 			enum shunt_policy shunt_policy = (sr->connection->config->failure_shunt == SHUNT_NONE ?
@@ -3742,8 +3742,8 @@ bool get_ipsec_traffic(struct state *st,
 bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 		     enum shunt_policy failure_shunt, struct logger *logger)
 {
-	enum routing_t ro = sr->routing,        /* routing, old */
-			rn = ro;                 /* routing, new */
+	enum routing ro = sr->routing;        /* routing, old */
+	enum routing rn = sr->routing;        /* routing, new */
 	enum shunt_policy negotiation_shunt = c->config->negotiation_shunt;
 
 	if (negotiation_shunt != failure_shunt ) {
