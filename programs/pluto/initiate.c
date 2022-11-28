@@ -607,7 +607,7 @@ static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const c
 		struct kernel_policy outbound_policy =
 			stateless_kernel_policy(&src, &dst,
 						/* we don't know connection for priority yet */
-						max_kernel_priority,
+						highest_kernel_priority,
 						b->failure_shunt, HERE);
 
 		if (!raw_policy(KERNEL_POLICY_OP_REPLACE,

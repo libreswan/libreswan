@@ -90,7 +90,7 @@
  * Lowest wins.
  */
 
-kernel_priority_t max_kernel_priority;
+kernel_priority_t highest_kernel_priority = { .value = 0, };
 
 kernel_priority_t calculate_kernel_priority(const struct connection *c)
 {
@@ -104,7 +104,7 @@ kernel_priority_t calculate_kernel_priority(const struct connection *c)
 	if (LIN(POLICY_GROUP, c->policy)) {
 		llog_pexpect(c->logger, HERE,
 			     "priority calculation of connection skipped - group template does not install SPDs");
-		return max_kernel_priority;
+		return highest_kernel_priority;
 	}
 
 	/* XXX: assume unsigned >= 32-bits */
@@ -3847,7 +3847,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 			struct kernel_policy outbound_kernel_policy =
 				stateless_kernel_policy(&src, &dst,
 							/* we don't know connection for priority yet */
-							max_kernel_priority,
+							highest_kernel_priority,
 							failure_shunt, HERE);
 
 			bool ok = raw_policy(KERNEL_POLICY_OP_REPLACE,

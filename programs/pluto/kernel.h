@@ -537,7 +537,7 @@ extern bool kernel_ops_detect_offload(const struct raw_iface *ifp, struct logger
 extern void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address *dst,
 		      bool hard, uint64_t bytes, uint64_t packets, uint64_t add_time);
 
-extern kernel_priority_t max_kernel_priority;
+extern kernel_priority_t highest_kernel_priority;
 kernel_priority_t calculate_kernel_priority(const struct connection *c);
 
 bool prospective_shunt_ok(enum shunt_policy shunt);
