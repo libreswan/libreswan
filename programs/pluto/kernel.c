@@ -194,6 +194,54 @@ static global_timer_cb kernel_scan_shunts;
 static bool invoke_command(const char *verb, const char *verb_suffix,
 			   const char *cmd, struct logger *logger);
 
+bool prospective_shunt_ok(enum shunt_policy shunt)
+{
+	switch (shunt) {
+	case SHUNT_TRAP:
+	case SHUNT_PASS:
+	case SHUNT_DROP:
+	case SHUNT_REJECT:
+		return true;
+	case SHUNT_UNSET:
+	case SHUNT_NONE: /* XXX: no default */
+	case SHUNT_HOLD:
+		break;
+	}
+	return false;
+}
+
+bool negotiation_shunt_ok(enum shunt_policy shunt)
+{
+	switch (shunt) {
+	case SHUNT_PASS:
+	case SHUNT_HOLD:
+		return true;
+	case SHUNT_UNSET:
+	case SHUNT_TRAP: /* XXX: no default */
+	case SHUNT_DROP:
+	case SHUNT_REJECT:
+	case SHUNT_NONE:
+		break;
+	}
+	return false;
+}
+
+bool failure_shunt_ok(enum shunt_policy shunt)
+{
+	switch (shunt) {
+	case SHUNT_NONE:
+	case SHUNT_PASS:
+	case SHUNT_DROP:
+	case SHUNT_REJECT:
+		return true;
+	case SHUNT_UNSET:
+	case SHUNT_TRAP: /* XXX: no default */
+	case SHUNT_HOLD:
+		break;
+	}
+	return false;
+}
+
 /*
  * Add/replace/delete an outbound bare kernel policy, aka shunt.
  *

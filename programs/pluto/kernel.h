@@ -535,4 +535,8 @@ extern void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address *dst,
 extern kernel_priority_t max_kernel_priority;
 kernel_priority_t calculate_kernel_priority(const struct connection *c, bool oe_shunt);
 
+bool prospective_shunt_ok(enum shunt_policy shunt);
+bool negotiation_shunt_ok(enum shunt_policy shunt);
+bool failure_shunt_ok(enum shunt_policy shunt);
+
 #endif

@@ -1940,6 +1940,27 @@ static enum connection_kind extract_connection_kind(const struct whack_message *
 	return CK_PERMANENT;
 }
 
+static bool extract_shunt(const char *shunt_name,
+			  enum shunt_policy *out,
+			  enum shunt_policy shunt,
+			  bool (*shunt_ok)(enum shunt_policy),
+			  enum shunt_policy unset_shunt,
+			  struct logger *logger)
+{
+	if (shunt == SHUNT_UNSET) {
+		shunt = unset_shunt;
+	}
+	if (!shunt_ok(shunt)) {
+		enum_buf sb;
+		llog(RC_FATAL, logger,
+		     ADD_FAILED_PREFIX"%s shunt %s invalid",
+		     shunt_name, str_enum_short(&shunt_policy_names, shunt, &sb));
+		return false;
+	}
+	*out = shunt;
+	return true;
+}
+
 static bool extract_connection(const struct whack_message *wm,
 			       struct connection *c)
 {
@@ -2164,47 +2185,18 @@ static bool extract_connection(const struct whack_message *wm,
 	config->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
 	c->policy = wm->policy;
 
-	switch (wm->prospective_shunt) {
-	case SHUNT_UNSET:
-		config->prospective_shunt = SHUNT_TRAP;
-		break;
-	case SHUNT_TRAP:
-	case SHUNT_PASS:
-	case SHUNT_DROP:
-	case SHUNT_REJECT:
-		config->prospective_shunt = wm->prospective_shunt;
-		break;
-	case SHUNT_NONE: /* XXX: no default */
-	case SHUNT_HOLD:
-	{
-		enum_buf sb;
-		llog(RC_FATAL, c->logger,
-		     ADD_FAILED_PREFIX"prospective shunt %s invalid",
-		     str_enum_short(&shunt_policy_names, wm->prospective_shunt, &sb));
+	if (!extract_shunt("prospective", &config->prospective_shunt,
+			   wm->prospective_shunt, prospective_shunt_ok,
+			   /*unset*/SHUNT_TRAP, c->logger)) {
 		return false;
-	}
 	}
 
-	switch (wm->negotiation_shunt) {
-	case SHUNT_UNSET:
-		config->negotiation_shunt = SHUNT_HOLD;
-		break;
-	case SHUNT_PASS:
-	case SHUNT_HOLD:
-		config->negotiation_shunt = wm->negotiation_shunt;
-		break;
-	case SHUNT_TRAP: /* XXX: no default */
-	case SHUNT_DROP:
-	case SHUNT_REJECT:
-	case SHUNT_NONE:
-	{
-		enum_buf sb;
-		llog(RC_FATAL, c->logger,
-		     ADD_FAILED_PREFIX"negotiation shunt %s invalid",
-		     str_enum_short(&shunt_policy_names, wm->negotiation_shunt, &sb));
+	if (!extract_shunt("negotiation", &config->negotiation_shunt,
+			   wm->negotiation_shunt, negotiation_shunt_ok,
+			   /*unset*/SHUNT_HOLD, c->logger)) {
 		return false;
 	}
-	}
+
 	if (libreswan_fipsmode() && config->negotiation_shunt == SHUNT_PASS) {
 		enum_buf sb;
 		llog(RC_LOG_SERIOUS, c->logger,
@@ -2213,26 +2205,12 @@ static bool extract_connection(const struct whack_message *wm,
 		config->negotiation_shunt = SHUNT_HOLD;
 	}
 
-	switch (wm->failure_shunt) {
-	case SHUNT_UNSET:
-		config->failure_shunt = SHUNT_NONE;
-		break;
-	case SHUNT_NONE:
-	case SHUNT_PASS:
-	case SHUNT_DROP:
-	case SHUNT_REJECT:
-		config->failure_shunt = wm->failure_shunt;
-		break;
-	case SHUNT_TRAP: /* XXX: no default */
-	case SHUNT_HOLD:
-	{
-		enum_buf sb;
-		llog(RC_FATAL, c->logger,
-		     ADD_FAILED_PREFIX"failure shunt %s invalid",
-		     str_enum_short(&shunt_policy_names, wm->failure_shunt, &sb));
+	if (!extract_shunt("failure", &config->failure_shunt,
+			   wm->failure_shunt, failure_shunt_ok,
+			   /*unset*/SHUNT_NONE, c->logger)) {
 		return false;
 	}
-	}
+
 	if (libreswan_fipsmode() && config->failure_shunt != SHUNT_NONE) {
 		enum_buf eb;
 		llog(RC_LOG_SERIOUS, c->logger,
