@@ -433,9 +433,9 @@ void update_hosts_from_end_host_addr(struct connection *c, struct connection_end
 	     end->config->leftright, str_address(&end->addr, &hab));
 
 	if (!address_is_specified(end->addr)) {
-		ldbg(c->logger,
-		     "  %s.host_addr's is unspecified (unset, ::, or 0.0.0.0); skipping",
-		     end->config->leftright);
+		llog_pexpect(c->logger, HERE,
+			     "  %s.host_addr's is unspecified (unset, ::, or 0.0.0.0); skipping",
+			     end->config->leftright);
 		return;
 	}
 
@@ -1124,9 +1124,7 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 
 	/* the rest is simple copying of corresponding fields */
 	host_config->type = src->host_type;
-	host->addr = src->host_addr;
 	host_config->addr_name = clone_str(src->host_addr_name, "host ip");
-	host->nexthop = src->host_nexthop;
 	host_config->xauth.server = src->xauth_server;
 	host_config->xauth.client = src->xauth_client;
 	host_config->xauth.username = clone_str(src->xauth_username, "xauth username");
@@ -1267,29 +1265,6 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 			    "%sikeport=%u must be between 1..65535, ignored",
 			    leftright, src->host_ikeport);
 		host_config->ikeport = 0;
-	}
-
-	/*
-	 * see if we can resolve the DNS name right now
-	 * XXX this is WRONG, we should do this asynchronously, as part of
-	 * the normal loading process
-	 */
-	switch (host_config->type) {
-	case KH_IPHOSTNAME:
-	{
-		err_t er = ttoaddress_dns(shunk1(host_config->addr_name),
-					  address_type(&host->addr),
-					  &host->addr);
-		if (er != NULL) {
-			llog(RC_COMMENT, logger,
-			     "failed to convert '%s' at load time: %s",
-			     host_config->addr_name, er);
-		}
-		break;
-	}
-
-	default:
-		break;
 	}
 
 	/*
@@ -2694,13 +2669,6 @@ static bool extract_connection(const struct whack_message *wm,
 			llog_diag(RC_FATAL, c->logger, &d, ADD_FAILED_PREFIX);
 			return false;
 		}
-		d = extract_child_end(wm, whack_ends[this],
-				      &config->end[this].child,
-				      c->logger);
-		if (d != NULL) {
-			llog_diag(RC_FATAL, c->logger, &d, ADD_FAILED_PREFIX);
-			return false;
-		}
 	}
 
 	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
@@ -2712,16 +2680,48 @@ static bool extract_connection(const struct whack_message *wm,
 		}
 	}
 
-	if (c->local->host.config->xauth.server || c->remote->host.config->xauth.server)
-		c->policy |= POLICY_XAUTH;
+	/*
+	 * Determine the host topology.
+	 *
+	 * Needs two passes; first extracts tentative host/nexthop.
+	 * Second propogates that to other dependent fields.
+	 *
+	 * XXX: the host lookup is blocking; should instead do it
+	 * asynchronously using unbound.
+	 */
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		const struct whack_end *we = whack_ends[end];
+		struct host_end *host = &c->end[end].host;
+		host->addr = host_afi->address.unspec;
+		if (address_is_specified(we->host_addr)) {
+			host->addr = we->host_addr;
+		} else if (we->host_type == KH_IPHOSTNAME) {
+			ip_address host_addr;
+			err_t er = ttoaddress_dns(shunk1(we->host_addr_name),
+						  host_afi, &host_addr);
+			if (er != NULL) {
+				llog(RC_COMMENT, c->logger,
+				     "failed to resolve '%s=%s' at load time: %s",
+				     we->leftright, we->host_addr_name, er);
+			} else {
+				host->addr = host_addr;
+			}
+		}
+		host->nexthop = we->host_nexthop;
+	}
 
-	update_hosts_from_end_host_addr(c, c->remote);
-	update_hosts_from_end_host_addr(c, c->local);
-
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		if (address_is_specified(c->end[end].host.addr)) {
+			update_hosts_from_end_host_addr(c, &c->end[end]);
+		}
+	}
 
 	/*
 	 * Cross-check the auth= vs authby= results.
 	 */
+
+	if (c->local->host.config->xauth.server || c->remote->host.config->xauth.server)
+		c->policy |= POLICY_XAUTH;
 
 	if (NEVER_NEGOTIATE(c->policy)) {
 		if (!PEXPECT(c->logger,
@@ -2788,6 +2788,16 @@ static bool extract_connection(const struct whack_message *wm,
 	 * Check that the IP address family of the children is
 	 * plausable.
 	 */
+
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		d = extract_child_end(wm, whack_ends[end],
+				      &config->end[end].child,
+				      c->logger);
+		if (d != NULL) {
+			llog_diag(RC_FATAL, c->logger, &d, ADD_FAILED_PREFIX);
+			return false;
+		}
+	}
 
 	bool using_ip[END_ROOF][IP_INDEX_ROOF] = {0};
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
