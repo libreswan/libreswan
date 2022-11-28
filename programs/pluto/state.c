@@ -408,7 +408,7 @@ struct child_sa *pexpect_child_sa_where(struct state *st, where_t where)
  * Get a state object.
  *
  * Caller must schedule an event for this object so that it doesn't
- * leak.  Caller must add_db_state().
+ * leak.  Caller must add_state_to_db().
  */
 
 static struct state *new_state(struct connection *c,
@@ -442,7 +442,7 @@ static struct state *new_state(struct connection *c,
 
 	/* needed by jam_state_connection_serialno() */
 	st->st_connection = c;
-	init_db_state(st); /* hash called below */
+	state_db_init_state(st); /* hash called below */
 
 	st->st_state = &state_undefined;
 	st->st_inception = realnow();
@@ -458,7 +458,7 @@ static struct state *new_state(struct connection *c,
 
 	dbg("creating state object #%lu at %p", st->st_serialno, (void *) st);
 
-	add_db_state(st);
+	state_db_add(st);
 	pstat_sa_started(st, sa_type);
 
 	return st;
@@ -1113,7 +1113,7 @@ void delete_state_tail(struct state *st)
 	 * This, effectively,  deletes any ISAKMP SA that this state
 	 * represents - lookups for this state no longer work.
 	 */
-	del_db_state(st, true/*valid*/);
+	state_db_del(st, true/*valid*/);
 
 	/*
 	 * Break the STATE->CONNECTION link.  If CONNECTION is an
@@ -3106,7 +3106,7 @@ void switch_md_st(struct msg_digest *md, struct state *st, where_t where)
 
 void check_state(struct state *st, where_t where)
 {
-	check_db_state(st, st->st_logger, where);
+	state_db_check_state(st, st->st_logger, where);
 	check_connection(st->st_connection, where);
 }
 

@@ -117,9 +117,9 @@ void exit_epilogue(void)
 	/*
 	 * Before ripping everything down; check internal state.
 	 */
-	check_state_db(logger);
-	check_connection_db(logger);
-	check_spd_route_db(logger);
+	state_db_check(logger);
+	connection_db_check(logger);
+	spd_route_db_check(logger);
 
 	/*
 	 * This should wipe pretty much everything: states, revivals,

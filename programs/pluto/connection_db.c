@@ -208,7 +208,7 @@ static void finish_connection(struct connection *c, const char *name,
 	c->logger = alloc_logger(c, &logger_connection_vec,
 				 debugging, whackfd, where);
 
-	init_db_connection(c);
+	connection_db_init_connection(c);
 
 	/*
 	 * Update counter, set serialno and add to serialno list.
@@ -296,7 +296,7 @@ struct spd_route *append_spd_route(struct connection *c, struct spd_route ***spd
 		spd->end[end].child = &c->end[end].child;	/*clone must update*/
 	}
 	/* db; will be updated */
-	init_db_spd_route(spd);
+	spd_route_db_init_spd_route(spd);
 	return spd;
 }
 
@@ -323,8 +323,8 @@ struct spd_route *clone_spd_route(struct connection *c, where_t where)
 	}
 
 	zero_thing(spd->hash_table_entries); /* keep init_list_entry() happy */
-	init_db_spd_route(spd);
-	add_db_spd_route(spd);
+	spd_route_db_init_spd_route(spd);
+	spd_route_db_add(spd);
 
 	return spd;
 }

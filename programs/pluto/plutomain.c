@@ -1611,10 +1611,10 @@ int main(int argc, char **argv)
 #endif
 	init_ikev2();
 	init_states();
-	init_state_db(logger);
-	init_connection_db(logger);
-	init_spd_route_db(logger);
-	init_host_pair_db(logger);
+	state_db_init(logger);
+	connection_db_init(logger);
+	spd_route_db_init(logger);
+	host_pair_db_init(logger);
 
 	pluto_init_nss(oco->nssdir, logger);
 	if (libreswan_fipsmode()) {

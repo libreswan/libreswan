@@ -105,9 +105,9 @@ static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 
 static void hash_connection(struct connection *c)
 {
-	add_db_connection(c);
+	connection_db_add(c);
 	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
-		add_db_spd_route(spd);
+		spd_route_db_add(spd);
 	}
 }
 
@@ -150,7 +150,7 @@ static void discard_spd_end(struct spd_end *e)
 
 static void discard_spd(struct spd_route **spd, bool valid)
 {
-	del_db_spd_route(*spd, valid);
+	spd_route_db_del(*spd, valid);
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		discard_spd_end(&(*spd)->end[end]);
 	}
@@ -217,7 +217,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 
 	flush_revival(c);
 
-	del_db_connection(c, connection_valid);
+	connection_db_del(c, connection_valid);
 
 	for (struct spd_route *spd = c->spd, *next = NULL; spd != NULL; spd = next) {
 		next = spd->spd_next; /*step-off*/
@@ -3199,7 +3199,7 @@ static void clone_connection_spd(struct connection *d, struct connection *t)
 		*dst = new;
 		dst = &new->spd_next;
 		/* ... before first use */
-		init_db_spd_route(new);
+		spd_route_db_init_spd_route(new);
 	}
 }
 
@@ -4772,9 +4772,9 @@ bool same_peer_ids(const struct connection *c, const struct connection *d,
 
 void check_connection(struct connection *c, where_t where)
 {
-	check_db_connection(c, c->logger, where);
+	connection_db_check_connection(c, c->logger, where);
 	for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
-		check_db_spd_route(sr, c->logger, where);
+		spd_route_db_check_spd_route(sr, c->logger, where);
 	}
 }
 

@@ -107,21 +107,21 @@ void check_hash_table_entry(struct hash_table *table, void *data,
 		TABLE, ##__VA_ARGS__,					\
 	};								\
 									\
-	void init_##STRUCT##_db(struct logger *logger)			\
+	void STRUCT##_db_init(struct logger *logger)			\
 	{								\
-		FOR_EACH_ELEMENT(h, STRUCT##_db_hash_tables) {	\
+		FOR_EACH_ELEMENT(h, STRUCT##_db_hash_tables) {		\
 			init_hash_table(*h, logger);			\
 		}							\
 	}								\
 									\
-	void check_##STRUCT##_db(struct logger *logger)			\
+	void STRUCT##_db_check(struct logger *logger)			\
 	{								\
-		FOR_EACH_ELEMENT(h, STRUCT##_db_hash_tables) {	\
+		FOR_EACH_ELEMENT(h, STRUCT##_db_hash_tables) {		\
 			check_hash_table(*h, logger);			\
 		}							\
 	}								\
 									\
-	void init_db_##STRUCT(struct STRUCT *s)				\
+	void STRUCT##_db_init_##STRUCT(struct STRUCT *s)		\
 	{								\
 		init_list_entry(&STRUCT##_db_list_info, s,		\
 				&s->hash_table_entries.list);		\
@@ -132,14 +132,14 @@ void check_hash_table_entry(struct hash_table *table, void *data,
 		}							\
 	}								\
 									\
-	void add_db_##STRUCT(struct STRUCT *s)				\
+	void STRUCT##_db_add(struct STRUCT *s)				\
 	{								\
 		FOR_EACH_ELEMENT(H, STRUCT##_db_hash_tables) {		\
 			add_hash_table_entry(*H, s);			\
 		}							\
 	}								\
 									\
-	void del_db_##STRUCT(struct STRUCT *s, bool valid)		\
+	void STRUCT##_db_del(struct STRUCT *s, bool valid)		\
 	{								\
 		remove_list_entry(&s->hash_table_entries.list);		\
 		if (valid) {						\
@@ -149,9 +149,9 @@ void check_hash_table_entry(struct hash_table *table, void *data,
 		}							\
 	}								\
 									\
-	void check_db_##STRUCT(struct STRUCT *s,			\
-			       struct logger *logger,			\
-			       where_t where)				\
+	void STRUCT##_db_check_##STRUCT(struct STRUCT *s,		\
+					  struct logger *logger,	\
+					  where_t where)		\
 	{								\
 		FOR_EACH_ELEMENT(h, STRUCT##_db_hash_tables) {		\
 			check_hash_table_entry(*h, s, logger, where);	\

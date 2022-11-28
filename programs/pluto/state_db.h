@@ -23,15 +23,15 @@ struct state;
 struct connection;
 struct list_entry;
 
-void init_state_db(struct logger *logger);
-void check_state_db(struct logger *logger);
+void state_db_init(struct logger *logger);
+void state_db_check(struct logger *logger);
 
-void init_db_state(struct state *st);
-void check_db_state(struct state *st, struct logger *logger, where_t where);
+void state_db_init_state(struct state *st);
+void state_db_check_state(struct state *st, struct logger *logger, where_t where);
 
-void add_db_state(struct state *st);
+void state_db_add(struct state *st);
+void state_db_del(struct state *st, bool valid);
 void rehash_state_cookies_in_db(struct state *st);
-void del_db_state(struct state *st, bool valid);
 
 /*
  * Lookup and generic search functions.
