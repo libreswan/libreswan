@@ -103,9 +103,8 @@ static void clone_connection_spd(struct connection *d, struct connection *t);
 #define MINIMUM_IPSEC_SA_RANDOM_MARK 65536
 static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 
-static void hash_connection(struct connection *c)
+static void spd_route_db_add_connection(struct connection *c)
 {
-	connection_db_add(c);
 	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
 		spd_route_db_add(spd);
 	}
@@ -2901,7 +2900,8 @@ static bool extract_connection(const struct whack_message *wm,
 	 * switch ends, triggering an spd rehash, insert things into
 	 * the database first.
 	 */
-	hash_connection(c);
+	connection_db_add(c);
+	spd_route_db_add_connection(c);
 
 	/* this triggers a rehash of the SPDs */
 	orient(c, c->logger);
@@ -3057,7 +3057,8 @@ struct connection *add_group_instance(struct connection *group,
 	group->hp_next = t;
 
 	/* all done */
-	hash_connection(t);
+	connection_db_add(t);
+	spd_route_db_add_connection(t);
 
 	/* route if group is routed */
 	if (group->policy & POLICY_GROUTED) {
@@ -3257,7 +3258,8 @@ struct connection *spd_instantiate(struct connection *t,
 	}
 
 	/* all done */
-	hash_connection(d);
+	connection_db_add(d);
+	spd_route_db_add_connection(d);
 
 	connection_buf cb, db;
 	address_buf pab;
