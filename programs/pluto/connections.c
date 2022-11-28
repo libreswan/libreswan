@@ -3342,23 +3342,34 @@ void set_policy_prio(struct connection *c)
  * Opportunistic: [" " myclient "==="] " ..." peer ["===" peer_client] '\0'
  */
 
-static size_t jam_connection_client(struct jambuf *b,
-				    const char *prefix, const char *suffix,
-				    const ip_selector client,
-				    const ip_address host_addr)
+static size_t jam_connection_child(struct jambuf *b,
+				   const char *prefix, const char *suffix,
+				   const struct child_end *child,
+				   const ip_address host_addr)
 {
+	const ip_selectors *selectors =
+		(child->selectors.accepted.len > 0 ? &child->selectors.accepted :
+		 child->selectors.proposed.len > 0 ? &child->selectors.proposed :
+		 NULL);
 	size_t s = 0;
-	if (selector_range_eq_address(client, host_addr)) {
+	if (selectors == NULL) {
+		/* no point */
+	} else if (selectors->len == 1 &&
+		   selector_range_eq_address(selectors->list[0], host_addr)) {
 		/* compact denotation for "self" */
 	} else {
 		s += jam_string(b, prefix);
-		if (client.is_set) {
-			s += jam_selector_subnet(b, &client);
-			if (selector_is_zero(client)) {
+		for (const ip_selector *selector = selectors->list;
+		     selector < selectors->list + selectors->len;
+		     selector++) {
+			if (pexpect(selector->is_set)) {
+				s += jam_selector_subnet(b, selector);
+				if (selector_is_zero(*selector)) {
+					s += jam_string(b, "?");
+				}
+			} else {
 				s += jam_string(b, "?");
 			}
-		} else {
-			s += jam_string(b, "?");
 		}
 		s += jam_string(b, suffix);
 	}
@@ -3376,14 +3387,15 @@ size_t jam_connection_instance(struct jambuf *buf, const struct connection *c)
 		s += jam(buf, "[%lu]", c->instance_serial);
 	}
 	if (c->policy & POLICY_OPPORTUNISTIC) {
-		s += jam_connection_client(buf, " ", "===",
-					   c->spd->local->client,
-					   c->local->host.addr);
+		/*
+		 * XXX: print proposed or accepted selectors?
+		 */
+		s += jam_connection_child(buf, " ", "===", &c->local->child,
+					  c->local->host.addr);
 		s += jam_string(buf, " ...");
-		s += jam_address(buf, &c->remote->host.addr);
-		s += jam_connection_client(buf, "===", "",
-					   c->spd->remote->client,
-					   c->remote->host.addr);
+		s += jam_address_sensitive(buf, &c->remote->host.addr);
+		s += jam_connection_child(buf, "===", "", &c->remote->child,
+					  c->remote->host.addr);
 	} else {
 		s += jam_string(buf, " ");
 		s += jam_address_sensitive(buf, &c->remote->host.addr);
