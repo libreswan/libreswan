@@ -43,19 +43,23 @@ extern const struct logger global_logger;
 extern void llog_passert(const struct logger *logger, where_t where,
 			 const char *message, ...) NEVER_RETURNS PRINTF_LIKE(3);
 
-#define PASSERT(LOGGER, ASSERTION)					\
+#define PASSERT_WHERE(LOGGER, WHERE, ASSERTION)				\
 	({								\
 		/* wrapping ASSERTION in parens suppresses -Wparen */	\
 		bool assertion__ = ASSERTION; /* no parens */		\
 		if (!assertion__) {					\
-			where_t here = HERE;				\
 			const struct logger *logger_ = LOGGER;		\
-			llog_passert(logger_, here, "%s", #ASSERTION);	\
+			llog_passert(logger_, WHERE, "%s", #ASSERTION);	\
 		}							\
-		(void) true;							\
+		/* return something so flipping to pexpect() is easy */	\
+		(void) true;						\
 	})
 
-#define passert(ASSERTION)     PASSERT(&global_logger, ASSERTION)
+#define PASSERT(LOGGER, ASSERTION)		\
+	PASSERT_WHERE(LOGGER, HERE, ASSERTION)
+
+#define passert(ASSERTION)				\
+	PASSERT_WHERE(&global_logger, HERE, ASSERTION)
 
 /* evaluate x exactly once; assert that err_t result is NULL; */
 #define happy(x) /* TBD: use ??? */				\

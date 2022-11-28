@@ -468,19 +468,21 @@ void lswlog_pexpect_example(void *p)
 extern void llog_pexpect(const struct logger *logger, where_t where,
 			 const char *message, ...) PRINTF_LIKE(3);
 
-#define PEXPECT(LOGGER, ASSERTION)					\
+#define PEXPECT_WHERE(LOGGER, WHERE, ASSERTION)				\
 	({								\
 		/* wrapping ASSERTION in parens suppresses -Wparen */	\
 		bool assertion__ = ASSERTION; /* no parens */		\
 		if (!assertion__) {					\
-			where_t here_ = HERE;				\
 			const struct logger *logger_ = LOGGER;		\
-			llog_pexpect(logger_, here_, "%s", #ASSERTION);	\
+			llog_pexpect(logger_, WHERE, "%s", #ASSERTION);	\
 		}							\
 		assertion__; /* result */				\
 	})
 
-#define pexpect(ASSERTION)  PEXPECT(&global_logger, ASSERTION)
+#define PEXPECT(LOGGER, ASSERTION)					\
+	PEXPECT_WHERE(LOGGER, HERE, ASSERTION)
+
+#define pexpect(ASSERTION)  PEXPECT_WHERE(&global_logger, HERE, ASSERTION)
 
 /* for a switch statement */
 
