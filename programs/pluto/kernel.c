@@ -153,9 +153,18 @@ kernel_priority_t calculate_kernel_priority(const struct connection *c, bool oe_
 	unsigned srcw = 128 - c->spd->local->client.maskbits;
 	prio = (prio << 8) | srcw;
 
-	/* if opportunistic, dial up dstw TO THE MAX aka 0 */
+	/*
+	 * If opportunistic, give this a higher priority (here 0).
+	 */
 	unsigned dstw = 128 - c->spd->remote->client.maskbits;
 	if (oe_shunt) {
+		/*
+		 * But with OE this is an intance with the client
+		 * already forced to the highest priority.
+		 */
+		PEXPECT(c->logger, c->policy & POLICY_OPPORTUNISTIC);
+		PEXPECT(c->logger, c->kind == CK_INSTANCE);
+		PEXPECT(c->logger, c->spd->remote->client.maskbits == selector_info(c->spd->remote->client)->mask_cnt);
 		dstw = 0;
 	}
 	prio = (prio << 8) | dstw;
