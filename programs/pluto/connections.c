@@ -3272,11 +3272,31 @@ struct connection *spd_instantiate(struct connection *t,
 	return d;
 }
 
-struct connection *rw_instantiate(struct connection *t,
-				  const ip_address peer_addr,
-				  const ip_selector *peer_subnet,
-				  const struct id *peer_id)
+struct connection *rw_responder_instantiate(struct connection *t,
+					    const ip_address peer_addr)
 {
+	if (!PEXPECT(t->logger, (t->policy & POLICY_OPPORTUNISTIC) == LEMPTY)) {
+		return NULL;
+	}
+
+	struct connection *d = spd_instantiate(t, peer_addr, NULL, null_shunk);
+	connection_buf inst;
+	address_buf b;
+	dbg("rw_instantiate() instantiated "PRI_CONNECTION" for %s",
+	    pri_connection(d, &inst),
+	    str_address(&peer_addr, &b));
+	return d;
+}
+
+struct connection *rw_responder_id_instantiate(struct connection *t,
+					       const ip_address peer_addr,
+					       const ip_selector *peer_subnet,
+					       const struct id *peer_id)
+{
+	if (!PEXPECT(t->logger, (t->policy & POLICY_OPPORTUNISTIC) == LEMPTY)) {
+		return NULL;
+	}
+
 	struct connection *d = spd_instantiate(t, peer_addr, peer_id, null_shunk);
 
 	if (peer_subnet != NULL && is_virtual_remote(t)) {
@@ -3289,22 +3309,13 @@ struct connection *rw_instantiate(struct connection *t,
 		}
 	}
 
-	if (d->policy & POLICY_OPPORTUNISTIC) {
-		/*
-		 * This must be before we know the client addresses.
-		 * Fill in one that is impossible. This prevents anyone else
-		 * from trying to use this connection to get to a particular
-		 * client
-		 */
-		set_first_selector(d, remote, selector_type(&d->spd->remote->client)->selector.zero);
-		rehash_db_spd_route_remote_client(d->spd);
-	}
 	connection_buf inst;
 	address_buf b;
 	dbg("rw_instantiate() instantiated "PRI_CONNECTION" for %s",
 	    pri_connection(d, &inst),
 	    str_address(&peer_addr, &b));
 	return d;
+
 }
 
 /* priority formatting */

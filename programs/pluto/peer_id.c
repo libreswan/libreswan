@@ -608,12 +608,9 @@ bool refine_host_connection_of_state_on_responder(struct state *st,
 			 *
 			 * Instantiate it, filling in peer's
 			 * ID.
-			 *
-			 * Don't try to update the instantiated
-			 * template's address when it is already set.
 			 */
-			r = rw_instantiate(r, st->st_connection->remote->host.addr,
-					   NULL, peer_id);
+			r = rw_responder_id_instantiate(r, st->st_connection->remote->host.addr,
+							NULL/*not-yet-known*/, peer_id);
 		}
 		/*
 		 * R is an improvement on .st_connection -- replace.

@@ -153,7 +153,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		    (c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
 			ldbg(md->md_logger,
 			     "local endpoint has narrowing=yes - needs instantiation");
-			return rw_instantiate(c, remote_address, NULL, NULL);
+			return rw_responder_instantiate(c, remote_address);
 		}
 
 		return c;
@@ -284,7 +284,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 	} else {
 		/* regular roadwarrior */
 		ldbg(md->md_logger, "rw_instantiate");
-		c = rw_instantiate(c, remote_address, NULL, NULL);
+		c = rw_responder_instantiate(c, remote_address);
 	}
 
 	return c;

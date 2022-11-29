@@ -1104,9 +1104,9 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 				 * instantiated template's address
 				 * when it is already set.
 				 */
-				p = rw_instantiate(p, c->remote->host.addr,
-						   remote_client,
-						   &c->remote->host.id);
+				p = rw_responder_id_instantiate(p, c->remote->host.addr,
+								remote_client,
+								&c->remote->host.id);
 			}
 			connection_buf cib;
 			ldbg(p->logger, "using connection "PRI_CONNECTION"",

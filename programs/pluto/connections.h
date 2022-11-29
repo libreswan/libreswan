@@ -678,10 +678,12 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 
 /* instantiating routines */
 
-extern struct connection *rw_instantiate(struct connection *t,
-					 const ip_address peer_addr,
-					 const ip_selector *peer_subnet,
-					 const struct id *peer_id);
+struct connection *rw_responder_instantiate(struct connection *t,
+					    const ip_address peer_addr);
+extern struct connection *rw_responder_id_instantiate(struct connection *t,
+						      const ip_address peer_addr,
+						      const ip_selector *peer_subnet,
+						      const struct id *peer_id);
 struct connection *oppo_instantiate(struct connection *t,
 				    const struct id *remote_id,
 				    const ip_address local_address,
