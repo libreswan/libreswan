@@ -483,70 +483,65 @@ void update_hosts_from_end_host_addr(struct connection *c, enum left_right e,
 	}
 }
 
-void update_spd_ends_from_host_ends(struct connection *c)
+void update_spds_from_end_host_addr(struct connection *c, enum left_right end, ip_address host_addr,
+				    where_t where)
 {
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		const char *leftright = c->end[end].config->leftright;
-		const struct host_end *host = &c->end[end].host;
-		const struct child_end_config *config = &c->end[end].config->child;
-		address_buf hab;
-		ldbg(c->logger, "updating %s.spd client(selector) from %s.host.addr %s",
-		     leftright, leftright, str_address(&host->addr, &hab));
+	const char *leftright = c->end[end].config->leftright;
+	const struct child_end *child = &c->end[end].child;
+	address_buf hab;
+	ldbg(c->logger, "updating %s.spd client(selector) from %s.host.addr %s "PRI_WHERE,
+	     leftright, leftright, str_address(&host_addr, &hab), pri_where(where));
 
-		if (!address_is_specified(host->addr)) {
-			ldbg(c->logger, "  %s.host.addr is unspecified (unset, ::, or 0.0.0.0); skipping",
+	if (child->config->has_client) {
+		ldbg(c->logger, "  %s.child.config.has_client; good to know",
+		     leftright);
+	}
+
+	if (!PEXPECT_WHERE(c->logger, where, address_is_specified(host_addr))) {
+		return;
+	}
+
+	if (child->config->selectors.len > 0) {
+		ldbg(c->logger, "  %s.child already has a hard-wired selectors; skipping",
+		     leftright);
+		return;
+	}
+
+	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+		struct spd_end *spde = &spd->end[end];
+
+		if (spde->child->has_client) {
+			pexpect(c->policy & POLICY_OPPORTUNISTIC);
+			pexpect(child->config->has_client);
+			ldbg(c->logger, "  %s.child.has_client yet no selectors; skipping magic",
 			     leftright);
 			continue;
 		}
 
-		if (config->has_client) {
-			ldbg(c->logger, "  %s.spd.config.has_client; good to know",
-			     leftright);
-		}
-
-		if (config->selectors.len > 0) {
-			ldbg(c->logger, "  %s.spd already has a hard-wired selectors; skipping",
-			     leftright);
+		/* per-above */
+		if (!pexpect(address_is_specified(host_addr))) {
 			continue;
 		}
 
-		for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
-			struct spd_end *spde = &spd->end[end];
+		/*
+		 * Default the end's child selector (client) to a
+		 * subnet containing only the end's host address.
+		 *
+		 * If the other end has multiple child subnets then
+		 * the SPD will be a list.
+		 */
+		ip_selector selector =
+			selector_from_address_protoport(host_addr, child->config->protoport);
 
-			if (spde->child->has_client) {
-				pexpect(c->policy & POLICY_OPPORTUNISTIC);
-				pexpect(config->has_client);
-				ldbg(c->logger, "  %s.spd.has_client but no selectors; skipping magic",
-				     leftright);
-				continue;
-			}
-
-			/* per-above */
-			if (!pexpect(address_is_specified(host->addr))) {
-				continue;
-			}
-
-			/*
-			 * Default the end's child selector (client)
-			 * to a subnet containing only the end's host
-			 * address.
-			 *
-			 * If the other end has multiple child subnets
-			 * then the SPD will be a list.
-			 */
-			ip_selector selector =
-				selector_from_address_protoport(host->addr, config->protoport);
-
-			selector_buf old, new;
-			dbg("  updated %s.spd client(selector) from %s to %s",
-			    leftright,
-			    str_selector_subnet_port(&spde->client, &old),
-			    str_selector_subnet_port(&selector, &new));
-			if (spd == c->spd) {
-				set_end_selector(c, end, selector, NULL);
-			} else {
-				spde->client = selector; /*set_end_selector()*/
-			}
+		selector_buf old, new;
+		dbg("  updated %s.spd client(selector) from %s to %s",
+		    leftright,
+		    str_selector_subnet_port(&spde->client, &old),
+		    str_selector_subnet_port(&selector, &new));
+		if (spd == c->spd) {
+			set_end_selector(c, end, selector, NULL);
+		} else {
+			spde->client = selector; /*set_end_selector()*/
 		}
 	}
 }
@@ -1818,7 +1813,14 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 		selectors[LEFT_END].selector++;
 	}
 
-	update_spd_ends_from_host_ends(c);
+
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		ip_address host_addr = c->end[end].host.addr;
+		if (address_is_specified(host_addr)) {
+			update_spds_from_end_host_addr(c, end, host_addr, HERE);
+		}
+	}
+
 	set_policy_prio(c); /* must be after kind is set */
 }
 
@@ -3244,7 +3246,8 @@ struct connection *spd_instantiate(struct connection *t,
 	struct connection *d = instantiate(t, peer_addr, peer_id, sec_label);
 	clone_connection_spd(d, t);
 
-	update_spd_ends_from_host_ends(d);
+	update_spds_from_end_host_addr(d, d->remote->config->index, peer_addr, HERE);
+
 	pexpect(oriented(d)); /* can't instantiate an unoriented template? */
 	set_policy_prio(d); /* re-compute; may have changed */
 

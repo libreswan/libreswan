@@ -1089,7 +1089,6 @@ struct connection *shunt_owner(const ip_selector *ours, const ip_selector *peers
 
 static void connection_check_ddns1(struct connection *c, struct logger *logger)
 {
-	ip_address new_addr;
 	const char *e;
 
 	/* this is the cheapest check, so do it first */
@@ -1123,7 +1122,8 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	}
 
 	/* XXX: blocking call */
-	e = ttoaddress_dns(shunk1(c->config->dnshostname), NULL/*UNSPEC*/, &new_addr);
+	ip_address new_remote_addr;
+	e = ttoaddress_dns(shunk1(c->config->dnshostname), NULL/*UNSPEC*/, &new_remote_addr);
 	if (e != NULL) {
 		connection_buf cib;
 		dbg("pending ddns: connection "PRI_CONNECTION" lookup of \"%s\" failed: %s",
@@ -1131,7 +1131,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 		return;
 	}
 
-	if (!address_is_specified(new_addr)) {
+	if (!address_is_specified(new_remote_addr)) {
 		connection_buf cib;
 		dbg("pending ddns: connection "PRI_CONNECTION" still no address for \"%s\"",
 		    pri_connection(c, &cib), c->config->dnshostname);
@@ -1153,7 +1153,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	 * This cannot currently be reached.  If in the future we do,
 	 * don't do weird things
 	 */
-	if (sameaddr(&new_addr, &c->remote->host.addr)) {
+	if (sameaddr(&new_remote_addr, &c->remote->host.addr)) {
 		connection_buf cib;
 		dbg("pending ddns: IP address unchanged for connection "PRI_CONNECTION"",
 		    pri_connection(c, &cib));
@@ -1166,12 +1166,11 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	dbg("pending ddns: updating IP address for %s from %s to %s",
 	    c->config->dnshostname,
 	    str_address_sensitive(&c->remote->host.addr, &old),
-	    str_address_sensitive(&new_addr, &new));
+	    str_address_sensitive(&new_remote_addr, &new));
 	pexpect(!address_is_specified(c->remote->host.addr)); /* per above */
 	/* propogate remote address */
-	update_hosts_from_end_host_addr(c, c->remote->config->index, new_addr, HERE); /* from DNS */
-	/* just re-do both */
-	update_spd_ends_from_host_ends(c);
+	update_hosts_from_end_host_addr(c, c->remote->config->index, new_remote_addr, HERE); /* from DNS */
+	update_spds_from_end_host_addr(c, c->remote->config->index, new_remote_addr, HERE);
 
 	/*
 	 * reduce the work we do by updating all connections waiting for this
