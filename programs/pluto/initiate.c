@@ -558,6 +558,7 @@ struct find_oppo_bundle {
 	ip_packet packet; /* that triggered the opportunistic exchange */
 	bool by_acquire;	/* acquire? whack? */
 	policy_prio_t policy_prio;
+	struct connection *connection;
 	enum shunt_policy negotiation_shunt;
 	enum shunt_policy failure_shunt;
 	struct logger *logger;	/* has whack attached */
@@ -732,6 +733,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * We have a connection: fill in the negotiation_shunt
 		 * and failure_shunt.
 		 */
+		b->connection = c;
 		b->failure_shunt = c->config->failure_shunt;
 		b->negotiation_shunt = c->config->negotiation_shunt;
 
@@ -815,6 +817,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * We have a connection: fill in the negotiation_shunt
 		 * and failure_shunt.
 		 */
+		b->connection = c;
 		b->failure_shunt = c->config->failure_shunt;
 		b->negotiation_shunt = c->config->negotiation_shunt;
 
@@ -845,6 +848,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 				       b->by_acquire ? "acquire" : "whack",
 				       b->logger);
 
+			pexpect(b->connection == c);
+			pexpect(c->config->negotiation_shunt == b->negotiation_shunt);
+			pexpect(c->config->failure_shunt == b->failure_shunt);
 			if (assign_holdpass(c, sr,
 					    b->negotiation_shunt,
 					    &b->packet)) {
@@ -901,6 +907,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	passert(c->policy & POLICY_OPPORTUNISTIC); /* can't initiate Road Warrior connections */
 
 	/* we have a connection: fill in the negotiation_shunt and failure_shunt */
+	b->connection = c;
 	b->failure_shunt = c->config->failure_shunt;
 	b->negotiation_shunt = c->config->negotiation_shunt;
 
@@ -971,7 +978,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	ip_address src_address = packet_src_address(b->packet);
 	ip_address dst_address = packet_dst_address(b->packet);
 	PEXPECT(t->logger, address_eq_address(src_address, t->local->host.addr));
+	pexpect(b->connection == t);
 	c = oppo_instantiate(t, dst_address);
+	b->connection = c;
 
 	selectors_buf sb;
 	dbg("going to initiate opportunistic %s, first installing %s negotiationshunt",
@@ -1026,6 +1035,9 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		/*
 		 * XXX: updating the policy inserted by the kernel.
 		 */
+		pexpect(b->connection == c);
+		pexpect(c->config->negotiation_shunt == b->negotiation_shunt);
+		pexpect(c->config->failure_shunt == b->failure_shunt);
 		if (assign_holdpass(c, c->spd,
 				    b->negotiation_shunt,
 				    &b->packet)) {

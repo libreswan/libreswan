@@ -1916,6 +1916,7 @@ bool assign_holdpass(const struct connection *c,
 		     enum shunt_policy negotiation_shunt,
 		     const ip_packet *packet)
 {
+	pexpect(c->config->negotiation_shunt == negotiation_shunt);
 	/*
 	 * either the automatically installed %hold eroute is broad enough
 	 * or we try to add a broader one and delete the automatic one.
