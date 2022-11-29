@@ -251,8 +251,7 @@ static bool initiate_connection_3_sec_label(struct connection *c,
 	if (c->kind == CK_TEMPLATE &&
 	    c->config->ike_version == IKEv2 &&
 	    (c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
-		struct connection *d = spd_instantiate(c, c->remote->host.addr,
-						       NULL, null_shunk);
+		struct connection *d = spd_instantiate(c, c->remote->host.addr, NULL, null_shunk);
 		/* XXX: something better? */
 		fd_delref(&d->logger->global_whackfd);
 		d->logger->global_whackfd = fd_addref(c->logger->global_whackfd);
@@ -1169,8 +1168,8 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	    str_address_sensitive(&c->remote->host.addr, &old),
 	    str_address_sensitive(&new_addr, &new));
 	pexpect(!address_is_specified(c->remote->host.addr)); /* per above */
-	c->remote->host.addr = new_addr;
-	update_hosts_from_end_host_addr(c, c->remote);
+	/* propogate remote address */
+	update_hosts_from_end_host_addr(c, c->remote->config->index, new_addr, HERE); /* from DNS */
 	/* just re-do both */
 	update_spd_ends_from_host_ends(c);
 

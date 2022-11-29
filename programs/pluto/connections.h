@@ -621,7 +621,8 @@ void jam_end(struct jambuf *buf, const struct spd_end *this, const struct spd_en
 struct whack_message;   /* forward declaration of tag whack_msg */
 extern void add_connection(const struct whack_message *wm, struct logger *logger);
 
-void update_hosts_from_end_host_addr(struct connection *c, struct connection_end *end);
+void update_hosts_from_end_host_addr(struct connection *c, enum left_right end,
+				     ip_address host_addr, where_t where);
 void update_spd_ends_from_host_ends(struct connection *c);
 extern void restart_connections_by_peer(struct connection *c, struct logger *logger);
 extern void flush_revival(const struct connection *c);
@@ -676,7 +677,7 @@ extern struct connection *spd_instantiate(struct connection *t,
 					  const struct id *peer_id,
 					  shunk_t sec_label);
 extern struct connection *instantiate(struct connection *t,
-				      const ip_address *peer_addr,
+				      const ip_address peer_addr,
 				      const struct id *peer_id,
 				      shunk_t sec_label);
 

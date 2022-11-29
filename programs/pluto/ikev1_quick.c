@@ -1095,8 +1095,14 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 			 * specified clients.  But it may need instantiation.
 			 */
 			if (p->kind == CK_TEMPLATE) {
-				/* Plain Road Warrior because no OPPO for IKEv1
-				 * instantiate, carrying over authenticated peer ID
+				/*
+				 * Plain Road Warrior because no OPPO
+				 * for IKEv1 instantiate, carrying
+				 * over authenticated peer ID
+				 *
+				 * Don't try to update the
+				 * instantiated template's address
+				 * when it is already set.
 				 */
 				p = rw_instantiate(p, c->remote->host.addr,
 						   remote_client,

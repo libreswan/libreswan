@@ -229,24 +229,23 @@ struct connection *find_v1_aggr_mode_connection(struct msg_digest *md,
 {
 	struct connection *c;
 
+	ip_address sender_address = endpoint_address(md->sender);
 	c = find_v1_host_connection(md->iface->ip_dev->id_address,
-				    endpoint_address(md->sender),
-				    authby, policy_xauth,
+				    sender_address, authby, policy_xauth,
 				    true/*POLICY_AGGRESSIVE*/,
 				    peer_id);
 	if (c != NULL) {
 		return c;
 	}
 
-	c = find_v1_host_connection(md->iface->ip_dev->id_address, unset_address,
-				    authby, policy_xauth,
+	c = find_v1_host_connection(md->iface->ip_dev->id_address,
+				    unset_address, authby, policy_xauth,
 				    true/*POLICY_AGGRESSIVE*/,
 				    peer_id);
 	if (c != NULL) {
 		/* Create a temporary connection that is a copy of this one.
 		 * Peers ID isn't declared yet.
 		 */
-		ip_address sender_address = endpoint_address(md->sender);
 		return rw_instantiate(c, sender_address, NULL, NULL);
 	}
 
@@ -262,6 +261,7 @@ struct connection *find_v1_aggr_mode_connection(struct msg_digest *md,
 
 struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 {
+	ip_address sender_address = endpoint_address(md->sender);
 	struct connection *c;
 
 	/* random source ports are handled by find_host_connection */
@@ -286,8 +286,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	 */
 
 	c = find_v1_host_connection(md->iface->ip_dev->id_address,
-				    endpoint_address(md->sender),
-				    authby, policy_xauth,
+				    sender_address, authby, policy_xauth,
 				    false/*POLICY_AGGRESSIVE*/,
 				    NULL /* peer ID not known yet */);
 	if (c != NULL) {
@@ -296,9 +295,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 		 * instantiation anyway (eg vnet=)
 		 */
 		if (c->kind == CK_TEMPLATE) {
-			ldbg(md->md_logger,
-			     "local endpoint needs instantiation");
-			ip_address sender_address = endpoint_address(md->sender);
+			ldbg(md->md_logger, "local endpoint needs instantiation");
 			return rw_instantiate(c, sender_address, NULL, NULL);
 		}
 
@@ -381,6 +378,5 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	connection_buf cib;
 	ldbg(md->md_logger, "instantiating "PRI_CONNECTION" for initial Main Mode message",
 	     pri_connection(c, &cib));
-	ip_address sender_address = endpoint_address(md->sender);
 	return rw_instantiate(c, sender_address, NULL, NULL);
 }

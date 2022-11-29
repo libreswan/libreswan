@@ -598,7 +598,6 @@ bool refine_host_connection_of_state_on_responder(struct state *st,
 		 *
 		 * Should the ID be fully updated here?
 		 */
-		struct connection *c = st->st_connection;
 		if (r->kind == CK_TEMPLATE || r->kind == CK_GROUP) {
 			/*
 			 * XXX: is r->kind == CK_GROUP ever
@@ -609,8 +608,11 @@ bool refine_host_connection_of_state_on_responder(struct state *st,
 			 *
 			 * Instantiate it, filling in peer's
 			 * ID.
+			 *
+			 * Don't try to update the instantiated
+			 * template's address when it is already set.
 			 */
-			r = rw_instantiate(r, c->remote->host.addr,
+			r = rw_instantiate(r, st->st_connection->remote->host.addr,
 					   NULL, peer_id);
 		}
 		/*

@@ -1630,6 +1630,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			pexpect(best.nsps.i.sec_label.len > 0);
 			pexpect(best.nsps.r.sec_label.len > 0);
 			pexpect(best.connection->child.sec_label.len == 0);
+			pexpect(address_is_specified(best.connection->remote->host.addr));
 		}
 
 		/*

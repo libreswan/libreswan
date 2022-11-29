@@ -422,24 +422,25 @@ ip_port end_host_port(const struct host_end *this, const struct host_end *that)
 	return ip_hport(port);
 }
 
-void update_hosts_from_end_host_addr(struct connection *c, struct connection_end *ce)
+void update_hosts_from_end_host_addr(struct connection *c, enum left_right e,
+				     ip_address host_addr, where_t where)
 {
-	struct host_end *end = &ce->host;
-	struct host_end *other_end = &c->end[!ce->config->index].host;
+	struct host_end *end = &c->end[e].host;
+	struct host_end *other_end = &c->end[!e].host;
 
 	address_buf hab;
 	ldbg(c->logger, "updating host ends from %s.host.addr %s",
-	     end->config->leftright, str_address(&end->addr, &hab));
+	     end->config->leftright, str_address(&host_addr, &hab));
 
-	if (!address_is_specified(end->addr)) {
-		llog_pexpect(c->logger, HERE,
-			     "  %s.host_addr's is unspecified (unset, ::, or 0.0.0.0); skipping",
-			     end->config->leftright);
+	if (!PEXPECT_WHERE(c->logger, where, address_is_specified(host_addr))) {
 		return;
 	}
 
-	const struct ip_info *afi = address_type(&end->addr);
-	passert(afi != NULL); /* since specified */
+	PASSERT_WHERE(c->logger, where, !address_is_specified(end->addr));
+	end->addr = host_addr;
+
+	const struct ip_info *afi = address_info(host_addr);
+	PASSERT(c->logger, afi != NULL); /* since specified */
 
 	/*
 	 * Default ID to IP (but only if not NO_IP -- WildCard).
@@ -479,19 +480,6 @@ void update_hosts_from_end_host_addr(struct connection *c, struct connection_end
 		    str_address(&other_end->nexthop, &old),
 		    str_address(&end->addr, &new));
 		other_end->nexthop = end->addr;
-	}
-
-	/*
-	 * Propagate end.HOST_ADDR's address family to
-	 * end.HOST_ADDR.
-	 */
-	if (!address_is_specified(other_end->addr)) {
-		address_buf old, new;
-		ldbg(c->logger, "  updated %s.host_addr from %s to %s",
-		     other_end->config->leftright,
-		     str_address(&other_end->addr, &old),
-		     str_address(&afi->address.unspec, &new));
-		other_end->addr = afi->address.unspec;
 	}
 }
 
@@ -2682,36 +2670,40 @@ static bool extract_connection(const struct whack_message *wm,
 	/*
 	 * Determine the host topology.
 	 *
-	 * Needs two passes; first extracts tentative host/nexthop.
-	 * Second propogates that to other dependent fields.
+	 * Needs two passes: first pass extracts tentative
+	 * host/nexthop; scecond propogates that to other dependent
+	 * fields.
 	 *
 	 * XXX: the host lookup is blocking; should instead do it
 	 * asynchronously using unbound.
+	 *
+	 * XXX: move the find nexthop code to here?
 	 */
+	ip_address host_addr[END_ROOF];
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		const struct whack_end *we = whack_ends[end];
 		struct host_end *host = &c->end[end].host;
-		host->addr = host_afi->address.unspec;
+		host_addr[end] = host_afi->address.unspec;
 		if (address_is_specified(we->host_addr)) {
-			host->addr = we->host_addr;
+			host_addr[end] = we->host_addr;
 		} else if (we->host_type == KH_IPHOSTNAME) {
-			ip_address host_addr;
+			ip_address addr;
 			err_t er = ttoaddress_dns(shunk1(we->host_addr_name),
-						  host_afi, &host_addr);
+						  host_afi, &addr);
 			if (er != NULL) {
 				llog(RC_COMMENT, c->logger,
 				     "failed to resolve '%s=%s' at load time: %s",
 				     we->leftright, we->host_addr_name, er);
 			} else {
-				host->addr = host_addr;
+				host_addr[end] = addr;
 			}
 		}
 		host->nexthop = we->host_nexthop;
 	}
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		if (address_is_specified(c->end[end].host.addr)) {
-			update_hosts_from_end_host_addr(c, &c->end[end]);
+		if (address_is_specified(host_addr[end])) {
+			update_hosts_from_end_host_addr(c, end, host_addr[end], HERE); /* from add */
 		}
 	}
 
@@ -3090,7 +3082,7 @@ struct connection *add_group_instance(struct connection *group,
  */
 
 struct connection *instantiate(struct connection *t,
-			       const ip_address *peer_addr,
+			       const ip_address peer_addr,
 			       const struct id *peer_id,
 			       shunk_t sec_label)
 {
@@ -3128,7 +3120,6 @@ struct connection *instantiate(struct connection *t,
 		 *
 		 *   The sec_label is updated below.
 		 */
-		pexpect(address_is_specified(t->remote->host.addr) || peer_addr != NULL);
 		if (sec_label.len == 0) {
 			kind = CK_TEMPLATE;
 		} else {
@@ -3152,17 +3143,15 @@ struct connection *instantiate(struct connection *t,
 	unshare_connection(d, t);
 	d->kind = kind;
 	passert(oriented(d));
-	if (peer_addr != NULL) {
-		d->remote->host.addr = *peer_addr;
-	}
 
-	/*
-	 * We cannot guess what our next_hop should be, but if it was
-	 * explicitly specified as 0.0.0.0, we set it to be peer.
-	 * (whack will not allow nexthop to be elided in RW case.)
-	 */
-	update_hosts_from_end_host_addr(d, d->local);
-	update_hosts_from_end_host_addr(d, d->remote);
+	/* propogate remote address when set */
+	PASSERT(d->logger, address_is_specified(peer_addr)); /* always */
+	if (address_is_specified(d->remote->host.addr)) {
+		/* can't change remote once set */
+		PASSERT(d->logger, address_eq_address(peer_addr, d->remote->host.addr));
+	} else {
+		update_hosts_from_end_host_addr(d, d->remote->config->index, peer_addr, HERE); /* from whack initiate */
+	}
 
 	d->child.reqid = (t->config->sa_reqid == 0 ? gen_reqid() : t->config->sa_reqid);
 	dbg("%s d->spd->reqid=%d because t->sa_reqid=%d (%s)",
@@ -3209,7 +3198,7 @@ struct connection *spd_instantiate(struct connection *t,
 				   const struct id *peer_id,
 				   shunk_t sec_label)
 {
-	struct connection *d = instantiate(t, &peer_addr, peer_id, sec_label);
+	struct connection *d = instantiate(t, peer_addr, peer_id, sec_label);
 	clone_connection_spd(d, t);
 
 	update_spd_ends_from_host_ends(d);
@@ -3285,7 +3274,7 @@ struct connection *rw_instantiate(struct connection *t,
 	if (peer_subnet != NULL && is_virtual_remote(t)) {
 		set_first_selector(d, remote, *peer_subnet);
 		rehash_db_spd_route_remote_client(d->spd);
-		if (selector_eq_address(*peer_subnet, peer_addr)) {
+		if (selector_eq_address(*peer_subnet, d->remote->host.addr)) {
 			ldbg(t->logger, "forcing remote %s.spd.has_client=false",
 			     d->spd->remote->config->leftright);
 			set_child_has_client(d, remote, false);
