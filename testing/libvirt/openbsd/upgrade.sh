@@ -29,3 +29,5 @@ add xmlto
 add curl
 add git
 add bash
+# stem with branch, see pkg_add
+add gcc%11
