@@ -434,7 +434,7 @@ for op in "${ops[@]}" ; do
 	    results_command "$@"
 	    ;;
 	failed )
-	    results_command "$@" | if grep failed ; then false ; else true ; fi
+	    results_command "$@" | if grep -e ' failed' -e ' unresolved' ; then false ; else true ; fi
 	    ;;
 	patch )
 	    diffs_command "$@" | patch -p1
