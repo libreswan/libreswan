@@ -3152,6 +3152,7 @@ struct connection *instantiate(struct connection *t,
 		/* can't change remote once set */
 		PASSERT(d->logger, address_eq_address(peer_addr, d->remote->host.addr));
 	} else {
+		/* this updates ID NULL */
 		update_hosts_from_end_host_addr(d, d->remote->config->index, peer_addr, HERE); /* from whack initiate */
 	}
 
@@ -3720,11 +3721,11 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 }
 
 struct connection *oppo_instantiate(struct connection *t,
-				    const struct id *remote_id,
-				    /* both host and client */
-				    const ip_address local_address,
 				    const ip_address remote_address)
 {
+	PEXPECT(t->logger, oriented(t)); /* else won't instantiate */
+
+	ip_address local_address = t->local->host.addr;
 	pexpect(address_is_specified(local_address));
 	pexpect(address_is_specified(remote_address));
 	address_buf lb, rb;
@@ -3734,7 +3735,22 @@ struct connection *oppo_instantiate(struct connection *t,
 	    str_address(&local_address, &lb),
 	    str_address(&remote_address, &rb));
 
-	struct connection *d = spd_instantiate(t, remote_address, remote_id, null_shunk);
+	/*
+	 * Instance inherits remote ID of child; exception being when
+	 * ID is NONE when it is set to the remote address.
+	 */
+	struct connection *d = instantiate(t, remote_address, /*peer_id*/NULL, /*sec_label*/null_shunk);
+
+	clone_connection_spd(d, t);
+	update_spds_from_end_host_addr(d, d->remote->config->index, remote_address, HERE);
+	set_policy_prio(d); /* re-compute; may have changed */
+
+	/* should still be true; leave another breadcrumb */
+	pexpect(d->spd->eroute_owner == SOS_NOBODY);
+	set_spd_owner(d->spd, SOS_NOBODY);
+
+	/* all done */
+	spd_route_db_add_connection(d);
 
 	passert(d->spd->spd_next == NULL);
 

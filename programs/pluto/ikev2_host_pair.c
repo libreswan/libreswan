@@ -279,8 +279,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		connection_buf cb;
 		ldbg(md->md_logger, "oppo_instantiate called by %s with "PRI_CONNECTION,
 		     __func__, pri_connection(c, &cb));
-		c = oppo_instantiate(c, &c->remote->host.id,
-				     local_address, remote_address);
+		c = oppo_instantiate(c, remote_address);
 	} else {
 		/* regular roadwarrior */
 		ldbg(md->md_logger, "rw_instantiate");
