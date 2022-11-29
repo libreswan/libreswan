@@ -349,99 +349,6 @@ static bool add_prospective_policy(enum expect_kernel_policy expect_kernel_polic
 			  "%s() inbound shunt for %s", __func__, opname);
 }
 
-static bool strip_stateful_policy(enum expect_kernel_policy expect_kernel_policy,
-				  const struct connection *c,
-				  const struct spd_route *sr,
-				  enum shunt_policy shunt_policy,
-				  const char *opname,
-				  struct logger *logger,
-				  where_t where)
-{
-	shunk_t sec_label = HUNK_AS_SHUNK(c->config->sec_label);
-
-	LSWDBGP(DBG_BASE, buf) {
-		jam(buf, "kernel: %s() ", __func__);
-
-		jam_string(buf, " ");
-		jam_string(buf, expect_kernel_policy_name(expect_kernel_policy));
-
-		jam(buf, " %s", opname);
-		jam(buf, " ");
-		jam_connection(buf, c);
-
-		enum_buf spb;
-		jam(buf, " shunt_policy=%s",
-		    str_enum_short(&shunt_policy_names, shunt_policy, &spb));
-
-		jam(buf, " ");
-		jam_selector_subnet_port(buf, &sr->local->client);
-		jam(buf, "-%s->", selector_protocol(sr->local->client)->name);
-		jam_selector_subnet_port(buf, &sr->remote->client);
-
-		jam(buf, " (config)sec_label=");
-		if (c->config->sec_label.len > 0) {
-			jam_sanitized_hunk(buf, sec_label);
-		}
-
-		jam(buf, PRI_WHERE, pri_where(where));
-	}
-
-	/*
-	 * XXX: the two calls below to raw_policy() seems to be the
-	 * only place where SA_PROTO and ESATYPE disagree - when
-	 * ENCAPSULATION_MODE_TRANSPORT SA_PROTO==&ip_protocol_esp and
-	 * ESATYPE==ET_INT!?!  Looking in the function there's a weird
-	 * test involving both SA_PROTO and ESATYPE.
-	 *
-	 * XXX: suspect sa_proto should be dropped (when is SPI not
-	 * internal) and instead esatype (encapsulated sa type) should
-	 * receive &ip_protocol ...
-	 *
-	 * Use raw_policy() as it gives a better log result.
-	 */
-
-	/*
-	 * Are we supposed to end up with no policy?
-	 */
-	if (shunt_policy == SHUNT_NONE) {
-		struct kernel_policy outbound_policy =
-			stateless_kernel_policy(&sr->local->client, &sr->remote->client,
-						calculate_kernel_priority(c),
-						shunt_policy, where);
-		if (!raw_policy(KERNEL_POLICY_OP_REPLACE,
-				DIRECTION_OUTBOUND,
-				EXPECT_KERNEL_POLICY_OK,
-				&outbound_policy.src.client,
-				&outbound_policy.dst.client,
-				&outbound_policy,
-				deltatime(0),
-				&c->sa_marks, c->xfrmi,
-				sec_label,
-				logger,
-				"%s() outbound shunt for %s", __func__, opname))
-			return false;
-		/*
-		 * XXX: leave the inbound stateful inbound kernel
-		 * policy behind.  Why?
-		 */
-		return true;
-	}
-
-	/*
-	 * Note the NO_INBOUND_ENTRY.  It's a hack to get around a
-	 * connection being unrouted, deleting both inbound and
-	 * outbound policies when there's only the basic outbound
-	 * policy installed.
-	 */
-
-	return delete_kernel_policies(expect_kernel_policy,
-				      sr->local->client,
-				      sr->remote->client,
-				      &c->sa_marks, c->xfrmi,
-				      sec_label,
-				      logger, where, opname);
-}
-
 struct kernel_policy stateless_kernel_policy(const ip_selector *src,
 					     const ip_selector *dst,
 					     kernel_priority_t priority,
@@ -2972,7 +2879,7 @@ bool route_and_eroute(struct connection *c,
 	    sr->local->client.ipproto, sr->local->client.hport, sr->remote->client.hport);
 
 	struct spd_route *esr, *rosr;
-	struct connection *ero;
+	struct connection *ero; /* eclipsed route owner */
 	struct connection *ro = route_owner(c, sr, &rosr, &ero, &esr);	/* who, if anyone, owns our eroute? */
 
 	dbg("kernel: route_and_eroute with c: %s (next: %s) ero:%s esr:{%p} ro:%s rosr:{%p} and state: #%lu",
@@ -3009,16 +2916,20 @@ bool route_and_eroute(struct connection *c,
 		/* if no state provided, then install a shunt for later */
 		if (st == NULL) {
 			/*
-			 * XXX: this might delete the policy so
-			 * setting eroute_installed (aka
-			 * policy_installed) to true is a stretch.
+			 * XXX: this deletes the installed policies.
+			 * Setting eroute_installed (aka policy
+			 * installed) is a stretch.
 			 */
 			enum shunt_policy shunt_policy = c->config->prospective_shunt;
+			pexpect(shunt_policy != SHUNT_NONE); /* see prospective_shunt_ok() */
 			eroute_installed =
-				strip_stateful_policy(EXPECT_KERNEL_POLICY_OK,
-						    c, sr, shunt_policy,
-						    "route_and_eroute() replace shunt",
-						    logger, HERE);
+				delete_kernel_policies(EXPECT_KERNEL_POLICY_OK,
+						       sr->local->client,
+						       sr->remote->client,
+						       &c->sa_marks, c->xfrmi,
+						       HUNK_AS_SHUNK(c->config->sec_label),
+						       logger, HERE,
+						       "route_and_eroute() replace shunt");
 		} else {
 			eroute_installed = sag_eroute(st, sr,
 						      KERNEL_POLICY_OP_REPLACE,
@@ -3211,15 +3122,49 @@ bool route_and_eroute(struct connection *c,
 				/* restore ero's former glory */
 				if (esr->eroute_owner == SOS_NOBODY) {
 					/* note: normal or eclipse case */
-					enum shunt_policy shunt_policy =
-						(esr->connection->child.routing == RT_ROUTED_PROSPECTIVE ? c->config->prospective_shunt :
-						 c->config->failure_shunt);
-					if (!strip_stateful_policy(EXPECT_KERNEL_POLICY_OK,
-								   ero, esr, shunt_policy,
-								   "route_and_eroute() restore",
-								   logger, HERE)) {
-						llog(RC_LOG, logger,
-						     "shunt_policy() in route_and_eroute() failed restore/replace");
+					if (c->child.routing == RT_ROUTED_PROSPECTIVE) {
+						if (!delete_kernel_policies(EXPECT_KERNEL_POLICY_OK,
+									    esr->local->client,
+									    esr->remote->client,
+									    &ero->sa_marks, ero->xfrmi,
+									    HUNK_AS_SHUNK(ero->config->sec_label),
+									    logger, HERE,
+									    "route_and_eroute() restore eclipsed prospective")) {
+							llog(RC_LOG, logger,
+							     "shunt_policy() in route_and_eroute() failed restore/replace");
+						}
+					} else if (c->config->failure_shunt == SHUNT_NONE) {
+						struct kernel_policy outbound_policy =
+							stateless_kernel_policy(&esr->local->client, &esr->remote->client,
+										calculate_kernel_priority(ero),
+										SHUNT_NONE, HERE);
+						if (!raw_policy(KERNEL_POLICY_OP_REPLACE,
+								DIRECTION_OUTBOUND,
+								EXPECT_KERNEL_POLICY_OK,
+								&outbound_policy.src.client,
+								&outbound_policy.dst.client,
+								&outbound_policy,
+								deltatime(0),
+								&ero->sa_marks, ero->xfrmi,
+								HUNK_AS_SHUNK(ero->config->sec_label),
+								logger,
+								"route_and_eroute() restore eclipsed failure =- NONE")) {
+							llog(RC_LOG, logger,
+							     "shunt_policy() in route_and_eroute() failed restore/replace");
+
+						}
+					} else {
+						/* some other failure shunt */
+						if (!delete_kernel_policies(EXPECT_KERNEL_POLICY_OK,
+									    esr->local->client,
+									    esr->remote->client,
+									    &ero->sa_marks, ero->xfrmi,
+									    HUNK_AS_SHUNK(ero->config->sec_label),
+									    logger, HERE,
+									    "route_and_eroute() restore eclipsed failure != NONE")) {
+							llog(RC_LOG, logger,
+							     "shunt_policy() in route_and_eroute() failed restore/replace");
+						}
 					}
 				} else {
 					/*
