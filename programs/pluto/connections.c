@@ -3154,6 +3154,49 @@ struct connection *instantiate(struct connection *t,
 	}
 
 	d->child.reqid = (t->config->sa_reqid == 0 ? gen_reqid() : t->config->sa_reqid);
+
+	/* which is true?  template could be prospective? */
+#if 0
+	pexpect(d->child.routing == RT_UNROUTED); /* CK_INSTANCE? */
+	pexpect(d->child.routing == RT_PROSPECTIVE_EROUTED);  /* CK_GROUPINSTANCE? */
+#endif
+	set_child_routing(d, RT_UNROUTED);
+
+	/*
+	 * Reset; sec_label templates will have set this.
+	 */
+	d->newest_ike_sa = SOS_NOBODY;
+	pexpect(d->newest_ipsec_sa == SOS_NOBODY);
+
+	/* reset log file info */
+	d->log_file_name = NULL;
+	d->log_file = NULL;
+	d->log_file_err = false;
+
+	if (sec_label.len > 0) {
+		/*
+		 * Install the sec_label from either an acquire or
+		 * child payload into both ends.
+		 */
+		pexpect(t->child.sec_label.ptr == NULL);
+		d->child.sec_label = clone_hunk(sec_label, "instantiate() sec_label");
+	}
+
+	/* assumption: orientation is the same as c's */
+	connect_to_host_pair(d);
+	connection_db_add(d);
+
+	/* XXX: could this use the connection number? */
+	if (t->sa_marks.in.unique) {
+		d->sa_marks.in.val = global_marks;
+		d->sa_marks.out.val = global_marks;
+		global_marks++;
+		if (global_marks == UINT_MAX - 1) {
+			/* we hope 2^32 connections ago are no longer around */
+			global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
+		}
+	}
+
 	dbg("%s d->spd->reqid=%d because t->sa_reqid=%d (%s)",
 	    d->name, d->child.reqid, t->config->sa_reqid,
 	    (t->config->sa_reqid == 0 ? "generate" : "use"));
@@ -3205,49 +3248,11 @@ struct connection *spd_instantiate(struct connection *t,
 	pexpect(oriented(d)); /* can't instantiate an unoriented template? */
 	set_policy_prio(d); /* re-compute; may have changed */
 
-	/* should still be true; reset so it leaves a bread crumb */
-#if 0
-	pexpect(d->child.routing == RT_UNROUTED); /* CK_INSTANCE? */
-	pexpect(d->child.routing == RT_PROSPECTIVE_EROUTED);  /* CK_GROUPINSTANCE? */
-#endif
+	/* should still be true; leave another breadcrumb */
 	pexpect(d->spd->eroute_owner == SOS_NOBODY);
-	/* leave another breadcrumb */
-	set_child_routing(d, RT_UNROUTED);
 	set_spd_owner(d->spd, SOS_NOBODY);
 
-	d->newest_ike_sa = SOS_NOBODY;
-	d->newest_ipsec_sa = SOS_NOBODY;
-
-
-	/* reset log file info */
-	d->log_file_name = NULL;
-	d->log_file = NULL;
-	d->log_file_err = false;
-
-	if (t->sa_marks.in.unique) {
-		d->sa_marks.in.val = global_marks;
-		d->sa_marks.out.val = global_marks;
-		global_marks++;
-		if (global_marks == UINT_MAX - 1) {
-			/* we hope 2^32 connections ago are no longer around */
-			global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
-		}
-	}
-
-	/* assumption: orientation is the same as c's */
-	connect_to_host_pair(d);
-
-	if (sec_label.len > 0) {
-		/*
-		 * Install the sec_label from either an acquire or
-		 * child payload into both ends.
-		 */
-		pexpect(t->child.sec_label.ptr == NULL);
-		d->child.sec_label = clone_hunk(sec_label, "instantiate() sec_label");
-	}
-
 	/* all done */
-	connection_db_add(d);
 	spd_route_db_add_connection(d);
 
 	connection_buf cb, db;
