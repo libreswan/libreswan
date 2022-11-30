@@ -532,55 +532,37 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
 }
 
 /* (Possibly) Opportunistic Initiation:
- * Knowing clients (single IP addresses), try to build a tunnel.
- * This may involve discovering a gateway and instantiating an
- * Opportunistic connection.  Called when a packet is caught by
- * a %trap, or when whack --oppohere --oppothere is used.
- * It may turn out that an existing or non-opporunistic connection
- * can handle the traffic.
  *
- * Most of the code will be restarted if an ADNS request is made
- * to discover the gateway.  The only difference between the first
- * and second entry is whether gateways_from_dns is NULL or not.
+ * Knowing clients (single IP addresses), try to build a tunnel.  This
+ * may involve discovering a gateway and instantiating an
+ * Opportunistic connection.  Called when a packet is caught by a
+ * %trap, or when whack --oppohere --oppothere is used.  It may turn
+ * out that an existing or non-opporunistic connection can handle the
+ * traffic.
+ *
+ * Most of the code will be restarted if an ADNS request is made to
+ * discover the gateway.  The only difference between the first and
+ * second entry is whether gateways_from_dns is NULL or not.
+ *
  *	initiate_opportunistic: initial entrypoint
  *	continue_oppo: where we pickup when ADNS result arrives
  *	initiate_opportunistic_body: main body shared by above routines
  *	cannot_ondemand: a helper function to log a diagnostic
+ *
  * This structure repeats a lot of code when the ADNS result arrives.
- * This seems like a waste, but anything learned the first time through
- * may no longer be true!
+ * This seems like a waste, but anything learned the first time
+ * through may no longer be true!
  *
  * After the first IKE message is sent, the regular state machinery
  * carries negotiation forward.
  */
 
-struct find_oppo_bundle {
-	ip_packet packet; /* that triggered the opportunistic exchange */
-	bool by_acquire;	/* acquire? whack? */
-	struct logger *logger;	/* has whack attached */
-	bool background;
-	shunk_t sec_label;
-};
-
-static void jam_oppo_bundle(struct jambuf *buf, struct find_oppo_bundle *b)
-{
-	jam(buf, "initiate on-demand for packet ");
-	jam_packet(buf, &b->packet);
-	if (!b->by_acquire) {
-		jam(buf, " by whack");
-	}
-	if (b->sec_label.len > 0) {
-		jam(buf, " sec_label=");
-		jam_sanitized_hunk(buf, b->sec_label);
-	}
-}
-
-static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b,
+static void cannot_ondemand(lset_t rc_flags, struct kernel_acquire *b,
 			    enum shunt_policy failure_shunt, const char *ughmsg)
 {
 	LLOG_JAMBUF(rc_flags, b->logger, buf) {
 		jam(buf, "cannot ");
-		jam_oppo_bundle(buf, b);
+		jam_kernel_acquire(buf, b);
 		jam(buf, ": %s", ughmsg);
 	}
 
@@ -655,7 +637,7 @@ static ip_selector shunt_from_address_and_selector(const char *what,
 						   end_port);
 }
 
-static void initiate_ondemand_body(struct find_oppo_bundle *b)
+static void initiate_ondemand_body(struct kernel_acquire *b)
 {
 	threadtime_t inception = threadtime_start();
 	enum shunt_policy failure_shunt = SHUNT_HOLD; /* until we found connection policy */
@@ -740,7 +722,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * Announce this to the world.  Use c->logger instead?
 		 */
 		LLOG_JAMBUF(RC_LOG, b->logger, buf) {
-			jam_oppo_bundle(buf, b);
+			jam_kernel_acquire(buf, b);
 			/* jam(buf, " using "); */
 		}
 
@@ -855,7 +837,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		}
 
 		LLOG_JAMBUF(RC_LOG, b->logger, buf) {
-			jam_oppo_bundle(buf, b);
+			jam_kernel_acquire(buf, b);
 			/* jam(buf, " using "); */
 		}
 
@@ -890,7 +872,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 * on DBG() to file; or whack to whack.
 	 */
 	LLOG_JAMBUF(RC_LOG, b->logger, buf) {
-		jam_oppo_bundle(buf, b);
+		jam_kernel_acquire(buf, b);
 	}
 
 	connection_buf cib;
@@ -1044,7 +1026,7 @@ void initiate_ondemand(const ip_packet *packet,
 		       const shunk_t sec_label,
 		       struct logger *logger)
 {
-	struct find_oppo_bundle b = {
+	struct kernel_acquire b = {
 		.packet = *packet,
 		.by_acquire = by_acquire,
 		.logger = logger, /*on-stack*/

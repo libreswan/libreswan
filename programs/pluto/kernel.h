@@ -543,4 +543,40 @@ bool prospective_shunt_ok(enum shunt_policy shunt);
 bool negotiation_shunt_ok(enum shunt_policy shunt);
 bool failure_shunt_ok(enum shunt_policy shunt);
 
+/* (Possibly) Opportunistic Initiation:
+ *
+ * Knowing clients (single IP addresses), try to build a tunnel.  This
+ * may involve discovering a gateway and instantiating an
+ * Opportunistic connection.  Called when a packet is caught by a
+ * %trap, or when whack --oppohere --oppothere is used.  It may turn
+ * out that an existing or non-opporunistic connection can handle the
+ * traffic.
+ *
+ * Most of the code will be restarted if an ADNS request is made to
+ * discover the gateway.  The only difference between the first and
+ * second entry is whether gateways_from_dns is NULL or not.
+ *
+ *	initiate_opportunistic: initial entrypoint
+ *	continue_oppo: where we pickup when ADNS result arrives
+ *	initiate_opportunistic_body: main body shared by above routines
+ *	cannot_ondemand: a helper function to log a diagnostic
+ *
+ * This structure repeats a lot of code when the ADNS result arrives.
+ * This seems like a waste, but anything learned the first time
+ * through may no longer be true!
+ *
+ * After the first IKE message is sent, the regular state machinery
+ * carries negotiation forward.
+ */
+
+struct kernel_acquire {
+	ip_packet packet; /* that triggered the opportunistic exchange */
+	bool by_acquire;	/* by kernel acquire, else by whack */
+	struct logger *logger;	/* on stack, could have whack attached */
+	bool background;
+	shunk_t sec_label;	/* on stack */
+};
+
+void jam_kernel_acquire(struct jambuf *buf, const struct kernel_acquire *b);
+
 #endif

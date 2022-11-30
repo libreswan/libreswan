@@ -4016,3 +4016,16 @@ void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address *dst,
 		passert(1); /* lets break! */
 	}
 }
+
+void jam_kernel_acquire(struct jambuf *buf, const struct kernel_acquire *b)
+{
+	jam(buf, "initiate on-demand for packet ");
+	jam_packet(buf, &b->packet);
+	if (!b->by_acquire) {
+		jam(buf, " by whack");
+	}
+	if (b->sec_label.len > 0) {
+		jam(buf, " sec_label=");
+		jam_sanitized_hunk(buf, b->sec_label);
+	}
+}
