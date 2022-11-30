@@ -1109,6 +1109,7 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 					       enum kernel_policy_op op,
 					       enum direction dir,
 					       enum ipsec_policy policy_type,
+					       enum kernel_policy_id policy_id,
 					       const struct kernel_policy *kernel_policy)
 {
 
@@ -1119,7 +1120,8 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 	struct sadb_x_policy *x_policy =
 		put_sadb_ext(req, sadb_x_policy, SADB_X_EXT_POLICY,
 			     .sadb_x_policy_type = policy_type,
-			     .sadb_x_policy_dir = policy_dir);
+			     .sadb_x_policy_dir = policy_dir,
+			     .sadb_x_policy_id = policy_id);
 
 	if (kernel_policy != NULL) {
 #ifdef sadb_x_policy_priority
@@ -1153,6 +1155,26 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 }
 #endif
 
+#ifdef SADB_X_EXT_POLICY
+static bool parse_sadb_x_policy(shunk_t *ext_cursor,
+				enum kernel_policy_id *policy_id,
+				struct logger *logger)
+{
+	shunk_t policy_cursor;
+	const struct sadb_x_policy *policy =
+		get_sadb_x_policy(ext_cursor, &policy_cursor, logger);
+	if (policy == NULL) {
+		return false;
+	}
+	if (DBGP(DBG_BASE)) {
+		llog_sadb_x_policy(DEBUG_STREAM, logger, policy, "  ");
+	}
+	*policy_id = policy->sadb_x_policy_id;
+	ldbg(logger, "    %u", (unsigned)(*policy_id));
+	return true;
+}
+#endif
+
 static bool pfkeyv2_raw_policy(enum kernel_policy_op op,
 			       enum direction dir,
 			       enum expect_kernel_policy expect_kernel_policy,
@@ -1162,6 +1184,7 @@ static bool pfkeyv2_raw_policy(enum kernel_policy_op op,
 			       deltatime_t use_lifetime UNUSED,
 			       const struct sa_marks *sa_marks UNUSED,
 			       const struct pluto_xfrmi *xfrmi UNUSED,
+			       enum kernel_policy_id policy_id,
 			       const shunk_t sec_label UNUSED,
 			       struct logger *logger)
 {
@@ -1328,7 +1351,7 @@ static bool pfkeyv2_raw_policy(enum kernel_policy_op op,
 	}
 	pexpect(policy_type != UINT_MAX);
 
-	put_sadb_x_policy(&req, op, dir, policy_type, kernel_policy);
+	put_sadb_x_policy(&req, op, dir, policy_type, policy_id, kernel_policy);
 
 #endif
 
@@ -1350,7 +1373,7 @@ static bool pfkeyv2_raw_policy(enum kernel_policy_op op,
 	return true;
 }
 
-static bool process_address(shunk_t *ext_cursor, ip_address *addr, ip_port *port, struct logger *logger)
+static bool parse_sadb_address(shunk_t *ext_cursor, ip_address *addr, ip_port *port, struct logger *logger)
 {
 	shunk_t address_cursor;
 	const struct sadb_address *address =
@@ -1370,13 +1393,14 @@ static bool process_address(shunk_t *ext_cursor, ip_address *addr, ip_port *port
 	return true;
 }
 
-static void process_acquire(const struct sadb_msg *msg,
-			    shunk_t msg_cursor,
-			    struct logger *logger)
+static void parse_sadb_acquire(const struct sadb_msg *msg UNUSED,
+			       shunk_t msg_cursor,
+			       struct logger *logger)
 {
 	ip_address src_address = unset_address;
 	ip_address dst_address = unset_address;
 	ip_port src_port, dst_port;
+	enum kernel_policy_id policy_id = 0;
 
 	while (msg_cursor.len > 0) {
 
@@ -1392,18 +1416,24 @@ static void process_acquire(const struct sadb_msg *msg,
 		switch (exttype) {
 
 		case SADB_EXT_ADDRESS_SRC:
-			if (!process_address(&ext_cursor, &src_address, &src_port, logger)) {
+			if (!parse_sadb_address(&ext_cursor, &src_address, &src_port, logger)) {
 				return;
 			}
 			break;
 		case SADB_EXT_ADDRESS_DST:
-			if (!process_address(&ext_cursor, &dst_address, &dst_port, logger)) {
+			if (!parse_sadb_address(&ext_cursor, &dst_address, &dst_port, logger)) {
 				return;
 			}
 			break;
 #ifdef SADB_X_EXT_POLICY /* FreeBSD NetBSD */
 		case SADB_X_EXT_POLICY:
+			policy_id = 0;
+			if (!parse_sadb_x_policy(&ext_cursor, &policy_id, logger)) {
+				return;
+			}
+			break;
 #endif
+
 		case SADB_EXT_PROPOSAL:
 			if (DBGP(DBG_BASE)) {
 				llog_sadb_ext(DEBUG_STREAM, logger, ext, "ignore: ");
@@ -1436,7 +1466,7 @@ static void process_acquire(const struct sadb_msg *msg,
 		.logger = logger, /*on-stack*/
 		.background = true, /* no whack so doesn't matter */
 		.sec_label = null_shunk,
-		.seq = msg->sadb_msg_seq,
+		.policy_id = policy_id,
 	};
 	initiate_ondemand(&b);
 }
@@ -1456,7 +1486,7 @@ static void process_pending(chunk_t payload, struct logger *logger)
 
 	switch (msg->sadb_msg_type) {
 	case SADB_ACQUIRE:
-		process_acquire(msg, msg_cursor, logger);
+		parse_sadb_acquire(msg, msg_cursor, logger);
 		break;
 	}
 }

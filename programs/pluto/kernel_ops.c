@@ -36,6 +36,7 @@ bool raw_policy(enum kernel_policy_op op,
 		deltatime_t use_lifetime,
 		const struct sa_marks *sa_marks,
 		const struct pluto_xfrmi *xfrmi,
+		enum kernel_policy_id id,
 		const shunk_t sec_label,
 		struct logger *logger,
 		const char *fmt, ...)
@@ -160,8 +161,7 @@ bool raw_policy(enum kernel_policy_op op,
 					     src_client, dst_client,
 					     policy,
 					     use_lifetime,
-					     sa_marks, xfrmi,
-					     sec_label,
+					     sa_marks, xfrmi, id, sec_label,
 					     logger);
 	dbg("kernel: %s() result=%s", __func__, (result ? "success" : "failed"));
 
@@ -174,6 +174,7 @@ bool delete_kernel_policy(enum direction dir,
 			  const ip_selector dst_client,
 			  const struct sa_marks *sa_marks,
 			  const struct pluto_xfrmi *xfrmi,
+			  enum kernel_policy_id id,
 			  const shunk_t sec_label,
 			  struct logger *logger, where_t where, const char *story)
 {
@@ -207,6 +208,8 @@ bool delete_kernel_policy(enum direction dir,
 		jam(buf, " xfrm_if_id=%d",
 		    xfrmi != NULL ? (int)xfrmi->if_id : -1);
 
+		jam(buf, " id=%d", (unsigned)id);
+
 		jam(buf, " sec_label=");
 		jam_sanitized_hunk(buf, sec_label);
 
@@ -219,7 +222,7 @@ bool delete_kernel_policy(enum direction dir,
 					     &src_client, &dst_client,
 					     /*policy*/NULL/*delete-not-needed*/,
 					     deltatime(0),
-					     sa_marks, xfrmi, sec_label,
+					     sa_marks, xfrmi, id, sec_label,
 					     logger);
 	dbg("kernel: %s() result=%s", __func__, (result ? "success" : "failed"));
 	return result;
@@ -230,19 +233,20 @@ bool delete_kernel_policies(enum expect_kernel_policy expect_inbound_kernel_poli
 			    const ip_selector remote_client,
 			    const struct sa_marks *sa_marks,
 			    const struct pluto_xfrmi *xfrmi,
+			    enum kernel_policy_id id,
 			    const shunk_t sec_label,
 			    struct logger *logger, where_t where, const char *story)
 {
 	bool out = delete_kernel_policy(DIRECTION_OUTBOUND,
 					EXPECT_KERNEL_POLICY_OK,
 					local_client, remote_client,
-					sa_marks, xfrmi, sec_label,
+					sa_marks, xfrmi, id, sec_label,
 					logger, where, story);
 	/* XXX: stumble on */
 	bool in = delete_kernel_policy(DIRECTION_INBOUND,
 				       expect_inbound_kernel_policy,
 				       remote_client, local_client,
-				       sa_marks, xfrmi, sec_label,
+				       sa_marks, xfrmi, id, sec_label,
 				       logger, where, story);
 	return (in && out);
 }

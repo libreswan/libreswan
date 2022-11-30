@@ -596,8 +596,9 @@ static void cannot_ondemand(lset_t rc_flags, const struct kernel_acquire *b,
 				&outbound_policy.src.client, &outbound_policy.dst.client,
 				&outbound_policy,
 				deltatime(SHUNT_PATIENCE),
-				NULL, /* sa_marks */
-				0 /* xfrm interface id */,
+				/*sa_marks*/NULL,
+				/*xfrmi*/NULL,
+				DEFAULT_KERNEL_POLICY_ID,
 				b->sec_label, b->logger,
 				"%s() %s", __func__, ughmsg)) {
 			llog(RC_LOG_SERIOUS, b->logger,
@@ -973,7 +974,9 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		       &outbound_kernel_policy.dst.client,
 		       &outbound_kernel_policy,
 		       deltatime(SHUNT_PATIENCE),
-		       NULL, 0 /* xfrm-if-id */,
+		       /*sa_marks*/NULL,
+		       /*xfrmi*/NULL,
+		       DEFAULT_KERNEL_POLICY_ID,
 		       b->sec_label, b->logger,
 		       "%s() %s", __func__, addwidemsg)) {
 		dbg("adding bare (possibly wided) passthrough negotiationshunt succeeded (violating API)");

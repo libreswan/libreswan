@@ -28,9 +28,10 @@ extern bool raw_policy(enum kernel_policy_op op,
 		       deltatime_t use_lifetime,
 		       const struct sa_marks *sa_marks,
 		       const struct pluto_xfrmi *xfrmi,
+		       enum kernel_policy_id id,
 		       const shunk_t sec_label,
 		       struct logger *logger,
-		       const char *fmt, ...) PRINTF_LIKE(12);
+		       const char *fmt, ...) PRINTF_LIKE(13);
 
 /*kernel_ops_policy() kernel_ops_spd()? */
 extern bool delete_kernel_policy(enum direction dir,
@@ -39,6 +40,7 @@ extern bool delete_kernel_policy(enum direction dir,
 				 const ip_selector that_client,
 				 const struct sa_marks *sa_marks,
 				 const struct pluto_xfrmi *xfrmi,
+				 enum kernel_policy_id id,
 				 const shunk_t sec_label, /*needed*/
 				 struct logger *logger, where_t where, const char *story);
 extern bool delete_kernel_policies(enum expect_kernel_policy expect_inbound_kernel_policy,
@@ -46,6 +48,7 @@ extern bool delete_kernel_policies(enum expect_kernel_policy expect_inbound_kern
 				   const ip_selector remote_client,
 				   const struct sa_marks *sa_marks,
 				   const struct pluto_xfrmi *xfrmi,
+				   enum kernel_policy_id id,
 				   const shunk_t sec_label, /*needed*/
 				   struct logger *logger, where_t where, const char *story);
 

@@ -319,6 +319,7 @@ static bool add_prospective_policy(enum expect_kernel_policy expect_kernel_polic
 			&outbound_kernel_policy,
 			deltatime(0),
 			&c->sa_marks, c->xfrmi,
+			DEFAULT_KERNEL_POLICY_ID,
 			sec_label,
 			logger,
 			"%s() outbound shunt for %s", __func__, opname))
@@ -344,6 +345,7 @@ static bool add_prospective_policy(enum expect_kernel_policy expect_kernel_polic
 			  &inbound_kernel_policy,
 			  deltatime(0),
 			  &c->sa_marks, c->xfrmi,
+			  DEFAULT_KERNEL_POLICY_ID,
 			  sec_label,
 			  logger,
 			  "%s() inbound shunt for %s", __func__, opname);
@@ -1553,6 +1555,7 @@ void unroute_connection(struct connection *c)
 					       sr->local->client,
 					       sr->remote->client,
 					       &c->sa_marks, c->xfrmi,
+					       DEFAULT_KERNEL_POLICY_ID,
 					       HUNK_AS_SHUNK(c->config->sec_label),
 					       c->logger, HERE, "unrouting connection");
 #ifdef IPSEC_CONNECTION_LIMIT
@@ -1674,7 +1677,8 @@ static void delete_bare_kernel_policy(const struct bare_shunt *bsp,
 	if (!delete_kernel_policy(DIRECTION_OUTBOUND,
 				  EXPECT_KERNEL_POLICY_OK,
 				  src, dst,
-				  /*sa_marks+xfrmi*/NULL,NULL,/*bare-shunt*/
+				  /*sa_marks*/NULL, /*xfrmi*/NULL, /*bare-shunt*/
+				  DEFAULT_KERNEL_POLICY_ID,
 				  /* bare-shunt: no sec_label XXX: ?!? */
 				  null_shunk,
 				  logger, where, "delete bare shunt")) {
@@ -1738,7 +1742,8 @@ bool flush_bare_shunt(const ip_address *src_address,
 	bool ok = delete_kernel_policy(DIRECTION_OUTBOUND,
 				       expect_kernel_policy,
 				       src, dst,
-				       /*sa_marks+xfrmi*/NULL,NULL,/*bare-shunt*/
+				       /*sa_marks*/NULL, /*xfrmi*/NULL, /*bare-shunt*/
+				       DEFAULT_KERNEL_POLICY_ID,
 				       /*sec-label*/null_shunk,/*bare-shunt*/
 				       logger, HERE, why);
 	if (!ok) {
@@ -1815,7 +1820,9 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 				&kernel_policy.src.client, &kernel_policy.dst.client,
 				&kernel_policy,
 				/*use_lifetime*/deltatime(0),
-				/*sa_marks+xfrmi*/NULL,NULL,/* XXX: bug? */
+				/*sa_marks*/NULL, /* XXX:bug? */
+				/*xfrmi*/NULL, /* XXX: bug? */
+				DEFAULT_KERNEL_POLICY_ID,
 				/*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
 				/*logger*/logger,
 				"%s() security label policy", __func__)) {
@@ -1835,7 +1842,9 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 						     EXPECT_KERNEL_POLICY_OK,
 						     c->spd->local->client,
 						     c->spd->remote->client,
-						     /*sa_marks+xfrmi*/NULL,NULL,/* XXX: bug? */
+						     /*sa_marks*/NULL, /* XXX: bug? */
+						     /*xfrmi*/NULL, /* XXX: bug? */
+						     DEFAULT_KERNEL_POLICY_ID,
 						     /*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
 						     /*logger*/logger, HERE, "security label policy");
 			}
@@ -1858,7 +1867,9 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 		delete_kernel_policies(EXPECT_KERNEL_POLICY_OK,
 				       c->spd->local->client,
 				       c->spd->remote->client,
-				       /*sa_marks+xfrmi*/NULL,NULL,/* XXX: bug? */
+				       /*sa_marks*/NULL,  /* XXX: bug? */
+				       /*xfrmi*/NULL, /* XXX: bug? */
+				       DEFAULT_KERNEL_POLICY_ID,
 				       /*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
 				       /*logger*/logger, HERE,
 				       "security label policy");
@@ -1887,6 +1898,7 @@ bool eroute_outbound_connection(enum kernel_policy_op op,
 				    kernel_policy,
 				    deltatime(0),
 				    sa_marks, xfrmi,
+				    DEFAULT_KERNEL_POLICY_ID,
 				    sec_label,
 				    logger,
 				    "CAT: %s() %s", __func__, opname);
@@ -1904,6 +1916,7 @@ bool eroute_outbound_connection(enum kernel_policy_op op,
 			  kernel_policy,
 			  deltatime(0),
 			  sa_marks, xfrmi,
+			  DEFAULT_KERNEL_POLICY_ID,
 			  sec_label,
 			  logger,
 			  "%s() %s", __func__, opname);
@@ -2522,6 +2535,7 @@ static bool setup_half_kernel_policy(struct state *st, enum direction direction)
 				&kernel_policy,			/* " */
 				deltatime(0),		/* lifetime */
 				&c->sa_marks, c->xfrmi,		/* IPsec SA marks */
+				DEFAULT_KERNEL_POLICY_ID,
 				HUNK_AS_SHUNK(c->config->sec_label),
 				st->st_logger,
 				"%s() add inbound Child SA", __func__)) {
@@ -2925,7 +2939,9 @@ bool route_and_eroute(struct connection *c,
 				delete_kernel_policies(EXPECT_KERNEL_POLICY_OK,
 						       sr->local->client,
 						       sr->remote->client,
-						       &c->sa_marks, c->xfrmi,
+						       &c->sa_marks,
+						       c->xfrmi,
+						       DEFAULT_KERNEL_POLICY_ID,
 						       HUNK_AS_SHUNK(c->config->sec_label),
 						       logger, HERE,
 						       "route_and_eroute() replace shunt");
@@ -3109,8 +3125,13 @@ bool route_and_eroute(struct connection *c,
 						&outbound_kernel_policy.dst.client,
 						&outbound_kernel_policy,
 						deltatime(SHUNT_PATIENCE),
-						/*sa_mars+xfrmi*/NULL,NULL,
-						/* bare shunt are not associated with any connection so no security label */
+						/*sa_marks*/NULL,
+						/*xfrmi*/NULL,
+						DEFAULT_KERNEL_POLICY_ID,
+						/* bare shunt are not
+						 * associated with any
+						 * connection so no
+						 * security label */
 						null_shunk, logger,
 						"%s() restore", __func__)) {
 					llog(RC_LOG, logger,
@@ -3125,7 +3146,9 @@ bool route_and_eroute(struct connection *c,
 						if (!delete_kernel_policies(EXPECT_KERNEL_POLICY_OK,
 									    esr->local->client,
 									    esr->remote->client,
-									    &ero->sa_marks, ero->xfrmi,
+									    &ero->sa_marks,
+									    ero->xfrmi,
+									    DEFAULT_KERNEL_POLICY_ID,
 									    HUNK_AS_SHUNK(ero->config->sec_label),
 									    logger, HERE,
 									    "route_and_eroute() restore eclipsed prospective")) {
@@ -3145,6 +3168,7 @@ bool route_and_eroute(struct connection *c,
 								&outbound_policy,
 								deltatime(0),
 								&ero->sa_marks, ero->xfrmi,
+								DEFAULT_KERNEL_POLICY_ID,
 								HUNK_AS_SHUNK(ero->config->sec_label),
 								logger,
 								"route_and_eroute() restore eclipsed failure =- NONE")) {
@@ -3157,7 +3181,9 @@ bool route_and_eroute(struct connection *c,
 						if (!delete_kernel_policies(EXPECT_KERNEL_POLICY_OK,
 									    esr->local->client,
 									    esr->remote->client,
-									    &ero->sa_marks, ero->xfrmi,
+									    &ero->sa_marks,
+									    ero->xfrmi,
+									    DEFAULT_KERNEL_POLICY_ID,
 									    HUNK_AS_SHUNK(ero->config->sec_label),
 									    logger, HERE,
 									    "route_and_eroute() restore eclipsed failure != NONE")) {
@@ -3195,7 +3221,9 @@ bool route_and_eroute(struct connection *c,
 					if (!delete_kernel_policies(EXPECT_KERNEL_POLICY_OK,
 								    sr->local->client,
 								    sr->remote->client,
-								    &c->sa_marks, c->xfrmi,
+								    &c->sa_marks,
+								    c->xfrmi,
+								    DEFAULT_KERNEL_POLICY_ID,
 								    HUNK_AS_SHUNK(c->config->sec_label),
 								    c->logger, HERE, "deleting route and eroute")) {
 						llog(RC_LOG, logger,
@@ -3367,7 +3395,9 @@ static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
 			&outbound_kernel_policy.dst.client,
 			(outbound_op == KERNEL_POLICY_OP_DELETE ? NULL : &outbound_kernel_policy),
 			deltatime(0),
-			&out->connection->sa_marks, out->connection->xfrmi,
+			&out->connection->sa_marks,
+			out->connection->xfrmi,
+			DEFAULT_KERNEL_POLICY_ID,
 			HUNK_AS_SHUNK(out->connection->config->sec_label),
 			out->connection->logger,
 			"%s() outbound kernel policy for %s", __func__, story)) {
@@ -3380,7 +3410,9 @@ static void teardown_kernel_policies(enum kernel_policy_op outbound_op,
 				  expect_kernel_policy,
 				  in->remote->client,
 				  in->local->client,
-				  &in->connection->sa_marks,in->connection->xfrmi,/*real*/
+				  &in->connection->sa_marks,
+				  in->connection->xfrmi,/*real*/
+				  DEFAULT_KERNEL_POLICY_ID,
 				  /*sec_label*/null_shunk,/*always*/
 				  in->connection->logger, HERE, story)) {
 		llog(RC_LOG, logger,
@@ -3802,7 +3834,8 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 					     &outbound_kernel_policy.dst.client,
 					     &outbound_kernel_policy,
 					     deltatime(SHUNT_PATIENCE),
-					     /*sa_marks+xfrmi*/NULL,NULL,
+					     /*sa_marks*/NULL, /*xfrmi*/NULL,
+					     DEFAULT_KERNEL_POLICY_ID,
 					     null_shunk, logger,
 					     "%s() %s", __func__, why);
 			if (!ok) {
@@ -4028,7 +4061,10 @@ void jam_kernel_acquire(struct jambuf *buf, const struct kernel_acquire *b)
 		jam(buf, " sec_label=");
 		jam_sanitized_hunk(buf, b->sec_label);
 	}
-	if (b->seq > 0) {
-		jam(buf, " seq=%u", (unsigned)b->seq);
+	if (b->state_id > 0) {
+		jam(buf, " seq=%u", (unsigned)b->state_id);
+	}
+	if (b->policy_id > 0) {
+		jam(buf, " policy=%u", (unsigned)b->policy_id);
 	}
 }

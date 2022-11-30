@@ -159,27 +159,6 @@ static sparse_names rtm_type_names = {
 #undef NE
 
 /*
- * xfrm2ip - Take an xfrm and convert to an IP address
- *
- * @param xaddr xfrm_address_t
- * @param addr ip_address IPv[46] Address from addr is copied here.
- */
-static void xfrm2ip(const xfrm_address_t *xaddr, ip_address *addr, const sa_family_t family)
-{
-	shunk_t x = THING_AS_SHUNK(*xaddr);
-
-	const struct ip_info *afi = aftoinfo(family);
-	passert(afi != NULL);
-
-	*addr = afi->address.unspec; /* initialize dst type and zero */
-	chunk_t a = address_as_chunk(addr);
-
-	/* a = x */
-	passert(x.len >= a.len);
-	memcpy(a.ptr, x.ptr, a.len);
-}
-
-/*
  * xfrm_from-address - Take an IP address and convert to an xfrm.
  */
 static xfrm_address_t xfrm_from_address(const ip_address *addr)
@@ -563,6 +542,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 			    deltatime_t use_lifetime UNUSED,
 			    const struct sa_marks *sa_marks,
 			    const struct pluto_xfrmi *xfrmi,
+			    enum kernel_policy_id policy_id,
 			    const shunk_t sec_label,
 			    struct logger *logger)
 {
@@ -661,6 +641,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 		struct xfrm_userpolicy_id *id = NLMSG_DATA(&req.n);
 		req_dir = &id->dir; /* set below */
 		set_xfrm_selectors(&id->sel, src_client, dst_client);
+		id->index = policy_id;
 	} else {
 		passert(kernel_policy != NULL); /*nr_rules >= 0*/
 		/*
@@ -1283,6 +1264,8 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 	req.n.nlmsg_type = replace ? XFRM_MSG_UPDSA : XFRM_MSG_NEWSA;
 
+	req.p.seq = sa->state_id;
+
 	req.p.saddr = xfrm_from_address(&sa->src.address);
 	req.p.id.daddr = xfrm_from_address(&sa->dst.address);
 
@@ -1860,7 +1843,8 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 		.logger = logger, /*on-stack*/
 		.background = true, /* no whack so doesn't matter */
 		.sec_label = sec_label,
-		.seq = acquire->seq,
+		.state_id = acquire->seq,
+		.policy_id = acquire->policy.index,
 	};
 
 	initiate_ondemand(&b);
@@ -1973,11 +1957,10 @@ static void netlink_kernel_sa_expire(struct nlmsghdr *n, struct logger *logger)
 		return;
 	}
 
-	ip_address src, dst;
+	ip_address src = address_from_xfrm(afi, &ue->state.saddr);
+	ip_address dst = address_from_xfrm(afi, &ue->state.id.daddr);
 	address_buf a;
 	address_buf b;
-	xfrm2ip(&ue->state.saddr, &src, ue->state.family);
-	xfrm2ip(&ue->state.id.daddr, &dst, ue->state.family);
 	dbg("%s spi 0x%x src %s dst %s %s mode %u proto %d bytes %"PRIu64" packets %"PRIu64"%s",
 	    __func__, ntohl(ue->state.id.spi),
 	    str_address(&src, &a), str_address(&dst, &b), ue->hard ? "hard" : "soft",
@@ -2039,16 +2022,22 @@ static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
 		return;
 	}
 
-	ip_address src, dst;
-
 	struct {
 		struct nlmsghdr n;
 		struct xfrm_userpolicy_id id;
 	} req;
 	struct nlm_resp rsp;
 
-	xfrm2ip(&upe->pol.sel.saddr, &src, upe->pol.sel.family);
-	xfrm2ip(&upe->pol.sel.daddr, &dst, upe->pol.sel.family);
+	const struct ip_info *afi = aftoinfo(upe->pol.sel.family);
+	if (afi == NULL) {
+		llog(RC_LOG, logger,
+		     "XFRM_MSG_EXPIRE message from kernel malformed: family %u unknown",
+		     upe->pol.sel.family);
+		return;
+	}
+
+	ip_address src = address_from_xfrm(afi, &upe->pol.sel.saddr);
+	ip_address dst = address_from_xfrm(afi, &upe->pol.sel.daddr);
 	address_buf a;
 	address_buf b;
 	dbg("%s src %s/%u dst %s/%u dir %d index %d",

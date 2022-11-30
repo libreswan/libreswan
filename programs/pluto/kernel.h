@@ -38,6 +38,9 @@ struct iface_dev;
 struct raw_iface;
 struct show;
 
+enum kernel_state_id { DEFAULT_KERNEL_STATE_ID, };	/* sizeof() >= sizeof(uint32_t) */
+enum kernel_policy_id { DEFAULT_KERNEL_POLICY_ID, };	/* sizeof() >= sizeof(uint32_t) */
+
 /*
  * Declare policy things early enough for uses.
  * Some of these things, while they seem like they are KLIPS-only, the
@@ -263,6 +266,7 @@ struct kernel_state {
 	const struct ip_protocol *proto;	/* ESP, AH, IPCOMP */
 	const struct ip_encap *encap_type;	/* ESP-in-TCP, ESP-in-UDP; or NULL */
 	unsigned replay_window;
+	enum kernel_state_id state_id;		/* linux calls this seq */
 	reqid_t reqid;
 
 	const struct encrypt_desc *encrypt;
@@ -364,6 +368,7 @@ struct kernel_ops {
 			   deltatime_t use_lifetime,
 			   const struct sa_marks *sa_marks,
 			   const struct pluto_xfrmi *xfrmi,
+			   enum kernel_policy_id id,
 			   const shunk_t sec_label,
 			   struct logger *logger);
 
@@ -543,41 +548,14 @@ bool prospective_shunt_ok(enum shunt_policy shunt);
 bool negotiation_shunt_ok(enum shunt_policy shunt);
 bool failure_shunt_ok(enum shunt_policy shunt);
 
-/* (Possibly) Opportunistic Initiation:
- *
- * Knowing clients (single IP addresses), try to build a tunnel.  This
- * may involve discovering a gateway and instantiating an
- * Opportunistic connection.  Called when a packet is caught by a
- * %trap, or when whack --oppohere --oppothere is used.  It may turn
- * out that an existing or non-opporunistic connection can handle the
- * traffic.
- *
- * Most of the code will be restarted if an ADNS request is made to
- * discover the gateway.  The only difference between the first and
- * second entry is whether gateways_from_dns is NULL or not.
- *
- *	initiate_opportunistic: initial entrypoint
- *	continue_oppo: where we pickup when ADNS result arrives
- *	initiate_opportunistic_body: main body shared by above routines
- *	cannot_ondemand: a helper function to log a diagnostic
- *
- * This structure repeats a lot of code when the ADNS result arrives.
- * This seems like a waste, but anything learned the first time
- * through may no longer be true!
- *
- * After the first IKE message is sent, the regular state machinery
- * carries negotiation forward.
- */
-
-enum kernel_seq { INVALID_SEQ, }; /* unsigned >= 32-bit */
-
 struct kernel_acquire {
-	ip_packet packet; /* that triggered the opportunistic exchange */
-	bool by_acquire;	/* by kernel acquire, else by whack */
-	struct logger *logger;	/* on stack, could have whack attached */
-	bool background;
-	shunk_t sec_label;	/* on stack */
-	enum kernel_seq seq;
+	ip_packet packet;			/* that triggered the on-demand exchange */
+	bool by_acquire;			/* by kernel acquire, else by whack */
+	struct logger *logger;			/* on stack, could have whack attached */
+	bool background;			/* close whackfd once started */
+	shunk_t sec_label;			/* on stack */
+	enum kernel_state_id state_id;		/* matches kernel state's .seq? */
+	enum kernel_policy_id policy_id;	/* matches kernel policy's .index? */
 };
 
 void jam_kernel_acquire(struct jambuf *buf, const struct kernel_acquire *b);
