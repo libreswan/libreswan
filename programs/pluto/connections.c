@@ -3728,71 +3728,72 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 static struct connection *oppo_instantiate(struct connection *t,
 					   const ip_address remote_address)
 {
-	PEXPECT(t->logger, oriented(t)); /* else won't instantiate */
-
-	ip_address local_address = t->local->host.addr;
-	pexpect(address_is_specified(local_address));
-	pexpect(address_is_specified(remote_address));
-
 	/*
 	 * Instance inherits remote ID of child; exception being when
 	 * ID is NONE when it is set to the remote address.
 	 */
-	struct connection *d = instantiate(t, remote_address, /*peer_id*/NULL, /*sec_label*/null_shunk);
+	PASSERT(t->logger, t->kind == CK_TEMPLATE);
+	PASSERT(t->logger, oriented(t)); /* else won't instantiate */
+
+	struct connection *d = instantiate(t, remote_address,
+					   /*peer_id*/NULL,
+					   /*sec_label*/null_shunk);
+
+	PASSERT(d->logger, d->kind == CK_INSTANCE);
+	PASSERT(d->logger, oriented(d)); /* else won't instantiate */
+	PASSERT(d->logger, d->policy & POLICY_OPPORTUNISTIC);
+	PASSERT(d->logger, address_eq_address(d->remote->host.addr, remote_address));
 
 	clone_connection_spd(d, t);
-	update_spds_from_end_host_addr(d, d->remote->config->index, remote_address, HERE);
-	set_policy_prio(d); /* re-compute; may have changed */
 
-	/* should still be true; leave another breadcrumb */
-	pexpect(d->spd->eroute_owner == SOS_NOBODY);
+	/* should still be true; leave another bread crumb */
+	PASSERT(d->logger, d->spd->eroute_owner == SOS_NOBODY);
 	set_spd_owner(d->spd, SOS_NOBODY);
 
-	/* all done */
-	spd_route_db_add_connection(d);
-
-	passert(d->spd->spd_next == NULL);
+	/* all done; only one */
+	PASSERT(d->logger, d->spd->spd_next == NULL);
 
 	/*
-	 * Fill in (or fix up) our client side.
+	 * XXX: shouldn't this have been done by the template - local
+	 * address hasn't changed.
 	 */
-
-	const struct ip_protocol *local_protocol = selector_protocol(t->spd->local->client);
-	ip_port local_port = selector_port(t->spd->local->client);
-	ldbg(d->logger,
-	     "%s() protocol %s port %d",
-	     __func__, local_protocol->name,
-	     local_port.hport);
+	const struct ip_protocol *local_template_protocol =
+		selector_protocol(t->spd->local->client);
+	ip_port local_template_port =
+		selector_port(t->spd->local->client);
+	ldbg(d->logger, "%s() protocol %s port "PRI_HPORT,
+	     __func__, local_template_protocol->name, pri_hport(local_template_port));
 
 	if (d->local->child.has_client) {
 		/*
+		 * Opportunistic connections do not use port
+		 * selectors.
+		 *
 		 * There was a client in the abstract connection so we
 		 * demand that either ...
 		 */
-
-		/* opportunistic connections do not use port selectors */
-		if (address_in_selector_range(local_address, d->spd->local->client)) {
+		if (address_in_selector_range(d->local->host.addr, d->spd->local->client)) {
+			pexpect(d->local->child.config->selectors.len == 0);
 			ldbg(d->logger, "%s() local %s.spd.has_client==true and local address <= client; narrowing local client",
 			     __func__, d->spd->local->config->leftright);
 			/*
-			 * the required client is within that subnet
-			 * narrow it(?), ...
-			*/
-			set_first_selector(d, local,
-				     selector_from_address_protocol_port(local_address,
-									 local_protocol,
-									 local_port));
-		} else if (address_eq_address(local_address, d->local->host.addr)) {
+			 * ... the required client is within that
+			 * subnet narrow it(?), ...
+			 */
+			ip_selector new_local_client =
+				selector_from_address_protocol_port(d->local->host.addr,
+								    local_template_protocol,
+								    local_template_port);
+			set_first_selector(d, local, new_local_client);
+		} else {
+			pexpect(d->local->child.config->selectors.len > 0);
 			ldbg(d->logger, "%s() local %s.spd.has_client==true and local address == host.addr; updating port",
 			     __func__, d->spd->local->config->leftright);
 			/*
-			 * or that it is our private ip in case we are
-			 * behind a port forward.
+			 * ... or that it is our private ip in case we
+			 * are behind a port forward.
 			 */
 			update_first_selector_port(d, local, unset_port);
-		} else {
-			llog_passert(t->logger, HERE,
-				     "local address does not match the host or client");
 		}
 	} else {
 		/*
@@ -3805,58 +3806,56 @@ static struct connection *oppo_instantiate(struct connection *t,
 		 *
 		 * XXX: it's all a bit weird.  Should the oppo group
 		 * just set the selector and work with that?
+		 *
+		 * XXX: this is no longer true?
 		 */
 		ldbg(d->logger,
 		     "%s() local %s.spd.has_client==false; patching damage by instantiate()",
 		     __func__, d->spd->local->config->leftright);
-		passert(address_eq_address(local_address, d->local->host.addr));
-		set_first_selector(d, local,
-			     selector_from_address_protocol_port(local_address,
-								 local_protocol,
-								 local_port));
+		ip_selector new_local_client =
+			selector_from_address_protocol_port(d->local->host.addr,
+							    local_template_protocol,
+							    local_template_port);
+		/* is the address being changed? */
+		PASSERT(d->logger, selector_eq_selector(d->spd->local->client, new_local_client));
+		set_first_selector(d, local, new_local_client);
 	}
-
-	ldbg(d->logger,
-	     "%s() local(d) protocol %s port %d",
-	     __func__, selector_protocol(d->spd->local->client)->name,
-	     selector_port(d->spd->local->client).hport);
 
 	/*
 	 * Fill in peer's client side.
 	 * If the client is the peer, excise the client from the connection.
 	 */
 
-	ldbg(d->logger, "%s() remote(c) protocol %s port %d",
-	     __func__, selector_protocol(t->spd->remote->client)->name,
-	     selector_port(t->spd->remote->client).hport);
+	update_spds_from_end_host_addr(d, d->remote->config->index, remote_address, HERE);
+	set_policy_prio(d); /* re-compute; may have changed */
+	const struct ip_protocol *remote_protocol = selector_protocol(d->spd->remote->client);
+	ip_port remote_port = selector_port(d->spd->remote->client);
 
-	const struct ip_protocol *remote_protocol = selector_protocol(t->spd->remote->client);
-	ip_port remote_port = selector_port(t->spd->remote->client);
-	passert(d->policy & POLICY_OPPORTUNISTIC);
-	passert(address_in_selector_range(remote_address, d->spd->remote->client));
+	ldbg(d->logger, "%s() remote(c) protocol %s port "PRI_HPORT,
+	     __func__, remote_protocol->name, pri_hport(remote_port));
+	PASSERT(d->logger, address_in_selector_range(remote_address, d->spd->remote->client));
 	set_first_selector(d, remote, selector_from_address_protocol_port(remote_address,
 									  remote_protocol,
 									  remote_port));
-	rehash_db_spd_route_remote_client(d->spd);
 
-	ldbg(d->logger, "%s() remote(d) protocol %s port %d",
-	     __func__, selector_protocol(d->spd->remote->client)->name,
-	     selector_port(d->spd->remote->client).hport);
+	spd_route_db_add_connection(d);
+	set_policy_prio(d); /* re-compute; may have changed */
 
-	if (address_eq_address(remote_address, d->remote->host.addr)) {
-		ldbg(d->logger,
-		     "%s() and address==remote.host_addr; remote %s.spd.has_client=false",
-		     __func__, d->spd->local->config->leftright);
-		set_child_has_client(d, remote, false);
-	}
+	set_child_has_client(d, remote, false);
 
 	/*
 	 * Remember if the template is routed:
 	 * if so, this instance applies for initiation
 	 * even if it is created for responding.
+	 *
+	 * D will have had its routing reset.
 	 */
 	if (routed(t->child.routing))
 		d->instance_initiation_ok = true;
+	ldbg(d->logger, "template routing %s instance routing %s instance_initiation_ok %s",
+	     enum_name_short(&routing_names, t->child.routing),
+	     enum_name_short(&routing_names, d->child.routing),
+	     bool_str(d->instance_initiation_ok));
 
 	if (DBGP(DBG_BASE)) {
 		char topo[CONN_BUF_LEN];
