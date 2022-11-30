@@ -743,6 +743,8 @@ enum routing {
 	RT_UNROUTED_KEYED,       /* keyed, but not routed, on purpose */
 };
 
+extern const struct enum_names routing_names;
+
 #define routed(rs) ((rs) > RT_UNROUTED_HOLD)
 #define erouted(rs) ((rs) != RT_UNROUTED)
 #define shunt_erouted(rs) (erouted(rs) && (rs) != RT_ROUTED_TUNNEL)
