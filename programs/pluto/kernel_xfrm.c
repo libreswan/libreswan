@@ -158,12 +158,6 @@ static sparse_names rtm_type_names = {
 };
 #undef NE
 
-#define RTA_TAIL(rta) ((struct rtattr *) (((void *) (rta)) + \
-				    RTA_ALIGN((rta)->rta_len)))
-
-#define NLMSG_TAIL(nmsg) \
-	((struct rtattr *) (((void *) (nmsg)) + NLMSG_ALIGN((nmsg)->nlmsg_len)))
-
 /*
  * xfrm2ip - Take an xfrm and convert to an IP address
  *
@@ -493,6 +487,53 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 	return false;
 }
 
+static void set_xfrm_selectors(struct xfrm_selector *sel, const ip_selector *src_client, const ip_selector *dst_client)
+{
+	const struct ip_protocol *client_proto = selector_protocol(*src_client);
+	pexpect(selector_protocol(*dst_client) == client_proto);
+
+	const struct ip_info *dst_client_afi  = selector_type(dst_client);
+	const int family = dst_client_afi->af;
+	dbg("%s() using family %s (%d)", __func__, dst_client_afi->ip_name, family);
+
+	/* .[sd]addr, .prefixlen_[sd], .[sd]port */
+	SELECTOR_TO_XFRM(*src_client, *sel, s);
+	SELECTOR_TO_XFRM(*dst_client, *sel, d);
+
+	/*
+	 * Munge .[sd]port?
+	 *
+	 * As per RFC 4301/5996, icmp type is put in the most significant
+	 * 8 bits and icmp code is in the least significant 8 bits of port
+	 * field.
+	 * Although Libreswan does not have any configuration options for
+	 * icmp type/code values, it is possible to specify icmp type and code
+	 * using protoport option. For example, icmp echo request
+	 * (type 8/code 0) needs to be encoded as 0x0800 in the port field
+	 * and can be specified as left/rightprotoport=icmp/2048. Now with
+	 * XFRM, icmp type and code need to be passed as source and
+	 * destination ports, respectively. Therefore, this code extracts
+	 * upper 8 bits and lower 8 bits and puts into source and destination
+	 * ports before passing to XFRM.
+	 */
+	if (client_proto == &ip_protocol_icmp ||
+	    client_proto == &ip_protocol_icmpv6) {
+		uint16_t tc = ntohs(sel->sport);
+		uint16_t icmp_type = tc >> 8;
+		uint16_t icmp_code = tc & 0xFF;
+
+		sel->sport = htons(icmp_type);
+		sel->dport = htons(icmp_code);
+	}
+
+	/* note: byte order doesn't change 0 or ~0 */
+	sel->sport_mask = sel->sport == 0 ? 0 : ~0;
+	sel->dport_mask = sel->dport == 0 ? 0 : ~0;
+	sel->proto = client_proto->ipproto;
+	sel->family = family;
+}
+
+
 /*
  * xfrm_raw_policy
  *
@@ -530,16 +571,6 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
 	pexpect(selector_protocol(*dst_client) == client_proto);
-
-	struct {
-		struct nlmsghdr n;
-		union {
-			struct xfrm_userpolicy_info p;
-			struct xfrm_userpolicy_id id;
-		} u;
-		/* ??? MAX_NETLINK_DATA_SIZE is defined in our header, not a kernel header */
-		char data[MAX_NETLINK_DATA_SIZE];
-	} req;
 
 	unsigned xfrm_action;
 	const char *policy_name;
@@ -610,6 +641,11 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	dbg("%s() policy=%s action=%d xfrm_dir=%d op=%s dir=%s",
 	    __func__, policy_name, xfrm_action, xfrm_dir, op_str, dir_str);
 
+	struct {
+		struct nlmsghdr n;
+		uint8_t data[MAX_NETLINK_DATA_SIZE];
+	} req = {0};
+
 	zero(&req);
 	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
 
@@ -617,49 +653,16 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	const int family = dst_client_afi->af;
 	dbg("%s() using family %s (%d)", __func__, dst_client_afi->ip_name, family);
 
-	/* .[sd]addr, .prefixlen_[sd], .[sd]port */
-	SELECTOR_TO_XFRM(*src_client, req.u.p.sel, s);
-	SELECTOR_TO_XFRM(*dst_client, req.u.p.sel, d);
-
-	/*
-	 * Munge .[sd]port?
-	 *
-	 * As per RFC 4301/5996, icmp type is put in the most significant
-	 * 8 bits and icmp code is in the least significant 8 bits of port
-	 * field.
-	 * Although Libreswan does not have any configuration options for
-	 * icmp type/code values, it is possible to specify icmp type and code
-	 * using protoport option. For example, icmp echo request
-	 * (type 8/code 0) needs to be encoded as 0x0800 in the port field
-	 * and can be specified as left/rightprotoport=icmp/2048. Now with
-	 * XFRM, icmp type and code need to be passed as source and
-	 * destination ports, respectively. Therefore, this code extracts
-	 * upper 8 bits and lower 8 bits and puts into source and destination
-	 * ports before passing to XFRM.
-	 */
-	if (client_proto == &ip_protocol_icmp ||
-	    client_proto == &ip_protocol_icmpv6) {
-		uint16_t tc = ntohs(req.u.p.sel.sport);
-		uint16_t icmp_type = tc >> 8;
-		uint16_t icmp_code = tc & 0xFF;
-
-		req.u.p.sel.sport = htons(icmp_type);
-		req.u.p.sel.dport = htons(icmp_code);
-	}
-
-	/* note: byte order doesn't change 0 or ~0 */
-	req.u.p.sel.sport_mask = req.u.p.sel.sport == 0 ? 0 : ~0;
-	req.u.p.sel.dport_mask = req.u.p.sel.dport == 0 ? 0 : ~0;
-	req.u.p.sel.proto = client_proto->ipproto;
-	req.u.p.sel.family = family;
-
+	uint8_t *req_dir;
 	if (op == KERNEL_POLICY_OP_DELETE) {
 		pexpect(kernel_policy == NULL || kernel_policy->nr_rules == 0);
-		req.u.id.dir = xfrm_dir;
 		req.n.nlmsg_type = XFRM_MSG_DELPOLICY;
-		req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.u.id)));
+		req.n.nlmsg_len = NLMSG_SPACE(sizeof(struct xfrm_userpolicy_id));
+		struct xfrm_userpolicy_id *id = NLMSG_DATA(&req.n);
+		req_dir = &id->dir; /* set below */
+		set_xfrm_selectors(&id->sel, src_client, dst_client);
 	} else {
-		pexpect(kernel_policy != NULL); /*nr_rules >= 0*/
+		passert(kernel_policy != NULL); /*nr_rules >= 0*/
 		/*
 		 * NEW will fail when an existing policy, UPD always
 		 * works.  This seems to happen in cases with NAT'ed
@@ -670,21 +673,25 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 		 * same end subnets.  Like A = B = C config where both
 		 * A - B and B - C have tunnel A = C configured.
 		 */
-		req.u.p.dir = xfrm_dir;
 		req.n.nlmsg_type = XFRM_MSG_UPDPOLICY;
-		req.n.nlmsg_len = NLMSG_ALIGN(NLMSG_LENGTH(sizeof(req.u.p)));
+		req.n.nlmsg_len = NLMSG_SPACE(sizeof(struct xfrm_userpolicy_info));
+		struct xfrm_userpolicy_info *info = NLMSG_DATA(&req.n);
+		req_dir = &info->dir; /* set below */
+		set_xfrm_selectors(&info->sel, src_client, dst_client);
 
 		/* The caller should have set the proper priority by now */
-		req.u.p.priority = kernel_policy->priority.value;
-		dbg("%s() IPsec SA SPD priority set to %d", __func__, req.u.p.priority);
+		info->priority = kernel_policy->priority.value;
+		dbg("%s() IPsec SA SPD priority set to %d", __func__, info->priority);
 
-		req.u.p.action = xfrm_action;
-		/* req.u.p.lft.soft_use_expires_seconds = deltasecs(use_lifetime); */
-		req.u.p.lft.soft_byte_limit = XFRM_INF;
-		req.u.p.lft.soft_packet_limit = XFRM_INF;
-		req.u.p.lft.hard_byte_limit = XFRM_INF;
-		req.u.p.lft.hard_packet_limit = XFRM_INF;
+		info->action = xfrm_action;
+		/* info->lft.soft_use_expires_seconds = deltasecs(use_lifetime); */
+		info->lft.soft_byte_limit = XFRM_INF;
+		info->lft.soft_packet_limit = XFRM_INF;
+		info->lft.hard_byte_limit = XFRM_INF;
+		info->lft.hard_packet_limit = XFRM_INF;
 	}
+	*req_dir = xfrm_dir;
+
 
 	/*
 	 * Add the encapsulation protocol found in proto_info[] that
@@ -851,7 +858,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 			 */
 			dbg("xfrm: %s() deleting policy forward (even when there may not be one)",
 			    __func__);
-			req.u.id.dir = XFRM_POLICY_FWD;
+			*req_dir = XFRM_POLICY_FWD;
 			ok &= sendrecv_xfrm_policy(&req.n, IGNORE_KERNEL_POLICY_MISSING,
 						   policy_name, "(fwd)", logger);
 			break;
@@ -864,7 +871,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 				break;
 			}
 			dbg("xfrm: %s() adding policy forward (suspect a tunnel)", __func__);
-			req.u.p.dir = XFRM_POLICY_FWD;
+			*req_dir = XFRM_POLICY_FWD;
 			ok &= sendrecv_xfrm_policy(&req.n, what_about_inbound,
 						   policy_name, "(fwd)", logger);
 			break;
@@ -1307,43 +1314,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	 * need or don't need selectors.
 	 */
 	if (!sa->tunnel) {
-		const struct ip_info *route_afi = selector_info(sa->src.route);
-		const struct ip_protocol *route_protocol = selector_protocol(sa->src.route);
-
-		/* .[sd]addr, .prefixlen_[sd], .[sd]port */
-		SELECTOR_TO_XFRM(sa->src.route, req.p.sel, s);
-		SELECTOR_TO_XFRM(sa->dst.route, req.p.sel, d);
-
-		/*
-		 * Munge .[sd]port?
-		 *
-		 * As per RFC 4301/5996, icmp type is put in the most
-		 * significant 8 bits and icmp code is in the least
-		 * significant 8 bits of port field. Although Libreswan does
-		 * not have any configuration options for
-		 * icmp type/code values, it is possible to specify icmp type
-		 * and code using protoport option. For example,
-		 * icmp echo request (type 8/code 0) needs to be encoded as
-		 * 0x0800 in the port field and can be specified
-		 * as left/rightprotoport=icmp/2048. Now with XFRM,
-		 * icmp type and code need to be passed as source and
-		 * destination ports, respectively. Therefore, this code
-		 * extracts upper 8 bits and lower 8 bits and puts
-		 * into source and destination ports before passing to XFRM.
-		 */
-		if (route_protocol == &ip_protocol_icmp ||
-		    route_protocol == &ip_protocol_icmpv6) {
-			uint16_t sport = hport(selector_port(sa->src.route));
-			uint16_t icmp_type = sport >> 8;
-			uint16_t icmp_code = sport & 0xFF;
-			req.p.sel.sport = htons(icmp_type);
-			req.p.sel.dport = htons(icmp_code);
-		}
-
-		req.p.sel.sport_mask = req.p.sel.sport == 0 ? 0 : ~0;
-		req.p.sel.dport_mask = req.p.sel.dport == 0 ? 0 : ~0;
-		req.p.sel.proto = route_protocol->ipproto;
-		req.p.sel.family = route_afi->af;
+		set_xfrm_selectors(&req.p.sel, &sa->src.route, &sa->dst.route);
 	}
 
 	req.p.reqid = sa->reqid;
