@@ -1121,22 +1121,28 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 			     .sadb_x_policy_type = policy_type,
 			     .sadb_x_policy_dir = policy_dir);
 
-	if (kernel_policy != NULL && kernel_policy->nr_rules > 0) {
-		pexpect(op == KERNEL_POLICY_OP_ADD ||
-			op == KERNEL_POLICY_OP_REPLACE);
-		pexpect(policy_type == IPSEC_POLICY_IPSEC);
-		/*
-		 * XXX: Only the first rule gets the worm; er tunnel
-		 * flag.
-		 *
-		 * Should the caller take care of this?
-		 */
-		enum ipsec_mode mode = (kernel_policy->mode == ENCAP_MODE_TUNNEL ? IPSEC_MODE_TUNNEL :
-					IPSEC_MODE_TRANSPORT);
-		for (unsigned i = 1; i <= kernel_policy->nr_rules; i++) {
-			const struct kernel_policy_rule *rule = &kernel_policy->rule[i];
-			put_sadb_x_ipsecrequest(req, kernel_policy, mode, rule);
-			mode = IPSEC_MODE_TRANSPORT;
+	if (kernel_policy != NULL) {
+#ifdef sadb_x_policy_priority
+		x_policy->sadb_x_policy_priority = kernel_policy->priority.value;
+#endif
+		if (kernel_policy->nr_rules > 0) {
+			pexpect(op == KERNEL_POLICY_OP_ADD ||
+				op == KERNEL_POLICY_OP_REPLACE);
+			pexpect(policy_type == IPSEC_POLICY_IPSEC);
+			/*
+			 * XXX: Only the first rule gets the worm; er
+			 * tunnel flag.
+			 *
+			 * Should the caller take care of this?
+			 */
+			enum ipsec_mode mode =
+				(kernel_policy->mode == ENCAP_MODE_TUNNEL ? IPSEC_MODE_TUNNEL :
+				 IPSEC_MODE_TRANSPORT);
+			for (unsigned i = 1/*not 0*/; i <= kernel_policy->nr_rules; i++) {
+				const struct kernel_policy_rule *rule = &kernel_policy->rule[i];
+				put_sadb_x_ipsecrequest(req, kernel_policy, mode, rule);
+				mode = IPSEC_MODE_TRANSPORT;
+			}
 		}
 	} else if (policy_type == IPSEC_POLICY_IPSEC) {
 		pexpect(op == KERNEL_POLICY_OP_DELETE);
@@ -1364,17 +1370,19 @@ static bool process_address(shunk_t *ext_cursor, ip_address *addr, ip_port *port
 	return true;
 }
 
-static void process_acquire(shunk_t base_cursor, struct logger *logger)
+static void process_acquire(const struct sadb_msg *msg,
+			    shunk_t msg_cursor,
+			    struct logger *logger)
 {
 	ip_address src_address = unset_address;
 	ip_address dst_address = unset_address;
 	ip_port src_port, dst_port;
 
-	while (base_cursor.len > 0) {
+	while (msg_cursor.len > 0) {
 
 		shunk_t ext_cursor;
 		const struct sadb_ext *ext =
-			get_sadb_ext(&base_cursor, &ext_cursor, logger);
+			get_sadb_ext(&msg_cursor, &ext_cursor, logger);
 		if (ext == NULL) {
 			llog_pexpect(logger, HERE, "bad ext");
 			return;
@@ -1422,29 +1430,33 @@ static void process_acquire(shunk_t base_cursor, struct logger *logger)
 					   &ip_protocol_all,
 					   src_port,
 					   dst_port);
-	initiate_ondemand(&packet,
-			  /*by_acquire*/true,
-			  /*background?*/true/*no whack so doesn't matter*/,
-			  null_shunk,
-			  logger);
+	struct kernel_acquire b = {
+		.packet = packet,
+		.by_acquire = true,
+		.logger = logger, /*on-stack*/
+		.background = true, /* no whack so doesn't matter */
+		.sec_label = null_shunk,
+		.seq = msg->sadb_msg_seq,
+	};
+	initiate_ondemand(&b);
 }
 
-static void process_pending(chunk_t msg, struct logger *logger)
+static void process_pending(chunk_t payload, struct logger *logger)
 {
 	if (DBGP(DBG_BASE)) {
-		llog_sadb(DEBUG_STREAM, logger, msg.ptr, msg.len, "pending ");
+		llog_sadb(DEBUG_STREAM, logger, payload.ptr, payload.len, "pending ");
 	}
 
-	shunk_t cursor = HUNK_AS_SHUNK(msg);
-	shunk_t base_cursor;
-	const struct sadb_msg *base = get_sadb_msg(&cursor, &base_cursor, logger);
-	if (base == NULL) {
-		llog_pexpect(logger, HERE, "no base");
+	shunk_t cursor = HUNK_AS_SHUNK(payload);
+	shunk_t msg_cursor;
+	const struct sadb_msg *msg = get_sadb_msg(&cursor, &msg_cursor, logger);
+	if (msg == NULL) {
+		llog_pexpect(logger, HERE, "no msg");
 	}
 
-	switch (base->sadb_msg_type) {
+	switch (msg->sadb_msg_type) {
 	case SADB_ACQUIRE:
-		process_acquire(base_cursor, logger);
+		process_acquire(msg, msg_cursor, logger);
 		break;
 	}
 }
