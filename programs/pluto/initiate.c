@@ -558,8 +558,6 @@ struct find_oppo_bundle {
 	ip_packet packet; /* that triggered the opportunistic exchange */
 	bool by_acquire;	/* acquire? whack? */
 	policy_prio_t policy_prio;
-	struct connection *connection;
-	enum shunt_policy failure_shunt;
 	struct logger *logger;	/* has whack attached */
 	bool background;
 	shunk_t sec_label;
@@ -578,7 +576,8 @@ static void jam_oppo_bundle(struct jambuf *buf, struct find_oppo_bundle *b)
 	}
 }
 
-static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const char *ughmsg)
+static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b,
+			    enum shunt_policy failure_shunt, const char *ughmsg)
 {
 	LLOG_JAMBUF(rc_flags, b->logger, buf) {
 		jam(buf, "cannot ");
@@ -600,15 +599,15 @@ static void cannot_ondemand(lset_t rc_flags, struct find_oppo_bundle *b, const c
 		 * Should SHUNT_PASS instead call with a delete?
 		 */
 		dbg("cannot_ondemand() replaced negotiationshunt with bare failureshunt=%s",
-		    enum_name_short(&shunt_policy_names, b->failure_shunt));
-		pexpect(b->failure_shunt != SHUNT_UNSET); /* set to something */
+		    enum_name_short(&shunt_policy_names, failure_shunt));
+		pexpect(failure_shunt != SHUNT_UNSET); /* set to something */
 		ip_selector src = packet_src_selector(b->packet);
 		ip_selector dst = packet_dst_selector(b->packet);
 		struct kernel_policy outbound_policy =
 			stateless_kernel_policy(&src, &dst,
 						/* we don't know connection for priority yet */
 						highest_kernel_priority,
-						b->failure_shunt, HERE);
+						failure_shunt, HERE);
 
 		if (!raw_policy(KERNEL_POLICY_OP_REPLACE,
 				DIRECTION_OUTBOUND,
@@ -660,6 +659,7 @@ static ip_selector shunt_from_address_and_selector(const char *what,
 static void initiate_ondemand_body(struct find_oppo_bundle *b)
 {
 	threadtime_t inception = threadtime_start();
+	enum shunt_policy failure_shunt = SHUNT_HOLD; /* until we found connection policy */
 
 	if (b->sec_label.len > 0) {
 		dbg("oppo bundle: received security label string: "PRI_SHUNK,
@@ -672,7 +672,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	 */
 
 	if (!b->packet.is_set) {
-		cannot_ondemand(RC_OPPOFAILURE, b, "impossible IP address");
+		cannot_ondemand(RC_OPPOFAILURE, b, failure_shunt,
+				"impossible IP address");
 		return;
 	}
 
@@ -682,7 +683,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * NETKEY gives us acquires for our own IP. This code
 		 * does not handle talking to ourselves on another ip.
 		 */
-		cannot_ondemand(RC_OPPOFAILURE, b, "acquire for our own IP address");
+		cannot_ondemand(RC_OPPOFAILURE, b, failure_shunt,
+				"acquire for our own IP address");
 		return;
 	}
 
@@ -697,7 +699,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * give up.  The failure policy cannot be gotten from
 		 * a connection; we pick %pass.
 		 */
-		cannot_ondemand(RC_OPPOFAILURE, b, "no routed template covers this pair");
+		cannot_ondemand(RC_OPPOFAILURE, b, failure_shunt,
+				"no routed template covers this pair");
 		return;
 	}
 
@@ -707,14 +710,14 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		dbg("IKEv2 connection has security label");
 
 		if (b->sec_label.len == 0) {
-			cannot_ondemand(RC_LOG_SERIOUS, b,
+			cannot_ondemand(RC_LOG_SERIOUS, b, failure_shunt,
 					"kernel acquire missing security label");
 			return;
 		}
 
 		if (!sec_label_within_range("acquire", HUNK_AS_SHUNK(b->sec_label),
 					    c->config->sec_label, b->logger)) {
-			cannot_ondemand(RC_LOG_SERIOUS, b,
+			cannot_ondemand(RC_LOG_SERIOUS, b, failure_shunt,
 					"received kernel security label does not fall within range of our connection");
 			return;
 		}
@@ -732,8 +735,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * We have a connection: fill in the negotiation_shunt
 		 * and failure_shunt.
 		 */
-		b->connection = c;
-		b->failure_shunt = c->config->failure_shunt;
+		failure_shunt = c->config->failure_shunt;
 
 		/*
 		 * Announce this to the world.  Use c->logger instead?
@@ -759,12 +761,14 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		/*
 		 * happens when dst is ourselves on a different IP
 		 */
-		cannot_ondemand(RC_OPPOFAILURE, b, "connection to self on another IP?");
+		cannot_ondemand(RC_OPPOFAILURE, b, failure_shunt,
+				"connection to self on another IP?");
 		return;
 	}
 
 	if (c->kind == CK_TEMPLATE && (c->policy & POLICY_OPPORTUNISTIC) == 0) {
-		cannot_ondemand(RC_NOPEERIP, b, "template connection");
+		cannot_ondemand(RC_NOPEERIP, b, failure_shunt,
+				"template connection");
 		return;
 	}
 
@@ -814,8 +818,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 *
 		 * We have a connection: fill in the failure_shunt.
 		 */
-		b->connection = c;
-		b->failure_shunt = c->config->failure_shunt;
+		failure_shunt = c->config->failure_shunt;
 
 		/*
 		 * Otherwise, there is some kind of static conn that
@@ -900,8 +903,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	/*
 	 * We have a connection: fill in the failure_shunt.
 	 */
-	b->connection = c;
-	b->failure_shunt = c->config->failure_shunt;
+	failure_shunt = c->config->failure_shunt;
 
 	/*
 	 * Always have shunts with protoports, even when no
@@ -948,7 +950,8 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	struct connection *t = find_outgoing_opportunistic_template(b->packet);
 
 	if (t == NULL) {
-		cannot_ondemand(RC_OPPOFAILURE, b, "no suitable template between endpoints");
+		cannot_ondemand(RC_OPPOFAILURE, b, failure_shunt,
+				"no suitable template between endpoints");
 		return;
 	}
 
@@ -970,9 +973,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	ip_address src_address = packet_src_address(b->packet);
 	ip_address dst_address = packet_dst_address(b->packet);
 	PEXPECT(t->logger, address_eq_address(src_address, t->local->host.addr));
-	pexpect(b->connection == t);
 	c = oppo_instantiate(t, dst_address);
-	b->connection = c;
 
 	selectors_buf sb;
 	dbg("going to initiate opportunistic %s, first installing %s negotiationshunt",
@@ -1048,7 +1049,6 @@ void initiate_ondemand(const ip_packet *packet,
 		.packet = *packet,
 		.by_acquire = by_acquire,
 		.policy_prio = BOTTOM_PRIO,
-		.failure_shunt = SHUNT_HOLD, /* until we found connection policy */
 		.logger = logger, /*on-stack*/
 		.background = background,
 		.sec_label = sec_label
