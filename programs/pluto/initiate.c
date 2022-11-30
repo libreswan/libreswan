@@ -945,22 +945,14 @@ void initiate_ondemand(const struct kernel_acquire *b)
 			     pri_connection(c, &cb), pri_connection(t, &tb));
 	}
 
-	/*
-	 * XXX we might not yet know the ID!
-	 *
-	 * XXX: what about the shunts computed above, and then stored
-	 * later.
-	 */
-	ip_address src_address = packet_src_address(b->packet);
-	ip_address dst_address = packet_dst_address(b->packet);
-	PEXPECT(t->logger, address_eq_address(src_address, t->local->host.addr));
-	c = oppo_instantiate(t, dst_address);
+	c = oppo_initiator_instantiate(t, b);
 
 	selectors_buf sb;
 	dbg("going to initiate opportunistic %s, first installing %s negotiationshunt",
 	    str_selectors(&local_shunt, &remote_shunt, &sb),
 	    enum_name_short(&shunt_policy_names, c->config->negotiation_shunt));
 
+	/* shunts saved in selectors */
 	pexpect(selector_eq_selector(c->spd->local->client, local_shunt));
 	pexpect(selector_eq_selector(c->spd->remote->client, remote_shunt));
 
@@ -998,12 +990,6 @@ void initiate_ondemand(const struct kernel_acquire *b)
 	passert(LHAS(LELEM(RT_UNROUTED) |
 		     LELEM(RT_ROUTED_PROSPECTIVE),
 		     c->child.routing));
-	/*
-	 * Save the selector in .client.
-	 */
-	set_first_selector(c, local, local_shunt);
-	set_first_selector(c, remote, remote_shunt);
-	rehash_db_spd_route_remote_client(c->spd);
 
 	if (b->by_acquire) {
 		/*

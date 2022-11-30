@@ -3720,20 +3720,19 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 	return best_connection;
 }
 
-struct connection *oppo_instantiate(struct connection *t,
-				    const ip_address remote_address)
+/*
+ * This is creating a packet on the responder _before_ it knows any
+ * details about the child's topology.  Any code filling in .child or
+ * .spd. is bunkem.
+ */
+static struct connection *oppo_instantiate(struct connection *t,
+					   const ip_address remote_address)
 {
 	PEXPECT(t->logger, oriented(t)); /* else won't instantiate */
 
 	ip_address local_address = t->local->host.addr;
 	pexpect(address_is_specified(local_address));
 	pexpect(address_is_specified(remote_address));
-	address_buf lb, rb;
-	connection_buf cb;
-	dbg("oppo instantiating "PRI_CONNECTION" with routing %s between %s -> %s",
-	    pri_connection(t, &cb), enum_name(&routing_story, t->child.routing),
-	    str_address(&local_address, &lb),
-	    str_address(&remote_address, &rb));
 
 	/*
 	 * Instance inherits remote ID of child; exception being when
@@ -3760,9 +3759,10 @@ struct connection *oppo_instantiate(struct connection *t,
 
 	const struct ip_protocol *local_protocol = selector_protocol(t->spd->local->client);
 	ip_port local_port = selector_port(t->spd->local->client);
-	dbg("oppo local(c) protocol %s port %d",
-	    local_protocol->name,
-	    local_port.hport);
+	ldbg(d->logger,
+	     "%s() protocol %s port %d",
+	     __func__, local_protocol->name,
+	     local_port.hport);
 
 	if (d->local->child.has_client) {
 		/*
@@ -3772,8 +3772,8 @@ struct connection *oppo_instantiate(struct connection *t,
 
 		/* opportunistic connections do not use port selectors */
 		if (address_in_selector_range(local_address, d->spd->local->client)) {
-			ldbg(d->logger, "oppo local %s.spd.has_client==true and local address <= client; narrowing local client",
-			     d->spd->local->config->leftright);
+			ldbg(d->logger, "%s() local %s.spd.has_client==true and local address <= client; narrowing local client",
+			     __func__, d->spd->local->config->leftright);
 			/*
 			 * the required client is within that subnet
 			 * narrow it(?), ...
@@ -3783,8 +3783,8 @@ struct connection *oppo_instantiate(struct connection *t,
 									 local_protocol,
 									 local_port));
 		} else if (address_eq_address(local_address, d->local->host.addr)) {
-			ldbg(d->logger, "oppo local %s.spd.has_client==true and local address == host.addr; updating port",
-			     d->spd->local->config->leftright);
+			ldbg(d->logger, "%s() local %s.spd.has_client==true and local address == host.addr; updating port",
+			     __func__, d->spd->local->config->leftright);
 			/*
 			 * or that it is our private ip in case we are
 			 * behind a port forward.
@@ -3806,8 +3806,9 @@ struct connection *oppo_instantiate(struct connection *t,
 		 * XXX: it's all a bit weird.  Should the oppo group
 		 * just set the selector and work with that?
 		 */
-		ldbg(d->logger, "oppo local %s.spd.has_client==false; patching damage by instantiate()",
-		     d->spd->local->config->leftright);
+		ldbg(d->logger,
+		     "%s() local %s.spd.has_client==false; patching damage by instantiate()",
+		     __func__, d->spd->local->config->leftright);
 		passert(address_eq_address(local_address, d->local->host.addr));
 		set_first_selector(d, local,
 			     selector_from_address_protocol_port(local_address,
@@ -3815,18 +3816,19 @@ struct connection *oppo_instantiate(struct connection *t,
 								 local_port));
 	}
 
-	dbg("oppo local(d) protocol %s port %d",
-	    selector_protocol(d->spd->local->client)->name,
-	    selector_port(d->spd->local->client).hport);
+	ldbg(d->logger,
+	     "%s() local(d) protocol %s port %d",
+	     __func__, selector_protocol(d->spd->local->client)->name,
+	     selector_port(d->spd->local->client).hport);
 
 	/*
 	 * Fill in peer's client side.
 	 * If the client is the peer, excise the client from the connection.
 	 */
 
-	dbg("oppo remote(c) protocol %s port %d",
-	    selector_protocol(t->spd->remote->client)->name,
-	    selector_port(t->spd->remote->client).hport);
+	ldbg(d->logger, "%s() remote(c) protocol %s port %d",
+	     __func__, selector_protocol(t->spd->remote->client)->name,
+	     selector_port(t->spd->remote->client).hport);
 
 	const struct ip_protocol *remote_protocol = selector_protocol(t->spd->remote->client);
 	ip_port remote_port = selector_port(t->spd->remote->client);
@@ -3837,13 +3839,14 @@ struct connection *oppo_instantiate(struct connection *t,
 									  remote_port));
 	rehash_db_spd_route_remote_client(d->spd);
 
-	dbg("oppo remote(d) protocol %s port %d",
-	    selector_protocol(d->spd->remote->client)->name,
-	    selector_port(d->spd->remote->client).hport);
+	ldbg(d->logger, "%s() remote(d) protocol %s port %d",
+	     __func__, selector_protocol(d->spd->remote->client)->name,
+	     selector_port(d->spd->remote->client).hport);
 
 	if (address_eq_address(remote_address, d->remote->host.addr)) {
-		ldbg(d->logger, "oppo and address==remote.host_addr; remote %s.spd.has_client=false",
-		     d->spd->local->config->leftright);
+		ldbg(d->logger,
+		     "%s() and address==remote.host_addr; remote %s.spd.has_client=false",
+		     __func__, d->spd->local->config->leftright);
 		set_child_has_client(d, remote, false);
 	}
 
@@ -3858,12 +3861,45 @@ struct connection *oppo_instantiate(struct connection *t,
 	if (DBGP(DBG_BASE)) {
 		char topo[CONN_BUF_LEN];
 		connection_buf inst;
-		DBG_log("oppo_instantiate() instantiated "PRI_CONNECTION" with routing %s: %s",
-			pri_connection(d, &inst),
-			enum_name(&routing_story, d->child.routing),
-			format_connection(topo, sizeof(topo), d, d->spd));
+		LDBG_log(d->logger,
+			 "%s() instantiated "PRI_CONNECTION" with routing %s: %s",
+			 __func__, pri_connection(d, &inst),
+			 enum_name(&routing_story, d->child.routing),
+			 format_connection(topo, sizeof(topo), d, d->spd));
 	}
 	return d;
+}
+
+struct connection *oppo_responder_instantiate(struct connection *t,
+					      const ip_address remote_address)
+{
+	address_buf lb, rb;
+	connection_buf cb;
+	ldbg(t->logger, "%s() "PRI_CONNECTION" with routing %s between %s -> %s",
+	     __func__, pri_connection(t, &cb), enum_name(&routing_story, t->child.routing),
+	     str_address(&t->local->host.addr, &lb),
+	     str_address(&remote_address, &rb));
+
+	return oppo_instantiate(t, remote_address);
+}
+
+struct connection *oppo_initiator_instantiate(struct connection *t,
+					      const struct kernel_acquire *b)
+{
+	connection_buf cb;
+	packet_buf bb;
+	ldbg(t->logger,
+	     "%s() "PRI_CONNECTION" with routing %s for packet %s",
+	     __func__, pri_connection(t, &cb),
+	     enum_name(&routing_story, t->child.routing),
+	     str_packet(&b->packet, &bb));
+
+	ip_address local_address = packet_src_address(b->packet);
+	ip_address remote_address = packet_dst_address(b->packet);
+	PEXPECT(t->logger, address_eq_address(local_address, t->local->host.addr));
+	PEXPECT(t->logger, oriented(t)); /* else won't instantiate */
+
+	return oppo_instantiate(t, remote_address);
 }
 
 /*

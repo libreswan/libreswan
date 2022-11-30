@@ -57,6 +57,7 @@
 #include "whack.h"
 
 struct host_pair;	/* opaque type */
+struct kernel_acquire;
 
 /*
  * Fast access to a connection.
@@ -684,7 +685,10 @@ extern struct connection *rw_responder_id_instantiate(struct connection *t,
 						      const ip_address peer_addr,
 						      const ip_selector *peer_subnet,
 						      const struct id *peer_id);
-struct connection *oppo_instantiate(struct connection *t, const ip_address remote_address);
+struct connection *oppo_initiator_instantiate(struct connection *t,
+					      const struct kernel_acquire *b);
+struct connection *oppo_responder_instantiate(struct connection *t,
+					      const ip_address remote_address);
 extern struct connection *spd_instantiate(struct connection *t,
 					  const ip_address peer_addr,
 					  const struct id *peer_id,
