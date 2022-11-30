@@ -492,7 +492,6 @@ extern bool flush_bare_shunt(const ip_address *src, const ip_address *dst,
 
 bool assign_holdpass(const struct connection *c,
 		     struct spd_route *sr,
-		     enum shunt_policy negotiation_shunt,
 		     const ip_packet *packet);
 
 extern bool orphan_holdpass(const struct connection *c, struct spd_route *sr,

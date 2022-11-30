@@ -1913,10 +1913,8 @@ bool eroute_outbound_connection(enum kernel_policy_op op,
 
 bool assign_holdpass(const struct connection *c,
 		     struct spd_route *sr,
-		     enum shunt_policy negotiation_shunt,
 		     const ip_packet *packet)
 {
-	pexpect(c->config->negotiation_shunt == negotiation_shunt);
 	/*
 	 * either the automatically installed %hold eroute is broad enough
 	 * or we try to add a broader one and delete the automatic one.
@@ -1998,7 +1996,7 @@ bool assign_holdpass(const struct connection *c,
 			struct kernel_policy outbound_kernel_policy =
 				stateless_kernel_policy(&sr->local->client, &sr->remote->client,
 							calculate_kernel_priority(c),
-							negotiation_shunt, HERE);
+							c->config->negotiation_shunt, HERE);
 
 			if (eroute_outbound_connection(op, reason, sr,
 						       &outbound_kernel_policy,

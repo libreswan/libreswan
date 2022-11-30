@@ -559,7 +559,6 @@ struct find_oppo_bundle {
 	bool by_acquire;	/* acquire? whack? */
 	policy_prio_t policy_prio;
 	struct connection *connection;
-	enum shunt_policy negotiation_shunt;
 	enum shunt_policy failure_shunt;
 	struct logger *logger;	/* has whack attached */
 	bool background;
@@ -735,7 +734,6 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 */
 		b->connection = c;
 		b->failure_shunt = c->config->failure_shunt;
-		b->negotiation_shunt = c->config->negotiation_shunt;
 
 		/*
 		 * Announce this to the world.  Use c->logger instead?
@@ -814,12 +812,10 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		 * If we are to proceed asynchronously, b->whackfd
 		 * will be NULL_WHACKFD.
 		 *
-		 * We have a connection: fill in the negotiation_shunt
-		 * and failure_shunt.
+		 * We have a connection: fill in the failure_shunt.
 		 */
 		b->connection = c;
 		b->failure_shunt = c->config->failure_shunt;
-		b->negotiation_shunt = c->config->negotiation_shunt;
 
 		/*
 		 * Otherwise, there is some kind of static conn that
@@ -848,12 +844,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 				       b->by_acquire ? "acquire" : "whack",
 				       b->logger);
 
-			pexpect(b->connection == c);
-			pexpect(c->config->negotiation_shunt == b->negotiation_shunt);
-			pexpect(c->config->failure_shunt == b->failure_shunt);
-			if (assign_holdpass(c, sr,
-					    b->negotiation_shunt,
-					    &b->packet)) {
+			if (assign_holdpass(c, sr, &b->packet)) {
 				dbg("initiate_ondemand_body() installed negotiation_shunt,");
 			} else {
 				llog(RC_LOG, b->logger,
@@ -906,10 +897,11 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	pexpect(c->kind == CK_TEMPLATE);
 	passert(c->policy & POLICY_OPPORTUNISTIC); /* can't initiate Road Warrior connections */
 
-	/* we have a connection: fill in the negotiation_shunt and failure_shunt */
+	/*
+	 * We have a connection: fill in the failure_shunt.
+	 */
 	b->connection = c;
 	b->failure_shunt = c->config->failure_shunt;
-	b->negotiation_shunt = c->config->negotiation_shunt;
 
 	/*
 	 * Always have shunts with protoports, even when no
@@ -985,7 +977,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	selectors_buf sb;
 	dbg("going to initiate opportunistic %s, first installing %s negotiationshunt",
 	    str_selectors(&local_shunt, &remote_shunt, &sb),
-	    enum_name_short(&shunt_policy_names, b->negotiation_shunt));
+	    enum_name_short(&shunt_policy_names, c->config->negotiation_shunt));
 
 	pexpect(selector_eq_selector(c->spd->local->client, local_shunt));
 	pexpect(selector_eq_selector(c->spd->remote->client, remote_shunt));
@@ -998,7 +990,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 	struct kernel_policy outbound_kernel_policy =
 		stateless_kernel_policy(&local_shunt, &remote_shunt,
 					calculate_kernel_priority(c),
-					b->negotiation_shunt, HERE);
+					c->config->negotiation_shunt, HERE);
 
 	if (raw_policy(KERNEL_POLICY_OP_ADD,
 		       DIRECTION_OUTBOUND,
@@ -1012,7 +1004,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		       "%s() %s", __func__, addwidemsg)) {
 		dbg("adding bare (possibly wided) passthrough negotiationshunt succeeded (violating API)");
 		add_bare_shunt(&local_shunt, &remote_shunt,
-			       b->negotiation_shunt, UNSET_CO_SERIAL,
+			       c->config->negotiation_shunt, UNSET_CO_SERIAL,
 			       addwidemsg, b->logger);
 	} else {
 		llog(RC_LOG, b->logger, "adding bare wide passthrough negotiationshunt failed");
@@ -1035,12 +1027,7 @@ static void initiate_ondemand_body(struct find_oppo_bundle *b)
 		/*
 		 * XXX: updating the policy inserted by the kernel.
 		 */
-		pexpect(b->connection == c);
-		pexpect(c->config->negotiation_shunt == b->negotiation_shunt);
-		pexpect(c->config->failure_shunt == b->failure_shunt);
-		if (assign_holdpass(c, c->spd,
-				    b->negotiation_shunt,
-				    &b->packet)) {
+		if (assign_holdpass(c, c->spd, &b->packet)) {
 			dbg("assign_holdpass succeeded");
 		} else {
 			llog(RC_LOG, b->logger, "assign_holdpass failed!");
@@ -1061,7 +1048,6 @@ void initiate_ondemand(const ip_packet *packet,
 		.packet = *packet,
 		.by_acquire = by_acquire,
 		.policy_prio = BOTTOM_PRIO,
-		.negotiation_shunt = SHUNT_HOLD, /* until we found connection policy */
 		.failure_shunt = SHUNT_HOLD, /* until we found connection policy */
 		.logger = logger, /*on-stack*/
 		.background = background,
