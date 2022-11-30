@@ -4028,4 +4028,7 @@ void jam_kernel_acquire(struct jambuf *buf, const struct kernel_acquire *b)
 		jam(buf, " sec_label=");
 		jam_sanitized_hunk(buf, b->sec_label);
 	}
+	if (b->seq > 0) {
+		jam(buf, " seq=%u", (unsigned)b->seq);
+	}
 }

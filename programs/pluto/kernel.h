@@ -569,12 +569,15 @@ bool failure_shunt_ok(enum shunt_policy shunt);
  * carries negotiation forward.
  */
 
+enum kernel_seq { INVALID_SEQ, }; /* unsigned >= 32-bit */
+
 struct kernel_acquire {
 	ip_packet packet; /* that triggered the opportunistic exchange */
 	bool by_acquire;	/* by kernel acquire, else by whack */
 	struct logger *logger;	/* on stack, could have whack attached */
 	bool background;
 	shunk_t sec_label;	/* on stack */
+	enum kernel_seq seq;
 };
 
 void jam_kernel_acquire(struct jambuf *buf, const struct kernel_acquire *b);
