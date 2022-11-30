@@ -557,7 +557,6 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
 struct find_oppo_bundle {
 	ip_packet packet; /* that triggered the opportunistic exchange */
 	bool by_acquire;	/* acquire? whack? */
-	policy_prio_t policy_prio;
 	struct logger *logger;	/* has whack attached */
 	bool background;
 	shunk_t sec_label;
@@ -1048,7 +1047,6 @@ void initiate_ondemand(const ip_packet *packet,
 	struct find_oppo_bundle b = {
 		.packet = *packet,
 		.by_acquire = by_acquire,
-		.policy_prio = BOTTOM_PRIO,
 		.logger = logger, /*on-stack*/
 		.background = background,
 		.sec_label = sec_label
