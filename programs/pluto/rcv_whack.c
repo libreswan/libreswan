@@ -901,10 +901,16 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 							   protocol,
 							   m->oppo.local.port,
 							   m->oppo.remote.port);
-			initiate_ondemand(&packet,
-					  /*by_acquire*/false,
-					  /*background*/m->whack_async,
-					  null_shunk, logger);
+
+			struct kernel_acquire b = {
+				.packet = packet,
+				.by_acquire = false,
+				.logger = logger, /*on-stack*/
+				.background = m->whack_async,
+				.sec_label = null_shunk,
+			};
+
+			initiate_ondemand(&b);
 		}
 		dbg_whack(s, "stop: oppo_initiate");
 	}

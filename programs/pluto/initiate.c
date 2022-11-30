@@ -557,7 +557,7 @@ void restart_connections_by_peer(struct connection *const c, struct logger *logg
  * carries negotiation forward.
  */
 
-static void cannot_ondemand(lset_t rc_flags, struct kernel_acquire *b,
+static void cannot_ondemand(lset_t rc_flags, const struct kernel_acquire *b,
 			    enum shunt_policy failure_shunt, const char *ughmsg)
 {
 	LLOG_JAMBUF(rc_flags, b->logger, buf) {
@@ -637,7 +637,7 @@ static ip_selector shunt_from_address_and_selector(const char *what,
 						   end_port);
 }
 
-static void initiate_ondemand_body(struct kernel_acquire *b)
+void initiate_ondemand(const struct kernel_acquire *b)
 {
 	threadtime_t inception = threadtime_start();
 	enum shunt_policy failure_shunt = SHUNT_HOLD; /* until we found connection policy */
@@ -1019,22 +1019,6 @@ static void initiate_ondemand_body(struct kernel_acquire *b)
 	ipsecdoi_initiate(c, c->policy, 1,
 			  SOS_NOBODY, &inception, b->sec_label,
 			  b->background, b->logger);
-}
-
-void initiate_ondemand(const ip_packet *packet,
-		       bool by_acquire, bool background,
-		       const shunk_t sec_label,
-		       struct logger *logger)
-{
-	struct kernel_acquire b = {
-		.packet = *packet,
-		.by_acquire = by_acquire,
-		.logger = logger, /*on-stack*/
-		.background = background,
-		.sec_label = sec_label
-	};
-
-	initiate_ondemand_body(&b);
 }
 
 /*

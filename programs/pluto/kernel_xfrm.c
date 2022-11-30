@@ -1883,10 +1883,16 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 		/* updates remaining too */
 		attr = RTA_NEXT(attr, remaining);
 	}
-	initiate_ondemand(&packet,
-			  /*by_acquire*/true,
-			  /*background?*/true/*no whack so doesn't matter*/,
-			  sec_label, logger);
+
+	struct kernel_acquire b = {
+		.packet = packet,
+		.by_acquire = true,
+		.logger = logger, /*on-stack*/
+		.background = true, /* no whack so doesn't matter */
+		.sec_label = sec_label
+	};
+
+	initiate_ondemand(&b);
 }
 
 static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol,

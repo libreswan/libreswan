@@ -19,6 +19,8 @@
 
 #include "ip_packet.h"
 
+struct kernel_acquire;
+
 bool initiate_connection(struct connection *c, const char *remote_host,
 			 bool background, bool log_failure, struct logger *logger);
 
@@ -30,9 +32,6 @@ void ipsecdoi_initiate(struct connection *c,
 		       shunk_t sec_label,
 		       bool background, struct logger *logger);
 
-extern void initiate_ondemand(const ip_packet *packet,
-			      bool by_acquire, bool background,
-			      const shunk_t sec_label,
-			      struct logger *logger);
+extern void initiate_ondemand(const struct kernel_acquire *b);
 
 #endif
