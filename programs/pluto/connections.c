@@ -2964,38 +2964,40 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 
 /*
  * Derive a template connection from a group connection and target.
- * Similar to instantiate().  Happens at whack --listen.  Returns name
- * of new connection.  NULL on failure (duplicated name).  Caller is
- * responsible for pfreeing name.
+ *
+ * Similar to instantiate().  Happens at whack --listen.  Returns new
+ * connection.  Null on failure (duplicated name).
  */
 
-struct connection *add_group_instance(struct connection *group,
-				      const ip_selector *target,
-				      const struct ip_protocol *proto,
-				      ip_port sport, ip_port dport)
+struct connection *group_instantiate(struct connection *group,
+				     const ip_subnet remote_subnet,
+				     const struct ip_protocol *protocol,
+				     ip_port local_port,
+				     ip_port remote_port)
 {
-	passert(group->kind == CK_GROUP);
-	passert(oriented(group));
+	PASSERT(group->logger, group->kind == CK_GROUP);
+	PASSERT(group->logger, oriented(group));
+	PASSERT(group->logger, protocol != NULL);
 
 	/*
 	 * Manufacture a unique name for this template.
 	 */
 	char *namebuf; /* must free */
-
-	subnet_buf targetbuf;
-	str_selector_subnet(target, &targetbuf);
-
-	if (proto == &ip_protocol_all) {
+	if (protocol == &ip_protocol_all) {
 		/* all protocols implies all ports */
-		pexpect(sport.hport == 0);
-		pexpect(dport.hport == 0);
-		namebuf = alloc_printf("%s#%s", group->name, targetbuf.buf);
+		pexpect(local_port.hport == 0);
+		pexpect(remote_port.hport == 0);
+		subnet_buf tb;
+		namebuf = alloc_printf("%s#%s", group->name,
+				       str_subnet(&remote_subnet, &tb));
 	} else {
-		namebuf = alloc_printf("%s#%s-("PRI_HPORT"--%d--"PRI_HPORT")", group->name,
-				       targetbuf.buf,
-				       pri_hport(sport),
-				       proto->ipproto,
-				       pri_hport(dport));
+		subnet_buf tb;
+		namebuf = alloc_printf("%s#%s-("PRI_HPORT"--%d--"PRI_HPORT")",
+				       group->name,
+				       str_subnet(&remote_subnet, &tb),
+				       pri_hport(local_port),
+				       protocol->ipproto,
+				       pri_hport(remote_port));
 	}
 
 	if (conn_by_name(namebuf, false/*!strict*/) != NULL) {
@@ -3025,12 +3027,16 @@ struct connection *add_group_instance(struct connection *group,
 	unshare_connection(t, group);
 	passert(t->foodgroup != t->name); /* XXX: see DANGER above */
 
-	set_first_selector(t, remote, *target);	/* hashed below */
-	if (proto != 0) {
-		/* if foodgroup entry specifies protoport, override protoport= settings */
-		update_first_selector_protocol_port(t, local, proto, sport);
-		update_first_selector_protocol_port(t, remote, proto, dport);
-	}
+	set_first_selector(t, remote, selector_from_subnet(remote_subnet));	/* hashed below */
+	/*
+	 * If foodgroup entry specifies protoport, override protoport=
+	 * settings.
+	 *
+	 * XXX: this always overrides!?!
+	 */
+	update_first_selector_protocol_port(t, local, protocol, local_port);
+	update_first_selector_protocol_port(t, remote, protocol, remote_port);
+
 	t->policy &= ~(POLICY_GROUP | POLICY_GROUTED);
 	t->policy |= POLICY_GROUPINSTANCE; /* mark as group instance for later */
 	t->kind = (!address_is_specified(t->remote->host.addr) &&

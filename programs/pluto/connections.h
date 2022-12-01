@@ -647,11 +647,11 @@ extern void release_connection(struct connection *c);
 extern void delete_connection(struct connection **cp);
 extern void delete_connections_by_name(const char *name, bool strict, struct logger *logger);
 extern void delete_every_connection(void);
-struct connection *add_group_instance(struct connection *group,
-				      const ip_selector *target,
-				      const struct ip_protocol *proto,
-				      ip_port sport,
-				      ip_port dport);
+struct connection *group_instantiate(struct connection *group,
+				     const ip_subnet remote_subnet,
+				     const struct ip_protocol *protocol,
+				     ip_port local_port,
+				     ip_port remote_port);
 
 extern struct connection *route_owner(struct connection *c,
 				      const struct spd_route *cur_spd,

@@ -65,7 +65,7 @@ static struct fg_groups *groups = NULL;
 struct fg_targets {
 	struct fg_targets *next;
 	struct fg_groups *group;
-	ip_selector subnet;
+	ip_subnet subnet;
 	const struct ip_protocol *proto;
 	ip_port sport;
 	ip_port dport;
@@ -88,14 +88,14 @@ static void remove_group_instance(const struct connection *group,
  * It returns -1, 0, or +1 if a is, respectively,
  * less than, equal to, or greater than b.
  */
-static int subnetcmp(const ip_selector a, const ip_selector b)
+static int subnetcmp(const ip_subnet a, const ip_subnet b)
 {
 	int r;
 
-	ip_address neta = selector_prefix(a);
-	ip_address maska = selector_prefix_mask(a);
-	ip_address netb = selector_prefix(b);
-	ip_address maskb = selector_prefix_mask(b);
+	ip_address neta = subnet_prefix(a);
+	ip_address maska = subnet_prefix_mask(a);
+	ip_address netb = subnet_prefix(b);
+	ip_address maskb = subnet_prefix_mask(b);
 	r = addrcmp(&neta, &netb);
 	if (r == 0)
 		r = addrcmp(&maska, &maskb);
@@ -106,7 +106,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 			   struct fg_targets **new_targets)
 {
 	const char *fgn = g->connection->name;
-	const ip_selector *lsn = &g->connection->spd->local->client;
+	const ip_subnet lsn = selector_subnet(g->connection->spd->local->client);
 	const struct lsw_conf_options *oco = lsw_init_options();
 	char *fg_path = alloc_printf("%s/%s", oco->policies_dir, fgn); /* must free */
 
@@ -131,7 +131,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 		}
 
 		/* address or address/mask */
-		ip_selector sn;
+		ip_subnet sn;
 		if (strchr(flp->tok, '/') == NULL) {
 			/* no /, so treat as /32 or V6 equivalent */
 			ip_address t;
@@ -143,7 +143,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 				flushline(flp, NULL/*shh*/);
 				continue;
 			}
-			sn = selector_from_address(t);
+			sn = subnet_from_address(t);
 		} else {
 			const struct ip_info *afi = strchr(flp->tok, ':') == NULL ? &ipv4_info : &ipv6_info;
 			ip_subnet snn;
@@ -162,11 +162,11 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 				     "zeroing non-zero host identifier %s in '%s'",
 				     str_address(&nonzero_host, &hb), flp->tok);
 			}
-			sn = selector_from_subnet(snn);
+			sn = snn;
 		}
 
-		const struct ip_info *type = selector_type(&sn);
-		if (type == NULL) {
+		const struct ip_info *afi = subnet_info(sn);
+		if (afi == NULL) {
 			llog(RC_LOG_SERIOUS, flp->logger,
 				    "ignored, unsupported Address Family \"%s\"",
 				    flp->tok);
@@ -247,7 +247,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 				r = -1; /* end of list is infinite */
 				break;
 			}
-			r = subnetcmp(*lsn, (*pp)->group->connection->spd->local->client);
+			r = subnetcmp(lsn, selector_subnet((*pp)->group->connection->spd->local->client));
 			if (r == 0) {
 				r = subnetcmp(sn, (*pp)->subnet);
 			}
@@ -266,9 +266,9 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 			subnet_buf dest;
 			llog(RC_LOG_SERIOUS, flp->logger,
 			     "subnet \"%s\", proto %d, sport "PRI_HPORT" dport "PRI_HPORT", source %s, already \"%s\"",
-			     str_selector_subnet(&sn, &dest),
+			     str_subnet(&sn, &dest),
 			     proto->ipproto, pri_hport(sport), pri_hport(dport),
-			     str_selector_subnet(lsn, &source),
+			     str_subnet(&lsn, &source),
 			     (*pp)->group->connection->name);
 		} else {
 			struct fg_targets *f = alloc_thing(struct fg_targets,
@@ -315,10 +315,10 @@ void load_groups(struct logger *logger)
 		DBG_log("old food groups:");
 		for (struct fg_targets *t = targets; t != NULL; t = t->next) {
 			selector_buf asource;
-			selector_buf atarget;
+			subnet_buf atarget;
 			DBG_log("  %s->%s %s sport "PRI_HPORT" dport "PRI_HPORT" %s",
 				str_selector_subnet_port(&t->group->connection->spd->local->client, &asource),
-				str_selector_subnet_port(&t->subnet, &atarget),
+				str_subnet(&t->subnet, &atarget),
 				t->proto->name, pri_hport(t->sport), pri_hport(t->dport),
 				t->group->connection->name);
 		}
@@ -326,10 +326,10 @@ void load_groups(struct logger *logger)
 		DBG_log("new food groups:");
 		for (struct fg_targets *t = new_targets; t != NULL; t = t->next) {
 			selector_buf asource;
-			selector_buf atarget;
+			subnet_buf atarget;
 			DBG_log("  %s->%s %s sport "PRI_HPORT" dport "PRI_HPORT" %s",
 				str_selector_subnet_port(&t->group->connection->spd->local->client, &asource),
-				str_selector_subnet_port(&t->subnet, &atarget),
+				str_subnet(&t->subnet, &atarget),
 				t->proto->name, pri_hport(t->sport), pri_hport(t->dport),
 				t->group->connection->name);
 		}
@@ -356,8 +356,8 @@ void load_groups(struct logger *logger)
 				r = -1; /* no more new; next is old */
 			}
 			if (r == 0)
-				r = subnetcmp(op->group->connection->spd->local->client,
-					      np->group->connection->spd->local->client);
+				r = subnetcmp(selector_subnet(op->group->connection->spd->local->client),
+					      selector_subnet(np->group->connection->spd->local->client));
 			if (r == 0)
 				r = subnetcmp(op->subnet, np->subnet);
 			if (r == 0)
@@ -390,9 +390,11 @@ void load_groups(struct logger *logger)
 					/* XXX: something better? */
 					fd_delref(&g->logger->global_whackfd);
 					g->logger->global_whackfd = fd_addref(logger->global_whackfd);
-					struct connection *ng = add_group_instance(g, &np->subnet,
-										   np->proto,
-										   np->sport, np->dport);
+					struct connection *ng = group_instantiate(g,
+										  np->subnet,
+										  np->proto,
+										  np->sport,
+										  np->dport);
 					/* XXX: something better? */
 					fd_delref(&g->logger->global_whackfd);
 					if (ng != NULL) {
