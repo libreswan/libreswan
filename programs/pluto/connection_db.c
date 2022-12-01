@@ -343,8 +343,8 @@ struct connection *clone_connection(const char *name, struct connection *t, wher
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		if (c->end[end].child.selectors.proposed.list != c->end[end].config->child.selectors.list) {
 			pexpect(c->end[end].child.selectors.proposed.len == 1);
-			pexpect(c->end[end].child.selectors.proposed.list == &t->end[end].child.selectors.acquire_or_host);
-			c->end[end].child.selectors.proposed.list = &c->end[end].child.selectors.acquire_or_host;
+			pexpect(c->end[end].child.selectors.proposed.list == &t->end[end].child.selectors.acquire_or_host_or_group);
+			c->end[end].child.selectors.proposed.list = &c->end[end].child.selectors.acquire_or_host_or_group;
 		}
  	}
 

@@ -1339,10 +1339,10 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 	return NULL;
 }
 
-static diag_t extract_child_end(const struct whack_message *wm,
-				const struct whack_end *src,
-				struct child_end_config *child_config,
-				struct logger *logger)
+static diag_t extract_child_end_config(const struct whack_message *wm,
+				       const struct whack_end *src,
+				       struct child_end_config *child_config,
+				       struct logger *logger)
 {
 	const char *leftright = src->leftright;
 
@@ -2778,31 +2778,38 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	/*
-	 * Check that the IP address family of the children is
-	 * plausable.
+	 * Extract the child configuration and save it.
 	 */
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		d = extract_child_end(wm, whack_ends[end],
-				      &config->end[end].child,
-				      c->logger);
+		d = extract_child_end_config(wm, whack_ends[end],
+					     &config->end[end].child,
+					     c->logger);
 		if (d != NULL) {
 			llog_diag(RC_FATAL, c->logger, &d, ADD_FAILED_PREFIX);
 			return false;
 		}
 	}
 
-	bool using_ip[END_ROOF][IP_INDEX_ROOF] = {0};
+	/*
+	 * Now cross check the configuration looking for IP version
+	 * conflicts.
+	 *
+	 * Build a table of the IP address families that each end's
+	 * child is using and then cross check that.
+	 */
+
+	bool end_uses_address_family[END_ROOF][IP_INDEX_ROOF] = {0};
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		if (c->end[end].config->child.selectors.len == 0) {
-			using_ip[end][host_afi->ip_index] = true;
+			end_uses_address_family[end][host_afi->ip_index] = true;
 		} else {
 			const ip_selectors *const selectors = &c->end[end].config->child.selectors;
 			for (const ip_selector *s = selectors->list;
 			     s < selectors->list + selectors->len;
 			     s++) {
 				const struct ip_info *afi = selector_type(s);
-				using_ip[end][afi->ip_index] = true;
+				end_uses_address_family[end][afi->ip_index] = true;
 			}
 		}
 	}
@@ -2810,9 +2817,14 @@ static bool extract_connection(const struct whack_message *wm,
 	/* now check there's a match */
 	FOR_EACH_THING(afi, &ipv4_info, &ipv6_info) {
 		enum ip_index i = afi->ip_index;
-		if (using_ip[LEFT_END][i] == using_ip[RIGHT_END][i]) {
+		if (end_uses_address_family[LEFT_END][i] == end_uses_address_family[RIGHT_END][i]) {
 			continue;
 		}
+		/*
+		 * One of the ends children is using an address family
+		 * not mentioned by the other end.  Try to log a
+		 * helpful error.
+		 */
 		if (c->end[LEFT_END].config->child.selectors.len > 0 &&
 		    c->end[RIGHT_END].config->child.selectors.len > 0) {
 			/*
@@ -2864,8 +2876,13 @@ static bool extract_connection(const struct whack_message *wm,
 		if (selectors->len > 0) {
 			c->end[end].child.selectors.proposed = *selectors;
 		} else {
+			/*
+			 * to-be-determined from the host or the
+			 * opportunistic group.
+			 */
+			c->end[end].child.selectors.acquire_or_host_or_group = unset_selector;
 			c->end[end].child.selectors.proposed.len = 1;
-			c->end[end].child.selectors.proposed.list = &c->end[end].child.selectors.acquire_or_host;
+			c->end[end].child.selectors.proposed.list = &c->end[end].child.selectors.acquire_or_host_or_group;
 		}
 		set_end_child_has_client(c, end, c->end[end].config->child.has_client);
 	}
@@ -4867,7 +4884,7 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 			    ip_selector new_selector,
 			    const char *excuse, where_t where)
 {
-	ip_selector old_selector = c->end[end].child.selectors.acquire_or_host;
+	ip_selector old_selector = c->end[end].child.selectors.acquire_or_host_or_group;
 	selector_buf ob, nb;
 	ldbg(c->logger, "%s.child.selector %s -> %s",
 	     c->end[end].config->leftright,
@@ -4895,8 +4912,8 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 	 * truncate the selector list.
 	 */
 	pexpect(c->end[end].child.selectors.proposed.len == 1);
-	c->end[end].child.selectors.acquire_or_host = new_selector;
-	c->end[end].child.selectors.proposed.list = &c->end[end].child.selectors.acquire_or_host;
+	c->end[end].child.selectors.acquire_or_host_or_group = new_selector;
+	c->end[end].child.selectors.proposed.list = &c->end[end].child.selectors.acquire_or_host_or_group;
 	c->end[end].child.selectors.proposed.len = 1;
 
 	/*

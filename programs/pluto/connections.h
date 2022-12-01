@@ -362,8 +362,8 @@ struct host_end {
 struct child_end {
 	const struct child_end_config *config;
 	struct {
-		ip_selector acquire_or_host;
-		ip_selectors proposed; /* either .acquire_or_host or config->selectors; do not free */
+		ip_selector acquire_or_host_or_group;
+		ip_selectors proposed; /* either .config->selectors or above; do not free */
 		ip_selectors accepted; /* must pfree(.list) */
 	} selectors;
 
@@ -415,13 +415,13 @@ struct spd_end {
 	set_end_selector_where(C, (C)->LR->config->index, SELECTOR, NULL, HERE)
 #define update_first_selector_protocol_port(C, LR, PROTOCOL, PORT)	\
 	set_end_selector_where(C, (C)->LR->config->index,		\
-			       selector_from_range_protocol_port(selector_range((C)->LR->child.selectors.acquire_or_host), \
+			       selector_from_range_protocol_port(selector_range((C)->LR->child.selectors.acquire_or_host_or_group), \
 								 PROTOCOL, PORT), \
 			       NULL, HERE)
 #define update_first_selector_port(C, LR, PORT)				\
 	set_end_selector_where(C, (C)->LR->config->index,		\
-			       selector_from_range_protocol_port(selector_range((C)->LR->child.selectors.acquire_or_host), \
-								 selector_protocol((C)->LR->child.selectors.acquire_or_host), \
+			       selector_from_range_protocol_port(selector_range((C)->LR->child.selectors.acquire_or_host_or_group), \
+								 selector_protocol((C)->LR->child.selectors.acquire_or_host_or_group), \
 								 PORT),	\
 			       NULL, HERE)
 
