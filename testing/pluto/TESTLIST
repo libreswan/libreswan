@@ -933,9 +933,9 @@ kvmplutotest	ikev2-selectors-64in4-rw-alias		wip
 kvmplutotest	ikev2-selectors-64in4-rw-ike		wip
 kvmplutotest	ikev2-selectors-64in6-rw-alias		wip
 kvmplutotest	ikev2-selectors-64in6-rw-ike		wip
-kvmplutotest	ikev2-selectors-66in4-rw-alias		wip
+kvmplutotest	ikev2-selectors-66in4-rw-alias		good
 kvmplutotest	ikev2-selectors-66in4-rw-ike		wip
-kvmplutotest	ikev2-selectors-66in6-rw-alias		wip
+kvmplutotest	ikev2-selectors-66in6-rw-alias		good
 kvmplutotest	ikev2-selectors-66in6-rw-ike		wip
 
 # transport mode related tests
