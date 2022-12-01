@@ -3044,15 +3044,51 @@ struct connection *group_instantiate(struct connection *group,
 	unshare_connection(t, group);
 	passert(t->foodgroup != t->name); /* XXX: see DANGER above */
 
-	set_first_selector(t, remote, selector_from_subnet(remote_subnet));	/* hashed below */
 	/*
-	 * If foodgroup entry specifies protoport, override protoport=
-	 * settings.
-	 *
-	 * XXX: this always overrides!?!
+	 * For the remote end, just use what ever the group specified
+	 * (i.e., ignore protoport=).
 	 */
-	update_first_selector_protocol_port(t, local, protocol, local_port);
-	update_first_selector_protocol_port(t, remote, protocol, remote_port);
+	ip_selector remote_selector =
+		selector_from_subnet_protocol_port(remote_subnet, protocol, remote_port);
+	set_first_selector(t, remote, remote_selector);
+
+	/*
+	 * Figure out the local selector; it was either specified
+	 * using subnet= or it needs to be derived from the host.
+	 *
+	 * XXX: this is looking like potential boiler plate code.
+	 */
+
+	ip_selector local_selector;
+	if (t->local->child.config->selectors.len > 0) {
+		/*
+		 * Selector contains subnet= possibly already merged
+		 * with protoport=.
+		 */
+		local_selector = t->local->child.config->selectors.list[0];
+	} else {
+		/*
+		 * Need to mash protoport and local .host_addr
+		 * together, and then combined with what was specified
+		 * by the group.
+		 */
+		local_selector = selector_from_address_protoport(t->local->host.addr,
+								 t->local->child.config->protoport);
+	}
+
+	/*
+	 * If the group entry specifies a protoport, override those
+	 * fields in the selector.
+	 */
+
+	if (protocol != &ip_protocol_all) {
+		ip_subnet local_subnet = selector_subnet(local_selector);
+		local_selector = selector_from_subnet_protocol_port(local_subnet,
+								    protocol,
+								    local_port);
+	}
+
+	set_first_selector(t, local, local_selector);
 
 	t->policy &= ~(POLICY_GROUP | POLICY_GROUTED);
 	t->policy |= POLICY_GROUPINSTANCE; /* mark as group instance for later */
@@ -3775,74 +3811,6 @@ static struct connection *oppo_instantiate(struct connection *t,
 
 	/* all done; only one */
 	PASSERT(d->logger, d->spd->spd_next == NULL);
-
-	/*
-	 * XXX: shouldn't this have been done by the template - local
-	 * address hasn't changed.
-	 */
-	const struct ip_protocol *local_template_protocol =
-		selector_protocol(t->spd->local->client);
-	ip_port local_template_port =
-		selector_port(t->spd->local->client);
-	ldbg(d->logger, "%s() protocol %s port "PRI_HPORT,
-	     __func__, local_template_protocol->name, pri_hport(local_template_port));
-
-	if (d->local->child.has_client) {
-		/*
-		 * Opportunistic connections do not use port
-		 * selectors.
-		 *
-		 * There was a client in the abstract connection so we
-		 * demand that either ...
-		 */
-		if (address_in_selector_range(d->local->host.addr, d->spd->local->client)) {
-			pexpect(d->local->child.config->selectors.len == 0);
-			ldbg(d->logger, "%s() local %s.spd.has_client==true and local address <= client; narrowing local client",
-			     __func__, d->spd->local->config->leftright);
-			/*
-			 * ... the required client is within that
-			 * subnet narrow it(?), ...
-			 */
-			ip_selector new_local_client =
-				selector_from_address_protocol_port(d->local->host.addr,
-								    local_template_protocol,
-								    local_template_port);
-			set_first_selector(d, local, new_local_client);
-		} else {
-			pexpect(d->local->child.config->selectors.len > 0);
-			ldbg(d->logger, "%s() local %s.spd.has_client==true and local address == host.addr; updating port",
-			     __func__, d->spd->local->config->leftright);
-			/*
-			 * ... or that it is our private ip in case we
-			 * are behind a port forward.
-			 */
-			update_first_selector_port(d, local, unset_port);
-		}
-	} else {
-		/*
-		 * There was no client in the abstract connection so
-		 * we demand that the required client be the host.
-		 *
-		 * Because instantiate(), when !has_client, updates
-		 * client using config->protoport, any proto/port
-		 * added to the template is lost.
-		 *
-		 * XXX: it's all a bit weird.  Should the oppo group
-		 * just set the selector and work with that?
-		 *
-		 * XXX: this is no longer true?
-		 */
-		ldbg(d->logger,
-		     "%s() local %s.spd.has_client==false; patching damage by instantiate()",
-		     __func__, d->spd->local->config->leftright);
-		ip_selector new_local_client =
-			selector_from_address_protocol_port(d->local->host.addr,
-							    local_template_protocol,
-							    local_template_port);
-		/* is the address being changed? */
-		PASSERT(d->logger, selector_eq_selector(d->spd->local->client, new_local_client));
-		set_first_selector(d, local, new_local_client);
-	}
 
 	/*
 	 * Fill in peer's client side.
