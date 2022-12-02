@@ -4061,10 +4061,12 @@ void jam_kernel_acquire(struct jambuf *buf, const struct kernel_acquire *b)
 		jam(buf, " sec_label=");
 		jam_sanitized_hunk(buf, b->sec_label);
 	}
+#if 0
 	if (b->state_id > 0) {
 		jam(buf, " seq=%u", (unsigned)b->state_id);
 	}
 	if (b->policy_id > 0) {
 		jam(buf, " policy=%u", (unsigned)b->policy_id);
 	}
+#endif
 }
