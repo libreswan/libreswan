@@ -118,7 +118,7 @@ west #
 | add bare shunt 0xPOINTER 192.0.1.254/32:8 -ICMP-> 192.0.2.254/32:0 => HOLD 0    acquire
 | comparing bare shunt 0xPOINTER 192.0.1.254/32:8 -ICMP-> 192.0.2.254/32:0 => HOLD 0    acquire
 | delete bare shunt 0xPOINTER 192.0.1.254/32:8 -ICMP-> 192.0.2.254/32:0 => HOLD 0    acquire
-initiate on-demand for packet 192.0.1.254:8-ICMP->192.0.2.254:0 seq=1
+initiate on-demand for packet 192.0.1.254:8-ICMP->192.0.2.254:0
 west #
  echo done
 done
