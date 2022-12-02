@@ -440,7 +440,7 @@ void update_host_pairs(struct connection *c)
 			 * client info
 			 */
 			if (!d->remote->child.has_client) {
-				set_first_selector(d, remote, selector_from_address(new_addr));
+				update_first_selector(d, remote, selector_from_address(new_addr));
 				rehash_db_spd_route_remote_client(d->spd);
 			}
 

@@ -1562,7 +1562,7 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				return STF_FATAL;
 			}
-			set_first_selector(c, local, selector_from_address(a));
+			update_first_selector(c, local, selector_from_address(a));
 			set_child_has_client(c, local, true);
 			c->local->child.has_lease = true;
 
@@ -1731,9 +1731,9 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				}
 				set_child_has_client(c, local, true);
 				c->local->child.has_lease = true;
-				set_end_selector(c, c->local->config->index,
-						 selector_from_address(a),
-						 "^*(&^(* IKEv1 doing something with the address it received");
+				update_end_selector(c, c->local->config->index,
+						    selector_from_address(a),
+						    "^*(&^(* IKEv1 doing something with the address it received");
 
 				subnet_buf caddr;
 				str_selector_subnet(&c->spd->local->client, &caddr);
@@ -1806,7 +1806,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 				if (!c->remote->child.has_client) {
 					passert(c->spd->spd_next == NULL);
 					set_child_has_client(c, remote, true);
-					set_first_selector(c, remote, ipv4_info.selector.all);
+					update_first_selector(c, remote, ipv4_info.selector.all);
 					rehash_db_spd_route_remote_client(c->spd);
 				}
 

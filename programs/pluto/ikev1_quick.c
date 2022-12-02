@@ -1126,7 +1126,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 				selector_from_range_protocol_port(selector_range(c->remote->child.selectors.proposed.list[0]),
 								  selector_protocol(c->remote->child.selectors.proposed.list[0]),
 								  selector_port(*remote_client));
-			set_first_selector(c, remote, selector);
+			update_first_selector(c, remote, selector);
 		}
 
 		if (is_virtual_remote(c)) {
@@ -1138,7 +1138,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 			     bool_str(c->local->config->child.virt != NULL),
 			     bool_str(c->remote->config->child.virt != NULL));
 
-			set_first_selector(c, remote, *remote_client);
+			update_first_selector(c, remote, *remote_client);
 			rehash_db_spd_route_remote_client(c->spd);
 			set_child_has_client(c, remote, true);
 			virtual_ip_delref(&c->spd->remote->virt);
@@ -1590,8 +1590,8 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 			     NAT_T_WITH_NATOA) &&
 			    IDcr->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
 				shunk_t idfqdn = pbs_in_left_as_shunk(&IDcr->pbs);
-				set_first_selector(st->st_connection, remote,
-					     selector_from_address(st->hidden_variables.st_nat_oa));
+				update_first_selector(st->st_connection, remote,
+						      selector_from_address(st->hidden_variables.st_nat_oa));
 				LLOG_JAMBUF(RC_LOG_SERIOUS, st->st_logger, buf) {
 					jam(buf, "IDcr was FQDN: ");
 					jam_sanitized_hunk(buf, idfqdn);

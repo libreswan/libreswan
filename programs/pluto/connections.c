@@ -585,7 +585,7 @@ void update_spds_from_end_host_addr(struct connection *c, enum left_right end, i
 		    str_selector_subnet_port(&spde->client, &old),
 		    str_selector_subnet_port(&selector, &new));
 		if (spd == c->spd) {
-			set_end_selector(c, end, selector, NULL);
+			update_end_selector(c, end, selector, NULL);
 		} else {
 			spde->client = selector; /*set_end_selector()*/
 		}
@@ -1823,7 +1823,7 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 						     indent, "", c->name, leftright, str_selector(selector, &sb));
 						passert(selector->is_set); /* else pointless */
 						if (spd == c->spd) {
-							set_end_selector(c, end, *selector, NULL);
+							update_end_selector(c, end, *selector, NULL);
 						} else {
 							spd_end->client = *selector;/*update_end_selector()*/
 						}
@@ -3465,7 +3465,7 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 	struct connection *d = spd_instantiate(t, peer_addr, peer_id, null_shunk);
 
 	if (peer_subnet != NULL && is_virtual_remote(t)) {
-		set_first_selector(d, remote, *peer_subnet);
+		update_first_selector(d, remote, *peer_subnet);
 		rehash_db_spd_route_remote_client(d->spd);
 		if (selector_eq_address(*peer_subnet, d->remote->host.addr)) {
 			ldbg(t->logger, "forcing remote %s.spd.has_client=false",
@@ -3935,9 +3935,10 @@ static struct connection *oppo_instantiate(struct connection *t,
 	ldbg(d->logger, "%s() remote(c) protocol %s port "PRI_HPORT,
 	     __func__, remote_protocol->name, pri_hport(remote_port));
 	PASSERT(d->logger, address_in_selector_range(remote_address, d->spd->remote->client));
-	set_first_selector(d, remote, selector_from_address_protocol_port(remote_address,
-									  remote_protocol,
-									  remote_port));
+	update_first_selector(d, remote,
+			      selector_from_address_protocol_port(remote_address,
+								  remote_protocol,
+								  remote_port));
 
 	spd_route_db_add_connection(d);
 	set_policy_prio(d); /* re-compute; may have changed */
@@ -4936,12 +4937,13 @@ bool dpd_active_locally(const struct connection *c)
 }
 
 void set_end_selector_where(struct connection *c, enum left_right end,
-			    ip_selector new_selector,
+			    ip_selector new_selector, bool first_time,
 			    const char *excuse, where_t where)
 {
 	ip_selector old_selector = c->end[end].child.selectors.acquire_or_host_or_group;
 	selector_buf ob, nb;
-	ldbg(c->logger, "%s.child.selector %s -> %s",
+	ldbg(c->logger, "%s %s.child.selector %s -> %s",
+	     (first_time ? "initialize" : "update"),
 	     c->end[end].config->leftright,
 	     str_selector(&old_selector, &ob),
 	     str_selector(&new_selector, &nb));

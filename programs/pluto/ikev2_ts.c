@@ -184,10 +184,10 @@ static void scribble_ts_response_on_initiator(struct child_sa *child,
 	       str_selector(&tsi, &si), nsps->i.nr,
 	       str_selector(&tsr, &sr), nsps->r.nr);
 	/* update */
-	set_end_selector(c, c->local->config->index, tsi,
-			 "scribbling final TSi on end");
-	set_end_selector(c, c->remote->config->index, tsr,
-			 "scribbling final TSr on end");
+	update_end_selector(c, c->local->config->index, tsi,
+			    "scribbling final TSi on end");
+	update_end_selector(c, c->remote->config->index, tsr,
+			    "scribbling final TSr on end");
 	/* redundant? */
 	set_child_has_client(c, local, !selector_eq_address(c->spd->local->client,
 							    c->local->host.addr));
@@ -1114,10 +1114,10 @@ static void scribble_ts_request_on_responder(struct child_sa *child,
 	dbg_ts("scribbling narrowed TSi=%s ...(%u) TSr=%s ...(%u) on responder",
 	       str_selector(&tsi, &si), nsps->i.nr,
 	       str_selector(&tsr, &sr), nsps->r.nr);
-	set_end_selector(c, c->local->config->index, tsr,
-			 "scribbling final TSr on end");
-	set_end_selector(c, c->remote->config->index, tsi,
-			 "scribbling final TSr on end");
+	update_end_selector(c, c->local->config->index, tsr,
+			    "scribbling final TSr on end");
+	update_end_selector(c, c->remote->config->index, tsi,
+			    "scribbling final TSr on end");
 	/* end game */
 	scribble_accepted_selectors(&c->local->child.selectors.accepted,
 				    &nsps->r, indent);

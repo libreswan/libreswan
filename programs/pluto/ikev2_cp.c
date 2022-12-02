@@ -451,15 +451,15 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs, struct child_sa 
 			    child->sa.st_serialno, c->name, c->instance_serial,
 			    af->ip_version, ipstr(&ip, &ip_str));
 		} else {
-			set_end_selector(c, c->local->config->index,
-					 selector_from_address(ip),
-					 "CP scribbling on end while ignoring TS");
+			update_end_selector(c, c->local->config->index,
+					    selector_from_address(ip),
+					    "CP scribbling on end while ignoring TS");
 			c->local->child.has_cat = true; /* create iptable entry */
 		}
 	} else {
-		set_end_selector(c, c->local->config->index,
-				 selector_from_address(ip),
-				 "CP scribbling on end while ignoring TS");
+		update_end_selector(c, c->local->config->index,
+				    selector_from_address(ip),
+				    "CP scribbling on end while ignoring TS");
 	}
 
 	return true;

@@ -405,14 +405,21 @@ struct connection_end {
 	struct child_end child;
 };
 
-void set_end_selector_where(struct connection *c, enum left_right end, ip_selector s, const char *excuse, where_t where);
+void set_end_selector_where(struct connection *c, enum left_right end,
+			    ip_selector s, bool first_time,
+			    const char *excuse, where_t where);
 
 struct spd_end {
 	ip_selector client;
-#define set_end_selector(C, END, SELECTOR, EXCUSE)		\
-	set_end_selector_where(C, END, SELECTOR, EXCUSE, HERE)
+#define update_end_selector(C, END, SELECTOR, EXCUSE)			\
+	set_end_selector_where(C, END, SELECTOR,			\
+			       /*first-time*/false, EXCUSE, HERE)
+#define update_first_selector(C, LR, SELECTOR)				\
+	set_end_selector_where(C, (C)->LR->config->index, SELECTOR,	\
+			       /*first-time*/false, NULL, HERE)
 #define set_first_selector(C, LR, SELECTOR)				\
-	set_end_selector_where(C, (C)->LR->config->index, SELECTOR, NULL, HERE)
+	set_end_selector_where(C, (C)->LR->config->index, SELECTOR,	\
+			       /*first-time*/true, NULL, HERE)
 
 	/*
 	 * An extract of the original configuration information for
