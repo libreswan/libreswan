@@ -3200,11 +3200,6 @@ struct connection *group_instantiate(struct connection *group,
 	t->kind = (!address_is_specified(t->remote->host.addr) &&
 		   !NEVER_NEGOTIATE(t->policy)) ? CK_TEMPLATE : CK_INSTANCE;
 
-	/* reset log file info */
-	t->log_file_name = NULL;
-	t->log_file = NULL;
-	t->log_file_err = false;
-
 	/* leave a breadcrumb */
 	PASSERT(t->logger, t->child.routing == RT_UNROUTED);
 	set_child_routing(t, RT_UNROUTED);
@@ -3336,11 +3331,6 @@ struct connection *instantiate(struct connection *t,
 	 */
 	d->newest_ike_sa = SOS_NOBODY;
 	pexpect(d->newest_ipsec_sa == SOS_NOBODY);
-
-	/* reset log file info */
-	d->log_file_name = NULL;
-	d->log_file = NULL;
-	d->log_file_err = false;
 
 	if (sec_label.len > 0) {
 		/*
@@ -4976,7 +4966,7 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 	 * single selector reasonable?  Certainly don't want to
 	 * truncate the selector list.
 	 */
-	pexpect(c->end[end].child.selectors.proposed.len == 1);
+	PEXPECT_WHERE(c->logger, where, c->end[end].child.selectors.proposed.len == 1);
 	c->end[end].child.selectors.acquire_or_host_or_group = new_selector;
 	c->end[end].child.selectors.proposed.list = &c->end[end].child.selectors.acquire_or_host_or_group;
 	c->end[end].child.selectors.proposed.len = 1;

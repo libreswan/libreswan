@@ -333,8 +333,13 @@ struct connection *clone_connection(const char *name, struct connection *t, wher
 {
 	struct connection *c = clone_thing(*t, where->func);
 	zero_thing(c->hash_table_entries); /* keep init_list_entry() happy */
+
 	/* caller responsible for cloning this */
 	c->spd = NULL;
+
+	c->log_file_name = NULL;
+	c->log_file = NULL;
+	c->log_file_err = false;
 
 	/* point local pointers at local structure */
 	c->local = &c->end[t->local->config->index];
