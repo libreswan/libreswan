@@ -128,11 +128,6 @@ struct child_end_config {
 	ip_protoport protoport;
 	char *updown;
 
-	/*
-	 * This means something, although exactly what isn't clear.
-	 */
-	bool has_client;
-
 	bool has_client_address_translation;		/* aka CAT */
 
 	ip_selectors selectors;

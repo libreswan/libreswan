@@ -538,11 +538,6 @@ void update_spds_from_end_host_addr(struct connection *c, enum left_right end, i
 	ldbg(c->logger, "updating %s.spd client(selector) from %s.host.addr %s "PRI_WHERE,
 	     leftright, leftright, str_address(&host_addr, &hab), pri_where(where));
 
-	if (child->config->has_client) {
-		ldbg(c->logger, "  %s.child.config.has_client; good to know",
-		     leftright);
-	}
-
 	if (!PEXPECT_WHERE(c->logger, where, address_is_specified(host_addr))) {
 		return;
 	}
@@ -558,7 +553,6 @@ void update_spds_from_end_host_addr(struct connection *c, enum left_right end, i
 
 		if (spde->child->has_client) {
 			pexpect(c->policy & POLICY_OPPORTUNISTIC);
-			pexpect(child->config->has_client);
 			ldbg(c->logger, "  %s.child.has_client yet no selectors; skipping magic",
 			     leftright);
 			continue;
@@ -1417,25 +1411,15 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 	/*
 	 * Figure out the end's child selectors.
 	 */
-	if ((wm->ike_version == IKEv1 && src->subnet != NULL) ||
-	    (wm->ike_version == IKEv2 && src->subnet != NULL && src->protoport.is_set)) {
+	if (src->subnet != NULL && (wm->ike_version == IKEv1 ||
+				    src->protoport.is_set)) {
 		/*
-		 * Legacy syntax.
+		 * Legacy syntax:
 		 *
-		 * When end.has_client:
+		 * - IKEv1
+		 * - when protoport= was also specified
 		 *
-		 * - the update SPD code skips updating the spd client
-		 *   (selector) from the host address
-		 *
-		 * - could_route() will allow routing even though the
-		 *   connection is a TEMPLATE
-		 *
-		 * - seems to also mean that the Child's selector is
-		 *   pinned (when false the Child's selector can be
-		 *   refined).
-		 *
-		 *   Of course if NARROWING is allowed, this can be
-		 *   refined regardless of .has_client.
+		 * Merge protoport into the selector.
 		 */
 		ip_subnet subnet;
 		ip_address nonzero_host;
@@ -1452,7 +1436,6 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		}
 		ldbg(logger, "%s child selectors from %ssubnet + %sprotoport; %s.config.has_client=true",
 		     leftright, leftright, leftright, leftright);
-		child_config->has_client = true;
 		child_config->selectors_field = "subnet";
 		child_config->selectors_string = clone_str(src->subnet, "client");
 		child_config->selectors.len = 1;
@@ -1469,7 +1452,6 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		ldbg(logger, "%s child selectors from %ssubnet (selector); %s.config.has_client=true",
 		     leftright, leftright, leftright);
 		passert(wm->ike_version == IKEv2);
-		child_config->has_client = true;
 		child_config->selectors_field = "subnet";
 		child_config->selectors_string = clone_str(src->subnet, "client");
 		ip_address nonzero_host;
@@ -1485,68 +1467,6 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 			     "zeroing non-sero address identifier %s in %ssubnet=%s",
 			     str_address(&nonzero_host, &hb), leftright, src->subnet);
 		}
-	} else if (src->protoport.is_set) {
-		/*
-		 * There's no child subnet _yet_ there is a child
-		 * client protoport.  Hence, there must be a child so
-		 * construct its SELECTOR using an address wild-card.
-		 *
-		 * Now since it is a wildcard, and can be refined
-		 * (i.e., not pinned), don't set .has_client.
-		 *
-		 * Per above, the client will be formed from
-		 * HOST+PROTOPORT.  Problem is, HOST probably isn't
-		 * yet known, use host family's .all as a stand in.
-		 * Calling update_ends*() will then try to fix it.
-		 *
-		 * When end.has_client:
-		 *
-		 * - the update SPD code skips updating the spd client
-		 *   (selector) from the host address
-		 *
-		 * - could_route() will allow routing even though the
-		 *   connection is a TEMPLATE
-		 *
-		 * - seems to also mean that the Child's selector is
-		 *   pinned (when false the Child's selector can be
-		 *   refined).
-		 *
-		 *   Of course if NARROWING is allowed, this can be
-		 *   refined regardless of .has_client.
-		 */
-		ldbg(logger, "%s child selectors from %sprotoport + host AFI; config.has_client=false",
-		     leftright, leftright);
-		pexpect(child_config->has_client == false);
-	} else if ((wm->policy & POLICY_OPPORTUNISTIC) &&
-		   !address_is_specified(src->host_addr)) {
-		/*
-		 * This heuristic is trying to guess the peer that
-		 * won't orient?!?
-		 *
-		 * The check for unspecified HOST_ADDR is pretty weak
-		 * (it comes from older code).  For instance, the
-		 * HOST_ADDR could be unspecified because
-		 * host=DNS-NAME didn't resolve or host=%defaultroute
-		 * is still unknown.
-		 *
-		 * When end.has_client:
-		 *
-		 * - the update SPD code skips updating the spd client
-		 *   (selector) from the host address
-		 *
-		 * - could_route() will allow routing even though the
-		 *   connection is a TEMPLATE
-		 *
-		 * - seems to also mean that the Child's selector is
-		 *   pinned (when false the Child's selector can be
-		 *   refined).
-		 *
-		 *   Of course if NARROWING is allowed, this can be
-		 *   refined regardless of .has_client.
-		 */
-		ldbg(logger, "%s child is opportunistic client as host is unspecified; config.has_client=true",
-		     leftright);
-		child_config->has_client = true;
 	} else {
 		ldbg(logger, "%s child selectors unknown; probably derived from host?!?",
 		     leftright);
@@ -2992,7 +2912,7 @@ static bool extract_connection(const struct whack_message *wm,
 			c->end[end].child.selectors.proposed.len = 1;
 			c->end[end].child.selectors.proposed.list = &c->end[end].child.selectors.acquire_or_host_or_group;
 		}
-		set_end_child_has_client(c, end, c->end[end].config->child.has_client);
+		set_end_child_has_client(c, end, c->end[end].config->child.selectors.len > 0);
 	}
 
 	/*
