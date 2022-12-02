@@ -413,17 +413,6 @@ struct spd_end {
 	set_end_selector_where(C, END, SELECTOR, EXCUSE, HERE)
 #define set_first_selector(C, LR, SELECTOR)				\
 	set_end_selector_where(C, (C)->LR->config->index, SELECTOR, NULL, HERE)
-#define update_first_selector_protocol_port(C, LR, PROTOCOL, PORT)	\
-	set_end_selector_where(C, (C)->LR->config->index,		\
-			       selector_from_range_protocol_port(selector_range((C)->LR->child.selectors.acquire_or_host_or_group), \
-								 PROTOCOL, PORT), \
-			       NULL, HERE)
-#define update_first_selector_port(C, LR, PORT)				\
-	set_end_selector_where(C, (C)->LR->config->index,		\
-			       selector_from_range_protocol_port(selector_range((C)->LR->child.selectors.acquire_or_host_or_group), \
-								 selector_protocol((C)->LR->child.selectors.acquire_or_host_or_group), \
-								 PORT),	\
-			       NULL, HERE)
 
 	/*
 	 * An extract of the original configuration information for

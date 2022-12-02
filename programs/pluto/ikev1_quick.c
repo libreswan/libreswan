@@ -1122,8 +1122,11 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 		/* fill in the client's true port */
 		if (c->remote->config->child.protoport.has_port_wildcard) {
-			ip_port port = selector_port(*remote_client);
-			update_first_selector_port(c, remote, port);
+			ip_selector selector =
+				selector_from_range_protocol_port(selector_range(c->remote->child.selectors.proposed.list[0]),
+								  selector_protocol(c->remote->child.selectors.proposed.list[0]),
+								  selector_port(*remote_client));
+			set_first_selector(c, remote, selector);
 		}
 
 		if (is_virtual_remote(c)) {
