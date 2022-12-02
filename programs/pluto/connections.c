@@ -103,6 +103,52 @@ static void clone_connection_spd(struct connection *d, struct connection *t);
 #define MINIMUM_IPSEC_SA_RANDOM_MARK 65536
 static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 
+PRINTF_LIKE(3)
+static void ldbg_connection(const struct connection *c, where_t where,
+			    const char *message, ...)
+{
+	if (DBGP(DBG_BASE)) {
+		LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
+			va_list ap;
+			va_start(ap, message);
+			jam_va_list(buf, message, ap);
+			va_end(ap);
+			jam(buf, " "PRI_WHERE, pri_where(where));
+		}
+		connection_buf cb;
+		LDBG_log(c->logger, "  connection: "PRI_CONNECTION,
+			 pri_connection(c, &cb));
+		LDBG_log(c->logger, "    routing: %s",
+			 enum_name_short(&routing_story, c->child.routing));
+		address_buf lb, rb;
+		LDBG_log(c->logger, "    host: %s->%s",
+			 str_address(&c->local->host.addr, &lb),
+			 str_address(&c->remote->host.addr, &rb));
+		LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
+			jam_string(buf, "    selectors:");
+			const char *sep = " ->";
+			FOR_EACH_THING(end, &c->local->child, &c->remote->child) {
+				const ip_selectors *selectors = &end->selectors.proposed;
+				for (const ip_selector *selector = selectors->list;
+				     selector < selectors->list + selectors->len;
+				     selector++) {
+					jam_string(buf, " ");
+					jam_selector(buf, selector);
+				}
+				jam_string(buf, sep); sep = "";
+			}
+		}
+		LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
+			jam_string(buf, "    spds:");
+			for (const struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+				jam_string(buf, " ");
+				jam_selectors(buf, &spd->local->client, &spd->remote->client);
+			}
+		}
+	}
+
+}
+
 static void spd_route_db_add_connection(struct connection *c)
 {
 	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
@@ -1824,6 +1870,68 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 	set_policy_prio(c); /* must be after kind is set */
 }
 
+static void add_proposal_spds(struct connection *c)
+{
+	unsigned indent = 0;
+	ldbg(c->logger, "%*sadding proposal spds", indent, "");
+	struct spd_route **spd_end = &c->spd;
+	struct {
+		const ip_selectors *selectors;
+		const ip_selector *selector;
+		const struct ip_info *afi;
+	} selectors[END_ROOF] = {0};
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		selectors[end].selectors = &c->end[end].child.selectors.proposed;
+		PASSERT(c->logger, selectors[end].selectors->len > 0);
+	}
+	selectors[LEFT_END].selector = selectors[LEFT_END].selectors->list;
+	for (selectors[LEFT_END].selector = selectors[LEFT_END].selectors->list;
+	     selectors[LEFT_END].selector < selectors[LEFT_END].selectors->list + selectors[LEFT_END].selectors->len;
+	     selectors[LEFT_END].selector++) {
+		for (selectors[RIGHT_END].selector = selectors[RIGHT_END].selectors->list;
+		     selectors[RIGHT_END].selector < selectors[RIGHT_END].selectors->list + selectors[RIGHT_END].selectors->len;
+		     selectors[RIGHT_END].selector++) {
+			indent = 1;
+			selector_buf leftb, rightb;
+			ldbg(c->logger, "%*s%s->%s", indent, "",
+			     str_selector(selectors[LEFT_END].selector, &leftb),
+			     str_selector(selectors[RIGHT_END].selector, &rightb));
+			indent = 2;
+			/*
+			 * XXX: figure out the combination's IP
+			 * family.
+			 */
+			FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+				selectors[end].afi = selector_type(selectors[end].selector);
+			}
+			if (selectors[LEFT_END].afi == selectors[RIGHT_END].afi) {
+				indent = 6;
+				struct spd_route *spd = append_spd_route(c, &spd_end);
+				FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+					const ip_selector *selector = selectors[end].selector;
+					const struct child_end_config *child_end = &c->end[end].config->child;
+					struct spd_end *spd_end = &spd->end[end];
+					const char *leftright = child_end->leftright;
+					spd_end->client = *selector;/*NOT update_end_selector()*/
+					selector_buf sb;
+					ldbg(c->logger,
+					     "%*s%s child spd from selector %s %s.spd.has_client=%s virt=%s",
+					     indent, "", spd_end->config->leftright,
+					     str_selector(&spd_end->client, &sb),
+					     leftright,
+					     bool_str(spd_end->child->has_client),
+					     bool_str(spd_end->virt != NULL));
+				}
+				/* default values */
+				passert(spd->eroute_owner == SOS_NOBODY);
+				set_spd_owner(spd, SOS_NOBODY);
+			}
+		}
+	}
+
+	set_policy_prio(c); /* must be after .kind and .spd are set */
+}
+
 
 /*
  * Extract the connection detail from the whack message WM and store
@@ -2992,9 +3100,19 @@ struct connection *group_instantiate(struct connection *group,
 				     ip_port local_port,
 				     ip_port remote_port)
 {
+	subnet_buf rsb;
+	ldbg_connection(group, HERE, "instantiate: "PRI_HPORT" %s -> [%s]:"PRI_HPORT,
+			pri_hport(local_port),
+			protocol->name,
+			str_subnet(&remote_subnet, &rsb),
+			pri_hport(remote_port));
 	PASSERT(group->logger, group->kind == CK_GROUP);
 	PASSERT(group->logger, oriented(group));
 	PASSERT(group->logger, protocol != NULL);
+	PASSERT(group->logger, (group->spd == NULL ||
+				group->spd->spd_next == NULL));
+	PASSERT(group->logger, (group->spd == NULL ||
+				group->spd->local->virt == NULL));
 
 	/*
 	 * Manufacture a unique name for this template.
@@ -3025,24 +3143,11 @@ struct connection *group_instantiate(struct connection *group,
 	}
 
 	struct connection *t = clone_connection(namebuf, group, HERE);
-	clone_connection_spd(t, group);
-
-	passert(namebuf != t->name); /* see clone_connection() */
-	pfreeany(namebuf);
-	t->foodgroup = t->name; /* XXX: DANGER: unshare_connection() will clone this */
-
-	/* suppress virt before unsharing */
-	passert(t->spd->local->virt == NULL);
-
-	pexpect(t->spd->spd_next == NULL);	/* we only handle top spd */
-
-	if (t->spd->remote->virt != NULL) {
-		DBG_log("virtual_ip not supported in group instance; ignored");
-		virtual_ip_delref(&t->spd->remote->virt);
-	}
-
+	t->foodgroup = namebuf; /* XXX: DANGER: unshare_connection() will clone this */
 	unshare_connection(t, group);
-	passert(t->foodgroup != t->name); /* XXX: see DANGER above */
+	passert(t->foodgroup != namebuf); /* XXX: see DANGER above */
+	passert(t->name != namebuf); /* see clone_connection() */
+	pfreeany(namebuf);
 
 	/*
 	 * For the remote end, just use what ever the group specified
@@ -3100,18 +3205,33 @@ struct connection *group_instantiate(struct connection *group,
 	t->log_file = NULL;
 	t->log_file_err = false;
 
-	t->child.reqid = (group->config->sa_reqid == 0 ? gen_reqid() : group->config->sa_reqid);
-	dbg("%s t.child.reqid=%d because group->sa_reqid=%d (%s)",
-	    t->name, t->child.reqid, group->config->sa_reqid,
-	    (group->config->sa_reqid == 0 ? "generate" : "use"));
+	/* leave a breadcrumb */
+	PASSERT(t->logger, t->child.routing == RT_UNROUTED);
+	set_child_routing(t, RT_UNROUTED);
 
-	/* same host_pair as parent: stick after parent on list */
-	/* t->hp_next = group->hp_next; */	/* done by clone_thing */
+	t->child.reqid = (t->config->sa_reqid == 0 ? gen_reqid() :
+			  t->config->sa_reqid);
+	ldbg(t->logger,
+	     "%s t.child.reqid=%d because group->sa_reqid=%d (%s)",
+	     t->name, t->child.reqid, t->config->sa_reqid,
+	     (t->config->sa_reqid == 0 ? "generate" : "use"));
+
+	/*
+	 * Same host_pair as parent: stick after parent on list.
+	 * t->hp_next = group->hp_next; // done by clone_connection
+	 */
 	group->hp_next = t;
 
 	/* all done */
 	connection_db_add(t);
+
+	/* fill in the SPDs */
+	add_proposal_spds(t);
 	spd_route_db_add_connection(t);
+
+	connection_buf gb;
+	ldbg_connection(t, HERE, "instantiated from "PRI_CONNECTION,
+			pri_connection(group, &gb));
 
 	/* route if group is routed */
 	if (group->policy & POLICY_GROUTED) {
@@ -3339,12 +3459,13 @@ struct connection *rw_responder_instantiate(struct connection *t,
 		return NULL;
 	}
 
+	address_buf ab;
+	ldbg_connection(t, HERE, "instantiate: %s",
+			str_address(&peer_addr, &ab));
 	struct connection *d = spd_instantiate(t, peer_addr, NULL, null_shunk);
-	connection_buf inst;
-	address_buf b;
-	dbg("rw_instantiate() instantiated "PRI_CONNECTION" for %s",
-	    pri_connection(d, &inst),
-	    str_address(&peer_addr, &b));
+	connection_buf tb;
+	ldbg_connection(d, HERE, "instantiated from "PRI_CONNECTION,
+			pri_connection(t, &tb));
 	return d;
 }
 
@@ -3357,6 +3478,13 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 		return NULL;
 	}
 
+	address_buf ab;
+	selector_buf sb;
+	id_buf ib;
+	ldbg_connection(t, HERE, "instantiate: -> %s [%s] %s",
+			str_address(&peer_addr, &ab),
+			str_selector(peer_subnet, &sb),
+			str_id(peer_id, &ib));
 	struct connection *d = spd_instantiate(t, peer_addr, peer_id, null_shunk);
 
 	if (peer_subnet != NULL && is_virtual_remote(t)) {
@@ -3369,11 +3497,9 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 		}
 	}
 
-	connection_buf inst;
-	address_buf b;
-	dbg("rw_instantiate() instantiated "PRI_CONNECTION" for %s",
-	    pri_connection(d, &inst),
-	    str_address(&peer_addr, &b));
+	connection_buf tb;
+	ldbg_connection(d, HERE, "instantiated from "PRI_CONNECTION,
+			pri_connection(t, &tb));
 	return d;
 
 }
@@ -3785,14 +3911,21 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
  * .spd. is bunkem.
  */
 static struct connection *oppo_instantiate(struct connection *t,
-					   const ip_address remote_address)
+					   const ip_address remote_address,
+					   where_t where)
 {
+	address_buf ab;
+	ldbg_connection(t, where, "instantiate: -> %s",
+			str_address(&remote_address, &ab));
+	PASSERT(t->logger, t->kind == CK_TEMPLATE);
+	PASSERT(t->logger, oriented(t)); /* else won't instantiate */
+	PASSERT(t->logger, t->local->child.selectors.proposed.len == 1);
+	PASSERT(t->logger, t->remote->child.selectors.proposed.len == 1);
+
 	/*
 	 * Instance inherits remote ID of child; exception being when
 	 * ID is NONE when it is set to the remote address.
 	 */
-	PASSERT(t->logger, t->kind == CK_TEMPLATE);
-	PASSERT(t->logger, oriented(t)); /* else won't instantiate */
 
 	struct connection *d = instantiate(t, remote_address,
 					   /*peer_id*/NULL,
@@ -3848,48 +3981,25 @@ static struct connection *oppo_instantiate(struct connection *t,
 	     enum_name_short(&routing_names, d->child.routing),
 	     bool_str(d->instance_initiation_ok));
 
-	if (DBGP(DBG_BASE)) {
-		char topo[CONN_BUF_LEN];
-		connection_buf inst;
-		LDBG_log(d->logger,
-			 "%s() instantiated "PRI_CONNECTION" with routing %s: %s",
-			 __func__, pri_connection(d, &inst),
-			 enum_name(&routing_story, d->child.routing),
-			 format_connection(topo, sizeof(topo), d, d->spd));
-	}
+	connection_buf tb;
+	ldbg_connection(d, where, "instantiated from "PRI_CONNECTION,
+			pri_connection(t, &tb));
 	return d;
 }
 
 struct connection *oppo_responder_instantiate(struct connection *t,
 					      const ip_address remote_address)
 {
-	address_buf lb, rb;
-	connection_buf cb;
-	ldbg(t->logger, "%s() "PRI_CONNECTION" with routing %s between %s -> %s",
-	     __func__, pri_connection(t, &cb), enum_name(&routing_story, t->child.routing),
-	     str_address(&t->local->host.addr, &lb),
-	     str_address(&remote_address, &rb));
-
-	return oppo_instantiate(t, remote_address);
+	return oppo_instantiate(t, remote_address, HERE);
 }
 
 struct connection *oppo_initiator_instantiate(struct connection *t,
 					      const struct kernel_acquire *b)
 {
-	connection_buf cb;
-	packet_buf bb;
-	ldbg(t->logger,
-	     "%s() "PRI_CONNECTION" with routing %s for packet %s",
-	     __func__, pri_connection(t, &cb),
-	     enum_name(&routing_story, t->child.routing),
-	     str_packet(&b->packet, &bb));
-
 	ip_address local_address = packet_src_address(b->packet);
 	ip_address remote_address = packet_dst_address(b->packet);
 	PEXPECT(t->logger, address_eq_address(local_address, t->local->host.addr));
-	PEXPECT(t->logger, oriented(t)); /* else won't instantiate */
-
-	return oppo_instantiate(t, remote_address);
+	return oppo_instantiate(t, remote_address, HERE);
 }
 
 /*
