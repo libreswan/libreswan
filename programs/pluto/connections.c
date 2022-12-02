@@ -3232,19 +3232,6 @@ struct connection *group_instantiate(struct connection *group,
 	connection_buf gb;
 	ldbg_connection(t, HERE, "instantiated from "PRI_CONNECTION,
 			pri_connection(group, &gb));
-
-	/* route if group is routed */
-	if (group->policy & POLICY_GROUTED) {
-		/* XXX: something better? */
-		fd_delref(&t->logger->global_whackfd);
-		t->logger->global_whackfd = fd_addref(group->logger->global_whackfd);
-		if (!trap_connection(t)) {
-			llog(WHACK_STREAM|RC_ROUTE, group->logger,
-			     "could not route");
-		}
-		/* XXX: something better? */
-		fd_delref(&t->logger->global_whackfd);
-	}
 	return t;
 }
 

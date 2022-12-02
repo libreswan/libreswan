@@ -1418,7 +1418,7 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 	return route_easy;
 }
 
-bool trap_connection(struct connection *c)
+bool route_and_trap_connection(struct connection *c)
 {
 	enum routability r = could_route(c, c->logger);
 

@@ -245,8 +245,8 @@ static int whack_route_connection(struct connection *c,
 		llog(WHACK_STREAM|RC_ORIENT, c->logger,
 		     "we cannot identify ourselves with either end of this connection");
 	} else if (c->policy & POLICY_GROUP) {
-		route_group(c);
-	} else if (!trap_connection(c)) {
+		route_and_trap_connection_group(c);
+	} else if (!route_and_trap_connection(c)) {
 		/* XXX: why whack only? */
 		llog(WHACK_STREAM|RC_ROUTE, c->logger,
 		     "could not route");
@@ -273,7 +273,7 @@ static int whack_unroute_connection(struct connection *c,
 	if (fail > 0) {
 		llog(WHACK_STREAM|RC_RTBUSY, logger, "cannot unroute: route busy");
 	} else if (c->policy & POLICY_GROUP) {
-		unroute_group(c);
+		unroute_connection_group(c);
 	} else {
 		unroute_connection(c);
 	}

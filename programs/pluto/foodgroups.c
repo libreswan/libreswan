@@ -395,9 +395,19 @@ void load_groups(struct logger *logger)
 										  np->proto,
 										  np->sport,
 										  np->dport);
-					/* XXX: something better? */
-					fd_delref(&g->logger->global_whackfd);
 					if (ng != NULL) {
+						/* route if group is routed */
+						if (g->policy & POLICY_GROUTED) {
+							/* XXX: something better? */
+							fd_delref(&ng->logger->global_whackfd);
+							ng->logger->global_whackfd = fd_addref(g->logger->global_whackfd);
+							if (!route_and_trap_connection(ng)) {
+								llog(WHACK_STREAM|RC_ROUTE, ng->logger,
+								     "could not route");
+							}
+							/* XXX: something better? */
+							fd_delref(&ng->logger->global_whackfd);
+						}
 						passert(np->name == NULL);
 						np->name = clone_str(ng->name, "group instance name");
 						/* advance new */
@@ -409,6 +419,8 @@ void load_groups(struct logger *logger)
 						*npp = np->next;
 						pfree_target(&np);
 					}
+					/* XXX: something better? */
+					fd_delref(&g->logger->global_whackfd);
 				}
 			}
 		}
@@ -439,7 +451,7 @@ static struct fg_groups *find_group(const struct connection *c)
 	return g;
 }
 
-void route_group(struct connection *c)
+void route_and_trap_connection_group(struct connection *c)
 {
 	/* it makes no sense to route a connection that is ISAKMP-only */
 	if (!NEVER_NEGOTIATE(c->policy) && !HAS_IPSEC_POLICY(c->policy)) {
@@ -461,7 +473,7 @@ void route_group(struct connection *c)
 					 * Shouldn't this leave a
 					 * breadcrumb in the log file?
 					 */
-					if (!trap_connection(ci))
+					if (!route_and_trap_connection(ci))
 						llog(WHACK_STREAM|RC_ROUTE, c->logger,
 						     "could not route");
 				}
@@ -470,7 +482,7 @@ void route_group(struct connection *c)
 	}
 }
 
-void unroute_group(struct connection *c)
+void unroute_connection_group(struct connection *c)
 {
 	struct fg_groups *g = find_group(c);
 	struct fg_targets *t;

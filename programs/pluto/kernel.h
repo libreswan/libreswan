@@ -485,7 +485,7 @@ struct bare_shunt **bare_shunt_ptr(const ip_selector *ours,
 extern void init_kernel(struct logger *logger);
 
 struct connection;      /* forward declaration of tag */
-extern bool trap_connection(struct connection *c);
+extern bool route_and_trap_connection(struct connection *c);
 extern void unroute_connection(struct connection *c);
 extern void migration_up(struct child_sa *child);
 extern void migration_down(struct child_sa *child);
