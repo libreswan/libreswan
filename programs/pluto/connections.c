@@ -3892,11 +3892,6 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 	return best_connection;
 }
 
-/*
- * This is creating a packet on the responder _before_ it knows any
- * details about the child's topology.  Any code filling in .child or
- * .spd. is bunkem.
- */
 static struct connection *oppo_instantiate(struct connection *t,
 					   const ip_address remote_address,
 					   where_t where)
@@ -3923,51 +3918,38 @@ static struct connection *oppo_instantiate(struct connection *t,
 	PASSERT(d->logger, d->policy & POLICY_OPPORTUNISTIC);
 	PASSERT(d->logger, address_eq_address(d->remote->host.addr, remote_address));
 
-	clone_connection_spd(d, t);
-
-	/* should still be true; leave another bread crumb */
-	PASSERT(d->logger, d->spd->eroute_owner == SOS_NOBODY);
-	set_spd_owner(d->spd, SOS_NOBODY);
-
-	/* all done; only one */
-	PASSERT(d->logger, d->spd->spd_next == NULL);
-
-	/*
-	 * Fill in peer's client side.
-	 * If the client is the peer, excise the client from the connection.
-	 */
-
-	update_spds_from_end_host_addr(d, d->remote->config->index, remote_address, HERE);
-	set_policy_prio(d); /* re-compute; may have changed */
-	const struct ip_protocol *remote_protocol = selector_protocol(d->spd->remote->client);
-	ip_port remote_port = selector_port(d->spd->remote->client);
-
-	ldbg(d->logger, "%s() remote(c) protocol %s port "PRI_HPORT,
-	     __func__, remote_protocol->name, pri_hport(remote_port));
-	PASSERT(d->logger, address_in_selector_range(remote_address, d->spd->remote->client));
-	update_first_selector(d, remote,
-			      selector_from_address_protocol_port(remote_address,
-								  remote_protocol,
-								  remote_port));
-
-	spd_route_db_add_connection(d);
-	set_policy_prio(d); /* re-compute; may have changed */
-
-	set_child_has_client(d, remote, false);
-
 	/*
 	 * Remember if the template is routed:
 	 * if so, this instance applies for initiation
 	 * even if it is created for responding.
 	 *
 	 * D will have had its routing reset.
+	 *
+	 * XXX: huh?
 	 */
-	if (routed(t->child.routing))
+	if (routed(t->child.routing)) {
 		d->instance_initiation_ok = true;
+	}
 	ldbg(d->logger, "template routing %s instance routing %s instance_initiation_ok %s",
 	     enum_name_short(&routing_names, t->child.routing),
 	     enum_name_short(&routing_names, d->child.routing),
 	     bool_str(d->instance_initiation_ok));
+
+	/*
+	 * Fill in peer's client side.
+	 */
+	PASSERT(d->logger, t->remote->child.selectors.proposed.len == 1);
+	ip_selector remote_template = t->remote->child.selectors.proposed.list[0];
+	/* see also caller checks */
+	PASSERT(d->logger, address_in_selector_range(remote_address, remote_template));
+	ip_selector remote_selector =
+		selector_from_address_protocol_port(remote_address,
+						    selector_protocol(remote_template),
+						    selector_port(remote_template));
+	update_first_selector(d, remote, remote_selector);
+
+	add_proposal_spds(d);
+	spd_route_db_add_connection(d);
 
 	connection_buf tb;
 	ldbg_connection(d, where, "instantiated from "PRI_CONNECTION,
@@ -3978,15 +3960,37 @@ static struct connection *oppo_instantiate(struct connection *t,
 struct connection *oppo_responder_instantiate(struct connection *t,
 					      const ip_address remote_address)
 {
+	/*
+	 * Did find oppo connection do its job?
+	 *
+	 * On the responder all that is known is the address of the
+	 * remote IKE daemon that initiated the exchange.  Hence check
+	 * it falls within the selector's range (can't match port as
+	 * not yet known).
+	 */
+	PASSERT(t->logger, t->remote->child.selectors.proposed.len == 1);
+	ip_selector remote_template = t->remote->child.selectors.proposed.list[0];
+	PASSERT(t->logger, address_in_selector_range(remote_address, remote_template));
 	return oppo_instantiate(t, remote_address, HERE);
 }
 
 struct connection *oppo_initiator_instantiate(struct connection *t,
 					      const struct kernel_acquire *b)
 {
+	/*
+	 * Did find oppo connection do its job?
+	 *
+	 * On the initiator the triggering packet provides the exact
+	 * endpoint that needs to be negotiated.  Hence this endpoint
+	 * must be fully within the template's selector).
+	 */
+	PASSERT(t->logger, t->remote->child.selectors.proposed.len == 1);
+	ip_selector remote_template = t->remote->child.selectors.proposed.list[0];
+	ip_endpoint remote_endpoint = packet_dst_endpoint(b->packet);
+	PASSERT(t->logger, endpoint_in_selector(remote_endpoint, remote_template));
 	ip_address local_address = packet_src_address(b->packet);
-	ip_address remote_address = packet_dst_address(b->packet);
 	PEXPECT(t->logger, address_eq_address(local_address, t->local->host.addr));
+	ip_address remote_address = endpoint_address(remote_endpoint);
 	return oppo_instantiate(t, remote_address, HERE);
 }
 
