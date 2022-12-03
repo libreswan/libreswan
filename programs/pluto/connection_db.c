@@ -341,17 +341,13 @@ struct connection *clone_connection(const char *name, struct connection *t, wher
 	c->log_file = NULL;
 	c->log_file_err = false;
 
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		zero(&c->end[end].child.selectors);
+ 	}
+
 	/* point local pointers at local structure */
 	c->local = &c->end[t->local->config->index];
 	c->remote = &c->end[t->remote->config->index];
-
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		if (c->end[end].child.selectors.proposed.list != c->end[end].config->child.selectors.list) {
-			pexpect(c->end[end].child.selectors.proposed.len == 1);
-			pexpect(c->end[end].child.selectors.proposed.list == &t->end[end].child.selectors.acquire_or_host_or_group);
-			c->end[end].child.selectors.proposed.list = &c->end[end].child.selectors.acquire_or_host_or_group;
-		}
- 	}
 
 	finish_connection(c, name, t->serialno,
 			  t->logger->debugging, t->logger->object_whackfd,

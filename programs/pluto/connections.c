@@ -3305,7 +3305,17 @@ struct connection *instantiate(struct connection *t,
 	}
 	unshare_connection(d, t);
 	d->kind = kind;
-	passert(oriented(d));
+	passert(oriented(d)); /*like parent like child*/
+
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		if (t->end[end].child.selectors.proposed.list == t->end[end].child.config->selectors.list) {
+			d->end[end].child.selectors.proposed = t->end[end].child.config->selectors;
+		} else {
+			d->end[end].child.selectors.acquire_or_host_or_group = t->end[end].child.selectors.acquire_or_host_or_group;
+			d->end[end].child.selectors.proposed.len = 1;
+			d->end[end].child.selectors.proposed.list = &d->end[end].child.selectors.acquire_or_host_or_group;
+		}
+ 	}
 
 	/* propogate remote address when set */
 	PASSERT(d->logger, address_is_specified(peer_addr)); /* always */
@@ -4968,7 +4978,9 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 	 * single selector reasonable?  Certainly don't want to
 	 * truncate the selector list.
 	 */
-	PEXPECT_WHERE(c->logger, where, c->end[end].child.selectors.proposed.len == 1);
+	PEXPECT_WHERE(c->logger, where,
+		      (first_time ? c->end[end].child.selectors.proposed.len == 0 :
+		       c->end[end].child.selectors.proposed.len == 1));
 	c->end[end].child.selectors.acquire_or_host_or_group = new_selector;
 	c->end[end].child.selectors.proposed.list = &c->end[end].child.selectors.acquire_or_host_or_group;
 	c->end[end].child.selectors.proposed.len = 1;
