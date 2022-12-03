@@ -3227,16 +3227,6 @@ struct connection *instantiate(struct connection *t,
 	d->kind = kind;
 	passert(oriented(d)); /*like parent like child*/
 
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		if (t->end[end].child.selectors.proposed.list == t->end[end].child.config->selectors.list) {
-			d->end[end].child.selectors.proposed = t->end[end].child.config->selectors;
-		} else {
-			d->end[end].child.selectors.acquire_or_host_or_group = t->end[end].child.selectors.acquire_or_host_or_group;
-			d->end[end].child.selectors.proposed.len = 1;
-			d->end[end].child.selectors.proposed.list = &d->end[end].child.selectors.acquire_or_host_or_group;
-		}
- 	}
-
 	/* propogate remote address when set */
 	PASSERT(d->logger, address_is_specified(peer_addr)); /* always */
 	if (address_is_specified(d->remote->host.addr)) {
@@ -3331,6 +3321,17 @@ struct connection *spd_instantiate(struct connection *t,
 				   shunk_t sec_label)
 {
 	struct connection *d = instantiate(t, peer_addr, peer_id, sec_label);
+
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		if (t->end[end].child.selectors.proposed.list == t->end[end].child.config->selectors.list) {
+			d->end[end].child.selectors.proposed = t->end[end].child.config->selectors;
+		} else {
+			d->end[end].child.selectors.acquire_or_host_or_group = t->end[end].child.selectors.acquire_or_host_or_group;
+			d->end[end].child.selectors.proposed.len = 1;
+			d->end[end].child.selectors.proposed.list = &d->end[end].child.selectors.acquire_or_host_or_group;
+		}
+ 	}
+
 	clone_connection_spd(d, t);
 
 	update_spds_from_end_host_addr(d, d->remote->config->index, peer_addr, HERE);
@@ -3856,6 +3857,11 @@ static struct connection *oppo_instantiate(struct connection *t,
 	     bool_str(d->instance_initiation_ok));
 
 	/*
+	 * Fill in the local client - just inherit the parent's value.
+	 */
+	set_first_selector(d, local, t->local->child.selectors.proposed.list[0]);
+
+	/*
 	 * Fill in peer's client side.
 	 */
 	PASSERT(d->logger, t->remote->child.selectors.proposed.len == 1);
@@ -3866,7 +3872,7 @@ static struct connection *oppo_instantiate(struct connection *t,
 		selector_from_address_protocol_port(remote_address,
 						    selector_protocol(remote_template),
 						    selector_port(remote_template));
-	update_first_selector(d, remote, remote_selector);
+	set_first_selector(d, remote, remote_selector);
 
 	add_proposal_spds(d);
 	spd_route_db_add_connection(d);
