@@ -4109,97 +4109,86 @@ struct connection *find_outgoing_opportunistic_template(const ip_packet packet)
  * largest value of .routing.  All other things being equal,
  * preference is given to c.  If none is routed, return NULL.
  *
- * If erop is non-null, set *erop to a connection sharing both
- * our client subnet and peer's client subnet with the largest value
- * of .routing.  If none is erouted, set *erop to NULL.
- *
- * The return value is used to find other connections sharing a route.
- * *erop is used to find other connections sharing an eroute.
+ * The return value is used to find other connections sharing a
+ * destination (route).  POLICY_SPDP is used to find other connections
+ * sharing an identical kernel policy.
  */
-struct connection *route_owner(struct connection *c,
-			       const struct spd_route *cur_spd,
-			       struct spd_route **srp,
-			       struct connection **erop,
-			       struct spd_route **esrp)
+struct spd_route *route_owner(struct spd_route *spd,
+			      struct spd_route **policy_spdp)
 {
+	struct connection *c = spd->connection;
 	if (!oriented(c)) {
 		llog(RC_LOG, c->logger,
 		     "route_owner: connection no longer oriented - system interface change?");
 		return NULL;
 	}
 
-	struct connection *best_routing_connection = c;
-	struct spd_route *best_routing_spd = NULL;
-	enum routing best_routing = cur_spd->connection->child.routing;
+	enum routing best_routing = spd->connection->child.routing;
+	struct spd_route *best_route_spd = spd;
 
-	struct connection *best_ero = c;
-	struct spd_route *best_esr = NULL;
-	enum routing best_erouting = best_routing;
+	enum routing policy_routing = RT_UNROUTED;
+	struct spd_route *policy_spd = spd;
 
-	for (const struct spd_route *c_spd = c->spd;
-	     c_spd != NULL; c_spd = c_spd->spd_next) {
+	struct spd_route_filter srf = {
+		.remote_client_range = &spd->remote->client,
+		.where = HERE,
+	};
+	while (next_spd_route(NEW2OLD, &srf)) {
+		struct spd_route *d_spd = srf.spd;
+		struct connection *d = d_spd->connection;
 
-		struct spd_route_filter srf = {
-			.remote_client_range = &c_spd->remote->client,
-			.where = HERE,
-		};
-		while (next_spd_route(NEW2OLD, &srf)) {
-			struct spd_route *d_spd = srf.spd;
-			struct connection *d = d_spd->connection;
+		if (spd == d_spd)
+			continue;
 
-			if (c_spd == d_spd)
-				continue;
+		if (!oriented(d))
+			continue;
 
-			if (!oriented(d))
-				continue;
+		if (d->child.routing == RT_UNROUTED)
+			continue;
 
-			if (d_spd->connection->child.routing == RT_UNROUTED)
-				continue;
+		/* lookup did it's job */
+		pexpect(selector_range_eq_selector_range(spd->remote->client,
+							 d_spd->remote->client));
+		if (!selector_eq_selector(spd->remote->client,
+					  d_spd->remote->client)) {
+			continue;
+		}
+		if (!address_eq_address(c->local->host.addr,
+					d->local->host.addr)) {
+			continue;
+		}
 
-			pexpect(selector_range_eq_selector_range(c_spd->remote->client, d_spd->remote->client));
-			if (c_spd->remote->client.ipproto != d_spd->remote->client.ipproto)
-				continue;
-			if (c_spd->remote->client.hport != d_spd->remote->client.hport)
-				continue;
-			if (!sameaddr(&c_spd->local->host->addr, &d_spd->local->host->addr))
-				continue;
+		/*
+		 * Consider policies different if the either
+		 * in or out marks differ (after masking).
+		 */
+		if (DBGP(DBG_BASE)) {
+			connection_buf cb;
+			DBG_log(" conn "PRI_CONNECTION" mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32 " vs",
+				pri_connection(c, &cb),
+				c->sa_marks.in.val, c->sa_marks.in.mask,
+				c->sa_marks.out.val, c->sa_marks.out.mask);
+			connection_buf db;
+			DBG_log(" conn "PRI_CONNECTION" mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32,
+				pri_connection(d, &db),
+				d->sa_marks.in.val, d->sa_marks.in.mask,
+				d->sa_marks.out.val, d->sa_marks.out.mask);
+		}
 
-			/*
-			 * Consider policies different if the either
-			 * in or out marks differ (after masking).
-			 */
-			if (DBGP(DBG_BASE)) {
-				connection_buf cb;
-				DBG_log(" conn "PRI_CONNECTION" mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32 " vs",
-					pri_connection(c, &cb),
-					c->sa_marks.in.val, c->sa_marks.in.mask,
-					c->sa_marks.out.val, c->sa_marks.out.mask);
-				connection_buf db;
-				DBG_log(" conn "PRI_CONNECTION" mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32,
-					pri_connection(d, &db),
-					d->sa_marks.in.val, d->sa_marks.in.mask,
-					d->sa_marks.out.val, d->sa_marks.out.mask);
-			}
+		if ( (c->sa_marks.in.val & c->sa_marks.in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask) ||
+		     (c->sa_marks.out.val & c->sa_marks.out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask) )
+			continue;
 
-			if ( (c->sa_marks.in.val & c->sa_marks.in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask) ||
-			     (c->sa_marks.out.val & c->sa_marks.out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask) )
-				continue;
+		if (d->child.routing > best_routing) {
+			best_route_spd = d_spd;
+			best_routing = d->child.routing;
+		}
 
-			if (d_spd->connection->child.routing > best_routing) {
-				best_routing_connection = d;
-				best_routing_spd = d_spd;
-				best_routing = d_spd->connection->child.routing;
-			}
-
-			if (selector_range_eq_selector_range(c_spd->local->client, d_spd->local->client) &&
-			    c_spd->local->client.ipproto == d_spd->local->client.ipproto &&
-			    c_spd->local->client.hport == d_spd->local->client.hport &&
-			    d_spd->connection->child.routing > best_erouting) {
-				best_ero = d;
-				best_esr = d_spd;
-				best_erouting = d_spd->connection->child.routing;
-			}
-
+		if (selector_eq_selector(spd->local->client,
+					 d_spd->local->client) &&
+		    d->child.routing > policy_routing) {
+			policy_spd = d_spd;
+			policy_routing = d->child.routing;
 		}
 	}
 
@@ -4207,44 +4196,37 @@ struct connection *route_owner(struct connection *c,
 		connection_buf cib;
 		jam(buf, "route owner of \"%s\"%s %s: ",
 		    pri_connection(c, &cib),
-		    enum_name(&routing_story, cur_spd->connection->child.routing));
+		    enum_name(&routing_story, spd->connection->child.routing));
 
 		if (!routed(best_routing)) {
 			jam(buf, "NULL");
-		} else if (best_routing_connection == c) {
+		} else if (best_route_spd->connection == spd->connection) {
 			jam(buf, "self");
 		} else {
 			connection_buf cib;
 			jam(buf, ""PRI_CONNECTION" %s",
-			    pri_connection(best_routing_connection, &cib),
+			    pri_connection(best_route_spd->connection, &cib),
 			    enum_name(&routing_story, best_routing));
 		}
 
-		if (erop != NULL) {
-			jam(buf, "; eroute owner: ");
-			if (!erouted(best_ero->child.routing)) {
-				jam(buf, "NULL");
-			} else if (best_ero == c) {
-				jam(buf, "self");
-			} else {
-				connection_buf cib;
-				jam(buf, ""PRI_CONNECTION" %s",
-				    pri_connection(best_ero, &cib),
-				    enum_name(&routing_story, best_ero->child.routing));
-			}
+		jam(buf, "; kernel policy owner: ");
+		if (!erouted(policy_routing)) {
+			jam(buf, "NULL");
+		} else if (policy_spd->connection == c) {
+			jam(buf, "self");
+		} else {
+			connection_buf cib;
+			jam(buf, ""PRI_CONNECTION" %s",
+			    pri_connection(policy_spd->connection, &cib),
+			    enum_name(&routing_story, policy_routing));
 		}
 	}
 
-	if (erop != NULL)
-		*erop = erouted(best_erouting) ? best_ero : NULL;
-
-	if (srp != NULL ) {
-		*srp = best_routing_spd;
-		if (esrp != NULL )
-			*esrp = best_esr;
+	if (policy_spdp != NULL) {
+		*policy_spdp = (erouted(policy_routing) ? policy_spd : NULL);
 	}
 
-	return routed(best_routing) ? best_routing_connection : NULL;
+	return routed(best_routing) ? best_route_spd : NULL;
 }
 
 /* signed result suitable for quicksort */

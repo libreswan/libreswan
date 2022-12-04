@@ -1115,9 +1115,10 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 		}
 	}
 
-	struct spd_route *esr, *rosr;
-	struct connection *ero;		/* who, if anyone, owns our eroute? */
-	struct connection *ro = route_owner(c, c->spd, &rosr, &ero, &esr);	/* who owns our route? */
+	struct spd_route *esr;
+	struct spd_route *rsr = route_owner(c->spd, &esr);	/* who owns our route? */
+	struct connection *ro = (rsr == NULL ? NULL : rsr->connection);
+	struct connection *ero = (esr == NULL ? NULL : esr->connection);
 
 	/*
 	 * If there is already a route for peer's client subnet and it
@@ -1315,7 +1316,7 @@ void migration_down(struct child_sa *child)
 			num_ipsec_eroute--;
 #endif
 		/* only unroute if no other connection shares it */
-		if (routed(cr) && route_owner(c, sr, NULL, NULL, NULL) == NULL) {
+		if (routed(cr) && route_owner(sr, NULL) == NULL) {
 			do_updown(UPDOWN_DOWN, c, sr, &child->sa, child->sa.st_logger);
 			child->sa.st_mobike_del_src_ip = true;
 			do_updown(UPDOWN_UNROUTE, c, sr, &child->sa, child->sa.st_logger);
@@ -1362,10 +1363,10 @@ void unroute_connection(struct connection *c)
 	set_child_routing(c, RT_UNROUTED);
 
 	if (routed(cr)) {
-		for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
+		for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
 			/* only unroute if no other connection shares it */
-			if (route_owner(c, sr, NULL, NULL, NULL) == NULL) {
-				do_updown(UPDOWN_UNROUTE, c, sr, NULL, c->logger);
+			if (route_owner(spd, NULL) == NULL) {
+				do_updown(UPDOWN_UNROUTE, c, spd, NULL, c->logger);
 			}
 		}
 	}
@@ -2577,17 +2578,20 @@ bool install_inbound_ipsec_sa(struct state *st)
 	passert(c->kind == CK_PERMANENT || c->kind == CK_INSTANCE);
 	if (c->remote->child.has_client) {
 		for (;; ) {
-			struct spd_route *esr;	/* value is ignored */
-			struct connection *o = route_owner(c, c->spd, &esr,
-							NULL, NULL);
+			struct spd_route *ro = route_owner(c->spd, NULL);
 
-			if (o == NULL || c == o)
+			if (ro == NULL)
 				break; /* nobody interesting has a route */
+			struct connection *co = ro->connection;
+			if (co == c) {
+				break; /* nobody interesting has a route */
+			}
 
 			/* note: we ignore the client addresses at this end */
-			if (sameaddr(&o->remote->host.addr,
-					&c->remote->host.addr) &&
-				o->interface == c->interface)
+			/* XXX: but compating interfaces doesn't ?!? */
+			if (sameaddr(&co->remote->host.addr,
+				     &c->remote->host.addr) &&
+			    co->interface == c->interface)
 				break;  /* existing route is compatible */
 
 			if (kernel_ops->overlap_supported) {
@@ -2597,11 +2601,11 @@ bool install_inbound_ipsec_sa(struct state *st)
 				 * intended, but am leaving it in to make it
 				 * behave like before
 				 */
-				if (!LIN(POLICY_TUNNEL, c->policy | o->policy))
+				if (!LIN(POLICY_TUNNEL, c->policy | co->policy))
 					break;
 
 				/* Both declared that overlapping is OK. */
-				if (LIN(POLICY_OVERLAPIP, c->policy & o->policy))
+				if (LIN(POLICY_OVERLAPIP, c->policy & co->policy))
 					break;
 			}
 
@@ -2609,12 +2613,12 @@ bool install_inbound_ipsec_sa(struct state *st)
 			connection_buf cib;
 			log_state(RC_LOG_SERIOUS, st,
 				  "route to peer's client conflicts with "PRI_CONNECTION" %s; releasing old connection to free the route",
-				  pri_connection(o, &cib),
-				  str_address_sensitive(&o->remote->host.addr, &b));
-			if (o->kind == CK_INSTANCE) {
-				delete_connection(&o);
+				  pri_connection(co, &cib),
+				  str_address_sensitive(&co->remote->host.addr, &b));
+			if (co->kind == CK_INSTANCE) {
+				delete_connection(&co);
 			} else {
-				release_connection(o);
+				release_connection(co);
 			}
 		}
 	}
@@ -2685,9 +2689,10 @@ bool route_and_eroute(struct connection *c,
 	    str_selectors(&sr->local->client, &sr->remote->client, &sb),
 	    sr->local->client.ipproto, sr->local->client.hport, sr->remote->client.hport);
 
-	struct spd_route *esr, *rosr;
-	struct connection *ero; /* eclipsed route owner */
-	struct connection *ro = route_owner(c, sr, &rosr, &ero, &esr);	/* who, if anyone, owns our eroute? */
+	struct spd_route *esr;
+	struct spd_route *rosr = route_owner(sr, &esr);	/* who, if anyone, owns our eroute? */
+	struct connection *ro = (rosr == NULL ? NULL : rosr->connection);
+	struct connection *ero = (esr == NULL ? NULL : esr->connection); /* eclipsed route owner */
 
 	dbg("kernel: route_and_eroute with c: %s (next: %s) ero:%s esr:{%p} ro:%s rosr:{%p} and state: #%lu",
 	    c->name,
@@ -2852,7 +2857,8 @@ bool route_and_eroute(struct connection *c,
 				pexpect(!erouted(rosr->connection->child.routing)); /* warn for now - requires fixing */
 				set_spd_routing(rosr, RT_UNROUTED);
 				/* no need to keep old value */
-				ro = route_owner(c, sr, &rosr, NULL, NULL);
+				rosr = route_owner(sr, NULL);
+				ro = (rosr == NULL ? NULL : rosr->connection);
 			} while (ro != NULL);
 		}
 	}
@@ -3306,7 +3312,7 @@ static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy expect
 			/* do now so route_owner won't find us */
 			set_spd_routing(sr, RT_UNROUTED);
 			/* only unroute if no other connection shares it */
-			if (route_owner(sr->connection, sr, NULL, NULL, NULL) == NULL) {
+			if (route_owner(sr, NULL) == NULL) {
 				do_updown(UPDOWN_UNROUTE, sr->connection, sr,
 					  NULL, sr->connection->logger);
 			}

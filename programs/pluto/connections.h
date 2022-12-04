@@ -644,11 +644,8 @@ struct connection *group_instantiate(struct connection *group,
 				     ip_port local_port,
 				     ip_port remote_port);
 
-extern struct connection *route_owner(struct connection *c,
-				      const struct spd_route *cur_spd,
-				      struct spd_route **srp,
-				      struct connection **erop,
-				      struct spd_route **esrp);
+extern struct spd_route *route_owner(struct spd_route *spd,
+				     struct spd_route **policy_spd);
 
 extern struct connection *shunt_owner(const ip_selector *ours,
 				      const ip_selector *peers);
