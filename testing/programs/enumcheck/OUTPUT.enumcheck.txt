@@ -25,18 +25,24 @@ pluto enum_names:
          match CK_PERMANENT: OK
          short_name 3: CK_PERMANENT OK
          jam_enum_short 3: CK_PERMANENT OK
-    4 -> CK_INSTANCE
-         jam_enum 4: CK_INSTANCE OK
+    4 -> CK_HYBRID
+         jam_enum 4: CK_HYBRID OK
+         search CK_HYBRID: OK
+         match CK_HYBRID: OK
+         short_name 4: CK_HYBRID OK
+         jam_enum_short 4: CK_HYBRID OK
+    5 -> CK_INSTANCE
+         jam_enum 5: CK_INSTANCE OK
          search CK_INSTANCE: OK
          match CK_INSTANCE: OK
-         short_name 4: CK_INSTANCE OK
-         jam_enum_short 4: CK_INSTANCE OK
-    5 -> CK_GOING_AWAY
-         jam_enum 5: CK_GOING_AWAY OK
+         short_name 5: CK_INSTANCE OK
+         jam_enum_short 5: CK_INSTANCE OK
+    6 -> CK_GOING_AWAY
+         jam_enum 6: CK_GOING_AWAY OK
          search CK_GOING_AWAY: OK
          match CK_GOING_AWAY: OK
-         short_name 5: CK_GOING_AWAY OK
-         jam_enum_short 5: CK_GOING_AWAY OK
+         short_name 6: CK_GOING_AWAY OK
+         jam_enum_short 6: CK_GOING_AWAY OK
 
   certpolicy_type_names:
     1 -> CERT_NEVERSEND
