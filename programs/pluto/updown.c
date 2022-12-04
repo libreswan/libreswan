@@ -27,6 +27,8 @@
  */
 
 #include <errno.h>
+#include <stdio.h>
+#include <sys/wait.h>		/* WIFEXITED() et.al. */
 
 #include "ip_info.h"
 
