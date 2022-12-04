@@ -1588,7 +1588,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			if (v2_child_connection_probably_shared(child, indent)) {
 				/* instantiate it, filling in peer's ID */
 				s = spd_instantiate(t, child->sa.st_connection->remote->host.addr,
-						    NULL, /*sec_label*/null_shunk);
+						    NULL, /*sec_label*/null_shunk, HERE);
 			} else {
 				s = child->sa.st_connection;
 			}
@@ -1639,7 +1639,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		 */
 		struct connection *s = spd_instantiate(best.connection,
 						       child->sa.st_connection->remote->host.addr,
-						       NULL, best.nsps.i.sec_label);
+						       NULL, best.nsps.i.sec_label, HERE);
 		scribble_ts_request_on_responder(child, s, &best.nsps, indent);
 
 		/* switch to instance; same score */

@@ -680,14 +680,11 @@ struct connection *oppo_initiator_instantiate(struct connection *t,
 					      const struct kernel_acquire *b);
 struct connection *oppo_responder_instantiate(struct connection *t,
 					      const ip_address remote_address);
-extern struct connection *spd_instantiate(struct connection *t,
-					  const ip_address peer_addr,
-					  const struct id *peer_id,
-					  shunk_t sec_label);
-extern struct connection *instantiate(struct connection *t,
-				      const ip_address peer_addr,
-				      const struct id *peer_id,
-				      shunk_t sec_label);
+struct connection *spd_instantiate(struct connection *t,
+				   const ip_address peer_addr,
+				   const struct id *peer_id,
+				   shunk_t sec_label,
+				   where_t where);
 
 struct connection *find_outgoing_opportunistic_template(const ip_packet packet);
 

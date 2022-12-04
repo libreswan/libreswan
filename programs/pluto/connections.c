@@ -3164,12 +3164,21 @@ struct connection *group_instantiate(struct connection *group,
  * does not affect port numbers.
  */
 
-struct connection *instantiate(struct connection *t,
-			       const ip_address peer_addr,
-			       const struct id *peer_id,
-			       shunk_t sec_label)
+static struct connection *instantiate(struct connection *t,
+				      const ip_address remote_addr,
+				      const struct id *peer_id,
+				      shunk_t sec_label,
+				      where_t where)
 {
-	passert(t->kind == CK_TEMPLATE);
+	address_buf ab;
+	id_buf idb;
+	ldbg_connection(t, where, "instantiate: remote=%s id=%s sec_label="PRI_SHUNK,
+			str_address(&remote_addr, &ab),
+			str_id(peer_id, &idb),
+			pri_shunk(sec_label));
+
+	PASSERT(t->logger, t->kind == CK_TEMPLATE);
+	PASSERT(t->logger, address_is_specified(remote_addr)); /* always */
 
 	/*
 	 * Is the new connection still a template?
@@ -3228,13 +3237,13 @@ struct connection *instantiate(struct connection *t,
 	passert(oriented(d)); /*like parent like child*/
 
 	/* propogate remote address when set */
-	PASSERT(d->logger, address_is_specified(peer_addr)); /* always */
 	if (address_is_specified(d->remote->host.addr)) {
 		/* can't change remote once set */
-		PASSERT(d->logger, address_eq_address(peer_addr, d->remote->host.addr));
+		PASSERT(d->logger, address_eq_address(remote_addr, d->remote->host.addr));
 	} else {
 		/* this updates ID NULL */
-		update_hosts_from_end_host_addr(d, d->remote->config->index, peer_addr, HERE); /* from whack initiate */
+		update_hosts_from_end_host_addr(d, d->remote->config->index,
+						remote_addr, HERE); /* from whack initiate */
 	}
 
 	d->child.reqid = (t->config->sa_reqid == 0 ? gen_reqid() : t->config->sa_reqid);
@@ -3318,9 +3327,10 @@ static void clone_connection_spd(struct connection *d, struct connection *t)
 struct connection *spd_instantiate(struct connection *t,
 				   const ip_address peer_addr,
 				   const struct id *peer_id,
-				   shunk_t sec_label)
+				   shunk_t sec_label,
+				   where_t where)
 {
-	struct connection *d = instantiate(t, peer_addr, peer_id, sec_label);
+	struct connection *d = instantiate(t, peer_addr, peer_id, sec_label, where);
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		if (t->end[end].child.selectors.proposed.list == t->end[end].child.config->selectors.list) {
@@ -3367,10 +3377,8 @@ struct connection *rw_responder_instantiate(struct connection *t,
 		return NULL;
 	}
 
-	address_buf ab;
-	ldbg_connection(t, HERE, "instantiate: %s",
-			str_address(&peer_addr, &ab));
-	struct connection *d = spd_instantiate(t, peer_addr, NULL, null_shunk);
+	struct connection *d = spd_instantiate(t, peer_addr, NULL,
+					       null_shunk, HERE);
 	connection_buf tb;
 	ldbg_connection(d, HERE, "instantiated from "PRI_CONNECTION,
 			pri_connection(t, &tb));
@@ -3386,14 +3394,8 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 		return NULL;
 	}
 
-	address_buf ab;
-	selector_buf sb;
-	id_buf ib;
-	ldbg_connection(t, HERE, "instantiate: -> %s [%s] %s",
-			str_address(&peer_addr, &ab),
-			str_selector(peer_subnet, &sb),
-			str_id(peer_id, &ib));
-	struct connection *d = spd_instantiate(t, peer_addr, peer_id, null_shunk);
+	struct connection *d = spd_instantiate(t, peer_addr, peer_id,
+					       null_shunk, HERE);
 
 	if (peer_subnet != NULL && is_virtual_remote(t)) {
 		update_first_selector(d, remote, *peer_subnet);
@@ -3817,9 +3819,6 @@ static struct connection *oppo_instantiate(struct connection *t,
 					   const ip_address remote_address,
 					   where_t where)
 {
-	address_buf ab;
-	ldbg_connection(t, where, "instantiate: -> %s",
-			str_address(&remote_address, &ab));
 	PASSERT(t->logger, t->kind == CK_TEMPLATE);
 	PASSERT(t->logger, oriented(t)); /* else won't instantiate */
 	PASSERT(t->logger, t->local->child.selectors.proposed.len == 1);
@@ -3832,7 +3831,8 @@ static struct connection *oppo_instantiate(struct connection *t,
 
 	struct connection *d = instantiate(t, remote_address,
 					   /*peer_id*/NULL,
-					   /*sec_label*/null_shunk);
+					   /*sec_label*/null_shunk,
+					   where);
 
 	PASSERT(d->logger, d->kind == CK_INSTANCE);
 	PASSERT(d->logger, oriented(d)); /* else won't instantiate */

@@ -161,7 +161,7 @@ static bool initiate_connection_2_address(struct connection *c,
 			return false;
 		}
 
-		struct connection *d = spd_instantiate(c, remote_ip, NULL, null_shunk);
+		struct connection *d = spd_instantiate(c, remote_ip, NULL, null_shunk, HERE);
 
 		/*
 		 * D could either be an instance, or a sec_label
@@ -251,7 +251,8 @@ static bool initiate_connection_3_sec_label(struct connection *c,
 	if (c->kind == CK_TEMPLATE &&
 	    c->config->ike_version == IKEv2 &&
 	    (c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
-		struct connection *d = spd_instantiate(c, c->remote->host.addr, NULL, null_shunk);
+		struct connection *d = spd_instantiate(c, c->remote->host.addr, NULL,
+						       null_shunk, HERE);
 		/* XXX: something better? */
 		fd_delref(&d->logger->global_whackfd);
 		d->logger->global_whackfd = fd_addref(c->logger->global_whackfd);
@@ -448,7 +449,8 @@ void ipsecdoi_initiate(struct connection *c,
 				 * connection.
 				 */
 				ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
-				cc = spd_instantiate(c, remote_addr, NULL, sec_label);
+				cc = spd_instantiate(c, remote_addr, NULL,
+						     sec_label, HERE);
 			} else {
 				cc = c;
 			}
