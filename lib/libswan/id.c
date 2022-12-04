@@ -213,44 +213,49 @@ err_t atoid(const char *src, struct id *id)
 	return NULL;
 }
 
-void jam_id_bytes(struct jambuf *buf, const struct id *id, jam_bytes_fn *jam_bytes)
+size_t jam_id_bytes(struct jambuf *buf, const struct id *id, jam_bytes_fn *jam_bytes)
 {
+	if (id == NULL) {
+		return jam_string(buf, "<null-id>");
+	}
+	size_t s = 0;
 	switch (id->kind) {
 	case ID_FROMCERT:
-		jam(buf, "%%fromcert");
+		s += jam_string(buf, "%fromcert");
 		break;
 	case ID_NONE:
-		jam(buf, "(none)");
+		s += jam_string(buf, "(none)");
 		break;
 	case ID_NULL:
-		jam(buf, "ID_NULL");
+		s += jam_string(buf, "ID_NULL");
 		break;
 	case ID_IPV4_ADDR:
 	case ID_IPV6_ADDR:
 		if (address_is_specified(id->ip_addr)) {
-			jam_address(buf, &id->ip_addr);
+			s += jam_address(buf, &id->ip_addr);
 		} else {
-			jam_string(buf, "%any");
+			s += jam_string(buf, "%any");
 		}
 		break;
 	case ID_FQDN:
-		jam(buf, "@");
-		jam_bytes(buf, id->name.ptr, id->name.len);
+		s += jam_string(buf, "@");
+		s += jam_bytes(buf, id->name.ptr, id->name.len);
 		break;
 	case ID_USER_FQDN:
-		jam_bytes(buf, id->name.ptr, id->name.len);
+		s += jam_bytes(buf, id->name.ptr, id->name.len);
 		break;
 	case ID_DER_ASN1_DN:
-		jam_dn(buf, id->name, jam_bytes);
+		s += jam_dn(buf, id->name, jam_bytes);
 		break;
 	case ID_KEY_ID:
-		jam(buf, "@#0x");
-		jam_hex_bytes(buf, id->name.ptr, id->name.len);
+		s += jam_string(buf, "@#0x");
+		s += jam_hex_bytes(buf, id->name.ptr, id->name.len);
 		break;
 	default:
-		jam(buf, "unknown id kind %d", id->kind);
+		s += jam(buf, "unknown id kind %d", id->kind);
 		break;
 	}
+	return s;
 }
 
 const char *str_id_bytes(const struct id *id, jam_bytes_fn *jam_bytes, id_buf *dst)
@@ -259,6 +264,11 @@ const char *str_id_bytes(const struct id *id, jam_bytes_fn *jam_bytes, id_buf *d
 	/* JAM_ID() only emits printable ASCII */
 	jam_id_bytes(&buf, id, jam_bytes);
 	return dst->buf;
+}
+
+const char *str_id(const struct id *id, id_buf *buf)
+{
+	return str_id_bytes(id, jam_raw_bytes, buf); /* see above */
 }
 
 struct id clone_id(const struct id *src, const char *story)

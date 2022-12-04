@@ -271,11 +271,13 @@ bool dn_has_wildcards(asn1_t dn)
  */
 
 static err_t format_dn(struct jambuf *buf, asn1_t dn,
-		       jam_bytes_fn *jam_bytes, bool nss_compatible)
+		       jam_bytes_fn *jam_bytes, bool nss_compatible,
+		       size_t *ss)
 {
 	asn1_t rdn;
 	asn1_t attribute;
 	bool more;
+	size_t s = 0;
 
 	RETURN_IF_ERR(init_rdn(dn, &rdn, &attribute, &more));
 
@@ -287,8 +289,9 @@ static err_t format_dn(struct jambuf *buf, asn1_t dn,
 		RETURN_IF_ERR(get_next_rdn(&rdn, &attribute, &oid,
 					   &value_ber, &value_type, &value_content,
 					   &more));
-		if (!first)
-			jam(buf, ", ");
+		if (!first) {
+			s += jam_string(buf, ", ");
+		}
 
 		/*
 		 * 2.3.  Converting AttributeTypeAndValue
@@ -347,7 +350,7 @@ static err_t format_dn(struct jambuf *buf, asn1_t dn,
 			}
 			/* first two nodes encoded in single byte */
 			/* ??? where does 40 come from? */
-			jam(buf, "%d.%d", *p / 40, *p % 40);
+			s += jam(buf, "%d.%d", *p / 40, *p % 40);
 			p++;
 			/* runs of 1xxxxxxx+ 0xxxxxxx */
 			while (p < end) {
@@ -365,12 +368,12 @@ static err_t format_dn(struct jambuf *buf, asn1_t dn,
 					if (p >= end)
 						return "corrupt OID run encoding";
 				}
-				jam(buf, ".%ju", n);
+				s += jam(buf, ".%ju", n);
 			}
 		} else {
-			jam(buf, "%s", oid_names[oid_code].name);
+			s += jam_string(buf, oid_names[oid_code].name);
 		}
-		jam(buf, "=");
+		s += jam_string(buf, "=");
 		if (oid_code == OID_UNKNOWN ||
 		    /*
 		     * NSS totally screws up a leading '#' - stripping
@@ -380,10 +383,10 @@ static err_t format_dn(struct jambuf *buf, asn1_t dn,
 		    (nss_compatible &&
 		     ((const char*)value_content.ptr)[0] == '#')) {
 			/* BER */
-			jam(buf, "#");
+			s += jam_string(buf, "#");
 			for (unsigned i = 0; i < value_ber.len; i++) {
 				uint8_t byte = ((const uint8_t*)value_ber.ptr)[i];
-				jam(buf, "%02X", byte);
+				s += jam(buf, "%02X", byte);
 			}
 		} else {
 
@@ -405,8 +408,8 @@ static err_t format_dn(struct jambuf *buf, asn1_t dn,
 			 * is hit?
 			 */
 			if (p < end && (*p == ' ' || *p == '#')) {
-				jam_bytes(buf, "\\", 1);
-				jam_bytes(buf, p, 1);
+				s += jam_bytes(buf, "\\", 1);
+				s += jam_bytes(buf, p, 1);
 				p++;
 			}
 
@@ -500,15 +503,15 @@ static err_t format_dn(struct jambuf *buf, asn1_t dn,
 					run++;
 				} else {
 					/* emit previous run */
-					jam_bytes(buf, p, run);
+					s += jam_bytes(buf, p, run);
 					if (needs_prefix) {
 						/* <ESC> <CHAR> */
-						jam_bytes(buf, "\\", 1);
-						jam_bytes(buf, &c, 1);
+						s += jam_bytes(buf, "\\", 1);
+						s += jam_bytes(buf, &c, 1);
 					} else {
 						/* <ESC> <HEX> <HEX> */
-						jam_bytes(buf, "\\", 1);
-						jam(buf, "%02X", c);
+						s += jam_bytes(buf, "\\", 1);
+						s += jam(buf, "%02X", c);
 					}
 					/* advance past this escaped character */
 					p += run + 1;
@@ -516,17 +519,18 @@ static err_t format_dn(struct jambuf *buf, asn1_t dn,
 				}
 			}
 			/* emit final run */
-			jam_bytes(buf, p, run);
+			s += jam_bytes(buf, p, run);
 			/*
 			 * Escape any trailing ' ' characters; using \<CHAR>
 			 * is ok; remember END had these stripped.
 			 */
 			for (unsigned i = 0; i < trailing; i++) {
-				jam_bytes(buf, "\\", 1);
-				jam_bytes(buf, &end[i], 1);
+				s += jam_bytes(buf, "\\", 1);
+				s += jam_bytes(buf, &end[i], 1);
 			}
 		}
 	}
+	*ss = s;
 	return NULL;
 }
 
@@ -535,12 +539,13 @@ static err_t format_dn(struct jambuf *buf, asn1_t dn,
  * into LDAP-style human-readable ASCII format
  */
 
-void jam_raw_dn(struct jambuf *buf, asn1_t dn, jam_bytes_fn *jam_bytes,
-		bool nss_compatible)
+size_t jam_raw_dn(struct jambuf *buf, asn1_t dn, jam_bytes_fn *jam_bytes,
+		  bool nss_compatible)
 {
+	size_t s = 0;
 	/* save start in case things screw up */
 	jampos_t pos = jambuf_get_pos(buf);
-	err_t ugh = format_dn(buf, dn, jam_bytes, nss_compatible);
+	err_t ugh = format_dn(buf, dn, jam_bytes, nss_compatible, &s);
 	if (ugh != NULL) {
 		/* error: print DN as hex string */
 		if (DBGP(DBG_BASE)) {
@@ -549,25 +554,28 @@ void jam_raw_dn(struct jambuf *buf, asn1_t dn, jam_bytes_fn *jam_bytes,
 		}
 		/* reset the buffer */
 		jambuf_set_pos(buf, &pos);
-		jam(buf, "0x");
-		jam_HEX_bytes(buf, dn.ptr, dn.len);
+		s = 0;
+		s += jam_string(buf, "0x");
+		s += jam_HEX_bytes(buf, dn.ptr, dn.len);
 	}
+	return s;
 }
 
 err_t parse_dn(asn1_t dn)
 {
 	dn_buf dnb;
 	struct jambuf buf = ARRAY_AS_JAMBUF(dnb.buf);
-	return format_dn(&buf, dn, jam_raw_bytes, true/*nss_compatible*/);
+	size_t s;/*ignored*/
+	return format_dn(&buf, dn, jam_raw_bytes, true/*nss_compatible*/, &s);
 }
 
-void jam_dn_or_null(struct jambuf *buf, asn1_t dn, const char *null_dn,
+size_t jam_dn_or_null(struct jambuf *buf, asn1_t dn, const char *null_dn,
 		    jam_bytes_fn *jam_bytes)
 {
 	if (dn.ptr == NULL) {
-		jam(buf, "%s", null_dn);
+		return jam_string(buf, null_dn);
 	} else {
-		jam_raw_dn(buf, dn, jam_bytes, true/*nss_compatible*/);
+		return jam_raw_dn(buf, dn, jam_bytes, true/*nss_compatible*/);
 	}
 }
 
@@ -578,9 +586,9 @@ const char *str_dn_or_null(asn1_t dn, const char *null_dn, dn_buf *dst)
 	return dst->buf;
 }
 
-void jam_dn(struct jambuf *buf, asn1_t dn, jam_bytes_fn *jam_bytes)
+size_t jam_dn(struct jambuf *buf, asn1_t dn, jam_bytes_fn *jam_bytes)
 {
-	jam_dn_or_null(buf, dn, "(empty)", jam_bytes);
+	return jam_dn_or_null(buf, dn, "(empty)", jam_bytes);
 }
 
 const char *str_dn(asn1_t dn, dn_buf *dst)
