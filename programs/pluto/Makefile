@@ -108,6 +108,8 @@ OBJS += kernel.o
 OBJS += kernel_ops.o
 OBJS += kernel_alg.o
 
+OBJS += updown.o
+
 ifeq ($(USE_PFKEYV2),true)
 OBJS += kernel_sadb.o
 OBJS += kernel_sadb_names.o

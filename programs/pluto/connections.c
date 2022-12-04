@@ -1406,7 +1406,19 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 
 	/* save some defaults */
 	child_config->protoport = src->protoport;
-	child_config->updown = clone_str(src->updown, "end_config.client.updown");
+
+	/*
+	 * Support for skipping updown, eg leftupdown="" or %disabled.
+	 *
+	 * Useful on busy servers that do not need to use updown for
+	 * anything.
+	 *
+	 * XXX: Perhaps src->updown will some day be NULL.
+	 */
+	child_config->updown = (src->updown == NULL ? NULL :
+				streq(src->updown, "%disabled") ? NULL :
+				streq(src->updown, "") ? NULL :
+				clone_str(src->updown, "child_config.updown"));
 
 	/*
 	 * Figure out the end's child selectors.

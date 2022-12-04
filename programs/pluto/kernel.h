@@ -444,8 +444,20 @@ extern bool fmt_common_shell_out(char *buf, size_t blen,
 				 struct state *st);
 
 /* many bits reach in to use this, but maybe shouldn't */
-extern bool do_command(const struct connection *c, const struct spd_route *sr,
-		       const char *verb, struct state *st, struct logger *logger);
+enum updown {
+	UPDOWN_PREPARE,
+	UPDOWN_ROUTE,
+	UPDOWN_UNROUTE,
+	UPDOWN_UP,
+	UPDOWN_DOWN,
+#ifdef HAVE_NM
+	UPDOWN_DISCONNECT_NM,
+#endif
+};
+
+extern bool do_updown(enum updown updown_verb,
+		      const struct connection *c, const struct spd_route *sr,
+		      struct state *st, struct logger *logger);
 
 /* bare (connectionless) shunt (eroute) table
  *

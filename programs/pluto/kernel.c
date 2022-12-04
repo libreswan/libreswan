@@ -186,8 +186,6 @@ static bool eroute_outbound_connection(enum kernel_policy_op op,
 				       struct logger *logger);
 
 static global_timer_cb kernel_scan_shunts;
-static bool invoke_command(const char *verb, const char *verb_suffix,
-			   const char *cmd, struct logger *logger);
 
 bool prospective_shunt_ok(enum shunt_policy shunt)
 {
@@ -781,210 +779,6 @@ bool fmt_common_shell_out(char *buf,
 #	undef JDipaddr
 }
 
-bool do_command(const struct connection *c,
-		const struct spd_route *sr,
-		const char *verb,
-		struct state *st,
-		/* either st, or c's logger */
-		struct logger *logger)
-{
-	/*
-	 * Support for skipping updown, eg leftupdown=""
-	 * Useful on busy servers that do not need to use updown for anything
-	 */
-	const char *updown = sr->local->config->child.updown;
-	if (updown == NULL || streq(updown, "%disabled")) {
-		dbg("kernel: skipped updown %s command - disabled per policy", verb);
-		return true;
-	}
-	dbg("kernel: running updown command \"%s\" for verb %s ", updown, verb);
-
-	/*
-	 * Figure out which verb suffix applies.
-	 */
-	const char *verb_suffix;
-
-	{
-		const struct ip_info *host_afi = address_info(sr->local->host->addr);
-		const struct ip_info *child_afi = selector_info(sr->local->client);
-		if (host_afi == NULL || child_afi == NULL) {
-			llog_pexpect(logger, HERE, "unknown address family");
-			return false;
-		}
-
-		const char *hs;
-		switch (host_afi->af) {
-		case AF_INET:
-			hs = "-host";
-			break;
-		case AF_INET6:
-			hs = "-host-v6";
-			break;
-		default:
-			bad_case(host_afi->af);
-		}
-
-		const char *cs;
-		switch (child_afi->af) {
-		case AF_INET:
-			cs = "-client"; /* really child; legacy name */
-			break;
-		case AF_INET6:
-			cs = "-client-v6"; /* really child; legacy name */
-			break;
-		default:
-			bad_case(child_afi->af);
-		}
-
-		verb_suffix = selector_range_eq_address(sr->local->client, sr->local->host->addr) ? hs : cs;
-	}
-
-	dbg("kernel: command executing %s%s", verb, verb_suffix);
-
-	char common_shell_out_str[2048];
-	if (!fmt_common_shell_out(common_shell_out_str,
-				  sizeof(common_shell_out_str), c, sr,
-				  st)) {
-		llog(RC_LOG_SERIOUS, logger,
-			    "%s%s command too long!", verb,
-			    verb_suffix);
-		return false;
-	}
-
-	/* must free */
-	char *cmd = alloc_printf("2>&1 "      /* capture stderr along with stdout */
-				 "PLUTO_VERB='%s%s' "
-				 "%s"         /* other stuff */
-				 "%s",        /* actual script */
-				 verb, verb_suffix,
-				 common_shell_out_str,
-				 updown);
-	if (cmd == NULL) {
-		llog(RC_LOG_SERIOUS, logger,
-			    "%s%s command too long!", verb,
-			    verb_suffix);
-		return false;
-	}
-
-	bool ok = invoke_command(verb, verb_suffix, cmd, logger);
-	pfree(cmd);
-	return ok;
-}
-
-bool invoke_command(const char *verb, const char *verb_suffix, const char *cmd,
-		    struct logger *logger)
-{
-#	define CHUNK_WIDTH	80	/* units for cmd logging */
-	if (DBGP(DBG_BASE)) {
-		int slen = strlen(cmd);
-		int i;
-
-		DBG_log("executing %s%s: %s",
-			verb, verb_suffix, cmd);
-		DBG_log("popen cmd is %d chars long", slen);
-		for (i = 0; i < slen; i += CHUNK_WIDTH)
-			DBG_log("cmd(%4d):%.*s:", i,
-				slen-i < CHUNK_WIDTH? slen-i : CHUNK_WIDTH,
-				&cmd[i]);
-	}
-#	undef CHUNK_WIDTH
-
-
-	{
-		/*
-		 * invoke the script, catching stderr and stdout
-		 * It may be of concern that some file descriptors will
-		 * be inherited.  For the ones under our control, we
-		 * have done fcntl(fd, F_SETFD, FD_CLOEXEC) to prevent this.
-		 * Any used by library routines (perhaps the resolver or
-		 * syslog) will remain.
-		 */
-		FILE *f = popen(cmd, "r");
-
-		if (f == NULL) {
-#ifdef HAVE_BROKEN_POPEN
-			/*
-			 * See bug #1067  Angstrom Linux on a arm7 has no
-			 * popen()
-			 */
-			if (errno == ENOSYS) {
-				/*
-				 * Try system(), though it will not give us
-				 * output
-				 */
-				DBG_log("unable to popen(), falling back to system()");
-				system(cmd);
-				return true;
-			}
-#endif
-			llog(RC_LOG_SERIOUS, logger,
-				    "unable to popen %s%s command",
-				    verb, verb_suffix);
-			return false;
-		}
-
-		/* log any output */
-		for (;; ) {
-			/*
-			 * if response doesn't fit in this buffer, it will
-			 * be folded
-			 */
-			char resp[256];
-
-			if (fgets(resp, sizeof(resp), f) == NULL) {
-				if (ferror(f)) {
-					llog_error(logger, errno,
-						   "fgets failed on output of %s%s command",
-						   verb, verb_suffix);
-					pclose(f);
-					return false;
-				} else {
-					passert(feof(f));
-					break;
-				}
-			} else {
-				char *e = resp + strlen(resp);
-
-				if (e > resp && e[-1] == '\n')
-					e[-1] = '\0'; /* trim trailing '\n' */
-				llog(RC_LOG, logger, "%s%s output: %s", verb,
-					    verb_suffix, resp);
-			}
-		}
-
-		/* report on and react to return code */
-		{
-			int r = pclose(f);
-
-			if (r == -1) {
-				llog_error(logger, errno,
-					   "pclose failed for %s%s command",
-					   verb, verb_suffix);
-				return false;
-			} else if (WIFEXITED(r)) {
-				if (WEXITSTATUS(r) != 0) {
-					llog(RC_LOG_SERIOUS, logger,
-						    "%s%s command exited with status %d",
-						    verb, verb_suffix,
-						    WEXITSTATUS(r));
-					return false;
-				}
-			} else if (WIFSIGNALED(r)) {
-				llog(RC_LOG_SERIOUS, logger,
-					    "%s%s command exited with signal %d",
-					    verb, verb_suffix, WTERMSIG(r));
-				return false;
-			} else {
-				llog(RC_LOG_SERIOUS, logger,
-					    "%s%s command exited with unknown status %d",
-					    verb, verb_suffix, r);
-				return false;
-			}
-		}
-	}
-	return true;
-}
-
 /*
  * Build an array of encapsulation rules/tmpl.  Order things
  * inner-most to outer-most so the last entry is what will go across
@@ -1504,8 +1298,8 @@ void migration_up(struct child_sa *child)
 #ifdef IPSEC_CONNECTION_LIMIT
 		num_ipsec_eroute++;
 #endif
-		do_command(c, sr, "up", &child->sa, child->sa.st_logger);
-		do_command(c, sr, "route", &child->sa, child->sa.st_logger);
+		do_updown(UPDOWN_UP, c, sr, &child->sa, child->sa.st_logger);
+		do_updown(UPDOWN_ROUTE, c, sr, &child->sa, child->sa.st_logger);
 	}
 }
 
@@ -1522,9 +1316,9 @@ void migration_down(struct child_sa *child)
 #endif
 		/* only unroute if no other connection shares it */
 		if (routed(cr) && route_owner(c, sr, NULL, NULL, NULL) == NULL) {
-			do_command(c, sr, "down", &child->sa, child->sa.st_logger);
+			do_updown(UPDOWN_DOWN, c, sr, &child->sa, child->sa.st_logger);
 			child->sa.st_mobike_del_src_ip = true;
-			do_command(c, sr, "unroute", &child->sa, child->sa.st_logger);
+			do_updown(UPDOWN_UNROUTE, c, sr, &child->sa, child->sa.st_logger);
 			child->sa.st_mobike_del_src_ip = false;
 		}
 	}
@@ -1571,7 +1365,7 @@ void unroute_connection(struct connection *c)
 		for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
 			/* only unroute if no other connection shares it */
 			if (route_owner(c, sr, NULL, NULL, NULL) == NULL) {
-				do_command(c, sr, "unroute", NULL, c->logger);
+				do_updown(UPDOWN_UNROUTE, c, sr, NULL, c->logger);
 			}
 		}
 	}
@@ -1853,14 +1647,14 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	}
 
 	/* a new route: no deletion required, but preparation is */
-	if (!do_command(c, c->spd, "prepare", NULL/*ST*/, logger)) {
+	if (!do_updown(UPDOWN_PREPARE, c, c->spd, NULL/*ST*/, logger)) {
 		dbg("kernel: %s() prepare command returned an error", __func__);
 	}
 
-	if (!do_command(c, c->spd, "route", NULL/*ST*/, logger)) {
+	if (!do_updown(UPDOWN_ROUTE, c, c->spd, NULL/*ST*/, logger)) {
 		/* Failure!  Unwind our work. */
 		dbg("kernel: %s() route command returned an error", __func__);
-		if (!do_command(c, c->spd, "down", NULL/*st*/, logger)) {
+		if (!do_updown(UPDOWN_DOWN, c, c->spd, NULL/*st*/, logger)) {
 			dbg("kernel: down command returned an error");
 		}
 		dbg("kernel: %s() pulling policies", __func__);
@@ -2993,7 +2787,7 @@ bool route_and_eroute(struct connection *c,
 		 */
 		firewall_notified = st == NULL || /* not a tunnel eroute */
 			sr->eroute_owner != SOS_NOBODY || /* already notified */
-			do_command(c, sr, "up", st, logger); /* go ahead and notify */
+			do_updown(UPDOWN_UP, c, sr, st, logger); /* go ahead and notify */
 	}
 
 	/* install the route */
@@ -3006,9 +2800,9 @@ bool route_and_eroute(struct connection *c,
 		/* we're in trouble -- don't do routing */
 	} else if (ro == NULL) {
 		/* a new route: no deletion required, but preparation is */
-		if (!do_command(c, sr, "prepare", st, logger))
+		if (!do_updown(UPDOWN_PREPARE, c, sr, st, logger))
 			dbg("kernel: prepare command returned an error");
-		route_installed = do_command(c, sr, "route", st, logger);
+		route_installed = do_updown(UPDOWN_ROUTE, c, sr, st, logger);
 		if (!route_installed)
 			dbg("kernel: route command returned an error");
 	} else if (routed(sr->connection->child.routing)) {
@@ -3034,18 +2828,18 @@ bool route_and_eroute(struct connection *c,
 		 */
 		if (sameaddr(&sr->local->host->nexthop,
 			     &esr->local->host->nexthop)) {
-			if (!do_command(ro, sr, "unroute", st, logger)) {
+			if (!do_updown(UPDOWN_UNROUTE, ro, sr, st, logger)) {
 				dbg("kernel: unroute command returned an error");
 			}
-			route_installed = do_command(c, sr, "route", st, logger);
+			route_installed = do_updown(UPDOWN_ROUTE, c, sr, st, logger);
 			if (!route_installed)
 				dbg("kernel: route command returned an error");
 		} else {
-			route_installed = do_command(c, sr, "route", st, logger);
+			route_installed = do_updown(UPDOWN_ROUTE, c, sr, st, logger);
 			if (!route_installed)
 				dbg("kernel: route command returned an error");
 
-			if (!do_command(ro, sr, "unroute", st, logger)) {
+			if (!do_updown(UPDOWN_UNROUTE, ro, sr, st, logger)) {
 				dbg("kernel: unroute command returned an error");
 			}
 		}
@@ -3094,7 +2888,7 @@ bool route_and_eroute(struct connection *c,
 	} else {
 		/* Failure!  Unwind our work. */
 		if (firewall_notified && sr->eroute_owner == SOS_NOBODY) {
-			if (!do_command(c, sr, "down", st, logger))
+			if (!do_updown(UPDOWN_DOWN, c, sr, st, logger))
 				dbg("kernel: down command returned an error");
 		}
 
@@ -3487,7 +3281,7 @@ static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy expect
 		}
 
 		dbg("kernel: %s() running 'down'", __func__);
-		(void) do_command(sr->connection, sr, "down", st, st->st_logger);
+		do_updown(UPDOWN_DOWN, sr->connection, sr, st, st->st_logger);
 
 		if (sr->connection->kind == CK_INSTANCE &&
 		    ((sr->connection->policy & POLICY_OPPORTUNISTIC) ||
@@ -3513,8 +3307,8 @@ static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy expect
 			set_spd_routing(sr, RT_UNROUTED);
 			/* only unroute if no other connection shares it */
 			if (route_owner(sr->connection, sr, NULL, NULL, NULL) == NULL) {
-				do_command(sr->connection, sr, "unroute", NULL,
-					   sr->connection->logger);
+				do_updown(UPDOWN_UNROUTE, sr->connection, sr,
+					  NULL, sr->connection->logger);
 			}
 
 		} else {
