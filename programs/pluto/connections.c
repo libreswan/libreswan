@@ -3779,22 +3779,22 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 			if (best_connection == NULL) {
 				connection_buf cb;
 				selectors_buf sb;
-				dbg("    choosing "PRI_CONNECTION" %s priority %"PRIu32" child %s; as first best",
-				    pri_connection(c, &cb),
-				    str_selectors(&c->spd->local->client, &c->spd->remote->client, &sb),
-				    priority,
-				    (c->policy_next != NULL ? c->policy_next->name : "none"));
+				ldbg(logger,
+				     "    choosing "PRI_CONNECTION" %s priority %"PRIu32"; as first best",
+				     pri_connection(c, &cb),
+				     str_selectors(&c->spd->local->client, &c->spd->remote->client, &sb),
+				     priority);
 			} else {
 				connection_buf cb, bcb;
 				selectors_buf sb, bsb;
-				dbg("    choosing "PRI_CONNECTION" %s priority %"PRIu32" child %s; as bests "PRI_CONNECTION" %s priority %"PRIu32,
-				    pri_connection(c, &cb),
-				    str_selectors(&c->spd->local->client, &c->spd->remote->client, &sb),
-				    priority,
-				    (c->policy_next != NULL ? c->policy_next->name : "none"),
-				    pri_connection(best_connection, &bcb),
-				    str_selectors(&best_sr->local->client, &best_sr->remote->client, &bsb),
-				    best_priority);
+				ldbg(logger,
+				     "    choosing "PRI_CONNECTION" %s priority %"PRIu32"; as bests "PRI_CONNECTION" %s priority %"PRIu32,
+				     pri_connection(c, &cb),
+				     str_selectors(&c->spd->local->client, &c->spd->remote->client, &sb),
+				     priority,
+				     pri_connection(best_connection, &bcb),
+				     str_selectors(&best_sr->local->client, &best_sr->remote->client, &bsb),
+				     best_priority);
 			}
 
 			best_connection = c;
@@ -4546,11 +4546,6 @@ static void show_one_connection(struct show *s,
 		jam(buf, " fake-strongswan:%s;", bool_str(c->config->send_vid_fake_strongswan));
 		jam(buf, " send-vendorid:%s;", bool_str(c->config->send_vendorid));
 		jam(buf, " send-no-esp-tfc:%s;", bool_str(c->config->send_no_esp_tfc));
-	}
-
-	if (c->policy_next != NULL) {
-		show_comment(s, PRI_CONNECTION":   policy_next: %s",
-			     c->name, instance, c->policy_next->name);
 	}
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {

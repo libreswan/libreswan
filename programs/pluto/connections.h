@@ -555,9 +555,6 @@ struct connection {
 		newest_ike_sa,
 		newest_ipsec_sa;
 
-	/* if multiple policies, next one to apply */
-	struct connection *policy_next;
-
 	/* host_pair linkage */
 	struct host_pair *host_pair;
 	struct connection *hp_next;

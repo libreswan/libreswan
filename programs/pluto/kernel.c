@@ -1037,16 +1037,6 @@ static bool resolve_route_policy_conflict(struct spd_route *spd,
 	}
 
 	/*
-	 * this is a co-terminal attempt of the "near" kind.
-	 * when chaining, we chain from inside to outside
-	 *
-	 * XXX permit multiple deep connections?
-	 */
-	passert(inside->policy_next == NULL);
-
-	inside->policy_next = outside;
-
-	/*
 	 * since we are going to steal the eroute from the secondary
 	 * policy, we need to make sure that it no longer thinks that
 	 * it owns the eroute.
@@ -1184,10 +1174,9 @@ static enum routability could_route(struct connection *c,
 
 		/* look along the chain of policies for one with the same name */
 
-		for (struct connection *ep = ero; ep != NULL; ep = ero->policy_next) {
-			if (ep->kind == CK_TEMPLATE &&
-				streq(ep->name, c->name))
-				return ROUTE_EASY;
+		if (ero->kind == CK_TEMPLATE && streq(ero->name, c->name)) {
+			ldbg(ero->logger, "EASY!");
+			return ROUTE_EASY;
 		}
 
 		/*
@@ -2707,14 +2696,11 @@ bool route_and_eroute(struct connection *c,
 	struct connection *ro = (rosr == NULL ? NULL : rosr->connection);
 	struct connection *ero = (esr == NULL ? NULL : esr->connection); /* eclipsed route owner */
 
-	dbg("kernel: route_and_eroute with c: %s (next: %s) ero:%s esr:{%p} ro:%s rosr:{%p} and state: #%lu",
-	    c->name,
-	    (c->policy_next ? c->policy_next->name : "none"),
-	    ero == NULL ? "null" : ero->name,
-	    esr,
-	    ro == NULL ? "null" : ro->name,
-	    rosr,
-	    st == NULL ? 0 : st->st_serialno);
+	ldbg(logger, "kernel: route_and_eroute with c: %s ero:%s esr:{%p} ro:%s rosr:{%p} and state: #%lu",
+	     c->name,
+	     (ero == NULL ? "null" : ero->name), esr,
+	     (ro == NULL ? "null" : ro->name), rosr,
+	     (st == NULL ? 0 : st->st_serialno));
 
 	/* look along the chain of policies for same one */
 
