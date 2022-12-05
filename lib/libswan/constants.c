@@ -193,6 +193,7 @@ static const char *const connection_kind_name[] = {
 	"CK_GROUP",	/* policy group: instantiates to template */
 	"CK_TEMPLATE",	/* abstract connection, with wildcard */
 	"CK_PERMANENT",	/* normal connection */
+	"CK_HYBRID",	/* IKE instance of template */
 	"CK_INSTANCE",	/* instance of template */
 	"CK_GOING_AWAY"	/* instance being deleted -- don't delete again */
 };

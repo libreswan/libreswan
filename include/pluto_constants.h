@@ -722,8 +722,11 @@ enum connection_kind {
 	CK_GROUP,       /* policy group: instantiates to template */
 	CK_TEMPLATE,    /* abstract connection, with wildcard */
 	CK_PERMANENT,   /* normal connection */
-	CK_INSTANCE,    /* instance of template, created for a particular attempt */
-	CK_GOING_AWAY   /* instance being deleted -- don't delete again */
+	CK_HYBRID,	/* IKE SA instantiated a template */
+	CK_INSTANCE,    /* instance of template, created for a
+			 * particular attempt */
+	CK_GOING_AWAY   /* instance being deleted -- don't delete
+			 * again */
 };
 
 /* routing status.
