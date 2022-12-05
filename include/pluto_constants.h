@@ -729,13 +729,16 @@ enum connection_kind {
 			 * again */
 };
 
-/* routing status.
- * Note: routing ignores source address, but erouting does not!
- * Note: a connection can only be routed if it is NEVER_NEGOTIATE
- * or HAS_IPSEC_POLICY.
+/*
+ * Routing status.
+ *
+ * Note: routing ignores the source address, but kernel policies do
+ * not!
+ *
+ * Note: a connection can only be routed if it is NEVER_NEGOTIATE or
+ * HAS_IPSEC_POLICY.
  */
 
-/* note that this is assumed to be ordered! */
 enum routing {
 	RT_UNROUTED,            /* unrouted */
 	RT_UNROUTED_HOLD,       /* unrouted, but HOLD shunt installed */
@@ -743,14 +746,27 @@ enum routing {
 	RT_ROUTED_HOLD,         /* routed, and HOLD shunt installed */
 	RT_ROUTED_FAILURE,      /* routed, and failure-context shunt installed */
 	RT_ROUTED_TUNNEL,       /* routed, and erouted to an IPSEC SA group */
-	RT_UNROUTED_KEYED,       /* keyed, but not routed, on purpose */
+	RT_UNROUTED_KEYED,      /* keyed, but not routed, on purpose */
 };
 
 extern const struct enum_names routing_names;
 
-#define routed(rs) ((rs) > RT_UNROUTED_HOLD)
-#define erouted(rs) ((rs) != RT_UNROUTED)
-#define shunt_erouted(rs) (erouted(rs) && (rs) != RT_ROUTED_TUNNEL)
+#define routed(RS) ((RS) == RT_ROUTED_PROSPECTIVE ||		\
+		    (RS) == RT_ROUTED_HOLD ||			\
+		    (RS) == RT_ROUTED_FAILURE ||		\
+		    (RS) == RT_ROUTED_TUNNEL ||			\
+		    !(pexpect((RS) != RT_UNROUTED_KEYED)))
+#define erouted(RS) ((RS) == RT_UNROUTED_HOLD ||		\
+		     (RS) == RT_ROUTED_PROSPECTIVE ||		\
+		     (RS) == RT_ROUTED_HOLD ||			\
+		     (RS) == RT_ROUTED_FAILURE ||		\
+		     (RS) == RT_ROUTED_TUNNEL ||		\
+		     !(pexpect((RS) != RT_UNROUTED_KEYED)))
+#define shunt_erouted(RS) ((RS) == RT_UNROUTED_HOLD ||			\
+			   (RS) == RT_ROUTED_PROSPECTIVE ||		\
+			   (RS) == RT_ROUTED_HOLD ||			\
+			   (RS) == RT_ROUTED_FAILURE ||			\
+			   !(pexpect((RS) != RT_UNROUTED_KEYED)))
 
 enum certpolicy {
 	CERT_NEVERSEND   = 1,
