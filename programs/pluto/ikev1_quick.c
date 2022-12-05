@@ -1917,7 +1917,7 @@ static struct connection *fc_try(const struct connection *c,
 				 const ip_selector *remote_client)
 {
 	struct connection *best = NULL;
-	policy_prio_t best_prio = BOTTOM_PRIO;
+	connection_priority_t best_prio = BOTTOM_PRIORITY;
 	const bool remote_is_host = selector_eq_address(*remote_client,
 							c->remote->host.addr);
 
@@ -2066,7 +2066,7 @@ static struct connection *fc_try(const struct connection *c,
 			 * - given that, the shortest CA pathlength is preferred
 			 * - given that, not switching is preferred
 			 */
-			policy_prio_t prio =
+			connection_priority_t prio =
 				PRIO_WEIGHT * routed(sr->connection->child.routing) +
 				WILD_WEIGHT * (MAX_WILDCARDS - wildcards) +
 				PATH_WEIGHT * (MAX_CA_PATH_LEN - pathlen) +
@@ -2100,7 +2100,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 				      const ip_selector *remote_client)
 {
 	struct connection *best = NULL;
-	policy_prio_t best_prio = BOTTOM_PRIO;
+	connection_priority_t best_prio = BOTTOM_PRIORITY;
 
 	FOR_EACH_HOST_PAIR_CONNECTION(local_address, unset_address, d) {
 
@@ -2179,8 +2179,8 @@ static struct connection *fc_try_oppo(const struct connection *c,
 			 *   are preferred
 			 * - given that, the shortest CA pathlength is preferred
 			 */
-			policy_prio_t prio =
-				PRIO_WEIGHT * (d->policy_prio + routed(sr->connection->child.routing)) +
+			connection_priority_t prio =
+				PRIO_WEIGHT * (d->priority + routed(sr->connection->child.routing)) +
 				WILD_WEIGHT * (MAX_WILDCARDS - wildcards) +
 				PATH_WEIGHT * (MAX_CA_PATH_LEN - pathlen);
 

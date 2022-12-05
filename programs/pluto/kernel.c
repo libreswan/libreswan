@@ -387,7 +387,7 @@ struct kernel_policy stateless_kernel_policy(const ip_selector *src,
 }
 
 struct bare_shunt {
-	policy_prio_t policy_prio;
+	connection_priority_t policy_prio;
 	ip_selector our_client;
 	ip_selector peer_client;
 	enum shunt_policy shunt_policy;
@@ -421,7 +421,7 @@ static void jam_bare_shunt(struct jambuf *buf, const struct bare_shunt *bs)
 	jam(buf, " => ");
 	jam_enum_short(buf, &shunt_policy_names, bs->shunt_policy);
 	jam(buf, " ");
-	jam_policy_prio(buf, bs->policy_prio);
+	jam_connection_priority(buf, bs->policy_prio);
 	jam(buf, "    %s", bs->why);
 }
 
@@ -470,7 +470,7 @@ void add_bare_shunt(const ip_selector *our_client,
 	const struct ip_protocol *transport_proto = selector_protocol(*our_client);
 	pexpect(transport_proto == selector_protocol(*peer_client));
 	bs->transport_proto = transport_proto;
-	bs->policy_prio = BOTTOM_PRIO;
+	bs->policy_prio = BOTTOM_PRIORITY;
 	bs->from_serialno = from_serialno;
 
 	bs->shunt_policy = shunt_policy;
@@ -1045,7 +1045,7 @@ static enum routability note_nearconflict(struct connection *outside,	/* CK_PERM
 	 * set the priority of the new eroute owner to be higher
 	 * than that of the current eroute owner
 	 */
-	inside->policy_prio = outside->policy_prio + 1;
+	inside->priority = outside->priority + 1;
 
 	connection_buf inst;
 	llog(RC_LOG_SERIOUS, logger,
@@ -1433,7 +1433,7 @@ void show_shunt_status(struct show *s)
 		selector_buf ourb;
 		selector_buf peerb;
 		said_buf sat;
-		policy_prio_buf prio;
+		connection_priority_buf prio;
 
 		/* XXX: hack to preserve output */
 		ip_said said = said_from_address_protocol_spi(selector_type(&bs->our_client)->address.unspec,
@@ -1445,7 +1445,7 @@ void show_shunt_status(struct show *s)
 			     bs->transport_proto->ipproto,
 			     str_selector_subnet_port(&(bs)->peer_client, &peerb),
 			     str_said(&said, &sat),
-			     str_policy_prio(bs->policy_prio, &prio),
+			     str_connection_priority(bs->policy_prio, &prio),
 			     bs->why);
 	}
 }
@@ -3586,7 +3586,7 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 			/* fudge up parameter list */
 			const ip_address *src_address = &sr->local->host->addr;
 			const ip_address *dst_address = &sr->remote->host->addr;
-			policy_prio_t policy_prio = BOTTOM_PRIO;	/* of replacing shunt*/
+			connection_priority_t policy_prio = BOTTOM_PRIORITY;	/* of replacing shunt*/
 			const char *why = "oe-failed";
 
 			/* fudge up replace_bare_shunt() */

@@ -315,9 +315,9 @@ struct config {
  * is a state that uses it.
  */
 
-/* connection policy priority: how important this policy is
- * - used to implement eroute-like precedence (augmented by a small
- *   bonus for a routed connection).
+/*
+ * Connection priority: how important this connection is
+ *
  * - a whole number
  * - larger is more important
  * - three subcomponents.  In order of decreasing significance:
@@ -332,18 +332,19 @@ struct config {
  *   as the original policy, even though its subnets might be smaller.
  * - display format: n,m
  *
- * ??? These are NOT the same as sa_priorities but eventually they should be aligned.
+ * ??? These are NOT the same as sa_priorities but eventually they
+ * should be aligned.
  */
-typedef uint32_t policy_prio_t;
-#define BOTTOM_PRIO   ((policy_prio_t)0)        /* smaller than any real prio */
 
-void set_policy_prio(struct connection *c);
+typedef enum { BOTTOM_PRIORITY, } connection_priority_t;
+
+void set_connection_priority(struct connection *c);
 
 typedef struct {
 	char buf[3 + 1 + 3 + 1 + 10 + 1];	/* (10 is to silence GCC) */
-} policy_prio_buf;
-size_t jam_policy_prio(struct jambuf *buf, policy_prio_t pp);
-const char *str_policy_prio(policy_prio_t pp, policy_prio_buf *buf);
+} connection_priority_buf;
+size_t jam_connection_priority(struct jambuf *buf, connection_priority_t pp);
+const char *str_connection_priority(connection_priority_t pp, connection_priority_buf *buf);
 
 struct host_end {
 	const struct host_end_config *config;
@@ -543,7 +544,7 @@ struct connection {
 	/* internal fields: */
 
 	unsigned long instance_serial;
-	policy_prio_t policy_prio;
+	connection_priority_t priority;
 	bool instance_initiation_ok;		/* this is an instance of a policy that mandates initiate */
 	enum connection_kind kind;
 	struct iface_endpoint *interface;	/* filled in iff oriented */

@@ -210,7 +210,7 @@ bool orient(struct connection *c, struct logger *logger)
 	}
 
 	/* (re-)compute the priority */
-	set_policy_prio(c);
+	set_connection_priority(c);
 	return true;
 }
 

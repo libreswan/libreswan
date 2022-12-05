@@ -1801,7 +1801,7 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 		}
 	}
 
-	set_policy_prio(c); /* must be after kind is set */
+	set_connection_priority(c); /* must be after kind is set */
 }
 
 static void add_proposal_spds(struct connection *c)
@@ -1863,7 +1863,7 @@ static void add_proposal_spds(struct connection *c)
 		}
 	}
 
-	set_policy_prio(c); /* must be after .kind and .spd are set */
+	set_connection_priority(c); /* must be after .kind and .spd are set */
 }
 
 
@@ -3361,7 +3361,7 @@ struct connection *spd_instantiate(struct connection *t,
 	update_spds_from_end_host_addr(d, d->remote->config->index, peer_addr, HERE);
 
 	pexpect(oriented(d)); /* can't instantiate an unoriented template? */
-	set_policy_prio(d); /* re-compute; may have changed */
+	set_connection_priority(d); /* re-compute; may have changed */
 
 	/* should still be true; leave another breadcrumb */
 	pexpect(d->spd->eroute_owner == SOS_NOBODY);
@@ -3429,28 +3429,28 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 }
 
 /* priority formatting */
-size_t jam_policy_prio(struct jambuf *buf, policy_prio_t pp)
+size_t jam_connection_priority(struct jambuf *buf, connection_priority_t pp)
 {
-	if (pp == BOTTOM_PRIO) {
+	if (pp == BOTTOM_PRIORITY) {
 		return jam_string(buf, "0");
 	}
 
 	return jam(buf, "%" PRIu32 ",%" PRIu32,
-		   pp >> 17, (pp & ~(~(policy_prio_t)0 << 17)) >> 8);
+		   pp >> 17, (pp & ~(~(connection_priority_t)0 << 17)) >> 8);
 }
 
-const char *str_policy_prio(policy_prio_t pp, policy_prio_buf *buf)
+const char *str_connection_priority(connection_priority_t pp, connection_priority_buf *buf)
 {
 	struct jambuf jb = ARRAY_AS_JAMBUF(buf->buf);
-	jam_policy_prio(&jb, pp);
+	jam_connection_priority(&jb, pp);
 	return buf->buf;
 }
 
-void set_policy_prio(struct connection *c)
+void set_connection_priority(struct connection *c)
 {
-	c->policy_prio = (((policy_prio_t)c->spd->local->client.maskbits << 17) |
-			  ((policy_prio_t)c->spd->remote->client.maskbits << 8) |
-			  ((policy_prio_t)1));
+	c->priority = (((connection_priority_t)c->spd->local->client.maskbits << 17) |
+		       ((connection_priority_t)c->spd->remote->client.maskbits << 8) |
+		       ((connection_priority_t)1));
 }
 
 /*
@@ -3635,7 +3635,7 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 	const ip_endpoint packet_dst = packet_dst_endpoint(packet);
 
 	struct connection *best_connection = NULL;
-	policy_prio_t best_priority = BOTTOM_PRIO;
+	connection_priority_t best_priority = BOTTOM_PRIORITY;
 	struct spd_route *best_sr = NULL;
 
 	struct connection_filter cq = { .where = HERE, };
@@ -3755,8 +3755,8 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 			 * For instance, exact protocol or exact port
 			 * gets more points.
 			 */
-			policy_prio_t priority =
-				(8 * (c->policy_prio + (c->kind == CK_INSTANCE)) +
+			connection_priority_t priority =
+				(8 * (c->priority + (c->kind == CK_INSTANCE)) +
 				 2 * (sr->local->client.hport == packet.src.hport) +
 				 2 * (sr->remote->client.hport == packet.dst.hport) +
 				 1 * (sr->local->client.ipproto == packet.protocol->ipproto));
@@ -4253,8 +4253,8 @@ int connection_compare(const struct connection *ca,
 		ca->instance_serial > cb-> instance_serial ? 1 : 0;
 
 	default:
-		return (ca->policy_prio < cb->policy_prio ? -1 :
-			ca->policy_prio > cb->policy_prio ? 1 : 0);
+		return (ca->priority < cb->priority ? -1 :
+			ca->priority > cb->priority ? 1 : 0);
 	}
 }
 
@@ -4592,10 +4592,10 @@ static void show_one_connection(struct show *s,
 	else
 		strcpy(satfcstr, "none");
 
-	policy_prio_buf prio;
+	connection_priority_buf prio;
 	show_comment(s, PRI_CONNECTION":   conn_prio: %s; interface: %s; metric: %u; mtu: %s; sa_prio:%s; sa_tfc:%s;",
 		     c->name, instance,
-		     str_policy_prio(c->policy_prio, &prio),
+		     str_connection_priority(c->priority, &prio),
 		     ifn,
 		     c->metric,
 		     mtustr, sapriostr, satfcstr);
