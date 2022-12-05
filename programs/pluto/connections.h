@@ -633,7 +633,7 @@ struct connection *group_instantiate(struct connection *group,
 				     ip_port local_port,
 				     ip_port remote_port);
 
-extern struct spd_route *route_owner(struct spd_route *spd,
+extern struct spd_route *route_owner(const struct spd_route *spd,
 				     struct spd_route **policy_spd);
 
 extern struct connection *shunt_owner(const ip_selector *ours,

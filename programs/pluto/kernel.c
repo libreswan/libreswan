@@ -1013,16 +1013,29 @@ static struct kernel_policy kernel_policy_from_state(const struct state *st,
  */
 
 enum routability {
-	route_impossible,
-	route_easy,
-	route_nearconflict,
-	route_unnecessary
+	ROUTE_IMPOSSIBLE,
+	ROUTE_EASY,
+	ROUTE_POLICY_CONFLICT,
+	ROUTE_UNNECESSARY
 };
 
-static enum routability note_nearconflict(struct connection *outside,	/* CK_PERMANENT */
-					  struct connection *inside,	/* CK_TEMPLATE */
+static bool resolve_route_policy_conflict(struct spd_route *spd,
+					  struct spd_route *conflict,
 					  struct logger *logger)
 {
+	struct connection *outside = NULL; /*CK_PERMANENT*/
+	struct connection *inside = NULL; /*CK_TEMPLATE*/
+	FOR_EACH_THING(c, spd->connection, conflict->connection) {
+		switch (c->kind) {
+		case CK_PERMANENT: outside = c; break;
+		case CK_TEMPLATE: inside = c; break;
+		default: break;
+		}
+	}
+	if (!PEXPECT(logger, outside != NULL && inside != NULL)) {
+		return false;
+	}
+
 	/*
 	 * this is a co-terminal attempt of the "near" kind.
 	 * when chaining, we chain from inside to outside
@@ -1046,21 +1059,23 @@ static enum routability note_nearconflict(struct connection *outside,	/* CK_PERM
 	     "conflict on eroute (%s), switching eroute to %s and linking %s",
 	     str_connection_instance(inside, &inst),
 	     inside->name, outside->name);
-
-	return route_nearconflict;
+	return true;
 }
 
 /*
  * Note: this may mutate c
  */
 
-static enum routability could_route(struct connection *c, struct logger *logger)
+static enum routability could_route(struct connection *c,
+				    const struct spd_route *spd,
+				    struct spd_route **conflict,
+				    struct logger *logger)
 {
 	esb_buf b;
-	ldbg(c->logger,
+	ldbg(logger,
 	     "kernel: could_route called; kind=%s remote %s.has_client=%s oppo=%s this.host_port=%u sec_label="PRI_SHUNK,
 	     enum_show(&connection_kind_names, c->kind, &b),
-	     c->spd->remote->config->leftright,
+	     spd->remote->config->leftright,
 	     bool_str(c->remote->child.has_client),
 	     bool_str(c->policy & POLICY_OPPORTUNISTIC),
 	     c->local->host.port,
@@ -1069,8 +1084,8 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 	/* it makes no sense to route a connection that is ISAKMP-only */
 	if (!NEVER_NEGOTIATE(c->policy) && !HAS_IPSEC_POLICY(c->policy)) {
 		llog(RC_ROUTE, logger,
-			    "cannot route an ISAKMP-only connection");
-		return route_impossible;
+		     "cannot route an ISAKMP-only connection");
+		return ROUTE_IMPOSSIBLE;
 	}
 
 	/*
@@ -1079,7 +1094,7 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 	 */
 	if (kernel_ops->overlap_supported && !LIN(POLICY_TUNNEL, c->policy)) {
 		ldbg(logger, "route-unnecessary: overlap and !tunnel");
-		return route_unnecessary;
+		return ROUTE_UNNECESSARY;
 	}
 
 	/*
@@ -1098,18 +1113,18 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 		} else if (c->remote->child.has_client) {
 			/* see extract_child_end() */
 			ldbg(logger, "template-route-possible: remote %s.spd.has_client==true",
-			     c->spd->remote->config->leftright);
+			     spd->remote->config->leftright);
 		} else {
 			policy_buf pb;
 			llog(RC_ROUTE, logger,
 			     "cannot route template policy of %s",
 			     str_connection_policies(c, &pb));
-			return route_impossible;
+			return ROUTE_IMPOSSIBLE;
 		}
 	}
 
 	struct spd_route *esr;
-	struct spd_route *rsr = route_owner(c->spd, &esr);	/* who owns our route? */
+	struct spd_route *rsr = route_owner(spd, &esr);	/* who owns our route? */
 	struct connection *ro = (rsr == NULL ? NULL : rsr->connection);
 	struct connection *ero = (esr == NULL ? NULL : esr->connection);
 
@@ -1145,7 +1160,7 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 				llog(RC_LOG_SERIOUS, logger,
 				     "cannot route -- route already in use for "PRI_CONNECTION"",
 				     pri_connection(ro, &cib));
-				return route_impossible;
+				return ROUTE_IMPOSSIBLE;
 			} else {
 				connection_buf cib;
 				llog(RC_LOG_SERIOUS, logger,
@@ -1161,12 +1176,10 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 		 * note, wavesec (PERMANENT) goes *outside* and
 		 * OE goes *inside* (TEMPLATE)
 		 */
-		if (ero->kind == CK_PERMANENT &&
-			c->kind == CK_TEMPLATE) {
-			return note_nearconflict(ero, c, logger);
-		} else if (c->kind == CK_PERMANENT &&
-			ero->kind == CK_TEMPLATE) {
-			return note_nearconflict(c, ero, logger);
+		if ((ero->kind == CK_PERMANENT && c->kind == CK_TEMPLATE) ||
+		    (c->kind == CK_PERMANENT && ero->kind == CK_TEMPLATE)) {
+			*conflict = esr;
+			return ROUTE_POLICY_CONFLICT;
 		}
 
 		/* look along the chain of policies for one with the same name */
@@ -1174,7 +1187,7 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 		for (struct connection *ep = ero; ep != NULL; ep = ero->policy_next) {
 			if (ep->kind == CK_TEMPLATE &&
 				streq(ep->name, c->name))
-				return route_easy;
+				return ROUTE_EASY;
 		}
 
 		/*
@@ -1196,57 +1209,59 @@ static enum routability could_route(struct connection *c, struct logger *logger)
 			llog(RC_LOG_SERIOUS, logger,
 				    "cannot install eroute -- it is in use for "PRI_CONNECTION" #%lu",
 				    pri_connection(ero, &erob), esr->eroute_owner);
-			return route_impossible;
+			return ROUTE_IMPOSSIBLE;
 		}
 
 		connection_buf erob;
 		dbg("kernel: overlapping permitted with "PRI_CONNECTION" #%lu",
 		    pri_connection(ero, &erob), esr->eroute_owner);
 	}
-	return route_easy;
+	return ROUTE_EASY;
 }
 
 bool route_and_trap_connection(struct connection *c)
 {
-	enum routability r = could_route(c, c->logger);
+	struct spd_route *conflict;
+	enum routability r = could_route(c, c->spd, &conflict, c->logger);
 
 	switch (r) {
-	case route_impossible:
+	case ROUTE_IMPOSSIBLE:
 		return false;
-
-	case route_easy:
-	case route_nearconflict:
-		if (c->config->ike_version == IKEv2 && c->config->sec_label.len > 0) {
-			/*
-			 * IKEv2 security labels are treated
-			 * specially: this allocates and installs a
-			 * full REQID, the route_and_eroute() call
-			 * does not (and who knows what else it does).
-			 */
-			dbg("kernel: installing SE trap policy");
-			return install_sec_label_connection_policies(c, c->logger);
-		} else if (c->child.routing >= RT_ROUTED_TUNNEL) {
-			/*
-			 * RT_ROUTED_TUNNEL is treated specially: we
-			 * don't override because we don't want to
-			 * lose track of the IPSEC_SAs etc.
-			 *
-			 * ??? The test treats RT_UNROUTED_KEYED
-			 * specially too.
-			 *
-			 * XXX: ah, I was wondering ...
-			 */
-			dbg("kernel: skipping trap policy as >=ROUTED_TUNNEL");
-			return true;
-		} else {
-			return route_and_eroute(c, c->spd, NULL, c->logger);
-		}
-
-	case route_unnecessary:
+	case ROUTE_EASY:
+		break;
+	case ROUTE_UNNECESSARY:
 		return true;
-
+	case ROUTE_POLICY_CONFLICT:
+		if (!resolve_route_policy_conflict(c->spd, conflict, c->logger)) {
+			return false;
+		}
+		break;
 	}
-	bad_case(r);
+	if (c->config->ike_version == IKEv2 && c->config->sec_label.len > 0) {
+		/*
+		 * IKEv2 security labels are treated
+		 * specially: this allocates and installs a
+		 * full REQID, the route_and_eroute() call
+		 * does not (and who knows what else it does).
+		 */
+		dbg("kernel: installing SE trap policy");
+		return install_sec_label_connection_policies(c, c->logger);
+	} else if (c->child.routing >= RT_ROUTED_TUNNEL) {
+		/*
+		 * RT_ROUTED_TUNNEL is treated specially: we
+		 * don't override because we don't want to
+		 * lose track of the IPSEC_SAs etc.
+		 *
+		 * ??? The test treats RT_UNROUTED_KEYED
+		 * specially too.
+		 *
+		 * XXX: ah, I was wondering ...
+		 */
+		dbg("kernel: skipping trap policy as >=ROUTED_TUNNEL");
+		return true;
+	} else {
+		return route_and_eroute(c, c->spd, NULL, c->logger);
+	}
 }
 
 static bool sag_eroute(const struct state *st,
@@ -2614,22 +2629,31 @@ bool install_inbound_ipsec_sa(struct state *st)
 
 	dbg("kernel: install_inbound_ipsec_sa() checking if we can route");
 	/* check that we will be able to route and eroute */
-	switch (could_route(c, st->st_logger)) {
-	case route_easy:
-	case route_nearconflict:
-		dbg("kernel:    routing is easy, or has resolvable near-conflict");
+	struct spd_route *conflict;
+	enum routability r = could_route(c, c->spd, &conflict, st->st_logger);
+	switch (r) {
+	case ROUTE_EASY:
+		dbg("kernel:    routing is easy");
 		break;
-
-	case route_unnecessary:
+	case ROUTE_POLICY_CONFLICT:
+		dbg("kernel:    routing conflict, resolving");
+		if (!resolve_route_policy_conflict(c->spd, conflict, st->st_logger)) {
+			return false;
+		}
+		break;
+	case ROUTE_UNNECESSARY:
+		dbg("kernel:    routing unnecessary");
 		/*
 		 * in this situation, we should look and see if there is
 		 * a state that our connection references, that we are
 		 * in fact replacing.
 		 */
 		break;
-
-	default:
+	case ROUTE_IMPOSSIBLE:
+		dbg("kernel:    impossible");
 		return false;
+	default:
+		bad_case(r);
 	}
 
 	/*
@@ -3038,14 +3062,20 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 	dbg("kernel: install_ipsec_sa() for #%lu: %s", st->st_serialno,
 	    inbound_also ? "inbound and outbound" : "outbound only");
 
-	enum routability rb = could_route(st->st_connection, st->st_logger);
+	struct spd_route *conflict;
+	enum routability rb = could_route(st->st_connection, st->st_connection->spd,
+					  &conflict, st->st_logger);
 
 	switch (rb) {
-	case route_easy:
-	case route_unnecessary:
-	case route_nearconflict:
+	case ROUTE_EASY:
+	case ROUTE_UNNECESSARY:
 		break;
-
+	case ROUTE_POLICY_CONFLICT:
+		if (!resolve_route_policy_conflict(st->st_connection->spd, conflict, st->st_logger)) {
+			return false;
+		}
+		break;
+	case ROUTE_IMPOSSIBLE:
 	default:
 		return false;
 	}
@@ -3083,7 +3113,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 		st->st_connection->temp_vars.revive_delay = 0;
 	}
 
-	if (rb == route_unnecessary)
+	if (rb == ROUTE_UNNECESSARY)
 		return true;
 
 	/* for (sr = &st->st_connection->spd; sr != NULL; sr = sr->next) */

@@ -4115,7 +4115,7 @@ struct connection *find_outgoing_opportunistic_template(const ip_packet packet)
  * destination (route).  POLICY_SPDP is used to find other connections
  * sharing an identical kernel policy.
  */
-struct spd_route *route_owner(struct spd_route *spd,
+struct spd_route *route_owner(const struct spd_route *spd,
 			      struct spd_route **policy_spdp)
 {
 	struct connection *c = spd->connection;
@@ -4125,11 +4125,11 @@ struct spd_route *route_owner(struct spd_route *spd,
 		return NULL;
 	}
 
-	enum routing best_routing = spd->connection->child.routing;
-	struct spd_route *best_route_spd = spd;
+	enum routing best_routing = RT_UNROUTED;
+	struct spd_route *best_route_spd = NULL;
 
 	enum routing policy_routing = RT_UNROUTED;
-	struct spd_route *policy_spd = spd;
+	struct spd_route *policy_spd = NULL;
 
 	struct spd_route_filter srf = {
 		.remote_client_range = &spd->remote->client,
