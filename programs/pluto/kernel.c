@@ -1039,7 +1039,7 @@ static enum routability note_nearconflict(struct connection *outside,	/* CK_PERM
 	 * policy, we need to make sure that it no longer thinks that
 	 * it owns the eroute.
 	 */
-	set_spd_routing(outside->spd, RT_UNROUTED_KEYED);
+	set_child_routing(outside, RT_UNROUTED_KEYED);
 	set_spd_owner(outside->spd, SOS_NOBODY);
 
 	/*
@@ -1672,7 +1672,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	}
 
 	/* Success! */
-	set_spd_routing(c->spd, RT_ROUTED_PROSPECTIVE);
+	set_child_routing(c, RT_ROUTED_PROSPECTIVE);
 	return true;
 }
 
@@ -1719,7 +1719,7 @@ bool eroute_outbound_connection(enum kernel_policy_op op,
 
 /* install a bare hold or pass policy to a connection */
 
-bool assign_holdpass(const struct connection *c,
+bool assign_holdpass(struct connection *c,
 		     struct spd_route *sr,
 		     const ip_packet *packet)
 {
@@ -1729,7 +1729,7 @@ bool assign_holdpass(const struct connection *c,
 	 * Beware: this %hold might be already handled, but still squeak
 	 * through because of a race.
 	 */
-	enum routing ro = sr->connection->child.routing;	/* routing, old */
+	enum routing ro = c->child.routing;	/* routing, old */
 	enum routing rn = ro;			/* routing, new */
 
 	passert(LHAS(LELEM(CK_PERMANENT) | LELEM(CK_INSTANCE), c->kind));
@@ -1835,7 +1835,7 @@ bool assign_holdpass(const struct connection *c,
 			return false;
 		}
 	}
-	set_spd_routing(sr, rn);
+	set_child_routing(c, rn);
 	dbg("kernel:  assign_holdpass() done - returning success");
 	return true;
 }
@@ -2682,7 +2682,7 @@ bool install_inbound_ipsec_sa(struct state *st)
 bool route_and_eroute(struct connection *c,
 		      struct spd_route *sr,
 		      struct state *st/*can be NULL*/,
-		      struct logger *logger/*st or c */)
+		      struct logger *logger/*st or c or ... */)
 {
 	selectors_buf sb;
 	dbg("kernel: route_and_eroute() for %s; proto %d, and source port %d dest port %d sec_label",
@@ -2810,7 +2810,7 @@ bool route_and_eroute(struct connection *c,
 		route_installed = do_updown(UPDOWN_ROUTE, c, sr, st, logger);
 		if (!route_installed)
 			dbg("kernel: route command returned an error");
-	} else if (routed(sr->connection->child.routing)) {
+	} else if (routed(c->child.routing)) {
 		route_installed = true; /* nothing to be done */
 	} else if (ro->interface->ip_dev == c->interface->ip_dev &&
 		   address_eq_address(ro->local->host.nexthop, c->local->host.nexthop)) {
@@ -2852,10 +2852,10 @@ bool route_and_eroute(struct connection *c,
 		/* record unrouting */
 		if (route_installed) {
 			do {
-				dbg("kernel: installed route: ro name=%s, rosr->connection->child.routing was %s",
-				    ro->name, enum_name(&routing_story, rosr->connection->child.routing));
-				pexpect(!erouted(rosr->connection->child.routing)); /* warn for now - requires fixing */
-				set_spd_routing(rosr, RT_UNROUTED);
+				dbg("kernel: installed route: ro .name=%s, .child.routing was %s",
+				    ro->name, enum_name(&routing_story, ro->child.routing));
+				pexpect(!erouted(ro->child.routing)); /* warn for now - requires fixing */
+				set_child_routing(ro, RT_UNROUTED);
 				/* no need to keep old value */
 				rosr = route_owner(sr, NULL);
 				ro = (rosr == NULL ? NULL : rosr->connection);
@@ -2873,9 +2873,9 @@ bool route_and_eroute(struct connection *c,
 
 		if (st == NULL) {
 			passert(sr->eroute_owner == SOS_NOBODY);
-			set_spd_routing(sr, RT_ROUTED_PROSPECTIVE);
+			set_child_routing(c, RT_ROUTED_PROSPECTIVE);
 		} else {
-			set_spd_routing(sr, RT_ROUTED_TUNNEL);
+			set_child_routing(c, RT_ROUTED_TUNNEL);
 			set_spd_owner(sr, st->st_serialno);
 			/* clear host shunts that clash with freshly installed route */
 			clear_narrow_holds(&sr->local->client, &sr->remote->client, logger);
@@ -3097,20 +3097,18 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 	if (rb == route_unnecessary)
 		return true;
 
-	struct spd_route *sr = st->st_connection->spd;
-
-	if (st->st_connection->remotepeertype == CISCO && sr->spd_next != NULL)
-		sr = sr->spd_next;
-
 	/* for (sr = &st->st_connection->spd; sr != NULL; sr = sr->next) */
 	struct connection *c = st->st_connection;
 	if (c->config->ike_version == IKEv2 &&
 	    c->child.sec_label.len > 0) {
 		dbg("kernel: %s() skipping route_and_eroute(st) as security label", __func__);
 	} else {
+		struct spd_route *sr = c->spd;
+		if (c->remotepeertype == CISCO && sr->spd_next != NULL)
+			sr = sr->spd_next;
 		for (; sr != NULL; sr = sr->spd_next) {
 			dbg("kernel: sr for #%lu: %s", st->st_serialno,
-			    enum_name(&routing_story, sr->connection->child.routing));
+			    enum_name(&routing_story, c->child.routing));
 
 			/*
 			 * if the eroute owner is not us, then make it
@@ -3118,11 +3116,11 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 			 * pluto-rekey-01, pluto-unit-02/oppo-twice
 			 */
 			pexpect(sr->eroute_owner == SOS_NOBODY ||
-				sr->connection->child.routing >= RT_ROUTED_TUNNEL);
+				c->child.routing >= RT_ROUTED_TUNNEL);
 
 			if (sr->eroute_owner != st->st_serialno &&
-			    sr->connection->child.routing != RT_UNROUTED_KEYED) {
-				if (!route_and_eroute(st->st_connection, sr, st, st->st_logger)) {
+			    c->child.routing != RT_UNROUTED_KEYED) {
+				if (!route_and_eroute(c, sr, st, st->st_logger)) {
 					delete_ipsec_sa(st);
 					/*
 					 * XXX go and unroute any SRs that were
@@ -3140,7 +3138,6 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 
 		if (srcisco != NULL) {
 			set_spd_owner(st->st_connection->spd, srcisco->eroute_owner);
-			set_spd_routing(st->st_connection->spd, srcisco->connection->child.routing);
 		}
 	}
 
@@ -3250,7 +3247,8 @@ static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy expect
 
 	dbg("kernel: %s() for "PRI_SO" ...", __func__, pri_so(st->st_serialno));
 
-	for (struct spd_route *sr = st->st_connection->spd; sr != NULL; sr = sr->spd_next) {
+	struct connection *c = st->st_connection;
+	for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
 
 		if (sr->eroute_owner != st->st_serialno) {
 			dbg("kernel: %s() skipping, eroute_owner "PRI_SO" doesn't match Child SA "PRI_SO,
@@ -3258,10 +3256,10 @@ static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy expect
 			continue;
 		}
 
-		if (sr->connection->child.routing != RT_ROUTED_TUNNEL) {
+		if (c->child.routing != RT_ROUTED_TUNNEL) {
 			enum_buf rb;
 			dbg("kernel: %s() skipping, routing %s isn't TUNNEL",
-			    __func__, str_enum_short(&routing_story, sr->connection->child.routing, &rb));
+			    __func__, str_enum_short(&routing_story, c->child.routing, &rb));
 			continue;
 		}
 
@@ -3280,7 +3278,7 @@ static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy expect
 			enum routing new_routing =
 				(sr->connection->config->failure_shunt == SHUNT_NONE ? RT_ROUTED_PROSPECTIVE :
 				 RT_ROUTED_FAILURE);
-			set_spd_routing(sr, new_routing);
+			set_child_routing(c, new_routing);
 			dbg("kernel: %s() skipping, first SPD and remotepeertype is CISCO, damage done",
 			    __func__);
 			continue;
@@ -3310,7 +3308,7 @@ static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy expect
 			num_ipsec_eroute--;
 #endif
 			/* do now so route_owner won't find us */
-			set_spd_routing(sr, RT_UNROUTED);
+			set_child_routing(c, RT_UNROUTED);
 			/* only unroute if no other connection shares it */
 			if (route_owner(sr, NULL) == NULL) {
 				do_updown(UPDOWN_UNROUTE, sr->connection, sr,
@@ -3347,7 +3345,7 @@ static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy expect
 						 st->st_logger,
 						 "replace");
 			/* update routing; route_owner() will see this and fail */
-			set_spd_routing(sr, new_routing);
+			set_child_routing(c, new_routing);
 
 		}
 	}
@@ -3516,11 +3514,11 @@ bool get_ipsec_traffic(struct state *st,
 	return true;
 }
 
-bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
+bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 		     enum shunt_policy failure_shunt, struct logger *logger)
 {
-	enum routing ro = sr->connection->child.routing;        /* routing, old */
-	enum routing rn = sr->connection->child.routing;        /* routing, new */
+	enum routing ro = c->child.routing;        /* routing, old */
+	enum routing rn = c->child.routing;        /* routing, new */
 	enum shunt_policy negotiation_shunt = c->config->negotiation_shunt;
 
 	if (negotiation_shunt != failure_shunt ) {
@@ -3691,7 +3689,7 @@ bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
 	}
 
 	/* change routing so we don't get cleared out when state/connection dies */
-	set_spd_routing(sr, rn);
+	set_child_routing(c, rn);
 	dbg("kernel: orphan_holdpas() done - returning success");
 	return true;
 }

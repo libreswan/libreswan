@@ -449,18 +449,6 @@ struct spd_route {
 		    pri_where(HERE));					\
 		(SPD)->eroute_owner = SO;				\
 	}
-
-#define set_spd_routing(SPD, RT)					\
-	{								\
-		connection_buf cb;					\
-		enum_buf ob, nb;					\
-		dbg("kernel: spd routing: "PRI_CONNECTION" %s->%s "PRI_WHERE, \
-		    pri_connection((SPD)->connection, &cb),		\
-		    str_enum(&routing_story, (SPD)->connection->child.routing, &ob), \
-		    str_enum(&routing_story, RT, &nb),			\
-		    pri_where(HERE));					\
-		(SPD)->connection->child.routing = RT;			\
-	}
 	struct {
 		struct list_entry list;
 		struct list_entry remote_client;

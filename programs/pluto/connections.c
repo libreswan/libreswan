@@ -1777,10 +1777,8 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 					     bool_str(spd_end->virt != NULL));
 				}
 				/* default values */
-				passert(spd->connection->child.routing == RT_UNROUTED);
 				passert(spd->eroute_owner == SOS_NOBODY);
 				/* leave a debug-log breadcrumb */
-				set_spd_routing(spd, RT_UNROUTED);
 				set_spd_owner(spd, SOS_NOBODY);
 			}
 			/* advance RIGHT (NULL+1>=NULL+0) */
@@ -1792,6 +1790,9 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 		selectors[LEFT_END].selector++;
 	}
 
+	/* leave a bread crumb */
+	passert(c->child.routing == RT_UNROUTED);
+	set_child_routing(c, RT_UNROUTED);
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		ip_address host_addr = c->end[end].host.addr;

@@ -507,11 +507,11 @@ extern bool flush_bare_shunt(const ip_address *src, const ip_address *dst,
 			     enum expect_kernel_policy expect_kernel_policy,
 			     const char *why, struct logger *logger);
 
-bool assign_holdpass(const struct connection *c,
+bool assign_holdpass(struct connection *c,
 		     struct spd_route *sr,
 		     const ip_packet *packet);
 
-extern bool orphan_holdpass(const struct connection *c, struct spd_route *sr,
+extern bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 			    enum shunt_policy failure_shunt, struct logger *logger);
 
 extern enum policy_spi shunt_policy_spi(enum shunt_policy);
