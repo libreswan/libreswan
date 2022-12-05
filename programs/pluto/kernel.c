@@ -1041,12 +1041,6 @@ static enum routability note_nearconflict(struct connection *outside,	/* CK_PERM
 	set_child_routing(outside, RT_UNROUTED_KEYED);
 	set_spd_owner(outside->spd, SOS_NOBODY);
 
-	/*
-	 * set the priority of the new eroute owner to be higher
-	 * than that of the current eroute owner
-	 */
-	inside->priority = outside->priority + 1;
-
 	connection_buf inst;
 	llog(RC_LOG_SERIOUS, logger,
 	     "conflict on eroute (%s), switching eroute to %s and linking %s",
