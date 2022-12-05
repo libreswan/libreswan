@@ -1016,7 +1016,6 @@ enum routability {
 	route_impossible,
 	route_easy,
 	route_nearconflict,
-	route_farconflict,
 	route_unnecessary
 };
 
@@ -1249,15 +1248,11 @@ bool route_and_trap_connection(struct connection *c)
 			return route_and_eroute(c, c->spd, NULL, c->logger);
 		}
 
-	case route_farconflict:
-		return false;
-
 	case route_unnecessary:
 		return true;
 
-	default:
-		bad_case(r);
 	}
+	bad_case(r);
 }
 
 static bool sag_eroute(const struct state *st,
