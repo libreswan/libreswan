@@ -103,9 +103,8 @@ static void clone_connection_spd(struct connection *d, struct connection *t);
 #define MINIMUM_IPSEC_SA_RANDOM_MARK 65536
 static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 
-PRINTF_LIKE(3)
-static void ldbg_connection(const struct connection *c, where_t where,
-			    const char *message, ...)
+void ldbg_connection(const struct connection *c, where_t where,
+		     const char *message, ...)
 {
 	if (DBGP(DBG_BASE)) {
 		LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
@@ -124,6 +123,8 @@ static void ldbg_connection(const struct connection *c, where_t where,
 		LDBG_log(c->logger, "    host: %s->%s",
 			 str_address(&c->local->host.addr, &lb),
 			 str_address(&c->remote->host.addr, &rb));
+		LDBG_log(c->logger, "    kind: %s",
+			 enum_name_short(&connection_kind_names, c->kind));
 		LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
 			jam_string(buf, "    selectors:");
 			const char *sep = " ->";

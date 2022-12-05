@@ -64,6 +64,8 @@ bool initiate_connection(struct connection *c,
 			 bool background, bool log_failure,
 			 struct logger *logger)
 {
+	ldbg_connection(c, HERE, "initiate: %s",
+			(remote_host == NULL ? "<null-host>" : remote_host));
 	/* XXX: something better? */
 	fd_delref(&c->logger->global_whackfd);
 	c->logger->global_whackfd =
@@ -177,7 +179,6 @@ static bool initiate_connection_2_address(struct connection *c,
 		     "instantiated connection with remote IP set to %s",
 		     str_address(&remote_ip, &ab));
 
-		/* flip cur_connection */
 		bool ok = initiate_connection_3_sec_label(d, background, inception);
 
 		if (!ok) {
@@ -359,8 +360,8 @@ void ipsecdoi_initiate(struct connection *c,
 		       shunk_t sec_label,
 		       bool background, struct logger *logger)
 {
-	if (sec_label.len > 0)
-		dbg("ipsecdoi_initiate() called with sec_label "PRI_SHUNK, pri_shunk(sec_label));
+	ldbg_connection(c, HERE, "%s() with sec_label "PRI_SHUNK,
+			__func__, pri_shunk(sec_label));
 
 	switch (c->config->ike_version) {
 #ifdef USE_IKEv1
