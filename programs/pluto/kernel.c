@@ -84,6 +84,11 @@
 #include "show.h"
 #include "rekeyfuzz.h"
 
+static void free_bare_shunt(struct bare_shunt **pp);
+static void delete_bare_kernel_policy(const struct bare_shunt *bsp,
+				      struct logger *logger,
+				      where_t where);
+
 /*
  * The priority assigned to a kernel policy.
  *
@@ -407,6 +412,15 @@ struct bare_shunt {
 
 	struct bare_shunt *next;
 };
+
+#if 0
+static struct kernel_policy bare_kernel_policy(const struct bare_shunt *bs, where_t where)
+{
+	return stateless_kernel_policy(&bs->our_client, &bs->peer_client,
+				       highest_kernel_priority,
+				       bs->shunt_policy, where);
+}
+#endif
 
 static struct bare_shunt *bare_shunts = NULL;
 
@@ -1208,8 +1222,352 @@ static enum routability could_route(struct connection *c,
 	return ROUTE_EASY;
 }
 
+static enum routability connection_routable(struct connection *c,
+					    struct logger *logger)
+{
+	esb_buf b;
+	ldbg(logger,
+	     "kernel: could_route called; kind=%s remote %s.has_client=%s this.host_port=%u sec_label="PRI_SHUNK,
+	     enum_show(&connection_kind_names, c->kind, &b),
+	     bool_str(c->remote->child.has_client),
+	     bool_str(c->policy & POLICY_OPPORTUNISTIC),
+	     c->local->host.port,
+	     pri_shunk(c->config->sec_label));
+
+	/* it makes no sense to route a connection that is ISAKMP-only */
+	if (!NEVER_NEGOTIATE(c->policy) && !HAS_IPSEC_POLICY(c->policy)) {
+		llog(RC_ROUTE, logger,
+		     "cannot route an ISAKMP-only connection");
+		return ROUTE_IMPOSSIBLE;
+	}
+
+	/*
+	 * if this is a transport SA, and overlapping SAs are supported, then
+	 * this route is not necessary at all.
+	 */
+	if (kernel_ops->overlap_supported && !LIN(POLICY_TUNNEL, c->policy)) {
+		ldbg(logger, "route-unnecessary: overlap and !tunnel");
+		return ROUTE_UNNECESSARY;
+	}
+
+	/*
+	 * If this is a template connection, we cannot route.
+	 *
+	 * However, opportunistic and sec_label templates can be
+	 * routed (as in install the policy).
+	 */
+	if (c->kind == CK_TEMPLATE) {
+		if (c->policy & POLICY_OPPORTUNISTIC) {
+			ldbg(logger, "template-route-possible: opportunistic");
+		} else if (c->config->sec_label.len > 0) {
+			ldbg(logger, "template-route-possible: has sec-label");
+		} else if (c->local->config->child.virt != NULL) {
+			ldbg(logger, "template-route-possible: local is virtual");
+		} else if (c->remote->child.has_client) {
+			/* see extract_child_end() */
+			ldbg(logger, "template-route-possible: remote %s.child.has_client==true",
+			     c->remote->config->leftright);
+		} else {
+			policy_buf pb;
+			llog(RC_ROUTE, logger,
+			     "cannot route template policy of %s",
+			     str_connection_policies(c, &pb));
+			return ROUTE_IMPOSSIBLE;
+		}
+	}
+	return ROUTE_EASY; /* aka keep looking */
+}
+
+static void find_spd_conflicts(struct spd_route *spd, struct logger *logger)
+{
+	zero(&spd->conflicting);
+	spd->conflicting.ok = true; /* hope for the best */
+
+	struct connection *c = spd->connection;
+
+	enum routing best_routing = RT_UNROUTED;
+	enum routing best_policy = RT_UNROUTED;
+
+	struct spd_route_filter srf = {
+		.remote_client_range = &spd->remote->client,
+		.where = HERE,
+	};
+
+	while (next_spd_route(NEW2OLD, &srf)) {
+		struct spd_route *d_spd = srf.spd;
+		struct connection *d = d_spd->connection;
+
+		if (spd == d_spd)
+			continue;
+
+		if (d->child.routing == RT_UNROUTED)
+			continue;
+
+		/* passert(oriented(d)); since routed */
+
+		/* lookup did it's job */
+		pexpect(selector_range_eq_selector_range(spd->remote->client,
+							 d_spd->remote->client));
+		if (!selector_eq_selector(spd->remote->client,
+					  d_spd->remote->client)) {
+			continue;
+		}
+
+		/* The routes conflict */
+
+		if (d->child.routing > best_routing) {
+			spd->conflicting.route = d_spd;
+			best_routing = d->child.routing;
+		}
+
+		/*
+		 * XXX: routing isn't about host addresses; the policy
+		 * is. This test is too early.
+		 */
+		if (!address_eq_address(c->local->host.addr,
+					d->local->host.addr)) {
+			continue;
+		}
+
+		/*
+		 * XXX: marks are't visible to the routing code, this
+		 * test is too early?
+		 */
+		if ( (c->sa_marks.in.val & c->sa_marks.in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask) ||
+		     (c->sa_marks.out.val & c->sa_marks.out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask) )
+			continue;
+
+		if (selector_eq_selector(spd->local->client, d_spd->local->client) &&
+		    d->child.routing > best_policy) {
+			spd->conflicting.policy = d_spd;
+			best_policy = d->child.routing;
+		}
+	}
+
+	/*
+	 * If there's no SPD with a conflicting policy, perhaps
+	 * there's a bare one.
+	 */
+
+	spd->conflicting.shunt = (spd->conflicting.policy != NULL ? NULL :
+				  bare_shunt_ptr(&spd->local->client, &spd->remote->client, __func__));
+
+	/*
+	 * Report what was found.
+	 */
+
+	selectors_buf sb;
+	ldbg(logger,
+	     "kernel: %s() %s; conflicting.route %s conflicting.policy %s conflicting.shunt=%s",
+	     __func__, str_selectors(&spd->local->client, &spd->remote->client, &sb),
+	     (spd->conflicting.route == NULL ? "<none>" : spd->conflicting.route->connection->name),
+	     (spd->conflicting.policy == NULL ? "<none>" : spd->conflicting.policy->connection->name),
+	     (spd->conflicting.shunt == NULL ? "<none>" : (*spd->conflicting.shunt)->why));
+
+	/*
+	 * If there is already a route owner for peer's client subnet
+	 * and it disagrees about interface or nexthop, we cannot
+	 * steal it.
+	 *
+	 * XXX: should route_owner() have filtered out this already?
+	 *
+	 * Note: if this connection is already routed (perhaps for
+	 * another state object), the route will agree.  This is as it
+	 * should be -- it will arise during rekeying.
+	 */
+	struct connection *ro = (spd->conflicting.route == NULL ? NULL :
+				 spd->conflicting.route->connection);
+	if (ro != NULL && (ro->interface->ip_dev != c->interface->ip_dev ||
+			   !address_eq_address(ro->local->host.nexthop, c->local->host.nexthop))) {
+		/*
+		 * Another connection is already using the eroute.
+		 *
+		 * TODO: XFRM supports this. For now, only allow this
+		 * for OE.
+		 */
+		PEXPECT(logger, kernel_ops->overlap_supported);
+		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			connection_buf cib;
+			llog(RC_LOG_SERIOUS, logger,
+			     "cannot route -- route already in use for "PRI_CONNECTION"",
+			     pri_connection(ro, &cib));
+			spd->conflicting.ok = false;
+		} else {
+			connection_buf cib;
+			llog(RC_LOG_SERIOUS, logger,
+			     "cannot route -- route already in use for "PRI_CONNECTION" - but allowing anyway",
+			     pri_connection(ro, &cib));
+		}
+	}
+
+	/*
+	 * If there is an eroute for another connection, there is a
+	 * problem.
+	 */
+
+	struct connection *po = (spd->conflicting.policy == NULL ? NULL :
+				 spd->conflicting.policy->connection);
+	if (po != NULL && po != c) {
+		if ((po->kind == CK_PERMANENT && c->kind == CK_TEMPLATE) ||
+		    (c->kind == CK_PERMANENT && po->kind == CK_TEMPLATE)) {
+			/*
+			 * note, wavesec (PERMANENT) goes *outside*
+			 * and OE goes *inside* (TEMPLATE)
+			 */
+			connection_buf pob;
+			ldbg(logger,
+			     "kernel: need to juggle permenant and template "PRI_CONNECTION" "PRI_SO,
+			     pri_connection(po, &pob), pri_so(spd->conflicting.policy->eroute_owner));
+		} else if (po->kind == CK_TEMPLATE && streq(po->name, c->name)) {
+			/*
+			 * Look along the chain of policies for one
+			 * with the same name.
+			 */
+			connection_buf pob;
+			ldbg(po->logger,
+			     "kernel: allowing policy conflict with template "PRI_CONNECTION" "PRI_SO"",
+			     pri_connection(po, &pob), pri_so(spd->conflicting.policy->eroute_owner));
+		} else if (LDISJOINT(POLICY_OVERLAPIP, c->policy | po->policy) &&
+			   c->config->sec_label.len == 0) {
+
+			/*
+			 * If we fell off the end of the list, then we
+			 * found no TEMPLATE so there must be a
+			 * conflict that we can't resolve.  As the
+			 * names are not equal, then we aren't
+			 * replacing/rekeying.
+			 *
+			 * ??? should there not be a conflict if
+			 * ANYTHING in the list, other than c,
+			 * conflicts with c?
+			 *
+			 * Another connection is already using the
+			 * eroute, TODO: XFRM apparently can do this
+			 * though
+			 */
+			connection_buf pob;
+			llog(RC_LOG_SERIOUS, logger,
+			     "cannot install eroute -- it is in use for "PRI_CONNECTION" "PRI_SO,
+			     pri_connection(po, &pob), pri_so(spd->conflicting.policy->eroute_owner));
+			spd->conflicting.ok = false;
+		} else {
+			connection_buf pob;
+			ldbg(logger, "kernel: overlapping permitted with "PRI_CONNECTION" "PRI_SO,
+			     pri_connection(po, &pob), pri_so(spd->conflicting.policy->eroute_owner));
+		}
+	}
+}
+
+
+static bool unrouted_to_routed_prospective(struct connection *c)
+{
+	enum routability r = connection_routable(c, c->logger);
+	switch (r) {
+	case ROUTE_IMPOSSIBLE:
+		return false;
+	case ROUTE_UNNECESSARY:
+		return true;
+	case ROUTE_EASY:
+	case ROUTE_POLICY_CONFLICT:
+		break;
+	}
+
+	/*
+	 * Pass 0: Lookup the status of each SPD.
+	 */
+
+	bool routable = false;
+	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+		find_spd_conflicts(spd, c->logger);
+		routable |= spd->conflicting.ok;
+	}
+
+	if (!routable) {
+		return false;
+	}
+
+	/*
+	 * Pass 1: install / replace kernel policy where needed.
+	 */
+
+	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+
+		/*
+		 * When overlap isn't supported, the old clashing bare
+		 * shunt needs to be deleted before the new one can be
+		 * installed.  Else it can be deleted after.
+		 *
+		 * For linux this also requires SA_MARKS to be set
+		 * uniquely.
+		 */
+
+		if (spd->conflicting.shunt != NULL &&
+		    PEXPECT(c->logger, !kernel_ops->overlap_supported)) {
+			delete_bare_kernel_policy(*spd->conflicting.shunt, c->logger, HERE);
+			free_bare_shunt(spd->conflicting.shunt);
+			spd->conflicting.shunt = NULL;
+		}
+
+		if (spd->conflicting.policy == NULL) {
+			add_prospective_policy(EXPECT_KERNEL_POLICY_OK,
+					       c, spd, __func__,
+					       c->logger, HERE);
+		}
+
+		if (spd->conflicting.shunt != NULL) {
+			PEXPECT(c->logger, kernel_ops->overlap_supported);
+			delete_bare_kernel_policy(*spd->conflicting.shunt, c->logger, HERE);
+			free_bare_shunt(spd->conflicting.shunt);
+			spd->conflicting.shunt = NULL;
+		}
+	}
+
+	/*
+	 * Pass 2: route when necessary.
+	 */
+
+	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+		if (spd->conflicting.route == NULL) {
+			/* a new route: no deletion required, but preparation is */
+			if (!do_updown(UPDOWN_PREPARE, c, spd, NULL/*state*/, c->logger))
+				ldbg(c->logger, "kernel: prepare command returned an error");
+			if (do_updown(UPDOWN_ROUTE, c, spd, NULL/*state*/, c->logger)) {
+				ldbg(c->logger, "kernel: route command returned an error");
+			}
+		}
+	}
+
+	/*
+	 * Pass N: zap dangling pointers.
+	 */
+
+	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+		zero(&spd->conflicting);
+	}
+
+	return true;
+}
+
+static bool connection_route_transition(struct connection *c, enum routing new_routing)
+{
+#define ON(O,N) ((O << 8) | N)
+	switch (ON(c->child.routing, new_routing)) {
+	case ON(RT_UNROUTED, RT_ROUTED_PROSPECTIVE):
+		return unrouted_to_routed_prospective(c);
+	default:
+		llog_pexpect(c->logger, HERE, "%s -> %s",
+			     enum_name_short(&routing_names, c->child.routing),
+			     enum_name_short(&routing_names, new_routing));
+		return false;
+	}
+#undef ON
+}
+
 bool route_and_trap_connection(struct connection *c)
 {
+	if (c->spd->spd_next != NULL) {
+		return connection_route_transition(c, RT_ROUTED_PROSPECTIVE);
+	}
 	struct spd_route *conflict;
 	enum routability r = could_route(c, c->spd, &conflict, c->logger);
 
@@ -1455,8 +1813,14 @@ static void delete_bare_kernel_policy(const struct bare_shunt *bsp,
 	/*
 	 * XXX: bare_kernel_policy() does not strip the port but this
 	 * code does.
+	 *
+	 * Presumably it is because bare shunts is widened to include
+	 * all protocols / ports.  But if that were true the selectors
+	 * would have already excluded the port.
 	 */
 	const struct ip_protocol *transport_proto = bsp->transport_proto;
+	pexpect(bsp->our_client.hport == 0);
+	pexpect(bsp->peer_client.hport == 0);
 	ip_address src_address = selector_prefix(bsp->our_client);
 	ip_address dst_address = selector_prefix(bsp->peer_client);
 	ip_selector src = selector_from_address_protocol(src_address, transport_proto);

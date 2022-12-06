@@ -451,6 +451,12 @@ struct spd_route {
 		(SPD)->eroute_owner = SO;				\
 	}
 	struct {
+		bool ok;
+		struct spd_route *route;
+		struct spd_route *policy;
+		struct bare_shunt **shunt;
+	} conflicting;
+	struct {
 		struct list_entry list;
 		struct list_entry remote_client;
 	} hash_table_entries;
