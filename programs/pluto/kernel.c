@@ -1580,7 +1580,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 		return false;
 	}
 
-	if (c->child.routing != RT_UNROUTED) {
+	if (erouted(c->child.routing)) {
 		dbg("kernel: %s() connection already routed", __func__);
 		return true;
 	}
@@ -3119,10 +3119,24 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 			 * if the eroute owner is not us, then make it
 			 * us.  See test co-terminal-02,
 			 * pluto-rekey-01, pluto-unit-02/oppo-twice
+			 *
+			 * However, when SR has been eclipsed, leave
+			 * the route alone - the SOS_NOBYDY +
+			 * RT_UNROUTED_KEYED.
+			 *
+			 * XXX: this PEXPECT() isn't reached; probably
+			 * because sr->eroute_owner == SOS_NOBODY is
+			 * true when RT_UNROUTED_KEYED.
 			 */
 			pexpect(sr->eroute_owner == SOS_NOBODY ||
-				c->child.routing >= RT_ROUTED_TUNNEL);
+				c->child.routing == RT_ROUTED_TUNNEL ||
+				!PEXPECT(c->logger, c->child.routing != RT_UNROUTED_KEYED));
 
+			/*
+			 * XXX: Since when sr->eroute_owner ==
+			 * SOS_NOBODY when RT_UNROUTED_KEYED, this
+			 * code is skipped for SR.
+			 */
 			if (sr->eroute_owner != st->st_serialno &&
 			    c->child.routing != RT_UNROUTED_KEYED) {
 				if (!route_and_eroute(c, sr, st, st->st_logger)) {

@@ -262,15 +262,10 @@ static int whack_unroute_connection(struct connection *c,
 				    void *unused_arg UNUSED,
 				    struct logger *logger)
 {
-	int fail = 0;
-
 	passert(c != NULL);
 
-	for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
-		if (sr->connection->child.routing >= RT_ROUTED_TUNNEL)
-			fail++;
-	}
-	if (fail > 0) {
+	if (c->child.routing == RT_ROUTED_TUNNEL ||
+	    !PEXPECT(c->logger, c->child.routing != RT_UNROUTED_KEYED)) {
 		llog(WHACK_STREAM|RC_RTBUSY, logger, "cannot unroute: route busy");
 	} else if (c->policy & POLICY_GROUP) {
 		unroute_connection_group(c);
