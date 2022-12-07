@@ -4892,25 +4892,38 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 			    ip_selector new_selector, bool first_time,
 			    const char *excuse, where_t where)
 {
-	ip_selector old_selector = c->end[end].child.selectors.acquire_or_host_or_group;
-	selector_buf ob, nb;
-	ldbg(c->logger, "%s %s.child.selector %s -> %s",
-	     (first_time ? "initialize" : "update"),
-	     c->end[end].config->leftright,
-	     str_selector(&old_selector, &ob),
-	     str_selector(&new_selector, &nb));
-	if (c->spd != NULL) {
-		ip_selector old_client = c->spd->end[end].client;
-		if (!selector_eq_selector(old_selector, old_client)) {
-			selector_buf sb, cb;
-			llog_pexpect(c->logger, where,
-				     "%s.child.selector %s does not match %s.spd.client %s",
-				     c->end[end].config->leftright,
-				     str_selector(&old_selector, &sb),
-				     c->end[end].config->leftright,
-				     str_selector(&old_client, &cb));
+	struct child_end *child = &c->end[end].child;
+	if (first_time) {
+		PEXPECT_WHERE(c->logger, where, child->selectors.proposed.len == 0);
+		selector_buf nb;
+		ldbg(c->logger, "set %s.child.selector %s",
+		     c->end[end].config->leftright,
+		     str_selector(&new_selector, &nb));
+		if (!PEXPECT_WHERE(c->logger, where, c->spd == NULL)) {
+			c->spd->end[end].client = new_selector;
 		}
-		c->spd->end[end].client = new_selector;
+	} else {
+		PEXPECT_WHERE(c->logger, where, child->selectors.proposed.len == 1);
+		ip_selector old_selector = child->selectors.acquire_or_host_or_group;
+		selector_buf ob, nb;
+		ldbg(c->logger, "update %s.child.selector %s -> %s",
+		     c->end[end].config->leftright,
+		     str_selector(&old_selector, &ob),
+		     str_selector(&new_selector, &nb));
+		if (c->spd != NULL) {
+			PEXPECT_WHERE(c->logger, where, c->spd->spd_next == NULL);
+			ip_selector old_client = c->spd->end[end].client;
+			if (!selector_eq_selector(old_selector, old_client)) {
+				selector_buf sb, cb;
+				llog_pexpect(c->logger, where,
+					     "%s.child.selector %s does not match %s.spd.client %s",
+					     c->end[end].config->leftright,
+					     str_selector(&old_selector, &sb),
+					     c->end[end].config->leftright,
+					     str_selector(&old_client, &cb));
+			}
+			c->spd->end[end].client = new_selector;
+		}
 	}
 
 	/*
@@ -4920,12 +4933,9 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 	 * single selector reasonable?  Certainly don't want to
 	 * truncate the selector list.
 	 */
-	PEXPECT_WHERE(c->logger, where,
-		      (first_time ? c->end[end].child.selectors.proposed.len == 0 :
-		       c->end[end].child.selectors.proposed.len == 1));
-	c->end[end].child.selectors.acquire_or_host_or_group = new_selector;
-	c->end[end].child.selectors.proposed.list = &c->end[end].child.selectors.acquire_or_host_or_group;
-	c->end[end].child.selectors.proposed.len = 1;
+	child->selectors.acquire_or_host_or_group = new_selector;
+	child->selectors.proposed.list = &child->selectors.acquire_or_host_or_group;
+	child->selectors.proposed.len = 1;
 
 	/*
 	 * When there's a selectors.list, the child.selector is only
@@ -4938,8 +4948,8 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 	 * XXX: the TS code violates this.  It scribbles the result of
 	 * the TS negotiation on the child.selector.
 	 */
-	if (c->end[end].config->child.selectors.len > 0) {
-		ip_selector selector = c->end[end].config->child.selectors.list[0];
+	if (child->config->selectors.len > 0) {
+		ip_selector selector = child->config->selectors.list[0];
 		if (selector_eq_selector(new_selector, selector)) {
 			selector_buf sb;
 			ldbg(c->logger,
@@ -4958,7 +4968,7 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 			     pri_where(where));
 		} else {
 			selector_buf sb, cb;
-			llog_passert(c->logger, where,
+			llog_pexpect(c->logger, where,
 				     "%s.child.selector %s does not match %s.selectors[0] %s",
 				     c->end[end].config->leftright,
 				     str_selector(&new_selector, &sb),
