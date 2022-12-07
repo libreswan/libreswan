@@ -1560,6 +1560,8 @@ static bool unrouted_to_routed_prospective(struct connection *c)
 		zero(&spd->conflicting);
 	}
 
+	set_child_routing(c, RT_ROUTED_PROSPECTIVE);
+
 	return true;
 }
 
