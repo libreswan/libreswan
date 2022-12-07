@@ -3220,7 +3220,6 @@ static struct connection *instantiate(struct connection *t,
 			str_id(peer_id, &idb),
 			pri_shunk(sec_label));
 
-	PASSERT(t->logger, t->kind == CK_TEMPLATE);
 	PASSERT(t->logger, address_is_specified(remote_addr)); /* always */
 
 	/*
@@ -3254,14 +3253,21 @@ static struct connection *instantiate(struct connection *t,
 		 *   connection; hence CK_INSTANCE
 		 *
 		 *   The sec_label is updated below.
+		 *
+		 * One problem is that, on the initiator, the child's
+		 * connection is instantiated from the original
+		 * template and not the hybrid.
 		 */
 		if (sec_label.len == 0) {
-			kind = CK_TEMPLATE;
+			PASSERT(t->logger, t->kind == CK_TEMPLATE);
+			kind = CK_TEMPLATE; /*CK_HYBRID*/
 		} else {
+			PASSERT(t->logger, t->kind == CK_TEMPLATE || CK_HYBRID);
 			kind = CK_INSTANCE;
 		}
 	} else {
 		/* pexpect(address_is_specified(t->remote->host.addr) || peer_addr != NULL); true??? */
+		PASSERT(t->logger, t->kind == CK_TEMPLATE);
 		kind = CK_INSTANCE;
 	}
 
@@ -3369,11 +3375,9 @@ static void clone_connection_spd(struct connection *d, struct connection *t)
 
 struct connection *spd_instantiate(struct connection *t,
 				   const ip_address peer_addr,
-				   const struct id *peer_id,
-				   shunk_t sec_label,
 				   where_t where)
 {
-	struct connection *d = instantiate(t, peer_addr, peer_id, sec_label, where);
+	struct connection *d = instantiate(t, peer_addr, /*peer-id*/NULL, /*sec_label*/null_shunk, where);
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		if (t->end[end].child.selectors.proposed.list == t->end[end].child.config->selectors.list) {
@@ -3400,13 +3404,63 @@ struct connection *spd_instantiate(struct connection *t,
 
 	connection_buf cb, db;
 	address_buf pab;
-	id_buf pib;
-	dbg("instantiated "PRI_CO" "PRI_CONNECTION" as "PRI_CO" "PRI_CONNECTION" using kind=%s remote_address=%s remote_id=%s sec_label="PRI_SHUNK,
+	dbg("instantiated "PRI_CO" "PRI_CONNECTION" as "PRI_CO" "PRI_CONNECTION" using kind=%s remote_address=%s sec_label="PRI_SHUNK,
 	    pri_co(t->serialno), pri_connection(t, &cb),
 	    pri_co(d->serialno), pri_connection(d, &db),
 	    enum_name(&connection_kind_names, d->kind),
 	    str_address(&peer_addr, &pab),
-	    peer_id != NULL ? str_id(peer_id, &pib) : "N/A",
+	    pri_shunk(d->child.sec_label));
+
+	return d;
+}
+
+struct connection *sec_label_instantiate(struct ike_sa *ike,
+					 shunk_t sec_label,
+					 where_t where)
+{
+	struct connection *t = ike->sa.st_connection;
+	/*
+	 * XXX: the IKE SA should always have a CK_HYBRID connection
+	 * bit that is currently only true on the responder.
+	 */
+	PEXPECT_WHERE(t->logger, where, (t->kind == CK_TEMPLATE/*bug*/ ||
+					 t->kind == CK_HYBRID));
+	PEXPECT_WHERE(t->logger, where, t->config->sec_label.len > 0);
+	PEXPECT_WHERE(t->logger, where, sec_label.len > 0);
+
+	ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
+	struct connection *d = instantiate(t, remote_addr, /*peer-id*/NULL, sec_label, where);
+
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		if (t->end[end].child.selectors.proposed.list == t->end[end].child.config->selectors.list) {
+			d->end[end].child.selectors.proposed = t->end[end].child.config->selectors;
+		} else {
+			d->end[end].child.selectors.acquire_or_host_or_group = t->end[end].child.selectors.acquire_or_host_or_group;
+			d->end[end].child.selectors.proposed.len = 1;
+			d->end[end].child.selectors.proposed.list = &d->end[end].child.selectors.acquire_or_host_or_group;
+		}
+ 	}
+
+	clone_connection_spd(d, t);
+
+	update_spds_from_end_host_addr(d, d->remote->config->index, remote_addr, HERE);
+
+	set_connection_priority(d); /* re-compute; may have changed */
+
+	/* should still be true; leave another breadcrumb */
+	pexpect(d->spd->eroute_owner == SOS_NOBODY);
+	set_spd_owner(d->spd, SOS_NOBODY);
+
+	/* all done */
+	spd_route_db_add_connection(d);
+
+	connection_buf cb, db;
+	address_buf pab;
+	dbg("instantiated "PRI_CO" "PRI_CONNECTION" as "PRI_CO" "PRI_CONNECTION" using kind=%s remote_address=%s sec_label="PRI_SHUNK,
+	    pri_co(t->serialno), pri_connection(t, &cb),
+	    pri_co(d->serialno), pri_connection(d, &db),
+	    enum_name(&connection_kind_names, d->kind),
+	    str_address(&remote_addr, &pab),
 	    pri_shunk(d->child.sec_label));
 
 	return d;

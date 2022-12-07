@@ -565,7 +565,14 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	} else if (impair.omit_v2_ike_auth_child) {
 		llog_sa(RC_LOG, ike, "IMPAIR: omitting CHILD SA payloads from the IKE_AUTH request");
 	} else if (HAS_IPSEC_POLICY(policy)) {
-		add_v2_pending(background ? null_fd : logger->global_whackfd, ike, c, policy, 1,
+		struct connection *cc;
+		if (c->config->sec_label.len > 0) {
+			pexpect(c == ike->sa.st_connection);
+			cc = sec_label_instantiate(ike, sec_label, HERE);
+		} else {
+			cc = c;
+		}
+		add_v2_pending(background ? null_fd : logger->global_whackfd, ike, cc, policy, 1,
 			       predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
 			       sec_label, true /*part of initiate*/);
 	}

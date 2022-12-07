@@ -163,7 +163,7 @@ static bool initiate_connection_2_address(struct connection *c,
 			return false;
 		}
 
-		struct connection *d = spd_instantiate(c, remote_ip, NULL, null_shunk, HERE);
+		struct connection *d = spd_instantiate(c, remote_ip, HERE);
 
 		/*
 		 * D could either be an instance, or a sec_label
@@ -252,8 +252,7 @@ static bool initiate_connection_3_sec_label(struct connection *c,
 	if (c->kind == CK_TEMPLATE &&
 	    c->config->ike_version == IKEv2 &&
 	    (c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
-		struct connection *d = spd_instantiate(c, c->remote->host.addr, NULL,
-						       null_shunk, HERE);
+		struct connection *d = spd_instantiate(c, c->remote->host.addr, HERE);
 		/* XXX: something better? */
 		fd_delref(&d->logger->global_whackfd);
 		d->logger->global_whackfd = fd_addref(c->logger->global_whackfd);
@@ -432,26 +431,22 @@ void ipsecdoi_initiate(struct connection *c,
 							sec_label, background, logger);
 		} else if (!IS_IKE_SA_ESTABLISHED(&ike->sa)) {
 			/* leave CHILD SA negotiation pending */
+			struct connection *cc;
+			if (c->config->sec_label.len > 0) {
+				/* sec-labels require a separate child connection */
+				cc = sec_label_instantiate(ike, sec_label, HERE);
+			} else {
+				cc = c;
+			}
 			add_v2_pending(background ? null_fd : logger->global_whackfd,
-				       ike, c, policy, try,
+				       ike, cc, policy, try,
 				       replacing, sec_label,
 				       false /*part of initiate*/);
 		} else if (!already_has_larval_v2_child(ike, c)) {
 			dbg("initiating child sa with "PRI_LOGGER, pri_logger(logger));
 			struct connection *cc;
-			if (c->kind == CK_TEMPLATE && sec_label.len > 0) {
-				/*
-				 * create instance and switch to it.
-				 *
-				 * Since the newly instantiated
-				 * connection has a security label due
-				 * to an `ACQUIRE` message from the
-				 * kernel, it is not a template
-				 * connection.
-				 */
-				ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
-				cc = spd_instantiate(c, remote_addr, NULL,
-						     sec_label, HERE);
+			if (c->config->sec_label.len > 0) {
+				cc = sec_label_instantiate(ike, sec_label, HERE);
 			} else {
 				cc = c;
 			}
