@@ -584,11 +584,11 @@ static void cannot_ondemand(lset_t rc_flags, const struct kernel_acquire *b,
 		 */
 		dbg("cannot_ondemand() replaced negotiationshunt with bare failureshunt=%s",
 		    enum_name_short(&shunt_policy_names, failure_shunt));
-		pexpect(failure_shunt != SHUNT_UNSET); /* set to something */
+		pexpect(failure_shunt_ok(failure_shunt)); /* set to something */
 		ip_selector src = packet_src_selector(b->packet);
 		ip_selector dst = packet_dst_selector(b->packet);
 		struct kernel_policy outbound_policy =
-			stateless_kernel_policy(&src, &dst,
+			kernel_policy_from_void(src, dst, DIRECTION_OUTBOUND,
 						/* we don't know connection for priority yet */
 						highest_kernel_priority,
 						failure_shunt, HERE);
@@ -966,7 +966,8 @@ void initiate_ondemand(const struct kernel_acquire *b)
 	 */
 
 	struct kernel_policy outbound_kernel_policy =
-		stateless_kernel_policy(&local_shunt, &remote_shunt,
+		kernel_policy_from_void(local_shunt, remote_shunt,
+					DIRECTION_OUTBOUND,
 					calculate_kernel_priority(c),
 					c->config->negotiation_shunt, HERE);
 

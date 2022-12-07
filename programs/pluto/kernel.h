@@ -200,8 +200,8 @@ struct kernel_policy {
  * from a bare shunt but can also be for a prospective shunt.
  */
 
-struct kernel_policy stateless_kernel_policy(const ip_selector *src,
-					     const ip_selector *dst,
+struct kernel_policy kernel_policy_from_void(ip_selector local, ip_selector remote,
+					     enum direction direction,
 					     kernel_priority_t priority,
 					     enum shunt_policy shunt_policy,
 					     where_t where);
