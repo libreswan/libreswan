@@ -1720,7 +1720,8 @@ static void mark_parse(/*const*/ char *wmmark,
 static void set_connection_spds(struct connection *c, const struct ip_info *host_afi)
 {
 	ldbg(c->logger, "adding spds");
-	struct spd_route **spd_end = &c->spd;
+	struct spd_route *spd_list = NULL;
+	struct spd_route **spd_tail = &spd_list;
 	struct {
 		const ip_selectors *selectors;
 		const ip_selector *selector;
@@ -1756,7 +1757,7 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 			}
 			if (selectors[LEFT_END].afi == selectors[RIGHT_END].afi) {
 				indent = 6;
-				struct spd_route *spd = append_spd_route(c, &spd_end);
+				struct spd_route *spd = append_spd_route(c, &spd_tail);
 				FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 					const ip_selector *selector = selectors[end].selector; /* could be NULL */
 					const struct child_end_config *child_end = &c->end[end].config->child;
@@ -1812,6 +1813,8 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 		if (selectors[LEFT_END].selector + 1 >= selectors[LEFT_END].selectors->list + selectors[LEFT_END].selectors->len) break;
 		selectors[LEFT_END].selector++;
 	}
+
+	c->spd = spd_list;
 
 	/* leave a bread crumb */
 	passert(c->child.routing == RT_UNROUTED);
@@ -4896,20 +4899,22 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 	if (first_time) {
 		PEXPECT_WHERE(c->logger, where, child->selectors.proposed.len == 0);
 		selector_buf nb;
-		ldbg(c->logger, "set %s.child.selector %s",
+		ldbg(c->logger, "set %s.child.selector %s "PRI_WHERE,
 		     c->end[end].config->leftright,
-		     str_selector(&new_selector, &nb));
+		     str_selector(&new_selector, &nb),
+		     pri_where(where));
 		if (!PEXPECT_WHERE(c->logger, where, c->spd == NULL)) {
 			c->spd->end[end].client = new_selector;
 		}
 	} else {
 		PEXPECT_WHERE(c->logger, where, child->selectors.proposed.len == 1);
-		ip_selector old_selector = child->selectors.acquire_or_host_or_group;
+		ip_selector old_selector = child->selectors.proposed.list[0];
 		selector_buf ob, nb;
-		ldbg(c->logger, "update %s.child.selector %s -> %s",
+		ldbg(c->logger, "update %s.child.selector %s -> %s "PRI_WHERE,
 		     c->end[end].config->leftright,
 		     str_selector(&old_selector, &ob),
-		     str_selector(&new_selector, &nb));
+		     str_selector(&new_selector, &nb),
+		     pri_where(where));
 		if (c->spd != NULL) {
 			PEXPECT_WHERE(c->logger, where, c->spd->spd_next == NULL);
 			ip_selector old_client = c->spd->end[end].client;
@@ -4953,9 +4958,10 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 		if (selector_eq_selector(new_selector, selector)) {
 			selector_buf sb;
 			ldbg(c->logger,
-			     "%s.child.selector %s matches selectors[0]",
+			     "%s.child.selector %s matches selectors[0] "PRI_WHERE,
 			     c->end[end].config->leftright,
-			     str_selector(&new_selector, &sb));
+			     str_selector(&new_selector, &sb),
+			     pri_where(where));
 		} else if (excuse != NULL) {
 			selector_buf sb, cb;
 			ldbg(c->logger,
