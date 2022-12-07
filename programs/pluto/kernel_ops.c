@@ -75,11 +75,12 @@ bool raw_policy(enum kernel_policy_op op,
 		jam(buf, " client=");
 		jam_selectors(buf, src_client, dst_client);
 
+		jam_string(buf, " policy=");
 		if (policy == NULL) {
 			jam(buf, "<null>");
 		} else {
 			jam_address(buf, &policy->src.host);
-			jam(buf, "==>");
+			jam(buf, "=>");
 			jam_address(buf, &policy->dst.host);
 			jam_string(buf, ",");
 			jam_enum(buf, &shunt_policy_names, policy->shunt);

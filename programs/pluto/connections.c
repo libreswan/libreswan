@@ -481,15 +481,17 @@ void update_hosts_from_end_host_addr(struct connection *c, enum left_right e,
 	ldbg(c->logger, "updating host ends from %s.host.addr %s",
 	     end->config->leftright, str_address(&host_addr, &hab));
 
-	if (!PEXPECT_WHERE(c->logger, where, address_is_specified(host_addr))) {
+	/* could be %any but can't be an address */
+	PASSERT_WHERE(c->logger, where, !address_is_specified(end->addr));
+
+	/* can't be unset; but could be %any[46] */
+	const struct ip_info *afi = address_info(host_addr);
+	PASSERT_WHERE(c->logger, where, afi != NULL); /* since specified */
+
+	end->addr = host_addr;
+	if (!address_is_specified(host_addr)) {
 		return;
 	}
-
-	PASSERT_WHERE(c->logger, where, !address_is_specified(end->addr));
-	end->addr = host_addr;
-
-	const struct ip_info *afi = address_info(host_addr);
-	PASSERT(c->logger, afi != NULL); /* since specified */
 
 	/*
 	 * Default ID to IP (but only if not NO_IP -- WildCard).
@@ -2767,9 +2769,7 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		if (address_is_specified(host_addr[end])) {
-			update_hosts_from_end_host_addr(c, end, host_addr[end], HERE); /* from add */
-		}
+		update_hosts_from_end_host_addr(c, end, host_addr[end], HERE); /* from add */
 	}
 
 	/*

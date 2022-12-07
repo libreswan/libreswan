@@ -1561,7 +1561,6 @@ static bool unrouted_to_routed_prospective(struct connection *c)
 	}
 
 	set_child_routing(c, RT_ROUTED_PROSPECTIVE);
-
 	return true;
 }
 
@@ -1583,7 +1582,8 @@ static bool connection_route_transition(struct connection *c, enum routing new_r
 bool route_and_trap_connection(struct connection *c)
 {
 	if (c->config->ike_version == IKEv2 && (c->spd->spd_next != NULL ||
-						c->config->sec_label.len > 0)) {
+						c->config->sec_label.len > 0 ||
+						(c->policy & POLICY_OPPORTUNISTIC))) {
 		return connection_route_transition(c, RT_ROUTED_PROSPECTIVE);
 	}
 	struct spd_route *conflict;
