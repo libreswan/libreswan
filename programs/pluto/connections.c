@@ -3420,6 +3420,10 @@ struct connection *rw_responder_instantiate(struct connection *t,
 					   /*TBD sec_label*/null_shunk,
 					   HERE);
 
+	/*
+	 * XXX: code in rw_responder_id_instantiate() is slightly
+	 * different.
+	 */
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		const char *leftright = d->end[end].config->leftright;
 		struct host_end *host = &d->end[end].host;
@@ -3450,26 +3454,56 @@ struct connection *rw_responder_instantiate(struct connection *t,
 }
 
 struct connection *rw_responder_id_instantiate(struct connection *t,
-					       const ip_address peer_addr,
-					       const ip_selector *peer_subnet,
-					       const struct id *peer_id)
+					       const ip_address remote_addr,
+					       const ip_selector *remote_subnet,
+					       const struct id *remote_id)
 {
-	if (!PEXPECT(t->logger, (t->policy & POLICY_OPPORTUNISTIC) == LEMPTY)) {
-		return NULL;
-	}
+	PASSERT(t->logger, (t->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
 
-	struct connection *d = spd_instantiate(t, peer_addr, peer_id,
-					       null_shunk, HERE);
+	/*
+	 * XXX: this function is never called when there are
+	 * sec_labels?
+	 */
+	struct connection *d = instantiate(t, remote_addr, remote_id,
+					   /*TBD sec_label?!?*/null_shunk,
+					   HERE);
 
-	if (peer_subnet != NULL && is_virtual_remote(t)) {
-		update_first_selector(d, remote, *peer_subnet);
-		rehash_db_spd_route_remote_client(d->spd);
-		if (selector_eq_address(*peer_subnet, d->remote->host.addr)) {
-			ldbg(t->logger, "forcing remote %s.spd.has_client=false",
-			     d->spd->remote->config->leftright);
-			set_child_has_client(d, remote, false);
+	/*
+	 * XXX: unlike rw_responder_id_instantiate(), this code has to
+	 * handle the remote subnet
+	 */
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		const char *leftright = d->end[end].config->leftright;
+		struct host_end *host = &d->end[end].host;
+		struct child_end *child = &d->end[end].child;
+		if (child->config->selectors.len > 0) {
+			ldbg(d->logger, "%s.child has %d configured selectors",
+			     leftright, child->config->selectors.len > 0);
+			child->selectors.proposed = child->config->selectors;
+		} else if (child == &d->remote->child &&
+			   remote_subnet != NULL &&
+			   d->remote->config->child.virt != NULL) {
+			PASSERT(d->logger, host == &d->remote->host);
+			set_end_selector(d, end, *remote_subnet);
+			if (selector_eq_address(*remote_subnet, d->remote->host.addr)) {
+				ldbg(t->logger, "forcing remote %s.spd.has_client=false",
+				     d->spd->remote->config->leftright);
+				set_child_has_client(d, remote, false);
+			}
+		} else {
+			ldbg(d->logger, "%s.child selector formed from host", leftright);
+			/*
+			 * Default the end's child selector (client) to a
+			 * subnet containing only the end's host address.
+			 */
+			ip_selector selector =
+				selector_from_address_protoport(host->addr,
+								child->config->protoport);
+			set_end_selector(d, end, selector);
 		}
 	}
+
+	add_proposal_spds(d);
 
 	connection_buf tb;
 	ldbg_connection(d, HERE, "instantiated from "PRI_CONNECTION,
