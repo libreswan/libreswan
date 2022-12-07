@@ -392,7 +392,7 @@ struct kernel_policy kernel_policy_from_void(ip_selector local, ip_selector remo
 	};
 	if (shunt_policy != SHUNT_PASS) {
 		transport_esp.nr_rules = 1;
-		transport_esp.rule[1] = (struct kernel_policy_rule) {
+		transport_esp.rule[0] = (struct kernel_policy_rule) {
 			.proto = ENCAP_PROTO_ESP,
 			.reqid = 0,
 		};
@@ -972,21 +972,21 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 	 * Note: the stack order matches kernel_sa's array.
 	 */
 
-	struct kernel_policy_rule *last = kernel_policy.rule; /* rule[0] is empty */
+	struct kernel_policy_rule *last = kernel_policy.rule;
 	if (policy & POLICY_COMPRESS) {
-		last++;
 		last->reqid = reqid_ipcomp(child_reqid);
 		last->proto = ENCAP_PROTO_IPCOMP;
+		last++;
 	}
 	if (policy & POLICY_ENCRYPT) {
-		last++;
 		last->reqid = reqid_esp(child_reqid);
 		last->proto = ENCAP_PROTO_ESP;
+		last++;
 	}
 	if (policy & POLICY_AUTHENTICATE) {
-		last++;
 		last->reqid = reqid_ah(child_reqid);
 		last->proto = ENCAP_PROTO_AH;
+		last++;
 	}
 
 	passert(last < kernel_policy.rule + elemsof(kernel_policy.rule));

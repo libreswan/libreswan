@@ -178,12 +178,9 @@ struct kernel_policy {
 	enum shunt_policy shunt;
 	where_t where;
 	/*
-	 * Index from 1; RULE[0] is always empty; so .nr_rules==0
-	 * implies no rules.
-	 *
 	 * The rules are applied to an outgoing packet in order they
 	 * appear in the rule[] table.  Hence, the output from
-	 * .rule[.nr_rules] goes across the wire, and rule[1]
+	 * .rule[.nr_rules-1] goes across the wire, and rule[0]
 	 * specifies the first transform.
 	 *
 	 * The first transform is also set according to MODE (tunnel
@@ -192,7 +189,7 @@ struct kernel_policy {
 	 */
 	enum encap_mode mode;
 	unsigned nr_rules;
-	struct kernel_policy_rule rule[5]; /* [0]+IPCOMP+AH+ESP+0 */
+	struct kernel_policy_rule rule[3/*IPCOMP+{ESP,AH}+PADDING*/];
 };
 
 /*

@@ -562,7 +562,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 		if (kernel_policy != NULL && kernel_policy->nr_rules > 0) {
 			policy_name =
 				(kernel_policy->mode == ENCAP_MODE_TUNNEL ? ip_protocol_ipip.name :
-				 kernel_policy->mode == ENCAP_MODE_TRANSPORT ? protocol_from_ipproto(kernel_policy->rule[kernel_policy->nr_rules].proto)->name :
+				 kernel_policy->mode == ENCAP_MODE_TRANSPORT ? protocol_from_ipproto(kernel_policy->rule[kernel_policy->nr_rules-1].proto)->name :
 				 "UNKNOWN");
 		} else {
 			/* MUST BE DELETE! */
@@ -690,26 +690,28 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	    pexpect(op != KERNEL_POLICY_OP_DELETE)) {
 		struct xfrm_user_tmpl tmpls[4] = {0};
 
-		/* remember; kernel_policy.rule[] is 1 based */
 		passert(kernel_policy->nr_rules <= (int)elemsof(tmpls));
-		for (unsigned i = 1; i <= kernel_policy->nr_rules; i++) {
+		/* only the first rule gets the worm; er tunnel flag */
+		unsigned mode = (kernel_policy->mode == ENCAP_MODE_TUNNEL ? XFRM_MODE_TUNNEL :
+				 XFRM_MODE_TRANSPORT);
+		for (unsigned i = 0; i < kernel_policy->nr_rules; i++) {
 			const struct kernel_policy_rule *rule = &kernel_policy->rule[i];
-			struct xfrm_user_tmpl *tmpl = &tmpls[i-1/*remove bias*/];
+			struct xfrm_user_tmpl *tmpl = &tmpls[i];
 			tmpl->reqid = rule->reqid;
 			tmpl->id.proto = rule->proto;
 			tmpl->optional = (rule->proto == ENCAP_PROTO_IPCOMP &&
 					  xfrm_dir != XFRM_POLICY_OUT);
 			tmpl->aalgos = tmpl->ealgos = tmpl->calgos = ~0;
 			tmpl->family = address_type(&kernel_policy->dst.host)->af;
-			/* only the first rule gets the worm; er tunnel flag */
-			if (i == 1 && kernel_policy->mode == ENCAP_MODE_TUNNEL) {
-				tmpl->mode = XFRM_MODE_TUNNEL;
+
+			/* set mode (tunnel or transport); then switch to transport */
+			tmpl->mode = mode;
+			if (mode == XFRM_MODE_TUNNEL) {
 				/* tunnel mode needs addresses */
 				tmpl->saddr = xfrm_from_address(&kernel_policy->src.host);
 				tmpl->id.daddr = xfrm_from_address(&kernel_policy->dst.host);
-			} else {
-				tmpl->mode = XFRM_MODE_TRANSPORT;
 			}
+			mode = XFRM_MODE_TRANSPORT;
 
 			address_buf sb, db;
 			dbg("%s() adding xfrm_user_tmpl reqid=%d id.proto=%d optional=%d family=%d mode=%d saddr=%s daddr=%s",
@@ -719,14 +721,14 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 			    tmpl->optional,
 			    tmpl->family,
 			    tmpl->mode,
-			    str_address(tmpl->mode ? &kernel_policy->src.host : &unset_address, &sb),
-			    str_address(tmpl->mode ? &kernel_policy->dst.host : &unset_address, &db));
+			    str_address(tmpl->mode == XFRM_MODE_TUNNEL ? &kernel_policy->src.host : &unset_address, &sb),
+			    str_address(tmpl->mode == XFRM_MODE_TUNNEL ? &kernel_policy->dst.host : &unset_address, &db));
 		}
 
 		/* append  */
 		struct rtattr *attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 		attr->rta_type = XFRMA_TMPL;
-		attr->rta_len = kernel_policy->nr_rules/*nr-rules*/ * sizeof(tmpls[0]);
+		attr->rta_len = kernel_policy->nr_rules * sizeof(tmpls[0]);
 		memcpy(RTA_DATA(attr), tmpls, attr->rta_len);
 		attr->rta_len = RTA_LENGTH(attr->rta_len);
 		req.n.nlmsg_len += attr->rta_len;
@@ -739,7 +741,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 			/*
 			 * Dump ignored proto_info[].
 			 */
-			for (unsigned i = 1; i <= kernel_policy->nr_rules; i++) {
+			for (unsigned i = 0; i < kernel_policy->nr_rules; i++) {
 				const struct kernel_policy_rule *rule = &kernel_policy->rule[i];
 				DBG_log("%s() ignoring xfrm_user_tmpl reqid=%d proto=%s %s because op=%s dir=%s",
 					__func__, rule->reqid,

@@ -1140,7 +1140,7 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 			enum ipsec_mode mode =
 				(kernel_policy->mode == ENCAP_MODE_TUNNEL ? IPSEC_MODE_TUNNEL :
 				 IPSEC_MODE_TRANSPORT);
-			for (unsigned i = 1/*not 0*/; i <= kernel_policy->nr_rules; i++) {
+			for (unsigned i = 0; i < kernel_policy->nr_rules; i++) {
 				const struct kernel_policy_rule *rule = &kernel_policy->rule[i];
 				put_sadb_x_ipsecrequest(req, kernel_policy, mode, rule);
 				mode = IPSEC_MODE_TRANSPORT;
@@ -1197,10 +1197,10 @@ static bool pfkeyv2_raw_policy(enum kernel_policy_op op,
 			       pexpect(0));
 
 	enum sadb_satype satype =
-		(kernel_policy == NULL ? SADB_SATYPE_UNSPEC :
-		 kernel_policy->rule[1].proto == ENCAP_PROTO_ESP ? SADB_SATYPE_ESP :
-		 kernel_policy->rule[1].proto == ENCAP_PROTO_AH ? SADB_SATYPE_AH :
-		 kernel_policy->rule[1].proto == ENCAP_PROTO_IPCOMP ? SADB_X_SATYPE_IPCOMP :
+		(kernel_policy == NULL || kernel_policy->nr_rules == 0 ? SADB_SATYPE_UNSPEC :
+		 kernel_policy->rule[0].proto == ENCAP_PROTO_ESP ? SADB_SATYPE_ESP :
+		 kernel_policy->rule[0].proto == ENCAP_PROTO_AH ? SADB_SATYPE_AH :
+		 kernel_policy->rule[0].proto == ENCAP_PROTO_IPCOMP ? SADB_X_SATYPE_IPCOMP :
 		 pexpect(0));
 
 	uint8_t reqbuf[SIZEOF_SADB_BASE +

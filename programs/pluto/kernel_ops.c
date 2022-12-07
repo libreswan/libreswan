@@ -97,8 +97,8 @@ bool raw_policy(enum kernel_policy_op op,
 			jam_string(buf, ",");
 			jam_enum_short(buf, &encap_mode_names, policy->mode);
 			jam_string(buf, "[");
-			for (unsigned i = policy->nr_rules; i >= 1; i--) {
-				const struct kernel_policy_rule *rule = &policy->rule[i];
+			for (unsigned i = policy->nr_rules; i > 0; i--) {
+				const struct kernel_policy_rule *rule = &policy->rule[i-1];
 				const struct ip_protocol *rule_proto = protocol_from_ipproto(rule->proto);
 				jam(buf, "%s!%d(", rule_proto->name, rule->reqid);
 			}
@@ -106,7 +106,7 @@ bool raw_policy(enum kernel_policy_op op,
 				/* XXX: should use stuff from selector */
 				jam_string(buf, client_proto->name);
 			}
-			for (unsigned i = policy->nr_rules; i >= 1; i--) {
+			for (unsigned i = policy->nr_rules; i > 0; i--) {
 				jam_string(buf, ")");
 			}
 			jam_string(buf, "]");
