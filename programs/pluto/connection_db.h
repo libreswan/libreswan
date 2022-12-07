@@ -21,13 +21,17 @@
 
 /* connections */
 
-void connection_db_init(struct logger *logger);
-void connection_db_check(struct logger *logger);
-
 struct connection *alloc_connection(const char *name,
 				    lset_t debugging, struct fd *whackfd,
 				    where_t where);
-struct connection *clone_connection(const char *name, struct connection *template, where_t where);
+void finish_connection(struct connection *c, const char *name,
+		       struct connection *t,
+		       lset_t debugging, struct fd *whackfd,
+		       where_t where);
+
+void connection_db_init(struct logger *logger);
+void connection_db_check(struct logger *logger);
+
 struct spd_route *append_spd_route(struct connection *c, struct spd_route ***last);
 
 void connection_db_init_connection(struct connection *c);

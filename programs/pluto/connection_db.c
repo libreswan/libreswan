@@ -196,10 +196,10 @@ HASH_DB(connection,
  * Allocate connections.
  */
 
-static void finish_connection(struct connection *c, const char *name,
-			      co_serial_t serial_from,
-			      lset_t debugging, struct fd *whackfd,
-			      where_t where)
+void finish_connection(struct connection *c, const char *name,
+		       struct connection *t,
+		       lset_t debugging, struct fd *whackfd,
+		       where_t where)
 {
 	/* announce it (before code below logs its address) */
 	dbg_alloc(name, c, where);
@@ -208,6 +208,27 @@ static void finish_connection(struct connection *c, const char *name,
 	c->logger = alloc_logger(c, &logger_connection_vec,
 				 debugging, whackfd, where);
 
+	/*
+	 * If there's no template to use as a reference point, LOCAL
+	 * and REMOTE are disoriented so distinguishing one as local
+	 * and the other as remote is pretty much meaningless.
+	 *
+	 * Somewhat arbitrarially (as in this is the way it's always
+	 * been) start with:
+	 *
+	 *    LEFT == LOCAL / THIS
+	 *    RIGHT == REMOTE / THAT
+	 *
+	 * Needed by the hash table code that expects .that->host.id
+	 * to work.
+	 */
+
+	enum left_right local = (t == NULL ? LEFT_END : t->local->config->index);
+	enum left_right remote = (t == NULL ? RIGHT_END : t->remote->config->index);
+	c->local = &c->end[local];	/* this; clone must update */
+	c->remote = &c->end[remote];	/* that; clone must update */
+
+	/* somewhat oriented can start hashing */
 	connection_db_init_connection(c);
 
 	/*
@@ -220,8 +241,7 @@ static void finish_connection(struct connection *c, const char *name,
 	connection_serialno++;
 	passert(connection_serialno > 0); /* can't overflow */
 	c->serialno = connection_serialno;
-
-	c->serial_from = serial_from;
+	c->serial_from = (t != NULL ? t->serialno : UNSET_CO_SERIAL);
 }
 
 struct connection *alloc_connection(const char *name,
@@ -229,30 +249,17 @@ struct connection *alloc_connection(const char *name,
 				    where_t where)
 {
 	struct connection *c = alloc_thing(struct connection, where->func);
+	finish_connection(c, name, NULL/*no template*/,
+			  debugging, whackfd, where);
 
 	/*
 	 * Allocate the configuration - only allocated on root
 	 * connection; connection instances (clones) inherit these
 	 * pointers.
-	 *
-	 * At this point THIS and THAT are disoriented so
-	 * distinguishing one as local and the other as remote is
-	 * pretty much meaningless.
-	 *
-	 * Somewhat arbitrarially (as in this is the way it's always
-	 * been) start with:
-	 *
-	 *    LEFT == LOCAL / THIS
-	 *    RIGHT == REMOTE / THAT
-	 *
-	 * Needed by the hash table code that expects .that->host.id
-	 * to work.
 	 */
 
 	struct config *config = alloc_thing(struct config, "root config");
 	c->config = c->root_config = config;
-	c->local = &c->end[LEFT_END]; /* this; clone must update */
-	c->remote = &c->end[RIGHT_END]; /* that; clone must update */
 
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		/* "left" or "right" */
@@ -272,8 +279,6 @@ struct connection *alloc_connection(const char *name,
 		end->child.config = &end_config->child;
 	}
 
-	finish_connection(c, name, 0/*no template*/,
-			  debugging, whackfd, where);
 	return c;
 }
 
@@ -327,32 +332,6 @@ struct spd_route *clone_spd_route(struct connection *c, where_t where)
 	spd_route_db_add(spd);
 
 	return spd;
-}
-
-struct connection *clone_connection(const char *name, struct connection *t, where_t where)
-{
-	struct connection *c = clone_thing(*t, where->func);
-	zero_thing(c->hash_table_entries); /* keep init_list_entry() happy */
-
-	/* caller responsible for cloning this */
-	c->spd = NULL;
-
-	c->log_file_name = NULL;
-	c->log_file = NULL;
-	c->log_file_err = false;
-
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		zero(&c->end[end].child.selectors);
- 	}
-
-	/* point local pointers at local structure */
-	c->local = &c->end[t->local->config->index];
-	c->remote = &c->end[t->remote->config->index];
-
-	finish_connection(c, name, t->serialno,
-			  t->logger->debugging, t->logger->object_whackfd,
-			  where);
-	return c;
 }
 
 /*

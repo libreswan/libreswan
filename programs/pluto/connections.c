@@ -98,6 +98,8 @@
 #include "lswnss.h"
 #include "show.h"
 
+static struct connection *clone_connection(const char *name, struct connection *t,
+					   const struct id *peer_id, where_t where);
 static void clone_connection_spd(struct connection *d, struct connection *t);
 
 #define MINIMUM_IPSEC_SA_RANDOM_MARK 65536
@@ -837,8 +839,8 @@ static char *format_connection(char *buf, size_t buf_len,
 
 /*
  * unshare_connection: after a struct connection has been copied,
- * duplicate anything it references so that unshareable resources
- * are no longer shared.  Typically strings, but some other things too.
+ * duplicate anything it references so that unshareable resources are
+ * no longer shared.  Typically strings, but some other things too.
  *
  * Think of this as converting a shallow copy to a deep copy
  *
@@ -848,30 +850,49 @@ static char *format_connection(char *buf, size_t buf_len,
  * up after the event is a guaranteed way to create use-after-free
  * problems.
  */
-static void unshare_connection(struct connection *c, struct connection *t/*emplate*/)
+
+struct connection *clone_connection(const char *name, struct connection *t,
+				    const struct id *peer_id, where_t where)
 {
-	c->root_config = NULL;
+	struct connection *c = clone_thing(*t, where->func);
+	zero_thing(c->hash_table_entries); /* keep init_list_entry() happy */
+	finish_connection(c, name, t,
+			  t->logger->debugging,
+			  t->logger->object_whackfd,
+			  where);
 
-	c->foodgroup = clone_str(c->foodgroup, "connection foodgroup");
+	/* caller responsible for cloning this */
+	c->spd = NULL;
 
-	c->vti_iface = clone_str(c->vti_iface, "connection vti_iface");
+	c->log_file_name = NULL;
+	c->log_file = NULL;
+	c->log_file_err = false;
 
+	c->root_config = NULL; /* block write access */
+	c->foodgroup = clone_str(t->foodgroup, "food groups");
+	c->vti_iface = clone_str(t->vti_iface, "connection vti_iface");
 	c->interface = iface_endpoint_addref(t->interface);
 
 	/* can't yet have an assigned SEC_LABEL */
-	pexpect(c->child.sec_label.ptr == NULL);
+	PASSERT(c->logger, c->child.sec_label.len == 0);
 
-	FOR_EACH_THING(end, c->local, c->remote) {
-		pexpect(end->child.selectors.accepted.len == 0);
-		end->host.id = clone_id(&end->host.id, "unshare connection id");
+	c->local->host.id = clone_id(&t->local->host.id, "unshare local connection id");
+	c->remote->host.id = clone_id((peer_id != NULL ? peer_id : &t->remote->host.id),
+				      "unshare remote connection id");
+
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		zero(&c->end[end].child.selectors);
 	}
 
 	for (enum ip_index i = IP_INDEX_FLOOR; i < IP_INDEX_ROOF; i++) {
 		c->pool[i] = addresspool_addref(t->pool[i]);
 	}
 
-	if (IS_XFRMI && c->xfrmi != NULL)
+	if (IS_XFRMI && c->xfrmi != NULL) {
 		reference_xfrmi(c);
+	}
+
+	return c;
 }
 
 /*
@@ -3076,11 +3097,11 @@ struct connection *group_instantiate(struct connection *group,
 		return NULL;
 	}
 
-	struct connection *t = clone_connection(namebuf, group, HERE);
-	t->foodgroup = namebuf; /* XXX: DANGER: unshare_connection() will clone this */
-	unshare_connection(t, group);
-	passert(t->foodgroup != namebuf); /* XXX: see DANGER above */
+	struct connection *t = clone_connection(namebuf, group, NULL/*id*/, HERE);
+
 	passert(t->name != namebuf); /* see clone_connection() */
+	PASSERT(group->logger, group->foodgroup == NULL);
+	t->foodgroup = clone_str(namebuf, "foodgroups");
 	pfreeany(namebuf);
 
 	/*
@@ -3236,17 +3257,18 @@ static struct connection *instantiate(struct connection *t,
 		kind = CK_INSTANCE;
 	}
 
-	t->instance_serial++;
-	struct connection *d = clone_connection(t->name, t, HERE);
-	passert(t->name != d->name); /* see clone_connection() */
+	t->instance_serial++;	/* before clone */
+
 	if (peer_id != NULL) {
 		int wildcards;	/* value ignored */
 
-		passert(d->remote->host.id.kind == ID_FROMCERT ||
-			match_id("", peer_id, &d->remote->host.id, &wildcards));
-		d->remote->host.id = *peer_id;
+		passert(t->remote->host.id.kind == ID_FROMCERT ||
+			match_id("", peer_id, &t->remote->host.id, &wildcards));
 	}
-	unshare_connection(d, t);
+
+	struct connection *d = clone_connection(t->name, t, peer_id, HERE);
+	passert(t->name != d->name); /* see clone_connection() */
+
 	d->kind = kind;
 	passert(oriented(d)); /*like parent like child*/
 
@@ -3261,6 +3283,9 @@ static struct connection *instantiate(struct connection *t,
 	}
 
 	d->child.reqid = (t->config->sa_reqid == 0 ? gen_reqid() : t->config->sa_reqid);
+	dbg("%s .child.reqid=%d because t.config.sa_requid=%d (%s)",
+	    d->name, d->child.reqid, t->config->sa_reqid,
+	    (t->config->sa_reqid == 0 ? "generate" : "use"));
 
 	/* which is true?  template could be prospective? */
 #if 0
@@ -3298,10 +3323,6 @@ static struct connection *instantiate(struct connection *t,
 			global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 		}
 	}
-
-	dbg("%s d->spd->reqid=%d because t->sa_reqid=%d (%s)",
-	    d->name, d->child.reqid, t->config->sa_reqid,
-	    (t->config->sa_reqid == 0 ? "generate" : "use"));
 
 	return d;
 }
