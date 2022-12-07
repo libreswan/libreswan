@@ -1157,8 +1157,9 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike)
 	}
 
 	if (c->config->sec_label.len > 0) {
-		pexpect(c->kind == CK_TEMPLATE);
-		pexpect(c->child.sec_label.len == 0);
+		PEXPECT(c->logger, c->kind == CK_TEMPLATE);
+		PEXPECT(c->logger, c->child.sec_label.len == 0);
+		PEXPECT(c->logger, c->child.routing == RT_UNROUTED);
 		if (!install_sec_label_connection_policies(c, ike->sa.st_logger)) {
 			return STF_FATAL;
 		}
@@ -1434,8 +1435,9 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	}
 
 	if (c->config->sec_label.len > 0) {
-		pexpect(c->kind == CK_TEMPLATE);
-		pexpect(c->child.sec_label.len == 0);
+		PEXPECT(c->logger, c->kind == CK_TEMPLATE);
+		PEXPECT(c->logger, c->child.sec_label.len == 0);
+		PEXPECT(c->logger, c->child.routing == RT_UNROUTED);
 		if (!install_sec_label_connection_policies(c, ike->sa.st_logger)) {
 			return STF_FATAL;
 		}

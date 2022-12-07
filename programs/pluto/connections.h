@@ -159,8 +159,11 @@ struct ike_info {
 	enum ike_version version;
 	/* IKEv1|IKEv2 */
 	const char *version_name;
-	/* [IKE_SA] = ISAKMP SA | IKE SA */
-	/* [IPSEC_SA = IPsec SA | Child SA */
+	/* [IKE_SA]  = ISAKMP | IKE */
+	/* [IPSEC_SA = IPsec  | Child */
+	const char *sa_name[SA_TYPE_ROOF];
+	/* [IKE_SA]  = ISAKMP SA | IKE SA */
+	/* [IPSEC_SA = IPsec SA  | Child SA */
 	const char *sa_type_name[SA_TYPE_ROOF];
 };
 
@@ -453,12 +456,18 @@ struct spd_route {
 		    pri_where(HERE));					\
 		(SPD)->eroute_owner = SO;				\
 	}
-	struct {
-		bool ok;
-		struct spd_route *route;
-		struct spd_route *policy;
-		struct bare_shunt **shunt;
-	} conflicting;
+	struct spd_wip {
+		struct {
+			bool ok;
+			struct spd_route *route;
+			struct spd_route *policy;
+			struct bare_shunt **shunt;
+		} conflicting;
+		struct {
+			bool route;
+			bool policy;
+		} installed;
+	} wip;
 	struct {
 		struct list_entry list;
 		struct list_entry remote_client;
