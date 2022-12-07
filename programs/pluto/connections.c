@@ -1873,6 +1873,7 @@ static void add_proposal_spds(struct connection *c)
 					struct spd_end *spd_end = &spd->end[end];
 					const char *leftright = child_end->leftright;
 					spd_end->client = *selector;/*NOT update_end_selector()*/
+					spd_end->virt = virtual_ip_addref(child_end->virt);
 					selector_buf sb;
 					ldbg(c->logger,
 					     "%*s%s child spd from selector %s %s.spd.has_client=%s virt=%s",
@@ -1890,6 +1891,7 @@ static void add_proposal_spds(struct connection *c)
 	}
 
 	set_connection_priority(c); /* must be after .kind and .spd are set */
+	spd_route_db_add_connection(c);
 }
 
 
@@ -3180,7 +3182,6 @@ struct connection *group_instantiate(struct connection *group,
 
 	/* fill in the SPDs */
 	add_proposal_spds(t);
-	spd_route_db_add_connection(t);
 
 	connection_buf gb;
 	ldbg_connection(t, HERE, "instantiated from "PRI_CONNECTION,
@@ -3384,7 +3385,6 @@ struct connection *spd_instantiate(struct connection *t,
 
 	update_spds_from_end_host_addr(d, d->remote->config->index, peer_addr, HERE);
 
-	pexpect(oriented(d)); /* can't instantiate an unoriented template? */
 	set_connection_priority(d); /* re-compute; may have changed */
 
 	/* should still be true; leave another breadcrumb */
@@ -3415,8 +3415,34 @@ struct connection *rw_responder_instantiate(struct connection *t,
 		return NULL;
 	}
 
-	struct connection *d = spd_instantiate(t, peer_addr, NULL,
-					       null_shunk, HERE);
+	struct connection *d = instantiate(t, peer_addr,
+					   /*TBD peer_id*/NULL,
+					   /*TBD sec_label*/null_shunk,
+					   HERE);
+
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		const char *leftright = d->end[end].config->leftright;
+		struct host_end *host = &d->end[end].host;
+		struct child_end *child = &d->end[end].child;
+		if (child->config->selectors.len > 0) {
+			ldbg(d->logger, "%s.child has %d configured selectors",
+			     leftright, child->config->selectors.len > 0);
+			child->selectors.proposed = child->config->selectors;
+		} else {
+			ldbg(d->logger, "%s.child selector formed from host", leftright);
+			/*
+			 * Default the end's child selector (client) to a
+			 * subnet containing only the end's host address.
+			 */
+			ip_selector selector =
+				selector_from_address_protoport(host->addr,
+								child->config->protoport);
+			set_end_selector(d, end, selector);
+		}
+	}
+
+	add_proposal_spds(d);
+
 	connection_buf tb;
 	ldbg_connection(d, HERE, "instantiated from "PRI_CONNECTION,
 			pri_connection(t, &tb));
@@ -3913,7 +3939,6 @@ static struct connection *oppo_instantiate(struct connection *t,
 	set_first_selector(d, remote, remote_selector);
 
 	add_proposal_spds(d);
-	spd_route_db_add_connection(d);
 
 	connection_buf tb;
 	ldbg_connection(d, where, "instantiated from "PRI_CONNECTION,

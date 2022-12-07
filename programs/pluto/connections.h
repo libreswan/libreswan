@@ -410,6 +410,9 @@ struct spd_end {
 #define update_end_selector(C, END, SELECTOR, EXCUSE)			\
 	set_end_selector_where(C, END, SELECTOR,			\
 			       /*first-time*/false, EXCUSE, HERE)
+#define set_end_selector(C, END, SELECTOR)				\
+	set_end_selector_where(C, END, SELECTOR,			\
+			       /*first-time*/true, NULL, HERE)
 #define update_first_selector(C, LR, SELECTOR)				\
 	set_end_selector_where(C, (C)->LR->config->index, SELECTOR,	\
 			       /*first-time*/false, NULL, HERE)
