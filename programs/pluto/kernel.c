@@ -1042,39 +1042,6 @@ enum routability {
 	ROUTE_UNNECESSARY
 };
 
-static bool resolve_route_policy_conflict(struct spd_route *spd,
-					  struct spd_route *conflict,
-					  struct logger *logger)
-{
-	struct connection *outside = NULL; /*CK_PERMANENT*/
-	struct connection *inside = NULL; /*CK_TEMPLATE*/
-	FOR_EACH_THING(c, spd->connection, conflict->connection) {
-		switch (c->kind) {
-		case CK_PERMANENT: outside = c; break;
-		case CK_TEMPLATE: inside = c; break;
-		default: break;
-		}
-	}
-	if (!PEXPECT(logger, outside != NULL && inside != NULL)) {
-		return false;
-	}
-
-	/*
-	 * since we are going to steal the eroute from the secondary
-	 * policy, we need to make sure that it no longer thinks that
-	 * it owns the eroute.
-	 */
-	set_child_routing(outside, RT_UNROUTED_KEYED);
-	set_spd_owner(outside->spd, SOS_NOBODY);
-
-	connection_buf inst;
-	llog(RC_LOG_SERIOUS, logger,
-	     "conflict on eroute (%s), switching eroute to %s and linking %s",
-	     str_connection_instance(inside, &inst),
-	     inside->name, outside->name);
-	return true;
-}
-
 /*
  * Note: this may mutate c
  */
@@ -1669,9 +1636,6 @@ bool route_and_trap_connection(struct connection *c)
 	case ROUTE_UNNECESSARY:
 		return true;
 	case ROUTE_POLICY_CONFLICT:
-		if (!resolve_route_policy_conflict(c->spd, conflict, c->logger)) {
-			return false;
-		}
 		break;
 	}
 	if (c->child.routing >= RT_ROUTED_TUNNEL) {
@@ -3076,9 +3040,6 @@ bool install_inbound_ipsec_sa(struct state *st)
 		break;
 	case ROUTE_POLICY_CONFLICT:
 		dbg("kernel:    routing conflict, resolving");
-		if (!resolve_route_policy_conflict(c->spd, conflict, st->st_logger)) {
-			return false;
-		}
 		break;
 	case ROUTE_UNNECESSARY:
 		dbg("kernel:    routing unnecessary");
@@ -3510,9 +3471,6 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 	case ROUTE_UNNECESSARY:
 		break;
 	case ROUTE_POLICY_CONFLICT:
-		if (!resolve_route_policy_conflict(st->st_connection->spd, conflict, st->st_logger)) {
-			return false;
-		}
 		break;
 	case ROUTE_IMPOSSIBLE:
 	default:
