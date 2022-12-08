@@ -1457,18 +1457,27 @@ void delete_states_by_connection(struct connection **cp)
 		return;
 	}
 
-	for (const struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
+	if (c->child.routing == RT_ROUTED_TUNNEL) {
+		llog_pexpect(c->logger, HERE, "routing should not be ROUTED_TUNNEL (what should it be?)");
+	}
+
+	unsigned spd_i = 0;
+	for (const struct spd_route *spd = spd; spd != NULL; spd = spd->spd_next) {
+		spd_i++;
 		/*
 		 * These passerts are not true currently due to
 		 * mobike.  Requires some re-implementation. Use
 		 * pexpect for now.
 		 */
-		if (sr->eroute_owner != SOS_NOBODY) {
-			llog_pexpect(c->logger, HERE, "eroute owner "PRI_SO" should be 0",
-				     pri_so(sr->eroute_owner));
-		}
-		if (sr->connection->child.routing == RT_ROUTED_TUNNEL) {
-			llog_pexpect(c->logger, HERE, "routing should not be ROUTED_TUNNEL (what should it be?)");
+		if (spd->eroute_owner != SOS_NOBODY) {
+			selectors_buf ssb;
+			llog_pexpect(c->logger, HERE, "eroute_owner for policy %d %s is "PRI_SO", should be 0",
+				     spd_i, str_selectors(&spd->local->client, &spd->remote->client, &ssb),
+				     pri_so(spd->eroute_owner));
+		} else {
+			selectors_buf ssb;
+			ldbg(c->logger, "eroute_owner for policy %d %s is 0",
+			     spd_i, str_selectors(&spd->local->client, &spd->remote->client, &ssb));
 		}
 	}
 }
