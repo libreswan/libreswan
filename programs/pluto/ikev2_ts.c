@@ -216,18 +216,16 @@ static void scribble_ts_response_on_initiator(struct child_sa *child,
 	dbg_ts("scribbling narrowed TSi=%s ...(%u) TSr=%s ...(%u) on initiator",
 	       str_selector(&tsi, &si), nsps->i.nr,
 	       str_selector(&tsr, &sr), nsps->r.nr);
-	/* update */
-	update_end_selector(c, c->local->config->index, tsi,
-			    "scribbling final TSi on end");
-	update_end_selector(c, c->remote->config->index, tsr,
-			    "scribbling final TSr on end");
-	/* redundant? */
+	/* end game */
+	scribble_selectors_on_spd(c, /*local*/&nsps->i, /*remote*/&nsps->r, indent);
+	/*
+	 * Redundant (should have been set earlier)?  Meaningless
+	 * (with multiple TS, what does this mean)?
+	 */
 	set_child_has_client(c, local, !selector_eq_address(c->spd->local->client,
 							    c->local->host.addr));
 	set_child_has_client(c, remote, !selector_eq_address(c->spd->remote->client,
 							     c->remote->host.addr));
-	/* end game */
-	scribble_selectors_on_spd(c, /*local*/&nsps->i, /*remote*/&nsps->r, indent);
 }
 
 /*
