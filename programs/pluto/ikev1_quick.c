@@ -1990,8 +1990,8 @@ static struct connection *fc_try(const struct connection *c,
 		 * If d has no peer client, remote_net must just have peer itself.
 		 */
 
-		for (const struct spd_route *sr = d->spd;
-		     best != d && sr != NULL; sr = sr->spd_next) {
+		for (const struct spd_route *d_spd = d->spd;
+		     best != d && d_spd != NULL; d_spd = d_spd->spd_next) {
 
 			if (DBGP(DBG_BASE)) {
 				selector_buf s1, d1;
@@ -2006,33 +2006,33 @@ static struct connection *fc_try(const struct connection *c,
 					c->spd->remote->client.hport,
 					(is_virtual_remote(c) ? "(virt)" : ""),
 					d->name,
-					str_selector_subnet_port(&sr->local->client, &s3),
-					sr->local->client.ipproto,
-					sr->local->client.hport,
-					str_selector_subnet_port(&sr->remote->client, &d3),
-					sr->remote->client.ipproto,
-					sr->remote->client.hport,
-					(is_virtual_spd_end(sr->remote) ? "(virt)" : ""));
+					str_selector_subnet_port(&d_spd->local->client, &s3),
+					d_spd->local->client.ipproto,
+					d_spd->local->client.hport,
+					str_selector_subnet_port(&d_spd->remote->client, &d3),
+					d_spd->remote->client.ipproto,
+					d_spd->remote->client.hport,
+					(is_virtual_spd_end(d_spd->remote) ? "(virt)" : ""));
 			}
 
-			if (!selector_range_eq_selector_range(sr->local->client, *local_client)) {
+			if (!selector_range_eq_selector_range(d_spd->local->client, *local_client)) {
 				if (DBGP(DBG_BASE)) {
 					selector_buf s1, s3;
 					DBG_log("   our client (%s) not in local_net (%s)",
-						str_selector_subnet_port(&sr->local->client, &s3),
+						str_selector_subnet_port(&d_spd->local->client, &s3),
 						str_selector_subnet_port(local_client, &s1));
 				}
 				continue;
 			}
 
-			if (sr->remote->child->has_client) {
+			if (d_spd->remote->child->has_client) {
 
-				if (!selector_range_eq_selector_range(sr->remote->client, *remote_client) &&
-				    !is_virtual_spd_end(sr->remote)) {
+				if (!selector_range_eq_selector_range(d_spd->remote->client, *remote_client) &&
+				    !is_virtual_spd_end(d_spd->remote)) {
 					if (DBGP(DBG_BASE)) {
 						selector_buf d1, d3;
 						DBG_log("   their client (%s) not in same remote_net (%s)",
-							str_selector_subnet_port(&sr->remote->client, &d3),
+							str_selector_subnet_port(&d_spd->remote->client, &d3),
 							str_selector_subnet_port(remote_client, &d1));
 					}
 					continue;
@@ -2040,12 +2040,12 @@ static struct connection *fc_try(const struct connection *c,
 
 				virtualwhy = check_virtual_net_allowed(d,
 								       selector_subnet(*remote_client),
-								       sr->remote->host->addr);
+								       d_spd->remote->host->addr);
 
-				if (is_virtual_spd_end(sr->remote) &&
+				if (is_virtual_spd_end(d_spd->remote) &&
 				    (virtualwhy != NULL ||
 				     is_virtual_net_used(d, remote_client,
-							 &sr->remote->host->id))) {
+							 &d_spd->remote->host->id))) {
 					dbg("   virtual net not allowed");
 					continue;
 				}
@@ -2067,7 +2067,7 @@ static struct connection *fc_try(const struct connection *c,
 			 * - given that, not switching is preferred
 			 */
 			connection_priority_t prio =
-				PRIO_WEIGHT * routed(sr->connection->child.routing) +
+				PRIO_WEIGHT * routed(d->child.routing) +
 				WILD_WEIGHT * (MAX_WILDCARDS - wildcards) +
 				PATH_WEIGHT * (MAX_CA_PATH_LEN - pathlen) +
 				(c == d ? 1 : 0) +
@@ -2147,8 +2147,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 		 * be marked as opportunistic.
 		 */
 
-		for (const struct spd_route *sr = d->spd;
-		     sr != NULL; sr = sr->spd_next) {
+		for (const struct spd_route *d_spd = d->spd; d_spd != NULL; d_spd = d_spd->spd_next) {
 
 			if (DBGP(DBG_BASE)) {
 				selector_buf s1;
@@ -2158,12 +2157,12 @@ static struct connection *fc_try_oppo(const struct connection *c,
 				DBG_log("  fc_try_oppo trying %s:%s -> %s vs %s:%s -> %s",
 					c->name, str_selector_subnet_port(local_client, &s1),
 					str_selector_subnet_port(remote_client, &d1),
-					d->name, str_selector_subnet_port(&sr->local->client, &s3),
-					str_selector_subnet_port(&sr->remote->client, &d3));
+					d->name, str_selector_subnet_port(&d_spd->local->client, &s3),
+					str_selector_subnet_port(&d_spd->remote->client, &d3));
 			}
 
-			if (!selector_range_in_selector_range(*local_client, sr->local->client) ||
-			    !selector_range_in_selector_range(*remote_client, sr->remote->client))
+			if (!selector_range_in_selector_range(*local_client, d_spd->local->client) ||
+			    !selector_range_in_selector_range(*remote_client, d_spd->remote->client))
 				continue;
 
 			/*
@@ -2180,7 +2179,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 			 * - given that, the shortest CA pathlength is preferred
 			 */
 			connection_priority_t prio =
-				PRIO_WEIGHT * (d->priority + routed(sr->connection->child.routing)) +
+				PRIO_WEIGHT * (d->priority + routed(d->child.routing)) +
 				WILD_WEIGHT * (MAX_WILDCARDS - wildcards) +
 				PATH_WEIGHT * (MAX_CA_PATH_LEN - pathlen);
 
@@ -2252,7 +2251,7 @@ struct connection *find_v1_client_connection(struct connection *const c,
 			    (sr->remote->client.ipproto == remote_protocol) &&
 			    (!sr->remote->client.hport ||
 			     sr->remote->client.hport == remote_port)) {
-				if (routed(sr->connection->child.routing))
+				if (routed(c->child.routing))
 					return c;
 
 				unrouted = c;

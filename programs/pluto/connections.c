@@ -3835,26 +3835,26 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 			continue;
 		}
 
+		/*
+		 * XXX: is the !sec_label an IKEv1 thing?  An IKEv2
+		 * sec-labeled connection should have been routed by
+		 * now?
+		 */
+		if (!routed(c->child.routing) &&
+		    !c->instance_initiation_ok &&
+		    c->config->sec_label.len == 0) {
+			connection_buf cb;
+			selectors_buf sb;
+			dbg("    skipping "PRI_CONNECTION" %s; !routed,!instance_initiation_ok,!sec_label",
+			    pri_connection(c, &cb),
+			    str_selectors(&c->spd->local->client, &c->spd->remote->client, &sb));
+			continue;
+		}
+
 		for (struct spd_route *sr = c->spd;
 		     /* bail if below sets BEST_CONECTION to C */
 		     best_connection != c && sr != NULL;
 		     sr = sr->spd_next) {
-
-			/*
-			 * XXX: is the !sec_label an IKEv1 thing?  An
-			 * IKEv2 sec-labeled connection should have
-			 * been routed by now?
-			 */
-			if (!routed(sr->connection->child.routing) &&
-			    !c->instance_initiation_ok &&
-			    c->config->sec_label.len == 0) {
-				connection_buf cb;
-				selectors_buf sb;
-				dbg("    skipping "PRI_CONNECTION" %s; !routed,!instance_initiation_ok,!sec_label",
-				    pri_connection(c, &cb),
-				    str_selectors(&c->spd->local->client, &c->spd->remote->client, &sb));
-				continue;
-			}
 
 			/*
 			 * The triggering packet needs to be within
@@ -4155,8 +4155,13 @@ struct connection *find_outgoing_opportunistic_template(const ip_packet packet)
 			}
 #endif
 
-			if (c->kind == CK_GROUP)
+			if (c->kind == CK_GROUP) {
 				continue;
+			}
+
+			if (!routed(c->child.routing)) {
+				continue;
+			}
 
 			/*
 			 * for each sr of c, see if we have a new best
@@ -4166,9 +4171,6 @@ struct connection *find_outgoing_opportunistic_template(const ip_packet packet)
 			 * match!
 			 */
 			for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
-				if (!routed(sr->connection->child.routing)) {
-					continue;
-				}
 
 				/*
 				 * The triggering packet needs to be
@@ -4340,7 +4342,7 @@ struct spd_route *route_owner(const struct spd_route *spd,
 		connection_buf cib;
 		jam(buf, "route owner of \"%s\"%s %s: ",
 		    pri_connection(c, &cib),
-		    enum_name(&routing_story, spd->connection->child.routing));
+		    enum_name(&routing_story, c->child.routing));
 
 		if (!routed(best_routing)) {
 			jam(buf, "NULL");
@@ -4442,7 +4444,7 @@ static void show_one_sr(struct show *s,
 	show_comment(s, PRI_CONNECTION": %s; %s; eroute owner: #%lu",
 		     c->name, instance,
 		     format_connection(topo, sizeof(topo), c, sr),
-		     enum_name(&routing_story, sr->connection->child.routing),
+		     enum_name(&routing_story, c->child.routing),
 		     sr->eroute_owner);
 
 #define OPT_HOST(h, ipb)  (address_is_specified(h) ? str_address(&h, &ipb) : "unset")
