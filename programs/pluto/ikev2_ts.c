@@ -1331,19 +1331,6 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 
 			/* responder so cross the streams */
 
-			const struct spd_route *spd = d->spd;
-			pexpect(spd != NULL);
-			pexpect(spd->spd_next == NULL);
-
-			pexpect(d->remote->child.selectors.proposed.list == &d->remote->child.selectors.acquire_or_host_or_group ||
-				d->remote->child.selectors.proposed.list == d->remote->config->child.selectors.list);
-			pexpect(d->local->child.selectors.proposed.list == &d->local->child.selectors.acquire_or_host_or_group ||
-				d->local->child.selectors.proposed.list == d->local->config->child.selectors.list);
-			pexpect(selector_eq_selector(d->spd->remote->client,
-						     d->remote->child.selectors.proposed.list[0]));
-			pexpect(selector_eq_selector(d->spd->local->client,
-						     d->local->child.selectors.proposed.list[0]));
-
 			const struct child_selector_ends ends = {
 				.i.selectors = &d->remote->child.selectors.proposed,
 				.i.sec_label = d->config->sec_label,
