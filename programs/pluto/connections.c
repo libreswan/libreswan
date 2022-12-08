@@ -3260,9 +3260,10 @@ static struct connection *instantiate(struct connection *t,
 		 */
 		if (sec_label.len == 0) {
 			PASSERT(t->logger, t->kind == CK_TEMPLATE);
-			kind = CK_TEMPLATE; /*CK_HYBRID*/
+			kind = CK_TEMPLATE; /*XXX:CK_HYBRID*/
 		} else {
-			PASSERT(t->logger, t->kind == CK_TEMPLATE || CK_HYBRID);
+			PASSERT(t->logger, (t->kind == CK_HYBRID ||
+					    t->kind == CK_TEMPLATE/*XXX:bug*/));
 			kind = CK_INSTANCE;
 		}
 	} else {
@@ -3423,8 +3424,8 @@ struct connection *sec_label_instantiate(struct ike_sa *ike,
 	 * XXX: the IKE SA should always have a CK_HYBRID connection
 	 * bit that is currently only true on the responder.
 	 */
-	PEXPECT_WHERE(t->logger, where, (t->kind == CK_TEMPLATE/*bug*/ ||
-					 t->kind == CK_HYBRID));
+	PEXPECT_WHERE(t->logger, where, (t->kind == CK_HYBRID ||
+					 t->kind == CK_TEMPLATE/*XXX:bug*/));
 	PEXPECT_WHERE(t->logger, where, t->config->sec_label.len > 0);
 	PEXPECT_WHERE(t->logger, where, sec_label.len > 0);
 
