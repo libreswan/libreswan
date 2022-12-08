@@ -651,8 +651,6 @@ struct connection *group_instantiate(struct connection *group,
 extern struct spd_route *route_owner(const struct spd_route *spd,
 				     struct spd_route **policy_spd);
 
-extern struct connection *shunt_owner(const ip_selector *ours,
-				      const ip_selector *peers);
 extern void rekey_now(const char *name, enum sa_type sa_type,
 		      bool background, struct logger *logger);
 

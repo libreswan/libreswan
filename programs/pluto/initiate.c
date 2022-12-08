@@ -1009,27 +1009,6 @@ void initiate_ondemand(const struct kernel_acquire *b)
 			  b->background, b->logger);
 }
 
-/*
- * Find a connection that owns the shunt eroute between subnets.
- * There ought to be only one.
- * This might get to be a bottleneck -- try hashing if it does.
- */
-struct connection *shunt_owner(const ip_selector *ours, const ip_selector *peers)
-{
-	struct connection_filter cf = { .where = HERE, };
-	while (next_connection_new2old(&cf)) {
-		struct connection *c = cf.c;
-		for (const struct spd_route *sr = c->spd; sr; sr = sr->spd_next) {
-			if (shunt_erouted(sr->connection->child.routing) &&
-			    selector_range_eq_selector_range(*ours, sr->local->client) &&
-			    selector_range_eq_selector_range(*peers, sr->remote->client))
-				return c;
-		}
-	}
-	return NULL;
-}
-
-
 /* time before retrying DDNS host lookup for phase 1 */
 #define PENDING_DDNS_INTERVAL secs_per_minute
 
