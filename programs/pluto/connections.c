@@ -152,13 +152,6 @@ void ldbg_connection(const struct connection *c, where_t where,
 
 }
 
-static void spd_route_db_add_connection(struct connection *c)
-{
-	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
-		spd_route_db_add(spd);
-	}
-}
-
 /*
  * Find a connection by name.
  *
@@ -204,6 +197,16 @@ static void discard_spd(struct spd_route **spd, bool valid)
 	}
 	pfreeany(*spd);
 }
+
+void discard_spds(struct spd_route **spds, bool connection_valid)
+{
+	for (struct spd_route *spd = *spds, *next = NULL; spd != NULL; spd = next) {
+		next = spd->spd_next; /*step-off*/
+		discard_spd(&spd, connection_valid);
+	}
+	*spds = NULL;
+}
+
 
 /*
  * delete_connection -- removes a connection by pointer
@@ -267,10 +270,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 
 	connection_db_del(c, connection_valid);
 
-	for (struct spd_route *spd = c->spd, *next = NULL; spd != NULL; spd = next) {
-		next = spd->spd_next; /*step-off*/
-		discard_spd(&spd, connection_valid);
-	}
+	discard_spds(&c->spd, connection_valid);
 
 	FOR_EACH_ELEMENT(end, c->end) {
 		free_id_content(&end->host.id);
@@ -1757,7 +1757,7 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 			}
 			if (selectors[LEFT_END].afi == selectors[RIGHT_END].afi) {
 				indent = 6;
-				struct spd_route *spd = append_spd_route(c, &spd_tail);
+				struct spd_route *spd = append_spd(c, &spd_tail);
 				FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 					const ip_selector *selector = selectors[end].selector; /* could be NULL */
 					const struct child_end_config *child_end = &c->end[end].config->child;
@@ -1866,7 +1866,7 @@ static void add_proposal_spds(struct connection *c)
 			}
 			if (selectors[LEFT_END].afi == selectors[RIGHT_END].afi) {
 				indent = 6;
-				struct spd_route *spd = append_spd_route(c, &spd_end);
+				struct spd_route *spd = append_spd(c, &spd_end);
 				FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 					const ip_selector *selector = selectors[end].selector;
 					const struct child_end_config *child_end = &c->end[end].config->child;

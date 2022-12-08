@@ -825,4 +825,7 @@ PRINTF_LIKE(3)
 void ldbg_connection(const struct connection *c, where_t where,
 		     const char *message, ...);
 
+struct spd_route *append_spd(struct connection *c, struct spd_route ***last);
+void discard_spds(struct spd_route **spds, bool connection_valid);
+
 #endif

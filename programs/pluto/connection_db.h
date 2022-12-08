@@ -32,8 +32,6 @@ void finish_connection(struct connection *c, const char *name,
 void connection_db_init(struct logger *logger);
 void connection_db_check(struct logger *logger);
 
-struct spd_route *append_spd_route(struct connection *c, struct spd_route ***last);
-
 void connection_db_init_connection(struct connection *c);
 void connection_db_check_connection(struct connection *c, struct logger *logger, where_t where);
 
@@ -49,6 +47,8 @@ struct spd_route *clone_spd_route(struct connection *c, where_t where);
 
 void spd_route_db_init_spd_route(struct spd_route *sr);
 void spd_route_db_check_spd_route(struct spd_route *sr, struct logger *logger, where_t where);
+
+void spd_route_db_add_connection(struct connection *c);
 
 void spd_route_db_add(struct spd_route *sr);
 void spd_route_db_del(struct spd_route *sr, bool valid);

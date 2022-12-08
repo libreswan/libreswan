@@ -117,10 +117,16 @@ static hash_t hash_spd_route_remote_client(const ip_selector *sr)
 	return hash_thing(sr->bytes, zero_hash);
 }
 
+void spd_route_db_add_connection(struct connection *c)
+{
+	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+		spd_route_db_add(spd);
+	}
+}
+
 HASH_TABLE(spd_route, remote_client, .remote->client, STATE_TABLE_SIZE);
 
-HASH_DB(spd_route,
-	&spd_route_remote_client_hash_table);
+HASH_DB(spd_route, &spd_route_remote_client_hash_table);
 
 void rehash_db_spd_route_remote_client(struct spd_route *sr)
 {
@@ -282,7 +288,7 @@ struct connection *alloc_connection(const char *name,
 	return c;
 }
 
-struct spd_route *append_spd_route(struct connection *c, struct spd_route ***spd_end)
+struct spd_route *append_spd(struct connection *c, struct spd_route ***spd_end)
 {
 	struct spd_route *spd = alloc_thing(struct spd_route, "spd_route");
 	/* append; too much redirection */

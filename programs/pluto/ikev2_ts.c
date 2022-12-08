@@ -36,6 +36,7 @@
 #include "ip_range.h"
 #include "iface.h"
 #include "pending.h"		/* for connection_is_pending() */
+#include "connection_db.h"	/* for spd_route_db_add_connection() */
 
 #define TS_MAX 16 /* arbitrary */
 
@@ -172,6 +173,38 @@ static void scribble_accepted_selectors(ip_selectors *selectors,
 	}
 }
 
+static void scribble_selectors_on_spd(struct connection *c,
+				      const struct narrowed_selector_payload *local_nsp,
+				      const struct narrowed_selector_payload *remote_nsp,
+				      indent_t indent)
+{
+	scribble_accepted_selectors(&c->local->child.selectors.accepted, local_nsp, indent);
+	scribble_accepted_selectors(&c->remote->child.selectors.accepted, remote_nsp, indent);
+	/*
+	 * XXX: instead build these SPDs from above selectors?
+	 */
+	struct spd_route *spd_list = NULL;
+	struct spd_route **spd_tail = &spd_list;
+	for (const struct narrowed_selector *local_ns = local_nsp->ts;
+	     local_ns < local_nsp->ts + local_nsp->nr; local_ns++) {
+		for (const struct narrowed_selector *remote_ns = remote_nsp->ts;
+		     remote_ns < remote_nsp->ts + remote_nsp->nr; remote_ns++) {
+			struct spd_route *spd = append_spd(c, &spd_tail);
+			spd->local->client = local_ns->selector;
+			spd->remote->client = remote_ns->selector;
+			/* bread crumb */
+			passert(spd->eroute_owner == SOS_NOBODY);
+			set_spd_owner(spd, SOS_NOBODY);
+		}
+	}
+	discard_spds(&c->spd, true/*valid*/);
+	c->spd = spd_list;
+#if 0
+	set_connection_priority(c); /* must be after .kind and .spd are set */
+#endif
+	spd_route_db_add_connection(c);
+}
+
 static void scribble_ts_response_on_initiator(struct child_sa *child,
 					      const struct narrowed_selector_payloads *nsps,
 					      indent_t indent)
@@ -194,10 +227,7 @@ static void scribble_ts_response_on_initiator(struct child_sa *child,
 	set_child_has_client(c, remote, !selector_eq_address(c->spd->remote->client,
 							     c->remote->host.addr));
 	/* end game */
-	scribble_accepted_selectors(&c->local->child.selectors.accepted,
-				    &nsps->i, indent);
-	scribble_accepted_selectors(&c->remote->child.selectors.accepted,
-				    &nsps->r, indent);
+	scribble_selectors_on_spd(c, /*local*/&nsps->i, /*remote*/&nsps->r, indent);
 }
 
 /*
@@ -1118,11 +1148,8 @@ static void scribble_ts_request_on_responder(struct child_sa *child,
 			    "scribbling final TSr on end");
 	update_end_selector(c, c->remote->config->index, tsi,
 			    "scribbling final TSr on end");
-	/* end game */
-	scribble_accepted_selectors(&c->local->child.selectors.accepted,
-				    &nsps->r, indent);
-	scribble_accepted_selectors(&c->remote->child.selectors.accepted,
-				    &nsps->i, indent);
+	/* end game; polarity reversed */
+	scribble_selectors_on_spd(c, /*local*/&nsps->r, /*remote*/&nsps->i, indent);
 }
 
 /*
