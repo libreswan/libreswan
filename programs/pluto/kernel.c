@@ -3135,6 +3135,8 @@ bool route_and_eroute(struct connection *c,
 		      struct state *st/*can be NULL*/,
 		      struct logger *logger/*st or c or ... */)
 {
+	PEXPECT(c->logger, c->spd != NULL && c->spd->spd_next == NULL);
+
 	selectors_buf sb;
 	dbg("kernel: route_and_eroute() for %s; proto %d, and source port %d dest port %d sec_label",
 	    str_selectors(&sr->local->client, &sr->remote->client, &sb),
