@@ -211,7 +211,7 @@ static bool msg_recv(struct inbuf *msg, const char *what, const struct sadb_msg 
 		}
 
 		if (base->sadb_msg_errno != 0) {
-			llog_errno(RC_LOG, logger, base->sadb_msg_errno, "bad response");
+			llog_errno(RC_LOG, logger, base->sadb_msg_errno, "bad response: ");
 			return false;
 		}
 

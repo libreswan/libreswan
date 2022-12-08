@@ -1061,7 +1061,7 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 			if (d != NULL) {
 				free_chunk_content(&keyspace);
 				enum_buf pkb;
-				return diag_diag(&d, "%s%s invalid",
+				return diag_diag(&d, "%s%s invalid, ",
 						 leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
 			}
 		} else {
@@ -1089,7 +1089,7 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 			if (d != NULL) {
 				free_chunk_content(&keyspace);
 				enum_buf pkb;
-				return diag_diag(&d, "%s%s invalid",
+				return diag_diag(&d, "%s%s invalid, ",
 						 leftright, str_enum(&ipseckey_algorithm_config_names, src->pubkey_alg, &pkb));
 			}
 		}

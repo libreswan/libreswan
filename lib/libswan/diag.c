@@ -48,7 +48,7 @@ diag_t diag_errno(int error, const char *fmt, ...)
 	va_start(ap, fmt);
 	jam_va_list(&buf, fmt, ap);
 	va_end(ap);
-	jam_string(&buf, ": ");
+	/* NO ": "; not *perror() */
 	jam_errno(&buf, error);
 	return (diag_t)clone_str(output, "diag-errno");
 }

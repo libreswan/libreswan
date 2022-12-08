@@ -191,7 +191,7 @@ bool whack_prompt_for(struct state *st, const char *prompt,
 	ssize_t n = fd_read(st->st_logger->object_whackfd, ansbuf, ansbuf_len);
 	if (n < 0) {
 		llog_errno(RC_LOG_SERIOUS, st->st_logger, (-(int)n),
-			   "read(whackfd) failed"/*: */);
+			   "read(whackfd) failed: ");
 		return false;
 	}
 

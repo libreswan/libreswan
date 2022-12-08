@@ -112,14 +112,14 @@ static enum route_status get_route_1(int s, ip_address dst,
 	/* send */
 	int w = write(s, &msg, msg.hdr.rtm_msglen);
 	if (w < 0) {
-		llog_errno(ERROR_FLAGS, logger, errno, "write failed");
+		llog_errno(ERROR_FLAGS, logger, errno, "write failed: ");
 		return ROUTE_FATAL;
 	}
 
 	/* recv */
 	int r = read(s, &msg, sizeof(msg));
 	if (r < 0) {
-		llog_errno(ERROR_FLAGS, logger, errno, "write failed");
+		llog_errno(ERROR_FLAGS, logger, errno, "write failed: ");
 		return ROUTE_FATAL;
 	}
 
@@ -203,7 +203,7 @@ enum route_status get_route(ip_address dst, struct ip_route *route, struct logge
 	int s = cloexec_socket(PF_ROUTE, SOCK_RAW, afi->af);
 	if (s < 0) {
 		llog_errno(ERROR_FLAGS, logger, errno,
-			   "cloexec_socket(PF_ROUTE, SOCK_RAW, %s) failed",
+			   "cloexec_socket(PF_ROUTE, SOCK_RAW, %s) failed: ",
 			   afi->ip_name);
 		return ROUTE_FATAL;
 	}

@@ -53,7 +53,7 @@ static enum lsw_fips_mode lsw_fips_product(struct logger *logger)
 		}
 
 		llog_errno(RC_LOG_SERIOUS, logger, errno,
-			   "FIPS ABORT: FIPS product check failed to determine status for %s"/*: */,
+			   "FIPS ABORT: FIPS product check failed to determine status for %s: ",
 			   FIPSPRODUCTCHECK);
 		return LSW_FIPS_UNKNOWN;
 	}

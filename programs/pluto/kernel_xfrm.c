@@ -2314,7 +2314,7 @@ static void netlink_v6holes(struct logger *logger)
 	if (stat(proc_f, &sts) != 0) {
 		/* not error */
 		llog_errno(RC_LOG, logger, errno,
-			   "kernel: starting without ipv6 support! could not stat \"%s\""/*: */,
+			   "kernel: starting without ipv6 support! could not stat \"%s\": ",
 			   proc_f);
 		/*
 		 * pretend success, do not exit pluto, likely IPv6 is

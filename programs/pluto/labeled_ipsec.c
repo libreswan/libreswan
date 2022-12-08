@@ -65,7 +65,7 @@ static bool check_access(const char *perm,
 	if (rtn != 0) {
 		/* make error look like an audit record */
 		llog_errno(RC_LOG, logger, errno,
-			   "selinux denied { %s } %s scontext=%s %s tcontext=%s tclass=%s"/*: */,
+			   "selinux denied { %s } %s scontext=%s %s tcontext=%s tclass=%s: ",
 			   perm, source, scontext, target, tcontext, tclass);
 		return false;
 	}
@@ -109,8 +109,7 @@ bool sec_label_within_range(const char *source, shunk_t label,
 	errno = 0;	/* getcon(3) is not documented to set errno */
 	if(getcon(&domain) != 0) {
 		/* note: getcon(3) does not specify that errno is set */
-		llog_errno(RC_LOG, logger, errno,
-			   "getcon()"/*: */);
+		llog_errno(RC_LOG, logger, errno, "getcon(): ");
 		return false;
 	}
 	dbg("our SElinux context is '%s'", domain);

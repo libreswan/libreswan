@@ -316,7 +316,7 @@ void log_error(struct logger *logger, int error,
 		log_error(LOGGER, e_, FMT, ##__VA_ARGS__); \
 	}
 
-/* like log_error() but no ERROR: prefix */
+/* like log_error() but no ERROR: prefix and/or ": " separator */
 void llog_errno(lset_t rc_flags, const struct logger *logger, int error,
 		const char *message, ...) PRINTF_LIKE(4);
 

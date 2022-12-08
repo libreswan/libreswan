@@ -172,7 +172,7 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 		} else {
 			/* if from==0, this prints "unspecified", not "undisclosed", oops */
 			llog_errno(RC_LOG, logger, packet_errno,
-				   "recvfrom on %s failed; cannot decode source sockaddr in rejection: %s"/*: */,
+				   "recvfrom on %s failed; cannot decode source sockaddr in rejection: %s: ",
 				   ifp->ip_dev->id_rname, from_ugh);
 		}
 		return false;
@@ -192,7 +192,7 @@ static struct msg_digest * udp_read_packet(struct iface_endpoint **ifpp,
 
 	if (packet_len < 0) {
 		llog_errno(RC_LOG, logger, packet_errno,
-			   "recvfrom on %s failed"/*: */, ifp->ip_dev->id_rname);
+			   "recvfrom on %s failed: ", ifp->ip_dev->id_rname);
 		return NULL;
 	}
 
