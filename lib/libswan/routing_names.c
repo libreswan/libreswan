@@ -25,13 +25,12 @@ static const char *routing_name[] = {
 	S(RT_ROUTED_HOLD),
 	S(RT_ROUTED_FAILURE),
 	S(RT_ROUTED_TUNNEL),
-	S(RT_UNROUTED_KEYED),
 #undef S
 };
 
 const struct enum_names routing_names = {
 	RT_UNROUTED,
-	RT_UNROUTED_KEYED,
+	RT_ROUTED_TUNNEL,
 	ARRAY_REF(routing_name),
 	"RT_", NULL,
 };

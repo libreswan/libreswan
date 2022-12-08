@@ -264,8 +264,7 @@ static int whack_unroute_connection(struct connection *c,
 {
 	passert(c != NULL);
 
-	if (c->child.routing == RT_ROUTED_TUNNEL ||
-	    !PEXPECT(c->logger, c->child.routing != RT_UNROUTED_KEYED)) {
+	if (c->child.routing == RT_ROUTED_TUNNEL) {
 		llog(WHACK_STREAM|RC_RTBUSY, logger, "cannot unroute: route busy");
 	} else if (c->policy & POLICY_GROUP) {
 		unroute_connection_group(c);

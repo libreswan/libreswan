@@ -3540,16 +3540,14 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 			 * true when RT_UNROUTED_KEYED.
 			 */
 			pexpect(sr->eroute_owner == SOS_NOBODY ||
-				c->child.routing == RT_ROUTED_TUNNEL ||
-				!PEXPECT(c->logger, c->child.routing != RT_UNROUTED_KEYED));
+				c->child.routing == RT_ROUTED_TUNNEL);
 
 			/*
 			 * XXX: Since when sr->eroute_owner ==
 			 * SOS_NOBODY when RT_UNROUTED_KEYED, this
 			 * code is skipped for SR.
 			 */
-			if (sr->eroute_owner != st->st_serialno &&
-			    c->child.routing != RT_UNROUTED_KEYED) {
+			if (sr->eroute_owner != st->st_serialno) {
 				if (!route_and_eroute(c, sr, st, st->st_logger)) {
 					delete_ipsec_sa(st);
 					/*

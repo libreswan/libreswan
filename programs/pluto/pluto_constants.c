@@ -98,11 +98,10 @@ static const char *const routing_story_strings[] = {
 	"erouted HOLD",         /* RT_ROUTED_HOLD: routed, and HOLD shunt installed */
 	"fail erouted",         /* RT_ROUTED_FAILURE: routed, and failure-context shunt eroute installed */
 	"erouted",              /* RT_ROUTED_TUNNEL: routed, and erouted to an IPSEC SA group */
-	"keyed, unrouted",      /* RT_UNROUTED_KEYED: was routed+keyed, but it got turned into an outer policy */
 };
 
 enum_names routing_story = {
-	RT_UNROUTED, RT_UNROUTED_KEYED,
+	RT_UNROUTED, RT_ROUTED_TUNNEL,
 	ARRAY_REF(routing_story_strings),
 	NULL, /* prefix */
 	NULL };

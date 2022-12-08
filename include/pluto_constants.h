@@ -746,7 +746,6 @@ enum routing {
 	RT_ROUTED_HOLD,         /* routed, and HOLD shunt installed */
 	RT_ROUTED_FAILURE,      /* routed, and failure-context shunt installed */
 	RT_ROUTED_TUNNEL,       /* routed, and erouted to an IPSEC SA group */
-	RT_UNROUTED_KEYED,      /* keyed, but not routed, on purpose */
 };
 
 extern const struct enum_names routing_names;
@@ -754,19 +753,16 @@ extern const struct enum_names routing_names;
 #define routed(RS) ((RS) == RT_ROUTED_PROSPECTIVE ||		\
 		    (RS) == RT_ROUTED_HOLD ||			\
 		    (RS) == RT_ROUTED_FAILURE ||		\
-		    (RS) == RT_ROUTED_TUNNEL ||			\
-		    !(pexpect((RS) != RT_UNROUTED_KEYED)))
+		    (RS) == RT_ROUTED_TUNNEL)
 #define erouted(RS) ((RS) == RT_UNROUTED_HOLD ||		\
 		     (RS) == RT_ROUTED_PROSPECTIVE ||		\
 		     (RS) == RT_ROUTED_HOLD ||			\
 		     (RS) == RT_ROUTED_FAILURE ||		\
-		     (RS) == RT_ROUTED_TUNNEL ||		\
-		     !(pexpect((RS) != RT_UNROUTED_KEYED)))
+		     (RS) == RT_ROUTED_TUNNEL)
 #define shunt_erouted(RS) ((RS) == RT_UNROUTED_HOLD ||			\
 			   (RS) == RT_ROUTED_PROSPECTIVE ||		\
 			   (RS) == RT_ROUTED_HOLD ||			\
-			   (RS) == RT_ROUTED_FAILURE ||			\
-			   !(pexpect((RS) != RT_UNROUTED_KEYED)))
+			   (RS) == RT_ROUTED_FAILURE)
 
 enum certpolicy {
 	CERT_NEVERSEND   = 1,
