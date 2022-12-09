@@ -511,7 +511,14 @@ bool do_updown(enum updown updown_verb,
 		ldbg(logger, "kernel: skipped updown %s command - disabled per policy", verb);
 		return true;
 	}
-	ldbg(logger, "kernel: running updown command \"%s\" for verb %s ", updown, verb);
+	if (spd != NULL && c->spd != NULL && c->spd->spd_next != NULL) {
+		/* i.e., more selectors than just this */
+		selectors_buf sb;
+		llog(RC_LOG, logger, "running updown %s %s", verb,
+		     str_selectors(&spd->local->client, &spd->remote->client, &sb));
+	} else {
+		ldbg(logger, "kernel: running updown command \"%s\" for verb %s ", updown, verb);
+	}
 
 	return do_updown_verb(verb, c, spd, st, logger);
 }
