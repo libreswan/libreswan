@@ -182,12 +182,6 @@ kernel_priority_t calculate_kernel_priority(const struct connection *c)
 	return (kernel_priority_t) { prio, };
 }
 
-static bool route_and_eroute(struct connection *c,
-			     struct spd_route *sr,
-			     struct state *st,
-			     /* st or c */
-			     struct logger *logger);
-
 static bool eroute_outbound_connection(enum kernel_policy_op op,
 				       const char *opname,
 				       const struct spd_route *sr,
@@ -1440,7 +1434,7 @@ static void find_spd_conflicts(struct spd_route *spd, struct logger *logger)
 	}
 }
 
-static bool unrouted_to_routed_prospective(struct connection *c)
+static bool transition_connection_to_routed_prospective(struct connection *c)
 {
 	enum routability r = connection_routable(c, c->logger);
 	switch (r) {
@@ -1600,7 +1594,7 @@ static bool connection_route_transition(struct connection *c, enum routing new_r
 #define ON(O,N) ((O << 8) | N)
 	switch (ON(c->child.routing, new_routing)) {
 	case ON(RT_UNROUTED, RT_ROUTED_PROSPECTIVE):
-		return unrouted_to_routed_prospective(c);
+		return transition_connection_to_routed_prospective(c);
 	default:
 		llog_pexpect(c->logger, HERE, "%s -> %s",
 			     enum_name_short(&routing_names, c->child.routing),
@@ -3049,25 +3043,24 @@ bool install_inbound_ipsec_sa(struct state *st)
  * Any SA Group must have already been created.
  * On failure, steps will be unwound.
  */
-bool route_and_eroute(struct connection *c,
-		      struct spd_route *sr,
-		      struct state *st/*can be NULL*/,
-		      struct logger *logger/*st or c or ... */)
-{
-	PEXPECT(c->logger, c->spd != NULL && c->spd->spd_next == NULL);
 
+static bool transition_spd_to_routed_tunnel(struct connection *c,
+					    struct spd_route *sr,
+					    struct state *st/*can be NULL*/,
+					    struct logger *logger/*st or c or ... */)
+{
 	selectors_buf sb;
-	dbg("kernel: route_and_eroute() for %s; proto %d, and source port %d dest port %d sec_label",
-	    str_selectors(&sr->local->client, &sr->remote->client, &sb),
-	    sr->local->client.ipproto, sr->local->client.hport, sr->remote->client.hport);
+	ldbg(logger, "kernel: %s() for %s; proto %d, and source port %d dest port %d sec_label",
+	     __func__, str_selectors(&sr->local->client, &sr->remote->client, &sb),
+	     sr->local->client.ipproto, sr->local->client.hport, sr->remote->client.hport);
 
 	struct spd_route *esr;
 	struct spd_route *rosr = route_owner(sr, &esr);	/* who, if anyone, owns our eroute? */
 	struct connection *ro = (rosr == NULL ? NULL : rosr->connection);
 	struct connection *ero = (esr == NULL ? NULL : esr->connection); /* eclipsed route owner */
 
-	ldbg(logger, "kernel: route_and_eroute with c: %s ero:%s esr:{%p} ro:%s rosr:{%p} and state: #%lu",
-	     c->name,
+	ldbg(logger, "kernel: %s() with c: %s ero:%s esr:{%p} ro:%s rosr:{%p} and state: #%lu",
+	     __func__, c->name,
 	     (ero == NULL ? "null" : ero->name), esr,
 	     (ro == NULL ? "null" : ro->name), rosr,
 	     (st == NULL ? 0 : st->st_serialno));
@@ -3112,11 +3105,11 @@ bool route_and_eroute(struct connection *c,
 						       DEFAULT_KERNEL_POLICY_ID,
 						       HUNK_AS_SHUNK(c->config->sec_label),
 						       logger, HERE,
-						       "route_and_eroute() replace shunt");
+						       "replace shunt");
 		} else {
 			eroute_installed = sag_eroute(st, sr,
 						      KERNEL_POLICY_OP_REPLACE,
-						      "route_and_eroute() replace sag");
+						      "replace sag");
 		}
 
 		/* remember to free bspp if we make it out of here alive */
@@ -3166,8 +3159,8 @@ bool route_and_eroute(struct connection *c,
 
 	bool route_installed = false;
 
-	dbg("kernel: route_and_eroute: firewall_notified: %s",
-	    firewall_notified ? "true" : "false");
+	ldbg(logger, "kernel: %s() firewall_notified: %s",
+	     __func__, firewall_notified ? "true" : "false");
 	if (!firewall_notified) {
 		/* we're in trouble -- don't do routing */
 	} else if (ro == NULL) {
@@ -3303,7 +3296,8 @@ bool route_and_eroute(struct connection *c,
 						null_shunk, logger,
 						"%s() restore", __func__)) {
 					llog(RC_LOG, logger,
-					     "raw_policy() in route_and_eroute() failed to restore/replace SA");
+					     "raw_policy() in %s() failed to restore/replace SA",
+					     __func__);
 				}
 			} else if (ero != NULL) {
 				passert(esr != NULL);
@@ -3319,9 +3313,10 @@ bool route_and_eroute(struct connection *c,
 									    DEFAULT_KERNEL_POLICY_ID,
 									    HUNK_AS_SHUNK(ero->config->sec_label),
 									    logger, HERE,
-									    "route_and_eroute() restore eclipsed prospective")) {
+									    "restore eclipsed prospective")) {
 							llog(RC_LOG, logger,
-							     "shunt_policy() in route_and_eroute() failed restore/replace");
+							     "shunt_policy() in %s() failed restore/replace",
+							     __func__);
 						}
 					} else if (c->config->failure_shunt == SHUNT_NONE) {
 						struct kernel_policy outbound_policy =
@@ -3341,9 +3336,9 @@ bool route_and_eroute(struct connection *c,
 								DEFAULT_KERNEL_POLICY_ID,
 								HUNK_AS_SHUNK(ero->config->sec_label),
 								logger,
-								"route_and_eroute() restore eclipsed failure =- NONE")) {
+								"%s() restore eclipsed failure =- NONE", __func__)) {
 							llog(RC_LOG, logger,
-							     "shunt_policy() in route_and_eroute() failed restore/replace");
+							     "shunt_policy() %s() failed restore/replace", __func__);
 
 						}
 					} else {
@@ -3356,9 +3351,9 @@ bool route_and_eroute(struct connection *c,
 									    DEFAULT_KERNEL_POLICY_ID,
 									    HUNK_AS_SHUNK(ero->config->sec_label),
 									    logger, HERE,
-									    "route_and_eroute() restore eclipsed failure != NONE")) {
+									    "restore eclipsed failure != NONE")) {
 							llog(RC_LOG, logger,
-							     "shunt_policy() in route_and_eroute() failed restore/replace");
+							     "shunt_policy() in %s() failed restore/replace", __func__);
 						}
 					}
 				} else {
@@ -3379,7 +3374,7 @@ bool route_and_eroute(struct connection *c,
 								KERNEL_POLICY_OP_REPLACE,
 								"restore"))
 							llog(RC_LOG, logger,
-							     "sag_eroute() in route_and_eroute() failed restore/replace");
+							     "sag_eroute() in %s() failed restore/replace", __func__);
 					}
 				}
 			} else {
@@ -3397,14 +3392,14 @@ bool route_and_eroute(struct connection *c,
 								    HUNK_AS_SHUNK(c->config->sec_label),
 								    c->logger, HERE, "deleting route and eroute")) {
 						llog(RC_LOG, logger,
-						     "shunt_policy() in route_and_eroute() failed in !st case");
+						     "shunt_policy() in %s() failed in !st case", __func__);
 					}
 				} else {
 					if (!sag_eroute(st, sr,
 							KERNEL_POLICY_OP_DELETE,
 							"delete")) {
 						llog(RC_LOG, logger,
-							    "sag_eroute() in route_and_eroute() failed in st case for delete");
+						     "sag_eroute() in %s() failed in st case for delete", __func__);
 					}
 				}
 			}
@@ -3472,7 +3467,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 	struct connection *c = st->st_connection;
 	if (c->config->ike_version == IKEv2 &&
 	    c->child.sec_label.len > 0) {
-		dbg("kernel: %s() skipping route_and_eroute(st) as security label", __func__);
+		dbg("kernel: %s() skipping install of IPsec policies as security label", __func__);
 	} else {
 		struct spd_route *sr = c->spd;
 		if (c->remotepeertype == CISCO && sr->spd_next != NULL)
@@ -3503,7 +3498,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 			 * code is skipped for SR.
 			 */
 			if (sr->eroute_owner != st->st_serialno) {
-				if (!route_and_eroute(c, sr, st, st->st_logger)) {
+				if (!transition_spd_to_routed_tunnel(c, sr, st, st->st_logger)) {
 					delete_ipsec_sa(st);
 					/*
 					 * XXX go and unroute any SRs that were
