@@ -103,6 +103,8 @@ diag_t ttoaddresses_num(shunk_t input, const char *delims,
 			const struct ip_info *afi,
 			ip_addresses *output);
 
+size_t jam_addresses(struct jambuf *buf, ip_addresses addresses);
+
 /*
  * Convert an address to a string:
  *

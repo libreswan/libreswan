@@ -69,6 +69,8 @@ diag_t ttoranges_num(shunk_t input, const char *delims,
 		     const struct ip_info *afi,
 		     ip_ranges *output) MUST_USE_RESULT;
 
+size_t jam_ranges(struct jambuf *buf, ip_ranges ranges);
+
 /*
  * Formatting
  */

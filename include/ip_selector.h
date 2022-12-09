@@ -123,6 +123,8 @@ diag_t ttoselectors_num(shunk_t input, const char *delims,
 			const struct ip_info *afi,
 			ip_selectors *output, ip_address *nonzero_host);
 
+size_t jam_selectors(struct jambuf *buf, const ip_selectors selectors);
+
 /*
  * Magic values.
  *
