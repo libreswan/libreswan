@@ -1462,7 +1462,7 @@ void delete_states_by_connection(struct connection **cp)
 	}
 
 	unsigned spd_i = 0;
-	for (const struct spd_route *spd = spd; spd != NULL; spd = spd->spd_next) {
+	for (const struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
 		spd_i++;
 		/*
 		 * These passerts are not true currently due to
