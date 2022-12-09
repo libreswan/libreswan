@@ -180,6 +180,13 @@ static void scribble_selectors_on_spd(struct connection *c,
 {
 	scribble_accepted_selectors(&c->local->child.selectors.accepted, local_nsp, indent);
 	scribble_accepted_selectors(&c->remote->child.selectors.accepted, remote_nsp, indent);
+	if (local_nsp->nr > 1 || remote_nsp->nr > 1) {
+		LLOG_JAMBUF(RC_LOG, indent.logger, buf) {
+			jam_selectors(buf, c->local->child.selectors.accepted);
+			jam_string(buf, " -> ");
+			jam_selectors(buf, c->remote->child.selectors.accepted);
+		}
+	}
 	/*
 	 * XXX: instead build these SPDs from above selectors?
 	 */
