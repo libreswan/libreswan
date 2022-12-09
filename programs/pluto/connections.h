@@ -448,7 +448,7 @@ struct spd_route {
 #define set_spd_owner(SPD, SO)						\
 	{								\
 		connection_buf cb;					\
-		dbg("kernel: spd owner: "PRI_CONNECTION" "PRI_SO"->"PRI_SO" "PRI_WHERE, \
+		dbg("kernel: spd eroute_owner: "PRI_CONNECTION" "PRI_SO"->"PRI_SO" "PRI_WHERE, \
 		    pri_connection((SPD)->connection, &cb),		\
 		    pri_so((SPD)->eroute_owner),			\
 		    /* SO could be an enum :-( */			\
