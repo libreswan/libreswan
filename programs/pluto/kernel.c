@@ -1037,9 +1037,8 @@ static struct kernel_policy kernel_policy_from_state(const struct state *st,
 
 enum routability {
 	ROUTE_IMPOSSIBLE,
-	ROUTE_EASY,
-	ROUTE_POLICY_CONFLICT,
-	ROUTE_UNNECESSARY
+	ROUTE_UNNECESSARY,
+	ROUTEABLE,
 };
 
 /*
@@ -1159,14 +1158,14 @@ static enum routability could_route(struct connection *c,
 		if ((ero->kind == CK_PERMANENT && c->kind == CK_TEMPLATE) ||
 		    (c->kind == CK_PERMANENT && ero->kind == CK_TEMPLATE)) {
 			*conflict = esr;
-			return ROUTE_POLICY_CONFLICT;
+			return ROUTEABLE;
 		}
 
 		/* look along the chain of policies for one with the same name */
 
 		if (ero->kind == CK_TEMPLATE && streq(ero->name, c->name)) {
 			ldbg(ero->logger, "EASY!");
-			return ROUTE_EASY;
+			return ROUTEABLE;
 		}
 
 		/*
@@ -1195,17 +1194,11 @@ static enum routability could_route(struct connection *c,
 		dbg("kernel: overlapping permitted with "PRI_CONNECTION" #%lu",
 		    pri_connection(ero, &erob), esr->eroute_owner);
 	}
-	return ROUTE_EASY;
+	return ROUTEABLE;
 }
 
-enum connection_routability {
-	CONNECTION_ROUTE_IMPOSSIBLE,
-	CONNECTION_ROUTE_UNNECESSARY,
-	CONNECTION_ROUTEABLE,
-};
-
-static enum connection_routability connection_routable(struct connection *c,
-						       struct logger *logger)
+static enum routability connection_routable(struct connection *c,
+					    struct logger *logger)
 {
 	esb_buf b;
 	ldbg(logger,
@@ -1222,7 +1215,7 @@ static enum connection_routability connection_routable(struct connection *c,
 		llog(RC_ROUTE, logger,
 		     "cannot route an %s-only connection",
 		     c->config->ike_info->sa_name[IKE_SA]);
-		return CONNECTION_ROUTE_IMPOSSIBLE;
+		return ROUTE_IMPOSSIBLE;
 	}
 
 	/*
@@ -1231,7 +1224,7 @@ static enum connection_routability connection_routable(struct connection *c,
 	 */
 	if (kernel_ops->overlap_supported && !LIN(POLICY_TUNNEL, c->policy)) {
 		ldbg(logger, "route-unnecessary: overlap and !tunnel");
-		return CONNECTION_ROUTE_UNNECESSARY;
+		return ROUTE_UNNECESSARY;
 	}
 
 	/*
@@ -1256,10 +1249,10 @@ static enum connection_routability connection_routable(struct connection *c,
 			llog(RC_ROUTE, logger,
 			     "cannot route template policy of %s",
 			     str_connection_policies(c, &pb));
-			return CONNECTION_ROUTE_IMPOSSIBLE;
+			return ROUTE_IMPOSSIBLE;
 		}
 	}
-	return CONNECTION_ROUTEABLE; /* aka keep looking */
+	return ROUTEABLE; /* aka keep looking */
 }
 
 static void find_spd_conflicts(struct spd_route *spd, struct logger *logger)
@@ -1449,13 +1442,13 @@ static void find_spd_conflicts(struct spd_route *spd, struct logger *logger)
 
 static bool unrouted_to_routed_prospective(struct connection *c)
 {
-	enum connection_routability r = connection_routable(c, c->logger);
+	enum routability r = connection_routable(c, c->logger);
 	switch (r) {
-	case CONNECTION_ROUTE_IMPOSSIBLE:
+	case ROUTE_IMPOSSIBLE:
 		return false;
-	case CONNECTION_ROUTE_UNNECESSARY:
+	case ROUTE_UNNECESSARY:
 		return true;
-	case CONNECTION_ROUTEABLE:
+	case ROUTEABLE:
 		break;
 	}
 
@@ -3002,11 +2995,8 @@ bool install_inbound_ipsec_sa(struct state *st)
 	struct spd_route *conflict;
 	enum routability r = could_route(c, c->spd, &conflict, st->st_logger);
 	switch (r) {
-	case ROUTE_EASY:
+	case ROUTEABLE:
 		dbg("kernel:    routing is easy");
-		break;
-	case ROUTE_POLICY_CONFLICT:
-		dbg("kernel:    routing conflict, resolving");
 		break;
 	case ROUTE_UNNECESSARY:
 		dbg("kernel:    routing unnecessary");
@@ -3434,10 +3424,8 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 					  &conflict, st->st_logger);
 
 	switch (rb) {
-	case ROUTE_EASY:
+	case ROUTEABLE:
 	case ROUTE_UNNECESSARY:
-		break;
-	case ROUTE_POLICY_CONFLICT:
 		break;
 	case ROUTE_IMPOSSIBLE:
 	default:
