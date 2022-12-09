@@ -1619,40 +1619,7 @@ static bool connection_route_transition(struct connection *c, enum routing new_r
 
 bool route_and_trap_connection(struct connection *c)
 {
-	if (c->config->ike_version == IKEv2 && (c->spd->spd_next != NULL ||
-						c->config->sec_label.len > 0 ||
-						(c->policy & POLICY_OPPORTUNISTIC) ||
-						c->kind == CK_PERMANENT)) {
-		return connection_route_transition(c, RT_ROUTED_PROSPECTIVE);
-	}
-	struct spd_route *conflict;
-	enum routability r = could_route(c, c->spd, &conflict, c->logger);
-
-	switch (r) {
-	case ROUTE_IMPOSSIBLE:
-		return false;
-	case ROUTE_EASY:
-		break;
-	case ROUTE_UNNECESSARY:
-		return true;
-	case ROUTE_POLICY_CONFLICT:
-		break;
-	}
-	if (c->child.routing >= RT_ROUTED_TUNNEL) {
-		/*
-		 * RT_ROUTED_TUNNEL is treated specially: we
-		 * don't override because we don't want to
-		 * lose track of the IPSEC_SAs etc.
-		 *
-		 * ??? The test treats RT_UNROUTED_KEYED
-		 * specially too.
-		 *
-		 * XXX: ah, I was wondering ...
-		 */
-		dbg("kernel: skipping trap policy as >=ROUTED_TUNNEL");
-		return true;
-	}
-	return route_and_eroute(c, c->spd, NULL, c->logger);
+	return connection_route_transition(c, RT_ROUTED_PROSPECTIVE);
 }
 
 static bool sag_eroute(const struct state *st,
