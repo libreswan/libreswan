@@ -434,12 +434,6 @@ extern const struct kernel_ops pfkeyv2_kernel_ops;
 
 extern const struct kernel_ops *const kernel_stacks[];
 
-/* helper for invoking call outs */
-extern bool fmt_common_shell_out(char *buf, size_t blen,
-				 const struct connection *c,
-				 const struct spd_route *sr,
-				 struct state *st);
-
 /* many bits reach in to use this, but maybe shouldn't */
 enum updown {
 	UPDOWN_PREPARE,
