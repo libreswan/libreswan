@@ -1434,7 +1434,7 @@ static void find_spd_conflicts(struct spd_route *spd, struct logger *logger)
 	}
 }
 
-static bool transition_connection_to_routed_prospective(struct connection *c)
+static bool install_prospective_kernel_policy(struct connection *c)
 {
 	enum routability r = connection_routable(c, c->logger);
 	switch (r) {
@@ -1594,7 +1594,7 @@ static bool connection_route_transition(struct connection *c, enum routing new_r
 #define ON(O,N) ((O << 8) | N)
 	switch (ON(c->child.routing, new_routing)) {
 	case ON(RT_UNROUTED, RT_ROUTED_PROSPECTIVE):
-		return transition_connection_to_routed_prospective(c);
+		return install_prospective_kernel_policy(c);
 	default:
 		llog_pexpect(c->logger, HERE, "%s -> %s",
 			     enum_name_short(&routing_names, c->child.routing),
@@ -3044,10 +3044,10 @@ bool install_inbound_ipsec_sa(struct state *st)
  * On failure, steps will be unwound.
  */
 
-static bool transition_spd_to_routed_tunnel(struct connection *c,
-					    struct spd_route *sr,
-					    struct state *st/*can be NULL*/,
-					    struct logger *logger/*st or c or ... */)
+static bool install_ipsec_spd_kernel_policies(struct connection *c,
+					      struct spd_route *sr,
+					      struct state *st,
+					      struct logger *logger/*st or c or ... */)
 {
 	selectors_buf sb;
 	ldbg(logger, "kernel: %s() for %s; proto %d, and source port %d dest port %d sec_label",
@@ -3087,31 +3087,9 @@ static bool transition_spd_to_routed_tunnel(struct connection *c,
 
 	if (bspp != NULL || ero != NULL) {
 		dbg("kernel: we are replacing an eroute");
-		/* if no state provided, then install a shunt for later */
-		if (st == NULL) {
-			/*
-			 * XXX: this deletes the installed policies.
-			 * Setting eroute_installed (aka policy
-			 * installed) is a stretch.
-			 */
-			enum shunt_policy shunt_policy = c->config->prospective_shunt;
-			pexpect(shunt_policy != SHUNT_NONE); /* see prospective_shunt_ok() */
-			eroute_installed =
-				delete_kernel_policies(EXPECT_KERNEL_POLICY_OK,
-						       sr->local->client,
-						       sr->remote->client,
-						       &c->sa_marks,
-						       c->xfrmi,
-						       DEFAULT_KERNEL_POLICY_ID,
-						       HUNK_AS_SHUNK(c->config->sec_label),
-						       logger, HERE,
-						       "replace shunt");
-		} else {
-			eroute_installed = sag_eroute(st, sr,
-						      KERNEL_POLICY_OP_REPLACE,
-						      "replace sag");
-		}
-
+		eroute_installed = sag_eroute(st, sr,
+					      KERNEL_POLICY_OP_REPLACE,
+					      "replace sag");
 		/* remember to free bspp if we make it out of here alive */
 	} else {
 		/* we're adding an eroute */
@@ -3126,15 +3104,9 @@ static bool transition_spd_to_routed_tunnel(struct connection *c,
 #endif
 
 		/* if no state provided, then install a shunt for later */
-		if (st == NULL) {
-			eroute_installed =
-				install_prospective_kernel_policies(EXPECT_KERNEL_POLICY_OK,
-								    sr, logger, HERE);
-		} else {
-			eroute_installed = sag_eroute(st, sr,
-						      KERNEL_POLICY_OP_ADD,
-						      "add");
-		}
+		eroute_installed = sag_eroute(st, sr,
+					      KERNEL_POLICY_OP_ADD,
+					      "add");
 	}
 
 	/* notify the firewall of a new tunnel */
@@ -3150,9 +3122,8 @@ static bool transition_spd_to_routed_tunnel(struct connection *c,
 		 * tunnel would have to be for our connection, so the actual
 		 * test is simple.
 		 */
-		firewall_notified = st == NULL || /* not a tunnel eroute */
-			sr->eroute_owner != SOS_NOBODY || /* already notified */
-			do_updown(UPDOWN_UP, c, sr, st, logger); /* go ahead and notify */
+		firewall_notified = (sr->eroute_owner != SOS_NOBODY || /* already notified */
+				     do_updown(UPDOWN_UP, c, sr, st, logger)); /* go ahead and notify */
 	}
 
 	/* install the route */
@@ -3231,15 +3202,10 @@ static bool transition_spd_to_routed_tunnel(struct connection *c,
 			free_bare_shunt(bspp);
 		}
 
-		if (st == NULL) {
-			passert(sr->eroute_owner == SOS_NOBODY);
-			set_child_routing(c, RT_ROUTED_PROSPECTIVE);
-		} else {
-			set_child_routing(c, RT_ROUTED_TUNNEL);
-			set_spd_owner(sr, st->st_serialno);
-			/* clear host shunts that clash with freshly installed route */
-			clear_narrow_holds(&sr->local->client, &sr->remote->client, logger);
-		}
+		set_child_routing(c, RT_ROUTED_TUNNEL);
+		set_spd_owner(sr, st->st_serialno);
+		/* clear host shunts that clash with freshly installed route */
+		clear_narrow_holds(&sr->local->client, &sr->remote->client, logger);
 
 #ifdef IPSEC_CONNECTION_LIMIT
 		if (new_eroute) {
@@ -3382,25 +3348,11 @@ static bool transition_spd_to_routed_tunnel(struct connection *c,
 				 * There was no previous eroute:
 				 * delete whatever we installed.
 				 */
-				if (st == NULL) {
-					if (!delete_kernel_policies(EXPECT_KERNEL_POLICY_OK,
-								    sr->local->client,
-								    sr->remote->client,
-								    &c->sa_marks,
-								    c->xfrmi,
-								    DEFAULT_KERNEL_POLICY_ID,
-								    HUNK_AS_SHUNK(c->config->sec_label),
-								    c->logger, HERE, "deleting route and eroute")) {
-						llog(RC_LOG, logger,
-						     "shunt_policy() in %s() failed in !st case", __func__);
-					}
-				} else {
-					if (!sag_eroute(st, sr,
-							KERNEL_POLICY_OP_DELETE,
-							"delete")) {
-						llog(RC_LOG, logger,
-						     "sag_eroute() in %s() failed in st case for delete", __func__);
-					}
+				if (!sag_eroute(st, sr,
+						KERNEL_POLICY_OP_DELETE,
+						"delete")) {
+					llog(RC_LOG, logger,
+					     "sag_eroute() in %s() failed in st case for delete", __func__);
 				}
 			}
 		}
@@ -3498,7 +3450,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 			 * code is skipped for SR.
 			 */
 			if (sr->eroute_owner != st->st_serialno) {
-				if (!transition_spd_to_routed_tunnel(c, sr, st, st->st_logger)) {
+				if (!install_ipsec_spd_kernel_policies(c, sr, st, st->st_logger)) {
 					delete_ipsec_sa(st);
 					/*
 					 * XXX go and unroute any SRs that were
