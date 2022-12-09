@@ -104,7 +104,7 @@ static void jam_spd_route(struct jambuf *buf, const struct spd_route *sr)
 {
 	jam_connection(buf, sr->connection);
 	jam_string(buf, " ");
-	jam_selectors(buf, &sr->local->client, &sr->remote->client);
+	jam_selector_pair(buf, &sr->local->client, &sr->remote->client);
 }
 
 static void jam_spd_route_remote_client(struct jambuf *buf, const struct spd_route *sr)

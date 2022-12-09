@@ -279,7 +279,7 @@ static bool install_prospective_kernel_policies(enum expect_kernel_policy expect
 		    str_enum_short(&shunt_policy_names, prospective_shunt, &spb));
 
 		jam(buf, " ");
-		jam_selectors(buf, &spd->local->client, &spd->remote->client);
+		jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
 
 		jam(buf, " config.sec_label=");
 		if (c->config->sec_label.len > 0) {
@@ -434,7 +434,7 @@ static int num_ipsec_eroute = 0;
 static void jam_bare_shunt(struct jambuf *buf, const struct bare_shunt *bs)
 {
 	jam(buf, "bare shunt %p ", bs);
-	jam_selectors(buf, &bs->our_client, &bs->peer_client);
+	jam_selector_pair(buf, &bs->our_client, &bs->peer_client);
 	jam(buf, " => ");
 	jam_enum_short(buf, &shunt_policy_names, bs->shunt_policy);
 	jam(buf, " ");
@@ -1100,10 +1100,10 @@ static void find_spd_conflicts(struct spd_route *spd, struct logger *logger)
 	 * Report what was found.
 	 */
 
-	selectors_buf sb;
+	selector_pair_buf sb;
 	ldbg(logger,
 	     "kernel: %s() %s; wip.conflicting_route %s wip.conflicting_policy %s wip.conflicting_shunt=%s",
-	     __func__, str_selectors(&spd->local->client, &spd->remote->client, &sb),
+	     __func__, str_selector_pair(&spd->local->client, &spd->remote->client, &sb),
 	     (spd->wip.conflicting.route == NULL ? "<none>" : spd->wip.conflicting.route->connection->name),
 	     (spd->wip.conflicting.policy == NULL ? "<none>" : spd->wip.conflicting.policy->connection->name),
 	     (spd->wip.conflicting.shunt == NULL ? "<none>" : (*spd->wip.conflicting.shunt)->why));
@@ -1503,9 +1503,9 @@ struct bare_shunt **bare_shunt_ptr(const ip_selector *our_client,
 	const struct ip_protocol *transport_proto = protocol_from_ipproto(our_client->ipproto);
 	pexpect(peer_client->ipproto == transport_proto->ipproto);
 
-	selectors_buf sb;
+	selector_pair_buf sb;
 	dbg("kernel: %s looking for %s",
-	    why, str_selectors(our_client, peer_client, &sb));
+	    why, str_selector_pair(our_client, peer_client, &sb));
 	for (struct bare_shunt **pp = &bare_shunts; *pp != NULL; pp = &(*pp)->next) {
 		struct bare_shunt *p = *pp;
 		dbg_bare_shunt("comparing", p);
@@ -1658,9 +1658,9 @@ bool flush_bare_shunt(const ip_address *src_address,
 	ip_selector dst = selector_from_address_protocol(*dst_address, transport_proto);
 
 	/* assume low code logged action */
-	selectors_buf sb;
+	selector_pair_buf sb;
 	dbg("kernel: deleting bare shunt %s from kernel for %s",
-	    str_selectors(&src, &dst, &sb), why);
+	    str_selector_pair(&src, &dst, &sb), why);
 	/* assume low code logged action */
 	bool ok = delete_kernel_policy(DIRECTION_OUTBOUND,
 				       expect_kernel_policy,
@@ -1671,10 +1671,10 @@ bool flush_bare_shunt(const ip_address *src_address,
 				       logger, HERE, why);
 	if (!ok) {
 		/* did/should kernel log this? */
-		selectors_buf sb;
+		selector_pair_buf sb;
 		llog(RC_LOG, logger,
 		     "delete kernel shunt %s failed - deleting from pluto shunt table",
-		     str_selectors_sensitive(&src, &dst, &sb));
+		     str_selector_pair_sensitive(&src, &dst, &sb));
 	}
 
 	/*
@@ -1689,10 +1689,10 @@ bool flush_bare_shunt(const ip_address *src_address,
 
 	struct bare_shunt **bs_pp = bare_shunt_ptr(&src, &dst, why);
 	if (bs_pp == NULL) {
-		selectors_buf sb;
+		selector_pair_buf sb;
 		llog(RC_LOG, logger,
 		     "can't find expected bare shunt to delete: %s",
-		     str_selectors_sensitive(&src, &dst, &sb));
+		     str_selector_pair_sensitive(&src, &dst, &sb));
 		return ok;
 	}
 
@@ -2817,9 +2817,9 @@ static bool install_ipsec_spd_kernel_policies(struct connection *c,
 					      struct state *st,
 					      struct logger *logger/*st or c or ... */)
 {
-	selectors_buf sb;
+	selector_pair_buf sb;
 	ldbg(logger, "kernel: %s() for %s; proto %d, and source port %d dest port %d sec_label",
-	     __func__, str_selectors(&sr->local->client, &sr->remote->client, &sb),
+	     __func__, str_selector_pair(&sr->local->client, &sr->remote->client, &sb),
 	     sr->local->client.ipproto, sr->local->client.hport, sr->remote->client.hport);
 
 	struct spd_route *esr;
@@ -3752,9 +3752,9 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 			ip_selector src = selector_from_address_protocol(*src_address, protocol);
 			ip_selector dst = selector_from_address_protocol(*dst_address, protocol);
 
-			selectors_buf sb;
+			selector_pair_buf sb;
 			dbg("kernel: replace bare shunt %s for %s",
-			    str_selectors(&src, &dst, &sb), why);
+			    str_selector_pair(&src, &dst, &sb), why);
 
 			/*
 			 * ??? this comment might be obsolete.
@@ -3789,7 +3789,7 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 			if (!ok) {
 				llog(RC_LOG, logger,
 				     "replace kernel shunt %s failed - deleting from pluto shunt table",
-				     str_selectors_sensitive(&src, &dst, &sb));
+				     str_selector_pair_sensitive(&src, &dst, &sb));
 			}
 
 			/*
@@ -3810,11 +3810,11 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 			struct bare_shunt **bs_pp = bare_shunt_ptr(&src, &dst, why);
 			/* passert(bs_pp != NULL); */
 			if (bs_pp == NULL) {
-				selectors_buf sb;
+				selector_pair_buf sb;
 				llog(RC_LOG, logger,
 				     "can't find expected bare shunt to %s: %s",
 				     ok ? "replace" : "delete",
-				     str_selectors_sensitive(&src, &dst, &sb));
+				     str_selector_pair_sensitive(&src, &dst, &sb));
 			} else if (ok) {
 				/*
 				 * change over to new bare eroute

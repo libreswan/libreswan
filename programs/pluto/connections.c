@@ -145,7 +145,7 @@ void ldbg_connection(const struct connection *c, where_t where,
 			jam_string(buf, "    spds:");
 			for (const struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
 				jam_string(buf, " ");
-				jam_selectors(buf, &spd->local->client, &spd->remote->client);
+				jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
 			}
 		}
 	}
@@ -3844,10 +3844,10 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 		    !c->instance_initiation_ok &&
 		    c->config->sec_label.len == 0) {
 			connection_buf cb;
-			selectors_buf sb;
+			selector_pair_buf sb;
 			dbg("    skipping "PRI_CONNECTION" %s; !routed,!instance_initiation_ok,!sec_label",
 			    pri_connection(c, &cb),
-			    str_selectors(&c->spd->local->client, &c->spd->remote->client, &sb));
+			    str_selector_pair(&c->spd->local->client, &c->spd->remote->client, &sb));
 			continue;
 		}
 
@@ -3872,22 +3872,22 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 
 			if (!selector_in_selector(packet_src, sr->local->client)) {
 				connection_buf cb;
-				selectors_buf sb;
+				selector_pair_buf sb;
 				selector_buf psb;
 				dbg("    skipping "PRI_CONNECTION" %s; packet src %s not in range",
 				    pri_connection(c, &cb),
-				    str_selectors(&c->spd->local->client, &c->spd->remote->client, &sb),
+				    str_selector_pair(&c->spd->local->client, &c->spd->remote->client, &sb),
 				    str_selector(&packet_src, &psb));
 				continue;
 			}
 
 			if (!endpoint_in_selector(packet_dst, sr->remote->client)) {
 				connection_buf cb;
-				selectors_buf sb;
+				selector_pair_buf sb;
 				endpoint_buf eb;
 				dbg("    skipping "PRI_CONNECTION" %s; packet dst %s not in range",
 				    pri_connection(c, &cb),
-				    str_selectors(&c->spd->local->client, &c->spd->remote->client, &sb),
+				    str_selector_pair(&c->spd->local->client, &c->spd->remote->client, &sb),
 				    str_endpoint(&packet_dst, &eb));
 				continue;
 			}
@@ -3907,13 +3907,13 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 			if (best_connection != NULL &&
 			    priority <= best_priority) {
 				connection_buf cb, bcb;
-				selectors_buf sb, bsb;
+				selector_pair_buf sb, bsb;
 				dbg("    skipping "PRI_CONNECTION" %s priority %"PRIu32"; doesn't best "PRI_CONNECTION" %s priority %"PRIu32,
 				    pri_connection(c, &cb),
-				    str_selectors(&c->spd->local->client, &c->spd->remote->client, &sb),
+				    str_selector_pair(&c->spd->local->client, &c->spd->remote->client, &sb),
 				    priority,
 				    pri_connection(best_connection, &bcb),
-				    str_selectors(&best_sr->local->client, &best_sr->remote->client, &bsb),
+				    str_selector_pair(&best_sr->local->client, &best_sr->remote->client, &bsb),
 				    best_priority);
 				continue;
 			}
@@ -3921,22 +3921,22 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 			/* current is best; log why */
 			if (best_connection == NULL) {
 				connection_buf cb;
-				selectors_buf sb;
+				selector_pair_buf sb;
 				ldbg(logger,
 				     "    choosing "PRI_CONNECTION" %s priority %"PRIu32"; as first best",
 				     pri_connection(c, &cb),
-				     str_selectors(&c->spd->local->client, &c->spd->remote->client, &sb),
+				     str_selector_pair(&c->spd->local->client, &c->spd->remote->client, &sb),
 				     priority);
 			} else {
 				connection_buf cb, bcb;
-				selectors_buf sb, bsb;
+				selector_pair_buf sb, bsb;
 				ldbg(logger,
 				     "    choosing "PRI_CONNECTION" %s priority %"PRIu32"; as bests "PRI_CONNECTION" %s priority %"PRIu32,
 				     pri_connection(c, &cb),
-				     str_selectors(&c->spd->local->client, &c->spd->remote->client, &sb),
+				     str_selector_pair(&c->spd->local->client, &c->spd->remote->client, &sb),
 				     priority,
 				     pri_connection(best_connection, &bcb),
-				     str_selectors(&best_sr->local->client, &best_sr->remote->client, &bsb),
+				     str_selector_pair(&best_sr->local->client, &best_sr->remote->client, &bsb),
 				     best_priority);
 			}
 
@@ -3955,11 +3955,11 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 
 	if (best_connection != NULL) {
 		connection_buf cib;
-		selectors_buf sb;
+		selector_pair_buf sb;
 		enum_buf kb;
 		dbg("  concluding with "PRI_CONNECTION" %s priority %" PRIu32 " kind=%s",
 		    pri_connection(best_connection, &cib),
-		    str_selectors(&best_sr->local->client, &best_sr->remote->client, &sb),
+		    str_selector_pair(&best_sr->local->client, &best_sr->remote->client, &sb),
 		    best_priority,
 		    str_enum_short(&connection_kind_names, best_connection->kind, &kb));
 	} else {

@@ -946,9 +946,9 @@ void initiate_ondemand(const struct kernel_acquire *b)
 
 	c = oppo_initiator_instantiate(t, b);
 
-	selectors_buf sb;
+	selector_pair_buf sb;
 	dbg("going to initiate opportunistic %s, first installing %s negotiationshunt",
-	    str_selectors(&local_shunt, &remote_shunt, &sb),
+	    str_selector_pair(&local_shunt, &remote_shunt, &sb),
 	    enum_name_short(&shunt_policy_names, c->config->negotiation_shunt));
 
 	/* shunts saved in selectors */

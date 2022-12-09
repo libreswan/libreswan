@@ -1470,14 +1470,16 @@ void delete_states_by_connection(struct connection **cp)
 		 * pexpect for now.
 		 */
 		if (spd->eroute_owner != SOS_NOBODY) {
-			selectors_buf ssb;
+			selector_pair_buf ssb;
 			llog_pexpect(c->logger, HERE, "eroute_owner for policy %d %s is "PRI_SO", should be 0",
-				     spd_i, str_selectors(&spd->local->client, &spd->remote->client, &ssb),
+				     spd_i,
+				     str_selector_pair(&spd->local->client,
+						       &spd->remote->client, &ssb),
 				     pri_so(spd->eroute_owner));
 		} else {
-			selectors_buf ssb;
+			selector_pair_buf ssb;
 			ldbg(c->logger, "eroute_owner for policy %d %s is 0",
-			     spd_i, str_selectors(&spd->local->client, &spd->remote->client, &ssb));
+			     spd_i, str_selector_pair(&spd->local->client, &spd->remote->client, &ssb));
 		}
 	}
 }

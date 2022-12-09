@@ -191,13 +191,13 @@ size_t jam_selector_subnet_port(struct jambuf *buf, const ip_selector *selector)
 
 typedef struct {
 	char buf[sizeof(selector_buf) + sizeof("=UNKNOWN=UNKNOWN=>") + sizeof(selector_buf)];
-} selectors_buf;
+} selector_pair_buf;
 
-const char *str_selectors(const ip_selector *src, const ip_selector *dst, selectors_buf *out);
-size_t jam_selectors(struct jambuf *buf, const ip_selector *src, const ip_selector *dst);
+const char *str_selector_pair(const ip_selector *src, const ip_selector *dst, selector_pair_buf *out);
+size_t jam_selector_pair(struct jambuf *buf, const ip_selector *src, const ip_selector *dst);
 
-const char *str_selectors_sensitive(const ip_selector *src, const ip_selector *dst, selectors_buf *out);
-size_t jam_selectors_sensitive(struct jambuf *buf, const ip_selector *src, const ip_selector *dst);
+const char *str_selector_pair_sensitive(const ip_selector *src, const ip_selector *dst, selector_pair_buf *out);
+size_t jam_selector_pair_sensitive(struct jambuf *buf, const ip_selector *src, const ip_selector *dst);
 
 /*
  * XXX: hacks to get around .client not containing a proper selector

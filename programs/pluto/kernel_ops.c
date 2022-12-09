@@ -73,7 +73,7 @@ bool raw_policy(enum kernel_policy_op op,
 		va_end(ap);
 
 		jam(buf, " client=");
-		jam_selectors(buf, src_client, dst_client);
+		jam_selector_pair(buf, src_client, dst_client);
 
 		jam_string(buf, " policy=");
 		if (policy == NULL) {
@@ -193,7 +193,7 @@ bool delete_kernel_policy(enum direction dir,
 		jam_string(buf, expect_kernel_policy_name(expect_kernel_policy));
 
 		jam(buf, " client=");
-		jam_selectors(buf, &src_client, &dst_client);
+		jam_selector_pair(buf, &src_client, &dst_client);
 
 		if (sa_marks != NULL) {
 			jam(buf, " sa_marks=");

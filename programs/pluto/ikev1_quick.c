@@ -1046,9 +1046,9 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 	 * XXX: isn't local->remote backwards?  The peer things it
 	 * proposed the reverse?
 	 */
-	selectors_buf sb;
+	selector_pair_buf sb;
 	log_state(RC_LOG, p1st, "the peer proposed: %s",
-		  str_selectors(local_client, remote_client, &sb));
+		  str_selector_pair(local_client, remote_client, &sb));
 
 	/* Now that we have identities of client subnets, we must look for
 	 * a suitable connection (our current one only matches for hosts).
@@ -1938,9 +1938,9 @@ static struct connection *fc_try(const struct connection *c,
 		if (d->policy & POLICY_GROUP)
 			continue;
 
-		selectors_buf sb;
+		selector_pair_buf sb;
 		dbg("  fc_try: looking at %s",
-		    str_selectors(&d->spd->local->client, &d->spd->remote->client, &sb));
+		    str_selector_pair(&d->spd->local->client, &d->spd->remote->client, &sb));
 
 		/*
 		 * ??? what should wildcards and pathlen default to?
@@ -2213,10 +2213,10 @@ struct connection *find_v1_client_connection(struct connection *const c,
 	}
 
 	if (DBGP(DBG_BASE)) {
-		selectors_buf sb;
+		selector_pair_buf sb;
 		DBG_log("find_v1_client_connection starting with %s", c->name);
 		DBG_log("  looking for %s",
-			str_selectors(local_client, remote_client, &sb));
+			str_selector_pair(local_client, remote_client, &sb));
 	}
 
 	/*

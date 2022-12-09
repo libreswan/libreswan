@@ -513,9 +513,9 @@ bool do_updown(enum updown updown_verb,
 	}
 	if (spd != NULL && c->spd != NULL && c->spd->spd_next != NULL) {
 		/* i.e., more selectors than just this */
-		selectors_buf sb;
+		selector_pair_buf sb;
 		llog(RC_LOG, logger, "running updown %s %s", verb,
-		     str_selectors(&spd->local->client, &spd->remote->client, &sb));
+		     str_selector_pair(&spd->local->client, &spd->remote->client, &sb));
 	} else {
 		ldbg(logger, "kernel: running updown command \"%s\" for verb %s ", updown, verb);
 	}
