@@ -445,17 +445,7 @@ struct spd_route {
 	struct spd_end *remote;		/* must update after clone */
 	struct connection *connection;
 	so_serial_t eroute_owner;
-#define set_spd_owner(SPD, SO)						\
-	{								\
-		connection_buf cb;					\
-		dbg("kernel: spd eroute_owner: "PRI_CONNECTION" "PRI_SO"->"PRI_SO" "PRI_WHERE, \
-		    pri_connection((SPD)->connection, &cb),		\
-		    pri_so((SPD)->eroute_owner),			\
-		    /* SO could be an enum :-( */			\
-		    pri_so((so_serial_t)SO),				\
-		    pri_where(HERE));					\
-		(SPD)->eroute_owner = SO;				\
-	}
+
 	struct spd_wip {
 		struct {
 			bool ok;
@@ -539,17 +529,8 @@ struct connection {
 
 	struct child {
 		enum routing routing; /* level of routing in place */
-#define set_child_routing(C, RT)					\
-		{							\
-			connection_buf cb;				\
-			enum_buf ob, nb;				\
-			dbg("kernel: spd routing: "PRI_CONNECTION" %s->%s "PRI_WHERE, \
-			    pri_connection((C), &cb),			\
-			    str_enum(&routing_story, (C)->child.routing, &ob), \
-			    str_enum(&routing_story, RT, &nb),		\
-			    pri_where(HERE));				\
-			(C)->child.routing = RT;			\
-		}
+		so_serial_t kernel_policy_owner;
+
 		/*
 		 * This is identical across kernel-states and shared
 		 * by all SPDs.
@@ -825,5 +806,15 @@ void ldbg_connection(const struct connection *c, where_t where,
 
 struct spd_route *append_spd(struct connection *c, struct spd_route ***last);
 void discard_spds(struct spd_route **spds, bool connection_valid);
+
+void set_spd_owner_where(struct spd_route *spd, so_serial_t so, where_t where);
+#define set_spd_owner(SPD, SO)			\
+	set_spd_owner_where(SPD, SO, HERE)
+void set_child_kernel_policy_owner_where(struct connection *c, so_serial_t so, where_t where);
+#define set_child_kernel_policy_owner(C, SO)			\
+	set_child_kernel_policy_owner_where(C, SO, HERE)
+void set_child_routing_where(struct connection *c, enum routing routing, where_t where);
+#define set_child_routing(C, RT)		\
+	set_child_routing_where(C, RT, HERE)
 
 #endif

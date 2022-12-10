@@ -947,14 +947,18 @@ static enum routability could_route(struct connection *c,
 			 */
 			connection_buf erob;
 			llog(RC_LOG_SERIOUS, logger,
-				    "cannot install eroute -- it is in use for "PRI_CONNECTION" #%lu",
-				    pri_connection(ero, &erob), esr->eroute_owner);
+			     "cannot install eroute -- it is in use for "PRI_CONNECTION" "PRI_SO" ("PRI_SO")",
+			     pri_connection(ero, &erob),
+			     pri_so(esr->eroute_owner),
+			     pri_so(esr->connection->child.kernel_policy_owner));
 			return ROUTE_IMPOSSIBLE;
 		}
 
 		connection_buf erob;
-		dbg("kernel: overlapping permitted with "PRI_CONNECTION" #%lu",
-		    pri_connection(ero, &erob), esr->eroute_owner);
+		dbg("kernel: overlapping permitted with "PRI_CONNECTION" "PRI_SO" ("PRI_SO")",
+		    pri_connection(ero, &erob),
+		    pri_so(esr->eroute_owner),
+		    pri_so(esr->connection->child.kernel_policy_owner));
 	}
 	return ROUTEABLE;
 }
@@ -1160,8 +1164,10 @@ static void find_spd_conflicts(struct spd_route *spd, struct logger *logger)
 			 */
 			connection_buf pob;
 			ldbg(logger,
-			     "kernel: need to juggle permenant and template "PRI_CONNECTION" "PRI_SO,
-			     pri_connection(po, &pob), pri_so(spd->wip.conflicting.policy->eroute_owner));
+			     "kernel: need to juggle permenant and template "PRI_CONNECTION" "PRI_SO" ("PRI_SO")",
+			     pri_connection(po, &pob),
+			     pri_so(spd->wip.conflicting.policy->eroute_owner),
+			     pri_so(spd->wip.conflicting.policy->connection->child.kernel_policy_owner));
 		} else if (po->kind == CK_TEMPLATE && streq(po->name, c->name)) {
 			/*
 			 * Look along the chain of policies for one
@@ -1169,8 +1175,10 @@ static void find_spd_conflicts(struct spd_route *spd, struct logger *logger)
 			 */
 			connection_buf pob;
 			ldbg(po->logger,
-			     "kernel: allowing policy conflict with template "PRI_CONNECTION" "PRI_SO"",
-			     pri_connection(po, &pob), pri_so(spd->wip.conflicting.policy->eroute_owner));
+			     "kernel: allowing policy conflict with template "PRI_CONNECTION" "PRI_SO" ("PRI_SO")",
+			     pri_connection(po, &pob),
+			     pri_so(spd->wip.conflicting.policy->eroute_owner),
+			     pri_so(spd->wip.conflicting.policy->connection->child.kernel_policy_owner));
 		} else if (LDISJOINT(POLICY_OVERLAPIP, c->policy | po->policy) &&
 			   c->config->sec_label.len == 0) {
 
@@ -1191,13 +1199,17 @@ static void find_spd_conflicts(struct spd_route *spd, struct logger *logger)
 			 */
 			connection_buf pob;
 			llog(RC_LOG_SERIOUS, logger,
-			     "cannot install eroute -- it is in use for "PRI_CONNECTION" "PRI_SO,
-			     pri_connection(po, &pob), pri_so(spd->wip.conflicting.policy->eroute_owner));
+			     "cannot install eroute -- it is in use for "PRI_CONNECTION" "PRI_SO" ("PRI_SO")",
+			     pri_connection(po, &pob),
+			     pri_so(spd->wip.conflicting.policy->eroute_owner),
+			     pri_so(spd->wip.conflicting.policy->connection->child.kernel_policy_owner));
 			spd->wip.conflicting.ok = false;
 		} else {
 			connection_buf pob;
-			ldbg(logger, "kernel: overlapping permitted with "PRI_CONNECTION" "PRI_SO,
-			     pri_connection(po, &pob), pri_so(spd->wip.conflicting.policy->eroute_owner));
+			ldbg(logger, "kernel: overlapping permitted with "PRI_CONNECTION" "PRI_SO" ("PRI_SO")",
+			     pri_connection(po, &pob),
+			     pri_so(spd->wip.conflicting.policy->eroute_owner),
+			     pri_so(spd->wip.conflicting.policy->connection->child.kernel_policy_owner));
 		}
 	}
 }
@@ -2415,18 +2427,20 @@ static bool setup_half_kernel_policy(struct state *st, enum direction direction)
 	 * Note reversed ends.
 	 * Not much to be done on failure.
 	 */
-	dbg("kernel: %s() installing kernel-policy direction=%s owner="PRI_SO,
+	dbg("kernel: %s() installing kernel-policy direction=%s owner="PRI_SO" ("PRI_SO")",
 	    __func__, enum_name_short(&direction_names, direction),
-	    pri_so(c->spd->eroute_owner));
+	    pri_so(c->spd->eroute_owner),
+	    pri_so(c->spd->connection->child.kernel_policy_owner));
 	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
 		if (spd->eroute_owner != SOS_NOBODY) {
 			selector_buf lb, rb;
-			dbg("kernel: %s() skipping %s SPD for %s<->%s as already has owner "PRI_SO,
+			dbg("kernel: %s() skipping %s SPD for %s<->%s as already has owner "PRI_SO" ("PRI_SO")",
 			    __func__,
 			    enum_name_short(&direction_names, direction),
 			    str_selector(&spd->local->client, &lb),
 			    str_selector(&spd->remote->client, &rb),
-			    pri_so(spd->eroute_owner));
+			    pri_so(spd->eroute_owner),
+			    pri_so(spd->connection->child.kernel_policy_owner));
 			continue;
 		}
 		if (c->config->sec_label.len > 0 &&
@@ -3195,28 +3209,6 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 		for (; sr != NULL; sr = sr->spd_next) {
 			dbg("kernel: sr for #%lu: %s", st->st_serialno,
 			    enum_name(&routing_story, c->child.routing));
-
-			/*
-			 * if the eroute owner is not us, then make it
-			 * us.  See test co-terminal-02,
-			 * pluto-rekey-01, pluto-unit-02/oppo-twice
-			 *
-			 * However, when SR has been eclipsed, leave
-			 * the route alone - the SOS_NOBYDY +
-			 * RT_UNROUTED_KEYED.
-			 *
-			 * XXX: this PEXPECT() isn't reached; probably
-			 * because sr->eroute_owner == SOS_NOBODY is
-			 * true when RT_UNROUTED_KEYED.
-			 */
-			pexpect(sr->eroute_owner == SOS_NOBODY ||
-				c->child.routing == RT_ROUTED_TUNNEL);
-
-			/*
-			 * XXX: Since when sr->eroute_owner ==
-			 * SOS_NOBODY when RT_UNROUTED_KEYED, this
-			 * code is skipped for SR.
-			 */
 			if (sr->eroute_owner != st->st_serialno) {
 				if (!install_ipsec_spd_kernel_policies(c, sr, st, st->st_logger)) {
 					delete_ipsec_sa(st);
@@ -3228,6 +3220,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 				}
 			}
 		}
+		set_child_kernel_policy_owner(c, st->st_serialno);
 	}
 
 	/* XXX why is this needed? Skip the bogus original conn? */
@@ -3383,13 +3376,27 @@ static void teardown_ipsec_kernel_policies(struct state *st,
 	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
 
 		if (spd->eroute_owner != st->st_serialno) {
-			dbg("kernel: %s() skipping, eroute_owner "PRI_SO" doesn't match Child SA "PRI_SO,
-			    __func__, pri_so(spd->eroute_owner), pri_so(st->st_serialno));
+			ldbg(st->st_logger,
+			     "kernel: %s() skipping, eroute_owner "PRI_SO" ("PRI_SO") doesn't match Child SA "PRI_SO,
+			     __func__,
+			     pri_so(spd->eroute_owner),
+			     pri_so(spd->connection->child.kernel_policy_owner),
+			     pri_so(st->st_serialno));
 			continue;
 		}
 
 		set_spd_owner(spd, SOS_NOBODY);
 		was_owner = true;
+	}
+	if (c->child.kernel_policy_owner != st->st_serialno) {
+		PEXPECT(st->st_logger, !was_owner);
+		ldbg(st->st_logger,
+		     "kernel: %s() skipping, kernel_policy_owner "PRI_SO" doesn't match Child SA "PRI_SO,
+		     __func__,
+		     pri_so(c->child.kernel_policy_owner),
+		     pri_so(st->st_serialno));
+	} else {
+		set_child_kernel_policy_owner(c, SOS_NOBODY);
 	}
 
 	if (!was_owner) {

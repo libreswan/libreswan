@@ -1800,10 +1800,6 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 					     bool_str(spd_end->child->has_client),
 					     bool_str(spd_end->virt != NULL));
 				}
-				/* default values */
-				passert(spd->eroute_owner == SOS_NOBODY);
-				/* leave a debug-log breadcrumb */
-				set_spd_owner(spd, SOS_NOBODY);
 			}
 			/* advance RIGHT (NULL+1>=NULL+0) */
 			if (selectors[RIGHT_END].selector + 1 >= selectors[RIGHT_END].selectors->list + selectors[RIGHT_END].selectors->len) break;
@@ -1815,6 +1811,10 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 	}
 
 	c->spd = spd_list;
+
+	/* leave a bread crumb */
+	PEXPECT(c->logger, c->child.kernel_policy_owner == SOS_NOBODY);
+	set_child_kernel_policy_owner(c, SOS_NOBODY);
 
 	/* leave a bread crumb */
 	passert(c->child.routing == RT_UNROUTED);
@@ -1883,12 +1883,13 @@ static void add_proposal_spds(struct connection *c)
 					     bool_str(spd_end->child->has_client),
 					     bool_str(spd_end->virt != NULL));
 				}
-				/* default values */
-				passert(spd->eroute_owner == SOS_NOBODY);
-				set_spd_owner(spd, SOS_NOBODY);
 			}
 		}
 	}
+
+	/* leave a bread crumb */
+	PEXPECT(c->logger, c->child.kernel_policy_owner == SOS_NOBODY);
+	set_child_kernel_policy_owner(c, SOS_NOBODY);
 
 	set_connection_priority(c); /* must be after .kind and .spd are set */
 	spd_route_db_add_connection(c);
@@ -3396,9 +3397,9 @@ struct connection *spd_instantiate(struct connection *t,
 
 	set_connection_priority(d); /* re-compute; may have changed */
 
-	/* should still be true; leave another breadcrumb */
-	pexpect(d->spd->eroute_owner == SOS_NOBODY);
-	set_spd_owner(d->spd, SOS_NOBODY);
+	/* leave breadcrumb */
+	pexpect(d->child.kernel_policy_owner == SOS_NOBODY);
+	set_child_kernel_policy_owner(d, SOS_NOBODY);
 
 	/* all done */
 	spd_route_db_add_connection(d);
@@ -3448,9 +3449,9 @@ struct connection *sec_label_instantiate(struct ike_sa *ike,
 
 	set_connection_priority(d); /* re-compute; may have changed */
 
-	/* should still be true; leave another breadcrumb */
-	pexpect(d->spd->eroute_owner == SOS_NOBODY);
-	set_spd_owner(d->spd, SOS_NOBODY);
+	/* leave breadcrumb */
+	pexpect(d->child.kernel_policy_owner == SOS_NOBODY);
+	set_child_kernel_policy_owner(d, SOS_NOBODY);
 
 	/* all done */
 	spd_route_db_add_connection(d);
@@ -5102,4 +5103,61 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 				     str_selector(&selector, &cb));
 		}
 	}
+}
+
+void set_spd_owner_where(struct spd_route *spd, so_serial_t nso, where_t where)
+{
+	so_serial_t oso = spd->eroute_owner;
+	selector_pair_buf sb;
+	ldbg(spd->connection->logger,
+	     "kernel: eroute_owner spd "PRI_SO"->"PRI_SO" %s "PRI_WHERE,
+	     pri_so(oso), pri_so(nso),
+	     str_selector_pair(&spd->local->client,
+			       &spd->remote->client,
+			       &sb),
+	     pri_where(where));
+	so_serial_t cso = spd->connection->child.kernel_policy_owner;
+	if (cso != oso) {
+		llog_pexpect(spd->connection->logger, where,
+			     "kernel: eroute_owner spd "PRI_SO" vs connection "PRI_SO" for %s",
+			     pri_so(oso), pri_so(cso),
+			     str_selector_pair(&spd->local->client,
+					       &spd->remote->client,
+					       &sb));
+	}
+	spd->eroute_owner = nso;
+}
+
+void set_child_kernel_policy_owner_where(struct connection *c, so_serial_t nso, where_t where)
+{
+	so_serial_t oso = c->child.kernel_policy_owner;
+	ldbg(c->logger,
+	     "kernel: eroute_owner connection "PRI_SO"->"PRI_SO" "PRI_WHERE,
+	     pri_so(oso), pri_so(nso),
+	     pri_where(where));
+	for (struct spd_route *spd = c->spd;
+	     spd != NULL;
+	     spd = spd->spd_next) {
+		if (spd->eroute_owner != nso) {
+			selector_pair_buf sb;
+			llog_pexpect(c->logger, where,
+				     "kernel: eroute_owner spd "PRI_SO" vs connection "PRI_SO" for %s",
+				     pri_so(spd->eroute_owner),
+				     pri_so(nso),
+				     str_selector_pair(&spd->local->client,
+						       &spd->remote->client,
+						       &sb));
+		}
+	}
+	c->child.kernel_policy_owner = nso;
+}
+
+void set_child_routing_where(struct connection *c, enum routing routing, where_t where)
+{
+	enum_buf ob, nb;
+	ldbg(c->logger, "kernel: routing connection %s->%s "PRI_WHERE,
+	     str_enum(&routing_story, c->child.routing, &ob),
+	     str_enum(&routing_story, routing, &nb),
+	     pri_where(where));
+	c->child.routing = routing;
 }
