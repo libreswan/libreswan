@@ -3143,6 +3143,42 @@ static bool install_ipsec_spd_kernel_policies(struct connection *c,
 	}
 }
 
+static bool install_ipsec_kernel_policies(struct state *st)
+{
+	struct connection *c = st->st_connection;
+	ldbg(st->st_logger,
+	     "kernel: %s() for "PRI_SO": connection "PRI_SO" %s",
+	    __func__,
+	    pri_so(st->st_serialno),
+	    pri_so(c->child.kernel_policy_owner),
+	    enum_name(&routing_story, c->child.routing));
+
+	if (c->child.kernel_policy_owner == st->st_serialno) {
+		for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+			PEXPECT(st->st_logger, spd->eroute_owner == st->st_serialno);
+		}
+		ldbg(st->st_logger,
+		     "kernel: %s() skipped as already owner",
+		     __func__);
+		return true;
+	}
+
+	struct spd_route *spd = c->spd;
+	if (c->remotepeertype == CISCO && spd->spd_next != NULL) {
+		/* XXX: why is CISCO skipped? */
+		set_spd_owner(spd, st->st_serialno);
+		spd = spd->spd_next;
+	}
+	for (; spd != NULL; spd = spd->spd_next) {
+		if (!install_ipsec_spd_kernel_policies(c, spd, st, st->st_logger)) {
+			return false;
+		}
+	}
+
+	set_child_kernel_policy_owner(c, st->st_serialno);
+	return true;
+}
+
 bool install_ipsec_sa(struct state *st, bool inbound_also)
 {
 	dbg("kernel: install_ipsec_sa() for #%lu: %s", st->st_serialno,
@@ -3203,24 +3239,9 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 	    c->child.sec_label.len > 0) {
 		dbg("kernel: %s() skipping install of IPsec policies as security label", __func__);
 	} else {
-		struct spd_route *sr = c->spd;
-		if (c->remotepeertype == CISCO && sr->spd_next != NULL)
-			sr = sr->spd_next;
-		for (; sr != NULL; sr = sr->spd_next) {
-			dbg("kernel: sr for #%lu: %s", st->st_serialno,
-			    enum_name(&routing_story, c->child.routing));
-			if (sr->eroute_owner != st->st_serialno) {
-				if (!install_ipsec_spd_kernel_policies(c, sr, st, st->st_logger)) {
-					delete_ipsec_sa(st);
-					/*
-					 * XXX go and unroute any SRs that were
-					 * successfully routed already.
-					 */
-					return false;
-				}
-			}
+		if (!install_ipsec_kernel_policies(st)) {
+			delete_ipsec_sa(st);
 		}
-		set_child_kernel_policy_owner(c, st->st_serialno);
 	}
 
 	/* XXX why is this needed? Skip the bogus original conn? */
