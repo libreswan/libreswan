@@ -949,8 +949,10 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 	 *
 	 * Clearly a bug.
 	 */
-	if (local->modecfg.server) {
-		dbg("skipping TS processing, mainly to stop a connection flip!?!");
+	if (local->modecfg.server &&
+	    child->sa.st_connection->local->child.selectors.proposed.len <= 1 &&
+	    child->sa.st_connection->remote->child.selectors.proposed.len <= 1) {
+		ldbg_sa(child, "skipping TS processing, mainly to stop a connection flip!?!");
 	} else {
 		/*
 		 * Danger! This TS call can change the child's
