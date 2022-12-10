@@ -191,9 +191,6 @@ static void scribble_selectors_on_spd(struct connection *c,
 	 * XXX: instead build these SPDs from above selectors?
 	 */
 
-	so_serial_t owner = c->child.kernel_policy_owner;
-	c->child.kernel_policy_owner = SOS_NOBODY;
-
 	struct spd_route *spd_list = NULL;
 	struct spd_route **spd_tail = &spd_list;
 	for (const struct narrowed_selector *local_ns = local_nsp->ts;
@@ -203,16 +200,22 @@ static void scribble_selectors_on_spd(struct connection *c,
 			struct spd_route *spd = append_spd(c, &spd_tail);
 			spd->local->client = local_ns->selector;
 			spd->remote->client = remote_ns->selector;
-			/* bread crumb */
-			passert(spd->eroute_owner == SOS_NOBODY);
-			set_spd_owner(spd, owner);
 		}
 	}
 
 	discard_spds(&c->spd, true/*valid*/);
 	c->spd = spd_list;
 
-	/* bread crumb */
+	/*
+	 * Fancy bread crumb; need to save the old owner and then zap
+	 * C so it is consistent with the new SPDs when they get
+	 * zapped.
+	 */
+	so_serial_t owner = c->child.kernel_policy_owner;
+	c->child.kernel_policy_owner = SOS_NOBODY;
+	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+		set_spd_owner(spd, owner);
+	}
 	set_child_kernel_policy_owner(c, owner);
 #if 0
 	set_connection_priority(c); /* must be after .kind and .spd are set */

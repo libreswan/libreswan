@@ -3372,37 +3372,19 @@ static void teardown_ipsec_kernel_policies(struct state *st,
 	 * XXX: can this instead look at the latest_ipsec?
 	 */
 
-	bool was_owner = false;
-	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
-
-		if (spd->eroute_owner != st->st_serialno) {
-			ldbg(st->st_logger,
-			     "kernel: %s() skipping, eroute_owner "PRI_SO" ("PRI_SO") doesn't match Child SA "PRI_SO,
-			     __func__,
-			     pri_so(spd->eroute_owner),
-			     pri_so(spd->connection->child.kernel_policy_owner),
-			     pri_so(st->st_serialno));
-			continue;
-		}
-
-		set_spd_owner(spd, SOS_NOBODY);
-		was_owner = true;
-	}
 	if (c->child.kernel_policy_owner != st->st_serialno) {
-		PEXPECT(st->st_logger, !was_owner);
 		ldbg(st->st_logger,
-		     "kernel: %s() skipping, kernel_policy_owner "PRI_SO" doesn't match Child SA "PRI_SO,
+		     "kernel: %s() skipping, kernel policy ownere (aka eroute_owner) "PRI_SO" doesn't match Child SA "PRI_SO,
 		     __func__,
 		     pri_so(c->child.kernel_policy_owner),
 		     pri_so(st->st_serialno));
-	} else {
-		set_child_kernel_policy_owner(c, SOS_NOBODY);
-	}
-
-	if (!was_owner) {
-		ldbg(st->st_logger, "not owner, skipping policy update and route update");
 		return;
 	}
+
+	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+		set_spd_owner(spd, SOS_NOBODY);
+	}
+	set_child_kernel_policy_owner(c, SOS_NOBODY);
 
 	/*
 	 * update routing; route_owner() will see this and not think
