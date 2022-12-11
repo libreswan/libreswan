@@ -1021,7 +1021,43 @@ static enum routability connection_routable(struct connection *c,
 	return ROUTEABLE; /* aka keep looking */
 }
 
-static void find_spd_conflicts(struct spd_route *spd, struct logger *logger)
+static bool spd_route_conflicts(struct spd_route *spd UNUSED,
+				struct spd_route *d_spd UNUSED,
+				struct logger *logger UNUSED,
+				unsigned indent UNUSED)
+{
+	return true;
+}
+
+static bool spd_policy_conflicts(struct spd_route *spd,
+				 struct spd_route *d_spd,
+				 struct logger *logger,
+				 unsigned indent)
+{
+	struct connection *c = spd->connection;
+	struct connection *d = d_spd->connection;
+
+	if ((c->sa_marks.in.val & c->sa_marks.in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask)) {
+		ldbg(logger, "%*s skipping policy %s; marks in don't match",
+		     indent, "", d->name);
+		return false;
+	}
+
+	if ((c->sa_marks.out.val & c->sa_marks.out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask) ) {
+		ldbg(logger, "%*s skipping policy %s; marks out don't match",
+		     indent, "", d->name);
+		return false;
+	}
+
+	if (!selector_eq_selector(spd->local->client, d_spd->local->client)) {
+		ldbg(logger, "%*s skipping policy %s; local selector doesn't match",
+		     indent, "", d->name);
+		return false;
+	}
+	return true;
+}
+
+static void check_spd_conflicts(struct spd_route *spd, struct logger *logger)
 {
 	zero(&spd->wip);
 	spd->wip.conflicting.ok = true; /* hope for the best */
@@ -1041,52 +1077,68 @@ static void find_spd_conflicts(struct spd_route *spd, struct logger *logger)
 		.where = HERE,
 	};
 
+	unsigned indent = 4;
+
 	while (next_spd_route(NEW2OLD, &srf)) {
 		struct spd_route *d_spd = srf.spd;
 		struct connection *d = d_spd->connection;
 
-		if (spd == d_spd)
+		if (spd == d_spd) {
+			ldbg(logger, "%*s skipping route %s; same spd",
+			     indent, "", d->name);
 			continue;
+		}
 
-		if (d->child.routing == RT_UNROUTED)
+		if (d->child.routing == RT_UNROUTED) {
+			ldbg(logger, "%*s skipping route %s; unrouted",
+			     indent, "", d->name);
 			continue;
+		}
 
-		/* passert(oriented(d)); since routed */
+#if 0
+		if (!oriented(d)) {
+			/* being routed implies orented() */
+			llog_pexpect(logger, HERE, "%*s skipping route %s; unoriented",
+				     indent, "", d->name);
+			continue;
+		}
+#endif
 
 		/* lookup did it's job */
 		pexpect(selector_range_eq_selector_range(spd->remote->client,
 							 d_spd->remote->client));
 		if (!selector_eq_selector(spd->remote->client,
 					  d_spd->remote->client)) {
+			ldbg(logger, "%*s skipping route %s; remote selectors don't match",
+			     indent, "", d->name);
+			continue;
+		}
+
+		/*
+		 * XXX: this doesn't make much sense for a route or
+		 * policy!?!
+		 */
+		if (!address_eq_address(c->local->host.addr,
+					d->local->host.addr)) {
+			ldbg(logger, "%*s skipping route %s; host addresses don't match",
+			     indent, "", d->name);
 			continue;
 		}
 
 		/* The routes conflict */
 
-		if (d->child.routing > best_routing) {
+		if (spd_route_conflicts(spd, d_spd, logger, indent) &&
+		    d->child.routing > best_routing) {
+			ldbg(logger, "%*s saving route %s; best so far",
+			     indent, "", d->name);
 			spd->wip.conflicting.route = d_spd;
 			best_routing = d->child.routing;
 		}
 
-		/*
-		 * XXX: routing isn't about host addresses; the policy
-		 * is. This test is too early.
-		 */
-		if (!address_eq_address(c->local->host.addr,
-					d->local->host.addr)) {
-			continue;
-		}
-
-		/*
-		 * XXX: marks are't visible to the routing code, this
-		 * test is too early?
-		 */
-		if ( (c->sa_marks.in.val & c->sa_marks.in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask) ||
-		     (c->sa_marks.out.val & c->sa_marks.out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask) )
-			continue;
-
-		if (selector_eq_selector(spd->local->client, d_spd->local->client) &&
+		if (spd_policy_conflicts(spd, d_spd, logger, indent) &&
 		    d->child.routing > best_policy) {
+			ldbg(logger, "%*s saving policy %s; best so far",
+			     indent, "", d->name);
 			spd->wip.conflicting.policy = d_spd;
 			best_policy = d->child.routing;
 		}
@@ -1097,8 +1149,9 @@ static void find_spd_conflicts(struct spd_route *spd, struct logger *logger)
 	 * there's a bare one.
 	 */
 
-	spd->wip.conflicting.shunt = (spd->wip.conflicting.policy != NULL ? NULL :
-				  bare_shunt_ptr(&spd->local->client, &spd->remote->client, __func__));
+	spd->wip.conflicting.shunt =
+		(spd->wip.conflicting.policy != NULL ? NULL :
+		 bare_shunt_ptr(&spd->local->client, &spd->remote->client, __func__));
 
 	/*
 	 * Report what was found.
@@ -1106,7 +1159,8 @@ static void find_spd_conflicts(struct spd_route *spd, struct logger *logger)
 
 	selector_pair_buf sb;
 	ldbg(logger,
-	     "kernel: %s() %s; wip.conflicting_route %s wip.conflicting_policy %s wip.conflicting_shunt=%s",
+	     "%*s kernel: %s() %s; wip.conflicting_route %s wip.conflicting_policy %s wip.conflicting_shunt=%s",
+	     indent, "",
 	     __func__, str_selector_pair(&spd->local->client, &spd->remote->client, &sb),
 	     (spd->wip.conflicting.route == NULL ? "<none>" : spd->wip.conflicting.route->connection->name),
 	     (spd->wip.conflicting.policy == NULL ? "<none>" : spd->wip.conflicting.policy->connection->name),
@@ -1133,7 +1187,6 @@ static void find_spd_conflicts(struct spd_route *spd, struct logger *logger)
 		 * TODO: XFRM supports this. For now, only allow this
 		 * for OE.
 		 */
-		PEXPECT(logger, kernel_ops->overlap_supported);
 		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 			connection_buf cib;
 			llog(RC_LOG_SERIOUS, logger,
@@ -1164,7 +1217,8 @@ static void find_spd_conflicts(struct spd_route *spd, struct logger *logger)
 			 */
 			connection_buf pob;
 			ldbg(logger,
-			     "kernel: need to juggle permenant and template "PRI_CONNECTION" "PRI_SO" ("PRI_SO")",
+			     "%*s kernel: need to juggle permenant and template "PRI_CONNECTION" "PRI_SO" ("PRI_SO")",
+			     indent, "",
 			     pri_connection(po, &pob),
 			     pri_so(spd->wip.conflicting.policy->eroute_owner),
 			     pri_so(spd->wip.conflicting.policy->connection->child.kernel_policy_owner));
@@ -1175,7 +1229,8 @@ static void find_spd_conflicts(struct spd_route *spd, struct logger *logger)
 			 */
 			connection_buf pob;
 			ldbg(po->logger,
-			     "kernel: allowing policy conflict with template "PRI_CONNECTION" "PRI_SO" ("PRI_SO")",
+			     "%*s kernel: allowing policy conflict with template "PRI_CONNECTION" "PRI_SO" ("PRI_SO")",
+			     indent, "",
 			     pri_connection(po, &pob),
 			     pri_so(spd->wip.conflicting.policy->eroute_owner),
 			     pri_so(spd->wip.conflicting.policy->connection->child.kernel_policy_owner));
@@ -1206,12 +1261,25 @@ static void find_spd_conflicts(struct spd_route *spd, struct logger *logger)
 			spd->wip.conflicting.ok = false;
 		} else {
 			connection_buf pob;
-			ldbg(logger, "kernel: overlapping permitted with "PRI_CONNECTION" "PRI_SO" ("PRI_SO")",
+			ldbg(logger,
+			     "%*s kernel: overlapping permitted with "PRI_CONNECTION" "PRI_SO" ("PRI_SO")",
+			     indent, "",
 			     pri_connection(po, &pob),
 			     pri_so(spd->wip.conflicting.policy->eroute_owner),
 			     pri_so(spd->wip.conflicting.policy->connection->child.kernel_policy_owner));
 		}
 	}
+}
+
+static bool check_connection_conflicts(struct connection *c, struct logger *logger)
+{
+	ldbg(logger, "checking %s for conflicts", c->name);
+	bool routable = false;
+	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+		check_spd_conflicts(spd, logger);
+		routable |= spd->wip.conflicting.ok;
+	}
+	return routable;
 }
 
 static bool install_prospective_kernel_policy(struct connection *c)
@@ -1233,12 +1301,7 @@ static bool install_prospective_kernel_policy(struct connection *c)
 	 * the structure is zeroed (sec_labels ignore conflicts).
 	 */
 
-	bool routable = false;
-	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
-		find_spd_conflicts(spd, c->logger);
-		routable |= spd->wip.conflicting.ok;
-	}
-
+	bool routable = check_connection_conflicts(c, c->logger);
 	if (!routable) {
 		return false;
 	}
@@ -2856,6 +2919,63 @@ static bool install_ipsec_spd_kernel_policies(struct connection *c,
 								   &sr->remote->client,
 								   "route and eroute") :
 				    NULL);
+#if 1
+	struct spd_route *spd = sr;
+	if (spd->wip.conflicting.route != rosr) {
+		if (spd->wip.conflicting.route == NULL &&
+		    rosr != NULL &&
+		    rosr != spd &&
+		    rosr->connection == spd->connection) {
+			selector_pair_buf rsb;
+			connection_buf cb;
+			ldbg(st->st_logger,
+			     "wip route <null> with sibling "PRI_CONNECTION" %s",
+			     pri_connection(rosr->connection, &cb),
+			     str_selector_pair(&rosr->local->client,
+					       &rosr->remote->client,
+					       &rsb));
+		} else {
+			const struct spd_route *wspd = spd->wip.conflicting.route;
+			selector_pair_buf wsb, rsb;
+			llog_pexpect(st->st_logger, HERE,
+				     "wip route %s %s != %s %s",
+				     (wspd == NULL ? "<null>" : wspd->connection->name),
+				     str_selector_pair((wspd == NULL ? NULL : &wspd->local->client),
+						       (wspd == NULL ? NULL : &wspd->remote->client),
+						       &wsb),
+				     (rosr == NULL ? "<null>" : rosr->connection->name),
+				     str_selector_pair((rosr == NULL ? NULL : &rosr->local->client),
+						       (rosr == NULL ? NULL : &rosr->remote->client),
+						       &rsb));
+		}
+	}
+	if (spd->wip.conflicting.policy != esr) {
+		const struct spd_route *wspd = spd->wip.conflicting.route;
+		selector_pair_buf wsb, esb;
+		llog_pexpect(st->st_logger, HERE,
+			     "wip policy %s %s != %s %s",
+			     (wspd == NULL ? "<null>" : wspd->connection->name),
+			     str_selector_pair((wspd == NULL ? NULL : &wspd->local->client),
+					       (wspd == NULL ? NULL : &wspd->remote->client),
+					       &wsb),
+			     (esr == NULL ? "<null>" : esr->connection->name),
+			     str_selector_pair((esr == NULL ? NULL : &esr->local->client),
+					       (esr == NULL ? NULL : &esr->remote->client),
+					       &esb));
+	}
+	if (spd->wip.conflicting.shunt != bspp) {
+		struct bare_shunt **wbsp = spd->wip.conflicting.shunt;
+		selector_pair_buf wsb, bsp;
+		llog_pexpect(st->st_logger, HERE,
+			     "wip bsp %s != %s",
+			     str_selector_pair(wbsp == NULL ? NULL : &(*wbsp)->our_client,
+					       wbsp == NULL ? NULL : &(*wbsp)->peer_client,
+					       &wsb),
+			     str_selector_pair(bspp == NULL ? NULL : &(*bspp)->our_client,
+					       bspp == NULL ? NULL : &(*bspp)->peer_client,
+					       &bsp));
+	}
+#endif
 
 	/* install the eroute */
 
@@ -3163,13 +3283,24 @@ static bool install_ipsec_kernel_policies(struct state *st)
 		return true;
 	}
 
-	struct spd_route *spd = c->spd;
-	if (c->remotepeertype == CISCO && spd->spd_next != NULL) {
+	struct spd_route *start = c->spd;
+	if (c->remotepeertype == CISCO && start->spd_next != NULL) {
 		/* XXX: why is CISCO skipped? */
-		set_spd_owner(spd, st->st_serialno);
-		spd = spd->spd_next;
+		set_spd_owner(start, st->st_serialno);
+		start = start->spd_next;
 	}
-	for (; spd != NULL; spd = spd->spd_next) {
+
+	/*
+	 * Pass +0: Lookup the status of each SPD.
+	 *
+	 * Still call find_spd_conflicts() when a sec_label so that
+	 * the structure is zeroed (sec_labels ignore conflicts).
+	 */
+
+	bool routable = check_connection_conflicts(c, st->st_logger);
+	ldbg(c->logger, "routability %s", bool_str(routable));
+
+	for (struct spd_route *spd = start; spd != NULL; spd = spd->spd_next) {
 		if (!install_ipsec_spd_kernel_policies(c, spd, st, st->st_logger)) {
 			return false;
 		}
