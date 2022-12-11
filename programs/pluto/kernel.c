@@ -1215,8 +1215,22 @@ static void check_spd_conflicts(struct spd_route *spd, struct logger *logger)
 		struct spd_route *d_spd = srf.spd;
 		struct connection *d = d_spd->connection;
 
+		/*
+		 * Don't conflict with self.
+		 */
 		if (spd == d_spd) {
 			ldbg(logger, "%*s skipping route %s; same spd",
+			     indent, "", d->name);
+			continue;
+		}
+
+		/*
+		 * For instance, a connection with:
+		 *    [1.2.3/25]->[5.6.7/24]
+		 *    [2.4.6/25]->[5.6.7/24]
+		 */
+		if (c == d) {
+			ldbg(logger, "%*s skipping route %s; same connection family",
 			     indent, "", d->name);
 			continue;
 		}
@@ -1227,14 +1241,12 @@ static void check_spd_conflicts(struct spd_route *spd, struct logger *logger)
 			continue;
 		}
 
-#if 0
 		if (!oriented(d)) {
 			/* being routed implies orented() */
 			llog_pexpect(logger, HERE, "%*s skipping route %s; unoriented",
 				     indent, "", d->name);
 			continue;
 		}
-#endif
 
 		/* lookup did it's job */
 		pexpect(selector_range_eq_selector_range(spd->remote->client,
@@ -1257,7 +1269,9 @@ static void check_spd_conflicts(struct spd_route *spd, struct logger *logger)
 			continue;
 		}
 
-		/* The routes conflict */
+		/*
+		 * Having got rid of the obvious, what conflicts?
+		 */
 
 		if (spd_route_conflicts(spd, d_spd, logger, indent) &&
 		    d->child.routing > best_routing) {
@@ -1279,6 +1293,8 @@ static void check_spd_conflicts(struct spd_route *spd, struct logger *logger)
 	/*
 	 * If there's no SPD with a conflicting policy, perhaps
 	 * there's a bare one.
+	 *
+	 * XXX: why not add this to the above hash table?
 	 */
 
 	spd->wip.conflicting.shunt =
@@ -3015,10 +3031,13 @@ bool install_inbound_ipsec_sa(struct state *st)
 	return true;
 }
 
-/* Install a route and then a prospective shunt eroute or an SA group eroute.
+/*
+ * Install kernel policies for an IPsec SA.
+ *
  * Assumption: could_route gave a go-ahead.
- * Any SA Group must have already been created.
- * On failure, steps will be unwound.
+ *
+ * Any SA Group must have already been created.  On failure, steps
+ * will be unwound.
  */
 
 static bool install_ipsec_spd_kernel_policies(struct connection *c,
@@ -3398,6 +3417,21 @@ static bool install_ipsec_spd_kernel_policies(struct connection *c,
 static bool install_ipsec_kernel_policies(struct state *st)
 {
 	struct connection *c = st->st_connection;
+
+	if (c->config->ike_version == IKEv2 &&
+	    c->child.sec_label.len > 0) {
+		ldbg(st->st_logger, "kernel: %s() skipping install of IPsec policies as security label", __func__);
+		return true;
+	}
+
+	if (c->child.kernel_policy_owner == st->st_serialno) {
+		ldbg(st->st_logger, "kernel: %s() skipping kernel policies as already owner", __func__);
+		for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+			PEXPECT(st->st_logger, spd->eroute_owner == st->st_serialno);
+		}
+		return true;
+	}
+
 	ldbg(st->st_logger,
 	     "kernel: %s() for "PRI_SO": connection "PRI_SO" %s",
 	    __func__,
@@ -3405,32 +3439,12 @@ static bool install_ipsec_kernel_policies(struct state *st)
 	    pri_so(c->child.kernel_policy_owner),
 	    enum_name(&routing_story, c->child.routing));
 
-	if (c->child.kernel_policy_owner == st->st_serialno) {
-		for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
-			PEXPECT(st->st_logger, spd->eroute_owner == st->st_serialno);
-		}
-		ldbg(st->st_logger,
-		     "kernel: %s() skipped as already owner",
-		     __func__);
-		return true;
-	}
-
 	struct spd_route *start = c->spd;
 	if (c->remotepeertype == CISCO && start->spd_next != NULL) {
 		/* XXX: why is CISCO skipped? */
 		set_spd_owner(start, st->st_serialno);
 		start = start->spd_next;
 	}
-
-	/*
-	 * Pass +0: Lookup the status of each SPD.
-	 *
-	 * Still call find_spd_conflicts() when a sec_label so that
-	 * the structure is zeroed (sec_labels ignore conflicts).
-	 */
-
-	bool routable = check_connection_conflicts(c, st->st_logger);
-	ldbg(c->logger, "routability %s", bool_str(routable));
 
 	for (struct spd_route *spd = start; spd != NULL; spd = spd->spd_next) {
 		if (!install_ipsec_spd_kernel_policies(c, spd, st, st->st_logger)) {
@@ -3444,8 +3458,21 @@ static bool install_ipsec_kernel_policies(struct state *st)
 
 bool install_ipsec_sa(struct state *st, bool inbound_also)
 {
+	struct connection *c = st->st_connection;
 	dbg("kernel: install_ipsec_sa() for #%lu: %s", st->st_serialno,
 	    inbound_also ? "inbound and outbound" : "outbound only");
+
+	/*
+	 * Pass +0: Lookup the status of each SPD.
+	 *
+	 * Still call find_spd_conflicts() when a sec_label so that
+	 * the structure is zeroed (sec_labels ignore conflicts).
+	 */
+
+	enum routability r = connection_routable(st->st_connection, st->st_logger);
+
+	bool routable = check_connection_conflicts(c, st->st_logger);
+	ldbg(c->logger, "routability %s", bool_str(routable));
 
 	struct spd_route *conflict;
 	enum routability rb = could_route(st->st_connection, st->st_connection->spd,
@@ -3454,10 +3481,14 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 	switch (rb) {
 	case ROUTEABLE:
 	case ROUTE_UNNECESSARY:
+		PEXPECT(st->st_logger, routable);
 		break;
 	case ROUTE_IMPOSSIBLE:
-	default:
+		PEXPECT(st->st_logger, !routable);
+		PEXPECT(st->st_logger, r == ROUTE_IMPOSSIBLE);
 		return false;
+	default:
+		bad_case(rb);
 	}
 
 	/* (attempt to) actually set up the SA group */
@@ -3485,35 +3516,33 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 		dbg("kernel: %s() setup inbound SA", __func__);
 
 		/*
-		 * We successfully installed an IPsec SA, meaning it is safe
-		 * to clear our revival back-off delay. This is based on the
-		 * assumption that an unwilling partner might complete an IKE
-		 * SA to us, but won't complete an IPsec SA to us.
+		 * We successfully installed an IPsec SA, meaning it
+		 * is safe to clear our revival back-off delay. This
+		 * is based on the assumption that an unwilling
+		 * partner might complete an IKE SA to us, but won't
+		 * complete an IPsec SA to us.
 		 */
 		st->st_connection->temp_vars.revive_delay = 0;
 	}
 
-	if (rb == ROUTE_UNNECESSARY)
+	if (rb == ROUTE_UNNECESSARY) {
 		return true;
-
-	/* for (sr = &st->st_connection->spd; sr != NULL; sr = sr->next) */
-	struct connection *c = st->st_connection;
-	if (c->config->ike_version == IKEv2 &&
-	    c->child.sec_label.len > 0) {
-		dbg("kernel: %s() skipping install of IPsec policies as security label", __func__);
-	} else {
-		if (!install_ipsec_kernel_policies(st)) {
-			delete_ipsec_sa(st);
-		}
 	}
 
-	/* XXX why is this needed? Skip the bogus original conn? */
-	if (st->st_connection->remotepeertype == CISCO) {
-		struct spd_route *srcisco = st->st_connection->spd->spd_next;
-
-		if (srcisco != NULL) {
-			set_spd_owner(st->st_connection->spd, srcisco->eroute_owner);
+	if (!install_ipsec_kernel_policies(st)) {
+		delete_ipsec_sa(st);
+	}
+	if (c->config->ike_version == IKEv2 && c->child.sec_label.len > 0) {
+		ldbg(st->st_logger, "kernel: %s() skipping install of IPsec policies as security label", __func__);
+	} else if (c->child.kernel_policy_owner == st->st_serialno) {
+		ldbg(st->st_logger, "kernel: %s() skipping kernel policies as already owner", __func__);
+		for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+			PEXPECT(st->st_logger, spd->eroute_owner == st->st_serialno);
 		}
+	} else {
+		if (!install_ipsec_kernel_policies(st)) {
+		}
+		set_child_kernel_policy_owner(c, st->st_serialno);
 	}
 
 	if (inbound_also)
