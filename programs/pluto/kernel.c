@@ -83,6 +83,7 @@
 #include "ip_encap.h"
 #include "show.h"
 #include "rekeyfuzz.h"
+#include "orient.h"
 
 static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 						   reqid_t child_reqid,
@@ -789,6 +790,137 @@ static struct kernel_policy kernel_policy_from_state(const struct state *st,
 								    priority,
 								    where);
 	return kernel_policy;
+}
+
+/*
+ * Find the connection to connection c's peer's client with the
+ * largest value of .routing.  All other things being equal,
+ * preference is given to c.  If none is routed, return NULL.
+ *
+ * The return value is used to find other connections sharing a
+ * destination (route).  POLICY_SPDP is used to find other connections
+ * sharing an identical kernel policy.
+ */
+
+static struct spd_route *route_owner(const struct spd_route *spd,
+				     struct spd_route **policy_spdp)
+{
+	struct connection *c = spd->connection;
+	if (!oriented(c)) {
+		llog(RC_LOG, c->logger,
+		     "route_owner: connection no longer oriented - system interface change?");
+		return NULL;
+	}
+
+	enum routing best_routing = RT_UNROUTED;
+	struct spd_route *best_route_spd = NULL;
+
+	enum routing policy_routing = RT_UNROUTED;
+	struct spd_route *policy_spd = NULL;
+
+	struct spd_route_filter srf = {
+		.remote_client_range = &spd->remote->client,
+		.where = HERE,
+	};
+	while (next_spd_route(NEW2OLD, &srf)) {
+		struct spd_route *d_spd = srf.spd;
+		struct connection *d = d_spd->connection;
+
+		if (spd == d_spd)
+			continue;
+
+		if (!oriented(d))
+			continue;
+
+		if (d->child.routing == RT_UNROUTED)
+			continue;
+
+		/* lookup did it's job */
+		pexpect(selector_range_eq_selector_range(spd->remote->client,
+							 d_spd->remote->client));
+		if (!selector_eq_selector(spd->remote->client,
+					  d_spd->remote->client)) {
+			continue;
+		}
+		if (!address_eq_address(c->local->host.addr,
+					d->local->host.addr)) {
+			continue;
+		}
+
+		/*
+		 * Consider policies different if the either
+		 * in or out marks differ (after masking).
+		 */
+		if (DBGP(DBG_BASE)) {
+			connection_buf cb;
+			DBG_log(" conn "PRI_CONNECTION" mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32 " vs",
+				pri_connection(c, &cb),
+				c->sa_marks.in.val, c->sa_marks.in.mask,
+				c->sa_marks.out.val, c->sa_marks.out.mask);
+			connection_buf db;
+			DBG_log(" conn "PRI_CONNECTION" mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32,
+				pri_connection(d, &db),
+				d->sa_marks.in.val, d->sa_marks.in.mask,
+				d->sa_marks.out.val, d->sa_marks.out.mask);
+		}
+
+		if ( (c->sa_marks.in.val & c->sa_marks.in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask) ||
+		     (c->sa_marks.out.val & c->sa_marks.out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask) )
+			continue;
+
+		if (d->child.routing > best_routing) {
+			dbg("    saving route");
+			best_route_spd = d_spd;
+			best_routing = d->child.routing;
+		}
+
+		if (selector_eq_selector(spd->local->client,
+					 d_spd->local->client) &&
+		    d->child.routing > policy_routing) {
+			dbg("    saving policy");
+			policy_spd = d_spd;
+			policy_routing = d->child.routing;
+		}
+	}
+
+	LSWDBGP(DBG_BASE, buf) {
+		connection_buf cib;
+		jam(buf, "route owner of "PRI_CONNECTION" %s; routing: ",
+		    pri_connection(c, &cib),
+		    enum_name(&routing_story, c->child.routing));
+
+		if (!routed(best_routing)) {
+			jam(buf, "NULL");
+		} else if (best_route_spd->connection == spd->connection &&
+			   best_route_spd != spd) {
+			jam(buf, "sibling");
+		} else if (best_route_spd == spd) {
+			jam(buf, "self");
+		} else {
+			connection_buf cib;
+			jam(buf, ""PRI_CONNECTION" %s",
+			    pri_connection(best_route_spd->connection, &cib),
+			    enum_name(&routing_story, best_routing));
+		}
+
+		jam(buf, "; kernel policy owner: ");
+		if (!erouted(policy_routing)) {
+			jam(buf, "NULL");
+		} else if (policy_spd->connection == c) {
+			jam(buf, "self");
+		} else {
+			connection_buf cib;
+			jam(buf, ""PRI_CONNECTION" %s",
+			    pri_connection(policy_spd->connection, &cib),
+			    enum_name(&routing_story, policy_routing));
+		}
+	}
+
+	if (policy_spdp != NULL) {
+		*policy_spdp = (erouted(policy_routing) ? policy_spd : NULL);
+	}
+
+	return routed(best_routing) ? best_route_spd : NULL;
 }
 
 /*

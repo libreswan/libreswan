@@ -629,9 +629,6 @@ struct connection *group_instantiate(struct connection *group,
 				     ip_port local_port,
 				     ip_port remote_port);
 
-extern struct spd_route *route_owner(const struct spd_route *spd,
-				     struct spd_route **policy_spd);
-
 extern void rekey_now(const char *name, enum sa_type sa_type,
 		      bool background, struct logger *logger);
 
