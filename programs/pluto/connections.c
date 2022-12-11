@@ -4327,6 +4327,7 @@ struct spd_route *route_owner(const struct spd_route *spd,
 			continue;
 
 		if (d->child.routing > best_routing) {
+			dbg("    saving route");
 			best_route_spd = d_spd;
 			best_routing = d->child.routing;
 		}
@@ -4334,6 +4335,7 @@ struct spd_route *route_owner(const struct spd_route *spd,
 		if (selector_eq_selector(spd->local->client,
 					 d_spd->local->client) &&
 		    d->child.routing > policy_routing) {
+			dbg("    saving policy");
 			policy_spd = d_spd;
 			policy_routing = d->child.routing;
 		}
@@ -4341,13 +4343,16 @@ struct spd_route *route_owner(const struct spd_route *spd,
 
 	LSWDBGP(DBG_BASE, buf) {
 		connection_buf cib;
-		jam(buf, "route owner of \"%s\"%s %s: ",
+		jam(buf, "route owner of "PRI_CONNECTION" %s; routing: ",
 		    pri_connection(c, &cib),
 		    enum_name(&routing_story, c->child.routing));
 
 		if (!routed(best_routing)) {
 			jam(buf, "NULL");
-		} else if (best_route_spd->connection == spd->connection) {
+		} else if (best_route_spd->connection == spd->connection &&
+			   best_route_spd != spd) {
+			jam(buf, "sibling");
+		} else if (best_route_spd == spd) {
 			jam(buf, "self");
 		} else {
 			connection_buf cib;
