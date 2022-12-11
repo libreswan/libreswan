@@ -417,15 +417,6 @@ struct bare_shunt {
 	struct bare_shunt *next;
 };
 
-#if 0
-static struct kernel_policy bare_kernel_policy(const struct bare_shunt *bs, where_t where)
-{
-	return stateless_kernel_policy(&bs->our_client, &bs->peer_client,
-				       highest_kernel_priority,
-				       bs->shunt_policy, where);
-}
-#endif
-
 static struct bare_shunt *bare_shunts = NULL;
 
 #ifdef IPSEC_CONNECTION_LIMIT
@@ -3132,23 +3123,7 @@ static bool install_ipsec_spd_kernel_policies(struct connection *c,
 
 	passert(bspp == NULL || ero == NULL);   /* only one non-NULL */
 	bool eroute_installed = sr->wip.installed.policy;
-
-	/* notify the firewall of a new tunnel */
-
-	bool firewall_notified = false;
-
-	if (eroute_installed) {
-		/*
-		 * do we have to notify the firewall?
-		 * Yes, if we are installing
-		 * a tunnel eroute and the firewall wasn't notified
-		 * for a previous tunnel with the same clients.  Any Previous
-		 * tunnel would have to be for our connection, so the actual
-		 * test is simple.
-		 */
-		firewall_notified = (sr->eroute_owner != SOS_NOBODY || /* already notified */
-				     do_updown(UPDOWN_UP, c, sr, st, logger)); /* go ahead and notify */
-	}
+	bool firewall_notified = sr->wip.installed.firewall;
 
 	/* install the route */
 
@@ -3380,8 +3355,7 @@ static bool install_ipsec_kernel_policies(struct state *st)
 {
 	struct connection *c = st->st_connection;
 
-	if (c->config->ike_version == IKEv2 &&
-	    c->child.sec_label.len > 0) {
+	if (c->config->ike_version == IKEv2 && c->child.sec_label.len > 0) {
 		ldbg(st->st_logger, "kernel: %s() skipping install of IPsec policies as security label", __func__);
 		return true;
 	}
@@ -3395,13 +3369,17 @@ static bool install_ipsec_kernel_policies(struct state *st)
 	}
 
 	ldbg(st->st_logger,
-	     "kernel: %s() for "PRI_SO": connection "PRI_SO" %s",
+	     "kernel: %s() installing IPsec policies for "PRI_SO": connection is currently "PRI_SO" %s",
 	    __func__,
 	    pri_so(st->st_serialno),
 	    pri_so(c->child.kernel_policy_owner),
 	    enum_name(&routing_story, c->child.routing));
 
 	struct spd_route *start = c->spd;
+	if (c->remotepeertype == CISCO && start->spd_next != NULL) {
+		/* XXX: why is CISCO skipped? */
+		start = start->spd_next;
+	}
 
 	bool ok = true;
 
@@ -3429,25 +3407,28 @@ static bool install_ipsec_kernel_policies(struct state *st)
 		ok &= spd->wip.installed.policy = sag_eroute(st, spd, op, "install IPsec policy");
 	}
 
-#if 0
-	if (c->child.kernel_policy_owner == SOS_NOBODY) {
-		for (struct spd_route *spd = start; spd != NULL && ok; spd = spd->spd_next) {
-			/*
-			 * Do we have to notify the firewall?  Yes, if
-			 * we are installing a tunnel eroute and the
-			 * firewall wasn't notified for a previous
-			 * tunnel with the same clients.  Any Previous
-			 * tunnel would have to be for our connection,
-			 * so the actual test is simple.
-			 *
-			 * XXX: can't this key off the connection
-			 * state?
-			 */
-			ok &= spd->wip.installed.firewall =
-				do_updown(UPDOWN_UP, c, spd, st, st->st_logger);
+	/* notify the firewall of the new tunnels */
+
+	for (struct spd_route *spd = start; spd != NULL && ok; spd = spd->spd_next) {
+		/*
+		 * Do we have to notify the firewall?  Yes, if
+		 * we are installing a tunnel eroute and the
+		 * firewall wasn't notified for a previous
+		 * tunnel with the same clients.  Any Previous
+		 * tunnel would have to be for our connection,
+		 * so the actual test is simple.
+		 *
+		 * XXX: can't this key off the connection
+		 * state?
+		 */
+		if (c->child.kernel_policy_owner != SOS_NOBODY) {
+			/* already notified */
+			spd->wip.installed.firewall = true;
+		} else {
+			/* go ahead and notify */
+			ok &= spd->wip.installed.firewall = do_updown(UPDOWN_UP, c, spd, st, st->st_logger);
 		}
 	}
-#endif
 
 	for (struct spd_route *spd = start; spd != NULL; spd = spd->spd_next) {
 		if (!install_ipsec_spd_kernel_policies(c, spd, st, st->st_logger)) {
@@ -3541,18 +3522,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 
 	if (!install_ipsec_kernel_policies(st)) {
 		delete_ipsec_sa(st);
-	}
-	if (c->config->ike_version == IKEv2 && c->child.sec_label.len > 0) {
-		ldbg(st->st_logger, "kernel: %s() skipping install of IPsec policies as security label", __func__);
-	} else if (c->child.kernel_policy_owner == st->st_serialno) {
-		ldbg(st->st_logger, "kernel: %s() skipping kernel policies as already owner", __func__);
-		for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
-			PEXPECT(st->st_logger, spd->eroute_owner == st->st_serialno);
-		}
-	} else {
-		if (!install_ipsec_kernel_policies(st)) {
-		}
-		set_child_kernel_policy_owner(c, st->st_serialno);
+		return false;
 	}
 
 	if (inbound_also)
