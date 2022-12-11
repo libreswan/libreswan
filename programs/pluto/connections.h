@@ -456,6 +456,7 @@ struct spd_route {
 		struct {
 			bool route;
 			bool policy;
+			bool firewall;
 		} installed;
 	} wip;
 	struct {

@@ -3130,37 +3130,8 @@ static bool install_ipsec_spd_kernel_policies(struct connection *c,
 
 	/* install the eroute */
 
-	bool eroute_installed = false; /* aka policy_installed */
-
-#ifdef IPSEC_CONNECTION_LIMIT
-	bool new_eroute = false;
-#endif
-
 	passert(bspp == NULL || ero == NULL);   /* only one non-NULL */
-
-	if (bspp != NULL || ero != NULL) {
-		dbg("kernel: we are replacing an eroute");
-		eroute_installed = sag_eroute(st, sr,
-					      KERNEL_POLICY_OP_REPLACE,
-					      "replace sag");
-		/* remember to free bspp if we make it out of here alive */
-	} else {
-		/* we're adding an eroute */
-#ifdef IPSEC_CONNECTION_LIMIT
-		if (num_ipsec_eroute == IPSEC_CONNECTION_LIMIT) {
-			llog(RC_LOG_SERIOUS, logger,
-				    "Maximum number of IPsec connections reached (%d)",
-				    IPSEC_CONNECTION_LIMIT);
-			return false;
-		}
-		new_eroute = true;
-#endif
-
-		/* if no state provided, then install a shunt for later */
-		eroute_installed = sag_eroute(st, sr,
-					      KERNEL_POLICY_OP_ADD,
-					      "add");
-	}
+	bool eroute_installed = sr->wip.installed.policy;
 
 	/* notify the firewall of a new tunnel */
 
@@ -3259,15 +3230,6 @@ static bool install_ipsec_spd_kernel_policies(struct connection *c,
 		set_spd_owner(sr, st->st_serialno);
 		/* clear host shunts that clash with freshly installed route */
 		clear_narrow_holds(&sr->local->client, &sr->remote->client, logger);
-
-#ifdef IPSEC_CONNECTION_LIMIT
-		if (new_eroute) {
-			num_ipsec_eroute++;
-			llog(RC_COMMENT, logger,
-				    "%d IPsec connections are currently being managed",
-				    num_ipsec_eroute);
-		}
-#endif
 
 		return true;
 	} else {
@@ -3440,17 +3402,65 @@ static bool install_ipsec_kernel_policies(struct state *st)
 	    enum_name(&routing_story, c->child.routing));
 
 	struct spd_route *start = c->spd;
-	if (c->remotepeertype == CISCO && start->spd_next != NULL) {
-		/* XXX: why is CISCO skipped? */
-		set_spd_owner(start, st->st_serialno);
-		start = start->spd_next;
+
+	bool ok = true;
+
+#ifdef IPSEC_CONNECTION_LIMIT
+	unsigned new_spds = 0;
+	for (struct spd_route *spd = start; spd != NULL && ok; spd = spd->spd_next) {
+		if (spd->wip.conflicting.policy == NULL &&
+		    spd->wip.conflicting.shunt == NULL) {
+			new_spds++;
+		}
 	}
+	if (num_ipsec_eroute + new_spds >= IPSEC_CONNECTION_LIMIT) {
+		llog(RC_LOG_SERIOUS, logger,
+		     "Maximum number of IPsec connections reached (%d)",
+		     IPSEC_CONNECTION_LIMIT);
+		return false;
+	}
+#endif
+
+	for (struct spd_route *spd = start; spd != NULL && ok; spd = spd->spd_next) {
+		enum kernel_policy_op op =
+			(spd->wip.conflicting.policy != NULL ||
+			 spd->wip.conflicting.shunt != NULL ? KERNEL_POLICY_OP_REPLACE :
+			 KERNEL_POLICY_OP_ADD);
+		ok &= spd->wip.installed.policy = sag_eroute(st, spd, op, "install IPsec policy");
+	}
+
+#if 0
+	if (c->child.kernel_policy_owner == SOS_NOBODY) {
+		for (struct spd_route *spd = start; spd != NULL && ok; spd = spd->spd_next) {
+			/*
+			 * Do we have to notify the firewall?  Yes, if
+			 * we are installing a tunnel eroute and the
+			 * firewall wasn't notified for a previous
+			 * tunnel with the same clients.  Any Previous
+			 * tunnel would have to be for our connection,
+			 * so the actual test is simple.
+			 *
+			 * XXX: can't this key off the connection
+			 * state?
+			 */
+			ok &= spd->wip.installed.firewall =
+				do_updown(UPDOWN_UP, c, spd, st, st->st_logger);
+		}
+	}
+#endif
 
 	for (struct spd_route *spd = start; spd != NULL; spd = spd->spd_next) {
 		if (!install_ipsec_spd_kernel_policies(c, spd, st, st->st_logger)) {
 			return false;
 		}
 	}
+
+#ifdef IPSEC_CONNECTION_LIMIT
+	num_ipsec_eroute += new_spds;
+	llog(RC_COMMENT, logger,
+	     "%d IPsec connections are currently being managed",
+	     num_ipsec_eroute);
+#endif
 
 	set_child_kernel_policy_owner(c, st->st_serialno);
 	return true;
