@@ -101,10 +101,11 @@ const char *str_endpoint_sensitive(const ip_endpoint *, endpoint_buf *);
 
 typedef struct {
 	char buf[sizeof(endpoint_buf) + sizeof("--UNKNOWN--UNKNOWN-->") + sizeof(endpoint_buf)];
-} endpoints_buf;
+} endpoint_pair_buf;
 
-size_t jam_endpoints(struct jambuf *jambuf, const ip_endpoint *src, const ip_endpoint *dst);
-const char *str_endpoints(const ip_endpoint *src, const ip_endpoint *dst, endpoints_buf *buf);
+size_t jam_endpoint_pair(struct jambuf *jambuf, const ip_endpoint *src, const ip_endpoint *dst);
+const char *str_endpoint_pair(const ip_endpoint *src, const ip_endpoint *dst,
+			      endpoint_pair_buf *buf);
 
 /*
  * Magic values.

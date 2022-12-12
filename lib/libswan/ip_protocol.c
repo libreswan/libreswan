@@ -1167,10 +1167,10 @@ const char *str_protocol(const struct ip_protocol *protocol)
 	return protocol->name;
 }
 
-size_t jam_protocols(struct jambuf *buf,
-		     const struct ip_protocol *src,
-		     char sep,
-		     const struct ip_protocol *dst)
+size_t jam_protocol_pair(struct jambuf *buf,
+			 const struct ip_protocol *src,
+			 char sep,
+			 const struct ip_protocol *dst)
 {
 	size_t s = 0;
 	/* caller adds ' ' */

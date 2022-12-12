@@ -104,10 +104,10 @@ size_t jam_protocol(struct jambuf *, const struct ip_protocol *);
 const char *str_protocol(const struct ip_protocol *);
 
 /* ex: sep='=' gives '=TCP=>' */
-size_t jam_protocols(struct jambuf *buf,
-		     const struct ip_protocol *src,
-		     char sep,
-		     const struct ip_protocol *dst);
+size_t jam_protocol_pair(struct jambuf *buf,
+			 const struct ip_protocol *src,
+			 char sep,
+			 const struct ip_protocol *dst);
 
 /* used to size other buffers */
 

@@ -167,7 +167,7 @@ size_t jam_selector_pair(struct jambuf *buf,
 	size_t s = 0;
 	s += jam_selector_subnet_port(buf, src);
 	s += jam_char(buf, ' ');
-	s += jam_protocols(buf, srcp, '-', dstp);
+	s += jam_protocol_pair(buf, srcp, '-', dstp);
 	s += jam_char(buf, ' ');
 	s += jam_selector_subnet_port(buf, dst);
 	return s;

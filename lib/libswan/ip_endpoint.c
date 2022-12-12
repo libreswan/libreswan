@@ -208,7 +208,7 @@ const char *str_endpoint_sensitive(const ip_endpoint *endpoint, endpoint_buf *ds
 	return dst->buf;
 }
 
-size_t jam_endpoints(struct jambuf *buf, const ip_endpoint *src, const ip_endpoint *dst)
+size_t jam_endpoint_pair(struct jambuf *buf, const ip_endpoint *src, const ip_endpoint *dst)
 {
 	size_t s = 0;
 	s += jam_endpoint(buf, src);
@@ -217,17 +217,17 @@ size_t jam_endpoints(struct jambuf *buf, const ip_endpoint *src, const ip_endpoi
 
 	const struct ip_protocol *srcp = src != NULL ? endpoint_protocol(*src) : &ip_protocol_all;
 	const struct ip_protocol *dstp = src != NULL ? endpoint_protocol(*dst) : &ip_protocol_all;
-	s += jam_protocols(buf, srcp, '-', dstp);
+	s += jam_protocol_pair(buf, srcp, '-', dstp);
 
 	s += jam_char(buf, ' ');
 	s += jam_endpoint(buf, dst);
 	return s;
 }
 
-const char *str_endpoints(const ip_endpoint *src, const ip_endpoint *dst, endpoints_buf *out)
+const char *str_endpoint_pair(const ip_endpoint *src, const ip_endpoint *dst, endpoint_pair_buf *out)
 {
 	struct jambuf buf = ARRAY_AS_JAMBUF(out->buf);
-	jam_endpoints(&buf, src, dst);
+	jam_endpoint_pair(&buf, src, dst);
 	return out->buf;
 }
 
