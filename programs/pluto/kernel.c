@@ -3127,71 +3127,7 @@ static bool install_ipsec_spd_kernel_policies(struct connection *c,
 
 	/* install the route */
 
-	bool route_installed = false;
-
-	ldbg(logger, "kernel: %s() firewall_notified: %s",
-	     __func__, firewall_notified ? "true" : "false");
-	if (!firewall_notified) {
-		/* we're in trouble -- don't do routing */
-	} else if (ro == NULL) {
-		/* a new route: no deletion required, but preparation is */
-		if (!do_updown(UPDOWN_PREPARE, c, sr, st, logger))
-			dbg("kernel: prepare command returned an error");
-		route_installed = do_updown(UPDOWN_ROUTE, c, sr, st, logger);
-		if (!route_installed)
-			dbg("kernel: route command returned an error");
-	} else if (routed(c->child.routing)) {
-		route_installed = true; /* nothing to be done */
-	} else if (ro->interface->ip_dev == c->interface->ip_dev &&
-		   address_eq_address(ro->local->host.nexthop, c->local->host.nexthop)) {
-		/*
-		 * The routes required for two different connections
-		 * agree (it is assumed that the destination subnets
-		 * agree).
-		 */
-		route_installed = true; /* nothing to be done */
-	} else {
-		/*
-		 * Some other connection must own the route
-		 * and the route must disagree.  But since could_route
-		 * must have allowed our stealing it, we'll do so.
-		 *
-		 * A feature of LINUX allows us to install the new route
-		 * before deleting the old if the nexthops differ.
-		 * This reduces the "window of vulnerability" when packets
-		 * might flow in the clear.
-		 */
-		if (sameaddr(&sr->local->host->nexthop,
-			     &esr->local->host->nexthop)) {
-			if (!do_updown(UPDOWN_UNROUTE, ro, sr, st, logger)) {
-				dbg("kernel: unroute command returned an error");
-			}
-			route_installed = do_updown(UPDOWN_ROUTE, c, sr, st, logger);
-			if (!route_installed)
-				dbg("kernel: route command returned an error");
-		} else {
-			route_installed = do_updown(UPDOWN_ROUTE, c, sr, st, logger);
-			if (!route_installed)
-				dbg("kernel: route command returned an error");
-
-			if (!do_updown(UPDOWN_UNROUTE, ro, sr, st, logger)) {
-				dbg("kernel: unroute command returned an error");
-			}
-		}
-
-		/* record unrouting */
-		if (route_installed) {
-			do {
-				dbg("kernel: installed route: ro .name=%s, .child.routing was %s",
-				    ro->name, enum_name(&routing_story, ro->child.routing));
-				pexpect(!erouted(ro->child.routing)); /* warn for now - requires fixing */
-				set_child_routing(ro, RT_UNROUTED);
-				/* no need to keep old value */
-				rosr = route_owner(sr, NULL);
-				ro = (rosr == NULL ? NULL : rosr->connection);
-			} while (ro != NULL);
-		}
-	}
+	bool route_installed = sr->wip.installed.route;
 
 	/* all done -- clean up */
 	if (route_installed) {
@@ -3385,7 +3321,7 @@ static bool install_ipsec_kernel_policies(struct state *st)
 
 #ifdef IPSEC_CONNECTION_LIMIT
 	unsigned new_spds = 0;
-	for (struct spd_route *spd = start; spd != NULL && ok; spd = spd->spd_next) {
+	for (struct spd_route *spd = start; ok && spd != NULL; spd = spd->spd_next) {
 		if (spd->wip.conflicting.policy == NULL &&
 		    spd->wip.conflicting.shunt == NULL) {
 			new_spds++;
@@ -3399,7 +3335,7 @@ static bool install_ipsec_kernel_policies(struct state *st)
 	}
 #endif
 
-	for (struct spd_route *spd = start; spd != NULL && ok; spd = spd->spd_next) {
+	for (struct spd_route *spd = start; ok && spd != NULL; spd = spd->spd_next) {
 		enum kernel_policy_op op =
 			(spd->wip.conflicting.policy != NULL ||
 			 spd->wip.conflicting.shunt != NULL ? KERNEL_POLICY_OP_REPLACE :
@@ -3407,26 +3343,95 @@ static bool install_ipsec_kernel_policies(struct state *st)
 		ok &= spd->wip.installed.policy = sag_eroute(st, spd, op, "install IPsec policy");
 	}
 
-	/* notify the firewall of the new tunnels */
+	/*
+	 * Do we have to notify the firewall?  Yes, if we are
+	 * installing a tunnel eroute and the firewall wasn't notified
+	 * for a previous tunnel with the same clients.  Any Previous
+	 * tunnel would have to be for our connection, so the actual
+	 * test is simple.
+	 */
 
-	for (struct spd_route *spd = start; spd != NULL && ok; spd = spd->spd_next) {
-		/*
-		 * Do we have to notify the firewall?  Yes, if
-		 * we are installing a tunnel eroute and the
-		 * firewall wasn't notified for a previous
-		 * tunnel with the same clients.  Any Previous
-		 * tunnel would have to be for our connection,
-		 * so the actual test is simple.
-		 *
-		 * XXX: can't this key off the connection
-		 * state?
-		 */
+	for (struct spd_route *spd = start; ok && spd != NULL; spd = spd->spd_next) {
 		if (c->child.kernel_policy_owner != SOS_NOBODY) {
 			/* already notified */
 			spd->wip.installed.firewall = true;
 		} else {
 			/* go ahead and notify */
-			ok &= spd->wip.installed.firewall = do_updown(UPDOWN_UP, c, spd, st, st->st_logger);
+			ok &= spd->wip.installed.firewall =
+				do_updown(UPDOWN_UP, c, spd, st, st->st_logger);
+		}
+	}
+
+	for (struct spd_route *spd = start; ok && spd != NULL; spd = spd->spd_next) {
+		struct connection *ro =
+			(spd->wip.conflicting.route == NULL ? NULL :
+			 spd->wip.conflicting.route->connection);
+		if (ro == NULL) {
+			/* a new route: no deletion required, but preparation is */
+			if (!do_updown(UPDOWN_PREPARE, c, spd, st, st->st_logger))
+				dbg("kernel: prepare command returned an error");
+			ok &= spd->wip.installed.route =
+				do_updown(UPDOWN_ROUTE, c, spd, st, st->st_logger);
+		} else if (routed(c->child.routing)) {
+			spd->wip.installed.route = true; /* nothing to be done */
+		} else if (ro->interface->ip_dev == c->interface->ip_dev &&
+			   address_eq_address(ro->local->host.nexthop, c->local->host.nexthop)) {
+			/*
+			 * The routes required for two different
+			 * connections agree (it is assumed that the
+			 * destination subnets agree).
+			 */
+			spd->wip.installed.route = true; /* nothing to be done */
+		} else {
+			/*
+			 * Some other connection must own the route
+			 * and the route must disagree.  But since
+			 * could_route must have allowed our stealing
+			 * it, we'll do so.
+			 *
+			 * A feature of LINUX allows us to install the
+			 * new route before deleting the old if the
+			 * nexthops differ.  This reduces the "window
+			 * of vulnerability" when packets might flow
+			 * in the clear.
+			 */
+			if (sameaddr(&spd->local->host->nexthop,
+				     &spd->wip.conflicting.policy->connection->local->host.nexthop)) {
+				if (!do_updown(UPDOWN_UNROUTE, ro, spd, st, st->st_logger)) {
+					dbg("kernel: unroute command returned an error");
+				}
+				ok &= spd->wip.installed.route =
+					do_updown(UPDOWN_ROUTE, c, spd, st, st->st_logger);
+			} else {
+				ok &= spd->wip.installed.route =
+					do_updown(UPDOWN_ROUTE, c, spd, st, st->st_logger);
+				/* XXX: shouldn't this be the RO route? */
+				if (!do_updown(UPDOWN_UNROUTE, ro, spd, st, st->st_logger)) {
+					dbg("kernel: unroute command returned an error");
+				}
+			}
+
+			/* record unrouting */
+			if (spd->wip.installed.route) {
+				/*
+				 * XXX: Given above code isn't
+				 * executed (it would likely SEGV),
+				 * this probably isn't either.
+				 *
+				 * XXX: This is looking for other
+				 * conflicting routes and unrouting
+				 * them.
+				 */
+				do {
+					dbg("kernel: installed route: ro .name=%s, .child.routing was %s",
+					    ro->name, enum_name(&routing_story, ro->child.routing));
+					pexpect(!erouted(ro->child.routing)); /* warn for now - requires fixing */
+					set_child_routing(ro, RT_UNROUTED);
+					/* no need to keep old value */
+					struct spd_route *rosr = route_owner(spd, NULL);
+					ro = (rosr == NULL ? NULL : rosr->connection);
+				} while (ro != NULL);
+			}
 		}
 	}
 
