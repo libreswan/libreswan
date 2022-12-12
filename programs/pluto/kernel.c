@@ -1185,7 +1185,7 @@ static bool spd_policy_conflicts(struct spd_route *spd,
 	return true;
 }
 
-static void check_spd_conflicts(struct spd_route *spd, struct logger *logger)
+static void get_connection_spd_conflict(struct spd_route *spd, struct logger *logger)
 {
 	zero(&spd->wip);
 	spd->wip.conflicting.ok = true; /* hope for the best */
@@ -1415,12 +1415,12 @@ static void check_spd_conflicts(struct spd_route *spd, struct logger *logger)
 	}
 }
 
-static bool check_connection_conflicts(struct connection *c, struct logger *logger)
+static bool get_connection_spd_conflicts(struct connection *c, struct logger *logger)
 {
 	ldbg(logger, "checking %s for conflicts", c->name);
 	bool routable = false;
 	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
-		check_spd_conflicts(spd, logger);
+		get_connection_spd_conflict(spd, logger);
 		routable |= spd->wip.conflicting.ok;
 	}
 	return routable;
@@ -1645,8 +1645,7 @@ static bool install_prospective_kernel_policy(struct connection *c)
 	 * the structure is zeroed (sec_labels ignore conflicts).
 	 */
 
-	bool routable = check_connection_conflicts(c, c->logger);
-	if (!routable) {
+	if (!get_connection_spd_conflicts(c, c->logger)) {
 		return false;
 	}
 
@@ -3441,24 +3440,20 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 
 	enum routability r = connection_routable(st->st_connection, st->st_logger);
 
-	bool routable = check_connection_conflicts(c, st->st_logger);
-	ldbg(c->logger, "routability %s", bool_str(routable));
-
-	struct spd_route *conflict;
-	enum routability rb = could_route(st->st_connection, st->st_connection->spd,
-					  &conflict, st->st_logger);
-
-	switch (rb) {
+	switch (r) {
 	case ROUTEABLE:
+		break;
 	case ROUTE_UNNECESSARY:
-		PEXPECT(st->st_logger, routable);
+		/* will install kernel state but not policy */
 		break;
 	case ROUTE_IMPOSSIBLE:
-		PEXPECT(st->st_logger, !routable);
-		PEXPECT(st->st_logger, r == ROUTE_IMPOSSIBLE);
 		return false;
 	default:
-		bad_case(rb);
+		bad_case(r);
+	}
+
+	if (!get_connection_spd_conflicts(c, st->st_logger)) {
+		return false;
 	}
 
 	/* (attempt to) actually set up the SA group */
@@ -3495,7 +3490,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 		st->st_connection->temp_vars.revive_delay = 0;
 	}
 
-	if (rb == ROUTE_UNNECESSARY) {
+	if (r == ROUTE_UNNECESSARY) {
 		return true;
 	}
 
