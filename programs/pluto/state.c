@@ -1461,26 +1461,16 @@ void delete_states_by_connection(struct connection **cp)
 		llog_pexpect(c->logger, HERE, "routing should not be ROUTED_TUNNEL (what should it be?)");
 	}
 
-	unsigned spd_i = 0;
-	for (const struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
-		spd_i++;
-		/*
-		 * These passerts are not true currently due to
-		 * mobike.  Requires some re-implementation. Use
-		 * pexpect for now.
-		 */
-		if (spd->eroute_owner != SOS_NOBODY) {
-			selector_pair_buf ssb;
-			llog_pexpect(c->logger, HERE, "eroute_owner for policy %d %s is "PRI_SO", should be 0",
-				     spd_i,
-				     str_selector_pair(&spd->local->client,
-						       &spd->remote->client, &ssb),
-				     pri_so(spd->eroute_owner));
-		} else {
-			selector_pair_buf ssb;
-			ldbg(c->logger, "eroute_owner for policy %d %s is 0",
-			     spd_i, str_selector_pair(&spd->local->client, &spd->remote->client, &ssb));
-		}
+	/*
+	 * These passerts are not true currently due to
+	 * mobike.  Requires some re-implementation. Use
+	 * pexpect for now.
+	 */
+	if (c->child.kernel_policy_owner != SOS_NOBODY) {
+		llog_pexpect(c->logger, HERE, "kernel_policy_owner for is "PRI_SO", should be 0",
+			     pri_so(c->child.kernel_policy_owner));
+	} else {
+		ldbg(c->logger, "kernel_policy_owner is 0");
 	}
 }
 
@@ -1974,7 +1964,7 @@ void state_eroute_usage(const ip_selector *ours, const ip_selector *peers,
 
 		/* XXX spd-enum */
 		if (IS_IPSEC_SA_ESTABLISHED(st) &&
-		    c->spd->eroute_owner == st->st_serialno &&
+		    c->child.kernel_policy_owner == st->st_serialno &&
 		    c->child.routing == RT_ROUTED_TUNNEL &&
 		    selector_range_eq_selector_range(c->spd->local->client, *ours) &&
 		    selector_range_eq_selector_range(c->spd->remote->client, *peers)) {
@@ -2067,7 +2057,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 		}
 
 		/* XXX spd-enum */ /* XXX: huh? */
-		if (c->spd->eroute_owner == st->st_serialno) {
+		if (c->child.kernel_policy_owner == st->st_serialno) {
 			jam(buf, " eroute owner;");
 		}
 
@@ -2121,7 +2111,7 @@ static void show_established_child_details(struct show *s, struct state *st,
 		 * XXX - mcr last used is really an attribute of
 		 * the connection
 		 */
-		if (c->spd->eroute_owner == st->st_serialno &&
+		if (c->child.kernel_policy_owner == st->st_serialno &&
 		    st->st_outbound_count != 0) {
 			jam(buf, " used %jds ago;",
 			    deltasecs(monotimediff(now , st->st_outbound_time)));
@@ -2951,7 +2941,7 @@ static void dbg_newest_ipsec_sa_change(const char *f, so_serial_t old_ipsec_sa,
 	    st->st_connection->instance_serial,
 	    st->st_connection->config->ike_info->version_name,
 	    st->st_connection->newest_ipsec_sa, old_ipsec_sa,
-	    st->st_connection->spd->eroute_owner,
+	    pri_so(st->st_connection->child.kernel_policy_owner),
 	    st->st_clonedfrom);
 }
 

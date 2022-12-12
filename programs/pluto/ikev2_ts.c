@@ -213,9 +213,6 @@ static void scribble_selectors_on_spd(struct connection *c,
 	 */
 	so_serial_t owner = c->child.kernel_policy_owner;
 	c->child.kernel_policy_owner = SOS_NOBODY;
-	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
-		set_spd_owner(spd, owner);
-	}
 	set_child_kernel_policy_owner(c, owner);
 #if 0
 	set_connection_priority(c); /* must be after .kind and .spd are set */

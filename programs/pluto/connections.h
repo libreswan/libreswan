@@ -444,7 +444,6 @@ struct spd_route {
 	struct spd_end *local;		/* must update after clone */
 	struct spd_end *remote;		/* must update after clone */
 	struct connection *connection;
-	so_serial_t eroute_owner;
 
 	struct spd_wip {
 		struct {
@@ -805,9 +804,6 @@ void ldbg_connection(const struct connection *c, where_t where,
 struct spd_route *append_spd(struct connection *c, struct spd_route ***last);
 void discard_spds(struct spd_route **spds, bool connection_valid);
 
-void set_spd_owner_where(struct spd_route *spd, so_serial_t so, where_t where);
-#define set_spd_owner(SPD, SO)			\
-	set_spd_owner_where(SPD, SO, HERE)
 void set_child_kernel_policy_owner_where(struct connection *c, so_serial_t so, where_t where);
 #define set_child_kernel_policy_owner(C, SO)			\
 	set_child_kernel_policy_owner_where(C, SO, HERE)

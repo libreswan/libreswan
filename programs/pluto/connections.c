@@ -4321,7 +4321,7 @@ static void show_one_sr(struct show *s,
 		     c->name, instance,
 		     format_connection(topo, sizeof(topo), c, sr),
 		     enum_name(&routing_story, c->child.routing),
-		     sr->eroute_owner);
+		     c->child.kernel_policy_owner);
 
 #define OPT_HOST(h, ipb)  (address_is_specified(h) ? str_address(&h, &ipb) : "unset")
 
@@ -4980,29 +4980,6 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 	}
 }
 
-void set_spd_owner_where(struct spd_route *spd, so_serial_t nso, where_t where)
-{
-	so_serial_t oso = spd->eroute_owner;
-	selector_pair_buf sb;
-	ldbg(spd->connection->logger,
-	     "kernel: eroute_owner spd "PRI_SO"->"PRI_SO" %s "PRI_WHERE,
-	     pri_so(oso), pri_so(nso),
-	     str_selector_pair(&spd->local->client,
-			       &spd->remote->client,
-			       &sb),
-	     pri_where(where));
-	so_serial_t cso = spd->connection->child.kernel_policy_owner;
-	if (cso != oso) {
-		llog_pexpect(spd->connection->logger, where,
-			     "kernel: eroute_owner spd "PRI_SO" vs connection "PRI_SO" for %s",
-			     pri_so(oso), pri_so(cso),
-			     str_selector_pair(&spd->local->client,
-					       &spd->remote->client,
-					       &sb));
-	}
-	spd->eroute_owner = nso;
-}
-
 void set_child_kernel_policy_owner_where(struct connection *c, so_serial_t nso, where_t where)
 {
 	so_serial_t oso = c->child.kernel_policy_owner;
@@ -5010,20 +4987,6 @@ void set_child_kernel_policy_owner_where(struct connection *c, so_serial_t nso, 
 	     "kernel: eroute_owner connection "PRI_SO"->"PRI_SO" "PRI_WHERE,
 	     pri_so(oso), pri_so(nso),
 	     pri_where(where));
-	for (struct spd_route *spd = c->spd;
-	     spd != NULL;
-	     spd = spd->spd_next) {
-		if (spd->eroute_owner != nso) {
-			selector_pair_buf sb;
-			llog_pexpect(c->logger, where,
-				     "kernel: eroute_owner spd "PRI_SO" vs connection "PRI_SO" for %s",
-				     pri_so(spd->eroute_owner),
-				     pri_so(nso),
-				     str_selector_pair(&spd->local->client,
-						       &spd->remote->client,
-						       &sb));
-		}
-	}
 	c->child.kernel_policy_owner = nso;
 }
 
