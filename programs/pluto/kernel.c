@@ -85,6 +85,11 @@
 #include "rekeyfuzz.h"
 #include "orient.h"
 
+static bool sag_eroute(const struct state *st,
+		       const struct spd_route *sr,
+		       enum kernel_policy_op op,
+		       const char *opname);
+
 static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 						   reqid_t child_reqid,
 						   const struct spd_route *spd,
@@ -1421,6 +1426,206 @@ static bool check_connection_conflicts(struct connection *c, struct logger *logg
 	return routable;
 }
 
+static void revert_kernel_policy(struct spd_route *spd, struct state *st/*could be NULL*/,
+				 struct logger *logger)
+{
+	struct connection *c = spd->connection;
+	PEXPECT(logger, st == NULL || st->st_connection == c);
+	PEXPECT(logger, (logger == c->logger ||
+			 logger == st->st_logger));
+
+	/*
+	 * Kill the firewall if previously there was no owner.
+	 */
+	if (spd->wip.installed.firewall && c->child.kernel_policy_owner == SOS_NOBODY) {
+		PEXPECT(logger, st != NULL);
+		ldbg(logger, "kernel: %s() reverting the firewall", __func__);
+		if (!do_updown(UPDOWN_DOWN, c, spd, st, logger))
+			dbg("kernel: down command returned an error");
+	}
+
+	/*
+	 * Now unwind the policy.
+	 *
+	 * Of course, if things failed before the policy was
+	 * installed, there's nothing to do.
+	 */
+
+	if (!spd->wip.installed.policy) {
+		ldbg(logger, "kernel: %s() no kernel policy to revert", __func__);
+		return;
+	}
+
+	/*
+	 * If there was no conflicting kernel policy and/or
+	 * bare shunt, just delete everything.
+	 */
+
+	if (spd->wip.conflicting.shunt == NULL &&
+	    spd->wip.conflicting.policy == NULL) {
+		ldbg(logger, "kernel: %s() no previous kernel policy or shunt: delete whatever we installed",
+		     __func__);
+		if (st == NULL) {
+			if (!delete_kernel_policies(EXPECT_KERNEL_POLICY_OK,
+						    spd->local->client,
+						    spd->remote->client,
+						    &c->sa_marks,
+						    c->xfrmi,
+						    DEFAULT_KERNEL_POLICY_ID,
+						    HUNK_AS_SHUNK(c->config->sec_label),
+						    c->logger, HERE, "deleting route and eroute")) {
+				llog(RC_LOG, logger,
+				     "shunt_policy() in route_and_eroute() failed in !st case");
+			}
+		} else {
+			if (!sag_eroute(st, spd,
+					KERNEL_POLICY_OP_DELETE,
+					"delete")) {
+				llog(RC_LOG, logger,
+				     "sag_eroute() in route_and_eroute() failed in st case for delete");
+			}
+		}
+		return;
+	}
+
+	/* only one - shunt set when no policy */
+	PEXPECT(logger, ((spd->wip.conflicting.shunt != NULL) !=
+			 (spd->wip.conflicting.policy != NULL)));
+
+	/*
+	 * If there's a bare shunt, restore it.
+	 *
+	 * I don't think that this case is very likely.
+	 * Normally a bare shunt would have been assigned to a
+	 * connection before we've gotten this far.
+	 */
+
+	if (spd->wip.conflicting.shunt != NULL) {
+		ldbg(logger, "kernel: %s() restoring bare shunt", __func__);
+		struct bare_shunt *bs = *spd->wip.conflicting.shunt;
+		struct kernel_policy outbound_kernel_policy =
+			kernel_policy_from_void(bs->our_client, bs->peer_client,
+						DIRECTION_OUTBOUND,
+						calculate_kernel_priority(c),
+						bs->shunt_policy, HERE);
+		if (!raw_policy(KERNEL_POLICY_OP_REPLACE,
+				DIRECTION_OUTBOUND,
+				EXPECT_KERNEL_POLICY_OK,
+				&outbound_kernel_policy.src.client,
+				&outbound_kernel_policy.dst.client,
+				&outbound_kernel_policy,
+				deltatime(SHUNT_PATIENCE),
+				/*sa_marks*/NULL,
+				/*xfrmi*/NULL,
+				DEFAULT_KERNEL_POLICY_ID,
+				/* bare shunt are not
+				 * associated with any
+				 * connection so no security
+				 * label */
+				null_shunk, logger,
+				"%s() restore", __func__)) {
+			llog(RC_LOG, st->st_logger,
+			     "raw_policy() in %s() failed to restore/replace SA",
+			     __func__);
+		}
+		return;
+	}
+
+	/*
+	 * Restore original kernel policy, if we can.
+	 *
+	 * Since there is nothing much to be done if the restoration
+	 * fails, ignore success or failure.
+	 */
+
+	PEXPECT(logger, spd->wip.conflicting.policy != NULL);
+	struct spd_route *esr = spd->wip.conflicting.policy;
+	struct connection *ero = esr->connection;
+
+	if (ero->child.kernel_policy_owner != SOS_NOBODY) {
+		/*
+		 * Try to find state that owned eroute.  Don't do
+		 * anything if it cannot be found.  This case isn't
+		 * likely since we don't run the updown script when
+		 * replacing a SA group with its successor (for the
+		 * same conn).
+		 */
+		ldbg(logger, "kernel: %s() restoring kernel policy for "PRI_SO,
+		     __func__, pri_so(ero->child.kernel_policy_owner));
+		struct state *ost = state_by_serialno(ero->child.kernel_policy_owner);
+		if (ost != NULL) {
+			if (!sag_eroute(ost, esr,
+					KERNEL_POLICY_OP_REPLACE,
+					"restore"))
+				llog(RC_LOG, logger,
+				     "sag_eroute() in %s() failed restore/replace", __func__);
+		}
+		return;
+	}
+
+	PEXPECT(logger, ero->child.kernel_policy_owner == SOS_NOBODY);
+
+	if (c->child.routing == RT_ROUTED_PROSPECTIVE) {
+		ldbg(logger, "kernel: %s() restoring prespective policy", __func__);
+		if (!delete_kernel_policies(EXPECT_KERNEL_POLICY_OK,
+					    esr->local->client,
+					    esr->remote->client,
+					    &ero->sa_marks,
+					    ero->xfrmi,
+					    DEFAULT_KERNEL_POLICY_ID,
+					    HUNK_AS_SHUNK(ero->config->sec_label),
+					    logger, HERE,
+					    "restore eclipsed prospective")) {
+			llog(RC_LOG, logger,
+			     "shunt_policy() in %s() failed restore/replace",
+			     __func__);
+		}
+		return;
+	}
+
+	if (c->config->failure_shunt == SHUNT_NONE) {
+		ldbg(logger, "kernel: %s() installing SHUNT_NONE aka block", __func__);
+		struct kernel_policy outbound_policy =
+			kernel_policy_from_void(esr->local->client,
+						esr->remote->client,
+						DIRECTION_OUTBOUND,
+						calculate_kernel_priority(ero),
+						SHUNT_NONE, HERE);
+		if (!raw_policy(KERNEL_POLICY_OP_REPLACE,
+				DIRECTION_OUTBOUND,
+				EXPECT_KERNEL_POLICY_OK,
+				&outbound_policy.src.client,
+				&outbound_policy.dst.client,
+				&outbound_policy,
+				deltatime(0),
+				&ero->sa_marks, ero->xfrmi,
+				DEFAULT_KERNEL_POLICY_ID,
+				HUNK_AS_SHUNK(ero->config->sec_label),
+				logger,
+				"%s() restore eclipsed failure =- NONE", __func__)) {
+			llog(RC_LOG, logger,
+			     "shunt_policy() %s() failed restore/replace", __func__);
+
+		}
+		return;
+	}
+
+	/* some other failure shunt */
+	ldbg(logger, "kernel: %s() deleting some other failure shunt", __func__);
+	if (!delete_kernel_policies(EXPECT_KERNEL_POLICY_OK,
+				    esr->local->client,
+				    esr->remote->client,
+				    &ero->sa_marks,
+				    ero->xfrmi,
+				    DEFAULT_KERNEL_POLICY_ID,
+				    HUNK_AS_SHUNK(ero->config->sec_label),
+				    logger, HERE,
+				    "restore eclipsed failure != NONE")) {
+		llog(RC_LOG, logger,
+		     "shunt_policy() in %s() failed restore/replace", __func__);
+	}
+}
+
 static bool install_prospective_kernel_policy(struct connection *c)
 {
 	enum routability r = connection_routable(c, c->logger);
@@ -1547,26 +1752,28 @@ static bool install_prospective_kernel_policy(struct connection *c)
 	}
 
 	/*
-	 * Pass 3: deal with failure
+	 * If things failed bail.
 	 */
+
 	if (!ok) {
-		llog_pexpect(c->logger, HERE, "need to clean up mess");
-	} else {
 		for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
-			if (spd->wip.conflicting.shunt != NULL) {
-				free_bare_shunt(spd->wip.conflicting.shunt);
-			}
+			revert_kernel_policy(spd, NULL/*st*/, c->logger);
 		}
-		set_child_routing(c, RT_ROUTED_PROSPECTIVE);
+		return false;
 	}
 
 	/*
-	 * Pass -0: zap dangling pointers.
+	 * Now clean up any shunts that were replaced.
 	 */
 
 	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
-		zero(&spd->wip);
+		struct bare_shunt **bspp = spd->wip.conflicting.shunt;
+		if (bspp != NULL) {
+			free_bare_shunt(bspp);
+		}
 	}
+
+	set_child_routing(c, RT_ROUTED_PROSPECTIVE);
 
 	return true;
 }
@@ -3022,271 +3229,6 @@ bool install_inbound_ipsec_sa(struct state *st)
 	return true;
 }
 
-/*
- * Install kernel policies for an IPsec SA.
- *
- * Assumption: could_route gave a go-ahead.
- *
- * Any SA Group must have already been created.  On failure, steps
- * will be unwound.
- */
-
-static bool install_ipsec_spd_kernel_policies(struct connection *c,
-					      struct spd_route *sr,
-					      struct state *st,
-					      struct logger *logger/*st or c or ... */)
-{
-	selector_pair_buf sb;
-	ldbg(logger, "kernel: %s() for %s; proto %d, and source port %d dest port %d sec_label",
-	     __func__, str_selector_pair(&sr->local->client, &sr->remote->client, &sb),
-	     sr->local->client.ipproto, sr->local->client.hport, sr->remote->client.hport);
-
-	struct spd_route *esr;
-	struct spd_route *rosr = route_owner(sr, &esr);	/* who, if anyone, owns our eroute? */
-	struct connection *ro = (rosr == NULL ? NULL : rosr->connection);
-	struct connection *ero = (esr == NULL ? NULL : esr->connection); /* eclipsed route owner */
-
-	ldbg(logger, "kernel: %s() with c: %s ero:%s esr:{%p} ro:%s rosr:{%p} and state: #%lu",
-	     __func__, c->name,
-	     (ero == NULL ? "null" : ero->name), esr,
-	     (ro == NULL ? "null" : ro->name), rosr,
-	     (st == NULL ? 0 : st->st_serialno));
-
-	/* look along the chain of policies for same one */
-
-	/* we should look for dest port as well? */
-	/* ports are now switched to the ones in this.client / that.client ??????? */
-	/* but port set is sr->this.port and sr.that.port ! */
-	struct bare_shunt **bspp = ((ero == NULL) ? bare_shunt_ptr(&sr->local->client,
-								   &sr->remote->client,
-								   "route and eroute") :
-				    NULL);
-#if 1
-	struct spd_route *spd = sr;
-	if (spd->wip.conflicting.route != rosr) {
-		if (spd->wip.conflicting.route == NULL &&
-		    rosr != NULL &&
-		    rosr != spd &&
-		    rosr->connection == spd->connection) {
-			selector_pair_buf rsb;
-			connection_buf cb;
-			ldbg(st->st_logger,
-			     "wip route <null> with sibling "PRI_CONNECTION" %s",
-			     pri_connection(rosr->connection, &cb),
-			     str_selector_pair(&rosr->local->client,
-					       &rosr->remote->client,
-					       &rsb));
-		} else {
-			const struct spd_route *wspd = spd->wip.conflicting.route;
-			selector_pair_buf wsb, rsb;
-			llog_pexpect(st->st_logger, HERE,
-				     "wip route %s %s != %s %s",
-				     (wspd == NULL ? "<null>" : wspd->connection->name),
-				     str_selector_pair((wspd == NULL ? NULL : &wspd->local->client),
-						       (wspd == NULL ? NULL : &wspd->remote->client),
-						       &wsb),
-				     (rosr == NULL ? "<null>" : rosr->connection->name),
-				     str_selector_pair((rosr == NULL ? NULL : &rosr->local->client),
-						       (rosr == NULL ? NULL : &rosr->remote->client),
-						       &rsb));
-		}
-	}
-	if (spd->wip.conflicting.policy != esr) {
-		const struct spd_route *wspd = spd->wip.conflicting.route;
-		selector_pair_buf wsb, esb;
-		llog_pexpect(st->st_logger, HERE,
-			     "wip policy %s %s != %s %s",
-			     (wspd == NULL ? "<null>" : wspd->connection->name),
-			     str_selector_pair((wspd == NULL ? NULL : &wspd->local->client),
-					       (wspd == NULL ? NULL : &wspd->remote->client),
-					       &wsb),
-			     (esr == NULL ? "<null>" : esr->connection->name),
-			     str_selector_pair((esr == NULL ? NULL : &esr->local->client),
-					       (esr == NULL ? NULL : &esr->remote->client),
-					       &esb));
-	}
-	if (spd->wip.conflicting.shunt != bspp) {
-		struct bare_shunt **wbsp = spd->wip.conflicting.shunt;
-		selector_pair_buf wsb, bsp;
-		llog_pexpect(st->st_logger, HERE,
-			     "wip bsp %s != %s",
-			     str_selector_pair(wbsp == NULL ? NULL : &(*wbsp)->our_client,
-					       wbsp == NULL ? NULL : &(*wbsp)->peer_client,
-					       &wsb),
-			     str_selector_pair(bspp == NULL ? NULL : &(*bspp)->our_client,
-					       bspp == NULL ? NULL : &(*bspp)->peer_client,
-					       &bsp));
-	}
-#endif
-
-	/* install the eroute */
-
-	passert(bspp == NULL || ero == NULL);   /* only one non-NULL */
-	bool eroute_installed = sr->wip.installed.policy;
-	bool firewall_notified = sr->wip.installed.firewall;
-
-	/* install the route */
-
-	bool route_installed = sr->wip.installed.route;
-
-	/* all done -- clean up */
-	if (route_installed) {
-		/* Success! */
-
-		if (bspp != NULL) {
-			free_bare_shunt(bspp);
-		}
-
-		set_child_routing(c, RT_ROUTED_TUNNEL);
-		set_spd_owner(sr, st->st_serialno);
-		/* clear host shunts that clash with freshly installed route */
-		clear_narrow_holds(&sr->local->client, &sr->remote->client, logger);
-
-		return true;
-	} else {
-		/* Failure!  Unwind our work. */
-		if (firewall_notified && sr->eroute_owner == SOS_NOBODY) {
-			if (!do_updown(UPDOWN_DOWN, c, sr, st, logger))
-				dbg("kernel: down command returned an error");
-		}
-
-		if (eroute_installed) {
-			/*
-			 * Restore original eroute, if we can.
-			 * Since there is nothing much to be done if
-			 * the restoration fails, ignore success or failure.
-			 */
-			if (bspp != NULL) {
-				/*
-				 * Restore old bare_shunt.
-				 * I don't think that this case is very likely.
-				 * Normally a bare shunt would have been
-				 * assigned to a connection before we've
-				 * gotten this far.
-				 */
-				struct bare_shunt *bs = *bspp;
-				struct kernel_policy outbound_kernel_policy =
-					kernel_policy_from_void(bs->our_client, bs->peer_client,
-								DIRECTION_OUTBOUND,
-								calculate_kernel_priority(c),
-								bs->shunt_policy, HERE);
-
-				if (!raw_policy(KERNEL_POLICY_OP_REPLACE,
-						DIRECTION_OUTBOUND,
-						EXPECT_KERNEL_POLICY_OK,
-						&outbound_kernel_policy.src.client,
-						&outbound_kernel_policy.dst.client,
-						&outbound_kernel_policy,
-						deltatime(SHUNT_PATIENCE),
-						/*sa_marks*/NULL,
-						/*xfrmi*/NULL,
-						DEFAULT_KERNEL_POLICY_ID,
-						/* bare shunt are not
-						 * associated with any
-						 * connection so no
-						 * security label */
-						null_shunk, logger,
-						"%s() restore", __func__)) {
-					llog(RC_LOG, logger,
-					     "raw_policy() in %s() failed to restore/replace SA",
-					     __func__);
-				}
-			} else if (ero != NULL) {
-				passert(esr != NULL);
-				/* restore ero's former glory */
-				if (esr->eroute_owner == SOS_NOBODY) {
-					/* note: normal or eclipse case */
-					if (c->child.routing == RT_ROUTED_PROSPECTIVE) {
-						if (!delete_kernel_policies(EXPECT_KERNEL_POLICY_OK,
-									    esr->local->client,
-									    esr->remote->client,
-									    &ero->sa_marks,
-									    ero->xfrmi,
-									    DEFAULT_KERNEL_POLICY_ID,
-									    HUNK_AS_SHUNK(ero->config->sec_label),
-									    logger, HERE,
-									    "restore eclipsed prospective")) {
-							llog(RC_LOG, logger,
-							     "shunt_policy() in %s() failed restore/replace",
-							     __func__);
-						}
-					} else if (c->config->failure_shunt == SHUNT_NONE) {
-						struct kernel_policy outbound_policy =
-							kernel_policy_from_void(esr->local->client,
-										esr->remote->client,
-										DIRECTION_OUTBOUND,
-										calculate_kernel_priority(ero),
-										SHUNT_NONE, HERE);
-						if (!raw_policy(KERNEL_POLICY_OP_REPLACE,
-								DIRECTION_OUTBOUND,
-								EXPECT_KERNEL_POLICY_OK,
-								&outbound_policy.src.client,
-								&outbound_policy.dst.client,
-								&outbound_policy,
-								deltatime(0),
-								&ero->sa_marks, ero->xfrmi,
-								DEFAULT_KERNEL_POLICY_ID,
-								HUNK_AS_SHUNK(ero->config->sec_label),
-								logger,
-								"%s() restore eclipsed failure =- NONE", __func__)) {
-							llog(RC_LOG, logger,
-							     "shunt_policy() %s() failed restore/replace", __func__);
-
-						}
-					} else {
-						/* some other failure shunt */
-						if (!delete_kernel_policies(EXPECT_KERNEL_POLICY_OK,
-									    esr->local->client,
-									    esr->remote->client,
-									    &ero->sa_marks,
-									    ero->xfrmi,
-									    DEFAULT_KERNEL_POLICY_ID,
-									    HUNK_AS_SHUNK(ero->config->sec_label),
-									    logger, HERE,
-									    "restore eclipsed failure != NONE")) {
-							llog(RC_LOG, logger,
-							     "shunt_policy() in %s() failed restore/replace", __func__);
-						}
-					}
-				} else {
-					/*
-					 * Try to find state that owned eroute.
-					 * Don't do anything if it cannot be
-					 * found.
-					 * This case isn't likely since we
-					 * don't run the updown script when
-					 * replacing a SA group with its
-					 * successor (for the same conn).
-					 */
-					struct state *ost =
-						state_by_serialno(esr->eroute_owner);
-
-					if (ost != NULL) {
-						if (!sag_eroute(ost, esr,
-								KERNEL_POLICY_OP_REPLACE,
-								"restore"))
-							llog(RC_LOG, logger,
-							     "sag_eroute() in %s() failed restore/replace", __func__);
-					}
-				}
-			} else {
-				/*
-				 * There was no previous eroute:
-				 * delete whatever we installed.
-				 */
-				if (!sag_eroute(st, sr,
-						KERNEL_POLICY_OP_DELETE,
-						"delete")) {
-					llog(RC_LOG, logger,
-					     "sag_eroute() in %s() failed in st case for delete", __func__);
-				}
-			}
-		}
-
-		return false;
-	}
-}
-
 static bool install_ipsec_kernel_policies(struct state *st)
 {
 	struct connection *c = st->st_connection;
@@ -3335,6 +3277,10 @@ static bool install_ipsec_kernel_policies(struct state *st)
 	}
 #endif
 
+	/*
+	 * Install the IPsec kernel policies.
+	 */
+
 	for (struct spd_route *spd = start; ok && spd != NULL; spd = spd->spd_next) {
 		enum kernel_policy_op op =
 			(spd->wip.conflicting.policy != NULL ||
@@ -3344,11 +3290,12 @@ static bool install_ipsec_kernel_policies(struct state *st)
 	}
 
 	/*
-	 * Do we have to notify the firewall?  Yes, if we are
-	 * installing a tunnel eroute and the firewall wasn't notified
-	 * for a previous tunnel with the same clients.  Any Previous
-	 * tunnel would have to be for our connection, so the actual
-	 * test is simple.
+	 * Do we have to notify the firewall?
+	 *
+	 * Yes, if we are installing a tunnel eroute and the firewall
+	 * wasn't notified for a previous tunnel with the same
+	 * clients.  Any Previous tunnel would have to be for our
+	 * connection, so the actual test is simple.
 	 */
 
 	for (struct spd_route *spd = start; ok && spd != NULL; spd = spd->spd_next) {
@@ -3361,6 +3308,12 @@ static bool install_ipsec_kernel_policies(struct state *st)
 				do_updown(UPDOWN_UP, c, spd, st, st->st_logger);
 		}
 	}
+
+	/*
+	 * Do we have to make a mess of the routing?
+	 *
+	 * Probably.  This code path needs a re-think.
+	 */
 
 	for (struct spd_route *spd = start; ok && spd != NULL; spd = spd->spd_next) {
 		struct connection *ro =
@@ -3435,20 +3388,41 @@ static bool install_ipsec_kernel_policies(struct state *st)
 		}
 	}
 
-	for (struct spd_route *spd = start; spd != NULL; spd = spd->spd_next) {
-		if (!install_ipsec_spd_kernel_policies(c, spd, st, st->st_logger)) {
-			return false;
+	if (!ok) {
+		for (struct spd_route *spd = start; spd != NULL; spd = spd->spd_next) {
+			revert_kernel_policy(spd, st, st->st_logger);
 		}
+		return false;
 	}
+
+	/*
+	 * Finally clean up.
+	 */
+
+	for (struct spd_route *spd = start; ok && spd != NULL; spd = spd->spd_next) {
+		struct bare_shunt **bspp = spd->wip.conflicting.shunt;
+		if (bspp != NULL) {
+			free_bare_shunt(bspp);
+		}
+		/* clear host shunts that clash with freshly installed route */
+		clear_narrow_holds(&spd->local->client, &spd->remote->client, st->st_logger);
+	}
+
 
 #ifdef IPSEC_CONNECTION_LIMIT
 	num_ipsec_eroute += new_spds;
-	llog(RC_COMMENT, logger,
+	llog(RC_COMMENT, st->st_logger,
 	     "%d IPsec connections are currently being managed",
 	     num_ipsec_eroute);
 #endif
 
+	/* include CISCO's SPD */
+	for (struct spd_route *spd = c->spd; ok && spd != NULL; spd = spd->spd_next) {
+		set_spd_owner(spd, st->st_serialno);
+	}
 	set_child_kernel_policy_owner(c, st->st_serialno);
+
+	set_child_routing(c, RT_ROUTED_TUNNEL);
 	return true;
 }
 
