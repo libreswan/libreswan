@@ -790,16 +790,13 @@ static struct kernel_policy kernel_policy_from_state(const struct state *st,
 
 /*
  * Find the connection to connection c's peer's client with the
- * largest value of .routing.  All other things being equal,
- * preference is given to c.  If none is routed, return NULL.
+ * largest value of .routing.  If none is routed, return NULL.
  *
  * The return value is used to find other connections sharing a
- * destination (route).  POLICY_SPDP is used to find other connections
- * sharing an identical kernel policy.
+ * destination (route).
  */
 
-static struct spd_route *route_owner(const struct spd_route *spd,
-				     struct spd_route **policy_spdp)
+static struct spd_route *route_owner(const struct spd_route *spd)
 {
 	struct connection *c = spd->connection;
 	if (!oriented(c)) {
@@ -810,9 +807,6 @@ static struct spd_route *route_owner(const struct spd_route *spd,
 
 	enum routing best_routing = RT_UNROUTED;
 	struct spd_route *best_route_spd = NULL;
-
-	enum routing policy_routing = RT_UNROUTED;
-	struct spd_route *policy_spd = NULL;
 
 	struct spd_route_filter srf = {
 		.remote_client_range = &spd->remote->client,
@@ -870,13 +864,6 @@ static struct spd_route *route_owner(const struct spd_route *spd,
 			best_routing = d->child.routing;
 		}
 
-		if (selector_eq_selector(spd->local->client,
-					 d_spd->local->client) &&
-		    d->child.routing > policy_routing) {
-			dbg("    saving policy");
-			policy_spd = d_spd;
-			policy_routing = d->child.routing;
-		}
 	}
 
 	LSWDBGP(DBG_BASE, buf) {
@@ -898,22 +885,6 @@ static struct spd_route *route_owner(const struct spd_route *spd,
 			    pri_connection(best_route_spd->connection, &cib),
 			    enum_name(&routing_story, best_routing));
 		}
-
-		jam(buf, "; kernel policy owner: ");
-		if (!erouted(policy_routing)) {
-			jam(buf, "NULL");
-		} else if (policy_spd->connection == c) {
-			jam(buf, "self");
-		} else {
-			connection_buf cib;
-			jam(buf, ""PRI_CONNECTION" %s",
-			    pri_connection(policy_spd->connection, &cib),
-			    enum_name(&routing_story, policy_routing));
-		}
-	}
-
-	if (policy_spdp != NULL) {
-		*policy_spdp = (erouted(policy_routing) ? policy_spd : NULL);
 	}
 
 	return routed(best_routing) ? best_route_spd : NULL;
@@ -931,168 +902,8 @@ enum routability {
 	ROUTEABLE,
 };
 
-/*
- * Note: this may mutate c
- */
-
-static enum routability could_route(struct connection *c,
-				    const struct spd_route *spd,
-				    struct spd_route **conflict,
-				    struct logger *logger)
-{
-	esb_buf b;
-	ldbg(logger,
-	     "kernel: could_route called; kind=%s remote %s.has_client=%s oppo=%s this.host_port=%u sec_label="PRI_SHUNK,
-	     enum_show(&connection_kind_names, c->kind, &b),
-	     spd->remote->config->leftright,
-	     bool_str(c->remote->child.has_client),
-	     bool_str(c->policy & POLICY_OPPORTUNISTIC),
-	     c->local->host.port,
-	     pri_shunk(c->config->sec_label));
-
-	/* it makes no sense to route a connection that is ISAKMP-only */
-	if (!NEVER_NEGOTIATE(c->policy) && !HAS_IPSEC_POLICY(c->policy)) {
-		llog(RC_ROUTE, logger,
-		     "cannot route an ISAKMP-only connection");
-		return ROUTE_IMPOSSIBLE;
-	}
-
-	/*
-	 * if this is a transport SA, and overlapping SAs are supported, then
-	 * this route is not necessary at all.
-	 */
-	if (kernel_ops->overlap_supported && !LIN(POLICY_TUNNEL, c->policy)) {
-		ldbg(logger, "route-unnecessary: overlap and !tunnel");
-		return ROUTE_UNNECESSARY;
-	}
-
-	/*
-	 * If this is a template connection, we cannot route.
-	 *
-	 * However, opportunistic and sec_label templates can be
-	 * routed (as in install the policy).
-	 */
-	if (c->kind == CK_TEMPLATE) {
-		if (c->policy & POLICY_OPPORTUNISTIC) {
-			ldbg(logger, "template-route-possible: opportunistic");
-		} else if (c->config->sec_label.len > 0) {
-			ldbg(logger, "template-route-possible: has sec-label");
-		} else if (c->local->config->child.virt != NULL) {
-			ldbg(logger, "template-route-possible: local is virtual");
-		} else if (c->remote->child.has_client) {
-			/* see extract_child_end() */
-			ldbg(logger, "template-route-possible: remote %s.spd.has_client==true",
-			     spd->remote->config->leftright);
-		} else {
-			policy_buf pb;
-			llog(RC_ROUTE, logger,
-			     "cannot route template policy of %s",
-			     str_connection_policies(c, &pb));
-			return ROUTE_IMPOSSIBLE;
-		}
-	}
-
-	struct spd_route *esr;
-	struct spd_route *rsr = route_owner(spd, &esr);	/* who owns our route? */
-	struct connection *ro = (rsr == NULL ? NULL : rsr->connection);
-	struct connection *ero = (esr == NULL ? NULL : esr->connection);
-
-	/*
-	 * If there is already a route for peer's client subnet and it
-	 * disagrees about interface or nexthop, we cannot steal it.
-	 *
-	 * Note: if this connection is already routed (perhaps for
-	 * another state object), the route will agree.  This is as it
-	 * should be -- it will arise during rekeying.
-	 */
-
-	if (ro != NULL &&
-	    (ro->interface->ip_dev != c->interface->ip_dev ||
-	     !address_eq_address(ro->local->host.nexthop, c->local->host.nexthop))) {
-
-		bool compatible_overlap = (kernel_ops->overlap_supported &&
-					   c != NULL &&
-					   ero != NULL &&
-					   c != ero &&
-					   LIN(POLICY_OVERLAPIP, c->policy & ero->policy));
-
-		if (!compatible_overlap) {
-			/*
-			 * Another connection is already using the
-			 * eroute.
-			 *
-			 * TODO: XFRM supports this. For now, only
-			 * allow this for OE
-			 */
-			if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-				connection_buf cib;
-				llog(RC_LOG_SERIOUS, logger,
-				     "cannot route -- route already in use for "PRI_CONNECTION"",
-				     pri_connection(ro, &cib));
-				return ROUTE_IMPOSSIBLE;
-			} else {
-				connection_buf cib;
-				llog(RC_LOG_SERIOUS, logger,
-				     "cannot route -- route already in use for "PRI_CONNECTION" - but allowing anyway",
-				     pri_connection(ro, &cib));
-			}
-		}
-	}
-
-	/* if there is an eroute for another connection, there is a problem */
-	if (ero != NULL && ero != c) {
-		/*
-		 * note, wavesec (PERMANENT) goes *outside* and
-		 * OE goes *inside* (TEMPLATE)
-		 */
-		if ((ero->kind == CK_PERMANENT && c->kind == CK_TEMPLATE) ||
-		    (c->kind == CK_PERMANENT && ero->kind == CK_TEMPLATE)) {
-			*conflict = esr;
-			return ROUTEABLE;
-		}
-
-		/* look along the chain of policies for one with the same name */
-
-		if (ero->kind == CK_TEMPLATE && streq(ero->name, c->name)) {
-			ldbg(ero->logger, "EASY!");
-			return ROUTEABLE;
-		}
-
-		/*
-		 * If we fell off the end of the list, then we found no
-		 * TEMPLATE so there must be a conflict that we can't resolve.
-		 * As the names are not equal, then we aren't
-		 * replacing/rekeying.
-		 *
-		 * ??? should there not be a conflict if ANYTHING in the list,
-		 * other than c, conflicts with c?
-		 */
-
-		if (LDISJOINT(POLICY_OVERLAPIP, c->policy | ero->policy) && c->config->sec_label.len == 0) {
-			/*
-			 * another connection is already using the eroute,
-			 * TODO: XFRM apparently can do this though
-			 */
-			connection_buf erob;
-			llog(RC_LOG_SERIOUS, logger,
-			     "cannot install eroute -- it is in use for "PRI_CONNECTION" "PRI_SO" ("PRI_SO")",
-			     pri_connection(ero, &erob),
-			     pri_so(esr->eroute_owner),
-			     pri_so(esr->connection->child.kernel_policy_owner));
-			return ROUTE_IMPOSSIBLE;
-		}
-
-		connection_buf erob;
-		dbg("kernel: overlapping permitted with "PRI_CONNECTION" "PRI_SO" ("PRI_SO")",
-		    pri_connection(ero, &erob),
-		    pri_so(esr->eroute_owner),
-		    pri_so(esr->connection->child.kernel_policy_owner));
-	}
-	return ROUTEABLE;
-}
-
-static enum routability connection_routable(struct connection *c,
-					    struct logger *logger)
+static enum routability connection_routability(struct connection *c,
+					       struct logger *logger)
 {
 	esb_buf b;
 	ldbg(logger,
@@ -1184,6 +995,10 @@ static bool spd_policy_conflicts(struct spd_route *spd,
 	}
 	return true;
 }
+
+/*
+ * XXX: can this and/or route_owner() be merged?
+ */
 
 static void get_connection_spd_conflict(struct spd_route *spd, struct logger *logger)
 {
@@ -1628,7 +1443,7 @@ static void revert_kernel_policy(struct spd_route *spd, struct state *st/*could 
 
 static bool install_prospective_kernel_policy(struct connection *c)
 {
-	enum routability r = connection_routable(c, c->logger);
+	enum routability r = connection_routability(c, c->logger);
 	switch (r) {
 	case ROUTE_IMPOSSIBLE:
 		return false;
@@ -1853,7 +1668,7 @@ void migration_down(struct child_sa *child)
 			num_ipsec_eroute--;
 #endif
 		/* only unroute if no other connection shares it */
-		if (routed(cr) && route_owner(sr, NULL) == NULL) {
+		if (routed(cr) && route_owner(sr) == NULL) {
 			do_updown(UPDOWN_DOWN, c, sr, &child->sa, child->sa.st_logger);
 			child->sa.st_mobike_del_src_ip = true;
 			do_updown(UPDOWN_UNROUTE, c, sr, &child->sa, child->sa.st_logger);
@@ -1902,7 +1717,7 @@ void unroute_connection(struct connection *c)
 	if (routed(cr)) {
 		for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
 			/* only unroute if no other connection shares it */
-			if (route_owner(spd, NULL) == NULL) {
+			if (route_owner(spd) == NULL) {
 				do_updown(UPDOWN_UNROUTE, c, spd, NULL, c->logger);
 			}
 		}
@@ -2824,9 +2639,10 @@ fail:
 	return false;
 }
 
-static bool setup_half_kernel_policy(struct state *st, enum direction direction)
+static bool install_inbound_ipsec_kernel_policies(struct state *st)
 {
 	const struct connection *c = st->st_connection;
+	struct logger *logger = st->st_logger;
 	/*
 	 * Add an inbound eroute to enforce an arrival check.
 	 *
@@ -2835,46 +2651,37 @@ static bool setup_half_kernel_policy(struct state *st, enum direction direction)
 	 * Note reversed ends.
 	 * Not much to be done on failure.
 	 */
-	dbg("kernel: %s() installing kernel-policy direction=%s owner="PRI_SO" ("PRI_SO")",
-	    __func__, enum_name_short(&direction_names, direction),
-	    pri_so(c->spd->eroute_owner),
-	    pri_so(c->spd->connection->child.kernel_policy_owner));
+	ldbg(logger, "kernel: %s() owner="PRI_SO" ("PRI_SO")",
+	     __func__, pri_so(c->spd->eroute_owner),
+	     pri_so(c->spd->connection->child.kernel_policy_owner));
 	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
 		if (spd->eroute_owner != SOS_NOBODY) {
-			selector_buf lb, rb;
-			dbg("kernel: %s() skipping %s SPD for %s<->%s as already has owner "PRI_SO" ("PRI_SO")",
-			    __func__,
-			    enum_name_short(&direction_names, direction),
-			    str_selector(&spd->local->client, &lb),
-			    str_selector(&spd->remote->client, &rb),
-			    pri_so(spd->eroute_owner),
-			    pri_so(spd->connection->child.kernel_policy_owner));
+			selector_pair_buf spb;
+			ldbg(logger, "kernel: %s() skipping SPD for %s as already has owner "PRI_SO" ("PRI_SO")",
+			    __func__, str_selector_pair(&spd->remote->client, &spd->local->client, &spb),
+			    pri_so(spd->eroute_owner), pri_so(spd->connection->child.kernel_policy_owner));
 			continue;
 		}
 		if (c->config->sec_label.len > 0 &&
 		    c->config->ike_version == IKEv2) {
-			selector_buf lb, rb;
-			dbg("kernel: %s() skipping %s SPD for %s<->%s as IKEv2 config.sec_label="PRI_SHUNK,
-			    __func__,
-			    enum_name_short(&direction_names, direction),
-			    str_selector(&spd->local->client, &lb),
-			    str_selector(&spd->remote->client, &rb),
-			    pri_shunk(c->config->sec_label));
+			selector_pair_buf spb;
+			ldbg(logger, "kernel: %s() skipping SPD for %s as IKEv2 config.sec_label="PRI_SHUNK,
+			     __func__,
+			     str_selector_pair(&spd->remote->client, &spd->local->client, &spb),
+			     pri_shunk(c->config->sec_label));
 			continue;
 		}
 
 		struct kernel_policy kernel_policy =
-			kernel_policy_from_state(st, spd, direction,
+			kernel_policy_from_state(st, spd, DIRECTION_INBOUND,
 						 calculate_kernel_priority(c),
 						 HERE);
-		selector_buf sb, db;
-		dbg("kernel: %s() is installing %s SPD for %s->%s",
-		    __func__, enum_name_short(&direction_names, direction),
-		    str_selector(&kernel_policy.src.client, &sb),
-		    str_selector(&kernel_policy.dst.client, &db));
+		selector_pair_buf spb;
+		ldbg(logger, "kernel: %s() is installing SPD for %s",
+		     __func__, str_selector_pair(&kernel_policy.src.client, &kernel_policy.dst.client, &spb));
 
 		if (!raw_policy(KERNEL_POLICY_OP_ADD,
-				direction,
+				DIRECTION_INBOUND,
 				EXPECT_KERNEL_POLICY_OK,
 				&kernel_policy.src.route,	/* src_client */
 				&kernel_policy.dst.route,	/* dst_client */
@@ -2885,11 +2692,11 @@ static bool setup_half_kernel_policy(struct state *st, enum direction direction)
 				HUNK_AS_SHUNK(c->config->sec_label),
 				st->st_logger,
 				"%s() add inbound Child SA", __func__)) {
+			selector_pair_buf spb;
 			llog(RC_LOG, st->st_logger,
-			     "kernel: %s() failed to add %s SPD (kernel policy) for %s->%s",
-			     __func__, enum_name_short(&direction_names, direction),
-			     str_selector(&kernel_policy.src.client, &sb),
-			     str_selector(&kernel_policy.dst.client, &db));
+			     "kernel: %s() failed to add SPD for %s",
+			     __func__,
+			     str_selector_pair(&kernel_policy.src.client, &kernel_policy.dst.client, &spb));
 		}
 	}
 
@@ -3121,15 +2928,19 @@ bool install_inbound_ipsec_sa(struct state *st)
 
 	/*
 	 * If our peer has a fixed-address client, check if we already
-	 * have a route for that client that conflicts.  We will take this
-	 * as proof that that route and the connections using it are
-	 * obsolete and should be eliminated.  Interestingly, this is
-	 * the only case in which we can tell that a connection is obsolete.
+	 * have a route for that client that conflicts.  We will take
+	 * this as proof that that route and the connections using it
+	 * are obsolete and should be eliminated.  Interestingly, this
+	 * is the only case in which we can tell that a connection is
+	 * obsolete.
+	 *
+	 * XXX: can this make use of connection_routability() and / or
+	 * get_connection_spd_conflicts() below?
 	 */
 	passert(c->kind == CK_PERMANENT || c->kind == CK_INSTANCE);
 	if (c->remote->child.has_client) {
 		for (;; ) {
-			struct spd_route *ro = route_owner(c->spd, NULL);
+			struct spd_route *ro = route_owner(c->spd);
 
 			if (ro == NULL)
 				break; /* nobody interesting has a route */
@@ -3174,10 +2985,11 @@ bool install_inbound_ipsec_sa(struct state *st)
 		}
 	}
 
-	dbg("kernel: install_inbound_ipsec_sa() checking if we can route");
-	/* check that we will be able to route and eroute */
-	struct spd_route *conflict;
-	enum routability r = could_route(c, c->spd, &conflict, st->st_logger);
+	/*
+	 * Check that we will be able to route and eroute.
+	 */
+
+	enum routability r = connection_routability(c, st->st_logger);
 	switch (r) {
 	case ROUTEABLE:
 		dbg("kernel:    routing is easy");
@@ -3185,9 +2997,9 @@ bool install_inbound_ipsec_sa(struct state *st)
 	case ROUTE_UNNECESSARY:
 		dbg("kernel:    routing unnecessary");
 		/*
-		 * in this situation, we should look and see if there is
-		 * a state that our connection references, that we are
-		 * in fact replacing.
+		 * in this situation, we should look and see if there
+		 * is a state that our connection references, that we
+		 * are in fact replacing.
 		 */
 		break;
 	case ROUTE_IMPOSSIBLE:
@@ -3196,6 +3008,11 @@ bool install_inbound_ipsec_sa(struct state *st)
 	default:
 		bad_case(r);
 	}
+
+	if (!get_connection_spd_conflicts(c, st->st_logger)) {
+		return false;
+	}
+
 
 	/*
 	 * we now have to set up the outgoing SA first, so that
@@ -3218,7 +3035,7 @@ bool install_inbound_ipsec_sa(struct state *st)
 		return false;
 	}
 
-	if (!setup_half_kernel_policy(st, DIRECTION_INBOUND)) {
+	if (!install_inbound_ipsec_kernel_policies(st)) {
 		dbg("kernel: %s() failed to install inbound kernel policy", __func__);
 		return false;
 	}
@@ -3380,7 +3197,7 @@ static bool install_ipsec_kernel_policies(struct state *st)
 					pexpect(!erouted(ro->child.routing)); /* warn for now - requires fixing */
 					set_child_routing(ro, RT_UNROUTED);
 					/* no need to keep old value */
-					struct spd_route *rosr = route_owner(spd, NULL);
+					struct spd_route *rosr = route_owner(spd);
 					ro = (rosr == NULL ? NULL : rosr->connection);
 				} while (ro != NULL);
 			}
@@ -3438,7 +3255,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 	 * the structure is zeroed (sec_labels ignore conflicts).
 	 */
 
-	enum routability r = connection_routable(st->st_connection, st->st_logger);
+	enum routability r = connection_routability(st->st_connection, st->st_logger);
 
 	switch (r) {
 	case ROUTEABLE:
@@ -3474,7 +3291,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 			dbg("kernel: %s() failed to install inbound kernel state", __func__);
 			return false;
 		}
-		if (!setup_half_kernel_policy(st, DIRECTION_INBOUND)) {
+		if (!install_inbound_ipsec_kernel_policies(st)) {
 			dbg("kernel: %s() failed to install inbound kernel policy", __func__);
 			return false;
 		}
@@ -3702,7 +3519,7 @@ static void teardown_ipsec_kernel_policies(struct state *st,
 			num_ipsec_eroute--;
 #endif
 			/* only unroute if no other connection shares it */
-			if (route_owner(spd, NULL) == NULL) {
+			if (route_owner(spd) == NULL) {
 				do_updown(UPDOWN_UNROUTE, c, spd, NULL, c->logger);
 			}
 
