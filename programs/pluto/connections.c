@@ -3198,7 +3198,8 @@ struct connection *group_instantiate(struct connection *group,
  * Common code for instantiating a Road Warrior or Opportunistic
  * connection.
  *
- * instantiate() doesn't clone SPDs while spd_instantiate() does.
+ * instantiate() doesn't generate SPDs from the selectors
+ * spd_instantiate() does.
  *
  * peers_id can be used to carry over an ID discovered in Phase 1.  It
  * must not disagree with the one in c, but if that is unspecified,
@@ -3376,42 +3377,48 @@ static void clone_connection_spd(struct connection *d, struct connection *t)
 }
 
 struct connection *spd_instantiate(struct connection *t,
-				   const ip_address peer_addr,
+				   const ip_address remote_addr,
 				   where_t where)
 {
-	struct connection *d = instantiate(t, peer_addr, /*peer-id*/NULL, /*sec_label*/null_shunk, where);
+	struct connection *d = instantiate(t, remote_addr, /*peer-id*/NULL,
+					   /*sec_label*/null_shunk, where);
 
+	/*
+	 * XXX: code in rw_responder_id_instantiate() is slightly
+	 * different - that code also handles remote subnets.
+	 *
+	 * XXX: identical to code in rw_responder_instantiate().
+	 */
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		if (t->end[end].child.selectors.proposed.list == t->end[end].child.config->selectors.list) {
-			d->end[end].child.selectors.proposed = t->end[end].child.config->selectors;
+		const char *leftright = d->end[end].config->leftright;
+		struct host_end *host = &d->end[end].host;
+		struct child_end *child = &d->end[end].child;
+		if (child->config->selectors.len > 0) {
+			ldbg(d->logger, "%s.child has %d configured selectors",
+			     leftright, child->config->selectors.len > 0);
+			child->selectors.proposed = child->config->selectors;
 		} else {
-			d->end[end].child.selectors.acquire_or_host_or_group = t->end[end].child.selectors.acquire_or_host_or_group;
-			d->end[end].child.selectors.proposed.len = 1;
-			d->end[end].child.selectors.proposed.list = &d->end[end].child.selectors.acquire_or_host_or_group;
+			ldbg(d->logger, "%s.child selector formed from host", leftright);
+			/*
+			 * Default the end's child selector (client) to a
+			 * subnet containing only the end's host address.
+			 */
+			ip_selector selector =
+				selector_from_address_protoport(host->addr,
+								child->config->protoport);
+			set_end_selector(d, end, selector);
 		}
- 	}
+	}
 
-	clone_connection_spd(d, t);
-
-	update_spds_from_end_host_addr(d, d->remote->config->index, peer_addr, HERE);
-
-	set_connection_priority(d); /* re-compute; may have changed */
+	add_proposal_spds(d);
 
 	/* leave breadcrumb */
 	pexpect(d->child.kernel_policy_owner == SOS_NOBODY);
 	set_child_kernel_policy_owner(d, SOS_NOBODY);
 
-	/* all done */
-	spd_route_db_add_connection(d);
-
-	connection_buf cb, db;
-	address_buf pab;
-	dbg("instantiated "PRI_CO" "PRI_CONNECTION" as "PRI_CO" "PRI_CONNECTION" using kind=%s remote_address=%s sec_label="PRI_SHUNK,
-	    pri_co(t->serialno), pri_connection(t, &cb),
-	    pri_co(d->serialno), pri_connection(d, &db),
-	    enum_name(&connection_kind_names, d->kind),
-	    str_address(&peer_addr, &pab),
-	    pri_shunk(d->child.sec_label));
+	connection_buf tb;
+	ldbg_connection(d, HERE, "instantiated from "PRI_CONNECTION,
+			pri_connection(t, &tb));
 
 	return d;
 }
@@ -3482,7 +3489,9 @@ struct connection *rw_responder_instantiate(struct connection *t,
 
 	/*
 	 * XXX: code in rw_responder_id_instantiate() is slightly
-	 * different.
+	 * different - that code also handles remote subnets.
+	 *
+	 * XXX: identical to code in spd_instantiate().
 	 */
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		const char *leftright = d->end[end].config->leftright;
