@@ -236,6 +236,35 @@ bool failure_shunt_ok(enum shunt_policy shunt)
 	return false;
 }
 
+static bool spd_kernel_policy_op(const struct spd_route *spd,
+				 enum kernel_policy_op op,
+				 enum direction direction,
+				 struct logger *logger, where_t where, const char *what)
+{
+	PASSERT(logger, (op == KERNEL_POLICY_OP_ADD ||
+			 op == KERNEL_POLICY_OP_REPLACE));
+	const struct connection *c = spd->connection;
+	enum encap_mode encap_mode = (c->policy & POLICY_TUNNEL ? ENCAP_MODE_TUNNEL :
+				      ENCAP_MODE_TRANSPORT);
+	struct kernel_policy kernel_policy =
+		kernel_policy_from_spd(c->policy, spd, encap_mode, direction, where);
+	if (!raw_policy(op, direction,
+			/* XXX: shouldn't this depend on
+			 * OP=add/replace? */
+			EXPECT_KERNEL_POLICY_OK,
+			&kernel_policy.src.client, &kernel_policy.dst.client,
+			&kernel_policy,
+			deltatime(0),
+			&c->sa_marks, c->xfrmi,
+			DEFAULT_KERNEL_POLICY_ID,
+			HUNK_AS_SHUNK(c->config->sec_label),
+			logger,
+			"%s "PRI_WHERE, what, pri_where(where))) {
+		return false;
+	}
+	return true;
+}
+
 /*
  * Add an outbound bare kernel policy, aka shunt.
  *
@@ -249,8 +278,7 @@ bool failure_shunt_ok(enum shunt_policy shunt)
  * not paired with a kernel state.
  */
 
-static bool install_prospective_kernel_policies(enum expect_kernel_policy expect_inbound_policy,
-						const struct spd_route *spd,
+static bool install_prospective_kernel_policies(const struct spd_route *spd,
 						struct logger *logger, where_t where)
 {
 	const struct connection *c = spd->connection;
@@ -263,9 +291,6 @@ static bool install_prospective_kernel_policies(enum expect_kernel_policy expect
 
 	LSWDBGP(DBG_BASE, buf) {
 		jam(buf, "kernel: %s() ", __func__);
-
-		jam_string(buf, " ");
-		jam_string(buf, expect_kernel_policy_name(expect_inbound_policy));
 
 		jam_connection(buf, c);
 
@@ -293,38 +318,45 @@ static bool install_prospective_kernel_policies(enum expect_kernel_policy expect
 		 * Security labels install a full policy which
 		 * includes REQID and assumed mode when adding the
 		 * prospective shunt but normal connections do not.
-		 */
-		struct kernel_policy policy;
-		if (c->config->sec_label.len > 0) {
-			enum encap_mode encap_mode = (c->policy & POLICY_TUNNEL ? ENCAP_MODE_TUNNEL :
-						      ENCAP_MODE_TRANSPORT);
-			policy = kernel_policy_from_spd(c->policy, spd,
-							encap_mode, direction, HERE);
-		} else {
-			policy = kernel_policy_from_void(spd->local->client, spd->remote->client,
-							 direction, calculate_kernel_priority(c),
-							 prospective_shunt, where);
-		}
-
-		/*
+		 *
 		 * Note the NO_INBOUND_ENTRY.  It's a hack to get
 		 * around a connection being unrouted, deleting both
 		 * inbound and outbound policies when there's only the
 		 * basic outbound policy installed.
 		 */
+		if (c->config->sec_label.len > 0) {
+			if (!spd_kernel_policy_op(spd, KERNEL_POLICY_OP_ADD, direction,
+						  logger, HERE,
+						  "prospective kernel policy")) {
+				return false;
+			}
+		} else {
+			struct kernel_policy kernel_policy =
+				kernel_policy_from_void(spd->local->client, spd->remote->client,
+							direction, calculate_kernel_priority(c),
+							prospective_shunt, where);
 
-		if (!raw_policy(KERNEL_POLICY_OP_ADD, direction,
-				(direction == DIRECTION_OUTBOUND ? EXPECT_KERNEL_POLICY_OK :
-				 expect_inbound_policy),
-				&policy.src.client, &policy.dst.client, &policy,
-				deltatime(0),
-				&c->sa_marks, c->xfrmi,
-				DEFAULT_KERNEL_POLICY_ID,
-				HUNK_AS_SHUNK(c->config->sec_label),
-				logger,
-				"%s() prospective kernel policy "PRI_WHERE,
-				__func__, pri_where(where))) {
-			return false;
+			/*
+			 * Note the NO_INBOUND_ENTRY.  It's a hack to get
+			 * around a connection being unrouted, deleting both
+			 * inbound and outbound policies when there's only the
+			 * basic outbound policy installed.
+			 */
+
+			if (!raw_policy(KERNEL_POLICY_OP_ADD, direction,
+					/* XXX: shoudn't no policy be expected? */
+					EXPECT_KERNEL_POLICY_OK,
+					&kernel_policy.src.client, &kernel_policy.dst.client,
+					&kernel_policy,
+					deltatime(0),
+					&c->sa_marks, c->xfrmi,
+					DEFAULT_KERNEL_POLICY_ID,
+					HUNK_AS_SHUNK(c->config->sec_label),
+					logger,
+					"%s() prospective kernel policy "PRI_WHERE,
+					__func__, pri_where(where))) {
+				return false;
+			}
 		}
 	}
 	return true;
@@ -1463,8 +1495,7 @@ static bool install_prospective_kernel_policy(struct connection *c)
 
 		if (spd->wip.conflicting.policy == NULL) {
 			ok &= spd->wip.installed.policy =
-				install_prospective_kernel_policies(EXPECT_KERNEL_POLICY_OK,
-								    spd, c->logger, HERE);
+				install_prospective_kernel_policies(spd, c->logger, HERE);
 		}
 
 		if (spd->wip.conflicting.shunt != NULL &&
@@ -1964,17 +1995,9 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 			/* XXX: log? */
 			return false;
 		}
-		if (!raw_policy(KERNEL_POLICY_OP_ADD, direction,
-				EXPECT_KERNEL_POLICY_OK,
-				&kernel_policy.src.client, &kernel_policy.dst.client,
-				&kernel_policy,
-				/*use_lifetime*/deltatime(0),
-				/*sa_marks*/NULL, /* XXX:bug? */
-				/*xfrmi*/NULL, /* XXX: bug? */
-				DEFAULT_KERNEL_POLICY_ID,
-				/*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
-				/*logger*/logger,
-				"%s() security label policy", __func__)) {
+		if (!spd_kernel_policy_op(c->spd, KERNEL_POLICY_OP_ADD, direction,
+					  /*logger*/logger, HERE,
+					  "prospective security label")) {
 			if (direction == DIRECTION_INBOUND) {
 				/*
 				 * Need to pull the just installed
@@ -3892,8 +3915,7 @@ static void expire_bare_shunts(struct logger *logger)
 				 */
 				struct connection *c = connection_by_serialno(bsp->from_serialno);
 				if (c != NULL) {
-					if (!install_prospective_kernel_policies(EXPECT_KERNEL_POLICY_OK,
-										 c->spd, logger, HERE)) {
+					if (!install_prospective_kernel_policies(c->spd, logger, HERE)) {
 						llog(RC_LOG, logger,
 						     "trap shunt install failed ");
 					}
