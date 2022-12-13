@@ -85,10 +85,10 @@
 #include "rekeyfuzz.h"
 #include "orient.h"
 
-static bool sag_eroute(const struct state *st,
-		       const struct spd_route *sr,
-		       enum kernel_policy_op op,
-		       const char *opname);
+static bool state_kernel_policy_op_outbound(const struct state *st,
+					    const struct spd_route *spd,
+					    enum kernel_policy_op op,
+					    const char *opname);
 
 static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 						   const struct spd_route *spd,
@@ -185,15 +185,6 @@ kernel_priority_t calculate_kernel_priority(const struct connection *c)
 	     prio, prio, base, portsw, protow, srcw, dstw, instw);
 	return (kernel_priority_t) { prio, };
 }
-
-static bool eroute_outbound_connection(enum kernel_policy_op op,
-				       const char *opname,
-				       const struct spd_route *sr,
-				       const struct kernel_policy *kernel_policy,
-				       const struct sa_marks *sa_marks,
-				       const struct pluto_xfrmi *xfrmi,
-				       shunk_t sec_label,
-				       struct logger *logger);
 
 static global_timer_cb kernel_scan_shunts;
 
@@ -1277,9 +1268,9 @@ static void revert_kernel_policy(struct spd_route *spd, struct state *st/*could 
 				     "shunt_policy() in route_and_eroute() failed in !st case");
 			}
 		} else {
-			if (!sag_eroute(st, spd,
-					KERNEL_POLICY_OP_DELETE,
-					"delete")) {
+			if (!state_kernel_policy_op_outbound(st, spd,
+							     KERNEL_POLICY_OP_DELETE,
+							     "delete")) {
 				llog(RC_LOG, logger,
 				     "sag_eroute() in route_and_eroute() failed in st case for delete");
 			}
@@ -1353,9 +1344,9 @@ static void revert_kernel_policy(struct spd_route *spd, struct state *st/*could 
 		     __func__, pri_so(ero->child.kernel_policy_owner));
 		struct state *ost = state_by_serialno(ero->child.kernel_policy_owner);
 		if (ost != NULL) {
-			if (!sag_eroute(ost, esr,
-					KERNEL_POLICY_OP_REPLACE,
-					"restore"))
+			if (!state_kernel_policy_op_outbound(ost, esr,
+							     KERNEL_POLICY_OP_REPLACE,
+							     "restore"))
 				llog(RC_LOG, logger,
 				     "sag_eroute() in %s() failed restore/replace", __func__);
 		}
@@ -1596,10 +1587,10 @@ bool route_and_trap_connection(struct connection *c)
 	return connection_route_transition(c, RT_ROUTED_PROSPECTIVE);
 }
 
-static bool sag_eroute(const struct state *st,
-		       const struct spd_route *sr,
-		       enum kernel_policy_op op,
-		       const char *opname)
+static bool state_kernel_policy_op_outbound(const struct state *st,
+					    const struct spd_route *spd,
+					    enum kernel_policy_op op,
+					    const char *opname)
 {
 	struct connection *c = st->st_connection;
 
@@ -1609,21 +1600,40 @@ static bool sag_eroute(const struct state *st,
 	 */
 
 	struct kernel_policy kernel_policy =
-		kernel_policy_from_state(st, sr, DIRECTION_OUTBOUND,
-					 
-					 HERE);
+		kernel_policy_from_state(st, spd, DIRECTION_OUTBOUND, HERE);
 	/* check for no transform at all */
 	passert(kernel_policy.nr_rules > 0);
 
-	/* hack */
-	char why[256];
-	snprintf(why, sizeof(why), "%s() %s", __func__, opname);
+	if (spd->local->child->has_cat) {
+		ip_selector client = selector_from_address(spd->local->host->addr);
+		bool t = raw_policy(op, DIRECTION_OUTBOUND,
+				    EXPECT_KERNEL_POLICY_OK,
+				    &client, &kernel_policy.dst.route,
+				    &kernel_policy,
+				    deltatime(0),
+				    &c->sa_marks, c->xfrmi,
+				    DEFAULT_KERNEL_POLICY_ID,
+				    HUNK_AS_SHUNK(c->config->sec_label),
+				    st->st_logger,
+				    "CAT: %s() %s", __func__, opname);
+		if (!t) {
+			llog(RC_LOG, st->st_logger,
+			     "CAT: failed to eroute additional Client Address Translation policy");
+		}
 
-	return eroute_outbound_connection(op, why, sr,
-					  &kernel_policy,
-					  &c->sa_marks, c->xfrmi,
-					  HUNK_AS_SHUNK(c->config->sec_label),
-					  st->st_logger);
+		ldbg(st->st_logger, "kernel: %s CAT extra route added return=%d", __func__, t);
+	}
+
+	return raw_policy(op, DIRECTION_OUTBOUND,
+			  EXPECT_KERNEL_POLICY_OK,
+			  &kernel_policy.src.route, &kernel_policy.dst.route,
+			  &kernel_policy,
+			  deltatime(0),
+			  &c->sa_marks, c->xfrmi,
+			  DEFAULT_KERNEL_POLICY_ID,
+			  HUNK_AS_SHUNK(c->config->sec_label),
+			  st->st_logger,
+			  "%s() %s", __func__, opname);
 }
 
 void migration_up(struct child_sa *child)
@@ -2020,47 +2030,6 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	return true;
 }
 
-bool eroute_outbound_connection(enum kernel_policy_op op,
-				const char *opname,
-				const struct spd_route *sr,
-				const struct kernel_policy *kernel_policy,
-				const struct sa_marks *sa_marks,
-				const struct pluto_xfrmi *xfrmi,
-				shunk_t sec_label,
-				struct logger *logger)
-{
-	if (sr->local->child->has_cat) {
-		ip_selector client = selector_from_address(sr->local->host->addr);
-		bool t = raw_policy(op, DIRECTION_OUTBOUND,
-				    EXPECT_KERNEL_POLICY_OK,
-				    &client, &kernel_policy->dst.route,
-				    kernel_policy,
-				    deltatime(0),
-				    sa_marks, xfrmi,
-				    DEFAULT_KERNEL_POLICY_ID,
-				    sec_label,
-				    logger,
-				    "CAT: %s() %s", __func__, opname);
-		if (!t) {
-			llog(RC_LOG, logger,
-			     "CAT: failed to eroute additional Client Address Translation policy");
-		}
-
-		dbg("kernel: %s CAT extra route added return=%d", __func__, t);
-	}
-
-	return raw_policy(op, DIRECTION_OUTBOUND,
-			  EXPECT_KERNEL_POLICY_OK,
-			  &kernel_policy->src.route, &kernel_policy->dst.route,
-			  kernel_policy,
-			  deltatime(0),
-			  sa_marks, xfrmi,
-			  DEFAULT_KERNEL_POLICY_ID,
-			  sec_label,
-			  logger,
-			  "%s() %s", __func__, opname);
-}
-
 /* install a bare hold or pass policy to a connection */
 
 bool assign_holdpass(struct connection *c,
@@ -2110,16 +2079,15 @@ bool assign_holdpass(struct connection *c,
 		 * bare table.
 		 */
 		ldbg(c->logger, "kernel: %s() no longer bare so ditching", __func__);
-		struct bare_shunt **old = bare_shunt_ptr(&sr->local->client, &sr->remote->client,
-							 "assign_holdpass");
+		struct bare_shunt **old = bare_shunt_ptr(&sr->local->client, &sr->remote->client, __func__);
 
 		if (old == NULL) {
 			/* ??? should this happen?  It does. */
 			llog(RC_LOG, c->logger,
-			     "assign_holdpass() no bare shunt to remove? - mismatch?");
+			     "%s() no bare shunt to remove? - mismatch?", __func__);
 		} else {
 			/* ??? should this happen? */
-			dbg("kernel: assign_holdpass() removing bare shunt");
+			dbg("kernel: %s() removing bare shunt", __func__);
 			free_bare_shunt(old);
 		}
 	} else {
@@ -2139,30 +2107,51 @@ bool assign_holdpass(struct connection *c,
 
 			if (erouted(ro)) {
 				op = KERNEL_POLICY_OP_REPLACE;
-				reason = "assign_holdpass() replace %trap with broad %pass or %hold";
+				reason = "replace %trap with broad %pass or %hold";
 			} else {
 				op = KERNEL_POLICY_OP_ADD;
-				reason = "assign_holdpass() add broad %pass or %hold";
+				reason = "broad %pass or %hold";
 			}
 
-			struct kernel_policy outbound_kernel_policy =
+			struct kernel_policy kernel_policy =
 				kernel_policy_from_void(sr->local->client, sr->remote->client,
 							DIRECTION_OUTBOUND,
 							calculate_kernel_priority(c),
 							c->config->negotiation_shunt, HERE);
 
-			if (eroute_outbound_connection(op, reason, sr,
-						       &outbound_kernel_policy,
-						       NULL, 0 /* xfrm_if_id */,
-						       HUNK_AS_SHUNK(c->config->sec_label),
-						       c->logger))
-			{
-				dbg("kernel: assign_holdpass() eroute_connection() done");
-			} else {
+			if (sr->local->child->has_cat) {
+				ip_selector client = selector_from_address(sr->local->host->addr);
+				if (!raw_policy(op, DIRECTION_OUTBOUND,
+						EXPECT_KERNEL_POLICY_OK,
+						&client, &kernel_policy.dst.route,
+						&kernel_policy,
+						deltatime(0),
+						&c->sa_marks, c->xfrmi,
+						DEFAULT_KERNEL_POLICY_ID,
+						HUNK_AS_SHUNK(c->config->sec_label),
+						c->logger, "CAT: %s() %s", __func__, reason)) {
+					llog(RC_LOG, c->logger,
+					     "CAT: failed to eroute additional Client Address Translation policy");
+				} else {
+					dbg("kernel: %s() CAT extra route added", __func__);
+				}
+			}
+
+			if (!raw_policy(op, DIRECTION_OUTBOUND,
+					EXPECT_KERNEL_POLICY_OK,
+					&kernel_policy.src.route, &kernel_policy.dst.route,
+					&kernel_policy,
+					deltatime(0),
+					&c->sa_marks, c->xfrmi,
+					DEFAULT_KERNEL_POLICY_ID,
+					HUNK_AS_SHUNK(c->config->sec_label),
+					c->logger, "%s() %s", __func__, reason)) {
 				llog(RC_LOG, c->logger,
-				     "assign_holdpass() eroute_connection() failed");
+				     "%s() eroute_connection() failed", __func__);
 				return false;
 			}
+
+			dbg("kernel: %s() eroute_connection() done", __func__);
 		}
 
 		ip_address src_host_addr = packet_src_address(*packet);
@@ -2171,17 +2160,17 @@ bool assign_holdpass(struct connection *c,
 		if (!flush_bare_shunt(&src_host_addr, &dst_host_addr,
 				      packet->protocol, IGNORE_KERNEL_POLICY_MISSING,
 				      (c->config->negotiation_shunt == SHUNT_PASS ? "delete narrow %pass" :
-				       "assign_holdpass() delete narrow %hold"),
+				       "delete narrow %hold"),
 				      c->logger)) {
-			dbg("kernel: assign_holdpass() delete_bare_shunt() succeeded");
+			dbg("kernel: %s() delete_bare_shunt() succeeded", __func__);
 		} else {
 			llog(RC_LOG, c->logger,
-			     "assign_holdpass() delete_bare_shunt() failed");
+			     "%s() delete_bare_shunt() failed", __func__);
 			return false;
 		}
 	}
 	set_child_routing(c, rn);
-	dbg("kernel:  assign_holdpass() done - returning success");
+	dbg("kernel:  %s() done - returning success", __func__);
 	return true;
 }
 
@@ -3075,7 +3064,8 @@ static bool install_ipsec_kernel_policies(struct state *st)
 			(spd->wip.conflicting.policy != NULL ||
 			 spd->wip.conflicting.shunt != NULL ? KERNEL_POLICY_OP_REPLACE :
 			 KERNEL_POLICY_OP_ADD);
-		ok &= spd->wip.installed.policy = sag_eroute(st, spd, op, "install IPsec policy");
+		ok &= spd->wip.installed.policy =
+			state_kernel_policy_op_outbound(st, spd, op, "install IPsec policy");
 	}
 
 	/*
@@ -3870,7 +3860,7 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 				dbg_bare_shunt("replace", bs);
 			} else {
 				llog(RC_LOG, logger,
-				     "assign_holdpass() failed to update shunt policy");
+				     "%s() failed to update shunt policy", __func__);
 				free_bare_shunt(bs_pp);
 			}
 		} else {
