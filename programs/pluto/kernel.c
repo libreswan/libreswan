@@ -91,11 +91,9 @@ static bool sag_eroute(const struct state *st,
 		       const char *opname);
 
 static struct kernel_policy kernel_policy_from_spd(lset_t policy,
-						   reqid_t child_reqid,
 						   const struct spd_route *spd,
 						   enum encap_mode mode,
 						   enum direction direction,
-						   kernel_priority_t priority,
 						   where_t where);
 static void free_bare_shunt(struct bare_shunt **pp);
 static void delete_bare_kernel_policy(const struct bare_shunt *bsp,
@@ -295,8 +293,6 @@ static bool install_prospective_kernel_policies(enum expect_kernel_policy expect
 		jam(buf, PRI_WHERE, pri_where(where));
 	}
 
-	kernel_priority_t priority = calculate_kernel_priority(c);
-
 	/*
 	 * Only the following shunts are valid.
 	 */
@@ -311,14 +307,11 @@ static bool install_prospective_kernel_policies(enum expect_kernel_policy expect
 		if (c->config->sec_label.len > 0) {
 			enum encap_mode encap_mode = (c->policy & POLICY_TUNNEL ? ENCAP_MODE_TUNNEL :
 						      ENCAP_MODE_TRANSPORT);
-			policy = kernel_policy_from_spd(c->policy,
-							c->child.reqid,
-							spd,
-							encap_mode, direction,
-							priority, HERE);
+			policy = kernel_policy_from_spd(c->policy, spd,
+							encap_mode, direction, HERE);
 		} else {
 			policy = kernel_policy_from_void(spd->local->client, spd->remote->client,
-							 direction, priority,
+							 direction, calculate_kernel_priority(c),
 							 prospective_shunt, where);
 		}
 
@@ -651,11 +644,9 @@ static struct kernel_route kernel_route_from_state(const struct state *st, enum 
 }
 
 static struct kernel_policy kernel_policy_from_spd(lset_t policy,
-						   reqid_t child_reqid,
 						   const struct spd_route *spd,
 						   enum encap_mode mode,
 						   enum direction direction,
-						   kernel_priority_t priority,
 						   where_t where)
 {
 	/*
@@ -710,7 +701,7 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 		.dst.host = dst->host->addr,
 		.src.route = src_route,
 		.dst.route = dst_route,
-		.priority = priority,
+		.priority = calculate_kernel_priority(spd->connection),
 		.mode = mode,
 		.shunt = SHUNT_UNSET,
 		.where = where,
@@ -731,6 +722,7 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 	 * Note: the stack order matches kernel_sa's array.
 	 */
 
+	reqid_t child_reqid = spd->connection->child.reqid;
 	struct kernel_policy_rule *last = kernel_policy.rule;
 	if (policy & POLICY_COMPRESS) {
 		last->reqid = reqid_ipcomp(child_reqid);
@@ -758,10 +750,8 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 static struct kernel_policy kernel_policy_from_state(const struct state *st,
 						     const struct spd_route *spd,
 						     enum direction direction,
-						     kernel_priority_t priority,
 						     where_t where)
 {
-	const struct connection *cc = st->st_connection;
 	bool tunnel = false;
 	lset_t policy = LEMPTY;
 	if (st->st_ipcomp.present) {
@@ -781,9 +771,7 @@ static struct kernel_policy kernel_policy_from_state(const struct state *st,
 
 	enum encap_mode mode = (tunnel ? ENCAP_MODE_TUNNEL : ENCAP_MODE_TRANSPORT);
 	struct kernel_policy kernel_policy = kernel_policy_from_spd(policy,
-								    cc->child.reqid,
 								    spd, mode, direction,
-								    priority,
 								    where);
 	return kernel_policy;
 }
@@ -1622,7 +1610,7 @@ static bool sag_eroute(const struct state *st,
 
 	struct kernel_policy kernel_policy =
 		kernel_policy_from_state(st, sr, DIRECTION_OUTBOUND,
-					 calculate_kernel_priority(c),
+					 
 					 HERE);
 	/* check for no transform at all */
 	passert(kernel_policy.nr_rules > 0);
@@ -1954,17 +1942,14 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	enum encap_mode mode = (c->policy & POLICY_TUNNEL ? ENCAP_MODE_TUNNEL :
 				ENCAP_MODE_TRANSPORT);
 
-	kernel_priority_t priority = calculate_kernel_priority(c);
-
 	/*
 	 * SE installs both an outgoing and incoming policy.  Normal
 	 * connections do not.
 	 */
 	FOR_EACH_THING(direction, DIRECTION_OUTBOUND, DIRECTION_INBOUND) {
 		const struct kernel_policy kernel_policy =
-			kernel_policy_from_spd(c->policy, c->child.reqid, c->spd,
-					       mode, direction,
-					       priority, HERE);
+			kernel_policy_from_spd(c->policy, c->spd,
+					       mode, direction, HERE);
 		if (kernel_policy.nr_rules == 0) {
 			/* XXX: log? */
 			return false;
@@ -2666,9 +2651,7 @@ static bool install_inbound_ipsec_kernel_policies(struct state *st)
 	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
 
 		struct kernel_policy kernel_policy =
-			kernel_policy_from_state(st, spd, DIRECTION_INBOUND,
-						 calculate_kernel_priority(c),
-						 HERE);
+			kernel_policy_from_state(st, spd, DIRECTION_INBOUND, HERE);
 		selector_pair_buf spb;
 		ldbg(logger, "kernel: %s() is installing SPD for %s",
 		     __func__, str_selector_pair(&kernel_policy.src.client, &kernel_policy.dst.client, &spb));
