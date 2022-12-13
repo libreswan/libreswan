@@ -769,9 +769,11 @@ static bool first_subnet(struct subnets *sn)
 		subnets = sn->end->strings[KSCF_SUBNET];
 		count = -1; /* becomes 0 below */
 	} else {
-		return false;
+		/* skip as NULL */
+		pexpect(sn->count == 0);
+		pexpect(sn->subnets == NULL);
+		return true;
 	}
-	sn->subnet = unset_subnet;
 	sn->subnets = subnets;
 	sn->count = count;
 	/* advances .count to 0(subnet) or 1(subnets) */
@@ -784,7 +786,7 @@ static bool next_subnet(struct subnets *sn)
 
 	const char *subnets = sn->subnets;
 	if (subnets == NULL) {
-		/* XXX: never happens */
+		/* happens when both subnet= and subnets= */
 		return false;
 	}
 
@@ -864,7 +866,6 @@ static int starter_permutate_conns(int
 	 * extra element of subnets= has been added, so subnets= for
 	 * only one side will do the right thing, as will some
 	 * combinations of also=
-	 *
 	 */
 
 	struct subnets left = {
@@ -873,7 +874,7 @@ static int starter_permutate_conns(int
 		.end = &conn->left,
 	};
 	if (!first_subnet(&left)) {
-		/* no subnets at all!?! */
+		/* syntax error */
 		return 1;
 	}
 	pexpect(left.count >= 0);
@@ -884,68 +885,89 @@ static int starter_permutate_conns(int
 		.end = &conn->right,
 	};
 	if (!first_subnet(&first_right)) {
-		/* no subnets at all!?! */
+		/* syntax error */
 		return 1;
 	}
 	struct subnets right = first_right;
 	pexpect(right.count >= 0);
 
-	for (;;) {
-		/* copy conn  --- we can borrow all pointers, since this
-		 * is a temporary copy */
-		struct starter_conn sc = *conn;
+	do {
+		do {
 
-		/* fix up leftsubnet/rightsubnet properly, make sure
-		 * that has_client is set.
-		 */
-		subnet_buf lb, rb;
-		str_subnet(&left.subnet, &lb);
-		str_subnet(&right.subnet, &rb);
-		sc.left.subnet = lb.buf;
-		sc.right.subnet = rb.buf;
+			/*
+			 * copy conn --- we can borrow all pointers,
+			 * since this is a temporary copy.
+			 */
+			struct starter_conn sc = *conn;
 
-		char tmpconnname[256];
-		snprintf(tmpconnname, sizeof(tmpconnname), "%s/%ux%u",
-			 conn->name, left.count, right.count);
-		sc.name = tmpconnname;
+			/*
+			 * Build a new conn name by appending
+			 * /<left-nr>x<right-nr>.
+			 *
+			 * When using subnet= NR==0.
+			 */
+			char tmpconnname[256];
+			snprintf(tmpconnname, sizeof(tmpconnname), "%s/%ux%u",
+				 conn->name, left.count, right.count);
+#if 0
+			fprintf(stderr, "tmpconnname=%s\n", tmpconnname);
+#endif
 
-		sc.connalias = conn->name;
+			sc.name = tmpconnname;
+			sc.connalias = conn->name;
 
-		const struct ip_info *left_afi = subnet_info(left.subnet);
-		const struct ip_info *right_afi = subnet_info(right.subnet);
-		if (left_afi == right_afi) {
-			int fail = (*operation)(cfg, &sc);
-			if (fail != 0) {
-				/* Fail at first failure?  I think so. */
-				return fail;
-			}
-		} else {
+			/*
+			 * Fix up leftsubnet/rightsubnet
+			 * properly, make sure that has_client
+			 * is set.
+			 *
+			 * XXX: LB and RB are same scope as SC.
+			 */
 			subnet_buf lb, rb;
-			starter_log(LOG_LEVEL_DEBUG, "skipping mismatched subnets %s %s",
-				    str_subnet(&left.subnet, &lb),
-				    str_subnet(&right.subnet, &rb));
+			str_subnet(&left.subnet, &lb);
+			str_subnet(&right.subnet, &rb);
+			sc.left.subnet = (left.subnet.is_set ? lb.buf : NULL);
+			sc.right.subnet = (right.subnet.is_set ? rb.buf : NULL);
+
+			/*
+			 * Either .subnet is !.is_set or is valid.
+			 */
+			const struct ip_info *left_afi = subnet_info(left.subnet);
+			const struct ip_info *right_afi = subnet_info(right.subnet);
+			if (left_afi == right_afi ||
+			    left_afi == NULL || right_afi == NULL) {
+				int fail = (*operation)(cfg, &sc);
+				if (fail != 0) {
+					/* Fail at first failure?  I think so. */
+					return fail;
+				}
+			} else {
+				subnet_buf lb, rb;
+				starter_log(LOG_LEVEL_DEBUG, "skipping mismatched subnets %s %s",
+					    str_subnet(&left.subnet, &lb),
+					    str_subnet(&right.subnet, &rb));
+			}
+
+			/*
+			 * Try to advance right.
+			 */
+		} while (next_subnet(&right));
+
+		if (right.error != NULL) {
+			/* really bad */
+			return 1;
 		}
 
 		/*
-		 * Okay, advance right first, and if it is out, rewind
-		 * and do left instead.
+		 * Right is out so rewind it and advance left.
 		 */
-		if (!next_subnet(&right)) {
-			if (right.error != NULL) {
-				/* really bad */
-				return 1;
-			}
-			/* reset right, and advance left! */
-			right = first_right;
-			/* left */
-			if (!next_subnet(&left)) {
-				if (left.error != NULL) {
-					/* really bad */
-					return 1;
-				}
-				break;
-			}
-		}
+		right = first_right;
+
+	} while (next_subnet(&left));
+
+	if (left.error != NULL) {
+		/* really bad */
+		return 1;
 	}
 
 	return 0;	/* success. */
