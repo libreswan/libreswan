@@ -72,11 +72,11 @@ bool selector_contains_one_address(const ip_selector selector)
 size_t jam_selector(struct jambuf *buf, const ip_selector *selector)
 {
 	if (selector == NULL) {
-		return jam_string(buf, "<selector:null>");
+		return jam_string(buf, "<null-selector>");
 	}
 
 	if (!selector->is_set) {
-		return jam(buf, PRI_SELECTOR, pri_selector(selector));
+		return jam_string(buf, "<unset-selector>");
 	}
 
 	const struct ip_info *afi = selector_type(selector);
@@ -85,9 +85,14 @@ size_t jam_selector(struct jambuf *buf, const ip_selector *selector)
 	}
 
 	size_t s = 0;
+
+	/* always <address>/<length> */
 	ip_address sa = selector_prefix(*selector);
 	s += jam_address(buf, &sa);
 	s += jam(buf, "/%u", selector->maskbits);
+
+	/* optionally /<protocol>/<port> */
+#if 1
 	if (selector->ipproto != 0 || selector->hport != 0) {
 		s += jam(buf, ":");
 		s += jam(buf, "%s/", selector_protocol(*selector)->name);
@@ -97,6 +102,15 @@ size_t jam_selector(struct jambuf *buf, const ip_selector *selector)
 			s += jam(buf, "%d", selector->hport);
 		}
 	}
+#else
+	const struct ip_protocol *protocol = selector_protocol(*selector);
+	if (selector->hport != 0) {
+		s += jam(buf, "/%s/%d", protocol->name, selector->hport);
+	} else if (protocol != &ip_protocol_all) {
+		s += jam(buf, "/%s", protocol->name);
+	}
+#endif
+
 	return s;
 }
 

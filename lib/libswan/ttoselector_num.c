@@ -33,7 +33,7 @@
  *
  */
 
-err_t ttoselector_num(shunk_t input,
+err_t ttoselector_num(shunk_t cursor,
 		      const struct ip_info *afi, /* could be NULL */
 		      ip_selector *dst, ip_address *nonzero_host)
 {
@@ -42,12 +42,14 @@ err_t ttoselector_num(shunk_t input,
 	err_t oops;
 
 	/*
-	 * <address> / ...
+	 * <address> [ / <prefix-length> [ / <protocol> [ / <port> ] ] ]
 	 */
 
-	char address_term;
-	shunk_t address_token = shunk_token(&input, &address_term, "/");
-	/* fprintf(stderr, "address="PRI_SHUNK"\n", pri_shunk(address_token)); */
+	char prefix_length_separator;
+	shunk_t address_token = shunk_token(&cursor, &prefix_length_separator, "/");
+#if 0
+	fprintf(stderr, "address="PRI_SHUNK"\n", pri_shunk(address_token));
+#endif
 
 	ip_address address;
 	oops = ttoaddress_num(address_token, afi/*possibly NULL*/, &address);
@@ -61,69 +63,61 @@ err_t ttoselector_num(shunk_t input,
 	passert(afi != NULL);
 
 	/*
-	 * ... <prefix-bits> : ...
+	 * <prefix-length> [ / <protocol> [ / <port> ] ]
+	 *
+	 * XXX: also allow :protocol/port for now.
 	 */
 
-	char prefix_length_term;
-	shunk_t prefix_length_token = shunk_token(&input, &prefix_length_term, ":");
-	/* fprintf(stderr, "prefix-bits="PRI_SHUNK"\n", pri_shunk(prefix_bits_token)); */
-
-	uintmax_t prefix_length = afi->mask_cnt;
+	uintmax_t prefix_length;
+	shunk_t prefix_length_token = shunk_token(&cursor, NULL, "/:");
+#if 0
+	fprintf(stderr, "prefix-bits="PRI_SHUNK"\n", pri_shunk(prefix_length_token));
+#endif
 	if (prefix_length_token.len > 0) {
-		oops = shunk_to_uintmax(prefix_length_token, NULL, 0, &prefix_length);
+		/* "1.2.3.4/123" or "1.2.3.4/123/..." */
+		uintmax_t tmp = 0;
+		oops = shunk_to_uintmax(prefix_length_token, NULL, 0, &tmp);
 		if (oops != NULL) {
 			return oops;
 		}
-		if (prefix_length > afi->mask_cnt) {
+		if (tmp > afi->mask_cnt) {
 			return "too large";
 		}
-	} else if (prefix_length_token.ptr != NULL) {
-		/* found but empty */
-		pexpect(prefix_length_token.len == 0);
-		return "missing prefix bit size";
-	}
-
-	struct ip_bytes routing_prefix = ip_bytes_from_blit(afi, address.bytes,
-							    /*routing-prefix*/&keep_bits,
-							    /*host-identifier*/&clear_bits,
-							    prefix_length);
-	if (ip_bytes_cmp(afi->ip_version, routing_prefix,
-			 afi->ip_version, address.bytes) != 0) {
-		*nonzero_host = address;
+		prefix_length = tmp;
+	} else {
+		prefix_length = afi->mask_cnt;
 	}
 
 	/*
-	 * ... <protocol> / ...
+	 * <protocol> / <port>
 	 */
 
-	char protocol_term;
-	shunk_t protocol_token = shunk_token(&input, &protocol_term, "/");
-	/* fprintf(stderr, "protocol="PRI_SHUNK"\n", pri_shunk(protocol_token)); */
-
-	const struct ip_protocol *protocol = &ip_protocol_all; /*0*/
+	const struct ip_protocol *protocol;
+	shunk_t protocol_token = shunk_token(&cursor, NULL, "/");
+#if 0
+	fprintf(stderr, "protocol="PRI_SHUNK"\n", pri_shunk(protocol_token));
+#endif
 	if (protocol_token.len > 0) {
-		if (protocol_term != '/') {
-			return "protocol must be followed by '/'";
-		}
+		/* "1.2.3.4//udp" or "1.2.3.4//udp/" */
 		protocol = protocol_from_shunk(protocol_token);
 		if (protocol == NULL) {
 			return "unknown protocol";
 		}
-	} else if (protocol_token.ptr != NULL) {
-		/* found but empty */
-		pexpect(protocol_token.len == 0);
-		return "missing protocol/port following ':'";
+	} else {
+		protocol = &ip_protocol_all;
 	}
 
 	/*
 	 * ... <port>
 	 */
 
-	shunk_t port_token = input;
-	/* fprintf(stderr, "port="PRI_SHUNK"\n", pri_shunk(port_token)); */
-
-	ip_port port = unset_port;
+	ip_port port;
+	shunk_t port_token = cursor;
+#if 0
+	fprintf(stderr, "port="PRI_SHUNK"\n", pri_shunk(port_token));
+#endif
 	if (port_token.len > 0) {
+		/* 1.2.3.4/32/udp/10 */
 		uintmax_t hport;
 		err_t oops = shunk_to_uintmax(port_token, NULL, 0, &hport);
 		if (oops != NULL) {
@@ -136,10 +130,23 @@ err_t ttoselector_num(shunk_t input,
 			return "a non-zero port requires a valid protocol";
 		}
 		port = ip_hport(hport);
-	} else if (port_token.ptr != NULL) {
-		/* found but empty */
-		pexpect(port_token.len == 0);
-		return "missing port following protocol/";
+	} else {
+		port = unset_port;
+	}
+
+	/*
+	 * Now form the routing prefix.  If it has less bits than the
+	 * address, zero them but return original address.  Caller can
+	 * use that to log message when so desired.
+	 */
+
+	struct ip_bytes routing_prefix = ip_bytes_from_blit(afi, address.bytes,
+							    /*routing-prefix*/&keep_bits,
+							    /*host-identifier*/&clear_bits,
+							    prefix_length);
+	if (ip_bytes_cmp(afi->ip_version, routing_prefix,
+			 afi->ip_version, address.bytes) != 0) {
+		*nonzero_host = address;
 	}
 
 	/* check host-part is zero */
