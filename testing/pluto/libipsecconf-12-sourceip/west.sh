@@ -20,3 +20,5 @@ ipsec auto --add sourceips-inside-selectors
 ipsec auto --add sourceip-outside-subnets
 ipsec auto --add sourceip-inside-subnets
 ipsec auto --add sourceips-inside-subnets
+
+ipsec whack --status
