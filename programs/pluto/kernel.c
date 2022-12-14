@@ -1510,14 +1510,28 @@ static bool install_prospective_kernel_policy(struct connection *c)
 	 * Pass +2: add the route.
 	 */
 
+	ldbg(c->logger, "kernel: %s() running updown-prepare when needed", __func__);
 	for (struct spd_route *spd = c->spd; spd != NULL && ok; spd = spd->spd_next) {
-		struct spd_route *ro = spd->wip.conflicting.route;
-		if (ro == NULL) {
+		if (spd->wip.conflicting.route == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			if (!do_updown(UPDOWN_PREPARE, c, spd, NULL/*state*/, c->logger))
 				ldbg(c->logger, "kernel: prepare command returned an error");
+		}
+	}
+
+	ldbg(c->logger, "kernel: %s() running updown-route when needed", __func__);
+	for (struct spd_route *spd = c->spd; spd != NULL && ok; spd = spd->spd_next) {
+		if (spd->wip.conflicting.route == NULL) {
 			ok &= spd->wip.installed.route =
 				do_updown(UPDOWN_ROUTE, c, spd, NULL/*state*/, c->logger);
+		}
+	}
+
+	for (struct spd_route *spd = c->spd; spd != NULL && ok; spd = spd->spd_next) {
+		struct spd_route *ro = spd->wip.conflicting.route;
+		if (ro == NULL) {
+			ldbg(c->logger, "already prepared (above)");
+			pexpect(spd->wip.installed.route);
 			continue;
 		}
 		if (ro->connection->interface->ip_dev == c->interface->ip_dev &&
@@ -3117,16 +3131,31 @@ static bool install_ipsec_kernel_policies(struct state *st)
 	 * Probably.  This code path needs a re-think.
 	 */
 
+	ldbg(st->st_logger, "kernel: %s() running updown-prepare", __func__);
+	for (struct spd_route *spd = start; ok && spd != NULL; spd = spd->spd_next) {
+		if (spd->wip.conflicting.route == NULL) {
+			/* a new route: no deletion required, but preparation is */
+			if (!do_updown(UPDOWN_PREPARE, c, spd, st, st->st_logger))
+				dbg("kernel: prepare command returned an error");
+		}
+	}
+
+	ldbg(st->st_logger, "kernel: %s() running updown-route", __func__);
+	for (struct spd_route *spd = start; ok && spd != NULL; spd = spd->spd_next) {
+		if (spd->wip.conflicting.route == NULL) {
+			/* a new route: no deletion required, but preparation is */
+			ok &= spd->wip.installed.route =
+				do_updown(UPDOWN_ROUTE, c, spd, st, st->st_logger);
+		}
+	}
+
 	for (struct spd_route *spd = start; ok && spd != NULL; spd = spd->spd_next) {
 		struct connection *ro =
 			(spd->wip.conflicting.route == NULL ? NULL :
 			 spd->wip.conflicting.route->connection);
 		if (ro == NULL) {
-			/* a new route: no deletion required, but preparation is */
-			if (!do_updown(UPDOWN_PREPARE, c, spd, st, st->st_logger))
-				dbg("kernel: prepare command returned an error");
-			ok &= spd->wip.installed.route =
-				do_updown(UPDOWN_ROUTE, c, spd, st, st->st_logger);
+			ldbg(c->logger, "prepared above");
+			pexpect(spd->wip.installed.route);
 		} else if (routed(c->child.routing)) {
 			spd->wip.installed.route = true; /* nothing to be done */
 		} else if (ro->interface->ip_dev == c->interface->ip_dev &&
