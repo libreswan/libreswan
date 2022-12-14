@@ -64,8 +64,8 @@ bool initiate_connection(struct connection *c,
 			 bool background, bool log_failure,
 			 struct logger *logger)
 {
-	ldbg_connection(c, HERE, "initiate: %s",
-			(remote_host == NULL ? "<null-host>" : remote_host));
+	ldbg_connection(c, HERE, "initiate: remote_host=%s",
+			(remote_host == NULL ? "<null> (using host from connection)" : remote_host));
 	/* XXX: something better? */
 	fd_delref(&c->logger->global_whackfd);
 	c->logger->global_whackfd =
