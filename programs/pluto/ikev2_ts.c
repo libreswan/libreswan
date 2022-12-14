@@ -56,7 +56,7 @@ struct score {
 };
 
 struct narrowed_selector {
-	const char *name;
+	const char *name;	/* XXX: redundant? */
 	unsigned nr;
 	struct score score;
 	ip_selector selector;
@@ -173,6 +173,24 @@ static void scribble_accepted_selectors(ip_selectors *selectors,
 	}
 }
 
+static void ldbg_narrowed_selector_payloads(struct logger *logger,
+					    const struct narrowed_selector_payloads *nsps)
+{
+	LDBG(logger, buf) {
+		jam_string(buf, "scribbling narrowed ");
+		const char *sep = "TSi=[";
+		FOR_EACH_THING(ts, &nsps->i, &nsps->r) {
+			jam_string(buf, sep); sep = "";
+			for (unsigned n = 0; n < ts->nr; n++) {
+				jam_string(buf, sep); sep = " ";
+				jam_selector(buf, &ts->ts[n].selector);
+			}
+			sep = "] -> TSr=[";
+		}
+		jam_string(buf, "]");
+	}
+}
+
 static void scribble_selectors_on_spd(struct connection *c,
 				      const struct narrowed_selector_payload *local_nsp,
 				      const struct narrowed_selector_payload *remote_nsp,
@@ -180,15 +198,22 @@ static void scribble_selectors_on_spd(struct connection *c,
 {
 	scribble_accepted_selectors(&c->local->child.selectors.accepted, local_nsp, indent);
 	scribble_accepted_selectors(&c->remote->child.selectors.accepted, remote_nsp, indent);
+
+	/*
+	 * Log accepted list when multiple traffic selectors are
+	 * involved.
+	 */
 	if (local_nsp->nr > 1 || remote_nsp->nr > 1) {
 		LLOG_JAMBUF(RC_LOG, indent.logger, buf) {
+			jam_string(buf, "accepted selectors ");
 			jam_selectors(buf, c->local->child.selectors.accepted);
-			jam_string(buf, " -> ");
+			jam_string(buf, "->");
 			jam_selectors(buf, c->remote->child.selectors.accepted);
 		}
 	}
+
 	/*
-	 * XXX: instead build these SPDs from above selectors?
+	 * Now build spds from selectors.
 	 */
 
 	struct spd_route *spd_list = NULL;
@@ -197,9 +222,11 @@ static void scribble_selectors_on_spd(struct connection *c,
 	     local_ns < local_nsp->ts + local_nsp->nr; local_ns++) {
 		for (const struct narrowed_selector *remote_ns = remote_nsp->ts;
 		     remote_ns < remote_nsp->ts + remote_nsp->nr; remote_ns++) {
-			struct spd_route *spd = append_spd(c, &spd_tail);
-			spd->local->client = local_ns->selector;
-			spd->remote->client = remote_ns->selector;
+			if (selector_info(local_ns->selector) == selector_info(remote_ns->selector)) {
+				struct spd_route *spd = append_spd(c, &spd_tail);
+				spd->local->client = local_ns->selector;
+				spd->remote->client = remote_ns->selector;
+			}
 		}
 	}
 
@@ -220,22 +247,43 @@ static void scribble_selectors_on_spd(struct connection *c,
 	spd_route_db_add_connection(c);
 }
 
+static void scribble_ts_request_on_responder(struct child_sa *child,
+					     struct connection *c,
+					     const struct narrowed_selector_payloads *nsps,
+					     indent_t indent)
+{
+	if (c != child->sa.st_connection) {
+		connection_buf from, to;
+		dbg_ts("switching #%lu from "PRI_CONNECTION" to just-instantiated "PRI_CONNECTION,
+		       child->sa.st_serialno,
+		       pri_connection(child->sa.st_connection, &from),
+		       pri_connection(c, &to));
+	} else {
+		connection_buf cib;
+		dbg_ts("overwrote #%lu connection "PRI_CONNECTION,
+		       child->sa.st_serialno, pri_connection(c, &cib));
+	}
+
+	ldbg_narrowed_selector_payloads(child->sa.st_logger, nsps);
+
+	/* end game; polarity reversed */
+	scribble_selectors_on_spd(c, /*local*/&nsps->r, /*remote*/&nsps->i, indent);
+}
+
 static void scribble_ts_response_on_initiator(struct child_sa *child,
 					      const struct narrowed_selector_payloads *nsps,
 					      indent_t indent)
 {
-	struct connection *c = child->sa.st_connection;
-	ip_selector tsi = nsps->i.ts[0].selector;
-	ip_selector tsr = nsps->r.ts[0].selector;
-	selector_buf si, sr;
-	dbg_ts("scribbling narrowed TSi=%s ...(%u) TSr=%s ...(%u) on initiator",
-	       str_selector(&tsi, &si), nsps->i.nr,
-	       str_selector(&tsr, &sr), nsps->r.nr);
+	ldbg_narrowed_selector_payloads(child->sa.st_logger, nsps);
+
 	/* end game */
+	struct connection *c = child->sa.st_connection;
 	scribble_selectors_on_spd(c, /*local*/&nsps->i, /*remote*/&nsps->r, indent);
+
 	/*
-	 * Redundant (should have been set earlier)?  Meaningless
-	 * (with multiple TS, what does this mean)?
+	 * Redundant (should have been set earlier)?
+	 *
+	 * Meaningless (with multiple TS)?
 	 */
 	set_child_has_client(c, local, !selector_eq_address(c->spd->local->client,
 							    c->local->host.addr));
@@ -1126,43 +1174,6 @@ static bool v2_child_connection_probably_shared(struct child_sa *child,
 	}
 
 	return false;
-}
-
-static void scribble_ts_request_on_responder(struct child_sa *child,
-					     struct connection *c,
-					     const struct narrowed_selector_payloads *nsps,
-					     indent_t indent)
-{
-	if (c != child->sa.st_connection) {
-		connection_buf from, to;
-		dbg_ts("switching #%lu from "PRI_CONNECTION" to just-instantiated "PRI_CONNECTION,
-		       child->sa.st_serialno,
-		       pri_connection(child->sa.st_connection, &from),
-		       pri_connection(c, &to));
-	} else {
-		connection_buf cib;
-		dbg_ts("overwrote #%lu connection "PRI_CONNECTION,
-		       child->sa.st_serialno, pri_connection(c, &cib));
-	}
-
-	/*
-	 * hack
-	 *
-	 * Responder processing a request so LOCAL==RESPONDER and
-	 * REMOTE=INITIATOR.
-	 */
-	ip_selector tsi = nsps->i.ts[0].selector;
-	ip_selector tsr = nsps->r.ts[0].selector;
-	selector_buf si, sr;
-	dbg_ts("scribbling narrowed TSi=%s ...(%u) TSr=%s ...(%u) on responder",
-	       str_selector(&tsi, &si), nsps->i.nr,
-	       str_selector(&tsr, &sr), nsps->r.nr);
-	update_end_selector(c, c->local->config->index, tsr,
-			    "scribbling final TSr on end");
-	update_end_selector(c, c->remote->config->index, tsi,
-			    "scribbling final TSr on end");
-	/* end game; polarity reversed */
-	scribble_selectors_on_spd(c, /*local*/&nsps->r, /*remote*/&nsps->i, indent);
 }
 
 /*
