@@ -711,13 +711,17 @@ doroute() {
     if ip link show "${PLUTO_INTERFACE%:*}" | grep -q POINTOPOINT; then
 	POINTPOINT=yes
     fi
-    # use nexthop if nexthop is not %direct and POINTPOINT is not set
-    if [ "${PLUTO_NEXT_HOP}" != "${PLUTO_PEER}" -a -z "${POINTPOINT}" ]; then
-	# XFRM interface needs no nexthop
-	if [ -z "${PLUTO_XFRMI_ROUTE}"  ]; then
-	   parms2="via ${PLUTO_NEXT_HOP}"
+    # Only use PLUTO_NEXT_HOP in routing if address families agree
+    if [ "${FAMILY}" = "${HOST_FAMILY}" ]; then
+	# use nexthop if nexthop is not %direct and POINTPOINT is not set
+	if [ "${PLUTO_NEXT_HOP}" != "${PLUTO_PEER}" -a -z "${POINTPOINT}" ]; then
+	    # XFRM interface needs no nexthop but one is needed for ESP
+	    if [ -n "${PLUTO_XFRMI_ROUTE}"  ]; then
+		esp_nexthop="via ${PLUTO_NEXT_HOP} "
+	    else
+		parms2="via ${PLUTO_NEXT_HOP}"
+	    fi
 	fi
-	esp_nexthop="via ${PLUTO_NEXT_HOP} "
     fi
     # route via proper interface according to routing table
     if [ "${cmd}" = "del" ]; then
