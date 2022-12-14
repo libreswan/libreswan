@@ -177,6 +177,10 @@ struct kernel_policy {
 	kernel_priority_t priority;
 	enum shunt_policy shunt;
 	where_t where;
+	shunk_t sec_label;
+	const struct sa_marks *sa_marks;
+	const struct pluto_xfrmi *xfrmi;
+	enum kernel_policy_id id;
 	/*
 	 * The rules are applied to an outgoing packet in order they
 	 * appear in the rule[] table.  Hence, the output from
@@ -201,6 +205,7 @@ struct kernel_policy kernel_policy_from_void(ip_selector local, ip_selector remo
 					     enum direction direction,
 					     kernel_priority_t priority,
 					     enum shunt_policy shunt_policy,
+					     const shunk_t sec_label,
 					     where_t where);
 
 /*

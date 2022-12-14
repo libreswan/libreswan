@@ -582,22 +582,26 @@ static void cannot_ondemand(lset_t rc_flags, const struct kernel_acquire *b,
 		pexpect(failure_shunt_ok(failure_shunt)); /* set to something */
 		ip_selector src = packet_src_selector(b->packet);
 		ip_selector dst = packet_dst_selector(b->packet);
-		struct kernel_policy outbound_policy =
+		struct kernel_policy kernel_policy =
 			kernel_policy_from_void(src, dst, DIRECTION_OUTBOUND,
 						/* we don't know connection for priority yet */
 						highest_kernel_priority,
-						failure_shunt, HERE);
+						failure_shunt,
+						b->sec_label, /*from acquire*/
+						HERE);
 
 		if (!raw_policy(KERNEL_POLICY_OP_REPLACE,
 				DIRECTION_OUTBOUND,
 				EXPECT_KERNEL_POLICY_OK,
-				&outbound_policy.src.client, &outbound_policy.dst.client,
-				&outbound_policy,
+				&kernel_policy.src.client,
+				&kernel_policy.dst.client,
+				&kernel_policy,
 				deltatime(SHUNT_PATIENCE),
-				/*sa_marks*/NULL,
-				/*xfrmi*/NULL,
-				DEFAULT_KERNEL_POLICY_ID,
-				b->sec_label, b->logger,
+				kernel_policy.sa_marks/*NULL*/,
+				kernel_policy.xfrmi/*NULL*/,
+				kernel_policy.id,
+				kernel_policy.sec_label, /* from acquire */
+				b->logger,
 				"%s() %s", __func__, ughmsg)) {
 			llog(RC_LOG_SERIOUS, b->logger,
 			     "failed to replace negotiationshunt with bare failureshunt");
@@ -955,28 +959,26 @@ void initiate_ondemand(const struct kernel_acquire *b)
 	pexpect(selector_eq_selector(c->spd->local->client, local_shunt));
 	pexpect(selector_eq_selector(c->spd->remote->client, remote_shunt));
 
-	/*
-	 * PAUL: should this use shunt_eroute() instead of API
-	 * violation into raw_policy()?
-	 */
-
-	struct kernel_policy outbound_kernel_policy =
+	struct kernel_policy kernel_policy =
 		kernel_policy_from_void(local_shunt, remote_shunt,
 					DIRECTION_OUTBOUND,
 					calculate_kernel_priority(c),
-					c->config->negotiation_shunt, HERE);
+					c->config->negotiation_shunt,
+					b->sec_label, /*from acquire */
+					HERE);
 
 	if (raw_policy(KERNEL_POLICY_OP_ADD,
 		       DIRECTION_OUTBOUND,
 		       EXPECT_KERNEL_POLICY_OK,
-		       &outbound_kernel_policy.src.client,
-		       &outbound_kernel_policy.dst.client,
-		       &outbound_kernel_policy,
+		       &kernel_policy.src.client,
+		       &kernel_policy.dst.client,
+		       &kernel_policy,
 		       deltatime(SHUNT_PATIENCE),
-		       /*sa_marks*/NULL,
-		       /*xfrmi*/NULL,
-		       DEFAULT_KERNEL_POLICY_ID,
-		       b->sec_label, b->logger,
+		       kernel_policy.sa_marks/*NULL*/,
+		       kernel_policy.xfrmi/*NULL*/,
+		       kernel_policy.id,
+		       kernel_policy.sec_label, /* from acquire */
+		       b->logger,
 		       "%s() %s", __func__, addwidemsg)) {
 		dbg("adding bare (possibly wided) passthrough negotiationshunt succeeded (violating API)");
 		add_bare_shunt(&local_shunt, &remote_shunt,

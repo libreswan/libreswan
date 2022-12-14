@@ -252,12 +252,14 @@ static bool spd_kernel_policy_op(const struct spd_route *spd,
 			/* XXX: shouldn't this depend on
 			 * OP=add/replace? */
 			EXPECT_KERNEL_POLICY_OK,
-			&kernel_policy.src.client, &kernel_policy.dst.client,
+			&kernel_policy.src.client,
+			&kernel_policy.dst.client,
 			&kernel_policy,
 			deltatime(0),
-			&c->sa_marks, c->xfrmi,
-			DEFAULT_KERNEL_POLICY_ID,
-			HUNK_AS_SHUNK(c->config->sec_label),
+			kernel_policy.sa_marks,
+			kernel_policy.xfrmi,
+			kernel_policy.id,
+			kernel_policy.sec_label,
 			logger,
 			"%s "PRI_WHERE, what, pri_where(where))) {
 		return false;
@@ -334,7 +336,9 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 			struct kernel_policy kernel_policy =
 				kernel_policy_from_void(spd->local->client, spd->remote->client,
 							direction, calculate_kernel_priority(c),
-							prospective_shunt, where);
+							prospective_shunt,
+							HUNK_AS_SHUNK(c->config->sec_label),
+							where);
 
 			/*
 			 * Note the NO_INBOUND_ENTRY.  It's a hack to get
@@ -346,12 +350,13 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 			if (!raw_policy(KERNEL_POLICY_OP_ADD, direction,
 					/* XXX: shoudn't no policy be expected? */
 					EXPECT_KERNEL_POLICY_OK,
-					&kernel_policy.src.client, &kernel_policy.dst.client,
+					&kernel_policy.src.client,
+					&kernel_policy.dst.client,
 					&kernel_policy,
 					deltatime(0),
 					&c->sa_marks, c->xfrmi,
-					DEFAULT_KERNEL_POLICY_ID,
-					HUNK_AS_SHUNK(c->config->sec_label),
+					kernel_policy.id,
+					kernel_policy.sec_label,
 					logger,
 					"%s() prospective kernel policy "PRI_WHERE,
 					__func__, pri_where(where))) {
@@ -362,11 +367,11 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 	return true;
 }
 
-
 struct kernel_policy kernel_policy_from_void(ip_selector local, ip_selector remote,
 					     enum direction direction,
 					     kernel_priority_t priority,
 					     enum shunt_policy shunt_policy,
+					     const shunk_t sec_label,
 					     where_t where)
 {
 	const ip_selector *src;
@@ -396,6 +401,10 @@ struct kernel_policy kernel_policy_from_void(ip_selector local, ip_selector remo
 		.priority = priority,
 		.shunt = shunt_policy,
 		.where = where,
+		.id = DEFAULT_KERNEL_POLICY_ID,
+		.sa_marks = NULL,
+		.xfrmi = NULL,
+		.sec_label = sec_label,
 		/*
 		 * With transport mode, the encapsulated packet on the
 		 * host interface must have the same family as the raw
@@ -728,6 +737,10 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 		.mode = mode,
 		.shunt = SHUNT_UNSET,
 		.where = where,
+		.sa_marks = &spd->connection->sa_marks,
+		.xfrmi = spd->connection->xfrmi,
+		.id = DEFAULT_KERNEL_POLICY_ID,
+		.sec_label = HUNK_AS_SHUNK(spd->connection->config->sec_label),
 		.nr_rules = 0,
 	};
 
@@ -1300,6 +1313,7 @@ static void revert_kernel_policy(struct spd_route *spd, struct state *st/*could 
 				     "shunt_policy() in route_and_eroute() failed in !st case");
 			}
 		} else {
+			llog_pexpect(st->st_logger, HERE, "using state to delete kernel policy");
 			if (!state_kernel_policy_op_outbound(st, spd,
 							     KERNEL_POLICY_OP_DELETE,
 							     "delete")) {
@@ -1325,27 +1339,29 @@ static void revert_kernel_policy(struct spd_route *spd, struct state *st/*could 
 	if (spd->wip.conflicting.shunt != NULL) {
 		ldbg(logger, "kernel: %s() restoring bare shunt", __func__);
 		struct bare_shunt *bs = *spd->wip.conflicting.shunt;
-		struct kernel_policy outbound_kernel_policy =
+		struct kernel_policy kernel_policy =
 			kernel_policy_from_void(bs->our_client, bs->peer_client,
 						DIRECTION_OUTBOUND,
 						calculate_kernel_priority(c),
-						bs->shunt_policy, HERE);
+						bs->shunt_policy,
+						/* bare shunt are not
+						 * associated with any
+						 * connection so no
+						 * security label */
+						/*sec_label*/null_shunk,
+						HERE);
 		if (!raw_policy(KERNEL_POLICY_OP_REPLACE,
 				DIRECTION_OUTBOUND,
 				EXPECT_KERNEL_POLICY_OK,
-				&outbound_kernel_policy.src.client,
-				&outbound_kernel_policy.dst.client,
-				&outbound_kernel_policy,
+				&kernel_policy.src.client,
+				&kernel_policy.dst.client,
+				&kernel_policy,
 				deltatime(SHUNT_PATIENCE),
-				/*sa_marks*/NULL,
-				/*xfrmi*/NULL,
-				DEFAULT_KERNEL_POLICY_ID,
-				/* bare shunt are not
-				 * associated with any
-				 * connection so no security
-				 * label */
-				null_shunk, logger,
-				"%s() restore", __func__)) {
+				kernel_policy.sa_marks/*NULL*/,
+				kernel_policy.xfrmi/*NULL*/,
+				kernel_policy.id,
+				kernel_policy.sec_label/*null_shunk*/,
+				logger, "%s() restore", __func__)) {
 			llog(RC_LOG, st->st_logger,
 			     "raw_policy() in %s() failed to restore/replace SA",
 			     __func__);
@@ -1407,22 +1423,25 @@ static void revert_kernel_policy(struct spd_route *spd, struct state *st/*could 
 
 	if (c->config->failure_shunt == SHUNT_NONE) {
 		ldbg(logger, "kernel: %s() installing SHUNT_NONE aka block", __func__);
-		struct kernel_policy outbound_policy =
+		struct kernel_policy kernel_policy =
 			kernel_policy_from_void(esr->local->client,
 						esr->remote->client,
 						DIRECTION_OUTBOUND,
 						calculate_kernel_priority(ero),
-						SHUNT_NONE, HERE);
+						SHUNT_NONE,
+						HUNK_AS_SHUNK(ero->config->sec_label),
+						HERE);
 		if (!raw_policy(KERNEL_POLICY_OP_REPLACE,
 				DIRECTION_OUTBOUND,
 				EXPECT_KERNEL_POLICY_OK,
-				&outbound_policy.src.client,
-				&outbound_policy.dst.client,
-				&outbound_policy,
+				&kernel_policy.src.client,
+				&kernel_policy.dst.client,
+				&kernel_policy,
 				deltatime(0),
+				/*XXX: BUG: should use from_spd() */
 				&ero->sa_marks, ero->xfrmi,
-				DEFAULT_KERNEL_POLICY_ID,
-				HUNK_AS_SHUNK(ero->config->sec_label),
+				kernel_policy.id,
+				kernel_policy.sec_label,
 				logger,
 				"%s() restore eclipsed failure =- NONE", __func__)) {
 			llog(RC_LOG, logger,
@@ -1637,7 +1656,8 @@ static bool state_kernel_policy_op_outbound(const struct state *st,
 					    enum kernel_policy_op op,
 					    const char *opname)
 {
-	struct connection *c = st->st_connection;
+	PEXPECT(st->st_logger, (op == KERNEL_POLICY_OP_ADD ||
+				op == KERNEL_POLICY_OP_REPLACE));
 
 	/*
 	 * Figure out the SPI and protocol (in two forms) for the
@@ -1656,9 +1676,10 @@ static bool state_kernel_policy_op_outbound(const struct state *st,
 				    &client, &kernel_policy.dst.route,
 				    &kernel_policy,
 				    deltatime(0),
-				    &c->sa_marks, c->xfrmi,
-				    DEFAULT_KERNEL_POLICY_ID,
-				    HUNK_AS_SHUNK(c->config->sec_label),
+				    kernel_policy.sa_marks,
+				    kernel_policy.xfrmi,
+				    kernel_policy.id,
+				    kernel_policy.sec_label,
 				    st->st_logger,
 				    "CAT: %s() %s", __func__, opname);
 		if (!t) {
@@ -1674,9 +1695,10 @@ static bool state_kernel_policy_op_outbound(const struct state *st,
 			  &kernel_policy.src.route, &kernel_policy.dst.route,
 			  &kernel_policy,
 			  deltatime(0),
-			  &c->sa_marks, c->xfrmi,
-			  DEFAULT_KERNEL_POLICY_ID,
-			  HUNK_AS_SHUNK(c->config->sec_label),
+			  kernel_policy.sa_marks,
+			  kernel_policy.xfrmi,
+			  kernel_policy.id,
+			  kernel_policy.sec_label,
 			  st->st_logger,
 			  "%s() %s", __func__, opname);
 }
@@ -1994,21 +2016,11 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 		return true;
 	}
 
-	enum encap_mode mode = (c->policy & POLICY_TUNNEL ? ENCAP_MODE_TUNNEL :
-				ENCAP_MODE_TRANSPORT);
-
 	/*
 	 * SE installs both an outgoing and incoming policy.  Normal
 	 * connections do not.
 	 */
 	FOR_EACH_THING(direction, DIRECTION_OUTBOUND, DIRECTION_INBOUND) {
-		const struct kernel_policy kernel_policy =
-			kernel_policy_from_spd(c->policy, c->spd,
-					       mode, direction, HERE);
-		if (kernel_policy.nr_rules == 0) {
-			/* XXX: log? */
-			return false;
-		}
 		if (!spd_kernel_policy_op(c->spd, KERNEL_POLICY_OP_ADD, direction,
 					  /*logger*/logger, HERE,
 					  "prospective security label")) {
@@ -2154,18 +2166,22 @@ bool assign_holdpass(struct connection *c,
 				kernel_policy_from_void(sr->local->client, sr->remote->client,
 							DIRECTION_OUTBOUND,
 							calculate_kernel_priority(c),
-							c->config->negotiation_shunt, HERE);
+							c->config->negotiation_shunt,
+							HUNK_AS_SHUNK(c->config->sec_label),
+							HERE);
 
 			if (sr->local->child->has_cat) {
+				llog_pexpect(c->logger, HERE, "acquired a CAT");
 				ip_selector client = selector_from_address(sr->local->host->addr);
 				if (!raw_policy(op, DIRECTION_OUTBOUND,
 						EXPECT_KERNEL_POLICY_OK,
 						&client, &kernel_policy.dst.route,
 						&kernel_policy,
 						deltatime(0),
+						/* XXX: bug; use from_spd() */
 						&c->sa_marks, c->xfrmi,
-						DEFAULT_KERNEL_POLICY_ID,
-						HUNK_AS_SHUNK(c->config->sec_label),
+						kernel_policy.id,
+						kernel_policy.sec_label,
 						c->logger, "CAT: %s() %s", __func__, reason)) {
 					llog(RC_LOG, c->logger,
 					     "CAT: failed to eroute additional Client Address Translation policy");
@@ -2179,9 +2195,10 @@ bool assign_holdpass(struct connection *c,
 					&kernel_policy.src.route, &kernel_policy.dst.route,
 					&kernel_policy,
 					deltatime(0),
+					/* XXX: bug; use from_spd() */
 					&c->sa_marks, c->xfrmi,
-					DEFAULT_KERNEL_POLICY_ID,
-					HUNK_AS_SHUNK(c->config->sec_label),
+					kernel_policy.id,
+					kernel_policy.sec_label,
 					c->logger, "%s() %s", __func__, reason)) {
 				llog(RC_LOG, c->logger,
 				     "%s() eroute_connection() failed", __func__);
@@ -2689,9 +2706,10 @@ static bool install_inbound_ipsec_kernel_policies(struct state *st)
 				&kernel_policy.dst.route,	/* dst_client */
 				&kernel_policy,			/* " */
 				deltatime(0),		/* lifetime */
-				&c->sa_marks, c->xfrmi,		/* IPsec SA marks */
-				DEFAULT_KERNEL_POLICY_ID,
-				HUNK_AS_SHUNK(c->config->sec_label),
+				kernel_policy.sa_marks,
+				kernel_policy.xfrmi,
+				kernel_policy.id,
+				kernel_policy.sec_label,
 				st->st_logger,
 				"%s() add inbound Child SA", __func__)) {
 			selector_pair_buf spb;
@@ -3361,11 +3379,13 @@ static void teardown_spd_kernel_policies(enum kernel_policy_op outbound_op,
 	 * The restored policy uses TRANSPORT mode (the host
 	 * .{src,dst} provides the family but the address isn't used).
 	 */
-	struct kernel_policy outbound_kernel_policy =
+	struct kernel_policy kernel_policy =
 		kernel_policy_from_void(spd->local->client, spd->remote->client,
 					DIRECTION_OUTBOUND,
 					calculate_kernel_priority(spd->connection),
-					outbound_shunt, HERE);
+					outbound_shunt,
+					HUNK_AS_SHUNK(spd->connection->config->sec_label),
+					HERE);
 
 	/*
 	 * Since this is tearing down a real policy; all the critical
@@ -3375,14 +3395,14 @@ static void teardown_spd_kernel_policies(enum kernel_policy_op outbound_op,
 	if (!raw_policy(outbound_op,
 			DIRECTION_OUTBOUND,
 			EXPECT_KERNEL_POLICY_OK,
-			&outbound_kernel_policy.src.client,
-			&outbound_kernel_policy.dst.client,
-			(outbound_op == KERNEL_POLICY_OP_DELETE ? NULL : &outbound_kernel_policy),
+			&kernel_policy.src.client,
+			&kernel_policy.dst.client,
+			(outbound_op == KERNEL_POLICY_OP_DELETE ? NULL : &kernel_policy),
 			deltatime(0),
-			&spd->connection->sa_marks,
-			spd->connection->xfrmi,
-			DEFAULT_KERNEL_POLICY_ID,
-			HUNK_AS_SHUNK(spd->connection->config->sec_label),
+			/* XXX: bug, use _from_spd() */
+			&spd->connection->sa_marks, spd->connection->xfrmi,
+			kernel_policy.id,
+			kernel_policy.sec_label,
 			spd->connection->logger,
 			"%s() outbound kernel policy for %s", __func__, story)) {
 		llog(RC_LOG, logger,
@@ -3849,24 +3869,32 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 			 *
 			 * This is at odds with !repl, which should
 			 * delete things.
+			 *
+			 * XXX: does replacing a sec_label kernel
+			 * policy with something bare make sense?
+			 * Should sec_label be included?
 			 */
 
-			struct kernel_policy outbound_kernel_policy =
+			struct kernel_policy kernel_policy =
 				kernel_policy_from_void(src, dst, DIRECTION_OUTBOUND,
 							/* we don't know connection for priority yet */
 							highest_kernel_priority,
-							failure_shunt, HERE);
+							failure_shunt,
+							/*sec_label;bug?*/null_shunk,
+							HERE);
 
 			bool ok = raw_policy(KERNEL_POLICY_OP_REPLACE,
 					     DIRECTION_OUTBOUND,
 					     EXPECT_KERNEL_POLICY_OK,
-					     &outbound_kernel_policy.src.client,
-					     &outbound_kernel_policy.dst.client,
-					     &outbound_kernel_policy,
+					     &kernel_policy.src.client,
+					     &kernel_policy.dst.client,
+					     &kernel_policy,
 					     deltatime(SHUNT_PATIENCE),
-					     /*sa_marks*/NULL, /*xfrmi*/NULL,
-					     DEFAULT_KERNEL_POLICY_ID,
-					     null_shunk, logger,
+					     kernel_policy.sa_marks/*NULL*/,
+					     kernel_policy.xfrmi/*NULL*/,
+					     kernel_policy.id,
+					     kernel_policy.sec_label,
+					     logger,
 					     "%s() %s", __func__, why);
 			if (!ok) {
 				llog(RC_LOG, logger,
