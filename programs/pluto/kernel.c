@@ -236,22 +236,32 @@ bool failure_shunt_ok(enum shunt_policy shunt)
 	return false;
 }
 
-static bool spd_kernel_policy_op(const struct spd_route *spd,
-				 enum kernel_policy_op op,
-				 enum direction direction,
-				 struct logger *logger, where_t where, const char *what)
+/*
+ * Install (add, replace) a kernel policy for the SPD.  The kernel
+ * policy is bare since there isn't yet a state.
+ *
+ * Unlike install_spd_kernel_policy() this also adds in speculative
+ * template / rules.  With sec_labels there's only really a policy for
+ * the IKE SA (everything else happens under the hood).
+ */
+
+static bool install_bare_sec_label_kernel_policy(const struct spd_route *spd,
+						 enum kernel_policy_op op,
+						 enum direction direction,
+						 enum expect_kernel_policy existing_policy_expectation,
+						 struct logger *logger,
+						 where_t where, const char *what)
 {
+	const struct connection *c = spd->connection;
 	PASSERT(logger, (op == KERNEL_POLICY_OP_ADD ||
 			 op == KERNEL_POLICY_OP_REPLACE));
-	const struct connection *c = spd->connection;
+	PASSERT(logger, c->config->sec_label.len > 0);
 	enum encap_mode encap_mode = (c->policy & POLICY_TUNNEL ? ENCAP_MODE_TUNNEL :
 				      ENCAP_MODE_TRANSPORT);
 	struct kernel_policy kernel_policy =
 		kernel_policy_from_spd(c->policy, spd, encap_mode, direction, where);
 	if (!raw_policy(op, direction,
-			/* XXX: shouldn't this depend on
-			 * OP=add/replace? */
-			EXPECT_KERNEL_POLICY_OK,
+			existing_policy_expectation,
 			&kernel_policy.src.client,
 			&kernel_policy.dst.client,
 			&kernel_policy,
@@ -266,6 +276,86 @@ static bool spd_kernel_policy_op(const struct spd_route *spd,
 	}
 	return true;
 }
+
+/*
+ * Install (add, replace) a kernel policy using information from the
+ * SPD.  An SPD is bare when there's no corresponding kernel state.
+ */
+
+static bool install_bare_spd_kernel_policy(const struct spd_route *spd,
+					   enum kernel_policy_op op,
+					   enum direction direction,
+					   enum expect_kernel_policy existing_policy_expectation,
+					   enum shunt_policy shunt,
+					   struct logger *logger,
+					   where_t where, const char *what)
+{
+	const struct connection *c = spd->connection;
+
+	PASSERT(logger, (op == KERNEL_POLICY_OP_ADD ||
+			 op == KERNEL_POLICY_OP_REPLACE));
+	PASSERT(logger, c->config->sec_label.len == 0);
+
+	/*
+	 * XXX: not kernel_policy_from_spd(), sigh:
+	 *
+	 * _from_spd() adds adds templates / rules based on the policy
+	 * which is something an established IPsec SA and sec_label
+	 * need, but not this code.
+	 *
+	 * _from_spd() modifies .client vs .route in strange ways
+	 * which is something this code doesn't want (and perpahs
+	 * _from_spd shouldn't be doing).
+	 */
+
+	struct kernel_policy kernel_policy =
+		kernel_policy_from_void(spd->local->client, spd->remote->client,
+					direction, calculate_kernel_priority(c),
+					shunt,
+					/* XXX: applicable? */
+					HUNK_AS_SHUNK(c->config->sec_label),
+					where);
+	kernel_policy.sa_marks = &c->sa_marks;
+	kernel_policy.xfrmi = c->xfrmi;
+
+	if (!raw_policy(op, direction,
+			existing_policy_expectation,
+			&kernel_policy.src.client,
+			&kernel_policy.dst.client,
+			&kernel_policy,
+			deltatime(0),
+			kernel_policy.sa_marks,
+			kernel_policy.xfrmi,
+			kernel_policy.id,
+			kernel_policy.sec_label,
+			logger,
+			"%s() %s "PRI_WHERE,
+			__func__, what, pri_where(where))) {
+		return false;
+	}
+
+	return true;
+}
+
+#if 0
+static bool delete_spd_kernel_policy(const struct spd_route *spd,
+				     enum direction direction,
+				     enum expect_kernel_policy existing_policy_expectation,
+				     struct logger *logger,
+				     where_t where,
+				     const char *story)
+{
+	return delete_kernel_policy(direction,
+				    existing_policy_expectation,
+				    spd->local->client,
+				    spd->remote->client,
+				    &spd->connection->sa_marks,
+				    spd->connection->xfrmi,
+				    DEFAULT_KERNEL_POLICY_ID,
+				    HUNK_AS_SHUNK(spd->connection->config->sec_label),
+				    logger, where, story);
+}
+#endif
 
 /*
  * Add an outbound bare kernel policy, aka shunt.
@@ -327,39 +417,21 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 		 * basic outbound policy installed.
 		 */
 		if (c->config->sec_label.len > 0) {
-			if (!spd_kernel_policy_op(spd, KERNEL_POLICY_OP_ADD, direction,
-						  logger, HERE,
-						  "prospective kernel policy")) {
+			if (!install_bare_sec_label_kernel_policy(spd,
+								  KERNEL_POLICY_OP_ADD,
+								  direction,
+								  /*XXX: should no policy be expected?*/
+								  EXPECT_KERNEL_POLICY_OK,
+								  logger, HERE,
+								  "prospective sec_label kernel policy")) {
 				return false;
 			}
 		} else {
-			struct kernel_policy kernel_policy =
-				kernel_policy_from_void(spd->local->client, spd->remote->client,
-							direction, calculate_kernel_priority(c),
-							prospective_shunt,
-							HUNK_AS_SHUNK(c->config->sec_label),
-							where);
-
-			/*
-			 * Note the NO_INBOUND_ENTRY.  It's a hack to get
-			 * around a connection being unrouted, deleting both
-			 * inbound and outbound policies when there's only the
-			 * basic outbound policy installed.
-			 */
-
-			if (!raw_policy(KERNEL_POLICY_OP_ADD, direction,
-					/* XXX: shoudn't no policy be expected? */
-					EXPECT_KERNEL_POLICY_OK,
-					&kernel_policy.src.client,
-					&kernel_policy.dst.client,
-					&kernel_policy,
-					deltatime(0),
-					&c->sa_marks, c->xfrmi,
-					kernel_policy.id,
-					kernel_policy.sec_label,
-					logger,
-					"%s() prospective kernel policy "PRI_WHERE,
-					__func__, pri_where(where))) {
+			if (!install_bare_spd_kernel_policy(spd, KERNEL_POLICY_OP_ADD, direction,
+							    /*XXX: should no policy be expected?*/
+							    EXPECT_KERNEL_POLICY_OK,
+							    prospective_shunt, logger, HERE,
+							    "prospective kernel_policy")) {
 				return false;
 			}
 		}
@@ -790,6 +862,7 @@ static struct kernel_policy kernel_policy_from_state(const struct state *st,
 {
 	bool tunnel = false;
 	lset_t policy = LEMPTY;
+
 	if (st->st_ipcomp.present) {
 		policy |= POLICY_COMPRESS;
 		tunnel |= (st->st_ipcomp.attrs.mode == ENCAPSULATION_MODE_TUNNEL);
@@ -2021,9 +2094,12 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	 * connections do not.
 	 */
 	FOR_EACH_THING(direction, DIRECTION_OUTBOUND, DIRECTION_INBOUND) {
-		if (!spd_kernel_policy_op(c->spd, KERNEL_POLICY_OP_ADD, direction,
-					  /*logger*/logger, HERE,
-					  "prospective security label")) {
+		if (!install_bare_sec_label_kernel_policy(c->spd,
+							  KERNEL_POLICY_OP_ADD,
+							  direction,
+							  EXPECT_KERNEL_POLICY_OK,
+							  /*logger*/logger, HERE,
+							  "prospective security label")) {
 			if (direction == DIRECTION_INBOUND) {
 				/*
 				 * Need to pull the just installed
@@ -2175,7 +2251,9 @@ bool assign_holdpass(struct connection *c,
 				ip_selector client = selector_from_address(sr->local->host->addr);
 				if (!raw_policy(op, DIRECTION_OUTBOUND,
 						EXPECT_KERNEL_POLICY_OK,
-						&client, &kernel_policy.dst.route,
+						/* XXX: this uses .client+.route!?! */
+						&client,
+						&kernel_policy.dst.route,
 						&kernel_policy,
 						deltatime(0),
 						/* XXX: bug; use from_spd() */
@@ -2192,7 +2270,9 @@ bool assign_holdpass(struct connection *c,
 
 			if (!raw_policy(op, DIRECTION_OUTBOUND,
 					EXPECT_KERNEL_POLICY_OK,
-					&kernel_policy.src.route, &kernel_policy.dst.route,
+					/* XXX: this uses .route+.route!?! */
+					&kernel_policy.src.route,
+					&kernel_policy.dst.route,
 					&kernel_policy,
 					deltatime(0),
 					/* XXX: bug; use from_spd() */
