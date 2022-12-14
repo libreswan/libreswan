@@ -337,7 +337,6 @@ static bool install_bare_spd_kernel_policy(const struct spd_route *spd,
 	return true;
 }
 
-#if 0
 static bool delete_spd_kernel_policy(const struct spd_route *spd,
 				     enum direction direction,
 				     enum expect_kernel_policy existing_policy_expectation,
@@ -345,17 +344,30 @@ static bool delete_spd_kernel_policy(const struct spd_route *spd,
 				     where_t where,
 				     const char *story)
 {
+	ip_selector src;
+	ip_selector dst;
+	switch (direction) {
+	case DIRECTION_OUTBOUND:
+		src = spd->local->client;
+		dst = spd->remote->client;
+		break;
+	case DIRECTION_INBOUND:
+		src = spd->remote->client;
+		dst = spd->local->client;
+		break;
+	default:
+		bad_case(direction);
+	}
+
 	return delete_kernel_policy(direction,
 				    existing_policy_expectation,
-				    spd->local->client,
-				    spd->remote->client,
+				    src, dst,
 				    &spd->connection->sa_marks,
 				    spd->connection->xfrmi,
 				    DEFAULT_KERNEL_POLICY_ID,
 				    HUNK_AS_SHUNK(spd->connection->config->sec_label),
 				    logger, where, story);
 }
-#endif
 
 /*
  * Add an outbound bare kernel policy, aka shunt.
@@ -3488,17 +3500,10 @@ static void teardown_spd_kernel_policies(enum kernel_policy_op outbound_op,
 		llog(RC_LOG, logger,
 		     "kernel: %s() outbound failed %s", __func__, story);
 	}
-	dbg("kernel: %s() calling raw_policy(delete-inbound), eroute_owner==NOBODY",
-	    __func__);
-	if (!delete_kernel_policy(DIRECTION_INBOUND,
-				  expect_inbound_policy,
-				  spd->remote->client,
-				  spd->local->client,
-				  &spd->connection->sa_marks,
-				  spd->connection->xfrmi,/*real*/
-				  DEFAULT_KERNEL_POLICY_ID,
-				  /*sec_label*/null_shunk,/*always*/
-				  spd->connection->logger, HERE, story)) {
+
+	if (!delete_spd_kernel_policy(spd, DIRECTION_INBOUND,
+				      expect_inbound_policy,
+				      logger, HERE, story)) {
 		llog(RC_LOG, logger,
 		     "kernel: %s() outbound failed %s", __func__, story);
 	}
