@@ -22,7 +22,7 @@ east #
  # non-zero counts confirm encrypted traffic flowing
 east #
  ipsec trafficstatus
-006 #2: "east/1x1"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@road'
-006 #3: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@road'
+006 #2: "east/1x1"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=104, outBytes=104, maxBytes=2^63B, id='@road'
+006 #3: "east/2x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@road'
 east #
  
