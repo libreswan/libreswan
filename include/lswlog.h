@@ -482,6 +482,20 @@ extern void llog_pexpect(const struct logger *logger, where_t where,
 #define PEXPECT(LOGGER, ASSERTION)					\
 	PEXPECT_WHERE(LOGGER, HERE, ASSERTION)
 
+#define PBAD_WHERE(LOGGER, WHERE, BAD)					\
+	({								\
+		/* wrapping BAD in parens suppresses -Wparen */		\
+		bool bad_ = BAD; /* no parens */			\
+		if (bad_) {						\
+			const struct logger *logger_ = LOGGER;		\
+			llog_pexpect(logger_, WHERE, "not (%s)", #BAD); \
+		}							\
+		assertion__; /* result */				\
+	})
+
+#define PBAD(LOGGER, BAD)			\
+	PBAD_WHERE(LOGGER, HERE, BAD)
+
 #define pexpect(ASSERTION)  PEXPECT_WHERE(&global_logger, HERE, ASSERTION)
 
 /* for a switch statement */
