@@ -310,10 +310,12 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 			if (end->host.cert.nss_cert != NULL) {
 				CERT_DestroyCertificate(end->host.cert.nss_cert);
 			}
+			/* ike/host */
 			free_chunk_content(&end->host.ca);
 			pfreeany(end->host.ckaid);
 			pfreeany(end->host.xauth.username);
 			pfreeany(end->host.addr_name);
+			pfreeany(end->host.pool_ranges.list);
 			/* child */
 			pfreeany(end->child.updown);
 			pfreeany(end->child.selectors.list);
@@ -1329,6 +1331,12 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 	 *
 	 * Can a client also be a server, per above, OE seems to think
 	 * so (but without actually setting the bits).
+	 *
+	 * Note: IKEv1's XAUTH code will replace this address pool
+	 * with one based on the auth file.
+	 *
+	 * Note: The selector code will use the addresspool ranges to
+	 * generate the selectors.
 	 */
 
 	/* only update, may already be set below */
@@ -1341,31 +1349,27 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 		passert(c->pool[IPv4_INDEX] == NULL &&
 			c->pool[IPv6_INDEX] == NULL);
 
-		ip_ranges pool_ranges = {0}; /* must pfree(.list) */
-		diag_t d = ttoranges_num(shunk1(src->addresspool), ", ", NULL, &pool_ranges);
+		diag_t d = ttoranges_num(shunk1(src->addresspool), ", ", NULL,
+					 &host_config->pool_ranges);
 		if (d != NULL) {
 			return diag_diag(&d, "invalid %saddresspool=%s, ", leftright, src->addresspool);
 		}
 
-		for (const ip_range *pool_range = pool_ranges.list;
-		     pool_range < pool_ranges.list + pool_ranges.len;
+		for (const ip_range *pool_range = host_config->pool_ranges.list;
+		     pool_range < host_config->pool_ranges.list + host_config->pool_ranges.len;
 		     pool_range++) {
 			const struct ip_info *pool_afi = range_type(pool_range);
 
 			if (c->pool[pool_afi->ip_index] != NULL) {
-				diag_t d= diag("invalid %saddresspool=%s, multiple %s ranges",
-					       leftright, src->addresspool, pool_afi->ip_name);
-				pfreeany(pool_ranges.list);
-				return d;
+				return diag("invalid %saddresspool=%s, multiple %s ranges",
+					    leftright, src->addresspool, pool_afi->ip_name);
 			}
 
 			if (pool_afi == &ipv6_info && !pool_range->is_subnet) {
 				range_buf rb;
-				diag_t d = diag("invalid %saddresspool=%s, IPv6 range %s is not a subnet",
-						leftright, src->addresspool,
-						str_range(pool_range, &rb));
-				pfreeany(pool_ranges.list);
-				return d;
+				return diag("invalid %saddresspool=%s, IPv6 range %s is not a subnet",
+					    leftright, src->addresspool,
+					    str_range(pool_range, &rb));
 			}
 
 			/* Check for overlap with existing pools */
@@ -1373,22 +1377,16 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 			struct addresspool *pool; /* ignore */
 			d = find_addresspool(*pool_range, &pool);
 			if (d != NULL) {
-				d = diag_diag(&d, "invalid %saddresspool=%s, ",
-					      leftright, src->addresspool);
-				pfreeany(pool_ranges.list);
-				return d;
+				return diag_diag(&d, "invalid %saddresspool=%s, ",
+						 leftright, src->addresspool);
 			}
 
 			d = install_addresspool(*pool_range, c);
 			if (d != NULL) {
-				d = diag_diag(&d, "invalid %saddresspool=%s, ",
-					      leftright, src->addresspool);
-				pfreeany(pool_ranges.list);
-				return d;
+				return diag_diag(&d, "invalid %saddresspool=%s, ",
+						 leftright, src->addresspool);
 			}
 		}
-
-		pfreeany(pool_ranges.list);
 
 		/*
 		 * Addresspool implies the end is a client (and other

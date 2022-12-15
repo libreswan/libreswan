@@ -106,6 +106,8 @@ struct host_end_config {
 		bool client;	/* request address for local end */
 	} modecfg;
 
+	ip_ranges pool_ranges;	/* see also connection .pool */
+
 	struct {
 		bool server;
 		bool client;
