@@ -294,7 +294,16 @@ static bool install_bare_spd_kernel_policy(const struct spd_route *spd,
 
 	PASSERT(logger, (op == KERNEL_POLICY_OP_ADD ||
 			 op == KERNEL_POLICY_OP_REPLACE));
+#if 0
+	/*
+	 * XXX: This happens when the code tearing down an IPsec
+	 * connection tries to install a bare shunt.  See
+	 * teardown_ipsec_kernel_policies() and
+	 * ikev1-labeled-ipsec-03-multi-acquires and
+	 * ikev1-labeled-ipsec-01.
+	 */
 	PASSERT(logger, c->config->sec_label.len == 0);
+#endif
 
 	/*
 	 * XXX: not kernel_policy_from_spd(), sigh:
