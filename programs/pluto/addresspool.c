@@ -538,6 +538,10 @@ err_t lease_that_address(struct connection *c, const struct state *st, const str
 	}
 
 	struct addresspool *pool = c->pool[afi->ip_index];
+	if (pool == NULL) {
+		return "no address pool";
+	}
+
 	const struct id *that_id = &c->remote->host.id;
 	bool reusable = client_can_reuse_lease(c);
 

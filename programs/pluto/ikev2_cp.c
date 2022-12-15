@@ -61,7 +61,7 @@ bool need_v2CP_request(const struct connection *const cc,
 }
 
 /* Misleading name, also used for NULL sized type's */
-static stf_status ikev2_ship_cp_attr_ip(uint16_t type, const ip_address *ip,
+static bool emit_v2CP_attribute_address(uint16_t type, const ip_address *ip,
 					const char *story, struct pbs_out *outpbs)
 {
 	struct pbs_out a_pbs;
@@ -70,38 +70,41 @@ static stf_status ikev2_ship_cp_attr_ip(uint16_t type, const ip_address *ip,
 		.type = type,
 	};
 
+	if (!out_struct(&attr, &ikev2_cp_attribute_desc, outpbs, &a_pbs)) {
+		return false;
+	}
+
 	/* could be NULL */
 	const struct ip_info *afi = address_type(ip);
-
 	if (afi == NULL) {
 		attr.len = 0;
-	} else if (afi == &ipv6_info) {
-		attr.len = IKEv2_INTERNAL_IP6_ADDRESS_SIZE; /* RFC hack to append IPv6 prefix len */
 	} else {
 		attr.len = address_type(ip)->ip_size;
 	}
 
-	if (!out_struct(&attr, &ikev2_cp_attribute_desc, outpbs,
-				&a_pbs))
-		return STF_INTERNAL_ERROR;
+	if (afi == &ipv6_info) {
+		/* RFC hack to append 1-byte IPv6 prefix len */
+		attr.len += sizeof(uint8_t);
+	}
 
 	if (attr.len > 0) {
 		if (!pbs_out_address(&a_pbs, *ip, story)) {
 			/* already logged */
-			return STF_INTERNAL_ERROR;
+			return false;
 		}
 	}
 
-	if (attr.len == IKEv2_INTERNAL_IP6_ADDRESS_SIZE) { /* IPv6 address add prefix */
-		uint8_t ipv6_prefix_len = IKEv2_INTERNAL_IP6_PREFIX_LEN;
-		if (!pbs_out_raw(&a_pbs, &ipv6_prefix_len, sizeof(uint8_t), "INTERNAL_IP6_PREFIX_LEN")) {
+	if (afi == &ipv6_info) {
+		uint8_t ipv6_prefix_len = IKEv2_INTERNAL_IP6_PREFIX_LEN; /*128*/
+		if (!pbs_out_raw(&a_pbs, &ipv6_prefix_len,
+				 sizeof(uint8_t), "INTERNAL_IP6_PREFIX_LEN")) {
 			/* already logged */
-			return STF_INTERNAL_ERROR;
+			return false;
 		}
 	}
 
 	close_output_pbs(&a_pbs);
-	return STF_OK;
+	return true;
 }
 
 static bool emit_v2CP_attribute(struct pbs_out *outpbs,
@@ -149,28 +152,20 @@ bool emit_v2CP_response(const struct child_sa *child, struct pbs_out *outpbs)
 	if (!out_struct(&cp, &ikev2_cp_desc, outpbs, &cp_pbs))
 		return false;
 
-	ip_address that_client_address = selector_prefix(c->spd->remote->client);
-	ikev2_ship_cp_attr_ip(selector_type(&c->spd->remote->client) == &ipv4_info ?
-			      IKEv2_INTERNAL_IP4_ADDRESS : IKEv2_INTERNAL_IP6_ADDRESS,
-			      &that_client_address, "Internal IP Address", &cp_pbs);
+	ip_address client_address = selector_prefix(c->spd->remote->client);
+	const struct ip_info *client_afi = address_info(client_address);
+	if (!emit_v2CP_attribute_address(client_afi->ikev2_internal_address,
+					 &client_address, "Internal IP Address", &cp_pbs)) {
+		return false;
+	}
 
 	for (const ip_address *dns = c->config->modecfg.dns.list;
 	     dns < c->config->modecfg.dns.list + c->config->modecfg.dns.len;
 	     dns++) {
 		const struct ip_info *afi = address_type(dns);
-		switch (afi->ip_version) {
-		case IPv4:
-			if (ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_DNS, dns,
-						  "IP4_DNS", &cp_pbs) != STF_OK) {
-				return false;
-			}
-			break;
-		case IPv6:
-			if (ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_DNS, dns,
-						  "IP6_DNS", &cp_pbs) != STF_OK) {
-				return false;
-			}
-			break;
+		if (!emit_v2CP_attribute_address(afi->ikev2_internal_dns, dns,
+						 "DNS", &cp_pbs)) {
+			return false;
 		}
 	}
 
@@ -203,12 +198,13 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 		return false;
 
 	struct connection *cc = child->sa.st_connection;
-	lset_t ipset = LEMPTY;
+	bool ipset[IP_INDEX_ROOF] = {0};
+	bool something = false;
 
 	FOR_EACH_THING(afi, &ipv4_info, &ipv6_info) {
 		if (cc->pool[afi->ip_index] != NULL) {
 			dbg("pool says to ask for %s", afi->ip_name);
-			ipset |= LELEM(afi->ip_index);
+			ipset[afi->ip_index] = something = true;
 		}
 	}
 
@@ -217,31 +213,53 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 	     s < selectors->list + selectors->len;
 	     s++) {
 		const struct ip_info *afi = selector_type(s);
-		if (afi != NULL) {
-			selector_buf sb;
-			dbg("local.selectors.list[%zu] %s says to ask for %s",
-			    s - selectors->list, str_selector(s, &sb), afi->ip_name);
-			ipset |= LELEM(afi->ip_index);
-		}
+		selector_buf sb;
+		dbg("local.selectors.list[%zu] %s says to ask for %s",
+		    s - selectors->list, str_selector(s, &sb), afi->ip_name);
+		ipset[afi->ip_index] = something = true;
 	}
 
-	if (ipset == LEMPTY) {
+	if (!something) {
 		llog_pexpect(child->sa.st_logger, HERE,
 			     "can't figure out which internal address is needed");
 		return false;
 	}
 
-	if (ipset & LELEM(ipv4_info.ip_index)) {
-		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_ADDRESS, NULL, "IPv4 address", &cp_pbs);
-		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP4_DNS, NULL, "IPv4 DNS", &cp_pbs);
+	FOR_EACH_THING(afi, &ipv4_info, &ipv6_info) {
+		if (ipset[afi->ip_index]) {
+			if (!emit_v2CP_attribute_address(afi->ikev2_internal_address,
+							 NULL, "address", &cp_pbs) ||
+			    !emit_v2CP_attribute_address(afi->ikev2_internal_dns,
+							 NULL, "DNS", &cp_pbs)) {
+				return false;
+			}
+		}
 	}
-	if (ipset & LELEM(ipv6_info.ip_index)) {
-		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_ADDRESS, NULL, "IPv6 address", &cp_pbs);
-		ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_IP6_DNS, NULL, "IPv6 DNS", &cp_pbs);
+	if (!emit_v2CP_attribute_address(IKEv2_INTERNAL_DNS_DOMAIN, NULL, "Domain", &cp_pbs)) {
+		return false;
 	}
-	ikev2_ship_cp_attr_ip(IKEv2_INTERNAL_DNS_DOMAIN, NULL, "Domain", &cp_pbs);
 
 	close_output_pbs(&cp_pbs);
+	return true;
+}
+
+static bool lease_cp_address(struct child_sa *child, const struct ip_info *afi)
+{
+	struct connection *cc = child->sa.st_connection;
+	const struct addresspool *pool = cc->pool[afi->ip_index];
+	if (pool == NULL) {
+		ldbg_sa(child, "ignoring %s address request, no pool",
+			afi->ip_name);
+		return true; /*non-fatal*/
+	}
+
+	err_t e = lease_that_address(cc, &child->sa, afi);
+	if (e != NULL) {
+		llog_sa(RC_LOG, child, "leasing %s address failed: %s",
+			afi->ip_name, e);
+		return false; /*fatal*/
+	}
+
 	return true;
 }
 
@@ -249,7 +267,6 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike, struct
 						      struct payload_digest *cp_digest)
 {
 	pexpect(ike->sa.st_connection == child->sa.st_connection);
-	struct connection *cc = child->sa.st_connection;
 
 	struct ikev2_cp *cp =  &cp_digest->payload.v2cp;
 	struct pbs_in *cp_pbs = &cp_digest->pbs;
@@ -262,12 +279,6 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike, struct
 			enum_name(&ikev2_cp_type_names, cp->isacp_type));
 		return false;
 	}
-
-	lset_t seen = LEMPTY;
-	static const struct ip_info *internal_to_info[] = {
-		[IKEv2_INTERNAL_IP4_ADDRESS] = &ipv4_info,
-		[IKEv2_INTERNAL_IP6_ADDRESS] = &ipv6_info,
-	};
 
 	while (pbs_left(cp_pbs) > 0) {
 
@@ -284,28 +295,15 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike, struct
 		enum ikev2_cp_attribute_type type = cp_attr.type; 
 		switch (type) {
 		case IKEv2_INTERNAL_IP4_ADDRESS:
-		case IKEv2_INTERNAL_IP6_ADDRESS:
-		{
-			const struct ip_info *afi = internal_to_info[type];
-			passert(afi != NULL);
-			const struct addresspool *pool = cc->pool[afi->ip_index];
-			if (pool == NULL) {
-				enum_buf eb;
-				ldbg_sa(child, "ignoring %s, no pool",
-					str_enum_short(&ikev2_cp_attribute_type_names, type, &eb));
-			} else {
-				err_t e = lease_that_address(child->sa.st_connection, &child->sa, afi);
-				if (e != NULL) {
-					enum_buf eb;
-					llog_sa(RC_LOG, child, "%s lease_an_address failure %s",
-						str_enum_short(&ikev2_cp_attribute_type_names, type, &eb),
-						e);
-					return false;
-				}
-				seen |= type;
+			if (!lease_cp_address(child, &ipv4_info)) {
+				return false;
 			}
 			break;
-		}
+		case IKEv2_INTERNAL_IP6_ADDRESS:
+			if (!lease_cp_address(child, &ipv6_info)) {
+				return false;
+			}
+			break;
 
 		default:
 		{
@@ -318,9 +316,8 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike, struct
 		}
 	}
 
-	if (seen == LEMPTY) {
-		llog_sa(RC_LOG_SERIOUS, child,
-			"ERROR: no valid internal address request");
+	if (!child->sa.st_connection->remote->child.has_lease) {
+		llog_sa(RC_LOG_SERIOUS, child, "ERROR: no valid internal address request");
 		return false;
 	}
 
