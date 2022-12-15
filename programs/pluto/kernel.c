@@ -321,11 +321,9 @@ static bool install_bare_spd_kernel_policy(const struct spd_route *spd,
 		kernel_policy_from_void(spd->local->client, spd->remote->client,
 					direction, calculate_kernel_priority(c),
 					shunt,
-					/* XXX: applicable? */
+					&c->sa_marks, c->xfrmi,
 					HUNK_AS_SHUNK(c->config->sec_label),
 					where);
-	kernel_policy.sa_marks = &c->sa_marks;
-	kernel_policy.xfrmi = c->xfrmi;
 
 	if (!raw_policy(op, direction,
 			existing_policy_expectation,
@@ -464,6 +462,8 @@ struct kernel_policy kernel_policy_from_void(ip_selector local, ip_selector remo
 					     enum direction direction,
 					     kernel_priority_t priority,
 					     enum shunt_policy shunt_policy,
+					     const struct sa_marks *sa_marks,
+					     const struct pluto_xfrmi *xfrmi,
 					     const shunk_t sec_label,
 					     where_t where)
 {
@@ -495,8 +495,8 @@ struct kernel_policy kernel_policy_from_void(ip_selector local, ip_selector remo
 		.shunt = shunt_policy,
 		.where = where,
 		.id = DEFAULT_KERNEL_POLICY_ID,
-		.sa_marks = NULL,
-		.xfrmi = NULL,
+		.sa_marks = sa_marks,
+		.xfrmi = xfrmi,
 		.sec_label = sec_label,
 		/*
 		 * With transport mode, the encapsulated packet on the
@@ -1330,6 +1330,7 @@ static void revert_kernel_policy(struct spd_route *spd, struct state *st/*could 
 					DIRECTION_OUTBOUND,
 					calculate_kernel_priority(c),
 					bs->shunt_policy,
+					/*sa_marks*/NULL, /*xfrmi*/NULL,
 					/* bare shunt are not
 					 * associated with any
 					 * connection so no
@@ -1997,6 +1998,8 @@ bool assign_holdpass(struct connection *c,
 							DIRECTION_OUTBOUND,
 							calculate_kernel_priority(c),
 							c->config->negotiation_shunt,
+							/* XXX: bug; use from_spd() */
+							&c->sa_marks, c->xfrmi,
 							HUNK_AS_SHUNK(c->config->sec_label),
 							HERE);
 
@@ -2010,8 +2013,8 @@ bool assign_holdpass(struct connection *c,
 						&kernel_policy.dst.route,
 						&kernel_policy,
 						deltatime(0),
-						/* XXX: bug; use from_spd() */
-						&c->sa_marks, c->xfrmi,
+						kernel_policy.sa_marks,
+						kernel_policy.xfrmi,
 						kernel_policy.id,
 						kernel_policy.sec_label,
 						c->logger, "CAT: %s() %s", __func__, reason)) {
@@ -3634,6 +3637,8 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 							/* we don't know connection for priority yet */
 							highest_kernel_priority,
 							failure_shunt,
+							/* XXX: bug; use from_spd() */
+							/*sa_marks*/NULL, /*xfrmi*/NULL,
 							/*sec_label;bug?*/null_shunk,
 							HERE);
 

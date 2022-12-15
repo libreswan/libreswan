@@ -587,6 +587,7 @@ static void cannot_ondemand(lset_t rc_flags, const struct kernel_acquire *b,
 						/* we don't know connection for priority yet */
 						highest_kernel_priority,
 						failure_shunt,
+						/*sa_marks*/NULL, /*xfrmi*/NULL,
 						b->sec_label, /*from acquire*/
 						HERE);
 
@@ -964,6 +965,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 					DIRECTION_OUTBOUND,
 					calculate_kernel_priority(c),
 					c->config->negotiation_shunt,
+					/*sa_marks*/NULL, /*xfrmi*/NULL,
 					b->sec_label, /*from acquire */
 					HERE);
 
