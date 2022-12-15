@@ -206,6 +206,8 @@ const struct ip_info ipv4_info = {
 
 	/* IKEv2 Traffic Selector */
 	.ikev2_ts_addr_range_type = IKEv2_TS_IPV4_ADDR_RANGE,
+	.ikev2_internal_address = IKEv2_INTERNAL_IP4_ADDRESS,
+	.ikev2_internal_dns = IKEv2_INTERNAL_IP4_DNS,
 
 	/* id */
 	.id_ip_addr = ID_IPV4_ADDR,
@@ -263,6 +265,8 @@ const struct ip_info ipv6_info = {
 
 	/* IKEv2 Traffic Selector */
 	.ikev2_ts_addr_range_type = IKEv2_TS_IPV6_ADDR_RANGE,
+	.ikev2_internal_address = IKEv2_INTERNAL_IP6_ADDRESS,
+	.ikev2_internal_dns = IKEv2_INTERNAL_IP6_DNS,
 
 	/* id */
 	.id_ip_addr = ID_IPV6_ADDR,

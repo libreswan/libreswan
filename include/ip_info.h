@@ -106,6 +106,8 @@ struct ip_info {
 	 * IKEv2 Traffic Selector Stuff.
 	 */
 	enum ikev2_ts_type ikev2_ts_addr_range_type;
+	enum ikev2_cp_attribute_type ikev2_internal_address;
+	enum ikev2_cp_attribute_type ikev2_internal_dns;
 
 	/*
 	 * ID stuff.
