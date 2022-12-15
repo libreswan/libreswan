@@ -1508,30 +1508,15 @@ static void revert_kernel_policy(struct spd_route *spd, struct state *st/*could 
 
 	if (c->config->failure_shunt == SHUNT_NONE) {
 		ldbg(logger, "kernel: %s() installing SHUNT_NONE aka block", __func__);
-		struct kernel_policy kernel_policy =
-			kernel_policy_from_void(esr->local->client,
-						esr->remote->client,
-						DIRECTION_OUTBOUND,
-						calculate_kernel_priority(ero),
-						SHUNT_NONE,
-						HUNK_AS_SHUNK(ero->config->sec_label),
-						HERE);
-		if (!raw_policy(KERNEL_POLICY_OP_REPLACE,
-				DIRECTION_OUTBOUND,
-				EXPECT_KERNEL_POLICY_OK,
-				&kernel_policy.src.client,
-				&kernel_policy.dst.client,
-				&kernel_policy,
-				deltatime(0),
-				/*XXX: BUG: should use from_spd() */
-				&ero->sa_marks, ero->xfrmi,
-				kernel_policy.id,
-				kernel_policy.sec_label,
-				logger,
-				"%s() restore eclipsed failure =- NONE", __func__)) {
+		if (!install_bare_spd_kernel_policy(esr,
+						    KERNEL_POLICY_OP_REPLACE,
+						    DIRECTION_OUTBOUND,
+						    EXPECT_KERNEL_POLICY_OK,
+						    SHUNT_NONE,
+						    logger, HERE,
+						    "restore eclipsed failure =- NONE")) {
 			llog(RC_LOG, logger,
 			     "shunt_policy() %s() failed restore/replace", __func__);
-
 		}
 		return;
 	}
@@ -3465,40 +3450,39 @@ static void teardown_spd_kernel_policies(enum kernel_policy_op outbound_op,
 					 enum expect_kernel_policy expect_inbound_policy,
 					 struct logger *logger, const char *story)
 {
-	pexpect(outbound_op == KERNEL_POLICY_OP_DELETE ||
-		outbound_op == KERNEL_POLICY_OP_REPLACE);
-	/*
-	 * The restored policy uses TRANSPORT mode (the host
-	 * .{src,dst} provides the family but the address isn't used).
-	 */
-	struct kernel_policy kernel_policy =
-		kernel_policy_from_void(spd->local->client, spd->remote->client,
-					DIRECTION_OUTBOUND,
-					calculate_kernel_priority(spd->connection),
-					outbound_shunt,
-					HUNK_AS_SHUNK(spd->connection->config->sec_label),
-					HERE);
+	PEXPECT(logger, (outbound_op == KERNEL_POLICY_OP_DELETE ||
+			 outbound_op == KERNEL_POLICY_OP_REPLACE));
 
 	/*
 	 * Since this is tearing down a real policy; all the critical
 	 * parameters from the add need to match.
 	 */
 
-	if (!raw_policy(outbound_op,
-			DIRECTION_OUTBOUND,
-			EXPECT_KERNEL_POLICY_OK,
-			&kernel_policy.src.client,
-			&kernel_policy.dst.client,
-			(outbound_op == KERNEL_POLICY_OP_DELETE ? NULL : &kernel_policy),
-			deltatime(0),
-			/* XXX: bug, use _from_spd() */
-			&spd->connection->sa_marks, spd->connection->xfrmi,
-			kernel_policy.id,
-			kernel_policy.sec_label,
-			spd->connection->logger,
-			"%s() outbound kernel policy for %s", __func__, story)) {
-		llog(RC_LOG, logger,
-		     "kernel: %s() outbound failed %s", __func__, story);
+	switch (outbound_op) {
+	case KERNEL_POLICY_OP_REPLACE:
+		if (!install_bare_spd_kernel_policy(spd,
+						    KERNEL_POLICY_OP_REPLACE,
+						    DIRECTION_OUTBOUND,
+						    EXPECT_KERNEL_POLICY_OK,
+						    outbound_shunt,
+						    logger, HERE, story)) {
+			llog(RC_LOG, logger,
+			     "kernel: %s() outbound replace failed %s", __func__, story);
+		}
+		break;
+	case KERNEL_POLICY_OP_DELETE:
+		/* XXX: delete_spd_kernel_policy() */
+		if (!delete_spd_kernel_policy(spd,
+					      DIRECTION_OUTBOUND,
+					      EXPECT_KERNEL_POLICY_OK,
+					      logger, HERE, story)) {
+			llog(RC_LOG, logger,
+			     "kernel: %s() outbound delete failed %s", __func__, story);
+		}
+		break;
+	default:
+		bad_case(outbound_op);
+		break;
 	}
 
 	if (!delete_spd_kernel_policy(spd, DIRECTION_INBOUND,
