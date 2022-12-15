@@ -1202,7 +1202,7 @@ static void get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 		}
 
 		if (spd_policy_conflicts(spd, d_spd, logger, indent) &&
-		    d->child.routing > best_policy) {
+		    d->child.routing > best_policy && false) {
 			ldbg(logger, "%*s saving policy %s; best so far",
 			     indent, "", d->name);
 			spd->wip.conflicting.policy = d_spd;
