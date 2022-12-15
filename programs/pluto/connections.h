@@ -451,7 +451,6 @@ struct spd_route {
 		struct {
 			bool ok;
 			struct spd_route *route;
-			struct spd_route *policy;
 			struct bare_shunt **shunt;
 		} conflicting;
 		struct {
