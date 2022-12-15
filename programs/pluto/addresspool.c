@@ -759,10 +759,6 @@ diag_t find_addresspool(const ip_range pool_range, struct addresspool **pool)
 
 diag_t install_addresspool(const ip_range pool_range, struct connection *c)
 {
-	for (enum ip_index i = IP_INDEX_FLOOR; i < IP_INDEX_ROOF; i++) {
-		pexpect(c->pool[i] == NULL);
-	}
-
 	/* can't be empty */
 	uintmax_t pool_size = range_size(pool_range);
 	if (pool_size == 0) {
@@ -796,6 +792,9 @@ diag_t install_addresspool(const ip_range pool_range, struct connection *c)
 	}
 
 	const struct ip_info *afi = range_info(pool_range);
+	if (c->pool[afi->ip_index] != NULL) {
+		return diag("connection already has a %s address pool", afi->ip_name);
+	}
 
 	if (existing_pool != NULL) {
 		/* re-use existing pool */

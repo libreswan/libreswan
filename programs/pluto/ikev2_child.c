@@ -951,7 +951,11 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 	 */
 	if (local->modecfg.server &&
 	    child->sa.st_connection->local->child.selectors.proposed.len <= 1 &&
-	    child->sa.st_connection->remote->child.selectors.proposed.len <= 1) {
+	    child->sa.st_connection->local->child.config->sourceip.len <= 1 &&
+	    child->sa.st_connection->local->host.config->pool_ranges.len <= 1 &&
+	    child->sa.st_connection->remote->child.selectors.proposed.len <= 1 &&
+	    child->sa.st_connection->remote->child.config->sourceip.len <= 1 &&
+	    child->sa.st_connection->remote->host.config->pool_ranges.len <= 1) {
 		ldbg_sa(child, "skipping TS processing, mainly to stop a connection flip!?!");
 	} else {
 		/*
