@@ -1077,34 +1077,6 @@ static bool spd_route_conflicts(struct spd_route *spd UNUSED,
 	return true;
 }
 
-static bool spd_policy_conflicts(struct spd_route *spd,
-				 struct spd_route *d_spd,
-				 struct logger *logger,
-				 unsigned indent)
-{
-	struct connection *c = spd->connection;
-	struct connection *d = d_spd->connection;
-
-	if ((c->sa_marks.in.val & c->sa_marks.in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask)) {
-		ldbg(logger, "%*s skipping policy %s; marks in don't match",
-		     indent, "", d->name);
-		return false;
-	}
-
-	if ((c->sa_marks.out.val & c->sa_marks.out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask) ) {
-		ldbg(logger, "%*s skipping policy %s; marks out don't match",
-		     indent, "", d->name);
-		return false;
-	}
-
-	if (!selector_eq_selector(spd->local->client, d_spd->local->client)) {
-		ldbg(logger, "%*s skipping policy %s; local selector doesn't match",
-		     indent, "", d->name);
-		return false;
-	}
-	return true;
-}
-
 /*
  * XXX: can this and/or route_owner() be merged?
  */
@@ -1122,7 +1094,6 @@ static void get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 	}
 
 	enum routing best_routing = RT_UNROUTED;
-	enum routing best_policy = RT_UNROUTED;
 
 	struct spd_route_filter srf = {
 		.remote_client_range = &spd->remote->client,
@@ -1200,14 +1171,6 @@ static void get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 			spd->wip.conflicting.route = d_spd;
 			best_routing = d->child.routing;
 		}
-
-		if (spd_policy_conflicts(spd, d_spd, logger, indent) &&
-		    d->child.routing > best_policy && false) {
-			ldbg(logger, "%*s saving policy %s; best so far",
-			     indent, "", d->name);
-			spd->wip.conflicting.policy = d_spd;
-			best_policy = d->child.routing;
-		}
 	}
 
 	/*
@@ -1218,8 +1181,7 @@ static void get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 	 */
 
 	spd->wip.conflicting.shunt =
-		(spd->wip.conflicting.policy != NULL ? NULL :
-		 bare_shunt_ptr(&spd->local->client, &spd->remote->client, __func__));
+		bare_shunt_ptr(&spd->local->client, &spd->remote->client, __func__);
 
 	/*
 	 * Report what was found.
@@ -1227,11 +1189,10 @@ static void get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 
 	selector_pair_buf sb;
 	ldbg(logger,
-	     "%*s kernel: %s() %s; wip.conflicting_route %s wip.conflicting_policy %s wip.conflicting_shunt=%s",
+	     "%*s kernel: %s() %s; wip.conflicting_route %s wip.conflicting_shunt=%s",
 	     indent, "",
 	     __func__, str_selector_pair(&spd->local->client, &spd->remote->client, &sb),
 	     (spd->wip.conflicting.route == NULL ? "<none>" : spd->wip.conflicting.route->connection->name),
-	     (spd->wip.conflicting.policy == NULL ? "<none>" : spd->wip.conflicting.policy->connection->name),
 	     (spd->wip.conflicting.shunt == NULL ? "<none>" : (*spd->wip.conflicting.shunt)->why));
 
 	/*
@@ -1266,71 +1227,6 @@ static void get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 			llog(RC_LOG_SERIOUS, logger,
 			     "cannot route -- route already in use for "PRI_CONNECTION" - but allowing anyway",
 			     pri_connection(ro, &cib));
-		}
-	}
-
-	/*
-	 * If there is an eroute for another connection, there is a
-	 * problem.
-	 */
-
-	struct connection *po = (spd->wip.conflicting.policy == NULL ? NULL :
-				 spd->wip.conflicting.policy->connection);
-	if (po != NULL && po != c) {
-		if ((po->kind == CK_PERMANENT && c->kind == CK_TEMPLATE) ||
-		    (c->kind == CK_PERMANENT && po->kind == CK_TEMPLATE)) {
-			/*
-			 * note, wavesec (PERMANENT) goes *outside*
-			 * and OE goes *inside* (TEMPLATE)
-			 */
-			connection_buf pob;
-			ldbg(logger,
-			     "%*s kernel: need to juggle permenant and template "PRI_CONNECTION" "PRI_SO,
-			     indent, "",
-			     pri_connection(po, &pob),
-			     pri_so(spd->wip.conflicting.policy->connection->child.kernel_policy_owner));
-		} else if (po->kind == CK_TEMPLATE && streq(po->name, c->name)) {
-			/*
-			 * Look along the chain of policies for one
-			 * with the same name.
-			 */
-			connection_buf pob;
-			ldbg(po->logger,
-			     "%*s kernel: allowing policy conflict with template "PRI_CONNECTION" "PRI_SO,
-			     indent, "",
-			     pri_connection(po, &pob),
-			     pri_so(spd->wip.conflicting.policy->connection->child.kernel_policy_owner));
-		} else if (LDISJOINT(POLICY_OVERLAPIP, c->policy | po->policy) &&
-			   c->config->sec_label.len == 0) {
-
-			/*
-			 * If we fell off the end of the list, then we
-			 * found no TEMPLATE so there must be a
-			 * conflict that we can't resolve.  As the
-			 * names are not equal, then we aren't
-			 * replacing/rekeying.
-			 *
-			 * ??? should there not be a conflict if
-			 * ANYTHING in the list, other than c,
-			 * conflicts with c?
-			 *
-			 * Another connection is already using the
-			 * eroute, TODO: XFRM apparently can do this
-			 * though
-			 */
-			connection_buf pob;
-			llog(RC_LOG_SERIOUS, logger,
-			     "cannot install eroute -- it is in use for "PRI_CONNECTION" "PRI_SO,
-			     pri_connection(po, &pob),
-			     pri_so(spd->wip.conflicting.policy->connection->child.kernel_policy_owner));
-			spd->wip.conflicting.ok = false;
-		} else {
-			connection_buf pob;
-			ldbg(logger,
-			     "%*s kernel: overlapping permitted with "PRI_CONNECTION" "PRI_SO,
-			     indent, "",
-			     pri_connection(po, &pob),
-			     pri_so(spd->wip.conflicting.policy->connection->child.kernel_policy_owner));
 		}
 	}
 }
