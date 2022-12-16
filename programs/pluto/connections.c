@@ -319,7 +319,6 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 			/* child */
 			pfreeany(end->child.updown);
 			pfreeany(end->child.selectors.list);
-			pfreeany(end->child.selectors_string);
 			pfreeany(end->child.sourceip.list);
 			virtual_ip_delref(&end->child.virt);
 		}
@@ -1352,7 +1351,7 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 		diag_t d = ttoranges_num(shunk1(src->addresspool), ", ", NULL,
 					 &host_config->pool_ranges);
 		if (d != NULL) {
-			return diag_diag(&d, "invalid %saddresspool=%s, ", leftright, src->addresspool);
+			return diag_diag(&d, "%saddresspool=%s invalid, ", leftright, src->addresspool);
 		}
 
 		for (const ip_range *pool_range = host_config->pool_ranges.list;
@@ -1361,13 +1360,13 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 			const struct ip_info *pool_afi = range_type(pool_range);
 
 			if (c->pool[pool_afi->ip_index] != NULL) {
-				return diag("invalid %saddresspool=%s, multiple %s ranges",
+				return diag("%saddresspool=%s invalid, multiple %s ranges",
 					    leftright, src->addresspool, pool_afi->ip_name);
 			}
 
 			if (pool_afi == &ipv6_info && !pool_range->is_subnet) {
 				range_buf rb;
-				return diag("invalid %saddresspool=%s, IPv6 range %s is not a subnet",
+				return diag("%saddresspool=%s invalid, IPv6 range %s is not a subnet",
 					    leftright, src->addresspool,
 					    str_range(pool_range, &rb));
 			}
@@ -1377,13 +1376,13 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 			struct addresspool *pool; /* ignore */
 			d = find_addresspool(*pool_range, &pool);
 			if (d != NULL) {
-				return diag_diag(&d, "invalid %saddresspool=%s, ",
+				return diag_diag(&d, "%saddresspool=%s invalid, ",
 						 leftright, src->addresspool);
 			}
 
 			d = install_addresspool(*pool_range, c);
 			if (d != NULL) {
-				return diag_diag(&d, "invalid %saddresspool=%s, ",
+				return diag_diag(&d, "%saddresspool=%s invalid, ",
 						 leftright, src->addresspool);
 			}
 		}
@@ -1470,8 +1469,6 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		}
 		ldbg(logger, "%s child selectors from %ssubnet + %sprotoport; %s.config.has_client=true",
 		     leftright, leftright, leftright, leftright);
-		child_config->selectors_field = "subnet";
-		child_config->selectors_string = clone_str(src->subnet, "client");
 		child_config->selectors.len = 1;
 		child_config->selectors.list = alloc_things(ip_selector, 1, "subnet-selectors");
 		child_config->selectors.list[0] =
@@ -1486,8 +1483,6 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		ldbg(logger, "%s child selectors from %ssubnet (selector); %s.config.has_client=true",
 		     leftright, leftright, leftright);
 		passert(wm->ike_version == IKEv2);
-		child_config->selectors_field = "subnet";
-		child_config->selectors_string = clone_str(src->subnet, "client");
 		ip_address nonzero_host;
 		diag_t d = ttoselectors_num(shunk1(src->subnet), ", ", NULL,
 					    &child_config->selectors, &nonzero_host);
@@ -2866,79 +2861,78 @@ static bool extract_connection(const struct whack_message *wm,
 	 * Now cross check the configuration looking for IP version
 	 * conflicts.
 	 *
-	 * Build a table of the IP address families that each end's
-	 * child is using and then cross check that.
+	 * First build a table of the IP address families that each
+	 * end's child is using and then cross check it with the other
+	 * end.  Either both ends use a AFI or both don't.
 	 */
 
-	bool end_uses_address_family[END_ROOF][IP_INDEX_ROOF] = {0};
+	struct {
+		bool used;
+		const char *field;
+		char *value;
+	} end_family[END_ROOF][IP_INDEX_ROOF] = {0};
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		if (c->end[end].config->child.selectors.len == 0) {
-			end_uses_address_family[end][host_afi->ip_index] = true;
-		} else {
-			const ip_selectors *const selectors = &c->end[end].config->child.selectors;
+		const ip_selectors *const selectors = &c->end[end].config->child.selectors;
+		const ip_ranges *const pools = &c->end[end].config->host.pool_ranges;
+		if (selectors->len > 0) {
 			for (const ip_selector *s = selectors->list;
 			     s < selectors->list + selectors->len;
 			     s++) {
 				const struct ip_info *afi = selector_type(s);
-				end_uses_address_family[end][afi->ip_index] = true;
+				end_family[end][afi->ip_index].used = true;
+				end_family[end][afi->ip_index].field = "subnet";
+				end_family[end][afi->ip_index].value = whack_ends[end]->subnet;
 			}
+		} else if (pools->len > 0) {
+			for (const ip_range *s = pools->list;
+			     s < pools->list + pools->len;
+			     s++) {
+				const struct ip_info *afi = range_type(s);
+				end_family[end][afi->ip_index].used = true;
+				end_family[end][afi->ip_index].field = "addresspool";
+				end_family[end][afi->ip_index].value = whack_ends[end]->addresspool;
+			}
+		} else {
+			end_family[end][host_afi->ip_index].used = true;
+			end_family[end][host_afi->ip_index].field = "";
+			end_family[end][host_afi->ip_index].value = whack_ends[end]->host_addr_name;
 		}
 	}
 
 	/* now check there's a match */
 	FOR_EACH_THING(afi, &ipv4_info, &ipv6_info) {
 		enum ip_index i = afi->ip_index;
-		if (end_uses_address_family[LEFT_END][i] == end_uses_address_family[RIGHT_END][i]) {
+		if (end_family[LEFT_END][i].used == end_family[RIGHT_END][i].used) {
 			continue;
 		}
 		/*
-		 * One of the ends children is using an address family
-		 * not mentioned by the other end.  Try to log a
-		 * helpful error.
+		 * Flip the AFI for RIGHT.  Presumably it being
+		 * non-zero is the reason for the conflict?
 		 */
-		if (c->end[LEFT_END].config->child.selectors.len > 0 &&
-		    c->end[RIGHT_END].config->child.selectors.len > 0) {
-			/*
-			 * Both ends used child AFIs.
-			 *
-			 * Since no permutation was valid one end must
-			 * be pure IPv4 and the other end pure IPv6
-			 * say.
-			 *
-			 * Use the first list entry to get the AFI.
-			 */
-			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"address family %s from left%s=%s conflicts with %s from right%s=%s",
-			     selector_type(c->end[LEFT_END].config->child.selectors.list)->ip_name,
-			     c->end[LEFT_END].config->child.selectors_field,
-			     c->end[LEFT_END].config->child.selectors_string,
-			     selector_type(c->end[RIGHT_END].config->child.selectors.list)->ip_name,
-			     c->end[RIGHT_END].config->child.selectors_field,
-			     c->end[RIGHT_END].config->child.selectors_string);
+		enum ip_index j = (i == IPv4_INDEX ? IPv6_INDEX : IPv4_INDEX);
+		if (end_family[LEFT_END][i].used) {
+			/* oops, no winner */
+			pexpect(end_family[RIGHT_END][j].used);
 		} else {
-			/*
-			 * One end used a child AFI, and the other
-			 * used the host's AFI.  If both ends used the
-			 * host AFI then the AFIs would have matched.
-			 */
-			const char *host_end = NULL;
-			const struct child_end_config *child_end = NULL;
-			FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-				if (c->end[end].config->child.selectors.len == 0) {
-					host_end = c->end[end].host.config->leftright;
-				} else {
-					child_end = &c->end[end].config->child;
-				}
-			}
-			passert(host_end != NULL);
-			passert(child_end != NULL);
-			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"%s host address family %s conflicts with %s%s=%s",
-			     host_end, host_afi->ip_name,
-			     child_end->leftright,
-			     child_end->selectors_field,
-			     child_end->selectors_string);
+			swap(i, j);
+			pexpect(end_family[LEFT_END][i].used);
+			pexpect(end_family[RIGHT_END][j].used);
 		}
+		/*
+		 * Both ends used child AFIs.
+		 *
+		 * Since no permutation was valid one end must
+		 * be pure IPv4 and the other end pure IPv6
+		 * say.
+		 *
+		 * Use the first list entry to get the AFI.
+		 */
+		llog(RC_FATAL, c->logger,
+		     ADD_FAILED_PREFIX"address family of left%s=%s conflicts with right%s=%s",
+		     end_family[LEFT_END][i].field,
+		     end_family[LEFT_END][i].value,
+		     end_family[RIGHT_END][j].field,
+		     end_family[RIGHT_END][j].value);
 		return false;
 	}
 

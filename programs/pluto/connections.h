@@ -133,10 +133,6 @@ struct child_end_config {
 	bool has_client_address_translation;		/* aka CAT */
 
 	ip_selectors selectors;
-	/* log "{.leftright}${.selectors_field}=${.selectors_string} */
-	const char *selectors_field;
-	char *selectors_string;
-
 	ip_addresses sourceip;
 
 	/*
