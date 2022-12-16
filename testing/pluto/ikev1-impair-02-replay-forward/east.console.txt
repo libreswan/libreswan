@@ -99,7 +99,7 @@ packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 3 of
 "westnet-eastnet" #1: retransmitting in response to duplicate packet; already STATE_MAIN_R3
 packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 3 of 4
 packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 4 of 4 (476 bytes)
-"westnet-eastnet" #1: the peer proposed: 192.0.2.0/24 -<all>-> 192.0.1.0/24
+"westnet-eastnet" #1: the peer proposed: 192.0.2.0/24->192.0.1.0/24
 packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 4 of 4
 packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 1 of 5 (792 bytes)
 "westnet-eastnet" #1: discarding initial packet; already STATE_MAIN_R3
