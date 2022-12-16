@@ -33,7 +33,7 @@ typedef struct {
 	bool is_set;
 	enum ip_version version;
 	struct ip_bytes bytes;
-	unsigned prefix_bits;
+	unsigned prefix_len;
 } ip_cidr;
 
 #define PRI_CIDR "<cidr-%s:IPv%d["PRI_IP_BYTES"]/%u>"
@@ -41,24 +41,19 @@ typedef struct {
 		((A).is_set ? "set" : "unset"),				\
 		(A).version,						\
 		pri_ip_bytes((A).bytes),					\
-		(A).prefix_bits
+		(A).prefix_len
 
 void pexpect_cidr(const ip_cidr a, where_t where);
 #define pcidr(A) pexpect_cidr(A, HERE)
 
 extern const ip_cidr unset_cidr;
 
-const struct ip_info *cidr_type(const ip_cidr *cidr);	/* handles NULL */
-const struct ip_info *cidr_info(const ip_cidr cidr);
-
-ip_address cidr_address(const ip_cidr cidr);
-
 /* convert CIDR address/mask; does not judge the result */
 ip_cidr cidr_from_raw(where_t where, enum ip_version version,
 		      const struct ip_bytes bytes,
 		      unsigned prefix_bits);
 
-err_t numeric_to_cidr(shunk_t src, const struct ip_info *afi, ip_cidr *cidr);
+ip_cidr cidr_from_address_prefix_len(ip_address address, unsigned prefix_len);
 
 /*
  * return why, if CDIR isn't useful.
@@ -68,8 +63,18 @@ err_t numeric_to_cidr(shunk_t src, const struct ip_info *afi, ip_cidr *cidr);
  * addresses are valid, they don't specifically specify anything...
  */
 
-err_t cidr_specified(const ip_cidr cidr);
+err_t cidr_check(const ip_cidr cidr);
 bool cidr_is_specified(const ip_cidr cidr);
+
+const struct ip_info *cidr_type(const ip_cidr *cidr);	/* handles NULL */
+const struct ip_info *cidr_info(const ip_cidr cidr);
+
+ip_address cidr_address(const ip_cidr cidr);
+ip_address cidr_prefix(const ip_cidr cidr);
+ip_address cidr_host(const ip_cidr cidr);
+unsigned cidr_prefix_len(const ip_cidr cidr);
+
+err_t ttocidr_num(shunk_t src, const struct ip_info *afi, ip_cidr *cidr);
 
 typedef struct {
 	char buf[sizeof(address_buf) + 4/*/128*/];

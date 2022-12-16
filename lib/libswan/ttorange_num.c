@@ -75,14 +75,14 @@ err_t ttorange_num(shunk_t input, const struct ip_info *afi, ip_range *dst)
 		}
 		/* XXX: should this reject bad addresses */
 		*dst = range_from_raw(HERE, afi->ip_version,
-				      ip_bytes_from_blit(afi, start_address.bytes,
-							 /*routing-prefix*/&keep_bits,
-							 /*host-identifier*/&clear_bits,
-							 maskbits),
-				      ip_bytes_from_blit(afi, start_address.bytes,
-							 /*routing-prefix*/&keep_bits,
-							 /*host-identifier*/&set_bits,
-							 maskbits));
+				      ip_bytes_blit(afi, start_address.bytes,
+						    &keep_routing_prefix,
+						    &clear_host_identifier,
+						    maskbits),
+				      ip_bytes_blit(afi, start_address.bytes,
+						    &keep_routing_prefix,
+						    &set_host_identifier,
+						    maskbits));
 		dst->is_subnet = (afi == &ipv6_info);
 		return NULL;
 	}

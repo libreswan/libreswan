@@ -28,6 +28,7 @@
 
 #include "ip_address.h"
 #include "ip_endpoint.h"
+#include "ip_cidr.h"
 #include "ip_bytes.h"
 #include "ip_version.h"
 #include "err.h"
@@ -73,7 +74,7 @@ ip_subnet subnet_from_raw(where_t where, enum ip_version version,
 /* ADDRESS..ADDRESS */
 ip_subnet subnet_from_address(const ip_address address);
 /* ADDRESS/PREFIX_BITS */
-ip_subnet subnet_from_address_prefix_bits(const ip_address prefix, unsigned prefix_length);
+ip_subnet subnet_from_cidr(const ip_cidr cidr);
 
 /* barf if not valid */
 err_t address_mask_to_subnet(const ip_address address, const ip_address mask, ip_subnet *subnet);

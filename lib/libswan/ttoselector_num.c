@@ -140,10 +140,10 @@ err_t ttoselector_num(shunk_t cursor,
 	 * use that to log message when so desired.
 	 */
 
-	struct ip_bytes routing_prefix = ip_bytes_from_blit(afi, address.bytes,
-							    /*routing-prefix*/&keep_bits,
-							    /*host-identifier*/&clear_bits,
-							    prefix_length);
+	struct ip_bytes routing_prefix = ip_bytes_blit(afi, address.bytes,
+						       &keep_routing_prefix,
+						       &clear_host_identifier,
+						       prefix_length);
 	if (ip_bytes_cmp(afi->ip_version, routing_prefix,
 			 afi->ip_version, address.bytes) != 0) {
 		*nonzero_host = address;

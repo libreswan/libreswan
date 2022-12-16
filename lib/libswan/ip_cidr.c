@@ -24,7 +24,7 @@ const ip_cidr unset_cidr;
 
 ip_cidr cidr_from_raw(where_t where, enum ip_version version,
 		      const struct ip_bytes bytes,
-		      unsigned prefix_bits)
+		      unsigned prefix_len)
 {
 
  	/* combine */
@@ -32,10 +32,22 @@ ip_cidr cidr_from_raw(where_t where, enum ip_version version,
 		.is_set = true,
 		.version = version,
 		.bytes = bytes,
-		.prefix_bits = prefix_bits,
+		.prefix_len = prefix_len,
 	};
 	pexpect_cidr(cidr, where);
 	return cidr;
+}
+
+ip_cidr cidr_from_address_prefix_len(ip_address address, unsigned prefix_len)
+{
+	const struct ip_info *afi = address_info(address);
+	if (afi == NULL) {
+		return unset_cidr;
+	}
+
+	/* contains both routing-prefix and host-identifier */
+	return cidr_from_raw(HERE, address.version, address.bytes, prefix_len);
+
 }
 
 const struct ip_info *cidr_type(const ip_cidr *cidr)
@@ -68,20 +80,38 @@ ip_address cidr_address(const ip_cidr cidr)
 	return address_from_raw(HERE, cidr.version, cidr.bytes);
 }
 
-err_t cidr_specified(const ip_cidr cidr)
+ip_address cidr_prefix(const ip_cidr cidr)
+{
+	const struct ip_info *afi = cidr_type(&cidr);
+	if (afi == NULL) {
+		return unset_address;
+	}
+	return address_from_raw(HERE, cidr.version,
+				ip_bytes_blit(afi, cidr.bytes,
+					      &keep_routing_prefix,
+					      &clear_host_identifier,
+					      cidr.prefix_len));
+}
+
+unsigned cidr_prefix_len(const ip_cidr cidr)
+{
+	return cidr.prefix_len;
+}
+
+err_t cidr_check(const ip_cidr cidr)
 {
 	if (!cidr.is_set) {
 		return "unset";
 	}
 
-	const struct ip_info *afi = cidr_type(&cidr);
+	const struct ip_info *afi = cidr_info(cidr);
 	if (afi == NULL) {
 		return "unknown address family";
 	}
 
 	/* https://en.wikipedia.org/wiki/IPv6_address#Special_addresses */
 	/* ::/0 and/or 0.0.0.0/0 */
-	if (cidr.prefix_bits == 0 && thingeq(cidr.bytes, unset_ip_bytes)) {
+	if (cidr.prefix_len == 0 && thingeq(cidr.bytes, unset_ip_bytes)) {
 		return "default route (no specific route)";
 	}
 
@@ -94,10 +124,10 @@ err_t cidr_specified(const ip_cidr cidr)
 
 bool cidr_is_specified(const ip_cidr cidr)
 {
-	return cidr_specified(cidr) == NULL;
+	return cidr_check(cidr) == NULL;
 }
 
-err_t numeric_to_cidr(shunk_t src, const struct ip_info *afi, ip_cidr *cidr)
+err_t ttocidr_num(shunk_t src, const struct ip_info *afi, ip_cidr *cidr)
 {
 	*cidr = unset_cidr;
 	err_t err;
@@ -154,7 +184,7 @@ size_t jam_cidr(struct jambuf *buf, const ip_cidr *cidr)
 	size_t s = 0;
 	ip_address sa = cidr_address(*cidr);
 	s += jam_address(buf, &sa); /* sensitive? */
-	s += jam(buf, "/%u", cidr->prefix_bits);
+	s += jam(buf, "/%u", cidr->prefix_len);
 	return s;
 }
 

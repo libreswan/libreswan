@@ -22,6 +22,7 @@
 #include "ip_subnet.h"
 #include "ip_protoport.h"
 #include "ip_protocol.h"
+#include "ip_cidr.h"
 #include "ip_range.h"
 #include "ip_bytes.h"
 #include "ip_version.h"
@@ -91,6 +92,8 @@ ip_selector selector_from_address_protocol_port(const ip_address address,
 						const ip_port port);
 
 ip_selector selector_from_endpoint(const ip_endpoint address);
+
+ip_selector selector_from_cidr(const ip_cidr cidr);
 
 ip_selector selector_from_subnet(const ip_subnet subnet);
 ip_selector selector_from_subnet_protocol_port(const ip_subnet subnet,

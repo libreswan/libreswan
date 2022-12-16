@@ -57,15 +57,17 @@ extern const struct ip_bytes unset_ip_bytes;
  * ROUTING-PREFIX:HOST-ID.
  */
 
-extern const struct ip_blit set_bits;
-extern const struct ip_blit clear_bits;
-extern const struct ip_blit keep_bits;
+extern const struct ip_routing_prefix_blit keep_routing_prefix;
+extern const struct ip_routing_prefix_blit clear_routing_prefix;
+extern const struct ip_routing_prefix_blit set_routing_prefix;
+extern const struct ip_host_identifier_blit clear_host_identifier;
+extern const struct ip_host_identifier_blit set_host_identifier;
 
-struct ip_bytes ip_bytes_from_blit(const struct ip_info *afi,
-				   const struct ip_bytes bytes,
-				   const struct ip_blit *routing_prefix,
-				   const struct ip_blit *host_id,
-				   unsigned nr_prefix_bits);
+struct ip_bytes ip_bytes_blit(const struct ip_info *afi,
+			      const struct ip_bytes bytes,
+			      const struct ip_routing_prefix_blit *routing_prefix,
+			      const struct ip_host_identifier_blit *host_identifier,
+			      unsigned prefix_len);
 
 /* Calculate l-r using unsigned arithmetic */
 struct ip_bytes ip_bytes_sub(const struct ip_info *afi,
@@ -77,9 +79,9 @@ int ip_bytes_first_set_bit(const struct ip_info *afi,
 			   const struct ip_bytes bytes);
 
 /* match prefixes, or -1 */
-int ip_bytes_prefix_bits(const struct ip_info *afi,
-			 const struct ip_bytes lo,
-			 const struct ip_bytes hi);
+int ip_bytes_prefix_len(const struct ip_info *afi,
+			const struct ip_bytes lo,
+			const struct ip_bytes hi);
 
 int ip_bytes_cmp(enum ip_version l_version, const struct ip_bytes l_bytes,
 		 enum ip_version r_version, const struct ip_bytes r_bytes);

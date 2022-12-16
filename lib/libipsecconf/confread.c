@@ -494,12 +494,12 @@ static bool validate_end(struct starter_conn *conn_st,
 
 	if (end->strings_set[KSCF_VTI_IP]) {
 		const char *value = end->strings[KSCF_VTI_IP];
-		err_t oops = numeric_to_cidr(shunk1(value), NULL, &end->vti_ip);
+		err_t oops = ttocidr_num(shunk1(value), NULL, &end->vti_ip);
 		if (oops != NULL) {
 			ERR_FOUND("bad addr %s%s=%s [%s]",
 				  leftright, "vti", value, oops);
 		}
-		oops = cidr_specified(end->vti_ip);
+		oops = cidr_check(end->vti_ip);
 		if (oops != NULL) {
 			ERR_FOUND("bad addr %s%s=%s [%s]",
 				  leftright, "vti", value, oops);
@@ -668,12 +668,12 @@ static bool validate_end(struct starter_conn *conn_st,
 
 	if (end->strings_set[KSCF_INTERFACE_IP]) {
 		const char *value = end->strings[KSCF_INTERFACE_IP];
-		err_t oops = numeric_to_cidr(shunk1(value), NULL, &end->ifaceip);
+		err_t oops = ttocidr_num(shunk1(value), NULL, &end->ifaceip);
 		if (oops != NULL) {
 			ERR_FOUND("bad addr %s%s=%s [%s]",
 				  leftright, "interface-ip", value, oops);
 		}
-		oops = cidr_specified(end->ifaceip);
+		oops = cidr_check(end->ifaceip);
 		if (oops != NULL) {
 			ERR_FOUND("bad addr %s%s=%s [%s]",
 				  leftright, "interface-ip", value, oops);

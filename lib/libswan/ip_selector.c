@@ -121,14 +121,23 @@ const char *str_selector(const ip_selector *selector, selector_buf *out)
 
 size_t jam_selector_subnet(struct jambuf *buf, const ip_selector *selector)
 {
+	if (selector == NULL) {
+		return jam_string(buf, "<null-selector>");
+	}
 	if (selector_is_unset(selector)) {
-		return jam(buf, PRI_SELECTOR, pri_selector(selector));
+		return jam_string(buf, "<unset-selector>");
 	}
 
-	ip_address address = selector_prefix(*selector);
-	unsigned prefix_bits = selector_prefix_bits(*selector);
-	ip_subnet subnet = subnet_from_address_prefix_bits(address, prefix_bits);
-	return jam_subnet(buf, &subnet);
+	const struct ip_info *afi = selector_type(selector);
+	if (afi == NULL) {
+		return jam_string(buf, "<unknown-selector>");
+	}
+
+	size_t s = 0;
+	ip_address sa = selector_prefix(*selector);
+	s += jam_address(buf, &sa); /* sensitive? */
+	s += jam(buf, "/%u", selector->maskbits);
+	return s;
 }
 
 const char *str_selector_subnet(const ip_selector *selector, subnet_buf *out)
@@ -305,9 +314,26 @@ ip_selector selector_from_endpoint(const ip_endpoint endpoint)
 				 endpoint_port(endpoint));
 }
 
+ip_selector selector_from_cidr(const ip_cidr cidr)
+{
+	const struct ip_info *afi = cidr_info(cidr);
+	if (afi == NULL) {
+		return unset_selector;
+	}
+
+	return selector_from_raw(HERE, cidr.version,
+				 ip_bytes_blit(afi, cidr.bytes,
+					       &keep_routing_prefix,
+					       &clear_host_identifier,
+					       cidr.prefix_len),
+				 cidr.prefix_len,
+				 &ip_protocol_all, unset_port);
+}
+
 ip_selector selector_from_subnet(const ip_subnet subnet)
 {
-	if (subnet_is_unset(&subnet)) {
+	const struct ip_info *afi = subnet_info(subnet);
+	if (afi == NULL) {
 		return unset_selector;
 	}
 
@@ -414,14 +440,14 @@ ip_range selector_range(const ip_selector selector)
 		return unset_range;
 	}
 
-	struct ip_bytes start = ip_bytes_from_blit(afi, selector.bytes,
-						   /*routing-prefix*/&keep_bits,
-						   /*host-identifier*/&clear_bits,
-						   selector.maskbits);
-	struct ip_bytes end = ip_bytes_from_blit(afi, selector.bytes,
-						 /*routing-prefix*/&keep_bits,
-						 /*host-identifier*/&set_bits,
-						 selector.maskbits);
+	struct ip_bytes start = ip_bytes_blit(afi, selector.bytes,
+					      &keep_routing_prefix,
+					      &clear_host_identifier,
+					      selector.maskbits);
+	struct ip_bytes end = ip_bytes_blit(afi, selector.bytes,
+					    &keep_routing_prefix,
+					    &set_host_identifier,
+					    selector.maskbits);
 	return range_from_raw(HERE, afi->ip_version, start, end);
 }
 
@@ -449,10 +475,10 @@ ip_address selector_prefix_mask(const ip_selector selector)
 		return unset_address;
 	}
 
-	struct ip_bytes prefix = ip_bytes_from_blit(afi, selector.bytes,
-						    /*routing-prefix*/ &set_bits,
-						    /*host-identifier*/ &clear_bits,
-						    selector.maskbits);
+	struct ip_bytes prefix = ip_bytes_blit(afi, selector.bytes,
+					       &set_routing_prefix,
+					       &clear_host_identifier,
+					       selector.maskbits);
 	return address_from_raw(HERE, afi->ip_version, prefix);
 }
 
@@ -519,11 +545,11 @@ bool selector_in_selector(const ip_selector i, const ip_selector o)
 	}
 
 	/* ib=i.prefix[0 .. o.bits] == ob=o.prefix[0 .. o.bits] */
-	struct ip_bytes ib = ip_bytes_from_blit(afi,
-						/*INNER*/i.bytes,
-						/*routing-prefix*/&keep_bits,
-						/*host-identifier*/&clear_bits,
-						/*OUTER*/o.maskbits);
+	struct ip_bytes ib = ip_bytes_blit(afi,
+					   /*INNER*/i.bytes,
+					   &keep_routing_prefix,
+					   &clear_host_identifier,
+					   /*OUTER*/o.maskbits);
 	if (!thingeq(ib, o.bytes)) {
 		return false;
 	}
@@ -610,9 +636,13 @@ int selector_hport(const ip_selector s)
 
 ip_subnet selector_subnet(const ip_selector selector)
 {
-	ip_address address = selector_prefix(selector);
-	unsigned prefix_bits = selector_prefix_bits(selector);
-	return subnet_from_address_prefix_bits(address, prefix_bits);
+	const struct ip_info *afi = selector_info(selector);
+	if (afi == NULL) {
+		return unset_subnet;
+	}
+
+	return subnet_from_raw(HERE, selector.version,
+			       selector.bytes, selector.maskbits);
 }
 
 bool selector_range_eq_selector_range(const ip_selector lhs, const ip_selector rhs)

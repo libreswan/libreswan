@@ -27,22 +27,31 @@ const struct ip_bytes unset_ip_bytes;
  * - mashup operates on network-order IP address bytes.
  */
 
-struct ip_blit {
+struct ip_routing_prefix_blit {
 	uint8_t and;	/* first operation */
 	uint8_t or;	/* second operation */
 };
 
-const struct ip_blit clear_bits = { .and = 0x00, .or = 0x00, };
-const struct ip_blit set_bits = { .and = 0x00/*don't care*/, .or = 0xff, };
-const struct ip_blit keep_bits = { .and = 0xff, .or = 0x00, };
+struct ip_host_identifier_blit {
+	uint8_t and;	/* first operation */
+	uint8_t or;	/* second operation */
+};
 
-struct ip_bytes ip_bytes_from_blit(const struct ip_info *afi,
-				   const struct ip_bytes in,
-				   const struct ip_blit *routing_prefix,
-				   const struct ip_blit *host_identifier,
-				   unsigned prefix_bit_length)
+const struct ip_routing_prefix_blit clear_routing_prefix = { .and = 0x00, .or = 0x00, };
+const struct ip_routing_prefix_blit set_routing_prefix = { .and = 0x00/*don't care*/, .or = 0xff, };
+const struct ip_routing_prefix_blit keep_routing_prefix = { .and = 0xff, .or = 0x00, };
+
+const struct ip_host_identifier_blit clear_host_identifier = { .and = 0x00, .or = 0x00, };
+const struct ip_host_identifier_blit set_host_identifier = { .and = 0x00/*don't care*/, .or = 0xff, };
+const struct ip_host_identifier_blit keep_host_identifier = { .and = 0xff, .or = 0x00, };
+
+struct ip_bytes ip_bytes_blit(const struct ip_info *afi,
+			      const struct ip_bytes in,
+			      const struct ip_routing_prefix_blit *routing_prefix,
+			      const struct ip_host_identifier_blit *host_identifier,
+			      unsigned prefix_len)
 {
-	if (!pexpect(prefix_bit_length <= afi->mask_cnt)) {
+	if (!pexpect(prefix_len <= afi->mask_cnt)) {
 		return unset_ip_bytes;	/* "can't happen" */
 	}
 
@@ -59,8 +68,8 @@ struct ip_bytes ip_bytes_from_blit(const struct ip_info *afi,
 	 * contains the first HOST_ID bit at big (aka PPC) endian
 	 * position XBIT.
 	 */
-	size_t xbyte = prefix_bit_length / BITS_PER_BYTE;
-	unsigned xbit = prefix_bit_length % BITS_PER_BYTE;
+	size_t xbyte = prefix_len / BITS_PER_BYTE;
+	unsigned xbit = prefix_len % BITS_PER_BYTE;
 
 	/* leading bytes only contain the ROUTING_PREFIX */
 	for (unsigned b = 0; b < xbyte; b++) {
@@ -135,9 +144,9 @@ int ip_bytes_first_set_bit(const struct ip_info *afi, const struct ip_bytes byte
 	return afi->ip_size * 8;
 }
 
-int ip_bytes_prefix_bits(const struct ip_info *afi,
-			 const struct ip_bytes lo,
-			 const struct ip_bytes hi)
+int ip_bytes_prefix_len(const struct ip_info *afi,
+			const struct ip_bytes lo,
+			const struct ip_bytes hi)
 {
 	/*
 	 * Determine the prefix_bits (the CIDR network part) by

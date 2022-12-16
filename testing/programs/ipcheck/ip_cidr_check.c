@@ -59,7 +59,7 @@ static void check_numeric_to_cidr(void)
 		PRINT("%s %s ", t->in, t->str != NULL ? t->str : "ERROR");
 
 		ip_cidr tmp, *cidr = &tmp;
-		err_t err = numeric_to_cidr(shunk1(t->in), IP_TYPE(t->family), cidr);
+		err_t err = ttocidr_num(shunk1(t->in), IP_TYPE(t->family), cidr);
 		if (err != NULL) {
 			if (t->str != NULL) {
 				FAIL("numeric_to_cidr() unexpectedly failed: %s", err);
@@ -103,7 +103,7 @@ static void check_cidr_is()
 		PRINT("%s %s ", t->in, bool_str(t->specified));
 
 		ip_cidr cidr;
-		err_t err = numeric_to_cidr(shunk1(t->in), IP_TYPE(t->family), &cidr);
+		err_t err = ttocidr_num(shunk1(t->in), IP_TYPE(t->family), &cidr);
 		if (err != NULL) {
 			FAIL("numeric_to_cidr() unexpectedly failed: %s", err);
 		}

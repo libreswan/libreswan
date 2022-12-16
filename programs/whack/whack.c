@@ -901,7 +901,7 @@ static void opt_to_address(struct family *family, ip_address *address)
 
 static void opt_to_cidr(struct family *family, ip_cidr *cidr)
 {
-	diagq(numeric_to_cidr(shunk1(optarg), family->type, cidr), optarg);
+	diagq(ttocidr_num(shunk1(optarg), family->type, cidr), optarg);
 	if (family->type == NULL) {
 		family->type = cidr_type(cidr);
 		family->used_by = long_opts[long_index].name;

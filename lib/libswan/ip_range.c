@@ -90,7 +90,7 @@ size_t jam_range(struct jambuf *buf, const ip_range *range)
 	size_t s = 0;
 	s += afi->address.jam(buf, afi, &range->start);
 	/* when a subnet, try to calculate the prefix-bits */
-	int prefix_bits = (range->is_subnet ? ip_bytes_prefix_bits(afi, range->start, range->end) : -1);
+	int prefix_bits = (range->is_subnet ? ip_bytes_prefix_len(afi, range->start, range->end) : -1);
 	if (prefix_bits >= 0) {
 		s += jam(buf, "/%d", prefix_bits);
 	} else {
@@ -128,14 +128,14 @@ ip_range range_from_subnet(const ip_subnet subnet)
 	}
 
 	return range_from_raw(HERE, afi->ip_version,
-			      ip_bytes_from_blit(afi, subnet.bytes,
-						 /*routing-prefix*/&keep_bits,
-						 /*host-identifier*/&clear_bits,
-						 subnet.maskbits),
-			      ip_bytes_from_blit(afi, subnet.bytes,
-						 /*routing-prefix*/&keep_bits,
-						 /*host-identifier*/&set_bits,
-						 subnet.maskbits));
+			      ip_bytes_blit(afi, subnet.bytes,
+					    &keep_routing_prefix,
+					    &clear_host_identifier,
+					    subnet.maskbits),
+			      ip_bytes_blit(afi, subnet.bytes,
+					    &keep_routing_prefix,
+					    &set_host_identifier,
+					    subnet.maskbits));
 }
 
 const struct ip_info *range_type(const ip_range *range)
@@ -353,7 +353,7 @@ err_t range_to_subnet(const ip_range range, ip_subnet *dst)
 	 * matching leading bits of FROM and TO.  Trailing bits
 	 * (subnet address) must be either all 0 (from) or 1 (to).
 	 */
-	int prefix_bits = ip_bytes_prefix_bits(afi, range.start, range.end);
+	int prefix_bits = ip_bytes_prefix_len(afi, range.start, range.end);
 	if (prefix_bits < 0) {
 		return "address range is not a subnet";
 	}
