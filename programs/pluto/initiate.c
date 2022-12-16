@@ -50,9 +50,9 @@ static bool initiate_connection_2_address(struct connection *c,
 					  const char *remote_host,
 					  bool background,
 					  const threadtime_t inception);
-static bool initiate_connection_3_sec_label(struct connection *c,
-					    bool background,
-					    const threadtime_t inception);
+static bool initiate_connection_3_template(struct connection *c,
+					   bool background,
+					   const threadtime_t inception);
 static bool initiate_connection_4_fab(struct connection *c,
 				      bool background,
 				      const threadtime_t inception);
@@ -179,7 +179,7 @@ static bool initiate_connection_2_address(struct connection *c,
 		     "instantiated connection with remote IP set to %s",
 		     str_address(&remote_ip, &ab));
 
-		bool ok = initiate_connection_3_sec_label(d, background, inception);
+		bool ok = initiate_connection_3_template(d, background, inception);
 
 		if (!ok) {
 			/* instance so free to delete */
@@ -234,10 +234,10 @@ static bool initiate_connection_2_address(struct connection *c,
 		return false;
 	}
 
-	return initiate_connection_3_sec_label(c, background, inception);
+	return initiate_connection_3_template(c, background, inception);
 }
 
-static bool initiate_connection_3_sec_label(struct connection *c,
+static bool initiate_connection_3_template(struct connection *c,
 					    bool background,
 					    const threadtime_t inception)
 {

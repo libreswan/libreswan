@@ -230,7 +230,7 @@ static void scribble_selectors_on_spd(struct connection *c,
 		}
 	}
 
-	discard_spds(&c->spd, true/*valid*/);
+	discard_connection_spds(c, true/*valid*/);
 	c->spd = spd_list;
 
 	/*

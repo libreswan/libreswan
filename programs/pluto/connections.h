@@ -800,7 +800,8 @@ void ldbg_connection(const struct connection *c, where_t where,
 		     const char *message, ...);
 
 struct spd_route *append_spd(struct connection *c, struct spd_route ***last);
-void discard_spds(struct spd_route **spds, bool connection_valid);
+void discard_connection_spds(struct connection *c, bool connection_valid);
+void add_connection_spds(struct connection *c);
 
 void set_child_kernel_policy_owner_where(struct connection *c, so_serial_t so, where_t where);
 #define set_child_kernel_policy_owner(C, SO)			\

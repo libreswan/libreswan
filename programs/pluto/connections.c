@@ -198,13 +198,13 @@ static void discard_spd(struct spd_route **spd, bool valid)
 	pfreeany(*spd);
 }
 
-void discard_spds(struct spd_route **spds, bool connection_valid)
+void discard_connection_spds(struct connection *c, bool connection_valid)
 {
-	for (struct spd_route *spd = *spds, *next = NULL; spd != NULL; spd = next) {
+	for (struct spd_route *spd = c->spd, *next = NULL; spd != NULL; spd = next) {
 		next = spd->spd_next; /*step-off*/
 		discard_spd(&spd, connection_valid);
 	}
-	*spds = NULL;
+	c->spd = NULL;
 }
 
 
@@ -270,7 +270,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 
 	connection_db_del(c, connection_valid);
 
-	discard_spds(&c->spd, connection_valid);
+	discard_connection_spds(c, connection_valid);
 
 	FOR_EACH_ELEMENT(end, c->end) {
 		free_id_content(&end->host.id);
@@ -1823,19 +1823,26 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 	set_connection_priority(c); /* must be after kind is set */
 }
 
-static void add_proposal_spds(struct connection *c)
+void add_connection_spds(struct connection *c)
 {
 	unsigned indent = 0;
 	ldbg(c->logger, "%*sadding proposal spds", indent, "");
-	struct spd_route **spd_end = &c->spd;
+
+	struct spd_route *spd_list = NULL;
+	struct spd_route **spd_end = &spd_list;
 	struct {
 		const ip_selectors *selectors;
 		const ip_selector *selector;
 		const struct ip_info *afi;
 	} selectors[END_ROOF] = {0};
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		selectors[end].selectors = &c->end[end].child.selectors.proposed;
-		PASSERT(c->logger, selectors[end].selectors->len > 0);
+		const ip_selectors *s = &c->end[end].child.selectors.proposed;
+		if (s->len == 0) {
+			ldbg(c->logger, "%s has no selectors",
+			     c->end[end].config->leftright);
+			return;
+		}
+		selectors[end].selectors = s;
 	}
 	selectors[LEFT_END].selector = selectors[LEFT_END].selectors->list;
 	for (selectors[LEFT_END].selector = selectors[LEFT_END].selectors->list;
@@ -1879,6 +1886,9 @@ static void add_proposal_spds(struct connection *c)
 			}
 		}
 	}
+
+	PEXPECT(c->logger, c->spd == NULL); /* leak? */
+	c->spd = spd_list;
 
 	/* leave a bread crumb */
 	PEXPECT(c->logger, c->child.kernel_policy_owner == SOS_NOBODY);
@@ -3178,7 +3188,7 @@ struct connection *group_instantiate(struct connection *group,
 	connection_db_add(t);
 
 	/* fill in the SPDs */
-	add_proposal_spds(t);
+	add_connection_spds(t);
 
 	connection_buf gb;
 	ldbg_connection(t, HERE, "instantiated from "PRI_CONNECTION,
@@ -3403,7 +3413,7 @@ struct connection *spd_instantiate(struct connection *t,
 		}
 	}
 
-	add_proposal_spds(d);
+	add_connection_spds(d);
 
 	/* leave breadcrumb */
 	pexpect(d->child.kernel_policy_owner == SOS_NOBODY);
@@ -3509,7 +3519,7 @@ struct connection *rw_responder_instantiate(struct connection *t,
 		}
 	}
 
-	add_proposal_spds(d);
+	add_connection_spds(d);
 
 	connection_buf tb;
 	ldbg_connection(d, HERE, "instantiated from "PRI_CONNECTION,
@@ -3567,7 +3577,7 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 		}
 	}
 
-	add_proposal_spds(d);
+	add_connection_spds(d);
 
 	connection_buf tb;
 	ldbg_connection(d, HERE, "instantiated from "PRI_CONNECTION,
@@ -4036,7 +4046,7 @@ static struct connection *oppo_instantiate(struct connection *t,
 						    selector_port(remote_template));
 	set_first_selector(d, remote, remote_selector);
 
-	add_proposal_spds(d);
+	add_connection_spds(d);
 
 	connection_buf tb;
 	ldbg_connection(d, where, "instantiated from "PRI_CONNECTION,
@@ -4898,11 +4908,12 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 			    const char *excuse, where_t where)
 {
 	struct child_end *child = &c->end[end].child;
+	const char *leftright = c->end[end].config->leftright;
 	if (first_time) {
 		PEXPECT_WHERE(c->logger, where, child->selectors.proposed.len == 0);
 		selector_buf nb;
-		ldbg(c->logger, "set %s.child.selector %s "PRI_WHERE,
-		     c->end[end].config->leftright,
+		ldbg(c->logger, "%s() set %s.child.selector %s "PRI_WHERE,
+		     __func__, leftright,
 		     str_selector(&new_selector, &nb),
 		     pri_where(where));
 		if (!PEXPECT_WHERE(c->logger, where, c->spd == NULL)) {
@@ -4912,8 +4923,8 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 		PEXPECT_WHERE(c->logger, where, child->selectors.proposed.len == 1);
 		ip_selector old_selector = child->selectors.proposed.list[0];
 		selector_buf ob, nb;
-		ldbg(c->logger, "update %s.child.selector %s -> %s "PRI_WHERE,
-		     c->end[end].config->leftright,
+		ldbg(c->logger, "%s() update %s.child.selector %s -> %s "PRI_WHERE,
+		     __func__, leftright,
 		     str_selector(&old_selector, &ob),
 		     str_selector(&new_selector, &nb),
 		     pri_where(where));
@@ -4923,8 +4934,8 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 			if (!selector_eq_selector(old_selector, old_client)) {
 				selector_buf sb, cb;
 				llog_pexpect(c->logger, where,
-					     "%s.child.selector %s does not match %s.spd.client %s",
-					     c->end[end].config->leftright,
+					     "%s() %s.child.selector %s does not match %s.spd.client %s",
+					     __func__, leftright,
 					     str_selector(&old_selector, &sb),
 					     c->end[end].config->leftright,
 					     str_selector(&old_client, &cb));
@@ -4960,15 +4971,15 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 		if (selector_eq_selector(new_selector, selector)) {
 			selector_buf sb;
 			ldbg(c->logger,
-			     "%s.child.selector %s matches selectors[0] "PRI_WHERE,
-			     c->end[end].config->leftright,
+			     "%s() %s.child.selector %s matches selectors[0] "PRI_WHERE,
+			     __func__, leftright,
 			     str_selector(&new_selector, &sb),
 			     pri_where(where));
 		} else if (excuse != NULL) {
 			selector_buf sb, cb;
 			ldbg(c->logger,
-			     "%s.child.selector %s does not match %s.selectors[0] %s but %s "PRI_WHERE,
-			     c->end[end].config->leftright,
+			     "%s() %s.child.selector %s does not match %s.selectors[0] %s but %s "PRI_WHERE,
+			     __func__, leftright,
 			     str_selector(&new_selector, &sb),
 			     c->end[end].config->leftright,
 			     str_selector(&selector, &cb),
@@ -4977,8 +4988,8 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 		} else {
 			selector_buf sb, cb;
 			llog_pexpect(c->logger, where,
-				     "%s.child.selector %s does not match %s.selectors[0] %s",
-				     c->end[end].config->leftright,
+				     "%s() %s.child.selector %s does not match %s.selectors[0] %s",
+				     __func__, leftright,
 				     str_selector(&new_selector, &sb),
 				     c->end[end].config->leftright,
 				     str_selector(&selector, &cb));
