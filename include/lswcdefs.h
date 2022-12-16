@@ -18,6 +18,12 @@
 #ifndef LSWCDEFS_H
 #define LSWCDEFS_H
 
+#define swap(L,R)				\
+	{					\
+		typeof(L) tmp_ = L;		\
+		L = R;				\
+		R = tmp_;			\
+	}
 
 /*
  * elemsof() returns the unsigned size_t.
