@@ -105,7 +105,7 @@ kvmplutotest	addconn-11-bignum			good
 kvmplutotest	algparse-01				good
 kvmplutotest	algparse-02-fips			good
 kvmplutotest	libipsecconf-01				good
-kvmplutotest	libipsecconf-02				good	github:540;github:579
+kvmplutotest	libipsecconf-02-family			good	github:540;github:579
 kvmplutotest	libipsecconf-04				good
 kvmplutotest	libipsecconf-05-empty_option		wip
 kvmplutotest	libipsecconf-06-ikev2-hash-algo		good
@@ -115,7 +115,7 @@ kvmplutotest	libipsecconf-09-time-prefix		wip
 kvmplutotest	libipsecconf-10-percentage-prefix	wip
 kvmplutotest	libipsecconf-11-default-key		wip	github:833
 kvmplutotest	libipsecconf-12-sourceip		good
-kvmplutotest	libipsecconf-13-addresspool		wip
+kvmplutotest	libipsecconf-13-addresspool		good
 
 #################################################################
 # Whack UI tests

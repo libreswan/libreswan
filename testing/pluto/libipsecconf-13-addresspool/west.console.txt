@@ -5,16 +5,64 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- ipsec auto --add 4Xin4
-002 "4Xin4": added IKEv2 connection
+ ipsec auto --add comma-4
+036 "comma-4": failed to add connection: leftaddresspool=,192.168.1.0/24 invalid, empty field
 west #
- ipsec auto --add 4Xin6
-036 "4Xin6": failed to add connection: right host address family IPv6 conflicts with leftaddresspool=192.168.1.0/24
+ ipsec auto --add comma-6
+036 "comma-6": failed to add connection: leftaddresspool=,2001:db8:0:3:1::/97 invalid, empty field
 west #
- ipsec auto --add 6Xin4
-036 "6Xin4": failed to add connection: right host address family IPv4 conflicts with leftaddresspool=2001:db8:0:3:1::/97
+ ipsec auto --add comma-4-comma
+036 "comma-4-comma": failed to add connection: leftaddresspool=,192.168.1.0/24, invalid, empty field
 west #
- ipsec auto --add 6Xin6
-002 "6Xin6": added IKEv2 connection
+ ipsec auto --add comma-6-comma
+036 "comma-6-comma": failed to add connection: leftaddresspool=,2001:db8:0:3:1::/97, invalid, empty field
+west #
+ ipsec auto --add 4-comma
+036 "4-comma": failed to add connection: leftaddresspool=192.168.1.0/24, invalid, empty field
+west #
+ ipsec auto --add 6-comma
+036 "6-comma": failed to add connection: leftaddresspool=2001:db8:0:3:1::/97, invalid, empty field
+west #
+ ipsec auto --add 4toXin4
+002 "4toXin4": added IKEv2 connection
+west #
+ ipsec auto --add 4toXin6
+036 "4toXin6": failed to add connection: address family of leftaddresspool=192.168.1.0/24 conflicts with right=2001:db8:1:2::23
+west #
+ ipsec auto --add 6toXin4
+036 "6toXin4": failed to add connection: address family of leftaddresspool=2001:db8:0:3:1::/97 conflicts with right=192.1.2.23
+west #
+ ipsec auto --add 6toXin6
+002 "6toXin6": added IKEv2 connection
+west #
+ ipsec auto --add 4to4in4
+002 "4to4in4": added IKEv2 connection
+west #
+ ipsec auto --add 4to6in6
+036 "4to6in6": failed to add connection: address family of leftaddresspool=192.168.1.0/24 conflicts with rightsubnet=2001:db8:2::/64
+west #
+ ipsec auto --add 6to4in4
+036 "6to4in4": failed to add connection: address family of leftaddresspool=2001:db8:0:3:1::/97 conflicts with rightsubnet=192.168.2.0/24
+west #
+ ipsec auto --add 6to6in6
+002 "6to6in6": added IKEv2 connection
+west #
+ ipsec auto --add 46to4in4
+036 "46to4in4": failed to add connection: address family of leftaddresspool=192.168.1.0/24,2001:db8:1::/64 conflicts with rightsubnet=192.168.2.0/24
+west #
+ ipsec auto --add 64to4in4
+036 "64to4in4": failed to add connection: address family of leftaddresspool=2001:db8:1::/64,192.168.1.0/24 conflicts with rightsubnet=192.168.2.0/24
+west #
+ ipsec auto --add 46to6in6
+036 "46to6in6": failed to add connection: address family of leftaddresspool=192.168.1.0/24,2001:db8:1::/64 conflicts with rightsubnet=2001:db8:2::/64
+west #
+ ipsec auto --add 64to6in6
+036 "64to6in6": failed to add connection: address family of leftaddresspool=2001:db8:1::/64,192.168.1.0/24 conflicts with rightsubnet=2001:db8:2::/64
+west #
+ ipsec auto --add 46to64in4
+002 "46to64in4": added IKEv2 connection
+west #
+ ipsec auto --add 64to46in6
+002 "64to46in6": added IKEv2 connection
 west #
  
