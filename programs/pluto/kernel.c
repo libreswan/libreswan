@@ -1891,24 +1891,12 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 		if (!do_updown(UPDOWN_DOWN, c, c->spd, NULL/*st*/, logger)) {
 			dbg("kernel: down command returned an error");
 		}
-		delete_kernel_policy(DIRECTION_OUTBOUND,
-				     EXPECT_KERNEL_POLICY_OK,
-				     c->spd->local->client,
-				     c->spd->remote->client,
-				     /*sa_marks*/NULL,  /* XXX: bug? */
-				     /*xfrmi*/NULL, /* XXX: bug? */
-				     DEFAULT_KERNEL_POLICY_ID,
-				     /*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
-				     logger, HERE, "failed security label");
-		delete_kernel_policy(DIRECTION_INBOUND,
-				     EXPECT_KERNEL_POLICY_OK,
-				     c->spd->remote->client,
-				     c->spd->local->client,
-				     /*sa_marks*/NULL,  /* XXX: bug? */
-				     /*xfrmi*/NULL, /* XXX: bug? */
-				     DEFAULT_KERNEL_POLICY_ID,
-				     /*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
-				     logger, HERE, "failed security label");
+		delete_spd_kernel_policy(c->spd, DIRECTION_OUTBOUND,
+					 EXPECT_KERNEL_POLICY_OK,
+					 logger, HERE, "failed security label");
+		delete_spd_kernel_policy(c->spd, DIRECTION_INBOUND,
+					 EXPECT_KERNEL_POLICY_OK,
+					 logger, HERE, "failed security label");
 		return false;
 	}
 
