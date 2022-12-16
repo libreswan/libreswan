@@ -1,0 +1,7 @@
+check addresspool= vs subnet=... vs host=...
+
+- addresspool= act as if subnet= was specified
+- addresspool= vs clientaddrfamily
+- addresspool= and subnet=
+
+github #946 #947 #948

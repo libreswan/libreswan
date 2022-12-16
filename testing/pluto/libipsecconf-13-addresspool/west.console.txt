@@ -1,0 +1,20 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add 4Xin4
+002 "4Xin4": added IKEv2 connection
+west #
+ ipsec auto --add 4Xin6
+036 "4Xin6": failed to add connection: right host address family IPv6 conflicts with leftaddresspool=192.168.1.0/24
+west #
+ ipsec auto --add 6Xin4
+036 "6Xin4": failed to add connection: right host address family IPv4 conflicts with leftaddresspool=2001:db8:0:3:1::/97
+west #
+ ipsec auto --add 6Xin6
+002 "6Xin6": added IKEv2 connection
+west #
+ 
