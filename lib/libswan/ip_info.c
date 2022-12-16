@@ -158,120 +158,123 @@ static ip_port port_from_ipv6_sockaddr(const ip_sockaddr sa)
 
 #define IPv4_FF { { 255, 255, 255, 255, }, }
 
-const struct ip_info ipv4_info = {
+const struct ip_info ip_info[IP_INDEX_ROOF] = {
 
-	.ip_version = IPv4,
-	.ip_index = IPv4_INDEX,
-	.ip_size = sizeof(struct in_addr),
-	.ip_name = "IPv4",
-	.mask_cnt = 32,
+	[IPv4_INDEX] = {
 
-	/* ip_address - .address.any matches grep */
-	.address.unspec = { .is_set = true, .version = IPv4, }, /* 0.0.0.0 */
-	.address.loopback = { .is_set = true, .version = IPv4, .bytes = { { 127, 0, 0, 1, }, }, },
-	.address.jam = jam_ipv4_address,
-	.address.jam_wrapped = jam_ipv4_address,
+		.ip_version = IPv4,
+		.ip_index = IPv4_INDEX,
+		.ip_size = sizeof(struct in_addr),
+		.ip_name = "IPv4",
+		.mask_cnt = 32,
 
-	/* ip_endpoint - */
-	.endpoint.jam = jam_ipv4_endpoint,
+		/* ip_address - .address.any matches grep */
+		.address.unspec = { .is_set = true, .version = IPv4, }, /* 0.0.0.0 */
+		.address.loopback = { .is_set = true, .version = IPv4, .bytes = { { 127, 0, 0, 1, }, }, },
+		.address.jam = jam_ipv4_address,
+		.address.jam_wrapped = jam_ipv4_address,
 
-	/* ip_subnet - .subnet.any matches grep */
-	.subnet.zero = { .is_set = true, .version = IPv4, .maskbits = 32, }, /* 0.0.0.0/32 */
-	.subnet.all = { .is_set = true, .version = IPv4, .maskbits = 0, }, /* 0.0.0.0/0 */
+		/* ip_endpoint - */
+		.endpoint.jam = jam_ipv4_endpoint,
 
-	/* ip_range - .range.any matches grep */
-	.range.zero = { .is_set = true, .version = IPv4, },
-	.range.all = { .is_set = true, .version = IPv4, .end = IPv4_FF, },
+		/* ip_subnet - .subnet.any matches grep */
+		.subnet.zero = { .is_set = true, .version = IPv4, .maskbits = 32, }, /* 0.0.0.0/32 */
+		.subnet.all = { .is_set = true, .version = IPv4, .maskbits = 0, }, /* 0.0.0.0/0 */
 
-	/* ip_selector - .selector.any matches grep */
-	.selector.zero = { .is_set = true, .version = IPv4, .maskbits = 32, }, /* 0.0.0.0/0 */
-	.selector.all = { .is_set = true, .version = IPv4, .maskbits = 0, }, /* 0.0.0.0/0 */
+		/* ip_range - .range.any matches grep */
+		.range.zero = { .is_set = true, .version = IPv4, },
+		.range.all = { .is_set = true, .version = IPv4, .end = IPv4_FF, },
 
-	/* ike */
-	.ikev1_max_fragment_size = ISAKMP_V1_FRAG_MAXLEN_IPv4,
-	.ikev2_max_fragment_size = ISAKMP_V2_FRAG_MAXLEN_IPv4,
+		/* ip_selector - .selector.any matches grep */
+		.selector.zero = { .is_set = true, .version = IPv4, .maskbits = 32, }, /* 0.0.0.0/0 */
+		.selector.all = { .is_set = true, .version = IPv4, .maskbits = 0, }, /* 0.0.0.0/0 */
 
-	/* socket() */
-	.socket = {
-		.domain = PF_INET,
-		.domain_name = "PF_INET",
+		/* ike */
+		.ikev1_max_fragment_size = ISAKMP_V1_FRAG_MAXLEN_IPv4,
+		.ikev2_max_fragment_size = ISAKMP_V2_FRAG_MAXLEN_IPv4,
+
+		/* socket() */
+		.socket = {
+			.domain = PF_INET,
+			.domain_name = "PF_INET",
+		},
+
+		/* sockaddr */
+		.af = AF_INET,
+		.af_name = "AF_INET",
+		.sockaddr_size = sizeof(struct sockaddr_in),
+		.address_from_sockaddr = address_from_ipv4_sockaddr,
+		.port_from_sockaddr = port_from_ipv4_sockaddr,
+
+		/* IKEv2 Traffic Selector */
+		.ikev2_ts_addr_range_type = IKEv2_TS_IPV4_ADDR_RANGE,
+		.ikev2_internal_address = IKEv2_INTERNAL_IP4_ADDRESS,
+		.ikev2_internal_dns = IKEv2_INTERNAL_IP4_DNS,
+
+		/* id */
+		.id_ip_addr = ID_IPV4_ADDR,
+		.id_ip_addr_subnet = ID_IPV4_ADDR_SUBNET,
+		.id_ip_addr_range = ID_IPV4_ADDR_RANGE,
 	},
-
-	/* sockaddr */
-	.af = AF_INET,
-	.af_name = "AF_INET",
-	.sockaddr_size = sizeof(struct sockaddr_in),
-	.address_from_sockaddr = address_from_ipv4_sockaddr,
-	.port_from_sockaddr = port_from_ipv4_sockaddr,
-
-	/* IKEv2 Traffic Selector */
-	.ikev2_ts_addr_range_type = IKEv2_TS_IPV4_ADDR_RANGE,
-	.ikev2_internal_address = IKEv2_INTERNAL_IP4_ADDRESS,
-	.ikev2_internal_dns = IKEv2_INTERNAL_IP4_DNS,
-
-	/* id */
-	.id_ip_addr = ID_IPV4_ADDR,
-	.id_ip_addr_subnet = ID_IPV4_ADDR_SUBNET,
-	.id_ip_addr_range = ID_IPV4_ADDR_RANGE,
-};
 
 #define IPv6_FF { { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, }, }
 
-const struct ip_info ipv6_info = {
+	[IPv6_INDEX] = {
 
-	.ip_version = IPv6,
-	.ip_index = IPv6_INDEX,
-	.ip_size = sizeof(struct in6_addr),
-	.ip_name = "IPv6",
-	.mask_cnt = 128,
+		.ip_version = IPv6,
+		.ip_index = IPv6_INDEX,
+		.ip_size = sizeof(struct in6_addr),
+		.ip_name = "IPv6",
+		.mask_cnt = 128,
 
-	/* ip_address - .address.any matches grep */
-	.address.unspec = { .is_set = true, .version = IPv6, }, /* :: */
-	.address.loopback = { .is_set = true, .version = IPv6, .bytes = { { [15] = 1, }, }, }, /* ::1 */
-	.address.jam = jam_ipv6_address,
-	.address.jam_wrapped = jam_ipv6_address_wrapped,
+		/* ip_address - .address.any matches grep */
+		.address.unspec = { .is_set = true, .version = IPv6, }, /* :: */
+		.address.loopback = { .is_set = true, .version = IPv6, .bytes = { { [15] = 1, }, }, }, /* ::1 */
+		.address.jam = jam_ipv6_address,
+		.address.jam_wrapped = jam_ipv6_address_wrapped,
 
-	/* ip_endpoint - */
-	.endpoint.jam = jam_ipv6_endpoint,
+		/* ip_endpoint - */
+		.endpoint.jam = jam_ipv6_endpoint,
 
-	/* ip_subnet - .subnet.any matches grep */
-	.subnet.zero = { .is_set = true, .version = IPv6, .maskbits = 128, }, /* ::/128 */
-	.subnet.all = { .is_set = true, .version = IPv6, .maskbits = 0, }, /* ::/0 */
+		/* ip_subnet - .subnet.any matches grep */
+		.subnet.zero = { .is_set = true, .version = IPv6, .maskbits = 128, }, /* ::/128 */
+		.subnet.all = { .is_set = true, .version = IPv6, .maskbits = 0, }, /* ::/0 */
 
-	/* ip_range - .range.any matches grep */
-	.range.zero = { .is_set = true, .version = IPv6, },
-	.range.all = { .is_set = true, .version = IPv6, .end = IPv6_FF, },
+		/* ip_range - .range.any matches grep */
+		.range.zero = { .is_set = true, .version = IPv6, },
+		.range.all = { .is_set = true, .version = IPv6, .end = IPv6_FF, },
 
-	/* ip_selector - .selector.any matches grep */
-	.selector.zero = { .is_set = true, .version = IPv6, .maskbits = 128, }, /* ::/0 */
-	.selector.all = { .is_set = true, .version = IPv6, .maskbits = 0, }, /* ::/0 */
+		/* ip_selector - .selector.any matches grep */
+		.selector.zero = { .is_set = true, .version = IPv6, .maskbits = 128, }, /* ::/0 */
+		.selector.all = { .is_set = true, .version = IPv6, .maskbits = 0, }, /* ::/0 */
 
-	/* ike */
-	.ikev1_max_fragment_size = ISAKMP_V1_FRAG_MAXLEN_IPv6,
-	.ikev2_max_fragment_size = ISAKMP_V2_FRAG_MAXLEN_IPv6,
+		/* ike */
+		.ikev1_max_fragment_size = ISAKMP_V1_FRAG_MAXLEN_IPv6,
+		.ikev2_max_fragment_size = ISAKMP_V2_FRAG_MAXLEN_IPv6,
 
-	/* socket() */
-	.socket = {
-		.domain = PF_INET6,
-		.domain_name = "PF_INET6",
+		/* socket() */
+		.socket = {
+			.domain = PF_INET6,
+			.domain_name = "PF_INET6",
+		},
+
+		/* sockaddr */
+		.af = AF_INET6,
+		.af_name = "AF_INET6",
+		.sockaddr_size = sizeof(struct sockaddr_in6),
+		.address_from_sockaddr = address_from_ipv6_sockaddr,
+		.port_from_sockaddr = port_from_ipv6_sockaddr,
+
+		/* IKEv2 Traffic Selector */
+		.ikev2_ts_addr_range_type = IKEv2_TS_IPV6_ADDR_RANGE,
+		.ikev2_internal_address = IKEv2_INTERNAL_IP6_ADDRESS,
+		.ikev2_internal_dns = IKEv2_INTERNAL_IP6_DNS,
+
+		/* id */
+		.id_ip_addr = ID_IPV6_ADDR,
+		.id_ip_addr_subnet = ID_IPV6_ADDR_SUBNET,
+		.id_ip_addr_range = ID_IPV6_ADDR_RANGE,
 	},
-
-	/* sockaddr */
-	.af = AF_INET6,
-	.af_name = "AF_INET6",
-	.sockaddr_size = sizeof(struct sockaddr_in6),
-	.address_from_sockaddr = address_from_ipv6_sockaddr,
-	.port_from_sockaddr = port_from_ipv6_sockaddr,
-
-	/* IKEv2 Traffic Selector */
-	.ikev2_ts_addr_range_type = IKEv2_TS_IPV6_ADDR_RANGE,
-	.ikev2_internal_address = IKEv2_INTERNAL_IP6_ADDRESS,
-	.ikev2_internal_dns = IKEv2_INTERNAL_IP6_DNS,
-
-	/* id */
-	.id_ip_addr = ID_IPV6_ADDR,
-	.id_ip_addr_subnet = ID_IPV6_ADDR_SUBNET,
-	.id_ip_addr_range = ID_IPV6_ADDR_RANGE,
 };
 
 const struct ip_info *aftoinfo(int af)

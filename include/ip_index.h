@@ -18,11 +18,11 @@
 #define IP_INDEX_H
 
 enum ip_index {
-	IPv4_INDEX = 1,
-	IPv6_INDEX = 2,
+	IPv4_INDEX,
+	IPv6_INDEX,
 };
 
-#define IP_INDEX_FLOOR 1
-#define IP_INDEX_ROOF 3
+#define IP_INDEX_FLOOR IPv4_INDEX
+#define IP_INDEX_ROOF (IPv6_INDEX+1)
 
 #endif

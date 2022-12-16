@@ -118,12 +118,10 @@ struct ip_info {
 
 };
 
-#if 0
-typedef const struct ip_info *ip_info; /* good idea? */
-#endif
+extern const struct ip_info ip_info[IP_INDEX_ROOF];
 
-extern const struct ip_info ipv4_info;
-extern const struct ip_info ipv6_info;
+#define ipv4_info ip_info[IPv4_INDEX]
+#define ipv6_info ip_info[IPv6_INDEX]
 
 extern const struct ip_info *aftoinfo(int af);
 
