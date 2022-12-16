@@ -229,29 +229,6 @@ bool delete_kernel_policy(enum direction dir,
 	return result;
 }
 
-bool delete_kernel_policies(enum expect_kernel_policy expect_inbound_kernel_policy,
-			    const ip_selector local_client,
-			    const ip_selector remote_client,
-			    const struct sa_marks *sa_marks,
-			    const struct pluto_xfrmi *xfrmi,
-			    enum kernel_policy_id id,
-			    const shunk_t sec_label,
-			    struct logger *logger, where_t where, const char *story)
-{
-	bool out = delete_kernel_policy(DIRECTION_OUTBOUND,
-					EXPECT_KERNEL_POLICY_OK,
-					local_client, remote_client,
-					sa_marks, xfrmi, id, sec_label,
-					logger, where, story);
-	/* XXX: stumble on */
-	bool in = delete_kernel_policy(DIRECTION_INBOUND,
-				       expect_inbound_kernel_policy,
-				       remote_client, local_client,
-				       sa_marks, xfrmi, id, sec_label,
-				       logger, where, story);
-	return (in && out);
-}
-
 bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logger *logger)
 {
 	LSWDBGP(DBG_BASE, buf) {

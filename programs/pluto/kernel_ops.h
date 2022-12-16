@@ -43,14 +43,6 @@ extern bool delete_kernel_policy(enum direction dir,
 				 enum kernel_policy_id id,
 				 const shunk_t sec_label, /*needed*/
 				 struct logger *logger, where_t where, const char *story);
-extern bool delete_kernel_policies(enum expect_kernel_policy expect_inbound_kernel_policy,
-				   const ip_selector local_client,
-				   const ip_selector remote_client,
-				   const struct sa_marks *sa_marks,
-				   const struct pluto_xfrmi *xfrmi,
-				   enum kernel_policy_id id,
-				   const shunk_t sec_label, /*needed*/
-				   struct logger *logger, where_t where, const char *story);
 
 /*kernel_ops_state()? kernel_ops_sad()?*/
 bool kernel_ops_add_sa(const struct kernel_state *sa,

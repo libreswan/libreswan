@@ -1289,17 +1289,14 @@ static void revert_kernel_policy(struct spd_route *spd, struct state *st/*could 
 		ldbg(logger, "kernel: %s() no previous kernel policy or shunt: delete whatever we installed",
 		     __func__);
 		if (st == NULL) {
-			if (!delete_kernel_policies(EXPECT_KERNEL_POLICY_OK,
-						    spd->local->client,
-						    spd->remote->client,
-						    &c->sa_marks,
-						    c->xfrmi,
-						    DEFAULT_KERNEL_POLICY_ID,
-						    HUNK_AS_SHUNK(c->config->sec_label),
-						    c->logger, HERE, "deleting route and eroute")) {
-				llog(RC_LOG, logger,
-				     "shunt_policy() in route_and_eroute() failed in !st case");
-			}
+			delete_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
+						 EXPECT_KERNEL_POLICY_OK,
+						 c->logger, HERE,
+						 "deleting failed policy");
+			delete_spd_kernel_policy(spd, DIRECTION_INBOUND,
+						 EXPECT_KERNEL_POLICY_OK,
+						 c->logger, HERE,
+						 "deleting failed policy");
 		} else {
 			llog_pexpect(st->st_logger, HERE, "using state to delete kernel policy");
 			if (!state_kernel_policy_op_outbound(st, spd,
@@ -1567,14 +1564,15 @@ void migration_down(struct child_sa *child)
 }
 
 /*
- * Delete any eroute for a connection and unroute it if route isn't
- * shared.
+ * Delete any kernal policies for a connection and unroute it if route
+ * isn't shared.
  */
+
 void unroute_connection(struct connection *c)
 {
 	enum routing cr = c->child.routing;
 	if (erouted(cr)) {
-		for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
+		for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
 			/* cannot handle a live one */
 			passert(cr != RT_ROUTED_TUNNEL);
 			/*
@@ -1587,13 +1585,14 @@ void unroute_connection(struct connection *c)
 			 * For sec_label, it's tearing down the route,
 			 * hence that is included.
 			 */
-			delete_kernel_policies(EXPECT_NO_INBOUND,
-					       sr->local->client,
-					       sr->remote->client,
-					       &c->sa_marks, c->xfrmi,
-					       DEFAULT_KERNEL_POLICY_ID,
-					       HUNK_AS_SHUNK(c->config->sec_label),
-					       c->logger, HERE, "unrouting connection");
+			delete_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
+						 EXPECT_KERNEL_POLICY_OK,
+						 c->logger, HERE,
+						 "unrouting connection");
+			delete_spd_kernel_policy(spd, DIRECTION_INBOUND,
+						 EXPECT_NO_INBOUND,
+						 c->logger, HERE,
+						 "unrouting connection");
 #ifdef IPSEC_CONNECTION_LIMIT
 			num_ipsec_eroute--;
 #endif
@@ -1892,16 +1891,24 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 		if (!do_updown(UPDOWN_DOWN, c, c->spd, NULL/*st*/, logger)) {
 			dbg("kernel: down command returned an error");
 		}
-		dbg("kernel: %s() pulling policies", __func__);
-		delete_kernel_policies(EXPECT_KERNEL_POLICY_OK,
-				       c->spd->local->client,
-				       c->spd->remote->client,
-				       /*sa_marks*/NULL,  /* XXX: bug? */
-				       /*xfrmi*/NULL, /* XXX: bug? */
-				       DEFAULT_KERNEL_POLICY_ID,
-				       /*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
-				       /*logger*/logger, HERE,
-				       "security label policy");
+		delete_kernel_policy(DIRECTION_OUTBOUND,
+				     EXPECT_KERNEL_POLICY_OK,
+				     c->spd->local->client,
+				     c->spd->remote->client,
+				     /*sa_marks*/NULL,  /* XXX: bug? */
+				     /*xfrmi*/NULL, /* XXX: bug? */
+				     DEFAULT_KERNEL_POLICY_ID,
+				     /*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
+				     logger, HERE, "failed security label");
+		delete_kernel_policy(DIRECTION_INBOUND,
+				     EXPECT_KERNEL_POLICY_OK,
+				     c->spd->remote->client,
+				     c->spd->local->client,
+				     /*sa_marks*/NULL,  /* XXX: bug? */
+				     /*xfrmi*/NULL, /* XXX: bug? */
+				     DEFAULT_KERNEL_POLICY_ID,
+				     /*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
+				     logger, HERE, "failed security label");
 		return false;
 	}
 
