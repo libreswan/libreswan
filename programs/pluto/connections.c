@@ -2945,9 +2945,9 @@ static bool extract_connection(const struct whack_message *wm,
 			 * to-be-determined from the host or the
 			 * opportunistic group.
 			 */
-			c->end[end].child.selectors.acquire_or_host_or_group = unset_selector;
+			c->end[end].child.selectors.assigned[0] = unset_selector;
 			c->end[end].child.selectors.proposed.len = 1;
-			c->end[end].child.selectors.proposed.list = &c->end[end].child.selectors.acquire_or_host_or_group;
+			c->end[end].child.selectors.proposed.list = c->end[end].child.selectors.assigned;
 		}
 		set_end_child_has_client(c, end, c->end[end].config->child.selectors.len > 0);
 	}
@@ -3438,9 +3438,9 @@ struct connection *sec_label_instantiate(struct ike_sa *ike,
 		if (t->end[end].child.selectors.proposed.list == t->end[end].child.config->selectors.list) {
 			d->end[end].child.selectors.proposed = t->end[end].child.config->selectors;
 		} else {
-			d->end[end].child.selectors.acquire_or_host_or_group = t->end[end].child.selectors.acquire_or_host_or_group;
+			d->end[end].child.selectors.assigned[0] = t->end[end].child.selectors.assigned[0];
 			d->end[end].child.selectors.proposed.len = 1;
-			d->end[end].child.selectors.proposed.list = &d->end[end].child.selectors.acquire_or_host_or_group;
+			d->end[end].child.selectors.proposed.list = d->end[end].child.selectors.assigned;
 		}
  	}
 
@@ -4940,8 +4940,8 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 	 * single selector reasonable?  Certainly don't want to
 	 * truncate the selector list.
 	 */
-	child->selectors.acquire_or_host_or_group = new_selector;
-	child->selectors.proposed.list = &child->selectors.acquire_or_host_or_group;
+	child->selectors.assigned[0] = new_selector;
+	child->selectors.proposed.list = child->selectors.assigned;
 	child->selectors.proposed.len = 1;
 
 	/*

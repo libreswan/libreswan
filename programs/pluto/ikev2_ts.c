@@ -1594,9 +1594,9 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			enum fit responder_sec_label_fit = END_EQUALS_TS;
 
 			/* responder so cross streams */
-			pexpect(t->remote->child.selectors.proposed.list == &t->remote->child.selectors.acquire_or_host_or_group ||
+			pexpect(t->remote->child.selectors.proposed.list == t->remote->child.selectors.assigned ||
 				t->remote->child.selectors.proposed.list == t->remote->config->child.selectors.list);
-			pexpect(t->local->child.selectors.proposed.list == &t->local->child.selectors.acquire_or_host_or_group ||
+			pexpect(t->local->child.selectors.proposed.list == t->local->child.selectors.assigned ||
 				t->local->child.selectors.proposed.list == t->local->config->child.selectors.list);
 			pexpect(selector_eq_selector(t->spd->remote->client,
 						     t->remote->child.selectors.proposed.list[0]));
@@ -1724,9 +1724,9 @@ bool process_v2TS_response_payloads(struct child_sa *child,
 	}
 
 	/* initiator so don't cross streams */
-	pexpect(c->remote->child.selectors.proposed.list == &c->remote->child.selectors.acquire_or_host_or_group ||
+	pexpect(c->remote->child.selectors.proposed.list == c->remote->child.selectors.assigned ||
 		c->remote->child.selectors.proposed.list == c->remote->config->child.selectors.list);
-	pexpect(c->local->child.selectors.proposed.list == &c->local->child.selectors.acquire_or_host_or_group ||
+	pexpect(c->local->child.selectors.proposed.list == c->local->child.selectors.assigned ||
 		c->local->child.selectors.proposed.list == c->local->config->child.selectors.list);
 	pexpect(selector_eq_selector(c->spd->remote->client,
 				     c->remote->child.selectors.proposed.list[0]));
@@ -1808,9 +1808,9 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 	}
 
 	/* responder so cross streams */
-	pexpect(c->remote->child.selectors.proposed.list == &c->remote->child.selectors.acquire_or_host_or_group ||
+	pexpect(c->remote->child.selectors.proposed.list == c->remote->child.selectors.assigned ||
 		c->remote->child.selectors.proposed.list == c->remote->config->child.selectors.list);
-	pexpect(c->local->child.selectors.proposed.list == &c->local->child.selectors.acquire_or_host_or_group ||
+	pexpect(c->local->child.selectors.proposed.list == c->local->child.selectors.assigned ||
 		c->local->child.selectors.proposed.list == c->local->config->child.selectors.list);
 	pexpect(selector_eq_selector(c->spd->remote->client,
 				     c->remote->child.selectors.proposed.list[0]));

@@ -359,7 +359,7 @@ struct host_end {
 struct child_end {
 	const struct child_end_config *config;
 	struct {
-		ip_selector acquire_or_host_or_group;
+		ip_selector assigned[2/*space for IPv4+IPv6 in no order*/];
 		ip_selectors proposed; /* either .config->selectors or above; do not free */
 		ip_selectors accepted; /* must pfree(.list) */
 	} selectors;
