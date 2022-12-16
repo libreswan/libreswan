@@ -160,6 +160,11 @@ pass2help()
 	delete test-domains, PLATFORM, PLATFORM.upgrade, PLATFORM.base
 	delete all domains and all builds
 
+  Libvirt breakage:
+
+    restart
+	restart libvirt to workaround catatonic daemon performance
+
 EOF
 }
 
@@ -441,6 +446,10 @@ for op in "${ops[@]}" ; do
 	    ;;
 	keys )
 	    ${gnumake} kvm-keys-clean kvm-keys
+	    ;;
+	restart )
+	    sudo systemctl restart libvirtd
+	    ;;
     esac
 done
 
