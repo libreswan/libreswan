@@ -176,15 +176,22 @@ size_t jam_selector_pair(struct jambuf *buf,
 		return jam_string(buf, "<unset-selectors>");
 	}
 
-	const struct ip_protocol *srcp = selector_protocol(*src);
-	const struct ip_protocol *dstp = selector_protocol(*dst);
-	size_t s = 0;
-	s += jam_selector_subnet_port(buf, src);
-	s += jam_char(buf, ' ');
-	s += jam_protocol_pair(buf, srcp, '-', dstp);
-	s += jam_char(buf, ' ');
-	s += jam_selector_subnet_port(buf, dst);
-	return s;
+	size_t l = 0;
+	const char *sep = "";
+	FOR_EACH_THING(s, src, dst) {
+		l += jam_string(buf, sep); sep = "->";
+		/* XXX: merge with ip_selector */
+		ip_address sa = selector_prefix(*s);
+		l += jam_address(buf, &sa);
+		l += jam(buf, "/%u", s->maskbits);
+		const struct ip_protocol *protocol = selector_protocol(*s);
+		if (s->hport != 0) {
+			l += jam(buf, "/%s/%d", protocol->name, s->hport);
+		} else if (protocol != &ip_protocol_all) {
+			l += jam(buf, "/%s", protocol->name);
+		}
+	}
+	return l;
 }
 
 const char *str_selector_pair(const ip_selector *src,
