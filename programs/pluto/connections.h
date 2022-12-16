@@ -643,15 +643,18 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 /* instantiating routines */
 
 struct connection *rw_responder_instantiate(struct connection *t,
-					    const ip_address peer_addr);
+					    const ip_address peer_addr,
+					    where_t where);
 extern struct connection *rw_responder_id_instantiate(struct connection *t,
 						      const ip_address peer_addr,
 						      const ip_selector *peer_subnet,
 						      const struct id *peer_id);
 struct connection *oppo_initiator_instantiate(struct connection *t,
-					      const struct kernel_acquire *b);
+					      const struct kernel_acquire *b,
+					      where_t where);
 struct connection *oppo_responder_instantiate(struct connection *t,
-					      const ip_address remote_address);
+					      const ip_address remote_address,
+					      where_t where);
 struct connection *sec_label_instantiate(struct ike_sa *ike,
 					 shunk_t sec_label,
 					 where_t where);

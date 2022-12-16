@@ -153,7 +153,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		    (c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
 			ldbg(md->md_logger,
 			     "local endpoint has narrowing=yes - needs instantiation");
-			return rw_responder_instantiate(c, remote_address);
+			return rw_responder_instantiate(c, remote_address, HERE);
 		}
 
 		return c;
@@ -279,11 +279,11 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		connection_buf cb;
 		ldbg(md->md_logger, "oppo_instantiate called by %s with "PRI_CONNECTION,
 		     __func__, pri_connection(c, &cb));
-		c = oppo_responder_instantiate(c, remote_address);
+		c = oppo_responder_instantiate(c, remote_address, HERE);
 	} else {
 		/* regular roadwarrior */
 		ldbg(md->md_logger, "rw_instantiate");
-		c = rw_responder_instantiate(c, remote_address);
+		c = rw_responder_instantiate(c, remote_address, HERE);
 	}
 
 	return c;

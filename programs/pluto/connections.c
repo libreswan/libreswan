@@ -3205,12 +3205,12 @@ static struct connection *instantiate(struct connection *t,
 				      const ip_address remote_addr,
 				      const struct id *peer_id,
 				      shunk_t sec_label,
-				      where_t where)
+				      const char *func, where_t where)
 {
 	address_buf ab;
 	id_buf idb;
-	ldbg_connection(t, where, "instantiate: remote=%s id=%s sec_label="PRI_SHUNK,
-			str_address(&remote_addr, &ab),
+	ldbg_connection(t, where, "%s: remote=%s id=%s sec_label="PRI_SHUNK,
+			func, str_address(&remote_addr, &ab),
 			str_id(peer_id, &idb),
 			pri_shunk(sec_label));
 
@@ -3373,7 +3373,8 @@ struct connection *spd_instantiate(struct connection *t,
 				   where_t where)
 {
 	struct connection *d = instantiate(t, remote_addr, /*peer-id*/NULL,
-					   /*sec_label*/null_shunk, where);
+					   /*sec_label*/null_shunk,
+					   __func__, where);
 
 	/*
 	 * XXX: code in rw_responder_id_instantiate() is slightly
@@ -3430,7 +3431,8 @@ struct connection *sec_label_instantiate(struct ike_sa *ike,
 	PEXPECT_WHERE(t->logger, where, sec_label.len > 0);
 
 	ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
-	struct connection *d = instantiate(t, remote_addr, /*peer-id*/NULL, sec_label, where);
+	struct connection *d = instantiate(t, remote_addr, /*peer-id*/NULL, sec_label,
+					   __func__, where);
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		if (t->end[end].child.selectors.proposed.list == t->end[end].child.config->selectors.list) {
@@ -3468,7 +3470,8 @@ struct connection *sec_label_instantiate(struct ike_sa *ike,
 }
 
 struct connection *rw_responder_instantiate(struct connection *t,
-					    const ip_address peer_addr)
+					    const ip_address peer_addr,
+					    where_t where)
 {
 	if (!PEXPECT(t->logger, (t->policy & POLICY_OPPORTUNISTIC) == LEMPTY)) {
 		return NULL;
@@ -3477,7 +3480,7 @@ struct connection *rw_responder_instantiate(struct connection *t,
 	struct connection *d = instantiate(t, peer_addr,
 					   /*TBD peer_id*/NULL,
 					   /*TBD sec_label*/null_shunk,
-					   HERE);
+					   __func__, where);
 
 	/*
 	 * XXX: code in rw_responder_id_instantiate() is slightly
@@ -3527,7 +3530,7 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 	 */
 	struct connection *d = instantiate(t, remote_addr, remote_id,
 					   /*TBD sec_label?!?*/null_shunk,
-					   HERE);
+					   __func__, HERE);
 
 	/*
 	 * XXX: unlike rw_responder_id_instantiate(), this code has to
@@ -3976,7 +3979,7 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 
 static struct connection *oppo_instantiate(struct connection *t,
 					   const ip_address remote_address,
-					   where_t where)
+					   const char *func, where_t where)
 {
 	PASSERT(t->logger, t->kind == CK_TEMPLATE);
 	PASSERT(t->logger, oriented(t)); /* else won't instantiate */
@@ -3991,7 +3994,7 @@ static struct connection *oppo_instantiate(struct connection *t,
 	struct connection *d = instantiate(t, remote_address,
 					   /*peer_id*/NULL,
 					   /*sec_label*/null_shunk,
-					   where);
+					   func, where);
 
 	PASSERT(d->logger, d->kind == CK_INSTANCE);
 	PASSERT(d->logger, oriented(d)); /* else won't instantiate */
@@ -4042,7 +4045,8 @@ static struct connection *oppo_instantiate(struct connection *t,
 }
 
 struct connection *oppo_responder_instantiate(struct connection *t,
-					      const ip_address remote_address)
+					      const ip_address remote_address,
+					      where_t where)
 {
 	/*
 	 * Did find oppo connection do its job?
@@ -4055,11 +4059,12 @@ struct connection *oppo_responder_instantiate(struct connection *t,
 	PASSERT(t->logger, t->remote->child.selectors.proposed.len == 1);
 	ip_selector remote_template = t->remote->child.selectors.proposed.list[0];
 	PASSERT(t->logger, address_in_selector_range(remote_address, remote_template));
-	return oppo_instantiate(t, remote_address, HERE);
+	return oppo_instantiate(t, remote_address, __func__, where);
 }
 
 struct connection *oppo_initiator_instantiate(struct connection *t,
-					      const struct kernel_acquire *b)
+					      const struct kernel_acquire *b,
+					      where_t where)
 {
 	/*
 	 * Did find oppo connection do its job?
@@ -4075,7 +4080,7 @@ struct connection *oppo_initiator_instantiate(struct connection *t,
 	ip_address local_address = packet_src_address(b->packet);
 	PEXPECT(t->logger, address_eq_address(local_address, t->local->host.addr));
 	ip_address remote_address = endpoint_address(remote_endpoint);
-	return oppo_instantiate(t, remote_address, HERE);
+	return oppo_instantiate(t, remote_address, __func__, where);
 }
 
 /*

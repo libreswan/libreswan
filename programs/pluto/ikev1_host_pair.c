@@ -246,7 +246,7 @@ struct connection *find_v1_aggr_mode_connection(struct msg_digest *md,
 		/* Create a temporary connection that is a copy of this one.
 		 * Peers ID isn't declared yet.
 		 */
-		return rw_responder_instantiate(c, sender_address);
+		return rw_responder_instantiate(c, sender_address, HERE);
 	}
 
 	endpoint_buf b;
@@ -296,7 +296,7 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 		 */
 		if (c->kind == CK_TEMPLATE) {
 			ldbg(md->md_logger, "local endpoint needs instantiation");
-			return rw_responder_instantiate(c, sender_address);
+			return rw_responder_instantiate(c, sender_address, HERE);
 		}
 
 		return c;
@@ -378,5 +378,5 @@ struct connection *find_v1_main_mode_connection(struct msg_digest *md)
 	connection_buf cib;
 	ldbg(md->md_logger, "instantiating "PRI_CONNECTION" for initial Main Mode message",
 	     pri_connection(c, &cib));
-	return rw_responder_instantiate(c, sender_address);
+	return rw_responder_instantiate(c, sender_address, HERE);
 }

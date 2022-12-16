@@ -949,7 +949,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 			     pri_connection(c, &cb), pri_connection(t, &tb));
 	}
 
-	c = oppo_initiator_instantiate(t, b);
+	c = oppo_initiator_instantiate(t, b, HERE);
 
 	selector_pair_buf sb;
 	dbg("going to initiate opportunistic %s, first installing %s negotiationshunt",
