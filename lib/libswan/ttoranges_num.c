@@ -45,7 +45,7 @@ diag_t ttoranges_num(shunk_t input, const char *delims,
 			break;
 		}
 		if (token.len == 0) {
-			continue;
+			return diag("empty field");
 		}
 		/* validate during first pass */
 		ip_range tmp;

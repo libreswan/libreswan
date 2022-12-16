@@ -46,7 +46,7 @@ diag_t ttoselectors_num(shunk_t input, const char *delims,
 			break;
 		}
 		if (token.len == 0) {
-			continue;
+			return diag("empty field");
 		}
 		/* validate during first pass */
 		ip_selector tmp;
