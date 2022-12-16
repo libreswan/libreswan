@@ -1993,24 +1993,22 @@ bool assign_holdpass(struct connection *c,
 				reason = "broad %pass or %hold";
 			}
 
-			struct kernel_policy kernel_policy =
-				kernel_policy_from_void(sr->local->client, sr->remote->client,
-							DIRECTION_OUTBOUND,
-							calculate_kernel_priority(c),
-							c->config->negotiation_shunt,
-							/* XXX: bug; use from_spd() */
-							&c->sa_marks, c->xfrmi,
-							HUNK_AS_SHUNK(c->config->sec_label),
-							HERE);
-
 			if (sr->local->child->has_cat) {
+				struct kernel_policy kernel_policy =
+					kernel_policy_from_void(sr->local->client, sr->remote->client,
+								DIRECTION_OUTBOUND,
+								calculate_kernel_priority(c),
+								c->config->negotiation_shunt,
+								/* XXX: bug; use from_spd() */
+								&c->sa_marks, c->xfrmi,
+								HUNK_AS_SHUNK(c->config->sec_label),
+								HERE);
 				llog_pexpect(c->logger, HERE, "acquired a CAT");
 				ip_selector client = selector_from_address(sr->local->host->addr);
 				if (!raw_policy(op, DIRECTION_OUTBOUND,
 						EXPECT_KERNEL_POLICY_OK,
 						/* XXX: this uses .client+.route!?! */
-						&client,
-						&kernel_policy.dst.route,
+						&client, &kernel_policy.dst.client,
 						&kernel_policy,
 						deltatime(0),
 						kernel_policy.sa_marks,
@@ -2025,18 +2023,10 @@ bool assign_holdpass(struct connection *c,
 				}
 			}
 
-			if (!raw_policy(op, DIRECTION_OUTBOUND,
-					EXPECT_KERNEL_POLICY_OK,
-					/* XXX: this uses .route+.route!?! */
-					&kernel_policy.src.route,
-					&kernel_policy.dst.route,
-					&kernel_policy,
-					deltatime(0),
-					/* XXX: bug; use from_spd() */
-					&c->sa_marks, c->xfrmi,
-					kernel_policy.id,
-					kernel_policy.sec_label,
-					c->logger, "%s() %s", __func__, reason)) {
+			if (!install_bare_spd_kernel_policy(sr, op, DIRECTION_OUTBOUND,
+							    EXPECT_KERNEL_POLICY_OK,
+							    c->config->negotiation_shunt,
+							    c->logger, HERE, reason)) {
 				llog(RC_LOG, c->logger,
 				     "%s() eroute_connection() failed", __func__);
 				return false;
@@ -3593,7 +3583,7 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 		 * we should be able to update only only the name of
 		 * the shunt.
 		 */
-		if (negotiation_shunt != failure_shunt ) {
+		if (negotiation_shunt != failure_shunt) {
 
 			dbg("kernel: replacing negotiation_shunt with failure_shunt");
 
