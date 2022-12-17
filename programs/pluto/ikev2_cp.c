@@ -406,10 +406,12 @@ static bool ikev2_set_dns(struct pbs_in *cp_a_pbs, struct child_sa *child,
 	return true;
 }
 
-static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs, struct child_sa *child,
-				       const struct ip_info *afi, bool *seen_an_address)
+static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs,
+				       struct child_sa *child,
+				       const struct ip_info *afi)
 {
-	struct connection *c = child->sa.st_connection;
+	struct connection *cc = child->sa.st_connection;
+	struct child_end *local = &cc->local->child;
 
 	ip_address ip;
 	diag_t d = pbs_in_address(cp_a_pbs, &ip, afi, "INTERNAL_IP_ADDRESS");
@@ -432,11 +434,13 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs, struct child_sa 
 		return false;
 	}
 
-	ipstr_buf ip_str;
+	bool duplicate_lease = local->lease[afi->ip_index].is_set;
+
+	address_buf ip_str;
 	llog_sa(RC_LOG, child,
-		  "received INTERNAL_IP%d_ADDRESS %s%s",
-		  afi->ip_version, ipstr(&ip, &ip_str),
-		  *seen_an_address ? "; discarded" : "");
+		"received INTERNAL_IP%d_ADDRESS %s%s",
+		afi->ip_version, str_address(&ip, &ip_str),
+		duplicate_lease ? "; discarded" : "");
 
 	bool responder = (child->sa.st_sa_role == SA_RESPONDER);
 	if (responder) {
@@ -444,34 +448,33 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs, struct child_sa 
 		return true;
 	}
 
-	if (*seen_an_address) {
+	if (duplicate_lease) {
 		return true;
 	}
 
-	*seen_an_address = true;
-	set_child_has_client(c, local, true);
-	c->local->child.lease[afi->ip_index] = ip;
+	set_child_has_client(cc, local, true);
+	local->lease[afi->ip_index] = ip;
 
-	if (c->local->child.config->has_client_address_translation) {
+	if (local->config->has_client_address_translation) {
 		dbg("CAT is set, not setting host source IP address to %s",
 		    ipstr(&ip, &ip_str));
-		ip_address this_client_prefix = selector_prefix(c->spd->local->client);
+		ip_address this_client_prefix = selector_prefix(cc->spd->local->client);
 		if (address_eq_address(this_client_prefix, ip)) {
 			/*
 			 * The address we received is same as this
 			 * side should we also check the host_srcip.
 			 */
 			dbg("#%lu %s[%lu] received INTERNAL_IP%d_ADDRESS that is same as this->client.addr %s. Will not add CAT iptable rules",
-			    child->sa.st_serialno, c->name, c->instance_serial,
+			    child->sa.st_serialno, cc->name, cc->instance_serial,
 			    afi->ip_version, ipstr(&ip, &ip_str));
 		} else {
-			update_end_selector(c, c->local->config->index,
+			update_end_selector(cc, cc->local->config->index,
 					    selector_from_address(ip),
 					    "CP scribbling on end while ignoring TS");
-			c->local->child.has_cat = true; /* create iptable entry */
+			local->has_cat = true; /* create iptable entry */
 		}
 	} else {
-		update_end_selector(c, c->local->config->index,
+		update_end_selector(cc, cc->local->config->index,
 				    selector_from_address(ip),
 				    "CP scribbling on end while ignoring TS");
 	}
@@ -510,7 +513,6 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 		bad_case(child->sa.st_sa_role);
 	}
 
-	bool seen_internal_address = false;
 	while (pbs_left(attrs) > 0) {
 		struct ikev2_cp_attribute cp_a;
 		pb_stream cp_a_pbs;
@@ -525,8 +527,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 
 		switch (cp_a.type) {
 		case IKEv2_INTERNAL_IP4_ADDRESS:
-			if (!ikev2_set_internal_address(&cp_a_pbs, child, &ipv4_info,
-							&seen_internal_address)) {
+			if (!ikev2_set_internal_address(&cp_a_pbs, child, &ipv4_info)) {
 				llog_sa(RC_LOG_SERIOUS, child,
 					  "ERROR malformed INTERNAL_IP4_ADDRESS attribute");
 				return false;
@@ -542,8 +543,7 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 			break;
 
 		case IKEv2_INTERNAL_IP6_ADDRESS:
-			if (!ikev2_set_internal_address(&cp_a_pbs, child, &ipv6_info,
-							&seen_internal_address)) {
+			if (!ikev2_set_internal_address(&cp_a_pbs, child, &ipv6_info)) {
 				llog_sa(RC_LOG_SERIOUS, child,
 					  "ERROR malformed INTERNAL_IP6_ADDRESS attribute");
 				return false;
