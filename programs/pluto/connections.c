@@ -1890,10 +1890,6 @@ void add_connection_spds(struct connection *c)
 	PEXPECT(c->logger, c->spd == NULL); /* leak? */
 	c->spd = spd_list;
 
-	/* leave a bread crumb */
-	PEXPECT(c->logger, c->child.kernel_policy_owner == SOS_NOBODY);
-	set_child_kernel_policy_owner(c, SOS_NOBODY);
-
 	set_connection_priority(c); /* must be after .kind and .spd are set */
 	spd_route_db_add_connection(c);
 }
@@ -4906,6 +4902,29 @@ void check_connection(struct connection *c, where_t where)
 bool dpd_active_locally(const struct connection *c)
 {
 	return deltasecs(c->config->dpd.delay) != 0;
+}
+
+void scribble_end_selector(struct connection *c, enum left_right end,
+			   ip_selector selector, where_t where, bool first_time)
+{
+	struct child_end *child = &c->end[end].child;
+	struct logger *logger = c->logger;
+	if (first_time) {
+		child->selectors.proposed.len = 0;
+		child->selectors.proposed.list = child->selectors.assigned;
+	}
+	unsigned i = child->selectors.proposed.len++;
+	if (!PEXPECT_WHERE(logger, where, i < elemsof(child->selectors.assigned))) {
+		return;
+	}
+	child->selectors.assigned[i] = selector;
+	selector_buf nb;
+	ldbg(c->logger, "%s() %s.child.selector[%d] %s "PRI_WHERE,
+	     __func__,
+	     c->end[end].config->leftright,
+	     i,
+	     str_selector(&selector, &nb),
+	     pri_where(where));
 }
 
 void set_end_selector_where(struct connection *c, enum left_right end,

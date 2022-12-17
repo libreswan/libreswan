@@ -391,11 +391,17 @@ static stf_status modecfg_resp(struct state *st,
 		ip_address ia;
 		if (use_modecfg_addr_as_client_addr &&
 		    c->pool[IPv4_INDEX] != NULL) {
-			err_t e = lease_that_address(c, st, &ipv4_info);
+
+			err_t e = lease_that_address(c, st, &ipv4_info, true);
 			if (e != NULL) {
 				log_state(RC_LOG, st, "lease_an_address failure %s", e);
 				return STF_INTERNAL_ERROR;
 			}
+
+			ldbg(c->logger, "another hack to get the SPD in sync");
+			c->spd->remote->client = c->remote->child.selectors.proposed.list[0];
+			rehash_db_spd_route_remote_client(c->spd);
+
 			ia = selector_prefix(c->spd->remote->client);
 			address_buf iab;
 			dbg("a lease %s", str_address(&ia, &iab));

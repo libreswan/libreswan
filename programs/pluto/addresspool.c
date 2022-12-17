@@ -525,7 +525,8 @@ static struct lease *recover_lease(const struct connection *c, const char *that_
 	return NULL;
 }
 
-err_t lease_that_address(struct connection *c, const struct state *st, const struct ip_info *afi)
+err_t lease_that_address(struct connection *c, const struct state *st,
+			 const struct ip_info *afi, bool first_lease)
 {
 	if (c->remote->child.lease[afi->ip_index].is_set &&
 	    connection_lease(c, afi) != NULL) {
@@ -650,8 +651,9 @@ err_t lease_that_address(struct connection *c, const struct state *st, const str
 	}
 	c->remote->child.lease[afi->ip_index] = ia;
 	set_child_has_client(c, remote, true);
-	update_first_selector(c, remote, selector_from_address(ia));
-	rehash_db_spd_route_remote_client(c->spd);
+	scribble_end_selector(c, c->remote->config->index,
+			      selector_from_address(ia),
+			      HERE, first_lease);
 	new_lease->assigned_to = c->serialno;
 
 	if (DBGP(DBG_BASE)) {

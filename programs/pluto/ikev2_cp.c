@@ -243,7 +243,8 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 	return true;
 }
 
-static bool lease_cp_address(struct child_sa *child, const struct ip_info *afi)
+static bool lease_cp_address(struct child_sa *child, const struct ip_info *afi,
+			     bool first_lease)
 {
 	struct connection *cc = child->sa.st_connection;
 	const struct addresspool *pool = cc->pool[afi->ip_index];
@@ -253,20 +254,22 @@ static bool lease_cp_address(struct child_sa *child, const struct ip_info *afi)
 		return true; /*non-fatal*/
 	}
 
-	err_t e = lease_that_address(cc, &child->sa, afi);
+	err_t e = lease_that_address(cc, &child->sa, afi, first_lease);
 	if (e != NULL) {
 		llog_sa(RC_LOG, child, "leasing %s address failed: %s",
 			afi->ip_name, e);
 		return false; /*fatal*/
 	}
-
+	PASSERT(cc->logger, child_has_lease(cc->remote)); /* used below */
 	return true;
 }
 
-bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike, struct child_sa *child,
+bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike,
+						      struct child_sa *child,
 						      struct payload_digest *cp_digest)
 {
-	pexpect(ike->sa.st_connection == child->sa.st_connection);
+	struct connection *cc = child->sa.st_connection;
+	pexpect(ike->sa.st_connection == cc);
 
 	struct ikev2_cp *cp =  &cp_digest->payload.v2cp;
 	struct pbs_in *cp_pbs = &cp_digest->pbs;
@@ -280,6 +283,8 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike, struct
 		return false;
 	}
 
+	bool first_lease = true;
+
 	while (pbs_left(cp_pbs) > 0) {
 
 		struct ikev2_cp_attribute cp_attr;
@@ -292,17 +297,19 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike, struct
 			return false;
 		}
 
-		enum ikev2_cp_attribute_type type = cp_attr.type; 
+		enum ikev2_cp_attribute_type type = cp_attr.type;
 		switch (type) {
 		case IKEv2_INTERNAL_IP4_ADDRESS:
-			if (!lease_cp_address(child, &ipv4_info)) {
+			if (!lease_cp_address(child, &ipv4_info, first_lease)) {
 				return false;
 			}
+			first_lease = false;
 			break;
 		case IKEv2_INTERNAL_IP6_ADDRESS:
-			if (!lease_cp_address(child, &ipv6_info)) {
+			if (!lease_cp_address(child, &ipv6_info, first_lease)) {
 				return false;
 			}
+			first_lease = false;
 			break;
 
 		default:
@@ -316,10 +323,16 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike, struct
 		}
 	}
 
-	if (!child_has_lease(child->sa.st_connection->remote)) {
+	if (!child_has_lease(cc->remote)) {
 		llog_sa(RC_LOG_SERIOUS, child, "ERROR: no valid internal address request");
 		return false;
 	}
+
+	set_child_has_client(cc, remote, true);
+
+	/* rebuild the SPDs */
+	discard_connection_spds(cc, /*valid?*/true);
+	add_connection_spds(cc);
 
 	return true;
 }

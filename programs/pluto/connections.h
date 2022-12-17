@@ -411,6 +411,8 @@ struct connection_end {
 void set_end_selector_where(struct connection *c, enum left_right end,
 			    ip_selector s, bool first_time,
 			    const char *excuse, where_t where);
+void scribble_end_selector(struct connection *c, enum left_right end,
+			   ip_selector selector, where_t where, bool first_time);
 
 struct spd_end {
 	ip_selector client;
