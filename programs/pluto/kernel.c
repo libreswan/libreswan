@@ -95,7 +95,7 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 						   enum encap_mode mode,
 						   enum direction direction,
 						   where_t where);
-static void free_bare_shunt(struct bare_shunt **pp);
+
 static void delete_bare_kernel_policy(const struct bare_shunt *bsp,
 				      struct logger *logger,
 				      where_t where);
@@ -1643,8 +1643,10 @@ struct bare_shunt **bare_shunt_ptr(const ip_selector *our_client,
 	return NULL;
 }
 
-/* free a bare_shunt entry, given a pointer to the pointer */
-static void free_bare_shunt(struct bare_shunt **pp)
+/*
+ * Free a bare_shunt entry, given a pointer to the pointer.
+ */
+void free_bare_shunt(struct bare_shunt **pp)
 {
 	struct bare_shunt *p;
 

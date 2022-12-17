@@ -1863,16 +1863,22 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol,
 		return;
 	}
 
-	ip_address src = address_from_xfrm(afi, &pol->sel.saddr);
-	ip_address dst = address_from_xfrm(afi, &pol->sel.daddr);
+	/* this is assuming that bare shunts are address only */
+	ip_address src_addr = address_from_xfrm(afi, &pol->sel.saddr);
+	ip_address dst_addr = address_from_xfrm(afi, &pol->sel.daddr);
 	const struct ip_protocol *transport_proto = protocol_from_ipproto(pol->sel.proto);
+	ip_selector src = selector_from_address_protocol(src_addr, transport_proto);
+	ip_selector dst = selector_from_address_protocol(dst_addr, transport_proto);
 
-	if (flush_bare_shunt(&src, &dst, transport_proto, EXPECT_KERNEL_POLICY_OK,
-			     "delete expired bare shunt", logger)) {
-		dbg("netlink_shunt_expire() called delete_bare_shunt() with success");
-	} else {
+	struct bare_shunt **bs_pp = bare_shunt_ptr(&src, &dst, "expire bare shunt");
+	if (bs_pp == NULL) {
+		selector_pair_buf sb;
 		llog(RC_LOG, logger,
-			    "netlink_shunt_expire() called delete_bare_shunt() which failed!");
+		     "can't find expected bare shunt to delete: %s",
+		     str_selector_pair_sensitive(&src, &dst, &sb));
+	} else {
+		free_bare_shunt(bs_pp);
+		ldbg(logger, "netlink_shunt_expire() called delete_bare_shunt() with success");
 	}
 }
 

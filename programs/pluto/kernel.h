@@ -484,6 +484,8 @@ extern unsigned shunt_count(void);
 struct bare_shunt **bare_shunt_ptr(const ip_selector *ours,
 				   const ip_selector *peers,
 				   const char *why);
+void free_bare_shunt(struct bare_shunt **pp);
+
 
 /* A netlink header defines EM_MAXRELSPIS, the max number of SAs in a group.
  * Is there a PF_KEY equivalent?
