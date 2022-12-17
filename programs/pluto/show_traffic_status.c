@@ -80,20 +80,29 @@ static void jam_state_traffic(struct jambuf *buf, struct state *st)
 		jam(buf, "'");
 	}
 
-	if (c->remote->child.has_lease) {
-		/*
-		 * "this" gave "that" a lease from "this" address
-		 * pool.
-		 */
-		jam(buf, ", lease=");
-		jam_selector_subnet(buf, &c->spd->remote->client);
-	} else if (c->local->child.has_lease) {
-		/*
-		 * "this" received an internal address from "that";
-		 * presumably from "that"'s address pool.
-		 */
-		jam(buf, ", lease=");
-		jam_selector_subnet(buf, &c->spd->local->client);
+	/*
+	 * Only one end can have a lease.
+	 */
+	FOR_EACH_THING(end,
+		       /* "this" gave "that" a lease from "this"
+			* address pool. */
+		       &c->remote,
+		       /* "this" received an internal address from
+			* "that"; presumably from "that"'s address
+			* pool. */
+		       &c->local) {
+		if (child_has_lease(*end)) {
+			jam(buf, ", lease=");
+			const char *sep = "";
+			FOR_EACH_ELEMENT(lease, (*end)->child.lease) {
+				if (lease->is_set) {
+					jam_string(buf, sep); sep = ",";
+					/* XXX: lease should be CIDR */
+					ip_subnet s = subnet_from_address(*lease);
+					jam_subnet(buf, &s);
+				}
+			}
+		}
 	}
 }
 

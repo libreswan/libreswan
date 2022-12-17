@@ -391,7 +391,13 @@ struct child_end {
 	 * .has_lease indicates that the end has been given an address
 	 * from the address pool.
 	 */
-	bool has_lease;		/* server gave out lease from address pool */
+#define child_has_lease(END)					\
+	({							\
+		const struct connection_end *end_ = END;	\
+		(end_->child.lease[IPv4_INDEX].is_set ||	\
+		 end_->child.lease[IPv6_INDEX].is_set);		\
+	})
+	ip_address lease[IP_INDEX_ROOF];
 	bool has_cat;		/* add a CAT iptable rule when a valid
 				   INTERNAL_IP4_ADDRESS is received */
 };

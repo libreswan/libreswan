@@ -316,7 +316,7 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike, struct
 		}
 	}
 
-	if (!child->sa.st_connection->remote->child.has_lease) {
+	if (!child_has_lease(child->sa.st_connection->remote)) {
 		llog_sa(RC_LOG_SERIOUS, child, "ERROR: no valid internal address request");
 		return false;
 	}
@@ -391,34 +391,35 @@ static bool ikev2_set_dns(struct pbs_in *cp_a_pbs, struct child_sa *child,
 }
 
 static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs, struct child_sa *child,
-				       const struct ip_info *af, bool *seen_an_address)
+				       const struct ip_info *afi, bool *seen_an_address)
 {
 	struct connection *c = child->sa.st_connection;
 
 	ip_address ip;
-	diag_t d = pbs_in_address(cp_a_pbs, &ip, af, "INTERNAL_IP_ADDRESS");
+	diag_t d = pbs_in_address(cp_a_pbs, &ip, afi, "INTERNAL_IP_ADDRESS");
 	if (d != NULL) {
 		llog_diag(RC_LOG, child->sa.st_logger, &d, "%s", "");
 		return false;
 	}
 
 	/*
-	 * if (af->af == AF_INET6) pbs_in_address only reads 16 bytes.
-	 * There should be one more byte in the pbs, 17th byte is prefix length.
+	 * If (af->af == AF_INET6) pbs_in_address only reads 16 bytes.
+	 * There should be one more byte in the pbs, 17th byte is
+	 * prefix length.
 	 */
 
 	if (!address_is_specified(ip)) {
 		address_buf ip_str;
 		llog_sa(RC_LOG, child,
 			  "ERROR INTERNAL_IP%d_ADDRESS %s is invalid",
-			  af->ip_version, str_address(&ip, &ip_str));
+			  afi->ip_version, str_address(&ip, &ip_str));
 		return false;
 	}
 
 	ipstr_buf ip_str;
 	llog_sa(RC_LOG, child,
 		  "received INTERNAL_IP%d_ADDRESS %s%s",
-		  af->ip_version, ipstr(&ip, &ip_str),
+		  afi->ip_version, ipstr(&ip, &ip_str),
 		  *seen_an_address ? "; discarded" : "");
 
 	bool responder = (child->sa.st_sa_role == SA_RESPONDER);
@@ -433,7 +434,7 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs, struct child_sa 
 
 	*seen_an_address = true;
 	set_child_has_client(c, local, true);
-	c->local->child.has_lease = true;
+	c->local->child.lease[afi->ip_index] = ip;
 
 	if (c->local->child.config->has_client_address_translation) {
 		dbg("CAT is set, not setting host source IP address to %s",
@@ -446,7 +447,7 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs, struct child_sa 
 			 */
 			dbg("#%lu %s[%lu] received INTERNAL_IP%d_ADDRESS that is same as this->client.addr %s. Will not add CAT iptable rules",
 			    child->sa.st_serialno, c->name, c->instance_serial,
-			    af->ip_version, ipstr(&ip, &ip_str));
+			    afi->ip_version, ipstr(&ip, &ip_str));
 		} else {
 			update_end_selector(c, c->local->config->index,
 					    selector_from_address(ip),

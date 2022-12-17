@@ -435,7 +435,7 @@ bool emit_v2_child_response_payloads(struct ike_sa *ike,
 	struct connection *cc = larval_child->sa.st_connection;
 
 	if (request_md->chain[ISAKMP_NEXT_v2CP] != NULL) {
-		if (cc->remote->child.has_lease) {
+		if (child_has_lease(cc->remote)) {
 			if (!emit_v2CP_response(larval_child, outpbs)) {
 				return false;
 			}

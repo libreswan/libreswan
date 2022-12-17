@@ -240,7 +240,7 @@ void delete_connection(struct connection **cp)
 		c->kind = CK_GOING_AWAY;
 		for (enum ip_index i = IP_INDEX_FLOOR; i < IP_INDEX_ROOF; i++) {
 			if (c->pool[i] != NULL) {
-				free_that_address_lease(c);
+				free_that_address_lease(c, &ip_info[i]);
 			}
 		}
 	}
@@ -4316,8 +4316,13 @@ ip_address spd_end_sourceip(const struct spd_end *spde)
 	 * Failing that see if CP is involved.  IKEv1 always leaves
 	 * client_address_translation false.
 	 */
-	if (spde->child->has_lease &&
+	const struct ip_info *afi = selector_info(spde->client);
+	if (afi != NULL &&
+	    spde->child->lease[afi->ip_index].is_set &&
 	    !spde->child->config->has_client_address_translation) {
+		/* XXX: same as .lease[]? */
+		ip_address a = selector_prefix(spde->client);
+		pexpect(address_eq_address(a, spde->child->lease[afi->ip_index]));
 		return selector_prefix(spde->client);
 	}
 

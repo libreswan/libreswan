@@ -904,7 +904,7 @@ static bool add_xauth_addresspool(struct connection *c,
 
 	/* delete existing pool if it exists */
 	if (c->pool[IPv4_INDEX] != NULL) {
-		free_that_address_lease(c);
+		free_that_address_lease(c, &ipv4_info);
 		addresspool_delref(&c->pool[IPv4_INDEX]);
 	}
 
@@ -1564,7 +1564,8 @@ static stf_status modecfg_inI2(struct msg_digest *md, pb_stream *rbody)
 			}
 			update_first_selector(c, local, selector_from_address(a));
 			set_child_has_client(c, local, true);
-			c->local->child.has_lease = true;
+			const struct ip_info *afi = address_info(a);
+			c->local->child.lease[afi->ip_index] = a;
 
 			subnet_buf caddr;
 			str_selector_subnet(&c->spd->local->client, &caddr);
@@ -1730,7 +1731,8 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					return STF_FATAL;
 				}
 				set_child_has_client(c, local, true);
-				c->local->child.has_lease = true;
+				const struct ip_info *afi = address_info(a);
+				c->local->child.lease[afi->ip_index] = a;
 				update_end_selector(c, c->local->config->index,
 						    selector_from_address(a),
 						    "^*(&^(* IKEv1 doing something with the address it received");

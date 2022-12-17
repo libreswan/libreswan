@@ -30,7 +30,7 @@ void addresspool_delref(struct addresspool **pool);
 struct addresspool *addresspool_addref(struct addresspool *pool);
 
 extern err_t lease_that_address(struct connection *c, const struct state *st, const struct ip_info *afi);
-extern void free_that_address_lease(struct connection *c);
+extern void free_that_address_lease(struct connection *c, const struct ip_info *afi);
 
 extern void show_addresspool_status(struct show *s);
 

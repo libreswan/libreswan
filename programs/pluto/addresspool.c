@@ -372,17 +372,16 @@ static bool client_can_reuse_lease(const struct connection *c)
  * that it still does (it may have been stolen by a newer connection
  * with the same ID).
  */
-static struct lease *connection_lease(struct connection *c)
+static struct lease *connection_lease(struct connection *c, const struct ip_info *afi)
 {
 	/*
 	 * No point looking for a lease when the connection doesn't
 	 * think it has one.
 	 */
-	if (!pexpect(c->remote->child.has_lease)) {
+	if (!pexpect(c->remote->child.lease[afi->ip_index].is_set)) {
 		return NULL;
 	}
 
-	const struct ip_info *afi = selector_info(c->spd->remote->client);
 	struct addresspool *pool = c->pool[afi->ip_index];
 
 	/*
@@ -393,7 +392,7 @@ static struct lease *connection_lease(struct connection *c)
 	 * Therefore a single test against size will indicate
 	 * membership in the range.
 	 */
-	ip_address prefix = selector_prefix(c->spd->remote->client);
+	ip_address prefix = c->remote->child.lease[afi->ip_index];
 	uintmax_t offset;
 	err_t err = address_to_range_offset(pool->r, prefix, &offset);
 	if (err != NULL) {
@@ -437,23 +436,20 @@ static struct lease *connection_lease(struct connection *c)
  * In that case, we do free the lease since that ID isn't distinctive.
  */
 
-void free_that_address_lease(struct connection *c)
+void free_that_address_lease(struct connection *c, const struct ip_info *afi)
 {
-	passert(!selector_is_unset(&c->spd->remote->client));
-
-	if (!c->remote->child.has_lease) {
-		dbg("connection has no lease");
+	if (!c->remote->child.lease[afi->ip_index].is_set) {
+		ldbg(c->logger, "connection has no %s lease", afi->ip_name);
 		return;
 	}
 
-	struct lease *lease = connection_lease(c);
+	struct lease *lease = connection_lease(c, afi);
 	if (lease == NULL) {
-		dbg("connection lost its lease");
-		c->remote->child.has_lease = false;
+		ldbg(c->logger, "connection lost its %s lease", afi->ip_name);
+		c->remote->child.lease[afi->ip_index] = unset_address;
 		return;
 	}
 
-	const struct ip_info *afi = selector_info(c->spd->remote->client);
 	struct addresspool *pool = c->pool[afi->ip_index];
 
 	if (lease->reusable_name != NULL) {
@@ -477,7 +473,7 @@ void free_that_address_lease(struct connection *c)
 	}
 
 	/* break the link */
-	c->remote->child.has_lease = false;
+	c->remote->child.lease[afi->ip_index] = unset_address;
 	lease->assigned_to = UNSET_CO_SERIAL;
 }
 
@@ -531,8 +527,8 @@ static struct lease *recover_lease(const struct connection *c, const char *that_
 
 err_t lease_that_address(struct connection *c, const struct state *st, const struct ip_info *afi)
 {
-	if (c->remote->child.has_lease &&
-	    connection_lease(c) != NULL) {
+	if (c->remote->child.lease[afi->ip_index].is_set &&
+	    connection_lease(c, afi) != NULL) {
 		dbg("connection both thinks it has, and really has a lease");
 		return NULL;
 	}
@@ -551,24 +547,15 @@ err_t lease_that_address(struct connection *c, const struct state *st, const str
 
 	jam_str(thatstr, sizeof(thatstr), that_name);
 
-	if(st->st_xauth_username[0] != '\0')
+	if(st->st_xauth_username[0] != '\0') {
 		add_str(thatstr, sizeof(thatstr), thatstr, st->st_xauth_username);
+	}
 
 	if (DBGP(DBG_BASE)) {
-		/*
-		 * ??? what is that.client.addr and why do we care?
-		 *
-		 * XXX: that.client[.addr] is where the lease,
-		 * assigned to the remote end, ends up.  If the
-		 * connection's previously had a release then it may
-		 * still be the old value.
-		 */
-		selector_buf b;
 		connection_buf cb;
-		DBG_pool(false, pool, "requesting %s lease for connection "PRI_CONNECTION" with '%s' and old address %s",
+		DBG_pool(false, pool, "requesting %s lease for connection "PRI_CONNECTION" with '%s'",
 			 reusable ? "reusable" : "one-time",
-			 pri_connection(c, &cb), thatstr,
-			 str_selector_subnet_port(&c->spd->remote->client, &b));
+			 pri_connection(c, &cb), thatstr);
 	}
 
 	struct lease *new_lease = NULL;
@@ -661,23 +648,23 @@ err_t lease_that_address(struct connection *c, const struct state *st, const str
 	if (err != NULL) {
 		llog_pexpect(st->st_logger, HERE, "%s", err);
 	}
-	c->remote->child.has_lease = true;
+	c->remote->child.lease[afi->ip_index] = ia;
 	set_child_has_client(c, remote, true);
 	update_first_selector(c, remote, selector_from_address(ia));
 	rehash_db_spd_route_remote_client(c->spd);
 	new_lease->assigned_to = c->serialno;
 
 	if (DBGP(DBG_BASE)) {
-		selector_buf a;
+		address_buf ab;
 		connection_buf cb;
 		DBG_lease(true, pool, new_lease,
-			  "assign %s %s lease to "PRI_CONNECTION" "PRI_CO" with ID '%s' and that.client %s",
+			  "assign %s %s lease to "PRI_CONNECTION" "PRI_CO" with ID '%s' and that.lease %s",
 			  story,
-			  reusable ? "reusable" : "one-time",
+			  (reusable ? "reusable" : "one-time"),
 			  pri_connection(c, &cb),
 			  pri_co(new_lease->assigned_to),
 			  thatstr,
-			  str_selector_subnet_port(&c->spd->remote->client, &a));
+			  str_address(&ia, &ab));
 	}
 
 	return NULL;
