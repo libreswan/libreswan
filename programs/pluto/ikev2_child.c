@@ -949,15 +949,8 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 	 *
 	 * Clearly a bug.
 	 */
-	if (local->modecfg.server &&
-	    child->sa.st_connection->local->child.selectors.proposed.len <= 1 &&
-	    child->sa.st_connection->local->child.config->sourceip.len <= 1 &&
-	    child->sa.st_connection->local->host.config->pool_ranges.len <= 1 &&
-	    child->sa.st_connection->remote->child.selectors.proposed.len <= 1 &&
-	    child->sa.st_connection->remote->child.config->sourceip.len <= 1 &&
-	    child->sa.st_connection->remote->host.config->pool_ranges.len <= 1) {
-		ldbg_sa(child, "skipping TS processing, mainly to stop a connection flip!?!");
-	} else {
+	if (connection_requires_ts(child->sa.st_connection) ||
+	    !local->modecfg.server) {
 		/*
 		 * Danger! This TS call can change the child's
 		 * connection.
@@ -966,6 +959,8 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 			/* already logged; caller, below, cleans up */
 			return v2N_TS_UNACCEPTABLE;
 		}
+	} else {
+		ldbg_sa(child, "skipping TS processing, mainly to stop tests failing but rumored to cause connection flips?!?");
 	}
 
 	n = process_v2_childs_sa_payload("IKE_AUTH responder matching remote ESP/AH proposals",

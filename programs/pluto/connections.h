@@ -397,6 +397,20 @@ struct child_end {
 		(end_->child.lease[IPv4_INDEX].is_set ||	\
 		 end_->child.lease[IPv6_INDEX].is_set);		\
 	})
+#define end_requires_ts(E)					\
+	({							\
+		const struct connection_end *e_ = E;		\
+		(e_->child.selectors.proposed.len > 1 ||	\
+		 e_->child.config->sourceip.len > 1 ||		\
+		 e_->host.config->pool_ranges.len > 1);		\
+	})
+#define connection_requires_ts(C)			\
+	({						\
+		const struct connection *c_ = C;	\
+		(end_requires_ts(c_->local) ||		\
+		 end_requires_ts(c_->remote));		\
+	})
+
 	ip_address lease[IP_INDEX_ROOF];
 	bool has_cat;		/* add a CAT iptable rule when a valid
 				   INTERNAL_IP4_ADDRESS is received */
