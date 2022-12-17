@@ -152,11 +152,14 @@ bool emit_v2CP_response(const struct child_sa *child, struct pbs_out *outpbs)
 	if (!out_struct(&cp, &ikev2_cp_desc, outpbs, &cp_pbs))
 		return false;
 
-	ip_address client_address = selector_prefix(c->spd->remote->client);
-	const struct ip_info *client_afi = address_info(client_address);
-	if (!emit_v2CP_attribute_address(client_afi->ikev2_internal_address,
-					 &client_address, "Internal IP Address", &cp_pbs)) {
-		return false;
+	FOR_EACH_ELEMENT(lease, c->remote->child.lease) {
+		if (lease->is_set) {
+			const struct ip_info *lease_afi = address_type(lease);
+			if (!emit_v2CP_attribute_address(lease_afi->ikev2_internal_address,
+							 lease, "Internal IP Address", &cp_pbs)) {
+				return false;
+			}
+		}
 	}
 
 	for (const ip_address *dns = c->config->modecfg.dns.list;
