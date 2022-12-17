@@ -1765,68 +1765,6 @@ static void clear_narrow_holds(const ip_selector *src_client,
 	}
 }
 
-/*
- * If there's kernel policy and/or a bare shunt, delete it.  If there
- * isn't ignore the error.
- */
-
-bool flush_bare_shunt(const ip_address *src_address,
-		      const ip_address *dst_address,
-		      const struct ip_protocol *transport_proto,
-		      enum expect_kernel_policy expect_kernel_policy,
-		      const char *why, struct logger *logger)
-{
-	/*
-	 * Strip the port; i.e., widen to an address.
-	 */
-	const struct ip_info *afi = address_type(src_address);
-	pexpect(afi == address_type(dst_address));
-	ip_selector src = selector_from_address_protocol(*src_address, transport_proto);
-	ip_selector dst = selector_from_address_protocol(*dst_address, transport_proto);
-
-	/* assume low code logged action */
-	selector_pair_buf sb;
-	dbg("kernel: deleting bare shunt %s from kernel for %s",
-	    str_selector_pair(&src, &dst, &sb), why);
-	/* assume low code logged action */
-	bool ok = delete_kernel_policy(DIRECTION_OUTBOUND,
-				       expect_kernel_policy,
-				       src, dst,
-				       /*sa_marks*/NULL, /*xfrmi*/NULL, /*bare-shunt*/
-				       DEFAULT_KERNEL_POLICY_ID,
-				       /*sec-label*/null_shunk,/*bare-shunt*/
-				       logger, HERE, why);
-	if (!ok) {
-		/* did/should kernel log this? */
-		selector_pair_buf sb;
-		llog(RC_LOG, logger,
-		     "delete kernel shunt %s failed - deleting from pluto shunt table",
-		     str_selector_pair_sensitive(&src, &dst, &sb));
-	}
-
-	/*
-	 * We can have proto mismatching acquires with xfrm - this is
-	 * a bad workaround.
-	 *
-	 * ??? what is the nature of those mismatching acquires?
-	 *
-	 * XXX: for instance, when whack initiates an OE connection.
-	 * There is no kernel-acquire shunt to remove.
-	 */
-
-	struct bare_shunt **bs_pp = bare_shunt_ptr(&src, &dst, why);
-	if (bs_pp == NULL) {
-		selector_pair_buf sb;
-		llog(RC_LOG, logger,
-		     "can't find expected bare shunt to delete: %s",
-		     str_selector_pair_sensitive(&src, &dst, &sb));
-		return ok;
-	}
-
-	free_bare_shunt(bs_pp);
-	return ok;
-}
-
 bool install_sec_label_connection_policies(struct connection *c, struct logger *logger)
 {
 	connection_buf cb;
@@ -1910,6 +1848,7 @@ bool assign_holdpass(struct connection *c,
 		     struct spd_route *sr,
 		     const ip_packet *packet)
 {
+	struct logger *logger = c->logger;
 	/*
 	 * either the automatically installed %hold eroute is broad enough
 	 * or we try to add a broader one and delete the automatic one.
@@ -1933,7 +1872,7 @@ bool assign_holdpass(struct connection *c,
 		break;
 	}
 
-	ldbg(c->logger, "kernel: %s() routing was %s, needs to be %s",
+	ldbg(logger, "kernel: %s() routing was %s, needs to be %s",
 	     __func__,
 	     enum_name(&routing_story, ro),
 	     enum_name(&routing_story, rn));
@@ -1952,12 +1891,13 @@ bool assign_holdpass(struct connection *c,
 		 * will no longer be bare so we must ditch it from the
 		 * bare table.
 		 */
-		ldbg(c->logger, "kernel: %s() no longer bare so ditching", __func__);
-		struct bare_shunt **old = bare_shunt_ptr(&sr->local->client, &sr->remote->client, __func__);
+		ldbg(logger, "kernel: %s() no longer bare so ditching", __func__);
+		struct bare_shunt **old = bare_shunt_ptr(&sr->local->client,
+							 &sr->remote->client, __func__);
 
 		if (old == NULL) {
 			/* ??? should this happen?  It does. */
-			llog(RC_LOG, c->logger,
+			llog(RC_LOG, logger,
 			     "%s() no bare shunt to remove? - mismatch?", __func__);
 		} else {
 			/* ??? should this happen? */
@@ -1965,7 +1905,7 @@ bool assign_holdpass(struct connection *c,
 			free_bare_shunt(old);
 		}
 	} else {
-		ldbg(c->logger, "kernel: %s() need broad(er) shunt", __func__);
+		ldbg(logger, "kernel: %s() need broad(er) shunt", __func__);
 		/*
 		 * we need a broad %hold, not the narrow one.
 		 * First we ensure that there is a broad %hold.
@@ -1997,7 +1937,7 @@ bool assign_holdpass(struct connection *c,
 								&c->sa_marks, c->xfrmi,
 								HUNK_AS_SHUNK(c->config->sec_label),
 								HERE);
-				llog_pexpect(c->logger, HERE, "acquired a CAT");
+				llog_pexpect(logger, HERE, "acquired a CAT");
 				ip_selector client = selector_from_address(sr->local->host->addr);
 				if (!raw_policy(op, DIRECTION_OUTBOUND,
 						EXPECT_KERNEL_POLICY_OK,
@@ -2009,8 +1949,8 @@ bool assign_holdpass(struct connection *c,
 						kernel_policy.xfrmi,
 						kernel_policy.id,
 						kernel_policy.sec_label,
-						c->logger, "CAT: %s() %s", __func__, reason)) {
-					llog(RC_LOG, c->logger,
+						logger, "CAT: %s() %s", __func__, reason)) {
+					llog(RC_LOG, logger,
 					     "CAT: failed to eroute additional Client Address Translation policy");
 				} else {
 					dbg("kernel: %s() CAT extra route added", __func__);
@@ -2020,8 +1960,8 @@ bool assign_holdpass(struct connection *c,
 			if (!install_bare_spd_kernel_policy(sr, op, DIRECTION_OUTBOUND,
 							    EXPECT_KERNEL_POLICY_OK,
 							    c->config->negotiation_shunt,
-							    c->logger, HERE, reason)) {
-				llog(RC_LOG, c->logger,
+							    logger, HERE, reason)) {
+				llog(RC_LOG, logger,
 				     "%s() eroute_connection() failed", __func__);
 				return false;
 			}
@@ -2029,20 +1969,63 @@ bool assign_holdpass(struct connection *c,
 			dbg("kernel: %s() eroute_connection() done", __func__);
 		}
 
-		ip_address src_host_addr = packet_src_address(*packet);
-		ip_address dst_host_addr = packet_dst_address(*packet);
+		/*
+		 * If there's kernel policy delete it.  If there isn't
+		 * ignore the error.
+		 *
+		 * Strip the port; i.e., widen to an address.
+		 *
+		 * XXX: is this right?  Isn't the existing selector
+		 * very narrow and above replaced it with something
+		 * wider?  Or is that the other way round?
+		 */
 
-		if (!flush_bare_shunt(&src_host_addr, &dst_host_addr,
-				      packet->protocol, IGNORE_KERNEL_POLICY_MISSING,
-				      (c->config->negotiation_shunt == SHUNT_PASS ? "delete narrow %pass" :
-				       "delete narrow %hold"),
-				      c->logger)) {
-			dbg("kernel: %s() delete_bare_shunt() succeeded", __func__);
-		} else {
-			llog(RC_LOG, c->logger,
-			     "%s() delete_bare_shunt() failed", __func__);
-			return false;
+		ip_address src_address = packet_src_address(*packet);
+		ip_address dst_address = packet_dst_address(*packet);
+		ip_selector src = selector_from_address_protocol(src_address,
+								 packet->protocol);
+		ip_selector dst = selector_from_address_protocol(dst_address,
+								 packet->protocol);
+		if (!delete_kernel_policy(DIRECTION_OUTBOUND,
+					  IGNORE_KERNEL_POLICY_MISSING,
+					  src, dst,
+					  /*sa_marks*/NULL, /*bare-shunt*/
+					  /*xfrmi*/NULL, /*bare-shunt*/
+					  DEFAULT_KERNEL_POLICY_ID, /*bare-shunt*/
+					  /*sec-label*/null_shunk, /*bare-shunt*/
+					  logger, HERE, "delete narrow old")) {
+			/* did/should kernel log this? */
+			selector_pair_buf sb;
+			llog(RC_LOG, logger,
+			     "delete kernel shunt %s failed - deleting from pluto shunt table",
+			     str_selector_pair_sensitive(&src, &dst, &sb));
 		}
+
+		/*
+		 * Now do the same for any existing bare shunt.
+		 *
+		 * We can have proto mismatching acquires with xfrm -
+		 * this is a bad workaround.
+		 *
+		 * ??? what is the nature of those mismatching
+		 * acquires?
+		 *
+		 * XXX: for instance, when whack initiates an OE
+		 * connection.  There is no kernel-acquire shunt to
+		 * remove.
+		 */
+
+		struct bare_shunt **bs_pp = bare_shunt_ptr(&src, &dst, "delete narrow hold");
+		if (bs_pp == NULL) {
+			selector_pair_buf sb;
+			llog(RC_LOG, logger,
+			     "can't find expected bare shunt to delete: %s",
+			     str_selector_pair_sensitive(&src, &dst, &sb));
+		} else {
+			free_bare_shunt(bs_pp);
+			dbg("kernel: %s() delete_bare_shunt() succeeded", __func__);
+		}
+
 	}
 	set_child_routing(c, rn);
 	dbg("kernel:  %s() done - returning success", __func__);
