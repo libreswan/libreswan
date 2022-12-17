@@ -351,29 +351,31 @@ static bool delete_spd_kernel_policy(const struct spd_route *spd,
 				     where_t where,
 				     const char *story)
 {
-	ip_selector src;
-	ip_selector dst;
+	const ip_selector *src;
+	const ip_selector *dst;
 	switch (direction) {
 	case DIRECTION_OUTBOUND:
-		src = spd->local->client;
-		dst = spd->remote->client;
+		src = &spd->local->client;
+		dst = &spd->remote->client;
 		break;
 	case DIRECTION_INBOUND:
-		src = spd->remote->client;
-		dst = spd->local->client;
+		src = &spd->remote->client;
+		dst = &spd->local->client;
 		break;
 	default:
 		bad_case(direction);
 	}
 
-	return delete_kernel_policy(direction,
-				    existing_policy_expectation,
-				    src, dst,
-				    &spd->connection->sa_marks,
-				    spd->connection->xfrmi,
-				    DEFAULT_KERNEL_POLICY_ID,
-				    HUNK_AS_SHUNK(spd->connection->config->sec_label),
-				    logger, where, story);
+	return raw_policy(KERNEL_POLICY_OP_DELETE, direction,
+			  existing_policy_expectation,
+			  src, dst,
+			  /*policy*/NULL/*delete-not-needed*/,
+			  deltatime(0),
+			  &spd->connection->sa_marks,
+			  spd->connection->xfrmi,
+			  DEFAULT_KERNEL_POLICY_ID,
+			  HUNK_AS_SHUNK(spd->connection->config->sec_label),
+			  logger, "%s "PRI_WHERE, story, pri_where(where));
 }
 
 /*
@@ -1866,15 +1868,10 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 				 */
 				dbg("pulling previously installed outbound policy");
 				pexpect(direction == DIRECTION_INBOUND);
-				delete_kernel_policy(DIRECTION_OUTBOUND,
-						     EXPECT_KERNEL_POLICY_OK,
-						     c->spd->local->client,
-						     c->spd->remote->client,
-						     /*sa_marks*/NULL, /* XXX: bug? */
-						     /*xfrmi*/NULL, /* XXX: bug? */
-						     DEFAULT_KERNEL_POLICY_ID,
-						     /*sec_label*/HUNK_AS_SHUNK(c->config->sec_label),
-						     /*logger*/logger, HERE, "security label policy");
+				delete_spd_kernel_policy(c->spd, DIRECTION_OUTBOUND,
+							 EXPECT_KERNEL_POLICY_OK,
+							 /*logger*/logger,
+							 HERE, "security label policy");
 			}
 			return false;
 		}
