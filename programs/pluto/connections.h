@@ -723,6 +723,7 @@ extern void connection_delete_unused_instance(struct connection **cp, struct sta
 /* print connection status */
 
 extern void show_connections_status(struct show *s);
+extern void show_connection_status(struct show *s, const struct connection *c);
 extern int connection_compare(const struct connection *ca,
 			      const struct connection *cb);
 
@@ -831,5 +832,12 @@ void set_child_kernel_policy_owner_where(struct connection *c, so_serial_t so, w
 void set_child_routing_where(struct connection *c, enum routing routing, where_t where);
 #define set_child_routing(C, RT)		\
 	set_child_routing_where(C, RT, HERE)
+
+#define END_BUF (sizeof(subnet_buf) + sizeof(address_buf) + sizeof(id_buf) + sizeof(subnet_buf) + 10)
+#define CONN_BUF_LEN    (2 * (END_BUF - 1) + 4)
+
+char *format_connection(char *buf, size_t buf_len,
+			       const struct connection *c,
+			const struct spd_route *sr);
 
 #endif

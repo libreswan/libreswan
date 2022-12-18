@@ -666,10 +666,13 @@
       <arg choice="plain"><replaceable>whack</replaceable></arg>
 
       <arg choice="plain">--status</arg>
-      <arg choice="plain">--trafficstatus</arg>
-      <arg choice="plain">--shuntstatus</arg>
       <arg choice="plain">--addresspoolstatus</arg>
+      <arg choice="plain">--briefstatus</arg>
+      <arg choice="plain">--connectionstatus</arg>
+      <arg choice="plain">--fipsstatus</arg>
       <arg choice="plain">--processstatus</arg>
+      <arg choice="plain">--shuntstatus</arg>
+      <arg choice="plain">--trafficstatus</arg>
 
       <arg choice="opt">--rundir <replaceable>path</replaceable></arg>
       <arg choice="opt">--ctlsocket <replaceable>path/file</replaceable></arg>
@@ -682,7 +685,7 @@
 
       <arg choice="plain"><replaceable>whack</replaceable></arg>
 
-      <arg choice="plain">--globalstats</arg>
+      <arg choice="plain">--globalstatus</arg>
       <arg choice="plain">--clearstats</arg>
 
       <arg choice="opt">--rundir <replaceable>path</replaceable></arg>

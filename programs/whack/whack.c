@@ -202,9 +202,12 @@ static void help(void)
 		"\n"
 		"reread: whack [--fetchcrls] [--rereadcerts] [--rereadsecrets] [--rereadall]\n"
 		"\n"
-		"status: whack [--status] | [--trafficstatus] | [--globalstatus] | \\\n"
-		"	[--clearstats] | [--shuntstatus] | [--fipsstatus] | [--briefstatus] \n"
-		"	[--showstates] | [--addresspoolstatus] [--processstatus]\n"
+		"status: whack [--status] | [--briefstatus] | \\\n"
+		"       [--addresspoolstatus] | [--connectionstatus] [--fipsstatus] | \\\n"
+		"       [--processstatus] | [--shuntstatus] | [--trafficstatus] | \\\n"
+		"	[--showstates]\n"
+		"\n"
+		"statistics: [--globalstatus] | [--clearstats]\n"
 		"\n"
 		"refresh dns: whack --ddns\n"
 		"\n"
@@ -339,6 +342,7 @@ enum option_enums {
 	OPT_SHUNT_STATUS,
 	OPT_SHOW_STATES,
 	OPT_ADDRESSPOOL_STATUS,
+	OPT_CONNECTION_STATUS,
 	OPT_FIPS_STATUS,
 	OPT_BRIEF_STATUS,
 	OPT_PROCESS_STATUS,
@@ -620,16 +624,20 @@ static const struct option long_opts[] = {
 
 	{ "purgeocsp", no_argument, NULL, OPT_PURGEOCSP + OO },
 
+	{ "clearstats", no_argument, NULL, OPT_CLEAR_STATS + OO },
+
 	{ "status", no_argument, NULL, OPT_STATUS + OO },
 	{ "globalstatus", no_argument, NULL, OPT_GLOBAL_STATUS + OO },
-	{ "clearstats", no_argument, NULL, OPT_CLEAR_STATS + OO },
 	{ "trafficstatus", no_argument, NULL, OPT_TRAFFIC_STATUS + OO },
 	{ "shuntstatus", no_argument, NULL, OPT_SHUNT_STATUS + OO },
 	{ "addresspoolstatus", no_argument, NULL, OPT_ADDRESSPOOL_STATUS + OO },
+	{ "connectionstatus", no_argument, NULL, OPT_CONNECTION_STATUS + OO },
 	{ "fipsstatus", no_argument, NULL, OPT_FIPS_STATUS + OO },
 	{ "briefstatus", no_argument, NULL, OPT_BRIEF_STATUS + OO },
 	{ "processstatus", no_argument, NULL, OPT_PROCESS_STATUS + OO },
+	{ "statestatus", no_argument, NULL, OPT_SHOW_STATES + OO }, /* alias to catch typos */
 	{ "showstates", no_argument, NULL, OPT_SHOW_STATES + OO },
+
 #ifdef USE_SECCOMP
 	{ "seccomp-crashtest", no_argument, NULL, OPT_SECCOMP_CRASHTEST + OO },
 #endif
@@ -1470,6 +1478,11 @@ int main(int argc, char **argv)
 
 		case OPT_ADDRESSPOOL_STATUS:	/* --addresspoolstatus */
 			msg.whack_addresspool_status = true;
+			ignore_errors = true;
+			continue;
+
+		case OPT_CONNECTION_STATUS:	/* --connectionstatus */
+			msg.whack_connection_status = true;
 			ignore_errors = true;
 			continue;
 
@@ -2594,6 +2607,7 @@ int main(int argc, char **argv)
 	      msg.whack_reread || msg.whack_crash || msg.whack_shunt_status ||
 	      msg.whack_status || msg.whack_global_status || msg.whack_traffic_status ||
 	      msg.whack_addresspool_status ||
+	      msg.whack_connection_status ||
 	      msg.whack_process_status ||
 	      msg.whack_fips_status || msg.whack_brief_status || msg.whack_clear_stats || msg.whack_options ||
 	      msg.whack_shutdown || msg.whack_purgeocsp || msg.whack_seccomp_crashtest || msg.whack_show_states ||

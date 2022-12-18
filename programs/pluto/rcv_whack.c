@@ -95,6 +95,29 @@
 #include "orient.h"
 #include "ikev2_create_child_sa.h"	/* for submit_v2_CREATE_CHILD_SA_*() */
 
+static bool whack_each_connection_by_name_or_alias(const char *name,
+						   void (*whack_connection)(struct show *s,
+									    const struct connection *c),
+						   struct show *s)
+{
+	struct connection *c = conn_by_name(name, true/*strict*/);
+	if (c != NULL) {
+		whack_connection(s, c);
+		return true;
+	}
+
+	int count = 0;
+
+	struct connection_filter cq = { .where = HERE, };
+	while (next_connection_new2old(&cq)) {
+		struct connection *p = cq.c;
+
+		if (lsw_alias_cmp(name, p->config->connalias))
+			whack_connection(s, p);
+	}
+	return count > 0;
+}
+
 struct initiate_connections_stuff {
 	bool background;
 	const char *remote_host;
@@ -968,6 +991,20 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "start: addresspoolstatus");
 		show_addresspool_status(s);
 		dbg_whack(s, "stop: addresspoolstatus");
+	}
+
+	if (m->whack_connection_status) {
+		dbg_whack(s, "start: connectionstatus");
+		if (m->name == NULL) {
+			show_connections_status(s);
+		} else if (!whack_each_connection_by_name_or_alias(m->name,
+								   show_connection_status,
+								   s)) {
+			   whack_log(RC_LOG, whackfd,
+				     "no connection or alias '%s'",
+				     m->name);
+		}
+		dbg_whack(s, "stop: connectionstatus");
 	}
 
 	if (m->whack_show_states) {
