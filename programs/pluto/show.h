@@ -89,4 +89,7 @@ void show_comment(struct show *s, const char *message, ...) PRINTF_LIKE(2);
  */
 void show_raw(struct show *s, const char *message, ...) PRINTF_LIKE(2);
 
+PRINTF_LIKE(3)
+void show_rc(struct show *s, enum rc_type, const char *message, ...);
+
 #endif

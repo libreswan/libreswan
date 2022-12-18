@@ -151,24 +151,36 @@ void jambuf_to_show(struct jambuf *buf, struct show *s, enum rc_type rc)
 	s->separator = HAD_OUTPUT;
 }
 
-void show_comment(struct show *s, const char *message, ...)
+static void show_rc_va_list(struct show *s, enum rc_type rc,
+			    const char *message, va_list ap)
 {
 	struct jambuf *buf = show_jambuf(s);
-	va_list args;
-	va_start(args, message);
-	jam_va_list(buf, message, args);
-	va_end(args);
-	jambuf_to_show(buf, s, RC_COMMENT);
+	jam_va_list(buf, message, ap);
+	jambuf_to_show(buf, s, rc);
+}
+
+void show_comment(struct show *s, const char *message, ...)
+{
+	va_list ap;
+	va_start(ap, message);
+	show_rc_va_list(s, RC_COMMENT, message, ap);
+	va_end(ap);
+}
+
+void show_rc(struct show *s, enum rc_type rc, const char *message, ...)
+{
+	va_list ap;
+	va_start(ap, message);
+	show_rc_va_list(s, rc, message, ap);
+	va_end(ap);
 }
 
 void show_raw(struct show *s, const char *message, ...)
 {
-	struct jambuf *buf = show_jambuf(s);
-	va_list args;
-	va_start(args, message);
-	jam_va_list(buf, message, args);
-	va_end(args);
-	jambuf_to_show(buf, s, RC_RAW);
+	va_list ap;
+	va_start(ap, message);
+	show_rc_va_list(s, RC_RAW, message, ap);
+	va_end(ap);
 }
 
 static void show_system_security(struct show *s)

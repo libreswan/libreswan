@@ -95,71 +95,63 @@
 #include "orient.h"
 #include "ikev2_create_child_sa.h"	/* for submit_v2_CREATE_CHILD_SA_*() */
 
-static bool whack_each_connection_by_name_or_alias(const char *name,
-						   void (*whack_connection)(struct show *s,
-									    const struct connection *c),
-						   struct show *s)
+static void whack_each_connection_by_name_or_alias(const struct whack_message *m,
+						   struct show *s,
+						   const char *what,
+						   bool (*whack_connection)
+						   (struct show *s,
+						    struct connection *c,
+						    const struct whack_message *m))
 {
-	struct connection *c = conn_by_name(name, true/*strict*/);
+	struct logger *logger = show_logger(s);
+	struct connection *c = conn_by_name(m->name, true/*strict*/);
 	if (c != NULL) {
-		whack_connection(s, c);
-		return true;
+		whack_connection(s, c, m);
+		return;
 	}
 
-	int count = 0;
+	if (what != NULL) {
+		llog(RC_COMMENT, logger, "%s all conns with alias=\"%s\"",
+		     what, m->name);
+	}
 
+	bool found = false;
 	struct connection_filter cq = { .where = HERE, };
 	while (next_connection_new2old(&cq)) {
 		struct connection *p = cq.c;
-
-		if (lsw_alias_cmp(name, p->config->connalias))
-			whack_connection(s, p);
-	}
-	return count > 0;
-}
-
-struct initiate_connections_stuff {
-	bool background;
-	const char *remote_host;
-	bool log_failure;
-};
-
-static int initiate_a_connection(struct connection *c, void *arg, struct logger *logger)
-{
-	connection_buf cb;
-	dbg("%s() for "PRI_CONNECTION, __func__, pri_connection(c, &cb))
-	const struct initiate_connections_stuff *is = arg;
-	return initiate_connection(c, is->remote_host,
-				   is->background,
-				   is->log_failure,
-				   logger);
-}
-
-static void initiate_connections_by_name(const char *name, const char *remote_host,
-					 bool background, struct logger *logger)
-{
-	dbg("%s() for %s", __func__, name);
-	passert(name != NULL);
-	struct connection *c = conn_by_name(name, /*strict-match?*/false);
-	if (c != NULL) {
-		struct initiate_connections_stuff is = {
-			.background = background,
-			.remote_host = remote_host,
-			.log_failure = true,
-		};
-		initiate_a_connection(c, &is, logger);
-	} else {
-		struct initiate_connections_stuff is = {
-			.background = background,
-			.remote_host = remote_host,
-			.log_failure = false,
-		};
-		llog(RC_COMMENT, logger, "initiating all conns with alias='%s'", name);
-		int count = foreach_connection_by_alias(name, initiate_a_connection, &is, logger);
-		if (count == 0) {
-			llog(RC_UNKNOWN_NAME, logger, "no connection named \"%s\"", name);
+		if (!lsw_alias_cmp(m->name, p->config->connalias)) {
+			continue;
+		}
+		found = true;
+		if (!whack_connection(s, p, m)) {
+			break;
 		}
 	}
+
+	if (!found) {
+		/* what means leave more breadcrumbs */
+#define MESSAGE "no connection or alias named \"%s\"'", m->name
+		if (what != NULL) {
+			llog(RC_UNKNOWN_NAME, logger, MESSAGE);
+		} else {
+			show_rc(s, RC_UNKNOWN_NAME, MESSAGE);
+		}
+#undef MESSAGE
+	}
+}
+
+static bool whack_initiate_connection(struct show *s, struct connection *c,
+				      const struct whack_message *m)
+{
+	struct logger *logger = show_logger(s);
+	connection_buf cb;
+	dbg("%s() for "PRI_CONNECTION, __func__, pri_connection(c, &cb));
+	bool log_failure = (c->config->connalias == NULL);
+	return initiate_connection(c,
+				   m->remote_host,
+				   m->whack_async/*background*/,
+				   log_failure,
+				   logger);
 }
 
 static struct state *find_impaired_state(unsigned biased_what,
@@ -255,11 +247,18 @@ static void whack_impair_action(enum impair_action impairment_action,
 	}
 }
 
-static int whack_route_connection(struct connection *c,
-				  void *unused_arg UNUSED,
-				  struct logger *logger)
+static bool whack_connection_status(struct show *s, struct connection *c,
+				    const struct whack_message *m UNUSED)
+{
+	show_connection_status(s, c);
+	return true;
+}
+
+static bool whack_route_connection(struct show *s, struct connection *c,
+				   const struct whack_message *m UNUSED)
 {
 	/* XXX: something better? */
+	struct logger *logger = show_logger(s);
 	fd_delref(&c->logger->global_whackfd);
 	c->logger->global_whackfd = fd_addref(logger->global_whackfd);
 
@@ -278,14 +277,18 @@ static int whack_route_connection(struct connection *c,
 	/* XXX: something better? */
 	fd_delref(&c->logger->global_whackfd);
 
-	return 1;
+	return true; /* ok; keep going */
 }
 
-static int whack_unroute_connection(struct connection *c,
-				    void *unused_arg UNUSED,
-				    struct logger *logger)
+static bool whack_unroute_connection(struct show *s, struct connection *c,
+				     const struct whack_message *m UNUSED)
 {
 	passert(c != NULL);
+
+	/* XXX: something better? */
+	struct logger *logger = show_logger(s);
+	fd_delref(&c->logger->global_whackfd);
+	c->logger->global_whackfd = fd_addref(logger->global_whackfd);
 
 	if (c->child.routing == RT_ROUTED_TUNNEL) {
 		llog(WHACK_STREAM|RC_RTBUSY, logger, "cannot unroute: route busy");
@@ -295,7 +298,10 @@ static int whack_unroute_connection(struct connection *c,
 		unroute_connection(c);
 	}
 
-	return 1;
+	/* XXX: something better? */
+	fd_delref(&c->logger->global_whackfd);
+
+	return true; /* ok; keep going */
 }
 
 static void do_whacklisten(struct logger *logger)
@@ -854,20 +860,13 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 
 	if (m->whack_route) {
 		dbg_whack(s, "start: route");
+		passert(m->name != NULL);
 		if (!listening) {
 			whack_log(RC_DEAF, whackfd,
 				  "need --listen before --route");
 		} else {
-			struct connection *c = conn_by_name(m->name, true/*strict*/);
-
-			if (c != NULL) {
-				whack_route_connection(c, NULL, logger);
-			} else if (0 == foreach_connection_by_alias(m->name, whack_route_connection,
-								    NULL, logger)) {
-				whack_log(RC_ROUTE, whackfd,
-					  "no connection or alias '%s'",
-					  m->name);
-			}
+			whack_each_connection_by_name_or_alias(m, s, NULL,
+							       whack_route_connection);
 		}
 		dbg_whack(s, "stop: route");
 	}
@@ -875,31 +874,23 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	if (m->whack_unroute) {
 		dbg_whack(s, "start: unroute");
 		passert(m->name != NULL);
-
-		struct connection *c = conn_by_name(m->name, true/*strict*/);
-		if (c != NULL) {
-			whack_unroute_connection(c, whackfd, NULL);
-		} else if (0 == foreach_connection_by_alias(m->name, whack_unroute_connection,
-							    NULL, logger)) {
-			whack_log(RC_ROUTE, whackfd,
-				  "no connection or alias '%s'",
-				  m->name);
-		}
+		whack_each_connection_by_name_or_alias(m, s, NULL,
+						       whack_unroute_connection);
 		dbg_whack(s, "stop: unroute");
 	}
 
 	if (m->whack_initiate) {
+		passert(m->name != NULL);
 		dbg_whack(s, "start: initiate name='%s' remote='%s' async=%s",
-			  m->name != NULL ? m->name : "<null>",
+			  m->name,
 			  m->remote_host != NULL ? m->remote_host : "<null>",
 			  bool_str(m->whack_async));
 		if (!listening) {
 			whack_log(RC_DEAF, whackfd,
 				  "need --listen before --initiate");
 		} else {
-			initiate_connections_by_name(m->name,
-						     m->remote_host,
-						     m->whack_async, logger);
+			whack_each_connection_by_name_or_alias(m, s, "initiating",
+							       whack_initiate_connection);
 		}
 		dbg_whack(s, "stop: initiate");
 	}
@@ -997,12 +988,9 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "start: connectionstatus");
 		if (m->name == NULL) {
 			show_connections_status(s);
-		} else if (!whack_each_connection_by_name_or_alias(m->name,
-								   show_connection_status,
-								   s)) {
-			   whack_log(RC_LOG, whackfd,
-				     "no connection or alias '%s'",
-				     m->name);
+		} else {
+			whack_each_connection_by_name_or_alias(m, s, NULL,
+							       whack_connection_status);
 		}
 		dbg_whack(s, "stop: connectionstatus");
 	}
