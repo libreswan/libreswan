@@ -466,7 +466,9 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 	return false;
 }
 
-static void set_xfrm_selectors(struct xfrm_selector *sel, const ip_selector *src_client, const ip_selector *dst_client)
+static void set_xfrm_selectors(struct xfrm_selector *sel,
+			       const ip_selector *src_client,
+			       const ip_selector *dst_client)
 {
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
 	pexpect(selector_protocol(*dst_client) == client_proto);
@@ -1858,8 +1860,8 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol,
 	const struct ip_info *afi = aftoinfo(pol->sel.family);
 	if (afi == NULL) {
 		llog(RC_LOG, logger,
-			    "XFRM_MSG_POLEXPIRE message from kernel malformed: address family %u unknown",
-			    pol->sel.family);
+		     "XFRM_MSG_POLEXPIRE message from kernel malformed: address family %u unknown",
+		     pol->sel.family);
 		return;
 	}
 
@@ -1869,6 +1871,11 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol,
 	const struct ip_protocol *transport_proto = protocol_from_ipproto(pol->sel.proto);
 	ip_selector src = selector_from_address_protocol(src_addr, transport_proto);
 	ip_selector dst = selector_from_address_protocol(dst_addr, transport_proto);
+	if (DBGP(DBG_BASE)) {
+		/* XXX: use packet_from_xfrm()? */
+		PEXPECT(logger, pol->sel.sport == 0);
+		PEXPECT(logger, pol->sel.dport == 0);
+	}
 
 	struct bare_shunt **bs_pp = bare_shunt_ptr(&src, &dst, "expire bare shunt");
 	if (bs_pp == NULL) {
@@ -2042,6 +2049,12 @@ static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
 		     "XFRM_MSG_EXPIRE message from kernel malformed: family %u unknown",
 		     upe->pol.sel.family);
 		return;
+	}
+
+	if (DBGP(DBG_BASE)) {
+		/* XXX: use packet_from_xfrm*()? */
+		PEXPECT(logger, upe->pol.sel.sport == 0);
+		PEXPECT(logger, upe->pol.sel.dport == 0);
 	}
 
 	ip_address src = address_from_xfrm(afi, &upe->pol.sel.saddr);

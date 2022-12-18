@@ -1937,7 +1937,7 @@ bool assign_holdpass(struct connection *c,
 								&c->sa_marks, c->xfrmi,
 								HUNK_AS_SHUNK(c->config->sec_label),
 								HERE);
-				llog_pexpect(logger, HERE, "acquired a CAT");
+				ldbg(logger, "acquired a CAT");
 				ip_selector client = selector_from_address(sr->local->host->addr);
 				if (!raw_policy(op, DIRECTION_OUTBOUND,
 						EXPECT_KERNEL_POLICY_OK,
