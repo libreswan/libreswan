@@ -25,16 +25,16 @@ west #
 initdone
 west #
  ipsec auto --up west1
-000 initiating all conns with alias='west1'
-021 no connection named "west1"
+000 initiating all conns with alias="west1"
+021 no connection or alias named "west1"'
 west #
  ipsec auto --up west2
-000 initiating all conns with alias='west2'
-021 no connection named "west2"
+000 initiating all conns with alias="west2"
+021 no connection or alias named "west2"'
 west #
  ipsec auto --up west3
-000 initiating all conns with alias='west3'
-021 no connection named "west3"
+000 initiating all conns with alias="west3"
+021 no connection or alias named "west3"'
 west #
  # ping will fail until we fix  up-client-v6 and add source address.
 west #
