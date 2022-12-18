@@ -96,9 +96,10 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 						   enum direction direction,
 						   where_t where);
 
-static void delete_bare_kernel_policy(const struct bare_shunt *bsp,
-				      struct logger *logger,
-				      where_t where);
+static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
+					    enum expect_kernel_policy expect_kernel_policy,
+					    struct logger *logger,
+					    where_t where);
 
 /*
  * The priority assigned to a kernel policy.
@@ -1395,7 +1396,9 @@ static bool install_prospective_kernel_policy(struct connection *c)
 
 		if (spd->wip.conflicting.shunt != NULL &&
 		    PEXPECT(c->logger, !kernel_ops->overlap_supported)) {
-			delete_bare_kernel_policy(*spd->wip.conflicting.shunt, c->logger, HERE);
+			delete_bare_shunt_kernel_policy(*spd->wip.conflicting.shunt,
+							EXPECT_KERNEL_POLICY_OK,
+							c->logger, HERE);
 			/* if everything succeeds, delete below */
 		}
 
@@ -1405,7 +1408,9 @@ static bool install_prospective_kernel_policy(struct connection *c)
 		if (spd->wip.conflicting.shunt != NULL &&
 		    /* double negative */
 		    !PEXPECT(c->logger, !kernel_ops->overlap_supported)) {
-			delete_bare_kernel_policy(*spd->wip.conflicting.shunt, c->logger, HERE);
+			delete_bare_shunt_kernel_policy(*spd->wip.conflicting.shunt,
+							EXPECT_KERNEL_POLICY_OK,
+							c->logger, HERE);
 			/* if everything succeeds, delete below */
 		}
 	}
@@ -1699,9 +1704,10 @@ void show_shunt_status(struct show *s)
 	}
 }
 
-static void delete_bare_kernel_policy(const struct bare_shunt *bsp,
-				      struct logger *logger,
-				      where_t where)
+static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
+					    enum expect_kernel_policy expect_kernel_policy,
+					    struct logger *logger,
+					    where_t where)
 {
 	/*
 	 * XXX: bare_kernel_policy() does not strip the port but this
@@ -1725,7 +1731,7 @@ static void delete_bare_kernel_policy(const struct bare_shunt *bsp,
 	ip_selector dst = selector_from_address_protocol(dst_address, transport_proto);
 	/* assume low code logged action */
 	if (!delete_kernel_policy(DIRECTION_OUTBOUND,
-				  EXPECT_KERNEL_POLICY_OK,
+				  expect_kernel_policy,
 				  src, dst,
 				  /*sa_marks*/NULL, /*xfrmi*/NULL, /*bare-shunt*/
 				  DEFAULT_KERNEL_POLICY_ID,
@@ -1757,7 +1763,9 @@ static void clear_narrow_holds(const ip_selector *src_client,
 		    transport_proto == bsp->transport_proto &&
 		    selector_in_selector(bsp->our_client, *src_client) &&
 		    selector_in_selector(bsp->peer_client, *dst_client)) {
-			delete_bare_kernel_policy(bsp, logger, HERE);
+			delete_bare_shunt_kernel_policy(bsp,
+							EXPECT_KERNEL_POLICY_OK,
+							logger, HERE);
 			free_bare_shunt(bspp);
 		} else {
 			bspp = &(*bspp)->next;
@@ -1907,13 +1915,14 @@ bool assign_holdpass(struct connection *c,
 	} else {
 		ldbg(logger, "kernel: %s() need broad(er) shunt", __func__);
 		/*
-		 * we need a broad %hold, not the narrow one.
-		 * First we ensure that there is a broad %hold.
-		 * There may already be one (race condition): no need to
-		 * create one.
-		 * There may already be a %trap: replace it.
-		 * There may not be any broad eroute: add %hold.
-		 * Once the broad %hold is in place, delete the narrow one.
+		 * We need a broad %hold, not the narrow one.
+		 *
+		 * First we ensure that there is a broad %hold.  There
+		 * may already be one (race condition): no need to
+		 * create one.  There may already be a %trap: replace
+		 * it.  There may not be any broad eroute: add %hold.
+		 * Once the broad %hold is in place, delete the narrow
+		 * one.
 		 */
 		if (rn != ro) {
 			enum kernel_policy_op op;
@@ -1970,14 +1979,14 @@ bool assign_holdpass(struct connection *c,
 		}
 
 		/*
-		 * If there's kernel policy delete it.  If there isn't
-		 * ignore the error.
+		 * Find the existing bare shunt and delete it.  If
+		 * there isn't ignore the error.
 		 *
 		 * Strip the port; i.e., widen to an address.
 		 *
 		 * XXX: is this right?  Isn't the existing selector
-		 * very narrow and above replaced it with something
-		 * wider?  Or is that the other way round?
+		 * very narrow and the above replacing it with
+		 * something wider?  Or is that the other way round?
 		 */
 
 		ip_address src_address = packet_src_address(*packet);
@@ -1986,44 +1995,19 @@ bool assign_holdpass(struct connection *c,
 								 packet->protocol);
 		ip_selector dst = selector_from_address_protocol(dst_address,
 								 packet->protocol);
-		if (!delete_kernel_policy(DIRECTION_OUTBOUND,
-					  IGNORE_KERNEL_POLICY_MISSING,
-					  src, dst,
-					  /*sa_marks*/NULL, /*bare-shunt*/
-					  /*xfrmi*/NULL, /*bare-shunt*/
-					  DEFAULT_KERNEL_POLICY_ID, /*bare-shunt*/
-					  /*sec-label*/null_shunk, /*bare-shunt*/
-					  logger, HERE, "delete narrow old")) {
-			/* did/should kernel log this? */
-			selector_pair_buf sb;
-			llog(RC_LOG, logger,
-			     "delete kernel shunt %s failed - deleting from pluto shunt table",
-			     str_selector_pair_sensitive(&src, &dst, &sb));
-		}
 
-		/*
-		 * Now do the same for any existing bare shunt.
-		 *
-		 * We can have proto mismatching acquires with xfrm -
-		 * this is a bad workaround.
-		 *
-		 * ??? what is the nature of those mismatching
-		 * acquires?
-		 *
-		 * XXX: for instance, when whack initiates an OE
-		 * connection.  There is no kernel-acquire shunt to
-		 * remove.
-		 */
-
-		struct bare_shunt **bs_pp = bare_shunt_ptr(&src, &dst, "delete narrow hold");
-		if (bs_pp == NULL) {
+		struct bare_shunt **bsp = bare_shunt_ptr(&src, &dst, "delete narrow hold");
+		if (bsp != NULL) {
+			delete_bare_shunt_kernel_policy(*bsp,
+							IGNORE_KERNEL_POLICY_MISSING,
+							logger, HERE);
+			free_bare_shunt(bsp);
+			dbg("kernel: %s() delete_bare_shunt() succeeded", __func__);
+		} else {
 			selector_pair_buf sb;
 			llog(RC_LOG, logger,
 			     "can't find expected bare shunt to delete: %s",
 			     str_selector_pair_sensitive(&src, &dst, &sb));
-		} else {
-			free_bare_shunt(bs_pp);
-			dbg("kernel: %s() delete_bare_shunt() succeeded", __func__);
 		}
 
 	}
@@ -3704,7 +3688,9 @@ static void expire_bare_shunts(struct logger *logger)
 					}
 				}
 			} else {
-				delete_bare_kernel_policy(bsp, logger, HERE);
+				delete_bare_shunt_kernel_policy(bsp,
+								EXPECT_KERNEL_POLICY_OK,
+								logger, HERE);
 			}
 			free_bare_shunt(bspp);
 		} else {
@@ -3719,7 +3705,9 @@ static void delete_bare_shunts(struct logger *logger)
 	dbg("kernel: emptying bare shunt table");
 	while (bare_shunts != NULL) { /* nothing left */
 		const struct bare_shunt *bsp = bare_shunts;
-		delete_bare_kernel_policy(bsp, logger, HERE);
+		delete_bare_shunt_kernel_policy(bsp,
+						EXPECT_KERNEL_POLICY_OK,
+						logger, HERE);
 		free_bare_shunt(&bare_shunts); /* also updates BARE_SHUNTS */
 	}
 }
