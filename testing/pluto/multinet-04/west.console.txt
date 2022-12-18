@@ -33,7 +33,7 @@ west #
 initdone
 west #
  ipsec auto --up westnets-eastnet
-000 initiating all conns with alias='westnets-eastnet'
+000 initiating all conns with alias="westnets-eastnet"
 002 "westnets-eastnet/2x0" #1: initiating IKEv1 Main Mode connection
 1v1 "westnets-eastnet/2x0" #1: sent Main Mode request
 000 "westnets-eastnet/1x0": queue IPsec SA; waiting on ISAKMP SA "westnets-eastnet/2x0" #1 negotiating with 192.1.2.23

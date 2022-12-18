@@ -103,7 +103,7 @@ west #
  ipsec whack --impair suppress-retransmits
 west #
  ipsec auto --up westnet-eastnet-subnets
-000 initiating all conns with alias='westnet-eastnet-subnets'
+000 initiating all conns with alias="westnet-eastnet-subnets"
 002 "westnet-eastnet-subnets/2x2" #1: initiating IKEv1 Main Mode connection
 1v1 "westnet-eastnet-subnets/2x2" #1: sent Main Mode request
 000 "westnet-eastnet-subnets/2x1": queue IPsec SA; waiting on ISAKMP SA "westnet-eastnet-subnets/2x2" #1 negotiating with 192.1.2.23

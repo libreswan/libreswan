@@ -21,7 +21,7 @@ west #
 initdone
 west #
  ipsec auto --up west-east
-000 initiating all conns with alias='west-east'
+000 initiating all conns with alias="west-east"
 1v2 "west-east/4x0" #1: initiating IKEv2 connection
 000 "west-east/3x0": queuing pending IPsec SA negotiating with 192.1.2.23 IKE SA #1 "west-east/4x0"
 000 "west-east/2x0": queuing pending IPsec SA negotiating with 192.1.2.23 IKE SA #1 "west-east/4x0"

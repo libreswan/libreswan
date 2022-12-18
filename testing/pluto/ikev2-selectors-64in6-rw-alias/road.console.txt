@@ -18,7 +18,7 @@ road #
 initdone
 road #
  ipsec auto --up road
-000 initiating all conns with alias='road'
+000 initiating all conns with alias="road"
 1v2 "road/2x2" #1: initiating IKEv2 connection
 000 "road/1x1": queue Child SA; waiting on IKE SA "road/2x2" #1 negotiating with 2001:db8:1:2::23
 1v2 "road/2x2" #1: sent IKE_SA_INIT request to [2001:db8:1:2::23]:500
