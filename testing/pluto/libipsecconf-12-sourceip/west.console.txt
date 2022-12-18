@@ -5,251 +5,53 @@ Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
+ # sourceip is shown as {my,their}_ip=
+west #
+ add() { ipsec auto --add $1 ; ipsec whack --connectionstatus --name $1 | grep _ip= ; }
+west #
  # fails because there's no subnet=
 west #
- ipsec auto --add sourceip-without-selector
+ add sourceip-without-selector
 036 "sourceip-without-selector": failed to add connection: leftsourceip=1.0.0.1 invalid, requires leftsubnet
 west #
- ipsec auto --add sourceips-without-selector
+ add sourceips-without-selector
 036 "sourceips-without-selector": failed to add connection: leftsourceip=1.0.0.1,1::1 invalid, requires leftsubnet
 west #
  # fails because sourceip is not within subnet
 west #
- ipsec auto --add sourceip-outside-selector
+ add sourceip-outside-selector
 036 "sourceip-outside-selector": failed to add connection: leftsourceip=1.0.0.1 address 1.0.0.1 is not within leftsubnet=2.0.0.0/24
 west #
  # fails because sourceip is not within subnet
 west #
- ipsec auto --add sourceips-outside-selectors
+ add sourceips-outside-selectors
 036 "sourceips-outside-selectors": failed to add connection: leftsourceip=1.0.0.1,1::1 address 1::1 is not within leftsubnet=2::/64,1.0.0.0/24
 west #
  # all good
 west #
- ipsec auto --add sourceip-inside-selector
+ add sourceip-inside-selector
 002 "sourceip-inside-selector": added IKEv2 connection
+000 "sourceip-inside-selector":     oriented; my_ip=1.0.0.1; their_ip=unset; my_updown=ipsec _updown;
 west #
- ipsec auto --add sourceips-inside-selectors
+ add sourceips-inside-selectors
 002 "sourceips-inside-selectors": added IKEv2 connection
+000 "sourceips-inside-selectors":     oriented; my_ip=1::1; their_ip=unset; my_updown=ipsec _updown;
+000 "sourceips-inside-selectors":     oriented; my_ip=1::1; their_ip=unset; my_updown=ipsec _updown;
 west #
  # subnets= tests can't check inside/outside
 west #
- ipsec auto --add sourceip-outside-subnets
+ add sourceip-outside-subnets
 002 "sourceip-outside-subnets/1x0": added IKEv2 connection
+000 "sourceip-outside-subnets/1x0":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
 west #
- ipsec auto --add sourceip-inside-subnets
+ add sourceip-inside-subnets
 002 "sourceip-inside-subnets/1x0": added IKEv2 connection
+000 "sourceip-inside-subnets/1x0":     oriented; my_ip=1.0.0.1; their_ip=unset; my_updown=ipsec _updown;
 west #
- ipsec auto --add sourceips-inside-subnets
+ add sourceips-inside-subnets
 002 "sourceips-inside-subnets/0x1": added IKEv2 connection
 002 "sourceips-inside-subnets/1x2": added IKEv2 connection
-west #
- ipsec whack --status
-000 using kernel interface: xfrm
-000  
-000 interface lo UDP 127.0.0.1:4500
-000 interface lo UDP 127.0.0.1:500
-000 interface eth0 UDP 192.0.1.254:4500
-000 interface eth0 UDP 192.0.1.254:500
-000 interface eth1 UDP 192.1.2.45:4500
-000 interface eth1 UDP 192.1.2.45:500
-000  
-000 fips mode=disabled;
-000 SElinux=XXXXX
-000 seccomp=OFF
-000  
-000 config setup options:
-000  
-000 configdir=/etc, configfile=/etc/ipsec.conf, secrets=/etc/ipsec.secrets, ipsecdir=/etc/ipsec.d
-000 sbindir=PATH/sbin, libexecdir=PATH/libexec/ipsec
-000 nhelpers=-1, uniqueids=yes, dnssec-enable=yes, logappend=no, logip=yes, shuntlifetime=900s, xfrmlifetime=30s
-000 ddos-cookies-threshold=25000, ddos-max-halfopen=50000, ddos-mode=auto, ikev1-policy=accept
-000 ikebuf=0, msg_errqueue=yes, crl-strict=no, crlcheckinterval=0, listen=<any>, nflog-all=0
-000 ocsp-enable=no, ocsp-strict=no, ocsp-timeout=2, ocsp-uri=<unset>
-000 ocsp-trust-name=<unset>
-000 ocsp-cache-size=1000, ocsp-cache-min-age=3600, ocsp-cache-max-age=86400, ocsp-method=get
-000 global-redirect=no, global-redirect-to=<unset>
-000 secctx-attr-type=XXXX
-000 debug ...
-000  
-000 nat-traversal=yes, keep-alive=20, nat-ikeport=4500
-000 virtual-private (%priv):
-000  
-000 Kernel algorithms supported:
-000  
-000 algorithm ESP encrypt: name=3DES_CBC, keysizemin=192, keysizemax=192
-000 algorithm ESP encrypt: name=AES_CBC, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: name=AES_CCM_12, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: name=AES_CCM_16, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: name=AES_CCM_8, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: name=AES_CTR, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: name=AES_GCM_12, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: name=AES_GCM_16, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: name=AES_GCM_8, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: name=CAMELLIA_CBC, keysizemin=128, keysizemax=256
-000 algorithm ESP encrypt: name=CHACHA20_POLY1305, keysizemin=256, keysizemax=256
-000 algorithm ESP encrypt: name=NULL, keysizemin=0, keysizemax=0
-000 algorithm ESP encrypt: name=NULL_AUTH_AES_GMAC, keysizemin=128, keysizemax=256
-000 algorithm AH/ESP auth: name=AES_CMAC_96, key-length=128
-000 algorithm AH/ESP auth: name=AES_XCBC_96, key-length=128
-000 algorithm AH/ESP auth: name=HMAC_MD5_96, key-length=128
-000 algorithm AH/ESP auth: name=HMAC_SHA1_96, key-length=160
-000 algorithm AH/ESP auth: name=HMAC_SHA2_256_128, key-length=256
-000 algorithm AH/ESP auth: name=HMAC_SHA2_256_TRUNCBUG, key-length=256
-000 algorithm AH/ESP auth: name=HMAC_SHA2_384_192, key-length=384
-000 algorithm AH/ESP auth: name=HMAC_SHA2_512_256, key-length=512
-000 algorithm AH/ESP auth: name=NONE, key-length=0
-000  
-000 IKE algorithms supported:
-000  
-000 algorithm IKE encrypt: v1id=5, v1name=OAKLEY_3DES_CBC, v2id=3, v2name=3DES, blocksize=8, keydeflen=192
-000 algorithm IKE encrypt: v1id=8, v1name=OAKLEY_CAMELLIA_CBC, v2id=23, v2name=CAMELLIA_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: v1id=-1, v1name=n/a, v2id=20, v2name=AES_GCM_C, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: v1id=-1, v1name=n/a, v2id=19, v2name=AES_GCM_B, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: v1id=-1, v1name=n/a, v2id=18, v2name=AES_GCM_A, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: v1id=13, v1name=OAKLEY_AES_CTR, v2id=13, v2name=AES_CTR, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: v1id=7, v1name=OAKLEY_AES_CBC, v2id=12, v2name=AES_CBC, blocksize=16, keydeflen=128
-000 algorithm IKE encrypt: v1id=-1, v1name=n/a, v2id=28, v2name=CHACHA20_POLY1305, blocksize=16, keydeflen=256
-000 algorithm IKE PRF: name=HMAC_MD5, hashlen=16
-000 algorithm IKE PRF: name=HMAC_SHA1, hashlen=20
-000 algorithm IKE PRF: name=HMAC_SHA2_256, hashlen=32
-000 algorithm IKE PRF: name=HMAC_SHA2_384, hashlen=48
-000 algorithm IKE PRF: name=HMAC_SHA2_512, hashlen=64
-000 algorithm IKE PRF: name=AES_XCBC, hashlen=16
-000 algorithm IKE DH Key Exchange: name=MODP1536, bits=1536
-000 algorithm IKE DH Key Exchange: name=MODP2048, bits=2048
-000 algorithm IKE DH Key Exchange: name=MODP3072, bits=3072
-000 algorithm IKE DH Key Exchange: name=MODP4096, bits=4096
-000 algorithm IKE DH Key Exchange: name=MODP6144, bits=6144
-000 algorithm IKE DH Key Exchange: name=MODP8192, bits=8192
-000 algorithm IKE DH Key Exchange: name=DH19, bits=512
-000 algorithm IKE DH Key Exchange: name=DH20, bits=768
-000 algorithm IKE DH Key Exchange: name=DH21, bits=1056
-000 algorithm IKE DH Key Exchange: name=DH31, bits=256
-000  
-000 stats db_ops: {curr_cnt, total_cnt, maxsz} :context={0,0,0} trans={0,0,0} attrs={0,0,0} 
-000  
-000 Connection list:
-000  
-000 "sourceip-inside-selector": 1.0.0.0/24===192.1.2.45[@west]...192.1.2.23[@east]; unrouted; eroute owner: #0
-000 "sourceip-inside-selector":     oriented; my_ip=1.0.0.1; their_ip=unset; my_updown=ipsec _updown;
-000 "sourceip-inside-selector":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "sourceip-inside-selector":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
-000 "sourceip-inside-selector":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "sourceip-inside-selector":   sec_label:unset;
-000 "sourceip-inside-selector":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "sourceip-inside-selector":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "sourceip-inside-selector":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "sourceip-inside-selector":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "sourceip-inside-selector":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-000 "sourceip-inside-selector":   conn_prio: 24,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "sourceip-inside-selector":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "sourceip-inside-selector":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "sourceip-inside-selector":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
-000 "sourceip-inside-selector":   nat-traversal: encaps:auto; keepalive:20s
-000 "sourceip-inside-selector":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $5;
-000 "sourceip-inside-subnets/1x0": 1.0.0.0/24===192.1.2.45[@west]...192.1.2.23[@east]; unrouted; eroute owner: #0
-000 "sourceip-inside-subnets/1x0":     oriented; my_ip=1.0.0.1; their_ip=unset; my_updown=ipsec _updown;
-000 "sourceip-inside-subnets/1x0":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "sourceip-inside-subnets/1x0":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
-000 "sourceip-inside-subnets/1x0":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "sourceip-inside-subnets/1x0":   sec_label:unset;
-000 "sourceip-inside-subnets/1x0":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "sourceip-inside-subnets/1x0":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "sourceip-inside-subnets/1x0":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "sourceip-inside-subnets/1x0":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "sourceip-inside-subnets/1x0":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-000 "sourceip-inside-subnets/1x0":   conn_prio: 24,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "sourceip-inside-subnets/1x0":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "sourceip-inside-subnets/1x0":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "sourceip-inside-subnets/1x0":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
-000 "sourceip-inside-subnets/1x0":   nat-traversal: encaps:auto; keepalive:20s
-000 "sourceip-inside-subnets/1x0":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $8;
-000 "sourceip-inside-subnets/1x0":   aliases: sourceip-inside-subnets
-000 "sourceip-outside-subnets/1x0": 2.0.0.0/24===192.1.2.45[@west]...192.1.2.23[@east]; unrouted; eroute owner: #0
-000 "sourceip-outside-subnets/1x0":     oriented; my_ip=unset; their_ip=unset; my_updown=ipsec _updown;
-000 "sourceip-outside-subnets/1x0":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "sourceip-outside-subnets/1x0":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
-000 "sourceip-outside-subnets/1x0":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "sourceip-outside-subnets/1x0":   sec_label:unset;
-000 "sourceip-outside-subnets/1x0":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "sourceip-outside-subnets/1x0":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "sourceip-outside-subnets/1x0":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "sourceip-outside-subnets/1x0":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "sourceip-outside-subnets/1x0":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-000 "sourceip-outside-subnets/1x0":   conn_prio: 24,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "sourceip-outside-subnets/1x0":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "sourceip-outside-subnets/1x0":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "sourceip-outside-subnets/1x0":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
-000 "sourceip-outside-subnets/1x0":   nat-traversal: encaps:auto; keepalive:20s
-000 "sourceip-outside-subnets/1x0":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $7;
-000 "sourceip-outside-subnets/1x0":   aliases: sourceip-outside-subnets
-000 "sourceips-inside-selectors": 1::/64===192.1.2.45[@west]...192.1.2.23[@east]===2::/64; unrouted; eroute owner: #0
-000 "sourceips-inside-selectors":     oriented; my_ip=1::1; their_ip=unset; my_updown=ipsec _updown;
-000 "sourceips-inside-selectors":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "sourceips-inside-selectors":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
-000 "sourceips-inside-selectors":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "sourceips-inside-selectors":   sec_label:unset;
-000 "sourceips-inside-selectors": 1.0.0.0/24===192.1.2.45[@west]...192.1.2.23[@east]===2.0.0.0/24; unrouted; eroute owner: #0
-000 "sourceips-inside-selectors":     oriented; my_ip=1::1; their_ip=unset; my_updown=ipsec _updown;
-000 "sourceips-inside-selectors":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "sourceips-inside-selectors":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
-000 "sourceips-inside-selectors":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "sourceips-inside-selectors":   sec_label:unset;
-000 "sourceips-inside-selectors":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "sourceips-inside-selectors":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "sourceips-inside-selectors":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "sourceips-inside-selectors":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "sourceips-inside-selectors":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-000 "sourceips-inside-selectors":   conn_prio: 64,64; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "sourceips-inside-selectors":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "sourceips-inside-selectors":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "sourceips-inside-selectors":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
-000 "sourceips-inside-selectors":   nat-traversal: encaps:auto; keepalive:20s
-000 "sourceips-inside-selectors":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $6;
-000 "sourceips-inside-subnets/0x1": 1::/64===192.1.2.45[@west]...192.1.2.23[@east]===2::/64; unrouted; eroute owner: #0
-000 "sourceips-inside-subnets/0x1":     oriented; my_ip=1::1; their_ip=unset; my_updown=ipsec _updown;
-000 "sourceips-inside-subnets/0x1":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "sourceips-inside-subnets/0x1":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
-000 "sourceips-inside-subnets/0x1":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "sourceips-inside-subnets/0x1":   sec_label:unset;
-000 "sourceips-inside-subnets/0x1":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "sourceips-inside-subnets/0x1":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "sourceips-inside-subnets/0x1":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "sourceips-inside-subnets/0x1":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "sourceips-inside-subnets/0x1":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-000 "sourceips-inside-subnets/0x1":   conn_prio: 64,64; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "sourceips-inside-subnets/0x1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "sourceips-inside-subnets/0x1":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "sourceips-inside-subnets/0x1":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
-000 "sourceips-inside-subnets/0x1":   nat-traversal: encaps:auto; keepalive:20s
-000 "sourceips-inside-subnets/0x1":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $9;
-000 "sourceips-inside-subnets/0x1":   aliases: sourceips-inside-subnets
-000 "sourceips-inside-subnets/1x2": 1.0.0.0/24===192.1.2.45[@west]...192.1.2.23[@east]===2.0.0.0/24; unrouted; eroute owner: #0
 000 "sourceips-inside-subnets/1x2":     oriented; my_ip=1.0.0.1; their_ip=unset; my_updown=ipsec _updown;
-000 "sourceips-inside-subnets/1x2":   xauth us:none, xauth them:none,  my_username=[any]; their_username=[any]
-000 "sourceips-inside-subnets/1x2":   our auth:rsasig(RSASIG+RSASIG_v1_5), their auth:RSASIG+ECDSA+RSASIG_v1_5, our autheap:none, their autheap:none;
-000 "sourceips-inside-subnets/1x2":   modecfg info: us:none, them:none, modecfg policy:push, dns:unset, domains:unset, cat:unset;
-000 "sourceips-inside-subnets/1x2":   sec_label:unset;
-000 "sourceips-inside-subnets/1x2":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 0;
-000 "sourceips-inside-subnets/1x2":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
-000 "sourceips-inside-subnets/1x2":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "sourceips-inside-subnets/1x2":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
-000 "sourceips-inside-subnets/1x2":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
-000 "sourceips-inside-subnets/1x2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
-000 "sourceips-inside-subnets/1x2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "sourceips-inside-subnets/1x2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "sourceips-inside-subnets/1x2":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
-000 "sourceips-inside-subnets/1x2":   nat-traversal: encaps:auto; keepalive:20s
-000 "sourceips-inside-subnets/1x2":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $10;
-000 "sourceips-inside-subnets/1x2":   aliases: sourceips-inside-subnets
-000  
-000 Total IPsec connections: loaded 6, active 0
-000  
-000 State Information: DDoS cookies not required, Accepting new IKE connections
-000 IKE SAs: total(0), half-open(0), open(0), authenticated(0), anonymous(0)
-000 IPsec SAs: total(0), authenticated(0), anonymous(0)
-000  
-000 Bare Shunt list:
-000  
+000 "sourceips-inside-subnets/0x1":     oriented; my_ip=1::1; their_ip=unset; my_updown=ipsec _updown;
 west #
  

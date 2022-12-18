@@ -2,23 +2,25 @@
 ipsec start
 ../../guestbin/wait-until-pluto-started
 
+# sourceip is shown as {my,their}_ip=
+add() { ipsec auto --add $1 ; ipsec whack --connectionstatus --name $1 | grep _ip= ; }
+
 # fails because there's no subnet=
-ipsec auto --add sourceip-without-selector
-ipsec auto --add sourceips-without-selector
+
+add sourceip-without-selector
+add sourceips-without-selector
 
 # fails because sourceip is not within subnet
-ipsec auto --add sourceip-outside-selector
+add sourceip-outside-selector
 
 # fails because sourceip is not within subnet
-ipsec auto --add sourceips-outside-selectors
+add sourceips-outside-selectors
 
 # all good
-ipsec auto --add sourceip-inside-selector
-ipsec auto --add sourceips-inside-selectors
+add sourceip-inside-selector
+add sourceips-inside-selectors
 
 # subnets= tests can't check inside/outside
-ipsec auto --add sourceip-outside-subnets
-ipsec auto --add sourceip-inside-subnets
-ipsec auto --add sourceips-inside-subnets
-
-ipsec whack --status
+add sourceip-outside-subnets
+add sourceip-inside-subnets
+add sourceips-inside-subnets
