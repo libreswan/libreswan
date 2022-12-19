@@ -78,8 +78,6 @@ size_t jam_said(struct jambuf *buf, const ip_said *said)
 			return jam_string(buf, "%trap");
 		case SPI_IGNORE:
 			return jam_string(buf, "%ignore");
-		case SPI_TRAPSUBNET:
-			return jam_string(buf, "%trapsubnet");
 		default:
 #if 0
 			return jam(buf, "%s-"PRI_IPSEC_SPI, "%unk", pri_ipsec_spi(said->spi));

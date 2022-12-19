@@ -2238,11 +2238,10 @@ static const char *const policy_spi_name[] = {
 	"%hold",
 	"%trap",
 	"%ignore",
-	"%trapsubnet",
 };
 
 enum_names policy_spi_names = {
-	SPI_PASS, SPI_TRAPSUBNET,
+	SPI_PASS, SPI_IGNORE,
 	ARRAY_REF(policy_spi_name),
 	"%",	/* prefix */
 	&policy_spi_none_names

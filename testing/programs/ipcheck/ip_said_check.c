@@ -75,7 +75,8 @@ static void check_str_said(void)
 		{ LN, "%hold",   "%hold", false, },   { LN, "int259@0.0.0.0", "%hold", false, },
 		{ LN, "%trap",   "%trap", false, },   { LN, "int260@0.0.0.0", "%trap", false, },
 		{ LN, "%ignore", "%ignore", false, }, { LN, "int261@0.0.0.0", "%ignore", false, },
-		{ LN, "%trapsubnet", "%trapsubnet", false, }, { LN, "int262@0.0.0.0", "%trapsubnet", false, },
+		/* was %trapsubnet */
+		{ LN, "int262@0.0.0.0", "%unk-263", false, },
 		/* was "int.106@0.0.0.0" */
 		{ LN, "int263@0.0.0.0", "%unk-263", false, },
 		{ LN, "esp9@1.2.3.4", "unk.9@1.2.3.4", .fudge = true, },
