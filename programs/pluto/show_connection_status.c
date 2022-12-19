@@ -249,8 +249,8 @@ static void jam_end_nexthop(struct jambuf *buf, const struct spd_end *this,
 	}
 }
 
-void jam_end(struct jambuf *buf, const struct spd_end *this, const struct spd_end *that,
-	     enum left_right left_right, lset_t policy, bool skip_next_hop)
+void jam_spd_end(struct jambuf *buf, const struct spd_end *this, const struct spd_end *that,
+		 enum left_right left_right, lset_t policy, bool skip_next_hop)
 {
 	switch (left_right) {
 	case LEFT_END:
@@ -281,31 +281,32 @@ void jam_end(struct jambuf *buf, const struct spd_end *this, const struct spd_en
  * Two symmetric ends separated by ...
  */
 
-#define END_BUF (sizeof(subnet_buf) + sizeof(address_buf) + sizeof(id_buf) + sizeof(subnet_buf) + 10)
-#define CONN_BUF_LEN    (2 * (END_BUF - 1) + 4)
-
-char *format_connection(char *buf, size_t buf_len,
-			       const struct connection *c,
-			       const struct spd_route *sr)
+void jam_spd(struct jambuf *buf, const struct spd_route *spd)
 {
-	struct jambuf b = array_as_jambuf(buf, buf_len);
-	jam_end(&b, sr->local, sr->remote, LEFT_END, LEMPTY, false);
-	jam(&b, "...");
-	jam_end(&b, sr->remote, sr->local, RIGHT_END, c->policy, oriented(c));
-	return buf;
+	jam_spd_end(buf, spd->local, spd->remote, LEFT_END, LEMPTY, false);
+	jam_string(buf, "...");
+	jam_spd_end(buf, spd->remote, spd->local, RIGHT_END,
+		    spd->connection->policy, oriented(spd->connection));
+}
+
+const char *str_spd(const struct spd_route *spd, spd_buf *buf)
+{
+	struct jambuf jambuf = ARRAY_AS_JAMBUF(buf->buf);
+	jam_spd(&jambuf, spd);
+	return buf->buf;
 }
 
 static void show_one_sr(struct show *s,
 			const struct connection *c,
-			const struct spd_route *sr,
+			const struct spd_route *spd,
 			const char *instance)
 {
-	char topo[CONN_BUF_LEN];
+	spd_buf spdb;
 	ipstr_buf thisipb, thatipb;
 
 	show_comment(s, PRI_CONNECTION": %s; %s; eroute owner: #%lu",
 		     c->name, instance,
-		     format_connection(topo, sizeof(topo), c, sr),
+		     str_spd(spd, &spdb),
 		     enum_name(&routing_story, c->child.routing),
 		     c->child.kernel_policy_owner);
 
@@ -324,9 +325,9 @@ static void show_one_sr(struct show *s,
 		     OPT_HOST(that_sourceip, thatipb),
 		     OPT_PREFIX_STR("; mycert=", cert_nickname(&c->local->host.config->cert)),
 		     OPT_PREFIX_STR("; peercert=", cert_nickname(&c->remote->host.config->cert)),
-		     ((sr->local->config->child.updown == NULL ||
-		       streq(sr->local->config->child.updown, "%disabled")) ? "<disabled>"
-		      : sr->local->config->child.updown));
+		     ((spd->local->config->child.updown == NULL ||
+		       streq(spd->local->config->child.updown, "%disabled")) ? "<disabled>" :
+		      spd->local->config->child.updown));
 
 #undef OPT_HOST
 #undef OPT_PREFIX_STR
@@ -346,18 +347,18 @@ static void show_one_sr(struct show *s,
 		      * Both should not be set, but if they are, we
 		      * want to know.
 		      */
-		     COMBO(sr->local->host->config->xauth, server, client),
-		     COMBO(sr->remote->host->config->xauth, server, client),
+		     COMBO(spd->local->host->config->xauth, server, client),
+		     COMBO(spd->remote->host->config->xauth, server, client),
 		     /* should really be an enum name */
-		     (sr->local->host->config->xauth.server ?
+		     (spd->local->host->config->xauth.server ?
 		      c->config->xauthby == XAUTHBY_FILE ? "xauthby:file;" :
 		      c->config->xauthby == XAUTHBY_PAM ? "xauthby:pam;" :
 		      "xauthby:alwaysok;" :
 		      ""),
-		     (sr->local->host->config->xauth.username == NULL ? "[any]" :
-		      sr->local->host->config->xauth.username),
-		     (sr->remote->host->config->xauth.username == NULL ? "[any]" :
-		      sr->remote->host->config->xauth.username));
+		     (spd->local->host->config->xauth.username == NULL ? "[any]" :
+		      spd->local->host->config->xauth.username),
+		     (spd->remote->host->config->xauth.username == NULL ? "[any]" :
+		      spd->remote->host->config->xauth.username));
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		const char *who;
@@ -410,8 +411,8 @@ static void show_one_sr(struct show *s,
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		jam(buf, PRI_CONNECTION":   modecfg info:", c->name, instance);
-		jam(buf, " us:%s,", COMBO(sr->local->host->config->modecfg, server, client));
-		jam(buf, " them:%s,", COMBO(sr->remote->host->config->modecfg, server, client));
+		jam(buf, " us:%s,", COMBO(spd->local->host->config->modecfg, server, client));
+		jam(buf, " them:%s,", COMBO(spd->remote->host->config->modecfg, server, client));
 		jam(buf, " modecfg policy:%s,", (c->policy & POLICY_MODECFG_PULL ? "pull" : "push"));
 
 		jam_string(buf, " dns:");
@@ -440,7 +441,7 @@ static void show_one_sr(struct show *s,
 			}
 		}
 
-		jam(buf, " cat:%s;", sr->local->child->config->has_client_address_translation ? "set" : "unset");
+		jam(buf, " cat:%s;", spd->local->child->config->has_client_address_translation ? "set" : "unset");
 	}
 
 #undef COMBO

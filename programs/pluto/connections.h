@@ -617,15 +617,6 @@ struct connection {
 extern bool same_peer_ids(const struct connection *c,
 			  const struct connection *d, const struct id *peers_id);
 
-/*
- * Format the topology of a connection end, leaving out defaults.
- * Largest left end looks like: client === host : port [ host_id ] ---
- * hop Note: if that==NULL, skip nexthop
- */
-void jam_end(struct jambuf *buf, const struct spd_end *this, const struct spd_end *that,
-	     enum left_right left_right, lset_t policy, bool filter_rnh);
-
-struct whack_message;   /* forward declaration of tag whack_msg */
 extern void add_connection(const struct whack_message *wm, struct logger *logger);
 
 void update_hosts_from_end_host_addr(struct connection *c, enum left_right end,
@@ -833,11 +824,21 @@ void set_child_routing_where(struct connection *c, enum routing routing, where_t
 #define set_child_routing(C, RT)		\
 	set_child_routing_where(C, RT, HERE)
 
-#define END_BUF (sizeof(subnet_buf) + sizeof(address_buf) + sizeof(id_buf) + sizeof(subnet_buf) + 10)
-#define CONN_BUF_LEN    (2 * (END_BUF - 1) + 4)
+/*
+ * Format the topology of a connection end, leaving out defaults.
+ * Largest left end looks like: client === host : port [ host_id ] ---
+ * hop Note: if that==NULL, skip nexthop
+ */
+void jam_spd_end(struct jambuf *buf, const struct spd_end *this, const struct spd_end *that,
+		 enum left_right left_right, lset_t policy, bool filter_rnh);
 
-char *format_connection(char *buf, size_t buf_len,
-			       const struct connection *c,
-			const struct spd_route *sr);
+#define SPD_END_BUF (sizeof(subnet_buf) + sizeof(address_buf) + sizeof(id_buf) + sizeof(subnet_buf) + 10)
+
+typedef struct {
+	char buf[SPD_END_BUF + /*...*/ SPD_END_BUF + 1/*canary*/];
+} spd_buf;
+
+void jam_spd(struct jambuf *buf, const struct spd_route *spd);
+const char *str_spd(const struct spd_route *spd, spd_buf *buf);
 
 #endif

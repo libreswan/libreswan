@@ -1078,13 +1078,13 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 				struct spd_end local = *c->spd->local;
 				local.client = *local_client;
-				jam_end(buf, &local, NULL, LEFT_END, LEMPTY, oriented(c));
+				jam_spd_end(buf, &local, NULL, LEFT_END, LEMPTY, oriented(c));
 
-				jam(buf, "...");
+				jam_string(buf, "...");
 
 				struct spd_end remote = *c->spd->remote;
 				remote.client = *remote_client;
-				jam_end(buf, &remote, NULL, RIGHT_END, LEMPTY, oriented(c));
+				jam_spd_end(buf, &remote, NULL, RIGHT_END, LEMPTY, oriented(c));
 			}
 			return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 		}
@@ -1149,7 +1149,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 			LSWDBGP(DBG_BASE, buf) {
 				jam(buf, "setting phase 2 virtual values to ");
-				jam_end(buf, c->spd->remote, NULL, LEFT_END, LEMPTY, oriented(c));
+				jam_spd_end(buf, c->spd->remote, NULL, LEFT_END, LEMPTY, oriented(c));
 			}
 		}
 	}
@@ -1389,9 +1389,9 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 		jam(buf, "    us: ");
 		const struct connection *c = st->st_connection;
 		const struct spd_route *sr = c->spd;
-		jam_end(buf, sr->local, sr->remote, LEFT_END, LEMPTY, oriented(c));
-		jam(buf, "  them: ");
-		jam_end(buf, sr->remote, sr->local, RIGHT_END, LEMPTY, oriented(c));
+		jam_spd_end(buf, sr->local, sr->remote, LEFT_END, LEMPTY, oriented(c));
+		jam_string(buf, "  them: ");
+		jam_spd_end(buf, sr->remote, sr->local, RIGHT_END, LEMPTY, oriented(c));
 	}
 
 	/**** finish reply packet: Nr [, KE ] [, IDci, IDcr ] ****/
