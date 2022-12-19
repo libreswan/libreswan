@@ -514,8 +514,6 @@ bool assign_holdpass(struct connection *c,
 extern bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 			    enum shunt_policy failure_shunt, struct logger *logger);
 
-extern enum policy_spi shunt_policy_spi(enum shunt_policy);
-
 extern ipsec_spi_t get_ipsec_spi(const struct connection *c,
 				 const struct ip_protocol *proto,
 				 ipsec_spi_t avoid,

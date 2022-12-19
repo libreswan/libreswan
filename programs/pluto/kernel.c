@@ -1686,19 +1686,13 @@ void show_shunt_status(struct show *s)
 		/* Print interesting fields.  Ignore count and last_active. */
 		selector_buf ourb;
 		selector_buf peerb;
-		said_buf sat;
 		connection_priority_buf prio;
-
-		/* XXX: hack to preserve output */
-		ip_said said = said_from_address_protocol_spi(selector_type(&bs->our_client)->address.unspec,
-							      &ip_protocol_internal,
-							      htonl(shunt_policy_spi(bs->shunt_policy)));
 
 		show_comment(s, "%s -%d-> %s => %s %s    %s",
 			     str_selector_subnet_port(&(bs)->our_client, &ourb),
 			     bs->transport_proto->ipproto,
 			     str_selector_subnet_port(&(bs)->peer_client, &peerb),
-			     str_said(&said, &sat),
+			     enum_name(&shunt_policy_percent_names, bs->shunt_policy),
 			     str_connection_priority(bs->policy_prio, &prio),
 			     bs->why);
 	}
@@ -2014,26 +2008,6 @@ bool assign_holdpass(struct connection *c,
 	set_child_routing(c, rn);
 	dbg("kernel:  %s() done - returning success", __func__);
 	return true;
-}
-
-/* compute a (host-order!) SPI to implement the policy in connection c */
-enum policy_spi shunt_policy_spi(enum shunt_policy sp)
-{
-	/* note: these are in host order :-( */
-	if (!pexpect(sp != SHUNT_UNSET)) {
-		return SPI_NONE;
-	}
-
-	static const enum policy_spi shunt_spi[SHUNT_POLICY_ROOF] = {
-		[SHUNT_NONE] = SPI_NONE,	/* --none */
-		[SHUNT_HOLD] = SPI_HOLD,	/* --negotiationshunt=hold */
-		[SHUNT_TRAP] = SPI_TRAP,	/* --initiateontraffic */
-		[SHUNT_PASS] = SPI_PASS,	/* --pass */
-		[SHUNT_DROP] = SPI_DROP,	/* --drop */
-		[SHUNT_REJECT] = SPI_REJECT,	/* --reject */
-	};
-	passert(sp < elemsof(shunt_spi));
-	return shunt_spi[sp];
 }
 
 static void setup_esp_nic_offload(struct kernel_state *sa, struct connection *c,

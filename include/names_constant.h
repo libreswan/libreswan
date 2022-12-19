@@ -19,7 +19,8 @@ extern const enum_names debug_names;
 extern const enum_names debug_help;
 extern const struct lmod_info debug_lmod_info;
 
-extern enum_names shunt_policy_names;
+extern enum_names shunt_policy_names;		/* SHUNT_... */
+extern enum_names shunt_policy_percent_names;	/* %... */
 extern enum_names connection_kind_names;
 extern enum_names routing_story;
 extern enum_names certpolicy_type_names;

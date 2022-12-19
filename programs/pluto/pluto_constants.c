@@ -336,6 +336,23 @@ enum_names shunt_policy_names = {
 	NULL,
 };
 
+static const char *const shunt_policy_percent_name[] = {
+	[SHUNT_UNSET] = "<shunt-unset>",
+	[SHUNT_HOLD] = "%hold",
+	[SHUNT_NONE] = "%none",
+	[SHUNT_PASS] = "%pass",
+	[SHUNT_DROP] = "%drop",
+	[SHUNT_REJECT] = "%reject",
+	[SHUNT_TRAP] = "%trap",
+};
+
+enum_names shunt_policy_percent_names = {
+	SHUNT_UNSET, SHUNT_POLICY_ROOF-1,
+	ARRAY_REF(shunt_policy_percent_name),
+	"%"/*prefix*/,
+	NULL,
+};
+
 /* print a policy: like bitnamesof, but it also does the non-bitfields.
  * Suppress the shunt and fail fields if 0.
  */
