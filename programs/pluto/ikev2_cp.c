@@ -474,7 +474,7 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs,
 			local->has_cat = true; /* create iptable entry */
 		}
 	} else if (connection_requires_ts(cc)) {
-		llog_sa(RC_LOG, child, "leaving TS alone");
+		ldbg_sa(child, "leaving TS alone");
 	} else {
 		update_end_selector(cc, cc->local->config->index,
 				    selector_from_address(ip),
