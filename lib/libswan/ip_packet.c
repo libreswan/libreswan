@@ -126,14 +126,20 @@ size_t jam_packet(struct jambuf *buf, const ip_packet *packet)
 	const struct ip_info *afi = packet->info;
 
 	size_t s = 0;
-	/* src port can be zero aka wildcard */
-	if (packet->src.hport == 0 && packet->protocol->endpoint_requires_non_zero_port) {
-		/* For IPv6 includes [] */
+	if (packet->src.hport == 0 && packet->protocol->zero_port_is_any) {
+		/*
+		 * SRC port can be zero aka wildcard aka ephemeral, it
+		 * isn't know to pluto so denotes any and should be
+		 * omitted.
+		 *
+		 * For IPv6, jam_wrapped() includes includes [] so
+		 * output is consistent with endpoint.jam().
+		 */
 		s += afi->address.jam_wrapped(buf, afi, &packet->src.bytes);
 	} else {
 		s += afi->endpoint.jam(buf, afi, &packet->src.bytes, packet->src.hport);
 	}
-	/* dst port is always valid */
+	/* DST port is always valid */
 	s += jam(buf, "-%s->", packet->protocol->name);
 	s += afi->endpoint.jam(buf, afi, &packet->dst.bytes, packet->dst.hport);
 	return s;
@@ -161,7 +167,7 @@ void pexpect_packet(const ip_packet *packet, where_t where)
 	     * An acquire triggered by a packet with no specified
 	     * source port will have a zero source port.
 	     */
-	    (packet->protocol->endpoint_requires_non_zero_port && packet->dst.hport == 0)) {
+	    (packet->protocol->zero_port_is_any && packet->dst.hport == 0)) {
 		if (packet->is_set) {
 			llog_pexpect(&global_logger, where,
 				     "invalid packet: "PRI_PACKET, pri_packet(packet));

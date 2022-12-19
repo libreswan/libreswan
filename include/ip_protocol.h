@@ -57,8 +57,14 @@ struct ip_protocol {
 	 * Using this to encapsulate.
 	 */
 	const struct ip_encap *encap_esp;
-	/* is a port required? */
-	bool endpoint_requires_non_zero_port;
+	/*
+	 * When showing a selector or packet, the zero port denotes
+	 * any port (0-65535) and should be omitted from the output.
+	 *
+	 * When parsing an endpoint, zero aka wild ports, aren't
+	 * allowed.
+	 */
+	bool zero_port_is_any;
 };
 
 #if 0

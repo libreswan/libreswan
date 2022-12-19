@@ -96,7 +96,7 @@ const struct ip_protocol ip_protocols[256] = {
 		/* libreswan */
 		.prefix = "tcp",
 		.encap_esp = &ip_encap_esp_in_tcp,
-		.endpoint_requires_non_zero_port = true,
+		.zero_port_is_any = true,
 	},
 	[7] = {
 		.description = "CBT",
@@ -166,7 +166,7 @@ const struct ip_protocol ip_protocols[256] = {
 		/* libreswan */
 		.prefix = "udp",
 		.encap_esp = &ip_encap_esp_in_udp,
-		.endpoint_requires_non_zero_port = true,
+		.zero_port_is_any = true,
 	},
 	[18] = {
 		.description = "Multiplexing",

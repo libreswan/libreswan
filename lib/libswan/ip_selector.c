@@ -92,24 +92,22 @@ size_t jam_selector(struct jambuf *buf, const ip_selector *selector)
 	s += jam(buf, "/%u", selector->maskbits);
 
 	/* optionally /<protocol>/<port> */
-#if 1
 	if (selector->ipproto != 0 || selector->hport != 0) {
-		s += jam(buf, ":");
-		s += jam(buf, "%s/", selector_protocol(*selector)->name);
-		if (selector->hport == 0) {
-			s += jam_string(buf, "0-65535");
+		const struct ip_protocol *protocol = selector_protocol(*selector);
+#if 1
+		if (selector->hport == 0 && protocol->zero_port_is_any) {
+			s += jam(buf, ":%s/0-65535", protocol->name);
 		} else {
-			s += jam(buf, "%d", selector->hport);
+			s += jam(buf, ":%s/%d", protocol->name, selector->hport);
 		}
-	}
 #else
-	const struct ip_protocol *protocol = selector_protocol(*selector);
-	if (selector->hport != 0) {
-		s += jam(buf, "/%s/%d", protocol->name, selector->hport);
-	} else if (protocol != &ip_protocol_all) {
-		s += jam(buf, "/%s", protocol->name);
-	}
+		if (selector->hport == 0 && protocol->zero_port_is_any) {
+			s += jam(buf, "/%s", protocol->name);
+		} else {
+			s += jam(buf, "/%s/%d", protocol->name, selector->hport);
+		}
 #endif
+	}
 
 	return s;
 }
@@ -176,22 +174,24 @@ size_t jam_selector_pair(struct jambuf *buf,
 		return jam_string(buf, "<unset-selectors>");
 	}
 
-	size_t l = 0;
+	size_t s = 0;
 	const char *sep = "";
-	FOR_EACH_THING(s, src, dst) {
-		l += jam_string(buf, sep); sep = "->";
+	FOR_EACH_THING(selector, src, dst) {
+		s += jam_string(buf, sep); sep = "->";
 		/* XXX: merge with ip_selector */
-		ip_address sa = selector_prefix(*s);
-		l += jam_address(buf, &sa);
-		l += jam(buf, "/%u", s->maskbits);
-		const struct ip_protocol *protocol = selector_protocol(*s);
-		if (s->hport != 0) {
-			l += jam(buf, "/%s/%d", protocol->name, s->hport);
-		} else if (protocol != &ip_protocol_all) {
-			l += jam(buf, "/%s", protocol->name);
+		ip_address sa = selector_prefix(*selector);
+		s += jam_address(buf, &sa);
+		s += jam(buf, "/%u", selector->maskbits);
+		if (selector->ipproto != 0 || selector->hport != 0) {
+			const struct ip_protocol *protocol = selector_protocol(*selector);
+			if (selector->hport == 0 && protocol->zero_port_is_any) {
+				s += jam(buf, "/%s", protocol->name);
+			} else {
+				s += jam(buf, "/%s/%d", protocol->name, selector->hport);
+			}
 		}
 	}
-	return l;
+	return s;
 }
 
 const char *str_selector_pair(const ip_selector *src,
