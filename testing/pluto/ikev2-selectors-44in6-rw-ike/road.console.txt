@@ -28,7 +28,7 @@ road #
 002 "road" #2: running updown prepare 192.0.3.0/24->192.0.20.0/24
 002 "road" #2: running updown route 192.0.3.0/24->192.0.2.0/24
 002 "road" #2: running updown route 192.0.3.0/24->192.0.20.0/24
-004 "road" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] [192.0.3.0-192.0.3.255:0-65535 0] -> [192.0.20.0-192.0.20.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+004 "road" #2: initiator established Child SA using #1; IPsec tunnel [192.0.3.0/24->192.0.2.0/24] [192.0.3.0/24->192.0.20.0/24] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 road #
  ../../guestbin/ipsec-look.sh
 road NOW
