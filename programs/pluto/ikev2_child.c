@@ -645,9 +645,16 @@ void llog_v2_child_sa_established(struct ike_sa *ike UNUSED, struct child_sa *ch
 		jam(buf, "IPsec %s", (c->policy & POLICY_TUNNEL ? "tunnel" : "transport"));
 		for (const struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
 			jam_string(buf, " ");
-			jam_end_selector(buf, spd->local->client);
-			jam_string(buf, " -> ");
-			jam_end_selector(buf, spd->remote->client);
+			if (connection_requires_ts(c)) {
+				jam_string(buf, "[");
+				jam_selector_pair(buf, &spd->local->client,
+						  &spd->remote->client);
+				jam_string(buf, "]");
+			} else {
+				jam_end_selector(buf, spd->local->client);
+				jam_string(buf, " -> ");
+				jam_end_selector(buf, spd->remote->client);
+			}
 		}
 		jam_string(buf, " ");
 		jam_child_sa_details(buf, &child->sa);
