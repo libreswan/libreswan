@@ -564,50 +564,9 @@ static void cannot_ondemand(lset_t rc_flags, const struct kernel_acquire *b, con
 	}
 
 	if (b->by_acquire) {
-		/*
-		 * A kernel policy was created for us based on the
-		 * packet trigger and not whack --oppo trigger.
-		 * Hence, there really is something in the kernel that
-		 * needs updating.
-		 *
-		 * Replace negotiationshunt (hold or pass) with
-		 * failureshunt (hold or pass).  If no failure_shunt
-		 * specified, use SHUNT_PASS -- THIS MAY CHANGE.
-		 *
-		 * Should SHUNT_PASS instead call with a delete?
-		 */
-		enum shunt_policy failure_shunt = SHUNT_HOLD;
-		dbg("cannot_ondemand() replaced negotiationshunt with bare failureshunt=%s",
-		    enum_name_short(&shunt_policy_names, failure_shunt));
-		pexpect(failure_shunt_ok(failure_shunt)); /* set to something */
-		ip_selector src = packet_src_selector(b->packet);
-		ip_selector dst = packet_dst_selector(b->packet);
-		struct kernel_policy kernel_policy =
-			kernel_policy_from_void(src, dst, DIRECTION_OUTBOUND,
-						/* we don't know connection for priority yet */
-						highest_kernel_priority,
-						failure_shunt,
-						/*sa_marks*/NULL, /*xfrmi*/NULL,
-						b->sec_label, /*from acquire*/
-						HERE);
-
-		if (!raw_policy(KERNEL_POLICY_OP_REPLACE,
-				DIRECTION_OUTBOUND,
-				EXPECT_KERNEL_POLICY_OK,
-				&kernel_policy.src.client,
-				&kernel_policy.dst.client,
-				&kernel_policy,
-				deltatime(SHUNT_PATIENCE),
-				kernel_policy.sa_marks/*NULL*/,
-				kernel_policy.xfrmi/*NULL*/,
-				kernel_policy.id,
-				kernel_policy.sec_label, /* from acquire */
-				b->logger,
-				"%s() %s", __func__, ughmsg)) {
-			llog(RC_LOG_SERIOUS, b->logger,
-			     "failed to replace negotiationshunt with bare failureshunt");
-			return;
-		}
+		ldbg(b->logger, "initiate from acquire so kernel policy is assumed to already expire");
+	} else {
+		ldbg(b->logger, "initiate from whack so nothing to kernel policy to expire");
 	}
 }
 
