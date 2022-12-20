@@ -2,11 +2,15 @@
 See also https://libreswan.org/
 
 v4.10 (Unreleased)
-
+* pluto: Support addresspool=v4/mask,v6/mask [Andrew]
+* pluto: Support multiple TSes per Child SA [Andrew]
+* building: remove old copy of unbound headers [Andrew]
+* building: Use DESTDIR instead of FINAL* env vars [Andrew]
 * install: overhaul [Andrew]
   - use INSTALL_INITSYSTEM=false to prevent update of /etc/<initsystem>
   - use INSTALL_CONFIGS=false prevents update of /etc/ipsec.d et.al.
   - drop FINAL* make variables; see mk/config.mk for alternatives
+* packaging: Fix debian systemd service install [Antonio Silva]
 
 v4.9 (October 13, 2022)
 * IKEv1: fix crasher (introduced in 4.8) when USE_NSS_KDF=false or MD5 [Andrew]
