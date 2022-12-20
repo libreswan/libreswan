@@ -1,4 +1,4 @@
-# @@CONFDIR@@/ipsec.conf - Libreswan 4.0 configuration file
+# @@CONFDIR@@/ipsec.conf - Libreswan 4.x configuration file
 #
 # see 'man ipsec.conf' and 'man pluto' for more information
 #
@@ -9,7 +9,7 @@ config setup
 	# Note that on busy VPN servers, the amount of logging can trigger
 	# syslogd (or journald) to rate limit messages.
 	#logfile=@@LOGDIR@@/pluto.log
-	#
+
 	# Debugging should only be used to find bugs, not configuration issues!
 	# "base" regular debug, "tmi" is excessive (!) and "private" will log
 	# sensitive key material (not available in FIPS mode). The "cpu-usage"
@@ -19,19 +19,57 @@ config setup
 	# plutodebug="base"
 	# plutodebug="tmi"
 	#plutodebug="none"
-	#
-	# Some machines use a DNS resolver on localhost with broken DNSSEC
-	# support. This can be tested using the command:
-	# dig +dnssec DNSnameOfRemoteServer
-	# If that fails but omitting '+dnssec' works, the system's resolver is
-	# broken and you might need to disable DNSSEC.
-	# dnssec-enable=no
-	#
-	# To enable IKE and IPsec over TCP for VPN server. Requires at least
+
+	# Whether to log IP addresses of incoming connections. Disable when
+	# logfile privacy is required.
+	#logip=yes
+
+	# The startup mode of the DDoS defense mechanism. Acceptable values
+	# are busy, unlimited or auto (the default). This option can also be
+	# given to the IKE daemon while running, for example by issuing ipsec
+	# whack --ddos--busy. When in busy mode, pluto activates the IKEv2
+	# anti-DDoS # counter measures.
+	#ddos-mode=auto
+
+	# DDoS defense mechanism threshold
+	# The number of half-open IKE SAs before the pluto IKE daemon will be
+	# placed in (anti-ddos) busy mode. The default is 25000.
+
+	# IKEv1 policy (accept, reject or drop)
+	# See RFC XXX - Deprecation of IKEv1 and obsoleted algorithms
+	#ikev1-policy=accept
+
+	# IKEv2 global redirect (during IKE_SA_INIT)
+	# Whether to send requests for the remote peer to redirect IKE/IPsec
+	# SA's during IKE_SA_INIT. Valid options are no (the default), yes
+	# and auto, where auto means that the requests will be sent if DDoS
+	# mode is active (see ddos-mode). If set, the option
+	# global-redirect-to= must also be set to indicate where to redirect
+	# peers to. this can be given to the IKE daemon wile running using
+	# ipsec whack --global-redirect{-to}
+	#global-redirect=no
+	#global-redirect-to=<ip or hostname>, ...
+
+	# The number of half-open IKE SAs before the IKE daemon starts
+	# refusing all new IKE attempts. Established IKE peers are not
+	# affected.
+	#max-halfopen-ike=5000
+
+	# Whether pluto performs DNSSEC validation.
+	#dnssec-enable=yes
+
+	# To accept IKE and IPsec encapsulation over TCP. Requires at least
 	# Linux 5.7 kernel or a kernel with TCP backport (like RHEL8 4.18.0-291)
-	# listen-tcp=yes
 	# To enable IKE and IPsec over TCP for VPN client, also specify
 	# tcp-remote-port=4500 in the client's conn section.
+	#listen-tcp=no
+
+	# SECCOMP syscall filtering (enabled,disabled or tolerant)
+	# Whether to log (when tolerant) or restart (when enabled) when
+	# a rogue syscall is attempted by pluto indicating a remote code
+	# exploit attempt.  # If using custom _updown scripts, this might
+	# trigger false positives.
+	#seccomp=disabled
 
 # if it exists, include system wide crypto-policy defaults
 # include /etc/crypto-policies/back-ends/libreswan.config
