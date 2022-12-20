@@ -1841,6 +1841,24 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 		attr = RTA_NEXT(attr, remaining);
 	}
 
+	/* XXX: kernel's __u64 != uint64_t */
+	ldbg(logger, "acquire.policy.lft.soft_add_expires_seconds=%"PRIu64,
+	     (uint64_t)acquire->policy.lft.soft_add_expires_seconds);
+	ldbg(logger, "acquire.policy.lft.hard_add_expires_seconds=%"PRIu64,
+	     (uint64_t)acquire->policy.lft.hard_add_expires_seconds);
+	ldbg(logger, "acquire.policy.lft.soft_use_expires_seconds=%"PRIu64,
+	     (uint64_t)acquire->policy.lft.soft_use_expires_seconds);
+	ldbg(logger, "acquire.policy.lft.hard_use_expires_seconds=%"PRIu64,
+	     (uint64_t)acquire->policy.lft.hard_use_expires_seconds);
+
+#if 0
+	/* XXX: kernel's __u64 != uint64_t */
+	ldbg(logger, "acquire.policy.curlft.add_time=%"PRIu64,
+	     (uint64_t)acquire->policy.curlft.add_time);
+	ldbg(logger, "acquire.policy.curlft.use_time=%"PRIu64,
+	     (uint64_t)acquire->policy.curlft.use_time);
+#endif
+
 	struct kernel_acquire b = {
 		.packet = packet,
 		.by_acquire = true,
