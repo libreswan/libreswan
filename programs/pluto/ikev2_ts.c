@@ -974,27 +974,6 @@ static bool fit_ts_to_selector(struct narrowed_selector *ns,
 	return true;
 }
 
-static bool fit_ts_to_selectors(struct narrowed_selector *ns,
-				const struct traffic_selector *ts,
-				const ip_selectors *selectors,
-				enum fit fit, indent_t indent)
-{
-	indent.level++;
-	zero(ns);
-	bool matched = false;
-	for (unsigned i = 0; i < selectors->len; i++) {
-		struct narrowed_selector t;
-		if (!fit_ts_to_selector(&t, ts, selectors->list[i], fit, indent)) {
-			continue;
-		}
-		if (score_gt_best(&t.score, &ns->score)) {
-			matched = true;
-			*ns = t;
-		}
-	}
-	return matched;
-}
-
 static bool fit_ts_to_sec_label(struct narrowed_selector_payload *nsp,
 				const struct traffic_selector_payload *tsp,
 				chunk_t sec_label, enum fit sec_label_fit,
@@ -1058,19 +1037,39 @@ static bool fit_tsp_to_end(struct narrowed_selector_payload *nsp,
 	if (!fit_ts_to_sec_label(nsp, tsp, end->sec_label, sec_label_fit, indent)) {
 		return false;
 	}
+
 	bool matched = false;
 	nsp->nr = 0;
 	for (unsigned i = 0; i < tsp->nr; i++) {
-		if (!fit_ts_to_selectors(&nsp->ts[nsp->nr], &tsp->ts[i],
-					 end->selectors, selector_fit, indent)) {
-			continue;
+		const struct traffic_selector *ts = &tsp->ts[i];
+		for (unsigned i = 0; i < end->selectors->len; i++) {
+
+			struct narrowed_selector t;
+			if (!fit_ts_to_selector(&t, ts, end->selectors->list[i],
+						selector_fit, indent)) {
+				continue;
+			}
+
+			matched = true;
+
+			/* save the best overall score */
+			if (score_gt_best(&t.score, &nsp->score)) {
+				nsp->score = t.score;
+			}
+
+			/* save the ts */
+			/* XXX: prefer wider selectors? */
+			nsp->ts[nsp->nr] = t;
+			nsp->nr++;
+
+			/* don't overflow */
+			if (nsp->nr >= elemsof(nsp->ts)) {
+				llog(RC_LOG_SERIOUS, indent.logger, "TS overflow");
+				return false;
+			}
 		}
-		matched = true;
-		if (score_gt_best(&nsp->ts[nsp->nr].score, &nsp->score)) {
-			nsp->score = nsp->ts[nsp->nr].score;
-		}
-		nsp->nr++;
 	}
+
 	return matched;
 }
 
