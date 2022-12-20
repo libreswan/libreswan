@@ -117,7 +117,7 @@ KVM-MAKEFLAG = \
 	      $(if $(KVM_$(strip $(1))), $(strip $(1))=$(KVM_$(strip $(1)))) )
 
 KVM_MAKEFLAGS ?= $(strip \
-	-j$(shell expr $(KVM_WORKERS) + 1) \
+	-j$(shell expr $(KVM_CPUS) + 1) \
 	$(call KVM-MAKEFLAG, ALL_ARGS) \
 	$(call KVM-MAKEFLAG, NSSDIR) \
 	$(call KVM-MAKEFLAG, NSS_CFLAGS) \
@@ -165,9 +165,6 @@ VIRT_INSTALL_FLAGS = \
 	--virt-type=kvm \
 	--noreboot \
 	--console=pty,target_type=serial \
-	--vcpus=$(KVM_WORKERS) \
-	--memory=$(shell expr 1024 + $(KVM_WORKERS) \* 2 \* 512) \
-	$(VIRT_CPUS) \
 	$(VIRT_CPU) \
 	$(VIRT_GATEWAY) \
 	$(VIRT_RND) \
@@ -748,6 +745,8 @@ $(KVM_POOLDIR_PREFIX)%-base: | \
 	$(KVM_PYTHON) testing/libvirt/$*/base.py \
 		$(VIRT_INSTALL) \
 			$(VIRT_INSTALL_FLAGS) \
+			--vcpus=1 \
+			--memory=1024 \
 			$(VIRT_POOLDIR) \
 			--name=$(notdir $@) \
 			$(if $(KVM_$($*)_OS_VARIANT), --os-variant=$(KVM_$($*)_OS_VARIANT)) \
@@ -976,6 +975,8 @@ $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-base \
 	$(QEMU_IMG) create -f qcow2 -F qcow2 -b $<.qcow2 $@.qcow2
 	$(VIRT_INSTALL) \
 		$(VIRT_INSTALL_FLAGS) \
+		--vcpus=1 \
+		--memory=1024 \
 		$(VIRT_POOLDIR) \
 		$(VIRT_BENCHDIR) \
 		--name=$(notdir $@) \
@@ -1011,6 +1012,15 @@ kvm-transmogrify-%:
 	rm -f $(KVM_POOLDIR_PREFIX)$(*).*
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)
 
+KVM_CPUS = \
+	$(if $(KVM_$($*)_CPUS), \
+		$(KVM_$($*)_CPUS), \
+		$(KVM_WORKERS))
+KVM_MEMORY = \
+	$(if $(KVM_$($*)_MEMORY), \
+		$(KVM_$($*)_MEMORY), \
+		$(shell expr 1024 + $(KVM_CPUS) \* 512))
+
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%, $(KVM_PLATFORM)): \
 $(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
 		| \
@@ -1021,6 +1031,8 @@ $(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
 	: fedora runs chcon TESTINGDIR
 	$(VIRT_INSTALL) \
 		$(VIRT_INSTALL_FLAGS) \
+		--vcpus=$(strip $(KVM_CPUS)) \
+		--memory=$(strip $(KVM_MEMORY)) \
 		$(VIRT_BENCHDIR) \
 		$(VIRT_POOLDIR) \
 		$(VIRT_SOURCEDIR) \
