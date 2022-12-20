@@ -114,6 +114,10 @@ west #
 "westnet-eastnet-ikev2" #1: liveness action - putting connection into hold
 | xfrm acquire rtattribute type 5 ...
 | xfrm acquire rtattribute type 16 ...
+| acquire.policy.lft.soft_add_expires_seconds=0
+| acquire.policy.lft.hard_add_expires_seconds=0
+| acquire.policy.lft.soft_use_expires_seconds=0
+| acquire.policy.lft.hard_use_expires_seconds=0
 initiate on-demand for packet 192.0.1.254:8-ICMP->192.0.2.254:0
 | assign_holdpass(): by_acquire=yes oppo=no kind=CK_PERMANENT routing=ROUTED_PROSPECTIVE->ROUTED_HOLD packet=192.0.1.254:8-ICMP->192.0.2.254:0 selectors=192.0.1.0/24->192.0.2.0/24 one_address=no
 | kernel: acquire looking for 192.0.1.254/32/ICMP/8->192.0.2.254/32/ICMP/0
