@@ -1846,6 +1846,13 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 
 /*
  * Install a bare hold or pass policy to a connection.
+ *
+ * Either the automatically installed %hold eroute is broad enough or
+ * we try to add a broader one and delete the automatic one.  Beware:
+ * this %hold might be already handled, but still squeak through
+ * because of a race.
+ *
+ * XXX: what race?
  */
 
 bool assign_holdpass(struct connection *c,
@@ -1853,33 +1860,140 @@ bool assign_holdpass(struct connection *c,
 		     struct spd_route *sr)
 {
 	struct logger *logger = c->logger;
-	/*
-	 * either the automatically installed %hold eroute is broad enough
-	 * or we try to add a broader one and delete the automatic one.
-	 * Beware: this %hold might be already handled, but still squeak
-	 * through because of a race.
-	 */
-	enum routing ro = c->child.routing;	/* routing, old */
-	enum routing rn = ro;			/* routing, new */
 
-	passert(LHAS(LELEM(CK_PERMANENT) | LELEM(CK_INSTANCE), c->kind));
-	/* figure out what routing should become */
-	switch (ro) {
+	/*
+	 * Figure out the connection's routing transition.
+	 *
+	 * UNROUTED when the trigger is by whack; ROUTED_PROSPECTIVE
+	 * when the triger is either acquire or whack?
+	 */
+	enum routing old_routing = c->child.routing;	/* routing, old */
+	enum routing new_routing;
+	switch (old_routing) {
 	case RT_UNROUTED:
-		rn = RT_UNROUTED_HOLD;
+		new_routing = RT_UNROUTED_HOLD;
 		break;
 	case RT_ROUTED_PROSPECTIVE:
-		rn = RT_ROUTED_HOLD;
+		new_routing = RT_ROUTED_HOLD;
 		break;
 	default:
 		/* no change: this %hold or %pass is old news */
+		new_routing = old_routing;
 		break;
 	}
 
-	ldbg(logger, "kernel: %s() routing was %s, needs to be %s",
-	     __func__,
-	     enum_name(&routing_story, ro),
-	     enum_name(&routing_story, rn));
+	if (DBGP(DBG_BASE)) {
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam(buf, "%s():", __func__);
+			jam(buf, " by_acquire=%s", bool_str(b->by_acquire));
+			jam(buf, " oppo=%s", bool_str(c->policy & POLICY_OPPORTUNISTIC));
+			jam(buf, " kind=");
+			jam_enum_short(buf, &connection_kind_names, c->kind);
+			jam(buf, " routing=");
+			jam_enum_short(buf, &routing_names, old_routing);
+			if (old_routing != new_routing) {
+				jam(buf, "->");
+				jam_enum_short(buf, &routing_names, new_routing);
+			}
+			jam(buf, " packet=");
+			jam_packet(buf, &b->packet);
+			jam(buf, " selectors=");
+			jam_selector_pair(buf, &sr->local->client, &sr->remote->client);
+			jam(buf, " one_address=%s",
+			    bool_str(selector_contains_one_address((sr)->local->client) &&
+				     selector_contains_one_address((sr)->remote->client)));
+		}
+	}
+
+	PASSERT(logger, (c->kind == CK_PERMANENT ||
+			 c->kind == CK_INSTANCE));
+
+
+	if ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY) {
+		/*
+		 * Unconditionally install the widened OE policy
+		 * defined by the SPD.
+		 *
+		 * Being OE the selectors presumably have only one
+		 * address (and no port/protocol).  There's code
+		 * further down checking for that case and both
+		 * skipping policy-add and deleting the bare shunt
+		 * when it happens.
+		 */
+		const char *const addwidemsg = "oe-negotiating";
+
+		struct kernel_policy kernel_policy =
+			kernel_policy_from_void(c->spd->local->client, c->spd->remote->client,
+						DIRECTION_OUTBOUND,
+						calculate_kernel_priority(c),
+						c->config->negotiation_shunt,
+						/*sa_marks*/NULL, /*xfrmi*/NULL,
+						b->sec_label, /*from acquire */
+						HERE);
+		if (raw_policy(KERNEL_POLICY_OP_ADD,
+			       DIRECTION_OUTBOUND,
+			       EXPECT_KERNEL_POLICY_OK,
+			       &kernel_policy.src.client,
+			       &kernel_policy.dst.client,
+			       &kernel_policy,
+			       deltatime(SHUNT_PATIENCE),
+			       kernel_policy.sa_marks/*NULL*/,
+			       kernel_policy.xfrmi/*NULL*/,
+			       kernel_policy.id,
+			       kernel_policy.sec_label, /* from acquire */
+			       logger,
+			       "%s() %s", __func__, addwidemsg)) {
+			/*
+			 * XXX: how can this code assume that the shunt is
+			 * "passthrough"?
+			 *
+			 * XXX: why add a bare shunt entry?  Shouldn't the
+			 * connection state instead be changed to flag that it
+			 * has a shunt?
+			 */
+			dbg("adding bare (possibly wided) passthrough negotiationshunt succeeded (violating API)");
+			add_bare_shunt(&kernel_policy.src.client, &kernel_policy.dst.client,
+				       c->config->negotiation_shunt, UNSET_CO_SERIAL,
+				       addwidemsg, logger);
+		} else {
+			llog(RC_LOG, logger, "adding bare wide passthrough negotiationshunt failed");
+		}
+	}
+
+	if (!b->by_acquire) {
+		/*
+		 * XXX: returning here and skipping the below is
+		 * wrong.
+		 *
+		 * Even when there's no acquire, the code may need to
+		 * widen the kernel policy inserted for the triggering
+		 * packet.  Which, presumably, is why OE is doing it
+		 * before this guard.
+		 */
+		ldbg(logger, "skipping %s() as not by acquire", __func__);
+		return true;
+	}
+
+	if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+		/*
+		 * Add the kernel shunt to the pluto bare
+		 * shunt list.
+		 *
+		 * We need to do this because the %hold shunt
+		 * was installed by kernel and we want to keep
+		 * track of it inside pluto.
+		 *
+		 * XXX: hack to keep code below happy - need
+		 * to figigure out what to do with the shunt
+		 * functions.
+		 */
+		ip_selector src_client = packet_src_selector(b->packet);
+		ip_selector dst_client = packet_dst_selector(b->packet);
+		add_bare_shunt(&src_client, &dst_client,
+			       SHUNT_HOLD, UNSET_CO_SERIAL,
+			       b->by_acquire ? "acquire" : "whack",
+			       logger);
+	}
 
 	/*
 	 * A template connection's eroute can be eclipsed by either a
@@ -1889,7 +2003,9 @@ bool assign_holdpass(struct connection *c,
 	 * XXX: is this still needed?
 	 *
 	 * XXX: yes, but not for the reason you might thing.  This
-	 * code is trying to detect the caller inserting a shunt.
+	 * code seems to be trying to detect the OE code above that
+	 * has already inserted the widened kernel policy and added
+	 * the needless bare_shunt.
 	 */
 	if (selector_contains_one_address((sr)->local->client) &&
 	    selector_contains_one_address((sr)->remote->client)) {
@@ -1907,7 +2023,15 @@ bool assign_holdpass(struct connection *c,
 			llog(RC_LOG, logger,
 			     "%s() no bare shunt to remove? - mismatch?", __func__);
 		} else {
-			/* ??? should this happen? */
+			/*
+			 * ??? should this happen?
+			 *
+			 * XXX: see the opportunistic path above
+			 * which, typically, adds a policy +
+			 * bare_shunt for just the address in
+			 * question.
+			 */
+			PEXPECT(logger, (c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
 			dbg("kernel: %s() removing bare shunt", __func__);
 			free_bare_shunt(old);
 		}
@@ -1923,11 +2047,11 @@ bool assign_holdpass(struct connection *c,
 		 * Once the broad %hold is in place, delete the narrow
 		 * one.
 		 */
-		if (rn != ro) {
+		if (old_routing != new_routing) {
 			enum kernel_policy_op op;
 			const char *reason;
 
-			if (erouted(ro)) {
+			if (erouted(old_routing)) {
 				op = KERNEL_POLICY_OP_REPLACE;
 				reason = "replace %trap with broad %pass or %hold";
 			} else {
@@ -2010,8 +2134,8 @@ bool assign_holdpass(struct connection *c,
 		}
 
 	}
-	set_child_routing(c, rn);
-	dbg("kernel:  %s() done - returning success", __func__);
+	set_child_routing(c, new_routing);
+	dbg("kernel: %s() done - returning success", __func__);
 	return true;
 }
 

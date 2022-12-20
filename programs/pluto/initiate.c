@@ -762,44 +762,16 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		 * will be NULL_WHACKFD.
 		 */
 
-		/*
-		 * Otherwise, there is some kind of static conn that
-		 * can handle this connection, so we initiate it.
-		 *
-		 * Only needed if we this was triggered by a packet
-		 * and acquire not by whack.
-		 */
-		if (b->by_acquire) {
-			/*
-			 * Add the kernel shunt to the pluto bare
-			 * shunt list.
-			 *
-			 * We need to do this because the %hold shunt
-			 * was installed by kernel and we want to keep
-			 * track of it inside pluto.
-			 *
-			 * XXX: hack to keep code below happy - need
-			 * to figigure out what to do with the shunt
-			 * functions.
-			 */
-			ip_selector src_client = packet_src_selector(b->packet);
-			ip_selector dst_client = packet_dst_selector(b->packet);
-			add_bare_shunt(&src_client, &dst_client,
-				       SHUNT_HOLD, UNSET_CO_SERIAL,
-				       b->by_acquire ? "acquire" : "whack",
-				       b->logger);
-
-			if (assign_holdpass(c, b, sr)) {
-				dbg("initiate_ondemand_body() installed negotiation_shunt,");
-			} else {
-				llog(RC_LOG, b->logger,
-					    "initiate_ondemand_body() failed to install negotiation_shunt,");
-			}
-		}
-
 		LLOG_JAMBUF(RC_LOG, b->logger, buf) {
 			jam_kernel_acquire(buf, b);
 			/* jam(buf, " using "); */
+		}
+
+		if (assign_holdpass(c, b, sr)) {
+			dbg("%s() installed negotiation_shunt", __func__);
+		} else {
+			llog(RC_LOG, b->logger,
+			     "%s() failed to install negotiation_shunt", __func__);
 		}
 
 		ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception, b->sec_label,
@@ -865,45 +837,6 @@ void initiate_ondemand(const struct kernel_acquire *b)
 	    str_selector_pair(&c->spd->local->client, &c->spd->remote->client, &sb),
 	    enum_name_short(&shunt_policy_names, c->config->negotiation_shunt));
 
-	struct kernel_policy kernel_policy =
-		kernel_policy_from_void(c->spd->local->client, c->spd->remote->client,
-					DIRECTION_OUTBOUND,
-					calculate_kernel_priority(c),
-					c->config->negotiation_shunt,
-					/*sa_marks*/NULL, /*xfrmi*/NULL,
-					b->sec_label, /*from acquire */
-					HERE);
-
-	const char *const addwidemsg = "oe-negotiating";
-	if (raw_policy(KERNEL_POLICY_OP_ADD,
-		       DIRECTION_OUTBOUND,
-		       EXPECT_KERNEL_POLICY_OK,
-		       &kernel_policy.src.client,
-		       &kernel_policy.dst.client,
-		       &kernel_policy,
-		       deltatime(SHUNT_PATIENCE),
-		       kernel_policy.sa_marks/*NULL*/,
-		       kernel_policy.xfrmi/*NULL*/,
-		       kernel_policy.id,
-		       kernel_policy.sec_label, /* from acquire */
-		       b->logger,
-		       "%s() %s", __func__, addwidemsg)) {
-		/*
-		 * XXX: how can this code assume that the shunt is
-		 * "passthrough"?
-		 *
-		 * XXX: why add a bare shunt entry?  Shouldn't the
-		 * connection state instead be changed to flag that it
-		 * has a shunt?
-		 */
-		dbg("adding bare (possibly wided) passthrough negotiationshunt succeeded (violating API)");
-		add_bare_shunt(&kernel_policy.src.client, &kernel_policy.dst.client,
-			       c->config->negotiation_shunt, UNSET_CO_SERIAL,
-			       addwidemsg, b->logger);
-	} else {
-		llog(RC_LOG, b->logger, "adding bare wide passthrough negotiationshunt failed");
-	}
-
 	/* If we are to proceed asynchronously, b->background will be true. */
 	passert(c->kind == CK_INSTANCE);
 	passert(HAS_IPSEC_POLICY(c->policy));
@@ -911,15 +844,10 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		     LELEM(RT_ROUTED_PROSPECTIVE),
 		     c->child.routing));
 
-	if (b->by_acquire) {
-		/*
-		 * XXX: updating the policy inserted by the kernel.
-		 */
-		if (assign_holdpass(c, b, c->spd)) {
-			dbg("assign_holdpass succeeded");
-		} else {
-			llog(RC_LOG, b->logger, "assign_holdpass failed!");
-		}
+	if (assign_holdpass(c, b, c->spd)) {
+		dbg("assign_holdpass succeeded");
+	} else {
+		llog(RC_LOG, b->logger, "assign_holdpass failed!");
 	}
 
 	ipsecdoi_initiate(c, c->policy, 1,
