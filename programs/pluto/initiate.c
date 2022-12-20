@@ -611,36 +611,6 @@ static void cannot_ondemand(lset_t rc_flags, const struct kernel_acquire *b, con
 	}
 }
 
-/*
- * Widen (narrow) the shunt?
- *
- * If we have protoport= set, narrow to it.  Zero the
- * ephemeral port.
- *
- * XXX: should local/remote shunts be computed independently?
-	*/
-static ip_selector shunt_from_address_and_selector(const char *what,
-						   const ip_address packet_address,
-						   ip_selector end_selector)
-{
-	const struct ip_protocol *end_protocol = selector_protocol(end_selector);
-	ip_port end_port = selector_port(end_selector);
-	/* log and cross check */
-	if (end_protocol == &ip_protocol_all) {
-		dbg("widening %s shunt to all protocols + all ports", what);
-		pexpect(end_port.hport == 0);
-	} else if (end_port.hport == 0) {
-		dbg("widening %s shunt %s protocol to all ports",
-		    what, end_protocol->name);
-	} else {
-		dbg("leaving %s shunt %s protocol %d port alone",
-		    what, end_protocol->name, end_port.hport);
-	}
-	return selector_from_address_protocol_port(packet_address,
-						   end_protocol,
-						   end_port);
-}
-
 void initiate_ondemand(const struct kernel_acquire *b)
 {
 	threadtime_t inception = threadtime_start();
@@ -858,62 +828,21 @@ void initiate_ondemand(const struct kernel_acquire *b)
 	 * any).
 	 */
 
-	/*
-	 * XXX: this is unconditional; at one point it was conditional
-	 * on DBG() to file; or whack to whack.
-	 */
 	LLOG_JAMBUF(RC_LOG, b->logger, buf) {
 		jam_kernel_acquire(buf, b);
 	}
 
-	connection_buf cib;
-	dbg("creating new instance from "PRI_CONNECTION, pri_connection(c, &cib));
-
-	pexpect(c->kind == CK_TEMPLATE);
-	passert(c->policy & POLICY_OPPORTUNISTIC); /* can't initiate Road Warrior connections */
-
-	/*
-	 * Always have shunts with protoports, even when no
-	 * protoport= settings in conn.
-	 */
-	const char *const addwidemsg = "oe-negotiating";
-
-	/*
-	 * Widen the packet shunt to something based on the
-	 * connection?
-	 *
-	 * If we have protoport= set, narrow to it.  Zero the
-	 * ephemeral port.
-	 *
-	 * XXX: should local/remote shunts be computed independently?
-	 */
-	pexpect(selector_protocol(c->spd->local->client) == selector_protocol(c->spd->remote->client));
-	ip_selector local_shunt = shunt_from_address_and_selector("local",
-								  packet_src_address(b->packet),
-								  c->spd->local->client);
-	ip_selector remote_shunt = shunt_from_address_and_selector("remote",
-								   packet_dst_address(b->packet),
-								   c->spd->remote->client);
-	pexpect(selector_protocol(local_shunt) == selector_protocol(remote_shunt));
-	selector_buf ls, rs;
-	packet_buf pb;
-	selector_buf lc, rc;
-	dbg("packet %s + %s->%s = %s+%s",
-	    str_packet(&b->packet, &pb),
-	    str_selector(&c->spd->local->client, &lc),
-	    str_selector(&c->spd->remote->client, &rc),
-	    str_selector(&local_shunt, &ls),
-	    str_selector(&remote_shunt, &rs));
-
-
-	/* XXX: re-use c */
 	/*
 	 * XXX Shouldn't this pass b->sec_label too in theory?  But we
 	 * don't support OE with labels.
 	 *
 	 * XXX: why is this looking for a new connection.  Isn't C
-	 * good enough, at least as a template?
+	 * good enough, at least as a template?  The PEXPECT below
+	 * says it always is.
 	 */
+
+	pexpect(c->kind == CK_TEMPLATE);
+	passert(c->policy & POLICY_OPPORTUNISTIC); /* can't initiate Road Warrior connections */
 	struct connection *t = find_outgoing_opportunistic_template(b->packet);
 
 	if (t == NULL) {
@@ -921,28 +850,23 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		return;
 	}
 
-	if (t == c) {
-		dbg("opportunistic and matching templates match");
-	} else {
+	if (t != c) {
 		connection_buf cb, tb;
 		llog_pexpect(b->logger, HERE,
 			     "need to switch from matching template "PRI_CONNECTION" to opportunistic template "PRI_CONNECTION,
 			     pri_connection(c, &cb), pri_connection(t, &tb));
 	}
 
+	/* XXX: re-use c */
 	c = oppo_initiator_instantiate(t, b, HERE);
 
 	selector_pair_buf sb;
 	dbg("going to initiate opportunistic %s, first installing %s negotiationshunt",
-	    str_selector_pair(&local_shunt, &remote_shunt, &sb),
+	    str_selector_pair(&c->spd->local->client, &c->spd->remote->client, &sb),
 	    enum_name_short(&shunt_policy_names, c->config->negotiation_shunt));
 
-	/* shunts saved in selectors */
-	pexpect(selector_eq_selector(c->spd->local->client, local_shunt));
-	pexpect(selector_eq_selector(c->spd->remote->client, remote_shunt));
-
 	struct kernel_policy kernel_policy =
-		kernel_policy_from_void(local_shunt, remote_shunt,
+		kernel_policy_from_void(c->spd->local->client, c->spd->remote->client,
 					DIRECTION_OUTBOUND,
 					calculate_kernel_priority(c),
 					c->config->negotiation_shunt,
@@ -950,6 +874,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 					b->sec_label, /*from acquire */
 					HERE);
 
+	const char *const addwidemsg = "oe-negotiating";
 	if (raw_policy(KERNEL_POLICY_OP_ADD,
 		       DIRECTION_OUTBOUND,
 		       EXPECT_KERNEL_POLICY_OK,
@@ -964,7 +889,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		       b->logger,
 		       "%s() %s", __func__, addwidemsg)) {
 		dbg("adding bare (possibly wided) passthrough negotiationshunt succeeded (violating API)");
-		add_bare_shunt(&local_shunt, &remote_shunt,
+		add_bare_shunt(&c->spd->local->client, &c->spd->remote->client,
 			       c->config->negotiation_shunt, UNSET_CO_SERIAL,
 			       addwidemsg, b->logger);
 	} else {
