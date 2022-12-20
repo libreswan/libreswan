@@ -1844,11 +1844,13 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	return true;
 }
 
-/* install a bare hold or pass policy to a connection */
+/*
+ * Install a bare hold or pass policy to a connection.
+ */
 
 bool assign_holdpass(struct connection *c,
-		     struct spd_route *sr,
-		     const ip_packet *packet)
+		     const struct kernel_acquire *b,
+		     struct spd_route *sr)
 {
 	struct logger *logger = c->logger;
 	/*
@@ -1885,6 +1887,9 @@ bool assign_holdpass(struct connection *c,
 	 * /32 -> /32.  This requires some special casing.
 	 *
 	 * XXX: is this still needed?
+	 *
+	 * XXX: yes, but not for the reason you might thing.  This
+	 * code is trying to detect the caller inserting a shunt.
 	 */
 	if (selector_contains_one_address((sr)->local->client) &&
 	    selector_contains_one_address((sr)->remote->client)) {
@@ -1983,12 +1988,12 @@ bool assign_holdpass(struct connection *c,
 		 * something wider?  Or is that the other way round?
 		 */
 
-		ip_address src_address = packet_src_address(*packet);
-		ip_address dst_address = packet_dst_address(*packet);
+		ip_address src_address = packet_src_address(b->packet);
+		ip_address dst_address = packet_dst_address(b->packet);
 		ip_selector src = selector_from_address_protocol(src_address,
-								 packet->protocol);
+								 b->packet.protocol);
 		ip_selector dst = selector_from_address_protocol(dst_address,
-								 packet->protocol);
+								 b->packet.protocol);
 
 		struct bare_shunt **bsp = bare_shunt_ptr(&src, &dst, "delete narrow hold");
 		if (bsp != NULL) {

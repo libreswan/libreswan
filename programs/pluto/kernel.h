@@ -508,8 +508,8 @@ extern bool flush_bare_shunt(const ip_address *src, const ip_address *dst,
 			     const char *why, struct logger *logger);
 
 bool assign_holdpass(struct connection *c,
-		     struct spd_route *sr,
-		     const ip_packet *packet);
+		     const struct kernel_acquire *b,
+		     struct spd_route *spd);
 
 extern bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 			    enum shunt_policy failure_shunt, struct logger *logger);

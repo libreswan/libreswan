@@ -789,7 +789,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 				       b->by_acquire ? "acquire" : "whack",
 				       b->logger);
 
-			if (assign_holdpass(c, sr, &b->packet)) {
+			if (assign_holdpass(c, b, sr)) {
 				dbg("initiate_ondemand_body() installed negotiation_shunt,");
 			} else {
 				llog(RC_LOG, b->logger,
@@ -888,8 +888,16 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		       kernel_policy.sec_label, /* from acquire */
 		       b->logger,
 		       "%s() %s", __func__, addwidemsg)) {
+		/*
+		 * XXX: how can this code assume that the shunt is
+		 * "passthrough"?
+		 *
+		 * XXX: why add a bare shunt entry?  Shouldn't the
+		 * connection state instead be changed to flag that it
+		 * has a shunt?
+		 */
 		dbg("adding bare (possibly wided) passthrough negotiationshunt succeeded (violating API)");
-		add_bare_shunt(&c->spd->local->client, &c->spd->remote->client,
+		add_bare_shunt(&kernel_policy.src.client, &kernel_policy.dst.client,
 			       c->config->negotiation_shunt, UNSET_CO_SERIAL,
 			       addwidemsg, b->logger);
 	} else {
@@ -907,7 +915,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		/*
 		 * XXX: updating the policy inserted by the kernel.
 		 */
-		if (assign_holdpass(c, c->spd, &b->packet)) {
+		if (assign_holdpass(c, b, c->spd)) {
 			dbg("assign_holdpass succeeded");
 		} else {
 			llog(RC_LOG, b->logger, "assign_holdpass failed!");
