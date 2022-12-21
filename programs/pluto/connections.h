@@ -361,6 +361,10 @@ struct child_end {
 	struct {
 		ip_selector assigned[2/*space for IPv4+IPv6 in no order*/];
 		ip_selectors proposed; /* either .config->selectors or above; do not free */
+		/*
+		 * XXX: used when logging the established description
+		 * of the child in jam_connection_child()?
+		 */
 		ip_selectors accepted; /* must pfree(.list) */
 	} selectors;
 
