@@ -1484,27 +1484,39 @@ bool route_and_trap_connection(struct connection *c)
 }
 
 static bool state_kernel_policy_op_outbound(const struct state *st,
-					    const struct spd_route *spd,
-					    enum kernel_policy_op op,
-					    const char *opname)
+						 const struct spd_route *spd,
+						 enum kernel_policy_op op,
+						 const char *opname)
 {
-	PEXPECT(st->st_logger, (op == KERNEL_POLICY_OP_ADD ||
-				op == KERNEL_POLICY_OP_REPLACE));
-
-	if (spd->block) {
-		llog(RC_LOG, st->st_logger, "state spd requires a block");
-		return false;
-	}
+	struct logger *logger = st->st_logger;
+	struct connection *cc = st->st_connection;
+	PASSERT(logger, cc == spd->connection);
+	PEXPECT(logger, (op == KERNEL_POLICY_OP_ADD ||
+			 op == KERNEL_POLICY_OP_REPLACE));
 
 	/*
 	 * Figure out the SPI and protocol (in two forms) for the
 	 * outer transformation.
 	 */
 
-	struct kernel_policy kernel_policy =
-		kernel_policy_from_state(st, spd, DIRECTION_OUTBOUND, HERE);
-	/* check for no transform at all */
-	passert(kernel_policy.nr_rules > 0);
+	struct kernel_policy kernel_policy;
+	if (spd->block) {
+		llog(RC_LOG, logger, "state spd requires a block");
+		kernel_policy = kernel_policy_from_void(spd->local->client,
+							spd->remote->client,
+							DIRECTION_OUTBOUND,
+							calculate_kernel_priority(cc),
+							/* XXX: guess */
+							SHUNT_DROP,
+							&cc->sa_marks, cc->xfrmi,
+							/* XXX: correct? */
+							HUNK_AS_SHUNK(cc->config->sec_label),
+							HERE);
+	} else {
+		kernel_policy = kernel_policy_from_state(st, spd, DIRECTION_OUTBOUND, HERE);
+		/* check for no transform at all */
+		PASSERT(logger, kernel_policy.nr_rules > 0);
+	}
 
 	if (spd->local->child->has_cat) {
 		ip_selector client = selector_from_address(spd->local->host->addr);
@@ -1518,7 +1530,7 @@ static bool state_kernel_policy_op_outbound(const struct state *st,
 				    kernel_policy.xfrmi,
 				    kernel_policy.id,
 				    kernel_policy.sec_label,
-				    st->st_logger,
+				    logger,
 				    "CAT: %s() %s", __func__, opname);
 		if (!t) {
 			llog(RC_LOG, st->st_logger,
