@@ -10,6 +10,7 @@
  * Copyright (C) 2015 Antony Antony <antony@phenome.org>
  * Copyright (C) 2017-2019 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2017 Mayank Totale <mtotale@gmail.com>
+ * Copyright (C) 2022 Paul Wouters <paul.wouters@aiven.io>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -122,20 +123,19 @@ void process_md(struct msg_digest *md)
 		 * IKEv2 doesn't say what to do with low versions,
 		 * just drop them.
 		 */
-		llog(RC_LOG, md->md_logger,
-		     "ignoring packet with IKE major version '%d'", vmaj);
+		rate_log(md, "ignoring packet with IKE major version '%d'", vmaj);
 		return;
 
 	case ISAKMP_MAJOR_VERSION: /* IKEv1 */
 		if (pluto_ikev1_pol == GLOBAL_IKEv1_DROP) {
-			llog(RC_LOG, md->md_logger,
-			     "ignoring IKEv1 packet as policy is set to silently drop all IKEv1 packets");
+			rate_log(md,
+			     "ignoring IKEv1 packet as global policy is set to silently drop all IKEv1 packets");
 			return;
 		}
 #ifdef USE_IKEv1
 		if (pluto_ikev1_pol == GLOBAL_IKEv1_REJECT) {
-			llog(RC_LOG, md->md_logger,
-			     "rejecting IKEv1 packet as policy is set to reject all IKEv1 packets");
+			rate_log(md,
+			     "rejecting IKEv1 packet as global policy is set to reject all IKEv1 packets");
 			send_v1_notification_from_md(md, v1N_INVALID_MAJOR_VERSION);
 			return;
 		}
@@ -155,7 +155,7 @@ void process_md(struct msg_digest *md)
 			 * own, given the major version numbers are
 			 * identical.
 			 */
-			llog(RC_LOG, md->md_logger,
+			rate_log(md,
 			     "ignoring packet with IKEv1 minor version number %d greater than %d", vmin, ISAKMP_MINOR_VERSION);
 			send_v1_notification_from_md(md, v1N_INVALID_MINOR_VERSION);
 			return;
@@ -175,8 +175,8 @@ void process_md(struct msg_digest *md)
 			/* Unlike IKEv1, for IKEv2 we are supposed to try to
 			 * continue on unknown minors
 			 */
-			llog(RC_LOG, md->md_logger,
-			     "Ignoring unknown IKEv2 minor version number %d", vmin);
+			rate_log(md,
+			     "Ignoring unknown/unsupported IKEv2 minor version number %d", vmin);
 		}
 		dbg(" processing version=%u.%u packet with exchange type=%s (%d)",
 		    vmaj, vmin,
@@ -186,7 +186,7 @@ void process_md(struct msg_digest *md)
 		break;
 
 	default:
-		llog(RC_LOG, md->md_logger,
+		rate_log(md,
 		     "message contains unsupported IKE major version '%d'", vmaj);
 		/*
 		 * According to 1.5.  Informational Messages outside
