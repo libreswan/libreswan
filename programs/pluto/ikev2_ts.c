@@ -51,13 +51,14 @@ typedef struct {
 
 struct score {
 	int range;
-	int port;
 	int protocol;
+	int port;
 };
 
 struct narrowed_selector {
 	const char *name;	/* XXX: redundant? */
 	unsigned nr;
+	bool block;
 	struct score score;
 	ip_selector selector;
 };
@@ -67,7 +68,7 @@ struct narrowed_selector_payload {
 	struct score score;
 	shunk_t sec_label;
 	unsigned nr;
-	struct narrowed_selector ts[TS_MAX];
+	struct narrowed_selector ns[TS_MAX];
 };
 
 struct narrowed_selector_payloads {
@@ -90,7 +91,7 @@ struct traffic_selector {
 	uint8_t ipprotoid;
 	uint16_t startport;
 	uint16_t endport;
-	ip_range net;	/* for now, always happens to be a CIDR */
+	ip_range range;	/* for now, always happens to be a CIDR */
 	const char *name; /*static*/
 };
 
@@ -168,24 +169,30 @@ static void scribble_accepted_selectors(ip_selectors *selectors,
 			.list = alloc_things(ip_selector, nsp->nr, "accepted-selectors"),
 		};
 		for (unsigned i = 0; i < nsp->nr; i++) {
-			selectors->list[i] = nsp->ts[i].selector;
+			selectors->list[i] = nsp->ns[i].selector;
 		}
 	}
 }
 
-static void ldbg_narrowed_selector_payloads(struct logger *logger,
-					    const struct narrowed_selector_payloads *nsps)
+static void llog_narrowed_selector_payloads(lset_t rc_flags,
+					    struct logger *logger,
+					    const struct narrowed_selector_payload *local_nsp,
+					    const struct narrowed_selector_payload *remote_nsp)
 {
-	LDBG(logger, buf) {
-		jam_string(buf, "scribbling narrowed ");
-		const char *sep = "TSi=[";
-		FOR_EACH_THING(ts, &nsps->i, &nsps->r) {
+	LLOG_JAMBUF(rc_flags, logger, buf) {
+		jam_string(buf, "accepted selectors");
+		const char *sep = " [";
+		FOR_EACH_THING(nsp, local_nsp, remote_nsp) {
 			jam_string(buf, sep); sep = "";
-			for (unsigned n = 0; n < ts->nr; n++) {
+			for (unsigned n = 0; n < nsp->nr; n++) {
+				const struct narrowed_selector *ns = &nsp->ns[n];
 				jam_string(buf, sep); sep = " ";
-				jam_selector(buf, &ts->ts[n].selector);
+				jam_selector(buf, &ns->selector);
+				if (ns->block) {
+					jam_string(buf, "(block)");
+				}
 			}
-			sep = "] -> TSr=[";
+			sep = "]->[";
 		}
 		jam_string(buf, "]");
 	}
@@ -204,12 +211,11 @@ static void scribble_selectors_on_spd(struct connection *c,
 	 * involved.
 	 */
 	if (local_nsp->nr > 1 || remote_nsp->nr > 1) {
-		LLOG_JAMBUF(RC_LOG, indent.logger, buf) {
-			jam_string(buf, "accepted selectors ");
-			jam_selectors(buf, c->local->child.selectors.accepted);
-			jam_string(buf, "->");
-			jam_selectors(buf, c->remote->child.selectors.accepted);
-		}
+		llog_narrowed_selector_payloads(RC_LOG, indent.logger,
+						local_nsp, remote_nsp);
+	} else if (DBGP(DBG_BASE)) {
+		llog_narrowed_selector_payloads(DEBUG_STREAM, indent.logger,
+						local_nsp, remote_nsp);
 	}
 
 	/*
@@ -218,14 +224,15 @@ static void scribble_selectors_on_spd(struct connection *c,
 
 	struct spd_route *spd_list = NULL;
 	struct spd_route **spd_tail = &spd_list;
-	for (const struct narrowed_selector *local_ns = local_nsp->ts;
-	     local_ns < local_nsp->ts + local_nsp->nr; local_ns++) {
-		for (const struct narrowed_selector *remote_ns = remote_nsp->ts;
-		     remote_ns < remote_nsp->ts + remote_nsp->nr; remote_ns++) {
+	for (const struct narrowed_selector *local_ns = local_nsp->ns;
+	     local_ns < local_nsp->ns + local_nsp->nr; local_ns++) {
+		for (const struct narrowed_selector *remote_ns = remote_nsp->ns;
+		     remote_ns < remote_nsp->ns + remote_nsp->nr; remote_ns++) {
 			if (selector_info(local_ns->selector) == selector_info(remote_ns->selector)) {
 				struct spd_route *spd = append_spd(c, &spd_tail);
 				spd->local->client = local_ns->selector;
 				spd->remote->client = remote_ns->selector;
+				spd->block = local_ns->block || remote_ns->block;
 			}
 		}
 	}
@@ -264,8 +271,6 @@ static void scribble_ts_request_on_responder(struct child_sa *child,
 		       child->sa.st_serialno, pri_connection(c, &cib));
 	}
 
-	ldbg_narrowed_selector_payloads(child->sa.st_logger, nsps);
-
 	/* end game; polarity reversed */
 	scribble_selectors_on_spd(c, /*local*/&nsps->r, /*remote*/&nsps->i, indent);
 }
@@ -274,8 +279,6 @@ static void scribble_ts_response_on_initiator(struct child_sa *child,
 					      const struct narrowed_selector_payloads *nsps,
 					      indent_t indent)
 {
-	ldbg_narrowed_selector_payloads(child->sa.st_logger, nsps);
-
 	/* end game */
 	struct connection *c = child->sa.st_connection;
 	scribble_selectors_on_spd(c, /*local*/&nsps->i, /*remote*/&nsps->r, indent);
@@ -652,7 +655,7 @@ static bool v2_parse_tsp(struct payload_digest *const ts_pd,
 			tsp->ts[tsp->nr] = (struct traffic_selector) {
 				.name = tsp->name,
 				.nr = n+1, /* count from 1 */
-				.net = range,
+				.range = range,
 				.startport = pr.isatpr_startport,
 				.endport = pr.isatpr_endport,
 				.ipprotoid = ts_h.isath_ipprotoid,
@@ -847,18 +850,18 @@ static ip_range narrow_range(ip_selector selector,
 	ip_range client_range = selector_range(selector);
 	switch (fit) {
 	case END_EQUALS_TS:
-		if (range_eq_range(client_range, ts->net)) {
+		if (range_eq_range(client_range, ts->range)) {
 			range = client_range;
 		}
 		break;
 	case END_NARROWER_THAN_TS:
-		if (range_in_range(client_range, ts->net)) {
+		if (range_in_range(client_range, ts->range)) {
 			range = client_range;
 		}
 		break;
 	case END_WIDER_THAN_TS:
-		if (range_in_range(ts->net, client_range)) {
-			range = ts->net;
+		if (range_in_range(ts->range, client_range)) {
+			range = ts->range;
 		}
 		break;
 	default:
@@ -870,7 +873,7 @@ static ip_range narrow_range(ip_selector selector,
 	dbg_ts("narrow range: selector.range=%s %s %s[%u]=%s ==> %s (%s)",
 	       str_range(&client_range, &cb),
 	       str_end_fit_ts(fit),
-	       ts->name, ts->nr, str_range(&ts->net, &tsb),
+	       ts->name, ts->nr, str_range(&ts->range, &tsb),
 	       str_range(&range, &rb), str_fit_story(fit));
 	return range;
 }
@@ -921,7 +924,8 @@ static bool narrow_ts_to_selector(struct narrowed_selector *n,
  * time?
  */
 
-static bool score_narrowed_selector(struct score *score, const struct narrowed_selector *ts,
+static bool score_narrowed_selector(struct score *score,
+				    const struct narrowed_selector *ts,
 				    indent_t indent)
 {
 	if (!pexpect(ts->selector.is_set)) {
@@ -1026,6 +1030,43 @@ static bool fit_ts_to_sec_label(struct narrowed_selector_payload *nsp,
 	return true;
 }
 
+static bool append_ns_to_nsp(const struct narrowed_selector *ns,
+			     struct narrowed_selector_payload *nsp)
+{
+	/* XXX: filter out duplicates */
+
+	/* don't overflow */
+	if (nsp->nr >= elemsof(nsp->ns)) {
+		return false;
+	}
+
+	/* save the best overall score */
+	if (score_gt_best(&ns->score, &nsp->score)) {
+		nsp->score = ns->score;
+	}
+
+	nsp->ns[nsp->nr] = *ns;
+	nsp->nr++;
+	return true;
+}
+
+static bool append_block_to_nsp(ip_selector selector,
+				struct narrowed_selector_payload *nsp)
+{
+	if (nsp->nr >= elemsof(nsp->ns)) {
+		return false;
+	}
+
+	nsp->ns[nsp->nr] = (struct narrowed_selector) {
+		.name = "block",
+		.nr = 0,
+		.selector = selector,
+		.block = true,
+	};
+	nsp->nr++;
+
+	return true;
+}
 
 static bool fit_tsp_to_end(struct narrowed_selector_payload *nsp,
 			   const struct traffic_selector_payload *tsp,
@@ -1039,37 +1080,41 @@ static bool fit_tsp_to_end(struct narrowed_selector_payload *nsp,
 	}
 
 	bool matched = false;
-	nsp->nr = 0;
-	for (unsigned i = 0; i < tsp->nr; i++) {
-		const struct traffic_selector *ts = &tsp->ts[i];
-		for (unsigned i = 0; i < end->selectors->len; i++) {
+	nsp->nr = 0; /*passert?*/
 
-			struct narrowed_selector t;
-			if (!fit_ts_to_selector(&t, ts, end->selectors->list[i],
+	for (unsigned i = 0; i < end->selectors->len; i++) {
+		const ip_selector selector = end->selectors->list[i];
+		bool match = false;
+
+		for (unsigned i = 0; i < tsp->nr; i++) {
+			const struct traffic_selector *ts = &tsp->ts[i];
+
+			struct narrowed_selector ns;
+			if (fit_ts_to_selector(&ns, ts, selector,
 						selector_fit, indent)) {
-				continue;
+				if (!append_ns_to_nsp(&ns, nsp)) {
+					llog(RC_LOG_SERIOUS, indent.logger, "TS overflow");
+					return false;
+				}
+				match = matched = true;
 			}
 
-			matched = true;
+		}
 
-			/* save the best overall score */
-			if (score_gt_best(&t.score, &nsp->score)) {
-				nsp->score = t.score;
-			}
-
-			/* save the ts */
-			/* XXX: prefer wider selectors? */
-			nsp->ts[nsp->nr] = t;
-			nsp->nr++;
-
-			/* don't overflow */
-			if (nsp->nr >= elemsof(nsp->ts)) {
+		if (!match && selector_fit == END_EQUALS_TS) {
+			/*
+			 * Track failed selectors so they can be
+			 * blocked.  Should work on responder, what
+			 * about initiator?
+			 */
+			if (!append_block_to_nsp(selector, nsp)) {
 				llog(RC_LOG_SERIOUS, indent.logger, "TS overflow");
 				return false;
 			}
 		}
 	}
 
+	/* not nsp->nr>0 as all could be blocked */
 	return matched;
 }
 

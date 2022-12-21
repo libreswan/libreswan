@@ -463,7 +463,8 @@ struct spd_route {
 	/* point into above */
 	struct spd_end *local;		/* must update after clone */
 	struct spd_end *remote;		/* must update after clone */
-	struct connection *connection;
+	struct connection *connection;	/* must update after clone */
+	bool block;
 
 	struct spd_wip {
 		struct {

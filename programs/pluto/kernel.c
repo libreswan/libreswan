@@ -1491,6 +1491,11 @@ static bool state_kernel_policy_op_outbound(const struct state *st,
 	PEXPECT(st->st_logger, (op == KERNEL_POLICY_OP_ADD ||
 				op == KERNEL_POLICY_OP_REPLACE));
 
+	if (spd->block) {
+		llog(RC_LOG, st->st_logger, "state spd requires a block");
+		return false;
+	}
+
 	/*
 	 * Figure out the SPI and protocol (in two forms) for the
 	 * outer transformation.
@@ -1505,7 +1510,8 @@ static bool state_kernel_policy_op_outbound(const struct state *st,
 		ip_selector client = selector_from_address(spd->local->host->addr);
 		bool t = raw_policy(op, DIRECTION_OUTBOUND,
 				    EXPECT_KERNEL_POLICY_OK,
-				    &client, &kernel_policy.dst.route,
+				    &client,
+				    &kernel_policy.dst.route,
 				    &kernel_policy,
 				    deltatime(0),
 				    kernel_policy.sa_marks,
@@ -3009,7 +3015,8 @@ static bool install_ipsec_kernel_policies(struct state *st)
 			(spd->wip.conflicting.shunt != NULL ? KERNEL_POLICY_OP_REPLACE :
 			 KERNEL_POLICY_OP_ADD);
 		ok &= spd->wip.installed.policy =
-			state_kernel_policy_op_outbound(st, spd, op, "install IPsec policy");
+			state_kernel_policy_op_outbound(st, spd, op,
+							"install IPsec policy");
 	}
 
 	/*
