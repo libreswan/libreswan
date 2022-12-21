@@ -1031,18 +1031,51 @@ static bool fit_ts_to_sec_label(struct narrowed_selector_payload *nsp,
 }
 
 static bool append_ns_to_nsp(const struct narrowed_selector *ns,
-			     struct narrowed_selector_payload *nsp)
+			     struct narrowed_selector_payload *nsp,
+			     indent_t indent)
 {
-	/* XXX: filter out duplicates */
+	/*
+	 * Save the best overall score.  Presumably duplicates won't
+	 * beat the existing score.
+	 */
+	if (score_gt_best(&ns->score, &nsp->score)) {
+		nsp->score = ns->score;
+	}
+
+	/*
+	 * XXX: filter out duplicates.
+	 */
+
+	for (unsigned n = 0; n < nsp->nr; n++) {
+		struct narrowed_selector *nso = &nsp->ns[n];
+
+		if (selector_eq_selector(ns->selector, nso->selector)) {
+			selector_buf nsb, nsob;
+			dbg_ts("%s == %s, dropping",
+			       str_selector(&ns->selector, &nsb),
+			       str_selector(&nso->selector, &nsob));
+			return true;
+		}
+		if (selector_in_selector(ns->selector, nso->selector)) {
+			selector_buf nsb, nsob;
+			dbg_ts("%s in %s, dropping",
+			       str_selector(&ns->selector, &nsb),
+			       str_selector(&nso->selector, &nsob));
+			return true;
+		}
+		if (selector_in_selector(nso->selector, ns->selector)) {
+			selector_buf nsb, nsob;
+			dbg_ts("%s in %s, widening",
+			       str_selector(&ns->selector, &nsb),
+			       str_selector(&nso->selector, &nsob));
+			*nso = *ns;
+			return true;
+		}
+	}
 
 	/* don't overflow */
 	if (nsp->nr >= elemsof(nsp->ns)) {
 		return false;
-	}
-
-	/* save the best overall score */
-	if (score_gt_best(&ns->score, &nsp->score)) {
-		nsp->score = ns->score;
 	}
 
 	nsp->ns[nsp->nr] = *ns;
@@ -1092,7 +1125,7 @@ static bool fit_tsp_to_end(struct narrowed_selector_payload *nsp,
 			struct narrowed_selector ns;
 			if (fit_ts_to_selector(&ns, ts, selector,
 						selector_fit, indent)) {
-				if (!append_ns_to_nsp(&ns, nsp)) {
+				if (!append_ns_to_nsp(&ns, nsp, indent)) {
 					llog(RC_LOG_SERIOUS, indent.logger, "TS overflow");
 					return false;
 				}
