@@ -22,7 +22,7 @@ east #
 initdone
 east #
  hostname | grep east > /dev/null && grep "ignoring IKEv1 packet" /tmp/pluto.log
-packet from 192.1.2.45:500: ignoring IKEv1 packet as policy is set to silently drop all IKEv1 packets
+packet from 192.1.2.45:500: ignoring IKEv1 packet as global policy is set to silently drop all IKEv1 packets
 east #
  hostname | grep east > /dev/null && (grep "sending notification INVALID_MAJOR_VERSION" /tmp/pluto.log >/dev/null && echo "A reply SHOULD NOT have been sent")
 east #
