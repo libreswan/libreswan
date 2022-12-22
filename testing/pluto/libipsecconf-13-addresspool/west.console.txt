@@ -60,9 +60,11 @@ west #
 036 "64to6in6": failed to add connection: address family of leftaddresspool=2001:db8:1::/64,192.168.1.0/24 conflicts with rightsubnet=2001:db8:2::/64
 west #
  ipsec auto --add 46to64in4
+002 "46to64in4": connection is using multiple addresspool
 002 "46to64in4": added IKEv2 connection
 west #
  ipsec auto --add 64to46in6
+002 "64to46in6": connection is using multiple addresspool
 002 "64to46in6": added IKEv2 connection
 west #
  
