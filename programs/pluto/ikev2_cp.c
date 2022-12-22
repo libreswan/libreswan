@@ -473,12 +473,12 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs,
 					    "CP scribbling on end while ignoring TS");
 			local->has_cat = true; /* create iptable entry */
 		}
-	} else if (connection_requires_ts(cc)) {
-		ldbg_sa(child, "leaving TS alone");
-	} else {
+	} else if (connection_requires_tss(cc) == NULL) {
 		update_end_selector(cc, cc->local->config->index,
 				    selector_from_address(ip),
 				    "CP scribbling on end while ignoring TS");
+	} else {
+		ldbg_sa(child, "leaving TS alone");
 	}
 
 	return true;

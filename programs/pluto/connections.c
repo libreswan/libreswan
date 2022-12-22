@@ -2782,9 +2782,13 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 		[SHUNT_REJECT] = "reject",
 	};
 
+	/* connection is good-to-go: log against it */
+	err_t tss = connection_requires_tss(c);
+	if (tss != NULL) {
+		llog(RC_LOG, c->logger, "connection is using multiple %s", tss);
+	}
 	const char *what = (NEVER_NEGOTIATE(c->policy) ? policy_shunt_names[c->config->prospective_shunt] :
 			    c->config->ike_info->version_name);
-	/* connection is good-to-go: log against it */
 	llog(RC_LOG, c->logger, "added %s connection", what);
 	policy_buf pb;
 	dbg("ike_life: %jd; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s ipsec_max_bytes: %" PRIu64 " ipsec_max_packets %" PRIu64,
@@ -4317,4 +4321,24 @@ void set_child_routing_where(struct connection *c, enum routing routing, where_t
 	     str_enum(&routing_story, routing, &nb),
 	     pri_where(where));
 	c->child.routing = routing;
+}
+
+err_t connection_requires_tss(const struct connection *c)
+{
+	if (c->config->ike_version == IKEv1) {
+		return NULL;
+	}
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		const struct connection_end *e = &c->end[end];
+		if (e->child.selectors.proposed.len > 1) {
+			return "subnet";
+		}
+		if (e->config->child.sourceip.len > 1) {
+			return "sourceip";
+		}
+		if (e->config->host.pool_ranges.len > 1) {
+			return "addresspool";
+		}
+	}
+	return NULL;
 }

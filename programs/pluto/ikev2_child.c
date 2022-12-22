@@ -645,15 +645,15 @@ void llog_v2_child_sa_established(struct ike_sa *ike UNUSED, struct child_sa *ch
 		jam(buf, "IPsec %s", (c->policy & POLICY_TUNNEL ? "tunnel" : "transport"));
 		for (const struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
 			jam_string(buf, " ");
-			if (connection_requires_ts(c)) {
+			if (connection_requires_tss(c) == NULL) {
+				jam_end_selector(buf, spd->local->client);
+				jam_string(buf, " -> ");
+				jam_end_selector(buf, spd->remote->client);
+			} else {
 				jam_string(buf, "[");
 				jam_selector_pair(buf, &spd->local->client,
 						  &spd->remote->client);
 				jam_string(buf, "]");
-			} else {
-				jam_end_selector(buf, spd->local->client);
-				jam_string(buf, " -> ");
-				jam_end_selector(buf, spd->remote->client);
 			}
 		}
 		jam_string(buf, " ");
@@ -956,7 +956,7 @@ static v2_notification_t process_v2_IKE_AUTH_request_child_sa_payloads(struct ik
 	 *
 	 * Clearly a bug.
 	 */
-	if (connection_requires_ts(child->sa.st_connection) ||
+	if (connection_requires_tss(child->sa.st_connection) != NULL ||
 	    !local->modecfg.server) {
 		/*
 		 * Danger! This TS call can change the child's
