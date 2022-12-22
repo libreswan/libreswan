@@ -401,7 +401,7 @@ void load_groups(struct logger *logger)
 							/* XXX: something better? */
 							fd_delref(&ng->logger->global_whackfd);
 							ng->logger->global_whackfd = fd_addref(g->logger->global_whackfd);
-							if (!route_and_trap_connection(ng)) {
+							if (!install_prospective_kernel_policy(ng)) {
 								llog(WHACK_STREAM|RC_ROUTE, ng->logger,
 								     "could not route");
 							}
@@ -473,7 +473,7 @@ void route_and_trap_connection_group(struct connection *c)
 					 * Shouldn't this leave a
 					 * breadcrumb in the log file?
 					 */
-					if (!route_and_trap_connection(ci))
+					if (!install_prospective_kernel_policy(ci))
 						llog(WHACK_STREAM|RC_ROUTE, c->logger,
 						     "could not route");
 				}

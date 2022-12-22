@@ -497,7 +497,6 @@ void free_bare_shunt(struct bare_shunt **pp);
 extern void init_kernel(struct logger *logger);
 
 struct connection;      /* forward declaration of tag */
-extern bool route_and_trap_connection(struct connection *c);
 extern void unroute_connection(struct connection *c);
 extern void migration_up(struct child_sa *child);
 extern void migration_down(struct child_sa *child);
@@ -521,6 +520,7 @@ extern ipsec_spi_t get_ipsec_spi(const struct connection *c,
 extern ipsec_spi_t get_ipsec_cpi(const struct connection *c,
 				 struct logger *logger/*state*/);
 
+bool install_prospective_kernel_policy(struct connection *c);
 extern bool install_inbound_ipsec_sa(struct state *st);
 extern bool install_ipsec_sa(struct state *st, bool inbound_also);
 void delete_ipsec_sa(struct state *st);

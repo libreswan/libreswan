@@ -268,7 +268,7 @@ static bool whack_route_connection(struct show *s, struct connection *c,
 		     "we cannot identify ourselves with either end of this connection");
 	} else if (c->policy & POLICY_GROUP) {
 		route_and_trap_connection_group(c);
-	} else if (!route_and_trap_connection(c)) {
+	} else if (!install_prospective_kernel_policy(c)) {
 		/* XXX: why whack only? */
 		llog(WHACK_STREAM|RC_ROUTE, c->logger,
 		     "could not route");

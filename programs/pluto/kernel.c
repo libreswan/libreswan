@@ -1355,7 +1355,7 @@ static void revert_kernel_policy(struct spd_route *spd, struct state *st/*could 
 	}
 }
 
-static bool install_prospective_kernel_policy(struct connection *c)
+bool install_prospective_kernel_policy(struct connection *c)
 {
 	enum routability r = connection_routability(c, c->logger);
 	switch (r) {
@@ -1461,26 +1461,6 @@ static bool install_prospective_kernel_policy(struct connection *c)
 	set_child_routing(c, RT_ROUTED_PROSPECTIVE);
 
 	return true;
-}
-
-static bool connection_route_transition(struct connection *c, enum routing new_routing)
-{
-#define ON(O,N) ((O << 8) | N)
-	switch (ON(c->child.routing, new_routing)) {
-	case ON(RT_UNROUTED, RT_ROUTED_PROSPECTIVE):
-		return install_prospective_kernel_policy(c);
-	default:
-		llog_pexpect(c->logger, HERE, "%s -> %s",
-			     enum_name_short(&routing_names, c->child.routing),
-			     enum_name_short(&routing_names, new_routing));
-		return false;
-	}
-#undef ON
-}
-
-bool route_and_trap_connection(struct connection *c)
-{
-	return connection_route_transition(c, RT_ROUTED_PROSPECTIVE);
 }
 
 static bool state_kernel_policy_op_outbound(const struct state *st,
