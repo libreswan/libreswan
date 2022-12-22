@@ -395,10 +395,10 @@ struct child_end {
 	 * .has_lease indicates that the end has been given an address
 	 * from the address pool.
 	 */
-#define child_has_lease(END)					\
+#define nr_child_leases(END)					\
 	({							\
 		const struct connection_end *end_ = END;	\
-		(end_->child.lease[IPv4_INDEX].is_set ||	\
+		(end_->child.lease[IPv4_INDEX].is_set +		\
 		 end_->child.lease[IPv6_INDEX].is_set);		\
 	})
 
@@ -419,7 +419,7 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 			    ip_selector s, bool first_time,
 			    const char *excuse, where_t where);
 void scribble_end_selector(struct connection *c, enum left_right end,
-			   ip_selector selector, where_t where, bool first_time);
+			   ip_selector selector, where_t where, unsigned nr);
 
 struct spd_end {
 	ip_selector client;

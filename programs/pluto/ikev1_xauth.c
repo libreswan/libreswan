@@ -392,7 +392,7 @@ static stf_status modecfg_resp(struct state *st,
 		if (use_modecfg_addr_as_client_addr &&
 		    c->pool[IPv4_INDEX] != NULL) {
 
-			err_t e = lease_that_address(c, st, &ipv4_info, true);
+			err_t e = lease_that_address(c, st, &ipv4_info);
 			if (e != NULL) {
 				log_state(RC_LOG, st, "lease_an_address failure %s", e);
 				return STF_INTERNAL_ERROR;

@@ -526,7 +526,7 @@ static struct lease *recover_lease(const struct connection *c, const char *that_
 }
 
 err_t lease_that_address(struct connection *c, const struct state *st,
-			 const struct ip_info *afi, bool first_lease)
+			 const struct ip_info *afi)
 {
 	if (c->remote->child.lease[afi->ip_index].is_set &&
 	    connection_lease(c, afi) != NULL) {
@@ -538,6 +538,8 @@ err_t lease_that_address(struct connection *c, const struct state *st,
 	if (pool == NULL) {
 		return "no address pool";
 	}
+
+	unsigned nr_leases = nr_child_leases(c->remote);
 
 	const struct id *that_id = &c->remote->host.id;
 	bool reusable = client_can_reuse_lease(c);
@@ -633,6 +635,7 @@ err_t lease_that_address(struct connection *c, const struct state *st,
 		if (reusable) {
 			new_lease->reusable_name = clone_str(thatstr, "lease name");
 			hash_lease_id(pool, new_lease);
+
 		}
 	}
 
@@ -653,7 +656,7 @@ err_t lease_that_address(struct connection *c, const struct state *st,
 	set_child_has_client(c, remote, true);
 	scribble_end_selector(c, c->remote->config->index,
 			      selector_from_address(ia),
-			      HERE, first_lease);
+			      HERE, nr_leases);
 	new_lease->assigned_to = c->serialno;
 
 	if (DBGP(DBG_BASE)) {

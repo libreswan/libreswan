@@ -4187,24 +4187,19 @@ bool dpd_active_locally(const struct connection *c)
 }
 
 void scribble_end_selector(struct connection *c, enum left_right end,
-			   ip_selector selector, where_t where, bool first_time)
+			   ip_selector selector, where_t where, unsigned nr)
 {
 	struct child_end *child = &c->end[end].child;
 	struct logger *logger = c->logger;
-	if (first_time) {
-		child->selectors.proposed.len = 0;
-		child->selectors.proposed.list = child->selectors.assigned;
-	}
-	unsigned i = child->selectors.proposed.len++;
-	if (!PEXPECT_WHERE(logger, where, i < elemsof(child->selectors.assigned))) {
+	if (!PEXPECT_WHERE(logger, where, nr < elemsof(child->selectors.assigned))) {
 		return;
 	}
-	child->selectors.assigned[i] = selector;
+	child->selectors.assigned[nr] = selector;
 	selector_buf nb;
 	ldbg(c->logger, "%s() %s.child.selector[%d] %s "PRI_WHERE,
 	     __func__,
 	     c->end[end].config->leftright,
-	     i,
+	     nr,
 	     str_selector(&selector, &nb),
 	     pri_where(where));
 }

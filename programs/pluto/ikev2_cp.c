@@ -246,8 +246,7 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 	return true;
 }
 
-static bool lease_cp_address(struct child_sa *child, const struct ip_info *afi,
-			     bool first_lease)
+static bool lease_cp_address(struct child_sa *child, const struct ip_info *afi)
 {
 	struct connection *cc = child->sa.st_connection;
 	const struct addresspool *pool = cc->pool[afi->ip_index];
@@ -257,13 +256,13 @@ static bool lease_cp_address(struct child_sa *child, const struct ip_info *afi,
 		return true; /*non-fatal*/
 	}
 
-	err_t e = lease_that_address(cc, &child->sa, afi, first_lease);
+	err_t e = lease_that_address(cc, &child->sa, afi);
 	if (e != NULL) {
 		llog_sa(RC_LOG, child, "leasing %s address failed: %s",
 			afi->ip_name, e);
 		return false; /*fatal*/
 	}
-	PASSERT(cc->logger, child_has_lease(cc->remote)); /* used below */
+	PASSERT(cc->logger, nr_child_leases(cc->remote) > 0); /* used below */
 	return true;
 }
 
@@ -286,8 +285,6 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike,
 		return false;
 	}
 
-	bool first_lease = true;
-
 	while (pbs_left(cp_pbs) > 0) {
 
 		struct ikev2_cp_attribute cp_attr;
@@ -303,16 +300,14 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike,
 		enum ikev2_cp_attribute_type type = cp_attr.type;
 		switch (type) {
 		case IKEv2_INTERNAL_IP4_ADDRESS:
-			if (!lease_cp_address(child, &ipv4_info, first_lease)) {
+			if (!lease_cp_address(child, &ipv4_info)) {
 				return false;
 			}
-			first_lease = false;
 			break;
 		case IKEv2_INTERNAL_IP6_ADDRESS:
-			if (!lease_cp_address(child, &ipv6_info, first_lease)) {
+			if (!lease_cp_address(child, &ipv6_info)) {
 				return false;
 			}
-			first_lease = false;
 			break;
 
 		default:
@@ -326,7 +321,7 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike,
 		}
 	}
 
-	if (!child_has_lease(cc->remote)) {
+	if (nr_child_leases(cc->remote) == 0) {
 		llog_sa(RC_LOG_SERIOUS, child, "ERROR: no valid internal address request");
 		return false;
 	}

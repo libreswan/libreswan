@@ -91,7 +91,7 @@ static void jam_state_traffic(struct jambuf *buf, struct state *st)
 			* "that"; presumably from "that"'s address
 			* pool. */
 		       &c->local) {
-		if (child_has_lease(*end)) {
+		if (nr_child_leases(*end) > 0) {
 			jam(buf, ", lease=");
 			const char *sep = "";
 			FOR_EACH_ELEMENT(lease, (*end)->child.lease) {

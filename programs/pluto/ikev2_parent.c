@@ -425,7 +425,7 @@ static bool expire_ike_because_child_not_used(struct state *st)
 		return false;
 	}
 
-	if (child_has_lease(c->remote)) {
+	if (nr_child_leases(c->remote) > 0) {
 		llog_pexpect(st->st_logger, HERE,
 			     "#%lu has lease; should not be trying to replace",
 			     st->st_serialno);
@@ -492,7 +492,7 @@ void schedule_v2_replace_event(struct state *st)
 	enum event_type kind;
 	const char *story;
 	if ((c->policy & POLICY_OPPORTUNISTIC) &&
-	    child_has_lease(st->st_connection->remote)) {
+	    nr_child_leases(st->st_connection->remote) > 0) {
 		kind = EVENT_SA_EXPIRE;
 		story = "always expire opportunistic SA with lease";
 	} else if (c->policy & POLICY_DONT_REKEY) {
