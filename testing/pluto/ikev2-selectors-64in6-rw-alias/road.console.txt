@@ -11,7 +11,9 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road
+002 "road/1x1": connection is using multiple sourceip
 002 "road/1x1": added IKEv2 connection
+002 "road/2x2": connection is using multiple sourceip
 002 "road/2x2": added IKEv2 connection
 road #
  echo "initdone"
