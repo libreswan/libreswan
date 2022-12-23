@@ -1927,7 +1927,7 @@ bool assign_holdpass(struct connection *c,
 						/*sa_marks*/NULL, /*xfrmi*/NULL,
 						b->sec_label, /*from acquire */
 						HERE);
-		if (raw_policy(KERNEL_POLICY_OP_ADD,
+		if (!raw_policy(KERNEL_POLICY_OP_ADD,
 			       DIRECTION_OUTBOUND,
 			       EXPECT_KERNEL_POLICY_OK,
 			       &kernel_policy.src.client,
@@ -1939,21 +1939,8 @@ bool assign_holdpass(struct connection *c,
 			       kernel_policy.id,
 			       kernel_policy.sec_label, /* from acquire */
 			       logger,
-			       "%s() %s", __func__, addwidemsg)) {
-			/*
-			 * XXX: how can this code assume that the shunt is
-			 * "passthrough"?
-			 *
-			 * XXX: why add a bare shunt entry?  Shouldn't the
-			 * connection state instead be changed to flag that it
-			 * has a shunt?
-			 */
-			dbg("adding bare (possibly wided) passthrough negotiationshunt succeeded (violating API)");
-			add_bare_shunt(&kernel_policy.src.client, &kernel_policy.dst.client,
-				       c->config->negotiation_shunt, UNSET_CO_SERIAL,
-				       addwidemsg, logger);
-		} else {
-			llog(RC_LOG, logger, "adding bare wide passthrough negotiationshunt failed");
+				"%s() %s", __func__, addwidemsg)) {
+			llog(RC_LOG, logger, "adding bare wide passthrough OE negotiationshunt failed");
 		}
 	}
 
@@ -1971,67 +1958,36 @@ bool assign_holdpass(struct connection *c,
 		return true;
 	}
 
-	if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-		/*
-		 * Add the kernel shunt to the pluto bare
-		 * shunt list.
-		 *
-		 * We need to do this because the %hold shunt
-		 * was installed by kernel and we want to keep
-		 * track of it inside pluto.
-		 *
-		 * XXX: hack to keep code below happy - need
-		 * to figigure out what to do with the shunt
-		 * functions.
-		 */
-		ip_selector src_client = packet_src_selector(b->packet);
-		ip_selector dst_client = packet_dst_selector(b->packet);
-		add_bare_shunt(&src_client, &dst_client,
-			       SHUNT_HOLD, UNSET_CO_SERIAL,
-			       b->by_acquire ? "acquire" : "whack",
-			       logger);
-	}
-
-	/*
-	 * A template connection's eroute can be eclipsed by either a
-	 * %hold or an eroute for an instance IFF the template is a
-	 * /32 -> /32.  This requires some special casing.
-	 *
-	 * XXX: is this still needed?
-	 *
-	 * XXX: yes, but not for the reason you might thing.  This
-	 * code seems to be trying to detect the OE code above that
-	 * has already inserted the widened kernel policy and added
-	 * the needless bare_shunt.
-	 */
 	if (selector_contains_one_address((sr)->local->client) &&
 	    selector_contains_one_address((sr)->remote->client)) {
 		/*
-		 * Although %hold or %pass is appropriately broad, it
-		 * will no longer be bare so we must ditch it from the
-		 * bare table.
+		 * A template connection's eroute can be eclipsed by
+		 * either a %hold or an eroute for an instance IFF the
+		 * template is a /32 -> /32.  This requires some
+		 * special casing.
+		 *
+		 * XXX: is this still needed?
+		 *
+		 * XXX: yes, but not for the reason you might thing.
+		 *
+		 * The bare shunt table ignores ports.  Hence it
+		 * considers 128.1/32/ICMP/8 and 127.1/32// to be
+		 * identical.  This means that code inserting or
+		 * deleting the packets bare_shunt entry is really
+		 * manipulating the wider entry and, conversely, code
+		 * deleting a wide entry could well be deleting the
+		 * packet's entry.
+		 *
+		 * Assuming that the OE code installed a /32, the ELSE
+		 * path below which deletes the packet's policy, would
+		 * end up deleting it.
+		 *
+		 * Assuming a non OE SPD is exactly /32, the ELSE path
+		 * again would end up deleting it.  Presumably most
+		 * SPDs are wider than /32 and need the packet's
+		 * bare_shunt entry deleted.
 		 */
 		ldbg(logger, "kernel: %s() no longer bare so ditching", __func__);
-		struct bare_shunt **old = bare_shunt_ptr(&sr->local->client,
-							 &sr->remote->client, __func__);
-
-		if (old == NULL) {
-			/* ??? should this happen?  It does. */
-			llog(RC_LOG, logger,
-			     "%s() no bare shunt to remove? - mismatch?", __func__);
-		} else {
-			/*
-			 * ??? should this happen?
-			 *
-			 * XXX: see the opportunistic path above
-			 * which, typically, adds a policy +
-			 * bare_shunt for just the address in
-			 * question.
-			 */
-			PEXPECT(logger, (c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
-			dbg("kernel: %s() removing bare shunt", __func__);
-			free_bare_shunt(old);
-		}
 	} else {
 		ldbg(logger, "kernel: %s() need broad(er) shunt", __func__);
 		/*
@@ -2099,14 +2055,16 @@ bool assign_holdpass(struct connection *c,
 		}
 
 		/*
-		 * Find the existing bare shunt and delete it.  If
-		 * there isn't ignore the error.
-		 *
 		 * Strip the port; i.e., widen to an address.
 		 *
-		 * XXX: is this right?  Isn't the existing selector
-		 * very narrow and the above replacing it with
-		 * something wider?  Or is that the other way round?
+		 * XXX: is this right?
+		 *
+		 * Isn't the packet's kernel policy very narrow and
+		 * the above replacing it with something wider?
+		 *
+		 * If the SPD is for a /32 then the below would delete
+		 * it.  What is saving things is the selector is /32
+		 * check above.
 		 */
 
 		ip_address src_address = packet_src_address(b->packet);
@@ -2115,32 +2073,21 @@ bool assign_holdpass(struct connection *c,
 								 b->packet.protocol);
 		ip_selector dst = selector_from_address_protocol(dst_address,
 								 b->packet.protocol);
-
-		struct bare_shunt **bsp = bare_shunt_ptr(&src, &dst, "delete narrow hold");
-		if (bsp != NULL) {
-			/* assume low code logged action */
-			if (!delete_kernel_policy(DIRECTION_OUTBOUND,
-						  IGNORE_KERNEL_POLICY_MISSING,
-						  src, dst,
-						  /*sa_marks*/NULL, /*xfrmi*/NULL, /*bare-shunt*/
-						  DEFAULT_KERNEL_POLICY_ID,
-						  /* bare-shunt: no sec_label XXX: ?!? */
-						  null_shunk,
-						  logger, HERE,
-						  "delete bare shunt in assign_holdpass()")) {
-				/* ??? we could not delete a bare shunt */
-				llog(RC_LOG, logger, "%s() failed to delete kernel policy", __func__);
-			}
-			free_bare_shunt(bsp);
-			dbg("kernel: %s() delete_bare_shunt() succeeded", __func__);
-		} else {
-			selector_pair_buf sb;
-			llog(RC_LOG, logger,
-			     "can't find expected bare shunt to delete: %s",
-			     str_selector_pair_sensitive(&src, &dst, &sb));
+		/* assume low code logged action */
+		if (!delete_kernel_policy(DIRECTION_OUTBOUND,
+					  IGNORE_KERNEL_POLICY_MISSING,
+					  src, dst,
+					  /*sa_marks*/NULL, /*xfrmi*/NULL, /*bare-shunt*/
+					  DEFAULT_KERNEL_POLICY_ID,
+					  /* bare-shunt: no sec_label XXX: ?!? */
+					  null_shunk,
+					  logger, HERE,
+					  "delete bare shunt in assign_holdpass()")) {
+			/* ??? we could not delete a bare shunt */
+			llog(RC_LOG, logger, "%s() failed to delete kernel policy", __func__);
 		}
-
 	}
+
 	set_child_routing(c, new_routing);
 	dbg("kernel: %s() done - returning success", __func__);
 	return true;
