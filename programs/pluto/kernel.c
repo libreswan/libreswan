@@ -1906,7 +1906,6 @@ bool assign_holdpass(struct connection *c,
 	PASSERT(logger, (c->kind == CK_PERMANENT ||
 			 c->kind == CK_INSTANCE));
 
-
 	if ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY) {
 		/*
 		 * Unconditionally install the widened OE policy
@@ -2119,9 +2118,19 @@ bool assign_holdpass(struct connection *c,
 
 		struct bare_shunt **bsp = bare_shunt_ptr(&src, &dst, "delete narrow hold");
 		if (bsp != NULL) {
-			delete_bare_shunt_kernel_policy(*bsp,
-							IGNORE_KERNEL_POLICY_MISSING,
-							logger, HERE);
+			/* assume low code logged action */
+			if (!delete_kernel_policy(DIRECTION_OUTBOUND,
+						  IGNORE_KERNEL_POLICY_MISSING,
+						  src, dst,
+						  /*sa_marks*/NULL, /*xfrmi*/NULL, /*bare-shunt*/
+						  DEFAULT_KERNEL_POLICY_ID,
+						  /* bare-shunt: no sec_label XXX: ?!? */
+						  null_shunk,
+						  logger, HERE,
+						  "delete bare shunt in assign_holdpass()")) {
+				/* ??? we could not delete a bare shunt */
+				llog(RC_LOG, logger, "%s() failed to delete kernel policy", __func__);
+			}
 			free_bare_shunt(bsp);
 			dbg("kernel: %s() delete_bare_shunt() succeeded", __func__);
 		} else {
