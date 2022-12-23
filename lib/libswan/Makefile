@@ -160,7 +160,6 @@ OBJS += keywords.o
 OBJS += ldbg.o
 OBJS += DBG_dump.o
 OBJS += DBG_log.o
-OBJS += DBG_va_list.o
 
 OBJS += llog_base64_bytes.o
 OBJS += llog_pem_bytes.o

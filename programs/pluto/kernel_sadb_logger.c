@@ -464,7 +464,7 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 {
 	va_list ap;
 	va_start(ap, fmt);
-	DBG_va_list(fmt, ap);
+	LDBG_va_list(logger, fmt, ap);
 	va_end(ap);
 
 	shunk_t msg_cursor = shunk2(ptr, len);
@@ -533,7 +533,7 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 				return;
 			}
 			llog_sadb_key(rc_flags, logger, key, "  ");
-			LDBGP(logger, DBG_CRYPT, buf) {
+			LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
 				jam(buf, "   ");
 				jam_dump_hunk(buf, key_cursor);
 			}

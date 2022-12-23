@@ -367,24 +367,14 @@ extern lset_t cur_debugging;	/* current debugging level */
 
 void ldbg(const struct logger *logger, const char *message, ...) PRINTF_LIKE(2);
 
-#define LDBGP(LOGGER, COND, BUF)					\
-	/* allocate the buffer */					\
-	for (char buf_[LOG_WIDTH],					\
-		     *dbgp_ = (DBGP(COND) ? buf_ : NULL);		\
-	     dbgp_ != NULL;						\
-	     dbgp_ = NULL)						\
-		/* create the jambuf_; no prefix; use jambuf_ */	\
-		for (struct jambuf jambuf_ = ARRAY_AS_JAMBUF(buf_),	\
-			     *BUF = &jambuf_;				\
-		     BUF != NULL;					\
-		     BUF = NULL,					\
-			     jambuf_to_logger(&jambuf_, LOGGER, DEBUG_STREAM))
+/* LDBG_JAMBUF() is ambigious - LDBG_op() or ldbg() ucase? */
+#define LDBGP_JAMBUF(COND, LOGGER, BUF)			\
+	for (bool cond_ = COND; cond_; cond_ = false)	\
+		LLOG_JAMBUF(DEBUG_STREAM, LOGGER, BUF)
 
-#define LDBG(LOGGER, BUF) LDBGP(LOGGER, DBG_BASE, BUF)
 
 /* DBG_*() are unconditional */
 void DBG_log(const char *message, ...) PRINTF_LIKE(1);
-void DBG_va_list(const char *message, va_list ap) VPRINTF_LIKE(1);
 void DBG_dump(const char *label, const void *p, size_t len);
 #define DBG_dump_hunk(LABEL, HUNK)					\
 	{								\

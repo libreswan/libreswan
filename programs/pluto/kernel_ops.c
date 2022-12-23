@@ -316,7 +316,7 @@ ipsec_spi_t kernel_ops_get_ipsec_spi(ipsec_spi_t avoid,
 				     const char *story,	/* often SAID string */
 				     struct logger *logger)
 {
-	LDBG(logger, buf) {
+	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 		jam_string(buf, "kernel: get_ipsec_spi() ");
 		jam_address(buf, src);
 		jam_string(buf, "-");
