@@ -1738,6 +1738,40 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 		return;
 	}
 
+	/* XXX: kernel's __u64 != uintmax_t */
+	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+		jam(buf, "xfrm_user_acquire ");
+		jam(buf, " ");
+		jam(buf, "id {");
+		jam(buf, " daddr: xfrm_address_t");
+		jam(buf, " spi: %jx", (uintmax_t) acquire->id.spi);
+		jam(buf, " proto: %jx", (uintmax_t) acquire->id.proto);
+		jam(buf, " saddr: struct xfrm_address_t");
+		jam(buf, " sel: struct xfrm_selector");
+		jam(buf, "}");
+		jam(buf, " ");
+		jam(buf, "policy {");
+		jam(buf, " ");
+		jam(buf, "lft {");
+		/* XXX: kernel's __u64 != uint64_t */
+		jam(buf, " soft_add_expires_seconds=%ju", (uintmax_t)acquire->policy.lft.soft_add_expires_seconds);
+		jam(buf, " hard_add_expires_seconds=%ju", (uintmax_t)acquire->policy.lft.hard_add_expires_seconds);
+		jam(buf, " soft_use_expires_seconds=%ju", (uintmax_t)acquire->policy.lft.soft_use_expires_seconds);
+		jam(buf, " hard_use_expires_seconds=%ju", (uintmax_t)acquire->policy.lft.hard_use_expires_seconds);
+		jam(buf, "}");
+		jam(buf, " ");
+		jam(buf, "curlft {");
+		jam(buf, " add_time=%s", (uintmax_t)acquire->policy.curlft.add_time > 0 ? ">0" : "0");
+		jam(buf, " use_time=%s", (uintmax_t)acquire->policy.curlft.use_time > 0 ? ">0" : "0");
+		jam(buf, "}");
+		jam(buf, " ");
+		jam(buf, "}");
+		jam(buf, " aalgos: %u", (unsigned) acquire->aalgos);
+		jam(buf, " ealgos: %u", (unsigned) acquire->ealgos);
+		jam(buf, " calgos: %u", (unsigned) acquire->calgos);
+		jam(buf, " seq: %u", (unsigned) acquire->seq);
+	}
+
 	shunk_t sec_label = NULL_HUNK;
 	const struct ip_info *afi = aftoinfo(acquire->policy.sel.family);
 	if (afi == NULL) {
@@ -1780,14 +1814,33 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 		case XFRMA_TMPL:
 		{
 			struct xfrm_user_tmpl *tmpl = (struct xfrm_user_tmpl *) RTA_DATA(attr);
-			dbg("... xfrm template attribute with reqid:%d, spi:%d, proto:%d",
-			    tmpl->reqid, tmpl->id.spi, tmpl->id.proto);
+			LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+				jam(buf, "xfrm_user_tmpl {");
+				jam(buf, " id: xfrm_id id");
+				jam(buf, " family: %ju", (uintmax_t) tmpl->family);
+				jam(buf, " saddr: xfrm_address_t");
+				jam(buf, " reqid: %ju", (uintmax_t) tmpl->reqid);
+				jam(buf, " mode: %ju", (uintmax_t) tmpl->mode);
+				jam(buf, " share: %ju", (uintmax_t) tmpl->share);;
+				jam(buf, " optional: %ju", (uintmax_t) tmpl->optional);
+				jam(buf, " aalgos: %ju", (uintmax_t) tmpl->aalgos);
+				jam(buf, " ealgos: %ju", (uintmax_t) tmpl->ealgos);
+				jam(buf, " calgos: %ju", (uintmax_t) tmpl->calgos);
+				jam(buf, "}");
+			}
 			break;
 		}
 		case XFRMA_POLICY_TYPE:
+		{
 			/* discard */
-			dbg("... xfrm policy type ignored");
+			struct xfrm_userpolicy_type *type = (struct xfrm_userpolicy_type*) RTA_DATA(attr);
+			LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+				jam(buf, "xfrm_userpolicy_type {");
+				jam(buf, " type: %ju", (uintmax_t) type->type);
+				jam(buf, "}");
+			}
 			break;
+		}
 		case XFRMA_SEC_CTX:
 		{
 			struct xfrm_user_sec_ctx *xuctx = (struct xfrm_user_sec_ctx *) RTA_DATA(attr);
@@ -1840,24 +1893,6 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 		/* updates remaining too */
 		attr = RTA_NEXT(attr, remaining);
 	}
-
-	/* XXX: kernel's __u64 != uint64_t */
-	ldbg(logger, "acquire.policy.lft.soft_add_expires_seconds=%"PRIu64,
-	     (uint64_t)acquire->policy.lft.soft_add_expires_seconds);
-	ldbg(logger, "acquire.policy.lft.hard_add_expires_seconds=%"PRIu64,
-	     (uint64_t)acquire->policy.lft.hard_add_expires_seconds);
-	ldbg(logger, "acquire.policy.lft.soft_use_expires_seconds=%"PRIu64,
-	     (uint64_t)acquire->policy.lft.soft_use_expires_seconds);
-	ldbg(logger, "acquire.policy.lft.hard_use_expires_seconds=%"PRIu64,
-	     (uint64_t)acquire->policy.lft.hard_use_expires_seconds);
-
-#if 0
-	/* XXX: kernel's __u64 != uint64_t */
-	ldbg(logger, "acquire.policy.curlft.add_time=%"PRIu64,
-	     (uint64_t)acquire->policy.curlft.add_time);
-	ldbg(logger, "acquire.policy.curlft.use_time=%"PRIu64,
-	     (uint64_t)acquire->policy.curlft.use_time);
-#endif
 
 	struct kernel_acquire b = {
 		.packet = packet,
