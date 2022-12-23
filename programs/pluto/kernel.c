@@ -1873,17 +1873,33 @@ bool assign_holdpass(struct connection *c,
 
 	switch (old_routing) {
 	case RT_UNROUTED:
+		/*
+		 * For instance:
+		 * - an instance with a routed template
+		 * - by whack
+		 */
 		new_routing = RT_UNROUTED_HOLD;
 		op = KERNEL_POLICY_OP_ADD;
-		reason = (oe ? "replace opportunistic %trap with broad %pass or %hold" :
-			  "replace %trap with broad %pass or %hold");
+		/* XXX: these descriptions make no sense */
+		reason = (oe ? "replace unrouted opportunistic %trap with broad %pass or %hold" :
+			  "replace unrouted %trap with broad %pass or %hold");
 		break;
 	case RT_ROUTED_PROSPECTIVE:
-		/* XXX: is this just re-installing the same policy? */
+		/*
+		 * For instance?
+		 *
+		 * XXX: could be whack or acquire.
+		 *
+		 * XXX: is this just re-installing the same policy?
+		 * No?  The prospective policy might be 7.0.0.0/8 but
+		 * this is installing 7.7.7.7/32 from a trigger of
+		 * 7.7.7.7/32/ICMP/8.
+		 */
 		new_routing = RT_ROUTED_HOLD;
 		op = KERNEL_POLICY_OP_REPLACE;
-		reason = (oe ? "broad opportunistic %pass or %hold" :
-			  "broad %pass or %hold");
+		/* XXX: these descriptions make no sense */
+		reason = (oe ? "broad prospective opportunistic %pass or %hold" :
+			  "broad prospective %pass or %hold");
 		break;
 	default:
 		/* no change: this %hold or %pass is old news */
@@ -1925,49 +1941,61 @@ bool assign_holdpass(struct connection *c,
 	PASSERT(logger, (c->kind == CK_PERMANENT ||
 			 c->kind == CK_INSTANCE));
 
-	if (oe) {
-		/*
-		 * Unconditionally install the widened OE policy
-		 * defined by the SPD.
-		 *
-		 * Being OE the selectors presumably have only one
-		 * address (and no port/protocol).  There's code
-		 * further down checking for that case and both
-		 * skipping policy-add and deleting the bare shunt
-		 * when it happens.
-		 */
-		PEXPECT(c->logger, op == KERNEL_POLICY_OP_ADD);
-		PEXPECT(c->logger, b->sec_label.len == 0);
-		PEXPECT(c->logger, c->config->sec_label.len == 0);
-		PEXPECT(c->logger, c->sa_marks.out.val == 0);
-		PEXPECT(c->logger, c->sa_marks.out.mask == 0);
-		PEXPECT(c->logger, c->xfrmi == NULL);
-		struct kernel_policy kernel_policy =
-			kernel_policy_from_void(c->spd->local->client,
-						c->spd->remote->client,
-						DIRECTION_OUTBOUND,
-						calculate_kernel_priority(c),
-						c->config->negotiation_shunt,
-						/* XXX: DIFFERENT TO BELOW (always N/A?) */
-						/*sa_marks*/NULL, /*xfrmi*/NULL,
-						/* XXX: DIFFERENT TO BELOW (always NULL?) */
-						b->sec_label, /*from acquire */
-						HERE);
-		if (!raw_policy(KERNEL_POLICY_OP_ADD,
-			       DIRECTION_OUTBOUND,
-			       EXPECT_KERNEL_POLICY_OK,
-			       &kernel_policy.src.client,
-			       &kernel_policy.dst.client,
-			       &kernel_policy,
-			       deltatime(SHUNT_PATIENCE),
-			       kernel_policy.sa_marks/*NULL*/,
-			       kernel_policy.xfrmi/*NULL*/,
-			       kernel_policy.id,
-			       kernel_policy.sec_label, /* from acquire */
-			       logger,
-				"%s() %s", __func__, reason)) {
-			llog(RC_LOG, logger, "adding bare wide passthrough OE negotiationshunt failed");
+	/*
+	 * We need a broad %hold, not the narrow one.
+	 *
+	 * First we ensure that there is a broad %hold.  There may
+	 * already be one (race condition): no need to create one.
+	 * There may already be a %trap: replace it.  There may not be
+	 * any broad eroute: add %hold.  Once the broad %hold is in
+	 * place, delete the narrow one.
+	 *
+	 * XXX: what race condition?
+	 *
+	 * XXX: why is OE special (other than that's the way the code
+	 * worked in the past)?
+	 */
+	if (oe || old_routing != new_routing) {
+
+		if (sr->local->child->has_cat) {
+			struct kernel_policy kernel_policy =
+				kernel_policy_from_void(sr->local->client, sr->remote->client,
+							DIRECTION_OUTBOUND,
+							calculate_kernel_priority(c),
+							c->config->negotiation_shunt,
+							&c->sa_marks, c->xfrmi,
+							HUNK_AS_SHUNK(c->config->sec_label),
+							HERE);
+			ldbg(logger, "acquired a CAT");
+			ip_selector client = selector_from_address(sr->local->host->addr);
+			if (!raw_policy(op, DIRECTION_OUTBOUND,
+					EXPECT_KERNEL_POLICY_OK,
+					/* XXX: this uses .client+.route!?! */
+					&client, &kernel_policy.dst.client,
+					&kernel_policy,
+					deltatime(0),
+					kernel_policy.sa_marks,
+					kernel_policy.xfrmi,
+					kernel_policy.id,
+					kernel_policy.sec_label,
+					logger, "CAT: %s() %s", __func__, reason)) {
+				llog(RC_LOG, logger,
+				     "CAT: failed to eroute additional Client Address Translation policy");
+			} else {
+				dbg("kernel: %s() CAT extra route added", __func__);
+			}
 		}
+
+		if (!install_bare_spd_kernel_policy(sr, op, DIRECTION_OUTBOUND,
+						    EXPECT_KERNEL_POLICY_OK,
+						    c->config->negotiation_shunt,
+						    logger, HERE, reason)) {
+			llog(RC_LOG, logger,
+			     "%s() eroute_connection() failed", __func__);
+			return false;
+		}
+
+		dbg("kernel: %s() eroute_connection() done", __func__);
 	}
 
 	if (!b->by_acquire) {
@@ -2016,61 +2044,6 @@ bool assign_holdpass(struct connection *c,
 		ldbg(logger, "kernel: %s() no longer bare so ditching", __func__);
 	} else {
 		ldbg(logger, "kernel: %s() need broad(er) shunt", __func__);
-		/*
-		 * We need a broad %hold, not the narrow one.
-		 *
-		 * First we ensure that there is a broad %hold.  There
-		 * may already be one (race condition): no need to
-		 * create one.  There may already be a %trap: replace
-		 * it.  There may not be any broad eroute: add %hold.
-		 * Once the broad %hold is in place, delete the narrow
-		 * one.
-		 */
-		if (old_routing != new_routing) {
-
-			if (sr->local->child->has_cat) {
-				struct kernel_policy kernel_policy =
-					kernel_policy_from_void(sr->local->client, sr->remote->client,
-								DIRECTION_OUTBOUND,
-								calculate_kernel_priority(c),
-								c->config->negotiation_shunt,
-								/* XXX: DIFFERENT TO ABOVE (probably correct) */
-								&c->sa_marks, c->xfrmi,
-								/* XXX: DIFFERENT TO ABOVE (probably correct) */
-								HUNK_AS_SHUNK(c->config->sec_label),
-								HERE);
-				ldbg(logger, "acquired a CAT");
-				ip_selector client = selector_from_address(sr->local->host->addr);
-				if (!raw_policy(op, DIRECTION_OUTBOUND,
-						EXPECT_KERNEL_POLICY_OK,
-						/* XXX: this uses .client+.route!?! */
-						&client, &kernel_policy.dst.client,
-						&kernel_policy,
-						deltatime(0),
-						kernel_policy.sa_marks,
-						kernel_policy.xfrmi,
-						kernel_policy.id,
-						kernel_policy.sec_label,
-						logger, "CAT: %s() %s", __func__, reason)) {
-					llog(RC_LOG, logger,
-					     "CAT: failed to eroute additional Client Address Translation policy");
-				} else {
-					dbg("kernel: %s() CAT extra route added", __func__);
-				}
-			}
-
-			if (!install_bare_spd_kernel_policy(sr, op, DIRECTION_OUTBOUND,
-							    EXPECT_KERNEL_POLICY_OK,
-							    c->config->negotiation_shunt,
-							    logger, HERE, reason)) {
-				llog(RC_LOG, logger,
-				     "%s() eroute_connection() failed", __func__);
-				return false;
-			}
-
-			dbg("kernel: %s() eroute_connection() done", __func__);
-		}
-
 		/*
 		 * Strip the port; i.e., widen to an address.
 		 *
