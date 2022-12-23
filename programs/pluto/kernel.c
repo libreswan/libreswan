@@ -1867,16 +1867,29 @@ bool assign_holdpass(struct connection *c,
 	 */
 	enum routing old_routing = c->child.routing;	/* routing, old */
 	enum routing new_routing;
+	enum kernel_policy_op op;
+	const char *reason;
+	bool oe = ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
+
 	switch (old_routing) {
 	case RT_UNROUTED:
 		new_routing = RT_UNROUTED_HOLD;
+		op = KERNEL_POLICY_OP_ADD;
+		reason = (oe ? "replace opportunistic %trap with broad %pass or %hold" :
+			  "replace %trap with broad %pass or %hold");
 		break;
 	case RT_ROUTED_PROSPECTIVE:
+		/* XXX: is this just re-installing the same policy? */
 		new_routing = RT_ROUTED_HOLD;
+		op = KERNEL_POLICY_OP_REPLACE;
+		reason = (oe ? "broad opportunistic %pass or %hold" :
+			  "broad %pass or %hold");
 		break;
 	default:
 		/* no change: this %hold or %pass is old news */
 		new_routing = old_routing;
+		op = 0; /* i.e., NOP */
+		reason = "NOP";
 		break;
 	}
 
@@ -1884,7 +1897,7 @@ bool assign_holdpass(struct connection *c,
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam(buf, "%s():", __func__);
 			jam(buf, " by_acquire=%s", bool_str(b->by_acquire));
-			jam(buf, " oppo=%s", bool_str(c->policy & POLICY_OPPORTUNISTIC));
+			jam(buf, " oppo=%s", bool_str(oe));
 			jam(buf, " kind=");
 			jam_enum_short(buf, &connection_kind_names, c->kind);
 			jam(buf, " routing=");
@@ -1892,6 +1905,8 @@ bool assign_holdpass(struct connection *c,
 			if (old_routing != new_routing) {
 				jam(buf, "->");
 				jam_enum_short(buf, &routing_names, new_routing);
+			} else {
+				jam_string(buf, "(no-change)");
 			}
 			jam(buf, " packet=");
 			jam_packet(buf, &b->packet);
@@ -1900,13 +1915,17 @@ bool assign_holdpass(struct connection *c,
 			jam(buf, " one_address=%s",
 			    bool_str(selector_contains_one_address((sr)->local->client) &&
 				     selector_contains_one_address((sr)->remote->client)));
+			jam_string(buf, " op=");
+			jam_enum(buf, &kernel_policy_op_names, op);
+			jam_string(buf, ": ");
+			jam_string(buf, reason);
 		}
 	}
 
 	PASSERT(logger, (c->kind == CK_PERMANENT ||
 			 c->kind == CK_INSTANCE));
 
-	if ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY) {
+	if (oe) {
 		/*
 		 * Unconditionally install the widened OE policy
 		 * defined by the SPD.
@@ -1917,14 +1936,21 @@ bool assign_holdpass(struct connection *c,
 		 * skipping policy-add and deleting the bare shunt
 		 * when it happens.
 		 */
-		const char *const addwidemsg = "oe-negotiating";
-
+		PEXPECT(c->logger, op == KERNEL_POLICY_OP_ADD);
+		PEXPECT(c->logger, b->sec_label.len == 0);
+		PEXPECT(c->logger, c->config->sec_label.len == 0);
+		PEXPECT(c->logger, c->sa_marks.out.val == 0);
+		PEXPECT(c->logger, c->sa_marks.out.mask == 0);
+		PEXPECT(c->logger, c->xfrmi == NULL);
 		struct kernel_policy kernel_policy =
-			kernel_policy_from_void(c->spd->local->client, c->spd->remote->client,
+			kernel_policy_from_void(c->spd->local->client,
+						c->spd->remote->client,
 						DIRECTION_OUTBOUND,
 						calculate_kernel_priority(c),
 						c->config->negotiation_shunt,
+						/* XXX: DIFFERENT TO BELOW (always N/A?) */
 						/*sa_marks*/NULL, /*xfrmi*/NULL,
+						/* XXX: DIFFERENT TO BELOW (always NULL?) */
 						b->sec_label, /*from acquire */
 						HERE);
 		if (!raw_policy(KERNEL_POLICY_OP_ADD,
@@ -1939,7 +1965,7 @@ bool assign_holdpass(struct connection *c,
 			       kernel_policy.id,
 			       kernel_policy.sec_label, /* from acquire */
 			       logger,
-				"%s() %s", __func__, addwidemsg)) {
+				"%s() %s", __func__, reason)) {
 			llog(RC_LOG, logger, "adding bare wide passthrough OE negotiationshunt failed");
 		}
 	}
@@ -2001,16 +2027,6 @@ bool assign_holdpass(struct connection *c,
 		 * one.
 		 */
 		if (old_routing != new_routing) {
-			enum kernel_policy_op op;
-			const char *reason;
-
-			if (erouted(old_routing)) {
-				op = KERNEL_POLICY_OP_REPLACE;
-				reason = "replace %trap with broad %pass or %hold";
-			} else {
-				op = KERNEL_POLICY_OP_ADD;
-				reason = "broad %pass or %hold";
-			}
 
 			if (sr->local->child->has_cat) {
 				struct kernel_policy kernel_policy =
@@ -2018,8 +2034,9 @@ bool assign_holdpass(struct connection *c,
 								DIRECTION_OUTBOUND,
 								calculate_kernel_priority(c),
 								c->config->negotiation_shunt,
-								/* XXX: bug; use from_spd() */
+								/* XXX: DIFFERENT TO ABOVE (probably correct) */
 								&c->sa_marks, c->xfrmi,
+								/* XXX: DIFFERENT TO ABOVE (probably correct) */
 								HUNK_AS_SHUNK(c->config->sec_label),
 								HERE);
 				ldbg(logger, "acquired a CAT");
