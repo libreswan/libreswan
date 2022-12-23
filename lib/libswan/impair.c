@@ -211,6 +211,9 @@ struct impairment impairments[] = {
 	A("event-sa-replace", STATE_EVENT_HANDLER, EVENT_SA_REPLACE,
 	  "trigger the replace event", "SA"),
 
+	V("cannot-ondemand", cannot_ondemand,
+	  "force acquire to call cannot_ondemand() and fail"),
+
 #undef V
 #undef A
 

@@ -162,6 +162,8 @@ struct impair {
 	bool ignore_soft_expire;
 	bool ignore_hard_expire;
 
+	bool cannot_ondemand;
+
 	/*
 	 * add more here
 	 */

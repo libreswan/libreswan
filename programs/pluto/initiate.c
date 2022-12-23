@@ -574,6 +574,11 @@ void initiate_ondemand(const struct kernel_acquire *b)
 {
 	threadtime_t inception = threadtime_start();
 
+	if (impair.cannot_ondemand) {
+		llog(RC_LOG, b->logger, "IMPAIR: cannot ondemand forced");
+		return;
+	}
+
 	if (b->sec_label.len > 0) {
 		dbg("oppo bundle: received security label string: "PRI_SHUNK,
 		    pri_shunk(b->sec_label));
