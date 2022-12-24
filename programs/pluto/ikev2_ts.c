@@ -1903,7 +1903,8 @@ bool verify_rekey_child_request_ts(struct child_sa *child, struct msg_digest *md
 	enum fit responder_selector_fit = END_NARROWER_THAN_TS;
 	enum fit responder_sec_label_fit = END_EQUALS_TS;
 
-	struct narrowed_selector_payloads best;
+	/* best's value isn't relevant, but pacify coverity */
+	struct narrowed_selector_payloads best = {0};
 	if (!fit_tsps_to_ends(&best, &their_tsps, &ends,
 			      responder_selector_fit,
 			      responder_sec_label_fit, indent)) {
