@@ -1,0 +1,38 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2
+002 "westnet-eastnet-ipv4-psk-ikev2": added IKEv2 connection
+west #
+ ipsec auto --add westnet-eastnet-ipv4-psk-ikev2-b
+002 "westnet-eastnet-ipv4-psk-ikev2-b": added IKEv2 connection
+west #
+ ipsec whack --impair suppress-retransmits
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up westnet-eastnet-ipv4-psk-ikev2
+1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: initiating IKEv2 connection
+1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "westnet-eastnet-ipv4-psk-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+004 "westnet-eastnet-ipv4-psk-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ ipsec auto --up westnet-eastnet-ipv4-psk-ikev2-b
+002 "westnet-eastnet-ipv4-psk-ikev2-b" #3: initiating Child SA using IKE SA #1
+1v2 "westnet-eastnet-ipv4-psk-ikev2-b" #3: sent CREATE_CHILD_SA request for new IPsec SA
+004 "westnet-eastnet-ipv4-psk-ikev2-b" #3: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.3.0-192.0.3.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
+west #
+ echo done
+done
+west #
+ ipsec trafficstatus
+006 #2: "westnet-eastnet-ipv4-psk-ikev2", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+006 #3: "westnet-eastnet-ipv4-psk-ikev2-b", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+west #
+ 
