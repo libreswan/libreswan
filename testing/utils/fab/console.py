@@ -171,7 +171,7 @@ class Remote:
         self.expect(sync.encode() + rb'\s+' + self.prompt.pattern, timeout=timeout)
 
         # Set the PTY inside the VM to no-echo
-        self.run("export TERM=dumb; unset LS_COLORS; stty sane -echo -onlcr")
+        self.run("export TERM=dumb ; unset LS_COLORS ; stty sane -echo -onlcr")
 
     def stty_sane(self, term="dumb", rows=24, columns=80):
         # Get the PTY inside the VM (not pexpect's PTY) into normal

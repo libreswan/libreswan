@@ -146,10 +146,10 @@ def main():
             console.redirect_output(sys.stdout)
             console.run("")
             console.redirect_output(None)
-            # Get this terminals properties.
+            # Pass this terminals properties to the VM.
             columns, rows = os.get_terminal_size()
-            # Normal mode
             console.stty_sane(term=os.getenv("TERM"), rows=rows, columns=columns)
+            # F.A.B.
             console.interact()
 
     if args.shutdown:

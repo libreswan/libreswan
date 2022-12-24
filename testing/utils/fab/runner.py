@@ -100,7 +100,7 @@ class TestDomain:
         # Set noecho on the PTY inside the VM (not pexpect's PTY
         # outside of the VM).  Disable emacs mode before disabling
         # echo - NetBSD seems to snafu emacs+-echo.
-        console.run("export TERM=dumb; unset LS_COLORS; set +o emacs ; stty sane -echo -onlcr")
+        console.run("export TERM=dumb ; unset LS_COLORS ; stty sane -echo -onlcr")
 
         test_directory = self.domain.guest_path(host_path=self.test.directory)
         if not test_directory:
