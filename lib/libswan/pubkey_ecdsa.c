@@ -79,7 +79,7 @@ static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubk
 		 *
 		 * Allow for and strip that off when necessary.
 		 */
-		if (group->nss_adds_ec_point_form_uncompressed &&
+		if ((*e)->nss_adds_ec_point_form_uncompressed &&
 		    ipseckey_pubkey.len == (*e)->bytes + 1 &&
 		    ipseckey_pubkey_ptr[0] == EC_POINT_FORM_UNCOMPRESSED) {
 			/* ignore prefix */
@@ -88,6 +88,7 @@ static diag_t ECDSA_ipseckey_rdata_to_pubkey_content(const shunk_t ipseckey_pubk
 			break;
 		}
 	}
+
 	if (group == NULL) {
 		return diag("unrecognized EC Public Key with length %zu", ipseckey_pubkey.len);
 	}
