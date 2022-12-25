@@ -43,8 +43,8 @@ west #
  ../../guestbin/kernel-state.sh
 192.1.2.45 192.1.2.23
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
-	E: aes-cbc 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
-	A: hmac-sha1 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	seq=0x00000001 replay=8 flags=0x00000400 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
@@ -54,8 +54,8 @@ west #
 	sadb_seq=1 pid=PID refcnt=1
 192.1.2.23 192.1.2.45
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
-	E: aes-cbc 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
-	A: hmac-sha1 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	seq=0x00000001 replay=8 flags=0x00000400 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
@@ -70,8 +70,8 @@ west #
  ../../guestbin/kernel-state.sh
 192.1.2.45 192.1.2.23
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
-	E: aes-cbc 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
-	A: hmac-sha1 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	seq=0x00000002 replay=8 flags=0x00000400 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
@@ -81,8 +81,8 @@ west #
 	sadb_seq=1 pid=PID refcnt=1
 192.1.2.23 192.1.2.45
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
-	E: aes-cbc 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
-	A: hmac-sha1 	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX	XXXXXXXX
+	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
+	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
 	seq=0x00000002 replay=8 flags=0x00000400 state=mature 
 	created: TIMESTAMP	current: TIMESTAMP
 	diff: N(s)	hard: 28800(s)	soft: 28800(s)
