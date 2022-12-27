@@ -216,7 +216,7 @@ KVM_OPENBSD_OS_VARIANT ?= $(shell osinfo-query os | awk '/openbsd[1-9]/ {print $
 #
 
 KVM_DEBIAN_HOST_NAMES = debiane debianw
-KVM_FEDORA_HOST_NAMES = east west north road nic fipse fipsw
+KVM_FEDORA_HOST_NAMES = east west north road nic
 KVM_FREEBSD_HOST_NAMES = freebsde freebsdw
 KVM_NETBSD_HOST_NAMES = netbsde netbsdw
 KVM_OPENBSD_HOST_NAMES = openbsde openbsdw
