@@ -215,13 +215,19 @@ KVM_OPENBSD_OS_VARIANT ?= $(shell osinfo-query os | awk '/openbsd[1-9]/ {print $
 # Hosts
 #
 
-KVM_DEBIAN_HOST_NAMES = debiane debianw
 KVM_FEDORA_HOST_NAMES = east west north road nic
+
+KVM_OS_HOST_NAMES = e w
+KVM_DEBIAN_HOST_NAMES = debiane debianw
 KVM_FREEBSD_HOST_NAMES = freebsde freebsdw
 KVM_NETBSD_HOST_NAMES = netbsde netbsdw
 KVM_OPENBSD_HOST_NAMES = openbsde openbsdw
 
-KVM_TEST_HOST_NAMES = $(foreach os, $(KVM_OS), $(KVM_$($(os))_HOST_NAMES))
+KVM_TEST_HOST_NAMES += $(KVM_FEDORA_HOST_NAMES)
+KVM_TEST_HOST_NAMES += \
+	$(foreach os, $(KVM_OS), \
+		$(foreach host, $(KVM_OS_HOST_NAMES), \
+			$(os)$(host)))
 KVM_BUILD_HOST_NAMES += $(foreach os, $(KVM_OS), $(os))
 KVM_BUILD_HOST_NAMES += $(foreach os, $(KVM_OS), $(os)-base)
 KVM_BUILD_HOST_NAMES += $(foreach os, $(KVM_OS), $(os)-upgrade)
@@ -1106,7 +1112,7 @@ kvm-install-%:
 
 
 #
-# Create the local domains
+# Create the test domains
 #
 
 # Since running a domain will likely modify its .qcow2 disk image
@@ -1115,6 +1121,32 @@ kvm-install-%:
 # a domain has been created.
 
 .PRECIOUS: $(KVM_TEST_DOMAINS)
+
+define define-test-domain
+  $(strip $(1))$(strip $(2))$(strip $(3)): $(KVM_POOLDIR_PREFIX)$(strip $(2)) | \
+		$$(foreach subnet, $$(KVM_TEST_SUBNETS), \
+			$(addprefix $(1), $$(subnet).net)) \
+		testing/libvirt/vm/$(strip $(3)).xml
+	: install-kvm-test-domain prefix=$(strip $(1)) platform=$(strip $(2)) host=$(strip $(3))
+	$$(MAKE) kvm-undefine-$$(notdir $$@)
+	$$(QEMU_IMG) create -f qcow2 -F qcow2 -b $(KVM_POOLDIR_PREFIX)$(strip $(2)).qcow2 $$@.qcow2
+	$$(KVM_TRANSMOGRIFY) \
+		-e "s:@@NAME@@:$$(notdir $$@):" \
+		-e "s:network='192_:network='$(addprefix $(notdir $(1)), 192_):" \
+		< testing/libvirt/vm/$(strip $(3)).xml \
+		> '$$@.tmp'
+	$$(VIRSH) define $$@.tmp
+	mv $$@.tmp $$@
+endef
+
+# generate rules for all combinations, including those not enabled
+$(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
+	$(foreach platform, $(KVM_PLATFORM), \
+		$(foreach host, $(KVM_OS_HOST_NAMES), \
+			$(eval $(call define-test-domain, \
+				$(prefix), \
+				$(platform), \
+				$(host))))))
 
 define define-clone-domain
   $(addprefix $(1), $(2)): $(3) | \
@@ -1135,12 +1167,11 @@ endef
 
 # generate rules for all combinations, including those not enabled
 $(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
-	$(foreach platform, $(KVM_PLATFORM), \
-		$(foreach host, $(KVM_$($(platform))_HOST_NAMES), \
-			$(eval $(call define-clone-domain, \
-				$(prefix), \
-				$(host), \
-				$(KVM_POOLDIR_PREFIX)$(platform))))))
+	$(foreach host, $(KVM_FEDORA_HOST_NAMES), \
+		$(eval $(call define-clone-domain, \
+			$(prefix), \
+			$(host), \
+			$(KVM_POOLDIR_PREFIX)fedora))))
 
 
 #
