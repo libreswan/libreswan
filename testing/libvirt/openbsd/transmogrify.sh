@@ -18,6 +18,9 @@ ${GATEWAY}:${SOURCEDIR}   /source   nfs  rw,tcp
 ${GATEWAY}:${TESTINGDIR}  /testing  nfs  rw,tcp
 EOF
 
+cp -v /bench/testing/libvirt/openbsd/rc.conf.local /etc/rc.conf.local
+chmod a+r /etc/rc.conf.local
+
 cp -v /bench/testing/libvirt/openbsd/rc.local /etc/rc.local
 chmod a+x /etc/rc.local
 

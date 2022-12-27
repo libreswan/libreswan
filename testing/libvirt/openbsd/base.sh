@@ -3,7 +3,7 @@
 set -x
 
 # Hobble some daemons
-cat <<EOF | tee /mnt/etc.rc.conf.local
+cat <<EOF | tee /mnt/etc/rc.conf.local
 iked_flags=NO
 sshd_flags=NO
 cron_flags=NO
