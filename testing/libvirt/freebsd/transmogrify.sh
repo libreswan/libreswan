@@ -11,23 +11,22 @@ TESTINGDIR=@@TESTINGDIR@@
 
 # update /etc/fstab with current /source and /testing
 mkdir -p /source /testing
-sed -e '/source/d' -e '/testing/d' /etc/fstab > /tmp/fstab
-cat <<EOF | tee -a /tmp/fstab
-${GATEWAY}:${SOURCEDIR}   /source         nfs     rw
-${GATEWAY}:${TESTINGDIR}  /testing        nfs     rw
+sed -e '/:/d' /etc/fstab > /tmp/fstab
+cat <<EOF >> /tmp/fstab
+${GATEWAY}:${SOURCEDIR}   /source         nfs     rw,noauto
+${GATEWAY}:${TESTINGDIR}  /testing        nfs     rw,noauto
 EOF
 mv /tmp/fstab /etc/fstab
-
-# change ROOT's shell to BASH
-#
-# Test scripts assume an SH like shell; but FreeBSD defaults to CSH.
+cat /etc/fstab
 
 chsh -s /usr/local/bin/bash root
 cp -v /bench/testing/libvirt/bash_profile /root/.bash_profile
 
+cp -v /bench/testing/libvirt/freebsd/rc.conf /etc/
+
+cp -v /bench/testing/libvirt/freebsd/auto_master /etc/
+
 # supress motd
 touch /root/.hushlogin
-
-cp -v /bench/testing/libvirt/freebsd/rc.conf /etc/rc.conf
 
 exit 0
