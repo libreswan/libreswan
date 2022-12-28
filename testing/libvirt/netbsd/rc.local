@@ -2,7 +2,7 @@
 
 if test -r /etc/ifconfig.vioif1 ; then
     echo '==> Hostnames already configured'
-else
+elif ifconfig | grep ^vioif1 > /dev/null ; then
     echo '==> Changing hostnames'
     mac=$(ifconfig vioif1 | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}')
     case "$mac" in
@@ -55,4 +55,6 @@ EOF
 	done
 	echo "==> Done changing hostnames"
     fi
+else
+    echo "==> Hostnames unchanged"
 fi

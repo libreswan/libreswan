@@ -73,6 +73,7 @@ EOF
 # booting
 
 cat <<EOF | tee -a /targetroot/etc/rc.conf
+. /etc/defaults/rc.conf
 rc_configured=YES
 no_swap=YES
 savecore=NO

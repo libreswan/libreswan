@@ -12,14 +12,15 @@ TESTINGDIR=@@TESTINGDIR@@
 # update /etc/fstab with current /source and /testing
 
 mkdir -p /source /testing
-sed -i -e '/source/d' -e '/testing/d' /etc/fstab
-cat <<EOF | tee -a /etc/fstab
-${GATEWAY}:${SOURCEDIR}   /source         nfs     rw
-${GATEWAY}:${TESTINGDIR}  /testing        nfs     rw
+sed -e '/:/d' /etc/fstab > /tmp/fstab
+
+cat <<EOF >> /tmp/fstab
+${GATEWAY}:${SOURCEDIR}   /source         nfs     rw,noauto
+${GATEWAY}:${TESTINGDIR}  /testing        nfs     rw,noauto
 EOF
-echo
+
+mv /tmp/fstab /etc/fstab
 cat /etc/fstab
-echo
 
 k=/pool/${PREFIX}netbsd-kernel
 if test -r $k ; then
@@ -29,6 +30,8 @@ fi
 chsh -s /usr/pkg/bin/bash root
 cp -v /bench/testing/libvirt/bash_profile /root/.bash_profile
 
-cp -v /bench/testing/libvirt/netbsd/rc.local /etc/rc.local
+cp -v /bench/testing/libvirt/netbsd/auto_master /etc/
+cp -v /bench/testing/libvirt/netbsd/rc.local /etc/
+cp -v /bench/testing/libvirt/netbsd/rc.conf /etc/
 
 exit 0
