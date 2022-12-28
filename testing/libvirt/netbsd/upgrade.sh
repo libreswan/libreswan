@@ -5,7 +5,7 @@ set -xe ; exec < /dev/null
 PREFIX=@@PREFIX@@
 
 cat <<EOF | tee /etc/pkg_install.conf
-PKG_PATH=http://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/i386/9.2/All
+PKG_PATH=http://cdn.NetBSD.org/pub/pkgsrc/packages/NetBSD/i386/10.0/All
 EOF
 
 # First install pkgin, it knows how to cache downloaded files.
