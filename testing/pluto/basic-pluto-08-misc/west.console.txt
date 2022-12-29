@@ -29,7 +29,7 @@ west #
 west #
  mv /etc/ipsec.conf /var/cache/otheruser/etc/
 west #
- chown -R bin.bin /var/cache/otheruser/var/run/pluto /var/cache/otheruser/etc
+ chown -R bin:bin /var/cache/otheruser/var/run/pluto /var/cache/otheruser/etc
 west #
  chmod -R 755 /var/cache/otheruser
 west #
