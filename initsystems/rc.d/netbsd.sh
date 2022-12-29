@@ -9,6 +9,10 @@
 
 $_rc_subr_loaded . /etc/rc.subr
 
+# correct way to do this?
+PATH=${PATH}:/usr/pkg/bin:@@SBINDIR@@
+export PATH
+
 name="pluto"
 rcvar=$name
 pidfile="@@RUNDIR@@/${name}.pid"
