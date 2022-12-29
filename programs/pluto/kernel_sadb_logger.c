@@ -353,8 +353,10 @@ void llog_sadb_x_policy(lset_t rc_flags, struct logger *logger,
 	JAM_SPARSE(ipsec_policy_names, sadb_x_policy, type); /* POLICY <> TYPE */
 	/* XXX: broken; needs sparse_sparse_names; */
 	JAM_IPSEC(sadb_x_policy, dir);
-#ifdef sadb_x_policy_scope
+#if defined sadb_x_policy_scope
 	JAM(u8, sadb_x_policy, scope);
+#elif defined sadb_x_policy_flags
+	JAM(u8, sadb_x_policy, flags);
 #else
 	JAM_RAW(sadb_x_policy, reserved);
 #endif

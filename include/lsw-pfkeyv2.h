@@ -1,6 +1,6 @@
 /* Wrapper for <net/pfkeyv2.h>, for libreswan
  *
- * Copyright (C) 2018 Andrew Cagney
+ * Copyright (C) 2018-2022 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -111,8 +111,10 @@
  * The thing is that, even at the time, code was starting to use
  * /prefixlen, and IKEv2 introduced start-end.  The IKEv1 mask was on
  * the way out!
+ *
+ * The thing is that, even at the time, IKE daemons were using UDP and
+ * non-standard ports.  Things this change seems to prohibit.
  */
-
 
 /*
  * Work-around various OSs reusing / renaming fields of existing
@@ -121,25 +123,54 @@
  * Use the macro expands to itself hack.
  */
 
-#ifdef __OpenBSD__
-/* in sadb_prop */
-# define sadb_prop_num sadb_prop_num	/* was sadb_prop_reserved */
-#endif
+/*
+ * struct sadb_x_policy
+ *     .sadb_x_policy_reserved
+ */
 
-#ifdef __linux__
-/* in sadb_x_policy */
-# define sadb_x_policy_priority sadb_x_policy_priority /* was sadb_x_policy_reserved2 */
-/* in sadb_x_ipsecrequest */
-/* sadb_x_ipsecrequest_reqid is 32-bits not 16-bits */
-# define sadb_x_ipsecrequest_reserved1 sadb_x_ipsecrequest_reserved1
-# define sadb_x_ipsecrequest_reserved2 sadb_x_ipsecrequest_reserved2
+#ifdef __NetBSD__
+# ifdef IPSEC_POLICY_FLAG_ORIGIN_KERNEL
+#  define sadb_x_policy_flags sadb_x_policy_flags	/* was sadb_x_policy_reserved */
+# endif
 #endif
 
 #ifdef __FreeBSD__
-/* in sadb_x_policy */
 # define sadb_x_policy_scope sadb_x_policy_scope	/* was sadb_x_policy_reserved */
+#endif
+
+/*
+ * struct sadb_x_policy
+ *    .sadb_x_policy_reserved2
+ */
+
+#ifdef __linux__
+# define sadb_x_policy_priority sadb_x_policy_priority /* was sadb_x_policy_reserved2 */
+#endif
+
+#ifdef __FreeBSD__
 /* define sadb_x_policy_ifindex == sadb_x_policy_priority */
 # define sadb_x_policy_priority sadb_x_policy_priority	/* was sadb_x_policy_reserved2 */
+#endif
+
+/*
+ * struct sadb_prop
+ *     .sadb_prop_reserved
+ */
+
+#ifdef __OpenBSD__
+# define sadb_prop_num sadb_prop_num	/* was sadb_prop_reserved */
+#endif
+
+/*
+ * struct sadb_x_ipsecrequest
+ *     .sadb_x_ipsecrequest_reserved1
+ *     .sadb_x_ipsecrequest_reserved2
+ */
+
+#ifdef __linux__
+/* sadb_x_ipsecrequest_reqid is 32-bits not 16-bits; these align it */
+# define sadb_x_ipsecrequest_reserved1 sadb_x_ipsecrequest_reserved1
+# define sadb_x_ipsecrequest_reserved2 sadb_x_ipsecrequest_reserved2
 #endif
 
 #endif /* KERNEL_PFKEYV2 */
