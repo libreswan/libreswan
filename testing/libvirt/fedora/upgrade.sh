@@ -4,30 +4,39 @@ set -xe ; exec < /dev/null
 
 PREFIX=@@PREFIX@@
 
-echo disable useless repos
+# dump network status, the "dnf makecache" command seems to sometimes
+# fail with no DNS?
+
+systemctl status systemd-resolved
+
+: disable useless repos
 
 for repo in fedora-modular updates-modular fedora-cisco-openh264 ; do
     echo disabling: ${repo}
     dnf config-manager --set-disable ${repo}
 done
 
-echo enable useful repos
+: enable useful repos
 
 for repo in fedora-debuginfo updates-debuginfo ; do
     echo enabling: ${repo}
     dnf config-manager --set-enable ${repo}
 done
 
-# Point the cache at /pool
+: Point the cache at /pool, but not /pool/fedora.pkg as that matches
+: /pool/fedora.*
+
+cachedir=$( . /etc/os-release ; echo /pool/pkg.${ID}${VERSION_ID} )
 dnf config-manager --save --setopt=keepcache=True
-# not /pool/fedora.pkg as that matches: rm -f /pool/fedora.*
-dnf config-manager --save --setopt=cachedir=/pool/pkg.fedora
+dnf config-manager --save --setopt=cachedir=${cachedir}
+
 #dnf config-manager --save --setopt=makecache=0
 
-# make it explicit
+: explicitly build the cache
+
 dnf makecache
 
-# "$@" contains: install-packages -- upgrade-packates
+# "$@" contains: <install-package> ... -- <upgrade-package> ...
 install=$(echo "$@" | sed -e 's/--.*//')
 upgrade=$(echo "$@" | sed -e 's/..--//')
 dnf install -y ${install}
