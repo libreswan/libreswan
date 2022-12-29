@@ -1,5 +1,8 @@
 
 See also https://libreswan.org/
+
+* NetBSD: fix compiler warning in lib/libswan/x509.c
+
 v4.12 (Aug 8, 2023)
 * SECURITY IKEv2: Fixes https://libreswan.org/security/CVE-2023-38710
 * SECURITY IKEv1: Fixes https://libreswan.org/security/CVE-2023-38711
