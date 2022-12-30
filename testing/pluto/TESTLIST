@@ -506,7 +506,7 @@ kvmplutotest	ikev2-decap-dscp-01			good
 kvmplutotest	ikev2-nopmtudisc-01			good
 
 kvmplutotest	ikev2-43-init-retransmit		good
-kvmplutotest	ikev2-44-switch-initiator-strongswan	good
+kvmplutotest	ikev2-44-switch-initiator-strongswan	wip	github/964
 
 kvmplutotest	ikev2-frag-01				good
 kvmplutotest	ikev2-frag-02-ipv6			good
