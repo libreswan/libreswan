@@ -25,9 +25,9 @@ north #
 1v2 "north-east" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "north-east" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "north-east" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-002 "north-east" #2: up-client output: net.ipv4.conf.vti0.disable_policy = 1
-002 "north-east" #2: up-client output: net.ipv4.conf.vti0.rp_filter = 0
-002 "north-east" #2: up-client output: net.ipv4.conf.vti0.forwarding = 1
+002 "north-east" #2: up-client output: /proc/sys/net/ipv4/conf/vti0/disable_policy = 1
+002 "north-east" #2: up-client output: /proc/sys/net/ipv4/conf/vti0/rp_filter = 0
+002 "north-east" #2: up-client output: /proc/sys/net/ipv4/conf/vti0/forwarding = 1
 002 "north-east" #2: prepare-client output: vti interface "vti0" already exists with conflicting setting (perhaps need vti-sharing=yes ?
 004 "north-east" #2: initiator established Child SA using #1; IPsec tunnel [0.0.0.0-255.255.255.255:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 north #
@@ -42,10 +42,10 @@ north #
  ip -s link show vti0
 5: vti0@NONE: <POINTOPOINT,NOARP,UP,LOWER_UP> mtu 1480 state UNKNOWN
     link/ipip 192.1.3.33 peer 192.1.2.23
-    RX: bytes  packets  errors  dropped missed  mcast   
-    0          0        0       0       0       0       
-    TX: bytes  packets  errors  dropped carrier collsns 
-    0          0        0       0       0       0       
+    RX:  bytes packets errors dropped  missed   mcast           
+             0       0      0       0       0       0 
+    TX:  bytes packets errors dropped carrier collsns           
+             0       0      0       0       0       0 
 north #
  ip route
 default via 192.1.3.254 dev eth1
@@ -65,10 +65,10 @@ north #
  ip -s link show vti0
 5: vti0@NONE: <POINTOPOINT,NOARP,UP,LOWER_UP> mtu 1480 state UNKNOWN
     link/ipip 192.1.3.33 peer 192.1.2.23
-    RX: bytes  packets  errors  dropped missed  mcast   
-    336        4        0       0       0       0       
-    TX: bytes  packets  errors  dropped carrier collsns 
-    336        4        0       0       0       0       
+    RX:  bytes packets errors dropped  missed   mcast           
+           336       4      0       0       0       0 
+    TX:  bytes packets errors dropped carrier collsns           
+           336       4      0       0       0       0 
 north #
  ipsec trafficstatus
 006 #2: "north-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'
