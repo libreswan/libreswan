@@ -32,14 +32,14 @@ west #
  iptables -L -n
 Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
-NFLOG      all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec nflog-prefix all-ipsec nflog-group 50
+NFLOG      all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec nflog-prefix  all-ipsec nflog-group 50
 ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
 DROP       all  --  192.0.2.0/24         0.0.0.0/0           
 Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-NFLOG      all  --  0.0.0.0/0            0.0.0.0/0            policy match dir out pol ipsec nflog-prefix all-ipsec nflog-group 50
+NFLOG      all  --  0.0.0.0/0            0.0.0.0/0            policy match dir out pol ipsec nflog-prefix  all-ipsec nflog-group 50
 west #
  ipsec auto --up westnet-eastnet-ikev2
 1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
@@ -94,14 +94,14 @@ IPSEC mangle TABLES
 iptables filter TABLE
 Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
-NFLOG      all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec nflog-prefix all-ipsec nflog-group 50
+NFLOG      all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec nflog-prefix  all-ipsec nflog-group 50
 ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
 DROP       all  --  192.0.2.0/24         0.0.0.0/0           
 Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-NFLOG      all  --  0.0.0.0/0            0.0.0.0/0            policy match dir out pol ipsec nflog-prefix all-ipsec nflog-group 50
+NFLOG      all  --  0.0.0.0/0            0.0.0.0/0            policy match dir out pol ipsec nflog-prefix  all-ipsec nflog-group 50
 ROUTING TABLES
 default via 192.1.2.254 dev eth1
 192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
@@ -119,13 +119,13 @@ west #
  iptables -L -n
 Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
-NFLOG      all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec nflog-prefix all-ipsec nflog-group 50
+NFLOG      all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec nflog-prefix  all-ipsec nflog-group 50
 ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
 DROP       all  --  192.0.2.0/24         0.0.0.0/0           
 Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-NFLOG      all  --  0.0.0.0/0            0.0.0.0/0            policy match dir out pol ipsec nflog-prefix all-ipsec nflog-group 50
+NFLOG      all  --  0.0.0.0/0            0.0.0.0/0            policy match dir out pol ipsec nflog-prefix  all-ipsec nflog-group 50
 west #
  
