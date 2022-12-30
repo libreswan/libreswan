@@ -801,7 +801,7 @@ $(KVM_POOLDIR_PREFIX)%-base: | \
 # - since kickstart is used this is pretty straight forward
 #
 
-KVM_FEDORA_ISO_URL ?= https://mirror.xenyth.net/fedora/linux/releases/37/Server/x86_64/iso/Fedora-Server-dvd-x86_64-37-1.7.iso
+KVM_FEDORA_ISO_URL ?= https://download.fedoraproject.org/pub/fedora/linux/releases/36/Server/x86_64/iso/Fedora-Server-dvd-x86_64-36-1.5.iso
 KVM_FEDORA_KICKSTART_FILE ?= testing/libvirt/fedora/base.ks
 KVM_FEDORA_ISO = $(KVM_POOLDIR)/$(notdir $(KVM_FEDORA_ISO_URL))
 kvm-iso: $(KVM_FEDORA_ISO)
