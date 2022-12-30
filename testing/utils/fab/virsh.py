@@ -273,3 +273,9 @@ class Domain:
                 return guest_directory + host_path[len(host_directory):]
 
         raise AssertionError("the host path '%s' is not mounted on the guest %s" % (host_path, self))
+
+    def save(self, ram):
+        self._run_status_output(_VIRSH + ["save", self.domain_name, ram])
+
+    def restore(self, ram):
+        self._run_status_output(_VIRSH + ["restore", self.domain_name, ram])
