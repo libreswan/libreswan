@@ -38,7 +38,7 @@ west #
 [IKE] IKE_SA west[1] established between 192.1.2.45[west]...192.1.2.23[east]
 [IKE] scheduling rekeying in XXXs
 [IKE] maximum IKE_SA lifetime XXXs
-[CFG] selected proposal: ESP:AES_GCM_16_128
+[CFG] selected proposal: ESP:AES_GCM_16_128/NO_EXT_SEQ
 [IKE] CHILD_SA westnet-eastnet{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
 initiate completed successfully
 west #
@@ -110,10 +110,10 @@ up
 west #
  ip -s link show ipsec2
 X: ipsec2@eth0: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    RX: bytes  packets  errors  dropped missed  mcast   
-    336        4        0       0       0       0       
-    TX: bytes  packets  errors  dropped carrier collsns 
-    336        4        0       0       0       0       
+    RX:  bytes packets errors dropped  missed   mcast           
+           336       4      0       0       0       0 
+    TX:  bytes packets errors dropped carrier collsns           
+           336       4      0       0       0       0 
 west #
  ip rule show
 0:	from all lookup local

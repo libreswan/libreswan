@@ -66,7 +66,7 @@ road #
  echo "quit" | runcon -t netutils_t timeout 15 nc  -p 4301 -vv 192.0.2.254 4300 2>&1 | sed -e 's/received in .*$/received .../' -e 's/Version .*/Version .../'
 Ncat: Version ...
 NCAT DEBUG: Using system default trusted CA certificates and those in PATH/share/ncat/ca-bundle.crt.
-NCAT DEBUG: Unable to load trusted CA certificates from PATH/share/ncat/ca-bundle.crt: error:02001002:system library:fopen:No such file or directory
+NCAT DEBUG: Unable to load trusted CA certificates from PATH/share/ncat/ca-bundle.crt: error:80000002:system library::No such file or directory
 libnsock nsock_iod_new2(): nsock_iod_new (IOD #1)
 libnsock nsock_connect_tcp(): TCP connection requested to 192.0.2.254:4300 (IOD #1) EID 8
 libnsock mksock_bind_addr(): Binding to 0.0.0.0:4301 (IOD #1)

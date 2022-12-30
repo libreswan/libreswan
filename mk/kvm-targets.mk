@@ -112,22 +112,31 @@ KVM_FEDORA_USE_EFENCE ?= true
 KVM_FEDORA_USE_LABELED_IPSEC ?= true
 KVM_FEDORA_USE_SECCOMP ?= true
 
+kvm-os-flag = \
+	$(strip \
+		$(if $($(patsubst KVM_%, KVM_$(*)_%, $(1))), \
+			$($(patsubst KVM_%, KVM_$(*)_%, $(1))), \
+			$($(strip $(1)))))
+
+kvm-opt-flag = \
+	$(if $(call kvm-os-flag, $(2)), \
+		$(strip $(1))=$(call kvm-os-flag, $(2)))
+
 KVM-MAKEFLAG = \
-	$(if $(KVM_$($*)_$(strip $(1))), $(strip $(1))=$(KVM_$($*)_$(strip $(1))), \
-	      $(if $(KVM_$(strip $(1))), $(strip $(1))=$(KVM_$(strip $(1)))) )
+	$(call kvm-opt-flag, $(1), $(1))
 
 KVM_MAKEFLAGS ?= $(strip \
-	-j$(shell expr $(KVM_CPUS) + 1) \
-	$(call KVM-MAKEFLAG, ALL_ARGS) \
-	$(call KVM-MAKEFLAG, NSSDIR) \
-	$(call KVM-MAKEFLAG, NSS_CFLAGS) \
-	$(call KVM-MAKEFLAG, NSS_LDFLAGS) \
-	$(call KVM-MAKEFLAG, SD_RESTART_TYPE) \
-	$(call KVM-MAKEFLAG, USE_EFENCE) \
-	$(call KVM-MAKEFLAG, USE_LABELED_IPSEC) \
-	$(call KVM-MAKEFLAG, USE_LTO) \
-	$(call KVM-MAKEFLAG, USE_NSS_KDF) \
-	$(call KVM-MAKEFLAG, USE_SECCOMP) \
+	-j$(call kvm-os-flag, $(KVM_BUILD_CPUS)) \
+	$(call KVM-MAKEFLAG, KVM_ALL_ARGS) \
+	$(call KVM-MAKEFLAG, KVM_NSSDIR) \
+	$(call KVM-MAKEFLAG, KVM_NSS_CFLAGS) \
+	$(call KVM-MAKEFLAG, KVM_NSS_LDFLAGS) \
+	$(call KVM-MAKEFLAG, KVM_SD_RESTART_TYPE) \
+	$(call KVM-MAKEFLAG, KVM_USE_EFENCE) \
+	$(call KVM-MAKEFLAG, KVM_USE_LABELED_IPSEC) \
+	$(call KVM-MAKEFLAG, KVM_USE_LTO) \
+	$(call KVM-MAKEFLAG, KVM_USE_NSS_KDF) \
+	$(call KVM-MAKEFLAG, KVM_USE_SECCOMP) \
 	)
 
 # Fine-tune the BASE and BUILD machines.
@@ -159,15 +168,15 @@ VIRT_SOURCEDIR ?= --filesystem=target=source,type=mount,accessmode=squash,source
 VIRT_TESTINGDIR ?= --filesystem=target=testing,type=mount,accessmode=squash,source=$(KVM_TESTINGDIR)
 
 VIRT_INSTALL_FLAGS = \
-	--connect=$(KVM_CONNECTION) \
-	--check=path_in_use=off \
-	--graphics=none \
-	--virt-type=kvm \
-	--noreboot \
-	--console=pty,target_type=serial \
-	$(VIRT_CPU) \
-	$(VIRT_GATEWAY) \
-	$(VIRT_RND) \
+	--connect=$(KVM_CONNECTION) \$(crlf)\
+	--check=path_in_use=off \$(crlf)\
+	--graphics=none \$(crlf)\
+	--virt-type=kvm \$(crlf)\
+	--noreboot \$(crlf)\
+	--console=pty,target_type=serial \$(crlf)\
+	$(VIRT_CPU) \$(crlf)\
+	$(VIRT_GATEWAY) \$(crlf)\
+	$(VIRT_RND) \$(crlf)\
 	$(VIRT_SECURITY)
 
 #
@@ -727,6 +736,9 @@ kvm-uninstall-gateway:
 ##
 ##
 
+KVM_BASE_CPUS = 1
+KVM_BASE_MEMORY = 2048
+
 .PHONY: kvm-base
 kvm-base: $(patsubst %, kvm-base-%, $(KVM_OS))
 
@@ -751,12 +763,12 @@ $(KVM_POOLDIR_PREFIX)%-base: | \
 	$(KVM_PYTHON) testing/libvirt/$*/base.py \
 		$(VIRT_INSTALL) \
 			$(VIRT_INSTALL_FLAGS) \
-			--vcpus=1 \
-			--memory=1024 \
-			$(VIRT_POOLDIR) \
+			--vcpus=$(call kvm-os-flag, KVM_BASE_CPUS) \
+			--memory=$(call kvm-os-flag, KVM_BASE_MEMORY) \
 			--name=$(notdir $@) \
-			$(if $(KVM_$($*)_OS_VARIANT), --os-variant=$(KVM_$($*)_OS_VARIANT)) \
+			--os-variant=$(KVM_$($*)_OS_VARIANT) \
 			--disk=path=$@.qcow2,size=$(VIRT_DISK_SIZE_GB),bus=virtio,format=qcow2 \
+			$(VIRT_POOLDIR) \
 			$(KVM_$($*)_VIRT_INSTALL_FLAGS)
 	:
 	: Check that the shell prompt includes the exit code.
@@ -962,9 +974,13 @@ $(KVM_OPENBSD_BASE_ISO): testing/libvirt/openbsd/base.disk
 ## Upgrade the base domain: create a clone, install any missing
 ## packages and upgrade any packages that are out-of-date.
 ##
-## While the script is running only /pool, pointing into this repo, is
-## accessible (/source and /testing which may point elsewhere are not
-## accessable, see above and below).
+## While the script is running only /pool and /bench (pointing into
+## this repo) are accessible (/source and /testing which may point
+## elsewhere are not accessable, see above and below).
+##
+
+KVM_UPGRADE_CPUS = 1
+KVM_UPGRADE_MEMORY = 2048
 
 .PHONY: kvm-upgrade
 kvm-upgrade: $(patsubst %, kvm-upgrade-%, $(KVM_OS))
@@ -983,13 +999,13 @@ $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-base \
 	$(QEMU_IMG) create -f qcow2 -F qcow2 -b $<.qcow2 $@.qcow2
 	$(VIRT_INSTALL) \
 		$(VIRT_INSTALL_FLAGS) \
-		--vcpus=1 \
-		--memory=1024 \
-		$(VIRT_POOLDIR) \
-		$(VIRT_BENCHDIR) \
+		--vcpus=$(call kvm-os-flag, KVM_UPGRADE_CPUS) \
+		--memory=$(call kvm-os-flag, KVM_UPGRADE_MEMORY) \
 		--name=$(notdir $@) \
 		--os-variant=$(KVM_$($*)_OS_VARIANT) \
 		--disk=cache=writeback,path=$@.qcow2 \
+		$(VIRT_POOLDIR) \
+		$(VIRT_BENCHDIR) \
 		--import \
 		--noautoconsole
 	: Copy/transmogrify upgrade.sh in this directory, KVM_BENCHDIR,
@@ -1020,14 +1036,8 @@ kvm-transmogrify-%:
 	rm -f $(KVM_POOLDIR_PREFIX)$(*).*
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)
 
-KVM_CPUS = \
-	$(if $(KVM_$($*)_CPUS), \
-		$(KVM_$($*)_CPUS), \
-		$(KVM_WORKERS))
-KVM_MEMORY = \
-	$(if $(KVM_$($*)_MEMORY), \
-		$(KVM_$($*)_MEMORY), \
-		$(shell expr 1024 + $(KVM_CPUS) \* 512))
+KVM_BUILD_CPUS = $(KVM_WORKERS)
+KVM_BUILD_MEMORY = $(shell expr 2048 + \( $(KVM_BUILD_CPUS) - 1 \) \* 256 )
 
 $(patsubst %, $(KVM_POOLDIR_PREFIX)%, $(KVM_PLATFORM)): \
 $(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
@@ -1039,15 +1049,15 @@ $(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
 	: fedora runs chcon TESTINGDIR
 	$(VIRT_INSTALL) \
 		$(VIRT_INSTALL_FLAGS) \
-		--vcpus=$(strip $(KVM_CPUS)) \
-		--memory=$(strip $(KVM_MEMORY)) \
+		--vcpus=$(call kvm-os-flag, KVM_BUILD_CPUS) \
+		--memory=$(call kvm-os-flag, KVM_BUILD_MEMORY) \
+		--name=$(notdir $@) \
+		--os-variant=$(KVM_$($*)_OS_VARIANT) \
+		--disk=cache=writeback,path=$@.qcow2 \
 		$(VIRT_BENCHDIR) \
 		$(VIRT_POOLDIR) \
 		$(VIRT_SOURCEDIR) \
 		$(VIRT_TESTINGDIR) \
-		--name=$(notdir $@) \
-		--os-variant=$(KVM_$($*)_OS_VARIANT) \
-		--disk=cache=writeback,path=$@.qcow2 \
 		--import \
 		--noautoconsole
 	: Copy/transmogrify transmogrify.sh in this directory, KVM_BENCHDIR,
