@@ -38,6 +38,7 @@ parsed IKE_AUTH response 1 [ IDr CERT AUTH EAP/REQ/ID ]
 received end entity cert "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
   using certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
   using trusted ca certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
+  reached self-signed root ca with a path length of 0
 checking certificate status of "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
   requesting ocsp status from 'http://nic.testing.libreswan.org:2560' ...
 ocsp response verification failed, no signer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=nic.testing.libreswan.org, E=user-nic@testing.libreswan.org' found
@@ -46,7 +47,6 @@ ocsp check failed, fallback to crl
 libcurl request failed [7]: Failed to connect to nic.testing.libreswan.org XXX
 crl fetching failed
 certificate status is not available
-  reached self-signed root ca with a path length of 0
 authentication of 'east.testing.libreswan.org' with RSA_EMSA_PKCS1_SHA2_256 successful
 server requested EAP_IDENTITY (id 0x00), sending 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
 generating IKE_AUTH request 2 [ EAP/RES/ID ]
@@ -74,6 +74,7 @@ negotiated TLS 1.2 using suite TLS_DHE_RSA_WITH_AES_256_GCM_SHA384
 received TLS server certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
   using certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
   using trusted ca certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
+  reached self-signed root ca with a path length of 0
 checking certificate status of "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
   requesting ocsp status from 'http://nic.testing.libreswan.org:2560' ...
 ocsp response verification failed, no signer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=nic.testing.libreswan.org, E=user-nic@testing.libreswan.org' found
@@ -82,9 +83,9 @@ ocsp check failed, fallback to crl
 libcurl request failed [7]: Failed to connect to nic.testing.libreswan.org XXX
 crl fetching failed
 certificate status is not available
-  reached self-signed root ca with a path length of 0
 received TLS cert request for 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org
 sending TLS client certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
+created signature with RSA_PSS_RSAE_SHA256
 generating IKE_AUTH request 7 [ EAP/RES/TLS ]
 sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
@@ -108,11 +109,12 @@ sending packet: from 192.1.3.209[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.3.209[4500] (XXX bytes)
 parsed IKE_AUTH response 11 [ AUTH CPRP(ADDR) SA TSi TSr N(MOBIKE_SUP) N(ADD_4_ADDR) ]
 authentication of 'east.testing.libreswan.org' with EAP successful
+installing new virtual IP 100.64.10.1
+peer supports MOBIKE
 IKE_SA rw-eap[1] established between 192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org]...192.1.2.23[east.testing.libreswan.org]
 scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
-installing new virtual IP 100.64.10.1
-selected proposal: ESP:AES_CBC_256/HMAC_SHA2_256_128/NO_EXT_SEQ
+selected proposal: ESP:AES_GCM_16_256/NO_EXT_SEQ
 CHILD_SA rw-eap{1} established with SPIs SPISPI_i SPISPI_o and TS 100.64.10.1/32 === 192.0.2.0/24
 connection 'rw-eap' established successfully
 road #

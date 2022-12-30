@@ -42,14 +42,14 @@ parsed IKE_AUTH response 1 [ IDr CERT AUTH SA TSi TSr ]
 received end entity cert "C=CH, O=strongSwan, CN=strongEast"
   using certificate "C=CH, O=strongSwan, CN=strongEast"
   using trusted ca certificate "C=CH, O=strongSwan, CN=strongSwan CA"
+  reached self-signed root ca with a path length of 0
 checking certificate status of "C=CH, O=strongSwan, CN=strongEast"
 certificate status is not available
-  reached self-signed root ca with a path length of 0
 authentication of 'C=CH, O=strongSwan, CN=strongEast' with ECDSA_WITH_SHA384_DER successful
 IKE_SA westnet-eastnet-ikev2[1] established between 192.1.2.45[C=CH, O=strongSwan, CN=strongWest]...192.1.2.23[C=CH, O=strongSwan, CN=strongEast]
 scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
-selected proposal: ESP:AES_CBC_256/HMAC_SHA2_512_256/NO_EXT_SEQ
+selected proposal: ESP:AES_GCM_16_256/NO_EXT_SEQ
 CHILD_SA westnet-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
 connection 'westnet-eastnet-ikev2' established successfully
 west #

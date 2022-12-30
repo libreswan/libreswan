@@ -46,6 +46,7 @@ parsed IKE_AUTH response 1 [ IDr CERT AUTH EAP/REQ/MD5 ]
 received end entity cert "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
   using certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
   using trusted ca certificate "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org"
+  reached self-signed root ca with a path length of 0
 checking certificate status of "C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org"
   requesting ocsp status from 'http://nic.testing.libreswan.org:2560' ...
 ocsp response verification failed, no signer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=nic.testing.libreswan.org, E=user-nic@testing.libreswan.org' found
@@ -54,7 +55,6 @@ ocsp check failed, fallback to crl
 libcurl request failed [7]: Failed to connect to nic.testing.libreswan.org XXX
 crl fetching failed
 certificate status is not available
-  reached self-signed root ca with a path length of 0
 authentication of 'east.testing.libreswan.org' with RSA_EMSA_PKCS1_SHA2_256 successful
 server requested EAP_MD5 authentication XXX
 generating IKE_AUTH request 2 [ EAP/RES/MD5 ]
@@ -68,8 +68,10 @@ sending packet: from 192.1.2.45[4500] to 192.1.2.23[4500] (XXX bytes)
 received packet: from 192.1.2.23[4500] to 192.1.2.45[4500] (XXX bytes)
 parsed IKE_AUTH response 3 [ AUTH SA TSi TSr N(AUTH_LFT) N(MOBIKE_SUP) N(ADD_4_ADDR) ]
 authentication of 'east.testing.libreswan.org' with EAP successful
+received AUTH_LIFETIME of XXXXs, scheduling reauthentication in XXXXs
+peer supports MOBIKE
 IKE_SA rw-eap[1] established between 192.1.2.45[user1@testing.libreswan.org]...192.1.2.23[east.testing.libreswan.org]
-scheduling reauthentication in XXXs
+reauthentication already scheduled in 9304s
 maximum IKE_SA lifetime XXXs
 selected proposal: ESP:AES_CBC_128/HMAC_SHA2_256_128/NO_EXT_SEQ
 CHILD_SA rw-eap{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24

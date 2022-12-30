@@ -19,16 +19,16 @@ sending packet: from 192.1.3.209[500] to 192.1.2.23[500] (XXX bytes)
 received packet: from 192.1.2.23[500] to 192.1.3.209[500] (XXX bytes)
 parsed IKE_AUTH response 1 [ IDr AUTH CPRP(ADDR DNS DNS) SA TSi TSr ]
 authentication of 'east' with pre-shared key successful
-IKE_SA roadnet-eastnet-ikev2[1] established between 192.1.3.209[road]...192.1.2.23[east]
-scheduling reauthentication in XXXs
-maximum IKE_SA lifetime XXXs
 adding DNS server failed
 adding DNS server failed
 handling INTERNAL_IP4_DNS attribute failed
 adding DNS server failed
 handling INTERNAL_IP4_DNS attribute failed
 installing new virtual IP 192.0.2.1
-selected proposal: ESP:AES_CBC_256/HMAC_SHA2_512_256/NO_EXT_SEQ
+IKE_SA roadnet-eastnet-ikev2[1] established between 192.1.3.209[road]...192.1.2.23[east]
+scheduling reauthentication in XXXs
+maximum IKE_SA lifetime XXXs
+selected proposal: ESP:AES_GCM_16_256/NO_EXT_SEQ
 CHILD_SA roadnet-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.2.1/32 === 0.0.0.0/0
 connection 'roadnet-eastnet-ikev2' established successfully
 road #

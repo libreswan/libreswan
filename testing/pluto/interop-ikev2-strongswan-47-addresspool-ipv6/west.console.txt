@@ -29,11 +29,11 @@ sending packet: from 2001:db8:1:2::45[500] to 2001:db8:1:2::23[500] (XXX bytes)
 received packet: from 2001:db8:1:2::23[500] to 2001:db8:1:2::45[500] (XXX bytes)
 parsed IKE_AUTH response 1 [ IDr AUTH CPRP(ADDR6) SA TSi TSr ]
 authentication of 'east' with pre-shared key successful
+installing new virtual IP 2001:db8:0:3:1::
 IKE_SA rw-eastnet-ipv6[1] established between 2001:db8:1:2::45[west]...2001:db8:1:2::23[east]
 scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
-installing new virtual IP 2001:db8:0:3:1::
-selected proposal: ESP:AES_CBC_256/HMAC_SHA2_512_256/NO_EXT_SEQ
+selected proposal: ESP:AES_GCM_16_256/NO_EXT_SEQ
 CHILD_SA rw-eastnet-ipv6{1} established with SPIs SPISPI_i SPISPI_o and TS 2001:db8:0:3:1::/128 === 2001:db8:0:2::/64
 connection 'rw-eastnet-ipv6' established successfully
 west #

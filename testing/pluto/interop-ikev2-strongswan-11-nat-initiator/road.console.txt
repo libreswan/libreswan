@@ -29,7 +29,7 @@ authentication of 'east' with pre-shared key successful
 IKE_SA road-eastnet-ikev2[1] established between 192.1.3.209[road]...192.1.2.23[east]
 scheduling reauthentication in XXXs
 maximum IKE_SA lifetime XXXs
-selected proposal: ESP:AES_CBC_256/HMAC_SHA2_512_256/NO_EXT_SEQ
+selected proposal: ESP:AES_GCM_16_256/NO_EXT_SEQ
 CHILD_SA road-eastnet-ikev2{1} established with SPIs SPISPI_i SPISPI_o and TS 192.1.3.209/32 === 192.0.2.0/24
 connection 'road-eastnet-ikev2' established successfully
 road #
