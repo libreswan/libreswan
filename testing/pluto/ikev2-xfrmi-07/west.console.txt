@@ -37,10 +37,10 @@ up
 west #
  ip -s link show ipsec17
 X: ipsec17@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    RX: bytes  packets  errors  dropped missed  mcast   
-    84         1        0       0       0       0       
-    TX: bytes  packets  errors  dropped carrier collsns 
-    84         1        0       0       0       0       
+    RX:  bytes packets errors dropped  missed   mcast           
+            84       1      0       0       0       0 
+    TX:  bytes packets errors dropped carrier collsns           
+            84       1      0       0       0       0 
 west #
  echo done
 done

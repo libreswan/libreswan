@@ -28,10 +28,10 @@ north #
 north #
  ip -s link show ipsec2
 X: ipsec2@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    RX: bytes  packets  errors  dropped missed  mcast   
-    0          0        0       0       0       0       
-    TX: bytes  packets  errors  dropped carrier collsns 
-    0          0        0       0       0       0       
+    RX:  bytes packets errors dropped  missed   mcast           
+             0       0      0       0       0       0 
+    TX:  bytes packets errors dropped carrier collsns           
+             0       0      0       0       0       0 
 north #
  ip route add 192.0.1.0/24 dev ipsec2
 north #
@@ -43,10 +43,10 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 north #
  ip -s link show ipsec2
 X: ipsec2@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    RX: bytes  packets  errors  dropped missed  mcast   
-    336        4        0       0       0       0       
-    TX: bytes  packets  errors  dropped carrier collsns 
-    336        4        0       0       0       0       
+    RX:  bytes packets errors dropped  missed   mcast           
+           336       4      0       0       0       0 
+    TX:  bytes packets errors dropped carrier collsns           
+           336       4      0       0       0       0 
 north #
  ipsec trafficstatus
 006 #2: "north-west", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@west'
@@ -62,10 +62,10 @@ north #
 north #
  ip -s link show ipsec2
 X: ipsec2@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    RX: bytes  packets  errors  dropped missed  mcast   
-    336        4        0       0       0       0       
-    TX: bytes  packets  errors  dropped carrier collsns 
-    336        4        0       0       0       0       
+    RX:  bytes packets errors dropped  missed   mcast           
+           336       4      0       0       0       0 
+    TX:  bytes packets errors dropped carrier collsns           
+           336       4      0       0       0       0 
 north #
  ip route add 192.0.2.0/24 dev ipsec3
 north #
@@ -77,10 +77,10 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 north #
  ip -s link show ipsec3
 X: ipsec3@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    RX: bytes  packets  errors  dropped missed  mcast   
-    336        4        0       0       0       0       
-    TX: bytes  packets  errors  dropped carrier collsns 
-    336        4        0       0       0       0       
+    RX:  bytes packets errors dropped  missed   mcast           
+           336       4      0       0       0       0 
+    TX:  bytes packets errors dropped carrier collsns           
+           336       4      0       0       0       0 
 north #
  ipsec trafficstatus
 006 #4: "north-east", type=ESP, add_time=1234567890, inBytes=336, outBytes=336, maxBytes=2^63B, id='@east'

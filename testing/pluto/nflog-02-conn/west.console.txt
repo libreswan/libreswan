@@ -49,14 +49,14 @@ west #
  iptables -L -n
 Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
-NFLOG      all  --  192.0.2.0/24         192.0.1.0/24         policy match dir in pol ipsec nflog-prefix  westnet-eastnet-ikev2 nflog-group 50
+NFLOG      all  --  192.0.2.0/24         192.0.1.0/24         policy match dir in pol ipsec nflog-prefix westnet-eastnet-ikev2 nflog-group 50
 ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
 DROP       all  --  192.0.2.0/24         0.0.0.0/0           
 Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-NFLOG      all  --  192.0.1.0/24         192.0.2.0/24         policy match dir out pol ipsec nflog-prefix  westnet-eastnet-ikev2 nflog-group 50
+NFLOG      all  --  192.0.1.0/24         192.0.2.0/24         policy match dir out pol ipsec nflog-prefix westnet-eastnet-ikev2 nflog-group 50
 west #
  # suppress job monitoring; specify packet count
 west #

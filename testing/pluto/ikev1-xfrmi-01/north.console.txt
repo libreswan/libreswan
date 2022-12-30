@@ -52,10 +52,10 @@ rtt min/avg/max/mdev = 0.XXX/0.XXX/0.XXX/0.XXX ms
 north #
  ip -s link show ipsec1
 X: ipsec1@eth1: <NOARP,UP,LOWER_UP> mtu 1500 state UNKNOWN
-    RX: bytes  packets  errors  dropped missed  mcast   
-    336        4        0       0       0       0       
-    TX: bytes  packets  errors  dropped carrier collsns 
-    336        4        0       0       0       0       
+    RX:  bytes packets errors dropped  missed   mcast           
+           336       4      0       0       0       0 
+    TX:  bytes packets errors dropped carrier collsns           
+           336       4      0       0       0       0 
 north #
  #kill -9 $(cat /tmp/tcpdump.pid)
 north #

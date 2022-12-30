@@ -55,14 +55,14 @@ west #
  iptables -L -n
 Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
-NFLOG      all  --  192.0.2.0/24         192.0.1.0/24         policy match dir in pol ipsec nflog-prefix  westnet-eastnet-nflog nflog-group 13
+NFLOG      all  --  192.0.2.0/24         192.0.1.0/24         policy match dir in pol ipsec nflog-prefix westnet-eastnet-nflog nflog-group 13
 ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
 DROP       all  --  192.0.2.0/24         0.0.0.0/0           
 Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-NFLOG      all  --  192.0.1.0/24         192.0.2.0/24         policy match dir out pol ipsec nflog-prefix  westnet-eastnet-nflog nflog-group 13
+NFLOG      all  --  192.0.1.0/24         192.0.2.0/24         policy match dir out pol ipsec nflog-prefix westnet-eastnet-nflog nflog-group 13
 west #
  ipsec auto --up west-east-nflog
 002 "west-east-nflog" #3: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+TUNNEL+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
@@ -72,16 +72,16 @@ west #
  iptables -L -n
 Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
-NFLOG      all  --  192.1.2.23           192.1.2.45           policy match dir in pol ipsec nflog-prefix  west-east-nflog nflog-group 50
-NFLOG      all  --  192.0.2.0/24         192.0.1.0/24         policy match dir in pol ipsec nflog-prefix  westnet-eastnet-nflog nflog-group 13
+NFLOG      all  --  192.1.2.23           192.1.2.45           policy match dir in pol ipsec nflog-prefix west-east-nflog nflog-group 50
+NFLOG      all  --  192.0.2.0/24         192.0.1.0/24         policy match dir in pol ipsec nflog-prefix westnet-eastnet-nflog nflog-group 13
 ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
 DROP       all  --  192.0.2.0/24         0.0.0.0/0           
 Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-NFLOG      all  --  192.1.2.45           192.1.2.23           policy match dir out pol ipsec nflog-prefix  west-east-nflog nflog-group 50
-NFLOG      all  --  192.0.1.0/24         192.0.2.0/24         policy match dir out pol ipsec nflog-prefix  westnet-eastnet-nflog nflog-group 13
+NFLOG      all  --  192.1.2.45           192.1.2.23           policy match dir out pol ipsec nflog-prefix west-east-nflog nflog-group 50
+NFLOG      all  --  192.0.1.0/24         192.0.2.0/24         policy match dir out pol ipsec nflog-prefix westnet-eastnet-nflog nflog-group 13
 west #
  # suppress job monitoring; specify packet count
 west #
@@ -116,14 +116,14 @@ west #
  iptables -L -n
 Chain INPUT (policy ACCEPT)
 target     prot opt source               destination         
-NFLOG      all  --  192.1.2.23           192.1.2.45           policy match dir in pol ipsec nflog-prefix  west-east-nflog nflog-group 50
+NFLOG      all  --  192.1.2.23           192.1.2.45           policy match dir in pol ipsec nflog-prefix west-east-nflog nflog-group 50
 ACCEPT     all  --  0.0.0.0/0            0.0.0.0/0            policy match dir in pol ipsec
 DROP       all  --  192.0.2.0/24         0.0.0.0/0           
 Chain FORWARD (policy ACCEPT)
 target     prot opt source               destination         
 Chain OUTPUT (policy ACCEPT)
 target     prot opt source               destination         
-NFLOG      all  --  192.1.2.45           192.1.2.23           policy match dir out pol ipsec nflog-prefix  west-east-nflog nflog-group 50
+NFLOG      all  --  192.1.2.45           192.1.2.23           policy match dir out pol ipsec nflog-prefix west-east-nflog nflog-group 50
 west #
  ipsec auto --down west-east-nflog
 002 "west-east-nflog": terminating SAs using this connection
