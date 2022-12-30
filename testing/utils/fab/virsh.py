@@ -65,7 +65,7 @@ class Domain:
             self._console.logger = self.logger
         return self.logger
 
-    def run_status_output(self, command):
+    def _run_status_output(self, command):
         self.logger.debug("running: %s", command)
         # 3.5 has subprocess.run
         process = subprocess.Popen(command,
@@ -83,14 +83,14 @@ class Domain:
         return status, output
 
     def state(self):
-        status, output = self.run_status_output(_VIRSH + ["domstate", self.domain_name])
+        status, output = self._run_status_output(_VIRSH + ["domstate", self.domain_name])
         if status:
             return None
         else:
             return output
 
     def _shutdown(self):
-        self.run_status_output(_VIRSH + ["shutdown", self.domain_name])
+        self._run_status_output(_VIRSH + ["shutdown", self.domain_name])
 
     def shutdown(self, timeout=SHUTDOWN_TIMEOUT):
         """Use the console to detect the shutdown - if/when the domain stops
@@ -117,7 +117,7 @@ class Domain:
         return self.destroy()
 
     def _destroy(self):
-        return self.run_status_output(_VIRSH + ["destroy", self.domain_name])
+        return self._run_status_output(_VIRSH + ["destroy", self.domain_name])
 
     def destroy(self, timeout=DESTROY_TIMEOUT):
         """Use the console to detect a destroyed domain - if/when the domain
@@ -144,15 +144,15 @@ class Domain:
         return False
 
     def reboot(self):
-        return self.run_status_output(_VIRSH + ["reboot", self.domain_name])
+        return self._run_status_output(_VIRSH + ["reboot", self.domain_name])
 
     def start(self):
         self._console = None
-        return self.run_status_output(_VIRSH + ["start", self.domain_name])
+        return self._run_status_output(_VIRSH + ["start", self.domain_name])
 
     def dumpxml(self):
         if self._xml == None:
-            status, self._xml = self.run_status_output(_VIRSH + ["dumpxml", self.domain_name])
+            status, self._xml = self._run_status_output(_VIRSH + ["dumpxml", self.domain_name])
             if status:
                 raise AssertionError("dumpxml failed: %s" % (output))
         return self._xml
