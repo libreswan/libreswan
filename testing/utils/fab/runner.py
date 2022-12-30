@@ -95,11 +95,16 @@ class TestDomain:
         self.domain.shutdown()
 
     def boot_and_login(self):
-        console = remote.boot_and_login(self.domain)
+
+        console = remote.boot_to_login_prompt(self.domain)
+        if not console:
+            domain.logger.error("domain not running")
+            return None
+
+        remote.login(self.domain, console)
 
         # Set noecho on the PTY inside the VM (not pexpect's PTY
-        # outside of the VM).  Disable emacs mode before disabling
-        # echo - NetBSD seems to snafu emacs+-echo.
+        # outside of the VM).
         console.run("export TERM=dumb ; unset LS_COLORS ; stty sane -echo -onlcr")
 
         test_directory = self.domain.guest_path(host_path=self.test.directory)

@@ -201,25 +201,6 @@ def _reboot_to_login_prompt(domain, console):
 
 def boot_to_login_prompt(domain):
 
-    console = domain.console()
-    if console:
-        return _reboot_to_login_prompt(domain, console)
-
     console = _start(domain, timeout=START_TIMEOUT)
     console.expect([LOGIN_PROMPT], timeout=LOGIN_PROMPT_TIMEOUT)
     return console
-
-def boot_and_login(domain, login=LOGIN, password=PASSWORD):
-
-    console = boot_to_login_prompt(domain)
-    if not console:
-        domain.logger.error("domain not running")
-        return None
-
-    # try to login
-    timeout = PASSWORD_TIMEOUT
-    domain.logger.info("got login prompt; sending '%s' and waiting %s seconds for password (or shell) prompt", \
-                       login, timeout)
-    console.sendline(login)
-    return _login(domain, console, login=login, password=password,
-                  lapsed_time=timing.Lapsed(), timeout=timeout)
