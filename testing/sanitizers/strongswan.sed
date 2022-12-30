@@ -13,6 +13,7 @@ s/^\(.* ESTABLISHED \)\([0-9]*\)\( second[s]*\)\( ago.*\)$/\1XXX second\4/g
 s/SPIs: [0-9a-z]*_i\([\*]*\) [0-9a-z]*_r\([\*]*\)/SPIs: SPISPI_i\1 SPISPI_r\2/g
 s/^\(.*  INSTALLED, T[A-Z]*, .* SPIs: \)\(.*_i \)\(.*_o\)$/\1SPISPI_i SPISPI_o/g
 s/^\(scheduling reauthentication in \)\([0-9]*s\)/\1XXXs/g
+s/^\(reauthentication already scheduled in \)\([0-9]*s\)/\1XXXs/g
 s/\(scheduling rekeying in \)\([0-9]*s\)/\1XXXs/g
 s/\(maximum IKE_SA lifetime \)\([0-9]*s\)/\1XXXs/g
 s/^\(maximum IKE_SA lifetime \)\([0-9]*s\)/\1XXXs/g

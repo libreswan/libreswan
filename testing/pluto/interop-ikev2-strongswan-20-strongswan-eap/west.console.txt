@@ -71,7 +71,7 @@ authentication of 'east.testing.libreswan.org' with EAP successful
 received AUTH_LIFETIME of XXXXs, scheduling reauthentication in XXXXs
 peer supports MOBIKE
 IKE_SA rw-eap[1] established between 192.1.2.45[user1@testing.libreswan.org]...192.1.2.23[east.testing.libreswan.org]
-reauthentication already scheduled in 9304s
+reauthentication already scheduled in XXXs
 maximum IKE_SA lifetime XXXs
 selected proposal: ESP:AES_CBC_128/HMAC_SHA2_256_128/NO_EXT_SEQ
 CHILD_SA rw-eap{1} established with SPIs SPISPI_i SPISPI_o and TS 192.0.1.0/24 === 192.0.2.0/24
