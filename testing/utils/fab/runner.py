@@ -91,30 +91,6 @@ class TestDomain:
             console.expect([pexpect.EOF])
             self.domain.close()
 
-    def shutdown(self):
-        self.domain.shutdown()
-
-    def boot_and_login(self):
-
-        console = remote.boot_to_login_prompt(self.domain)
-        if not console:
-            domain.logger.error("domain not running")
-            return None
-
-        remote.login(self.domain, console)
-
-        # Set noecho on the PTY inside the VM (not pexpect's PTY
-        # outside of the VM).
-        console.run("export TERM=dumb ; unset LS_COLORS ; stty sane -echo -onlcr")
-
-        test_directory = self.domain.guest_path(host_path=self.test.directory)
-        if not test_directory:
-            abspath = os.path.abspath(self.test.directory)
-            self.logger.error("directory %s not mounted on %s", abspath, self.domain)
-            raise Exception("directory '%s' not mounted on %s" % (abspath, self.domain))
-        self.logger.info("'cd' to %s", test_directory)
-        console.chdir(test_directory)
-
     def read_file_run(self, basename):
         # child's log is in binary
         console = self.domain.console()
@@ -169,13 +145,40 @@ def _boot_test_domains(logger, test, domains):
 
     logger.info("shutdown domains: %s",
                 " ".join(str(e) for e in unused_domains))
+
     for test_domain in unused_domains:
-        test_domain.shutdown()
+        domain = test_domain.domain
+        domain.shutdown()
 
     logger.info("boot-and-login domains: %s",
                 " ".join(str(e) for e in test_domains.values()))
+
     for test_domain in test_domains.values():
-        test_domain.boot_and_login()
+
+        logger = test_domain.logger
+        domain = test_domain.domain
+
+        console = domain.console()
+        if console:
+            domain.shutdown()
+        console = remote.boot_to_login_prompt(domain)
+        if not console:
+            logger.error("domain not running")
+            return None
+
+        remote.login(domain, console)
+
+        # Set noecho on the PTY inside the VM (not pexpect's PTY
+        # outside of the VM).
+        console.run("export TERM=dumb ; unset LS_COLORS ; stty sane -echo -onlcr")
+
+        test_directory = domain.guest_path(host_path=test.directory)
+        if not test_directory:
+            abspath = os.path.abspath(self.test.directory)
+            self.logger.error("directory %s not mounted on %s", abspath, self.domain)
+            raise Exception("directory '%s' not mounted on %s" % (abspath, self.domain))
+        logger.info("'cd' to %s", test_directory)
+        console.chdir(test_directory)
 
     return test_domains
 
