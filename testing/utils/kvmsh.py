@@ -109,11 +109,13 @@ def main():
     elif interactive or batch:
 
         console = domain.console()
+        if not console:
+            console = remote.boot_to_login_prompt(domain)
+        if not console:
+            logger.error("no domain")
+            sys.exit(1)
 
-        if console:
-            remote.login(domain, console)
-        else:
-            console = remote.boot_and_login(domain)
+        remote.login(domain, console)
 
         if args.chdir and os.path.isabs(args.chdir):
             chdir = args.chdir
