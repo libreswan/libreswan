@@ -114,8 +114,8 @@ KVM_FEDORA_USE_SECCOMP ?= true
 
 kvm-os-flag = \
 	$(strip \
-		$(if $($(patsubst KVM_%, KVM_$(*)_%, $(1))), \
-			$($(patsubst KVM_%, KVM_$(*)_%, $(1))), \
+		$(if $($(strip $(patsubst KVM_%, KVM_$($*)_%, $(1)))), \
+			$($(strip $(patsubst KVM_%, KVM_$($*)_%, $(1)))), \
 			$($(strip $(1)))))
 
 kvm-opt-flag = \
@@ -123,7 +123,9 @@ kvm-opt-flag = \
 		$(strip $(1))=$(call kvm-os-flag, $(2)))
 
 KVM-MAKEFLAG = \
-	$(call kvm-opt-flag, $(1), $(1))
+	$(call kvm-opt-flag, \
+		$(patsubst KVM_%, %, $(1)), \
+		$(1))
 
 KVM_MAKEFLAGS ?= $(strip \
 	-j$(call kvm-os-flag, $(KVM_BUILD_CPUS)) \
@@ -1104,7 +1106,6 @@ kvm-build: $(foreach os, $(KVM_OS), kvm-build-$(os))
 $(patsubst %, kvm-build-%, $(KVM_INSTALL_PLATFORM)): \
 kvm-build-%: $(KVM_POOLDIR_PREFIX)%
 	: $(MAKE) $(patsubst %, kvm-undefine-%, $(call add-kvm-prefixes, $(KVM_$($*)_HOST_NAMES)))
-	: the LS is to workaround NetBSD kern/57145
 	$(KVMSH) $(KVMSH_FLAGS) \
 		--chdir /source \
 		$(notdir $<) \
