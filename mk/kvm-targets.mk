@@ -1104,10 +1104,12 @@ kvm-build: $(foreach os, $(KVM_OS), kvm-build-$(os))
 $(patsubst %, kvm-build-%, $(KVM_INSTALL_PLATFORM)): \
 kvm-build-%: $(KVM_POOLDIR_PREFIX)%
 	: $(MAKE) $(patsubst %, kvm-undefine-%, $(call add-kvm-prefixes, $(KVM_$($*)_HOST_NAMES)))
+	: the LS is to workaround NetBSD kern/57145
 	$(KVMSH) $(KVMSH_FLAGS) \
 		--chdir /source \
 		$(notdir $<) \
 		-- \
+		ls \; \
 		time gmake install-base $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS)
 
 
