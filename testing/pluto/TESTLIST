@@ -1288,7 +1288,7 @@ kvmplutotest	ikev2-ppk-static-10-yes-no			good
 kvmplutotest	ikev2-redirect-01-global			good
 kvmplutotest	ikev2-redirect-02-auth				good
 kvmplutotest	ikev2-redirect-03-auth-loop			good
-kvmplutotest	ikev2-redirect-06-roadwarriors			good
+kvmplutotest	ikev2-redirect-06-roadwarriors			wip	github/965
 kvmplutotest	ikev2-redirect-01-global-load-balancer		good
 
 # MOBIKE tests
