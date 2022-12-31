@@ -49,10 +49,11 @@ include testing/libvirt/openbsd/kvm.mk
 KVM_SOURCEDIR ?= $(abs_top_srcdir)
 KVM_TESTINGDIR ?= $(abs_top_srcdir)/testing
 KVM_BENCHDIR ?= $(abs_top_srcdir)
-
 # An educated guess ...
 KVM_POOLDIR ?= $(abspath $(abs_top_srcdir)/../pool)
 KVM_LOCALDIR ?= $(KVM_POOLDIR)
+KVM_SNAPSHOTDIR ?=
+
 # While KVM_PREFIX might be empty, KVM_PREFIXES is never empty.
 KVM_PREFIX ?=
 KVM_PREFIXES ?= $(if $(KVM_PREFIX), $(KVM_PREFIX), '')
@@ -508,6 +509,7 @@ kvm-%: $(KVM_HOST_OK) kvm-keys-ok
 		$(if $(WEB_ENABLED), --publish-results $(WEB_RESULTSDIR)) \
 		$(if $(WEB_ENABLED), --publish-status $(WEB_SUMMARYDIR)/status.json) \
 		 --test-status '$(STRIPPED_KVM_TEST_STATUS)' \
+		$(if $(KVM_SNAPSHOTDIR), --snapshot-directory $(KVM_SNAPSHOTDIR)) \
 		$(if $(filter kvm-re%, $@), --skip passed) \
 		$(KVMRUNNER_FLAGS) \
 		$(KVM_TEST_FLAGS) \

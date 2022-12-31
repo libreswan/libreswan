@@ -1,6 +1,6 @@
 # Test driver, for libreswan
 #
-# Copyright (C) 2015-2019  Andrew Cagney
+# Copyright (C) 2015-2022  Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -58,6 +58,9 @@ def add_arguments(parser):
                        default=os.path.join("BACKUP", timing.START_TIME.strftime("%Y-%m-%d-%H%M%S")),
                        help="backup existing <test>/OUTPUT to %(metavar)s/<date>/<test> (default: %(default)s)")
 
+    group.add_argument("--snapshot-directory",
+                       metavar="DIRECTORY", default=None,
+                       help="directory for storing test domain snapshots, typically pointed at KVM_POOLDIR")
 
 def log_arguments(logger, args):
     logger.info("Test Runner arguments:")
@@ -66,6 +69,7 @@ def log_arguments(logger, args):
     logger.info("  parallel: %s", args.parallel)
     logger.info("  tcpdump: %s", args.tcpdump)
     logger.info("  backup-directory: %s", args.backup_directory)
+    logger.info("  snapshot-directory: %s", args.snapshot_directory)
     logger.info("  run-post-mortem: %s", args.run_post_mortem)
 
 
@@ -158,14 +162,23 @@ def _boot_test_domains(logger, test, domains):
         logger = test_domain.logger
         domain = test_domain.domain
 
-        console = domain.console()
-        if console:
-            domain.shutdown()
-        console = remote.boot_to_login_prompt(domain)
-        if not console:
-            logger.error("domain not running")
-            return None
+        if domain.restore():
+            logger.info("domain restored")
+            console = domain.console()
+        else:
+            console = domain.console()
+            if console:
+                logger.info("shutting down existing domain")
+                domain.shutdown()
+            console = remote.boot_to_login_prompt(domain)
+            if not console:
+                logger.error("domain not running")
+                return None
+            if domain.save():
+                logger.info("domain saved")
+                console = domain.console()
 
+        logger.info("domain is running")
         remote.login(domain, console)
 
         # Set noecho on the PTY inside the VM (not pexpect's PTY
@@ -501,7 +514,10 @@ def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_
     domains = {}
     for host_name in testsuite.HOST_NAMES:
         domain_name = (domain_prefix + host_name)
-        domain = virsh.Domain(logger.nest(domain_name), host_name=host_name, domain_name=domain_name)
+        domain = virsh.Domain(logger.nest(domain_name),
+                              host_name=host_name,
+                              domain_name=domain_name,
+                              snapshot_directory=args.snapshot_directory)
         domains[host_name] = domain
 
     logger.info("processing test queue")
@@ -509,7 +525,8 @@ def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_
         while True:
             task = test_queue.get(block=False)
             task_logger = logger.nest(task.test.name + " " + domain_prefix)
-            _process_test(domain_prefix, domains, args, result_stats, task, task_logger)
+            _process_test(domain_prefix, domains, args,
+                          result_stats, task, task_logger)
     except queue.Empty:
         None
     finally:

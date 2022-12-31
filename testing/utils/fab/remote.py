@@ -39,8 +39,8 @@ START_TIMEOUT = 20
 # Assuming the machine is booted, try to log-in.
 
 LOGIN_TIMEOUT = 10
-PASSWORD_TIMEOUT = 5
-SHELL_TIMEOUT = 5
+PASSWORD_TIMEOUT = 10
+SHELL_TIMEOUT = 10
 
 def _login(domain, console, login, password,
            lapsed_time, timeout):

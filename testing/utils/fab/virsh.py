@@ -44,7 +44,7 @@ DESTROY_TIMEOUT = 20
 
 class Domain:
 
-    def __init__(self, logger, host_name=None, domain_name=None):
+    def __init__(self, logger, host_name=None, domain_name=None, snapshot_directory=None):
         # Use the term "domain" just like virsh
         self.domain_name = domain_name
         self.host_name = host_name
@@ -55,6 +55,9 @@ class Domain:
         self._mounts = None
         self._xml = None
         self._console = None # or False or a real console
+        self._snapshot_memory = snapshot_directory and os.path.join(snapshot_directory, domain_name + ".mem")
+        self._snapshot_disk = snapshot_directory and os.path.join(snapshot_directory, domain_name + ".disk")
+        self.has_snapshot = False
 
     def __str__(self):
         return "domain " + self.domain_name
@@ -65,8 +68,11 @@ class Domain:
             self._console.logger = self.logger
         return self.logger
 
-    def _run_status_output(self, command):
-        self.logger.debug("running: %s", command)
+    def _run_status_output(self, command, verbose=False):
+        if verbose:
+            self.logger.info("running: %s", command)
+        else:
+            self.logger.debug("running: %s", command)
         # 3.5 has subprocess.run
         process = subprocess.Popen(command,
                                    stdin=subprocess.DEVNULL,
@@ -136,7 +142,7 @@ class Domain:
         if console.expect([pexpect.EOF, pexpect.TIMEOUT],
                           timeout=timeout) == 0:
             self.logger.info("domain destroyed after %s", lapsed_time)
-            self._console = False
+            self._console = None
             return True
 
         self.logger.error("timeout destroying domain, giving up")
@@ -166,9 +172,9 @@ class Domain:
             return self._console
 
         # self._console is None
-        command_args = _VIRSH + ["console", "--force", self.domain_name]
-        self.logger.info("spawning: %s", " ".join(command_args))
-        self._console = console.Remote(command_args, self.logger, hostname=self.host_name)
+        command = _VIRSH + ["console", "--force", self.domain_name]
+        self.logger.info("spawning: %s", " ".join(command))
+        self._console = console.Remote(command, self.logger, hostname=self.host_name)
         # Give the virsh process a chance set up its control-c
         # handler.  Otherwise something like control-c as the first
         # character sent might kill it.  If the machine is down, it
@@ -274,8 +280,75 @@ class Domain:
 
         raise AssertionError("the host path '%s' is not mounted on the guest %s" % (host_path, self))
 
-    def save(self, ram):
-        self._run_status_output(_VIRSH + ["save", self.domain_name, ram])
+    def save(self):
+        if not self._snapshot_memory:
+            return False
 
-    def restore(self, ram):
-        self._run_status_output(_VIRSH + ["restore", self.domain_name, ram])
+        # This SHOULD be using snapshot-create-as.
+        #
+        # snapshot-create-as can create a full snapshot (disk +
+        # memory) of running VM without stopping it, BUT:
+        #
+        # The code in snapshot-restore to restore these snapshots
+        # isn't implemented, grr.
+        #
+        # It isn't clear how to restore these snapshots manually The
+        # only post (same one that admits the that this isn't
+        # implemented) claiming it is using several commands but comes
+        # with no example, grr.
+        #
+        # Hence the convoluted hoops to make this work.
+
+        # grab the memory, which shuts down the domain
+        command = _VIRSH + ["save", self.domain_name, self._snapshot_memory]
+        status, output = self._run_status_output(command, verbose=True)
+        if status:
+            self.logger.error("save failed: %s", output)
+            return False
+
+        # create a disk snapshot
+        command = _VIRSH + ["snapshot-delete", self.domain_name, "--current"]
+        status, output = self._run_status_output(command, verbose=True)
+        if status:
+            self.logger.info("snapshot delete: %s", output)
+        command = _VIRSH + ["snapshot-create", self.domain_name]
+        status, output = self._run_status_output(command, verbose=True)
+        if status:
+            self.logger.error("snapshot failed: %s", output)
+            return False
+
+        # now resume execution
+        command = _VIRSH + ["restore", self._snapshot_memory]
+        status, output = self._run_status_output(command, verbose=True)
+        if status:
+            self.logger.error("restore failed: %s", output)
+            return False
+
+        self.has_snapshot = True
+        self._console = None
+        return True
+
+    def restore(self):
+        if not self.has_snapshot:
+            return False
+
+        # blow the domain away
+        self._console = None
+        self._destroy()
+
+        # wind back the disk
+        command = _VIRSH + ["snapshot-revert", self.domain_name, "--current"]
+        status, output = self._run_status_output(command, verbose=True)
+        if status:
+            self.logger.error("restore failed: %s", output)
+            return False
+
+        # restart the VM using the memory image
+        command = _VIRSH + ["restore", self._snapshot_memory]
+        status, output = self._run_status_output(command, verbose=True)
+        if status:
+            self.logger.error("restore failed: %s", output)
+            return False
+
+        return True
+
