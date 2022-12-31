@@ -1216,13 +1216,14 @@ kvm-shutdown: $(patsubst %, kvm-shutdown-%, $(KVM_PLATFORM_DOMAIN_NAMES))
 $(patsubst %, kvm-undefine-%, $(KVM_PLATFORM_DOMAIN_NAMES)): \
 kvm-undefine-%:
 	@if state=$$($(VIRSH) domstate $* 2>&1); then \
+		run() { echo "$$@" ; "$$@"; } ; \
 		case "$${state}" in \
 		"running" | "in shutdown" | "paused" ) \
-			echo -n "destroying $*: " ; $(VIRSH) destroy $* ; \
-			echo -n "undefining $*: " ; $(VIRSH) undefine $* \
+			run $(VIRSH) destroy $* ; \
+			run $(VIRSH) undefine $* --managed-save --snapshots-metadata \
 			;; \
 		"shut off" ) \
-			echo -n "undefining $*: " ; $(VIRSH) undefine $* \
+			run $(VIRSH) undefine $* --managed-save --snapshots-metadata \
 			;; \
 		* ) \
 			echo "Unknown state $${state} for $*" ; \
@@ -1232,6 +1233,7 @@ kvm-undefine-%:
 		echo "No domain $*" ; \
 	fi
 	rm -f $(KVM_POOLDIR)/$*       $(KVM_LOCALDIR)/$*
+	: not all disks are managed by libvirt
 	rm -f $(KVM_POOLDIR)/$*.qcow2 $(KVM_LOCALDIR)/$*.qcow2
 kvm-undefine: $(patsubst %, kvm-undefine-%, $(KVM_PLATFORM_DOMAIN_NAMES))
 
