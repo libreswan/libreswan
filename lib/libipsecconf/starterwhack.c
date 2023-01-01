@@ -769,7 +769,7 @@ static bool first_subnet(struct subnets *sn)
 		subnets = sn->end->strings[KSCF_SUBNET];
 		count = -1; /* becomes 0 below */
 	} else {
-		/* skip as NULL */
+		/* neither subnet= subnets= presumably peer has values */
 		pexpect(sn->count == 0);
 		pexpect(sn->subnets == NULL);
 		return true;
@@ -874,7 +874,7 @@ static int starter_permutate_conns(int
 		.end = &conn->left,
 	};
 	if (!first_subnet(&left)) {
-		/* syntax error */
+		/* syntax error; already logged */
 		return 1;
 	}
 	pexpect(left.count >= 0);
@@ -914,7 +914,6 @@ static int starter_permutate_conns(int
 #endif
 
 			sc.name = tmpconnname;
-			sc.connalias = conn->name;
 
 			/*
 			 * Fix up leftsubnet/rightsubnet
@@ -974,16 +973,31 @@ static int starter_permutate_conns(int
 }
 
 int starter_whack_add_conn(struct starter_config *cfg,
-			   const struct starter_conn *conn,
+			   const struct starter_conn *starter_conn,
 			   struct logger *logger)
 {
 	/* basic case, nothing special to synthize! */
-	if (!conn->left.strings_set[KSCF_SUBNETS] &&
-	    !conn->right.strings_set[KSCF_SUBNETS])
-		return starter_whack_basic_add_conn(cfg, conn);
+	if (!starter_conn->left.strings_set[KSCF_SUBNETS] &&
+	    !starter_conn->right.strings_set[KSCF_SUBNETS])
+		return starter_whack_basic_add_conn(cfg, starter_conn);
+
+	/* trying to do subnets aka aliases */
+	struct starter_conn alias_conn = *starter_conn;
+	alias_conn.connalias = starter_conn->name;
+
+	/*
+	 * Throw subnet=a,b pluto which will see CONNALIAS != NULL and
+	 * reject things.
+	 */
+	FOR_EACH_THING(end, &alias_conn.left, &alias_conn.right) {
+		if (end->strings_set[KSCF_SUBNET] &&
+		    strchr(end->strings[KSCF_SUBNET], ',') != NULL) {
+			return starter_whack_basic_add_conn(cfg, &alias_conn);
+		}
+	}
 
 	return starter_permutate_conns(starter_whack_basic_add_conn,
-				       cfg, conn, logger);
+				       cfg, &alias_conn, logger);
 }
 
 static int starter_whack_basic_route_conn(struct starter_config *cfg,

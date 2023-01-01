@@ -1253,6 +1253,13 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		     leftright);
 	}
 
+	if (child_config->selectors.len > 1 && wm->connalias != NULL) {
+		/* XXX: don't know which end has subnets= */
+		return diag("multi-selector \"%ssubnet=%s\" combined with subnets=",
+			    leftright, src->subnet);
+	}
+
+
 	/*
 	 * Also extract .virt.
 	 *
