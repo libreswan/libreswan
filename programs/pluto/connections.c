@@ -1738,29 +1738,26 @@ static enum connection_kind extract_connection_kind(const struct whack_message *
 	return CK_PERMANENT;
 }
 
-static bool extract_shunt(const char *shunt_name,
-			  enum shunt_policy *out,
-			  enum shunt_policy shunt,
-			  bool (*shunt_ok)(enum shunt_policy),
-			  enum shunt_policy unset_shunt,
-			  struct logger *logger)
+static diag_t extract_shunt(const char *shunt_name,
+			    enum shunt_policy *out,
+			    enum shunt_policy shunt,
+			    bool (*shunt_ok)(enum shunt_policy),
+			    enum shunt_policy unset_shunt)
 {
 	if (shunt == SHUNT_UNSET) {
 		shunt = unset_shunt;
 	}
 	if (!shunt_ok(shunt)) {
 		enum_buf sb;
-		llog(RC_FATAL, logger,
-		     ADD_FAILED_PREFIX"%s shunt %s invalid",
-		     shunt_name, str_enum_short(&shunt_policy_names, shunt, &sb));
-		return false;
+		return diag("%s shunt %s invalid",
+			    shunt_name, str_enum_short(&shunt_policy_names, shunt, &sb));
 	}
 	*out = shunt;
-	return true;
+	return NULL;
 }
 
-static bool extract_connection(const struct whack_message *wm,
-			       struct connection *c)
+static diag_t extract_connection(const struct whack_message *wm,
+				 struct connection *c)
 {
 	diag_t d;
 	struct config *config = c->root_config; /* writeable; root only */
@@ -1768,65 +1765,48 @@ static bool extract_connection(const struct whack_message *wm,
 
 	if ((wm->policy & POLICY_TUNNEL) == LEMPTY) {
 		if (wm->sa_tfcpad != 0) {
-			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"connection with type=transport cannot specify tfc=");
-			return false;
+			return diag("connection with type=transport cannot specify tfc=");
 		}
 		if (wm->vti_iface != NULL) {
-			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"VTI requires tunnel mode but connection specifies type=transport");
-			return false;
+			return diag("VTI requires tunnel mode but connection specifies type=transport");
 		}
 	}
 	if (LIN(POLICY_AUTHENTICATE, wm->policy)) {
 		if (wm->sa_tfcpad != 0) {
-			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"connection with phase2=ah cannot specify tfc=");
-			return false;
+			return diag("connection with phase2=ah cannot specify tfc=");
 		}
 	}
 
 	if (wm->authby.never) {
 		if (wm->prospective_shunt == SHUNT_UNSET ||
 		    wm->prospective_shunt == SHUNT_TRAP) {
-			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"connection with authby=never must specify shunt type via type=");
-			return false;
+			return diag("connection with authby=never must specify shunt type via type=");
 		}
 	}
 	if (wm->prospective_shunt != SHUNT_UNSET &&
 	    wm->prospective_shunt != SHUNT_TRAP) {
 		if (!authby_eq(wm->authby, (struct authby) { .never = true, })) {
-			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"shunt connection cannot have authentication method other then authby=never");
-			return false;
+			return diag("shunt connection cannot have authentication method other then authby=never");
 		}
 	} else {
 		switch (wm->policy & (POLICY_AUTHENTICATE | POLICY_ENCRYPT)) {
 		case LEMPTY:
 			if (!wm->authby.never) {
-				llog(RC_FATAL, c->logger,
-				     ADD_FAILED_PREFIX"non-shunt connection must have AH or ESP");
-				return false;
+				return diag("non-shunt connection must have AH or ESP");
 			}
 			break;
 		case POLICY_AUTHENTICATE | POLICY_ENCRYPT:
-			llog(RC_FATAL, c->logger,
-				    ADD_FAILED_PREFIX"non-shunt connection must not specify both AH and ESP");
-			return false;
+			return diag("non-shunt connection must not specify both AH and ESP");
 		}
 	}
 
 	if (wm->ike_version == IKEv1) {
 #ifdef USE_IKEv1
 		if (pluto_ikev1_pol != GLOBAL_IKEv1_ACCEPT) {
-			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"global ikev1-policy does not allow IKEv1 connections");
-			return false;
+			return diag("global ikev1-policy does not allow IKEv1 connections");
 		}
 #else
-		llog(RC_FATAL, c->logger, ADD_FAILED_PREFIX"IKEv1 support not compiled in");
-		return false;
+		return diag("IKEv1 support not compiled in");
 #endif
 	}
 	config->ike_version = wm->ike_version;
@@ -1859,53 +1839,39 @@ static bool extract_connection(const struct whack_message *wm,
 
 	if (wm->policy & POLICY_OPPORTUNISTIC &&
 	    c->config->ike_version < IKEv2) {
-		llog(RC_FATAL, c->logger,
-		     ADD_FAILED_PREFIX"opportunistic connection MUST have IKEv2");
-		return false;
+		return diag("opportunistic connection MUST have IKEv2");
 	}
 
 	if (wm->policy & POLICY_MOBIKE &&
 	    c->config->ike_version < IKEv2) {
-		llog(RC_FATAL, c->logger,
-		     ADD_FAILED_PREFIX"MOBIKE requires IKEv2");
-		return false;
+		return diag("MOBIKE requires IKEv2");
 	}
 
 	if ((wm->policy & POLICY_MOBIKE) &&
 	    (wm->policy & POLICY_TUNNEL) == LEMPTY) {
-		llog(RC_FATAL, c->logger,
-		     ADD_FAILED_PREFIX"MOBIKE requires tunnel mode");
-		return false;
+		return diag("MOBIKE requires tunnel mode");
 	}
 
 	if (wm->policy & POLICY_IKEV2_ALLOW_NARROWING &&
 	    c->config->ike_version < IKEv2) {
-		llog(RC_FATAL, c->logger,
-		     ADD_FAILED_PREFIX"narrowing=yes requires IKEv2");
-		return false;
+		return diag("narrowing=yes requires IKEv2");
 	}
 
 	if (wm->iketcp != IKE_TCP_NO &&
 	    c->config->ike_version < IKEv2) {
-		llog(RC_FATAL, c->logger,
-		     ADD_FAILED_PREFIX"enable-tcp= requires IKEv2");
-		return false;
+		return diag("enable-tcp= requires IKEv2");
 	}
 
 	if (wm->policy & POLICY_MOBIKE) {
 		if (kernel_ops->migrate_ipsec_sa_is_enabled == NULL) {
-			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"MOBIKE is not supported by %s kernel interface",
-			     kernel_ops->interface_name);
-			return false;
+			return diag("MOBIKE is not supported by %s kernel interface",
+				    kernel_ops->interface_name);
 		}
 		/* probe the interface */
 		err_t err = kernel_ops->migrate_ipsec_sa_is_enabled(c->logger);
 		if (err != NULL) {
-			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"MOBIKE support is not enabled for %s kernel interface: %s",
-			     kernel_ops->interface_name, err);
-			return false;
+			return diag("MOBIKE support is not enabled for %s kernel interface: %s",
+				    kernel_ops->interface_name, err);
 		}
 	}
 
@@ -1921,9 +1887,7 @@ static bool extract_connection(const struct whack_message *wm,
 		c->remote_tcpport = 0;
 	} else {
 		if (wm->iketcp != IKE_TCP_NO && (wm->remote_tcpport == 0 || wm->remote_tcpport == 500)) {
-			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"tcp-remoteport cannot be 0 or 500");
-			return false;
+			return diag("tcp-remoteport cannot be 0 or 500");
 		}
 		c->remote_tcpport = wm->remote_tcpport;
 		c->iketcp = wm->iketcp;
@@ -1942,9 +1906,7 @@ static bool extract_connection(const struct whack_message *wm,
 	/* some port stuff */
 
 	if (wm->right.protoport.has_port_wildcard && wm->left.protoport.has_port_wildcard) {
-		llog(RC_FATAL, c->logger,
-		     ADD_FAILED_PREFIX"cannot have protoports with wildcard (%%any) ports on both sides");
-		return false;
+		return diag("cannot have protoports with wildcard (%%any) ports on both sides");
 	}
 
 	/*
@@ -1958,13 +1920,10 @@ static bool extract_connection(const struct whack_message *wm,
 	const struct ip_info *host_afi = NULL;
 	d = extract_host_afi(wm, &host_afi);
 	if (d != NULL) {
-		llog_diag(RC_FATAL, c->logger, &d, ADD_FAILED_PREFIX);
-		return false;
+		return d;
 	}
 	if (host_afi == NULL) {
-		llog(RC_FATAL, c->logger,
-		     ADD_FAILED_PREFIX"host address family unknown");
-		return false;
+		return diag("host address family unknown");
 	}
 
 	/*
@@ -1976,9 +1935,7 @@ static bool extract_connection(const struct whack_message *wm,
 	 */
 	if (wm->left.host_type != KH_IPHOSTNAME && !address_is_specified(wm->left.host_addr) &&
 	    wm->right.host_type != KH_IPHOSTNAME && !address_is_specified(wm->right.host_addr)) {
-		llog(RC_FATAL, c->logger,
-		     ADD_FAILED_PREFIX"must specify host IP address for our side");
-		return false;
+		return diag("must specify host IP address for our side");
 	}
 
 	/* duplicate any alias, adding spaces to the beginning and end */
@@ -1987,16 +1944,18 @@ static bool extract_connection(const struct whack_message *wm,
 	config->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
 	c->policy = wm->policy;
 
-	if (!extract_shunt("prospective", &config->prospective_shunt,
-			   wm->prospective_shunt, prospective_shunt_ok,
-			   /*unset*/SHUNT_TRAP, c->logger)) {
-		return false;
+	d = extract_shunt("prospective", &config->prospective_shunt,
+			  wm->prospective_shunt, prospective_shunt_ok,
+			  /*unset*/SHUNT_TRAP);
+	if (d != NULL) {
+		return d;
 	}
 
-	if (!extract_shunt("negotiation", &config->negotiation_shunt,
-			   wm->negotiation_shunt, negotiation_shunt_ok,
-			   /*unset*/SHUNT_HOLD, c->logger)) {
-		return false;
+	d = extract_shunt("negotiation", &config->negotiation_shunt,
+			  wm->negotiation_shunt, negotiation_shunt_ok,
+			  /*unset*/SHUNT_HOLD);
+	if (d != NULL) {
+		return d;
 	}
 
 	if (libreswan_fipsmode() && config->negotiation_shunt == SHUNT_PASS) {
@@ -2007,10 +1966,11 @@ static bool extract_connection(const struct whack_message *wm,
 		config->negotiation_shunt = SHUNT_HOLD;
 	}
 
-	if (!extract_shunt("failure", &config->failure_shunt,
-			   wm->failure_shunt, failure_shunt_ok,
-			   /*unset*/SHUNT_NONE, c->logger)) {
-		return false;
+	d = extract_shunt("failure", &config->failure_shunt,
+			  wm->failure_shunt, failure_shunt_ok,
+			  /*unset*/SHUNT_NONE);
+	if (d != NULL) {
+		return d;
 	}
 
 	if (libreswan_fipsmode() && config->failure_shunt != SHUNT_NONE) {
@@ -2065,11 +2025,9 @@ static bool extract_connection(const struct whack_message *wm,
 		c->policy &= ~POLICY_ESN_YES;
 		c->policy |= POLICY_ESN_NO;
 	} else if (wm->sa_replay_window > kernel_ops->max_replay_window) {
-		llog(RC_FATAL, c->logger,
-		     ADD_FAILED_PREFIX"replay-window=%ju exceeds %s limit of %ju",
-		     wm->sa_replay_window,
-		     kernel_ops->interface_name, kernel_ops->max_replay_window);
-		return false;
+		return diag("replay-window=%ju exceeds %s limit of %ju",
+			    wm->sa_replay_window,
+			    kernel_ops->interface_name, kernel_ops->max_replay_window);
 	}
 
 	connection_buf cb;
@@ -2104,11 +2062,9 @@ static bool extract_connection(const struct whack_message *wm,
 
 		if (c->config->ike_proposals.p == NULL) {
 			pexpect(parser->diag != NULL); /* something */
-			llog_diag(RC_FATAL, c->logger, &parser->diag,
-				  ADD_FAILED_PREFIX);
+			diag_t d = parser->diag; parser->diag = NULL;
 			free_proposal_parser(&parser);
-			/* caller will free C */
-			return false;
+			return d;
 		}
 		free_proposal_parser(&parser);
 
@@ -2178,11 +2134,9 @@ static bool extract_connection(const struct whack_message *wm,
 		config->child_proposals.p = proposals_from_str(parser, wm->esp);
 		if (c->config->child_proposals.p == NULL) {
 			pexpect(parser->diag != NULL);
-			llog_diag(RC_FATAL, c->logger, &parser->diag,
-				  ADD_FAILED_PREFIX);
+			diag_t d = parser->diag; parser->diag = NULL;
 			free_proposal_parser(&parser);
-			/* caller will free C */
-			return false;
+			return d;
 		}
 		free_proposal_parser(&parser);
 
@@ -2320,11 +2274,7 @@ static bool extract_connection(const struct whack_message *wm,
 					    (wm->ike_version == IKEv1 ? &ipv4_info : NULL),
 					    &config->modecfg.dns);
 		if (d != NULL) {
-			llog_diag(RC_FATAL, c->logger, &d,
-				  ADD_FAILED_PREFIX"modecfgdns=%s invalid: ",
-				  wm->modecfg_dns);
-			/* caller will free C */
-			return false;
+			return diag_diag(&d, "modecfgdns=%s invalid: ", wm->modecfg_dns);
 		}
 
 		config->modecfg.domains = clone_shunk_tokens(shunk1(wm->modecfg_domains),
@@ -2380,17 +2330,13 @@ static bool extract_connection(const struct whack_message *wm,
 		if (wm->xfrm_if_id != UINT32_MAX) {
 			err_t err = xfrm_iface_supported(c->logger);
 			if (err != NULL) {
-				llog(RC_FATAL, c->logger,
-				     ADD_FAILED_PREFIX"ipsec-interface=%u not supported. %s",
-				     wm->xfrm_if_id, err);
-				return false;
+				return diag("ipsec-interface=%u not supported. %s",
+					    wm->xfrm_if_id, err);
 			}
 			if (!setup_xfrm_interface(c, wm->xfrm_if_id == 0 ?
 						  PLUTO_XFRMI_REMAP_IF_ID_ZERO : wm->xfrm_if_id )) {
 				/* XXX: never happens?!? */
-				llog(RC_FATAL, c->logger,
-				     ADD_FAILED_PREFIX"setup xfrmi interface failed");
-				return false;
+				return diag("setup xfrmi interface failed");
 			}
 		}
 #endif
@@ -2430,16 +2376,13 @@ static bool extract_connection(const struct whack_message *wm,
 		shunk_t sec_label = shunk2(wm->sec_label, strlen(wm->sec_label)+1);
 		err_t ugh = vet_seclabel(sec_label);
 		if (ugh != NULL) {
-			llog(RC_LOG_SERIOUS, c->logger, ADD_FAILED_PREFIX"%s: policy-label=%s",
-			     ugh, wm->sec_label);
-			return false;
+			return diag("%s: policy-label=%s", ugh, wm->sec_label);
 		}
 		config->sec_label = clone_hunk(sec_label, "struct config sec_label");
 	}
 
 	if (wm->left.addresspool != NULL && wm->right.addresspool != NULL) {
-		llog(RC_FATAL, c->logger, ADD_FAILED_PREFIX"both left and right define addresspool=");
-		return false;
+		return diag("both left and right define addresspool=");
 	}
 
 	/*
@@ -2457,16 +2400,12 @@ static bool extract_connection(const struct whack_message *wm,
 	}
 
 	if (wm->left.virt != NULL && wm->right.virt != NULL) {
-		llog(RC_FATAL, c->logger,
-		     ADD_FAILED_PREFIX"both left and right define virtual subnets");
-		return false;
+		return diag("both left and right define virtual subnets");
 	}
 
 	if (connection_kind == CK_GROUP &&
 	    (wm->left.virt != NULL || wm->right.virt != NULL)) {
-		llog(RC_FATAL, c->logger,
-		     ADD_FAILED_PREFIX"connection groups do not support virtual subnets");
-		return false;
+		return diag("connection groups do not support virtual subnets");
 	}
 
 	/*
@@ -2488,8 +2427,7 @@ static bool extract_connection(const struct whack_message *wm,
 				     wm, whack_ends[this], whack_ends[that],
 				     &same_ca[this], c->logger);
 		if (d != NULL) {
-			llog_diag(RC_FATAL, c->logger, &d, ADD_FAILED_PREFIX);
-			return false;
+			return d;
 		}
 	}
 
@@ -2551,7 +2489,7 @@ static bool extract_connection(const struct whack_message *wm,
 		if (!PEXPECT(c->logger,
 			     c->local->host.config->auth == AUTH_NEVER &&
 			     c->remote->host.config->auth == AUTH_NEVER)) {
-			return false;
+			return diag("internal error");
 		}
 	} else {
 		if (c->local->host.config->auth == AUTH_UNSET ||
@@ -2562,20 +2500,16 @@ static bool extract_connection(const struct whack_message *wm,
 			 * or left with something useless (such as
 			 * never).
 			 */
-			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"no authentication (auth=, authby=) was set");
-			return false;
+			return diag("no authentication (auth=, authby=) was set");
 		}
 
 		if ((c->local->host.config->auth == AUTH_PSK && c->remote->host.config->auth == AUTH_NULL) ||
 		    (c->local->host.config->auth == AUTH_NULL && c->remote->host.config->auth == AUTH_PSK)) {
-			llog(RC_FATAL, c->logger,
-			     ADD_FAILED_PREFIX"cannot mix PSK and NULL authentication (%sauth=%s and %sauth=%s)",
-			     c->local->config->leftright,
-			     enum_name(&keyword_auth_names, c->local->host.config->auth),
-			     c->remote->config->leftright,
-			     enum_name(&keyword_auth_names, c->remote->host.config->auth));
-			return false;
+			return diag("cannot mix PSK and NULL authentication (%sauth=%s and %sauth=%s)",
+				    c->local->config->leftright,
+				    enum_name(&keyword_auth_names, c->local->host.config->auth),
+				    c->remote->config->leftright,
+				    enum_name(&keyword_auth_names, c->remote->host.config->auth));
 		}
 	}
 
@@ -2617,8 +2551,7 @@ static bool extract_connection(const struct whack_message *wm,
 					     &config->end[end].child,
 					     c->logger);
 		if (d != NULL) {
-			llog_diag(RC_FATAL, c->logger, &d, ADD_FAILED_PREFIX);
-			return false;
+			return d;
 		}
 	}
 
@@ -2692,13 +2625,11 @@ static bool extract_connection(const struct whack_message *wm,
 		 *
 		 * Use the first list entry to get the AFI.
 		 */
-		llog(RC_FATAL, c->logger,
-		     ADD_FAILED_PREFIX"address family of left%s=%s conflicts with right%s=%s",
-		     end_family[LEFT_END][i].field,
-		     end_family[LEFT_END][i].value,
-		     end_family[RIGHT_END][j].field,
-		     end_family[RIGHT_END][j].value);
-		return false;
+		return diag("address family of left%s=%s conflicts with right%s=%s",
+			    end_family[LEFT_END][i].field,
+			    end_family[LEFT_END][i].value,
+			    end_family[RIGHT_END][j].field,
+			    end_family[RIGHT_END][j].value);
 	}
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
@@ -2733,7 +2664,7 @@ static bool extract_connection(const struct whack_message *wm,
 
 	set_connection_spds(c, host_afi);
 	if (!pexpect(c->spd != NULL)) {
-		return false;
+		return diag("internal error");
 	}
 
 	/*
@@ -2749,7 +2680,7 @@ static bool extract_connection(const struct whack_message *wm,
 
 	connect_to_host_pair(c);
 
-	return true;
+	return NULL;
 }
 
 void add_connection(const struct whack_message *wm, struct logger *logger)
@@ -2771,8 +2702,9 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 						debugging, logger->global_whackfd,
 						HERE);
 
-	if (!extract_connection(wm, c)) {
-		/* already logged */
+	diag_t d = extract_connection(wm, c);
+	if (d != NULL) {
+		llog_diag(RC_FATAL, c->logger, &d, ADD_FAILED_PREFIX);
 		discard_connection(&c, false/*not-valid*/);
 		return;
 	}
