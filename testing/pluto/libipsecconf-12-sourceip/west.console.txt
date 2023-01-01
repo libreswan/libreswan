@@ -50,11 +50,11 @@ west #
 000 "sourceip-inside-subnets/1x0":     oriented; my_ip=1.0.0.1; their_ip=unset; my_updown=ipsec _updown;
 west #
  add sourceips-inside-subnets
-002 "sourceips-inside-subnets/0x1": connection is using multiple sourceip
-002 "sourceips-inside-subnets/0x1": added IKEv2 connection
-002 "sourceips-inside-subnets/1x2": connection is using multiple sourceip
-002 "sourceips-inside-subnets/1x2": added IKEv2 connection
-000 "sourceips-inside-subnets/1x2":     oriented; my_ip=1.0.0.1; their_ip=unset; my_updown=ipsec _updown;
-000 "sourceips-inside-subnets/0x1":     oriented; my_ip=1::1; their_ip=unset; my_updown=ipsec _updown;
+002 "sourceips-inside-subnets/1x1": connection is using multiple sourceip
+002 "sourceips-inside-subnets/1x1": added IKEv2 connection
+002 "sourceips-inside-subnets/2x2": connection is using multiple sourceip
+002 "sourceips-inside-subnets/2x2": added IKEv2 connection
+000 "sourceips-inside-subnets/2x2":     oriented; my_ip=1.0.0.1; their_ip=unset; my_updown=ipsec _updown;
+000 "sourceips-inside-subnets/1x1":     oriented; my_ip=1::1; their_ip=unset; my_updown=ipsec _updown;
 west #
  
