@@ -1490,6 +1490,9 @@ static bool load_conn(struct starter_conn *conn,
 				   POLICY_IKE_FRAG_FORCE));
 	}
 
+	/* Let this go through to pluto which will validate it. */
+	conn->clientaddrfamily = aftoinfo(conn->options[KNCF_CLIENTADDRFAMILY]);
+
 	/*
 	 * TODO:
 	 * The address family default should come in either via

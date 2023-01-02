@@ -497,7 +497,8 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.whack_delete = true;	/* always do replace for now */
 	msg.name = connection_name(conn);
 
-	msg.tunnel_addr_family = conn->left.host_family->af;
+	msg.host_afi = conn->left.host_family;
+	msg.child_afi = conn->clientaddrfamily;
 
 	if (conn->right.addrtype == KH_IPHOSTNAME)
 		msg.dnshostname = conn->right.strings[KSCF_IP];

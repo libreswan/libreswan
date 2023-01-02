@@ -258,8 +258,9 @@ struct whack_message {
 	struct whack_end left;
 	struct whack_end right;
 
-	/* note: if the client is the gateway, the following must be equal */
-	sa_family_t tunnel_addr_family;	/* between clients */
+	/* names match field */
+	const struct ip_info *host_afi;
+	const struct ip_info *child_afi;
 
 	char *ike;			/* ike algo string (separated by commas) */
 	char *pfsgroup;			/* pfsgroup will be "encapsulated" in esp string for pluto */

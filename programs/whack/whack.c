@@ -1032,7 +1032,7 @@ int main(int argc, char **argv)
 	struct whack_end *end = &msg.left;
 
 	struct family host_family = { 0, };
-	struct family client_family = { 0, };
+	struct family child_family = { 0, };
 
 	msg.name = NULL;
 	msg.remote_host = NULL;
@@ -1073,7 +1073,8 @@ int main(int argc, char **argv)
 
 	msg.active_redirect_dests = NULL;
 
-	msg.tunnel_addr_family = AF_UNSPEC;
+	msg.host_afi = NULL;
+	msg.child_afi = NULL;
 
 	msg.right.updown = DEFAULT_UPDOWN;
 	msg.left.updown = DEFAULT_UPDOWN;
@@ -1520,7 +1521,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_OPPO_HERE:	/* --oppohere <ip-address> */
-			opt_to_address(&client_family, &msg.oppo.local.address);
+			opt_to_address(&child_family, &msg.oppo.local.address);
 			if (!address_is_specified(msg.oppo.local.address)) {
 				/* either :: or 0.0.0.0; unset rejected */
 				address_buf ab;
@@ -1530,7 +1531,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_OPPO_THERE:	/* --oppothere <ip-address> */
-			opt_to_address(&client_family, &msg.oppo.remote.address);
+			opt_to_address(&child_family, &msg.oppo.remote.address);
 			if (!address_is_specified(msg.oppo.remote.address)) {
 				/* either :: or 0.0.0.0; unset rejected */
 				address_buf ab;
@@ -1712,7 +1713,7 @@ int main(int argc, char **argv)
 			continue;
 
 		case END_VTIIP:	/* --vtiip <ip-address/mask> */
-			opt_to_cidr(&client_family, &end->host_vtiip);
+			opt_to_cidr(&child_family, &end->host_vtiip);
 			continue;
 
 		/*
@@ -2185,19 +2186,19 @@ int main(int argc, char **argv)
 		case CD_TUNNELIPV4:	/* --tunnelipv4 */
 			if (LHAS(cd_seen, CD_TUNNELIPV6 - CD_FIRST))
 				diagw("--tunnelipv4 conflicts with --tunnelipv6");
-			if (client_family.used_by != NULL)
-				diagq("--tunnelipv4 must precede", client_family.used_by);
-			client_family.used_by = long_opts[long_index].name;
-			client_family.type = &ipv4_info;
+			if (child_family.used_by != NULL)
+				diagq("--tunnelipv4 must precede", child_family.used_by);
+			child_family.used_by = long_opts[long_index].name;
+			child_family.type = &ipv4_info;
 			continue;
 
 		case CD_TUNNELIPV6:	/* --tunnelipv6 */
 			if (LHAS(cd_seen, CD_TUNNELIPV4 - CD_FIRST))
 				diagw("--tunnelipv6 conflicts with --tunnelipv4");
-			if (client_family.used_by != NULL)
-				diagq("--tunnelipv6 must precede", client_family.used_by);
-			client_family.used_by = long_opts[long_index].name;
-			client_family.type = &ipv6_info;
+			if (child_family.used_by != NULL)
+				diagq("--tunnelipv6 must precede", child_family.used_by);
+			child_family.used_by = long_opts[long_index].name;
+			child_family.type = &ipv6_info;
 			continue;
 
 		case END_XAUTHSERVER:	/* --xauthserver */
@@ -2478,9 +2479,8 @@ int main(int argc, char **argv)
 		break;
 	}
 
-	if (client_family.type != NULL) {
-		msg.tunnel_addr_family = client_family.type->af;
-	}
+	msg.child_afi = child_family.type;
+	msg.host_afi = host_family.type;
 
 	if (!authby_is_set(msg.authby)) {
 		/*

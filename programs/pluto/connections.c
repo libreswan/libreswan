@@ -2597,9 +2597,27 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 	}
 
+	/* legacy; check against clientaddrfamily */
+	if (wm->child_afi != NULL) {
+		/* is other ip version being used? */
+		enum ip_index j = (wm->child_afi == &ipv4_info ? IPv6_INDEX :
+				   IPv4_INDEX);
+		FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+			if (end_family[end][j].used) {
+				return diag("\"childaddrfamily=%s\" conflicts with \"%s%s=%s\"",
+					    wm->child_afi->ip_name,
+					    config->end[end].leftright,
+					    end_family[end][j].field,
+					    end_family[end][j].value);
+			}
+		}
+	}
+
 	/* now check there's a match */
 	FOR_EACH_THING(afi, &ipv4_info, &ipv6_info) {
 		enum ip_index i = afi->ip_index;
+
+		/* both ends do; or both ends don't */
 		if (end_family[LEFT_END][i].used == end_family[RIGHT_END][i].used) {
 			continue;
 		}
@@ -2631,6 +2649,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 			    end_family[RIGHT_END][j].field,
 			    end_family[RIGHT_END][j].value);
 	}
+
+	/*
+	 * Fill in selectors.
+	 */
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		const ip_selectors *const selectors = &c->end[end].config->child.selectors;

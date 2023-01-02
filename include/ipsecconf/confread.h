@@ -59,7 +59,7 @@ typedef enum keyword_set int_set[KEY_NUMERIC_ROOF];
 
 struct starter_end {
 	const char *leftright;
-	const struct ip_info *host_family;
+	const struct ip_info *host_family;	/* XXX: move to starter_conn? */
 	enum keyword_host addrtype;
 	enum keyword_host nexttype;
 	ip_address addr;
@@ -120,6 +120,8 @@ struct starter_conn {
 	struct starter_end left, right;
 
 	unsigned long id;
+
+	const struct ip_info *clientaddrfamily;
 
 	enum keyword_auto desired_state;
 

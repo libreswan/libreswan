@@ -196,7 +196,8 @@ static bool pack_ip_info(struct whackpacker *wp UNUSED,
 			 const char *what UNUSED)
 {
 	/* spell out conversions */
-	*info = (const void*)(uintptr_t)(unsigned)(*info)->ip_version;
+	enum ip_version v = (*info == NULL ? 0 : (*info)->ip_version);
+	*info = (const void*)(uintptr_t)(unsigned)v;
 	return true;
 }
 
@@ -206,7 +207,7 @@ static bool unpack_ip_info(struct whackpacker *wp UNUSED,
 {
 	/* spell out conversions */
 	*info = ip_version_info((unsigned)(uintptr_t)(const void*)*info);
-	return *info != NULL;
+	return true;
 }
 
 static bool pack_ip_protocol(struct whackpacker *wp UNUSED,
@@ -298,6 +299,7 @@ const struct pickler pickle_unpacker = {
 #define PICKLE_SHUNK(FIELD) pickle->shunk(wp, FIELD, #FIELD)
 #define PICKLE_THINGS(THINGS, NR) pickle->raw(wp, (void**)(THINGS), NR*sizeof((THINGS)[0][0]), #THINGS)
 #define PICKLE_CONSTANT_STRING(FIELD, VALUE) pickle->constant_string(wp, FIELD, VALUE, #FIELD)
+#define PICKLE_IP_INFO(FIELD) pickle->ip_info(wp, FIELD, #FIELD)
 
 #if 0
 #define PICKLE_CIDR(CIDR) \
@@ -358,6 +360,8 @@ static bool pickle_whack_message(struct whackpacker *wp, const struct pickler *p
 		PICKLE_CHUNK(&wp->msg->keyval) &&
 		PICKLE_THINGS(&wp->msg->impairments, wp->msg->nr_impairments) &&
 		PICKLE_STRING(&wp->msg->sec_label) &&
+		PICKLE_IP_INFO(&wp->msg->host_afi) &&
+		PICKLE_IP_INFO(&wp->msg->child_afi) &&
 		true);
 }
 
