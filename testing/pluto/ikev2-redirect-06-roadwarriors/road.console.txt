@@ -14,16 +14,16 @@ road #
  echo initdone
 initdone
 road #
- ipsec auto --up road-east | sed -e "s/192.0.2.10./192.0.2.10X/" | sort # sanitize-retransmits
-002 "road-east" #2: received INTERNAL_IP4_ADDRESS 192.0.2.10X
-002 "road-east" #2: received INTERNAL_IP4_DNS 1.2.3.4
-002 "road-east" #2: received INTERNAL_IP4_DNS 5.6.7.8
-002 "road-east" #2: up-client output: updating resolvconf
-003 "road-east" #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
-004 "road-east" #2: initiator established Child SA using #1; IPsec tunnel [192.0.2.10X-192.0.2.101:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+ ipsec auto --up road-east
 1v2 "road-east" #1: initiating IKEv2 connection
 1v2 "road-east" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "road-east" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "road-east" #1: initiator established IKE SA; authenticated peer '3nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org' issued by CA 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=Libreswan test CA for mainca, E=testing@libreswan.org'
+002 "road-east" #2: received INTERNAL_IP4_ADDRESS 192.0.2.101
+002 "road-east" #2: received INTERNAL_IP4_DNS 1.2.3.4
+002 "road-east" #2: received INTERNAL_IP4_DNS 5.6.7.8
+002 "road-east" #2: up-client output: updating resolvconf
+004 "road-east" #2: initiator established Child SA using #1; IPsec tunnel [192.0.2.101-192.0.2.101:0-65535 0] -> [0.0.0.0-255.255.255.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 road #
  ../../guestbin/ping-once.sh --up 192.0.2.254
 up
@@ -34,7 +34,18 @@ road #
  echo done
 done
 road #
- ipsec whack --trafficstatus | sed -e "s/#./#X/" -e "s/\[[0-9]\]/[X]/" -e "s/192.0.2.10./192.0.2.10X/" | sort
-006 #X: "road-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.10X/32
+ # wait for it to re-establish
+road #
+ ../../guestbin/wait-for.sh --match east -- ipsec whack --trafficstatus | sed -e 's/192.0.2.10[1-2]/192.0.2.10x/'
+006 #4: "road-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.10x/32
+road #
+ ../../guestbin/ping-once.sh --up 192.0.2.254
+up
+road #
+ echo really done
+really done
+road #
+ ipsec whack --trafficstatus | sed -e 's/#[0-9]/#N/' -e 's/192.0.2.10[1-2]/192.0.2.10x/' -e 's/192.1.3.[0-9]*/192.1.3.x/' | sort
+006 #N: "road-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=192.0.2.10x/32
 road #
 
