@@ -2,7 +2,7 @@
   <term><emphasis remap='B'>nat-keepalive</emphasis></term>
   <listitem>
 <para>whether to send any NAT-T keep-alives. These one byte packets
-are send to prevent the NAT router from closing its port when there is
+are sent to prevent the NAT router from closing its port when there is
 not enough traffic on the IPsec connection. Acceptable values are:
 <emphasis remap='B'>yes</emphasis> (the default) and
 <emphasis remap='B'>no</emphasis>.

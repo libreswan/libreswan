@@ -943,7 +943,7 @@
           <manvolnum>5</manvolnum>
         </citerefentry> for the syntax. The option
       <option>--force-keepalive</option> forces the sending of the <emphasis
-      remap="I">keep-alive packets</emphasis>, which are send to prevent the
+      remap="I">keep-alive packets</emphasis>, which are sent to prevent the
       NAT router from closing its port when there is not enough traffic on the
       IPsec connection. The <option>--keep-alive</option> sets the delay (in
       seconds) of these keep-alive packets. The newer NAT-T standards support
