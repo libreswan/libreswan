@@ -486,8 +486,8 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 	struct connection *c = child->sa.st_connection;
 	pb_stream *attrs = &cp_pd->pbs;
 
-	dbg("#%lu %s[%lu] parsing ISAKMP_NEXT_v2CP payload",
-	    child->sa.st_serialno, c->name, c->instance_serial);
+	ldbg_sa(child, "#%lu %s[%lu] parsing ISAKMP_NEXT_v2CP payload",
+		child->sa.st_serialno, c->name, c->instance_serial);
 
 	switch (child->sa.st_sa_role) {
 	case SA_INITIATOR:
@@ -508,6 +508,19 @@ bool process_v2CP_response_payload(struct ike_sa *ike UNUSED, struct child_sa *c
 		break;
 	default:
 		bad_case(child->sa.st_sa_role);
+	}
+
+	/*
+	 * Initialize connection fields that are no longer valid.  For
+	 * instance, the instance connection is being re-directed or
+	 * revived.
+	 */
+	FOR_EACH_ELEMENT(lease, c->local->child.lease) {
+		if (lease->is_set) {
+			address_buf ab;
+			ldbg(c->logger, "zapping lease %s", str_address(lease, &ab));
+			zero(lease);
+		}
 	}
 
 	while (pbs_left(attrs) > 0) {
