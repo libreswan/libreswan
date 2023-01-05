@@ -167,6 +167,17 @@ typedef struct { uint32_t value; } kernel_priority_t;
 #define PRI_KERNEL_PRIORITY PRIu32
 #define pri_kernel_priority(P) (P).value
 
+enum offload_type {
+	OFFLOAD_NONE,
+	OFFLOAD_CRYPTO,
+	OFFLOAD_PACKET,
+};
+
+struct nic_offload {
+	const char *dev;
+	enum offload_type type;
+};
+
 struct kernel_policy {
 	/*
 	 * The src/dst selector and src/dst host (and apparently
@@ -269,7 +280,7 @@ struct kernel_state {
 	const char *story;
 	chunk_t sec_label;
 
-	const char *nic_offload_dev;
+	struct nic_offload nic_offload;
 	uint32_t xfrm_if_id;
 	struct sa_mark mark_set; /* config keyword mark-out */
 	uint64_t sa_ipsec_max_bytes;

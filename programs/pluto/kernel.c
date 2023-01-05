@@ -1618,7 +1618,8 @@ static void setup_esp_nic_offload(struct kernel_state *sa, struct connection *c,
 		dbg("kernel: NIC esp-hw-offload offload for connection '%s' enabled on interface %s",
 		    c->name, c->interface->ip_dev->id_rname);
 	}
-	sa->nic_offload_dev = c->interface->ip_dev->id_rname;
+	sa->nic_offload.dev = c->interface->ip_dev->id_rname;
+	sa->nic_offload.type = (c->config->nic_offload == off_pkt) ? OFFLOAD_PACKET : OFFLOAD_CRYPTO;
 }
 
 /*
@@ -1898,10 +1899,18 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 		bool ret = kernel_ops_add_sa(said_next, replace, st->st_logger);
 
 		if (!ret && nic_offload_fallback &&
-		    said_next->nic_offload_dev != NULL) {
-			/* Fallback to non-nic-offload crypto */
-			said_next->nic_offload_dev = NULL;
-			ret = kernel_ops_add_sa(said_next, replace, st->st_logger);
+		    said_next->nic_offload.dev != NULL) {
+			/* Fallback to nic-offload crypto from packet offload */
+			if (said_next->nic_offload.type == OFFLOAD_PACKET) {
+				said_next->nic_offload.type = OFFLOAD_CRYPTO;
+				ret = kernel_ops_add_sa(said_next, replace, st->st_logger);
+			}
+
+			if (!ret) {
+				/* Fallback to non-nic-offload crypto */
+				said_next->nic_offload.dev = NULL;
+				ret = kernel_ops_add_sa(said_next, replace, st->st_logger);
+			}
 		}
 
 		/* scrub keys from memory */
