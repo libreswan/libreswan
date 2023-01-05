@@ -216,7 +216,7 @@ struct config {
 	struct ikev2_proposals *v2_ike_proposals;
 	struct ikev2_proposals *v2_ike_auth_child_proposals;
 
-	enum yna_options nic_offload;
+	enum offload_options nic_offload;
 	char *dnshostname;
 
 	struct {

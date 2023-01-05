@@ -1601,14 +1601,14 @@ bool assign_holdpass(struct connection *c,
 static void setup_esp_nic_offload(struct kernel_state *sa, struct connection *c,
 		bool *nic_offload_fallback)
 {
-	if (c->config->nic_offload == yna_no ||
+	if (c->config->nic_offload == off_no ||
 	    c->interface == NULL || c->interface->ip_dev == NULL ||
 	    c->interface->ip_dev->id_rname == NULL) {
 		dbg("kernel: NIC esp-hw-offload disabled for connection '%s'", c->name);
 		return;
 	}
 
-	if (c->config->nic_offload == yna_auto) {
+	if (c->config->nic_offload == off_auto) {
 		if (!c->interface->ip_dev->id_nic_offload) {
 			dbg("kernel: NIC esp-hw-offload not for connection '%s' not available on interface %s",
 				c->name, c->interface->ip_dev->id_rname);

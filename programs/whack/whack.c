@@ -1058,7 +1058,7 @@ int main(int argc, char **argv)
 	msg.modecfg_dns = NULL;
 	msg.modecfg_banner = NULL;
 
-	msg.nic_offload = yna_auto;
+	msg.nic_offload = off_auto;
 	msg.sa_ipsec_max_bytes = IPSEC_SA_MAX_OPERATIONS; /* max uint_64_t */
 	msg.sa_ipsec_max_packets = IPSEC_SA_MAX_OPERATIONS; /* max uint_64_t */
 	msg.sa_ike_max_lifetime = deltatime(IKE_SA_LIFETIME_DEFAULT);
@@ -1935,13 +1935,15 @@ int main(int argc, char **argv)
 
 		case CD_NIC_OFFLOAD:  /* --nic-offload */
 			if (streq(optarg, "no"))
-				msg.nic_offload = yna_no;
+				msg.nic_offload = off_no;
 			else if (streq(optarg, "yes"))
-				msg.nic_offload = yna_yes;
+				msg.nic_offload = off_yes;
 			else if (streq(optarg, "auto"))
-				msg.nic_offload = yna_auto;
+				msg.nic_offload = off_auto;
+			else if (streq(optarg, "packet"))
+				msg.nic_offload = off_pkt;
 			else
-				diagw("--nic-offload options are 'no', 'yes' or 'auto'");
+				diagw("--nic-offload options are 'no', 'yes', 'packet' or 'auto'");
 			continue;
 
 		case CD_NO_NAT_KEEPALIVE:	/* --no-nat_keepalive */

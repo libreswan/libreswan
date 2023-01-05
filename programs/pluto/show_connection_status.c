@@ -618,8 +618,9 @@ void show_connection_status(struct show *s, const struct connection *c)
 		     c->vti_iface == NULL ? "unset" : c->vti_iface,
 		     bool_str(c->vti_routing),
 		     bool_str(c->vti_shared),
-		     (c->config->nic_offload == yna_auto ? "auto" :
-		      bool_str(c->config->nic_offload == yna_yes)));
+		     (c->config->nic_offload == off_auto ? "auto" :
+		     (c->config->nic_offload == off_pkt ? "packet" :
+		      bool_str(c->config->nic_offload == off_yes))));
 
 	{
 		id_buf thisidb;

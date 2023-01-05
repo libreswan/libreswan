@@ -820,6 +820,13 @@ enum eap_options {
 	IKE_EAP_TLS = 1,
 };
 
+enum offload_options {
+	off_auto = 1, /* default */
+	off_no = 2,
+	off_yes = 3, /* Backwords compatible */
+	off_pkt = 4,
+};
+
 /*
  * Policies for establishing an SA
  *

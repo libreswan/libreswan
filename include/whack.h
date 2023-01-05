@@ -189,7 +189,7 @@ struct whack_message {
 	uintmax_t sa_replay_window;
 	deltatime_t retransmit_timeout;
 	deltatime_t retransmit_interval;
-	enum yna_options nic_offload;
+	enum offload_options nic_offload;
 	uint32_t xfrm_if_id;
 
 	/* For IKEv1 RFC 3706 - Dead Peer Detection */

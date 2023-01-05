@@ -114,11 +114,19 @@ static const struct sparse_name kw_yndev_list[] = {
 };
 #endif
 
-/* Values for yes/no/auto, used by encapsulation and nic-offload */
+/* Values for yes/no/auto, used by encapsulation */
 static const struct sparse_name kw_yna_list[] = {
 	{ "yes",	yna_yes },
 	{ "no",		yna_no },
 	{ "auto",	yna_auto },
+	SPARSE_NULL
+};
+
+static const struct sparse_name kw_offload_list[] = {
+	{ "yes",        off_yes },
+	{ "no",         off_no },
+	{ "auto",       off_auto },
+	{ "packet",     off_pkt },
 	SPARSE_NULL
 };
 
@@ -535,7 +543,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "ipsec-interface", kv_conn, kt_loose_enum, KNCF_XFRM_IF_ID, kw_yndev_list, NULL, },
 #endif
 
-  { "nic-offload",  kv_conn,  kt_enum,  KNCF_NIC_OFFLOAD,  kw_yna_list, NULL, },
+  { "nic-offload",  kv_conn,  kt_enum,  KNCF_NIC_OFFLOAD,  kw_offload_list, NULL, },
 
   { "encapsulation",  kv_conn,  kt_enum,  KNCF_ENCAPS,  kw_yna_list, NULL, },
   { "forceencaps",  kv_conn, kt_obsolete, KNCF_WARNIGNORE, NULL, NULL, },
