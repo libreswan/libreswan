@@ -19,7 +19,7 @@ import collections
 from fab import logutil
 from fab import utilsdir
 from fab import scripts
-from fab.hosts import HOST_NAMES
+from fab.hosts import GUEST_NAMES
 
 
 class Test:
@@ -87,15 +87,14 @@ class Test:
         else:
             self._testing_directory = utilsdir.relpath("..")
 
-        # Get an ordered list of the scripts (host, script, silent) to
-        # run.
-        self.host_scripts = scripts.host_scripts(self.directory, self.logger)
+        # Get an ordered list of {guest_name:,command:} to run.
+        self.commands = scripts.commands(self.directory, self.logger)
 
         # Just assume any host mentioned in scripts needs to run.
-        host_names = set()
-        for script in self.host_scripts:
-            host_names.add(script.host_name)
-        self.host_names = sorted(host_names)
+        guest_names = set()
+        for command in self.commands:
+            guest_names.add(command.guest_name)
+        self.guest_names = sorted(guest_names)
 
     def testing_directory(self, *path):
         return os.path.relpath(os.path.join(self._testing_directory, *path))

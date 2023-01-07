@@ -29,10 +29,10 @@ from fab import jsonutil
 class Print(argutil.List):
     # tests
     TEST_DIRECTORY = "test-directory"
-    TEST_HOST_NAMES = "test-host-names"
+    TEST_GUEST_NAMES = "test-guest-names"
     TEST_KIND = "test-kind"
     TEST_NAME = "test-name"
-    TEST_SCRIPTS = "test-scripts"
+    TEST_COMMANDS = "test-commands"
     TEST_STATUS = "test-status"
     # results
     START_TIME = "start-time"
@@ -120,9 +120,9 @@ def build_result(logger, result, baseline, args, what_to_print, b):
             b.add(p, result.test.directory)
         elif p is Print.TEST_STATUS:
             b.add(p, result.test.status)
-        elif p is Print.TEST_HOST_NAMES:
-            b.add(p, result.test.host_names,
-                  string=lambda host_names, sep: sep + ",".join(host_names))
+        elif p is Print.TEST_GUEST_NAMES:
+            b.add(p, result.test.guest_names,
+                  string=lambda guest_names, sep: sep + ",".join(guest_names))
         elif p is Print.TEST_KIND:
             b.add(p, result.test.kind)
         elif p is Print.TEST_NAME:
@@ -137,8 +137,8 @@ def build_result(logger, result, baseline, args, what_to_print, b):
             b.add(p, result.test.testing_directory())
         elif p is Print.SAVED_OUTPUT_DIRECTORY:
             b.add(p, result.test.saved_output_directory)
-        elif p is Print.TEST_SCRIPTS:
-            b.add(p, result.test.host_scripts)
+        elif p is Print.TEST_COMMANDS:
+            b.add(p, result.test.commands)
         elif p is Print.BASELINE_DIRECTORY:
             b.add(p, baseline and result.test.name in baseline and baseline[result.test.name].directory or None)
         elif p is Print.BASELINE_OUTPUT_DIRECTORY:

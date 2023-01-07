@@ -72,8 +72,8 @@ def main():
                         choices=set(["interactive", "batch"]),
                         help=("enter mode"
                               " (default: if there is no command enter interactive mode)"))
-    parser.add_argument("--host-name", default=None,
-                        help="The virtual machine's host name")
+    parser.add_argument("--guest-name", default=None,
+                        help="The virtual machine guest's name")
 
     parser.add_argument("domain_name", action="store", metavar="DOMAIN",
                         help="virtual machine (domain) to connect to")
@@ -89,7 +89,7 @@ def main():
     logger = logutil.getLogger("kvmsh", args.domain_name)
 
     # Get things started
-    domain = virsh.Domain(logger, domain_name=args.domain_name, host_name=args.host_name)
+    domain = virsh.Domain(logger, domain_name=args.domain_name, guest_name=args.guest_name)
 
     # Find a reason to log-in and interact with the console.
     batch = args.mode == "batch" or args.command

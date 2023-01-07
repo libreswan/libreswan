@@ -278,30 +278,30 @@ class TestResult:
 
         # check the log file for problems
 
-        for host_name in test.host_names:
-            pluto_log_filename = host_name + ".pluto.log"
+        for guest_name in test.guest_names:
+            pluto_log_filename = guest_name + ".pluto.log"
             if self.grub(pluto_log_filename, "ASSERTION FAILED"):
-                self.issues.add(Issues.ASSERTION, host_name)
+                self.issues.add(Issues.ASSERTION, guest_name)
                 self.resolution.failed()
             if self.grub(pluto_log_filename, "EXPECTATION FAILED"):
-                self.issues.add(Issues.EXPECTATION, host_name)
+                self.issues.add(Issues.EXPECTATION, guest_name)
                 self.resolution.failed()
             if self.grub(pluto_log_filename, "\(null\)"):
-                self.issues.add(Issues.PRINTF_NULL, host_name)
+                self.issues.add(Issues.PRINTF_NULL, guest_name)
                 self.resolution.failed()
             if self.grub(pluto_log_filename, r"[^ -~\n]"):
                 # This won't detect a \n embedded in the middle of a
                 # log line.
-                self.issues.add(Issues.ISCNTRL, host_name)
+                self.issues.add(Issues.ISCNTRL, guest_name)
                 self.resolution.failed()
             if self.grub(pluto_log_filename, r"leak detective found [0-9]+ leaks"):
-                self.issues.add(Issues.LEAK, host_name)
+                self.issues.add(Issues.LEAK, guest_name)
                 self.resolution.failed()
 
         # Check the raw console output for problems and that it
         # matches expected output.
 
-        for host_name in test.host_names:
+        for guest_name in test.guest_names:
 
             # Check that the host's raw output is present.
             #
@@ -311,9 +311,9 @@ class TestResult:
             # Since things really screwed up, mark the test as
             # UNRESOLVED and give up.
 
-            raw_output_filename = host_name + ".console.verbose.txt"
+            raw_output_filename = guest_name + ".console.verbose.txt"
             if self.grub(raw_output_filename) is None:
-                self.issues.add(Issues.OUTPUT_MISSING, host_name)
+                self.issues.add(Issues.OUTPUT_MISSING, guest_name)
                 self.resolution.unresolved()
                 # With no raw console output, there's little point in
                 # trying validating it.  Skip remaining tests for this
@@ -326,24 +326,24 @@ class TestResult:
             # command line utility that barfs.
 
             self.logger.debug("host %s checking raw console output for signs of a crash",
-                              host_name)
+                              guest_name)
             if self.grub(raw_output_filename, r"[\r\n]CORE FOUND"):
-                self.issues.add(Issues.CORE, host_name)
+                self.issues.add(Issues.CORE, guest_name)
                 self.resolution.failed()
             if self.grub(raw_output_filename, r"SEGFAULT"):
-                self.issues.add(Issues.SEGFAULT, host_name)
+                self.issues.add(Issues.SEGFAULT, guest_name)
                 self.resolution.failed()
             if self.grub(raw_output_filename, r"GPFAULT"):
-                self.issues.add(Issues.GPFAULT, host_name)
+                self.issues.add(Issues.GPFAULT, guest_name)
                 self.resolution.failed()
             if self.grub(raw_output_filename, r"ASSERTION FAILED"):
-                self.issues.add(Issues.ASSERTION, host_name)
+                self.issues.add(Issues.ASSERTION, guest_name)
                 self.resolution.failed()
             if self.grub(raw_output_filename, r"EXPECTATION FAILED"):
-                self.issues.add(Issues.EXPECTATION, host_name)
+                self.issues.add(Issues.EXPECTATION, guest_name)
                 self.resolution.failed()
             if self.grub(raw_output_filename, "\(null\)"):
-                self.issues.add(Issues.PRINTF_NULL, host_name)
+                self.issues.add(Issues.PRINTF_NULL, guest_name)
                 self.resolution.failed()
 
             # Check that the host's raw output is complete.
@@ -356,21 +356,21 @@ class TestResult:
 
             if self.grub(raw_output_filename, LHS + " " + Issues.TIMEOUT):
                 # One of the test scripts hung; all the
-                self.issues.add(Issues.TIMEOUT, host_name)
+                self.issues.add(Issues.TIMEOUT, guest_name)
                 self.resolution.failed()
 
             if self.grub(raw_output_filename, LHS + " " + Issues.EOF):
                 # One of the test scripts hung; all the
-                self.issues.add(Issues.EOF, host_name)
+                self.issues.add(Issues.EOF, guest_name)
                 self.resolution.unresolved()
 
             if self.grub(raw_output_filename, LHS + " " + Issues.EXCEPTION):
                 # One of the test scripts hung; all the
-                self.issues.add(Issues.EXCEPTION, host_name)
+                self.issues.add(Issues.EXCEPTION, guest_name)
                 self.resolution.unresolved()
 
             if self.grub(raw_output_filename, DONE) is None:
-                self.issues.add(Issues.OUTPUT_TRUNCATED, host_name)
+                self.issues.add(Issues.OUTPUT_TRUNCATED, guest_name)
                 self.resolution.unresolved()
 
 
@@ -380,9 +380,9 @@ class TestResult:
             # useful.
 
             sanitized_output_path = os.path.join(self.output_directory,
-                                                 host_name + ".console.txt")
+                                                 guest_name + ".console.txt")
             self.logger.debug("host %s sanitize console output '%s'",
-                              host_name, sanitized_output_path)
+                              guest_name, sanitized_output_path)
             sanitized_output = None
             if quick:
                 sanitized_output = self._file_contents(sanitized_output_path)
@@ -391,41 +391,41 @@ class TestResult:
                                                     os.path.join(self.output_directory, raw_output_filename),
                                                     test)
             if sanitized_output is None:
-                self.issues.add(Issues.SANITIZER_FAILED, host_name)
+                self.issues.add(Issues.SANITIZER_FAILED, guest_name)
                 self.resolution.unresolved()
                 continue
-            self.sanitized_output[host_name] = sanitized_output
+            self.sanitized_output[guest_name] = sanitized_output
 
             self.logger.debug("host %s checking sanitized console output for issues",
-                              host_name)
+                              guest_name)
             if self.grep(sanitized_output, r"\(null\)"):
-                self.issues.add(Issues.PRINTF_NULL, host_name)
+                self.issues.add(Issues.PRINTF_NULL, guest_name)
                 self.resolution.failed()
             if self.grep(sanitized_output, r"[^ -~\r\n\t]"):
                 # Console contains \r\n; this won't detect \n embedded
                 # in the middle of a log line.  Audit emits embedded
                 # escapes!
-                self.issues.add(Issues.ISCNTRL, host_name)
+                self.issues.add(Issues.ISCNTRL, guest_name)
                 self.resolution.failed()
             if self.grep(sanitized_output, r"\[ *\d+\.\d+\] Call Trace:"):
                 # the sanitizer strips out the bogus backtrace "failed
                 # to disable LRO"; hence checking the sanitized output
-                self.issues.add(Issues.KERNEL, host_name)
+                self.issues.add(Issues.KERNEL, guest_name)
                 self.resolution.failed()
 
             expected_output_path = test.testing_directory("pluto", test.name,
-                                                          host_name + ".console.txt")
+                                                          guest_name + ".console.txt")
             self.logger.debug("host %s comparing against known-good output '%s'",
-                              host_name, expected_output_path)
+                              guest_name, expected_output_path)
 
             expected_output = self._file_contents(expected_output_path)
             if expected_output is None:
-                self.issues.add(Issues.OUTPUT_UNCHECKED, host_name)
+                self.issues.add(Issues.OUTPUT_UNCHECKED, guest_name)
                 self.resolution.unresolved()
                 continue
 
             diff = None
-            diff_filename = host_name + ".console.diff"
+            diff_filename = guest_name + ".console.diff"
 
             if quick:
                 # Try to load the existing diff file.  Like _diff()
@@ -436,20 +436,20 @@ class TestResult:
             if diff is None:
                 # use brute force
                 diff = _diff(self.logger,
-                             "MASTER/" + test.directory + "/" + host_name + ".console.txt",
+                             "MASTER/" + test.directory + "/" + guest_name + ".console.txt",
                              expected_output,
-                             "OUTPUT/" + test.directory + "/" + host_name + ".console.txt",
+                             "OUTPUT/" + test.directory + "/" + guest_name + ".console.txt",
                              sanitized_output)
 
             if diff:
-                self.diffs[host_name] = diff
+                self.diffs[guest_name] = diff
                 whitespace = _whitespace(expected_output,
                                          sanitized_output)
                 self.resolution.failed()
                 if whitespace:
-                    self.issues.add(Issues.OUTPUT_WHITESPACE, host_name)
+                    self.issues.add(Issues.OUTPUT_WHITESPACE, guest_name)
                 else:
-                    self.issues.add(Issues.OUTPUT_DIFFERENT, host_name)
+                    self.issues.add(Issues.OUTPUT_DIFFERENT, guest_name)
 
     def save(self, output_directory=None):
         output_directory = output_directory or self.output_directory
@@ -457,25 +457,25 @@ class TestResult:
             self.logger.debug("output directory missing: %s", output_directory)
             return
         # write the sanitized console output
-        for host_name in self.test.host_names:
-            if host_name in self.sanitized_output:
-                sanitized_output = self.sanitized_output[host_name]
-                sanitized_output_filename = host_name + ".console.txt"
+        for guest_name in self.test.guest_names:
+            if guest_name in self.sanitized_output:
+                sanitized_output = self.sanitized_output[guest_name]
+                sanitized_output_filename = guest_name + ".console.txt"
                 sanitized_output_pathname = os.path.join(output_directory,
                                                          sanitized_output_filename)
                 self.logger.debug("host %s writing sanitized output file: %s",
-                                  host_name, sanitized_output_pathname)
+                                  guest_name, sanitized_output_pathname)
                 with open(sanitized_output_pathname, "wb") as f:
                     f.write(sanitized_output)
         # write the diffs
-        for host_name in self.test.host_names:
+        for guest_name in self.test.guest_names:
             # Always create the diff file; when there is no diff
             # leave it empty.
-            diff = host_name in self.diffs and self.diffs[host_name]
-            diff_filename = host_name + ".console.diff"
+            diff = guest_name in self.diffs and self.diffs[guest_name]
+            diff_filename = guest_name + ".console.diff"
             diff_pathname = os.path.join(output_directory, diff_filename)
             self.logger.debug("host %s writing diff file %s",
-                              host_name, diff_pathname)
+                              guest_name, diff_pathname)
             with open(diff_pathname, "wb") as f:
                 if diff:
                     for line in diff:
@@ -625,45 +625,45 @@ def mortem(test, args, logger, baseline=None, output_directory=None, quick=False
     and baseline_result.resolution in [baseline_result.resolution.PASSED]:
         return test_result
 
-    for host_name in test.host_names:
+    for guest_name in test.guest_names:
 
         # result missing output; still check baseline ..
-        if host_name not in test_result.sanitized_output:
-            if host_name in baseline_result.sanitized_output:
-                if host_name in baseline_result.diffs:
-                    test_result.issues.add(Issues.BASELINE_FAILED, host_name)
+        if guest_name not in test_result.sanitized_output:
+            if guest_name in baseline_result.sanitized_output:
+                if guest_name in baseline_result.diffs:
+                    test_result.issues.add(Issues.BASELINE_FAILED, guest_name)
                 else:
-                    test_result.issues.add(Issues.BASELINE_PASSED, host_name)
+                    test_result.issues.add(Issues.BASELINE_PASSED, guest_name)
             continue
 
-        if not host_name in baseline_result.sanitized_output:
-            test_result.issues.add(Issues.BASELINE_MISSING, host_name)
+        if not guest_name in baseline_result.sanitized_output:
+            test_result.issues.add(Issues.BASELINE_MISSING, guest_name)
             continue
 
-        if not host_name in test_result.diffs:
-            if host_name in baseline_result.diffs:
-                test_result.issues.add(Issues.BASELINE_FAILED, host_name)
+        if not guest_name in test_result.diffs:
+            if guest_name in baseline_result.diffs:
+                test_result.issues.add(Issues.BASELINE_FAILED, guest_name)
             continue
 
-        if not host_name in baseline_result.diffs:
-            test_result.issues.add(Issues.BASELINE_PASSED, host_name)
+        if not guest_name in baseline_result.diffs:
+            test_result.issues.add(Issues.BASELINE_PASSED, guest_name)
             continue
 
         baseline_diff = _diff(logger,
-                              "BASELINE/" + test.directory + "/" + host_name + ".console.txt",
-                              baseline_result.sanitized_output[host_name],
-                              "OUTPUT/" + test.directory + "/" + host_name + ".console.txt",
-                              test_result.sanitized_output[host_name])
+                              "BASELINE/" + test.directory + "/" + guest_name + ".console.txt",
+                              baseline_result.sanitized_output[guest_name],
+                              "OUTPUT/" + test.directory + "/" + guest_name + ".console.txt",
+                              test_result.sanitized_output[guest_name])
         if baseline_diff:
-            baseline_whitespace = _whitespace(baseline_result.sanitized_output[host_name],
-                                              test_result.sanitized_output[host_name])
+            baseline_whitespace = _whitespace(baseline_result.sanitized_output[guest_name],
+                                              test_result.sanitized_output[guest_name])
             if baseline_whitespace:
-                test_result.issues.add(Issues.BASELINE_WHITESPACE, host_name)
+                test_result.issues.add(Issues.BASELINE_WHITESPACE, guest_name)
             else:
-                test_result.issues.add(Issues.BASELINE_DIFFERENT, host_name)
+                test_result.issues.add(Issues.BASELINE_DIFFERENT, guest_name)
             # update the diff to something hopefully closer?
-            # test_result.diffs[host_name] = baseline_diff
+            # test_result.diffs[guest_name] = baseline_diff
         # else:
-        #    test_result.issues.add("baseline-failed", host_name)
+        #    test_result.issues.add("baseline-failed", guest_name)
 
     return test_result

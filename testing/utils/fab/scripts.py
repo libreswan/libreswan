@@ -23,13 +23,13 @@ class Scripts(list):
         return ",".join(str(script) for script in self)
 
 class Script:
-    def __init__(self, host_name, path):
-        self.host_name = host_name
+    def __init__(self, guest_name, path):
+        self.guest_name = guest_name
         self.path = path
     def __str__(self):
-        return self.host_name + ":" + self.path
+        return self.guest_name + ":" + self.path
 
-from fab.hosts import HOST_NAMES
+from fab.hosts import GUEST_NAMES
 
 def _scripts(directory):
     """Returns a set of *.sh scripts found in DIRECTORY"""
@@ -45,27 +45,27 @@ def _scripts(directory):
             scripts.add(script)
     return scripts
 
-def _add_script(run, scripts, script, host_names):
+def _add_script(run, scripts, script, guest_names):
     if script in scripts:
         scripts.remove(script)
-        for host_name in host_names:
-            run.append(Script(host_name, script))
+        for guest_name in guest_names:
+            run.append(Script(guest_name, script))
 
-def host_scripts(directory, logger):
-    """Return a list of (host, script, silent-but-deadly) tuples to run"""
+def _guest_scripts(directory, logger):
+    """Return a list of {guest_name:, path:} to run"""
 
     scripts = _scripts(directory)
     logger.debug("raw script files: %s", scripts);
 
-    # Form a subset of HOST_NAMES based on the names found in the
+    # Form a subset of GUEST_NAMES based on the names found in the
     # scripts.
-    host_names = set()
-    for host_name in HOST_NAMES:
+    guest_names = set()
+    for guest_name in GUEST_NAMES:
         for script in scripts:
-            if re.search(host_name, script):
-                host_names.add(host_name)
-    host_names = sorted(host_names)
-    logger.debug("script sorted host names: %s", host_names)
+            if re.search(guest_name, script):
+                guest_names.add(guest_name)
+    guest_names = sorted(guest_names)
+    logger.debug("script sorted host names: %s", guest_names)
 
     # Compatibility hack: form a list of scripts matching <host>init.sh
     # and within that force "nic" then "east" to be on the front of
@@ -73,21 +73,21 @@ def host_scripts(directory, logger):
     init_scripts = Scripts()
     _add_script(init_scripts, scripts, "nicinit.sh", ["nic"])
     _add_script(init_scripts, scripts, "eastinit.sh", ["east"])
-    for host_name in host_names:
-        _add_script(init_scripts, scripts, host_name + "init.sh", [host_name])
+    for guest_name in guest_names:
+        _add_script(init_scripts, scripts, guest_name + "init.sh", [guest_name])
     logger.debug("init scripts: %s", init_scripts)
 
     # Compatibility hack: form a list of scripts matching <host>run.sh.
     # These will be run second.
     run_scripts = Scripts()
-    for host_name in host_names:
-        _add_script(run_scripts, scripts, host_name + "run.sh", [host_name])
+    for guest_name in guest_names:
+        _add_script(run_scripts, scripts, guest_name + "run.sh", [guest_name])
     logger.debug("run scripts: %s", run_scripts)
 
     # Part compatibility hack, part new behaviour: form a list of
     # scripts matching <host>final.sh.  These will be run last.
     final_scripts = Scripts()
-    _add_script(final_scripts, scripts, "final.sh", host_names)
+    _add_script(final_scripts, scripts, "final.sh", guest_names)
     logger.debug("final scripts: %s", final_scripts)
 
     # What's left are ordered scripts.  Preserve the order that the
@@ -95,8 +95,8 @@ def host_scripts(directory, logger):
     # 99-west-east.sh would be run on west then east.
     ordered_scripts = Scripts()
     for script in sorted(scripts):
-        for host_name in re.findall("|".join(host_names), script):
-            ordered_scripts.append(Script(host_name, script))
+        for guest_name in re.findall("|".join(guest_names), script):
+            ordered_scripts.append(Script(guest_name, script))
     logger.debug("ordered scripts: %s", ordered_scripts)
 
     # Form the list if scripts to run.  Per above: init, run, ordered,
@@ -107,3 +107,27 @@ def host_scripts(directory, logger):
     all_scripts.extend(ordered_scripts)
     all_scripts.extend(final_scripts)
     return all_scripts
+
+class Command:
+    def __init__(self, guest_name, line):
+        self.guest_name = guest_name
+        self.line = line
+    def __str__(self):
+        return self.guest_name + "# " + self.line
+
+class Commands(list):
+    def __str__(self):
+        # string is used by --print test-scripts (it has no spaces)
+        return "\n".join(str(script) for script in self)
+
+def commands(directory, logger):
+    scripts = _guest_scripts(directory, logger)
+    commands = Commands()
+    for script in scripts:
+        with open(os.path.join(directory, script.path), "r") as file:
+            for line in file:
+                line = line.strip()
+                if line:
+                    command = Command(script.guest_name, line)
+                    commands.append(command)
+    return commands

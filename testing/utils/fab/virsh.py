@@ -44,10 +44,10 @@ DESTROY_TIMEOUT = 20
 
 class Domain:
 
-    def __init__(self, logger, host_name=None, domain_name=None, snapshot_directory=None):
+    def __init__(self, logger, guest_name=None, domain_name=None, snapshot_directory=None):
         # Use the term "domain" just like virsh
         self.domain_name = domain_name
-        self.host_name = host_name
+        self.guest_name = guest_name
         self.virsh_console = None
         self.logger = logger
         self.debug_handler = None
@@ -174,7 +174,7 @@ class Domain:
         # self._console is None
         command = _VIRSH + ["console", "--force", self.domain_name]
         self.logger.info("spawning: %s", " ".join(command))
-        self._console = console.Remote(command, self.logger, hostname=self.host_name)
+        self._console = console.Remote(command, self.logger, hostname=self.guest_name)
         # Give the virsh process a chance set up its control-c
         # handler.  Otherwise something like control-c as the first
         # character sent might kill it.  If the machine is down, it

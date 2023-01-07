@@ -55,7 +55,7 @@ def log_arguments(logger, args):
 results_to_print = printer.Print(printer.Print.TEST_NAME,
                                  printer.Print.TEST_KIND,
                                  printer.Print.TEST_STATUS,
-                                 printer.Print.TEST_HOST_NAMES,
+                                 printer.Print.TEST_GUEST_NAMES,
                                  printer.Print.START_TIME,
                                  printer.Print.STOP_TIME,
                                  printer.Print.RESULT,

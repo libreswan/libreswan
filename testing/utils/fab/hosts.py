@@ -16,13 +16,13 @@ import subprocess
 
 from fab import utilsdir
 
-def _host_names():
-    host_names = set()
+def _guest_names():
+    guest_names = set()
     # this failing is a disaster
     output = subprocess.check_output([utilsdir.relpath("kvmhosts.sh")])
-    for host_name in output.decode('utf-8').splitlines():
-        host_names.add(host_name)
-    return host_names
+    for guest_name in output.decode('utf-8').splitlines():
+        guest_names.add(guest_name)
+    return guest_names
 
-"""An unordered set of the test host names"""
-HOST_NAMES = _host_names()
+"""An unordered set of the test guest names"""
+GUEST_NAMES = _guest_names()
