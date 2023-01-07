@@ -118,13 +118,29 @@ class Debug:
     def flush(self):
         pass
 
+class Redirect:
+
+    def __init__(self, files):
+        self.files = files
+
+    def close(self):
+        pass
+
+    def write(self, text):
+        for f in self.files:
+            f.buffer.write(text)
+
+    def flush(self):
+        for f in self.files:
+            f.flush()
+
 
 class Remote:
 
     def __init__(self, command, logger, hostname=None, username=None):
         # Need access to HOSTNAME.
         self.logger = logger
-        self.unicode_output_file = None
+        self.unicode_output_files = []
         self.basename = None
         self.hostname = hostname
         self.username = username
@@ -196,19 +212,20 @@ class Remote:
         return self.run("cd " + directory)
 
     def redirect_output(self, unicode_file):
-        self.unicode_output_file = unicode_file
-        self.logger.debug("switching output from %s to %s's buffer", self.child.logfile, unicode_file)
-        self.child.logfile = unicode_file and unicode_file.buffer or None
+        if unicode_file:
+            self.unicode_output_files.append(unicode_file)
+            self.logger.debug("switching output from %s to %s's buffer",
+                              self.child.logfile, unicode_file)
+            self.child.logfile = Redirect(self.unicode_output_files)
+        else:
+            self.unicode_output_files = []
+            self.child.logfile = None
 
     def append_output(self, unicode_format, *unicode_args):
-        self.unicode_output_file.write(unicode_format % unicode_args)
-        self.unicode_output_file.flush()
-
-    def close_output(self):
-        if self.unicode_output_file:
-            self.logger.info("closing console output");
-            self.unicode_output_file.close()
-            self.child.logfile = None
+        output = (unicode_format % unicode_args)
+        for f in self.unicode_output_files:
+            f.write(output)
+            f.flush()
 
     def sendline(self, line):
         return self.child.sendline(line)

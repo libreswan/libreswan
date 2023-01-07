@@ -339,20 +339,36 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
 
                         try:
 
+                            verbose_txt = open(os.path.join(test.output_directory, "verbose.txt"), "w")
+                            verbose_files = {None: verbose_txt}
+
                             # re-direct the test-result log file
                             for test_domain in test_domains.values():
+                                guest_name = test_domain.domain.guest_name
                                 output = os.path.join(test.output_directory,
-                                                      test_domain.domain.guest_name + ".console.verbose.txt")
+                                                      guest_name + ".console.verbose.txt")
                                 test_domain.open()
-                                test_domain.console.redirect_output(open(output, "w"))
+                                f = open(output, "w")
+                                test_domain.console.redirect_output(f)
+                                verbose_files[guest_name] = f
+                                test_domain.console.redirect_output(verbose_txt)
 
-                            # If a script times out, don't try to run
-                            # post-mortem.sh.
+                            # If a guest command times out, don't try
+                            # to run post-mortem.sh.
                             guest_timed_out = None
 
                             for command in test.commands:
                                 test_domain = test_domains[command.guest_name]
                                 try:
+                                    # write an extra prompt to
+                                    # verbose.txt so that the
+                                    # sanitizer knows it has merged
+                                    # output.  It won't split
+                                    # prompt+command and will strip
+                                    # out the duplicate.
+                                    verbose_txt.write(command.guest_name + "# ")
+                                    verbose_txt.flush()
+                                    # run the command
                                     test_domain.run(command)
                                 except pexpect.TIMEOUT as e:
                                     # A timeout while running a test
@@ -393,17 +409,31 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                             elif guest_timed_out:
                                 logger.warning("+++ skipping script post-mortem.sh -- %s timed out +++" % (guest_timed_out))
                             else: # None or True
+                                post_mortem_ok = True
                                 script = "../../guestbin/post-mortem.sh"
+                                # Tag merged file ready for post-mortem output
+                                verbose_txt.write("%s post-mortem %s" % (post.LHS, post.LHS))
+                                verbose_txt.flush()
+                                # run post mortem
                                 for guest_name in test.guest_names:
                                     test_domain = test_domains[guest_name]
-                                    test_domain.console.append_output("%s post-mortem %s", post.LHS, post.LHS)
                                     logger.info("running %s on %s", script, guest_name)
                                     try:
-                                        status = test_domain.console.run(script, timeout=TEST_TIMEOUT)
+                                        # again add double prompt
+                                        verbose_txt.write(guest_name + "# ")
+                                        verbose_txt.flush()
+                                        # and mark domain's console
+                                        verbose_file = verbose_files[guest_name]
+                                        verbose_file.write("%s post-mortem %s" % (post.LHS, post.LHS))
+                                        verbose_file.flush()
+                                        #
+                                        status = test_domain.console.run(script)
                                         if status:
+                                            post_mortem_ok = False
                                             logger.error("%s failed on %s with status %s", script, guest_name, status)
                                         else:
-                                            test_domain.console.append_output("%s post-mortem %s", post.RHS, post.RHS)
+                                            verbose_file.write("%s post-mortem %s" % (post.RHS, post.RHS))
+                                            verbose_file.flush()
                                     except pexpect.TIMEOUT as e:
                                         # A post-mortem ending with a
                                         # TIMEOUT gets treated as a
@@ -428,19 +458,22 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                         test_domain.console.append_output("\n%s %s %s\n", post.LHS, message, post.RHS)
                                         raise
 
-                            for test_domain in test_domains.values():
-                                test_domain.console.append_output(post.DONE)
+                                if post_mortem_ok:
+                                    verbose_txt.write("%s post-mortem %s" % (post.RHS, post.RHS))
+                                    verbose_txt.flush()
+
+                            for f in verbose_files.values():
+                                f.write(post.DONE)
 
                         finally:
 
-                            # Close the redirected test-result log files
-                            logger.info("closing all the test domain log files")
-                            for test_domain in test_domains.values():
-                                test_domain.console.close_output()
+                            for f in verbose_files.values():
+                                f.close()
 
                             # Always disconnect from the test domains.
                             logger.info("closing all the test domains")
                             for test_domain in test_domains.values():
+                                test_domain.console.redirect_output(None)
                                 test_domain.close()
 
         finally:
