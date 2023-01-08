@@ -120,14 +120,27 @@ class Commands(list):
         # string is used by --print test-scripts (it has no spaces)
         return "\n".join(str(script) for script in self)
 
+_GUEST_COMMAND_PATTERN = r'^(?P<guest>[a-z]+)# (?P<line>.*)$'
+_GUEST_COMMAND_REGEX = re.compile(_GUEST_COMMAND_PATTERN)
+
 def commands(directory, logger):
-    scripts = _guest_scripts(directory, logger)
     commands = Commands()
-    for script in scripts:
-        with open(os.path.join(directory, script.path), "r") as file:
+
+    console_txt = os.path.join(directory, "console.txt")
+    if os.path.exists(console_txt):
+        with open(console_txt, "r") as file:
             for line in file:
-                line = line.strip()
-                if line:
-                    command = Command(script.guest_name, line)
-                    commands.append(command)
+                match = _GUEST_COMMAND_REGEX.match(line)
+                if match:
+                    commands.append(Command(match.group("guest"), match.group("line")))
+    else:
+        scripts = _guest_scripts(directory, logger)
+        for script in scripts:
+            with open(os.path.join(directory, script.path), "r") as file:
+                for line in file:
+                    line = line.strip()
+                    if line:
+                        command = Command(script.guest_name, line)
+                        commands.append(command)
+
     return commands
