@@ -942,6 +942,8 @@ kvmplutotest	ikev2-selectors-66in6-rw-alias		good
 kvmplutotest	ikev2-selectors-66in6-rw-ike		good
 kvmplutotest	ikev2-selectors-44in4-rw-ike-mismatch-01	wip	release-blocker
 kvmplutotest	ikev2-selectors-44in4-rw-alias-mismatch-01	wip	release-blocker
+kvmplutotest	ikev2-selectors-44in4-rw-ike-mismatch-02	good
+kvmplutotest	ikev2-selectors-44in4-rw-alias-mismatch-02	wip	release-blocker
 
 # transport mode related tests
 kvmplutotest	ikev1-nat-transport-02		good
