@@ -159,11 +159,11 @@ def build_result(logger, result, baseline, args, what_to_print, b):
             raise Exception("unhandled print option %s" % p)
 
     if Print.DIFFS in what_to_print:
-        for domain in result.diffs:
-            b.add(Print.DIFFS, domain,
-                  result.diffs[domain],
-                  string=(lambda diff, sep: diff
-                          and (sep and "\n" or "") + b"\n".join(diff).decode('utf-8')
-                          or ""))
+        for guest_name, diff_output in result.diff_output.items():
+            if diff_output: # could be blank
+                b.add(Print.DIFFS, guest_name, diff_output,
+                      string=(lambda diff, sep: diff
+                              and (sep and "\n" or "") + b"\n".join(diff).decode('utf-8')
+                              or ""))
 
     b.flush()
