@@ -1,0 +1,16 @@
+/testing/guestbin/swan-prep --46
+ipsec start
+../../guestbin/wait-until-pluto-started
+ipsec whack --impair suppress-retransmits
+echo "initdone"
+# note swan-prep does not yet support BSD
+../../guestbin/netbsd-prep.sh
+
+ipsec start
+ipsec auto --add eastnet-westnet-ikev2
+echo "initdone"
+ipsec auto --route eastnet-westnet-ikev2
+../../guestbin/kernel-state.sh
+../../guestbin/kernel-policy.sh
+../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
