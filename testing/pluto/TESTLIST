@@ -921,6 +921,8 @@ kvmplutotest	ikev2-rw-multiple-subnets-4-mismatch-split-up	good
 kvmplutotest	ikev2-rw-multiple-subnets-5-mismatch-frst	good
 kvmplutotest	ikev2-rw-multiple-rw-by-id			wip
 
+
+
 # tests for using multiple subnets with single ike and alias
 kvmplutotest	ikev2-selectors-44in4-rw-alias		good
 kvmplutotest	ikev2-selectors-44in4-rw-ike		good
@@ -938,6 +940,8 @@ kvmplutotest	ikev2-selectors-66in4-rw-alias		good
 kvmplutotest	ikev2-selectors-66in4-rw-ike		good
 kvmplutotest	ikev2-selectors-66in6-rw-alias		good
 kvmplutotest	ikev2-selectors-66in6-rw-ike		good
+kvmplutotest	ikev2-selectors-44in4-rw-ike-mismatch-01	wip	release-blocker
+kvmplutotest	ikev2-selectors-44in4-rw-alias-mismatch-01	wip	release-blocker
 
 # transport mode related tests
 kvmplutotest	ikev1-nat-transport-02		good
