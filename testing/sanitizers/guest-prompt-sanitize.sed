@@ -9,9 +9,16 @@ s;\x1B.*\x1B\\;;
 
 s/\[root@\([^ ]*\) .*\]# /\1 # /
 
+# if it is a double prompt vis:
+#   west # netbsdw# ...
+# leave it to guest-prompt-double.sed
+
+/^[a-z][a-z]* # [a-z][a-z]*# / {
+  b
+}
+
 # if the line is blank, delete it
 /^[^ ]* # $/d
 
-# add in a new line; why?
-
+# ... else add in a new line; why?
 s/^\([^ ]*\) # /\1 #\n /

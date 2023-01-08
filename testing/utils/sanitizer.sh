@@ -11,38 +11,45 @@ if test $# -lt 1; then
     cat <<EOF 1>&2
 Usage:
 
-    $0 <console.verbose.txt> [ <test-directory> [ <fixup-directory> ... ] ]
+    $0 <verbose.txt> [ <test-directory> [ <fixup-directory> ... ] ]
 
-Cleans up the file <console.verbose.txt> using fixup scripts specified
-by testparams.sh (or default-testparams.sh).  The result is written to
+Sanitizes the file <verbose.txt> using fixup scripts specified by
+testparams.sh (or default-testparams.sh).  The result is written to
 STDOUT.
 
-<test-directory> specifies the test parameters directory.  By default,
-<test-directory> is determined using the absolute path to
-<console.verbose.txt>.  Typically required when the output file
-<console.verbose.txt> is not under OUTPUT/ in the build tree.
+<test-directory>
 
-<fixup.directory> ... is a list of directories containing the fixup
-scripts.  By default:
-  $fixupdir
-is used.
+	The directory containing testparams.sh
+
+	Only required when when the unsanitized file <verbose.txt> is
+	not under OUTPUT/ in the build tree.
+
+	By default, ${testingdir} is used
+
+
+<fixup.directory> ...
+
+	A list of directories containing the fixup scripts.
+
+	By default, $fixubdir is used.
 
 EOF
     exit 1
 fi
 
-# <console.verbose.txt>
+
+# *.console.verbose.txt | verbose.txt
 if test "x$1" = "x-"; then
     input=- ; shift
 else
     input=$(readlink -f $1) ; shift
     if test ! -r "$input"; then
-	echo "console.verbose.txt file not found: $input" 1>&2
+	echo "unsanitized file not found: $input" 1>&2
 	exit 1
     fi
     case "$input" in
-	*.console.verbose.txt) ;;
-	*) echo "expecting suffix .console.verbose.txt: $input" 1>&2 ; exit 1 ;;
+	*verbose.txt) ;; # not .verbose.txt
+	*) echo "expecting an unsanitized .verbose.txt file: $input" 1>&2 ; exit 1 ;;
     esac
 fi
 
