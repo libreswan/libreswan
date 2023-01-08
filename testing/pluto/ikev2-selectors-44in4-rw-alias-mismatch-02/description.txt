@@ -1,0 +1,5 @@
+IPv4 IKEv2 RW with IPv4 and IPv4 using aliases
+
+east has an additional subnet that road does not have. So on east,
+these TSes MUST NOT be added to any tunnel, and instead a %hold
+shunt should be there.
