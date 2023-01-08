@@ -1,16 +1,15 @@
-/testing/guestbin/swan-prep --46
-ipsec start
-../../guestbin/wait-until-pluto-started
-ipsec whack --impair suppress-retransmits
-echo "initdone"
-# note swan-prep does not yet support BSD
-../../guestbin/netbsd-prep.sh
-
-ipsec start
-ipsec auto --add eastnet-westnet-ikev2
-echo "initdone"
-ipsec auto --route eastnet-westnet-ikev2
-../../guestbin/kernel-state.sh
-../../guestbin/kernel-policy.sh
-../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
-../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+east# /testing/guestbin/swan-prep --46
+east# ipsec start
+east# ../../guestbin/wait-until-pluto-started
+east# ipsec whack --impair suppress-retransmits
+east# echo "initdone"
+netbsdw# # note swan-prep does not yet support BSD
+netbsdw# ../../guestbin/netbsd-prep.sh
+netbsdw# ipsec start
+netbsdw# ipsec auto --add eastnet-westnet-ikev2
+netbsdw# echo "initdone"
+netbsdw# ipsec auto --route eastnet-westnet-ikev2
+netbsdw# ../../guestbin/kernel-state.sh
+netbsdw# ../../guestbin/kernel-policy.sh
+netbsdw# ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+netbsdw# ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
