@@ -1684,14 +1684,18 @@ int main(int argc, char **argv)
 	llog(RC_LOG, logger, "FIPS HMAC integrity support [enabled]");
 	bool fips_files = FIPSCHECK_verify_files(fips_package_files);
 	if (fips_files) {
-		llog(RC_LOG, logger, "FIPS HMAC integrity verification self-test passed");
+		llog(RC_LOG, logger, "FIPS HMAC integrity verification self-test [passed]");
 	} else if (libreswan_fipsmode()) {
-		fatal(PLUTO_EXIT_FIPS_FAIL, logger, "FIPS HMAC integrity verification self-test FAILED");
+		fatal(PLUTO_EXIT_FIPS_FAIL, logger, "FIPS HMAC integrity verification self-test [FAILED], pluto ABORTED");
 	} else {
-		llog(RC_LOG_SERIOUS, logger, "FIPS HMAC integrity verification self-test FAILED");
+		llog(RC_LOG_SERIOUS, logger, "FIPS HMAC integrity verification self-test [FAILED]");
 	}
 #else
-	llog(RC_LOG, logger, "FIPS HMAC integrity support [disabled]");
+# ifdef USE_NSS_KDF
+	llog(RC_LOG, logger, "FIPS HMAC integrity support [not required]");
+# else
+	llog(RC_LOG, logger, "FIPS HMAC integrity support [not compiled in]");
+# endif
 #endif
 
 #ifdef HAVE_LIBCAP_NG
