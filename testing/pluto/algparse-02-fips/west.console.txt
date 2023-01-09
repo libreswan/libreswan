@@ -25,7 +25,7 @@ west #
  grep ^FIPS /tmp/pluto.log
 FIPS Mode: YES
 FIPS mode enabled for pluto daemon
-FIPS HMAC integrity support [disabled]
+FIPS HMAC integrity support [not required]
 FIPS Encryption algorithms:
 FIPS Hash algorithms:
 FIPS PRF algorithms:
