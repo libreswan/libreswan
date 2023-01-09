@@ -1,6 +1,4 @@
-netbsde# #
- note swan-prep does not yet support BSD
-netbsde# ../../guestbin/netbsd-prep.sh
+netbsde# ../../guestbin/netbsd-prep.sh # note: swan-prep does not yet support BSD
 ipsec.conf -> PATH/etc/ipsec.conf
 ipsec.secrets -> PATH/etc/ipsec.secrets
 netbsde# ipsec start
@@ -14,8 +12,7 @@ netbsde# ipsec auto --add eastnet-westnet-ikev2
 netbsde# ipsec whack --impair suppress-retransmits
 netbsde# echo "initdone"
 initdone
-netbsdw# # note swan-prep does not yet support BSD
-netbsdw# ../../guestbin/netbsd-prep.sh
+netbsdw# ../../guestbin/netbsd-prep.sh # note: swan-prep does not yet support BSD
 ipsec.conf -> PATH/etc/ipsec.conf
 ipsec.secrets -> PATH/etc/ipsec.secrets
 netbsdw# ipsec start
@@ -98,3 +95,4 @@ netbsdw# ../../guestbin/kernel-state.sh
 	allocated: 2	hard: 0	soft: 0
 	sadb_seq=0 pid=PID refcnt=0
 netbsdw# dmesg | grep ipsec
+ 
