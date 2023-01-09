@@ -4,7 +4,7 @@
 # be fed to things like sort.  While at it strip out any trailing
 # spaces.
 #
-# Note: OpenBSD SED doesn't support \t or \s
+# Note: OpenBSD's SED doesn't support \t or \s
 #
 # Note: kernel-{state,policy}.sh have identical code
 
