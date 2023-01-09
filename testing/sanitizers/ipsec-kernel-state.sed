@@ -1,6 +1,6 @@
 # match: setkey ...
 
-/guestbin\/kernel-state.sh/ b match
+/guestbin\/ipsec-kernel-state.sh/ b match
 /^ ip xfrm state$/ b match
 /^ ip xfrm state |/ b match
 /^ ip -4 xfrm state$/ b match

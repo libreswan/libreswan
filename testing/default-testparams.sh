@@ -40,8 +40,8 @@ REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS debug.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS impair.sed"
 
 # The following sanitizers are written to only modify specific commands
-REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guestbin-kernel-state.sed"	# includes ip xfrm state
-REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guestbin-kernel-policy.sed"	# includes ip xfrm policy
+REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS ipsec-kernel-state.sed"		# includes ip xfrm state
+REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS ipsec-kernel-policy.sed"	# includes ip xfrm policy
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS ephemeral-ports.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-ip-route.sed"
 REF_CONSOLE_FIXUPS="$REF_CONSOLE_FIXUPS guest-ip-addr.sed"

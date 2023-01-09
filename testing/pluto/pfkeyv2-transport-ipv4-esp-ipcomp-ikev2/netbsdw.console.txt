@@ -23,7 +23,7 @@ west #
 003 "eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 004 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec transport [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP DPD=passive}
 west #
- ../../guestbin/kernel-policy.sh
+ ../../guestbin/ipsec-kernel-policy.sh
 192.1.2.23[any] 192.1.2.45[any] 255(reserved)
 	in ipsec
 	ipcomp/transport//require
@@ -40,7 +40,7 @@ west #
  ../../guestbin/ping-once.sh --up 192.1.2.23
 up
 west #
- ../../guestbin/kernel-state.sh
+ ../../guestbin/ipsec-kernel-state.sh
 192.1.2.23 192.1.2.45 
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
@@ -85,7 +85,7 @@ west #
  ../../guestbin/ping-once.sh --medium --up 192.1.2.23
 up
 west #
- ../../guestbin/kernel-state.sh
+ ../../guestbin/ipsec-kernel-state.sh
 192.1.2.23 192.1.2.45 
 	esp mode=any spi=SPISPI(0xSPISPI) reqid=16389(0x00004005)
 	E: aes-cbc  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX

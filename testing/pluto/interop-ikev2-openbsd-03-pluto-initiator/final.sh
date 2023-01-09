@@ -1,2 +1,2 @@
-../../guestbin/kernel-state.sh
-../../guestbin/kernel-policy.sh
+../../guestbin/ipsec-kernel-state.sh
+../../guestbin/ipsec-kernel-policy.sh

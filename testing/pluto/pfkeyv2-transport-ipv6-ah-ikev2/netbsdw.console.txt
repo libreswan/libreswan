@@ -23,7 +23,7 @@ west #
 003 "eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 004 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec transport [2001:db8:1:2::45-2001:db8:1:2::45:0-65535 0] -> [2001:db8:1:2::23-2001:db8:1:2::23:0-65535 0] {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 DPD=passive}
 west #
- ../../guestbin/kernel-policy.sh
+ ../../guestbin/ipsec-kernel-policy.sh
 2001:db8:1:2::23[any] 2001:db8:1:2::45[any] 255(reserved)
 	in ipsec
 	ah/transport//require
@@ -38,7 +38,7 @@ west #
  ../../guestbin/ping-once.sh --up 2001:db8:1:2::23
 up
 west #
- ../../guestbin/kernel-state.sh
+ ../../guestbin/ipsec-kernel-state.sh
 2001:db8:1:2::23 2001:db8:1:2::45 
 	ah mode=any spi=SPISPI(0xSPISPI) reqid=16388(0x00004004)
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
@@ -63,7 +63,7 @@ west #
  ../../guestbin/ping-once.sh --medium --up 2001:db8:1:2::23
 up
 west #
- ../../guestbin/kernel-state.sh
+ ../../guestbin/ipsec-kernel-state.sh
 2001:db8:1:2::23 2001:db8:1:2::45 
 	ah mode=any spi=SPISPI(0xSPISPI) reqid=16388(0x00004004)
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX

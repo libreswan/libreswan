@@ -25,7 +25,7 @@ netbsdw# ipsec auto --up eastnet-westnet-ikev2
 1v2 "eastnet-westnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_CBC_256 integ=HMAC_SHA1_96 prf=HMAC_SHA1 group=MODP2048}
 003 "eastnet-westnet-ikev2" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 004 "eastnet-westnet-ikev2" #2: initiator established Child SA using #1; IPsec transport [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {AH=>0xAHAH <0xAHAH xfrm=HMAC_SHA1_96 IPCOMP=>0xESPESP <0xESPESP DPD=passive}
-netbsdw# ../../guestbin/kernel-policy.sh
+netbsdw# ../../guestbin/ipsec-kernel-policy.sh
 192.1.2.23[any] 192.1.2.45[any] 255(reserved)
 	in ipsec
 	ipcomp/transport//require
@@ -40,7 +40,7 @@ netbsdw# ../../guestbin/kernel-policy.sh
 	refcnt=0
 netbsdw# ../../guestbin/ping-once.sh --up 192.1.2.23
 up
-netbsdw# ../../guestbin/kernel-state.sh
+netbsdw# ../../guestbin/ipsec-kernel-state.sh
 192.1.2.23 192.1.2.45 
 	ah mode=any spi=SPISPI(0xSPISPI) reqid=16388(0x00004004)
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX
@@ -81,7 +81,7 @@ netbsdw# ../../guestbin/kernel-state.sh
 	sadb_seq=0 pid=PID refcnt=0
 netbsdw# ../../guestbin/ping-once.sh --medium --up 192.1.2.23
 up
-netbsdw# ../../guestbin/kernel-state.sh
+netbsdw# ../../guestbin/ipsec-kernel-state.sh
 192.1.2.23 192.1.2.45 
 	ah mode=any spi=SPISPI(0xSPISPI) reqid=16388(0x00004004)
 	A: hmac-sha1  XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX XXXXXXXX

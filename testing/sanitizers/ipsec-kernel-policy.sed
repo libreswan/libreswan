@@ -1,6 +1,6 @@
 # match random policy output
 
-/guestbin\/kernel-policy.sh/ b match
+/guestbin\/ipsec-kernel-policy.sh/ b match
 /^ ip xfrm policy$/ b match
 /^ ip -4 xfrm policy$/ b match
 /^ ip -6 xfrm policy$/ b match
