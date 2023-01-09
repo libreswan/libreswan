@@ -9,5 +9,5 @@ iptables -I INPUT -m policy --dir in --pol ipsec -j ACCEPT
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-compress
-ipsec auto --status | grep westnet-eastnet-compress
+ipsec whack --connectionstatus --name westnet-eastnet-compress
 echo "initdone"
