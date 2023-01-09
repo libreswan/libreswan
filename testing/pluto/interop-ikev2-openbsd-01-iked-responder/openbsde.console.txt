@@ -29,7 +29,7 @@ east #
 	identity_dst: type fqdn id 0: FQDN/west
 	lifetime_lastuse: alloc 0 bytes 0 add 0 first N
 	tag: IKED
-	counter: 
+	counter:
 		0 input packets
 		1 output packet
 		0 input bytes
@@ -55,7 +55,7 @@ east #
 	identity_dst: type fqdn id 0: FQDN/east
 	lifetime_lastuse: alloc 0 bytes 0 add 0 first N
 	tag: IKED
-	counter: 
+	counter:
 		1 input packet
 		0 output packets
 		228 input bytes

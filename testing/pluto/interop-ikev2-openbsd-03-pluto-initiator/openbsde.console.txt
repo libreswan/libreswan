@@ -26,12 +26,12 @@ east #
 	address_src: 192.1.2.23
 	address_dst: 192.1.2.45
 	key_auth: bits 256: HASHKEY
-	key_encrypt: bits 0: ENCKEY
+	key_encrypt: bits 0:
 	identity_src: type fqdn id 0: FQDN/east
 	identity_dst: type fqdn id 0: FQDN/west
 	lifetime_lastuse: alloc 0 bytes 0 add 0 first N
 	tag: IKED
-	counter: 
+	counter:
 		0 input packets
 		1 output packet
 		0 input bytes
@@ -52,12 +52,12 @@ east #
 	address_src: 192.1.2.45
 	address_dst: 192.1.2.23
 	key_auth: bits 256: HASHKEY
-	key_encrypt: bits 0: ENCKEY
+	key_encrypt: bits 0:
 	identity_src: type fqdn id 0: FQDN/west
 	identity_dst: type fqdn id 0: FQDN/east
 	lifetime_lastuse: alloc 0 bytes 0 add 0 first N
 	tag: IKED
-	counter: 
+	counter:
 		1 input packet
 		0 output packets
 		220 input bytes

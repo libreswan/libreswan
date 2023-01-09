@@ -46,9 +46,9 @@ west #
 	address_src: 192.1.2.23
 	address_dst: 192.1.2.45
 	key_auth: bits 256: HASHKEY
-	key_encrypt: bits 0: ENCKEY
+	key_encrypt: bits 0:
 	lifetime_lastuse: alloc 0 bytes 0 add 0 first N
-	counter: 
+	counter:
 		1 input packet
 		0 output packets
 		220 input bytes
@@ -69,9 +69,9 @@ west #
 	address_src: 192.1.2.45
 	address_dst: 192.1.2.23
 	key_auth: bits 256: HASHKEY
-	key_encrypt: bits 0: ENCKEY
+	key_encrypt: bits 0:
 	lifetime_lastuse: alloc 0 bytes 0 add 0 first N
-	counter: 
+	counter:
 		0 input packets
 		1 output packet
 		0 input bytes
