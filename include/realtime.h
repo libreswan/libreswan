@@ -88,6 +88,5 @@ struct realtm utc_realtime(realtime_t t);
 
 /* for pthread_cond_timedwait() */
 clockid_t realtime_clockid(void);
-struct timespec realtime_as_timespec(realtime_t);
 
 #endif

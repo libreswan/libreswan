@@ -75,15 +75,6 @@ monotime_t mononow(void)
 	};
 }
 
-struct timespec monotime_as_timespec(monotime_t t)
-{
-	struct timespec ts = {
-		.tv_sec = t.mt.tv_sec,
-		.tv_nsec = t.mt.tv_usec * 1000,
-	};
-	return ts;
-}
-
 intmax_t monosecs(monotime_t m)
 {
 	return m.mt.tv_sec;

@@ -71,7 +71,6 @@ intmax_t monosecs(monotime_t m);
 
 /* for pthread_cond_timedwait() */
 clockid_t monotime_clockid(void);
-struct timespec monotime_as_timespec(monotime_t);
 
 typedef struct {
 	/* slightly over size */
