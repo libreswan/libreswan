@@ -211,7 +211,7 @@ west #
 002 "westnet-eastnet-compress": terminating SAs using this connection
 002 "westnet-eastnet-compress" #2: deleting state (STATE_QUICK_I2) and sending notification
 005 "westnet-eastnet-compress" #2: ESP traffic information: in=6nnB out=6nnB
-005 "westnet-eastnet-compress" #2: IPCOMP traffic information: in=0B out=0B
+005 "westnet-eastnet-compress" #2: IPCOMP traffic information: in=31KiB out=31KiB
 002 "westnet-eastnet-compress" #1: deleting state (STATE_MAIN_I4) and sending notification
 west #
  echo ping
