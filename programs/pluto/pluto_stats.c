@@ -39,7 +39,6 @@
 #include "nat_traversal.h"
 #include "show.h"
 
-
 unsigned long pstats_ipsec_sa;
 unsigned long pstats_ikev1_sa;
 unsigned long pstats_ikev2_sa;
@@ -65,10 +64,12 @@ unsigned long pstats_ikev2_ipsec_encrypt[IKEv2_ENCR_PSTATS_ROOF];
 unsigned long pstats_ikev1_ipsec_integ[AUTH_ALGORITHM_PSTATS_ROOF];
 unsigned long pstats_ikev2_ipsec_integ[IKEv2_INTEG_PSTATS_ROOF];
 
-uint64_t pstats_ipsec_in_bytes;	/* total incoming IPsec traffic */
-uint64_t pstats_ipsec_out_bytes;	/* total outgoing IPsec traffic */
-unsigned long pstats_ike_in_bytes;	/* total incoming IPsec traffic */
-unsigned long pstats_ike_out_bytes;	/* total outgoing IPsec traffic */
+struct pstats_bytes pstats_ike_bytes;	/* total IKE traffic */
+struct pstats_bytes pstats_esp_bytes;
+struct pstats_bytes pstats_ah_bytes;
+struct pstats_bytes pstats_ipcomp_bytes;
+struct pstats_bytes pstats_ipsec_bytes;
+
 unsigned long pstats_ikev1_sent_notifies_e[v1N_ERROR_PSTATS_ROOF]; /* types of NOTIFY ERRORS */
 unsigned long pstats_ikev1_recv_notifies_e[v1N_ERROR_PSTATS_ROOF]; /* types of NOTIFY ERRORS */
 unsigned long pstats_ipsec_esp;
@@ -388,6 +389,12 @@ static void enum_stats(struct show *s, enum_names *names, unsigned long start,
 		}							\
 	}
 
+static void show_bytes(struct show *s, const char *prefix, const struct pstats_bytes *bytes)
+{
+	show_raw(s, "%s.in=%"PRIu64, prefix, bytes->in);
+	show_raw(s, "%s.out=%"PRIu64, prefix, bytes->out);
+}
+
 void show_pluto_stats(struct show *s)
 {
 	show_raw(s, "total.ipsec.type.all=%lu", pstats_ipsec_sa);
@@ -399,11 +406,14 @@ void show_pluto_stats(struct show *s)
 	show_raw(s, "total.ipsec.type.encap=%lu", pstats_ipsec_encap_yes);
 	show_raw(s, "total.ipsec.type.non_encap=%lu", pstats_ipsec_encap_no);
 	/*
-	 * Total counts only total of traffic by terminated IPsec SA's.
-	 * Should we call get_sa_bundle_info() for bytes of active IPsec SA's?
+	 * Total counts only total of traffic by terminated IPsec
+	 * SA's.  Should we call get_sa_bundle_info() for bytes of
+	 * active IPsec SA's?
 	 */
-	show_raw(s, "total.ipsec.traffic.in=%" PRIu64, pstats_ipsec_in_bytes);
-	show_raw(s, "total.ipsec.traffic.out=%" PRIu64, pstats_ipsec_out_bytes);
+	show_bytes(s, "total.ipsec.traffic", &pstats_ipsec_bytes);
+	show_bytes(s, "total.ipsec.esp.traffic", &pstats_esp_bytes);
+	show_bytes(s, "total.ipsec.ah.traffic", &pstats_ah_bytes);
+	show_bytes(s, "total.ipsec.ipcomp.traffic", &pstats_ipcomp_bytes);
 
 	/* old */
 	show_raw(s, "total.ike.ikev2.established=%lu", pstats_ikev2_sa);
@@ -443,8 +453,8 @@ void show_pluto_stats(struct show *s)
 	show_raw(s, "total.ike.dpd.sent=%lu", pstats_ike_dpd_sent);
 	show_raw(s, "total.ike.dpd.recv=%lu", pstats_ike_dpd_recv);
 	show_raw(s, "total.ike.dpd.replied=%lu", pstats_ike_dpd_replied);
-	show_raw(s, "total.ike.traffic.in=%lu", pstats_ike_in_bytes);
-	show_raw(s, "total.ike.traffic.out=%lu", pstats_ike_out_bytes);
+
+	show_bytes(s, "total.ike.traffic", &pstats_ike_bytes);
 
 	show_raw(s, "total.pamauth.started=%lu", pstats_pamauth_started);
 	show_raw(s, "total.pamauth.stopped=%lu", pstats_pamauth_stopped);
@@ -498,8 +508,12 @@ void clear_pluto_stats(void)
 	memset(pstats_sa_finished, 0, sizeof pstats_sa_finished);
 	memset(pstats_sa_established, 0, sizeof pstats_sa_established);
 
-	pstats_ipsec_in_bytes = pstats_ipsec_out_bytes = 0;
-	pstats_ike_in_bytes = pstats_ike_out_bytes = 0;
+	zero(&pstats_ike_bytes);
+	zero(&pstats_esp_bytes);
+	zero(&pstats_ah_bytes);
+	zero(&pstats_ipcomp_bytes);
+	zero(&pstats_ipsec_bytes);
+
 	pstats_ipsec_esp = pstats_ipsec_ah = pstats_ipsec_ipcomp = 0;
 	pstats_ipsec_encap_yes = pstats_ipsec_encap_no = 0;
 	pstats_ipsec_esn = pstats_ipsec_tfc = 0;

@@ -36,10 +36,17 @@ extern unsigned long pstats_invalidke_recv_u[OAKLEY_GROUP_PSTATS_ROOF];
 extern unsigned long pstats_invalidke_sent_s[OAKLEY_GROUP_PSTATS_ROOF];
 extern unsigned long pstats_invalidke_sent_u[OAKLEY_GROUP_PSTATS_ROOF];
 
-extern uint64_t pstats_ipsec_in_bytes;	/* total incoming IPsec traffic */
-extern uint64_t pstats_ipsec_out_bytes;	/* total outgoing IPsec traffic */
-extern unsigned long pstats_ike_in_bytes;	/* total incoming IPsec traffic */
-extern unsigned long pstats_ike_out_bytes;	/* total outgoing IPsec traffic */
+struct pstats_bytes {
+	uint64_t in;
+	uint64_t out;
+};
+
+extern struct pstats_bytes pstats_ipsec_bytes;	/* total wire IPsec traffic */
+extern struct pstats_bytes pstats_esp_bytes;
+extern struct pstats_bytes pstats_ah_bytes;
+extern struct pstats_bytes pstats_ipcomp_bytes;
+extern struct pstats_bytes pstats_ike_bytes;	/* total IKE traffic */
+
 extern unsigned long pstats_ikev1_sent_notifies_e[v1N_ERROR_PSTATS_ROOF]; /* types of NOTIFY ERRORS */
 extern unsigned long pstats_ikev1_recv_notifies_e[v1N_ERROR_PSTATS_ROOF]; /* types of NOTIFY ERRORS */
 extern const struct pluto_stat pstats_ikev2_sent_notifies_e; /* types of NOTIFY ERRORS */

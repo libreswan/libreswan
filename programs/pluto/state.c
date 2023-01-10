@@ -856,7 +856,8 @@ void delete_state(struct state *st)
 }
 
 static void update_and_log_traffic(struct state *st, const char *name,
-				   struct ipsec_proto_info *proto)
+				   struct ipsec_proto_info *proto,
+				   struct pstats_bytes *pstats)
 {
 	/* pull in the traffic counters into state before they're lost */
 	if (!get_ipsec_traffic(st, proto, DIRECTION_OUTBOUND)) {
@@ -881,11 +882,9 @@ static void update_and_log_traffic(struct state *st, const char *name,
 			jam_string(buf, st->st_xauth_username);
 		}
 	}
-	/*
-	 * XXX: this double counts IPCOMP+{ESP,AH}.
-	 */
-	pstats_ipsec_in_bytes += proto->inbound.bytes;
-	pstats_ipsec_out_bytes += proto->outbound.bytes;
+
+	pstats->in += proto->inbound.bytes;
+	pstats->out += proto->outbound.bytes;
 }
 
 void delete_state_tail(struct state *st)
@@ -960,15 +959,23 @@ void delete_state_tail(struct state *st)
 		 * ESP/AH/IPCOMP
 		 */
 		if (st->st_esp.present) {
-			update_and_log_traffic(st, "ESP", &st->st_esp);
+			update_and_log_traffic(st, "ESP", &st->st_esp,
+					       &pstats_esp_bytes);
+			pstats_ipsec_bytes.in += st->st_esp.inbound.bytes;
+			pstats_ipsec_bytes.out += st->st_esp.outbound.bytes;
 		}
 
 		if (st->st_ah.present) {
-			update_and_log_traffic(st, "AH", &st->st_ah);
+			update_and_log_traffic(st, "AH", &st->st_ah,
+					       &pstats_ah_bytes);
+			pstats_ipsec_bytes.in += st->st_ah.inbound.bytes;
+			pstats_ipsec_bytes.out += st->st_ah.outbound.bytes;
 		}
 
 		if (st->st_ipcomp.present) {
-			update_and_log_traffic(st, "IPCOMP", &st->st_ipcomp);
+			update_and_log_traffic(st, "IPCOMP", &st->st_ipcomp,
+					       &pstats_ipcomp_bytes);
+			/* XXX: not ipcomp */
 		}
 	}
 

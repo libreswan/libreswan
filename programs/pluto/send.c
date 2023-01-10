@@ -181,7 +181,7 @@ static bool send_shunks(const char *where, bool just_a_keepalive,
 			}
 			return false;
 		}
-		pstats_ike_out_bytes += len;
+		pstats_ike_bytes.out += len;
 	}
 
 	/*
