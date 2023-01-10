@@ -29,5 +29,5 @@ install-missing-file = \
 	if test ! -f $(strip $(3)) ; then \
 		$(call install-file, $(1), $(2), $(3)); \
 	else \
-		echo "WARNING: $(strip $(3)): skipping update, new version is in $(strip $(2))" 1>&2 ; \
+		echo "WARNING: skipping as file is already installed: $(strip $(3))" 1>&2 ; \
 	fi
