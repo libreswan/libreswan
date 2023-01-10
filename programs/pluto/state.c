@@ -855,17 +855,26 @@ void delete_state(struct state *st)
 	delete_state_tail(st);
 }
 
-static void log_and_update_traffic(struct state *st, const char *name, struct ipsec_proto_info *traffic)
+static void update_and_log_traffic(struct state *st, const char *name,
+				   struct ipsec_proto_info *proto)
 {
+	/* pull in the traffic counters into state before they're lost */
+	if (!get_ipsec_traffic(st, proto, DIRECTION_OUTBOUND)) {
+		log_state(RC_LOG, st, "failed to pull traffic counters from outbound IPsec SA");
+	}
+	if (!get_ipsec_traffic(st, proto, DIRECTION_INBOUND)) {
+		log_state(RC_LOG, st, "failed to pull traffic counters from inbound IPsec SA");
+	}
+
 	LLOG_JAMBUF(RC_INFORMATIONAL, st->st_logger, buf) {
 		jam(buf, "%s traffic information:", name);
 		/* in */
 		jam_string(buf, " in=");
-		jam_humber(buf, traffic->inbound.bytes);
+		jam_humber(buf, proto->inbound.bytes);
 		jam_string(buf, "B");
 		/* out */
 		jam_string(buf, " out=");
-		jam_humber(buf, traffic->outbound.bytes);
+		jam_humber(buf, proto->outbound.bytes);
 		jam_string(buf, "B");
 		if (st->st_xauth_username[0] != '\0') {
 			jam_string(buf, " XAUTHuser=");
@@ -873,12 +882,10 @@ static void log_and_update_traffic(struct state *st, const char *name, struct ip
 		}
 	}
 	/*
-	 * XXX: this double counts ESP+IPCOMP; or would if IPCOMP
-	 * returned the correct byte-count (instead of zero) when
-	 * wrapped in ESP.
+	 * XXX: this double counts IPCOMP+{ESP,AH}.
 	 */
-	pstats_ipsec_in_bytes += traffic->inbound.bytes;
-	pstats_ipsec_out_bytes += traffic->outbound.bytes;
+	pstats_ipsec_in_bytes += proto->inbound.bytes;
+	pstats_ipsec_out_bytes += proto->outbound.bytes;
 }
 
 void delete_state_tail(struct state *st)
@@ -949,38 +956,19 @@ void delete_state_tail(struct state *st)
 	if (IS_IPSEC_SA_ESTABLISHED(st) ||
 	    IS_CHILD_SA_ESTABLISHED(st)) {
 		/*
-		 * XXX: should be iterating over ESP, AH, and IPCOMP
-		 * fetching any that matter.
-		 */
-		struct ipsec_proto_info *const first_ipsec_proto =
-			(st->st_esp.present ? &st->st_esp :
-			 st->st_ah.present ? &st->st_ah :
-			 st->st_ipcomp.present ? &st->st_ipcomp :
-			 NULL);
-		passert(first_ipsec_proto != NULL);
-
-		/* pull in the traffic counters into state before they're lost */
-		if (!get_ipsec_traffic(st, first_ipsec_proto, DIRECTION_OUTBOUND)) {
-			log_state(RC_LOG, st, "failed to pull traffic counters from outbound IPsec SA");
-		}
-		if (!get_ipsec_traffic(st, first_ipsec_proto, DIRECTION_INBOUND)) {
-			log_state(RC_LOG, st, "failed to pull traffic counters from inbound IPsec SA");
-		}
-
-		/*
 		 * Note that a state/SA can have more then one of
 		 * ESP/AH/IPCOMP
 		 */
 		if (st->st_esp.present) {
-			log_and_update_traffic(st, "ESP", &st->st_esp);
+			update_and_log_traffic(st, "ESP", &st->st_esp);
 		}
 
 		if (st->st_ah.present) {
-			log_and_update_traffic(st, "AH", &st->st_ah);
+			update_and_log_traffic(st, "AH", &st->st_ah);
 		}
 
 		if (st->st_ipcomp.present) {
-			log_and_update_traffic(st, "IPCOMP", &st->st_ipcomp);
+			update_and_log_traffic(st, "IPCOMP", &st->st_ipcomp);
 		}
 	}
 
