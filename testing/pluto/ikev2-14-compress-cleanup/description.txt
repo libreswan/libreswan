@@ -1,0 +1,16 @@
+IKEv2 test using IPCOMP
+
+Test to see if the ipcomp state is properly deleted when the connection goes down.
+eg:
+
+src 192.1.2.23 dst 192.1.2.45
+	proto comp spi 0x0000a833 reqid 16390 mode tunnel
+	replay-window 0 flag af-unspec
+	comp deflate 
+	anti-replay context: seq 0x0, oseq 0x0, bitmap 0x00000000
+src 192.1.2.23 dst 192.1.2.45
+	proto 4 spi 0xc0010217 reqid 0 mode tunnel
+	replay-window 0 flag af-unspec
+	anti-replay context: seq 0x0, oseq 0x0, bitmap 0x00000000
+
+These states were not cleaned up in libreswan up to 4.9
