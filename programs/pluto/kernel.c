@@ -3377,6 +3377,7 @@ bool get_ipsec_traffic(struct state *st,
 	if (kernel_ops->get_kernel_state == NULL) {
 		return false;
 	}
+
 	/*
 	 * If we're being redirected (using the REDIRECT mechanism),
 	 * then use the state's current remote endpoint, and not the
