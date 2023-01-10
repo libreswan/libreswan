@@ -759,10 +759,6 @@ extern const struct enum_names routing_names;
 		     (RS) == RT_ROUTED_HOLD ||			\
 		     (RS) == RT_ROUTED_FAILURE ||		\
 		     (RS) == RT_ROUTED_TUNNEL)
-#define shunt_erouted(RS) ((RS) == RT_UNROUTED_HOLD ||			\
-			   (RS) == RT_ROUTED_PROSPECTIVE ||		\
-			   (RS) == RT_ROUTED_HOLD ||			\
-			   (RS) == RT_ROUTED_FAILURE)
 
 enum certpolicy {
 	CERT_NEVERSEND   = 1,
