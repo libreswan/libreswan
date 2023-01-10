@@ -37,8 +37,8 @@ static struct timespec thread_clock(void)
 static struct timespec wall_clock(void)
 {
 	struct timespec now;
-	/* assume never suspended; CLOCK_BOOTTIME is linux specific */
-	int e = clock_gettime(CLOCK_MONOTONIC, &now);
+	/* use the same clockid as monotime */
+	int e = clock_gettime(monotime_clockid(), &now);
 	passert(e == 0);
 	return now;
 }
@@ -274,4 +274,15 @@ void statetime_stop(const statetime_t *start, const char *fmt, ...)
 		/* bill total time */
 		cpu_usage_add(st->st_timing.main_usage, usage);
 	}
+}
+
+monotime_t monotime_from_threadtime(const threadtime_t time)
+{
+	monotime_t m = {
+		.mt = {
+			.tv_sec = time.wall_clock.tv_sec,
+			.tv_usec = time.wall_clock.tv_nsec / 1000,
+		}
+	};
+	return m;
 }

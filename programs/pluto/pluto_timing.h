@@ -60,6 +60,7 @@ struct cpu_usage {
 typedef struct cpu_timing threadtime_t;
 threadtime_t threadtime_start(void);
 void threadtime_stop(const threadtime_t *start, long serialno, const char *fmt, ...) PRINTF_LIKE(3);
+monotime_t monotime_from_threadtime(const threadtime_t start);
 
 /*
  * For helper threads that have some context.
