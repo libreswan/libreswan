@@ -1015,10 +1015,11 @@ kvmplutotest	ikev2-labeled-ipsec-08-narrow-ike-childless			good
 
 # compress tests
 kvmplutotest    compress-pluto-01			good
-kvmplutotest    compress-pluto-01-cleanup		good	github:512
+kvmplutotest    compress-pluto-01-cleanup		wip	github:435
 kvmplutotest    compress-pluto-02			good
 kvmplutotest    ikev2-14-compress			good
 kvmplutotest    ikev2-14-compress-mismatch		good
+kvmplutotest    ikev2-14-compress-cleanup		wip	github:435
 kvmplutotest	sourceip-01				good
 
 #################################################################
