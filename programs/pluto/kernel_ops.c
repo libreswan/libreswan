@@ -169,66 +169,6 @@ bool raw_policy(enum kernel_policy_op op,
 	return result;
 }
 
-bool delete_kernel_policy(enum direction dir,
-			  enum expect_kernel_policy expect_kernel_policy,
-			  const ip_selector src_client,
-			  const ip_selector dst_client,
-			  const struct sa_marks *sa_marks,
-			  const struct pluto_xfrmi *xfrmi,
-			  enum kernel_policy_id id,
-			  const shunk_t sec_label,
-			  struct logger *logger, where_t where, const char *story)
-{
-	const struct ip_protocol *client_proto = selector_protocol(src_client);
-	pexpect(client_proto == selector_protocol(dst_client));
-
-	LSWDBGP(DBG_BASE, buf) {
-
-		jam(buf, "kernel: %s() %s:", __func__, story);
-
-		jam_string(buf, " ");
-		jam_enum_short(buf, &direction_names, dir);
-
-		jam_string(buf, " ");
-		jam_string(buf, expect_kernel_policy_name(expect_kernel_policy));
-
-		jam(buf, " client=");
-		jam_selector_pair(buf, &src_client, &dst_client);
-
-		if (sa_marks != NULL) {
-			jam(buf, " sa_marks=");
-			const char *dir = "out:";
-			FOR_EACH_THING(mark, &sa_marks->out, &sa_marks->in) {
-				jam(buf, "%s%x/%x%s",
-				    dir, mark->val, mark->mask,
-				    mark->unique ? "/unique" : "");
-				dir = ",in:";
-			}
-		}
-
-		jam(buf, " xfrm_if_id=%d",
-		    xfrmi != NULL ? (int)xfrmi->if_id : -1);
-
-		jam(buf, " id=%d", (unsigned)id);
-
-		jam(buf, " sec_label=");
-		jam_sanitized_hunk(buf, sec_label);
-
-		jam_string(buf, " ");
-		jam(buf, PRI_WHERE, pri_where(where));
-	}
-
-	bool result = kernel_ops->raw_policy(KERNEL_POLICY_OP_DELETE, dir,
-					     expect_kernel_policy,
-					     &src_client, &dst_client,
-					     /*policy*/NULL/*delete-not-needed*/,
-					     deltatime(0),
-					     sa_marks, xfrmi, id, sec_label,
-					     logger);
-	dbg("kernel: %s() result=%s", __func__, (result ? "success" : "failed"));
-	return result;
-}
-
 bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logger *logger)
 {
 	LSWDBGP(DBG_BASE, buf) {

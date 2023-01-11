@@ -59,6 +59,7 @@
 #include "kernel.h"
 #include "kernel_ops.h"
 #include "kernel_xfrm.h"
+#include "kernel_policy.h"
 #include "packet.h"
 #include "x509.h"
 #include "pluto_x509.h"
@@ -89,12 +90,6 @@ static bool state_kernel_policy_op_outbound(const struct state *st,
 					    const struct spd_route *spd,
 					    enum kernel_policy_op op,
 					    const char *opname);
-
-static struct kernel_policy kernel_policy_from_spd(lset_t policy,
-						   const struct spd_route *spd,
-						   enum encap_mode mode,
-						   enum direction direction,
-						   where_t where);
 
 static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 					    enum expect_kernel_policy expect_kernel_policy,
@@ -237,114 +232,6 @@ bool failure_shunt_ok(enum shunt_policy shunt)
 	return false;
 }
 
-/*
- * Install (add, replace) a kernel policy for the SPD.  The kernel
- * policy is bare since there isn't yet a state.
- *
- * Unlike install_spd_kernel_policy() this also adds in speculative
- * template / rules.  With sec_labels there's only really a policy for
- * the IKE SA (everything else happens under the hood).
- */
-
-static bool install_bare_sec_label_kernel_policy(const struct spd_route *spd,
-						 enum kernel_policy_op op,
-						 enum direction direction,
-						 enum expect_kernel_policy existing_policy_expectation,
-						 struct logger *logger,
-						 where_t where, const char *what)
-{
-	const struct connection *c = spd->connection;
-	PASSERT(logger, (op == KERNEL_POLICY_OP_ADD ||
-			 op == KERNEL_POLICY_OP_REPLACE));
-	PASSERT(logger, c->config->sec_label.len > 0);
-	enum encap_mode encap_mode = (c->policy & POLICY_TUNNEL ? ENCAP_MODE_TUNNEL :
-				      ENCAP_MODE_TRANSPORT);
-	struct kernel_policy kernel_policy =
-		kernel_policy_from_spd(c->policy, spd, encap_mode, direction, where);
-	if (!raw_policy(op, direction,
-			existing_policy_expectation,
-			&kernel_policy.src.client,
-			&kernel_policy.dst.client,
-			&kernel_policy,
-			deltatime(0),
-			kernel_policy.sa_marks,
-			kernel_policy.xfrmi,
-			kernel_policy.id,
-			kernel_policy.sec_label,
-			logger,
-			"%s "PRI_WHERE, what, pri_where(where))) {
-		return false;
-	}
-	return true;
-}
-
-/*
- * Install (add, replace) a kernel policy using information from the
- * SPD.  An SPD is bare when there's no corresponding kernel state.
- */
-
-static bool install_bare_spd_kernel_policy(const struct spd_route *spd,
-					   enum kernel_policy_op op,
-					   enum direction direction,
-					   enum expect_kernel_policy existing_policy_expectation,
-					   enum shunt_policy shunt,
-					   struct logger *logger,
-					   where_t where, const char *what)
-{
-	const struct connection *c = spd->connection;
-
-	PASSERT(logger, (op == KERNEL_POLICY_OP_ADD ||
-			 op == KERNEL_POLICY_OP_REPLACE));
-#if 0
-	/*
-	 * XXX: This happens when the code tearing down an IPsec
-	 * connection tries to install a bare shunt.  See
-	 * teardown_ipsec_kernel_policies() and
-	 * ikev1-labeled-ipsec-03-multi-acquires and
-	 * ikev1-labeled-ipsec-01.
-	 */
-	PASSERT(logger, c->config->sec_label.len == 0);
-#endif
-
-	/*
-	 * XXX: not kernel_policy_from_spd(), sigh:
-	 *
-	 * _from_spd() adds adds templates / rules based on the policy
-	 * which is something an established IPsec SA and sec_label
-	 * need, but not this code.
-	 *
-	 * _from_spd() modifies .client vs .route in strange ways
-	 * which is something this code doesn't want (and perpahs
-	 * _from_spd shouldn't be doing).
-	 */
-
-	struct kernel_policy kernel_policy =
-		kernel_policy_from_void(spd->local->client, spd->remote->client,
-					direction, calculate_kernel_priority(c),
-					shunt,
-					&c->sa_marks, c->xfrmi,
-					HUNK_AS_SHUNK(c->config->sec_label),
-					where);
-
-	if (!raw_policy(op, direction,
-			existing_policy_expectation,
-			&kernel_policy.src.client,
-			&kernel_policy.dst.client,
-			&kernel_policy,
-			deltatime(0),
-			kernel_policy.sa_marks,
-			kernel_policy.xfrmi,
-			kernel_policy.id,
-			kernel_policy.sec_label,
-			logger,
-			"%s() %s "PRI_WHERE,
-			__func__, what, pri_where(where))) {
-		return false;
-	}
-
-	return true;
-}
-
 static bool delete_spd_kernel_policy(const struct spd_route *spd,
 				     enum direction direction,
 				     enum expect_kernel_policy existing_policy_expectation,
@@ -459,66 +346,6 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 		}
 	}
 	return true;
-}
-
-struct kernel_policy kernel_policy_from_void(ip_selector local, ip_selector remote,
-					     enum direction direction,
-					     kernel_priority_t priority,
-					     enum shunt_policy shunt_policy,
-					     const struct sa_marks *sa_marks,
-					     const struct pluto_xfrmi *xfrmi,
-					     const shunk_t sec_label,
-					     where_t where)
-{
-	const ip_selector *src;
-	const ip_selector *dst;
-	switch (direction) {
-	case DIRECTION_OUTBOUND:
-		src = &local;
-		dst = &remote;
-		break;
-	case DIRECTION_INBOUND:
-		src = &remote;
-		dst = &local;
-		break;
-	default:
-		bad_case(direction);
-	}
-
-	const struct ip_info *child_afi = selector_type(src);
-	pexpect(selector_type(dst) == child_afi);
-
-	struct kernel_policy transport_esp = {
-		/* what will capture packets */
-		.src.client = *src,
-		.dst.client = *dst,
-		.src.route = *src,
-		.dst.route = *dst,
-		.priority = priority,
-		.shunt = shunt_policy,
-		.where = where,
-		.id = DEFAULT_KERNEL_POLICY_ID,
-		.sa_marks = sa_marks,
-		.xfrmi = xfrmi,
-		.sec_label = sec_label,
-		/*
-		 * With transport mode, the encapsulated packet on the
-		 * host interface must have the same family as the raw
-		 * packet on the client interface.  Even though it is
-		 * UNSPEC.
-		 */
-		.src.host = child_afi->address.unspec,
-		.dst.host = child_afi->address.unspec,
-		.mode = ENCAP_MODE_TRANSPORT,
-	};
-	if (shunt_policy != SHUNT_PASS) {
-		transport_esp.nr_rules = 1;
-		transport_esp.rule[0] = (struct kernel_policy_rule) {
-			.proto = ENCAP_PROTO_ESP,
-			.reqid = 0,
-		};
-	}
-	return transport_esp;
 }
 
 struct bare_shunt {
@@ -769,144 +596,6 @@ static struct kernel_route kernel_route_from_state(const struct state *st, enum 
 	default:
 		bad_case(direction);
 	}
-}
-
-static struct kernel_policy kernel_policy_from_spd(lset_t policy,
-						   const struct spd_route *spd,
-						   enum encap_mode mode,
-						   enum direction direction,
-						   where_t where)
-{
-	/*
-	 * With pfkey and transport mode with nat-traversal we need to
-	 * change the remote IPsec SA to point to external ip of the
-	 * peer.  Here we substitute real client ip with NATD ip.
-	 *
-	 * Bug #1004 fix.
-	 *
-	 * There really isn't "client" with XFRM and transport mode so
-	 * eroute must be done to natted, visible ip. If we don't hide
-	 * internal IP, communication doesn't work.
-	 */
-	ip_selector remote_client;
-	switch (mode) {
-	case ENCAP_MODE_TUNNEL:
-		remote_client = spd->remote->client;
-		break;
-	case ENCAP_MODE_TRANSPORT:
-		remote_client = selector_from_address_protocol_port(spd->remote->host->addr,
-								    selector_protocol(spd->remote->client),
-								    selector_port(spd->remote->client));
-		break;
-	default:
-		bad_case(mode);
-	}
-
-	const struct spd_end *src;
-	const struct spd_end *dst;
-	ip_selector src_route, dst_route;
-	switch (direction) {
-	case DIRECTION_INBOUND:
-		src = spd->remote;
-		dst = spd->local;
-		src_route = remote_client;
-		dst_route = dst->client;	/* XXX: kernel_route has unset_selector */
-		break;
-	case DIRECTION_OUTBOUND:
-		src = spd->local;
-		dst = spd->remote;
-		src_route = src->client;	/* XXX: kernel_route has unset_selector */
-		dst_route = remote_client;
-		break;
-	default:
-		bad_case(direction);
-	}
-
-	struct kernel_policy kernel_policy = {
-		.src.client = src->client,
-		.dst.client = dst->client,
-		.src.host = src->host->addr,
-		.dst.host = dst->host->addr,
-		.src.route = src_route,
-		.dst.route = dst_route,
-		.priority = calculate_kernel_priority(spd->connection),
-		.mode = mode,
-		.shunt = SHUNT_UNSET,
-		.where = where,
-		.sa_marks = &spd->connection->sa_marks,
-		.xfrmi = spd->connection->xfrmi,
-		.id = DEFAULT_KERNEL_POLICY_ID,
-		.sec_label = HUNK_AS_SHUNK(spd->connection->config->sec_label),
-		.nr_rules = 0,
-	};
-
-	/*
-	 * Construct the kernel policy rules inner-to-outer (matching
-	 * the flow of an outgoing packet).
-	 *
-	 * Note: the order is fixed: compress -> encrypt ->
-	 * authenticate.
-	 *
-	 * Note: only the inner most policy rule gets the tunnel bit
-	 * (aka worm) (currently the global .mode is set and kernel
-	 * backends handle this).
-	 *
-	 * Note: the stack order matches kernel_sa's array.
-	 */
-
-	reqid_t child_reqid = spd->connection->child.reqid;
-	struct kernel_policy_rule *last = kernel_policy.rule;
-	if (policy & POLICY_COMPRESS) {
-		last->reqid = reqid_ipcomp(child_reqid);
-		last->proto = ENCAP_PROTO_IPCOMP;
-		last++;
-	}
-	if (policy & POLICY_ENCRYPT) {
-		last->reqid = reqid_esp(child_reqid);
-		last->proto = ENCAP_PROTO_ESP;
-		last++;
-	}
-	if (policy & POLICY_AUTHENTICATE) {
-		last->reqid = reqid_ah(child_reqid);
-		last->proto = ENCAP_PROTO_AH;
-		last++;
-	}
-
-	passert(last < kernel_policy.rule + elemsof(kernel_policy.rule));
-	kernel_policy.nr_rules = last - kernel_policy.rule;
-	passert(kernel_policy.nr_rules < elemsof(kernel_policy.rule));
-
-	return kernel_policy;
-}
-
-static struct kernel_policy kernel_policy_from_state(const struct state *st,
-						     const struct spd_route *spd,
-						     enum direction direction,
-						     where_t where)
-{
-	bool tunnel = false;
-	lset_t policy = LEMPTY;
-
-	if (st->st_ipcomp.present) {
-		policy |= POLICY_COMPRESS;
-		tunnel |= (st->st_ipcomp.attrs.mode == ENCAPSULATION_MODE_TUNNEL);
-	}
-
-	if (st->st_esp.present) {
-		policy |= POLICY_ENCRYPT;
-		tunnel |= (st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL);
-	}
-
-	if (st->st_ah.present) {
-		policy |= POLICY_AUTHENTICATE;
-		tunnel |= (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL);
-	}
-
-	enum encap_mode mode = (tunnel ? ENCAP_MODE_TUNNEL : ENCAP_MODE_TRANSPORT);
-	struct kernel_policy kernel_policy = kernel_policy_from_spd(policy,
-								    spd, mode, direction,
-								    where);
-	return kernel_policy;
 }
 
 /*

@@ -197,20 +197,6 @@ struct kernel_policy {
 };
 
 /*
- * A kernel policy that does not have a state.  Typically constructed
- * from a bare shunt but can also be for a prospective shunt.
- */
-
-struct kernel_policy kernel_policy_from_void(ip_selector local, ip_selector remote,
-					     enum direction direction,
-					     kernel_priority_t priority,
-					     enum shunt_policy shunt_policy,
-					     const struct sa_marks *sa_marks,
-					     const struct pluto_xfrmi *xfrmi,
-					     const shunk_t sec_label,
-					     where_t where);
-
-/*
  * The CHILD (IPsec, kernel) SA has two IP ends.
  */
 

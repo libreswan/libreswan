@@ -106,6 +106,7 @@ endif
 # kernel
 
 OBJS += kernel.o
+OBJS += kernel_policy.o
 OBJS += kernel_ops.o
 OBJS += kernel_alg.o
 
