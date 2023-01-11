@@ -434,3 +434,37 @@ bool delete_kernel_policy(enum direction dir,
 	dbg("kernel: %s() result=%s", __func__, (result ? "success" : "failed"));
 	return result;
 }
+
+bool delete_spd_kernel_policy(const struct spd_route *spd,
+			      enum direction direction,
+			      enum expect_kernel_policy existing_policy_expectation,
+			      struct logger *logger,
+			      where_t where,
+			      const char *story)
+{
+	const ip_selector *src;
+	const ip_selector *dst;
+	switch (direction) {
+	case DIRECTION_OUTBOUND:
+		src = &spd->local->client;
+		dst = &spd->remote->client;
+		break;
+	case DIRECTION_INBOUND:
+		src = &spd->remote->client;
+		dst = &spd->local->client;
+		break;
+	default:
+		bad_case(direction);
+	}
+
+	return raw_policy(KERNEL_POLICY_OP_DELETE, direction,
+			  existing_policy_expectation,
+			  src, dst,
+			  /*policy*/NULL/*delete-not-needed*/,
+			  deltatime(0),
+			  &spd->connection->sa_marks,
+			  spd->connection->xfrmi,
+			  DEFAULT_KERNEL_POLICY_ID,
+			  HUNK_AS_SHUNK(spd->connection->config->sec_label),
+			  logger, "%s "PRI_WHERE, story, pri_where(where));
+}

@@ -91,10 +91,10 @@ static bool state_kernel_policy_op_outbound(const struct state *st,
 					    enum kernel_policy_op op,
 					    const char *opname);
 
-static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
-					    enum expect_kernel_policy expect_kernel_policy,
-					    struct logger *logger,
-					    where_t where);
+static void delete_bare_shunt_outbound_kernel_policy(const struct bare_shunt *bsp,
+						     enum expect_kernel_policy expect_kernel_policy,
+						     struct logger *logger,
+						     where_t where);
 
 /*
  * The priority assigned to a kernel policy.
@@ -230,40 +230,6 @@ bool failure_shunt_ok(enum shunt_policy shunt)
 		break;
 	}
 	return false;
-}
-
-static bool delete_spd_kernel_policy(const struct spd_route *spd,
-				     enum direction direction,
-				     enum expect_kernel_policy existing_policy_expectation,
-				     struct logger *logger,
-				     where_t where,
-				     const char *story)
-{
-	const ip_selector *src;
-	const ip_selector *dst;
-	switch (direction) {
-	case DIRECTION_OUTBOUND:
-		src = &spd->local->client;
-		dst = &spd->remote->client;
-		break;
-	case DIRECTION_INBOUND:
-		src = &spd->remote->client;
-		dst = &spd->local->client;
-		break;
-	default:
-		bad_case(direction);
-	}
-
-	return raw_policy(KERNEL_POLICY_OP_DELETE, direction,
-			  existing_policy_expectation,
-			  src, dst,
-			  /*policy*/NULL/*delete-not-needed*/,
-			  deltatime(0),
-			  &spd->connection->sa_marks,
-			  spd->connection->xfrmi,
-			  DEFAULT_KERNEL_POLICY_ID,
-			  HUNK_AS_SHUNK(spd->connection->config->sec_label),
-			  logger, "%s "PRI_WHERE, story, pri_where(where));
 }
 
 /*
@@ -1062,9 +1028,9 @@ bool install_prospective_kernel_policy(struct connection *c)
 
 		if (spd->wip.conflicting.shunt != NULL &&
 		    PEXPECT(c->logger, !kernel_ops->overlap_supported)) {
-			delete_bare_shunt_kernel_policy(*spd->wip.conflicting.shunt,
-							EXPECT_KERNEL_POLICY_OK,
-							c->logger, HERE);
+			delete_bare_shunt_outbound_kernel_policy(*spd->wip.conflicting.shunt,
+								 EXPECT_KERNEL_POLICY_OK,
+								 c->logger, HERE);
 			/* if everything succeeds, delete below */
 		}
 
@@ -1074,9 +1040,9 @@ bool install_prospective_kernel_policy(struct connection *c)
 		if (spd->wip.conflicting.shunt != NULL &&
 		    /* double negative */
 		    !PEXPECT(c->logger, !kernel_ops->overlap_supported)) {
-			delete_bare_shunt_kernel_policy(*spd->wip.conflicting.shunt,
-							EXPECT_KERNEL_POLICY_OK,
-							c->logger, HERE);
+			delete_bare_shunt_outbound_kernel_policy(*spd->wip.conflicting.shunt,
+								 EXPECT_KERNEL_POLICY_OK,
+								 c->logger, HERE);
 			/* if everything succeeds, delete below */
 		}
 	}
@@ -1373,10 +1339,10 @@ void show_shunt_status(struct show *s)
 	}
 }
 
-static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
-					    enum expect_kernel_policy expect_kernel_policy,
-					    struct logger *logger,
-					    where_t where)
+static void delete_bare_shunt_outbound_kernel_policy(const struct bare_shunt *bsp,
+						     enum expect_kernel_policy expect_kernel_policy,
+						     struct logger *logger,
+						     where_t where)
 {
 	/*
 	 * XXX: bare_kernel_policy() does not strip the port but this
@@ -1432,9 +1398,9 @@ static void clear_narrow_holds(const ip_selector *src_client,
 		    transport_proto == bsp->transport_proto &&
 		    selector_in_selector(bsp->our_client, *src_client) &&
 		    selector_in_selector(bsp->peer_client, *dst_client)) {
-			delete_bare_shunt_kernel_policy(bsp,
-							EXPECT_KERNEL_POLICY_OK,
-							logger, HERE);
+			delete_bare_shunt_outbound_kernel_policy(bsp,
+								 EXPECT_KERNEL_POLICY_OK,
+								 logger, HERE);
 			free_bare_shunt(bspp);
 		} else {
 			bspp = &(*bspp)->next;
@@ -3315,9 +3281,9 @@ static void expire_bare_shunts(struct logger *logger)
 					}
 				}
 			} else {
-				delete_bare_shunt_kernel_policy(bsp,
-								EXPECT_KERNEL_POLICY_OK,
-								logger, HERE);
+				delete_bare_shunt_outbound_kernel_policy(bsp,
+									 EXPECT_KERNEL_POLICY_OK,
+									 logger, HERE);
 			}
 			free_bare_shunt(bspp);
 		} else {
@@ -3327,14 +3293,14 @@ static void expire_bare_shunts(struct logger *logger)
 	}
 }
 
-static void delete_bare_shunts(struct logger *logger)
+static void delete_bare_shunt_outbound_kernel_policies(struct logger *logger)
 {
 	dbg("kernel: emptying bare shunt table");
 	while (bare_shunts != NULL) { /* nothing left */
 		const struct bare_shunt *bsp = bare_shunts;
-		delete_bare_shunt_kernel_policy(bsp,
-						EXPECT_KERNEL_POLICY_OK,
-						logger, HERE);
+		delete_bare_shunt_outbound_kernel_policy(bsp,
+							 EXPECT_KERNEL_POLICY_OK,
+							 logger, HERE);
 		free_bare_shunt(&bare_shunts); /* also updates BARE_SHUNTS */
 	}
 }
@@ -3350,7 +3316,7 @@ void shutdown_kernel(struct logger *logger)
 	if (kernel_ops->shutdown != NULL) {
 		kernel_ops->shutdown(logger);
 	}
-	delete_bare_shunts(logger);
+	delete_bare_shunt_outbound_kernel_policies(logger);
 }
 
 void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address *dst,

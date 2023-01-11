@@ -117,4 +117,11 @@ bool delete_kernel_policy(enum direction dir,
 			  const shunk_t sec_label, /*needed*/
 			  struct logger *logger, where_t where, const char *story);
 
+bool delete_spd_kernel_policy(const struct spd_route *spd,
+			      enum direction direction,
+			      enum expect_kernel_policy existing_policy_expectation,
+			      struct logger *logger,
+			      where_t where,
+			      const char *story);
+
 #endif
