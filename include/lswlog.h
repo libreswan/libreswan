@@ -480,7 +480,7 @@ extern void llog_pexpect(const struct logger *logger, where_t where,
 			const struct logger *logger_ = LOGGER;		\
 			llog_pexpect(logger_, WHERE, "not (%s)", #BAD); \
 		}							\
-		assertion__; /* result */				\
+		bad_; /* result */					\
 	})
 
 #define PBAD(LOGGER, BAD)			\
