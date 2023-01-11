@@ -343,31 +343,46 @@ bool install_bare_spd_kernel_policy(const struct spd_route *spd,
 	return true;
 }
 
-bool delete_kernel_policy(enum direction dir,
+bool delete_kernel_policy(enum direction direction,
 			  enum expect_kernel_policy expect_kernel_policy,
-			  const ip_selector src_client,
-			  const ip_selector dst_client,
+			  const ip_selector *local_child,
+			  const ip_selector *remote_child,
 			  const struct sa_marks *sa_marks,
 			  const struct pluto_xfrmi *xfrmi,
 			  enum kernel_policy_id id,
 			  const shunk_t sec_label,
 			  struct logger *logger, where_t where, const char *story)
 {
-	const struct ip_protocol *client_proto = selector_protocol(src_client);
-	pexpect(client_proto == selector_protocol(dst_client));
+	const ip_selector *src_child;
+	const ip_selector *dst_child;
+	switch (direction) {
+	case DIRECTION_OUTBOUND:
+		src_child = local_child;
+		dst_child = remote_child;
+		break;
+	case DIRECTION_INBOUND:
+		src_child = remote_child;
+		dst_child = local_child;
+		break;
+	default:
+		bad_case(direction);
+	}
+
+	const struct ip_protocol *child_proto = selector_protocol(*src_child);
+	pexpect(child_proto == selector_protocol(*dst_child));
 
 	LSWDBGP(DBG_BASE, buf) {
 
 		jam(buf, "kernel: %s() %s:", __func__, story);
 
 		jam_string(buf, " ");
-		jam_enum_short(buf, &direction_names, dir);
+		jam_enum_short(buf, &direction_names, direction);
 
 		jam_string(buf, " ");
 		jam_string(buf, expect_kernel_policy_name(expect_kernel_policy));
 
-		jam(buf, " client=");
-		jam_selector_pair(buf, &src_client, &dst_client);
+		jam(buf, " child=");
+		jam_selector_pair(buf, src_child, dst_child);
 
 		if (sa_marks != NULL) {
 			jam(buf, " sa_marks=");
@@ -392,9 +407,10 @@ bool delete_kernel_policy(enum direction dir,
 		jam(buf, PRI_WHERE, pri_where(where));
 	}
 
-	bool result = kernel_ops->raw_policy(KERNEL_POLICY_OP_DELETE, dir,
+	bool result = kernel_ops->raw_policy(KERNEL_POLICY_OP_DELETE,
+					     direction,
 					     expect_kernel_policy,
-					     &src_client, &dst_client,
+					     src_child, dst_child,
 					     /*policy*/NULL/*delete-not-needed*/,
 					     deltatime(0),
 					     sa_marks, xfrmi, id, sec_label,
@@ -410,31 +426,14 @@ bool delete_spd_kernel_policy(const struct spd_route *spd,
 			      where_t where,
 			      const char *story)
 {
-	const ip_selector *src;
-	const ip_selector *dst;
-	switch (direction) {
-	case DIRECTION_OUTBOUND:
-		src = &spd->local->client;
-		dst = &spd->remote->client;
-		break;
-	case DIRECTION_INBOUND:
-		src = &spd->remote->client;
-		dst = &spd->local->client;
-		break;
-	default:
-		bad_case(direction);
-	}
-
-	return raw_policy(KERNEL_POLICY_OP_DELETE, direction,
-			  existing_policy_expectation,
-			  src, dst,
-			  /*policy*/NULL/*delete-not-needed*/,
-			  deltatime(0),
-			  &spd->connection->sa_marks,
-			  spd->connection->xfrmi,
-			  DEFAULT_KERNEL_POLICY_ID,
-			  HUNK_AS_SHUNK(spd->connection->config->sec_label),
-			  logger, "%s "PRI_WHERE, story, pri_where(where));
+	return delete_kernel_policy(direction,
+				    existing_policy_expectation,
+				    &spd->local->client, &spd->remote->client,
+				    &spd->connection->sa_marks,
+				    spd->connection->xfrmi,
+				    DEFAULT_KERNEL_POLICY_ID,
+				    HUNK_AS_SHUNK(spd->connection->config->sec_label),
+				    logger, where, story);
 }
 
 /* CAT and it's kittens */
@@ -489,7 +488,7 @@ bool delete_cat_kernel_policy(const struct spd_route *spd,
 	ip_selector local_client = selector_from_address(spd->local->host->addr);
 	return delete_kernel_policy(DIRECTION_OUTBOUND,
 				    expect_kernel_policy,
-				    local_client, spd->remote->client,
+				    &local_client, &spd->remote->client,
 				    &c->sa_marks, c->xfrmi,
 				    DEFAULT_KERNEL_POLICY_ID,
 				    HUNK_AS_SHUNK(spd->connection->config->sec_label),

@@ -1372,7 +1372,7 @@ static void delete_bare_shunt_outbound_kernel_policy(const struct bare_shunt *bs
 	/* assume low code logged action */
 	if (!delete_kernel_policy(DIRECTION_OUTBOUND,
 				  expect_kernel_policy,
-				  src, dst,
+				  &src, &dst,
 				  /*sa_marks*/NULL, /*xfrmi*/NULL, /*bare-shunt*/
 				  DEFAULT_KERNEL_POLICY_ID,
 				  /* bare-shunt: no sec_label XXX: ?!? */
