@@ -886,7 +886,8 @@ static bool get_connection_spd_conflicts(struct connection *c, struct logger *lo
 	return routable;
 }
 
-static void revert_kernel_policy(struct spd_route *spd, struct state *st/*could be NULL*/,
+static void revert_kernel_policy(struct spd_route *spd,
+				 struct state *st/*could be NULL*/,
 				 struct logger *logger)
 {
 	struct connection *c = spd->connection;
@@ -918,28 +919,28 @@ static void revert_kernel_policy(struct spd_route *spd, struct state *st/*could 
 
 	/*
 	 * If there was no bare shunt, just delete everything.
+	 *
+	 * XXX: is this overkill?  For instance, when an instance
+	 * IPsec fails should things go back to the prospective
+	 * template?
 	 */
 
 	if (spd->wip.conflicting.shunt == NULL) {
 		ldbg(logger, "kernel: %s() no previous kernel policy or shunt: delete whatever we installed",
 		     __func__);
-		if (st == NULL) {
-			delete_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
+		delete_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
+					 EXPECT_KERNEL_POLICY_OK,
+					 c->logger, HERE,
+					 "deleting failed policy");
+		delete_spd_kernel_policy(spd, DIRECTION_INBOUND,
+					 EXPECT_KERNEL_POLICY_OK,
+					 c->logger, HERE,
+					 "deleting failed policy");
+		if (st != NULL && spd->local->child->has_cat && !spd->block) {
+			ldbg(logger, "cleaning up CAT that had kittens");
+			delete_cat_kernel_policy(spd,
 						 EXPECT_KERNEL_POLICY_OK,
-						 c->logger, HERE,
-						 "deleting failed policy");
-			delete_spd_kernel_policy(spd, DIRECTION_INBOUND,
-						 EXPECT_KERNEL_POLICY_OK,
-						 c->logger, HERE,
-						 "deleting failed policy");
-		} else {
-			llog_pexpect(st->st_logger, HERE, "using state to delete kernel policy");
-			if (!state_kernel_policy_op_outbound(st, spd,
-							     KERNEL_POLICY_OP_DELETE,
-							     "delete")) {
-				llog(RC_LOG, logger,
-				     "sag_eroute() in route_and_eroute() failed in st case for delete");
-			}
+						 c->logger, HERE, "cleaning up CAT");
 		}
 		return;
 	}
@@ -1605,7 +1606,7 @@ bool assign_holdpass(struct connection *c,
 	if (oe || old_routing != new_routing) {
 
 		if (sr->local->child->has_cat) {
-			if (!install_bare_cat_kernel_policy(sr, op, DIRECTION_OUTBOUND,
+			if (!install_bare_cat_kernel_policy(sr, op,
 							    EXPECT_KERNEL_POLICY_OK,
 							    c->config->negotiation_shunt,
 							    logger, HERE, "acquired")) {
