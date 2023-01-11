@@ -2424,29 +2424,12 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 			 KERNEL_POLICY_OP_ADD);
 		if (spd->block) {
 			llog(RC_LOG, st->st_logger, "state spd requires a block (and no CAT?)");
-			const struct kernel_policy kernel_policy =
-				kernel_policy_from_void(spd->local->client,
-							spd->remote->client,
-							DIRECTION_OUTBOUND,
-							calculate_kernel_priority(c),
-							/* XXX: guess */
-							SHUNT_DROP,
-							&c->sa_marks, c->xfrmi,
-							/* XXX: correct? */
-							HUNK_AS_SHUNK(c->config->sec_label),
-							HERE);
 			ok &= spd->wip.installed.policy =
-				raw_policy(op, DIRECTION_OUTBOUND,
-					   EXPECT_KERNEL_POLICY_OK,
-					   &kernel_policy.src.route, &kernel_policy.dst.route,
-					   &kernel_policy,
-					   deltatime(0),
-					   kernel_policy.sa_marks,
-					   kernel_policy.xfrmi,
-					   kernel_policy.id,
-					   kernel_policy.sec_label,
-					   st->st_logger,
-					   "%s() %s", __func__, "install IPsec block policy");
+				install_bare_spd_kernel_policy(spd, op, DIRECTION_OUTBOUND,
+							       EXPECT_KERNEL_POLICY_OK,
+							       SHUNT_DROP,
+							       st->st_logger, HERE,
+							       "install IPsec block policy");
 		} else {
 			const struct kernel_policy kernel_policy =
 				kernel_policy_from_state(st, spd, DIRECTION_OUTBOUND, HERE);
