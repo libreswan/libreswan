@@ -86,11 +86,6 @@
 #include "rekeyfuzz.h"
 #include "orient.h"
 
-static bool state_kernel_policy_op_outbound(const struct state *st,
-					    const struct spd_route *spd,
-					    enum kernel_policy_op op,
-					    const char *opname);
-
 static void delete_bare_shunt_outbound_kernel_policy(const struct bare_shunt *bsp,
 						     enum expect_kernel_policy expect_kernel_policy,
 						     struct logger *logger,
@@ -1094,80 +1089,6 @@ bool install_prospective_kernel_policy(struct connection *c)
 	set_child_routing(c, RT_ROUTED_PROSPECTIVE);
 
 	return true;
-}
-
-static bool state_kernel_policy_op_outbound(const struct state *st,
-						 const struct spd_route *spd,
-						 enum kernel_policy_op op,
-						 const char *opname)
-{
-	struct logger *logger = st->st_logger;
-	struct connection *cc = st->st_connection;
-	PASSERT(logger, cc == spd->connection);
-	PEXPECT(logger, (op == KERNEL_POLICY_OP_ADD ||
-			 op == KERNEL_POLICY_OP_REPLACE));
-
-	if (spd->block) {
-		llog(RC_LOG, logger, "state spd requires a block (and no CAT?)");
-		const struct kernel_policy kernel_policy =
-			kernel_policy_from_void(spd->local->client,
-						spd->remote->client,
-						DIRECTION_OUTBOUND,
-						calculate_kernel_priority(cc),
-						/* XXX: guess */
-						SHUNT_DROP,
-						&cc->sa_marks, cc->xfrmi,
-						/* XXX: correct? */
-						HUNK_AS_SHUNK(cc->config->sec_label),
-						HERE);
-		return raw_policy(op, DIRECTION_OUTBOUND,
-				  EXPECT_KERNEL_POLICY_OK,
-				  &kernel_policy.src.route, &kernel_policy.dst.route,
-				  &kernel_policy,
-				  deltatime(0),
-				  kernel_policy.sa_marks,
-				  kernel_policy.xfrmi,
-				  kernel_policy.id,
-				  kernel_policy.sec_label,
-				  st->st_logger,
-				  "%s() %s", __func__, opname);
-	}
-
-	const struct kernel_policy kernel_policy =
-		kernel_policy_from_state(st, spd, DIRECTION_OUTBOUND, HERE);
-	/* check for no transform at all */
-	PASSERT(logger, kernel_policy.nr_rules > 0);
-
-	if (spd->local->child->has_cat) {
-		ip_selector client = selector_from_address(spd->local->host->addr);
-		if (!raw_policy(op, DIRECTION_OUTBOUND,
-				EXPECT_KERNEL_POLICY_OK,
-				&client,
-				&kernel_policy.dst.route,
-				&kernel_policy,
-				deltatime(0),
-				kernel_policy.sa_marks,
-				kernel_policy.xfrmi,
-				kernel_policy.id,
-				kernel_policy.sec_label,
-				logger,
-				"CAT: %s() %s", __func__, opname)) {
-			llog(RC_LOG, st->st_logger,
-			     "CAT: failed to eroute additional Client Address Translation policy");
-		}
-	}
-
-	return raw_policy(op, DIRECTION_OUTBOUND,
-			  EXPECT_KERNEL_POLICY_OK,
-			  &kernel_policy.src.route, &kernel_policy.dst.route,
-			  &kernel_policy,
-			  deltatime(0),
-			  kernel_policy.sa_marks,
-			  kernel_policy.xfrmi,
-			  kernel_policy.id,
-			  kernel_policy.sec_label,
-			  st->st_logger,
-			  "%s() %s", __func__, opname);
 }
 
 void migration_up(struct child_sa *child)
@@ -2449,7 +2370,7 @@ bool install_inbound_ipsec_sa(struct state *st)
 	return true;
 }
 
-static bool install_ipsec_kernel_policies(struct state *st)
+static bool install_outbound_ipsec_kernel_policies(struct state *st)
 {
 	struct connection *c = st->st_connection;
 
@@ -2501,9 +2422,67 @@ static bool install_ipsec_kernel_policies(struct state *st)
 		enum kernel_policy_op op =
 			(spd->wip.conflicting.shunt != NULL ? KERNEL_POLICY_OP_REPLACE :
 			 KERNEL_POLICY_OP_ADD);
-		ok &= spd->wip.installed.policy =
-			state_kernel_policy_op_outbound(st, spd, op,
-							"install IPsec policy");
+		if (spd->block) {
+			llog(RC_LOG, st->st_logger, "state spd requires a block (and no CAT?)");
+			const struct kernel_policy kernel_policy =
+				kernel_policy_from_void(spd->local->client,
+							spd->remote->client,
+							DIRECTION_OUTBOUND,
+							calculate_kernel_priority(c),
+							/* XXX: guess */
+							SHUNT_DROP,
+							&c->sa_marks, c->xfrmi,
+							/* XXX: correct? */
+							HUNK_AS_SHUNK(c->config->sec_label),
+							HERE);
+			ok &= spd->wip.installed.policy =
+				raw_policy(op, DIRECTION_OUTBOUND,
+					   EXPECT_KERNEL_POLICY_OK,
+					   &kernel_policy.src.route, &kernel_policy.dst.route,
+					   &kernel_policy,
+					   deltatime(0),
+					   kernel_policy.sa_marks,
+					   kernel_policy.xfrmi,
+					   kernel_policy.id,
+					   kernel_policy.sec_label,
+					   st->st_logger,
+					   "%s() %s", __func__, "install IPsec block policy");
+		} else {
+			const struct kernel_policy kernel_policy =
+				kernel_policy_from_state(st, spd, DIRECTION_OUTBOUND, HERE);
+			/* check for no transform at all */
+			PASSERT(st->st_logger, kernel_policy.nr_rules > 0);
+			if (spd->local->child->has_cat) {
+				ip_selector client = selector_from_address(spd->local->host->addr);
+				if (!raw_policy(op, DIRECTION_OUTBOUND,
+						EXPECT_KERNEL_POLICY_OK,
+						&client,
+						&kernel_policy.dst.route,
+						&kernel_policy,
+						deltatime(0),
+						kernel_policy.sa_marks,
+						kernel_policy.xfrmi,
+						kernel_policy.id,
+						kernel_policy.sec_label,
+						st->st_logger,
+						"CAT: %s() %s", __func__, "install IPsec CAT policy")) {
+					llog(RC_LOG, st->st_logger,
+					     "CAT: failed to eroute additional Client Address Translation policy");
+				}
+			}
+			ok &= spd->wip.installed.policy =
+				raw_policy(op, DIRECTION_OUTBOUND,
+					   EXPECT_KERNEL_POLICY_OK,
+					   &kernel_policy.src.route, &kernel_policy.dst.route,
+					   &kernel_policy,
+					   deltatime(0),
+					   kernel_policy.sa_marks,
+					   kernel_policy.xfrmi,
+					   kernel_policy.id,
+					   kernel_policy.sec_label,
+					   st->st_logger,
+					   "%s() %s", __func__, "install IPsec policy");
+		}
 	}
 
 	/*
@@ -2654,7 +2633,7 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 		return true;
 	}
 
-	if (!install_ipsec_kernel_policies(st)) {
+	if (!install_outbound_ipsec_kernel_policies(st)) {
 		delete_ipsec_sa(st);
 		return false;
 	}
