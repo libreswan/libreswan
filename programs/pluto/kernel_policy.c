@@ -343,6 +343,38 @@ bool install_bare_spd_kernel_policy(const struct spd_route *spd,
 	return true;
 }
 
+bool install_bare_cat_kernel_policy(const struct spd_route *spd,
+				    enum kernel_policy_op op,
+				    enum direction direction,
+				    enum expect_kernel_policy expect_kernel_policy,
+				    enum shunt_policy shunt,
+				    struct logger *logger,
+				    where_t where,
+				    const char *reason)
+{
+	struct connection *c = spd->connection;
+	ldbg(logger, "CAT: %s", reason);
+	struct kernel_policy kernel_policy =
+		kernel_policy_from_void(spd->local->client, spd->remote->client,
+					direction,
+					calculate_kernel_priority(c),
+					shunt, &c->sa_marks, c->xfrmi,
+					HUNK_AS_SHUNK(c->config->sec_label),
+					where);
+	/* XXX: notice how SRC is the HOST address */
+	ip_selector client = selector_from_address(spd->local->host->addr);
+	return raw_policy(op, direction, expect_kernel_policy,
+			  /* XXX: this uses .HOST+.route!?! */
+			  &client, &kernel_policy.dst.client,
+			  &kernel_policy,
+			  deltatime(0),
+			  kernel_policy.sa_marks,
+			  kernel_policy.xfrmi,
+			  kernel_policy.id,
+			  kernel_policy.sec_label,
+			  logger, "CAT: %s", reason);
+}
+
 bool delete_kernel_policy(enum direction dir,
 			  enum expect_kernel_policy expect_kernel_policy,
 			  const ip_selector src_client,

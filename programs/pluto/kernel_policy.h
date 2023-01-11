@@ -91,6 +91,15 @@ bool install_bare_spd_kernel_policy(const struct spd_route *spd,
 				    struct logger *logger,
 				    where_t where, const char *what);
 
+/* CAT (client address translation) kernel policy maps host->client */
+bool install_bare_cat_kernel_policy(const struct spd_route *spd,
+				    enum kernel_policy_op op,
+				    enum direction direction,
+				    enum expect_kernel_policy expect_kernel_policy,
+				    enum shunt_policy shunt,
+				    struct logger *logger,
+				    where_t where,
+				    const char *reason);
 /*
  * Delete a kernel policy.
  *

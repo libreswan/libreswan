@@ -1635,31 +1635,12 @@ bool assign_holdpass(struct connection *c,
 	if (oe || old_routing != new_routing) {
 
 		if (sr->local->child->has_cat) {
-			struct kernel_policy kernel_policy =
-				kernel_policy_from_void(sr->local->client, sr->remote->client,
-							DIRECTION_OUTBOUND,
-							calculate_kernel_priority(c),
-							c->config->negotiation_shunt,
-							&c->sa_marks, c->xfrmi,
-							HUNK_AS_SHUNK(c->config->sec_label),
-							HERE);
-			ldbg(logger, "acquired a CAT");
-			ip_selector client = selector_from_address(sr->local->host->addr);
-			if (!raw_policy(op, DIRECTION_OUTBOUND,
-					EXPECT_KERNEL_POLICY_OK,
-					/* XXX: this uses .client+.route!?! */
-					&client, &kernel_policy.dst.client,
-					&kernel_policy,
-					deltatime(0),
-					kernel_policy.sa_marks,
-					kernel_policy.xfrmi,
-					kernel_policy.id,
-					kernel_policy.sec_label,
-					logger, "CAT: %s() %s", __func__, reason)) {
+			if (!install_bare_cat_kernel_policy(sr, op, DIRECTION_OUTBOUND,
+							    EXPECT_KERNEL_POLICY_OK,
+							    c->config->negotiation_shunt,
+							    logger, HERE, "acquired")) {
 				llog(RC_LOG, logger,
-				     "CAT: failed to eroute additional Client Address Translation policy");
-			} else {
-				dbg("kernel: %s() CAT extra route added", __func__);
+				     "CAT: failed to install Client Address Translation kernel policy");
 			}
 		}
 
@@ -1672,7 +1653,7 @@ bool assign_holdpass(struct connection *c,
 			return false;
 		}
 
-		dbg("kernel: %s() eroute_connection() done", __func__);
+		dbg("kernel: %s() done", __func__);
 	}
 
 	set_child_routing(c, new_routing);
