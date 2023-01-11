@@ -917,44 +917,88 @@ static struct kernel_policy kernel_policy_from_state(const struct state *st,
  * destination (route).
  */
 
-static struct spd_route *route_owner(const struct spd_route *spd)
+enum owner_type {
+	ROUTE_OWNER,
+	POLICY_OWNER,
+};
+
+static struct spd_route *spd_owner(const struct spd_route *spd,
+				   enum owner_type owner_type,
+				   unsigned indent)
 {
 	struct connection *c = spd->connection;
+	struct logger *logger = c->logger;
 	if (!oriented(c)) {
-		llog(RC_LOG, c->logger,
-		     "route_owner: connection no longer oriented - system interface change?");
+		llog(RC_LOG, logger,
+		     "connection no longer oriented - system interface change?");
 		return NULL;
 	}
+	selector_pair_buf spb;
+	ldbg(logger, "%*slooking for SPD %s owner of %s",
+	     indent, "",
+	     (owner_type == ROUTE_OWNER ? "route" :
+	      owner_type == ROUTE_OWNER ? "policy" :
+	      "???"),
+	     str_selector_pair(&spd->local->client, &spd->remote->client, &spb));
 
-	enum routing best_routing = RT_UNROUTED;
-	struct spd_route *best_route_spd = NULL;
+	struct spd_route *owner = NULL;
 
 	struct spd_route_filter srf = {
 		.remote_client_range = &spd->remote->client,
 		.where = HERE,
 	};
+
+	indent += 2;
 	while (next_spd_route(NEW2OLD, &srf)) {
 		struct spd_route *d_spd = srf.spd;
 		struct connection *d = d_spd->connection;
 
-		if (spd == d_spd)
-			continue;
-
-		if (!oriented(d))
-			continue;
-
-		if (d->child.routing == RT_UNROUTED)
-			continue;
-
-		/* lookup did it's job */
-		pexpect(selector_range_eq_selector_range(spd->remote->client,
-							 d_spd->remote->client));
-		if (!selector_eq_selector(spd->remote->client,
-					  d_spd->remote->client)) {
+		if (spd == d_spd) {
+			ldbg(logger, "%*s%s skipped; same SPD",
+			     indent, "", d->name);
 			continue;
 		}
+
+		switch (owner_type) {
+		case ROUTE_OWNER:
+			if (!routed(d->child.routing)) {
+				ldbg(logger, "%*s%s skipped; unrouted",
+				     indent, "", d->name);
+				continue;
+			}
+			break;
+		case POLICY_OWNER:
+			if (!erouted(d->child.routing)) {
+				ldbg(logger, "%*s%s skipped; not installed",
+				     indent, "", d->name);
+				continue;
+			}
+			break;
+		}
+
+		PEXPECT(logger, erouted(d->child.routing));
+
+		if (!oriented(d)) {
+			/* being routed implies orented() */
+			llog_pexpect(logger, HERE, "skipping %s; unoriented yet routed",
+				     d->name);
+			continue;
+		}
+
+		/* lookup did it's job */
+		PEXPECT(logger, selector_range_eq_selector_range(spd->remote->client,
+								 d_spd->remote->client));
+		if (!selector_eq_selector(spd->remote->client,
+					  d_spd->remote->client)) {
+			ldbg(logger, "%*s%s skipped; different selectors",
+			     indent, "", d->name);
+			continue;
+		}
+
 		if (!address_eq_address(c->local->host.addr,
 					d->local->host.addr)) {
+			ldbg(logger, "%*s%s skipped; different local address?!?",
+			     indent, "", d->name);
 			continue;
 		}
 
@@ -962,53 +1006,66 @@ static struct spd_route *route_owner(const struct spd_route *spd)
 		 * Consider policies different if the either
 		 * in or out marks differ (after masking).
 		 */
-		if (DBGP(DBG_BASE)) {
-			connection_buf cb;
-			DBG_log(" conn "PRI_CONNECTION" mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32 " vs",
-				pri_connection(c, &cb),
-				c->sa_marks.in.val, c->sa_marks.in.mask,
-				c->sa_marks.out.val, c->sa_marks.out.mask);
-			connection_buf db;
-			DBG_log(" conn "PRI_CONNECTION" mark %" PRIu32 "/%#08" PRIx32 ", %" PRIu32 "/%#08" PRIx32,
-				pri_connection(d, &db),
-				d->sa_marks.in.val, d->sa_marks.in.mask,
-				d->sa_marks.out.val, d->sa_marks.out.mask);
-		}
 
-		if ( (c->sa_marks.in.val & c->sa_marks.in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask) ||
-		     (c->sa_marks.out.val & c->sa_marks.out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask) )
+		if ((c->sa_marks.in.val & c->sa_marks.in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask)) {
+			ldbg(logger, "%*s%s skipped; marks.in %"PRIu32"/%#08"PRIx32" vs %"PRIu32"/%#08"PRIx32,
+			     indent, "", d->name,
+			     c->sa_marks.in.val, c->sa_marks.in.mask,
+			     d->sa_marks.in.val, d->sa_marks.in.mask);
 			continue;
-
-		if (d->child.routing > best_routing) {
-			dbg("    saving route");
-			best_route_spd = d_spd;
-			best_routing = d->child.routing;
 		}
 
+		if ((c->sa_marks.out.val & c->sa_marks.out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask)) {
+			ldbg(logger, "%s()%s skipped; marks.out %"PRIu32"/%#08"PRIx32" vs %"PRIu32"/%#08"PRIx32,
+			     __func__, d->name,
+			     c->sa_marks.out.val, c->sa_marks.out.mask,
+			     d->sa_marks.out.val, d->sa_marks.out.mask);
+			continue;
+		}
+
+		if (owner == NULL) {
+			ldbg(logger, "%*s%s saved; first matching SPD",
+			     indent, "", d->name);
+			owner = d_spd;
+			continue;
+		}
+
+		if (d->child.routing > owner->connection->child.routing) {
+			ldbg(logger, "%*s%s saved; better matching SPD",
+			     indent, "", d->name);
+			owner = d_spd;
+		}
 	}
 
+	indent -= 2;
 	LSWDBGP(DBG_BASE, buf) {
 		connection_buf cib;
-		jam(buf, "route owner of "PRI_CONNECTION" %s; routing: ",
+		jam(buf, "%*s"PRI_CONNECTION" %s owner; routing: ",
+		    indent, "",
 		    pri_connection(c, &cib),
 		    enum_name(&routing_story, c->child.routing));
 
-		if (!routed(best_routing)) {
+		if (owner == NULL) {
 			jam(buf, "NULL");
-		} else if (best_route_spd->connection == spd->connection &&
-			   best_route_spd != spd) {
+		} else if (owner->connection == spd->connection &&
+			   owner != spd) {
 			jam(buf, "sibling");
-		} else if (best_route_spd == spd) {
+		} else if (owner == spd) {
 			jam(buf, "self");
 		} else {
+			const struct connection *c = owner->connection;
 			connection_buf cib;
 			jam(buf, ""PRI_CONNECTION" %s",
-			    pri_connection(best_route_spd->connection, &cib),
-			    enum_name(&routing_story, best_routing));
+			    pri_connection(c, &cib), enum_name(&routing_story, c->child.routing));
 		}
 	}
 
-	return routed(best_routing) ? best_route_spd : NULL;
+	return owner;
+}
+
+static struct spd_route *route_owner(struct spd_route *spd)
+{
+	return spd_owner(spd, ROUTE_OWNER, 0);
 }
 
 /*
@@ -1081,19 +1138,11 @@ static enum routability connection_routability(struct connection *c,
 	return ROUTEABLE; /* aka keep looking */
 }
 
-static bool spd_route_conflicts(struct spd_route *spd UNUSED,
-				struct spd_route *d_spd UNUSED,
-				struct logger *logger UNUSED,
-				unsigned indent UNUSED)
-{
-	return true;
-}
-
 /*
  * XXX: can this and/or route_owner() be merged?
  */
 
-static void get_connection_spd_conflict(struct spd_route *spd, struct logger *logger)
+static void get_connection_spd_conflict(struct spd_route *spd, struct logger *logger, unsigned indent)
 {
 	zero(&spd->wip);
 	spd->wip.conflicting.ok = true; /* hope for the best */
@@ -1105,85 +1154,13 @@ static void get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 		return;
 	}
 
-	enum routing best_routing = RT_UNROUTED;
+	/*
+	 * Find how owns the installed SPD (kernel policy).
+	 */
 
-	struct spd_route_filter srf = {
-		.remote_client_range = &spd->remote->client,
-		.where = HERE,
-	};
-
-	unsigned indent = 4;
-
-	while (next_spd_route(NEW2OLD, &srf)) {
-		struct spd_route *d_spd = srf.spd;
-		struct connection *d = d_spd->connection;
-
-		/*
-		 * Don't conflict with self.
-		 */
-		if (spd == d_spd) {
-			ldbg(logger, "%*s skipping route %s; same spd",
-			     indent, "", d->name);
-			continue;
-		}
-
-		/*
-		 * For instance, a connection with:
-		 *    [1.2.3/25]->[5.6.7/24]
-		 *    [2.4.6/25]->[5.6.7/24]
-		 */
-		if (c == d) {
-			ldbg(logger, "%*s skipping route %s; same connection family",
-			     indent, "", d->name);
-			continue;
-		}
-
-		if (d->child.routing == RT_UNROUTED) {
-			ldbg(logger, "%*s skipping route %s; unrouted",
-			     indent, "", d->name);
-			continue;
-		}
-
-		if (!oriented(d)) {
-			/* being routed implies orented() */
-			llog_pexpect(logger, HERE, "%*s skipping route %s; unoriented",
-				     indent, "", d->name);
-			continue;
-		}
-
-		/* lookup did it's job */
-		pexpect(selector_range_eq_selector_range(spd->remote->client,
-							 d_spd->remote->client));
-		if (!selector_eq_selector(spd->remote->client,
-					  d_spd->remote->client)) {
-			ldbg(logger, "%*s skipping route %s; remote selectors don't match",
-			     indent, "", d->name);
-			continue;
-		}
-
-		/*
-		 * XXX: this doesn't make much sense for a route or
-		 * policy!?!
-		 */
-		if (!address_eq_address(c->local->host.addr,
-					d->local->host.addr)) {
-			ldbg(logger, "%*s skipping route %s; host addresses don't match",
-			     indent, "", d->name);
-			continue;
-		}
-
-		/*
-		 * Having got rid of the obvious, what conflicts?
-		 */
-
-		if (spd_route_conflicts(spd, d_spd, logger, indent) &&
-		    d->child.routing > best_routing) {
-			ldbg(logger, "%*s saving route %s; best so far",
-			     indent, "", d->name);
-			spd->wip.conflicting.route = d_spd;
-			best_routing = d->child.routing;
-		}
-	}
+	spd->wip.conflicting.spd = spd_owner(spd, POLICY_OWNER, indent);
+	pexpect(spd->wip.conflicting.spd == NULL ||
+		erouted(spd->wip.conflicting.spd->connection->child.routing));
 
 	/*
 	 * If there's no SPD with a conflicting policy, perhaps
@@ -1201,14 +1178,14 @@ static void get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 
 	selector_pair_buf sb;
 	ldbg(logger,
-	     "%*s kernel: %s() %s; wip.conflicting_route %s wip.conflicting_shunt=%s",
+	     "%*s kernel: %s() %s; wip.conflicting.spd %s wip.conflicting.shunt=%s",
 	     indent, "",
 	     __func__, str_selector_pair(&spd->local->client, &spd->remote->client, &sb),
-	     (spd->wip.conflicting.route == NULL ? "<none>" : spd->wip.conflicting.route->connection->name),
+	     (spd->wip.conflicting.spd == NULL ? "<none>" : spd->wip.conflicting.spd->connection->name),
 	     (spd->wip.conflicting.shunt == NULL ? "<none>" : (*spd->wip.conflicting.shunt)->why));
 
 	/*
-	 * If there is already a route owner for peer's client subnet
+	 * If there is already an SPD owner for peer's client subnet
 	 * and it disagrees about interface or nexthop, we cannot
 	 * steal it.
 	 *
@@ -1218,8 +1195,8 @@ static void get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 	 * another state object), the route will agree.  This is as it
 	 * should be -- it will arise during rekeying.
 	 */
-	struct connection *ro = (spd->wip.conflicting.route == NULL ? NULL :
-				 spd->wip.conflicting.route->connection);
+	struct connection *ro = (spd->wip.conflicting.spd == NULL ? NULL :
+				 spd->wip.conflicting.spd->connection);
 	if (ro != NULL && (ro->interface->ip_dev != c->interface->ip_dev ||
 			   !address_eq_address(ro->local->host.nexthop, c->local->host.nexthop))) {
 		/*
@@ -1248,7 +1225,7 @@ static bool get_connection_spd_conflicts(struct connection *c, struct logger *lo
 	ldbg(logger, "checking %s for conflicts", c->name);
 	bool routable = false;
 	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
-		get_connection_spd_conflict(spd, logger);
+		get_connection_spd_conflict(spd, logger, 2);
 		routable |= spd->wip.conflicting.ok;
 	}
 	return routable;
@@ -1421,7 +1398,7 @@ bool install_prospective_kernel_policy(struct connection *c)
 
 	ldbg(c->logger, "kernel: %s() running updown-prepare when needed", __func__);
 	for (struct spd_route *spd = c->spd; spd != NULL && ok; spd = spd->spd_next) {
-		if (spd->wip.conflicting.route == NULL) {
+		if (spd->wip.conflicting.spd == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			if (!do_updown(UPDOWN_PREPARE, c, spd, NULL/*state*/, c->logger))
 				ldbg(c->logger, "kernel: prepare command returned an error");
@@ -1430,7 +1407,7 @@ bool install_prospective_kernel_policy(struct connection *c)
 
 	ldbg(c->logger, "kernel: %s() running updown-route when needed", __func__);
 	for (struct spd_route *spd = c->spd; spd != NULL && ok; spd = spd->spd_next) {
-		if (spd->wip.conflicting.route == NULL) {
+		if (spd->wip.conflicting.spd == NULL) {
 			ok &= spd->wip.installed.route =
 				do_updown(UPDOWN_ROUTE, c, spd, NULL/*state*/, c->logger);
 		}
@@ -1550,20 +1527,31 @@ void migration_up(struct child_sa *child)
 void migration_down(struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
-	/* do now so route_owner won't find us */
 	enum routing cr = c->child.routing;
-	set_child_routing(c, RT_UNROUTED);
-	for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
 #ifdef IPSEC_CONNECTION_LIMIT
-		if (erouted(cr))
+	if (erouted(cr)) {
+		/* XXX: c->spd should be {.len,.list} */
+		for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
 			num_ipsec_eroute--;
+		}
+	}
 #endif
-		/* only unroute if no other connection shares it */
-		if (routed(cr) && route_owner(sr) == NULL) {
-			do_updown(UPDOWN_DOWN, c, sr, &child->sa, child->sa.st_logger);
-			child->sa.st_mobike_del_src_ip = true;
-			do_updown(UPDOWN_UNROUTE, c, sr, &child->sa, child->sa.st_logger);
-			child->sa.st_mobike_del_src_ip = false;
+	/*
+	 * Update connection's routing so that route_owner() won't
+	 * find us.
+	 *
+	 * Only unroute when no other routed connection shares the
+	 * SPD.
+	 */
+	set_child_routing(c, RT_UNROUTED);
+	if (routed(cr)) {
+		for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+			if (route_owner(spd) == NULL) {
+				do_updown(UPDOWN_DOWN, c, spd, &child->sa, child->sa.st_logger);
+				child->sa.st_mobike_del_src_ip = true;
+				do_updown(UPDOWN_UNROUTE, c, spd, &child->sa, child->sa.st_logger);
+				child->sa.st_mobike_del_src_ip = false;
+			}
 		}
 	}
 }
@@ -2905,7 +2893,7 @@ static bool install_ipsec_kernel_policies(struct state *st)
 
 	ldbg(st->st_logger, "kernel: %s() running updown-prepare", __func__);
 	for (struct spd_route *spd = start; ok && spd != NULL; spd = spd->spd_next) {
-		if (spd->wip.conflicting.route == NULL) {
+		if (spd->wip.conflicting.spd == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			if (!do_updown(UPDOWN_PREPARE, c, spd, st, st->st_logger))
 				dbg("kernel: prepare command returned an error");
@@ -2914,7 +2902,7 @@ static bool install_ipsec_kernel_policies(struct state *st)
 
 	ldbg(st->st_logger, "kernel: %s() running updown-route", __func__);
 	for (struct spd_route *spd = start; ok && spd != NULL; spd = spd->spd_next) {
-		if (spd->wip.conflicting.route == NULL) {
+		if (spd->wip.conflicting.spd == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			ok &= spd->wip.installed.route =
 				do_updown(UPDOWN_ROUTE, c, spd, st, st->st_logger);

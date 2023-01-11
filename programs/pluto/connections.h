@@ -462,7 +462,7 @@ struct spd_route {
 	struct spd_wip {
 		struct {
 			bool ok;
-			struct spd_route *route;
+			struct spd_route *spd;
 			struct bare_shunt **shunt;
 		} conflicting;
 		struct {
