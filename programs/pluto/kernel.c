@@ -1106,50 +1106,54 @@ static bool state_kernel_policy_op_outbound(const struct state *st,
 	PEXPECT(logger, (op == KERNEL_POLICY_OP_ADD ||
 			 op == KERNEL_POLICY_OP_REPLACE));
 
-	/*
-	 * Figure out the SPI and protocol (in two forms) for the
-	 * outer transformation.
-	 */
-
-	struct kernel_policy kernel_policy;
 	if (spd->block) {
-		llog(RC_LOG, logger, "state spd requires a block");
-		kernel_policy = kernel_policy_from_void(spd->local->client,
-							spd->remote->client,
-							DIRECTION_OUTBOUND,
-							calculate_kernel_priority(cc),
-							/* XXX: guess */
-							SHUNT_DROP,
-							&cc->sa_marks, cc->xfrmi,
-							/* XXX: correct? */
-							HUNK_AS_SHUNK(cc->config->sec_label),
-							HERE);
-	} else {
-		kernel_policy = kernel_policy_from_state(st, spd, DIRECTION_OUTBOUND, HERE);
-		/* check for no transform at all */
-		PASSERT(logger, kernel_policy.nr_rules > 0);
+		llog(RC_LOG, logger, "state spd requires a block (and no CAT?)");
+		const struct kernel_policy kernel_policy =
+			kernel_policy_from_void(spd->local->client,
+						spd->remote->client,
+						DIRECTION_OUTBOUND,
+						calculate_kernel_priority(cc),
+						/* XXX: guess */
+						SHUNT_DROP,
+						&cc->sa_marks, cc->xfrmi,
+						/* XXX: correct? */
+						HUNK_AS_SHUNK(cc->config->sec_label),
+						HERE);
+		return raw_policy(op, DIRECTION_OUTBOUND,
+				  EXPECT_KERNEL_POLICY_OK,
+				  &kernel_policy.src.route, &kernel_policy.dst.route,
+				  &kernel_policy,
+				  deltatime(0),
+				  kernel_policy.sa_marks,
+				  kernel_policy.xfrmi,
+				  kernel_policy.id,
+				  kernel_policy.sec_label,
+				  st->st_logger,
+				  "%s() %s", __func__, opname);
 	}
+
+	const struct kernel_policy kernel_policy =
+		kernel_policy_from_state(st, spd, DIRECTION_OUTBOUND, HERE);
+	/* check for no transform at all */
+	PASSERT(logger, kernel_policy.nr_rules > 0);
 
 	if (spd->local->child->has_cat) {
 		ip_selector client = selector_from_address(spd->local->host->addr);
-		bool t = raw_policy(op, DIRECTION_OUTBOUND,
-				    EXPECT_KERNEL_POLICY_OK,
-				    &client,
-				    &kernel_policy.dst.route,
-				    &kernel_policy,
-				    deltatime(0),
-				    kernel_policy.sa_marks,
-				    kernel_policy.xfrmi,
-				    kernel_policy.id,
-				    kernel_policy.sec_label,
-				    logger,
-				    "CAT: %s() %s", __func__, opname);
-		if (!t) {
+		if (!raw_policy(op, DIRECTION_OUTBOUND,
+				EXPECT_KERNEL_POLICY_OK,
+				&client,
+				&kernel_policy.dst.route,
+				&kernel_policy,
+				deltatime(0),
+				kernel_policy.sa_marks,
+				kernel_policy.xfrmi,
+				kernel_policy.id,
+				kernel_policy.sec_label,
+				logger,
+				"CAT: %s() %s", __func__, opname)) {
 			llog(RC_LOG, st->st_logger,
 			     "CAT: failed to eroute additional Client Address Translation policy");
 		}
-
-		ldbg(st->st_logger, "kernel: %s CAT extra route added return=%d", __func__, t);
 	}
 
 	return raw_policy(op, DIRECTION_OUTBOUND,
