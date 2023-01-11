@@ -937,7 +937,7 @@ static struct spd_route *spd_owner(const struct spd_route *spd,
 	ldbg(logger, "%*slooking for SPD %s owner of %s",
 	     indent, "",
 	     (owner_type == ROUTE_OWNER ? "route" :
-	      owner_type == ROUTE_OWNER ? "policy" :
+	      owner_type == POLICY_OWNER ? "policy" :
 	      "???"),
 	     str_selector_pair(&spd->local->client, &spd->remote->client, &spb));
 
