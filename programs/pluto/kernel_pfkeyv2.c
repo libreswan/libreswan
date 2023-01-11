@@ -1513,6 +1513,11 @@ static void pfkeyv2_process_msg(int fd UNUSED, struct logger *logger)
 	process_pending_queue(logger);
 }
 
+static void pfkeyv2_shutdown(struct logger *logger)
+{
+	ldbg(logger, "%s() called; nothing to do", __func__);
+}
+
 static const char *pfkeyv2_protostack_names[] = {
 	"pfkeyv2",
 	"pfkey",
@@ -1543,6 +1548,7 @@ const struct kernel_ops pfkeyv2_kernel_ops = {
 	.route_fdp = NULL,		/* XXX: what is this? */
 
 	.init = pfkeyv2_init,
+	.shutdown = pfkeyv2_shutdown,
 	.get_ipsec_spi = pfkeyv2_get_ipsec_spi,
 	.del_ipsec_spi = pfkeyv2_del_ipsec_spi,
 	.add_sa = pfkeyv2_add_sa,

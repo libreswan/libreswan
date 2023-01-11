@@ -2575,6 +2575,15 @@ static bool netlink_poke_ipsec_policy_hole(int fd, const struct ip_info *afi, st
 	return true;
 }
 
+static void xfrm_shutdown(struct logger *logger)
+{
+#ifdef USE_XFRM_INTERFACE
+	free_xfrmi_ipsec1(logger);
+#else
+	ldbg(logger, "%s() called; nothing to do", __func__);
+#endif
+}
+
 static const char *xfrm_protostack_names[] = { "xfrm", "netkey", NULL, };
 
 const struct kernel_ops xfrm_kernel_ops = {
@@ -2588,11 +2597,7 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.esn_supported = true,
 
 	.init = init_netlink,
-#ifdef USE_XFRM_INTERFACE
-	.shutdown = free_xfrmi_ipsec1,
-#else
-	.shutdown = NULL,
-#endif
+	.shutdown = xfrm_shutdown,
 	.process_msg = netlink_process_msg,
 	.raw_policy = xfrm_raw_policy,
 	.add_sa = netlink_add_sa,

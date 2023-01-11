@@ -3316,11 +3316,8 @@ static void kernel_scan_shunts(struct logger *logger)
 
 void shutdown_kernel(struct logger *logger)
 {
-
-	if (kernel_ops->shutdown != NULL) {
-		kernel_ops->shutdown(logger);
-	}
 	delete_bare_shunt_outbound_kernel_policies(logger);
+	kernel_ops->shutdown(logger);
 }
 
 void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address *dst,
