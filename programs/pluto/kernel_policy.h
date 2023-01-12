@@ -49,16 +49,6 @@ struct kernel_policy kernel_policy_from_void(ip_selector local, ip_selector remo
 					     where_t where);
 
 /*
- * A kernel policy for an SPD.
- */
-
-struct kernel_policy kernel_policy_from_spd(lset_t policy,
-					    const struct spd_route *spd,
-					    enum encap_mode mode,
-					    enum direction direction,
-					    where_t where);
-
-/*
  * Kernel policy of an established IPsec connection aka
  * ROUTED_TUNNELED.
  */

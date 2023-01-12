@@ -97,11 +97,11 @@ struct kernel_policy kernel_policy_from_void(ip_selector local, ip_selector remo
 	return transport_esp;
 }
 
-struct kernel_policy kernel_policy_from_spd(lset_t policy,
-					    const struct spd_route *spd,
-					    enum encap_mode mode,
-					    enum direction direction,
-					    where_t where)
+static struct kernel_policy kernel_policy_from_spd(lset_t policy,
+						   const struct spd_route *spd,
+						   enum encap_mode mode,
+						   enum direction direction,
+						   where_t where)
 {
 	/*
 	 * With pfkey and transport mode with nat-traversal we need to
