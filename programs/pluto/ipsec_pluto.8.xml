@@ -3251,7 +3251,7 @@
           <term><emphasis remap="B">PLUTO_PEER_ID</emphasis></term>
 
           <listitem>
-            <para>Dlists our peer's id.</para>
+            <para>lists our peer's id.</para>
           </listitem>
         </varlistentry>
 
