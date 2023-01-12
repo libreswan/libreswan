@@ -374,11 +374,11 @@ static void dbg_bare_shunt(const char *op, const struct bare_shunt *bs)
  * Simple rule: use a string literal.
  */
 
-static void add_bare_shunt(const ip_selector *our_client,
-			   const ip_selector *peer_client,
-			   enum shunt_policy shunt_policy,
-			   co_serial_t from_serialno,
-			   const char *why, struct logger *logger)
+static struct bare_shunt *add_bare_shunt(const ip_selector *our_client,
+					 const ip_selector *peer_client,
+					 enum shunt_policy shunt_policy,
+					 co_serial_t from_serialno,
+					 const char *why, struct logger *logger)
 {
 	/* report any duplication; this should NOT happen */
 	struct bare_shunt **bspp = bare_shunt_ptr(our_client, peer_client, why);
@@ -412,6 +412,8 @@ static void add_bare_shunt(const ip_selector *our_client,
 		llog_bare_shunt(RC_LOG, logger, bs,
 				"CONFLICTING      new");
 	}
+
+	return bs;
 }
 
 static reqid_t get_proto_reqid(reqid_t base, const struct ip_protocol *proto)
@@ -2987,7 +2989,6 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 		     enum shunt_policy failure_shunt, struct logger *logger)
 {
 	enum routing ro = c->child.routing;        /* routing, old */
-	enum routing rn = c->child.routing;        /* routing, new */
 	enum shunt_policy negotiation_shunt = c->config->negotiation_shunt;
 
 	if (negotiation_shunt != failure_shunt ) {
@@ -2999,9 +3000,11 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 	dbg("kernel: orphan_holdpass() called for %s with transport_proto '%d' and sport %d and dport %d",
 	    c->name, sr->local->client.ipproto, sr->local->client.hport, sr->remote->client.hport);
 
-	passert(LHAS(LELEM(CK_PERMANENT) | LELEM(CK_INSTANCE) |
-				LELEM(CK_GOING_AWAY), c->kind));
+	passert(LHAS(LELEM(CK_PERMANENT) |
+		     LELEM(CK_INSTANCE) |
+		     LELEM(CK_GOING_AWAY), c->kind));
 
+	enum routing rn = c->child.routing;        /* routing, new */
 	switch (ro) {
 	case RT_UNROUTED_HOLD:
 		rn = RT_UNROUTED;
@@ -3021,7 +3024,7 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 		break;
 	}
 
-	dbg("kernel: orphaning holdpass for connection '%s', routing was %s, needs to be %s",
+	dbg("kernel: orphaning holdpass for connection '%s', routing %s -> %s",
 	    c->name,
 	    enum_name(&routing_story, ro),
 	    enum_name(&routing_story, rn));
@@ -3038,20 +3041,27 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 
 	{
 		/*
-		 * Create the bare shunt and ...
+		 * Create the new bare shunt ...
+		 *
+		 * Notice how this uses the SPD's local/remote .client
+		 * but further down things switch to the SPD's hosts
+		 * addresses.  For OE, won't they be the same?  Or,
+		 * perhaps only sometimes?
 		 */
-		add_bare_shunt(&sr->local->client, &sr->remote->client,
-			       negotiation_shunt,
-			       ((strstr(c->name, "/32") != NULL ||
-				 strstr(c->name, "/128") != NULL) ? c->serialno : 0),
-			       "oe-failing", logger);
+		struct bare_shunt *new_bs =
+			add_bare_shunt(&sr->local->client,
+				       &sr->remote->client,
+				       negotiation_shunt,
+				       ((strstr(c->name, "/32") != NULL ||
+					 strstr(c->name, "/128") != NULL) ? c->serialno : 0),
+				       "oe-failing", logger);
 
 		/*
 		 * ... UPDATE kernel policy if needed.
 		 *
 		 * This really causes the name to remain "oe-failing",
-		 * we should be able to update only only the name of
-		 * the shunt.
+		 * we should be able to update only the name of the
+		 * shunt.
 		 */
 		if (negotiation_shunt != failure_shunt) {
 
@@ -3134,9 +3144,14 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 			 * XXX: see above, this code is looking for
 			 * and fiddling with the shunt only just added
 			 * above?
+			 *
+			 * XXX: maybe, the added bare shunt was for
+			 * .client, but this is for .host.  However,
+			 * since this is OE wasn't the .client
+			 * constructed using the two host addresses?
 			 */
 			struct bare_shunt **bs_pp = bare_shunt_ptr(&src, &dst, why);
-			/* passert(bs_pp != NULL); */
+			PEXPECT(logger, bs_pp != NULL && *bs_pp == new_bs);
 			if (bs_pp == NULL) {
 				selector_pair_buf sb;
 				llog(RC_LOG, logger,
