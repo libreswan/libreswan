@@ -310,7 +310,6 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 }
 
 struct bare_shunt {
-	connection_priority_t policy_prio;
 	ip_selector our_client;
 	ip_selector peer_client;
 	enum shunt_policy shunt_policy;
@@ -344,7 +343,7 @@ static void jam_bare_shunt(struct jambuf *buf, const struct bare_shunt *bs)
 	jam(buf, " => ");
 	jam_enum_short(buf, &shunt_policy_names, bs->shunt_policy);
 	jam(buf, " ");
-	jam_connection_priority(buf, bs->policy_prio);
+	jam_connection_priority(buf, BOTTOM_PRIORITY);
 	jam(buf, "    %s", bs->why);
 }
 
@@ -395,7 +394,6 @@ static void add_bare_shunt(const ip_selector *our_client,
 	const struct ip_protocol *transport_proto = selector_protocol(*our_client);
 	pexpect(transport_proto == selector_protocol(*peer_client));
 	bs->transport_proto = transport_proto;
-	bs->policy_prio = BOTTOM_PRIORITY;
 	bs->from_serialno = from_serialno;
 
 	bs->shunt_policy = shunt_policy;
@@ -1262,7 +1260,7 @@ void show_shunt_status(struct show *s)
 			     bs->transport_proto->ipproto,
 			     str_selector_subnet_port(&(bs)->peer_client, &peerb),
 			     enum_name(&shunt_policy_percent_names, bs->shunt_policy),
-			     str_connection_priority(bs->policy_prio, &prio),
+			     str_connection_priority(BOTTOM_PRIORITY, &prio),
 			     bs->why);
 	}
 }
@@ -3130,7 +3128,6 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 			/* fudge up parameter list */
 			const ip_address *src_address = &sr->local->host->addr;
 			const ip_address *dst_address = &sr->remote->host->addr;
-			connection_priority_t policy_prio = BOTTOM_PRIORITY;	/* of replacing shunt*/
 			const char *why = "oe-failed";
 
 			/* fudge up replace_bare_shunt() */
@@ -3222,7 +3219,6 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 				 */
 				struct bare_shunt *bs = *bs_pp;
 				bs->why = why;
-				bs->policy_prio = policy_prio;
 				bs->shunt_policy = failure_shunt;
 				bs->count = 0;
 				bs->last_activity = mononow();
