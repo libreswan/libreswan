@@ -366,15 +366,17 @@ static void dbg_bare_shunt(const char *op, const struct bare_shunt *bs)
 }
 
 /*
- * Note: "why" must be in stable storage (not auto, not heap)
- * because we use it indefinitely without copying or pfreeing.
+ * Note: "why" must be in stable storage (not auto, not heap) because
+ * we use it indefinitely without copying or pfreeing.
+ *
  * Simple rule: use a string literal.
  */
-void add_bare_shunt(const ip_selector *our_client,
-		    const ip_selector *peer_client,
-		    enum shunt_policy shunt_policy,
-		    co_serial_t from_serialno,
-		    const char *why, struct logger *logger)
+
+static void add_bare_shunt(const ip_selector *our_client,
+			   const ip_selector *peer_client,
+			   enum shunt_policy shunt_policy,
+			   co_serial_t from_serialno,
+			   const char *why, struct logger *logger)
 {
 	/* report any duplication; this should NOT happen */
 	struct bare_shunt **bspp = bare_shunt_ptr(our_client, peer_client, why);

@@ -519,16 +519,6 @@ extern bool migrate_ipsec_sa(struct child_sa *child);
 extern void show_kernel_interface(struct show *s);
 void shutdown_kernel(struct logger *logger);
 
-/*
- * Note: "why" must be in stable storage (not auto, not heap)
- * because we use it indefinitely without copying or pfreeing.
- * Simple rule: use a string literal.
- */
-extern void add_bare_shunt(const ip_selector *ours, const ip_selector *peers,
-			   enum shunt_policy shunt_policy,
-			   co_serial_t from_serialno,
-			   const char *why, struct logger *logger);
-
 bool install_sec_label_connection_policies(struct connection *c, struct logger *logger);
 
 extern deltatime_t bare_shunt_interval;
