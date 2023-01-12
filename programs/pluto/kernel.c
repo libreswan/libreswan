@@ -2888,12 +2888,10 @@ static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy expect
 
 void delete_ipsec_sa(struct state *st)
 {
-	teardown_ipsec_sa(st, EXPECT_KERNEL_POLICY_OK);
-}
-
-void delete_larval_ipsec_sa(struct state *st)
-{
-	teardown_ipsec_sa(st, EXPECT_NO_INBOUND);
+	struct connection *c = st->st_connection;
+	teardown_ipsec_sa(st,
+			  (c->child.routing == RT_ROUTED_TUNNEL ? EXPECT_KERNEL_POLICY_OK :
+			   EXPECT_NO_INBOUND));
 }
 
 /*

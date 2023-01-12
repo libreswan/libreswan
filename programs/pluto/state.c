@@ -1059,9 +1059,15 @@ void delete_state_tail(struct state *st)
 			 * established Child SA.
 			 *
 			 * This is overkill, just the outgoing SA
-			 * needs to be deleted.
+			 * needs to be deleted?  Possibly not,
+			 * acquire(?) seems to also install an inbound
+			 * kernel policy.
+			 *
+			 * XXX: delete_ipsec_sa() is a misnomer, it is
+			 * really transitioning the connection to a
+			 * new state.
 			 */
-			delete_larval_ipsec_sa(st);
+			delete_ipsec_sa(st);
 		}
 		break;
 	}
