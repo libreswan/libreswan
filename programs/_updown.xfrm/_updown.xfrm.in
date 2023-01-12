@@ -906,7 +906,7 @@ addvtiiface() {
 			echo "vti interface already exists with identical parameters, OK"
 		    fi
 		else
-		    echo "vti interface \"${VTI_IFACE}\" already exists with conflicting setting (perhaps need vti-sharing=yes ?"
+		    echo "vti interface \"${VTI_IFACE}\" already exists with conflicting setting (perhaps need vti-shared=yes ?"
 		fi
 	    fi
 	fi
