@@ -2986,8 +2986,15 @@ bool get_ipsec_traffic(struct state *st,
 }
 
 bool orphan_holdpass(struct connection *c, struct spd_route *sr,
-		     enum shunt_policy failure_shunt, struct logger *logger)
+		     struct logger *logger)
 {
+	enum shunt_policy failure_shunt = c->config->failure_shunt;
+	enum shunt_policy nego_shunt = c->config->negotiation_shunt;
+
+	dbg("OE: delete_state orphaning hold with failureshunt %s (negotiation shunt would have been %s)",
+	    enum_name_short(&shunt_policy_names, failure_shunt),
+	    enum_name_short(&shunt_policy_names, nego_shunt));
+
 	enum routing ro = c->child.routing;        /* routing, old */
 	enum shunt_policy negotiation_shunt = c->config->negotiation_shunt;
 

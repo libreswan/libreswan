@@ -934,24 +934,6 @@ void delete_state_tail(struct state *st)
 	    st->st_state->kind == STATE_V2_IKE_SA_DELETE)
 		linux_audit_conn(st, LAK_PARENT_DESTROY);
 
-	/* If we are failed OE initiator, make shunt bare */
-	if (IS_IKE_SA(st) &&
-	    (st->st_connection->policy & POLICY_OPPORTUNISTIC) &&
-	    (st->st_state->kind == STATE_V2_PARENT_I1 ||
-	     st->st_state->kind == STATE_V2_PARENT_I2)) {
-		struct connection *c = st->st_connection;
-		enum shunt_policy failure_shunt = c->config->failure_shunt;
-		enum shunt_policy nego_shunt = c->config->negotiation_shunt;
-
-		dbg("OE: delete_state orphaning hold with failureshunt %s (negotiation shunt would have been %s)",
-		    enum_name_short(&shunt_policy_names, failure_shunt),
-		    enum_name_short(&shunt_policy_names, nego_shunt));
-
-		if (!orphan_holdpass(c, c->spd, failure_shunt, st->st_logger)) {
-			log_state(RC_LOG_SERIOUS, st, "orphan_holdpass() failure ignored");
-		}
-	}
-
 	if (IS_IPSEC_SA_ESTABLISHED(st) ||
 	    IS_CHILD_SA_ESTABLISHED(st)) {
 		/*
@@ -1041,8 +1023,9 @@ void delete_state_tail(struct state *st)
 	delete_cryptographic_continuation(st);
 
 	/*
-	 * tell kernel to delete any IPSEC SA
+	 * Tell kernel to delete any IPSEC SA
 	 */
+
 	switch (st->st_ike_version) {
 	case IKEv1:
 		if (IS_IPSEC_SA_ESTABLISHED(st)) {
@@ -1050,7 +1033,25 @@ void delete_state_tail(struct state *st)
 		}
 		break;
 	case IKEv2:
-		if (IS_CHILD_SA_ESTABLISHED(st)) {
+		if (IS_IKE_SA(st) &&
+		    (st->st_connection->policy & POLICY_OPPORTUNISTIC) &&
+		    st->st_sa_role == SA_INITIATOR &&
+		    (st->st_state->kind == STATE_V2_PARENT_I1 ||
+		     st->st_state->kind == STATE_V2_PARENT_I2)) {
+			/*
+			 * A failed OE initiator, make shunt bare.
+			 *
+			 * The .kind test seems a little dodgy.
+			 * Suspect it is trying to capture the initial
+			 * IKE exchange when the child hasn't yet been
+			 * created, except that STATE_V2_PARENT_I2 has
+			 * a larval Child SA.
+			 */
+			struct connection *c = st->st_connection;
+			if (!orphan_holdpass(c, c->spd, st->st_logger)) {
+				log_state(RC_LOG_SERIOUS, st, "orphan_holdpass() failure ignored");
+			}
+		} else if (IS_CHILD_SA_ESTABLISHED(st)) {
 			delete_ipsec_sa(st);
 		} else if (st->st_sa_role == SA_INITIATOR &&
 			   st->st_establishing_sa == IPSEC_SA) {
