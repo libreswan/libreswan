@@ -2837,12 +2837,17 @@ static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy expect
 void uninstall_ipsec_sa(struct state *st/*IKE or Child*/)
 {
 	struct connection *c = st->st_connection;
-	struct logger *logger = st->st_logger;
 	switch (st->st_ike_version) {
 	case IKEv1:
 		if (IS_IPSEC_SA_ESTABLISHED(st)) {
+#if 0
+			/* see comments below about multiple calls */
 			PEXPECT(logger, c->child.routing == RT_ROUTED_TUNNEL);
-			teardown_ipsec_sa(st/*child*/, EXPECT_KERNEL_POLICY_OK);
+#endif
+			enum expect_kernel_policy expect_inbound_policy =
+				(c->child.routing == RT_ROUTED_TUNNEL ? EXPECT_KERNEL_POLICY_OK :
+				 EXPECT_NO_INBOUND);
+			teardown_ipsec_sa(st/*child*/, expect_inbound_policy);
 		}
 		break;
 	case IKEv2:
@@ -2866,8 +2871,21 @@ void uninstall_ipsec_sa(struct state *st/*IKE or Child*/)
 				log_state(RC_LOG_SERIOUS, st, "orphan_holdpass() failure ignored");
 			}
 		} else if (IS_CHILD_SA_ESTABLISHED(st)) {
+#if 0
+			/*
+			 * XXX: There's a race when an SA is replaced
+			 * simultaneous to the pluto being shutdown.
+			 *
+			 * For instance, ikev2-13-ah, this pexpect is
+			 * triggered because #2, which was replaced by
+			 * #3, tries to tear down the SA.
+			 */
 			PEXPECT(logger, c->child.routing == RT_ROUTED_TUNNEL);
-			teardown_ipsec_sa(st/*child*/, EXPECT_KERNEL_POLICY_OK);
+#endif
+			enum expect_kernel_policy expect_inbound_policy =
+				(c->child.routing == RT_ROUTED_TUNNEL ? EXPECT_KERNEL_POLICY_OK :
+				 EXPECT_NO_INBOUND);
+			teardown_ipsec_sa(st/*child*/, expect_inbound_policy);
 		} else if (st->st_sa_role == SA_INITIATOR &&
 			   st->st_establishing_sa == IPSEC_SA) {
 			/*
@@ -2881,10 +2899,14 @@ void uninstall_ipsec_sa(struct state *st/*IKE or Child*/)
 			 * prospective hold installs both inbound and
 			 * outbound kernel policies?
 			 *
-			 * When an IKE family is being deleted,
-			 * teardown_ipsec_sa maybe called for both the
-			 * IKE SA and the (larval) Child SA, and in an
-			 * ill-defined order.
+			 * Note: When an IKE family is being deleted,
+			 * teardown_ipsec_sa maybe called for:
+			 *
+			 * - the IKE SA establishing the connection
+			 * - the (larval) Child SA
+			 * - the just replaced Child SA (see above)
+			 *
+			 * and in an ill-defined order.
 			 */
 			enum expect_kernel_policy expect_inbound_policy =
 				(c->child.routing == RT_ROUTED_TUNNEL ? EXPECT_KERNEL_POLICY_OK :
