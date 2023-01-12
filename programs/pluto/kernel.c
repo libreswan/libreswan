@@ -2739,9 +2739,8 @@ static void teardown_ipsec_kernel_policies(struct state *st,
 
 		do_updown(UPDOWN_DOWN, c, spd, st, logger);
 
-		if (c->kind == CK_INSTANCE &&
-		    ((c->policy & POLICY_OPPORTUNISTIC) ||
-		     (c->policy & POLICY_DONT_REKEY))) {
+		switch (new_routing) {
+		case RT_UNROUTED:
 			/* get rid of the IPsec SA */
 			if (!delete_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
 						      EXPECT_KERNEL_POLICY_OK,
@@ -2756,23 +2755,42 @@ static void teardown_ipsec_kernel_policies(struct state *st,
 			if (route_owner(spd) == NULL) {
 				do_updown(UPDOWN_UNROUTE, c, spd, NULL, logger);
 			}
-		} else {
-			/* restore the prospective or failure kernel policy */
-			enum shunt_policy shunt_policy = (c->config->failure_shunt == SHUNT_NONE ?
-							  c->config->prospective_shunt :
-							  c->config->failure_shunt);
-			pexpect(shunt_policy != SHUNT_NONE);
+			break;
+		case RT_ROUTED_PROSPECTIVE:
+			pexpect(c->config->prospective_shunt != SHUNT_NONE);
 			if (!install_bare_spd_kernel_policy(spd,
 							    KERNEL_POLICY_OP_REPLACE,
 							    DIRECTION_OUTBOUND,
 							    EXPECT_KERNEL_POLICY_OK,
-							    shunt_policy,
+							    c->config->prospective_shunt,
 							    logger, HERE, "replacing")) {
 				llog(RC_LOG, logger,
-				     "kernel: %s() outbound replace failed", __func__);
+				     "kernel: %s() replace outbound with prospective shunt failed", __func__);
 			}
+			break;
+		case RT_ROUTED_FAILURE:
+			pexpect(c->config->failure_shunt != SHUNT_NONE);
+			if (!install_bare_spd_kernel_policy(spd,
+							    KERNEL_POLICY_OP_REPLACE,
+							    DIRECTION_OUTBOUND,
+							    EXPECT_KERNEL_POLICY_OK,
+							    c->config->failure_shunt,
+							    logger, HERE, "replacing")) {
+				llog(RC_LOG, logger,
+				     "kernel: %s() replace outbound with failure shunt failed", __func__);
+			}
+			break;
+		case RT_UNROUTED_HOLD:
+		case RT_ROUTED_HOLD:
+		case RT_ROUTED_TUNNEL:
+			bad_case(new_routing);
 		}
-		/* always zap inbound */
+		/*
+		 * Always zap inbound.
+		 *
+		 * XXX: which is interesting since the original
+		 * prospective kernel policy included inbound.
+		 */
 		if (!delete_spd_kernel_policy(spd, DIRECTION_INBOUND,
 					      expect_inbound_policy,
 					      logger, HERE, "inbound")) {
