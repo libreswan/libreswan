@@ -2637,71 +2637,6 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 }
 
 /*
- * Delete an IPSEC SA's kernel policy.
- *
- * We may not succeed, but we bull ahead anyway because we cannot do
- * anything better by recognizing failure.
- *
- * This used to have a parameter inbound_only, but the saref code
- * changed to always install inbound before outbound so this it was
- * always false, and thus removed.  But this means that while there's
- * now always an outbound policy, there may not yet be an inbound
- * policy!  For instance, IKEv2 IKE AUTH initiator gets rejected.  So
- * what is there, and should this even be called?
- *
- * EXPECT_KERNEL_POLICY is trying to help sort this out.
- */
-
-static void teardown_spd_kernel_policies(enum kernel_policy_op outbound_op,
-					 enum shunt_policy outbound_shunt,
-					 struct spd_route *spd,
-					 enum expect_kernel_policy expect_inbound_policy,
-					 struct logger *logger, const char *story)
-{
-	PEXPECT(logger, (outbound_op == KERNEL_POLICY_OP_DELETE ||
-			 outbound_op == KERNEL_POLICY_OP_REPLACE));
-
-	/*
-	 * Since this is tearing down a real policy; all the critical
-	 * parameters from the add need to match.
-	 */
-
-	switch (outbound_op) {
-	case KERNEL_POLICY_OP_REPLACE:
-		if (!install_bare_spd_kernel_policy(spd,
-						    KERNEL_POLICY_OP_REPLACE,
-						    DIRECTION_OUTBOUND,
-						    EXPECT_KERNEL_POLICY_OK,
-						    outbound_shunt,
-						    logger, HERE, story)) {
-			llog(RC_LOG, logger,
-			     "kernel: %s() outbound replace failed %s", __func__, story);
-		}
-		break;
-	case KERNEL_POLICY_OP_DELETE:
-		/* XXX: delete_spd_kernel_policy() */
-		if (!delete_spd_kernel_policy(spd,
-					      DIRECTION_OUTBOUND,
-					      EXPECT_KERNEL_POLICY_OK,
-					      logger, HERE, story)) {
-			llog(RC_LOG, logger,
-			     "kernel: %s() outbound delete failed %s", __func__, story);
-		}
-		break;
-	default:
-		bad_case(outbound_op);
-		break;
-	}
-
-	if (!delete_spd_kernel_policy(spd, DIRECTION_INBOUND,
-				      expect_inbound_policy,
-				      logger, HERE, story)) {
-		llog(RC_LOG, logger,
-		     "kernel: %s() outbound failed %s", __func__, story);
-	}
-}
-
-/*
  * Delete an IPSEC SA
  *
  * We may not succeed, but we bull ahead anyway because we cannot do
@@ -2721,6 +2656,7 @@ static void teardown_ipsec_kernel_policies(struct state *st,
 					   enum expect_kernel_policy expect_inbound_policy)
 {
 	struct connection *c = st->st_connection;
+	struct logger *logger = st->st_logger;
 
 	enum routing new_routing;
 	if (c->remotepeertype == CISCO) {
@@ -2766,7 +2702,7 @@ static void teardown_ipsec_kernel_policies(struct state *st,
 	 */
 
 	if (c->child.kernel_policy_owner != st->st_serialno) {
-		ldbg(st->st_logger,
+		ldbg(logger,
 		     "kernel: %s() skipping, kernel policy ownere (aka eroute_owner) "PRI_SO" doesn't match Child SA "PRI_SO,
 		     __func__,
 		     pri_so(c->child.kernel_policy_owner),
@@ -2796,65 +2732,52 @@ static void teardown_ipsec_kernel_policies(struct state *st,
 			 * right back to RT_ROUTED_PROSPECTIVE as if
 			 * no failure happened.
 			 */
-			ldbg(c->logger,
-			     "kernel: %s() skipping, first SPD and remotepeertype is CISCO, damage done",
+			ldbg(logger, "kernel: %s() skipping, first SPD and remotepeertype is CISCO, damage done",
 			     __func__);
 			continue;
 		}
 
-		do_updown(UPDOWN_DOWN, c, spd, st, st->st_logger);
+		do_updown(UPDOWN_DOWN, c, spd, st, logger);
 
 		if (c->kind == CK_INSTANCE &&
 		    ((c->policy & POLICY_OPPORTUNISTIC) ||
 		     (c->policy & POLICY_DONT_REKEY))) {
-
-			/*
-			 *
-			 * Case 1: just get rid of the IPSEC SA
-			 *
-			 * Case 2: even if the connection is still
-			 * alive (due to an ISAKMP SA), we get rid of
-			 * routing.
-			 */
-			teardown_spd_kernel_policies(KERNEL_POLICY_OP_DELETE,
-						     c->config->failure_shunt/*delete so almost ignored!?!*/,
-						     spd, expect_inbound_policy,
-						     st->st_logger,
-						     "deleting instance");
+			/* get rid of the IPsec SA */
+			if (!delete_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
+						      EXPECT_KERNEL_POLICY_OK,
+						      logger, HERE, "unrouting")) {
+				llog(RC_LOG, logger,
+				     "kernel: %s() outbound delete for unroute failed", __func__);
+			}
 #ifdef IPSEC_CONNECTION_LIMIT
 			num_ipsec_eroute--;
 #endif
 			/* only unroute if no other connection shares it */
 			if (route_owner(spd) == NULL) {
-				do_updown(UPDOWN_UNROUTE, c, spd, NULL, c->logger);
+				do_updown(UPDOWN_UNROUTE, c, spd, NULL, logger);
 			}
-
 		} else {
-
-			dbg("kernel: %s() calling bare_policy_op(REPLACE_OUTBOUND), it is the default", __func__);
-			/*
-			 * + if the .failure_shunt==SHUNT_NONE then
-			 * the .prospective_shunt is chosen and that
-			 * can't be SHUNT_NONE
-			 *
-			 * + if the .failure_shunt!=SHUNT_NONE then
-			 * the .failure_shunt is chosen, and that
-			 * isn't SHUNT_NONE.
-			 *
-			 * This code installs a TRANSPORT mode policy
-			 * (the host .{src,dst} provides the family
-			 * but the address isn't used).  The actual
-			 * connection might be TUNNEL.
-			 */
+			/* restore the prospective or failure kernel policy */
 			enum shunt_policy shunt_policy = (c->config->failure_shunt == SHUNT_NONE ?
 							  c->config->prospective_shunt :
 							  c->config->failure_shunt);
 			pexpect(shunt_policy != SHUNT_NONE);
-			teardown_spd_kernel_policies(KERNEL_POLICY_OP_REPLACE,
-						     shunt_policy,
-						     spd, expect_inbound_policy,
-						     st->st_logger,
-						     "replace");
+			if (!install_bare_spd_kernel_policy(spd,
+							    KERNEL_POLICY_OP_REPLACE,
+							    DIRECTION_OUTBOUND,
+							    EXPECT_KERNEL_POLICY_OK,
+							    shunt_policy,
+							    logger, HERE, "replacing")) {
+				llog(RC_LOG, logger,
+				     "kernel: %s() outbound replace failed", __func__);
+			}
+		}
+		/* always zap inbound */
+		if (!delete_spd_kernel_policy(spd, DIRECTION_INBOUND,
+					      expect_inbound_policy,
+					      logger, HERE, "inbound")) {
+			llog(RC_LOG, logger,
+			     "kernel: %s() inbound delete failed", __func__);
 		}
 	}
 }
