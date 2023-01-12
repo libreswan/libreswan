@@ -509,7 +509,7 @@ extern ipsec_spi_t get_ipsec_cpi(const struct connection *c,
 bool install_prospective_kernel_policy(struct connection *c);
 extern bool install_inbound_ipsec_sa(struct state *st);
 extern bool install_ipsec_sa(struct state *st, bool inbound_also);
-void delete_ipsec_sa(struct state *st);
+void uninstall_ipsec_sa(struct state *st);
 
 extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
 extern bool get_ipsec_traffic(struct state *st, struct ipsec_proto_info *sa, enum direction direction);

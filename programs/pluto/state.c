@@ -1023,55 +1023,17 @@ void delete_state_tail(struct state *st)
 	delete_cryptographic_continuation(st);
 
 	/*
-	 * Tell kernel to delete any IPSEC SA
+	 * Tell kernel to uninstall any larval or established IPsecSA,
+	 * optionally replacing the kernel policy with a prospective
+	 * or failing policy.
+	 *
+	 * Note that ST could be either for a Child SA or an IKE SA.
+	 * For instance, when a state for an on-demand connection
+	 * fails during IKE_SA_INIT, it is the IKE SA that is downing
+	 * the connection.
 	 */
 
-	switch (st->st_ike_version) {
-	case IKEv1:
-		if (IS_IPSEC_SA_ESTABLISHED(st)) {
-			delete_ipsec_sa(st);
-		}
-		break;
-	case IKEv2:
-		if (IS_IKE_SA(st) &&
-		    (st->st_connection->policy & POLICY_OPPORTUNISTIC) &&
-		    st->st_sa_role == SA_INITIATOR &&
-		    (st->st_state->kind == STATE_V2_PARENT_I1 ||
-		     st->st_state->kind == STATE_V2_PARENT_I2)) {
-			/*
-			 * A failed OE initiator, make shunt bare.
-			 *
-			 * The .kind test seems a little dodgy.
-			 * Suspect it is trying to capture the initial
-			 * IKE exchange when the child hasn't yet been
-			 * created, except that STATE_V2_PARENT_I2 has
-			 * a larval Child SA.
-			 */
-			struct connection *c = st->st_connection;
-			if (!orphan_holdpass(c, c->spd, st->st_logger)) {
-				log_state(RC_LOG_SERIOUS, st, "orphan_holdpass() failure ignored");
-			}
-		} else if (IS_CHILD_SA_ESTABLISHED(st)) {
-			delete_ipsec_sa(st);
-		} else if (st->st_sa_role == SA_INITIATOR &&
-			   st->st_establishing_sa == IPSEC_SA) {
-			/*
-			 * XXX: so much for dreams of becoming an
-			 * established Child SA.
-			 *
-			 * This is overkill, just the outgoing SA
-			 * needs to be deleted?  Possibly not,
-			 * acquire(?) seems to also install an inbound
-			 * kernel policy.
-			 *
-			 * XXX: delete_ipsec_sa() is a misnomer, it is
-			 * really transitioning the connection to a
-			 * new state.
-			 */
-			delete_ipsec_sa(st);
-		}
-		break;
-	}
+	uninstall_ipsec_sa(st);
 
 	if (st->st_connection->newest_ipsec_sa == st->st_serialno)
 		st->st_connection->newest_ipsec_sa = SOS_NOBODY;

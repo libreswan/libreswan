@@ -86,6 +86,9 @@
 #include "rekeyfuzz.h"
 #include "orient.h"
 
+static void teardown_ipsec_sa(struct state *st,
+			      enum expect_kernel_policy expect_inbound_policy);
+
 static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 					    enum expect_kernel_policy expect_kernel_policy,
 					    struct logger *logger, where_t where);
@@ -2629,7 +2632,9 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 	}
 
 	if (!install_outbound_ipsec_kernel_policies(st)) {
-		delete_ipsec_sa(st);
+		teardown_ipsec_sa(st,
+				  (c->child.routing == RT_ROUTED_TUNNEL ? EXPECT_KERNEL_POLICY_OK :
+				   EXPECT_NO_INBOUND));
 		return false;
 	}
 
@@ -2829,12 +2834,65 @@ static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy expect
 	teardown_half_ipsec_sa(st, DIRECTION_INBOUND);
 }
 
-void delete_ipsec_sa(struct state *st)
+void uninstall_ipsec_sa(struct state *st/*IKE or Child*/)
 {
 	struct connection *c = st->st_connection;
-	teardown_ipsec_sa(st,
-			  (c->child.routing == RT_ROUTED_TUNNEL ? EXPECT_KERNEL_POLICY_OK :
-			   EXPECT_NO_INBOUND));
+	struct logger *logger = st->st_logger;
+	switch (st->st_ike_version) {
+	case IKEv1:
+		if (IS_IPSEC_SA_ESTABLISHED(st)) {
+			PEXPECT(logger, c->child.routing == RT_ROUTED_TUNNEL);
+			teardown_ipsec_sa(st/*child*/, EXPECT_KERNEL_POLICY_OK);
+		}
+		break;
+	case IKEv2:
+		if (IS_IKE_SA(st) &&
+		    (st->st_connection->policy & POLICY_OPPORTUNISTIC) &&
+		    st->st_sa_role == SA_INITIATOR &&
+		    (st->st_state->kind == STATE_V2_PARENT_I1 ||
+		     st->st_state->kind == STATE_V2_PARENT_I2)) {
+			/*
+			 * A failed OE initiator, make shunt bare.
+			 *
+			 * Checking .kind above seems pretty dodgy.
+			 * Suspect it is trying to capture the initial
+			 * IKE exchange when the child hasn't yet been
+			 * created, except that when kind is
+			 * STATE_V2_PARENT_I2 the larval Child SA has
+			 * been created?!?
+			 */
+			struct connection *c = st->st_connection;
+			if (!orphan_holdpass(c, c->spd, st->st_logger)) {
+				log_state(RC_LOG_SERIOUS, st, "orphan_holdpass() failure ignored");
+			}
+		} else if (IS_CHILD_SA_ESTABLISHED(st)) {
+			PEXPECT(logger, c->child.routing == RT_ROUTED_TUNNEL);
+			teardown_ipsec_sa(st/*child*/, EXPECT_KERNEL_POLICY_OK);
+		} else if (st->st_sa_role == SA_INITIATOR &&
+			   st->st_establishing_sa == IPSEC_SA) {
+			/*
+			 * XXX: so much for dreams of becoming an
+			 * established Child SA.
+			 *
+			 * This seems to be is overkill as just the
+			 * outgoing SA needs to be deleted?
+			 *
+			 * Actually, no.  During acquire the
+			 * prospective hold installs both inbound and
+			 * outbound kernel policies?
+			 *
+			 * When an IKE family is being deleted,
+			 * teardown_ipsec_sa maybe called for both the
+			 * IKE SA and the (larval) Child SA, and in an
+			 * ill-defined order.
+			 */
+			enum expect_kernel_policy expect_inbound_policy =
+				(c->child.routing == RT_ROUTED_TUNNEL ? EXPECT_KERNEL_POLICY_OK :
+				 EXPECT_NO_INBOUND);
+			teardown_ipsec_sa(st/*IKE!!!*/, expect_inbound_policy);
+		}
+		break;
+	}
 }
 
 /*
