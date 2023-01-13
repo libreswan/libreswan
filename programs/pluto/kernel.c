@@ -1462,7 +1462,7 @@ bool assign_holdpass(struct connection *c,
 		 * - an instance with a routed template
 		 * - by whack
 		 */
-		new_routing = RT_UNROUTED_HOLD;
+		new_routing = RT_UNROUTED_NEGOTIATION;
 		op = KERNEL_POLICY_OP_ADD;
 		/* XXX: these descriptions make no sense */
 		reason = (oe ? "replace unrouted opportunistic %trap with broad %pass or %hold" :
@@ -1479,7 +1479,7 @@ bool assign_holdpass(struct connection *c,
 		 * this is installing 7.7.7.7/32 from a trigger of
 		 * 7.7.7.7/32/ICMP/8.
 		 */
-		new_routing = RT_ROUTED_HOLD;
+		new_routing = RT_ROUTED_NEGOTIATION;
 		op = KERNEL_POLICY_OP_REPLACE;
 		/* XXX: these descriptions make no sense */
 		reason = (oe ? "broad prospective opportunistic %pass or %hold" :
@@ -2787,8 +2787,8 @@ static void teardown_ipsec_kernel_policies(struct state *st,
 				     "kernel: %s() replace outbound with failure shunt failed", __func__);
 			}
 			break;
-		case RT_UNROUTED_HOLD:
-		case RT_ROUTED_HOLD:
+		case RT_UNROUTED_NEGOTIATION:
+		case RT_ROUTED_NEGOTIATION:
 		case RT_ROUTED_TUNNEL:
 			bad_case(new_routing);
 		}
@@ -3093,15 +3093,15 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 
 	enum routing rn = c->child.routing;        /* routing, new */
 	switch (ro) {
-	case RT_UNROUTED_HOLD:
+	case RT_UNROUTED_NEGOTIATION:
 		rn = RT_UNROUTED;
 		dbg("kernel: orphan_holdpass unrouted: hold -> pass");
 		break;
 	case RT_UNROUTED:
-		rn = RT_UNROUTED_HOLD;
+		rn = RT_UNROUTED_NEGOTIATION;
 		dbg("kernel: orphan_holdpass unrouted: pass -> hold");
 		break;
-	case RT_ROUTED_HOLD:
+	case RT_ROUTED_NEGOTIATION:
 		rn = RT_ROUTED_PROSPECTIVE;
 		dbg("kernel: orphan_holdpass routed: hold -> trap (?)");
 		break;

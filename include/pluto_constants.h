@@ -737,26 +737,29 @@ enum connection_kind {
  *
  * Note: a connection can only be routed if it is NEVER_NEGOTIATE or
  * HAS_IPSEC_POLICY.
+ *
+ * Note: UNROUTED can be misleading.  A CK_INSTANCE is considered
+ * UNROUTED when it's CK_TEMPLATE owns the route?
  */
 
 enum routing {
-	RT_UNROUTED,            /* unrouted */
-	RT_UNROUTED_HOLD,       /* unrouted, but HOLD shunt installed */
-	RT_ROUTED_PROSPECTIVE,  /* routed, and prospective shunt installed */
-	RT_ROUTED_HOLD,         /* routed, and HOLD shunt installed */
-	RT_ROUTED_FAILURE,      /* routed, and failure-context shunt installed */
-	RT_ROUTED_TUNNEL,       /* routed, and erouted to an IPSEC SA group */
+	RT_UNROUTED,			/* unrouted */
+	RT_UNROUTED_NEGOTIATION,	/* unrouted, but .negotiation_shunt installed */
+	RT_ROUTED_PROSPECTIVE,		/* routed, and .prospective_shunt installed */
+	RT_ROUTED_NEGOTIATION,		/* routed, and .negotiation_shunt installed */
+	RT_ROUTED_FAILURE,      	/* routed, and .failure_shunt installed */
+	RT_ROUTED_TUNNEL,       	/* routed, and erouted to an IPSEC SA group */
 };
 
 extern const struct enum_names routing_names;
 
 #define routed(RS) ((RS) == RT_ROUTED_PROSPECTIVE ||		\
-		    (RS) == RT_ROUTED_HOLD ||			\
+		    (RS) == RT_ROUTED_NEGOTIATION ||		\
 		    (RS) == RT_ROUTED_FAILURE ||		\
 		    (RS) == RT_ROUTED_TUNNEL)
-#define erouted(RS) ((RS) == RT_UNROUTED_HOLD ||		\
+#define erouted(RS) ((RS) == RT_UNROUTED_NEGOTIATION ||		\
 		     (RS) == RT_ROUTED_PROSPECTIVE ||		\
-		     (RS) == RT_ROUTED_HOLD ||			\
+		     (RS) == RT_ROUTED_NEGOTIATION ||		\
 		     (RS) == RT_ROUTED_FAILURE ||		\
 		     (RS) == RT_ROUTED_TUNNEL)
 
