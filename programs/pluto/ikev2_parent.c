@@ -72,7 +72,6 @@
 #include "send.h"
 #include "ikev2_send.h"
 #include "pluto_stats.h"
-#include "ikev2_retry.h"
 #include "ipsecconf/confread.h"		/* for struct starter_end */
 #include "addr_lookup.h"
 #include "impair.h"

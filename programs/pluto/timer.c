@@ -61,8 +61,8 @@
 #include "kernel.h"		/* for kernel_ops */
 #include "nat_traversal.h"
 #include "pluto_sd.h"
-#include "ikev1_retry.h"
-#include "ikev2_retry.h"
+#include "ikev1_retransmit.h"
+#include "ikev2_retransmit.h"
 #include "pluto_stats.h"
 #include "iface.h"
 #include "ikev2_liveness.h"

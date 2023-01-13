@@ -24,7 +24,7 @@
 
 #include "defs.h"
 #include "state.h"
-#include "ikev2_retry.h"
+#include "ikev2_retransmit.h"
 #include "passert.h"
 #include "connections.h"
 #include "log.h"

@@ -229,7 +229,7 @@ OBJS += server_pool.o
 OBJS += hash_table.o list_entry.o
 OBJS += timer.o
 OBJS += host_pair.o ikev2_host_pair.o
-OBJS += ikev2_retry.o
+OBJS += ikev2_retransmit.o
 OBJS += ipsec_doi.o
 ifeq ($(USE_DNSSEC),true)
 OBJS += ikev2_ipseckey.o ikev2_ipseckey_dnsr.o
@@ -238,7 +238,8 @@ ifeq ($(USE_IKEv1),true)
 OBJS += ikev1.o ikev1_aggr.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_struct.o ikev1_msgid.o
 OBJS += ikev1_states.o ikev1_hash.o ikev1_message.o ikev1_nat.o
 OBJS += crypt_dh_v1.o
-OBJS += ikev1_retry.o ikev1_host_pair.o
+OBJS += ikev1_retransmit.o
+OBJS += ikev1_host_pair.o
 OBJS += ikev1_spdb.o
 endif
 OBJS += ikev2.o ikev2_parent.o ikev2_child.o
