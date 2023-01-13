@@ -212,7 +212,7 @@ export LC_ALL
 #	CONNMARK_OUT
 #		the outgoing mark to use
 #
-#	VTI_IFAC=iface
+#	VTI_IFACE=iface
 #		Name of VTI interface to create
 #
 #	VTI_ROUTING=yes|no
