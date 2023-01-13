@@ -1459,34 +1459,40 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 
 bool assign_holdpass(struct connection *c,
 		     const struct kernel_acquire *b,
-		     struct spd_route *sr)
+		     struct spd_route *spd)
 {
 	struct logger *logger = c->logger;
+	bool oe = ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
+	struct connection *t = connection_by_serialno(c->serial_from); /* could be NULL */
+	struct spd_owner owner = spd_owner(spd, 0);
+
+	PASSERT(logger, (c->kind == CK_PERMANENT ||
+			 c->kind == CK_INSTANCE));
+	PASSERT(logger, ((c->kind == CK_INSTANCE) >= (t != NULL)));
 
 	/*
 	 * Figure out the connection's routing transition.
-	 *
-	 * UNROUTED when the trigger is by whack; ROUTED_PROSPECTIVE
-	 * when the triger is either acquire or whack?
 	 */
 	enum routing old_routing = c->child.routing;	/* routing, old */
 	enum routing new_routing;
 	enum kernel_policy_op op;
 	const char *reason;
-	bool oe = ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
 
 	switch (old_routing) {
 	case RT_UNROUTED:
 		/*
 		 * For instance:
-		 * - an instance with a routed template
-		 * - by whack
+		 * - an instance with a routed prospective template
+		 * but also:
+		 * - an unrouted permenant by whack?
+		 * - an instance with an unrouted template due to whack?
 		 */
 		new_routing = RT_UNROUTED_NEGOTIATION;
 		op = KERNEL_POLICY_OP_ADD;
 		/* XXX: these descriptions make no sense */
 		reason = (oe ? "replace unrouted opportunistic %trap with broad %pass or %hold" :
 			  "replace unrouted %trap with broad %pass or %hold");
+		PEXPECT(logger, t == NULL || t->child.routing == RT_ROUTED_PROSPECTIVE);
 		break;
 	case RT_ROUTED_PROSPECTIVE:
 		/*
@@ -1504,6 +1510,7 @@ bool assign_holdpass(struct connection *c,
 		/* XXX: these descriptions make no sense */
 		reason = (oe ? "broad prospective opportunistic %pass or %hold" :
 			  "broad prospective %pass or %hold");
+		PEXPECT(logger, t == NULL);
 		break;
 	default:
 		/* no change: this %hold or %pass is old news */
@@ -1513,37 +1520,40 @@ bool assign_holdpass(struct connection *c,
 		break;
 	}
 
-	if (DBGP(DBG_BASE)) {
-		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-			jam(buf, "%s():", __func__);
-			jam(buf, " by_acquire=%s", bool_str(b->by_acquire));
-			jam(buf, " oppo=%s", bool_str(oe));
-			jam(buf, " kind=");
-			jam_enum_short(buf, &connection_kind_names, c->kind);
-			jam(buf, " routing=");
-			jam_enum_short(buf, &routing_names, old_routing);
-			if (old_routing != new_routing) {
-				jam(buf, "->");
-				jam_enum_short(buf, &routing_names, new_routing);
-			} else {
-				jam_string(buf, "(no-change)");
-			}
-			jam(buf, " packet=");
-			jam_packet(buf, &b->packet);
-			jam(buf, " selectors=");
-			jam_selector_pair(buf, &sr->local->client, &sr->remote->client);
-			jam(buf, " one_address=%s",
-			    bool_str(selector_contains_one_address((sr)->local->client) &&
-				     selector_contains_one_address((sr)->remote->client)));
-			jam_string(buf, " op=");
-			jam_enum(buf, &kernel_policy_op_names, op);
-			jam_string(buf, ": ");
-			jam_string(buf, reason);
+	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+		jam(buf, "%s():", __func__);
+		jam(buf, " by_acquire=%s", bool_str(b->by_acquire));
+		jam(buf, " oppo=%s", bool_str(oe));
+		jam(buf, " kind=");
+		jam_enum_short(buf, &connection_kind_names, c->kind);
+		jam(buf, " routing=");
+		jam_enum_short(buf, &routing_names, old_routing);
+		if (old_routing != new_routing) {
+			jam(buf, "->");
+			jam_enum_short(buf, &routing_names, new_routing);
+		} else {
+			jam_string(buf, "(no-change)");
 		}
+		jam(buf, " packet=");
+		jam_packet(buf, &b->packet);
+		jam(buf, " selectors=");
+		jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
+		jam(buf, " one_address=%s",
+		    bool_str(selector_contains_one_address(spd->local->client) &&
+			     selector_contains_one_address(spd->remote->client)));
+		jam_string(buf, " op=");
+		jam_enum(buf, &kernel_policy_op_names, op);
+		/* can have policy owner without route owner */
+		if (owner.policy != NULL) {
+			jam_string(buf, " policy-owner=");
+			jam_connection(buf, owner.policy->connection);
+		} else if (owner.route != NULL) {
+			jam_string(buf, " route-owner=");
+			jam_connection(buf, owner.route->connection);
+		}
+		jam_string(buf, ": ");
+		jam_string(buf, reason);
 	}
-
-	PASSERT(logger, (c->kind == CK_PERMANENT ||
-			 c->kind == CK_INSTANCE));
 
 	/*
 	 * We need a broad %hold, not the narrow one.
@@ -1561,8 +1571,8 @@ bool assign_holdpass(struct connection *c,
 	 */
 	if (oe || old_routing != new_routing) {
 
-		if (sr->local->child->has_cat) {
-			if (!install_bare_cat_kernel_policy(sr, op,
+		if (spd->local->child->has_cat) {
+			if (!install_bare_cat_kernel_policy(spd, op,
 							    EXPECT_KERNEL_POLICY_OK,
 							    c->config->negotiation_shunt,
 							    logger, HERE, "acquired")) {
@@ -1571,7 +1581,7 @@ bool assign_holdpass(struct connection *c,
 			}
 		}
 
-		if (!install_bare_spd_kernel_policy(sr, op, DIRECTION_OUTBOUND,
+		if (!install_bare_spd_kernel_policy(spd, op, DIRECTION_OUTBOUND,
 						    EXPECT_KERNEL_POLICY_OK,
 						    c->config->negotiation_shunt,
 						    logger, HERE, reason)) {
