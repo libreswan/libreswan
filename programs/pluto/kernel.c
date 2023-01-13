@@ -568,38 +568,33 @@ static struct kernel_route kernel_route_from_state(const struct state *st, enum 
 }
 
 /*
- * Find the connection to connection c's peer's client with the
- * largest value of .routing.  If none is routed, return NULL.
- *
- * The return value is used to find other connections sharing a
- * destination (route).
+ * Find who currently owns the route and kernel policy matching the
+ * SPD.
  */
 
-enum owner_type {
-	ROUTE_OWNER,
-	POLICY_OWNER,
+struct spd_owner {
+	struct spd_route *policy;
+	struct spd_route *route;
 };
 
-static struct spd_route *spd_owner(const struct spd_route *spd,
-				   enum owner_type owner_type,
-				   unsigned indent)
+static const struct spd_owner null_spd_owner;
+
+static struct spd_owner spd_owner(const struct spd_route *spd, unsigned indent)
 {
 	struct connection *c = spd->connection;
 	struct logger *logger = c->logger;
 	if (!oriented(c)) {
 		llog(RC_LOG, logger,
 		     "connection no longer oriented - system interface change?");
-		return NULL;
+		return null_spd_owner;
 	}
+
 	selector_pair_buf spb;
-	ldbg(logger, "%*slooking for SPD %s owner of %s",
+	ldbg(logger, "%*slooking for SPD owners of %s",
 	     indent, "",
-	     (owner_type == ROUTE_OWNER ? "route" :
-	      owner_type == POLICY_OWNER ? "policy" :
-	      "???"),
 	     str_selector_pair(&spd->local->client, &spd->remote->client, &spb));
 
-	struct spd_route *owner = NULL;
+	struct spd_owner owner = null_spd_owner;
 
 	struct spd_route_filter srf = {
 		.remote_client_range = &spd->remote->client,
@@ -611,39 +606,31 @@ static struct spd_route *spd_owner(const struct spd_route *spd,
 		struct spd_route *d_spd = srf.spd;
 		struct connection *d = d_spd->connection;
 
+		/*
+		 * Part 1: eliminate cases common to both routes and
+		 * policies.
+		 */
+
 		if (spd == d_spd) {
 			ldbg(logger, "%*s%s skipped; same SPD",
 			     indent, "", d->name);
 			continue;
 		}
 
-		switch (owner_type) {
-		case ROUTE_OWNER:
-			if (!routed(d->child.routing)) {
-				ldbg(logger, "%*s%s skipped; unrouted",
-				     indent, "", d->name);
-				continue;
-			}
-			break;
-		case POLICY_OWNER:
-			if (!erouted(d->child.routing)) {
-				ldbg(logger, "%*s%s skipped; not installed",
-				     indent, "", d->name);
-				continue;
-			}
-			break;
-		}
-
-		PEXPECT(logger, erouted(d->child.routing));
-
-		if (!oriented(d)) {
-			/* being routed implies orented() */
-			llog_pexpect(logger, HERE, "skipping %s; unoriented yet routed",
-				     d->name);
+		if (d->child.routing == RT_UNROUTED) {
+			ldbg(logger, "%*s%s skipped; unrouted",
+			     indent, "", d->name);
 			continue;
 		}
 
-		/* lookup did it's job */
+		if (!oriented(d)) {
+			/* can happen during shutdown */
+			ldbg(logger, "%*s%s skipped; not oriented",
+			     indent, "", d->name);
+			continue;
+		}
+
+		/* fast lookup did it's job! */
 		PEXPECT(logger, selector_range_eq_selector_range(spd->remote->client,
 								 d_spd->remote->client));
 		if (!selector_eq_selector(spd->remote->client,
@@ -653,6 +640,7 @@ static struct spd_route *spd_owner(const struct spd_route *spd,
 			continue;
 		}
 
+		/* XXX: why? */
 		if (!address_eq_address(c->local->host.addr,
 					d->local->host.addr)) {
 			ldbg(logger, "%*s%s skipped; different local address?!?",
@@ -661,8 +649,8 @@ static struct spd_route *spd_owner(const struct spd_route *spd,
 		}
 
 		/*
-		 * Consider policies different if the either
-		 * in or out marks differ (after masking).
+		 * Consider SPDs to be different when the either in or
+		 * out marks differ (after masking).
 		 */
 
 		if ((c->sa_marks.in.val & c->sa_marks.in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask)) {
@@ -681,40 +669,68 @@ static struct spd_route *spd_owner(const struct spd_route *spd,
 			continue;
 		}
 
-		if (owner == NULL) {
-			ldbg(logger, "%*s%s saved; first matching SPD",
-			     indent, "", d->name);
-			owner = d_spd;
-			continue;
-		}
+		/*
+		 * Save either.
+		 */
 
-		if (d->child.routing > owner->connection->child.routing) {
-			ldbg(logger, "%*s%s saved; better matching SPD",
-			     indent, "", d->name);
-			owner = d_spd;
+		switch (d->child.routing) {
+		case RT_UNROUTED:
+			bad_case(d->child.routing); /* see above */
+		case RT_UNROUTED_NEGOTIATION:
+			if (owner.policy == NULL) {
+				ldbg(logger, "%*s%s saved SPD policy; first match",
+				     indent, "", d->name);
+				owner.policy = d_spd;
+			} else if (owner.policy->connection->child.routing < d->child.routing) {
+				ldbg(logger, "%*s%s saved SPD policy; better match",
+				     indent, "", d->name);
+				owner.policy = d_spd;
+			}
+			break;
+		case RT_ROUTED_PROSPECTIVE:
+		case RT_ROUTED_NEGOTIATION:
+		case RT_ROUTED_FAILURE:
+		case RT_ROUTED_TUNNEL:
+			if (owner.route == NULL) {
+				PEXPECT(logger, (owner.policy == NULL ||
+						 owner.policy->connection->child.routing == RT_UNROUTED_NEGOTIATION));
+				ldbg(logger, "%*s%s saved SPD route+policy; first route match",
+				     indent, "", d->name);
+				owner.route = owner.policy = d_spd;
+			} else if (owner.route->connection->child.routing < d->child.routing) {
+				ldbg(logger, "%*s%s saved SPD route+policy; better match",
+				     indent, "", d->name);
+				owner.route = owner.policy = d_spd;
+			}
+			break;
 		}
 	}
-
 	indent -= 2;
-	LSWDBGP(DBG_BASE, buf) {
-		connection_buf cib;
-		jam(buf, "%*s"PRI_CONNECTION" %s owner; routing: ",
-		    indent, "",
-		    pri_connection(c, &cib),
-		    enum_name(&routing_story, c->child.routing));
 
-		if (owner == NULL) {
-			jam(buf, "NULL");
-		} else if (owner->connection == spd->connection &&
-			   owner != spd) {
-			jam(buf, "sibling");
-		} else if (owner == spd) {
-			jam(buf, "self");
-		} else {
-			const struct connection *c = owner->connection;
-			connection_buf cib;
-			jam(buf, ""PRI_CONNECTION" %s",
-			    pri_connection(c, &cib), enum_name(&routing_story, c->child.routing));
+	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+		jam(buf, "%*s", indent, "");
+		jam_connection(buf, c);
+		jam_string(buf, " ");
+		jam_enum_short(buf, &routing_story, c->child.routing);
+		jam_string(buf, ":");
+
+		const char *what = "route";
+		FOR_EACH_THING(clash, owner.route, owner.policy) {
+			jam_string(buf, what);
+			jam_string(buf, " ");
+			if (clash == NULL) {
+				jam(buf, "NULL");
+			} else if (clash->connection == spd->connection) {
+				PEXPECT(logger, clash != spd); /*per-above*/
+				jam_string(buf, "sibling");
+			} else {
+				PEXPECT(logger, clash != spd); /*per-above*/
+				jam_connection(buf, clash->connection);
+				jam_string(buf, " ");
+				jam_enum_short(buf, &routing_story,
+					       clash->connection->child.routing);
+			}
+			what = "policy";
 		}
 	}
 
@@ -723,7 +739,7 @@ static struct spd_route *spd_owner(const struct spd_route *spd,
 
 static struct spd_route *route_owner(struct spd_route *spd)
 {
-	return spd_owner(spd, ROUTE_OWNER, 0);
+	return spd_owner(spd, 0).route;
 }
 
 /*
@@ -816,7 +832,7 @@ static void get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 	 * Find how owns the installed SPD (kernel policy).
 	 */
 
-	spd->wip.conflicting.spd = spd_owner(spd, POLICY_OWNER, indent);
+	spd->wip.conflicting.spd = spd_owner(spd, indent).policy;
 	pexpect(spd->wip.conflicting.spd == NULL ||
 		erouted(spd->wip.conflicting.spd->connection->child.routing));
 
@@ -1429,7 +1445,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 }
 
 /*
- * Install a bare hold or pass policy to a connection.
+ * Install the negotiation kernel policy.
  *
  * Either the automatically installed %hold eroute is broad enough or
  * we try to add a broader one and delete the automatic one.  Beware:
@@ -1437,6 +1453,8 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
  * because of a race.
  *
  * XXX: what race?
+ *
+ * XXX: description seems strange?
  */
 
 bool assign_holdpass(struct connection *c,
