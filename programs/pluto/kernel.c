@@ -1173,27 +1173,29 @@ void unroute_connection(struct connection *c)
 
 #include "kernel_alg.h"
 
-/* find an entry in the bare_shunt table.
- * Trick: return a pointer to the pointer to the entry;
- * this allows the entry to be deleted.
+/*
+ * Find a bare shunt that encompasses the selector pair.
+ *
+ * Since bare shunt kernel policies have the heighest priority (0) use
+ * selector_in_selector for the match.  For instance a bare shunt
+ * 1.2.3.4/32/tcp encompass the address 1.2.3.4/32/tcp/22.
+ *
+ * Trick: return a pointer to the pointer to the entry; this allows
+ * the entry to be deleted.
  */
 struct bare_shunt **bare_shunt_ptr(const ip_selector *our_client,
 				   const ip_selector *peer_client,
 				   const char *why)
 
 {
-	const struct ip_protocol *transport_proto = protocol_from_ipproto(our_client->ipproto);
-	pexpect(peer_client->ipproto == transport_proto->ipproto);
-
 	selector_pair_buf sb;
 	dbg("kernel: %s looking for %s",
 	    why, str_selector_pair(our_client, peer_client, &sb));
 	for (struct bare_shunt **pp = &bare_shunts; *pp != NULL; pp = &(*pp)->next) {
 		struct bare_shunt *p = *pp;
 		dbg_bare_shunt("comparing", p);
-		if (transport_proto == p->transport_proto &&
-		    selector_range_eq_selector_range(*our_client, p->our_client) &&
-		    selector_range_eq_selector_range(*peer_client, p->peer_client)) {
+		if (selector_in_selector(*our_client, p->our_client) &&
+		    selector_in_selector(*peer_client, p->peer_client)) {
 			return pp;
 		}
 	}
