@@ -89,7 +89,7 @@ static void jam_iketcp_prefix(struct jambuf *buf, const struct iface_endpoint *i
 static void dbg_iketcp(const struct iface_endpoint *ifp, const char *msg, ...) PRINTF_LIKE(2);
 void dbg_iketcp(const struct iface_endpoint *ifp, const char *msg, ...)
 {
-	LSWDBGP(DBG_BASE, buf) {
+	LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 		jam_iketcp_prefix(buf, ifp);
 		va_list ap;
 		va_start(ap, msg);

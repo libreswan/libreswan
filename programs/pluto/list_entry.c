@@ -71,11 +71,9 @@ void jam_list_entry(struct jambuf *buf, const struct list_entry *entry)
 static void log_entry(const char *op, struct list_entry *entry)
 {
 	passert(entry != NULL);
-	if (DBGP(DBG_TMI)) {
-		LSWLOG_DEBUG(buf) {
-			jam(buf, "%s: %s ", entry->info->name, op);
-			jam_list_entry(buf, entry);
-		}
+	LDBGP_JAMBUF(DBG_TMI, &global_logger, buf) {
+		jam(buf, "%s: %s ", entry->info->name, op);
+		jam_list_entry(buf, entry);
 	}
 	if (entry->next[OLD2NEW] != NULL || entry->next[NEW2OLD] != NULL) {
 		passert_entry(entry, entry->next[OLD2NEW] != NULL);
@@ -136,14 +134,12 @@ void insert_list_entry(struct list_head *list,
 {
 	passert_entry(entry, entry->info != NULL);
 	passert_entry(entry, entry->data != NULL);
-	if (DBGP(DBG_TMI)) {
-		LSWLOG_DEBUG(buf) {
-			jam(buf, "%s: inserting ",
-				entry->info->name);
-			jam_list_entry(buf, entry);
-			jam(buf, " into list ");
-			jam_list_entry(buf, &list->head);
-		}
+	LDBGP_JAMBUF(DBG_TMI, &global_logger, buf) {
+		jam(buf, "%s: inserting ",
+		    entry->info->name);
+		jam_list_entry(buf, entry);
+		jam(buf, " into list ");
+		jam_list_entry(buf, &list->head);
 	}
 	passert_entry(entry, list->head.info == entry->info);
 	passert_entry(entry, entry->data != NULL);
@@ -155,14 +151,12 @@ void insert_list_entry(struct list_head *list,
 	entry->next[NEW2OLD]->next[OLD2NEW] = entry;
 	entry->next[OLD2NEW]->next[NEW2OLD] = entry;
 	/* list->next[OLD2NEW] = list->next[OLD2NEW]; */
-	if (DBGP(DBG_TMI)) {
-		LSWLOG_DEBUG(buf) {
-			jam(buf, "%s: inserted  ",
-				entry->info->name);
-			jam_list_entry(buf, entry);
-			jam(buf, " into list ");
-			jam_list_entry(buf, &list->head);
-		}
+	LDBGP_JAMBUF(DBG_TMI, &global_logger, buf) {
+		jam(buf, "%s: inserted  ",
+		    entry->info->name);
+		jam_list_entry(buf, entry);
+		jam(buf, " into list ");
+		jam_list_entry(buf, &list->head);
 	}
 }
 

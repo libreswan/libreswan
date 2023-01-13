@@ -2068,7 +2068,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 		free_proposal_parser(&parser);
 
-		LSWDBGP(DBG_BASE, buf) {
+		LDBGP_JAMBUF(DBG_BASE, c->logger, buf) {
 			jam_string(buf, "ike (phase1) algorithm values: ");
 			jam_proposals(buf, c->config->ike_proposals.p);
 		}
@@ -2140,7 +2140,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		}
 		free_proposal_parser(&parser);
 
-		LSWDBGP(DBG_BASE, buf) {
+		LDBGP_JAMBUF(DBG_BASE, c->logger, buf) {
 			jam_string(buf, "ESP/AH string values: ");
 			jam_proposals(buf, c->config->child_proposals.p);
 		};

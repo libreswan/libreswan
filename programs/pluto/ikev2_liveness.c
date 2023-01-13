@@ -61,7 +61,7 @@ static void schedule_liveness(struct child_sa *child, deltatime_t time_since_las
 	 */
 	delay = deltatime_sub(delay, time_since_last_contact);
 	delay = deltatime_max(delay, deltatime(MIN_LIVENESS));
-	LSWDBGP(DBG_BASE, buf) {
+	LDBGP_JAMBUF(DBG_BASE, child->sa.st_logger, buf) {
 		deltatime_buf db;
 		endpoint_buf remote_buf;
 		jam(buf, "liveness: #%lu scheduling next check for %s in %s seconds",

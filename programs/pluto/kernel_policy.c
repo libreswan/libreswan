@@ -371,7 +371,7 @@ bool delete_kernel_policy(enum direction direction,
 	const struct ip_protocol *child_proto = selector_protocol(*src_child);
 	pexpect(child_proto == selector_protocol(*dst_child));
 
-	LSWDBGP(DBG_BASE, buf) {
+	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 
 		jam(buf, "kernel: %s() %s:", __func__, story);
 

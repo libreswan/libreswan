@@ -199,7 +199,7 @@ static bool emit_v2CERTREQ_ca(struct pbs_out *cr_pbs, chunk_t ca)
 	CERTCertificate *cacert = CERT_FindCertByName(handle, &caname); /* must unref */
 
 	if (cacert == NULL) {
-		LSWDBGP(DBG_BASE, buf) {
+		LDBGP_JAMBUF(DBG_BASE, cr_pbs->outs_logger, buf) {
 			jam(buf, "NSS: locating CA cert \'");
 			jam_dn(buf, ASN1(ca), jam_sanitized_bytes);
 			jam(buf, "\' for CERTREQ using CERT_FindCertByName() failed: ");

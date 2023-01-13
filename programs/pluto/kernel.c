@@ -257,7 +257,7 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 	enum shunt_policy prospective_shunt = c->config->prospective_shunt;
 	passert(prospective_shunt_ok(prospective_shunt));
 
-	LSWDBGP(DBG_BASE, buf) {
+	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 		jam(buf, "kernel: %s() ", __func__);
 
 		jam_connection(buf, c);
@@ -364,7 +364,7 @@ static void llog_bare_shunt(lset_t rc_flags, struct logger *logger,
 
 static void dbg_bare_shunt(const char *op, const struct bare_shunt *bs)
 {
-	LSWDBGP(DBG_BASE, buf) {
+	LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 		jam(buf, "%s ", op);
 		jam_bare_shunt(buf, bs);
 	}

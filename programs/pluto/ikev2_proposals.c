@@ -356,7 +356,7 @@ static void jam_chosen_proposal(struct jambuf *buf,
 void DBG_log_ikev2_proposal(const char *prefix,
 			    const struct ikev2_proposal *proposal)
 {
-	LSWLOG_DEBUG(buf) {
+	LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
 		jam(buf, "%s ikev2_proposal: ", prefix);
 		jam_v2_proposal(buf, proposal->propnum, proposal);
 	}
@@ -605,7 +605,7 @@ static int process_transforms(pb_stream *prop_pbs, struct jambuf *remote_jam_buf
 					}
 					if (local_transform->id == remote_transform.id &&
 					    local_transform->attr_keylen == remote_transform.attr_keylen) {
-						LSWDBGP(DBG_BASE, buf) {
+						LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 							jam(buf, "remote proposal %u transform %d (",
 							    remote_propnum, remote_transform_nr);
 							jam_type_transform(buf, type, &remote_transform);
@@ -656,7 +656,7 @@ static int process_transforms(pb_stream *prop_pbs, struct jambuf *remote_jam_buf
 	 *   transform types".
 	 */
 	lset_t unmatched_remote_transform_types = proposed_remote_transform_types & ~matched_remote_transform_types;
-	LSWDBGP(DBG_BASE, buf) {
+	LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 		jam(buf, "remote proposal %u proposed transforms: ",
 			remote_propnum);
 		jam_trans_types(buf, proposed_remote_transform_types);
@@ -666,7 +666,7 @@ static int process_transforms(pb_stream *prop_pbs, struct jambuf *remote_jam_buf
 		jam_trans_types(buf, unmatched_remote_transform_types);
 	}
 	if (unmatched_remote_transform_types) {
-		LSWDBGP(DBG_BASE, buf) {
+		LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 			jam(buf, "remote proposal %u does not match; unmatched remote transforms: ",
 				remote_propnum);
 			jam_trans_types(buf, unmatched_remote_transform_types);
@@ -679,7 +679,7 @@ static int process_transforms(pb_stream *prop_pbs, struct jambuf *remote_jam_buf
 	FOR_EACH_V2_PROPOSAL_IN_RANGE(local_propnum, local_proposal, local_proposals,
 				      local_propnum_base, local_propnum_bound) {
 		struct ikev2_proposal_match *matching_local_proposal = &matching_local_proposals[local_propnum];
-		LSWDBGP(DBG_BASE, log) {
+		LDBGP_JAMBUF(DBG_BASE, &global_logger, log) {
 			jam(log, "comparing remote proposal %u containing ",
 			    remote_propnum);
 			jam_trans_types(log, proposed_remote_transform_types);
@@ -761,7 +761,7 @@ static int process_transforms(pb_stream *prop_pbs, struct jambuf *remote_jam_buf
 		 *   ENCR!AEAD+ESP=NO     ENCR       INTEG+ESP  INTEG
 		 */
 		if (unmatched || missing) {
-			LSWDBGP(DBG_BASE, log) {
+			LDBGP_JAMBUF(DBG_BASE, &global_logger, log) {
 				jam(log, "remote proposal %d does not match local proposal %d; unmatched transforms: ",
 					remote_propnum, local_propnum);
 				jam_trans_types(log, unmatched);
@@ -878,7 +878,7 @@ static int ikev2_process_proposals(pb_stream *sa_payload,
 			 */
 			matching_local_proposal->optional_transform_types = optional_transform_types;
 			matching_local_proposal->required_transform_types = all_transform_types & ~optional_transform_types;
-			LSWDBGP(DBG_BASE, buf) {
+			LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 				jam(buf, "local proposal %d transforms: required: ",
 					local_propnum);
 				jam_trans_types(buf, matching_local_proposal->
@@ -1194,13 +1194,13 @@ v2_notification_t ikev2_process_sa_payload(const char *what,
 			if (expect_accepted) {
 				pexpect(matching_local_propnum == best_proposal->propnum);
 				/* don't log on initiator's end - redundant */
-				LSWDBGP(DBG_BASE, buf) {
+				LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 					jam_string(buf, "remote accepted the proposal ");
 					jam_jambuf(buf, remote_jam_buf);
 				}
 			} else {
 				if (opportunistic) {
-					LSWDBGP(DBG_BASE, buf) {
+					LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 						jam_chosen_proposal(buf, best_proposal,
 								    remote_jam_buf);
 					}
@@ -1774,7 +1774,7 @@ struct ikev2_proposals *ikev2_proposals_from_proposal(const char *story, const s
 	proposals->proposal[1] = *proposal;
 	proposals->proposal[1].propnum = 0; /* auto assign */
 	zero_thing(proposals->proposal[1].remote_spi);
-	LSWDBGP(DBG_BASE, buf) {
+	LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 		jam_string(buf, story);
 		jam_v2_proposals(buf, proposals);
 	}
@@ -2040,7 +2040,7 @@ struct ikev2_proposals *ikev2_proposals_from_proposals(enum ikev2_sec_proto_id p
 	v2_proposals->roof = 1; /* i.e., empty: [1,1) */
 
 	FOR_EACH_PROPOSAL(proposals, proposal) {
-		LSWDBGP(DBG_BASE, buf) {
+		LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 			jam(buf, "converting %s proposal ", name);
 			jam_proposal(buf, proposal);
 			jam_string(buf, " to ikev2 ...");
@@ -2083,7 +2083,7 @@ struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 		return NULL;
 	}
 
-	LSWDBGP(DBG_BASE, buf) {
+	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 		jam_string(buf, "constructing ESP/AH proposals with ");
 		if (default_dh == NULL) {
 			jam_string(buf, "no default DH");
@@ -2131,7 +2131,7 @@ struct ikev2_proposals *get_v2_child_proposals(struct connection *c,
 
 	for (int dup = 0; dup < (add_empty_msdh_duplicates ? 2 : 1); dup++) {
 		FOR_EACH_PROPOSAL(c->config->child_proposals.p, esp_info) {
-			LSWDBGP(DBG_BASE, log) {
+			LDBGP_JAMBUF(DBG_BASE, &global_logger, log) {
 				jam(log, "converting proposal ");
 				jam_proposal(log, esp_info);
 				jam(log, " to ikev2 ...");
@@ -2232,7 +2232,7 @@ static struct ikev2_proposals *get_v2_child_rekey_proposals(const char *story,
 				  /*2:MSDH_DOWNGRADE*/ OAKLEY_GROUP_NONE),
 				 0);
 	}
-	LSWDBGP(DBG_BASE, buf) {
+	LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 		jam_string(buf, story);
 		jam_v2_proposals(buf, proposals);
 	}

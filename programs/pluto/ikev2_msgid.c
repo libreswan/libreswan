@@ -113,7 +113,7 @@ static void jam_v2_msgid(struct jambuf *buf,
 
 void dbg_v2_msgid(struct ike_sa *ike, const char *fmt, ...)
 {
-	LSWDBGP(DBG_BASE, buf) {
+	LDBGP_JAMBUF(DBG_BASE, ike->sa.st_logger, buf) {
 		va_list ap;
 		va_start(ap, fmt);
 		jam_v2_msgid(buf, ike, fmt, ap);
@@ -145,19 +145,16 @@ static void dbg_msgids_update(const char *what,
 			      enum message_role message, intmax_t msgid,
 			      struct ike_sa *ike, const struct v2_msgid_windows *old_windows)
 {
-	if (DBGP(DBG_BASE)) {
-		LSWLOG_DEBUG(buf) {
-			jam_msgid_prefix(buf, ike);
-			jam(buf, " %s", what);
-
-			switch (message) {
-			case MESSAGE_REQUEST: jam(buf, " message request %jd", msgid); break;
-			case MESSAGE_RESPONSE: jam(buf, " message response %jd", msgid); break;
-			case NO_MESSAGE: break;
-			default: bad_case(message);
-			}
-			jam_window_details(buf, ike, old_windows);
+	LDBGP_JAMBUF(DBG_BASE, ike->sa.st_logger, buf) {
+		jam_msgid_prefix(buf, ike);
+		jam(buf, " %s", what);
+		switch (message) {
+		case MESSAGE_REQUEST: jam(buf, " message request %jd", msgid); break;
+		case MESSAGE_RESPONSE: jam(buf, " message response %jd", msgid); break;
+		case NO_MESSAGE: break;
+		default: bad_case(message);
 		}
+		jam_window_details(buf, ike, old_windows);
 	}
 }
 

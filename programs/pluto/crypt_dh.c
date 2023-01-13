@@ -95,7 +95,7 @@ struct dh_local_secret *calc_dh_local_secret(const struct dh_desc *group, struct
 	secret->group = group;
 	secret->privk = privk;
 	secret->pubk = pubk;
-	LSWDBGP(DBG_CRYPT, buf) {
+	LDBGP_JAMBUF(DBG_CRYPT, logger, buf) {
 		jam_dh_local_secret(buf, secret);
 		jam_string(buf, "created");
 	}

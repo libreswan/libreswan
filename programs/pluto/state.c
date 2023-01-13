@@ -3022,7 +3022,7 @@ void list_state_events(struct show *s, const monotime_t now)
 void set_v1_transition(struct state *st, const struct state_v1_microcode *transition,
 		       where_t where)
 {
-	LSWDBGP(DBG_BASE, buf) {
+	LDBGP_JAMBUF(DBG_BASE, st->st_logger, buf) {
 		jam(buf, "#%lu.st_v1_transition ", st->st_serialno);
 		jam_v1_transition(buf, st->st_v1_transition);
 		jam(buf, " to ");
@@ -3036,7 +3036,7 @@ void set_v1_transition(struct state *st, const struct state_v1_microcode *transi
 void set_v2_transition(struct state *st, const struct v2_state_transition *transition,
 		       where_t where)
 {
-	LSWDBGP(DBG_BASE, buf) {
+	LDBGP_JAMBUF(DBG_BASE, st->st_logger, buf) {
 		jam(buf, "#%lu.st_v2_transition ", st->st_serialno);
 		jam_v2_transition(buf, st->st_v2_transition);
 		jam(buf, " -> ");
@@ -3059,7 +3059,7 @@ static void jam_st(struct jambuf *buf, struct state *st)
 
 void switch_md_st(struct msg_digest *md, struct state *st, where_t where)
 {
-	LSWDBGP(DBG_BASE, buf) {
+	LDBGP_JAMBUF(DBG_BASE, st->st_logger, buf) {
 		jam(buf, "switching IKEv%d MD.ST from ", st->st_ike_version);
 		jam_st(buf, md->v1_st);
 		jam(buf, " to ");

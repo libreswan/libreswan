@@ -1147,7 +1147,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 				set_child_has_client(c, remote, false);
 			}
 
-			LSWDBGP(DBG_BASE, buf) {
+			LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 				jam(buf, "setting phase 2 virtual values to ");
 				jam_spd_end(buf, c->spd->remote, NULL, LEFT_END, LEMPTY, oriented(c));
 			}

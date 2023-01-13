@@ -805,7 +805,7 @@ void init_ikev1(struct logger *logger)
 
 		if (DBGP(DBG_BASE)) {
 			if (from->nr_transitions == 0) {
-				LSWLOG_DEBUG(buf) {
+				LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 					jam_string(buf, "  ");
 					lswlog_finite_state(buf, from);
 					jam_string(buf, ":");

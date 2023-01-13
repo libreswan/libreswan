@@ -256,7 +256,7 @@ static void DBG_pool(bool verbose, const struct addresspool *pool,
 static void DBG_pool(bool verbose, const struct addresspool *pool,
 		     const char *format, ...)
 {
-	LSWLOG_DEBUG(buf) {
+	LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
 		jam(buf, "pool ");
 		jam_range(buf, &pool->r);
 		jam(buf, ": ");
@@ -277,7 +277,7 @@ static void DBG_lease(bool verbose, const struct addresspool *pool, const struct
 static void DBG_lease(bool verbose, const struct addresspool *pool, const struct lease *lease,
 		      const char *format, ...)
 {
-	LSWLOG_DEBUG(buf) {
+	LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
 		jam(buf, "pool ");
 		jam_range(buf, &pool->r);
 		jam(buf, " lease ");

@@ -184,17 +184,4 @@ extern void linux_audit_init(int do_audit, struct logger *logger);
 # endif
 #endif
 
-#define LSWLOG_DEBUG(BUF)					\
-	JAMBUF(BUF)						\
-		/* no-prefix */					\
-		for (; BUF != NULL;				\
-		     jambuf_to_logger(BUF, &global_logger, DEBUG_STREAM), BUF = NULL)
-
-#define LSWDBGP(DEBUG, BUF)						\
-	for (bool lswlog_p = DBGP(DEBUG); lswlog_p; lswlog_p = false)	\
-		JAMBUF(BUF)						\
-			/* no-prefix */					\
-			for (; BUF != NULL;				\
-			     jambuf_to_logger(BUF, &global_logger, DEBUG_STREAM), BUF = NULL)
-
 #endif /* _PLUTO_LOG_H */

@@ -184,7 +184,7 @@ void server_fork_sigchld_handler(struct logger *logger)
 			dbg("waitpid returned nothing left to do (all child processes are busy)");
 			return;
 		default:
-			LSWDBGP(DBG_BASE, buf) {
+			LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 				jam(buf, "waitpid returned pid %d",
 					child);
 				jam_status(buf, status);
@@ -213,7 +213,7 @@ void server_fork_sigchld_handler(struct logger *logger)
 						    pid_entry->context,
 						    pid_entry->logger);
 			} else if (st == NULL) {
-				LSWDBGP(DBG_BASE, buf) {
+				LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 					jam_pid_entry_pid(buf, pid_entry);
 					jam_string(buf, " disappeared");
 				}

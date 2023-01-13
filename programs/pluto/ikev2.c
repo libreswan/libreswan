@@ -128,7 +128,7 @@ static void process_packet_with_secured_ike_sa(struct msg_digest *mdp, struct ik
 
 void ldbg_v2_success(struct ike_sa *ike)
 {
-	LSWDBGP(DBG_BASE, buf) {
+	LDBGP_JAMBUF(DBG_BASE, ike->sa.st_logger, buf) {
 		jam_logger_prefix(buf, ike->sa.st_logger);
 		jam_string(buf, ike->sa.st_v2_transition->story);
 		jam_string(buf, ": ");
@@ -996,7 +996,7 @@ void init_ikev2(void)
 					dbg("    %zu transitions", prev->nr_transitions);
 				}
 				/* start the new one */
-				LSWLOG_DEBUG(buf) {
+				LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
 					jam(buf, "  ");
 					lswlog_finite_state(buf, from);
 				}
@@ -1016,7 +1016,7 @@ void init_ikev2(void)
 				str_enum_short(&event_type_names, t->timeout_event, &tb),
 				send);
 
-			LSWLOG_DEBUG(buf) {
+			LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
 				enum_buf xb;
 				jam(buf, "       %s %s; payloads: ",
 				    str_enum_short(&ikev2_exchange_names, t->exchange, &xb),
@@ -1803,7 +1803,7 @@ void ikev2_process_packet(struct msg_digest *md)
 	 */
 
 	const enum isakmp_xchg_type ix = md->hdr.isa_xchg;
-	LSWDBGP(DBG_BASE, buf) {
+	LDBGP_JAMBUF(DBG_BASE, md->md_logger, buf) {
 		switch (expected_local_ike_role) {
 		case SA_RESPONDER:
 			jam(buf, "I am the IKE SA Original Responder");
@@ -2651,7 +2651,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 	pexpect(transition->state == ike->sa.st_state->kind);
 #endif
 
-	LSWDBGP(DBG_BASE, buf) {
+	LDBGP_JAMBUF(DBG_BASE, ike->sa.st_logger, buf) {
 		jam(buf, "#%lu complete_v2_state_transition()", ike->sa.st_serialno);
 		if (ike->sa.st_state->kind != transition->state) {
 			jam(buf, " in state %s", ike->sa.st_state->short_name);

@@ -75,7 +75,7 @@ void threadtime_stop(const threadtime_t *start, long serialno, const char *fmt, 
 {
 	if (DBGP(DBG_CPU_USAGE)) {
 		struct cpu_usage usage = threadtime_sub(threadtime_start(), *start);
-		LSWLOG_DEBUG(buf) {
+		LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
 			if (serialno > 0) {
 				/* on thread so in background */
 				jam(buf, "(#%lu) ", serialno);
@@ -104,7 +104,7 @@ struct cpu_usage logtime_stop(const logtime_t *start, const char *fmt, ...)
 {
 	struct cpu_usage usage = threadtime_sub(threadtime_start(), start->time);
 	if (DBGP(DBG_CPU_USAGE)) {
-		LSWLOG_DEBUG(buf) {
+		LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
 			/* update is indented by 2 indents */
 			for (int i = 0; i < start->level; i++) {
 				jam_string(buf, INDENT INDENT);
@@ -136,7 +136,7 @@ static void DBG_missing(const statetime_t *start, threadtime_t now,
 	 */
 	struct cpu_usage missing = threadtime_sub(now, last_log);
 	if (missing.thread_seconds > MISSING_FUDGE) {
-		LSWLOG_DEBUG(buf) {
+		LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
 			for (int i = 0; i < start->level; i++) {
 				jam_string(buf, INDENT INDENT);
 			}
@@ -250,7 +250,7 @@ void statetime_stop(const statetime_t *start, const char *fmt, ...)
 	/* time since start */
 	struct cpu_usage usage = threadtime_sub(stop_time, start->time);
 	if (DBGP(DBG_CPU_USAGE)) {
-		LSWLOG_DEBUG(buf) {
+		LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
 			/* update is indented by 2 indents */
 			for (int i = 0; i < start->level; i++) {
 				jam_string(buf, INDENT INDENT);

@@ -1863,7 +1863,7 @@ shunk_t pbs_in_left_as_shunk(const pb_stream *pbs)
 
 static void DBG_print_nat(const field_desc *fp, uintmax_t nat)
 {
-	LSWLOG_DEBUG(buf) {
+	LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
 		jam(buf, "   %s: %ju", fp->name, nat);
 		jam(buf, " (");
 		/*
@@ -2006,7 +2006,7 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 			}
 
 			case ft_lset: /* bits representing set */
-				LSWLOG_DEBUG(buf) {
+				LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
 					jam(buf, "   %s: ", fp->name);
 					jam_lset(buf, fp->desc, n);
 					jam(buf, " (0x%jx)", n);
@@ -2020,7 +2020,7 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 			break;
 
 		case ft_raw:            /* bytes to be left in network-order */
-			LSWLOG_DEBUG(buf) {
+			LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
 				jam(buf, "   %s: ", fp->name);
 				jam_dump_bytes(buf, inp, i);
 			}
@@ -2839,7 +2839,7 @@ bool pbs_out_raw(struct pbs_out *outs, const void *bytes, size_t len, const char
 		if (len > 16) { /* arbitrary */
 			DBG_dump(NULL, bytes, len);
 		} else {
-			LSWLOG_DEBUG(buf) {
+			LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
 				jam(buf, "%s: ", name);
 				jam_dump_bytes(buf, bytes, len);
 			}

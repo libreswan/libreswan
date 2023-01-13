@@ -178,7 +178,7 @@ bool next_spd_route(enum chrono order, struct spd_route_filter *filter)
 			/* save connection; but step off current entry */
 			filter->internal = entry->next[order];
 			filter->count++;
-			LSWDBGP(DBG_BASE, buf) {
+			LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 				jam_string(buf, "  found ");
 				jam_spd_route(buf, spd);
 			}
@@ -395,7 +395,7 @@ static bool next_connection(enum chrono adv, struct connection_filter *filter)
 			/* save connection; but step off current entry */
 			filter->internal = entry->next[adv];
 			filter->count++;
-			LSWDBGP(DBG_BASE, buf) {
+			LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 				jam_string(buf, "  found ");
 				jam_connection(buf, c);
 			}

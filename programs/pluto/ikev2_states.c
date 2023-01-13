@@ -209,7 +209,7 @@ static const struct v2_state_transition *v2_state_transition(struct logger *logg
 	struct ikev2_payload_errors message_payload_status = { .bad = false };
 	struct ikev2_payload_errors encrypted_payload_status = { .bad = false };
 
-	LSWDBGP(DBG_BASE, buf) {
+	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 		jam(buf, "looking for transition from %s matching ",
 		    state->short_name);
 		jam_msg_digest(buf, md);

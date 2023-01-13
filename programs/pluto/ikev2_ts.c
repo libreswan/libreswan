@@ -1591,7 +1591,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			struct connection *t = cf.c;
 			indent.level = 2;
 
-			LSWDBGP(DBG_BASE, buf) {
+			LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 				jam(buf, TS_INDENT, ts_indent);
 				jam(buf, "investigating template \"%s\";",
 					t->name);

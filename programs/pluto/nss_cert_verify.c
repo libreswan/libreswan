@@ -717,7 +717,7 @@ diag_t cert_verify_subject_alt_name(const CERTCertificate *cert, const struct id
 			}
 
 			if (c_len == strlen(n_ptr) && strncaseeq(n_ptr, c_ptr, c_len)) {
-				LSWDBGP(DBG_BASE, buf) {
+				LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 					jam(buf, "peer certificate subjectAltname '%s' matched '", ascii_id),
 					jam_sanitized_bytes(buf, current->name.other.data,
 							    current->name.other.len);

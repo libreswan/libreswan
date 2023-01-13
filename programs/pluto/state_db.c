@@ -327,7 +327,7 @@ static struct list_head *filter_head(struct state_filter *filter)
 	/* select list head */
 	struct list_head *bucket;
 	if (filter->ike_spis != NULL) {
-		LSWDBGP(DBG_BASE, buf) {
+		LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 			jam(buf, "FOR_EACH_STATE[ike_spis=");
 			jam_ike_spis(buf, filter->ike_spis);
 			jam(buf, "]... in "PRI_WHERE, pri_where(filter->where));
@@ -393,7 +393,7 @@ static bool next_state(enum chrono adv, struct state_filter *filter)
 			/* save state; but step off current entry */
 			filter->internal = entry->next[adv];
 			filter->count++;
-			LSWDBGP(DBG_BASE, buf) {
+			LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 				jam_string(buf, "  found ");
 				jam_state(buf, st);
 			}

@@ -489,7 +489,7 @@ static struct db_context *kernel_alg_db_new(struct child_proposals proposals,
 	bool success = true;
 	if (proposals.p != NULL) {
 		FOR_EACH_PROPOSAL(proposals.p, proposal) {
-			LSWDBGP(DBG_BASE, buf) {
+			LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 				jam_string(buf, "adding proposal: ");
 				jam_proposal(buf, proposal);
 			}
@@ -3242,7 +3242,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 				if (esp_attrs.transattrs.ta_integ == &ike_alg_integ_none &&
 				    !encrypt_desc_is_aead(esp_attrs.transattrs.ta_encrypt) &&
 				    !ah_seen) {
-					LSWDBGP(DBG_BASE, buf) {
+					LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 						jam_string(buf, "ESP from ");
 						jam_address(buf, &c->remote->host.addr);
 						jam_string(buf, " must either have AUTH or be combined with AH");

@@ -82,7 +82,7 @@ static void dbg_log_dns_question(struct p_dns_req *dnsr,
 		}
 	}
 
-	LSWDBGP(DBG_BASE, buf) {
+	LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 		jam(buf, "DNS QUESTION ");
 		jam_sanitized_bytes(buf, ldns_buffer_begin(output),
 				    ldns_buffer_position(output));

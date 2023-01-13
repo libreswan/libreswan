@@ -52,7 +52,7 @@ struct list_head *hash_table_bucket(struct hash_table *table, hash_t hash)
 
 void init_hash_table_entry(struct hash_table *table, void *data)
 {
-	LSWDBGP(DBG_TMI, buf) {
+	LDBGP_JAMBUF(DBG_TMI, &global_logger, buf) {
 		jam(buf, "entry %s@%p ", table->info->name, data);
 		table->info->jam(buf, data);
 		jam(buf, " initialized");
@@ -68,7 +68,7 @@ void add_hash_table_entry(struct hash_table *table, void *data)
 	struct list_head *bucket = hash_table_bucket(table, hash);
 	insert_list_entry(bucket, entry);
 	table->nr_entries++;
-	LSWDBGP(DBG_TMI, buf) {
+	LDBGP_JAMBUF(DBG_TMI, &global_logger, buf) {
 		jam(buf, "entry %s@%p ", table->info->name, data);
 		table->info->jam(buf, data);
 		jam(buf, " added to hash table bucket %p", bucket);
@@ -77,7 +77,7 @@ void add_hash_table_entry(struct hash_table *table, void *data)
 
 void del_hash_table_entry(struct hash_table *table, void *data)
 {
-	LSWDBGP(DBG_TMI, buf) {
+	LDBGP_JAMBUF(DBG_TMI, &global_logger, buf) {
 		jam(buf, "entry %s@%p ", table->info->name, data);
 		table->info->jam(buf, data);
 		/* HEAD AKA BUCKET isn't directly known */
