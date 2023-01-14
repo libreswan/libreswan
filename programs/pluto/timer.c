@@ -132,7 +132,6 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 
 	case EVENT_SA_DISCARD:
 	case EVENT_v1_REPLACE:
-	case EVENT_v1_REPLACE_IF_USED:
 	case EVENT_CRYPTO_TIMEOUT:
 	case EVENT_v1_PAM_TIMEOUT:
 		/*
@@ -295,9 +294,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		break;
 
 	case EVENT_v1_REPLACE:
-	case EVENT_v1_REPLACE_IF_USED:
-		pexpect(event_type == EVENT_v1_REPLACE ||
-			event_type == EVENT_v1_REPLACE_IF_USED);
+	{
 		const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
 		struct connection *c = st->st_connection;
 
@@ -306,7 +303,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 			/* not very interesting: no need to replace */
 			dbg("not replacing stale %s SA %lu; #%lu will do",
 			    satype, st->st_serialno, newer_sa);
-		} else if (event_type == EVENT_v1_REPLACE_IF_USED &&
+		} else if ((c->policy & POLICY_DONT_REKEY) &&
 			   monotime_cmp(now, >=, monotime_add(st->st_outbound_time,
 							      c->config->sa_rekey_margin))) {
 			/*
@@ -340,6 +337,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		event_delete(EVENT_v1_DPD, st);
 		event_schedule(EVENT_SA_EXPIRE, st->st_replace_margin, st);
 		break;
+	}
 
 	case EVENT_v2_REPLACE:
 		v2_event_sa_replace(st);

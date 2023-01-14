@@ -2596,30 +2596,33 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			}
 
 			/*
-			 * By default, we plan to rekey.
+			 * By default, we plan to rekey via the
+			 * replace event.
 			 *
 			 * If there isn't enough time to rekey, plan
 			 * to expire.
 			 *
 			 * If we are --dontrekey, a lot more rules
-			 * apply.  If we are the Initiator, use
-			 * REPLACE_IF_USED.  If we are the Responder,
-			 * and the dictated time was unacceptable (too
-			 * large), plan to REPLACE (the only way to
-			 * ratchet down the time).  If we are the
-			 * Responder, and the dictated time is
-			 * acceptable, plan to EXPIRE.
+			 * apply:
+			 *
+			 * If we are the Initiator, use REPLACE.
+			 *
+			 * If we are the Responder, and the dictated
+			 * time was unacceptable (too large), plan to
+			 * REPLACE (the only way to ratchet down the
+			 * time).  If we are the Responder, and the
+			 * dictated time is acceptable, plan to
+			 * EXPIRE.
 			 *
 			 * Note: for ISAKMP SA, we let the negotiated
 			 * time stand (implemented by earlier logic).
 			 */
 			if (agreed_time &&
-			    (c->policy & POLICY_DONT_REKEY)) {
-				event_type = ((smc->flags & SMF_INITIATOR) ?
-					      EVENT_v1_REPLACE_IF_USED :
-					      EVENT_SA_EXPIRE);
-			}
-			if (event_type != EVENT_SA_EXPIRE) {
+			    (c->policy & POLICY_DONT_REKEY) != LEMPTY &&
+			    (smc->flags & SMF_INITIATOR) == LEMPTY) {
+				/* per above, don't re-key responder */
+				event_type = EVENT_SA_EXPIRE;
+			} else {
 				deltatime_t marg = fuzz_rekey_margin(st->st_sa_role,
 								     c->config->sa_rekey_margin,
 								     c->config->sa_rekey_fuzz/*percent*/);

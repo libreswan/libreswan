@@ -227,7 +227,6 @@ enum event_type {
 	EVENT_v1_DPD_TIMEOUT,		/* v1 dead peer detection timeout */
 	EVENT_v1_PAM_TIMEOUT,		/* v1 give up on PAM helper */
 	EVENT_v1_REPLACE,		/* v1 replacement event */
-	EVENT_v1_REPLACE_IF_USED,	/* v1 replacement event */
 
 	EVENT_v2_REKEY,			/* SA rekey event */
 	EVENT_v2_REPLACE,		/* v2 IKE/Child SA replacement event */

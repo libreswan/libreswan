@@ -2313,12 +2313,11 @@ static const char *const event_v1_name[] = {
 	E(EVENT_v1_DPD_TIMEOUT),
 	E(EVENT_v1_PAM_TIMEOUT),
 	E(EVENT_v1_REPLACE),
-	E(EVENT_v1_REPLACE_IF_USED),
 #undef E
 };
 
 static const enum_names event_v1_names = {
-	EVENT_v1_SEND_XAUTH, EVENT_v1_REPLACE_IF_USED,
+	EVENT_v1_SEND_XAUTH, EVENT_v1_REPLACE,
 	ARRAY_REF(event_v1_name),
 	"EVENT_v1_", /* prefix */
 	&event_sa_names
