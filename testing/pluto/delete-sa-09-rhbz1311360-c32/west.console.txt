@@ -69,7 +69,7 @@ west #
 1v1 "westnet-eastnet" #3: sent Quick Mode request
 004 "westnet-eastnet" #3: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 west #
- # give the EVENT_SA_REPLACE a second to die
+ # give the EVENT_v1_REPLACE a second to die
 west #
  sleep 2
 west #

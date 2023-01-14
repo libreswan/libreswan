@@ -33,7 +33,7 @@ west #
 west #
  ipsec status |grep west-east
 west #
- # wait over one minute to ensure no EVENT_SA_REPLACE lingered and started something
+ # wait over one minute to ensure no EVENT_v1_REPLACE lingered and started something
 west #
  sleep 45
 west #

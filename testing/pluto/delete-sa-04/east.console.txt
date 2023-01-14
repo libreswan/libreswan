@@ -9,10 +9,10 @@ east #
 east #
  # waiting until we are within the last 50s of the IPsec SA lifetime
 east #
- while (ipsec status |grep STATE_QUICK_I2 |grep "EVENT_SA_REPLACE in 5"); ret=$?; [ $ret -ne 0 ]; do sleep 1; done
+ while (ipsec status |grep STATE_QUICK_I2 |grep "EVENT_v1_REPLACE in 5"); ret=$?; [ $ret -ne 0 ]; do sleep 1; done
 000 #2: "west-east-auto":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
 east #
- ipsec status |grep STATE_QUICK_I2 |grep "EVENT_SA_REPLACE in"
+ ipsec status |grep STATE_QUICK_I2 |grep "EVENT_v1_REPLACE in"
 000 #2: "west-east-auto":500 STATE_QUICK_I2 (sent QI2, IPsec SA established); REPLACE in XXs; newest; eroute owner; ISAKMP SA #1; idle;
 east #
  # Connection should be up, and there should be NO log message about "already replacing"
