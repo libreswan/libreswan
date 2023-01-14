@@ -35,6 +35,7 @@
 #include "log.h"
 #include "connections.h"
 #include "ikev2_notify.h"
+#include "ikev2_retransmit.h"
 
 struct ikev2_payload_errors {
 	bool bad;
@@ -115,7 +116,9 @@ struct finite_state v2_states[] = {
 	 * IKEv2 established states.
 	 */
 
-	S(STATE_V2_ESTABLISHED_IKE_SA, "established IKE SA", CAT_ESTABLISHED_IKE_SA, .v2.secured = true),
+	S(STATE_V2_ESTABLISHED_IKE_SA, "established IKE SA", CAT_ESTABLISHED_IKE_SA,
+	  .v2.secured = true,
+	  .v2.request_timeout = process_v2_ike_sa_established_request_timeout),
 	/* this message is used for both initial exchanges and rekeys */
 	S(STATE_V2_ESTABLISHED_CHILD_SA, "established Child SA", CAT_ESTABLISHED_CHILD_SA),
 

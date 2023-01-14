@@ -261,11 +261,11 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		dbg("IKEv%d retransmit event", st->st_ike_version);
 		switch (st->st_ike_version) {
 		case IKEv2:
-			retransmit_v2_msg(st);
+			event_v2_retransmit(st, now);
 			break;
 #ifdef USE_IKEv1
 		case IKEv1:
-			retransmit_v1_msg(st);
+			event_v1_retransmit(st, now);
 			break;
 #endif
 		default:

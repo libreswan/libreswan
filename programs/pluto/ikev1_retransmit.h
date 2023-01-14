@@ -19,6 +19,6 @@
 
 struct state;
 
-void retransmit_v1_msg(struct state *st);
+void event_v1_retransmit(struct state *st, monotime_t now);
 
 #endif

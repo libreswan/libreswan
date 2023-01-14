@@ -50,7 +50,8 @@
  * we'll extend the number of retransmissions as well to
  * improve the reliability.
  */
-void retransmit_v1_msg(struct state *st)
+
+void event_v1_retransmit(struct state *st, monotime_t now UNUSED)
 {
 	struct connection *c = st->st_connection;
 	/*

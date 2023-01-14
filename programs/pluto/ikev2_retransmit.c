@@ -34,7 +34,7 @@
 #include "ikev2_replace.h"
 #include "kernel.h"
 
-static void retransmit_timeout_action(struct ike_sa *ike)
+void process_v2_ike_sa_established_request_timeout(struct ike_sa *ike, monotime_t now UNUSED)
 {
 	const char *kind_name = enum_name(&connection_kind_names,
 					  ike->sa.st_connection->kind);
@@ -105,7 +105,7 @@ static void retransmit_timeout_action(struct ike_sa *ike)
  * XXX: it is the IKE SA that is responsible for all retransmits.
  */
 
-void retransmit_v2_msg(struct state *ike_sa)
+void event_v2_retransmit(struct state *ike_sa, monotime_t now)
 {
 	passert(ike_sa != NULL);
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
@@ -177,19 +177,8 @@ void retransmit_v2_msg(struct state *ike_sa)
 		return;
 	}
 
-	/*
-	 * The entire family is dead dead head.
-	 */
-	if (IS_IKE_SA_ESTABLISHED(&ike->sa)) {
-		/*
-		 * Since the IKE SA is established, mimic the
-		 * (probably wrong) behaviour of the old liveness code
-		 * path - it needs to revive all the connections under
-		 * the IKE SA and not just this one child(?).
-		 */
-		/* already logged */
-		retransmit_timeout_action(ike);
-		/* presumably retry_action() deletes the state? */
+	if (ike->sa.st_state->v2.request_timeout != NULL) {
+		ike->sa.st_state->v2.request_timeout(ike, now);
 		return;
 	}
 
