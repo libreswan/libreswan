@@ -68,6 +68,8 @@
 #include "ikev2_liveness.h"
 #include "ikev2_mobike.h"
 #include "ikev2_delete.h"		/* for submit_v2_delete_exchange() */
+#include "ikev1_replace.h"
+#include "ikev2_replace.h"
 
 static int state_event_cmp(const void *lp, const void *rp)
 {
@@ -293,54 +295,14 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		v2_event_sa_reauth(st);
 		break;
 
+#ifdef USE_IKEv1
 	case EVENT_v1_REPLACE:
-	{
-		const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
-		struct connection *c = st->st_connection;
-
-		so_serial_t newer_sa = get_newer_sa_from_connection(st);
-		if (newer_sa != SOS_NOBODY) {
-			/* not very interesting: no need to replace */
-			dbg("not replacing stale %s SA %lu; #%lu will do",
-			    satype, st->st_serialno, newer_sa);
-		} else if ((c->policy & POLICY_DONT_REKEY) &&
-			   monotime_cmp(now, >=, monotime_add(st->st_outbound_time,
-							      c->config->sa_rekey_margin))) {
-			/*
-			 * we observed no recent use: no need to replace
-			 *
-			 * The sampling effects mean that st_outbound_time
-			 * could be up to SHUNT_SCAN_INTERVAL more recent
-			 * than actual traffic because the sampler looks at
-			 * change over that interval.
-			 * st_outbound_time could also not yet reflect traffic
-			 * in the last SHUNT_SCAN_INTERVAL.
-			 * We expect that SHUNT_SCAN_INTERVAL is smaller than
-			 * c->sa_rekey_margin so that the effects of this will
-			 * be unimportant.
-			 * This is just an optimization: correctness is not
-			 * at stake.
-			 */
-			dbg("not replacing stale %s SA: inactive for %jds",
-			    satype, deltasecs(monotimediff(now, st->st_outbound_time)));
-		} else {
-			dbg("replacing stale %s SA",
-			    IS_IKE_SA(st) ? "ISAKMP" : "IPsec");
-			/*
-			 * XXX: this call gets double billed -
-			 * both to the state being deleted and
-			 * to the new state being created.
-			 */
-			ipsecdoi_replace(st, 1);
-		}
-
-		event_delete(EVENT_v1_DPD, st);
-		event_schedule(EVENT_SA_EXPIRE, st->st_replace_margin, st);
+		event_v1_replace(st, now);
 		break;
-	}
+#endif
 
 	case EVENT_v2_REPLACE:
-		v2_event_sa_replace(st);
+		event_v2_replace(st, now);
 		break;
 
 	case EVENT_SA_EXPIRE:

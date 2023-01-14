@@ -239,10 +239,12 @@ OBJS += ikev1.o ikev1_aggr.o ikev1_main.o ikev1_quick.o ikev1_dpd.o ikev1_spdb_s
 OBJS += ikev1_states.o ikev1_hash.o ikev1_message.o ikev1_nat.o
 OBJS += crypt_dh_v1.o
 OBJS += ikev1_retransmit.o
+OBJS += ikev1_replace.o
 OBJS += ikev1_host_pair.o
 OBJS += ikev1_spdb.o
 endif
 OBJS += ikev2.o ikev2_parent.o ikev2_child.o
+OBJS += ikev2_replace.o
 OBJS += ikev2_proposals.o
 OBJS += ikev2_states.o
 OBJS += ikev2_psk.o ikev2_ppk.o ikev2_crypto.o

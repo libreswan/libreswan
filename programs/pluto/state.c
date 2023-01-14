@@ -68,6 +68,9 @@
 #include "ikev2_eap.h"			/* for free_eap_state() */
 #include "lswfips.h"			/* for libreswan_fipsmode() */
 #include "show.h"
+#include "ikev1_replace.h"
+#include "ikev2_replace.h"
+
 
 bool uniqueIDs = false;
 
@@ -1462,23 +1465,32 @@ void delete_states_by_peer(const struct fd *whackfd, const ip_address *peer)
 	for (int ph1 = 0; ph1 < 2; ph1++) {
 		struct state_filter sf = { .where = HERE, };
 		while (next_state_new2old(&sf)) {
-			struct state *this = sf.st;
-			const struct connection *c = this->st_connection;
+			struct state *st = sf.st;
+			const struct connection *c = st->st_connection;
 			endpoint_buf b;
 			dbg("comparing %s to %s",
-			    str_endpoint(&this->st_remote_endpoint, &b),
+			    str_endpoint(&st->st_remote_endpoint, &b),
 			    peerstr);
 
 			if (peer != NULL /* ever false? */ &&
-			    endpoint_address_eq_address(this->st_remote_endpoint, *peer)) {
-				if (ph1 == 0 && IS_IKE_SA(this)) {
+			    endpoint_address_eq_address(st->st_remote_endpoint, *peer)) {
+				if (ph1 == 0 && IS_IKE_SA(st)) {
 					whack_log(RC_COMMENT, whackfd,
 						  "peer %s for connection %s crashed; replacing",
 						  peerstr,
 						  c->name);
-					ipsecdoi_replace(this, 1);
+					switch (st->st_ike_version) {
+#ifdef USE_IKEv1
+					case IKEv1:
+						ikev1_replace(st, 1);
+						break;
+#endif
+					case IKEv2:
+						ikev2_replace(st, 1);
+						break;
+					}
 				} else {
-					event_force(c->config->ike_info->replace_event, this);
+					event_force(c->config->ike_info->replace_event, st);
 				}
 			}
 		}

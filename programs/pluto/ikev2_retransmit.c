@@ -31,7 +31,7 @@
 #include "pluto_stats.h"
 #include "ikev2_send.h"
 #include "pending.h"
-#include "ipsec_doi.h"
+#include "ikev2_replace.h"
 #include "kernel.h"
 
 static void retransmit_timeout_action(struct ike_sa *ike)
@@ -225,7 +225,7 @@ void retransmit_v2_msg(struct state *ike_sa)
 			llog_sa(RC_LOG, ike, "%s", story);
 		}
 
-		ipsecdoi_replace(&ike->sa, try);
+		ikev2_replace(&ike->sa, try);
 	} else {
 		dbg("maximum number of keyingtries reached - deleting state");
 	}

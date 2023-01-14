@@ -53,6 +53,7 @@
 #include "ikev2.h"
 #include "log.h"
 #include "ipsec_doi.h"
+#include "ikev2_replace.h"
 #include "timer.h"
 #include "ike_spi.h"
 #include "rnd.h"
@@ -545,7 +546,7 @@ void schedule_v2_replace_event(struct state *st)
 	pexpect(st->st_v2_lifetime_event->ev_type == kind);
 }
 
-static bool state_is_expired(struct state *st, const char *verb)
+bool v2_state_is_expired(struct state *st, const char *verb)
 {
 	struct ike_sa *ike = ike_sa(st, HERE);
 	if (ike == NULL) {
@@ -608,7 +609,7 @@ static bool state_is_expired(struct state *st, const char *verb)
 
 void v2_event_sa_rekey(struct state *st)
 {
-	if (state_is_expired(st, "rekey")) {
+	if (v2_state_is_expired(st, "rekey")) {
 		return;
 	}
 
@@ -627,25 +628,9 @@ void v2_event_sa_rekey(struct state *st)
 		satype, st->st_serialno);
 }
 
-void v2_event_sa_replace(struct state *st)
-{
-	if (state_is_expired(st, "replace")) {
-		return;
-	}
-
-	const char *satype = IS_IKE_SA(st) ? "IKE" : "Child";
-	dbg("replacing stale %s SA", satype);
-
-	/*
-	 * XXX: For a CHILD SA, will this result in a re-key attempt?
-	 */
-	ipsecdoi_replace(st, 1);
-	event_force(EVENT_SA_EXPIRE, st);
-}
-
 void v2_event_sa_reauth(struct state *st)
 {
-	if (state_is_expired(st, "re-authenticating")) {
+	if (v2_state_is_expired(st, "re-authenticating")) {
 		return;
 	}
 
@@ -655,7 +640,7 @@ void v2_event_sa_reauth(struct state *st)
 	/*
 	 * XXX: For a CHILD SA, will this result in a re-key attempt?
 	 */
-	ipsecdoi_replace(st, 1);
+	ikev2_replace(st, 1);
 }
 
 /*

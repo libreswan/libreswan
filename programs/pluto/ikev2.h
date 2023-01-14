@@ -174,4 +174,6 @@ void llog_v2_success_exchange(struct ike_sa *ike);
 void llog_v2_success_story_details(struct ike_sa *ike);
 void ldbg_v2_success(struct ike_sa *ike);
 
+bool v2_state_is_expired(struct state *st, const char *verb);
+
 #endif

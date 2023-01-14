@@ -27,8 +27,6 @@ struct payload_digest;
 struct state;
 struct jambuf;
 
-extern void ipsecdoi_replace(struct state *st, unsigned long try);
-
 extern void init_phase2_iv(struct state *st, const msgid_t *msgid);
 
 extern bool accept_delete(struct msg_digest *md,

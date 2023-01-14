@@ -39,7 +39,7 @@
 #include "initiate.h"			/* for initiate_connection() */
 #include "revival.h"
 #include "pluto_shutdown.h"		/* for exiting_pluto */
-#include "ipsec_doi.h"
+#include "ikev2_replace.h"
 
 /*
  * Revival mechanism: keep track of connections
@@ -121,8 +121,9 @@ void add_revival_if_needed(struct state *st)
 		llog_sa(RC_LOG_SERIOUS, ike,
 			  "received Delete SA payload: replace CHILD SA #%lu now",
 			  st->st_serialno);
+		PASSERT(st->st_logger, st->st_ike_version == IKEv2);
 		st->st_replace_margin = deltatime(0);
-		ipsecdoi_replace(st, 1);
+		ikev2_replace(st, 1);
 		return;
 	}
 

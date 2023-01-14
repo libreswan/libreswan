@@ -29,7 +29,7 @@
 #include "log.h"
 #include "ikev1_send.h"
 #include "pending.h"
-#include "ipsec_doi.h"
+#include "ikev1_replace.h"
 #include "pluto_stats.h"
 
 #ifdef USE_IKEv1
@@ -116,7 +116,7 @@ void retransmit_v1_msg(struct state *st)
 			log_state(RC_COMMENT, st, "%s", story);
 		}
 
-		ipsecdoi_replace(st, next_try);
+		ikev1_replace(st, next_try);
 	}
 
 	pstat_sa_failed(st, REASON_TOO_MANY_RETRANSMITS);
