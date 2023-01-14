@@ -2149,7 +2149,7 @@ bool accept_delete(struct msg_digest *md,
 						  "received Delete SA payload: replace IPsec State #%lu now",
 						  dst->st_serialno);
 					dst->st_replace_margin = deltatime(0);
-					event_force(EVENT_SA_REPLACE, dst);
+					event_force(EVENT_v1_REPLACE, dst);
 				} else {
 					log_state(RC_LOG_SERIOUS, st,
 						  "received Delete SA(0x%08" PRIx32 ") payload: deleting IPsec State #%lu",

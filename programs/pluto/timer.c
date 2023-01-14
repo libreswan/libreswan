@@ -119,7 +119,10 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 	case EVENT_RETRANSMIT:
 		return &st->st_retransmit_event;
 
-	case EVENT_SA_REPLACE:
+	case EVENT_v2_REPLACE:
+		return &st->st_v2_lifetime_event;
+		break;
+
 	case EVENT_SA_EXPIRE:
 		switch (st->st_ike_version) {
 		case IKEv1: return &st->st_event;
@@ -128,6 +131,7 @@ struct state_event **state_event_slot(struct state *st, enum event_type type)
 		break;
 
 	case EVENT_SA_DISCARD:
+	case EVENT_v1_REPLACE:
 	case EVENT_v1_REPLACE_IF_USED:
 	case EVENT_CRYPTO_TIMEOUT:
 	case EVENT_v1_PAM_TIMEOUT:
@@ -290,61 +294,55 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 		v2_event_sa_reauth(st);
 		break;
 
-	case EVENT_SA_REPLACE:
+	case EVENT_v1_REPLACE:
 	case EVENT_v1_REPLACE_IF_USED:
-		switch (st->st_ike_version) {
-		case IKEv2:
-			pexpect(event_type == EVENT_SA_REPLACE);
-			v2_event_sa_replace(st);
-			break;
-		case IKEv1:
-			pexpect(event_type == EVENT_SA_REPLACE ||
-				event_type == EVENT_v1_REPLACE_IF_USED);
-			struct connection *c = st->st_connection;
-			const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
+		pexpect(event_type == EVENT_v1_REPLACE ||
+			event_type == EVENT_v1_REPLACE_IF_USED);
+		const char *satype = IS_IKE_SA(st) ? "IKE" : "CHILD";
+		struct connection *c = st->st_connection;
 
-			so_serial_t newer_sa = get_newer_sa_from_connection(st);
-			if (newer_sa != SOS_NOBODY) {
-				/* not very interesting: no need to replace */
-				dbg("not replacing stale %s SA %lu; #%lu will do",
-				    satype, st->st_serialno, newer_sa);
-			} else if (event_type == EVENT_v1_REPLACE_IF_USED &&
-				   monotime_cmp(now, >=, monotime_add(st->st_outbound_time,
-								      c->config->sa_rekey_margin))) {
-				/*
-				 * we observed no recent use: no need to replace
-				 *
-				 * The sampling effects mean that st_outbound_time
-				 * could be up to SHUNT_SCAN_INTERVAL more recent
-				 * than actual traffic because the sampler looks at
-				 * change over that interval.
-				 * st_outbound_time could also not yet reflect traffic
-				 * in the last SHUNT_SCAN_INTERVAL.
-				 * We expect that SHUNT_SCAN_INTERVAL is smaller than
-				 * c->sa_rekey_margin so that the effects of this will
-				 * be unimportant.
-				 * This is just an optimization: correctness is not
-				 * at stake.
-				 */
-				dbg("not replacing stale %s SA: inactive for %jds",
-				    satype, deltasecs(monotimediff(now, st->st_outbound_time)));
-			} else {
-				dbg("replacing stale %s SA",
-				    IS_IKE_SA(st) ? "ISAKMP" : "IPsec");
-				/*
-				 * XXX: this call gets double billed -
-				 * both to the state being deleted and
-				 * to the new state being created.
-				 */
-				ipsecdoi_replace(st, 1);
-			}
-
-			event_delete(EVENT_v1_DPD, st);
-			event_schedule(EVENT_SA_EXPIRE, st->st_replace_margin, st);
-			break;
-		default:
-			bad_case(st->st_ike_version);
+		so_serial_t newer_sa = get_newer_sa_from_connection(st);
+		if (newer_sa != SOS_NOBODY) {
+			/* not very interesting: no need to replace */
+			dbg("not replacing stale %s SA %lu; #%lu will do",
+			    satype, st->st_serialno, newer_sa);
+		} else if (event_type == EVENT_v1_REPLACE_IF_USED &&
+			   monotime_cmp(now, >=, monotime_add(st->st_outbound_time,
+							      c->config->sa_rekey_margin))) {
+			/*
+			 * we observed no recent use: no need to replace
+			 *
+			 * The sampling effects mean that st_outbound_time
+			 * could be up to SHUNT_SCAN_INTERVAL more recent
+			 * than actual traffic because the sampler looks at
+			 * change over that interval.
+			 * st_outbound_time could also not yet reflect traffic
+			 * in the last SHUNT_SCAN_INTERVAL.
+			 * We expect that SHUNT_SCAN_INTERVAL is smaller than
+			 * c->sa_rekey_margin so that the effects of this will
+			 * be unimportant.
+			 * This is just an optimization: correctness is not
+			 * at stake.
+			 */
+			dbg("not replacing stale %s SA: inactive for %jds",
+			    satype, deltasecs(monotimediff(now, st->st_outbound_time)));
+		} else {
+			dbg("replacing stale %s SA",
+			    IS_IKE_SA(st) ? "ISAKMP" : "IPsec");
+			/*
+			 * XXX: this call gets double billed -
+			 * both to the state being deleted and
+			 * to the new state being created.
+			 */
+			ipsecdoi_replace(st, 1);
 		}
+
+		event_delete(EVENT_v1_DPD, st);
+		event_schedule(EVENT_SA_EXPIRE, st->st_replace_margin, st);
+		break;
+
+	case EVENT_v2_REPLACE:
+		v2_event_sa_replace(st);
 		break;
 
 	case EVENT_SA_EXPIRE:

@@ -451,7 +451,7 @@ void connection_check_phase2(struct logger *logger)
 			if (c->config->dnshostname != NULL) {
 				restart_connections_by_peer(c, logger);
 			} else {
-				event_force(EVENT_SA_REPLACE, p1st);
+				event_force(c->config->ike_info->replace_event, p1st);
 			}
 		} else {
 			/* start a new connection. Something wanted it up */

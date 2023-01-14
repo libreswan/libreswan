@@ -208,8 +208,10 @@ struct impairment impairments[] = {
 	  "trigger the reauthenticate event", "SA"),
 	A("event-v2-liveness", STATE_EVENT_HANDLER, EVENT_v2_LIVENESS,
 	  "trigger the liveness event", "SA"),
-	A("event-sa-replace", STATE_EVENT_HANDLER, EVENT_SA_REPLACE,
-	  "trigger the replace event", "SA"),
+	A("event-v1-replace", STATE_EVENT_HANDLER, EVENT_v1_REPLACE,
+	  "trigger the IKEv1 replace event", "SA"),
+	A("event-v2-replace", STATE_EVENT_HANDLER, EVENT_v2_REPLACE,
+	  "trigger the IKEv2 replace event", "SA"),
 
 	V("cannot-ondemand", cannot_ondemand,
 	  "force acquire to call cannot_ondemand() and fail"),

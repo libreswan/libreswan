@@ -637,7 +637,7 @@ static bool flush_incomplete_child(struct state *cst, void *pst)
 				c->config->ike_info->sa_type_name[IKE_SA],
 				ike->sa.st_serialno);
 			child->sa.st_policy = c->policy; /* for pick_initiator */
-			event_force(EVENT_SA_REPLACE, &child->sa);
+			event_force(c->config->ike_info->replace_event, &child->sa);
 
 		} else {
 
@@ -1478,7 +1478,7 @@ void delete_states_by_peer(const struct fd *whackfd, const ip_address *peer)
 						  c->name);
 					ipsecdoi_replace(this, 1);
 				} else {
-					event_force(EVENT_SA_REPLACE, this);
+					event_force(c->config->ike_info->replace_event, this);
 				}
 			}
 		}
@@ -3197,7 +3197,7 @@ void set_sa_expire_next_event(enum event_type next_event, struct state *st)
 	case IKEv1:
 		event_delete(EVENT_v1_DPD, st);
 		if (next_event == EVENT_NULL)
-			next_event = EVENT_SA_REPLACE;
+			next_event = EVENT_v1_REPLACE;
 		break;
 	default:
 		bad_case(st->st_ike_version);

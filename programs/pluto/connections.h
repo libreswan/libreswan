@@ -163,6 +163,7 @@ struct ike_info {
 	/* [IKE_SA]  = ISAKMP SA | IKE SA */
 	/* [IPSEC_SA = IPsec SA  | Child SA */
 	const char *sa_type_name[SA_TYPE_ROOF];
+	enum event_type replace_event;
 };
 
 struct config {

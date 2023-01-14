@@ -1824,6 +1824,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			.sa_name[IPSEC_SA] = "IPsec",
 			.sa_type_name[IKE_SA] = "ISAKMP SA",
 			.sa_type_name[IPSEC_SA] = "IPsec SA",
+			.replace_event = EVENT_v1_REPLACE,
 		},
 		[IKEv2] = {
 			.version = IKEv2,
@@ -1832,6 +1833,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			.sa_name[IPSEC_SA] = "Child",
 			.sa_type_name[IKE_SA] = "IKE SA",
 			.sa_type_name[IPSEC_SA] = "Child SA",
+			.replace_event = EVENT_v2_REPLACE,
 		},
 	};
 	passert(wm->ike_version < elemsof(ike_info));

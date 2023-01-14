@@ -382,7 +382,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .opt_enc_payloads = P(CERT) | P(CP) | P(SA) | P(TSi) | P(TSr),
 	  .processor  = process_v2_IKE_AUTH_response,
 	  .llog_success = ldbg_v2_success,/* logged mid transition */
-	  .timeout_event = EVENT_SA_REPLACE,
+	  .timeout_event = EVENT_v2_REPLACE,
 	},
 
 	{ .story      = "Initiator: processing IKE_AUTH failure response",
@@ -454,7 +454,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .opt_enc_payloads = P(CERT) | P(CERTREQ) | P(IDr) | P(CP) | P(SA) | P(TSi) | P(TSr),
 	  .processor  = process_v2_IKE_AUTH_request,
 	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_SA_REPLACE, },
+	  .timeout_event = EVENT_v2_REPLACE, },
 
 	{ .story      = "Responder: process IKE_AUTH request, initiate EAP",
 	  .state      = STATE_V2_PARENT_R1,
@@ -494,7 +494,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .req_enc_payloads = P(AUTH),
 	  .processor  = process_v2_IKE_AUTH_request_EAP_final,
 	  .llog_success = llog_v2_success_story,
-	  .timeout_event = EVENT_SA_REPLACE, },
+	  .timeout_event = EVENT_v2_REPLACE, },
 
 	/*
 	 * Create a Child SA during IKE_AUTH.
@@ -509,7 +509,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .processor  = NULL,
 	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_SA_REPLACE, },
+	  .timeout_event = EVENT_v2_REPLACE, },
 
 	{ .story      = "Child SA created by responder during IKE_AUTH",
 	  .state      = STATE_V2_IKE_AUTH_CHILD_R0,
@@ -518,7 +518,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .exchange   = ISAKMP_v2_IKE_AUTH,
 	  .processor  = NULL,
 	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_SA_REPLACE, },
+	  .timeout_event = EVENT_v2_REPLACE, },
 
 	/*
 	 * Child transitions wheh rekeying an IKE SA using
@@ -556,7 +556,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .opt_enc_payloads = P(N),
 	  .processor  = process_v2_CREATE_CHILD_SA_rekey_ike_request,
 	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_SA_REPLACE, },
+	  .timeout_event = EVENT_v2_REPLACE, },
 
 	{ .story      = "process rekey IKE SA response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_REKEY_IKE_I1,
@@ -569,7 +569,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .opt_enc_payloads = P(N),
 	  .processor  = process_v2_CREATE_CHILD_SA_rekey_ike_response,
 	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_SA_REPLACE, },
+	  .timeout_event = EVENT_v2_REPLACE, },
 
 	{ .story      = "process rekey IKE SA failure response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_REKEY_IKE_I1,
@@ -620,7 +620,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .encrypted_payloads.notification = v2N_REKEY_SA,
 	  .processor  = process_v2_CREATE_CHILD_SA_rekey_child_request,
 	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_SA_REPLACE, },
+	  .timeout_event = EVENT_v2_REPLACE, },
 
 	{ .story      = "process rekey Child SA response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_REKEY_CHILD_I1,
@@ -634,7 +634,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_CREATE_CHILD_SA_child_response,
 	  /* .processor  = process_v2_CREATE_CHILD_SA_rekey_child_response, */
 	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_SA_REPLACE, },
+	  .timeout_event = EVENT_v2_REPLACE, },
 
 	{ .story      = "process rekey Child SA failure response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_REKEY_CHILD_I1,
@@ -684,7 +684,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .opt_enc_payloads = P(KE) | P(N) | P(CP),
 	  .processor  = process_v2_CREATE_CHILD_SA_new_child_request,
 	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_SA_REPLACE, },
+	  .timeout_event = EVENT_v2_REPLACE, },
 
 	{ .story      = "process create Child SA response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_NEW_CHILD_I1,
@@ -698,7 +698,7 @@ static /*const*/ struct v2_state_transition v2_state_transition_table[] = {
 	  .processor  = process_v2_CREATE_CHILD_SA_child_response,
 	  /* .processor  = process_v2_CREATE_CHILD_SA_new_child_response, */
 	  .llog_success = ldbg_v2_success,
-	  .timeout_event = EVENT_SA_REPLACE, },
+	  .timeout_event = EVENT_v2_REPLACE, },
 
 	{ .story      = "process create Child SA failure response (CREATE_CHILD_SA)",
 	  .state      = STATE_V2_NEW_CHILD_I1,
@@ -2488,7 +2488,7 @@ static void success_v2_state_transition(struct ike_sa *ike,
 		pexpect(transition->send_role == MESSAGE_REQUEST);
 		break;
 
-	case EVENT_SA_REPLACE: /* IKE or Child SA replacement event */
+	case EVENT_v2_REPLACE: /* IKE or Child SA replacement event */
 		delete_event(&ike->sa); /* relying on replace */
 		schedule_v2_replace_event(&ike->sa);
 		break;

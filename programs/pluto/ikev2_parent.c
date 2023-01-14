@@ -498,7 +498,7 @@ void schedule_v2_replace_event(struct state *st)
 		kind = EVENT_SA_EXPIRE;
 		story = "policy doesn't allow re-key";
 	} else if (IS_IKE_SA(st) && LIN(POLICY_REAUTH, st->st_connection->policy)) {
-		kind = EVENT_SA_REPLACE;
+		kind = EVENT_v2_REPLACE;
 		story = "IKE SA with policy re-authenticate";
 	} else {
 		deltatime_t marg = fuzz_rekey_margin(st->st_sa_role,
@@ -524,13 +524,13 @@ void schedule_v2_replace_event(struct state *st)
 		pexpect(st->st_v2_refresh_event->ev_type == EVENT_v2_REKEY);
 		story = "attempting re-key";
 
-		kind = EVENT_SA_REPLACE;
+		kind = EVENT_v2_REPLACE;
 	}
 
 	/*
 	 * This is the drop-dead event.
 	 */
-	passert(kind == EVENT_SA_REPLACE || kind == EVENT_SA_EXPIRE);
+	passert(kind == EVENT_v2_REPLACE || kind == EVENT_SA_EXPIRE);
 	deltatime_buf lb;
 	dbg(PRI_SO" will %s in %s seconds (%s)",
 	    st->st_serialno,
