@@ -155,6 +155,26 @@ void start_retransmits(struct state *st)
 
 enum retransmit_status retransmit(struct state *st)
 {
+	/*
+	 * XXX: this is the IKE SA's retry limit; a second child
+	 * trying to establish may have a different policy.
+	 */
+
+	/*
+	 * Paul: this line can stay attempt 3 of 2 because the cleanup
+	 * happens when over the maximum
+	 */
+	struct connection *c = st->st_connection;
+	unsigned long try_limit = c->sa_keying_tries;
+	unsigned long try = st->st_try + 1;
+	address_buf b;
+	connection_buf cib;
+	ldbg(st->st_logger,
+	     "handling event EVENT_RETRANSMIT for %s "PRI_CONNECTION" #%lu attempt %lu of %lu",
+	     ipstr(&c->remote->host.addr, &b),
+	     pri_connection(c, &cib),
+	     st->st_serialno, try, try_limit);
+
 	retransmit_t *rt = &st->st_retransmit;
 
 	/*

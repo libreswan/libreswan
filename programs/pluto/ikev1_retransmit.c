@@ -61,15 +61,6 @@ void event_v1_retransmit(struct state *st, monotime_t now UNUSED)
 	unsigned long current_try = st->st_try;
 	unsigned long try_limit = c->sa_keying_tries;
 
-	/* Paul: this line can say attempt 3 of 2 because the cleanup happens when over the maximum */
-	address_buf b;
-	connection_buf cib;
-	dbg("handling event EVENT_RETRANSMIT for %s "PRI_CONNECTION" #%lu keying attempt %lu of %lu; retransmit %lu",
-	    str_address(&c->remote->host.addr, &b),
-	    pri_connection(c, &cib),
-	    st->st_serialno, current_try, try_limit,
-	    retransmit_count(st) + 1);
-
 	switch (retransmit(st)) {
 	case RETRANSMIT_YES:
 		resend_recorded_v1_ike_msg(st, "EVENT_RETRANSMIT");

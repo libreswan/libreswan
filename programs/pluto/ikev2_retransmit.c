@@ -114,33 +114,6 @@ void event_v2_retransmit(struct state *ike_sa, monotime_t now)
 		return;
 	}
 
-	/*
-	 * XXX: this is the IKE SA's retry limit; a second child
-	 * trying to establish may have a different policy.
-	 */
-	struct connection *c = ike->sa.st_connection;
-	unsigned long try_limit = c->sa_keying_tries;
-	unsigned long try = ike->sa.st_try + 1;
-
-	/*
-	 * Paul: this line can stay attempt 3 of 2 because the cleanup
-	 * happens when over the maximum
-	 */
-	if (DBGP(DBG_BASE)) {
-		ipstr_buf b;
-		connection_buf cib;
-		DBG_log("handling event EVENT_RETRANSMIT for %s "PRI_CONNECTION" #%lu attempt %lu of %lu",
-			ipstr(&c->remote->host.addr, &b),
-			pri_connection(c, &cib),
-			ike->sa.st_serialno, try, try_limit);
-		DBG_log("and parent for %s "PRI_CONNECTION" #%lu keying attempt %lu of %lu; retransmit %lu",
-			ipstr(&c->remote->host.addr, &b),
-			pri_connection(c, &cib),
-			ike->sa.st_serialno,
-			ike->sa.st_try, try_limit,
-			retransmit_count(&ike->sa) + 1);
-	}
-
 	/* if this connection has a newer Child SA than this state
 	 * this negotiation is not relevant any more.  would this
 	 * cover if there are multiple CREATE_CHILD_SA pending on this
@@ -155,6 +128,7 @@ void event_v2_retransmit(struct state *ike_sa, monotime_t now)
 	 * is the "newest". Should > be replaced with != ?
 	 */
 
+	struct connection *c = ike->sa.st_connection;
 	if (!IS_IKE_SA_ESTABLISHED(&ike->sa) && c->newest_ike_sa > ike->sa.st_serialno) {
 		llog_sa(RC_LOG, ike,
 			  "suppressing retransmit because IKE SA was superseded #%lu try=%lu; drop this negotiation",
