@@ -32,6 +32,7 @@
 #include "ikev2_send.h"
 #include "pending.h"
 #include "ikev2_replace.h"
+#include "ikev2.h"		/* for ikev2_retry_establishing_ike_sa() */
 #include "kernel.h"
 
 void process_v2_ike_sa_established_request_timeout(struct ike_sa *ike, monotime_t now UNUSED)
@@ -187,36 +188,8 @@ void event_v2_retransmit(struct state *ike_sa, monotime_t now)
 	 * The retry is probably valid.  However, would it be easier
 	 * to just let the replace code handle this?
 	 */
-	if (try != 0 && (try <= try_limit || try_limit == 0)) {
-		/*
-		 * A lot like EVENT_SA_REPLACE, but over again.
-		 * Since we know that st cannot be in use,
-		 * we can delete it right away.
-		 */
-		char story[80]; /* arbitrary limit */
-
-		snprintf(story, sizeof(story), try_limit == 0 ?
-			"starting keying attempt %ld of an unlimited number" :
-			"starting keying attempt %ld of at most %ld",
-			try, try_limit);
-
-		if (fd_p(ike->sa.st_logger->object_whackfd)) {
-			/*
-			 * Release whack because the observer will
-			 * get bored.
-			 */
-			llog_sa(RC_COMMENT, ike,
-				  "%s, but releasing whack",
-				  story);
-			release_pending_whacks(&ike->sa, story);
-		} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-			/* no whack: just log to syslog */
-			llog_sa(RC_LOG, ike, "%s", story);
-		}
-
-		ikev2_replace(&ike->sa, try);
-	} else {
-		dbg("maximum number of keyingtries reached - deleting state");
+	if (ikev2_retry_establishing_ike_sa(ike)) {
+		return;
 	}
 
 	/*
