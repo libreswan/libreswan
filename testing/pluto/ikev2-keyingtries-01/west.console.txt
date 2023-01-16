@@ -19,7 +19,7 @@ initdone
 west #
  ipsec whack --impair ke-payload:omit
 west #
- ipsec whack --impair revival
+ ipsec whack --impair revival  # give up after N retry attempts
 west #
  # keyingtries=1, 3s
 west #
@@ -33,8 +33,6 @@ west #
 031 "westnet-eastnet-k1" #1: STATE_V2_PARENT_I1: 3 second timeout exceeded after 2 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 002 "westnet-eastnet-k1" #1: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
 002 "westnet-eastnet-k1" #1: IMPAIR: skipping revival of connection that is supposed to remain up
-west #
- sleep 5
 west #
  ipsec auto --delete westnet-eastnet-k1
 002 "westnet-eastnet-k1": terminating SAs using this connection
@@ -51,10 +49,15 @@ west #
 031 "westnet-eastnet-k3" #2: STATE_V2_PARENT_I1: 3 second timeout exceeded after 2 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 000 "westnet-eastnet-k3" #2: starting keying attempt 2 of at most 3, but releasing whack
 west #
- sleep 15
+ ../../guestbin/wait-for.sh --match ' 3 of at most 3' -- cat /tmp/pluto.log
+"westnet-eastnet-k3" #3: starting keying attempt 3 of at most 3
+west #
+ ../../guestbin/wait-for.sh --match '"westnet-eastnet-k3" #3.*skipping revival' -- cat /tmp/pluto.log
+"westnet-eastnet-k3" #3: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  ipsec auto --delete westnet-eastnet-k3
 002 "westnet-eastnet-k3": terminating SAs using this connection
+002 "westnet-eastnet-k3" #4: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
 west #
  # keyingtries=0 (default, forever)
 west #
@@ -68,53 +71,8 @@ west #
 031 "westnet-eastnet" #5: STATE_V2_PARENT_I1: 3 second timeout exceeded after 2 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 000 "westnet-eastnet" #5: starting keying attempt 2 of an unlimited number, but releasing whack
 west #
- # give whack released connection some time to do a few keyingtries
-west #
- sleep 30
-west #
- ipsec stop
-Redirecting to: [initsystem]
-west #
- # head -37 is magic to make logging more predictable
-west #
- grep "keying attempt" OUTPUT/west.pluto.log | head -37
-| and parent for 192.1.2.23 "westnet-eastnet-k1" #1 keying attempt 1 of 1; retransmit 1
-| and parent for 192.1.2.23 "westnet-eastnet-k1" #1 keying attempt 1 of 1; retransmit 2
-| and parent for 192.1.2.23 "westnet-eastnet-k1" #1 keying attempt 1 of 1; retransmit 3
-| and parent for 192.1.2.23 "westnet-eastnet-k3" #2 keying attempt 1 of 3; retransmit 1
-| and parent for 192.1.2.23 "westnet-eastnet-k3" #2 keying attempt 1 of 3; retransmit 2
-| and parent for 192.1.2.23 "westnet-eastnet-k3" #2 keying attempt 1 of 3; retransmit 3
-"westnet-eastnet-k3" #2: starting keying attempt 2 of at most 3, but releasing whack
-| and parent for 192.1.2.23 "westnet-eastnet-k3" #3 keying attempt 2 of 3; retransmit 1
-| and parent for 192.1.2.23 "westnet-eastnet-k3" #3 keying attempt 2 of 3; retransmit 2
-| and parent for 192.1.2.23 "westnet-eastnet-k3" #3 keying attempt 2 of 3; retransmit 3
-"westnet-eastnet-k3" #3: starting keying attempt 3 of at most 3
-| and parent for 192.1.2.23 "westnet-eastnet-k3" #4 keying attempt 3 of 3; retransmit 1
-| and parent for 192.1.2.23 "westnet-eastnet-k3" #4 keying attempt 3 of 3; retransmit 2
-| and parent for 192.1.2.23 "westnet-eastnet-k3" #4 keying attempt 3 of 3; retransmit 3
-| and parent for 192.1.2.23 "westnet-eastnet" #5 keying attempt 1 of 0; retransmit 1
-| and parent for 192.1.2.23 "westnet-eastnet" #5 keying attempt 1 of 0; retransmit 2
-| and parent for 192.1.2.23 "westnet-eastnet" #5 keying attempt 1 of 0; retransmit 3
-"westnet-eastnet" #5: starting keying attempt 2 of an unlimited number, but releasing whack
-| and parent for 192.1.2.23 "westnet-eastnet" #6 keying attempt 2 of 0; retransmit 1
-| and parent for 192.1.2.23 "westnet-eastnet" #6 keying attempt 2 of 0; retransmit 2
-| and parent for 192.1.2.23 "westnet-eastnet" #6 keying attempt 2 of 0; retransmit 3
+ ../../guestbin/wait-for.sh --match ' 3 of an unlimited number' -- cat /tmp/pluto.log
 "westnet-eastnet" #6: starting keying attempt 3 of an unlimited number
-| and parent for 192.1.2.23 "westnet-eastnet" #7 keying attempt 3 of 0; retransmit 1
-| and parent for 192.1.2.23 "westnet-eastnet" #7 keying attempt 3 of 0; retransmit 2
-| and parent for 192.1.2.23 "westnet-eastnet" #7 keying attempt 3 of 0; retransmit 3
-"westnet-eastnet" #7: starting keying attempt 4 of an unlimited number
-| and parent for 192.1.2.23 "westnet-eastnet" #8 keying attempt 4 of 0; retransmit 1
-| and parent for 192.1.2.23 "westnet-eastnet" #8 keying attempt 4 of 0; retransmit 2
-| and parent for 192.1.2.23 "westnet-eastnet" #8 keying attempt 4 of 0; retransmit 3
-"westnet-eastnet" #8: starting keying attempt 5 of an unlimited number
-| and parent for 192.1.2.23 "westnet-eastnet" #9 keying attempt 5 of 0; retransmit 1
-| and parent for 192.1.2.23 "westnet-eastnet" #9 keying attempt 5 of 0; retransmit 2
-| and parent for 192.1.2.23 "westnet-eastnet" #9 keying attempt 5 of 0; retransmit 3
-"westnet-eastnet" #9: starting keying attempt 6 of an unlimited number
-| and parent for 192.1.2.23 "westnet-eastnet" #10 keying attempt 6 of 0; retransmit 1
-| and parent for 192.1.2.23 "westnet-eastnet" #10 keying attempt 6 of 0; retransmit 2
-| and parent for 192.1.2.23 "westnet-eastnet" #10 keying attempt 6 of 0; retransmit 3
 west #
  echo done
 done
