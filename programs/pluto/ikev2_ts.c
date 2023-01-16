@@ -37,6 +37,7 @@
 #include "iface.h"
 #include "pending.h"		/* for connection_is_pending() */
 #include "connection_db.h"	/* for spd_route_db_add_connection() */
+#include "instantiate.h"
 
 #define TS_MAX 16 /* arbitrary */
 

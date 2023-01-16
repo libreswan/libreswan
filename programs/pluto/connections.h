@@ -626,11 +626,6 @@ extern void release_connection(struct connection *c);
 extern void delete_connection(struct connection **cp);
 extern void delete_connections_by_name(const char *name, bool strict, struct logger *logger);
 extern void delete_every_connection(void);
-struct connection *group_instantiate(struct connection *group,
-				     const ip_subnet remote_subnet,
-				     const struct ip_protocol *protocol,
-				     ip_port local_port,
-				     ip_port remote_port);
 
 extern void rekey_now(const char *name, enum sa_type sa_type,
 		      bool background, struct logger *logger);
@@ -647,28 +642,6 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 					      const ip_packet packet,
 					      shunk_t sec_label,
 					      struct logger *logger);
-
-/* instantiating routines */
-
-struct connection *rw_responder_instantiate(struct connection *t,
-					    const ip_address peer_addr,
-					    where_t where);
-extern struct connection *rw_responder_id_instantiate(struct connection *t,
-						      const ip_address peer_addr,
-						      const ip_selector *peer_subnet,
-						      const struct id *peer_id);
-struct connection *oppo_initiator_instantiate(struct connection *t,
-					      const struct kernel_acquire *b,
-					      where_t where);
-struct connection *oppo_responder_instantiate(struct connection *t,
-					      const ip_address remote_address,
-					      where_t where);
-struct connection *sec_label_instantiate(struct ike_sa *ike,
-					 shunk_t sec_label,
-					 where_t where);
-struct connection *spd_instantiate(struct connection *t,
-				   const ip_address peer_addr,
-				   where_t where);
 
 struct connection *find_outgoing_opportunistic_template(const ip_packet packet);
 

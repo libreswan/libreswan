@@ -44,6 +44,7 @@
 #include "keys.h"
 #include "nss_cert_verify.h"
 #include "pluto_x509.h"
+#include "instantiate.h"
 
 /*
  * This is to support certificates with SAN using wildcard, eg SAN

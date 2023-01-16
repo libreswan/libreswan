@@ -42,6 +42,7 @@
 #include "ikev2_create_child_sa.h"	/* for initiate_v2_CREATE_CHILD_SA_create_child() */
 #include "labeled_ipsec.h"		/* for sec_label_within_range() */
 #include "ip_info.h"
+#include "instantiate.h"
 
 static bool initiate_connection_1_basics(struct connection *c,
 					 const char *remote_host,

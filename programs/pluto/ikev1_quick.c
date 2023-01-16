@@ -33,7 +33,6 @@
 #include <arpa/inet.h>
 #include <resolv.h>
 
-
 #include "sysdep.h"
 #include "constants.h"
 #include "defs.h"
@@ -88,6 +87,7 @@
 #include "crypt_dh.h"
 #include "unpack.h"
 #include "orient.h"
+#include "instantiate.h"
 
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"

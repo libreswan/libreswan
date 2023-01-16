@@ -58,6 +58,7 @@
 #include "ikev2_proposals.h"
 #include "ikev2_certreq.h"
 #include "kernel.h"		/* for orphan_holdpass() */
+#include "instantiate.h"	/* for sec_label_instantiate() */
 
 static ke_and_nonce_cb initiate_v2_IKE_SA_INIT_request_continue;	/* type assertion */
 static dh_shared_secret_cb process_v2_request_no_skeyseed_continue;	/* type assertion */

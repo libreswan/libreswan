@@ -213,6 +213,7 @@ USERLAND_LDFLAGS += $(LIBEVENT_LDFLAGS)
 USERLAND_LDFLAGS += $(LDAP_LDFLAGS)
 
 OBJS += connections.o
+OBJS += instantiate.o
 OBJS += connection_db.o
 OBJS += initiate.o terminate.o ikev2_rekey_now.o
 OBJS += pending.o crypto.o defs.o

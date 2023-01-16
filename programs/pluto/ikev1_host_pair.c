@@ -29,6 +29,7 @@
 #include "demux.h"
 #include "iface.h"
 #include "ikev1_spdb.h"
+#include "instantiate.h"
 
 static bool match_v1_connection(struct connection *c, struct authby authby,
 				bool policy_xauth, bool policy_aggressive,

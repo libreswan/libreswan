@@ -41,6 +41,7 @@
 #include "ip_info.h"
 #include "ip_selector.h"
 #include "orient.h"
+#include "instantiate.h"
 
 /* Groups is a list of connections that are policy groups.
  * The list is updated as group connections are added and deleted.

@@ -31,6 +31,7 @@
 #include "unpack.h"
 #include "orient.h"		/* for oriented() */
 #include "authby.h"
+#include "instantiate.h"
 
 static bool match_connection(const struct connection *c,
 			     struct authby remote_authby)
