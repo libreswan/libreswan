@@ -2881,26 +2881,7 @@ void uninstall_ipsec_sa(struct state *st/*IKE or Child*/)
 		}
 		break;
 	case IKEv2:
-		if (IS_IKE_SA(st) &&
-		    (st->st_connection->policy & POLICY_OPPORTUNISTIC) &&
-		    st->st_sa_role == SA_INITIATOR &&
-		    (st->st_state->kind == STATE_V2_PARENT_I1 ||
-		     st->st_state->kind == STATE_V2_PARENT_I2)) {
-			/*
-			 * A failed OE initiator, make shunt bare.
-			 *
-			 * Checking .kind above seems pretty dodgy.
-			 * Suspect it is trying to capture the initial
-			 * IKE exchange when the child hasn't yet been
-			 * created, except that when kind is
-			 * STATE_V2_PARENT_I2 the larval Child SA has
-			 * been created?!?
-			 */
-			struct connection *c = st->st_connection;
-			if (!orphan_holdpass(c, c->spd, st->st_logger)) {
-				log_state(RC_LOG_SERIOUS, st, "orphan_holdpass() failure ignored");
-			}
-		} else if (IS_CHILD_SA_ESTABLISHED(st)) {
+		if (IS_CHILD_SA_ESTABLISHED(st)) {
 #if 0
 			/*
 			 * XXX: There's a race when an SA is replaced

@@ -57,6 +57,7 @@
 #include "pluto_stats.h"
 #include "ikev2_proposals.h"
 #include "ikev2_certreq.h"
+#include "kernel.h"		/* for orphan_holdpass() */
 
 static ke_and_nonce_cb initiate_v2_IKE_SA_INIT_request_continue;	/* type assertion */
 static dh_shared_secret_cb process_v2_request_no_skeyseed_continue;	/* type assertion */
@@ -1701,4 +1702,29 @@ static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
 	process_protected_v2_message(ike, md);
 	md_delref(&md);
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
+}
+
+void process_v2_ike_sa_init_request_timeout(struct ike_sa *ike, monotime_t now UNUSED)
+{
+	if (ikev2_retry_establishing_ike_sa(ike)) {
+		return;
+	}
+	struct connection *c = ike->sa.st_connection;
+	if (c->policy & POLICY_OPPORTUNISTIC) {
+		/*
+		 * A failed OE initiator, make shunt bare.
+		 *
+		 * Checking .kind above seems pretty dodgy.  Suspect
+		 * it is trying to capture the initial IKE exchange
+		 * when the child hasn't yet been created, except that
+		 * when kind is STATE_V2_PARENT_I2 the larval Child SA
+		 * has been created?!?
+		 */
+		if (!orphan_holdpass(c, c->spd, ike->sa.st_logger)) {
+			llog_sa(RC_LOG_SERIOUS, ike, "orphan_holdpass() failure ignored");
+		}
+	}
+	pstat_sa_failed(&ike->sa, REASON_TOO_MANY_RETRANSMITS);
+	/* can't send delete as message window is full */
+	delete_ike_family(&ike, DONT_SEND_DELETE);
 }

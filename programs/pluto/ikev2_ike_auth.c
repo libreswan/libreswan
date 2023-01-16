@@ -1626,3 +1626,28 @@ stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 
 	return STF_FATAL;
 }
+
+void process_v2_ike_auth_request_timeout(struct ike_sa *ike, monotime_t now UNUSED)
+{
+	if (ikev2_retry_establishing_ike_sa(ike)) {
+		return;
+	}
+	struct connection *c = ike->sa.st_connection;
+	if (c->policy & POLICY_OPPORTUNISTIC) {
+		/*
+		 * A failed OE initiator, make shunt bare.
+		 *
+		 * Checking .kind above seems pretty dodgy.  Suspect
+		 * it is trying to capture the initial IKE exchange
+		 * when the child hasn't yet been created, except that
+		 * when kind is STATE_V2_PARENT_I2 the larval Child SA
+		 * has been created?!?
+		 */
+		if (!orphan_holdpass(c, c->spd, ike->sa.st_logger)) {
+			llog_sa(RC_LOG_SERIOUS, ike, "orphan_holdpass() failure ignored");
+		}
+	}
+	pstat_sa_failed(&ike->sa, REASON_TOO_MANY_RETRANSMITS);
+	/* can't send delete as message window is full */
+	delete_ike_family(&ike, DONT_SEND_DELETE);
+}
