@@ -2436,12 +2436,6 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 	    pri_so(c->child.kernel_policy_owner),
 	    enum_name(&routing_story, c->child.routing));
 
-	struct spd_route *start = c->spd;
-	if (c->remotepeertype == CISCO && start->spd_next != NULL) {
-		/* XXX: why is CISCO skipped? */
-		start = start->spd_next;
-	}
-
 	bool ok = true;
 
 #ifdef IPSEC_CONNECTION_LIMIT
@@ -2463,7 +2457,7 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 	 * Install the IPsec kernel policies.
 	 */
 
-	for (struct spd_route *spd = start; ok && spd != NULL; spd = spd->spd_next) {
+	for (struct spd_route *spd = c->spd; ok && spd != NULL; spd = spd->spd_next) {
 		enum kernel_policy_op op =
 			(spd->wip.conflicting.shunt != NULL ? KERNEL_POLICY_OP_REPLACE :
 			 KERNEL_POLICY_OP_ADD);
@@ -2522,7 +2516,7 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 	 * connection, so the actual test is simple.
 	 */
 
-	for (struct spd_route *spd = start; ok && spd != NULL; spd = spd->spd_next) {
+	for (struct spd_route *spd = c->spd; ok && spd != NULL; spd = spd->spd_next) {
 		if (c->child.kernel_policy_owner != SOS_NOBODY) {
 			/* already notified */
 			spd->wip.installed.firewall = true;
@@ -2540,7 +2534,7 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 	 */
 
 	ldbg(st->st_logger, "kernel: %s() running updown-prepare", __func__);
-	for (struct spd_route *spd = start; ok && spd != NULL; spd = spd->spd_next) {
+	for (struct spd_route *spd = c->spd; ok && spd != NULL; spd = spd->spd_next) {
 		if (spd->wip.conflicting.spd == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			if (!do_updown(UPDOWN_PREPARE, c, spd, st, st->st_logger))
@@ -2549,7 +2543,7 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 	}
 
 	ldbg(st->st_logger, "kernel: %s() running updown-route", __func__);
-	for (struct spd_route *spd = start; ok && spd != NULL; spd = spd->spd_next) {
+	for (struct spd_route *spd = c->spd; ok && spd != NULL; spd = spd->spd_next) {
 		if (spd->wip.conflicting.spd == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			ok &= spd->wip.installed.route =
@@ -2558,7 +2552,7 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 	}
 
 	if (!ok) {
-		for (struct spd_route *spd = start; spd != NULL; spd = spd->spd_next) {
+		for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
 			revert_kernel_policy(spd, st, st->st_logger);
 		}
 		return false;
@@ -2568,7 +2562,7 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 	 * Finally clean up.
 	 */
 
-	for (struct spd_route *spd = start; ok && spd != NULL; spd = spd->spd_next) {
+	for (struct spd_route *spd = c->spd; ok && spd != NULL; spd = spd->spd_next) {
 		struct bare_shunt **bspp = spd->wip.conflicting.shunt;
 		if (bspp != NULL) {
 			free_bare_shunt(bspp);
@@ -2585,7 +2579,6 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 	     num_ipsec_eroute);
 #endif
 
-	/* include CISCO's SPD */
 	set_child_kernel_policy_owner(c, st->st_serialno);
 
 	set_child_routing(c, RT_ROUTED_TUNNEL);
@@ -2696,20 +2689,7 @@ static void teardown_ipsec_kernel_policies(struct state *st,
 	struct logger *logger = st->st_logger;
 
 	enum routing new_routing;
-	if (c->remotepeertype == CISCO) {
-		/*
-		 * XXX: this comment is out-of-date.
-		 *
-		 * XXX: this is currently the only reason for spd_next
-		 * walking.
-		 *
-		 * Routing should become RT_ROUTED_FAILURE, but if
-		 * POLICY_FAIL_NONE, then we just go right back to
-		 * RT_ROUTED_PROSPECTIVE as if no failure happened.
-		 */
-		new_routing = (c->config->failure_shunt == SHUNT_NONE ? RT_ROUTED_PROSPECTIVE :
-			       RT_ROUTED_FAILURE);
-	} else if (c->kind == CK_INSTANCE &&
+	if (c->kind == CK_INSTANCE &&
 		   ((c->policy & POLICY_OPPORTUNISTIC) ||
 		    (c->policy & POLICY_DONT_REKEY))) {
 		new_routing = RT_UNROUTED;
@@ -2756,23 +2736,6 @@ static void teardown_ipsec_kernel_policies(struct state *st,
 	set_child_routing(c, new_routing);
 
 	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
-
-		if (spd == c->spd && c->remotepeertype == CISCO) {
-			/*
-			 * XXX: this comment is out-of-date:
-			 *
-			 * XXX: this is currently the only reason for
-			 * spd_next walking.
-			 *
-			 * Routing should become RT_ROUTED_FAILURE,
-			 * but if POLICY_FAIL_NONE, then we just go
-			 * right back to RT_ROUTED_PROSPECTIVE as if
-			 * no failure happened.
-			 */
-			ldbg(logger, "kernel: %s() skipping, first SPD and remotepeertype is CISCO, damage done",
-			     __func__);
-			continue;
-		}
 
 		do_updown(UPDOWN_DOWN, c, spd, st, logger);
 
