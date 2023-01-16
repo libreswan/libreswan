@@ -426,9 +426,7 @@ static bool emit_v2TS_payload(struct pbs_out *outpbs,
 		return false;
 	}
 
-	for (const ip_selector *s = selectors->list;
-	     s < selectors->list + selectors->len;
-	     s++) {
+	FOR_EACH_ITEM(s, selectors) {
 
 		ip_selector ts = *s;
 		if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_R0 &&

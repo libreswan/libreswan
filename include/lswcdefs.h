@@ -62,6 +62,32 @@
 #endif
 
 /*
+ * A macro to iterate over a list-like structure.
+ */
+
+#define FOR_EACH_ITEM(ENTRY, LIST)				\
+	for (typeof((LIST)->list[0]) *ENTRY = (LIST)->list;	\
+	     ENTRY < (LIST)->list + (LIST)->len;		\
+	     ENTRY++)
+
+/* Remember, THING 1 and THING 2 are inseparable */
+#define FOR_EACH_THING(THING, THING1, THING2, ...)			\
+	for (typeof(THING1) things_[] = { THING1, THING2, ##__VA_ARGS__ }, \
+		     *thingp_ = things_, THING;				\
+	     thingp_ < things_ + elemsof(things_) ? (THING = *thingp_, true) : false; \
+	     thingp_++)
+
+#define FOR_EACH_ELEMENT(THING, ARRAY)			\
+	for (typeof(&(ARRAY)[0]) THING = (ARRAY);	\
+	     THING < (ARRAY) + elemsof(ARRAY);		\
+	     THING++)
+
+#define FOR_EACH_ELEMENT_FROM_1(THING, ARRAY)		\
+	for (typeof(&(ARRAY)[1]) THING = &(ARRAY)[1];	\
+	     THING < (ARRAY) + elemsof(ARRAY);		\
+	     THING++)
+
+/*
  * A macro to discard the const portion of a variable to avoid
  * otherwise unavoidable -Wcast-qual warnings.  USE WITH CAUTION and
  * only when you know it's safe to discard the const.

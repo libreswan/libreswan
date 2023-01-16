@@ -420,9 +420,7 @@ static void show_one_sr(struct show *s,
 			jam_string(buf, "unset,");
 		} else {
 			const char *sep = "";
-			for (const ip_address *dns = c->config->modecfg.dns.list;
-			     dns < c->config->modecfg.dns.list + c->config->modecfg.dns.len;
-			     dns++) {
+			FOR_EACH_ITEM(dns, &c->config->modecfg.dns) {
 				jam_string(buf, sep);
 				sep = ", ";
 				jam_address(buf, dns);

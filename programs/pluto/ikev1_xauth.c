@@ -252,9 +252,7 @@ static stf_status isakmp_add_attr(pb_stream *strattr,
 		 * last's is finished at the end so our loop structure
 		 * is odd.
 		 */
-		for (const ip_address *dns = c->config->modecfg.dns.list;
-		     dns < c->config->modecfg.dns.list + c->config->modecfg.dns.len;
-		     dns++) {
+		FOR_EACH_ITEM(dns, &c->config->modecfg.dns) {
 
 			/* emit attribute's value */
 			if (!pbs_out_address(&attrval, *dns, "IP4_dns")) {

@@ -162,9 +162,7 @@ bool emit_v2CP_response(const struct child_sa *child, struct pbs_out *outpbs)
 		}
 	}
 
-	for (const ip_address *dns = c->config->modecfg.dns.list;
-	     dns < c->config->modecfg.dns.list + c->config->modecfg.dns.len;
-	     dns++) {
+	FOR_EACH_ITEM(dns, &c->config->modecfg.dns) {
 		const struct ip_info *afi = address_type(dns);
 		if (!emit_v2CP_attribute_address(afi->ikev2_internal_dns, dns,
 						 "DNS", &cp_pbs)) {
@@ -212,9 +210,7 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 	}
 
 	const ip_selectors *selectors = &cc->local->child.selectors.proposed;
-	for (const ip_selector *s = selectors->list;
-	     s < selectors->list + selectors->len;
-	     s++) {
+	FOR_EACH_ITEM(s, selectors) {
 		const struct ip_info *afi = selector_type(s);
 		selector_buf sb;
 		dbg("local.selectors.list[%zu] %s says to ask for %s",

@@ -124,10 +124,7 @@ void ldbg_connection(const struct connection *c, where_t where,
 			jam_string(buf, "    selectors:");
 			const char *sep = " ->";
 			FOR_EACH_THING(end, &c->local->child, &c->remote->child) {
-				const ip_selectors *selectors = &end->selectors.proposed;
-				for (const ip_selector *selector = selectors->list;
-				     selector < selectors->list + selectors->len;
-				     selector++) {
+				FOR_EACH_ITEM(selector, &end->selectors.proposed) {
 					jam_string(buf, " ");
 					jam_selector(buf, selector);
 				}
@@ -1041,9 +1038,7 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 			return diag_diag(&d, "%saddresspool=%s invalid, ", leftright, src->addresspool);
 		}
 
-		for (const ip_range *pool_range = host_config->pool_ranges.list;
-		     pool_range < host_config->pool_ranges.list + host_config->pool_ranges.len;
-		     pool_range++) {
+		FOR_EACH_ITEM(pool_range, &host_config->pool_ranges) {
 			const struct ip_info *pool_afi = range_type(pool_range);
 
 			if (c->pool[pool_afi->ip_index] != NULL) {
@@ -1236,8 +1231,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 					 src->leftright, src->sourceip);
 		}
 		/* valid? */
-		for (ip_address *sip = child_config->sourceip.list;
-		     sip < child_config->sourceip.list + child_config->sourceip.len; sip++) {
+		FOR_EACH_ITEM(sip, &child_config->sourceip) {
 			if (!address_is_specified(*sip)) {
 				return diag("%ssourceip=%s invalid, must be a valid address",
 					    leftright, src->sourceip);
@@ -1247,9 +1241,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 				continue;
 			}
 			bool within = false;
-			for (ip_selector *sel = child_config->selectors.list;
-			     sel < child_config->selectors.list + child_config->selectors.len;
-			     sel++) {
+			FOR_EACH_ITEM(sel, &child_config->selectors) {
 				if (address_in_selector(*sip, *sel)) {
 					within = true;
 					break;
@@ -1539,12 +1531,10 @@ void add_connection_spds(struct connection *c)
 		selectors[end].selectors = s;
 	}
 	selectors[LEFT_END].selector = selectors[LEFT_END].selectors->list;
-	for (selectors[LEFT_END].selector = selectors[LEFT_END].selectors->list;
-	     selectors[LEFT_END].selector < selectors[LEFT_END].selectors->list + selectors[LEFT_END].selectors->len;
-	     selectors[LEFT_END].selector++) {
-		for (selectors[RIGHT_END].selector = selectors[RIGHT_END].selectors->list;
-		     selectors[RIGHT_END].selector < selectors[RIGHT_END].selectors->list + selectors[RIGHT_END].selectors->len;
-		     selectors[RIGHT_END].selector++) {
+	FOR_EACH_ITEM(left_selector, selectors[LEFT_END].selectors) {
+		selectors[LEFT_END].selector = left_selector;
+		FOR_EACH_ITEM(right_selector, selectors[RIGHT_END].selectors) {
+			selectors[RIGHT_END].selector = right_selector;
 			indent = 1;
 			selector_buf leftb, rightb;
 			ldbg(c->logger, "%*s%s->%s", indent, "",
@@ -2510,18 +2500,14 @@ static diag_t extract_connection(const struct whack_message *wm,
 		const ip_selectors *const selectors = &c->end[end].config->child.selectors;
 		const ip_ranges *const pools = &c->end[end].config->host.pool_ranges;
 		if (selectors->len > 0) {
-			for (const ip_selector *s = selectors->list;
-			     s < selectors->list + selectors->len;
-			     s++) {
+			FOR_EACH_ITEM(s, selectors) {
 				const struct ip_info *afi = selector_type(s);
 				end_family[end][afi->ip_index].used = true;
 				end_family[end][afi->ip_index].field = "subnet";
 				end_family[end][afi->ip_index].value = whack_ends[end]->subnet;
 			}
 		} else if (pools->len > 0) {
-			for (const ip_range *s = pools->list;
-			     s < pools->list + pools->len;
-			     s++) {
+			FOR_EACH_ITEM(s, pools) {;
 				const struct ip_info *afi = range_type(s);
 				end_family[end][afi->ip_index].used = true;
 				end_family[end][afi->ip_index].field = "addresspool";
@@ -2753,9 +2739,7 @@ static size_t jam_connection_child(struct jambuf *b,
 		/* compact denotation for "self" */
 	} else {
 		s += jam_string(b, prefix);
-		for (const ip_selector *selector = selectors->list;
-		     selector < selectors->list + selectors->len;
-		     selector++) {
+		FOR_EACH_ITEM(selector, selectors) {
 			if (pexpect(selector->is_set)) {
 				s += jam_selector_subnet(b, selector);
 				if (selector_is_zero(*selector)) {
@@ -3312,7 +3296,7 @@ ip_address spd_end_sourceip(const struct spd_end *spde)
 	 * Find a sourceip within the SPD selector.
 	 */
 	const ip_addresses *sourceip = &spde->child->config->sourceip;
-	for (ip_address *s = sourceip->list; s < sourceip->list + sourceip->len; s++) {
+	FOR_EACH_ITEM(s, sourceip) {
 		if (address_in_selector(*s, spde->client)) {
 			return *s;
 		}
