@@ -127,23 +127,6 @@ enum binary {
 		memeq(l_, r_, sizeof(L));				\
 	})
 
-/* Remember, THING 1 and THING 2 are inseparable */
-#define FOR_EACH_THING(THING, THING1, THING2, ...)			\
-	for (typeof(THING1) things_[] = { THING1, THING2, ##__VA_ARGS__ }, \
-		     *thingp_ = things_, THING;				\
-	     thingp_ < things_ + elemsof(things_) ? (THING = *thingp_, true) : false; \
-	     thingp_++)
-
-#define FOR_EACH_ELEMENT(THING, ARRAY)			\
-	for (typeof(&(ARRAY)[0]) THING = (ARRAY);	\
-	     THING < (ARRAY) + elemsof(ARRAY);		\
-	     THING++)
-
-#define FOR_EACH_ELEMENT_FROM_1(THING, ARRAY)		\
-	for (typeof(&(ARRAY)[1]) THING = &(ARRAY)[1];	\
-	     THING < (ARRAY) + elemsof(ARRAY);		\
-	     THING++)
-
 /*
  * Fill a string field, ensuring that it is padded and terminated with NUL
  * If termination isn't required, strncpy would do.
