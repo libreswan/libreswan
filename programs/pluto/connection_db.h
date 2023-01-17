@@ -43,8 +43,6 @@ void connection_db_del(struct connection *c, bool valid);
 void spd_route_db_init(struct logger *logger);
 void spd_route_db_check(struct logger *logger);
 
-struct spd_route *clone_spd_route(struct connection *c, where_t where);
-
 void spd_route_db_init_spd_route(struct spd_route *sr);
 void spd_route_db_check_spd_route(struct spd_route *sr, struct logger *logger, where_t where);
 

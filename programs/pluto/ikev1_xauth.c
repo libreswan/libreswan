@@ -80,7 +80,6 @@
 #include "ikev1_hash.h"
 #include "impair.h"
 #include "ikev1_message.h"
-#include "connection_db.h"		/* for clone_spd_route() */
 
 /* forward declarations */
 static stf_status xauth_client_ackstatus(struct state *st,
@@ -1837,15 +1836,16 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 							  ugh);
 						break;
 					}
-					ip_selector wire_selector = selector_from_subnet(wire_subnet);
 
 					subnet_buf pretty_subnet;
 					str_subnet(&wire_subnet, &pretty_subnet);
 
 					log_state(RC_INFORMATIONAL, st,
-						  "Received subnet %s",
+						  "Received and ignored subnet %s",
 						  pretty_subnet.buf);
 
+#ifdef USE_CISCO_SPLIT
+					ip_selector wire_selector = selector_from_subnet(wire_subnet);
 					for (struct spd_route *sr = c->spd; ; sr = sr->spd_next) {
 						if (selector_range_eq_selector_range(wire_selector, sr->remote->client)) {
 							/* duplicate entry: ignore */
@@ -1861,6 +1861,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 							break;
 						}
 					}
+#endif
 				}
 
 				/*

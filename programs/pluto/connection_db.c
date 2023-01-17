@@ -311,35 +311,6 @@ struct spd_route *append_spd(struct connection *c, struct spd_route ***spd_end)
 	return spd;
 }
 
-struct spd_route *clone_spd_route(struct connection *c, where_t where)
-{
-	/* always first!?! */
-	struct spd_route *spd = clone_thing(*c->spd, where->func);
-	spd->spd_next = NULL;
-	pexpect(spd->connection == c);
-
-	/* XXX: why!?! this is not SPD */
-	c->local->host.id.name = null_shunk;
-	c->remote->host.id.name = null_shunk;
-
-	/* update internal pointers */
-	spd->local = &spd->end[c->local->config->index];
-	spd->remote = &spd->end[c->remote->config->index];
-
-	/* unshare pointers */
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		spd->end[end].virt = NULL;	/* don't inherit?!? */
-		spd->end[end].host = &c->end[end].host;
-		spd->end[end].child = &c->end[end].child;
-	}
-
-	zero_thing(spd->hash_table_entries); /* keep init_list_entry() happy */
-	spd_route_db_init_spd_route(spd);
-	spd_route_db_add(spd);
-
-	return spd;
-}
-
 /*
  * See also {new2old,old2new}_state()
  */
