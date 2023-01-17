@@ -46,6 +46,7 @@ struct kernel_policy kernel_policy_from_void(ip_selector local, ip_selector remo
 					     const struct sa_marks *sa_marks,
 					     const struct pluto_xfrmi *xfrmi,
 					     const shunk_t sec_label,
+					     const struct nic_offload *nic_offload,
 					     where_t where);
 
 /*

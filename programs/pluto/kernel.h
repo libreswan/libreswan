@@ -205,6 +205,7 @@ struct kernel_policy {
 	enum encap_mode mode;
 	unsigned nr_rules;
 	struct kernel_policy_rule rule[3/*IPCOMP+{ESP,AH}+PADDING*/];
+	struct nic_offload nic_offload;
 };
 
 /*
@@ -555,5 +556,6 @@ struct kernel_acquire {
 };
 
 void jam_kernel_acquire(struct jambuf *buf, const struct kernel_acquire *b);
-
+void setup_esp_nic_offload(struct nic_offload *nic_offload, const struct connection *c,
+			   bool *nic_offload_fallback);
 #endif

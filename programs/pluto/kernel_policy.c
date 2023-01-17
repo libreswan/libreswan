@@ -44,6 +44,7 @@ struct kernel_policy kernel_policy_from_void(ip_selector local, ip_selector remo
 					     const struct sa_marks *sa_marks,
 					     const struct pluto_xfrmi *xfrmi,
 					     const shunk_t sec_label,
+					     const struct nic_offload *nic_offload,
 					     where_t where)
 {
 	const ip_selector *src;
@@ -86,6 +87,7 @@ struct kernel_policy kernel_policy_from_void(ip_selector local, ip_selector remo
 		.src.host = child_afi->address.unspec,
 		.dst.host = child_afi->address.unspec,
 		.mode = ENCAP_MODE_TRANSPORT,
+		.nic_offload = *nic_offload,
 	};
 	if (shunt_policy != SHUNT_PASS) {
 		transport_esp.nr_rules = 1;
@@ -101,6 +103,7 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 						   const struct spd_route *spd,
 						   enum encap_mode mode,
 						   enum direction direction,
+						   struct nic_offload *nic_offload,
 						   where_t where)
 {
 	/*
@@ -166,6 +169,8 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 		.nr_rules = 0,
 	};
 
+	if (nic_offload && nic_offload->dev)
+		kernel_policy.nic_offload = *nic_offload;
 	/*
 	 * Construct the kernel policy rules inner-to-outer (matching
 	 * the flow of an outgoing packet).
@@ -212,6 +217,7 @@ struct kernel_policy kernel_policy_from_state(const struct state *st,
 {
 	bool tunnel = false;
 	lset_t policy = LEMPTY;
+	struct nic_offload nic_offload = {};
 
 	if (st->st_ipcomp.present) {
 		policy |= POLICY_COMPRESS;
@@ -228,10 +234,11 @@ struct kernel_policy kernel_policy_from_state(const struct state *st,
 		tunnel |= (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL);
 	}
 
+	setup_esp_nic_offload(&nic_offload, st->st_connection, NULL);
 	enum encap_mode mode = (tunnel ? ENCAP_MODE_TUNNEL : ENCAP_MODE_TRANSPORT);
 	struct kernel_policy kernel_policy = kernel_policy_from_spd(policy,
 								    spd, mode, direction,
-								    where);
+								    &nic_offload, where);
 	return kernel_policy;
 }
 
@@ -257,8 +264,12 @@ bool install_bare_sec_label_kernel_policy(const struct spd_route *spd,
 	PASSERT(logger, c->config->sec_label.len > 0);
 	enum encap_mode encap_mode = (c->policy & POLICY_TUNNEL ? ENCAP_MODE_TUNNEL :
 				      ENCAP_MODE_TRANSPORT);
-	struct kernel_policy kernel_policy =
-		kernel_policy_from_spd(c->policy, spd, encap_mode, direction, where);
+	struct nic_offload nic_offload = {};
+	struct kernel_policy kernel_policy;
+
+	setup_esp_nic_offload(&nic_offload, c, NULL);
+	kernel_policy = kernel_policy_from_spd(c->policy, spd, encap_mode, direction, &nic_offload, where);
+
 	if (!raw_policy(op, direction,
 			existing_policy_expectation,
 			&kernel_policy.src.client,
@@ -290,6 +301,7 @@ bool install_bare_spd_kernel_policy(const struct spd_route *spd,
 				    where_t where, const char *what)
 {
 	const struct connection *c = spd->connection;
+	struct nic_offload nic_offload = {};
 
 	PASSERT(logger, (op == KERNEL_POLICY_OP_ADD ||
 			 op == KERNEL_POLICY_OP_REPLACE));
@@ -316,12 +328,14 @@ bool install_bare_spd_kernel_policy(const struct spd_route *spd,
 	 * _from_spd shouldn't be doing).
 	 */
 
+	setup_esp_nic_offload(&nic_offload, c, NULL);
 	struct kernel_policy kernel_policy =
 		kernel_policy_from_void(spd->local->client, spd->remote->client,
 					direction, calculate_kernel_priority(c),
 					shunt,
 					&c->sa_marks, c->xfrmi,
 					HUNK_AS_SHUNK(c->config->sec_label),
+					&nic_offload,
 					where);
 
 	if (!raw_policy(op, direction,
@@ -447,13 +461,16 @@ bool install_bare_cat_kernel_policy(const struct spd_route *spd,
 				    const char *reason)
 {
 	struct connection *c = spd->connection;
+	struct nic_offload nic_offload = {};
 	ldbg(logger, "CAT: %s", reason);
+	setup_esp_nic_offload(&nic_offload, c, NULL);
 	struct kernel_policy kernel_policy =
 		kernel_policy_from_void(spd->local->client, spd->remote->client,
 					DIRECTION_OUTBOUND,
 					calculate_kernel_priority(c),
 					shunt, &c->sa_marks, c->xfrmi,
 					HUNK_AS_SHUNK(c->config->sec_label),
+					&nic_offload,
 					where);
 	/*
 	 * XXX: forming the local CLIENT from the local HOST is

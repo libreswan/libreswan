@@ -94,6 +94,7 @@ static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 					    struct logger *logger, where_t where);
 
 static bool install_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
+					     const struct nic_offload *nic_offload,
 					     enum expect_kernel_policy expect_kernel_policy,
 					     struct logger *logger, where_t where);
 
@@ -977,7 +978,10 @@ static void revert_kernel_policy(struct spd_route *spd,
 
 	ldbg(logger, "kernel: %s() restoring bare shunt", __func__);
 	struct bare_shunt *bs = *spd->wip.conflicting.shunt;
-	if (!install_bare_shunt_kernel_policy(bs, EXPECT_KERNEL_POLICY_OK,
+	struct nic_offload nic_offload = {};
+	setup_esp_nic_offload(&nic_offload, c, NULL);
+	if (!install_bare_shunt_kernel_policy(bs, &nic_offload,
+					      EXPECT_KERNEL_POLICY_OK,
 					      logger, HERE)) {
 		llog(RC_LOG, st->st_logger,
 		     "raw_policy() in %s() failed to restore/replace SA",
@@ -1269,6 +1273,7 @@ void show_shunt_status(struct show *s)
 }
 
 static bool install_bare_shunt_kernel_policy(const struct bare_shunt *bs,
+					     const struct nic_offload *nic_offload,
 					     enum expect_kernel_policy expect_kernel_policy,
 					     struct logger *logger, where_t where)
 {
@@ -1283,6 +1288,7 @@ static bool install_bare_shunt_kernel_policy(const struct bare_shunt *bs,
 					 * connection so no
 					 * security label */
 					/*sec_label*/null_shunk,
+					nic_offload,
 					where);
 	return raw_policy(KERNEL_POLICY_OP_REPLACE,
 			  DIRECTION_OUTBOUND,
@@ -1598,8 +1604,8 @@ bool assign_holdpass(struct connection *c,
 	return true;
 }
 
-static void setup_esp_nic_offload(struct kernel_state *sa, struct connection *c,
-		bool *nic_offload_fallback)
+void setup_esp_nic_offload(struct nic_offload *nic_offload, const struct connection *c,
+			   bool *nic_offload_fallback)
 {
 	if (c->config->nic_offload == off_no ||
 	    c->interface == NULL || c->interface->ip_dev == NULL ||
@@ -1614,12 +1620,13 @@ static void setup_esp_nic_offload(struct kernel_state *sa, struct connection *c,
 				c->name, c->interface->ip_dev->id_rname);
 			return;
 		}
-		*nic_offload_fallback = true;
+		if (nic_offload_fallback)
+			*nic_offload_fallback = true;
 		dbg("kernel: NIC esp-hw-offload offload for connection '%s' enabled on interface %s",
 		    c->name, c->interface->ip_dev->id_rname);
 	}
-	sa->nic_offload.dev = c->interface->ip_dev->id_rname;
-	sa->nic_offload.type = (c->config->nic_offload == off_pkt) ? OFFLOAD_PACKET : OFFLOAD_CRYPTO;
+	nic_offload->dev = c->interface->ip_dev->id_rname;
+	nic_offload->type = (c->config->nic_offload == off_pkt) ? OFFLOAD_PACKET : OFFLOAD_CRYPTO;
 }
 
 /*
@@ -1894,7 +1901,7 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 			DBG_dump_hunk("ESP integrity key:", said_next->integ_key);
 		}
 
-		setup_esp_nic_offload(said_next, c, &nic_offload_fallback);
+		setup_esp_nic_offload(&said_next->nic_offload, c, &nic_offload_fallback);
 
 		bool ret = kernel_ops_add_sa(said_next, replace, st->st_logger);
 
@@ -3234,6 +3241,8 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 			 * Should sec_label be included?
 			 */
 
+			struct nic_offload nic_offload = {};
+			setup_esp_nic_offload(&nic_offload, c, NULL);
 			struct kernel_policy kernel_policy =
 				kernel_policy_from_void(src, dst, DIRECTION_OUTBOUND,
 							/* we don't know connection for priority yet */
@@ -3242,6 +3251,7 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 							/* XXX: bug; use from_spd() */
 							/*sa_marks*/NULL, /*xfrmi*/NULL,
 							/*sec_label;bug?*/null_shunk,
+							&nic_offload,
 							HERE);
 
 			bool ok = raw_policy(KERNEL_POLICY_OP_REPLACE,
