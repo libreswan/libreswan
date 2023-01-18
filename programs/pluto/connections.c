@@ -1432,101 +1432,7 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 		}
 	}
 
-	ldbg(c->logger, "adding spds");
-	struct spd_route *spd_list = NULL;
-	struct spd_route **spd_tail = &spd_list;
-	struct {
-		const ip_selectors *selectors;
-		const ip_selector *selector;
-		const struct ip_info *afi;
-	} selectors[END_ROOF] = {0};
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		selectors[end].selectors = &c->end[end].child.selectors.proposed;
-	}
-	selectors[LEFT_END].selector = selectors[LEFT_END].selectors->list; /* could be unset */
-	pexpect(selectors[LEFT_END].selector != NULL);
-	while (true) /*LEFT*/ {
-		unsigned indent = 1;
-		selector_buf leftb;
-		ldbg(c->logger, "%*s%s->...", indent, "", str_selector(selectors[LEFT_END].selector, &leftb));
-		selectors[RIGHT_END].selector = selectors[RIGHT_END].selectors->list; /* could be unset */
-		pexpect(selectors[RIGHT_END].selector != NULL);
-		while (true) /*RIGHT*/ {
-			indent = 2;
-			selector_buf rightb;
-			ldbg(c->logger, "%*s%s->%s", indent, "",
-			     str_selector(selectors[LEFT_END].selector, &leftb),
-			     str_selector(selectors[RIGHT_END].selector, &rightb));
-			indent = 3;
-			/*
-			 * XXX: Try to filter out IPv4 vs IPv6.  When
-			 * selector is NULL, the host's address family
-			 * is used.
-			 */
-			FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-				if (selectors[end].selector == NULL ||
-				    !selectors[end].selector->is_set) {
-					selectors[end].afi = host_afi;
-				} else {
-					selectors[end].afi = selector_type(selectors[end].selector);
-				}
-			}
-			if (selectors[LEFT_END].afi == selectors[RIGHT_END].afi) {
-				indent = 6;
-				struct spd_route *spd = append_spd(c, &spd_tail);
-				FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-					const ip_selector *selector = selectors[end].selector; /* could be NULL */
-					const struct child_end_config *child_end = &c->end[end].config->child;
-					struct spd_end *spd_end = &spd->end[end];
-					const char *leftright = child_end->leftright;
-					/*
-					 * Set things based both on
-					 * virt and on selectors.
-					 *
-					 * XXX: don't set .has_client
-					 * as update_child_ends*()
-					 * will see it and skip
-					 * updating the client address
-					 * from the host.
-					 */
-					if (selector != NULL && selector->is_set) {
-						selector_buf sb;
-						ldbg(c->logger,
-						     "%*s%s %s child spd has selectors; setting client to %s",
-						     indent, "", c->name, leftright, str_selector(selector, &sb));
-						passert(selector->is_set); /* else pointless */
-						if (spd == c->spd) {
-							update_end_selector(c, end, *selector, NULL);
-						} else {
-							spd_end->client = *selector;/*update_end_selector()*/
-						}
-					}
-					if (child_end->virt != NULL) {
-						ldbg(c->logger,
-						     "%*s%s child spd is virtual; adding virt",
-						     indent, "", leftright);
-						spd_end->virt = virtual_ip_addref(child_end->virt);
-					}
-					selector_buf sb;
-					ldbg(c->logger,
-					     "%*s%s child spd from selector %s %s.spd.has_client=%s virt=%s",
-					     indent, "", spd_end->config->leftright,
-					     str_selector(&spd_end->client, &sb),
-					     leftright,
-					     bool_str(spd_end->child->has_client),
-					     bool_str(spd_end->virt != NULL));
-				}
-			}
-			/* advance RIGHT (NULL+1>=NULL+0) */
-			if (selectors[RIGHT_END].selector + 1 >= selectors[RIGHT_END].selectors->list + selectors[RIGHT_END].selectors->len) break;
-			selectors[RIGHT_END].selector++;
-		}
-		/* advance LEFT (NULL+1>=NULL+0) */
-		if (selectors[LEFT_END].selector + 1 >= selectors[LEFT_END].selectors->list + selectors[LEFT_END].selectors->len) break;
-		selectors[LEFT_END].selector++;
-	}
-
-	c->spd = spd_list;
+	add_connection_spds(c, host_afi);
 
 	/* leave a bread crumb */
 	PEXPECT(c->logger, c->child.kernel_policy_owner == SOS_NOBODY);
@@ -1539,7 +1445,7 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 	set_connection_priority(c); /* must be after kind is set */
 }
 
-void add_connection_spds(struct connection *c)
+void add_connection_spds(struct connection *c, const struct ip_info *host_afi)
 {
 	unsigned indent = 0;
 	ldbg(c->logger, "%*sadding proposal spds", indent, "");
@@ -1576,7 +1482,8 @@ void add_connection_spds(struct connection *c)
 			 * family.
 			 */
 			FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-				selectors[end].afi = selector_type(selectors[end].selector);
+				const struct ip_info *afi = selector_type(selectors[end].selector);
+				selectors[end].afi = (afi != NULL ? afi : host_afi);
 			}
 			if (selectors[LEFT_END].afi == selectors[RIGHT_END].afi) {
 				indent = 6;
@@ -1586,7 +1493,8 @@ void add_connection_spds(struct connection *c)
 					const struct child_end_config *child_end = &c->end[end].config->child;
 					struct spd_end *spd_end = &spd->end[end];
 					const char *leftright = child_end->leftright;
-					spd_end->client = *selector;/*NOT update_end_selector()*/
+					/* NOT set_end_selector() */
+					spd_end->client = *selector;
 					spd_end->virt = virtual_ip_addref(child_end->virt);
 					selector_buf sb;
 					ldbg(c->logger,
@@ -2628,7 +2536,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * the database first.
 	 */
 	connection_db_add(c);
-	spd_route_db_add_connection(c);
 
 	/* this triggers a rehash of the SPDs */
 	orient(c, c->logger);

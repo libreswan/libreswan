@@ -37,6 +37,7 @@
 #include "log.h"
 #include "addresspool.h"
 #include "ikev2_cp.h"
+#include "orient.h"		/* for oriented() */
 
 static bool need_v2_configuration_payload(const struct connection *const cc,
 					  const lset_t st_nat_traversal)
@@ -326,7 +327,8 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike,
 
 	/* rebuild the SPDs */
 	discard_connection_spds(cc, /*valid?*/true);
-	add_connection_spds(cc);
+	PEXPECT(cc->logger, oriented(cc));
+	add_connection_spds(cc, address_info(cc->local->host.addr));
 
 	return true;
 }

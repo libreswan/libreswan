@@ -244,7 +244,8 @@ struct connection *group_instantiate(struct connection *group,
 	connection_db_add(t);
 
 	/* fill in the SPDs */
-	add_connection_spds(t);
+	PEXPECT(t->logger, oriented(t));
+	add_connection_spds(t, address_info(t->local->host.addr));
 
 	connection_buf gb;
 	ldbg_connection(t, HERE, "instantiated from "PRI_CONNECTION,
@@ -469,7 +470,8 @@ struct connection *spd_instantiate(struct connection *t,
 		}
 	}
 
-	add_connection_spds(d);
+	PEXPECT(d->logger, oriented(d));
+	add_connection_spds(d, address_info(d->local->host.addr));
 
 	/* leave breadcrumb */
 	pexpect(d->child.kernel_policy_owner == SOS_NOBODY);
@@ -575,7 +577,8 @@ struct connection *rw_responder_instantiate(struct connection *t,
 		}
 	}
 
-	add_connection_spds(d);
+	PEXPECT(d->logger, oriented(d));
+	add_connection_spds(d, address_info(d->local->host.addr));
 
 	connection_buf tb;
 	ldbg_connection(d, HERE, "instantiated from "PRI_CONNECTION,
@@ -633,7 +636,8 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 		}
 	}
 
-	add_connection_spds(d);
+	PEXPECT(d->logger, oriented(d));
+	add_connection_spds(d, address_info(d->local->host.addr));
 
 	connection_buf tb;
 	ldbg_connection(d, HERE, "instantiated from "PRI_CONNECTION,
@@ -701,7 +705,8 @@ static struct connection *oppo_instantiate(struct connection *t,
 						    selector_port(remote_template));
 	set_first_selector(d, remote, remote_selector);
 
-	add_connection_spds(d);
+	PEXPECT(d->logger, oriented(d));
+	add_connection_spds(d, address_info(d->local->host.addr));
 
 	connection_buf tb;
 	ldbg_connection(d, where, "instantiated from "PRI_CONNECTION,
