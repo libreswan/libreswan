@@ -223,23 +223,29 @@ static void scribble_selectors_on_spd(struct connection *c,
 	 * Now build spds from selectors.
 	 */
 
-	struct spd_route *spd_list = NULL;
-	struct spd_route **spd_tail = &spd_list;
-	for (const struct narrowed_selector *local_ns = local_nsp->ns;
-	     local_ns < local_nsp->ns + local_nsp->nr; local_ns++) {
-		for (const struct narrowed_selector *remote_ns = remote_nsp->ns;
-		     remote_ns < remote_nsp->ns + remote_nsp->nr; remote_ns++) {
-			if (selector_info(local_ns->selector) == selector_info(remote_ns->selector)) {
-				struct spd_route *spd = append_spd(c, &spd_tail);
-				spd->local->client = local_ns->selector;
-				spd->remote->client = remote_ns->selector;
-				spd->block = local_ns->block || remote_ns->block;
+	unsigned nr_spds = 0;
+	for (unsigned pass = 1; pass <= 2; pass++) {
+		if (pass == 2) {
+			discard_connection_spds(c, true/*valid*/);
+			alloc_connection_spds(c, nr_spds);
+		}
+		nr_spds = 0;
+		for (const struct narrowed_selector *local_ns = local_nsp->ns;
+		     local_ns < local_nsp->ns + local_nsp->nr; local_ns++) {
+			for (const struct narrowed_selector *remote_ns = remote_nsp->ns;
+			     remote_ns < remote_nsp->ns + remote_nsp->nr; remote_ns++) {
+				if (selector_info(local_ns->selector) == selector_info(remote_ns->selector)) {
+					if (pass == 2) {
+						struct spd_route *spd = &c->child.spds.list[nr_spds];
+						spd->local->client = local_ns->selector;
+						spd->remote->client = remote_ns->selector;
+						spd->block = local_ns->block || remote_ns->block;
+					}
+					nr_spds++;
+				}
 			}
 		}
 	}
-
-	discard_connection_spds(c, true/*valid*/);
-	c->spd = spd_list;
 
 	/*
 	 * Fancy bread crumb; need to save the old owner and then zap

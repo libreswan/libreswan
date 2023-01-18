@@ -179,22 +179,23 @@ static void discard_spd_end(struct spd_end *e)
 	virtual_ip_delref(&e->virt);
 }
 
-static void discard_spd(struct spd_route **spd, bool valid)
+static void discard_spd(struct spd_route *spd, bool valid)
 {
-	spd_route_db_del(*spd, valid);
+	spd_route_db_del(spd, valid);
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		discard_spd_end(&(*spd)->end[end]);
+		discard_spd_end(&spd->end[end]);
 	}
-	pfreeany(*spd);
 }
 
 void discard_connection_spds(struct connection *c, bool connection_valid)
 {
 	for (struct spd_route *spd = c->spd, *next = NULL; spd != NULL; spd = next) {
 		next = spd->spd_next; /*step-off*/
-		discard_spd(&spd, connection_valid);
+		discard_spd(spd, connection_valid);
 	}
+	pfreeany(c->child.spds.list);
 	c->spd = NULL;
+	c->child.spds = (struct spds) {0};
 }
 
 
@@ -1450,8 +1451,6 @@ void add_connection_spds(struct connection *c, const struct ip_info *host_afi)
 	unsigned indent = 0;
 	ldbg(c->logger, "%*sadding proposal spds", indent, "");
 
-	struct spd_route *spd_list = NULL;
-	struct spd_route **spd_end = &spd_list;
 	struct {
 		const ip_selectors *selectors;
 		const ip_selector *selector;
@@ -1466,51 +1465,70 @@ void add_connection_spds(struct connection *c, const struct ip_info *host_afi)
 		}
 		selectors[end].selectors = s;
 	}
-	selectors[LEFT_END].selector = selectors[LEFT_END].selectors->list;
-	FOR_EACH_ITEM(left_selector, selectors[LEFT_END].selectors) {
-		selectors[LEFT_END].selector = left_selector;
-		FOR_EACH_ITEM(right_selector, selectors[RIGHT_END].selectors) {
-			selectors[RIGHT_END].selector = right_selector;
-			indent = 1;
-			selector_buf leftb, rightb;
-			ldbg(c->logger, "%*s%s->%s", indent, "",
-			     str_selector(selectors[LEFT_END].selector, &leftb),
-			     str_selector(selectors[RIGHT_END].selector, &rightb));
-			indent = 2;
-			/*
-			 * XXX: figure out the combination's IP
-			 * family.
-			 */
-			FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-				const struct ip_info *afi = selector_type(selectors[end].selector);
-				selectors[end].afi = (afi != NULL ? afi : host_afi);
-			}
-			if (selectors[LEFT_END].afi == selectors[RIGHT_END].afi) {
-				indent = 6;
-				struct spd_route *spd = append_spd(c, &spd_end);
+
+	/*
+	 * Pass 1: totals nr SPDs needed.
+	 * Pass 2: allocates SPDs.
+	 *
+	 * If selectors were split into IPv4 and IPv6 lists this could
+	 * go away.
+	 */
+
+	unsigned nr_spds = 0;
+	for (unsigned pass = 1; pass <= 2; pass++) {
+		if (pass == 2) {
+			alloc_connection_spds(c, nr_spds);
+		}
+		nr_spds = 0;
+		selectors[LEFT_END].selector = selectors[LEFT_END].selectors->list;
+		FOR_EACH_ITEM(left_selector, selectors[LEFT_END].selectors) {
+			selectors[LEFT_END].selector = left_selector;
+			selectors[LEFT_END].afi = selector_type(left_selector);
+			FOR_EACH_ITEM(right_selector, selectors[RIGHT_END].selectors) {
+				selectors[RIGHT_END].selector = right_selector;
+				selectors[RIGHT_END].afi = selector_type(right_selector);
+				indent = 1;
+				selector_buf leftb, rightb;
+				ldbg(c->logger, "%*s%s->%s", indent, "",
+				     str_selector(selectors[LEFT_END].selector, &leftb),
+				     str_selector(selectors[RIGHT_END].selector, &rightb));
+				indent = 2;
+				/*
+				 * XXX: figure out the combination's IP
+				 * family.
+				 */
 				FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-					const ip_selector *selector = selectors[end].selector;
-					const struct child_end_config *child_end = &c->end[end].config->child;
-					struct spd_end *spd_end = &spd->end[end];
-					const char *leftright = child_end->leftright;
-					/* NOT set_end_selector() */
-					spd_end->client = *selector;
-					spd_end->virt = virtual_ip_addref(child_end->virt);
-					selector_buf sb;
-					ldbg(c->logger,
-					     "%*s%s child spd from selector %s %s.spd.has_client=%s virt=%s",
-					     indent, "", spd_end->config->leftright,
-					     str_selector(&spd_end->client, &sb),
-					     leftright,
-					     bool_str(spd_end->child->has_client),
-					     bool_str(spd_end->virt != NULL));
+					const struct ip_info *afi = selector_type(selectors[end].selector);
+					selectors[end].afi = (afi != NULL ? afi : host_afi);
+				}
+				if (selectors[LEFT_END].afi == selectors[RIGHT_END].afi) {
+					if (pass == 2) {
+						struct spd_route *spd = &c->child.spds.list[nr_spds];
+						PASSERT(c->logger, spd < c->child.spds.list + c->child.spds.len);
+						indent = 3;
+						FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+							const ip_selector *selector = selectors[end].selector;
+							const struct child_end_config *child_end = &c->end[end].config->child;
+							struct spd_end *spd_end = &spd->end[end];
+							const char *leftright = child_end->leftright;
+							/* NOT set_end_selector() */
+							spd_end->client = *selector;
+							spd_end->virt = virtual_ip_addref(child_end->virt);
+							selector_buf sb;
+							ldbg(c->logger,
+							     "%*s%s child spd from selector %s %s.spd.has_client=%s virt=%s",
+							     indent, "", spd_end->config->leftright,
+							     str_selector(&spd_end->client, &sb),
+							     leftright,
+							     bool_str(spd_end->child->has_client),
+							     bool_str(spd_end->virt != NULL));
+						}
+					}
+					nr_spds++;
 				}
 			}
 		}
 	}
-
-	PEXPECT(c->logger, c->spd == NULL); /* leak? */
-	c->spd = spd_list;
 
 	set_connection_priority(c); /* must be after .kind and .spd are set */
 	spd_route_db_add_connection(c);

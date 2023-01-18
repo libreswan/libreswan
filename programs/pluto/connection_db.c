@@ -288,27 +288,31 @@ struct connection *alloc_connection(const char *name,
 	return c;
 }
 
-struct spd_route *append_spd(struct connection *c, struct spd_route ***spd_end)
+void alloc_connection_spds(struct connection *c, unsigned nr_spds)
 {
-	struct spd_route *spd = alloc_thing(struct spd_route, "spd_route");
-	/* append; too much redirection */
-	passert(**spd_end == NULL);
-	**spd_end = spd;
-	*spd_end = &spd->spd_next;
-	passert(**spd_end == NULL);
-	/* back link */
-	spd->connection = c;
-	/* local link */
-	spd->local = &spd->end[c->local->config->index];	/*clone must update*/
-	spd->remote = &spd->end[c->remote->config->index];	/*clone must update*/
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		spd->end[end].config = c->end[end].config;
-		spd->end[end].host = &c->end[end].host;		/*clone must update*/
-		spd->end[end].child = &c->end[end].child;	/*clone must update*/
+	PASSERT(c->logger, c->child.spds.len == 0);
+	ldbg(c->logger, "allocating %u SPDs", nr_spds);
+	c->child.spds = (struct spds) {
+		.len = nr_spds,
+		.list = alloc_things(struct spd_route, nr_spds, "spds"),
+	};
+	c->spd = c->child.spds.list;
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		/* back compat */
+		spd->spd_next = (spd == c->spd + nr_spds - 1 ? NULL : spd + 1);
+		/* back link */
+		spd->connection = c;
+		/* local link */
+		spd->local = &spd->end[c->local->config->index];	/*clone must update*/
+		spd->remote = &spd->end[c->remote->config->index];	/*clone must update*/
+		FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+			spd->end[end].config = c->end[end].config;
+			spd->end[end].host = &c->end[end].host;		/*clone must update*/
+			spd->end[end].child = &c->end[end].child;	/*clone must update*/
+		}
+		/* db; will be updated */
+		spd_route_db_init_spd_route(spd);
 	}
-	/* db; will be updated */
-	spd_route_db_init_spd_route(spd);
-	return spd;
 }
 
 /*

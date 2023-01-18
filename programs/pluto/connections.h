@@ -478,6 +478,11 @@ struct spd_route {
 	} hash_table_entries;
 };
 
+struct spds {
+	unsigned len;
+	struct spd_route *list;
+};
+
 struct sa_mark {
 	uint32_t val;
 	uint32_t mask;
@@ -551,6 +556,7 @@ struct connection {
 		 */
 		reqid_t reqid;
 		chunk_t sec_label;		/* negotiated sec label */
+		struct spds spds;
 	} child;
 	struct spd_route *spd;
 
@@ -781,7 +787,7 @@ PRINTF_LIKE(3)
 void ldbg_connection(const struct connection *c, where_t where,
 		     const char *message, ...);
 
-struct spd_route *append_spd(struct connection *c, struct spd_route ***last);
+void alloc_connection_spds(struct connection *c, unsigned nr);
 void discard_connection_spds(struct connection *c, bool connection_valid);
 void add_connection_spds(struct connection *c, const struct ip_info *host_afi);
 

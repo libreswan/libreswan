@@ -50,7 +50,8 @@ static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 
 static struct connection *clone_connection(const char *name, struct connection *t,
 					   const struct id *peer_id, where_t where);
-static void clone_connection_spd(struct connection *d, struct connection *t);
+
+static void clone_connection_spd(struct connection *d, const struct connection *t);
 
 /*
  * unshare_connection: after a struct connection has been copied,
@@ -76,8 +77,9 @@ struct connection *clone_connection(const char *name, struct connection *t,
 			  t->logger->object_whackfd,
 			  where);
 
-	/* caller responsible for cloning this */
+	/* caller responsible for re-building these */
 	c->spd = NULL;
+	zero(&c->child.spds);
 
 	c->log_file_name = NULL;
 	c->log_file = NULL;
@@ -88,7 +90,8 @@ struct connection *clone_connection(const char *name, struct connection *t,
 	c->vti_iface = clone_str(t->vti_iface, "connection vti_iface");
 	c->interface = iface_endpoint_addref(t->interface);
 
-	/* can't yet have an assigned SEC_LABEL */
+	/* Template can't yet have an assigned SEC_LABEL */
+	PASSERT(t->logger, t->child.sec_label.len == 0);
 	PASSERT(c->logger, c->child.sec_label.len == 0);
 
 	c->local->host.id = clone_id(&t->local->host.id, "unshare local connection id");
@@ -411,25 +414,28 @@ static struct connection *instantiate(struct connection *t,
  * instance, ends up throwing away the SPDs creating its own.
  */
 
-static void clone_connection_spd(struct connection *d, struct connection *t)
+static void clone_connection_spd(struct connection *d, const struct connection *t)
 {
-	struct spd_route **dst = &d->spd;
-	for (struct spd_route *old = t->spd; old != NULL; old = old->spd_next) {
-		struct spd_route *new = clone_thing(*old, __func__);
+	PASSERT(d->logger, d->child.spds.len == 0);
+	const unsigned nr_spds = t->child.spds.len;
+	ldbg(d->logger, "allocating %u SPDs", nr_spds);
+	d->child.spds = (struct spds) {
+		.len = nr_spds,
+		.list = clone_things(t->child.spds.list, t->child.spds.len, __func__),
+	};
+	d->spd = d->child.spds.list;
+	FOR_EACH_ITEM(new, &d->child.spds) {
 		zero_thing(new->hash_table_entries); /* keep init_list_entry() happy */
 		new->connection = d;
-		new->spd_next = NULL; /* break old chain */
+		new->spd_next = (new < d->spd + nr_spds - 1 ? new + 1 : NULL);
 		/* cross-link */
 		new->local = &new->end[d->local->config->index];
 		new->remote = &new->end[d->remote->config->index];
 		FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-			new->end[end].virt = virtual_ip_addref(old->end[end].virt);
+			new->end[end].virt = virtual_ip_addref(new->end[end].virt);
 			new->end[end].host = &d->end[end].host;
 			new->end[end].child = &d->end[end].child;
 		}
-		/* add to c->spd list ... */
-		*dst = new;
-		dst = &new->spd_next;
 		/* ... before first use */
 		spd_route_db_init_spd_route(new);
 	}
