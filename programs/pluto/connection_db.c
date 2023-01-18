@@ -119,7 +119,7 @@ static hash_t hash_spd_route_remote_client(const ip_selector *sr)
 
 void spd_route_db_add_connection(struct connection *c)
 {
-	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 		spd_route_db_add(spd);
 	}
 }
@@ -298,8 +298,6 @@ void alloc_connection_spds(struct connection *c, unsigned nr_spds)
 	};
 	c->spd = c->child.spds.list;
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-		/* back compat */
-		spd->spd_next = (spd == c->spd + nr_spds - 1 ? NULL : spd + 1);
 		/* back link */
 		spd->connection = c;
 		/* local link */

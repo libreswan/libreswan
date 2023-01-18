@@ -142,13 +142,12 @@ void initialize_new_state(struct state *st,
 	st->st_policy = policy & ~POLICY_IPSEC_MASK;        /* clear bits */
 	st->st_try = try;
 
-	for (const struct spd_route *sr = c->spd;
-	     sr != NULL; sr = sr->spd_next) {
-		if (sr->local->host->config->xauth.client) {
-			if (sr->local->host->config->xauth.username != NULL) {
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		if (spd->local->host->config->xauth.client) {
+			if (spd->local->host->config->xauth.username != NULL) {
 				jam_str(st->st_xauth_username,
 					sizeof(st->st_xauth_username),
-					sr->local->host->config->xauth.username);
+					spd->local->host->config->xauth.username);
 				break;
 			}
 		}

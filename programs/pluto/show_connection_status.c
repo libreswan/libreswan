@@ -505,13 +505,8 @@ void show_connection_status(struct show *s, const struct connection *c)
 			c->instance_serial);
 
 	/* Show topology. */
-	{
-		const struct spd_route *sr = c->spd;
-
-		while (sr != NULL) {
-			show_one_sr(s, c, sr, instance);
-			sr = sr->spd_next;
-		}
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		show_one_sr(s, c, spd, instance);
 	}
 
 	/* Show CAs */

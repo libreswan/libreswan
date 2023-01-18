@@ -1809,7 +1809,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 
 				/* make sure that other side isn't an endpoint */
 				if (!c->remote->child.has_client) {
-					passert(c->spd->spd_next == NULL);
+					passert(c->child.spds.len == 1);
 					set_child_has_client(c, remote, true);
 					update_first_selector(c, remote, ipv4_info.selector.all);
 					rehash_db_spd_route_remote_client(c->spd);

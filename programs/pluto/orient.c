@@ -198,14 +198,14 @@ bool orient(struct connection *c, struct logger *logger)
 	c->local = local;
 	c->remote = remote;
 
-	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 		spd->local = &spd->end[end];
 		spd->remote = &spd->end[!end];
 	}
 
 	/* rehash end dependent hashes */
 	rehash_db_connection_that_id(c);
-	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 		rehash_db_spd_route_remote_client(spd);
 	}
 

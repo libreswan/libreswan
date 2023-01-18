@@ -898,7 +898,7 @@ static bool get_connection_spd_conflicts(struct connection *c, struct logger *lo
 {
 	ldbg(logger, "checking %s for conflicts", c->name);
 	bool routable = false;
-	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 		get_connection_spd_conflict(spd, logger, 2);
 		routable |= spd->wip.conflicting.ok;
 	}
@@ -1013,7 +1013,11 @@ bool install_prospective_kernel_policy(struct connection *c)
 	 */
 
 	bool ok = true;
-	for (struct spd_route *spd = c->spd; spd != NULL && ok; spd = spd->spd_next) {
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+
+		if (!ok) {
+			break;
+		}
 
 		/*
 		 * When overlap isn't supported, the old clashing bare
@@ -1049,7 +1053,10 @@ bool install_prospective_kernel_policy(struct connection *c)
 	 */
 
 	ldbg(c->logger, "kernel: %s() running updown-prepare when needed", __func__);
-	for (struct spd_route *spd = c->spd; spd != NULL && ok; spd = spd->spd_next) {
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		if (!ok) {
+			break;
+		}
 		if (spd->wip.conflicting.spd == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			if (!do_updown(UPDOWN_PREPARE, c, spd, NULL/*state*/, c->logger))
@@ -1058,7 +1065,10 @@ bool install_prospective_kernel_policy(struct connection *c)
 	}
 
 	ldbg(c->logger, "kernel: %s() running updown-route when needed", __func__);
-	for (struct spd_route *spd = c->spd; spd != NULL && ok; spd = spd->spd_next) {
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		if (!ok) {
+			break;
+		}
 		if (spd->wip.conflicting.spd == NULL) {
 			ok &= spd->wip.installed.route =
 				do_updown(UPDOWN_ROUTE, c, spd, NULL/*state*/, c->logger);
@@ -1070,7 +1080,7 @@ bool install_prospective_kernel_policy(struct connection *c)
 	 */
 
 	if (!ok) {
-		for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+		FOR_EACH_ITEM(spd, &c->child.spds) {
 			revert_kernel_policy(spd, NULL/*st*/, c->logger);
 		}
 		return false;
@@ -1080,7 +1090,7 @@ bool install_prospective_kernel_policy(struct connection *c)
 	 * Now clean up any shunts that were replaced.
 	 */
 
-	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 		struct bare_shunt **bspp = spd->wip.conflicting.shunt;
 		if (bspp != NULL) {
 			free_bare_shunt(bspp);
@@ -1097,12 +1107,12 @@ void migration_up(struct child_sa *child)
 	struct connection *c = child->sa.st_connection;
 	/* do now so route_owner won't find us */
 	set_child_routing(c, RT_ROUTED_TUNNEL);
-	for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 #ifdef IPSEC_CONNECTION_LIMIT
 		num_ipsec_eroute++;
 #endif
-		do_updown(UPDOWN_UP, c, sr, &child->sa, child->sa.st_logger);
-		do_updown(UPDOWN_ROUTE, c, sr, &child->sa, child->sa.st_logger);
+		do_updown(UPDOWN_UP, c, spd, &child->sa, child->sa.st_logger);
+		do_updown(UPDOWN_ROUTE, c, spd, &child->sa, child->sa.st_logger);
 	}
 }
 
@@ -1113,7 +1123,7 @@ void migration_down(struct child_sa *child)
 #ifdef IPSEC_CONNECTION_LIMIT
 	if (erouted(cr)) {
 		/* XXX: c->spd should be {.len,.list} */
-		for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+		FOR_EACH_ITEM(spd, &c->child.spds) {
 			num_ipsec_eroute--;
 		}
 	}
@@ -1127,7 +1137,7 @@ void migration_down(struct child_sa *child)
 	 */
 	set_child_routing(c, RT_UNROUTED);
 	if (routed(cr)) {
-		for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+		FOR_EACH_ITEM(spd, &c->child.spds) {
 			if (route_owner(spd) == NULL) {
 				do_updown(UPDOWN_DOWN, c, spd, &child->sa, child->sa.st_logger);
 				child->sa.st_mobike_del_src_ip = true;
@@ -1147,7 +1157,7 @@ void unroute_connection(struct connection *c)
 {
 	enum routing cr = c->child.routing;
 	if (erouted(cr)) {
-		for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+		FOR_EACH_ITEM(spd, &c->child.spds) {
 			/* cannot handle a live one */
 			passert(cr != RT_ROUTED_TUNNEL);
 			/*
@@ -1178,7 +1188,7 @@ void unroute_connection(struct connection *c)
 	set_child_routing(c, RT_UNROUTED);
 
 	if (routed(cr)) {
-		for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+		FOR_EACH_ITEM(spd, &c->child.spds) {
 			/* only unroute if no other connection shares it */
 			if (route_owner(spd) == NULL) {
 				do_updown(UPDOWN_UNROUTE, c, spd, NULL, c->logger);
@@ -2041,7 +2051,7 @@ static bool install_inbound_ipsec_kernel_policies(struct state *st)
 		return true;
 	}
 
-	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 
 		struct kernel_policy kernel_policy =
 			kernel_policy_from_state(st, spd, DIRECTION_INBOUND, HERE);
@@ -2465,7 +2475,12 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 	 * Install the IPsec kernel policies.
 	 */
 
-	for (struct spd_route *spd = c->spd; ok && spd != NULL; spd = spd->spd_next) {
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+
+		if (!ok) {
+			break;
+		}
+
 #ifdef USE_CISCO_SPLIT
 		if (c->remotepeertype == CISCO &&
 		    spd == c->spd &&
@@ -2473,6 +2488,7 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 			continue;
 		}
 #endif
+
 		enum kernel_policy_op op =
 			(spd->wip.conflicting.shunt != NULL ? KERNEL_POLICY_OP_REPLACE :
 			 KERNEL_POLICY_OP_ADD);
@@ -2531,7 +2547,12 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 	 * connection, so the actual test is simple.
 	 */
 
-	for (struct spd_route *spd = c->spd; ok && spd != NULL; spd = spd->spd_next) {
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+
+		if (!ok) {
+			break;
+		}
+
 #ifdef USE_CISCO_SPLIT
 		if (c->remotepeertype == CISCO &&
 		    spd == c->spd &&
@@ -2556,7 +2577,10 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 	 */
 
 	ldbg(st->st_logger, "kernel: %s() running updown-prepare", __func__);
-	for (struct spd_route *spd = c->spd; ok && spd != NULL; spd = spd->spd_next) {
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		if (!ok) {
+			break;
+		}
 #ifdef USE_CISCO_SPLIT
 		if (c->remotepeertype == CISCO &&
 		    spd == c->spd &&
@@ -2572,7 +2596,10 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 	}
 
 	ldbg(st->st_logger, "kernel: %s() running updown-route", __func__);
-	for (struct spd_route *spd = c->spd; ok && spd != NULL; spd = spd->spd_next) {
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		if (!ok) {
+			break;
+		}
 #ifdef USE_CISCO_SPLIT
 		if (c->remotepeertype == CISCO &&
 		    spd == c->spd &&
@@ -2588,7 +2615,7 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 	}
 
 	if (!ok) {
-		for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+		FOR_EACH_ITEM(spd, &c->child.spds) {
 			revert_kernel_policy(spd, st, st->st_logger);
 		}
 		return false;
@@ -2598,7 +2625,10 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 	 * Finally clean up.
 	 */
 
-	for (struct spd_route *spd = c->spd; ok && spd != NULL; spd = spd->spd_next) {
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		if (!ok) {
+			break;
+		}
 #ifdef USE_CISCO_SPLIT
 		if (c->remotepeertype == CISCO &&
 		    spd == c->spd &&
@@ -2779,7 +2809,7 @@ static void teardown_ipsec_kernel_policies(struct state *st,
 	 */
 	set_child_routing(c, new_routing);
 
-	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 
 #ifdef USE_CISCO_SPLIT
 		if (spd == c->spd && c->remotepeertype == CISCO) {

@@ -135,10 +135,9 @@ struct connection *group_instantiate(struct connection *group,
 	PASSERT(group->logger, group->kind == CK_GROUP);
 	PASSERT(group->logger, oriented(group));
 	PASSERT(group->logger, protocol != NULL);
-	PASSERT(group->logger, (group->spd == NULL ||
-				group->spd->spd_next == NULL));
-	PASSERT(group->logger, (group->spd == NULL ||
-				group->spd->local->virt == NULL));
+	PASSERT(group->logger, group->child.spds.len <= 1);
+	PASSERT(group->logger, (group->child.spds.len == 0 ||
+				group->child.spds.list->local->virt == NULL));
 
 	/*
 	 * Manufacture a unique name for this template.
@@ -427,7 +426,6 @@ static void clone_connection_spd(struct connection *d, const struct connection *
 	FOR_EACH_ITEM(new, &d->child.spds) {
 		zero_thing(new->hash_table_entries); /* keep init_list_entry() happy */
 		new->connection = d;
-		new->spd_next = (new < d->spd + nr_spds - 1 ? new + 1 : NULL);
 		/* cross-link */
 		new->local = &new->end[d->local->config->index];
 		new->remote = &new->end[d->remote->config->index];

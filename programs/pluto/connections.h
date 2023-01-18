@@ -452,7 +452,6 @@ struct spd_end {
 };
 
 struct spd_route {
-	struct spd_route *spd_next;
 	struct spd_end end[END_ROOF];
 	/* point into above */
 	struct spd_end *local;		/* must update after clone */
@@ -558,7 +557,8 @@ struct connection {
 		chunk_t sec_label;		/* negotiated sec label */
 		struct spds spds;
 	} child;
-	struct spd_route *spd;
+
+	struct spd_route *spd;			/* HACK: points to child.spds.list */
 
 	/* internal fields: */
 

@@ -353,7 +353,7 @@ bool is_virtual_spd_end(const struct spd_end *end)
 bool is_virtual_remote(const struct connection *c)
 {
 	bool virt = false;
-	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 		if (spd->remote->virt != NULL) {
 			virt = true;
 			break;

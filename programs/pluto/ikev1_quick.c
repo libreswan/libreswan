@@ -1978,8 +1978,7 @@ static struct connection *fc_try(const struct connection *c,
 		}
 
 		/*
-		 * non-Opportunistic case:
-		 * local_client must match.
+		 * non-Opportunistic case: local_client must match.
 		 *
 		 * So must remote_client, but the testing is complicated
 		 * by the fact that the peer might be a wildcard
@@ -1990,8 +1989,11 @@ static struct connection *fc_try(const struct connection *c,
 		 * If d has no peer client, remote_net must just have peer itself.
 		 */
 
-		for (const struct spd_route *d_spd = d->spd;
-		     best != d && d_spd != NULL; d_spd = d_spd->spd_next) {
+		FOR_EACH_ITEM(d_spd, &d->child.spds) {
+
+			if (best == d) {
+				break;
+			}
 
 			if (DBGP(DBG_BASE)) {
 				selector_buf s1, d1;
@@ -2140,14 +2142,16 @@ static struct connection *fc_try_oppo(const struct connection *c,
 
 		/*
 		 * Opportunistic case:
-		 * local_net must be inside d->spd->local->client
-		 * and remote_net must be inside d->spd->remote->client
-		 * Note: this host_pair chain also has shunt
-		 * eroute conns (clear, drop), but they won't
-		 * be marked as opportunistic.
+		 *
+		 * local_net must be inside d->spd->local->client and
+		 * remote_net must be inside d->spd->remote->client
+		 *
+		 * Note: this host_pair chain also has shunt eroute
+		 * conns (clear, drop), but they won't be marked as
+		 * opportunistic.
 		 */
 
-		for (const struct spd_route *d_spd = d->spd; d_spd != NULL; d_spd = d_spd->spd_next) {
+		FOR_EACH_ITEM(d_spd, &d->child.spds) {
 
 			if (DBGP(DBG_BASE)) {
 				selector_buf s1;
@@ -2227,30 +2231,34 @@ struct connection *find_v1_client_connection(struct connection *const c,
 		struct connection *unrouted = NULL;
 		int srnum = -1;
 
-		for (const struct spd_route *sr = c->spd; unrouted == NULL && sr != NULL;
-			sr = sr->spd_next) {
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+
+			if (unrouted != NULL) {
+				break;
+			}
+
 			srnum++;
 
 			if (DBGP(DBG_BASE)) {
 				selector_buf s2;
 				selector_buf d2;
 				DBG_log("  concrete checking against sr#%d %s -> %s", srnum,
-					str_selector_subnet_port(&sr->local->client, &s2),
-					str_selector_subnet_port(&sr->remote->client, &d2));
+					str_selector_subnet_port(&spd->local->client, &s2),
+					str_selector_subnet_port(&spd->remote->client, &d2));
 			}
 
 			unsigned local_protocol = selector_protocol(*local_client)->ipproto;
 			int local_port = selector_port(*local_client).hport;
 			unsigned remote_protocol = selector_protocol(*remote_client)->ipproto;
 			int remote_port = selector_port(*remote_client).hport;
-			if (selector_range_eq_selector_range(sr->local->client, *local_client) &&
-			    selector_range_eq_selector_range(sr->remote->client, *remote_client) &&
-			    sr->local->client.ipproto == local_protocol &&
-			    (!sr->local->client.hport ||
-			     sr->local->client.hport == local_port) &&
-			    (sr->remote->client.ipproto == remote_protocol) &&
-			    (!sr->remote->client.hport ||
-			     sr->remote->client.hport == remote_port)) {
+			if (selector_range_eq_selector_range(spd->local->client, *local_client) &&
+			    selector_range_eq_selector_range(spd->remote->client, *remote_client) &&
+			    spd->local->client.ipproto == local_protocol &&
+			    (!spd->local->client.hport ||
+			     spd->local->client.hport == local_port) &&
+			    (spd->remote->client.ipproto == remote_protocol) &&
+			    (!spd->remote->client.hport ||
+			     spd->remote->client.hport == remote_port)) {
 				if (routed(c->child.routing))
 					return c;
 
@@ -2281,17 +2289,18 @@ struct connection *find_v1_client_connection(struct connection *const c,
 		 * look for an abstract connection to match
 		 */
 		ip_address local_address = unset_address;
-		for (const struct spd_route *sra = c->spd;
-		     sra != NULL && !address_is_specified(local_address);
-		     sra = sra->spd_next) {
-			FOR_EACH_HOST_PAIR_CONNECTION(sra->local->host->addr,
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+			if (address_is_specified(local_address)) {
+				break;
+			}
+			FOR_EACH_HOST_PAIR_CONNECTION(spd->local->host->addr,
 						      unset_address, ignore) {
-				local_address = sra->local->host->addr;
+				local_address = spd->local->host->addr;
 				selector_buf s2;
 				selector_buf d2;
 				DBG_log("  checking hostpair %s -> %s",
-					str_selector_subnet_port(&sra->local->client, &s2),
-					str_selector_subnet_port(&sra->remote->client, &d2));
+					str_selector_subnet_port(&spd->local->client, &s2),
+					str_selector_subnet_port(&spd->remote->client, &d2));
 				break;
 			}
 		}

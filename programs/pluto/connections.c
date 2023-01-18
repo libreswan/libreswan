@@ -133,7 +133,7 @@ void ldbg_connection(const struct connection *c, where_t where,
 		}
 		LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
 			jam_string(buf, "    spds:");
-			for (const struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+			FOR_EACH_ITEM(spd, &c->child.spds) {
 				jam_string(buf, " ");
 				jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
 			}
@@ -174,24 +174,23 @@ void release_connection(struct connection *c)
 }
 
 /* Delete a connection */
-static void discard_spd_end(struct spd_end *e)
+static void discard_spd_end_content(struct spd_end *e)
 {
 	virtual_ip_delref(&e->virt);
 }
 
-static void discard_spd(struct spd_route *spd, bool valid)
+static void discard_spd_content(struct spd_route *spd, bool valid)
 {
 	spd_route_db_del(spd, valid);
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		discard_spd_end(&spd->end[end]);
+		discard_spd_end_content(&spd->end[end]);
 	}
 }
 
 void discard_connection_spds(struct connection *c, bool connection_valid)
 {
-	for (struct spd_route *spd = c->spd, *next = NULL; spd != NULL; spd = next) {
-		next = spd->spd_next; /*step-off*/
-		discard_spd(spd, connection_valid);
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		discard_spd_content(spd, connection_valid);
 	}
 	pfreeany(c->child.spds.list);
 	c->spd = NULL;
@@ -545,7 +544,7 @@ void update_spds_from_end_host_addr(struct connection *c, enum left_right end, i
 		return;
 	}
 
-	for (struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 		struct spd_end *spde = &spd->end[end];
 
 		if (spde->child->has_client) {
@@ -2831,7 +2830,7 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 
 	struct connection *best_connection = NULL;
 	connection_priority_t best_priority = BOTTOM_PRIORITY;
-	struct spd_route *best_sr = NULL;
+	struct spd_route *best_spd = NULL;
 
 	struct connection_filter cq = { .where = HERE, };
 	while (next_connection_new2old(&cq)) {
@@ -2903,10 +2902,12 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 			continue;
 		}
 
-		for (struct spd_route *sr = c->spd;
-		     /* bail if below sets BEST_CONECTION to C */
-		     best_connection != c && sr != NULL;
-		     sr = sr->spd_next) {
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+
+			/* bail if below sets BEST_CONECTION to C */
+			if (best_connection == c) {
+				break;
+			}
 
 			/*
 			 * The triggering packet needs to be within
@@ -2922,7 +2923,7 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 			 * DST, OTOH, is a proper endpoint.
 			 */
 
-			if (!selector_in_selector(packet_src, sr->local->client)) {
+			if (!selector_in_selector(packet_src, spd->local->client)) {
 				connection_buf cb;
 				selector_pair_buf sb;
 				selector_buf psb;
@@ -2933,7 +2934,7 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 				continue;
 			}
 
-			if (!endpoint_in_selector(packet_dst, sr->remote->client)) {
+			if (!endpoint_in_selector(packet_dst, spd->remote->client)) {
 				connection_buf cb;
 				selector_pair_buf sb;
 				endpoint_buf eb;
@@ -2952,9 +2953,9 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 			 */
 			connection_priority_t priority =
 				(8 * (c->priority + (c->kind == CK_INSTANCE)) +
-				 2 * (sr->local->client.hport == packet.src.hport) +
-				 2 * (sr->remote->client.hport == packet.dst.hport) +
-				 1 * (sr->local->client.ipproto == packet.protocol->ipproto));
+				 2 * (spd->local->client.hport == packet.src.hport) +
+				 2 * (spd->remote->client.hport == packet.dst.hport) +
+				 1 * (spd->local->client.ipproto == packet.protocol->ipproto));
 
 			if (best_connection != NULL &&
 			    priority <= best_priority) {
@@ -2965,7 +2966,7 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 				    str_selector_pair(&c->spd->local->client, &c->spd->remote->client, &sb),
 				    priority,
 				    pri_connection(best_connection, &bcb),
-				    str_selector_pair(&best_sr->local->client, &best_sr->remote->client, &bsb),
+				    str_selector_pair(&best_spd->local->client, &best_spd->remote->client, &bsb),
 				    best_priority);
 				continue;
 			}
@@ -2988,12 +2989,12 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 				     str_selector_pair(&c->spd->local->client, &c->spd->remote->client, &sb),
 				     priority,
 				     pri_connection(best_connection, &bcb),
-				     str_selector_pair(&best_sr->local->client, &best_sr->remote->client, &bsb),
+				     str_selector_pair(&best_spd->local->client, &best_spd->remote->client, &bsb),
 				     best_priority);
 			}
 
 			best_connection = c;
-			best_sr = sr;
+			best_spd = spd;
 			best_priority = priority;
 		}
 	}
@@ -3011,7 +3012,7 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 		enum_buf kb;
 		dbg("  concluding with "PRI_CONNECTION" %s priority %" PRIu32 " kind=%s",
 		    pri_connection(best_connection, &cib),
-		    str_selector_pair(&best_sr->local->client, &best_sr->remote->client, &sb),
+		    str_selector_pair(&best_spd->local->client, &best_spd->remote->client, &sb),
 		    best_priority,
 		    str_enum_short(&connection_kind_names, best_connection->kind, &kb));
 	} else {
@@ -3019,7 +3020,7 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 	}
 
 	if (srp != NULL && best_connection != NULL) {
-		*srp = best_sr;
+		*srp = best_spd;
 	}
 	return best_connection;
 }
@@ -3118,7 +3119,7 @@ struct connection *find_outgoing_opportunistic_template(const ip_packet packet)
 			 * conns, it does not find the most narrow
 			 * match!
 			 */
-			for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
+			FOR_EACH_ITEM(spd, &c->child.spds) {
 
 				/*
 				 * The triggering packet needs to be
@@ -3135,8 +3136,8 @@ struct connection *find_outgoing_opportunistic_template(const ip_packet packet)
 				 */
 				ip_selector src = packet_src_selector(packet);
 				ip_endpoint dst = packet_dst_endpoint(packet);
-				if (!selector_in_selector(src, sr->local->client) ||
-				    !endpoint_in_selector(dst, sr->remote->client)) {
+				if (!selector_in_selector(src, spd->local->client) ||
+				    !endpoint_in_selector(dst, spd->remote->client)) {
 					continue;
 				}
 
@@ -3149,7 +3150,7 @@ struct connection *find_outgoing_opportunistic_template(const ip_packet packet)
 				 * ??? not elegant, not symmetric.
 				 * Possible replacement test:
 				 *   best_spd_route->this.client.maskbits + best_spd_route->that.client.maskbits >
-				 *   sr->local->client.maskbits + sr->remote->client.maskbits
+				 *   spd->local->client.maskbits + spd->remote->client.maskbits
 				 * but this knows too much about the representation of ip_subnet.
 				 * What is the correct semantics?
 				 *
@@ -3159,7 +3160,7 @@ struct connection *find_outgoing_opportunistic_template(const ip_packet packet)
 				 */
 
 				if (best_spd_route != NULL &&
-				    selector_in_selector(best_spd_route->local->client, sr->local->client)) {
+				    selector_in_selector(best_spd_route->local->client, spd->local->client)) {
 					/*
 					 * BEST_SPD_ROUTE is better.
 					 *
@@ -3169,8 +3170,8 @@ struct connection *find_outgoing_opportunistic_template(const ip_packet packet)
 					continue;
 				}
 				if (best_spd_route != NULL &&
-				    selector_eq_selector(best_spd_route->local->client, sr->local->client) &&
-				    selector_in_selector(best_spd_route->remote->client, sr->remote->client)) {
+				    selector_eq_selector(best_spd_route->local->client, spd->local->client) &&
+				    selector_in_selector(best_spd_route->remote->client, spd->remote->client)) {
 					/*
 					 * BEST_SPD_ROUTE is better.
 					 *
@@ -3183,7 +3184,7 @@ struct connection *find_outgoing_opportunistic_template(const ip_packet packet)
 					continue;
 				}
 				best = c;
-				best_spd_route = sr;
+				best_spd_route = spd;
 			}
 		}
 	}
@@ -3354,8 +3355,8 @@ bool same_peer_ids(const struct connection *c, const struct connection *d,
 void check_connection(struct connection *c, where_t where)
 {
 	connection_db_check_connection(c, c->logger, where);
-	for (struct spd_route *sr = c->spd; sr != NULL; sr = sr->spd_next) {
-		spd_route_db_check_spd_route(sr, c->logger, where);
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		spd_route_db_check_spd_route(spd, c->logger, where);
 	}
 }
 
@@ -3409,7 +3410,7 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 		     str_selector(&new_selector, &nb),
 		     pri_where(where));
 		if (c->spd != NULL) {
-			PEXPECT_WHERE(c->logger, where, c->spd->spd_next == NULL);
+			PEXPECT_WHERE(c->logger, where, c->child.spds.len == 1);
 			ip_selector old_client = c->spd->end[end].client;
 			if (!selector_eq_selector(old_selector, old_client)) {
 				selector_buf sb, cb;

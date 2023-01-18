@@ -1646,7 +1646,7 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 
 	/* calculate the per-end policy that might apply */
 
-	for (const struct spd_route *spd = c->spd; spd != NULL; spd = spd->spd_next) {
+	FOR_EACH_ITEM(spd, &c->child.spds) {
 		if (selection) {
 			/*
 			 * this is the initiator, we have proposed, they have answered,
