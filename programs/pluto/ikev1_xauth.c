@@ -1822,7 +1822,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 								 &i, sizeof(i), NULL);
 					if (d != NULL) {
 						llog_diag(RC_INFORMATIONAL, st->st_logger, &d,
-							 "ignoring malformed CISCO_SPLIT_INC payload");
+							  "ignoring malformed CISCO_SPLIT_INC payload: ");
 						break;
 					}
 
@@ -1837,21 +1837,14 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 						break;
 					}
 
-					subnet_buf pretty_subnet;
-					str_subnet(&wire_subnet, &pretty_subnet);
-
-					log_state(RC_INFORMATIONAL, st,
-						  "Received and ignored subnet %s",
-						  pretty_subnet.buf);
-
 #ifdef USE_CISCO_SPLIT
 					ip_selector wire_selector = selector_from_subnet(wire_subnet);
 					for (struct spd_route *sr = c->spd; ; sr = sr->spd_next) {
 						if (selector_range_eq_selector_range(wire_selector, sr->remote->client)) {
 							/* duplicate entry: ignore */
 							log_state(RC_INFORMATIONAL, st,
-								  "Subnet %s already has an spd_route - ignoring",
-								  pretty_subnet.buf);
+								  "CISCO_SPLIT_INC subnet %s already has an spd_route - ignoring",
+								  str_subnet(&wire_subnet, &pretty_subnet));
 							break;
 						} else if (sr->spd_next == NULL) {
 							/* new entry: add at end*/
@@ -1861,6 +1854,12 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 							break;
 						}
 					}
+#else
+					subnet_buf pretty_subnet;
+					log_state(RC_INFORMATIONAL, st,
+						  "received and ignored CISCO_SPLIT_INC subnet %s",
+						  str_subnet(&wire_subnet, &pretty_subnet));
+
 #endif
 				}
 
@@ -1874,7 +1873,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 			case IKEv1_INTERNAL_IP4_NBNS | ISAKMP_ATTR_AF_TLV:
 			case IKEv1_INTERNAL_IP6_NBNS | ISAKMP_ATTR_AF_TLV:
 			{
-				log_state(RC_LOG, st, "Received and ignored obsoleted Cisco NetBEUI NS info");
+				log_state(RC_LOG, st, "received and ignored obsoleted Cisco NetBEUI NS info");
 				break;
 			}
 
