@@ -8,6 +8,7 @@ v5.0 (Unreleased)
 * pluto: Support multiple TSes per Child SA [Andrew]
 * building: remove old copy of unbound headers [Andrew]
 * building: Use DESTDIR instead of FINAL* env vars [Andrew]
+* building: Fix "make git-rpm" [Paul/Tuomo]
 * install: overhaul [Andrew]
   - use INSTALL_INITSYSTEM=false to prevent update of /etc/<initsystem>
   - use INSTALL_CONFIGS=false prevents update of /etc/ipsec.d et.al.
