@@ -101,6 +101,9 @@ extern bool report_leaks(struct logger *logger); /* true is bad */
 	((__typeof__(&(orig))) clone_bytes((const void *)&(orig),	\
 					   sizeof(orig), (name)))
 
+#define clone_things(ORIG, COUNT, NAME)					\
+	((__typeof__(&(ORIG[0]))) clone_bytes((ORIG), sizeof((ORIG)[0]) * (COUNT), (NAME)))
+
 #define clone_const_thing(orig, name) clone_bytes((const void *)&(orig), \
 					    sizeof(orig), (name))
 
