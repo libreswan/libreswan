@@ -1398,6 +1398,40 @@ static void mark_parse(/*const*/ char *wmmark,
 
 static void set_connection_spds(struct connection *c, const struct ip_info *host_afi)
 {
+	/*
+	 * Fill in selectors.
+	 */
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		ip_address host_addr = c->end[end].host.addr;
+		const struct child_end_config *child_config = c->end[end].child.config;
+		if (child_config->selectors.len > 0) {
+			c->end[end].child.selectors.proposed = child_config->selectors;
+			set_end_child_has_client(c, end, true);
+		} else if (address_is_specified(host_addr)) {
+			/*
+			 * Default the end's child selector (client)
+			 * to a subnet containing only the end's host
+			 * address.
+			 *
+			 * If the other end has multiple child
+			 * selectors then the combination becomes a
+			 * list.
+			 */
+			ip_selector selector =
+				selector_from_address_protoport(host_addr,
+								child_config->protoport);
+			set_end_selector(c, end, selector);
+		} else {
+			/*
+			 * to-be-determined from the host or the
+			 * opportunistic group.
+			 */
+			c->end[end].child.selectors.assigned[0] = unset_selector;
+			c->end[end].child.selectors.proposed.len = 1;
+			c->end[end].child.selectors.proposed.list = c->end[end].child.selectors.assigned;
+		}
+	}
+
 	ldbg(c->logger, "adding spds");
 	struct spd_route *spd_list = NULL;
 	struct spd_route **spd_tail = &spd_list;
@@ -1407,14 +1441,16 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 		const struct ip_info *afi;
 	} selectors[END_ROOF] = {0};
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		selectors[end].selectors = &c->end[end].config->child.selectors;
+		selectors[end].selectors = &c->end[end].child.selectors.proposed;
 	}
-	selectors[LEFT_END].selector = selectors[LEFT_END].selectors->list; /* could be NULL */
+	selectors[LEFT_END].selector = selectors[LEFT_END].selectors->list; /* could be unset */
+	pexpect(selectors[LEFT_END].selector != NULL);
 	while (true) /*LEFT*/ {
 		unsigned indent = 1;
 		selector_buf leftb;
 		ldbg(c->logger, "%*s%s->...", indent, "", str_selector(selectors[LEFT_END].selector, &leftb));
-		selectors[RIGHT_END].selector = selectors[RIGHT_END].selectors->list;  /* could be NULL */
+		selectors[RIGHT_END].selector = selectors[RIGHT_END].selectors->list; /* could be unset */
+		pexpect(selectors[RIGHT_END].selector != NULL);
 		while (true) /*RIGHT*/ {
 			indent = 2;
 			selector_buf rightb;
@@ -1428,7 +1464,8 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 			 * is used.
 			 */
 			FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-				if (selectors[end].selector == NULL) {
+				if (selectors[end].selector == NULL ||
+				    !selectors[end].selector->is_set) {
 					selectors[end].afi = host_afi;
 				} else {
 					selectors[end].afi = selector_type(selectors[end].selector);
@@ -1452,7 +1489,7 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 					 * updating the client address
 					 * from the host.
 					 */
-					if (selector != NULL) {
+					if (selector != NULL && selector->is_set) {
 						selector_buf sb;
 						ldbg(c->logger,
 						     "%*s%s %s child spd has selectors; setting client to %s",
@@ -1498,13 +1535,6 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 	/* leave a bread crumb */
 	passert(c->child.routing == RT_UNROUTED);
 	set_child_routing(c, RT_UNROUTED);
-
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		ip_address host_addr = c->end[end].host.addr;
-		if (address_is_specified(host_addr)) {
-			update_spds_from_end_host_addr(c, end, host_addr, HERE);
-		}
-	}
 
 	set_connection_priority(c); /* must be after kind is set */
 }
@@ -2571,26 +2601,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 			    end_family[LEFT_END][i].value,
 			    end_family[RIGHT_END][j].field,
 			    end_family[RIGHT_END][j].value);
-	}
-
-	/*
-	 * Fill in selectors.
-	 */
-
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		const ip_selectors *const selectors = &c->end[end].config->child.selectors;
-		if (selectors->len > 0) {
-			c->end[end].child.selectors.proposed = *selectors;
-		} else {
-			/*
-			 * to-be-determined from the host or the
-			 * opportunistic group.
-			 */
-			c->end[end].child.selectors.assigned[0] = unset_selector;
-			c->end[end].child.selectors.proposed.len = 1;
-			c->end[end].child.selectors.proposed.list = c->end[end].child.selectors.assigned;
-		}
-		set_end_child_has_client(c, end, c->end[end].config->child.selectors.len > 0);
 	}
 
 	/*
