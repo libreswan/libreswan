@@ -24,6 +24,8 @@ LIBRESWANSRCDIR?=$(shell pwd)
 
 include $(top_srcdir)/mk/config.mk
 
+MAIN_RPMBUILD_SOURCES  = $(shell rpm --eval %{_sourcedir})
+MAIN_RPMBUILD_SPEC  = $(shell rpm --eval %{_specdir})
 MAIN_RPM_VERSION = $(shell make showversion | sed "s/-.*//")
 MAIN_RPM_PREVER = $(shell make showversion | sed -e  "s/^.[^-]*-\([^-]*\)-\(.*\)/rc\1_\2/" -e "s/-/_/g")
 MAIN_RPM_PREFIX  = libreswan-$(MAIN_RPM_VERSION)$(MAIN_RPM_PREVER)
@@ -132,22 +134,23 @@ rpm:
 
 git-rpm:
 	@echo building rpm for libreswan testing
-	mkdir -p ~/rpmbuild/SPECS/
+	mkdir -p $(MAIN_RPMBUILD_SPEC) $(MAIN_RPMBUILD_SOURCES)
 	sed  -e "s/^Version:.*/Version: $(MAIN_RPM_VERSION)/g" \
 	     -e "s/^#global prever.*/%global prever $(MAIN_RPM_PREVER)/" \
 	     -e "s/^Release:.*/Release: 0.$(MAIN_RPM_PREVER)/" \
-		$(MAIN_RPM_SPECFILE) > ~/rpmbuild/SPECS/libreswan.spec
-	mkdir -p ~/rpmbuild/SOURCES
+		$(MAIN_RPM_SPECFILE) > $(MAIN_RPMBUILD_SPEC)/libreswan.spec
 	git archive --format=tar --prefix=libreswan-$(MAIN_RPM_VERSION)$(MAIN_RPM_PREVER)/ \
-		-o ~/rpmbuild/SOURCES/libreswan-$(MAIN_RPM_VERSION)$(MAIN_RPM_PREVER).tar HEAD
+		-o $(MAIN_RPMBUILD_SOURCES)/libreswan-$(MAIN_RPM_VERSION)$(MAIN_RPM_PREVER).tar HEAD
 	if [ -a Makefile.inc.local ] ; then \
-		tar --transform "s|^|$(MAIN_RPM_PREFIX)/|" -rf ~/rpmbuild/SOURCES/$(MAIN_RPM_PREFIX).tar Makefile.inc.local ; \
+		tar --transform "s|^|$(MAIN_RPM_PREFIX)/|" -rf $(MAIN_RPMBUILD_SOURCES)/$(MAIN_RPM_PREFIX).tar Makefile.inc.local ; \
 	fi;
-	echo 'IPSECBASEVERSION=$(MAIN_RPM_VERSION)$(MAIN_RPM_PREVER)' > ~/rpmbuild/SOURCES/version.mk
-	( pushd ~/rpmbuild/SOURCES; tar --transform "s|^|$(MAIN_RPM_PREFIX)/mk/|" -rf ~/rpmbuild/SOURCES/$(MAIN_RPM_PREFIX).tar version.mk; popd)
-	rm ~/rpmbuild/SOURCES/version.mk
-	gzip -f ~/rpmbuild/SOURCES/$(MAIN_RPM_PREFIX).tar
-	rpmbuild -ba ~/rpmbuild/SPECS/libreswan.spec
+	echo 'IPSECBASEVERSION=$(MAIN_RPM_VERSION)$(MAIN_RPM_PREVER)' > $(MAIN_RPMBUILD_SOURCES)/version.mk
+	( pushd $(MAIN_RPMBUILD_SOURCES); tar --transform "s|^|$(MAIN_RPM_PREFIX)/mk/|" -rf $(MAIN_RPMBUILD_SOURCES)/$(MAIN_RPM_PREFIX).tar version.mk; popd)
+	rm $(MAIN_RPMBUILD_SOURCES)/version.mk
+	gzip -f $(MAIN_RPMBUILD_SOURCES)/$(MAIN_RPM_PREFIX).tar
+	# get IKE test vectors if needed
+	spectool --get-files $(MAIN_RPMBUILD_SPEC)/libreswan.spec --directory $(MAIN_RPMBUILD_SOURCES);
+	rpmbuild -ba $(MAIN_RPMBUILD_SPEC)/libreswan.spec
 
 tarpkg:
 	@echo "Generating tar.gz package to install"
