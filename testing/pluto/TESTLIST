@@ -87,35 +87,40 @@ kvmplutotest	basic-pluto-01-nokey		good
 
 
 #################################################################
-# Parser tests
+# add connection parser and semantic checker tests
 #################################################################
-kvmplutotest	alias-01				wip
-kvmplutotest	readwriteconf-01			wip
-kvmplutotest	addconn-01				good
-kvmplutotest	addconn-02				good
-kvmplutotest	addconn-03				good
-kvmplutotest	addconn-04				good
-kvmplutotest	addconn-05				good
-kvmplutotest	addconn-06-whack-algos			good
-kvmplutotest	addconn-07-defaultroute			good
-kvmplutotest	addconn-08-ordering			good	github:658
-kvmplutotest	addconn-09-dpd-vs-liveness		good
-kvmplutotest	addconn-10-duplicate-key		good
-kvmplutotest	addconn-11-bignum			good
-kvmplutotest	algparse-01				good
-kvmplutotest	algparse-02-fips			good
-kvmplutotest	libipsecconf-01				good
-kvmplutotest	libipsecconf-02-family			good	github:540;github:579
-kvmplutotest	libipsecconf-04				good
-kvmplutotest	libipsecconf-05-empty_option		wip
-kvmplutotest	libipsecconf-06-ikev2-hash-algo		good
-kvmplutotest	libipsecconf-07				good
-kvmplutotest	libipsecconf-08-system-crypto-policies	good
-kvmplutotest	libipsecconf-09-time-prefix		wip
-kvmplutotest	libipsecconf-10-percentage-prefix	wip
-kvmplutotest	libipsecconf-11-default-key		wip	github:833
-kvmplutotest	libipsecconf-12-sourceip		good
-kvmplutotest	libipsecconf-13-addresspool		good
+
+kvmplutotest	alias-01					wip
+kvmplutotest	readwriteconf-01				wip
+
+kvmplutotest	algparse-01					good
+kvmplutotest	algparse-02-fips				good
+
+kvmplutotest	addconn-01-config-setup-retransmit-interval	good
+kvmplutotest	addconn-02-many-routes				good
+kvmplutotest	addconn-03-defaultroute-any			good
+kvmplutotest	addconn-04-config-path				good
+kvmplutotest	addconn-05-bogus-left-interface			good
+kvmplutotest	addconn-06-whack-algos				good
+kvmplutotest	addconn-07-defaultroute				good
+kvmplutotest	addconn-08-ordering				good	github:658
+kvmplutotest	addconn-09-dpd-vs-liveness			good
+kvmplutotest	addconn-10-duplicate-key			good
+kvmplutotest	addconn-11-bignum				good
+kvmplutotest	addconn-12-family				good	github:540;github:579
+kvmplutotest	addconn-13-subnets				good
+kvmplutotest	addconn-14-addresspool				good
+kvmplutotest	addconn-15-sourceip				good
+kvmplutotest	addconn-16-empty-config-option			wip
+kvmplutotest	addconn-17-config-time-suffix			wip
+kvmplutotest	addconn-18-config-percentage-suffix		wip
+kvmplutotest	addconn-19-recursive-include			good
+kvmplutotest	addconn-20-conn-default				good
+kvmplutotest	addconn-21-config-setup-listen			good
+kvmplutotest	addconn-22-authby-hash-algo			good
+kvmplutotest	addconn-23-system-crypto-policies		good
+kvmplutotest	addconn-24-conn-default-rsasigkey		wip	github:833
+
 
 #################################################################
 # Whack UI tests

@@ -1,6 +1,0 @@
-# not used
-east #
- echo "initdone"
-initdone
-east #
- 

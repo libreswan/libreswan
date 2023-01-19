@@ -1,2 +1,0 @@
-# not used
-echo "initdone"
