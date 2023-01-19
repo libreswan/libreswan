@@ -570,7 +570,7 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		struct connection *cc;
 		if (c->config->sec_label.len > 0) {
 			pexpect(c == ike->sa.st_connection);
-			cc = sec_label_instantiate(ike, sec_label, HERE);
+			cc = sec_label_child_instantiate(ike, sec_label, HERE);
 		} else {
 			cc = c;
 		}

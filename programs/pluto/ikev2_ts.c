@@ -1756,7 +1756,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			 * template-instance into a proper instance,
 			 * and then update its selectors.
 			 */
-			s = sec_label_instantiate(ike_sa(&child->sa, HERE), best.nsps.i.sec_label, HERE);
+			s = sec_label_child_instantiate(ike_sa(&child->sa, HERE), best.nsps.i.sec_label, HERE);
 		} else {
 			pexpect(best.nsps.i.sec_label.len == 0);
 			pexpect(best.nsps.r.sec_label.len == 0);

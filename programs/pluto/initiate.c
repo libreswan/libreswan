@@ -435,7 +435,7 @@ void ipsecdoi_initiate(struct connection *c,
 			struct connection *cc;
 			if (c->config->sec_label.len > 0) {
 				/* sec-labels require a separate child connection */
-				cc = sec_label_instantiate(ike, sec_label, HERE);
+				cc = sec_label_child_instantiate(ike, sec_label, HERE);
 			} else {
 				cc = c;
 			}
@@ -447,7 +447,7 @@ void ipsecdoi_initiate(struct connection *c,
 			dbg("initiating child sa with "PRI_LOGGER, pri_logger(logger));
 			struct connection *cc;
 			if (c->config->sec_label.len > 0) {
-				cc = sec_label_instantiate(ike, sec_label, HERE);
+				cc = sec_label_child_instantiate(ike, sec_label, HERE);
 			} else {
 				cc = c;
 			}
