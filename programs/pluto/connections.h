@@ -622,8 +622,6 @@ extern void add_connection(const struct whack_message *wm, struct logger *logger
 
 void update_hosts_from_end_host_addr(struct connection *c, enum left_right end,
 				     ip_address host_addr, where_t where);
-void update_spds_from_end_host_addr(struct connection *c, enum left_right end,
-				    ip_address host_addr, where_t where);
 extern void restart_connections_by_peer(struct connection *c, struct logger *logger);
 extern void flush_revival(const struct connection *c);
 

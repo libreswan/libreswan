@@ -525,63 +525,6 @@ void update_hosts_from_end_host_addr(struct connection *c, enum left_right e,
 	}
 }
 
-void update_spds_from_end_host_addr(struct connection *c, enum left_right end, ip_address host_addr,
-				    where_t where)
-{
-	const char *leftright = c->end[end].config->leftright;
-	const struct child_end *child = &c->end[end].child;
-	address_buf hab;
-	ldbg(c->logger, "updating %s.spd client(selector) from %s.host.addr %s "PRI_WHERE,
-	     leftright, leftright, str_address(&host_addr, &hab), pri_where(where));
-
-	if (!PEXPECT_WHERE(c->logger, where, address_is_specified(host_addr))) {
-		return;
-	}
-
-	if (child->config->selectors.len > 0) {
-		ldbg(c->logger, "  %s.child already has a hard-wired selectors; skipping",
-		     leftright);
-		return;
-	}
-
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-		struct spd_end *spde = &spd->end[end];
-
-		if (spde->child->has_client) {
-			pexpect(c->policy & POLICY_OPPORTUNISTIC);
-			ldbg(c->logger, "  %s.child.has_client yet no selectors; skipping magic",
-			     leftright);
-			continue;
-		}
-
-		/* per-above */
-		if (!pexpect(address_is_specified(host_addr))) {
-			continue;
-		}
-
-		/*
-		 * Default the end's child selector (client) to a
-		 * subnet containing only the end's host address.
-		 *
-		 * If the other end has multiple child subnets then
-		 * the SPD will be a list.
-		 */
-		ip_selector selector =
-			selector_from_address_protoport(host_addr, child->config->protoport);
-
-		selector_buf old, new;
-		dbg("  updated %s.spd client(selector) from %s to %s",
-		    leftright,
-		    str_selector_subnet_port(&spde->client, &old),
-		    str_selector_subnet_port(&selector, &new));
-		if (spd == c->spd) {
-			update_end_selector(c, end, selector, NULL);
-		} else {
-			spde->client = selector; /*set_end_selector()*/
-		}
-	}
-}
-
 /*
  * Figure out the host / client address family.
  *
