@@ -909,54 +909,35 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 	    str_address_sensitive(&c->remote->host.addr, &old),
 	    str_address_sensitive(&new_remote_addr, &new));
 	pexpect(!address_is_specified(c->remote->host.addr)); /* per above */
+
 	/* propogate remote address */
 	update_hosts_from_end_host_addr(c, c->remote->config->index, new_remote_addr, HERE); /* from DNS */
+	discard_connection_spds(c, /*connection_valid*/true);
 
 	if (c->remote->child.config->selectors.len > 0) {
 		ldbg(c->logger, "  %s.child already has a hard-wired selectors; skipping",
 		     c->remote->config->leftright);
-		return;
+	} else if (c->remote->child.has_client) {
+		pexpect(c->policy & POLICY_OPPORTUNISTIC);
+		ldbg(c->logger, "  %s.child.has_client yet no selectors; skipping magic",
+		     c->remote->config->leftright);
 	} else {
-
-		const char *leftright = c->remote->child.config->leftright;
-		const struct child_end *child = &c->remote->child;
-		address_buf hab;
-		ldbg(c->logger, "updating %s.spd client(selector) from %s.host.addr %s "PRI_WHERE,
-		     leftright, leftright, str_address(&new_remote_addr, &hab), pri_where(HERE));
-
-		FOR_EACH_ITEM(spd, &c->child.spds) {
-			struct spd_end *spde = spd->remote;
-
-			if (spde->child->has_client) {
-				pexpect(c->policy & POLICY_OPPORTUNISTIC);
-				ldbg(c->logger, "  %s.child.has_client yet no selectors; skipping magic",
-				     leftright);
-				continue;
-			}
-
-			/*
-			 * Default the end's child selector (client)
-			 * to a subnet containing only the end's host
-			 * address.
-			 *
-			 * If the other end has multiple child subnets
-			 * then the SPD will be a list.
-			 */
-			ip_selector remote_selector =
-				selector_from_address_protoport(new_remote_addr, child->config->protoport);
-
-			selector_buf old, new;
-			dbg("  updated %s.spd client(selector) from %s to %s",
-			    leftright,
-			    str_selector_subnet_port(&spde->client, &old),
-			    str_selector_subnet_port(&remote_selector, &new));
-			if (spd == c->spd) {
-				update_first_selector(c, remote, remote_selector);
-			} else {
-				spde->client = remote_selector; /*set_end_selector()*/
-			}
-		}
+		/*
+		 * Default the end's child selector (client)
+		 * to a subnet containing only the end's host
+		 * address.
+		 */
+		struct child_end *child = &c->remote->child;
+		ip_selector remote_selector =
+			selector_from_address_protoport(new_remote_addr, child->config->protoport);
+		selector_buf new;
+		dbg("  updated %s.selector to %s",
+		    c->remote->config->leftright,
+		    str_selector(&remote_selector, &new));
+		set_first_selector(c, remote, remote_selector);
 	}
+
+	add_connection_spds(c, address_info(c->local->host.addr));
 
 	/*
 	 * reduce the work we do by updating all connections waiting for this

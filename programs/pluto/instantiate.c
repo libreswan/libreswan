@@ -498,9 +498,7 @@ struct connection *sec_label_child_instantiate(struct ike_sa *ike,
 			ip_selector end_selector =
 				selector_from_address_protoport(d->end[end].host.addr,
 								child->config->protoport);
-			child->selectors.assigned[0] = end_selector;
-			child->selectors.proposed.len = 1;
-			child->selectors.proposed.list = child->selectors.assigned;
+			set_end_selector(d, end, end_selector);
 		}
  	}
 

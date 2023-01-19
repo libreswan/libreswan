@@ -3396,7 +3396,7 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 		     __func__, leftright,
 		     str_selector(&new_selector, &nb),
 		     pri_where(where));
-		if (!PEXPECT_WHERE(c->logger, where, c->spd == NULL)) {
+		if (PBAD_WHERE(c->logger, where, c->spd != NULL)) {
 			c->spd->end[end].client = new_selector;
 		}
 	} else {
