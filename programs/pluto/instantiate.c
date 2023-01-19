@@ -511,7 +511,51 @@ struct connection *sec_label_child_instantiate(struct ike_sa *ike,
 		spd_route_db_init_spd_route(new);
 	}
 
-	update_spds_from_end_host_addr(d, d->remote->config->index, remote_addr, HERE);
+	if (d->remote->child.config->selectors.len > 0) {
+		ldbg(d->logger, "  %s.child already has a hard-wired selectors; skipping",
+		     d->remote->config->leftright);
+	} else {
+
+		FOR_EACH_ITEM(spd, &d->child.spds) {
+			address_buf hab;
+			ldbg(d->logger, "updating %s.spd client(selector) from %s.host.addr %s "PRI_WHERE,
+			     d->remote->config->leftright,
+			     d->remote->config->leftright,
+			     str_address(&remote_addr, &hab), pri_where(where));
+
+			const struct child_end *child = &d->remote->child;
+
+			struct spd_end *spde = spd->remote;
+
+			if (spde->child->has_client) {
+				pexpect(d->policy & POLICY_OPPORTUNISTIC);
+				ldbg(d->logger, "  %s.child.has_client yet no selectors; skipping magic",
+				     d->remote->config->leftright);
+				continue;
+			}
+
+			/*
+			 * Default the end's child selector (client) to a
+			 * subnet containing only the end's host address.
+			 *
+			 * If the other end has multiple child subnets then
+			 * the SPD will be a list.
+			 */
+			ip_selector selector =
+				selector_from_address_protoport(remote_addr, child->config->protoport);
+
+			selector_buf old, new;
+			dbg("  updated %s.spd client(selector) from %s to %s",
+			    d->remote->config->leftright,
+			    str_selector_subnet_port(&spde->client, &old),
+			    str_selector_subnet_port(&selector, &new));
+			if (spd == d->spd) {
+				update_first_selector(d, remote, selector);
+			} else {
+				spde->client = selector; /*set_end_selector()*/
+			}
+		}
+	}
 
 	set_connection_priority(d); /* re-compute; may have changed */
 
