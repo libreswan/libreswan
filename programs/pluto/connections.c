@@ -1533,7 +1533,6 @@ void add_connection_spds(struct connection *c, const struct ip_info *host_afi)
 	spd_route_db_add_connection(c);
 }
 
-
 /*
  * Extract the connection detail from the whack message WM and store
  * them in the connection C.

@@ -460,6 +460,11 @@ struct connection *spd_instantiate(struct connection *t,
 	return d;
 }
 
+/*
+ * For an established SEC_LABEL connection, instantiate a connection
+ * for the Child SA.
+ */
+
 struct connection *sec_label_child_instantiate(struct ike_sa *ike,
 					       shunk_t sec_label,
 					       where_t where)
@@ -479,61 +484,10 @@ struct connection *sec_label_child_instantiate(struct ike_sa *ike,
 					   __func__, where);
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		if (t->end[end].child.selectors.proposed.list == t->end[end].child.config->selectors.list) {
-			d->end[end].child.selectors.proposed = t->end[end].child.config->selectors;
+		struct child_end *child = &d->end[end].child;
+		if (child->config->selectors.len > 0) {
+			child->selectors.proposed = child->config->selectors;
 		} else {
-			d->end[end].child.selectors.assigned[0] = t->end[end].child.selectors.assigned[0];
-			d->end[end].child.selectors.proposed.len = 1;
-			d->end[end].child.selectors.proposed.list = d->end[end].child.selectors.assigned;
-		}
- 	}
-
-	PASSERT(d->logger, d->child.spds.len == 0);
-	const unsigned nr_spds = t->child.spds.len;
-	ldbg(d->logger, "allocating %u SPDs", nr_spds);
-	d->child.spds = (struct spds) {
-		.len = nr_spds,
-		.list = clone_things(t->child.spds.list, t->child.spds.len, __func__),
-	};
-	d->spd = d->child.spds.list;
-	FOR_EACH_ITEM(new, &d->child.spds) {
-		zero_thing(new->hash_table_entries); /* keep init_list_entry() happy */
-		new->connection = d;
-		/* cross-link */
-		new->local = &new->end[d->local->config->index];
-		new->remote = &new->end[d->remote->config->index];
-		FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-			new->end[end].virt = virtual_ip_addref(new->end[end].virt);
-			new->end[end].host = &d->end[end].host;
-			new->end[end].child = &d->end[end].child;
-		}
-		/* ... before first use */
-		spd_route_db_init_spd_route(new);
-	}
-
-	if (d->remote->child.config->selectors.len > 0) {
-		ldbg(d->logger, "  %s.child already has a hard-wired selectors; skipping",
-		     d->remote->config->leftright);
-	} else {
-
-		FOR_EACH_ITEM(spd, &d->child.spds) {
-			address_buf hab;
-			ldbg(d->logger, "updating %s.spd client(selector) from %s.host.addr %s "PRI_WHERE,
-			     d->remote->config->leftright,
-			     d->remote->config->leftright,
-			     str_address(&remote_addr, &hab), pri_where(where));
-
-			const struct child_end *child = &d->remote->child;
-
-			struct spd_end *spde = spd->remote;
-
-			if (spde->child->has_client) {
-				pexpect(d->policy & POLICY_OPPORTUNISTIC);
-				ldbg(d->logger, "  %s.child.has_client yet no selectors; skipping magic",
-				     d->remote->config->leftright);
-				continue;
-			}
-
 			/*
 			 * Default the end's child selector (client) to a
 			 * subnet containing only the end's host address.
@@ -541,30 +495,20 @@ struct connection *sec_label_child_instantiate(struct ike_sa *ike,
 			 * If the other end has multiple child subnets then
 			 * the SPD will be a list.
 			 */
-			ip_selector selector =
-				selector_from_address_protoport(remote_addr, child->config->protoport);
-
-			selector_buf old, new;
-			dbg("  updated %s.spd client(selector) from %s to %s",
-			    d->remote->config->leftright,
-			    str_selector_subnet_port(&spde->client, &old),
-			    str_selector_subnet_port(&selector, &new));
-			if (spd == d->spd) {
-				update_first_selector(d, remote, selector);
-			} else {
-				spde->client = selector; /*set_end_selector()*/
-			}
+			ip_selector end_selector =
+				selector_from_address_protoport(d->end[end].host.addr,
+								child->config->protoport);
+			child->selectors.assigned[0] = end_selector;
+			child->selectors.proposed.len = 1;
+			child->selectors.proposed.list = child->selectors.assigned;
 		}
-	}
+ 	}
 
-	set_connection_priority(d); /* re-compute; may have changed */
+	add_connection_spds(d, address_info(d->local->host.addr));
 
 	/* leave breadcrumb */
 	pexpect(d->child.kernel_policy_owner == SOS_NOBODY);
 	set_child_kernel_policy_owner(d, SOS_NOBODY);
-
-	/* all done */
-	spd_route_db_add_connection(d);
 
 	connection_buf cb, db;
 	address_buf pab;
