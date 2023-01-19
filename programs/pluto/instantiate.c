@@ -51,8 +51,6 @@ static uint32_t global_marks = MINIMUM_IPSEC_SA_RANDOM_MARK;
 static struct connection *clone_connection(const char *name, struct connection *t,
 					   const struct id *peer_id, where_t where);
 
-static void clone_connection_spd(struct connection *d, const struct connection *t);
-
 /*
  * unshare_connection: after a struct connection has been copied,
  * duplicate anything it references so that unshareable resources are
@@ -413,32 +411,6 @@ static struct connection *instantiate(struct connection *t,
  * instance, ends up throwing away the SPDs creating its own.
  */
 
-static void clone_connection_spd(struct connection *d, const struct connection *t)
-{
-	PASSERT(d->logger, d->child.spds.len == 0);
-	const unsigned nr_spds = t->child.spds.len;
-	ldbg(d->logger, "allocating %u SPDs", nr_spds);
-	d->child.spds = (struct spds) {
-		.len = nr_spds,
-		.list = clone_things(t->child.spds.list, t->child.spds.len, __func__),
-	};
-	d->spd = d->child.spds.list;
-	FOR_EACH_ITEM(new, &d->child.spds) {
-		zero_thing(new->hash_table_entries); /* keep init_list_entry() happy */
-		new->connection = d;
-		/* cross-link */
-		new->local = &new->end[d->local->config->index];
-		new->remote = &new->end[d->remote->config->index];
-		FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-			new->end[end].virt = virtual_ip_addref(new->end[end].virt);
-			new->end[end].host = &d->end[end].host;
-			new->end[end].child = &d->end[end].child;
-		}
-		/* ... before first use */
-		spd_route_db_init_spd_route(new);
-	}
-}
-
 struct connection *spd_instantiate(struct connection *t,
 				   const ip_address remote_addr,
 				   where_t where)
@@ -516,7 +488,28 @@ struct connection *sec_label_child_instantiate(struct ike_sa *ike,
 		}
  	}
 
-	clone_connection_spd(d, t);
+	PASSERT(d->logger, d->child.spds.len == 0);
+	const unsigned nr_spds = t->child.spds.len;
+	ldbg(d->logger, "allocating %u SPDs", nr_spds);
+	d->child.spds = (struct spds) {
+		.len = nr_spds,
+		.list = clone_things(t->child.spds.list, t->child.spds.len, __func__),
+	};
+	d->spd = d->child.spds.list;
+	FOR_EACH_ITEM(new, &d->child.spds) {
+		zero_thing(new->hash_table_entries); /* keep init_list_entry() happy */
+		new->connection = d;
+		/* cross-link */
+		new->local = &new->end[d->local->config->index];
+		new->remote = &new->end[d->remote->config->index];
+		FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+			new->end[end].virt = virtual_ip_addref(new->end[end].virt);
+			new->end[end].host = &d->end[end].host;
+			new->end[end].child = &d->end[end].child;
+		}
+		/* ... before first use */
+		spd_route_db_init_spd_route(new);
+	}
 
 	update_spds_from_end_host_addr(d, d->remote->config->index, remote_addr, HERE);
 
