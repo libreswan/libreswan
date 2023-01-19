@@ -26,7 +26,7 @@
       each of these keys: the hard limit which is the total number of
       bytes that a given key can encrypt, and the soft limit which is
       the number of bytes that can be encrypted before a renegotiation
-      of the IPsec SA is initiated.  Normally the renegotation (via
+      of the IPsec SA is initiated.  Normally the renegotiation (via
       the IKE SA) is completed before the
       <replaceable>ipsec-max-bytes</replaceable> value is reached.
     </para>
