@@ -226,7 +226,7 @@ static void scribble_selectors_on_spd(struct connection *c,
 	unsigned nr_spds = 0;
 	for (unsigned pass = 1; pass <= 2; pass++) {
 		if (pass == 2) {
-			discard_connection_spds(c, true/*valid*/);
+			discard_connection_spds(c);
 			alloc_connection_spds(c, nr_spds);
 		}
 		nr_spds = 0;

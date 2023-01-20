@@ -912,7 +912,7 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 
 	/* propogate remote address */
 	update_hosts_from_end_host_addr(c, c->remote->config->index, new_remote_addr, HERE); /* from DNS */
-	discard_connection_spds(c, /*connection_valid*/true);
+	discard_connection_spds(c);
 
 	if (c->remote->child.config->selectors.len > 0) {
 		ldbg(c->logger, "  %s.child already has a hard-wired selectors; skipping",

@@ -326,7 +326,7 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike,
 	set_child_has_client(cc, remote, true);
 
 	/* rebuild the SPDs */
-	discard_connection_spds(cc, /*valid?*/true);
+	discard_connection_spds(cc);
 	PEXPECT(cc->logger, oriented(cc));
 	add_connection_spds(cc, address_info(cc->local->host.addr));
 

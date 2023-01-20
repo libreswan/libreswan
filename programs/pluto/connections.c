@@ -179,18 +179,18 @@ static void discard_spd_end_content(struct spd_end *e)
 	virtual_ip_delref(&e->virt);
 }
 
-static void discard_spd_content(struct spd_route *spd, bool valid)
+static void discard_spd_content(struct spd_route *spd)
 {
-	spd_route_db_del(spd, valid);
+	spd_route_db_del(spd, /*valid*/true);
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		discard_spd_end_content(&spd->end[end]);
 	}
 }
 
-void discard_connection_spds(struct connection *c, bool connection_valid)
+void discard_connection_spds(struct connection *c)
 {
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-		discard_spd_content(spd, connection_valid);
+		discard_spd_content(spd);
 	}
 	pfreeany(c->child.spds.list);
 	c->spd = NULL;
@@ -259,8 +259,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	flush_revival(c);
 
 	connection_db_del(c, connection_valid);
-
-	discard_connection_spds(c, connection_valid);
+	discard_connection_spds(c);
 
 	FOR_EACH_ELEMENT(end, c->end) {
 		free_id_content(&end->host.id);
