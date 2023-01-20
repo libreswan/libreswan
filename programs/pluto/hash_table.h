@@ -39,7 +39,7 @@ struct hash_table {
 #define HASH_TABLE(STRUCT, NAME, FIELD, NR_BUCKETS)			\
 									\
 	LIST_INFO(STRUCT, hash_table_entries.NAME,			\
-		  STRUCT##_##NAME##_hash_info, jam_##STRUCT##_##NAME);	\
+		  STRUCT##_##NAME##_hash_info, jam_##STRUCT);		\
 									\
 	static hash_t hash_table_hash_##STRUCT##_##NAME(const void *data) \
 	{								\

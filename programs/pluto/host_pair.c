@@ -40,7 +40,7 @@
 
 const char host_pair_magic[] = "host pair magic";
 
-static void jam_host_pair_addresses(struct jambuf *buf, const struct host_pair *hp)
+static void jam_host_pair(struct jambuf *buf, const struct host_pair *hp)
 {
 	passert(hp->magic == host_pair_magic);
 	jam_address(buf, &hp->local);

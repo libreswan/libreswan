@@ -24,12 +24,6 @@
  * A table hashed by serialno.
  */
 
-static void jam_connection_serialno(struct jambuf *buf, const struct connection *c)
-{
-	jam_connection(buf, c);
-	jam(buf, " "PRI_CO, pri_co(c->serialno));
-}
-
 static hash_t hash_connection_serialno(const co_serial_t *serialno)
 {
 	return hash_thing(*serialno, zero_hash);
@@ -70,13 +64,6 @@ static hash_t hash_connection_that_id(const struct id *id)
 	return hash;
 }
 
-static void jam_connection_that_id(struct jambuf *buf, const struct connection *c)
-{
-	jam_connection_serialno(buf, c);
-	jam(buf, ": that_id=");
-	jam_id_bytes(buf, &c->remote->host.id, jam_sanitized_bytes);
-}
-
 HASH_TABLE(connection, that_id, .remote->host.id, STATE_TABLE_SIZE);
 
 void rehash_db_connection_that_id(struct connection *c)
@@ -105,11 +92,6 @@ static void jam_spd_route(struct jambuf *buf, const struct spd_route *sr)
 	jam_connection(buf, sr->connection);
 	jam_string(buf, " ");
 	jam_selector_pair(buf, &sr->local->client, &sr->remote->client);
-}
-
-static void jam_spd_route_remote_client(struct jambuf *buf, const struct spd_route *sr)
-{
-	jam_spd_route(buf, sr);
 }
 
 static hash_t hash_spd_route_remote_client(const ip_selector *sr)

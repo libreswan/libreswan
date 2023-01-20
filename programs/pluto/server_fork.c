@@ -58,7 +58,7 @@ struct pid_entry {
 	struct logger *logger;
 };
 
-static void jam_pid_entry_pid(struct jambuf *buf, const struct pid_entry *entry)
+static void jam_pid_entry(struct jambuf *buf, const struct pid_entry *entry)
 {
 	if (entry == NULL) {
 		jam(buf, "NULL pid");
@@ -214,7 +214,7 @@ void server_fork_sigchld_handler(struct logger *logger)
 						    pid_entry->logger);
 			} else if (st == NULL) {
 				LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-					jam_pid_entry_pid(buf, pid_entry);
+					jam_pid_entry(buf, pid_entry);
 					jam_string(buf, " disappeared");
 				}
 				pid_entry->callback(NULL, NULL, status,

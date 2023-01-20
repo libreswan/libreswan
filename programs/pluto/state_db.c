@@ -60,11 +60,6 @@ static hash_t hash_state_serialno(const so_serial_t *serialno)
 	return hash_thing(*serialno, zero_hash);
 }
 
-static void jam_state_serialno(struct jambuf *buf, const struct state *st)
-{
-	jam_state(buf, st);
-}
-
 HASH_TABLE(state, serialno, .st_serialno, STATE_TABLE_SIZE);
 
 /*
@@ -110,11 +105,6 @@ static hash_t hash_state_connection_serialno(const co_serial_t *connection_seria
 	return hash_thing(*connection_serial, zero_hash);
 }
 
-static void jam_state_connection_serialno(struct jambuf *buf, const struct state *st)
-{
-	jam(buf, PRI_CO, st->st_connection->serialno);
-}
-
 HASH_TABLE(state, connection_serialno, .st_connection->serialno, STATE_TABLE_SIZE);
 
 void rehash_state_connection(struct state *st)
@@ -129,12 +119,6 @@ void rehash_state_connection(struct state *st)
 static hash_t hash_state_reqid(const reqid_t *reqid)
 {
 	return hash_thing(*reqid, zero_hash);
-}
-
-static void jam_state_reqid(struct jambuf *buf, const struct state *st)
-{
-	jam_state(buf, st);
-	jam(buf, ": reqid=%u", st->st_reqid);
 }
 
 HASH_TABLE(state, reqid, .st_reqid, STATE_TABLE_SIZE);
@@ -186,14 +170,6 @@ void rehash_state_reqid(struct state *st)
 static hash_t hash_state_ike_initiator_spi(const ike_spi_t *ike_initiator_spi)
 {
 	return hash_thing(*ike_initiator_spi, zero_hash);
-}
-
-static void jam_state_ike_initiator_spi(struct jambuf *buf, const struct state *st)
-{
-	jam_state(buf, st);
-	jam(buf, ": ");
-	jam_dump_bytes(buf, st->st_ike_spis.initiator.bytes,
-		       sizeof(st->st_ike_spis.initiator.bytes));
 }
 
 HASH_TABLE(state, ike_initiator_spi, .st_ike_spis.initiator, STATE_TABLE_SIZE);
@@ -251,13 +227,6 @@ static void jam_ike_spis(struct jambuf *buf, const ike_spis_t *ike_spis)
 	jam(buf, "  ");
 	jam_dump_bytes(buf, ike_spis->responder.bytes,
 		       sizeof(ike_spis->responder.bytes));
-}
-
-static void jam_state_ike_spis(struct jambuf *buf, const struct state *st)
-{
-	jam_state(buf, st);
-	jam(buf, ": ");
-	jam_ike_spis(buf, &st->st_ike_spis);
 }
 
 HASH_TABLE(state, ike_spis, .st_ike_spis, STATE_TABLE_SIZE);
