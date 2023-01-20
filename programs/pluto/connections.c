@@ -3293,14 +3293,6 @@ bool same_peer_ids(const struct connection *c, const struct connection *d,
 		       &d->remote->host.id);
 }
 
-void check_connection(struct connection *c, where_t where)
-{
-	connection_db_check_connection(c, c->logger, where);
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-		spd_route_db_check_spd_route(spd, c->logger, where);
-	}
-}
-
 /* seems to be a good spot for now */
 bool dpd_active_locally(const struct connection *c)
 {

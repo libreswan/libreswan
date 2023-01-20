@@ -922,8 +922,6 @@ void list_state_events(struct show *s, const monotime_t now);
 struct child_sa *find_v2_child_sa_by_spi(ipsec_spi_t spi, int8_t protoid,
 					 ip_address *dst);
 
-void check_state(struct state *st, where_t where);
-
 void connswitch_state_and_log(struct state *st, struct connection *c);
 
 void DBG_tcpdump_ike_sa_keys(const struct state *st);

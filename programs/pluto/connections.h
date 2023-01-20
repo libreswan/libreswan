@@ -770,8 +770,6 @@ struct spd_route_filter {
 
 bool next_spd_route(enum chrono order, struct spd_route_filter *srf);
 
-void check_connection(struct connection *c, where_t where);
-
 void replace_connection_that_id(struct connection *c, const struct id *new_id);
 void rehash_db_connection_that_id(struct connection *c);
 

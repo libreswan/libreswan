@@ -2364,9 +2364,6 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 		passert(md != NULL);
 		pexpect(md->v1_st == st);
 		suspend_any_md(md->v1_st, md);
-		if (DBGP(DBG_BASE)) {
-			check_state(md->v1_st, HERE);
-		}
 		return;
 	case STF_IGNORE:
 		/* DANGER: MD might be NULL; ST might be NULL */
@@ -2385,10 +2382,6 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 
 	enum state_kind from_state = md->smc->state;
 	st = md->v1_st;
-
-	if (DBGP(DBG_BASE)) {
-		check_state(st, HERE);
-	}
 
 	passert(st != NULL);
 	pexpect(!state_is_busy(st));

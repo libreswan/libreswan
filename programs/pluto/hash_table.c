@@ -102,8 +102,8 @@ void rehash_table_entry(struct hash_table *table, void *data)
  * at-most one bucket at a time).
  */
 
-void check_hash_table_entry(struct hash_table *table, void *data,
-			    struct logger *logger, where_t where)
+static void check_hash_table_entry(struct hash_table *table, void *data,
+				   struct logger *logger, where_t where)
 {
 	hash_t hash = table->hasher(data);
 	/* not inserted (might passert) */

@@ -2662,10 +2662,6 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		jam_enum(buf, &stf_status_names, result);
 	}
 
-	if (DBGP(DBG_BASE)) {
-		check_state(&ike->sa, HERE);
-	}
-
 	switch (result) {
 
 	case STF_SKIP_COMPLETE_STATE_TRANSITION:

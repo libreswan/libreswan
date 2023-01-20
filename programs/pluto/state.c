@@ -3081,12 +3081,6 @@ void switch_md_st(struct msg_digest *md, struct state *st, where_t where)
 	md->v1_st = st;
 }
 
-void check_state(struct state *st, where_t where)
-{
-	state_db_check_state(st, st->st_logger, where);
-	check_connection(st->st_connection, where);
-}
-
 /*
  * Every time a state's connection is changed, the following need to happen:
  *

@@ -91,9 +91,6 @@ void add_hash_table_entry(struct hash_table *table, void *data);
 void del_hash_table_entry(struct hash_table *table, void *data);
 void rehash_table_entry(struct hash_table *table, void *data);
 
-void check_hash_table_entry(struct hash_table *table, void *data,
-			    struct logger *logger, where_t where);
-
 #define HASH_DB(STRUCT, TABLE, ...)					\
 									\
 	LIST_INFO(STRUCT, hash_table_entries.list,			\
@@ -147,16 +144,7 @@ void check_hash_table_entry(struct hash_table *table, void *data,
 				del_hash_table_entry(*h, s);		\
 			}						\
 		}							\
-	}								\
-									\
-	void STRUCT##_db_check_##STRUCT(struct STRUCT *s,		\
-					  struct logger *logger,	\
-					  where_t where)		\
-	{								\
-		FOR_EACH_ELEMENT(h, STRUCT##_db_hash_tables) {		\
-			check_hash_table_entry(*h, s, logger, where);	\
-		}							\
-	}								\
+	}
 
 /*
  * Return the head of the list entries that match HASH.
