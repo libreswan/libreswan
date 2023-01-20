@@ -123,7 +123,7 @@ void add_revival_if_needed(struct state *st)
 			  st->st_serialno);
 		PASSERT(st->st_logger, st->st_ike_version == IKEv2);
 		st->st_replace_margin = deltatime(0);
-		ikev2_replace(st, 1);
+		ikev2_replace(st);
 		return;
 	}
 

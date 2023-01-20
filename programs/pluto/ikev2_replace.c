@@ -45,7 +45,7 @@
  * Does not delete the old state -- someone else will do that.
  */
 
-void ikev2_replace(struct state *st, unsigned long try)
+void ikev2_replace(struct state *st)
 {
 	/*
 	 * start billing the new state.  The old state also gets
@@ -62,7 +62,7 @@ void ikev2_replace(struct state *st, unsigned long try)
 
 		if (IS_IKE_SA_ESTABLISHED(st))
 			log_state(RC_LOG, st, "initiate reauthentication of IKE SA");
-		initiate_v2_IKE_SA_INIT_request(c, st, policy, try, &inception,
+		initiate_v2_IKE_SA_INIT_request(c, st, policy, 1/*try*/, &inception,
 						HUNK_AS_SHUNK(c->child.sec_label),
 						/*background?*/false, st->st_logger);
 
@@ -79,7 +79,7 @@ void ikev2_replace(struct state *st, unsigned long try)
 		if (st->st_ike_version == IKEv1)
 			passert(HAS_IPSEC_POLICY(policy));
 
-		ipsecdoi_initiate(st->st_connection, policy, try, st->st_serialno, &inception,
+		ipsecdoi_initiate(st->st_connection, policy, 1/*try*/, st->st_serialno, &inception,
 				  null_shunk, /*background?*/false, st->st_logger);
 	}
 }
@@ -93,9 +93,6 @@ void event_v2_replace(struct state *st, monotime_t now UNUSED)
 	const char *satype = IS_IKE_SA(st) ? "IKE" : "Child";
 	ldbg(st->st_logger, "replacing stale %s SA", satype);
 
-	/*
-	 * XXX: For a CHILD SA, will this result in a re-key attempt?
-	 */
-	ikev2_replace(st, 1);
+	ikev2_replace(st);
 	event_force(EVENT_SA_EXPIRE, st);
 }

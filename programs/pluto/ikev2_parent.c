@@ -98,6 +98,7 @@
 #include "ikev2_child.h"
 #include "ikev2_create_child_sa.h"	/* for ikev2_rekey_ike_start() */
 #include "rekeyfuzz.h"
+#include "ikev2_ike_sa_init.h"		/* for initiate_v2_IKE_SA_INIT_request() */
 
 bool accept_v2_nonce(struct logger *logger, struct msg_digest *md,
 		     chunk_t *dest, const char *name)
@@ -640,7 +641,7 @@ void v2_event_sa_reauth(struct state *st)
 	/*
 	 * XXX: For a CHILD SA, will this result in a re-key attempt?
 	 */
-	ikev2_replace(st, 1);
+	ikev2_replace(st);
 }
 
 /*
@@ -786,7 +787,18 @@ bool ikev2_retry_establishing_ike_sa(struct ike_sa *ike)
 		llog_sa(RC_LOG, ike, "%s", story);
 	}
 
-	ikev2_replace(&ike->sa, try);
+	/*
+	 * Start billing for the new new state.  The old state also
+	 * gets billed for this function call, oops.
+	 *
+	 * Start from policy in connection
+	 */
+
+	lset_t policy = c->policy & ~POLICY_IPSEC_MASK;
+	threadtime_t inception = threadtime_start();
+	initiate_v2_IKE_SA_INIT_request(c, &ike->sa, policy, try, &inception,
+					HUNK_AS_SHUNK(c->child.sec_label),
+					/*background?*/false, ike->sa.st_logger);
 
 	/*
 	 * XXX: There might be a larval child.  Just use the biggest

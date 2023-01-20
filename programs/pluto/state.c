@@ -1486,7 +1486,7 @@ void delete_states_by_peer(const struct fd *whackfd, const ip_address *peer)
 						break;
 #endif
 					case IKEv2:
-						ikev2_replace(st, 1);
+						ikev2_replace(st);
 						break;
 					}
 				} else {
