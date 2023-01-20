@@ -30,7 +30,7 @@ void state_db_init_state(struct state *st);
 void state_db_check_state(struct state *st, struct logger *logger, where_t where);
 
 void state_db_add(struct state *st);
-void state_db_del(struct state *st, bool valid);
+void state_db_del(struct state *st);
 void rehash_state_cookies_in_db(struct state *st);
 
 /*

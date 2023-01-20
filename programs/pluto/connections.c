@@ -181,7 +181,7 @@ static void discard_spd_end_content(struct spd_end *e)
 
 static void discard_spd_content(struct spd_route *spd)
 {
-	spd_route_db_del(spd, /*valid*/true);
+	spd_route_db_del(spd);
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		discard_spd_end_content(&spd->end[end]);
 	}
@@ -258,7 +258,9 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 
 	flush_revival(c);
 
-	connection_db_del(c, connection_valid);
+	if (connection_valid) {
+		connection_db_del(c);
+	}
 	discard_connection_spds(c);
 
 	FOR_EACH_ELEMENT(end, c->end) {

@@ -1080,7 +1080,7 @@ void delete_state_tail(struct state *st)
 	 * This, effectively,  deletes any ISAKMP SA that this state
 	 * represents - lookups for this state no longer work.
 	 */
-	state_db_del(st, true/*valid*/);
+	state_db_del(st);
 
 	/*
 	 * Break the STATE->CONNECTION link.  If CONNECTION is an
