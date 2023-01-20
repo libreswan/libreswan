@@ -117,13 +117,6 @@ static hash_t hash_spd_route_remote_client(const ip_selector *sr)
 	return hash_thing(sr->bytes, zero_hash);
 }
 
-void spd_route_db_add_connection(struct connection *c)
-{
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-		spd_route_db_add(spd);
-	}
-}
-
 HASH_TABLE(spd_route, remote_client, .remote->client, STATE_TABLE_SIZE);
 
 HASH_DB(spd_route, &spd_route_remote_client_hash_table);

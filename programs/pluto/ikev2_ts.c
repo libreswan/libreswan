@@ -240,6 +240,7 @@ static void scribble_selectors_on_spd(struct connection *c,
 						spd->local->client = local_ns->selector;
 						spd->remote->client = remote_ns->selector;
 						spd->block = local_ns->block || remote_ns->block;
+						spd_route_db_add(spd);
 					}
 					nr_spds++;
 				}
@@ -258,7 +259,6 @@ static void scribble_selectors_on_spd(struct connection *c,
 #if 0
 	set_connection_priority(c); /* must be after .kind and .spd are set */
 #endif
-	spd_route_db_add_connection(c);
 }
 
 static void scribble_ts_request_on_responder(struct child_sa *child,

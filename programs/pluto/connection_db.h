@@ -46,8 +46,6 @@ void spd_route_db_check(struct logger *logger);
 void spd_route_db_init_spd_route(struct spd_route *sr);
 void spd_route_db_check_spd_route(struct spd_route *sr, struct logger *logger, where_t where);
 
-void spd_route_db_add_connection(struct connection *c);
-
 void spd_route_db_add(struct spd_route *sr);
 void spd_route_db_del(struct spd_route *sr, bool valid);
 

@@ -1464,6 +1464,7 @@ void add_connection_spds(struct connection *c, const struct ip_info *host_afi)
 							     bool_str(spd_end->child->has_client),
 							     bool_str(spd_end->virt != NULL));
 						}
+						spd_route_db_add(spd);
 					}
 					nr_spds++;
 				}
@@ -1472,7 +1473,6 @@ void add_connection_spds(struct connection *c, const struct ip_info *host_afi)
 	}
 
 	set_connection_priority(c); /* must be after .kind and .spd are set */
-	spd_route_db_add_connection(c);
 }
 
 /*
