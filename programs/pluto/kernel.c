@@ -3193,23 +3193,25 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 		}
 	}
 
-	{
+	if (negotiation_shunt == failure_shunt) {
+
 		/*
-		 * Create the new bare shunt ...
+		 * Create the new bare negotiation shunt ...
 		 *
 		 * Notice how this uses the SPD's local/remote .client
 		 * but further down things switch to the SPD's hosts
 		 * addresses.  For OE, won't they be the same?  Or,
 		 * perhaps only sometimes?
 		 */
-		struct bare_shunt *new_bs =
-			add_bare_shunt(&sr->local->client,
-				       &sr->remote->client,
-				       negotiation_shunt,
-				       ((strstr(c->name, "/32") != NULL ||
-					 strstr(c->name, "/128") != NULL) ? c->serialno : 0),
-				       "oe-failing", logger);
+		ldbg(logger, "kernel: no need to replace negotiation_shunt with failure_shunt - they are the same");
+		add_bare_shunt(&sr->local->client,
+			       &sr->remote->client,
+			       negotiation_shunt,
+			       ((strstr(c->name, "/32") != NULL ||
+				 strstr(c->name, "/128") != NULL) ? c->serialno : 0),
+			       "oe-failing", logger);
 
+	} else {
 		/*
 		 * ... UPDATE kernel policy if needed.
 		 *
@@ -3217,121 +3219,83 @@ bool orphan_holdpass(struct connection *c, struct spd_route *sr,
 		 * we should be able to update only the name of the
 		 * shunt.
 		 */
-		if (negotiation_shunt != failure_shunt) {
 
-			dbg("kernel: replacing negotiation_shunt with failure_shunt");
+		dbg("kernel: replacing negotiation_shunt with failure_shunt");
 
-			/* fudge up parameter list */
-			const ip_address *src_address = &sr->local->host->addr;
-			const ip_address *dst_address = &sr->remote->host->addr;
-			const char *why = "oe-failed";
+		/* fudge up parameter list */
+		const ip_address *src_address = &sr->local->host->addr;
+		const ip_address *dst_address = &sr->remote->host->addr;
+		const char *why = "oe-failed";
 
-			/* fudge up replace_bare_shunt() */
-			const struct ip_info *afi = address_type(src_address);
-			passert(afi == address_type(dst_address));
-			const struct ip_protocol *protocol = protocol_from_ipproto(sr->local->client.ipproto);
-			/* ports? assumed wide? */
-			ip_selector src = selector_from_address_protocol(*src_address, protocol);
-			ip_selector dst = selector_from_address_protocol(*dst_address, protocol);
+		/* fudge up replace_bare_shunt() */
+		const struct ip_info *afi = address_type(src_address);
+		passert(afi == address_type(dst_address));
+		const struct ip_protocol *protocol = protocol_from_ipproto(sr->local->client.ipproto);
+		/* ports? assumed wide? */
+		ip_selector src = selector_from_address_protocol(*src_address, protocol);
+		ip_selector dst = selector_from_address_protocol(*dst_address, protocol);
 
-			selector_pair_buf sb;
-			dbg("kernel: replace bare shunt %s for %s",
-			    str_selector_pair(&src, &dst, &sb), why);
+		selector_pair_buf sb;
+		dbg("kernel: replace bare shunt %s for %s",
+		    str_selector_pair(&src, &dst, &sb), why);
 
+		/*
+		 * ??? this comment might be obsolete.
+		 *
+		 * If the transport protocol is not the wildcard (0),
+		 * then we need to look for a host<->host shunt, and
+		 * replace that with the shunt spi, and then we add a
+		 * %HOLD for what was there before.
+		 *
+		 * This is at odds with !repl, which should delete
+		 * things.
+		 *
+		 * XXX: does replacing a sec_label kernel policy with
+		 * something bare make sense?  Should sec_label be
+		 * included?
+		 */
+
+		struct kernel_policy kernel_policy =
+			kernel_policy_from_void(src, dst, DIRECTION_OUTBOUND,
+						/* we don't know connection for priority yet */
+						highest_kernel_priority,
+						failure_shunt,
+						/* XXX: bug; use from_spd() */
+						/*sa_marks*/NULL, /*xfrmi*/NULL,
+						/*sec_label;bug?*/null_shunk,
+						HERE);
+
+		if (raw_policy(KERNEL_POLICY_OP_REPLACE,
+			       DIRECTION_OUTBOUND,
+			       EXPECT_KERNEL_POLICY_OK,
+			       &kernel_policy.src.client,
+			       &kernel_policy.dst.client,
+			       &kernel_policy,
+			       deltatime(SHUNT_PATIENCE),
+			       kernel_policy.sa_marks/*NULL*/,
+			       kernel_policy.xfrmi/*NULL*/,
+			       kernel_policy.id,
+			       kernel_policy.sec_label,
+			       logger,
+			       "%s() %s", __func__, why)) {
 			/*
-			 * ??? this comment might be obsolete.
-			 *
-			 * If the transport protocol is not the
-			 * wildcard (0), then we need to look for a
-			 * host<->host shunt, and replace that with
-			 * the shunt spi, and then we add a %HOLD for
-			 * what was there before.
-			 *
-			 * This is at odds with !repl, which should
-			 * delete things.
-			 *
-			 * XXX: does replacing a sec_label kernel
-			 * policy with something bare make sense?
-			 * Should sec_label be included?
+			 * Change over to new bare eroute ours, peers,
+			 * transport_proto are the same.
 			 */
-
-			struct kernel_policy kernel_policy =
-				kernel_policy_from_void(src, dst, DIRECTION_OUTBOUND,
-							/* we don't know connection for priority yet */
-							highest_kernel_priority,
-							failure_shunt,
-							/* XXX: bug; use from_spd() */
-							/*sa_marks*/NULL, /*xfrmi*/NULL,
-							/*sec_label;bug?*/null_shunk,
-							HERE);
-
-			bool ok = raw_policy(KERNEL_POLICY_OP_REPLACE,
-					     DIRECTION_OUTBOUND,
-					     EXPECT_KERNEL_POLICY_OK,
-					     &kernel_policy.src.client,
-					     &kernel_policy.dst.client,
-					     &kernel_policy,
-					     deltatime(SHUNT_PATIENCE),
-					     kernel_policy.sa_marks/*NULL*/,
-					     kernel_policy.xfrmi/*NULL*/,
-					     kernel_policy.id,
-					     kernel_policy.sec_label,
-					     logger,
-					     "%s() %s", __func__, why);
-			if (!ok) {
-				llog(RC_LOG, logger,
-				     "replace kernel shunt %s failed - deleting from pluto shunt table",
-				     str_selector_pair_sensitive(&src, &dst, &sb));
-			}
-
-			/*
-			 * We can have proto mismatching acquires with
-			 * xfrm - this is a bad workaround.
-			 *
-			 * ??? what is the nature of those mismatching
-			 * acquires?
-			 *
-			 * XXX: for instance, when whack initiates an
-			 * OE connection.  There is no kernel-acquire
-			 * shunt to remove.
-			 *
-			 * XXX: see above, this code is looking for
-			 * and fiddling with the shunt only just added
-			 * above?
-			 *
-			 * XXX: maybe, the added bare shunt was for
-			 * .client, but this is for .host.  However,
-			 * since this is OE wasn't the .client
-			 * constructed using the two host addresses?
-			 */
-			struct bare_shunt **bs_pp = bare_shunt_ptr(&src, &dst, why);
-			PEXPECT(logger, bs_pp != NULL && *bs_pp == new_bs);
-			if (bs_pp == NULL) {
-				selector_pair_buf sb;
-				llog(RC_LOG, logger,
-				     "can't find expected bare shunt to %s: %s",
-				     ok ? "replace" : "delete",
-				     str_selector_pair_sensitive(&src, &dst, &sb));
-			} else if (ok) {
-				/*
-				 * change over to new bare eroute
-				 * ours, peers, transport_proto are
-				 * the same.
-				 */
-				struct bare_shunt *bs = *bs_pp;
-				bs->why = why;
-				bs->shunt_policy = failure_shunt;
-				bs->count = 0;
-				bs->last_activity = mononow();
-				dbg_bare_shunt("replace", bs);
-			} else {
-				llog(RC_LOG, logger,
-				     "%s() failed to update shunt policy", __func__);
-				free_bare_shunt(bs_pp);
-			}
+			struct bare_shunt *bs =
+				add_bare_shunt(&sr->local->client,
+					       &sr->remote->client,
+					       failure_shunt,
+					       ((strstr(c->name, "/32") != NULL ||
+						 strstr(c->name, "/128") != NULL) ? c->serialno : 0),
+					       why, logger);
+			dbg_bare_shunt("replace", bs);
 		} else {
-			dbg("kernel: No need to replace negotiation_shunt with failure_shunt - they are the same");
+			llog(RC_LOG, logger,
+			     "replace kernel shunt %s failed - deleting from pluto shunt table",
+			     str_selector_pair_sensitive(&src, &dst, &sb));
 		}
+
 	}
 
 	/* change routing so we don't get cleared out when state/connection dies */
