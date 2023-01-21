@@ -496,8 +496,9 @@ bool assign_holdpass(struct connection *c,
 		     const struct kernel_acquire *b,
 		     struct spd_route *spd);
 
-extern bool orphan_holdpass(struct connection *c, struct spd_route *sr,
-			    struct logger *logger);
+void orphan_holdpass(struct connection *c,
+		     struct spd_route *sr,
+		     struct logger *logger);
 
 extern ipsec_spi_t get_ipsec_spi(const struct connection *c,
 				 const struct ip_protocol *proto,
