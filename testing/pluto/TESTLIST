@@ -1353,7 +1353,7 @@ kvmplutotest	ikev1-policy-01-drop			good
 kvmplutotest	ikev1-policy-02-reject			good
 
 kvmplutotest	ikev2-revive-through-nat		good
-kvmplutotest	ikev2-revive-through-nat-02-cleanfail	good
+kvmplutotest	ikev2-revive-through-nat-02-cleanfail	wip	github/992
 
 # crossing the stream race conditions
 kvmplutotest	ikev2-crossing-streams-01		wip	github:557
