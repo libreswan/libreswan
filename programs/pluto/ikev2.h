@@ -176,6 +176,6 @@ void ldbg_v2_success(struct ike_sa *ike);
 
 bool v2_state_is_expired(struct state *st, const char *verb);
 
-bool ikev2_retry_establishing_ike_sa(struct ike_sa *ike);
+void ikev2_retry_establishing_ike_sa(struct ike_sa *ike);
 
 #endif

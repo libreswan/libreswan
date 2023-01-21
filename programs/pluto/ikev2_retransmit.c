@@ -158,15 +158,6 @@ void event_v2_retransmit(struct state *ike_sa, monotime_t now)
 	}
 
 	/*
-	 * XXX: This is looking at the failed to establish IKE SA.
-	 * The retry is probably valid.  However, would it be easier
-	 * to just let the replace code handle this?
-	 */
-	if (ikev2_retry_establishing_ike_sa(ike)) {
-		return;
-	}
-
-	/*
 	 * XXX: There might be a larval child.  Just use the biggest
 	 * stick available.
 	 */

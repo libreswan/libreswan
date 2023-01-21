@@ -752,16 +752,11 @@ void wipe_old_v2_connections(const struct ike_sa *ike)
  * later exchange fail.
  */
 
-bool ikev2_retry_establishing_ike_sa(struct ike_sa *ike)
+void ikev2_retry_establishing_ike_sa(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
 	unsigned long try_limit = c->sa_keying_tries;
 	unsigned long try = ike->sa.st_try + 1; /* +1 as this try */
-
-	if (try_limit > 0 && try > try_limit) {
-		dbg("maximum number of establish retries reached - abandoning");
-		return false;
-	}
 
 	/*
 	 * A lot like EVENT_SA_REPLACE, but over again.  Since we know
@@ -808,6 +803,4 @@ bool ikev2_retry_establishing_ike_sa(struct ike_sa *ike)
 	pstat_sa_failed(&ike->sa, REASON_TOO_MANY_RETRANSMITS);
 	/* can't send delete as message window is full */
 	delete_ike_family(&ike, DONT_SEND_DELETE);
-
-	return true;
 }
