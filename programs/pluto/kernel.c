@@ -2454,11 +2454,9 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 	}
 #endif
 
-	bool ok = true;
-
 #ifdef IPSEC_CONNECTION_LIMIT
 	unsigned new_spds = 0;
-	for (struct spd_route *spd = start; ok && spd != NULL; spd = spd->spd_next) {
+	for (struct spd_route *spd = start; spd != NULL; spd = spd->spd_next) {
 		if (spd->wip.conflicting.shunt == NULL) {
 			new_spds++;
 		}
@@ -2470,6 +2468,8 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 		return false;
 	}
 #endif
+
+	bool ok = true;	/* sticky: once false, stays false */
 
 	/*
 	 * Install the IPsec kernel policies.
@@ -2494,7 +2494,7 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 			 KERNEL_POLICY_OP_ADD);
 		if (spd->block) {
 			llog(RC_LOG, st->st_logger, "state spd requires a block (and no CAT?)");
-			ok &= spd->wip.installed.policy =
+			ok = spd->wip.installed.policy =
 				install_bare_spd_kernel_policy(spd, op, DIRECTION_OUTBOUND,
 							       EXPECT_KERNEL_POLICY_OK,
 							       SHUNT_DROP,
@@ -2523,7 +2523,7 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 					     "CAT: failed to eroute additional Client Address Translation policy");
 				}
 			}
-			ok &= spd->wip.installed.policy =
+			ok = spd->wip.installed.policy =
 				raw_policy(op, DIRECTION_OUTBOUND,
 					   EXPECT_KERNEL_POLICY_OK,
 					   &kernel_policy.src.route, &kernel_policy.dst.route,
@@ -2565,7 +2565,7 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 			spd->wip.installed.firewall = true;
 		} else {
 			/* go ahead and notify */
-			ok &= spd->wip.installed.firewall =
+			ok = spd->wip.installed.firewall =
 				do_updown(UPDOWN_UP, c, spd, st, st->st_logger);
 		}
 	}
@@ -2577,21 +2577,20 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 	 */
 
 	ldbg(st->st_logger, "kernel: %s() running updown-prepare", __func__);
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-		if (!ok) {
-			break;
-		}
+	if (ok) {
+		FOR_EACH_ITEM(spd, &c->child.spds) {
 #ifdef USE_CISCO_SPLIT
-		if (c->remotepeertype == CISCO &&
-		    spd == c->spd &&
-		    spd->spd_next != NULL) {
-			continue;
-		}
+			if (c->remotepeertype == CISCO &&
+			    spd == c->spd &&
+			    spd->spd_next != NULL) {
+				continue;
+			}
 #endif
-		if (spd->wip.conflicting.spd == NULL) {
-			/* a new route: no deletion required, but preparation is */
-			if (!do_updown(UPDOWN_PREPARE, c, spd, st, st->st_logger))
-				dbg("kernel: prepare command returned an error");
+			if (spd->wip.conflicting.spd == NULL) {
+				/* a new route: no deletion required, but preparation is */
+				if (!do_updown(UPDOWN_PREPARE, c, spd, st, st->st_logger))
+					dbg("kernel: prepare command returned an error");
+			}
 		}
 	}
 
@@ -2609,10 +2608,14 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 #endif
 		if (spd->wip.conflicting.spd == NULL) {
 			/* a new route: no deletion required, but preparation is */
-			ok &= spd->wip.installed.route =
+			ok = spd->wip.installed.route =
 				do_updown(UPDOWN_ROUTE, c, spd, st, st->st_logger);
 		}
 	}
+
+	/*
+	 * Finally clean up.
+	 */
 
 	if (!ok) {
 		FOR_EACH_ITEM(spd, &c->child.spds) {
@@ -2621,14 +2624,7 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 		return false;
 	}
 
-	/*
-	 * Finally clean up.
-	 */
-
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-		if (!ok) {
-			break;
-		}
 #ifdef USE_CISCO_SPLIT
 		if (c->remotepeertype == CISCO &&
 		    spd == c->spd &&
