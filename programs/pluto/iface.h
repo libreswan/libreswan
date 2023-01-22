@@ -53,7 +53,6 @@ struct iface_io {
 				struct logger *logger);
 	void (*cleanup)(struct iface_endpoint *ifp);
 	void (*listen)(struct iface_endpoint *fip, struct logger *logger);
-	int (*bind_iface_endpoint)(const char *iface, ip_endpoint endpoint, struct logger *logger);
 	bool (*enable_esp_encap)(const struct iface_endpoint *ifp, struct logger *logger);
 };
 
