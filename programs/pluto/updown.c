@@ -511,7 +511,8 @@ bool do_updown(enum updown updown_verb,
 		ldbg(logger, "kernel: skipped updown %s command - disabled per policy", verb);
 		return true;
 	}
-	if (spd != NULL && c->child.spds.len > 1) {
+
+	if (c->child.spds.len > 1) {
 		/* i.e., more selectors than just this */
 		selector_pair_buf sb;
 		llog(RC_LOG, logger, "running updown %s %s", verb,
