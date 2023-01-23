@@ -150,7 +150,8 @@ def main():
             console.redirect_output(None)
             # Pass this terminals properties to the VM.
             columns, rows = os.get_terminal_size()
-            console.stty_sane(term=os.getenv("TERM"), rows=rows, columns=columns)
+            console.run("unset LS_COLORS; export TERM=%s; stty sane rows %s columns %s"
+                        % (os.getenv("TERM"), rows, columns))
             # F.A.B.
             console.interact()
 
