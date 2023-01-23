@@ -100,36 +100,6 @@ def login(domain, console, login=LOGIN, password=PASSWORD):
     return _login(domain, console, login=login, password=password,
                   lapsed_time=lapsed_time, timeout=timeout)
 
-
-# Get a domain running with an attached console.  Should be really
-# quick.
-
-def _start(domain, timeout):
-    domain.logger.info("starting domain")
-    # Do not call this when the console is functional!
-    console = domain.console()
-    if console:
-        raise pexpect.EOF("console for domain %s already open" % domain)
-    # Bring the machine up from scratch.
-    end_time = time.time() + timeout
-    first_attempt = True
-    while not console:
-        if time.time() > end_time:
-            raise pexpect.EOF("trying to start domain %s" % domain)
-        status, output = domain.start()
-        if status and first_attempt:
-            # The first attempt at starting the domain _must_ succeed.
-            # Failing is a sign that the domain was running.  Further
-            # attempts might fail as things get racey.
-            raise pexpect.EOF("failed to start domain %s" % output)
-        # give the VM time to start and then try opening the console.
-        time.sleep(1)
-        console = domain.console()
-        first_attempt = False
-    domain.logger.debug("got console")
-    return console
-
-
 def _reboot_to_login_prompt(domain, console):
 
     # Drain any existing output.
@@ -190,7 +160,7 @@ def _reboot_to_login_prompt(domain, console):
         domain.logger.error("domain hung, trying to pull the power cord")
         domain.destroy()
         console.expect_exact(pexpect.EOF, timeout=SHUTDOWN_TIMEOUT)
-        console = _start(domain, timeout=START_TIMEOUT)
+        console = domain.start(timeout=START_TIMEOUT)
 
     # Now wait for login prompt.  If this second attempt fails then
     # either a .TIMEOUT or a .EOF exception will be thrown and the
@@ -201,6 +171,6 @@ def _reboot_to_login_prompt(domain, console):
 
 def boot_to_login_prompt(domain):
 
-    console = _start(domain, timeout=START_TIMEOUT)
+    console = domain.start(timeout=START_TIMEOUT)
     console.expect([LOGIN_PROMPT], timeout=LOGIN_PROMPT_TIMEOUT)
     return console

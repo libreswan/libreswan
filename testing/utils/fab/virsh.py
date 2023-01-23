@@ -152,9 +152,22 @@ class Domain:
     def reboot(self):
         return self._run_status_output(_VIRSH + ["reboot", self.domain_name])
 
-    def start(self):
-        self._console = None
-        return self._run_status_output(_VIRSH + ["start", self.domain_name])
+    def start(self, timeout=CONSOLE_TIMEOUT):
+        command = _VIRSH + ["start", self.domain_name, "--console"]
+        self.logger.info("spawning: %s", " ".join(command))
+        self._console = console.Remote(command, self.logger, hostname=self.guest_name)
+        if self._console.expect([pexpect.EOF,
+                                 # libvirt >= 8.x
+                                 ("Domain '%s' started\r\n" +
+                                  "Connected to domain '%s'\r\n" +
+                                  "Escape character is \\^] \(Ctrl \+ ]\)\r\n") % (self.domain_name, self.domain_name)
+                                 ],
+                                timeout=timeout) > 0:
+            self.logger.info("domain started");
+            return self._console
+        # already tried and failed
+        self._console = False
+        raise pexpect.EOF("failed to start domain")
 
     def dumpxml(self):
         if self._xml == None:
