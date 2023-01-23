@@ -492,9 +492,11 @@ extern bool flush_bare_shunt(const ip_address *src, const ip_address *dst,
 			     enum expect_kernel_policy expect_kernel_policy,
 			     const char *why, struct logger *logger);
 
-bool assign_holdpass(struct connection *c,
-		     const struct kernel_acquire *b,
-		     struct spd_route *spd);
+void assign_holdpass(struct connection *c,
+		     struct spd_route *spd,
+		     enum kernel_policy_op op,
+		     struct logger *logger,
+		     const char *reason);
 
 void orphan_holdpass(struct connection *c,
 		     struct spd_route *sr,
@@ -545,5 +547,12 @@ struct kernel_acquire {
 };
 
 void jam_kernel_acquire(struct jambuf *buf, const struct kernel_acquire *b);
+
+struct spd_owner {
+	struct spd_route *policy;
+	struct spd_route *route;
+};
+
+struct spd_owner spd_owner(const struct spd_route *spd, unsigned indent);
 
 #endif

@@ -572,14 +572,9 @@ static struct kernel_route kernel_route_from_state(const struct state *st, enum 
  * SPD.
  */
 
-struct spd_owner {
-	struct spd_route *policy;
-	struct spd_route *route;
-};
-
 static const struct spd_owner null_spd_owner;
 
-static struct spd_owner spd_owner(const struct spd_route *spd, unsigned indent)
+struct spd_owner spd_owner(const struct spd_route *spd, unsigned indent)
 {
 	struct connection *c = spd->connection;
 	struct logger *logger = c->logger;
@@ -1467,104 +1462,12 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
  * XXX: description seems strange?
  */
 
-bool assign_holdpass(struct connection *c,
-		     const struct kernel_acquire *b,
-		     struct spd_route *spd)
+void assign_holdpass(struct connection *c,
+		     struct spd_route *spd,
+		     enum kernel_policy_op op,
+		     struct logger *logger,
+		     const char *reason)
 {
-	struct logger *logger = c->logger;
-	bool oe = ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
-	struct connection *t = connection_by_serialno(c->serial_from); /* could be NULL */
-	struct spd_owner owner = spd_owner(spd, 0);
-
-	PASSERT(logger, (c->kind == CK_PERMANENT ||
-			 c->kind == CK_INSTANCE));
-	PASSERT(logger, ((c->kind == CK_INSTANCE) >= (t != NULL)));
-
-	/*
-	 * Figure out the connection's routing transition.
-	 */
-	enum routing old_routing = c->child.routing;	/* routing, old */
-	enum routing new_routing;
-	enum kernel_policy_op op;
-	const char *reason;
-
-	switch (old_routing) {
-	case RT_UNROUTED:
-		/*
-		 * For instance:
-		 * - an instance with a routed prospective template
-		 * but also:
-		 * - an unrouted permenant by whack?
-		 * - an instance with an unrouted template due to whack?
-		 */
-		new_routing = RT_UNROUTED_NEGOTIATION;
-		op = KERNEL_POLICY_OP_ADD;
-		/* XXX: these descriptions make no sense */
-		reason = (oe ? "replace unrouted opportunistic %trap with broad %pass or %hold" :
-			  "replace unrouted %trap with broad %pass or %hold");
-		PEXPECT(logger, t == NULL || t->child.routing == RT_ROUTED_PROSPECTIVE);
-		break;
-	case RT_ROUTED_PROSPECTIVE:
-		/*
-		 * For instance?
-		 *
-		 * XXX: could be whack or acquire.
-		 *
-		 * XXX: is this just re-installing the same policy?
-		 * No?  The prospective policy might be 7.0.0.0/8 but
-		 * this is installing 7.7.7.7/32 from a trigger of
-		 * 7.7.7.7/32/ICMP/8.
-		 */
-		new_routing = RT_ROUTED_NEGOTIATION;
-		op = KERNEL_POLICY_OP_REPLACE;
-		/* XXX: these descriptions make no sense */
-		reason = (oe ? "broad prospective opportunistic %pass or %hold" :
-			  "broad prospective %pass or %hold");
-		PEXPECT(logger, t == NULL);
-		break;
-	default:
-		/* no change: this %hold or %pass is old news */
-		new_routing = old_routing;
-		op = 0; /* i.e., NOP */
-		reason = "NOP";
-		break;
-	}
-
-	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-		jam(buf, "%s():", __func__);
-		jam(buf, " by_acquire=%s", bool_str(b->by_acquire));
-		jam(buf, " oppo=%s", bool_str(oe));
-		jam(buf, " kind=");
-		jam_enum_short(buf, &connection_kind_names, c->kind);
-		jam(buf, " routing=");
-		jam_enum_short(buf, &routing_names, old_routing);
-		if (old_routing != new_routing) {
-			jam(buf, "->");
-			jam_enum_short(buf, &routing_names, new_routing);
-		} else {
-			jam_string(buf, "(no-change)");
-		}
-		jam(buf, " packet=");
-		jam_packet(buf, &b->packet);
-		jam(buf, " selectors=");
-		jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
-		jam(buf, " one_address=%s",
-		    bool_str(selector_contains_one_address(spd->local->client) &&
-			     selector_contains_one_address(spd->remote->client)));
-		jam_string(buf, " op=");
-		jam_enum(buf, &kernel_policy_op_names, op);
-		/* can have policy owner without route owner */
-		if (owner.policy != NULL) {
-			jam_string(buf, " policy-owner=");
-			jam_connection(buf, owner.policy->connection);
-		} else if (owner.route != NULL) {
-			jam_string(buf, " route-owner=");
-			jam_connection(buf, owner.route->connection);
-		}
-		jam_string(buf, ": ");
-		jam_string(buf, reason);
-	}
-
 	/*
 	 * We need a broad %hold, not the narrow one.
 	 *
@@ -1579,33 +1482,27 @@ bool assign_holdpass(struct connection *c,
 	 * XXX: why is OE special (other than that's the way the code
 	 * worked in the past)?
 	 */
-	if (oe || old_routing != new_routing) {
-
-		if (spd->local->child->has_cat) {
-			if (!install_bare_cat_kernel_policy(spd, op,
-							    EXPECT_KERNEL_POLICY_OK,
-							    c->config->negotiation_shunt,
-							    logger, HERE, "acquired")) {
-				llog(RC_LOG, logger,
-				     "CAT: failed to install Client Address Translation kernel policy");
-			}
-		}
-
-		if (!install_bare_spd_kernel_policy(spd, op, DIRECTION_OUTBOUND,
+	PASSERT(logger, (op == KERNEL_POLICY_OP_ADD ||
+			 op == KERNEL_POLICY_OP_REPLACE));
+	if (spd->local->child->has_cat) {
+		if (!install_bare_cat_kernel_policy(spd, op,
 						    EXPECT_KERNEL_POLICY_OK,
 						    c->config->negotiation_shunt,
-						    logger, HERE, reason)) {
+						    logger, HERE, "acquired")) {
 			llog(RC_LOG, logger,
-			     "%s() eroute_connection() failed", __func__);
-			return false;
+			     "CAT: failed to install Client Address Translation kernel policy");
 		}
-
-		dbg("kernel: %s() done", __func__);
 	}
 
-	set_child_routing(c, new_routing);
-	dbg("kernel: %s() done - returning success", __func__);
-	return true;
+	if (!install_bare_spd_kernel_policy(spd, op, DIRECTION_OUTBOUND,
+					    EXPECT_KERNEL_POLICY_OK,
+					    c->config->negotiation_shunt,
+					    logger, HERE, reason)) {
+		llog(RC_LOG, logger,
+		     "%s() eroute_connection() failed", __func__);
+	}
+
+	dbg("kernel: %s() done", __func__);
 }
 
 static void setup_esp_nic_offload(struct kernel_state *sa, struct connection *c,

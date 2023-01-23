@@ -43,6 +43,7 @@
 #include "labeled_ipsec.h"		/* for sec_label_within_range() */
 #include "ip_info.h"
 #include "instantiate.h"
+#include "routing.h"
 
 static bool initiate_connection_1_basics(struct connection *c,
 					 const char *remote_host,
@@ -699,13 +700,12 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		 */
 #else
 		/*
-		 * XXX We got an acquire (NETKEY only?) for
-		 * something we already have an instance for ??
-		 * We cannot process as normal because the
-		 * bare_shunts table and assign_holdpass()
-		 * would get confused between this new entry
-		 * and the existing one.  So we return without
-		 * doing anything.
+		 * XXX We got an acquire (NETKEY only?) for something
+		 * we already have an instance for ??  We cannot
+		 * process as normal because the bare_shunts table and
+		 * assign_holdpass() (connection_negotiating()) would
+		 * get confused between this new entry and the
+		 * existing one.  So we return without doing anything.
 		 */
 		llog(RC_LOG, b->logger,
 			    "ignoring found existing connection instance "PRI_CONNECTION" that covers kernel acquire with IKE state #%lu and IPsec state #%lu - due to duplicate acquire?",
@@ -732,13 +732,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 			/* jam(buf, " using "); */
 		}
 
-		if (assign_holdpass(c, b, sr)) {
-			dbg("%s() installed negotiation_shunt", __func__);
-		} else {
-			llog(RC_LOG, b->logger,
-			     "%s() failed to install negotiation_shunt", __func__);
-		}
-
+		connection_negotiating(c, b);
 		ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception, b->sec_label,
 				  b->background, b->logger);
 
@@ -809,12 +803,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		     LELEM(RT_ROUTED_PROSPECTIVE),
 		     c->child.routing));
 
-	if (assign_holdpass(c, b, c->spd)) {
-		dbg("assign_holdpass succeeded");
-	} else {
-		llog(RC_LOG, b->logger, "assign_holdpass failed!");
-	}
-
+	connection_negotiating(c, b);
 	ipsecdoi_initiate(c, c->policy, 1,
 			  SOS_NOBODY, &inception, b->sec_label,
 			  b->background, b->logger);
