@@ -14,6 +14,7 @@ v5.0 (Unreleased)
   - use INSTALL_CONFIGS=false prevents update of /etc/ipsec.d et.al.
   - drop FINAL* make variables; see mk/config.mk for alternatives
 * packaging: Fix debian systemd service install [Antonio Silva]
+* testing: Fix namespace tests for super long dir names [Paul]
 
 v4.9 (October 13, 2022)
 * IKEv1: fix crasher (introduced in 4.8) when USE_NSS_KDF=false or MD5 [Andrew]
