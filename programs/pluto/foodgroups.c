@@ -41,6 +41,7 @@
 #include "ip_info.h"
 #include "ip_selector.h"
 #include "orient.h"
+#include "routing.h"
 #include "instantiate.h"
 
 /* Groups is a list of connections that are policy groups.
@@ -483,7 +484,7 @@ void route_and_trap_connection_group(struct connection *c)
 	}
 }
 
-void unroute_connection_group(struct connection *c)
+void connection_group_down(struct connection *c)
 {
 	struct fg_groups *g = find_group(c);
 	struct fg_targets *t;
@@ -495,7 +496,7 @@ void unroute_connection_group(struct connection *c)
 			struct connection *ci = conn_by_name(t->name, false/*!strict*/);
 
 			if (ci != NULL) {
-				unroute_connection(ci);
+				connection_down(ci);
 			}
 		}
 	}

@@ -482,8 +482,7 @@ void free_bare_shunt(struct bare_shunt **pp);
 
 extern void init_kernel(struct logger *logger);
 
-struct connection;      /* forward declaration of tag */
-extern void unroute_connection(struct connection *c);
+struct spd_route *route_owner(struct spd_route *spd);
 extern void migration_up(struct child_sa *child);
 extern void migration_down(struct child_sa *child);
 

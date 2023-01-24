@@ -97,6 +97,7 @@
 #include "ikev2_proposals.h"
 #include "lswnss.h"
 #include "show.h"
+#include "routing.h"
 
 void ldbg_connection(const struct connection *c, where_t where,
 		     const char *message, ...)
@@ -170,7 +171,7 @@ void release_connection(struct connection *c)
 	flush_pending_by_connection(c);
 	delete_states_by_connection(&c);
 	passert(c != NULL);
-	unroute_connection(c);
+	connection_down(c);
 }
 
 /* Delete a connection */

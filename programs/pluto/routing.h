@@ -20,6 +20,7 @@ struct connection;
 struct state;
 struct kernel_acquire;
 
+void connection_down(struct connection *c);
 void connection_prospective(struct connection *c);
 void connection_negotiating(struct connection *c,
 			    const struct kernel_acquire *b);

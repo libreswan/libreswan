@@ -26,7 +26,7 @@
 #include "defs.h"
 #include "connections.h"
 #include "pending.h"
-#include "kernel.h"		/* for unroute_connection(c) */
+#include "routing.h"		/* for connection_unroute(c) */
 #include "log.h"
 #include "ip_info.h"
 #include "hash_table.h"
@@ -433,7 +433,7 @@ void update_host_pairs(struct connection *c)
 			 * Unroute the old connection before changing the ip
 			 * address.
 			 */
-			unroute_connection(d);
+			connection_down(d);
 
 			/*
 			 * If the client is the peer, also update the

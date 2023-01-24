@@ -55,6 +55,7 @@
 #include "state.h"
 #include "ipsec_doi.h"          /* needs demux.h and state.h */
 #include "kernel.h"             /* needs connections.h */
+#include "routing.h"
 #include "rcv_whack.h"
 #include "log.h"
 #include "lswfips.h"
@@ -293,9 +294,9 @@ static bool whack_unroute_connection(struct show *s, struct connection *c,
 	if (c->child.routing == RT_ROUTED_TUNNEL) {
 		llog(WHACK_STREAM|RC_RTBUSY, logger, "cannot unroute: route busy");
 	} else if (c->policy & POLICY_GROUP) {
-		unroute_connection_group(c);
+		connection_group_down(c);
 	} else {
-		unroute_connection(c);
+		connection_down(c);
 	}
 
 	/* XXX: something better? */

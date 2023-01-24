@@ -36,9 +36,8 @@
 #include "ikev2_redirect.h"
 #include "ikev2_message.h"
 #include "ikev2_send.h"
-#include "kernel.h"
 #include "pluto_stats.h"
-
+#include "routing.h"
 #include "ikev2_informational.h"
 #include "ikev2_mobike.h"
 #include "ikev2_delete.h"
@@ -214,7 +213,7 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	 * various test cases.
 	 */
 	if (do_unroute) {
-		unroute_connection(c);
+		connection_down(c);
 	}
 
 	/*
@@ -274,7 +273,7 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 	 * various test cases.
 	 */
 	if (do_unroute) {
-		unroute_connection(c);
+		connection_down(c);
 	}
 
 	/*

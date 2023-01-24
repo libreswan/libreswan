@@ -48,6 +48,7 @@
 #include "packet.h"
 #include "demux.h"      /* needs packet.h */
 #include "kernel.h"     /* needs connections.h */
+#include "routing.h"
 #include "log.h"
 #include "server.h"
 #include "timer.h"
@@ -78,7 +79,7 @@ static void dpd_clear_connection(struct connection *c)
 	if (c != NULL) {
 		dbg("%s: unrouting connection DPD action - clearing",
 		    enum_name(&connection_kind_names, c->kind));
-		unroute_connection(c); /* --unroute */
+		connection_down(c); /* --unroute */
 	}
 }
 

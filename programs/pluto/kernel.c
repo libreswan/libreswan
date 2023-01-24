@@ -732,7 +732,7 @@ struct spd_owner spd_owner(const struct spd_route *spd, unsigned indent)
 	return owner;
 }
 
-static struct spd_route *route_owner(struct spd_route *spd)
+struct spd_route *route_owner(struct spd_route *spd)
 {
 	return spd_owner(spd, 0).route;
 }
@@ -1138,55 +1138,6 @@ void migration_down(struct child_sa *child)
 				child->sa.st_mobike_del_src_ip = true;
 				do_updown(UPDOWN_UNROUTE, c, spd, &child->sa, child->sa.st_logger);
 				child->sa.st_mobike_del_src_ip = false;
-			}
-		}
-	}
-}
-
-/*
- * Delete any kernal policies for a connection and unroute it if route
- * isn't shared.
- */
-
-void unroute_connection(struct connection *c)
-{
-	enum routing cr = c->child.routing;
-	if (erouted(cr)) {
-		FOR_EACH_ITEM(spd, &c->child.spds) {
-			/* cannot handle a live one */
-			passert(cr != RT_ROUTED_TUNNEL);
-			/*
-			 * XXX: note the hack where missing inbound
-			 * policies are ignored.  The connection
-			 * should know if there's an inbound policy,
-			 * in fact the connection shouldn't even have
-			 * inbound policies, just the state.
-			 *
-			 * For sec_label, it's tearing down the route,
-			 * hence that is included.
-			 */
-			delete_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
-						 EXPECT_KERNEL_POLICY_OK,
-						 c->logger, HERE,
-						 "unrouting connection");
-			delete_spd_kernel_policy(spd, DIRECTION_INBOUND,
-						 EXPECT_NO_INBOUND,
-						 c->logger, HERE,
-						 "unrouting connection");
-#ifdef IPSEC_CONNECTION_LIMIT
-			num_ipsec_eroute--;
-#endif
-		}
-	}
-
-	/* do now so route_owner won't find us */
-	set_child_routing(c, RT_UNROUTED);
-
-	if (routed(cr)) {
-		FOR_EACH_ITEM(spd, &c->child.spds) {
-			/* only unroute if no other connection shares it */
-			if (route_owner(spd) == NULL) {
-				do_updown(UPDOWN_UNROUTE, c, spd, NULL, c->logger);
 			}
 		}
 	}

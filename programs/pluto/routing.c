@@ -21,6 +21,7 @@
 #include "pending.h"
 #include "log.h"
 #include "kernel.h"
+#include "kernel_policy.h"
 
 void set_child_routing_where(struct connection *c, enum routing routing, where_t where)
 {
@@ -236,6 +237,73 @@ enum connection_action connection_timeout(struct connection *c,
 		     __func__);
 	return CONNECTION_FAIL;
 }
+
+/*
+ * Delete any kernal policies for a connection and unroute it if route
+ * isn't shared.
+ */
+
+void connection_down(struct connection *c)
+{
+	enum routing cr = c->child.routing;
+	switch (cr) {
+	case RT_UNROUTED:
+		break;
+	case RT_UNROUTED_NEGOTIATION:
+	case RT_ROUTED_PROSPECTIVE:
+	case RT_ROUTED_NEGOTIATION:
+	case RT_ROUTED_FAILURE:
+	case RT_ROUTED_TUNNEL:
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+			/* cannot handle a live one */
+			passert(cr != RT_ROUTED_TUNNEL);
+			/*
+			 * XXX: note the hack where missing inbound
+			 * policies are ignored.  The connection
+			 * should know if there's an inbound policy,
+			 * in fact the connection shouldn't even have
+			 * inbound policies, just the state.
+			 *
+			 * For sec_label, it's tearing down the route,
+			 * hence that is included.
+			 */
+			delete_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
+						 EXPECT_KERNEL_POLICY_OK,
+						 c->logger, HERE,
+						 "unrouting connection");
+			delete_spd_kernel_policy(spd, DIRECTION_INBOUND,
+						 EXPECT_NO_INBOUND,
+						 c->logger, HERE,
+						 "unrouting connection");
+#ifdef IPSEC_CONNECTION_LIMIT
+			num_ipsec_eroute--;
+#endif
+		}
+		break;
+	}
+
+	/* do now so route_owner won't find us */
+	set_child_routing(c, RT_UNROUTED);
+
+	switch (cr) {
+	case RT_UNROUTED:
+	case RT_UNROUTED_NEGOTIATION:
+		break;
+	case RT_ROUTED_PROSPECTIVE:
+	case RT_ROUTED_NEGOTIATION:
+	case RT_ROUTED_FAILURE:
+	case RT_ROUTED_TUNNEL:
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+			/* only unroute if no other connection shares it */
+			if (route_owner(spd) == NULL) {
+				do_updown(UPDOWN_UNROUTE, c, spd, NULL, c->logger);
+			}
+		}
+		break;
+	}
+}
+
+/* these go at the end so renames don't find them */
 
 const char *connection_action_name[] = {
 #define S(E) [E] = #E

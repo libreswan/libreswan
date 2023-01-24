@@ -33,7 +33,7 @@
 #include "pending.h"
 #include "ikev2_replace.h"
 #include "ikev2.h"		/* for ikev2_retry_establishing_ike_sa() */
-#include "kernel.h"
+#include "routing.h"
 
 void process_v2_ike_sa_established_request_timeout(struct ike_sa *ike, monotime_t now UNUSED)
 {
@@ -60,7 +60,7 @@ void process_v2_ike_sa_established_request_timeout(struct ike_sa *ike, monotime_
 		if (c != NULL && c->newest_ike_sa == so) {
 			dbg("unrouting connection kind %s",
 			    kind_name);
-			unroute_connection(c); /* --unroute */
+			connection_down(c); /* --unroute */
 		}
 		break;
 	}
