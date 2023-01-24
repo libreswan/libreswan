@@ -71,7 +71,7 @@ extern void connection_suspend(struct child_sa *child);
 
 enum routing_action {
 	CONNECTION_RETRY,
-	/*CONNECTION_REVIVE*/
+	CONNECTION_REVIVE,
 	CONNECTION_FAIL,
 };
 

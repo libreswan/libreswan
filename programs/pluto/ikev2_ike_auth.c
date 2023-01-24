@@ -65,6 +65,7 @@
 #include "ikev2_certreq.h"
 #include "routing.h"
 #include "ikev2_replace.h"
+#include "revival.h"
 
 static stf_status process_v2_IKE_AUTH_request_tail(struct state *st,
 						   struct msg_digest *md,
@@ -1635,6 +1636,9 @@ void process_v2_ike_auth_request_timeout(struct ike_sa *ike, monotime_t now UNUS
 	switch (action) {
 	case CONNECTION_RETRY:
 		ikev2_retry_establishing_ike_sa(ike);
+		return;
+	case CONNECTION_REVIVE:
+		schedule_revival(&ike->sa);
 		return;
 	case CONNECTION_FAIL:
 		pstat_sa_failed(&ike->sa, REASON_TOO_MANY_RETRANSMITS);

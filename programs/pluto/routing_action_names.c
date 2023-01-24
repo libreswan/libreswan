@@ -22,6 +22,7 @@
 const char *routing_action_name[] = {
 #define S(E) [E] = #E
 	S(CONNECTION_RETRY),
+	S(CONNECTION_REVIVE),
 	S(CONNECTION_FAIL),
 #undef S
 };

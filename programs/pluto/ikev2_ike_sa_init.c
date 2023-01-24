@@ -61,6 +61,7 @@
 #include "instantiate.h"	/* for sec_label_instantiate() */
 #include "routing.h"
 #include "ikev2_replace.h"
+#include "revival.h"
 
 static ke_and_nonce_cb initiate_v2_IKE_SA_INIT_request_continue;	/* type assertion */
 static dh_shared_secret_cb process_v2_request_no_skeyseed_continue;	/* type assertion */
@@ -1713,6 +1714,9 @@ void process_v2_ike_sa_init_request_timeout(struct ike_sa *ike, monotime_t now U
 	switch (action) {
 	case CONNECTION_RETRY:
 		ikev2_retry_establishing_ike_sa(ike);
+		return;
+	case CONNECTION_REVIVE:
+		schedule_revival(&ike->sa);
 		return;
 	case CONNECTION_FAIL:
 		/*

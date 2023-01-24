@@ -22,6 +22,7 @@
 #include "log.h"
 #include "kernel.h"
 #include "kernel_policy.h"
+#include "revival.h"
 
 void set_child_routing_where(struct connection *c, enum routing routing, where_t where)
 {
@@ -167,6 +168,9 @@ static enum routing_action connection_retry(struct ike_sa *ike,
 	if (try_limit == 0 || tries_so_far < try_limit) {
 		ldbg(logger, "maximum number of establish retries reached - abandoning");
 		return CONNECTION_RETRY;
+	}
+	if (revival_needed(&ike->sa)) {
+		return CONNECTION_REVIVE;
 	}
 	if (c->child.routing != new_routing) {
 		ldbg(logger, "maximum number of establish retries reached - abandoning");

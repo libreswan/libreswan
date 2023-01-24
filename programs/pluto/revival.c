@@ -107,11 +107,19 @@ void flush_revival(const struct connection *c)
 
 void add_revival_if_needed(struct state *st)
 {
+	if (!revival_needed(st)) {
+		return;
+	}
+	schedule_revival(st);
+}
+
+bool revival_needed(struct state *st)
+{
 	struct connection *c = st->st_connection;
 
 	if (exiting_pluto) {
 		dbg("skilling revival: pluto is going down");
-		return;
+		return false;
 	}
 
 	if (IS_CHILD_SA_ESTABLISHED(st) &&
@@ -124,27 +132,27 @@ void add_revival_if_needed(struct state *st)
 		PASSERT(st->st_logger, st->st_ike_version == IKEv2);
 		st->st_replace_margin = deltatime(0);
 		ikev2_replace(st);
-		return;
+		return false;
 	}
 
 	if (!IS_IKE_SA(st)) {
 		dbg("skipping revival: not an IKE SA");
-		return;
+		return false;
 	}
 
 	if ((c->policy & POLICY_UP) == LEMPTY) {
 		dbg("skipping revival: POLICY_UP disabled");
-		return;
+		return false;
 	}
 
 	if ((c->policy & POLICY_DONT_REKEY) != LEMPTY) {
 		dbg("skipping revival: POLICY_DONT_REKEY enabled");
-		return;
+		return false;
 	}
 
 	if (c->config->ike_version == IKEv2 && c->config->sec_label.len > 0) {
 		dbg("skipped revival: childless IKE SA");
-		return;
+		return false;
 	}
 
 	so_serial_t newer_sa = get_newer_sa_from_connection(st);
@@ -160,22 +168,28 @@ void add_revival_if_needed(struct state *st)
 		 */
 		dbg("skipping revival: IKE delete_state() for #%lu and connection '%s' that is supposed to remain up;  not a problem - have newer #%lu",
 		    st->st_serialno, c->name, newer_sa);
-		return;
+		return false;
 	}
 
 	if (impair.revival) {
 		log_state(RC_LOG, st,
 			  "IMPAIR: skipping revival of connection that is supposed to remain up");
-		return;
+		return false;
 	}
 
 	if (*find_revival(c) != NULL) {
 		log_state(RC_LOG, st,
 			  "deleting %s but connection is supposed to remain up; EVENT_REVIVE_CONNS already scheduled",
 			  c->config->ike_info->sa_type_name[IKE_SA]);
-		return;
+		return false;
 	}
 
+	return true;
+}
+
+void schedule_revival(struct state *st)
+{
+	struct connection *c = st->st_connection;
 	log_state(RC_LOG, st,
 		  "deleting %s but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS",
 		  c->config->ike_info->sa_type_name[IKE_SA]);
