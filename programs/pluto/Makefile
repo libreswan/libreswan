@@ -215,7 +215,12 @@ USERLAND_LDFLAGS += $(LDAP_LDFLAGS)
 OBJS += connections.o
 OBJS += instantiate.o
 OBJS += connection_db.o
+
 OBJS += routing.o
+OBJS += routing_names.o
+OBJS += routing_action_names.o
+OBJS += routing_story.o
+
 OBJS += initiate.o terminate.o ikev2_rekey_now.o
 OBJS += pending.o crypto.o defs.o
 OBJS += ike_spi.o

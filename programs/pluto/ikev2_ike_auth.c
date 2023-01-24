@@ -1632,8 +1632,8 @@ stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 void process_v2_ike_auth_request_timeout(struct ike_sa *ike, monotime_t now UNUSED)
 {
 	struct connection *c = ike->sa.st_connection;
-	enum connection_action action = connection_timeout(c, ike->sa.st_try/*so far*/,
-							   ike->sa.st_logger);
+	enum routing_action action = connection_timeout(c, ike->sa.st_try/*so far*/,
+							ike->sa.st_logger);
 	switch (action) {
 	case CONNECTION_RETRY:
 		ikev2_retry_establishing_ike_sa(ike);
@@ -1647,5 +1647,5 @@ void process_v2_ike_auth_request_timeout(struct ike_sa *ike, monotime_t now UNUS
 	enum_buf eb;
 	llog_passert(ike->sa.st_logger, HERE,
 		     "unexpected connection action %s",
-		     str_enum_short(&connection_action_names, action, &eb));
+		     str_enum_short(&routing_action_names, action, &eb));
 }

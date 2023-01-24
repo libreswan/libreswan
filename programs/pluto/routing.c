@@ -156,9 +156,9 @@ void connection_negotiating(struct connection *c,
 	dbg("kernel: %s() done - returning success", __func__);
 }
 
-enum connection_action connection_timeout(struct connection *c,
-					  unsigned tries_so_far,
-					  struct logger *logger)
+enum routing_action connection_timeout(struct connection *c,
+				       unsigned tries_so_far,
+				       struct logger *logger)
 {
 	unsigned try_limit = c->sa_keying_tries;
 
@@ -356,19 +356,3 @@ void connection_migration_down(struct child_sa *child)
 		}
 	}
 }
-
-/* these go at the end so renames don't find them */
-
-const char *connection_action_name[] = {
-#define S(E) [E] = #E
-	S(CONNECTION_RETRY),
-	S(CONNECTION_FAIL),
-#undef S
-};
-
-const struct enum_names connection_action_names = {
-	CONNECTION_RETRY, CONNECTION_FAIL,
-	ARRAY_REF(connection_action_name),
-	"CONNECTION_",
-	NULL,
-};

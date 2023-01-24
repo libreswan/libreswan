@@ -45,6 +45,7 @@
 #include "ckaid.h"
 #include "authby.h"
 #include "ip_index.h"
+#include "routing.h"
 
 /*
  * Note that we include this even if not X509, because we do not want

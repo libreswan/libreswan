@@ -1,0 +1,35 @@
+/* tables of names for values defined in constants.h
+ *
+ * Copyright (C) 2022 Andrew Cagney
+ *
+ * This program is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU General Public License as published by the
+ * Free Software Foundation; either version 2 of the License, or (at your
+ * option) any later version.  See <https://www.gnu.org/licenses/gpl2.txt>.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+ * or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+ * for more details.
+ */
+
+#include "lswcdefs.h"		/* for ARRAY_REF() */
+#include "enum_names.h"
+#include "routing.h"		/* for enum routing */
+
+/* routing status names */
+static const char *const routing_story_strings[] = {
+	[RT_UNROUTED] = "unrouted",			  /* unrouted */
+	[RT_UNROUTED_NEGOTIATION] = "unrouted HOLD",      /* unrouted, but HOLD shunt installed */
+	[RT_ROUTED_PROSPECTIVE] = "prospective erouted",  /* routed, and prospective shunt installed */
+	[RT_ROUTED_NEGOTIATION] = "erouted HOLD",         /* routed, and HOLD shunt installed */
+	[RT_ROUTED_FAILURE] = "fail erouted",         	  /* routed, and failure-context shunt eroute installed */
+	[RT_ROUTED_TUNNEL] = "erouted",		      	  /* routed, and erouted to an IPSEC SA group */
+};
+
+const struct enum_names routing_story = {
+	RT_UNROUTED, RT_UNROUTED_TUNNEL,
+	ARRAY_REF(routing_story_strings),
+	NULL, /* prefix */
+	NULL
+};

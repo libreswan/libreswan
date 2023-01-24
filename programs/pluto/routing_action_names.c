@@ -1,6 +1,6 @@
-/* tables of names for values defined in constants.h
+/* connection routing, for libreswan
  *
- * Copyright (C) 2022 Andrew Cagney
+ * Copyright (C) 2023 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -13,24 +13,22 @@
  * for more details.
  */
 
+/* these go at the end so renames don't find them */
+
 #include "lswcdefs.h"		/* for ARRAY_REF() */
 #include "enum_names.h"
-#include "constants.h"		/* for enum routing */
+#include "routing.h"
 
-static const char *routing_name[] = {
+const char *routing_action_name[] = {
 #define S(E) [E] = #E
-	S(RT_UNROUTED),
-	S(RT_UNROUTED_NEGOTIATION),
-	S(RT_ROUTED_PROSPECTIVE),
-	S(RT_ROUTED_NEGOTIATION),
-	S(RT_ROUTED_FAILURE),
-	S(RT_ROUTED_TUNNEL),
+	S(CONNECTION_RETRY),
+	S(CONNECTION_FAIL),
 #undef S
 };
 
-const struct enum_names routing_names = {
-	RT_UNROUTED,
-	RT_ROUTED_TUNNEL,
-	ARRAY_REF(routing_name),
-	"RT_", NULL,
+const struct enum_names routing_action_names = {
+	CONNECTION_RETRY, CONNECTION_FAIL,
+	ARRAY_REF(routing_action_name),
+	"CONNECTION_",
+	NULL,
 };

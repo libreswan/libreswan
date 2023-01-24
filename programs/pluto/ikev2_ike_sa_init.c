@@ -1710,8 +1710,8 @@ static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
 void process_v2_ike_sa_init_request_timeout(struct ike_sa *ike, monotime_t now UNUSED)
 {
 	struct connection *c = ike->sa.st_connection;
-	enum connection_action action = connection_timeout(c, ike->sa.st_try/*so far*/,
-							   ike->sa.st_logger);
+	enum routing_action action = connection_timeout(c, ike->sa.st_try/*so far*/,
+							ike->sa.st_logger);
 	switch (action) {
 	case CONNECTION_FAIL:
 		/*
@@ -1729,5 +1729,5 @@ void process_v2_ike_sa_init_request_timeout(struct ike_sa *ike, monotime_t now U
 	enum_buf eb;
 	llog_passert(ike->sa.st_logger, HERE,
 		     "unexpected connection action %s",
-		     str_enum_short(&connection_action_names, action, &eb));
+		     str_enum_short(&routing_action_names, action, &eb));
 }

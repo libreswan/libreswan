@@ -90,22 +90,6 @@ enum_names natt_method_names = {
 	NULL
 };
 
-/* routing status names */
-static const char *const routing_story_strings[] = {
-	[RT_UNROUTED] = "unrouted",			  /* unrouted */
-	[RT_UNROUTED_NEGOTIATION] = "unrouted HOLD",      /* unrouted, but HOLD shunt installed */
-	[RT_ROUTED_PROSPECTIVE] = "prospective erouted",  /* routed, and prospective shunt installed */
-	[RT_ROUTED_NEGOTIATION] = "erouted HOLD",         /* routed, and HOLD shunt installed */
-	[RT_ROUTED_FAILURE] = "fail erouted",         	  /* routed, and failure-context shunt eroute installed */
-	[RT_ROUTED_TUNNEL] = "erouted",		      	  /* routed, and erouted to an IPSEC SA group */
-};
-
-enum_names routing_story = {
-	RT_UNROUTED, RT_ROUTED_TUNNEL,
-	ARRAY_REF(routing_story_strings),
-	NULL, /* prefix */
-	NULL };
-
 static const char *const stf_status_strings[] = {
 #define A(S) [S] = #S
 	A(STF_SKIP_COMPLETE_STATE_TRANSITION),

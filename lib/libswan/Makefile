@@ -64,7 +64,6 @@ OBJS += secrets.o
 OBJS += pubkey_rsa.o
 OBJS += pubkey_ecdsa.o
 
-OBJS += routing_names.o
 OBJS += sparse_names.o
 OBJS += ttoaddress_dns.o
 OBJS += ttoaddress_num.o
