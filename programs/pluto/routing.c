@@ -22,6 +22,16 @@
 #include "log.h"
 #include "kernel.h"
 
+void set_child_routing_where(struct connection *c, enum routing routing, where_t where)
+{
+	enum_buf ob, nb;
+	ldbg(c->logger, "kernel: routing connection %s->%s "PRI_WHERE,
+	     str_enum(&routing_story, c->child.routing, &ob),
+	     str_enum(&routing_story, routing, &nb),
+	     pri_where(where));
+	c->child.routing = routing;
+}
+
 void connection_negotiating(struct connection *c,
 			    const struct kernel_acquire *b)
 {

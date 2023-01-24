@@ -3423,16 +3423,6 @@ void set_child_kernel_policy_owner_where(struct connection *c, so_serial_t nso, 
 	c->child.kernel_policy_owner = nso;
 }
 
-void set_child_routing_where(struct connection *c, enum routing routing, where_t where)
-{
-	enum_buf ob, nb;
-	ldbg(c->logger, "kernel: routing connection %s->%s "PRI_WHERE,
-	     str_enum(&routing_story, c->child.routing, &ob),
-	     str_enum(&routing_story, routing, &nb),
-	     pri_where(where));
-	c->child.routing = routing;
-}
-
 err_t connection_requires_tss(const struct connection *c)
 {
 	if (c->config->ike_version == IKEv1) {

@@ -108,6 +108,10 @@ struct connection *clone_connection(const char *name, struct connection *t,
 		reference_xfrmi(c);
 	}
 
+	/* leave a breadcrumb */
+	c->child.routing = RT_UNROUTED; /* trash cloned value; applies to parent */
+	set_child_routing(c, RT_UNROUTED);
+
 	return c;
 }
 
@@ -222,10 +226,6 @@ struct connection *group_instantiate(struct connection *group,
 	t->policy |= POLICY_GROUPINSTANCE; /* mark as group instance for later */
 	t->kind = (!address_is_specified(t->remote->host.addr) &&
 		   !NEVER_NEGOTIATE(t->policy)) ? CK_TEMPLATE : CK_INSTANCE;
-
-	/* leave a breadcrumb */
-	PASSERT(t->logger, t->child.routing == RT_UNROUTED);
-	set_child_routing(t, RT_UNROUTED);
 
 	t->child.reqid = (t->config->sa_reqid == 0 ? gen_reqid() :
 			  t->config->sa_reqid);
@@ -362,13 +362,6 @@ static struct connection *instantiate(struct connection *t,
 	dbg("%s .child.reqid=%d because t.config.sa_requid=%d (%s)",
 	    d->name, d->child.reqid, t->config->sa_reqid,
 	    (t->config->sa_reqid == 0 ? "generate" : "use"));
-
-	/* which is true?  template could be prospective? */
-#if 0
-	pexpect(d->child.routing == RT_UNROUTED); /* CK_INSTANCE? */
-	pexpect(d->child.routing == RT_PROSPECTIVE_EROUTED);  /* CK_GROUPINSTANCE? */
-#endif
-	set_child_routing(d, RT_UNROUTED);
 
 	/*
 	 * Reset; sec_label templates will have set this.
