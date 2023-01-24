@@ -156,86 +156,72 @@ void connection_negotiating(struct connection *c,
 	dbg("kernel: %s() done - returning success", __func__);
 }
 
-enum routing_action connection_timeout(struct connection *c,
-				       unsigned tries_so_far,
-				       struct logger *logger)
+static enum routing_action connection_retry(struct ike_sa *ike,
+					    enum routing new_routing)
 {
+	struct logger *logger = ike->sa.st_logger;
+	struct connection *c = ike->sa.st_connection;
 	unsigned try_limit = c->sa_keying_tries;
+	unsigned tries_so_far = ike->sa.st_try;
 
-	switch (c->child.routing) {
+	if (try_limit == 0 || tries_so_far < try_limit) {
+		ldbg(logger, "maximum number of establish retries reached - abandoning");
+		return CONNECTION_RETRY;
+	}
+	if (c->child.routing != new_routing) {
+		ldbg(logger, "maximum number of establish retries reached - abandoning");
+		if (c->policy & POLICY_OPPORTUNISTIC) {
+			/*
+			 * A failed OE initiator, make shunt bare.
+			 *
+			 * Checking .kind above seems pretty dodgy.
+			 * Suspect it is trying to capture the initial
+			 * IKE exchange when the child hasn't yet been
+			 * created, except that when kind is
+			 * STATE_V2_PARENT_I2 the larval Child SA has
+			 * been created?!?
+			 */
+			orphan_holdpass(c, c->spd, logger);
+			/*
+			 * Change routing so we don't get cleared out
+			 * when state/connection dies.
+			 */
+			set_child_routing(c, new_routing);
+		}
+	}
+	return CONNECTION_FAIL;
+}
+
+enum routing_action connection_timeout(struct ike_sa *ike)
+{
+	/*
+	 * Part 1: handle the easy cases where the connection didn't
+	 * establish and things should retry/revive with kernel
+	 * policy/state unchanged.
+	 */
+
+	struct connection *c = ike->sa.st_connection;
+	const enum routing cr = c->child.routing;
+	switch (cr) {
 
 	case RT_UNROUTED:		 /* for instance, permanent */
-		if (try_limit > 0 && tries_so_far >= try_limit) {
-			ldbg(logger, "maximum number of establish retries reached - abandoning");
-			return CONNECTION_FAIL;
-		}
-		return CONNECTION_RETRY;
-
+		return connection_retry(ike, RT_UNROUTED);
 	case RT_UNROUTED_NEGOTIATION:
-		if (try_limit > 0 && tries_so_far >= try_limit) {
-			ldbg(logger, "maximum number of establish retries reached - abandoning");
-			if (c->policy & POLICY_OPPORTUNISTIC) {
-				/*
-				 * A failed OE initiator, make shunt
-				 * bare.
-				 *
-				 * Checking .kind above seems pretty
-				 * dodgy.  Suspect it is trying to
-				 * capture the initial IKE exchange
-				 * when the child hasn't yet been
-				 * created, except that when kind is
-				 * STATE_V2_PARENT_I2 the larval Child
-				 * SA has been created?!?
-				 */
-				orphan_holdpass(c, c->spd, logger);
-				/*
-				 * Change routing so we don't get
-				 * cleared out when state/connection
-				 * dies.
-				 */
-				set_child_routing(c, RT_UNROUTED);
-				dbg("kernel: orphan_holdpas() done - returning success");
-			}
-			return CONNECTION_FAIL;
-		}
-		return CONNECTION_RETRY;
-
+		return connection_retry(ike, RT_UNROUTED);
 	case RT_ROUTED_NEGOTIATION:
-		if (try_limit > 0 && tries_so_far >= try_limit) {
-			ldbg(logger, "maximum number of establish retries reached - abandoning");
-			if (c->policy & POLICY_OPPORTUNISTIC) {
-				/*
-				 * A failed OE initiator, make shunt
-				 * bare.
-				 *
-				 * Checking .kind above seems pretty
-				 * dodgy.  Suspect it is trying to
-				 * capture the initial IKE exchange
-				 * when the child hasn't yet been
-				 * created, except that when kind is
-				 * STATE_V2_PARENT_I2 the larval Child
-				 * SA has been created?!?
-				 */
-				orphan_holdpass(c, c->spd, logger);
-				/*
-				 * Change routing so we don't get
-				 * cleared out when state/connection
-				 * dies.
-				 */
-				set_child_routing(c, RT_ROUTED_PROSPECTIVE);
-			}
-			return CONNECTION_FAIL;
-		}
-		return CONNECTION_RETRY;
+		return connection_retry(ike, RT_ROUTED_PROSPECTIVE);
 
-	default:
-		break;
+	case RT_ROUTED_PROSPECTIVE:
+	case RT_ROUTED_FAILURE:
+	case RT_ROUTED_TUNNEL:
+	case RT_UNROUTED_TUNNEL:
+		llog_pexpect(ike->sa.st_logger, HERE, "connection in %s not expecting %s",
+			     enum_name_short(&routing_names, cr),
+			     __func__);
+		return CONNECTION_FAIL;
 	}
-	enum_buf eb;
-	llog_pexpect(logger, HERE, "connection in %s not expecting %s",
-		     str_enum_short(&routing_names, c->child.routing, &eb),
-		     __func__);
-	return CONNECTION_FAIL;
+
+	bad_case(cr);
 }
 
 /*

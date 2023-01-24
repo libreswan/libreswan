@@ -1709,10 +1709,11 @@ static stf_status process_v2_request_no_skeyseed_continue(struct state *ike_st,
 
 void process_v2_ike_sa_init_request_timeout(struct ike_sa *ike, monotime_t now UNUSED)
 {
-	struct connection *c = ike->sa.st_connection;
-	enum routing_action action = connection_timeout(c, ike->sa.st_try/*so far*/,
-							ike->sa.st_logger);
+	enum routing_action action = connection_timeout(ike);
 	switch (action) {
+	case CONNECTION_RETRY:
+		ikev2_retry_establishing_ike_sa(ike);
+		return;
 	case CONNECTION_FAIL:
 		/*
 		 * XXX: There might be a larval child.  Just use the biggest
@@ -1721,9 +1722,6 @@ void process_v2_ike_sa_init_request_timeout(struct ike_sa *ike, monotime_t now U
 		pstat_sa_failed(&ike->sa, REASON_TOO_MANY_RETRANSMITS);
 		/* can't send delete as message window is full */
 		delete_ike_family(&ike, DONT_SEND_DELETE);
-		return;
-	case CONNECTION_RETRY:
-		ikev2_retry_establishing_ike_sa(ike);
 		return;
 	}
 	enum_buf eb;

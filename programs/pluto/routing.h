@@ -60,6 +60,7 @@ struct connection;
 struct state;
 struct kernel_acquire;
 struct child_sa;
+struct ike_sa;
 
 void connection_down(struct connection *c);
 void connection_prospective(struct connection *c);
@@ -76,7 +77,6 @@ enum routing_action {
 
 extern const struct enum_names routing_action_names;
 
-enum routing_action connection_timeout(struct connection *c, unsigned tries_so_far,
-				       struct logger *logger);
+enum routing_action connection_timeout(struct ike_sa *ike);
 
 #endif

@@ -1631,9 +1631,7 @@ stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 
 void process_v2_ike_auth_request_timeout(struct ike_sa *ike, monotime_t now UNUSED)
 {
-	struct connection *c = ike->sa.st_connection;
-	enum routing_action action = connection_timeout(c, ike->sa.st_try/*so far*/,
-							ike->sa.st_logger);
+	enum routing_action action = connection_timeout(ike);
 	switch (action) {
 	case CONNECTION_RETRY:
 		ikev2_retry_establishing_ike_sa(ike);
