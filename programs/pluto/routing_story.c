@@ -25,6 +25,7 @@ static const char *const routing_story_strings[] = {
 	[RT_ROUTED_NEGOTIATION] = "erouted HOLD",         /* routed, and HOLD shunt installed */
 	[RT_ROUTED_FAILURE] = "fail erouted",         	  /* routed, and failure-context shunt eroute installed */
 	[RT_ROUTED_TUNNEL] = "erouted",		      	  /* routed, and erouted to an IPSEC SA group */
+	[RT_UNROUTED_TUNNEL] = "migrating",		  /* unrouted, established; used by MOBIKE */
 };
 
 const struct enum_names routing_story = {

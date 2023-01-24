@@ -28,8 +28,8 @@ struct logger;
  * Note: a connection can only be routed if it is NEVER_NEGOTIATE or
  * HAS_IPSEC_POLICY.
  *
- * Note: UNROUTED can be misleading.  A CK_INSTANCE is considered
- * UNROUTED when it's CK_TEMPLATE owns the route?
+ * Note: UNROUTED can be misleading.  .  A CK_INSTANCE is UNROUTED
+ * while the CK_TEMPLATE has prospective route.
  */
 
 enum routing {
@@ -39,6 +39,7 @@ enum routing {
 	RT_ROUTED_NEGOTIATION,		/* routed, and .negotiation_shunt installed */
 	RT_ROUTED_FAILURE,      	/* routed, and .failure_shunt installed */
 	RT_ROUTED_TUNNEL,       	/* routed, and erouted to an IPSEC SA group */
+	RT_UNROUTED_TUNNEL,		/* unrouted, and established; used by MOBIKE */
 };
 
 extern const struct enum_names routing_names;
@@ -52,7 +53,8 @@ extern const struct enum_names routing_story;
 		     (RS) == RT_ROUTED_PROSPECTIVE ||		\
 		     (RS) == RT_ROUTED_NEGOTIATION ||		\
 		     (RS) == RT_ROUTED_FAILURE ||		\
-		     (RS) == RT_ROUTED_TUNNEL)
+		     (RS) == RT_ROUTED_TUNNEL ||		\
+		     (RS) == RT_UNROUTED_TUNNEL)
 
 struct connection;
 struct state;
@@ -63,8 +65,8 @@ void connection_down(struct connection *c);
 void connection_prospective(struct connection *c);
 void connection_negotiating(struct connection *c,
 			    const struct kernel_acquire *b);
-extern void connection_migration_up(struct child_sa *child);
-extern void connection_migration_down(struct child_sa *child);
+extern void connection_resume(struct child_sa *child);
+extern void connection_suspend(struct child_sa *child);
 
 enum routing_action {
 	CONNECTION_RETRY,

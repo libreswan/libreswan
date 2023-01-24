@@ -671,6 +671,7 @@ struct spd_owner spd_owner(const struct spd_route *spd, unsigned indent)
 
 		switch (d->child.routing) {
 		case RT_UNROUTED:
+		case RT_UNROUTED_TUNNEL:	/* was RT_UNROUTED */
 			bad_case(d->child.routing); /* see above */
 		case RT_UNROUTED_NEGOTIATION:
 			if (owner.policy == NULL) {
@@ -2673,6 +2674,7 @@ static void teardown_ipsec_kernel_policies(struct state *st,
 		case RT_UNROUTED_NEGOTIATION:
 		case RT_ROUTED_NEGOTIATION:
 		case RT_ROUTED_TUNNEL:
+		case RT_UNROUTED_TUNNEL:
 			bad_case(new_routing);
 		}
 		/*

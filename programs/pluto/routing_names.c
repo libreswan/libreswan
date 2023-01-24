@@ -25,6 +25,7 @@ static const char *routing_name[] = {
 	S(RT_ROUTED_NEGOTIATION),
 	S(RT_ROUTED_FAILURE),
 	S(RT_ROUTED_TUNNEL),
+	S(RT_UNROUTED_TUNNEL),
 #undef S
 };
 

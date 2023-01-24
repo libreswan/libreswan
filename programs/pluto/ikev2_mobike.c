@@ -303,7 +303,7 @@ void record_deladdr(ip_address *ip, char *a_type)
 		 * Presumably the kernel policy (at least) is acting
 		 * like a trap while mibike migrates things?
 		 */
-		connection_migration_down(child);
+		connection_suspend(child);
 
 		event_delete(EVENT_v2_LIVENESS, &child->sa);
 

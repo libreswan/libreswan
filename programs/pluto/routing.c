@@ -254,6 +254,7 @@ void connection_down(struct connection *c)
 	case RT_ROUTED_NEGOTIATION:
 	case RT_ROUTED_FAILURE:
 	case RT_ROUTED_TUNNEL:
+	case RT_UNROUTED_TUNNEL:
 		FOR_EACH_ITEM(spd, &c->child.spds) {
 			/* cannot handle a live one */
 			passert(cr != RT_ROUTED_TUNNEL);
@@ -288,6 +289,7 @@ void connection_down(struct connection *c)
 	switch (cr) {
 	case RT_UNROUTED:
 	case RT_UNROUTED_NEGOTIATION:
+	case RT_UNROUTED_TUNNEL:
 		break;
 	case RT_ROUTED_PROSPECTIVE:
 	case RT_ROUTED_NEGOTIATION:
@@ -311,42 +313,53 @@ void connection_down(struct connection *c)
  * mibike migrates things?
  */
 
-void connection_migration_up(struct child_sa *child)
+void connection_resume(struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
 	/* do now so route_owner won't find us */
-	set_child_routing(c, RT_ROUTED_TUNNEL);
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-#ifdef IPSEC_CONNECTION_LIMIT
-		num_ipsec_eroute++;
-#endif
-		do_updown(UPDOWN_UP, c, spd, &child->sa, child->sa.st_logger);
-		do_updown(UPDOWN_ROUTE, c, spd, &child->sa, child->sa.st_logger);
+	enum routing cr = c->child.routing;
+	switch (cr) {
+	case RT_UNROUTED_TUNNEL:
+		set_child_routing(c, RT_ROUTED_TUNNEL);
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+			do_updown(UPDOWN_UP, c, spd, &child->sa, child->sa.st_logger);
+			do_updown(UPDOWN_ROUTE, c, spd, &child->sa, child->sa.st_logger);
+		}
+		break;
+	case RT_UNROUTED:
+	case RT_UNROUTED_NEGOTIATION:
+	case RT_ROUTED_NEGOTIATION:
+	case RT_ROUTED_FAILURE:
+	case RT_ROUTED_TUNNEL:
+	case RT_ROUTED_PROSPECTIVE:
+		llog_pexpect(child->sa.st_logger, HERE,
+			     "%s() unexpected routing %s",
+			     __func__, enum_name_short(&routing_names, cr));
+		set_child_routing(c, RT_ROUTED_TUNNEL);
+		break;
 	}
 }
 
-void connection_migration_down(struct child_sa *child)
+void connection_suspend(struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
-	enum routing cr = c->child.routing;
-#ifdef IPSEC_CONNECTION_LIMIT
-	if (erouted(cr)) {
-		/* XXX: c->spd should be {.len,.list} */
-		FOR_EACH_ITEM(spd, &c->child.spds) {
-			num_ipsec_eroute--;
-		}
-	}
-#endif
 	/*
-	 * Update connection's routing so that route_owner() won't
-	 * find us.
-	 *
-	 * Only unroute when no other routed connection shares the
-	 * SPD.
+	 * XXX: this an expansion of routed(); most of these
+	 * transitions are probably invalid!
 	 */
-	set_child_routing(c, RT_UNROUTED);
-	if (routed(cr)) {
+	enum routing cr = c->child.routing;
+	PEXPECT(c->logger, cr == RT_ROUTED_TUNNEL);
+	switch (cr) {
+	case RT_ROUTED_TUNNEL:
+		/*
+		 * Update connection's routing so that route_owner()
+		 * won't find us.
+		 *
+		 * Only unroute when no other routed connection shares
+		 * the SPD.
+		 */
 		FOR_EACH_ITEM(spd, &c->child.spds) {
+			/* XXX: never finds SPD */
 			if (route_owner(spd) == NULL) {
 				do_updown(UPDOWN_DOWN, c, spd, &child->sa, child->sa.st_logger);
 				child->sa.st_mobike_del_src_ip = true;
@@ -354,5 +367,32 @@ void connection_migration_down(struct child_sa *child)
 				child->sa.st_mobike_del_src_ip = false;
 			}
 		}
+		set_child_routing(c, RT_UNROUTED_TUNNEL);
+		break;
+	case RT_ROUTED_PROSPECTIVE:
+	case RT_ROUTED_NEGOTIATION:
+	case RT_ROUTED_FAILURE:
+		llog_pexpect(child->sa.st_logger, HERE,
+			     "%s() unexpected routing %s",
+			     __func__, enum_name_short(&routing_names, cr));
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+			/* XXX: never finds SPD */
+			if (route_owner(spd) == NULL) {
+				do_updown(UPDOWN_DOWN, c, spd, &child->sa, child->sa.st_logger);
+				child->sa.st_mobike_del_src_ip = true;
+				do_updown(UPDOWN_UNROUTE, c, spd, &child->sa, child->sa.st_logger);
+				child->sa.st_mobike_del_src_ip = false;
+			}
+		}
+		set_child_routing(c, RT_UNROUTED_TUNNEL);
+		break;
+	case RT_UNROUTED:
+	case RT_UNROUTED_NEGOTIATION:
+	case RT_UNROUTED_TUNNEL:
+		llog_pexpect(child->sa.st_logger, HERE,
+			     "%s() unexpected routing %s",
+			     __func__, enum_name_short(&routing_names, cr));
+		set_child_routing(c, RT_UNROUTED_TUNNEL);
+		break;
 	}
 }
