@@ -19,11 +19,14 @@
 struct connection;
 struct state;
 struct kernel_acquire;
+struct child_sa;
 
 void connection_down(struct connection *c);
 void connection_prospective(struct connection *c);
 void connection_negotiating(struct connection *c,
 			    const struct kernel_acquire *b);
+extern void connection_migration_up(struct child_sa *child);
+extern void connection_migration_down(struct child_sa *child);
 
 enum connection_action {
 	CONNECTION_RETRY,

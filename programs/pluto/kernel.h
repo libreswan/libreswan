@@ -483,8 +483,6 @@ void free_bare_shunt(struct bare_shunt **pp);
 extern void init_kernel(struct logger *logger);
 
 struct spd_route *route_owner(struct spd_route *spd);
-extern void migration_up(struct child_sa *child);
-extern void migration_down(struct child_sa *child);
 
 extern bool flush_bare_shunt(const ip_address *src, const ip_address *dst,
 			     const struct ip_protocol *transport_proto,

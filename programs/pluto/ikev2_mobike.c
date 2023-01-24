@@ -42,7 +42,7 @@
 #include "addr_lookup.h"
 #include "ipsecconf/confread.h"
 #include "ikev2_message.h"
-
+#include "routing.h"
 #include "ikev2_mobike.h"
 
 static bool add_mobike_response_payloads(shunk_t cookie2, struct msg_digest *md,
@@ -303,7 +303,7 @@ void record_deladdr(ip_address *ip, char *a_type)
 		 * Presumably the kernel policy (at least) is acting
 		 * like a trap while mibike migrates things?
 		 */
-		migration_down(child);
+		connection_migration_down(child);
 
 		event_delete(EVENT_v2_LIVENESS, &child->sa);
 

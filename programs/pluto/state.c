@@ -70,7 +70,7 @@
 #include "show.h"
 #include "ikev1_replace.h"
 #include "ikev2_replace.h"
-
+#include "routing.h"
 
 bool uniqueIDs = false;
 
@@ -2601,7 +2601,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 
 	if (md_role == MESSAGE_RESPONSE) {
 		/* MOBIKE initiator processing response */
-		migration_up(child);
+		connection_migration_up(child);
 		ike->sa.st_deleted_local_addr = unset_address;
 		child->sa.st_deleted_local_addr = unset_address;
 		if (dpd_active_locally(child->sa.st_connection) &&

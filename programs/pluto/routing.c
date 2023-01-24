@@ -303,6 +303,60 @@ void connection_down(struct connection *c)
 	}
 }
 
+/*
+ * "down" / "unroute" the connection but _don't_ delete the kernel
+ * state / policy.
+ *
+ * Presumably the kernel policy (at least) is acting like a trap while
+ * mibike migrates things?
+ */
+
+void connection_migration_up(struct child_sa *child)
+{
+	struct connection *c = child->sa.st_connection;
+	/* do now so route_owner won't find us */
+	set_child_routing(c, RT_ROUTED_TUNNEL);
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+#ifdef IPSEC_CONNECTION_LIMIT
+		num_ipsec_eroute++;
+#endif
+		do_updown(UPDOWN_UP, c, spd, &child->sa, child->sa.st_logger);
+		do_updown(UPDOWN_ROUTE, c, spd, &child->sa, child->sa.st_logger);
+	}
+}
+
+void connection_migration_down(struct child_sa *child)
+{
+	struct connection *c = child->sa.st_connection;
+	enum routing cr = c->child.routing;
+#ifdef IPSEC_CONNECTION_LIMIT
+	if (erouted(cr)) {
+		/* XXX: c->spd should be {.len,.list} */
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+			num_ipsec_eroute--;
+		}
+	}
+#endif
+	/*
+	 * Update connection's routing so that route_owner() won't
+	 * find us.
+	 *
+	 * Only unroute when no other routed connection shares the
+	 * SPD.
+	 */
+	set_child_routing(c, RT_UNROUTED);
+	if (routed(cr)) {
+		FOR_EACH_ITEM(spd, &c->child.spds) {
+			if (route_owner(spd) == NULL) {
+				do_updown(UPDOWN_DOWN, c, spd, &child->sa, child->sa.st_logger);
+				child->sa.st_mobike_del_src_ip = true;
+				do_updown(UPDOWN_UNROUTE, c, spd, &child->sa, child->sa.st_logger);
+				child->sa.st_mobike_del_src_ip = false;
+			}
+		}
+	}
+}
+
 /* these go at the end so renames don't find them */
 
 const char *connection_action_name[] = {
