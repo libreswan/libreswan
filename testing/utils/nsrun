@@ -3113,9 +3113,9 @@ def localhost_sudo(args, testname):
     if s:
         logger.info("sudo pexpect '%s' pid %d", cmd, s.child.pid)
         s.sendline('export HISTFILE=/dev/null; export TERM=dumb; unset LS_COLORS')
+        s.sendline("cd %s/testing/pluto/%s" % (args.libreswandir, testname))
         s.sendline("export PS1='" + DEFAULTCONFIG["PS1"] + "'")
         # this has to before shell.run()
-        s.chdir("%s/testing/pluto/%s" % (args.libreswandir, testname))
         s.stty_sane()
         # s.child.setecho(False) # this does not seems to work!
         s.run('stty -echo')
