@@ -169,6 +169,8 @@ static enum routing_action connection_retry(struct ike_sa *ike,
 		ldbg(logger, "maximum number of establish retries reached - abandoning");
 		return CONNECTION_RETRY;
 	}
+	PEXPECT(ike->sa.st_logger, !ike->sa.st_early_revival);
+	ike->sa.st_early_revival = true;
 	if (revival_needed(&ike->sa)) {
 		return CONNECTION_REVIVE;
 	}

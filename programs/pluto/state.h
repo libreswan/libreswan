@@ -753,6 +753,14 @@ struct state {
 		SEEN_EMPTY_v2CERTREQ = 1,
 		SEEN_FULL_v2CERTREQ = 2,
 	} st_v2_ike_seen_certreq;
+
+	/*
+	 * Has this state's connection been checked for revival?
+	 *
+	 * Early revival happens in connection_timeout(), late revival
+	 * happens in delete_state().
+	 */
+	bool st_early_revival;
 };
 
 /*

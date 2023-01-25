@@ -1048,7 +1048,11 @@ void delete_state_tail(struct state *st)
 	 * If policy dictates, try to keep the state's connection
 	 * alive.  DONT_REKEY overrides UP.
 	 */
-	add_revival_if_needed(st);
+	if (st->st_early_revival) {
+		ldbg(st->st_logger, "state already checked for revival");
+	} else {
+		add_revival_if_needed(st);
+	}
 
 	/*
 	 * fake a state change here while we are still associated with a
