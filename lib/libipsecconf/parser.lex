@@ -432,14 +432,14 @@ static uintmax_t parser_lex_unsigned(const char *yytext)
 				/* process a number */
 				yylval.num = parser_lex_unsigned(yytext);
 				BEGIN INITIAL;
-				return INTEGER;
+				return UNSIGNED;
 			}
 
 <VALUE>%forever	{
 				/* a number, really 0 */
 				yylval.num = 0;
 				BEGIN INITIAL;
-				return INTEGER;
+				return UNSIGNED;
 			}
 
 <KEY,BOOLEAN_KEY,COMMENT_KEY>[\t ] /* eat blanks */

@@ -68,7 +68,7 @@ static struct starter_comments_list *parser_comments;
 }
 %token EQUAL FIRST_SPACES EOL CONFIG SETUP CONN INCLUDE VERSION
 %token <s>      STRING
-%token <num>    INTEGER
+%token <num>    UNSIGNED
 %token <num>    BOOL
 %token <k>      KEYWORD
 %token <k>      TIMEWORD
@@ -86,11 +86,11 @@ static struct starter_comments_list *parser_comments;
 config_file: blanklines versionstmt sections ;
 
 /* check out the version number - this is optional (and we're phasing out its use) */
-/* we have configs shipped with version 2 (INTEGER) and with version 2.0 (STRING, now  NUMBER/float was removed */
+/* we have configs shipped with version 2 (UNSIGNED) and with version 2.0 (STRING, now  NUMBER/float was removed */
 
 versionstmt: /* NULL */
 	| VERSION STRING EOL blanklines
-	| VERSION INTEGER EOL blanklines
+	| VERSION UNSIGNED EOL blanklines
 	;
 
 blanklines: /* NULL */
@@ -272,10 +272,10 @@ statement_kw:
 	| BOOLWORD EQUAL BOOL {
 		new_parser_kw(&$1, NULL, $<num>3);
 	}
-	| KEYWORD EQUAL INTEGER {
+	| KEYWORD EQUAL UNSIGNED {
 		new_parser_kw(&$1, NULL, $<num>3);
 	}
-	| TIMEWORD EQUAL INTEGER {
+	| TIMEWORD EQUAL UNSIGNED {
 		struct keyword *kw = &$1;
 		deltatime_t d;
 		if (kw->keydef->validity & kv_milliseconds) {
@@ -332,7 +332,7 @@ statement_kw:
 		new_parser_kw(&$1, NULL, $<num>3);
 	}
 	| KEYWORD EQUAL { /* this is meaningless, we ignore it */ }
-	| BINARYWORD EQUAL INTEGER {
+	| BINARYWORD EQUAL UNSIGNED {
 		struct keyword *kw = &$1;
 		unsigned long b = $3;
 		new_parser_kw(kw, NULL, b);
@@ -350,7 +350,7 @@ statement_kw:
 			new_parser_kw(kw, NULL, b);
 		}
 	}
-	| BYTEWORD EQUAL INTEGER {
+	| BYTEWORD EQUAL UNSIGNED {
 		struct keyword *kw = &$1;
 		uint64_t b = $3;
 		new_parser_kw(kw, NULL, b);
