@@ -442,13 +442,6 @@ struct state {
 
 	struct v2_msgid_windows st_v2_msgid_windows;	/* IKE */
 
-	/* message ID sequence for things we send (as initiator) */
-	msgid_t st_msgid_lastack;               /* last one peer acknowledged - host order */
-	msgid_t st_msgid_nextuse;               /* next one to use - host order */
-	/* message ID sequence for things we receive (as responder) */
-	msgid_t st_msgid_lastrecv;             /* last one peer sent - Host order v2 only */
-	msgid_t st_msgid_lastreplied;         /* to decide retransmit CREATE_CHILD_SA */
-
 	chunk_t st_firstpacket_me;              /* copy of my message 1 (for hashing) */
 	chunk_t st_firstpacket_peer;             /* copy of peers message 1 (for hashing) */
 

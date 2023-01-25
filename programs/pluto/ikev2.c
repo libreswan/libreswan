@@ -1356,10 +1356,6 @@ static bool is_duplicate_request_msgid(struct ike_sa *ike,
 	passert(ike->sa.st_state->v2.secured); /* not IKE_SA_INIT */
 	intmax_t msgid = md->hdr.isa_msgid; /* zero extend */
 
-	/* lie to keep test results happy */
-	dbg("#%lu st.st_msgid_lastrecv %jd md.hdr.isa_msgid %08jx",
-	    ike->sa.st_serialno, ike->sa.st_v2_msgid_windows.responder.recv, msgid);
-
 	/* the sliding window is really small?!? */
 	pexpect(ike->sa.st_v2_msgid_windows.responder.recv ==
 		ike->sa.st_v2_msgid_windows.responder.sent);
