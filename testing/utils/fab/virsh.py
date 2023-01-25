@@ -196,6 +196,7 @@ class Domain:
                                  "Connected to domain '%s'\r\nEscape character is \\^] \(Ctrl \+ ]\)\r\n" % self.domain_name
                                  ],
                                 timeout=timeout) > 0:
+            self.logger.debug("console attached");
             return self._console
         self.logger.info("got EOF from console")
         self._console.close()
@@ -208,8 +209,7 @@ class Domain:
         if self._console is False:
             self.logger.info("console already failed")
             return self._console
-
-        self._open_console()
+        return self._open_console()
 
     def close(self):
         if self._console:
