@@ -48,13 +48,14 @@ class Domain:
         # Use the term "domain" just like virsh
         self.domain_name = domain_name
         self.guest_name = guest_name
-        self.virsh_console = None
         self.logger = logger
         self.debug_handler = None
         self.logger.debug("domain created")
         self._mounts = None
         self._xml = None
-        self._console = None # or False or a real console
+        # ._console is three state: None when state unknown; False
+        # when shutdown (by us); else the console.
+        self._console = None
         self._snapshot_memory = snapshot_directory and os.path.join(snapshot_directory, domain_name + ".mem")
         self._snapshot_disk = snapshot_directory and os.path.join(snapshot_directory, domain_name + ".disk")
         self.has_snapshot = False
@@ -104,21 +105,24 @@ class Domain:
 
         """
 
-        console = self.console()
-        if not console:
+        if self._console is False:
             self.logger.error("domain already shutdown")
             return True
+
+        if self._console is None:
+            if not self._open_console():
+                self.logger.error("domain already shutdown")
+                return True
 
         self.logger.info("waiting %d seconds for domain to shutdown", timeout)
         lapsed_time = timing.Lapsed()
         self._shutdown()
-        if console.expect([pexpect.EOF, pexpect.TIMEOUT],
-                          timeout=timeout) == 0:
+        if self._console.expect([pexpect.EOF, pexpect.TIMEOUT],
+                                timeout=timeout) == 0:
             self.logger.info("domain shutdown after %s", lapsed_time)
             self._console = False
             self.logger.info("domain state is: %s", self.state())
             return True
-
         self.logger.error("timeout shutting down domain")
         return self.destroy()
 
@@ -176,14 +180,7 @@ class Domain:
                 raise AssertionError("dumpxml failed: %s" % (output))
         return self._xml
 
-    def console(self, timeout=CONSOLE_TIMEOUT):
-        if self._console:
-            self.logger.info("console already open")
-            return self._console
-        if self._console is False:
-            self.logger.info("console already failed")
-            return self._console
-
+    def _open_console(self, timeout=CONSOLE_TIMEOUT):
         # self._console is None
         command = _VIRSH + ["console", "--force", self.domain_name]
         self.logger.info("spawning: %s", " ".join(command))
@@ -200,10 +197,19 @@ class Domain:
                                  ],
                                 timeout=timeout) > 0:
             return self._console
-
-        self.logger.debug("got EOF from console")
+        self.logger.info("got EOF from console")
         self._console.close()
         self._console = False
+
+    def console(self, timeout=CONSOLE_TIMEOUT):
+        if self._console:
+            self.logger.info("console already open")
+            return self._console
+        if self._console is False:
+            self.logger.info("console already failed")
+            return self._console
+
+        self._open_console()
 
     def close(self):
         if self._console:

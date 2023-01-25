@@ -167,7 +167,7 @@ class Remote:
         .sendcontrol("]")
 
         """
-        self.logger.info("closing console")
+        self.logger.debug("closing console")
         self.child.close()
 
     def sync(self, hostname=None, username=None, timeout=TIMEOUT):
