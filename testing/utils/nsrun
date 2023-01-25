@@ -607,6 +607,9 @@ class TestList:
             if line[0] == '#':
                 logger.debug("skip comment: %s", line)
                 continue
+            testdir = ''
+            testtype = ''
+            testexpect = ''
             try:
                 tokens = []
                 tokens = line.split()
