@@ -196,7 +196,6 @@ struct whack_message {
 	deltatime_t dpd_delay;
 	deltatime_t dpd_timeout;
 	enum dpd_action dpd_action;
-	int dpd_count;
 
 	/* Cisco interop:  remote peer type */
 	enum keyword_remotepeertype remotepeertype;
