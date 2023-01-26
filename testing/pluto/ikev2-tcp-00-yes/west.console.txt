@@ -1,8 +1,6 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 west #
- certutil -D -n east -d sql:/etc/ipsec.d
-west #
  # confirm that the network is alive
 west #
  ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
@@ -108,6 +106,7 @@ NSS_CERTIFICATES
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 Libreswan test CA for mainca - Libreswan                     CT,, 
+east                                                         P,,  
 east-ec                                                      P,,  
 hashsha1                                                     P,,  
 nic                                                          P,,  
