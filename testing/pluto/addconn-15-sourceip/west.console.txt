@@ -36,8 +36,8 @@ west #
  add sourceips-inside-selectors
 002 "sourceips-inside-selectors": connection is using multiple subnet
 002 "sourceips-inside-selectors": added IKEv2 connection
-000 "sourceips-inside-selectors":     oriented; my_ip=1::1; their_ip=unset; my_updown=ipsec _updown;
 000 "sourceips-inside-selectors":     oriented; my_ip=1.0.0.1; their_ip=unset; my_updown=ipsec _updown;
+000 "sourceips-inside-selectors":     oriented; my_ip=1::1; their_ip=unset; my_updown=ipsec _updown;
 west #
  # subnets= tests can't check inside/outside
 west #
