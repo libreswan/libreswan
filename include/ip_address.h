@@ -27,6 +27,7 @@
 #include "where.h"
 #include "ip_bytes.h"
 #include "ip_version.h"
+#include "ip_index.h"
 
 struct in_addr;
 struct in6_addr;
@@ -93,6 +94,10 @@ err_t ttoaddress_dns(shunk_t src, const struct ip_info *type, ip_address *dst);
 /* comma/space separated list */
 
 typedef struct {
+	struct {
+		unsigned len;
+		ip_address *list;
+	} ip[IP_INDEX_ROOF];
 	unsigned len;
 	ip_address *list;
 } ip_addresses;
