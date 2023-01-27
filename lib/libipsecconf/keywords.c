@@ -681,9 +681,36 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 	return keywordtype;
 }
 
-unsigned int parser_enum_list(const struct keyword_def *kd, const char *s, bool list)
+uintmax_t parser_enum(const struct keyword_def *kd, const char *s)
 {
-	assert(kd->type == kt_list || kd->type == kt_enum);
+	assert(kd->type == kt_enum);
+	assert(kd->validenum != NULL && kd->validenum != NULL);
+
+	for (const struct sparse_name *kev = kd->validenum; kev->name != NULL; kev++) {
+		if (strcaseeq(s, kev->name)) {
+			return kev->value;
+		}
+	}
+
+	/* perhaps an unsigned integer? */
+	uintmax_t number;
+	if (shunk_to_uintmax(shunk1(s), NULL, /*base*/10, &number) == NULL) {
+		return number;
+	}
+
+	/* we didn't find anything, complain */
+	fprintf(stderr,
+		"ERROR: %s: %d: keyword %s, invalid value: %s\n",
+		parser_cur_filename(),
+		parser_cur_lineno(),
+		kd->keyname,
+		s);
+	exit(1);
+}
+
+uintmax_t parser_enum_list(const struct keyword_def *kd, const char *s)
+{
+	assert(kd->type == kt_list);
 
 	unsigned int valresult = 0;
 
@@ -726,14 +753,6 @@ unsigned int parser_enum_list(const struct keyword_def *kd, const char *s, bool 
 		}
 	}
 
-	if (numfound > 1 && !list) {
-		fprintf(stderr,
-			"ERROR: %s: %d: keyword %s accepts only one value, not %s\n",
-			parser_cur_filename(), parser_cur_lineno(),
-			kd->keyname, s);
-		exit(1);
-	}
-;
 	return valresult;
 }
 
@@ -765,36 +784,27 @@ lset_t parser_lset(const struct keyword_def *kd, const char *value)
 	return result.set;
 }
 
-unsigned int parser_loose_enum(struct keyword *k, const char *s)
+uintmax_t parser_loose_enum(struct keyword *k, const char *s)
 {
 	const struct keyword_def *kd = k->keydef;
-	unsigned int valresult;
 
 	assert(kd->type == kt_loose_enum || kd->type == kt_pubkey);
 	assert(kd->validenum != NULL && kd->validenum != NULL);
 
-	const struct sparse_name *kev;
-	for (kev = kd->validenum; kev->name != NULL; kev++) {
+	for (const struct sparse_name *kev = kd->validenum; kev->name != NULL; kev++) {
 		if (strcaseeq(s, kev->name)) {
-			break;
+			k->string = NULL;
+			return kev->value;
 		}
 	}
 
-	/* if we found something */
-	if (kev->name != NULL) {
-		/*
-		 * Unfortunately, "ipsec-interface" takes numbers and a string,
-		 * so the number 0 is valid and we need to skip the assert
-		 */
-		if (!streq(kd->keyname,"ipsec-interface")) {
-			assert(kev->value != 0);
-		}
-
-		valresult = kev->value;
+	/* perhaps an unsigned integer? */
+	uintmax_t number;
+	if (shunk_to_uintmax(shunk1(s), NULL, /*base*/10, &number) == NULL) {
 		k->string = NULL;
-		return valresult;
+		return number;
 	}
 
 	k->string = strdup(s);	/* ??? why not xstrdup? */
-	return 255;
+	return 255; /* what the heck is 255? */
 }

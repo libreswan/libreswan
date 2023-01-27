@@ -352,21 +352,6 @@ static int parser_y_eof(void)
 	return 0;
 }
 
-/* XXX: assumes YYTEXT is [0-9]+; see rule */
-static uintmax_t parser_lex_unsigned(const char *yytext)
-{
-	uintmax_t val;
-	err_t err = shunk_to_uintmax(shunk1(yytext), NULL, /*base*/10, &val);
-	if (err != NULL) {
-		char ebuf[128];
-
-		snprintf(ebuf, sizeof(ebuf),
-			 "%s: %s", err, yytext);
-		yyerror(ebuf);
-	}
-	return val;
-}
-
 %}
 
 /* lexical states:
@@ -428,18 +413,11 @@ static uintmax_t parser_lex_unsigned(const char *yytext)
 
 <INITIAL,BOOLEAN_VALUE>[\t ]+	/* ignore spaces in line */ ;
 
-<INITIAL,VALUE>[0-9]+	{
-				/* process a number */
-				yylval.num = parser_lex_unsigned(yytext);
-				BEGIN INITIAL;
-				return UNSIGNED;
-			}
-
 <VALUE>%forever	{
 				/* a number, really 0 */
-				yylval.num = 0;
+				yylval.s = strdup("0");
 				BEGIN INITIAL;
-				return UNSIGNED;
+				return STRING;
 			}
 
 <KEY,BOOLEAN_KEY,COMMENT_KEY>[\t ] /* eat blanks */

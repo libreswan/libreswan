@@ -53,6 +53,7 @@ static bool save_errors;
 static struct config_parsed *parser_cfg;
 static struct kw_list **parser_kw, *parser_kw_last;
 static void new_parser_kw(struct keyword *keyword, char *string, uintmax_t number);	/* forward */
+static uintmax_t parser_unsigned(const char *yytext);
 static struct starter_comments_list *parser_comments;
 
 /**
@@ -63,13 +64,11 @@ static struct starter_comments_list *parser_comments;
 
 %union {
 	char *s;
-	uintmax_t num;
 	bool boolean;
 	struct keyword k;
 }
 %token EQUAL FIRST_SPACES EOL CONFIG SETUP CONN INCLUDE VERSION
 %token <s>      STRING
-%token <num>    UNSIGNED
 %token <boolean>   BOOLEAN
 %token <k>      KEYWORD
 %token <k>      TIMEWORD
@@ -91,7 +90,6 @@ config_file: blanklines versionstmt sections ;
 
 versionstmt: /* NULL */
 	| VERSION STRING EOL blanklines
-	| VERSION UNSIGNED EOL blanklines
 	;
 
 blanklines: /* NULL */
@@ -159,13 +157,13 @@ statement_kw:
 
 		switch (kw.keydef->type) {
 		case kt_list:
-			number = parser_enum_list(kw.keydef, value, true);
+			number = parser_enum_list(kw.keydef, value);
 			break;
 		case kt_lset:
 			number = parser_lset(kw.keydef, value);	/* XXX: truncates! */
 			break;
 		case kt_enum:
-			number = parser_enum_list(kw.keydef, value, false);
+			number = parser_enum(kw.keydef, value);
 			break;
 		case kt_pubkey:
 		case kt_loose_enum:
@@ -225,13 +223,13 @@ statement_kw:
 
 		switch (kw.keydef->type) {
 		case kt_list:
-			number = parser_enum_list(kw.keydef, $3, true);
+			number = parser_enum_list(kw.keydef, $3);
 			break;
 		case kt_lset:
 			number = parser_lset(kw.keydef, $3); /* XXX: truncates! */
 			break;
 		case kt_enum:
-			number = parser_enum_list(kw.keydef, $3, false);
+			number = parser_enum(kw.keydef, $3);
 			break;
 		case kt_pubkey:
 		case kt_loose_enum:
@@ -250,9 +248,12 @@ statement_kw:
 			string = $3;
 			break;
 
+		case kt_number:
+			number = parser_unsigned($3);
+			break;
+
 		case kt_bool:
 		case kt_invertbool:
-		case kt_number:
 		case kt_time:
 		case kt_percent:
 		case kt_binary:
@@ -274,19 +275,6 @@ statement_kw:
 		new_parser_kw(&$1, NULL, $3);
 	}
 
-	| KEYWORD EQUAL UNSIGNED {
-		new_parser_kw(&$1, NULL, $<num>3);
-	}
-	| TIMEWORD EQUAL UNSIGNED {
-		struct keyword *kw = &$1;
-		deltatime_t d;
-		if (kw->keydef->validity & kv_milliseconds) {
-			d = deltatime_ms($3);
-		} else {
-			d = deltatime($3);
-		}
-		new_parser_kw(kw, NULL, deltamillisecs(d));
-	}
 	| TIMEWORD EQUAL STRING {
 		struct keyword *kw = &$1;
 		const char *const str = $3;
@@ -305,6 +293,7 @@ statement_kw:
 			new_parser_kw(kw, NULL, deltamillisecs(d));
 		}
 	}
+
 	| PERCENTWORD EQUAL STRING {
 		struct keyword kw = $1;
 		const char *const str = $3;
@@ -334,11 +323,6 @@ statement_kw:
 		new_parser_kw(&$1, NULL, $3);
 	}
 	| KEYWORD EQUAL { /* this is meaningless, we ignore it */ }
-	| BINARYWORD EQUAL UNSIGNED {
-		struct keyword *kw = &$1;
-		unsigned long b = $3;
-		new_parser_kw(kw, NULL, b);
-	}
 	| BINARYWORD EQUAL STRING {
 		struct keyword *kw = &$1;
 		const char *const str = $3;
@@ -351,11 +335,6 @@ statement_kw:
 		} else {
 			new_parser_kw(kw, NULL, b);
 		}
-	}
-	| BYTEWORD EQUAL UNSIGNED {
-		struct keyword *kw = &$1;
-		uint64_t b = $3;
-		new_parser_kw(kw, NULL, b);
 	}
 	| BYTEWORD EQUAL STRING {
 		struct keyword *kw = &$1;
@@ -506,4 +485,17 @@ static void new_parser_kw(struct keyword *keyword, char *string, uintmax_t numbe
 		/* new is new last on list */
 		parser_kw_last = new;
 	}
+}
+
+uintmax_t parser_unsigned(const char *yytext)
+{
+	uintmax_t number;
+	err_t err = shunk_to_uintmax(shunk1(yytext), NULL, /*base*/10, &number);
+	if (err != NULL) {
+		char ebuf[128];
+		snprintf(ebuf, sizeof(ebuf),
+			 "%s: %s", err, yytext);
+		yyerror(ebuf);
+	}
+	return number;
 }
