@@ -192,10 +192,14 @@ struct whack_message {
 	enum yna_options nic_offload;
 	uint32_t xfrm_if_id;
 
-	/* For IKEv1 RFC 3706 - Dead Peer Detection */
-	deltatime_t dpd_delay;
-	deltatime_t dpd_timeout;
-	enum dpd_action dpd_action;
+	/* For IKEv1 RFC 3706 - Dead Peer Detection / IKEv2 liveness */
+	enum dpd_action dpd_action; /* 0 implies unset */
+	enum {
+		DPD_SECONDS,
+		DPD_MILLISECONDS,
+	} dpd_timescale;
+	char *dpd_delay;	/* either seconds or milliseconds */
+	char *dpd_timeout;	/* either seconds or milliseconds */
 
 	/* Cisco interop:  remote peer type */
 	enum keyword_remotepeertype remotepeertype;

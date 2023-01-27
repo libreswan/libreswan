@@ -24,6 +24,10 @@
 #include "lswlog.h"
 
 const deltatime_t deltatime_zero;
+const deltatime_t deltatime_epoc = {
+	.dt = {
+	},
+};
 
 /*
  * Rather than deal with the 'bias' in a -ve timeval, this code

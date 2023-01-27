@@ -148,6 +148,8 @@ struct starter_conn {
 	bool vti_routing;
 	bool vti_shared;
 	uint32_t xfrm_if_id;
+	char *dpd_delay;
+	char *dpd_timeout;
 };
 
 struct starter_config {

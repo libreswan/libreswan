@@ -1251,6 +1251,9 @@ static bool load_conn(struct starter_conn *conn,
 	str_to_conn(redirect_to, KSCF_REDIRECT_TO);
 	str_to_conn(accept_redirect_to, KSCF_ACCEPT_REDIRECT_TO);
 
+	str_to_conn(dpd_delay, KSCF_DPDDELAY_MS);
+	str_to_conn(dpd_timeout, KSCF_DPDTIMEOUT_MS);
+
 #	undef str_to_conn
 
 	if (conn->options_set[KNCF_PHASE2]) {
@@ -1586,6 +1589,8 @@ static void copy_conn_default(struct starter_conn *conn,
 	STR_FIELD(vti_iface);
 	STR_FIELD(redirect_to);
 	STR_FIELD(accept_redirect_to);
+	STR_FIELD(dpd_delay);
+	STR_FIELD(dpd_timeout);
 
 	for (unsigned i = 0; i < elemsof(conn->strings); i++)
 		STR_FIELD(strings[i]);

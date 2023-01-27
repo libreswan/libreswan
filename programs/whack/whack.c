@@ -1090,6 +1090,7 @@ int main(int argc, char **argv)
 	msg.oppo.remote.port = ip_hport(0);
 
 	msg.dpd_action = DPD_ACTION_UNSET;
+	msg.dpd_timescale = DPD_SECONDS;
 
 	for (;;) {
 		/* numeric argument for some flags */
@@ -1976,27 +1977,31 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_DPDDELAY:	/* --dpddelay <seconds> */
-			optarg_to_deltatime(&msg.dpd_delay, &timescale_seconds);
+			pexpect(msg.dpd_timescale == DPD_SECONDS);
+			msg.dpd_delay = strdup(optarg);
 			continue;
 
 		case CD_DPDTIMEOUT:	/* --dpdtimeout <seconds> */
-			optarg_to_deltatime(&msg.dpd_timeout, &timescale_seconds);
+			pexpect(msg.dpd_timescale == DPD_SECONDS);
+			msg.dpd_timeout = strdup(optarg);
 			continue;
 
 		case CD_DPDACTION:	/* --dpdaction */
-			msg.dpd_action = 255;
-			if (streq(optarg, "clear"))
+			if (streq(optarg, "clear")) {
 				msg.dpd_action = DPD_ACTION_CLEAR;
-			else if (streq(optarg, "hold"))
+			} else if (streq(optarg, "hold")) {
 				msg.dpd_action = DPD_ACTION_HOLD;
-			else if (streq(optarg, "restart"))
+			} else if (streq(optarg, "restart")) {
 				msg.dpd_action = DPD_ACTION_RESTART;
-			else if (streq(optarg, "restart_by_peer"))
+			} else if (streq(optarg, "restart_by_peer")) {
 				/*
 				 * obsolete (not advertised) option for
 				 * compatibility
 				 */
 				msg.dpd_action = DPD_ACTION_RESTART;
+			} else {
+				diagw("dpdaction can only be \"clear\", \"hold\" or \"restart\"");
+			}
 			continue;
 
 		case CD_SEND_REDIRECT:	/* --send-redirect */
@@ -2635,36 +2640,6 @@ int main(int argc, char **argv)
 
 	check_max_lifetime(msg.sa_ike_max_lifetime, IKE_SA_LIFETIME_MAXIMUM, "ike-lifetime", &msg);
 	check_max_lifetime(msg.sa_ipsec_max_lifetime, IPSEC_SA_LIFETIME_MAXIMUM, "ipsec-lifetime", &msg);
-
-	switch (msg.ike_version) {
-	case IKEv1:
-		if (deltasecs(msg.dpd_delay) != 0 &&
-		    deltasecs(msg.dpd_timeout) == 0) {
-			diagw("dpddelay specified, but dpdtimeout is zero, both should be specified");
-		}
-		if (deltasecs(msg.dpd_delay) == 0 &&
-		    deltasecs(msg.dpd_timeout) != 0) {
-			diagw("dpdtimeout specified, but dpddelay is zero, both should be specified");
-		}
-		break;
-	case IKEv2:
-		if (deltasecs(msg.dpd_timeout) != 0) {
-			fprintf(stderr, "whack: IKEv2 liveness uses --retransmit-timeout, option --dpdtimeout ignored\n");
-		}
-		break;
-	}
-
-	switch (msg.dpd_action) {
-	case DPD_ACTION_CLEAR:
-	case DPD_ACTION_HOLD:
-	case DPD_ACTION_RESTART:
-		break;
-	case DPD_ACTION_UNSET:
-		msg.dpd_action = DPD_ACTION_HOLD;
-		break;
-	default:
-		diagw("dpdaction can only be \"clear\", \"hold\" or \"restart\"");
-	}
 
 	if (msg.remotepeertype != CISCO &&
 	    msg.remotepeertype != NON_CISCO) {

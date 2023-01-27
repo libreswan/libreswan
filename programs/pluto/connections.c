@@ -98,6 +98,7 @@
 #include "lswnss.h"
 #include "show.h"
 #include "routing.h"
+#include "timescale.h"
 
 void ldbg_connection(const struct connection *c, where_t where,
 		     const char *message, ...)
@@ -2057,24 +2058,81 @@ static diag_t extract_connection(const struct whack_message *wm,
 			config->sa_rekey_margin = new_rkm;
 		}
 
-		/* IKEv1's RFC 3706 DPD */
-		config->dpd.action = wm->dpd_action;
+		/*
+		 * Whack and addconn use different timescales for the
+		 * same dpd options; ulgh.
+		 */
+		ldbg(c->logger, "timescale %d dpdaction=%d", wm->dpd_timescale, wm->dpd_action);
+		const struct timescale *dpd_timescale = NULL;
+		switch (wm->dpd_timescale) {
+		case DPD_SECONDS:
+			/* aka whack */
+			dpd_timescale = &timescale_seconds;
+			break;
+		case DPD_MILLISECONDS:
+			/* aka addconn */
+			dpd_timescale = &timescale_milliseconds;
+			break;
+		}
+		PASSERT(c->logger, dpd_timescale != NULL);
+
+		config->dpd.action = (wm->dpd_action == DPD_ACTION_UNSET ? DPD_ACTION_HOLD :
+				      wm->dpd_action);
+
 		switch (wm->ike_version) {
 		case IKEv1:
-			if (deltasecs(wm->dpd_delay) > 0 &&
-			    deltasecs(wm->dpd_timeout) > 0) {
-				config->dpd.delay = wm->dpd_delay;
-				config->dpd.timeout = wm->dpd_timeout;
-			} else if (deltasecs(wm->dpd_delay) > 0 ||
-				   deltasecs(wm->dpd_timeout) > 0) {
-				llog(RC_LOG_SERIOUS, c->logger,
-				     "IKEv1 DPD requres both dpddelay and dpdtimeout");
+			/* IKEv1's RFC 3706 DPD */
+			if (wm->dpd_delay != NULL &&
+			    wm->dpd_timeout != NULL) {
+				diag_t d;
+				d = ttodeltatime(wm->dpd_delay,
+						 &config->dpd.delay,
+						 dpd_timescale);
+				if (d != NULL) {
+					return diag_diag(&d, "dpddelay=%s invalid, ",
+							 wm->dpd_delay);
+				}
+				d = ttodeltatime(wm->dpd_timeout,
+						 &config->dpd.timeout,
+						 dpd_timescale);
+				if (d != NULL) {
+					return diag_diag(&d, "dpdtimeout=%s invalid, ",
+							 wm->dpd_timeout);
+				}
+			} else if (wm->dpd_delay != NULL  ||
+				   wm->dpd_timeout != NULL ||
+				   wm->dpd_action != DPD_ACTION_UNSET) {
+				llog(RC_LOG, c->logger,
+				     "warning: IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set");
 			}
 			break;
 		case IKEv2:
-			config->dpd.delay = wm->dpd_delay;
-			config->dpd.timeout = wm->dpd_timeout; /* XXX: to-be-deleted */
+			if (wm->dpd_delay != NULL) {
+				diag_t d;
+				d = ttodeltatime(wm->dpd_delay,
+						 &config->dpd.delay,
+						 dpd_timescale);
+				if (d != NULL) {
+					return diag_diag(&d, "dpddelay=%s invalid, ",
+							 wm->dpd_delay);
+				}
+			} else if (wm->dpd_action != DPD_ACTION_UNSET) {
+				llog(RC_LOG, c->logger,
+				     "warning: IKEv2 liveness setting dpdaction= is ignored unless dpddelay= is set");
+			}
+			if (wm->dpd_timeout != NULL) {
+				llog(RC_LOG, c->logger,
+				     "warning: IKEv2 liveness uses retransmit-timeout=, dpdtimeout= ignored");
+			}
 			break;
+		}
+
+		/* check for conflicts */
+		if ((wm->policy & POLICY_DONT_REKEY) != LEMPTY &&
+		    wm->dpd_action == DPD_ACTION_RESTART) {
+			llog(RC_LOG, c->logger,
+			     "warning: dpdaction cannot be 'restart'  when rekey=no - defaulting to 'hold'");
+			config->dpd.action = DPD_ACTION_HOLD;
 		}
 
 		/* Cisco interop: remote peer type */

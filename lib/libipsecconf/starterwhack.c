@@ -564,52 +564,11 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	}
 
 	/* default to HOLD */
-	msg.dpd_action = DPD_ACTION_HOLD;
-	switch (conn->ike_version) {
-	case IKEv1:
-		if (conn->options_set[KNCF_DPDDELAY_MS] &&
-		    conn->options_set[KNCF_DPDTIMEOUT_MS]) {
-			msg.dpd_delay = deltatime_ms(conn->options[KNCF_DPDDELAY_MS]);
-			msg.dpd_timeout = deltatime_ms(conn->options[KNCF_DPDTIMEOUT_MS]);
-			if (conn->options_set[KNCF_DPDACTION]) {
-				msg.dpd_action = conn->options[KNCF_DPDACTION];
-			}
-		} else if (conn->options_set[KNCF_DPDDELAY_MS]  ||
-			   conn->options_set[KNCF_DPDTIMEOUT_MS] ||
-			   conn->options_set[KNCF_DPDACTION]) {
-			starter_log(LOG_LEVEL_ERR,
-				    "conn: \"%s\" warning IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set",
-				    conn->name);
-		}
-		break;
-	case IKEv2:
-		if (conn->options_set[KNCF_DPDDELAY_MS]) {
-			msg.dpd_delay = deltatime_ms(conn->options[KNCF_DPDDELAY_MS]);
-			if (conn->options_set[KNCF_DPDACTION]) {
-				msg.dpd_action = conn->options[KNCF_DPDACTION];
-			}
-		} else if (conn->options_set[KNCF_DPDACTION]) {
-			starter_log(LOG_LEVEL_ERR,
-				    "conn: \"%s\" warning IKEv2 liveness setting dpdaction= is ignored unless dpddelay= is set",
-				    conn->name);
-		}
-		if (conn->options_set[KNCF_DPDTIMEOUT_MS]) {
-			starter_log(LOG_LEVEL_ERR,
-				    "conn: \"%s\" warning IKEv2 liveness uses retransmit-timeout=, dpdtimeout= ignored",
-				    conn->name);
-		}
-		break;
-	}
-
-	/* check for conflicts */
-	if (conn->options_set[KNCF_REKEY] && !conn->options[KNCF_REKEY]) {
-		if (conn->options[KNCF_DPDACTION] == DPD_ACTION_RESTART) {
-			starter_log(LOG_LEVEL_ERR,
-				    "conn: \"%s\" warning dpdaction cannot be 'restart'  when rekey=no - defaulting to 'hold'",
-				    conn->name);
-			msg.dpd_action = DPD_ACTION_HOLD;
-		}
-	}
+	msg.dpd_action = (conn->options_set[KNCF_DPDACTION] ? conn->options[KNCF_DPDACTION] :
+			  DPD_ACTION_UNSET);
+	msg.dpd_timescale = DPD_MILLISECONDS;
+	msg.dpd_delay = conn->dpd_delay;
+	msg.dpd_timeout = conn->dpd_timeout;
 
 	if (conn->options_set[KNCF_SEND_CA])
 		msg.send_ca = conn->options[KNCF_SEND_CA];
