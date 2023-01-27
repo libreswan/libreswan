@@ -64,12 +64,13 @@ static struct starter_comments_list *parser_comments;
 %union {
 	char *s;
 	uintmax_t num;
+	bool boolean;
 	struct keyword k;
 }
 %token EQUAL FIRST_SPACES EOL CONFIG SETUP CONN INCLUDE VERSION
 %token <s>      STRING
 %token <num>    UNSIGNED
-%token <num>    BOOL
+%token <boolean>   BOOLEAN
 %token <k>      KEYWORD
 %token <k>      TIMEWORD
 %token <k>      BOOLWORD
@@ -269,9 +270,10 @@ statement_kw:
 		new_parser_kw(&kw, string, number);
 	}
 
-	| BOOLWORD EQUAL BOOL {
-		new_parser_kw(&$1, NULL, $<num>3);
+	| BOOLWORD EQUAL BOOLEAN {
+		new_parser_kw(&$1, NULL, $3);
 	}
+
 	| KEYWORD EQUAL UNSIGNED {
 		new_parser_kw(&$1, NULL, $<num>3);
 	}
@@ -328,8 +330,8 @@ statement_kw:
 			new_parser_kw(&kw, NULL, (unsigned int)val);
 		}
 	}
-	| KEYWORD EQUAL BOOL {
-		new_parser_kw(&$1, NULL, $<num>3);
+	| KEYWORD EQUAL BOOLEAN {
+		new_parser_kw(&$1, NULL, $3);
 	}
 	| KEYWORD EQUAL { /* this is meaningless, we ignore it */ }
 	| BINARYWORD EQUAL UNSIGNED {

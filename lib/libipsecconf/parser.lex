@@ -461,24 +461,26 @@ static uintmax_t parser_lex_unsigned(const char *yytext)
 				return EOL;
 			}
 
+<BOOLEAN_VALUE>1    |
 <BOOLEAN_VALUE>y    |
 <BOOLEAN_VALUE>yes  |
 <BOOLEAN_VALUE>true |
 <BOOLEAN_VALUE>on	{
 				/* process a boolean */
-				yylval.num = 1;
+				yylval.boolean = true;
 				BEGIN INITIAL;
-				return BOOL;
+				return BOOLEAN;
 			}
 
+<BOOLEAN_VALUE>0     |
 <BOOLEAN_VALUE>n     |
 <BOOLEAN_VALUE>no    |
 <BOOLEAN_VALUE>false |
 <BOOLEAN_VALUE>off	{
 				/* process a boolean */
-				yylval.num = 0;
+				yylval.boolean = false;
 				BEGIN INITIAL;
-				return BOOL;
+				return BOOLEAN;
 			}
 
 <COMMENT_VALUE>[^\n]*	{
