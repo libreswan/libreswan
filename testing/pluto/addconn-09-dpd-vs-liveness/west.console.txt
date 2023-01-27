@@ -8,31 +8,30 @@ west #
  # don't use tabs, guest things it is tab completion
 west #
  ipsec auto --add ikev1-dpdtimeout=10s            # requires dpddelay
-conn: "ikev1-dpdtimeout=10s" warning IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set
+002 "ikev1-dpdtimeout=10s": warning: IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set
 002 "ikev1-dpdtimeout=10s": added IKEv1 connection
 west #
  ipsec auto --add ikev1-dpddelay=10s              # requires dpdtimeout
-conn: "ikev1-dpddelay=10s" warning IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set
+002 "ikev1-dpddelay=10s": warning: IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set
 002 "ikev1-dpddelay=10s": added IKEv1 connection
 west #
  ipsec auto --add ikev1-dpdaction=clear           # requires dpddelay+dpdtimeout
-conn: "ikev1-dpdaction=clear" warning IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set
+002 "ikev1-dpdaction=clear": warning: IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set
 002 "ikev1-dpdaction=clear": added IKEv1 connection
 west #
  ipsec auto --add ikev1-dpdaction=clear-dpdtimeout=10s # requires dpddelay
-conn: "ikev1-dpdaction=clear-dpdtimeout=10s" warning IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set
+002 "ikev1-dpdaction=clear-dpdtimeout=10s": warning: IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set
 002 "ikev1-dpdaction=clear-dpdtimeout=10s": added IKEv1 connection
 west #
  ipsec auto --add ikev1-dpddelay=10s-dpdtimeout=0s # requires dpdtimeout!=0
-003 "ikev1-dpddelay=10s-dpdtimeout=0s": IKEv1 DPD requres both dpddelay and dpdtimeout
 002 "ikev1-dpddelay=10s-dpdtimeout=0s": added IKEv1 connection
 west #
  ipsec auto --add ikev2-dpdtimeout=10s            # ignore dpdtimeout
-conn: "ikev2-dpdtimeout=10s" warning IKEv2 liveness uses retransmit-timeout=, dpdtimeout= ignored
+002 "ikev2-dpdtimeout=10s": warning: IKEv2 liveness uses retransmit-timeout=, dpdtimeout= ignored
 002 "ikev2-dpdtimeout=10s": added IKEv2 connection
 west #
  ipsec auto --add ikev2-dpdaction=clear           # requires dpddelay
-conn: "ikev2-dpdaction=clear" warning IKEv2 liveness setting dpdaction= is ignored unless dpddelay= is set
+002 "ikev2-dpdaction=clear": warning: IKEv2 liveness setting dpdaction= is ignored unless dpddelay= is set
 002 "ikev2-dpdaction=clear": added IKEv2 connection
 west #
  
