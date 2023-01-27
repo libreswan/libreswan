@@ -1067,6 +1067,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 				streq(src->updown, "%disabled") ? NULL :
 				streq(src->updown, "") ? NULL :
 				clone_str(src->updown, "child_config.updown"));
+	ip_selectors *child_selectors = &child_config->selectors;
 
 	/*
 	 * Figure out the end's child selectors.
@@ -1096,10 +1097,13 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		}
 		ldbg(logger, "%s child selectors from %ssubnet + %sprotoport; %s.config.has_client=true",
 		     leftright, leftright, leftright, leftright);
-		child_config->selectors.len = 1;
-		child_config->selectors.list = alloc_things(ip_selector, 1, "subnet-selectors");
-		child_config->selectors.list[0] =
+		child_selectors->len = 1;
+		child_selectors->list = alloc_things(ip_selector, 1, "subnet-selectors");
+		child_selectors->list[0] =
 			selector_from_subnet_protoport(subnet, src->protoport);
+		const struct ip_info *afi = subnet_info(subnet);
+		child_selectors->ip[afi->ip_index].len = 1;
+		child_selectors->ip[afi->ip_index].list = child_selectors->list;
 	} else if (src->subnet != NULL) {
 		/*
 		 * Parse new syntax (protoport= is not used).
@@ -1128,7 +1132,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 		     leftright);
 	}
 
-	if (child_config->selectors.len > 1 && wm->connalias != NULL) {
+	if (child_selectors->len > 1 && wm->connalias != NULL) {
 		/* XXX: don't know which end has subnets= */
 		return diag("multi-selector \"%ssubnet=%s\" combined with subnets=",
 			    leftright, src->subnet);
@@ -1350,9 +1354,11 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 		ip_address host_addr = c->end[end].host.addr;
 		const struct child_end_config *child_config = c->end[end].child.config;
 		if (child_config->selectors.len > 0) {
+			dbg("select from child.selectors");
 			c->end[end].child.selectors.proposed = child_config->selectors;
 			set_end_child_has_client(c, end, true);
 		} else if (address_is_specified(host_addr)) {
+			dbg("select from address proto port");
 			/*
 			 * Default the end's child selector (client)
 			 * to a subnet containing only the end's host
@@ -1367,13 +1373,18 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 								child_config->protoport);
 			set_end_selector(c, end, selector);
 		} else {
+			dbg("select from host");
 			/*
 			 * to-be-determined from the host or the
 			 * opportunistic group.
 			 */
-			c->end[end].child.selectors.assigned[0] = unset_selector;
-			c->end[end].child.selectors.proposed.len = 1;
-			c->end[end].child.selectors.proposed.list = c->end[end].child.selectors.assigned;
+			struct child_end_selectors *end_selectors = &c->end[end].child.selectors;
+			end_selectors->assigned[0] = unset_selector;
+			end_selectors->proposed.len = 1;
+			end_selectors->proposed.list = end_selectors->assigned;
+			/* keep IPv[46] table in sync */
+			end_selectors->proposed.ip[host_afi->ip_index].len = 1;
+			end_selectors->proposed.ip[host_afi->ip_index].list = end_selectors->proposed.list;
 		}
 	}
 
@@ -1390,24 +1401,28 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 	set_connection_priority(c); /* must be after kind is set */
 }
 
-void add_connection_spds(struct connection *c, const struct ip_info *host_afi)
+void add_connection_spds(struct connection *c,
+			 const struct ip_info *host_afi UNUSED /*XXX: suspect need to fudge up IPv[46] entry to match no-op selector entry, see above and unset_selector */)
 {
 	unsigned indent = 0;
-	ldbg(c->logger, "%*sadding proposal spds", indent, "");
+	ldbg(c->logger, "%*sadding connection spds using proposed", indent, "");
 
-	struct {
-		const ip_selectors *selectors;
-		const ip_selector *selector;
-		const struct ip_info *afi;
-	} selectors[END_ROOF] = {0};
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		const ip_selectors *s = &c->end[end].child.selectors.proposed;
-		if (s->len == 0) {
-			ldbg(c->logger, "%s has no selectors",
-			     c->end[end].config->leftright);
-			return;
-		}
-		selectors[end].selectors = s;
+	indent = 1;
+	const ip_selectors *left = &c->end[LEFT_END].child.selectors.proposed;
+	const ip_selectors *right = &c->end[RIGHT_END].child.selectors.proposed;
+	ldbg(c->logger, "%*sleft=%u right=%u",
+	     indent, "", left->len, right->len);
+
+	/*
+	 * calculate the total number of SPDs.
+	 */
+	unsigned nr_spds = 0;
+	for (enum ip_index ip = IP_INDEX_FLOOR; ip < IP_INDEX_ROOF; ip++) {
+		const ip_selectors *left = &c->end[LEFT_END].child.selectors.proposed;
+		const ip_selectors *right = &c->end[RIGHT_END].child.selectors.proposed;
+		ldbg(c->logger, "%*sleft[%u]=%u right[%u]=%u",
+		     indent+1, "", ip, left->ip[ip].len, ip, right->ip[ip].len);
+		nr_spds += (left->ip[ip].len * right->ip[ip].len);
 	}
 
 	/*
@@ -1418,59 +1433,42 @@ void add_connection_spds(struct connection *c, const struct ip_info *host_afi)
 	 * go away.
 	 */
 
-	unsigned nr_spds = 0;
-	for (unsigned pass = 1; pass <= 2; pass++) {
-		if (pass == 2) {
-			alloc_connection_spds(c, nr_spds);
-		}
-		nr_spds = 0;
-		selectors[LEFT_END].selector = selectors[LEFT_END].selectors->list;
-		FOR_EACH_ITEM(left_selector, selectors[LEFT_END].selectors) {
-			selectors[LEFT_END].selector = left_selector;
-			selectors[LEFT_END].afi = selector_type(left_selector);
-			FOR_EACH_ITEM(right_selector, selectors[RIGHT_END].selectors) {
-				selectors[RIGHT_END].selector = right_selector;
-				selectors[RIGHT_END].afi = selector_type(right_selector);
-				indent = 1;
-				selector_buf leftb, rightb;
-				ldbg(c->logger, "%*s%s->%s", indent, "",
-				     str_selector(selectors[LEFT_END].selector, &leftb),
-				     str_selector(selectors[RIGHT_END].selector, &rightb));
+	alloc_connection_spds(c, nr_spds);
+	unsigned spds = 0;
+	for (enum ip_index ip = IP_INDEX_FLOOR; ip < IP_INDEX_ROOF; ip++) {
+		const ip_selectors *left_selectors = &c->end[LEFT_END].child.selectors.proposed;
+		FOR_EACH_ITEM(left_selector, &left_selectors->ip[ip]) {
+			const ip_selectors *right_selectors = &c->end[RIGHT_END].child.selectors.proposed;
+			FOR_EACH_ITEM(right_selector, &right_selectors->ip[ip]) {
 				indent = 2;
-				/*
-				 * XXX: figure out the combination's IP
-				 * family.
-				 */
+				selector_pair_buf spb;
+				ldbg(c->logger, "%*s%s", indent, "",
+				     str_selector_pair(left_selector, right_selector, &spb));
+				indent = 3;
+				struct spd_route *spd = &c->child.spds.list[spds++];
+				PASSERT(c->logger, spd < c->child.spds.list + c->child.spds.len);
+				ip_selector *selectors[] = {
+					[LEFT_END] = left_selector,
+					[RIGHT_END] = right_selector,
+				};
 				FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-					const struct ip_info *afi = selector_type(selectors[end].selector);
-					selectors[end].afi = (afi != NULL ? afi : host_afi);
+					const ip_selector *selector = selectors[end];
+					const struct child_end_config *child_end = &c->end[end].config->child;
+					struct spd_end *spd_end = &spd->end[end];
+					const char *leftright = child_end->leftright;
+					/* NOT set_end_selector() */
+					spd_end->client = *selector;
+					spd_end->virt = virtual_ip_addref(child_end->virt);
+					selector_buf sb;
+					ldbg(c->logger,
+					     "%*s%s child spd from selector %s %s.spd.has_client=%s virt=%s",
+					     indent, "", spd_end->config->leftright,
+					     str_selector(&spd_end->client, &sb),
+					     leftright,
+					     bool_str(spd_end->child->has_client),
+					     bool_str(spd_end->virt != NULL));
 				}
-				if (selectors[LEFT_END].afi == selectors[RIGHT_END].afi) {
-					if (pass == 2) {
-						struct spd_route *spd = &c->child.spds.list[nr_spds];
-						PASSERT(c->logger, spd < c->child.spds.list + c->child.spds.len);
-						indent = 3;
-						FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-							const ip_selector *selector = selectors[end].selector;
-							const struct child_end_config *child_end = &c->end[end].config->child;
-							struct spd_end *spd_end = &spd->end[end];
-							const char *leftright = child_end->leftright;
-							/* NOT set_end_selector() */
-							spd_end->client = *selector;
-							spd_end->virt = virtual_ip_addref(child_end->virt);
-							selector_buf sb;
-							ldbg(c->logger,
-							     "%*s%s child spd from selector %s %s.spd.has_client=%s virt=%s",
-							     indent, "", spd_end->config->leftright,
-							     str_selector(&spd_end->client, &sb),
-							     leftright,
-							     bool_str(spd_end->child->has_client),
-							     bool_str(spd_end->virt != NULL));
-						}
-						spd_route_db_add(spd);
-					}
-					nr_spds++;
-				}
+				spd_route_db_add(spd);
 			}
 		}
 	}
@@ -3305,12 +3303,17 @@ bool dpd_active_locally(const struct connection *c)
 void scribble_end_selector(struct connection *c, enum left_right end,
 			   ip_selector selector, where_t where, unsigned nr)
 {
-	struct child_end *child = &c->end[end].child;
+	struct child_end_selectors *end_selectors = &c->end[end].child.selectors;
 	struct logger *logger = c->logger;
-	if (!PEXPECT_WHERE(logger, where, nr < elemsof(child->selectors.assigned))) {
+	if (!PEXPECT_WHERE(logger, where, nr < elemsof(end_selectors->assigned))) {
 		return;
 	}
-	child->selectors.assigned[nr] = selector;
+	const struct ip_info *afi = selector_info(selector);
+	end_selectors->assigned[nr] = selector;
+	/* keep IPv[46] table in sync */
+	end_selectors->proposed.ip[afi->ip_index].len = 1;
+	end_selectors->proposed.ip[afi->ip_index].list = &end_selectors->assigned[nr];
+
 	selector_buf nb;
 	ldbg(c->logger, "%s() %s.child.selector[%d] %s "PRI_WHERE,
 	     __func__,
@@ -3325,9 +3328,10 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 			    const char *excuse, where_t where)
 {
 	struct child_end *child = &c->end[end].child;
+	struct child_end_selectors *end_selectors = &c->end[end].child.selectors;
 	const char *leftright = c->end[end].config->leftright;
 	if (first_time) {
-		PEXPECT_WHERE(c->logger, where, child->selectors.proposed.len == 0);
+		PEXPECT_WHERE(c->logger, where, end_selectors->proposed.len == 0);
 		selector_buf nb;
 		ldbg(c->logger, "%s() set %s.child.selector %s "PRI_WHERE,
 		     __func__, leftright,
@@ -3337,8 +3341,8 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 			c->spd->end[end].client = new_selector;
 		}
 	} else {
-		PEXPECT_WHERE(c->logger, where, child->selectors.proposed.len == 1);
-		ip_selector old_selector = child->selectors.proposed.list[0];
+		PEXPECT_WHERE(c->logger, where, end_selectors->proposed.len == 1);
+		ip_selector old_selector = end_selectors->proposed.list[0];
 		selector_buf ob, nb;
 		ldbg(c->logger, "%s() update %s.child.selector %s -> %s "PRI_WHERE,
 		     __func__, leftright,
@@ -3368,9 +3372,13 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 	 * single selector reasonable?  Certainly don't want to
 	 * truncate the selector list.
 	 */
-	child->selectors.assigned[0] = new_selector;
-	child->selectors.proposed.list = child->selectors.assigned;
-	child->selectors.proposed.len = 1;
+	const struct ip_info *afi = selector_info(new_selector);
+	end_selectors->assigned[0] = new_selector;
+	end_selectors->proposed.len = 1;
+	end_selectors->proposed.list = end_selectors->assigned;
+	/* keep IPv[46] table in sync */
+	end_selectors->proposed.ip[afi->ip_index].len = 1;
+	end_selectors->proposed.ip[afi->ip_index].list = end_selectors->proposed.list;
 
 	/*
 	 * When there's a selectors.list, the child.selector is only

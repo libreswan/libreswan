@@ -360,7 +360,7 @@ struct host_end {
 
 struct child_end {
 	const struct child_end_config *config;
-	struct {
+	struct child_end_selectors {
 		ip_selector assigned[2/*space for IPv4+IPv6 in no order*/];
 		ip_selectors proposed; /* either .config->selectors or above; do not free */
 		/*
