@@ -75,7 +75,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	SOPT(KBF_AUDIT_LOG, true);
 	SOPT(KBF_UNIQUEIDS, true);
 	SOPT(KBF_LISTEN_UDP, true);
-	SOPT(KBF_LISTEN_TCP, true);
+	SOPT(KBF_LISTEN_TCP, false);
 	SOPT(KBF_DO_DNSSEC, true);
 	SOPT(KBF_PERPEERLOG, false);
 	SOPT(KBF_IKEBUF, IKE_BUF_AUTO);
@@ -141,7 +141,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	DOPT(KNCF_IKEV1_NATT, NATT_BOTH);
 	DOPT(KNCF_ENCAPS, yna_auto);
 
-	DOPT(KNCF_TCP, IKE_TCP_FALLBACK);
+	DOPT(KNCF_TCP, IKE_TCP_NO);
 	DOPT(KNCF_REMOTE_TCPPORT, NAT_IKE_UDP_PORT);
 
 	/* Network Manager support */
