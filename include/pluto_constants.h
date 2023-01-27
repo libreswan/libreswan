@@ -79,7 +79,7 @@ enum ike_version {
 
 /* RFC 3706 Dead Peer Detection */
 enum dpd_action {
-	DPD_ACTION_DISABLED,	/* happens for type=passthrough */
+	DPD_ACTION_UNSET,
 	DPD_ACTION_CLEAR,
 	DPD_ACTION_HOLD,
 	DPD_ACTION_RESTART
