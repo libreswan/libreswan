@@ -296,10 +296,10 @@ const char *str_spd(const struct spd_route *spd, spd_buf *buf)
 	return buf->buf;
 }
 
-static void show_one_sr(struct show *s,
-			const struct connection *c,
-			const struct spd_route *spd,
-			const char *instance)
+static void show_one_spd(struct show *s,
+			 const struct connection *c,
+			 const struct spd_route *spd,
+			 const char *instance)
 {
 	spd_buf spdb;
 	ipstr_buf thisipb, thatipb;
@@ -315,8 +315,8 @@ static void show_one_sr(struct show *s,
 		/* note: this macro generates a pair of arguments */
 #define OPT_PREFIX_STR(pre, s) (s) == NULL ? "" : (pre), (s) == NULL? "" : (s)
 
-	ip_address this_sourceip = spd_end_sourceip(c->spd->local);
-	ip_address that_sourceip = spd_end_sourceip(c->spd->remote);
+	ip_address this_sourceip = spd_end_sourceip(spd->local);
+	ip_address that_sourceip = spd_end_sourceip(spd->remote);
 
 	show_comment(s, PRI_CONNECTION":     %s; my_ip=%s; their_ip=%s%s%s%s%s; my_updown=%s;",
 		     c->name, instance,
@@ -506,7 +506,7 @@ void show_connection_status(struct show *s, const struct connection *c)
 
 	/* Show topology. */
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-		show_one_sr(s, c, spd, instance);
+		show_one_spd(s, c, spd, instance);
 	}
 
 	/* Show CAs */
