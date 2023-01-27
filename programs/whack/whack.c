@@ -1089,6 +1089,8 @@ int main(int argc, char **argv)
 	msg.oppo.local.port = ip_hport(8);
 	msg.oppo.remote.port = ip_hport(0);
 
+	msg.dpd_action = DPD_ACTION_UNSET;
+
 	for (;;) {
 		/* numeric argument for some flags */
 		uintmax_t opt_whole = 0;
@@ -2653,10 +2655,12 @@ int main(int argc, char **argv)
 	}
 
 	switch (msg.dpd_action) {
-	case DPD_ACTION_DISABLED:
 	case DPD_ACTION_CLEAR:
 	case DPD_ACTION_HOLD:
 	case DPD_ACTION_RESTART:
+		break;
+	case DPD_ACTION_UNSET:
+		msg.dpd_action = DPD_ACTION_HOLD;
 		break;
 	default:
 		diagw("dpdaction can only be \"clear\", \"hold\" or \"restart\"");

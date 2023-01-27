@@ -31,8 +31,8 @@ west #
 003 "westnet-eastnet-k1" #1: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
 003 "westnet-eastnet-k1" #1: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
 031 "westnet-eastnet-k1" #1: STATE_V2_PARENT_I1: 3 second timeout exceeded after 2 retransmits.  No response (or no acceptable response) to our first IKEv2 message
-002 "westnet-eastnet-k1" #1: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
 002 "westnet-eastnet-k1" #1: IMPAIR: skipping revival of connection that is supposed to remain up
+002 "westnet-eastnet-k1" #1: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
 west #
  ipsec auto --delete westnet-eastnet-k1
 002 "westnet-eastnet-k1": terminating SAs using this connection
