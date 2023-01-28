@@ -2062,20 +2062,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		 * Whack and addconn use different timescales for the
 		 * same dpd options; ulgh.
 		 */
-		ldbg(c->logger, "timescale %d dpdaction=%d", wm->dpd_timescale, wm->dpd_action);
-		const struct timescale *dpd_timescale = NULL;
-		switch (wm->dpd_timescale) {
-		case DPD_SECONDS:
-			/* aka whack */
-			dpd_timescale = &timescale_seconds;
-			break;
-		case DPD_MILLISECONDS:
-			/* aka addconn */
-			dpd_timescale = &timescale_milliseconds;
-			break;
-		}
-		PASSERT(c->logger, dpd_timescale != NULL);
-
+		ldbg(c->logger, "dpdaction=%d", wm->dpd_action);
+		const struct timescale *const dpd_timescale = &timescale_seconds;
 		config->dpd.action = (wm->dpd_action == DPD_ACTION_UNSET ? DPD_ACTION_HOLD :
 				      wm->dpd_action);
 
@@ -2099,6 +2087,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 					return diag_diag(&d, "dpdtimeout=%s invalid, ",
 							 wm->dpd_timeout);
 				}
+				deltatime_buf db, tb;
+				ldbg(c->logger, "IKEv1 dpd.timeout=%s dpd.delay=%s",
+				     str_deltatime(config->dpd.timeout, &db),
+				     str_deltatime(config->dpd.delay, &tb));
 			} else if (wm->dpd_delay != NULL  ||
 				   wm->dpd_timeout != NULL ||
 				   wm->dpd_action != DPD_ACTION_UNSET) {

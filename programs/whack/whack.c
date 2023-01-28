@@ -1090,7 +1090,6 @@ int main(int argc, char **argv)
 	msg.oppo.remote.port = ip_hport(0);
 
 	msg.dpd_action = DPD_ACTION_UNSET;
-	msg.dpd_timescale = DPD_SECONDS;
 
 	for (;;) {
 		/* numeric argument for some flags */
@@ -1977,12 +1976,10 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_DPDDELAY:	/* --dpddelay <seconds> */
-			pexpect(msg.dpd_timescale == DPD_SECONDS);
 			msg.dpd_delay = strdup(optarg);
 			continue;
 
 		case CD_DPDTIMEOUT:	/* --dpdtimeout <seconds> */
-			pexpect(msg.dpd_timescale == DPD_SECONDS);
 			msg.dpd_timeout = strdup(optarg);
 			continue;
 

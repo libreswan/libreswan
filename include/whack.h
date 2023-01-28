@@ -194,12 +194,8 @@ struct whack_message {
 
 	/* For IKEv1 RFC 3706 - Dead Peer Detection / IKEv2 liveness */
 	enum dpd_action dpd_action; /* 0 implies unset */
-	enum {
-		DPD_SECONDS,
-		DPD_MILLISECONDS,
-	} dpd_timescale;
-	char *dpd_delay;	/* either seconds or milliseconds */
-	char *dpd_timeout;	/* either seconds or milliseconds */
+	char *dpd_delay;	/* seconds */
+	char *dpd_timeout;	/* seconds */
 
 	/* Cisco interop:  remote peer type */
 	enum keyword_remotepeertype remotepeertype;

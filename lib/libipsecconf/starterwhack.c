@@ -566,7 +566,6 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	/* default to HOLD */
 	msg.dpd_action = (conn->options_set[KNCF_DPDACTION] ? conn->options[KNCF_DPDACTION] :
 			  DPD_ACTION_UNSET);
-	msg.dpd_timescale = DPD_MILLISECONDS;
 	msg.dpd_delay = conn->dpd_delay;
 	msg.dpd_timeout = conn->dpd_timeout;
 
