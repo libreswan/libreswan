@@ -653,9 +653,6 @@ int parser_find_keyword(const char *s, YYSTYPE *lval)
 	case kt_percent:
 		keywordtype = PERCENTWORD;
 		break;
-	case kt_time:
-		keywordtype = TIMEWORD;
-		break;
 	case kt_binary:
 		keywordtype = BINARYWORD;
 		break;

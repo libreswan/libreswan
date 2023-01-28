@@ -54,6 +54,7 @@ static struct config_parsed *parser_cfg;
 static struct kw_list **parser_kw, *parser_kw_last;
 static void new_parser_kw(struct keyword *keyword, char *string, uintmax_t number);	/* forward */
 static uintmax_t parser_unsigned(const char *yytext);
+static uintmax_t parser_time(struct keyword *kw, const char *yytext);
 static struct starter_comments_list *parser_comments;
 
 /**
@@ -71,7 +72,6 @@ static struct starter_comments_list *parser_comments;
 %token <s>      STRING
 %token <boolean>   BOOLEAN
 %token <k>      KEYWORD
-%token <k>      TIMEWORD
 %token <k>      BOOLWORD
 %token <k>      PERCENTWORD
 %token <k>      BINARYWORD
@@ -252,9 +252,12 @@ statement_kw:
 			number = parser_unsigned($3);
 			break;
 
+		case kt_time:
+			number = parser_time(&$1, $3);
+			break;
+
 		case kt_bool:
 		case kt_invertbool:
-		case kt_time:
 		case kt_percent:
 		case kt_binary:
 		case kt_byte:
@@ -273,25 +276,6 @@ statement_kw:
 
 	| BOOLWORD EQUAL BOOLEAN {
 		new_parser_kw(&$1, NULL, $3);
-	}
-
-	| TIMEWORD EQUAL STRING {
-		struct keyword *kw = &$1;
-		const char *const str = $3;
-		const struct timescale *scale;
-		if (kw->keydef->validity & kv_milliseconds) {
-			scale = &timescale_milliseconds;
-		} else {
-			scale = &timescale_seconds;
-		}
-		deltatime_t d;
-		diag_t diag = ttodeltatime(str, &d, scale);
-		if (diag != NULL) {
-			yyerror(str_diag(diag));
-			pfree_diag(&diag);
-		} else {
-			new_parser_kw(kw, NULL, deltamillisecs(d));
-		}
 	}
 
 	| PERCENTWORD EQUAL STRING {
@@ -498,4 +482,21 @@ uintmax_t parser_unsigned(const char *yytext)
 		yyerror(ebuf);
 	}
 	return number;
+}
+
+uintmax_t parser_time(struct keyword *kw, const char *str)
+{
+	const struct timescale *scale;
+	if (kw->keydef->validity & kv_milliseconds) {
+		scale = &timescale_milliseconds;
+	} else {
+		scale = &timescale_seconds;
+	}
+	deltatime_t d;
+	diag_t diag = ttodeltatime(str, &d, scale);
+	if (diag != NULL) {
+		yyerror(str_diag(diag));
+		pfree_diag(&diag);
+	}
+	return deltamillisecs(d);
 }
