@@ -166,7 +166,7 @@ west #
 000 "west":   conn_prio: 0,0; interface: ipsec1@eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "west":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "west":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "west":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
+000 "west":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "west":   nat-traversal: encaps:auto; keepalive:20s
 000 "west":   newest IKE SA: #1; newest IPsec SA: #2; conn serial: $1;
 000 "west":   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048

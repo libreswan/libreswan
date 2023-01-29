@@ -49,7 +49,7 @@ west #
 000 "westnet-eastnet-ikev2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-ikev2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-ikev2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "westnet-eastnet-ikev2":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
+000 "westnet-eastnet-ikev2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-ikev2":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-ikev2":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
 west #

@@ -48,7 +48,7 @@ west #
 000 "west":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "west":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "west":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "west":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:15s
+000 "west":   liveness: passive; dpddelay:0s; retransmit-timeout:15s
 000 "west":   nat-traversal: encaps:auto; keepalive:20s
 000 "west":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
 west #

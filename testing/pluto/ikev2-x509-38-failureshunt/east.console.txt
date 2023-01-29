@@ -113,7 +113,7 @@ east #
 000 "failureshunt":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "failureshunt":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "failureshunt":   our idtype: ID_IPV4_ADDR; our id=192.1.2.23; their idtype: ID_IPV4_ADDR; their id=192.1.2.45
-000 "failureshunt":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
+000 "failureshunt":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "failureshunt":   nat-traversal: encaps:auto; keepalive:20s
 000 "failureshunt":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "westnet-eastnet": 192.1.2.23...192.1.2.45; unrouted; eroute owner: #0
@@ -130,7 +130,7 @@ east #
 000 "westnet-eastnet":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet":   our idtype: ID_IPV4_ADDR; our id=192.1.2.23; their idtype: ID_IPV4_ADDR; their id=192.1.2.45
-000 "westnet-eastnet":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
+000 "westnet-eastnet":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $2;
 000  

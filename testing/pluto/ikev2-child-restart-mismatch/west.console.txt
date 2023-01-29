@@ -86,7 +86,7 @@ west #
 000 "westnet-eastnet-ikev2b":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-ikev2b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-ikev2b":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "westnet-eastnet-ikev2b":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
+000 "westnet-eastnet-ikev2b":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-ikev2b":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-ikev2b":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $2;
 000 "westnet-eastnet-ikev2c": 192.0.1.0/24===192.1.2.45[@west]...192.1.2.23[@east]===192.0.201.0/24; unrouted; eroute owner: #0
@@ -103,7 +103,7 @@ west #
 000 "westnet-eastnet-ikev2c":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-ikev2c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-ikev2c":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "westnet-eastnet-ikev2c":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
+000 "westnet-eastnet-ikev2c":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-ikev2c":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-ikev2c":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $3;
 west #

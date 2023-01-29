@@ -30,7 +30,7 @@ west #
 000 "westnet-eastnet-0":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-0":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-0":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "westnet-eastnet-0":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
+000 "westnet-eastnet-0":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-0":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-0":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "westnet-eastnet-0":   aliases: westnet-eastnet
@@ -48,7 +48,7 @@ west #
 000 "westnet-eastnet-1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-1":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "westnet-eastnet-1":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
+000 "westnet-eastnet-1":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-1":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-1":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "westnet-eastnet-1":   aliases: westnet-eastnet
@@ -66,7 +66,7 @@ west #
 000 "westnet-eastnet-2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "westnet-eastnet-2":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
+000 "westnet-eastnet-2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-2":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-2":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "westnet-eastnet-2":   aliases: westnet-eastnet
@@ -176,7 +176,7 @@ west #
 000 "westnet-eastnet-0":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-0":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-0":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "westnet-eastnet-0":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
+000 "westnet-eastnet-0":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-0":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-0":   newest ISAKMP SA: #1; newest IPsec SA: #2;
 000 "westnet-eastnet-0":   aliases: westnet-eastnet
@@ -196,7 +196,7 @@ west #
 000 "westnet-eastnet-1":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-1":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-1":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "westnet-eastnet-1":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
+000 "westnet-eastnet-1":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-1":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-1":   newest ISAKMP SA: #0; newest IPsec SA: #4;
 000 "westnet-eastnet-1":   aliases: westnet-eastnet
@@ -215,7 +215,7 @@ west #
 000 "westnet-eastnet-2":   conn_prio: 24,24; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "westnet-eastnet-2":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "westnet-eastnet-2":   our idtype: ID_FQDN; our id=@west; their idtype: ID_FQDN; their id=@east
-000 "westnet-eastnet-2":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
+000 "westnet-eastnet-2":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "westnet-eastnet-2":   nat-traversal: encaps:auto; keepalive:20s
 000 "westnet-eastnet-2":   newest ISAKMP SA: #0; newest IPsec SA: #3;
 000 "westnet-eastnet-2":   aliases: westnet-eastnet

@@ -150,7 +150,7 @@ road #
 000 "road-east-x509-ipv4":   conn_prio: 0,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "road-east-x509-ipv4":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "road-east-x509-ipv4":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
-000 "road-east-x509-ipv4":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
+000 "road-east-x509-ipv4":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "road-east-x509-ipv4":   nat-traversal: encaps:auto; keepalive:20s
 000 "road-east-x509-ipv4":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "road-east-x509-ipv4"[1]: 192.0.2.100/32===192.1.3.209[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org,+MC+S=C]---192.1.3.254...192.1.2.23[C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org]===0.0.0.0/0; erouted; eroute owner: #2
@@ -168,7 +168,7 @@ road #
 000 "road-east-x509-ipv4"[1]:   conn_prio: 0,0; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "road-east-x509-ipv4"[1]:   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "road-east-x509-ipv4"[1]:   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org; their idtype: ID_DER_ASN1_DN; their id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org
-000 "road-east-x509-ipv4"[1]:   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
+000 "road-east-x509-ipv4"[1]:   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "road-east-x509-ipv4"[1]:   nat-traversal: encaps:auto; keepalive:20s
 000 "road-east-x509-ipv4"[1]:   newest IKE SA: #3; newest IPsec SA: #2; conn serial: $2, instantiated from: $1;
 000 "road-east-x509-ipv4"[1]:   IKEv2 algorithm newest: AES_GCM_16_256-HMAC_SHA2_512-MODP2048

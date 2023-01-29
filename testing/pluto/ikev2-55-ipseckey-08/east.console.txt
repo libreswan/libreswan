@@ -23,7 +23,7 @@ east #
 000 "east-any":   conn_prio: 32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "east-any":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "east-any":   our idtype: ID_IPV4_ADDR; our id=192.1.2.23; their idtype: %none; their id=(none)
-000 "east-any":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
+000 "east-any":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "east-any":   nat-traversal: encaps:auto; keepalive:20s
 000 "east-any":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
 east #

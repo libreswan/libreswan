@@ -103,7 +103,7 @@ ipsec auto --status
 000 "road-eastnet-nonat":   policy: IKEv2+RSASIG+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO+ESN_YES;
 000 "road-eastnet-nonat":   conn_prio: 32,24; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "road-eastnet-nonat":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
-000 "road-eastnet-nonat":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
+000 "road-eastnet-nonat":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "road-eastnet-nonat":   nat-traversal: encaps:auto; keepalive:20s
 000 "road-eastnet-nonat":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
 000  

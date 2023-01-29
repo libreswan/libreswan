@@ -23,7 +23,7 @@ east #
 000 "east":   conn_prio: 64,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "east":   our idtype: ID_FQDN; our id=@east; their idtype: %none; their id=(none)
-000 "east":   liveness: passive; dpdaction:hold; dpddelay:0s; retransmit-timeout:60s
+000 "east":   liveness: passive; dpddelay:0s; retransmit-timeout:60s
 000 "east":   nat-traversal: encaps:auto; keepalive:20s
 000 "east":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
 east #
