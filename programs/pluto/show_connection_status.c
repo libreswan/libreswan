@@ -641,17 +641,15 @@ void show_connection_status(struct show *s, const struct connection *c)
 			     deltasecs(c->config->dpd.timeout));
 		break;
 	}
+
 	case IKEv2:
-	{
-		enum_buf eb;
-		show_comment(s, PRI_CONNECTION":   liveness: %s; dpdaction:%s; dpddelay:%jds; retransmit-timeout:%jds",
+		show_comment(s, PRI_CONNECTION":   liveness: %s; dpddelay:%jds; retransmit-timeout:%jds",
 			     c->name, instance,
 			     deltasecs(c->config->dpd.delay) > 0 ? "active" : "passive",
-			     str_enum_short(&dpd_action_names, c->config->dpd.action, &eb),
 			     deltasecs(c->config->dpd.delay),
 			     deltasecs(c->config->retransmit_timeout));
 		break;
-	}
+
 	}
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
