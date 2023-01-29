@@ -2064,12 +2064,13 @@ static diag_t extract_connection(const struct whack_message *wm,
 		 */
 		ldbg(c->logger, "dpdaction=%d", wm->dpd_action);
 		const struct timescale *const dpd_timescale = &timescale_seconds;
-		config->dpd.action = (wm->dpd_action == DPD_ACTION_UNSET ? DPD_ACTION_HOLD :
-				      wm->dpd_action);
 
 		switch (wm->ike_version) {
 		case IKEv1:
 			/* IKEv1's RFC 3706 DPD */
+			config->dpd.action = (wm->dpd_action == DPD_ACTION_UNSET ? DPD_ACTION_HOLD :
+					      wm->dpd_action);
+
 			if (wm->dpd_delay != NULL &&
 			    wm->dpd_timeout != NULL) {
 				diag_t d;
@@ -2097,6 +2098,13 @@ static diag_t extract_connection(const struct whack_message *wm,
 				llog(RC_LOG, c->logger,
 				     "warning: IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set");
 			}
+			/* check for conflicts */
+			if ((wm->policy & POLICY_DONT_REKEY) != LEMPTY &&
+			    wm->dpd_action == DPD_ACTION_RESTART) {
+				llog(RC_LOG, c->logger,
+				     "warning: dpdaction cannot be 'restart'  when rekey=no - defaulting to 'hold'");
+				config->dpd.action = DPD_ACTION_HOLD;
+			}
 			break;
 		case IKEv2:
 			if (wm->dpd_delay != NULL) {
@@ -2108,23 +2116,15 @@ static diag_t extract_connection(const struct whack_message *wm,
 					return diag_diag(&d, "dpddelay=%s invalid, ",
 							 wm->dpd_delay);
 				}
-			} else if (wm->dpd_action != DPD_ACTION_UNSET) {
-				llog(RC_LOG, c->logger,
-				     "warning: IKEv2 liveness setting dpdaction= is ignored unless dpddelay= is set");
 			}
-			if (wm->dpd_timeout != NULL) {
+			config->dpd.action = DPD_ACTION_HOLD;/*keep tests happy*/
+			if (wm->dpd_timeout != NULL ||
+			    wm->dpd_action != DPD_ACTION_UNSET) {
+				/* actual values don't matter */
 				llog(RC_LOG, c->logger,
-				     "warning: IKEv2 liveness uses retransmit-timeout=, dpdtimeout= ignored");
+				     "warning: IKEv2 ignores dpdtimeout= and dpdaction=; use dpddelay=, retransmit-timeout=, failureshunt=, and negotiationshunt=");
 			}
 			break;
-		}
-
-		/* check for conflicts */
-		if ((wm->policy & POLICY_DONT_REKEY) != LEMPTY &&
-		    wm->dpd_action == DPD_ACTION_RESTART) {
-			llog(RC_LOG, c->logger,
-			     "warning: dpdaction cannot be 'restart'  when rekey=no - defaulting to 'hold'");
-			config->dpd.action = DPD_ACTION_HOLD;
 		}
 
 		/* Cisco interop: remote peer type */

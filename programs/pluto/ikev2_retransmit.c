@@ -37,69 +37,12 @@
 
 void process_v2_ike_sa_established_request_timeout(struct ike_sa *ike, monotime_t now UNUSED)
 {
-	const char *kind_name = enum_name(&connection_kind_names,
-					  ike->sa.st_connection->kind);
-
-	switch (ike->sa.st_connection->config->dpd.action) {
-	case DPD_ACTION_CLEAR:
-	{
-		/*
-		 * Danger: delete_ike_family() can delete the IKE SA's
-		 * connection.  Cover our bases by saving a handle.
-		 */
-		llog_sa(RC_LOG, ike,
-			"liveness action - clearing connection kind %s",
-			kind_name);
-		co_serial_t co = ike->sa.st_connection->serialno;
-		so_serial_t so = ike->sa.st_serialno;
-		/* remove any partial negotiations that are failing */
-		flush_pending_by_connection(ike->sa.st_connection);
-		delete_ike_family(&ike, DONT_SEND_DELETE);
-		pexpect(ike == NULL);
-		struct connection *c = connection_by_serialno(co);
-		if (c != NULL && c->newest_ike_sa == so) {
-			dbg("unrouting connection kind %s",
-			    kind_name);
-			connection_down(c); /* --unroute */
-		}
-		break;
+	llog_sa(RC_LOG, ike,
+		"liveness action - putting connection into hold");
+	if (ike->sa.st_connection->kind == CK_INSTANCE) {
+		dbg("liveness warning: dpdaction=hold on instance futile - will be deleted");
 	}
-
-	case DPD_ACTION_RESTART:
-	{
-		/*
-		 * XXX: Danger! This connection call can end up
-		 * deleting IKE.
-		 *
-		 * So that the logger is valid after IKE_TBD's been
-		 * deleted, create a clone of IKE's logger and
-		 * kill the IKE pointer.
-		 *
-		 * XXX: and how is this different to REVIVE?
-		 */
-		llog_sa(RC_LOG, ike,
-			"liveness action - restarting all connections that share this peer");
-		struct logger *logger = clone_logger(ike->sa.st_logger, HERE);
-		struct connection *c = ike->sa.st_connection;
-		ike = NULL;
-		restart_connections_by_peer(c, logger);
-		ike = NULL; /* potentially deleted */
-		free_logger(&logger, HERE);
-		break;
-	}
-
-	case DPD_ACTION_HOLD:
-		llog_sa(RC_LOG, ike,
-			"liveness action - putting connection into hold");
-		if (ike->sa.st_connection->kind == CK_INSTANCE) {
-			dbg("liveness warning: dpdaction=hold on instance futile - will be deleted");
-		}
-		delete_ike_family(&ike, DONT_SEND_DELETE);
-		break;
-
-	default:
-		bad_case(ike->sa.st_connection->config->dpd.action);
-	}
+	delete_ike_family(&ike, DONT_SEND_DELETE);
 }
 
 /*
