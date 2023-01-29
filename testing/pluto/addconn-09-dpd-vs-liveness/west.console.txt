@@ -27,11 +27,11 @@ west #
 002 "ikev1-dpddelay=10s-dpdtimeout=0s": added IKEv1 connection
 west #
  ipsec auto --add ikev2-dpdtimeout=10s            # ignore dpdtimeout
-002 "ikev2-dpdtimeout=10s": warning: IKEv2 liveness uses retransmit-timeout=, dpdtimeout= ignored
+002 "ikev2-dpdtimeout=10s": warning: IKEv2 ignores dpdtimeout= and dpdaction=; use dpddelay=, retransmit-timeout=, failureshunt=, and negotiationshunt=
 002 "ikev2-dpdtimeout=10s": added IKEv2 connection
 west #
  ipsec auto --add ikev2-dpdaction=clear           # requires dpddelay
-002 "ikev2-dpdaction=clear": warning: IKEv2 liveness setting dpdaction= is ignored unless dpddelay= is set
+002 "ikev2-dpdaction=clear": warning: IKEv2 ignores dpdtimeout= and dpdaction=; use dpddelay=, retransmit-timeout=, failureshunt=, and negotiationshunt=
 002 "ikev2-dpdaction=clear": added IKEv2 connection
 west #
  

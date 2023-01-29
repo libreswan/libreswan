@@ -6,6 +6,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add west-east
+002 "west-east": warning: IKEv2 ignores dpdtimeout= and dpdaction=; use dpddelay=, retransmit-timeout=, failureshunt=, and negotiationshunt=
 002 "west-east": added IKEv2 connection
 east #
  echo "initdone"

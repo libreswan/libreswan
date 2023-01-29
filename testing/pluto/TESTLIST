@@ -689,18 +689,18 @@ kvmplutotest	dpd-10-alias 		wip
 kvmplutotest	dpd-11-silent		good
 
 # IKEv2 liveness tests
-kvmplutotest	ikev2-liveness-01-east-active-clear		good
-kvmplutotest	ikev2-liveness-02-east-active-restart		good
-kvmplutotest	ikev2-liveness-03-both-active-clear		good
-kvmplutotest	ikev2-liveness-04-west-aggr-clear		good
+kvmplutotest	ikev2-liveness-01-east-active-clear		wip	github/253;dpdaction=clear
+kvmplutotest	ikev2-liveness-02-east-active-restart		wip	github/253;dpdaction=restart
+kvmplutotest	ikev2-liveness-03-both-active-clear		wip	github/253;dpdaction=clear
+kvmplutotest	ikev2-liveness-04-west-aggr-clear		wip	github/253;dpdaction=clear
 kvmplutotest	ikev2-liveness-05				wip	github:531
-kvmplutotest	ikev2-liveness-06-both-active-clear-clear	good
+kvmplutotest	ikev2-liveness-06-both-active-clear-clear	wip	github/253;dpdaction=clear
 kvmplutotest	ikev2-liveness-07				wip	github:531
 kvmplutotest	ikev2-liveness-08				wip
 kvmplutotest	ikev2-liveness-09				good
 kvmplutotest	ikev2-liveness-10				wip
 kvmplutotest	ikev2-liveness-11-silent			good
-kvmplutotest	ikev2-liveness-12-clear-rw-restart		good
+kvmplutotest	ikev2-liveness-12-clear-rw-restart		wip	github/253;dpdaction
 kvmplutotest	ikev2-child-00-dh-hang		wip
 kvmplutotest	ikev2-child-01-pfs-no-downgrade-no	good
 kvmplutotest	ikev2-child-02-pfs-yes-downgrade-yes	good
