@@ -2117,7 +2117,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 							 wm->dpd_delay);
 				}
 			}
-			config->dpd.action = DPD_ACTION_HOLD;/*keep tests happy*/
 			if (wm->dpd_timeout != NULL ||
 			    wm->dpd_action != DPD_ACTION_UNSET) {
 				/* actual values don't matter */
