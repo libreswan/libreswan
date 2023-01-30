@@ -200,33 +200,30 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 		return false;
 
 	struct connection *cc = child->sa.st_connection;
-	bool ipset[IP_INDEX_ROOF] = {0};
-	bool something = false;
+	bool ask_for_ip[IP_INDEX_ROOF] = {0};
+	bool ask_for_something = false;
 
 	FOR_EACH_THING(afi, &ipv4_info, &ipv6_info) {
 		if (cc->pool[afi->ip_index] != NULL) {
 			dbg("pool says to ask for %s", afi->ip_name);
-			ipset[afi->ip_index] = something = true;
+			ask_for_ip[afi->ip_index] = true;
 		}
+		const ip_selectors *selectors = &cc->local->child.selectors.proposed;
+		if (selectors->ip[afi->ip_index].len > 0) {
+			dbg("local.selectors.proposed.ip[%s].len > 0 so ask", afi->ip_name);
+			ask_for_ip[afi->ip_index] = true;
+		}
+		ask_for_something |= ask_for_ip[afi->ip_index];
 	}
 
-	const ip_selectors *selectors = &cc->local->child.selectors.proposed;
-	FOR_EACH_ITEM(s, selectors) {
-		const struct ip_info *afi = selector_type(s);
-		selector_buf sb;
-		dbg("local.selectors.list[%zu] %s says to ask for %s",
-		    s - selectors->list, str_selector(s, &sb), afi->ip_name);
-		ipset[afi->ip_index] = something = true;
-	}
-
-	if (!something) {
+	if (!ask_for_something) {
 		llog_pexpect(child->sa.st_logger, HERE,
 			     "can't figure out which internal address is needed");
 		return false;
 	}
 
 	FOR_EACH_THING(afi, &ipv4_info, &ipv6_info) {
-		if (ipset[afi->ip_index]) {
+		if (ask_for_ip[afi->ip_index]) {
 			if (!emit_v2CP_attribute_address(afi->ikev2_internal_address,
 							 NULL, "address", &cp_pbs) ||
 			    !emit_v2CP_attribute_address(afi->ikev2_internal_dns,
