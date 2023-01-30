@@ -24,9 +24,6 @@ from fab import console
 from fab import logutil
 from fab import timing
 
-# Can be anything as it either matches immediately or dies with EOF.
-CONSOLE_TIMEOUT = 30
-
 class STATE:
     RUNNING = "running"
     IDLE = "idle"
@@ -39,6 +36,9 @@ class STATE:
 
 _VIRSH = ["sudo", "virsh", "--connect", "qemu:///system"]
 
+START_TIMEOUT = 60
+# Can be anything as it either matches immediately or dies with EOF.
+CONSOLE_TIMEOUT = 20
 SHUTDOWN_TIMEOUT = 20
 DESTROY_TIMEOUT = 20
 
