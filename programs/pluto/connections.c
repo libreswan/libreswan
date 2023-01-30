@@ -230,9 +230,9 @@ void delete_connection(struct connection **cp)
 			     c->newest_ike_sa, c->newest_ipsec_sa);
 		}
 		c->kind = CK_GOING_AWAY;
-		for (enum ip_index i = IP_INDEX_FLOOR; i < IP_INDEX_ROOF; i++) {
-			if (c->pool[i] != NULL) {
-				free_that_address_lease(c, &ip_info[i]);
+		FOR_EACH_ELEMENT(afi, ip_families) {
+			if (c->pool[afi->ip_index] != NULL) {
+				free_that_address_lease(c, afi);
 			}
 		}
 	}
@@ -248,8 +248,8 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	if (c->kind == CK_GROUP)
 		delete_group(c);
 
-	for (enum ip_index i = IP_INDEX_FLOOR; i < IP_INDEX_ROOF; i++) {
-		addresspool_delref(&c->pool[i]);
+	FOR_EACH_ELEMENT(afi, ip_families) {
+		addresspool_delref(&c->pool[afi->ip_index]);
 	}
 
 	if (IS_XFRMI && c->xfrmi != NULL)
@@ -984,7 +984,7 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 			return diag_diag(&d, "%saddresspool=%s invalid, ", leftright, src->addresspool);
 		}
 
-		FOR_EACH_ELEMENT(pool_afi, ip_info) {
+		FOR_EACH_ELEMENT(pool_afi, ip_families) {
 
 			/* allow at most one */
 			switch (host_config->pool_ranges.ip[pool_afi->ip_index].len) {
@@ -1422,12 +1422,14 @@ void add_connection_spds(struct connection *c,
 	 * calculate the total number of SPDs.
 	 */
 	unsigned nr_spds = 0;
-	for (enum ip_index ip = IP_INDEX_FLOOR; ip < IP_INDEX_ROOF; ip++) {
+	FOR_EACH_ELEMENT(afi, ip_families) {
 		const ip_selectors *left = &c->end[LEFT_END].child.selectors.proposed;
 		const ip_selectors *right = &c->end[RIGHT_END].child.selectors.proposed;
-		ldbg(c->logger, "%*sleft[%u]=%u right[%u]=%u",
-		     indent+1, "", ip, left->ip[ip].len, ip, right->ip[ip].len);
-		nr_spds += (left->ip[ip].len * right->ip[ip].len);
+		ldbg(c->logger, "%*sleft[%s]=%u right[%s]=%u",
+		     indent+1, "",
+		     afi->ip_name, left->ip[afi->ip_index].len,
+		     afi->ip_name, right->ip[afi->ip_index].len);
+		nr_spds += (left->ip[afi->ip_index].len * right->ip[afi->ip_index].len);
 	}
 
 	/*
@@ -1440,7 +1442,8 @@ void add_connection_spds(struct connection *c,
 
 	alloc_connection_spds(c, nr_spds);
 	unsigned spds = 0;
-	for (enum ip_index ip = IP_INDEX_FLOOR; ip < IP_INDEX_ROOF; ip++) {
+	FOR_EACH_ELEMENT(afi, ip_families) {
+		enum ip_index ip = afi->ip_index;
 		const ip_selectors *left_selectors = &c->end[LEFT_END].child.selectors.proposed;
 		FOR_EACH_ITEM(left_selector, &left_selectors->ip[ip]) {
 			const ip_selectors *right_selectors = &c->end[RIGHT_END].child.selectors.proposed;
@@ -2487,7 +2490,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	/* now check there's a match */
-	FOR_EACH_THING(afi, &ipv4_info, &ipv6_info) {
+	FOR_EACH_ELEMENT(afi, ip_families) {
 		enum ip_index i = afi->ip_index;
 
 		/* both ends do; or both ends don't */

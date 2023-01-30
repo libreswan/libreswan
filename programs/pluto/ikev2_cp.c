@@ -203,7 +203,7 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 	bool ask_for_ip[IP_INDEX_ROOF] = {0};
 	bool ask_for_something = false;
 
-	FOR_EACH_THING(afi, &ipv4_info, &ipv6_info) {
+	FOR_EACH_ELEMENT(afi, ip_families) {
 		if (cc->pool[afi->ip_index] != NULL) {
 			dbg("pool says to ask for %s", afi->ip_name);
 			ask_for_ip[afi->ip_index] = true;
@@ -222,7 +222,7 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 		return false;
 	}
 
-	FOR_EACH_THING(afi, &ipv4_info, &ipv6_info) {
+	FOR_EACH_ELEMENT(afi, ip_families) {
 		if (ask_for_ip[afi->ip_index]) {
 			if (!emit_v2CP_attribute_address(afi->ikev2_internal_address,
 							 NULL, "address", &cp_pbs) ||

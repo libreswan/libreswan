@@ -92,7 +92,8 @@ diag_t ttoselectors_num(shunk_t input, const char *delims,
 			 */
 			dbg("%s() nr tokens %u", __func__, nr_tokens);
 			output->list = alloc_things(ip_token, nr_tokens, "selectors");
-			FOR_EACH_THING(ip, IPv4_INDEX, IPv6_INDEX) {
+			FOR_EACH_ELEMENT(afi, ip_families) {
+				enum ip_index ip = afi->ip_index;
 				output->ip[ip].list = output->list + output->len;
 				output->len += output->ip[ip].len;
 				output->ip[ip].len = 0; /* ready for second pass */

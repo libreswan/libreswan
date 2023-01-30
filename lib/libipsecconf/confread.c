@@ -413,7 +413,9 @@ static bool validate_end(struct starter_conn *conn_st,
 	const char *leftright = end->leftright;
 	bool err = false;
 
-	pexpect(end->host_family == &ipv4_info || end->host_family == &ipv6_info); /* i.e., not NULL */
+	passert(end->host_family != NULL);
+	pexpect(end->host_family == &ipv4_info ||
+		end->host_family == &ipv6_info); /* i.e., not NULL */
 
 #  define ERR_FOUND(...) { starter_error_append(perrl, __VA_ARGS__); err = true; }
 

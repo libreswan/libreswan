@@ -17,7 +17,7 @@ struct ip_info {
 	 * address family
 	 */
 	enum ip_version ip_version; /* 4 or 6 */
-	enum ip_index ip_index; /* 1 or 2 (never 0) */
+	enum ip_index ip_index; /* 0 or 1 */
 	const char *ip_name; /* "IPv4" or "IPv6" */
 	size_t ip_size; /* 4 or 16 */
 	unsigned mask_cnt; /* 32 or 128 */
@@ -118,10 +118,10 @@ struct ip_info {
 
 };
 
-extern const struct ip_info ip_info[IP_INDEX_ROOF];
+extern const struct ip_info ip_families[IP_INDEX_ROOF];
 
-#define ipv4_info ip_info[IPv4_INDEX]
-#define ipv6_info ip_info[IPv6_INDEX]
+#define ipv4_info ip_families[IPv4_INDEX]
+#define ipv6_info ip_families[IPv6_INDEX]
 
 extern const struct ip_info *aftoinfo(int af);
 

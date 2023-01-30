@@ -31,6 +31,8 @@
  * for more details.
  */
 
+#include "ip_info.h"
+
 #include "defs.h"
 #include "instantiate.h"
 #include "iface.h"
@@ -100,8 +102,8 @@ struct connection *clone_connection(const char *name, struct connection *t,
 		zero(&c->end[end].child.selectors);
 	}
 
-	for (enum ip_index i = IP_INDEX_FLOOR; i < IP_INDEX_ROOF; i++) {
-		c->pool[i] = addresspool_addref(t->pool[i]);
+	FOR_EACH_ELEMENT(afi, ip_families) {
+		c->pool[afi->ip_index] = addresspool_addref(t->pool[afi->ip_index]);
 	}
 
 	if (IS_XFRMI && c->xfrmi != NULL) {

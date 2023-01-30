@@ -22,7 +22,6 @@ enum ip_index {
 	IPv6_INDEX,
 };
 
-#define IP_INDEX_FLOOR IPv4_INDEX
 #define IP_INDEX_ROOF (IPv6_INDEX+1)
 
 #endif

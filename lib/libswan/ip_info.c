@@ -158,7 +158,7 @@ static ip_port port_from_ipv6_sockaddr(const ip_sockaddr sa)
 
 #define IPv4_FF { { 255, 255, 255, 255, }, }
 
-const struct ip_info ip_info[IP_INDEX_ROOF] = {
+const struct ip_info ip_families[IP_INDEX_ROOF] = {
 
 	[IPv4_INDEX] = {
 
