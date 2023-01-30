@@ -984,14 +984,18 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 			return diag_diag(&d, "%saddresspool=%s invalid, ", leftright, src->addresspool);
 		}
 
-		FOR_EACH_ITEM(pool_range, &host_config->pool_ranges) {
-			const struct ip_info *pool_afi = range_type(pool_range);
+		FOR_EACH_ELEMENT(pool_afi, ip_info) {
 
-			if (c->pool[pool_afi->ip_index] != NULL) {
+			/* allow at most one */
+			switch (host_config->pool_ranges.ip[pool_afi->ip_index].len) {
+			case 0: continue;
+			case 1: break;
+			default:
 				return diag("%saddresspool=%s invalid, multiple %s ranges",
 					    leftright, src->addresspool, pool_afi->ip_name);
 			}
 
+			const ip_range *pool_range = host_config->pool_ranges.ip[pool_afi->ip_index].list;
 			if (pool_afi == &ipv6_info && !pool_range->is_subnet) {
 				range_buf rb;
 				return diag("%saddresspool=%s invalid, IPv6 range %s is not a subnet",
