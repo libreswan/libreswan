@@ -675,13 +675,13 @@ kvmplutotest	ikev2-asymmetric-14-rsacert-rsaraw	wip
 
 
 # RFC 3706 DPD
-kvmplutotest	dpd-01			wip github:517
-kvmplutotest	dpd-02	good
+kvmplutotest	dpd-01						wip	github/517
+kvmplutotest	dpd-02						wip	github/253;dpdaction=clear
 kvmplutotest	dpd-02-reverse	good
 kvmplutotest	dpd-03	good
 kvmplutotest	dpd-04	good
 kvmplutotest	dpd-05	good
-kvmplutotest	dpd-06	good
+kvmplutotest	dpd-06						wip	github/253;dpdaction=restart
 kvmplutotest	dpd-07	good
 kvmplutotest	dpd-08	wip
 kvmplutotest	dpd-09-shared		wip
