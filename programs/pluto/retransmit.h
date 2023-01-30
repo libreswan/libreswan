@@ -40,14 +40,17 @@ void start_retransmits(struct state *st);
 
 void clear_retransmits(struct state *st);
 
-enum retransmit_status {
-	RETRANSMITS_TIMED_OUT = 1,
-	DELETE_ON_RETRANSMIT,
+enum retransmit_action {
+	RETRANSMIT_TIMEOUT = 1,
 	RETRANSMIT_NO,
 	RETRANSMIT_YES,
+	/* due to impair */
+	TIMEOUT_ON_RETRANSMIT,
+	DELETE_ON_RETRANSMIT,
 };
 
-enum retransmit_status retransmit(struct state *st);
+enum retransmit_action retransmit(struct state *st);
+
 
 size_t lswlog_retransmit_prefix(struct jambuf *buf, struct state *st);
 

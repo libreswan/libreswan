@@ -67,7 +67,9 @@ void event_v1_retransmit(struct state *st, monotime_t now UNUSED)
 		return;
 	case RETRANSMIT_NO:
 		return;
-	case RETRANSMITS_TIMED_OUT:
+	case RETRANSMIT_TIMEOUT:
+		break;
+	case TIMEOUT_ON_RETRANSMIT:
 		break;
 	case DELETE_ON_RETRANSMIT:
 		/* disable re-key code */

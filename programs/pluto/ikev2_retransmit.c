@@ -88,7 +88,9 @@ void event_v2_retransmit(struct state *ike_sa, monotime_t now)
 		return;
 	case RETRANSMIT_NO:
 		return;
-	case RETRANSMITS_TIMED_OUT:
+	case RETRANSMIT_TIMEOUT:
+		break;
+	case TIMEOUT_ON_RETRANSMIT:
 		break;
 	case DELETE_ON_RETRANSMIT:
 		delete_ike_family(&ike, DONT_SEND_DELETE);

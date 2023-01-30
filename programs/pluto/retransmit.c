@@ -153,7 +153,7 @@ void start_retransmits(struct state *st)
  * reached - so that the caller has access to the capped values.
  */
 
-enum retransmit_status retransmit(struct state *st)
+enum retransmit_action retransmit(struct state *st)
 {
 	/*
 	 * XXX: this is the IKE SA's retry limit; a second child
@@ -184,10 +184,12 @@ enum retransmit_status retransmit(struct state *st)
 	 *
 	 * - trigger the retransmit timeout path after the first delay
 	 */
+
 	if (impair.timeout_on_retransmit) {
 		log_state(RC_LOG, st, "IMPAIR: retransmit so timing out SA (may retry)");
-		return RETRANSMITS_TIMED_OUT;
+		return TIMEOUT_ON_RETRANSMIT;
 	}
+
 	if (impair.delete_on_retransmit) {
 		log_state(RC_LOG, st, "IMPAIR: retransmit so deleting SA");
 		return DELETE_ON_RETRANSMIT;
@@ -277,7 +279,8 @@ enum retransmit_status retransmit(struct state *st)
 				break;
 			}
 		}
-		return RETRANSMITS_TIMED_OUT;
+		/* let the recovery code kick in */
+		return RETRANSMIT_TIMEOUT;
 	}
 
 	double_delay(rt, nr_retransmits);
