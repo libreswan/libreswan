@@ -292,24 +292,3 @@ enum retransmit_status retransmit(struct state *st)
 	}
 	return RETRANSMIT_YES;
 }
-
-void suppress_retransmits(struct state *st)
-{
-	retransmit_t *rt = &st->st_retransmit;
-	if (rt->limit == 0) {
-		dbg_retransmit(st, "no retransmits to suppress");
-		return;
-	}
-
-	const monotime_t now = mononow();
-	rt->delay = monotimediff(monotime_add(rt->start, rt->timeout), now);
-	rt->delays = deltatime_add(rt->delays, rt->delay);
-	event_delete(EVENT_RETRANSMIT, st);
-	event_schedule(EVENT_RETRANSMIT, rt->delay, st);
-	LLOG_JAMBUF(RC_RETRANSMISSION, st->st_logger, buf) {
-		jam(buf, "%s: suppressing retransmits; will wait ",
-			st->st_state->name);
-		jam_deltatime(buf, rt->delay);
-		jam_string(buf, " seconds for retry");
-	}
-}
