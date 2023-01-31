@@ -630,17 +630,13 @@ void show_connection_status(struct show *s, const struct connection *c)
 
 	switch (c->config->ike_version) {
 	case IKEv1:
-	{
-		enum_buf eb;
-		show_comment(s, PRI_CONNECTION":   dpd: %s; action:%s; delay:%jds; timeout:%jds",
+		show_comment(s, PRI_CONNECTION":   dpd: %s; delay:%jds; timeout:%jds",
 			     c->name, instance,
 			     (deltasecs(c->config->dpd.delay) > 0 &&
 			      deltasecs(c->config->dpd.timeout) > 0 ? "active" : "passive"),
-			     str_enum_short(&dpd_action_names, c->config->dpd.action, &eb),
 			     deltasecs(c->config->dpd.delay),
 			     deltasecs(c->config->dpd.timeout));
 		break;
-	}
 
 	case IKEv2:
 		show_comment(s, PRI_CONNECTION":   liveness: %s; dpddelay:%jds; retransmit-timeout:%jds",
