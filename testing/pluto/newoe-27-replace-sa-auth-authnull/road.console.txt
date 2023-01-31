@@ -151,7 +151,6 @@ road #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
 000  
-000 192.1.3.209/32 -0-> 192.1.2.23/32 => %pass 0    oe-failing
 road #
  echo done
 done
