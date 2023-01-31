@@ -156,7 +156,7 @@ class Domain:
     def reboot(self):
         return self._run_status_output(_VIRSH + ["reboot", self.domain_name])
 
-    def start(self, timeout=CONSOLE_TIMEOUT):
+    def start(self, timeout=START_TIMEOUT):
         command = _VIRSH + ["start", self.domain_name, "--console"]
         self.logger.info("spawning: %s", " ".join(command))
         self._console = console.Remote(command, self.logger, hostname=self.guest_name)
