@@ -1418,7 +1418,9 @@ void add_connection_spds(struct connection *c,
 	ldbg(c->logger, "%*sleft=%u right=%u",
 	     indent, "", left->len, right->len);
 
-	/* Calculate the total number of SPDs. */
+	/*
+	 * calculate the total number of SPDs.
+	 */
 	unsigned nr_spds = 0;
 	FOR_EACH_ELEMENT(afi, ip_families) {
 		const ip_selectors *left = &c->end[LEFT_END].child.selectors.proposed;
@@ -1430,10 +1432,15 @@ void add_connection_spds(struct connection *c,
 		nr_spds += (left->ip[afi->ip_index].len * right->ip[afi->ip_index].len);
 	}
 
-	/* Allocate the SPDs. */
-	alloc_connection_spds(c, nr_spds);
+	/*
+	 * Pass 1: totals nr SPDs needed.
+	 * Pass 2: allocates SPDs.
+	 *
+	 * If selectors were split into IPv4 and IPv6 lists this could
+	 * go away.
+	 */
 
-	/* Now fill them in. */
+	alloc_connection_spds(c, nr_spds);
 	unsigned spds = 0;
 	FOR_EACH_ELEMENT(afi, ip_families) {
 		enum ip_index ip = afi->ip_index;
@@ -2446,21 +2453,18 @@ static diag_t extract_connection(const struct whack_message *wm,
 		const ip_selectors *const selectors = &c->end[end].config->child.selectors;
 		const ip_ranges *const pools = &c->end[end].config->host.pool_ranges;
 		if (selectors->len > 0) {
-			FOR_EACH_ELEMENT(afi, ip_families) {
-				if (selectors->ip[afi->ip_index].len > 0) {
-					end_family[end][afi->ip_index].used = true;
-					end_family[end][afi->ip_index].field = "subnet";
-					end_family[end][afi->ip_index].value = whack_ends[end]->subnet;
-				}
+			FOR_EACH_ITEM(s, selectors) {
+				const struct ip_info *afi = selector_type(s);
+				end_family[end][afi->ip_index].used = true;
+				end_family[end][afi->ip_index].field = "subnet";
+				end_family[end][afi->ip_index].value = whack_ends[end]->subnet;
 			}
 		} else if (pools->len > 0) {
-			FOR_EACH_ELEMENT(afi, ip_families) {
-				if (pools->ip[afi->ip_index].len > 0) {
-					const struct ip_info *afi = range_type(s);
-					end_family[end][afi->ip_index].used = true;
-					end_family[end][afi->ip_index].field = "addresspool";
-					end_family[end][afi->ip_index].value = whack_ends[end]->addresspool;
-				}
+			FOR_EACH_ITEM(s, pools) {;
+				const struct ip_info *afi = range_type(s);
+				end_family[end][afi->ip_index].used = true;
+				end_family[end][afi->ip_index].field = "addresspool";
+				end_family[end][afi->ip_index].value = whack_ends[end]->addresspool;
 			}
 		} else {
 			end_family[end][host_afi->ip_index].used = true;
