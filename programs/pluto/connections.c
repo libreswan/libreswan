@@ -2062,7 +2062,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 		switch (wm->ike_version) {
 		case IKEv1:
 			/* IKEv1's RFC 3706 DPD */
-			config->dpd.action = DPD_ACTION_HOLD;
 			if (wm->dpd_delay != NULL &&
 			    wm->dpd_timeout != NULL) {
 				if (wm->dpd_action != DPD_ACTION_UNSET) {
