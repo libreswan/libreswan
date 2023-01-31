@@ -28,7 +28,7 @@ west #
 000 "nss-cert-ocsp":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "nss-cert-ocsp":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "nss-cert-ocsp":   our idtype: ID_DER_ASN1_DN; our id=C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=revoked.testing.libreswan.org, E=user-revoked@testing.libreswan.org; their idtype: %fromcert; their id=%fromcert
-000 "nss-cert-ocsp":   dpd: passive; action:hold; delay:0s; timeout:0s
+000 "nss-cert-ocsp":   dpd: passive; delay:0s; timeout:0s
 000 "nss-cert-ocsp":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "nss-cert-ocsp":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 west #

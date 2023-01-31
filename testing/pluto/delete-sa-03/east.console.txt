@@ -28,7 +28,7 @@ east #
 000 "west-east":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "west-east":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
-000 "west-east":   dpd: passive; action:hold; delay:0s; timeout:0s
+000 "west-east":   dpd: passive; delay:0s; timeout:0s
 000 "west-east":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "west-east":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "west-east-b": 198.51.100.2/32===192.1.2.23[@east]...192.1.2.45[@west]===198.51.100.1/32; unrouted; eroute owner: #0
@@ -44,7 +44,7 @@ east #
 000 "west-east-b":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "west-east-b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "west-east-b":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
-000 "west-east-b":   dpd: passive; action:hold; delay:0s; timeout:0s
+000 "west-east-b":   dpd: passive; delay:0s; timeout:0s
 000 "west-east-b":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "west-east-b":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $2;
 000 "west-east-c": 198.51.100.4/32===192.1.2.23[@east]...192.1.2.45[@west]===198.51.100.3/32; unrouted; eroute owner: #0
@@ -60,7 +60,7 @@ east #
 000 "west-east-c":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "west-east-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "west-east-c":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
-000 "west-east-c":   dpd: passive; action:hold; delay:0s; timeout:0s
+000 "west-east-c":   dpd: passive; delay:0s; timeout:0s
 000 "west-east-c":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "west-east-c":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $3;
 east #
@@ -83,7 +83,7 @@ east #
 000 "west-east":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "west-east":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "west-east":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
-000 "west-east":   dpd: passive; action:hold; delay:0s; timeout:0s
+000 "west-east":   dpd: passive; delay:0s; timeout:0s
 000 "west-east":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "west-east":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "west-east-b": 198.51.100.2/32===192.1.2.23[@east]...192.1.2.45[@west]===198.51.100.1/32; erouted; eroute owner: #3
@@ -99,7 +99,7 @@ east #
 000 "west-east-b":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "west-east-b":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "west-east-b":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
-000 "west-east-b":   dpd: passive; action:hold; delay:0s; timeout:0s
+000 "west-east-b":   dpd: passive; delay:0s; timeout:0s
 000 "west-east-b":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "west-east-b":   newest ISAKMP SA: #0; newest IPsec SA: #3; conn serial: $2;
 000 "west-east-b":   ESP algorithm newest: AES_CBC_128-HMAC_SHA1_96; pfsgroup=<Phase1>
@@ -116,7 +116,7 @@ east #
 000 "west-east-c":   conn_prio: 32,32; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "west-east-c":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "west-east-c":   our idtype: ID_FQDN; our id=@east; their idtype: ID_FQDN; their id=@west
-000 "west-east-c":   dpd: passive; action:hold; delay:0s; timeout:0s
+000 "west-east-c":   dpd: passive; delay:0s; timeout:0s
 000 "west-east-c":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "west-east-c":   newest ISAKMP SA: #1; newest IPsec SA: #4; conn serial: $3;
 000 "west-east-c":   IKEv1 algorithm newest: AES_CBC_256-HMAC_SHA2_256-MODP2048
