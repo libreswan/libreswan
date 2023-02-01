@@ -184,7 +184,6 @@ static const struct sparse_name kw_sendca_list[] = {
  */
 static const struct sparse_name kw_auto_list[] = {
 	{ "ignore", STARTUP_IGNORE },
-	/* no keyword for STARTUP_POLICY */
 	{ "add",    STARTUP_ADD },
 	{ "ondemand",  STARTUP_ONDEMAND },
 	{ "route",  STARTUP_ONDEMAND }, /* backwards compatibility alias */

@@ -422,10 +422,6 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 			dsn = "ignore";
 			break;
 
-		case STARTUP_POLICY:
-			dsn = "policy";	/* ??? no keyword for this */
-			break;
-
 		case STARTUP_ADD:
 			dsn = "add";
 			break;
