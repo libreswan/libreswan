@@ -113,10 +113,9 @@ west #
 "west" #4: sent CREATE_CHILD_SA request to rekey IPsec SA
 "west" #5: initiating rekey to replace Child SA #3
 "west" #1: STATE_V2_ESTABLISHED_IKE_SA: 15 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv2 message
-"west" #1: liveness action - putting connection into hold
+"west" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 "west" #3: ESP traffic information: in=0B out=0B
 "west" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and NOT sending notification
-"west" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  ipsec whack --trafficstatus
 west #
