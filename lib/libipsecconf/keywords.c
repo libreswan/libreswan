@@ -182,14 +182,14 @@ static const struct sparse_name kw_sendca_list[] = {
 /*
  * Values for auto={add,start,ondemand,ignore,keep}
  */
-static const struct sparse_name kw_auto_list[] = {
-	{ "ignore", STARTUP_IGNORE },
-	{ "add",    STARTUP_ADD },
-	{ "ondemand",  STARTUP_ONDEMAND },
-	{ "route",  STARTUP_ONDEMAND }, /* backwards compatibility alias */
-	{ "start",  STARTUP_START },
-	{ "up",     STARTUP_START }, /* alias */
-	{ "keep",   STARTUP_KEEP }, /* add plus once up, keep up */
+static const struct sparse_name kw_autostart_list[] = {
+	{ "ignore", AUTOSTART_IGNORE },
+	{ "add",    AUTOSTART_ADD },
+	{ "ondemand",  AUTOSTART_ONDEMAND },
+	{ "route",  AUTOSTART_ONDEMAND }, /* backwards compatibility alias */
+	{ "start",  AUTOSTART_START },
+	{ "up",     AUTOSTART_START }, /* alias */
+	{ "keep",   AUTOSTART_KEEP }, /* add plus once up, keep up */
 	SPARSE_NULL
 };
 
@@ -455,7 +455,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
 
   /* these are conn statements which are not left/right */
 
-  { "auto",  kv_conn | kv_duplicateok,  kt_enum,  KNCF_AUTO,  kw_auto_list, NULL, },
+  { "auto",  kv_conn | kv_duplicateok,  kt_enum,  KNCF_AUTO,  kw_autostart_list, NULL, },
   { "also",  kv_conn,  kt_appendstring,  KSCF_ALSO, NULL, NULL, },
   { "alsoflip",  kv_conn,  kt_string,  KSCF_ALSOFLIP, NULL, NULL, },
   { "ike",  kv_conn,  kt_string,  KSCF_IKE, NULL, NULL, },

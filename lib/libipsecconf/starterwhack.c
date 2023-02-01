@@ -524,6 +524,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.prospective_shunt = conn->prospective_shunt;
 	msg.negotiation_shunt = conn->negotiation_shunt;
 	msg.failure_shunt = conn->failure_shunt;
+	msg.autostart = conn->autostart;
 
 	msg.connalias = conn->connalias;
 

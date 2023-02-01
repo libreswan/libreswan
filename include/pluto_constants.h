@@ -91,6 +91,16 @@ enum send_ca_policy {
 	CA_SEND_ALL = 2,
 };
 
+/* values for auto={add,start,{route,ondemand},ignore} */
+
+enum autostart {
+	AUTOSTART_IGNORE = 0, /* aka unset */
+	AUTOSTART_ADD,
+	AUTOSTART_ONDEMAND,
+	AUTOSTART_START,
+	AUTOSTART_KEEP,
+};
+
 /* Cisco interop: values remote_peer_type= */
 enum keyword_remotepeertype {
 	NON_CISCO = 0,

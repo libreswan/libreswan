@@ -176,6 +176,7 @@ struct whack_message {
 	enum shunt_policy prospective_shunt;
 	enum shunt_policy negotiation_shunt;
 	enum shunt_policy failure_shunt;
+	enum autostart autostart;
 
 	uintmax_t sa_ipsec_max_bytes;
 	uintmax_t sa_ipsec_max_packets;

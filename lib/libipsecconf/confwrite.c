@@ -417,24 +417,24 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 	{
 		const char *dsn = "UNKNOWN";
 
-		switch (conn->desired_state) {
-		case STARTUP_IGNORE:
+		switch (conn->autostart) {
+		case AUTOSTART_IGNORE:
 			dsn = "ignore";
 			break;
 
-		case STARTUP_ADD:
+		case AUTOSTART_ADD:
 			dsn = "add";
 			break;
 
-		case STARTUP_ONDEMAND:
+		case AUTOSTART_ONDEMAND:
 			dsn = "ondemand";
 			break;
 
-		case STARTUP_START:
+		case AUTOSTART_START:
 			dsn = "start";
 			break;
 
-		case STARTUP_KEEP:
+		case AUTOSTART_KEEP:
 			dsn = "keep";
 			break;
 		}

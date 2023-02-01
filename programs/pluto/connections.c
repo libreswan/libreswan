@@ -1769,6 +1769,12 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
 	c->policy = wm->policy;
 
+	config->autostart = wm->autostart;
+	if (wm->autostart == AUTOSTART_START) {
+		dbg("%s() connection '%s' +POLICY_UP", __func__, c->name);
+		c->policy |= POLICY_UP;
+	}
+
 	d = extract_shunt("prospective", &config->prospective_shunt,
 			  wm->prospective_shunt, prospective_shunt_ok,
 			  /*unset*/SHUNT_TRAP);
@@ -2721,7 +2727,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 {
 	const char *sep = "";
 	size_t s = 0;
-	lset_t shunt;
+	enum shunt_policy shunt;
 
 	if (c->config->ike_version > 0) {
 		s += jam_string(buf, c->config->ike_info->version_name);

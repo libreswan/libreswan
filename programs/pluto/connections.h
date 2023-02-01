@@ -188,6 +188,7 @@ struct config {
 	enum shunt_policy prospective_shunt;	/* before */
 	enum shunt_policy negotiation_shunt;	/* during */
 	enum shunt_policy failure_shunt;	/* after */
+	enum autostart autostart;		/* aka auto */
 
 	enum keyword_xauthby xauthby;
 	enum keyword_xauthfail xauthfail;

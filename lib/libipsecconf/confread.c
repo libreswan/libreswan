@@ -171,7 +171,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 	DOPT(KNCF_HOSTADDRFAMILY, AF_UNSPEC);
 	DOPT(KNCF_CLIENTADDRFAMILY, AF_UNSPEC);
 
-	DOPT(KNCF_AUTO, STARTUP_IGNORE);
+	DOPT(KNCF_AUTO, AUTOSTART_IGNORE);
 	DOPT(KNCF_XFRM_IF_ID, UINT32_MAX);
 
 # undef DOPT
@@ -1535,18 +1535,9 @@ static bool load_conn(struct starter_conn *conn,
 	err |= validate_end(conn, &conn->left, perrl);
 	err |= validate_end(conn, &conn->right, perrl);
 
-	/*
-	 * TODO:
-	 * verify both ends are using the same inet family, if one end
-	 * is "%any" or "%defaultroute", then perhaps adjust it.
-	 * ensource this for left,leftnexthop,right,rightnexthop
-	 */
-
-	if (conn->options_set[KNCF_AUTO])
-		conn->desired_state = conn->options[KNCF_AUTO];
-
-	if (conn->desired_state == STARTUP_KEEP)
-		conn->policy |= POLICY_UP; /* auto=keep means once up, keep up */
+	if (conn->options_set[KNCF_AUTO]) {
+		conn->autostart = conn->options[KNCF_AUTO];
+	}
 
 	return err;
 }
@@ -1625,7 +1616,7 @@ static struct starter_conn *alloc_add_conn(struct starter_config *cfg, const cha
 	copy_conn_default(conn, &cfg->conn_default);
 	assert(conn->name == NULL);
 	conn->name = clone_str(name, "add conn name");
-	conn->desired_state = STARTUP_IGNORE;
+	conn->autostart = AUTOSTART_IGNORE;
 	conn->state = STATE_FAILED;
 
 	TAILQ_INIT(&conn->comments);

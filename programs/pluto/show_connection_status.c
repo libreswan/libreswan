@@ -560,6 +560,16 @@ void show_connection_status(struct show *s, const struct connection *c)
 				jam_string(buf, "+rKOD");
 			}
 		}
+#if 0
+		/* XXX: where should this go? */
+		switch (c->config->autostart) {
+		case AUTOSTART_IGNORE: break;
+		case AUTOSTART_ADD: jam(buf, "; auto:add"); break;
+		case AUTOSTART_ONDEMAND: jam(buf, "; auto:ondemand"); break;
+		case AUTOSTART_KEEP: jam(buf, "; auto:keep"); break;
+		case AUTOSTART_START: jam(buf, "; auto:start"); break;
+		}
+#endif
 		jam_string(buf, ";");
 	}
 

@@ -312,16 +312,6 @@ enum keyword_keyexchange {
 	KE_IKE  = 1,
 };
 
-/* values for auto={add,start,route,ignore} */
-
-enum keyword_auto {
-	STARTUP_IGNORE = 0, /* aka unset */
-	STARTUP_ADD,
-	STARTUP_ONDEMAND,
-	STARTUP_START,
-	STARTUP_KEEP,
-};
-
 /*
  * Potential keyword values for fields like {left,right}rsasigkey=.
  *
