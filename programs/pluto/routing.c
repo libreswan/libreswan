@@ -157,17 +157,30 @@ void connection_negotiating(struct connection *c,
 	dbg("kernel: %s() done - returning success", __func__);
 }
 
-static enum routing_action connection_timeout_retry(struct ike_sa *ike,
-						    enum routing new_routing)
+static bool connection_timeout_retry(struct ike_sa *ike)
 {
-	struct logger *logger = ike->sa.st_logger;
 	struct connection *c = ike->sa.st_connection;
 	unsigned try_limit = c->sa_keying_tries;
 	unsigned tries_so_far = ike->sa.st_try;
 
-	if (try_limit == 0 || tries_so_far < try_limit) {
-		return CONNECTION_RETRY;
+	if (try_limit == 0) {
+		ldbg_sa(ike, "retying ad infinitum");
+		return true;
 	}
+
+	if (tries_so_far < try_limit) {
+		ldbg_sa(ike, "retrying; only tried %d out of %u", tries_so_far, try_limit);
+		return true;
+	}
+
+	return false;
+}
+
+static enum routing_action connection_timeout_revive(struct ike_sa *ike,
+						     enum routing new_routing)
+{
+	struct logger *logger = ike->sa.st_logger;
+	struct connection *c = ike->sa.st_connection;
 
 	ldbg(logger, "maximum number of establish retries reached - abandoning");
 	PEXPECT(ike->sa.st_logger, !ike->sa.st_early_revival);
@@ -212,13 +225,23 @@ enum routing_action connection_timeout(struct ike_sa *ike)
 	switch (cr) {
 
 	case RT_UNROUTED:		 /* for instance, permanent */
-		return connection_timeout_retry(ike, RT_UNROUTED);
+		if (connection_timeout_retry(ike)) {
+			return CONNECTION_RETRY;
+		}
+		return connection_timeout_revive(ike, RT_UNROUTED);
 	case RT_UNROUTED_NEGOTIATION:
-		return connection_timeout_retry(ike, RT_UNROUTED);
+		if (connection_timeout_retry(ike)) {
+			return CONNECTION_RETRY;
+		}
+		return connection_timeout_revive(ike, RT_UNROUTED);
 	case RT_ROUTED_NEGOTIATION:
-		return connection_timeout_retry(ike, RT_ROUTED_PROSPECTIVE/*lie*/);
+		if (connection_timeout_retry(ike)) {
+			return CONNECTION_RETRY;
+		}
+		return connection_timeout_revive(ike, RT_ROUTED_PROSPECTIVE/*lie*/);
 	case RT_ROUTED_TUNNEL:
-		return connection_timeout_retry(ike, RT_ROUTED_NEGOTIATION/*lie*/);
+		/* don't retry as well */
+		return connection_timeout_revive(ike, RT_ROUTED_NEGOTIATION/*lie*/);
 
 	case RT_ROUTED_PROSPECTIVE:
 	case RT_ROUTED_FAILURE:
