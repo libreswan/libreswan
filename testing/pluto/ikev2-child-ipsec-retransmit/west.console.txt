@@ -42,9 +42,8 @@ west #
 010 "westnet-eastnet-ikev2a" #1: STATE_V2_ESTABLISHED_IKE_SA: retransmission; will wait 4 seconds for response
 010 "westnet-eastnet-ikev2a" #1: STATE_V2_ESTABLISHED_IKE_SA: retransmission; will wait 8 seconds for response
 031 "westnet-eastnet-ikev2a" #1: STATE_V2_ESTABLISHED_IKE_SA: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our IKEv2 message
-002 "westnet-eastnet-ikev2a" #1: liveness action - putting connection into hold
-002 "westnet-eastnet-ikev2a" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and NOT sending notification
 002 "westnet-eastnet-ikev2a" #1: IMPAIR: skipping revival of connection that is supposed to remain up
+002 "westnet-eastnet-ikev2a" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and NOT sending notification
 west #
  echo done
 done

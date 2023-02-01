@@ -112,7 +112,6 @@ west #
 000  
 west #
  grep -E "liveness action|acquire|on-demand" OUTPUT/west.pluto.log
-"westnet-eastnet-ikev2" #1: liveness action - putting connection into hold
 | xfrm_user_acquire  id { daddr: xfrm_address_t spi: 0 proto: 32 saddr: struct xfrm_address_t sel: struct xfrm_selector} policy { lft { soft_add_expires_seconds=0 hard_add_expires_seconds=0 soft_use_expires_seconds=0 hard_use_expires_seconds=0} curlft { add_time=>0 use_time=0} } aalgos: 4294967295 ealgos: 4294967295 calgos: 4294967295 seq: 1
 | xfrm acquire rtattribute type 5 ...
 | xfrm acquire rtattribute type 16 ...
