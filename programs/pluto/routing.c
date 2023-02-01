@@ -157,8 +157,8 @@ void connection_negotiating(struct connection *c,
 	dbg("kernel: %s() done - returning success", __func__);
 }
 
-static enum routing_action connection_retry(struct ike_sa *ike,
-					    enum routing new_routing)
+static enum routing_action connection_timeout_retry(struct ike_sa *ike,
+						    enum routing new_routing)
 {
 	struct logger *logger = ike->sa.st_logger;
 	struct connection *c = ike->sa.st_connection;
@@ -166,16 +166,17 @@ static enum routing_action connection_retry(struct ike_sa *ike,
 	unsigned tries_so_far = ike->sa.st_try;
 
 	if (try_limit == 0 || tries_so_far < try_limit) {
-		ldbg(logger, "maximum number of establish retries reached - abandoning");
 		return CONNECTION_RETRY;
 	}
+
+	ldbg(logger, "maximum number of establish retries reached - abandoning");
 	PEXPECT(ike->sa.st_logger, !ike->sa.st_early_revival);
 	ike->sa.st_early_revival = true;
 	if (revival_needed(&ike->sa)) {
 		return CONNECTION_REVIVE;
 	}
+
 	if (c->child.routing != new_routing) {
-		ldbg(logger, "maximum number of establish retries reached - abandoning");
 		if (c->policy & POLICY_OPPORTUNISTIC) {
 			/*
 			 * A failed OE initiator, make shunt bare.
@@ -211,15 +212,16 @@ enum routing_action connection_timeout(struct ike_sa *ike)
 	switch (cr) {
 
 	case RT_UNROUTED:		 /* for instance, permanent */
-		return connection_retry(ike, RT_UNROUTED);
+		return connection_timeout_retry(ike, RT_UNROUTED);
 	case RT_UNROUTED_NEGOTIATION:
-		return connection_retry(ike, RT_UNROUTED);
+		return connection_timeout_retry(ike, RT_UNROUTED);
 	case RT_ROUTED_NEGOTIATION:
-		return connection_retry(ike, RT_ROUTED_PROSPECTIVE);
+		return connection_timeout_retry(ike, RT_ROUTED_PROSPECTIVE/*lie*/);
+	case RT_ROUTED_TUNNEL:
+		return connection_timeout_retry(ike, RT_ROUTED_NEGOTIATION/*lie*/);
 
 	case RT_ROUTED_PROSPECTIVE:
 	case RT_ROUTED_FAILURE:
-	case RT_ROUTED_TUNNEL:
 	case RT_UNROUTED_TUNNEL:
 		llog_pexpect(ike->sa.st_logger, HERE, "connection in %s not expecting %s",
 			     enum_name_short(&routing_names, cr),

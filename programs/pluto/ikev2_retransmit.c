@@ -34,22 +34,13 @@
 #include "ikev2_replace.h"
 #include "ikev2.h"		/* for ikev2_retry_establishing_ike_sa() */
 #include "routing.h"
-
-void process_v2_ike_sa_established_request_timeout(struct ike_sa *ike, monotime_t now UNUSED)
-{
-	llog_sa(RC_LOG, ike,
-		"liveness action - putting connection into hold");
-	if (ike->sa.st_connection->kind == CK_INSTANCE) {
-		dbg("liveness warning: dpdaction=hold on instance futile - will be deleted");
-	}
-	delete_ike_family(&ike, DONT_SEND_DELETE);
-}
+#include "revival.h"
 
 /*
  * XXX: it is the IKE SA that is responsible for all retransmits.
  */
 
-void event_v2_retransmit(struct state *ike_sa, monotime_t now)
+void event_v2_retransmit(struct state *ike_sa, monotime_t now UNUSED)
 {
 	passert(ike_sa != NULL);
 	struct ike_sa *ike = pexpect_ike_sa(ike_sa);
@@ -81,7 +72,8 @@ void event_v2_retransmit(struct state *ike_sa, monotime_t now)
 		return;
 	}
 
-	switch (retransmit(&ike->sa)) {
+	enum retransmit_action retransmit_action = retransmit(&ike->sa);
+	switch (retransmit_action) {
 	case RETRANSMIT_YES:
 		send_recorded_v2_message(ike, "EVENT_RETRANSMIT",
 					 MESSAGE_REQUEST);
@@ -89,27 +81,33 @@ void event_v2_retransmit(struct state *ike_sa, monotime_t now)
 	case RETRANSMIT_NO:
 		return;
 	case RETRANSMIT_TIMEOUT:
-		break;
 	case TIMEOUT_ON_RETRANSMIT:
-		break;
+	{
+		enum routing_action routing_action = connection_timeout(ike);
+		switch (routing_action) {
+		case CONNECTION_RETRY:
+			ikev2_retry_establishing_ike_sa(ike);
+			return;
+		case CONNECTION_REVIVE:
+			schedule_revival(&ike->sa);
+			delete_ike_family(&ike, DONT_SEND_DELETE);
+			return;
+		case CONNECTION_FAIL:
+			pstat_sa_failed(&ike->sa, REASON_TOO_MANY_RETRANSMITS);
+			/* can't send delete as message window is full */
+			delete_ike_family(&ike, DONT_SEND_DELETE);
+			return;
+		}
+		enum_buf eb;
+		llog_passert(ike->sa.st_logger, HERE,
+			     "unexpected connection action %s",
+			     str_enum_short(&routing_action_names, routing_action, &eb));
+		return;
+	}
 	case DELETE_ON_RETRANSMIT:
 		delete_ike_family(&ike, DONT_SEND_DELETE);
 		return;
 	}
 
-	if (ike->sa.st_state->v2.request_timeout != NULL) {
-		ike->sa.st_state->v2.request_timeout(ike, now);
-		return;
-	}
-
-	/*
-	 * XXX: There might be a larval child.  Just use the biggest
-	 * stick available.
-	 */
-
-	pstat_sa_failed(&ike->sa, REASON_TOO_MANY_RETRANSMITS);
-	/* can't send delete as message window is full */
-	delete_ike_family(&ike, DONT_SEND_DELETE);
-
-	/* note: no md->st to clear */
+	bad_case(retransmit_action);
 }

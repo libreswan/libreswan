@@ -748,6 +748,7 @@ void wipe_old_v2_connections(const struct ike_sa *ike)
 /*
  * Re-try establishing the IKE SAs (previous attempt failed).
  *
+ * This is called when the IKE_SA_INIT and/or IKE_AUTH exchange fails.
  * This is different to having an IKE_SA establish but then have a
  * later exchange fail.
  */

@@ -23,6 +23,5 @@ struct state;
 struct ike_sa;
 
 void event_v2_retransmit(struct state *st, monotime_t now);
-void process_v2_ike_sa_established_request_timeout(struct ike_sa *ike, monotime_t now);
 
 #endif
