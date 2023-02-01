@@ -63,26 +63,6 @@
 
 #include "pluto_stats.h"
 
-static void dpd_clear_connection(struct connection *c)
-{
-	/*
-	 * For CK_INSTANCE, delete_states_by_connection() will clear
-	 * Note that delete_states_by_connection changes c->kind but we need
-	 * to remember what it was to know if we still need to unroute after delete
-	 */
-	flush_pending_by_connection(c); /* remove any partial negotiations that are failing */
-	delete_v1_states_by_connection_family(&c);	/* may change c to NULL */
-	/*
-	 * ??? Coverity Scan (as of 2022 Feb 1) thinks c has been dereferenced
-	 * so testing it for NULL now is suspicious.  It is simply wrong.
-	 */
-	if (c != NULL) {
-		dbg("%s: unrouting connection DPD action - clearing",
-		    enum_name(&connection_kind_names, c->kind));
-		connection_down(c); /* --unroute */
-	}
-}
-
 /**
  * DPD Timeout Function
  *
@@ -107,33 +87,11 @@ void event_v1_dpd_timeout(struct state *tbd_st)
 	struct logger *logger = clone_logger(tbd_st->st_logger, HERE);
 	struct connection *c = tbd_st->st_connection;
 	tbd_st = NULL; /* kill TBD_ST; can no longer be trusted */
-
-	switch (c->config->dpd.action) {
-	case DPD_ACTION_CLEAR:
-		llog(RC_LOG, logger,
-		     "DPD action - clearing connection kind %s",
-		     enum_name(&connection_kind_names, c->kind));
-		dpd_clear_connection(c);
-		break;
-
-	case DPD_ACTION_RESTART:
-		llog(RC_LOG, logger,
-		     "DPD action - restarting all connections that share this peer");
-		restart_connections_by_peer(c, logger);
-		break;
-
-	case DPD_ACTION_HOLD:
-		llog(RC_LOG, logger,
-		     "DPD action - putting connection into hold");
-		if (c->kind == CK_INSTANCE) {
-			dbg("DPD warning dpdaction=hold on instance futile - will be deleted");
-		}
-		delete_v1_states_by_connection_family(&c);
-		break;
-
-	default:
-		bad_case(c->config->dpd.action);
+	llog(RC_LOG, logger, "DPD action - putting connection into hold");
+	if (c->kind == CK_INSTANCE) {
+		ldbg(logger, "DPD warning dpdaction=hold on instance futile - will be deleted");
 	}
+	delete_v1_states_by_connection_family(&c);
 	free_logger(&logger, HERE);
 }
 

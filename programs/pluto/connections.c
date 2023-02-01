@@ -2058,21 +2058,16 @@ static diag_t extract_connection(const struct whack_message *wm,
 			config->sa_rekey_margin = new_rkm;
 		}
 
-		/*
-		 * Whack and addconn use different timescales for the
-		 * same dpd options; ulgh.
-		 */
-		ldbg(c->logger, "dpdaction=%d", wm->dpd_action);
 		const struct timescale *const dpd_timescale = &timescale_seconds;
-
 		switch (wm->ike_version) {
 		case IKEv1:
 			/* IKEv1's RFC 3706 DPD */
-			config->dpd.action = (wm->dpd_action == DPD_ACTION_UNSET ? DPD_ACTION_HOLD :
-					      wm->dpd_action);
-
 			if (wm->dpd_delay != NULL &&
 			    wm->dpd_timeout != NULL) {
+				if (wm->dpd_action != DPD_ACTION_UNSET) {
+					llog(RC_LOG, c->logger,
+					     "warning: IKEv1 ignores dpdaction=");
+				}
 				diag_t d;
 				d = ttodeltatime(wm->dpd_delay,
 						 &config->dpd.delay,
@@ -2092,18 +2087,13 @@ static diag_t extract_connection(const struct whack_message *wm,
 				ldbg(c->logger, "IKEv1 dpd.timeout=%s dpd.delay=%s",
 				     str_deltatime(config->dpd.timeout, &db),
 				     str_deltatime(config->dpd.delay, &tb));
+			} else if (wm->dpd_action != DPD_ACTION_UNSET) {
+				llog(RC_LOG, c->logger,
+				     "warning: IKEv1 ignores dpdaction=, use dpdtimeout= and dpddelay=");
 			} else if (wm->dpd_delay != NULL  ||
-				   wm->dpd_timeout != NULL ||
-				   wm->dpd_action != DPD_ACTION_UNSET) {
+				   wm->dpd_timeout != NULL) {
 				llog(RC_LOG, c->logger,
 				     "warning: IKEv1 dpd settings are ignored unless both dpdtimeout= and dpddelay= are set");
-			}
-			/* check for conflicts */
-			if ((wm->policy & POLICY_DONT_REKEY) != LEMPTY &&
-			    wm->dpd_action == DPD_ACTION_RESTART) {
-				llog(RC_LOG, c->logger,
-				     "warning: dpdaction cannot be 'restart'  when rekey=no - defaulting to 'hold'");
-				config->dpd.action = DPD_ACTION_HOLD;
 			}
 			break;
 		case IKEv2:
@@ -2121,7 +2111,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 			    wm->dpd_action != DPD_ACTION_UNSET) {
 				/* actual values don't matter */
 				llog(RC_LOG, c->logger,
-				     "warning: IKEv2 ignores dpdtimeout= and dpdaction=; use dpddelay=, retransmit-timeout=, failureshunt=, and negotiationshunt=");
+				     "warning: IKEv2 ignores dpdtimeout= and dpdaction=; use dpddelay= and retransmit-timeout=");
 			}
 			break;
 		}

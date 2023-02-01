@@ -6,6 +6,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add xauth-road-eastnet-psk
+002 "xauth-road-eastnet-psk": warning: IKEv1 ignores dpdaction=
 002 "xauth-road-eastnet-psk": added IKEv1 connection
 road #
  echo "initdone"
@@ -13,6 +14,7 @@ initdone
 road #
  ipsec auto --add xauth-road-eastnet-psk
 002 "xauth-road-eastnet-psk": terminating SAs using this connection
+002 "xauth-road-eastnet-psk": warning: IKEv1 ignores dpdaction=
 002 "xauth-road-eastnet-psk": added IKEv1 connection
 road #
  ipsec whack --xauthname 'use2' --xauthpass 'use1pass' --name xauth-road-eastnet-psk --initiate

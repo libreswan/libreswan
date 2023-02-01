@@ -24,7 +24,7 @@ road #
 000 "road-eastnet-psk":   conn_prio: 32,24; interface: eth0; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "road-eastnet-psk":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
 000 "road-eastnet-psk":   our idtype: ID_FQDN; our id=@roadrandom; their idtype: ID_FQDN; their id=@east
-000 "road-eastnet-psk":   dpd: passive; action:hold; delay:0s; timeout:0s
+000 "road-eastnet-psk":   dpd: passive; delay:0s; timeout:0s
 000 "road-eastnet-psk":   nat-traversal: encaps:auto; keepalive:20s; ikev1-method:rfc+drafts
 000 "road-eastnet-psk":   newest ISAKMP SA: #0; newest IPsec SA: #0; conn serial: $1;
 000 "road-eastnet-psk":   IKE algorithms: 3DES_CBC-HMAC_SHA1-MODP2048, 3DES_CBC-HMAC_SHA1-MODP1536

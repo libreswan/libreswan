@@ -231,7 +231,6 @@ struct config {
 	struct {
 		deltatime_t delay;		/* time between checks */
 		deltatime_t timeout;	/* time after which we are dead */
-		enum dpd_action action;	/* what to do when we die */
 	} dpd;
 
 	bool send_no_esp_tfc;
