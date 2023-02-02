@@ -109,7 +109,6 @@ def main():
     elif interactive or batch:
 
         console = domain.console()
-        print(console)
         if not console:
             console = remote.boot_to_login_prompt(domain)
         if not console:
