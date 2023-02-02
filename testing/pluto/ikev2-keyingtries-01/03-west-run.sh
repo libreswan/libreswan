@@ -8,7 +8,7 @@ ipsec auto --delete westnet-eastnet-k1
 # keyingtries=3, 9s
 ipsec auto --up westnet-eastnet-k3
 ../../guestbin/wait-for.sh --match ' 3 of at most 3' -- cat /tmp/pluto.log
-../../guestbin/wait-for.sh --match '"westnet-eastnet-k3" #3.*skipping revival' -- cat /tmp/pluto.log
+../../guestbin/wait-for.sh --match '"westnet-eastnet-k3".*skipping revival' -- cat /tmp/pluto.log
 ipsec auto --delete westnet-eastnet-k3
 
 # keyingtries=0 (default, forever)
