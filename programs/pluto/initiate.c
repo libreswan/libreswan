@@ -717,20 +717,29 @@ void initiate_ondemand(const struct kernel_acquire *b)
 
 	if (c->kind != CK_TEMPLATE) {
 		/*
-		 * We've found a connection that can serve.  Do we
-		 * have to initiate it?  Not if there is currently an
-		 * IPSEC SA.  This may be redundant if a
-		 * non-opportunistic negotiation is already being
-		 * attempted.
+		 * We've found a non-template connection that can serve.
 		 *
-		 * If we are to proceed asynchronously, b->whackfd
-		 * will be NULL_WHACKFD.
+		 * It could be a permanent connection that is
+		 * on-demand, or it could be an established connection
+		 * (instance or permanent) that this connection can
+		 * piggy-back.
 		 */
+
+		PEXPECT(c->logger, (c->kind == CK_PERMANENT ||
+				    /* XXX: ever true? */
+				    (c->kind == CK_INSTANCE && b->sec_label.len != 0)));
 
 		LLOG_JAMBUF(RC_LOG, b->logger, buf) {
 			jam_kernel_acquire(buf, b);
 			/* jam(buf, " using "); */
 		}
+
+		/*
+		 * Do we have to initiate it?  Not if there is
+		 * currently an IPSEC SA.  This may be redundant if a
+		 * non-opportunistic negotiation is already being
+		 * attempted.
+		 */
 
 		connection_negotiating(c, b);
 		ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception, b->sec_label,
