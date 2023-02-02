@@ -183,8 +183,6 @@ static enum routing_action connection_timeout_revive(struct ike_sa *ike,
 	struct connection *c = ike->sa.st_connection;
 
 	ldbg(logger, "maximum number of establish retries reached - abandoning");
-	PEXPECT(ike->sa.st_logger, !ike->sa.st_early_revival);
-	ike->sa.st_early_revival = true;
 	if (should_revive(&ike->sa)) {
 		return CONNECTION_REVIVE;
 	}
@@ -214,6 +212,9 @@ static enum routing_action connection_timeout_revive(struct ike_sa *ike,
 
 enum routing_action connection_timeout(struct ike_sa *ike)
 {
+	PEXPECT(ike->sa.st_logger, !ike->sa.st_early_revival);
+	ike->sa.st_early_revival = true;
+
 	/*
 	 * Part 1: handle the easy cases where the connection didn't
 	 * establish and things should retry/revive with kernel
