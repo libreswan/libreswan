@@ -157,7 +157,7 @@ void connection_negotiating(struct connection *c,
 	dbg("kernel: %s() done - returning success", __func__);
 }
 
-static bool connection_timeout_retry(struct ike_sa *ike)
+static bool should_retry(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
 	unsigned try_limit = c->sa_keying_tries;
@@ -185,7 +185,7 @@ static enum routing_action connection_timeout_revive(struct ike_sa *ike,
 	ldbg(logger, "maximum number of establish retries reached - abandoning");
 	PEXPECT(ike->sa.st_logger, !ike->sa.st_early_revival);
 	ike->sa.st_early_revival = true;
-	if (revival_needed(&ike->sa)) {
+	if (should_revive(&ike->sa)) {
 		return CONNECTION_REVIVE;
 	}
 
@@ -225,17 +225,17 @@ enum routing_action connection_timeout(struct ike_sa *ike)
 	switch (cr) {
 
 	case RT_UNROUTED:		 /* for instance, permanent */
-		if (connection_timeout_retry(ike)) {
+		if (should_retry(ike)) {
 			return CONNECTION_RETRY;
 		}
 		return connection_timeout_revive(ike, RT_UNROUTED);
 	case RT_UNROUTED_NEGOTIATION:
-		if (connection_timeout_retry(ike)) {
+		if (should_retry(ike)) {
 			return CONNECTION_RETRY;
 		}
 		return connection_timeout_revive(ike, RT_UNROUTED);
 	case RT_ROUTED_NEGOTIATION:
-		if (connection_timeout_retry(ike)) {
+		if (should_retry(ike)) {
 			return CONNECTION_RETRY;
 		}
 		return connection_timeout_revive(ike, RT_ROUTED_PROSPECTIVE/*lie*/);

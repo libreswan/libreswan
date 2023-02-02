@@ -21,7 +21,7 @@ struct state;
 struct connection;
 
 
-bool revival_needed(struct state *st);
+bool should_revive(struct state *st);
 void schedule_revival(struct state *st);
 void add_revival_if_needed(struct state *st);
 void init_revival_timer(void);

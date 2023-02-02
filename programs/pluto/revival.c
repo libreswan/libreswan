@@ -107,13 +107,13 @@ void flush_revival(const struct connection *c)
 
 void add_revival_if_needed(struct state *st)
 {
-	if (!revival_needed(st)) {
+	if (!should_revive(st)) {
 		return;
 	}
 	schedule_revival(st);
 }
 
-bool revival_needed(struct state *st)
+bool should_revive(struct state *st)
 {
 	struct connection *c = st->st_connection;
 
