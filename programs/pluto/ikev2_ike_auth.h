@@ -28,6 +28,5 @@ extern ikev2_state_transition_fn process_v2_IKE_AUTH_response;
 extern ikev2_state_transition_fn process_v2_IKE_AUTH_failure_response;
 
 bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike);
-void process_v2_ike_auth_request_timeout(struct ike_sa *ike, monotime_t now);
 
 #endif

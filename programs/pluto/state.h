@@ -274,7 +274,6 @@ struct finite_state {
 		struct {
 			const struct v2_state_transition *transitions;
 			bool secured; /* hence, exchanges must be integrity protected */
-			void (*request_timeout)(struct ike_sa *ike, monotime_t now);
 		} v2;
 	};
 	size_t nr_transitions;
@@ -757,7 +756,7 @@ struct state {
 	/*
 	 * Has this state's connection been checked for revival?
 	 *
-	 * Early revival happens in connection_timeout(), late revival
+	 * Early revival happens during a timeout say, late revival
 	 * happens in delete_state().
 	 */
 	bool st_early_revival;

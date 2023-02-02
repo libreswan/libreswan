@@ -83,8 +83,7 @@ struct finite_state v2_states[] = {
 	 * IKE SA.
 	 */
 
-	S(STATE_V2_PARENT_I1, "sent IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA,
-	  .v2.request_timeout = process_v2_ike_sa_init_request_timeout),
+	S(STATE_V2_PARENT_I1, "sent IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA),
 	S(STATE_V2_PARENT_R0, "processing IKE_SA_INIT request", CAT_HALF_OPEN_IKE_SA),
 	S(STATE_V2_PARENT_R1, "sent IKE_SA_INIT reply", CAT_HALF_OPEN_IKE_SA, .v2.secured = true),
 	S(STATE_V2_PARENT_R_EAP, "sent EAP request", CAT_OPEN_IKE_SA, .v2.secured = true),
@@ -94,9 +93,7 @@ struct finite_state v2_states[] = {
 	 * ones are not authenticated.
 	 */
 
-	S(STATE_V2_PARENT_I2, "sent IKE_AUTH request", CAT_OPEN_IKE_SA,
-	  .v2.secured = true,
-	  .v2.request_timeout = process_v2_ike_sa_init_request_timeout),
+	S(STATE_V2_PARENT_I2, "sent IKE_AUTH request", CAT_OPEN_IKE_SA, .v2.secured = true),
 
 	/* IKE exchange can also create a child */
 

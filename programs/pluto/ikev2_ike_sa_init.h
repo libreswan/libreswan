@@ -8,6 +8,8 @@
 #ifndef IKEV2_IKE_SA_INIT_H
 #define IKEV2_IKE_SA_INIT_H
 
+#include "ikev2.h"		/* for ikev2_state_transition_fn */
+
 struct msg_digest;
 struct ike_sa;
 
@@ -27,7 +29,5 @@ extern ikev2_state_transition_fn process_v2_IKE_SA_INIT_response;
 extern ikev2_state_transition_fn process_v2_IKE_SA_INIT_response_v2N_INVALID_KE_PAYLOAD;
 
 bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike);
-
-void process_v2_ike_sa_init_request_timeout(struct ike_sa *ike, monotime_t now);
 
 #endif

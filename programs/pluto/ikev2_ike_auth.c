@@ -1629,25 +1629,3 @@ stf_status process_v2_IKE_AUTH_failure_response(struct ike_sa *ike,
 
 	return STF_FATAL;
 }
-
-void process_v2_ike_auth_request_timeout(struct ike_sa *ike, monotime_t now UNUSED)
-{
-	enum routing_action action = connection_timeout(ike);
-	switch (action) {
-	case CONNECTION_RETRY:
-		ikev2_retry_establishing_ike_sa(ike);
-		return;
-	case CONNECTION_REVIVE:
-		schedule_revival(&ike->sa);
-		return;
-	case CONNECTION_FAIL:
-		pstat_sa_failed(&ike->sa, REASON_TOO_MANY_RETRANSMITS);
-		/* can't send delete as message window is full */
-		delete_ike_family(&ike, DONT_SEND_DELETE);
-		return;
-	}
-	enum_buf eb;
-	llog_passert(ike->sa.st_logger, HERE,
-		     "unexpected connection action %s",
-		     str_enum_short(&routing_action_names, action, &eb));
-}
