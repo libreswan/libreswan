@@ -1078,13 +1078,13 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 				struct spd_end local = *c->spd->local;
 				local.client = *local_client;
-				jam_spd_end(buf, &local, NULL, LEFT_END, LEMPTY, oriented(c));
+				jam_spd_end(buf, c, &local, NULL, LEFT_END, oriented(c));
 
 				jam_string(buf, "...");
 
 				struct spd_end remote = *c->spd->remote;
 				remote.client = *remote_client;
-				jam_spd_end(buf, &remote, NULL, RIGHT_END, LEMPTY, oriented(c));
+				jam_spd_end(buf, c, &remote, NULL, RIGHT_END, oriented(c));
 			}
 			return STF_FAIL_v1N + v1N_INVALID_ID_INFORMATION;
 		}
@@ -1149,7 +1149,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 
 			LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 				jam(buf, "setting phase 2 virtual values to ");
-				jam_spd_end(buf, c->spd->remote, NULL, LEFT_END, LEMPTY, oriented(c));
+				jam_spd_end(buf, c, c->spd->remote, NULL, LEFT_END, oriented(c));
 			}
 		}
 	}
@@ -1389,9 +1389,9 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 		jam(buf, "    us: ");
 		const struct connection *c = st->st_connection;
 		const struct spd_route *sr = c->spd;
-		jam_spd_end(buf, sr->local, sr->remote, LEFT_END, LEMPTY, oriented(c));
+		jam_spd_end(buf, c, sr->local, sr->remote, LEFT_END, oriented(c));
 		jam_string(buf, "  them: ");
-		jam_spd_end(buf, sr->remote, sr->local, RIGHT_END, LEMPTY, oriented(c));
+		jam_spd_end(buf, c, sr->remote, sr->local, RIGHT_END, oriented(c));
 	}
 
 	/**** finish reply packet: Nr [, KE ] [, IDci, IDcr ] ****/
@@ -1935,8 +1935,9 @@ static struct connection *fc_try(const struct connection *c,
 			continue;
 		}
 
-		if (d->policy & POLICY_GROUP)
+		if (d->kind == CK_GROUP) {
 			continue;
+		}
 
 		selector_pair_buf sb;
 		dbg("  fc_try: looking at %s",
@@ -2117,8 +2118,9 @@ static struct connection *fc_try_oppo(const struct connection *c,
 			continue;
 		}
 
-		if (d->policy & POLICY_GROUP)
+		if (d->kind == CK_GROUP) {
 			continue;
+		}
 
 		int wildcards, pathlen;
 		if (!(same_id(&c->local->host.id, &d->local->host.id) &&

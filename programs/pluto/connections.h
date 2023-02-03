@@ -800,8 +800,9 @@ void set_child_routing_where(struct connection *c, enum routing routing, where_t
  * Largest left end looks like: client === host : port [ host_id ] ---
  * hop Note: if that==NULL, skip nexthop
  */
-void jam_spd_end(struct jambuf *buf, const struct spd_end *this, const struct spd_end *that,
-		 enum left_right left_right, lset_t policy, bool filter_rnh);
+void jam_spd_end(struct jambuf *buf, const struct connection *c,
+		 const struct spd_end *this, const struct spd_end *that,
+		 enum left_right left_right, bool filter_rnh);
 
 #define SPD_END_BUF (sizeof(subnet_buf) + sizeof(address_buf) + sizeof(id_buf) + sizeof(subnet_buf) + 10)
 

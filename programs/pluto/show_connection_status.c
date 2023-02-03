@@ -66,7 +66,8 @@
  * result (length excludes NUL at end).
  */
 
-static void jam_end_host(struct jambuf *buf, const struct spd_end *this, lset_t policy)
+static void jam_end_host(struct jambuf *buf, const struct connection *c,
+			 const struct spd_end *this)
 {
 	/* HOST */
 	if (!address_is_specified(this->host->addr)) {
@@ -74,19 +75,16 @@ static void jam_end_host(struct jambuf *buf, const struct spd_end *this, lset_t 
 			jam_string(buf, "%dns");
 			jam(buf, "<%s>", this->host->config->addr_name);
 		} else {
-			switch (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC)) {
-			case POLICY_GROUP:
-				jam_string(buf, "%group");
-				break;
-			case POLICY_OPPORTUNISTIC:
+			if (c->kind == CK_GROUP) {
+				if (c->policy & POLICY_OPPORTUNISTIC) {
+					jam_string(buf, "%opportunisticgroup");
+				} else {
+					jam_string(buf, "%group");
+				}
+			} else if (c->policy & POLICY_OPPORTUNISTIC) {
 				jam_string(buf, "%opportunistic");
-				break;
-			case POLICY_GROUP | POLICY_OPPORTUNISTIC:
-				jam_string(buf, "%opportunisticgroup");
-				break;
-			default:
+			} else {
 				jam_string(buf, "%any");
-				break;
 			}
 		}
 		/*
@@ -135,8 +133,8 @@ static void jam_end_host(struct jambuf *buf, const struct spd_end *this, lset_t 
 	}
 }
 
-static void jam_end_client(struct jambuf *buf, const struct spd_end *this,
-			   lset_t policy, enum left_right left_right)
+static void jam_end_client(struct jambuf *buf, const struct connection *c,
+			   const struct spd_end *this, enum left_right left_right)
 {
 	/* left: [CLIENT/PROTOCOL:PORT===] or right: [===CLIENT/PROTOCOL:PORT] */
 
@@ -149,7 +147,8 @@ static void jam_end_client(struct jambuf *buf, const struct spd_end *this,
 	}
 
 	if (selector_is_all(this->client) &&
-	    (policy & (POLICY_GROUP | POLICY_OPPORTUNISTIC))) {
+	    (c->kind == CK_GROUP ||
+	     c->policy & POLICY_OPPORTUNISTIC)) {
 		/* booring */
 		return;
 	}
@@ -249,15 +248,16 @@ static void jam_end_nexthop(struct jambuf *buf, const struct spd_end *this,
 	}
 }
 
-void jam_spd_end(struct jambuf *buf, const struct spd_end *this, const struct spd_end *that,
-		 enum left_right left_right, lset_t policy, bool skip_next_hop)
+void jam_spd_end(struct jambuf *buf, const struct connection *c,
+		 const struct spd_end *this, const struct spd_end *that,
+		 enum left_right left_right, bool skip_next_hop)
 {
 	switch (left_right) {
 	case LEFT_END:
 		/* CLIENT/PROTOCOL:PORT=== */
-		jam_end_client(buf, this, policy, left_right);
+		jam_end_client(buf, c, this, left_right);
 		/* HOST */
-		jam_end_host(buf, this, policy);
+		jam_end_host(buf, c, this);
 		/* [ID+OPTS] */
 		jam_end_id(buf, this);
 		/* ---NEXTHOP */
@@ -267,11 +267,11 @@ void jam_spd_end(struct jambuf *buf, const struct spd_end *this, const struct sp
 		/* HOPNEXT--- */
 		jam_end_nexthop(buf, this, that, skip_next_hop, left_right);
 		/* HOST */
-		jam_end_host(buf, this, policy);
+		jam_end_host(buf, c, this);
 		/* [ID+OPTS] */
 		jam_end_id(buf, this);
 		/* ===CLIENT/PROTOCOL:PORT */
-		jam_end_client(buf, this, policy, left_right);
+		jam_end_client(buf, c, this, left_right);
 		break;
 	}
 }
@@ -283,10 +283,11 @@ void jam_spd_end(struct jambuf *buf, const struct spd_end *this, const struct sp
 
 void jam_spd(struct jambuf *buf, const struct spd_route *spd)
 {
-	jam_spd_end(buf, spd->local, spd->remote, LEFT_END, LEMPTY, false);
+	jam_spd_end(buf, spd->connection, spd->local, spd->remote,
+		    LEFT_END, false);
 	jam_string(buf, "...");
-	jam_spd_end(buf, spd->remote, spd->local, RIGHT_END,
-		    spd->connection->policy, oriented(spd->connection));
+	jam_spd_end(buf, spd->connection, spd->remote, spd->local,
+		    RIGHT_END, oriented(spd->connection));
 }
 
 const char *str_spd(const struct spd_route *spd, spd_buf *buf)
