@@ -189,20 +189,22 @@ enum_names doi_names = {
 
 /* kind of struct connection */
 static const char *const connection_kind_name[] = {
-	"CK_INVALID",
-	"CK_GROUP",	/* policy group: instantiates to template */
-	"CK_TEMPLATE",	/* abstract connection, with wildcard */
-	"CK_PERMANENT",	/* normal connection */
-	"CK_HYBRID",	/* IKE instance of template */
-	"CK_INSTANCE",	/* instance of template */
-	"CK_GOING_AWAY"	/* instance being deleted -- don't delete again */
+#define S(E) [E] = #E
+	S(CK_INVALID),
+	S(CK_GROUP),		/* policy group: instantiates to template */
+	S(CK_TEMPLATE),		/* abstract connection, with wildcard */
+	S(CK_PERMANENT),	/* normal connection */
+	S(CK_HYBRID),		/* IKE instance of template */
+	S(CK_INSTANCE),		/* instance of template */
+	S(CK_GOING_AWAY),	/* instance being deleted -- don't delete again */
+#undef S
 };
 
 enum_names connection_kind_names = {
 	CK_INVALID,
 	CK_GOING_AWAY,
 	ARRAY_REF(connection_kind_name),
-	NULL, /* prefix */
+	"CK_", /* prefix */
 	NULL
 };
 
