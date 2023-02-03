@@ -5,44 +5,51 @@ pluto enum_names:
          jam_enum 0: CK_INVALID OK
          search CK_INVALID: OK
          match CK_INVALID: OK
-         short_name 0: CK_INVALID OK
-         jam_enum_short 0: CK_INVALID OK
+         short_name 0: INVALID OK
+         jam_enum_short 0: INVALID OK
+         match INVALID [short]: OK
     1 -> CK_GROUP
          jam_enum 1: CK_GROUP OK
          search CK_GROUP: OK
          match CK_GROUP: OK
-         short_name 1: CK_GROUP OK
-         jam_enum_short 1: CK_GROUP OK
+         short_name 1: GROUP OK
+         jam_enum_short 1: GROUP OK
+         match GROUP [short]: OK
     2 -> CK_TEMPLATE
          jam_enum 2: CK_TEMPLATE OK
          search CK_TEMPLATE: OK
          match CK_TEMPLATE: OK
-         short_name 2: CK_TEMPLATE OK
-         jam_enum_short 2: CK_TEMPLATE OK
+         short_name 2: TEMPLATE OK
+         jam_enum_short 2: TEMPLATE OK
+         match TEMPLATE [short]: OK
     3 -> CK_PERMANENT
          jam_enum 3: CK_PERMANENT OK
          search CK_PERMANENT: OK
          match CK_PERMANENT: OK
-         short_name 3: CK_PERMANENT OK
-         jam_enum_short 3: CK_PERMANENT OK
+         short_name 3: PERMANENT OK
+         jam_enum_short 3: PERMANENT OK
+         match PERMANENT [short]: OK
     4 -> CK_HYBRID
          jam_enum 4: CK_HYBRID OK
          search CK_HYBRID: OK
          match CK_HYBRID: OK
-         short_name 4: CK_HYBRID OK
-         jam_enum_short 4: CK_HYBRID OK
+         short_name 4: HYBRID OK
+         jam_enum_short 4: HYBRID OK
+         match HYBRID [short]: OK
     5 -> CK_INSTANCE
          jam_enum 5: CK_INSTANCE OK
          search CK_INSTANCE: OK
          match CK_INSTANCE: OK
-         short_name 5: CK_INSTANCE OK
-         jam_enum_short 5: CK_INSTANCE OK
+         short_name 5: INSTANCE OK
+         jam_enum_short 5: INSTANCE OK
+         match INSTANCE [short]: OK
     6 -> CK_GOING_AWAY
          jam_enum 6: CK_GOING_AWAY OK
          search CK_GOING_AWAY: OK
          match CK_GOING_AWAY: OK
-         short_name 6: CK_GOING_AWAY OK
-         jam_enum_short 6: CK_GOING_AWAY OK
+         short_name 6: GOING_AWAY OK
+         jam_enum_short 6: GOING_AWAY OK
+         match GOING_AWAY [short]: OK
 
   certpolicy_type_names:
     1 -> CERT_NEVERSEND
