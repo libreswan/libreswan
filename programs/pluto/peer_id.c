@@ -288,9 +288,9 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			}
 
 			/* ignore group connections */
-			if (d->policy & POLICY_GROUP) {
+			if (d->kind == CK_GROUP) {
 				connection_buf cb;
-				dbg_rhc("skipping group connection "PRI_CONNECTION,
+				dbg_rhc("skipping group template connection "PRI_CONNECTION,
 					pri_connection(d, &cb));
 				continue;
 			}

@@ -267,7 +267,7 @@ static bool whack_route_connection(struct show *s, struct connection *c,
 		/* XXX: why whack only? */
 		llog(WHACK_STREAM|RC_ORIENT, c->logger,
 		     "we cannot identify ourselves with either end of this connection");
-	} else if (c->policy & POLICY_GROUP) {
+	} else if (c->kind == CK_GROUP) {
 		route_and_trap_connection_group(c);
 	} else if (!install_prospective_kernel_policy(c)) {
 		/* XXX: why whack only? */
@@ -293,7 +293,7 @@ static bool whack_unroute_connection(struct show *s, struct connection *c,
 
 	if (c->child.routing == RT_ROUTED_TUNNEL) {
 		llog(WHACK_STREAM|RC_RTBUSY, logger, "cannot unroute: route busy");
-	} else if (c->policy & POLICY_GROUP) {
+	} else if (c->kind == CK_GROUP) {
 		connection_group_down(c);
 	} else {
 		connection_down(c);

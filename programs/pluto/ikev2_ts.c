@@ -1292,7 +1292,6 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 #define CONNECTION_POLICIES	(POLICY_DONT_REKEY |		\
 				 POLICY_REAUTH |		\
 				 POLICY_OPPORTUNISTIC |		\
-				 POLICY_GROUP |			\
 				 POLICY_GROUTED |		\
 				 POLICY_GROUPINSTANCE |		\
 				 POLICY_UP |			\
@@ -1334,7 +1333,8 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			/* XXX: sec_label connections all look a-like, include CO */
 			connection_buf cb;
 			policy_buf pb;
-			dbg_ts("evaluating connection "PRI_CONNECTION" "PRI_CO" with policy <%s>:",
+			dbg_ts("evaluating %s connection "PRI_CONNECTION" "PRI_CO" with policy <%s>:",
+			       enum_name_short(&connection_kind_names, cc->kind),
 			       pri_connection(d, &cb), pri_co(d->serialno),
 			       str_policy(d->policy & CONNECTION_POLICIES, &pb));
 
@@ -1349,16 +1349,14 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 
 			/*
 			 * Groups are like template templates?  They
-			 * get instantiated into GROUPINSTANCEs (when
-			 * this happens the POLICY_GROUP bit is
-			 * stripped off and POLICY_GROUPINSTANCE is
-			 * added)?
+			 * get instantiated into CK_TEMPLATE +
+			 * GROUPINSTANCE?
 			 *
 			 * They also seem to be very like sec_labels
 			 * which start as templates, become hybrid
 			 * template instances, and finally instances.
 			 */
-			if (d->policy & POLICY_GROUP) {
+			if (d->kind == CK_GROUP) {
 				connection_buf cb;
 				dbg_ts("skipping "PRI_CONNECTION", group policy",
 				       pri_connection(d, &cb));
