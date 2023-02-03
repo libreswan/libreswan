@@ -26,6 +26,29 @@
 #include "ikev2_ike_sa_init.h"		/* for initiate_v2_IKE_SA_INIT_request() */
 #include "pluto_stats.h"
 
+enum connection_event {
+	CONNECTION_TIMEOUT,
+};
+
+static const char *connection_event_name[] = {
+#define S(E) [E] = #E
+	S(CONNECTION_TIMEOUT),
+#undef S
+};
+
+static enum_names connection_event_names = {
+	CONNECTION_TIMEOUT, CONNECTION_TIMEOUT,
+	ARRAY_REF(connection_event_name),
+	"CONNECTION_",
+	NULL,
+};
+
+static void dispatch(struct connection *c, enum connection_event event, struct ike_sa *ike);
+
+static void permanent_event_handler(struct connection *c, enum connection_event event, struct ike_sa *ike);
+static void template_event_handler(struct connection *c, enum connection_event event, struct ike_sa *ike);
+static void instance_event_handler(struct connection *c, enum connection_event event, struct ike_sa *ike);
+
 void set_child_routing_where(struct connection *c, enum routing routing, where_t where)
 {
 	enum_buf ob, nb;
@@ -237,95 +260,385 @@ static void fail(struct ike_sa *ike)
 
 void connection_timeout(struct ike_sa *ike)
 {
+	struct connection *c = ike->sa.st_connection;
+	dispatch(c, CONNECTION_TIMEOUT, ike);
+}
+
+void dispatch(struct connection *c, enum connection_event event, struct ike_sa *ike)
+{
+	LDBGP_JAMBUF(DBG_BASE, c->logger, buf) {
+		jam(buf, "dispatch %s event %s",
+		    enum_name_short(&connection_kind_names, c->kind),
+		    enum_name_short(&connection_event_names, event));
+		if (ike != NULL) {
+			jam(buf, " for "PRI_SO, pri_so(ike->sa.st_serialno));
+		}
+	}
+	switch (c->kind) {
+	case CK_PERMANENT:
+		permanent_event_handler(c, event, ike);
+		break;
+	case CK_TEMPLATE:
+		template_event_handler(c, event, ike);
+		break;
+	case CK_INSTANCE:
+		instance_event_handler(c, event, ike);
+		break;
+	default:
+		bad_case(c->kind);
+	}
+}
+
+void permanent_event_handler(struct connection *c, enum connection_event event, struct ike_sa *ike)
+{
 	/*
 	 * Part 1: handle the easy cases where the connection didn't
 	 * establish and things should retry/revive with kernel
 	 * policy/state unchanged.
 	 */
 
-	struct connection *c = ike->sa.st_connection;
 	const enum routing cr = c->child.routing;
 	switch (cr) {
 
 	case RT_UNROUTED:
-		/* for instance, permanent+up */
-		if (should_retry(ike)) {
-			retry(ike);
+		switch (event) {
+		case CONNECTION_TIMEOUT:
+			/* for instance, permanent+up */
+			if (should_retry(ike)) {
+				retry(ike);
+				return;
+			}
+			if (should_revive(&ike->sa)) {
+				schedule_revival(&ike->sa);
+				return;
+			}
+			fail(ike);
 			return;
 		}
-		if (should_revive(&ike->sa)) {
-			schedule_revival(&ike->sa);
-			return;
-		}
-		fail(ike);
-		return;
+		bad_case(event);
 
 	case RT_UNROUTED_NEGOTIATION:
-		/* for instance, permenant ondemand */
-		if (should_retry(ike)) {
-			retry(ike);
+		switch (event) {
+		case CONNECTION_TIMEOUT:
+			/* for instance, permenant ondemand */
+			if (should_retry(ike)) {
+				retry(ike);
+				return;
+			}
+			if (should_revive(&ike->sa)) {
+				schedule_revival(&ike->sa);
+				return;
+			}
+			if (c->policy & POLICY_OPPORTUNISTIC) {
+				/*
+				 * A failed OE initiator, make shunt bare.
+				 */
+				orphan_holdpass(c, c->spd, c->logger);
+				/*
+				 * Change routing so we don't get cleared out
+				 * when state/connection dies.
+				 */
+				set_child_routing(c, RT_UNROUTED);
+			}
+			fail(ike);
 			return;
 		}
-		if (should_revive(&ike->sa)) {
-			schedule_revival(&ike->sa);
-			return;
-		}
-		if (c->policy & POLICY_OPPORTUNISTIC) {
-			/*
-			 * A failed OE initiator, make shunt bare.
-			 */
-			orphan_holdpass(c, c->spd, c->logger);
-			/*
-			 * Change routing so we don't get cleared out
-			 * when state/connection dies.
-			 */
-			set_child_routing(c, RT_UNROUTED);
-		}
-		fail(ike);
-		return;
+		bad_case(event);
 
 	case RT_ROUTED_NEGOTIATION:
-		if (should_retry(ike)) {
-			retry(ike);
+		switch (event) {
+		case CONNECTION_TIMEOUT:
+			if (should_retry(ike)) {
+				retry(ike);
+				return;
+			}
+			if (should_revive(&ike->sa)) {
+				schedule_revival(&ike->sa);
+				return;
+			}
+			if (c->policy & POLICY_OPPORTUNISTIC) {
+				/*
+				 * A failed OE initiator, make shunt bare.
+				 */
+				orphan_holdpass(c, c->spd, c->logger);
+				/*
+				 * Change routing so we don't get cleared out
+				 * when state/connection dies.
+				 */
+				set_child_routing(c, RT_ROUTED_PROSPECTIVE/*lie?!?*/);
+			}
+			fail(ike);
 			return;
 		}
-		if (should_revive(&ike->sa)) {
-			schedule_revival(&ike->sa);
+		bad_case(event);
+
+	case RT_ROUTED_TUNNEL:
+		switch (event) {
+		case CONNECTION_TIMEOUT:
+			/* don't retry as well */
+			if (should_revive(&ike->sa)) {
+				schedule_revival(&ike->sa);
+				return;
+			}
+			if (c->policy & POLICY_OPPORTUNISTIC) {
+				/*
+				 * A failed OE initiator, make shunt bare.
+				 */
+				orphan_holdpass(c, c->spd, c->logger);
+				/*
+				 * Change routing so we don't get cleared out
+				 * when state/connection dies.
+				 */
+				set_child_routing(c, RT_ROUTED_NEGOTIATION/*lie?!?*/);
+			}
+			fail(ike);
 			return;
 		}
-		if (c->policy & POLICY_OPPORTUNISTIC) {
-			/*
-			 * A failed OE initiator, make shunt bare.
-			 */
-			orphan_holdpass(c, c->spd, c->logger);
-			/*
-			 * Change routing so we don't get cleared out
-			 * when state/connection dies.
-			 */
-			set_child_routing(c, RT_ROUTED_PROSPECTIVE/*lie?!?*/);
-		}
+		bad_case(event);
+
+	case RT_ROUTED_PROSPECTIVE:
+	case RT_ROUTED_FAILURE:
+	case RT_UNROUTED_TUNNEL:
+		llog_pexpect(ike->sa.st_logger, HERE, "connection in %s not expecting %s",
+			     enum_name_short(&routing_names, cr),
+			     __func__);
+		/* can't send delete as message window is full */
 		fail(ike);
 		return;
 
-	case RT_ROUTED_TUNNEL:
-		/* don't retry as well */
-		if (should_revive(&ike->sa)) {
-			schedule_revival(&ike->sa);
+	}
+
+	bad_case(cr);
+}
+
+void template_event_handler(struct connection *c, enum connection_event event, struct ike_sa *ike)
+{
+	/*
+	 * Part 1: handle the easy cases where the connection didn't
+	 * establish and things should retry/revive with kernel
+	 * policy/state unchanged.
+	 */
+
+	const enum routing cr = c->child.routing;
+	switch (cr) {
+
+	case RT_UNROUTED:
+		switch (event) {
+		case CONNECTION_TIMEOUT:
+			/* for instance, permanent+up */
+			if (should_retry(ike)) {
+				retry(ike);
+				return;
+			}
+			if (should_revive(&ike->sa)) {
+				schedule_revival(&ike->sa);
+				return;
+			}
+			fail(ike);
 			return;
 		}
-		if (c->policy & POLICY_OPPORTUNISTIC) {
-			/*
-			 * A failed OE initiator, make shunt bare.
-			 */
-			orphan_holdpass(c, c->spd, c->logger);
-			/*
-			 * Change routing so we don't get cleared out
-			 * when state/connection dies.
-			 */
-			set_child_routing(c, RT_ROUTED_NEGOTIATION/*lie?!?*/);
+		bad_case(event);
+
+	case RT_UNROUTED_NEGOTIATION:
+		switch (event) {
+		case CONNECTION_TIMEOUT:
+			/* for instance, permenant ondemand */
+			if (should_retry(ike)) {
+				retry(ike);
+				return;
+			}
+			if (should_revive(&ike->sa)) {
+				schedule_revival(&ike->sa);
+				return;
+			}
+			if (c->policy & POLICY_OPPORTUNISTIC) {
+				/*
+				 * A failed OE initiator, make shunt bare.
+				 */
+				orphan_holdpass(c, c->spd, c->logger);
+				/*
+				 * Change routing so we don't get cleared out
+				 * when state/connection dies.
+				 */
+				set_child_routing(c, RT_UNROUTED);
+			}
+			fail(ike);
+			return;
 		}
+		bad_case(event);
+
+	case RT_ROUTED_NEGOTIATION:
+		switch (event) {
+		case CONNECTION_TIMEOUT:
+			if (should_retry(ike)) {
+				retry(ike);
+				return;
+			}
+			if (should_revive(&ike->sa)) {
+				schedule_revival(&ike->sa);
+				return;
+			}
+			if (c->policy & POLICY_OPPORTUNISTIC) {
+				/*
+				 * A failed OE initiator, make shunt bare.
+				 */
+				orphan_holdpass(c, c->spd, c->logger);
+				/*
+				 * Change routing so we don't get cleared out
+				 * when state/connection dies.
+				 */
+				set_child_routing(c, RT_ROUTED_PROSPECTIVE/*lie?!?*/);
+			}
+			fail(ike);
+			return;
+		}
+		bad_case(event);
+
+	case RT_ROUTED_TUNNEL:
+		switch (event) {
+		case CONNECTION_TIMEOUT:
+			/* don't retry as well */
+			if (should_revive(&ike->sa)) {
+				schedule_revival(&ike->sa);
+				return;
+			}
+			if (c->policy & POLICY_OPPORTUNISTIC) {
+				/*
+				 * A failed OE initiator, make shunt bare.
+				 */
+				orphan_holdpass(c, c->spd, c->logger);
+				/*
+				 * Change routing so we don't get cleared out
+				 * when state/connection dies.
+				 */
+				set_child_routing(c, RT_ROUTED_NEGOTIATION/*lie?!?*/);
+			}
+			fail(ike);
+			return;
+		}
+		bad_case(event);
+
+	case RT_ROUTED_PROSPECTIVE:
+	case RT_ROUTED_FAILURE:
+	case RT_UNROUTED_TUNNEL:
+		llog_pexpect(ike->sa.st_logger, HERE, "connection in %s not expecting %s",
+			     enum_name_short(&routing_names, cr),
+			     __func__);
+		/* can't send delete as message window is full */
 		fail(ike);
 		return;
+
+	}
+
+	bad_case(cr);
+}
+
+void instance_event_handler(struct connection *c, enum connection_event event, struct ike_sa *ike)
+{
+	/*
+	 * Part 1: handle the easy cases where the connection didn't
+	 * establish and things should retry/revive with kernel
+	 * policy/state unchanged.
+	 */
+
+	const enum routing cr = c->child.routing;
+	switch (cr) {
+
+	case RT_UNROUTED:
+		switch (event) {
+		case CONNECTION_TIMEOUT:
+			/* for instance, permanent+up */
+			if (should_retry(ike)) {
+				retry(ike);
+				return;
+			}
+			if (should_revive(&ike->sa)) {
+				schedule_revival(&ike->sa);
+				return;
+			}
+			fail(ike);
+			return;
+		}
+		bad_case(event);
+
+	case RT_UNROUTED_NEGOTIATION:
+		switch (event) {
+		case CONNECTION_TIMEOUT:
+			/* for instance, permenant ondemand */
+			if (should_retry(ike)) {
+				retry(ike);
+				return;
+			}
+			if (should_revive(&ike->sa)) {
+				schedule_revival(&ike->sa);
+				return;
+			}
+			if (c->policy & POLICY_OPPORTUNISTIC) {
+				/*
+				 * A failed OE initiator, make shunt bare.
+				 */
+				orphan_holdpass(c, c->spd, c->logger);
+				/*
+				 * Change routing so we don't get cleared out
+				 * when state/connection dies.
+				 */
+				set_child_routing(c, RT_UNROUTED);
+			}
+			fail(ike);
+			return;
+		}
+		bad_case(event);
+
+	case RT_ROUTED_NEGOTIATION:
+		switch (event) {
+		case CONNECTION_TIMEOUT:
+			if (should_retry(ike)) {
+				retry(ike);
+				return;
+			}
+			if (should_revive(&ike->sa)) {
+				schedule_revival(&ike->sa);
+				return;
+			}
+			if (c->policy & POLICY_OPPORTUNISTIC) {
+				/*
+				 * A failed OE initiator, make shunt bare.
+				 */
+				orphan_holdpass(c, c->spd, c->logger);
+				/*
+				 * Change routing so we don't get cleared out
+				 * when state/connection dies.
+				 */
+				set_child_routing(c, RT_ROUTED_PROSPECTIVE/*lie?!?*/);
+			}
+			fail(ike);
+			return;
+		}
+		bad_case(event);
+
+	case RT_ROUTED_TUNNEL:
+		switch (event) {
+		case CONNECTION_TIMEOUT:
+			/* don't retry as well */
+			if (should_revive(&ike->sa)) {
+				schedule_revival(&ike->sa);
+				return;
+			}
+			if (c->policy & POLICY_OPPORTUNISTIC) {
+				/*
+				 * A failed OE initiator, make shunt bare.
+				 */
+				orphan_holdpass(c, c->spd, c->logger);
+				/*
+				 * Change routing so we don't get cleared out
+				 * when state/connection dies.
+				 */
+				set_child_routing(c, RT_ROUTED_NEGOTIATION/*lie?!?*/);
+			}
+			fail(ike);
+			return;
+		}
+		bad_case(event);
 
 	case RT_ROUTED_PROSPECTIVE:
 	case RT_ROUTED_FAILURE:
