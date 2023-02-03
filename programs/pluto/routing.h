@@ -18,6 +18,10 @@
 
 struct connection;
 struct logger;
+struct state;
+struct kernel_acquire;
+struct child_sa;
+struct ike_sa;
 
 /*
  * Routing status.
@@ -56,27 +60,13 @@ extern const struct enum_names routing_story;
 		     (RS) == RT_ROUTED_TUNNEL ||		\
 		     (RS) == RT_UNROUTED_TUNNEL)
 
-struct connection;
-struct state;
-struct kernel_acquire;
-struct child_sa;
-struct ike_sa;
-
 void connection_down(struct connection *c);
 void connection_prospective(struct connection *c);
 void connection_negotiating(struct connection *c,
 			    const struct kernel_acquire *b);
-extern void connection_resume(struct child_sa *child);
-extern void connection_suspend(struct child_sa *child);
+void connection_resume(struct child_sa *child);
+void connection_suspend(struct child_sa *child);
 
-enum routing_action {
-	CONNECTION_RETRY,
-	CONNECTION_REVIVE,
-	CONNECTION_FAIL,
-};
-
-extern const struct enum_names routing_action_names;
-
-enum routing_action connection_timeout(struct ike_sa *ike);
+void connection_timeout(struct ike_sa *ike);
 
 #endif

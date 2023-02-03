@@ -218,7 +218,6 @@ OBJS += connection_db.o
 
 OBJS += routing.o
 OBJS += routing_names.o
-OBJS += routing_action_names.o
 OBJS += routing_story.o
 
 OBJS += initiate.o terminate.o ikev2_rekey_now.o

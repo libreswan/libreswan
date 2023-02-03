@@ -23,6 +23,8 @@
 #include "kernel.h"
 #include "kernel_policy.h"
 #include "revival.h"
+#include "ikev2_ike_sa_init.h"		/* for initiate_v2_IKE_SA_INIT_request() */
+#include "pluto_stats.h"
 
 void set_child_routing_where(struct connection *c, enum routing routing, where_t where)
 {
@@ -176,15 +178,72 @@ static bool should_retry(struct ike_sa *ike)
 	return false;
 }
 
-static enum routing_action connection_timeout_revive(struct ike_sa *ike,
-						     enum routing new_routing)
+/*
+ * Re-try establishing the IKE SAs (previous attempt failed).
+ *
+ * This is called when the IKE_SA_INIT and/or IKE_AUTH exchange fails.
+ * This is different to having an IKE_SA establish but then have a
+ * later exchange fail.
+ */
+
+static void retry(struct ike_sa *ike)
+{
+	struct connection *c = ike->sa.st_connection;
+	unsigned long try_limit = c->sa_keying_tries;
+	unsigned long try = ike->sa.st_try + 1; /* +1 as this try */
+
+	/*
+	 * A lot like EVENT_SA_REPLACE, but over again.  Since we know
+	 * that st cannot be in use, we can delete it right away.
+	 */
+	char story[80]; /* arbitrary limit */
+
+	snprintf(story, sizeof(story), try_limit == 0 ?
+		 "starting keying attempt %ld of an unlimited number" :
+		 "starting keying attempt %ld of at most %ld",
+		 try, try_limit);
+
+	if (fd_p(ike->sa.st_logger->object_whackfd)) {
+		/*
+		 * Release whack because the observer will get bored.
+		 */
+		llog_sa(RC_COMMENT, ike,
+			"%s, but releasing whack",
+			story);
+		release_pending_whacks(&ike->sa, story);
+	} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+		/* no whack: just log to syslog */
+		llog_sa(RC_LOG, ike, "%s", story);
+	}
+
+	/*
+	 * Start billing for the new new state.  The old state also
+	 * gets billed for this function call, oops.
+	 *
+	 * Start from policy in connection
+	 */
+
+	lset_t policy = c->policy & ~POLICY_IPSEC_MASK;
+	threadtime_t inception = threadtime_start();
+	initiate_v2_IKE_SA_INIT_request(c, &ike->sa, policy, try, &inception,
+					HUNK_AS_SHUNK(c->child.sec_label),
+					/*background?*/false, ike->sa.st_logger);
+}
+
+static void fail(struct ike_sa *ike)
+{
+	pstat_sa_failed(&ike->sa, REASON_TOO_MANY_RETRANSMITS);
+}
+
+static void connection_timeout_revive(struct ike_sa *ike, enum routing new_routing)
 {
 	struct logger *logger = ike->sa.st_logger;
 	struct connection *c = ike->sa.st_connection;
 
 	ldbg(logger, "maximum number of establish retries reached - abandoning");
 	if (should_revive(&ike->sa)) {
-		return CONNECTION_REVIVE;
+		schedule_revival(&ike->sa);
+		return;
 	}
 
 	if (c->child.routing != new_routing) {
@@ -207,14 +266,12 @@ static enum routing_action connection_timeout_revive(struct ike_sa *ike,
 			set_child_routing(c, new_routing);
 		}
 	}
-	return CONNECTION_FAIL;
+	/* can't send delete as message window is full */
+	fail(ike);
 }
 
-enum routing_action connection_timeout(struct ike_sa *ike)
+void connection_timeout(struct ike_sa *ike)
 {
-	PEXPECT(ike->sa.st_logger, !ike->sa.st_early_revival);
-	ike->sa.st_early_revival = true;
-
 	/*
 	 * Part 1: handle the easy cases where the connection didn't
 	 * establish and things should retry/revive with kernel
@@ -225,24 +282,36 @@ enum routing_action connection_timeout(struct ike_sa *ike)
 	const enum routing cr = c->child.routing;
 	switch (cr) {
 
-	case RT_UNROUTED:		 /* for instance, permanent */
+	case RT_UNROUTED:
+		/* for instance, permanent+up */
 		if (should_retry(ike)) {
-			return CONNECTION_RETRY;
+			retry(ike);
+			return;
 		}
-		return connection_timeout_revive(ike, RT_UNROUTED);
+		connection_timeout_revive(ike, RT_UNROUTED);
+		return;
+
 	case RT_UNROUTED_NEGOTIATION:
+		/* for instance, permenant ondemand */
 		if (should_retry(ike)) {
-			return CONNECTION_RETRY;
+			retry(ike);
+			return;
 		}
-		return connection_timeout_revive(ike, RT_UNROUTED);
+		connection_timeout_revive(ike, RT_UNROUTED);
+		return;
+
 	case RT_ROUTED_NEGOTIATION:
 		if (should_retry(ike)) {
-			return CONNECTION_RETRY;
+			retry(ike);
+			return;
 		}
-		return connection_timeout_revive(ike, RT_ROUTED_PROSPECTIVE/*lie*/);
+		connection_timeout_revive(ike, RT_ROUTED_PROSPECTIVE/*lie*/);
+		return;
+
 	case RT_ROUTED_TUNNEL:
 		/* don't retry as well */
-		return connection_timeout_revive(ike, RT_ROUTED_NEGOTIATION/*lie*/);
+		connection_timeout_revive(ike, RT_ROUTED_NEGOTIATION/*lie*/);
+		return;
 
 	case RT_ROUTED_PROSPECTIVE:
 	case RT_ROUTED_FAILURE:
@@ -250,7 +319,10 @@ enum routing_action connection_timeout(struct ike_sa *ike)
 		llog_pexpect(ike->sa.st_logger, HERE, "connection in %s not expecting %s",
 			     enum_name_short(&routing_names, cr),
 			     __func__);
-		return CONNECTION_FAIL;
+		/* can't send delete as message window is full */
+		fail(ike);
+		return;
+
 	}
 
 	bad_case(cr);

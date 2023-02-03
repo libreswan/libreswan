@@ -74,39 +74,36 @@ void event_v2_retransmit(struct state *ike_sa, monotime_t now UNUSED)
 
 	enum retransmit_action retransmit_action = retransmit(&ike->sa);
 	switch (retransmit_action) {
+
 	case RETRANSMIT_YES:
 		send_recorded_v2_message(ike, "EVENT_RETRANSMIT",
 					 MESSAGE_REQUEST);
 		return;
+
 	case RETRANSMIT_NO:
 		return;
+
 	case RETRANSMIT_TIMEOUT:
 	case TIMEOUT_ON_RETRANSMIT:
-	{
-		enum routing_action routing_action = connection_timeout(ike);
-		switch (routing_action) {
-		case CONNECTION_RETRY:
-			ikev2_retry_establishing_ike_sa(ike);
-			return;
-		case CONNECTION_REVIVE:
-			schedule_revival(&ike->sa);
-			delete_ike_family(&ike, DONT_SEND_DELETE);
-			return;
-		case CONNECTION_FAIL:
-			pstat_sa_failed(&ike->sa, REASON_TOO_MANY_RETRANSMITS);
-			/* can't send delete as message window is full */
-			delete_ike_family(&ike, DONT_SEND_DELETE);
-			return;
-		}
-		enum_buf eb;
-		llog_passert(ike->sa.st_logger, HERE,
-			     "unexpected connection action %s",
-			     str_enum_short(&routing_action_names, routing_action, &eb));
+		/*
+		 * Tell the connection so it can revive/retry if
+		 * needed and then delete the state.
+		 *
+		 * XXX: There might be a larval child.  Just use the
+		 * biggest stick available.  Can't send delete as
+		 * message window is full.
+		 */
+		connection_timeout(ike);
+		PEXPECT(ike->sa.st_logger, !ike->sa.st_early_revival);
+		ike->sa.st_early_revival = true;
+		pstat_sa_failed(&ike->sa, REASON_TOO_MANY_RETRANSMITS);
+		delete_ike_family(&ike, DONT_SEND_DELETE);
 		return;
-	}
+
 	case DELETE_ON_RETRANSMIT:
 		delete_ike_family(&ike, DONT_SEND_DELETE);
 		return;
+
 	}
 
 	bad_case(retransmit_action);
