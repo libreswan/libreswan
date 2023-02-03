@@ -235,41 +235,6 @@ static void fail(struct ike_sa *ike)
 	pstat_sa_failed(&ike->sa, REASON_TOO_MANY_RETRANSMITS);
 }
 
-static void connection_timeout_revive(struct ike_sa *ike, enum routing new_routing)
-{
-	struct logger *logger = ike->sa.st_logger;
-	struct connection *c = ike->sa.st_connection;
-
-	ldbg(logger, "maximum number of establish retries reached - abandoning");
-	if (should_revive(&ike->sa)) {
-		schedule_revival(&ike->sa);
-		return;
-	}
-
-	if (c->child.routing != new_routing) {
-		if (c->policy & POLICY_OPPORTUNISTIC) {
-			/*
-			 * A failed OE initiator, make shunt bare.
-			 *
-			 * Checking .kind above seems pretty dodgy.
-			 * Suspect it is trying to capture the initial
-			 * IKE exchange when the child hasn't yet been
-			 * created, except that when kind is
-			 * STATE_V2_PARENT_I2 the larval Child SA has
-			 * been created?!?
-			 */
-			orphan_holdpass(c, c->spd, logger);
-			/*
-			 * Change routing so we don't get cleared out
-			 * when state/connection dies.
-			 */
-			set_child_routing(c, new_routing);
-		}
-	}
-	/* can't send delete as message window is full */
-	fail(ike);
-}
-
 void connection_timeout(struct ike_sa *ike)
 {
 	/*
@@ -288,7 +253,11 @@ void connection_timeout(struct ike_sa *ike)
 			retry(ike);
 			return;
 		}
-		connection_timeout_revive(ike, RT_UNROUTED);
+		if (should_revive(&ike->sa)) {
+			schedule_revival(&ike->sa);
+			return;
+		}
+		fail(ike);
 		return;
 
 	case RT_UNROUTED_NEGOTIATION:
@@ -297,7 +266,22 @@ void connection_timeout(struct ike_sa *ike)
 			retry(ike);
 			return;
 		}
-		connection_timeout_revive(ike, RT_UNROUTED);
+		if (should_revive(&ike->sa)) {
+			schedule_revival(&ike->sa);
+			return;
+		}
+		if (c->policy & POLICY_OPPORTUNISTIC) {
+			/*
+			 * A failed OE initiator, make shunt bare.
+			 */
+			orphan_holdpass(c, c->spd, c->logger);
+			/*
+			 * Change routing so we don't get cleared out
+			 * when state/connection dies.
+			 */
+			set_child_routing(c, RT_UNROUTED);
+		}
+		fail(ike);
 		return;
 
 	case RT_ROUTED_NEGOTIATION:
@@ -305,12 +289,42 @@ void connection_timeout(struct ike_sa *ike)
 			retry(ike);
 			return;
 		}
-		connection_timeout_revive(ike, RT_ROUTED_PROSPECTIVE/*lie*/);
+		if (should_revive(&ike->sa)) {
+			schedule_revival(&ike->sa);
+			return;
+		}
+		if (c->policy & POLICY_OPPORTUNISTIC) {
+			/*
+			 * A failed OE initiator, make shunt bare.
+			 */
+			orphan_holdpass(c, c->spd, c->logger);
+			/*
+			 * Change routing so we don't get cleared out
+			 * when state/connection dies.
+			 */
+			set_child_routing(c, RT_ROUTED_PROSPECTIVE/*lie?!?*/);
+		}
+		fail(ike);
 		return;
 
 	case RT_ROUTED_TUNNEL:
 		/* don't retry as well */
-		connection_timeout_revive(ike, RT_ROUTED_NEGOTIATION/*lie*/);
+		if (should_revive(&ike->sa)) {
+			schedule_revival(&ike->sa);
+			return;
+		}
+		if (c->policy & POLICY_OPPORTUNISTIC) {
+			/*
+			 * A failed OE initiator, make shunt bare.
+			 */
+			orphan_holdpass(c, c->spd, c->logger);
+			/*
+			 * Change routing so we don't get cleared out
+			 * when state/connection dies.
+			 */
+			set_child_routing(c, RT_ROUTED_NEGOTIATION/*lie?!?*/);
+		}
+		fail(ike);
 		return;
 
 	case RT_ROUTED_PROSPECTIVE:
