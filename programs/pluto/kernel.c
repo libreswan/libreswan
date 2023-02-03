@@ -2913,9 +2913,9 @@ bool get_ipsec_traffic(struct state *st,
 
 	dbg("kernel: get_sa_bundle_info %s", sa.story);
 
-	uint64_t bytes;
-	uint64_t add_time;
-	uint64_t lastused;
+	uint64_t bytes = 0;
+	uint64_t add_time = 0;
+	uint64_t lastused = 0;
 	if (!kernel_ops->get_kernel_state(&sa, &bytes, &add_time, &lastused, st->st_logger))
 		return false;
 
