@@ -159,8 +159,7 @@ ipsec_stopnflog() {
     elif [ "${FIREWALL}" = NFTABLES ]; then
         nflog_nftables_delete
     else
-        echo "unknown firewall comaand ${FIREWALL_CMD} and ${FIREWALL} expect ipables or nft"
-        exit 1
+        echo "WARNING unknown firewall comaand ${FIREWALL} expect IPTABLES or NFTABLES or nft"
     fi
 
     exit 0
