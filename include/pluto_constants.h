@@ -729,7 +729,7 @@ extern struct keywords sa_role_names;
 
 enum connection_kind {
 	CK_INVALID = 0,	/* better name? */
-	CK_GROUP,       /* policy group: instantiates to template */
+	CK_GROUP,       /* policy group: instantiates to CK_TEMPLATE+POLICY_GROUPINSTANCE */
 	CK_TEMPLATE,    /* abstract connection, with wildcard */
 	CK_PERMANENT,   /* normal connection */
 	CK_HYBRID,	/* IKE SA instantiated a template */
@@ -860,7 +860,6 @@ enum sa_policy_bits {
 	POLICY_DONT_REKEY_IX,	/* don't rekey state either Phase */
 	POLICY_REAUTH_IX,	/* IKEv2 only initiate re-authentication */
 	POLICY_OPPORTUNISTIC_IX,	/* is this opportunistic? */
-	POLICY_GROUP_IX,	/* is this a group template? */
 	POLICY_GROUTED_IX,	/* do we want this group routed? */
 	POLICY_GROUPINSTANCE_IX,	/* is this a group template instance? */
 	POLICY_UP_IX,	/* do we want this up? */
@@ -905,7 +904,6 @@ enum sa_policy_bits {
 #define POLICY_DONT_REKEY	LELEM(POLICY_DONT_REKEY_IX)	/* don't rekey state either Phase */
 #define POLICY_REAUTH	LELEM(POLICY_REAUTH_IX)	/* IKEv2 initiate reauthentication instead of rekey */
 #define POLICY_OPPORTUNISTIC	LELEM(POLICY_OPPORTUNISTIC_IX)	/* is this opportunistic? */
-#define POLICY_GROUP	LELEM(POLICY_GROUP_IX)	/* is this a group template? */
 #define POLICY_GROUTED	LELEM(POLICY_GROUTED_IX)	/* do we want this group routed? */
 #define POLICY_GROUPINSTANCE	LELEM(POLICY_GROUPINSTANCE_IX)	/* is this a group template instance? */
 #define POLICY_UP	LELEM(POLICY_UP_IX)	/* do we want this up? */

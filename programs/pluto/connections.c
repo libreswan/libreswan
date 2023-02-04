@@ -1520,8 +1520,8 @@ static void extract_max_sa_lifetime(const char *sa_name,
 static enum connection_kind extract_connection_kind(const struct whack_message *wm,
 						    struct logger *logger)
 {
-	if (wm->policy & POLICY_GROUP) {
-		ldbg(logger, "connection is group: by policy");
+	if (wm->is_connection_group) {
+		ldbg(logger, "connection is group: by .connection_group");
 		return CK_GROUP;
 	}
 	if (wm->ike_version == IKEv2 && wm->sec_label != NULL) {
@@ -2746,6 +2746,12 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	if (policy != LEMPTY) {
 		s += jam_string(buf, sep);
 		s += jam_lset_short(buf, &sa_policy_bit_names, "+", policy);
+		sep = "+";
+	}
+
+	if (c->kind == CK_GROUP) {
+		s += jam_string(buf, sep);
+		s += jam_string(buf, "GROUP");
 		sep = "+";
 	}
 

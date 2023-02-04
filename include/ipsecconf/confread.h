@@ -111,6 +111,7 @@ struct starter_conn {
 	lset_t policy;
 	struct authby authby;
 	lset_t sighash_policy;
+	bool is_connection_group;
 	enum shunt_policy prospective_shunt;
 	enum shunt_policy negotiation_shunt;
 	enum shunt_policy failure_shunt;

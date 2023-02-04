@@ -1603,11 +1603,13 @@ int main(int argc, char **argv)
 				end->host_addr = get_address_any(&host_family);
 			} else if (streq(optarg, "%group")) {
 				/* always use tunnel mode; mark as group */
-				new_policy = POLICY_TUNNEL | POLICY_GROUP;
+				new_policy = POLICY_TUNNEL;
+				msg.is_connection_group = true;
 				end->host_addr = get_address_any(&host_family);
 			} else if (streq(optarg, "%opportunisticgroup")) {
 				/* always use tunnel mode; mark as opportunistic */
-				new_policy = POLICY_TUNNEL | POLICY_OPPORTUNISTIC | POLICY_GROUP;
+				new_policy = POLICY_TUNNEL | POLICY_OPPORTUNISTIC;
+				msg.is_connection_group = true;
 				end->host_addr = get_address_any(&host_family);
 			} else if (msg.left.id != NULL && !streq(optarg, "%null")) {
 				new_policy = LEMPTY;
@@ -1637,7 +1639,7 @@ int main(int argc, char **argv)
 
 			msg.policy |= new_policy;
 
-			if (new_policy & POLICY_GROUP) {
+			if (msg.is_connection_group) {
 				/*
 				 * client subnet must not be specified by
 				 * user: it will come from the group's file.

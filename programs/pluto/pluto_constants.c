@@ -130,7 +130,6 @@ static const char *const sa_policy_bit_name[] = {
 	P(POLICY_DONT_REKEY),
 	P(POLICY_REAUTH),
 	P(POLICY_OPPORTUNISTIC),
-	P(POLICY_GROUP),
 	P(POLICY_GROUTED),
 	P(POLICY_GROUPINSTANCE),
 	P(POLICY_UP),

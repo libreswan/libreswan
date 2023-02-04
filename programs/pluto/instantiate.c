@@ -224,7 +224,7 @@ struct connection *group_instantiate(struct connection *group,
 
 	set_first_selector(t, local, local_selector);
 
-	t->policy &= ~(POLICY_GROUP | POLICY_GROUTED);
+	t->policy &= ~POLICY_GROUTED;
 	t->policy |= POLICY_GROUPINSTANCE; /* mark as group instance for later */
 	t->kind = (!address_is_specified(t->remote->host.addr) &&
 		   !NEVER_NEGOTIATE(t->policy)) ? CK_TEMPLATE : CK_INSTANCE;
