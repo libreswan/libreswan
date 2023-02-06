@@ -1,0 +1,19 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ ipsec auto --add ikev2-westnet-eastnet-x509-cr
+002 "ikev2-westnet-eastnet-x509-cr": added IKEv2 connection
+east #
+ echo "initdone"
+initdone
+east #
+ hostname | grep east > /dev/null && grep SEC_ERROR_EXPIRED_CERTIFICATE /tmp/pluto.log
+"ikev2-westnet-eastnet-x509-cr" #1: NSS: ERROR: IPsec certificate E=user-notvalidanymore@testing.libreswan.org,CN=notvalidanymore.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_EXPIRED_CERTIFICATE: Peer's Certificate has expired.
+"ikev2-westnet-eastnet-x509-cr" #2: NSS: ERROR: IPsec certificate E=user-notvalidanymore@testing.libreswan.org,CN=notvalidanymore.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_EXPIRED_CERTIFICATE: Peer's Certificate has expired.
+east #
+ 

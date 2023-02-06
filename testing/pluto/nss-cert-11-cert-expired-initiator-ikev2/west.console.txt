@@ -1,0 +1,47 @@
+/testing/guestbin/swan-prep --x509
+Preparing X.509 files
+west #
+ /testing/guestbin/swan-prep --x509 --x509name notvalidanymore
+Preparing X.509 files
+west #
+ # Set a time in the past so notvalidanymore is valid here (but not
+west #
+ # on the other side with normal time
+west #
+ # Invoke pluto directly so that it is the root of the shared
+west #
+ # faketime tree.
+west #
+ LD_PRELOAD=PATH/lib64/faketime/libfaketime.so.1 FAKETIME=-3d ipsec pluto  --config /etc/ipsec.conf
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ # if faketime works, adding conn should not give a warning about cert
+west #
+ ipsec auto --add ikev2-westnet-eastnet-x509-cr
+002 "ikev2-westnet-eastnet-x509-cr": added IKEv2 connection
+west #
+ ipsec whack --impair suppress-retransmits
+west #
+ echo "initdone"
+initdone
+west #
+ # Should fail
+west #
+ ipsec auto --up ikev2-westnet-eastnet-x509-cr
+1v2 "ikev2-westnet-eastnet-x509-cr" #1: initiating IKEv2 connection
+1v2 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+1v2 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "ikev2-westnet-eastnet-x509-cr" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
+036 "ikev2-westnet-eastnet-x509-cr" #1: encountered fatal error in state STATE_V2_PARENT_I2
+002 "ikev2-westnet-eastnet-x509-cr" #1: deleting state (STATE_V2_PARENT_I2) and NOT sending notification
+002 "ikev2-westnet-eastnet-x509-cr" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+west #
+ echo "done"
+done
+west #
+ hostname | grep east > /dev/null && grep SEC_ERROR_EXPIRED_CERTIFICATE /tmp/pluto.log
+west #
+ 
+west #
+ 
