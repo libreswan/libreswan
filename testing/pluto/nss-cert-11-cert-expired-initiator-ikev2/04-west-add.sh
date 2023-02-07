@@ -7,5 +7,6 @@ pk12util -i OUTPUT/old-west.p12 -W secret -d /etc/ipsec.d
 
 ipsec start
 ../../guestbin/wait-until-pluto-started
+ipsec whack --impair revival
 ipsec auto --add old-west
 ipsec auto --add new-west

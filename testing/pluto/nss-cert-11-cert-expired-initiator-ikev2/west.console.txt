@@ -13,6 +13,8 @@ west #
  pk12util -W secret -o OUTPUT/east.p12 -n east -d /etc/ipsec.d
 pk12util: PKCS12 EXPORT SUCCESSFUL
 west #
+ certutil -L -n east -d /etc/ipsec.d -a > OUTPUT/east.crt
+west #
  certutil -F -n east -d /etc/ipsec.d
 west #
  # Import the old and new certificates
@@ -29,6 +31,8 @@ west #
 Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
+west #
+ ipsec whack --impair revival
 west #
  ipsec auto --add old-west
 002 "old-west": added IKEv2 connection
@@ -59,6 +63,6 @@ west #
 003 "old-west" #3: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 036 "old-west" #3: encountered fatal error in state STATE_V2_PARENT_I2
 002 "old-west" #3: deleting state (STATE_V2_PARENT_I2) and NOT sending notification
-002 "old-west" #3: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+002 "old-west" #3: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  

@@ -7,17 +7,25 @@ east #
 east #
  # back.
 east #
- certutil -m 1 -S -k rsa -x -w -2 -n new-ca  -s "CN=new-ca"  -v 12 -t "CT,C,C" -d /etc/ipsec.d -z ipsec.conf
+ certutil -m 1 -S -k rsa -x        -w -2 -n new-ca   -s "CN=new-ca"   -v 12 -t "CT,C,C" -d /etc/ipsec.d -z ipsec.conf
 Generating key.  This may take a few moments...
 east #
- certutil -m 2 -S -k rsa -c new-ca -n new-west -s "CN=new-west" -v 12 -t "u,u,u"  -d /etc/ipsec.d -z ipsec.conf
+ certutil -m 2 -S -k rsa -c new-ca -w -2 -n new-west -s "CN=new-west" -v 12 -t "u,u,u"  -d /etc/ipsec.d -z ipsec.conf
 Generating key.  This may take a few moments...
 Notice: Trust flag u is set automatically if the private key is present.
 east #
  pk12util -W secret -o OUTPUT/new-west.p12   -n new-west -d /etc/ipsec.d
 pk12util: PKCS12 EXPORT SUCCESSFUL
 east #
+ certutil -L -n new-west -d /etc/ipsec.d -a > OUTPUT/new-west.crt
+east #
  certutil -F -n new-west -d /etc/ipsec.d
+east #
+ PATH/lib64/nss/unsupported-tools/vfychain -d /etc/ipsec.d -a OUTPUT/new-west.crt
+Chain is good!
+east #
+ PATH/lib64/nss/unsupported-tools/vfychain -b 2212300000Z -d /etc/ipsec.d -a OUTPUT/new-west.crt
+Chain is good!
 east #
  # Now generate an expired certificate; these two overlap but a month
 east #
@@ -33,7 +41,22 @@ east #
  pk12util -W secret -o OUTPUT/old-west.p12   -n old-west -d /etc/ipsec.d
 pk12util: PKCS12 EXPORT SUCCESSFUL
 east #
+ certutil -L -n old-west -d /etc/ipsec.d -a > OUTPUT/old-west.crt
+east #
  certutil -F -n old-west -d /etc/ipsec.d
+east #
+ PATH/lib64/nss/unsupported-tools/vfychain -d /etc/ipsec.d -a OUTPUT/old-west.crt
+Chain is bad!
+PROBLEM WITH THE CERT CHAIN:
+CERT 0. CN=old-west :
+  ERROR -8162: The certificate issuer's certificate has expired. Check your system date and time.
+    CN=old-ca
+CERT 1. old-ca [Certificate Authority]:
+  ERROR -8162: The certificate issuer's certificate has expired. Check your system date and time.
+    CN=old-ca
+east #
+ PATH/lib64/nss/unsupported-tools/vfychain -b 2212300000Z -d /etc/ipsec.d -a OUTPUT/old-west.crt
+Chain is good!
 east #
  # Import the cert
 east #
