@@ -1,19 +1,53 @@
-/testing/guestbin/swan-prep --x509
-Preparing X.509 files
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+east #
+ # Generate a sane CA and a sane peer certificate, back-dated by a few
+east #
+ # months.  Export these then wipe so that peer has to send the cert
+east #
+ # back.
+east #
+ certutil -m 1 -S -k rsa -x -w -2 -n new-ca  -s "CN=new-ca"  -v 12 -t "CT,C,C" -d /etc/ipsec.d -z ipsec.conf
+Generating key.  This may take a few moments...
+east #
+ certutil -m 2 -S -k rsa -c new-ca -n new-west -s "CN=new-west" -v 12 -t "u,u,u"  -d /etc/ipsec.d -z ipsec.conf
+Generating key.  This may take a few moments...
+Notice: Trust flag u is set automatically if the private key is present.
+east #
+ pk12util -W secret -o OUTPUT/new-west.p12   -n new-west -d /etc/ipsec.d
+pk12util: PKCS12 EXPORT SUCCESSFUL
+east #
+ certutil -F -n new-west -d /etc/ipsec.d
+east #
+ # Now generate an expired certificate; these two overlap but a month
+east #
+ # ago.
+east #
+ certutil -m 1 -S -k rsa -x -w -13 -n old-ca  -s "CN=old-ca"  -v 12 -t "CT,C,C" -d /etc/ipsec.d -z ipsec.conf
+Generating key.  This may take a few moments...
+east #
+ certutil -m 2 -S -k rsa -c old-ca -w -11 -n old-west -s "CN=old-west" -v 12 -t "u,u,u"  -d /etc/ipsec.d -z ipsec.conf
+Generating key.  This may take a few moments...
+Notice: Trust flag u is set automatically if the private key is present.
+east #
+ pk12util -W secret -o OUTPUT/old-west.p12   -n old-west -d /etc/ipsec.d
+pk12util: PKCS12 EXPORT SUCCESSFUL
+east #
+ certutil -F -n old-west -d /etc/ipsec.d
+east #
+ # Import the cert
+east #
+ pk12util -i OUTPUT/east.p12 -W secret -d /etc/ipsec.d
+pk12util: PKCS12 IMPORT SUCCESSFUL
+east #
+ # now get going
 east #
  ipsec start
 Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add ikev2-westnet-eastnet-x509-cr
-002 "ikev2-westnet-eastnet-x509-cr": added IKEv2 connection
-east #
- echo "initdone"
-initdone
-east #
- hostname | grep east > /dev/null && grep SEC_ERROR_EXPIRED_CERTIFICATE /tmp/pluto.log
-"ikev2-westnet-eastnet-x509-cr" #1: NSS: ERROR: IPsec certificate E=user-notvalidanymore@testing.libreswan.org,CN=notvalidanymore.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_EXPIRED_CERTIFICATE: Peer's Certificate has expired.
-"ikev2-westnet-eastnet-x509-cr" #2: NSS: ERROR: IPsec certificate E=user-notvalidanymore@testing.libreswan.org,CN=notvalidanymore.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_EXPIRED_CERTIFICATE: Peer's Certificate has expired.
+ ipsec auto --add east
+002 "east": added IKEv2 connection
 east #
  

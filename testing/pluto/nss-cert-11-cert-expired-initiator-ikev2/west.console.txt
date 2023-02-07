@@ -1,47 +1,64 @@
-/testing/guestbin/swan-prep --x509
-Preparing X.509 files
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
 west #
- /testing/guestbin/swan-prep --x509 --x509name notvalidanymore
-Preparing X.509 files
+ # Generate a sane certificate with a sane date
 west #
- # Set a time in the past so notvalidanymore is valid here (but not
+ certutil -m 1 -S -k rsa -x -w -2 -n west-ca -s "CN=west-ca"  -v 12 -t "CT,C,C" -d /etc/ipsec.d -z ipsec.conf
+Generating key.  This may take a few moments...
 west #
- # on the other side with normal time
+ certutil -m 2 -S -k rsa -c west-ca -n east -s "CN=east" -v 12 -t "u,u,u"  -d /etc/ipsec.d -z ipsec.conf
+Generating key.  This may take a few moments...
+Notice: Trust flag u is set automatically if the private key is present.
 west #
- # Invoke pluto directly so that it is the root of the shared
+ pk12util -W secret -o OUTPUT/east.p12 -n east -d /etc/ipsec.d
+pk12util: PKCS12 EXPORT SUCCESSFUL
 west #
- # faketime tree.
+ certutil -F -n east -d /etc/ipsec.d
 west #
- LD_PRELOAD=PATH/lib64/faketime/libfaketime.so.1 FAKETIME=-3d ipsec pluto  --config /etc/ipsec.conf
+ # Import the old and new certificates
+west #
+ pk12util -i OUTPUT/new-west.p12 -W secret -d /etc/ipsec.d
+pk12util: PKCS12 IMPORT SUCCESSFUL
+west #
+ pk12util -i OUTPUT/old-west.p12 -W secret -d /etc/ipsec.d
+pk12util: PKCS12 IMPORT SUCCESSFUL
+west #
+ # now get going
+west #
+ ipsec start
+Redirecting to: [initsystem]
 west #
  ../../guestbin/wait-until-pluto-started
 west #
- # if faketime works, adding conn should not give a warning about cert
+ ipsec auto --add old-west
+002 "old-west": added IKEv2 connection
 west #
- ipsec auto --add ikev2-westnet-eastnet-x509-cr
-002 "ikev2-westnet-eastnet-x509-cr": added IKEv2 connection
+ ipsec auto --add new-west
+002 "new-west": added IKEv2 connection
 west #
- ipsec whack --impair suppress-retransmits
+ # out with the old
 west #
- echo "initdone"
-initdone
+ ipsec auto --up new-west
+1v2 "new-west" #1: initiating IKEv2 connection
+1v2 "new-west" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+1v2 "new-west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "new-west" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using peer certificate 'CN=east' issued by CA 'CN=west-ca'
+004 "new-west" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
- # Should fail
+ ipsec auto --delete new-west
+002 "new-west": terminating SAs using this connection
+002 "new-west" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+005 "new-west" #2: ESP traffic information: in=0B out=0B
 west #
- ipsec auto --up ikev2-westnet-eastnet-x509-cr
-1v2 "ikev2-westnet-eastnet-x509-cr" #1: initiating IKEv2 connection
-1v2 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-1v2 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-003 "ikev2-westnet-eastnet-x509-cr" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
-036 "ikev2-westnet-eastnet-x509-cr" #1: encountered fatal error in state STATE_V2_PARENT_I2
-002 "ikev2-westnet-eastnet-x509-cr" #1: deleting state (STATE_V2_PARENT_I2) and NOT sending notification
-002 "ikev2-westnet-eastnet-x509-cr" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+ # in with the new
 west #
- echo "done"
-done
-west #
- hostname | grep east > /dev/null && grep SEC_ERROR_EXPIRED_CERTIFICATE /tmp/pluto.log
-west #
- 
+ ipsec auto --up old-west
+1v2 "old-west" #3: initiating IKEv2 connection
+1v2 "old-west" #3: sent IKE_SA_INIT request to 192.1.2.23:500
+1v2 "old-west" #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "old-west" #3: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
+036 "old-west" #3: encountered fatal error in state STATE_V2_PARENT_I2
+002 "old-west" #3: deleting state (STATE_V2_PARENT_I2) and NOT sending notification
+002 "old-west" #3: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  
