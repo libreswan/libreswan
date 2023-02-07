@@ -10,9 +10,6 @@ pk12util -W secret -o OUTPUT/new-west.p12   -n new-west -d /etc/ipsec.d
 certutil -L -n new-west -d /etc/ipsec.d -a > OUTPUT/new-west.crt
 certutil -F -n new-west -d /etc/ipsec.d
 
-/usr/lib64/nss/unsupported-tools/vfychain -p -p -d /etc/ipsec.d -a OUTPUT/new-west.crt
-/usr/lib64/nss/unsupported-tools/vfychain -p -p -b 2212300000Z -d /etc/ipsec.d -a OUTPUT/new-west.crt
-
 # Now generate an expired certificate; these two overlap but a month
 # ago.
 
@@ -22,5 +19,15 @@ pk12util -W secret -o OUTPUT/old-west.p12   -n old-west -d /etc/ipsec.d
 certutil -L -n old-west -d /etc/ipsec.d -a > OUTPUT/old-west.crt
 certutil -F -n old-west -d /etc/ipsec.d
 
-/usr/lib64/nss/unsupported-tools/vfychain -p -p -d /etc/ipsec.d -a OUTPUT/old-west.crt
-/usr/lib64/nss/unsupported-tools/vfychain -p -p -b 2212300000Z -d /etc/ipsec.d -a OUTPUT/old-west.crt
+# use vfychain
+#
+# -p -p engages the new PKIX interface that pluto is using.
+#
+# -u 12 -> 1<<12 is #define certificateUsageIPsec (0x1000)
+#
+# -b YYMMDDHHMMZ (yea, CC is magic)
+
+/usr/lib64/nss/unsupported-tools/vfychain -v -u 12 -p -p -d /etc/ipsec.d -a OUTPUT/new-west.crt
+/usr/lib64/nss/unsupported-tools/vfychain -v -u 12 -p -p -b 2212300000Z -d /etc/ipsec.d -a OUTPUT/new-west.crt
+/usr/lib64/nss/unsupported-tools/vfychain -v -u 12 -p -p -d /etc/ipsec.d -a OUTPUT/old-west.crt
+/usr/lib64/nss/unsupported-tools/vfychain -v -u 12 -p -p -b 2212300000Z -d /etc/ipsec.d -a OUTPUT/old-west.crt
