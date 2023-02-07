@@ -9,8 +9,9 @@ certutil -m 2 -S -k rsa -c new-ca -w -2 -n new-west -s "CN=new-west" -v 12 -t "u
 pk12util -W secret -o OUTPUT/new-west.p12   -n new-west -d /etc/ipsec.d
 certutil -L -n new-west -d /etc/ipsec.d -a > OUTPUT/new-west.crt
 certutil -F -n new-west -d /etc/ipsec.d
-/usr/lib64/nss/unsupported-tools/vfychain -d /etc/ipsec.d -a OUTPUT/new-west.crt
-/usr/lib64/nss/unsupported-tools/vfychain -b 2212300000Z -d /etc/ipsec.d -a OUTPUT/new-west.crt
+
+/usr/lib64/nss/unsupported-tools/vfychain -p -p -d /etc/ipsec.d -a OUTPUT/new-west.crt
+/usr/lib64/nss/unsupported-tools/vfychain -p -p -b 2212300000Z -d /etc/ipsec.d -a OUTPUT/new-west.crt
 
 # Now generate an expired certificate; these two overlap but a month
 # ago.
@@ -20,5 +21,6 @@ certutil -m 2 -S -k rsa -c old-ca -w -11 -n old-west -s "CN=old-west" -v 12 -t "
 pk12util -W secret -o OUTPUT/old-west.p12   -n old-west -d /etc/ipsec.d
 certutil -L -n old-west -d /etc/ipsec.d -a > OUTPUT/old-west.crt
 certutil -F -n old-west -d /etc/ipsec.d
-/usr/lib64/nss/unsupported-tools/vfychain -d /etc/ipsec.d -a OUTPUT/old-west.crt
-/usr/lib64/nss/unsupported-tools/vfychain -b 2212300000Z -d /etc/ipsec.d -a OUTPUT/old-west.crt
+
+/usr/lib64/nss/unsupported-tools/vfychain -p -p -d /etc/ipsec.d -a OUTPUT/old-west.crt
+/usr/lib64/nss/unsupported-tools/vfychain -p -p -b 2212300000Z -d /etc/ipsec.d -a OUTPUT/old-west.crt

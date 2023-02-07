@@ -21,10 +21,10 @@ east #
 east #
  certutil -F -n new-west -d /etc/ipsec.d
 east #
- PATH/lib64/nss/unsupported-tools/vfychain -d /etc/ipsec.d -a OUTPUT/new-west.crt
+ PATH/lib64/nss/unsupported-tools/vfychain -p -p -d /etc/ipsec.d -a OUTPUT/new-west.crt
 Chain is good!
 east #
- PATH/lib64/nss/unsupported-tools/vfychain -b 2212300000Z -d /etc/ipsec.d -a OUTPUT/new-west.crt
+ PATH/lib64/nss/unsupported-tools/vfychain -p -p -b 2212300000Z -d /etc/ipsec.d -a OUTPUT/new-west.crt
 Chain is good!
 east #
  # Now generate an expired certificate; these two overlap but a month
@@ -45,17 +45,14 @@ east #
 east #
  certutil -F -n old-west -d /etc/ipsec.d
 east #
- PATH/lib64/nss/unsupported-tools/vfychain -d /etc/ipsec.d -a OUTPUT/old-west.crt
+ PATH/lib64/nss/unsupported-tools/vfychain -p -p -d /etc/ipsec.d -a OUTPUT/old-west.crt
 Chain is bad!
 PROBLEM WITH THE CERT CHAIN:
 CERT 0. CN=old-west :
-  ERROR -8162: The certificate issuer's certificate has expired. Check your system date and time.
-    CN=old-ca
-CERT 1. old-ca [Certificate Authority]:
-  ERROR -8162: The certificate issuer's certificate has expired. Check your system date and time.
+  ERROR -8179: Peer's Certificate issuer is not recognized.
     CN=old-ca
 east #
- PATH/lib64/nss/unsupported-tools/vfychain -b 2212300000Z -d /etc/ipsec.d -a OUTPUT/old-west.crt
+ PATH/lib64/nss/unsupported-tools/vfychain -p -p -b 2212300000Z -d /etc/ipsec.d -a OUTPUT/old-west.crt
 Chain is good!
 east #
  # Import the cert
