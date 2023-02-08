@@ -1,6 +1,6 @@
-old expiring CA overlapping a new CA with random connection order
+old expired CA overlapping a new CA with random connection order
 
-East has two connections:
+East has two template connections:
 
   old-east: with old-ca that expires in a month, it uses that to sign
   old-west

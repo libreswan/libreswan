@@ -1,5 +1,0 @@
-Expired certificate on west, east should reject it.  To allow west to
-load the cert, tweak its perception of time using faketime.
-
-This test might be time sensitive with respect to when the test certificates
-were generated. If this fails, try rerunning testing/x509/dist_certs.py
