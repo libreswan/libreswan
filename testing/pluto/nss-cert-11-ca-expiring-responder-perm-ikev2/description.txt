@@ -1,0 +1,20 @@
+old expiring CA overlapping a new CA with a permanent connection
+
+East has one permanent connection with <peer>id=%fromcert and:
+
+  old-ca that expires in a month, it uses that to sign old-west
+
+  new-ca that has a very long expiry, it uses that to sign new-west
+
+West similarly has two connections:
+
+  old-west: tries to prove its identity using old-west certificate
+  (i.e., to the connection old-east)
+
+  new-west: tries to prove its identity using new-west certificate
+  (i.e., to the connection new-east)
+
+Since all CAs and certs are valid old-west and new-west should always
+establish.
+
+new-west fails because east is pinned to old-ca #1006.
