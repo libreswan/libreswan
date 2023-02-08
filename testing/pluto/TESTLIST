@@ -1212,6 +1212,8 @@ kvmplutotest	nss-cert-04-ikev2		good
 kvmplutotest	nss-cert-05			good
 kvmplutotest	nss-cert-05-ikev2		good
 kvmplutotest	nss-cert-06			good
+kvmplutotest	nss-cert-11-ca-expiring-responder-ikev2	good
+kvmplutotest	nss-cert-11-ca-expired-responder-ikev2	wip
 kvmplutotest	ikev2-nss-cert-08-mismatch		good
 kvmplutotest	nss-cert-chain-01-ikev1		good
 kvmplutotest	nss-cert-chain-02-ikev1		good

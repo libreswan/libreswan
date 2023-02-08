@@ -1,0 +1,23 @@
+old expiring CA overlapping a new CA with random connection order
+
+East has two connections:
+
+  old-east: with old-ca that expires in a month, it uses that to sign
+  old-west
+
+  new-east: with new-ca that has a very long expiry, it uses that to
+  sign new-west
+
+West similarly has two connections:
+
+  old-west: tries to prove its identity using old-west certificate
+  (i.e., to the connection old-east)
+
+  new-west: tries to prove its identity using new-west certificate
+  (i.e., to the connection new-east)
+
+Since all CAs and certs are valid old-west and new-west should always
+establish.
+
+To that end, east's connections are added old,new and then new,old.
+West then tries to establish.
