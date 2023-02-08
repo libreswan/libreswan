@@ -1,7 +1,15 @@
 /testing/guestbin/swan-prep --nokeys
 Creating empty NSS database
 east #
- # Generate a sane CA and a sane peer certificate, back-dated by a few
+ NOW=$(date +%s)
+east #
+ THEN=$((${NOW} - 45 * 24 * 60 * 60))
+east #
+ GROUNDHOGDAY=$(date -d @${THEN} +%Y-%m-%d)
+east #
+ sed -i -e "s/groundhogday=.*/groundhogday=${GROUNDHOGDAY}/" /etc/ipsec.conf
+east #
+ # Generate a sane CA and a sane peer certificate, back-dated by two
 east #
  # months.  Export these then wipe so that peer has to send the cert
 east #
@@ -21,11 +29,11 @@ east #
 east #
  certutil -F -n new-west -d /etc/ipsec.d
 east #
- # Now generate an expired certificate; these two overlap but a month
+ # Now generate a CA that expired 1 month ago.  Use that to sign a
 east #
- # ago.
+ # certificate (for west) that is valid.
 east #
- certutil -m 1 -S -k rsa -x -w -13 -n old-ca  -s "CN=old-ca"  -v 12 -t "CT,C,C" -d /etc/ipsec.d -z ipsec.conf
+ certutil -m 1 -S -k rsa -x -w -13 -v 12 -n old-ca  -s "CN=old-ca"  -v 12 -t "CT,C,C" -d /etc/ipsec.d -z ipsec.conf
 Generating key.  This may take a few moments...
 east #
  certutil -m 2 -S -k rsa -c old-ca -w -11 -n old-west -s "CN=old-west" -v 12 -t "u,u,u"  -d /etc/ipsec.d -z ipsec.conf
@@ -39,7 +47,7 @@ east #
 east #
  certutil -F -n old-west -d /etc/ipsec.d
 east #
- # use vfychain
+ # Use vfychain to confirm the above settings
 east #
  #
 east #
@@ -53,12 +61,14 @@ east #
 east #
  # -b YYMMDDHHMMZ (yea, CC is magic)
 east #
+ VFYDATE=$(date -d @${THEN} +%y%m%d000000Z)
+east #
  PATH/lib64/nss/unsupported-tools/vfychain -v -u 12 -p -p -d /etc/ipsec.d -a OUTPUT/new-west.crt
 Chain is good!
 Root Certificate Subject:: "CN=new-ca"
 Certificate 1 Subject: "CN=new-west"
 east #
- PATH/lib64/nss/unsupported-tools/vfychain -v -u 12 -p -p -b 2212300000Z -d /etc/ipsec.d -a OUTPUT/new-west.crt
+ PATH/lib64/nss/unsupported-tools/vfychain -v -u 12 -p -p -b ${VFYDATE} -d /etc/ipsec.d -a OUTPUT/new-west.crt
 Chain is good!
 Root Certificate Subject:: "CN=new-ca"
 Certificate 1 Subject: "CN=new-west"
@@ -70,7 +80,7 @@ CERT 0. CN=old-west :
   ERROR -8179: Peer's Certificate issuer is not recognized.
     CN=old-ca
 east #
- PATH/lib64/nss/unsupported-tools/vfychain -v -u 12 -p -p -b 2212300000Z -d /etc/ipsec.d -a OUTPUT/old-west.crt
+ PATH/lib64/nss/unsupported-tools/vfychain -v -u 12 -p -p -b ${VFYDATE} -d /etc/ipsec.d -a OUTPUT/old-west.crt
 Chain is good!
 Root Certificate Subject:: "CN=old-ca"
 Certificate 1 Subject: "CN=old-west"
@@ -88,6 +98,7 @@ east #
  ../../guestbin/wait-until-pluto-started
 east #
  ipsec auto --add east
+003 "east": WARNING: left verifying certificate time: TIMESTAMP
 002 "east": added IKEv2 connection
 east #
  
