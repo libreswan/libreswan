@@ -11,7 +11,7 @@ sed -i -e "s/groundhogday=.*/groundhogday=${GROUNDHOGDAY}/" /etc/ipsec.conf
 # back.
 
 certutil -m 1 -S -k rsa -x        -w -2 -n new-ca   -s "CN=new-ca"   -v 12 -t "CT,C,C" -d /etc/ipsec.d -z ipsec.conf
-certutil -m 2 -S -k rsa -c new-ca -w -2 -n new-west -s "CN=new-west" -v 12 -t "u,u,u"  -d /etc/ipsec.d -z ipsec.conf
+certutil -m 2 -S -k rsa -c new-ca       -n new-west -s "CN=new-west" -v 12 -t "u,u,u"  -d /etc/ipsec.d -z ipsec.conf
 pk12util -W secret -o OUTPUT/new-west.p12   -n new-west -d /etc/ipsec.d
 certutil -L -n new-west -d /etc/ipsec.d -a > OUTPUT/new-west.crt
 certutil -F -n new-west -d /etc/ipsec.d
