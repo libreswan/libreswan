@@ -5,6 +5,7 @@
 #
 s/\(Mon\|Tue\|Wed\|Thu\|Fri\|Sat\|Sun\) ... .. ..:..:.. ... 20../TIMESTAMP/g
 s/\(Mon\|Tue\|Wed\|Thu\|Fri\|Sat\|Sun\) ... .. ..:..:.. 20../TIMESTAMP/g
+s/\(Jan\|Feb\|Mar\|Apr\|May\|Jun\|Jul\|Aug\|Sep\|Oct\|Nov\|Dec\) .. ..:..:.. ... 20../TIMESTAMP/g
 s/\(Jan\|Feb\|Mar\|Apr\|May\|Jun\|Jul\|Aug\|Sep\|Oct\|Nov\|Dec\) .. ..:..:.. 20../TIMESTAMP/g
 s/expires in [0-9]* days/expires in X days/g
 # lie!
