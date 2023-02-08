@@ -168,7 +168,7 @@ static void set_rev_params(CERTRevocationFlags *rev,
 static bool verify_end_cert(struct logger *logger,
 			    const struct root_certs *root_certs,
 			    const struct rev_opts *rev_opts,
-			    realtime_t certtime,
+			    realtime_t groundhogtime,
 			    CERTCertificate *end_cert)
 {
 	CERTRevocationFlags rev;
@@ -182,7 +182,7 @@ static bool verify_end_cert(struct logger *logger,
 
 	realtime_buf rb;
 	ldbg(logger, "certifcate time check time is %s",
-	     str_realtime(certtime, true/*utc*/, &rb));
+	     str_realtime(groundhogtime, true/*utc*/, &rb));
 
 	CERTValInParam cvin[] = {
 		{
@@ -205,7 +205,7 @@ static bool verify_end_cert(struct logger *logger,
 			.type = cert_pi_date,
 			/* Needs to be in microseconds; zero/epoch
 			 * means NOW */
-			.value.scalar.time = realmicroseconds(certtime),
+			.value.scalar.time = realmicroseconds(groundhogtime),
 		},
 		{
 			.type = cert_pi_end
@@ -515,7 +515,7 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 
 struct verified_certs find_and_verify_certs(struct logger *logger,
 					    enum ike_version ike_version,
-					    realtime_t certtime,
+					    realtime_t groundhogtime,
 					    struct payload_digest *cert_payloads,
 					    const struct rev_opts *rev_opts,
 					    struct root_certs *root_certs,
@@ -600,7 +600,12 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 
 	logtime_t verify_time = logtime_start(logger);
 	bool end_ok = verify_end_cert(logger, root_certs, rev_opts,
-				      certtime, end_cert);
+				      realtime_epoch, end_cert);
+	if (!end_ok && realtime_cmp(groundhogtime, >, realtime_epoch)) {
+		ldbg(logger, "retrying with groundhogtime");
+		end_ok = verify_end_cert(logger, root_certs, rev_opts,
+					 groundhogtime, end_cert);
+	}
 	logtime_stop(&verify_time, "%s() calling verify_end_cert()", __func__);
 	if (!end_ok) {
 		/*
