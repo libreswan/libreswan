@@ -133,6 +133,7 @@ enum keyword_string_conn_field {
 
 	KSCF_last_loose = KSCF_XFRM_IF_ID,
 
+	KSCF_GROUNDHOGDAY,	/* left/right */
 	KSCF_UPDOWN,	/* left/right */
 	KSCF_ID,	/* left/right */
 	KSCF_CERT,	/* left/right */

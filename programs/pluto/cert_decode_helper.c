@@ -56,6 +56,7 @@ struct task {
 	struct id id;
 	struct rev_opts rev_opts;
 	enum ike_version ike_version;
+	realtime_t certtime;
 	struct root_certs *root_certs; /* counted reference */
 	/* output */
 	struct verified_certs verified;
@@ -82,6 +83,7 @@ void submit_v2_cert_decode(struct ike_sa *ike,
 		.cert_payloads = cert_payloads,
 		.cb = cb,
 		.ike_version = ike->sa.st_ike_version,
+		.certtime = ike->sa.st_connection->remote->config->host.certtime,
 		.id = ike->sa.st_connection->remote->host.id, /* XXX: safe? */
 		.rev_opts = {
 			.ocsp = ocsp_enable,
@@ -101,6 +103,7 @@ static void cert_decode_computer(struct logger *logger,
 				 int my_thread UNUSED)
 {
 	task->verified = find_and_verify_certs(logger, task->ike_version,
+					       task->certtime,
 					       task->cert_payloads, &task->rev_opts,
 					       task->root_certs, &task->id);
 }

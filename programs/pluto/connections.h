@@ -117,6 +117,9 @@ struct host_end_config {
 
 	enum eap_options eap;		/* whether to require/do EAP auth (eg EAPTLS) */
 	bool key_from_DNS_on_demand;
+	realtime_t certtime;		/* time to use when verifying
+					 * certificates; default is
+					 * NOW */
 };
 
 /*

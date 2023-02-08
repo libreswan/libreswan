@@ -50,6 +50,7 @@ struct verified_certs {
 
 struct verified_certs find_and_verify_certs(struct logger *log,
 					    enum ike_version ike_version,
+					    realtime_t certtime,
 					    struct payload_digest *cert_payloads,
 					    const struct rev_opts *rev_opts,
 					    struct root_certs *root_cert,
