@@ -37,6 +37,11 @@ realtime_t realtime_ms(intmax_t milliseconds)
 	return (realtime_t) { .rt = timeval_ms(milliseconds), };
 }
 
+uint64_t realmicroseconds(realtime_t t)
+{
+	return t.rt.tv_sec * 1000000LL + t.rt.tv_usec;
+}
+
 realtime_t realtimesum(realtime_t t, deltatime_t d)
 {
 	realtime_t s;

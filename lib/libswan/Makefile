@@ -150,6 +150,7 @@ OBJS += deltatime.o
 OBJS += realtime.o
 OBJS += monotime.o
 OBJS += ttodeltatime.o
+OBJS += ttorealtime.o
 
 OBJS += refcnt.o
 OBJS += debug.o

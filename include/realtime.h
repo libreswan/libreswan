@@ -52,6 +52,7 @@ extern const realtime_t realtime_epoch;
 
 realtime_t realtime(time_t seconds);
 realtime_t realtime_ms(intmax_t milliseconds);
+diag_t ttorealtime(const char *time, realtime_t *rt);
 
 /*
  * Formatting.
@@ -85,6 +86,8 @@ struct realtm {
 
 struct realtm local_realtime(realtime_t t);
 struct realtm utc_realtime(realtime_t t);
+
+uint64_t realmicroseconds(realtime_t t);	/* for NSS */
 
 /* for pthread_cond_timedwait() */
 clockid_t realtime_clockid(void);
