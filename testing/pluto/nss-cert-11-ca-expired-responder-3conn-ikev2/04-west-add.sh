@@ -2,6 +2,7 @@
 
 pk12util -i OUTPUT/new-west.p12 -W secret -d /etc/ipsec.d
 pk12util -i OUTPUT/old-west.p12 -W secret -d /etc/ipsec.d
+pk12util -i OUTPUT/hog-west.p12 -W secret -d /etc/ipsec.d
 
 # now get going
 
@@ -9,3 +10,4 @@ ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add old-west
 ipsec auto --add new-west
+ipsec auto --add hog-west

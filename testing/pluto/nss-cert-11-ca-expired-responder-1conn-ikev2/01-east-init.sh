@@ -3,9 +3,6 @@
 NOW=$(date +%s)
 THEN=$((${NOW} - 45 * 24 * 60 * 60))
 
-GROUNDHOGDAY=$(date -d @${THEN} +%Y-%m-%d)
-sed -i -e "s/groundhogday=.*/groundhogday=${GROUNDHOGDAY}/" /etc/ipsec.conf
-
 # Generate a sane CA and a sane peer certificate, back-dated by two
 # months.  Export these then wipe so that peer has to send the cert
 # back.

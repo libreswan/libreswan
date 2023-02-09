@@ -1,0 +1,42 @@
+old expired CA overlapping a new CA with random connection order
+
+EAST has three template connections (old-ca, new-ca, and hog-ca).
+
+On EAST each connection has its own root CA (same name), and that root
+CA is used to generate a signed end certificate for WEST.
+
+  new-ca, new-west: the CA is valid (from 2 months ago), the cert from today
+  old-ca, old-west: the CA and end cert expired a month ago
+  hog-ca, hog-west: the CA and end cert expired a month ago
+
+In the case of hog-ca, the connection also has groundhog enabled.
+
+WEST has three corresponding connections (old-west, new-west,
+hog-west).
+
+WEST then tries to initiate each of these connections to EAST where
+EAST:
+
+  - tries to authenticate the certificate chain using PKIX
+
+    The first pass through uses NOW.  If there are any groundhogs, a
+    second pass will retry expired certificates using their expiration
+    date (flaging those certs as requiring a groundhog connection).
+
+    new-ca succeeds on the first pass using NOW for the time
+
+    old-ca and hog-ca succeed on the second pass by using their
+    expiration date
+
+  - searches for the best connection
+
+    If the cert is a groundhog, then non-groundhog connections are
+    skipped.
+
+    new-ca succeeds; no groundhog needed
+
+    old-ca is rejected as the only groundhog connection doesn't match
+    the CA
+
+    hog-ca succeeds because its connection is a groundhog and its CA
+    matches
