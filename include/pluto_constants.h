@@ -860,9 +860,9 @@ enum sa_policy_bits {
 	POLICY_DONT_REKEY_IX,	/* don't rekey state either Phase */
 	POLICY_REAUTH_IX,	/* IKEv2 only initiate re-authentication */
 	POLICY_OPPORTUNISTIC_IX,	/* is this opportunistic? */
-	POLICY_GROUTED_IX,	/* do we want this group routed? */
 	POLICY_GROUPINSTANCE_IX,	/* is this a group template instance? */
-	POLICY_UP_IX,	/* do we want this up? */
+	POLICY_ROUTE_IX,	/* do we want to keep this connection routed? */
+	POLICY_UP_IX,		/* do we want to keep this connection up? */
 	POLICY_XAUTH_IX,	/* do we offer XAUTH? */
 	POLICY_MODECFG_PULL_IX,	/* is modecfg pulled by client? */
 	POLICY_AGGRESSIVE_IX,	/* do we do aggressive mode? */
@@ -904,9 +904,9 @@ enum sa_policy_bits {
 #define POLICY_DONT_REKEY	LELEM(POLICY_DONT_REKEY_IX)	/* don't rekey state either Phase */
 #define POLICY_REAUTH	LELEM(POLICY_REAUTH_IX)	/* IKEv2 initiate reauthentication instead of rekey */
 #define POLICY_OPPORTUNISTIC	LELEM(POLICY_OPPORTUNISTIC_IX)	/* is this opportunistic? */
-#define POLICY_GROUTED	LELEM(POLICY_GROUTED_IX)	/* do we want this group routed? */
 #define POLICY_GROUPINSTANCE	LELEM(POLICY_GROUPINSTANCE_IX)	/* is this a group template instance? */
-#define POLICY_UP	LELEM(POLICY_UP_IX)	/* do we want this up? */
+#define POLICY_ROUTE	LELEM(POLICY_ROUTE_IX)	/* do we want to keep this connection routed? */
+#define POLICY_UP	LELEM(POLICY_UP_IX)	/* do we want to keep this connection up? */
 #define POLICY_XAUTH	LELEM(POLICY_XAUTH_IX)	/* do we offer XAUTH? */
 #define POLICY_MODECFG_PULL	LELEM(POLICY_MODECFG_PULL_IX)	/* is modecfg pulled by client? */
 #define POLICY_AGGRESSIVE	LELEM(POLICY_AGGRESSIVE_IX)	/* do we do aggressive mode? */

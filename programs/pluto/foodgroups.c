@@ -392,26 +392,30 @@ void load_groups(struct logger *logger)
 					/* XXX: something better? */
 					fd_delref(&g->logger->global_whackfd);
 					g->logger->global_whackfd = fd_addref(logger->global_whackfd);
-					struct connection *ng = group_instantiate(g,
-										  np->subnet,
-										  np->proto,
-										  np->sport,
-										  np->dport);
-					if (ng != NULL) {
+					/* group instance (which is a template) */
+					struct connection *t = group_instantiate(g,
+										 np->subnet,
+										 np->proto,
+										 np->sport,
+										 np->dport);
+					if (t != NULL) {
+						/* instance when remote addr valid */
+						PEXPECT(logger, (t->kind == CK_TEMPLATE ||
+								 t->kind == CK_INSTANCE));
 						/* route if group is routed */
-						if (g->policy & POLICY_GROUTED) {
+						if (g->policy & POLICY_ROUTE) {
 							/* XXX: something better? */
-							fd_delref(&ng->logger->global_whackfd);
-							ng->logger->global_whackfd = fd_addref(g->logger->global_whackfd);
-							if (!install_prospective_kernel_policy(ng)) {
-								llog(WHACK_STREAM|RC_ROUTE, ng->logger,
+							fd_delref(&t->logger->global_whackfd);
+							t->logger->global_whackfd = fd_addref(g->logger->global_whackfd);
+							if (!install_prospective_kernel_policy(t)) {
+								llog(WHACK_STREAM|RC_ROUTE, t->logger,
 								     "could not route");
 							}
 							/* XXX: something better? */
-							fd_delref(&ng->logger->global_whackfd);
+							fd_delref(&t->logger->global_whackfd);
 						}
 						passert(np->name == NULL);
-						np->name = clone_str(ng->name, "group instance name");
+						np->name = clone_str(t->name, "group instance name");
 						/* advance new */
 						npp = &np->next;
 					} else {
@@ -464,7 +468,7 @@ void route_and_trap_connection_group(struct connection *c)
 		struct fg_targets *t;
 
 		passert(g != NULL);
-		g->connection->policy |= POLICY_GROUTED;
+		g->connection->policy |= POLICY_ROUTE;
 		for (t = targets; t != NULL; t = t->next) {
 			if (t->group == g) {
 				struct connection *ci = conn_by_name(t->name, false/*!strict*/);
@@ -490,7 +494,7 @@ void connection_group_down(struct connection *c)
 	struct fg_targets *t;
 
 	passert(g != NULL);
-	g->connection->policy &= ~POLICY_GROUTED;
+	g->connection->policy &= ~POLICY_ROUTE;
 	for (t = targets; t != NULL; t = t->next) {
 		if (t->group == g) {
 			struct connection *ci = conn_by_name(t->name, false/*!strict*/);

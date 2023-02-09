@@ -1292,8 +1292,8 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 #define CONNECTION_POLICIES	(POLICY_DONT_REKEY |		\
 				 POLICY_REAUTH |		\
 				 POLICY_OPPORTUNISTIC |		\
-				 POLICY_GROUTED |		\
 				 POLICY_GROUPINSTANCE |		\
+				 POLICY_ROUTE |			\
 				 POLICY_UP |			\
 				 POLICY_XAUTH |			\
 				 POLICY_MODECFG_PULL |		\
