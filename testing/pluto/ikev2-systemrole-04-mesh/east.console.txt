@@ -158,7 +158,7 @@ east #
 000 "clear":   ike_life: 0s; ipsec_life: 0s; ipsec_max_bytes: 0B; ipsec_max_packets: 0; replay_window: 0; rekey_margin: 0s; rekey_fuzz: 0%; keyingtries: 0;
 000 "clear":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:0;
 000 "clear":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "clear":   policy: IKEv2+AUTH_NEVER+GROUTED+GROUP+PASS+NEVER_NEGOTIATE;
+000 "clear":   policy: IKEv2+AUTH_NEVER+ROUTE+GROUP+PASS+NEVER_NEGOTIATE;
 000 "clear":   v2-auth-hash-policy: none;
 000 "clear":   conn_prio: 32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "clear":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:no;
@@ -193,7 +193,7 @@ east #
 000 "private":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
 000 "private":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "private":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "private":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+GROUTED+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+GROUP+failureDROP;
+000 "private":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+ROUTE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+GROUP+failureDROP;
 000 "private":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "private":   conn_prio: 32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "private":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;
@@ -229,7 +229,7 @@ east #
 000 "private-or-clear":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%; keyingtries: 1;
 000 "private-or-clear":   retransmit-interval: 9999ms; retransmit-timeout: 99s; iketcp:no; iketcp-port:4500;
 000 "private-or-clear":   initial-contact:no; cisco-unity:no; fake-strongswan:no; send-vendorid:no; send-no-esp-tfc:no;
-000 "private-or-clear":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+GROUTED+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+GROUP+failurePASS;
+000 "private-or-clear":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+OPPORTUNISTIC+ROUTE+IKE_FRAG_ALLOW+ESN_NO+ESN_YES+GROUP+failurePASS;
 000 "private-or-clear":   v2-auth-hash-policy: SHA2_256+SHA2_384+SHA2_512;
 000 "private-or-clear":   conn_prio: 32,0; interface: eth1; metric: 0; mtu: unset; sa_prio:auto; sa_tfc:none;
 000 "private-or-clear":   nflog-group: unset; mark: unset; vti-iface:unset; vti-routing:no; vti-shared:no; nic-offload:auto;

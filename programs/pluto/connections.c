@@ -140,6 +140,10 @@ void ldbg_connection(const struct connection *c, where_t where,
 				jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
 			}
 		}
+		LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
+			jam_string(buf, "    policy: ");
+			jam_connection_policies(buf, c);
+		}
 	}
 
 }
