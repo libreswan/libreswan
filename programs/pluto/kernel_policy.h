@@ -105,6 +105,8 @@ bool delete_spd_kernel_policy(const struct spd_route *spd,
 			      where_t where,
 			      const char *story);
 
+void delete_connection_kernel_policies(struct connection *c);
+
 /*
  * The always outbound CAT (client address translation) kernel policy
  * maps the local.host -> remote.client.

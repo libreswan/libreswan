@@ -436,6 +436,33 @@ bool delete_spd_kernel_policy(const struct spd_route *spd,
 				    logger, where, story);
 }
 
+void delete_connection_kernel_policies(struct connection *c)
+{
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		/*
+		 * XXX: note the hack where missing inbound
+		 * policies are ignored.  The connection
+		 * should know if there's an inbound policy,
+		 * in fact the connection shouldn't even have
+		 * inbound policies, just the state.
+		 *
+		 * For sec_label, it's tearing down the route,
+		 * hence that is included.
+		 */
+		delete_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
+					 EXPECT_KERNEL_POLICY_OK,
+					 c->logger, HERE,
+					 "unrouting connection");
+		delete_spd_kernel_policy(spd, DIRECTION_INBOUND,
+					 EXPECT_NO_INBOUND,
+					 c->logger, HERE,
+					 "unrouting connection");
+#ifdef IPSEC_CONNECTION_LIMIT
+		num_ipsec_eroute--;
+#endif
+	}
+}
+
 /* CAT and it's kittens */
 
 bool install_bare_cat_kernel_policy(const struct spd_route *spd,

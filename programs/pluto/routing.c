@@ -709,6 +709,16 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
  * isn't shared.
  */
 
+static void do_updown_unroute(struct connection *c)
+{
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		/* only unroute if no other connection shares it */
+		if (route_owner(spd) == NULL) {
+			do_updown(UPDOWN_UNROUTE, c, spd, NULL, c->logger);
+		}
+	}
+}
+
 void connection_down(struct connection *c)
 {
 	enum routing cr = c->child.routing;
@@ -721,31 +731,9 @@ void connection_down(struct connection *c)
 	case RT_ROUTED_FAILURE:
 	case RT_ROUTED_TUNNEL:
 	case RT_UNROUTED_TUNNEL:
-		FOR_EACH_ITEM(spd, &c->child.spds) {
-			/* cannot handle a live one */
-			passert(cr != RT_ROUTED_TUNNEL);
-			/*
-			 * XXX: note the hack where missing inbound
-			 * policies are ignored.  The connection
-			 * should know if there's an inbound policy,
-			 * in fact the connection shouldn't even have
-			 * inbound policies, just the state.
-			 *
-			 * For sec_label, it's tearing down the route,
-			 * hence that is included.
-			 */
-			delete_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
-						 EXPECT_KERNEL_POLICY_OK,
-						 c->logger, HERE,
-						 "unrouting connection");
-			delete_spd_kernel_policy(spd, DIRECTION_INBOUND,
-						 EXPECT_NO_INBOUND,
-						 c->logger, HERE,
-						 "unrouting connection");
-#ifdef IPSEC_CONNECTION_LIMIT
-			num_ipsec_eroute--;
-#endif
-		}
+		/* cannot handle a live one */
+		passert(cr != RT_ROUTED_TUNNEL);
+		delete_connection_kernel_policies(c);
 		break;
 	}
 
@@ -761,12 +749,7 @@ void connection_down(struct connection *c)
 	case RT_ROUTED_NEGOTIATION:
 	case RT_ROUTED_FAILURE:
 	case RT_ROUTED_TUNNEL:
-		FOR_EACH_ITEM(spd, &c->child.spds) {
-			/* only unroute if no other connection shares it */
-			if (route_owner(spd) == NULL) {
-				do_updown(UPDOWN_UNROUTE, c, spd, NULL, c->logger);
-			}
-		}
+		do_updown_unroute(c);
 		break;
 	}
 }
