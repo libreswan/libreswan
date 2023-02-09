@@ -432,14 +432,31 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 		bad_case(event);
 
 	case RT_ROUTED_PROSPECTIVE:
+		switch (event) {
+		case CONNECTION_ROUTE:
+			break; /*barf*/
+		case CONNECTION_TIMEOUT:
+			break; /*barf*/
+		}
+		bad_case(event);
+
 	case RT_ROUTED_FAILURE:
+		switch (event) {
+		case CONNECTION_ROUTE:
+			break; /*barf*/
+		case CONNECTION_TIMEOUT:
+			break; /*barf*/
+		}
+		bad_case(event);
+
 	case RT_UNROUTED_TUNNEL:
-		llog_pexpect(ike->sa.st_logger, HERE, "connection in %s not expecting %s",
-			     enum_name_short(&routing_names, cr),
-			     __func__);
-		/* can't send delete as message window is full */
-		fail(ike);
-		return;
+		switch (event) {
+		case CONNECTION_ROUTE:
+			break; /*barf*/
+		case CONNECTION_TIMEOUT:
+			break; /*barf*/
+		}
+		bad_case(event);
 
 	}
 
@@ -569,14 +586,31 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 		bad_case(event);
 
 	case RT_ROUTED_PROSPECTIVE:
+		switch (event) {
+		case CONNECTION_ROUTE:
+			break; /*barf*/
+		case CONNECTION_TIMEOUT:
+			break; /*barf*/
+		}
+		bad_case(event);
+
 	case RT_ROUTED_FAILURE:
+		switch (event) {
+		case CONNECTION_ROUTE:
+			break; /*barf*/
+		case CONNECTION_TIMEOUT:
+			break; /*barf*/
+		}
+		bad_case(event);
+
 	case RT_UNROUTED_TUNNEL:
-		llog_pexpect(ike->sa.st_logger, HERE, "connection in %s not expecting %s",
-			     enum_name_short(&routing_names, cr),
-			     __func__);
-		/* can't send delete as message window is full */
-		fail(ike);
-		return;
+		switch (event) {
+		case CONNECTION_ROUTE:
+			break; /*barf*/
+		case CONNECTION_TIMEOUT:
+			break; /*barf*/
+		}
+		bad_case(event);
 
 	}
 
@@ -703,14 +737,31 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 		bad_case(event);
 
 	case RT_ROUTED_PROSPECTIVE:
+		switch (event) {
+		case CONNECTION_ROUTE:
+			break; /*barf*/
+		case CONNECTION_TIMEOUT:
+			break; /*barf*/
+		}
+		bad_case(event);
+
 	case RT_ROUTED_FAILURE:
+		switch (event) {
+		case CONNECTION_ROUTE:
+			break; /*barf*/
+		case CONNECTION_TIMEOUT:
+			break; /*barf*/
+		}
+		bad_case(event);
+
 	case RT_UNROUTED_TUNNEL:
-		llog_pexpect(ike->sa.st_logger, HERE, "connection in %s not expecting %s",
-			     enum_name_short(&routing_names, cr),
-			     __func__);
-		/* can't send delete as message window is full */
-		fail(ike);
-		return;
+		switch (event) {
+		case CONNECTION_ROUTE:
+			break; /*barf*/
+		case CONNECTION_TIMEOUT:
+			break; /*barf*/
+		}
+		bad_case(event);
 
 	}
 
