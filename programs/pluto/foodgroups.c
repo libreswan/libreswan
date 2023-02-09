@@ -457,9 +457,11 @@ static struct fg_groups *find_group(const struct connection *c)
 	return g;
 }
 
-void route_and_trap_connection_group(struct connection *c)
+void connection_group_route(struct connection *c)
 {
-	/* it makes no sense to route a connection that is ISAKMP-only */
+	PASSERT(c->logger, oriented(c));
+	/* it makes no sense to route a connection that is
+	 * ISAKMP-only */
 	if (!NEVER_NEGOTIATE(c->policy) && !HAS_IPSEC_POLICY(c->policy)) {
 		llog(RC_ROUTE, c->logger,
 		     "cannot route an ISAKMP-only group connection");

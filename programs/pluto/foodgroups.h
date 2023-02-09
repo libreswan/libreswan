@@ -21,7 +21,7 @@ struct logger;
 extern void add_to_groups(struct connection *c);
 extern void delete_group(const struct connection *c);
 
-extern void route_and_trap_connection_group(struct connection *c);
+extern void connection_group_route(struct connection *c);
 extern void connection_group_down(struct connection *c);
 
 extern void load_groups(struct logger *logger);

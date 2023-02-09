@@ -49,7 +49,7 @@
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
 #include "foodgroups.h"
-#include "whack.h"              /* needs connections.h */
+#include "whack.h"
 #include "packet.h"
 #include "demux.h"              /* needs packet.h */
 #include "state.h"
@@ -268,11 +268,9 @@ static bool whack_route_connection(struct show *s, struct connection *c,
 		llog(WHACK_STREAM|RC_ORIENT, c->logger,
 		     "we cannot identify ourselves with either end of this connection");
 	} else if (c->kind == CK_GROUP) {
-		route_and_trap_connection_group(c);
-	} else if (!install_prospective_kernel_policy(c)) {
-		/* XXX: why whack only? */
-		llog(WHACK_STREAM|RC_ROUTE, c->logger,
-		     "could not route");
+		connection_group_route(c);
+	} else {
+		connection_route(c);
 	}
 
 	/* XXX: something better? */

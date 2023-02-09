@@ -27,17 +27,19 @@
 #include "pluto_stats.h"
 
 enum connection_event {
+	CONNECTION_ROUTE,
 	CONNECTION_TIMEOUT,
 };
 
 static const char *connection_event_name[] = {
 #define S(E) [E] = #E
+	S(CONNECTION_ROUTE),
 	S(CONNECTION_TIMEOUT),
 #undef S
 };
 
 static enum_names connection_event_names = {
-	CONNECTION_TIMEOUT, CONNECTION_TIMEOUT,
+	0, CONNECTION_TIMEOUT,
 	ARRAY_REF(connection_event_name),
 	"CONNECTION_",
 	NULL,
@@ -264,6 +266,11 @@ void connection_timeout(struct ike_sa *ike)
 	dispatch(c, CONNECTION_TIMEOUT, ike);
 }
 
+void connection_route(struct connection *c)
+{
+	dispatch(c, CONNECTION_ROUTE, NULL/*IKE*/);
+}
+
 void dispatch(struct connection *c, enum connection_event event, struct ike_sa *ike)
 {
 	LDBGP_JAMBUF(DBG_BASE, c->logger, buf) {
@@ -302,6 +309,12 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 
 	case RT_UNROUTED:
 		switch (event) {
+		case CONNECTION_ROUTE:
+			if (!install_prospective_kernel_policy(c)) {
+				/* XXX: why whack only? */
+				llog(WHACK_STREAM|RC_ROUTE, c->logger, "could not route");
+			}
+			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permanent+up */
 			if (should_retry(ike)) {
@@ -319,6 +332,9 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 
 	case RT_UNROUTED_NEGOTIATION:
 		switch (event) {
+		case CONNECTION_ROUTE:
+			llog(RC_LOG_SERIOUS, c->logger, "cannot route negotiating connection");
+			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permenant ondemand */
 			if (should_retry(ike)) {
@@ -347,6 +363,9 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 
 	case RT_ROUTED_NEGOTIATION:
 		switch (event) {
+		case CONNECTION_ROUTE:
+			llog(RC_LOG_SERIOUS, c->logger, "connection already routed");
+			return;
 		case CONNECTION_TIMEOUT:
 			if (should_retry(ike)) {
 				retry(ike);
@@ -374,6 +393,9 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 
 	case RT_ROUTED_TUNNEL:
 		switch (event) {
+		case CONNECTION_ROUTE:
+			llog(RC_LOG_SERIOUS, c->logger, "cannot route established connection");
+			return;
 		case CONNECTION_TIMEOUT:
 			/* don't retry as well */
 			if (should_revive(&ike->sa)) {
@@ -424,6 +446,12 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 
 	case RT_UNROUTED:
 		switch (event) {
+		case CONNECTION_ROUTE:
+			if (!install_prospective_kernel_policy(c)) {
+				/* XXX: why whack only? */
+				llog(WHACK_STREAM|RC_ROUTE, c->logger, "could not route");
+			}
+			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permanent+up */
 			if (should_retry(ike)) {
@@ -441,6 +469,9 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 
 	case RT_UNROUTED_NEGOTIATION:
 		switch (event) {
+		case CONNECTION_ROUTE:
+			llog(RC_LOG_SERIOUS, c->logger, "cannot route negotiating connection");
+			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permenant ondemand */
 			if (should_retry(ike)) {
@@ -469,6 +500,9 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 
 	case RT_ROUTED_NEGOTIATION:
 		switch (event) {
+		case CONNECTION_ROUTE:
+			llog(RC_LOG_SERIOUS, c->logger, "cannot route established connection");
+			return;
 		case CONNECTION_TIMEOUT:
 			if (should_retry(ike)) {
 				retry(ike);
@@ -496,6 +530,9 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 
 	case RT_ROUTED_TUNNEL:
 		switch (event) {
+		case CONNECTION_ROUTE:
+			llog(RC_LOG_SERIOUS, c->logger, "cannot route established connection");
+			return;
 		case CONNECTION_TIMEOUT:
 			/* don't retry as well */
 			if (should_revive(&ike->sa)) {
@@ -546,6 +583,9 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 
 	case RT_UNROUTED:
 		switch (event) {
+		case CONNECTION_ROUTE:
+			llog(RC_LOG_SERIOUS, c->logger, "cannot route connection instance");
+			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permanent+up */
 			if (should_retry(ike)) {
@@ -563,6 +603,9 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 
 	case RT_UNROUTED_NEGOTIATION:
 		switch (event) {
+		case CONNECTION_ROUTE:
+			llog(RC_LOG_SERIOUS, c->logger, "cannot route connection instance");
+			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permenant ondemand */
 			if (should_retry(ike)) {
@@ -591,6 +634,9 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 
 	case RT_ROUTED_NEGOTIATION:
 		switch (event) {
+		case CONNECTION_ROUTE:
+			llog(RC_LOG_SERIOUS, c->logger, "cannot route connection instance");
+			return;
 		case CONNECTION_TIMEOUT:
 			if (should_retry(ike)) {
 				retry(ike);
@@ -618,6 +664,9 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 
 	case RT_ROUTED_TUNNEL:
 		switch (event) {
+		case CONNECTION_ROUTE:
+			llog(RC_LOG_SERIOUS, c->logger, "cannot route connection instance");
+			return;
 		case CONNECTION_TIMEOUT:
 			/* don't retry as well */
 			if (should_revive(&ike->sa)) {
