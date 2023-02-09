@@ -934,16 +934,29 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 			    src->leftright, src->protoport.hport);
 	}
 
-	if (src->groundhogday != NULL) {
-		diag_t d = ttorealtime(src->groundhogday, &host_config->certtime);
-		if (d != NULL) {
-			return diag_diag(&d, "%sgroundhogday=%s invalid, ",
-					 leftright, src->groundhogday);
+	if (src->groundhog != NULL) {
+		const char *g = src->groundhog;
+		/* XXX: ttobool() */
+		if (strcaseeq(g, "1") ||
+		    strcaseeq(g, "yes") ||
+		    strcaseeq(g, "true") ||
+		    strcaseeq(g, "on")) {
+			host_config->groundhog = true;
+		} else if (strcaseeq(g, "0") ||
+			   strcaseeq(g, "no") ||
+			   strcaseeq(g, "false") ||
+			   strcaseeq(g, "off")) {
+			host_config->groundhog = false;
+		} else {
+			return diag("%sgroundhog=%s invalid", leftright, g);
 		}
-		realtime_buf rb;
+		if (host_config->groundhog && libreswan_fipsmode()) {
+			return diag("%sgroundhog=%s is invalid in FIPS mode",
+				    leftright, g);
+		}
+		groundhogday |= host_config->groundhog;
 		llog(RC_LOG_SERIOUS, logger,
-		     "WARNING: %s verifying certificate time: %s",
-		     leftright, str_realtime(host_config->certtime, true/*UTC*/, &rb));
+		     "WARNING: %s is a groundhog", leftright);
 	}
 	host_config->key_from_DNS_on_demand = src->key_from_DNS_on_demand;
 	host_config->sendcert = src->sendcert == 0 ? CERT_SENDIFASKED : src->sendcert;

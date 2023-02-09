@@ -507,6 +507,7 @@ struct state {
 	struct {
 		bool processed;		/* do this once, may not be any */
 		bool harmless;		/* vs something nasty */
+		bool groundhog;
 		struct certs *verified;	/* list; first is EE */
 		struct pubkey_list *pubkey_db;
 	} st_remote_certs;
