@@ -43,13 +43,6 @@ pluto enum_names:
          short_name 5: INSTANCE OK
          jam_enum_short 5: INSTANCE OK
          match INSTANCE [short]: OK
-    6 -> CK_GOING_AWAY
-         jam_enum 6: CK_GOING_AWAY OK
-         search CK_GOING_AWAY: OK
-         match CK_GOING_AWAY: OK
-         short_name 6: GOING_AWAY OK
-         jam_enum_short 6: GOING_AWAY OK
-         match GOING_AWAY [short]: OK
 
   certpolicy_type_names:
     1 -> CERT_NEVERSEND
