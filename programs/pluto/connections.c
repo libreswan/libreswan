@@ -431,9 +431,18 @@ void delete_connections_by_name(const char *name, bool strict, struct logger *lo
 
 void delete_every_connection(void)
 {
-	struct connection_filter cq = { .where = HERE, };
-	/* Delete instances before templates. */
-	while (next_connection_new2old(&cq)) {
+	/*
+	 * Keep deleting the newest connection until there isn't one.
+	 *
+	 * Deleting new-to-old means that instances are deleted before
+	 * templates.  Picking away at the queue avoids the posability
+	 * of a cascading delete deleting multiple connections.
+	 */
+	while (true) {
+		struct connection_filter cq = { .where = HERE, };
+		if (!next_connection_new2old(&cq)) {
+			break;
+		}
 		struct connection *c = cq.c;
 		delete_connection(&c);
 	}
