@@ -196,13 +196,12 @@ static const char *const connection_kind_name[] = {
 	S(CK_PERMANENT),	/* normal connection */
 	S(CK_HYBRID),		/* IKE instance of template */
 	S(CK_INSTANCE),		/* instance of template */
-	S(CK_GOING_AWAY),	/* instance being deleted -- don't delete again */
 #undef S
 };
 
 enum_names connection_kind_names = {
 	CK_INVALID,
-	CK_GOING_AWAY,
+	CK_INSTANCE,
 	ARRAY_REF(connection_kind_name),
 	"CK_", /* prefix */
 	NULL

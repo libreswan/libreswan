@@ -172,7 +172,6 @@ struct connection *conn_by_name(const char *nm, bool no_inst)
 
 void release_connection(struct connection *c)
 {
-	pexpect(c->kind != CK_INSTANCE);
 	flush_pending_by_connection(c);
 	delete_states_by_connection(&c);
 	passert(c != NULL);
@@ -221,11 +220,20 @@ void delete_connection(struct connection **cp)
 	*cp = NULL;
 
 	/*
-	 * Must be careful to avoid circularity:
-	 * we mark c as going away so it won't get deleted recursively.
+	 * Must be careful to avoid circularity, something like:
+	 *
+	 *   release_connection() ->
+	 *   delete_states_by_connection() ->
+	 *   delete_v1_states_by_connection() ->
+	 *   delete_connection().
+	 *
+	 * We mark c as going away so it won't get deleted
+	 * recursively.
 	 */
-	passert(c->kind != CK_GOING_AWAY);
+	PASSERT(c->logger, (c->policy & POLICY_GOING_AWAY) == LEMPTY);
+
 	if (c->kind == CK_INSTANCE) {
+		c->policy |= POLICY_GOING_AWAY;
 		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 			address_buf b;
 			llog(RC_LOG, c->logger,
@@ -233,7 +241,6 @@ void delete_connection(struct connection **cp)
 			     str_address_sensitive(&c->remote->host.addr, &b),
 			     c->newest_ike_sa, c->newest_ipsec_sa);
 		}
-		c->kind = CK_GOING_AWAY;
 		FOR_EACH_ELEMENT(afi, ip_families) {
 			if (c->pool[afi->ip_index] != NULL) {
 				free_that_address_lease(c, afi);
@@ -2703,8 +2710,7 @@ static size_t jam_connection_child(struct jambuf *b,
 
 size_t jam_connection_instance(struct jambuf *buf, const struct connection *c)
 {
-	if (!pexpect(c->kind == CK_INSTANCE ||
-		     c->kind == CK_GOING_AWAY)) {
+	if (PBAD(c->logger, c->kind != CK_INSTANCE)) {
 		return 0;
 	}
 	size_t s = 0;
@@ -2732,7 +2738,7 @@ size_t jam_connection(struct jambuf *buf, const struct connection *c)
 {
 	size_t s = 0;
 	s += jam(buf, "\"%s\"", c->name);
-	if (c->kind == CK_INSTANCE || c->kind == CK_GOING_AWAY) {
+	if (c->kind == CK_INSTANCE) {
 		s += jam_connection_instance(buf, c);
 	}
 	return s;
@@ -3288,6 +3294,13 @@ void connection_delete_unused_instance(struct connection **cp,
 {
 	struct connection *c = (*cp);
 	*cp = NULL;
+
+	if (c->policy & POLICY_GOING_AWAY) {
+		connection_buf cb;
+		dbg("connection "PRI_CONNECTION" is going away, skipping delete-unused",
+		    pri_connection(c, &cb));
+		return;
+	}
 
 	if (c->kind != CK_INSTANCE) {
 		connection_buf cb;

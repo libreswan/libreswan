@@ -1276,12 +1276,14 @@ static void delete_v1_states_by_connection_bottom_up(struct connection **cp,
 	struct fd *whackfd = c->logger->global_whackfd;
 
 	/*
-	 * Stop recursive calls trying to delete this connection by
-	 * flaging this connection as going away.
+	 * Stop recursive calls trying to delete this template
+	 * connection by flaging this connection as going away.
 	 */
-	enum connection_kind ck = c->kind;
-	if (ck == CK_INSTANCE) {
-		c->kind = CK_GOING_AWAY;
+	bool delete_instance = (c->kind == CK_INSTANCE &&
+				(c->policy & POLICY_GOING_AWAY) == LEMPTY);
+	if (delete_instance) {
+		/* stop recursive delete by state code */
+		c->policy |= POLICY_GOING_AWAY;
 	}
 
 	/*
@@ -1341,8 +1343,8 @@ static void delete_v1_states_by_connection_bottom_up(struct connection **cp,
 		}
 	}
 
-	if (ck == CK_INSTANCE) {
-		c->kind = ck;
+	if (delete_instance) {
+		c->policy &= ~POLICY_GOING_AWAY; /* scrub above bit */
 		/* already delt with relations above!?! */
 		delete_connection(cp);
 	}

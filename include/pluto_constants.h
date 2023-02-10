@@ -735,8 +735,6 @@ enum connection_kind {
 	CK_HYBRID,	/* IKE SA instantiated a template */
 	CK_INSTANCE,    /* instance of template, created for a
 			 * particular attempt */
-	CK_GOING_AWAY   /* instance being deleted -- don't delete
-			 * again */
 };
 
 enum certpolicy {
@@ -887,7 +885,8 @@ enum sa_policy_bits {
 	POLICY_ESN_YES_IX,		/* send/accept ESNyes */
 	POLICY_INTERMEDIATE_IX, /* allow Intermediate Exchange */
 	POLICY_IGNORE_PEER_DNS_IX, /* install obtained DNS servers locally */
-#define POLICY_IX_LAST	POLICY_IGNORE_PEER_DNS_IX
+	POLICY_GOING_AWAY_IX,	/* connection instance already being deleted */
+#define POLICY_IX_LAST	POLICY_GOING_AWAY_IX
 };
 
 #define POLICY_ENCRYPT	LELEM(POLICY_ENCRYPT_IX)	/* must be first of IPSEC policies */
@@ -926,6 +925,7 @@ enum sa_policy_bits {
 #define POLICY_ESN_YES		LELEM(POLICY_ESN_YES_IX)	/* accept or request ESNyes */
 #define POLICY_INTERMEDIATE	LELEM(POLICY_INTERMEDIATE_IX) /* allow Intermediate Exchange */
 #define POLICY_IGNORE_PEER_DNS	LELEM(POLICY_IGNORE_PEER_DNS_IX)
+#define POLICY_GOING_AWAY	LELEM(POLICY_GOING_AWAY_IX)	/* connection instance already being deleted */
 
 /*
  * RFC 7427 Signature Hash Algorithm exchang

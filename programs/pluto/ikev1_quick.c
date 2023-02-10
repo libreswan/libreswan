@@ -1871,7 +1871,6 @@ static bool is_virtual_net_used(struct connection *c,
 
 			return true; /* already used by another one */
 
-		case CK_GOING_AWAY:
 		default:
 			break;
 		}
