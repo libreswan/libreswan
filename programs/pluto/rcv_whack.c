@@ -48,7 +48,7 @@
 #include "pluto_x509.h"
 #include "certs.h"
 #include "connections.h"        /* needs id.h */
-#include "foodgroups.h"
+#include "foodgroups.h"		/* for load_groups() */
 #include "whack.h"
 #include "packet.h"
 #include "demux.h"              /* needs packet.h */
@@ -263,15 +263,7 @@ static bool whack_route_connection(struct show *s, struct connection *c,
 	fd_delref(&c->logger->global_whackfd);
 	c->logger->global_whackfd = fd_addref(logger->global_whackfd);
 
-	if (!oriented(c)) {
-		/* XXX: why whack only? */
-		llog(WHACK_STREAM|RC_ORIENT, c->logger,
-		     "we cannot identify ourselves with either end of this connection");
-	} else if (c->kind == CK_GROUP) {
-		connection_group_route(c);
-	} else {
-		connection_route(c);
-	}
+	connection_route(c);
 
 	/* XXX: something better? */
 	fd_delref(&c->logger->global_whackfd);
@@ -289,13 +281,7 @@ static bool whack_unroute_connection(struct show *s, struct connection *c,
 	fd_delref(&c->logger->global_whackfd);
 	c->logger->global_whackfd = fd_addref(logger->global_whackfd);
 
-	if (c->child.routing == RT_ROUTED_TUNNEL) {
-		llog(WHACK_STREAM|RC_RTBUSY, logger, "cannot unroute: route busy");
-	} else if (c->kind == CK_GROUP) {
-		connection_group_down(c);
-	} else {
-		connection_down(c);
-	}
+	connection_unroute(c);
 
 	/* XXX: something better? */
 	fd_delref(&c->logger->global_whackfd);

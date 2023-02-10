@@ -61,7 +61,8 @@ extern const struct enum_names routing_story;
 		     (RS) == RT_UNROUTED_TUNNEL)
 
 void connection_route(struct connection *c);
-void connection_down(struct connection *c);
+void connection_unroute(struct connection *c);
+
 void connection_prospective(struct connection *c);
 void connection_negotiating(struct connection *c,
 			    const struct kernel_acquire *b);

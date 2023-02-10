@@ -176,7 +176,7 @@ void release_connection(struct connection *c)
 	flush_pending_by_connection(c);
 	delete_states_by_connection(&c);
 	passert(c != NULL);
-	connection_down(c);
+	connection_unroute(c);
 }
 
 /* Delete a connection */

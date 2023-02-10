@@ -213,7 +213,7 @@ stf_status process_v2_INFORMATIONAL_request(struct ike_sa *ike,
 	 * various test cases.
 	 */
 	if (do_unroute) {
-		connection_down(c);
+		connection_unroute(c);
 	}
 
 	/*
@@ -273,7 +273,7 @@ stf_status process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 	 * various test cases.
 	 */
 	if (do_unroute) {
-		connection_down(c);
+		connection_unroute(c);
 	}
 
 	/*

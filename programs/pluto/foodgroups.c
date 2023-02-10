@@ -490,7 +490,7 @@ void connection_group_route(struct connection *c)
 	}
 }
 
-void connection_group_down(struct connection *c)
+void connection_group_unroute(struct connection *c)
 {
 	struct fg_groups *g = find_group(c);
 	struct fg_targets *t;
@@ -502,7 +502,7 @@ void connection_group_down(struct connection *c)
 			struct connection *ci = conn_by_name(t->name, false/*!strict*/);
 
 			if (ci != NULL) {
-				connection_down(ci);
+				connection_unroute(ci);
 			}
 		}
 	}

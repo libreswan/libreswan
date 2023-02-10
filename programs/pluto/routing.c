@@ -25,6 +25,8 @@
 #include "revival.h"
 #include "ikev2_ike_sa_init.h"		/* for initiate_v2_IKE_SA_INIT_request() */
 #include "pluto_stats.h"
+#include "foodgroups.h"			/* for connection_group_{route,unroute}() */
+#include "orient.h"
 
 enum connection_event {
 	CONNECTION_ROUTE,
@@ -268,6 +270,17 @@ void connection_timeout(struct ike_sa *ike)
 
 void connection_route(struct connection *c)
 {
+	if (!oriented(c)) {
+		llog(RC_ORIENT, c->logger,
+		     "we cannot identify ourselves with either end of this connection");
+		return;
+	}
+
+	if (c->kind == CK_GROUP) {
+		connection_group_route(c);
+		return;
+	}
+
 	dispatch(c, CONNECTION_ROUTE, NULL/*IKE*/);
 }
 
@@ -719,20 +732,27 @@ static void do_updown_unroute(struct connection *c)
 	}
 }
 
-void connection_down(struct connection *c)
+void connection_unroute(struct connection *c)
 {
+	if (c->kind == CK_GROUP) {
+		/* XXX: may recurse back to here with group
+		 * instances. */
+		connection_group_unroute(c);
+		return;
+	}
+
 	enum routing cr = c->child.routing;
 	switch (cr) {
 	case RT_UNROUTED:
 		break;
+	case RT_ROUTED_TUNNEL:
+		llog(RC_RTBUSY, c->logger, "cannot unroute: route busy");
+		return;
 	case RT_UNROUTED_NEGOTIATION:
 	case RT_ROUTED_PROSPECTIVE:
 	case RT_ROUTED_NEGOTIATION:
 	case RT_ROUTED_FAILURE:
-	case RT_ROUTED_TUNNEL:
 	case RT_UNROUTED_TUNNEL:
-		/* cannot handle a live one */
-		passert(cr != RT_ROUTED_TUNNEL);
 		delete_connection_kernel_policies(c);
 		break;
 	}
