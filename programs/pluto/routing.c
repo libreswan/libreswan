@@ -30,12 +30,14 @@
 
 enum connection_event {
 	CONNECTION_ROUTE,
+	CONNECTION_UNROUTE,
 	CONNECTION_TIMEOUT,
 };
 
 static const char *connection_event_name[] = {
 #define S(E) [E] = #E
 	S(CONNECTION_ROUTE),
+	S(CONNECTION_UNROUTE),
 	S(CONNECTION_TIMEOUT),
 #undef S
 };
@@ -46,6 +48,8 @@ static enum_names connection_event_names = {
 	"CONNECTION_",
 	NULL,
 };
+
+static void do_updown_unroute(struct connection *c);
 
 static void dispatch(struct connection *c, enum connection_event event, struct ike_sa *ike);
 
@@ -328,6 +332,9 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 				llog(WHACK_STREAM|RC_ROUTE, c->logger, "could not route");
 			}
 			return;
+		case CONNECTION_UNROUTE:
+			ldbg(c->logger, "already unrouted");
+			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permanent+up */
 			if (should_retry(ike)) {
@@ -347,6 +354,10 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 		switch (event) {
 		case CONNECTION_ROUTE:
 			llog(RC_LOG_SERIOUS, c->logger, "cannot route negotiating connection");
+			return;
+		case CONNECTION_UNROUTE:
+			delete_connection_kernel_policies(c);
+			set_child_routing(c, RT_UNROUTED);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permenant ondemand */
@@ -379,6 +390,12 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 		case CONNECTION_ROUTE:
 			llog(RC_LOG_SERIOUS, c->logger, "connection already routed");
 			return;
+		case CONNECTION_UNROUTE:
+			delete_connection_kernel_policies(c);
+			/* do now so route_owner won't find us */
+			set_child_routing(c, RT_UNROUTED);
+			do_updown_unroute(c);
+			return;
 		case CONNECTION_TIMEOUT:
 			if (should_retry(ike)) {
 				retry(ike);
@@ -409,6 +426,9 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 		case CONNECTION_ROUTE:
 			llog(RC_LOG_SERIOUS, c->logger, "cannot route established connection");
 			return;
+		case CONNECTION_UNROUTE:
+			llog(RC_RTBUSY, c->logger, "cannot unroute: route busy");
+			return;
 		case CONNECTION_TIMEOUT:
 			/* don't retry as well */
 			if (should_revive(&ike->sa)) {
@@ -435,6 +455,11 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 		switch (event) {
 		case CONNECTION_ROUTE:
 			break; /*barf*/
+		case CONNECTION_UNROUTE:
+			delete_connection_kernel_policies(c);
+			set_child_routing(c, RT_UNROUTED);
+			do_updown_unroute(c);
+			return;
 		case CONNECTION_TIMEOUT:
 			break; /*barf*/
 		}
@@ -444,6 +469,12 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 		switch (event) {
 		case CONNECTION_ROUTE:
 			break; /*barf*/
+		case CONNECTION_UNROUTE:
+			delete_connection_kernel_policies(c);
+			/* do now so route_owner won't find us */
+			set_child_routing(c, RT_UNROUTED);
+			do_updown_unroute(c);
+			return;
 		case CONNECTION_TIMEOUT:
 			break; /*barf*/
 		}
@@ -453,6 +484,10 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 		switch (event) {
 		case CONNECTION_ROUTE:
 			break; /*barf*/
+		case CONNECTION_UNROUTE:
+			delete_connection_kernel_policies(c);
+			set_child_routing(c, RT_UNROUTED);
+			return;
 		case CONNECTION_TIMEOUT:
 			break; /*barf*/
 		}
@@ -482,6 +517,9 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 				llog(WHACK_STREAM|RC_ROUTE, c->logger, "could not route");
 			}
 			return;
+		case CONNECTION_UNROUTE:
+			ldbg(c->logger, "already unrouted");
+			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permanent+up */
 			if (should_retry(ike)) {
@@ -501,6 +539,10 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 		switch (event) {
 		case CONNECTION_ROUTE:
 			llog(RC_LOG_SERIOUS, c->logger, "cannot route negotiating connection");
+			return;
+		case CONNECTION_UNROUTE:
+			delete_connection_kernel_policies(c);
+			set_child_routing(c, RT_UNROUTED);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permenant ondemand */
@@ -533,6 +575,12 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 		case CONNECTION_ROUTE:
 			llog(RC_LOG_SERIOUS, c->logger, "cannot route established connection");
 			return;
+		case CONNECTION_UNROUTE:
+			delete_connection_kernel_policies(c);
+			/* do now so route_owner won't find us */
+			set_child_routing(c, RT_UNROUTED);
+			do_updown_unroute(c);
+			return;
 		case CONNECTION_TIMEOUT:
 			if (should_retry(ike)) {
 				retry(ike);
@@ -563,6 +611,9 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 		case CONNECTION_ROUTE:
 			llog(RC_LOG_SERIOUS, c->logger, "cannot route established connection");
 			return;
+		case CONNECTION_UNROUTE:
+			llog(RC_RTBUSY, c->logger, "cannot unroute: route busy");
+			return;
 		case CONNECTION_TIMEOUT:
 			/* don't retry as well */
 			if (should_revive(&ike->sa)) {
@@ -589,6 +640,12 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 		switch (event) {
 		case CONNECTION_ROUTE:
 			break; /*barf*/
+		case CONNECTION_UNROUTE:
+			delete_connection_kernel_policies(c);
+			/* do now so route_owner won't find us */
+			set_child_routing(c, RT_UNROUTED);
+			do_updown_unroute(c);
+			return;
 		case CONNECTION_TIMEOUT:
 			break; /*barf*/
 		}
@@ -598,6 +655,12 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 		switch (event) {
 		case CONNECTION_ROUTE:
 			break; /*barf*/
+		case CONNECTION_UNROUTE:
+			delete_connection_kernel_policies(c);
+			/* do now so route_owner won't find us */
+			set_child_routing(c, RT_UNROUTED);
+			do_updown_unroute(c);
+			return;
 		case CONNECTION_TIMEOUT:
 			break; /*barf*/
 		}
@@ -607,6 +670,11 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 		switch (event) {
 		case CONNECTION_ROUTE:
 			break; /*barf*/
+		case CONNECTION_UNROUTE:
+			delete_connection_kernel_policies(c);
+			/* do now so route_owner won't find us */
+			set_child_routing(c, RT_UNROUTED);
+			return;
 		case CONNECTION_TIMEOUT:
 			break; /*barf*/
 		}
@@ -633,6 +701,9 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 		case CONNECTION_ROUTE:
 			llog(RC_LOG_SERIOUS, c->logger, "cannot route connection instance");
 			return;
+		case CONNECTION_UNROUTE:
+			ldbg(c->logger, "already unrouted");
+			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permanent+up */
 			if (should_retry(ike)) {
@@ -652,6 +723,11 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 		switch (event) {
 		case CONNECTION_ROUTE:
 			llog(RC_LOG_SERIOUS, c->logger, "cannot route connection instance");
+			return;
+		case CONNECTION_UNROUTE:
+			delete_connection_kernel_policies(c);
+			/* do now so route_owner won't find us */
+			set_child_routing(c, RT_UNROUTED);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permenant ondemand */
@@ -684,6 +760,10 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 		case CONNECTION_ROUTE:
 			llog(RC_LOG_SERIOUS, c->logger, "cannot route connection instance");
 			return;
+		case CONNECTION_UNROUTE:
+			delete_connection_kernel_policies(c);
+			do_updown_unroute(c);
+			break;
 		case CONNECTION_TIMEOUT:
 			if (should_retry(ike)) {
 				retry(ike);
@@ -714,6 +794,9 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 		case CONNECTION_ROUTE:
 			llog(RC_LOG_SERIOUS, c->logger, "cannot route connection instance");
 			return;
+		case CONNECTION_UNROUTE:
+			llog(RC_RTBUSY, c->logger, "cannot unroute: route busy");
+			return;
 		case CONNECTION_TIMEOUT:
 			/* don't retry as well */
 			if (should_revive(&ike->sa)) {
@@ -740,6 +823,12 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 		switch (event) {
 		case CONNECTION_ROUTE:
 			break; /*barf*/
+		case CONNECTION_UNROUTE:
+			delete_connection_kernel_policies(c);
+			/* do now so route_owner won't find us */
+			set_child_routing(c, RT_UNROUTED);
+			do_updown_unroute(c);
+			return;
 		case CONNECTION_TIMEOUT:
 			break; /*barf*/
 		}
@@ -749,6 +838,12 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 		switch (event) {
 		case CONNECTION_ROUTE:
 			break; /*barf*/
+		case CONNECTION_UNROUTE:
+			delete_connection_kernel_policies(c);
+			/* do now so route_owner won't find us */
+			set_child_routing(c, RT_UNROUTED);
+			do_updown_unroute(c);
+			return;
 		case CONNECTION_TIMEOUT:
 			break; /*barf*/
 		}
@@ -758,6 +853,10 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 		switch (event) {
 		case CONNECTION_ROUTE:
 			break; /*barf*/
+		case CONNECTION_UNROUTE:
+			delete_connection_kernel_policies(c);
+			set_child_routing(c, RT_UNROUTED);
+			return;
 		case CONNECTION_TIMEOUT:
 			break; /*barf*/
 		}
@@ -792,37 +891,7 @@ void connection_unroute(struct connection *c)
 		return;
 	}
 
-	enum routing cr = c->child.routing;
-	switch (cr) {
-	case RT_UNROUTED:
-		break;
-	case RT_ROUTED_TUNNEL:
-		llog(RC_RTBUSY, c->logger, "cannot unroute: route busy");
-		return;
-	case RT_UNROUTED_NEGOTIATION:
-	case RT_ROUTED_PROSPECTIVE:
-	case RT_ROUTED_NEGOTIATION:
-	case RT_ROUTED_FAILURE:
-	case RT_UNROUTED_TUNNEL:
-		delete_connection_kernel_policies(c);
-		break;
-	}
-
-	/* do now so route_owner won't find us */
-	set_child_routing(c, RT_UNROUTED);
-
-	switch (cr) {
-	case RT_UNROUTED:
-	case RT_UNROUTED_NEGOTIATION:
-	case RT_UNROUTED_TUNNEL:
-		break;
-	case RT_ROUTED_PROSPECTIVE:
-	case RT_ROUTED_NEGOTIATION:
-	case RT_ROUTED_FAILURE:
-	case RT_ROUTED_TUNNEL:
-		do_updown_unroute(c);
-		break;
-	}
+	dispatch(c, CONNECTION_UNROUTE, NULL/*IKE*/);
 }
 
 /*
