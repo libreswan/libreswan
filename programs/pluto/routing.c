@@ -266,6 +266,17 @@ static void fail(struct ike_sa *ike)
 	pstat_sa_failed(&ike->sa, REASON_TOO_MANY_RETRANSMITS);
 }
 
+#define barf(C, EVENT) barf_where(C, EVENT, HERE)
+static void barf_where(struct connection *c, enum connection_event event, where_t where)
+{
+	connection_buf cb;
+	enum_buf kb, eb;
+	llog_pexpect(c->logger, where, "%s connection "PRI_CONNECTION" not expecting %s",
+		     str_enum_short(&connection_kind_names, c->kind, &kb),
+		     pri_connection(c, &cb),
+		     str_enum_short(&connection_event_names, event, &eb));
+}
+
 void connection_timeout(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
@@ -291,11 +302,16 @@ void connection_route(struct connection *c)
 void dispatch(struct connection *c, enum connection_event event, struct ike_sa *ike)
 {
 	LDBGP_JAMBUF(DBG_BASE, c->logger, buf) {
-		jam(buf, "dispatch %s event %s",
-		    enum_name_short(&connection_kind_names, c->kind),
-		    enum_name_short(&connection_event_names, event));
+		jam_string(buf, "dispatch ");
+		jam_enum_short(buf, &connection_event_names, event);
+		jam_string(buf, " to ");
+		jam_enum_short(buf, &connection_kind_names, c->kind);
+		jam_string(buf, " connection ");
+		jam_connection(buf, c);
+		jam_string(buf, " with routing ");
+		jam_enum_short(buf, &routing_names, c->child.routing);
 		if (ike != NULL) {
-			jam(buf, " for "PRI_SO, pri_so(ike->sa.st_serialno));
+			jam(buf, " for IKE SA "PRI_SO, pri_so(ike->sa.st_serialno));
 		}
 	}
 	switch (c->kind) {
@@ -454,21 +470,24 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 	case RT_ROUTED_PROSPECTIVE:
 		switch (event) {
 		case CONNECTION_ROUTE:
-			break; /*barf*/
+			barf(c, event);
+			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
 			set_child_routing(c, RT_UNROUTED);
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_TIMEOUT:
-			break; /*barf*/
+			barf(c, event);
+			return;
 		}
 		bad_case(event);
 
 	case RT_ROUTED_FAILURE:
 		switch (event) {
 		case CONNECTION_ROUTE:
-			break; /*barf*/
+			barf(c, event);
+			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
@@ -476,20 +495,23 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_TIMEOUT:
-			break; /*barf*/
+			barf(c, event);
+			return;
 		}
 		bad_case(event);
 
 	case RT_UNROUTED_TUNNEL:
 		switch (event) {
 		case CONNECTION_ROUTE:
-			break; /*barf*/
+			barf(c, event);
+			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
 			set_child_routing(c, RT_UNROUTED);
 			return;
 		case CONNECTION_TIMEOUT:
-			break; /*barf*/
+			barf(c, event);
+			return;
 		}
 		bad_case(event);
 
@@ -639,7 +661,8 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 	case RT_ROUTED_PROSPECTIVE:
 		switch (event) {
 		case CONNECTION_ROUTE:
-			break; /*barf*/
+			barf(c, event);
+			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
@@ -647,14 +670,16 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_TIMEOUT:
-			break; /*barf*/
+			barf(c, event);
+			return;
 		}
 		bad_case(event);
 
 	case RT_ROUTED_FAILURE:
 		switch (event) {
 		case CONNECTION_ROUTE:
-			break; /*barf*/
+			barf(c, event);
+			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
@@ -662,21 +687,24 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_TIMEOUT:
-			break; /*barf*/
+			barf(c, event);
+			return;
 		}
 		bad_case(event);
 
 	case RT_UNROUTED_TUNNEL:
 		switch (event) {
 		case CONNECTION_ROUTE:
-			break; /*barf*/
+			barf(c, event);
+			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
 			set_child_routing(c, RT_UNROUTED);
 			return;
 		case CONNECTION_TIMEOUT:
-			break; /*barf*/
+			barf(c, event);
+			return;
 		}
 		bad_case(event);
 
@@ -822,7 +850,8 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 	case RT_ROUTED_PROSPECTIVE:
 		switch (event) {
 		case CONNECTION_ROUTE:
-			break; /*barf*/
+			barf(c, event);
+			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
@@ -830,14 +859,16 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_TIMEOUT:
-			break; /*barf*/
+			barf(c, event);
+			return;
 		}
 		bad_case(event);
 
 	case RT_ROUTED_FAILURE:
 		switch (event) {
 		case CONNECTION_ROUTE:
-			break; /*barf*/
+			barf(c, event);
+			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
@@ -845,20 +876,23 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_TIMEOUT:
-			break; /*barf*/
+			barf(c, event);
+			return;
 		}
 		bad_case(event);
 
 	case RT_UNROUTED_TUNNEL:
 		switch (event) {
 		case CONNECTION_ROUTE:
-			break; /*barf*/
+			barf(c, event);
+			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
 			set_child_routing(c, RT_UNROUTED);
 			return;
 		case CONNECTION_TIMEOUT:
-			break; /*barf*/
+			barf(c, event);
+			return;
 		}
 		bad_case(event);
 
