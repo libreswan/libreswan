@@ -693,7 +693,7 @@ struct state {
 		struct list_entry reqid;
 		struct list_entry ike_spis;
 		struct list_entry ike_initiator_spi;
-	} hash_table_entries;
+	} state_db_entries;
 
 	struct hidden_variables hidden_variables;
 

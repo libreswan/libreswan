@@ -43,7 +43,7 @@ struct host_pair {
 	struct pending *pending;                /* awaiting Keying Channel */
 	struct {
 		struct list_entry addresses;
-	} hash_table_entries;
+	} host_pair_db_entries;
 };
 
 /* export to pending.c */

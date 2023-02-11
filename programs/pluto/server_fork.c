@@ -48,7 +48,7 @@ struct pid_entry {
 	unsigned long magic;
 	struct {
 		struct list_entry pid;
-	} hash_table_entries;
+	} pid_entry_db_entries;
 	pid_t pid;
 	void *context;
 	server_fork_cb *callback;

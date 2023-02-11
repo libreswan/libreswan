@@ -478,7 +478,7 @@ struct spd_route {
 	struct {
 		struct list_entry list;
 		struct list_entry remote_client;
-	} hash_table_entries;
+	} spd_route_db_entries;
 };
 
 struct spds {
@@ -595,7 +595,7 @@ struct connection {
 		struct list_entry list;
 		struct list_entry serialno;
 		struct list_entry that_id;
-	} hash_table_entries;
+	} connection_db_entries;
 
 	/*
 	 * An extract of the original configuration information for
