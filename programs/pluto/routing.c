@@ -763,7 +763,7 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
 			do_updown_unroute(c);
-			break;
+			return;
 		case CONNECTION_TIMEOUT:
 			if (should_retry(ike)) {
 				retry(ike);
