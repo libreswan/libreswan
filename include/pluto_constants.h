@@ -732,7 +732,6 @@ enum connection_kind {
 	CK_GROUP,       /* policy group: instantiates to CK_TEMPLATE+POLICY_GROUPINSTANCE */
 	CK_TEMPLATE,    /* abstract connection, with wildcard */
 	CK_PERMANENT,   /* normal connection */
-	CK_HYBRID,	/* IKE SA instantiated a template */
 	CK_INSTANCE,    /* instance of template, created for a
 			 * particular attempt */
 };

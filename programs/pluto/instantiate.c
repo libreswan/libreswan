@@ -284,6 +284,7 @@ static struct connection *instantiate(struct connection *t,
 			pri_shunk(sec_label));
 
 	PASSERT(t->logger, address_is_specified(remote_addr)); /* always */
+	PASSERT(t->logger, t->kind == CK_TEMPLATE);
 
 	/*
 	 * Is the new connection still a template?
@@ -322,16 +323,11 @@ static struct connection *instantiate(struct connection *t,
 		 * template and not the hybrid.
 		 */
 		if (sec_label.len == 0) {
-			PASSERT(t->logger, t->kind == CK_TEMPLATE);
-			kind = CK_TEMPLATE; /*XXX:CK_HYBRID*/
+			kind = CK_TEMPLATE;
 		} else {
-			PASSERT(t->logger, (t->kind == CK_HYBRID ||
-					    t->kind == CK_TEMPLATE/*XXX:bug*/));
 			kind = CK_INSTANCE;
 		}
 	} else {
-		/* pexpect(address_is_specified(t->remote->host.addr) || peer_addr != NULL); true??? */
-		PASSERT(t->logger, t->kind == CK_TEMPLATE);
 		kind = CK_INSTANCE;
 	}
 
@@ -465,12 +461,7 @@ struct connection *sec_label_child_instantiate(struct ike_sa *ike,
 					       where_t where)
 {
 	struct connection *t = ike->sa.st_connection;
-	/*
-	 * XXX: the IKE SA should always have a CK_HYBRID connection
-	 * bit that is currently only true on the responder.
-	 */
-	PEXPECT_WHERE(t->logger, where, (t->kind == CK_HYBRID ||
-					 t->kind == CK_TEMPLATE/*XXX:bug*/));
+	PEXPECT_WHERE(t->logger, where, t->kind == CK_TEMPLATE);
 	PEXPECT_WHERE(t->logger, where, t->config->sec_label.len > 0);
 	PEXPECT_WHERE(t->logger, where, sec_label.len > 0);
 
