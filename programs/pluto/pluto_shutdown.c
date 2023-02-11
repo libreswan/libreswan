@@ -57,7 +57,8 @@
 #include "demux.h"		/* for free_demux() */
 #include "impair_message.h"	/* for free_impair_message() */
 #include "state_db.h"		/* for check_state_db() */
-#include "connection_db.h"	/* for check_{connection,spd}_db() */
+#include "connection_db.h"	/* for check_connection_db() */
+#include "spd_route_db.h"	/* for check_spd_db() */
 
 volatile bool exiting_pluto = false;
 static enum pluto_exit_code pluto_exit_code;

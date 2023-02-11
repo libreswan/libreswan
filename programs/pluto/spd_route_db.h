@@ -13,21 +13,23 @@
  * for more details.
  */
 
-#ifndef CONNECTION_DB_H
-#define CONNECTION_DB_H
+#ifndef SPD_ROUTE_DB_H
+#define SPD_ROUTE_DB_H
 
 #include "where.h"
 
-struct connection;
+struct spd_route;
 struct logger;
 
-void connection_db_init(struct logger *logger);
-void connection_db_check(struct logger *logger);
+/* spd route */
 
-void connection_db_init_connection(struct connection *c);
-void connection_db_check_connection(struct connection *c, struct logger *logger, where_t where);
+void spd_route_db_init(struct logger *logger);
+void spd_route_db_check(struct logger *logger);
 
-void connection_db_add(struct connection *c);
-void connection_db_del(struct connection *c);
+void spd_route_db_init_spd_route(struct spd_route *sr);
+void spd_route_db_check_spd_route(struct spd_route *sr, struct logger *logger, where_t where);
+
+void spd_route_db_add(struct spd_route *sr);
+void spd_route_db_del(struct spd_route *sr);
 
 #endif

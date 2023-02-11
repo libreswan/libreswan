@@ -816,4 +816,13 @@ typedef struct {
 void jam_spd(struct jambuf *buf, const struct spd_route *spd);
 const char *str_spd(const struct spd_route *spd, spd_buf *buf);
 
+#include "connections.h"
+
+/* connections */
+
+void finish_connection(struct connection *c, const char *name,
+		       struct connection *t,
+		       lset_t debugging, struct fd *whackfd,
+		       where_t where);
+
 #endif

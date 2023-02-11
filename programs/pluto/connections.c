@@ -58,6 +58,7 @@
 #include "defs.h"
 #include "connections.h" /* needs id.h */
 #include "connection_db.h"
+#include "spd_route_db.h"
 #include "pending.h"
 #include "foodgroups.h"
 #include "packet.h"
@@ -1437,6 +1438,31 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 	set_connection_priority(c); /* must be after kind is set */
 }
 
+void alloc_connection_spds(struct connection *c, unsigned nr_spds)
+{
+	PASSERT(c->logger, c->child.spds.len == 0);
+	ldbg(c->logger, "allocating %u SPDs", nr_spds);
+	c->child.spds = (struct spds) {
+		.len = nr_spds,
+		.list = alloc_things(struct spd_route, nr_spds, "spds"),
+	};
+	c->spd = c->child.spds.list;
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		/* back link */
+		spd->connection = c;
+		/* local link */
+		spd->local = &spd->end[c->local->config->index];	/*clone must update*/
+		spd->remote = &spd->end[c->remote->config->index];	/*clone must update*/
+		FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+			spd->end[end].config = c->end[end].config;
+			spd->end[end].host = &c->end[end].host;		/*clone must update*/
+			spd->end[end].child = &c->end[end].child;	/*clone must update*/
+		}
+		/* db; will be updated */
+		spd_route_db_init_spd_route(spd);
+	}
+}
+
 void add_connection_spds(struct connection *c,
 			 const struct ip_info *host_afi UNUSED /*XXX: suspect need to fudge up IPv[46] entry to match no-op selector entry, see above and unset_selector */)
 {
@@ -1608,6 +1634,96 @@ static diag_t extract_shunt(const char *shunt_name,
 	}
 	*out = shunt;
 	return NULL;
+}
+
+/*
+ * Allocate connections.
+ */
+
+void finish_connection(struct connection *c, const char *name,
+		       struct connection *t,
+		       lset_t debugging, struct fd *whackfd,
+		       where_t where)
+{
+	/* announce it (before code below logs its address) */
+	dbg_alloc(name, c, where);
+
+	c->name = clone_str(name, __func__);
+	c->logger = alloc_logger(c, &logger_connection_vec,
+				 debugging, whackfd, where);
+
+	/*
+	 * If there's no template to use as a reference point, LOCAL
+	 * and REMOTE are disoriented so distinguishing one as local
+	 * and the other as remote is pretty much meaningless.
+	 *
+	 * Somewhat arbitrarially (as in this is the way it's always
+	 * been) start with:
+	 *
+	 *    LEFT == LOCAL / THIS
+	 *    RIGHT == REMOTE / THAT
+	 *
+	 * Needed by the hash table code that expects .that->host.id
+	 * to work.
+	 */
+
+	enum left_right local = (t == NULL ? LEFT_END : t->local->config->index);
+	enum left_right remote = (t == NULL ? RIGHT_END : t->remote->config->index);
+	c->local = &c->end[local];	/* this; clone must update */
+	c->remote = &c->end[remote];	/* that; clone must update */
+
+	/* somewhat oriented can start hashing */
+	connection_db_init_connection(c);
+
+	/*
+	 * Update counter, set serialno and add to serialno list.
+	 *
+	 * The connection will be hashed after the caller has finished
+	 * populating it.
+	 */
+	static co_serial_t connection_serialno;
+	connection_serialno++;
+	passert(connection_serialno > 0); /* can't overflow */
+	c->serialno = connection_serialno;
+	c->serial_from = (t != NULL ? t->serialno : UNSET_CO_SERIAL);
+}
+
+static struct connection *alloc_connection(const char *name,
+					   lset_t debugging, struct fd *whackfd,
+					   where_t where)
+{
+	struct connection *c = alloc_thing(struct connection, where->func);
+	finish_connection(c, name, NULL/*no template*/,
+			  debugging, whackfd, where);
+
+	/*
+	 * Allocate the configuration - only allocated on root
+	 * connection; connection instances (clones) inherit these
+	 * pointers.
+	 */
+
+	struct config *config = alloc_thing(struct config, "root config");
+	c->config = c->root_config = config;
+
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+		/* "left" or "right" */
+		const char *leftright =
+			(lr == LEFT_END ? "left" :
+			 lr == RIGHT_END ? "right" :
+			 NULL);
+		passert(leftright != NULL);
+		struct connection_end *end = &c->end[lr];
+		struct config_end *end_config = &config->end[lr];
+		end_config->leftright = leftright;
+		end_config->index = lr;
+		end_config->host.leftright = leftright;
+		end_config->child.leftright = leftright;
+		end->config = end_config;
+		end->host.config = &end_config->host;
+		end->child.config = &end_config->child;
+	}
+
+	return c;
 }
 
 static diag_t extract_connection(const struct whack_message *wm,
