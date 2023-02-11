@@ -85,10 +85,22 @@ void replace_connection_that_id(struct connection *c, const struct id *src)
 }
 
 /*
+ * A serial_from table.
+ */
+
+static hash_t hash_connection_serial_from(const co_serial_t *serial_from)
+{
+	return hash_thing(*serial_from, zero_hash);
+}
+
+HASH_TABLE(connection, serial_from, .serial_from, STATE_TABLE_SIZE);
+
+/*
  * Maintain the contents of the hash tables.
  */
 
 HASH_DB(connection,
+	&connection_serial_from_hash_table,
 	&connection_serialno_hash_table,
 	&connection_that_id_hash_table);
 
@@ -106,6 +118,13 @@ static struct list_head *connection_filter_head(struct connection_filter *filter
 		return hash_table_bucket(&connection_that_id_hash_table, hash);
 	}
 
+	if (filter->serial_from != UNSET_CO_SERIAL) {
+		dbg("FOR_EACH_CONNECTION[serial_from="PRI_CO"].... in "PRI_WHERE,
+		    pri_co(filter->serial_from), pri_where(filter->where));
+		hash_t hash = hash_connection_serial_from(&filter->serial_from);
+		return hash_table_bucket(&connection_serial_from_hash_table, hash);
+	}
+
 	dbg("FOR_EACH_CONNECTION_.... in "PRI_WHERE, pri_where(filter->where));
 	return &connection_db_list_head;
 }
@@ -113,6 +132,10 @@ static struct list_head *connection_filter_head(struct connection_filter *filter
 static bool matches_connection_filter(struct connection *c, struct connection_filter *filter)
 {
 	if (filter->kind != 0 && filter->kind != c->kind) {
+		return false;
+	}
+	if (filter->serial_from != UNSET_CO_SERIAL &&
+	    filter->serial_from != c->serial_from) {
 		return false;
 	}
 	if (filter->name != NULL && !streq(filter->name, c->name)) {
