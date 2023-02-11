@@ -29,19 +29,12 @@ pluto enum_names:
          short_name 3: PERMANENT OK
          jam_enum_short 3: PERMANENT OK
          match PERMANENT [short]: OK
-    4 -> CK_HYBRID
-         jam_enum 4: CK_HYBRID OK
-         search CK_HYBRID: OK
-         match CK_HYBRID: OK
-         short_name 4: HYBRID OK
-         jam_enum_short 4: HYBRID OK
-         match HYBRID [short]: OK
-    5 -> CK_INSTANCE
-         jam_enum 5: CK_INSTANCE OK
+    4 -> CK_INSTANCE
+         jam_enum 4: CK_INSTANCE OK
          search CK_INSTANCE: OK
          match CK_INSTANCE: OK
-         short_name 5: INSTANCE OK
-         jam_enum_short 5: INSTANCE OK
+         short_name 4: INSTANCE OK
+         jam_enum_short 4: INSTANCE OK
          match INSTANCE [short]: OK
 
   certpolicy_type_names:
