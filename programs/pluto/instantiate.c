@@ -367,15 +367,6 @@ static struct connection *instantiate(struct connection *t,
 	d->newest_ike_sa = SOS_NOBODY;
 	pexpect(d->newest_ipsec_sa == SOS_NOBODY);
 
-	if (sec_label.len > 0) {
-		/*
-		 * Install the sec_label from either an acquire or
-		 * child payload into both ends.
-		 */
-		pexpect(t->child.sec_label.ptr == NULL);
-		d->child.sec_label = clone_hunk(sec_label, "instantiate() sec_label");
-	}
-
 	/* assumption: orientation is the same as c's */
 	connect_to_host_pair(d);
 	connection_db_add(d);
@@ -466,8 +457,15 @@ struct connection *sec_label_child_instantiate(struct ike_sa *ike,
 	PEXPECT_WHERE(t->logger, where, sec_label.len > 0);
 
 	ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
-	struct connection *d = instantiate(t, remote_addr, /*peer-id*/NULL, sec_label,
-					   __func__, where);
+	struct connection *d = instantiate(t, remote_addr, /*peer-id*/NULL,
+					   sec_label, __func__, where);
+
+	/*
+	 * Install the sec_label from either an acquire or child
+	 * payload into both ends.
+	 */
+	pexpect(t->child.sec_label.ptr == NULL);
+	d->child.sec_label = clone_hunk(sec_label, __func__);
 
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		struct child_end *child = &d->end[end].child;
@@ -514,8 +512,7 @@ struct connection *rw_responder_instantiate(struct connection *t,
 		return NULL;
 	}
 
-	struct connection *d = instantiate(t, peer_addr,
-					   /*TBD peer_id*/NULL,
+	struct connection *d = instantiate(t, peer_addr, /*TBD peer_id*/NULL,
 					   /*TBD sec_label*/null_shunk,
 					   __func__, where);
 
@@ -629,8 +626,7 @@ static struct connection *oppo_instantiate(struct connection *t,
 	 * ID is NONE when it is set to the remote address.
 	 */
 
-	struct connection *d = instantiate(t, remote_address,
-					   /*peer_id*/NULL,
+	struct connection *d = instantiate(t, remote_address, /*peer_id*/NULL,
 					   /*sec_label*/null_shunk,
 					   func, where);
 
