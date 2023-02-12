@@ -60,8 +60,10 @@ static void instance_event_handler(struct connection *c, enum connection_event e
 void set_child_routing_where(struct connection *c, enum routing routing,
 			     so_serial_t so, where_t where)
 {
+	connection_buf cb;
 	enum_buf ob, nb;
-	ldbg(c->logger, "kernel: routing connection "PRI_SO"->"PRI_SO" %s->%s "PRI_WHERE,
+	ldbg(c->logger, "kernel: routing connection "PRI_CONNECTION" "PRI_SO"->"PRI_SO" %s->%s "PRI_WHERE,
+	     pri_connection(c, &cb),
 	     pri_so(c->child.newest_routing_sa),
 	     pri_so(so),
 	     str_enum(&routing_story, c->child.routing, &ob),
@@ -311,6 +313,8 @@ void dispatch(struct connection *c, enum connection_event event, struct ike_sa *
 		jam_string(buf, " to ");
 		jam_enum_short(buf, &connection_kind_names, c->kind);
 		jam_string(buf, " connection ");
+		jam(buf, PRI_CO, pri_co(c->serialno));
+		jam_string(buf, " ");
 		jam_connection(buf, c);
 		jam_string(buf, " with routing ");
 		jam_enum_short(buf, &routing_names, c->child.routing);
