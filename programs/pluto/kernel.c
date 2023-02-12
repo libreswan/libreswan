@@ -1288,9 +1288,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	    enum_name(&routing_story, c->child.routing),
 	    pri_shunk(c->config->sec_label));
 
-	if (!pexpect(c->config->ike_version == IKEv2) ||
-	    !pexpect(c->config->sec_label.len > 0) ||
-	    !pexpect(c->kind == CK_TEMPLATE)) {
+	if (PBAD(c->logger, c->config->ike_version != IKEv2 && !labeled_torp(c))) {
 		return false;
 	}
 
@@ -2260,7 +2258,8 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 {
 	struct connection *c = st->st_connection;
 
-	if (c->config->ike_version == IKEv2 && c->child.sec_label.len > 0) {
+	if (c->config->ike_version == IKEv2 &&
+	    labeled_child(c)) {
 		ldbg(st->st_logger, "kernel: %s() skipping install of IPsec policies as security label", __func__);
 		return true;
 	}

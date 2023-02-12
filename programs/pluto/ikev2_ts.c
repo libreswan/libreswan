@@ -1379,17 +1379,16 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 
 			/*
 			 * For labeled IPsec, always start with the
-			 * hybrid sec_label template instance.
+			 * labeled_instance().
 			 *
 			 * Who are we to argue if the kernel asks for
 			 * a new SA with, seemingly, a security label
 			 * that matches an existing connection
 			 * instance.
 			 */
-			if (d->config->sec_label.len > 0 &&
-			    d->kind != CK_TEMPLATE) {
+			if (labeled_child(d)) {
 				connection_buf cb;
-				dbg_ts("skipping "PRI_CONNECTION",  non-template IKEv2 with a security label",
+				dbg_ts("skipping "PRI_CONNECTION", labeled IKEv2 child",
 				       pri_connection(d, &cb));
 				continue;
 			}
@@ -1520,9 +1519,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 	 *   be helpful here).
 	 */
 	if (best.connection == NULL &&
-	    cc->kind != CK_INSTANCE) {
-		pexpect((cc->kind == CK_PERMANENT) ||
-			(cc->kind == CK_TEMPLATE && cc->config->sec_label.len > 0));
+	    (cc->kind == CK_PERMANENT || labeled_torp(cc))) {
 		/*
 		 * Don't try to look for something else to
 		 * 'instantiate' when the current connection is
@@ -1542,6 +1539,9 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		 * sometimes blats the current instance with new
 		 * values - something that should not be done to a
 		 * permanent connection.
+		 *
+		 * XXX: For SEC_LABEL, best should have been set back
+		 * to CC?!?
 		 */
 		dbg_ts("no best spd route; but the current %s connection \"%s\" is not a CK_INSTANCE; giving up",
 		       enum_name(&connection_kind_names, cc->kind), cc->name);

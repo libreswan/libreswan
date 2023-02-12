@@ -621,9 +621,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		return;
 	}
 
-	if (c->config->ike_version == IKEv2 &&
-	    c->config->sec_label.len > 0 &&
-	    c->kind == CK_TEMPLATE) {
+	if (c->config->ike_version == IKEv2 && labeled_torp(c)) {
 		dbg("IKEv2 connection has security label");
 
 		if (b->sec_label.len == 0) {

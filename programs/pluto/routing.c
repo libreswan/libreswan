@@ -264,10 +264,11 @@ void connection_ondemand(struct connection *c, threadtime_t *inception, const st
 	 *
 	 * Rather than have the template m/c try to deal with this,
 	 * handle it here.
+	 *
+	 * XXX: labeled_template(c) here looks wrong - it should have
+	 * been instantiated?
 	 */
-	if (c->config->ike_version == IKEv2 &&
-	    c->config->sec_label.len > 0 &&
-	    c->kind == CK_TEMPLATE) {
+	if (labeled_torp(c)) {
 		ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY,
 				  inception, b->sec_label, b->background, b->logger);
 		packet_buf pb;

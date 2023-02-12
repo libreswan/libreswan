@@ -277,12 +277,12 @@ static struct connection *refine_host_connection_on_responder(int indent,
 			}
 
 			/*
-			 * Only consider template sec_label
-			 * connections.
+			 * Only consider template and parent instances
+			 * sec_label connections.
 			 */
-			if (d->kind == CK_INSTANCE && d->config->sec_label.len > 0) {
+			if (labeled_child(d)) {
 				connection_buf cb;
-				dbg_rhc("skipping sec_label instance "PRI_CONNECTION,
+				dbg_rhc("skipping labeled child "PRI_CONNECTION,
 					pri_connection(d, &cb));
 				continue;
 			}

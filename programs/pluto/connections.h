@@ -823,4 +823,26 @@ void finish_connection(struct connection *c, const char *name,
 		       lset_t debugging, struct fd *whackfd,
 		       where_t where);
 
+/*
+ * Three types of labels.
+ *
+ * The problem is, none of the existing code was carefull to
+ * distinguish betwee an labeled template and parent.  Hence
+ * labeled_torp() as a place holder for both.
+ */
+
+bool labeled_where(const struct connection *c, where_t where);
+bool labeled_torp_where(const struct connection *c, where_t where);
+bool labeled_template_where(const struct connection *c, where_t where);
+bool labeled_parent_where(const struct connection *c, where_t where);
+bool labeled_child_where(const struct connection *c, where_t where);
+
+#define labeled(C) labeled_where(C, HERE)
+#define labeled_torp(C) labeled_torp_where(C, HERE)
+#if 0
+#define labeled_template(C) labeled_template_where(C, HERE)
+#define labeled_parent(C) labeled_parent_where(C, HERE)
+#endif
+#define labeled_child(C) labeled_child_where(C, HERE)
+
 #endif

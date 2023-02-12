@@ -458,12 +458,12 @@ static void show_one_spd(struct show *s,
 	 *
 	 * XXX: IKEv1 stores the negotiated sec_label in the state.
 	 */
-	if (c->child.sec_label.len > 0) {
+	if (labeled_child(c)) {
 		/* negotiated (IKEv2) */
 		show_comment(s, PRI_CONNECTION":   sec_label:"PRI_SHUNK,
 			     c->name, instance,
 			     pri_shunk(c->child.sec_label));
-	} else if (c->config->sec_label.len > 0) {
+	} else if (labeled_torp(c)) {
 		/* configured */
 		show_comment(s, "\"%s\"%s:   sec_label:"PRI_SHUNK,
 			     c->name, instance,

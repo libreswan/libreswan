@@ -423,9 +423,7 @@ struct connection *sec_label_child_instantiate(struct ike_sa *ike,
 					       where_t where)
 {
 	struct connection *t = ike->sa.st_connection;
-	PEXPECT_WHERE(t->logger, where, t->kind == CK_TEMPLATE);
-	PEXPECT_WHERE(t->logger, where, t->config->sec_label.len > 0);
-	PEXPECT_WHERE(t->logger, where, sec_label.len > 0);
+	PEXPECT_WHERE(t->logger, where, labeled_torp(t));
 
 	ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
 	struct connection *d = instantiate(t, remote_addr, /*peer-id*/NULL,

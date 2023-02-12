@@ -16,17 +16,20 @@
  */
 
 #include <errno.h>
+
 #include "labeled_ipsec.h"
 
 #include "defs.h"		/* for so_serial_t */
 #include "log.h"
+#include "connections.h"
 
 #ifdef HAVE_LABELED_IPSEC
-
 #include <selinux/selinux.h>
+#endif
 
 err_t vet_seclabel(shunk_t sl)
 {
+#ifdef HAVE_LABELED_IPSEC
 	if (sl.len > MAX_SECCTX_LEN)
 		return "security label is too long";
 
@@ -42,18 +45,27 @@ err_t vet_seclabel(shunk_t sl)
 		return "security label has an embedded NUL";
 
 	return NULL;
+#else
+	dbg("%s() not implemented: %zu", __func__, sl.len);
+	return "Labeled IPsec not supported";
+#endif
 }
 
 void init_labeled_ipsec(struct logger *logger)
 {
+#ifdef HAVE_LABELED_IPSEC
 	if (!is_selinux_enabled()) {
 		llog(RC_LOG, logger, "selinux support is NOT enabled.");
 		return;
 	}
 	llog(RC_LOG, logger, "SELinux support is enabled in %s mode.",
 	     security_getenforce() ? "ENFORCING" : "PERMISSIVE");
+#else
+	ldbg(logger, "%s() not implemented", __func__);
+#endif
 }
 
+#ifdef HAVE_LABELED_IPSEC
 static bool check_access(const char *perm,
 			 const char *source, const char *scontext,
 			 const char *target, const char *tcontext,
@@ -74,10 +86,12 @@ static bool check_access(const char *perm,
 	     perm, source, scontext, target, tcontext, tclass);
 	return true;
 }
+#endif
 
 bool sec_label_within_range(const char *source, shunk_t label,
 			    chunk_t range, struct logger *logger)
 {
+#ifdef HAVE_LABELED_IPSEC
 	if (label.len == 0 || range.len == 0) {
 		return false;
 	}
@@ -127,23 +141,57 @@ bool sec_label_within_range(const char *source, shunk_t label,
 
 	freecon(domain);
 	return true;
-}
-
 #else
-
-err_t vet_seclabel(shunk_t sl UNUSED)
-{
-	return "Labeled IPsec not supported";
+	ldbg(logger, "%s() not implemented: %s "PRI_SHUNK" "PRI_SHUNK,
+	     __func__, source, pri_shunk(label), pri_shunk(range));
+	return false;
+#endif
 }
 
-void init_labeled_ipsec(struct logger *logger UNUSED)
+bool labeled_where(const struct connection *c, where_t where UNUSED)
 {
+	return (c->config->sec_label.len > 0);
 }
 
-bool sec_label_within_range(const char *source UNUSED, shunk_t label UNUSED,
-			    chunk_t range UNUSED, struct logger *logger UNUSED)
+bool labeled_torp_where(const struct connection *c, where_t where)
 {
+	if (labeled_template_where(c, where)) {
+		connection_buf cb;
+		ldbg(c->logger, "labeled("PRI_CONNECTION") is template "PRI_WHERE,
+		     pri_connection(c, &cb),
+		     pri_where(where));
+		return true;
+	}
+	if (labeled_parent_where(c, where)) {
+		connection_buf cb;
+		ldbg(c->logger, "labeled("PRI_CONNECTION") is parent "PRI_WHERE,
+		     pri_connection(c, &cb),
+		     pri_where(where));
+		return true;
+	}
 	return false;
 }
 
-#endif
+bool labeled_template_where(const struct connection *c, where_t where UNUSED)
+{
+	return (c->kind == CK_TEMPLATE &&
+		c->config->sec_label.len > 0 &&
+		c->serial_from == UNSET_CO_SERIAL &&
+		PEXPECT(c->logger, c->child.sec_label.len == 0));
+}
+
+bool labeled_parent_where(const struct connection *c, where_t where UNUSED)
+{
+	return (c->kind == CK_TEMPLATE &&
+		c->config->sec_label.len > 0 &&
+		c->serial_from > UNSET_CO_SERIAL &&
+		PEXPECT(c->logger, c->child.sec_label.len == 0));
+}
+
+bool labeled_child_where(const struct connection *c, where_t where UNUSED)
+{
+	return (c->kind == CK_INSTANCE &&
+		c->config->sec_label.len > 0 &&
+		c->child.sec_label.len > 0 &&
+		PEXPECT(c->logger, c->serial_from != UNSET_CO_SERIAL));
+}

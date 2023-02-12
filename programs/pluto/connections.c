@@ -2928,13 +2928,18 @@ const char *str_connection_policies(const struct connection *c, policy_buf *buf)
  * Find an existing connection for a trapped outbound packet.
  *
  * This is attempted before we bother with gateway discovery.
- *   + this connection is routed or instance_of_routed_template
+ *
+ *   + the connection is routed or instance_of_routed_template
  *     (i.e. approved for on-demand)
- *   + this subnet contains our_client (or we are our_client)
- *   + that subnet contains peer_client (or peer is peer_client)
+ *
+ *   + local subnet contains src address (or we are our_client)
+ *
+ *   + remote subnet contains dst address (or peer is peer_client)
+ *
  *   + don't care about Phase 1 IDs (we don't know)
- * Note: result may still need to be instantiated.
- * The winner has the highest policy priority.
+ *
+ * Note: result may still need to be instantiated.  The winner has the
+ * highest policy priority.
  *
  * If there are several with that priority, we give preference to the
  * first one that is an instance.
@@ -2988,12 +2993,9 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 		 * for a new SA with, seemingly, a security label that
 		 * matches an existing connection instance.
 		 */
-		if (c->config->ike_version == IKEv2 &&
-		    c->config->sec_label.len > 0 &&
-		    c->kind != CK_TEMPLATE) {
-			pexpect(c->kind == CK_INSTANCE);
+		if (c->config->ike_version == IKEv2 && labeled_child(c)) {
 			connection_buf cb;
-			dbg("    skipping "PRI_CONNECTION"; IKEv2 sec_label connection is not a template",
+			dbg("    skipping "PRI_CONNECTION"; IKEv2 sec_label connection is a child",
 			    pri_connection(c, &cb));
 			continue;
 		}
