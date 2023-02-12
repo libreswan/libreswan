@@ -253,9 +253,9 @@ static void scribble_selectors_on_spd(struct connection *c,
 	 * C so it is consistent with the new SPDs when they get
 	 * zapped.
 	 */
-	so_serial_t owner = c->child.kernel_policy_owner;
-	c->child.kernel_policy_owner = SOS_NOBODY;
-	set_child_kernel_policy_owner(c, owner);
+	so_serial_t owner = c->child.newest_routing_sa;
+	c->child.newest_routing_sa = SOS_NOBODY;
+	set_child_routing(c, c->child.routing, owner);
 #if 0
 	set_connection_priority(c); /* must be after .kind and .spd are set */
 #endif

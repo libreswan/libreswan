@@ -1439,9 +1439,9 @@ void delete_states_by_connection(struct connection **cp)
 	 * mobike.  Requires some re-implementation. Use
 	 * pexpect for now.
 	 */
-	if (c->child.kernel_policy_owner != SOS_NOBODY) {
+	if (c->child.newest_routing_sa != SOS_NOBODY) {
 		llog_pexpect(c->logger, HERE, "kernel_policy_owner for is "PRI_SO", should be 0",
-			     pri_so(c->child.kernel_policy_owner));
+			     pri_so(c->child.newest_routing_sa));
 	} else {
 		ldbg(c->logger, "kernel_policy_owner is 0");
 	}
@@ -1946,7 +1946,7 @@ void state_eroute_usage(const ip_selector *ours, const ip_selector *peers,
 
 		/* XXX spd-enum */
 		if (IS_IPSEC_SA_ESTABLISHED(st) &&
-		    c->child.kernel_policy_owner == st->st_serialno &&
+		    c->child.newest_routing_sa == st->st_serialno &&
 		    c->child.routing == RT_ROUTED_TUNNEL &&
 		    selector_range_eq_selector_range(c->spd->local->client, *ours) &&
 		    selector_range_eq_selector_range(c->spd->remote->client, *peers)) {
@@ -2039,7 +2039,7 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 		}
 
 		/* XXX spd-enum */ /* XXX: huh? */
-		if (c->child.kernel_policy_owner == st->st_serialno) {
+		if (c->child.newest_routing_sa == st->st_serialno) {
 			jam(buf, " eroute owner;");
 		}
 
@@ -2093,7 +2093,7 @@ static void show_established_child_details(struct show *s, struct state *st,
 		 * XXX - mcr last used is really an attribute of
 		 * the connection
 		 */
-		if (c->child.kernel_policy_owner == st->st_serialno &&
+		if (c->child.newest_routing_sa == st->st_serialno &&
 		    st->st_outbound_count != 0) {
 			jam(buf, " used %jds ago;",
 			    deltasecs(monotimediff(now , st->st_outbound_time)));
@@ -2923,7 +2923,7 @@ static void dbg_newest_ipsec_sa_change(const char *f, so_serial_t old_ipsec_sa,
 	    st->st_connection->instance_serial,
 	    st->st_connection->config->ike_info->version_name,
 	    st->st_connection->newest_ipsec_sa, old_ipsec_sa,
-	    pri_so(st->st_connection->child.kernel_policy_owner),
+	    pri_so(st->st_connection->child.newest_routing_sa),
 	    st->st_clonedfrom);
 }
 

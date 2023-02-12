@@ -309,7 +309,7 @@ static void show_one_spd(struct show *s,
 		     c->name, instance,
 		     str_spd(spd, &spdb),
 		     enum_name(&routing_story, c->child.routing),
-		     c->child.kernel_policy_owner);
+		     c->child.newest_routing_sa);
 
 #define OPT_HOST(h, ipb)  (address_is_specified(h) ? str_address(&h, &ipb) : "unset")
 

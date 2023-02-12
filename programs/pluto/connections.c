@@ -1417,12 +1417,9 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 	add_connection_spds(c, host_afi);
 
 	/* leave a bread crumb */
-	PEXPECT(c->logger, c->child.kernel_policy_owner == SOS_NOBODY);
-	set_child_kernel_policy_owner(c, SOS_NOBODY);
-
-	/* leave a bread crumb */
+	PEXPECT(c->logger, c->child.newest_routing_sa == SOS_NOBODY);
 	passert(c->child.routing == RT_UNROUTED);
-	set_child_routing(c, RT_UNROUTED);
+	set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
 
 	set_connection_priority(c); /* must be after kind is set */
 }
@@ -3615,16 +3612,6 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 				     str_selector(&selector, &cb));
 		}
 	}
-}
-
-void set_child_kernel_policy_owner_where(struct connection *c, so_serial_t nso, where_t where)
-{
-	so_serial_t oso = c->child.kernel_policy_owner;
-	ldbg(c->logger,
-	     "kernel: eroute_owner connection "PRI_SO"->"PRI_SO" "PRI_WHERE,
-	     pri_so(oso), pri_so(nso),
-	     pri_where(where));
-	c->child.kernel_policy_owner = nso;
 }
 
 err_t connection_requires_tss(const struct connection *c)

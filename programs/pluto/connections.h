@@ -551,7 +551,7 @@ struct connection {
 
 	struct child {
 		enum routing routing; /* level of routing in place */
-		so_serial_t kernel_policy_owner;
+		so_serial_t newest_routing_sa;
 
 		/*
 		 * This is identical across kernel-states and shared
@@ -574,9 +574,8 @@ struct connection {
 
 	struct ephemeral_variables temp_vars;
 
-	so_serial_t		/* state object serial number */
-		newest_ike_sa,
-		newest_ipsec_sa;
+	so_serial_t newest_ike_sa;
+	so_serial_t newest_ipsec_sa;
 
 	/* host_pair linkage */
 	struct host_pair *host_pair;
@@ -792,12 +791,10 @@ void alloc_connection_spds(struct connection *c, unsigned nr);
 void discard_connection_spds(struct connection *c);
 void add_connection_spds(struct connection *c, const struct ip_info *host_afi);
 
-void set_child_kernel_policy_owner_where(struct connection *c, so_serial_t so, where_t where);
-#define set_child_kernel_policy_owner(C, SO)			\
-	set_child_kernel_policy_owner_where(C, SO, HERE)
-void set_child_routing_where(struct connection *c, enum routing routing, where_t where);
-#define set_child_routing(C, RT)		\
-	set_child_routing_where(C, RT, HERE)
+void set_child_routing_where(struct connection *c, enum routing routing,
+			     so_serial_t serialno, where_t where);
+#define set_child_routing(C, RT, SO)		\
+	set_child_routing_where(C, RT, SO, HERE)
 
 /*
  * Format the topology of a connection end, leaving out defaults.

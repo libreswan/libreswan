@@ -57,14 +57,18 @@ static void permanent_event_handler(struct connection *c, enum connection_event 
 static void template_event_handler(struct connection *c, enum connection_event event, struct ike_sa *ike);
 static void instance_event_handler(struct connection *c, enum connection_event event, struct ike_sa *ike);
 
-void set_child_routing_where(struct connection *c, enum routing routing, where_t where)
+void set_child_routing_where(struct connection *c, enum routing routing,
+			     so_serial_t so, where_t where)
 {
 	enum_buf ob, nb;
-	ldbg(c->logger, "kernel: routing connection %s->%s "PRI_WHERE,
+	ldbg(c->logger, "kernel: routing connection "PRI_SO"->"PRI_SO" %s->%s "PRI_WHERE,
+	     pri_so(c->child.newest_routing_sa),
+	     pri_so(so),
 	     str_enum(&routing_story, c->child.routing, &ob),
 	     str_enum(&routing_story, routing, &nb),
 	     pri_where(where));
 	c->child.routing = routing;
+	c->child.newest_routing_sa = so;
 }
 
 void connection_negotiating(struct connection *c,
@@ -186,7 +190,7 @@ void connection_negotiating(struct connection *c,
 		dbg("kernel: %s() done", __func__);
 	}
 
-	set_child_routing(c, new_routing);
+	set_child_routing(c, new_routing, c->child.newest_routing_sa);
 	dbg("kernel: %s() done - returning success", __func__);
 }
 
@@ -373,7 +377,7 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
-			set_child_routing(c, RT_UNROUTED);
+			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permenant ondemand */
@@ -394,7 +398,7 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 				 * Change routing so we don't get cleared out
 				 * when state/connection dies.
 				 */
-				set_child_routing(c, RT_UNROUTED);
+				set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			}
 			fail(ike);
 			return;
@@ -409,7 +413,7 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
-			set_child_routing(c, RT_UNROUTED);
+			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_TIMEOUT:
@@ -430,7 +434,8 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 				 * Change routing so we don't get cleared out
 				 * when state/connection dies.
 				 */
-				set_child_routing(c, RT_ROUTED_PROSPECTIVE/*lie?!?*/);
+				set_child_routing(c, RT_ROUTED_PROSPECTIVE/*lie?!?*/,
+						  c->child.newest_routing_sa);
 			}
 			fail(ike);
 			return;
@@ -460,7 +465,8 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 				 * Change routing so we don't get cleared out
 				 * when state/connection dies.
 				 */
-				set_child_routing(c, RT_ROUTED_NEGOTIATION/*lie?!?*/);
+				set_child_routing(c, RT_ROUTED_NEGOTIATION/*lie?!?*/,
+						  c->child.newest_routing_sa);
 			}
 			fail(ike);
 			return;
@@ -474,7 +480,7 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
-			set_child_routing(c, RT_UNROUTED);
+			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_TIMEOUT:
@@ -491,7 +497,7 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
-			set_child_routing(c, RT_UNROUTED);
+			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_TIMEOUT:
@@ -507,7 +513,7 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
-			set_child_routing(c, RT_UNROUTED);
+			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
 		case CONNECTION_TIMEOUT:
 			barf(c, event);
@@ -564,7 +570,7 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
-			set_child_routing(c, RT_UNROUTED);
+			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permenant ondemand */
@@ -585,7 +591,7 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 				 * Change routing so we don't get cleared out
 				 * when state/connection dies.
 				 */
-				set_child_routing(c, RT_UNROUTED);
+				set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			}
 			fail(ike);
 			return;
@@ -600,7 +606,7 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
-			set_child_routing(c, RT_UNROUTED);
+			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_TIMEOUT:
@@ -621,7 +627,8 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 				 * Change routing so we don't get cleared out
 				 * when state/connection dies.
 				 */
-				set_child_routing(c, RT_ROUTED_PROSPECTIVE/*lie?!?*/);
+				set_child_routing(c, RT_ROUTED_PROSPECTIVE/*lie?!?*/,
+						  c->child.newest_routing_sa);
 			}
 			fail(ike);
 			return;
@@ -651,7 +658,8 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 				 * Change routing so we don't get cleared out
 				 * when state/connection dies.
 				 */
-				set_child_routing(c, RT_ROUTED_NEGOTIATION/*lie?!?*/);
+				set_child_routing(c, RT_ROUTED_NEGOTIATION/*lie?!?*/,
+						  c->child.newest_routing_sa);
 			}
 			fail(ike);
 			return;
@@ -666,7 +674,7 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
-			set_child_routing(c, RT_UNROUTED);
+			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_TIMEOUT:
@@ -683,7 +691,7 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
-			set_child_routing(c, RT_UNROUTED);
+			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_TIMEOUT:
@@ -700,7 +708,7 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
-			set_child_routing(c, RT_UNROUTED);
+			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
 		case CONNECTION_TIMEOUT:
 			barf(c, event);
@@ -755,7 +763,7 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
-			set_child_routing(c, RT_UNROUTED);
+			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permenant ondemand */
@@ -776,7 +784,7 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 				 * Change routing so we don't get cleared out
 				 * when state/connection dies.
 				 */
-				set_child_routing(c, RT_UNROUTED);
+				set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			}
 			fail(ike);
 			return;
@@ -810,7 +818,8 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 				 * Change routing so we don't get cleared out
 				 * when state/connection dies.
 				 */
-				set_child_routing(c, RT_ROUTED_PROSPECTIVE/*lie?!?*/);
+				set_child_routing(c, RT_ROUTED_PROSPECTIVE/*lie?!?*/,
+						  c->child.newest_routing_sa);
 			}
 			fail(ike);
 			return;
@@ -840,7 +849,8 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 				 * Change routing so we don't get cleared out
 				 * when state/connection dies.
 				 */
-				set_child_routing(c, RT_ROUTED_NEGOTIATION/*lie?!?*/);
+				set_child_routing(c, RT_ROUTED_NEGOTIATION/*lie?!?*/,
+						  c->child.newest_routing_sa);
 			}
 			fail(ike);
 			return;
@@ -855,7 +865,7 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
-			set_child_routing(c, RT_UNROUTED);
+			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_TIMEOUT:
@@ -872,7 +882,7 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
-			set_child_routing(c, RT_UNROUTED);
+			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_TIMEOUT:
@@ -888,7 +898,7 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
-			set_child_routing(c, RT_UNROUTED);
+			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
 		case CONNECTION_TIMEOUT:
 			barf(c, event);
@@ -943,7 +953,7 @@ void connection_resume(struct child_sa *child)
 	enum routing cr = c->child.routing;
 	switch (cr) {
 	case RT_UNROUTED_TUNNEL:
-		set_child_routing(c, RT_ROUTED_TUNNEL);
+		set_child_routing(c, RT_ROUTED_TUNNEL, c->child.newest_routing_sa);
 		FOR_EACH_ITEM(spd, &c->child.spds) {
 			do_updown(UPDOWN_UP, c, spd, &child->sa, child->sa.st_logger);
 			do_updown(UPDOWN_ROUTE, c, spd, &child->sa, child->sa.st_logger);
@@ -958,7 +968,7 @@ void connection_resume(struct child_sa *child)
 		llog_pexpect(child->sa.st_logger, HERE,
 			     "%s() unexpected routing %s",
 			     __func__, enum_name_short(&routing_names, cr));
-		set_child_routing(c, RT_ROUTED_TUNNEL);
+		set_child_routing(c, RT_ROUTED_TUNNEL, c->child.newest_routing_sa);
 		break;
 	}
 }
@@ -990,7 +1000,7 @@ void connection_suspend(struct child_sa *child)
 				child->sa.st_mobike_del_src_ip = false;
 			}
 		}
-		set_child_routing(c, RT_UNROUTED_TUNNEL);
+		set_child_routing(c, RT_UNROUTED_TUNNEL, c->child.newest_routing_sa);
 		break;
 	case RT_ROUTED_PROSPECTIVE:
 	case RT_ROUTED_NEGOTIATION:
@@ -1007,7 +1017,7 @@ void connection_suspend(struct child_sa *child)
 				child->sa.st_mobike_del_src_ip = false;
 			}
 		}
-		set_child_routing(c, RT_UNROUTED_TUNNEL);
+		set_child_routing(c, RT_UNROUTED_TUNNEL, c->child.newest_routing_sa);
 		break;
 	case RT_UNROUTED:
 	case RT_UNROUTED_NEGOTIATION:
@@ -1015,7 +1025,7 @@ void connection_suspend(struct child_sa *child)
 		llog_pexpect(child->sa.st_logger, HERE,
 			     "%s() unexpected routing %s",
 			     __func__, enum_name_short(&routing_names, cr));
-		set_child_routing(c, RT_UNROUTED_TUNNEL);
+		set_child_routing(c, RT_UNROUTED_TUNNEL, c->child.newest_routing_sa);
 		break;
 	}
 }

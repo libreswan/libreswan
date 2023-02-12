@@ -112,7 +112,7 @@ struct connection *clone_connection(const char *name, struct connection *t,
 
 	/* leave a breadcrumb */
 	c->child.routing = RT_UNROUTED; /* trash cloned value; applies to parent */
-	set_child_routing(c, RT_UNROUTED);
+	set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 
 	return c;
 }
@@ -405,8 +405,8 @@ struct connection *spd_instantiate(struct connection *t,
 	add_connection_spds(d, address_info(d->local->host.addr));
 
 	/* leave breadcrumb */
-	pexpect(d->child.kernel_policy_owner == SOS_NOBODY);
-	set_child_kernel_policy_owner(d, SOS_NOBODY);
+	pexpect(d->child.newest_routing_sa == SOS_NOBODY);
+	set_child_routing(d, d->child.routing, SOS_NOBODY);
 
 	connection_buf tb;
 	ldbg_connection(d, HERE, "instantiated from "PRI_CONNECTION,
@@ -462,8 +462,8 @@ struct connection *sec_label_child_instantiate(struct ike_sa *ike,
 	add_connection_spds(d, address_info(d->local->host.addr));
 
 	/* leave breadcrumb */
-	pexpect(d->child.kernel_policy_owner == SOS_NOBODY);
-	set_child_kernel_policy_owner(d, SOS_NOBODY);
+	pexpect(d->child.newest_routing_sa == SOS_NOBODY);
+	set_child_routing(d, d->child.routing, SOS_NOBODY);
 
 	connection_buf cb, db;
 	address_buf pab;
