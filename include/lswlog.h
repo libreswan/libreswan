@@ -483,8 +483,9 @@ extern void llog_pexpect(const struct logger *logger, where_t where,
 		bad_; /* result */					\
 	})
 
-#define PBAD(LOGGER, BAD)			\
-	PBAD_WHERE(LOGGER, HERE, BAD)
+#define PBAD(LOGGER, BAD) PBAD_WHERE(LOGGER, HERE, BAD)
+
+#define pbad(BAD) PBAD_WHERE(&global_logger, HERE, BAD)
 
 #define pexpect(ASSERTION)  PEXPECT_WHERE(&global_logger, HERE, ASSERTION)
 
