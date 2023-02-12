@@ -1,0 +1,19 @@
+../../guestbin/nic-nft-nat.sh
+192.1.3.0/24:500 -udp-> 192.1.2.254:35500-35600
+192.1.3.0/24:500 -tcp-> 192.1.2.254:35500-35600
+192.1.3.0/24:4500 -udp-> 192.1.2.254:39500-39600
+192.1.3.0/24:4500 -tcp-> 192.1.2.254:39500-39600
+192.1.3.0/24 -> 192.1.2.254
+nic #
+ nft list ruleset
+table ip ipsec-nat {
+	chain ipsec-postrouting {
+		type nat hook postrouting priority srcnat; policy accept;
+		ip saddr 192.1.3.0/24 udp sport 500 snat to 192.1.2.254:35500-35600
+		ip saddr 192.1.3.0/24 tcp sport 500 snat to 192.1.2.254:35500-35600
+		ip saddr 192.1.3.0/24 udp sport 4500 snat to 192.1.2.254:39500-39600
+		ip saddr 192.1.3.0/24 tcp sport 4500 snat to 192.1.2.254:39500-39600
+		ip saddr 192.1.3.0/24 snat to 192.1.2.254
+	}
+}
+

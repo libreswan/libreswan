@@ -1,0 +1,64 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ # give OE policies time to load
+east #
+ ipsec auto --add east-rw
+002 "east-rw": added IKEv2 connection
+east #
+ ../../guestbin/wait-for.sh --match 'loaded 1,' -- ipsec auto --status
+000 Total IPsec connections: loaded 1, active 0
+east #
+ echo "initdone"
+initdone
+east #
+ ../../guestbin/ipsec-look.sh
+east NOW
+XFRM state:
+src 192.1.2.254 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport EPHEM dport 4500 addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.23 dst 192.1.2.254
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+XFRM policy:
+src 10.0.10.1/32 dst 192.0.2.0/24
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 10.0.10.1/32 dst 192.0.2.0/24
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.0.2.0/24 dst 10.0.10.1/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.254
+		proto esp reqid REQID mode tunnel
+XFRM done
+nft list ruleset
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+east #
+ 

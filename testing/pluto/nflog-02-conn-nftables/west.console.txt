@@ -1,0 +1,130 @@
+/testing/guestbin/swan-prep
+west #
+ ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
+destination -I 192.0.1.254 192.0.2.254 is alive
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add westnet-eastnet-ikev2
+002 "westnet-eastnet-ikev2": added IKEv2 connection
+west #
+ ipsec whack --impair suppress-retransmits
+west #
+ echo "initdone"
+initdone
+west #
+ nft list ruleset
+west #
+ ipsec auto --up westnet-eastnet-ikev2
+1v2 "westnet-eastnet-ikev2" #1: initiating IKEv2 connection
+1v2 "westnet-eastnet-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+1v2 "westnet-eastnet-ikev2" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "westnet-eastnet-ikev2" #1: initiator established IKE SA; authenticated peer '2nnn-bit RSASSA-PSS with SHA2_512' digital signature using preloaded certificate '@east'
+004 "westnet-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ nft list ruleset
+table ip ipsec-filter {
+	chain ipsec-all-input {
+		type filter hook input priority filter; policy accept;
+		meta ipsec exists ip daddr 192.0.1.0/24 ip saddr 192.0.2.0/24 log group 50
+	}
+	chain ipsec-all-output {
+		type filter hook output priority filter; policy accept;
+		rt ipsec exists ip daddr 192.0.2.0/24 ip saddr 192.0.1.0/24 log group 50
+	}
+}
+west #
+ # suppress job monitoring; specify packet count
+west #
+ rm -f /tmp/nflog-50.pcap /tmp/tcpdump.log
+west #
+ set +m
+west #
+ tcpdump -c 4 -s 0 -w /tmp/nflog-50.pcap -i nflog:50 > /tmp/tcpdump.log 2>&1 &
+[B] PID
+west #
+ ../../guestbin/wait-for.sh --match 'listening on' -- cat /tmp/tcpdump.log
+tcpdump: listening on INTERFACE DETAILS
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
+up
+west #
+ ipsec auto --down westnet-eastnet-ikev2
+002 "westnet-eastnet-ikev2": terminating SAs using this connection
+002 "westnet-eastnet-ikev2" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+005 "westnet-eastnet-ikev2" #2: ESP traffic information: in=168B out=168B
+west #
+ nft list ruleset
+table ip ipsec-filter {
+	chain ipsec-all-input {
+		type filter hook input priority filter; policy accept;
+	}
+	chain ipsec-all-output {
+		type filter hook output priority filter; policy accept;
+	}
+}
+west #
+ # wait for count to reach tcpdump then dump it
+west #
+ wait
+west #
+ cp  /tmp/nflog-50.pcap OUTPUT/nflog-50.pcap
+west #
+ tcpdump -n -r OUTPUT/nflog-50.pcap 2>/dev/null
+IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
+IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id XXXX, seq 1, length 64
+IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
+IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id XXXX, seq 1, length 64
+west #
+ echo done
+done
+west #
+ ../../guestbin/ipsec-look.sh
+west NOW
+XFRM state:
+XFRM policy:
+src 192.0.1.0/24 dst 192.0.2.0/24
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+XFRM done
+nft list ruleset
+table ip ipsec-filter {
+	chain ipsec-all-input {
+		type filter hook input priority filter; policy accept;
+	}
+	chain ipsec-all-output {
+		type filter hook output priority filter; policy accept;
+	}
+}
+ROUTING TABLES
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
+192.0.2.0/24 via 192.1.2.23 dev eth1
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.45
+NSS_CERTIFICATES
+Certificate Nickname                                         Trust Attributes
+                                                             SSL,S/MIME,JAR/XPI
+west #
+ ipsec stop
+Redirecting to: [initsystem]
+west #
+ # show no nflog left behind
+west #
+ nft list ruleset
+table ip ipsec-filter {
+	chain ipsec-all-input {
+		type filter hook input priority filter; policy accept;
+	}
+	chain ipsec-all-output {
+		type filter hook output priority filter; policy accept;
+	}
+}
+west #
+ 
