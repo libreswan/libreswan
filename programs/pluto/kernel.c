@@ -1861,6 +1861,33 @@ static bool install_inbound_ipsec_kernel_policies(struct state *st)
 		ldbg(logger, "kernel: %s() is installing SPD for %s",
 		     __func__, str_selector_pair(&kernel_policy.src.client, &kernel_policy.dst.client, &spb));
 
+#if defined(HAVE_NFTABLES)
+		if (spd->local->child->has_cat) {
+			ip_selector client = selector_from_address(spd->local->host->addr);
+
+			if (!raw_policy(KERNEL_POLICY_OP_ADD,
+					DIRECTION_INBOUND,
+					EXPECT_KERNEL_POLICY_OK,
+					&kernel_policy.src.route,	/* src_client */
+					&client,
+					&kernel_policy,			/* " */
+					deltatime(0),		/* lifetime */
+					kernel_policy.sa_marks,
+					kernel_policy.xfrmi,
+					kernel_policy.id,
+					kernel_policy.sec_label,
+					st->st_logger,
+					"%s() add inbound Child SA", __func__)) {
+				selector_pair_buf spb;
+				llog(RC_LOG, st->st_logger,
+				     "kernel: %s() failed to add SPD for %s",
+				     __func__,
+				     str_selector_pair(&kernel_policy.src.client, &kernel_policy.dst.client, &spb));
+			}
+
+		}
+#endif
+
 		if (!raw_policy(KERNEL_POLICY_OP_ADD,
 				DIRECTION_INBOUND,
 				EXPECT_KERNEL_POLICY_OK,
