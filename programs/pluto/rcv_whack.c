@@ -141,6 +141,36 @@ static void whack_each_connection_by_name_or_alias(const struct whack_message *m
 	}
 }
 
+/*
+ * Delete connections with the specified name;
+ * strict==!wm->whack_add_connection i.e., when replacing a connection
+ * wipe everything
+ */
+
+static int whack_delete_connection_wrap(struct connection *c, void *arg UNUSED, struct logger *logger)
+{
+	/* XXX: something better? */
+	fd_delref(&c->logger->global_whackfd);
+	c->logger->global_whackfd = fd_addref(logger->global_whackfd); /* freed by discard_conection() */
+	delete_connection(&c);
+	return 1;
+}
+
+static void whack_delete_connections(const char *name, bool strict, struct logger *logger)
+{
+	passert(name != NULL);
+	struct connection *c = conn_by_name(name, strict);
+	if (c != NULL) {
+		do {
+			/* XXX: something better? */
+			whack_delete_connection_wrap(c, NULL, logger);
+			c = conn_by_name(name, false/*!strict*/);
+		} while (c != NULL);
+	} else {
+		foreach_connection_by_alias(name, whack_delete_connection_wrap, NULL, logger);
+	}
+}
+
 static bool whack_initiate_connection(struct show *s, struct connection *c,
 				      const struct whack_message *m)
 {
@@ -585,9 +615,12 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "stop: rekey_ipsec '%s'", m->name == NULL ? "NULL" : m->name);
 	}
 
-	/* Deleting combined with adding a connection works as replace.
-	 * To make this more useful, in only this combination,
-	 * delete will silently ignore the lack of the connection.
+	/*
+	 * Deleting combined with adding a connection works as
+	 * replace.
+	 *
+	 * To make this more useful, in only this combination, delete
+	 * will silently ignore the lack of the connection.
 	 */
 	if (m->whack_delete) {
 		dbg_whack(s, "start: delete '%s'", m->name == NULL ? "NULL" : m->name);
@@ -596,7 +629,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 				  "received whack command to delete a connection, but did not receive the connection name - ignored");
 		} else {
 			terminate_connections_by_name(m->name, /*quiet?*/true, logger);
-			delete_connections_by_name(m->name, !m->whack_connection, logger);
+			whack_delete_connections(m->name, !m->whack_connection, logger);
 		}
 		dbg_whack(s, "stop: delete '%s'", m->name == NULL ? "NULL" : m->name);
 	}

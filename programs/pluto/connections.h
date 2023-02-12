@@ -633,7 +633,6 @@ extern void flush_revival(const struct connection *c);
 extern void terminate_connections_by_name(const char *name, bool quiet, struct logger *logger);
 extern void release_connection(struct connection *c);
 extern void delete_connection(struct connection **cp);
-extern void delete_connections_by_name(const char *name, bool strict, struct logger *logger);
 extern void delete_every_connection(void);
 
 extern void rekey_now(const char *name, enum sa_type sa_type,

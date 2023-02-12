@@ -426,32 +426,6 @@ int foreach_concrete_connection_by_name(const char *name,
 	return total;
 }
 
-static int delete_connection_wrap(struct connection *c, void *arg UNUSED, struct logger *logger)
-{
-	/* XXX: something better? */
-	fd_delref(&c->logger->global_whackfd);
-	c->logger->global_whackfd = fd_addref(logger->global_whackfd); /* freed by discard_conection() */
-
-	delete_connection(&c);
-	return 1;
-}
-
-/* Delete connections with the specified name */
-void delete_connections_by_name(const char *name, bool strict, struct logger *logger)
-{
-	passert(name != NULL);
-	struct connection *c = conn_by_name(name, strict);
-	if (c != NULL) {
-		do {
-			/* XXX: something better? */
-			delete_connection_wrap(c, NULL, logger);
-			c = conn_by_name(name, false/*!strict*/);
-		} while (c != NULL);
-	} else {
-		foreach_connection_by_alias(name, delete_connection_wrap, NULL, logger);
-	}
-}
-
 void delete_every_connection(void)
 {
 	/*
