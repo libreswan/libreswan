@@ -273,63 +273,20 @@ struct connection *group_instantiate(struct connection *group,
 static struct connection *instantiate(struct connection *t,
 				      const ip_address remote_addr,
 				      const struct id *peer_id,
-				      shunk_t sec_label,
+				      enum connection_kind kind,
 				      const char *func, where_t where)
 {
 	address_buf ab;
 	id_buf idb;
-	ldbg_connection(t, where, "%s: remote=%s id=%s sec_label="PRI_SHUNK,
+	ldbg_connection(t, where, "%s: remote=%s id=%s kind=%s->%s",
 			func, str_address(&remote_addr, &ab),
 			str_id(peer_id, &idb),
-			pri_shunk(sec_label));
+			enum_name_short(&connection_kind_names, t->kind),
+			enum_name_short(&connection_kind_names, kind));
 
 	PASSERT(t->logger, address_is_specified(remote_addr)); /* always */
 	PASSERT(t->logger, t->kind == CK_TEMPLATE);
-
-	/*
-	 * Is the new connection still a template?
-	 *
-	 * For instance, a responder with a template connection T with
-	 * both remote=%any and configuration sec_label will:
-	 *
-	 * - during IKE_SA_INIT, instantiate T with the remote
-         *   address; creating a new template T.IKE (since the
-         *   negotiated sec_label isn't known it is still a template)
-	 *
-	 * - during IKE_AUTH (or CREATE_CHILD_SA), instantiate T.IKE
-	 *   with the Child SA's negotiated SEC_LABEL creating the
-	 *   connection instance C.CHILD
-	 */
-	enum connection_kind kind;
-	if (t->config->sec_label.len > 0) {
-		/*
-		 * Either:
-		 *
-		 * - T is the sec_label group template, and D is the
-		 *   IKE connection (also treated like a template);
-		 *   hence CK_TEMPLATE
-		 *
-		 *   The remote address is updated below.
-		 *
-		 * Or:
-		 *
-		 * - T is the IKE connection and and D is Child
-		 *   connection; hence CK_INSTANCE
-		 *
-		 *   The sec_label is updated below.
-		 *
-		 * One problem is that, on the initiator, the child's
-		 * connection is instantiated from the original
-		 * template and not the hybrid.
-		 */
-		if (sec_label.len == 0) {
-			kind = CK_TEMPLATE;
-		} else {
-			kind = CK_INSTANCE;
-		}
-	} else {
-		kind = CK_INSTANCE;
-	}
+	PASSERT(t->logger, kind == CK_TEMPLATE || kind == CK_INSTANCE);
 
 	t->instance_serial++;	/* before clone */
 
@@ -397,9 +354,25 @@ struct connection *spd_instantiate(struct connection *t,
 				   const ip_address remote_addr,
 				   where_t where)
 {
+	/*
+	 * Is the new connection still a template?
+	 *
+	 * For instance, a responder with a template connection T with
+	 * both remote=%any and configuration sec_label will:
+	 *
+	 * - during IKE_SA_INIT, instantiate T with the remote
+         *   address; creating a new template T.IKE (since the
+         *   negotiated sec_label isn't known it is still a template)
+	 *
+	 * - during IKE_AUTH (or CREATE_CHILD_SA), instantiate T.IKE
+	 *   with the Child SA's negotiated SEC_LABEL creating the
+	 *   connection instance C.CHILD
+	 */
+	enum connection_kind kind = (t->config->sec_label.len > 0 ? CK_TEMPLATE :
+				     CK_INSTANCE);
+
 	struct connection *d = instantiate(t, remote_addr, /*peer-id*/NULL,
-					   /*sec_label*/null_shunk,
-					   __func__, where);
+					   kind, __func__, where);
 
 	/*
 	 * XXX: code in rw_responder_id_instantiate() is slightly
@@ -458,7 +431,7 @@ struct connection *sec_label_child_instantiate(struct ike_sa *ike,
 
 	ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
 	struct connection *d = instantiate(t, remote_addr, /*peer-id*/NULL,
-					   sec_label, __func__, where);
+					   CK_INSTANCE, __func__, where);
 
 	/*
 	 * Install the sec_label from either an acquire or child
@@ -512,9 +485,25 @@ struct connection *rw_responder_instantiate(struct connection *t,
 		return NULL;
 	}
 
+	/*
+	 * Is the new connection still a template?
+	 *
+	 * For instance, a responder with a template connection T with
+	 * both remote=%any and configuration sec_label will:
+	 *
+	 * - during IKE_SA_INIT, instantiate T with the remote
+         *   address; creating a new template T.IKE (since the
+         *   negotiated sec_label isn't known it is still a template)
+	 *
+	 * - during IKE_AUTH (or CREATE_CHILD_SA), instantiate T.IKE
+	 *   with the Child SA's negotiated SEC_LABEL creating the
+	 *   connection instance C.CHILD
+	 */
+	enum connection_kind kind = (t->config->sec_label.len > 0 ? CK_TEMPLATE :
+				     CK_INSTANCE);
+
 	struct connection *d = instantiate(t, peer_addr, /*TBD peer_id*/NULL,
-					   /*TBD sec_label*/null_shunk,
-					   __func__, where);
+					   kind, __func__, where);
 
 	/*
 	 * XXX: code in rw_responder_id_instantiate() is slightly
@@ -560,12 +549,29 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 	PASSERT(t->logger, (t->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
 
 	/*
+	 * Is the new connection still a template?
+	 *
+	 * For instance, a responder with a template connection T with
+	 * both remote=%any and configuration sec_label will:
+	 *
+	 * - during IKE_SA_INIT, instantiate T with the remote
+         *   address; creating a new template T.IKE (since the
+         *   negotiated sec_label isn't known it is still a template)
+	 *
+	 * - during IKE_AUTH (or CREATE_CHILD_SA), instantiate T.IKE
+	 *   with the Child SA's negotiated SEC_LABEL creating the
+	 *   connection instance C.CHILD
+	 */
+	enum connection_kind kind = (t->config->sec_label.len > 0 ? CK_TEMPLATE :
+				     CK_INSTANCE);
+	PEXPECT(t->logger, kind == CK_INSTANCE);
+
+	/*
 	 * XXX: this function is never called when there are
 	 * sec_labels?
 	 */
 	struct connection *d = instantiate(t, remote_addr, remote_id,
-					   /*TBD sec_label?!?*/null_shunk,
-					   __func__, HERE);
+					   kind, __func__, HERE);
 
 	/*
 	 * XXX: unlike rw_responder_id_instantiate(), this code has to
@@ -627,8 +633,7 @@ static struct connection *oppo_instantiate(struct connection *t,
 	 */
 
 	struct connection *d = instantiate(t, remote_address, /*peer_id*/NULL,
-					   /*sec_label*/null_shunk,
-					   func, where);
+					   CK_INSTANCE, func, where);
 
 	PASSERT(d->logger, d->kind == CK_INSTANCE);
 	PASSERT(d->logger, oriented(d)); /* else won't instantiate */
