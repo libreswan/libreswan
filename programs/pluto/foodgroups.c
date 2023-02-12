@@ -71,7 +71,7 @@ struct fg_targets {
 	const struct ip_protocol *proto;
 	ip_port sport;
 	ip_port dport;
-	char *name; /* name of instance of group conn */
+	co_serial_t serialno;
 };
 
 static struct fg_targets *targets = NULL;
@@ -80,10 +80,35 @@ static struct fg_targets *targets = NULL;
  * An old target has disappeared for a group: delete instance.
  */
 static void remove_group_instance(const struct connection *group,
-				  const char *name, struct logger *logger)
+				  co_serial_t serialno)
 {
 	passert(group->kind == CK_GROUP);
-	delete_connections_by_name(name, false, logger);
+	ldbg(group->logger, "removing group instance "PRI_CO, pri_co(serialno));
+	struct connection *gi = connection_by_serialno(serialno);
+	if (gi == NULL) {
+		/*
+		 * This happens during shutdown when all connections
+		 * are deleted in new-to-old order (i.e., group
+		 * instances are deleted before the group).
+		 */
+		return;
+	}
+
+	/* now delete instances */
+	struct connection_filter cq = {
+		.serial_from = gi->serialno,
+		.where = HERE,
+	};
+	while (next_connection_new2old(&cq)) {
+		struct connection *c = cq.c;
+		/* XXX: something better? */
+		fd_delref(&c->logger->global_whackfd);
+		c->logger->global_whackfd = fd_addref(group->logger->global_whackfd); /* freed by discard_conection() */
+		delete_connection(&c);
+	}
+
+	/* and group instance */
+	delete_connection(&gi);
 }
 
 /* subnetcmp compares the two ip_subnet values a and b.
@@ -281,7 +306,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 			f->proto = proto;
 			f->sport = sport;
 			f->dport = dport;
-			f->name = NULL; /* filled in below */
+			f->serialno = UNSET_CO_SERIAL;
 			*pp = f;
 		}
 	}
@@ -293,7 +318,6 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 
 static void pfree_target(struct fg_targets **target)
 {
-	pfreeany((*target)->name);
 	pfree((*target));
 	*target = NULL;
 }
@@ -370,10 +394,14 @@ void load_groups(struct logger *logger)
 				r = hport(op->dport) - hport(np->dport);
 
 			if (r == 0 && op->group == np->group) {
-				/* unchanged -- steal name & skip over */
-				passert(np->name == NULL);
-				np->name = op->name;
-				op->name = NULL;
+				/* unchanged; transfer connection &
+				 * skip over */
+				ldbg(op->group->connection->logger,
+				     "transfering "PRI_CO, pri_co(op->serialno));
+				passert(op->serialno != UNSET_CO_SERIAL);
+				passert(np->serialno == UNSET_CO_SERIAL);
+				np->serialno = op->serialno;
+				op->serialno = UNSET_CO_SERIAL;
 				/* free old; advance new */
 				*opp = op->next;
 				pfree_target(&op);
@@ -382,7 +410,7 @@ void load_groups(struct logger *logger)
 				/* note: r>=0 || r<= 0: following cases overlap! */
 				if (r <= 0) {
 					remove_group_instance(op->group->connection,
-							      op->name, logger);
+							      op->serialno);
 					/* free old */
 					*opp = op->next;
 					pfree_target(&op);
@@ -414,8 +442,9 @@ void load_groups(struct logger *logger)
 							/* XXX: something better? */
 							fd_delref(&t->logger->global_whackfd);
 						}
-						passert(np->name == NULL);
-						np->name = clone_str(t->name, "group instance name");
+						ldbg(g->logger, "setting "PRI_CO, pri_co(t->serialno));
+						passert(np->serialno == UNSET_CO_SERIAL);
+						np->serialno = t->serialno;
 						/* advance new */
 						npp = &np->next;
 					} else {
@@ -473,8 +502,7 @@ void connection_group_route(struct connection *c)
 		g->connection->policy |= POLICY_ROUTE;
 		for (t = targets; t != NULL; t = t->next) {
 			if (t->group == g) {
-				struct connection *ci = conn_by_name(t->name, false/*!strict*/);
-
+				struct connection *ci = connection_by_serialno(t->serialno);
 				if (ci != NULL) {
 					/*
 					 * XXX: why whack only?
@@ -499,8 +527,7 @@ void connection_group_unroute(struct connection *c)
 	g->connection->policy &= ~POLICY_ROUTE;
 	for (t = targets; t != NULL; t = t->next) {
 		if (t->group == g) {
-			struct connection *ci = conn_by_name(t->name, false/*!strict*/);
-
+			struct connection *ci = connection_by_serialno(t->serialno);
 			if (ci != NULL) {
 				connection_unroute(ci);
 			}
@@ -533,7 +560,7 @@ void delete_group(const struct connection *c)
 				/* remove *PP but advance first */
 				*pp = t->next;
 				remove_group_instance(t->group->connection,
-						      t->name, c->logger);
+						      t->serialno);
 				pfree_target(&t);
 				/* pp is ready for next iteration */
 			} else {
