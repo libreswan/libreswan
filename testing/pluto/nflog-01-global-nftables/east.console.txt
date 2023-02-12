@@ -2,12 +2,6 @@
 east #
  ipsec start
 Redirecting to: [initsystem]
-Error: Could not process rule: No such file or directory
-delete chain ip filter ipsec-all-input
-                ^^^^^^
-Error: Could not process rule: No such file or directory
-delete chain ip filter ipsec-all-output
-                ^^^^^^
 east #
  ../../guestbin/wait-until-pluto-started
 east #

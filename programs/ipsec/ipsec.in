@@ -119,9 +119,26 @@ nflog_nftables_add() {
     nft add rule ip filter ipsec-all-output rt ipsec exists log prefix "all-ipsec" group 50
 }
 
+nflog_nftables_delete_table() {
+    local table=$1
+
+    if [ -n "${NFGROUP}" ]; then
+        f=$(nft list table ip filter 2>/dev/null | wc -l)
+        if [ ${f} -gt 0 ]; then
+            f=$(nft list chain ip filter ${table} 2>/dev/null | wc -l)
+            if [ ${f} -gt 0 ]; then
+                nft delete chain ip filter ${table}
+            fi
+        fi
+    fi
+}
+
 nflog_nftables_delete() {
-    nft delete chain ip filter ipsec-all-input
-    nft delete chain ip filter ipsec-all-output
+    # only delete global nft tables leave the "table ip filter".
+    # It is more tricky to be sure "filter" is used by something else.
+    # And delete only if it is not usd anything else
+    nflog_nftables_delete_table ipsec-all-input
+    nflog_nftables_delete_table ipsec-all-output
 }
 
 nflog_iptables_delete() {
@@ -142,8 +159,7 @@ ipsec_stopnflog() {
     elif [ "${FIREWALL}" = NFTABLES ]; then
         nflog_nftables_delete
     else
-        echo "unknown firewall comaand ${FIREWALL_CMD} and ${FIREWALL} expect ipables or nft"
-        exit 1
+        echo "WARNING unknown firewall comaand ${FIREWALL} expect IPTABLES or NFTABLES or nft"
     fi
 
     exit 0
