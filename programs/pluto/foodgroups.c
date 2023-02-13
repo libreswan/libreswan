@@ -509,9 +509,11 @@ void connection_group_route(struct connection *c)
 					 * Shouldn't this leave a
 					 * breadcrumb in the log file?
 					 */
+					connection_buf cb;
 					if (!install_prospective_kernel_policy(ci))
 						llog(WHACK_STREAM|RC_ROUTE, c->logger,
-						     "could not route");
+						     "could not route "PRI_CONNECTION,
+						     pri_connection(ci, &cb));
 				}
 			}
 		}

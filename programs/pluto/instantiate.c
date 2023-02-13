@@ -226,22 +226,7 @@ struct connection *group_instantiate(struct connection *group,
 
 	t->policy &= ~POLICY_ROUTE;
 	t->policy |= POLICY_GROUPINSTANCE; /* mark as group instance for later */
-	/*
-	 * CK_GROUP should expand into CK_TEMPLATE except sometimes it
-	 * doesn't:
-	 *
-	 * For NEVER_NEVOTIATE(t), setting it to CK_INSTANCE stops the
-	 * responder picking it; feels like host-pair code forgetting
-	 * to skip a case?
-	 *
-	 * XXX: removed code that wet KIND to CK_INSTANCE when
-	 * remote.host_addr was valid.  Presumably that was an
-	 * optimization to avoid allocating both a connection template
-	 * and a connection instance.  If that is the intent then
-	 * CK_PERMANENT (which combines routing with initiating) is a
-	 * better fit.
-	 */
-	t->kind = (NEVER_NEGOTIATE(t->policy) ? CK_INSTANCE : CK_TEMPLATE);
+	t->kind = CK_TEMPLATE;
 	t->child.reqid = (t->config->sa_reqid == 0 ? gen_reqid() :
 			  t->config->sa_reqid);
 	ldbg(t->logger,

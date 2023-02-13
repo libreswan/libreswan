@@ -790,6 +790,8 @@ static enum routability connection_routability(struct connection *c,
 	if (c->kind == CK_TEMPLATE) {
 		if (c->policy & POLICY_OPPORTUNISTIC) {
 			ldbg(logger, "template-route-possible: opportunistic");
+		} else if (c->policy & POLICY_GROUPINSTANCE) {
+			ldbg(logger, "template-route-possible: groupinstance");
 		} else if (c->config->sec_label.len > 0) {
 			ldbg(logger, "template-route-possible: has sec-label");
 		} else if (c->local->config->child.virt != NULL) {
