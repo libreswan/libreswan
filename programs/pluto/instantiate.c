@@ -234,12 +234,14 @@ struct connection *group_instantiate(struct connection *group,
 	 * responder picking it; feels like host-pair code forgetting
 	 * to skip a case?
 	 *
-	 * Address-specified looks like an optimization to avoid a
-	 * second connection being instantiated?
+	 * XXX: removed code that wet KIND to CK_INSTANCE when
+	 * remote.host_addr was valid.  Presumably that was an
+	 * optimization to avoid allocating both a connection template
+	 * and a connection instance.  If that is the intent then
+	 * CK_PERMANENT (which combines routing with initiating) is a
+	 * better fit.
 	 */
-	t->kind = (NEVER_NEGOTIATE(t->policy) ? CK_INSTANCE :
-		   address_is_specified(t->remote->host.addr) ? CK_INSTANCE :
-		   CK_TEMPLATE);
+	t->kind = (NEVER_NEGOTIATE(t->policy) ? CK_INSTANCE : CK_TEMPLATE);
 	t->child.reqid = (t->config->sa_reqid == 0 ? gen_reqid() :
 			  t->config->sa_reqid);
 	ldbg(t->logger,
