@@ -76,9 +76,6 @@ void ikev2_replace(struct state *st)
 		 */
 		lset_t policy = capture_child_rekey_policy(st);
 
-		if (st->st_ike_version == IKEv1)
-			passert(HAS_IPSEC_POLICY(policy));
-
 		ipsecdoi_initiate(st->st_connection, policy, 1/*try*/, st->st_serialno, &inception,
 				  null_shunk, /*background?*/false, st->st_logger);
 	}
