@@ -726,10 +726,11 @@ $(KVM_LOCALDIR)/%.net: | $(KVM_LOCALDIR)
 .PHONY: kvm-networks kvm-gateway
 kvm-gateway: $(KVM_GATEWAY_FILE)
 kvm-networks: $(KVM_TEST_NETWORKS)
-.PHONY: kvm-uninstall-networks kvm-uninstall-gateway
+.PHONY: kvm-uninstall-networks
 kvm-uninstall-networks:
 	$(foreach network, $(KVM_TEST_NETWORKS), \
 		$(call destroy-kvm-network, $(network)))
+.PHONY: kvm-uninstall-gateway
 kvm-uninstall-gateway:
 	$(call destroy-kvm-network, $(KVM_GATEWAY_FILE))
 
@@ -1239,6 +1240,10 @@ kvm-undefine-%:
 	rm -f $(KVM_POOLDIR)/$*.qcow2 $(KVM_LOCALDIR)/$*.qcow2
 kvm-undefine: $(patsubst %, kvm-undefine-%, $(KVM_PLATFORM_DOMAIN_NAMES))
 
+.PHONY: kvm-uninstall
+kvm-uninstall: kvm-uninstall-networks
+kvm-uninstall: $(patsubst %, kvm-uninstall-%, $(KVM_OS))
+
 .PHONY: kvm-clean
 kvm-clean: kvm-uninstall
 kvm-clean: kvm-clean-keys
@@ -1247,12 +1252,8 @@ kvm-clean: kvm-clean-check
 
 .PHONY: kvm-purge
 kvm-purge: kvm-clean
-kvm-purge: kvm-uninstall-networks
 kvm-purge: kvm-downgrade
 	rm -f $(KVM_HOST_OK)
-
-.PHONY: kvm-uninstall
-kvm-uninstall: $(patsubst %, kvm-uninstall-%, $(KVM_OS))
 
 $(patsubst %, kvm-uninstall-%, $(KVM_PLATFORM)): \
 kvm-uninstall-%:
