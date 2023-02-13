@@ -34,7 +34,8 @@
 #include "instantiate.h"
 
 static bool match_connection(const struct connection *c,
-			     struct authby remote_authby)
+			     struct authby remote_authby,
+			     bool *send_reject_response)
 {
 	pexpect(oriented(c)); /* searching oriented lists */
 
@@ -73,32 +74,26 @@ static bool match_connection(const struct connection *c,
 	}
 
 	if (NEVER_NEGOTIATE(c->policy)) {
-		/* are we a block or clear connection? */
+		/*
+		 * Normally NEVER_NEGOTIATE means, drop packet but
+		 * respond with NO_PROPOSAL_CHOSEN (the default
+		 * behaviour when no connection matches).
+		 *
+		 * However, NEVER_NEGOTIATE OE connections, such as
+		 * BLOCK and CLEAR, instead want to suppress the
+		 * NO_PROPOSAL_CHOSEN response.
+		 *
+		 * But there's a problem, BLOCK and CLEAR don't have
+		 * the OPPORTUNISTIC bit set.  Fortunately they do
+		 * have GROUPINSTANCE!  Hence the some what convoluted
+		 * logic to detect these cases and clear 
+		 */
 		enum shunt_policy shunt = c->config->prospective_shunt;
-		if (shunt != SHUNT_TRAP) {
-			/*
-			 * We need to match block/clear so we can send back
-			 * NO_PROPOSAL_CHOSEN, otherwise not match so we
-			 * can hit packetdefault to do real IKE.
-			 * clear and block do not have POLICY_OPPORTUNISTIC,
-			 * but clear-or-private and private-or-clear do, but
-			 * they don't do IKE themselves but allow packetdefault
-			 * to be hit and do the work.
-			 * if not policy_oppo -> we hit clear/block so this is right c
-			 */
-			if ((c->policy & POLICY_OPPORTUNISTIC)) {
-				connection_buf cb;
-				dbg("  skipping "PRI_CONNECTION", never negotiate + oe",
-				    pri_connection(c, &cb));
-				return false;
-			}
-
-			/*
-			 * Shunt match - stop the search for another
-			 * conn if we are groupinstance.
-			 */
+		if (shunt == SHUNT_PASS/*clear*/ ||
+		    shunt == SHUNT_REJECT/*block*/) {
 			if (c->policy & POLICY_GROUPINSTANCE) {
-				return true;
+				pexpect(remote_authby.never);
+				*send_reject_response = false;
 			}
 		}
 		connection_buf cb;
@@ -136,7 +131,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 	struct connection *c = NULL;
 	FOR_EACH_HOST_PAIR_CONNECTION(local_address, remote_address, d) {
 
-		if (!match_connection(d, remote_authby)) {
+		if (!match_connection(d, remote_authby, send_reject_response)) {
 			continue;
 		}
 
@@ -160,6 +155,8 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		 * We found a non-wildcard connection.
 		 *
 		 * IKEv2 doesn't have to worry about vnet=/vhost=.
+		 *
+		 * XXX: won't any template need instantiating?!?
 		 */
 		if ((c->kind == CK_TEMPLATE) &&
 		    (c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
@@ -169,6 +166,14 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		}
 
 		return c;
+	}
+
+	/*
+	 * A non-wild card connection rejected the packet, go with it.
+	 */
+	if (!(*send_reject_response)) {
+		dbg("  non-wildcard rejected packet");
+		return NULL;
 	}
 
 	/*
@@ -183,7 +188,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 	 */
 	FOR_EACH_HOST_PAIR_CONNECTION(local_address, unset_address, d) {
 
-		if (!match_connection(d, remote_authby)) {
+		if (!match_connection(d, remote_authby, send_reject_response)) {
 			continue;
 		}
 
@@ -252,52 +257,28 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		endpoint_buf b;
 		authby_buf pb;
 		ldbg(md->md_logger,
-		     "%s message received on %s but no connection has been authorized with policy %s",
+		     "  %s message received on %s but no connection has been authorized with policy %s, %s",
 		     enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
 		     str_endpoint(local_endpoint, &b),
-		     str_authby(remote_authby, &pb));
-		*send_reject_response = true;
+		     str_authby(remote_authby, &pb),
+		     ((*send_reject_response) ? "sending reject response" : "suppressing reject response"));
 		return NULL;
 	}
 
-	if (c->kind != CK_TEMPLATE) {
-		endpoint_buf b;
-		connection_buf cib;
-		ldbg(md->md_logger,
-		     "%s message received on %s for "PRI_CONNECTION" with kind=%s dropped",
-		     enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
-		     str_endpoint(local_endpoint, &b),
-		     pri_connection(c, &cib),
-		     enum_name(&connection_kind_names, c->kind));
-		/*
-		 * This is used when in IKE_INIT request is
-		 * received but hits an OE clear
-		 * foodgroup. There is no point sending the
-		 * message as it is unauthenticated and cannot
-		 * be trusted by the initiator. And the
-		 * responder is revealing itself to the
-		 * initiator while it is configured to never
-		 * talk to that particular initiator. With
-		 * this, the system does not need to enforce
-		 * this policy using a firewall.
-		 *
-		 * Note that this technically violates the
-		 * IKEv2 specification that states we MUST
-		 * answer (with NO_PROPOSAL_CHOSEN).
-		 */
-		*send_reject_response = false;
-		return NULL;
-	}
+	/*
+	 * Since the match was <local>,%any, the connection must be a
+	 * wildcard and, hence, must be instantiated.
+	 */
 
 	if (LIN(POLICY_OPPORTUNISTIC, c->policy)) {
 		connection_buf cb;
-		ldbg(md->md_logger, "  opportunistic instantiate winner "PRI_CONNECTION,
+		ldbg(md->md_logger, "  instantiate opportunistic winner "PRI_CONNECTION,
 		     pri_connection(c, &cb));
 		c = oppo_responder_instantiate(c, remote_address, HERE);
 	} else {
 		/* regular roadwarrior */
 		connection_buf cb;
-		ldbg(md->md_logger, "  roadwarrior instantiate winner "PRI_CONNECTION,
+		ldbg(md->md_logger, "  instantiate roadwarrior winner "PRI_CONNECTION,
 		     pri_connection(c, &cb));
 		c = rw_responder_instantiate(c, remote_address, HERE);
 	}
@@ -310,7 +291,8 @@ struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
 {
 	/*
 	 * How to authenticate (prove the identity of) the remote
-	 * peer; in order of decreasing preference.
+	 * peer; in order of decreasing preference.  NEVER matches
+	 * things like BLOCK and CLEAR.
 	 */
 	static const struct authby remote_authbys[] = {
 		{ .ecdsa = true, },
@@ -324,24 +306,21 @@ struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
 	struct connection *c = NULL;
 
 	/*
-	 * XXX in the near future, this loop should find
-	 * type=passthrough and return STF_DROP
-	 *
 	 * XXX: this nested loop could do with a tune up.
 	 */
 	FOR_EACH_ELEMENT(remote_authby, remote_authbys) {
 		/*
-		 * When the connection "isn't found" POLICY and
-		 * SEND_REJECTED_RESPONSE end up with the values from
-		 * the final authby=null search.
-		 *
-		 * For instance, if an earlier search returns NULL but
-		 * clears SEND_REJECT_RESPONSE, that will be lost.
-		 *
-		 * XXX: this searches the host-pairs REMOTE<->LOCAL
-		 * and then ANY->LOCAL for a match with the given
+		 * This searches the host-pairs REMOTE<->LOCAL and
+		 * then ANY->LOCAL for a match with the given
 		 * PEER_AUTHBY.  This means a "stronger" template will
 		 * match before a "weaker" static connection.
+		 *
+		 * When no connection matches, SEND_REJECTED_RESPONSE
+		 * will contain the value from the final AUTHBY=NEVER
+		 * pass which can include BLOCK and CLEAR.
+		 *
+		 * For instance, if an earlier search returns NULL and
+		 * flags SEND_REJECT_RESPONSE, that will be lost.
 		 */
 		*send_reject_response = true;
 		c = ikev2_find_host_connection(md, *remote_authby,
@@ -351,16 +330,11 @@ struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
 	}
 
 	if (c == NULL) {
-		/* we might want to change this to a debug log message only */
-		endpoint_buf b;
-		llog(RC_LOG_SERIOUS, md->md_logger,
-		     "%s message received on %s but no suitable connection found with IKEv2 policy",
-		     enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
-		     str_endpoint(&md->iface->local_endpoint, &b));
+		ldbg(md->md_logger,
+		     "  no connection found, %s",
+		     ((*send_reject_response) ? "sending reject response" : "suppressing reject response"));
 		return NULL;
 	}
-
-	passert(c != NULL);	/* (e != STF_OK) == (c == NULL) */
 
 	connection_buf ci;
 	authby_buf pb;
@@ -369,41 +343,5 @@ struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
 	     pri_connection(c, &ci),
 	     str_authby(c->remote->host.config->authby, &pb));
 
-	/*
-	 * Did we overlook a type=passthrough foodgroup?
-	 */
-	FOR_EACH_HOST_PAIR_CONNECTION(md->iface->ip_dev->id_address, unset_address, tmp) {
-
-#if 0
-		/* REMOTE==%any so d can never be an instance */
-		if (tmp->kind == CK_INSTANCE && tmp->remote->host.id.kind == ID_NULL) {
-			connection_buf cb;
-			dbg("skipping "PRI_CONNECTION", unauthenticated with ID_NULL",
-			    pri_connection(tmp, &cb));
-			continue;
-		}
-#endif
-
-		if (tmp->config->prospective_shunt == SHUNT_TRAP) {
-			continue;
-		}
-		if (tmp->kind != CK_INSTANCE) {
-			continue;
-		}
-		ip_address sender = endpoint_address(md->sender);
-		if (!address_in_selector_range(sender, tmp->spd->remote->client)) {
-			continue;
-		}
-		ldbg(md->md_logger,
-		     "passthrough conn %s also matches - check which has longer prefix match", tmp->name);
-		if (c->spd->remote->client.maskbits >= tmp->spd->remote->client.maskbits) {
-			continue;
-		}
-		ldbg(md->md_logger,
-		     "passthrough conn was a better match (%d bits versus conn %d bits) - suppressing NO_PROPSAL_CHOSEN reply",
-		     tmp->spd->remote->client.maskbits,
-		     c->spd->remote->client.maskbits);
-		return NULL;
-	}
 	return c;
 }

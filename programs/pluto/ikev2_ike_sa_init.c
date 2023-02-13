@@ -354,6 +354,11 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		bool send_reject_response = true;
 		struct connection *c = find_v2_host_pair_connection(md, &send_reject_response);
 		if (c == NULL) {
+			endpoint_buf b;
+			llog(RC_LOG_SERIOUS, md->md_logger,
+			     "%s message received on %s but no suitable connection found with IKEv2 policy",
+			     enum_name(&ikev2_exchange_names, md->hdr.isa_xchg),
+			     str_endpoint(&md->iface->local_endpoint, &b));
 			if (send_reject_response) {
 				/*
 				 * NO_PROPOSAL_CHOSEN is used when the
@@ -363,6 +368,10 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 				 *
 				 * INVALID_SYNTAX is for errors that a
 				 * configuration change could not fix.
+				 *
+				 * This call will log that the message
+				 * was sent.  Should its message be
+				 * merged with the above?
 				 */
 				send_v2N_response_from_md(md, v2N_NO_PROPOSAL_CHOSEN, NULL);
 			}
