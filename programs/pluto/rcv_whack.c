@@ -877,7 +877,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	}
 
 	if (m->whack_route) {
-		dbg_whack(s, "start: route");
+		dbg_whack(s, "start: route \"%s\"", m->name);
 		passert(m->name != NULL);
 		if (!listening) {
 			whack_log(RC_DEAF, whackfd,
@@ -886,15 +886,15 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 			whack_each_connection_by_name_or_alias(m, s, NULL,
 							       whack_route_connection);
 		}
-		dbg_whack(s, "stop: route");
+		dbg_whack(s, "stop: route \"%s\"", m->name);
 	}
 
 	if (m->whack_unroute) {
-		dbg_whack(s, "start: unroute");
+		dbg_whack(s, "start: unroute \"%s\"", m->name);
 		passert(m->name != NULL);
 		whack_each_connection_by_name_or_alias(m, s, NULL,
 						       whack_unroute_connection);
-		dbg_whack(s, "stop: unroute");
+		dbg_whack(s, "stop: unroute \"%s\"", m->name);
 	}
 
 	if (m->whack_initiate) {
