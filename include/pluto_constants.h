@@ -844,12 +844,13 @@ enum sa_policy_bits {
 	POLICY_PFS_IX,
 	POLICY_DECAP_DSCP_IX,	/* decapsulate ToS/DSCP bits */
 	POLICY_NOPMTUDISC_IX,
+
+#define POLICY_IPSEC_MASK	LRANGE(POLICY_ENCRYPT_IX, POLICY_NOPMTUDISC_IX)
+
 	POLICY_MSDH_DOWNGRADE_IX, /* allow IKEv2 rekey to downgrade DH group - Microsoft bug */
 	POLICY_ALLOW_NO_SAN_IX, /* allow a certificate conn to not have IKE ID on cert SAN */
 	POLICY_DNS_MATCH_ID_IX, /* perform reverse DNS lookup on IP to confirm ID */
 	POLICY_SHA2_TRUNCBUG_IX, /* workaround old Linux kernel (android 4.x) */
-
-#define POLICY_IPSEC_MASK	LRANGE(POLICY_ENCRYPT_IX, POLICY_NOPMTUDISC_IX)
 
 	/* connection policy
 	 * Other policies could vary per state object.  These live in connection.
@@ -939,10 +940,12 @@ enum sa_policy_bits {
 
 /* These policy bits must match exactly: POLICY_XAUTH, POLICY_AGGRESSIVE, POLICY_IKEV1_ALLOW */
 
-/* Any IPsec policy?  If not, a connection description
- * is only for ISAKMP SA, not IPSEC SA.  (A pun, I admit.)
- * Note: a connection can only be routed if it is NEVER_NEGOTIATE
- * or HAS_IPSEC_POLICY.
+/*
+ * Any IPsec policy?  If not, a connection description is only for
+ * ISAKMP SA, not IPSEC SA.  (A pun, I admit.)
+ *
+ * Note: a connection can only be routed if it is NEVER_NEGOTIATE or
+ * HAS_IPSEC_POLICY.
  */
 #define HAS_IPSEC_POLICY(p) (((p) & POLICY_IPSEC_MASK) != 0)
 
