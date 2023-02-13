@@ -226,9 +226,20 @@ struct connection *group_instantiate(struct connection *group,
 
 	t->policy &= ~POLICY_ROUTE;
 	t->policy |= POLICY_GROUPINSTANCE; /* mark as group instance for later */
-	t->kind = (!address_is_specified(t->remote->host.addr) &&
-		   !NEVER_NEGOTIATE(t->policy)) ? CK_TEMPLATE : CK_INSTANCE;
-
+	/*
+	 * CK_GROUP should expand into CK_TEMPLATE except sometimes it
+	 * doesn't:
+	 *
+	 * For NEVER_NEVOTIATE(t), setting it to CK_INSTANCE stops the
+	 * responder picking it; feels like host-pair code forgetting
+	 * to skip a case?
+	 *
+	 * Address-specified looks like an optimization to avoid a
+	 * second connection being instantiated?
+	 */
+	t->kind = (NEVER_NEGOTIATE(t->policy) ? CK_INSTANCE :
+		   address_is_specified(t->remote->host.addr) ? CK_INSTANCE :
+		   CK_TEMPLATE);
 	t->child.reqid = (t->config->sa_reqid == 0 ? gen_reqid() :
 			  t->config->sa_reqid);
 	ldbg(t->logger,
