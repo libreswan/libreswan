@@ -45,10 +45,30 @@ static bool match_connection(const struct connection *c,
 		return false;
 	}
 
+	if (c->kind == CK_GROUP) {
+		connection_buf cb;
+		dbg("  skipping "PRI_CONNECTION", connection group",
+		    pri_connection(c, &cb));
+		return false;
+	}
+
 	if (c->kind == CK_INSTANCE && c->remote->host.id.kind == ID_NULL) {
 		connection_buf cb;
 		dbg("  skipping "PRI_CONNECTION", ID_NULL instance",
 		    pri_connection(c, &cb));
+		return false;
+	}
+
+	/*
+	 * Require all the bits to match (there's actually ony one).
+	 */
+	if (!authby_le(remote_authby, c->remote->host.config->authby)) {
+		connection_buf cb;
+		authby_buf ab, cab;
+		dbg("  skipping "PRI_CONNECTION", %s missing required authby %s",
+		    pri_connection(c, &cb),
+		    str_authby(c->remote->host.config->authby, &cab),
+		    str_authby(remote_authby, &ab));
 		return false;
 	}
 
@@ -87,16 +107,6 @@ static bool match_connection(const struct connection *c,
 		return false;
 	}
 
-	/*
-	 * Require all the bits to match (there's actually ony one).
-	 */
-	if (!authby_le(remote_authby, c->remote->host.config->authby)) {
-		connection_buf cb;
-		dbg("  skipping "PRI_CONNECTION", missing authby",
-		    pri_connection(c, &cb));
-		return false;
-	}
-
 	return true;
 }
 
@@ -125,6 +135,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 	 */
 	struct connection *c = NULL;
 	FOR_EACH_HOST_PAIR_CONNECTION(local_address, remote_address, d) {
+
 		if (!match_connection(d, remote_authby)) {
 			continue;
 		}
@@ -171,12 +182,8 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 	 * Food Groups kind of assumes one.
 	 */
 	FOR_EACH_HOST_PAIR_CONNECTION(local_address, unset_address, d) {
-		if (!match_connection(d, remote_authby)) {
-			continue;
-		}
 
-		if (d->kind == CK_GROUP) {
-			dbg("  skipping as GROUP");
+		if (!match_connection(d, remote_authby)) {
 			continue;
 		}
 
@@ -184,8 +191,10 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		 * Road Warrior: we have an instant winner.
 		 */
 		if (d->kind == CK_TEMPLATE && !(d->policy & POLICY_OPPORTUNISTIC)) {
+			connection_buf cb;
+			dbg("  accepting "PRI_CONNECTION", non-opportunistic",
+			    pri_connection(d, &cb));
 			c = d;
-			dbg("  accepting non-opportunistic");
 			break;
 		}
 
@@ -209,7 +218,9 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		if (!address_in_selector_range(remote_address, d->spd->remote->client)) {
 			address_buf ab;
 			selector_buf sb;
-			dbg("  skipping as %s is-not in range:%s",
+			connection_buf cb;
+			dbg("  skipping "PRI_CONNECTION", as %s is-not in range %s",
+			    pri_connection(d, &cb),
 			    str_address(&remote_address, &ab),
 			    str_selector(&d->spd->remote->client, &sb));
 			continue;
@@ -219,14 +230,18 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		    selector_range_in_selector_range(c->spd->remote->client,
 						     d->spd->remote->client)) {
 			selector_buf s1, s2;
-			dbg("  skipping as best range of %s is narrower than %s",
+			connection_buf cb;
+			dbg("  skipping "PRI_CONNECTION", as best range of %s is narrower than %s",
+			    pri_connection(d, &cb),
 			    str_selector(&c->spd->remote->client, &s1),
 			    str_selector(&d->spd->remote->client, &s2));
 			continue;
 		}
 
 		selector_buf s1, s2;
-		dbg("  saving oppo %s for later, previous %s",
+		connection_buf dc;
+		dbg("  saving "PRI_CONNECTION", opportunistic %s range better than %s",
+		    pri_connection(d, &dc),
 		    str_selector(&d->spd->remote->client, &s1),
 		    c == NULL ? "n/a" : str_selector(&c->spd->remote->client, &s2));
 		c = d;
@@ -274,16 +289,16 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		return NULL;
 	}
 
-	/* only allow opportunistic for IKEv2 connections */
-	if (LIN(POLICY_OPPORTUNISTIC, c->policy) &&
-	    c->config->ike_version == IKEv2) {
+	if (LIN(POLICY_OPPORTUNISTIC, c->policy)) {
 		connection_buf cb;
-		ldbg(md->md_logger, "oppo_instantiate called by %s with "PRI_CONNECTION,
-		     __func__, pri_connection(c, &cb));
+		ldbg(md->md_logger, "  opportunistic instantiate winner "PRI_CONNECTION,
+		     pri_connection(c, &cb));
 		c = oppo_responder_instantiate(c, remote_address, HERE);
 	} else {
 		/* regular roadwarrior */
-		ldbg(md->md_logger, "rw_instantiate");
+		connection_buf cb;
+		ldbg(md->md_logger, "  roadwarrior instantiate winner "PRI_CONNECTION,
+		     pri_connection(c, &cb));
 		c = rw_responder_instantiate(c, remote_address, HERE);
 	}
 
@@ -303,6 +318,7 @@ struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
 		{ .rsasig_v1_5 = true, },
 		{ .psk = true, },
 		{ .null = true, },
+		{ .never = true, },
 	};
 
 	struct connection *c = NULL;
@@ -362,7 +378,7 @@ struct connection *find_v2_host_pair_connection(const struct msg_digest *md,
 		/* REMOTE==%any so d can never be an instance */
 		if (tmp->kind == CK_INSTANCE && tmp->remote->host.id.kind == ID_NULL) {
 			connection_buf cb;
-			dbg("skipping unauthenticated "PRI_CONNECTION" with ID_NULL",
+			dbg("skipping "PRI_CONNECTION", unauthenticated with ID_NULL",
 			    pri_connection(tmp, &cb));
 			continue;
 		}
