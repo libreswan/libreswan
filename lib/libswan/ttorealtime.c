@@ -17,6 +17,7 @@
 #define _XOPEN_SOURCE		/* expose strptime() */
 #endif
 
+#include <sys/types.h>		/* for __need_clockid_t */
 #include <time.h>
 #include <string.h>
 
