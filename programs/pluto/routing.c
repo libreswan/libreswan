@@ -55,6 +55,8 @@ static enum_names connection_event_names = {
 struct event {
 	enum connection_event event;
 	struct ike_sa *ike;
+	threadtime_t *inception;
+	const struct kernel_acquire *acquire;
 };
 
 static void do_updown_unroute(struct connection *c);
@@ -80,6 +82,164 @@ void set_child_routing_where(struct connection *c, enum routing routing,
 	c->child.routing = routing;
 	c->child.newest_routing_sa = so;
 }
+
+static void ondemand_unrouted_to_unrouted_negotiation(struct connection *c, const struct event *e)
+{
+	/*
+	 * For instance:
+	 * - an instance with a routed prospective template
+	 * but also:
+	 * - an unrouted permanent by whack?
+	 * - an instance with an unrouted template due to whack?
+	 */
+
+	struct logger *logger = c->logger;
+	struct spd_route *spd = c->spd; /*XXX:only-one!?!*/
+	bool oe = ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
+
+	/* used below in pexpects */
+	struct connection *t = connection_by_serialno(c->serial_from); /* could be NULL */
+
+	enum routing old_routing = c->child.routing;	/* routing, old */
+	enum routing new_routing = RT_UNROUTED_NEGOTIATION;
+	enum kernel_policy_op op = KERNEL_POLICY_OP_ADD;
+	/* XXX: these descriptions make no sense */
+	const char *reason = (oe ? "replace unrouted opportunistic %trap with broad %pass or %hold" :
+			      "replace unrouted %trap with broad %pass or %hold");
+	PEXPECT(logger, t == NULL || t->child.routing == RT_ROUTED_PROSPECTIVE);
+	/*
+	 * We need a broad %hold, not the narrow one.
+	 *
+	 * First we ensure that there is a broad %hold.  There may
+	 * already be one (race condition): no need to create one.
+	 * There may already be a %trap: replace it.  There may not be
+	 * any broad eroute: add %hold.  Once the broad %hold is in
+	 * place, delete the narrow one.
+	 *
+	 * XXX: what race condition?
+	 *
+	 * XXX: why is OE special (other than that's the way the code
+	 * worked in the past)?
+	 */
+	if (oe || old_routing != new_routing) {
+		assign_holdpass(c, spd, op, logger, reason);
+		dbg("kernel: %s() done", __func__);
+	}
+
+	set_child_routing(c, new_routing, c->child.newest_routing_sa);
+	dbg("kernel: %s() done - returning success", __func__);
+
+	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY,
+			  e->inception, e->acquire->sec_label, e->acquire->background, e->acquire->logger);
+}
+
+static void ondemand_routed_prospective_to_routed_negotiation(struct connection *c, const struct event *e)
+{
+	struct logger *logger = c->logger;
+	struct spd_route *spd = c->spd; /*XXX:only-one!?!*/
+	bool oe = ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
+
+	/* used below in pexpects */
+	struct connection *t = connection_by_serialno(c->serial_from); /* could be NULL */
+
+	/*
+	 * For instance?
+	 *
+	 * XXX: could be whack or acquire.
+	 *
+	 * XXX: is this just re-installing the same policy?
+	 * No?  The prospective policy might be 7.0.0.0/8 but
+	 * this is installing 7.7.7.7/32 from a trigger of
+	 * 7.7.7.7/32/ICMP/8.
+	 */
+	enum routing old_routing = c->child.routing;	/* routing, old */
+	enum routing new_routing = RT_ROUTED_NEGOTIATION;
+	enum kernel_policy_op op = KERNEL_POLICY_OP_REPLACE;
+	/* XXX: these descriptions make no sense */
+	const char *reason = (oe ? "broad prospective opportunistic %pass or %hold" :
+			      "broad prospective %pass or %hold");
+	PEXPECT(logger, t == NULL);
+	/*
+	 * We need a broad %hold, not the narrow one.
+	 *
+	 * First we ensure that there is a broad %hold.  There may
+	 * already be one (race condition): no need to create one.
+	 * There may already be a %trap: replace it.  There may not be
+	 * any broad eroute: add %hold.  Once the broad %hold is in
+	 * place, delete the narrow one.
+	 *
+	 * XXX: what race condition?
+	 *
+	 * XXX: why is OE special (other than that's the way the code
+	 * worked in the past)?
+	 */
+	if (oe || old_routing != new_routing) {
+		assign_holdpass(c, spd, op, logger, reason);
+		dbg("kernel: %s() done", __func__);
+	}
+
+	set_child_routing(c, new_routing, c->child.newest_routing_sa);
+	dbg("kernel: %s() done - returning success", __func__);
+
+	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY,
+			  e->inception, e->acquire->sec_label, e->acquire->background, e->acquire->logger);
+}
+
+#if 0
+static void ondemand_default(struct connection *c, const struct event *e)
+{
+
+	struct logger *logger = c->logger;
+	struct spd_route *spd = c->spd; /*XXX:only-one!?!*/
+	bool oe = ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
+
+	/* used below in pexpects */
+	struct connection *t = connection_by_serialno(c->serial_from); /* could be NULL */
+
+	PASSERT(logger, (c->kind == CK_PERMANENT ||
+			 c->kind == CK_INSTANCE));
+	PASSERT(logger, ((c->kind == CK_INSTANCE) >= (t != NULL)));
+
+	/*
+	 * Figure out the connection's routing transition.
+	 */
+	enum routing old_routing = c->child.routing;	/* routing, old */
+	enum routing new_routing;
+	enum kernel_policy_op op;
+	const char *reason;
+
+		/* no change: this %hold or %pass is old news */
+		new_routing = old_routing;
+		op = 0; /* i.e., NOP */
+		reason = "NOP";
+
+	/*
+	 * We need a broad %hold, not the narrow one.
+	 *
+	 * First we ensure that there is a broad %hold.  There may
+	 * already be one (race condition): no need to create one.
+	 * There may already be a %trap: replace it.  There may not be
+	 * any broad eroute: add %hold.  Once the broad %hold is in
+	 * place, delete the narrow one.
+	 *
+	 * XXX: what race condition?
+	 *
+	 * XXX: why is OE special (other than that's the way the code
+	 * worked in the past)?
+	 */
+	if (oe || old_routing != new_routing) {
+		assign_holdpass(c, spd, op, logger, reason);
+		dbg("kernel: %s() done", __func__);
+	}
+
+	set_child_routing(c, new_routing, c->child.newest_routing_sa);
+	dbg("kernel: %s() done - returning success", __func__);
+
+	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY,
+			  e->inception, e->acquire->sec_label, e->acquire->background, e->acquire->logger);
+
+}
+#endif
 
 void connection_ondemand(struct connection *c, threadtime_t *inception, const struct kernel_acquire *b)
 {
@@ -118,127 +278,11 @@ void connection_ondemand(struct connection *c, threadtime_t *inception, const st
 		return;
 	}
 
-	struct logger *logger = c->logger;
-	struct spd_route *spd = c->spd; /*XXX:only-one!?!*/
-	bool oe = ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
-
-	/* used below in pexpects */
-	struct connection *t = connection_by_serialno(c->serial_from); /* could be NULL */
-	struct spd_owner owner = spd_owner(spd, 0);
-
-	PASSERT(logger, (c->kind == CK_PERMANENT ||
-			 c->kind == CK_INSTANCE));
-	PASSERT(logger, ((c->kind == CK_INSTANCE) >= (t != NULL)));
-
-	/*
-	 * Figure out the connection's routing transition.
-	 */
-	enum routing old_routing = c->child.routing;	/* routing, old */
-	enum routing new_routing;
-	enum kernel_policy_op op;
-	const char *reason;
-
-	switch (old_routing) {
-	case RT_UNROUTED:
-		/*
-		 * For instance:
-		 * - an instance with a routed prospective template
-		 * but also:
-		 * - an unrouted permenant by whack?
-		 * - an instance with an unrouted template due to whack?
-		 */
-		new_routing = RT_UNROUTED_NEGOTIATION;
-		op = KERNEL_POLICY_OP_ADD;
-		/* XXX: these descriptions make no sense */
-		reason = (oe ? "replace unrouted opportunistic %trap with broad %pass or %hold" :
-			  "replace unrouted %trap with broad %pass or %hold");
-		PEXPECT(logger, t == NULL || t->child.routing == RT_ROUTED_PROSPECTIVE);
-		break;
-	case RT_ROUTED_PROSPECTIVE:
-		/*
-		 * For instance?
-		 *
-		 * XXX: could be whack or acquire.
-		 *
-		 * XXX: is this just re-installing the same policy?
-		 * No?  The prospective policy might be 7.0.0.0/8 but
-		 * this is installing 7.7.7.7/32 from a trigger of
-		 * 7.7.7.7/32/ICMP/8.
-		 */
-		new_routing = RT_ROUTED_NEGOTIATION;
-		op = KERNEL_POLICY_OP_REPLACE;
-		/* XXX: these descriptions make no sense */
-		reason = (oe ? "broad prospective opportunistic %pass or %hold" :
-			  "broad prospective %pass or %hold");
-		PEXPECT(logger, t == NULL);
-		break;
-	default:
-		/* no change: this %hold or %pass is old news */
-		new_routing = old_routing;
-		op = 0; /* i.e., NOP */
-		reason = "NOP";
-		break;
-	}
-
-	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-		jam(buf, "%s():", __func__);
-		jam(buf, " by_acquire=%s", bool_str(b->by_acquire));
-		jam(buf, " oppo=%s", bool_str(oe));
-		jam(buf, " kind=");
-		jam_enum_short(buf, &connection_kind_names, c->kind);
-		jam(buf, " routing=");
-		jam_enum_short(buf, &routing_names, old_routing);
-		if (old_routing != new_routing) {
-			jam(buf, "->");
-			jam_enum_short(buf, &routing_names, new_routing);
-		} else {
-			jam_string(buf, "(no-change)");
-		}
-		jam(buf, " packet=");
-		jam_packet(buf, &b->packet);
-		jam(buf, " selectors=");
-		jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
-		jam(buf, " one_address=%s",
-		    bool_str(selector_contains_one_address(spd->local->client) &&
-			     selector_contains_one_address(spd->remote->client)));
-		jam_string(buf, " op=");
-		jam_enum(buf, &kernel_policy_op_names, op);
-		/* can have policy owner without route owner */
-		if (owner.policy != NULL) {
-			jam_string(buf, " policy-owner=");
-			jam_connection(buf, owner.policy->connection);
-		} else if (owner.route != NULL) {
-			jam_string(buf, " route-owner=");
-			jam_connection(buf, owner.route->connection);
-		}
-		jam_string(buf, ": ");
-		jam_string(buf, reason);
-	}
-
-	/*
-	 * We need a broad %hold, not the narrow one.
-	 *
-	 * First we ensure that there is a broad %hold.  There may
-	 * already be one (race condition): no need to create one.
-	 * There may already be a %trap: replace it.  There may not be
-	 * any broad eroute: add %hold.  Once the broad %hold is in
-	 * place, delete the narrow one.
-	 *
-	 * XXX: what race condition?
-	 *
-	 * XXX: why is OE special (other than that's the way the code
-	 * worked in the past)?
-	 */
-	if (oe || old_routing != new_routing) {
-		assign_holdpass(c, spd, op, logger, reason);
-		dbg("kernel: %s() done", __func__);
-	}
-
-	set_child_routing(c, new_routing, c->child.newest_routing_sa);
-	dbg("kernel: %s() done - returning success", __func__);
-
-	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY,
-			  inception, b->sec_label, b->background, b->logger);
+	dispatch(c, (struct event) {
+			.event = CONNECTION_ONDEMAND,
+			.inception = inception,
+			.acquire = b,
+		});
 }
 
 static bool should_retry(struct ike_sa *ike)
@@ -411,7 +455,8 @@ void permanent_event_handler(struct connection *c, const struct event *e)
 			ldbg(c->logger, "already unrouted");
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, e);
+			/* presumably triggered by whack */
+			ondemand_unrouted_to_unrouted_negotiation(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permanent+up */
@@ -508,6 +553,25 @@ void permanent_event_handler(struct connection *c, const struct event *e)
 		}
 		bad_case(e->event);
 
+	case RT_ROUTED_PROSPECTIVE:
+		switch (e->event) {
+		case CONNECTION_ROUTE:
+			barf(c, e);
+			return;
+		case CONNECTION_UNROUTE:
+			delete_connection_kernel_policies(c);
+			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
+			do_updown_unroute(c);
+			return;
+		case CONNECTION_ONDEMAND:
+			ondemand_routed_prospective_to_routed_negotiation(c, e);
+			return;
+		case CONNECTION_TIMEOUT:
+			barf(c, e);
+			return;
+		}
+		bad_case(e->event);
+
 	case RT_ROUTED_TUNNEL:
 		switch (e->event) {
 		case CONNECTION_ROUTE:
@@ -539,25 +603,6 @@ void permanent_event_handler(struct connection *c, const struct event *e)
 						  c->child.newest_routing_sa);
 			}
 			fail(e->ike);
-			return;
-		}
-		bad_case(e->event);
-
-	case RT_ROUTED_PROSPECTIVE:
-		switch (e->event) {
-		case CONNECTION_ROUTE:
-			barf(c, e);
-			return;
-		case CONNECTION_UNROUTE:
-			delete_connection_kernel_policies(c);
-			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
-			do_updown_unroute(c);
-			return;
-		case CONNECTION_ONDEMAND:
-			barf(c, e);
-			return;
-		case CONNECTION_TIMEOUT:
-			barf(c, e);
 			return;
 		}
 		bad_case(e->event);
@@ -845,7 +890,15 @@ void instance_event_handler(struct connection *c, const struct event *e)
 			ldbg(c->logger, "already unrouted");
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, e);
+			/*
+			 * Triggered by whack or ondemand against the
+			 * template which instantiates this
+			 * connection.
+			 *
+			 * The template may or may not be routed (but
+			 * this code seems to expect it to).
+			 */
+			ondemand_unrouted_to_unrouted_negotiation(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permanent+up */
