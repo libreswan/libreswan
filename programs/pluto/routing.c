@@ -329,14 +329,14 @@ void connection_timeout(struct ike_sa *ike)
 
 void connection_route(struct connection *c)
 {
-	if (!oriented(c)) {
-		llog(RC_ORIENT, c->logger,
-		     "we cannot identify ourselves with either end of this connection");
+	if (c->kind == CK_GROUP) {
+		connection_group_route(c);
 		return;
 	}
 
-	if (c->kind == CK_GROUP) {
-		connection_group_route(c);
+	if (!oriented(c)) {
+		llog(RC_ORIENT, c->logger,
+		     "we cannot identify ourselves with either end of this connection");
 		return;
 	}
 
@@ -389,6 +389,7 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 	case RT_UNROUTED:
 		switch (event) {
 		case CONNECTION_ROUTE:
+			c->policy |= POLICY_ROUTE; /* always */
 			if (!install_prospective_kernel_policy(c)) {
 				/* XXX: why whack only? */
 				llog(WHACK_STREAM|RC_ROUTE, c->logger, "could not route");
@@ -415,7 +416,8 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 	case RT_UNROUTED_NEGOTIATION:
 		switch (event) {
 		case CONNECTION_ROUTE:
-			llog(RC_LOG_SERIOUS, c->logger, "cannot route negotiating connection");
+			c->policy |= POLICY_ROUTE;
+			llog(RC_LOG_SERIOUS, c->logger, "policy ROUTE added to negotiating connection");
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -450,6 +452,7 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 	case RT_ROUTED_NEGOTIATION:
 		switch (event) {
 		case CONNECTION_ROUTE:
+			pexpect(c->policy |= POLICY_ROUTE);
 			llog(RC_LOG_SERIOUS, c->logger, "connection already routed");
 			return;
 		case CONNECTION_UNROUTE:
@@ -487,7 +490,8 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 	case RT_ROUTED_TUNNEL:
 		switch (event) {
 		case CONNECTION_ROUTE:
-			llog(RC_LOG_SERIOUS, c->logger, "cannot route established connection");
+			c->policy |= POLICY_ROUTE; /* always */
+			llog(RC_LOG, c->logger, "policy ROUTE added to established connection");
 			return;
 		case CONNECTION_UNROUTE:
 			llog(RC_RTBUSY, c->logger, "cannot unroute: route busy");
@@ -582,6 +586,7 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 	case RT_UNROUTED:
 		switch (event) {
 		case CONNECTION_ROUTE:
+			c->policy |= POLICY_ROUTE;
 			if (!install_prospective_kernel_policy(c)) {
 				/* XXX: why whack only? */
 				llog(WHACK_STREAM|RC_ROUTE, c->logger, "could not route");
@@ -608,7 +613,8 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 	case RT_UNROUTED_NEGOTIATION:
 		switch (event) {
 		case CONNECTION_ROUTE:
-			llog(RC_LOG_SERIOUS, c->logger, "cannot route negotiating connection");
+			c->policy |= POLICY_ROUTE;
+			llog(RC_LOG_SERIOUS, c->logger, "policy ROUTE added to negotiating connection");
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -643,7 +649,8 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 	case RT_ROUTED_NEGOTIATION:
 		switch (event) {
 		case CONNECTION_ROUTE:
-			llog(RC_LOG_SERIOUS, c->logger, "cannot route established connection");
+			c->policy |= POLICY_ROUTE;
+			llog(RC_LOG_SERIOUS, c->logger, "policy ROUTE added to negotiating connection");
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -680,7 +687,8 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 	case RT_ROUTED_TUNNEL:
 		switch (event) {
 		case CONNECTION_ROUTE:
-			llog(RC_LOG_SERIOUS, c->logger, "cannot route established connection");
+			c->policy |= POLICY_ROUTE;
+			llog(RC_LOG_SERIOUS, c->logger, "policy ROUTE added to established connection");
 			return;
 		case CONNECTION_UNROUTE:
 			llog(RC_RTBUSY, c->logger, "cannot unroute: route busy");
@@ -777,7 +785,7 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 	case RT_UNROUTED:
 		switch (event) {
 		case CONNECTION_ROUTE:
-			llog(RC_LOG_SERIOUS, c->logger, "cannot route connection instance");
+			barf(c, event);
 			return;
 		case CONNECTION_UNROUTE:
 			ldbg(c->logger, "already unrouted");
@@ -800,7 +808,7 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 	case RT_UNROUTED_NEGOTIATION:
 		switch (event) {
 		case CONNECTION_ROUTE:
-			llog(RC_LOG_SERIOUS, c->logger, "cannot route connection instance");
+			barf(c, event);
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -836,7 +844,7 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 	case RT_ROUTED_NEGOTIATION:
 		switch (event) {
 		case CONNECTION_ROUTE:
-			llog(RC_LOG_SERIOUS, c->logger, "cannot route connection instance");
+			barf(c, event);
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -871,7 +879,7 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 	case RT_ROUTED_TUNNEL:
 		switch (event) {
 		case CONNECTION_ROUTE:
-			llog(RC_LOG_SERIOUS, c->logger, "cannot route connection instance");
+			barf(c, event);
 			return;
 		case CONNECTION_UNROUTE:
 			llog(RC_RTBUSY, c->logger, "cannot unroute: route busy");
@@ -977,6 +985,7 @@ void connection_unroute(struct connection *c)
 		return;
 	}
 
+	c->policy &= ~POLICY_ROUTE;
 	dispatch(c, CONNECTION_UNROUTE, NULL/*IKE*/);
 }
 

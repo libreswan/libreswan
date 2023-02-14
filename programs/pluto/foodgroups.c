@@ -488,24 +488,31 @@ static struct fg_groups *find_group(const struct connection *c)
 
 void connection_group_route(struct connection *c)
 {
-	PASSERT(c->logger, oriented(c));
-	/* it makes no sense to route a connection that is
-	 * ISAKMP-only */
+	/*
+	 * It makes no sense to route a connection that is IKE-only
+	 * (except when it is an IKE only connection such is created
+	 * for labeled IPsec, but lets ignore that).
+	 */
 	if (!NEVER_NEGOTIATE(c->policy) && !HAS_IPSEC_POLICY(c->policy)) {
 		llog(RC_ROUTE, c->logger,
-		     "cannot route an ISAKMP-only group connection");
-	} else {
-		struct fg_groups *g = find_group(c);
-		struct fg_targets *t;
+		     "cannot route an IKE-only group connection");
+		return;
+	}
 
-		passert(g != NULL);
-		g->connection->policy |= POLICY_ROUTE;
-		for (t = targets; t != NULL; t = t->next) {
-			if (t->group == g) {
-				struct connection *ci = connection_by_serialno(t->serialno);
-				if (ci != NULL) {
-					connection_route(ci);
-				}
+	if (!oriented(c)) {
+		llog(RC_ORIENT, c->logger,
+		     "we cannot identify ourselves with either end of this connection");
+		return;
+	}
+
+	struct fg_groups *g = find_group(c);
+	passert(g != NULL);
+	g->connection->policy |= POLICY_ROUTE;
+	for (struct fg_targets *t = targets; t != NULL; t = t->next) {
+		if (t->group == g) {
+			struct connection *ci = connection_by_serialno(t->serialno);
+			if (ci != NULL) {
+				connection_route(ci);
 			}
 		}
 	}
