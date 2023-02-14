@@ -52,13 +52,18 @@ static enum_names connection_event_names = {
 	NULL,
 };
 
+struct event {
+	enum connection_event event;
+	struct ike_sa *ike;
+};
+
 static void do_updown_unroute(struct connection *c);
 
-static void dispatch(struct connection *c, enum connection_event event, struct ike_sa *ike);
+static void dispatch(struct connection *c, const struct event e);
 
-static void permanent_event_handler(struct connection *c, enum connection_event event, struct ike_sa *ike);
-static void template_event_handler(struct connection *c, enum connection_event event, struct ike_sa *ike);
-static void instance_event_handler(struct connection *c, enum connection_event event, struct ike_sa *ike);
+static void permanent_event_handler(struct connection *c, const struct event *e);
+static void template_event_handler(struct connection *c, const struct event *e);
+static void instance_event_handler(struct connection *c, const struct event *e);
 
 void set_child_routing_where(struct connection *c, enum routing routing,
 			     so_serial_t so, where_t where)
@@ -313,20 +318,23 @@ static void fail(struct ike_sa *ike)
 }
 
 #define barf(C, EVENT) barf_where(C, EVENT, HERE)
-static void barf_where(struct connection *c, enum connection_event event, where_t where)
+static void barf_where(struct connection *c, const struct event *e, where_t where)
 {
 	connection_buf cb;
 	enum_buf kb, eb;
 	llog_pexpect(c->logger, where, "%s connection "PRI_CONNECTION" not expecting %s",
 		     str_enum_short(&connection_kind_names, c->kind, &kb),
 		     pri_connection(c, &cb),
-		     str_enum_short(&connection_event_names, event, &eb));
+		     str_enum_short(&connection_event_names, e->event, &eb));
 }
 
 void connection_timeout(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
-	dispatch(c, CONNECTION_TIMEOUT, ike);
+	dispatch(c, (struct event) {
+			.event = CONNECTION_TIMEOUT,
+			.ike = ike,
+		});
 }
 
 void connection_route(struct connection *c)
@@ -342,14 +350,16 @@ void connection_route(struct connection *c)
 		return;
 	}
 
-	dispatch(c, CONNECTION_ROUTE, NULL/*IKE*/);
+	dispatch(c, (struct event) {
+			.event = CONNECTION_ROUTE,
+		});
 }
 
-void dispatch(struct connection *c, enum connection_event event, struct ike_sa *ike)
+void dispatch(struct connection *c, const struct event e)
 {
 	LDBGP_JAMBUF(DBG_BASE, c->logger, buf) {
 		jam_string(buf, "dispatch ");
-		jam_enum_short(buf, &connection_event_names, event);
+		jam_enum_short(buf, &connection_event_names, e.event);
 		jam_string(buf, " to ");
 		jam_enum_short(buf, &connection_kind_names, c->kind);
 		jam_string(buf, " connection ");
@@ -358,26 +368,26 @@ void dispatch(struct connection *c, enum connection_event event, struct ike_sa *
 		jam_connection(buf, c);
 		jam_string(buf, " with routing ");
 		jam_enum_short(buf, &routing_names, c->child.routing);
-		if (ike != NULL) {
-			jam(buf, " for IKE SA "PRI_SO, pri_so(ike->sa.st_serialno));
+		if (e.ike != NULL) {
+			jam(buf, " for IKE SA "PRI_SO, pri_so(e.ike->sa.st_serialno));
 		}
 	}
 	switch (c->kind) {
 	case CK_PERMANENT:
-		permanent_event_handler(c, event, ike);
+		permanent_event_handler(c, &e);
 		break;
 	case CK_TEMPLATE:
-		template_event_handler(c, event, ike);
+		template_event_handler(c, &e);
 		break;
 	case CK_INSTANCE:
-		instance_event_handler(c, event, ike);
+		instance_event_handler(c, &e);
 		break;
 	default:
 		bad_case(c->kind);
 	}
 }
 
-void permanent_event_handler(struct connection *c, enum connection_event event, struct ike_sa *ike)
+void permanent_event_handler(struct connection *c, const struct event *e)
 {
 	/*
 	 * Part 1: handle the easy cases where the connection didn't
@@ -389,7 +399,7 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 	switch (cr) {
 
 	case RT_UNROUTED:
-		switch (event) {
+		switch (e->event) {
 		case CONNECTION_ROUTE:
 			c->policy |= POLICY_ROUTE; /* always */
 			if (!install_prospective_kernel_policy(c)) {
@@ -401,25 +411,25 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 			ldbg(c->logger, "already unrouted");
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permanent+up */
-			if (should_retry(ike)) {
-				retry(ike);
+			if (should_retry(e->ike)) {
+				retry(e->ike);
 				return;
 			}
-			if (should_revive(&ike->sa)) {
-				schedule_revival(&ike->sa);
+			if (should_revive(&(e->ike->sa))) {
+				schedule_revival(&(e->ike->sa));
 				return;
 			}
-			fail(ike);
+			fail(e->ike);
 			return;
 		}
-		bad_case(event);
+		bad_case(e->event);
 
 	case RT_UNROUTED_NEGOTIATION:
-		switch (event) {
+		switch (e->event) {
 		case CONNECTION_ROUTE:
 			c->policy |= POLICY_ROUTE;
 			llog(RC_LOG_SERIOUS, c->logger, "policy ROUTE added to negotiating connection");
@@ -429,16 +439,16 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permenant ondemand */
-			if (should_retry(ike)) {
-				retry(ike);
+			if (should_retry(e->ike)) {
+				retry(e->ike);
 				return;
 			}
-			if (should_revive(&ike->sa)) {
-				schedule_revival(&ike->sa);
+			if (should_revive(&(e->ike->sa))) {
+				schedule_revival(&(e->ike->sa));
 				return;
 			}
 			if (c->policy & POLICY_OPPORTUNISTIC) {
@@ -452,13 +462,13 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 				 */
 				set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			}
-			fail(ike);
+			fail(e->ike);
 			return;
 		}
-		bad_case(event);
+		bad_case(e->event);
 
 	case RT_ROUTED_NEGOTIATION:
-		switch (event) {
+		switch (e->event) {
 		case CONNECTION_ROUTE:
 			pexpect(c->policy |= POLICY_ROUTE);
 			llog(RC_LOG_SERIOUS, c->logger, "connection already routed");
@@ -470,15 +480,15 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
-			if (should_retry(ike)) {
-				retry(ike);
+			if (should_retry(e->ike)) {
+				retry(e->ike);
 				return;
 			}
-			if (should_revive(&ike->sa)) {
-				schedule_revival(&ike->sa);
+			if (should_revive(&(e->ike->sa))) {
+				schedule_revival(&(e->ike->sa));
 				return;
 			}
 			if (c->policy & POLICY_OPPORTUNISTIC) {
@@ -493,13 +503,13 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 				set_child_routing(c, RT_ROUTED_PROSPECTIVE/*lie?!?*/,
 						  c->child.newest_routing_sa);
 			}
-			fail(ike);
+			fail(e->ike);
 			return;
 		}
-		bad_case(event);
+		bad_case(e->event);
 
 	case RT_ROUTED_TUNNEL:
-		switch (event) {
+		switch (e->event) {
 		case CONNECTION_ROUTE:
 			c->policy |= POLICY_ROUTE; /* always */
 			llog(RC_LOG, c->logger, "policy ROUTE added to established connection");
@@ -508,12 +518,12 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 			llog(RC_RTBUSY, c->logger, "cannot unroute: route busy");
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* don't retry as well */
-			if (should_revive(&ike->sa)) {
-				schedule_revival(&ike->sa);
+			if (should_revive(&(e->ike->sa))) {
+				schedule_revival(&(e->ike->sa));
 				return;
 			}
 			if (c->policy & POLICY_OPPORTUNISTIC) {
@@ -528,15 +538,15 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 				set_child_routing(c, RT_ROUTED_NEGOTIATION/*lie?!?*/,
 						  c->child.newest_routing_sa);
 			}
-			fail(ike);
+			fail(e->ike);
 			return;
 		}
-		bad_case(event);
+		bad_case(e->event);
 
 	case RT_ROUTED_PROSPECTIVE:
-		switch (event) {
+		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -544,18 +554,18 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
-			barf(c, event);
+			barf(c, e);
 			return;
 		}
-		bad_case(event);
+		bad_case(e->event);
 
 	case RT_ROUTED_FAILURE:
-		switch (event) {
+		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -564,38 +574,38 @@ void permanent_event_handler(struct connection *c, enum connection_event event, 
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
-			barf(c, event);
+			barf(c, e);
 			return;
 		}
-		bad_case(event);
+		bad_case(e->event);
 
 	case RT_UNROUTED_TUNNEL:
-		switch (event) {
+		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
-			barf(c, event);
+			barf(c, e);
 			return;
 		}
-		bad_case(event);
+		bad_case(e->event);
 
 	}
 
 	bad_case(cr);
 }
 
-void template_event_handler(struct connection *c, enum connection_event event, struct ike_sa *ike)
+void template_event_handler(struct connection *c, const struct event *e)
 {
 	/*
 	 * Part 1: handle the easy cases where the connection didn't
@@ -607,7 +617,7 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 	switch (cr) {
 
 	case RT_UNROUTED:
-		switch (event) {
+		switch (e->event) {
 		case CONNECTION_ROUTE:
 			c->policy |= POLICY_ROUTE;
 			if (!install_prospective_kernel_policy(c)) {
@@ -619,25 +629,25 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 			ldbg(c->logger, "already unrouted");
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permanent+up */
-			if (should_retry(ike)) {
-				retry(ike);
+			if (should_retry(e->ike)) {
+				retry(e->ike);
 				return;
 			}
-			if (should_revive(&ike->sa)) {
-				schedule_revival(&ike->sa);
+			if (should_revive(&(e->ike->sa))) {
+				schedule_revival(&(e->ike->sa));
 				return;
 			}
-			fail(ike);
+			fail(e->ike);
 			return;
 		}
-		bad_case(event);
+		bad_case(e->event);
 
 	case RT_UNROUTED_NEGOTIATION:
-		switch (event) {
+		switch (e->event) {
 		case CONNECTION_ROUTE:
 			c->policy |= POLICY_ROUTE;
 			llog(RC_LOG_SERIOUS, c->logger, "policy ROUTE added to negotiating connection");
@@ -647,16 +657,16 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permenant ondemand */
-			if (should_retry(ike)) {
-				retry(ike);
+			if (should_retry(e->ike)) {
+				retry(e->ike);
 				return;
 			}
-			if (should_revive(&ike->sa)) {
-				schedule_revival(&ike->sa);
+			if (should_revive(&(e->ike->sa))) {
+				schedule_revival(&(e->ike->sa));
 				return;
 			}
 			if (c->policy & POLICY_OPPORTUNISTIC) {
@@ -670,13 +680,13 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 				 */
 				set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			}
-			fail(ike);
+			fail(e->ike);
 			return;
 		}
-		bad_case(event);
+		bad_case(e->event);
 
 	case RT_ROUTED_NEGOTIATION:
-		switch (event) {
+		switch (e->event) {
 		case CONNECTION_ROUTE:
 			c->policy |= POLICY_ROUTE;
 			llog(RC_LOG_SERIOUS, c->logger, "policy ROUTE added to negotiating connection");
@@ -688,15 +698,15 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
-			if (should_retry(ike)) {
-				retry(ike);
+			if (should_retry(e->ike)) {
+				retry(e->ike);
 				return;
 			}
-			if (should_revive(&ike->sa)) {
-				schedule_revival(&ike->sa);
+			if (should_revive(&(e->ike->sa))) {
+				schedule_revival(&(e->ike->sa));
 				return;
 			}
 			if (c->policy & POLICY_OPPORTUNISTIC) {
@@ -711,13 +721,13 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 				set_child_routing(c, RT_ROUTED_PROSPECTIVE/*lie?!?*/,
 						  c->child.newest_routing_sa);
 			}
-			fail(ike);
+			fail(e->ike);
 			return;
 		}
-		bad_case(event);
+		bad_case(e->event);
 
 	case RT_ROUTED_TUNNEL:
-		switch (event) {
+		switch (e->event) {
 		case CONNECTION_ROUTE:
 			c->policy |= POLICY_ROUTE;
 			llog(RC_LOG_SERIOUS, c->logger, "policy ROUTE added to established connection");
@@ -726,12 +736,12 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 			llog(RC_RTBUSY, c->logger, "cannot unroute: route busy");
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* don't retry as well */
-			if (should_revive(&ike->sa)) {
-				schedule_revival(&ike->sa);
+			if (should_revive(&(e->ike->sa))) {
+				schedule_revival(&(e->ike->sa));
 				return;
 			}
 			if (c->policy & POLICY_OPPORTUNISTIC) {
@@ -746,15 +756,15 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 				set_child_routing(c, RT_ROUTED_NEGOTIATION/*lie?!?*/,
 						  c->child.newest_routing_sa);
 			}
-			fail(ike);
+			fail(e->ike);
 			return;
 		}
-		bad_case(event);
+		bad_case(e->event);
 
 	case RT_ROUTED_PROSPECTIVE:
-		switch (event) {
+		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -763,18 +773,18 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
-			barf(c, event);
+			barf(c, e);
 			return;
 		}
-		bad_case(event);
+		bad_case(e->event);
 
 	case RT_ROUTED_FAILURE:
-		switch (event) {
+		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -783,18 +793,18 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
-			barf(c, event);
+			barf(c, e);
 			return;
 		}
-		bad_case(event);
+		bad_case(e->event);
 
 	case RT_UNROUTED_TUNNEL:
-		switch (event) {
+		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -802,20 +812,20 @@ void template_event_handler(struct connection *c, enum connection_event event, s
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
-			barf(c, event);
+			barf(c, e);
 			return;
 		}
-		bad_case(event);
+		bad_case(e->event);
 
 	}
 
 	bad_case(cr);
 }
 
-void instance_event_handler(struct connection *c, enum connection_event event, struct ike_sa *ike)
+void instance_event_handler(struct connection *c, const struct event *e)
 {
 	/*
 	 * Part 1: handle the easy cases where the connection didn't
@@ -827,35 +837,35 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 	switch (cr) {
 
 	case RT_UNROUTED:
-		switch (event) {
+		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_UNROUTE:
 			ldbg(c->logger, "already unrouted");
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permanent+up */
-			if (should_retry(ike)) {
-				retry(ike);
+			if (should_retry(e->ike)) {
+				retry(e->ike);
 				return;
 			}
-			if (should_revive(&ike->sa)) {
-				schedule_revival(&ike->sa);
+			if (should_revive(&(e->ike->sa))) {
+				schedule_revival(&(e->ike->sa));
 				return;
 			}
-			fail(ike);
+			fail(e->ike);
 			return;
 		}
-		bad_case(event);
+		bad_case(e->event);
 
 	case RT_UNROUTED_NEGOTIATION:
-		switch (event) {
+		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -863,16 +873,16 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permenant ondemand */
-			if (should_retry(ike)) {
-				retry(ike);
+			if (should_retry(e->ike)) {
+				retry(e->ike);
 				return;
 			}
-			if (should_revive(&ike->sa)) {
-				schedule_revival(&ike->sa);
+			if (should_revive(&(e->ike->sa))) {
+				schedule_revival(&(e->ike->sa));
 				return;
 			}
 			if (c->policy & POLICY_OPPORTUNISTIC) {
@@ -886,30 +896,30 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 				 */
 				set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			}
-			fail(ike);
+			fail(e->ike);
 			return;
 		}
-		bad_case(event);
+		bad_case(e->event);
 
 	case RT_ROUTED_NEGOTIATION:
-		switch (event) {
+		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
-			if (should_retry(ike)) {
-				retry(ike);
+			if (should_retry(e->ike)) {
+				retry(e->ike);
 				return;
 			}
-			if (should_revive(&ike->sa)) {
-				schedule_revival(&ike->sa);
+			if (should_revive(&(e->ike->sa))) {
+				schedule_revival(&(e->ike->sa));
 				return;
 			}
 			if (c->policy & POLICY_OPPORTUNISTIC) {
@@ -924,26 +934,26 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 				set_child_routing(c, RT_ROUTED_PROSPECTIVE/*lie?!?*/,
 						  c->child.newest_routing_sa);
 			}
-			fail(ike);
+			fail(e->ike);
 			return;
 		}
-		bad_case(event);
+		bad_case(e->event);
 
 	case RT_ROUTED_TUNNEL:
-		switch (event) {
+		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_UNROUTE:
 			llog(RC_RTBUSY, c->logger, "cannot unroute: route busy");
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* don't retry as well */
-			if (should_revive(&ike->sa)) {
-				schedule_revival(&ike->sa);
+			if (should_revive(&(e->ike->sa))) {
+				schedule_revival(&(e->ike->sa));
 				return;
 			}
 			if (c->policy & POLICY_OPPORTUNISTIC) {
@@ -958,15 +968,15 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 				set_child_routing(c, RT_ROUTED_NEGOTIATION/*lie?!?*/,
 						  c->child.newest_routing_sa);
 			}
-			fail(ike);
+			fail(e->ike);
 			return;
 		}
-		bad_case(event);
+		bad_case(e->event);
 
 	case RT_ROUTED_PROSPECTIVE:
-		switch (event) {
+		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -975,18 +985,18 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
-			barf(c, event);
+			barf(c, e);
 			return;
 		}
-		bad_case(event);
+		bad_case(e->event);
 
 	case RT_ROUTED_FAILURE:
-		switch (event) {
+		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -995,31 +1005,31 @@ void instance_event_handler(struct connection *c, enum connection_event event, s
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
-			barf(c, event);
+			barf(c, e);
 			return;
 		}
-		bad_case(event);
+		bad_case(e->event);
 
 	case RT_UNROUTED_TUNNEL:
-		switch (event) {
+		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, event);
+			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
-			barf(c, event);
+			barf(c, e);
 			return;
 		}
-		bad_case(event);
+		bad_case(e->event);
 
 	}
 
@@ -1051,7 +1061,9 @@ void connection_unroute(struct connection *c)
 	}
 
 	c->policy &= ~POLICY_ROUTE;
-	dispatch(c, CONNECTION_UNROUTE, NULL/*IKE*/);
+	dispatch(c, (struct event) {
+			.event = CONNECTION_UNROUTE,
+		});
 }
 
 /*
