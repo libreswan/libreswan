@@ -20,6 +20,8 @@ east #
     link/ether 12:00:00:64:64:23 brd ff:ff:ff:ff:ff:ff
     inet 192.1.2.23/24 scope global eth1
        valid_lft forever preferred_lft forever
+4: ip_vti0@NONE: <NOARP> mtu XXXX qdisc noop state DOWN group default
+    link/ipip 0.0.0.0 brd 0.0.0.0
 east #
  ipsec start
 Redirecting to: [initsystem]
