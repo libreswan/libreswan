@@ -21,6 +21,7 @@
 #include <time.h>		/* for struct timespec */
 
 #include "lswcdefs.h"		/* for PRINTF_LIKE() */
+#include "monotime.h"
 
 struct state;
 struct logger;

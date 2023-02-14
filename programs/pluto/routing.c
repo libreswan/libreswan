@@ -27,6 +27,7 @@
 #include "pluto_stats.h"
 #include "foodgroups.h"			/* for connection_group_{route,unroute}() */
 #include "orient.h"
+#include "initiate.h"			/* for ipsecdoi_initiate() */
 
 enum connection_event {
 	CONNECTION_ROUTE,
@@ -73,9 +74,42 @@ void set_child_routing_where(struct connection *c, enum routing routing,
 	c->child.newest_routing_sa = so;
 }
 
-void connection_negotiating(struct connection *c,
-			    const struct kernel_acquire *b)
+void connection_ondemand(struct connection *c, threadtime_t *inception, const struct kernel_acquire *b)
 {
+	/*
+	 * SEC_LABELs get instantiated as follows:
+	 *
+	 *   labeled_template(): an on-demand (routed) connenection
+	 *   CK_TEMPLATE.
+	 *
+	 *   labeled_parent(): the labeled-template instantiated as a
+	 *   CK_TEMPLATE.  This should probably be CK_INSTANCE or
+	 *   CK_PARENT?
+	 *
+	 *   labeled_child(): the labeled parent instantiated as
+	 *   CK_INSTANCE.  This should probably be CK_CHILD?
+	 *
+	 * None of which really fit.  Unlike CK_INSTANCE where the
+	 * ondemand connection has both the IKE and Child SAs tied to
+	 * it.  Labeled IPsec instead has the IKE SA tied to
+	 * labeled-parent, and, optionally, the Child SA tied to
+	 * labeled-child.
+	 *
+	 * Rather than have the template m/c try to deal with this,
+	 * handle it here.
+	 */
+	if (c->config->ike_version == IKEv2 &&
+	    c->config->sec_label.len > 0 &&
+	    c->kind == CK_TEMPLATE) {
+		ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY,
+				  inception, b->sec_label, b->background, b->logger);
+		packet_buf pb;
+		enum_buf hab;
+		dbg("initiated on demand using security label and %s %s",
+		    str_enum_short(&keyword_auth_names, c->local->host.config->auth, &hab),
+		    str_packet(&b->packet, &pb));
+	}
+
 	struct logger *logger = c->logger;
 	struct spd_route *spd = c->spd; /*XXX:only-one!?!*/
 	bool oe = ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
@@ -194,6 +228,9 @@ void connection_negotiating(struct connection *c,
 
 	set_child_routing(c, new_routing, c->child.newest_routing_sa);
 	dbg("kernel: %s() done - returning success", __func__);
+
+	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY,
+			  inception, b->sec_label, b->background, b->logger);
 }
 
 static bool should_retry(struct ike_sa *ike)

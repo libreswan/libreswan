@@ -16,6 +16,8 @@
 #ifndef ROUTING_H
 #define ROUTING_H
 
+#include "pluto_timing.h"	/* for threadtime_t */
+
 struct connection;
 struct logger;
 struct state;
@@ -63,9 +65,8 @@ extern const struct enum_names routing_story;
 void connection_route(struct connection *c);
 void connection_unroute(struct connection *c);
 
-void connection_prospective(struct connection *c);
-void connection_negotiating(struct connection *c,
-			    const struct kernel_acquire *b);
+void connection_ondemand(struct connection *c, threadtime_t *inception, const struct kernel_acquire *b);
+
 void connection_resume(struct child_sa *child);
 void connection_suspend(struct child_sa *child);
 

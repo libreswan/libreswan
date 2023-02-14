@@ -658,15 +658,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 			/* jam(buf, " using "); */
 		}
 
-		ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception, b->sec_label,
-				  b->background, b->logger);
-
-		packet_buf pb;
-		enum_buf hab;
-		dbg("initiated on demand using security label and %s %s",
-		    str_enum_short(&keyword_auth_names, c->local->host.config->auth, &hab),
-		    str_packet(&b->packet, &pb));
-
+		connection_ondemand(c, &inception, b);
 		return;
 	}
 
@@ -741,16 +733,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		 * attempted.
 		 */
 
-		connection_negotiating(c, b);
-		ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception, b->sec_label,
-				  b->background, b->logger);
-
-		packet_buf pb;
-		enum_buf hab;
-		dbg("initiated on demand using %s %s",
-		    str_enum_short(&keyword_auth_names, c->local->host.config->auth, &hab),
-		    str_packet(&b->packet, &pb));
-
+		connection_ondemand(c, &inception, b);
 		return;
 	}
 
@@ -812,10 +795,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		     LELEM(RT_ROUTED_PROSPECTIVE),
 		     c->child.routing));
 
-	connection_negotiating(c, b);
-	ipsecdoi_initiate(c, c->policy, 1,
-			  SOS_NOBODY, &inception, b->sec_label,
-			  b->background, b->logger);
+	connection_ondemand(c, &inception, b);
 }
 
 /* time before retrying DDNS host lookup for phase 1 */

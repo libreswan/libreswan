@@ -15,6 +15,8 @@
 
 #include "lswcdefs.h"		/* for ARRAY_REF() */
 #include "enum_names.h"
+
+#include "defs.h"
 #include "routing.h"		/* for enum routing */
 
 /* routing status names */
