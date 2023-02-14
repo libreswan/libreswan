@@ -108,6 +108,7 @@ void connection_ondemand(struct connection *c, threadtime_t *inception, const st
 		dbg("initiated on demand using security label and %s %s",
 		    str_enum_short(&keyword_auth_names, c->local->host.config->auth, &hab),
 		    str_packet(&b->packet, &pb));
+		return;
 	}
 
 	struct logger *logger = c->logger;
