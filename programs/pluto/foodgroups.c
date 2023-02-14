@@ -504,16 +504,7 @@ void connection_group_route(struct connection *c)
 			if (t->group == g) {
 				struct connection *ci = connection_by_serialno(t->serialno);
 				if (ci != NULL) {
-					/*
-					 * XXX: why whack only?
-					 * Shouldn't this leave a
-					 * breadcrumb in the log file?
-					 */
-					connection_buf cb;
-					if (!install_prospective_kernel_policy(ci))
-						llog(WHACK_STREAM|RC_ROUTE, c->logger,
-						     "could not route "PRI_CONNECTION,
-						     pri_connection(ci, &cb));
+					connection_route(ci);
 				}
 			}
 		}
