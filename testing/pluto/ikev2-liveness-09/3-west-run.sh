@@ -26,5 +26,5 @@ ip route del unreachable 192.1.2.23
 ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 ipsec trafficstatus
 ipsec shuntstatus
-grep -E "liveness action|acquire|on-demand" OUTPUT/west.pluto.log
+grep -E "^[^|].*(liveness action|acquire|on-demand)" OUTPUT/west.pluto.log
 echo done

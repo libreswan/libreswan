@@ -111,12 +111,8 @@ west #
 000 Bare Shunt list:
 000  
 west #
- grep -E "liveness action|acquire|on-demand" OUTPUT/west.pluto.log
-| xfrm_user_acquire  id { daddr: xfrm_address_t spi: 0 proto: 32 saddr: struct xfrm_address_t sel: struct xfrm_selector} policy { lft { soft_add_expires_seconds=0 hard_add_expires_seconds=0 soft_use_expires_seconds=0 hard_use_expires_seconds=0} curlft { add_time=>0 use_time=0} } aalgos: 4294967295 ealgos: 4294967295 calgos: 4294967295 seq: 1
-| xfrm acquire rtattribute type 5 ...
-| xfrm acquire rtattribute type 16 ...
+ grep -E "^[^|].*(liveness action|acquire|on-demand)" OUTPUT/west.pluto.log
 initiate on-demand for packet 192.0.1.254:8-ICMP->192.0.2.254:0
-| connection_ondemand(): by_acquire=yes oppo=no kind=PERMANENT routing=ROUTED_PROSPECTIVE->ROUTED_NEGOTIATION packet=192.0.1.254:8-ICMP->192.0.2.254:0 selectors=192.0.1.0/24->192.0.2.0/24 one_address=no op=KERNEL_POLICY_OP_REPLACE: broad prospective %pass or %hold
 west #
  echo done
 done
