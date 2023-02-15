@@ -1,40 +1,34 @@
-  <varlistentry>
-  <term><emphasis remap='B'>leftid</emphasis></term>
+<varlistentry>
+  <term>
+    <emphasis remap='B'>leftid</emphasis>
+  </term>
   <listitem>
-<para>how
+    <para>
+      how the left participant should be identified for
+      authentication; defaults to <emphasis remap='B'>left</emphasis>.
+      Can be an IP address or a fully-qualified domain name which will
+      be resolved.  If preceded by <emphasis remap='B'>@</emphasis>,
+      the value is used as a literal string and will not be resolved.
 
+      To support opaque identifiers (usually of type ID_KEY_ID, such
+      as used by Cisco to specify Group Name, use square brackets, eg
+      <emphasis remap='B'>rightid=@[GroupName]</emphasis>.
 
-the left participant
-should be identified for authentication;
-defaults to
-<emphasis remap='B'>left</emphasis>.
-Can be an IP address or a fully-qualified domain name which will be resolved.
-If preceded by <emphasis remap='B'>@</emphasis>, the value is used as
-a literal string and will not be resolved.
+      The magic value <emphasis remap='B'>%fromcert</emphasis> causes
+      the ID to be set to a DN taken from a certificate that is
+      loaded.  Prior to 2.5.16, this was the default if a certificate
+      was specified.
 
-To support opaque identifiers (usually of type ID_KEY_ID, such as used by
-Cisco to specify Group Name, use square brackets, eg <emphasis remap='B'>rightid=@[GroupName]</emphasis>.
-
-The magic value
-<emphasis remap='B'>%fromcert</emphasis>
-causes the ID to be set to a DN taken from a certificate that is loaded.
-Prior to 2.5.16, this was the default if a certificate was specified.
-
-The magic value
-<emphasis remap='B'>%none</emphasis>
-sets the ID to no ID. This is included for completeness, as the ID may
-have been set in the default conn, and one wishes for it to default instead
-of being explicitly set.
-
-The magic value
-<emphasis remap='B'>%myid</emphasis>
-stands for the current setting of <emphasis remap='I'>myid</emphasis>.
-
-This is set in <emphasis remap='B'>config setup</emphasis> or by <citerefentry><refentrytitle>ipsec_whack</refentrytitle><manvolnum>8</manvolnum></citerefentry>), or, if not set,
-it is the IP address in <emphasis remap='B'>%defaultroute</emphasis> (if that is supported by a TXT record in its reverse domain), or otherwise
-it is the system's hostname (if that is supported by a TXT record in its forward domain), or otherwise it is undefined.</para>
-<para>
-When using certificate based ID's, one need to specify the full RDN, optionally using wildcard matching (eg CN='*'). If
-the RDN contains a comma, this can be masked using a comma (eg OU='Foo,, Bar and associates')</para>
+      The magic value <emphasis remap='B'>%none</emphasis> sets the ID
+      to no ID. This is included for completeness, as the ID may have
+      been set in the default conn, and one wishes for it to default
+      instead of being explicitly set.
+    </para>
+    <para>
+      When using certificate based ID's, one need to specify the full
+      RDN, optionally using wildcard matching (eg CN='*'). If the RDN
+      contains a comma, this can be masked using a comma (eg OU='Foo,,
+      Bar and associates')
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>
