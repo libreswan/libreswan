@@ -1,7 +1,16 @@
-  <varlistentry>
-  <term><emphasis remap='B'>leftckaid</emphasis></term>
+<varlistentry>
+  <term>
+    <emphasis remap='B'>leftckaid</emphasis>
+  </term>
   <listitem>
-    <para>The hex CKAID of the X.509 certificate.  Certificates are
-    stored in the NSS database.</para>
+    <para>
+      The CKAID of the X.509 certificate or host key.
+    </para>
+    <para>
+      For X.509 certificates, the CKAID is either the certificate's
+      SubjectKeyIdentifier or the public key's SHA1 fingerprint (when
+      the SubjectKeyIdentifier isn't specified).  For host keys the
+      CKAID is the SHA1 fingerprint of the public key.
+    </para>
   </listitem>
-  </varlistentry>
+</varlistentry>
