@@ -32,7 +32,8 @@ look()
 	 -o -type f -name '*.sh' -print \
 	 -o -type f -name '*.awk' -print \
 	 -o -type f -name '*.in' -print \
-	 -o -type f -name '*.[chly]' -print
+	 -o -type f -name '*.[chly]' -print \
+	 -o -type f -name '*.xml' -print
 }
 
 if test $# -gt 0 ; then
