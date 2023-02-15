@@ -15,11 +15,15 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-# XXX:
+#
+# OSDEP - the target's OS
+#
+# Below assumes a native build.  Cross compiling will need to override
+# this.
 #
 # "uname" describes the the build system's kernel, and not the target
 # system's operating environment (architecture, kernel, operating
-# system version, glibc version, ...) - think cross compile.
+# system version, glibc version, ...).
 #
 # An improvement might be:
 #
@@ -30,8 +34,8 @@
 #
 # Trying to query the build environment with tricks like:
 #
-# ( echo '#include <features.h>' ; echo 'major=__GLIBC__ ;
-# minor=__GLIBC_MINOR__') | gcc -E -
+#   ( echo '#include <features.h>' ; echo 'major=__GLIBC__ ;
+#   minor=__GLIBC_MINOR__') | gcc -E -
 #
 # have a similar result.
 
@@ -41,11 +45,21 @@ OSDEP:=$(shell uname -s | tr 'A-Z' 'a-z')
 endif
 export OSDEP
 
-ifndef OBJDIR
-# let Makefile.inc.local override them?
-ARCH ?= $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/ -e 's/ //g')
-HOST ?= $(shell hostname | sed -e 's/\..*//')
-OBJDIR:=OBJ.${OSDEP}.${ARCH}.$(HOST)
-export OBJDIR
+#
+# OBJDIR - directory to store result
+#
+# The obsession with reproducable builds means that this variable
+# can't contain anything that might identify the build system, such as
+# the host name.
+#
+# Below assumes build directory is local.  Shared directory builds
+# will need to override this (the test VMs, for instance, build into
+# /var/tmp/OBJDIR).
+#
 
+ifndef OBJDIR
+ARCH ?= $(shell uname -m | sed -e s/i.86/i386/ -e s/sun4u/sparc64/ -e s/arm.*/arm/ -e s/sa110/arm/ -e 's/ //g')
+# evaluate once
+OBJDIR := OBJ.$(OSDEP).$(ARCH)
 endif
+export OBJDIR
