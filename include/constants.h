@@ -176,6 +176,7 @@ enum binary {
 #define messup(x) messupn((x), sizeof(*(x)))	/* set all bytes to wrong value */
 
 extern const char *bool_str(bool b);	/* bool -> string */
+err_t ttobool(const char *t, bool *b);	/* string -> bool */
 
 /* routines to copy C strings to fixed-length buffers */
 extern char *jam_str(char *dest, size_t size, const char *src);
