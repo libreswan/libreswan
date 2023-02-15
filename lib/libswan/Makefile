@@ -74,7 +74,7 @@ OBJS += ttoranges_num.o
 OBJS += ttoselector_num.o
 OBJS += ttoselectors_num.o
 OBJS += ttosubnet_num.o
-
+OBJS += ttobool.o
 OBJS += ttobinary-iec-60027-2.o
 OBJS += binaryscale-iec-60027-2.o
 OBJS += alloc.o
