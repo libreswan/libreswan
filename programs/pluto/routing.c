@@ -515,7 +515,7 @@ void permanent_event_handler(struct connection *c, const struct event *e)
 	case RT_ROUTED_NEGOTIATION:
 		switch (e->event) {
 		case CONNECTION_ROUTE:
-			pexpect(c->policy |= POLICY_ROUTE);
+			c->policy |= POLICY_ROUTE;
 			llog(RC_LOG_SERIOUS, c->logger, "connection already routed");
 			return;
 		case CONNECTION_UNROUTE:
