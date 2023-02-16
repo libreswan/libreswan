@@ -7,26 +7,26 @@ west #
 west #
  # dates for these certs are sane.
 west #
- certutil -m 1 -S -k rsa -x         -n west-ca -s "CN=west-ca"  -v 12 -t "CT,C,C" -d /etc/ipsec.d -z ipsec.conf
+ ipsec certutil -m 1 -S -k rsa -x         -n west-ca -s "CN=west-ca"  -v 12 -t "CT,C,C" -z ipsec.conf
 Generating key.  This may take a few moments...
 west #
- certutil -m 2 -S -k rsa -c west-ca -n east    -s "CN=east" -v 12 -t "u,u,u"  -d /etc/ipsec.d -z ipsec.conf
+ ipsec certutil -m 2 -S -k rsa -c west-ca -n east    -s "CN=east" -v 12 -t "u,u,u"  -z ipsec.conf
 Generating key.  This may take a few moments...
 Notice: Trust flag u is set automatically if the private key is present.
 west #
- pk12util -W secret -o OUTPUT/east.p12 -n east -d /etc/ipsec.d
+ ipsec pk12util -W secret -o OUTPUT/east.p12 -n east
 pk12util: PKCS12 EXPORT SUCCESSFUL
 west #
- certutil -L -n east -d /etc/ipsec.d -a > OUTPUT/east.crt
+ ipsec certutil -L -n east -a > OUTPUT/east.crt
 west #
- certutil -F -n east -d /etc/ipsec.d
+ ipsec certutil -F -n east
 west #
  # Import the old and new certificates
 west #
- pk12util -i OUTPUT/new-west.p12 -W secret -d /etc/ipsec.d
+ ipsec pk12util -i OUTPUT/new-west.p12 -W secret
 pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
- pk12util -i OUTPUT/old-west.p12 -W secret -d /etc/ipsec.d
+ ipsec pk12util -i OUTPUT/old-west.p12 -W secret
 pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
  # now get going

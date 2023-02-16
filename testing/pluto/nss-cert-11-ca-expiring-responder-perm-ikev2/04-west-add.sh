@@ -1,7 +1,7 @@
 # Import the old and new certificates
 
-pk12util -i OUTPUT/new-west.p12 -W secret -d /etc/ipsec.d
-pk12util -i OUTPUT/old-west.p12 -W secret -d /etc/ipsec.d
+ipsec pk12util -i OUTPUT/new-west.p12 -W secret
+ipsec pk12util -i OUTPUT/old-west.p12 -W secret
 
 # now get going
 

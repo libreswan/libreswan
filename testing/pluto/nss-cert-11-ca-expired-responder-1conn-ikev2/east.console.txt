@@ -11,39 +11,40 @@ east #
 east #
  # back.
 east #
- certutil -m 1 -S -k rsa -x        -w -2 -n new-ca   -s "CN=new-ca"   -v 12 -t "CT,C,C" -d /etc/ipsec.d -z ipsec.conf
+ ipsec certutil -m 1 -S -k rsa -x        -w -2 -n new-ca   -s "CN=new-ca"   -v 12 -t "CT,C,C" -z ipsec.conf
 Generating key.  This may take a few moments...
 east #
- certutil -m 2 -S -k rsa -c new-ca       -n new-west -s "CN=new-west" -v 12 -t "u,u,u"  -d /etc/ipsec.d -z ipsec.conf
+ ipsec certutil -m 2 -S -k rsa -c new-ca       -n new-west -s "CN=new-west" -v 12 -t "u,u,u"  -z ipsec.conf
 Generating key.  This may take a few moments...
 Notice: Trust flag u is set automatically if the private key is present.
 east #
- pk12util -W secret -o OUTPUT/new-west.p12   -n new-west -d /etc/ipsec.d
+ ipsec pk12util -W secret -o OUTPUT/new-west.p12   -n new-west
 pk12util: PKCS12 EXPORT SUCCESSFUL
 east #
- certutil -L -n new-west -d /etc/ipsec.d -a > OUTPUT/new-west.crt
+ ipsec certutil -L -n new-west -a > OUTPUT/new-west.crt
 east #
- certutil -F -n new-west -d /etc/ipsec.d
+ ipsec certutil -F -n new-west
 east #
  # Now generate a CA that expired 1 month ago.  Use that to sign a
 east #
  # certificate (for west) that is valid.
 east #
- certutil -m 1 -S -k rsa -x -w -13 -v 12 -n old-ca  -s "CN=old-ca"  -v 12 -t "CT,C,C" -d /etc/ipsec.d -z ipsec.conf
+ ipsec certutil -m 1 -S -k rsa -x -w -13 -v 12 -n old-ca  -s "CN=old-ca"  -v 12 -t "CT,C,C" -z ipsec.conf
 Generating key.  This may take a few moments...
 east #
- certutil -m 2 -S -k rsa -c old-ca -w -11 -n old-west -s "CN=old-west" -v 12 -t "u,u,u"  -d /etc/ipsec.d -z ipsec.conf
+ ipsec certutil -m 2 -S -k rsa -c old-ca -w -11 -n old-west -s "CN=old-west" -v 12 -t "u,u,u"  -z ipsec.conf
 Generating key.  This may take a few moments...
 Notice: Trust flag u is set automatically if the private key is present.
 east #
- pk12util -W secret -o OUTPUT/old-west.p12   -n old-west -d /etc/ipsec.d
+ ipsec pk12util -W secret -o OUTPUT/old-west.p12   -n old-west
 pk12util: PKCS12 EXPORT SUCCESSFUL
 east #
- certutil -L -n old-west -d /etc/ipsec.d -a > OUTPUT/old-west.crt
+ ipsec certutil -L -n old-west -a > OUTPUT/old-west.crt
 east #
- certutil -F -n old-west -d /etc/ipsec.d
+ ipsec certutil -F -n old-west
 east #
- # Use vfychain to confirm the above settings
+ ipsec vfychain to confirm the above settings
+open of to failed, -5950 = File not found
 east #
  #
 east #
@@ -59,32 +60,32 @@ east #
 east #
  VFYDATE=$(date -d @${THEN} +%y%m%d000000Z)
 east #
- PATH/lib64/nss/unsupported-tools/vfychain -v -u 12 -p -p -d /etc/ipsec.d -a OUTPUT/new-west.crt
+ ipsec vfychain -v -u 12 -p -p -a OUTPUT/new-west.crt
 Chain is good!
 Root Certificate Subject:: "CN=new-ca"
 Certificate 1 Subject: "CN=new-west"
 east #
- ! PATH/lib64/nss/unsupported-tools/vfychain -v -u 12 -p -p -b ${VFYDATE} -d /etc/ipsec.d -a OUTPUT/new-west.crt
+ ! ipsec vfychain -v -u 12 -p -p -b ${VFYDATE} -a OUTPUT/new-west.crt
 Chain is bad!
 PROBLEM WITH THE CERT CHAIN:
 CERT 0. CN=new-west :
   ERROR -8181: Peer's Certificate has expired.
 east #
- ! PATH/lib64/nss/unsupported-tools/vfychain -v -u 12 -p -p -d /etc/ipsec.d -a OUTPUT/old-west.crt
+ ! ipsec vfychain -v -u 12 -p -p -a OUTPUT/old-west.crt
 Chain is bad!
 PROBLEM WITH THE CERT CHAIN:
 CERT 0. CN=old-west :
   ERROR -8179: Peer's Certificate issuer is not recognized.
     CN=old-ca
 east #
- PATH/lib64/nss/unsupported-tools/vfychain -v -u 12 -p -p -b ${VFYDATE} -d /etc/ipsec.d -a OUTPUT/old-west.crt
+ ipsec vfychain -v -u 12 -p -p -b ${VFYDATE} -a OUTPUT/old-west.crt
 Chain is good!
 Root Certificate Subject:: "CN=old-ca"
 Certificate 1 Subject: "CN=old-west"
 east #
  # Import the cert
 east #
- pk12util -i OUTPUT/east.p12 -W secret -d /etc/ipsec.d
+ ipsec pk12util -i OUTPUT/east.p12 -W secret
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
  # now get going

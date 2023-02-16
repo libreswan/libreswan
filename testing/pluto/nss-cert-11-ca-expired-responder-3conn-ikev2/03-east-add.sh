@@ -1,6 +1,6 @@
 # Import the cert
 
-pk12util -i OUTPUT/east.p12 -W secret -d /etc/ipsec.d
+ipsec pk12util -i OUTPUT/east.p12 -W secret
 
 ipsec start
 ../../guestbin/wait-until-pluto-started
