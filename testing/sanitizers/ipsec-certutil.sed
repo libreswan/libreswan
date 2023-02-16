@@ -1,6 +1,7 @@
 # match: certutil
 
 /^ certutil / b match
+/^ ipsec certutil / b match
 b end
 
 :match
