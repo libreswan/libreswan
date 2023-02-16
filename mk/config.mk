@@ -412,6 +412,15 @@ NSSDIR ?= $(VARDIR)/lib/ipsec/nss
 TRANSFORMS += 's:@IPSEC_NSSDIR@:$(NSSDIR):g'
 USERLAND_CFLAGS += -DIPSEC_NSSDIR=\"$(NSSDIR)\"
 
+# Where NSS programs live (well most of them, fedora hides vfychain,
+# see hack in ipsec.in).
+ifndef NSS_BINDIR
+NSS_BINDIR := $(pkg-config --variable prefix nss)/bin
+export NSS_BINDIR
+endif
+TRANSFORMS += 's:@@NSS_BINDIR@@:$(NSS_BINDIR):g'
+USERLAND_CFLAGS += -DNSS_BINDIR=\"$(NSS_BINDIR)\"
+
 DOCKER_PLUTONOFORK ?= --nofork
 
 # PYTHON_BINARY is used for python scripts shebang

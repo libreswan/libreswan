@@ -33,10 +33,13 @@ DBPW=""
 CACERTDIR="${IPSEC_CONFDDIR}/cacerts"
 CRLDIR="${IPSEC_CONFDDIR}/crls"
 CTLSOCKET="${IPSEC_RUNDIR}/pluto.ctl"
+NSS_BINDIR="${NSS_BINDIR:-@@NSS_BINDIR@@}"
 
 export IPSEC_EXECDIR IPSEC_CONF IPSEC_RUNDIR CTLSOCKET
 
-# standardize PATH, and export it for everything else's benefit
+# standardize PATH, and export it for everything else's benefit;
+# should config.mk generate this?
+PATH="${NSS_BINDIR}:${PATH#${NSS_BINDIR}:}"
 PATH="${IPSEC_SBINDIR}:${PATH#${IPSEC_SBINDIR}:}"
 export PATH
 
@@ -483,6 +486,33 @@ ipsec_checknss() {
     fi
 }
 
+ipsec_nsscmd() {
+
+    if [ -z "${1}" ]; then
+	echo "Usage: ipsec {certutil,pk12util,vfychain} ..." >&2
+	exit 1
+    fi
+
+    # vfychain on Fedora isn't in the default path.
+    if test -x /usr/lib64/nss/unsupported-tools/$1 ; then
+	cmd=/usr/lib64/nss/unsupported-tools/$1
+    else
+	cmd=$1
+    fi
+    shift # drop the command
+
+    # reject -d and --nssdir outright
+    case " $* " in
+	*' -d '* | *' --nssdir '* )
+	    echo "ERROR: ipsec {certutil,pk12util,vfychain} do not accept --nssdir" >&2
+	    exit 1
+	    ;;
+    esac
+
+    exec ${cmd} -d ${IPSEC_NSSDIR} "$@"
+}
+
+
 # Check for no options at all and return usage.
 if [ -z "${1}" ]; then
     ipsec_usage
@@ -598,6 +628,9 @@ while [ ${#} -gt 0 ]; do
 	    ;;
 	checknss|--checknss|initnss|--initnss)
 	    ipsec_checknss "${@}"
+	    ;;
+	certutil|pk12util|vfychain)
+	    ipsec_nsscmd "${@}"
 	    ;;
 	secrets)
 	    cmd="whack"
