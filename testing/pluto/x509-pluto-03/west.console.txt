@@ -3,7 +3,7 @@ Preparing X.509 files
 west #
  # remove east's cert so it must come via IKE
 west #
- certutil -D -n east -d sql:/etc/ipsec.d
+ ipsec certutil -D -n east
 west #
  # confirm that the network is alive
 west #

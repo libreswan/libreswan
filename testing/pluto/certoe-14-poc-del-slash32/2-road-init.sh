@@ -5,7 +5,7 @@ ip tuntap add mode tun tun0
 ifconfig tun0 10.11.12.13/24
 ip route add default via 10.11.12.14
 ip route add 192.1.2.0/24 via 192.1.3.254
-certutil -D -n east -d sql:/etc/ipsec.d
+ipsec certutil -D -n east
 cp road-ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
 cp policies/* /etc/ipsec.d/policies/
 # specific /32 to test replacement of /32 oppo-instance with oppo-group

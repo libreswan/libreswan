@@ -6,11 +6,11 @@ pk12util: File Open failed: /testing/x509/pkcs12/east.p12: PR_FILE_NOT_FOUND_ERR
 east #
  # east MUST NOT have intermediate ceritificates available - they are changing target like end target
 east #
- #certutil -A -i /testing/x509/certs/west_chain_int_1.crt -n "west_chain_1" -d sql:/etc/ipsec.d -t "CT,,"
+ #ipsec certutil -A -i /testing/x509/certs/west_chain_int_1.crt -n "west_chain_1" -t "CT,,"
 east #
- #certutil -A -i /testing/x509/certs/west_chain_int_2.crt -n "west_chain_2" -d sql:/etc/ipsec.d -t "CT,,"
+ #ipsec certutil -A -i /testing/x509/certs/west_chain_int_2.crt -n "west_chain_2" -t "CT,,"
 east #
- certutil -A -i /testing/x509/cacerts/otherca.crt -n "otherca" -d sql:/etc/ipsec.d -t "CT,,"
+ ipsec certutil -A -i /testing/x509/cacerts/otherca.crt -n "otherca" -t "CT,,"
 east #
  ipsec start
 Redirecting to: [initsystem]
@@ -61,7 +61,7 @@ east #
 000 "road-chain-B":   nat-traversal: encaps:auto; keepalive:20s
 000 "road-chain-B":   newest IKE SA: #0; newest IPsec SA: #0; conn serial: $1;
 east #
- certutil -L -d sql:/etc/ipsec.d
+ ipsec certutil -L
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east                                                         u,u,u

@@ -1,9 +1,9 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 east #
- certutil -d sql:/etc/ipsec.d -D -n west
+ ipsec certutil -D -n west
 east #
- certutil -K -d sql:/etc/ipsec.d
+ ipsec certutil -K
 certutil: Checking token "NSS Certificate DB" in slot "NSS User Private Key and Certificate Services"
 < 0> rsa      <<CKAID#1>>   east
 east #
@@ -40,7 +40,7 @@ east #
  echo "initdone"
 initdone
 east #
- certutil -L -d sql:/etc/ipsec.d
+ ipsec certutil -L
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east                                                         u,u,u

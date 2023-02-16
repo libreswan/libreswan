@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --x509
 # remove east's cert so it must come via IKE
-certutil -D -n east -d sql:/etc/ipsec.d
+ipsec certutil -D -n east
 # confirm that the network is alive
 ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 # ensure that clear text does not get through

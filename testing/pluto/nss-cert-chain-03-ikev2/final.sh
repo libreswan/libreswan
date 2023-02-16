@@ -1,3 +1,3 @@
-certutil -L -d sql:/etc/ipsec.d
+ipsec certutil -L
 # catch any cert chain specific leaks
 ipsec whack --shutdown

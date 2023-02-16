@@ -48,7 +48,7 @@ east #
 east #
  echo -n "123456" > /tmp/pin
 east #
- certutil -h "pkcs11:model=SoftHSM%20v2;manufacturer=SoftHSM%20project;token=libreswan" -M -t CT,, -n "libreswan:eastCA" -d sql:/etc/ipsec.d -f /tmp/pin
+ ipsec certutil -h "pkcs11:model=SoftHSM%20v2;manufacturer=SoftHSM%20project;token=libreswan" -M -t CT,, -n "libreswan:eastCA" -f /tmp/pin
 east #
  #p11tool --list-all "pkcs11:model=SoftHSM%20v2;manufacturer=SoftHSM%20project;token=libreswan" --login
 east #

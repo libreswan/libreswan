@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 east #
- certutil -d sql:/etc/ipsec.d -D -n "Libreswan test CA for mainca - Libreswan"
+ ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
 east #
  ipsec start
 Redirecting to: [initsystem]

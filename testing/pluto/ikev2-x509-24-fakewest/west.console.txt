@@ -3,9 +3,9 @@ Preparing X.509 files
 west #
  # delete real west cert and real main CA
 west #
- certutil -D -n west -d sql:/etc/ipsec.d
+ ipsec certutil -D -n west
 west #
- certutil -D -d sql:/etc/ipsec.d -n "Libreswan test CA for mainca - Libreswan"
+ ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
 west #
  # import fake one
 west #
@@ -14,7 +14,7 @@ pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
  # remove (fake) CA
 west #
- certutil -D -d sql:/etc/ipsec.d -n "Libreswan test CA for mainca - Libreswan"
+ ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
 west #
  # confirm that the network is alive
 west #

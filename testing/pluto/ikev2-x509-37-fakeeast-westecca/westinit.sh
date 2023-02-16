@@ -3,7 +3,7 @@
 # import real west+mainca
 pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/pkcs12/mainca/west.p12
 # delete real main CA
-certutil -D -d sql:/etc/ipsec.d -n "Libreswan test CA for mainca - Libreswan"
+ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
 # so only CA is bogus
 pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/fake/pkcs12/mainec/mainec.p12
 

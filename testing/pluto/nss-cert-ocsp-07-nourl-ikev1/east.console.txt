@@ -1,13 +1,13 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 east #
- certutil -d sql:/etc/ipsec.d -D -n west
+ ipsec certutil -D -n west
 east #
  # replace nic with the nic-no url cert
 east #
- certutil -d sql:/etc/ipsec.d -D -n nic
+ ipsec certutil -D -n nic
 east #
- certutil -A -i /testing/x509/certs/nic-nourl.crt -d sql:/etc/ipsec.d -n nic -t "P,,"
+ ipsec certutil -A -i /testing/x509/certs/nic-nourl.crt -n nic -t "P,,"
 east #
  ipsec start
 Redirecting to: [initsystem]

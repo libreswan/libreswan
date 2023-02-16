@@ -6,7 +6,7 @@ east #
 east #
  # pk12util -i OUTPUT/nss/client.p12 -d sql:/etc/ipsec.d -K 'foobar' -W 'foobar'
 east #
- # certutil -M -d sql:/etc/ipsec.d -n cacert -t 'CT,,'
+ # ipsec certutil -M -n cacert -t 'CT,,'
 east #
  # new scratch DB
 east #
@@ -64,7 +64,7 @@ east #
  pk12util -i OUTPUT/nss/server.p12 -d sql:/etc/ipsec.d -K 'foobar' -W 'foobar'
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
- certutil -M -d sql:/etc/ipsec.d -n cacert -t 'CT,,'
+ ipsec certutil -M -n cacert -t 'CT,,'
 east #
  ipsec start
 Redirecting to: [initsystem]

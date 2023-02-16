@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --x509 --x509name north
 # delete the CA, both ends hardcode both certificates
-certutil -D -n "Libreswan test CA for mainca - Libreswan" -d sql:/etc/ipsec.d
-certutil -D -n "east-ec" -d sql:/etc/ipsec.d
+ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
+ipsec certutil -D -n "east-ec"
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-ikev2

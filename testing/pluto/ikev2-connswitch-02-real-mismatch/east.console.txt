@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep
 east #
- certutil -d sql:/etc/ipsec.d -D -n west
+ ipsec certutil -D -n west
 certutil: could not find certificate named "west": SEC_ERROR_...
 east #
  ipsec start

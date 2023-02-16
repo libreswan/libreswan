@@ -1,9 +1,9 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 west #
- certutil -d sql:/etc/ipsec.d -D -n east
+ ipsec certutil -D -n east
 west #
- certutil -d sql:/etc/ipsec.d -D -n west
+ ipsec certutil -D -n west
 west #
  certutil -A -i /testing/x509/cacerts/badca.crt -n "badca" -d sql:/etc/ipsec.d -t "CT,,"
 west #

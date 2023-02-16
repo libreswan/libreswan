@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --x509 --x509name notyetvalid
-certutil -d sql:/etc/ipsec.d -D -n east
+ipsec certutil -D -n east
 mkdir -p /var/run/pluto
 
 # Set a time in the future so notyetvalid and east certs are valid

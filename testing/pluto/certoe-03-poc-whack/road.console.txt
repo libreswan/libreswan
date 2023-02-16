@@ -1,9 +1,9 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 road #
- certutil -D -n road -d sql:/etc/ipsec.d
+ ipsec certutil -D -n road
 road #
- certutil -D -n east -d sql:/etc/ipsec.d
+ ipsec certutil -D -n east
 road #
  cp road-ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
 road #

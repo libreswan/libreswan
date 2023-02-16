@@ -3,7 +3,7 @@ Preparing X.509 files
 east #
  # remove west's cert so it must come via IKE
 east #
- certutil -D -n west -d sql:/etc/ipsec.d
+ ipsec certutil -D -n west
 east #
  ipsec start
 Redirecting to: [initsystem]

@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --x509
-certutil -D -n west -d sql:/etc/ipsec.d
+ipsec certutil -D -n west
 mkdir /tmp/tmpnss-east
 export NSS_DISABLE_UNLOAD=no
 export NSS_SDB_USE_CACHE=yes

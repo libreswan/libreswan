@@ -3,7 +3,7 @@ west #
  /testing/guestbin/swan-prep --x509 --signedbyother
 Preparing X.509 files
 west #
- certutil -D -n east -d sql:/etc/ipsec.d
+ ipsec certutil -D -n east
 west #
  cp policies/* /etc/ipsec.d/policies/
 west #

@@ -32,7 +32,7 @@ east #
  echo "initdone"
 initdone
 east #
- certutil -L -d sql:/etc/ipsec.d
+ ipsec certutil -L
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 mainca                                                       CT,, 

@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --x509
-certutil -D -d sql:/etc/ipsec.d -n road
-certutil -D -d sql:/etc/ipsec.d -n west
+ipsec certutil -D -n road
+ipsec certutil -D -n west
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add nss-cert

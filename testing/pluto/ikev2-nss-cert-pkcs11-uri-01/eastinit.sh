@@ -20,7 +20,7 @@ p11tool --provider /usr/lib64/pkcs11/libsofthsm2.so --id 01 --write --load-privk
 # note: --trusted --ca does not seem to set the trust bits needed for CA for nss - so fixup afterwards
 p11tool --provider /usr/lib64/pkcs11/libsofthsm2.so --id 01 --write --trusted --ca --load-certificate /testing/x509/cacerts/mainca.crt --label eastCA --so-login
 echo -n "123456" > /tmp/pin
-certutil -h "pkcs11:model=SoftHSM%20v2;manufacturer=SoftHSM%20project;token=libreswan" -M -t CT,, -n "libreswan:eastCA" -d sql:/etc/ipsec.d -f /tmp/pin
+ipsec certutil -h "pkcs11:model=SoftHSM%20v2;manufacturer=SoftHSM%20project;token=libreswan" -M -t CT,, -n "libreswan:eastCA" -f /tmp/pin
 #p11tool --list-all "pkcs11:model=SoftHSM%20v2;manufacturer=SoftHSM%20project;token=libreswan" --login
 CERT_URI=$(p11tool --list-all "pkcs11:model=SoftHSM%20v2;manufacturer=SoftHSM%20project;token=libreswan" --login | grep eastCert |grep -v Label | cut -d ':' -f '2-' | sed 's/ //g')
 KEY_URI=$(p11tool --list-all "pkcs11:model=SoftHSM%20v2;manufacturer=SoftHSM%20project;token=libreswan" --login | grep eastKey |grep -v Label | cut -d ':' -f '2-' | sed 's/ //g')

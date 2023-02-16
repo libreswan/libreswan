@@ -3,9 +3,9 @@ Preparing X.509 files
 west #
  # delete the CA, both ends hardcode both certificates
 west #
- certutil -D -n "Libreswan test CA for mainca - Libreswan" -d sql:/etc/ipsec.d
+ ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
 west #
- certutil -D -n "east-ec" -d sql:/etc/ipsec.d
+ ipsec certutil -D -n "east-ec"
 west #
  ipsec start
 Redirecting to: [initsystem]

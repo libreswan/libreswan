@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 west #
- certutil -d sql:/etc/ipsec.d -D -n east
+ ipsec certutil -D -n east
 west #
  # confirm that the network is alive
 west #

@@ -26,7 +26,7 @@ pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
  # Tuomo: why doesn't ipsec checknss --settrust work here?
 west #
- certutil -M -d sql:/etc/ipsec.d -n "strongSwan CA - strongSwan" -t CT,,
+ ipsec certutil -M -n "strongSwan CA - strongSwan" -t CT,,
 west #
  ipsec start
 Redirecting to: [initsystem]

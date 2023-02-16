@@ -1,9 +1,9 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 east #
- certutil -d sql:/etc/ipsec.d -D -n west
+ ipsec certutil -D -n west
 east #
- certutil -A -i /testing/x509/cacerts/otherca.crt -d sql:/etc/ipsec.d -n "otherca" -t 'CT,,'
+ ipsec certutil -A -i /testing/x509/cacerts/otherca.crt -n "otherca" -t 'CT,,'
 east #
  ipsec start
 Redirecting to: [initsystem]
@@ -55,7 +55,7 @@ east #
  echo "initdone"
 initdone
 east #
- certutil -L -d sql:/etc/ipsec.d
+ ipsec certutil -L
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east                                                         u,u,u

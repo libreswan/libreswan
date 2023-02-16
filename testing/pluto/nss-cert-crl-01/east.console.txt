@@ -3,7 +3,7 @@ Preparing X.509 files
 east #
  crlutil -I -i /testing/x509/crls/cacrlvalid.crl -d sql:/etc/ipsec.d
 east #
- certutil -d sql:/etc/ipsec.d -D -n west
+ ipsec certutil -D -n west
 east #
  ipsec start
 Redirecting to: [initsystem]

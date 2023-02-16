@@ -3,7 +3,7 @@
 # Always zap and recreate special comma certs. Saved under OUTPUT/nss
 # and left waiting for clients (west et.al.) which an import using:
 # pk12util -i OUTPUT/nss/client.p12 -d sql:/etc/ipsec.d -K 'foobar' -W 'foobar'
-# certutil -M -d sql:/etc/ipsec.d -n cacert -t 'CT,,'
+# ipsec certutil -M -n cacert -t 'CT,,'
 
 # new scratch DB
 rm -f OUTPUT/nss
@@ -26,7 +26,7 @@ pk12util -o OUTPUT/nss/serverX.p12 -n serverX -d sql:OUTPUT/nss -W 'foobar' -K '
 # init and import real server
 ipsec initnss > /dev/null 2> /dev/null
 pk12util -i OUTPUT/nss/server.p12 -d sql:/etc/ipsec.d -K 'foobar' -W 'foobar'
-certutil -M -d sql:/etc/ipsec.d -n cacert -t 'CT,,'
+ipsec certutil -M -n cacert -t 'CT,,'
 
 ipsec start
 ../../guestbin/wait-until-pluto-started

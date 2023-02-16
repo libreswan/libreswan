@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 east #
- certutil -d sql:/etc/ipsec.d -D -n west
+ ipsec certutil -D -n west
 east #
  pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/pkcs12/mainca/usage-server.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
@@ -38,7 +38,7 @@ east #
  echo "initdone"
 initdone
 east #
- certutil -L -d sql:/etc/ipsec.d
+ ipsec certutil -L
 Certificate Nickname                                         Trust Attributes
                                                              SSL,S/MIME,JAR/XPI
 east                                                         u,u,u

@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep --x509
-certutil -d sql:/etc/ipsec.d -D -n west
-certutil -A -i /testing/x509/cacerts/otherca.crt -d sql:/etc/ipsec.d -n "otherca" -t 'CT,,'
+ipsec certutil -D -n west
+ipsec certutil -A -i /testing/x509/cacerts/otherca.crt -n "otherca" -t 'CT,,'
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add nss-cert-correct

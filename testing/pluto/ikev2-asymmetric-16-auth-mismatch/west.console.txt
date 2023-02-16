@@ -3,9 +3,9 @@ Preparing X.509 files
 west #
  # remove our cert, we only want/need to CAcert
 west #
- certutil -D -n west -d sql:/etc/ipsec.d
+ ipsec certutil -D -n west
 west #
- certutil -D -n east -d sql:/etc/ipsec.d
+ ipsec certutil -D -n east
 west #
  # ensure that clear text does not get through
 west #

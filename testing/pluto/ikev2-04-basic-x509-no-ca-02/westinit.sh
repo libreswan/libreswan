@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --x509
 # delete the CA, both ends hardcode both certificates
-certutil -D -n "Libreswan test CA for mainca - Libreswan" -d sql:/etc/ipsec.d
-certutil -D -n "east-ec" -d sql:/etc/ipsec.d
+ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
+ipsec certutil -D -n "east-ec"
 # load a distraction CA
 pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/pkcs12/otherca/otherwest.p12
 certutil -M -n 'Libreswan test CA for otherca - Libreswan' -d sql:/etc/ipsec.d/ -t 'CT,,'

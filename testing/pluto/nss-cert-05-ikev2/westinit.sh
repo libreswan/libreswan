@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --x509 --signedbyother
-certutil -d sql:/etc/ipsec.d -D -n east
+ipsec certutil -D -n east
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec whack --impair suppress-retransmits

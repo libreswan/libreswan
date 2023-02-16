@@ -1,2 +1,2 @@
-certutil -L -d sql:/etc/ipsec.d
+ipsec certutil -L
 ipsec auto --listall

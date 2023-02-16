@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --x509
-certutil -d sql:/etc/ipsec.d -D -n east
+ipsec certutil -D -n east
 # confirm that the network is alive
 ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 ipsec start

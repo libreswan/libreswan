@@ -7,7 +7,7 @@ pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
  # delete real main CA
 west #
- certutil -D -d sql:/etc/ipsec.d -n "Libreswan test CA for mainca - Libreswan"
+ ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
 west #
  # so only CA is bogus
 west #

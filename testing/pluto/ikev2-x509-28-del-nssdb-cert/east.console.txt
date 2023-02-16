@@ -21,7 +21,7 @@ east #
 east #
  # delete certificate east
 east #
- certutil -d sql:/etc/ipsec.d -D -n east
+ ipsec certutil -D -n east
 east #
  # whack should not show certificate
 east #
@@ -36,7 +36,7 @@ east #
 east #
  # put east back
 east #
- certutil -A -i ../../x509/certs/east.crt -d sql:/etc/ipsec.d -n east -t "P,,"
+ ipsec certutil -A -i ../../x509/certs/east.crt -n east -t "P,,"
 east #
  # re-load should not dump core
 east #

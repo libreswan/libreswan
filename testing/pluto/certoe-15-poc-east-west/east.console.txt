@@ -6,7 +6,7 @@ east #
  ip route add default via 192.9.2.1
 Error: Nexthop has invalid gateway.
 east #
- certutil -D -n west -d sql:/etc/ipsec.d
+ ipsec certutil -D -n west
 east #
  cp east-ikev2-oe.conf /etc/ipsec.d/ikev2-oe.conf
 east #

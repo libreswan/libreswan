@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --x509
-certutil -d sql:/etc/ipsec.d -D -n east
+ipsec certutil -D -n east
 pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/pkcs12/mainca/usage-client.p12
 ipsec start
 ../../guestbin/wait-until-pluto-started
