@@ -118,8 +118,7 @@ struct whack_end {
 				 * pluto will convert to IP address again,
 				 * if this is non-NULL when conn fails.
 				 */
-	char *groundhogday;	/* Day to use when verifying
-				 * certificates */
+	char *groundhog;	/* Is this end a groundhog? */
 };
 
 enum whack_opt_set {

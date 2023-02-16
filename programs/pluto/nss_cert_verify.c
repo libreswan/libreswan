@@ -46,6 +46,8 @@
 #include "log.h"
 #include "log_limiter.h"
 
+bool groundhogday;
+
 static bool crl_is_current(CERTSignedCrl *crl)
 {
 	return SEC_CheckCrlTimes(&crl->crl, PR_Now()) != secCertTimeExpired;
@@ -166,9 +168,9 @@ static void set_rev_params(CERTRevocationFlags *rev,
 			      (err) == SEC_ERROR_INADEQUATE_KEY_USAGE)
 
 static bool verify_end_cert(struct logger *logger,
-			    const struct root_certs *root_certs,
+			    const CERTCertList *trustcl,
 			    const struct rev_opts *rev_opts,
-			    realtime_t groundhogtime,
+			    PRTime groundhogtime,
 			    CERTCertificate *end_cert)
 {
 	CERTRevocationFlags rev;
@@ -180,9 +182,7 @@ static bool verify_end_cert(struct logger *logger,
 	set_rev_per_meth(&rev, revFlagsLeaf, revFlagsChain);
 	set_rev_params(&rev, rev_opts);
 
-	realtime_buf rb;
-	ldbg(logger, "certifcate time check time is %s",
-	     str_realtime(groundhogtime, true/*utc*/, &rb));
+	ldbg(logger, "groundhogtime is %ju", (uintmax_t)groundhogtime);
 
 	CERTValInParam cvin[] = {
 		{
@@ -195,7 +195,7 @@ static bool verify_end_cert(struct logger *logger,
 		},
 		{
 			.type = cert_pi_trustAnchors,
-			.value = { .pointer = { .chain = root_certs->trustcl, } }
+			.value = { .pointer = { .chain = trustcl, } }
 		},
 		{
 			.type = cert_pi_useOnlyTrustAnchors,
@@ -203,9 +203,7 @@ static bool verify_end_cert(struct logger *logger,
 		},
 		{
 			.type = cert_pi_date,
-			/* Needs to be in microseconds; zero/epoch
-			 * means NOW */
-			.value.scalar.time = realmicroseconds(groundhogtime),
+			.value.scalar.time = groundhogtime,
 		},
 		{
 			.type = cert_pi_end
@@ -228,7 +226,6 @@ static bool verify_end_cert(struct logger *logger,
 	if (DBGP(DBG_BASE)) {
 		DBG_log("%s verifying %s using:", __func__, end_cert->subjectName);
 		unsigned nr = 0;
-		CERTCertList *trustcl = root_certs->trustcl;
 		for (CERTCertListNode *node = CERT_LIST_HEAD(trustcl);
 		     !CERT_LIST_END(node, trustcl);
 		     node = CERT_LIST_NEXT(node)) {
@@ -515,7 +512,6 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 
 struct verified_certs find_and_verify_certs(struct logger *logger,
 					    enum ike_version ike_version,
-					    realtime_t groundhogtime,
 					    struct payload_digest *cert_payloads,
 					    const struct rev_opts *rev_opts,
 					    struct root_certs *root_certs,
@@ -525,6 +521,7 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 		.cert_chain = NULL,
 		.crl_update_needed = false,
 		.harmless = true,
+		.groundhog = false,
 	};
 
 	if (!pexpect(cert_payloads != NULL)) {
@@ -599,12 +596,45 @@ struct verified_certs find_and_verify_certs(struct logger *logger,
 	}
 
 	logtime_t verify_time = logtime_start(logger);
-	bool end_ok = verify_end_cert(logger, root_certs, rev_opts,
-				      realtime_epoch, end_cert);
-	if (!end_ok && realtime_cmp(groundhogtime, >, realtime_epoch)) {
-		ldbg(logger, "retrying with groundhogtime");
-		end_ok = verify_end_cert(logger, root_certs, rev_opts,
-					 groundhogtime, end_cert);
+	bool end_ok = verify_end_cert(logger, root_certs->trustcl, rev_opts,
+				      0, end_cert);
+	if (!end_ok && groundhogday) {
+		/*
+		 * Go through the CA certs retrying any with an
+		 * expired time.
+		 */
+		PRTime prnow = PR_Now();
+		for (CERTCertListNode *node = CERT_LIST_HEAD(root_certs->trustcl);
+		     !CERT_LIST_END(node, root_certs->trustcl);
+		     node = CERT_LIST_NEXT(node)) {
+			PRTime not_before, not_after;
+			PRTime groundhogtime = 0;
+			if (CERT_GetCertTimes(node->cert, &not_before, &not_after) != SECSuccess) {
+				continue;
+			}
+			if (LL_CMP(not_after, <, prnow)) {
+				groundhogtime = not_after;
+			} else if (LL_CMP(not_before, >, prnow)) {
+				groundhogtime = not_before;
+			} else {
+				continue;
+			}
+			ldbg(logger, "  retrying groundhog CA: %s", node->cert->subjectName);
+			CERTCertList ground_certs = {
+				.list = PR_INIT_STATIC_CLIST(&ground_certs.list),
+			};
+			CERTCertListNode ground_cert = {
+				.cert = node->cert,
+			};
+			PR_INSERT_LINK(&ground_cert.links, &ground_certs.list);
+
+			if (verify_end_cert(logger, &ground_certs, rev_opts,
+					    groundhogtime, end_cert)) {
+				result.groundhog = true;
+				end_ok = true;
+				break;
+			}
+		}
 	}
 	logtime_stop(&verify_time, "%s() calling verify_end_cert()", __func__);
 	if (!end_ok) {

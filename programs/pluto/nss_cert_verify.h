@@ -46,11 +46,11 @@ struct verified_certs {
 	struct pubkey_list *pubkey_db;
 	bool crl_update_needed;
 	bool harmless;
+	bool groundhog;
 };
 
 struct verified_certs find_and_verify_certs(struct logger *log,
 					    enum ike_version ike_version,
-					    realtime_t certtime,
 					    struct payload_digest *cert_payloads,
 					    const struct rev_opts *rev_opts,
 					    struct root_certs *root_cert,
@@ -59,5 +59,7 @@ struct verified_certs find_and_verify_certs(struct logger *log,
 extern diag_t cert_verify_subject_alt_name(const CERTCertificate *cert, const struct id *id);
 
 extern SECItem *nss_pkcs7_blob(const struct cert *cert, bool send_full_chain);
+
+extern bool groundhogday;
 
 #endif /* NSS_CERT_VFY_H */

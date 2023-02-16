@@ -396,8 +396,8 @@ static bool set_whack_end(struct whack_end *w,
 		w->xauth_client = l->options[KNCF_XAUTHCLIENT];
 	if (l->strings_set[KSCF_USERNAME])
 		w->xauth_username = l->strings[KSCF_USERNAME];
-	if (l->strings_set[KSCF_GROUNDHOGDAY])
-		w->groundhogday = l->strings[KSCF_GROUNDHOGDAY];
+	if (l->strings_set[KSCF_GROUNDHOG])
+		w->groundhog = l->strings[KSCF_GROUNDHOG];
 
 	if (l->options_set[KNCF_MODECONFIGSERVER])
 		w->modecfg_server = l->options[KNCF_MODECONFIGSERVER];

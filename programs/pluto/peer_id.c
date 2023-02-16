@@ -260,6 +260,13 @@ static struct connection *refine_host_connection_on_responder(int indent,
 				continue;
 			}
 
+			if (st->st_remote_certs.groundhog && !d->remote->config->host.groundhog) {
+				connection_buf cb;
+				dbg_rhc("skipping non-groundhog instance "PRI_CONNECTION"",
+					pri_connection(d, &cb));
+				continue;
+			}
+
 			/*
 			 * An Opportunistic connection is never
 			 * better.

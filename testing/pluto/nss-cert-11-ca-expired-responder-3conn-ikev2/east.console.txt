@@ -43,6 +43,24 @@ east #
 east #
  certutil -F -n old-west -d /etc/ipsec.d
 east #
+ # Now generate a CA that expired 1 month ago.  Use that to sign a
+east #
+ # certificate (for west) that is valid.
+east #
+ certutil -m 1 -S -k rsa -x -w -13 -v 12 -n hog-ca  -s "CN=hog-ca"  -v 12 -t "CT,C,C" -d /etc/ipsec.d -z ipsec.conf
+Generating key.  This may take a few moments...
+east #
+ certutil -m 2 -S -k rsa -c hog-ca -w -11 -n hog-west -s "CN=hog-west" -v 12 -t "u,u,u"  -d /etc/ipsec.d -z ipsec.conf
+Generating key.  This may take a few moments...
+Notice: Trust flag u is set automatically if the private key is present.
+east #
+ pk12util -W secret -o OUTPUT/hog-west.p12   -n hog-west -d /etc/ipsec.d
+pk12util: PKCS12 EXPORT SUCCESSFUL
+east #
+ certutil -L -n hog-west -d /etc/ipsec.d -a > OUTPUT/hog-west.crt
+east #
+ certutil -F -n hog-west -d /etc/ipsec.d
+east #
  # Use vfychain to confirm the above settings
 east #
  #
@@ -64,7 +82,7 @@ Chain is good!
 Root Certificate Subject:: "CN=new-ca"
 Certificate 1 Subject: "CN=new-west"
 east #
- ! PATH/lib64/nss/unsupported-tools/vfychain -v -u 12 -p -p -b ${VFYDATE} -d /etc/ipsec.d -a OUTPUT/new-west.crt
+ PATH/lib64/nss/unsupported-tools/vfychain -v -u 12 -p -p -b ${VFYDATE} -d /etc/ipsec.d -a OUTPUT/new-west.crt
 Chain is bad!
 PROBLEM WITH THE CERT CHAIN:
 CERT 0. CN=new-west :
@@ -82,20 +100,36 @@ Chain is good!
 Root Certificate Subject:: "CN=old-ca"
 Certificate 1 Subject: "CN=old-west"
 east #
+ ! PATH/lib64/nss/unsupported-tools/vfychain -v -u 12 -p -p -d /etc/ipsec.d -a OUTPUT/hog-west.crt
+Chain is bad!
+PROBLEM WITH THE CERT CHAIN:
+CERT 0. CN=hog-west :
+  ERROR -8179: Peer's Certificate issuer is not recognized.
+    CN=hog-ca
+east #
+ PATH/lib64/nss/unsupported-tools/vfychain -v -u 12 -p -p -b ${VFYDATE} -d /etc/ipsec.d -a OUTPUT/hog-west.crt
+Chain is good!
+Root Certificate Subject:: "CN=hog-ca"
+Certificate 1 Subject: "CN=hog-west"
+east #
  # Import the cert
 east #
  pk12util -i OUTPUT/east.p12 -W secret -d /etc/ipsec.d
 pk12util: PKCS12 IMPORT SUCCESSFUL
-east #
- # now get going
 east #
  ipsec start
 Redirecting to: [initsystem]
 east #
  ../../guestbin/wait-until-pluto-started
 east #
- ipsec auto --add east
-003 "east": WARNING: left is a groundhog
-002 "east": added IKEv2 connection
+ ipsec auto --add new-ca
+002 "new-ca": added IKEv2 connection
+east #
+ ipsec auto --add old-ca
+002 "old-ca": added IKEv2 connection
+east #
+ ipsec auto --add hog-ca
+003 "hog-ca": WARNING: left is a groundhog
+002 "hog-ca": added IKEv2 connection
 east #
  
