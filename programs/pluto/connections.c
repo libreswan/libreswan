@@ -935,24 +935,13 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 	}
 
 	if (src->groundhog != NULL) {
-		const char *g = src->groundhog;
-		/* XXX: ttobool() */
-		if (strcaseeq(g, "1") ||
-		    strcaseeq(g, "yes") ||
-		    strcaseeq(g, "true") ||
-		    strcaseeq(g, "on")) {
-			host_config->groundhog = true;
-		} else if (strcaseeq(g, "0") ||
-			   strcaseeq(g, "no") ||
-			   strcaseeq(g, "false") ||
-			   strcaseeq(g, "off")) {
-			host_config->groundhog = false;
-		} else {
-			return diag("%sgroundhog=%s invalid", leftright, g);
+		err_t e = ttobool(src->groundhog, &host_config->groundhog);
+		if (e != NULL) {
+			return diag("%sgroundhog=%s, %s", leftright, src->groundhog, e);
 		}
 		if (host_config->groundhog && libreswan_fipsmode()) {
 			return diag("%sgroundhog=%s is invalid in FIPS mode",
-				    leftright, g);
+				    leftright, src->groundhog);
 		}
 		groundhogday |= host_config->groundhog;
 		llog(RC_LOG_SERIOUS, logger,
