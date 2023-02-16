@@ -606,8 +606,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		return;
 	}
 
-	struct spd_route *sr = NULL;
-	struct connection *c = find_connection_for_packet(&sr, b->packet,
+	struct connection *c = find_connection_for_packet(b->packet,
 							  b->sec_label,
 							  b->logger);
 	if (c == NULL) {
@@ -624,12 +623,14 @@ void initiate_ondemand(const struct kernel_acquire *b)
 	if (c->config->ike_version == IKEv2 && labeled_torp(c)) {
 		dbg("IKEv2 connection has security label");
 
+		/* already checked by find */
 		if (b->sec_label.len == 0) {
 			cannot_ondemand(RC_LOG_SERIOUS, b,
 					"kernel acquire missing security label");
 			return;
 		}
 
+		/* already checked by find */
 		if (!sec_label_within_range("acquire", HUNK_AS_SHUNK(b->sec_label),
 					    c->config->sec_label, b->logger)) {
 			cannot_ondemand(RC_LOG_SERIOUS, b,
@@ -638,17 +639,12 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		}
 
 		/*
-		 * We've found a connection that can serve.  Do we
-		 * have to initiate it?  Not if there is currently an
-		 * IPSEC SA.  This may be redundant if a
-		 * non-opportunistic negotiation is already being
-		 * attempted.
+		 * We've found a sec_label connection that can serve.
 		 *
-		 * If we are to proceed asynchronously, b->whackfd
-		 * will be NULL_WHACKFD.
-		 */
-
-		/*
+		 * It could be a labeled-template (which needs
+		 * initiating), or labeled-parent (which means a
+		 * piggyback), but never a labeled-child.
+		 *
 		 * Announce this to the world.  Use c->logger instead?
 		 */
 		LLOG_JAMBUF(RC_LOG, b->logger, buf) {

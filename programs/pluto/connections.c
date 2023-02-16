@@ -2947,21 +2947,19 @@ const char *str_connection_policies(const struct connection *c, policy_buf *buf)
  * See also find_outgoing_opportunistic_template().
  */
 
-struct connection *find_connection_for_packet(struct spd_route **srp,
-					      const ip_packet packet,
+struct connection *find_connection_for_packet(const ip_packet packet,
 					      shunk_t sec_label,
 					      struct logger *logger)
 {
 	packet_buf pb;
-	dbg("%s() looking for an out-going connection that matches packet %s sec_label="PRI_SHUNK,
-	    __func__, str_packet(&packet, &pb), pri_shunk(sec_label));
+	ldbg(logger, "%s() looking for an out-going connection that matches packet %s sec_label="PRI_SHUNK,
+	     __func__, str_packet(&packet, &pb), pri_shunk(sec_label));
 
 	const ip_selector packet_src = packet_src_selector(packet);
 	const ip_endpoint packet_dst = packet_dst_endpoint(packet);
 
 	struct connection *best_connection = NULL;
 	connection_priority_t best_priority = BOTTOM_PRIORITY;
-	struct spd_route *best_spd = NULL;
 
 	struct connection_filter cq = { .where = HERE, };
 	while (next_connection_new2old(&cq)) {
@@ -2969,8 +2967,8 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 
 		if (c->kind == CK_GROUP) {
 			connection_buf cb;
-			dbg("    skipping "PRI_CONNECTION"; a food group",
-			    pri_connection(c, &cb));
+			ldbg(logger, "    skipping "PRI_CONNECTION"; a food group",
+			     pri_connection(c, &cb));
 			continue;
 		}
 
@@ -2981,9 +2979,9 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 		 */
 		if ((sec_label.len > 0) != (c->config->sec_label.len > 0)) {
 			connection_buf cb;
-			dbg("    skipping "PRI_CONNECTION"; %s have a sec_label",
-			    pri_connection(c, &cb),
-			    (sec_label.len > 0 ? "must" : "must not"));
+			ldbg(logger, "    skipping "PRI_CONNECTION"; %s have a sec_label",
+			     pri_connection(c, &cb),
+			     (sec_label.len > 0 ? "must" : "must not"));
 			continue;
 		}
 
@@ -2995,8 +2993,8 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 		 */
 		if (c->config->ike_version == IKEv2 && labeled_child(c)) {
 			connection_buf cb;
-			dbg("    skipping "PRI_CONNECTION"; IKEv2 sec_label connection is a child",
-			    pri_connection(c, &cb));
+			ldbg(logger, "    skipping "PRI_CONNECTION"; IKEv2 sec_label connection is a child",
+			     pri_connection(c, &cb));
 			continue;
 		}
 
@@ -3008,9 +3006,9 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 		    !sec_label_within_range("acquire", sec_label,
 					    c->config->sec_label, logger)) {
 			connection_buf cb;
-			dbg("    skipping "PRI_CONNECTION"; packet sec_label="PRI_SHUNK" not within connection sec_label="PRI_SHUNK,
-			    pri_connection(c, &cb), pri_shunk(sec_label),
-			    pri_shunk(c->config->sec_label));
+			ldbg(logger, "    skipping "PRI_CONNECTION"; packet sec_label="PRI_SHUNK" not within connection sec_label="PRI_SHUNK,
+			     pri_connection(c, &cb), pri_shunk(sec_label),
+			     pri_shunk(c->config->sec_label));
 			continue;
 		}
 
@@ -3024,132 +3022,143 @@ struct connection *find_connection_for_packet(struct spd_route **srp,
 		    c->config->sec_label.len == 0) {
 			connection_buf cb;
 			selector_pair_buf sb;
-			dbg("    skipping "PRI_CONNECTION" %s; !routed,!instance_initiation_ok,!sec_label",
-			    pri_connection(c, &cb),
-			    str_selector_pair(&c->spd->local->client, &c->spd->remote->client, &sb));
+			ldbg(logger, "    skipping "PRI_CONNECTION" %s; !routed,!instance_initiation_ok,!sec_label",
+			     pri_connection(c, &cb),
+			     str_selector_pair(&c->spd->local->client, &c->spd->remote->client, &sb));
 			continue;
 		}
 
-		FOR_EACH_ITEM(spd, &c->child.spds) {
+		/*
+		 * The triggering packet needs to be within
+		 * the client.
+		 */
 
-			/* bail if below sets BEST_CONECTION to C */
-			if (best_connection == c) {
-				break;
-			}
-
+		connection_priority_t src = 0;
+		FOR_EACH_ITEM(local, &c->local->child.selectors.proposed) {
 			/*
-			 * The triggering packet needs to be within
-			 * the client.
+			 * The packet source address is a selector, and not endpoint.
 			 *
-			 * SRC is a selector, and not endpoint.  When
-			 * the source port passed into the kernel is
-			 * ephemeral (i.e., passed in as zero) that
-			 * same ephemeral (zero) port is passed on to
-			 * pluto, and a zero (unknown) port is not
-			 * valid for an endpoint.
-			 *
-			 * DST, OTOH, is a proper endpoint.
+			 * If the triggering source port passed into
+			 * the kernel is ephemeral (i.e., passed in
+			 * with the value zero) that same ephemeral
+			 * (zero) port is passed on to pluto.  A zero
+			 * (unknown) port is not valid for an
+			 * endpoint.
 			 */
-
-			if (!selector_in_selector(packet_src, spd->local->client)) {
-				connection_buf cb;
-				selector_pair_buf sb;
-				selector_buf psb;
-				dbg("    skipping "PRI_CONNECTION" %s; packet src %s not in range",
-				    pri_connection(c, &cb),
-				    str_selector_pair(&c->spd->local->client, &c->spd->remote->client, &sb),
-				    str_selector(&packet_src, &psb));
-				continue;
+			if (selector_in_selector(packet_src, *local)) {
+				/* add one so always non-zero */
+				unsigned score =
+					(((local->hport == packet_src.hport) << 2) |
+					 ((local->ipproto == packet_src.ipproto) << 1) |
+					 1);
+				src = max(score, src);
 			}
-
-			if (!endpoint_in_selector(packet_dst, spd->remote->client)) {
-				connection_buf cb;
-				selector_pair_buf sb;
-				endpoint_buf eb;
-				dbg("    skipping "PRI_CONNECTION" %s; packet dst %s not in range",
-				    pri_connection(c, &cb),
-				    str_selector_pair(&c->spd->local->client, &c->spd->remote->client, &sb),
-				    str_endpoint(&packet_dst, &eb));
-				continue;
-			}
-
-			/*
-			 * More exact is better and bigger
-			 *
-			 * For instance, exact protocol or exact port
-			 * gets more points.
-			 */
-			connection_priority_t priority =
-				(8 * (c->priority + (c->kind == CK_INSTANCE)) +
-				 2 * (spd->local->client.hport == packet.src.hport) +
-				 2 * (spd->remote->client.hport == packet.dst.hport) +
-				 1 * (spd->local->client.ipproto == packet.protocol->ipproto));
-
-			if (best_connection != NULL &&
-			    priority <= best_priority) {
-				connection_buf cb, bcb;
-				selector_pair_buf sb, bsb;
-				dbg("    skipping "PRI_CONNECTION" %s priority %"PRIu32"; doesn't best "PRI_CONNECTION" %s priority %"PRIu32,
-				    pri_connection(c, &cb),
-				    str_selector_pair(&c->spd->local->client, &c->spd->remote->client, &sb),
-				    priority,
-				    pri_connection(best_connection, &bcb),
-				    str_selector_pair(&best_spd->local->client, &best_spd->remote->client, &bsb),
-				    best_priority);
-				continue;
-			}
-
-			/* current is best; log why */
-			if (best_connection == NULL) {
-				connection_buf cb;
-				selector_pair_buf sb;
-				ldbg(logger,
-				     "    choosing "PRI_CONNECTION" %s priority %"PRIu32"; as first best",
-				     pri_connection(c, &cb),
-				     str_selector_pair(&c->spd->local->client, &c->spd->remote->client, &sb),
-				     priority);
-			} else {
-				connection_buf cb, bcb;
-				selector_pair_buf sb, bsb;
-				ldbg(logger,
-				     "    choosing "PRI_CONNECTION" %s priority %"PRIu32"; as bests "PRI_CONNECTION" %s priority %"PRIu32,
-				     pri_connection(c, &cb),
-				     str_selector_pair(&c->spd->local->client, &c->spd->remote->client, &sb),
-				     priority,
-				     pri_connection(best_connection, &bcb),
-				     str_selector_pair(&best_spd->local->client, &best_spd->remote->client, &bsb),
-				     best_priority);
-			}
-
-			best_connection = c;
-			best_spd = spd;
-			best_priority = priority;
 		}
+
+		if (src == 0) {
+			LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+				jam_string(buf, "    skipping ");
+				jam_connection(buf, c);
+				jam_string(buf, "; packet dst ");
+				jam_selector(buf, &packet_src);
+				jam_string(buf, " not in selectors ");
+				jam_selectors(buf, c->local->child.selectors.proposed);
+			}
+			continue;
+		}
+
+		connection_priority_t dst = 0;
+		FOR_EACH_ITEM(remote, &c->remote->child.selectors.proposed) {
+			/*
+			 * The packet destination address is always a
+			 * proper endpoint.
+			 */
+			if (endpoint_in_selector(packet_dst, *remote)) {
+				/* add one so always non-zero */
+				unsigned score =
+					(((remote->hport == packet_dst.hport) << 2) | 1);
+				dst = max(score, dst);
+			}
+		}
+
+		if (dst == 0) {
+			LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+				jam_string(buf, "    skipping ");
+				jam_connection(buf, c);
+				jam_string(buf, "; packet dst ");
+				jam_endpoint(buf, &packet_dst);
+				jam_string(buf, " not in selectors ");
+				jam_selectors(buf, c->remote->child.selectors.proposed);
+			}
+			continue;
+		}
+
+		/*
+		 * More exact is better and bigger
+		 *
+		 * Instance score better than the template.  Exact
+		 * protocol or exact port gets more points (see
+		 * above).
+		 */
+		connection_priority_t priority =
+			(8 * (c->priority + (c->kind == CK_INSTANCE)) +
+			 (src - 1/*strip 1 added above*/) +
+			 (dst - 1/*strip 1 added above*/));
+
+		if (best_connection != NULL &&
+		    priority <= best_priority) {
+			connection_buf cb, bcb;
+			ldbg(logger,
+			     "    skipping "PRI_CONNECTION" priority %"PRIu32"; doesn't best "PRI_CONNECTION" priority %"PRIu32,
+			     pri_connection(c, &cb),
+			     priority,
+			     pri_connection(best_connection, &bcb),
+			     best_priority);
+			continue;
+		}
+
+		/* current is best; log why */
+		if (best_connection == NULL) {
+			connection_buf cb;
+			ldbg(logger,
+			     "    choosing "PRI_CONNECTION" priority %"PRIu32"; as first best",
+			     pri_connection(c, &cb),
+			     priority);
+		} else {
+			connection_buf cb, bcb;
+			ldbg(logger,
+			     "    choosing "PRI_CONNECTION" priority %"PRIu32"; as bests "PRI_CONNECTION" priority %"PRIu32,
+			     pri_connection(c, &cb),
+			     priority,
+			     pri_connection(best_connection, &bcb),
+			     best_priority);
+		}
+
+		best_connection = c;
+		best_priority = priority;
+	}
+
+	if (best_connection == NULL) {
+		ldbg(logger, "  concluding with empty; no match");
+		return NULL;
 	}
 
 	/*
 	 * XXX: So that the best connection can prevent negotiation?
 	 */
-	if (best_connection != NULL && NEVER_NEGOTIATE(best_connection->policy)) {
-		best_connection = NULL;
+	if (NEVER_NEGOTIATE(best_connection->policy)) {
+		connection_buf cb;
+		ldbg(logger, "  concluding with empty; best connection "PRI_CONNECTION" was NEVER_NEGOTIATE",
+		     pri_connection(best_connection, &cb));
+		return NULL;
 	}
 
-	if (best_connection != NULL) {
-		connection_buf cib;
-		selector_pair_buf sb;
-		enum_buf kb;
-		dbg("  concluding with "PRI_CONNECTION" %s priority %" PRIu32 " kind=%s",
-		    pri_connection(best_connection, &cib),
-		    str_selector_pair(&best_spd->local->client, &best_spd->remote->client, &sb),
-		    best_priority,
-		    str_enum_short(&connection_kind_names, best_connection->kind, &kb));
-	} else {
-		dbg("  concluding with empty");
-	}
-
-	if (srp != NULL && best_connection != NULL) {
-		*srp = best_spd;
-	}
+	connection_buf cib;
+	enum_buf kb;
+	dbg("  concluding with "PRI_CONNECTION" priority %" PRIu32 " kind=%s",
+	    pri_connection(best_connection, &cib),
+	    best_priority,
+	    str_enum_short(&connection_kind_names, best_connection->kind, &kb));
 	return best_connection;
 }
 
