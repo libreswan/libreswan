@@ -1,6 +1,6 @@
 # Do not populate NSS DB, check it is empty
 /testing/guestbin/swan-prep
-certutl -L -d sql:/etc/ipsec.d
+ipsec certutl -L
 # setup softhsm with east's PKCS12 info
 #SOFTHSM2_CONF="/etc/softhsm2.conf"
 #SOFTHSM2_TOKEN_DIR="$(grep 'directories.tokendir' "$SOFTHSM2_CONF" | cut -d '=' -f 2 | sed 's/ //g')"

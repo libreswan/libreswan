@@ -1,6 +1,6 @@
 # Do not populate NSS DB, check it is empty
 /testing/guestbin/swan-prep
-certutl -L -d sql:/etc/ipsec.d
+ipsec certutl -L
 # workaround for  https://bugzilla.redhat.com/show_bug.cgi?id=1848649
 /usr/bin/update-crypto-policies
 # setup softhsm with east's PKCS12 info

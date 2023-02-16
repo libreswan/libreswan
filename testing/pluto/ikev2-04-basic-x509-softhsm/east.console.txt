@@ -2,7 +2,7 @@
 east #
  /testing/guestbin/swan-prep
 east #
- certutl -L -d sql:/etc/ipsec.d
+ ipsec certutl -L
 -bash: certutl: command not found
 east #
  # setup softhsm with east's PKCS12 info

@@ -31,13 +31,13 @@ openssl x509 -req -days 365 -in OUTPUT/${key}.csr -signkey OUTPUT/${key}.key -ou
 openssl pkcs12 -export -password pass:foobar -in OUTPUT/${key}.crt -inkey OUTPUT/${key}.key -name ${key} -out OUTPUT/${key}.p12
 
 # import it
-pk12util -d /etc/ipsec.d/ -i OUTPUT/west.p12 -W foobar
-pk12util -d /etc/ipsec.d/ -i OUTPUT/east.p12 -W foobar
-certutil -K -d /etc/ipsec.d/
+ipsec pk12util -i OUTPUT/west.p12 -W foobar
+ipsec pk12util -i OUTPUT/east.p12 -W foobar
+ipsec certutil -K
 
 # patch up ipsec.conf
-certutil -K -d /etc/ipsec.d | awk "/ east/ { print \$4 }" > OUTPUT/east.ckaid
-certutil -K -d /etc/ipsec.d | awk "/ west/ { print \$4 }" > OUTPUT/west.ckaid
+ipsec certutil -K | awk "/ east/ { print \$4 }" > OUTPUT/east.ckaid
+ipsec certutil -K | awk "/ west/ { print \$4 }" > OUTPUT/west.ckaid
 sed -i -e "s/@east-ckaid@/`cat OUTPUT/east.ckaid`/" /etc/ipsec.conf
 sed -i -e "s/@west-ckaid@/`cat OUTPUT/west.ckaid`/" /etc/ipsec.conf
 

@@ -2,7 +2,7 @@
 east #
  /testing/guestbin/swan-prep
 east #
- certutl -L -d sql:/etc/ipsec.d
+ ipsec certutl -L
 -bash: certutl: command not found
 east #
  # workaround for  https://bugzilla.redhat.com/show_bug.cgi?id=1848649

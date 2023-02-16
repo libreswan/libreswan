@@ -5,9 +5,9 @@ rm /etc/ipsec.d/*.db
 modutil -create -dbdir /etc/ipsec.d -force
 
 # import fiddled keys
-pk12util -d /etc/ipsec.d/ -i OUTPUT/west.p12 -W foobar
-pk12util -d /etc/ipsec.d/ -i OUTPUT/east.p12 -W foobar
-certutil -K -d /etc/ipsec.d/
+ipsec pk12util -i OUTPUT/west.p12 -W foobar
+ipsec pk12util -i OUTPUT/east.p12 -W foobar
+ipsec certutil -K
 
 # patch up ipsec.conf
 sed -i -e "s/@east-ckaid@/`cat OUTPUT/east.ckaid`/" /etc/ipsec.conf

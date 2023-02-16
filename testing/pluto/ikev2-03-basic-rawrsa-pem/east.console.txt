@@ -64,22 +64,22 @@ east #
 east #
  # import it
 east #
- pk12util -d /etc/ipsec.d/ -i OUTPUT/west.p12 -W foobar
+ ipsec pk12util -i OUTPUT/west.p12 -W foobar
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
- pk12util -d /etc/ipsec.d/ -i OUTPUT/east.p12 -W foobar
+ ipsec pk12util -i OUTPUT/east.p12 -W foobar
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
- certutil -K -d /etc/ipsec.d/
+ ipsec certutil -K
 certutil: Checking token "NSS Certificate DB" in slot "NSS User Private Key and Certificate Services"
 < 0> rsa      <<CKAID#1>>   west
 < 1> rsa      <<CKAID#2>>   east
 east #
  # patch up ipsec.conf
 east #
- certutil -K -d /etc/ipsec.d | awk "/ east/ { print \$4 }" > OUTPUT/east.ckaid
+ ipsec certutil -K | awk "/ east/ { print \$4 }" > OUTPUT/east.ckaid
 east #
- certutil -K -d /etc/ipsec.d | awk "/ west/ { print \$4 }" > OUTPUT/west.ckaid
+ ipsec certutil -K | awk "/ west/ { print \$4 }" > OUTPUT/west.ckaid
 east #
  sed -i -e "s/@east-ckaid@/`cat OUTPUT/east.ckaid`/" /etc/ipsec.conf
 east #

@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --x509 --signedbyother
 Preparing X.509 files
 west #
- ipsec certutil -D -n east
+ certutil -d sql:/etc/ipsec.d -D -n east
 west #
  ipsec start
 Redirecting to: [initsystem]
