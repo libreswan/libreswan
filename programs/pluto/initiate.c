@@ -620,24 +620,38 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		return;
 	}
 
-	if (c->config->ike_version == IKEv2 && labeled_torp(c)) {
+	/* else C would not have been found */
+	PASSERT(b->logger, oriented(c));
+
+	/* spell out types that c can return */
+	switch (c->kind) {
+	case CK_PERMANENT:
+	case CK_TEMPLATE: /* sec_label or opportunistic */
+	case CK_INSTANCE:
+		break;
+	default:
+		bad_case(c->kind);
+	}
+
+	if (labeled(c)) {
 		dbg("IKEv2 connection has security label");
-
-		/* already checked by find */
-		if (b->sec_label.len == 0) {
-			cannot_ondemand(RC_LOG_SERIOUS, b,
-					"kernel acquire missing security label");
-			return;
+		/*
+		 * Above should only returns sec_label C when below
+		 * are true.
+		 */
+		PASSERT(b->logger, b->sec_label.len > 0);
+		PASSERT(b->logger, sec_label_within_range("acquire", HUNK_AS_SHUNK(b->sec_label),
+							  c->config->sec_label, b->logger));
+		PASSERT(b->logger, (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
+		switch (c->config->ike_version) {
+		case IKEv1:
+			PASSERT(b->logger, (c->kind == CK_PERMANENT ||
+					    c->kind == CK_INSTANCE));
+			break;
+		case IKEv2:
+			PASSERT(b->logger, labeled_torp(c));
+			break;
 		}
-
-		/* already checked by find */
-		if (!sec_label_within_range("acquire", HUNK_AS_SHUNK(b->sec_label),
-					    c->config->sec_label, b->logger)) {
-			cannot_ondemand(RC_LOG_SERIOUS, b,
-					"received kernel security label does not fall within range of our connection");
-			return;
-		}
-
 		/*
 		 * We've found a sec_label connection that can serve.
 		 *
@@ -656,35 +670,13 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		return;
 	}
 
-	if ((c->policy & POLICY_OPPORTUNISTIC) && !orient(c, b->logger)) {
-		/*
-		 * happens when dst is ourselves on a different IP
-		 */
-		cannot_ondemand(RC_OPPOFAILURE, b, "connection to self on another IP?");
-		return;
-	}
-
-	if (c->kind == CK_TEMPLATE && (c->policy & POLICY_OPPORTUNISTIC) == 0) {
-		cannot_ondemand(RC_NOPEERIP, b, "template connection");
-		return;
-	}
+	/* sec_labels are  off the table */
+	PASSERT(b->logger, b->sec_label.len == 0);
+	PASSERT(b->logger, c->config->sec_label.len == 0);
 
 	/* Labeled IPsec and Opportunistic cannot both be used */
-	if (c->kind == CK_INSTANCE && b->sec_label.len == 0) {
-		connection_buf cib;
-		/* there is already an instance being negotiated */
-#if 0
-		llog(RC_LOG, b->logger,
-			    "rekeying existing instance "PRI_CONNECTION", due to acquire",
-			    pri_connection(c, &cib));
-
-		/*
-		 * We used to return here, but rekeying is a better
-		 * choice.  If we got the acquire, it is because
-		 * something turned stuff into a %trap, or something
-		 * got deleted, perhaps due to an expiry.
-		 */
-#else
+	switch (c->kind) {
+	case CK_INSTANCE:
 		/*
 		 * XXX We got an acquire (NETKEY only?) for something
 		 * we already have an instance for ??  We cannot
@@ -693,103 +685,37 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		 * get confused between this new entry and the
 		 * existing one.  So we return without doing anything.
 		 */
-		llog(RC_LOG, b->logger,
-			    "ignoring found existing connection instance "PRI_CONNECTION" that covers kernel acquire with IKE state #%lu and IPsec state #%lu - due to duplicate acquire?",
-			    pri_connection(c, &cib),
+		LLOG_JAMBUF(RC_LOG, b->logger, buf) {
+			jam_string(buf, "ignoring found existing connection instance ");
+			jam_connection(buf, c);
+			jam(buf, " that covers kernel acquire with IKE state #%lu and IPsec state #%lu - due to duplicate acquire?",
 			    c->newest_ike_sa, c->newest_ipsec_sa);
+		}
 		return;
-#endif
-	}
-
-	if (c->kind != CK_TEMPLATE) {
-		/*
-		 * We've found a non-template connection that can serve.
-		 *
-		 * It could be a permanent connection that is
-		 * on-demand, or it could be an established connection
-		 * (instance or permanent) that this connection can
-		 * piggy-back.
-		 */
-
-		PEXPECT(c->logger, (c->kind == CK_PERMANENT ||
-				    /* XXX: ever true? */
-				    (c->kind == CK_INSTANCE && b->sec_label.len != 0)));
-
+	case CK_PERMANENT:
+		PASSERT(b->logger, (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
 		LLOG_JAMBUF(RC_LOG, b->logger, buf) {
 			jam_kernel_acquire(buf, b);
 			/* jam(buf, " using "); */
 		}
-
-		/*
-		 * Do we have to initiate it?  Not if there is
-		 * currently an IPSEC SA.  This may be redundant if a
-		 * non-opportunistic negotiation is already being
-		 * attempted.
-		 */
-
 		connection_ondemand(c, &inception, b);
 		return;
-	}
-
-	/*
-	 * We are handling an opportunistic situation.  This involves
-	 * several DNS lookup steps that require suspension.
-	 *
-	 * NOTE: will be re-implemented
-	 *
-	 * old comment:
-	 *
-	 * The first chunk of code handles the result of the previous
-	 * DNS query (if any).  It also selects the kind of the next
-	 * step.  The second chunk initiates the next DNS query (if
-	 * any).
-	 */
-
-	LLOG_JAMBUF(RC_LOG, b->logger, buf) {
-		jam_kernel_acquire(buf, b);
-	}
-
-	/*
-	 * XXX Shouldn't this pass b->sec_label too in theory?  But we
-	 * don't support OE with labels.
-	 *
-	 * XXX: why is this looking for a new connection.  Isn't C
-	 * good enough, at least as a template?  The PEXPECT below
-	 * says it always is.
-	 */
-
-	pexpect(c->kind == CK_TEMPLATE);
-	passert(c->policy & POLICY_OPPORTUNISTIC); /* can't initiate Road Warrior connections */
-	struct connection *t = find_outgoing_opportunistic_template(b->packet);
-
-	if (t == NULL) {
-		cannot_ondemand(RC_OPPOFAILURE, b, "no suitable template between endpoints");
+	case CK_TEMPLATE:
+		PASSERT(b->logger, (c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
+		LLOG_JAMBUF(RC_LOG, b->logger, buf) {
+			jam_kernel_acquire(buf, b);
+		}
+		/* XXX: re-use c */
+		c = oppo_initiator_instantiate(c, b, HERE);
+		/* switched C to instance */
+		PASSERT(b->logger, c->kind == CK_INSTANCE);
+		PASSERT(b->logger, HAS_IPSEC_POLICY(c->policy));
+		PASSERT(b->logger, c->child.routing == RT_UNROUTED); /*instance*/
+		connection_ondemand(c, &inception, b);
 		return;
+	default:
+		bad_case(c->kind);
 	}
-
-	if (t != c) {
-		connection_buf cb, tb;
-		llog_pexpect(b->logger, HERE,
-			     "need to switch from matching template "PRI_CONNECTION" to opportunistic template "PRI_CONNECTION,
-			     pri_connection(c, &cb), pri_connection(t, &tb));
-	}
-
-	/* XXX: re-use c */
-	c = oppo_initiator_instantiate(t, b, HERE);
-
-	selector_pair_buf sb;
-	dbg("going to initiate opportunistic %s, first installing %s negotiationshunt",
-	    str_selector_pair(&c->spd->local->client, &c->spd->remote->client, &sb),
-	    enum_name_short(&shunt_policy_names, c->config->negotiation_shunt));
-
-	/* If we are to proceed asynchronously, b->background will be true. */
-	passert(c->kind == CK_INSTANCE);
-	passert(HAS_IPSEC_POLICY(c->policy));
-	passert(LHAS(LELEM(RT_UNROUTED) |
-		     LELEM(RT_ROUTED_PROSPECTIVE),
-		     c->child.routing));
-
-	connection_ondemand(c, &inception, b);
 }
 
 /* time before retrying DDNS host lookup for phase 1 */

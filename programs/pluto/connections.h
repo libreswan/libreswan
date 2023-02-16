@@ -650,8 +650,6 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 					      shunk_t sec_label,
 					      struct logger *logger);
 
-struct connection *find_outgoing_opportunistic_template(const ip_packet packet);
-
 /* publicly useful? */
 size_t jam_connection_instance(struct jambuf *buf, const struct connection *c);
 size_t jam_connection(struct jambuf *buf, const struct connection *c);
