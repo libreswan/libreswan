@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 east #
- crlutil -I -i /testing/x509/crls/needupdate.crl -d sql:/etc/ipsec.d
+ ipsec crlutil -I -i /testing/x509/crls/needupdate.crl
 east #
  ipsec certutil  -D -n west
 east #
@@ -37,7 +37,7 @@ initdone
 east #
  # Check that mainca is present
 east #
- crlutil -L -d sql:/etc/ipsec.d | grep mainca
+ ipsec crlutil -L | grep mainca
 Libreswan test CA for mainca - Libreswan CRL  
 east #
  # DANGER: race.

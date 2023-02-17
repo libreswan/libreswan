@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 east #
- crlutil -I -i /testing/x509/crls/cacrlvalid.crl -d sql:/etc/ipsec.d
+ ipsec crlutil -I -i /testing/x509/crls/cacrlvalid.crl
 east #
  ipsec certutil -D -n west
 east #
@@ -35,7 +35,7 @@ east #
  echo "initdone"
 initdone
 east #
- crlutil -L -d sql:/etc/ipsec.d | grep mainca
+ ipsec crlutil -L | grep mainca
 Libreswan test CA for mainca - Libreswan CRL  
 east #
  ipsec auto --listall | grep -A10 "List of CRLs" | grep -E 'Issuer|Entry|Serial'

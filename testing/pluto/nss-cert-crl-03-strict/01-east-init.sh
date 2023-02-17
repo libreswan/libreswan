@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --x509
-crlutil -I -i /testing/x509/crls/needupdate.crl -d sql:/etc/ipsec.d
+ipsec crlutil -I -i /testing/x509/crls/needupdate.crl
 ipsec certutil -D -n west
 # ipsec start
 ipsec pluto --config /etc/ipsec.conf --leak-detective --impair event-check-crls

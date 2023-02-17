@@ -50,7 +50,7 @@ west #
  echo done
 done
 west #
- crlutil -L -d sql:/etc/ipsec.d | grep mainca
+ ipsec crlutil -L | grep mainca
 west #
  ipsec auto --listall | grep -A10 "List of CRLs" | grep -E 'Issuer|Entry|Serial'
 west #

@@ -1,5 +1,5 @@
 # Check that mainca is present
-crlutil -L -d sql:/etc/ipsec.d | grep mainca
+ipsec crlutil -L | grep mainca
 # DANGER: race.
 #
 # Wait for the CRL fetch helper to be triggered and fetch the CRLs.

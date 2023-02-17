@@ -55,7 +55,7 @@ west #
  ipsec whack --trafficstatus
 006 #2: "nss-cert-crl", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org'
 west #
- crlutil -L -d sql:/etc/ipsec.d | grep mainca
+ ipsec crlutil -L | grep mainca
 west #
  ipsec auto --listcrls
 000  

@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 east #
- crlutil -I -i /testing/x509/crls/needupdate.crl -d sql:/etc/ipsec.d
+ ipsec crlutil -I -i /testing/x509/crls/needupdate.crl
 east #
  ipsec certutil -D -n west
 east #
@@ -49,7 +49,7 @@ east #
  ../../guestbin/wait-for.sh --match '^[^|].* #2: IPsec SA established' -- cat /tmp/pluto.log
 "nss-cert-crl" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 east #
- crlutil -L -d sql:/etc/ipsec.d | grep mainca
+ ipsec crlutil -L | grep mainca
 Libreswan test CA for mainca - Libreswan CRL  
 east #
  ipsec auto --listcrls

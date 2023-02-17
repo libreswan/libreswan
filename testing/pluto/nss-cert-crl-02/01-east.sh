@@ -1,5 +1,5 @@
 /testing/guestbin/swan-prep --x509
-crlutil -I -i /testing/x509/crls/cacrlvalid.crl -d sql:/etc/ipsec.d
+ipsec crlutil -I -i /testing/x509/crls/cacrlvalid.crl
 ipsec certutil -D -n west
 ipsec start
 ../../guestbin/wait-until-pluto-started
