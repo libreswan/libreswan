@@ -115,33 +115,53 @@ ipsec_help() {
 
 # add nflog-all
 nflog_nftables_add() {
-    nft add table ip filter
-    nft add chain ip filter ipsec-all-input "{ type filter hook input priority 0; policy accept; }"
-    nft add chain ip filter ipsec-all-output "{ type filter hook output priority 0; policy accept; }"
-    nft add rule ip filter ipsec-all-input meta ipsec exists log prefix "all-ipsec" group 50
-    nft add rule ip filter ipsec-all-output rt ipsec exists log prefix "all-ipsec" group 50
+
+	nft -f - <<EOF
+
+table inet ipsec-log {
+	chain input {
+		type filter hook input priority filter; policy accept;
+		meta ipsec exists log prefix "all-ipsec-input" group 50
+	}
+
+	chain output {
+		type filter hook output priority filter; policy accept;
+		rt ipsec exists log prefix "all-ipsec-output" group 50
+	}
+}
+
+EOF
 }
 
 nflog_nftables_delete_table() {
-    local table=$1
+  local table=$1
 
-    if [ -n "${NFGROUP}" ]; then
-        f=$(nft list table ip filter 2>/dev/null | wc -l)
-        if [ ${f} -gt 0 ]; then
-            f=$(nft list chain ip filter ${table} 2>/dev/null | wc -l)
-            if [ ${f} -gt 0 ]; then
-                nft delete chain ip filter ${table}
-            fi
-        fi
+  t=$(nft list table inet $table 2>/dev/null | wc -l)
+  [ ${t} -eq 2 ] &&  nft delete table ${table}
+}
+
+nflog_nftables_delete_chain() {
+ local chain=$1
+
+  t=$(nft list table inet ipsec-log 2>/dev/null | wc -l)
+  if [ ${t} -gt 0 ]; then
+    c=$(nft list chain inet ipsec-log ${chain} 2>/dev/null | wc -l)
+    if [ ${c} -gt 0 ]; then
+      nft delete chain inet ipsec-log ${chain}
+      # assumed nothing else used this chain.
+      # one day check if something else used this chain.
+      # if yes only delete the rule this script added and warn?
+      # something like
+      # nft -a list chain inet ipsec-log input | grep -v "all-ipsec-input" | wc -l
+      # count -eq 5 . chagpti's idea of finding empty nftable chain
     fi
+  fi
 }
 
 nflog_nftables_delete() {
-    # only delete global nft tables leave the "table ip filter".
-    # It is more tricky to be sure "filter" is used by something else.
-    # And delete only if it is not usd anything else
-    nflog_nftables_delete_table ipsec-all-input
-    nflog_nftables_delete_table ipsec-all-output
+  nflog_nftables_delete_chain input
+  nflog_nftables_delete_chain output
+  nflog_nftables_delete_table ipsec-log
 }
 
 nflog_iptables_delete() {
@@ -151,6 +171,7 @@ nflog_iptables_delete() {
 }
 
 ipsec_stopnflog() {
+    set -x
     NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_EXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup | grep -v "#" | grep nflog | sed -e "s/^.*=//" -e "s/'//g");
     if [ -z "${NFGROUP}" ]; then
 	exit 0
@@ -198,11 +219,12 @@ checknflog_iptables() {
 
 checknflog_nftables() {
     if [ -n "${NFGROUP}" ]; then
-	f=$(nft list table ip filter 2>/dev/null | wc -l)
+	f=$(nft list table inet ipsec-log 2>/dev/null | wc -l)
 	if [ ${f} -gt 0 ]; then
-	    f=$(nft list chain ip filter ipsec-all-input 2>/dev/null | wc -l)
+	    f=$(nft list chain inet ipsec-log input 2>/dev/null | wc -l)
 	    if [ ${f} -gt 0 ]; then
-		echo "found ipsec-all-input"
+		echo "found chain ipsec all-input"
+		# this is incomplete need more work here to check both rules.
 	    else
 		nflog_nftables_add
 	    fi
@@ -212,12 +234,6 @@ checknflog_nftables() {
     else
 	nflog_nftables_delete
     fi
-
-    # nft delete rule filter input handle 15
-    # nft add rule ip filter ipsec-all-input meta ipsec exists ipsec in ip saddr 192.168.1.0/24 accept
-    # nft -a list
-    # nft -a list chain ip filter ipsec-all-output
-    # nft delete chain ip filter ipsec-all-output
 }
 
 firewall_cmd() {
