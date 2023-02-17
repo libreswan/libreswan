@@ -171,7 +171,6 @@ nflog_iptables_delete() {
 }
 
 ipsec_stopnflog() {
-    set -x
     NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_EXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup | grep -v "#" | grep nflog | sed -e "s/^.*=//" -e "s/'//g");
     if [ -z "${NFGROUP}" ]; then
 	exit 0

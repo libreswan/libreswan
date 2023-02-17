@@ -844,18 +844,25 @@ firewall_cmd() {
     fi
 }
 
+
 add_nflog_nftables_conn() {
-    # this is an approximation using daddr and saddr.
-    # Multiple connections with exact PLUTO_MY_CLIENT PLUTO_PEER_CLIENT would mix up.
-    # There is an easy way to specifcy spi. However, after a rekey pluto would need to update the rules
-    # with new SPIs. for reference. SPI based rules are:
-    # nft add rule ip ipsec-filter ipsec-all-input meta ipsec exists ipsec in spi ${SPI_OUT} log group ${NFLOG}
-    # nft add rule ip ipsec-filter ipsec-all-output rt ipsec exists ipsec out spi ${SPI_IN} log group ${NFLOG}
-    nft add table ip ipsec-filter
-    nft add chain ip ipsec-filter ipsec-all-input "{ type filter hook input priority 0; policy accept; }"
-    nft add chain ip ipsec-filter ipsec-all-output "{ type filter hook output priority 0; policy accept; }"
-    nft add rule ip ipsec-filter ipsec-all-input meta ipsec exists ip daddr ${PLUTO_MY_CLIENT} ip saddr ${PLUTO_PEER_CLIENT} log group ${NFLOG}
-    nft add rule ip ipsec-filter ipsec-all-output rt ipsec exists ip daddr ${PLUTO_PEER_CLIENT} ip saddr ${PLUTO_MY_CLIENT} log group ${NFLOG}
+
+nft -f - <<EOF
+
+table inet ipsec-log {
+        chain input {
+                type filter hook input priority filter; policy accept;
+		ipsec in reqid ${PLUTO_SA_REQID} ip saddr ${PLUTO_PEER_CLIENT} ip daddr ${PLUTO_MY_CLIENT} counter log group ${NFLOG}
+        }
+
+        chain output {
+                type filter hook output priority filter; policy accept;
+		ipsec out reqid ${PLUTO_SA_REQID} ip saddr ${PLUTO_MY_CLIENT} ip daddr ${PLUTO_PEER_CLIENT} counter log group ${NFLOG}
+        }
+}
+
+EOF
+
 }
 
 nftables_delete_rule() {
@@ -863,19 +870,39 @@ nftables_delete_rule() {
     local chain=$2
     local rulerexp=$3
 
-    f=$(nft list table ip ${table} 2>/dev/null | wc -l)
-    if [ ${f} -gt 0 ]; then
-        l=$(nft -a list chain ip ${table} ${chain} 2>/dev/null | grep "${rulerexp}" | wc -l)
-        if [ ${l} -gt 0 ]; then
-	    h=$(nft -a list chain ip ${table} ${chain} | grep "${rulerexp}" | sed -e 's/.*handle\s*//g')
-            [ ${l} -gt 1 ] && echo "exception found ${l} rules matching \"${rulerexp}\". Expecting 1 rule"
+    t=$(nft list table inet ${table} 2>/dev/null | wc -l)
+    if [ ${t} -gt 2 ]; then # a table with 2 lines is an empty table
+        c=$(nft -a list chain inet ${table} ${chain} 2>/dev/null | wc -l)
+        if [ ${c} -gt 5 ]; then # 5 or less no rules in it.
+	    h=$(nft -a list chain inet ${table} ${chain} | grep "${rulerexp}" | sed -e 's/.*handle\s*//g')
             for i in ${h}; do
-		nft delete rule ${table} ${chain} handle ${i}
+		nft delete rule inet ${table} ${chain} handle ${i}
             done
         fi
     fi
     # the chain will live. delete  the chain here or in ipsec.in at the end?
 }
+
+nftables_delete_table() {
+  local table=$1
+
+  t=$(nft list table inet $table 2>/dev/null | wc -l)
+  [ ${t} -eq 2 ] && nft delete table inet ${table}
+}
+
+nftables_delete_chain() {
+ local table=$1
+ local chain=$2
+
+  t=$(nft list table inet ${table} 2>/dev/null | wc -l)
+  if [ ${t} -gt 2 ]; then
+    c=$(nft list chain inet ${table} ${chain} 2>/dev/null | wc -l)
+    if [ ${c} -eq 5 ]; then
+      nft delete chain inet ${table} ${chain}
+    fi
+  fi
+}
+
 
 addnflog() {
     firewall_cmd
@@ -902,8 +929,11 @@ delnflog() {
 	    -j NFLOG --nflog-group ${NFLOG} --nflog-prefix ${PLUTO_CONNECTION}
     elif [ "${FIREWALL}" = "NFTABLES" -a -n "${NFLOG}" ]; then
 	# note the 3rd argument. regexp should be identical to what is used in nft add rule
-	nftables_delete_rule ipsec-filter ipsec-all-input "meta ipsec exists ip daddr ${PLUTO_MY_CLIENT} ip saddr ${PLUTO_PEER_CLIENT} log group ${NFLOG}"
-	nftables_delete_rule ipsec-filter ipsec-all-output  "rt ipsec exists ip daddr ${PLUTO_PEER_CLIENT} ip saddr ${PLUTO_MY_CLIENT} log group ${NFLOG}"
+	nftables_delete_rule ipsec-log input "ipsec in reqid ${PLUTO_SA_REQID} ip saddr ${PLUTO_PEER_CLIENT} ip daddr ${PLUTO_MY_CLIENT_NET}"
+	nftables_delete_rule ipsec-log output "ipsec out reqid ${PLUTO_SA_REQID} ip saddr ${PLUTO_MY_CLIENT} ip daddr ${PLUTO_PEER_CLIENT}"
+	nftables_delete_chain ipsec-log input
+	nftables_delete_chain ipsec-log output
+	nftables_delete_table ipsec-log
     fi
 }
 
@@ -994,17 +1024,27 @@ delvti() {
 }
 
 # Client Address Translation CAT
-
+#
 add_nftables_cat() {
-  nft add table ip ipsec-nat
-  nft add chain ip ipsec-nat ipsec-postrouting "{ type filter hook postrouting  priority 100; policy accept;}"
-  nft add chain ip ipsec-nat ipsec-prerouting "{ type filter hook prerouting priority -100; policy accept;}"
-  # outgoing
-  # keep of order of saddr daddr expression.
-  # The order is used to grep handle while deleting the rule
-  nft add rule ip ipsec-nat ipsec-postrouting rt ipsec exists ip daddr ${PLUTO_PEER_CLIENT} ip saddr ${PLUTO_ME} ip saddr set ${PLUTO_MY_CLIENT_NET} notrack counter accept
-  # incoming
-  nft add rule ip ipsec-nat ipsec-prerouting meta ipsec exists ip daddr ${PLUTO_MY_CLIENT_NET} ip saddr ${PLUTO_PEER_CLIENT} ip daddr set ${PLUTO_ME} notrack counter accept
+    # this use reqid. And assume reqid is generated per conn. If you hardcode and have
+    # multiple connections things could get mixed up.
+
+nft -f - <<EOF
+
+table inet ipsec-cat {
+        chain postrouting {
+		type filter hook postrouting priority srcnat; policy accept;
+                ipsec out reqid ${PLUTO_SA_REQID} ip saddr ${PLUTO_ME} ip daddr ${PLUTO_PEER_CLIENT} ip saddr set ${PLUTO_MY_CLIENT_NET} notrack counter
+        }
+
+        chain prerouting {
+		type filter hook prerouting priority dstnat; policy accept;
+                ipsec in reqid ${PLUTO_SA_REQID} ip saddr ${PLUTO_PEER_CLIENT} ip daddr ${PLUTO_MY_CLIENT_NET} ip daddr set ${PLUTO_ME} notrack counter
+        }
+}
+
+EOF
+
 }
 
 addcat() {
@@ -1029,8 +1069,11 @@ delcat() {
 	    iptables -t nat -D POSTROUTING -m policy --dir out --pol ipsec \
 	        -d ${PLUTO_PEER_CLIENT} -j SNAT --to-source ${PLUTO_MY_CLIENT_NET}
     elif [ "${FIREWALL}" = NFTABLES -a -n "${CAT}" ]; then
-	nftables_delete_rule ipsec-nat ipsec-postrouting "ip daddr ${PLUTO_PEER_CLIENT} ip saddr ${PLUTO_ME} ip saddr set ${PLUTO_MY_CLIENT_NET} notrack counter"
-	nftables_delete_rule ipsec-nat ipsec-prerouting "ip daddr ${PLUTO_MY_CLIENT_NET} ip saddr ${PLUTO_PEER_CLIENT} ip daddr set ${PLUTO_ME} notrack counter"
+	nftables_delete_rule ipsec-cat postrouting "ipsec out reqid ${PLUTO_SA_REQID} ip saddr ${PLUTO_ME} ip daddr ${PLUTO_PEER_CLIENT}"
+	nftables_delete_rule ipsec-cat prerouting "ipsec in reqid ${PLUTO_SA_REQID} ip saddr ${PLUTO_PEER_CLIENT} ip daddr ${PLUTO_MY_CLIENT_NET}"
+	nftables_delete_chain ipsec-cat prerouting
+	nftables_delete_chain ipsec-cat postrouting
+	nftables_delete_table ipsec-cat
     fi
 }
 
