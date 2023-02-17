@@ -629,7 +629,7 @@ while [ ${#} -gt 0 ]; do
 	checknss|--checknss|initnss|--initnss)
 	    ipsec_checknss "${@}"
 	    ;;
-	certutil|pk12util|vfychain)
+	certutil|pk12util|vfychain|crlutil)
 	    ipsec_nsscmd "${@}"
 	    ;;
 	secrets)
