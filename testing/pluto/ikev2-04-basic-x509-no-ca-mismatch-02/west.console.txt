@@ -9,7 +9,7 @@ west #
 west #
  # add a random cert and CA, unrelated to the actual test
 west #
- pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/pkcs12/otherca/otherwest.p12
+ ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/otherca/otherwest.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
  ipsec start

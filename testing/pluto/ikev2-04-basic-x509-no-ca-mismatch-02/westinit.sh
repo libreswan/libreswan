@@ -3,7 +3,7 @@
 ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
 ipsec certutil -D -n "east-ec"
 # add a random cert and CA, unrelated to the actual test
-pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/pkcs12/otherca/otherwest.p12
+ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/otherca/otherwest.p12
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add westnet-eastnet-ikev2

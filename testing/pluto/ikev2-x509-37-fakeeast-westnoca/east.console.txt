@@ -2,7 +2,7 @@
 east #
  # import real west+mainca
 east #
- pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/pkcs12/mainca/west.p12
+ ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/mainca/west.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
  # delete real main CA
@@ -11,7 +11,7 @@ east #
 east #
  # import fake east cert and fake main CA
 east #
- pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/fake/pkcs12/mainca/east.p12
+ ipsec pk12util -W foobar -K '' -i /testing/x509/fake/pkcs12/mainca/east.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
  # remove main CA - so real-west cannot be verified - rely on cert=west

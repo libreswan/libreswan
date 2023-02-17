@@ -2,7 +2,7 @@
 west #
  # import real west+mainca
 west #
- pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/pkcs12/mainca/west.p12
+ ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/mainca/west.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
  # delete real main CA
@@ -11,7 +11,7 @@ west #
 west #
  # so only CA is bogus
 west #
- pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/fake/pkcs12/mainec/mainec.p12
+ ipsec pk12util -W foobar -K '' -i /testing/x509/fake/pkcs12/mainec/mainec.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
  # confirm that the network is alive

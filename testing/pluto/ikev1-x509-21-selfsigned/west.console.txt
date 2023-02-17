@@ -1,16 +1,16 @@
 /testing/guestbin/swan-prep
 west #
- pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/selfsigned/west-selfsigned.p12
+ ipsec pk12util -W foobar -K '' -i /testing/x509/selfsigned/west-selfsigned.p12
 pk12util: no nickname for cert in PKCS12 file.
 pk12util: using nickname: west-selfsigned.testing.libreswan.org
 pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
- pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/selfsigned/east-selfsigned.p12
+ ipsec pk12util -W foobar -K '' -i /testing/x509/selfsigned/east-selfsigned.p12
 pk12util: no nickname for cert in PKCS12 file.
 pk12util: using nickname: east-selfsigned.testing.libreswan.org
 pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
- pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/selfsigned/road-selfsigned.p12
+ ipsec pk12util -W foobar -K '' -i /testing/x509/selfsigned/road-selfsigned.p12
 pk12util: no nickname for cert in PKCS12 file.
 pk12util: using nickname: road-selfsigned.testing.libreswan.org
 pk12util: PKCS12 IMPORT SUCCESSFUL

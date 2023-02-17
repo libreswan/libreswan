@@ -4,7 +4,7 @@ west #
 west #
  ipsec initnss > /dev/null 2> /dev/null
 west #
- pk12util -i OUTPUT/nss/client.p12 -d sql:/etc/ipsec.d -K 'foobar' -W 'foobar'
+ ipsec pk12util -i OUTPUT/nss/client.p12 -K 'foobar' -W 'foobar'
 pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
  ipsec certutil -M -n cacert -t 'CT,,'

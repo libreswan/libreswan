@@ -6,7 +6,7 @@ east #
 east #
  ipsec initnss > /dev/null 2> /dev/null
 east #
- PATH/bin/pk12util -i /testing/x509/strongswan/strongEast.p12 -d sql:/etc/ipsec.d -w /testing/x509/nss-pw -k /testing/x509/nss-pw
+ ipsec pk12util -i /testing/x509/strongswan/strongEast.p12 -w /testing/x509/nss-pw -k /testing/x509/nss-pw
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
  # Tuomo: why doesn't ipsec checknss --settrust work here?

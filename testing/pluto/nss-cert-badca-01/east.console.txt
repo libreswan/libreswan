@@ -5,9 +5,9 @@ east #
 east #
  ipsec certutil -D -n east
 east #
- certutil -A -i /testing/x509/cacerts/badca.crt -n "badca" -d sql:/etc/ipsec.d -t "CT,,"
+ ipsec certutil -A -i /testing/x509/cacerts/badca.crt -n "badca" -t "CT,,"
 east #
- pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/pkcs12/badca/badeast.p12
+ ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/badca/badeast.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
  ipsec start

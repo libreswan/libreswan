@@ -3,7 +3,7 @@
 ipsec certutil -D -n west
 ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
 # import fake one
-pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/fake/pkcs12/mainca/west.p12
+ipsec pk12util -W foobar -K '' -i /testing/x509/fake/pkcs12/mainca/west.p12
 # remove (fake) CA
 ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
 # confirm that the network is alive

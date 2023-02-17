@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
 rm -f /etc/ipsec.d/*.*
 ipsec initnss > /dev/null 2> /dev/null
-pk12util -i OUTPUT/nss/client.p12 -d sql:/etc/ipsec.d -K 'foobar' -W 'foobar'
+ipsec pk12util -i OUTPUT/nss/client.p12 -K 'foobar' -W 'foobar'
 ipsec certutil -M -n cacert -t 'CT,,'
 ipsec start
 ../../guestbin/wait-until-pluto-started

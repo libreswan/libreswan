@@ -1,11 +1,11 @@
 /testing/guestbin/swan-prep --eccert
 
 # import real west+mainca
-pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/pkcs12/mainca/west.p12
+ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/mainca/west.p12
 # delete real main CA
 ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
 # so only CA is bogus
-pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/fake/pkcs12/mainec/mainec.p12
+ipsec pk12util -W foobar -K '' -i /testing/x509/fake/pkcs12/mainec/mainec.p12
 
 # confirm that the network is alive
 ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254

@@ -16,12 +16,12 @@ west #
  ../../guestbin/ping-once.sh --down -I 192.0.1.254 192.0.2.254
 down
 west #
- PATH/bin/pk12util -i /testing/x509/strongswan/strongWest.p12 -d sql:/etc/ipsec.d -w /testing/x509/nss-pw
+ ipsec pk12util -i /testing/x509/strongswan/strongWest.p12 -w /testing/x509/nss-pw
 pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
  # import for east should not be needed
 west #
- PATH/bin/pk12util -i /testing/x509/strongswan/strongEast.p12 -d sql:/etc/ipsec.d -w /testing/x509/nss-pw
+ ipsec pk12util -i /testing/x509/strongswan/strongEast.p12 -w /testing/x509/nss-pw
 pk12util: PKCS12 IMPORT SUCCESSFUL
 west #
  # Tuomo: why doesn't ipsec checknss --settrust work here?

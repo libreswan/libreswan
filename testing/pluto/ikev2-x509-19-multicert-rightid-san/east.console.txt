@@ -5,9 +5,9 @@ east #
 east #
  # add second identity/cert
 east #
- #pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/pkcs12/otherca/othereast.p12
+ #ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/otherca/othereast.p12
 east #
- pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/pkcs12/mainca/north.p12
+ ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/mainca/north.p12
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
  ipsec start

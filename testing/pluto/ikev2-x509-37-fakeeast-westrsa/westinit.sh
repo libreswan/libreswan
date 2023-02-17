@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep
 
 # import real west+mainca
-pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/pkcs12/mainca/west.p12
+ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/mainca/west.p12
 
 # confirm that the network is alive
 ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254

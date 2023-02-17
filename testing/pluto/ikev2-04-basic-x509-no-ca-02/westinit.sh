@@ -3,8 +3,8 @@
 ipsec certutil -D -n "Libreswan test CA for mainca - Libreswan"
 ipsec certutil -D -n "east-ec"
 # load a distraction CA
-pk12util -W foobar -K '' -d sql:/etc/ipsec.d -i /testing/x509/pkcs12/otherca/otherwest.p12
-certutil -M -n 'Libreswan test CA for otherca - Libreswan' -d sql:/etc/ipsec.d/ -t 'CT,,'
+ipsec pk12util -W foobar -K '' -i /testing/x509/pkcs12/otherca/otherwest.p12
+ipsec certutil -M -n 'Libreswan test CA for otherca - Libreswan' -t 'CT,,'
 # confirm that the network is alive
 ../../guestbin/wait-until-alive -I 192.0.1.254 192.0.2.254
 # ensure that clear text does not get through

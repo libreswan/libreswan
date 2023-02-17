@@ -1,6 +1,6 @@
 /testing/guestbin/swan-prep
 east #
- PATH/bin/pk12util -i /testing/x509/strongswan/strongEast.p12 -d sql:/etc/ipsec.d -w /testing/x509/nss-pw
+ ipsec pk12util -i /testing/x509/strongswan/strongEast.p12 -w /testing/x509/nss-pw
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
  # Because we cannot run ipsec import, fixup trust bits manually

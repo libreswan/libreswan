@@ -4,7 +4,7 @@ east #
 east #
  # and left waiting for clients (west et.al.) which an import using:
 east #
- # pk12util -i OUTPUT/nss/client.p12 -d sql:/etc/ipsec.d -K 'foobar' -W 'foobar'
+ # ipsec pk12util -i OUTPUT/nss/client.p12 -K 'foobar' -W 'foobar'
 east #
  # ipsec certutil -M -n cacert -t 'CT,,'
 east #
@@ -61,7 +61,7 @@ east #
 east #
  ipsec initnss > /dev/null 2> /dev/null
 east #
- pk12util -i OUTPUT/nss/server.p12 -d sql:/etc/ipsec.d -K 'foobar' -W 'foobar'
+ ipsec pk12util -i OUTPUT/nss/server.p12 -K 'foobar' -W 'foobar'
 pk12util: PKCS12 IMPORT SUCCESSFUL
 east #
  ipsec certutil -M -n cacert -t 'CT,,'

@@ -1,7 +1,7 @@
 /testing/guestbin/swan-prep --x509
 Preparing X.509 files
 east #
- pk12util -i /testing/x509/pkcs12/east.p12 -d sql:/etc/ipsec.d -W "foobar"
+ ipsec pk12util -i /testing/x509/pkcs12/east.p12 -W "foobar"
 pk12util: File Open failed: /testing/x509/pkcs12/east.p12: PR_FILE_NOT_FOUND_ERROR: File not found
 east #
  # east MUST NOT have intermediate ceritificates available - they are changing target like end target
