@@ -121,7 +121,12 @@ static bool fmt_common_shell_out(char *buf,
 
 	JDuint("PLUTO_MY_PORT", sr->local->client.hport);
 	JDuint("PLUTO_MY_PROTOCOL", sr->local->client.ipproto);
-	JDuint("PLUTO_SA_REQID", c->child.reqid);
+	JDuint("PLUTO_SA_REQID", st == NULL ? c->child.reqid :
+		st->st_esp.present ? reqid_esp(c->child.reqid) :
+		st->st_ah.present ? reqid_ah(c->child.reqid) :
+		st->st_ipcomp.present ? reqid_ipcomp(c->child.reqid) :
+		c->child.reqid);
+
 	JDstr("PLUTO_SA_TYPE",
 		st == NULL ? "none" :
 		st->st_esp.present ? "ESP" :
