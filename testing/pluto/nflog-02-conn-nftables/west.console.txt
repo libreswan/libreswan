@@ -26,14 +26,14 @@ west #
 004 "westnet-eastnet-ikev2" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
 west #
  nft list ruleset
-table ip ipsec-filter {
-	chain ipsec-all-input {
+table inet ipsec-log {
+	chain input {
 		type filter hook input priority filter; policy accept;
-		meta ipsec exists ip daddr 192.0.1.0/24 ip saddr 192.0.2.0/24 log group 50
+		ipsec in reqid 16389 ip saddr 192.0.2.0/24 ip daddr 192.0.1.0/24 counter packets 0 bytes 0 log group 50
 	}
-	chain ipsec-all-output {
+	chain output {
 		type filter hook output priority filter; policy accept;
-		rt ipsec exists ip daddr 192.0.2.0/24 ip saddr 192.0.1.0/24 log group 50
+		ipsec out reqid 16389 ip saddr 192.0.1.0/24 ip daddr 192.0.2.0/24 counter packets 0 bytes 0 log group 50
 	}
 }
 west #
@@ -60,16 +60,6 @@ west #
 002 "westnet-eastnet-ikev2" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 005 "westnet-eastnet-ikev2" #2: ESP traffic information: in=168B out=168B
 west #
- nft list ruleset
-table ip ipsec-filter {
-	chain ipsec-all-input {
-		type filter hook input priority filter; policy accept;
-	}
-	chain ipsec-all-output {
-		type filter hook output priority filter; policy accept;
-	}
-}
-west #
  # wait for count to reach tcpdump then dump it
 west #
  wait
@@ -81,6 +71,10 @@ IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
 IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id XXXX, seq 1, length 64
 IP 192.0.1.254 > 192.0.2.254: ICMP echo request, id XXXX, seq 1, length 64
 IP 192.0.2.254 > 192.0.1.254: ICMP echo reply, id XXXX, seq 1, length 64
+west #
+ # expect no nftables rulese
+west #
+ nft list ruleset
 west #
  echo done
 done
@@ -95,14 +89,6 @@ src 192.0.1.0/24 dst 192.0.2.0/24
 		proto esp reqid 0 mode transport
 XFRM done
 nft list ruleset
-table ip ipsec-filter {
-	chain ipsec-all-input {
-		type filter hook input priority filter; policy accept;
-	}
-	chain ipsec-all-output {
-		type filter hook output priority filter; policy accept;
-	}
-}
 ROUTING TABLES
 default via 192.1.2.254 dev eth1
 192.0.1.0/24 dev eth0 proto kernel scope link src 192.0.1.254
@@ -118,13 +104,5 @@ west #
  # show no nflog left behind
 west #
  nft list ruleset
-table ip ipsec-filter {
-	chain ipsec-all-input {
-		type filter hook input priority filter; policy accept;
-	}
-	chain ipsec-all-output {
-		type filter hook output priority filter; policy accept;
-	}
-}
 west #
  

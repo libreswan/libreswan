@@ -19,14 +19,14 @@ west #
  # show nflog global ipsec-all rules
 west #
  nft list ruleset
-table ip filter {
-	chain ipsec-all-input {
+table inet ipsec-log {
+	chain input {
 		type filter hook input priority filter; policy accept;
-		meta ipsec exists log prefix "all-ipsec" group 50
+		meta ipsec exists log prefix "all-ipsec-input" group 50
 	}
-	chain ipsec-all-output {
+	chain output {
 		type filter hook output priority filter; policy accept;
-		rt ipsec exists log prefix "all-ipsec" group 50
+		rt ipsec exists log prefix "all-ipsec-output" group 50
 	}
 }
 west #
@@ -80,14 +80,14 @@ src 192.0.1.0/24 dst 192.0.2.0/24
 		proto esp reqid 0 mode transport
 XFRM done
 nft list ruleset
-table ip filter {
-	chain ipsec-all-input {
+table inet ipsec-log {
+	chain input {
 		type filter hook input priority filter; policy accept;
-		meta ipsec exists log prefix "all-ipsec" group 50
+		meta ipsec exists log prefix "all-ipsec-input" group 50
 	}
-	chain ipsec-all-output {
+	chain output {
 		type filter hook output priority filter; policy accept;
-		rt ipsec exists log prefix "all-ipsec" group 50
+		rt ipsec exists log prefix "all-ipsec-output" group 50
 	}
 }
 ROUTING TABLES
@@ -101,13 +101,16 @@ Certificate Nickname                                         Trust Attributes
 west #
  ipsec stop
 Redirecting to: [initsystem]
+Error: No such file or directory; did you mean table ‘ipsec-log’ in family inet?
+delete table ipsec-log
+             ^^^^^^^^^
 west #
  # show no nflog left behind
 west #
  # it may leave an empty table ip filter
 west #
  nft list ruleset
-table ip filter {
+table inet ipsec-log {
 }
 west #
  

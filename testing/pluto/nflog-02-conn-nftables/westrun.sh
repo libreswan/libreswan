@@ -12,11 +12,11 @@ tcpdump -c 4 -s 0 -w /tmp/nflog-50.pcap -i nflog:50 > /tmp/tcpdump.log 2>&1 &
 ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 
 ipsec auto --down westnet-eastnet-ikev2
-nft list ruleset
 
 # wait for count to reach tcpdump then dump it
 wait
 cp  /tmp/nflog-50.pcap OUTPUT/nflog-50.pcap
 tcpdump -n -r OUTPUT/nflog-50.pcap 2>/dev/null
-
+# expect no nftables rulese
+nft list ruleset
 echo done

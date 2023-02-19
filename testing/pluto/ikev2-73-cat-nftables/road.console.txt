@@ -83,14 +83,14 @@ src 192.1.3.209/32 dst 192.0.2.0/24
 		proto esp reqid REQID mode tunnel
 XFRM done
 nft list ruleset
-table ip ipsec-nat {
-	chain ipsec-postrouting {
+table inet ipsec-cat {
+	chain postrouting {
 		type filter hook postrouting priority srcnat; policy accept;
-		rt ipsec exists ip daddr 192.0.2.0/24 ip saddr 192.1.3.209 ip saddr set 10.0.10.1 notrack counter packets 1 bytes 84 accept
+		ipsec out reqid REQID ip saddr 192.1.3.209 ip daddr 192.0.2.0/24 ip saddr set 10.0.10.1 notrack counter packets 1 bytes 84
 	}
-	chain ipsec-prerouting {
+	chain prerouting {
 		type filter hook prerouting priority dstnat; policy accept;
-		meta ipsec exists ip daddr 10.0.10.1 ip saddr 192.0.2.0/24 ip daddr set 192.1.3.209 notrack counter packets 1 bytes 84 accept
+		ipsec in reqid REQID ip saddr 192.0.2.0/24 ip daddr 10.0.10.1 ip daddr set 192.1.3.209 notrack counter packets 1 bytes 84
 	}
 }
 ROUTING TABLES
