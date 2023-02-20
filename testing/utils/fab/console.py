@@ -115,15 +115,13 @@ class Redirect:
             f.flush()
 
 
-class Remote:
+class Console:
 
-    def __init__(self, command, logger, hostname=None, username=None):
-        # Need access to HOSTNAME.
+    def __init__(self, command, logger, hostname=None):
         self.logger = logger
         self.unicode_output_files = []
-        self.basename = None
-        self.hostname = hostname
-        self.username = username
+        self._basename = None
+        self._hostname = hostname
         self.prompt = _PROMPT_REGEX
         # Create the child: configure -ve timeout parameters to act
         # like poll, and give all methods an explicit default of
@@ -150,14 +148,14 @@ class Remote:
         self.logger.debug("closing console")
         self.child.close()
 
-    def _check_prompt(self, hostname=None, username=None, basename=None, dollar=None):
+    def _check_prompt(self):
         """Match wild-card  of the prompt pattern; return status"""
 
         self.logger.debug("match %s contains %s", self.child.match, self.child.match.groupdict())
-        _check_prompt_group(self.logger, self.child.match, HOSTNAME_GROUP, hostname)
-        _check_prompt_group(self.logger, self.child.match, USERNAME_GROUP, username)
-        _check_prompt_group(self.logger, self.child.match, BASENAME_GROUP, basename)
-        _check_prompt_group(self.logger, self.child.match, DOLLAR_GROUP, dollar)
+        # If basename is known, make certain it doesn't change.
+        # Catches scripts changing directory.
+        _check_prompt_group(self.logger, self.child.match, HOSTNAME_GROUP, self._hostname)
+        _check_prompt_group(self.logger, self.child.match, BASENAME_GROUP, self._basename)
         # If there's no status, return None, not empty.
         status = self.child.match.group(STATUS_GROUP)
         if status:
@@ -173,13 +171,13 @@ class Remote:
         # This can throw a pexpect.TIMEOUT or pexpect.EOF exception
         self.child.expect(self.prompt, timeout=timeout, \
                           searchwindowsize=searchwindowsize)
-        status = self._check_prompt(basename=self.basename)
+        status = self._check_prompt()
         self.logger.debug("run exit status %s", status)
         return status
 
     def chdir(self, directory):
         # save directory so run() can verify it
-        self.basename = os.path.basename(directory)
+        self._basename = os.path.basename(directory)
         if self.run("cd " + directory):
             # i.e., non-zero exit code
             raise Exception("'%s' failed", directory)
