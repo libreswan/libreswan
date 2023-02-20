@@ -15,6 +15,7 @@
 
 import re
 import os
+import random
 import logging
 import pexpect
 import time
@@ -77,7 +78,18 @@ def _login(domain, console, login, password,
             domain.logger.info("we're in after %s!", lapsed_time)
             break
 
-    console.sync()
+    # Sync with the remote end by matching a known and unique pattern.
+    # Strictly match PATTERN+PROMPT so that earlier prompts that might
+    # also be lurking in the output are discarded.
+    number = str(random.randrange(10000, 1000000))
+    sync = "sync=" + number + "=cnyc"
+    console.sendline("echo " + sync)
+    console.expect(sync.encode() + rb'\s+' + console.prompt.pattern, timeout=virsh.TIMEOUT)
+
+    # Set the PTY inside the VM to no-echo; kvmsh.py's interactive
+    # mode will re-adjust this.
+    console.run("export TERM=dumb ; unset LS_COLORS ; stty sane -echo -onlcr")
+
     return console
 
 

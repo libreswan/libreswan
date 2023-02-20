@@ -13,7 +13,6 @@
 # for more details.
 
 import os
-import random
 import pexpect
 import re
 
@@ -150,25 +149,6 @@ class Remote:
         """
         self.logger.debug("closing console")
         self.child.close()
-
-    def sync(self, hostname=None, username=None, timeout=TIMEOUT):
-        self.hostname = hostname or self.hostname
-        self.username = username or self.username
-        # Update the expected prompt
-        self.hostname = hostname
-        self.username = username
-
-        # Sync with the remote end by matching a known and unique
-        # pattern.  Strictly match PATTERN+PROMPT so that earlier
-        # prompts that might also be lurking in the output are
-        # discarded.
-        number = str(random.randrange(10000, 1000000))
-        sync = "sync=" + number + "=cnyc"
-        self.sendline("echo " + sync)
-        self.expect(sync.encode() + rb'\s+' + self.prompt.pattern, timeout=timeout)
-
-        # Set the PTY inside the VM to no-echo
-        self.run("export TERM=dumb ; unset LS_COLORS ; stty sane -echo -onlcr")
 
     def _check_prompt(self, hostname=None, username=None, basename=None, dollar=None):
         """Match wild-card  of the prompt pattern; return status"""
