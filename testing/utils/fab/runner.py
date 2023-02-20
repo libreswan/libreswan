@@ -182,10 +182,7 @@ def _boot_test_domains(logger, test, domains):
         console.run("export TERM=dumb ; unset LS_COLORS ; stty sane -echo -onlcr")
 
         test_directory = os.path.join("/testing/pluto", test.name)
-        if console.chdir(test_directory):
-            # i.e., non-zero exit code
-            self.logger.error("directory %s not mounted on %s", test_directory, self.domain)
-            raise Exception("directory '%s' not mounted on %s" % (test_directory, self.domain))
+        console.chdir(test_directory)
 
     return test_domains
 

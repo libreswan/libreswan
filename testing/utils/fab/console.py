@@ -198,8 +198,11 @@ class Remote:
         return status
 
     def chdir(self, directory):
+        # save directory so run() can verify it
         self.basename = os.path.basename(directory)
-        return self.run("cd " + directory)
+        if self.run("cd " + directory):
+            # i.e., non-zero exit code
+            raise Exception("'%s' failed", directory)
 
     def redirect_output(self, unicode_file):
         if unicode_file:
