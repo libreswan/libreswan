@@ -181,13 +181,11 @@ def _boot_test_domains(logger, test, domains):
         # outside of the VM).
         console.run("export TERM=dumb ; unset LS_COLORS ; stty sane -echo -onlcr")
 
-        test_directory = domain.guest_path(host_path=test.directory)
-        if not test_directory:
-            abspath = os.path.abspath(self.test.directory)
-            self.logger.error("directory %s not mounted on %s", abspath, self.domain)
-            raise Exception("directory '%s' not mounted on %s" % (abspath, self.domain))
-        logger.info("'cd' to %s", test_directory)
-        console.chdir(test_directory)
+        test_directory = os.path.join("/testing/pluto", test.name)
+        if console.chdir(test_directory):
+            # i.e., non-zero exit code
+            self.logger.error("directory %s not mounted on %s", test_directory, self.domain)
+            raise Exception("directory '%s' not mounted on %s" % (test_directory, self.domain))
 
     return test_domains
 
