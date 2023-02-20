@@ -27,6 +27,7 @@ from fab import virsh
 from fab import remote
 from fab import argutil
 from fab import logutil
+from fab import pathutil
 
 class Boot(Enum):
     cold = "cold"
@@ -120,7 +121,8 @@ def main():
         if args.chdir and os.path.isabs(args.chdir):
             chdir = args.chdir
         elif args.chdir:
-            chdir = domain.guest_path(console, host_path=args.chdir)
+            # convert host path to guest path
+            chdir = pathutil.guest_path(domain, args.chdir)
         else:
             chdir = None
         if chdir:

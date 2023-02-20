@@ -80,25 +80,6 @@ def _check_prompt_group(logger, match, field, expected):
             raise pexpect.TIMEOUT("incorrect prompt, field '%s' should be '%s but was '%s'" \
                                   % (field, expected, found))
 
-
-def _check_prompt(logger, match, hostname=None, username=None, basename=None, dollar=None):
-    """Match wild-card  of the prompt pattern; return status"""
-
-    logger.debug("match %s contains %s", match, match.groupdict())
-    _check_prompt_group(logger, match, HOSTNAME_GROUP, hostname)
-    _check_prompt_group(logger, match, USERNAME_GROUP, username)
-    _check_prompt_group(logger, match, BASENAME_GROUP, basename)
-    _check_prompt_group(logger, match, DOLLAR_GROUP, dollar)
-    # If there's no status, return None, not empty.
-    status = match.group(STATUS_GROUP)
-    if status:
-        status = int(status)
-    else:
-        status = None
-    logger.debug("exit code '%s'", status)
-    return status
-
-
 # This file-like class passes all writes on to the LOGGER at DEBUG.
 # It is is used to direct pexpect's .logfile_read and .logfile_send
 # files into the logging system.
@@ -189,14 +170,30 @@ class Remote:
         # Set the PTY inside the VM to no-echo
         self.run("export TERM=dumb ; unset LS_COLORS ; stty sane -echo -onlcr")
 
+    def _check_prompt(self, hostname=None, username=None, basename=None, dollar=None):
+        """Match wild-card  of the prompt pattern; return status"""
+
+        self.logger.debug("match %s contains %s", self.child.match, self.child.match.groupdict())
+        _check_prompt_group(self.logger, self.child.match, HOSTNAME_GROUP, hostname)
+        _check_prompt_group(self.logger, self.child.match, USERNAME_GROUP, username)
+        _check_prompt_group(self.logger, self.child.match, BASENAME_GROUP, basename)
+        _check_prompt_group(self.logger, self.child.match, DOLLAR_GROUP, dollar)
+        # If there's no status, return None, not empty.
+        status = self.child.match.group(STATUS_GROUP)
+        if status:
+            status = int(status)
+        else:
+            status = None
+        self.logger.debug("exit code '%s'", status)
+        return status
+
     def run(self, command, timeout=TIMEOUT, searchwindowsize=-1):
         self.logger.debug("run '%s' expecting prompt", command)
         self.child.sendline(command)
         # This can throw a pexpect.TIMEOUT or pexpect.EOF exception
         self.child.expect(self.prompt, timeout=timeout, \
                           searchwindowsize=searchwindowsize)
-        status = _check_prompt(self.logger, self.child.match,
-                               basename=self.basename)
+        status = self._check_prompt(basename=self.basename)
         self.logger.debug("run exit status %s", status)
         return status
 
@@ -239,29 +236,6 @@ class Remote:
     def expect_exact(self, expect, timeout=TIMEOUT, searchwindowsize=-1):
         return self.child.expect_exact(expect, timeout=timeout,
                                        searchwindowsize=searchwindowsize)
-
-    def expect_prompt(self, expect, timeout=TIMEOUT, searchwindowsize=-1):
-        """Like expect but also match the prompt
-
-        In addition to matching EXPECT+"\s+"+PROMPT, and to speed up
-        error detection, just PROMPT is also matched.  The latter is
-        treated as if a timeout occurred.  If things are not kept in
-        sync, this will match an earlier prompt.  The idea is found in
-        DEJAGNU based tools.
-
-        Returns both the exit status and the re.match
-
-        """
-
-        self.logger.debug("expect '%s' and prompt", expect.decode('ascii'))
-        if self.expect([expect + rb'\s+' + self.prompt.pattern, self.prompt],
-                       timeout=timeout, searchwindowsize=searchwindowsize):
-            self.logger.debug("only matched prompt")
-            raise pexpect.TIMEOUT("pattern %s not found" % expect)
-        status = _check_prompt(self.logger, self.child.match,
-                               basename=self.basename)
-        self.logger.debug("status %s match %s", status, self.child.match)
-        return status, self.child.match
 
     def sendcontrol(self, control):
         return self.child.sendcontrol(control)

@@ -41,6 +41,7 @@ START_TIMEOUT = 60
 CONSOLE_TIMEOUT = 20
 SHUTDOWN_TIMEOUT = 20
 DESTROY_TIMEOUT = 20
+TIMEOUT = 10
 
 class Domain:
 
@@ -217,7 +218,8 @@ class Domain:
         self._console = None # not False
 
     def _get_mounts(self, console):
-        # First extract the 9p mount points from LIBVIRT.
+
+        # First: extract the 9p mount points from LIBVIRT.
         #
         # The code works kind of but not really like a state machine.
         # Specific lines trigger actions.
@@ -242,15 +244,29 @@ class Domain:
                 self.logger.debug("filesystem '%s' '%s'", target, source)
                 mount_points[target] = source
                 continue
-        # now query the domain for its fstab, save it in regex
-        # group(1); danger binary data!
+
+        # Second: query the domain for its fstab
+        #
+        # It is saved in the first group (remember 0 is everything?).
+        # Danger binary data!
+        #
+        # Merge this into .run()?
         console.sendline("cat /etc/fstab")
-        status, output = console.expect_prompt(rb'(.*)')
+        if console.child.expect([rb'(.*)\s+' + console.prompt.pattern,
+                                 console.prompt],
+                                timeout=TIMEOUT,
+                                searchwindowsize=-1):
+            raise pexpect.TIMEOUT("fstab content not found")
+        status = console._check_prompt()
         if status:
             raise AssertionError("extracting fstab failed: %s", status)
+        self.logger.debug("status %s match %s", status, self._console.child.match)
+        output = self._console.child.match
         fstab = output.group(1).decode('utf-8')
-        # convert the fstab into a second map; look for NFS and 9p
-        # mounts
+
+        # Third: convert the fstab into a second map
+        #
+        # look for NFS and 9p mounts and add them to the table
         mounts = []
         for line in fstab.splitlines():
             self.logger.debug("line: %s", line)
