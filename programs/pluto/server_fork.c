@@ -47,6 +47,7 @@
 struct pid_entry {
 	unsigned long magic;
 	struct {
+		struct list_entry list;
 		struct list_entry pid;
 	} pid_entry_db_entries;
 	pid_t pid;
@@ -78,21 +79,41 @@ static hash_t hash_pid_entry_pid(const pid_t *pid)
 
 HASH_TABLE(pid_entry, pid, .pid, 23);
 
+static struct pid_entry *pid_entry_by_pid(const pid_t pid)
+{
+	hash_t hash = hash_pid_entry_pid(&pid);
+	struct list_head *bucket = hash_table_bucket(&pid_entry_pid_hash_table, hash);
+	struct pid_entry *pid_entry;
+	FOR_EACH_LIST_ENTRY_OLD2NEW(pid_entry, bucket) {
+		passert(pid_entry->magic == PID_MAGIC);
+		if (thingeq(pid_entry->pid, pid)) {
+			return pid_entry;
+		}
+	}
+	return NULL;
+}
+
+static void pid_entry_db_init(struct logger *logger);
+static void pid_entry_db_check(struct logger *logger);
+static void pid_entry_db_init_pid_entry(struct pid_entry *);
+static void pid_entry_db_add(struct pid_entry *);
+static void pid_entry_db_del(struct pid_entry *);
+
+HASH_DB(pid_entry, &pid_entry_pid_hash_table);
+
 void show_process_status(struct show *s)
 {
 	show_separator(s);
 	/* XXX: don't sort for now */
 	show_comment(s, "  PID  Process");
-	FOR_EACH_ELEMENT(h, pid_entry_pid_buckets) {
-		const struct pid_entry *e;
-		FOR_EACH_LIST_ENTRY_NEW2OLD(e, h) {
-			/*
-			 * XXX: Danger! The test script
-			 * wait-until-pluto-started greps to see if
-			 * the "addconn" line has disappeared.
-			 */
-			show_comment(s, "%5d  %s", e->pid, e->name);
-		}
+	const struct pid_entry *e;
+	FOR_EACH_LIST_ENTRY_OLD2NEW(e, &pid_entry_db_list_head) {
+		/*
+		 * XXX: Danger! The test script
+		 * wait-until-pluto-started greps to see if
+		 * the "addconn" line has disappeared.
+		 */
+		show_comment(s, "%5d  %s", e->pid, e->name);
 	}
 }
 
@@ -109,8 +130,8 @@ static void add_pid(const char *name, so_serial_t serialno, pid_t pid,
 	new_pid->name = name;
 	new_pid->start_time = mononow();
 	new_pid->logger = clone_logger(logger, HERE);
-	init_hash_table_entry(&pid_entry_pid_hash_table, new_pid);
-	add_hash_table_entry(&pid_entry_pid_hash_table, new_pid);
+	pid_entry_db_init_pid_entry(new_pid);
+	pid_entry_db_add(new_pid);
 }
 
 static void free_pid_entry(struct pid_entry **p)
@@ -189,15 +210,7 @@ void server_fork_sigchld_handler(struct logger *logger)
 					child);
 				jam_status(buf, status);
 			}
-			struct pid_entry *pid_entry = NULL;
-			hash_t hash = hash_pid_entry_pid(&child);
-			struct list_head *bucket = hash_table_bucket(&pid_entry_pid_hash_table, hash);
-			FOR_EACH_LIST_ENTRY_OLD2NEW(pid_entry, bucket) {
-				passert(pid_entry->magic == PID_MAGIC);
-				if (pid_entry->pid == child) {
-					break;
-				}
-			}
+			struct pid_entry *pid_entry = pid_entry_by_pid(child);
 			if (pid_entry == NULL) {
 				LLOG_JAMBUF(RC_LOG, logger, buf) {
 					jam(buf, "waitpid return unknown child pid %d",
@@ -246,7 +259,7 @@ void server_fork_sigchld_handler(struct logger *logger)
 					       pid_entry->name);
 			}
 			/* clean it up */
-			del_hash_table_entry(&pid_entry_pid_hash_table, pid_entry);
+			pid_entry_db_del(pid_entry);
 			free_pid_entry(&pid_entry);
 			continue;
 		}
@@ -286,5 +299,10 @@ void server_fork_exec(const char *what, const char *path,
 
 void init_server_fork(struct logger *logger)
 {
-	init_hash_table(&pid_entry_pid_hash_table, logger);
+	pid_entry_db_init(logger);
+}
+
+void check_server_fork(struct logger *logger)
+{
+	pid_entry_db_check(logger);
 }

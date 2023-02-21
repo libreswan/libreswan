@@ -57,6 +57,7 @@ void server_fork_exec(const char *what, const char *path,
 
 void server_fork_sigchld_handler(struct logger *logger);
 void init_server_fork(struct logger *logger);
+void check_server_fork(struct logger *logger);
 void show_process_status(struct show *s);
 
 #endif /* _SERVER_H */
