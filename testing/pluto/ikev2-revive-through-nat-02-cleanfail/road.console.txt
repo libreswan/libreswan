@@ -32,15 +32,6 @@ road #
 002 "road-eastnet-ikev2" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
 005 "road-eastnet-ikev2" #2: ESP traffic information: in=84B out=84B
 road #
- # give east time to re-trigger to us due to auto=keep
-road #
- # we check in final to see if east cleaned up properly
-road #
- sleep 20
-road #
- echo done
-done
-road #
  # should be empty for east and road
 road #
  ipsec showstates
