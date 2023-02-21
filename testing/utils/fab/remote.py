@@ -148,7 +148,7 @@ def _reboot_to_login_prompt(domain, console):
             # spontaneously disconnect.
             domain.logger.error("domain disconnected spontaneously after %s", timer)
             break
-        elif match == 3 and console.child.buffer == "":
+        elif match == 3 and console.buffer == "":
             # On F23, F24, F25, instead of resetting, the domain will
             # hang.  The symptoms are a .TIMEOUT and an empty buffer
             # (HACK!).

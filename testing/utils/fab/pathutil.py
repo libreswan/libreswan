@@ -55,8 +55,8 @@ def guest_path(guest, host_path):
     # everything) and then converted to "text".  Danger binary data!
     #
     # Merge this into .run()?
-    guest._console.child.sendline("cat /etc/fstab")
-    if guest._console.child.expect([rb'(.*)\s+' + guest._console.prompt.pattern,
+    guest._console.sendline("cat /etc/fstab")
+    if guest._console.expect([rb'(.*)\s+' + guest._console.prompt.pattern,
                                     guest._console.prompt],
                                    timeout=virsh.TIMEOUT,
                                    searchwindowsize=-1):
@@ -64,8 +64,8 @@ def guest_path(guest, host_path):
     status = guest._console._check_prompt()
     if status:
         raise AssertionError("extracting fstab failed: %s", status)
-    guest.logger.debug("status %s match %s", status, guest._console.child.match)
-    output = guest._console.child.match
+    guest.logger.debug("status %s match %s", status, guest._console.match)
+    output = guest._console.match
     fstab = output.group(1).decode('utf-8')
 
     # Convert the fstab into a device (NFS path or 9p target) to local

@@ -83,7 +83,7 @@ def _check_prompt_group(logger, match, field, expected):
 # It is is used to direct pexpect's .logfile_read and .logfile_send
 # files into the logging system.
 
-class Debug:
+class _Debug:
 
     def __init__(self, logger, message):
         self.logger = logger
@@ -98,7 +98,7 @@ class Debug:
     def flush(self):
         pass
 
-class Redirect:
+class _Redirect:
 
     def __init__(self, files):
         self.files = files
@@ -115,49 +115,33 @@ class Redirect:
             f.flush()
 
 
-class Console:
+class Console(pexpect.spawn):
 
     def __init__(self, command, logger, hostname=None):
+        # Create the child.
+        logger.debug("spawning '%s'", " ".join(command))
+        pexpect.spawn.__init__(self, command[0], args=command[1:], timeout=TIMEOUT)
         self.logger = logger
         self.unicode_output_files = []
         self._basename = None
         self._hostname = hostname
         self.prompt = _PROMPT_REGEX
-        # Create the child: configure -ve timeout parameters to act
-        # like poll, and give all methods an explicit default of
-        # TIMEOUT seconds; leave searchwindowsize set to the infinite
-        # default so that expect patterns do not mysteriously fail.
-        self.logger.debug("spawning '%s'", " ".join(command))
-        self.child = pexpect.spawn(command[0], args=command[1:], timeout=0)
         #This crashes inside of pexpect!
         #self.logger.debug("child is '%s'", self.child)
         # route low level output to the logger
-        self.child.logfile_read = Debug(self.logger, "read <<%s>>>")
-        self.child.logfile_send = Debug(self.logger, "send <<%s>>>")
-
-    def close(self):
-        """Close the console
-
-        The intent is to close the PTY.  Since COMMAND is (probably)
-        running as root, any attempt by .close() to kill the process
-        using a signal will fail.  Consequently, the caller should
-        first shutdown the process, and then call close (hint: use
-        .sendcontrol("]")
-
-        """
-        self.logger.debug("closing console")
-        self.child.close()
+        self.logfile_read = _Debug(self.logger, "read <<%s>>>")
+        self.logfile_send = _Debug(self.logger, "send <<%s>>>")
 
     def _check_prompt(self):
         """Match wild-card  of the prompt pattern; return status"""
 
-        self.logger.debug("match %s contains %s", self.child.match, self.child.match.groupdict())
+        self.logger.debug("match %s contains %s", self.match, self.match.groupdict())
         # If basename is known, make certain it doesn't change.
         # Catches scripts changing directory.
-        _check_prompt_group(self.logger, self.child.match, HOSTNAME_GROUP, self._hostname)
-        _check_prompt_group(self.logger, self.child.match, BASENAME_GROUP, self._basename)
+        _check_prompt_group(self.logger, self.match, HOSTNAME_GROUP, self._hostname)
+        _check_prompt_group(self.logger, self.match, BASENAME_GROUP, self._basename)
         # If there's no status, return None, not empty.
-        status = self.child.match.group(STATUS_GROUP)
+        status = self.match.group(STATUS_GROUP)
         if status:
             status = int(status)
         else:
@@ -167,10 +151,10 @@ class Console:
 
     def run(self, command, timeout=TIMEOUT, searchwindowsize=-1):
         self.logger.debug("run '%s' expecting prompt", command)
-        self.child.sendline(command)
+        self.sendline(command)
         # This can throw a pexpect.TIMEOUT or pexpect.EOF exception
-        self.child.expect(self.prompt, timeout=timeout, \
-                          searchwindowsize=searchwindowsize)
+        self.expect(self.prompt, timeout=timeout,
+                    searchwindowsize=searchwindowsize)
         status = self._check_prompt()
         self.logger.debug("run exit status %s", status)
         return status
@@ -186,11 +170,11 @@ class Console:
         if unicode_file:
             self.unicode_output_files.append(unicode_file)
             self.logger.debug("switching output from %s to %s's buffer",
-                              self.child.logfile, unicode_file)
-            self.child.logfile = Redirect(self.unicode_output_files)
+                              self.logfile, unicode_file)
+            self.logfile = _Redirect(self.unicode_output_files)
         else:
             self.unicode_output_files = []
-            self.child.logfile = None
+            self.logfile = None
 
     def append_output(self, unicode_format, *unicode_args):
         output = (unicode_format % unicode_args)
@@ -198,32 +182,8 @@ class Console:
             f.write(output)
             f.flush()
 
-    def sendline(self, line):
-        return self.child.sendline(line)
-
     def drain(self):
         self.logger.debug("draining any existing output")
         if self.expect([rb'.+', pexpect.TIMEOUT], timeout=0) == 0:
-            self.logger.info("discarding '%s' and re-draining", self.child.match)
+            self.logger.info("discarding '%s' and re-draining", self.match)
             self.expect([rb'.+', pexpect.TIMEOUT], timeout=0)
-
-    def expect(self, expect, timeout=TIMEOUT, searchwindowsize=-1):
-        timer = timing.Lapsed()
-        match = self.child.expect(expect, timeout=timeout,
-                                  searchwindowsize=searchwindowsize)
-        self.logger.debug("%s matched after %s", ascii(expect[match]), timer)
-        return match
-
-    def expect_exact(self, expect, timeout=TIMEOUT, searchwindowsize=-1):
-        return self.child.expect_exact(expect, timeout=timeout,
-                                       searchwindowsize=searchwindowsize)
-
-    def sendcontrol(self, control):
-        return self.child.sendcontrol(control)
-
-    def sendintr(self):
-        return self.child.sendintr()
-
-    def interact(self):
-        self.logger.debug("entering interactive mode")
-        return self.child.interact()
