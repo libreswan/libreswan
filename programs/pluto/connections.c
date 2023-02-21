@@ -1904,9 +1904,17 @@ static diag_t extract_connection(const struct whack_message *wm,
 	c->policy = wm->policy;
 
 	config->autostart = wm->autostart;
-	if (wm->autostart == AUTOSTART_START) {
-		dbg("%s() connection '%s' +POLICY_UP", __func__, c->name);
+	switch (wm->autostart) {
+	case AUTOSTART_KEEP:
+	case AUTOSTART_START:
+		ldbg(c->logger, "autostart=%s implies +POLICY_UP",
+		     enum_name_short(&autostart_names, wm->autostart));
 		c->policy |= POLICY_UP;
+		break;
+	case AUTOSTART_IGNORE:
+	case AUTOSTART_ADD:
+	case AUTOSTART_ONDEMAND:
+		break;
 	}
 
 	d = extract_shunt("prospective", &config->prospective_shunt,
