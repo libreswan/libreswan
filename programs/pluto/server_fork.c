@@ -85,7 +85,7 @@ void show_process_status(struct show *s)
 	show_comment(s, "  PID  Process");
 	FOR_EACH_ELEMENT(h, pid_entry_pid_buckets) {
 		const struct pid_entry *e;
-		FOR_EACH_LIST_ENTRY_NEW2OLD(h, e) {
+		FOR_EACH_LIST_ENTRY_NEW2OLD(e, h) {
 			/*
 			 * XXX: Danger! The test script
 			 * wait-until-pluto-started greps to see if
@@ -192,7 +192,7 @@ void server_fork_sigchld_handler(struct logger *logger)
 			struct pid_entry *pid_entry = NULL;
 			hash_t hash = hash_pid_entry_pid(&child);
 			struct list_head *bucket = hash_table_bucket(&pid_entry_pid_hash_table, hash);
-			FOR_EACH_LIST_ENTRY_OLD2NEW(bucket, pid_entry) {
+			FOR_EACH_LIST_ENTRY_OLD2NEW(pid_entry, bucket) {
 				passert(pid_entry->magic == PID_MAGIC);
 				if (pid_entry->pid == child) {
 					break;

@@ -38,7 +38,7 @@ struct hash_table {
 
 #define HASH_TABLE(STRUCT, NAME, FIELD, NR_BUCKETS)			\
 									\
-	LIST_INFO(STRUCT, STRUCT##_db_entries.NAME,		\
+	LIST_INFO(STRUCT, STRUCT##_db_entries.NAME,			\
 		  STRUCT##_##NAME##_hash_info, jam_##STRUCT);		\
 									\
 	static hash_t hash_table_hash_##STRUCT##_##NAME(const void *data) \
@@ -95,7 +95,7 @@ void rehash_table_entry(struct hash_table *table, void *data);
 									\
 	/* backup list for when there is no accelerator */		\
 									\
-	LIST_INFO(STRUCT, STRUCT##_db_entries.list,		\
+	LIST_INFO(STRUCT, STRUCT##_db_entries.list,			\
 		  STRUCT##_db_list_info, jam_##STRUCT);			\
 									\
 	static struct list_head STRUCT##_db_list_head =			\
@@ -123,7 +123,7 @@ void rehash_table_entry(struct hash_table *table, void *data);
 	void STRUCT##_db_init_##STRUCT(struct STRUCT *s)		\
 	{								\
 		init_list_entry(&STRUCT##_db_list_info, s,		\
-				&s->STRUCT##_db_entries.list);	\
+				&s->STRUCT##_db_entries.list);		\
 		FOR_EACH_ELEMENT(H, STRUCT##_db_hash_tables) {		\
 			init_hash_table_entry(*H, s);			\
 		}							\
@@ -132,7 +132,7 @@ void rehash_table_entry(struct hash_table *table, void *data);
 	void STRUCT##_db_add(struct STRUCT *s)				\
 	{								\
 		insert_list_entry(&STRUCT##_db_list_head,		\
-				  &s->STRUCT##_db_entries.list); \
+				  &s->STRUCT##_db_entries.list);	\
 		FOR_EACH_ELEMENT(H, STRUCT##_db_hash_tables) {		\
 			add_hash_table_entry(*H, s);			\
 		}							\
@@ -140,7 +140,7 @@ void rehash_table_entry(struct hash_table *table, void *data);
 									\
 	void STRUCT##_db_del(struct STRUCT *s)				\
 	{								\
-		remove_list_entry(&s->STRUCT##_db_entries.list); \
+		remove_list_entry(&s->STRUCT##_db_entries.list);	\
 		FOR_EACH_ELEMENT(h, STRUCT##_db_hash_tables) {		\
 			del_hash_table_entry(*h, s);			\
 		}							\

@@ -78,7 +78,7 @@ struct state *state_by_serialno(so_serial_t serialno)
 	struct state *st;
 	hash_t hash = hash_state_serialno(&serialno);
 	struct list_head *bucket = hash_table_bucket(&state_serialno_hash_table, hash);
-	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, st) {
+	FOR_EACH_LIST_ENTRY_NEW2OLD(st, bucket) {
 		if (st->st_serialno == serialno) {
 			return st;
 		}
@@ -135,7 +135,7 @@ struct state *state_by_reqid(reqid_t reqid,
 	struct state *st;
 	hash_t hash = hash_state_reqid(&reqid);
 	struct list_head *bucket = hash_table_bucket(&state_reqid_hash_table, hash);
-	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, st) {
+	FOR_EACH_LIST_ENTRY_NEW2OLD(st, bucket) {
 		if (st->st_reqid != reqid) {
 			continue;
 		}
@@ -184,7 +184,7 @@ struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
 	hash_t hash = hash_state_ike_initiator_spi(ike_initiator_spi);
 	struct list_head *bucket = hash_table_bucket(&state_ike_initiator_spi_hash_table, hash);
 	struct state *st = NULL;
-	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, st) {
+	FOR_EACH_LIST_ENTRY_NEW2OLD(st, bucket) {
 		if (!state_plausable(st, ike_version, clonedfrom, v1_msgid, role)) {
 			continue;
 		}
@@ -243,7 +243,7 @@ struct state *state_by_ike_spis(enum ike_version ike_version,
 	hash_t hash = hash_state_ike_spis(ike_spis);
 	struct list_head *bucket = hash_table_bucket(&state_ike_spis_hash_table, hash);
 	struct state *st = NULL;
-	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, st) {
+	FOR_EACH_LIST_ENTRY_NEW2OLD(st, bucket) {
 		if (!state_plausable(st, ike_version, clonedfrom, v1_msgid, sa_role)) {
 			continue;
 		}

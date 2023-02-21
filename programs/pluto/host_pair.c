@@ -201,7 +201,7 @@ struct connection *next_host_pair_connection(const ip_address local,
 		hash_t hash = hp_hasher(local, remote);
 		struct list_head *bucket = hash_table_bucket(&host_pair_addresses_hash_table, hash);
 		struct host_pair *hp = NULL;
-		FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, hp) {
+		FOR_EACH_LIST_ENTRY_NEW2OLD(hp, bucket) {
 			if (host_pair_matches_addresses(hp, local, remote)) {
 				connection_buf cb;
 				address_buf lb, rb;
@@ -231,7 +231,7 @@ void connect_to_host_pair(struct connection *c)
 		hash_t hash = hp_hasher(local, remote);
 		struct host_pair *hp = NULL;
 		struct list_head *bucket = hash_table_bucket(&host_pair_addresses_hash_table, hash);
-		FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, hp) {
+		FOR_EACH_LIST_ENTRY_NEW2OLD(hp, bucket) {
 			if (host_pair_matches_addresses(hp, local, remote)) {
 				break;
 			}
@@ -503,7 +503,7 @@ void check_orientations(struct logger *logger)
 		for (unsigned u = 0; u < host_pair_addresses_hash_table.nr_slots; u++) {
 			struct list_head *bucket = &host_pair_addresses_hash_table.slots[u];
 			struct host_pair *hp = NULL;
-			FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, hp) {
+			FOR_EACH_LIST_ENTRY_NEW2OLD(hp, bucket) {
 				/*
 				 * XXX: what's with the maybe compare
 				 * the port logic?

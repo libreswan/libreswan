@@ -114,7 +114,7 @@ static void check_hash_table_entry(struct hash_table *table, void *data,
 	{
 		struct list_head *data_bucket = hash_table_bucket(table, hash);
 		void *bucket_data;
-		FOR_EACH_LIST_ENTRY_NEW2OLD(data_bucket, bucket_data) {
+		FOR_EACH_LIST_ENTRY_NEW2OLD(bucket_data, data_bucket) {
 			if (data == bucket_data) {
 				return;
 			}
@@ -124,7 +124,7 @@ static void check_hash_table_entry(struct hash_table *table, void *data,
 	for (unsigned n = 0; n < table->nr_slots; n++) {
 		const struct list_head *table_bucket = &table->slots[n];
 		void *bucket_data;
-		FOR_EACH_LIST_ENTRY_NEW2OLD(table_bucket, bucket_data) {
+		FOR_EACH_LIST_ENTRY_NEW2OLD(bucket_data, table_bucket) {
 			if (data == bucket_data) {
 				JAMBUF(buf) {
 					jam(buf, "entry %s@%p ", table->info->name, data);
@@ -151,7 +151,7 @@ void check_hash_table(struct hash_table *table, struct logger *logger)
 	for (unsigned n = 0; n < table->nr_slots; n++) {
 		const struct list_head *table_bucket = &table->slots[n];
 		void *bucket_data;
-		FOR_EACH_LIST_ENTRY_NEW2OLD(table_bucket, bucket_data) {
+		FOR_EACH_LIST_ENTRY_NEW2OLD(bucket_data, table_bucket) {
 			/* overkill */
 			check_hash_table_entry(table, bucket_data, logger, HERE);
 		}

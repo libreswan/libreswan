@@ -131,7 +131,7 @@ void remove_list_entry(struct list_entry *entry);
  * as the sentinel; and DATA is left with that NULL value.
  */
 
-#define FOR_EACH_LIST_ENTRY_(HEAD, DATA, NEXT)				\
+#define FOR_EACH_LIST_ENTRY_(DATA, HEAD, NEXT)				\
 									\
 	/* entry = either first entry or back at head */		\
 	for (struct list_entry *entry_ = (HEAD)->head.next[NEXT];	\
@@ -144,10 +144,10 @@ void remove_list_entry(struct list_entry *entry);
 		     DATA = (typeof(DATA))entry_->data,			\
 			     entry_ = entry_->next[NEXT])
 
-#define FOR_EACH_LIST_ENTRY_OLD2NEW(HEAD, DATA)		\
-	FOR_EACH_LIST_ENTRY_(HEAD, DATA, OLD2NEW)
+#define FOR_EACH_LIST_ENTRY_OLD2NEW(DATA, HEAD)		\
+	FOR_EACH_LIST_ENTRY_(DATA, HEAD, OLD2NEW)
 
-#define FOR_EACH_LIST_ENTRY_NEW2OLD(HEAD, DATA)		\
-	FOR_EACH_LIST_ENTRY_(HEAD, DATA, NEW2OLD)
+#define FOR_EACH_LIST_ENTRY_NEW2OLD(DATA, HEAD)		\
+	FOR_EACH_LIST_ENTRY_(DATA, HEAD, NEW2OLD)
 
 #endif

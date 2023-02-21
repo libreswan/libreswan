@@ -1495,7 +1495,7 @@ static void process_pending(chunk_t payload, struct logger *logger)
 static void process_pending_queue(struct logger *logger)
 {
 	struct pending *pending;
-	FOR_EACH_LIST_ENTRY_OLD2NEW(&pending_queue, pending) {
+	FOR_EACH_LIST_ENTRY_OLD2NEW(pending, &pending_queue) {
 		remove_list_entry(&pending->entry);
 		process_pending(pending->msg, logger);
 		free_chunk_content(&pending->msg);

@@ -41,7 +41,7 @@ struct connection *connection_by_serialno(co_serial_t serialno)
 	struct connection *c;
 	hash_t hash = hash_connection_serialno(&serialno);
 	struct list_head *bucket = hash_table_bucket(&connection_serialno_hash_table, hash);
-	FOR_EACH_LIST_ENTRY_NEW2OLD(bucket, c) {
+	FOR_EACH_LIST_ENTRY_NEW2OLD(c, bucket) {
 		if (c->serialno == serialno) {
 			return c;
 		}

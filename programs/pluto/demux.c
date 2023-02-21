@@ -381,7 +381,7 @@ static bool impair_incoming(struct msg_digest *md)
 		save_md_for_replay(impaired, md);
 		/* MD is the most recent entry */
 		struct replay_entry *e = NULL;
-		FOR_EACH_LIST_ENTRY_NEW2OLD(&replay_packets, e) {
+		FOR_EACH_LIST_ENTRY_NEW2OLD(e, &replay_packets) {
 			process_md_clone(e->md, "original packet");
 			process_md_clone(e->md, "duplicate packet");
 			break;
@@ -391,7 +391,7 @@ static bool impair_incoming(struct msg_digest *md)
 	if (impair.replay_forward) {
 		save_md_for_replay(impaired, md);
 		struct replay_entry *e = NULL;
-		FOR_EACH_LIST_ENTRY_OLD2NEW(&replay_packets, e) {
+		FOR_EACH_LIST_ENTRY_OLD2NEW(e, &replay_packets) {
 			process_md_clone(e->md, "replay forward: packet %lu of %lu",
 					 e->nr, replay_count);
 		}
@@ -400,7 +400,7 @@ static bool impair_incoming(struct msg_digest *md)
 	if (impair.replay_backward) {
 		save_md_for_replay(impaired, md);
 		struct replay_entry *e = NULL;
-		FOR_EACH_LIST_ENTRY_NEW2OLD(&replay_packets, e) {
+		FOR_EACH_LIST_ENTRY_NEW2OLD(e, &replay_packets) {
 			process_md_clone(e->md, "start replay backward: packet %lu of %lu",
 					 e->nr, replay_count);
 		}
@@ -596,7 +596,7 @@ void jam_msg_digest(struct jambuf *buf, const struct msg_digest *md)
 void shutdown_demux(void)
 {
 	struct replay_entry *e = NULL;
-	FOR_EACH_LIST_ENTRY_NEW2OLD(&replay_packets, e) {
+	FOR_EACH_LIST_ENTRY_NEW2OLD(e, &replay_packets) {
 		md_delref(&e->md);
 		remove_list_entry(&e->entry);
 		pfreeany(e);

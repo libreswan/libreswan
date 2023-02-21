@@ -219,7 +219,7 @@ static void *helper_thread(void *arg)
 			while (!exiting_pluto) {
 				/* grab the next entry, if there is one */
 				pexpect(job == NULL);
-				FOR_EACH_LIST_ENTRY_OLD2NEW(&backlog, job) { break; }
+				FOR_EACH_LIST_ENTRY_OLD2NEW(job, &backlog) { break; }
 				if (job != NULL) {
 					/*
 					 * Assign the entry to this
@@ -612,7 +612,7 @@ void free_server_helper_jobs(struct logger *logger)
 	if (helper_threads_started == helper_threads_stopped) {
 		passert(helper_threads == NULL);
 		struct job *job = NULL;
-		FOR_EACH_LIST_ENTRY_OLD2NEW(&backlog, job) {
+		FOR_EACH_LIST_ENTRY_OLD2NEW(job, &backlog) {
 			remove_list_entry(&job->backlog);
 			free_job(&job);
 		}

@@ -104,7 +104,7 @@ static void add_iface_dev(const struct raw_iface *ifp, struct logger *logger)
 struct iface_dev *find_iface_dev_by_address(const ip_address *address)
 {
 	struct iface_dev *ifd;
-	FOR_EACH_LIST_ENTRY_OLD2NEW(&interface_dev, ifd) {
+	FOR_EACH_LIST_ENTRY_OLD2NEW(ifd, &interface_dev) {
 		if (sameaddr(address, &ifd->id_address)) {
 			return ifd;
 		}
@@ -115,7 +115,7 @@ struct iface_dev *find_iface_dev_by_address(const ip_address *address)
 static void mark_ifaces_dead(void)
 {
 	struct iface_dev *ifd;
-	FOR_EACH_LIST_ENTRY_OLD2NEW(&interface_dev, ifd) {
+	FOR_EACH_LIST_ENTRY_OLD2NEW(ifd, &interface_dev) {
 		dbg("iface: marking %s dead", ifd->id_rname);
 		ifd->ifd_change = IFD_DELETE;
 	}
@@ -125,7 +125,7 @@ static void add_or_keep_iface_dev(struct raw_iface *ifp, struct logger *logger)
 {
 	/* find the iface */
 	struct iface_dev *ifd;
-	FOR_EACH_LIST_ENTRY_OLD2NEW(&interface_dev, ifd) {
+	FOR_EACH_LIST_ENTRY_OLD2NEW(ifd, &interface_dev) {
 		if (streq(ifd->id_rname, ifp->name) &&
 		    sameaddr(&ifd->id_address, &ifp->addr)) {
 			dbg("iface: marking %s keep", ifd->id_rname);
@@ -189,7 +189,7 @@ static void free_dead_ifaces(struct logger *logger)
 		 * list of iface devs.
 		 */
 		struct iface_dev *ifd;
-		FOR_EACH_LIST_ENTRY_OLD2NEW(&interface_dev, ifd) {
+		FOR_EACH_LIST_ENTRY_OLD2NEW(ifd, &interface_dev) {
 			if (ifd->ifd_change == IFD_DELETE) {
 				release_iface_dev(&ifd);
 			}
@@ -424,7 +424,7 @@ struct iface_endpoint *bind_iface_endpoint(struct iface_dev *ifd,
 static void add_new_ifaces(struct logger *logger)
 {
 	struct iface_dev *ifd;
-	FOR_EACH_LIST_ENTRY_OLD2NEW(&interface_dev, ifd) {
+	FOR_EACH_LIST_ENTRY_OLD2NEW(ifd, &interface_dev) {
 		if (ifd->ifd_change != IFD_ADD)
 			continue;
 
@@ -612,7 +612,7 @@ void shutdown_ifaces(struct logger *logger)
 	free_dead_ifaces(logger);
 	/* clean up remaining hidden interfaces */
 	struct iface_endpoint *ifp;
-	FOR_EACH_LIST_ENTRY_NEW2OLD(&iface_endpoints, ifp) {
+	FOR_EACH_LIST_ENTRY_NEW2OLD(ifp, &iface_endpoints) {
 		iface_endpoint_delref(&ifp);
 	}
 }
