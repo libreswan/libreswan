@@ -101,6 +101,8 @@ enum autostart {
 	AUTOSTART_KEEP,
 };
 
+extern const struct enum_names autostart_names;
+
 /* Cisco interop: values remote_peer_type= */
 enum keyword_remotepeertype {
 	NON_CISCO = 0,

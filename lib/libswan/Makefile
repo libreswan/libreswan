@@ -275,6 +275,8 @@ ifneq ($(LINUX_VARIANT),)
 OBJS += xfrm_policy_names.o
 endif
 
+OBJS += autostart_names.o
+
 OBJS += $(abs_builddir)/version.o
 
 # build version.c using version number from mk/version.mk
