@@ -1,0 +1,61 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
+ # loaded via ipsec.conf - no ipsec auto --keep yet
+east #
+ echo "initdone"
+initdone
+east #
+ # road is up; capture the kernel policy on east
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.0.2.0/24 dst 192.1.3.209/32
+	dir out priority PRIORITY ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.254
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.0.2.0/24
+	dir fwd priority PRIORITY ptype main 
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.0.2.0/24
+	dir in priority PRIORITY ptype main 
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+east #
+ # road is down, east with autostart=keep should try to revive; while
+east #
+ # this is happening kernel-policy should still be in place
+east #
+ ../../guestbin/wait-for.sh --match 'deleting IKE SA but connection is supposed to remain up' -- cat /tmp/pluto.log
+"road-eastnet-ikev2"[1] 192.1.2.254 #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.0.2.0/24 dst 192.1.3.209/32
+	dir out priority PRIORITY ptype main 
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+east #
+ # since the NAT port is still open road should allow recovery
+east #
+ ../../guestbin/wait-for.sh --match '#4: initiator established Child SA using #3' -- cat /tmp/pluto.log
+"road-eastnet-ikev2"[1] 192.1.2.254 #4: initiator established Child SA using #3; IPsec tunnel [192.0.2.0-192.0.2.255:0-65535 0] -> [192.1.3.209-192.1.3.209:0-65535 0] {ESPinUDP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE NATD=192.1.2.254:6666 DPD=passive}
+east #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.0.2.0/24 dst 192.1.3.209/32
+	dir out priority PRIORITY ptype main 
+	tmpl src 192.1.2.23 dst 192.1.2.254
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.0.2.0/24
+	dir fwd priority PRIORITY ptype main 
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+src 192.1.3.209/32 dst 192.0.2.0/24
+	dir in priority PRIORITY ptype main 
+	tmpl src 192.1.2.254 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+east #
+ 
