@@ -306,7 +306,8 @@ stf_status IKE_SA_DEL_process_v2_INFORMATIONAL_response(struct ike_sa *ike,
 	 *
 	 * Killing .v1_st is an extra safety net.
 	 */
-	delete_ike_family(&ike, DONT_SEND_DELETE);
+	ike->sa.st_send_delete = DONT_SEND_DELETE;
+	delete_ike_family(&ike);
 	pexpect(ike == NULL);
 	return STF_SKIP_COMPLETE_STATE_TRANSITION;
 }

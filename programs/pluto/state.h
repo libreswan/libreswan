@@ -841,7 +841,7 @@ extern void delete_state(struct state *st);
 extern void delete_v1_states_by_connection_family(struct connection **c);
 extern void delete_states_by_connection(struct connection **c);
 extern void rekey_p2states_by_connection(struct connection *c);
-extern void delete_ike_family(struct ike_sa **ikep, enum send_delete send_delete);
+extern void delete_ike_family(struct ike_sa **ikep);
 
 struct state *state_by_serialno(so_serial_t serialno);
 struct ike_sa *ike_sa_by_serialno(so_serial_t serialno);

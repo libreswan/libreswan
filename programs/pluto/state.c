@@ -532,7 +532,8 @@ void delete_state_by_id_name(struct state *st, const char *name)
 	const char *thatidbuf = str_id(&c->remote->host.id, &thatidb);
 	if (streq(thatidbuf, name)) {
 		struct ike_sa *ike = pexpect_ike_sa(st);
-		delete_ike_family(&ike, PROBABLY_SEND_DELETE);
+		ike->sa.st_send_delete = PROBABLY_SEND_DELETE;
+		delete_ike_family(&ike);
 	}
 }
 
@@ -544,7 +545,8 @@ void v1_delete_state_by_username(struct state *st, const char *name)
 
 	if (IS_IKE_SA(st) && streq(st->st_xauth_username, name)) {
 		struct ike_sa *ike = pexpect_ike_sa(st);
-		delete_ike_family(&ike, PROBABLY_SEND_DELETE);
+		ike->sa.st_send_delete = PROBABLY_SEND_DELETE;
+		delete_ike_family(&ike);
 		/* note: no md->v1_st to clear */
 	}
 }
@@ -2741,7 +2743,7 @@ static bool delete_ike_family_child(struct state *st, void *unused_context UNUSE
 	return false; /* keep going */
 }
 
-void delete_ike_family(struct ike_sa **ikep, enum send_delete send_delete)
+void delete_ike_family(struct ike_sa **ikep)
 {
 	struct ike_sa *ike = (*ikep);
 	(*ikep) = NULL;
@@ -2761,8 +2763,6 @@ void delete_ike_family(struct ike_sa **ikep, enum send_delete send_delete)
 			  delete_ike_family_child, NULL,
 			  __func__);
 	/* delete self */
-	pexpect(ike->sa.st_send_delete == PROBABLY_SEND_DELETE);
-	ike->sa.st_send_delete = send_delete;
 	delete_state(&ike->sa);
 }
 

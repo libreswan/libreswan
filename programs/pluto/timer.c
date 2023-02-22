@@ -351,7 +351,8 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 				/* IKEv2 parent, delete children too */
 				dbg("IKEv2 SA expired, delete whole family");
 				passert(&ike->sa == st);
-				delete_ike_family(&ike, PROBABLY_SEND_DELETE);
+				ike->sa.st_send_delete = PROBABLY_SEND_DELETE;
+				delete_ike_family(&ike);
 				/* note: no md->st to clear */
 				st = NULL;
 			} else if (IS_IKE_SA_ESTABLISHED(&ike->sa)) {
