@@ -63,7 +63,6 @@
 #include "enum_names.h"
 #include "virtual_ip.h"
 #include "state_db.h"		/* for init_state_db() */
-#include "revival.h"		/* for init_revival_timer() */
 #include "connection_db.h"	/* for init_connection_db() */
 #include "spd_route_db.h"	/* for init_spd_route_db() */
 #include "nat_traversal.h"
@@ -1777,7 +1776,6 @@ int main(int argc, char **argv)
 	/* server initialized; timers can follow */
 	init_log_limiter();
 	init_nat_traversal_timer(keep_alive, logger);
-	init_revival_timer();
 	init_connections_timer();
 	init_pending();
 

@@ -215,6 +215,7 @@ USERLAND_LDFLAGS += $(LDAP_LDFLAGS)
 OBJS += connections.o
 OBJS += instantiate.o
 OBJS += connection_db.o
+OBJS += connection_event.o
 OBJS += spd_route_db.o
 
 OBJS += routing.o

@@ -32,6 +32,7 @@
  */
 
 #include "connections.h"
+#include "connection_event.h"
 #include "nat_traversal.h"		/* for NAT_T_DETECTED */
 #include "state.h"
 #include "log.h"
@@ -57,52 +58,9 @@
  * outstanding revivals; hence no need to free revivals.
  */
 
-struct revival {
-	co_serial_t serialno;
-	struct revival *next;
-};
-
-static struct revival *revivals = NULL;
-
-/*
- * XXX: Return connection C's revival object's link, if found.  If the
- * connection C can't be found, then the address of the revival list's
- * tail is returned.  Perhaps, exiting the loop and returning NULL
- * would be more obvious.
- */
-static struct revival **find_revival(const struct connection *c)
-{
-	for (struct revival **rp = &revivals; ; rp = &(*rp)->next) {
-		if (*rp == NULL || co_serial_cmp((*rp)->serialno, ==, c->serialno)) {
-			return rp;
-		}
-	}
-}
-
-/*
- * XXX: In addition to freeing RP (and killing the pointer), this
- * "free" function has the side effect of unlinks RP from the revival
- * list.  Perhaps free*() isn't the best name.
- */
-static void free_revival(struct revival **rp)
-{
-	struct revival *r = *rp;
-	*rp = r->next;
-	pfree(r);
-}
-
 void flush_revival(const struct connection *c)
 {
-	struct revival **rp = find_revival(c);
-
-	if (*rp == NULL) {
-		dbg("flush revival: connection '%s' with serial "PRI_CO" wasn't on the list",
-		    c->name, pri_co(c->serialno));
-	} else {
-		dbg("flush revival: connection '%s' with serial "PRI_CO" revival flushed",
-		    c->name, pri_co(c->serialno));
-		free_revival(rp);
-	}
+	flush_connection_event(c, CONNECTION_REVIVAL);
 }
 
 void add_revival_if_needed(struct state *st)
@@ -177,7 +135,7 @@ bool should_revive(struct state *st)
 		return false;
 	}
 
-	if (*find_revival(c) != NULL) {
+	if (connection_event_scheduled(c, CONNECTION_REVIVAL)) {
 		log_state(RC_LOG, st,
 			  "deleting %s but connection is supposed to remain up; EVENT_REVIVE_CONNS already scheduled",
 			  c->config->ike_info->sa_type_name[IKE_SA]);
@@ -194,11 +152,6 @@ void schedule_revival(struct state *st)
 		  "deleting %s but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS",
 		  c->config->ike_info->sa_type_name[IKE_SA]);
 
-	struct revival *r = alloc_thing(struct revival,
-					"revival struct");
-	r->serialno = c->serialno;
-	r->next = revivals;
-	revivals = r;
 	int delay = c->temp_vars.revive_delay;
 	dbg("add revival: connection '%s' (serial "PRI_CO") added to the list and scheduled for %d seconds",
 	    c->name, pri_co(c->serialno), delay);
@@ -240,40 +193,16 @@ void schedule_revival(struct state *st)
 	 * deleted); and would encroach even further on "initiate" and
 	 * "pending" functionality.
 	 */
-	schedule_oneshot_timer(EVENT_REVIVE_CONNS, deltatime(delay));
+	schedule_connection_event(c, CONNECTION_REVIVAL, deltatime(delay));
 }
 
-static void revive_conns(struct logger *logger)
+void revive_connection(struct connection *c, struct logger *logger)
 {
-	/*
-	 * XXX: Revive all listed connections regardless of their
-	 * DELAY.  See note above in add_revival().
-	 */
-	dbg("revive_conns() called");
-	while (revivals != NULL) {
-		struct connection *c = connection_by_serialno(revivals->serialno);
-		if (c == NULL) {
-			llog(RC_UNKNOWN_NAME, logger,
-				    "failed to initiate connection "PRI_CO" which received a Delete/Notify but must remain up per local policy; connection no longer exists", pri_co(revivals->serialno));
-		} else {
-			llog(RC_LOG, c->logger,
-			     "initiating connection '%s' with serial "PRI_CO" which received a Delete/Notify but must remain up per local policy",
-			     c->name, pri_co(c->serialno));
-			initiate_connection(c, /*remote-host-name*/NULL,
-					    /*background*/true,
-					    /*log-failure*/true,
-					    logger);
-		}
-		/*
-		 * Danger! The free_revival() call removes head,
-		 * replacing it with the next in the list.
-		 */
-		free_revival(&revivals);
-	}
-	dbg("revive_conns() done");
-}
-
-void init_revival_timer(void)
-{
-	init_oneshot_timer(EVENT_REVIVE_CONNS, revive_conns);
+	llog(RC_LOG, c->logger,
+	     "initiating connection '%s' with serial "PRI_CO" which received a Delete/Notify but must remain up per local policy",
+	     c->name, pri_co(c->serialno));
+	initiate_connection(c, /*remote-host-name*/NULL,
+			    /*background*/true,
+			    /*log-failure*/true,
+			    logger);
 }

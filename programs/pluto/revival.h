@@ -20,7 +20,7 @@ struct logger;
 struct state;
 struct connection;
 
-
+void revive_connection(struct connection *c, struct logger *logger);
 bool should_revive(struct state *st);
 void schedule_revival(struct state *st);
 void add_revival_if_needed(struct state *st);
