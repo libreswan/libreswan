@@ -347,11 +347,19 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 					  st->st_clonedfrom);
 				delete_state(st);
 				st = NULL;
+			} else if (IS_IKE_SA_ESTABLISHED(st)) {
+				/* IKEv2 parent, delete children too */
+				dbg("IKEv2 SA expired, delete whole family");
+				passert(&ike->sa == st);
+				ike->sa.st_send_delete = DO_SEND_DELETE;
+				delete_ike_family(&ike);
+				/* note: no md->st to clear */
+				st = NULL;
 			} else if (IS_IKE_SA(st)) {
 				/* IKEv2 parent, delete children too */
 				dbg("IKEv2 SA expired, delete whole family");
 				passert(&ike->sa == st);
-				ike->sa.st_send_delete = PROBABLY_SEND_DELETE;
+				ike->sa.st_send_delete = DONT_SEND_DELETE;
 				delete_ike_family(&ike);
 				/* note: no md->st to clear */
 				st = NULL;

@@ -525,14 +525,15 @@ void delete_state_by_id_name(struct state *st, const char *name)
 {
 	struct connection *c = st->st_connection;
 
-	if (!IS_IKE_SA(st))
+	if (!IS_PARENT_SA(st))
 		return;
 
 	id_buf thatidb;
 	const char *thatidbuf = str_id(&c->remote->host.id, &thatidb);
 	if (streq(thatidbuf, name)) {
 		struct ike_sa *ike = pexpect_ike_sa(st);
-		ike->sa.st_send_delete = PROBABLY_SEND_DELETE;
+		ike->sa.st_send_delete = (IS_PARENT_SA_ESTABLISHED(st) ? DO_SEND_DELETE :
+					  DONT_SEND_DELETE);
 		delete_ike_family(&ike);
 	}
 }
@@ -540,15 +541,19 @@ void delete_state_by_id_name(struct state *st, const char *name)
 void v1_delete_state_by_username(struct state *st, const char *name)
 {
 	/* only support deleting ikev1 with XAUTH username */
-	if (st->st_ike_version == IKEv2)
+	if (!IS_ISAKMP_SA(st)) {
 		return;
-
-	if (IS_IKE_SA(st) && streq(st->st_xauth_username, name)) {
-		struct ike_sa *ike = pexpect_ike_sa(st);
-		ike->sa.st_send_delete = PROBABLY_SEND_DELETE;
-		delete_ike_family(&ike);
-		/* note: no md->v1_st to clear */
 	}
+
+	if (!streq(st->st_xauth_username, name)) {
+		return;
+	}
+
+	struct ike_sa *ike = pexpect_ike_sa(st); /* per above */
+	ike->sa.st_send_delete = (IS_ISAKMP_SA_ESTABLISHED(st) ? DO_SEND_DELETE :
+				  DONT_SEND_DELETE);
+	delete_ike_family(&ike);
+	/* note: no md->v1_st to clear */
 }
 
 /*
