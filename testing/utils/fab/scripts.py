@@ -16,6 +16,7 @@ import os
 import re
 
 from fab import argutil
+from fab.hosts import GUEST_NAMES
 
 class Scripts(list):
     def __str__(self):
@@ -28,8 +29,6 @@ class Script:
         self.path = path
     def __str__(self):
         return self.guest_name + ":" + self.path
-
-from fab.hosts import GUEST_NAMES
 
 def _scripts(directory):
     """Returns a set of *.sh scripts found in DIRECTORY"""
@@ -60,7 +59,7 @@ def _guest_scripts(directory, logger):
     # Form a subset of GUEST_NAMES based on the names found in the
     # scripts.
     guest_names = set()
-    for guest_name in GUEST_NAMES:
+    for guest_name, host_name in GUEST_NAMES:
         for script in scripts:
             if re.search(guest_name, script):
                 guest_names.add(guest_name)

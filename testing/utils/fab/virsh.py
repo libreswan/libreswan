@@ -45,10 +45,11 @@ TIMEOUT = 10
 
 class Domain:
 
-    def __init__(self, logger, guest_name=None, domain_name=None, snapshot_directory=None):
+    def __init__(self, logger, host_name=None, guest_name=None, domain_name=None, snapshot_directory=None):
         # Use the term "domain" just like virsh
         self.domain_name = domain_name
         self.guest_name = guest_name
+        self.host_name = host_name
         self.logger = logger
         self.debug_handler = None
         self.logger.debug("domain created")
@@ -160,7 +161,7 @@ class Domain:
     def start(self, timeout=START_TIMEOUT):
         command = _VIRSH + ["start", self.domain_name, "--console"]
         self.logger.info("spawning: %s", " ".join(command))
-        self._console = console.Console(command, self.logger, hostname=self.guest_name)
+        self._console = console.Console(command, self.logger, host_name=self.host_name)
         if self._console.expect([pexpect.EOF,
                                  # libvirt >= 8.x
                                  ("Domain '%s' started\r\n" +
@@ -185,7 +186,7 @@ class Domain:
         # self._console is None
         command = _VIRSH + ["console", "--force", self.domain_name]
         self.logger.info("spawning: %s", " ".join(command))
-        self._console = console.Console(command, self.logger, hostname=self.guest_name)
+        self._console = console.Console(command, self.logger, host_name=self.host_name)
         # Give the virsh process a chance set up its control-c
         # handler.  Otherwise something like control-c as the first
         # character sent might kill it.  If the machine is down, it

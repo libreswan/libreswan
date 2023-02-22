@@ -117,14 +117,14 @@ class _Redirect:
 
 class Console(pexpect.spawn):
 
-    def __init__(self, command, logger, hostname=None):
+    def __init__(self, command, logger, host_name=None):
         # Create the child.
         logger.debug("spawning '%s'", " ".join(command))
         pexpect.spawn.__init__(self, command[0], args=command[1:], timeout=TIMEOUT)
         self.logger = logger
         self.unicode_output_files = []
         self._basename = None
-        self._hostname = hostname
+        self._host_name = host_name
         self.prompt = _PROMPT_REGEX
         #This crashes inside of pexpect!
         #self.logger.debug("child is '%s'", self.child)
@@ -138,7 +138,7 @@ class Console(pexpect.spawn):
         self.logger.debug("match %s contains %s", self.match, self.match.groupdict())
         # If basename is known, make certain it doesn't change.
         # Catches scripts changing directory.
-        _check_prompt_group(self.logger, self.match, HOSTNAME_GROUP, self._hostname)
+        _check_prompt_group(self.logger, self.match, HOSTNAME_GROUP, self._host_name)
         _check_prompt_group(self.logger, self.match, BASENAME_GROUP, self._basename)
         # If there's no status, return None, not empty.
         status = self.match.group(STATUS_GROUP)

@@ -34,6 +34,7 @@ from fab import skip
 from fab import ignore
 from fab import tcpdump
 from fab import publish
+from fab.hosts import GUEST_NAMES
 
 def add_arguments(parser):
     group = parser.add_argument_group("Test Runner arguments",
@@ -533,10 +534,11 @@ def _process_test_queue(domain_prefix, test_queue, nr_tests, args, done, result_
     logger.info("preparing test domains")
 
     domains = {}
-    for guest_name in testsuite.GUEST_NAMES:
+    for guest_name, host_name in GUEST_NAMES:
         domain_name = (domain_prefix + guest_name)
         domain = virsh.Domain(logger.nest(domain_name),
                               guest_name=guest_name,
+                              host_name=host_name,
                               domain_name=domain_name,
                               snapshot_directory=args.snapshot_directory)
         domains[guest_name] = domain

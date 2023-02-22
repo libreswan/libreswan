@@ -13,16 +13,28 @@
 # for more details.
 
 import subprocess
+import re
 
 from fab import utilsdir
 
 def _guest_names():
-    guest_names = set()
     # this failing is a disaster
     output = subprocess.check_output([utilsdir.relpath("kvmhosts.sh")])
+
+    guest_names = []
     for guest_name in output.decode('utf-8').splitlines():
-        guest_names.add(guest_name)
+        host_name = guest_name
+        for h in ["north", "south", "east", "west", "road"]:
+            if re.search(h[0:1]+r'$', guest_name):
+                host_name = h
+                break
+            if re.search(h+r'$', guest_name):
+                host_name = h
+                break
+        t = (guest_name, host_name)
+        guest_names.append(t)
+
     return guest_names
 
-"""An unordered set of the test guest names"""
+"""An unordered set of tupples of (GUEST_NAME,HOST_NAME)"""
 GUEST_NAMES = _guest_names()
