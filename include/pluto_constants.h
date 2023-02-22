@@ -684,7 +684,11 @@ extern struct keywords sa_role_names;
 #define IS_V1_ISAKMP_SA_ESTABLISHED(ST)					\
 	((LELEM((ST)->st_state->kind) & V1_ISAKMP_SA_ESTABLISHED_STATES) != LEMPTY)
 
+#define IS_ISAKMP_SA_ESTABLISHED(ST)					\
+	((LELEM((ST)->st_state->kind) & V1_ISAKMP_SA_ESTABLISHED_STATES) != LEMPTY)
+
 #define IS_V1_ISAKMP_SA(ST) ((ST)->st_ike_version == IKEv1 && (ST)->st_clonedfrom == SOS_NOBODY)
+#define IS_ISAKMP_SA(ST) ((ST)->st_ike_version == IKEv1 && (ST)->st_clonedfrom == SOS_NOBODY)
 
 #define IS_V1_MODE_CFG_ESTABLISHED(ST) (((ST)->kind) == STATE_MODE_CFG_R2)
 
@@ -723,6 +727,9 @@ extern struct keywords sa_role_names;
 
 #define IS_CHILD_SA(st)  ((st)->st_clonedfrom != SOS_NOBODY)
 #define IS_IKE_SA(st)	 ((st)->st_clonedfrom == SOS_NOBODY)
+
+#define IS_PARENT_SA(ST) ((ST)->st_clonedfrom == SOS_NOBODY) /* IKEv1 or IKEv2 */
+#define IS_PARENT_SA_ESTABLISHED(ST) (IS_IKE_SA_ESTABLISHED(ST) || IS_ISAKMP_SA_ESTABLISHED(ST))
 
 /* kind of struct connection
  * Ordered (mostly) by concreteness.  Order is exploited.
