@@ -32,4 +32,8 @@ void spd_route_db_check_spd_route(struct spd_route *sr, struct logger *logger, w
 void spd_route_db_add(struct spd_route *sr);
 void spd_route_db_del(struct spd_route *sr);
 
+#if 0
+void spd_route_db_rehash_remote_client(struct spd_route *sr); /* see connections.h */
+#endif
+
 #endif

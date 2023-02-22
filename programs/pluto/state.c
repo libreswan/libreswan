@@ -3108,7 +3108,7 @@ void connswitch_state_and_log(struct state *st, struct connection *new)
 	log_state(RC_LOG, st, "switched to "PRI_CONNECTION,
 		  pri_connection(new, &nb));
 	st->st_connection = new;
-	rehash_state_connection(st);
+	state_db_rehash_connection_serialno(st);
 	connection_delete_unused_instance(&old, st,
 					  st->st_logger->global_whackfd);
 }

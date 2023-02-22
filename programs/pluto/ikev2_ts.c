@@ -1844,7 +1844,7 @@ bool process_v2TS_response_payloads(struct child_sa *child,
 	}
 
 	scribble_ts_response_on_initiator(child, &best, indent);
-	rehash_db_spd_route_remote_client(c->spd);
+	spd_route_db_rehash_remote_client(c->spd);
 
 	return true;
 }

@@ -38,10 +38,7 @@ HASH_TABLE(spd_route, remote_client, .remote->client, STATE_TABLE_SIZE);
 
 HASH_DB(spd_route, &spd_route_remote_client_hash_table);
 
-void rehash_db_spd_route_remote_client(struct spd_route *sr)
-{
-	rehash_table_entry(&spd_route_remote_client_hash_table, sr);
-}
+REHASH_DB_ENTRY(spd_route, remote_client, .remote->client);
 
 static struct list_head *spd_route_filter_head(struct spd_route_filter *filter)
 {

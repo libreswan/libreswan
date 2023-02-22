@@ -52,7 +52,7 @@ struct hash_table {
 	static struct list_entry *hash_table_entry_##STRUCT##_##NAME(void *data) \
 	{								\
 		struct STRUCT *s = data;				\
-		return &s->STRUCT##_db_entries.NAME;		\
+		return &s->STRUCT##_db_entries.NAME;			\
 	}								\
 									\
 	struct hash_table STRUCT##_##NAME##_hash_table = {		\
@@ -89,7 +89,6 @@ hash_t hash_bytes(const void *ptr, size_t len, hash_t hash);
 void init_hash_table_entry(struct hash_table *table, void *data);
 void add_hash_table_entry(struct hash_table *table, void *data);
 void del_hash_table_entry(struct hash_table *table, void *data);
-void rehash_table_entry(struct hash_table *table, void *data);
 
 #define HASH_DB(STRUCT, TABLE, ...)					\
 									\
@@ -144,6 +143,24 @@ void rehash_table_entry(struct hash_table *table, void *data);
 		FOR_EACH_ELEMENT(h, STRUCT##_db_hash_tables) {		\
 			del_hash_table_entry(*h, s);			\
 		}							\
+	}
+
+/* not all code requires rehashing */
+
+#define REHASH_DB(STRUCT)					\
+	void STRUCT##_db_rehash(struct STRUCT *s)		\
+	{							\
+		FOR_EACH_ELEMENT(h, STRUCT##_db_hash_tables) {	\
+			del_hash_table_entry(*h, s);		\
+			add_hash_table_entry(*h, s);		\
+		}						\
+	}
+
+#define REHASH_DB_ENTRY(STRUCT, NAME, FIELD)				\
+	void STRUCT##_db_rehash_##NAME(struct STRUCT *s)		\
+	{								\
+		del_hash_table_entry(&STRUCT##_##NAME##_hash_table, s);	\
+		add_hash_table_entry(&STRUCT##_##NAME##_hash_table, s);	\
 	}
 
 /*

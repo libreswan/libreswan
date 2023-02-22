@@ -204,9 +204,9 @@ bool orient(struct connection *c, struct logger *logger)
 	}
 
 	/* rehash end dependent hashes */
-	rehash_db_connection_that_id(c);
+	connection_db_rehash_that_id(c);
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-		rehash_db_spd_route_remote_client(spd);
+		spd_route_db_rehash_remote_client(spd);
 	}
 
 	/* (re-)compute the priority */

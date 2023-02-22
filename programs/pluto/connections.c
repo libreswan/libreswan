@@ -89,7 +89,7 @@
 #include "ip_address.h"
 #include "ip_info.h"
 #include "keyhi.h" /* for SECKEY_DestroyPublicKey */
-#include "state_db.h"		/* for rehash_state_connection */
+#include "state_db.h"		/* for state_db_rehash_connection_serialno */
 # include "kernel_xfrm_interface.h"
 #include "iface.h"
 #include "ip_selector.h"

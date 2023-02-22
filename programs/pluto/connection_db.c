@@ -67,13 +67,7 @@ static hash_t hash_connection_that_id(const struct id *id)
 
 HASH_TABLE(connection, that_id, .remote->host.id, STATE_TABLE_SIZE);
 
-void rehash_db_connection_that_id(struct connection *c)
-{
-	id_buf idb;
-	dbg("%s() rehashing "PRI_CO" that_id=%s",
-	    __func__, pri_co(c->serialno), str_id(&c->remote->host.id, &idb));
-	rehash_table_entry(&connection_that_id_hash_table, c);
-}
+REHASH_DB_ENTRY(connection, that_id, .remote->host.id);
 
 void replace_connection_that_id(struct connection *c, const struct id *src)
 {
@@ -81,7 +75,7 @@ void replace_connection_that_id(struct connection *c, const struct id *src)
 	passert(dst->name.ptr == NULL || dst->name.ptr != src->name.ptr);
 	free_id_content(dst);
 	*dst = clone_id(src, "replaing connection id");
-	rehash_db_connection_that_id(c);
+	connection_db_rehash_that_id(c);
 }
 
 /*

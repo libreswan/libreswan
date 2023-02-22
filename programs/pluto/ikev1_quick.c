@@ -1139,7 +1139,7 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 			     bool_str(c->remote->config->child.virt != NULL));
 
 			update_first_selector(c, remote, *remote_client);
-			rehash_db_spd_route_remote_client(c->spd);
+			spd_route_db_rehash_remote_client(c->spd);
 			set_child_has_client(c, remote, true);
 			virtual_ip_delref(&c->spd->remote->virt);
 

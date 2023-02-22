@@ -88,13 +88,6 @@ void del_hash_table_entry(struct hash_table *table, void *data)
 	table->nr_entries--;
 }
 
-void rehash_table_entry(struct hash_table *table, void *data)
-{
-	/* XXX: this moves the entry to the front of the table */
-	del_hash_table_entry(table, data);
-	add_hash_table_entry(table, data);
-}
-
 /*
  * Check that the data hashes to the correct bucket.
  *

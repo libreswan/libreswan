@@ -397,7 +397,7 @@ static stf_status modecfg_resp(struct state *st,
 
 			ldbg(c->logger, "another hack to get the SPD in sync");
 			c->spd->remote->client = c->remote->child.selectors.proposed.list[0];
-			rehash_db_spd_route_remote_client(c->spd);
+			spd_route_db_rehash_remote_client(c->spd);
 
 			ia = selector_prefix(c->spd->remote->client);
 			address_buf iab;
@@ -1812,7 +1812,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 					passert(c->child.spds.len == 1);
 					set_child_has_client(c, remote, true);
 					update_first_selector(c, remote, ipv4_info.selector.all);
-					rehash_db_spd_route_remote_client(c->spd);
+					spd_route_db_rehash_remote_client(c->spd);
 				}
 
 				while (pbs_left(&strattr) > 0) {
@@ -1850,7 +1850,7 @@ stf_status modecfg_inR1(struct state *st, struct msg_digest *md)
 							/* new entry: add at end*/
 							sr->spd_next = clone_spd_route(c, HERE);
 							sr->remote->client = wire_selector; /*OK;not first*/
-							rehash_db_spd_route_remote_client(sr);
+							spd_route_db_rehash_remote_client(sr);
 							break;
 						}
 					}

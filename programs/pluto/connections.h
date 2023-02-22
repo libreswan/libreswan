@@ -773,9 +773,9 @@ struct spd_route_filter {
 bool next_spd_route(enum chrono order, struct spd_route_filter *srf);
 
 void replace_connection_that_id(struct connection *c, const struct id *new_id);
-void rehash_db_connection_that_id(struct connection *c);
+void connection_db_rehash_that_id(struct connection *c);
 
-void rehash_db_spd_route_remote_client(struct spd_route *sr);
+void spd_route_db_rehash_remote_client(struct spd_route *sr);
 
 bool dpd_active_locally(const struct connection *c);
 

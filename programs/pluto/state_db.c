@@ -107,10 +107,7 @@ static hash_t hash_state_connection_serialno(const co_serial_t *connection_seria
 
 HASH_TABLE(state, connection_serialno, .st_connection->serialno, STATE_TABLE_SIZE);
 
-void rehash_state_connection(struct state *st)
-{
-	rehash_table_entry(&state_connection_serialno_hash_table, st);
-}
+REHASH_DB_ENTRY(state, connection_serialno, .st_connection->serialno);
 
 /*
  * A table hashed by reqid.
@@ -122,6 +119,7 @@ static hash_t hash_state_reqid(const reqid_t *reqid)
 }
 
 HASH_TABLE(state, reqid, .st_reqid, STATE_TABLE_SIZE);
+REHASH_DB_ENTRY(state, reqid, .st_reqid);
 
 struct state *state_by_reqid(reqid_t reqid,
 			     state_by_predicate *predicate /*optional*/,
@@ -151,11 +149,6 @@ struct state *state_by_reqid(reqid_t reqid,
 	return NULL;
 }
 
-void rehash_state_reqid(struct state *st)
-{
-	rehash_table_entry(&state_reqid_hash_table, st);
-}
-
 /*
  * Hash table indexed by just the IKE SPIi.
  *
@@ -173,6 +166,7 @@ static hash_t hash_state_ike_initiator_spi(const ike_spi_t *ike_initiator_spi)
 }
 
 HASH_TABLE(state, ike_initiator_spi, .st_ike_spis.initiator, STATE_TABLE_SIZE);
+static REHASH_DB_ENTRY(state, ike_initiator_spi, .st_ike_spis.initiator);
 
 struct state *state_by_ike_initiator_spi(enum ike_version ike_version,
 					 const so_serial_t *clonedfrom, /*optional*/
@@ -230,6 +224,7 @@ static void jam_ike_spis(struct jambuf *buf, const ike_spis_t *ike_spis)
 }
 
 HASH_TABLE(state, ike_spis, .st_ike_spis, STATE_TABLE_SIZE);
+static REHASH_DB_ENTRY(state, ike_spis, .st_ike_spis);
 
 struct state *state_by_ike_spis(enum ike_version ike_version,
 				const so_serial_t *clonedfrom,
@@ -283,8 +278,8 @@ void rehash_state_cookies_in_db(struct state *st)
 	dbg("State DB: re-hashing %s state #%lu IKE SPIi and SPI[ir]",
 	    st->st_connection->config->ike_info->version_name,
 	    st->st_serialno);
-	rehash_table_entry(&state_ike_spis_hash_table, st);
-	rehash_table_entry(&state_ike_initiator_spi_hash_table, st);
+	state_db_rehash_ike_spis(st);
+	state_db_rehash_ike_initiator_spi(st);
 }
 
 /*
