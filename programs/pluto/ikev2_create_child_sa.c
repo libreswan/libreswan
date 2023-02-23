@@ -390,10 +390,10 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	dbg("initiating child sa with "PRI_LOGGER, pri_logger(logger));
 
 	pexpect(IS_CHILD_SA_ESTABLISHED(&child_being_replaced->sa));
-	struct child_sa *larval_child = new_v2_child_state(c, ike, IPSEC_SA,
-							   SA_INITIATOR,
-							   STATE_V2_REKEY_CHILD_I0,
-							   logger->global_whackfd);
+	struct child_sa *larval_child = new_v2_child_sa(c, ike, IPSEC_SA,
+							SA_INITIATOR,
+							STATE_V2_REKEY_CHILD_I0,
+							logger->global_whackfd);
 
 	free_chunk_content(&larval_child->sa.st_ni); /* this is from the parent. */
 	free_chunk_content(&larval_child->sa.st_nr); /* this is from the parent. */
@@ -636,10 +636,10 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 	}
 
 	pexpect(larval_child == NULL);
-	larval_child = new_v2_child_state(predecessor->sa.st_connection,
-					  ike, IPSEC_SA, SA_RESPONDER,
-					  STATE_V2_REKEY_CHILD_R0,
-					  null_fd);
+	larval_child = new_v2_child_sa(predecessor->sa.st_connection,
+				       ike, IPSEC_SA, SA_RESPONDER,
+				       STATE_V2_REKEY_CHILD_R0,
+				       null_fd);
 	ike->sa.st_v2_msgid_windows.responder.wip_sa = larval_child;
 	larval_child->sa.st_v2_rekey_pred = predecessor->sa.st_serialno;
 	larval_child->sa.st_v2_create_child_sa_proposals =
@@ -668,10 +668,10 @@ void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 					 lset_t policy, int try,
 					 struct fd *whackfd)
 {
-	struct child_sa *larval_child = new_v2_child_state(c, ike, IPSEC_SA,
-							   SA_INITIATOR,
-							   STATE_V2_NEW_CHILD_I0,
-							   whackfd);
+	struct child_sa *larval_child = new_v2_child_sa(c, ike, IPSEC_SA,
+							SA_INITIATOR,
+							STATE_V2_NEW_CHILD_I0,
+							whackfd);
 
 	free_chunk_content(&larval_child->sa.st_ni); /* this is from the parent. */
 	free_chunk_content(&larval_child->sa.st_nr); /* this is from the parent. */
@@ -832,10 +832,10 @@ stf_status process_v2_CREATE_CHILD_SA_new_child_request(struct ike_sa *ike,
 							struct msg_digest *md)
 {
 	pexpect(larval_child == NULL);
-	larval_child = new_v2_child_state(ike->sa.st_connection,
-					  ike, IPSEC_SA, SA_RESPONDER,
-					  STATE_V2_NEW_CHILD_R0,
-					  null_fd);
+	larval_child = new_v2_child_sa(ike->sa.st_connection,
+				       ike, IPSEC_SA, SA_RESPONDER,
+				       STATE_V2_NEW_CHILD_R0,
+				       null_fd);
 	ike->sa.st_v2_msgid_windows.responder.wip_sa = larval_child;
 	larval_child->sa.st_v2_create_child_sa_proposals =
 		get_v2_CREATE_CHILD_SA_new_child_proposals(ike, larval_child);
@@ -1281,10 +1281,10 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike)
 	struct connection *c = ike->sa.st_connection;
 
 	; /* to be determined */
-	struct child_sa *larval_ike = new_v2_child_state(c, ike, IKE_SA,
-							 SA_INITIATOR,
-							 STATE_V2_REKEY_IKE_I0,
-							 ike->sa.st_logger->global_whackfd);
+	struct child_sa *larval_ike = new_v2_child_sa(c, ike, IKE_SA,
+						      SA_INITIATOR,
+						      STATE_V2_REKEY_IKE_I0,
+						      ike->sa.st_logger->global_whackfd);
 	larval_ike->sa.st_oakley = ike->sa.st_oakley;
 	larval_ike->sa.st_ike_rekey_spis.initiator = ike_initiator_spi();
 	larval_ike->sa.st_v2_rekey_pred = ike->sa.st_serialno;
@@ -1404,10 +1404,10 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_ike_request(struct ike_sa *ike,
 	v2_notification_t n;
 
 	pexpect(larval_ike == NULL);
-	larval_ike = new_v2_child_state(ike->sa.st_connection,
-					ike, IKE_SA, SA_RESPONDER,
-					STATE_V2_REKEY_IKE_R0,
-					null_fd);
+	larval_ike = new_v2_child_sa(ike->sa.st_connection,
+				     ike, IKE_SA, SA_RESPONDER,
+				     STATE_V2_REKEY_IKE_R0,
+				     null_fd);
 	ike->sa.st_v2_msgid_windows.responder.wip_sa = larval_ike;
 	larval_ike->sa.st_v2_rekey_pred = ike->sa.st_serialno;
 

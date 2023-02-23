@@ -485,13 +485,13 @@ struct ike_sa *new_v1_rstate(struct connection *c, struct msg_digest *md)
 	return ike;
 }
 
-struct ike_sa *new_v2_ike_state(struct connection *c,
-				const struct v2_state_transition *transition,
-				enum sa_role sa_role,
-				const ike_spi_t ike_initiator_spi,
-				const ike_spi_t ike_responder_spi,
-				lset_t policy,
-				int try, struct fd *whack_sock)
+struct ike_sa *new_v2_ike_sa(struct connection *c,
+			     const struct v2_state_transition *transition,
+			     enum sa_role sa_role,
+			     const ike_spi_t ike_initiator_spi,
+			     const ike_spi_t ike_responder_spi,
+			     lset_t policy,
+			     int try, struct fd *whack_sock)
 {
 	struct state *st = new_state(c, ike_initiator_spi, ike_responder_spi,
 				     IKE_SA, sa_role, whack_sock, HERE);
@@ -1625,12 +1625,12 @@ struct state *ikev1_duplicate_state(struct connection *c,
 	return duplicate_state(c, st, IPSEC_SA, sa_role, whackfd);
 }
 
-struct child_sa *new_v2_child_state(struct connection *c,
-				    struct ike_sa *ike,
-				    enum sa_type sa_type,
-				    enum sa_role sa_role,
-				    enum state_kind kind, /* const struct v2_state_transition *transition */
-				    struct fd *whackfd)
+struct child_sa *new_v2_child_sa(struct connection *c,
+				 struct ike_sa *ike,
+				 enum sa_type sa_type,
+				 enum sa_role sa_role,
+				 enum state_kind kind, /* const struct v2_state_transition *transition */
+				 struct fd *whackfd)
 {
 	/* XXX: transitions should be parameter */
 	const struct finite_state *fs = finite_states[kind];

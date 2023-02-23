@@ -852,20 +852,20 @@ struct ike_sa *new_v1_rstate(struct connection *c, struct msg_digest *md);
 struct state *ikev1_duplicate_state(struct connection *c, struct state *st,
 				    enum sa_role sa_role, struct fd *whackfd);
 
-struct ike_sa *new_v2_ike_state(struct connection *c,
-				const struct v2_state_transition *transition,
-				enum sa_role sa_role,
-				const ike_spi_t ike_initiator_spi,
-				const ike_spi_t ike_responder_spi,
-				lset_t policy,
-				int try, struct fd *whack_sock);
+struct ike_sa *new_v2_ike_sa(struct connection *c,
+			     const struct v2_state_transition *transition,
+			     enum sa_role sa_role,
+			     const ike_spi_t ike_initiator_spi,
+			     const ike_spi_t ike_responder_spi,
+			     lset_t policy,
+			     int try, struct fd *whack_sock);
 /* could eventually be IKE or CHILD SA */
-struct child_sa *new_v2_child_state(struct connection *c,
-				    struct ike_sa *ike,
-				    enum sa_type sa_type,
-				    enum sa_role sa_role,
-				    enum state_kind kind,
-				    struct fd *whackfd);
+struct child_sa *new_v2_child_sa(struct connection *c,
+				 struct ike_sa *ike,
+				 enum sa_type sa_type, /*where is this going?*/
+				 enum sa_role sa_role,
+				 enum state_kind kind,
+				 struct fd *whackfd);
 
 void set_v1_transition(struct state *st, const struct state_v1_microcode *transition, where_t where);
 void set_v2_transition(struct state *st, const struct v2_state_transition *transition, where_t where);

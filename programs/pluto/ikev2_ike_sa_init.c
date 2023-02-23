@@ -383,11 +383,11 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 		 * presumably, dedicating real resources to the
 		 * connection.
 		 */
-		struct ike_sa *ike = new_v2_ike_state(c, transition, SA_RESPONDER,
-						      md->hdr.isa_ike_spis.initiator,
-						      ike_responder_spi(&md->sender,
-									md->md_logger),
-						      LEMPTY, 0, null_fd);
+		struct ike_sa *ike = new_v2_ike_sa(c, transition, SA_RESPONDER,
+						   md->hdr.isa_ike_spis.initiator,
+						   ike_responder_spi(&md->sender,
+								     md->md_logger),
+						   LEMPTY, 0, null_fd);
 
 		statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
 		/* XXX: keep test results happy */
@@ -539,9 +539,9 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	const struct finite_state *fs = finite_states[STATE_V2_PARENT_I0];
 	pexpect(fs->nr_transitions == 1);
 	const struct v2_state_transition *transition = &fs->v2.transitions[0];
-	struct ike_sa *ike = new_v2_ike_state(c, transition, SA_INITIATOR,
-					      ike_initiator_spi(), zero_ike_spi,
-					      policy, try, logger->global_whackfd);
+	struct ike_sa *ike = new_v2_ike_sa(c, transition, SA_INITIATOR,
+					   ike_initiator_spi(), zero_ike_spi,
+					   policy, try, logger->global_whackfd);
 	statetime_t start = statetime_backdate(&ike->sa, inception);
 
 	/* set up new state */
