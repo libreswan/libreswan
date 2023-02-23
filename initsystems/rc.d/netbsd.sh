@@ -9,6 +9,14 @@
 
 $_rc_subr_loaded . /etc/rc.subr
 
+# standardize PATH, and export it for everything else's benefit;
+# should config.mk generate this?
+IPSEC_SBINDIR="${IPSEC_SBINDIR:-@@SBINDIR@@}"
+NSS_BINDIR="${NSS_BINDIR:-@@NSS_BINDIR@@}"
+PATH="${NSS_BINDIR}:${PATH#${NSS_BINDIR}:}"
+PATH="${IPSEC_SBINDIR}:${PATH#${IPSEC_SBINDIR}:}"
+export PATH
+
 name="pluto"
 rcvar=$name
 pidfile="@@RUNDIR@@/${name}.pid"
