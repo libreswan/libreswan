@@ -230,10 +230,10 @@ void delete_connection(struct connection **cp)
 	 * We mark c as going away so it won't get deleted
 	 * recursively.
 	 */
-	PASSERT(c->logger, (c->policy & POLICY_GOING_AWAY) == LEMPTY);
+	PASSERT(c->logger, !c->going_away);
 
 	if (c->kind == CK_INSTANCE) {
-		c->policy |= POLICY_GOING_AWAY;
+		c->going_away = true;
 		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
 			address_buf b;
 			llog(RC_LOG, c->logger,
@@ -3243,7 +3243,7 @@ void connection_delete_unused_instance(struct connection **cp,
 	struct connection *c = (*cp);
 	*cp = NULL;
 
-	if (c->policy & POLICY_GOING_AWAY) {
+	if (c->going_away) {
 		connection_buf cb;
 		dbg("connection "PRI_CONNECTION" is going away, skipping delete-unused",
 		    pri_connection(c, &cb));

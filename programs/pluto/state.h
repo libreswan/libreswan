@@ -124,18 +124,6 @@ struct trans_attrs {
 };
 
 /*
- * While a state is being deleted, should a last-gasp delete be sent?
- *
- * For instance, when tearing down a connection.
- */
-
-enum send_delete {
-	PROBABLY_SEND_DELETE,
-	DONT_SEND_DELETE,
-	DO_SEND_DELETE,
-};
-
-/*
  * IPsec (Phase 2 / Quick Mode) transform and attributes This is a
  * flattened/decoded version of what is represented by a Transaction
  * Payload.  There may be one for AH, one for ESP, and a funny one for
@@ -320,7 +308,6 @@ struct state {
 	/*const*/ enum sa_type st_establishing_sa;	/* where is this state going? */
 
 	bool st_ikev2_anon;                     /* is this an anonymous IKEv2 state? */
-	enum send_delete st_send_delete;	/* suppress or force sending DELETE */
 
 	struct connection *st_connection;       /* connection for this SA */
  	struct logger *st_logger;
@@ -755,12 +742,66 @@ struct state {
 	} st_v2_ike_seen_certreq;
 
 	/*
-	 * Has this state's connection been checked for revival?
+	 * Screw around with what happens when a state is being
+	 * deleted.
 	 *
-	 * Early revival happens during a timeout say, late revival
-	 * happens in delete_state().
+	 * The problem is that both the connection and state code
+	 * think they are in control.
+	 *
+	 * For instance, the connection code will delete the state
+	 * only to have the sate code try to delete the connection.
 	 */
-	bool st_early_revival;
+
+	struct {
+		/*
+		 * Has this state's connection been checked for
+		 * revival?
+		 *
+		 * IKEv2 connections, for instance, check for revival
+		 * in connection_timeout().  This is so that the
+		 * connection code can both adjust kernel policy and,
+		 * possibly delete any kernel state.
+		 *
+		 * Other code paths still leave revival to
+		 * delete_state().
+		 */
+		bool skip_revival;
+
+		/*
+		 * In delete_state(), as a last gasp, should a delete
+		 * message to delete the SA be sent?
+		 *
+		 * For instance, when tearing down an SA, instead of
+		 * sequencing a delete IKE/Child SA exchange,
+		 * delete_state() will generate and send an
+		 * out-of-band delete message.  This is known as
+		 * record'n'send.  It should go away.
+		 */
+		enum {
+			PROBABLY_SEND_DELETE,
+			DONT_SEND_DELETE,
+			DO_SEND_DELETE,
+		} send_delete;
+
+		/*
+		 * In delete_state(), should the code also delete the
+		 * (template instance) connection?
+		 *
+		 * When tearing down an SA family, the state and
+		 * connection code get into a bun-fight over when
+		 * connections/states should be deleted.  This flag
+		 * and POLICY_GOING_AWAY try to avoid this.
+		 *
+		 * A simple rule would be for the connection code to
+		 * delete the (kernel) state, but most code has the
+		 * state trying to delete the connection.
+		 */
+		enum {
+			PROBABLY_DELETE_CONNECTION,
+			DONT_DELETE_CONNECTION,
+		} delete_connection;
+
+	} st_on_delete;
 };
 
 /*

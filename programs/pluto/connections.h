@@ -519,6 +519,11 @@ struct connection {
 	struct logger *logger;
 	char *foodgroup;
 	lset_t policy;
+	bool going_away;		/* Is the connection already
+					 * in the process of being
+					 * deleted and, hence,
+					 * delete_state() should leave
+					 * it alone? */
 	unsigned long sa_keying_tries;
 	uint32_t sa_priority;
 	uint32_t sa_tfcpad;

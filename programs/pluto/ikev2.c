@@ -2710,7 +2710,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		v2_msgid_finish(ike, md);
 		send_recorded_v2_message(ike, "DELETE_IKE_FAMILY", MESSAGE_RESPONSE);
 		/* do the deed */
-		ike->sa.st_send_delete = DONT_SEND_DELETE;
+		ike->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
 		delete_ike_family(&ike);
 		pexpect(ike == NULL);
 		return;
@@ -2733,7 +2733,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		pexpect(transition->recv_role == MESSAGE_RESPONSE);
 		v2_msgid_finish(ike, md);
 		/* do the deed */
-		ike->sa.st_send_delete = DO_SEND_DELETE;
+		ike->sa.st_on_delete.send_delete = DO_SEND_DELETE;
 		delete_ike_family(&ike);
 		/* get out of here -- everything is invalid */
 		pexpect(ike == NULL);
@@ -2768,7 +2768,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		}
 
 		/* if this was a child fail, don't destroy the IKE SA */
-		ike->sa.st_send_delete = DONT_SEND_DELETE;
+		ike->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
 		delete_ike_family(&ike);
 		pexpect(ike == NULL);
 		return;
@@ -2784,7 +2784,7 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		     "state transition '%s' failed with %s",
 		     transition->story,
 		     enum_name(&v2_notification_names, notification));
-	ike->sa.st_send_delete = DONT_SEND_DELETE;
+	ike->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
 	delete_ike_family(&ike);
 }
 

@@ -532,7 +532,7 @@ void delete_state_by_id_name(struct state *st, const char *name)
 	const char *thatidbuf = str_id(&c->remote->host.id, &thatidb);
 	if (streq(thatidbuf, name)) {
 		struct ike_sa *ike = pexpect_ike_sa(st);
-		ike->sa.st_send_delete = (IS_PARENT_SA_ESTABLISHED(st) ? DO_SEND_DELETE :
+		ike->sa.st_on_delete.send_delete = (IS_PARENT_SA_ESTABLISHED(st) ? DO_SEND_DELETE :
 					  DONT_SEND_DELETE);
 		delete_ike_family(&ike);
 	}
@@ -550,7 +550,7 @@ void v1_delete_state_by_username(struct state *st, const char *name)
 	}
 
 	struct ike_sa *ike = pexpect_ike_sa(st); /* per above */
-	ike->sa.st_send_delete = (IS_ISAKMP_SA_ESTABLISHED(st) ? DO_SEND_DELETE :
+	ike->sa.st_on_delete.send_delete = (IS_ISAKMP_SA_ESTABLISHED(st) ? DO_SEND_DELETE :
 				  DONT_SEND_DELETE);
 	delete_ike_family(&ike);
 	/* note: no md->v1_st to clear */
@@ -691,13 +691,13 @@ static void flush_incomplete_children(struct ike_sa *ike)
 
 static bool should_send_delete(const struct state *st)
 {
-	switch (st->st_send_delete) {
+	switch (st->st_on_delete.send_delete) {
 	case DO_SEND_DELETE:
-		dbg("%s: #%lu? YES, because .st_send_delete==DO_SEND_DELETE",
+		dbg("%s: #%lu? YES, because .st_on_delete.send_delete==DO_SEND_DELETE",
 		    __func__, st->st_serialno);
 		return true;
 	case DONT_SEND_DELETE:
-		dbg("%s: #%lu? NO, because .st_send_delete==DONT_SEND_DELETE",
+		dbg("%s: #%lu? NO, because .st_on_delete.send_delete==DONT_SEND_DELETE",
 		    __func__, st->st_serialno);
 		return false;
 	default:
@@ -825,7 +825,7 @@ static void send_delete(struct state *st)
 		record_v2_delete(ike, st);
 		send_recorded_v2_message(ike, "delete notification", MESSAGE_REQUEST);
 		v2_msgid_finish(ike, NULL/*MD*/);
-		st->st_send_delete = DONT_SEND_DELETE;
+		st->st_on_delete.send_delete = DONT_SEND_DELETE;
 		return;
 	}
 	}
@@ -1055,7 +1055,7 @@ void delete_state_tail(struct state *st)
 	 * If policy dictates, try to keep the state's connection
 	 * alive.  DONT_REKEY overrides UP.
 	 */
-	if (st->st_early_revival) {
+	if (st->st_on_delete.skip_revival) {
 		ldbg(st->st_logger, "state already checked for revival");
 	} else {
 		add_revival_if_needed(st);
@@ -1108,8 +1108,14 @@ void delete_state_tail(struct state *st)
 	 *   hash table this succeeding means that there must be a
 	 *   second state using the connection
 	 */
-	connection_delete_unused_instance(&st->st_connection, st,
-				  st->st_logger->global_whackfd);
+	if (st->st_on_delete.delete_connection == PROBABLY_DELETE_CONNECTION) {
+		connection_delete_unused_instance(&st->st_connection, st,
+						  st->st_logger->global_whackfd);
+	} else {
+		connection_buf cb;
+		ldbg(st->st_logger, "leaving connection "PRI_CONNECTION" alone",
+		     pri_connection(st->st_connection, &cb));
+	}
 
 	pexpect(st->st_connection == NULL);
 
@@ -1286,11 +1292,10 @@ static void delete_v1_states_by_connection_bottom_up(struct connection **cp,
 	 * Stop recursive calls trying to delete this template
 	 * connection by flaging this connection as going away.
 	 */
-	bool delete_instance = (c->kind == CK_INSTANCE &&
-				(c->policy & POLICY_GOING_AWAY) == LEMPTY);
+	bool delete_instance = (c->kind == CK_INSTANCE && !c->going_away);
 	if (delete_instance) {
 		/* stop recursive delete by state code */
-		c->policy |= POLICY_GOING_AWAY;
+		c->going_away = true;
 	}
 
 	/*
@@ -1351,7 +1356,7 @@ static void delete_v1_states_by_connection_bottom_up(struct connection **cp,
 	}
 
 	if (delete_instance) {
-		c->policy &= ~POLICY_GOING_AWAY; /* scrub above bit */
+		c->going_away = false; /* scrub above bit */
 		/* already delt with relations above!?! */
 		delete_connection(cp);
 	}
@@ -2740,7 +2745,7 @@ static bool delete_ike_family_child(struct state *st, void *unused_context UNUSE
 	}
 
 	case IKEv2:
-		st->st_send_delete = DONT_SEND_DELETE;
+		st->st_on_delete.send_delete = DONT_SEND_DELETE;
 		break;
 	}
 
@@ -2998,7 +3003,7 @@ void suppress_delete_notify(const struct ike_sa *ike,
 		return;
 	}
 
-	st->st_send_delete = DONT_SEND_DELETE;
+	st->st_on_delete.send_delete = DONT_SEND_DELETE;
 	dbg("marked %s state #%lu to suppress sending delete notify",
 	    what, st->st_serialno);
 }
