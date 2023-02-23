@@ -875,7 +875,20 @@ extern void rehash_state(struct state *st,
 			 const ike_spi_t *ike_responder_spi);
 extern void state_eroute_usage(const ip_selector *ours, const ip_selector *peers,
 			       unsigned long count, monotime_t nw);
-extern void delete_state(struct state *st);
+/*
+ * The delete_{ike,child}_sa() variants only delete the <<struct
+ * state>> and <<kernel state>>.  They do not send delete, do not
+ * delete the connection, do not revive, do not pass go, and of course
+ * do not collect $200.
+ *
+ * They are for connection code which just needs to blow away the
+ * state.
+ */
+
+void delete_ike_sa(struct ike_sa **ike);
+void delete_child_sa(struct child_sa **child);
+
+void delete_state(struct state *st);
 extern void delete_v1_states_by_connection_family(struct connection **c);
 extern void delete_states_by_connection(struct connection **c);
 extern void rekey_p2states_by_connection(struct connection *c);

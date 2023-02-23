@@ -828,6 +828,26 @@ void delete_state(struct state *st)
 	delete_state_tail(st);
 }
 
+void delete_child_sa(struct child_sa **child)
+{
+	struct state *st = &(*child)->sa;
+	*child = NULL;
+	st->st_on_delete.skip_revival = true;
+	st->st_on_delete.send_delete = DONT_SEND_DELETE;
+	st->st_on_delete.skip_connection = true;
+	delete_state(st);
+}
+
+void delete_ike_sa(struct ike_sa **ike)
+{
+	struct state *st = &(*ike)->sa;
+	*ike = NULL;
+	st->st_on_delete.skip_revival = true;
+	st->st_on_delete.send_delete = DONT_SEND_DELETE;
+	st->st_on_delete.skip_connection = true;
+	delete_state(st);
+}
+
 static void update_and_log_traffic(struct state *st, const char *name,
 				   struct ipsec_proto_info *proto,
 				   struct pstats_bytes *pstats)
