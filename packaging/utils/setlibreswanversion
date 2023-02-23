@@ -25,7 +25,7 @@ cd "${2:-.}" || usage
 # -f .git check is needed for "git worktree"
 if [ -d .git -o -f .git ]; then
     if git version >/dev/null 2>&1; then
-	CUR=$(git describe --tags ${ADD_GIT_DIRTY})
+	CUR=$(git describe --tags --always ${ADD_GIT_DIRTY})
 	BRANCH=$(git rev-parse --abbrev-ref HEAD)
 	echo "${CUR}-${BRANCH}"
 	exit 0
