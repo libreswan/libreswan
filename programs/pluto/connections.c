@@ -258,14 +258,14 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	*cp = NULL;
 
 	ldbg(c->logger, "%s() %s "PRI_CO" from "PRI_CO,
-	     __func__, c->name, pri_co(c->serialno), pri_co(c->serial_from));
+	     __func__, c->name, pri_co(c->serialno), pri_co(c->clonedfrom));
 
 	/*
 	 * Don't expect any offspring?  Something handled by caller.
 	 */
 	if (DBGP(DBG_BASE)) {
 		struct connection_filter cq = {
-			.serial_from = c->serialno,
+			.clonedfrom = c->serialno,
 			.where = HERE,
 		};
 		PEXPECT(c->logger, !next_connection_old2new(&cq));
@@ -312,7 +312,7 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 
 	struct config *config = c->root_config;
 	if (config != NULL) {
-		passert(co_serial_is_unset(c->serial_from));
+		passert(co_serial_is_unset(c->clonedfrom));
 		free_chunk_content(&config->sec_label);
 		free_proposals(&config->ike_proposals.p);
 		free_proposals(&config->child_proposals.p);
@@ -1672,7 +1672,7 @@ void finish_connection(struct connection *c, const char *name,
 	connection_serialno++;
 	passert(connection_serialno > 0); /* can't overflow */
 	c->serialno = connection_serialno;
-	c->serial_from = (t != NULL ? t->serialno : UNSET_CO_SERIAL);
+	c->clonedfrom = (t != NULL ? t->serialno : UNSET_CO_SERIAL);
 }
 
 static struct connection *alloc_connection(const char *name,

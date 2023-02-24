@@ -1283,7 +1283,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 {
 	connection_buf cb;
 	dbg("kernel: %s() "PRI_CO" "PRI_CO" "PRI_CONNECTION" routed %s sec_label="PRI_SHUNK,
-	    __func__, pri_co(c->serialno), pri_co(c->serial_from),
+	    __func__, pri_co(c->serialno), pri_co(c->clonedfrom),
 	    pri_connection(c, &cb),
 	    enum_name(&routing_story, c->child.routing),
 	    pri_shunk(c->config->sec_label));

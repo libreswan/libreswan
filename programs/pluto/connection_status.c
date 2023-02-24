@@ -697,9 +697,9 @@ void show_connection_status(struct show *s, const struct connection *c)
 		    c->newest_ike_sa,
 		    c->newest_ipsec_sa, /* IPsec SA or Child SA? */
 		    pri_co(c->serialno));
-		if (c->serial_from != UNSET_CO_SERIAL) {
+		if (c->clonedfrom != UNSET_CO_SERIAL) {
 			jam(buf, ", instantiated from: "PRI_CO";",
-			    pri_co(c->serial_from));
+			    pri_co(c->clonedfrom));
 		} else {
 			jam(buf, ";");
 		}

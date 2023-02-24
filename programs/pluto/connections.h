@@ -514,7 +514,7 @@ struct ephemeral_variables {
 
 struct connection {
 	co_serial_t serialno;
-	co_serial_t serial_from; /* "0" when connection root */
+	co_serial_t clonedfrom;	/* "0" when connection root */
 	char *name;
 	struct logger *logger;
 	char *foodgroup;
@@ -600,7 +600,7 @@ struct connection {
 		struct list_entry list;
 		struct list_entry serialno;
 		struct list_entry that_id;
-		struct list_entry serial_from;
+		struct list_entry clonedfrom;
 	} connection_db_entries;
 
 	/*
@@ -736,7 +736,7 @@ struct connection_filter {
 	const char *name;
 	const struct id *this_id_eq; /* strict; not same_id() */
 	const struct id *that_id_eq; /* strict; not same_id() */
-	co_serial_t serial_from;
+	co_serial_t clonedfrom;
 	/* current result (can be safely deleted) */
 	struct connection *c;
 	/* internal: handle on next entry */

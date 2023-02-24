@@ -98,7 +98,7 @@ static void ondemand_unrouted_to_unrouted_negotiation(struct connection *c, cons
 	bool oe = ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
 
 	/* used below in pexpects */
-	struct connection *t = connection_by_serialno(c->serial_from); /* could be NULL */
+	struct connection *t = connection_by_serialno(c->clonedfrom); /* could be NULL */
 
 	enum routing old_routing = c->child.routing;	/* routing, old */
 	enum routing new_routing = RT_UNROUTED_NEGOTIATION;
@@ -140,7 +140,7 @@ static void ondemand_routed_prospective_to_routed_negotiation(struct connection 
 	bool oe = ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
 
 	/* used below in pexpects */
-	struct connection *t = connection_by_serialno(c->serial_from); /* could be NULL */
+	struct connection *t = connection_by_serialno(c->clonedfrom); /* could be NULL */
 
 	/*
 	 * For instance?
@@ -194,7 +194,7 @@ static void ondemand_default(struct connection *c, const struct event *e)
 	bool oe = ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
 
 	/* used below in pexpects */
-	struct connection *t = connection_by_serialno(c->serial_from); /* could be NULL */
+	struct connection *t = connection_by_serialno(c->clonedfrom); /* could be NULL */
 
 	PASSERT(logger, (c->kind == CK_PERMANENT ||
 			 c->kind == CK_INSTANCE));
