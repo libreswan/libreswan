@@ -88,7 +88,6 @@ OBJS += ikev2_eap.o
 OBJS += state_db.o
 OBJS += show.o
 OBJS += show_traffic_status.o
-OBJS += show_connection_status.o
 OBJS += retransmit.o
 
 # local (possibly more up to date) copy of <linux/xfrm.h>
@@ -216,6 +215,7 @@ OBJS += connections.o
 OBJS += instantiate.o
 OBJS += connection_db.o
 OBJS += connection_event.o
+OBJS += connection_status.o
 OBJS += spd_route_db.o
 
 OBJS += routing.o
