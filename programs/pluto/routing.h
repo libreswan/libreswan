@@ -71,5 +71,7 @@ void connection_resume(struct child_sa *child);
 void connection_suspend(struct child_sa *child);
 
 void connection_timeout(struct ike_sa *ike);
+void connection_delete_child(struct child_sa **child);
+void connection_delete_ike(struct ike_sa **ike);
 
 #endif

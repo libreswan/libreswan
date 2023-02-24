@@ -33,6 +33,8 @@ enum connection_event {
 	CONNECTION_ROUTE,
 	CONNECTION_UNROUTE,
 	CONNECTION_ONDEMAND,
+	CONNECTION_DELETE_CHILD,
+	CONNECTION_DELETE_IKE,
 	CONNECTION_TIMEOUT,
 };
 
@@ -41,6 +43,8 @@ static const char *connection_event_name[] = {
 	S(CONNECTION_ROUTE),
 	S(CONNECTION_UNROUTE),
 	S(CONNECTION_ONDEMAND),
+	S(CONNECTION_DELETE_CHILD),
+	S(CONNECTION_DELETE_IKE),
 	S(CONNECTION_TIMEOUT),
 #undef S
 };
@@ -55,6 +59,7 @@ static enum_names connection_event_names = {
 struct event {
 	enum connection_event event;
 	struct ike_sa *ike;
+	struct child_sa *child;
 	threadtime_t *inception;
 	const struct kernel_acquire *acquire;
 };
@@ -459,6 +464,10 @@ void permanent_event_handler(struct connection *c, const struct event *e)
 			/* presumably triggered by whack */
 			ondemand_unrouted_to_unrouted_negotiation(c, e);
 			return;
+		case CONNECTION_DELETE_IKE:
+		case CONNECTION_DELETE_CHILD:
+			barf(c, e);
+			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permanent+up */
 			if (should_retry(e->ike)) {
@@ -485,6 +494,8 @@ void permanent_event_handler(struct connection *c, const struct event *e)
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
 		case CONNECTION_ONDEMAND:
+		case CONNECTION_DELETE_IKE:
+		case CONNECTION_DELETE_CHILD:
 			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
@@ -526,6 +537,8 @@ void permanent_event_handler(struct connection *c, const struct event *e)
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_ONDEMAND:
+		case CONNECTION_DELETE_CHILD:
+		case CONNECTION_DELETE_IKE:
 			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
@@ -567,6 +580,8 @@ void permanent_event_handler(struct connection *c, const struct event *e)
 		case CONNECTION_ONDEMAND:
 			ondemand_routed_prospective_to_routed_negotiation(c, e);
 			return;
+		case CONNECTION_DELETE_CHILD:
+		case CONNECTION_DELETE_IKE:
 		case CONNECTION_TIMEOUT:
 			barf(c, e);
 			return;
@@ -583,6 +598,8 @@ void permanent_event_handler(struct connection *c, const struct event *e)
 			llog(RC_RTBUSY, c->logger, "cannot unroute: route busy");
 			return;
 		case CONNECTION_ONDEMAND:
+		case CONNECTION_DELETE_CHILD:
+		case CONNECTION_DELETE_IKE:
 			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
@@ -620,8 +637,8 @@ void permanent_event_handler(struct connection *c, const struct event *e)
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, e);
-			return;
+		case CONNECTION_DELETE_CHILD:
+		case CONNECTION_DELETE_IKE:
 		case CONNECTION_TIMEOUT:
 			barf(c, e);
 			return;
@@ -638,8 +655,8 @@ void permanent_event_handler(struct connection *c, const struct event *e)
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, e);
-			return;
+		case CONNECTION_DELETE_CHILD:
+		case CONNECTION_DELETE_IKE:
 		case CONNECTION_TIMEOUT:
 			barf(c, e);
 			return;
@@ -675,6 +692,8 @@ void template_event_handler(struct connection *c, const struct event *e)
 			ldbg(c->logger, "already unrouted");
 			return;
 		case CONNECTION_ONDEMAND:
+		case CONNECTION_DELETE_CHILD:
+		case CONNECTION_DELETE_IKE:
 			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
@@ -703,6 +722,8 @@ void template_event_handler(struct connection *c, const struct event *e)
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
 		case CONNECTION_ONDEMAND:
+		case CONNECTION_DELETE_CHILD:
+		case CONNECTION_DELETE_IKE:
 			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
@@ -744,6 +765,8 @@ void template_event_handler(struct connection *c, const struct event *e)
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_ONDEMAND:
+		case CONNECTION_DELETE_CHILD:
+		case CONNECTION_DELETE_IKE:
 			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
@@ -782,6 +805,8 @@ void template_event_handler(struct connection *c, const struct event *e)
 			llog(RC_RTBUSY, c->logger, "cannot unroute: route busy");
 			return;
 		case CONNECTION_ONDEMAND:
+		case CONNECTION_DELETE_CHILD:
+		case CONNECTION_DELETE_IKE:
 			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
@@ -819,8 +844,8 @@ void template_event_handler(struct connection *c, const struct event *e)
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, e);
-			return;
+		case CONNECTION_DELETE_CHILD:
+		case CONNECTION_DELETE_IKE:
 		case CONNECTION_TIMEOUT:
 			barf(c, e);
 			return;
@@ -839,8 +864,8 @@ void template_event_handler(struct connection *c, const struct event *e)
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, e);
-			return;
+		case CONNECTION_DELETE_CHILD:
+		case CONNECTION_DELETE_IKE:
 		case CONNECTION_TIMEOUT:
 			barf(c, e);
 			return;
@@ -858,8 +883,8 @@ void template_event_handler(struct connection *c, const struct event *e)
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, e);
-			return;
+		case CONNECTION_DELETE_CHILD:
+		case CONNECTION_DELETE_IKE:
 		case CONNECTION_TIMEOUT:
 			barf(c, e);
 			return;
@@ -901,6 +926,10 @@ void instance_event_handler(struct connection *c, const struct event *e)
 			 */
 			ondemand_unrouted_to_unrouted_negotiation(c, e);
 			return;
+		case CONNECTION_DELETE_CHILD:
+		case CONNECTION_DELETE_IKE:
+			barf(c, e);
+			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permanent+up */
 			if (should_retry(e->ike)) {
@@ -927,6 +956,8 @@ void instance_event_handler(struct connection *c, const struct event *e)
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
 		case CONNECTION_ONDEMAND:
+		case CONNECTION_DELETE_CHILD:
+		case CONNECTION_DELETE_IKE:
 			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
@@ -965,6 +996,8 @@ void instance_event_handler(struct connection *c, const struct event *e)
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_ONDEMAND:
+		case CONNECTION_DELETE_CHILD:
+		case CONNECTION_DELETE_IKE:
 			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
@@ -1002,6 +1035,8 @@ void instance_event_handler(struct connection *c, const struct event *e)
 			llog(RC_RTBUSY, c->logger, "cannot unroute: route busy");
 			return;
 		case CONNECTION_ONDEMAND:
+		case CONNECTION_DELETE_CHILD:
+		case CONNECTION_DELETE_IKE:
 			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
@@ -1039,8 +1074,8 @@ void instance_event_handler(struct connection *c, const struct event *e)
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, e);
-			return;
+		case CONNECTION_DELETE_CHILD:
+		case CONNECTION_DELETE_IKE:
 		case CONNECTION_TIMEOUT:
 			barf(c, e);
 			return;
@@ -1059,8 +1094,8 @@ void instance_event_handler(struct connection *c, const struct event *e)
 			do_updown_unroute(c);
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, e);
-			return;
+		case CONNECTION_DELETE_CHILD:
+		case CONNECTION_DELETE_IKE:
 		case CONNECTION_TIMEOUT:
 			barf(c, e);
 			return;
@@ -1077,8 +1112,8 @@ void instance_event_handler(struct connection *c, const struct event *e)
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, e);
-			return;
+		case CONNECTION_DELETE_CHILD:
+		case CONNECTION_DELETE_IKE:
 		case CONNECTION_TIMEOUT:
 			barf(c, e);
 			return;
@@ -1210,4 +1245,48 @@ void connection_suspend(struct child_sa *child)
 		set_child_routing(c, RT_UNROUTED_TUNNEL, c->child.newest_routing_sa);
 		break;
 	}
+}
+
+/*
+ * Received a message telling us to delete the connection's Child.SA.
+ */
+
+void connection_delete_child(struct child_sa **childp)
+{
+	struct child_sa *child = (*childp); *childp = NULL;
+	struct connection *c = child->sa.st_connection;
+	/*
+	 * Caller is responsible for generating any messages; suppress
+	 * delete_state()'s desire to send an out-of-band delete.
+	 */
+	child->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
+	child->sa.st_on_delete.skip_revival = true;
+	child->sa.st_on_delete.skip_connection = true;
+	/*
+	 * Let state machine figure out how to react.
+	 */
+	dispatch(c, (struct event) {
+			.event = CONNECTION_DELETE_CHILD,
+			.child = child,
+		});
+}
+
+void connection_delete_ike(struct ike_sa **ikep)
+{
+	struct ike_sa *ike = (*ikep); *ikep = NULL;
+	struct connection *c = ike->sa.st_connection;
+	/*
+	 * Caller is responsible for generating any messages; suppress
+	 * delete_state()'s desire to send an out-of-band delete.
+	 */
+	ike->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
+	ike->sa.st_on_delete.skip_revival = true;
+	ike->sa.st_on_delete.skip_connection = true;
+	/*
+	 * Let state machine figure out how to react.
+	 */
+	dispatch(c, (struct event) {
+			.event = CONNECTION_DELETE_IKE,
+			.ike = ike,
+		});
 }
