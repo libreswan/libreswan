@@ -1108,13 +1108,13 @@ void delete_state_tail(struct state *st)
 	 *   hash table this succeeding means that there must be a
 	 *   second state using the connection
 	 */
-	if (st->st_on_delete.delete_connection == PROBABLY_DELETE_CONNECTION) {
-		connection_delete_unused_instance(&st->st_connection, st,
-						  st->st_logger->global_whackfd);
-	} else {
+	if (st->st_on_delete.skip_connection) {
 		connection_buf cb;
 		ldbg(st->st_logger, "leaving connection "PRI_CONNECTION" alone",
 		     pri_connection(st->st_connection, &cb));
+	} else {
+		connection_delete_unused_instance(&st->st_connection, st,
+						  st->st_logger->global_whackfd);
 	}
 
 	pexpect(st->st_connection == NULL);

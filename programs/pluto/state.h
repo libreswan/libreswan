@@ -784,8 +784,8 @@ struct state {
 		} send_delete;
 
 		/*
-		 * In delete_state(), should the code also delete the
-		 * (template instance) connection?
+		 * In delete_state(), should the code trying to delete
+		 * a connection be skipped?
 		 *
 		 * When tearing down an SA family, the state and
 		 * connection code get into a bun-fight over when
@@ -796,10 +796,7 @@ struct state {
 		 * delete the (kernel) state, but most code has the
 		 * state trying to delete the connection.
 		 */
-		enum {
-			PROBABLY_DELETE_CONNECTION,
-			DONT_DELETE_CONNECTION,
-		} delete_connection;
+		bool skip_connection;
 
 	} st_on_delete;
 };
