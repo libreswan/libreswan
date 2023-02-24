@@ -219,6 +219,12 @@ void delete_connection(struct connection **cp)
 	struct connection *c = *cp;
 	*cp = NULL;
 
+	if (c->kind == CK_GROUP) {
+		delete_connection_group_instances(c);
+		discard_connection(&c, true/*connection_valid*/);
+		return;
+	}
+
 	/*
 	 * Must be careful to avoid circularity, something like:
 	 *
@@ -253,10 +259,6 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 
 	ldbg(c->logger, "%s() %s "PRI_CO" from "PRI_CO,
 	     __func__, c->name, pri_co(c->serialno), pri_co(c->serial_from));
-
-	if (c->kind == CK_GROUP) {
-		delete_group(c);
-	}
 
 	/*
 	 * Don't expect any offspring?  Something handled by caller.
@@ -2403,10 +2405,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 */
 	const enum connection_kind connection_kind =
 		c->kind = extract_connection_kind(wm, c->logger);
-
-	if (connection_kind == CK_GROUP) {
-		add_to_groups(c);
-	}
 
 	if (wm->left.virt != NULL && wm->right.virt != NULL) {
 		return diag("both left and right define virtual subnets");

@@ -44,17 +44,6 @@
 #include "routing.h"
 #include "instantiate.h"
 
-/* Groups is a list of connections that are policy groups.
- * The list is updated as group connections are added and deleted.
- */
-
-struct fg_groups {
-	struct fg_groups *next;
-	struct connection *connection;
-};
-
-static struct fg_groups *groups = NULL;
-
 /* Targets is a list of pairs: subnet and its policy group.
  * This list is bulk-updated on whack --listen and
  * incrementally updated when group connections are deleted.
@@ -66,7 +55,7 @@ static struct fg_groups *groups = NULL;
 
 struct fg_targets {
 	struct fg_targets *next;
-	struct fg_groups *group;
+	struct connection *group;
 	ip_subnet subnet;
 	const struct ip_protocol *proto;
 	ip_port sport;
@@ -129,11 +118,12 @@ static int subnetcmp(const ip_subnet a, const ip_subnet b)
 	return r;
 }
 
-static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
+static void read_foodgroup(struct file_lex_position *oflp,
+			   struct connection *g,
 			   struct fg_targets **new_targets)
 {
-	const char *fgn = g->connection->name;
-	const ip_subnet lsn = selector_subnet(g->connection->spd->local->client);
+	const char *fgn = g->name;
+	const ip_subnet lsn = selector_subnet(g->spd->local->client);
 	const struct lsw_conf_options *oco = lsw_init_options();
 	char *fg_path = alloc_printf("%s/%s", oco->policies_dir, fgn); /* must free */
 
@@ -274,7 +264,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 				r = -1; /* end of list is infinite */
 				break;
 			}
-			r = subnetcmp(lsn, selector_subnet((*pp)->group->connection->spd->local->client));
+			r = subnetcmp(lsn, selector_subnet((*pp)->group->spd->local->client));
 			if (r == 0) {
 				r = subnetcmp(sn, (*pp)->subnet);
 			}
@@ -296,7 +286,7 @@ static void read_foodgroup(struct file_lex_position *oflp, struct fg_groups *g,
 			     str_subnet(&sn, &dest),
 			     proto->ipproto, pri_hport(sport), pri_hport(dport),
 			     str_subnet(&lsn, &source),
-			     (*pp)->group->connection->name);
+			     (*pp)->group->name);
 		} else {
 			struct fg_targets *f = alloc_thing(struct fg_targets,
 							   "fg_target");
@@ -326,9 +316,17 @@ void load_groups(struct logger *logger)
 {
 	struct fg_targets *new_targets = NULL;
 
-	/* for each group, add config file targets into new_targets */
-	for (struct fg_groups *g = groups; g != NULL; g = g->next) {
-		if (oriented(g->connection)) {
+	/*
+	 * Find all the connection groups and, for each, add config
+	 * file targets into new_targets.
+	 */
+	struct connection_filter cf = {
+		.kind = CK_GROUP,
+		.where = HERE,
+	};
+	while (next_connection_new2old(&cf)) {
+		struct connection *g = cf.c;
+		if (oriented(g)) {
 			struct file_lex_position flp = {
 				.logger = logger,
 			};
@@ -343,10 +341,10 @@ void load_groups(struct logger *logger)
 			selector_buf asource;
 			subnet_buf atarget;
 			DBG_log("  %s->%s %s sport "PRI_HPORT" dport "PRI_HPORT" %s",
-				str_selector_subnet_port(&t->group->connection->spd->local->client, &asource),
+				str_selector_subnet_port(&t->group->spd->local->client, &asource),
 				str_subnet(&t->subnet, &atarget),
 				t->proto->name, pri_hport(t->sport), pri_hport(t->dport),
-				t->group->connection->name);
+				t->group->name);
 		}
 		/* dump new food groups */
 		DBG_log("new food groups:");
@@ -354,10 +352,10 @@ void load_groups(struct logger *logger)
 			selector_buf asource;
 			subnet_buf atarget;
 			DBG_log("  %s->%s %s sport "PRI_HPORT" dport "PRI_HPORT" %s",
-				str_selector_subnet_port(&t->group->connection->spd->local->client, &asource),
+				str_selector_subnet_port(&t->group->spd->local->client, &asource),
 				str_subnet(&t->subnet, &atarget),
 				t->proto->name, pri_hport(t->sport), pri_hport(t->dport),
-				t->group->connection->name);
+				t->group->name);
 		}
 	}
 
@@ -382,8 +380,8 @@ void load_groups(struct logger *logger)
 				r = -1; /* no more new; next is old */
 			}
 			if (r == 0)
-				r = subnetcmp(selector_subnet(op->group->connection->spd->local->client),
-					      selector_subnet(np->group->connection->spd->local->client));
+				r = subnetcmp(selector_subnet(op->group->spd->local->client),
+					      selector_subnet(np->group->spd->local->client));
 			if (r == 0)
 				r = subnetcmp(op->subnet, np->subnet);
 			if (r == 0)
@@ -396,7 +394,7 @@ void load_groups(struct logger *logger)
 			if (r == 0 && op->group == np->group) {
 				/* unchanged; transfer connection &
 				 * skip over */
-				ldbg(op->group->connection->logger,
+				ldbg(op->group->logger,
 				     "transfering "PRI_CO, pri_co(op->serialno));
 				passert(op->serialno != UNSET_CO_SERIAL);
 				passert(np->serialno == UNSET_CO_SERIAL);
@@ -409,14 +407,13 @@ void load_groups(struct logger *logger)
 			} else {
 				/* note: r>=0 || r<= 0: following cases overlap! */
 				if (r <= 0) {
-					remove_group_instance(op->group->connection,
-							      op->serialno);
+					remove_group_instance(op->group, op->serialno);
 					/* free old */
 					*opp = op->next;
 					pfree_target(&op);
 				}
 				if (r >= 0) {
-					struct connection *g = np->group->connection;
+					struct connection *g = np->group;
 					/* XXX: something better? */
 					fd_delref(&g->logger->global_whackfd);
 					g->logger->global_whackfd = fd_addref(logger->global_whackfd);
@@ -466,48 +463,32 @@ void load_groups(struct logger *logger)
 	}
 }
 
-void add_to_groups(struct connection *c)
+
+void connection_group_route(struct connection *g)
 {
-	passert(c->kind == CK_GROUP);
-	struct fg_groups *g = alloc_thing(struct fg_groups, "policy group");
+	if (!PEXPECT(g->logger, g->kind == CK_GROUP)) {
+		return;
+	}
 
-	g->next = groups;
-	groups = g;
-
-	g->connection = c;
-}
-
-static struct fg_groups *find_group(const struct connection *c)
-{
-	struct fg_groups *g;
-
-	for (g = groups; g != NULL && g->connection != c; g = g->next)
-		;
-	return g;
-}
-
-void connection_group_route(struct connection *c)
-{
 	/*
-	 * It makes no sense to route a connection that is IKE-only
-	 * (except when it is an IKE only connection such is created
-	 * for labeled IPsec, but lets ignore that).
+	 * It makes no sense to route a connection that is IKE-only.
+	 *
+	 * ... except when it is an IKE only connection such is
+	 * created for labeled IPsec, but lets ignore that.
 	 */
-	if (!NEVER_NEGOTIATE(c->policy) && !HAS_IPSEC_POLICY(c->policy)) {
-		llog(RC_ROUTE, c->logger,
+	if (!NEVER_NEGOTIATE(g->policy) && !HAS_IPSEC_POLICY(g->policy)) {
+		llog(RC_ROUTE, g->logger,
 		     "cannot route an IKE-only group connection");
 		return;
 	}
 
-	if (!oriented(c)) {
-		llog(RC_ORIENT, c->logger,
+	if (!oriented(g)) {
+		llog(RC_ORIENT, g->logger,
 		     "we cannot identify ourselves with either end of this connection");
 		return;
 	}
 
-	struct fg_groups *g = find_group(c);
-	passert(g != NULL);
-	g->connection->policy |= POLICY_ROUTE;
+	g->policy |= POLICY_ROUTE;
 	for (struct fg_targets *t = targets; t != NULL; t = t->next) {
 		if (t->group == g) {
 			struct connection *ci = connection_by_serialno(t->serialno);
@@ -518,14 +499,14 @@ void connection_group_route(struct connection *c)
 	}
 }
 
-void connection_group_unroute(struct connection *c)
+void connection_group_unroute(struct connection *g)
 {
-	struct fg_groups *g = find_group(c);
-	struct fg_targets *t;
+	if (!PEXPECT(g->logger, g->kind == CK_GROUP)) {
+		return;
+	}
 
-	passert(g != NULL);
-	g->connection->policy &= ~POLICY_ROUTE;
-	for (t = targets; t != NULL; t = t->next) {
+	g->policy &= ~POLICY_ROUTE;
+	for (struct fg_targets *t = targets; t != NULL; t = t->next) {
 		if (t->group == g) {
 			struct connection *ci = connection_by_serialno(t->serialno);
 			if (ci != NULL) {
@@ -535,39 +516,23 @@ void connection_group_unroute(struct connection *c)
 	}
 }
 
-void delete_group(const struct connection *c)
+void delete_connection_group_instances(const struct connection *g)
 {
-	/*
-	 * find and remove from groups
-	 */
-	struct fg_groups *g = NULL;
-	for (struct fg_groups **pp = &groups; *pp != NULL; pp = &(*pp)->next) {
-		if ((*pp)->connection == c) {
-			g = *pp;
-			*pp = g->next;
-			break;
-		}
-	}
-
 	/*
 	 * find and remove from targets
 	 */
-	if (pexpect(g != NULL)) {
-		struct fg_targets **pp = &targets;
-		while (*pp != NULL) {
-			struct fg_targets *t = *pp;
-			if (t->group == g) {
-				/* remove *PP but advance first */
-				*pp = t->next;
-				remove_group_instance(t->group->connection,
-						      t->serialno);
-				pfree_target(&t);
-				/* pp is ready for next iteration */
-			} else {
-				/* advance PP */
-				pp = &t->next;
-			}
+	struct fg_targets **pp = &targets;
+	while (*pp != NULL) {
+		struct fg_targets *t = *pp;
+		if (t->group == g) {
+			/* remove *PP but advance first */
+			*pp = t->next;
+			remove_group_instance(t->group, t->serialno);
+			pfree_target(&t);
+			/* pp is ready for next iteration */
+		} else {
+			/* advance PP */
+			pp = &t->next;
 		}
-		pfree(g);
 	}
 }

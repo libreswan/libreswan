@@ -18,8 +18,7 @@
 struct connection;      /* forward declaration */
 struct logger;
 
-extern void add_to_groups(struct connection *c);
-extern void delete_group(const struct connection *c);
+extern void delete_connection_group_instances(const struct connection *c);
 
 extern void connection_group_route(struct connection *c);
 extern void connection_group_unroute(struct connection *c);
