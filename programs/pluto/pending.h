@@ -70,7 +70,7 @@ void unpend(struct ike_sa *ike, struct connection *cc);
 void release_pending_whacks(struct state *st, err_t story);
 void update_pending(struct ike_sa *old_ike, struct ike_sa *new_ike);
 
-void flush_pending_by_connection(const struct connection *c);
+void remove_connection_from_pending(const struct connection *c);
 void flush_pending_by_state(struct ike_sa *ike);
 
 bool connection_is_pending(const struct connection *c);

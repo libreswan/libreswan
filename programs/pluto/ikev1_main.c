@@ -2164,7 +2164,7 @@ bool accept_delete(struct msg_digest *md,
 					dbg("%s() connection '%s' -POLICY_UP", __func__, rc->name);
 					rc->policy &= ~POLICY_UP;
 					if (!shared_phase1_connection(rc)) {
-						flush_pending_by_connection(rc);
+						remove_connection_from_pending(rc);
 						/*
 						 * why loop? there can
 						 * be only one IKE SA,

@@ -70,7 +70,7 @@ static int terminate_a_connection(struct connection *c, void *unused_arg UNUSED,
 	     "terminating SAs using this connection");
 	dbg("%s() connection '%s' -POLICY_UP", __func__, c->name);
 	c->policy &= ~POLICY_UP;
-	flush_pending_by_connection(c);
+	remove_connection_from_pending(c);
 
 	if (shared_phase1_connection(c)) {
 		llog(RC_LOG, c->logger,

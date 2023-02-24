@@ -172,7 +172,7 @@ struct connection *conn_by_name(const char *nm, bool no_inst)
 
 void release_connection(struct connection *c)
 {
-	flush_pending_by_connection(c);
+	remove_connection_from_pending(c);
 	delete_states_by_connection(&c);
 	passert(c != NULL);
 	connection_unroute(c);

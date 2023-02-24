@@ -224,46 +224,30 @@ void release_pending_whacks(struct state *st, err_t story)
 }
 
 /*
- * remove a pending from a linked list.
+ * Remove a pending from a linked list.
  *
  * pp points to the link to the entry.
  * *pp will be updated to point to the successor to the original *pp.
  * In effect, we advance *pp.
- * Note: If you are traversing a linked list and deleting some entries,
- * you should not advance pp after calling delete_pending.
+ *
+ * Note: If you are traversing a linked list and deleting some
+ * entries, you should not advance pp after calling delete_pending.
  */
-static void delete_pending(struct pending **pp)
+
+static void delete_pending(struct pending **pp, const char *what)
 {
+	const struct connection *c = (*pp)->connection;
+	connection_buf cib;
+	ldbg(c->logger,
+	     "%s removing pending {%p} %s connection "PRI_CONNECTION"",
+	     what, (*pp), (c->config->ike_version == IKEv2 ? "Child SA" : "Quick Mode"),
+	     pri_connection(c, &cib));
+
 	/* remove from list */
 	struct pending *p = *pp;
 	*pp = p->next;
 
-	if (DBGP(DBG_BASE)) {
-		if (p->connection == NULL) {
-			/*
-			 * ??? when does this happen?
-			 *
-			 * Look for p->connection=NULL below.  When
-			 * unpend()ing, the pending connection's
-			 * ownership is transferred to the state.
-			 */
-			DBG_log("removing pending policy {%p}; connection ownership transferred", p);
-		} else {
-			connection_buf cib;
-			DBG_log("removing pending policy {%p} with connection "PRI_CONNECTION"",
-				p, pri_connection(p->connection, &cib));
-		}
-	}
-
-	if (p->connection != NULL) {
-		/* above unlink means C is no longer pending */
-		pexpect(!connection_is_pending(p->connection));
-		connection_delete_unused_instance(&p->connection,
-						  /*old-state*/NULL,
-						  null_fd/*XXX: p->whack_sock?*/);
-	}
 	fd_delref(&p->whack_sock); /*on-heap*/
-
 	pfree(p);
 }
 
@@ -321,16 +305,7 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 			default:
 				bad_case(ike->sa.st_ike_version);
 			}
-			address_buf b;
-			connection_buf cib;
-			dbg("%s pending %s with %s "PRI_CONNECTION"",
-			    what,
-			    (ike->sa.st_ike_version == IKEv2) ? "Child SA" : "Quick Mode",
-			    str_address(&p->connection->remote->host.addr, &b),
-			    pri_connection(p->connection, &cib));
-
-			p->connection = NULL;           /* ownership transferred */
-			delete_pending(pp);	/* in effect, advances pp */
+			delete_pending(pp, what);	/* in effect, advances pp */
 		} else {
 			pp = &p->next;
 		}
@@ -477,7 +452,11 @@ void update_pending(struct ike_sa *old_ike, struct ike_sa *new_ike)
 	}
 }
 
-/* a IKE SA negotiation has failed; discard any pending */
+/*
+ * An IKE SA negotiation has failed; discard any pending.
+ *
+ * Danger: this code deletes connections.
+ */
 void flush_pending_by_state(struct ike_sa *ike)
 {
 	for (struct pending *p, **pp = host_pair_first_pending(ike->sa.st_connection);
@@ -487,25 +466,42 @@ void flush_pending_by_state(struct ike_sa *ike)
 			 * *pp, because delete_pending updates pp to
 			 * point to the next element before it frees *pp
 			 */
-			delete_pending(pp);	/* in effect, advances pp */
+			struct connection *c = p->connection;
+			delete_pending(pp, "flush");	/* in effect, advances pp */
+			/* above unlink means C is no longer pending */
+			pexpect(!connection_is_pending(c));
+			connection_delete_unused_instance(&c,
+							  /*old-state*/NULL,
+							  null_fd/*XXX: p->whack_sock?*/);
 		} else {
 			pp = &p->next;
 		}
 	}
 }
 
-/* a connection has been deleted; discard any related pending */
-void flush_pending_by_connection(const struct connection *c)
+/*
+ * A connection is been deleted; look for and remove the connection
+ * from the host-pair pending list.
+ *
+ * The host-pair pending list contains all connections waiting for an
+ * IKE SA to establish between the two ends.
+ *
+ * Note: this code DOES NOT delete the connection (ya!).
+ */
+
+void remove_connection_from_pending(const struct connection *c)
 {
+	unsigned found = 0;	/* should appear at most once */
 	for (struct pending *p, **pp = host_pair_first_pending(c);
 	     pp != NULL && (p = *pp) != NULL; /*see-below*/) {
 		if (p->connection == c) {
-			p->connection = NULL; /* prevent delete_pending from releasing */
-			delete_pending(pp);	/* in effect, advances pp */
+			found++;
+			delete_pending(pp, "flush");	/* in effect, advances pp */
 		} else {
 			pp = &p->next;
 		}
 	}
+	PEXPECT(c->logger, found <= 1);
 }
 
 void show_pending_child_details(struct show *s,
