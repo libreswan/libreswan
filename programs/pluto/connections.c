@@ -241,11 +241,6 @@ void delete_connection(struct connection **cp)
 			     str_address_sensitive(&c->remote->host.addr, &b),
 			     c->newest_ike_sa, c->newest_ipsec_sa);
 		}
-		FOR_EACH_ELEMENT(afi, ip_families) {
-			if (c->pool[afi->ip_index] != NULL) {
-				free_that_address_lease(c, afi);
-			}
-		}
 	}
 	release_connection(c);
 	discard_connection(&c, true/*connection_valid*/);
@@ -275,7 +270,10 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	}
 
 	FOR_EACH_ELEMENT(afi, ip_families) {
-		addresspool_delref(&c->pool[afi->ip_index]);
+		if (c->pool[afi->ip_index] != NULL) {
+			free_that_address_lease(c, afi);
+			addresspool_delref(&c->pool[afi->ip_index]);
+		}
 	}
 
 	if (IS_XFRMI && c->xfrmi != NULL)
