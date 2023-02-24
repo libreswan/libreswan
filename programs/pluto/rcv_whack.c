@@ -532,7 +532,7 @@ static void whack_adjust_options(const struct whack_message *m, struct logger *l
 				       m->whack_async/*background*/,
 				       logger);
 		}
-	} else if (!m->whack_connection) {
+	} else if (!m->whack_add) {
 		struct connection *c = conn_by_name(m->name, true/*strict*/);
 		if (c == NULL) {
 			llog(WHACK_STREAM|RC_UNKNOWN_NAME, logger,
@@ -629,7 +629,7 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 				  "received whack command to delete a connection, but did not receive the connection name - ignored");
 		} else {
 			terminate_connections_by_name(m->name, /*quiet?*/true, logger);
-			whack_delete_connections(m->name, !m->whack_connection, logger);
+			whack_delete_connections(m->name, !m->whack_add, logger);
 		}
 		dbg_whack(s, "stop: delete '%s'", m->name == NULL ? "NULL" : m->name);
 	}
@@ -701,10 +701,10 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "stop: crash %s", str_address(&m->whack_crash_peer, &pb));
 	}
 
-	if (m->whack_connection) {
-		dbg_whack(s, "start: add-connection '%s'", m->name == NULL ? "NULL" : m->name);
+	if (m->whack_add) {
+		dbg_whack(s, "start: add '%s'", m->name == NULL ? "NULL" : m->name);
 		add_connection(m, logger);
-		dbg_whack(s, "stop: add-connection '%s'", m->name == NULL ? "NULL" : m->name);
+		dbg_whack(s, "stop: add '%s'", m->name == NULL ? "NULL" : m->name);
 	}
 
 	if (m->active_redirect_dests != NULL) {

@@ -166,7 +166,7 @@ struct whack_message {
 
 	/* for WHACK_CONNECTION */
 
-	bool whack_connection;
+	bool whack_add;
 	bool whack_async;
 
 	enum ike_version ike_version;

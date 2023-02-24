@@ -495,7 +495,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 					const struct starter_conn *conn)
 {
 	struct whack_message msg = empty_whack_message;
-	msg.whack_connection = true;
+	msg.whack_add = true;
 	msg.whack_delete = true;	/* always do replace for now */
 	msg.name = connection_name(conn);
 

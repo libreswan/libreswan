@@ -2573,7 +2573,7 @@ int main(int argc, char **argv)
 				diagw("must not specify clients for ISAKMP-only connection");
 		}
 
-		msg.whack_connection = true;
+		msg.whack_add = true;
 	}
 
 	/* decide whether --name is mandatory or forbidden */
@@ -2601,7 +2601,7 @@ int main(int argc, char **argv)
 			diagw("--addkey and --pubkeyrsa require --keyid");
 	}
 
-	if (!(msg.whack_connection || msg.whack_key ||
+	if (!(msg.whack_add || msg.whack_key ||
 	      msg.whack_delete ||msg.whack_deleteid || msg.whack_deletestate ||
 	      msg.whack_deleteuser || msg.active_redirect_dests != NULL ||
 	      msg.global_redirect || msg.global_redirect_to ||
