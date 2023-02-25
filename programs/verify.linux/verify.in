@@ -144,6 +144,8 @@ def rpfiltercheck():
 
 def cmdchecks():
 	global retcode
+	nftbales = False
+
 	printfun("Checking 'ip' command")
 	if not os.path.isfile("/sbin/ip") and not os.path.isfile("/usr/sbin/ip") \
 	   and not os.path.isfile("/bin/ip"):
@@ -158,7 +160,16 @@ def cmdchecks():
 	else:
 		print_result("OK","OK")
 
-	if "true" in iptables:
+	if "true" in nftables:
+		printfun("Checking 'nft' command")
+		nft = which("nft")
+		if nft:
+			print_result("OK","OK")
+			nftbales = True
+		else:
+			print_result("WARN","MISSING")
+
+	if "true" in iptables and !nftbales:
 		printfun("Checking 'iptables' command")
 
 		if which("iptables"):
@@ -166,13 +177,6 @@ def cmdchecks():
 		else:
 			print_result("WARN","MISSING")
 
-	if "true" in nftables:
-		printfun("Checking 'nft' command")
-		nft = which("nft")
-		if nft:
-			print_result("OK","OK")
-		else:
-			print_result("WARN","MISSING")
 
 	printfun("Checking 'prelink' command does not interfere with FIPS")
 	if os.path.isfile("/sbin/prelink") or os.path.isfile("/usr/sbin/prelink"):
