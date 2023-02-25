@@ -459,3 +459,41 @@ bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md)
 	}  /* for each Delete Payload */
 	return true;
 }
+
+void record_n_send_v2_delete(struct ike_sa *ike, where_t where)
+{
+	/*
+	 * XXX: This code sends delete for Child SAs.
+	 *
+	 * For instance, during shutdown and because
+	 * connections are are deleted new-to-old, a
+	 * connection instance with a Child SA will be deleted
+	 * before the connection instance with the IKE SA.
+	 *
+	 * XXX: record'n'send call shouldn't be needed.
+	 *
+	 * Instead of forcing a delete, this code should use
+	 * normal state transitions and exchanges to delete
+	 * things.
+	 *
+	 * XXX: record'n'send call can violate RFC
+	 *
+	 * Since nothing is waiting for the response, there's
+	 * nothing to ensure that this send was received
+	 * before the next is sent.
+	 *
+	 * XXX: the established IKE SA may not be viable
+	 *
+	 * For instance, even though after a rekey, the old
+	 * IKE SA is established and not .st_viable_parent,
+	 * still needs to send a delete (but again it should
+	 * do that using a state transition)?
+	 */
+	dbg_v2_msgid(ike, "hacking around record'n'send for "PRI_SO" "PRI_WHERE,
+		     ike->sa.st_serialno, pri_where(where));
+	v2_msgid_start(ike, NULL/*MD*/);
+	record_v2_delete(ike, &ike->sa);
+	send_recorded_v2_message(ike, "delete notification", MESSAGE_REQUEST);
+	v2_msgid_finish(ike, NULL/*MD*/);
+	ike->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
+}
