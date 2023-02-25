@@ -1094,6 +1094,7 @@ void delete_state_tail(struct state *st)
 		connection_buf cb;
 		ldbg(st->st_logger, "leaving connection "PRI_CONNECTION" alone",
 		     pri_connection(st->st_connection, &cb));
+		st->st_connection = NULL;
 	} else {
 		connection_delete_unused_instance(&st->st_connection, st,
 						  st->st_logger->global_whackfd);

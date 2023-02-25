@@ -57,20 +57,20 @@ static enum_names connection_event_names = {
 };
 
 struct event {
-	enum connection_event event;
+	const enum connection_event event;
 	struct ike_sa *ike;
 	struct child_sa *child;
-	threadtime_t *inception;
-	const struct kernel_acquire *acquire;
+	const threadtime_t *const inception;
+	const struct kernel_acquire *const acquire;
 };
 
 static void do_updown_unroute(struct connection *c);
 
-static void dispatch(struct connection *c, const struct event e);
+static void dispatch(struct connection *c, struct event e);
 
-static void permanent_event_handler(struct connection *c, const struct event *e);
-static void template_event_handler(struct connection *c, const struct event *e);
-static void instance_event_handler(struct connection *c, const struct event *e);
+static void permanent_event_handler(struct connection *c, struct event *e);
+static void template_event_handler(struct connection *c, struct event *e);
+static void instance_event_handler(struct connection *c, struct event *e);
 
 void set_child_routing_where(struct connection *c, enum routing routing,
 			     so_serial_t so, where_t where)
@@ -405,7 +405,7 @@ void connection_route(struct connection *c)
 		});
 }
 
-void dispatch(struct connection *c, const struct event e)
+void dispatch(struct connection *c, struct event e)
 {
 	LDBGP_JAMBUF(DBG_BASE, c->logger, buf) {
 		jam_string(buf, "dispatch ");
@@ -437,7 +437,7 @@ void dispatch(struct connection *c, const struct event e)
 	}
 }
 
-void permanent_event_handler(struct connection *c, const struct event *e)
+void permanent_event_handler(struct connection *c, struct event *e)
 {
 	/*
 	 * Part 1: handle the easy cases where the connection didn't
@@ -469,7 +469,7 @@ void permanent_event_handler(struct connection *c, const struct event *e)
 			barf(c, e);
 			return;
 		case CONNECTION_TIMEOUT:
-			/* for instance, permanent+up */
+			/* ex, permanent+up */
 			if (should_retry(e->ike)) {
 				retry(e->ike);
 				return;
@@ -598,7 +598,48 @@ void permanent_event_handler(struct connection *c, const struct event *e)
 			llog(RC_RTBUSY, c->logger, "cannot unroute: route busy");
 			return;
 		case CONNECTION_ONDEMAND:
+			barf(c, e);
+			return;
 		case CONNECTION_DELETE_CHILD:
+			if (c->child.newest_routing_sa > e->child->sa.st_serialno) {
+				/* no longer child's */
+				ldbg_sa(e->child, "not the newest routing SA; leaving connection alone");
+				delete_child_sa(&e->child);
+				return;
+			}
+			if (c->newest_ipsec_sa > e->child->sa.st_serialno) {
+				/* covered by above? */
+				llog_pexpect(e->child->sa.st_logger, HERE,
+					     "not the newest child; leaving connection alone");
+				delete_child_sa(&e->child);
+				return;
+			}
+			if (should_revive(&(e->child->sa))) {
+				/* XXX: should this be ROUTED_NEGOTIATING? */
+				replace_ipsec_with_bare_kernel_policies(e->child, SHUNT_KIND_PROSPECTIVE,
+									EXPECT_KERNEL_POLICY_OK, HERE);
+				schedule_revival(&(e->child->sa));
+				delete_child_sa(&e->child);
+				return;
+			}
+			if (c->config->autostart == AUTOSTART_ONDEMAND) {
+				/*
+				 * Change routing so we don't get cleared out
+				 * when state/connection dies.
+				 */
+				replace_ipsec_with_bare_kernel_policies(e->child, SHUNT_KIND_PROSPECTIVE,
+									EXPECT_KERNEL_POLICY_OK, HERE);
+				delete_child_sa(&e->child);
+				return;
+			}
+			/* XXX: should this be responder only? */
+			enum shunt_kind shunt_kind =
+				(c->config->failure_shunt != SHUNT_NONE ? SHUNT_KIND_FAILURE :
+				 SHUNT_KIND_PROSPECTIVE);
+			replace_ipsec_with_bare_kernel_policies(e->child, shunt_kind,
+								EXPECT_KERNEL_POLICY_OK, HERE);
+			delete_child_sa(&e->child);
+			return;
 		case CONNECTION_DELETE_IKE:
 			barf(c, e);
 			return;
@@ -668,7 +709,7 @@ void permanent_event_handler(struct connection *c, const struct event *e)
 	bad_case(cr);
 }
 
-void template_event_handler(struct connection *c, const struct event *e)
+void template_event_handler(struct connection *c, struct event *e)
 {
 	/*
 	 * Part 1: handle the easy cases where the connection didn't
@@ -896,7 +937,7 @@ void template_event_handler(struct connection *c, const struct event *e)
 	bad_case(cr);
 }
 
-void instance_event_handler(struct connection *c, const struct event *e)
+void instance_event_handler(struct connection *c, struct event *e)
 {
 	/*
 	 * Part 1: handle the easy cases where the connection didn't
@@ -1255,6 +1296,13 @@ void connection_delete_child(struct child_sa **childp)
 {
 	struct child_sa *child = (*childp); *childp = NULL;
 	struct connection *c = child->sa.st_connection;
+	if (c->kind != CK_PERMANENT) {
+		ldbg_sa(child, "%s() doesn't yet handle %s",
+			__func__, enum_name_short(&connection_kind_names, c->kind));
+		child->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
+		delete_state(&child->sa);
+		return;
+	}
 	/*
 	 * Caller is responsible for generating any messages; suppress
 	 * delete_state()'s desire to send an out-of-band delete.

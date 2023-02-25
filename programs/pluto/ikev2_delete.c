@@ -262,74 +262,87 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 		case PROTO_IPSEC_AH: /* Child SAs */
 		case PROTO_IPSEC_ESP: /* Child SAs */
 		{
-			/* stuff for responding */
+			/*
+			 * Again two passes.
+			 *
+			 * First accumulate the SPIs that actually
+			 * need to be deleted (deleting the
+			 * corresponding states), and second build a
+			 * payload of just those SPIs.
+			 */
 			ipsec_spi_t spi_buf[128];
 			uint16_t j = 0;	/* number of SPIs in spi_buf */
-			uint16_t i;
 
-			for (i = 0; i < v2del->isad_nrspi; i++) {
-				ipsec_spi_t spi;
+			for (unsigned i = 0; i < v2del->isad_nrspi; i++) {
 
-				diag_t d = pbs_in_raw( &p->pbs, &spi, sizeof(spi),"SPI");
+				/*
+				 * From 3.11.  Delete Payload.
+				 *
+				 * [the delete payload will] contain
+				 * the IPsec protocol ID of that
+				 * protocol (2 for AH, 3 for ESP), and
+				 * the SPI is the SPI the sending
+				 * endpoint would expect in inbound
+				 * ESP or AH packets.
+				 *
+				 * From our POV, the outbound SPI
+				 * (i.e., inbound to the peer).
+				 */
+				ipsec_spi_t outbound_spi;
+				diag_t d = pbs_in_raw( &p->pbs, &outbound_spi, sizeof(outbound_spi),"SPI");
 				if (d != NULL) {
 					llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
 					return false;
 				}
 
 				esb_buf b;
-				dbg("delete %s SA(0x%08" PRIx32 ")",
-				    enum_show(&ikev2_delete_protocol_id_names,
-					      v2del->isad_protoid, &b),
-				    ntohl((uint32_t) spi));
+				ldbg_sa(ike, "delete %s Child SA with outbound SPI "PRI_IPSEC_SPI,
+					enum_show(&ikev2_delete_protocol_id_names,
+						  v2del->isad_protoid, &b),
+					pri_ipsec_spi(outbound_spi));
 
-				/*
-				 * From 3.11.  Delete Payload: [the
-				 * delete payload will] contain the
-				 * IPsec protocol ID of that protocol
-				 * (2 for AH, 3 for ESP), and the SPI
-				 * is the SPI the sending endpoint
-				 * would expect in inbound ESP or AH
-				 * packets.
-				 *
-				 * From our POV, that's the outbound
-				 * SPI.
-				 */
 				struct child_sa *child = find_v2_child_sa_by_outbound_spi(ike,
 											  v2del->isad_protoid,
-											  spi);
-
+											  outbound_spi);
 				if (child == NULL) {
 					esb_buf b;
 					llog_sa(RC_LOG, ike,
-						  "received delete request for %s SA(0x%08" PRIx32 ") but corresponding state not found",
-						  enum_show(&ikev2_delete_protocol_id_names,
-							    v2del->isad_protoid, &b),
-						  ntohl((uint32_t)spi));
-				} else {
-					esb_buf b;
-					dbg("our side SPI that needs to be deleted: %s SA(0x%08" PRIx32 ")",
-					    enum_show(&ikev2_delete_protocol_id_names,
-						      v2del->isad_protoid, &b),
-					    ntohl((uint32_t)spi));
+						"received delete request for %s Child SA with outbound SPI "PRI_IPSEC_SPI" but corresponding state not found",
+						enum_show(&ikev2_delete_protocol_id_names,
+							  v2del->isad_protoid, &b),
+						pri_ipsec_spi(outbound_spi));
+					continue;
+				}
 
-					/* we just received a delete, don't send another delete */
-					child->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
-					passert(ike->sa.st_serialno == child->sa.st_clonedfrom);
-					struct ipsec_proto_info *pr =
+				/*
+				 * Reverse the SPI.
+				 *
+				 * The peer expects to be sent the SPI
+				 * that they are putting on the front
+				 * of packets inbound to us.
+				 */
+				struct ipsec_proto_info *pr =
 						(v2del->isad_protoid == PROTO_IPSEC_AH
 						 ? &child->sa.st_ah
 						 : &child->sa.st_esp);
-					if (j < elemsof(spi_buf)) {
-						spi_buf[j] = pr->inbound.spi;
-						j++;
-					} else {
-						llog_sa(RC_LOG, ike,
-							  "too many SPIs in Delete Notification payload; ignoring 0x%08" PRIx32,
-							  ntohl(spi));
-					}
-					delete_state(&child->sa);
-					child = NULL;
+				ipsec_spi_t inbound_spi = pr->inbound.spi;
+
+				ldbg_sa(ike, "%s Child SA with outbound SPI "PRI_IPSEC_SPI" has inbound SPI "PRI_IPSEC_SPI,
+					enum_show(&ikev2_delete_protocol_id_names, v2del->isad_protoid, &b),
+					pri_ipsec_spi(outbound_spi),
+					pri_ipsec_spi(inbound_spi));
+
+				passert(ike->sa.st_serialno == child->sa.st_clonedfrom);
+				if (j < elemsof(spi_buf)) {
+					spi_buf[j] = inbound_spi;
+					j++;
+				} else {
+					llog_sa(RC_LOG, ike,
+						"too many SPIs in Delete Notification payload; ignoring outbound SPI "PRI_IPSEC_SPI,
+						pri_ipsec_spi(outbound_spi));
 				}
+				connection_delete_child(&child);
+
 			} /* for each spi */
 
 			/* build output Delete Payload */
