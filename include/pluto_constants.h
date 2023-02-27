@@ -844,6 +844,21 @@ enum shunt_policy {
 #define SHUNT_POLICY_ROOF (SHUNT_REJECT+1)
 };
 
+enum shunt_kind {
+	PROSPECTIVE_SHUNT,
+	NEGOTIATION_SHUNT,
+	FAILURE_SHUNT,
+	BLOCK_SHUNT,
+#define prospective_shunt shunt[PROSPECTIVE_SHUNT]	/* before */
+#define negotiation_shunt shunt[NEGOTIATION_SHUNT]	/* during */
+#define failure_shunt shunt[FAILURE_SHUNT]		/* after */
+#define block_shunt shunt[BLOCK_SHUNT]			/* block */
+#define SHUNT_KIND_ROOF (BLOCK_SHUNT+1)
+};
+
+extern const struct enum_names shunt_kind_names;
+
+
 enum sa_policy_bits {
 	POLICY_ENCRYPT_IX,	/* must be first of IPSEC policies */
 	POLICY_AUTHENTICATE_IX,	/* must be second */

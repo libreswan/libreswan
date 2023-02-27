@@ -186,52 +186,20 @@ kernel_priority_t calculate_kernel_priority(const struct connection *c)
 
 static global_timer_cb kernel_scan_shunts;
 
-bool prospective_shunt_ok(enum shunt_policy shunt)
+bool shunt_ok(enum shunt_kind shunt_kind, enum shunt_policy shunt_policy)
 {
-	switch (shunt) {
-	case SHUNT_TRAP:
-	case SHUNT_PASS:
-	case SHUNT_DROP:
-	case SHUNT_REJECT:
-		return true;
-	case SHUNT_UNSET:
-	case SHUNT_NONE: /* XXX: no default */
-	case SHUNT_HOLD:
-		break;
-	}
-	return false;
-}
-
-bool negotiation_shunt_ok(enum shunt_policy shunt)
-{
-	switch (shunt) {
-	case SHUNT_PASS:
-	case SHUNT_HOLD:
-		return true;
-	case SHUNT_UNSET:
-	case SHUNT_TRAP: /* XXX: no default */
-	case SHUNT_DROP:
-	case SHUNT_REJECT:
-	case SHUNT_NONE:
-		break;
-	}
-	return false;
-}
-
-bool failure_shunt_ok(enum shunt_policy shunt)
-{
-	switch (shunt) {
-	case SHUNT_NONE:
-	case SHUNT_PASS:
-	case SHUNT_DROP:
-	case SHUNT_REJECT:
-		return true;
-	case SHUNT_UNSET:
-	case SHUNT_TRAP: /* XXX: no default */
-	case SHUNT_HOLD:
-		break;
-	}
-	return false;
+	static const bool ok[SHUNT_KIND_ROOF][SHUNT_POLICY_ROOF] = {
+		[PROSPECTIVE_SHUNT] = {
+			[SHUNT_NONE] = false, [SHUNT_HOLD] = false, [SHUNT_TRAP] = true,  [SHUNT_PASS] = true, [SHUNT_DROP] = true,  [SHUNT_REJECT] = true,
+		},
+		[NEGOTIATION_SHUNT] = {
+			[SHUNT_NONE] = false, [SHUNT_HOLD] = true,  [SHUNT_TRAP] = false, [SHUNT_PASS] = true, [SHUNT_DROP] = false, [SHUNT_REJECT] = false,
+		},
+		[FAILURE_SHUNT] = {
+			[SHUNT_NONE] = true,  [SHUNT_HOLD] = false, [SHUNT_TRAP] = false, [SHUNT_PASS] = true, [SHUNT_DROP] = true,  [SHUNT_REJECT] = true,
+		},
+	};
+	return ok[shunt_kind][shunt_policy];
 }
 
 /*
@@ -255,8 +223,8 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 	/*
 	 * Only the following shunts are valid.
 	 */
-	enum shunt_policy prospective_shunt = c->config->prospective_shunt;
-	passert(prospective_shunt_ok(prospective_shunt));
+	enum shunt_policy prospective = c->config->prospective_shunt;
+	passert(shunt_ok(PROSPECTIVE_SHUNT, prospective));
 
 	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 		jam(buf, "kernel: %s() ", __func__);
@@ -265,7 +233,7 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 
 		enum_buf spb;
 		jam(buf, " prospective_shunt=%s",
-		    str_enum_short(&shunt_policy_names, prospective_shunt, &spb));
+		    str_enum_short(&shunt_policy_names, prospective, &spb));
 
 		jam(buf, " ");
 		jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
@@ -307,7 +275,8 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 			if (!install_bare_spd_kernel_policy(spd, KERNEL_POLICY_OP_ADD, direction,
 							    /*XXX: should no policy be expected?*/
 							    EXPECT_KERNEL_POLICY_OK,
-							    prospective_shunt, logger, HERE,
+							    PROSPECTIVE_SHUNT,
+							    logger, HERE,
 							    "prospective kernel_policy")) {
 				return false;
 			}
@@ -319,6 +288,7 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 struct bare_shunt {
 	ip_selector our_client;
 	ip_selector peer_client;
+	enum shunt_kind shunt_kind;
 	enum shunt_policy shunt_policy;
 	const struct ip_protocol *transport_proto; /* XXX: same value in local/remote */
 	unsigned long count;
@@ -1188,6 +1158,7 @@ static bool install_bare_shunt_kernel_policy(const struct bare_shunt *bs,
 		kernel_policy_from_void(bs->our_client, bs->peer_client,
 					/*always*/DIRECTION_OUTBOUND,
 					highest_kernel_priority,
+					bs->shunt_kind,
 					bs->shunt_policy,
 					/*sa_marks*/NULL, /*xfrmi*/NULL,
 					/* bare shunt are not
@@ -1367,7 +1338,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
  * XXX: description seems strange?
  */
 
-void assign_holdpass(struct connection *c,
+void assign_holdpass(struct connection *c UNUSED,
 		     struct spd_route *spd,
 		     enum kernel_policy_op op,
 		     struct logger *logger,
@@ -1392,7 +1363,7 @@ void assign_holdpass(struct connection *c,
 	if (spd->local->child->has_cat) {
 		if (!install_bare_cat_kernel_policy(spd, op,
 						    EXPECT_KERNEL_POLICY_OK,
-						    c->config->negotiation_shunt,
+						    NEGOTIATION_SHUNT,
 						    logger, HERE, "acquired")) {
 			llog(RC_LOG, logger,
 			     "CAT: failed to install Client Address Translation kernel policy");
@@ -1401,7 +1372,7 @@ void assign_holdpass(struct connection *c,
 
 	if (!install_bare_spd_kernel_policy(spd, op, DIRECTION_OUTBOUND,
 					    EXPECT_KERNEL_POLICY_OK,
-					    c->config->negotiation_shunt,
+					    NEGOTIATION_SHUNT,
 					    logger, HERE, reason)) {
 		llog(RC_LOG, logger,
 		     "%s() eroute_connection() failed", __func__);
@@ -2327,7 +2298,7 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 			ok = spd->wip.installed.policy =
 				install_bare_spd_kernel_policy(spd, op, DIRECTION_OUTBOUND,
 							       EXPECT_KERNEL_POLICY_OK,
-							       SHUNT_DROP,
+							       BLOCK_SHUNT,
 							       st->st_logger, HERE,
 							       "install IPsec block policy");
 		} else {
@@ -2679,7 +2650,7 @@ static void teardown_ipsec_kernel_policies(struct state *st,
 							    KERNEL_POLICY_OP_REPLACE,
 							    DIRECTION_OUTBOUND,
 							    EXPECT_KERNEL_POLICY_OK,
-							    c->config->prospective_shunt,
+							    PROSPECTIVE_SHUNT,
 							    logger, HERE, "replacing")) {
 				llog(RC_LOG, logger,
 				     "kernel: %s() replace outbound with prospective shunt failed", __func__);
@@ -2691,7 +2662,7 @@ static void teardown_ipsec_kernel_policies(struct state *st,
 							    KERNEL_POLICY_OP_REPLACE,
 							    DIRECTION_OUTBOUND,
 							    EXPECT_KERNEL_POLICY_OK,
-							    c->config->failure_shunt,
+							    FAILURE_SHUNT,
 							    logger, HERE, "replacing")) {
 				llog(RC_LOG, logger,
 				     "kernel: %s() replace outbound with failure shunt failed", __func__);
@@ -3068,7 +3039,7 @@ void orphan_holdpass(struct connection *c,
 		kernel_policy_from_void(src, dst, DIRECTION_OUTBOUND,
 					/* we don't know connection for priority yet */
 					highest_kernel_priority,
-					c->config->failure_shunt,
+					FAILURE_SHUNT, c->config->shunt[FAILURE_SHUNT],
 					/* XXX: bug; use from_spd() */
 					/*sa_marks*/NULL, /*xfrmi*/NULL,
 					/*sec_label;bug?*/null_shunk,

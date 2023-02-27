@@ -189,10 +189,9 @@ struct config {
 	unsigned long sa_rekey_fuzz;
 
 	lset_t sighash_policy;
-	enum shunt_policy prospective_shunt;	/* before */
-	enum shunt_policy negotiation_shunt;	/* during */
-	enum shunt_policy failure_shunt;	/* after */
 	enum autostart autostart;		/* aka auto */
+
+	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 
 	enum keyword_xauthby xauthby;
 	enum keyword_xauthfail xauthfail;

@@ -42,6 +42,7 @@ struct spd_route;
 struct kernel_policy kernel_policy_from_void(ip_selector local, ip_selector remote,
 					     enum direction direction,
 					     kernel_priority_t priority,
+					     enum shunt_kind shunt_kind,
 					     enum shunt_policy shunt_policy,
 					     const struct sa_marks *sa_marks,
 					     const struct pluto_xfrmi *xfrmi,
@@ -77,7 +78,7 @@ bool install_bare_spd_kernel_policy(const struct spd_route *spd,
 				    enum kernel_policy_op op,
 				    enum direction direction,
 				    enum expect_kernel_policy existing_policy_expectation,
-				    enum shunt_policy shunt,
+				    enum shunt_kind shunt_kind,
 				    struct logger *logger,
 				    where_t where, const char *what);
 
@@ -117,7 +118,7 @@ void delete_connection_kernel_policies(struct connection *c);
 bool install_bare_cat_kernel_policy(const struct spd_route *spd,
 				    enum kernel_policy_op op,
 				    enum expect_kernel_policy expect_kernel_policy,
-				    enum shunt_policy shunt,
+				    enum shunt_kind shunt_kind,
 				    struct logger *logger,
 				    where_t where,
 				    const char *reason);

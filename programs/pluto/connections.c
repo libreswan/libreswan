@@ -1606,20 +1606,21 @@ static enum connection_kind extract_connection_kind(const struct whack_message *
 }
 
 static diag_t extract_shunt(const char *shunt_name,
-			    enum shunt_policy *out,
-			    enum shunt_policy shunt,
-			    bool (*shunt_ok)(enum shunt_policy),
+			    struct config *config,
+			    const struct whack_message *wm,
+			    enum shunt_kind shunt_kind,
 			    enum shunt_policy unset_shunt)
 {
-	if (shunt == SHUNT_UNSET) {
-		shunt = unset_shunt;
+	enum shunt_policy shunt_policy = wm->shunt[shunt_kind];
+	if (shunt_policy == SHUNT_UNSET) {
+		shunt_policy = unset_shunt;
 	}
-	if (!shunt_ok(shunt)) {
+	if (!shunt_ok(shunt_kind, shunt_policy)) {
 		enum_buf sb;
-		return diag("%s shunt %s invalid",
-			    shunt_name, str_enum_short(&shunt_policy_names, shunt, &sb));
+		return diag("%sshunt=%s invalid",
+			    shunt_name, str_enum_short(&shunt_policy_names, shunt_policy, &sb));
 	}
-	*out = shunt;
+	config->shunt[shunt_kind] = shunt_policy;
 	return NULL;
 }
 
@@ -1917,16 +1918,12 @@ static diag_t extract_connection(const struct whack_message *wm,
 		break;
 	}
 
-	d = extract_shunt("prospective", &config->prospective_shunt,
-			  wm->prospective_shunt, prospective_shunt_ok,
-			  /*unset*/SHUNT_TRAP);
+	d = extract_shunt("prospective", config, wm, PROSPECTIVE_SHUNT, /*unset*/SHUNT_TRAP);
 	if (d != NULL) {
 		return d;
 	}
 
-	d = extract_shunt("negotiation", &config->negotiation_shunt,
-			  wm->negotiation_shunt, negotiation_shunt_ok,
-			  /*unset*/SHUNT_HOLD);
+	d = extract_shunt("negotiation", config, wm, NEGOTIATION_SHUNT, /*unset*/SHUNT_HOLD);
 	if (d != NULL) {
 		return d;
 	}
@@ -1939,12 +1936,13 @@ static diag_t extract_connection(const struct whack_message *wm,
 		config->negotiation_shunt = SHUNT_HOLD;
 	}
 
-	d = extract_shunt("failure", &config->failure_shunt,
-			  wm->failure_shunt, failure_shunt_ok,
-			  /*unset*/SHUNT_NONE);
+	d = extract_shunt("failure", config, wm, FAILURE_SHUNT, /*unset*/SHUNT_NONE);
 	if (d != NULL) {
 		return d;
 	}
+
+	/* make kernel code easier */
+	config->shunt[BLOCK_SHUNT] = SHUNT_DROP;
 
 	if (libreswan_fipsmode() && config->failure_shunt != SHUNT_NONE) {
 		enum_buf eb;

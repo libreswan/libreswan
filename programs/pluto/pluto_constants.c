@@ -319,6 +319,22 @@ enum_names shunt_policy_names = {
 	NULL,
 };
 
+static const char *const shunt_kind_name[] = {
+#define A(S) [S##_SHUNT] = #S
+	A(NEGOTIATION),
+	A(FAILURE),
+	A(BLOCK),
+	A(PROSPECTIVE),
+#undef A
+};
+
+enum_names shunt_kind_names = {
+	0, SHUNT_KIND_ROOF-1,
+	ARRAY_REF(shunt_kind_name),
+	"SHUNT_", /* prefix */
+	NULL,
+};
+
 static const char *const shunt_policy_percent_name[] = {
 	[SHUNT_UNSET] = "<shunt-unset>",
 	[SHUNT_HOLD] = "%hold",
@@ -368,6 +384,7 @@ static const enum_names *pluto_enum_names_checklist[] = {
 	&kernel_policy_op_names,
 	&direction_names,
 	&encap_mode_names,
+	&shunt_kind_names,
 	&shunt_policy_names,
 	&keyword_auth_names,
 	&keyword_host_names,

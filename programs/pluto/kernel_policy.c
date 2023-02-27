@@ -40,6 +40,7 @@
 struct kernel_policy kernel_policy_from_void(ip_selector local, ip_selector remote,
 					     enum direction direction,
 					     kernel_priority_t priority,
+					     enum shunt_kind shunt_kind,
 					     enum shunt_policy shunt_policy,
 					     const struct sa_marks *sa_marks,
 					     const struct pluto_xfrmi *xfrmi,
@@ -71,6 +72,7 @@ struct kernel_policy kernel_policy_from_void(ip_selector local, ip_selector remo
 		.src.route = *src,
 		.dst.route = *dst,
 		.priority = priority,
+		.kind = shunt_kind,
 		.shunt = shunt_policy,
 		.where = where,
 		.id = DEFAULT_KERNEL_POLICY_ID,
@@ -285,7 +287,7 @@ bool install_bare_spd_kernel_policy(const struct spd_route *spd,
 				    enum kernel_policy_op op,
 				    enum direction direction,
 				    enum expect_kernel_policy existing_policy_expectation,
-				    enum shunt_policy shunt,
+				    enum shunt_kind shunt_kind,
 				    struct logger *logger,
 				    where_t where, const char *what)
 {
@@ -319,7 +321,8 @@ bool install_bare_spd_kernel_policy(const struct spd_route *spd,
 	struct kernel_policy kernel_policy =
 		kernel_policy_from_void(spd->local->client, spd->remote->client,
 					direction, calculate_kernel_priority(c),
-					shunt,
+					shunt_kind,
+					spd->connection->config->shunt[shunt_kind],
 					&c->sa_marks, c->xfrmi,
 					HUNK_AS_SHUNK(c->config->sec_label),
 					where);
@@ -468,7 +471,7 @@ void delete_connection_kernel_policies(struct connection *c)
 bool install_bare_cat_kernel_policy(const struct spd_route *spd,
 				    enum kernel_policy_op op,
 				    enum expect_kernel_policy expect_kernel_policy,
-				    enum shunt_policy shunt,
+				    enum shunt_kind shunt_kind,
 				    struct logger *logger,
 				    where_t where,
 				    const char *reason)
@@ -479,7 +482,8 @@ bool install_bare_cat_kernel_policy(const struct spd_route *spd,
 		kernel_policy_from_void(spd->local->client, spd->remote->client,
 					DIRECTION_OUTBOUND,
 					calculate_kernel_priority(c),
-					shunt, &c->sa_marks, c->xfrmi,
+					shunt_kind, spd->connection->config->shunt[shunt_kind],
+					&c->sa_marks, c->xfrmi,
 					HUNK_AS_SHUNK(c->config->sec_label),
 					where);
 	/*

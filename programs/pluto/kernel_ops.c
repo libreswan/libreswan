@@ -83,6 +83,8 @@ bool raw_policy(enum kernel_policy_op op,
 			jam(buf, "=>");
 			jam_address(buf, &policy->dst.host);
 			jam_string(buf, ",");
+			jam_enum(buf, &shunt_kind_names, policy->kind);
+			jam_string(buf, "=");
 			jam_enum(buf, &shunt_policy_names, policy->shunt);
 			jam_string(buf, ",");
 			jam(buf, ",priority=%"PRI_KERNEL_PRIORITY,

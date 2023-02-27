@@ -174,9 +174,7 @@ struct whack_message {
 	lset_t policy;
 	struct authby authby;
 	lset_t sighash_policy;
-	enum shunt_policy prospective_shunt;
-	enum shunt_policy negotiation_shunt;
-	enum shunt_policy failure_shunt;
+	enum shunt_policy shunt[SHUNT_KIND_ROOF];
 	enum autostart autostart;
 	bool is_connection_group;
 
