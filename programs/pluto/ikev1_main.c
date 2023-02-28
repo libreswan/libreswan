@@ -2130,15 +2130,16 @@ bool accept_delete(struct msg_digest *md,
 						  ntohl(spi));
 				}
 
-				struct connection *rc = dst->st_connection;
+				/* save for post delete_state() code */
+				co_serial_t rc_serialno = dst->st_connection->serialno;
 
 				if (nat_traversal_enabled && dst->st_connection->ikev1_natt != NATT_NONE) {
 					nat_traversal_change_port_lookup(md, dst);
 					v1_maybe_natify_initiator_endpoints(st, HERE);
 				}
 
-				if (rc->newest_ipsec_sa == dst->st_serialno &&
-					(rc->policy & POLICY_UP)) {
+				if (dst->st_connection->newest_ipsec_sa == dst->st_serialno &&
+				    (dst->st_connection->policy & POLICY_UP)) {
 					/*
 					 * Last IPsec SA for a permanent
 					 * connection that we have initiated.
@@ -2162,7 +2163,12 @@ bool accept_delete(struct msg_digest *md,
 						md->v1_st = NULL;
 				}
 
-				if (rc->newest_ipsec_sa == SOS_NOBODY) {
+				/*
+				 * Either .newest_ipsec_sa matches DST
+				 * and is cleared, or was never set.
+				 */
+				struct connection *rc = connection_by_serialno(rc_serialno);
+				if (rc != NULL && rc->newest_ipsec_sa == SOS_NOBODY) {
 					dbg("%s() connection '%s' -POLICY_UP", __func__, rc->name);
 					rc->policy &= ~POLICY_UP;
 					if (!shared_phase1_connection(rc)) {
