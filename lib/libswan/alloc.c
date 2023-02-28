@@ -40,13 +40,7 @@ bool leak_detective = false;	/* must not change after first alloc! */
  * a list of live ones.  If a dead one is freed, an assertion MIGHT fail.
  * If the live list is corrupted, that will often be detected.
  * In the end, report_leaks() is called, and the names of remaining
- * live allocations are printed.  At the moment, it is hoped, not that
- * the list is empty, but that there will be no surprises.
- *
- * Accepted Leaks:
- * - "struct iface" and "device name" (for "discovered" net interfaces)
- * - "struct pluto_event in event_schedule()" (events not associated with states)
- * - "Pluto lock name" (one only, needed until end -- why bother?)
+ * live allocations are printed.
  */
 
 /* this magic number is 3671129837 decimal (623837458 complemented) */
@@ -61,6 +55,85 @@ union mhdr {
 	} i;	/* info */
 	unsigned long long junk;	/* force maximal alignment */
 };
+
+/*
+ * Detect and passert() an invalid memory address.
+ *
+ * With leak_detective, valid memory has .magic==LEAK_MAGIC, and just
+ * pfree()d memory has .magic=~LEAK_DETECTIVE (and 0xFE scribbled over
+ * the content).
+ */
+
+static union mhdr *pmhdr_where(void *ptr, where_t where)
+{
+#if 0
+	/*
+	 * Diagnose a pointer read from a pfree()'d struct.
+	 *
+	 * Since the pfree() memory contents had 0XEF scribbled on
+	 * them, any pointers in that struct will have the value
+	 * POINTER_MAGIC.
+	 *
+	 * This isn't enabled.  POINTER_MAGIC is misalligned and
+	 * (presumably) invalid.  Accessing .i.magic should fail,
+	 * SIGSEGVs or SIGBUS.
+	 */
+#ifdef INTPTR_MAX
+# if INTPTR_MAX == INT32_C(0x7FFFFFFF)
+#  define POINTER_T uint32_t
+#  define POINTER_MAGIC UINT32_C(0xEFEFEFEF)
+# elif INTPTR_MAX == INT64_C(0x7FFFFFFFFFFFFFFF)
+#  define POINTER_T uint64_t
+#  define POINTER_MAGIC UINT64_C(0xEFEFEFEFEFEFEFEF)
+# else
+#   error INTPTR_MAX not recognized
+# endif
+#else
+# error INTPTR_MAX not defined
+#endif
+	if ((POINTER_T)ptr == POINTER_MAGIC) {
+		llog_passert(&global_logger, where,
+			     "pointer %p invalid, possible use after free (pointer == POINTER_MAGIC)", ptr);
+	}
+#endif
+	union mhdr *p = ((union mhdr *)ptr) - 1;
+	switch (p->i.magic) {
+	case LEAK_MAGIC:
+		break;
+	case ~LEAK_MAGIC:
+		/*
+		 * Diagnose of a double free.
+		 *
+		 * Note: this won't detect a re-allocated pointer vis:
+		 *
+		 *    pfree(p);          // p == 1234
+		 *    q = alloc_bytes(); // q == 1234
+		 *    pfree(p)           // p == 1234
+		 *
+		 * Note: the testuite has EFENCE enabled (unmap and
+		 * never reuse in free()) so just trying to access
+		 * .i.magic will trigger a SEGV barf.
+		 */
+		llog_passert(&global_logger, where,
+			     "pointer %p invalid, possible double free (magic == ~LEAK_MAGIC)", ptr);
+	default:
+		/*
+		 * Diagnose an invalid pointer (possibly corrupt,
+		 * possibly...).
+		 */
+		llog_passert(&global_logger, where,
+			     "pointer %p invalid, possible heap corruption or bad pointer (magic != LEAK_MAGIC and ~LEAK_MAGIC})", ptr);
+	}
+	return p;
+}
+
+void pmemory_where(void *ptr, where_t where)
+{
+	passert(ptr != NULL);
+	if (leak_detective) {
+		pmhdr_where(ptr, where);
+	}
+}
 
 /* protects updates to the leak-detective linked list */
 static pthread_mutex_t leak_detective_mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -141,20 +214,8 @@ void *uninitialized_malloc(size_t size, const char *name)
 void pfree(void *ptr)
 {
 	if (leak_detective) {
-		union mhdr *p;
-
 		passert(ptr != NULL);
-
-		p = ((union mhdr *)ptr) - 1;
-
-		if (p->i.magic == ~LEAK_MAGIC) {
-			llog_passert(&global_logger, HERE,
-				     "pointer %p invalid, possible double free (magic == ~LEAK_MAGIC)", ptr);
-		} else if (p->i.magic != LEAK_MAGIC) {
-			llog_passert(&global_logger, HERE,
-				     "pointer %p invalid, possible heap corruption or bad pointer (magic != LEAK_MAGIC or ~LEAK_MAGIC})", ptr);
-		}
-
+		union mhdr *p = pmhdr_where(ptr, HERE);
 		remove_allocation(p);
 		/* stomp on memory!   Is another byte value better? */
 		memset(p, 0xEF, sizeof(union mhdr) + p->i.size);
@@ -283,11 +344,6 @@ void *clone_bytes_bytes(const void *lhs_ptr, size_t lhs_len,
 
 /*
  * Re-size something on the HEAP.
- *
- * Unlike the more traditional realloc() this code doesn't allow a
- * NULL pointer.  The caller, which is presumably implementing some
- * sort of realloc() wrapper, gets to handle this.  So as to avoid any
- * confusion, give this a different name and function signature.
  */
 
 void *uninitialized_realloc(void *ptr, size_t new_size, const char *name)
@@ -295,8 +351,7 @@ void *uninitialized_realloc(void *ptr, size_t new_size, const char *name)
 	if (ptr == NULL) {
 		return uninitialized_malloc(new_size, name);
 	} else if (leak_detective) {
-		union mhdr *p = ((union mhdr *)ptr) - 1;
-		passert(p->i.magic == LEAK_MAGIC);
+		union mhdr *p = pmhdr_where(ptr, HERE);
 		remove_allocation(p);
 		p = realloc(p, sizeof(union mhdr) + new_size);
 		if (p == NULL) {
@@ -315,8 +370,7 @@ void realloc_bytes(void **ptr, size_t old_size, size_t new_size, const char *nam
 	if (*ptr == NULL) {
 		passert(old_size == 0);
 	} else if (leak_detective) {
-		union mhdr *p = ((union mhdr *)*ptr) - 1;
-		passert(p->i.magic == LEAK_MAGIC);
+		union mhdr *p = pmhdr_where(*ptr, HERE);
 		passert(p->i.size == old_size);
 	}
 	*ptr = uninitialized_realloc(*ptr, new_size, name);

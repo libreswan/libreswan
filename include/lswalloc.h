@@ -36,6 +36,10 @@ extern void pfree(void *ptr);
 /* Never returns NULL; allocates 0 bytes as 1-byte */
 extern void *alloc_bytes(size_t size, const char *name);
 
+/* verify allocation; PTR must be non-NULL */
+void pmemory_where(void *ptr, where_t where);
+#define pmemory(PTR) pmemory_where(PTR, HERE)
+
 /* clone's NULL bytes as NULL bytes, not 1-byte */
 void *clone_bytes(const void *orig, size_t size, const char *name);
 void *clone_bytes_bytes(const void *lhs_ptr, size_t lhs_len,
