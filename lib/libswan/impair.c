@@ -77,13 +77,20 @@ struct impairment {
 	const char *what;
 	const char *help;
 	/*
-	 * If non-NULL, HOW is either a keyword or an (unsigned)
-	 * number encoded as keywords.nr_keywords+NUMBER.
-	 *
-	 * If NULL, HOW is assumed to be a boolean.
+	 * When .how_keywords is non-NULL, HOW is either a keyword or
+	 * an (unsigned) number encoded as .keywords .nr_keywords +
+	 * NUMBER.
 	 */
 	const struct keywords *how_keywords;
+	/*
+	 * (else) When .how_enum_names is non-NULL, HOW is the enum
+	 * name value.
+	 */
 	const struct enum_names *how_enum_names;
+	/*
+	 * (else) when .unsigned_help is non-NULL, HOW is the value
+	 * biased by 1.
+	 */
 	const char *unsigned_help;
 	void *value;
 	/* size_t offsetof_value; */
@@ -95,8 +102,10 @@ struct impairment {
 struct impairment impairments[] = {
 	{ .what = NULL, },
 
-#define A(WHAT, ACTION, PARAM, HELP, UNSIGNED_HELP, ...) { .what = WHAT, .action = CALL_##ACTION, .param = PARAM, .help = HELP, .unsigned_help = UNSIGNED_HELP, ##__VA_ARGS__, }
-#define V(WHAT, VALUE, HELP, ...) { .what = WHAT, .action = CALL_IMPAIR_UPDATE, .value = &impair.VALUE, .help = HELP, .sizeof_value = sizeof(impair.VALUE), ##__VA_ARGS__, }
+#define A(WHAT, ACTION, PARAM, HELP, UNSIGNED_HELP, ...) \
+	{ .what = WHAT, .action = CALL_##ACTION, .param = PARAM, .help = HELP, .unsigned_help = UNSIGNED_HELP, ##__VA_ARGS__, }
+#define V(WHAT, VALUE, HELP, ...) \
+	{ .what = WHAT, .action = CALL_IMPAIR_UPDATE, .value = &impair.VALUE, .help = HELP, .sizeof_value = sizeof(impair.VALUE), ##__VA_ARGS__, }
 
 	V("allow-dns-insecure", allow_dns_insecure, "allow IPSECKEY lookups without DNSSEC protection"),
 	V("allow-null-none", allow_null_none, "cause pluto to allow esp=null-none and ah=none for testing"),
@@ -215,6 +224,13 @@ struct impairment impairments[] = {
 
 	V("cannot-ondemand", cannot_ondemand,
 	  "force acquire to call cannot_ondemand() and fail"),
+
+	V("number-of-TSi-selectors", number_of_TSi_selectors,
+	  "send bogus number of selectors in TSi payload",
+	  .unsigned_help = "number of selectors"),
+	V("number-of-TSr-selectors", number_of_TSr_selectors,
+	  "send bogus number of selectors in TSr payload",
+	  .unsigned_help = "force number of selectors"),
 
 #undef V
 #undef A

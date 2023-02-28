@@ -164,6 +164,9 @@ struct impair {
 
 	bool cannot_ondemand;
 
+	unsigned number_of_TSi_selectors;
+	unsigned number_of_TSr_selectors;
+
 	/*
 	 * add more here
 	 */

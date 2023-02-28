@@ -9,7 +9,7 @@
  * Copyright (C) 2013 D. Hugh Redelmeier <hugh@mimosa.com>
  * Copyright (C) 2014-2015, 2018 Andrew cagney <cagney@gnu.org>
  * Copyright (C) 2017 Antony Antony <antony@phenome.org>
- * Copyright (C) 2019 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2019-2023 Andrew Cagney <cagney@gnu.org>
  * Copyright (C) 2021 Paul Wouters <paul.wouters@aiven.io>
  *
  * This program is free software; you can redistribute it and/or modify it
@@ -404,11 +404,20 @@ static bool emit_v2TS_payload(struct pbs_out *outpbs,
 			      const struct_desc *ts_desc,
 			      ip_selectors *selectors,
 			      shunk_t sec_label,
+			      unsigned impaired_biased_len,
 			      const char *name)
 {
 	unsigned nr_ts = selectors->len;
 	if (sec_label.len > 0) {
 		nr_ts++;
+	}
+
+	if (impaired_biased_len > 0) {
+		unsigned new_nr = impaired_biased_len - 1;
+		llog(RC_LOG, outpbs->outs_logger,
+		     "IMPAIR: forcing number of %s selectors from %u to %u",
+		     name, nr_ts, new_nr);
+		nr_ts = new_nr;
 	}
 
 	struct ikev2_ts its = {
@@ -488,6 +497,7 @@ bool emit_v2TS_request_payloads(struct pbs_out *out, const struct child_sa *chil
 	if (!emit_v2TS_payload(out, child, &ikev2_ts_i_desc,
 			       &c->local->child.selectors.proposed,
 			       HUNK_AS_SHUNK(c->child.sec_label),
+			       impair.number_of_TSi_selectors,
 			       "local TSi")) {
 		return false;
 	}
@@ -495,6 +505,7 @@ bool emit_v2TS_request_payloads(struct pbs_out *out, const struct child_sa *chil
 	if (!emit_v2TS_payload(out, child, &ikev2_ts_r_desc,
 			       &c->remote->child.selectors.proposed,
 			       HUNK_AS_SHUNK(c->child.sec_label),
+			       impair.number_of_TSr_selectors,
 			       "remote TSr")) {
 		return false;
 	}
@@ -525,14 +536,18 @@ bool emit_v2TS_response_payloads(struct pbs_out *outpbs, const struct child_sa *
 	ip_selectors *accepted_ts_i =
 		(c->remote->child.selectors.accepted.len > 0 ? &c->remote->child.selectors.accepted : &c->remote->child.selectors.proposed);
 	if (!emit_v2TS_payload(outpbs, child, &ikev2_ts_i_desc, accepted_ts_i,
-			       HUNK_AS_SHUNK(c->child.sec_label), "remote TSi")) {
+			       HUNK_AS_SHUNK(c->child.sec_label),
+			       impair.number_of_TSi_selectors,
+			       "remote TSi")) {
 		return false;
 	}
 
 	ip_selectors *accepted_ts_r =
 		(c->local->child.selectors.accepted.len > 0 ? &c->local->child.selectors.accepted : &c->local->child.selectors.proposed);
 	if (!emit_v2TS_payload(outpbs, child, &ikev2_ts_r_desc, accepted_ts_r,
-			       HUNK_AS_SHUNK(c->child.sec_label), "local TSr")) {
+			       HUNK_AS_SHUNK(c->child.sec_label),
+			       impair.number_of_TSr_selectors,
+			       "local TSr")) {
 		return false;
 	}
 
