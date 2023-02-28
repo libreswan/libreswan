@@ -495,5 +495,7 @@ void record_n_send_v2_delete(struct ike_sa *ike, where_t where)
 	record_v2_delete(ike, &ike->sa);
 	send_recorded_v2_message(ike, "delete notification", MESSAGE_REQUEST);
 	v2_msgid_finish(ike, NULL/*MD*/);
+#if 0
 	ike->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
+#endif
 }
