@@ -18,77 +18,11 @@ east #
 "east/0x2"[1] 192.1.2.254 #3: IPsec SA established tunnel mode {ESPinUDP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 NATD=192.1.2.254:EPHEM DPD=passive}
 east #
  ipsec trafficstatus
-006 #2: "east/0x1"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
-006 #3: "east/0x2"[1] 192.1.2.254, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
 east #
  ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:
-src 192.1.2.254 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
-	encap type espinudp sport EPHEM dport 4500 addr 0.0.0.0
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-src 192.1.2.23 dst 192.1.2.254
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
-	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-src 192.1.2.254 dst 192.1.2.23
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
-	encap type espinudp sport EPHEM dport 4500 addr 0.0.0.0
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
-src 192.1.2.23 dst 192.1.2.254
-	proto esp spi 0xSPISPI reqid REQID mode tunnel
-	replay-window 0 flag af-unspec
-	auth-trunc hmac(sha1) 0xHASHKEY 96
-	enc cbc(aes) 0xENCKEY
-	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
-	anti-replay esn context:
-	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
-	 replay_window 128, bitmap-length 4
-	 00000000 00000000 00000000 XXXXXXXX 
 XFRM policy:
-src 192.0.2.0/24 dst 192.0.3.0/24
-	dir out priority PRIORITY ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.254
-		proto esp reqid REQID mode tunnel
-src 192.0.20.0/24 dst 192.0.3.0/24
-	dir out priority PRIORITY ptype main
-	tmpl src 192.1.2.23 dst 192.1.2.254
-		proto esp reqid REQID mode tunnel
-src 192.0.3.0/24 dst 192.0.2.0/24
-	dir fwd priority PRIORITY ptype main
-	tmpl src 192.1.2.254 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.3.0/24 dst 192.0.2.0/24
-	dir in priority PRIORITY ptype main
-	tmpl src 192.1.2.254 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.3.0/24 dst 192.0.20.0/24
-	dir fwd priority PRIORITY ptype main
-	tmpl src 192.1.2.254 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
-src 192.0.3.0/24 dst 192.0.20.0/24
-	dir in priority PRIORITY ptype main
-	tmpl src 192.1.2.254 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
 XFRM done
 IPSEC mangle TABLES
 iptables filter TABLE
