@@ -2343,7 +2343,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 					    wm->xfrm_if_id, err);
 			}
 			if (!setup_xfrm_interface(c, wm->xfrm_if_id == 0 ?
-						  PLUTO_XFRMI_REMAP_IF_ID_ZERO : wm->xfrm_if_id )) {
+						 PLUTO_XFRMI_REMAP_IF_ID_ZERO : wm->xfrm_if_id )) {
 				/* XXX: never happens?!? */
 				return diag("setup xfrmi interface failed");
 			}

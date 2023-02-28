@@ -386,7 +386,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	 */
 #ifdef USE_XFRM_INTERFACE
 	if (cc->xfrmi != NULL && cc->xfrmi->if_id != 0) {
-		if (add_xfrmi(cc, larval_child->sa.st_logger)) {
+		if (!add_xfrm_interface(cc, larval_child->sa.st_logger)) {
 			return v2N_INVALID_SYNTAX; /* fatal */
 		}
 	}
@@ -816,7 +816,7 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 	if (child->sa.st_state->kind != STATE_V2_REKEY_CHILD_I1)
 		if (c->xfrmi != NULL &&
 				c->xfrmi->if_id != 0)
-			if (add_xfrmi(c, child->sa.st_logger))
+			if (!add_xfrm_interface(c, child->sa.st_logger))
 				return v2N_INVALID_SYNTAX; /* fatal */
 #endif
 	/* now install child SAs */
