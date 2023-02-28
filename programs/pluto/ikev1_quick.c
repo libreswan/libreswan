@@ -1466,7 +1466,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 #ifdef USE_XFRM_INTERFACE
 	struct connection *c = st->st_connection;
 	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
-		if (add_xfrmi(c, st->st_logger))
+		if (!add_xfrm_interface(c, st->st_logger))
 			return STF_FATAL;
 #endif
 	if (!install_inbound_ipsec_sa(st))
@@ -1681,7 +1681,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 	 */
 #ifdef USE_XFRM_INTERFACE
 	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
-		if (add_xfrmi(c, st->st_logger))
+		if (!add_xfrm_interface(c, st->st_logger))
 			return STF_FATAL;
 #endif
 	if (!install_ipsec_sa(st, true))
@@ -1720,7 +1720,7 @@ stf_status quick_inI2(struct state *st, struct msg_digest *md UNUSED)
 #ifdef USE_XFRM_INTERFACE
 	struct connection *c = st->st_connection;
 	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
-		if (add_xfrmi(c, st->st_logger))
+		if (!add_xfrm_interface(c, st->st_logger))
 			return STF_FATAL;
 #endif
 	if (!install_ipsec_sa(st, false))

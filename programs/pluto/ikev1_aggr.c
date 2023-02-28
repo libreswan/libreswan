@@ -801,7 +801,7 @@ static stf_status aggr_inR1_outI2_crypto_continue(struct state *st,
 	ISAKMP_SA_established(pexpect_ike_sa(st));
 #ifdef USE_XFRM_INTERFACE
 	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
-		if (add_xfrmi(c, st->st_logger))
+		if (!add_xfrm_interface(c, st->st_logger))
 			return STF_FATAL;
 #endif
 
@@ -957,7 +957,7 @@ stf_status aggr_inI2(struct state *st, struct msg_digest *md)
 	ISAKMP_SA_established(pexpect_ike_sa(st));
 #ifdef USE_XFRM_INTERFACE
 	if (c->xfrmi != NULL && c->xfrmi->if_id != 0)
-		if (add_xfrmi(c, st->st_logger))
+		if (!add_xfrm_interface(c, st->st_logger))
 			return STF_FATAL;
 #endif
 

@@ -20,6 +20,7 @@
 #include <stdbool.h>
 
 #include "err.h"
+#include "refcnt.h"
 
 #if defined(linux) && defined(KERNEL_XFRM) && defined(USE_XFRM_INTERFACE)
 /* how to check defined(XFRMA_IF_ID) && defined(IFLA_XFRM_LINK)? those are enums */
@@ -34,6 +35,9 @@
 /* for ipsec0 we need to map it to a different if_id */
 #define PLUTO_XFRMI_REMAP_IF_ID_ZERO	16384
 
+#define XFRMI_SUCCESS 0
+#define XFRMI_FAILURE 1
+
 struct connection;
 struct logger;
 
@@ -41,13 +45,15 @@ struct pluto_xfrmi {
 	char *name;
 	uint32_t if_id; /* IFLA_XFRM_IF_ID */
 	uint32_t dev_if_id;  /* if_id of device, IFLA_XFRM_LINK */
-	unsigned int refcount;
+	refcnt_t refcnt;
 	bool shared;
 	bool pluto_added;
 	struct pluto_xfrmi *next;
 };
+
+/* Both setup_xfrm_interface() and add_xfrm_interface() return true on success, false otherwise */
 extern bool setup_xfrm_interface(struct connection *c, uint32_t xfrm_if_id);
-extern bool add_xfrmi(struct connection *c, struct logger *logger);
+extern bool add_xfrm_interface(struct connection *c, struct logger *logger);
 extern void stale_xfrmi_interfaces(struct logger *logger);
 extern err_t xfrm_iface_supported(struct logger *logger);
 extern void free_xfrmi_ipsec1(struct logger *logger);
