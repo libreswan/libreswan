@@ -437,6 +437,11 @@ static bool v2_parse_tss(struct payload_digest *const ts_pd,
 		d = pbs_in_struct(&ts_pd->pbs, &ikev2_ts_header_desc,
 			  &ts_h, sizeof(ts_h), &ts_body_pbs);
 
+		if (d != NULL) {
+			llog_diag(RC_LOG, logger, &d, "%s", "");
+			return false;
+		}
+
 		switch (ts_h.isath_type) {
 		case IKEv2_TS_IPV4_ADDR_RANGE:
 		case IKEv2_TS_IPV6_ADDR_RANGE:
