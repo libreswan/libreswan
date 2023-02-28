@@ -483,7 +483,9 @@ class TestResult:
             # always add entry so that save() knows what to write
             self.diff_output[guest_name] = diff_output
 
-            if diff_output:
+            if Issues.OUTPUT_TRUNCATED in self.issues:
+                self.logger.debug("skipping diff as truncated")
+            elif diff_output:
                 whitespace = _whitespace(expected_output, sanitized_output)
                 self.resolution.failed()
                 if whitespace:
