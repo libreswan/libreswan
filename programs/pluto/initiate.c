@@ -29,7 +29,7 @@
 #include "connections.h"
 #include "pending.h"
 #include "timer.h"
-#include "kernel_ops.h"			/* for raw_policy() */
+#include "kernel_ops.h"			/* for struct kernel_acquire */
 #include "log.h"
 #include "ikev1_spdb.h"			/* for kernel_alg_makedb() !?! */
 #include "initiate.h"
