@@ -25,7 +25,7 @@
 #include "lswlog.h"
 
 /* returns a file descriptor on success; -1 on error */
-int nl_send_query(const struct nlmsghdr *req, int protocol, struct logger *logger)
+int nl_send_query(const struct nlmsghdr *req, int protocol, const struct logger *logger)
 {
 	int nl_fd = cloexec_socket(AF_NETLINK, SOCK_DGRAM|SOCK_NONBLOCK, protocol);
 

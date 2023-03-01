@@ -111,7 +111,7 @@ static uint32_t xfrm_interface_id = IPSEC1_XFRM_IF_ID; /* XFRMA_IF_ID && XFRMA_S
 static bool nl_query_small_resp(const struct nlmsghdr *req,
 			       const char *context,
 			       const char *if_name,
-			       struct logger *logger)
+			       const struct logger *logger)
 {
 	int nl_fd = nl_send_query(req, NETLINK_ROUTE, logger);
 	if (nl_fd < 0) {
@@ -232,7 +232,7 @@ static bool ip_link_set_up(const char *if_name, struct logger *logger)
 }
 
 /* ??? true means failure! */
-static bool ip_link_del(const char *if_name, struct logger *logger)
+static bool ip_link_del(const char *if_name, const struct logger *logger)
 {
 	struct nl_ifinfomsg_req req = init_nl_ifi(RTM_DELLINK, NLM_F_REQUEST);
 	req.i.ifi_index = if_nametoindex(if_name);
@@ -709,7 +709,7 @@ bool add_xfrmi(struct connection *c, struct logger *logger)
 	return ip_link_set_up(c->xfrmi->name, logger);
 }
 
-static void free_xfrmi(struct pluto_xfrmi *xfrmi /*non-NULL*/, struct logger *logger)
+static void free_xfrmi(struct pluto_xfrmi *xfrmi /*non-NULL*/, const struct logger *logger)
 {
 	struct pluto_xfrmi **pp;
 	struct pluto_xfrmi *p;
