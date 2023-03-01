@@ -374,50 +374,15 @@ bool delete_kernel_policy(enum direction direction,
 	const struct ip_protocol *child_proto = selector_protocol(*src_child);
 	pexpect(child_proto == selector_protocol(*dst_child));
 
-	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-
-		jam(buf, "kernel: %s() %s:", __func__, story);
-
-		jam_string(buf, " ");
-		jam_enum_short(buf, &direction_names, direction);
-
-		jam_string(buf, " ");
-		jam_string(buf, expect_kernel_policy_name(expect_kernel_policy));
-
-		jam(buf, " child=");
-		jam_selector_pair(buf, src_child, dst_child);
-
-		if (sa_marks != NULL) {
-			jam(buf, " sa_marks=");
-			const char *dir = "out:";
-			FOR_EACH_THING(mark, &sa_marks->out, &sa_marks->in) {
-				jam(buf, "%s%x/%x%s",
-				    dir, mark->val, mark->mask,
-				    mark->unique ? "/unique" : "");
-				dir = ",in:";
-			}
-		}
-
-		jam(buf, " xfrm_if_id=%d",
-		    xfrmi != NULL ? (int)xfrmi->if_id : -1);
-
-		jam(buf, " id=%d", (unsigned)id);
-
-		jam(buf, " sec_label=");
-		jam_sanitized_hunk(buf, sec_label);
-
-		jam_string(buf, " ");
-		jam(buf, PRI_WHERE, pri_where(where));
-	}
-
-	bool result = kernel_ops->raw_policy(KERNEL_POLICY_OP_DELETE,
-					     direction,
-					     expect_kernel_policy,
-					     src_child, dst_child,
-					     /*policy*/NULL/*delete-not-needed*/,
-					     deltatime(0),
-					     sa_marks, xfrmi, id, sec_label,
-					     logger);
+	bool result = raw_policy(KERNEL_POLICY_OP_DELETE,
+				 direction,
+				 expect_kernel_policy,
+				 src_child, dst_child,
+				 /*policy*/NULL/*delete-not-needed*/,
+				 deltatime(0),
+				 sa_marks, xfrmi, id, sec_label,
+				 logger,
+				 "%s "PRI_WHERE, story, pri_where(where));
 	dbg("kernel: %s() result=%s", __func__, (result ? "success" : "failed"));
 	return result;
 }

@@ -949,7 +949,7 @@ static void revert_kernel_policy(struct spd_route *spd,
 	if (!install_bare_shunt_kernel_policy(bs, EXPECT_KERNEL_POLICY_OK,
 					      logger, HERE)) {
 		llog(RC_LOG, st->st_logger,
-		     "raw_policy() in %s() failed to restore/replace SA",
+		     "%s() failed to restore/replace SA",
 		     __func__);
 	}
 }
