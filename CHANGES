@@ -16,6 +16,10 @@ v5.0 (Unreleased)
 * packaging: Fix debian systemd service install [Antonio Silva]
 * testing: Fix namespace tests for super long dir names [Paul]
 
+v4.10 (February 28, 2023)
+* SECURITY IKEv2: Fixes https://libreswan.org/security/CVE-2023-23009
+* IKEv1: only clean up a connection when it isn't deleted [Andrew]
+
 v4.9 (October 13, 2022)
 * IKEv1: fix crasher (introduced in 4.8) when USE_NSS_KDF=false or MD5 [Andrew]
 * IKEv2: fix RFC 8229 IKE/ESP over IPv6 TCP [Andrew]
