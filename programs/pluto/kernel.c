@@ -94,10 +94,6 @@ static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 					    enum expect_kernel_policy expect_kernel_policy,
 					    struct logger *logger, where_t where);
 
-static bool install_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
-					     enum expect_kernel_policy expect_kernel_policy,
-					     struct logger *logger, where_t where);
-
 /*
  * The priority assigned to a kernel policy.
  *
@@ -946,8 +942,9 @@ static void revert_kernel_policy(struct spd_route *spd,
 
 	ldbg(logger, "kernel: %s() restoring bare shunt", __func__);
 	struct bare_shunt *bs = *spd->wip.conflicting.shunt;
-	if (!install_bare_shunt_kernel_policy(bs, EXPECT_KERNEL_POLICY_OK,
-					      logger, HERE)) {
+	if (!install_bare_kernel_policy(bs->our_client, bs->peer_client,
+					bs->shunt_kind, bs->shunt_policy,
+					logger, HERE)) {
 		llog(RC_LOG, st->st_logger,
 		     "%s() failed to restore/replace SA",
 		     __func__);
@@ -1148,37 +1145,6 @@ void show_shunt_status(struct show *s)
 			     str_connection_priority(BOTTOM_PRIORITY, &prio),
 			     bs->why);
 	}
-}
-
-static bool install_bare_shunt_kernel_policy(const struct bare_shunt *bs,
-					     enum expect_kernel_policy expect_kernel_policy,
-					     struct logger *logger, where_t where)
-{
-	struct kernel_policy kernel_policy =
-		kernel_policy_from_void(bs->our_client, bs->peer_client,
-					/*always*/DIRECTION_OUTBOUND,
-					highest_kernel_priority,
-					bs->shunt_kind,
-					bs->shunt_policy,
-					/*sa_marks*/NULL, /*xfrmi*/NULL,
-					/* bare shunt are not
-					 * associated with any
-					 * connection so no
-					 * security label */
-					/*sec_label*/null_shunk,
-					where);
-	return raw_policy(KERNEL_POLICY_OP_REPLACE,
-			  DIRECTION_OUTBOUND,
-			  expect_kernel_policy,
-			  &kernel_policy.src.client,
-			  &kernel_policy.dst.client,
-			  &kernel_policy,
-			  deltatime(SHUNT_PATIENCE),
-			  kernel_policy.sa_marks/*NULL*/,
-			  kernel_policy.xfrmi/*NULL*/,
-			  kernel_policy.id, /*0*/
-			  kernel_policy.sec_label/*null_shunk*/,
-			  logger, "%s() %s", __func__, where->func);
 }
 
 static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
@@ -1825,59 +1791,10 @@ static bool install_inbound_ipsec_kernel_policies(struct state *st)
 	}
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-
-		struct kernel_policy kernel_policy =
-			kernel_policy_from_state(st, spd, DIRECTION_INBOUND, HERE);
 		selector_pair_buf spb;
 		ldbg(logger, "kernel: %s() is installing SPD for %s",
-		     __func__, str_selector_pair(&kernel_policy.src.client, &kernel_policy.dst.client, &spb));
-
-#if defined(HAVE_NFTABLES)
-		if (spd->local->child->has_cat) {
-			ip_selector client = selector_from_address(spd->local->host->addr);
-
-			if (!raw_policy(KERNEL_POLICY_OP_ADD,
-					DIRECTION_INBOUND,
-					EXPECT_KERNEL_POLICY_OK,
-					&kernel_policy.src.route,	/* src_client */
-					&client,
-					&kernel_policy,			/* " */
-					deltatime(0),		/* lifetime */
-					kernel_policy.sa_marks,
-					kernel_policy.xfrmi,
-					kernel_policy.id,
-					kernel_policy.sec_label,
-					st->st_logger,
-					"%s() add inbound Child SA", __func__)) {
-				selector_pair_buf spb;
-				llog(RC_LOG, st->st_logger,
-				     "kernel: %s() failed to add SPD for %s",
-				     __func__,
-				     str_selector_pair(&kernel_policy.src.client, &kernel_policy.dst.client, &spb));
-			}
-
-		}
-#endif
-
-		if (!raw_policy(KERNEL_POLICY_OP_ADD,
-				DIRECTION_INBOUND,
-				EXPECT_KERNEL_POLICY_OK,
-				&kernel_policy.src.route,	/* src_client */
-				&kernel_policy.dst.route,	/* dst_client */
-				&kernel_policy,			/* " */
-				deltatime(0),		/* lifetime */
-				kernel_policy.sa_marks,
-				kernel_policy.xfrmi,
-				kernel_policy.id,
-				kernel_policy.sec_label,
-				st->st_logger,
-				"%s() add inbound Child SA", __func__)) {
-			selector_pair_buf spb;
-			llog(RC_LOG, st->st_logger,
-			     "kernel: %s() failed to add SPD for %s",
-			     __func__,
-			     str_selector_pair(&kernel_policy.src.client, &kernel_policy.dst.client, &spb));
-		}
+		     __func__, str_selector_pair(&spd->remote->client, &spd->local->client, &spb));
+		install_inbound_ipsec_kernel_policy(pexpect_child_sa(st), spd, HERE);
 	}
 
 	return true;
@@ -2302,40 +2219,10 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 							       st->st_logger, HERE,
 							       "install IPsec block policy");
 		} else {
-			const struct kernel_policy kernel_policy =
-				kernel_policy_from_state(st, spd, DIRECTION_OUTBOUND, HERE);
-			/* check for no transform at all */
-			PASSERT(st->st_logger, kernel_policy.nr_rules > 0);
-			if (spd->local->child->has_cat) {
-				ip_selector client = selector_from_address(spd->local->host->addr);
-				if (!raw_policy(op, DIRECTION_OUTBOUND,
-						EXPECT_KERNEL_POLICY_OK,
-						&client,
-						&kernel_policy.dst.route,
-						&kernel_policy,
-						deltatime(0),
-						kernel_policy.sa_marks,
-						kernel_policy.xfrmi,
-						kernel_policy.id,
-						kernel_policy.sec_label,
-						st->st_logger,
-						"CAT: %s() %s", __func__, "install IPsec CAT policy")) {
-					llog(RC_LOG, st->st_logger,
-					     "CAT: failed to eroute additional Client Address Translation policy");
-				}
-			}
 			ok = spd->wip.installed.policy =
-				raw_policy(op, DIRECTION_OUTBOUND,
-					   EXPECT_KERNEL_POLICY_OK,
-					   &kernel_policy.src.route, &kernel_policy.dst.route,
-					   &kernel_policy,
-					   deltatime(0),
-					   kernel_policy.sa_marks,
-					   kernel_policy.xfrmi,
-					   kernel_policy.id,
-					   kernel_policy.sec_label,
-					   st->st_logger,
-					   "%s() %s", __func__, "install IPsec policy");
+				install_outbound_ipsec_kernel_policy(pexpect_child_sa(st), spd,
+								     spd->wip.conflicting.shunt != NULL,
+								     HERE);
 		}
 	}
 
@@ -3035,29 +2922,9 @@ void orphan_holdpass(struct connection *c,
 	 * included?
 	 */
 
-	struct kernel_policy kernel_policy =
-		kernel_policy_from_void(src, dst, DIRECTION_OUTBOUND,
-					/* we don't know connection for priority yet */
-					highest_kernel_priority,
-					FAILURE_SHUNT, c->config->shunt[FAILURE_SHUNT],
-					/* XXX: bug; use from_spd() */
-					/*sa_marks*/NULL, /*xfrmi*/NULL,
-					/*sec_label;bug?*/null_shunk,
-					HERE);
-
-	if (raw_policy(KERNEL_POLICY_OP_REPLACE,
-		       DIRECTION_OUTBOUND,
-		       EXPECT_KERNEL_POLICY_OK,
-		       &kernel_policy.src.client,
-		       &kernel_policy.dst.client,
-		       &kernel_policy,
-		       deltatime(SHUNT_PATIENCE),
-		       kernel_policy.sa_marks/*NULL*/,
-		       kernel_policy.xfrmi/*NULL*/,
-		       kernel_policy.id,
-		       kernel_policy.sec_label,
-		       logger,
-		       "%s() %s", __func__, why)) {
+	if (install_bare_kernel_policy(src, dst,
+				       FAILURE_SHUNT, c->config->shunt[FAILURE_SHUNT],
+				       logger, HERE)) {
 		/*
 		 * Change over to new bare eroute ours, peers,
 		 * transport_proto are the same.

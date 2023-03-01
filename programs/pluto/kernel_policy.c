@@ -37,15 +37,22 @@
 
 #include "kernel_xfrm_interface.h"		/* for dumping struct pluto_xfrmi */
 
-struct kernel_policy kernel_policy_from_void(ip_selector local, ip_selector remote,
-					     enum direction direction,
-					     kernel_priority_t priority,
-					     enum shunt_kind shunt_kind,
-					     enum shunt_policy shunt_policy,
-					     const struct sa_marks *sa_marks,
-					     const struct pluto_xfrmi *xfrmi,
-					     const shunk_t sec_label,
-					     where_t where)
+
+/*
+ * A kernel policy that does not have a state.  Typically constructed
+ * from a bare shunt but can also be for a prospective shunt when
+ * sec_label gets involved.
+ */
+
+static struct kernel_policy kernel_policy_from_void(ip_selector local, ip_selector remote,
+						    enum direction direction,
+						    kernel_priority_t priority,
+						    enum shunt_kind shunt_kind,
+						    enum shunt_policy shunt_policy,
+						    const struct sa_marks *sa_marks,
+						    const struct pluto_xfrmi *xfrmi,
+						    const shunk_t sec_label,
+						    where_t where)
 {
 	const ip_selector *src;
 	const ip_selector *dst;
@@ -207,10 +214,10 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 	return kernel_policy;
 }
 
-struct kernel_policy kernel_policy_from_state(const struct state *st,
-					      const struct spd_route *spd,
-					      enum direction direction,
-					      where_t where)
+static struct kernel_policy kernel_policy_from_state(const struct state *st,
+						     const struct spd_route *spd,
+						     enum direction direction,
+						     where_t where)
 {
 	bool tunnel = false;
 	lset_t policy = LEMPTY;
@@ -489,4 +496,134 @@ bool delete_cat_kernel_policy(const struct spd_route *spd,
 				    DEFAULT_KERNEL_POLICY_ID,
 				    HUNK_AS_SHUNK(spd->connection->config->sec_label),
 				    logger, where, reason);
+}
+
+void install_inbound_ipsec_kernel_policy(struct child_sa *child,
+					 struct spd_route *spd,
+					 where_t where)
+{
+	struct kernel_policy kernel_policy =
+		kernel_policy_from_state(&child->sa, spd, DIRECTION_INBOUND, where);
+	selector_pair_buf spb;
+	ldbg_sa(child, "kernel: %s() is installing SPD for %s",
+		__func__, str_selector_pair(&kernel_policy.src.client, &kernel_policy.dst.client, &spb));
+
+#if defined(HAVE_NFTABLES)
+	if (spd->local->child->has_cat) {
+		ip_selector client = selector_from_address(spd->local->host->addr);
+
+		if (!raw_policy(KERNEL_POLICY_OP_ADD,
+				DIRECTION_INBOUND,
+				EXPECT_KERNEL_POLICY_OK,
+				&kernel_policy.src.route,	/* src_client */
+				&client,
+				&kernel_policy,			/* " */
+				deltatime(0),		/* lifetime */
+				kernel_policy.sa_marks,
+				kernel_policy.xfrmi,
+				kernel_policy.id,
+				kernel_policy.sec_label,
+				st->st_logger,
+				"%s() add inbound Child SA", __func__)) {
+			selector_pair_buf spb;
+			llog(RC_LOG, st->st_logger,
+			     "kernel: %s() failed to add SPD for %s",
+			     __func__,
+			     str_selector_pair(&kernel_policy.src.client, &kernel_policy.dst.client, &spb));
+		}
+
+	}
+#endif
+
+	if (!raw_policy(KERNEL_POLICY_OP_ADD,
+			DIRECTION_INBOUND,
+			EXPECT_KERNEL_POLICY_OK,
+			&kernel_policy.src.route,	/* src_client */
+			&kernel_policy.dst.route,	/* dst_client */
+			&kernel_policy,			/* " */
+			deltatime(0),		/* lifetime */
+			kernel_policy.sa_marks,
+			kernel_policy.xfrmi,
+			kernel_policy.id,
+			kernel_policy.sec_label,
+			child->sa.st_logger,
+			"%s() add inbound Child SA", __func__)) {
+		selector_pair_buf spb;
+		llog_sa(RC_LOG, child,
+			"kernel: %s() failed to add SPD for %s",
+			__func__,
+			str_selector_pair(&kernel_policy.src.client, &kernel_policy.dst.client, &spb));
+	}
+}
+
+bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
+					  struct spd_route *spd,
+					  bool replace, where_t where)
+{
+	enum kernel_policy_op op = (replace ? KERNEL_POLICY_OP_REPLACE :
+				    KERNEL_POLICY_OP_ADD);
+	const struct kernel_policy kernel_policy =
+		kernel_policy_from_state(&child->sa, spd, DIRECTION_OUTBOUND, where);
+	/* check for no transform at all */
+	PASSERT(child->sa.st_logger, kernel_policy.nr_rules > 0);
+	if (spd->local->child->has_cat) {
+		ip_selector client = selector_from_address(spd->local->host->addr);
+		if (!raw_policy(op, DIRECTION_OUTBOUND,
+				EXPECT_KERNEL_POLICY_OK,
+				&client,
+				&kernel_policy.dst.route,
+				&kernel_policy,
+				deltatime(0),
+				kernel_policy.sa_marks,
+				kernel_policy.xfrmi,
+				kernel_policy.id,
+				kernel_policy.sec_label,
+				child->sa.st_logger,
+				"CAT: %s() %s", __func__, "install IPsec CAT policy")) {
+			llog_sa(RC_LOG, child,
+				"CAT: failed to eroute additional Client Address Translation policy");
+		}
+	}
+	return raw_policy(op, DIRECTION_OUTBOUND,
+			   EXPECT_KERNEL_POLICY_OK,
+			   &kernel_policy.src.route, &kernel_policy.dst.route,
+			   &kernel_policy,
+			   deltatime(0),
+			   kernel_policy.sa_marks,
+			   kernel_policy.xfrmi,
+			   kernel_policy.id,
+			   kernel_policy.sec_label,
+			   child->sa.st_logger,
+			   "%s() %s", __func__, "install IPsec policy");
+}
+
+bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
+				enum shunt_kind shunt_kind,
+				enum shunt_policy shunt_policy,
+				struct logger *logger, where_t where)
+{
+	struct kernel_policy kernel_policy =
+		kernel_policy_from_void(src, dst,
+					/*always*/DIRECTION_OUTBOUND,
+					highest_kernel_priority,
+					shunt_kind, shunt_policy,
+					/*sa_marks*/NULL, /*xfrmi*/NULL,
+					/* bare shunt are not
+					 * associated with any
+					 * connection so no
+					 * security label */
+					/*sec_label*/null_shunk,
+					where);
+	return raw_policy(KERNEL_POLICY_OP_REPLACE,
+			  DIRECTION_OUTBOUND,
+			  EXPECT_KERNEL_POLICY_OK,
+			  &kernel_policy.src.client,
+			  &kernel_policy.dst.client,
+			  &kernel_policy,
+			  deltatime(SHUNT_PATIENCE),
+			  kernel_policy.sa_marks/*NULL*/,
+			  kernel_policy.xfrmi/*NULL*/,
+			  kernel_policy.id, /*0*/
+			  kernel_policy.sec_label/*null_shunk*/,
+			  logger, "%s() %s", __func__, where->func);
 }

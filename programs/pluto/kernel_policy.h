@@ -34,32 +34,6 @@ struct logger;
 struct spd_route;
 
 /*
- * A kernel policy that does not have a state.  Typically constructed
- * from a bare shunt but can also be for a prospective shunt when
- * sec_label gets involved.
- */
-
-struct kernel_policy kernel_policy_from_void(ip_selector local, ip_selector remote,
-					     enum direction direction,
-					     kernel_priority_t priority,
-					     enum shunt_kind shunt_kind,
-					     enum shunt_policy shunt_policy,
-					     const struct sa_marks *sa_marks,
-					     const struct pluto_xfrmi *xfrmi,
-					     const shunk_t sec_label,
-					     where_t where);
-
-/*
- * Kernel policy of an established IPsec connection aka
- * ROUTED_TUNNELED.
- */
-
-struct kernel_policy kernel_policy_from_state(const struct state *st,
-					      const struct spd_route *spd,
-					      enum direction direction,
-					      where_t where);
-
-/*
  * Bare Kernel Policies (i.e., do not have a state).
  *
  * These are installed when a connection transitions to
@@ -128,5 +102,16 @@ bool delete_cat_kernel_policy(const struct spd_route *spd,
 			      struct logger *logger,
 			      where_t where,
 			      const char *story);
+
+void install_inbound_ipsec_kernel_policy(struct child_sa *child, struct spd_route *spd,
+					 where_t where);
+bool install_outbound_ipsec_kernel_policy(struct child_sa *child, struct spd_route *spd,
+					  bool replace, where_t where);
+
+
+bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
+				enum shunt_kind shunt_kind,
+				enum shunt_policy shunt_policy,
+				struct logger *logger, where_t where);
 
 #endif
