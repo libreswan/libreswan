@@ -1,7 +1,7 @@
 
 See also https://libreswan.org/
 
-v4.10 (February 26, 2023)
+v4.10 (February 28, 2023)
 * SECURITY IKEv2: Fixes https://libreswan.org/security/CVE-2023-23009
 * IKEv1: only clean up a connection when it isn't deleted [Andrew]
 
