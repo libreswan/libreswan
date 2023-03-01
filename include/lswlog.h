@@ -307,7 +307,7 @@ void libreswan_exit(enum pluto_exit_code rc) NEVER_RETURNS;
  *   <log-prefix>ERROR: <message...>...
  */
 
-void log_error(struct logger *logger, int error,
+void log_error(const struct logger *logger, int error,
 	       const char *message, ...) PRINTF_LIKE(3);
 
 #define llog_error(LOGGER, ERRNO, FMT, ...)				\

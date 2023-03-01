@@ -19,7 +19,7 @@
 
 #include "lswlog.h"
 
-void log_error(struct logger *logger, int error, const char *fmt, ...)
+void log_error(const struct logger *logger, int error, const char *fmt, ...)
 {
 	char output[LOG_WIDTH];
 	struct jambuf buf[] = { ARRAY_AS_JAMBUF(output), };
