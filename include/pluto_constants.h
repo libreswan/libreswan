@@ -835,6 +835,7 @@ size_t jam_policy(struct jambuf *buf, lset_t policy);
 
 enum shunt_policy {
 	SHUNT_UNSET,
+	SHUNT_IPSEC,	/* only valid with KIND IPSEC */
 	SHUNT_NONE,
 	SHUNT_HOLD, /* during negotiation, don't change */
 	SHUNT_TRAP,
@@ -845,15 +846,15 @@ enum shunt_policy {
 };
 
 enum shunt_kind {
-	PROSPECTIVE_SHUNT,
-	NEGOTIATION_SHUNT,
-	FAILURE_SHUNT,
-	BLOCK_SHUNT,
-#define prospective_shunt shunt[PROSPECTIVE_SHUNT]	/* before */
-#define negotiation_shunt shunt[NEGOTIATION_SHUNT]	/* during */
-#define failure_shunt shunt[FAILURE_SHUNT]		/* after */
-#define block_shunt shunt[BLOCK_SHUNT]			/* block */
-#define SHUNT_KIND_ROOF (BLOCK_SHUNT+1)
+	SHUNT_KIND_IPSEC,
+	SHUNT_KIND_PROSPECTIVE,
+	SHUNT_KIND_NEGOTIATION,
+	SHUNT_KIND_FAILURE,
+	SHUNT_KIND_BLOCK,
+#define prospective_shunt shunt[SHUNT_KIND_PROSPECTIVE]	/* before */
+#define negotiation_shunt shunt[SHUNT_KIND_NEGOTIATION]	/* during */
+#define failure_shunt shunt[SHUNT_KIND_FAILURE]		/* after */
+#define SHUNT_KIND_ROOF (SHUNT_KIND_BLOCK+1)
 };
 
 extern const struct enum_names shunt_kind_names;

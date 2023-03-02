@@ -1918,12 +1918,16 @@ static diag_t extract_connection(const struct whack_message *wm,
 		break;
 	}
 
-	d = extract_shunt("prospective", config, wm, PROSPECTIVE_SHUNT, /*unset*/SHUNT_TRAP);
+	d = extract_shunt("prospective", config, wm,
+			  SHUNT_KIND_PROSPECTIVE,
+			  /*unset*/SHUNT_TRAP);
 	if (d != NULL) {
 		return d;
 	}
 
-	d = extract_shunt("negotiation", config, wm, NEGOTIATION_SHUNT, /*unset*/SHUNT_HOLD);
+	d = extract_shunt("negotiation", config, wm,
+			  SHUNT_KIND_NEGOTIATION,
+			  /*unset*/SHUNT_HOLD);
 	if (d != NULL) {
 		return d;
 	}
@@ -1936,13 +1940,15 @@ static diag_t extract_connection(const struct whack_message *wm,
 		config->negotiation_shunt = SHUNT_HOLD;
 	}
 
-	d = extract_shunt("failure", config, wm, FAILURE_SHUNT, /*unset*/SHUNT_NONE);
+	d = extract_shunt("failure", config, wm,
+			  SHUNT_KIND_FAILURE,
+			  /*unset*/SHUNT_NONE);
 	if (d != NULL) {
 		return d;
 	}
 
 	/* make kernel code easier */
-	config->shunt[BLOCK_SHUNT] = SHUNT_DROP;
+	config->shunt[SHUNT_KIND_BLOCK] = SHUNT_DROP;
 
 	if (libreswan_fipsmode() && config->failure_shunt != SHUNT_NONE) {
 		enum_buf eb;

@@ -110,6 +110,8 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 						   const struct spd_route *spd,
 						   enum encap_mode mode,
 						   enum direction direction,
+						   enum shunt_kind shunt_kind,
+						   enum shunt_policy shunt_policy,
 						   where_t where)
 {
 	/*
@@ -166,7 +168,8 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 		.dst.route = dst_route,
 		.priority = calculate_kernel_priority(spd->connection),
 		.mode = mode,
-		.shunt = SHUNT_UNSET,
+		.kind = shunt_kind,
+		.shunt = shunt_policy,
 		.where = where,
 		.sa_marks = &spd->connection->sa_marks,
 		.xfrmi = spd->connection->xfrmi,
@@ -240,6 +243,8 @@ static struct kernel_policy kernel_policy_from_state(const struct state *st,
 	enum encap_mode mode = (tunnel ? ENCAP_MODE_TUNNEL : ENCAP_MODE_TRANSPORT);
 	struct kernel_policy kernel_policy = kernel_policy_from_spd(policy,
 								    spd, mode, direction,
+								    SHUNT_KIND_IPSEC,
+								    SHUNT_IPSEC,
 								    where);
 	return kernel_policy;
 }
@@ -267,7 +272,10 @@ bool install_bare_sec_label_kernel_policy(const struct spd_route *spd,
 	enum encap_mode encap_mode = (c->policy & POLICY_TUNNEL ? ENCAP_MODE_TUNNEL :
 				      ENCAP_MODE_TRANSPORT);
 	struct kernel_policy kernel_policy =
-		kernel_policy_from_spd(c->policy, spd, encap_mode, direction, where);
+		kernel_policy_from_spd(c->policy, spd, encap_mode, direction,
+				       SHUNT_KIND_IPSEC,
+				       SHUNT_IPSEC,
+				       where);
 	if (!raw_policy(op, direction,
 			existing_policy_expectation,
 			&kernel_policy.src.client,

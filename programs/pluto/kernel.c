@@ -185,13 +185,13 @@ static global_timer_cb kernel_scan_shunts;
 bool shunt_ok(enum shunt_kind shunt_kind, enum shunt_policy shunt_policy)
 {
 	static const bool ok[SHUNT_KIND_ROOF][SHUNT_POLICY_ROOF] = {
-		[PROSPECTIVE_SHUNT] = {
+		[SHUNT_KIND_PROSPECTIVE] = {
 			[SHUNT_NONE] = false, [SHUNT_HOLD] = false, [SHUNT_TRAP] = true,  [SHUNT_PASS] = true, [SHUNT_DROP] = true,  [SHUNT_REJECT] = true,
 		},
-		[NEGOTIATION_SHUNT] = {
+		[SHUNT_KIND_NEGOTIATION] = {
 			[SHUNT_NONE] = false, [SHUNT_HOLD] = true,  [SHUNT_TRAP] = false, [SHUNT_PASS] = true, [SHUNT_DROP] = false, [SHUNT_REJECT] = false,
 		},
-		[FAILURE_SHUNT] = {
+		[SHUNT_KIND_FAILURE] = {
 			[SHUNT_NONE] = true,  [SHUNT_HOLD] = false, [SHUNT_TRAP] = false, [SHUNT_PASS] = true, [SHUNT_DROP] = true,  [SHUNT_REJECT] = true,
 		},
 	};
@@ -220,7 +220,7 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 	 * Only the following shunts are valid.
 	 */
 	enum shunt_policy prospective = c->config->prospective_shunt;
-	passert(shunt_ok(PROSPECTIVE_SHUNT, prospective));
+	passert(shunt_ok(SHUNT_KIND_PROSPECTIVE, prospective));
 
 	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 		jam(buf, "kernel: %s() ", __func__);
@@ -271,7 +271,7 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 			if (!install_bare_spd_kernel_policy(spd, KERNEL_POLICY_OP_ADD, direction,
 							    /*XXX: should no policy be expected?*/
 							    EXPECT_KERNEL_POLICY_OK,
-							    PROSPECTIVE_SHUNT,
+							    SHUNT_KIND_PROSPECTIVE,
 							    logger, HERE,
 							    "prospective kernel_policy")) {
 				return false;
@@ -1329,7 +1329,7 @@ void assign_holdpass(struct connection *c UNUSED,
 	if (spd->local->child->has_cat) {
 		if (!install_bare_cat_kernel_policy(spd, op,
 						    EXPECT_KERNEL_POLICY_OK,
-						    NEGOTIATION_SHUNT,
+						    SHUNT_KIND_NEGOTIATION,
 						    logger, HERE, "acquired")) {
 			llog(RC_LOG, logger,
 			     "CAT: failed to install Client Address Translation kernel policy");
@@ -1338,7 +1338,7 @@ void assign_holdpass(struct connection *c UNUSED,
 
 	if (!install_bare_spd_kernel_policy(spd, op, DIRECTION_OUTBOUND,
 					    EXPECT_KERNEL_POLICY_OK,
-					    NEGOTIATION_SHUNT,
+					    SHUNT_KIND_NEGOTIATION,
 					    logger, HERE, reason)) {
 		llog(RC_LOG, logger,
 		     "%s() eroute_connection() failed", __func__);
@@ -2215,7 +2215,7 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 			ok = spd->wip.installed.policy =
 				install_bare_spd_kernel_policy(spd, op, DIRECTION_OUTBOUND,
 							       EXPECT_KERNEL_POLICY_OK,
-							       BLOCK_SHUNT,
+							       SHUNT_KIND_BLOCK,
 							       st->st_logger, HERE,
 							       "install IPsec block policy");
 		} else {
@@ -2537,7 +2537,7 @@ static void teardown_ipsec_kernel_policies(struct state *st,
 							    KERNEL_POLICY_OP_REPLACE,
 							    DIRECTION_OUTBOUND,
 							    EXPECT_KERNEL_POLICY_OK,
-							    PROSPECTIVE_SHUNT,
+							    SHUNT_KIND_PROSPECTIVE,
 							    logger, HERE, "replacing")) {
 				llog(RC_LOG, logger,
 				     "kernel: %s() replace outbound with prospective shunt failed", __func__);
@@ -2549,7 +2549,7 @@ static void teardown_ipsec_kernel_policies(struct state *st,
 							    KERNEL_POLICY_OP_REPLACE,
 							    DIRECTION_OUTBOUND,
 							    EXPECT_KERNEL_POLICY_OK,
-							    FAILURE_SHUNT,
+							    SHUNT_KIND_FAILURE,
 							    logger, HERE, "replacing")) {
 				llog(RC_LOG, logger,
 				     "kernel: %s() replace outbound with failure shunt failed", __func__);
@@ -2923,7 +2923,7 @@ void orphan_holdpass(struct connection *c,
 	 */
 
 	if (install_bare_kernel_policy(src, dst,
-				       FAILURE_SHUNT, c->config->shunt[FAILURE_SHUNT],
+				       SHUNT_KIND_FAILURE, c->config->shunt[SHUNT_KIND_FAILURE],
 				       logger, HERE)) {
 		/*
 		 * Change over to new bare eroute ours, peers,

@@ -557,19 +557,20 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 	unsigned xfrm_action;
 	const char *policy_name;
 	/* shunt route */
-	enum shunt_policy shunt_policy = (kernel_policy == NULL ? SHUNT_UNSET : kernel_policy->shunt);
+	enum shunt_policy shunt_policy =
+		(kernel_policy == NULL || kernel_policy->nr_rules == 0 ? SHUNT_UNSET :
+		 kernel_policy->shunt);
 	switch (shunt_policy) {
 	case SHUNT_UNSET:
+		/* MUST BE DELETE! */
+		policy_name = "delete(UNUSED)";
 		xfrm_action = XFRM_POLICY_ALLOW;
-		if (kernel_policy != NULL && kernel_policy->nr_rules > 0) {
-			policy_name =
-				(kernel_policy->mode == ENCAP_MODE_TUNNEL ? ip_protocol_ipip.name :
-				 kernel_policy->mode == ENCAP_MODE_TRANSPORT ? protocol_from_ipproto(kernel_policy->rule[kernel_policy->nr_rules-1].proto)->name :
-				 "UNKNOWN");
-		} else {
-			/* MUST BE DELETE! */
-			policy_name = "delete(UNUSED)";
-		}
+		break;
+	case SHUNT_IPSEC:
+		xfrm_action = XFRM_POLICY_ALLOW;
+		policy_name = (kernel_policy->mode == ENCAP_MODE_TUNNEL ? ip_protocol_ipip.name :
+			       kernel_policy->mode == ENCAP_MODE_TRANSPORT ? protocol_from_ipproto(kernel_policy->rule[kernel_policy->nr_rules-1].proto)->name :
+			       "UNKNOWN");
 		break;
 	case SHUNT_PASS:
 		xfrm_action = XFRM_POLICY_ALLOW;
@@ -851,7 +852,7 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 			if (!ok) {
 				break;
 			}
-			if (shunt_policy == SHUNT_UNSET &&
+			if (shunt_policy == SHUNT_IPSEC &&
 			    kernel_policy != NULL && kernel_policy->mode == ENCAP_MODE_TRANSPORT) {
 				break;
 			}

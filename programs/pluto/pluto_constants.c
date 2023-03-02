@@ -303,6 +303,7 @@ enum_names perspective_names = {
 static const char *const shunt_policy_name[] = {
 #define A(S) [S] = #S
 	A(SHUNT_UNSET),
+	A(SHUNT_IPSEC),
 	A(SHUNT_HOLD),
 	A(SHUNT_NONE),
 	A(SHUNT_PASS),
@@ -320,18 +321,19 @@ enum_names shunt_policy_names = {
 };
 
 static const char *const shunt_kind_name[] = {
-#define A(S) [S##_SHUNT] = #S
-	A(NEGOTIATION),
-	A(FAILURE),
-	A(BLOCK),
-	A(PROSPECTIVE),
+#define A(S) [S] = #S
+	A(SHUNT_KIND_IPSEC),
+	A(SHUNT_KIND_NEGOTIATION),
+	A(SHUNT_KIND_FAILURE),
+	A(SHUNT_KIND_BLOCK),
+	A(SHUNT_KIND_PROSPECTIVE),
 #undef A
 };
 
 enum_names shunt_kind_names = {
 	0, SHUNT_KIND_ROOF-1,
 	ARRAY_REF(shunt_kind_name),
-	"SHUNT_", /* prefix */
+	"SHUNT_KIND_", /*PREFIX*/
 	NULL,
 };
 

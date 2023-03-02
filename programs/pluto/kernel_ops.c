@@ -83,11 +83,11 @@ bool raw_policy(enum kernel_policy_op op,
 			jam(buf, "=>");
 			jam_address(buf, &policy->dst.host);
 			jam_string(buf, ",");
-			jam_enum(buf, &shunt_kind_names, policy->kind);
+			jam_enum_short(buf, &shunt_kind_names, policy->kind);
 			jam_string(buf, "=");
-			jam_enum(buf, &shunt_policy_names, policy->shunt);
+			jam_enum_short(buf, &shunt_policy_names, policy->shunt);
 			jam_string(buf, ",");
-			jam(buf, ",priority=%"PRI_KERNEL_PRIORITY,
+			jam(buf, "priority=%"PRI_KERNEL_PRIORITY,
 			    pri_kernel_priority(policy->priority));
 			/*
 			 * Print outer-to-inner and use paren to show
@@ -102,7 +102,7 @@ bool raw_policy(enum kernel_policy_op op,
 			for (unsigned i = policy->nr_rules; i > 0; i--) {
 				const struct kernel_policy_rule *rule = &policy->rule[i-1];
 				const struct ip_protocol *rule_proto = protocol_from_ipproto(rule->proto);
-				jam(buf, "%s!%d(", rule_proto->name, rule->reqid);
+				jam(buf, "%s@%d(", rule_proto->name, rule->reqid);
 			}
 			if (policy->nr_rules > 0) {
 				/* XXX: should use stuff from selector */

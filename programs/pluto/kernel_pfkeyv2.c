@@ -1189,7 +1189,9 @@ static bool pfkeyv2_raw_policy(enum kernel_policy_op op,
 			       const shunk_t sec_label UNUSED,
 			       struct logger *logger)
 {
-	enum shunt_policy shunt_policy = (kernel_policy == NULL ? SHUNT_UNSET : kernel_policy->shunt);
+	enum shunt_policy shunt_policy =
+		(kernel_policy == NULL || kernel_policy->nr_rules == 0 ? SHUNT_UNSET :
+		 kernel_policy->shunt);
 #ifdef __OpenBSD__
 
 	enum sadb_type type = (op == KERNEL_POLICY_OP_ADD ? SADB_X_ADDFLOW :
@@ -1231,6 +1233,9 @@ static bool pfkeyv2_raw_policy(enum kernel_policy_op op,
 	case SHUNT_UNSET:
 		policy_type = SADB_X_FLOW_TYPE_REQUIRE;
 		/* XXX: XFRM also considers delete here? */
+		break;
+	case SHUNT_IPSEC:
+		policy_type = SADB_X_FLOW_TYPE_REQUIRE;
 		break;
 	case SHUNT_HOLD:
 		pexpect(0);
@@ -1337,6 +1342,9 @@ static bool pfkeyv2_raw_policy(enum kernel_policy_op op,
 	case SHUNT_UNSET:
 		policy_type = IPSEC_POLICY_IPSEC;
 		/* XXX: XFRM also considers delete here? */
+		break;
+	case SHUNT_IPSEC:
+		policy_type = IPSEC_POLICY_IPSEC;
 		break;
 	case SHUNT_HOLD:
 		pexpect(0);
