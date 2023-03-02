@@ -651,17 +651,6 @@ define create-kvm-network
 	$(VIRSH) net-start $(basename $(notdir $(1)))
 endef
 
-define destroy-kvm-network
-	: destroy-kvm-network network=$(strip $(1))
-	if $(VIRSH) net-info '$(basename $(notdir $(1)))' 2>/dev/null | grep 'Active:.*yes' > /dev/null ; then \
-		$(VIRSH) net-destroy '$(basename $(notdir $(1)))' ; \
-	fi
-	if $(VIRSH) net-info '$(basename $(notdir $(1)))' >/dev/null 2>&1 ; then \
-		$(VIRSH) net-undefine '$(basename $(notdir $(1)))' ; \
-	fi
-	rm -f $(1)
-endef
-
 
 #
 # The Gateway
@@ -684,7 +673,7 @@ KVM_GATEWAY_FILE = $(KVM_POOLDIR)/$(KVM_GATEWAY).gw
 
 $(KVM_POOLDIR)/$(KVM_GATEWAY).gw: | testing/libvirt/net/$(KVM_GATEWAY)
 $(KVM_POOLDIR)/$(KVM_GATEWAY).gw: | $(KVM_POOLDIR)
-	$(call destroy-kvm-network, $@)
+	./testing/libvirt/kvm-uninstall-network.sh $@
 	$(call create-kvm-network, testing/libvirt/net/$(KVM_GATEWAY))
 	touch $@
 
@@ -706,7 +695,7 @@ KVM_BRIDGE_NAME = $(strip $(if $(patsubst 192_%,,$*), \
 			swan$(subst _,,$(patsubst %192_,,$*))))
 
 $(KVM_LOCALDIR)/%.net: | $(KVM_LOCALDIR)
-	$(call destroy-kvm-network, $@)
+	./testing/libvirt/kvm-uninstall-network.sh $@
 	rm -f '$@.tmp'
 	echo "<network ipv6='yes'>" 					>> '$@.tmp'
 	echo "  <name>$*</name>"					>> '$@.tmp'
@@ -728,12 +717,10 @@ kvm-gateway: $(KVM_GATEWAY_FILE)
 kvm-networks: $(KVM_TEST_NETWORKS)
 .PHONY: kvm-uninstall-networks
 kvm-uninstall-networks:
-	$(foreach network, $(KVM_TEST_NETWORKS), \
-		$(call destroy-kvm-network, $(network)))
+	./testing/libvirt/kvm-uninstall-network.sh $(KVM_TEST_NETWORKS)
 .PHONY: kvm-uninstall-gateway
 kvm-uninstall-gateway:
-	$(call destroy-kvm-network, $(KVM_GATEWAY_FILE))
-
+	./testing/libvirt/kvm-uninstall-network.sh $(KVM_GATEWAY_FILE)
 
 ##
 ##
