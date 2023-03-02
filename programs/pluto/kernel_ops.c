@@ -46,13 +46,9 @@ bool raw_policy(enum kernel_policy_op op,
 	if (policy == NULL) {
 		pexpect(op == KERNEL_POLICY_OP_DELETE);
 	} else {
-		pexpect((op == KERNEL_POLICY_OP_DELETE) <=/*implies*/ (policy->priority.value == 0));
-		pexpect((op == KERNEL_POLICY_OP_DELETE) <=/*implies*/ (policy->nr_rules == 0));
-		pexpect((op == KERNEL_POLICY_OP_DELETE) <=/*implies*/ (policy->shunt == SHUNT_UNSET));
-		pexpect((policy->nr_rules == 0) <=/*implies*/ (policy->shunt == SHUNT_UNSET ||
-							       policy->shunt == SHUNT_PASS));
-		/* policies with matching states are SHUNT_UNSET */
-		pexpect((policy->nr_rules > 0) <=/*implies*/ (policy->shunt != SHUNT_PASS));
+		pexpect(op != KERNEL_POLICY_OP_DELETE);
+		pexpect(policy->shunt != SHUNT_UNSET);
+		pexpect((policy->nr_rules == 0) ==/*iff*/ (policy->shunt == SHUNT_PASS));
 	}
 
 	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
