@@ -26,7 +26,8 @@
 
 static struct root_certs *root_cert_db;
 
-static void root_certs_free(void *obj, where_t unused_where UNUSED)
+static void root_certs_free(void *obj, const struct logger *unused_logger UNUSED,
+			    where_t unused_where UNUSED)
 {
 	struct root_certs *root_certs = obj;
 	dbg("destroying root certificate cache");
@@ -107,7 +108,7 @@ struct root_certs *root_certs_addref_where(where_t where)
 
 void root_certs_delref_where(struct root_certs **root_certs, where_t where)
 {
-	delref_where(root_certs, where);
+	delref_where(root_certs, &global_logger, where);
 }
 
 bool root_certs_empty(const struct root_certs *root_certs)

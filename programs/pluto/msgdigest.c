@@ -20,7 +20,7 @@
 #include "demux.h"      /* needs packet.h */
 #include "iface.h"
 
-static void free_md(void *obj, where_t where)
+static void free_md(void *obj, const struct logger *logger UNUSED, where_t where)
 {
 	struct msg_digest *md = obj;
 	free_chunk_content(&md->raw_packet);
@@ -66,5 +66,8 @@ struct msg_digest *md_addref_where(struct msg_digest *md, where_t where)
 
 void md_delref_where(struct msg_digest **mdp, where_t where)
 {
-	delref_where(mdp, where);
+	/* need non-NULL so .md_logger is available */
+	if (*mdp != NULL) {
+		delref_where(mdp, (*mdp)->md_logger, where);
+	}
 }

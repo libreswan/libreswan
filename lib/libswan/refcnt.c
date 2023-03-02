@@ -107,11 +107,13 @@ unsigned refcnt_peek(const refcnt_t *refcnt)
 	return val;
 }
 
-void refcnt_delref_where(const char *what, void *pointer, struct refcnt *refcnt,
+void refcnt_delref_where(const char *what, void *pointer,
+			 struct refcnt *refcnt,
+			 const struct logger *logger,
 			 const struct where *where)
 {
 	if (pointer == NULL) {
-		dbg("delref %s@NULL "PRI_WHERE"", what, pri_where(where));
+		ldbg(logger, "delref %s@NULL "PRI_WHERE"", what, pri_where(where));
 		return;
 	}
 
@@ -127,11 +129,11 @@ void refcnt_delref_where(const char *what, void *pointer, struct refcnt *refcnt,
 	}
 	pthread_mutex_unlock(&refcnt_mutex);
 	if (old == 0) {
-		llog_pexpect(&global_logger, where, "refcnt for %s@%p should have been non-0",
-			    what, pointer);
+		llog_pexpect(logger, where, "refcnt for %s@%p should have been non-0",
+			     what, pointer);
 	}
 	DEBUG_LOG("del");
 	if (new == 0) {
-		refcnt->base->free(pointer, where);
+		refcnt->base->free(pointer, logger, where);
 	}
 }

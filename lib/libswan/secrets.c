@@ -998,7 +998,7 @@ struct pubkey *pubkey_addref_where(struct pubkey *pk, where_t where)
 /*
  * free a public key struct
  */
-static void free_pubkey(void *obj, where_t where UNUSED)
+static void free_pubkey(void *obj, const struct logger *logger UNUSED, where_t where UNUSED)
 {
 	struct pubkey *pk = obj;
 	free_id_content(&pk->id);
@@ -1009,7 +1009,7 @@ static void free_pubkey(void *obj, where_t where UNUSED)
 
 void pubkey_delref_where(struct pubkey **pkp, where_t where)
 {
-	delref_where(pkp, where);
+	delref_where(pkp, &global_logger, where);
 }
 
 /*

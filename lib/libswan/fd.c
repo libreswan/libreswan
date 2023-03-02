@@ -37,19 +37,19 @@ struct fd *fd_addref_where(struct fd *fd, const struct where *where)
 	return addref_where(fd, where);
 }
 
-static void free_fd(void *obj, where_t where)
+static void free_fd(void *obj, const struct logger *logger, where_t where)
 {
 	struct fd *fd = obj;
 	pexpect(fd->magic == FD_MAGIC);
 	if (close(fd->fd) != 0) {
 		if (DBGP(DBG_BASE)) {
-			llog_errno(DEBUG_STREAM, &global_logger, errno,
+			llog_errno(DEBUG_STREAM, logger, errno,
 				   "freeref "PRI_FD" close() failed "PRI_WHERE": ",
 				   pri_fd(fd), pri_where(where));
 		}
 	} else {
-		dbg("freeref "PRI_FD" "PRI_WHERE"",
-		    pri_fd(fd), pri_where(where));
+		ldbg(logger, "freeref "PRI_FD" "PRI_WHERE"",
+		     pri_fd(fd), pri_where(where));
 	}
 	fd->magic = ~FD_MAGIC;
 	pfree(fd);
@@ -57,7 +57,7 @@ static void free_fd(void *obj, where_t where)
 
 void fd_delref_where(struct fd **fd, where_t where)
 {
-	delref_where(fd, where);
+	delref_where(fd, &global_logger, where);
 }
 
 void fd_leak(struct fd *fd, where_t where)

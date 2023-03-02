@@ -108,7 +108,7 @@ static bool stale_checked;
 static uint32_t xfrm_interface_id = IPSEC1_XFRM_IF_ID; /* XFRMA_IF_ID && XFRMA_SET_MARK */
 
 /* Forward declaration */
-static void free_xfrmi(void *object, where_t where);
+static void free_xfrmi(void *object, const struct logger *logger, where_t where);
 
 /* Return 0 (XFRMI_SUCCESS) on success or non-zero (XFRMI_FAILURE) on failure.
  * Later, if necessary, more detailed failure codes can be returned. */
@@ -710,12 +710,11 @@ bool add_xfrm_interface(struct connection *c, struct logger *logger)
 }
 
 /* This function is a callback that will be called by refcnt reaches 0 */
-static void free_xfrmi(void *object, where_t where)
+static void free_xfrmi(void *object, const struct logger *logger, where_t where)
 {
 	struct pluto_xfrmi *xfrmi = (struct pluto_xfrmi *) object;
 	struct pluto_xfrmi **pp;
 	struct pluto_xfrmi *p;
-	const struct logger *logger = &global_logger;
 
 	for (pp = &pluto_xfrm_interfaces; (p = *pp) != NULL; pp = &p->next) {
 		if (p == xfrmi) {
@@ -723,21 +722,21 @@ static void free_xfrmi(void *object, where_t where)
 			if (xfrmi->pluto_added) {
 				ip_link_del(xfrmi->name, logger);
 				llog(RC_LOG, logger,
-					"delete ipsec-interface=%s if_id=%u added by pluto"PRI_WHERE"",
-					xfrmi->name, xfrmi->if_id, pri_where(where));
+				     "delete ipsec-interface=%s if_id=%u added by pluto"PRI_WHERE"",
+				     xfrmi->name, xfrmi->if_id, pri_where(where));
 			} else {
 				llog(RC_LOG, logger,
-					"cannot delete ipsec-interface=%s if_id=%u, not created by pluto",
-					xfrmi->name, xfrmi->if_id);
+				     "cannot delete ipsec-interface=%s if_id=%u, not created by pluto",
+				     xfrmi->name, xfrmi->if_id);
 			}
 			pfreeany(xfrmi->name);
 			pfreeany(xfrmi);
 			return;
 		}
-		dbg("p=%p xfrmi=%p", p, xfrmi);
+		ldbg(logger, "p=%p xfrmi=%p", p, xfrmi);
 	}
-	dbg("p=%p xfrmi=%s if_id=%u not found in the list", xfrmi,
-			xfrmi->name, xfrmi->if_id);
+	ldbg(logger, "p=%p xfrmi=%s if_id=%u not found in the list", xfrmi,
+	     xfrmi->name, xfrmi->if_id);
 }
 
 /* at start call this to see if there are any stale interface lying around. */
@@ -796,9 +795,9 @@ void unreference_xfrmi(struct connection *c)
 {
 	passert(c->xfrmi != NULL);
 
-	dbg("unreference xfrmi=%p name=%s if_id=%u refcount=%u (before).",
-			c->xfrmi, c->xfrmi->name, c->xfrmi->if_id,
-			refcnt_peek(&(c->xfrmi->refcnt)));
+	ldbg(c->logger, "unreference xfrmi=%p name=%s if_id=%u refcount=%u (before).",
+	     c->xfrmi, c->xfrmi->name, c->xfrmi->if_id,
+	     refcnt_peek(&(c->xfrmi->refcnt)));
 
-	delref(&c->xfrmi);
+	delref(&c->xfrmi, c->logger);
 }

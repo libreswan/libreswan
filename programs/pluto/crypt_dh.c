@@ -75,7 +75,8 @@ static void jam_dh_local_secret(struct jambuf *buf, struct dh_local_secret *secr
 	jam(buf, "DH secret %s@%p: ", secret->group->common.fqn, secret);
 }
 
-static void free_dh_local_secret(void *obj, where_t where UNUSED)
+static void free_dh_local_secret(void *obj, const struct logger *unused_logger UNUSED,
+				 where_t unused_where UNUSED)
 {
 	struct dh_local_secret *secret = obj;
 	SECKEY_DestroyPublicKey(secret->pubk);
@@ -120,7 +121,7 @@ struct dh_local_secret *dh_local_secret_addref(struct dh_local_secret *secret, w
 
 void dh_local_secret_delref(struct dh_local_secret **secret, where_t where)
 {
-	delref_where(secret, where);
+	delref_where(secret, &global_logger, where);
 }
 
 struct task {

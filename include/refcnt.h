@@ -25,7 +25,7 @@
 
 struct refcnt_base {
 	const char *what;
-	void (*free)(void *object, where_t where);
+	void (*free)(void *object, const struct logger *logger, where_t where);
 };
 
 typedef struct refcnt {
@@ -89,19 +89,21 @@ void refcnt_addref_where(const char *what, const void *pointer,
  */
 
 void refcnt_delref_where(const char *what, void *pointer,
-			 struct refcnt *refcnt, where_t where);
+			 struct refcnt *refcnt,
+			 const struct logger *logger, where_t where);
 
-#define delref_where(OBJ, WHERE)					\
+#define delref_where(OBJ, LOGGER, WHERE)				\
 	{								\
 		typeof(OBJ) o_ = OBJ;					\
-		refcnt_delref_where(#OBJ, *o_, *o_ == NULL ? NULL : &(*o_)->refcnt, WHERE); \
+		refcnt_t *r_ = (*o_ == NULL ? NULL : &(*o_)->refcnt);	\
+		refcnt_delref_where(#OBJ, *o_, r_, LOGGER, WHERE);	\
 		*o_ = NULL; /*kill pointer */				\
 	}
 
-#define delref(OBJ)							\
+#define delref(OBJ, LOGGER)						\
 	{								\
 		where_t where = HERE;					\
-		delref_where(OBJ, where);				\
+		delref_where(OBJ, LOGGER, where);			\
 	}
 
 /* for code wanting to use refcnt for normal allocs */

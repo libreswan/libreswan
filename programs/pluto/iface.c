@@ -80,7 +80,8 @@ LIST_INFO(iface_dev, ifd_entry, iface_dev_info, jam_iface_dev);
 static struct list_head interface_dev = INIT_LIST_HEAD(&interface_dev,
 						       &iface_dev_info);
 
-static void free_iface_dev(void *obj, where_t where UNUSED)
+static void free_iface_dev(void *obj, const struct logger *unused_logger UNUSED,
+			   where_t unused_where UNUSED)
 {
 	struct iface_dev *ifd = obj;
 	remove_list_entry(&ifd->ifd_entry);
@@ -138,7 +139,7 @@ static void add_or_keep_iface_dev(struct raw_iface *ifp, struct logger *logger)
 
 void release_iface_dev(struct iface_dev **id)
 {
-	delref(id);
+	delref(id, &global_logger);
 }
 
 static void free_dead_ifaces(struct logger *logger)
@@ -207,7 +208,8 @@ static void free_dead_ifaces(struct logger *logger)
 }
 
 
-static void free_iface_endpoint(void *o, where_t where UNUSED)
+static void free_iface_endpoint(void *o, const struct logger *unused_logger UNUSED,
+				where_t unused_where UNUSED)
 {
 	struct iface_endpoint *ifp = o;
 	/* drop any lists */
@@ -246,7 +248,7 @@ struct iface_endpoint *alloc_iface_endpoint(int fd,
 
 void iface_endpoint_delref_where(struct iface_endpoint **ifp, where_t where)
 {
-	delref_where(ifp, where);
+	delref_where(ifp, &global_logger, where);
 }
 
 struct iface_endpoint *iface_endpoint_addref_where(struct iface_endpoint *ifp, where_t where)

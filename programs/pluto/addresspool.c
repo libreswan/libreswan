@@ -675,7 +675,8 @@ err_t lease_that_address(struct connection *c, const struct state *st,
 	return NULL;
 }
 
-static void free_addresspool(void *p, where_t where UNUSED)
+static void free_addresspool(void *p, const struct logger *unused_logger UNUSED,
+			     where_t unused_where UNUSED)
 {
 	struct addresspool *pool = p;
 
@@ -701,7 +702,7 @@ static void free_addresspool(void *p, where_t where UNUSED)
 
 void addresspool_delref(struct addresspool **pool)
 {
-	delref(pool);
+	delref(pool, &global_logger);
 }
 
 struct addresspool *addresspool_addref(struct addresspool *pool)

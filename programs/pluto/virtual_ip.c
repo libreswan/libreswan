@@ -214,7 +214,8 @@ void init_virtual_ip(const char *private_list,
  * @return virtual_ip
  */
 
-static void virtual_ip_free(void *obj, where_t where UNUSED)
+static void virtual_ip_free(void *obj, const struct logger *unused_logger UNUSED,
+			    where_t unused_where UNUSED)
 {
 	struct virtual_ip *vip = obj;
 	pfree(vip);
@@ -520,5 +521,5 @@ struct virtual_ip *virtual_ip_addref_where(struct virtual_ip *vip, where_t where
 
 void virtual_ip_delref_where(struct virtual_ip **vip, where_t where)
 {
-	delref_where(vip, where);
+	delref_where(vip, &global_logger, where);
 }
