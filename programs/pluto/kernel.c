@@ -1330,7 +1330,7 @@ void assign_holdpass(struct connection *c UNUSED,
 		if (!install_bare_cat_kernel_policy(spd, op,
 						    EXPECT_KERNEL_POLICY_OK,
 						    SHUNT_KIND_NEGOTIATION,
-						    logger, HERE, "acquired")) {
+						    logger, HERE, "CAT: acquired")) {
 			llog(RC_LOG, logger,
 			     "CAT: failed to install Client Address Translation kernel policy");
 		}

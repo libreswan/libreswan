@@ -30,8 +30,9 @@ extern bool raw_policy(enum kernel_policy_op op,
 		       const struct pluto_xfrmi *xfrmi,
 		       enum kernel_policy_id id,
 		       const shunk_t sec_label,
+		       where_t where,
 		       struct logger *logger,
-		       const char *fmt, ...) PRINTF_LIKE(13);
+		       const char *story);
 
 /*kernel_ops_state()? kernel_ops_sad()?*/
 bool kernel_ops_add_sa(const struct kernel_state *sa,

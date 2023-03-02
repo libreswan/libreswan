@@ -1,6 +1,6 @@
 /* kernel op wrappers, for libreswan
  *
- * Copyright (C) 2021 Andrew Cagney <cagney@gnu.org>
+ * Copyright (C) 2021-2023 Andrew Cagney <cagney@gnu.org>
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -38,8 +38,9 @@ bool raw_policy(enum kernel_policy_op op,
 		const struct pluto_xfrmi *xfrmi,
 		enum kernel_policy_id id,
 		const shunk_t sec_label,
+		where_t where,
 		struct logger *logger,
-		const char *fmt, ...)
+		const char *story)
 {
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
 	pexpect(client_proto == selector_protocol(*dst_client));
@@ -61,12 +62,6 @@ bool raw_policy(enum kernel_policy_op op,
 
 		jam_string(buf, " ");
 		jam_string(buf, expect_kernel_policy_name(expect_kernel_policy));
-
-		jam(buf, " ");
-		va_list ap;
-		va_start(ap, fmt);
-		jam_va_list(buf, fmt, ap);
-		va_end(ap);
 
 		jam(buf, " client=");
 		jam_selector_pair(buf, src_client, dst_client);
@@ -135,6 +130,11 @@ bool raw_policy(enum kernel_policy_op op,
 			jam_string(buf, " ");
 			jam(buf, PRI_WHERE, pri_where(policy->where));
 		}
+
+		jam(buf, " ");
+		jam_string(buf, story);
+		jam_string(buf, " ");
+		jam(buf, PRI_WHERE, pri_where(where));
 	}
 
 	if (policy != NULL) {
