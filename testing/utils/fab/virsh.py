@@ -173,7 +173,7 @@ class Domain:
             return self._console
         # already tried and failed
         self._console = False
-        raise pexpect.EOF("failed to start domain")
+        raise pexpect.EOF("failed to start domain %s" % self.domain_name)
 
     def dumpxml(self):
         if self._xml == None:
