@@ -1,6 +1,6 @@
 # KVM make targets, for Libreswan
 #
-# Copyright (C) 2015-2022 Andrew Cagney
+# Copyright (C) 2015-2023 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -202,7 +202,7 @@ freebsd = FREEBSD
 netbsd = NETBSD
 openbsd = OPENBSD
 
-# this is what could work
+# this is what works
 #KVM_PLATFORM += debian
 KVM_PLATFORM += fedora
 KVM_PLATFORM += freebsd
@@ -224,32 +224,7 @@ KVM_NETBSD_OS_VARIANT ?= $(shell osinfo-query os | awk '/netbsd[1-9]/ {print $$1
 KVM_OPENBSD_OS_VARIANT ?= $(shell osinfo-query os | awk '/openbsd[1-9]/ {print $$1}' | sort -V | tail -1)
 
 #
-# Hosts
-#
-
-KVM_FEDORA_HOST_NAMES = east west north road nic
-
-KVM_OS_HOST_NAMES = e w
-KVM_DEBIAN_HOST_NAMES = debiane debianw
-KVM_FREEBSD_HOST_NAMES = freebsde freebsdw
-KVM_NETBSD_HOST_NAMES = netbsde netbsdw
-KVM_OPENBSD_HOST_NAMES = openbsde openbsdw
-
-KVM_TEST_HOST_NAMES += $(KVM_FEDORA_HOST_NAMES)
-KVM_TEST_HOST_NAMES += \
-	$(foreach os, $(KVM_OS), \
-		$(foreach host, $(KVM_OS_HOST_NAMES), \
-			$(os)$(host)))
-KVM_BUILD_HOST_NAMES += $(foreach os, $(KVM_OS), $(os))
-KVM_BUILD_HOST_NAMES += $(foreach os, $(KVM_OS), $(os)-base)
-KVM_BUILD_HOST_NAMES += $(foreach os, $(KVM_OS), $(os)-upgrade)
-
-KVM_HOST_NAMES = $(KVM_TEST_HOST_NAMES) $(KVM_BUILD_HOST_NAMES)
-
-#
-# Domains
-#
-# Generate local names using prefixes
+# Hosts and Domains
 #
 
 strip-prefix = $(subst '',,$(subst "",,$(1)))
@@ -258,6 +233,73 @@ add-kvm-prefixes = \
 	$(foreach prefix, $(KVM_PREFIXES), \
 		$(addprefix $(call strip-prefix,$(prefix)),$(1)))
 KVM_FIRST_PREFIX = $(call strip-prefix,$(firstword $(KVM_PREFIXES)))
+
+KVM_OS_HOST_NAMES = e w
+
+define domains
+
+$(eval KVM_$($(strip $1))_BASE_HOST_NAME    = $(strip $1)-base)
+$(eval KVM_$($(strip $1))_UPGRADE_HOST_NAME = $(strip $1)-upgrade)
+$(eval KVM_$($(strip $1))_BUILD_HOST_NAME   = $(strip $1))
+
+$(eval KVM_$($(strip $1))_BASE_DOMAIN_NAME    = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_$($(strip $1))_BASE_HOST_NAME)))
+$(eval KVM_$($(strip $1))_UPGRADE_DOMAIN_NAME = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_$($(strip $1))_UPGRADE_HOST_NAME)))
+$(eval KVM_$($(strip $1))_BUILD_DOMAIN_NAME   = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_$($(strip $1))_BUILD_HOST_NAME)))
+
+$(eval KVM_$($(strip $1))_BASE_DOMAIN    = $(addprefix $(KVM_POOLDIR)/, $(KVM_$($(strip $1))_BASE_DOMAIN_NAME)))
+$(eval KVM_$($(strip $1))_UPGRADE_DOMAIN = $(addprefix $(KVM_POOLDIR)/, $(KVM_$($(strip $1))_UPGRADE_DOMAIN_NAME)))
+$(eval KVM_$($(strip $1))_BUILD_DOMAIN   = $(addprefix $(KVM_POOLDIR)/, $(KVM_$($(strip $1))_BUILD_DOMAIN_NAME)))
+
+$(eval KVM_$($(strip $1))_TEST_HOST_NAMES   = $(addprefix $1, $(KVM_OS_HOST_NAMES)))
+$(eval KVM_$($(strip $1))_TEST_DOMAIN_NAMES = $$(call add-kvm-prefixes, $(KVM_$($(strip $1))_TEST_HOST_NAMES)))
+$(eval KVM_$($(strip $1))_TEST_DOMAINS      = $(addprefix $(KVM_LOCALDIR)/, $(KVM_$($(strip $1))_TEST_DOMAIN_NAMES)))
+
+endef
+
+$(foreach platform, $(KVM_PLATFORM), \
+	$(call domains, $(platform)))
+
+KVM_BASE_HOST_NAMES   = $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform))_BASE_HOST_NAME))
+KVM_BASE_DOMAIN_NAMES = $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform))_BASE_DOMAIN_NAME))
+KVM_BASE_DOMAINS      = $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform))_BASE_DOMAIN))
+
+KVM_UPGRADE_HOST_NAMES   = $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform))_UPGRADE_HOST_NAME))
+KVM_UPGRADE_DOMAIN_NAMES = $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform))_UPGRADE_DOMAIN_NAME))
+KVM_UPGRADE_DOMAINS      = $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform))_UPGRADE_DOMAIN))
+
+KVM_BUILD_HOST_NAMES   = $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform))_BUILD_HOST_NAME))
+KVM_BUILD_DOMAIN_NAMES = $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform))_BUILD_DOMAIN_NAME))
+KVM_BUILD_DOMAINS      = $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform))_BUILD_DOMAIN))
+
+KVM_TEST_HOST_NAMES   = $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform))_TEST_HOST_NAMES))
+KVM_TEST_DOMAIN_NAMES = $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform))_TEST_DOMAIN_NAMES))
+KVM_TEST_DOMAINS      = $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform))_TEST_DOMAINS))
+
+KVM_FEDORA_HOST_NAMES = east west north road nic
+KVM_FEDORA_TEST_HOST_NAMES += $(KVM_FEDORA_HOST_NAMES)
+KVM_FEDORA_TEST_DOMAIN_NAMES += $(call add-kvm-prefixes, $(KVM_FEDORA_HOST_NAMES))
+KVM_FEDORA_TEST_DOMAINS += $(addprefix $(KVM_LOCALDIR)/, $(KVM_FEDORA_TEST_DOMAIN_NAMES))
+
+KVM_HOST_NAMES += $(KVM_BASE_HOST_NAMES)
+KVM_HOST_NAMES += $(KVM_UPGRADE_HOST_NAMES)
+KVM_HOST_NAMES += $(KVM_BUILD_HOST_NAMES)
+KVM_HOST_NAMES += $(KVM_TEST_HOST_NAMES)
+
+KVM_DOMAIN_NAMES += $(KVM_BASE_DOMAIN_NAMES)
+KVM_DOMAIN_NAMES += $(KVM_UPGRADE_DOMAIN_NAMES)
+KVM_DOMAIN_NAMES += $(KVM_BUILD_DOMAIN_NAMES)
+KVM_DOMAIN_NAMES += $(KVM_TEST_DOMAIN_NAMES)
+
+KVM_DOMAINS += $(KVM_BASE_DOMAINS)
+KVM_DOMAINS += $(KVM_UPGRADE_DOMAINS)
+KVM_DOMAINS += $(KVM_BUILD_DOMAINS)
+KVM_DOMAINS += $(KVM_TEST_DOMAINS)
+
+#
+# Domains
+#
+# Generate local names using prefixes
+#
 
 # targets for dumping the above; $(info) value to stdout when
 # evaluating the command @: gives make real work.
@@ -274,11 +316,6 @@ print-kvm-baseline: ; @:$(info $(KVM_BASELINE))
 .PHONY: print-kvm-platform
 print-kvm-platform: ; @:$(info $(KVM_PLATFORM))
 
-KVM_BUILD_DOMAIN_NAMES = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_BUILD_HOST_NAMES))
-KVM_TEST_DOMAIN_NAMES = $(call add-kvm-prefixes, $(KVM_TEST_HOST_NAMES))
-
-KVM_DOMAIN_NAMES = $(sort $(KVM_TEST_DOMAIN_NAMES) $(KVM_BUILD_DOMAIN_NAMES))
-
 KVM_POOLDIR_PREFIX = $(KVM_POOLDIR)/$(KVM_FIRST_PREFIX)
 KVM_LOCALDIR_PREFIXES = \
 	$(call strip-prefix, \
@@ -287,19 +324,6 @@ KVM_LOCALDIR_PREFIXES = \
 add-kvm-localdir-prefixes = \
 	$(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
 		$(patsubst %, $(prefix)%, $(1)))
-
-KVM_BUILD_DOMAINS = $(addprefix $(KVM_POOLDIR)/, $(KVM_BUILD_DOMAIN_NAMES))
-KVM_TEST_DOMAINS = $(addprefix $(KVM_LOCALDIR)/, $(KVM_TEST_DOMAIN_NAMES))
-
-KVM_PLATFORM_BUILD_HOST_NAMES += $(foreach platform, $(KVM_PLATFORM), $(platform))
-KVM_PLATFORM_BUILD_HOST_NAMES += $(foreach platform, $(KVM_PLATFORM), $(platform)-base)
-KVM_PLATFORM_BUILD_HOST_NAMES += $(foreach platform, $(KVM_PLATFORM), $(platform)-upgrade)
-
-KVM_PLATFORM_TEST_HOST_NAMES += $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform))_HOST_NAMES))
-
-KVM_PLATFORM_BUILD_DOMAIN_NAMES = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_PLATFORM_BUILD_HOST_NAMES))
-KVM_PLATFORM_TEST_DOMAIN_NAMES  = $(call add-kvm-prefixes, $(KVM_PLATFORM_TEST_HOST_NAMES))
-KVM_PLATFORM_DOMAIN_NAMES = $(KVM_PLATFORM_BUILD_DOMAIN_NAMES) $(KVM_PLATFORM_TEST_DOMAIN_NAMES)
 
 #
 # Other utilities and directories
@@ -497,6 +521,7 @@ STRIPPED_KVM_TEST_STATUS = $(subst $(sp),|,$(sort $(KVM_TEST_STATUS)))
 
 kvm-test kvm-check kvm-retest kvm-recheck: \
 kvm-%: $(KVM_HOST_OK) kvm-keys-ok
+	: $@
 	: shutdown all the build domains, kvmrunner shuts down the test domains
 	$(foreach domain, $(KVM_BUILD_DOMAINS), $(call shutdown-os-domain, $(domain)))
 	@$(MAKE) $(if $(WEB_ENABLED), web-test-prep, -s web-pages-disabled)
@@ -736,6 +761,7 @@ kvm-base: $(patsubst %, kvm-base-%, $(KVM_OS))
 
 $(patsubst %, kvm-base-%, $(KVM_PLATFORM)): \
 kvm-base-%:
+	: $@
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)-base
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)-base.*
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-base
@@ -813,7 +839,6 @@ $(KVM_FEDORA_ISO): | $(KVM_POOLDIR)
 	wget --output-document $@.tmp --no-clobber -- $(KVM_FEDORA_ISO_URL)
 	mv $@.tmp $@
 
-KVM_FEDORA_BASE_DOMAIN = $(KVM_POOLDIR_PREFIX)fedora-base
 KVM_FEDORA_VIRT_INSTALL_FLAGS = \
 	--location=$(KVM_FEDORA_ISO) \
 	--initrd-inject=$(KVM_FEDORA_KICKSTART_FILE) \
@@ -842,7 +867,6 @@ $(KVM_FREEBSD_ISO): | $(KVM_POOLDIR)
 	wget --output-document $@.xz --no-clobber -- $(KVM_FREEBSD_ISO_URL).xz
 	xz --uncompress --keep $@.xz
 
-KVM_FREEBSD_BASE_DOMAIN = $(KVM_POOLDIR_PREFIX)freebsd-base
 KVM_FREEBSD_BASE_ISO = $(KVM_FREEBSD_BASE_DOMAIN).iso
 KVM_FREEBSD_VIRT_INSTALL_FLAGS = \
        --cdrom=$(KVM_FREEBSD_BASE_ISO)
@@ -887,7 +911,6 @@ $(KVM_NETBSD_BOOT_ISO): | $(KVM_POOLDIR)
 	wget --output-document $@.tmp --no-clobber -- $(KVM_NETBSD_BOOT_ISO_URL)
 	mv $@.tmp $@
 
-KVM_NETBSD_BASE_DOMAIN = $(KVM_POOLDIR_PREFIX)netbsd-base
 KVM_NETBSD_BASE_ISO = $(KVM_NETBSD_BASE_DOMAIN).iso
 KVM_NETBSD_VIRT_INSTALL_FLAGS = \
 	--cdrom=$(KVM_NETBSD_BOOT_ISO) \
@@ -933,7 +956,6 @@ $(KVM_OPENBSD_ISO): | $(KVM_POOLDIR)
 	echo 'SHA256 ($@.tmp) = $(KVM_OPENBSD_ISO_SHA256)' | cksum -c
 	mv $@.tmp $@
 
-KVM_OPENBSD_BASE_DOMAIN = $(KVM_POOLDIR_PREFIX)openbsd-base
 KVM_OPENBSD_BASE_ISO = $(KVM_OPENBSD_BASE_DOMAIN).iso
 KVM_OPENBSD_VIRT_INSTALL_FLAGS = --cdrom=$(KVM_OPENBSD_BASE_ISO)
 
@@ -979,6 +1001,7 @@ kvm-upgrade: $(patsubst %, kvm-upgrade-%, $(KVM_OS))
 
 $(patsubst %, kvm-upgrade-%, $(KVM_PLATFORM)): \
 kvm-upgrade-%:
+	: $@
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)-upgrade.*
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)-upgrade
@@ -1024,6 +1047,7 @@ kvm-transmogrify: $(patsubst %, kvm-transmogrify-%, $(KVM_OS))
 
 $(patsubst %, kvm-transmogrify-%, $(KVM_PLATFORM)): \
 kvm-transmogrify-%:
+	: $@
 	rm -f $(KVM_POOLDIR_PREFIX)$(*)
 	rm -f $(KVM_POOLDIR_PREFIX)$(*).*
 	$(MAKE) $(KVM_POOLDIR_PREFIX)$(*)
@@ -1095,7 +1119,7 @@ kvm-build: $(foreach os, $(KVM_OS), kvm-build-$(os))
 
 $(patsubst %, kvm-build-%, $(KVM_INSTALL_PLATFORM)): \
 kvm-build-%: $(KVM_POOLDIR_PREFIX)%
-	: $(MAKE) $(patsubst %, kvm-undefine-%, $(call add-kvm-prefixes, $(KVM_$($*)_HOST_NAMES)))
+	: $@
 	$(KVMSH) $(KVMSH_FLAGS) \
 		--chdir /source \
 		$(notdir $<) \
@@ -1110,10 +1134,11 @@ kvm-install: $(foreach os, $(KVM_OS), kvm-install-$(os))
 
 $(patsubst %, kvm-install-%, $(KVM_PLATFORM)): \
 kvm-install-%:
-	$(MAKE) $(patsubst %, kvm-undefine-%, $(call add-kvm-prefixes, $(KVM_$($*)_HOST_NAMES)))
+	: $@
+	$(MAKE) $(patsubst %, kvm-undefine-%, $(call add-kvm-prefixes, $(KVM_$($*)_TEST_HOST_NAMES)))
 	$(MAKE) kvm-build-$*
 	$(KVMSH) --shutdown $(KVM_FIRST_PREFIX)$*
-	$(MAKE) $(call add-kvm-localdir-prefixes, $(KVM_$($*)_HOST_NAMES))
+	$(MAKE) $(call add-kvm-localdir-prefixes, $(KVM_$($*)_TEST_HOST_NAMES))
 
 
 #
@@ -1132,6 +1157,7 @@ define define-test-domain
 		$$(foreach subnet, $$(KVM_TEST_SUBNETS), \
 			$(addprefix $(1), $$(subnet).net)) \
 		testing/libvirt/vm/$(strip $(3)).xml
+	: $$@
 	: install-kvm-test-domain prefix=$(strip $(1)) platform=$(strip $(2)) host=$(strip $(3))
 	$$(MAKE) kvm-undefine-$$(notdir $$@)
 	$$(QEMU_IMG) create -f qcow2 -F qcow2 -b $(KVM_POOLDIR_PREFIX)$(strip $(2)).qcow2 $$@.qcow2
@@ -1158,6 +1184,7 @@ define define-clone-domain
 		$$(foreach subnet, $$(KVM_TEST_SUBNETS), \
 			$(addprefix $(1), $$(subnet).net)) \
 		testing/libvirt/vm/$(strip $(2)).xml
+	: $$@
 	: install-kvm-test-domain prefix=$(strip $(1)) host=$(strip $(2)) template=$(strip $(3))
 	$$(MAKE) kvm-undefine-$$(notdir $$@)
 	$$(QEMU_IMG) create -f qcow2 -F qcow2 -b $(strip $(3)).qcow2 $$@.qcow2
@@ -1197,14 +1224,16 @@ $(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
 # domains.
 
 .PHONY: kvm-shutdown
-$(patsubst %, kvm-shutdown-%, $(KVM_PLATFORM_DOMAIN_NAMES)): \
+$(patsubst %, kvm-shutdown-%, $(KVM_DOMAIN_NAMES)): \
 kvm-shutdown-%:
+	: $@
 	$(KVMSH) --shutdown $*
-kvm-shutdown: $(patsubst %, kvm-shutdown-%, $(KVM_PLATFORM_DOMAIN_NAMES))
+kvm-shutdown: $(patsubst %, kvm-shutdown-%, $(KVM_DOMAIN_NAMES))
 
 .PHONY: kvm-undefine
-$(patsubst %, kvm-undefine-%, $(KVM_PLATFORM_DOMAIN_NAMES)): \
+$(patsubst %, kvm-undefine-%, $(KVM_DOMAIN_NAMES)): \
 kvm-undefine-%:
+	: $@
 	@if state=$$($(VIRSH) domstate $* 2>&1); then \
 		run() { echo "$$@" ; "$$@"; } ; \
 		case "$${state}" in \
@@ -1225,7 +1254,7 @@ kvm-undefine-%:
 	rm -f $(KVM_POOLDIR)/$*       $(KVM_LOCALDIR)/$*
 	: not all disks are managed by libvirt
 	rm -f $(KVM_POOLDIR)/$*.qcow2 $(KVM_LOCALDIR)/$*.qcow2
-kvm-undefine: $(patsubst %, kvm-undefine-%, $(KVM_PLATFORM_DOMAIN_NAMES))
+kvm-undefine: $(patsubst %, kvm-undefine-%, $(KVM_DOMAIN_NAMES))
 
 .PHONY: kvm-uninstall
 kvm-uninstall: kvm-uninstall-networks
@@ -1244,7 +1273,8 @@ kvm-purge: kvm-downgrade
 
 $(patsubst %, kvm-uninstall-%, $(KVM_PLATFORM)): \
 kvm-uninstall-%:
-	$(MAKE) $(patsubst %, kvm-undefine-%, $(call add-kvm-prefixes, $(KVM_$($*)_HOST_NAMES)))
+	: $@
+	$(MAKE) $(patsubst %, kvm-undefine-%, $(call add-kvm-prefixes, $(KVM_$($*)_TEST_HOST_NAMES)))
 	$(MAKE) kvm-undefine-$(KVM_FIRST_PREFIX)$*
 	rm -f $(KVM_POOLDIR_PREFIX)$*
 	rm -f $(KVM_POOLDIR_PREFIX)$*.*
@@ -1254,6 +1284,7 @@ kvm-downgrade: $(foreach os, $(KVM_OS), kvm-downgrade-$(os))
 
 $(patsubst %, kvm-downgrade-%, $(KVM_PLATFORM)): \
 kvm-downgrade-%:
+	: $@
 	$(MAKE) kvm-uninstall-$*
 	$(MAKE) kvm-undefine-$(KVM_FIRST_PREFIX)$*-upgrade
 	rm -f $(KVM_POOLDIR_PREFIX)$*-upgrade
@@ -1265,6 +1296,7 @@ kvm-demolish: $(foreach os, $(KVM_OS), kvm-demolish-$(os))
 
 $(patsubst %, kvm-demolish-%, $(KVM_PLATFORM)): \
 kvm-demolish-%:
+	: $@
 	$(MAKE) kvm-downgrade-$*
 	$(MAKE) kvm-undefine-$(KVM_FIRST_PREFIX)$*-base
 	rm -f $(KVM_POOLDIR_PREFIX)$*-base
@@ -1386,17 +1418,14 @@ Configuration:
 
     $(call kvm-var-value,KVM_KEYS_DOMAIN)
 
+    $(call kvm-var-value,KVM_OS)
+    $(call kvm-var-value,KVM_PLATFORM)
+
     $(call kvm-var-value,KVM_DEBIAN_MAKEFLAGS)
     $(call kvm-var-value,KVM_FEDORA_MAKEFLAGS)
     $(call kvm-var-value,KVM_FREEBSD_MAKEFLAGS)
     $(call kvm-var-value,KVM_NETBSD_MAKEFLAGS)
     $(call kvm-var-value,KVM_OPENBSD_MAKEFLAGS)
-
-    $(call kvm-var-value,KVM_DEBIAN_HOST_NAMES)
-    $(call kvm-var-value,KVM_FEDORA_HOST_NAMES)
-    $(call kvm-var-value,KVM_FREEBSD_HOST_NAMES)
-    $(call kvm-var-value,KVM_NETBSD_HOST_NAMES)
-    $(call kvm-var-value,KVM_OPENBSD_HOST_NAMES)
 
     $(call kvm-var-value,KVM_DEBIAN_OS_VARIANT)
     $(call kvm-var-value,KVM_FEDORA_OS_VARIANT)
@@ -1404,29 +1433,76 @@ Configuration:
     $(call kvm-var-value,KVM_NETBSD_OS_VARIANT)
     $(call kvm-var-value,KVM_OPENBSD_OS_VARIANT)
 
-    $(call kvm-var-value,KVM_TEST_HOST_NAMES)
-    $(call kvm-var-value,KVM_TEST_DOMAIN_NAMES)
-    $(call kvm-var-value,KVM_TEST_DOMAINS)
+    $(call kvm-var-value,KVM_FEDORA_HOST_NAMES)
+
+    $(call kvm-var-value,KVM_OS_HOST_NAMES)
+
+    $(call kvm-var-value,KVM_DEBIAN_BASE_HOST_NAME)
+    $(call kvm-var-value,KVM_FEDORA_BASE_HOST_NAME)
+    $(call kvm-var-value,KVM_FREEBSD_BASE_HOST_NAME)
+    $(call kvm-var-value,KVM_NETBSD_BASE_HOST_NAME)
+    $(call kvm-var-value,KVM_OPENBSD_BASE_HOST_NAME)
+
+    $(call kvm-var-value,KVM_BASE_HOST_NAMES)
+
+    $(call kvm-var-value,KVM_DEBIAN_UPGRADE_HOST_NAME)
+    $(call kvm-var-value,KVM_FEDORA_UPGRADE_HOST_NAME)
+    $(call kvm-var-value,KVM_FREEBSD_UPGRADE_HOST_NAME)
+    $(call kvm-var-value,KVM_NETBSD_UPGRADE_HOST_NAME)
+    $(call kvm-var-value,KVM_OPENBSD_UPGRADE_HOST_NAME)
+
+    $(call kvm-var-value,KVM_UPGRADE_HOST_NAMES)
+
+    $(call kvm-var-value,KVM_DEBIAN_BUILD_HOST_NAME)
+    $(call kvm-var-value,KVM_FEDORA_BUILD_HOST_NAME)
+    $(call kvm-var-value,KVM_FREEBSD_BUILD_HOST_NAME)
+    $(call kvm-var-value,KVM_NETBSD_BUILD_HOST_NAME)
+    $(call kvm-var-value,KVM_OPENBSD_BUILD_HOST_NAME)
 
     $(call kvm-var-value,KVM_BUILD_HOST_NAMES)
+
+    $(call kvm-var-value,KVM_DEBIAN_TEST_HOST_NAMES)
+    $(call kvm-var-value,KVM_FEDORA_TEST_HOST_NAMES)
+    $(call kvm-var-value,KVM_FREEBSD_TEST_HOST_NAMES)
+    $(call kvm-var-value,KVM_NETBSD_TEST_HOST_NAMES)
+    $(call kvm-var-value,KVM_OPENBSD_TEST_HOST_NAMES)
+
+    $(call kvm-var-value,KVM_TEST_HOST_NAMES)
+
+    $(call kvm-var-value,KVM_HOST_NAMES)
+
+    $(call kvm-var-value,KVM_DEBIAN_TEST_DOMAIN_NAMES)
+    $(call kvm-var-value,KVM_FEDORA_TEST_DOMAIN_NAMES)
+    $(call kvm-var-value,KVM_FREEBSD_TEST_DOMAIN_NAMES)
+    $(call kvm-var-value,KVM_NETBSD_TEST_DOMAIN_NAMES)
+    $(call kvm-var-value,KVM_OPENBSD_TEST_DOMAIN_NAMES)
+
+    $(call kvm-var-value,KVM_TEST_DOMAIN_NAMES)
+
+    $(call kvm-var-value,KVM_DEBIAN_TEST_DOMAINS)
+    $(call kvm-var-value,KVM_FEDORA_TEST_DOMAINS)
+    $(call kvm-var-value,KVM_FREEBSD_TEST_DOMAINS)
+    $(call kvm-var-value,KVM_NETBSD_TEST_DOMAINS)
+    $(call kvm-var-value,KVM_OPENBSD_TEST_DOMAINS)
+
+    $(call kvm-var-value,KVM_TEST_DOMAINS)
+
+    $(call kvm-var-value,KVM_BASE_DOMAIN_NAMES)
+    $(call kvm-var-value,KVM_UPGRADE_DOMAIN_NAMES)
     $(call kvm-var-value,KVM_BUILD_DOMAIN_NAMES)
+
+    $(call kvm-var-value,KVM_DOMAIN_NAMES)
+
+    $(call kvm-var-value,KVM_BASE_DOMAINS)
+    $(call kvm-var-value,KVM_UPGRADE_DOMAINS)
     $(call kvm-var-value,KVM_BUILD_DOMAINS)
+
+    $(call kvm-var-value,KVM_DOMAINS)
 
     $(call kvm-var-value,KVM_GATEWAY)
     $(call kvm-var-value,KVM_GATEWAY_FILE)
     $(call kvm-var-value,KVM_TEST_SUBNETS)
     $(call kvm-var-value,KVM_TEST_NETWORKS)
-
-    $(call kvm-var-value,KVM_OS)
-
-    $(call kvm-var-value,KVM_PLATFORM)
-
-    $(call kvm-var-value,KVM_PLATFORM_BUILD_HOST_NAMES)
-    $(call kvm-var-value,KVM_PLATFORM_TEST_HOST_NAMES)
-
-    $(call kvm-var-value,KVM_PLATFORM_BUILD_DOMAIN_NAMES)
-    $(call kvm-var-value,KVM_PLATFORM_TEST_DOMAIN_NAMES)
-    $(call kvm-var-value,KVM_PLATFORM_DOMAIN_NAMES)
 
  KVM Domains:
 
