@@ -164,7 +164,7 @@ VIRT_CPU ?= --cpu=host-passthrough
 VIRT_DISK_SIZE_GB ?= 10
 VIRT_RND ?= --rng=type=random,device=/dev/random
 VIRT_SECURITY ?= --security=type=static,model=dac,label='$(KVM_UID):$(KVM_GID)',relabel=yes
-VIRT_GATEWAY ?= --network=network:$(KVM_GATEWAY),model=virtio
+VIRT_GATEWAY ?= --network=network:$(KVM_GATEWAY_NAME),model=virtio
 VIRT_BENCHDIR ?= --filesystem=target=bench,type=mount,accessmode=squash,source=$(KVM_BENCHDIR)
 VIRT_POOLDIR ?= --filesystem=target=pool,type=mount,accessmode=squash,source=$(KVM_POOLDIR)
 VIRT_SOURCEDIR ?= --filesystem=target=source,type=mount,accessmode=squash,source=$(KVM_SOURCEDIR)
@@ -226,6 +226,24 @@ KVM_OPENBSD_OS_VARIANT ?= $(shell osinfo-query os | awk '/openbsd[1-9]/ {print $
 #
 # Hosts and Domains
 #
+# These make variables roughly follow the naming convention:
+#
+#  KVM_*_HOST_NAME KVM_*_HOST_NAMES
+#
+#      the root names without any additions
+#
+#  KVM_*_DOMAIN_NAME KVM_*_DOMAIN_NAME
+#
+#      the host names with domain specific prefixes added; this is
+#      what is fed to libvirt but note ...
+#
+#  KVM_*_DOMAIN KVM_*_DOMAINS
+#
+#      the path/domain-name that is used as the make target
+#
+#      Note: make rules use $(notdir KVM_*_DOMAIN), $(notdir $@), and
+#      $* (matching % in pattern rules) to get the domain name from
+#      the target
 
 strip-prefix = $(subst '',,$(subst "",,$(1)))
 # for-each-kvm-prefix = how?
@@ -678,7 +696,22 @@ endef
 
 
 #
-# The Gateway
+# The Gateway and Test networks
+#
+# Like domains/hosts, these make variables follow the rough naming
+# convention:
+#
+#  KVM_GATEWAY_NAME / KVM_TEST_NETWORK_NAMES
+#
+#    the name that virsh likes to use
+#
+#  KVM_GATEWAY / KVM_TEST_NETWORKS
+#
+#    the path/name that is used as the make target
+#
+#    Note: make rules use constructs such as $(notdir $(KVM_GATEWAY)),
+#    $(notdir $@), and $* (matching % in pattern rules) to get the
+#    name from the target.
 #
 # Because the gateway is created directly from libvirt/swandefault and
 # that file contains hardwired IP addresses, but only one is possible.
@@ -686,45 +719,44 @@ endef
 # XXX: Why?  Perhaps it is so that SSHing into the VMs is possible,
 # but with lots of VMs what address gets assigned stops being
 # predictable.
-
+#
 # To avoid the problem where the host has no "default" KVM network
-# (there's a rumour that libreswan's main testing machine has this
-# problem) define a dedicated swandefault gateway.
+# (there's a strong rumour that libreswan's main testing machine has
+# this problem) define a dedicated swandefault gateway.
 
-KVM_GATEWAY ?= swandefault
+KVM_GATEWAY_NAME ?= swandefault
 KVM_GATEWAY_ADDRESS ?= 192.168.234.1
 
-KVM_GATEWAY_FILE = $(KVM_POOLDIR)/$(KVM_GATEWAY).gw
+KVM_GATEWAY = $(KVM_POOLDIR)/$(KVM_GATEWAY_NAME)
 
-$(KVM_POOLDIR)/$(KVM_GATEWAY).gw: | testing/libvirt/net/$(KVM_GATEWAY)
-$(KVM_POOLDIR)/$(KVM_GATEWAY).gw: | $(KVM_POOLDIR)
+$(KVM_GATEWAY): | testing/libvirt/net/$(KVM_GATEWAY_NAME)
+$(KVM_GATEWAY): | $(KVM_POOLDIR)
 	./testing/libvirt/kvm-uninstall-network.sh $@
-	$(call create-kvm-network, testing/libvirt/net/$(KVM_GATEWAY))
+	$(call create-kvm-network, testing/libvirt/net/$(KVM_GATEWAY_NAME))
 	touch $@
 
 #
 # Test networks.
 #
-# Since networks survive across reboots and don't use any disk, they
-# are stored in $(KVM_POOLDIR) and not $(KVM_LOCALDIR).
-#
 
-KVM_TEST_SUBNETS = $(notdir $(wildcard testing/libvirt/net/192_*))
-KVM_TEST_NETWORKS = $(addsuffix .net, $(call add-kvm-localdir-prefixes, $(KVM_TEST_SUBNETS)))
+KVM_TEST_NETWORK_NAMES = $(notdir $(wildcard testing/libvirt/net/192_*))
+KVM_TEST_NETWORKS = $(call add-kvm-localdir-prefixes, $(KVM_TEST_NETWORK_NAMES))
 
 .PRECIOUS: $(KVM_TEST_NETWORKS)
 
-# <prefix><network>.net; if <prefix> is blank call it swan<network>*
+# <prefix><network>; if <prefix> is blank call it swan<network>*
 KVM_BRIDGE_NAME = $(strip $(if $(patsubst 192_%,,$*), \
-			$*, \
-			swan$(subst _,,$(patsubst %192_,,$*))))
+					$*, \
+					swan$(subst _,,$(patsubst %192_,,$*))))
 
-$(KVM_LOCALDIR)/%.net: | $(KVM_LOCALDIR)
+$(KVM_TEST_NETWORKS): \
+$(KVM_LOCALDIR)/%: | $(KVM_LOCALDIR)
+	: $@
 	./testing/libvirt/kvm-uninstall-network.sh $@
 	rm -f '$@.tmp'
 	echo "<network ipv6='yes'>" 					>> '$@.tmp'
 	echo "  <name>$*</name>"					>> '$@.tmp'
-	echo "  <bridge name='$(KVM_BRIDGE_NAME)'" >> '$@.tmp'
+	echo "  <bridge name='$(KVM_BRIDGE_NAME)'"			>> '$@.tmp'
 	echo "          stp='on' delay='0'/>"				>> '$@.tmp'
 	$(if $(patsubst 192_%,, $*), \
 	echo "  <!--" 							>> '$@.tmp')
@@ -732,14 +764,19 @@ $(KVM_LOCALDIR)/%.net: | $(KVM_LOCALDIR)
 	$(if $(patsubst 192_%,, $*), \
 	echo "    -->" 							>> '$@.tmp')
 	echo "</network>"						>> '$@.tmp'
-	: rename .net.tmp to .tmp
-	mv $@.tmp $(basename $@).tmp
-	$(call create-kvm-network, $(basename $@).tmp)
-	mv $(basename $@).tmp $@
+	$(call create-kvm-network, $@.tmp)
+	mv $@.tmp $@
 
-.PHONY: kvm-networks kvm-gateway
-kvm-gateway: $(KVM_GATEWAY_FILE)
-kvm-networks: $(KVM_TEST_NETWORKS)
+.PHONY: kvm-install-test-networks kvm-install-gateway
+kvm-install-gateway: $(KVM_GATEWAY)
+kvm-install-test-networks: $(KVM_TEST_NETWORKS)
+
+.PHONY: kvm-uninstall-test-networks
+kvm-uninstall-test-networks:
+	./testing/libvirt/kvm-uninstall-network.sh $(KVM_TEST_NETWORKS)
+.PHONY: kvm-uninstall-gateway
+kvm-uninstall-gateway:
+	./testing/libvirt/kvm-uninstall-network.sh $(KVM_GATEWAY)
 
 ##
 ##
@@ -765,7 +802,7 @@ $(KVM_POOLDIR_PREFIX)%-base: | \
 		testing/libvirt/%/base.py \
 		$(KVM_POOLDIR) \
 		$(KVM_HOST_OK) \
-		$(KVM_GATEWAY_FILE)
+		$(KVM_GATEWAY)
 	: clean up old domains
 	./testing/libvirt/kvm-uninstall-domain.sh $@
 	: use script to drive build of new domain
@@ -1148,8 +1185,7 @@ kvm-install-%:
 
 define define-test-domain
   $(strip $(1))$(strip $(2))$(strip $(3)): $(KVM_POOLDIR_PREFIX)$(strip $(2)) | \
-		$$(foreach subnet, $$(KVM_TEST_SUBNETS), \
-			$(addprefix $(1), $$(subnet).net)) \
+		$$(addprefix $(1), $$(KVM_TEST_NETWORK_NAMES)) \
 		testing/libvirt/vm/$(strip $(3)).xml
 	: $$@
 	: install-kvm-test-domain prefix=$(strip $(1)) platform=$(strip $(2)) host=$(strip $(3))
@@ -1175,8 +1211,7 @@ $(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
 
 define define-fedora-domain
   $(addprefix $(1), $(2)): $(3) | \
-		$$(foreach subnet, $$(KVM_TEST_SUBNETS), \
-			$(addprefix $(1), $$(subnet).net)) \
+		$$(addprefix $(1), $$(KVM_TEST_NETWORK_NAMES)) \
 		testing/libvirt/vm/$(strip $(2)).xml
 	: $$@
 	: install-kvm-test-domain prefix=$(strip $(1)) host=$(strip $(2)) template=$(strip $(3))
@@ -1229,9 +1264,6 @@ kvm-uninstall: kvm-uninstall-test-networks
 kvm-uninstall: kvm-uninstall-test-domains
 kvm-uninstall: kvm-uninstall-build-domains
 
-.PHONY: kvm-uninstall-test-networks
-kvm-uninstall-test-networks:
-	./testing/libvirt/kvm-uninstall-network.sh $(KVM_TEST_NETWORKS)
 .PHONY: kvm-uninstall-test-domains
 kvm-uninstall-test-domains:
 	./testing/libvirt/kvm-uninstall-domain.sh $(KVM_TEST_DOMAINS)
@@ -1488,19 +1520,21 @@ Configuration:
 
     $(call kvm-var-value,KVM_DOMAINS)
 
+    $(call kvm-var-value,KVM_GATEWAY_ADDRESS)
+    $(call kvm-var-value,KVM_GATEWAY_NAME)
     $(call kvm-var-value,KVM_GATEWAY)
-    $(call kvm-var-value,KVM_GATEWAY_FILE)
-    $(call kvm-var-value,KVM_TEST_SUBNETS)
+
+    $(call kvm-var-value,KVM_TEST_NETWORK_NAMES)
     $(call kvm-var-value,KVM_TEST_NETWORKS)
 
  KVM Domains:
 
     $(KVM_BASE_DOMAIN)
-    | gateway: $(KVM_GATEWAY)
+    | gateway: $(KVM_GATEWAY_NAME)
     | directory: $(KVM_POOLDIR)
     |
     +- $(KVM_KEYS_DOMAIN)
-    |  | gateway: $(KVM_GATEWAY)
+    |  | gateway: $(KVM_GATEWAY_NAME)
     |  | directory: $(KVM_POOLDIR)
     |  |  \
 $(foreach prefix,$(KVM_PREFIXES), \
