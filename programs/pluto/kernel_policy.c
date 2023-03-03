@@ -628,3 +628,130 @@ bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
 			  kernel_policy.sec_label/*null_shunk*/,
 			  where, logger, "install bare policy");
 }
+
+void replace_ipsec_with_bare_kernel_policies(struct child_sa *child,
+					     enum shunt_kind shunt_kind,
+					     enum expect_kernel_policy expect_inbound_policy,
+					     where_t where)
+{
+	struct connection *c = child->sa.st_connection;
+	enum routing new_routing =
+		(shunt_kind == SHUNT_KIND_PROSPECTIVE ? RT_ROUTED_PROSPECTIVE :
+		 shunt_kind == SHUNT_KIND_FAILURE ? RT_ROUTED_FAILURE :
+		 SHUNT_KIND_ROOF);
+	PASSERT(child->sa.st_logger, new_routing != SHUNT_KIND_ROOF);
+	set_child_routing(c, new_routing, SOS_NOBODY);
+
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+
+#ifdef USE_CISCO_SPLIT
+		if (spd == c->spd && c->remotepeertype == CISCO) {
+			/*
+			 * XXX: this comment is out-of-date:
+			 *
+			 * XXX: this is currently the only reason for
+			 * spd_next walking.
+			 *
+			 * Routing should become RT_ROUTED_FAILURE,
+			 * but if POLICY_FAIL_NONE, then we just go
+			 * right back to RT_ROUTED_PROSPECTIVE as if
+			 * no failure happened.
+			 */
+			ldbg_sa(child,
+				"kernel: %s() skipping, first SPD and remotepeertype is CISCO, damage done",
+				__func__);
+			continue;
+		}
+#endif
+
+		do_updown(UPDOWN_DOWN, c, spd, &child->sa, child->sa.st_logger);
+
+		pexpect(c->config->shunt[shunt_kind] != SHUNT_NONE);
+		if (!install_bare_spd_kernel_policy(spd,
+						    KERNEL_POLICY_OP_REPLACE,
+						    DIRECTION_OUTBOUND,
+						    EXPECT_KERNEL_POLICY_OK,
+						    shunt_kind,
+						    child->sa.st_logger, where, "replacing")) {
+			llog_sa(RC_LOG, child,
+				"kernel: %s() replace outbound with prospective shunt failed", __func__);
+		}
+		/*
+		 * Always zap inbound.
+		 *
+		 * XXX: which is interesting since the original
+		 * prospective kernel policy included inbound.
+		 */
+		if (!delete_spd_kernel_policy(spd, DIRECTION_INBOUND,
+					      expect_inbound_policy,
+					      child->sa.st_logger, where, "inbound")) {
+			llog_sa(RC_LOG, child,
+				"kernel: %s() inbound delete failed", __func__);
+		}
+	}
+}
+
+void uninstall_ipsec_kernel_policies(struct child_sa *child,
+				     enum expect_kernel_policy expect_inbound_policy,
+				     where_t where)
+{
+	struct connection *c = child->sa.st_connection;
+	/*
+	 * update routing; route_owner() will see this and not think
+	 * this route is the owner?
+	 */
+	set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
+
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+
+#ifdef USE_CISCO_SPLIT
+		if (spd == c->spd && c->remotepeertype == CISCO) {
+			/*
+			 * XXX: this comment is out-of-date:
+			 *
+			 * XXX: this is currently the only reason for
+			 * spd_next walking.
+			 *
+			 * Routing should become RT_ROUTED_FAILURE,
+			 * but if POLICY_FAIL_NONE, then we just go
+			 * right back to RT_ROUTED_PROSPECTIVE as if
+			 * no failure happened.
+			 */
+			ldbg_sa(child,
+				"kernel: %s() skipping, first SPD and remotepeertype is CISCO, damage done",
+				__func__);
+			continue;
+		}
+#endif
+
+		do_updown(UPDOWN_DOWN, c, spd, &child->sa, child->sa.st_logger);
+
+		/* get rid of the IPsec SA */
+		if (!delete_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
+					      EXPECT_KERNEL_POLICY_OK,
+					      child->sa.st_logger, where, "unrouting")) {
+			llog_sa(RC_LOG, child,
+				"kernel: %s() outbound delete for unroute failed", __func__);
+		}
+#ifdef IPSEC_CONNECTION_LIMIT
+		num_ipsec_eroute--;
+#endif
+		/* only unroute if no other connection shares it */
+		if (route_owner(spd) == NULL) {
+			do_updown(UPDOWN_UNROUTE, c, spd, NULL, child->sa.st_logger);
+		}
+
+		/*
+		 * Always zap inbound.
+		 *
+		 * XXX: which is interesting since the original
+		 * prospective kernel policy included inbound.
+		 */
+		if (!delete_spd_kernel_policy(spd, DIRECTION_INBOUND,
+					      expect_inbound_policy,
+					      child->sa.st_logger, where, "inbound")) {
+			llog_sa(RC_LOG, child,
+				"kernel: %s() inbound delete failed", __func__);
+		}
+	}
+}
