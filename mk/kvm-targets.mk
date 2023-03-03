@@ -740,12 +740,6 @@ $(KVM_LOCALDIR)/%.net: | $(KVM_LOCALDIR)
 .PHONY: kvm-networks kvm-gateway
 kvm-gateway: $(KVM_GATEWAY_FILE)
 kvm-networks: $(KVM_TEST_NETWORKS)
-.PHONY: kvm-uninstall-networks
-kvm-uninstall-networks:
-	./testing/libvirt/kvm-uninstall-network.sh $(KVM_TEST_NETWORKS)
-.PHONY: kvm-uninstall-gateway
-kvm-uninstall-gateway:
-	./testing/libvirt/kvm-uninstall-network.sh $(KVM_GATEWAY_FILE)
 
 ##
 ##
@@ -773,7 +767,7 @@ $(KVM_POOLDIR_PREFIX)%-base: | \
 		$(KVM_HOST_OK) \
 		$(KVM_GATEWAY_FILE)
 	: clean up old domains
-	$(MAKE) kvm-undefine-$(notdir $@)
+	./testing/libvirt/kvm-uninstall-domain.sh $@
 	: use script to drive build of new domain
 	DOMAIN=$(notdir $@) \
 	GATEWAY=$(KVM_GATEWAY_ADDRESS) \
@@ -1010,7 +1004,7 @@ $(patsubst %, $(KVM_POOLDIR_PREFIX)%-upgrade, $(KVM_PLATFORM)): \
 $(KVM_POOLDIR_PREFIX)%-upgrade: $(KVM_POOLDIR_PREFIX)%-base \
 		testing/libvirt/%/upgrade.sh \
 		| $(KVM_HOST_OK)
-	$(MAKE) kvm-undefine-$(notdir $@)
+	./testing/libvirt/kvm-uninstall-domain.sh $@
 	$(QEMU_IMG) create -f qcow2 -F qcow2 -b $<.qcow2 $@.qcow2
 	$(VIRT_INSTALL) \
 		$(VIRT_INSTALL_FLAGS) \
@@ -1060,7 +1054,7 @@ $(KVM_POOLDIR_PREFIX)%: $(KVM_POOLDIR_PREFIX)%-upgrade \
 		| \
 		testing/libvirt/%/transmogrify.sh \
 		$(KVM_HOST_OK)
-	$(MAKE) kvm-undefine-$(notdir $@)
+	./testing/libvirt/kvm-uninstall-domain.sh $@
 	$(QEMU_IMG) create -f qcow2 -F qcow2 -b $<.qcow2 $@.qcow2
 	: fedora runs chcon TESTINGDIR
 	$(VIRT_INSTALL) \
@@ -1135,10 +1129,10 @@ kvm-install: $(foreach os, $(KVM_OS), kvm-install-$(os))
 $(patsubst %, kvm-install-%, $(KVM_PLATFORM)): \
 kvm-install-%:
 	: $@
-	$(MAKE) $(patsubst %, kvm-undefine-%, $(call add-kvm-prefixes, $(KVM_$($*)_TEST_HOST_NAMES)))
+	./testing/libvirt/kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
 	$(MAKE) kvm-build-$*
 	$(KVMSH) --shutdown $(KVM_FIRST_PREFIX)$*
-	$(MAKE) $(call add-kvm-localdir-prefixes, $(KVM_$($*)_TEST_HOST_NAMES))
+	$(MAKE) $(KVM_$($*)_TEST_DOMAINS)
 
 
 #
@@ -1159,7 +1153,7 @@ define define-test-domain
 		testing/libvirt/vm/$(strip $(3)).xml
 	: $$@
 	: install-kvm-test-domain prefix=$(strip $(1)) platform=$(strip $(2)) host=$(strip $(3))
-	$$(MAKE) kvm-undefine-$$(notdir $$@)
+	./testing/libvirt/kvm-uninstall-domain.sh $$@
 	$$(QEMU_IMG) create -f qcow2 -F qcow2 -b $(KVM_POOLDIR_PREFIX)$(strip $(2)).qcow2 $$@.qcow2
 	$$(KVM_TRANSMOGRIFY) \
 		-e "s:@@NAME@@:$$(notdir $$@):" \
@@ -1179,14 +1173,14 @@ $(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
 				$(platform), \
 				$(host))))))
 
-define define-clone-domain
+define define-fedora-domain
   $(addprefix $(1), $(2)): $(3) | \
 		$$(foreach subnet, $$(KVM_TEST_SUBNETS), \
 			$(addprefix $(1), $$(subnet).net)) \
 		testing/libvirt/vm/$(strip $(2)).xml
 	: $$@
 	: install-kvm-test-domain prefix=$(strip $(1)) host=$(strip $(2)) template=$(strip $(3))
-	$$(MAKE) kvm-undefine-$$(notdir $$@)
+	./testing/libvirt/kvm-uninstall-domain.sh $$@
 	$$(QEMU_IMG) create -f qcow2 -F qcow2 -b $(strip $(3)).qcow2 $$@.qcow2
 	$$(KVM_TRANSMOGRIFY) \
 		-e "s:@@NAME@@:$$(notdir $$@):" \
@@ -1200,7 +1194,7 @@ endef
 # generate rules for all combinations, including those not enabled
 $(foreach prefix, $(KVM_LOCALDIR_PREFIXES), \
 	$(foreach host, $(KVM_FEDORA_HOST_NAMES), \
-		$(eval $(call define-clone-domain, \
+		$(eval $(call define-fedora-domain, \
 			$(prefix), \
 			$(host), \
 			$(KVM_POOLDIR_PREFIX)fedora))))
@@ -1230,35 +1224,26 @@ kvm-shutdown-%:
 	$(KVMSH) --shutdown $*
 kvm-shutdown: $(patsubst %, kvm-shutdown-%, $(KVM_DOMAIN_NAMES))
 
-.PHONY: kvm-undefine
-$(patsubst %, kvm-undefine-%, $(KVM_DOMAIN_NAMES)): \
-kvm-undefine-%:
-	: $@
-	@if state=$$($(VIRSH) domstate $* 2>&1); then \
-		run() { echo "$$@" ; "$$@"; } ; \
-		case "$${state}" in \
-		"running" | "in shutdown" | "paused" ) \
-			run $(VIRSH) destroy $* ; \
-			run $(VIRSH) undefine $* --managed-save --snapshots-metadata \
-			;; \
-		"shut off" ) \
-			run $(VIRSH) undefine $* --managed-save --snapshots-metadata \
-			;; \
-		* ) \
-			echo "Unknown state $${state} for $*" ; \
-			;; \
-		esac ; \
-	else \
-		echo "No domain $*" ; \
-	fi
-	rm -f $(KVM_POOLDIR)/$*       $(KVM_LOCALDIR)/$*
-	: not all disks are managed by libvirt
-	rm -f $(KVM_POOLDIR)/$*.qcow2 $(KVM_LOCALDIR)/$*.qcow2
-kvm-undefine: $(patsubst %, kvm-undefine-%, $(KVM_DOMAIN_NAMES))
-
 .PHONY: kvm-uninstall
-kvm-uninstall: kvm-uninstall-networks
-kvm-uninstall: $(patsubst %, kvm-uninstall-%, $(KVM_OS))
+kvm-uninstall: kvm-uninstall-test-networks
+kvm-uninstall: kvm-uninstall-test-domains
+kvm-uninstall: kvm-uninstall-build-domains
+
+.PHONY: kvm-uninstall-test-networks
+kvm-uninstall-test-networks:
+	./testing/libvirt/kvm-uninstall-network.sh $(KVM_TEST_NETWORKS)
+.PHONY: kvm-uninstall-test-domains
+kvm-uninstall-test-domains:
+	./testing/libvirt/kvm-uninstall-domain.sh $(KVM_TEST_DOMAINS)
+.PHONY: kvm-uninstall-test-domains
+kvm-uninstall-build-domains:
+	./testing/libvirt/kvm-uninstall-domain.sh $(KVM_BUILD_DOMAINS)
+.PHONY: kvm-uninstall-upgrade-domains
+kvm-uninstall-upgrade-domains:
+	./testing/libvirt/kvm-uninstall-domain.sh $(KVM_UPGRADE_DOMAINS)
+.PHONY: kvm-uninstall-base-domains
+kvm-uninstall-base-domains:
+	./testing/libvirt/kvm-uninstall-domain.sh $(KVM_BASE_DOMAINS)
 
 .PHONY: kvm-clean
 kvm-clean: kvm-uninstall
@@ -1274,10 +1259,8 @@ kvm-purge: kvm-downgrade
 $(patsubst %, kvm-uninstall-%, $(KVM_PLATFORM)): \
 kvm-uninstall-%:
 	: $@
-	$(MAKE) $(patsubst %, kvm-undefine-%, $(call add-kvm-prefixes, $(KVM_$($*)_TEST_HOST_NAMES)))
-	$(MAKE) kvm-undefine-$(KVM_FIRST_PREFIX)$*
-	rm -f $(KVM_POOLDIR_PREFIX)$*
-	rm -f $(KVM_POOLDIR_PREFIX)$*.*
+	./testing/libvirt/kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
+	./testing/libvirt/kvm-uninstall-domain.sh $(KVM_$($*)_BUILD_DOMAIN)
 
 .PHONY: kvm-downgrade
 kvm-downgrade: $(foreach os, $(KVM_OS), kvm-downgrade-$(os))
@@ -1285,22 +1268,17 @@ kvm-downgrade: $(foreach os, $(KVM_OS), kvm-downgrade-$(os))
 $(patsubst %, kvm-downgrade-%, $(KVM_PLATFORM)): \
 kvm-downgrade-%:
 	: $@
-	$(MAKE) kvm-uninstall-$*
-	$(MAKE) kvm-undefine-$(KVM_FIRST_PREFIX)$*-upgrade
-	rm -f $(KVM_POOLDIR_PREFIX)$*-upgrade
-	rm -f $(KVM_POOLDIR_PREFIX)$*-upgrade.*
+	./testing/libvirt/kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
+	./testing/libvirt/kvm-uninstall-domain.sh $(KVM_$($*)_BUILD_DOMAIN)
+	./testing/libvirt/kvm-uninstall-domain.sh $(KVM_$($*)_UPGRADE_DOMAIN)
 
 .PHONY: kvm-demolish
 kvm-demolish: kvm-uninstall-gateway
 kvm-demolish: $(foreach os, $(KVM_OS), kvm-demolish-$(os))
 
 $(patsubst %, kvm-demolish-%, $(KVM_PLATFORM)): \
-kvm-demolish-%:
-	: $@
-	$(MAKE) kvm-downgrade-$*
-	$(MAKE) kvm-undefine-$(KVM_FIRST_PREFIX)$*-base
-	rm -f $(KVM_POOLDIR_PREFIX)$*-base
-	rm -f $(KVM_POOLDIR_PREFIX)$*-base.*
+kvm-demolish-%: kvm-downgrade-%
+	./testing/libvirt/kvm-uninstall-domain.sh $(KVM_$($*)_BASE_DOMAIN)
 
 
 #
@@ -1355,12 +1333,20 @@ endif
 $(patsubst %, kvmsh-%, $(filter-out $(KVM_DOMAIN_NAMES), $(KVM_HOST_NAMES))): \
 kvmsh-%: kvmsh-$(KVM_FIRST_PREFIX)%
 
-$(patsubst %, kvmsh-%, $(KVM_TEST_DOMAIN_NAMES)) : \
-kvmsh-%: $(KVM_LOCALDIR)/% | $(KVM_HOST_OK)
+$(patsubst %, kvmsh-%, $(KVM_BASE_DOMAIN_NAMES)) : \
+kvmsh-%: $(KVM_POOLDIR)/% | $(KVM_HOST_OK)
+	$(KVMSH) $(KVMSH_FLAGS) $* $(KVMSH_COMMAND)
+
+$(patsubst %, kvmsh-%, $(KVM_UPGRADE_DOMAIN_NAMES)) : \
+kvmsh-%: $(KVM_POOLDIR)/% | $(KVM_HOST_OK)
 	$(KVMSH) $(KVMSH_FLAGS) $* $(KVMSH_COMMAND)
 
 $(patsubst %, kvmsh-%, $(KVM_BUILD_DOMAIN_NAMES)) : \
 kvmsh-%: $(KVM_POOLDIR)/% | $(KVM_HOST_OK)
+	$(KVMSH) $(KVMSH_FLAGS) $* $(KVMSH_COMMAND)
+
+$(patsubst %, kvmsh-%, $(KVM_TEST_DOMAIN_NAMES)) : \
+kvmsh-%: $(KVM_LOCALDIR)/% | $(KVM_HOST_OK)
 	$(KVMSH) $(KVMSH_FLAGS) $* $(KVMSH_COMMAND)
 
 
@@ -1459,6 +1445,8 @@ Configuration:
     $(call kvm-var-value,KVM_NETBSD_BUILD_HOST_NAME)
     $(call kvm-var-value,KVM_OPENBSD_BUILD_HOST_NAME)
 
+    $(call kvm-var-value,KVM_BASE_HOST_NAMES)
+    $(call kvm-var-value,KVM_UPGRADE_HOST_NAMES)
     $(call kvm-var-value,KVM_BUILD_HOST_NAMES)
 
     $(call kvm-var-value,KVM_DEBIAN_TEST_HOST_NAMES)
@@ -1496,6 +1484,7 @@ Configuration:
     $(call kvm-var-value,KVM_BASE_DOMAINS)
     $(call kvm-var-value,KVM_UPGRADE_DOMAINS)
     $(call kvm-var-value,KVM_BUILD_DOMAINS)
+    $(call kvm-var-value,KVM_TEST_DOMAINS)
 
     $(call kvm-var-value,KVM_DOMAINS)
 
