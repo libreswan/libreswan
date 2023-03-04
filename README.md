@@ -47,23 +47,12 @@ For Debian/Ubuntu
 
 	(unbound is build without event api, set USE_DNSSEC=false)
 
-For Fedora/RHEL8/CentOS8
+For Fedora/CentOS-Stream/RHEL/AlmaLinux/RockyLinux etc.
 
 	yum install audit-libs-devel bison curl-devel flex \
 		gcc ldns-devel libcap-ng-devel libevent-devel \
 		libseccomp-devel libselinux-devel make nspr-devel nss-devel \
 		pam-devel pkgconfig systemd-devel unbound-devel xmlto
-
-For RHEL7/CentOS7
-
-	yum install audit-libs-devel bison curl-devel fipscheck-devel flex \
-		gcc ldns-devel libcap-ng-devel libevent-devel \
-		libseccomp-devel libselinux-devel make nspr-devel nss-devel \
-		pam-devel pkgconfig systemd-devel unbound-devel xmlto
-
-	(fipscheck is needed because the nss library is too old for
-	USE_NSS_KDF=true)
-
 
 Runtime requirements (usually already present on the system)
 
@@ -77,6 +66,11 @@ Runtime requirements (usually already present on the system)
 
 
 ## Building for RPM based systems
+
+Install requirements for rpm package building:
+
+      dnf install rpm-build rpmdevtools
+
 The packaging/ directory is used to find the proper spce file for your
 distribution. Simply issue the command: make rpm
 You can also pick a specific spec file. For example, to build for CentOS8,
