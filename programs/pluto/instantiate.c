@@ -110,9 +110,10 @@ struct connection *clone_connection(const char *name, struct connection *t,
 		reference_xfrmi(c);
 	}
 
-	/* leave a breadcrumb */
-	c->child.routing = RT_UNROUTED; /* trash cloned value; applies to parent */
-	set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
+	/* trash cloned value; applies to parent */
+	c->child.routing = RT_UNROUTED;
+	c->child.newest_routing_sa = SOS_NOBODY;
+	set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
 
 	return c;
 }
