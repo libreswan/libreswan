@@ -418,7 +418,7 @@ static void process_nlmsgs(char *msgbuf,  ssize_t len, struct ifinfo_response *i
 			i++;
 			red_msg_size += nlmsg->nlmsg_len;
 			dbg("RTM_NEWLINK: netlink %d ignored %d. Bytes %d", i, ignored, red_msg_size);
-			if (parse_nl_newlink_msg(nlmsg, ifi_rsp) != XFRMI_SUCCESS && ifi_rsp->result)
+			if (parse_nl_newlink_msg(nlmsg, ifi_rsp) == XFRMI_SUCCESS && ifi_rsp->result)
 				return;
 			break;
 
