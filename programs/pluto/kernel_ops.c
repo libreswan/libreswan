@@ -126,11 +126,6 @@ bool raw_policy(enum kernel_policy_op op,
 		jam(buf, " sec_label=");
 		jam_sanitized_hunk(buf, sec_label);
 
-		if (policy != NULL) {
-			jam_string(buf, " ");
-			jam(buf, PRI_WHERE, pri_where(policy->where));
-		}
-
 		jam(buf, " ");
 		jam_string(buf, story);
 		jam_string(buf, " ");
