@@ -12,6 +12,7 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
+import time
 import subprocess
 import pexpect
 import sys
@@ -28,7 +29,7 @@ class STATE:
     RUNNING = "running"
     IDLE = "idle"
     PAUSED = "paused"
-    SHUTDOWN = "shutdown"
+    IN_SHUTDOWN = "in shutdown"
     SHUT_OFF = "shut off"
     CRASHED = "crashed"
     DYING = "dying"
@@ -121,7 +122,7 @@ class Domain:
         self._shutdown()
         if self._console.expect([pexpect.EOF, pexpect.TIMEOUT],
                                 timeout=timeout) == 0:
-            self.logger.info("domain shutdown after %s", lapsed_time)
+            self.logger.info("got EOF; domain shutdown after %s", lapsed_time)
             self._console = False
             self.logger.info("domain state is: %s", self.state())
             return True
@@ -159,6 +160,12 @@ class Domain:
         return self._run_status_output(_VIRSH + ["reboot", self.domain_name])
 
     def start(self, timeout=START_TIMEOUT):
+        # A shutdown domain can linger for a bit
+        while self.state() == STATE.IN_SHUTDOWN and timeout > 0:
+            self.logger.info("waiting for domain to finish shutting down")
+            time.sleep(1)
+            timeout = timeout - 1;
+
         command = _VIRSH + ["start", self.domain_name, "--console"]
         self.logger.info("spawning: %s", " ".join(command))
         self._console = console.Console(command, self.logger, host_name=self.host_name)
