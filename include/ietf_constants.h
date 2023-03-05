@@ -1642,6 +1642,10 @@ typedef enum {
 	v2N_PPK_IDENTITY = 16436, /* draft-ietf-ipsecme-qr-ikev2 */
 	v2N_NO_PPK_AUTH = 16437, /* draft-ietf-ipsecme-qr-ikev2 */
 	v2N_INTERMEDIATE_EXCHANGE_SUPPORTED = 16438, /* draft-ietf-ipsecme-ikev2-intermediate-04 */
+	v2N_IP4_ALLOWED = 16439,
+	v2N_IP6_ALLOWED = 16440,
+	v2N_ADDITIONAL_KEY_EXCHANGE = 16441,
+	v2N_USE_AGGFRAG = 16442,
 
 	v2N_STATUS_PSTATS_ROOF, /* used to cap status statistics array */
 
