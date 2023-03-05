@@ -254,28 +254,31 @@ KVM_FIRST_PREFIX = $(call strip-prefix,$(firstword $(KVM_PREFIXES)))
 
 KVM_OS_HOST_NAMES = e w
 
+# expand anything using $1 (such as make variable names and values)
+# immediately, but delay everything else by using $$.
+
 define domains
 
-$(eval KVM_$($(strip $1))_BASE_HOST_NAME    = $(strip $1)-base)
-$(eval KVM_$($(strip $1))_UPGRADE_HOST_NAME = $(strip $1)-upgrade)
-$(eval KVM_$($(strip $1))_BUILD_HOST_NAME   = $(strip $1))
+KVM_$($(strip $1))_BASE_HOST_NAME    = $(strip $1)-base
+KVM_$($(strip $1))_UPGRADE_HOST_NAME = $(strip $1)-upgrade
+KVM_$($(strip $1))_BUILD_HOST_NAME   = $(strip $1)
 
-$(eval KVM_$($(strip $1))_BASE_DOMAIN_NAME    = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_$($(strip $1))_BASE_HOST_NAME)))
-$(eval KVM_$($(strip $1))_UPGRADE_DOMAIN_NAME = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_$($(strip $1))_UPGRADE_HOST_NAME)))
-$(eval KVM_$($(strip $1))_BUILD_DOMAIN_NAME   = $(addprefix $(KVM_FIRST_PREFIX), $(KVM_$($(strip $1))_BUILD_HOST_NAME)))
+KVM_$($(strip $1))_BASE_DOMAIN_NAME    = $$(addprefix $$(KVM_FIRST_PREFIX), $$(KVM_$($(strip $1))_BASE_HOST_NAME))
+KVM_$($(strip $1))_UPGRADE_DOMAIN_NAME = $$(addprefix $$(KVM_FIRST_PREFIX), $$(KVM_$($(strip $1))_UPGRADE_HOST_NAME))
+KVM_$($(strip $1))_BUILD_DOMAIN_NAME   = $$(addprefix $$(KVM_FIRST_PREFIX), $$(KVM_$($(strip $1))_BUILD_HOST_NAME))
 
-$(eval KVM_$($(strip $1))_BASE_DOMAIN    = $(addprefix $(KVM_POOLDIR)/, $(KVM_$($(strip $1))_BASE_DOMAIN_NAME)))
-$(eval KVM_$($(strip $1))_UPGRADE_DOMAIN = $(addprefix $(KVM_POOLDIR)/, $(KVM_$($(strip $1))_UPGRADE_DOMAIN_NAME)))
-$(eval KVM_$($(strip $1))_BUILD_DOMAIN   = $(addprefix $(KVM_POOLDIR)/, $(KVM_$($(strip $1))_BUILD_DOMAIN_NAME)))
+KVM_$($(strip $1))_BASE_DOMAIN    = $$(addprefix $$(KVM_POOLDIR)/, $$(KVM_$($(strip $1))_BASE_DOMAIN_NAME))
+KVM_$($(strip $1))_UPGRADE_DOMAIN = $$(addprefix $$(KVM_POOLDIR)/, $$(KVM_$($(strip $1))_UPGRADE_DOMAIN_NAME))
+KVM_$($(strip $1))_BUILD_DOMAIN   = $$(addprefix $$(KVM_POOLDIR)/, $$(KVM_$($(strip $1))_BUILD_DOMAIN_NAME))
 
-$(eval KVM_$($(strip $1))_TEST_HOST_NAMES   = $(addprefix $1, $(KVM_OS_HOST_NAMES)))
-$(eval KVM_$($(strip $1))_TEST_DOMAIN_NAMES = $$(call add-kvm-prefixes, $(KVM_$($(strip $1))_TEST_HOST_NAMES)))
-$(eval KVM_$($(strip $1))_TEST_DOMAINS      = $(addprefix $(KVM_LOCALDIR)/, $(KVM_$($(strip $1))_TEST_DOMAIN_NAMES)))
+KVM_$($(strip $1))_TEST_HOST_NAMES   = $$(addprefix $1, $$(KVM_OS_HOST_NAMES))
+KVM_$($(strip $1))_TEST_DOMAIN_NAMES = $$(call add-kvm-prefixes, $$(KVM_$($(strip $1))_TEST_HOST_NAMES))
+KVM_$($(strip $1))_TEST_DOMAINS      = $$(addprefix $$(KVM_LOCALDIR)/, $$(KVM_$($(strip $1))_TEST_DOMAIN_NAMES))
 
 endef
 
 $(foreach platform, $(KVM_PLATFORM), \
-	$(call domains, $(platform)))
+	$(eval $(call domains, $(platform))))
 
 KVM_BASE_HOST_NAMES   = $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform))_BASE_HOST_NAME))
 KVM_BASE_DOMAIN_NAMES = $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform))_BASE_DOMAIN_NAME))
@@ -295,8 +298,8 @@ KVM_TEST_DOMAINS      = $(foreach platform, $(KVM_PLATFORM), $(KVM_$($(platform)
 
 KVM_FEDORA_HOST_NAMES = east west north road nic
 KVM_FEDORA_TEST_HOST_NAMES += $(KVM_FEDORA_HOST_NAMES)
-KVM_FEDORA_TEST_DOMAIN_NAMES += $(call add-kvm-prefixes, $(KVM_FEDORA_HOST_NAMES))
-KVM_FEDORA_TEST_DOMAINS += $(addprefix $(KVM_LOCALDIR)/, $(KVM_FEDORA_TEST_DOMAIN_NAMES))
+#KVM_FEDORA_TEST_DOMAIN_NAMES += $(call add-kvm-prefixes, $(KVM_FEDORA_HOST_NAMES))
+#KVM_FEDORA_TEST_DOMAINS += $(addprefix $(KVM_LOCALDIR)/, $(KVM_FEDORA_TEST_DOMAIN_NAMES))
 
 KVM_HOST_NAMES += $(KVM_BASE_HOST_NAMES)
 KVM_HOST_NAMES += $(KVM_UPGRADE_HOST_NAMES)
@@ -1389,7 +1392,8 @@ kvmsh-%: $(KVM_LOCALDIR)/% | $(KVM_HOST_OK)
 #
 
 define kvm-var-value
-$(1)=$($(1)) [$(value $(1))]
+$(1)=$($(1))
+	[$(value $(1))]
 endef
 
 define kvm-value
