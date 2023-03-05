@@ -66,11 +66,11 @@ struct event {
 
 static void do_updown_unroute(struct connection *c);
 
-static void dispatch(struct connection *c, struct event e);
+static void dispatch(struct connection *c, struct logger *logger, struct event e);
 
-static void permanent_event_handler(struct connection *c, struct event *e);
-static void template_event_handler(struct connection *c, struct event *e);
-static void instance_event_handler(struct connection *c, struct event *e);
+static void permanent_event_handler(struct connection *c, struct logger *logger, struct event *e);
+static void template_event_handler(struct connection *c, struct logger *logger, struct event *e);
+static void instance_event_handler(struct connection *c, struct logger *logger, struct event *e);
 
 void set_child_routing_where(struct connection *c, enum routing routing,
 			     so_serial_t so, where_t where)
@@ -284,7 +284,7 @@ void connection_ondemand(struct connection *c, threadtime_t *inception, const st
 		return;
 	}
 
-	dispatch(c, (struct event) {
+	dispatch(c, c->logger, (struct event) {
 			.event = CONNECTION_ONDEMAND,
 			.inception = inception,
 			.acquire = b,
@@ -367,12 +367,12 @@ static void fail(struct ike_sa *ike)
 	pstat_sa_failed(&ike->sa, REASON_TOO_MANY_RETRANSMITS);
 }
 
-#define barf(C, EVENT) barf_where(C, EVENT, HERE)
-static void barf_where(struct connection *c, const struct event *e, where_t where)
+#define barf(C, LOGGER, EVENT) barf_where(C, LOGGER, EVENT, HERE)
+static void barf_where(struct connection *c, struct logger *logger, const struct event *e, where_t where)
 {
 	connection_buf cb;
 	enum_buf kb, eb;
-	llog_pexpect(c->logger, where, "%s connection "PRI_CONNECTION" not expecting %s",
+	llog_pexpect(logger, where, "%s connection "PRI_CONNECTION" not expecting %s",
 		     str_enum_short(&connection_kind_names, c->kind, &kb),
 		     pri_connection(c, &cb),
 		     str_enum_short(&connection_event_names, e->event, &eb));
@@ -381,7 +381,7 @@ static void barf_where(struct connection *c, const struct event *e, where_t wher
 void connection_timeout(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
-	dispatch(c, (struct event) {
+	dispatch(c, ike->sa.st_logger, (struct event) {
 			.event = CONNECTION_TIMEOUT,
 			.ike = ike,
 		});
@@ -400,14 +400,14 @@ void connection_route(struct connection *c)
 		return;
 	}
 
-	dispatch(c, (struct event) {
+	dispatch(c, c->logger, (struct event) {
 			.event = CONNECTION_ROUTE,
 		});
 }
 
-void dispatch(struct connection *c, struct event e)
+void dispatch(struct connection *c, struct logger *logger, struct event e)
 {
-	LDBGP_JAMBUF(DBG_BASE, c->logger, buf) {
+	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 		jam_string(buf, "dispatch ");
 		jam_enum_short(buf, &connection_event_names, e.event);
 		jam_string(buf, " to ");
@@ -424,20 +424,20 @@ void dispatch(struct connection *c, struct event e)
 	}
 	switch (c->kind) {
 	case CK_PERMANENT:
-		permanent_event_handler(c, &e);
+		permanent_event_handler(c, logger, &e);
 		break;
 	case CK_TEMPLATE:
-		template_event_handler(c, &e);
+		template_event_handler(c, logger, &e);
 		break;
 	case CK_INSTANCE:
-		instance_event_handler(c, &e);
+		instance_event_handler(c, logger, &e);
 		break;
 	default:
 		bad_case(c->kind);
 	}
 }
 
-void permanent_event_handler(struct connection *c, struct event *e)
+void permanent_event_handler(struct connection *c, struct logger *logger, struct event *e)
 {
 	/*
 	 * Part 1: handle the easy cases where the connection didn't
@@ -454,11 +454,11 @@ void permanent_event_handler(struct connection *c, struct event *e)
 			c->policy |= POLICY_ROUTE; /* always */
 			if (!install_prospective_kernel_policy(c)) {
 				/* XXX: why whack only? */
-				llog(WHACK_STREAM|RC_ROUTE, c->logger, "could not route");
+				llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");
 			}
 			return;
 		case CONNECTION_UNROUTE:
-			ldbg(c->logger, "already unrouted");
+			ldbg(logger, "already unrouted");
 			return;
 		case CONNECTION_ONDEMAND:
 			/* presumably triggered by whack */
@@ -466,7 +466,7 @@ void permanent_event_handler(struct connection *c, struct event *e)
 			return;
 		case CONNECTION_DELETE_IKE:
 		case CONNECTION_DELETE_CHILD:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* ex, permanent+up */
@@ -487,7 +487,8 @@ void permanent_event_handler(struct connection *c, struct event *e)
 		switch (e->event) {
 		case CONNECTION_ROUTE:
 			c->policy |= POLICY_ROUTE;
-			llog(RC_LOG_SERIOUS, c->logger, "policy ROUTE added to negotiating connection");
+			llog(RC_LOG_SERIOUS, logger,
+			     "policy ROUTE added to negotiating connection");
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -496,7 +497,7 @@ void permanent_event_handler(struct connection *c, struct event *e)
 		case CONNECTION_ONDEMAND:
 		case CONNECTION_DELETE_IKE:
 		case CONNECTION_DELETE_CHILD:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permenant ondemand */
@@ -512,7 +513,7 @@ void permanent_event_handler(struct connection *c, struct event *e)
 				/*
 				 * A failed OE initiator, make shunt bare.
 				 */
-				orphan_holdpass(c, c->spd, c->logger);
+				orphan_holdpass(c, c->spd, logger);
 				/*
 				 * Change routing so we don't get cleared out
 				 * when state/connection dies.
@@ -528,7 +529,7 @@ void permanent_event_handler(struct connection *c, struct event *e)
 		switch (e->event) {
 		case CONNECTION_ROUTE:
 			c->policy |= POLICY_ROUTE;
-			llog(RC_LOG_SERIOUS, c->logger, "connection already routed");
+			llog(RC_LOG_SERIOUS, logger, "connection already routed");
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -539,7 +540,7 @@ void permanent_event_handler(struct connection *c, struct event *e)
 		case CONNECTION_ONDEMAND:
 		case CONNECTION_DELETE_CHILD:
 		case CONNECTION_DELETE_IKE:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_TIMEOUT:
 			if (should_retry(e->ike)) {
@@ -554,7 +555,7 @@ void permanent_event_handler(struct connection *c, struct event *e)
 				/*
 				 * A failed OE initiator, make shunt bare.
 				 */
-				orphan_holdpass(c, c->spd, c->logger);
+				orphan_holdpass(c, c->spd, logger);
 				/*
 				 * Change routing so we don't get cleared out
 				 * when state/connection dies.
@@ -570,7 +571,7 @@ void permanent_event_handler(struct connection *c, struct event *e)
 	case RT_ROUTED_PROSPECTIVE:
 		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -583,7 +584,7 @@ void permanent_event_handler(struct connection *c, struct event *e)
 		case CONNECTION_DELETE_CHILD:
 		case CONNECTION_DELETE_IKE:
 		case CONNECTION_TIMEOUT:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		}
 		bad_case(e->event);
@@ -592,24 +593,24 @@ void permanent_event_handler(struct connection *c, struct event *e)
 		switch (e->event) {
 		case CONNECTION_ROUTE:
 			c->policy |= POLICY_ROUTE; /* always */
-			llog(RC_LOG, c->logger, "policy ROUTE added to established connection");
+			llog(RC_LOG, logger, "policy ROUTE added to established connection");
 			return;
 		case CONNECTION_UNROUTE:
-			llog(RC_RTBUSY, c->logger, "cannot unroute: route busy");
+			llog(RC_RTBUSY, logger, "cannot unroute: route busy");
 			return;
 		case CONNECTION_ONDEMAND:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_DELETE_CHILD:
 			if (c->child.newest_routing_sa > e->child->sa.st_serialno) {
 				/* no longer child's */
-				ldbg_sa(e->child, "not the newest routing SA; leaving connection alone");
+				ldbg(logger, "not the newest routing SA; leaving connection alone");
 				delete_child_sa(&e->child);
 				return;
 			}
 			if (c->newest_ipsec_sa > e->child->sa.st_serialno) {
 				/* covered by above? */
-				llog_pexpect(e->child->sa.st_logger, HERE,
+				llog_pexpect(logger, HERE,
 					     "not the newest child; leaving connection alone");
 				delete_child_sa(&e->child);
 				return;
@@ -641,7 +642,7 @@ void permanent_event_handler(struct connection *c, struct event *e)
 			delete_child_sa(&e->child);
 			return;
 		case CONNECTION_DELETE_IKE:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* don't retry as well */
@@ -653,7 +654,7 @@ void permanent_event_handler(struct connection *c, struct event *e)
 				/*
 				 * A failed OE initiator, make shunt bare.
 				 */
-				orphan_holdpass(c, c->spd, c->logger);
+				orphan_holdpass(c, c->spd, logger);
 				/*
 				 * Change routing so we don't get cleared out
 				 * when state/connection dies.
@@ -669,7 +670,7 @@ void permanent_event_handler(struct connection *c, struct event *e)
 	case RT_ROUTED_FAILURE:
 		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -681,7 +682,7 @@ void permanent_event_handler(struct connection *c, struct event *e)
 		case CONNECTION_DELETE_CHILD:
 		case CONNECTION_DELETE_IKE:
 		case CONNECTION_TIMEOUT:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		}
 		bad_case(e->event);
@@ -689,7 +690,7 @@ void permanent_event_handler(struct connection *c, struct event *e)
 	case RT_UNROUTED_TUNNEL:
 		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -699,7 +700,7 @@ void permanent_event_handler(struct connection *c, struct event *e)
 		case CONNECTION_DELETE_CHILD:
 		case CONNECTION_DELETE_IKE:
 		case CONNECTION_TIMEOUT:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		}
 		bad_case(e->event);
@@ -709,7 +710,7 @@ void permanent_event_handler(struct connection *c, struct event *e)
 	bad_case(cr);
 }
 
-void template_event_handler(struct connection *c, struct event *e)
+void template_event_handler(struct connection *c, struct logger *logger, struct event *e)
 {
 	/*
 	 * Part 1: handle the easy cases where the connection didn't
@@ -726,16 +727,16 @@ void template_event_handler(struct connection *c, struct event *e)
 			c->policy |= POLICY_ROUTE;
 			if (!install_prospective_kernel_policy(c)) {
 				/* XXX: why whack only? */
-				llog(WHACK_STREAM|RC_ROUTE, c->logger, "could not route");
+				llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");
 			}
 			return;
 		case CONNECTION_UNROUTE:
-			ldbg(c->logger, "already unrouted");
+			ldbg(logger, "already unrouted");
 			return;
 		case CONNECTION_ONDEMAND:
 		case CONNECTION_DELETE_CHILD:
 		case CONNECTION_DELETE_IKE:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permanent+up */
@@ -756,7 +757,7 @@ void template_event_handler(struct connection *c, struct event *e)
 		switch (e->event) {
 		case CONNECTION_ROUTE:
 			c->policy |= POLICY_ROUTE;
-			llog(RC_LOG_SERIOUS, c->logger, "policy ROUTE added to negotiating connection");
+			llog(RC_LOG_SERIOUS, logger, "policy ROUTE added to negotiating connection");
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -765,7 +766,7 @@ void template_event_handler(struct connection *c, struct event *e)
 		case CONNECTION_ONDEMAND:
 		case CONNECTION_DELETE_CHILD:
 		case CONNECTION_DELETE_IKE:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permenant ondemand */
@@ -781,7 +782,7 @@ void template_event_handler(struct connection *c, struct event *e)
 				/*
 				 * A failed OE initiator, make shunt bare.
 				 */
-				orphan_holdpass(c, c->spd, c->logger);
+				orphan_holdpass(c, c->spd, logger);
 				/*
 				 * Change routing so we don't get cleared out
 				 * when state/connection dies.
@@ -797,7 +798,7 @@ void template_event_handler(struct connection *c, struct event *e)
 		switch (e->event) {
 		case CONNECTION_ROUTE:
 			c->policy |= POLICY_ROUTE;
-			llog(RC_LOG_SERIOUS, c->logger, "policy ROUTE added to negotiating connection");
+			llog(RC_LOG_SERIOUS, logger, "policy ROUTE added to negotiating connection");
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -808,7 +809,7 @@ void template_event_handler(struct connection *c, struct event *e)
 		case CONNECTION_ONDEMAND:
 		case CONNECTION_DELETE_CHILD:
 		case CONNECTION_DELETE_IKE:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_TIMEOUT:
 			if (should_retry(e->ike)) {
@@ -823,7 +824,7 @@ void template_event_handler(struct connection *c, struct event *e)
 				/*
 				 * A failed OE initiator, make shunt bare.
 				 */
-				orphan_holdpass(c, c->spd, c->logger);
+				orphan_holdpass(c, c->spd, logger);
 				/*
 				 * Change routing so we don't get cleared out
 				 * when state/connection dies.
@@ -840,15 +841,15 @@ void template_event_handler(struct connection *c, struct event *e)
 		switch (e->event) {
 		case CONNECTION_ROUTE:
 			c->policy |= POLICY_ROUTE;
-			llog(RC_LOG_SERIOUS, c->logger, "policy ROUTE added to established connection");
+			llog(RC_LOG_SERIOUS, logger, "policy ROUTE added to established connection");
 			return;
 		case CONNECTION_UNROUTE:
-			llog(RC_RTBUSY, c->logger, "cannot unroute: route busy");
+			llog(RC_RTBUSY, logger, "cannot unroute: route busy");
 			return;
 		case CONNECTION_ONDEMAND:
 		case CONNECTION_DELETE_CHILD:
 		case CONNECTION_DELETE_IKE:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* don't retry as well */
@@ -860,7 +861,7 @@ void template_event_handler(struct connection *c, struct event *e)
 				/*
 				 * A failed OE initiator, make shunt bare.
 				 */
-				orphan_holdpass(c, c->spd, c->logger);
+				orphan_holdpass(c, c->spd, logger);
 				/*
 				 * Change routing so we don't get cleared out
 				 * when state/connection dies.
@@ -876,7 +877,7 @@ void template_event_handler(struct connection *c, struct event *e)
 	case RT_ROUTED_PROSPECTIVE:
 		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -888,7 +889,7 @@ void template_event_handler(struct connection *c, struct event *e)
 		case CONNECTION_DELETE_CHILD:
 		case CONNECTION_DELETE_IKE:
 		case CONNECTION_TIMEOUT:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		}
 		bad_case(e->event);
@@ -896,7 +897,7 @@ void template_event_handler(struct connection *c, struct event *e)
 	case RT_ROUTED_FAILURE:
 		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -908,7 +909,7 @@ void template_event_handler(struct connection *c, struct event *e)
 		case CONNECTION_DELETE_CHILD:
 		case CONNECTION_DELETE_IKE:
 		case CONNECTION_TIMEOUT:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		}
 		bad_case(e->event);
@@ -916,7 +917,7 @@ void template_event_handler(struct connection *c, struct event *e)
 	case RT_UNROUTED_TUNNEL:
 		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -927,7 +928,7 @@ void template_event_handler(struct connection *c, struct event *e)
 		case CONNECTION_DELETE_CHILD:
 		case CONNECTION_DELETE_IKE:
 		case CONNECTION_TIMEOUT:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		}
 		bad_case(e->event);
@@ -937,7 +938,7 @@ void template_event_handler(struct connection *c, struct event *e)
 	bad_case(cr);
 }
 
-void instance_event_handler(struct connection *c, struct event *e)
+void instance_event_handler(struct connection *c, struct logger *logger, struct event *e)
 {
 	/*
 	 * Part 1: handle the easy cases where the connection didn't
@@ -951,10 +952,10 @@ void instance_event_handler(struct connection *c, struct event *e)
 	case RT_UNROUTED:
 		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_UNROUTE:
-			ldbg(c->logger, "already unrouted");
+			ldbg(logger, "already unrouted");
 			return;
 		case CONNECTION_ONDEMAND:
 			/*
@@ -969,7 +970,7 @@ void instance_event_handler(struct connection *c, struct event *e)
 			return;
 		case CONNECTION_DELETE_CHILD:
 		case CONNECTION_DELETE_IKE:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permanent+up */
@@ -989,7 +990,7 @@ void instance_event_handler(struct connection *c, struct event *e)
 	case RT_UNROUTED_NEGOTIATION:
 		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -999,7 +1000,7 @@ void instance_event_handler(struct connection *c, struct event *e)
 		case CONNECTION_ONDEMAND:
 		case CONNECTION_DELETE_CHILD:
 		case CONNECTION_DELETE_IKE:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* for instance, permenant ondemand */
@@ -1015,7 +1016,7 @@ void instance_event_handler(struct connection *c, struct event *e)
 				/*
 				 * A failed OE initiator, make shunt bare.
 				 */
-				orphan_holdpass(c, c->spd, c->logger);
+				orphan_holdpass(c, c->spd, logger);
 				/*
 				 * Change routing so we don't get cleared out
 				 * when state/connection dies.
@@ -1030,7 +1031,7 @@ void instance_event_handler(struct connection *c, struct event *e)
 	case RT_ROUTED_NEGOTIATION:
 		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -1039,7 +1040,7 @@ void instance_event_handler(struct connection *c, struct event *e)
 		case CONNECTION_ONDEMAND:
 		case CONNECTION_DELETE_CHILD:
 		case CONNECTION_DELETE_IKE:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_TIMEOUT:
 			if (should_retry(e->ike)) {
@@ -1054,7 +1055,7 @@ void instance_event_handler(struct connection *c, struct event *e)
 				/*
 				 * A failed OE initiator, make shunt bare.
 				 */
-				orphan_holdpass(c, c->spd, c->logger);
+				orphan_holdpass(c, c->spd, logger);
 				/*
 				 * Change routing so we don't get cleared out
 				 * when state/connection dies.
@@ -1070,15 +1071,15 @@ void instance_event_handler(struct connection *c, struct event *e)
 	case RT_ROUTED_TUNNEL:
 		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_UNROUTE:
-			llog(RC_RTBUSY, c->logger, "cannot unroute: route busy");
+			llog(RC_RTBUSY, logger, "cannot unroute: route busy");
 			return;
 		case CONNECTION_ONDEMAND:
 		case CONNECTION_DELETE_CHILD:
 		case CONNECTION_DELETE_IKE:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_TIMEOUT:
 			/* don't retry as well */
@@ -1090,7 +1091,7 @@ void instance_event_handler(struct connection *c, struct event *e)
 				/*
 				 * A failed OE initiator, make shunt bare.
 				 */
-				orphan_holdpass(c, c->spd, c->logger);
+				orphan_holdpass(c, c->spd, logger);
 				/*
 				 * Change routing so we don't get cleared out
 				 * when state/connection dies.
@@ -1106,7 +1107,7 @@ void instance_event_handler(struct connection *c, struct event *e)
 	case RT_ROUTED_PROSPECTIVE:
 		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -1118,7 +1119,7 @@ void instance_event_handler(struct connection *c, struct event *e)
 		case CONNECTION_DELETE_CHILD:
 		case CONNECTION_DELETE_IKE:
 		case CONNECTION_TIMEOUT:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		}
 		bad_case(e->event);
@@ -1126,7 +1127,7 @@ void instance_event_handler(struct connection *c, struct event *e)
 	case RT_ROUTED_FAILURE:
 		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -1138,7 +1139,7 @@ void instance_event_handler(struct connection *c, struct event *e)
 		case CONNECTION_DELETE_CHILD:
 		case CONNECTION_DELETE_IKE:
 		case CONNECTION_TIMEOUT:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		}
 		bad_case(e->event);
@@ -1146,7 +1147,7 @@ void instance_event_handler(struct connection *c, struct event *e)
 	case RT_UNROUTED_TUNNEL:
 		switch (e->event) {
 		case CONNECTION_ROUTE:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		case CONNECTION_UNROUTE:
 			delete_connection_kernel_policies(c);
@@ -1156,7 +1157,7 @@ void instance_event_handler(struct connection *c, struct event *e)
 		case CONNECTION_DELETE_CHILD:
 		case CONNECTION_DELETE_IKE:
 		case CONNECTION_TIMEOUT:
-			barf(c, e);
+			barf(c, logger, e);
 			return;
 		}
 		bad_case(e->event);
@@ -1191,7 +1192,7 @@ void connection_unroute(struct connection *c)
 	}
 
 	c->policy &= ~POLICY_ROUTE;
-	dispatch(c, (struct event) {
+	dispatch(c, c->logger, (struct event) {
 			.event = CONNECTION_UNROUTE,
 		});
 }
@@ -1313,7 +1314,7 @@ void connection_delete_child(struct child_sa **childp)
 	/*
 	 * Let state machine figure out how to react.
 	 */
-	dispatch(c, (struct event) {
+	dispatch(c, child->sa.st_logger, (struct event) {
 			.event = CONNECTION_DELETE_CHILD,
 			.child = child,
 		});
@@ -1333,7 +1334,7 @@ void connection_delete_ike(struct ike_sa **ikep)
 	/*
 	 * Let state machine figure out how to react.
 	 */
-	dispatch(c, (struct event) {
+	dispatch(c, ike->sa.st_logger, (struct event) {
 			.event = CONNECTION_DELETE_IKE,
 			.ike = ike,
 		});
