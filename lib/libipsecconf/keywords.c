@@ -538,7 +538,6 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "nic-offload",  kv_conn,  kt_enum,  KNCF_NIC_OFFLOAD,  kw_yna_list, NULL, },
 
   { "encapsulation",  kv_conn,  kt_enum,  KNCF_ENCAPS,  kw_yna_list, NULL, },
-  { "forceencaps",  kv_conn, kt_obsolete, KNCF_WARNIGNORE, NULL, NULL, },
 
   { "overlapip",  kv_conn,  kt_bool,  KNCF_OVERLAPIP, NULL, NULL, },
   { "reauth",  kv_conn,  kt_bool,  KNCF_REAUTH, NULL, NULL, },

@@ -322,7 +322,6 @@
           <arg choice="opt">restart</arg>
         </group></arg>
 
-      <arg choice="opt">--forceencaps</arg>
       <arg choice="opt">--no-keep-alive</arg>
 
       <arg choice="opt"><group choice="plain">

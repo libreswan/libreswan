@@ -464,7 +464,6 @@ enum option_enums {
 	CD_REDIRECT_TO,
 	CD_ACCEPT_REDIRECT,
 	CD_ACCEPT_REDIRECT_TO,
-	CD_FORCEENCAPS,
 	CD_ENCAPS,
 	CD_NO_NAT_KEEPALIVE,
 	CD_IKEV1_NATT,
@@ -732,7 +731,6 @@ static const struct option long_opts[] = {
 
 	PS("dontrekey", DONT_REKEY),
 	PS("reauth", REAUTH),
-	{ "forceencaps", no_argument, NULL, CD_FORCEENCAPS + OO }, /* backwards compatibility */
 	{ "encaps", required_argument, NULL, CD_ENCAPS + OO },
 	{ "no-nat_keepalive", no_argument, NULL,  CD_NO_NAT_KEEPALIVE + OO },
 	{ "ikev1_natt", required_argument, NULL, CD_IKEV1_NATT + OO },	/* obsolete _ */
@@ -1919,11 +1917,6 @@ int main(int argc, char **argv)
 				msg.send_ca = CA_SEND_ALL;
 			else
 				msg.send_ca = CA_SEND_NONE;
-			continue;
-
-		/* backwards compatibility */
-		case CD_FORCEENCAPS:	/* --forceencaps */
-			msg.encaps = yna_yes;
 			continue;
 
 		case CD_ENCAPS:	/* --encaps */
