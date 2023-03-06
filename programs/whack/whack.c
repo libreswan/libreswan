@@ -2594,9 +2594,22 @@ int main(int argc, char **argv)
 		       LELEM(OPT_REKEY_IPSEC))) {
 		if (!LHAS(opts1_seen, OPT_NAME))
 			diagw("missing --name <connection_name>");
+#if 0
+		/*
+		 * XXX: these checks are broken:
+		 *
+		 * Since !LELEM(OPT_TRAFFIC_STATUS) is always false
+		 * the diagw() never appears.
+		 *
+		 * .whack_options is a "bool" and not an "lset_t".
+		 *
+		 * .whack_options is only set when there's a DBGOPT,
+		 * testing that directly would be better.
+		 */
 	} else if (msg.whack_options == LEMPTY) {
 		if (LHAS(opts1_seen, OPT_NAME) && !LELEM(OPT_TRAFFIC_STATUS))
 			diagw("no reason for --name");
+#endif
 	}
 
 	if (!LDISJOINT(opts1_seen, LELEM(OPT_REMOTE_HOST))) {
