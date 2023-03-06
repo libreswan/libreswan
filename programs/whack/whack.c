@@ -292,7 +292,15 @@ enum option_enums {
 	OPT_REMOTE_HOST,
 	OPT_CONNALIAS,
 
-	OPT_CD,
+	OPT_CD_SEEN,		/* magic, indicates an option from the
+				 * CD_{FIRST,LAST} or CDP_{FIRST,LAST}
+				 * range was seen */
+	OPT_RANGE2_SEEN,	/* magic, indicates an option from the
+				 * OPT_{FIRST,LAST}2 range was seen
+				 * (which has lots of space) */
+	OPT_LST_SEEN,		/* magic, indicates that an option
+				 * from the LST_{FIRST,LAST} range was
+				 * seen. */
 
 	OPT_KEYID,
 	OPT_ADDKEY,
@@ -359,7 +367,7 @@ enum option_enums {
 
 #   define OPT_LAST1 OPT_OPPO_DPORT	/* last "normal" option, range 1 */
 
-#define OPT_FIRST2  OPT_ASYNC	/* first normal option, range 2 */
+#define OPT_FIRST2  OPT_ASYNC	/* first "normal" option, range 2 */
 
 	OPT_ASYNC,
 
@@ -526,8 +534,10 @@ enum option_enums {
 /*
  * Policy options
  *
- * Really part of Connection Description but too many bits
- * for cd_seen.
+ * Really part of Connection Description but, seemingly, easier to
+ * manipulate as separate policy bits.
+ *
+ * XXX: I'm skeptical.
  */
 
 #define CDP_FIRST	CDP_SINGLETON
@@ -556,6 +566,7 @@ enum option_enums {
 	DBGOPT_LAST = DBGOPT_NO_IMPAIR,
 
 #define	OPTION_ENUMS_LAST	DBGOPT_LAST
+#define OPTION_ENUMS_ROOF	(OPTION_ENUMS_LAST+1)
 };
 
 /*
@@ -997,14 +1008,9 @@ int main(int argc, char **argv)
 	struct whack_message msg;
 	struct whackpacker wp;
 	char esp_buf[256];	/* uses snprintf */
-	lset_t
-		opts1_seen = LEMPTY,
-		opts2_seen = LEMPTY,
-		lst_seen = LEMPTY,
-		cd_seen = LEMPTY,
-		cdp_seen = LEMPTY,
-		end_seen = LEMPTY,
-		algo_seen = LEMPTY;
+	bool seen[OPTION_ENUMS_ROOF] = {0};
+	lset_t opts1_seen = LEMPTY;
+	lset_t end_seen = LEMPTY;
 
 	char xauthusername[MAX_XAUTH_USERNAME_LEN];
 	char xauthpass[XAUTH_MAX_PASS_LENGTH];
@@ -1017,10 +1023,7 @@ int main(int argc, char **argv)
 	/* check division of numbering space */
 	assert(OPTION_OFFSET + OPTION_ENUMS_LAST < NUMERIC_ARG);
 	assert(OPT_LAST1 - OPT_FIRST1 < LELEM_ROOF);
-	assert(OPT_LAST2 - OPT_FIRST2 < LELEM_ROOF);
-	assert(LST_LAST - LST_FIRST < LELEM_ROOF);
 	assert(END_LAST - END_FIRST < LELEM_ROOF);
-	assert(CD_LAST - CD_FIRST < LELEM_ROOF);
 	assert(OPT_AUTHBY_LAST - OPT_AUTHBY_FIRST < LELEM_ROOF);
 
 	zero(&msg);	/* ??? pointer fields might not be NULLed */
@@ -1133,28 +1136,26 @@ int main(int argc, char **argv)
 			opts1_seen |= f;
 		} else if (OPT_FIRST2 <= c && c <= OPT_LAST2) {
 			/*
-			 * OPT_* options get added opts_seen2.
-			 * Reject repeated options (unless later code
-			 * intervenes).
+			 * OPT_* options in the above range get added
+			 * to seen[].  Reject repeated options.
 			 */
-			lset_t f = LELEM(c);
-
-			if (opts2_seen & f)
+			if (seen[c]) {
 				diagq("duplicated flag",
 				      long_opts[long_index].name);
-			opts2_seen |= f;
+			}
+			seen[c] = true;
+			opts1_seen |= LELEM(OPT_RANGE2_SEEN);
 		} else if (LST_FIRST <= c && c <= LST_LAST) {
 			/*
-			 * LST_* options get added lst_seen.
-			 * Reject repeated options (unless later code
-			 * intervenes).
+			 * LST_* options get added to seen[].
+			 * Repeated options are rejected.
 			 */
-			lset_t f = LELEM(c - LST_FIRST);
-
-			if (lst_seen & f)
+			if (seen[c]) {
 				diagq("duplicated flag",
 				      long_opts[long_index].name);
-			lst_seen |= f;
+			}
+			seen[c] = true;
+			opts1_seen |= LELEM(OPT_LST_SEEN);
 		} else if (DBGOPT_FIRST <= c && c <= DBGOPT_LAST) {
 			/*
 			 * DBGOPT_* options are treated separately to reduce
@@ -1164,8 +1165,10 @@ int main(int argc, char **argv)
 		} else if (END_FIRST <= c && c <= END_LAST) {
 			/*
 			 * END_* options are added to end_seen.
-			 * Reject repeated options (unless later code
-			 * intervenes).
+			 * Reject repeated options for the current
+			 * end.  Code below, when parsing --to, will
+			 * clear END_SEEN so that the second end can
+			 * duplicate options from the first end.
 			 */
 			lset_t f = LELEM(c - END_FIRST);
 
@@ -1173,45 +1176,39 @@ int main(int argc, char **argv)
 				diagq("duplicated flag",
 				      long_opts[long_index].name);
 			end_seen |= f;
-			opts1_seen |= LELEM(OPT_CD);
+			opts1_seen |= LELEM(OPT_CD_SEEN);
 		} else if (CD_FIRST <= c && c <= CD_LAST) {
 			/*
-			 * CD_* options are added to cd_seen.
-			 * Reject repeated options (unless later code
-			 * intervenes).
+			 * CD_* options are added to seen[].  Reject
+			 * repeated options.
 			 */
-			lset_t f = LELEM(c - CD_FIRST);
-
-			if (cd_seen & f)
+			if (seen[c])
 				diagq("duplicated flag",
 				      long_opts[long_index].name);
-			cd_seen |= f;
-			opts1_seen |= LELEM(OPT_CD);
+			seen[c] = true;
+			opts1_seen |= LELEM(OPT_CD_SEEN);
 		} else if (CDP_FIRST <= c && c <= CDP_LAST) {
 			/*
-			 * CDP_* options are added to cdp_seen.
-			 * Reject repeated options (unless later code
-			 * intervenes).
+			 * CDP_* options are added to seen[].  Reject
+			 * repeated options.
 			 */
-			lset_t f = LELEM(c - CDP_FIRST);
-
-			if (cdp_seen & f)
+			if (seen[c])
 				diagq("duplicated flag",
 				      long_opts[long_index].name);
-			cdp_seen |= f;
-			opts1_seen |= LELEM(OPT_CD);
+			seen[c] = true;
+			opts1_seen |= LELEM(OPT_CD_SEEN);
 		} else if (OPT_AUTHBY_FIRST <= c && c <= OPT_AUTHBY_LAST) {
 			/*
  			 * ALGO options all translate into two lset's
- 			 * msg.policy and msg.sighash
+ 			 * msg.policy and msg.sighash.  Don't allow
+ 			 * duplicates(!?!).
  			 */
-			lset_t f = LELEM(c - OPT_AUTHBY_FIRST);
-
-			if (algo_seen & f)
+			if (seen[c]) {
 				diagq("duplicated flag",
 				      long_opts[long_index].name);
-			algo_seen |= f;
-			opts1_seen |= LELEM(OPT_CD);
+			}
+			seen[c] = true;
+			opts1_seen |= LELEM(OPT_CD_SEEN);
 		}
 
 		/*
@@ -2150,7 +2147,7 @@ int main(int argc, char **argv)
 				continue;
 			}
 
-			if (LHAS(cd_seen, CD_CONNIPV6 - CD_FIRST)) {
+			if (seen[CD_CONNIPV6]) {
 				/* i.e., --ipv6 ... --ipv4 */
 				diagw("--ipv4 conflicts with --ipv6");
 			}
@@ -2169,7 +2166,7 @@ int main(int argc, char **argv)
 				continue;
 			}
 
-			if (LHAS(cd_seen, CD_CONNIPV4 - CD_FIRST)) {
+			if (seen[CD_CONNIPV4]) {
 				/* i.e., --ipv4 ... --ipv6 */
 				diagw("--ipv6 conflicts with --ipv4");
 			}
@@ -2183,8 +2180,9 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_TUNNELIPV4:	/* --tunnelipv4 */
-			if (LHAS(cd_seen, CD_TUNNELIPV6 - CD_FIRST))
+			if (seen[CD_TUNNELIPV6]) {
 				diagw("--tunnelipv4 conflicts with --tunnelipv6");
+			}
 			if (child_family.used_by != NULL)
 				diagq("--tunnelipv4 must precede", child_family.used_by);
 			child_family.used_by = long_opts[long_index].name;
@@ -2192,8 +2190,9 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_TUNNELIPV6:	/* --tunnelipv6 */
-			if (LHAS(cd_seen, CD_TUNNELIPV4 - CD_FIRST))
+			if (seen[CD_TUNNELIPV4]) {
 				diagw("--tunnelipv6 conflicts with --tunnelipv4");
+			}
 			if (child_family.used_by != NULL)
 				diagq("--tunnelipv6 must precede", child_family.used_by);
 			child_family.used_by = long_opts[long_index].name;
@@ -2516,17 +2515,33 @@ int main(int argc, char **argv)
 		/*NOTREACHED*/
 	case LELEM(OPT_OPPO_HERE) | LELEM(OPT_OPPO_THERE):
 		msg.whack_oppo_initiate = true;
-		if (LIN(cd_seen,
-			LELEM(CD_TUNNELIPV4 -
-			      CD_FIRST) | LELEM(CD_TUNNELIPV6 - CD_FIRST)))
-			opts1_seen &= ~LELEM(OPT_CD);
+		/*
+		 * When the only CD (connection description) option is
+		 * TUNNELIPV[46] scrub that a connection description
+		 * was seen (OPTS1_SEEN will be left with
+		 * OPT_OPPO_{HERE,THERE}.
+		 *
+		 * XXX: is this broken?  It scrubs the OPT_CD_SEEN bit
+		 * when though a CDP_* or OPT_AUTHBY_* bit was set
+		 * (both of which seem to be incompatible with OPPO).
+		 */
+		for (enum option_enums e = CD_FIRST; e <= CD_LAST; e++) {
+			if (e != CD_TUNNELIPV4 &&
+			    e != CD_TUNNELIPV6 &&
+			    seen[e]) {
+				pexpect(opts1_seen & LELEM(OPT_CD_SEEN));
+				opts1_seen &= ~LELEM(OPT_CD_SEEN);
+				break;
+			}
+		}
 		break;
 	}
 
 	/* check connection description */
-	if (LHAS(opts1_seen, OPT_CD)) {
-		if (!LHAS(cd_seen, CD_TO - CD_FIRST))
+	if (LHAS(opts1_seen, OPT_CD_SEEN)) {
+		if (!seen[CD_TO]) {
 			diagw("connection description option, but no --to");
+		}
 
 		if (!LHAS(end_seen, END_HOST - END_FIRST))
 			diagw("connection missing --host after --to");
@@ -2574,7 +2589,7 @@ int main(int argc, char **argv)
 		       LELEM(OPT_ROUTE) | LELEM(OPT_UNROUTE) |
 		       LELEM(OPT_INITIATE) | LELEM(OPT_TERMINATE) |
 		       LELEM(OPT_DELETE) |  LELEM(OPT_DELETEID) |
-		       LELEM(OPT_DELETEUSER) | LELEM(OPT_CD) |
+		       LELEM(OPT_DELETEUSER) | LELEM(OPT_CD_SEEN) |
 		       LELEM(OPT_REKEY_IKE) |
 		       LELEM(OPT_REKEY_IPSEC))) {
 		if (!LHAS(opts1_seen, OPT_NAME))
@@ -2653,10 +2668,9 @@ int main(int argc, char **argv)
 	if (ugh != NULL)
 		diagw(ugh);
 
-	msg.magic = ((opts1_seen & ~(LELEM(OPT_SHUTDOWN) | LELEM(OPT_STATUS))) |
-		     opts2_seen | lst_seen | cd_seen) != LEMPTY ||
-		    msg.whack_options ?
-		    WHACK_MAGIC : WHACK_BASIC_MAGIC;
+	msg.magic = (((opts1_seen & ~(LELEM(OPT_SHUTDOWN) | LELEM(OPT_STATUS))) != LEMPTY ||
+		      msg.whack_options) ? WHACK_MAGIC :
+		     WHACK_BASIC_MAGIC);
 
 	/* send message to Pluto */
 	if (access(ctl_addr.sun_path, R_OK | W_OK) < 0) {
