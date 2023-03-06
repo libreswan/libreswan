@@ -285,12 +285,6 @@ static void diagq(err_t ugh, const char *this)
  * - CDP_* options (Connection Description Policy bit options)
  */
 enum option_enums {
-#   define OPT_FIRST1    OPT_RUNDIR	/* first normal option, range 1 */
-	OPT_RUNDIR,
-	OPT_CTLSOCKET,
-	OPT_NAME,
-	OPT_REMOTE_HOST,
-	OPT_CONNALIAS,
 
 #define OPTS_SEEN_CD LELEM(OPTS_SEEN_CD_IX)
 	OPTS_SEEN_CD_IX,	/* magic, indicates an option from the
@@ -308,6 +302,27 @@ enum option_enums {
 	OPTS_SEEN_DBG_IX,	/* magic, indicates that an option
 				 * from the DBGOPT_{FIRST,LAST} range
 				 * was seen. */
+
+#   define OPT_FIRST1    OPT_STATUS	/* first normal option, range 1 */
+
+	OPT_STATUS,		/* must be part of first group */
+	OPT_SHUTDOWN,		/* must be part of first group */
+
+#   define OPT_LAST1 OPT_SHUTDOWN	/* last "normal" option, range 1 */
+
+#define OPT_FIRST2  OPT_ASYNC	/* first "normal" option, range 2 */
+
+	OPT_ASYNC,
+
+	OPT_RUNDIR,
+	OPT_CTLSOCKET,
+	OPT_NAME,
+	OPT_REMOTE_HOST,
+	OPT_CONNALIAS,
+
+	OPT_DELETECRASH,
+	OPT_USERNAME,
+	OPT_XAUTHPASS,
 
 	OPT_KEYID,
 	OPT_ADDKEY,
@@ -348,10 +363,8 @@ enum option_enums {
 
 	OPT_PURGEOCSP,
 
-	OPT_STATUS,		/* must be part of first group */
 	OPT_GLOBAL_STATUS,
 	OPT_CLEAR_STATS,
-	OPT_SHUTDOWN,		/* must be part of first group */
 	OPT_SHUTDOWN_DIRTY,
 	OPT_TRAFFIC_STATUS,
 	OPT_SHUNT_STATUS,
@@ -372,17 +385,7 @@ enum option_enums {
 	OPT_OPPO_SPORT,
 	OPT_OPPO_DPORT,
 
-#   define OPT_LAST1 OPT_OPPO_DPORT	/* last "normal" option, range 1 */
-
-#define OPT_FIRST2  OPT_ASYNC	/* first "normal" option, range 2 */
-
-	OPT_ASYNC,
-
-	OPT_DELETECRASH,
-	OPT_USERNAME,
-	OPT_XAUTHPASS,
-
-#define OPT_LAST2 OPT_XAUTHPASS	/* last "normal" option, range 2 */
+#define OPT_LAST2 OPT_OPPO_DPORT	/* last "normal" option, range 2 */
 
 /* List options */
 
@@ -400,7 +403,6 @@ enum option_enums {
 	LST_GROUPS,
 	LST_CARDS,
 	LST_ALL,
-
 #   define LST_LAST LST_ALL	/* last list option */
 
 /* Connection End Description options */
