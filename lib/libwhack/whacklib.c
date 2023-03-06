@@ -342,9 +342,6 @@ static bool pickle_whack_message(struct whackpacker *wp, const struct pickler *p
 		PICKLE_STRING(&wp->msg->ike) &&
 		PICKLE_STRING(&wp->msg->esp) &&
 		PICKLE_STRING(&wp->msg->connalias) &&
-		PICKLE_STRING(&wp->msg->string1) &&
-		PICKLE_STRING(&wp->msg->string2) &&
-		PICKLE_STRING(&wp->msg->string3) &&
 		PICKLE_STRING(&wp->msg->dnshostname) &&
 		PICKLE_STRING(&wp->msg->modecfg_dns) &&
 		PICKLE_STRING(&wp->msg->modecfg_domains) &&
