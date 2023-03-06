@@ -1758,6 +1758,10 @@ static const char *const ikev2_notify_name_16384[] = {
 	"v2N_PPK_IDENTITY",
 	"v2N_NO_PPK_AUTH",
 	"v2N_INTERMEDIATE_EXCHANGE_SUPPORTED" /* 16438*/,
+	"v2N_IP4_ALLOWED",
+	"v2N_IP6_ALLOWED",
+	"v2N_ADDITIONAL_KEY_EXCHANGE",
+	"v2N_USE_AGGFRAG",
 };
 
 static enum_names v2_notification_names_16384 = {
@@ -1816,6 +1820,7 @@ static const char *const ikev2_notify_name[] = {
 	"v2N_CHILD_SA_NOT_FOUND",
 	"v2N_INVALID_GROUP_ID", /* 45 draft-yeung-g-ikev2 */
 	"v2N_AUTHORIZATION_FAILED",
+	"v2N_STATE_NOT_FOUND", /* draft-ietf-ipsecme-ikev2-multiple-ke-12 */
 };
 
 enum_names v2_notification_names = {
