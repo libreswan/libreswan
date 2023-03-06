@@ -1766,7 +1766,7 @@ static const char *const ikev2_notify_name_16384[] = {
 
 static enum_names v2_notification_names_16384 = {
 	v2N_INITIAL_CONTACT,
-	v2N_INTERMEDIATE_EXCHANGE_SUPPORTED,
+	v2N_USE_AGGFRAG,
 	ARRAY_REF(ikev2_notify_name_16384),
 	"v2N_", /* prefix */
 	&v2_notification_names_private
@@ -1825,7 +1825,7 @@ static const char *const ikev2_notify_name[] = {
 
 enum_names v2_notification_names = {
 	v2N_NOTHING_WRONG,
-	v2N_AUTHORIZATION_FAILED,
+	v2N_STATE_NOT_FOUND,
 	ARRAY_REF(ikev2_notify_name),
 	"v2N_", /* prefix */
 	&v2_notification_names_16384
