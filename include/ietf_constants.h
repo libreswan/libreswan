@@ -1576,7 +1576,7 @@ typedef enum {
 	v2N_CHILD_SA_NOT_FOUND = 44, /* RFC 7296 */
 	v2N_INVALID_GROUP_ID = 45, /* draft-yeung-g-ikev2 */
 	v2N_AUTHORIZATION_FAILED = 46, /* draft-yeung-g-ikev2 */
-	v2N_STATE_NOT_FOUND = 47 /* draft-ietf-ipsecme-ikev2-multiple-ke-12 */
+	v2N_STATE_NOT_FOUND = 47, /* draft-ietf-ipsecme-ikev2-multiple-ke-12 */
 
 	v2N_ERROR_PSTATS_ROOF, /* used to cap error statistics array */
 
