@@ -348,10 +348,10 @@ enum option_enums {
 
 	OPT_PURGEOCSP,
 
-	OPT_STATUS,
+	OPT_STATUS,		/* must be part of first group */
 	OPT_GLOBAL_STATUS,
 	OPT_CLEAR_STATS,
-	OPT_SHUTDOWN,
+	OPT_SHUTDOWN,		/* must be part of first group */
 	OPT_SHUTDOWN_DIRTY,
 	OPT_TRAFFIC_STATUS,
 	OPT_SHUNT_STATUS,
@@ -2524,12 +2524,7 @@ int main(int argc, char **argv)
 	 */
 
 	/* check opportunistic initiation simulation request */
-	switch (opts_seen & (LELEM(OPT_OPPO_HERE) | LELEM(OPT_OPPO_THERE))) {
-	case LELEM(OPT_OPPO_HERE):
-	case LELEM(OPT_OPPO_THERE):
-		diagw("--oppohere and --oppothere must be used together");
-		/*NOTREACHED*/
-	case LELEM(OPT_OPPO_HERE) | LELEM(OPT_OPPO_THERE):
+	if (seen[OPT_OPPO_HERE] && seen[OPT_OPPO_THERE]) {
 		msg.whack_oppo_initiate = true;
 		/*
 		 * When the only CD (connection description) option is
@@ -2537,8 +2532,8 @@ int main(int argc, char **argv)
 		 * was seen (OPTS_SEEN will be left with
 		 * OPT_OPPO_{HERE,THERE}.
 		 *
-		 * XXX: is this broken?  It scrubs the OPTS_SEEN_CD bit
-		 * when though a CDP_* or OPT_AUTHBY_* bit was set
+		 * XXX: is this broken?  It scrubs the OPTS_SEEN_CD
+		 * bit when though a CDP_* or OPT_AUTHBY_* bit was set
 		 * (both of which seem to be incompatible with OPPO).
 		 */
 		for (enum option_enums e = CD_FIRST; e <= CD_LAST; e++) {
@@ -2550,7 +2545,8 @@ int main(int argc, char **argv)
 				break;
 			}
 		}
-		break;
+	} else if (seen[OPT_OPPO_HERE] || seen[OPT_OPPO_THERE]) {
+		diagw("--oppohere and --oppothere must be used together");
 	}
 
 	/* check connection description */
@@ -2601,15 +2597,17 @@ int main(int argc, char **argv)
 	}
 
 	/* decide whether --name is mandatory or forbidden */
-	if (!LDISJOINT(opts_seen,
-		       LELEM(OPT_ROUTE) | LELEM(OPT_UNROUTE) |
-		       LELEM(OPT_INITIATE) | LELEM(OPT_TERMINATE) |
-		       LELEM(OPT_DELETE) |  LELEM(OPT_DELETEID) |
-		       LELEM(OPT_DELETEUSER) |
-		       OPTS_SEEN_CD |
-		       LELEM(OPT_REKEY_IKE) |
-		       LELEM(OPT_REKEY_IPSEC))) {
-		if (!LHAS(opts_seen, OPT_NAME))
+	if (seen[OPT_ROUTE] ||
+	    seen[OPT_UNROUTE] ||
+	    seen[OPT_INITIATE] ||
+	    seen[OPT_TERMINATE] ||
+	    seen[OPT_DELETE] ||
+	    seen[OPT_DELETEID] ||
+	    seen[OPT_DELETEUSER] ||
+	    seen[OPT_REKEY_IKE] ||
+	    seen[OPT_REKEY_IPSEC] ||
+	    (opts_seen & OPTS_SEEN_CD)) {
+		if (!seen[OPT_NAME])
 			diagw("missing --name <connection_name>");
 #if 0
 		/*
@@ -2624,19 +2622,19 @@ int main(int argc, char **argv)
 		 * testing that directly would be better.
 		 */
 	} else if (msg.whack_options == LEMPTY) {
-		if (LHAS(opts_seen, OPT_NAME) && !LELEM(OPT_TRAFFIC_STATUS))
+		if (seen[OPT_NAME] && !LELEM(OPT_TRAFFIC_STATUS))
 			diagw("no reason for --name");
 #endif
 	}
 
-	if (!LDISJOINT(opts_seen, LELEM(OPT_REMOTE_HOST))) {
-		if (!LHAS(opts_seen, OPT_INITIATE))
-			diagw("--remote-host can only be used with --initiate");
+	if (seen[OPT_REMOTE_HOST] && !seen[OPT_INITIATE]) {
+		diagw("--remote-host can only be used with --initiate");
 	}
 
-	if (!LDISJOINT(opts_seen, LELEM(OPT_PUBKEYRSA) | LELEM(OPT_ADDKEY))) {
-		if (!LHAS(opts_seen, OPT_KEYID))
+	if (seen[OPT_PUBKEYRSA] || seen[OPT_ADDKEY]) {
+		if (!seen[OPT_KEYID]) {
 			diagw("--addkey and --pubkeyrsa require --keyid");
+		}
 	}
 
 	if (!(msg.whack_add || msg.whack_key ||
