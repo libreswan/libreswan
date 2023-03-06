@@ -109,7 +109,7 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child, struct spd_rou
 					  bool replace, where_t where);
 
 void replace_ipsec_with_bare_kernel_policies(struct child_sa *child,
-					     enum shunt_kind shunt_kind,
+					     enum routing new_routing,
 					     enum expect_kernel_policy expect_inbound_policy,
 					     where_t where);
 

@@ -362,6 +362,54 @@ static void retry(struct ike_sa *ike)
 					/*background?*/false, ike->sa.st_logger);
 }
 
+/*
+ * Return TRUE when the connection must be preserved.
+ */
+static bool delete_routed_tunnel_child(struct connection *c,
+				       struct logger *logger,
+				       struct event *e)
+{
+	if (c->child.newest_routing_sa > e->child->sa.st_serialno) {
+		/* no longer child's */
+		ldbg(logger, "not the newest routing SA; leaving connection alone");
+		delete_child_sa(&e->child);
+		return true;
+	}
+	if (c->newest_ipsec_sa > e->child->sa.st_serialno) {
+		/* covered by above? */
+		llog_pexpect(logger, HERE,
+			     "not the newest child; leaving connection alone");
+		delete_child_sa(&e->child);
+		return true;
+	}
+	if (should_revive(&(e->child->sa))) {
+		/* XXX: should this be ROUTED_NEGOTIATING? */
+		replace_ipsec_with_bare_kernel_policies(e->child, RT_ROUTED_PROSPECTIVE,
+							EXPECT_KERNEL_POLICY_OK, HERE);
+		schedule_revival(&(e->child->sa));
+		delete_child_sa(&e->child);
+		return true;
+	}
+	if (c->config->autostart == AUTOSTART_ONDEMAND) {
+		/*
+		 * Change routing so we don't get cleared out
+		 * when state/connection dies.
+		 */
+		replace_ipsec_with_bare_kernel_policies(e->child, RT_ROUTED_PROSPECTIVE,
+							EXPECT_KERNEL_POLICY_OK, HERE);
+		delete_child_sa(&e->child);
+		return false;
+	}
+	/* XXX: should this be responder only? */
+	enum routing new_routing =
+		(c->config->failure_shunt != SHUNT_NONE ? RT_ROUTED_FAILURE :
+		 RT_ROUTED_PROSPECTIVE);
+	replace_ipsec_with_bare_kernel_policies(e->child, new_routing,
+						EXPECT_KERNEL_POLICY_OK, HERE);
+	delete_child_sa(&e->child);
+	return false;
+}
+
 static void fail(struct ike_sa *ike)
 {
 	pstat_sa_failed(&ike->sa, REASON_TOO_MANY_RETRANSMITS);
@@ -602,44 +650,8 @@ void permanent_event_handler(struct connection *c, struct logger *logger, struct
 			barf(c, logger, e);
 			return;
 		case CONNECTION_DELETE_CHILD:
-			if (c->child.newest_routing_sa > e->child->sa.st_serialno) {
-				/* no longer child's */
-				ldbg(logger, "not the newest routing SA; leaving connection alone");
-				delete_child_sa(&e->child);
-				return;
-			}
-			if (c->newest_ipsec_sa > e->child->sa.st_serialno) {
-				/* covered by above? */
-				llog_pexpect(logger, HERE,
-					     "not the newest child; leaving connection alone");
-				delete_child_sa(&e->child);
-				return;
-			}
-			if (should_revive(&(e->child->sa))) {
-				/* XXX: should this be ROUTED_NEGOTIATING? */
-				replace_ipsec_with_bare_kernel_policies(e->child, SHUNT_KIND_PROSPECTIVE,
-									EXPECT_KERNEL_POLICY_OK, HERE);
-				schedule_revival(&(e->child->sa));
-				delete_child_sa(&e->child);
-				return;
-			}
-			if (c->config->autostart == AUTOSTART_ONDEMAND) {
-				/*
-				 * Change routing so we don't get cleared out
-				 * when state/connection dies.
-				 */
-				replace_ipsec_with_bare_kernel_policies(e->child, SHUNT_KIND_PROSPECTIVE,
-									EXPECT_KERNEL_POLICY_OK, HERE);
-				delete_child_sa(&e->child);
-				return;
-			}
-			/* XXX: should this be responder only? */
-			enum shunt_kind shunt_kind =
-				(c->config->failure_shunt != SHUNT_NONE ? SHUNT_KIND_FAILURE :
-				 SHUNT_KIND_PROSPECTIVE);
-			replace_ipsec_with_bare_kernel_policies(e->child, shunt_kind,
-								EXPECT_KERNEL_POLICY_OK, HERE);
-			delete_child_sa(&e->child);
+			/* permenant connections are never deleted */
+			delete_routed_tunnel_child(c, logger, e);
 			return;
 		case CONNECTION_DELETE_IKE:
 			barf(c, logger, e);
@@ -1076,8 +1088,31 @@ void instance_event_handler(struct connection *c, struct logger *logger, struct 
 		case CONNECTION_UNROUTE:
 			llog(RC_RTBUSY, logger, "cannot unroute: route busy");
 			return;
-		case CONNECTION_ONDEMAND:
 		case CONNECTION_DELETE_CHILD:
+			if (delete_routed_tunnel_child(c, logger, e)) {
+				/* connection is being revived so
+				 * don't touch */
+				return;
+			}
+
+			/*.
+			 * See of a state, any state (presumably the
+			 * IKE SA, is using the connection.
+			 */
+			struct state_filter sf = {
+				.connection_serialno = c->serialno,
+				.where = HERE,
+			};
+			if (next_state_new2old(&sf)) {
+				connection_buf cb;
+				dbg("connection "PRI_CONNECTION" in use by #%lu, skipping delete-unused",
+				    pri_connection(c, &cb), sf.st->st_serialno);
+				return;
+			}
+
+			delete_connection(&c);
+			return;
+		case CONNECTION_ONDEMAND:
 		case CONNECTION_DELETE_IKE:
 			barf(c, logger, e);
 			return;
@@ -1297,6 +1332,7 @@ void connection_delete_child(struct child_sa **childp)
 {
 	struct child_sa *child = (*childp); *childp = NULL;
 	struct connection *c = child->sa.st_connection;
+#if 0
 	if (c->kind != CK_PERMANENT) {
 		ldbg_sa(child, "%s() doesn't yet handle %s",
 			__func__, enum_name_short(&connection_kind_names, c->kind));
@@ -1304,6 +1340,7 @@ void connection_delete_child(struct child_sa **childp)
 		delete_state(&child->sa);
 		return;
 	}
+#endif
 	/*
 	 * Caller is responsible for generating any messages; suppress
 	 * delete_state()'s desire to send an out-of-band delete.

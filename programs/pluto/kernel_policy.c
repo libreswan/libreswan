@@ -630,16 +630,18 @@ bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
 }
 
 void replace_ipsec_with_bare_kernel_policies(struct child_sa *child,
-					     enum shunt_kind shunt_kind,
+					     enum routing new_routing,
 					     enum expect_kernel_policy expect_inbound_policy,
 					     where_t where)
 {
 	struct connection *c = child->sa.st_connection;
-	enum routing new_routing =
-		(shunt_kind == SHUNT_KIND_PROSPECTIVE ? RT_ROUTED_PROSPECTIVE :
-		 shunt_kind == SHUNT_KIND_FAILURE ? RT_ROUTED_FAILURE :
+	enum shunt_kind shunt_kind =
+		(new_routing == RT_ROUTED_PROSPECTIVE ? SHUNT_KIND_PROSPECTIVE :
+		 new_routing == RT_ROUTED_FAILURE ? SHUNT_KIND_FAILURE :
 		 SHUNT_KIND_ROOF);
-	PASSERT(child->sa.st_logger, new_routing != SHUNT_KIND_ROOF);
+	PASSERT(child->sa.st_logger, shunt_kind != SHUNT_KIND_ROOF);
+	PASSERT(child->sa.st_logger, c->config->shunt[shunt_kind] != SHUNT_NONE);
+	/* it's being stripped of the state, hence SOS_NOBODY */
 	set_child_routing(c, new_routing, SOS_NOBODY);
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {

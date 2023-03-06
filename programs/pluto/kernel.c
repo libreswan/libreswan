@@ -2447,26 +2447,23 @@ static void teardown_ipsec_kernel_policies(struct state *st,
 
 	enum routing new_routing;
 	if (c->kind == CK_INSTANCE &&
-		   ((c->policy & POLICY_OPPORTUNISTIC) ||
-		    (c->policy & POLICY_DONT_REKEY))) {
+	    ((c->policy & POLICY_OPPORTUNISTIC) ||
+	     (c->policy & POLICY_DONT_REKEY))) {
 		new_routing = RT_UNROUTED;
-	} else {
+	} else if (c->config->failure_shunt == SHUNT_NONE) {
 		/*
-		 * + if the .failure_shunt==SHUNT_NONE then
-		 * the .prospective_shunt is chosen and that
-		 * can't be SHUNT_NONE
-		 *
-		 * + if the .failure_shunt!=SHUNT_NONE then
-		 * the .failure_shunt is chosen, and that
-		 * isn't SHUNT_NONE.
-		 *
-		 * This code installs a TRANSPORT mode policy
-		 * (the host .{src,dst} provides the family
-		 * but the address isn't used).  The actual
-		 * connection might be TUNNEL.
+		 * If the .failure_shunt==SHUNT_NONE then the
+		 * .prospective_shunt is chosen and that can't be
+		 * SHUNT_NONE.
 		 */
-		new_routing = (c->config->failure_shunt == SHUNT_NONE ? RT_ROUTED_PROSPECTIVE :
-			       RT_ROUTED_FAILURE);
+		new_routing = RT_ROUTED_PROSPECTIVE;
+	} else {
+		 /*
+		 * If the .failure_shunt!=SHUNT_NONE then the
+		 * .failure_shunt is chosen, and that isn't
+		 * SHUNT_NONE.
+		 */
+		new_routing = RT_ROUTED_FAILURE;
 	}
 
 	/*
@@ -2489,11 +2486,11 @@ static void teardown_ipsec_kernel_policies(struct state *st,
 		uninstall_ipsec_kernel_policies(child, expect_inbound_policy, HERE);
 		break;
 	case RT_ROUTED_PROSPECTIVE:
-		replace_ipsec_with_bare_kernel_policies(child, SHUNT_KIND_PROSPECTIVE,
+		replace_ipsec_with_bare_kernel_policies(child, RT_ROUTED_PROSPECTIVE,
 							expect_inbound_policy, HERE);
 		break;
 	case RT_ROUTED_FAILURE:
-		replace_ipsec_with_bare_kernel_policies(child, SHUNT_KIND_FAILURE,
+		replace_ipsec_with_bare_kernel_policies(child, RT_ROUTED_FAILURE,
 							expect_inbound_policy, HERE);
 		break;
 	case RT_UNROUTED_NEGOTIATION:
