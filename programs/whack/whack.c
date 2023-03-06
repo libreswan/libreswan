@@ -292,15 +292,22 @@ enum option_enums {
 	OPT_REMOTE_HOST,
 	OPT_CONNALIAS,
 
-	OPT_CD_SEEN,		/* magic, indicates an option from the
+#define OPTS_SEEN_CD LELEM(OPTS_SEEN_CD_IX)
+	OPTS_SEEN_CD_IX,	/* magic, indicates an option from the
 				 * CD_{FIRST,LAST} or CDP_{FIRST,LAST}
 				 * range was seen */
-	OPT_RANGE2_SEEN,	/* magic, indicates an option from the
-				 * OPT_{FIRST,LAST}2 range was seen
-				 * (which has lots of space) */
-	OPT_LST_SEEN,		/* magic, indicates that an option
+#define OPTS_SEEN_NORMAL LELEM(OPTS_SEEN_NORMAL_IX)
+	OPTS_SEEN_NORMAL_IX,	/* magic, indicates an option from the
+				 * OPT_{FIRST,LAST}{1,2} range was
+				 * seen (which has lots of space) */
+#define OPTS_SEEN_LST LELEM(OPTS_SEEN_LST_IX)
+	OPTS_SEEN_LST_IX,	/* magic, indicates that an option
 				 * from the LST_{FIRST,LAST} range was
 				 * seen. */
+#define OPTS_SEEN_DBG LELEM(OPTS_SEEN_DBG_IX)
+	OPTS_SEEN_DBG_IX,	/* magic, indicates that an option
+				 * from the DBGOPT_{FIRST,LAST} range
+				 * was seen. */
 
 	OPT_KEYID,
 	OPT_ADDKEY,
@@ -1009,7 +1016,7 @@ int main(int argc, char **argv)
 	struct whackpacker wp;
 	char esp_buf[256];	/* uses snprintf */
 	bool seen[OPTION_ENUMS_ROOF] = {0};
-	lset_t opts1_seen = LEMPTY;
+	lset_t opts_seen = LEMPTY;
 	lset_t end_seen = LEMPTY;
 
 	char xauthusername[MAX_XAUTH_USERNAME_LEN];
@@ -1024,7 +1031,6 @@ int main(int argc, char **argv)
 	assert(OPTION_OFFSET + OPTION_ENUMS_LAST < NUMERIC_ARG);
 	assert(OPT_LAST1 - OPT_FIRST1 < LELEM_ROOF);
 	assert(END_LAST - END_FIRST < LELEM_ROOF);
-	assert(OPT_AUTHBY_LAST - OPT_AUTHBY_FIRST < LELEM_ROOF);
 
 	zero(&msg);	/* ??? pointer fields might not be NULLed */
 
@@ -1124,51 +1130,60 @@ int main(int argc, char **argv)
 		 */
 		if (OPT_FIRST1 <= c && c <= OPT_LAST1) {
 			/*
-			 * OPT_* options get added opts1_seen.
-			 * Reject repeated options (unless later code
-			 * intervenes).
+			 * OPT_* options get added to "opts_seen" and
+			 * "seen[]".  Any repeated options are
+			 * rejected.
 			 */
-			lset_t f = LELEM(c);
-
-			if (opts1_seen & f)
+			if (seen[c])
 				diagq("duplicated flag",
 				      long_opts[long_index].name);
-			opts1_seen |= f;
+			opts_seen |= LELEM(c);
+			seen[c] = true;
+			opts_seen |= OPTS_SEEN_NORMAL;
 		} else if (OPT_FIRST2 <= c && c <= OPT_LAST2) {
 			/*
 			 * OPT_* options in the above range get added
-			 * to seen[].  Reject repeated options.
+			 * to "seen[]".  Any repeated options are
+			 * rejected.  The marker OPTS_SEEN_NORMAL is
+			 * also added to "opts_seen".
 			 */
 			if (seen[c]) {
 				diagq("duplicated flag",
 				      long_opts[long_index].name);
 			}
 			seen[c] = true;
-			opts1_seen |= LELEM(OPT_RANGE2_SEEN);
+			opts_seen |= OPTS_SEEN_NORMAL;
 		} else if (LST_FIRST <= c && c <= LST_LAST) {
 			/*
 			 * LST_* options get added to seen[].
-			 * Repeated options are rejected.
+			 * Repeated options are rejected.  The marker
+			 * OPT_LST_SEEN is also added to "opts_seen".
 			 */
 			if (seen[c]) {
 				diagq("duplicated flag",
 				      long_opts[long_index].name);
 			}
 			seen[c] = true;
-			opts1_seen |= LELEM(OPT_LST_SEEN);
+			opts_seen |= OPTS_SEEN_LST;
 		} else if (DBGOPT_FIRST <= c && c <= DBGOPT_LAST) {
 			/*
-			 * DBGOPT_* options are treated separately to reduce
-			 * potential members of opts1_seen.
+			 * DBGOPT_* options are treated separately.
+			 * For instance, repeats are alloowed.
 			 */
+#if 0
+			seen[c] = true;
+#endif
+			opts_seen |= OPTS_SEEN_DBG;
 			msg.whack_options = true;
 		} else if (END_FIRST <= c && c <= END_LAST) {
 			/*
 			 * END_* options are added to end_seen.
-			 * Reject repeated options for the current
-			 * end.  Code below, when parsing --to, will
-			 * clear END_SEEN so that the second end can
-			 * duplicate options from the first end.
+			 * Reject repeated options for the current end
+			 * (code below, when parsing --to, will clear
+			 * END_SEEN so that the second end can
+			 * duplicate options from the first end).  The
+			 * marker OPTS_SEEN_CD is also added to
+			 * "opts_seen".
 			 */
 			lset_t f = LELEM(c - END_FIRST);
 
@@ -1176,27 +1191,29 @@ int main(int argc, char **argv)
 				diagq("duplicated flag",
 				      long_opts[long_index].name);
 			end_seen |= f;
-			opts1_seen |= LELEM(OPT_CD_SEEN);
+			opts_seen |= OPTS_SEEN_CD;
 		} else if (CD_FIRST <= c && c <= CD_LAST) {
 			/*
-			 * CD_* options are added to seen[].  Reject
-			 * repeated options.
+			 * CD_* options are added to seen[].  Repeated
+			 * options are rejected.  The marker
+			 * OPTS_SEEN_CD is also added to "opts_seen".
 			 */
 			if (seen[c])
 				diagq("duplicated flag",
 				      long_opts[long_index].name);
 			seen[c] = true;
-			opts1_seen |= LELEM(OPT_CD_SEEN);
+			opts_seen |= OPTS_SEEN_CD;
 		} else if (CDP_FIRST <= c && c <= CDP_LAST) {
 			/*
-			 * CDP_* options are added to seen[].  Reject
-			 * repeated options.
+			 * CDP_* options are added to seen[].
+			 * Repeated options are rejected.  The marker
+			 * OPTS_SEEN_CD is also added to "opts_seen".
 			 */
 			if (seen[c])
 				diagq("duplicated flag",
 				      long_opts[long_index].name);
 			seen[c] = true;
-			opts1_seen |= LELEM(OPT_CD_SEEN);
+			opts_seen |= OPTS_SEEN_CD;
 		} else if (OPT_AUTHBY_FIRST <= c && c <= OPT_AUTHBY_LAST) {
 			/*
  			 * ALGO options all translate into two lset's
@@ -1208,7 +1225,7 @@ int main(int argc, char **argv)
 				      long_opts[long_index].name);
 			}
 			seen[c] = true;
-			opts1_seen |= LELEM(OPT_CD_SEEN);
+			opts_seen |= OPTS_SEEN_CD;
 		}
 
 		/*
@@ -2508,7 +2525,7 @@ int main(int argc, char **argv)
 	 */
 
 	/* check opportunistic initiation simulation request */
-	switch (opts1_seen & (LELEM(OPT_OPPO_HERE) | LELEM(OPT_OPPO_THERE))) {
+	switch (opts_seen & (LELEM(OPT_OPPO_HERE) | LELEM(OPT_OPPO_THERE))) {
 	case LELEM(OPT_OPPO_HERE):
 	case LELEM(OPT_OPPO_THERE):
 		diagw("--oppohere and --oppothere must be used together");
@@ -2518,10 +2535,10 @@ int main(int argc, char **argv)
 		/*
 		 * When the only CD (connection description) option is
 		 * TUNNELIPV[46] scrub that a connection description
-		 * was seen (OPTS1_SEEN will be left with
+		 * was seen (OPTS_SEEN will be left with
 		 * OPT_OPPO_{HERE,THERE}.
 		 *
-		 * XXX: is this broken?  It scrubs the OPT_CD_SEEN bit
+		 * XXX: is this broken?  It scrubs the OPTS_SEEN_CD bit
 		 * when though a CDP_* or OPT_AUTHBY_* bit was set
 		 * (both of which seem to be incompatible with OPPO).
 		 */
@@ -2529,8 +2546,8 @@ int main(int argc, char **argv)
 			if (e != CD_TUNNELIPV4 &&
 			    e != CD_TUNNELIPV6 &&
 			    seen[e]) {
-				pexpect(opts1_seen & LELEM(OPT_CD_SEEN));
-				opts1_seen &= ~LELEM(OPT_CD_SEEN);
+				pexpect(opts_seen & OPTS_SEEN_CD);
+				opts_seen &= ~OPTS_SEEN_CD;
 				break;
 			}
 		}
@@ -2538,7 +2555,7 @@ int main(int argc, char **argv)
 	}
 
 	/* check connection description */
-	if (LHAS(opts1_seen, OPT_CD_SEEN)) {
+	if (opts_seen & OPTS_SEEN_CD) {
 		if (!seen[CD_TO]) {
 			diagw("connection description option, but no --to");
 		}
@@ -2585,14 +2602,15 @@ int main(int argc, char **argv)
 	}
 
 	/* decide whether --name is mandatory or forbidden */
-	if (!LDISJOINT(opts1_seen,
+	if (!LDISJOINT(opts_seen,
 		       LELEM(OPT_ROUTE) | LELEM(OPT_UNROUTE) |
 		       LELEM(OPT_INITIATE) | LELEM(OPT_TERMINATE) |
 		       LELEM(OPT_DELETE) |  LELEM(OPT_DELETEID) |
-		       LELEM(OPT_DELETEUSER) | LELEM(OPT_CD_SEEN) |
+		       LELEM(OPT_DELETEUSER) |
+		       OPTS_SEEN_CD |
 		       LELEM(OPT_REKEY_IKE) |
 		       LELEM(OPT_REKEY_IPSEC))) {
-		if (!LHAS(opts1_seen, OPT_NAME))
+		if (!LHAS(opts_seen, OPT_NAME))
 			diagw("missing --name <connection_name>");
 #if 0
 		/*
@@ -2607,18 +2625,18 @@ int main(int argc, char **argv)
 		 * testing that directly would be better.
 		 */
 	} else if (msg.whack_options == LEMPTY) {
-		if (LHAS(opts1_seen, OPT_NAME) && !LELEM(OPT_TRAFFIC_STATUS))
+		if (LHAS(opts_seen, OPT_NAME) && !LELEM(OPT_TRAFFIC_STATUS))
 			diagw("no reason for --name");
 #endif
 	}
 
-	if (!LDISJOINT(opts1_seen, LELEM(OPT_REMOTE_HOST))) {
-		if (!LHAS(opts1_seen, OPT_INITIATE))
+	if (!LDISJOINT(opts_seen, LELEM(OPT_REMOTE_HOST))) {
+		if (!LHAS(opts_seen, OPT_INITIATE))
 			diagw("--remote-host can only be used with --initiate");
 	}
 
-	if (!LDISJOINT(opts1_seen, LELEM(OPT_PUBKEYRSA) | LELEM(OPT_ADDKEY))) {
-		if (!LHAS(opts1_seen, OPT_KEYID))
+	if (!LDISJOINT(opts_seen, LELEM(OPT_PUBKEYRSA) | LELEM(OPT_ADDKEY))) {
+		if (!LHAS(opts_seen, OPT_KEYID))
 			diagw("--addkey and --pubkeyrsa require --keyid");
 	}
 
@@ -2681,7 +2699,7 @@ int main(int argc, char **argv)
 	if (ugh != NULL)
 		diagw(ugh);
 
-	msg.magic = (((opts1_seen & ~(LELEM(OPT_SHUTDOWN) | LELEM(OPT_STATUS))) != LEMPTY ||
+	msg.magic = (((opts_seen & ~(LELEM(OPT_SHUTDOWN) | LELEM(OPT_STATUS))) != LEMPTY ||
 		      msg.whack_options) ? WHACK_MAGIC :
 		     WHACK_BASIC_MAGIC);
 
