@@ -121,11 +121,6 @@ struct whack_end {
 	char *groundhog;	/* Is this end a groundhog? */
 };
 
-enum whack_opt_set {
-	WHACK_ADJUSTOPTIONS=0,		/* normal case */
-	WHACK_SETDUMPDIR=1,		/* string1 contains new dumpdir */
-};
-
 struct whack_message {
 	unsigned int magic;
 
@@ -375,12 +370,6 @@ struct whack_message {
 	int metric;
 
 	char *dnshostname;
-
-	/* for use with general option adjustments */
-	enum whack_opt_set opt_set;
-	char *string1;
-	char *string2;
-	char *string3;
 
 	/* space for strings (hope there is enough room) */
 	size_t str_size;

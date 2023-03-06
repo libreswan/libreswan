@@ -486,7 +486,7 @@ static void dbg_whack(struct show *s, const char *fmt, ...)
 	}
 }
 
-static void whack_adjust_options(const struct whack_message *m, struct logger *logger)
+static void whack_debug_options(const struct whack_message *m, struct logger *logger)
 {
 	if (libreswan_fipsmode()) {
 		if (lmod_is_set(m->debugging, DBG_PRIVATE)) {
@@ -525,14 +525,7 @@ static void whack_adjust_options(const struct whack_message *m, struct logger *l
 				       "+", new_debugging);
 		}
 		set_debugging(new_debugging);
-		for (unsigned i = 0; i < m->nr_impairments; i++) {
-			/* ??? what should we do with return value? */
-			process_impair(&m->impairments[i],
-				       whack_impair_action,
-				       m->whack_async/*background*/,
-				       logger);
-		}
-	} else if (!m->whack_add) {
+	} else if (!m->whack_add/*connection*/) {
 		struct connection *c = conn_by_name(m->name, true/*strict*/);
 		if (c == NULL) {
 			llog(WHACK_STREAM|RC_UNKNOWN_NAME, logger,
@@ -546,6 +539,21 @@ static void whack_adjust_options(const struct whack_message *m, struct logger *l
 					       "+", c->logger->debugging);
 			}
 		}
+	}
+}
+
+static void whack_impair_options(const struct whack_message *m, struct logger *logger)
+{
+	if (m->name == NULL) {
+		for (unsigned i = 0; i < m->nr_impairments; i++) {
+			/* ??? what should we do with return value? */
+			process_impair(&m->impairments[i],
+				       whack_impair_action,
+				       m->whack_async/*background*/,
+				       logger);
+		}
+	} else if (!m->whack_add/*connection*/) {
+		ldbg(logger, "per-connection impairment not implemented");
 	}
 }
 
@@ -576,19 +584,17 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	 *
 	 * XXX: why?
 	 */
-	if (m->whack_options) {
-		dbg_whack(s, "start: options (impair|debug)");
-		switch (m->opt_set) {
-		case WHACK_ADJUSTOPTIONS:
-			whack_adjust_options(m, logger);
-			break;
 
-		case WHACK_SETDUMPDIR:
-			/* XXX */
-			break;
+	if (!lmod_empty(m->debugging)) {
+		dbg_whack(s, "start: options debug");
+		whack_debug_options(m, logger);
+		dbg_whack(s, "stop: options debug");
+	}
 
-		}
-		dbg_whack(s, "stop: options (impair|debug)");
+	if (m->nr_impairments > 0) {
+		dbg_whack(s, "start: options impair");
+		whack_impair_options(m, logger);
+		dbg_whack(s, "stop: options impair");
 	}
 
 	if (m->whack_rekey_ike) {
