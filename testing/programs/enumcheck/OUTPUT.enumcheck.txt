@@ -2715,6 +2715,13 @@ IETF registry enum_names:
          short_name 46: AUTHORIZATION_FAILED OK
          jam_enum_short 46: AUTHORIZATION_FAILED OK
          match AUTHORIZATION_FAILED [short]: OK
+   47 -> v2N_STATE_NOT_FOUND
+         jam_enum 47: v2N_STATE_NOT_FOUND OK
+         search v2N_STATE_NOT_FOUND: OK
+         match v2N_STATE_NOT_FOUND: OK
+         short_name 47: STATE_NOT_FOUND OK
+         jam_enum_short 47: STATE_NOT_FOUND OK
+         match STATE_NOT_FOUND [short]: OK
 
   ikev2_ts_type_names:
     7 -> IKEv2_TS_IPV4_ADDR_RANGE
