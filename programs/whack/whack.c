@@ -1174,7 +1174,6 @@ int main(int argc, char **argv)
 			seen[c] = true;
 #endif
 			opts_seen |= OPTS_SEEN_DBG;
-			msg.whack_options = true;
 		} else if (END_FIRST <= c && c <= END_LAST) {
 			/*
 			 * END_* options are added to end_seen.
@@ -2654,7 +2653,9 @@ int main(int argc, char **argv)
 	      msg.whack_addresspool_status ||
 	      msg.whack_connection_status ||
 	      msg.whack_process_status ||
-	      msg.whack_fips_status || msg.whack_brief_status || msg.whack_clear_stats || msg.whack_options ||
+	      msg.whack_fips_status || msg.whack_brief_status || msg.whack_clear_stats ||
+	      !lmod_empty(msg.debugging) ||
+	      msg.nr_impairments > 0 ||
 	      msg.whack_shutdown || msg.whack_purgeocsp || msg.whack_seccomp_crashtest || msg.whack_show_states ||
 	      msg.whack_rekey_ike || msg.whack_rekey_ipsec ||
 	      msg.whack_listpubkeys || msg.whack_checkpubkeys))
@@ -2699,8 +2700,7 @@ int main(int argc, char **argv)
 	if (ugh != NULL)
 		diagw(ugh);
 
-	msg.magic = (((opts_seen & ~(LELEM(OPT_SHUTDOWN) | LELEM(OPT_STATUS))) != LEMPTY ||
-		      msg.whack_options) ? WHACK_MAGIC :
+	msg.magic = ((opts_seen & ~(LELEM(OPT_SHUTDOWN) | LELEM(OPT_STATUS))) != LEMPTY ? WHACK_MAGIC :
 		     WHACK_BASIC_MAGIC);
 
 	/* send message to Pluto */

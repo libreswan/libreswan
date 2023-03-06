@@ -149,10 +149,7 @@ struct whack_message {
 	size_t name_len; /* string 1 */
 	char *name;
 
-	/* for WHACK_OPTIONS: */
-
-	bool whack_options;
-
+	/* for debugging! */
 	lmod_t debugging;
 
 	/* what to impair and how */
