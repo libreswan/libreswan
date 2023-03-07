@@ -7,10 +7,10 @@ set -e
 # possible hostnames, always implies first
 
 # gmake isn't on debian?
-gnumake=make
+gnumake="make"
+quietmake="${gnumake} -C $(realpath $(dirname $0)) --no-print-directory"
 
-kvm_platform=$(${gnumake} print-kvm-platform)
-
+kvm_platform=$(${quietmake} print-kvm-platform)
 buildhosts=${kvm_platform}
 basehosts=
 upgradehosts=
@@ -221,7 +221,7 @@ if test "$1" = $0 -a $# -eq 3 ; then
 fi
 
 # Translate ../../../kvm [...] into ./kvm [...] and with no [...]
-# implying "clean".  Do this before checking $#=0 as this can add the
+# implying "check".  Do this before checking $#=0 as this can add the
 # missing parameter.
 
 if test $(realpath $(dirname $0)) != $(realpath ${PWD}) ; then
@@ -279,11 +279,11 @@ fi
 
 declare -a ops
 
-kvm_baseline=$(${gnumake} print-kvm-baseline)
-kvm_test_status=$(${gnumake} print-kvm-test-status)
-kvm_test_flags=$(${gnumake} print-kvm-test-flags)
-kvm_prefixes=($(${gnumake} print-kvm-prefixes))
-kvm_testingdir=$(${gnumake} print-kvm-testingdir)
+kvm_baseline=$(${quietmake} print-kvm-baseline)
+kvm_test_status=$(${quietmake} print-kvm-test-status)
+kvm_test_flags=$(${quietmake} print-kvm-test-flags)
+kvm_prefixes=($(${quietmake} print-kvm-prefixes))
+kvm_testingdir=$(${quietmake} print-kvm-testingdir)
 
 modified=
 baseline=
