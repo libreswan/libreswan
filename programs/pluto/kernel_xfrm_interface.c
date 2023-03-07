@@ -722,8 +722,8 @@ static void free_xfrmi(void *object, const struct logger *logger, where_t where)
 			if (xfrmi->pluto_added) {
 				ip_link_del(xfrmi->name, logger);
 				llog(RC_LOG, logger,
-				     "delete ipsec-interface=%s if_id=%u added by pluto"PRI_WHERE"",
-				     xfrmi->name, xfrmi->if_id, pri_where(where));
+				     "delete ipsec-interface=%s if_id=%u added by pluto",
+				     xfrmi->name, xfrmi->if_id);
 			} else {
 				llog(RC_LOG, logger,
 				     "cannot delete ipsec-interface=%s if_id=%u, not created by pluto",
@@ -735,8 +735,9 @@ static void free_xfrmi(void *object, const struct logger *logger, where_t where)
 		}
 		ldbg(logger, "p=%p xfrmi=%p", p, xfrmi);
 	}
-	ldbg(logger, "p=%p xfrmi=%s if_id=%u not found in the list", xfrmi,
-	     xfrmi->name, xfrmi->if_id);
+	/* XXX: should this never happen? */
+	ldbg(logger, "p=%p xfrmi=%s if_id=%u not found in the list "PRI_WHERE, xfrmi,
+	     xfrmi->name, xfrmi->if_id, pri_where(where));
 }
 
 /* at start call this to see if there are any stale interface lying around. */
