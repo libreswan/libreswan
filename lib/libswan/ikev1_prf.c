@@ -21,6 +21,7 @@
 #include "ike_alg.h"
 #include "ike_alg_prf_ikev1_ops.h"
 #include "crypt_symkey.h"		/* for DBG_symkey() */
+#include "lswlog.h"			/* for DBGP() et.al. */
 
 /*
  * Compute: SKEYID = prf(Ni_b | Nr_b, g^xy)

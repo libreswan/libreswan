@@ -23,7 +23,7 @@
 #include "vendorid.h"
 
 #include "defs.h"
-
+#include "log.h"
 #include "ikev1_vendorid.h"
 #include "demux.h"
 #include "connections.h"

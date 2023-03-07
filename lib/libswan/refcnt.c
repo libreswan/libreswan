@@ -16,6 +16,7 @@
 #include <pthread.h>
 
 #include "refcnt.h"
+#include "lswlog.h"		/* for DBG*() et.al. */
 
 static pthread_mutex_t refcnt_mutex = PTHREAD_MUTEX_INITIALIZER;
 

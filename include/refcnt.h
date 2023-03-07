@@ -19,9 +19,10 @@
 
 #include <stdbool.h>
 
-#include "lswlog.h"		/* for pexpect(), for dbg() */
 #include "lswcdefs.h"		/* for MUST_USE_RESULT */
 #include "where.h"
+
+struct logger;
 
 struct refcnt_base {
 	const char *what;
@@ -33,9 +34,12 @@ typedef struct refcnt {
 } refcnt_t;
 
 /*
- * Initialize the refcnt.
+ * Allocate the structure (plus extra) initializing the refcnt.
  *
- * Note: the over-allocated memory is _NOT_ aligned.
+ * On return the object has a reference count of one and all other
+ * fields are zero.
+ *
+ * Note: any over-allocated memory is _NOT_ aligned.
  */
 
 void refcnt_init(const void *pointer, struct refcnt *refcnt,
@@ -80,19 +84,21 @@ void refcnt_addref_where(const char *what, const void *pointer,
 
 void *refcnt_delref_where(const char *what, void *pointer,
 			  struct refcnt *refcnt,
-			  const struct logger *logger, where_t where);
+			  const struct logger *logger, where_t where) MUST_USE_RESULT;
 
 #define delref_where(OBJP, LOGGER, WHERE)				\
 	({								\
 		typeof(OBJP) op_ = OBJP;				\
 		typeof(*OBJP) o_ = *op_;				\
-		*op_ = NULL; /*kill pointer */				\
+		*op_ = NULL; /* always kill pointer; and early */	\
 		refcnt_t *r_ = (o_ == NULL ? NULL : &o_->refcnt);	\
 		o_ = refcnt_delref_where(#OBJP, o_, r_, LOGGER, WHERE); \
 		o_; /* NULL or last OBJ */				\
 	})
 
-/* for code wanting to use refcnt for normal allocs */
+/*
+ * For code wanting to use refcnt checks but with normal allocs.
+ */
 void dbg_alloc(const char *what, const void *pointer, where_t where);
 void dbg_free(const char *what, const void *pointer, where_t where);
 

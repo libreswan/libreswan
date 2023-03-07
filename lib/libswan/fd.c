@@ -23,6 +23,7 @@
 #include "fd.h"
 #include "lswalloc.h"
 #include "refcnt.h"
+#include "lswlog.h"		/* for pexpect() */
 
 struct fd {
 #define FD_MAGIC 0xf00d1e
