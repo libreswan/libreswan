@@ -91,8 +91,7 @@ struct dh_local_secret *calc_dh_local_secret(const struct dh_desc *group, struct
 	group->dh_ops->calc_local_secret(group, &privk, &pubk, logger);
 	passert(privk != NULL);
 	passert(pubk != NULL);
-	where_t here = HERE;
-	struct dh_local_secret *secret = refcnt_alloc(struct dh_local_secret, free_dh_local_secret, here);
+	struct dh_local_secret *secret = refcnt_alloc(struct dh_local_secret, free_dh_local_secret, HERE);
 	secret->group = group;
 	secret->privk = privk;
 	secret->pubk = pubk;

@@ -91,8 +91,7 @@ static void free_iface_dev(void *obj, const struct logger *unused_logger UNUSED,
 
 static void add_iface_dev(const struct raw_iface *ifp, struct logger *logger)
 {
-	where_t where = HERE;
-	struct iface_dev *ifd = refcnt_alloc(struct iface_dev, free_iface_dev, where);
+	struct iface_dev *ifd = refcnt_alloc(struct iface_dev, free_iface_dev, HERE);
 	ifd->id_rname = clone_str(ifp->name, "real device name");
 	ifd->id_nic_offload = kernel_ops_detect_offload(ifp, logger);
 	ifd->id_address = ifp->addr;

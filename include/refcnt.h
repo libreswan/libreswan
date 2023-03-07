@@ -37,7 +37,6 @@ typedef struct refcnt {
  * Initialize the refcnt.
  *
  * Note: the over-allocated memory is _NOT_ aligned.
- * Note: ref_init(OBJ,HERE) breaks as HERE contains braces.
  */
 
 void refcnt_init(const void *pointer, struct refcnt *refcnt,
@@ -62,8 +61,6 @@ unsigned refcnt_peek(const refcnt_t *refcnt);
 
 /*
  * Add a reference.
- *
- * Note that ref_add(OBJ,HERE) breaks as HERE contains braces.
  */
 
 void refcnt_addref_where(const char *what, const void *pointer,
@@ -84,8 +81,6 @@ void refcnt_addref_where(const char *what, const void *pointer,
 
 /*
  * Delete a reference.
- *
- * Note that ref_delete(OBJ,HERE) breaks as HERE contains braces.
  */
 
 void refcnt_delref_where(const char *what, void *pointer,
