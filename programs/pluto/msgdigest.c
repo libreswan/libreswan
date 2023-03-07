@@ -20,21 +20,12 @@
 #include "demux.h"      /* needs packet.h */
 #include "iface.h"
 
-static void free_md(void *obj, const struct logger *logger UNUSED, where_t where)
-{
-	struct msg_digest *md = obj;
-	free_chunk_content(&md->raw_packet);
-	free_logger(&md->md_logger, where);
-	iface_endpoint_delref_where(&md->iface, where);
-	pfree(md);
-}
-
 struct msg_digest *alloc_md(struct iface_endpoint *ifp,
 			    const ip_endpoint *sender,
 			    const uint8_t *packet, size_t packet_len,
 			    where_t where)
 {
-	struct msg_digest *md = refcnt_overalloc(struct msg_digest, packet_len, free_md, where);
+	struct msg_digest *md = refcnt_overalloc(struct msg_digest, packet_len, where);
 	md->iface = iface_endpoint_addref_where(ifp, where);
 	md->sender = *sender;
 	md->md_logger = alloc_logger(md, &logger_message_vec,
@@ -67,7 +58,12 @@ struct msg_digest *md_addref_where(struct msg_digest *md, where_t where)
 void md_delref_where(struct msg_digest **mdp, where_t where)
 {
 	/* need non-NULL so .md_logger is available */
-	if (*mdp != NULL) {
-		delref_where(mdp, (*mdp)->md_logger, where);
+	const struct logger *logger = (*mdp != NULL ? (*mdp)->md_logger : &global_logger);
+	struct msg_digest *md = delref_where(mdp, logger, where);
+	if (md != NULL) {
+		free_chunk_content(&md->raw_packet);
+		free_logger(&md->md_logger, where);
+		iface_endpoint_delref_where(&md->iface, where);
+		pfree(md);
 	}
 }

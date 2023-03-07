@@ -107,9 +107,6 @@ static int xfrm_interface_support = 0;
 static bool stale_checked;
 static uint32_t xfrm_interface_id = IPSEC1_XFRM_IF_ID; /* XFRMA_IF_ID && XFRMA_SET_MARK */
 
-/* Forward declaration */
-static void free_xfrmi(void *object, const struct logger *logger, where_t where);
-
 /* Return 0 (XFRMI_SUCCESS) on success or non-zero (XFRMI_FAILURE) on failure.
  * Later, if necessary, more detailed failure codes can be returned. */
 static int nl_query_small_resp(const struct nlmsghdr *req,
@@ -625,7 +622,7 @@ static void new_pluto_xfrmi(uint32_t if_id, bool shared, char *name, struct conn
 	struct pluto_xfrmi **head = &pluto_xfrm_interfaces;
 	/* Create a new ref-counted xfrmi, it is not added to system yet.
 	 * The call to refcnt_alloc() counts as a reference */
-	struct pluto_xfrmi *p = refcnt_alloc(struct pluto_xfrmi, free_xfrmi, HERE);
+	struct pluto_xfrmi *p = refcnt_alloc(struct pluto_xfrmi, HERE);
 	p->if_id = if_id;
 	p->name = name;
 	c->xfrmi = p;
@@ -709,37 +706,6 @@ bool add_xfrm_interface(struct connection *c, struct logger *logger)
 	return (ip_link_set_up(c->xfrmi->name, logger) == XFRMI_SUCCESS);
 }
 
-/* This function is a callback that will be called by refcnt reaches 0 */
-static void free_xfrmi(void *object, const struct logger *logger, where_t where)
-{
-	struct pluto_xfrmi *xfrmi = (struct pluto_xfrmi *) object;
-	struct pluto_xfrmi **pp;
-	struct pluto_xfrmi *p;
-
-	for (pp = &pluto_xfrm_interfaces; (p = *pp) != NULL; pp = &p->next) {
-		if (p == xfrmi) {
-			*pp = p->next;
-			if (xfrmi->pluto_added) {
-				ip_link_del(xfrmi->name, logger);
-				llog(RC_LOG, logger,
-				     "delete ipsec-interface=%s if_id=%u added by pluto",
-				     xfrmi->name, xfrmi->if_id);
-			} else {
-				llog(RC_LOG, logger,
-				     "cannot delete ipsec-interface=%s if_id=%u, not created by pluto",
-				     xfrmi->name, xfrmi->if_id);
-			}
-			pfreeany(xfrmi->name);
-			pfreeany(xfrmi);
-			return;
-		}
-		ldbg(logger, "p=%p xfrmi=%p", p, xfrmi);
-	}
-	/* XXX: should this never happen? */
-	ldbg(logger, "p=%p xfrmi=%s if_id=%u not found in the list "PRI_WHERE, xfrmi,
-	     xfrmi->name, xfrmi->if_id, pri_where(where));
-}
-
 /* at start call this to see if there are any stale interface lying around. */
 void stale_xfrmi_interfaces(struct logger *logger)
 {
@@ -794,11 +760,37 @@ void reference_xfrmi(struct connection *c)
 
 void unreference_xfrmi(struct connection *c)
 {
-	passert(c->xfrmi != NULL);
+	struct logger *logger = c->logger;
+	PASSERT(logger, c->xfrmi != NULL);
 
-	ldbg(c->logger, "unreference xfrmi=%p name=%s if_id=%u refcount=%u (before).",
+	ldbg(logger, "unreference xfrmi=%p name=%s if_id=%u refcount=%u (before).",
 	     c->xfrmi, c->xfrmi->name, c->xfrmi->if_id,
 	     refcnt_peek(&(c->xfrmi->refcnt)));
 
-	delref_where(&c->xfrmi, c->logger, HERE);
+	struct pluto_xfrmi *xfrmi = delref_where(&c->xfrmi, logger, HERE);
+	if (xfrmi != NULL) {
+		struct pluto_xfrmi **pp;
+		struct pluto_xfrmi *p;
+		for (pp = &pluto_xfrm_interfaces; (p = *pp) != NULL; pp = &p->next) {
+			if (p == xfrmi) {
+				*pp = p->next;
+				if (xfrmi->pluto_added) {
+					ip_link_del(xfrmi->name, logger);
+					llog(RC_LOG, logger,
+					     "delete ipsec-interface=%s if_id=%u added by pluto",
+					     xfrmi->name, xfrmi->if_id);
+				} else {
+					llog(RC_LOG, logger,
+					     "cannot delete ipsec-interface=%s if_id=%u, not created by pluto",
+					     xfrmi->name, xfrmi->if_id);
+				}
+				pfreeany(xfrmi->name);
+				pfreeany(xfrmi);
+				return;
+			}
+			ldbg(logger, "p=%p xfrmi=%p", p, xfrmi);
+		}
+		ldbg(logger, "p=%p xfrmi=%s if_id=%u not found in the list", xfrmi,
+		     xfrmi->name, xfrmi->if_id);
+	}
 }

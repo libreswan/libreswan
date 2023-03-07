@@ -675,34 +675,25 @@ err_t lease_that_address(struct connection *c, const struct state *st,
 	return NULL;
 }
 
-static void free_addresspool(void *p, const struct logger *unused_logger UNUSED,
-			     where_t unused_where UNUSED)
+void addresspool_delref(struct addresspool **poolparty)
 {
-	struct addresspool *pool = p;
-
-	/* search for pool in list of pools so we can unlink it */
-	if (pool == NULL)
-		return;
-
-	for (struct addresspool **pp = &pluto_pools; *pp != NULL; pp = &(*pp)->next) {
-		if (*pp == pool) {
-			*pp = pool->next;	/* unlink pool */
-			for (unsigned l = 0; l < pool->nr_leases; l++) {
-				free_lease_content(&pool->leases[l]);
+	struct addresspool *pool = delref_where(poolparty, &global_logger, HERE);
+	if (pool != NULL) {
+		for (struct addresspool **pp = &pluto_pools; *pp != NULL; pp = &(*pp)->next) {
+			if (*pp == pool) {
+				*pp = pool->next;	/* unlink pool */
+				for (unsigned l = 0; l < pool->nr_leases; l++) {
+					free_lease_content(&pool->leases[l]);
+				}
+				pfreeany(pool->leases);
+				pfree(pool);
+				return;
 			}
-			pfreeany(pool->leases);
-			pfree(pool);
-			return;
+		}
+		if (DBGP(DBG_BASE)) {
+			DBG_pool(false, pool, "pool %p not found in list of pools", pool);
 		}
 	}
-	if (DBGP(DBG_BASE)) {
-		DBG_pool(false, pool, "pool %p not found in list of pools", pool);
-	}
-}
-
-void addresspool_delref(struct addresspool **pool)
-{
-	delref_where(pool, &global_logger, HERE);
 }
 
 struct addresspool *addresspool_addref(struct addresspool *pool)
@@ -799,7 +790,7 @@ diag_t install_addresspool(const ip_range pool_range, struct connection *c)
 	}
 
 	/* make a new pool */
-	struct addresspool *new_pool = refcnt_alloc(struct addresspool, free_addresspool, HERE);
+	struct addresspool *new_pool = refcnt_alloc(struct addresspool, HERE);
 	new_pool->r = pool_range;
 	new_pool->size = pool_size;
 	new_pool->nr_in_use = 0;

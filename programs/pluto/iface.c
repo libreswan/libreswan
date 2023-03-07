@@ -80,18 +80,9 @@ LIST_INFO(iface_dev, ifd_entry, iface_dev_info, jam_iface_dev);
 static struct list_head interface_dev = INIT_LIST_HEAD(&interface_dev,
 						       &iface_dev_info);
 
-static void free_iface_dev(void *obj, const struct logger *unused_logger UNUSED,
-			   where_t unused_where UNUSED)
-{
-	struct iface_dev *ifd = obj;
-	remove_list_entry(&ifd->ifd_entry);
-	pfree(ifd->id_rname);
-	pfree(ifd);
-}
-
 static void add_iface_dev(const struct raw_iface *ifp, struct logger *logger)
 {
-	struct iface_dev *ifd = refcnt_alloc(struct iface_dev, free_iface_dev, HERE);
+	struct iface_dev *ifd = refcnt_alloc(struct iface_dev, HERE);
 	ifd->id_rname = clone_str(ifp->name, "real device name");
 	ifd->id_nic_offload = kernel_ops_detect_offload(ifp, logger);
 	ifd->id_address = ifp->addr;
@@ -136,9 +127,15 @@ static void add_or_keep_iface_dev(struct raw_iface *ifp, struct logger *logger)
 	add_iface_dev(ifp, logger);
 }
 
-void release_iface_dev(struct iface_dev **id)
+void release_iface_dev(struct iface_dev **ifdp)
 {
-	delref_where(id, &global_logger, HERE);
+	const struct logger *logger = &global_logger;
+	struct iface_dev *ifd = delref_where(ifdp, logger, HERE);
+	if (ifd != NULL) {
+		remove_list_entry(&ifd->ifd_entry);
+		pfree(ifd->id_rname);
+		pfree(ifd);
+	}
 }
 
 static void free_dead_ifaces(struct logger *logger)
@@ -206,23 +203,6 @@ static void free_dead_ifaces(struct logger *logger)
 	}
 }
 
-
-static void free_iface_endpoint(void *o, const struct logger *unused_logger UNUSED,
-				where_t unused_where UNUSED)
-{
-	struct iface_endpoint *ifp = o;
-	/* drop any lists */
-	pexpect(ifp->next == NULL);
-	remove_list_entry(&ifp->entry);
-	/* generic stuff */
-	ifp->io->cleanup(ifp);
-	release_iface_dev(&ifp->ip_dev);
-	/* XXX: after cleanup so code can log FD */
-	close(ifp->fd);
-	ifp->fd = -1;
-	pfree(ifp);
-}
-
 struct iface_endpoint *alloc_iface_endpoint(int fd,
 					    struct iface_dev *ifd,
 					    const struct iface_io *io,
@@ -231,9 +211,7 @@ struct iface_endpoint *alloc_iface_endpoint(int fd,
 					    ip_endpoint local_endpoint,
 					    where_t where)
 {
-	struct iface_endpoint *ifp = refcnt_alloc(struct iface_endpoint,
-						  free_iface_endpoint,
-						  where);
+	struct iface_endpoint *ifp = refcnt_alloc(struct iface_endpoint, where);
 	ifp->fd = fd;
 	ifp->ip_dev = addref_where(ifd, where);
 	ifp->io = io;
@@ -245,9 +223,21 @@ struct iface_endpoint *alloc_iface_endpoint(int fd,
 	return ifp;
 }
 
-void iface_endpoint_delref_where(struct iface_endpoint **ifp, where_t where)
+void iface_endpoint_delref_where(struct iface_endpoint **ifpp, where_t where)
 {
-	delref_where(ifp, &global_logger, where);
+	struct iface_endpoint *ifp = delref_where(ifpp, &global_logger, where);
+	if (ifp != NULL) {
+		/* drop any lists */
+		pexpect(ifp->next == NULL);
+		remove_list_entry(&ifp->entry);
+		/* generic stuff */
+		ifp->io->cleanup(ifp);
+		release_iface_dev(&ifp->ip_dev);
+		/* XXX: after cleanup so code can log FD */
+		close(ifp->fd);
+		ifp->fd = -1;
+		pfree(ifp);
+	}
 }
 
 struct iface_endpoint *iface_endpoint_addref_where(struct iface_endpoint *ifp, where_t where)

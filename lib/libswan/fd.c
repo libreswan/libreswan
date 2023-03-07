@@ -37,27 +37,25 @@ struct fd *fd_addref_where(struct fd *fd, const struct where *where)
 	return addref_where(fd, where);
 }
 
-static void free_fd(void *obj, const struct logger *logger, where_t where)
+void fd_delref_where(struct fd **fdp, where_t where)
 {
-	struct fd *fd = obj;
-	pexpect(fd->magic == FD_MAGIC);
-	if (close(fd->fd) != 0) {
-		if (DBGP(DBG_BASE)) {
-			llog_errno(DEBUG_STREAM, logger, errno,
-				   "freeref "PRI_FD" close() failed "PRI_WHERE": ",
-				   pri_fd(fd), pri_where(where));
+	const struct logger *logger = &global_logger;
+	struct fd *fd = delref_where(fdp, logger, where);
+	if (fd != NULL) {
+		pexpect(fd->magic == FD_MAGIC);
+		if (close(fd->fd) != 0) {
+			if (DBGP(DBG_BASE)) {
+				llog_errno(DEBUG_STREAM, logger, errno,
+					   "freeref "PRI_FD" close() failed "PRI_WHERE": ",
+					   pri_fd(fd), pri_where(where));
+			}
+		} else {
+			ldbg(logger, "freeref "PRI_FD" "PRI_WHERE"",
+			     pri_fd(fd), pri_where(where));
 		}
-	} else {
-		ldbg(logger, "freeref "PRI_FD" "PRI_WHERE"",
-		     pri_fd(fd), pri_where(where));
+		fd->magic = ~FD_MAGIC;
+		pfree(fd);
 	}
-	fd->magic = ~FD_MAGIC;
-	pfree(fd);
-}
-
-void fd_delref_where(struct fd **fd, where_t where)
-{
-	delref_where(fd, &global_logger, where);
 }
 
 void fd_leak(struct fd *fd, where_t where)
@@ -103,7 +101,7 @@ struct fd *fd_accept(int socket, const struct where *where, struct logger *logge
 		return NULL;
 	}
 
-	struct fd *fdt = refcnt_alloc(struct fd, free_fd, where);
+	struct fd *fdt = refcnt_alloc(struct fd, where);
 	fdt->fd = fd;
 	fdt->magic = FD_MAGIC;
 	dbg("%s: new "PRI_FD" "PRI_WHERE"",

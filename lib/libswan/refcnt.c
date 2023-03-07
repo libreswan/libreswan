@@ -107,14 +107,14 @@ unsigned refcnt_peek(const refcnt_t *refcnt)
 	return val;
 }
 
-void refcnt_delref_where(const char *what, void *pointer,
-			 struct refcnt *refcnt,
-			 const struct logger *logger,
-			 const struct where *where)
+void *refcnt_delref_where(const char *what, void *pointer,
+			  struct refcnt *refcnt,
+			  const struct logger *logger,
+			  const struct where *where)
 {
 	if (pointer == NULL) {
 		ldbg(logger, "delref %s@NULL "PRI_WHERE"", what, pri_where(where));
-		return;
+		return NULL;
 	}
 
 	/* on main thread */
@@ -134,6 +134,7 @@ void refcnt_delref_where(const char *what, void *pointer,
 	}
 	DEBUG_LOG("del");
 	if (new == 0) {
-		refcnt->base->free(pointer, logger, where);
+		return pointer;
 	}
+	return NULL;
 }

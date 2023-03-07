@@ -25,7 +25,6 @@
 
 struct refcnt_base {
 	const char *what;
-	void (*free)(void *object, const struct logger *logger, where_t where);
 };
 
 typedef struct refcnt {
@@ -42,19 +41,18 @@ typedef struct refcnt {
 void refcnt_init(const void *pointer, struct refcnt *refcnt,
 		 const struct refcnt_base *base, where_t where);
 
-#define refcnt_overalloc(THING, EXTRA, FREE, WHERE)		       \
+#define refcnt_overalloc(THING, EXTRA, WHERE)			       \
 	({							       \
 		static const struct refcnt_base b_ = {		       \
 			.what = #THING,				       \
-			.free = FREE,				       \
 		};						       \
 		THING *t_ = alloc_bytes(sizeof(THING) + (EXTRA), b_.what); \
 		refcnt_init(t_, &t_->refcnt, &b_, WHERE);	       \
 		t_;						       \
 	})
 
-#define refcnt_alloc(THING, FREE, WHERE)			       \
-	refcnt_overalloc(THING, /*extra*/0, FREE, WHERE)
+#define refcnt_alloc(THING, WHERE)			\
+	refcnt_overalloc(THING, /*extra*/0, WHERE)
 
 /* look at refcnt atomically */
 unsigned refcnt_peek(const refcnt_t *refcnt);
@@ -75,19 +73,24 @@ void refcnt_addref_where(const char *what, const void *pointer,
 
 /*
  * Delete a reference.
+ *
+ * Returns a non-NULL pointer to the object when it is the last
+ * reference and needs to be pfree()ed.
  */
 
-void refcnt_delref_where(const char *what, void *pointer,
-			 struct refcnt *refcnt,
-			 const struct logger *logger, where_t where);
+void *refcnt_delref_where(const char *what, void *pointer,
+			  struct refcnt *refcnt,
+			  const struct logger *logger, where_t where);
 
-#define delref_where(OBJ, LOGGER, WHERE)				\
-	{								\
-		typeof(OBJ) o_ = OBJ;					\
-		refcnt_t *r_ = (*o_ == NULL ? NULL : &(*o_)->refcnt);	\
-		refcnt_delref_where(#OBJ, *o_, r_, LOGGER, WHERE);	\
-		*o_ = NULL; /*kill pointer */				\
-	}
+#define delref_where(OBJP, LOGGER, WHERE)				\
+	({								\
+		typeof(OBJP) op_ = OBJP;				\
+		typeof(*OBJP) o_ = *op_;				\
+		*op_ = NULL; /*kill pointer */				\
+		refcnt_t *r_ = (o_ == NULL ? NULL : &o_->refcnt);	\
+		o_ = refcnt_delref_where(#OBJP, o_, r_, LOGGER, WHERE); \
+		o_; /* NULL or last OBJ */				\
+	})
 
 /* for code wanting to use refcnt for normal allocs */
 void dbg_alloc(const char *what, const void *pointer, where_t where);
