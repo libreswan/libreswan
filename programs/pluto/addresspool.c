@@ -702,12 +702,12 @@ static void free_addresspool(void *p, const struct logger *unused_logger UNUSED,
 
 void addresspool_delref(struct addresspool **pool)
 {
-	delref(pool, &global_logger);
+	delref_where(pool, &global_logger, HERE);
 }
 
 struct addresspool *addresspool_addref(struct addresspool *pool)
 {
-	return addref(pool);
+	return addref_where(pool, HERE);
 }
 
 /*

@@ -786,7 +786,7 @@ void free_xfrmi_ipsec1(struct logger *logger)
 
 void reference_xfrmi(struct connection *c)
 {
-	addref(c->xfrmi);
+	addref_where(c->xfrmi, HERE);
 	dbg("reference xfrmi=%p name=%s if_id=%u refcount=%u (after)", c->xfrmi,
 			c->xfrmi->name, c->xfrmi->if_id,
 			refcnt_peek(&(c->xfrmi->refcnt)));
@@ -800,5 +800,5 @@ void unreference_xfrmi(struct connection *c)
 	     c->xfrmi, c->xfrmi->name, c->xfrmi->if_id,
 	     refcnt_peek(&(c->xfrmi->refcnt)));
 
-	delref(&c->xfrmi, c->logger);
+	delref_where(&c->xfrmi, c->logger, HERE);
 }

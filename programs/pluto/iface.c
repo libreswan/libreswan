@@ -138,7 +138,7 @@ static void add_or_keep_iface_dev(struct raw_iface *ifp, struct logger *logger)
 
 void release_iface_dev(struct iface_dev **id)
 {
-	delref(id, &global_logger);
+	delref_where(id, &global_logger, HERE);
 }
 
 static void free_dead_ifaces(struct logger *logger)

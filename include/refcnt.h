@@ -73,12 +73,6 @@ void refcnt_addref_where(const char *what, const void *pointer,
 		o_; /* result */					\
 	})
 
-#define addref(OBJ)							\
-	({								\
-		where_t where = HERE;					\
-		addref_where(OBJ, where);				\
-	})
-
 /*
  * Delete a reference.
  */
@@ -93,12 +87,6 @@ void refcnt_delref_where(const char *what, void *pointer,
 		refcnt_t *r_ = (*o_ == NULL ? NULL : &(*o_)->refcnt);	\
 		refcnt_delref_where(#OBJ, *o_, r_, LOGGER, WHERE);	\
 		*o_ = NULL; /*kill pointer */				\
-	}
-
-#define delref(OBJ, LOGGER)						\
-	{								\
-		where_t where = HERE;					\
-		delref_where(OBJ, LOGGER, where);			\
 	}
 
 /* for code wanting to use refcnt for normal allocs */
