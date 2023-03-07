@@ -1225,7 +1225,6 @@ static bool migrate_xfrm_sa(const struct kernel_migrate *sa, struct logger *logg
 
 static bool xfrm_migrate_ipsec_sa(struct child_sa *child)
 {
-	/* support ah? if(!child->sa.st_esp.present && !child->sa.st_ah.present)) */
 	if (!child->sa.st_esp.present) {
 		llog_sa(RC_LOG, child, "mobike SA migration only support ESP SA");
 		return false;
