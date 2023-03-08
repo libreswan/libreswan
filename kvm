@@ -220,32 +220,45 @@ if test "$1" = $0 -a $# -eq 3 ; then
     exit 0
 fi
 
-# Translate ../../../kvm [...] into ./kvm [...] and with no [...]
-# implying "check".  Do this before checking $#=0 as this can add the
-# missing parameter.
+# Translate ../../../kvm [...] into ./kvm [...]
+#
+# No argments implies "check $PWD", and operations but no directory
+# implies $PWD as the test.  Do this before checking $#=0 as this will
+# add the missing parameter.
 
 if test $(realpath $(dirname $0)) != $(realpath ${PWD}) ; then
     if test $# -eq 0 ; then
-	set -- check ${PWD}
+	set -- check $PWD
     else
+	# convert any paths to absolute
 	declare -a args
 	i=0
+	found_dir=false
+	need_dir=false
 	for arg in "$@" ; do
-	    if test -d "${arg}" ; then
-		dir=true
-		args[$i]=$(realpath ${arg})
-	    elif test "${arg}" = check ; then
-		check=true
-		args[$i]="${arg}"
-	    else
-		args[$i]="${arg}"
-	    fi
+	    case "${arg}" in
+		check | recheck | diff | diffs | patch | add )
+		    args[$i]="${arg}"
+		    need_dir=true
+		    ;;
+		* )
+		    if test -d "${arg}" ; then
+			found_dir=true
+			args[$i]=$(realpath ${arg})
+		    else
+			args[$i]="${arg}"
+		    fi
+		    ;;
+	    esac
 	    i=$((i + 1))
 	done
-	set -- "${args[@]}"
+	if ! $found_dir && $need_dir ; then
+	    set -- "${args[@]}" $PWD
+	else
+	    set -- "${args[@]}"
+	fi
     fi
     cd $(dirname $0)
-    echo "$@"
 fi
 
 # Finally is there at least one parameter?
