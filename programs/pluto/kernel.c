@@ -2820,8 +2820,7 @@ void orphan_holdpass(struct connection *c,
 		 * github/976.
 		 */
 		struct bare_shunt *bs =
-			add_bare_shunt(&sr->local->client,
-				       &sr->remote->client,
+			add_bare_shunt(&src, &dst,
 				       c->config->failure_shunt,
 				       ((strstr(c->name, "/32") != NULL ||
 					 strstr(c->name, "/128") != NULL) ? c->serialno : 0),
