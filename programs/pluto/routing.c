@@ -580,17 +580,6 @@ void permanent_event_handler(struct connection *c, struct logger *logger, struct
 				schedule_revival(&(e->ike->sa));
 				return;
 			}
-			if (c->policy & POLICY_OPPORTUNISTIC) {
-				/*
-				 * A failed OE initiator, make shunt bare.
-				 */
-				orphan_holdpass(c, c->spd, logger);
-				/*
-				 * Change routing so we don't get cleared out
-				 * when state/connection dies.
-				 */
-				set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
-			}
 			fail(e->ike);
 			return;
 		default:
@@ -618,18 +607,6 @@ void permanent_event_handler(struct connection *c, struct logger *logger, struct
 			if (should_revive(&(e->ike->sa))) {
 				schedule_revival(&(e->ike->sa));
 				return;
-			}
-			if (c->policy & POLICY_OPPORTUNISTIC) {
-				/*
-				 * A failed OE initiator, make shunt bare.
-				 */
-				orphan_holdpass(c, c->spd, logger);
-				/*
-				 * Change routing so we don't get cleared out
-				 * when state/connection dies.
-				 */
-				set_child_routing(c, RT_ROUTED_PROSPECTIVE/*lie?!?*/,
-						  c->child.newest_routing_sa);
 			}
 			fail(e->ike);
 			return;
@@ -671,18 +648,6 @@ void permanent_event_handler(struct connection *c, struct logger *logger, struct
 			if (should_revive(&(e->ike->sa))) {
 				schedule_revival(&(e->ike->sa));
 				return;
-			}
-			if (c->policy & POLICY_OPPORTUNISTIC) {
-				/*
-				 * A failed OE initiator, make shunt bare.
-				 */
-				orphan_holdpass(c, c->spd, logger);
-				/*
-				 * Change routing so we don't get cleared out
-				 * when state/connection dies.
-				 */
-				set_child_routing(c, RT_ROUTED_NEGOTIATION/*lie?!?*/,
-						  c->child.newest_routing_sa);
 			}
 			fail(e->ike);
 			return;
@@ -780,17 +745,6 @@ void template_event_handler(struct connection *c, struct logger *logger, struct 
 				schedule_revival(&(e->ike->sa));
 				return;
 			}
-			if (c->policy & POLICY_OPPORTUNISTIC) {
-				/*
-				 * A failed OE initiator, make shunt bare.
-				 */
-				orphan_holdpass(c, c->spd, logger);
-				/*
-				 * Change routing so we don't get cleared out
-				 * when state/connection dies.
-				 */
-				set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
-			}
 			fail(e->ike);
 			return;
 		default:
@@ -819,18 +773,6 @@ void template_event_handler(struct connection *c, struct logger *logger, struct 
 				schedule_revival(&(e->ike->sa));
 				return;
 			}
-			if (c->policy & POLICY_OPPORTUNISTIC) {
-				/*
-				 * A failed OE initiator, make shunt bare.
-				 */
-				orphan_holdpass(c, c->spd, logger);
-				/*
-				 * Change routing so we don't get cleared out
-				 * when state/connection dies.
-				 */
-				set_child_routing(c, RT_ROUTED_PROSPECTIVE/*lie?!?*/,
-						  c->child.newest_routing_sa);
-			}
 			fail(e->ike);
 			return;
 		default:
@@ -852,18 +794,6 @@ void template_event_handler(struct connection *c, struct logger *logger, struct 
 			if (should_revive(&(e->ike->sa))) {
 				schedule_revival(&(e->ike->sa));
 				return;
-			}
-			if (c->policy & POLICY_OPPORTUNISTIC) {
-				/*
-				 * A failed OE initiator, make shunt bare.
-				 */
-				orphan_holdpass(c, c->spd, logger);
-				/*
-				 * Change routing so we don't get cleared out
-				 * when state/connection dies.
-				 */
-				set_child_routing(c, RT_ROUTED_NEGOTIATION/*lie?!?*/,
-						  c->child.newest_routing_sa);
 			}
 			fail(e->ike);
 			return;
