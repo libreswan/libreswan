@@ -36,6 +36,7 @@ enum connection_event {
 	CONNECTION_DELETE_CHILD,
 	CONNECTION_DELETE_IKE,
 	CONNECTION_TIMEOUT,
+#define CONNECTION_EVENT_ROOF (CONNECTION_TIMEOUT+1)
 };
 
 static const char *connection_event_name[] = {
@@ -67,10 +68,6 @@ struct event {
 static void do_updown_unroute(struct connection *c);
 
 static void dispatch(struct connection *c, struct logger *logger, struct event e);
-
-static void permanent_event_handler(struct connection *c, struct logger *logger, struct event *e);
-static void template_event_handler(struct connection *c, struct logger *logger, struct event *e);
-static void instance_event_handler(struct connection *c, struct logger *logger, struct event *e);
 
 void set_child_routing_where(struct connection *c, enum routing routing,
 			     so_serial_t so, where_t where)
@@ -476,15 +473,16 @@ void connection_delete_ike(struct ike_sa **ikep)
 		});
 }
 
-void dispatch(struct connection *c, struct logger *logger, struct event e)
+void dispatch(struct connection *c, struct logger *logger, struct event ee)
 {
 	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+		const struct event e = ee;
 		jam_string(buf, "dispatch ");
 		jam_enum_short(buf, &connection_event_names, e.event);
 		jam_string(buf, " to ");
-		jam_enum_short(buf, &connection_kind_names, c->kind);
-		jam_string(buf, " ");
 		jam_enum_short(buf, &routing_names, c->child.routing);
+		jam_string(buf, " ");
+		jam_enum_short(buf, &connection_kind_names, c->kind);
 		jam_string(buf, " ");
 		jam(buf, PRI_CO, pri_co(c->serialno));
 		jam_string(buf, " ");
@@ -500,49 +498,40 @@ void dispatch(struct connection *c, struct logger *logger, struct event e)
 			jam_kernel_acquire(buf, e.acquire);
 		}
 	}
-	switch (c->kind) {
-	case CK_PERMANENT:
-		permanent_event_handler(c, logger, &e);
-		break;
-	case CK_TEMPLATE:
-		template_event_handler(c, logger, &e);
-		break;
-	case CK_INSTANCE:
-		instance_event_handler(c, logger, &e);
-		break;
-	default:
-		bad_case(c->kind);
-	}
-}
 
-void permanent_event_handler(struct connection *c, struct logger *logger, struct event *e)
-{
+#define XX(CONNECTION_EVENT, CONNECTION_ROUTING, CONNECTION_KIND)	\
+	(((CONNECTION_EVENT) *						\
+	  CONNECTION_ROUTING_ROOF + CONNECTION_ROUTING) *		\
+	 CONNECTION_KIND_ROOF + CONNECTION_KIND)
+#define X(EVENT, ROUTING, KIND)				\
+	XX(CONNECTION_##EVENT, RT_##ROUTING, CK_##KIND)
+
 	/*
 	 * Part 1: handle the easy cases where the connection didn't
 	 * establish and things should retry/revive with kernel
 	 * policy/state unchanged.
 	 */
 
-	const enum routing cr = c->child.routing;
-	switch (cr) {
-
-	case RT_UNROUTED:
-		switch (e->event) {
-		case CONNECTION_ROUTE:
+	struct event *e = &ee;
+	const enum routing routing = c->child.routing;
+	const enum connection_kind kind = c->kind;
+	{
+		switch (XX(e->event, routing, kind)) {
+		case X(ROUTE, UNROUTED, PERMANENT):
 			c->policy |= POLICY_ROUTE; /* always */
 			if (!install_prospective_kernel_policy(c)) {
 				/* XXX: why whack only? */
 				llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");
 			}
 			return;
-		case CONNECTION_UNROUTE:
+		case X(UNROUTE, UNROUTED, PERMANENT):
 			ldbg(logger, "already unrouted");
 			return;
-		case CONNECTION_ONDEMAND:
+		case X(ONDEMAND, UNROUTED, PERMANENT):
 			/* presumably triggered by whack */
 			ondemand_unrouted_to_unrouted_negotiation(c, e);
 			return;
-		case CONNECTION_TIMEOUT:
+		case X(TIMEOUT, UNROUTED, PERMANENT):
 			/* ex, permanent+up */
 			if (should_retry(e->ike)) {
 				retry(e->ike);
@@ -554,23 +543,17 @@ void permanent_event_handler(struct connection *c, struct logger *logger, struct
 			}
 			fail(e->ike);
 			return;
-		default:
-			barf(c, logger, e);
-			return;
-		}
 
-	case RT_UNROUTED_NEGOTIATION:
-		switch (e->event) {
-		case CONNECTION_ROUTE:
+		case X(ROUTE, UNROUTED_NEGOTIATION, PERMANENT):
 			c->policy |= POLICY_ROUTE;
 			llog(RC_LOG_SERIOUS, logger,
 			     "policy ROUTE added to negotiating connection");
 			return;
-		case CONNECTION_UNROUTE:
+		case X(UNROUTE, UNROUTED_NEGOTIATION, PERMANENT):
 			delete_connection_kernel_policies(c);
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
-		case CONNECTION_TIMEOUT:
+		case X(TIMEOUT, UNROUTED_NEGOTIATION, PERMANENT):
 			/* for instance, permenant ondemand */
 			if (should_retry(e->ike)) {
 				retry(e->ike);
@@ -582,24 +565,18 @@ void permanent_event_handler(struct connection *c, struct logger *logger, struct
 			}
 			fail(e->ike);
 			return;
-		default:
-			barf(c, logger, e);
-			return;
-		}
 
-	case RT_ROUTED_NEGOTIATION:
-		switch (e->event) {
-		case CONNECTION_ROUTE:
+		case X(ROUTE, ROUTED_NEGOTIATION, PERMANENT):
 			c->policy |= POLICY_ROUTE;
 			llog(RC_LOG_SERIOUS, logger, "connection already routed");
 			return;
-		case CONNECTION_UNROUTE:
+		case X(UNROUTE, ROUTED_NEGOTIATION, PERMANENT):
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			do_updown_unroute(c);
 			return;
-		case CONNECTION_TIMEOUT:
+		case X(TIMEOUT, ROUTED_NEGOTIATION, PERMANENT):
 			if (should_retry(e->ike)) {
 				retry(e->ike);
 				return;
@@ -610,40 +587,28 @@ void permanent_event_handler(struct connection *c, struct logger *logger, struct
 			}
 			fail(e->ike);
 			return;
-		default:
-			barf(c, logger, e);
-			return;
-		}
 
-	case RT_ROUTED_PROSPECTIVE:
-		switch (e->event) {
-		case CONNECTION_UNROUTE:
+		case X(UNROUTE, ROUTED_PROSPECTIVE, PERMANENT):
 			delete_connection_kernel_policies(c);
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			do_updown_unroute(c);
 			return;
-		case CONNECTION_ONDEMAND:
+		case X(ONDEMAND, ROUTED_PROSPECTIVE, PERMANENT):
 			ondemand_routed_prospective_to_routed_negotiation(c, e);
 			return;
-		default:
-			barf(c, logger, e);
-			return;
-		}
 
-	case RT_ROUTED_TUNNEL:
-		switch (e->event) {
-		case CONNECTION_ROUTE:
+		case X(ROUTE, ROUTED_TUNNEL, PERMANENT):
 			c->policy |= POLICY_ROUTE; /* always */
 			llog(RC_LOG, logger, "policy ROUTE added to established connection");
 			return;
-		case CONNECTION_UNROUTE:
+		case X(UNROUTE, ROUTED_TUNNEL, PERMANENT):
 			llog(RC_RTBUSY, logger, "cannot unroute: route busy");
 			return;
-		case CONNECTION_DELETE_CHILD:
+		case X(DELETE_CHILD, ROUTED_TUNNEL, PERMANENT):
 			/* permenant connections are never deleted */
 			delete_routed_tunnel_child(c, logger, e);
 			return;
-		case CONNECTION_TIMEOUT:
+		case X(TIMEOUT, ROUTED_TUNNEL, PERMANENT):
 			/* don't retry as well */
 			if (should_revive(&(e->ike->sa))) {
 				schedule_revival(&(e->ike->sa));
@@ -651,64 +616,30 @@ void permanent_event_handler(struct connection *c, struct logger *logger, struct
 			}
 			fail(e->ike);
 			return;
-		default:
-			barf(c, logger, e);
-			return;
-		}
 
-	case RT_ROUTED_FAILURE:
-		switch (e->event) {
-		case CONNECTION_UNROUTE:
+		case X(UNROUTE, ROUTED_FAILURE, PERMANENT):
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			do_updown_unroute(c);
 			return;
-		default:
-			barf(c, logger, e);
-			return;
-		}
 
-	case RT_UNROUTED_TUNNEL:
-		switch (e->event) {
-		case CONNECTION_UNROUTE:
+		case X(UNROUTE, UNROUTED_TUNNEL, PERMANENT):
 			delete_connection_kernel_policies(c);
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
-		default:
-			barf(c, logger, e);
-			return;
-		}
 
-	}
-
-	bad_case(cr);
-}
-
-void template_event_handler(struct connection *c, struct logger *logger, struct event *e)
-{
-	/*
-	 * Part 1: handle the easy cases where the connection didn't
-	 * establish and things should retry/revive with kernel
-	 * policy/state unchanged.
-	 */
-
-	const enum routing cr = c->child.routing;
-	switch (cr) {
-
-	case RT_UNROUTED:
-		switch (e->event) {
-		case CONNECTION_ROUTE:
+		case X(ROUTE, UNROUTED, TEMPLATE):
 			c->policy |= POLICY_ROUTE;
 			if (!install_prospective_kernel_policy(c)) {
 				/* XXX: why whack only? */
 				llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");
 			}
 			return;
-		case CONNECTION_UNROUTE:
+		case X(UNROUTE, UNROUTED, TEMPLATE):
 			ldbg(logger, "already unrouted");
 			return;
-		case CONNECTION_TIMEOUT:
+		case X(TIMEOUT, UNROUTED, TEMPLATE):
 			/* for instance, permanent+up */
 			if (should_retry(e->ike)) {
 				retry(e->ike);
@@ -720,22 +651,16 @@ void template_event_handler(struct connection *c, struct logger *logger, struct 
 			}
 			fail(e->ike);
 			return;
-		default:
-			barf(c, logger, e);
-			return;
-		}
 
-	case RT_UNROUTED_NEGOTIATION:
-		switch (e->event) {
-		case CONNECTION_ROUTE:
+		case X(ROUTE, UNROUTED_NEGOTIATION, TEMPLATE):
 			c->policy |= POLICY_ROUTE;
 			llog(RC_LOG_SERIOUS, logger, "policy ROUTE added to negotiating connection");
 			return;
-		case CONNECTION_UNROUTE:
+		case X(UNROUTE, UNROUTED_NEGOTIATION, TEMPLATE):
 			delete_connection_kernel_policies(c);
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
-		case CONNECTION_TIMEOUT:
+		case X(TIMEOUT, UNROUTED_NEGOTIATION, TEMPLATE):
 			/* for instance, permenant ondemand */
 			if (should_retry(e->ike)) {
 				retry(e->ike);
@@ -747,24 +672,18 @@ void template_event_handler(struct connection *c, struct logger *logger, struct 
 			}
 			fail(e->ike);
 			return;
-		default:
-			barf(c, logger, e);
-			return;
-		}
 
-	case RT_ROUTED_NEGOTIATION:
-		switch (e->event) {
-		case CONNECTION_ROUTE:
+		case X(ROUTE, ROUTED_NEGOTIATION, TEMPLATE):
 			c->policy |= POLICY_ROUTE;
 			llog(RC_LOG_SERIOUS, logger, "policy ROUTE added to negotiating connection");
 			return;
-		case CONNECTION_UNROUTE:
+		case X(UNROUTE, ROUTED_NEGOTIATION, TEMPLATE):
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			do_updown_unroute(c);
 			return;
-		case CONNECTION_TIMEOUT:
+		case X(TIMEOUT, ROUTED_NEGOTIATION, TEMPLATE):
 			if (should_retry(e->ike)) {
 				retry(e->ike);
 				return;
@@ -775,21 +694,15 @@ void template_event_handler(struct connection *c, struct logger *logger, struct 
 			}
 			fail(e->ike);
 			return;
-		default:
-			barf(c, logger, e);
-			return;
-		}
 
-	case RT_ROUTED_TUNNEL:
-		switch (e->event) {
-		case CONNECTION_ROUTE:
+		case X(ROUTE, ROUTED_TUNNEL, TEMPLATE):
 			c->policy |= POLICY_ROUTE;
 			llog(RC_LOG_SERIOUS, logger, "policy ROUTE added to established connection");
 			return;
-		case CONNECTION_UNROUTE:
+		case X(UNROUTE, ROUTED_TUNNEL, TEMPLATE):
 			llog(RC_RTBUSY, logger, "cannot unroute: route busy");
 			return;
-		case CONNECTION_TIMEOUT:
+		case X(TIMEOUT, ROUTED_TUNNEL, TEMPLATE):
 			/* don't retry as well */
 			if (should_revive(&(e->ike->sa))) {
 				schedule_revival(&(e->ike->sa));
@@ -797,71 +710,31 @@ void template_event_handler(struct connection *c, struct logger *logger, struct 
 			}
 			fail(e->ike);
 			return;
-		default:
-			barf(c, logger, e);
-			return;
-		}
 
-	case RT_ROUTED_PROSPECTIVE:
-		switch (e->event) {
-		case CONNECTION_UNROUTE:
+		case X(UNROUTE, ROUTED_PROSPECTIVE, TEMPLATE):
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			do_updown_unroute(c);
 			return;
-		default:
-			barf(c, logger, e);
-			return;
-		}
 
-	case RT_ROUTED_FAILURE:
-		switch (e->event) {
-		case CONNECTION_UNROUTE:
+		case X(UNROUTE, ROUTED_FAILURE, TEMPLATE):
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			do_updown_unroute(c);
 			return;
-		default:
-			barf(c, logger, e);
-			return;
-		}
 
-	case RT_UNROUTED_TUNNEL:
-		switch (e->event) {
-		case CONNECTION_UNROUTE:
+		case X(UNROUTE, UNROUTED_TUNNEL, TEMPLATE):
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
-		default:
-			barf(c, logger, e);
-			return;
-		}
 
-	}
-
-	bad_case(cr);
-}
-
-void instance_event_handler(struct connection *c, struct logger *logger, struct event *e)
-{
-	/*
-	 * Part 1: handle the easy cases where the connection didn't
-	 * establish and things should retry/revive with kernel
-	 * policy/state unchanged.
-	 */
-
-	const enum routing cr = c->child.routing;
-	switch (cr) {
-
-	case RT_UNROUTED:
-		switch (e->event) {
-		case CONNECTION_UNROUTE:
+		case X(UNROUTE, UNROUTED, INSTANCE):
 			ldbg(logger, "already unrouted");
 			return;
-		case CONNECTION_ONDEMAND:
+		case X(ONDEMAND, UNROUTED, INSTANCE):
 			/*
 			 * Triggered by whack or ondemand against the
 			 * template which instantiates this
@@ -872,7 +745,7 @@ void instance_event_handler(struct connection *c, struct logger *logger, struct 
 			 */
 			ondemand_unrouted_to_unrouted_negotiation(c, e);
 			return;
-		case CONNECTION_TIMEOUT:
+		case X(TIMEOUT, UNROUTED, INSTANCE):
 			/* for instance, permanent+up */
 			if (should_retry(e->ike)) {
 				retry(e->ike);
@@ -884,19 +757,13 @@ void instance_event_handler(struct connection *c, struct logger *logger, struct 
 			}
 			fail(e->ike);
 			return;
-		default:
-			barf(c, logger, e);
-			return;
-		}
 
-	case RT_UNROUTED_NEGOTIATION:
-		switch (e->event) {
-		case CONNECTION_UNROUTE:
+		case X(UNROUTE, UNROUTED_NEGOTIATION, INSTANCE):
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
-		case CONNECTION_TIMEOUT:
+		case X(TIMEOUT, UNROUTED_NEGOTIATION, INSTANCE):
 			/* for instance, permenant ondemand */
 			if (should_retry(e->ike)) {
 				retry(e->ike);
@@ -919,18 +786,12 @@ void instance_event_handler(struct connection *c, struct logger *logger, struct 
 			}
 			fail(e->ike);
 			return;
-		default:
-			barf(c, logger, e);
-			return;
-		}
 
-	case RT_ROUTED_NEGOTIATION:
-		switch (e->event) {
-		case CONNECTION_UNROUTE:
+		case X(UNROUTE, ROUTED_NEGOTIATION, INSTANCE):
 			delete_connection_kernel_policies(c);
 			do_updown_unroute(c);
 			return;
-		case CONNECTION_TIMEOUT:
+		case X(TIMEOUT, ROUTED_NEGOTIATION, INSTANCE):
 			if (should_retry(e->ike)) {
 				retry(e->ike);
 				return;
@@ -953,17 +814,11 @@ void instance_event_handler(struct connection *c, struct logger *logger, struct 
 			}
 			fail(e->ike);
 			return;
-		default:
-			barf(c, logger, e);
-			return;
-		}
 
-	case RT_ROUTED_TUNNEL:
-		switch (e->event) {
-		case CONNECTION_UNROUTE:
+		case X(UNROUTE, ROUTED_TUNNEL, INSTANCE):
 			llog(RC_RTBUSY, logger, "cannot unroute: route busy");
 			return;
-		case CONNECTION_DELETE_CHILD:
+		case X(DELETE_CHILD, ROUTED_TUNNEL, INSTANCE):
 			if (delete_routed_tunnel_child(c, logger, e)) {
 				/* connection is being revived so
 				 * don't touch */
@@ -987,7 +842,7 @@ void instance_event_handler(struct connection *c, struct logger *logger, struct 
 
 			delete_connection(&c);
 			return;
-		case CONNECTION_TIMEOUT:
+		case X(TIMEOUT, ROUTED_TUNNEL, INSTANCE):
 			/* don't retry as well */
 			if (should_revive(&(e->ike->sa))) {
 				schedule_revival(&(e->ike->sa));
@@ -1007,52 +862,31 @@ void instance_event_handler(struct connection *c, struct logger *logger, struct 
 			}
 			fail(e->ike);
 			return;
-		default:
-			barf(c, logger, e);
-			return;
-		}
 
-	case RT_ROUTED_PROSPECTIVE:
-		switch (e->event) {
-		case CONNECTION_UNROUTE:
+		case X(UNROUTE, ROUTED_PROSPECTIVE, INSTANCE):
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			do_updown_unroute(c);
 			return;
-		default:
-			barf(c, logger, e);
-			return;
-		}
 
-	case RT_ROUTED_FAILURE:
-		switch (e->event) {
-		case CONNECTION_UNROUTE:
+		case X(UNROUTE, ROUTED_FAILURE, INSTANCE):
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			do_updown_unroute(c);
 			return;
-		default:
-			barf(c, logger, e);
-			return;
-		}
-		bad_case(e->event);
 
-	case RT_UNROUTED_TUNNEL:
-		switch (e->event) {
-		case CONNECTION_UNROUTE:
+		case X(UNROUTE, UNROUTED_TUNNEL, INSTANCE):
 			delete_connection_kernel_policies(c);
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
 		default:
 			barf(c, logger, e);
 			return;
-		}
 
+		}
 	}
-
-	bad_case(cr);
 }
 
 /*

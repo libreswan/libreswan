@@ -742,6 +742,7 @@ enum connection_kind {
 	CK_PERMANENT,   /* normal connection */
 	CK_INSTANCE,    /* instance of template, created for a
 			 * particular attempt */
+#define CONNECTION_KIND_ROOF (CK_INSTANCE+1)
 };
 
 enum certpolicy {

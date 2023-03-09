@@ -46,6 +46,7 @@ enum routing {
 	RT_ROUTED_FAILURE,      	/* routed, and .failure_shunt installed */
 	RT_ROUTED_TUNNEL,       	/* routed, and erouted to an IPSEC SA group */
 	RT_UNROUTED_TUNNEL,		/* unrouted, and established; used by MOBIKE */
+#define CONNECTION_ROUTING_ROOF (RT_UNROUTED_TUNNEL+1)
 };
 
 extern const struct enum_names routing_names;
