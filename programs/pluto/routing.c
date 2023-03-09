@@ -190,62 +190,6 @@ static void ondemand_routed_prospective_to_routed_negotiation(struct connection 
 			  e->inception, e->acquire->sec_label, e->acquire->background, e->acquire->logger);
 }
 
-#if 0
-static void ondemand_default(struct connection *c, const struct event *e)
-{
-
-	struct logger *logger = c->logger;
-	struct spd_route *spd = c->spd; /*XXX:only-one!?!*/
-	bool oe = ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
-
-	/* used below in pexpects */
-	struct connection *t = connection_by_serialno(c->clonedfrom); /* could be NULL */
-
-	PASSERT(logger, (c->kind == CK_PERMANENT ||
-			 c->kind == CK_INSTANCE));
-	PASSERT(logger, ((c->kind == CK_INSTANCE) >= (t != NULL)));
-
-	/*
-	 * Figure out the connection's routing transition.
-	 */
-	enum routing old_routing = c->child.routing;	/* routing, old */
-	enum routing new_routing;
-	enum kernel_policy_op op;
-	const char *reason;
-
-		/* no change: this %hold or %pass is old news */
-		new_routing = old_routing;
-		op = 0; /* i.e., NOP */
-		reason = "NOP";
-
-	/*
-	 * We need a broad %hold, not the narrow one.
-	 *
-	 * First we ensure that there is a broad %hold.  There may
-	 * already be one (race condition): no need to create one.
-	 * There may already be a %trap: replace it.  There may not be
-	 * any broad eroute: add %hold.  Once the broad %hold is in
-	 * place, delete the narrow one.
-	 *
-	 * XXX: what race condition?
-	 *
-	 * XXX: why is OE special (other than that's the way the code
-	 * worked in the past)?
-	 */
-	if (oe || old_routing != new_routing) {
-		assign_holdpass(c, spd, op, logger, reason);
-		dbg("kernel: %s() done", __func__);
-	}
-
-	set_child_routing(c, new_routing, c->child.newest_routing_sa);
-	dbg("kernel: %s() done - returning success", __func__);
-
-	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY,
-			  e->inception, e->acquire->sec_label, e->acquire->background, e->acquire->logger);
-
-}
-#endif
-
 void connection_ondemand(struct connection *c, threadtime_t *inception, const struct kernel_acquire *b)
 {
 	/*
