@@ -44,6 +44,7 @@ typedef enum { UNSET_CO_SERIAL = 0, MAX_CO_SERIAL = UINT_MAX, } co_serial_t;
 
 #define PRI_CO "$%u"
 #define pri_co(CO) ((CO))
+#define jam_co(BUF, CO) jam(BUF, PRI_CO, CO)
 
 #define co_serial_is_unset(CO) ((CO) == UNSET_CO_SERIAL)
 #define co_serial_is_set(CO)   ((CO) != UNSET_CO_SERIAL)
@@ -68,6 +69,7 @@ typedef unsigned long so_serial_t;
 
 #define PRI_SO "#%lu"
 #define pri_so(SO) (SO)
+#define jam_so(BUF, SO) jam(BUF, PRI_SO, SO)
 
 enum sa_type {
 #define SA_TYPE_FLOOR 0
