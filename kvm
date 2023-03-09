@@ -100,9 +100,11 @@ pass2help()
     recheck [ <test-directory> ... ]
 	re-run the testsuite
     clean
+    test
 	clean the test environment (delete test and build domains and
 	build trees)
     check-clean
+    test-clean
 	delete the test results (leave the build trees and domains alone)
     keys
 	update the keys used for testing
