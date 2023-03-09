@@ -1132,7 +1132,7 @@ void instance_event_handler(struct connection *c, struct logger *logger, struct 
 				 * when state/connection dies.
 				 */
 				set_child_routing(c, RT_ROUTED_NEGOTIATION/*lie?!?*/,
-						  c->child.newest_routing_sa);
+						  SOS_NOBODY);
 			}
 			fail(e->ike);
 			return;
