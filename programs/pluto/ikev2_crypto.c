@@ -32,6 +32,7 @@
 #include "constants.h"
 
 #include "defs.h"
+#include "log.h"
 #include "id.h"
 #include "x509.h"
 #include "certs.h"

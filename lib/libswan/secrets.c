@@ -998,18 +998,17 @@ struct pubkey *pubkey_addref_where(struct pubkey *pk, where_t where)
 /*
  * free a public key struct
  */
-static void free_pubkey(void *obj, const struct logger *logger UNUSED, where_t where UNUSED)
-{
-	struct pubkey *pk = obj;
-	free_id_content(&pk->id);
-	/* algorithm-specific freeing */
-	pk->content.type->free_pubkey_content(&pk->content);
-	pfree(pk);
-}
 
 void pubkey_delref_where(struct pubkey **pkp, where_t where)
 {
-	delref_where(pkp, &global_logger, where);
+	const struct logger *logger = &global_logger;
+	struct pubkey *pk = delref_where(pkp, logger, where);
+	if (pk != NULL) {
+		free_id_content(&pk->id);
+		/* algorithm-specific freeing */
+		pk->content.type->free_pubkey_content(&pk->content);
+		pfree(pk);
+	}
 }
 
 /*
@@ -1083,8 +1082,7 @@ static struct pubkey *alloc_pubkey(const struct id *id, /* ASKK */
 	pexpect(pkc->keyid.keyid[0] != '\0');
 	pexpect(pkc->ckaid.len > 0);
 
-	struct pubkey *pk = refcnt_overalloc(struct pubkey, issuer.len,
-					     free_pubkey, where);
+	struct pubkey *pk = refcnt_overalloc(struct pubkey, issuer.len, where);
 	pk->content = *pkc;
 	pk->id = clone_id(id, "public key id");
 	pk->dns_auth_level = dns_auth_level;

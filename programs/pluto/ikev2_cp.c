@@ -446,22 +446,26 @@ static bool ikev2_set_internal_address(struct pbs_in *cp_a_pbs,
 	local->lease[afi->ip_index] = ip;
 
 	if (local->config->has_client_address_translation) {
-		dbg("CAT is set, not setting host source IP address to %s",
-		    ipstr(&ip, &ip_str));
+		address_buf ipb;
+		ldbg_sa(child,
+			"CAT: configured, not setting host source IP address to %s local CAT = %s->true",
+			str_address(&ip, &ipb), bool_str(local->has_cat));
+		local->has_cat = true; /* create iptable entry */
 		ip_address this_client_prefix = selector_prefix(cc->spd->local->client);
 		if (address_eq_address(this_client_prefix, ip)) {
 			/*
 			 * The address we received is same as this
 			 * side should we also check the host_srcip.
 			 */
-			dbg("#%lu %s[%lu] received INTERNAL_IP%d_ADDRESS that is same as this->client.addr %s. Will not add CAT iptable rules",
-			    child->sa.st_serialno, cc->name, cc->instance_serial,
-			    afi->ip_version, ipstr(&ip, &ip_str));
+			address_buf ipb;
+			ldbg_sa(child,
+				"CAT: #%lu %s[%lu] received INTERNAL_IP%d_ADDRESS that is same as this->client.addr %s. Will not add CAT iptable rules",
+				child->sa.st_serialno, cc->name, cc->instance_serial,
+				afi->ip_version, str_address(&ip, &ipb));
 		} else {
 			update_end_selector(cc, cc->local->config->index,
 					    selector_from_address(ip),
-					    "CP scribbling on end while ignoring TS");
-			local->has_cat = true; /* create iptable entry */
+					    "CAT: scribbling on end while ignoring TS");
 		}
 	} else if (connection_requires_tss(cc) == NULL) {
 		update_end_selector(cc, cc->local->config->index,

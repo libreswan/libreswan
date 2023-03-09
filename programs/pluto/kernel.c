@@ -2750,27 +2750,6 @@ void orphan_holdpass(struct connection *c,
 {
 	if (c->config->negotiation_shunt == c->config->failure_shunt) {
 		/*
-		 * The, presumably installed, kernel policy for the
-		 * negotiation_shunt is identical to the kernel policy
-		 * for the failure shunt.  Hence, nothing in the
-		 * kernel needs to change.
-		 *
-		 * However, if there is an existing bare_shunt then it
-		 * needs to be fiddled so it's name is oe-failing.
-		 * This is done by replacing.
-		 */
-		struct bare_shunt **old = bare_shunt_ptr(&sr->local->client,
-							 &sr->remote->client,
-							 "orphan holdpass");
-		if (old != NULL) {
-			PEXPECT(logger, (*old)->shunt_policy == c->config->negotiation_shunt);
-			PEXPECT(logger, (*old)->shunt_policy == c->config->failure_shunt);
-			ldbg(logger, "kernel: deleting negotiation bare_shunt %s %s to make space for (almost) identical failure shunt; kernel policy unchanged",
-			     enum_name_short(&shunt_policy_names, (*old)->shunt_policy),
-			     (*old)->why);
-			free_bare_shunt(old);
-		}
-		/*
 		 * The /32/128 is a hack to detect an opportunistic
 		 * group name.  See group_instantiate() and
 		 * github/976.
@@ -2787,24 +2766,6 @@ void orphan_holdpass(struct connection *c,
 	}
 
 	/*
-	 * If there's any existing shunt, delete it.
-	 *
-	 * routing.c can probably figure out of this call is needed
-	 * (presumably it knows when there's a failure shunt).
-	 */
-	struct bare_shunt **old = bare_shunt_ptr(&sr->local->client,
-						 &sr->remote->client,
-						 "orphan holdpass");
-	if (old != NULL) {
-		PEXPECT(logger, (*old)->shunt_policy == c->config->negotiation_shunt);
-		ldbg(logger, "kernel: deleting negotiation bare_shunt %s %s to make space for %s failure shunt; kernel policy unchanged",
-		     enum_name_short(&shunt_policy_names, (*old)->shunt_policy),
-		     (*old)->why,
-		     enum_name_short(&shunt_policy_names, c->config->failure_shunt));
-		free_bare_shunt(old);
-	}
-
-	/*
 	 * ... UPDATE kernel policy if needed.
 	 *
 	 * This really causes the name to remain "oe-failing",
@@ -2812,7 +2773,7 @@ void orphan_holdpass(struct connection *c,
 	 * shunt.
 	 */
 
-	dbg("kernel: replacing negotiation_shunt with failure_shunt");
+	dbg("kernel: installing bare_shunt/failure_shunt");
 
 	/* fudge up parameter list */
 	const ip_address *src_address = &sr->local->host->addr;
@@ -2859,8 +2820,7 @@ void orphan_holdpass(struct connection *c,
 		 * github/976.
 		 */
 		struct bare_shunt *bs =
-			add_bare_shunt(&sr->local->client,
-				       &sr->remote->client,
+			add_bare_shunt(&src, &dst,
 				       c->config->failure_shunt,
 				       ((strstr(c->name, "/32") != NULL ||
 					 strstr(c->name, "/128") != NULL) ? c->serialno : 0),

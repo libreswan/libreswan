@@ -28,6 +28,7 @@
 #include "lswnss.h"
 #include "lswtool.h"
 #include "lswalloc.h"
+#include "lswlog.h"		/* for fatal() */
 
 #ifdef __clang__
 /*

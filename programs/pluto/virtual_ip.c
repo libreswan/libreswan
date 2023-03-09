@@ -214,13 +214,6 @@ void init_virtual_ip(const char *private_list,
  * @return virtual_ip
  */
 
-static void virtual_ip_free(void *obj, const struct logger *unused_logger UNUSED,
-			    where_t unused_where UNUSED)
-{
-	struct virtual_ip *vip = obj;
-	pfree(vip);
-}
-
 diag_t create_virtual(const char *leftright, const char *string, struct virtual_ip **vip)
 {
 	passert(string != NULL && string[0] != '\0');
@@ -292,7 +285,7 @@ diag_t create_virtual(const char *leftright, const char *string, struct virtual_
 	 */
 	struct virtual_ip *v = refcnt_overalloc(struct virtual_ip,
 						/*extra*/(n_net * sizeof(ip_subnet)),
-						virtual_ip_free, HERE);
+						HERE);
 
 	v->flags = flags;
 	v->n_net = n_net;
@@ -519,7 +512,11 @@ struct virtual_ip *virtual_ip_addref_where(struct virtual_ip *vip, where_t where
 	return addref_where(vip, where);
 }
 
-void virtual_ip_delref_where(struct virtual_ip **vip, where_t where)
+void virtual_ip_delref_where(struct virtual_ip **vipp, where_t where)
 {
-	delref_where(vip, &global_logger, where);
+	const struct logger *logger = &global_logger;
+	struct virtual_ip *vip = delref_where(vipp, logger, where);
+	if (vip != NULL) {
+		pfree(vip);
+	}
 }

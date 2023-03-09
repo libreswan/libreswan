@@ -29,6 +29,7 @@
  */
 
 #include "defs.h"
+#include "log.h"
 #include "ikev2_notify.h"
 #include "demux.h"
 #include "pluto_stats.h"
