@@ -397,6 +397,17 @@ void connection_route(struct connection *c)
 		});
 }
 
+static void jam_event_sa(struct jambuf *buf, struct state *st)
+{
+	jam_string(buf, "; ");
+	enum sa_type sa_type = IS_PARENT_SA(st) ? IKE_SA : IPSEC_SA;
+	jam_string(buf, st->st_connection->config->ike_info->sa_type_name[sa_type]);
+	jam_string(buf, " ");
+	jam_so(buf, st->st_serialno);
+	jam_string(buf, " ");
+	jam_string(buf, st->st_state->short_name);
+}
+
 void dispatch(struct connection *c, struct logger *logger, struct event e)
 {
 	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
@@ -404,14 +415,21 @@ void dispatch(struct connection *c, struct logger *logger, struct event e)
 		jam_enum_short(buf, &connection_event_names, e.event);
 		jam_string(buf, " to ");
 		jam_enum_short(buf, &connection_kind_names, c->kind);
-		jam_string(buf, " connection ");
+		jam_string(buf, " ");
+		jam_enum_short(buf, &routing_names, c->child.routing);
+		jam_string(buf, " ");
 		jam(buf, PRI_CO, pri_co(c->serialno));
 		jam_string(buf, " ");
 		jam_connection(buf, c);
-		jam_string(buf, " with routing ");
-		jam_enum_short(buf, &routing_names, c->child.routing);
 		if (e.ike != NULL) {
-			jam(buf, " for IKE SA "PRI_SO, pri_so(e.ike->sa.st_serialno));
+			jam_event_sa(buf, &e.ike->sa);
+		}
+		if (e.child != NULL) {
+			jam_event_sa(buf, &e.child->sa);
+		}
+		if (e.acquire != NULL) {
+			jam_string(buf, "; ");
+			jam_kernel_acquire(buf, e.acquire);
 		}
 	}
 	switch (c->kind) {
