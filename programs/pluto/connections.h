@@ -158,16 +158,12 @@ struct config_end {
 };
 
 struct ike_info {
-	/* 1|2 */
-	enum ike_version version;
-	/* IKEv1|IKEv2 */
-	const char *version_name;
-	/* [IKE_SA]  = ISAKMP | IKE */
-	/* [IPSEC_SA = IPsec  | Child */
-	const char *sa_name[SA_TYPE_ROOF];
-	/* [IKE_SA]  = ISAKMP SA | IKE SA */
-	/* [IPSEC_SA = IPsec SA  | Child SA */
-	const char *sa_type_name[SA_TYPE_ROOF];
+	enum ike_version version;		/* 1|2 */
+	const char *version_name;		/* IKEv1|IKEv2 */
+	const char *sa_name[SA_TYPE_ROOF];	/* [IKE_SA]  = ISAKMP | IKE */
+						/* [IPSEC_SA = IPsec  | Child */
+	const char *sa_type_name[SA_TYPE_ROOF];	/* [IKE_SA]  = ISAKMP SA | IKE SA */
+						/* [IPSEC_SA = IPsec SA  | Child SA */
 	enum event_type replace_event;
 };
 
