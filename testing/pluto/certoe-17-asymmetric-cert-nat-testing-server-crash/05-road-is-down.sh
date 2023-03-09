@@ -11,3 +11,4 @@ ipsec whack --shuntstatus
 ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 # should show no tunnel
 ipsec whack --trafficstatus
+../../guestbin/ipsec-kernel-policy.sh
