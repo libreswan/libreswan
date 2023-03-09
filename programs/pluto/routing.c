@@ -408,6 +408,74 @@ static void jam_event_sa(struct jambuf *buf, struct state *st)
 	jam_string(buf, st->st_state->short_name);
 }
 
+void connection_unroute(struct connection *c)
+{
+	if (c->kind == CK_GROUP) {
+		/* XXX: may recurse back to here with group
+		 * instances. */
+		connection_group_unroute(c);
+		return;
+	}
+
+	c->policy &= ~POLICY_ROUTE;
+	dispatch(c, c->logger, (struct event) {
+			.event = CONNECTION_UNROUTE,
+		});
+}
+
+/*
+ * Received a message telling us to delete the connection's Child.SA.
+ */
+
+void connection_delete_child(struct child_sa **childp)
+{
+	struct child_sa *child = (*childp); *childp = NULL;
+	struct connection *c = child->sa.st_connection;
+#if 0
+	if (c->kind != CK_PERMANENT) {
+		ldbg_sa(child, "%s() doesn't yet handle %s",
+			__func__, enum_name_short(&connection_kind_names, c->kind));
+		child->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
+		delete_state(&child->sa);
+		return;
+	}
+#endif
+	/*
+	 * Caller is responsible for generating any messages; suppress
+	 * delete_state()'s desire to send an out-of-band delete.
+	 */
+	child->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
+	child->sa.st_on_delete.skip_revival = true;
+	child->sa.st_on_delete.skip_connection = true;
+	/*
+	 * Let state machine figure out how to react.
+	 */
+	dispatch(c, child->sa.st_logger, (struct event) {
+			.event = CONNECTION_DELETE_CHILD,
+			.child = child,
+		});
+}
+
+void connection_delete_ike(struct ike_sa **ikep)
+{
+	struct ike_sa *ike = (*ikep); *ikep = NULL;
+	struct connection *c = ike->sa.st_connection;
+	/*
+	 * Caller is responsible for generating any messages; suppress
+	 * delete_state()'s desire to send an out-of-band delete.
+	 */
+	ike->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
+	ike->sa.st_on_delete.skip_revival = true;
+	ike->sa.st_on_delete.skip_connection = true;
+	/*
+	 * Let state machine figure out how to react.
+	 */
+	dispatch(c, ike->sa.st_logger, (struct event) {
+			.event = CONNECTION_DELETE_IKE,
+			.ike = ike,
+		});
+}
+
 void dispatch(struct connection *c, struct logger *logger, struct event e)
 {
 	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
@@ -1072,21 +1140,6 @@ static void do_updown_unroute(struct connection *c)
 	}
 }
 
-void connection_unroute(struct connection *c)
-{
-	if (c->kind == CK_GROUP) {
-		/* XXX: may recurse back to here with group
-		 * instances. */
-		connection_group_unroute(c);
-		return;
-	}
-
-	c->policy &= ~POLICY_ROUTE;
-	dispatch(c, c->logger, (struct event) {
-			.event = CONNECTION_UNROUTE,
-		});
-}
-
 /*
  * "down" / "unroute" the connection but _don't_ delete the kernel
  * state / policy.
@@ -1177,57 +1230,4 @@ void connection_suspend(struct child_sa *child)
 		set_child_routing(c, RT_UNROUTED_TUNNEL, c->child.newest_routing_sa);
 		break;
 	}
-}
-
-/*
- * Received a message telling us to delete the connection's Child.SA.
- */
-
-void connection_delete_child(struct child_sa **childp)
-{
-	struct child_sa *child = (*childp); *childp = NULL;
-	struct connection *c = child->sa.st_connection;
-#if 0
-	if (c->kind != CK_PERMANENT) {
-		ldbg_sa(child, "%s() doesn't yet handle %s",
-			__func__, enum_name_short(&connection_kind_names, c->kind));
-		child->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
-		delete_state(&child->sa);
-		return;
-	}
-#endif
-	/*
-	 * Caller is responsible for generating any messages; suppress
-	 * delete_state()'s desire to send an out-of-band delete.
-	 */
-	child->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
-	child->sa.st_on_delete.skip_revival = true;
-	child->sa.st_on_delete.skip_connection = true;
-	/*
-	 * Let state machine figure out how to react.
-	 */
-	dispatch(c, child->sa.st_logger, (struct event) {
-			.event = CONNECTION_DELETE_CHILD,
-			.child = child,
-		});
-}
-
-void connection_delete_ike(struct ike_sa **ikep)
-{
-	struct ike_sa *ike = (*ikep); *ikep = NULL;
-	struct connection *c = ike->sa.st_connection;
-	/*
-	 * Caller is responsible for generating any messages; suppress
-	 * delete_state()'s desire to send an out-of-band delete.
-	 */
-	ike->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
-	ike->sa.st_on_delete.skip_revival = true;
-	ike->sa.st_on_delete.skip_connection = true;
-	/*
-	 * Let state machine figure out how to react.
-	 */
-	dispatch(c, ike->sa.st_logger, (struct event) {
-			.event = CONNECTION_DELETE_IKE,
-			.ike = ike,
-		});
 }
