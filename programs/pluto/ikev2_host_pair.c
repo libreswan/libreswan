@@ -152,7 +152,7 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 
 	if (c != NULL) {
 		/*
-		 * We found a non-wildcard connection.
+		 * We found a possibly non-wildcard connection.
 		 *
 		 * IKEv2 doesn't have to worry about vnet=/vhost=.
 		 *
@@ -162,6 +162,11 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		    (c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
 			ldbg(md->md_logger,
 			     "local endpoint has narrowing=yes - needs instantiation");
+			return rw_responder_instantiate(c, remote_address, HERE);
+		}
+		if (labeled_template(c)) {
+			ldbg(md->md_logger,
+			     "local endpoint is a labeled template - needs instantiation");
 			return rw_responder_instantiate(c, remote_address, HERE);
 		}
 
