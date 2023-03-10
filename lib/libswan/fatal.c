@@ -17,45 +17,45 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "lswlog.h"
+#include "fatal.h"
 
-VPRINTF_LIKE(3)
-static void jam_fatal(struct jambuf *buf, const struct logger *logger,
-		      const char *fmt, va_list ap)
+#include "constants.h"		/* for enum pluto_exit_code */
+#include "lswlog.h"		/* for LOG_WIDTH et.al. */
+
+void fatal(enum pluto_exit_code pec, const struct logger *logger, const char *fmt, ...)
 {
-	/* XXX: The message format is:
-	 *   FATAL ERROR: <log-prefix><message...>
-	 * and not:
-	 *   <log-prefix>FATAL ERROR: <message...>
-	 */
-	jam_string(buf, FATAL_PREFIX);
-	jam_logger_prefix(buf, logger);
-	jam_va_list(buf, fmt, ap);
+	char scratch[LOG_WIDTH];
+	struct jambuf buf[1] = { ARRAY_AS_JAMBUF(scratch), };
+	jam_logger_rc_prefix(buf, logger, FATAL_FLAGS);
+	{
+		va_list ap;
+		va_start(ap, fmt);
+		jam_va_list(buf, fmt, ap);
+		va_end(ap);
+	}
+	fatal_jambuf_to_logger(buf, pec, logger);
 }
 
-void fatal(enum pluto_exit_code rc, const struct logger *logger, const char *fmt, ...)
-{
-	char output[LOG_WIDTH];
-	struct jambuf buf = ARRAY_AS_JAMBUF(output);
-	va_list ap;
-	va_start(ap, fmt);
-	jam_fatal(&buf, logger, fmt, ap);
-	va_end(ap);
-	jambuf_to_logger(&buf, logger, ERROR_FLAGS);
-	libreswan_exit(rc);
-}
-
-void fatal_errno(enum pluto_exit_code rc, const struct logger *logger,
+void fatal_errno(enum pluto_exit_code pec, const struct logger *logger,
 		 int error, const char *fmt, ...)
 {
-	char output[LOG_WIDTH];
-	struct jambuf buf = ARRAY_AS_JAMBUF(output);
-	va_list ap;
-	va_start(ap, fmt);
-	jam_fatal(&buf, logger, fmt, ap);
-	va_end(ap);
-	jam_string(&buf, ": ");
-	jam_errno(&buf, error);
-	jambuf_to_logger(&buf, logger, ERROR_FLAGS);
-	libreswan_exit(rc);
+	char scratch[LOG_WIDTH];
+	struct jambuf buf[1] = { ARRAY_AS_JAMBUF(scratch), };
+	jam_logger_rc_prefix(buf, logger, FATAL_FLAGS);
+	{
+		va_list ap;
+		va_start(ap, fmt);
+		jam_va_list(buf, fmt, ap);
+		va_end(ap);
+		jam_string(buf, ": ");
+		jam_errno(buf, error);
+	}
+	fatal_jambuf_to_logger(buf, pec, logger);
+}
+
+void fatal_jambuf_to_logger(struct jambuf *buf, enum pluto_exit_code pec,
+			    const struct logger *logger)
+{
+	jambuf_to_logger(buf, logger, FATAL_FLAGS);
+	libreswan_exit(pec);
 }

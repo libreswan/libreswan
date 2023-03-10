@@ -29,9 +29,9 @@ void llog_pexpect(const struct logger *logger, where_t where, const char *messag
 	}
 }
 
-
 void pexpect_jambuf_to_logger(struct jambuf *buf, where_t where, const struct logger *logger, lset_t rc_flags)
 {
+	jam_string(buf, " ");
 	jam_where(buf, where);
 	jambuf_to_logger(buf, logger, rc_flags);
 }

@@ -32,11 +32,10 @@ void init_crypt_symkey(struct logger *logger)
 	PK11SlotInfo *slot = PK11_GetBestSlot(CKM_AES_KEY_GEN,
 					      lsw_nss_get_password_context(logger));
 	if (slot == NULL) {
-		char error[LOG_WIDTH];
-		struct jambuf buf[1] = { ARRAY_AS_JAMBUF(error), };
-		jam(buf, "NSS: ephemeral slot error: ");
-		jam_nss_error_code(buf, PR_GetError());
-		fatal(PLUTO_EXIT_FAIL, logger, "%s", error);
+		LLOG_FATAL_JAMBUF(PLUTO_EXIT_FAIL, logger, buf) {
+			jam(buf, "NSS: ephemeral slot error: ");
+			jam_nss_error_code(buf, PR_GetError());
+		}
 	}
 	ephemeral_symkey = PK11_KeyGen(slot, CKM_AES_KEY_GEN,
 				       NULL, 128/8, NULL);

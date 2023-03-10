@@ -39,6 +39,9 @@ static void jam_stream_prefix(struct jambuf *buf, enum stream stream)
 	case PASSERT_STREAM:
 		jam_string(buf, PASSERT_PREFIX);
 		break;
+	case FATAL_STREAM:
+		jam_string(buf, FATAL_PREFIX);
+		return;
 	case ERROR_STREAM:
 		return;
 	case ALL_STREAMS:

@@ -33,6 +33,7 @@
 #include "fd.h"			/* for null_fd */
 #include "impair.h"
 #include "pexpect.h"
+#include "fatal.h"
 
 #define LOG_WIDTH	((size_t)1024)	/* roof of number of chars in log line */
 
@@ -150,6 +151,7 @@ enum stream {
 	ERROR_STREAM       = 0x0400000, /*   ERR     yes    err    <o>   */
 	PEXPECT_STREAM     = 0x0500000, /*   ERR     yes    err    EXPECTATION FAILED: <o> */
 	PASSERT_STREAM     = 0x0600000, /*   ERR     yes    err    ABORT: ASSERTION_FAILED: <o> */
+	FATAL_STREAM       = 0x0700000, /*   ERR     yes    err    FATAL ERROR: <o> */
 	NO_STREAM          = 0x0f00000, /*   N/A     N/A                 */
 	/*
 	 * <o>: add prefix when object is available
@@ -172,6 +174,7 @@ enum stream {
 #define PEXPECT_FLAGS		(PEXPECT_STREAM|RC_LOG_SERIOUS)
 #define PASSERT_FLAGS		(PASSERT_STREAM|RC_LOG_SERIOUS)
 #define ERROR_FLAGS		(ERROR_STREAM|RC_LOG_SERIOUS)
+#define FATAL_FLAGS		(FATAL_STREAM|RC_LOG_SERIOUS)
 #define PRINTF_FLAGS		(NO_PREFIX|WHACK_STREAM)
 
 /*
@@ -305,17 +308,6 @@ void log_error(const struct logger *logger, int error,
 /* like log_error() but no ERROR: prefix and/or ": " separator */
 void llog_errno(lset_t rc_flags, const struct logger *logger, int error,
 		const char *message, ...) PRINTF_LIKE(4);
-
-/*
- * XXX: The message format is:
- *   FATAL ERROR: <log-prefix><message...>
- * and not:
- *   <log-prefix>FATAL ERROR: <message...>
- */
-void fatal(enum pluto_exit_code rc, const struct logger *logger,
-	   const char *message, ...) PRINTF_LIKE(3) NEVER_RETURNS;
-void fatal_errno(enum pluto_exit_code rc, const struct logger *logger,
-		 int error, const char *message, ...) PRINTF_LIKE(4) NEVER_RETURNS;
 
 /*
  * Log debug messages to the main log stream, but not the WHACK log

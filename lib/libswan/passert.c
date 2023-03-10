@@ -23,8 +23,8 @@ void llog_passert(const struct logger *logger, where_t where, const char *fmt, .
 {
 	char scratch[LOG_WIDTH];
 	struct jambuf buf[1] = { ARRAY_AS_JAMBUF(scratch), };
+	jam_logger_rc_prefix(buf, logger, PASSERT_FLAGS);
 	{
-		jam_logger_rc_prefix(buf, logger, PASSERT_FLAGS);
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);
