@@ -239,7 +239,8 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 			jam_sanitized_hunk(buf, c->config->sec_label);
 		}
 
-		jam(buf, PRI_WHERE, pri_where(where));
+		jam_string(buf, " ");
+		jam_where(buf, where);
 	}
 
 	/*

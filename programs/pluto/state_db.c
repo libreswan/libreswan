@@ -294,7 +294,8 @@ static struct list_head *filter_head(struct state_filter *filter)
 		LDBGP_JAMBUF(DBG_BASE, &global_logger, buf) {
 			jam(buf, "FOR_EACH_STATE[ike_spis=");
 			jam_ike_spis(buf, filter->ike_spis);
-			jam(buf, "]... in "PRI_WHERE, pri_where(filter->where));
+			jam_string(buf, "]... in ");
+			jam_where(buf, filter->where);
 		}
 		hash_t hash = hash_state_ike_spis(filter->ike_spis);
 		bucket = hash_table_bucket(&state_ike_spis_hash_table, hash);

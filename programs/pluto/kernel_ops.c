@@ -129,7 +129,7 @@ bool raw_policy(enum kernel_policy_op op,
 		jam(buf, " ");
 		jam_string(buf, story);
 		jam_string(buf, " ");
-		jam(buf, PRI_WHERE, pri_where(where));
+		jam_where(buf, where);
 	}
 
 	if (policy != NULL) {

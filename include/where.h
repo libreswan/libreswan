@@ -49,5 +49,6 @@ typedef const struct where {
 	})
 #define PRI_WHERE "(%s() +%lu %s)"
 #define pri_where(SC) (SC)->func, (SC)->line, (SC)->file
+#define jam_where(BUF, WHERE) jam(BUF, PRI_WHERE, pri_where(WHERE))
 
 #endif

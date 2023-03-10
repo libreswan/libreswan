@@ -185,7 +185,7 @@ PK11SymKey *crypt_derive(PK11SymKey *base_key, CK_MECHANISM_TYPE derive, SECItem
 		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 			jam_string(buf, SPACES"result: newref ");
 			jam_symkey(buf, target_name, target_key);
-			jam(buf, PRI_WHERE, pri_where(where));
+			jam_where(buf, where);
 		}
 	}
 	return target_key;

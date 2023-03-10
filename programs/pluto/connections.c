@@ -110,7 +110,8 @@ void ldbg_connection(const struct connection *c, where_t where,
 			va_start(ap, message);
 			jam_va_list(buf, message, ap);
 			va_end(ap);
-			jam(buf, " "PRI_WHERE, pri_where(where));
+			jam_string(buf, " ");
+			jam_where(buf, where);
 		}
 		connection_buf cb;
 		LDBG_log(c->logger, "  connection: "PRI_CO" "PRI_CONNECTION,

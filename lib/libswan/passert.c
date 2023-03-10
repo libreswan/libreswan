@@ -28,7 +28,8 @@ void llog_passert(const struct logger *logger, where_t where, const char *fmt, .
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);
 		va_end(ap);
-		jam(buf, " "PRI_WHERE, pri_where(where));
+		jam_string(buf, " ");
+		jam_where(buf, where);
 		jambuf_to_logger(buf, logger, ERROR_FLAGS);
 	}
 	abort();

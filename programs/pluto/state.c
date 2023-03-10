@@ -3038,7 +3038,8 @@ void set_v1_transition(struct state *st, const struct state_v1_microcode *transi
 		jam_v1_transition(buf, st->st_v1_transition);
 		jam(buf, " to ");
 		jam_v1_transition(buf, transition);
-		jam(buf, " "PRI_WHERE, pri_where(where));
+		jam_string(buf, " ");
+		jam_where(buf, where);
 	}
 	st->st_v1_transition = transition;
 }
@@ -3052,7 +3053,8 @@ void set_v2_transition(struct state *st, const struct v2_state_transition *trans
 		jam_v2_transition(buf, st->st_v2_transition);
 		jam(buf, " -> ");
 		jam_v2_transition(buf, transition);
-		jam(buf, " "PRI_WHERE, pri_where(where));
+		jam_string(buf, " ");
+		jam_where(buf, where);
 	}
 	st->st_v2_transition = transition;
 }
@@ -3075,7 +3077,8 @@ void switch_md_st(struct msg_digest *md, struct state *st, where_t where)
 		jam_st(buf, md->v1_st);
 		jam(buf, " to ");
 		jam_st(buf, st);
-		jam(buf, " "PRI_WHERE, pri_where(where));
+		jam_string(buf, " ");
+		jam_where(buf, where);
 	}
 	md->v1_st = st;
 }
