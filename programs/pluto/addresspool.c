@@ -284,7 +284,7 @@ static void DBG_lease(bool verbose, const struct addresspool *pool, const struct
 		ip_address addr;
 		err_t err = pool_lease_to_address(pool, lease, &addr);
 		if (err != NULL) {
-			jam(buf, "[EXPECTATION FAILED: %s]", err);
+			jam(buf, "["PEXPECT_PREFIX"%s]", err);
 		}
 		jam_address(buf, &addr);
 		if (co_serial_is_set(lease->assigned_to)) {

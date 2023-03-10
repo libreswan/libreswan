@@ -795,7 +795,7 @@ void llog_sadb(lset_t rc_flags, struct logger *logger,
 
 		default:
 		{
-			llog_sadb_ext(ERROR_FLAGS, logger, ext, "EXPECTATION FAILED: ");
+			llog_sadb_ext(ERROR_FLAGS, logger, ext, PEXPECT_PREFIX);
 			llog_pexpect(logger, HERE, "unexpected payload");
 			break;
 		}

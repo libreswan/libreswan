@@ -238,10 +238,10 @@ static void whack_va_list(enum rc_type rc, const struct fd *whackfd,
 	JAMBUF(buf) {
 		/* always get the message out */
 		if (!in_main_thread()) {
-			jam_string(buf, "[EXPECTATION FAILED: on main thread]: ");
+			jam_string(buf, "["PEXPECT_PREFIX"on main thread]: ");
 		}
 		if (!fd_p(whackfd)) {
-			jam_string(buf, "[EXPECTATION FAILED: whackfd valid]: ");
+			jam_string(buf, "["PEXPECT_PREFIX"whackfd valid]: ");
 		}
 		{
 			jam_va_list(buf, message, args);
@@ -336,9 +336,9 @@ static size_t jam_from_prefix(struct jambuf *buf, const void *object)
 {
 	size_t s = 0;
 	if (!in_main_thread()) {
-		s += jam(buf, "EXPECTATION FAILED: %s in main thread: ", __func__);
+		s += jam(buf, PEXPECT_PREFIX"%s in main thread: ", __func__);
 	} else if (object == NULL) {
-		s += jam(buf, "EXPECTATION FAILED: %s NULL: ", __func__);
+		s += jam(buf, PEXPECT_PREFIX"%s NULL: ", __func__);
 	} else {
 		const ip_endpoint *from = object;
 		/* peer's IP address */
@@ -364,9 +364,9 @@ static size_t jam_message_prefix(struct jambuf *buf, const void *object)
 {
 	size_t s = 0;
 	if (!in_main_thread()) {
-		s += jam(buf, "EXPECTATION FAILED: %s in main thread: ", __func__);
+		s += jam(buf, PEXPECT_PREFIX"%s in main thread: ", __func__);
 	} else if (object == NULL) {
-		s += jam(buf, "EXPECTATION FAILED: %s NULL: ", __func__);
+		s += jam(buf, PEXPECT_PREFIX"%s NULL: ", __func__);
 	} else {
 		const struct msg_digest *md = object;
 		s += jam_from_prefix(buf, &md->sender);
@@ -385,10 +385,10 @@ static size_t jam_connection_prefix(struct jambuf *buf, const void *object)
 {
 	size_t s = 0;
 	if (!in_main_thread()) {
-		s += jam(buf, "EXPECTATION FAILED: %s in main thread: ",
+		s += jam(buf, PEXPECT_PREFIX"%s in main thread: ",
 			 __func__);
 	} else if (object == NULL) {
-		s += jam(buf, "EXPECTATION FAILED: %s NULL: ", __func__);
+		s += jam(buf, PEXPECT_PREFIX"%s NULL: ", __func__);
 	} else {
 		const struct connection *c = object;
 		s += jam_connection(buf, c);
@@ -429,9 +429,9 @@ static size_t jam_state_prefix(struct jambuf *buf, const void *object)
 {
 	size_t s = 0;
 	if (!in_main_thread()) {
-		s += jam(buf, "EXPECTATION FAILED: %s in main thread: ", __func__);
+		s += jam(buf, PEXPECT_PREFIX"%s in main thread: ", __func__);
 	} else if (object == NULL) {
-		s += jam(buf, "EXPECTATION FAILED: %s NULL: ", __func__);
+		s += jam(buf, PEXPECT_PREFIX"%s NULL: ", __func__);
 	} else {
 		const struct state *st = object;
 		s += jam_state(buf, st);

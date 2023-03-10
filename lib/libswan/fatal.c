@@ -28,7 +28,7 @@ static void jam_fatal(struct jambuf *buf, const struct logger *logger,
 	 * and not:
 	 *   <log-prefix>FATAL ERROR: <message...>
 	 */
-	jam(buf, "FATAL ERROR: ");
+	jam_string(buf, FATAL_PREFIX);
 	jam_logger_prefix(buf, logger);
 	jam_va_list(buf, fmt, ap);
 }

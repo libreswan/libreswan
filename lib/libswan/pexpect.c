@@ -22,7 +22,7 @@
 void llog_pexpect(const struct logger *logger, where_t where, const char *message, ...)
 {
 	JAMBUF(buf) {
-		jam_string(buf, "EXPECTATION FAILED: ");
+		jam_string(buf, PEXPECT_PREFIX);
 		jam_logger_prefix(buf, logger);
 		va_list ap;
 		va_start(ap, message);

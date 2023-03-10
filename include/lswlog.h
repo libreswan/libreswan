@@ -152,8 +152,15 @@ enum stream {
 	 */
 };
 
-#define ERROR_FLAGS (ERROR_STREAM|RC_LOG_SERIOUS)
-#define PRINTF_FLAGS (NO_PREFIX|WHACK_STREAM)
+#define DEBUG_PREFIX		"| "
+#define ERROR_PREFIX		"ERROR: "
+#define PEXPECT_PREFIX		"EXPECTATION FAILED: "
+#define PASSERT_PREFIX		"FATAL: ASSERTION FAILED: "
+#define FATAL_PREFIX		"FATAL ERROR: "
+
+#define DEBUG_FLAGS		(DEBUG_STREAM)
+#define ERROR_FLAGS		(ERROR_STREAM|RC_LOG_SERIOUS)
+#define PRINTF_FLAGS		(NO_PREFIX|WHACK_STREAM)
 
 /*
  * Broadcast a log message.
@@ -314,8 +321,6 @@ void fatal_errno(enum pluto_exit_code rc, const struct logger *logger,
  */
 
 extern lset_t cur_debugging;	/* current debugging level */
-
-#define DEBUG_PREFIX "| "
 
 #define DBGP(cond)	(cur_debugging & (cond))
 
