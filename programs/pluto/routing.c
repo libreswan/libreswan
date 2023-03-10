@@ -29,6 +29,8 @@
 #include "orient.h"
 #include "initiate.h"			/* for ipsecdoi_initiate() */
 
+static void do_updown_unroute(struct connection *c);
+
 enum connection_event {
 	CONNECTION_ROUTE,
 	CONNECTION_UNROUTE,
@@ -57,17 +59,51 @@ static enum_names connection_event_names = {
 	NULL,
 };
 
-struct event {
-	const enum connection_event event;
+struct annex {
 	struct ike_sa *ike;
 	struct child_sa *child;
 	const threadtime_t *const inception;
 	const struct kernel_acquire *const acquire;
 };
 
-static void do_updown_unroute(struct connection *c);
+static void dispatch(const enum connection_event event,
+		     struct connection *c,
+		     struct logger *logger, where_t where,
+		     struct annex e);
 
-static void dispatch(struct connection *c, struct logger *logger, struct event e);
+static void jam_event_sa(struct jambuf *buf, struct state *st)
+{
+	jam_string(buf, "; ");
+	enum sa_type sa_type = IS_PARENT_SA(st) ? IKE_SA : IPSEC_SA;
+	jam_string(buf, st->st_connection->config->ike_info->sa_type_name[sa_type]);
+	jam_string(buf, " ");
+	jam_so(buf, st->st_serialno);
+	jam_string(buf, " ");
+	jam_string(buf, st->st_state->short_name);
+}
+
+static void jam_event(struct jambuf *buf, enum connection_event event, struct connection *c, struct annex *e)
+{
+	jam_enum_short(buf, &connection_event_names, event);
+	jam_string(buf, " to ");
+	jam_enum_short(buf, &routing_names, c->child.routing);
+	jam_string(buf, " ");
+	jam_enum_short(buf, &connection_kind_names, c->kind);
+	jam_string(buf, " ");
+	jam(buf, PRI_CO, pri_co(c->serialno));
+	jam_string(buf, " ");
+	jam_connection(buf, c);
+	if (e->ike != NULL) {
+		jam_event_sa(buf, &e->ike->sa);
+	}
+	if (e->child != NULL) {
+		jam_event_sa(buf, &e->child->sa);
+	}
+	if (e->acquire != NULL) {
+		jam_string(buf, "; ");
+		jam_kernel_acquire(buf, e->acquire);
+	}
+}
 
 void set_child_routing_where(struct connection *c, enum routing routing,
 			     so_serial_t so, where_t where)
@@ -85,7 +121,7 @@ void set_child_routing_where(struct connection *c, enum routing routing,
 	c->child.newest_routing_sa = so;
 }
 
-static void ondemand_unrouted_to_unrouted_negotiation(struct connection *c, const struct event *e)
+static void ondemand_unrouted_to_unrouted_negotiation(struct connection *c, const struct annex *e)
 {
 	/*
 	 * For instance:
@@ -135,7 +171,7 @@ static void ondemand_unrouted_to_unrouted_negotiation(struct connection *c, cons
 			  e->inception, e->acquire->sec_label, e->acquire->background, e->acquire->logger);
 }
 
-static void ondemand_routed_prospective_to_routed_negotiation(struct connection *c, const struct event *e)
+static void ondemand_routed_prospective_to_routed_negotiation(struct connection *c, const struct annex *e)
 {
 	struct logger *logger = c->logger;
 	struct spd_route *spd = c->spd; /*XXX:only-one!?!*/
@@ -225,11 +261,12 @@ void connection_ondemand(struct connection *c, threadtime_t *inception, const st
 		return;
 	}
 
-	dispatch(c, c->logger, (struct event) {
-			.event = CONNECTION_ONDEMAND,
-			.inception = inception,
-			.acquire = b,
-		});
+	dispatch(CONNECTION_ONDEMAND, c,
+		 c->logger, HERE,
+		 (struct annex) {
+			 .inception = inception,
+			 .acquire = b,
+		 });
 }
 
 static bool should_retry(struct ike_sa *ike)
@@ -308,7 +345,7 @@ static void retry(struct ike_sa *ike)
  */
 static bool delete_routed_tunnel_child(struct connection *c,
 				       struct logger *logger,
-				       struct event *e)
+				       struct annex *e)
 {
 	if (c->child.newest_routing_sa > e->child->sa.st_serialno) {
 		/* no longer child's */
@@ -351,24 +388,14 @@ static bool delete_routed_tunnel_child(struct connection *c,
 	return false;
 }
 
-#define barf(C, LOGGER, EVENT) barf_where(C, LOGGER, EVENT, HERE)
-static void barf_where(struct connection *c, struct logger *logger, const struct event *e, where_t where)
-{
-	connection_buf cb;
-	enum_buf kb, eb;
-	llog_pexpect(logger, where, "%s connection "PRI_CONNECTION" not expecting %s",
-		     str_enum_short(&connection_kind_names, c->kind, &kb),
-		     pri_connection(c, &cb),
-		     str_enum_short(&connection_event_names, e->event, &eb));
-}
-
 void connection_timeout(struct ike_sa *ike)
 {
 	struct connection *c = ike->sa.st_connection;
-	dispatch(c, ike->sa.st_logger, (struct event) {
-			.event = CONNECTION_TIMEOUT,
-			.ike = ike,
-		});
+	dispatch(CONNECTION_TIMEOUT, c,
+		 ike->sa.st_logger, HERE,
+		 (struct annex) {
+			 .ike = ike,
+		 });
 }
 
 void connection_route(struct connection *c)
@@ -384,20 +411,12 @@ void connection_route(struct connection *c)
 		return;
 	}
 
-	dispatch(c, c->logger, (struct event) {
-			.event = CONNECTION_ROUTE,
-		});
-}
+	dispatch(CONNECTION_ROUTE, c,
+		 c->logger, HERE,
+		 (struct annex) {
+			 0,
+		 });
 
-static void jam_event_sa(struct jambuf *buf, struct state *st)
-{
-	jam_string(buf, "; ");
-	enum sa_type sa_type = IS_PARENT_SA(st) ? IKE_SA : IPSEC_SA;
-	jam_string(buf, st->st_connection->config->ike_info->sa_type_name[sa_type]);
-	jam_string(buf, " ");
-	jam_so(buf, st->st_serialno);
-	jam_string(buf, " ");
-	jam_string(buf, st->st_state->short_name);
 }
 
 void connection_unroute(struct connection *c)
@@ -410,9 +429,11 @@ void connection_unroute(struct connection *c)
 	}
 
 	c->policy &= ~POLICY_ROUTE;
-	dispatch(c, c->logger, (struct event) {
-			.event = CONNECTION_UNROUTE,
-		});
+	dispatch(CONNECTION_UNROUTE, c,
+		 c->logger, HERE,
+		 (struct annex) {
+			 0,
+		 });
 }
 
 /*
@@ -442,10 +463,11 @@ void connection_delete_child(struct child_sa **childp)
 	/*
 	 * Let state machine figure out how to react.
 	 */
-	dispatch(c, child->sa.st_logger, (struct event) {
-			.event = CONNECTION_DELETE_CHILD,
-			.child = child,
-		});
+	dispatch(CONNECTION_DELETE_CHILD, c,
+		 child->sa.st_logger, HERE,
+		 (struct annex) {
+			 .child = child,
+		 });
 }
 
 void connection_delete_ike(struct ike_sa **ikep)
@@ -462,36 +484,23 @@ void connection_delete_ike(struct ike_sa **ikep)
 	/*
 	 * Let state machine figure out how to react.
 	 */
-	dispatch(c, ike->sa.st_logger, (struct event) {
-			.event = CONNECTION_DELETE_IKE,
-			.ike = ike,
-		});
+	dispatch(CONNECTION_DELETE_IKE, c,
+		 ike->sa.st_logger, HERE,
+		 (struct annex) {
+			 .ike = ike,
+		 });
 }
 
-void dispatch(struct connection *c, struct logger *logger, struct event ee)
+void dispatch(enum connection_event event, struct connection *c,
+	      struct logger *logger, where_t where,
+	      struct annex ee)
 {
+	struct annex *e = &ee;
 	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-		const struct event e = ee;
 		jam_string(buf, "dispatch ");
-		jam_enum_short(buf, &connection_event_names, e.event);
-		jam_string(buf, " to ");
-		jam_enum_short(buf, &routing_names, c->child.routing);
+		jam_event(buf, event, c, e);
 		jam_string(buf, " ");
-		jam_enum_short(buf, &connection_kind_names, c->kind);
-		jam_string(buf, " ");
-		jam(buf, PRI_CO, pri_co(c->serialno));
-		jam_string(buf, " ");
-		jam_connection(buf, c);
-		if (e.ike != NULL) {
-			jam_event_sa(buf, &e.ike->sa);
-		}
-		if (e.child != NULL) {
-			jam_event_sa(buf, &e.child->sa);
-		}
-		if (e.acquire != NULL) {
-			jam_string(buf, "; ");
-			jam_kernel_acquire(buf, e.acquire);
-		}
+		jam_where(buf, where);
 	}
 
 #define XX(CONNECTION_EVENT, CONNECTION_ROUTING, CONNECTION_KIND)	\
@@ -501,17 +510,12 @@ void dispatch(struct connection *c, struct logger *logger, struct event ee)
 #define X(EVENT, ROUTING, KIND)				\
 	XX(CONNECTION_##EVENT, RT_##ROUTING, CK_##KIND)
 
-	/*
-	 * Part 1: handle the easy cases where the connection didn't
-	 * establish and things should retry/revive with kernel
-	 * policy/state unchanged.
-	 */
-
-	struct event *e = &ee;
-	const enum routing routing = c->child.routing;
-	const enum connection_kind kind = c->kind;
 	{
-		switch (XX(e->event, routing, kind)) {
+		const enum routing routing = c->child.routing;
+		const enum connection_kind kind = c->kind;
+
+		switch (XX(event, routing, kind)) {
+
 		case X(ROUTE, UNROUTED, PERMANENT):
 			c->policy |= POLICY_ROUTE; /* always */
 			if (!install_prospective_kernel_policy(c)) {
@@ -795,11 +799,13 @@ void dispatch(struct connection *c, struct logger *logger, struct event ee)
 			delete_connection_kernel_policies(c);
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
-		default:
-			barf(c, logger, e);
-			return;
 
 		}
+	}
+
+	LLOG_PEXPECT_JAMBUF(logger, where, buf) {
+		jam_string(buf, "unhandled ");
+		jam_event(buf, event, c, e);
 	}
 }
 
