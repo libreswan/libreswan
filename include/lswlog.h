@@ -140,6 +140,7 @@ enum stream {
 	WHACK_STREAM       = 0x0200000, /*   N/A     yes    err    <o>   */
 	DEBUG_STREAM       = 0x0300000, /*  DEBUG     no    err    | <o> */
 	ERROR_STREAM       = 0x0400000, /*   ERR     yes    err    <o>   */
+	PEXPECT_STREAM     = 0x0500000, /*   ERR     yes    err    EXPECTATION FAILED: <o> */
 	NO_STREAM          = 0x0f00000, /*   N/A     N/A                 */
 	/*
 	 * <o>: add prefix when object is available
@@ -159,6 +160,7 @@ enum stream {
 #define FATAL_PREFIX		"FATAL ERROR: "
 
 #define DEBUG_FLAGS		(DEBUG_STREAM)
+#define PEXPECT_FLAGS		(PEXPECT_STREAM|RC_LOG_SERIOUS)
 #define ERROR_FLAGS		(ERROR_STREAM|RC_LOG_SERIOUS)
 #define PRINTF_FLAGS		(NO_PREFIX|WHACK_STREAM)
 
@@ -430,6 +432,12 @@ void lswlog_pexpect_example(void *p)
 
 extern void llog_pexpect(const struct logger *logger, where_t where,
 			 const char *message, ...) PRINTF_LIKE(3);
+
+#define LLOG_PEXPECT_JAMBUF(LOGGER, WHERE, BUF)				\
+	JAMBUF(BUF)							\
+	for (jam_logger_rc_prefix(BUF, LOGGER, PEXPECT_FLAGS);		\
+	     BUF != NULL;						\
+	     jambuf_where_to_logger(BUF, WHERE, (LOGGER), PEXPECT_FLAGS), BUF = NULL)
 
 #define PEXPECT_WHERE(LOGGER, WHERE, ASSERTION)				\
 	({								\

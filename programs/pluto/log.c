@@ -300,6 +300,7 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 		log_whacks(rc, logger, buf);
 		return;
 	case ERROR_STREAM:
+	case PEXPECT_STREAM:
 		log_raw(LOG_ERR, "", buf);
 		log_whacks(rc, logger, buf);
 		return;

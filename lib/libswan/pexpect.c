@@ -21,13 +21,10 @@
 
 void llog_pexpect(const struct logger *logger, where_t where, const char *message, ...)
 {
-	JAMBUF(buf) {
-		jam_string(buf, PEXPECT_PREFIX);
-		jam_logger_prefix(buf, logger);
+	LLOG_PEXPECT_JAMBUF(logger, where, buf) {
 		va_list ap;
 		va_start(ap, message);
 		jam_va_list(buf, message, ap);
 		va_end(ap);
-		jambuf_where_to_logger(buf, where, logger, ERROR_FLAGS);
 	}
 }

@@ -32,8 +32,20 @@ void jam_logger_rc_prefix(struct jambuf *buf, const struct logger *logger, lset_
 	 * say
 	 */
 	enum stream stream = (rc_flags & STREAM_MASK);
-	if (stream == DEBUG_STREAM) {
+	switch (stream) {
+	case DEBUG_STREAM:
 		jam_string(buf, DEBUG_PREFIX);
+		break;
+	case PEXPECT_STREAM:
+		jam_string(buf, PEXPECT_PREFIX);
+		break;
+	case ERROR_STREAM:
+		break;
+	case ALL_STREAMS:
+	case LOG_STREAM:
+	case WHACK_STREAM:
+	case NO_STREAM:
+		break;
 	}
 	if (stream != DEBUG_STREAM ||
 	    DBGP(DBG_ADD_PREFIX) ||
