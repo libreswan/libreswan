@@ -829,7 +829,7 @@ void proposal_next_token(struct proposal_tokenizer *tokens)
 	tokens->this = tokens->next;
 	tokens->next = shunk_token(&tokens->input, &tokens->next_term, tokens->delims);
 	if (DBGP(DBG_PROPOSAL_PARSER)) {
-		JAMBUF(buf) {
+		LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
 			jam(buf, "token: ");
 			if (tokens->prev_term != '\0') {
 				jam(buf, "'%c'", tokens->prev_term);
@@ -860,7 +860,6 @@ void proposal_next_token(struct proposal_tokenizer *tokens)
 			} else {
 				jam(buf, "''");
 			}
-			jambuf_to_logger(buf, &global_logger, DEBUG_STREAM);
 		}
 	}
 }
