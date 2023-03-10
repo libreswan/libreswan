@@ -249,6 +249,7 @@ void llog_va_list(lset_t rc_flags, const struct logger *logger,
 		  const char *message, va_list ap) VPRINTF_LIKE(3);
 
 void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc_flags);
+void jambuf_where_to_logger(struct jambuf *buf, where_t where, const struct logger *logger, lset_t rc_flags);
 
 #define LLOG_JAMBUF(RC_FLAGS, LOGGER, BUF)				\
 	JAMBUF(BUF)							\

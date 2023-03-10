@@ -1,6 +1,6 @@
 /* pexpect, for libreswan
  *
- * Copyright (C) 2020 Andrew Cagney
+ * Copyright (C) 2023 Andrew Cagney
  *
  * This program is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -19,15 +19,8 @@
 
 #include "lswlog.h"
 
-void llog_pexpect(const struct logger *logger, where_t where, const char *message, ...)
+void jambuf_where_to_logger(struct jambuf *buf, where_t where, const struct logger *logger, lset_t rc_flags)
 {
-	JAMBUF(buf) {
-		jam_string(buf, "EXPECTATION FAILED: ");
-		jam_logger_prefix(buf, logger);
-		va_list ap;
-		va_start(ap, message);
-		jam_va_list(buf, message, ap);
-		va_end(ap);
-		jambuf_where_to_logger(buf, where, logger, ERROR_FLAGS);
-	}
+	jam_where(buf, where);
+	jambuf_to_logger(buf, logger, rc_flags);
 }
