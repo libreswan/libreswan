@@ -351,11 +351,6 @@ static bool delete_routed_tunnel_child(struct connection *c,
 	return false;
 }
 
-static void fail(struct ike_sa *ike)
-{
-	pstat_sa_failed(&ike->sa, REASON_TOO_MANY_RETRANSMITS);
-}
-
 #define barf(C, LOGGER, EVENT) barf_where(C, LOGGER, EVENT, HERE)
 static void barf_where(struct connection *c, struct logger *logger, const struct event *e, where_t where)
 {
@@ -543,7 +538,7 @@ void dispatch(struct connection *c, struct logger *logger, struct event ee)
 				schedule_revival(&(e->ike->sa));
 				return;
 			}
-			fail(e->ike);
+			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
 
 		case X(ROUTE, UNROUTED_NEGOTIATION, PERMANENT):
@@ -565,7 +560,7 @@ void dispatch(struct connection *c, struct logger *logger, struct event ee)
 				schedule_revival(&(e->ike->sa));
 				return;
 			}
-			fail(e->ike);
+			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
 
 		case X(ROUTE, ROUTED_NEGOTIATION, PERMANENT):
@@ -587,7 +582,7 @@ void dispatch(struct connection *c, struct logger *logger, struct event ee)
 				schedule_revival(&(e->ike->sa));
 				return;
 			}
-			fail(e->ike);
+			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
 
 		case X(UNROUTE, ROUTED_PROSPECTIVE, PERMANENT):
@@ -616,7 +611,7 @@ void dispatch(struct connection *c, struct logger *logger, struct event ee)
 				schedule_revival(&(e->ike->sa));
 				return;
 			}
-			fail(e->ike);
+			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
 
 		case X(UNROUTE, ROUTED_FAILURE, PERMANENT):
@@ -674,7 +669,7 @@ void dispatch(struct connection *c, struct logger *logger, struct event ee)
 				schedule_revival(&(e->ike->sa));
 				return;
 			}
-			fail(e->ike);
+			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
 
 		case X(UNROUTE, UNROUTED_NEGOTIATION, INSTANCE):
@@ -703,7 +698,7 @@ void dispatch(struct connection *c, struct logger *logger, struct event ee)
 				 */
 				set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			}
-			fail(e->ike);
+			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
 
 		case X(UNROUTE, ROUTED_NEGOTIATION, INSTANCE):
@@ -731,7 +726,7 @@ void dispatch(struct connection *c, struct logger *logger, struct event ee)
 				set_child_routing(c, RT_ROUTED_PROSPECTIVE/*lie?!?*/,
 						  c->child.newest_routing_sa);
 			}
-			fail(e->ike);
+			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
 
 		case X(UNROUTE, ROUTED_TUNNEL, INSTANCE):
@@ -779,7 +774,7 @@ void dispatch(struct connection *c, struct logger *logger, struct event ee)
 				set_child_routing(c, RT_ROUTED_NEGOTIATION/*lie?!?*/,
 						  SOS_NOBODY);
 			}
-			fail(e->ike);
+			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
 
 		case X(UNROUTE, ROUTED_PROSPECTIVE, INSTANCE):
