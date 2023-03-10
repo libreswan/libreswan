@@ -463,7 +463,8 @@ static void show_one_spd(struct show *s,
 		show_comment(s, PRI_CONNECTION":   sec_label:"PRI_SHUNK,
 			     c->name, instance,
 			     pri_shunk(c->child.sec_label));
-	} else if (labeled_torp(c)) {
+	} else if (labeled_template(c) ||
+		   labeled_parent(c)) {
 		/* configured */
 		show_comment(s, "\"%s\"%s:   sec_label:"PRI_SHUNK,
 			     c->name, instance,
