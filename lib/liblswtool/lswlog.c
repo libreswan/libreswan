@@ -76,9 +76,6 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger UNUSED, ls
 {
 	enum stream stream = (rc_flags & STREAM_MASK);
 	switch (stream) {
-	case DEBUG_STREAM:
-		fprintf(stderr, DEBUG_PREFIX"%s\n", buf->array);
-		return;
 	case ALL_STREAMS:
 	case LOG_STREAM:
 		if (log_to_stderr) {
@@ -89,6 +86,7 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger UNUSED, ls
 		/* AKA the console */
 		fprintf(stdout, "%s\n", buf->array);
 		return;
+	case DEBUG_STREAM:
 	case ERROR_STREAM:
 		fprintf(stderr, "%s\n", buf->array);
 		return;

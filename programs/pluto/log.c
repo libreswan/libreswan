@@ -284,7 +284,7 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 	enum stream stream = rc_flags & STREAM_MASK;
 	switch (stream) {
 	case DEBUG_STREAM:
-		log_raw(LOG_DEBUG, DEBUG_PREFIX, buf);
+		log_raw(LOG_DEBUG, "", buf);
 		return;
 	case ALL_STREAMS:
 		log_raw(LOG_WARNING, "", buf);
