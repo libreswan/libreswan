@@ -281,38 +281,37 @@ static void log_whacks(enum rc_type rc, const struct logger *logger, struct jamb
 void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc_flags)
 {
 	enum rc_type rc = rc_flags & RC_MASK;
-	enum stream only = rc_flags & STREAM_MASK;
-	switch (only) {
+	enum stream stream = rc_flags & STREAM_MASK;
+	switch (stream) {
 	case DEBUG_STREAM:
 		log_raw(LOG_DEBUG, DEBUG_PREFIX, buf);
-		break;
+		return;
 	case ALL_STREAMS:
 		log_raw(LOG_WARNING, "", buf);
 		log_whacks(rc, logger, buf);
-		break;
+		return;
 	case LOG_STREAM:
 		log_raw(LOG_WARNING, "", buf);
-		break;
+		return;
 	case WHACK_STREAM:
 		if (DBGP(DBG_BASE)) {
 			log_raw(LOG_DEBUG, "|] ", buf);
 		}
 		log_whacks(rc, logger, buf);
-		break;
+		return;
 	case ERROR_STREAM:
 		log_raw(LOG_ERR, "", buf);
 		log_whacks(rc, logger, buf);
-		break;
+		return;
 	case NO_STREAM:
 		/*
 		 * XXX: Like writing to /dev/null - go through the
 		 * motions but with no result.  Code really really
 		 * should not call this function with this flag.
 		 */
-		break;
-	default:
-		bad_case(only);
+		return;
 	}
+	bad_case(stream);
 }
 
 const struct logger_object_vec logger_global_vec = {

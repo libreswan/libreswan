@@ -74,32 +74,31 @@ struct logger *tool_init_log(const char *name)
 
 void jambuf_to_logger(struct jambuf *buf, const struct logger *logger UNUSED, lset_t rc_flags)
 {
-	enum stream only = rc_flags & STREAM_MASK;
-	switch (only) {
+	enum stream stream = (rc_flags & STREAM_MASK);
+	switch (stream) {
 	case DEBUG_STREAM:
 		fprintf(stderr, DEBUG_PREFIX"%s\n", buf->array);
-		break;
+		return;
 	case ALL_STREAMS:
 	case LOG_STREAM:
 		if (log_to_stderr) {
 			fprintf(stderr, "%s\n", buf->array);
 		}
-		break;
+		return;
 	case WHACK_STREAM:
 		/* AKA the console */
 		fprintf(stdout, "%s\n", buf->array);
-		break;
+		return;
 	case ERROR_STREAM:
 		fprintf(stderr, "%s\n", buf->array);
-		break;
+		return;
 	case NO_STREAM:
 		/*
 		 * XXX: Like writing to /dev/null - go through the
 		 * motions but with no result.  Code really really
 		 * should not call this function with this flag.
 		 */
-		break;
-	default:
-		bad_case(only);
+		return;
 	}
+	bad_case(stream);
 }
