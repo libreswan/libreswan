@@ -2861,7 +2861,7 @@ size_t jam_connection_instance(struct jambuf *buf, const struct connection *c)
 		return 0;
 	}
 	size_t s = 0;
-	if (c->instance_serial != 0) {
+	if (c->instance_serial > 0) {
 		s += jam(buf, "[%lu]", c->instance_serial);
 	}
 	if (c->policy & POLICY_OPPORTUNISTIC) {
@@ -3226,8 +3226,9 @@ int connection_compare(const struct connection *ca,
 	/* same name, and same type */
 	switch (ca->kind) {
 	case CK_INSTANCE:
-		return ca->instance_serial < cb->instance_serial ? -1 :
-		ca->instance_serial > cb-> instance_serial ? 1 : 0;
+		return (ca->instance_serial < cb->instance_serial ? -1 :
+			ca->instance_serial > cb->instance_serial ? 1 :
+			0);
 
 	default:
 		return (ca->priority < cb->priority ? -1 :

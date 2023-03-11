@@ -85,6 +85,8 @@ struct connection *clone_connection(const char *name, struct connection *t,
 	c->log_file = NULL;
 	c->log_file_err = false;
 
+	c->next_instance_serial = 0;	/* restart count */
+	c->instance_serial = 0;		/* restart count */
 	c->root_config = NULL; /* block write access */
 	c->foodgroup = clone_str(t->foodgroup, "food groups");
 	c->vti_iface = clone_str(t->vti_iface, "connection vti_iface");
@@ -291,17 +293,24 @@ static struct connection *instantiate(struct connection *t,
 	PASSERT(t->logger, t->kind == CK_TEMPLATE);
 	PASSERT(t->logger, kind == CK_TEMPLATE || kind == CK_INSTANCE);
 
-	t->instance_serial++;	/* before clone */
-
 	if (peer_id != NULL) {
 		int wildcards;	/* value ignored */
-
 		passert(t->remote->host.id.kind == ID_FROMCERT ||
 			match_id("", peer_id, &t->remote->host.id, &wildcards));
 	}
 
 	struct connection *d = clone_connection(t->name, t, peer_id, HERE);
 	passert(t->name != d->name); /* see clone_connection() */
+
+	/*
+	 *  Only update .instance_serial when enabled (by having
+	 * .next_instance_serial > 0).
+	 */
+	if (kind == CK_INSTANCE) {
+		d->instance_serial = ++t->next_instance_serial;
+		ldbg(d->logger, "updating instance serial %lu next %lu",
+		     d->instance_serial, t->next_instance_serial);
+	}
 
 	d->kind = kind;
 	passert(oriented(d)); /*like parent like child*/
@@ -454,10 +463,6 @@ struct connection *sec_label_parent_instantiate(struct connection *t,
 	struct connection *d = instantiate(t, remote_address, /*peer-id*/NULL,
 					   CK_TEMPLATE, empty_shunk,
 					   __func__, where);
-	/*
-	 * So that labeled_parent() doesn't count.
-	 */
-	d->instance_serial = 0;
 
 	update_selectors(d);
 	add_connection_spds(d, address_info(d->local->host.addr));

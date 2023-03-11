@@ -567,6 +567,7 @@ struct connection {
 
 	/* internal fields: */
 
+	unsigned long next_instance_serial;
 	unsigned long instance_serial;
 	connection_priority_t priority;
 	bool instance_initiation_ok;		/* this is an instance of a policy that mandates initiate */

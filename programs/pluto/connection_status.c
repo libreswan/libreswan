@@ -502,7 +502,7 @@ void show_connection_status(struct show *s, const struct connection *c)
 	};
 
 	instance[0] = '\0';
-	if (c->kind == CK_INSTANCE && c->instance_serial != 0)
+	if (c->instance_serial > 0)
 		snprintf(instance, sizeof(instance), "[%lu]",
 			c->instance_serial);
 
