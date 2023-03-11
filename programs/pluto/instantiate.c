@@ -72,7 +72,7 @@ struct connection *clone_connection(const char *name, struct connection *t,
 {
 	struct connection *c = clone_thing(*t, where->func);
 	zero_thing(c->connection_db_entries); /* keep init_list_entry() happy */
-	finish_connection(c, name, t,
+	finish_connection(c, name, t, t->config,
 			  t->logger->debugging,
 			  t->logger->object_whackfd,
 			  where);

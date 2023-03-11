@@ -1642,6 +1642,7 @@ static diag_t extract_shunt(const char *shunt_name,
 
 void finish_connection(struct connection *c, const char *name,
 		       struct connection *t,
+		       const struct config *config,
 		       lset_t debugging, struct fd *whackfd,
 		       where_t where)
 {
@@ -1653,12 +1654,11 @@ void finish_connection(struct connection *c, const char *name,
 				 debugging, whackfd, where);
 
 	/*
-	 * If there's no template to use as a reference point, LOCAL
-	 * and REMOTE are disoriented so distinguishing one as local
-	 * and the other as remote is pretty much meaningless.
+	 * Determine left/right vs local/remote.
 	 *
-	 * Somewhat arbitrarially (as in this is the way it's always
-	 * been) start with:
+	 * When there's no template, LOCAL and REMOTE are disoriented
+	 * so the decision is arbitrary.  Keep with the historic
+	 * convention:
 	 *
 	 *    LEFT == LOCAL / THIS
 	 *    RIGHT == REMOTE / THAT
@@ -1669,8 +1669,25 @@ void finish_connection(struct connection *c, const char *name,
 
 	enum left_right local = (t == NULL ? LEFT_END : t->local->config->index);
 	enum left_right remote = (t == NULL ? RIGHT_END : t->remote->config->index);
+
 	c->local = &c->end[local];	/* this; clone must update */
 	c->remote = &c->end[remote];	/* that; clone must update */
+
+	/*
+	 * Point connection's end's config at corresponding entries in
+	 * config.
+	 *
+	 * Needed by the connection_db code when it tries to log.
+	 */
+	c->config = config;
+	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+		/* "left" or "right" */
+		struct connection_end *end = &c->end[lr];
+		const struct config_end *end_config = &c->config->end[lr];
+		end->config = end_config;
+		end->host.config = &end_config->host;
+		end->child.config = &end_config->child;
+	}
 
 	/* somewhat oriented can start hashing */
 	connection_db_init_connection(c);
@@ -1688,23 +1705,9 @@ void finish_connection(struct connection *c, const char *name,
 	c->clonedfrom = (t != NULL ? t->serialno : UNSET_CO_SERIAL);
 }
 
-static struct connection *alloc_connection(const char *name,
-					   lset_t debugging, struct fd *whackfd,
-					   where_t where)
+static struct config *alloc_config(void)
 {
-	struct connection *c = alloc_thing(struct connection, where->func);
-	finish_connection(c, name, NULL/*no template*/,
-			  debugging, whackfd, where);
-
-	/*
-	 * Allocate the configuration - only allocated on root
-	 * connection; connection instances (clones) inherit these
-	 * pointers.
-	 */
-
 	struct config *config = alloc_thing(struct config, "root config");
-	c->config = c->root_config = config;
-
 	FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
 		/* "left" or "right" */
 		const char *leftright =
@@ -1712,16 +1715,31 @@ static struct connection *alloc_connection(const char *name,
 			 lr == RIGHT_END ? "right" :
 			 NULL);
 		passert(leftright != NULL);
-		struct connection_end *end = &c->end[lr];
 		struct config_end *end_config = &config->end[lr];
 		end_config->leftright = leftright;
 		end_config->index = lr;
 		end_config->host.leftright = leftright;
 		end_config->child.leftright = leftright;
-		end->config = end_config;
-		end->host.config = &end_config->host;
-		end->child.config = &end_config->child;
 	}
+	return config;
+}
+
+static struct connection *alloc_connection(const char *name,
+					   lset_t debugging, struct fd *whackfd,
+					   where_t where)
+{
+	struct connection *c = alloc_thing(struct connection, where->func);
+
+	/*
+	 * Allocate the configuration - only allocated on root
+	 * connection; connection instances (clones) inherit these
+	 * pointers.
+	 */
+	c->root_config = alloc_config();
+
+	finish_connection(c, name, NULL/*no template*/,
+			  c->root_config,
+			  debugging, whackfd, where);
 
 	return c;
 }
