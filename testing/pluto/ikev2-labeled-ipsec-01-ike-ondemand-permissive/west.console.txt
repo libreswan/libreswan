@@ -63,7 +63,7 @@ west #
 fired and forgotten
 west #
  ../../guestbin/wait-for.sh --match 192.1.2.23 -- ipsec trafficstatus
-006 #2: "labeled"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+006 #2: "labeled"[2] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
 west #
  ../../guestbin/ping-once.sh --runcon "system_u:system_r:ping_t:s0:c1.c256" --up     -I 192.1.2.45 192.1.2.23
 up
@@ -71,7 +71,7 @@ west #
  # there should be 1 tunnel in each direction
 west #
  ipsec trafficstatus
-006 #2: "labeled"[1] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=64, outBytes=64, maxBytes=2^63B, id='@east'
+006 #2: "labeled"[2] 192.1.2.23, type=ESP, add_time=1234567890, inBytes=64, outBytes=64, maxBytes=2^63B, id='@east'
 west #
  # there should be no bare shunts
 west #
@@ -148,7 +148,7 @@ west #
 west #
  ipsec showstates
 000 #1: "labeled":500 STATE_V2_ESTABLISHED_IKE_SA (established IKE SA); REKEY in XXs; REPLACE in XXs; newest; idle;
-000 #2: "labeled"[1] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; IKE SA #1; idle;
-000 #2: "labeled"[1] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 Traffic: ESPin=64B ESPout=64B ESPmax=2^63B 
+000 #2: "labeled"[2] 192.1.2.23:500 STATE_V2_ESTABLISHED_CHILD_SA (established Child SA); REKEY in XXs; REPLACE in XXs; newest; IKE SA #1; idle;
+000 #2: "labeled"[2] 192.1.2.23 esp.ESPSPIi@192.1.2.23 esp.ESPSPIi@192.1.2.45 Traffic: ESPin=64B ESPout=64B ESPmax=2^63B 
 west #
  
