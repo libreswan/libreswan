@@ -422,7 +422,8 @@ void load_groups(struct logger *logger)
 										 np->subnet,
 										 np->proto,
 										 np->sport,
-										 np->dport);
+										 np->dport,
+										 HERE);
 					if (t != NULL) {
 						/* instance when remote addr valid */
 						PEXPECT(logger, (t->kind == CK_TEMPLATE ||

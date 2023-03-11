@@ -36,7 +36,8 @@ struct connection *group_instantiate(struct connection *group,
 				     const ip_subnet remote_subnet,
 				     const struct ip_protocol *protocol,
 				     ip_port local_port,
-				     ip_port remote_port);
+				     ip_port remote_port,
+				     where_t where);
 
 struct connection *rw_responder_instantiate(struct connection *t,
 					    const ip_address peer_addr,
@@ -44,7 +45,8 @@ struct connection *rw_responder_instantiate(struct connection *t,
 extern struct connection *rw_responder_id_instantiate(struct connection *t,
 						      const ip_address peer_addr,
 						      const ip_selector *peer_subnet,
-						      const struct id *peer_id);
+						      const struct id *peer_id,
+						      where_t where);
 
 struct connection *oppo_initiator_instantiate(struct connection *t,
 					      const struct kernel_acquire *b,

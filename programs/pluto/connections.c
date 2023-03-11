@@ -113,12 +113,19 @@ void ldbg_connection(const struct connection *c, where_t where,
 			jam_string(buf, " ");
 			jam_where(buf, where);
 		}
-		connection_buf cb;
-		LDBG_log(c->logger, "  connection: "PRI_CO" "PRI_CONNECTION,
-			 pri_co(c->serialno), pri_connection(c, &cb));
-		LDBG_log(c->logger, "    kind: %s; routing: %s",
-			 enum_name_short(&connection_kind_names, c->kind),
-			 enum_name_short(&routing_story, c->child.routing));
+		LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
+			jam_string(buf, "  connection ");
+			jam_co(buf, c->serialno);
+			if (c->clonedfrom != 0) {
+				jam_string(buf, " clonedfrom ");
+				jam_co(buf, c->clonedfrom);
+			}
+			jam_string(buf, ": ");
+			jam_connection(buf, c);
+		}
+		LDBG_log(c->logger, "    routing+kind: %s %s",
+			 enum_name_short(&routing_names, c->child.routing),
+			 enum_name_short(&connection_kind_names, c->kind));
 		address_buf lb, rb;
 		LDBG_log(c->logger, "    host: %s->%s",
 			 str_address(&c->local->host.addr, &lb),
@@ -147,13 +154,12 @@ void ldbg_connection(const struct connection *c, where_t where,
 		}
 		if (c->config->sec_label.len > 0) {
 			LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
-				jam_string(buf, "    sec_label=");
-				jam(buf, PRI_SHUNK, pri_shunk(c->config->sec_label));
+				jam_string(buf, "    sec_label: ");
 				if (c->child.sec_label.len > 0) {
-					jam_string(buf, " [");
 					jam(buf, PRI_SHUNK, pri_shunk(c->child.sec_label));
-					jam_string(buf, "]");
+					jam_string(buf, " <= ");
 				}
+				jam(buf, PRI_SHUNK, pri_shunk(c->config->sec_label));
 			}
 		}
 	}

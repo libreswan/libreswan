@@ -619,7 +619,8 @@ bool refine_host_connection_of_state_on_responder(struct state *st,
 			 */
 			pexpect(r->kind == CK_TEMPLATE);
 			r = rw_responder_id_instantiate(r, st->st_connection->remote->host.addr,
-							NULL/*not-yet-known*/, peer_id);
+							NULL/*not-yet-known*/,
+							peer_id, HERE);
 		}
 		/*
 		 * R is an improvement on .st_connection -- replace.

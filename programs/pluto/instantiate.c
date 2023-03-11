@@ -129,10 +129,12 @@ struct connection *group_instantiate(struct connection *group,
 				     const ip_subnet remote_subnet,
 				     const struct ip_protocol *protocol,
 				     ip_port local_port,
-				     ip_port remote_port)
+				     ip_port remote_port,
+				     where_t where)
 {
 	subnet_buf rsb;
-	ldbg_connection(group, HERE, "instantiate: "PRI_HPORT" %s -> [%s]:"PRI_HPORT,
+	ldbg_connection(group, where, "%s: "PRI_HPORT" %s -> [%s]:"PRI_HPORT,
+			__func__,
 			pri_hport(local_port),
 			protocol->name,
 			str_subnet(&remote_subnet, &rsb),
@@ -249,8 +251,8 @@ struct connection *group_instantiate(struct connection *group,
 	add_connection_spds(t, address_info(t->local->host.addr));
 
 	connection_buf gb;
-	ldbg_connection(t, HERE, "instantiated from "PRI_CONNECTION,
-			pri_connection(group, &gb));
+	ldbg_connection(t, HERE, "%s: from "PRI_CONNECTION,
+			__func__, pri_connection(group, &gb));
 	return t;
 }
 
@@ -273,15 +275,17 @@ static struct connection *instantiate(struct connection *t,
 				      const ip_address remote_addr,
 				      const struct id *peer_id,
 				      enum connection_kind kind,
+				      shunk_t sec_label, /* for ldbg() message only */
 				      const char *func, where_t where)
 {
 	address_buf ab;
 	id_buf idb;
-	ldbg_connection(t, where, "%s: remote=%s id=%s kind=%s->%s",
+	ldbg_connection(t, where, "%s: remote=%s id=%s kind=%s->%s sec_label="PRI_SHUNK,
 			func, str_address(&remote_addr, &ab),
 			str_id(peer_id, &idb),
 			enum_name_short(&connection_kind_names, t->kind),
-			enum_name_short(&connection_kind_names, kind));
+			enum_name_short(&connection_kind_names, kind),
+			pri_shunk(sec_label));
 
 	PASSERT(t->logger, address_is_specified(remote_addr)); /* always */
 	PASSERT(t->logger, t->kind == CK_TEMPLATE);
@@ -419,11 +423,10 @@ struct connection *spd_instantiate(struct connection *t,
 	PASSERT(t->logger, !labeled(t));
 
 	struct connection *d = instantiate(t, remote_addr, /*peer-id*/NULL,
-					   CK_INSTANCE, __func__, where);
+					   CK_INSTANCE, empty_shunk,
+					   __func__, where);
 
 	update_selectors(d);
-
-	PEXPECT(d->logger, oriented(d));
 	add_connection_spds(d, address_info(d->local->host.addr));
 
 	/* leave breadcrumb */
@@ -431,8 +434,8 @@ struct connection *spd_instantiate(struct connection *t,
 	set_child_routing(d, d->child.routing, SOS_NOBODY);
 
 	connection_buf tb;
-	ldbg_connection(d, HERE, "instantiated from "PRI_CONNECTION,
-			pri_connection(t, &tb));
+	ldbg_connection(d, where, "%s: from "PRI_CONNECTION,
+			__func__, pri_connection(t, &tb));
 
 	return d;
 }
@@ -449,14 +452,14 @@ struct connection *sec_label_parent_instantiate(struct connection *t,
 	PASSERT(t->logger, labeled_template(t));
 
 	struct connection *d = instantiate(t, remote_address, /*peer-id*/NULL,
-					   CK_TEMPLATE, __func__, where);
+					   CK_TEMPLATE, empty_shunk,
+					   __func__, where);
 	/*
-	 * So that labeled_parent() doesn't count */
+	 * So that labeled_parent() doesn't count.
+	 */
 	d->instance_serial = 0;
 
 	update_selectors(d);
-
-	PEXPECT(d->logger, oriented(d));
 	add_connection_spds(d, address_info(d->local->host.addr));
 
 	/* leave breadcrumb */
@@ -464,8 +467,8 @@ struct connection *sec_label_parent_instantiate(struct connection *t,
 	set_child_routing(d, d->child.routing, SOS_NOBODY);
 
 	connection_buf tb;
-	ldbg_connection(d, HERE, "instantiated from "PRI_CONNECTION,
-			pri_connection(t, &tb));
+	ldbg_connection(d, where, "%s: from "PRI_CONNECTION,
+			__func__, pri_connection(t, &tb));
 
 	return d;
 }
@@ -484,7 +487,8 @@ struct connection *sec_label_child_instantiate(struct ike_sa *ike,
 
 	ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
 	struct connection *d = instantiate(t, remote_addr, /*peer-id*/NULL,
-					   CK_INSTANCE, __func__, where);
+					   CK_INSTANCE, sec_label,
+					   __func__, where);
 
 	/*
 	 * Install the sec_label from either an acquire or child
@@ -500,14 +504,9 @@ struct connection *sec_label_child_instantiate(struct ike_sa *ike,
 	pexpect(d->child.newest_routing_sa == SOS_NOBODY);
 	set_child_routing(d, d->child.routing, SOS_NOBODY);
 
-	connection_buf cb, db;
-	address_buf pab;
-	dbg("instantiated "PRI_CO" "PRI_CONNECTION" as "PRI_CO" "PRI_CONNECTION" using kind=%s remote_address=%s sec_label="PRI_SHUNK,
-	    pri_co(t->serialno), pri_connection(t, &cb),
-	    pri_co(d->serialno), pri_connection(d, &db),
-	    enum_name(&connection_kind_names, d->kind),
-	    str_address(&remote_addr, &pab),
-	    pri_shunk(d->child.sec_label));
+	connection_buf tb;
+	ldbg_connection(d, where, "%s: from "PRI_CONNECTION,
+			__func__, pri_connection(t, &tb));
 
 	return d;
 }
@@ -520,23 +519,23 @@ struct connection *rw_responder_instantiate(struct connection *t,
 	PASSERT(t->logger, !labeled(t));
 
 	struct connection *d = instantiate(t, peer_addr, /*TBD peer_id*/NULL,
-					   CK_INSTANCE, __func__, where);
+					   CK_INSTANCE, empty_shunk,
+					   __func__, where);
 
 	update_selectors(d);
-
-	PEXPECT(d->logger, oriented(d));
 	add_connection_spds(d, address_info(d->local->host.addr));
 
 	connection_buf tb;
-	ldbg_connection(d, HERE, "instantiated from "PRI_CONNECTION,
-			pri_connection(t, &tb));
+	ldbg_connection(d, where, "%s: from "PRI_CONNECTION,
+			__func__, pri_connection(t, &tb));
 	return d;
 }
 
 struct connection *rw_responder_id_instantiate(struct connection *t,
 					       const ip_address remote_addr,
 					       const ip_selector *remote_subnet,
-					       const struct id *remote_id)
+					       const struct id *remote_id,
+					       where_t where)
 {
 	PASSERT(t->logger, (t->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
 	PASSERT(t->logger, !labeled(t));
@@ -546,16 +545,15 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 	 * sec_labels?
 	 */
 	struct connection *d = instantiate(t, remote_addr, remote_id,
-					   CK_INSTANCE, __func__, HERE);
+					   CK_INSTANCE, empty_shunk,
+					   __func__, where);
 
 	update_subnet_selectors(d, remote_subnet);
-
-	PEXPECT(d->logger, oriented(d));
 	add_connection_spds(d, address_info(d->local->host.addr));
 
 	connection_buf tb;
-	ldbg_connection(d, HERE, "instantiated from "PRI_CONNECTION,
-			pri_connection(t, &tb));
+	ldbg_connection(d, where, "%s: from "PRI_CONNECTION,
+			__func__, pri_connection(t, &tb));
 	return d;
 
 }
@@ -575,7 +573,8 @@ static struct connection *oppo_instantiate(struct connection *t,
 	 */
 
 	struct connection *d = instantiate(t, remote_address, /*peer_id*/NULL,
-					   CK_INSTANCE, func, where);
+					   CK_INSTANCE, empty_shunk,
+					   func, where);
 
 	PASSERT(d->logger, d->kind == CK_INSTANCE);
 	PASSERT(d->logger, oriented(d)); /* else won't instantiate */
@@ -621,8 +620,8 @@ static struct connection *oppo_instantiate(struct connection *t,
 	add_connection_spds(d, address_info(d->local->host.addr));
 
 	connection_buf tb;
-	ldbg_connection(d, where, "instantiated from "PRI_CONNECTION,
-			pri_connection(t, &tb));
+	ldbg_connection(d, where, "%s: from "PRI_CONNECTION,
+			func, pri_connection(t, &tb));
 	return d;
 }
 
