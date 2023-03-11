@@ -158,15 +158,16 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		 *
 		 * XXX: won't any template need instantiating?!?
 		 */
+		if (labeled_template(c)) {
+			ldbg(md->md_logger,
+			     "local endpoint is a labeled template - needs instantiation");
+			return sec_label_parent_instantiate(c, remote_address, HERE);
+		}
+
 		if ((c->kind == CK_TEMPLATE) &&
 		    (c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
 			ldbg(md->md_logger,
 			     "local endpoint has narrowing=yes - needs instantiation");
-			return rw_responder_instantiate(c, remote_address, HERE);
-		}
-		if (labeled_template(c)) {
-			ldbg(md->md_logger,
-			     "local endpoint is a labeled template - needs instantiation");
 			return rw_responder_instantiate(c, remote_address, HERE);
 		}
 
@@ -280,6 +281,12 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 		ldbg(md->md_logger, "  instantiate opportunistic winner "PRI_CONNECTION,
 		     pri_connection(c, &cb));
 		c = oppo_responder_instantiate(c, remote_address, HERE);
+	} else if (labeled_template(c)) {
+		/* regular roadwarrior */
+		connection_buf cb;
+		ldbg(md->md_logger, "  instantiate sec_label winner "PRI_CONNECTION,
+		     pri_connection(c, &cb));
+		c = sec_label_parent_instantiate(c, remote_address, HERE);
 	} else {
 		/* regular roadwarrior */
 		connection_buf cb;

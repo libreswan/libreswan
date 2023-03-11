@@ -52,11 +52,16 @@ struct connection *oppo_initiator_instantiate(struct connection *t,
 struct connection *oppo_responder_instantiate(struct connection *t,
 					      const ip_address remote_address,
 					      where_t where);
-struct connection *sec_label_child_instantiate(struct ike_sa *ike,
-					       shunk_t sec_label,
-					       where_t where);
+
 struct connection *spd_instantiate(struct connection *t,
 				   const ip_address peer_addr,
 				   where_t where);
+
+struct connection *sec_label_child_instantiate(struct ike_sa *ike,
+					       shunk_t sec_label,
+					       where_t where);
+struct connection *sec_label_parent_instantiate(struct connection *t,
+						const ip_address remote_address,
+						where_t where);
 
 #endif

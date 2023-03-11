@@ -165,7 +165,12 @@ static bool initiate_connection_2_address(struct connection *c,
 			return false;
 		}
 
-		struct connection *d = spd_instantiate(c, remote_ip, HERE);
+		struct connection *d;
+		if (labeled(c)) {
+			d = sec_label_parent_instantiate(c, remote_ip, HERE);
+		} else {
+			d = spd_instantiate(c, remote_ip, HERE);
+		}
 
 		/*
 		 * D could either be an instance, or a sec_label
@@ -251,10 +256,31 @@ static bool initiate_connection_3_template(struct connection *c,
 
 	passert(address_is_specified(c->remote->host.addr));
 
-	if ((c->kind == CK_TEMPLATE &&
-	     c->config->ike_version == IKEv2 &&
-	     (c->policy & POLICY_IKEV2_ALLOW_NARROWING)) ||
-	    labeled_template(c)) {
+	if (labeled_template(c)) {
+		struct connection *d =
+			sec_label_parent_instantiate(c, c->remote->host.addr, HERE);
+		/* XXX: something better? */
+		fd_delref(&d->logger->global_whackfd);
+		d->logger->global_whackfd = fd_addref(c->logger->global_whackfd);
+		/*
+		 * LOGGING: why not log this (other than it messes
+		 * with test output)?
+		 */
+		llog(LOG_STREAM|RC_LOG, d->logger, "instantiated connection");
+		/* flip cur_connection */
+		bool ok = initiate_connection_4_fab(d, background, inception);
+		if (!ok) {
+			delete_connection(&d);
+		} else {
+			/* XXX: something better? */
+			fd_delref(&d->logger->global_whackfd);
+		}
+		return ok;
+	}
+
+	if (c->kind == CK_TEMPLATE &&
+	    c->config->ike_version == IKEv2 &&
+	    (c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
 		struct connection *d = spd_instantiate(c, c->remote->host.addr, HERE);
 		/* XXX: something better? */
 		fd_delref(&d->logger->global_whackfd);
@@ -664,13 +690,10 @@ void initiate_ondemand(const struct kernel_acquire *b)
 
 		struct connection *cc;
 		if (labeled_template(c)) {
-			cc = spd_instantiate(c, c->remote->host.addr, HERE);
-		} else if (labeled_parent(c)) {
-			cc = c;
+			cc = sec_label_parent_instantiate(c, c->remote->host.addr, HERE);
 		} else {
-			llog_pexpect(c->logger, HERE,
-				     "unexpected connection for sec_label on demand");
-			return;
+			PEXPECT(b->logger, labeled_parent(c));
+			cc = c;
 		}
 
 		connection_ondemand(cc, &inception, b);
