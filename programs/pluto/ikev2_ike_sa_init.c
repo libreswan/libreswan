@@ -568,20 +568,23 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		ike->sa.st_interface = iface_endpoint_addref(p);
 	}
 
-	if (c->config->sec_label.len > 0 && sec_label.len == 0) {
+	if (labeled(c) > 0 && sec_label.len == 0) {
 		/*
-		 * Establishing a sec-label connection yet there's no
-		 * sec-label.  Assume this is a forced up.
+		 * Establishing a sec_label connection yet there's no
+		 * sec-label for the child.  Assume this is a forced
+		 * up aka childless IKE SA.
 		 */
-		pexpect(c->kind == CK_TEMPLATE);
-		dbg("template connection sec_label="PRI_SHUNK" but initiate does not; skipping child",
-		    pri_shunk(c->config->sec_label));
+		PEXPECT(c->logger, labeled_parent(c));
+		ldbg(c->logger,
+		     "labeled parent connection with sec_label="PRI_SHUNK" but no child sec_label; assuming childless",
+		     pri_shunk(c->config->sec_label));
 	} else if (impair.omit_v2_ike_auth_child) {
 		llog_sa(RC_LOG, ike, "IMPAIR: omitting CHILD SA payloads from the IKE_AUTH request");
 	} else if (HAS_IPSEC_POLICY(policy)) {
 		struct connection *cc;
-		if (c->config->sec_label.len > 0) {
-			pexpect(c == ike->sa.st_connection);
+		if (labeled(c)) {
+			PEXPECT(ike->sa.st_logger, labeled_parent(c));
+			PEXPECT(ike->sa.st_logger, c == ike->sa.st_connection);
 			cc = sec_label_child_instantiate(ike, sec_label, HERE);
 		} else {
 			cc = c;

@@ -582,11 +582,6 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		return;
 	}
 
-	if (b->sec_label.len > 0) {
-		dbg("oppo bundle: received security label string: "PRI_SHUNK,
-		    pri_shunk(b->sec_label));
-	}
-
 	/*
 	 * What connection shall we use?  First try for one that
 	 * explicitly handles the clients.
@@ -667,7 +662,18 @@ void initiate_ondemand(const struct kernel_acquire *b)
 			/* jam(buf, " using "); */
 		}
 
-		connection_ondemand(c, &inception, b);
+		struct connection *cc;
+		if (labeled_template(c)) {
+			cc = spd_instantiate(c, c->remote->host.addr, HERE);
+		} else if (labeled_parent(c)) {
+			cc = c;
+		} else {
+			llog_pexpect(c->logger, HERE,
+				     "unexpected connection for sec_label on demand");
+			return;
+		}
+
+		connection_ondemand(cc, &inception, b);
 		return;
 	}
 
