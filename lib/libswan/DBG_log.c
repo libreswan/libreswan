@@ -24,11 +24,10 @@ lset_t cur_debugging = DBG_NONE;	/* default to reporting nothing */
 
 void DBG_log(const char *message, ...)
 {
-	JAMBUF(buf) {
+	LLOG_JAMBUF(DEBUG_STREAM, &global_logger, buf) {
 		va_list args;
 		va_start(args, message);
 		jam_va_list(buf, message, args);
 		va_end(args);
-		jambuf_to_logger(buf, &global_logger, DEBUG_STREAM);
 	}
 }

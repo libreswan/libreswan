@@ -22,7 +22,7 @@
 void llog_passert(const struct logger *logger, where_t where, const char *fmt, ...)
 {
 	JAMBUF(buf) {
-		jam_string(buf, "ABORT: ASSERTION FAILED: ");
+		jam_string(buf, PASSERT_PREFIX);
 		jam_logger_prefix(buf, logger);
 		va_list ap;
 		va_start(ap, fmt);

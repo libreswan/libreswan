@@ -141,7 +141,7 @@ void fatal_diag(enum pluto_exit_code rc, struct logger *logger, diag_t *diag,
 		 * and not:
 		 *   <log-prefix>FATAL ERROR: <message...><diag>
 		 */
-		jam(buf, "FATAL ERROR: ");
+		jam_string(buf, FATAL_PREFIX);
 		jam_logger_prefix(buf, logger);
 		va_list ap;
 		va_start(ap, fmt);

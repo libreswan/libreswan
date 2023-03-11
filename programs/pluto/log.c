@@ -238,10 +238,10 @@ static void whack_va_list(enum rc_type rc, const struct fd *whackfd,
 	JAMBUF(buf) {
 		/* always get the message out */
 		if (!in_main_thread()) {
-			jam_string(buf, "[EXPECTATION FAILED: on main thread]: ");
+			jam_string(buf, "["PEXPECT_PREFIX"on main thread]: ");
 		}
 		if (!fd_p(whackfd)) {
-			jam_string(buf, "[EXPECTATION FAILED: whackfd valid]: ");
+			jam_string(buf, "["PEXPECT_PREFIX"whackfd valid]: ");
 		}
 		{
 			jam_va_list(buf, message, args);
@@ -281,38 +281,38 @@ static void log_whacks(enum rc_type rc, const struct logger *logger, struct jamb
 void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc_flags)
 {
 	enum rc_type rc = rc_flags & RC_MASK;
-	enum stream only = rc_flags & STREAM_MASK;
-	switch (only) {
+	enum stream stream = rc_flags & STREAM_MASK;
+	switch (stream) {
 	case DEBUG_STREAM:
-		log_raw(LOG_DEBUG, DEBUG_PREFIX, buf);
-		break;
+		log_raw(LOG_DEBUG, "", buf);
+		return;
 	case ALL_STREAMS:
 		log_raw(LOG_WARNING, "", buf);
 		log_whacks(rc, logger, buf);
-		break;
+		return;
 	case LOG_STREAM:
 		log_raw(LOG_WARNING, "", buf);
-		break;
+		return;
 	case WHACK_STREAM:
 		if (DBGP(DBG_BASE)) {
 			log_raw(LOG_DEBUG, "|] ", buf);
 		}
 		log_whacks(rc, logger, buf);
-		break;
+		return;
 	case ERROR_STREAM:
+	case PEXPECT_STREAM:
 		log_raw(LOG_ERR, "", buf);
 		log_whacks(rc, logger, buf);
-		break;
+		return;
 	case NO_STREAM:
 		/*
 		 * XXX: Like writing to /dev/null - go through the
 		 * motions but with no result.  Code really really
 		 * should not call this function with this flag.
 		 */
-		break;
-	default:
-		bad_case(only);
+		return;
 	}
+	bad_case(stream);
 }
 
 const struct logger_object_vec logger_global_vec = {
@@ -337,9 +337,9 @@ static size_t jam_from_prefix(struct jambuf *buf, const void *object)
 {
 	size_t s = 0;
 	if (!in_main_thread()) {
-		s += jam(buf, "EXPECTATION FAILED: %s in main thread: ", __func__);
+		s += jam(buf, PEXPECT_PREFIX"%s in main thread: ", __func__);
 	} else if (object == NULL) {
-		s += jam(buf, "EXPECTATION FAILED: %s NULL: ", __func__);
+		s += jam(buf, PEXPECT_PREFIX"%s NULL: ", __func__);
 	} else {
 		const ip_endpoint *from = object;
 		/* peer's IP address */
@@ -365,9 +365,9 @@ static size_t jam_message_prefix(struct jambuf *buf, const void *object)
 {
 	size_t s = 0;
 	if (!in_main_thread()) {
-		s += jam(buf, "EXPECTATION FAILED: %s in main thread: ", __func__);
+		s += jam(buf, PEXPECT_PREFIX"%s in main thread: ", __func__);
 	} else if (object == NULL) {
-		s += jam(buf, "EXPECTATION FAILED: %s NULL: ", __func__);
+		s += jam(buf, PEXPECT_PREFIX"%s NULL: ", __func__);
 	} else {
 		const struct msg_digest *md = object;
 		s += jam_from_prefix(buf, &md->sender);
@@ -386,10 +386,10 @@ static size_t jam_connection_prefix(struct jambuf *buf, const void *object)
 {
 	size_t s = 0;
 	if (!in_main_thread()) {
-		s += jam(buf, "EXPECTATION FAILED: %s in main thread: ",
+		s += jam(buf, PEXPECT_PREFIX"%s in main thread: ",
 			 __func__);
 	} else if (object == NULL) {
-		s += jam(buf, "EXPECTATION FAILED: %s NULL: ", __func__);
+		s += jam(buf, PEXPECT_PREFIX"%s NULL: ", __func__);
 	} else {
 		const struct connection *c = object;
 		s += jam_connection(buf, c);
@@ -430,9 +430,9 @@ static size_t jam_state_prefix(struct jambuf *buf, const void *object)
 {
 	size_t s = 0;
 	if (!in_main_thread()) {
-		s += jam(buf, "EXPECTATION FAILED: %s in main thread: ", __func__);
+		s += jam(buf, PEXPECT_PREFIX"%s in main thread: ", __func__);
 	} else if (object == NULL) {
-		s += jam(buf, "EXPECTATION FAILED: %s NULL: ", __func__);
+		s += jam(buf, PEXPECT_PREFIX"%s NULL: ", __func__);
 	} else {
 		const struct state *st = object;
 		s += jam_state(buf, st);

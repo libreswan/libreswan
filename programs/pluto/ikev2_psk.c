@@ -149,7 +149,7 @@ static diag_t ikev2_calculate_psk_sighash(bool verify,
 		 * by repeated EAP-TLS exchanges?
 		 */
 		if (!pexpect(auth_sig->len > 0)) {
-			return diag("EXPECTATION FAILED: missing auth_sig");
+			return diag(PEXPECT_PREFIX"missing auth_sig");
 		}
 		pss = HUNK_AS_SHUNK(*auth_sig);
 	} else if (authby != AUTH_NULL) {

@@ -76,12 +76,10 @@ void passert_nss_error(const struct logger *logger, where_t where,
 void pexpect_nss_error(struct logger *logger, where_t where,
 		       const char *message, ...)
 {
-	char scratch[LOG_WIDTH];
-	struct jambuf buf[1] = { ARRAY_AS_JAMBUF(scratch), };
-	va_list ap;
-	va_start(ap, message);
-	jam_va_nss_error_code(buf, PR_GetError(), message, ap);
-	va_end(ap);
-	/* XXX: double copy */
-	llog_pexpect(logger, where, PRI_SHUNK, pri_shunk(jambuf_as_shunk(buf)));
+	LLOG_PEXPECT_JAMBUF(logger, where, buf) {
+		va_list ap;
+		va_start(ap, message);
+		jam_va_nss_error_code(buf, PR_GetError(), message, ap);
+		va_end(ap);
+	}
 }

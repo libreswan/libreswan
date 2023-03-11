@@ -119,23 +119,19 @@ static void check_hash_table_entry(struct hash_table *table, void *data,
 		void *bucket_data;
 		FOR_EACH_LIST_ENTRY_NEW2OLD(bucket_data, table_bucket) {
 			if (data == bucket_data) {
-				JAMBUF(buf) {
+				LLOG_PEXPECT_JAMBUF(logger, where, buf) {
 					jam(buf, "entry %s@%p ", table->info->name, data);
 					table->info->jam(buf, data);
 					jam_string(buf, " is in the wrong bucket");
-					llog_pexpect(logger, where, PRI_SHUNK,
-						     pri_shunk(jambuf_as_shunk(buf)));
 				}
 				return;
 			}
 		}
 	}
-	JAMBUF(buf) {
+	LLOG_PEXPECT_JAMBUF(logger, where, buf) {
 		jam(buf, "entry %s@%p ", table->info->name, data);
 		table->info->jam(buf, data);
 		jam_string(buf, " is missing");
-		llog_pexpect(logger, where, PRI_SHUNK,
-			     pri_shunk(jambuf_as_shunk(buf)));
 	}
 }
 

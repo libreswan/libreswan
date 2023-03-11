@@ -21,14 +21,14 @@
 
 void llog_errno(lset_t rc_flags, const struct logger *logger, int error, const char *fmt, ...)
 {
-	char output[LOG_WIDTH];
-	struct jambuf buf[] = { ARRAY_AS_JAMBUF(output), };
-	jam_logger_prefix(buf, logger);
-	va_list ap;
-	va_start(ap, fmt);
-	jam_va_list(buf, fmt, ap);
-	va_end(ap);
-	/* NO ": "; not a *perror() function */
-	jam_errno(buf, error);
-	jambuf_to_logger(buf, logger, rc_flags);
+	JAMBUF(buf) {
+		jam_logger_rc_prefix(buf, logger, rc_flags);
+		va_list ap;
+		va_start(ap, fmt);
+		jam_va_list(buf, fmt, ap);
+		va_end(ap);
+		/* NO ": "; not a *perror() function */
+		jam_errno(buf, error);
+		jambuf_to_logger(buf, logger, rc_flags);
+	}
 }

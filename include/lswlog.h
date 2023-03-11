@@ -122,39 +122,6 @@ enum rc_type {
 struct jambuf;
 
 /*
- * The logging streams used by libreswan.
- *
- * So far three^D^D^D^D^D four^D^D^D^D five^D^D^D^D six^D^D^D
- * seven^D^D^D^D^D five.five streams have been identified; and let's
- * not forget that code writes to STDOUT and STDERR directly.
- *
- * The streams differ in the syslog severity and what PREFIX is
- * assumed to be present and the tool being run.
- *
- *                           PLUTO
- *              SEVERITY  WHACK  PREFIX    TOOLS    PREFIX
- *   default    WARNING    yes    state     -v
- *   log        WARNING     -     state     -v
- *   debug      DEBUG       -     "| "     debug?
- *   error      ERR         -    ERROR     STDERR  PROG:_...
- *   whack         -       yes    NNN      STDOUT  ...
- *   file          -        -      -         -
- *
- * The streams will then add additional prefixes as required.  For
- * instance, the log_whack stream will prefix a timestamp when sending
- * to a file (optional), and will prefix NNN(RC) when sending to
- * whack.
- *
- * For tools, the default and log streams go to STDERR when enabled;
- * and the debug stream goes to STDERR conditional on debug flags.
- * Should the whack stream go to stdout?
- *
- * As needed, return size_t - the number of bytes written - so that
- * implementations have somewhere to send values that should not be
- * ignored; for instance fwrite() :-/
- */
-
-/*
  * By default messages are broadcast (to both log files and whack),
  * mix-in one of these options to limit this.
  *
@@ -163,30 +130,39 @@ struct jambuf;
  */
 
 enum stream {
-	/* Mask the whack RC; max value is 64435+200 */
-	RC_MASK      = 0x0fffff,
-	STREAM_MASK  = 0xf00000,
-	NO_PREFIX   = 0x1000000,
-	/*                         syslog()                       */
-	/*                         Severity  Whack  Tools  Prefix */
-	ALL_STREAMS  = 0x000000, /* WARNING   yes    err?   <o>   */
-	LOG_STREAM   = 0x100000, /* WARNING   no     err?   <o>   */
-	DEBUG_STREAM = 0x200000, /*  DEBUG    no     err   |<o>   */
-	WHACK_STREAM = 0x300000, /*   N/A     yes    err    <o>   */
-	ERROR_STREAM = 0x400000, /*   ERR     no     err    <o>   */
-	NO_STREAM    = 0xf00000, /*   N/A     N/A                 */
+#define RC_MASK              0x00fffff	/* rc_type max is 64435+200 */
+#define STREAM_MASK          0x0f00000
+#define NO_PREFIX            0x1000000
+	/*                                 syslog()                      */
+	/*                                Severity  Whack  Tools  Prefix */
+	ALL_STREAMS        = 0x0000000, /* WARNING   yes    err?   <o>   */
+	LOG_STREAM         = 0x0100000, /* WARNING    no    err?   <o>   */
+	WHACK_STREAM       = 0x0200000, /*   N/A     yes    err    <o>   */
+	DEBUG_STREAM       = 0x0300000, /*  DEBUG     no    err    | <o> */
+	ERROR_STREAM       = 0x0400000, /*   ERR     yes    err    <o>   */
+	PEXPECT_STREAM     = 0x0500000, /*   ERR     yes    err    EXPECTATION FAILED: <o> */
+	NO_STREAM          = 0x0f00000, /*   N/A     N/A                 */
 	/*
 	 * <o>: add prefix when object is available
 	 *
-	 * |<o>: add both "| " and prefex when object is available and
+	 * | <o>: add both "| " and prefex when object is available and
          * feature is enabled
 	 *
 	 * err?: write to stderr when enabled (tests log_to_stderr,
-	 * typically via -v).
+	 * typically via -v).  Used by tools such as whack.
 	 */
-#define ERROR_FLAGS (ERROR_STREAM|RC_LOG_SERIOUS)
-#define PRINTF_FLAGS (NO_PREFIX|WHACK_STREAM)
 };
+
+#define DEBUG_PREFIX		"| "
+#define ERROR_PREFIX		"ERROR: "
+#define PEXPECT_PREFIX		"EXPECTATION FAILED: "
+#define PASSERT_PREFIX		"FATAL: ASSERTION FAILED: "
+#define FATAL_PREFIX		"FATAL ERROR: "
+
+#define DEBUG_FLAGS		(DEBUG_STREAM)
+#define PEXPECT_FLAGS		(PEXPECT_STREAM|RC_LOG_SERIOUS)
+#define ERROR_FLAGS		(ERROR_STREAM|RC_LOG_SERIOUS)
+#define PRINTF_FLAGS		(NO_PREFIX|WHACK_STREAM)
 
 /*
  * Broadcast a log message.
@@ -348,8 +324,6 @@ void fatal_errno(enum pluto_exit_code rc, const struct logger *logger,
 
 extern lset_t cur_debugging;	/* current debugging level */
 
-#define DEBUG_PREFIX "| "
-
 #define DBGP(cond)	(cur_debugging & (cond))
 
 #define DBGF(COND, MESSAGE, ...)				\
@@ -458,6 +432,12 @@ void lswlog_pexpect_example(void *p)
 
 extern void llog_pexpect(const struct logger *logger, where_t where,
 			 const char *message, ...) PRINTF_LIKE(3);
+
+#define LLOG_PEXPECT_JAMBUF(LOGGER, WHERE, BUF)				\
+	JAMBUF(BUF)							\
+	for (jam_logger_rc_prefix(BUF, LOGGER, PEXPECT_FLAGS);		\
+	     BUF != NULL;						\
+	     jambuf_where_to_logger(BUF, WHERE, (LOGGER), PEXPECT_FLAGS), BUF = NULL)
 
 #define PEXPECT_WHERE(LOGGER, WHERE, ASSERTION)				\
 	({								\

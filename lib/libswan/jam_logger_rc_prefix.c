@@ -21,7 +21,33 @@ void jam_logger_rc_prefix(struct jambuf *buf, const struct logger *logger, lset_
 	if (rc_flags & NO_PREFIX) {
 		return;
 	}
-	if ((rc_flags & STREAM_MASK) != DEBUG_STREAM ||
+	/* XXX: The message format is:
+	 *   FATAL ERROR: <log-prefix><message...><diag>
+	 *   EXPECTATION FAILED: <log-prefix><message...><diag>
+	 *   | <log-prefix><message...><diag>
+	 * and not:
+	 *   <log-prefix>FATAL ERROR: <message...><diag>
+	 *   <log-prefix>| <message...><diag>
+	 *   <log-prefix>EXPECTATION_FAILED: <message...><diag>
+	 * say
+	 */
+	enum stream stream = (rc_flags & STREAM_MASK);
+	switch (stream) {
+	case DEBUG_STREAM:
+		jam_string(buf, DEBUG_PREFIX);
+		break;
+	case PEXPECT_STREAM:
+		jam_string(buf, PEXPECT_PREFIX);
+		break;
+	case ERROR_STREAM:
+		break;
+	case ALL_STREAMS:
+	case LOG_STREAM:
+	case WHACK_STREAM:
+	case NO_STREAM:
+		break;
+	}
+	if (stream != DEBUG_STREAM ||
 	    DBGP(DBG_ADD_PREFIX) ||
 	    logger->debugging != LEMPTY) {
 		jam_logger_prefix(buf, logger);
