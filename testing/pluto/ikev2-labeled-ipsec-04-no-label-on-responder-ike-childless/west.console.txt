@@ -70,7 +70,7 @@ west #
 fired and forgotten
 west #
  ../../guestbin/wait-for.sh --match '^[^|].*TS_UNACCEPTABLE' -- cat /tmp/pluto.log
-"labeled"[2] 192.1.2.23 #2: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
+"labeled"[1] 192.1.2.23 #2: CREATE_CHILD_SA failed with error notification TS_UNACCEPTABLE
 west #
  # there should be 0 tunnels - child rejected
 west #
