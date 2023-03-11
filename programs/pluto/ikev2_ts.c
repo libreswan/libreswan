@@ -1585,8 +1585,8 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 	 */
 
 	if (best.connection == NULL &&
-	    cc->config->sec_label.len == 0 &&
-	    cc->policy & POLICY_GROUPINSTANCE) {
+	    !labeled(cc) &&
+	    (cc->policy & POLICY_GROUPINSTANCE)) {
 		/*
 		 * Is there something better than the current
 		 * connection?
@@ -1697,7 +1697,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 						     t->remote->child.selectors.proposed.list[0]));
 			pexpect(selector_eq_selector(t->spd->local->client,
 						     t->local->child.selectors.proposed.list[0]));
-			pexpect(t->config->sec_label.len == 0);
+			pexpect(!labeled(t));
 			struct child_selector_ends ends = {
 				.i.selectors = &t->remote->child.selectors.proposed,
 				.i.sec_label = t->config->sec_label,
@@ -1752,31 +1752,30 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 	 */
 
 	indent.level = 1;
-	if (best.connection != NULL &&
-	    best.connection->kind == CK_TEMPLATE) {
+	if (labeled_parent(best.connection)) {
+		/*
+		 * Convert the hybrid sec_label template-instance into
+		 * a proper instance, and then update its selectors.
+		 */
+		dbg_ts("instantiating the labeled_parent connection");
+		indent.level = 2;
+		pexpect(best.connection == child->sa.st_connection); /* big circle */
+		pexpect(best.nsps.i.sec_label.len > 0);
+		pexpect(best.nsps.r.sec_label.len > 0);
+		pexpect(best.connection->child.sec_label.len == 0);
+		pexpect(address_is_specified(best.connection->remote->host.addr));
+		struct connection *s = sec_label_child_instantiate(ike_sa(&child->sa, HERE), best.nsps.i.sec_label, HERE);
+		scribble_ts_request_on_responder(child, s, &best.nsps, indent);
+		/* switch to instance; same score */
+		best.connection = s;
+	} else if (best.connection != NULL &&
+		   best.connection->kind == CK_TEMPLATE) {
 		dbg_ts("instantiating the template connection");
 		indent.level = 2;
-
-		struct connection *s;
-		if (best.connection->config->sec_label.len > 0) {
-			pexpect(best.connection == child->sa.st_connection); /* big circle */
-			pexpect(best.nsps.i.sec_label.len > 0);
-			pexpect(best.nsps.r.sec_label.len > 0);
-			pexpect(best.connection->child.sec_label.len == 0);
-			pexpect(address_is_specified(best.connection->remote->host.addr));
-			/*
-			 * Convert the hybrid sec_label
-			 * template-instance into a proper instance,
-			 * and then update its selectors.
-			 */
-			s = sec_label_child_instantiate(ike_sa(&child->sa, HERE), best.nsps.i.sec_label, HERE);
-		} else {
-			pexpect(best.nsps.i.sec_label.len == 0);
-			pexpect(best.nsps.r.sec_label.len == 0);
-			s = spd_instantiate(best.connection, child->sa.st_connection->remote->host.addr, HERE);
-		}
+		pexpect(best.nsps.i.sec_label.len == 0);
+		pexpect(best.nsps.r.sec_label.len == 0);
+		struct connection *s = spd_instantiate(best.connection, child->sa.st_connection->remote->host.addr, HERE);
 		scribble_ts_request_on_responder(child, s, &best.nsps, indent);
-
 		/* switch to instance; same score */
 		best.connection = s;
 	}

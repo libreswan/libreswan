@@ -568,7 +568,7 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		ike->sa.st_interface = iface_endpoint_addref(p);
 	}
 
-	if (labeled(c) > 0 && sec_label.len == 0) {
+	if (labeled(c) && sec_label.len == 0) {
 		/*
 		 * Establishing a sec_label connection yet there's no
 		 * sec-label for the child.  Assume this is a forced
