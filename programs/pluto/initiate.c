@@ -251,9 +251,10 @@ static bool initiate_connection_3_template(struct connection *c,
 
 	passert(address_is_specified(c->remote->host.addr));
 
-	if (c->kind == CK_TEMPLATE &&
-	    c->config->ike_version == IKEv2 &&
-	    (c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
+	if ((c->kind == CK_TEMPLATE &&
+	     c->config->ike_version == IKEv2 &&
+	     (c->policy & POLICY_IKEV2_ALLOW_NARROWING)) ||
+	    labeled_template(c)) {
 		struct connection *d = spd_instantiate(c, c->remote->host.addr, HERE);
 		/* XXX: something better? */
 		fd_delref(&d->logger->global_whackfd);
@@ -656,7 +657,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		 * We've found a sec_label connection that can serve.
 		 *
 		 * It could be a labeled-template (which needs
-		 * initiating), or labeled-parent (which means a
+		 * instantiated), or labeled-parent (which means a
 		 * piggyback), but never a labeled-child.
 		 *
 		 * Announce this to the world.  Use c->logger instead?
