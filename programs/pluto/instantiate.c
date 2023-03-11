@@ -493,25 +493,7 @@ struct connection *sec_label_child_instantiate(struct ike_sa *ike,
 	pexpect(t->child.sec_label.ptr == NULL);
 	d->child.sec_label = clone_hunk(sec_label, __func__);
 
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		struct child_end *child = &d->end[end].child;
-		if (child->config->selectors.len > 0) {
-			child->selectors.proposed = child->config->selectors;
-		} else {
-			/*
-			 * Default the end's child selector (client) to a
-			 * subnet containing only the end's host address.
-			 *
-			 * If the other end has multiple child subnets then
-			 * the SPD will be a list.
-			 */
-			ip_selector end_selector =
-				selector_from_address_protoport(d->end[end].host.addr,
-								child->config->protoport);
-			set_end_selector(d, end, end_selector);
-		}
- 	}
-
+	update_selectors(d);
 	add_connection_spds(d, address_info(d->local->host.addr));
 
 	/* leave breadcrumb */
