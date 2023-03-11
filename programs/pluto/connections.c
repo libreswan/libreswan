@@ -145,6 +145,17 @@ void ldbg_connection(const struct connection *c, where_t where,
 			jam_string(buf, "    policy: ");
 			jam_connection_policies(buf, c);
 		}
+		if (c->config->sec_label.len > 0) {
+			LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
+				jam_string(buf, "    sec_label=");
+				jam(buf, PRI_SHUNK, pri_shunk(c->config->sec_label));
+				if (c->child.sec_label.len > 0) {
+					jam_string(buf, " [");
+					jam(buf, PRI_SHUNK, pri_shunk(c->child.sec_label));
+					jam_string(buf, "]");
+				}
+			}
+		}
 	}
 
 }
