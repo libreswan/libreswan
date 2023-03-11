@@ -16,40 +16,56 @@
 
 #include "lswlog.h"
 
-void jam_logger_rc_prefix(struct jambuf *buf, const struct logger *logger, lset_t rc_flags)
+/* XXX: The message format is:
+ *   FATAL ERROR: <log-prefix><message...><diag>
+ *   EXPECTATION FAILED: <log-prefix><message...><diag>
+ *   | <log-prefix><message...><diag>
+ * and not:
+ *   <log-prefix>FATAL ERROR: <message...><diag>
+ *   <log-prefix>| <message...><diag>
+ *   <log-prefix>EXPECTATION_FAILED: <message...><diag>
+ * say
+ */
+
+static void jam_stream_prefix(struct jambuf *buf, enum stream stream)
 {
-	if (rc_flags & NO_PREFIX) {
-		return;
-	}
-	/* XXX: The message format is:
-	 *   FATAL ERROR: <log-prefix><message...><diag>
-	 *   EXPECTATION FAILED: <log-prefix><message...><diag>
-	 *   | <log-prefix><message...><diag>
-	 * and not:
-	 *   <log-prefix>FATAL ERROR: <message...><diag>
-	 *   <log-prefix>| <message...><diag>
-	 *   <log-prefix>EXPECTATION_FAILED: <message...><diag>
-	 * say
-	 */
-	enum stream stream = (rc_flags & STREAM_MASK);
 	switch (stream) {
 	case DEBUG_STREAM:
 		jam_string(buf, DEBUG_PREFIX);
-		break;
+		return;
 	case PEXPECT_STREAM:
 		jam_string(buf, PEXPECT_PREFIX);
-		break;
+		return;
 	case ERROR_STREAM:
-		break;
+		return;
 	case ALL_STREAMS:
 	case LOG_STREAM:
 	case WHACK_STREAM:
 	case NO_STREAM:
-		break;
+		return;
 	}
-	if (stream != DEBUG_STREAM ||
-	    DBGP(DBG_ADD_PREFIX) ||
-	    logger->debugging != LEMPTY) {
+	bad_case(stream);
+}
+
+void jam_logger_rc_prefix(struct jambuf *buf, const struct logger *logger, lset_t rc_flags)
+{
+	enum log_prefix prefix = (rc_flags & LOG_PREFIX_MASK);
+	enum stream stream = (rc_flags & STREAM_MASK);
+	switch (prefix) {
+	case NO_PREFIX:
+		return;
+	case ADD_PREFIX:
+		jam_stream_prefix(buf, stream);
 		jam_logger_prefix(buf, logger);
+		return;
+	case AUTO_PREFIX:
+		jam_stream_prefix(buf, stream);
+		if (stream != DEBUG_STREAM ||
+		    DBGP(DBG_ADD_PREFIX) ||
+		    logger->debugging != LEMPTY) {
+			jam_logger_prefix(buf, logger);
+		}
+		return;
 	}
+	bad_case(prefix);
 }

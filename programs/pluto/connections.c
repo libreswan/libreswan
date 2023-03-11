@@ -105,7 +105,7 @@ void ldbg_connection(const struct connection *c, where_t where,
 		     const char *message, ...)
 {
 	if (DBGP(DBG_BASE)) {
-		LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, c->logger, buf) {
 			va_list ap;
 			va_start(ap, message);
 			jam_va_list(buf, message, ap);
