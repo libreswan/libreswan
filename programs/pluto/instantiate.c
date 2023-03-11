@@ -341,31 +341,8 @@ static struct connection *instantiate(struct connection *t,
 	return d;
 }
 
-/*
- * In addition to instantiate() also clone the SPD entries.
- *
- * XXX: it's arguable that SPD entries are being created far too early
- * (currently during connection add).  The IKEv2 TS responder, for
- * instance, ends up throwing away the SPDs creating its own.
- */
-
-struct connection *spd_instantiate(struct connection *t,
-				   const ip_address remote_addr,
-				   where_t where)
+static void update_selectors(struct connection *d)
 {
-	PASSERT(t->logger, !labeled(t));
-
-	struct connection *d = instantiate(t, remote_addr, /*peer-id*/NULL,
-					   CK_INSTANCE, __func__, where);
-
-	/*
-	 * XXX: code in rw_responder_id_instantiate() is slightly
-	 * different - that code also handles remote subnets.
-	 *
-	 * XXX: this code in rw_responder_instantiate() and
-	 * spd_instantiate() and sec_label_parent_instantiate() is
-	 * identical..
-	 */
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
 		const char *leftright = d->end[end].config->leftright;
 		struct host_end *host = &d->end[end].host;
@@ -386,6 +363,65 @@ struct connection *spd_instantiate(struct connection *t,
 			set_end_selector(d, end, selector);
 		}
 	}
+}
+
+/*
+ * XXX: unlike rw_responder_id_instantiate(), this code has to
+ * handle the remote subnet
+ */
+static void update_subnet_selectors(struct connection *d,
+				    const ip_selector *remote_subnet)
+{
+	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		const char *leftright = d->end[end].config->leftright;
+		struct host_end *host = &d->end[end].host;
+		struct child_end *child = &d->end[end].child;
+		if (child->config->selectors.len > 0) {
+			ldbg(d->logger, "%s.child has %d configured selectors",
+			     leftright, child->config->selectors.len > 0);
+			child->selectors.proposed = child->config->selectors;
+		} else if (child == &d->remote->child &&
+			   remote_subnet != NULL &&
+			   d->remote->config->child.virt != NULL) {
+			PASSERT(d->logger, host == &d->remote->host);
+			set_end_selector(d, end, *remote_subnet);
+			if (selector_eq_address(*remote_subnet, d->remote->host.addr)) {
+				ldbg(d->logger, "forcing remote %s.spd.has_client=false",
+				     d->spd->remote->config->leftright);
+				set_child_has_client(d, remote, false);
+			}
+		} else {
+			ldbg(d->logger, "%s.child selector formed from host", leftright);
+			/*
+			 * Default the end's child selector (client) to a
+			 * subnet containing only the end's host address.
+			 */
+			ip_selector selector =
+				selector_from_address_protoport(host->addr,
+								child->config->protoport);
+			set_end_selector(d, end, selector);
+		}
+	}
+}
+
+/*
+ * In addition to instantiate() also clone the SPD entries.
+ *
+ * XXX: it's arguable that SPD entries are being created far too early
+ * (currently during connection add).  The IKEv2 TS responder, for
+ * instance, ends up throwing away the SPDs creating its own.
+ */
+
+struct connection *spd_instantiate(struct connection *t,
+				   const ip_address remote_addr,
+				   where_t where)
+{
+	PASSERT(t->logger, !labeled(t));
+
+	struct connection *d = instantiate(t, remote_addr, /*peer-id*/NULL,
+					   CK_INSTANCE, __func__, where);
+
+	update_selectors(d);
 
 	PEXPECT(d->logger, oriented(d));
 	add_connection_spds(d, address_info(d->local->host.addr));
@@ -418,34 +454,7 @@ struct connection *sec_label_parent_instantiate(struct connection *t,
 	 * So that labeled_parent() doesn't count */
 	d->instance_serial = 0;
 
-	/*
-	 * XXX: code in rw_responder_id_instantiate() is slightly
-	 * different - that code also handles remote subnets.
-	 *
-	 * XXX: this code in rw_responder_instantiate() and
-	 * spd_instantiate() and sec_label_parent_instantiate() is
-	 * identical..
-	 */
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		const char *leftright = d->end[end].config->leftright;
-		struct host_end *host = &d->end[end].host;
-		struct child_end *child = &d->end[end].child;
-		if (child->config->selectors.len > 0) {
-			ldbg(d->logger, "%s.child has %d configured selectors",
-			     leftright, child->config->selectors.len > 0);
-			child->selectors.proposed = child->config->selectors;
-		} else {
-			ldbg(d->logger, "%s.child selector formed from host", leftright);
-			/*
-			 * Default the end's child selector (client) to a
-			 * subnet containing only the end's host address.
-			 */
-			ip_selector selector =
-				selector_from_address_protoport(host->addr,
-								child->config->protoport);
-			set_end_selector(d, end, selector);
-		}
-	}
+	update_selectors(d);
 
 	PEXPECT(d->logger, oriented(d));
 	add_connection_spds(d, address_info(d->local->host.addr));
@@ -531,34 +540,7 @@ struct connection *rw_responder_instantiate(struct connection *t,
 	struct connection *d = instantiate(t, peer_addr, /*TBD peer_id*/NULL,
 					   CK_INSTANCE, __func__, where);
 
-	/*
-	 * XXX: code in rw_responder_id_instantiate() is slightly
-	 * different - that code also handles remote subnets.
-	 *
-	 * XXX: this code in rw_responder_instantiate() and
-	 * spd_instantiate() and sec_label_parent_instantiate() is
-	 * identical..
-	 */
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		const char *leftright = d->end[end].config->leftright;
-		struct host_end *host = &d->end[end].host;
-		struct child_end *child = &d->end[end].child;
-		if (child->config->selectors.len > 0) {
-			ldbg(d->logger, "%s.child has %d configured selectors",
-			     leftright, child->config->selectors.len > 0);
-			child->selectors.proposed = child->config->selectors;
-		} else {
-			ldbg(d->logger, "%s.child selector formed from host", leftright);
-			/*
-			 * Default the end's child selector (client) to a
-			 * subnet containing only the end's host address.
-			 */
-			ip_selector selector =
-				selector_from_address_protoport(host->addr,
-								child->config->protoport);
-			set_end_selector(d, end, selector);
-		}
-	}
+	update_selectors(d);
 
 	PEXPECT(d->logger, oriented(d));
 	add_connection_spds(d, address_info(d->local->host.addr));
@@ -584,40 +566,7 @@ struct connection *rw_responder_id_instantiate(struct connection *t,
 	struct connection *d = instantiate(t, remote_addr, remote_id,
 					   CK_INSTANCE, __func__, HERE);
 
-	/*
-	 * XXX: unlike rw_responder_id_instantiate(), this code has to
-	 * handle the remote subnet
-	 */
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		const char *leftright = d->end[end].config->leftright;
-		struct host_end *host = &d->end[end].host;
-		struct child_end *child = &d->end[end].child;
-		if (child->config->selectors.len > 0) {
-			ldbg(d->logger, "%s.child has %d configured selectors",
-			     leftright, child->config->selectors.len > 0);
-			child->selectors.proposed = child->config->selectors;
-		} else if (child == &d->remote->child &&
-			   remote_subnet != NULL &&
-			   d->remote->config->child.virt != NULL) {
-			PASSERT(d->logger, host == &d->remote->host);
-			set_end_selector(d, end, *remote_subnet);
-			if (selector_eq_address(*remote_subnet, d->remote->host.addr)) {
-				ldbg(t->logger, "forcing remote %s.spd.has_client=false",
-				     d->spd->remote->config->leftright);
-				set_child_has_client(d, remote, false);
-			}
-		} else {
-			ldbg(d->logger, "%s.child selector formed from host", leftright);
-			/*
-			 * Default the end's child selector (client) to a
-			 * subnet containing only the end's host address.
-			 */
-			ip_selector selector =
-				selector_from_address_protoport(host->addr,
-								child->config->protoport);
-			set_end_selector(d, end, selector);
-		}
-	}
+	update_subnet_selectors(d, remote_subnet);
 
 	PEXPECT(d->logger, oriented(d));
 	add_connection_spds(d, address_info(d->local->host.addr));
