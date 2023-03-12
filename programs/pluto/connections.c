@@ -2885,7 +2885,7 @@ size_t jam_connection(struct jambuf *buf, const struct connection *c)
 {
 	size_t s = 0;
 	s += jam(buf, "\"%s\"", c->name);
-	if (c->kind == CK_INSTANCE) {
+	if (c->instance_serial > 0) {
 		s += jam_connection_instance(buf, c);
 	}
 	return s;
@@ -2894,7 +2894,7 @@ size_t jam_connection(struct jambuf *buf, const struct connection *c)
 const char *str_connection_instance(const struct connection *c, connection_buf *buf)
 {
 	struct jambuf p = ARRAY_AS_JAMBUF(buf->buf);
-	if (c->kind == CK_INSTANCE) {
+	if (c->instance_serial > 0) {
 		jam_connection_instance(&p, c);
 	}
 	return buf->buf;

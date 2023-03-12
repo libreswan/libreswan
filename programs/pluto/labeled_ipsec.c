@@ -178,17 +178,15 @@ bool labeled_template_where(const struct connection *c, where_t where UNUSED)
 	return (c != NULL &&
 		c->kind == CK_TEMPLATE &&
 		c->config->sec_label.len > 0 &&
-		c->clonedfrom == UNSET_CO_SERIAL &&
-		PEXPECT(c->logger, c->child.sec_label.len == 0));
+		c->child.sec_label.len == 0);
 }
 
 bool labeled_parent_where(const struct connection *c, where_t where UNUSED)
 {
 	return (c != NULL &&
-		c->kind == CK_TEMPLATE &&
+		c->kind == CK_INSTANCE &&
 		c->config->sec_label.len > 0 &&
-		c->clonedfrom != UNSET_CO_SERIAL &&
-		PEXPECT(c->logger, c->child.sec_label.len == 0));
+		c->child.sec_label.len == 0);
 }
 
 bool labeled_child_where(const struct connection *c, where_t where UNUSED)
@@ -196,6 +194,5 @@ bool labeled_child_where(const struct connection *c, where_t where UNUSED)
 	return (c != NULL &&
 		c->kind == CK_INSTANCE &&
 		c->config->sec_label.len > 0 &&
-		c->child.sec_label.len > 0 &&
-		PEXPECT(c->logger, c->clonedfrom != UNSET_CO_SERIAL));
+		c->child.sec_label.len > 0);
 }
