@@ -304,6 +304,10 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 		log_raw(LOG_ERR, "", buf);
 		log_whacks(rc, logger, buf);
 		return;
+	case PASSERT_STREAM:
+		log_raw(LOG_ERR, "", buf);
+		log_whacks(rc, logger, buf);
+		return; /*abort();*/
 	case NO_STREAM:
 		/*
 		 * XXX: Like writing to /dev/null - go through the

@@ -32,6 +32,7 @@
 #include "where.h"		/* used by macros */
 #include "fd.h"			/* for null_fd */
 #include "impair.h"
+#include "pexpect.h"
 
 #define LOG_WIDTH	((size_t)1024)	/* roof of number of chars in log line */
 
@@ -148,6 +149,7 @@ enum stream {
 	DEBUG_STREAM       = 0x0300000, /*  DEBUG     no    err    | <o> */
 	ERROR_STREAM       = 0x0400000, /*   ERR     yes    err    <o>   */
 	PEXPECT_STREAM     = 0x0500000, /*   ERR     yes    err    EXPECTATION FAILED: <o> */
+	PASSERT_STREAM     = 0x0600000, /*   ERR     yes    err    ABORT: ASSERTION_FAILED: <o> */
 	NO_STREAM          = 0x0f00000, /*   N/A     N/A                 */
 	/*
 	 * <o>: add prefix when object is available
@@ -168,6 +170,7 @@ enum stream {
 
 #define DEBUG_FLAGS		(DEBUG_STREAM)
 #define PEXPECT_FLAGS		(PEXPECT_STREAM|RC_LOG_SERIOUS)
+#define PASSERT_FLAGS		(PASSERT_STREAM|RC_LOG_SERIOUS)
 #define ERROR_FLAGS		(ERROR_STREAM|RC_LOG_SERIOUS)
 #define PRINTF_FLAGS		(NO_PREFIX|WHACK_STREAM)
 
@@ -232,7 +235,6 @@ void llog_va_list(lset_t rc_flags, const struct logger *logger,
 		  const char *message, va_list ap) VPRINTF_LIKE(3);
 
 void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc_flags);
-void jambuf_where_to_logger(struct jambuf *buf, where_t where, const struct logger *logger, lset_t rc_flags);
 
 #define LLOG_JAMBUF(RC_FLAGS, LOGGER, BUF)				\
 	JAMBUF(BUF)							\
@@ -416,66 +418,6 @@ void lswbuf(struct jambuf *log)
 	}
 }
 #endif
-
-/*
- * Log an expectation failure message to the error streams.  That is
- * the main log (level LOG_ERR) and whack log (level RC_LOG_SERIOUS).
- *
- * When evaluating ASSERTION, do not wrap it in parentheses as it will
- * suppress the warning for 'foo = bar'.
- *
- * Because static analyzer tools are easily confused, explicitly
- * return the assertion result.
- */
-
-#ifdef EXAMPLE
-void lswlog_pexpect_example(void *p)
-{
-	if (!pexpect(p != NULL)) {
-		return;
-	}
-}
-#endif
-
-extern void llog_pexpect(const struct logger *logger, where_t where,
-			 const char *message, ...) PRINTF_LIKE(3);
-
-#define LLOG_PEXPECT_JAMBUF(LOGGER, WHERE, BUF)				\
-	JAMBUF(BUF)							\
-	for (jam_logger_rc_prefix(BUF, LOGGER, PEXPECT_FLAGS);		\
-	     BUF != NULL;						\
-	     jambuf_where_to_logger(BUF, WHERE, (LOGGER), PEXPECT_FLAGS), BUF = NULL)
-
-#define PEXPECT_WHERE(LOGGER, WHERE, ASSERTION)				\
-	({								\
-		/* wrapping ASSERTION in parens suppresses -Wparen */	\
-		bool assertion__ = ASSERTION; /* no parens */		\
-		if (!assertion__) {					\
-			const struct logger *logger_ = LOGGER;		\
-			llog_pexpect(logger_, WHERE, "%s", #ASSERTION);	\
-		}							\
-		assertion__; /* result */				\
-	})
-
-#define PEXPECT(LOGGER, ASSERTION)					\
-	PEXPECT_WHERE(LOGGER, HERE, ASSERTION)
-
-#define PBAD_WHERE(LOGGER, WHERE, BAD)					\
-	({								\
-		/* wrapping BAD in parens suppresses -Wparen */		\
-		bool bad_ = BAD; /* no parens */			\
-		if (bad_) {						\
-			const struct logger *logger_ = LOGGER;		\
-			llog_pexpect(logger_, WHERE, "not (%s)", #BAD); \
-		}							\
-		bad_; /* result */					\
-	})
-
-#define PBAD(LOGGER, BAD) PBAD_WHERE(LOGGER, HERE, BAD)
-
-#define pbad(BAD) PBAD_WHERE(&global_logger, HERE, BAD)
-
-#define pexpect(ASSERTION)  PEXPECT_WHERE(&global_logger, HERE, ASSERTION)
 
 /* for a switch statement */
 

@@ -25,15 +25,12 @@
 	{								\
 		bool a_ = ASSERTION; /* evaluate once */		\
 		if (!a_) {						\
-			JAMBUF(buf) {					\
-				jam(buf, "%s: ",			\
-				    (ENTRY)->info->name);		\
+			LLOG_PASSERT_JAMBUF(&global_logger, HERE, buf) { \
+				jam_string(buf, (ENTRY)->info->name);	\
+				jam_string(buf, ": ");			\
 				jam_list_entry(buf, (ENTRY));		\
-				jam(buf, ": %s", #ASSERTION);		\
-				/* XXX: hack: double copy */		\
-				llog_passert(&global_logger, HERE,	\
-					     PRI_SHUNK,			\
-					     pri_shunk(jambuf_as_shunk(buf))); \
+				jam_string(buf, ": ");			\
+				jam_string(buf, #ASSERTION);		\
 			}						\
 		}							\
 	}
@@ -42,14 +39,10 @@
 	{								\
 		bool a_ = ASSERTION; /* evaluate once */		\
 		if (!a_) {						\
-			JAMBUF(buf) {					\
-				jam(buf, "%s: %s",			\
-				    (INFO)->name,			\
-				    #ASSERTION);			\
-				/* XXX: hack: double copy */		\
-				llog_pexpect(&global_logger, HERE,	\
-					     PRI_SHUNK,			\
-					     pri_shunk(jambuf_as_shunk(buf))); \
+			LLOG_PASSERT_JAMBUF(&global_logger, HERE, buf) { \
+				jam_string(buf, (INFO)->name);		\
+				jam_string(buf, ": ");			\
+				jam_string(buf, #ASSERTION);		\
 			}						\
 		}							\
 	}

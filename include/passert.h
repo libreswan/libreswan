@@ -26,6 +26,7 @@
 #include "err.h"		/* for err_t */
 #include "lswcdefs.h"		/* for NEVER_RETURNS PRINTF_LIKE() */
 #include "where.h"
+#include "lset.h"
 
 struct logger;
 
@@ -40,8 +41,24 @@ extern const struct logger global_logger;
 #define GLOBAL_LOGGER
 #endif
 
+/*
+ * XXX: GCC, at least can't understand that LLOG_PASSERT_JAMBUF()
+ * never returns.  Hence code sometimes calls
+ * passert_jambuf_to_logger() explicitly.
+ */
+
 extern void llog_passert(const struct logger *logger, where_t where,
 			 const char *message, ...) NEVER_RETURNS PRINTF_LIKE(3);
+
+void passert_jambuf_to_logger(struct jambuf *buf,
+			      where_t where, const struct logger *logger,
+			      lset_t rc_flags) NEVER_RETURNS;
+
+#define LLOG_PASSERT_JAMBUF(LOGGER, WHERE, BUF)				\
+	JAMBUF(BUF)							\
+	for (jam_logger_rc_prefix(BUF, LOGGER, PASSERT_FLAGS);		\
+	     BUF != NULL;						\
+	     passert_jambuf_to_logger(BUF, WHERE, (LOGGER), PASSERT_FLAGS), BUF = NULL)
 
 #define PASSERT_WHERE(LOGGER, WHERE, ASSERTION)				\
 	({								\

@@ -21,14 +21,24 @@
 
 void llog_passert(const struct logger *logger, where_t where, const char *fmt, ...)
 {
-	JAMBUF(buf) {
-		jam_string(buf, PASSERT_PREFIX);
-		jam_logger_prefix(buf, logger);
+	char scratch[LOG_WIDTH];
+	struct jambuf buf[1] = { ARRAY_AS_JAMBUF(scratch), };
+	{
+		jam_logger_rc_prefix(buf, logger, PASSERT_FLAGS);
 		va_list ap;
 		va_start(ap, fmt);
 		jam_va_list(buf, fmt, ap);
 		va_end(ap);
-		jambuf_where_to_logger(buf, where, logger, ERROR_FLAGS);
 	}
+	passert_jambuf_to_logger(buf, where, logger, PASSERT_FLAGS);
+}
+
+void passert_jambuf_to_logger(struct jambuf *buf,
+			      where_t where, const struct logger *logger,
+			      lset_t rc_flags)
+{
+	jam_string(buf, " ");
+	jam_where(buf, where);
+	jambuf_to_logger(buf, logger, rc_flags);
 	abort();
 }

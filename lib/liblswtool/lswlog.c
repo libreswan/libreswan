@@ -91,6 +91,9 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger UNUSED, ls
 	case PEXPECT_STREAM:
 		fprintf(stderr, "%s\n", buf->array);
 		return;
+	case PASSERT_STREAM:
+		fprintf(stderr, "%s\n", buf->array);
+		return; /*abort();?*/
 	case NO_STREAM:
 		/*
 		 * XXX: Like writing to /dev/null - go through the
