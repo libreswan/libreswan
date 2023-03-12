@@ -522,7 +522,9 @@ void dispatch(struct connection *c, struct logger *logger, struct event ee)
 			if (!install_prospective_kernel_policy(c)) {
 				/* XXX: why whack only? */
 				llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");
+				return;
 			}
+			PEXPECT(logger, c->child.routing == RT_ROUTED_PROSPECTIVE);
 			return;
 		case X(UNROUTE, UNROUTED, PERMANENT):
 			ldbg(logger, "already unrouted");
@@ -634,101 +636,18 @@ void dispatch(struct connection *c, struct logger *logger, struct event ee)
 			if (!install_prospective_kernel_policy(c)) {
 				/* XXX: why whack only? */
 				llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");
+				return;
 			}
+			PEXPECT(logger, c->child.routing == RT_ROUTED_PROSPECTIVE);
 			return;
 		case X(UNROUTE, UNROUTED, TEMPLATE):
 			ldbg(logger, "already unrouted");
 			return;
-		case X(TIMEOUT, UNROUTED, TEMPLATE):
-			/* for instance, permanent+up */
-			if (should_retry(e->ike)) {
-				retry(e->ike);
-				return;
-			}
-			if (should_revive(&(e->ike->sa))) {
-				schedule_revival(&(e->ike->sa));
-				return;
-			}
-			fail(e->ike);
-			return;
-
-		case X(ROUTE, UNROUTED_NEGOTIATION, TEMPLATE):
-			c->policy |= POLICY_ROUTE;
-			llog(RC_LOG_SERIOUS, logger, "policy ROUTE added to negotiating connection");
-			return;
-		case X(UNROUTE, UNROUTED_NEGOTIATION, TEMPLATE):
-			delete_connection_kernel_policies(c);
-			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
-			return;
-		case X(TIMEOUT, UNROUTED_NEGOTIATION, TEMPLATE):
-			/* for instance, permenant ondemand */
-			if (should_retry(e->ike)) {
-				retry(e->ike);
-				return;
-			}
-			if (should_revive(&(e->ike->sa))) {
-				schedule_revival(&(e->ike->sa));
-				return;
-			}
-			fail(e->ike);
-			return;
-
-		case X(ROUTE, ROUTED_NEGOTIATION, TEMPLATE):
-			c->policy |= POLICY_ROUTE;
-			llog(RC_LOG_SERIOUS, logger, "policy ROUTE added to negotiating connection");
-			return;
-		case X(UNROUTE, ROUTED_NEGOTIATION, TEMPLATE):
-			delete_connection_kernel_policies(c);
-			/* do now so route_owner won't find us */
-			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
-			do_updown_unroute(c);
-			return;
-		case X(TIMEOUT, ROUTED_NEGOTIATION, TEMPLATE):
-			if (should_retry(e->ike)) {
-				retry(e->ike);
-				return;
-			}
-			if (should_revive(&(e->ike->sa))) {
-				schedule_revival(&(e->ike->sa));
-				return;
-			}
-			fail(e->ike);
-			return;
-
-		case X(ROUTE, ROUTED_TUNNEL, TEMPLATE):
-			c->policy |= POLICY_ROUTE;
-			llog(RC_LOG_SERIOUS, logger, "policy ROUTE added to established connection");
-			return;
-		case X(UNROUTE, ROUTED_TUNNEL, TEMPLATE):
-			llog(RC_RTBUSY, logger, "cannot unroute: route busy");
-			return;
-		case X(TIMEOUT, ROUTED_TUNNEL, TEMPLATE):
-			/* don't retry as well */
-			if (should_revive(&(e->ike->sa))) {
-				schedule_revival(&(e->ike->sa));
-				return;
-			}
-			fail(e->ike);
-			return;
-
 		case X(UNROUTE, ROUTED_PROSPECTIVE, TEMPLATE):
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			do_updown_unroute(c);
-			return;
-
-		case X(UNROUTE, ROUTED_FAILURE, TEMPLATE):
-			delete_connection_kernel_policies(c);
-			/* do now so route_owner won't find us */
-			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
-			do_updown_unroute(c);
-			return;
-
-		case X(UNROUTE, UNROUTED_TUNNEL, TEMPLATE):
-			delete_connection_kernel_policies(c);
-			/* do now so route_owner won't find us */
-			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
 
 		case X(UNROUTE, UNROUTED, INSTANCE):

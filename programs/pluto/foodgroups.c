@@ -436,6 +436,8 @@ void load_groups(struct logger *logger)
 							if (!install_prospective_kernel_policy(t)) {
 								llog(WHACK_STREAM|RC_ROUTE, t->logger,
 								     "could not route");
+							} else {
+								PEXPECT(logger, t->child.routing == RT_ROUTED_PROSPECTIVE);
 							}
 							/* XXX: something better? */
 							fd_delref(&t->logger->global_whackfd);
