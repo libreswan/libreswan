@@ -70,14 +70,13 @@ $(builddir)/%.tmp: $(srcdir)/%.xml | $(builddir)
 # Default rule for creating the man pages from the intermediate
 # (transformed) input.
 #
-# Note: XMLTO seems to fail even when it succeeds so ignore the exit
-# status and instead explicitlay check for the expected output files.
+# Danger: XMLTO will barf run on 9p (it tries to update ownership and
+# fails).
 #
 # Use a dummy target since the generated man pages probably don't
 # match the target name.
 
 $(builddir)/%.man: $(builddir)/%.tmp
 	: ignoring seemingly bogus $(XMLTO) exit status
-	$(XMLTO) man $< -o $(builddir) || true
-	test -z "" $(foreach refname,$(call refnames,$<), -a -r $(builddir)/$(refname))
+	$(XMLTO) man $< -o $(builddir)
 	touch $@
