@@ -509,7 +509,7 @@ struct ephemeral_variables {
 
 struct connection {
 	co_serial_t serialno;
-	co_serial_t clonedfrom;	/* "0" when connection root */
+	struct connection *clonedfrom;
 	char *name;
 	struct logger *logger;
 	char *foodgroup;
@@ -732,7 +732,7 @@ struct connection_filter {
 	const char *name;
 	const struct id *this_id_eq; /* strict; not same_id() */
 	const struct id *that_id_eq; /* strict; not same_id() */
-	co_serial_t clonedfrom;
+	struct connection *clonedfrom;
 	/* current result (can be safely deleted) */
 	struct connection *c;
 	/* internal: handle on next entry */

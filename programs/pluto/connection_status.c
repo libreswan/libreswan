@@ -700,7 +700,7 @@ void show_connection_status(struct show *s, const struct connection *c)
 		    pri_co(c->serialno));
 		if (c->clonedfrom != UNSET_CO_SERIAL) {
 			jam(buf, ", instantiated from: "PRI_CO";",
-			    pri_co(c->clonedfrom));
+			    pri_connection_co(c->clonedfrom));
 		} else {
 			jam(buf, ";");
 		}

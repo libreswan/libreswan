@@ -85,7 +85,7 @@ static void remove_group_instance(const struct connection *group,
 
 	/* now delete instances */
 	struct connection_filter cq = {
-		.clonedfrom = gi->serialno,
+		.clonedfrom = gi,
 		.where = HERE,
 	};
 	while (next_connection_new2old(&cq)) {

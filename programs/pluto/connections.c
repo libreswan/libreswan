@@ -115,10 +115,10 @@ void ldbg_connection(const struct connection *c, where_t where,
 		}
 		LLOG_JAMBUF(DEBUG_STREAM, c->logger, buf) {
 			jam_string(buf, "  connection ");
-			jam_co(buf, c->serialno);
+			jam_connection_co(buf, c);
 			if (c->clonedfrom != 0) {
 				jam_string(buf, " clonedfrom ");
-				jam_co(buf, c->clonedfrom);
+				jam_connection_co(buf, c->clonedfrom);
 			}
 			jam_string(buf, ": ");
 			jam_connection(buf, c);
@@ -276,14 +276,16 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	*cp = NULL;
 
 	ldbg(c->logger, "%s() %s "PRI_CO" from "PRI_CO,
-	     __func__, c->name, pri_co(c->serialno), pri_co(c->clonedfrom));
+	     __func__, c->name,
+	     pri_connection_co(c),
+	     pri_connection_co(c->clonedfrom));
 
 	/*
 	 * Don't expect any offspring?  Something handled by caller.
 	 */
 	if (DBGP(DBG_BASE)) {
 		struct connection_filter cq = {
-			.clonedfrom = c->serialno,
+			.clonedfrom = c,
 			.where = HERE,
 		};
 		PEXPECT(c->logger, !next_connection_old2new(&cq));
@@ -1708,7 +1710,7 @@ void finish_connection(struct connection *c, const char *name,
 	connection_serialno++;
 	passert(connection_serialno > 0); /* can't overflow */
 	c->serialno = connection_serialno;
-	c->clonedfrom = (t != NULL ? t->serialno : UNSET_CO_SERIAL);
+	c->clonedfrom = t;
 }
 
 static struct config *alloc_config(void)

@@ -82,9 +82,10 @@ void replace_connection_that_id(struct connection *c, const struct id *src)
  * A serial_from table.
  */
 
-static hash_t hash_connection_clonedfrom(const co_serial_t *clonedfrom)
+static hash_t hash_connection_clonedfrom(struct connection *const *cpp)
 {
-	return hash_thing(*clonedfrom, zero_hash);
+	so_serial_t serial = (*cpp == NULL ? 0 : (*cpp)->serialno);
+	return hash_thing(serial, zero_hash);
 }
 
 HASH_TABLE(connection, clonedfrom, .clonedfrom, STATE_TABLE_SIZE);
@@ -112,9 +113,9 @@ static struct list_head *connection_filter_head(struct connection_filter *filter
 		return hash_table_bucket(&connection_that_id_hash_table, hash);
 	}
 
-	if (filter->clonedfrom != UNSET_CO_SERIAL) {
+	if (filter->clonedfrom != NULL) {
 		dbg("FOR_EACH_CONNECTION[clonedfrom="PRI_CO"].... in "PRI_WHERE,
-		    pri_co(filter->clonedfrom), pri_where(filter->where));
+		    pri_connection_co(filter->clonedfrom), pri_where(filter->where));
 		hash_t hash = hash_connection_clonedfrom(&filter->clonedfrom);
 		return hash_table_bucket(&connection_clonedfrom_hash_table, hash);
 	}
@@ -128,7 +129,7 @@ static bool matches_connection_filter(struct connection *c, struct connection_fi
 	if (filter->kind != 0 && filter->kind != c->kind) {
 		return false;
 	}
-	if (filter->clonedfrom != UNSET_CO_SERIAL &&
+	if (filter->clonedfrom != NULL &&
 	    filter->clonedfrom != c->clonedfrom) {
 		return false;
 	}

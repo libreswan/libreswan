@@ -138,7 +138,7 @@ static void ondemand_unrouted_to_unrouted_negotiation(struct connection *c, cons
 	bool oe = ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
 
 	/* used below in pexpects */
-	struct connection *t = connection_by_serialno(c->clonedfrom); /* could be NULL */
+	struct connection *t = c->clonedfrom; /* could be NULL */
 
 	enum routing old_routing = c->child.routing;	/* routing, old */
 	enum routing new_routing = RT_UNROUTED_NEGOTIATION;
@@ -180,7 +180,7 @@ static void ondemand_routed_prospective_to_routed_negotiation(struct connection 
 	bool oe = ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
 
 	/* used below in pexpects */
-	struct connection *t = connection_by_serialno(c->clonedfrom); /* could be NULL */
+	struct connection *t = c->clonedfrom; /* could be NULL */
 
 	/*
 	 * For instance?

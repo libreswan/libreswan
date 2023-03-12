@@ -43,8 +43,10 @@
 typedef enum { UNSET_CO_SERIAL = 0, MAX_CO_SERIAL = UINT_MAX, } co_serial_t;
 
 #define PRI_CO "$%u"
-#define pri_co(CO) ((CO))
-#define jam_co(BUF, CO) jam(BUF, PRI_CO, CO)
+#define pri_co(CO) (CO)
+#define jam_co(BUF, CO) jam(BUF, PRI_CO, pri_co(CO))
+#define pri_connection_co(C) ((C) == NULL ? UNSET_CO_SERIAL : (C)->serialno)
+#define jam_connection_co(BUF, C) jam(BUF, PRI_CO, pri_connection_co(C))
 
 #define co_serial_is_unset(CO) ((CO) == UNSET_CO_SERIAL)
 #define co_serial_is_set(CO)   ((CO) != UNSET_CO_SERIAL)
