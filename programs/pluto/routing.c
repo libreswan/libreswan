@@ -532,18 +532,6 @@ void dispatch(enum connection_event event, struct connection *c,
 			/* presumably triggered by whack */
 			ondemand_unrouted_to_unrouted_negotiation(c, e);
 			return;
-		case X(TIMEOUT, UNROUTED, PERMANENT):
-			/* ex, permanent+up */
-			if (should_retry(e->ike)) {
-				retry(e->ike);
-				return;
-			}
-			if (should_revive(&(e->ike->sa))) {
-				schedule_revival(&(e->ike->sa));
-				return;
-			}
-			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
-			return;
 
 		case X(ROUTE, UNROUTED_NEGOTIATION, PERMANENT):
 			c->policy |= POLICY_ROUTE;
@@ -553,18 +541,6 @@ void dispatch(enum connection_event event, struct connection *c,
 		case X(UNROUTE, UNROUTED_NEGOTIATION, PERMANENT):
 			delete_connection_kernel_policies(c);
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
-			return;
-		case X(TIMEOUT, UNROUTED_NEGOTIATION, PERMANENT):
-			/* for instance, permenant ondemand */
-			if (should_retry(e->ike)) {
-				retry(e->ike);
-				return;
-			}
-			if (should_revive(&(e->ike->sa))) {
-				schedule_revival(&(e->ike->sa));
-				return;
-			}
-			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
 
 		case X(ROUTE, ROUTED_NEGOTIATION, PERMANENT):
@@ -576,17 +552,6 @@ void dispatch(enum connection_event event, struct connection *c,
 			/* do now so route_owner won't find us */
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			do_updown_unroute(c);
-			return;
-		case X(TIMEOUT, ROUTED_NEGOTIATION, PERMANENT):
-			if (should_retry(e->ike)) {
-				retry(e->ike);
-				return;
-			}
-			if (should_revive(&(e->ike->sa))) {
-				schedule_revival(&(e->ike->sa));
-				return;
-			}
-			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
 
 		case X(UNROUTE, ROUTED_PROSPECTIVE, PERMANENT):
@@ -608,14 +573,6 @@ void dispatch(enum connection_event event, struct connection *c,
 		case X(DELETE_CHILD, ROUTED_TUNNEL, PERMANENT):
 			/* permenant connections are never deleted */
 			delete_routed_tunnel_child(c, logger, e);
-			return;
-		case X(TIMEOUT, ROUTED_TUNNEL, PERMANENT):
-			/* don't retry as well */
-			if (should_revive(&(e->ike->sa))) {
-				schedule_revival(&(e->ike->sa));
-				return;
-			}
-			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
 
 		case X(UNROUTE, ROUTED_FAILURE, PERMANENT):
@@ -663,74 +620,16 @@ void dispatch(enum connection_event event, struct connection *c,
 			 */
 			ondemand_unrouted_to_unrouted_negotiation(c, e);
 			return;
-		case X(TIMEOUT, UNROUTED, INSTANCE):
-			/* for instance, permanent+up */
-			if (should_retry(e->ike)) {
-				retry(e->ike);
-				return;
-			}
-			if (should_revive(&(e->ike->sa))) {
-				schedule_revival(&(e->ike->sa));
-				return;
-			}
-			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
-			return;
 
 		case X(UNROUTE, UNROUTED_NEGOTIATION, INSTANCE):
 			delete_connection_kernel_policies(c);
 			/* do now so route_owner won't find us */
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
-		case X(TIMEOUT, UNROUTED_NEGOTIATION, INSTANCE):
-			/* for instance, permenant ondemand */
-			if (should_retry(e->ike)) {
-				retry(e->ike);
-				return;
-			}
-			if (should_revive(&(e->ike->sa))) {
-				schedule_revival(&(e->ike->sa));
-				return;
-			}
-			if (c->policy & POLICY_OPPORTUNISTIC) {
-				/*
-				 * A failed OE initiator, make shunt bare.
-				 */
-				orphan_holdpass(c, c->spd, logger);
-				/*
-				 * Change routing so we don't get cleared out
-				 * when state/connection dies.
-				 */
-				set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
-			}
-			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
-			return;
 
 		case X(UNROUTE, ROUTED_NEGOTIATION, INSTANCE):
 			delete_connection_kernel_policies(c);
 			do_updown_unroute(c);
-			return;
-		case X(TIMEOUT, ROUTED_NEGOTIATION, INSTANCE):
-			if (should_retry(e->ike)) {
-				retry(e->ike);
-				return;
-			}
-			if (should_revive(&(e->ike->sa))) {
-				schedule_revival(&(e->ike->sa));
-				return;
-			}
-			if (c->policy & POLICY_OPPORTUNISTIC) {
-				/*
-				 * A failed OE initiator, make shunt bare.
-				 */
-				orphan_holdpass(c, c->spd, logger);
-				/*
-				 * Change routing so we don't get cleared out
-				 * when state/connection dies.
-				 */
-				set_child_routing(c, RT_ROUTED_PROSPECTIVE/*lie?!?*/,
-						  c->child.newest_routing_sa);
-			}
-			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
 
 		case X(UNROUTE, ROUTED_TUNNEL, INSTANCE):
@@ -760,26 +659,6 @@ void dispatch(enum connection_event event, struct connection *c,
 
 			delete_connection(&c);
 			return;
-		case X(TIMEOUT, ROUTED_TUNNEL, INSTANCE):
-			/* don't retry as well */
-			if (should_revive(&(e->ike->sa))) {
-				schedule_revival(&(e->ike->sa));
-				return;
-			}
-			if (c->policy & POLICY_OPPORTUNISTIC) {
-				/*
-				 * A failed OE initiator, make shunt bare.
-				 */
-				orphan_holdpass(c, c->spd, logger);
-				/*
-				 * Change routing so we don't get cleared out
-				 * when state/connection dies.
-				 */
-				set_child_routing(c, RT_ROUTED_NEGOTIATION/*lie?!?*/,
-						  SOS_NOBODY);
-			}
-			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
-			return;
 
 		case X(UNROUTE, ROUTED_PROSPECTIVE, INSTANCE):
 			delete_connection_kernel_policies(c);
@@ -800,6 +679,127 @@ void dispatch(enum connection_event event, struct connection *c,
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
 
+		case X(TIMEOUT, UNROUTED, PERMANENT):
+			/* ex, permanent+up */
+			if (should_retry(e->ike)) {
+				retry(e->ike);
+				return;
+			}
+			if (should_revive(&(e->ike->sa))) {
+				schedule_revival(&(e->ike->sa));
+				return;
+			}
+			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
+			return;
+		case X(TIMEOUT, UNROUTED_NEGOTIATION, PERMANENT):
+			/* for instance, permenant ondemand */
+			if (should_retry(e->ike)) {
+				retry(e->ike);
+				return;
+			}
+			if (should_revive(&(e->ike->sa))) {
+				schedule_revival(&(e->ike->sa));
+				return;
+			}
+			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
+			return;
+		case X(TIMEOUT, ROUTED_NEGOTIATION, PERMANENT):
+			if (should_retry(e->ike)) {
+				retry(e->ike);
+				return;
+			}
+			if (should_revive(&(e->ike->sa))) {
+				schedule_revival(&(e->ike->sa));
+				return;
+			}
+			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
+			return;
+		case X(TIMEOUT, ROUTED_TUNNEL, PERMANENT):
+			/* don't retry as well */
+			if (should_revive(&(e->ike->sa))) {
+				schedule_revival(&(e->ike->sa));
+				return;
+			}
+			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
+			return;
+		case X(TIMEOUT, UNROUTED, INSTANCE):
+			/* for instance, permanent+up */
+			if (should_retry(e->ike)) {
+				retry(e->ike);
+				return;
+			}
+			if (should_revive(&(e->ike->sa))) {
+				schedule_revival(&(e->ike->sa));
+				return;
+			}
+			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
+			return;
+		case X(TIMEOUT, UNROUTED_NEGOTIATION, INSTANCE):
+			/* for instance, permenant ondemand */
+			if (should_retry(e->ike)) {
+				retry(e->ike);
+				return;
+			}
+			if (should_revive(&(e->ike->sa))) {
+				schedule_revival(&(e->ike->sa));
+				return;
+			}
+			if (c->policy & POLICY_OPPORTUNISTIC) {
+				/*
+				 * A failed OE initiator, make shunt bare.
+				 */
+				orphan_holdpass(c, c->spd, logger);
+				/*
+				 * Change routing so we don't get cleared out
+				 * when state/connection dies.
+				 */
+				set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
+			}
+			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
+			return;
+		case X(TIMEOUT, ROUTED_NEGOTIATION, INSTANCE):
+			if (should_retry(e->ike)) {
+				retry(e->ike);
+				return;
+			}
+			if (should_revive(&(e->ike->sa))) {
+				schedule_revival(&(e->ike->sa));
+				return;
+			}
+			if (c->policy & POLICY_OPPORTUNISTIC) {
+				/*
+				 * A failed OE initiator, make shunt bare.
+				 */
+				orphan_holdpass(c, c->spd, logger);
+				/*
+				 * Change routing so we don't get cleared out
+				 * when state/connection dies.
+				 */
+				set_child_routing(c, RT_ROUTED_PROSPECTIVE/*lie?!?*/,
+						  c->child.newest_routing_sa);
+			}
+			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
+			return;
+		case X(TIMEOUT, ROUTED_TUNNEL, INSTANCE):
+			/* don't retry as well */
+			if (should_revive(&(e->ike->sa))) {
+				schedule_revival(&(e->ike->sa));
+				return;
+			}
+			if (c->policy & POLICY_OPPORTUNISTIC) {
+				/*
+				 * A failed OE initiator, make shunt bare.
+				 */
+				orphan_holdpass(c, c->spd, logger);
+				/*
+				 * Change routing so we don't get cleared out
+				 * when state/connection dies.
+				 */
+				set_child_routing(c, RT_ROUTED_NEGOTIATION/*lie?!?*/,
+						  SOS_NOBODY);
+			}
+			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
+			return;
 		}
 	}
 
