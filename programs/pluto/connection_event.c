@@ -103,8 +103,8 @@ void connection_event_handler(void *arg, struct logger *logger)
 	}
 }
 
-bool connection_event_scheduled(const struct connection *c,
-				enum connection_event event)
+bool connection_event_is_scheduled(const struct connection *c,
+				   enum connection_event event)
 {
 	struct event_connection *e;
 	FOR_EACH_LIST_ENTRY_OLD2NEW(e, &connection_events) {

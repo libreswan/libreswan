@@ -76,7 +76,7 @@ bool should_revive(struct state *st)
 	struct connection *c = st->st_connection;
 
 	if (exiting_pluto) {
-		dbg("skilling revival: pluto is going down");
+		ldbg(st->st_logger, "skilling revival: pluto is going down");
 		return false;
 	}
 
@@ -94,22 +94,22 @@ bool should_revive(struct state *st)
 	}
 
 	if (!IS_IKE_SA(st)) {
-		dbg("skipping revival: not an IKE SA");
+		ldbg(st->st_logger, "skipping revival: not an IKE SA");
 		return false;
 	}
 
 	if ((c->policy & POLICY_UP) == LEMPTY) {
-		dbg("skipping revival: POLICY_UP disabled");
+		ldbg(st->st_logger, "skipping revival: POLICY_UP disabled");
 		return false;
 	}
 
 	if ((c->policy & POLICY_DONT_REKEY) != LEMPTY) {
-		dbg("skipping revival: POLICY_DONT_REKEY enabled");
+		ldbg(st->st_logger, "skipping revival: POLICY_DONT_REKEY enabled");
 		return false;
 	}
 
 	if (c->config->ike_version == IKEv2 && c->config->sec_label.len > 0) {
-		dbg("skipped revival: childless IKE SA");
+		ldbg(st->st_logger, "skipped revival: childless IKE SA");
 		return false;
 	}
 
@@ -124,7 +124,7 @@ bool should_revive(struct state *st)
 		 * that, at the end, cleanly deletes it with none of
 		 * this guff.
 		 */
-		dbg("skipping revival: IKE delete_state() for #%lu and connection '%s' that is supposed to remain up;  not a problem - have newer #%lu",
+		ldbg(st->st_logger, "skipping revival: IKE delete_state() for #%lu and connection '%s' that is supposed to remain up;  not a problem - have newer #%lu",
 		    st->st_serialno, c->name, newer_sa);
 		return false;
 	}
@@ -135,7 +135,7 @@ bool should_revive(struct state *st)
 		return false;
 	}
 
-	if (connection_event_scheduled(c, CONNECTION_REVIVAL)) {
+	if (connection_event_is_scheduled(c, CONNECTION_REVIVAL)) {
 		log_state(RC_LOG, st,
 			  "deleting %s but connection is supposed to remain up; EVENT_REVIVE_CONNS already scheduled",
 			  c->config->ike_info->sa_type_name[IKE_SA]);
@@ -148,12 +148,12 @@ bool should_revive(struct state *st)
 void schedule_revival(struct state *st)
 {
 	struct connection *c = st->st_connection;
-	log_state(RC_LOG, st,
-		  "deleting %s but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS",
-		  c->config->ike_info->sa_type_name[IKE_SA]);
+	llog(RC_LOG, st->st_logger,
+	     "deleting %s but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS",
+	     c->config->ike_info->sa_type_name[IKE_SA]);
 
 	int delay = c->temp_vars.revive_delay;
-	dbg("add revival: connection '%s' (serial "PRI_CO") added to the list and scheduled for %d seconds",
+	ldbg(st->st_logger, "add revival: connection '%s' (serial "PRI_CO") added to the list and scheduled for %d seconds",
 	    c->name, pri_co(c->serialno), delay);
 	c->temp_vars.revive_delay = min(delay + REVIVE_CONN_DELAY,
 						REVIVE_CONN_DELAY_MAX);
@@ -167,9 +167,9 @@ void schedule_revival(struct state *st)
 		 * is why isn't the host_port updated once things have
 		 * established and nat has been detected.
 		 */
-		dbg("updating connection for remote port %d", st->st_remote_endpoint.hport);
-		dbg("%s() %s.host_port: %u->%u (that)", __func__, c->remote->config->leftright,
-		    c->remote->host.port, st->st_remote_endpoint.hport);
+		ldbg(st->st_logger, "updating connection for remote port %d", st->st_remote_endpoint.hport);
+		ldbg(st->st_logger, "%s() %s.host_port: %u->%u (that)", __func__, c->remote->config->leftright,
+		     c->remote->host.port, st->st_remote_endpoint.hport);
 		c->remote->host.port = st->st_remote_endpoint.hport;
 		/*
 		 * Need to force the host to use the encap port.
@@ -180,7 +180,7 @@ void schedule_revival(struct state *st)
 	}
 
 	if (c->kind == CK_INSTANCE && c->sa_keying_tries == 0) {
-		dbg("limiting instance revival attempts to 2 keyingtries");
+		ldbg(st->st_logger, "limiting instance revival attempts to 2 keyingtries");
 		c->sa_keying_tries = 2;
 	}
 	/*
