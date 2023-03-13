@@ -392,8 +392,33 @@ static bool delete_routed_tunnel_child(struct connection *c,
 
 void connection_timeout(struct ike_sa *ike)
 {
-	struct connection *c = ike->sa.st_connection;
-	dispatch(CONNECTION_TIMEOUT_IKE, c,
+	/*
+	 * First notify all the non-IKE children that there as been a
+	 * timeout.
+	 */
+	struct state_filter sf = {
+		.ike = ike,
+		.where = HERE,
+	};
+	while (next_state_new2old(&sf)) {
+		struct child_sa *child = pexpect_child_sa(sf.st);
+		if (child->sa.st_connection == ike->sa.st_connection) {
+			continue;
+		}
+		dispatch(CONNECTION_TIMEOUT_CHILD,
+			 child->sa.st_connection,
+			 child->sa.st_logger, HERE,
+			 (struct annex) {
+				 .ike = ike,
+				 .child = child,
+			 });
+	}
+
+	/*
+	 * Second, notify the IKE SA that there's been a timeout.
+	 */
+	dispatch(CONNECTION_TIMEOUT_IKE,
+		 ike->sa.st_connection,
 		 ike->sa.st_logger, HERE,
 		 (struct annex) {
 			 .ike = ike,
@@ -802,6 +827,27 @@ void dispatch(enum connection_event event, struct connection *c,
 			}
 			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
+
+		case X(TIMEOUT_CHILD, UNROUTED, PERMANENT):
+			/* ex, permanent+up but not established */
+#if 0
+			if (should_revive(&(e->child->sa))) {
+				schedule_revival(&(e->child->sa));
+				delete_child_sa(&e->child);
+				return;
+			}
+#endif
+			/*
+			 * IKE SA gets stats count
+			 * pstat_sa_failed(&e->ike->sa,
+			 * REASON_TOO_MANY_RETRANSMITS);
+			 */
+			/*
+			 * Permanent so don't delete.
+			 */
+			delete_child_sa(&e->child);
+			return;
+
 		}
 	}
 
