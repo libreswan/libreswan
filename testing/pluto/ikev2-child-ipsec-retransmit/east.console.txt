@@ -24,10 +24,5 @@ east #
 | sending 440 bytes for STATE_V2_PARENT_R0 through eth1 from 192.1.2.23:500 to 192.1.2.45:500 using UDP (for #1)
 | sending 225 bytes for STATE_V2_PARENT_R1 through eth1 from 192.1.2.23:500 to 192.1.2.45:500 using UDP (for #1)
 | sending 177 bytes for STATE_V2_ESTABLISHED_IKE_SA through eth1 from 192.1.2.23:500 to 192.1.2.45:500 using UDP (for #1)
-| sending 177 bytes for ikev2-responder-retransmit through eth1 from 192.1.2.23:500 to 192.1.2.45:500 using UDP (for #1)
-| sending 177 bytes for ikev2-responder-retransmit through eth1 from 192.1.2.23:500 to 192.1.2.45:500 using UDP (for #1)
-| sending 177 bytes for ikev2-responder-retransmit through eth1 from 192.1.2.23:500 to 192.1.2.45:500 using UDP (for #1)
-| sending 177 bytes for ikev2-responder-retransmit through eth1 from 192.1.2.23:500 to 192.1.2.45:500 using UDP (for #1)
-| sending 177 bytes for ikev2-responder-retransmit through eth1 from 192.1.2.23:500 to 192.1.2.45:500 using UDP (for #1)
 east #
  

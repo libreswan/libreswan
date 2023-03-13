@@ -33,15 +33,12 @@ west #
 west #
  iptables -I INPUT -p udp --dport 500 -j DROP
 west #
+ ipsec whack --impair timeout-on-retransmit
+west #
  ipsec auto --up westnet-eastnet-ikev2b #retransmits
 002 "westnet-eastnet-ikev2b" #3: initiating Child SA using IKE SA #1
 1v2 "westnet-eastnet-ikev2b" #3: sent CREATE_CHILD_SA request for new IPsec SA
-010 "westnet-eastnet-ikev2a" #1: STATE_V2_ESTABLISHED_IKE_SA: retransmission; will wait 0.5 seconds for response
-010 "westnet-eastnet-ikev2a" #1: STATE_V2_ESTABLISHED_IKE_SA: retransmission; will wait 1 seconds for response
-010 "westnet-eastnet-ikev2a" #1: STATE_V2_ESTABLISHED_IKE_SA: retransmission; will wait 2 seconds for response
-010 "westnet-eastnet-ikev2a" #1: STATE_V2_ESTABLISHED_IKE_SA: retransmission; will wait 4 seconds for response
-010 "westnet-eastnet-ikev2a" #1: STATE_V2_ESTABLISHED_IKE_SA: retransmission; will wait 8 seconds for response
-031 "westnet-eastnet-ikev2a" #1: STATE_V2_ESTABLISHED_IKE_SA: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our IKEv2 message
+002 "westnet-eastnet-ikev2a" #1: IMPAIR: retransmit so timing out SA (may retry)
 002 "westnet-eastnet-ikev2a" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 002 "westnet-eastnet-ikev2a" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and NOT sending notification
 west #
@@ -54,10 +51,5 @@ west #
 | sending 828 bytes for STATE_V2_PARENT_I0 through eth1 from 192.1.2.45:500 to 192.1.2.23:500 using UDP (for #1)
 | sending 397 bytes for STATE_V2_PARENT_I1 through eth1 from 192.1.2.45:500 to 192.1.2.23:500 using UDP (for #1)
 | sending 337 bytes for STATE_V2_ESTABLISHED_IKE_SA through eth1 from 192.1.2.45:500 to 192.1.2.23:500 using UDP (for #1)
-| sending 337 bytes for EVENT_RETRANSMIT through eth1 from 192.1.2.45:500 to 192.1.2.23:500 using UDP (for #1)
-| sending 337 bytes for EVENT_RETRANSMIT through eth1 from 192.1.2.45:500 to 192.1.2.23:500 using UDP (for #1)
-| sending 337 bytes for EVENT_RETRANSMIT through eth1 from 192.1.2.45:500 to 192.1.2.23:500 using UDP (for #1)
-| sending 337 bytes for EVENT_RETRANSMIT through eth1 from 192.1.2.45:500 to 192.1.2.23:500 using UDP (for #1)
-| sending 337 bytes for EVENT_RETRANSMIT through eth1 from 192.1.2.45:500 to 192.1.2.23:500 using UDP (for #1)
 west #
  
