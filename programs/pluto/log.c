@@ -280,8 +280,8 @@ static void log_whacks(enum rc_type rc, const struct logger *logger, struct jamb
 
 void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc_flags)
 {
-	enum rc_type rc = rc_flags & RC_MASK;
-	enum stream stream = rc_flags & STREAM_MASK;
+	enum rc_type rc = (rc_flags & RC_MASK);
+	enum stream stream = (rc_flags & STREAM_MASK);
 	switch (stream) {
 	case DEBUG_STREAM:
 		log_raw(LOG_DEBUG, "", buf);
@@ -317,7 +317,7 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc
 		 */
 		return;
 	}
-	bad_case(stream);
+	abort(); /* not bad_case(stream) as recursive */
 }
 
 const struct logger_object_vec logger_global_vec = {

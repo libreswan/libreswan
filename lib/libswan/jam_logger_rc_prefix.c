@@ -14,6 +14,8 @@
  *
  */
 
+#include <stdlib.h>		/* for abort() */
+
 #include "lswlog.h"
 
 /* XXX: The message format is:
@@ -38,7 +40,7 @@ static void jam_stream_prefix(struct jambuf *buf, enum stream stream)
 		return;
 	case PASSERT_STREAM:
 		jam_string(buf, PASSERT_PREFIX);
-		break;
+		return;
 	case FATAL_STREAM:
 		jam_string(buf, FATAL_PREFIX);
 		return;
@@ -50,7 +52,7 @@ static void jam_stream_prefix(struct jambuf *buf, enum stream stream)
 	case NO_STREAM:
 		return;
 	}
-	bad_case(stream);
+	abort(); /* not bad_case(stream) as recursive */
 }
 
 void jam_logger_rc_prefix(struct jambuf *buf, const struct logger *logger, lset_t rc_flags)
@@ -73,5 +75,5 @@ void jam_logger_rc_prefix(struct jambuf *buf, const struct logger *logger, lset_
 		}
 		return;
 	}
-	bad_case(prefix);
+	abort(); /* not bad_case(stream) as recursive */
 }

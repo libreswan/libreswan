@@ -103,5 +103,6 @@ void jambuf_to_logger(struct jambuf *buf, const struct logger *logger UNUSED, ls
 		 */
 		return;
 	}
-	bad_case(stream);
+	fprintf(stderr, "bad stream %d", stream);
+	abort(); /* not bad_case(stream) as recursive */
 }
