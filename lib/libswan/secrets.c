@@ -534,9 +534,6 @@ static err_t process_psk_secret(struct file_lex_position *flp, chunk_t *psk)
 		}
 	}
 
-	dbg("processing PSK at line %d: %s",
-	    flp->lino, ugh == NULL ? "passed" : ugh);
-
 	return ugh;
 }
 
@@ -558,9 +555,6 @@ static err_t process_xauth_secret(struct file_lex_position *flp, chunk_t *xauth)
 			shift(flp);
 		}
 	}
-
-	dbg("processing XAUTH at line %d: %s",
-	    flp->lino, ugh == NULL ? "passed" : ugh);
 
 	return ugh;
 }
@@ -598,9 +592,6 @@ static err_t process_ppk_static_secret(struct file_lex_position *flp,
 			shift(flp);
 		}
 	}
-
-	dbg("processing PPK at line %d: %s",
-	    flp->lino, ugh == NULL ? "passed" : ugh);
 
 	return ugh;
 }
@@ -708,15 +699,21 @@ static void process_secret(struct file_lex_position *flp,
 		/* preshared key: quoted string or ttodata format */
 		ugh = !shift(flp) ? "ERROR: unexpected end of record in PSK" :
 			process_psk_secret(flp, &s->stuff.u.preshared_secret);
+		dbg("processing PSK at line %d: %s",
+			s->stuff.line, ugh == NULL ? "passed" : ugh);
 	} else if (tokeqword(flp, "xauth")) {
 		/* xauth key: quoted string or ttodata format */
 		s->stuff.kind = SECRET_XAUTH;
 		ugh = !shift(flp) ? "ERROR: unexpected end of record in PSK" :
 			process_xauth_secret(flp, &s->stuff.u.preshared_secret);
+		dbg("processing XAUTH at line %d: %s",
+			s->stuff.line, ugh == NULL ? "passed" : ugh);
 	} else if (tokeqword(flp, "ppks")) {
 		s->stuff.kind = SECRET_PPK;
 		ugh = !shift(flp) ? "ERROR: unexpected end of record in static PPK" :
 			process_ppk_static_secret(flp, &s->stuff.ppk, &s->stuff.ppk_id);
+		dbg("processing PPK at line %d: %s",
+			s->stuff.line, ugh == NULL ? "passed" : ugh);
 	} else {
 		ugh = builddiag("WARNING: ignored unrecognized keyword: %s", flp->tok);
 	}
@@ -724,7 +721,7 @@ static void process_secret(struct file_lex_position *flp,
 	if (ugh != NULL) {
 		llog(RC_LOG_SERIOUS, flp->logger,
 			    "\"%s\" line %d: %s",
-			    flp->filename, flp->lino, ugh);
+			    flp->filename, s->stuff.line, ugh);
 		/* free id's that should have been allocated */
 		if (s->ids != NULL) {
 			struct id_list *i, *ni;
