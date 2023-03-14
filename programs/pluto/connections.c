@@ -597,37 +597,34 @@ static diag_t extract_host_afi(const struct whack_message *wm,
 
 #define ADD_FAILED_PREFIX "failed to add connection: "
 
-static diag_t extract_host_end_config(struct connection *c, /* for POOL */
-				      struct id *end_id,
-				      struct host_end_config *host_config,
-				      struct host_end_config *other_host_config,
-				      const struct whack_message *wm,
-				      const struct whack_end *src,
-				      const struct whack_end *other_src,
-				      bool *same_ca,
-				      struct logger *logger/*connection "..."*/)
+static diag_t extract_host_end(struct connection *c, /* for POOL */
+			       struct host_end *host,
+			       struct host_end_config *host_config,
+			       struct host_end_config *other_host_config,
+			       const struct whack_message *wm,
+			       const struct whack_end *src,
+			       const struct whack_end *other_src,
+			       bool *same_ca,
+			       struct logger *logger/*connection "..."*/)
 {
 	err_t err;
 	const char *leftright = host_config->leftright;
 
 	/*
-	 * Decode id, if any.
+	 * decode id, if any
 	 *
 	 * For %fromcert, the load_end_cert*() call will update it.
-	 *
-	 * For ID_NONE, set_hosts_from_that_address() will update it.
 	 */
-	pexpect(end_id->kind == ID_NONE); /*unset*/
-	if (src->id != NULL) {
+	if (src->id == NULL) {
+		host->id.kind = ID_NONE;
+	} else {
 		/*
-		 * Cannot report errors due to low level nesting of
-		 * functions, since it will try literal IP string
-		 * conversions first. But atoid() will log real
-		 * failures like illegal DNS chars already, and for
-		 * @string ID's all chars are valid without
-		 * processing.
+		 * Cannot report errors due to low level nesting of functions,
+		 * since it will try literal IP string conversions first. But
+		 * atoid() will log real failures like illegal DNS chars already,
+		 * and for @string ID's all chars are valid without processing.
 		 */
-		atoid(src->id, end_id);
+		atoid(src->id, &host->id);
 	}
 
 	/* decode CA distinguished name, if any */
@@ -687,8 +684,7 @@ static diag_t extract_host_end_config(struct connection *c, /* for POOL */
 			return diag("%s certificate '%s' not found in the NSS database",
 				    leftright, src->cert);
 		}
-		diag_t diag = add_end_cert_and_preload_private_key(cert, end_id,
-								   host_config,
+		diag_t diag = add_end_cert_and_preload_private_key(cert, host, host_config,
 								   *same_ca/*preserve_ca*/,
 								   logger);
 		if (diag != NULL) {
@@ -804,8 +800,7 @@ static diag_t extract_host_end_config(struct connection *c, /* for POOL */
 		 */
 		CERTCertificate *cert = get_cert_by_ckaid_from_nss(&ckaid, logger);
 		if (cert != NULL) {
-			diag_t diag = add_end_cert_and_preload_private_key(cert, end_id,
-									   host_config,
+			diag_t diag = add_end_cert_and_preload_private_key(cert, host, host_config,
 									   *same_ca/*preserve_ca*/,
 									   logger);
 			if (diag != NULL) {
@@ -1261,7 +1256,7 @@ static diag_t extract_child_end_config(const struct whack_message *wm,
 }
 
 diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
-					    struct id *end_id,
+					    struct host_end *host_end,
 					    struct host_end_config *host_end_config,
 					    bool preserve_ca,
 					    struct logger *logger)
@@ -1293,7 +1288,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	}
 
 	/* XXX: should this be after validity check? */
-	select_nss_cert_id(cert, end_id);
+	select_nss_cert_id(cert, &host_end->id);
 
 	/* check validity of cert */
 	if (CERT_CheckCertValidTimes(cert, PR_Now(), false) !=
@@ -1303,7 +1298,7 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 	}
 
 	dbg("loading %s certificate \'%s\' pubkey", leftright, nickname);
-	if (!add_pubkey_from_nss_cert(&pluto_pubkeys, end_id, cert, logger)) {
+	if (!add_pubkey_from_nss_cert(&pluto_pubkeys, &host_end->id, cert, logger)) {
 		/* XXX: push diag_t into add_pubkey_from_nss_cert()? */
 		return diag("%s certificate \'%s\' pubkey could not be loaded",
 			    leftright, nickname);
@@ -2476,10 +2471,10 @@ static diag_t extract_connection(const struct whack_message *wm,
 	FOR_EACH_THING(this, LEFT_END, RIGHT_END) {
 		diag_t d;
 		int that = (this + 1) % END_ROOF;
-		d = extract_host_end_config(c, &c->end[this].host.id,
-					    &config->end[this].host, &config->end[that].host,
-					    wm, whack_ends[this], whack_ends[that],
-					    &same_ca[this], c->logger);
+		d = extract_host_end(c, &c->end[this].host,
+				     &config->end[this].host, &config->end[that].host,
+				     wm, whack_ends[this], whack_ends[that],
+				     &same_ca[this], c->logger);
 		if (d != NULL) {
 			return d;
 		}
