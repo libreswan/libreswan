@@ -392,6 +392,8 @@ static bool delete_routed_tunnel_child(struct connection *c,
 
 void connection_timeout(struct ike_sa *ike)
 {
+	ldbg_sa(ike, "IKE SA is no longer viable");
+	ike->sa.st_viable_parent = false;
 	/*
 	 * First notify all the non-IKE children that there as been a
 	 * timeout.
@@ -508,6 +510,8 @@ void connection_delete_ike(struct ike_sa **ikep)
 	ike->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
 	ike->sa.st_on_delete.skip_revival = true;
 	ike->sa.st_on_delete.skip_connection = true;
+	ldbg_sa(ike, "IKE SA is no longer viable");
+	ike->sa.st_viable_parent = false;
 	/*
 	 * Let state machine figure out how to react.
 	 */
