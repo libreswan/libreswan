@@ -860,7 +860,7 @@ void init_ikev1(struct logger *logger)
 		 * always true of a state?
 		 */
 		if ((t->flags & from->v1.flags) != from->v1.flags) {
-			DBGF(DBG_BASE, "transition %s -> %s (%s) missing flags 0x%"PRIxLSET,
+			DBGF(DBG_BASE, "transition %s -> %s (%s) missing flags 0x"PRI_LSET,
 			     from->short_name, to->short_name,
 			     t->message, from->v1.flags);
 		}
@@ -2014,7 +2014,7 @@ void process_packet_tail(struct msg_digest *md)
 				}
 
 				esb_buf b;
-				dbg("got payload 0x%" PRIxLSET"  (%s) needed: 0x%" PRIxLSET " opt: 0x%" PRIxLSET,
+				dbg("got payload 0x"PRI_LSET" (%s) needed: 0x"PRI_LSET" opt: 0x"PRI_LSET,
 				    s, enum_show(&ikev1_payload_names, np, &b),
 				    needed, smc->opt_payloads);
 				needed &= ~s;

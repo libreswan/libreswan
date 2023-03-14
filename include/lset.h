@@ -22,6 +22,7 @@
 #include <stddef.h>		/* for size_t */
 #include <stdint.h>		/* for uint_fast64_t */
 #include <stdbool.h>
+#include <inttypes.h>		/* for PRI... */
 
 struct enum_names;
 struct jambuf;
@@ -33,8 +34,8 @@ struct sparse_name;
  */
 
 typedef uint_fast64_t lset_t;
-#define PRI_LSET "%"PRIxLSET
-#define PRIxLSET    PRIxFAST64
+#define PRI_LSET "%"PRIxFAST64
+
 #define LELEM_ROOF  64	/* all elements must be less than this */
 #define LEMPTY ((lset_t)0)
 #define LELEM(opt) ((lset_t)1 << (opt))

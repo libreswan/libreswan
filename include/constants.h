@@ -102,8 +102,6 @@ enum binary {
 
 #define NULL_FD (-1)	/* NULL file descriptor */
 
-#include <inttypes.h>
-
 #include <prcpucfg.h>	/* from nspr4 devel */
 
 #ifndef BITS_PER_BYTE
