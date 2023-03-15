@@ -100,7 +100,7 @@ extern const struct enum_names encap_mode_names;
 
 enum direction {
 	DIRECTION_INBOUND = 2, /*>true*/
-	DIRECTION_OUTBOUND,
+	DIRECTION_OUTBOUND = 4, /* so lset_t works */
 };
 
 extern const struct enum_names direction_names;
