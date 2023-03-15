@@ -953,8 +953,6 @@ extern bool verbose_state_busy(const struct state *st);
 extern bool drop_new_exchanges(void);
 extern bool require_ddos_cookies(void);
 extern void show_globalstate_status(struct show *s);
-extern void set_newest_v1_ipsec_sa(const char *m, struct state *const st);
-extern void set_newest_v2_child_sa(const char *m, struct child_sa *child);
 extern void update_ike_endpoints(struct ike_sa *ike, const struct msg_digest *md);
 extern bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md);
 extern void v2_expire_unused_ike_sa(struct ike_sa *ike);

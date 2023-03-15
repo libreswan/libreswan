@@ -1692,8 +1692,6 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
-	set_newest_v1_ipsec_sa(__func__, st);
-
 	if (dpd_init(st) != STF_OK) {
 		uninstall_ipsec_sa(st);
 		return STF_FAIL_v1N;
@@ -1723,8 +1721,6 @@ stf_status quick_inI2(struct state *st, struct msg_digest *md UNUSED)
 #endif
 	if (!install_ipsec_sa(pexpect_child_sa(st), DIRECTION_OUTBOUND, HERE))
 		return STF_INTERNAL_ERROR;
-
-	set_newest_v1_ipsec_sa(__func__, st);
 
 	update_iv(st);  /* not actually used, but tidy */
 

@@ -392,21 +392,14 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 	}
 #endif
 
+	/* re-check IKE, child about to be updated */
+	pexpect(ike->sa.st_connection->newest_ike_sa == ike->sa.st_serialno);
+
 	/* install inbound and outbound SPI info */
 	if (!install_ipsec_sa(larval_child, DIRECTION_INBOUND|DIRECTION_OUTBOUND, HERE)) {
 		/* already logged */
 		return v2N_TS_UNACCEPTABLE;
 	}
-
-	/*
-	 * Mark that the connection has an established Child SA
-	 * associated with it.
-	 *
-	 * (The IKE SA's connection may not be the same as the Child
-	 * SAs connection).
-	 */
-	pexpect(ike->sa.st_connection->newest_ike_sa == ike->sa.st_serialno);
-	set_newest_v2_child_sa(__func__, larval_child); /* process_v2_CREATE_CHILD_SA_request_continue_2() */
 
 	/*
 	 * Should this save SK_PBS so that, when the emit fails,
@@ -824,8 +817,6 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		/* This affects/kills the IKE SA? Oops :-( */
 		return v2N_INVALID_SYNTAX; /* fatal */
 	}
-
-	set_newest_v2_child_sa(__func__, child); /* process_v2_child_response_payloads() */
 
 	if (child->sa.st_state->kind == STATE_V2_REKEY_CHILD_I1)
 		ikev2_rekey_expire_predecessor(child, child->sa.st_v2_rekey_pred);

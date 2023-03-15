@@ -2385,6 +2385,38 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
 		}
 	}
 
+	/*
+	 * Transfer ownership of the connection's IPsec SA (kernel
+	 * state) to the new Child.
+	 *
+	 * For IKEv2, both inbound and outbound IPsec SAs are
+	 * installed at the same time so direction doesn't matter.
+	 *
+	 * For IKEv1, on the responder during quick mode, inbound and
+	 * then outbound IPsec SAs are installed during separate
+	 * exchanges, hence direction does matter.
+	 *
+	 * Since the above code updates routing, the routing owner
+	 * should match the child.
+	 */
+	if (direction & DIRECTION_OUTBOUND) {
+		so_serial_t old_ipsec_sa = c->newest_ipsec_sa;
+		so_serial_t new_ipsec_sa = child->sa.st_serialno;
+		so_serial_t routing_sa = c->child.newest_routing_sa;
+		connection_buf cb;
+		ldbg(logger,
+		     "kernel: %s() .newest_ipsec_sa "PRI_SO"->"PRI_SO" (routing SA "PRI_SO") "PRI_CONNECTION" "PRI_WHERE,
+		     __func__, pri_so(old_ipsec_sa), pri_so(new_ipsec_sa),
+		     pri_so(routing_sa),
+		     pri_connection(c, &cb),
+		     pri_where(where));
+		PEXPECT(child->sa.st_logger, new_ipsec_sa >= old_ipsec_sa);
+#if 0
+		PEXPECT(child->sa.st_logger, routing_sa == new_ipsec_sa);
+#endif
+		child->sa.st_connection->newest_ipsec_sa = new_ipsec_sa;
+	}
+
 	/* we only audit once for IPsec SA's, we picked the inbound SA */
 	if (direction & DIRECTION_INBOUND) {
 		linux_audit_conn(&child->sa, LAK_CHILD_START);

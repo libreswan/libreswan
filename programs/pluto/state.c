@@ -2908,36 +2908,6 @@ void show_globalstate_status(struct show *s)
 	}
 }
 
-static void dbg_newest_ipsec_sa_change(const char *f, so_serial_t old_ipsec_sa,
-				       struct state *const st)
-{
-	dbg("%s: instance %s[%lu], setting %s newest_ipsec_sa to #%lu (was #%lu) (spd.eroute=#%lu) cloned from #%lu",
-	    f, st->st_connection->name,
-	    st->st_connection->instance_serial,
-	    st->st_connection->config->ike_info->version_name,
-	    st->st_connection->newest_ipsec_sa, old_ipsec_sa,
-	    pri_so(st->st_connection->child.newest_routing_sa),
-	    st->st_clonedfrom);
-}
-
-void set_newest_v1_ipsec_sa(const char *f, struct state *const st)
-{
-	passert(st->st_ike_version == IKEv1);
-	so_serial_t old_ipsec_sa = st->st_connection->newest_ipsec_sa;
-
-	st->st_connection->newest_ipsec_sa = st->st_serialno;
-	dbg_newest_ipsec_sa_change(f, old_ipsec_sa, st);
-}
-
-void set_newest_v2_child_sa(const char *f, struct child_sa *child)
-{
-	passert(child->sa.st_ike_version == IKEv2);
-	so_serial_t old_sa = child->sa.st_connection->newest_ipsec_sa;
-	so_serial_t new_sa = child->sa.st_serialno;
-	child->sa.st_connection->newest_ipsec_sa = new_sa;
-	dbg_newest_ipsec_sa_change(f, old_sa, &child->sa);
-}
-
 static void append_word(char **sentence, const char *word)
 {
 	size_t sl = strlen(*sentence);
