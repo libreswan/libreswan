@@ -248,6 +248,13 @@ static void scribble_selectors_on_spd(struct connection *c,
 		}
 	}
 
+#if 0
+	/*
+	 * XXX: this is bogus.
+	 *
+	 * During a re-key .newest_routing_sa and .newest_ipsec_sa are
+	 * pointing at the old owner.
+	 */
 	/*
 	 * Fancy bread crumb; need to save the old owner and then zap
 	 * C so it is consistent with the new SPDs when they get
@@ -256,6 +263,7 @@ static void scribble_selectors_on_spd(struct connection *c,
 	so_serial_t owner = c->child.newest_routing_sa;
 	c->child.newest_routing_sa = SOS_NOBODY;
 	set_child_routing(c, c->child.routing, owner);
+#endif
 #if 0
 	set_connection_priority(c); /* must be after .kind and .spd are set */
 #endif
