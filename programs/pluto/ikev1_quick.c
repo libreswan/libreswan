@@ -1473,9 +1473,6 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 	if (!install_inbound_ipsec_sa(st))
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 
-	/* we only audit once for IPsec SA's, we picked the inbound SA */
-	linux_audit_conn(st, LAK_CHILD_START);
-
 	/* encrypt message, except for fixed part of header */
 	if (!ikev1_encrypt_message(&rbody, st)) {
 		uninstall_ipsec_sa(st);

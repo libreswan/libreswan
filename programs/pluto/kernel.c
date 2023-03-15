@@ -2140,6 +2140,9 @@ bool install_inbound_ipsec_sa(struct state *st)
 		return false;
 	}
 
+	/* we only audit once for IPsec SA's, we picked the inbound SA */
+	linux_audit_conn(st, LAK_CHILD_START);
+
 	dbg("kernel: %s() setup inbound SA", __func__);
 
 	return true;
