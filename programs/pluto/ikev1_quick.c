@@ -1470,7 +1470,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 		if (!add_xfrm_interface(c, st->st_logger))
 			return STF_FATAL;
 #endif
-	if (!install_inbound_ipsec_sa(st))
+	if (!install_inbound_ipsec_sa(pexpect_child_sa(st), HERE))
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 
 	/* encrypt message, except for fixed part of header */
@@ -1682,7 +1682,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 		if (!add_xfrm_interface(c, st->st_logger))
 			return STF_FATAL;
 #endif
-	if (!install_ipsec_sa(st, true))
+	if (!install_ipsec_sa(pexpect_child_sa(st), DIRECTION_INBOUND|DIRECTION_OUTBOUND, HERE))
 		return STF_INTERNAL_ERROR;
 
 	/* encrypt message, except for fixed part of header */
@@ -1721,7 +1721,7 @@ stf_status quick_inI2(struct state *st, struct msg_digest *md UNUSED)
 		if (!add_xfrm_interface(c, st->st_logger))
 			return STF_FATAL;
 #endif
-	if (!install_ipsec_sa(st, false))
+	if (!install_ipsec_sa(pexpect_child_sa(st), DIRECTION_OUTBOUND, HERE))
 		return STF_INTERNAL_ERROR;
 
 	set_newest_v1_ipsec_sa(__func__, st);

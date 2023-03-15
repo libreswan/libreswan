@@ -743,6 +743,7 @@ static enum routability connection_routability(struct connection *c,
 	 * if this is a transport SA, and overlapping SAs are supported, then
 	 * this route is not necessary at all.
 	 */
+	PEXPECT(logger, !kernel_ops->overlap_supported); /* still WIP */
 	if (kernel_ops->overlap_supported && !LIN(POLICY_TUNNEL, c->policy)) {
 		ldbg(logger, "route-unnecessary: overlap and !tunnel");
 		return ROUTE_UNNECESSARY;
@@ -2023,9 +2024,9 @@ void show_kernel_interface(struct show *s)
  * The Responder will subsequently use install_ipsec_sa for the outbound.
  * The Initiator uses install_ipsec_sa to install both at once.
  */
-bool install_inbound_ipsec_sa(struct state *st)
+bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 {
-	struct connection *const c = st->st_connection;
+	struct connection *const c = child->sa.st_connection;
 
 	/*
 	 * If our peer has a fixed-address client, check if we already
@@ -2074,10 +2075,10 @@ bool install_inbound_ipsec_sa(struct state *st)
 
 			address_buf b;
 			connection_buf cib;
-			log_state(RC_LOG_SERIOUS, st,
-				  "route to peer's client conflicts with "PRI_CONNECTION" %s; releasing old connection to free the route",
-				  pri_connection(co, &cib),
-				  str_address_sensitive(&co->remote->host.addr, &b));
+			llog_sa(RC_LOG_SERIOUS, child,
+				"route to peer's client conflicts with "PRI_CONNECTION" %s; releasing old connection to free the route",
+				pri_connection(co, &cib),
+				str_address_sensitive(&co->remote->host.addr, &b));
 			if (co->kind == CK_INSTANCE) {
 				delete_connection(&co);
 			} else {
@@ -2085,68 +2086,7 @@ bool install_inbound_ipsec_sa(struct state *st)
 			}
 		}
 	}
-
-	/*
-	 * Check that we will be able to route and eroute.
-	 */
-
-	enum routability r = connection_routability(c, st->st_logger);
-	switch (r) {
-	case ROUTEABLE:
-		dbg("kernel:    routing is easy");
-		break;
-	case ROUTE_UNNECESSARY:
-		dbg("kernel:    routing unnecessary");
-		/*
-		 * in this situation, we should look and see if there
-		 * is a state that our connection references, that we
-		 * are in fact replacing.
-		 */
-		break;
-	case ROUTE_IMPOSSIBLE:
-		dbg("kernel:    impossible");
-		return false;
-	default:
-		bad_case(r);
-	}
-
-	if (!get_connection_spd_conflicts(c, st->st_logger)) {
-		return false;
-	}
-
-
-	/*
-	 * we now have to set up the outgoing SA first, so that
-	 * we can refer to it in the incoming SA.
-	 */
-	if (!st->st_outbound_done) {
-		dbg("kernel: installing outgoing SA now");
-		if (!setup_half_kernel_state(st, DIRECTION_OUTBOUND)) {
-			dbg("kernel: %s() failed to install outbound kernel state", __func__);
-			return false;
-		}
-		dbg("kernel: %s() setup outbound SA (kernel policy installed earlier?)", __func__);
-		st->st_outbound_done = true;
-	}
-
-	/* (attempt to) actually set up the SAs */
-
-	if (!setup_half_kernel_state(st, DIRECTION_INBOUND)) {
-		dbg("kernel: %s() failed to install inbound kernel state", __func__);
-		return false;
-	}
-
-	if (!install_inbound_ipsec_kernel_policies(st)) {
-		dbg("kernel: %s() failed to install inbound kernel policy", __func__);
-		return false;
-	}
-
-	/* we only audit once for IPsec SA's, we picked the inbound SA */
-	linux_audit_conn(st, LAK_CHILD_START);
-
-	dbg("kernel: %s() setup inbound SA", __func__);
-
-	return true;
+	return install_ipsec_sa(child, DIRECTION_INBOUND, where);
 }
 
 static bool install_outbound_ipsec_kernel_policies(struct state *st)
@@ -2348,11 +2288,19 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 	return true;
 }
 
-bool install_ipsec_sa(struct state *st, bool inbound_also)
+bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
 {
-	struct connection *c = st->st_connection;
-	dbg("kernel: install_ipsec_sa() for #%lu: %s", st->st_serialno,
-	    inbound_also ? "inbound and outbound" : "outbound only");
+	struct logger *logger = child->sa.st_logger;
+	struct connection *c = child->sa.st_connection;
+	ldbg(logger, "kernel: %s() for "PRI_SO": %s%s%s "PRI_WHERE,
+	     __func__, pri_so(child->sa.st_serialno),
+	     (direction & DIRECTION_INBOUND ? "inbound" : ""),
+	     (direction == (DIRECTION_INBOUND | DIRECTION_OUTBOUND) ? "+" : ""),
+	     (direction & DIRECTION_OUTBOUND ? "outbound" : ""),
+	     pri_where(where));
+
+	PASSERT(logger, (direction & (DIRECTION_INBOUND|DIRECTION_OUTBOUND)) != LEMPTY);
+	PASSERT(logger, (direction & ~(DIRECTION_INBOUND|DIRECTION_OUTBOUND)) == LEMPTY);
 
 	/*
 	 * Pass +0: Lookup the status of each SPD.
@@ -2361,47 +2309,61 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 	 * the structure is zeroed (sec_labels ignore conflicts).
 	 */
 
-	enum routability r = connection_routability(st->st_connection, st->st_logger);
+	enum routability r = connection_routability(c, logger);
 
 	switch (r) {
 	case ROUTEABLE:
+		ldbg(logger, "kernel:    routing is easy");
 		break;
 	case ROUTE_UNNECESSARY:
-		/* will install kernel state but not policy */
+		ldbg(logger, "kernel:    routing unnecessary");
+		/*
+		 * in this situation, we should look and see if there
+		 * is a state that our connection references, that we
+		 * are in fact replacing.
+		 */
 		break;
 	case ROUTE_IMPOSSIBLE:
+		dbg("kernel:    impossible");
 		return false;
 	default:
 		bad_case(r);
 	}
 
-	if (!get_connection_spd_conflicts(c, st->st_logger)) {
+	if (!get_connection_spd_conflicts(c, logger)) {
 		return false;
 	}
 
 	/* (attempt to) actually set up the SA group */
 
-	/* setup outgoing SA if we haven't already */
-	if (!st->st_outbound_done) {
-		if (!setup_half_kernel_state(st, DIRECTION_OUTBOUND)) {
-			dbg("kernel: %s() failed to install outbound kernel state", __func__);
+
+	/*
+	 * Always setup the outgoing SA first, so that we can refer to
+	 * it in the incoming SA (this happens when installing SAs in
+	 * both directions and installing an incomming SA).
+	 *
+	 * XXX: what exactly is being refered to?
+	 */
+	if (!child->sa.st_outbound_done) {
+		if (!setup_half_kernel_state(&child->sa, DIRECTION_OUTBOUND)) {
+			ldbg(logger, "kernel: %s() failed to install outbound kernel state", __func__);
 			return false;
 		}
-		dbg("kernel: %s() setup outbound SA (kernel policy installed earlier?)", __func__);
-		st->st_outbound_done = true;
+		ldbg(logger, "kernel: %s() setup outbound SA (kernel policy installed earlier?)", __func__);
+		child->sa.st_outbound_done = true;
 	}
 
 	/* now setup inbound SA */
-	if (inbound_also) {
-		if (!setup_half_kernel_state(st, DIRECTION_INBOUND)) {
-			dbg("kernel: %s() failed to install inbound kernel state", __func__);
+	if (direction & DIRECTION_INBOUND) {
+		if (!setup_half_kernel_state(&child->sa, DIRECTION_INBOUND)) {
+			ldbg(logger, "kernel: %s() failed to install inbound kernel state", __func__);
 			return false;
 		}
-		if (!install_inbound_ipsec_kernel_policies(st)) {
-			dbg("kernel: %s() failed to install inbound kernel policy", __func__);
+		if (!install_inbound_ipsec_kernel_policies(&child->sa)) {
+			ldbg(logger, "kernel: %s() failed to install inbound kernel policy", __func__);
 			return false;
 		}
-		dbg("kernel: %s() setup inbound SA", __func__);
+		ldbg(logger, "kernel: %s() installed inbound kernel state+policy", __func__);
 
 		/*
 		 * We successfully installed an IPsec SA, meaning it
@@ -2410,22 +2372,24 @@ bool install_ipsec_sa(struct state *st, bool inbound_also)
 		 * partner might complete an IKE SA to us, but won't
 		 * complete an IPsec SA to us.
 		 */
-		st->st_connection->temp_vars.revive_delay = 0;
+		child->sa.st_connection->temp_vars.revive_delay = 0;
 	}
 
-	if (r == ROUTE_UNNECESSARY) {
-		return true;
+	if (PEXPECT(logger, r == ROUTEABLE)
+	    && (direction & DIRECTION_OUTBOUND)) {
+		if (!install_outbound_ipsec_kernel_policies(&child->sa)) {
+			teardown_ipsec_sa(&child->sa,
+					  (c->child.routing == RT_ROUTED_TUNNEL ? EXPECT_KERNEL_POLICY_OK :
+					   EXPECT_NO_INBOUND));
+			return false;
+		}
 	}
 
-	if (!install_outbound_ipsec_kernel_policies(st)) {
-		teardown_ipsec_sa(st,
-				  (c->child.routing == RT_ROUTED_TUNNEL ? EXPECT_KERNEL_POLICY_OK :
-				   EXPECT_NO_INBOUND));
-		return false;
+	/* we only audit once for IPsec SA's, we picked the inbound SA */
+	if (direction & DIRECTION_INBOUND) {
+		linux_audit_conn(&child->sa, LAK_CHILD_START);
 	}
 
-	if (inbound_also)
-		linux_audit_conn(st, LAK_CHILD_START);
 	return true;
 }
 

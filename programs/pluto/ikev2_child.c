@@ -393,7 +393,7 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 #endif
 
 	/* install inbound and outbound SPI info */
-	if (!install_ipsec_sa(&larval_child->sa, true)) {
+	if (!install_ipsec_sa(larval_child, DIRECTION_INBOUND|DIRECTION_OUTBOUND, HERE)) {
 		/* already logged */
 		return v2N_TS_UNACCEPTABLE;
 	}
@@ -820,9 +820,10 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 				return v2N_INVALID_SYNTAX; /* fatal */
 #endif
 	/* now install child SAs */
-	if (!install_ipsec_sa(&child->sa, true))
+	if (!install_ipsec_sa(child, DIRECTION_INBOUND|DIRECTION_OUTBOUND, HERE)) {
 		/* This affects/kills the IKE SA? Oops :-( */
 		return v2N_INVALID_SYNTAX; /* fatal */
+	}
 
 	set_newest_v2_child_sa(__func__, child); /* process_v2_child_response_payloads() */
 

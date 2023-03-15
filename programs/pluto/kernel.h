@@ -509,8 +509,10 @@ extern ipsec_spi_t get_ipsec_cpi(const struct connection *c,
 				 struct logger *logger/*state*/);
 
 bool install_prospective_kernel_policy(struct connection *c);
-extern bool install_inbound_ipsec_sa(struct state *st);
-extern bool install_ipsec_sa(struct state *st, bool inbound_also);
+
+bool install_inbound_ipsec_sa(struct child_sa *child, where_t where);
+bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where);
+
 void uninstall_ipsec_sa(struct state *st);
 
 extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
