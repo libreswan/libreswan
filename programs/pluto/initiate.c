@@ -656,7 +656,6 @@ void initiate_ondemand(const struct kernel_acquire *b)
 	}
 
 	if (labeled(c)) {
-		dbg("IKEv2 connection has security label");
 		/*
 		 * Above should only returns sec_label C when below
 		 * are true.
