@@ -833,21 +833,21 @@ void dispatch(enum connection_event event, struct connection *c,
 			return;
 
 		case X(TIMEOUT_CHILD, UNROUTED, PERMANENT):
-			/* ex, permanent+up but not established */
-#if 0
-			if (should_revive(&(e->child->sa))) {
+			/*
+			 * ex, permanent+up but not established.
+			 *
+			 * Since the connection is permanent it
+			 * doesn't need to be deleted.
+			 */
+			if (should_revive_connection(e->child)) {
 				schedule_revival(&(e->child->sa));
 				delete_child_sa(&e->child);
 				return;
 			}
-#endif
 			/*
 			 * IKE SA gets stats count
 			 * pstat_sa_failed(&e->ike->sa,
 			 * REASON_TOO_MANY_RETRANSMITS);
-			 */
-			/*
-			 * Permanent so don't delete.
 			 */
 			delete_child_sa(&e->child);
 			return;

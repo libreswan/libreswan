@@ -145,6 +145,65 @@ bool should_revive(struct state *st)
 	return true;
 }
 
+bool should_revive_connection(struct child_sa *child)
+{
+	struct connection *c = child->sa.st_connection;
+
+	if (exiting_pluto) {
+		ldbg_sa(child, "skilling revival: pluto is going down");
+		return false;
+	}
+
+	if ((c->policy & POLICY_UP) == LEMPTY) {
+		ldbg_sa(child, "skipping revival: POLICY_UP disabled");
+		return false;
+	}
+
+	if ((c->policy & POLICY_DONT_REKEY) != LEMPTY) {
+		ldbg_sa(child, "skipping revival: POLICY_DONT_REKEY enabled");
+		return false;
+	}
+
+	if (labeled(c)) {
+		/* not supported for now */
+		ldbg_sa(child, "skipped revival: labeled Child SA is too hard");
+		return false;
+	}
+
+	if (c->child.newest_routing_sa > child->sa.st_serialno) {
+		/*
+		 * There's a newer SA playing with the routing.
+		 * Presumably this is an old Child SA that is in the
+		 * process of being rekeyed or replaced.
+		 */
+		ldbg_sa(child, "skipping revival: newest routing SA "PRI_SO" is newer than this Child SA "PRI_SO,
+			pri_so(c->child.newest_routing_sa), pri_so(child->sa.st_serialno));
+		return false;
+	}
+
+	if (c->newest_ipsec_sa > child->sa.st_serialno) {
+		/* should be covered by above */
+		llog_pexpect(child->sa.st_logger, HERE,
+			     "skipping revival: newest IPsec SA "PRI_SO" is newer than this Child SA "PRI_SO,
+			     pri_so(c->newest_ipsec_sa), pri_so(child->sa.st_serialno));
+		return false;
+	}
+
+	if (connection_event_is_scheduled(c, CONNECTION_REVIVAL)) {
+		llog_sa(RC_LOG, child,
+			"event CONNECTION_REVIVAL already scheduled");
+		return false;
+	}
+
+	if (impair.revival) {
+		llog_sa(RC_LOG, child,
+			"IMPAIR: skipping revival of connection that is supposed to remain up");
+		return false;
+	}
+
+	return true;
+}
+
 void schedule_revival(struct state *st)
 {
 	struct connection *c = st->st_connection;

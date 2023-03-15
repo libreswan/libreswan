@@ -19,9 +19,11 @@
 struct logger;
 struct state;
 struct connection;
+struct child_sa;
 
 void revive_connection(struct connection *c, struct logger *logger);
 bool should_revive(struct state *st);
+bool should_revive_connection(struct child_sa *child);
 void schedule_revival(struct state *st);
 void add_revival_if_needed(struct state *st);
 void init_revival_timer(void);
