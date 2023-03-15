@@ -459,22 +459,22 @@ struct connection *sec_label_parent_instantiate(struct connection *t,
 {
 	PASSERT(t->logger, labeled_template(t));
 
-	struct connection *d = instantiate(t, remote_address, /*peer-id*/NULL,
+	struct connection *p = instantiate(t, remote_address, /*peer-id*/NULL,
 					   /*update_serial*/false, empty_shunk,
 					   __func__, where);
 
-	update_selectors(d);
-	add_connection_spds(d, address_info(d->local->host.addr));
+	update_selectors(p);
+	add_connection_spds(p, address_info(p->local->host.addr));
 
 	/* leave breadcrumb */
-	pexpect(d->child.newest_routing_sa == SOS_NOBODY);
-	set_child_routing(d, d->child.routing, SOS_NOBODY);
+	pexpect(p->child.newest_routing_sa == SOS_NOBODY);
+	set_child_routing(p, p->child.routing, SOS_NOBODY);
 
 	connection_buf tb;
-	ldbg_connection(d, where, "%s: from "PRI_CONNECTION,
+	ldbg_connection(p, where, "%s: from "PRI_CONNECTION,
 			__func__, pri_connection(t, &tb));
 
-	return d;
+	return p;
 }
 
 /*
@@ -486,11 +486,11 @@ struct connection *sec_label_child_instantiate(struct ike_sa *ike,
 					       shunk_t sec_label,
 					       where_t where)
 {
-	struct connection *t = ike->sa.st_connection;
-	PEXPECT_WHERE(t->logger, where, labeled_torp(t));
+	struct connection *p = ike->sa.st_connection;
+	PASSERT(p->logger, labeled_parent(p));
 
 	ip_address remote_addr = endpoint_address(ike->sa.st_remote_endpoint);
-	struct connection *d = instantiate(t, remote_addr, /*peer-id*/NULL,
+	struct connection *c = instantiate(p, remote_addr, /*peer-id*/NULL,
 					   /*update_serial*/true, sec_label,
 					   __func__, where);
 
@@ -498,21 +498,21 @@ struct connection *sec_label_child_instantiate(struct ike_sa *ike,
 	 * Install the sec_label from either an acquire or child
 	 * payload into both ends.
 	 */
-	pexpect(t->child.sec_label.ptr == NULL);
-	d->child.sec_label = clone_hunk(sec_label, __func__);
+	PASSERT(c->logger, c->child.sec_label.ptr == NULL);
+	c->child.sec_label = clone_hunk(sec_label, __func__);
 
-	update_selectors(d);
-	add_connection_spds(d, address_info(d->local->host.addr));
+	update_selectors(c);
+	add_connection_spds(c, address_info(c->local->host.addr));
 
 	/* leave breadcrumb */
-	pexpect(d->child.newest_routing_sa == SOS_NOBODY);
-	set_child_routing(d, d->child.routing, SOS_NOBODY);
+	pexpect(c->child.newest_routing_sa == SOS_NOBODY);
+	set_child_routing(c, c->child.routing, SOS_NOBODY);
 
 	connection_buf tb;
-	ldbg_connection(d, where, "%s: from "PRI_CONNECTION,
-			__func__, pri_connection(t, &tb));
+	ldbg_connection(c, where, "%s: from "PRI_CONNECTION,
+			__func__, pri_connection(p, &tb));
 
-	return d;
+	return c;
 }
 
 struct connection *rw_responder_instantiate(struct connection *t,

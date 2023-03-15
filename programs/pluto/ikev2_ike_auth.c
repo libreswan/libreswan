@@ -1159,7 +1159,7 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike)
 		}
 	}
 
-	if (labeled_torp(c)) {
+	if (labeled_parent(c)) {
 		PEXPECT(c->logger, c->child.routing == RT_UNROUTED);
 		if (!install_sec_label_connection_policies(c, ike->sa.st_logger)) {
 			return STF_FATAL;
@@ -1435,7 +1435,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 		}
 	}
 
-	if (labeled_torp(c)) {
+	if (labeled_parent(c)) {
 		ldbg(c->logger, "sec-label routing = %s, should be RT_UNROUTED",
 		     enum_name(&routing_names, c->child.routing));
 		if (!install_sec_label_connection_policies(c, ike->sa.st_logger)) {

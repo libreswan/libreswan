@@ -1588,8 +1588,8 @@ static enum connection_kind extract_connection_kind(const struct whack_message *
 		ldbg(logger, "connection is group: by .connection_group");
 		return CK_GROUP;
 	}
-	if (wm->ike_version == IKEv2 && wm->sec_label != NULL) {
-		ldbg(logger, "connection is template: IKEv2 and has security label: %s", wm->sec_label);
+	if (wm->sec_label != NULL) {
+		ldbg(logger, "connection is template: has security label: %s", wm->sec_label);
 		return CK_TEMPLATE;
 	}
 	if(wm->policy & POLICY_IKEV2_ALLOW_NARROWING) {
@@ -3021,25 +3021,28 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 		}
 
 		/*
-		 * For both IKEv1 and IKEv2 labeled IPsec, don't try
-		 * to mix 'n' match acquire sec_label with
-		 * non-sec_label connection.
+		 * Don't try to mix 'n' match acquire sec_label with
+		 * non-sec_label connections.
 		 */
-		if ((sec_label.len > 0) != (c->config->sec_label.len > 0)) {
+		if (sec_label.len == 0 && labeled(c)) {
 			connection_buf cb;
-			ldbg(logger, "    skipping "PRI_CONNECTION"; %s have a sec_label",
-			     pri_connection(c, &cb),
-			     (sec_label.len > 0 ? "must" : "must not"));
+			ldbg(logger, "    skipping "PRI_CONNECTION"; has unwanted label",
+			     pri_connection(c, &cb));
+			continue;
+		}
+		if (sec_label.len > 0 && !labeled(c)) {
+			connection_buf cb;
+			ldbg(logger, "    skipping "PRI_CONNECTION"; doesn't have label",
+			     pri_connection(c, &cb));
 			continue;
 		}
 
 		/*
-		 * For IKEv2 labeled IPsec, always start with the
-		 * template.  Who are we to argue if the kernel asks
-		 * for a new SA with, seemingly, a security label that
-		 * matches an existing connection instance.
+		 * Labeled IPsec, always start with the either the
+		 * template or the parent - assume the kernel won't
+		 * send a duplicate child request.
 		 */
-		if (c->config->ike_version == IKEv2 && labeled_child(c)) {
+		if (labeled_child(c)) {
 			connection_buf cb;
 			ldbg(logger, "    skipping "PRI_CONNECTION"; IKEv2 sec_label connection is a child",
 			     pri_connection(c, &cb));

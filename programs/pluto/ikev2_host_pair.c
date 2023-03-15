@@ -153,10 +153,6 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 	if (c != NULL) {
 		/*
 		 * We found a possibly non-wildcard connection.
-		 *
-		 * IKEv2 doesn't have to worry about vnet=/vhost=.
-		 *
-		 * XXX: won't any template need instantiating?!?
 		 */
 		if (labeled_template(c)) {
 			ldbg(md->md_logger,

@@ -1532,17 +1532,20 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 	/*
 	 * Did the the search fail badly?
 	 *
-	 * - no existing connection (or connection template) matched
+	 * = no existing connection (or connection template) matched
 	 *   the proposed traffic selectors.
 	 *
-	 * - more importantly, the existing connection is "permanent"
+	 * = more importantly, the existing connection is "permanent"
 	 *   (or permanent like) so there isn't the option of
 	 *   instantiating something better (switching away from
 	 *   permenant connections isn't allowed; explaining why might
 	 *   be helpful here).
+	 *
+	 * = if the existing connection is LABELED then the search
+	 *   should have found the same label
 	 */
 	if (best.connection == NULL &&
-	    (cc->kind == CK_PERMANENT || labeled_torp(cc))) {
+	    (cc->kind == CK_PERMANENT || labeled(cc))) {
 		/*
 		 * Don't try to look for something else to
 		 * 'instantiate' when the current connection is

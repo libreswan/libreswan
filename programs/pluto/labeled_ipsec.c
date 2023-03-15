@@ -148,32 +148,13 @@ bool sec_label_within_range(const char *source, shunk_t label,
 #endif
 }
 
-bool labeled_where(const struct connection *c, where_t where UNUSED)
+bool labeled(const struct connection *c)
 {
 	return (c != NULL &&
 		c->config->sec_label.len > 0);
 }
 
-bool labeled_torp_where(const struct connection *c, where_t where)
-{
-	if (labeled_template_where(c, where)) {
-		connection_buf cb;
-		ldbg(c->logger, "labeled("PRI_CONNECTION") is template "PRI_WHERE,
-		     pri_connection(c, &cb),
-		     pri_where(where));
-		return true;
-	}
-	if (labeled_parent_where(c, where)) {
-		connection_buf cb;
-		ldbg(c->logger, "labeled("PRI_CONNECTION") is parent "PRI_WHERE,
-		     pri_connection(c, &cb),
-		     pri_where(where));
-		return true;
-	}
-	return false;
-}
-
-bool labeled_template_where(const struct connection *c, where_t where UNUSED)
+bool labeled_template(const struct connection *c)
 {
 	return (c != NULL &&
 		c->kind == CK_TEMPLATE &&
@@ -181,7 +162,7 @@ bool labeled_template_where(const struct connection *c, where_t where UNUSED)
 		c->child.sec_label.len == 0);
 }
 
-bool labeled_parent_where(const struct connection *c, where_t where UNUSED)
+bool labeled_parent(const struct connection *c)
 {
 	return (c != NULL &&
 		c->kind == CK_INSTANCE &&
@@ -189,7 +170,7 @@ bool labeled_parent_where(const struct connection *c, where_t where UNUSED)
 		c->child.sec_label.len == 0);
 }
 
-bool labeled_child_where(const struct connection *c, where_t where UNUSED)
+bool labeled_child(const struct connection *c)
 {
 	return (c != NULL &&
 		c->kind == CK_INSTANCE &&

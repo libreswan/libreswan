@@ -227,32 +227,8 @@ static void ondemand_routed_prospective_to_routed_negotiation(struct connection 
 
 void connection_ondemand(struct connection *c, threadtime_t *inception, const struct kernel_acquire *b)
 {
-	/*
-	 * SEC_LABELs get instantiated as follows:
-	 *
-	 *   labeled_template(): an on-demand (routed) connenection
-	 *   CK_TEMPLATE.
-	 *
-	 *   labeled_parent(): the labeled-template instantiated as a
-	 *   CK_TEMPLATE.  This should probably be CK_INSTANCE or
-	 *   CK_PARENT?
-	 *
-	 *   labeled_child(): the labeled parent instantiated as
-	 *   CK_INSTANCE.  This should probably be CK_CHILD?
-	 *
-	 * None of which really fit.  Unlike CK_INSTANCE where the
-	 * ondemand connection has both the IKE and Child SAs tied to
-	 * it.  Labeled IPsec instead has the IKE SA tied to
-	 * labeled-parent, and, optionally, the Child SA tied to
-	 * labeled-child.
-	 *
-	 * Rather than have the template m/c try to deal with this,
-	 * handle it here.
-	 *
-	 * XXX: labeled_template(c) here looks wrong - it should have
-	 * been instantiated?
-	 */
-	if (labeled_torp(c)) {
+	if (labeled(c)) {
+		PASSERT(c->logger, labeled_parent(c));
 		ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY,
 				  inception, b->sec_label, b->background, b->logger);
 		packet_buf pb;

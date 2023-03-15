@@ -1220,19 +1220,20 @@ static void clear_narrow_holds(const ip_selector *src_client,
 bool install_sec_label_connection_policies(struct connection *c, struct logger *logger)
 {
 	connection_buf cb;
-	dbg("kernel: %s() "PRI_CO" "PRI_CO" "PRI_CONNECTION" routed %s sec_label="PRI_SHUNK,
-	    __func__,
-	    pri_connection_co(c),
-	    pri_connection_co(c->clonedfrom),
-	    pri_connection(c, &cb),
-	    enum_name(&routing_story, c->child.routing),
-	    pri_shunk(c->config->sec_label));
+	ldbg(logger,
+	     "kernel: %s() "PRI_CO" "PRI_CO" "PRI_CONNECTION" routed %s sec_label="PRI_SHUNK,
+	     __func__,
+	     pri_connection_co(c),
+	     pri_connection_co(c->clonedfrom),
+	     pri_connection(c, &cb),
+	     enum_name(&routing_story, c->child.routing),
+	     pri_shunk(c->config->sec_label));
 
-	if (PBAD(c->logger, c->config->ike_version != IKEv2 && !labeled_torp(c))) {
+	if (PBAD(logger, !labeled_parent(c))) {
 		return false;
 	}
 
-	if (erouted(c->child.routing)) {
+	if (PBAD(logger, erouted(c->child.routing))) {
 		dbg("kernel: %s() connection already routed", __func__);
 		return true;
 	}
@@ -1258,7 +1259,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 				 * reversed parameters is just so
 				 * lame.  raw_policy can handle this.
 				 */
-				dbg("pulling previously installed outbound policy");
+				ldbg(logger, "pulling previously installed outbound policy");
 				pexpect(direction == DIRECTION_INBOUND);
 				delete_spd_kernel_policy(c->spd, DIRECTION_OUTBOUND,
 							 EXPECT_KERNEL_POLICY_OK,
@@ -1271,14 +1272,14 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 
 	/* a new route: no deletion required, but preparation is */
 	if (!do_updown(UPDOWN_PREPARE, c, c->spd, NULL/*ST*/, logger)) {
-		dbg("kernel: %s() prepare command returned an error", __func__);
+		ldbg(logger, "kernel: %s() prepare command returned an error", __func__);
 	}
 
 	if (!do_updown(UPDOWN_ROUTE, c, c->spd, NULL/*ST*/, logger)) {
 		/* Failure!  Unwind our work. */
-		dbg("kernel: %s() route command returned an error", __func__);
+		ldbg(logger, "kernel: %s() route command returned an error", __func__);
 		if (!do_updown(UPDOWN_DOWN, c, c->spd, NULL/*st*/, logger)) {
-			dbg("kernel: down command returned an error");
+			ldbg(logger, "kernel: down command returned an error");
 		}
 		delete_spd_kernel_policy(c->spd, DIRECTION_OUTBOUND,
 					 EXPECT_KERNEL_POLICY_OK,

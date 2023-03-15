@@ -657,6 +657,12 @@ void initiate_ondemand(const struct kernel_acquire *b)
 
 	if (labeled(c)) {
 		/*
+		 * We've found a sec_label connection that can serve.
+		 *
+		 * It could be a labeled-template (which needs
+		 * instantiated), or labeled-parent (which means a
+		 * piggyback), but never a labeled-child.
+		 *
 		 * Above should only returns sec_label C when below
 		 * are true.
 		 */
@@ -664,22 +670,9 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		PASSERT(b->logger, sec_label_within_range("acquire", HUNK_AS_SHUNK(b->sec_label),
 							  c->config->sec_label, b->logger));
 		PASSERT(b->logger, (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
-		switch (c->config->ike_version) {
-		case IKEv1:
-			PASSERT(b->logger, (c->kind == CK_PERMANENT ||
-					    c->kind == CK_INSTANCE));
-			break;
-		case IKEv2:
-			PASSERT(b->logger, labeled_torp(c));
-			break;
-		}
+		PASSERT(b->logger, (labeled_template(c) || labeled_parent(c)));
+
 		/*
-		 * We've found a sec_label connection that can serve.
-		 *
-		 * It could be a labeled-template (which needs
-		 * instantiated), or labeled-parent (which means a
-		 * piggyback), but never a labeled-child.
-		 *
 		 * Announce this to the world.  Use c->logger instead?
 		 */
 		LLOG_JAMBUF(RC_LOG, b->logger, buf) {
@@ -687,13 +680,16 @@ void initiate_ondemand(const struct kernel_acquire *b)
 			/* jam(buf, " using "); */
 		}
 
+		/*
+		 * ondemand negotiation always requires a parent.
+		 */
 		struct connection *cc;
 		if (labeled_template(c)) {
 			cc = sec_label_parent_instantiate(c, c->remote->host.addr, HERE);
 		} else {
-			PEXPECT(b->logger, labeled_parent(c));
 			cc = c;
 		}
+		PASSERT(b->logger, labeled_parent(cc));
 
 		connection_ondemand(cc, &inception, b);
 		return;
