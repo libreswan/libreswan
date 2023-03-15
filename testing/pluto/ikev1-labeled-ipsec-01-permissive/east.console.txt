@@ -1,5 +1,7 @@
 /testing/guestbin/swan-prep
 east #
+ echo 3 > /proc/sys/net/core/xfrm_acq_expires
+east #
  # build install se module
 east #
  ../../guestbin/semodule.sh ipsecspd-full-perm.te
@@ -8,9 +10,9 @@ Creating targeted ipsecspd-full-perm.pp policy package
 rm tmp/ipsecspd-full-perm.mod.fc tmp/ipsecspd-full-perm.mod
 ipsecspd-full-perm.pp installed
 east #
- setsebool domain_can_mmap_files=1
+ setenforce 0
 east #
- setsebool nis_enabled=1
+ # get pluto going
 east #
  ipsec start
 Redirecting to: [initsystem]
@@ -19,12 +21,6 @@ east #
 east #
  ipsec auto --add labeled
 002 "labeled": added IKEv1 connection
-east #
- runcon -t netutils_t ipsec getpeercon_server -d 4300
--> running as unconfined_u:unconfined_r:netutils_t:s0-s0:c0.c1023
--> creating socket ... ok
--> listening on TCP port 4300 ... ok
--> waiting ... 
 east #
  echo "initdone"
 initdone

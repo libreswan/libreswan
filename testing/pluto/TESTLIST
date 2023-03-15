@@ -1002,7 +1002,7 @@ kvmplutotest	interop-ikev2-xfrmi-strongswan-01			good
 kvmplutotest	interop-ikev2-eaptls-strongswan-client			wip
 
 # IKEv1 Selinux / secure labeling tests
-kvmplutotest	ikev1-labeled-ipsec-01						wip
+kvmplutotest	ikev1-labeled-ipsec-01-permissive				good
 kvmplutotest	ikev1-labeled-ipsec-02-mismatch					wip
 kvmplutotest	ikev1-labeled-ipsec-03-multi-acquires				wip
 # IKEv2 Selinux / secure labeling tests

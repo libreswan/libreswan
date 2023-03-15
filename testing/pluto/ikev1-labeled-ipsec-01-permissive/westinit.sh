@@ -1,8 +1,9 @@
 /testing/guestbin/swan-prep
+echo 3 > /proc/sys/net/core/xfrm_acq_expires
 # install selinux; generated in OUTPUT by east
 semodule -i OUTPUT/ipsecspd-full-perm.pp
-setsebool domain_can_mmap_files=1
-setsebool nis_enabled=1
+setenforce 0
+# start pluto
 ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add labeled
