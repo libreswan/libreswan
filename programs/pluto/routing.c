@@ -272,17 +272,24 @@ static bool should_retry(struct ike_sa *ike)
 	unsigned try_limit = c->sa_keying_tries;
 	unsigned tries_so_far = ike->sa.st_try;
 
+	if (IS_IKE_SA_ESTABLISHED(&ike->sa)) {
+		ldbg_sa(ike, "skipping retry: IKE SA is established");
+		return false;
+	}
+
+	if (try_limit > 0 && tries_so_far >= try_limit) {
+		ldbg_sa(ike, "skipping retry: already tried %u ot of %u retries",
+			tries_so_far, try_limit);
+		return false;
+	}
+
 	if (try_limit == 0) {
 		ldbg_sa(ike, "retying ad infinitum");
-		return true;
+	} else {
+		ldbg_sa(ike, "retrying: only tried %d out of %u", tries_so_far, try_limit);
 	}
 
-	if (tries_so_far < try_limit) {
-		ldbg_sa(ike, "retrying; only tried %d out of %u", tries_so_far, try_limit);
-		return true;
-	}
-
-	return false;
+	return true;
 }
 
 /*
@@ -385,28 +392,48 @@ static bool delete_routed_tunnel_child(struct connection *c,
 	return false;
 }
 
-void connection_timeout(struct ike_sa *ike)
+void connection_timeout(struct ike_sa **ike)
 {
-	ldbg_sa(ike, "IKE SA is no longer viable");
-	ike->sa.st_viable_parent = false;
+	/*
+	 * Stop reviving children trying to use this IKE SA.
+	 */
+	ldbg_sa(*ike, "IKE SA is no longer viable");
+	(*ike)->sa.st_viable_parent = false;
+
+	/*
+	 * Short-circuit and preserve weird retry code path for now.
+	 *
+	 * If an IKE SA gets a timeout before it has established it
+	 * will retry a few times before falling back to revival.
+	 */
+	if (should_retry(*ike)) {
+		retry(*ike);
+		PEXPECT((*ike)->sa.st_logger, !(*ike)->sa.st_on_delete.skip_revival);
+		(*ike)->sa.st_on_delete.skip_revival = true;
+		pstat_sa_failed(&(*ike)->sa, REASON_TOO_MANY_RETRANSMITS);
+		(*ike)->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
+		delete_ike_family(ike);
+		return;
+	}
+
 	/*
 	 * First notify all the non-IKE children that there as been a
 	 * timeout.
 	 */
 	struct state_filter sf = {
-		.ike = ike,
+		.ike = *ike,
 		.where = HERE,
 	};
 	while (next_state_new2old(&sf)) {
 		struct child_sa *child = pexpect_child_sa(sf.st);
-		if (child->sa.st_connection == ike->sa.st_connection) {
+		if (child->sa.st_connection == (*ike)->sa.st_connection) {
 			continue;
 		}
 		dispatch(CONNECTION_TIMEOUT_CHILD,
 			 child->sa.st_connection,
 			 child->sa.st_logger, HERE,
 			 (struct annex) {
-				 .ike = ike,
+				 .ike = *ike,
 				 .child = child,
 			 });
 	}
@@ -415,11 +442,17 @@ void connection_timeout(struct ike_sa *ike)
 	 * Second, notify the IKE SA that there's been a timeout.
 	 */
 	dispatch(CONNECTION_TIMEOUT_IKE,
-		 ike->sa.st_connection,
-		 ike->sa.st_logger, HERE,
+		 (*ike)->sa.st_connection,
+		 (*ike)->sa.st_logger, HERE,
 		 (struct annex) {
-			 .ike = ike,
+			 .ike = *ike,
 		 });
+
+	PEXPECT((*ike)->sa.st_logger, !(*ike)->sa.st_on_delete.skip_revival);
+	(*ike)->sa.st_on_delete.skip_revival = true;
+	pstat_sa_failed(&(*ike)->sa, REASON_TOO_MANY_RETRANSMITS);
+	(*ike)->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
+	delete_ike_family(ike);
 }
 
 void connection_route(struct connection *c)
@@ -707,10 +740,6 @@ void dispatch(enum connection_event event, struct connection *c,
 
 		case X(TIMEOUT_IKE, UNROUTED, PERMANENT):
 			/* ex, permanent+up */
-			if (should_retry(e->ike)) {
-				retry(e->ike);
-				return;
-			}
 			if (should_revive(&(e->ike->sa))) {
 				schedule_revival(&(e->ike->sa));
 				return;
@@ -719,10 +748,6 @@ void dispatch(enum connection_event event, struct connection *c,
 			return;
 		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, PERMANENT):
 			/* for instance, permenant ondemand */
-			if (should_retry(e->ike)) {
-				retry(e->ike);
-				return;
-			}
 			if (should_revive(&(e->ike->sa))) {
 				schedule_revival(&(e->ike->sa));
 				return;
@@ -730,10 +755,6 @@ void dispatch(enum connection_event event, struct connection *c,
 			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
 		case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, PERMANENT):
-			if (should_retry(e->ike)) {
-				retry(e->ike);
-				return;
-			}
 			if (should_revive(&(e->ike->sa))) {
 				schedule_revival(&(e->ike->sa));
 				return;
@@ -750,10 +771,6 @@ void dispatch(enum connection_event event, struct connection *c,
 			return;
 		case X(TIMEOUT_IKE, UNROUTED, INSTANCE):
 			/* for instance, permanent+up */
-			if (should_retry(e->ike)) {
-				retry(e->ike);
-				return;
-			}
 			if (should_revive(&(e->ike->sa))) {
 				schedule_revival(&(e->ike->sa));
 				return;
@@ -762,10 +779,6 @@ void dispatch(enum connection_event event, struct connection *c,
 			return;
 		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, INSTANCE):
 			/* for instance, permenant ondemand */
-			if (should_retry(e->ike)) {
-				retry(e->ike);
-				return;
-			}
 			if (should_revive(&(e->ike->sa))) {
 				schedule_revival(&(e->ike->sa));
 				return;
@@ -784,10 +797,6 @@ void dispatch(enum connection_event event, struct connection *c,
 			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
 		case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, INSTANCE):
-			if (should_retry(e->ike)) {
-				retry(e->ike);
-				return;
-			}
 			if (should_revive(&(e->ike->sa))) {
 				schedule_revival(&(e->ike->sa));
 				return;

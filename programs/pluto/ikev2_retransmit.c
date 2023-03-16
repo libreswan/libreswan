@@ -89,17 +89,8 @@ void event_v2_retransmit(struct state *ike_sa, monotime_t now UNUSED)
 		/*
 		 * Tell the connection so it can revive/retry if
 		 * needed and then delete the state.
-		 *
-		 * XXX: There might be a larval child.  Just use the
-		 * biggest stick available.  Can't send delete as
-		 * message window is full.
 		 */
-		connection_timeout(ike);
-		PEXPECT(ike->sa.st_logger, !ike->sa.st_on_delete.skip_revival);
-		ike->sa.st_on_delete.skip_revival = true;
-		pstat_sa_failed(&ike->sa, REASON_TOO_MANY_RETRANSMITS);
-		ike->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
-		delete_ike_family(&ike);
+		connection_timeout(&ike);
 		return;
 
 	case DELETE_ON_RETRANSMIT:
