@@ -207,6 +207,35 @@ struct logger_object_vec {
 
 void jam_logger_rc_prefix(struct jambuf *buf, const struct logger *logger, lset_t rc_flags);
 
+struct barfbuf {
+	char array[LOG_WIDTH];
+	struct barfjam {
+		const struct logger *logger;
+		struct jambuf jambuf;
+		lset_t rc_flags;
+		where_t where;
+		enum pluto_exit_code pec;
+	} barf;
+};
+
+struct jambuf *jambuf_from_barfbuf(struct barfbuf *barfbuf,
+				   const struct logger *logger,
+				   enum pluto_exit_code pec,
+				   where_t where,
+				   lset_t rc_flags) MUST_USE_RESULT;
+void barfbuf_to_logger(struct barfbuf *buf); /* may not return */
+
+#define BARFBUF(RC_FLAGS, LOGGER, PEC, WHERE, BUF)			\
+	/* create the buffer */						\
+	for (struct barfbuf barfbuf_, *bf_ = &barfbuf_;			\
+	     bf_ != NULL; bf_ = NULL)					\
+		/* create the jambuf */					\
+		for (struct jambuf *BUF =				\
+			     jambuf_from_barfbuf(&barfbuf_, LOGGER,	\
+						 PEC, WHERE, RC_FLAGS); \
+		     BUF != NULL;					\
+		     barfbuf_to_logger(&barfbuf_), BUF = NULL)
+
 bool suppress_object_log_false(const void *object);
 bool suppress_object_log_true(const void *object);
 size_t jam_object_prefix_none(struct jambuf *buf, const void *object);

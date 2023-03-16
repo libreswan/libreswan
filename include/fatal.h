@@ -25,6 +25,7 @@
 enum pluto_exit_code;
 struct logger;
 struct jambuf;
+struct barfbuf;
 
 /*
  * XXX: The message format is:
@@ -38,13 +39,17 @@ void fatal(enum pluto_exit_code pec, const struct logger *logger,
 void fatal_errno(enum pluto_exit_code pec, const struct logger *logger,
 		 int error, const char *message, ...) PRINTF_LIKE(4) NEVER_RETURNS;
 
-void fatal_jambuf_to_logger(struct jambuf *buf, enum pluto_exit_code pec,
-			    const struct logger *logger) NEVER_RETURNS;
+void fatal_barfbuf_to_logger(struct barfbuf *buf) NEVER_RETURNS;
 
 #define LLOG_FATAL_JAMBUF(PEC, LOGGER, BUF)				\
-	JAMBUF(BUF)							\
-	for (jam_logger_rc_prefix(BUF, LOGGER, FATAL_FLAGS);		\
-	     BUF != NULL;						\
-	     fatal_jambuf_to_logger(BUF, PEC, LOGGER), BUF = NULL)
+	/* create the buffer */						\
+	for (struct barfbuf barfbuf_, *lbp_ = &barfbuf_;		\
+	     lbp_ != NULL; lbp_ = NULL)					\
+		/* create the jambuf */					\
+		for (struct jambuf *BUF =				\
+			     jambuf_from_barfbuf(&barfbuf_, LOGGER,	\
+						 PEC, NULL, FATAL_FLAGS); \
+		     BUF != NULL;					\
+		     fatal_barfbuf_to_logger(&barfbuf_), BUF = NULL)
 
 #endif

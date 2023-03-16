@@ -63,25 +63,27 @@ diag_t diag_nss_error(const char *message, ...)
 void passert_nss_error(const struct logger *logger, where_t where,
 		       const char *message, ...)
 {
-	char scratch[LOG_WIDTH];
-	struct jambuf buf[1] = { ARRAY_AS_JAMBUF(scratch), };
+	struct barfbuf barfbuf;
+	struct jambuf *buf = jambuf_from_barfbuf(&barfbuf, logger, 0, where, PASSERT_FLAGS);
 	{
-		jam_logger_rc_prefix(buf, logger, PASSERT_FLAGS);
 		va_list ap;
 		va_start(ap, message);
 		jam_va_nss_error_code(buf, PR_GetError(), message, ap);
 		va_end(ap);
 	}
-	passert_jambuf_to_logger(buf, where, logger, PASSERT_FLAGS);
+	passert_barfbuf_to_logger(&barfbuf);
 }
 
 void pexpect_nss_error(struct logger *logger, where_t where,
 		       const char *message, ...)
 {
-	LLOG_PEXPECT_JAMBUF(logger, where, buf) {
+	struct barfbuf barfbuf;
+	struct jambuf *buf = jambuf_from_barfbuf(&barfbuf, logger, 0, where, PEXPECT_FLAGS);
+	{
 		va_list ap;
 		va_start(ap, message);
 		jam_va_nss_error_code(buf, PR_GetError(), message, ap);
 		va_end(ap);
 	}
+	pexpect_barfbuf_to_logger(&barfbuf);
 }

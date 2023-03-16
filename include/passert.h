@@ -29,6 +29,7 @@
 #include "lset.h"
 
 struct logger;
+struct barfbuf;
 
 /* our versions of assert: log result */
 
@@ -50,15 +51,18 @@ extern const struct logger global_logger;
 extern void llog_passert(const struct logger *logger, where_t where,
 			 const char *message, ...) NEVER_RETURNS PRINTF_LIKE(3);
 
-void passert_jambuf_to_logger(struct jambuf *buf,
-			      where_t where, const struct logger *logger,
-			      lset_t rc_flags) NEVER_RETURNS;
+void passert_barfbuf_to_logger(struct barfbuf *buf) NEVER_RETURNS;
 
 #define LLOG_PASSERT_JAMBUF(LOGGER, WHERE, BUF)				\
-	JAMBUF(BUF)							\
-	for (jam_logger_rc_prefix(BUF, LOGGER, PASSERT_FLAGS);		\
-	     BUF != NULL;						\
-	     passert_jambuf_to_logger(BUF, WHERE, (LOGGER), PASSERT_FLAGS), BUF = NULL)
+	/* create the buffer */						\
+	for (struct barfbuf barfbuf_, *bf_ = &barfbuf_;			\
+	     bf_ != NULL; bf_ = NULL)					\
+		/* create the jambuf */					\
+		for (struct jambuf *BUF =				\
+			     jambuf_from_barfbuf(&barfbuf_, LOGGER,	\
+						 0, WHERE, PASSERT_FLAGS); \
+		     BUF != NULL;					\
+		     passert_barfbuf_to_logger(&barfbuf_), BUF = NULL)
 
 #define PASSERT_WHERE(LOGGER, WHERE, ASSERTION)				\
 	({								\

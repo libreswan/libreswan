@@ -180,6 +180,7 @@ OBJS += llog_dump.o
 OBJS += llog_va_list.o
 OBJS += log_nss_error.o
 OBJS += jam_logger_rc_prefix.o
+OBJS += barfbuf.o
 
 OBJS += jam_nss_cka.o
 OBJS += jam_nss_ckf.o

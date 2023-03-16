@@ -33,6 +33,9 @@
 #include "fd.h"			/* for null_fd */
 #include "impair.h"
 
+struct jambuf;
+struct barfbuf;
+
 /*
  * Log an expectation failure message to the error streams.  That is
  * the main log (level LOG_ERR) and whack log (level RC_LOG_SERIOUS).
@@ -47,15 +50,18 @@
 extern void llog_pexpect(const struct logger *logger, where_t where,
 			 const char *message, ...) PRINTF_LIKE(3);
 
-void pexpect_jambuf_to_logger(struct jambuf *buf,
-			      where_t where, const struct logger *logger,
-			      lset_t rc_flags);
+void pexpect_barfbuf_to_logger(struct barfbuf *buf);
 
 #define LLOG_PEXPECT_JAMBUF(LOGGER, WHERE, BUF)				\
-	JAMBUF(BUF)							\
-	for (jam_logger_rc_prefix(BUF, LOGGER, PEXPECT_FLAGS);		\
-	     BUF != NULL;						\
-	     pexpect_jambuf_to_logger(BUF, WHERE, (LOGGER), PEXPECT_FLAGS), BUF = NULL)
+	/* create the buffer */						\
+	for (struct barfbuf barfbuf_, *lbp_ = &barfbuf_;		\
+	     lbp_ != NULL; lbp_ = NULL)					\
+		/* create the jambuf */					\
+		for (struct jambuf *BUF =				\
+			     jambuf_from_barfbuf(&barfbuf_, LOGGER,	\
+						 0, WHERE, PEXPECT_FLAGS); \
+		     BUF != NULL;					\
+		     pexpect_barfbuf_to_logger(&barfbuf_), BUF = NULL)
 
 #define PEXPECT_WHERE(LOGGER, WHERE, ASSERTION)				\
 	({								\
