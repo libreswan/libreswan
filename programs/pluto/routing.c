@@ -108,19 +108,38 @@ static void jam_event(struct jambuf *buf, enum connection_event event, struct co
 }
 
 void set_child_routing_where(struct connection *c, enum routing routing,
-			     so_serial_t so, where_t where)
+			     so_serial_t new_routing_sa, where_t where)
 {
+	so_serial_t old_routing_sa = c->child.newest_routing_sa;
 	connection_buf cb;
 	enum_buf ob, nb;
-	ldbg(c->logger, "kernel: routing connection "PRI_CONNECTION" "PRI_SO"->"PRI_SO" %s->%s "PRI_WHERE,
-	     pri_connection(c, &cb),
-	     pri_so(c->child.newest_routing_sa),
-	     pri_so(so),
+	ldbg(c->logger, "kernel: .newest_routing_sa "PRI_SO"->"PRI_SO" .routing %s->%s (IPsec "PRI_SO") "PRI_CONNECTION" "PRI_WHERE,
+	     pri_so(old_routing_sa), pri_so(new_routing_sa),
 	     str_enum(&routing_story, c->child.routing, &ob),
 	     str_enum(&routing_story, routing, &nb),
+	     pri_so(c->newest_ipsec_sa),
+	     pri_connection(c, &cb),
 	     pri_where(where));
+	/*
+	 * Labed children are never routed and/or have a kernel
+	 * policy.  Instead the kernel deals with the policy, and the
+	 * template/parent owns the route.
+	 */
+	PEXPECT(c->logger, !labeled_child(c));
+	/*
+	 * Always going forward; never in reverse.
+	 *
+	 * Well, except during teardown when the kernel policy is
+	 * pulled before kernel state.  Hence, when SO is nobody,
+	 * can't assert much about the ipsec_sa.
+	 */
+	PEXPECT(c->logger, old_routing_sa >= c->newest_ipsec_sa);
+	if (new_routing_sa != SOS_NOBODY) {
+		PEXPECT(c->logger, new_routing_sa >= c->child.newest_routing_sa);
+		PEXPECT(c->logger, new_routing_sa >= c->newest_ipsec_sa);
+	}
 	c->child.routing = routing;
-	c->child.newest_routing_sa = so;
+	c->child.newest_routing_sa = new_routing_sa;
 }
 
 static void ondemand_unrouted_to_unrouted_negotiation(struct connection *c, const struct annex *e)
