@@ -112,10 +112,8 @@ struct connection *clone_connection(const char *name, struct connection *t,
 		reference_xfrmi(c);
 	}
 
-	/* trash cloned value; applies to parent */
-	c->child.routing = RT_UNROUTED;
 	c->child.newest_routing_sa = SOS_NOBODY;
-	set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
+	c->child.routing = RT_UNROUTED;
 
 	return c;
 }
@@ -439,7 +437,7 @@ struct connection *spd_instantiate(struct connection *t,
 
 	/* leave breadcrumb */
 	pexpect(d->child.newest_routing_sa == SOS_NOBODY);
-	set_child_routing(d, d->child.routing, SOS_NOBODY);
+	pexpect(d->child.routing == RT_UNROUTED);
 
 	connection_buf tb;
 	ldbg_connection(d, where, "%s: from "PRI_CONNECTION,
@@ -466,9 +464,8 @@ struct connection *sec_label_parent_instantiate(struct connection *t,
 	update_selectors(p);
 	add_connection_spds(p, address_info(p->local->host.addr));
 
-	/* leave breadcrumb */
 	pexpect(p->child.newest_routing_sa == SOS_NOBODY);
-	set_child_routing(p, p->child.routing, SOS_NOBODY);
+	pexpect(p->child.routing == RT_UNROUTED);
 
 	connection_buf tb;
 	ldbg_connection(p, where, "%s: from "PRI_CONNECTION,
@@ -504,9 +501,8 @@ struct connection *sec_label_child_instantiate(struct ike_sa *ike,
 	update_selectors(c);
 	add_connection_spds(c, address_info(c->local->host.addr));
 
-	/* leave breadcrumb */
 	pexpect(c->child.newest_routing_sa == SOS_NOBODY);
-	set_child_routing(c, c->child.routing, SOS_NOBODY);
+	pexpect(c->child.routing == RT_UNROUTED);
 
 	connection_buf tb;
 	ldbg_connection(c, where, "%s: from "PRI_CONNECTION,
