@@ -63,7 +63,7 @@ static enum_names connection_event_names = {
 
 struct annex {
 	struct ike_sa *ike;
-	struct child_sa *child;
+	struct child_sa **child;
 	const threadtime_t *const inception;
 	const struct kernel_acquire *const acquire;
 };
@@ -99,7 +99,7 @@ static void jam_event(struct jambuf *buf, enum connection_event event, struct co
 		jam_event_sa(buf, &e->ike->sa);
 	}
 	if (e->child != NULL) {
-		jam_event_sa(buf, &e->child->sa);
+		jam_event_sa(buf, &(*e->child)->sa);
 	}
 	if (e->acquire != NULL) {
 		jam_string(buf, "; ");
@@ -351,25 +351,25 @@ static bool delete_routed_tunnel_child(struct connection *c,
 				       struct logger *logger,
 				       struct annex *e)
 {
-	if (c->child.newest_routing_sa > e->child->sa.st_serialno) {
+	if (c->child.newest_routing_sa > (*e->child)->sa.st_serialno) {
 		/* no longer child's */
 		ldbg(logger, "not the newest routing SA; leaving connection alone");
-		delete_child_sa(&e->child);
+		delete_child_sa(e->child);
 		return true;
 	}
-	if (c->newest_ipsec_sa > e->child->sa.st_serialno) {
+	if (c->newest_ipsec_sa > (*e->child)->sa.st_serialno) {
 		/* covered by above? */
 		llog_pexpect(logger, HERE,
 			     "not the newest child; leaving connection alone");
-		delete_child_sa(&e->child);
+		delete_child_sa(e->child);
 		return true;
 	}
-	if (should_revive(&(e->child->sa))) {
+	if (should_revive(&((*e->child)->sa))) {
 		/* XXX: should this be ROUTED_NEGOTIATING? */
-		replace_ipsec_with_bare_kernel_policies(e->child, RT_ROUTED_PROSPECTIVE,
+		replace_ipsec_with_bare_kernel_policies((*e->child), RT_ROUTED_PROSPECTIVE,
 							EXPECT_KERNEL_POLICY_OK, HERE);
-		schedule_revival(&(e->child->sa));
-		delete_child_sa(&e->child);
+		schedule_revival(&(*e->child)->sa);
+		delete_child_sa(e->child);
 		return true;
 	}
 	if (c->config->autostart == AUTOSTART_ONDEMAND) {
@@ -377,18 +377,18 @@ static bool delete_routed_tunnel_child(struct connection *c,
 		 * Change routing so we don't get cleared out
 		 * when state/connection dies.
 		 */
-		replace_ipsec_with_bare_kernel_policies(e->child, RT_ROUTED_PROSPECTIVE,
+		replace_ipsec_with_bare_kernel_policies((*e->child), RT_ROUTED_PROSPECTIVE,
 							EXPECT_KERNEL_POLICY_OK, HERE);
-		delete_child_sa(&e->child);
+		delete_child_sa(e->child);
 		return false;
 	}
 	/* XXX: should this be responder only? */
 	enum routing new_routing =
 		(c->config->failure_shunt != SHUNT_NONE ? RT_ROUTED_FAILURE :
 		 RT_ROUTED_PROSPECTIVE);
-	replace_ipsec_with_bare_kernel_policies(e->child, new_routing,
+	replace_ipsec_with_bare_kernel_policies((*e->child), new_routing,
 						EXPECT_KERNEL_POLICY_OK, HERE);
-	delete_child_sa(&e->child);
+	delete_child_sa(e->child);
 	return false;
 }
 
@@ -434,8 +434,9 @@ void connection_timeout(struct ike_sa **ike)
 			 child->sa.st_logger, HERE,
 			 (struct annex) {
 				 .ike = *ike,
-				 .child = child,
+				 .child = &child,
 			 });
+		PEXPECT((*ike)->sa.st_logger, child == NULL);
 	}
 
 	/*
@@ -497,16 +498,14 @@ void connection_unroute(struct connection *c)
  * Received a message telling us to delete the connection's Child.SA.
  */
 
-void connection_delete_child(struct child_sa **childp)
+void connection_delete_child(struct child_sa **child)
 {
-	struct child_sa *child = (*childp); *childp = NULL;
-	struct connection *c = child->sa.st_connection;
 #if 0
-	if (c->kind != CK_PERMANENT) {
-		ldbg_sa(child, "%s() doesn't yet handle %s",
+	if ((*child)->sa.st_connection->kind != CK_PERMANENT) {
+		ldbg_sa((*child), "%s() doesn't yet handle %s",
 			__func__, enum_name_short(&connection_kind_names, c->kind));
 		child->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
-		delete_state(&child->sa);
+		delete_state(child->sa);
 		return;
 	}
 #endif
@@ -514,17 +513,20 @@ void connection_delete_child(struct child_sa **childp)
 	 * Caller is responsible for generating any messages; suppress
 	 * delete_state()'s desire to send an out-of-band delete.
 	 */
-	child->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
-	child->sa.st_on_delete.skip_revival = true;
-	child->sa.st_on_delete.skip_connection = true;
+	(*child)->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
+	(*child)->sa.st_on_delete.skip_revival = true;
+	(*child)->sa.st_on_delete.skip_connection = true;
 	/*
 	 * Let state machine figure out how to react.
 	 */
-	dispatch(CONNECTION_DELETE_CHILD, c,
-		 child->sa.st_logger, HERE,
+	dispatch(CONNECTION_DELETE_CHILD,
+		 (*child)->sa.st_connection,
+		 (*child)->sa.st_logger, HERE,
 		 (struct annex) {
 			 .child = child,
 		 });
+	/* no logger as no child */
+	pexpect(*child == NULL);
 }
 
 void connection_delete_ike(struct ike_sa **ikep)
@@ -796,6 +798,8 @@ void dispatch(enum connection_event event, struct connection *c,
 			}
 			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
+		case X(TIMEOUT_IKE, ROUTED_PROSPECTIVE, INSTANCE):
+			return;
 		case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, INSTANCE):
 			if (should_revive(&(e->ike->sa))) {
 				schedule_revival(&(e->ike->sa));
@@ -843,9 +847,9 @@ void dispatch(enum connection_event event, struct connection *c,
 			 * Since the connection is permanent it
 			 * doesn't need to be deleted.
 			 */
-			if (should_revive_connection(e->child)) {
-				schedule_revival(&(e->child->sa));
-				delete_child_sa(&e->child);
+			if (should_revive_connection(*(e->child))) {
+				schedule_revival(&(*(e->child))->sa);
+				delete_child_sa(e->child);
 				return;
 			}
 			/*
@@ -853,7 +857,7 @@ void dispatch(enum connection_event event, struct connection *c,
 			 * pstat_sa_failed(&e->ike->sa,
 			 * REASON_TOO_MANY_RETRANSMITS);
 			 */
-			delete_child_sa(&e->child);
+			delete_child_sa(e->child);
 			return;
 
 		}
