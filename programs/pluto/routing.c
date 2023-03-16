@@ -419,18 +419,66 @@ void connection_timeout(struct ike_sa **ike)
 	}
 
 	/*
-	 * First notify all the non-IKE children that there as been a
-	 * timeout.
+	 * Find and notify the IKE SA's newest first Child SA.
+	 *
+	 * This way, the first Child SA can jump ahead of any other
+	 * children that may need reviving.  Without this, the IKE
+	 * SA's connection could end up flip-flopping between several
+	 * of the children (harmless but annoying).
+	 *
+	 * Search the full list IKE SA childen as short cuts such as
+	 * .newest_ipsec_sa and .newest_routing_sa may not be valid.
+	 *
+	 * XXX: true?  A labeled_child() doesn't set
+	 * .newest_routing_sa for instance, but does that matter?
 	 */
-	struct state_filter sf = {
+
+	struct child_sa *first_child = NULL;
+	struct state_filter first_child_filter = {
 		.ike = *ike,
 		.where = HERE,
 	};
-	while (next_state_new2old(&sf)) {
-		struct child_sa *child = pexpect_child_sa(sf.st);
-		if (child->sa.st_connection == (*ike)->sa.st_connection) {
+	while (next_state_new2old(&first_child_filter)) {
+		struct child_sa *child = pexpect_child_sa(first_child_filter.st);
+		if (child->sa.st_connection != (*ike)->sa.st_connection) {
 			continue;
 		}
+		if (first_child == NULL) {
+			first_child = child;
+			continue;
+		}
+		if (child->sa.st_serialno > first_child->sa.st_serialno) {
+			first_child = child;
+			continue;
+		}
+	}
+	if (first_child != NULL) {
+		attach_whack(first_child->sa.st_logger, (*ike)->sa.st_logger);
+		/* will delete child and its logger */
+		dispatch(CONNECTION_TIMEOUT_CHILD,
+			 first_child->sa.st_connection,
+			 first_child->sa.st_logger, HERE,
+			 (struct annex) {
+				 .ike = *ike,
+				 .child = &first_child,
+			 });
+	}
+	PEXPECT((*ike)->sa.st_logger, first_child == NULL); /*gone!*/
+
+	/*
+	 * Now go through any remaining children timing them out.
+	 *
+	 * This should include children of the first IKE SA that are
+	 * been replaced.
+	 */
+	struct state_filter child_filter = {
+		.ike = *ike,
+		.where = HERE,
+	};
+	while (next_state_new2old(&child_filter)) {
+		struct child_sa *child = pexpect_child_sa(child_filter.st);
+		attach_whack(child->sa.st_logger, (*ike)->sa.st_logger);
+		/* will delete child and its logger */
 		dispatch(CONNECTION_TIMEOUT_CHILD,
 			 child->sa.st_connection,
 			 child->sa.st_logger, HERE,
@@ -442,7 +490,7 @@ void connection_timeout(struct ike_sa **ike)
 	}
 
 	/*
-	 * Second, notify the IKE SA that there's been a timeout.
+	 * Finally notify the IKE SA?
 	 */
 	dispatch(CONNECTION_TIMEOUT_IKE,
 		 (*ike)->sa.st_connection,
@@ -801,6 +849,7 @@ void dispatch(enum connection_event event, struct connection *c,
 			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
 		case X(TIMEOUT_IKE, ROUTED_PROSPECTIVE, INSTANCE):
+		case X(TIMEOUT_IKE, ROUTED_PROSPECTIVE, PERMANENT):
 			return;
 		case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, INSTANCE):
 			if (should_revive(&(e->ike->sa))) {
@@ -842,26 +891,18 @@ void dispatch(enum connection_event event, struct connection *c,
 			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
 
-		case X(TIMEOUT_CHILD, UNROUTED, PERMANENT):
-			/*
-			 * ex, permanent+up but not established.
-			 *
-			 * Since the connection is permanent it
-			 * doesn't need to be deleted.
-			 */
+		case X(TIMEOUT_CHILD, ROUTED_TUNNEL, PERMANENT):
+		case X(TIMEOUT_CHILD, ROUTED_TUNNEL, INSTANCE):
+		case X(TIMEOUT_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
+		case X(TIMEOUT_CHILD, UNROUTED, PERMANENT): /* permanent+up */
 			if (should_revive_connection(*(e->child))) {
-				schedule_revival(&(*(e->child))->sa);
+				schedule_revival(&(*e->child)->sa);
 				delete_child_sa(e->child);
 				return;
 			}
-			/*
-			 * IKE SA gets stats count
-			 * pstat_sa_failed(&e->ike->sa,
-			 * REASON_TOO_MANY_RETRANSMITS);
-			 */
+			/* XXX: delete connection? */
 			delete_child_sa(e->child);
 			return;
-
 		}
 	}
 
