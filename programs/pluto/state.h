@@ -768,6 +768,15 @@ struct state {
 		bool skip_revival;
 
 		/*
+		 * Skip any code fiddling with the installed kernel
+		 * policy (presumably caller has done this).
+		 *
+		 * With this true, delete_state() should delete the
+		 * (surprise) kernel state.
+		 */
+		bool skip_kernel_policy;
+
+		/*
 		 * In delete_state(), as a last gasp, should a delete
 		 * message to delete the SA be sent?
 		 *

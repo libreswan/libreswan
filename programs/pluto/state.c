@@ -835,6 +835,9 @@ void delete_child_sa(struct child_sa **child)
 	st->st_on_delete.skip_revival = true;
 	st->st_on_delete.send_delete = DONT_SEND_DELETE;
 	st->st_on_delete.skip_connection = true;
+#if 0
+	st->st_on_delete.skip_kernel_policy = true;
+#endif
 	delete_state(st);
 }
 
@@ -1026,7 +1029,18 @@ void delete_state_tail(struct state *st)
 	 */
 
 	if (IS_CHILD_SA(st)) {
-		uninstall_ipsec_sa(pexpect_child_sa(st));
+		if (st->st_on_delete.skip_kernel_policy) {
+			ldbg(st->st_logger, "skiping delete kernel policy (only deleting kernel state)");
+			if (IS_CHILD_SA_ESTABLISHED(st)) {
+				uninstall_kernel_states(pexpect_child_sa(st));
+			} else if (st->st_sa_role == SA_INITIATOR &&
+				   st->st_establishing_sa == IPSEC_SA) {
+				/* larval? */
+				uninstall_kernel_states(pexpect_child_sa(st));
+			}
+		} else {
+			uninstall_ipsec_sa(pexpect_child_sa(st));
+		}
 	}
 
 	if (st->st_connection->newest_ipsec_sa == st->st_serialno)
@@ -1040,7 +1054,7 @@ void delete_state_tail(struct state *st)
 	 * alive.  DONT_REKEY overrides UP.
 	 */
 	if (st->st_on_delete.skip_revival) {
-		ldbg(st->st_logger, "state already checked for revival");
+		ldbg(st->st_logger, "skipping revival (handled earlier)");
 	} else {
 		add_revival_if_needed(st);
 	}
@@ -1094,7 +1108,7 @@ void delete_state_tail(struct state *st)
 	 */
 	if (st->st_on_delete.skip_connection) {
 		connection_buf cb;
-		ldbg(st->st_logger, "leaving connection "PRI_CONNECTION" alone",
+		ldbg(st->st_logger, "skipping connection_delete_unused_instance "PRI_CONNECTION,
 		     pri_connection(st->st_connection, &cb));
 		st->st_connection = NULL;
 	} else {
