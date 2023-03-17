@@ -59,6 +59,7 @@ extern bool whack_prompt_for(struct state *st, const char *prompt,
 			     bool echo, char *ansbuf, size_t ansbuf_len);
 
 void release_whack(struct logger *logger, where_t where);
+void attach_whack(struct logger *dst, const struct logger *src);
 
 /* for pushing state to other subsystems */
 #define binlog_refresh_state(st) binlog_state((st), (st)->st_state->kind)

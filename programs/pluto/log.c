@@ -628,3 +628,36 @@ void log_state(lset_t rc_flags, const struct state *st,
 	}
 	va_end(ap);
 }
+
+void attach_whack(struct logger *dst, const struct logger *src)
+{
+	/* find a whack to attach */
+	struct fd *src_fd = NULL;
+	FOR_EACH_THING(fdp, &src->global_whackfd, &src->object_whackfd) {
+		if (*fdp != NULL) {
+			src_fd = *fdp;
+			break;
+		}
+	}
+	/* do no harm? */
+	if (src_fd == NULL) {
+		return;
+	}
+	/* already attached? */
+	FOR_EACH_THING(fdp, &dst->global_whackfd, &dst->object_whackfd) {
+		if (*fdp == src_fd) {
+			/* already attached */
+			return;
+		}
+	}
+	/* attach to spare slot */
+	FOR_EACH_THING(fdp, &dst->global_whackfd, &dst->object_whackfd) {
+		if (fdp == NULL) {
+			*fdp = fd_addref(src_fd);
+			return;
+		}
+	}
+	/* replace global */
+	fd_delref(&dst->global_whackfd);
+	dst->global_whackfd = fd_addref(src_fd);
+}
