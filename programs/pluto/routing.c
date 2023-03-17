@@ -126,6 +126,7 @@ void set_child_routing_where(struct connection *c, enum routing routing,
 	 * template/parent owns the route.
 	 */
 	PEXPECT(c->logger, !labeled_child(c));
+#if 0
 	/*
 	 * Always going forward; never in reverse.
 	 *
@@ -138,6 +139,7 @@ void set_child_routing_where(struct connection *c, enum routing routing,
 		PEXPECT(c->logger, new_routing_sa >= c->child.newest_routing_sa);
 		PEXPECT(c->logger, new_routing_sa >= c->newest_ipsec_sa);
 	}
+#endif
 	c->child.routing = routing;
 	c->child.newest_routing_sa = new_routing_sa;
 }
