@@ -236,6 +236,20 @@ void barfbuf_to_logger(struct barfbuf *buf); /* may not return */
 		     BUF != NULL;					\
 		     barfbuf_to_logger(&barfbuf_), BUF = NULL)
 
+struct logbuf {
+	char array[LOG_WIDTH];
+	struct logjam {
+		const struct logger *logger;
+		struct jambuf jambuf;
+		lset_t rc_flags;
+	} log;
+};
+
+struct jambuf *jambuf_from_logbuf(struct logbuf *logbuf,
+				  const struct logger *logger,
+				  lset_t rc_flags) MUST_USE_RESULT;
+void logbuf_to_logger(struct logbuf *buf);
+
 bool suppress_object_log_false(const void *object);
 bool suppress_object_log_true(const void *object);
 size_t jam_object_prefix_none(struct jambuf *buf, const void *object);
@@ -269,10 +283,15 @@ void llog_va_list(lset_t rc_flags, const struct logger *logger,
 void jambuf_to_logger(struct jambuf *buf, const struct logger *logger, lset_t rc_flags);
 
 #define LLOG_JAMBUF(RC_FLAGS, LOGGER, BUF)				\
-	JAMBUF(BUF)							\
-		for (jam_logger_rc_prefix(BUF, LOGGER, RC_FLAGS);	\
+	/* create the buffer */						\
+	for (struct logbuf logbuf_, *lbp_ = &logbuf_;			\
+	     lbp_ != NULL; lbp_ = NULL)					\
+		/* create the jambuf */					\
+		for (struct jambuf *BUF =				\
+			     jambuf_from_logbuf(&logbuf_, LOGGER,	\
+						RC_FLAGS);		\
 		     BUF != NULL;					\
-		     jambuf_to_logger(BUF, (LOGGER), RC_FLAGS), BUF = NULL)
+		     logbuf_to_logger(&logbuf_), BUF = NULL)
 
 void llog_dump(lset_t rc_flags,
 	       const struct logger *log,
