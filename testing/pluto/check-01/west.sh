@@ -22,6 +22,7 @@ ipsec dncheck > /dev/null || echo failed
 ipsec keyidcheck > /dev/null || echo failed
 ipsec asn1check > /dev/null || echo failed
 ipsec vendoridcheck > /dev/null || echo failed
+ipsec ttodatacheck -r
 
 # Need to disable DNS tests; localhost is ok
 ipsec ipcheck --dns=hosts-file > /dev/null || echo failed

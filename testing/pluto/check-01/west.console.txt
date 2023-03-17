@@ -47,6 +47,8 @@ west #
 vendoridcheck: Initializing NSS
 vendoridcheck: FIPS Mode: NO
 west #
+ ipsec ttodatacheck -r
+west #
  # Need to disable DNS tests; localhost is ok
 west #
  ipsec ipcheck --dns=hosts-file > /dev/null || echo failed
