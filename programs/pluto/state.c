@@ -3100,15 +3100,13 @@ void DBG_tcpdump_ike_sa_keys(const struct state *st)
 
 	/* format initiator SPI */
 	char tispi[3 + 2*IKE_SA_SPI_SIZE];
-	(void)datatot(st->st_ike_spis.initiator.bytes, sizeof(st->st_ike_spis.initiator.bytes),
-		      'x',
-		      tispi, sizeof(tispi));
+	datatot(st->st_ike_spis.initiator.bytes, sizeof(st->st_ike_spis.initiator.bytes),
+		'x', tispi, sizeof(tispi));
 
 	/* format responder SPI */
 	char trspi[3 + 2*IKE_SA_SPI_SIZE];
-	(void)datatot(st->st_ike_spis.responder.bytes, sizeof(st->st_ike_spis.responder.bytes),
-		      'x',
-		      trspi, sizeof(trspi));
+	datatot(st->st_ike_spis.responder.bytes, sizeof(st->st_ike_spis.responder.bytes),
+		'x', trspi, sizeof(trspi));
 
 	const char *authalgo = st->st_oakley.ta_integ->integ_tcpdump_name;
 	const char *encalgo = st->st_oakley.ta_encrypt->encrypt_tcpdump_name;
@@ -3126,14 +3124,14 @@ void DBG_tcpdump_ike_sa_keys(const struct state *st)
 	chunk_t ai = chunk_from_symkey("ai", st->st_skey_ai_nss,
 				       st->st_logger);
 	char tai[3 + 2 * BYTES_FOR_BITS(256)] = "";
-	(void)datatot(ai.ptr, ai.len, 'x', tai, sizeof(tai));
+	datatot(ai.ptr, ai.len, 'x', tai, sizeof(tai));
 	free_chunk_content(&ai);
 
 	/* v2 IKE encryption key for initiator (256 bit bound) */
 	chunk_t ei = chunk_from_symkey("ei", st->st_skey_ei_nss,
 				       st->st_logger);
 	char tei[3 + 2 * BYTES_FOR_BITS(256)] = "";
-	(void)datatot(ei.ptr, ei.len, 'x', tei, sizeof(tei));
+	datatot(ei.ptr, ei.len, 'x', tei, sizeof(tei));
 	free_chunk_content(&ei);
 
 	DBG_log("ikev%d I %s %s %s:%s %s%s:%s",
@@ -3146,14 +3144,14 @@ void DBG_tcpdump_ike_sa_keys(const struct state *st)
 	chunk_t ar = chunk_from_symkey("ar", st->st_skey_ar_nss,
 				       st->st_logger);
 	char tar[3 + 2 * BYTES_FOR_BITS(256)] = "";
-	(void)datatot(ar.ptr, ar.len, 'x', tar, sizeof(tar));
+	datatot(ar.ptr, ar.len, 'x', tar, sizeof(tar));
 	free_chunk_content(&ar);
 
 	/* v2 IKE encryption key for responder (256 bit bound) */
 	chunk_t er = chunk_from_symkey("er", st->st_skey_er_nss,
 				       st->st_logger);
 	char ter[3 + 2 * BYTES_FOR_BITS(256)] = "";
-	(void)datatot(er.ptr, er.len, 'x', ter, sizeof(ter));
+	datatot(er.ptr, er.len, 'x', ter, sizeof(ter));
 	free_chunk_content(&er);
 
 	DBG_log("ikev%d R %s %s %s:%s %s%s:%s",

@@ -78,8 +78,7 @@ int main(int argc, char *argv[])
 	hexout(p, n, stdout);
 	printf("\n");
 
-	size_t i = datatot((const unsigned char*)buf, n, 'h',
-			   buf2, sizeof(buf2));
+	size_t i = datatot(buf, n, 'h', buf2, sizeof(buf2));
 	if (i == 0) {
 		fprintf(stderr, "%s: datatot reports error in `%s'\n", pgm,
 			argv[1]);
@@ -94,7 +93,7 @@ int main(int argc, char *argv[])
 				pgm, i);
 			exit(1);
 		}
-		i = datatot((const unsigned char *)buf, n, 'h', p2, i);
+		i = datatot(buf, n, 'h', p2, i);
 		if (i == 0) {
 			fprintf(stderr, "%s: error in datatot retry?!?\n",
 				pgm);
@@ -286,28 +285,27 @@ static void regress(void)
 		}
 
 		check(r, buf, n,
-		      ttodata(r->ascii, 0, base, buf, sizeof(buf),
-			      &n), &status);
+		      ttodata(r->ascii, 0, base, buf, sizeof(buf), &n),
+		      &status);
 		if (base == 64 || xbase == 64)
 			check(r, buf, n,
-			      ttodata(r->ascii, strlen(r->ascii), base,
-				      buf, sizeof(buf), &n), &status);
+			      ttodata(r->ascii, strlen(r->ascii), base, buf, sizeof(buf), &n),
+			      &status);
 
 		if (xbase != 0) {
 			check(r, buf, n,
-			      ttodata(r->ascii + 2, 0, xbase, buf,
-				      sizeof(buf), &n), &status);
+			      ttodata(r->ascii + 2, 0, xbase, buf, sizeof(buf), &n),
+			      &status);
 			if (base == 64 || xbase == 64)
 				check(r, buf, n,
-				      ttodata(r->ascii + 2, 0, xbase,
-					      buf, sizeof(buf), &n), &status);
+				      ttodata(r->ascii + 2, 0, xbase, buf, sizeof(buf), &n),
+				      &status);
 		}
 	}
 
 	for (dr = datatoatab; dr->data != NULL; dr++) {
 		strcpy(buf, "---");
-		n = datatot((const unsigned char*)dr->data, strlen(dr->data),
-			    dr->format, buf,
+		n = datatot(dr->data, strlen(dr->data), dr->format, buf,
 			    (dr->buflen == -1) ? sizeof(buf) : (size_t)dr->buflen);
 		size_t should = (dr->ascii == NULL) ? 0 : strlen(dr->ascii) + 1;
 		if (dr->outlen != -1)

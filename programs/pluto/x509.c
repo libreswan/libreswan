@@ -778,7 +778,7 @@ static bool cert_detail_notafter_to_str(char *buf, size_t buflen,
 static int certsntoa(CERTCertificate *cert, char *dst, size_t dstlen)
 {
 	return datatot(cert->serialNumber.data, cert->serialNumber.len,
-			'x', dst, dstlen);
+		       'x', dst, dstlen);
 }
 
 static void show_cert_detail(struct show *s, CERTCertificate *cert)

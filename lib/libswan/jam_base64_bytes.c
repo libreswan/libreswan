@@ -25,10 +25,11 @@ size_t jam_base64_bytes(struct jambuf *buf, const void *ptr, size_t size)
 	 * A byte is 8-bits, base64 uses 6-bits (2^6=64).  Plus some
 	 * for \0.  Plus some extra for the trailing === and rounding.
 	 */
-	chunk_t base64 = alloc_chunk(size * 8 / 6 + 1 + 10, "base64");
-	size_t length = datatot(ptr, size, 64, (void*)base64.ptr, base64.len);
-	passert(length < base64.len);
-	jam_raw_bytes(buf, base64.ptr, length);
-	free_chunk_content(&base64);
+	size_t base64_len = size * 8 / 6 + 1 + 10;
+	char *base64_ptr = alloc_things(char, base64_len, "base64");
+	size_t length = datatot(ptr, size, 64, base64_ptr, base64_len);
+	passert(length < base64_len);
+	jam_raw_bytes(buf, base64_ptr, length);
+	pfree(base64_ptr);
 	return length;
 }

@@ -111,7 +111,7 @@ err_t string_to_ckaid(const char *string, ckaid_t *ckaid)
 	}
 
 	/* binlen will be "fixed"; ttodata doesn't take void* */
-	const char *err = ttodata(string, 0, 16, (void*)ckaid->ptr, ckaid->len, &ckaid->len);
+	const char *err = ttodata(string, 0, 16, ckaid->ptr, ckaid->len, &ckaid->len);
 	if (err != NULL) {
 		return err;
 	}

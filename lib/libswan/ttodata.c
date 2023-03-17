@@ -45,14 +45,12 @@ static err_t badch(void);
  *
  * Return NULL on success, else literal or errp
  */
-#define TTODATAV_IGNORE_BASE64_SPACES  (1 << 1)  /* ignore spaces in base64 encodings */
 
 static const char *ttodatav(const char *src, size_t srclen,
 			    int base,		/* 0 means figure it out */
 			    char *dst,		/* need not be valid if dstlen is 0 */
 			    size_t dstlen,
-			    size_t *lenp,	/* where to record length (NULL is nowhere) */
-			    lset_t flags	/*XXX: always LEMPTY*/)
+			    size_t *lenp)	/* where to record length (NULL is nowhere) */
 {
 	size_t ingroup;	/* number of input bytes converted at once */
 	char buf[4];	/* output from conversion */
@@ -62,7 +60,6 @@ static const char *ttodatav(const char *src, size_t srclen,
 	int ndone;
 	int i;
 	int underscoreok;
-	bool skipSpace = false;
 
 	if (dstlen == 0)
 		dst = buf;	/* point it somewhere valid */
@@ -103,8 +100,6 @@ static const char *ttodatav(const char *src, size_t srclen,
 		decode = unb64;
 		underscoreok = 0;
 		ingroup = 4;
-		if (flags & TTODATAV_IGNORE_BASE64_SPACES)
-			skipSpace = true;
 		break;
 
 	case 256:
@@ -129,7 +124,7 @@ static const char *ttodatav(const char *src, size_t srclen,
 		for (sl = 0; sl < ingroup; src++, srclen--) {
 			if (srclen == 0)
 				return "input ends in mid-byte, perhaps truncated";
-			else if (!(skipSpace && (*src == ' ' || *src == '\t')))
+			else
 				stage[sl++] = *src;
 		}
 
@@ -155,11 +150,6 @@ static const char *ttodatav(const char *src, size_t srclen,
 				*dst++ = buf[i];
 			ndone++;
 		}
-		while (srclen >= 1 && skipSpace &&
-			(*src == ' ' || *src == '\t')) {
-			src++;
-			srclen--;
-		}
 		if (underscoreok && srclen > 1 && *src == '_') {
 			/* srclen > 1 means not last character */
 			src++;
@@ -183,14 +173,14 @@ static const char *ttodatav(const char *src, size_t srclen,
 const char *ttodata(const char *src,
 		    size_t srclen,	/* 0 means apply strlen() */
 		    int base,		/* 0 means figure it out */
-		    char *dst,		/* need not be valid if dstlen is 0 */
+		    void *dst,		/* need not be valid if dstlen is 0 */
 		    size_t dstlen,
 		    size_t *lenp)	/* where to record length (NULL is nowhere) */
 {
 	/* zero means apply strlen() */
 	if (srclen == 0)
 		srclen = strlen(src);
-	return ttodatav(src, srclen, base, dst, dstlen, lenp, LEMPTY);
+	return ttodatav(src, srclen, base, dst, dstlen, lenp);
 }
 
 const char *ttochunk(shunk_t src,
@@ -198,13 +188,13 @@ const char *ttochunk(shunk_t src,
 		     chunk_t *dst)
 {
 	size_t size = 0;
-	err_t err = ttodatav(src.ptr, src.len, base, NULL/*dst*/, 0/*dstlen*/, &size, LEMPTY);
+	err_t err = ttodatav(src.ptr, src.len, base, NULL/*dst*/, 0/*dstlen*/, &size);
 	if (err != NULL) {
 		return err;
 	}
 	passert(size > 0); /* see pdone variable above */
 	*dst = alloc_chunk(size, "ttochunk");
-	err = ttodatav(src.ptr, src.len, base, (char*)dst->ptr, dst->len, &size, LEMPTY);
+	err = ttodatav(src.ptr, src.len, base, (char*)dst->ptr, dst->len, &size);
 	passert(err == NULL);
 	passert(dst->len == size);
 	return NULL;

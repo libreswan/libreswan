@@ -25,10 +25,10 @@ static void convert(const char *src, size_t nreal, int format, char *out);
  *  - datatot - convert data bytes to text
  * true length (with NUL) for success
  */
-size_t datatot(const unsigned char *src, size_t srclen,
+size_t datatot(const void *src, size_t srclen,
 	       int format,  	  /* character indicating what format */
-	       char *dst,
-	       size_t dstlen) 	  /* need not be valid if dstlen is 0 */
+	       char *dst, 	  /* need not be valid if dstlen is 0 */
+	       size_t dstlen)
 {
 	size_t inblocksize;             /* process this many bytes at a time */
 	size_t outblocksize;            /* producing this many */
