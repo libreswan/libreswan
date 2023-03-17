@@ -114,7 +114,7 @@ size_t datatot(const unsigned char *src, size_t srclen,
 		dst[dstlen-1] = '\0';
 		dst += dstlen - 1;
 	} else {
-		strncpy(dst, prefix, dstlen); /* make CodeQL happy */
+		strcpy(dst, prefix); /*dstlen > strlen(prefix) */
 		dst += nreal;
 	}
 
