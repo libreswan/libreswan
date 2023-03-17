@@ -514,6 +514,7 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where);
 bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where);
 
 void uninstall_ipsec_sa(struct state *st);
+void uninstall_kernel_states(struct child_sa *child);
 
 extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
 extern bool get_ipsec_traffic(struct state *st, struct ipsec_proto_info *sa, enum direction direction);

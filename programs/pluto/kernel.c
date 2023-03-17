@@ -1874,9 +1874,11 @@ static unsigned append_teardown(struct dead_sa *dead, enum direction direction,
  * Deleting only requires the addresses, protocol, and IPsec SPIs.
  */
 
-static bool teardown_half_ipsec_sa(struct state *st, enum direction direction)
+static bool uninstall_kernel_state(struct child_sa *child, enum direction direction)
 {
-	struct connection *const c = st->st_connection;
+	struct connection *const c = child->sa.st_connection;
+	ldbg_sa(child, "kernel: %s() deleting %s",
+		__func__, enum_name_short(&direction_names, direction));
 
 	/*
 	 * If we have a new address in c->remote->host.addr,
@@ -1888,20 +1890,20 @@ static bool teardown_half_ipsec_sa(struct state *st, enum direction direction)
 	 */
 
 	ip_address effective_remote_address = c->remote->host.addr;
-	if (!endpoint_address_eq_address(st->st_remote_endpoint, effective_remote_address) &&
+	if (!endpoint_address_eq_address(child->sa.st_remote_endpoint, effective_remote_address) &&
 	    address_is_specified(c->temp_vars.redirect_ip)) {
-		effective_remote_address = endpoint_address(st->st_remote_endpoint);
+		effective_remote_address = endpoint_address(child->sa.st_remote_endpoint);
 	}
 
 	/* collect each proto SA that needs deleting */
 
 	struct dead_sa dead[3];	/* at most 3 entries */
 	unsigned nr = 0;
-	nr += append_teardown(dead + nr, direction, &st->st_ah,
+	nr += append_teardown(dead + nr, direction, &child->sa.st_ah,
 			      c->local->host.addr, effective_remote_address);
-	nr += append_teardown(dead + nr, direction, &st->st_esp,
+	nr += append_teardown(dead + nr, direction, &child->sa.st_esp,
 			      c->local->host.addr, effective_remote_address);
-	nr += append_teardown(dead + nr, direction, &st->st_ipcomp,
+	nr += append_teardown(dead + nr, direction, &child->sa.st_ipcomp,
 			      c->local->host.addr, effective_remote_address);
 	passert(nr < elemsof(dead));
 
@@ -1924,7 +1926,7 @@ static bool teardown_half_ipsec_sa(struct state *st, enum direction direction)
 		result &= kernel_ops_del_ipsec_spi(tbd->spi,
 						   tbd->protocol,
 						   &tbd->src, &tbd->dst,
-						   st->st_logger);
+						   child->sa.st_logger);
 	}
 
 	return result;
@@ -2512,31 +2514,35 @@ static void teardown_ipsec_kernel_policies(struct state *st,
 	}
 }
 
+void uninstall_kernel_states(struct child_sa *child)
+{
+	if (child->sa.st_esp.present || child->sa.st_ah.present) {
+		/* ESP or AH means this was an established IPsec SA */
+		linux_audit_conn(&child->sa, LAK_CHILD_DESTROY);
+	}
+
+	uninstall_kernel_state(child, DIRECTION_OUTBOUND);
+	/* For larval IPsec SAs this may not exist */
+	uninstall_kernel_state(child, DIRECTION_INBOUND);
+}
+
 static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy expect_inbound_policy)
 {
+	dbg("kernel: %s() for "PRI_SO" ...", __func__, pri_so(st->st_serialno));
+
 	struct connection *c = st->st_connection;
 
 	/* XXX in IKEv2 we get a spurious call with a parent st :( */
-	if (!pexpect(IS_CHILD_SA(st))) {
+	struct child_sa *child = pexpect_child_sa(st);
+	if (child == NULL) {
 		return;
 	}
-
-	if (st->st_esp.present || st->st_ah.present) {
-		/* ESP or AH means this was an established IPsec SA */
-		linux_audit_conn(st, LAK_CHILD_DESTROY);
-	}
-
-	dbg("kernel: %s() for "PRI_SO" ...", __func__, pri_so(st->st_serialno));
 
 	if (c->child.routing == RT_ROUTED_TUNNEL) {
 		teardown_ipsec_kernel_policies(st, expect_inbound_policy);
 	}
 
-	dbg("kernel: %s() calling teardown_half_ipsec_sa(outbound)", __func__);
-	teardown_half_ipsec_sa(st, DIRECTION_OUTBOUND);
-	/* For larval IPsec SAs this may not exist */
-	dbg("kernel: %s() calling teardown_half_ipsec_sa(inbound)", __func__);
-	teardown_half_ipsec_sa(st, DIRECTION_INBOUND);
+	uninstall_kernel_states(child);
 }
 
 void uninstall_ipsec_sa(struct state *st/*IKE or Child*/)
