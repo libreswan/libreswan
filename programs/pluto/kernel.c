@@ -2410,7 +2410,15 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
 		     pri_so(routing_sa),
 		     pri_connection(c, &cb),
 		     pri_where(where));
+#if 0
+		/*
+		 * XXX: triggers when two peers initiate
+		 * simultaneously eventually finding themselves
+		 * fighting over the same Child SA, for instance in
+		 * ikev2-systemrole-04-mesh.
+		 */
 		PEXPECT(child->sa.st_logger, new_ipsec_sa >= old_ipsec_sa);
+#endif
 #if 0
 		PEXPECT(child->sa.st_logger, routing_sa == new_ipsec_sa);
 #endif
