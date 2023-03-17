@@ -1,6 +1,6 @@
-# Test programs that run on the GUEST, for libreswan
+# hunk like tests, for libreswan
 #
-# Copyright (C) 2015-2022  Andrew Cagney
+# Copyright (C) 2019 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -12,23 +12,18 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-ifndef top_srcdir
-include ../../mk/dirs.mk
-endif
-include $(top_srcdir)/mk/config.mk
+# XXX: Hack to suppress the man page.  Should one be added?
+PROGRAM_MANPAGE =
 
-SUBDIRS += enumcheck
-SUBDIRS += ipcheck
-SUBDIRS += jambufcheck
-SUBDIRS += timecheck
-SUBDIRS += hunkcheck
-SUBDIRS += dncheck
-SUBDIRS += keyidcheck
-SUBDIRS += ttodatacheck
-ifeq ($(USE_LABELED_IPSEC),true)
-SUBDIRS += getpeercon_server
-endif
-SUBDIRS += asn1check
-SUBDIRS += vendoridcheck
+PROGRAM = ttodatacheck
 
-include $(top_srcdir)/mk/targets.mk
+OBJS += ttodatacheck.o
+
+OBJS += $(LIBRESWANLIB)
+OBJS += $(LSWTOOLLIBS)
+
+ifdef top_srcdir
+include $(top_srcdir)/mk/program.mk
+else
+include ../../../mk/program.mk
+endif
