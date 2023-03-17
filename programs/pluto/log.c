@@ -652,7 +652,7 @@ void attach_whack(struct logger *dst, const struct logger *src)
 	}
 	/* attach to spare slot */
 	FOR_EACH_THING(fdp, &dst->global_whackfd, &dst->object_whackfd) {
-		if (fdp == NULL) {
+		if (*fdp == NULL) {
 			*fdp = fd_addref(src_fd);
 			return;
 		}
