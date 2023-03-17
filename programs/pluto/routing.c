@@ -468,7 +468,7 @@ void connection_timeout(struct ike_sa **ike)
 	/*
 	 * Now go through any remaining children timing them out.
 	 *
-	 * This should include children of the first IKE SA that are
+	 * This could include children of the first IKE SA that are
 	 * been replaced.
 	 */
 	struct state_filter child_filter = {
@@ -499,11 +499,8 @@ void connection_timeout(struct ike_sa **ike)
 			 .ike = *ike,
 		 });
 
-	PEXPECT((*ike)->sa.st_logger, !(*ike)->sa.st_on_delete.skip_revival);
-	(*ike)->sa.st_on_delete.skip_revival = true;
 	pstat_sa_failed(&(*ike)->sa, REASON_TOO_MANY_RETRANSMITS);
-	(*ike)->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
-	delete_ike_family(ike);
+	delete_ike_sa(ike);
 }
 
 void connection_route(struct connection *c)
