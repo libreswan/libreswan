@@ -87,7 +87,7 @@
 #include "orient.h"
 #include "kernel_alg.h"
 
-static void teardown_ipsec_sa(struct state *st,
+static void teardown_ipsec_sa(struct child_sa *child,
 			      enum expect_kernel_policy expect_inbound_policy);
 
 static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
@@ -2380,7 +2380,7 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
 	if (PEXPECT(logger, r == ROUTEABLE)
 	    && (direction & DIRECTION_OUTBOUND)) {
 		if (!install_outbound_ipsec_kernel_policies(&child->sa)) {
-			teardown_ipsec_sa(&child->sa,
+			teardown_ipsec_sa(child,
 					  (c->child.routing == RT_ROUTED_TUNNEL ? EXPECT_KERNEL_POLICY_OK :
 					   EXPECT_NO_INBOUND));
 			return false;
@@ -2451,12 +2451,11 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
  * EXPECT_KERNEL_POLICY is trying to help sort this out.
  */
 
-static void teardown_ipsec_kernel_policies(struct state *st,
+static void teardown_ipsec_kernel_policies(struct child_sa *child,
 					   enum expect_kernel_policy expect_inbound_policy)
 {
-	struct child_sa *child = pexpect_child_sa(st);
-	struct connection *c = st->st_connection;
-	struct logger *logger = st->st_logger;
+	struct connection *c = child->sa.st_connection;
+	struct logger *logger = child->sa.st_logger;
 
 	enum routing new_routing;
 	if (c->kind == CK_INSTANCE &&
@@ -2485,12 +2484,12 @@ static void teardown_ipsec_kernel_policies(struct state *st,
 	 * XXX: can this instead look at the latest_ipsec?
 	 */
 
-	if (c->child.newest_routing_sa != st->st_serialno) {
+	if (c->child.newest_routing_sa != child->sa.st_serialno) {
 		ldbg(logger,
 		     "kernel: %s() skipping, kernel policy ownere (aka eroute_owner) "PRI_SO" doesn't match Child SA "PRI_SO,
 		     __func__,
 		     pri_so(c->child.newest_routing_sa),
-		     pri_so(st->st_serialno));
+		     pri_so(child->sa.st_serialno));
 		return;
 	}
 
@@ -2526,31 +2525,30 @@ void uninstall_kernel_states(struct child_sa *child)
 	uninstall_kernel_state(child, DIRECTION_INBOUND);
 }
 
-static void teardown_ipsec_sa(struct state *st, enum expect_kernel_policy expect_inbound_policy)
+static void teardown_ipsec_sa(struct child_sa *child,
+			      enum expect_kernel_policy expect_inbound_policy)
 {
-	dbg("kernel: %s() for "PRI_SO" ...", __func__, pri_so(st->st_serialno));
+	dbg("kernel: %s() for "PRI_SO" ...", __func__, pri_so(child->sa.st_serialno));
 
-	struct connection *c = st->st_connection;
-
-	/* XXX in IKEv2 we get a spurious call with a parent st :( */
-	struct child_sa *child = pexpect_child_sa(st);
-	if (child == NULL) {
-		return;
-	}
-
+	struct connection *c = child->sa.st_connection;
 	if (c->child.routing == RT_ROUTED_TUNNEL) {
-		teardown_ipsec_kernel_policies(st, expect_inbound_policy);
+		teardown_ipsec_kernel_policies(child, expect_inbound_policy);
 	}
 
 	uninstall_kernel_states(child);
 }
 
-void uninstall_ipsec_sa(struct state *st/*IKE or Child*/)
+void uninstall_ipsec_sa(struct child_sa *child)
 {
-	struct connection *c = st->st_connection;
-	switch (st->st_ike_version) {
+	/* caller snafued with pexpect_child_sa(st) */
+	if (pbad(child == NULL)) {
+		return;
+	}
+
+	struct connection *c = child->sa.st_connection;
+	switch (child->sa.st_ike_version) {
 	case IKEv1:
-		if (IS_IPSEC_SA_ESTABLISHED(st)) {
+		if (IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
 #if 0
 			/* see comments below about multiple calls */
 			PEXPECT(logger, c->child.routing == RT_ROUTED_TUNNEL);
@@ -2558,12 +2556,11 @@ void uninstall_ipsec_sa(struct state *st/*IKE or Child*/)
 			enum expect_kernel_policy expect_inbound_policy =
 				(c->child.routing == RT_ROUTED_TUNNEL ? EXPECT_KERNEL_POLICY_OK :
 				 EXPECT_NO_INBOUND);
-			teardown_ipsec_sa(st/*child*/, expect_inbound_policy);
+			teardown_ipsec_sa(child, expect_inbound_policy);
 		}
 		break;
 	case IKEv2:
-		if (IS_CHILD_SA_ESTABLISHED(st)) {
-#if 0
+		if (IS_CHILD_SA_ESTABLISHED(&child->sa)) {
 			/*
 			 * XXX: There's a race when an SA is replaced
 			 * simultaneous to the pluto being shutdown.
@@ -2572,14 +2569,15 @@ void uninstall_ipsec_sa(struct state *st/*IKE or Child*/)
 			 * triggered because #2, which was replaced by
 			 * #3, tries to tear down the SA.
 			 */
+#if 0
 			PEXPECT(logger, c->child.routing == RT_ROUTED_TUNNEL);
 #endif
 			enum expect_kernel_policy expect_inbound_policy =
 				(c->child.routing == RT_ROUTED_TUNNEL ? EXPECT_KERNEL_POLICY_OK :
 				 EXPECT_NO_INBOUND);
-			teardown_ipsec_sa(st/*child*/, expect_inbound_policy);
-		} else if (st->st_sa_role == SA_INITIATOR &&
-			   st->st_establishing_sa == IPSEC_SA) {
+			teardown_ipsec_sa(child, expect_inbound_policy);
+		} else if (child->sa.st_sa_role == SA_INITIATOR &&
+			   child->sa.st_establishing_sa == IPSEC_SA) {
 			/*
 			 * XXX: so much for dreams of becoming an
 			 * established Child SA.
@@ -2590,20 +2588,11 @@ void uninstall_ipsec_sa(struct state *st/*IKE or Child*/)
 			 * Actually, no.  During acquire the
 			 * prospective hold installs both inbound and
 			 * outbound kernel policies?
-			 *
-			 * Note: When an IKE family is being deleted,
-			 * teardown_ipsec_sa maybe called for:
-			 *
-			 * - the IKE SA establishing the connection
-			 * - the (larval) Child SA
-			 * - the just replaced Child SA (see above)
-			 *
-			 * and in an ill-defined order.
 			 */
 			enum expect_kernel_policy expect_inbound_policy =
 				(c->child.routing == RT_ROUTED_TUNNEL ? EXPECT_KERNEL_POLICY_OK :
 				 EXPECT_NO_INBOUND);
-			teardown_ipsec_sa(st/*IKE!!!*/, expect_inbound_policy);
+			teardown_ipsec_sa(child, expect_inbound_policy);
 		}
 		break;
 	}

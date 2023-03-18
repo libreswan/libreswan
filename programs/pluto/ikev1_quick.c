@@ -1475,7 +1475,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 
 	/* encrypt message, except for fixed part of header */
 	if (!ikev1_encrypt_message(&rbody, st)) {
-		uninstall_ipsec_sa(st);
+		uninstall_ipsec_sa(pexpect_child_sa(st));
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
@@ -1688,12 +1688,12 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 	/* encrypt message, except for fixed part of header */
 
 	if (!ikev1_encrypt_message(&rbody, st)) {
-		uninstall_ipsec_sa(st);
+		uninstall_ipsec_sa(pexpect_child_sa(st));
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
 	if (dpd_init(st) != STF_OK) {
-		uninstall_ipsec_sa(st);
+		uninstall_ipsec_sa(pexpect_child_sa(st));
 		return STF_FAIL_v1N;
 	}
 
@@ -1729,7 +1729,7 @@ stf_status quick_inI2(struct state *st, struct msg_digest *md UNUSED)
 	 * on this conn, so initialize it
 	 */
 	if (dpd_init(st) != STF_OK) {
-		uninstall_ipsec_sa(st);
+		uninstall_ipsec_sa(pexpect_child_sa(st));
 		return STF_FAIL_v1N;
 	}
 

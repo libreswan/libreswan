@@ -1025,7 +1025,9 @@ void delete_state_tail(struct state *st)
 	 * the connection.
 	 */
 
-	uninstall_ipsec_sa(st);
+	if (IS_CHILD_SA(st)) {
+		uninstall_ipsec_sa(pexpect_child_sa(st));
+	}
 
 	if (st->st_connection->newest_ipsec_sa == st->st_serialno)
 		st->st_connection->newest_ipsec_sa = SOS_NOBODY;
