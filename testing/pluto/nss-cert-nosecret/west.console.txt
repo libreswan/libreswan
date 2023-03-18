@@ -79,6 +79,7 @@ west #
 000   not before: TIMESTAMP
 000   not after: TIMESTAMP
 000   3072 bit RSA
+002 adding the CA+root cert E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA
 000  
 000 List of X.509 CA Certificates:
 000  

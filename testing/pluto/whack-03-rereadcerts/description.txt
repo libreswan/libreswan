@@ -1,0 +1,11 @@
+Basic pluto with IKEv2 on the initiator (west), and on the responder.
+It uses certificates, and both ends have each others certificate preloaded.
+
+IKE does not depend on CERT/CERTREQ payloads. This test should not be
+used as model for PKIX validation based tests.
+
+This also tests having public keys loaded from certificates, but not
+use the DN as the ID.  Pluto also loads the public key in the certificate
+file with the name given.
+
+This is called "out of bound PKIX", as the certificates are not sent in-band.

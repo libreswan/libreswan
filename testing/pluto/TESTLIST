@@ -126,6 +126,7 @@ kvmplutotest	addconn-24-conn-default-rsasigkey		wip	github:833
 # Whack UI tests
 #################################################################
 kvmplutotest	whack-02-globalstatus			good
+kvmplutotest	whack-03-rereadcerts			good
 
 
 #################################################################
