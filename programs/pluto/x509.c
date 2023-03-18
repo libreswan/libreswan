@@ -921,24 +921,21 @@ CERTCertList *get_all_certificates(struct logger *logger)
 	return PK11_ListCertsInSlot(slot);
 }
 
-static void cert_detail_list(struct show *s, show_cert_t type)
+void list_crls(struct show *s)
 {
-	char *tstr;
+	crl_detail_list(s);
+}
 
-	switch (type) {
-	case CERT_TYPE_END:
-		tstr = "End";
-		break;
-	case CERT_TYPE_CA:
-		tstr = "CA";
-		break;
-	default:
-		bad_case(type);
-	}
-
+static void list_certs_header(struct show *s, const char *tstr)
+{
 	show_blank(s);
 	show_comment(s, "List of X.509 %s Certificates:", tstr);
 	show_blank(s);
+}
+
+void list_certs(struct show *s)
+{
+	list_certs_header(s, "End");
 
 	CERTCertList *certs = get_all_certificates(show_logger(s));
 
@@ -947,7 +944,7 @@ static void cert_detail_list(struct show *s, show_cert_t type)
 
 	for (CERTCertListNode *node = CERT_LIST_HEAD(certs);
 	     !CERT_LIST_END(node, certs); node = CERT_LIST_NEXT(node)) {
-		if (is_cert_of_type(node->cert, type)) {
+		if (is_cert_of_type(node->cert, CERT_TYPE_END)) {
 			show_cert_detail(s, node->cert);
 		}
 	}
@@ -955,14 +952,13 @@ static void cert_detail_list(struct show *s, show_cert_t type)
 	CERT_DestroyCertList(certs);
 }
 
-void list_crls(struct show *s)
+void list_cacerts(struct show *s, struct root_certs *roots)
 {
-	crl_detail_list(s);
-}
-
-void list_certs(struct show *s)
-{
-	cert_detail_list(s, CERT_TYPE_END);
+	list_certs_header(s, "CA");
+	for (CERTCertListNode *node = CERT_LIST_HEAD(roots->trustcl);
+	     !CERT_LIST_END(node, roots->trustcl); node = CERT_LIST_NEXT(node)) {
+		show_cert_detail(s, node->cert);
+	}
 }
 
 /*
@@ -971,11 +967,6 @@ void list_certs(struct show *s)
 const char *cert_nickname(const cert_t *cert)
 {
 	return cert != NULL && cert->nss_cert != NULL ? cert->nss_cert->nickname : NULL;
-}
-
-void list_authcerts(struct show *s)
-{
-	cert_detail_list(s, CERT_TYPE_CA);
 }
 
 void clear_ocsp_cache(void)

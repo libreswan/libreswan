@@ -82,6 +82,7 @@
 #include "pluto_seccomp.h"
 #endif
 #include "server_fork.h"		/* for show_process_status() */
+#include "root_certs.h"			/* for free_root_certs() */
 
 #ifdef USE_XFRM_INTERFACE
 # include "kernel_xfrm_interface.h"
@@ -109,6 +110,14 @@ static void whack_fetchcrls(struct show *s)
 static void whack_rereadcerts(struct show *s)
 {
 	reread_cert_connections(show_logger(s));
+	free_root_certs(show_logger(s));
+}
+
+static void whack_listcacerts(struct show *s)
+{
+	struct root_certs *roots = root_certs_addref(show_logger(s));
+	list_cacerts(s, roots);
+	root_certs_delref(&roots, show_logger(s));
 }
 
 static void whack_each_connection_by_name_or_alias(const struct whack_message *m,
@@ -864,9 +873,9 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	}
 
 	if (m->whack_list & LIST_CACERTS) {
-		dbg_whack(s, "start: list & LIST_CACERTS");
-		list_authcerts(s);
-		dbg_whack(s, "stop: list & LIST_CACERTS");
+		dbg_whack(s, "start: listcacerts");
+		whack_listcacerts(s);
+		dbg_whack(s, "stop: listcacerts");
 	}
 
 	if (m->whack_list & LIST_CRLS) {

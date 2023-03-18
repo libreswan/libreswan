@@ -36,7 +36,6 @@ void root_certs_delref_where(struct root_certs **,
 			     where_t where);
 #define root_certs_delref(ROOT_CERTS, LOGGER) root_certs_delref_where(ROOT_CERTS, LOGGER, HERE)
 
-
 bool root_certs_empty(const struct root_certs *);
 
 #endif
