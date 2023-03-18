@@ -1454,14 +1454,21 @@ int main(int argc, char **argv)
 			continue;
 
 		case OPT_REREADSECRETS:	/* --rereadsecrets */
-		case OPT_REREADCRLS:	/* --rereadcrls */
-		case OPT_REREADCERTS:	/* --rereadcerts */
-		case OPT_FETCHCRLS:	/* --fetchcrls */
-			msg.whack_reread |= LELEM(c - OPT_REREADSECRETS);
+			msg.whack_rereadsecrets = true;
 			continue;
-
+		case OPT_REREADCERTS:	/* --rereadcerts */
+			msg.whack_rereadcerts = true;
+			continue;
+		case OPT_FETCHCRLS:	/* --fetchcrls */
+			msg.whack_fetchcrls = true;
+			continue;
 		case OPT_REREADALL:	/* --rereadall */
-			msg.whack_reread = REREAD_ALL;
+			msg.whack_rereadsecrets = true;
+			msg.whack_rereadcerts = true;
+			msg.whack_fetchcrls = true;
+			continue;
+		case OPT_REREADCRLS:	/* --rereadcrls */
+			fprintf(stderr, "whack warning: rereadcrls command obsoleted did you mean ipsec whack --fetchcrls\n");
 			continue;
 
 		case OPT_PURGEOCSP:	/* --purgeocsp */
@@ -2648,7 +2655,10 @@ int main(int argc, char **argv)
 	      msg.whack_route || msg.whack_unroute || msg.whack_listen ||
 	      msg.whack_unlisten || msg.whack_list || msg.ike_buf_size ||
 	      msg.whack_ddos != DDOS_undefined || msg.whack_ddns ||
-	      msg.whack_reread || msg.whack_crash || msg.whack_shunt_status ||
+	      msg.whack_rereadcerts ||
+	      msg.whack_fetchcrls ||
+	      msg.whack_rereadsecrets ||
+	      msg.whack_crash || msg.whack_shunt_status ||
 	      msg.whack_status || msg.whack_global_status || msg.whack_traffic_status ||
 	      msg.whack_addresspool_status ||
 	      msg.whack_connection_status ||

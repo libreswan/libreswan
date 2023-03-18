@@ -96,6 +96,21 @@
 #include "orient.h"
 #include "ikev2_create_child_sa.h"	/* for submit_v2_CREATE_CHILD_SA_*() */
 
+static void whack_rereadsecrets(struct show *s)
+{
+	load_preshared_secrets(show_logger(s));
+}
+
+static void whack_fetchcrls(struct show *s)
+{
+	submit_crl_fetch_requests(NULL, show_logger(s));
+}
+
+static void whack_rereadcerts(struct show *s)
+{
+	reread_cert_connections(show_logger(s));
+}
+
 static void whack_each_connection_by_name_or_alias(const struct whack_message *m,
 						   struct show *s,
 						   const char *what,
@@ -798,10 +813,10 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "stop: ddns %d", m->whack_ddns);
 	}
 
-	if (m->whack_reread & REREAD_SECRETS) {
-		dbg_whack(s, "start: reread & REREAD_SECRETS");
-		load_preshared_secrets(show_logger(s));
-		dbg_whack(s, "stop: reread & REREAD_SECRETS");
+	if (m->whack_rereadsecrets) {
+		dbg_whack(s, "start: rereadsecrets");
+		whack_rereadsecrets(s);
+		dbg_whack(s, "stop: rereadsecrets");
 	}
 
 	if (m->whack_listpubkeys) {
@@ -822,23 +837,18 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "stop: purgeocsp");
 	}
 
-	if (m->whack_reread & REREAD_CRLS) {
-		llog(RC_LOG_SERIOUS, logger,
-		     "ipsec whack: rereadcrls command obsoleted did you mean ipsec whack --fetchcrls");
-	}
-
 #if defined(LIBCURL) || defined(LIBLDAP)
-	if (m->whack_reread & REREAD_FETCH) {
-		dbg_whack(s, "start: reread & REREAD_FETCH");
-		submit_crl_fetch_requests(NULL, logger);
-		dbg_whack(s, "stop: reread & REREAD_FETCH");
+	if (m->whack_fetchcrls) {
+		dbg_whack(s, "start: fetchcrls");
+		whack_fetchcrls(s);
+		dbg_whack(s, "stop: fetchcrls");
 	}
 #endif
 
-	if (m->whack_reread & REREAD_CERTS) {
-		dbg_whack(s, "start: reread & REREAD_CERTS");
-		reread_cert_connections(logger);
-		dbg_whack(s, "stop: reread & REREAD_CERTS");
+	if (m->whack_rereadcerts) {
+		dbg_whack(s, "start: rereadcerts");
+		whack_rereadcerts(s);
+		dbg_whack(s, "stop: rereadcerts");
 	}
 
 	if (m->whack_list & LIST_PSKS) {

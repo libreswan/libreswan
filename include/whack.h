@@ -337,7 +337,10 @@ struct whack_message {
 	lset_t whack_list;
 
 	/* for WHACK_REREAD */
-	uint8_t whack_reread;
+
+	bool whack_rereadcerts;
+	bool whack_rereadsecrets;
+	bool whack_fetchcrls;
 
 	/* for connalias string */
 	char *connalias;
@@ -386,15 +389,6 @@ struct whack_message {
 
 /* omit events from listing options */
 #define LIST_ALL	LRANGES(LIST_PUBKEYS, LIST_PSKS)  /* all list options */
-
-/* options of whack --reread*** command */
-
-#define REREAD_NONE	0x00		/* don't reread anything */
-#define REREAD_SECRETS	0x01		/* reread /etc/ipsec.secrets */
-#define REREAD_CRLS	0x02		/* obsoleted - just gives a warning */
-#define REREAD_FETCH	0x04		/* update CRL from distribution point(s) */
-#define REREAD_CERTS	0x08		/* update CERT(S) of connection(s) */
-#define REREAD_ALL	LRANGES(REREAD_SECRETS, REREAD_CERTS)	/* all reread options */
 
 struct whackpacker {
 	struct whack_message *msg;
