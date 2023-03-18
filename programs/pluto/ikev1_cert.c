@@ -125,11 +125,11 @@ bool v1_decode_certs(struct msg_digest *md)
 		.crl_strict = crl_strict,
 	};
 
-	struct root_certs *root_certs = root_certs_addref(); /* must-release */
+	struct root_certs *root_certs = root_certs_addref(&global_logger); /* must-release */
 	struct verified_certs certs = find_and_verify_certs(st->st_logger, st->st_ike_version,
 							    cert_payloads, &rev_opts,
 							    root_certs, &c->remote->host.id);
-	root_certs_delref(&root_certs);
+	root_certs_delref(&root_certs, GLOBAL_LOGGER);
 
 	/* either something went wrong, or there were no certs */
 	if (certs.cert_chain == NULL) {

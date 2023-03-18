@@ -28,11 +28,13 @@ struct root_certs {
 	CERTCertList *trustcl;
 };
 
-struct root_certs *root_certs_addref_where(where_t where);
-#define root_certs_addref() root_certs_addref_where(HERE)
+struct root_certs *root_certs_addref_where(where_t where, struct logger *logger);
+#define root_certs_addref(LOGGER) root_certs_addref_where(HERE, LOGGER)
 
-void root_certs_delref_where(struct root_certs **, where_t where);
-#define root_certs_delref(ROOT_CERTS) root_certs_delref_where(ROOT_CERTS, HERE)
+void root_certs_delref_where(struct root_certs **,
+			     struct logger *logger,
+			     where_t where);
+#define root_certs_delref(ROOT_CERTS, LOGGER) root_certs_delref_where(ROOT_CERTS, LOGGER, HERE)
 
 
 bool root_certs_empty(const struct root_certs *);

@@ -26,7 +26,7 @@
 
 static struct root_certs *root_cert_db;
 
-struct root_certs *root_certs_addref_where(where_t where)
+struct root_certs *root_certs_addref_where(where_t where, struct logger *logger)
 {
 	passert(in_main_thread());
 
@@ -52,8 +52,7 @@ struct root_certs *root_certs_addref_where(where_t where)
 	struct root_certs *root_certs = addref_where(root_cert_db, where); /* function result */
 	root_certs->trustcl = CERT_NewCertList();
 
-	struct logger logger = global_logger;
-	PK11SlotInfo *slot = lsw_nss_get_authenticated_slot(&logger);
+	PK11SlotInfo *slot = lsw_nss_get_authenticated_slot(logger);
 	if (slot == NULL) {
 		/* already logged */
 		return root_certs; /* empty, but non-null, list */
@@ -87,7 +86,7 @@ struct root_certs *root_certs_addref_where(where_t where)
 			dbg("discarding non-root CA cert %s", node->cert->subjectName);
 			continue;
 		}
-		dbg("adding the CA+root cert %s", node->cert->subjectName);
+		llog(RC_LOG, logger, "adding the CA+root cert %s", node->cert->subjectName);
 		CERTCertificate *dup = CERT_DupCertificate(node->cert);
 		CERT_AddCertToListTail(root_certs->trustcl, dup);
 	}
@@ -97,12 +96,12 @@ struct root_certs *root_certs_addref_where(where_t where)
 	return root_certs;
 }
 
-void root_certs_delref_where(struct root_certs **root_certsp, where_t where)
+void root_certs_delref_where(struct root_certs **root_certsp,
+			     struct logger *logger, where_t where)
 {
-	const struct logger *logger = &global_logger;
 	struct root_certs *root_certs = delref_where(root_certsp, logger, where);
 	if (root_certs != NULL) {
-		dbg("destroying root certificate cache");
+		llog(RC_LOG, logger, "freeing root certificate cache");
 		CERT_DestroyCertList(root_certs->trustcl);
 		pfreeany(root_certs);
 	}
@@ -150,7 +149,7 @@ void free_root_certs(struct logger *logger)
 		/* extend or set cert cache lifetime */
 		schedule_oneshot_timer(EVENT_FREE_ROOT_CERTS, FREE_ROOT_CERTS_TIMEOUT);
 	} else {
-		root_certs_delref(&root_cert_db);
+		root_certs_delref(&root_cert_db, logger);
 		pexpect(root_cert_db == NULL);
 	}
 }

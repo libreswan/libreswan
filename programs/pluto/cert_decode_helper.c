@@ -77,7 +77,7 @@ void submit_v2_cert_decode(struct ike_sa *ike,
 			   cert_decode_cb *cb, where_t where)
 {
 	struct task task = {
-		.root_certs = root_certs_addref(),
+		.root_certs = root_certs_addref(&global_logger),
 		.md = md_addref(md),
 		.cert_payloads = cert_payloads,
 		.cb = cb,
@@ -193,6 +193,6 @@ static void cert_decode_cleanup(struct task **task)
 	release_certs(&(*task)->verified.cert_chain);	/* may be NULL */
 	free_public_keys(&(*task)->verified.pubkey_db);	/* may be NULL */
 	md_delref(&(*task)->md);
-	root_certs_delref(&(*task)->root_certs);
+	root_certs_delref(&(*task)->root_certs, GLOBAL_LOGGER);
 	pfreeany((*task));
 }
