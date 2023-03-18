@@ -255,8 +255,8 @@ bool suppress_object_log_true(const void *object);
 size_t jam_object_prefix_none(struct jambuf *buf, const void *object);
 
 #ifndef GLOBAL_LOGGER
-extern const struct logger global_logger;
-#define GLOBAL_LOGGER
+extern struct logger global_logger;
+#define GLOBAL_LOGGER &global_logger
 #endif
 
 struct logger {

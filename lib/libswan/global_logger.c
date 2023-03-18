@@ -42,7 +42,7 @@ const struct where global_where = {
 	.line = 0, .file = "<global>", .func = "<global>",
 };
 
-const struct logger global_logger = {
+/*const*/struct logger global_logger = {
 	.where = &global_where,
 	.object = NULL,
 	.object_vec = &logger_global_vec,

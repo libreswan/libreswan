@@ -38,8 +38,8 @@ struct barfbuf;
  */
 
 #ifndef GLOBAL_LOGGER
-extern const struct logger global_logger;
-#define GLOBAL_LOGGER
+extern struct logger global_logger;
+#define GLOBAL_LOGGER &global_logger
 #endif
 
 /*
