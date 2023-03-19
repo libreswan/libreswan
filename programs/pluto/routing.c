@@ -797,7 +797,6 @@ void dispatch(enum connection_event event, struct connection *c,
 				schedule_revival(&(e->ike->sa));
 				return;
 			}
-			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
 		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, PERMANENT):
 			/* for instance, permenant ondemand */
@@ -805,14 +804,12 @@ void dispatch(enum connection_event event, struct connection *c,
 				schedule_revival(&(e->ike->sa));
 				return;
 			}
-			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
 		case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, PERMANENT):
 			if (should_revive(&(e->ike->sa))) {
 				schedule_revival(&(e->ike->sa));
 				return;
 			}
-			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
 		case X(TIMEOUT_IKE, ROUTED_TUNNEL, PERMANENT):
 			/* don't retry as well */
@@ -820,7 +817,6 @@ void dispatch(enum connection_event event, struct connection *c,
 				schedule_revival(&(e->ike->sa));
 				return;
 			}
-			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
 		case X(TIMEOUT_IKE, UNROUTED, INSTANCE):
 			/* for instance, permanent+up */
@@ -828,7 +824,6 @@ void dispatch(enum connection_event event, struct connection *c,
 				schedule_revival(&(e->ike->sa));
 				return;
 			}
-			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
 		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, INSTANCE):
 			/* for instance, permenant ondemand */
@@ -847,7 +842,6 @@ void dispatch(enum connection_event event, struct connection *c,
 				 */
 				set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			}
-			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
 		case X(TIMEOUT_IKE, ROUTED_PROSPECTIVE, INSTANCE):
 		case X(TIMEOUT_IKE, ROUTED_PROSPECTIVE, PERMANENT):
@@ -869,7 +863,6 @@ void dispatch(enum connection_event event, struct connection *c,
 				set_child_routing(c, RT_ROUTED_PROSPECTIVE/*lie?!?*/,
 						  c->child.newest_routing_sa);
 			}
-			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
 		case X(TIMEOUT_IKE, ROUTED_TUNNEL, INSTANCE):
 			/* don't retry as well */
@@ -889,7 +882,6 @@ void dispatch(enum connection_event event, struct connection *c,
 				set_child_routing(c, RT_ROUTED_NEGOTIATION/*lie?!?*/,
 						  SOS_NOBODY);
 			}
-			pstat_sa_failed(&e->ike->sa, REASON_TOO_MANY_RETRANSMITS);
 			return;
 
 		case X(TIMEOUT_CHILD, ROUTED_TUNNEL, PERMANENT):
