@@ -113,12 +113,13 @@ void set_child_routing_where(struct connection *c, enum routing routing,
 	so_serial_t old_routing_sa = c->child.newest_routing_sa;
 	connection_buf cb;
 	enum_buf ob, nb;
-	ldbg(c->logger, "kernel: .newest_routing_sa "PRI_SO"->"PRI_SO" .routing %s->%s (IPsec "PRI_SO") "PRI_CONNECTION" "PRI_WHERE,
+	ldbg(c->logger, "kernel: .newest_routing_sa "PRI_SO"->"PRI_SO" .routing %s->%s "PRI_CO" "PRI_CONNECTION" IPsec "PRI_SO" "PRI_WHERE,
 	     pri_so(old_routing_sa), pri_so(new_routing_sa),
-	     str_enum(&routing_story, c->child.routing, &ob),
-	     str_enum(&routing_story, routing, &nb),
-	     pri_so(c->newest_ipsec_sa),
+	     str_enum_short(&routing_names, c->child.routing, &ob),
+	     str_enum_short(&routing_names, routing, &nb),
+	     pri_connection_co(c),
 	     pri_connection(c, &cb),
+	     pri_so(c->newest_ipsec_sa),
 	     pri_where(where));
 	/*
 	 * Labed children are never routed and/or have a kernel
@@ -468,7 +469,7 @@ void connection_timeout(struct ike_sa **ike)
 	/*
 	 * Now go through any remaining children timing them out.
 	 *
-	 * This should include children of the first IKE SA that are
+	 * This could include children of the first IKE SA that are
 	 * been replaced.
 	 */
 	struct state_filter child_filter = {
