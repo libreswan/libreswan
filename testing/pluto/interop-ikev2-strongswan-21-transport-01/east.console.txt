@@ -44,23 +44,23 @@ src 192.1.2.45 dst 192.1.2.23
 east #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.0.2.0/24 dst 192.0.2.0/24
-	dir fwd priority PRIORITY ptype main 
+	dir fwd priority PRIORITY ptype main
 src 192.0.2.0/24 dst 192.0.2.0/24
-	dir in priority PRIORITY ptype main 
+	dir in priority PRIORITY ptype main
 src 192.0.2.0/24 dst 192.0.2.0/24
-	dir out priority PRIORITY ptype main 
+	dir out priority PRIORITY ptype main
 src 192.1.2.0/24 dst 192.1.2.0/24
-	dir fwd priority PRIORITY ptype main 
+	dir fwd priority PRIORITY ptype main
 src 192.1.2.0/24 dst 192.1.2.0/24
-	dir in priority PRIORITY ptype main 
+	dir in priority PRIORITY ptype main
 src 192.1.2.0/24 dst 192.1.2.0/24
-	dir out priority PRIORITY ptype main 
+	dir out priority PRIORITY ptype main
 src 192.1.2.23/32 dst 192.1.2.45/32
-	dir out priority PRIORITY ptype main 
+	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp spi 0xSPISPI reqid REQID mode transport
 src 192.1.2.45/32 dst 192.1.2.23/32
-	dir in priority PRIORITY ptype main 
+	dir in priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 east #

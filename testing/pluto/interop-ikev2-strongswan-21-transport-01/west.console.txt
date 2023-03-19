@@ -66,11 +66,11 @@ src 192.1.2.45 dst 192.1.2.23
 west #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.1.2.23/32 dst 192.1.2.45/32
-	dir in priority PRIORITY ptype main 
+	dir in priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 src 192.1.2.45/32 dst 192.1.2.23/32
-	dir out priority PRIORITY ptype main 
+	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid REQID mode transport
 west #

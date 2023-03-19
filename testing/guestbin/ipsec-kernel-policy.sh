@@ -14,6 +14,7 @@ join_lines()
 s/[ 	]*$//
 1 { h; n; }
 /^[^ 	]/ { x; s,\n,<>,g; p; n; }
+s/[ 	]*$//
 H
 $ { x; s,\n,<>,g; p; }'
 }
@@ -70,6 +71,12 @@ xfrm_policy()
 	# strip the sort prefixes
 	sed -e 's/^.* | //'
     } | {
+	if test "$#" -gt 0 ; then
+	    grep "$@"
+	else
+	    cat
+	fi
+    } | {
 	split_lines
     }
 }
@@ -86,13 +93,13 @@ ipsecctl_policy()
 
 case $(uname) in
     Linux)
-	xfrm_policy
+	xfrm_policy "$@"
 	;;
     NetBSD|FreeBSD)
-	setkey_policy
+	setkey_policy "$@"
 	;;
     OpenBSD)
-	ipsecctl_policy
+	ipsecctl_policy "$@"
 	;;
     *)
 	echo unknown
