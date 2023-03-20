@@ -29,8 +29,8 @@ road #
  ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
 fired and forgotten
 road #
- ../../guestbin/wait-for.sh --match oe-failed -- ipsec whack --shuntstatus
-000 192.1.3.209/32 -0-> 192.1.2.23/32 => %drop 0    oe-failed
+ ../../guestbin/wait-for.sh --match oe-failing -- ipsec whack --shuntstatus
+000 192.1.3.209/32 -0-> 192.1.2.23/32 => %drop 0    oe-failing
 road #
  ipsec whack --trafficstatus
 road #

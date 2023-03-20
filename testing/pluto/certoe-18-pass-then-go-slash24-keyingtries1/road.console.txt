@@ -45,7 +45,7 @@ src 192.1.3.209 dst 192.1.2.23
 	sel src 192.1.3.209/32 dst 192.1.2.23/32 proto icmp type 8 code 0 dev eth0 
 XFRM policy:
 src 192.1.3.209/32 dst 192.1.2.23/32
-	dir out priority PRIORITY ptype main
+	dir out priority 0 ptype main
 src 192.1.2.253/32 dst 192.1.3.209/32
 	dir fwd priority PRIORITY ptype main
 src 192.1.2.253/32 dst 192.1.3.209/32

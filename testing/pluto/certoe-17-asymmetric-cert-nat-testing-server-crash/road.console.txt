@@ -99,7 +99,7 @@ road #
  # check ping, expected to succeed now via %pass
 road #
  ../../guestbin/wait-for.sh --match %pass -- ipsec whack --shuntstatus
-000 192.1.3.209/32 -0-> 192.1.2.23/32 => %pass 0    oe-failed
+000 192.1.3.209/32 -0-> 192.1.2.23/32 => %pass 0    oe-failing
 road #
  ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 up
@@ -125,7 +125,7 @@ road #
  ipsec whack --shuntstatus
 000 Bare Shunt list:
 000  
-000 192.1.3.209/32 -0-> 192.1.2.23/32 => %pass 0    oe-failed
+000 192.1.3.209/32 -0-> 192.1.2.23/32 => %pass 0    oe-failing
 road #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.1.3.209/32 dst 192.1.2.23/32
