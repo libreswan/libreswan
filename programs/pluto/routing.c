@@ -893,8 +893,12 @@ void dispatch(enum connection_event event, struct connection *c,
 				delete_child_sa(e->child);
 				return;
 			}
-			/* XXX: delete connection? */
 			delete_child_sa(e->child);
+			if (kind == CK_INSTANCE &&
+			    e->ike != NULL/*IKEv1?*/ &&
+			    c != e->ike->sa.st_connection) {
+				delete_connection(&c);
+			}
 			return;
 		}
 	}
