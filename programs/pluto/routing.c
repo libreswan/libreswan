@@ -553,7 +553,7 @@ void connection_unroute(struct connection *c)
  * Received a message telling us to delete the connection's Child.SA.
  */
 
-void connection_delete_child(struct child_sa **child)
+void connection_delete_child(struct ike_sa *ike, struct child_sa **child)
 {
 #if 0
 	if ((*child)->sa.st_connection->kind != CK_PERMANENT) {
@@ -578,6 +578,7 @@ void connection_delete_child(struct child_sa **child)
 		 (*child)->sa.st_connection,
 		 (*child)->sa.st_logger, HERE,
 		 (struct annex) {
+			 .ike = ike,
 			 .child = child,
 		 });
 	/* no logger as no child */
