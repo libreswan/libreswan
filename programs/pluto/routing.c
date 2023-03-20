@@ -500,11 +500,15 @@ void connection_timeout(struct ike_sa **ike)
 			 .ike = *ike,
 		 });
 
-	PEXPECT((*ike)->sa.st_logger, !(*ike)->sa.st_on_delete.skip_revival);
-	(*ike)->sa.st_on_delete.skip_revival = true;
 	pstat_sa_failed(&(*ike)->sa, REASON_TOO_MANY_RETRANSMITS);
-	(*ike)->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
-	delete_ike_family(ike);
+	struct state *st = &(*ike)->sa;
+	*ike = NULL;
+	st->st_on_delete.skip_revival = true;
+	st->st_on_delete.send_delete = DONT_SEND_DELETE;
+#if 0
+	st->st_on_delete.skip_connection = true;
+#endif
+	delete_state(st);
 }
 
 void connection_route(struct connection *c)
