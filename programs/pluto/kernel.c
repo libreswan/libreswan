@@ -2754,23 +2754,6 @@ void orphan_holdpass(struct connection *c,
 		     struct spd_route *sr,
 		     struct logger *logger)
 {
-	if (c->config->negotiation_shunt == c->config->failure_shunt) {
-		/*
-		 * The /32/128 is a hack to detect an opportunistic
-		 * group name.  See group_instantiate() and
-		 * github/976.
-		 */
-		ldbg(logger, "kernel: adding failure==negotiation bare_shunt %s; kernel policy unchanged",
-		     enum_name_short(&shunt_policy_names, c->config->failure_shunt));
-		add_bare_shunt(&sr->local->client,
-			       &sr->remote->client,
-			       c->config->failure_shunt,
-			       ((strstr(c->name, "/32") != NULL ||
-				 strstr(c->name, "/128") != NULL) ? c->serialno : 0),
-			       "oe-failing", logger);
-		return;
-	}
-
 	/*
 	 * ... UPDATE kernel policy if needed.
 	 *
@@ -2784,7 +2767,7 @@ void orphan_holdpass(struct connection *c,
 	/* fudge up parameter list */
 	const ip_address *src_address = &sr->local->host->addr;
 	const ip_address *dst_address = &sr->remote->host->addr;
-	const char *why = "oe-failed";
+	const char *why = "oe-failing";
 
 	/* fudge up replace_bare_shunt() */
 	const struct ip_info *afi = address_type(src_address);
