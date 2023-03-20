@@ -209,7 +209,7 @@ void schedule_revival(struct state *st)
 	struct connection *c = st->st_connection;
 	llog(RC_LOG, st->st_logger,
 	     "deleting %s but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS",
-	     c->config->ike_info->sa_type_name[IKE_SA]);
+	     c->config->ike_info->sa_type_name[st->st_establishing_sa]);
 
 	int delay = c->temp_vars.revive_delay;
 	ldbg(st->st_logger, "add revival: connection '%s' (serial "PRI_CO") added to the list and scheduled for %d seconds",
