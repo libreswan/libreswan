@@ -87,8 +87,8 @@
 #include "orient.h"
 #include "kernel_alg.h"
 
-static void teardown_ipsec_sa(struct child_sa *child,
-			      enum expect_kernel_policy expect_inbound_policy);
+static void teardown_ipsec_kernel_policies(struct child_sa *child,
+					   enum expect_kernel_policy expect_inbound_policy);
 
 static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 					    enum expect_kernel_policy expect_kernel_policy,
@@ -2384,9 +2384,11 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
 	if (PEXPECT(logger, r == ROUTEABLE)
 	    && (direction & DIRECTION_OUTBOUND)) {
 		if (!install_outbound_ipsec_kernel_policies(&child->sa)) {
-			teardown_ipsec_sa(child,
-					  (c->child.routing == RT_ROUTED_TUNNEL ? EXPECT_KERNEL_POLICY_OK :
-					   EXPECT_NO_INBOUND));
+			enum expect_kernel_policy expect_inbound_policy =
+				(c->child.routing == RT_ROUTED_TUNNEL ? EXPECT_KERNEL_POLICY_OK :
+				 EXPECT_NO_INBOUND);
+			teardown_ipsec_kernel_policies(child, expect_inbound_policy);
+			uninstall_kernel_states(child);
 			return false;
 		}
 	}
@@ -2461,6 +2463,21 @@ static void teardown_ipsec_kernel_policies(struct child_sa *child,
 	struct connection *c = child->sa.st_connection;
 	struct logger *logger = child->sa.st_logger;
 
+	if (c->child.routing != RT_ROUTED_TUNNEL) {
+		ldbg(logger,
+		     "kernel: %s() skipping, "PRI_SO" is not a routed tunnel",
+		     __func__, pri_so(child->sa.st_serialno));
+		return;
+	}
+
+	if (c->child.newest_routing_sa != child->sa.st_serialno) {
+		ldbg(logger,
+		     "kernel: %s() skipping, "PRI_SO" is not the routed owner "PRI_SO,
+		     __func__, pri_so(child->sa.st_serialno),
+		     pri_so(c->child.newest_routing_sa));
+		return;
+	}
+
 	enum routing new_routing;
 	if (c->kind == CK_INSTANCE &&
 	    ((c->policy & POLICY_OPPORTUNISTIC) ||
@@ -2480,21 +2497,6 @@ static void teardown_ipsec_kernel_policies(struct child_sa *child,
 		 * SHUNT_NONE.
 		 */
 		new_routing = RT_ROUTED_FAILURE;
-	}
-
-	/*
-	 * Pass 1: see if there's work to do.
-	 *
-	 * XXX: can this instead look at the latest_ipsec?
-	 */
-
-	if (c->child.newest_routing_sa != child->sa.st_serialno) {
-		ldbg(logger,
-		     "kernel: %s() skipping, kernel policy ownere (aka eroute_owner) "PRI_SO" doesn't match Child SA "PRI_SO,
-		     __func__,
-		     pri_so(c->child.newest_routing_sa),
-		     pri_so(child->sa.st_serialno));
-		return;
 	}
 
 	switch (new_routing) {
@@ -2529,19 +2531,6 @@ void uninstall_kernel_states(struct child_sa *child)
 	uninstall_kernel_state(child, DIRECTION_INBOUND);
 }
 
-static void teardown_ipsec_sa(struct child_sa *child,
-			      enum expect_kernel_policy expect_inbound_policy)
-{
-	dbg("kernel: %s() for "PRI_SO" ...", __func__, pri_so(child->sa.st_serialno));
-
-	struct connection *c = child->sa.st_connection;
-	if (c->child.routing == RT_ROUTED_TUNNEL) {
-		teardown_ipsec_kernel_policies(child, expect_inbound_policy);
-	}
-
-	uninstall_kernel_states(child);
-}
-
 void uninstall_ipsec_sa(struct child_sa *child)
 {
 	/* caller snafued with pexpect_child_sa(st) */
@@ -2560,7 +2549,8 @@ void uninstall_ipsec_sa(struct child_sa *child)
 			enum expect_kernel_policy expect_inbound_policy =
 				(c->child.routing == RT_ROUTED_TUNNEL ? EXPECT_KERNEL_POLICY_OK :
 				 EXPECT_NO_INBOUND);
-			teardown_ipsec_sa(child, expect_inbound_policy);
+			teardown_ipsec_kernel_policies(child, expect_inbound_policy);
+			uninstall_kernel_states(child);
 		}
 		break;
 	case IKEv2:
@@ -2579,7 +2569,8 @@ void uninstall_ipsec_sa(struct child_sa *child)
 			enum expect_kernel_policy expect_inbound_policy =
 				(c->child.routing == RT_ROUTED_TUNNEL ? EXPECT_KERNEL_POLICY_OK :
 				 EXPECT_NO_INBOUND);
-			teardown_ipsec_sa(child, expect_inbound_policy);
+			teardown_ipsec_kernel_policies(child, expect_inbound_policy);
+			uninstall_kernel_states(child);
 		} else if (child->sa.st_sa_role == SA_INITIATOR &&
 			   child->sa.st_establishing_sa == IPSEC_SA) {
 			/*
@@ -2596,7 +2587,8 @@ void uninstall_ipsec_sa(struct child_sa *child)
 			enum expect_kernel_policy expect_inbound_policy =
 				(c->child.routing == RT_ROUTED_TUNNEL ? EXPECT_KERNEL_POLICY_OK :
 				 EXPECT_NO_INBOUND);
-			teardown_ipsec_sa(child, expect_inbound_policy);
+			teardown_ipsec_kernel_policies(child, expect_inbound_policy);
+			uninstall_kernel_states(child);
 		}
 		break;
 	}
