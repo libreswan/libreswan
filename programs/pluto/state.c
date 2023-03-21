@@ -835,9 +835,7 @@ void delete_child_sa(struct child_sa **child)
 	st->st_on_delete.skip_revival = true;
 	st->st_on_delete.send_delete = DONT_SEND_DELETE;
 	st->st_on_delete.skip_connection = true;
-#if 0
 	st->st_on_delete.skip_kernel_policy = true;
-#endif
 	delete_state(st);
 }
 

@@ -360,7 +360,6 @@ static bool keep_routed_tunnel_connection(struct connection *c,
 		/* no longer child's */
 		ldbg(c->logger, "keeping connection; routing SA "PRI_SO" is newer",
 		     pri_so(c->child.newest_routing_sa));
-		(*e->child)->sa.st_on_delete.skip_kernel_policy = true;
 		delete_child_sa(e->child);
 		return true;
 	}
@@ -368,7 +367,6 @@ static bool keep_routed_tunnel_connection(struct connection *c,
 		/* covered by above; no!? */
 		ldbg(c->logger, "keeping connection; IPsec SA "PRI_SO" is newer",
 		     pri_so(c->newest_ipsec_sa));
-		(*e->child)->sa.st_on_delete.skip_kernel_policy = true;
 		delete_child_sa(e->child);
 		return true;
 	}
@@ -379,7 +377,6 @@ static bool keep_routed_tunnel_connection(struct connection *c,
 		schedule_revival(&(*e->child)->sa);
 		/* covered by above; no!? */
 		ldbg(c->logger, "keeping connection; it is being revived");
-		(*e->child)->sa.st_on_delete.skip_kernel_policy = true;
 		delete_child_sa(e->child);
 		return true;
 	}
@@ -394,7 +391,6 @@ static bool keep_routed_tunnel_connection(struct connection *c,
 		 RT_ROUTED_PROSPECTIVE);
 	replace_ipsec_with_bare_kernel_policies((*e->child), new_routing,
 						EXPECT_KERNEL_POLICY_OK, HERE);
-	(*e->child)->sa.st_on_delete.skip_kernel_policy = true;
 	delete_child_sa(e->child);
 
 	/*
