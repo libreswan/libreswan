@@ -80,7 +80,10 @@ bool delete_spd_kernel_policy(const struct spd_route *spd,
 			      where_t where,
 			      const char *story);
 
-void delete_connection_kernel_policies(struct connection *c);
+void delete_spd_kernel_policies(struct spds *spds,
+				struct logger *logger,
+				where_t where,
+				const char *story);
 
 /*
  * The always outbound CAT (client address translation) kernel policy
