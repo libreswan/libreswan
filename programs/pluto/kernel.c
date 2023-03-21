@@ -87,9 +87,6 @@
 #include "orient.h"
 #include "kernel_alg.h"
 
-static void teardown_ipsec_kernel_policies(struct child_sa *child,
-					   enum expect_kernel_policy expect_inbound_policy);
-
 static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 					    enum expect_kernel_policy expect_kernel_policy,
 					    struct logger *logger, where_t where);
@@ -2457,8 +2454,8 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
  * EXPECT_KERNEL_POLICY is trying to help sort this out.
  */
 
-static void teardown_ipsec_kernel_policies(struct child_sa *child,
-					   enum expect_kernel_policy expect_inbound_policy)
+void teardown_ipsec_kernel_policies(struct child_sa *child,
+				    enum expect_kernel_policy expect_inbound_policy)
 {
 	struct connection *c = child->sa.st_connection;
 	struct logger *logger = child->sa.st_logger;

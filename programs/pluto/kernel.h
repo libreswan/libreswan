@@ -514,6 +514,8 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where);
 bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where);
 
 void uninstall_ipsec_sa(struct child_sa *child);
+void teardown_ipsec_kernel_policies(struct child_sa *child,
+				    enum expect_kernel_policy);
 void uninstall_kernel_states(struct child_sa *child);
 
 extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);

@@ -1328,6 +1328,27 @@ static bool echo_id(pb_stream *outs,
 	return true;
 }
 
+static void uninstall_v1_ipsec_sa(struct child_sa *child)
+{
+	/* caller snafued with pexpect_child_sa(st) */
+	if (pbad(child == NULL)) {
+		return;
+	}
+
+	struct connection *c = child->sa.st_connection;
+	if (IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
+#if 0
+		/* see comments below about multiple calls */
+		PEXPECT(logger, c->child.routing == RT_ROUTED_TUNNEL);
+#endif
+		enum expect_kernel_policy expect_inbound_policy =
+			(c->child.routing == RT_ROUTED_TUNNEL ? EXPECT_KERNEL_POLICY_OK :
+			 EXPECT_NO_INBOUND);
+		teardown_ipsec_kernel_policies(child, expect_inbound_policy);
+		uninstall_kernel_states(child);
+	}
+}
+
 static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_digest *md)
 {
 	struct payload_digest *const id_pd = md->chain[ISAKMP_NEXT_ID];
@@ -1475,7 +1496,7 @@ static stf_status quick_inI1_outR1_continue12_tail(struct state *st, struct msg_
 
 	/* encrypt message, except for fixed part of header */
 	if (!ikev1_encrypt_message(&rbody, st)) {
-		uninstall_ipsec_sa(pexpect_child_sa(st));
+		uninstall_v1_ipsec_sa(pexpect_child_sa(st));
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
@@ -1688,12 +1709,12 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 	/* encrypt message, except for fixed part of header */
 
 	if (!ikev1_encrypt_message(&rbody, st)) {
-		uninstall_ipsec_sa(pexpect_child_sa(st));
+		uninstall_v1_ipsec_sa(pexpect_child_sa(st));
 		return STF_INTERNAL_ERROR; /* ??? we may be partly committed */
 	}
 
 	if (dpd_init(st) != STF_OK) {
-		uninstall_ipsec_sa(pexpect_child_sa(st));
+		uninstall_v1_ipsec_sa(pexpect_child_sa(st));
 		return STF_FAIL_v1N;
 	}
 
@@ -1729,7 +1750,7 @@ stf_status quick_inI2(struct state *st, struct msg_digest *md UNUSED)
 	 * on this conn, so initialize it
 	 */
 	if (dpd_init(st) != STF_OK) {
-		uninstall_ipsec_sa(pexpect_child_sa(st));
+		uninstall_v1_ipsec_sa(pexpect_child_sa(st));
 		return STF_FAIL_v1N;
 	}
 
