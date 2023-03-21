@@ -463,39 +463,43 @@ void connection_timeout(struct ike_sa **ike)
 	}
 
 	/*
-	 * Find and notify the IKE SA's newest first Child SA.
-	 *
-	 * This way, the first Child SA can jump ahead of any other
-	 * children that may need reviving.  Without this, the IKE
-	 * SA's connection could end up flip-flopping between several
-	 * of the children (harmless but annoying).
-	 *
-	 * Search the full list IKE SA childen as short cuts such as
-	 * .newest_ipsec_sa and .newest_routing_sa may not be valid.
-	 *
-	 * XXX: true?  A labeled_child() doesn't set
-	 * .newest_routing_sa for instance, but does that matter?
+	 * Weed out any lurking larval children (i.e., children that
+	 * don't own their connection's route) that are sharing a
+	 * connection.
 	 */
-
-	struct child_sa *first_child = NULL;
-	struct state_filter first_child_filter = {
-		.ike = *ike,
-		.where = HERE,
-	};
-	while (next_state_new2old(&first_child_filter)) {
-		struct child_sa *child = pexpect_child_sa(first_child_filter.st);
-		if (child->sa.st_connection != (*ike)->sa.st_connection) {
-			continue;
-		}
-		if (first_child == NULL) {
-			first_child = child;
-			continue;
-		}
-		if (child->sa.st_serialno > first_child->sa.st_serialno) {
-			first_child = child;
-			continue;
+	{
+		struct state_filter larval_filter = {
+			.ike = *ike,
+			.where = HERE,
+		};
+		while (next_state_new2old(&larval_filter)) {
+			struct child_sa *child = pexpect_child_sa(larval_filter.st);
+			if (child->sa.st_connection->child.newest_routing_sa ==
+			    child->sa.st_serialno) {
+				continue;
+			}
+			/*
+			 * This delete doesn't get logged by
+			 * delete_state(), do it here?!?
+			 */
+			attach_whack(child->sa.st_logger, (*ike)->sa.st_logger);
+			llog_sa(RC_LOG, child, "deleting larval state due to timeout");
+			delete_child_sa(&child);
 		}
 	}
+
+	/*
+	 * If the IKE SA's connection has Child SA owning the route
+	 * then notify that first.
+	 *
+	 * This way, the IKE SA's connection can jump to the head of
+	 * the revival queue.  Without this, the IKE SA's connection
+	 * could end up flip-flopping between several of the children
+	 * (harmless but annoying).
+	 */
+
+	struct child_sa *first_child =
+		child_sa_by_serialno((*ike)->sa.st_connection->child.newest_routing_sa);
 	if (first_child != NULL) {
 		attach_whack(first_child->sa.st_logger, (*ike)->sa.st_logger);
 		/* will delete child and its logger */
@@ -508,29 +512,40 @@ void connection_timeout(struct ike_sa **ike)
 			 });
 	}
 	PEXPECT((*ike)->sa.st_logger, first_child == NULL); /*gone!*/
+	PEXPECT((*ike)->sa.st_logger, (*ike)->sa.st_connection->child.newest_routing_sa == SOS_NOBODY);
 
 	/*
-	 * Now go through any remaining children timing them out.
+	 * Now go through any remaining children.
+	 *
+	 * If the child is the routing owner, notify it of the
+	 * timeout.  Otherwise just blow it away.
 	 *
 	 * This could include children of the first IKE SA that are
 	 * been replaced.
 	 */
-	struct state_filter child_filter = {
-		.ike = *ike,
-		.where = HERE,
-	};
-	while (next_state_new2old(&child_filter)) {
-		struct child_sa *child = pexpect_child_sa(child_filter.st);
-		attach_whack(child->sa.st_logger, (*ike)->sa.st_logger);
-		/* will delete child and its logger */
-		dispatch(CONNECTION_TIMEOUT_CHILD,
-			 child->sa.st_connection,
-			 child->sa.st_logger, HERE,
-			 (struct annex) {
-				 .ike = *ike,
-				 .child = &child,
-			 });
-		PEXPECT((*ike)->sa.st_logger, child == NULL);
+	{
+		struct state_filter child_filter = {
+			.ike = *ike,
+			.where = HERE,
+		};
+		while (next_state_new2old(&child_filter)) {
+			struct child_sa *child = pexpect_child_sa(child_filter.st);
+			if (!PEXPECT((*ike)->sa.st_logger,
+				     child->sa.st_connection->child.newest_routing_sa ==
+				     child->sa.st_serialno)) {
+				continue;
+			}
+			/* will delete child and its logger */
+			attach_whack(child->sa.st_logger, (*ike)->sa.st_logger);
+			dispatch(CONNECTION_TIMEOUT_CHILD,
+				 child->sa.st_connection,
+				 child->sa.st_logger, HERE,
+				 (struct annex) {
+					 .ike = *ike,
+					 .child = &child,
+				 });
+			PEXPECT((*ike)->sa.st_logger, child == NULL);
+		}
 	}
 
 	/*
