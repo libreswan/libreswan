@@ -622,34 +622,32 @@ void connection_unroute(struct connection *c)
 
 void connection_delete_child(struct ike_sa *ike, struct child_sa **child)
 {
-#if 0
-	if ((*child)->sa.st_connection->kind != CK_PERMANENT) {
-		ldbg_sa((*child), "%s() doesn't yet handle %s",
-			__func__, enum_name_short(&connection_kind_names, c->kind));
-		child->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
-		delete_state(child->sa);
-		return;
+	struct connection *c = (*child)->sa.st_connection;
+	if ((*child)->sa.st_serialno == c->child.newest_routing_sa) {
+		/*
+		 * Caller is responsible for generating any messages; suppress
+		 * delete_state()'s desire to send an out-of-band delete.
+		 */
+		(*child)->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
+		(*child)->sa.st_on_delete.skip_revival = true;
+		(*child)->sa.st_on_delete.skip_connection = true;
+		/*
+		 * Let state machine figure out how to react.
+		 */
+		dispatch(CONNECTION_DELETE_CHILD,
+			 (*child)->sa.st_connection,
+			 (*child)->sa.st_logger, HERE,
+			 (struct annex) {
+				 .ike = ike,
+				 .child = child,
+			 });
+		/* no logger as no child */
+		pexpect(*child == NULL);
+	} else {
+		attach_whack((*child)->sa.st_logger, ike->sa.st_logger);
+		llog_sa(RC_LOG, (*child), "deleted");
+		delete_child_sa(child);
 	}
-#endif
-	/*
-	 * Caller is responsible for generating any messages; suppress
-	 * delete_state()'s desire to send an out-of-band delete.
-	 */
-	(*child)->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
-	(*child)->sa.st_on_delete.skip_revival = true;
-	(*child)->sa.st_on_delete.skip_connection = true;
-	/*
-	 * Let state machine figure out how to react.
-	 */
-	dispatch(CONNECTION_DELETE_CHILD,
-		 (*child)->sa.st_connection,
-		 (*child)->sa.st_logger, HERE,
-		 (struct annex) {
-			 .ike = ike,
-			 .child = child,
-		 });
-	/* no logger as no child */
-	pexpect(*child == NULL);
 }
 
 void connection_delete_ike(struct ike_sa **ikep)
