@@ -298,8 +298,8 @@ struct bare_shunt {
 	 */
 	const char *why;
 
-	/* the connection from where it came - used to re-load /32 conns */
-	co_serial_t from_serialno;
+	/* The connection to restore when the bare_shunt expires.  */
+	co_serial_t restore_serialno;
 
 	struct bare_shunt *next;
 };
@@ -319,6 +319,9 @@ static void jam_bare_shunt(struct jambuf *buf, const struct bare_shunt *bs)
 	jam(buf, " ");
 	jam_connection_priority(buf, BOTTOM_PRIORITY);
 	jam(buf, "    %s", bs->why);
+	if (bs->restore_serialno != UNSET_CO_SERIAL) {
+		jam(buf, " "PRI_CO, pri_co(bs->restore_serialno));
+	}
 }
 
 static void llog_bare_shunt(lset_t rc_flags, struct logger *logger,
@@ -348,7 +351,7 @@ static void ldbg_bare_shunt(const struct logger *logger, const char *op, const s
 static struct bare_shunt *add_bare_shunt(const ip_selector *our_client,
 					 const ip_selector *peer_client,
 					 enum shunt_policy shunt_policy,
-					 co_serial_t from_serialno,
+					 co_serial_t restore_serialno,
 					 const char *why, struct logger *logger)
 {
 	/* report any duplication; this should NOT happen */
@@ -368,7 +371,7 @@ static struct bare_shunt *add_bare_shunt(const ip_selector *our_client,
 	const struct ip_protocol *transport_proto = selector_protocol(*our_client);
 	pexpect(transport_proto == selector_protocol(*peer_client));
 	bs->transport_proto = transport_proto;
-	bs->from_serialno = from_serialno;
+	bs->restore_serialno = restore_serialno;
 
 	bs->shunt_policy = shunt_policy;
 	bs->count = 0;
@@ -1119,8 +1122,7 @@ unsigned shunt_count(void)
 {
 	unsigned i = 0;
 
-	for (const struct bare_shunt *bs = bare_shunts; bs != NULL; bs = bs->next)
-	{
+	for (const struct bare_shunt *bs = bare_shunts; bs != NULL; bs = bs->next) {
 		i++;
 	}
 
@@ -1135,17 +1137,19 @@ void show_shunt_status(struct show *s)
 
 	for (const struct bare_shunt *bs = bare_shunts; bs != NULL; bs = bs->next) {
 		/* Print interesting fields.  Ignore count and last_active. */
-		selector_buf ourb;
-		selector_buf peerb;
-		connection_priority_buf prio;
-
-		show_comment(s, "%s -%d-> %s => %s %s    %s",
-			     str_selector_subnet_port(&(bs)->our_client, &ourb),
-			     bs->transport_proto->ipproto,
-			     str_selector_subnet_port(&(bs)->peer_client, &peerb),
-			     enum_name(&shunt_policy_percent_names, bs->shunt_policy),
-			     str_connection_priority(BOTTOM_PRIORITY, &prio),
-			     bs->why);
+		SHOW_JAMBUF(RC_COMMENT, s, buf) {
+			jam_selector_subnet_port(buf, &(bs)->our_client);
+			jam(buf, " -%d-> ", bs->transport_proto->ipproto);
+			jam_selector_subnet_port(buf, &(bs)->peer_client);
+			jam_string(buf, " => ");
+			jam_enum(buf, &shunt_policy_percent_names, bs->shunt_policy);
+			jam_string(buf, "    ");
+			jam_string(buf, bs->why);
+			if (bs->restore_serialno != UNSET_CO_SERIAL) {
+				jam_string(buf, " ");
+				jam_co(buf, bs->restore_serialno);
+			}
+		}
 	}
 }
 
@@ -2801,18 +2805,32 @@ void orphan_holdpass(struct connection *c,
 				       SHUNT_KIND_FAILURE, c->config->shunt[SHUNT_KIND_FAILURE],
 				       logger, HERE)) {
 		/*
+		 * If the bare shunt exactly matches the template,
+		 * then mark the template as needing restoring when
+		 * the bare shunt expires.
+		 *
+		 * XXX: as a quick and dirty hack, assume there's only
+		 * one selector.
+		 */
+		co_serial_t restore;
+		struct connection *t = c->clonedfrom;
+		if (selector_eq_selector(src, t->local->child.selectors.proposed.list[0]) &&
+		    selector_eq_selector(dst, t->remote->child.selectors.proposed.list[0])) {
+			restore = t->serialno;
+		} else {
+			restore = UNSET_CO_SERIAL;
+		}
+
+		/*
 		 * Change over to new bare eroute ours, peers,
 		 * transport_proto are the same.
-		 *
-		 * The /32/128 is a hack to detect an opportunistic
-		 * group name.  See group_instantiate() and
-		 * github/976.
 		 */
+
+
 		struct bare_shunt *bs =
 			add_bare_shunt(&src, &dst,
 				       c->config->failure_shunt,
-				       ((strstr(c->name, "/32") != NULL ||
-					 strstr(c->name, "/128") != NULL) ? c->serialno : 0),
+				       restore,
 				       why, logger);
 		ldbg_bare_shunt(logger, "replace", bs);
 	} else {
@@ -2832,14 +2850,14 @@ static void expire_bare_shunts(struct logger *logger)
 
 		if (age > deltasecs(pluto_shunt_lifetime)) {
 			ldbg_bare_shunt(logger, "expiring old", bsp);
-			if (co_serial_is_set(bsp->from_serialno)) {
+			if (co_serial_is_set(bsp->restore_serialno)) {
 				/*
 				 * Time to restore the connection's
 				 * shunt.  Presumably the bare shunt
 				 * was a place holder while things
 				 * were given time to rest (back-off).
 				 */
-				struct connection *c = connection_by_serialno(bsp->from_serialno);
+				struct connection *c = connection_by_serialno(bsp->restore_serialno);
 				if (c != NULL) {
 					if (!install_prospective_kernel_policies(c->spd, logger, HERE)) {
 						llog(RC_LOG, logger,
