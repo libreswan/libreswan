@@ -117,11 +117,6 @@ void replace_ipsec_with_bare_kernel_policies(struct child_sa *child,
 					     enum expect_kernel_policy expect_inbound_policy,
 					     where_t where);
 
-void uninstall_ipsec_kernel_policies(struct child_sa *child,
-				     enum expect_kernel_policy expect_inbound_policy,
-				     where_t where);
-
-
 bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
 				enum shunt_kind shunt_kind,
 				enum shunt_policy shunt_policy,

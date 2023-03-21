@@ -2492,9 +2492,41 @@ void teardown_ipsec_kernel_policies(struct child_sa *child)
 		new_routing = RT_ROUTED_FAILURE;
 	}
 
+
+	struct spds spds = c->child.spds;
+#ifdef USE_CISCO_SPLIT
+	if (c->remotepeertype == CISCO) {
+		/*
+		 * XXX: this comment is out-of-date:
+		 *
+		 * XXX: this is currently the only reason for
+		 * spd_next walking.
+		 *
+		 * Routing should become RT_ROUTED_FAILURE,
+		 * but if POLICY_FAIL_NONE, then we just go
+		 * right back to RT_ROUTED_PROSPECTIVE as if
+		 * no failure happened.
+		 */
+		ldbg_sa(child,
+			"kernel: %s() skipping, first SPD and remotepeertype is CISCO, damage done",
+			__func__);
+		passert(spds.len > 0);
+		spds.list++;
+		spds.len--;
+	}
+#endif
+
 	switch (new_routing) {
 	case RT_UNROUTED:
-		uninstall_ipsec_kernel_policies(child, EXPECT_KERNEL_POLICY_OK, HERE);
+		/*
+		 * update routing; route_owner() will see this and not
+		 * think this route is the owner?
+		 */
+		set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
+		do_updown_spds(UPDOWN_DOWN, c, &spds, &child->sa, child->sa.st_logger);
+		delete_spd_kernel_policies(&spds, EXPECT_KERNEL_POLICY_OK,
+					   child->sa.st_logger, HERE, "unroute");
+		do_updown_unowned_spds(UPDOWN_UNROUTE, c, &spds, NULL, child->sa.st_logger);
 		break;
 	case RT_ROUTED_PROSPECTIVE:
 		replace_ipsec_with_bare_kernel_policies(child, RT_ROUTED_PROSPECTIVE,
