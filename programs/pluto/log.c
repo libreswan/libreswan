@@ -641,12 +641,14 @@ void attach_whack(struct logger *dst, const struct logger *src)
 	}
 	/* do no harm? */
 	if (src_fd == NULL) {
+		ldbg(dst, "no whack to attach");
 		return;
 	}
 	/* already attached? */
 	FOR_EACH_THING(fdp, &dst->global_whackfd, &dst->object_whackfd) {
 		if (*fdp == src_fd) {
 			/* already attached */
+			ldbg(dst, "whack already attached");
 			return;
 		}
 	}
@@ -654,10 +656,12 @@ void attach_whack(struct logger *dst, const struct logger *src)
 	FOR_EACH_THING(fdp, &dst->global_whackfd, &dst->object_whackfd) {
 		if (*fdp == NULL) {
 			*fdp = fd_addref(src_fd);
+			ldbg(dst, "whack attached to spare slot");
 			return;
 		}
 	}
 	/* replace global */
+	ldbg(dst, "whack attached to global slot");
 	fd_delref(&dst->global_whackfd);
 	dst->global_whackfd = fd_addref(src_fd);
 }
