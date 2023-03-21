@@ -685,6 +685,31 @@ void dispatch(enum connection_event event, struct connection *c,
 		jam_where(buf, where);
 	}
 
+#if 0
+	/*
+	 * This isn't true for ONDEMAND when the connection is being
+	 * (re) attached to an existing IKE SA.
+	 *
+	 * For instance:
+	 *
+	 *   - permanent ike+child establish
+	 *   - large pings trigger hard expire of child, and then
+	 *   - ondemand request
+	 *
+	 * because the connection is permanent the IKE SA is set, but
+	 * ondemand doesn't think to pass in the existing IKE (and nor
+	 * should it?).
+	 *
+	 * See ikev2-expire-03-bytes-ignore-soft
+	 */
+	PEXPECT(logger, (c->newest_ike_sa == SOS_NOBODY ||
+			 (e->ike != NULL &&
+			  e->ike->sa.st_serialno == c->newest_ike_sa)));
+#endif
+	PEXPECT(logger, (c->child.newest_routing_sa == SOS_NOBODY ||
+			 ((*e->child) != NULL &&
+			  (*e->child)->sa.st_serialno == c->child.newest_routing_sa)));
+
 #define XX(CONNECTION_EVENT, CONNECTION_ROUTING, CONNECTION_KIND)	\
 	(((CONNECTION_EVENT) *						\
 	  CONNECTION_ROUTING_ROOF + CONNECTION_ROUTING) *		\
