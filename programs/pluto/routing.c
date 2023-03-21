@@ -93,9 +93,21 @@ static void jam_event(struct jambuf *buf, enum connection_event event, struct co
 	jam_string(buf, " ");
 	jam_enum_short(buf, &connection_kind_names, c->kind);
 	jam_string(buf, " ");
-	jam(buf, PRI_CO, pri_co(c->serialno));
+	jam_co(buf, c->serialno);
 	jam_string(buf, " ");
 	jam_connection(buf, c);
+	if (c->child.newest_routing_sa != SOS_NOBODY) {
+		jam_string(buf, " routing");
+		jam_so(buf, c->child.newest_routing_sa);
+	}
+	if (c->newest_ipsec_sa != SOS_NOBODY) {
+		jam_string(buf, " IPsec");
+		jam_so(buf, c->newest_ipsec_sa);
+	}
+	if (c->newest_ike_sa != SOS_NOBODY) {
+		jam_string(buf, " IKE");
+		jam_so(buf, c->newest_ike_sa);
+	}
 	if (e->ike != NULL) {
 		jam_event_sa(buf, &e->ike->sa);
 	}
