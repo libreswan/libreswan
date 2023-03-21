@@ -33,6 +33,7 @@
 #include "ip_info.h"
 
 #include "defs.h"
+#include "updown.h"
 #include "state.h"
 #include "connections.h"
 #include "log.h"
@@ -527,4 +528,18 @@ bool do_updown(enum updown updown_verb,
 	}
 
 	return do_updown_verb(verb, c, spd, st, logger);
+}
+
+void do_updown_unowned_spds(enum updown updown_verb,
+			    const struct connection *c,
+			    const struct spds *spds,
+			    struct state *st,
+			    struct logger *logger)
+{
+	FOR_EACH_ITEM(spd, spds) {
+		/* only unroute if no other connection shares it */
+		if (route_owner(spd) == NULL) {
+			do_updown(updown_verb, c, spd, st, logger);
+		}
+	}
 }

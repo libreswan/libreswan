@@ -34,7 +34,7 @@
 #include "kernel_policy.h"
 #include "kernel.h"
 #include "kernel_ops.h"
-
+#include "updown.h"
 #include "kernel_xfrm_interface.h"		/* for dumping struct pluto_xfrmi */
 
 

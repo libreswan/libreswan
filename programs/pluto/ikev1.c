@@ -166,6 +166,7 @@
 #include "unpack.h"
 #include "pending.h"
 #include "rekeyfuzz.h"
+#include "updown.h"
 
 #ifdef HAVE_NM
 #include "kernel.h"

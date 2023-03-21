@@ -28,6 +28,7 @@
 #include "foodgroups.h"			/* for connection_group_{route,unroute}() */
 #include "orient.h"
 #include "initiate.h"			/* for ipsecdoi_initiate() */
+#include "updown.h"
 
 static void do_updown_unroute(struct connection *c);
 
@@ -980,12 +981,7 @@ void dispatch(enum connection_event event, struct connection *c,
 
 static void do_updown_unroute(struct connection *c)
 {
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-		/* only unroute if no other connection shares it */
-		if (route_owner(spd) == NULL) {
-			do_updown(UPDOWN_UNROUTE, c, spd, NULL, c->logger);
-		}
-	}
+	do_updown_unowned_spds(UPDOWN_UNROUTE, c, &c->child.spds, NULL, c->logger);
 }
 
 /*

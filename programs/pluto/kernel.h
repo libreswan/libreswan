@@ -429,22 +429,6 @@ extern const struct kernel_ops pfkeyv2_kernel_ops;
 
 extern const struct kernel_ops *const kernel_stacks[];
 
-/* many bits reach in to use this, but maybe shouldn't */
-enum updown {
-	UPDOWN_PREPARE,
-	UPDOWN_ROUTE,
-	UPDOWN_UNROUTE,
-	UPDOWN_UP,
-	UPDOWN_DOWN,
-#ifdef HAVE_NM
-	UPDOWN_DISCONNECT_NM,
-#endif
-};
-
-extern bool do_updown(enum updown updown_verb,
-		      const struct connection *c, const struct spd_route *sr,
-		      struct state *st, struct logger *logger);
-
 /* bare (connectionless) shunt (eroute) table
  *
  * Bare shunts are those that don't "belong" to a connection.

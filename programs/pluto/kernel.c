@@ -46,7 +46,6 @@
 #include <event2/event_struct.h>
 #include <event2/thread.h>
 
-
 #include "sysdep.h"
 #include "constants.h"
 
@@ -86,6 +85,7 @@
 #include "rekeyfuzz.h"
 #include "orient.h"
 #include "kernel_alg.h"
+#include "updown.h"
 
 static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
 					    enum expect_kernel_policy expect_kernel_policy,
