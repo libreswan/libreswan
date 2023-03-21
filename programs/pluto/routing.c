@@ -919,10 +919,12 @@ void dispatch(enum connection_event event, struct connection *c,
 			}
 			return;
 
+		case X(TIMEOUT_CHILD, ROUTED_TUNNEL, PERMANENT):
 		case X(DELETE_CHILD, ROUTED_TUNNEL, PERMANENT):
 			/* permenant connections are never deleted */
 			pexpect(keep_routed_tunnel_connection(c, where, e) == true);
 			return;
+		case X(TIMEOUT_CHILD, ROUTED_TUNNEL, INSTANCE):
 		case X(DELETE_CHILD, ROUTED_TUNNEL, INSTANCE):
 			if (keep_routed_tunnel_connection(c, where, e)) {
 				return;
@@ -930,8 +932,6 @@ void dispatch(enum connection_event event, struct connection *c,
 			delete_connection(&c);
 			return;
 
-		case X(TIMEOUT_CHILD, ROUTED_TUNNEL, PERMANENT):
-		case X(TIMEOUT_CHILD, ROUTED_TUNNEL, INSTANCE):
 		case X(TIMEOUT_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
 		case X(TIMEOUT_CHILD, UNROUTED, PERMANENT): /* permanent+up */
 			if (should_revive_connection(*(e->child))) {
