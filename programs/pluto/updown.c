@@ -530,6 +530,17 @@ bool do_updown(enum updown updown_verb,
 	return do_updown_verb(verb, c, spd, st, logger);
 }
 
+void do_updown_spds(enum updown updown_verb,
+		    const struct connection *c,
+		    const struct spds *spds,
+		    struct state *st,
+		    struct logger *logger)
+{
+	FOR_EACH_ITEM(spd, spds) {
+		do_updown(updown_verb, c, spd, st, logger);
+	}
+}
+
 void do_updown_unowned_spds(enum updown updown_verb,
 			    const struct connection *c,
 			    const struct spds *spds,

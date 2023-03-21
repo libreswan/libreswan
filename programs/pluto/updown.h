@@ -51,6 +51,11 @@ bool do_updown(enum updown updown_verb,
 	       const struct connection *c, const struct spd_route *sr,
 	       struct state *st, struct logger *logger);
 
+void do_updown_spds(enum updown updown_verb,
+		    const struct connection *c,
+		    const struct spds *spds,
+		    struct state *st, struct logger *logger);
+
 void do_updown_unowned_spds(enum updown updown_verb,
 			    const struct connection *c,
 			    const struct spds *spds,
