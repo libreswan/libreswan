@@ -1335,16 +1335,8 @@ static void uninstall_v1_ipsec_sa(struct child_sa *child)
 		return;
 	}
 
-	struct connection *c = child->sa.st_connection;
 	if (IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
-#if 0
-		/* see comments below about multiple calls */
-		PEXPECT(logger, c->child.routing == RT_ROUTED_TUNNEL);
-#endif
-		enum expect_kernel_policy expect_inbound_policy =
-			(c->child.routing == RT_ROUTED_TUNNEL ? EXPECT_KERNEL_POLICY_OK :
-			 EXPECT_NO_INBOUND);
-		teardown_ipsec_kernel_policies(child, expect_inbound_policy);
+		teardown_ipsec_kernel_policies(child);
 		uninstall_kernel_states(child);
 	}
 }

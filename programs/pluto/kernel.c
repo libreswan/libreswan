@@ -2381,10 +2381,7 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
 	if (PEXPECT(logger, r == ROUTEABLE)
 	    && (direction & DIRECTION_OUTBOUND)) {
 		if (!install_outbound_ipsec_kernel_policies(&child->sa)) {
-			enum expect_kernel_policy expect_inbound_policy =
-				(c->child.routing == RT_ROUTED_TUNNEL ? EXPECT_KERNEL_POLICY_OK :
-				 EXPECT_NO_INBOUND);
-			teardown_ipsec_kernel_policies(child, expect_inbound_policy);
+			teardown_ipsec_kernel_policies(child);
 			uninstall_kernel_states(child);
 			return false;
 		}
@@ -2454,8 +2451,7 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
  * EXPECT_KERNEL_POLICY is trying to help sort this out.
  */
 
-void teardown_ipsec_kernel_policies(struct child_sa *child,
-				    enum expect_kernel_policy expect_inbound_policy)
+void teardown_ipsec_kernel_policies(struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
 	struct logger *logger = child->sa.st_logger;
@@ -2498,15 +2494,15 @@ void teardown_ipsec_kernel_policies(struct child_sa *child,
 
 	switch (new_routing) {
 	case RT_UNROUTED:
-		uninstall_ipsec_kernel_policies(child, expect_inbound_policy, HERE);
+		uninstall_ipsec_kernel_policies(child, EXPECT_KERNEL_POLICY_OK, HERE);
 		break;
 	case RT_ROUTED_PROSPECTIVE:
 		replace_ipsec_with_bare_kernel_policies(child, RT_ROUTED_PROSPECTIVE,
-							expect_inbound_policy, HERE);
+							EXPECT_KERNEL_POLICY_OK, HERE);
 		break;
 	case RT_ROUTED_FAILURE:
 		replace_ipsec_with_bare_kernel_policies(child, RT_ROUTED_FAILURE,
-							expect_inbound_policy, HERE);
+							EXPECT_KERNEL_POLICY_OK, HERE);
 		break;
 	case RT_UNROUTED_NEGOTIATION:
 	case RT_ROUTED_NEGOTIATION:
@@ -2535,7 +2531,6 @@ void uninstall_ipsec_sa(struct child_sa *child)
 		return;
 	}
 
-	struct connection *c = child->sa.st_connection;
 	switch (child->sa.st_ike_version) {
 	case IKEv1:
 		if (IS_IPSEC_SA_ESTABLISHED(&child->sa)) {
@@ -2543,10 +2538,7 @@ void uninstall_ipsec_sa(struct child_sa *child)
 			/* see comments below about multiple calls */
 			PEXPECT(logger, c->child.routing == RT_ROUTED_TUNNEL);
 #endif
-			enum expect_kernel_policy expect_inbound_policy =
-				(c->child.routing == RT_ROUTED_TUNNEL ? EXPECT_KERNEL_POLICY_OK :
-				 EXPECT_NO_INBOUND);
-			teardown_ipsec_kernel_policies(child, expect_inbound_policy);
+			teardown_ipsec_kernel_policies(child);
 			uninstall_kernel_states(child);
 		}
 		break;
@@ -2563,10 +2555,7 @@ void uninstall_ipsec_sa(struct child_sa *child)
 #if 0
 			PEXPECT(logger, c->child.routing == RT_ROUTED_TUNNEL);
 #endif
-			enum expect_kernel_policy expect_inbound_policy =
-				(c->child.routing == RT_ROUTED_TUNNEL ? EXPECT_KERNEL_POLICY_OK :
-				 EXPECT_NO_INBOUND);
-			teardown_ipsec_kernel_policies(child, expect_inbound_policy);
+			teardown_ipsec_kernel_policies(child);
 			uninstall_kernel_states(child);
 		} else if (child->sa.st_sa_role == SA_INITIATOR &&
 			   child->sa.st_establishing_sa == IPSEC_SA) {
@@ -2581,10 +2570,7 @@ void uninstall_ipsec_sa(struct child_sa *child)
 			 * prospective hold installs both inbound and
 			 * outbound kernel policies?
 			 */
-			enum expect_kernel_policy expect_inbound_policy =
-				(c->child.routing == RT_ROUTED_TUNNEL ? EXPECT_KERNEL_POLICY_OK :
-				 EXPECT_NO_INBOUND);
-			teardown_ipsec_kernel_policies(child, expect_inbound_policy);
+			teardown_ipsec_kernel_policies(child);
 			uninstall_kernel_states(child);
 		}
 		break;
