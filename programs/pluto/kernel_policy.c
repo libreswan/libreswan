@@ -415,7 +415,9 @@ bool delete_spd_kernel_policy(const struct spd_route *spd,
 				    logger, where, story);
 }
 
-void delete_spd_kernel_policies(struct spds *spds, struct logger *logger, where_t where,
+void delete_spd_kernel_policies(const struct spds *spds,
+				enum expect_kernel_policy inbound_policy_expectation,
+				struct logger *logger, where_t where,
 				const char *story)
 {
 	FOR_EACH_ITEM(spd, spds) {
@@ -433,7 +435,7 @@ void delete_spd_kernel_policies(struct spds *spds, struct logger *logger, where_
 					 EXPECT_KERNEL_POLICY_OK,
 					 logger, where, story);
 		delete_spd_kernel_policy(spd, DIRECTION_INBOUND,
-					 EXPECT_NO_INBOUND,
+					 inbound_policy_expectation,
 					 logger, where, story);
 #ifdef IPSEC_CONNECTION_LIMIT
 		num_ipsec_eroute--;

@@ -721,9 +721,8 @@ void dispatch(enum connection_event event, struct connection *c,
 			     "policy ROUTE added to negotiating connection");
 			return;
 		case X(UNROUTE, UNROUTED_NEGOTIATION, PERMANENT):
-			delete_spd_kernel_policies(&c->child.spds,
-						   c->logger, where,
-						   "unroute permanent");
+			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+						   c->logger, where, "unroute permanent");
 			set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
 			return;
 
@@ -732,18 +731,16 @@ void dispatch(enum connection_event event, struct connection *c,
 			llog(RC_LOG_SERIOUS, logger, "connection already routed");
 			return;
 		case X(UNROUTE, ROUTED_NEGOTIATION, PERMANENT):
-			delete_spd_kernel_policies(&c->child.spds,
-						   c->logger, where,
-						   "unroute permanent");
+			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+						   c->logger, where, "unroute permanent");
 			/* do now so route_owner won't find us */
 			set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
 			do_updown_unroute(c);
 			return;
 
 		case X(UNROUTE, ROUTED_PROSPECTIVE, PERMANENT):
-			delete_spd_kernel_policies(&c->child.spds,
-						   c->logger, where,
-						   "unroute permanent");
+			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+						   c->logger, where, "unroute permanent");
 			set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
 			do_updown_unroute(c);
 			return;
@@ -760,18 +757,16 @@ void dispatch(enum connection_event event, struct connection *c,
 			return;
 
 		case X(UNROUTE, ROUTED_FAILURE, PERMANENT):
-			delete_spd_kernel_policies(&c->child.spds,
-						   c->logger, where,
-						   "unroute permanent");
+			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+						   c->logger, where, "unroute permanent");
 			/* do now so route_owner won't find us */
 			set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
 			do_updown_unroute(c);
 			return;
 
 		case X(UNROUTE, UNROUTED_TUNNEL, PERMANENT):
-			delete_spd_kernel_policies(&c->child.spds,
-						   c->logger, where,
-						   "unroute permanent");
+			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+						   c->logger, where, "unroute permanent");
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			return;
 
@@ -788,9 +783,8 @@ void dispatch(enum connection_event event, struct connection *c,
 			ldbg(logger, "already unrouted");
 			return;
 		case X(UNROUTE, ROUTED_PROSPECTIVE, TEMPLATE):
-			delete_spd_kernel_policies(&c->child.spds,
-						   c->logger, where,
-						   "unroute template");
+			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+						   c->logger, where, "unroute template");
 			/* do now so route_owner won't find us */
 			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
 			do_updown_unroute(c);
@@ -812,17 +806,15 @@ void dispatch(enum connection_event event, struct connection *c,
 			return;
 
 		case X(UNROUTE, UNROUTED_NEGOTIATION, INSTANCE):
-			delete_spd_kernel_policies(&c->child.spds,
-						   c->logger, where,
-						   "unroute instance");
+			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+						   c->logger, where, "unroute instance");
 			/* do now so route_owner won't find us */
 			set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
 			return;
 
 		case X(UNROUTE, ROUTED_NEGOTIATION, INSTANCE):
-			delete_spd_kernel_policies(&c->child.spds,
-						   c->logger, where,
-						   "unroute instance");
+			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+						   c->logger, where, "unroute instance");
 			do_updown_unroute(c);
 			return;
 
@@ -831,27 +823,24 @@ void dispatch(enum connection_event event, struct connection *c,
 			return;
 
 		case X(UNROUTE, ROUTED_PROSPECTIVE, INSTANCE):
-			delete_spd_kernel_policies(&c->child.spds,
-						   c->logger, where,
-						   "unroute instance");
+			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+						   c->logger, where, "unroute instance");
 			/* do now so route_owner won't find us */
 			set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
 			do_updown_unroute(c);
 			return;
 
 		case X(UNROUTE, ROUTED_FAILURE, INSTANCE):
-			delete_spd_kernel_policies(&c->child.spds,
-						   c->logger, where,
-						   "unroute instance");
+			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+						   c->logger, where, "unroute instance");
 			/* do now so route_owner won't find us */
 			set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
 			do_updown_unroute(c);
 			return;
 
 		case X(UNROUTE, UNROUTED_TUNNEL, INSTANCE):
-			delete_spd_kernel_policies(&c->child.spds,
-						   c->logger, where,
-						   "unroute instance");
+			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+						   c->logger, where, "unroute instance");
 			set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
 			return;
 
