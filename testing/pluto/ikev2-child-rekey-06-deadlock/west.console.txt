@@ -86,7 +86,7 @@ west #
 west #
  ipsec whack --rekey-ipsec --name west
 002 "west" #5: initiating rekey to replace Child SA #3
-002 "west" #5: IMPAIR: skipping revival of connection that is supposed to remain up
+002 "west" #5: deleting larval state due to timeout
 002 "west" #3: IMPAIR: skipping revival of connection that is supposed to remain up
 005 "west" #3: ESP traffic information: in=0B out=0B
 west #
@@ -115,8 +115,8 @@ west #
 "west" #4: sent CREATE_CHILD_SA request to rekey IPsec SA
 "west" #5: initiating rekey to replace Child SA #3
 "west" #1: STATE_V2_ESTABLISHED_IKE_SA: 15 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv2 message
-"west" #5: IMPAIR: skipping revival of connection that is supposed to remain up
-"west" #4: IMPAIR: skipping revival of connection that is supposed to remain up
+"west" #5: deleting larval state due to timeout
+"west" #4: deleting larval state due to timeout
 "west" #3: IMPAIR: skipping revival of connection that is supposed to remain up
 "west" #3: ESP traffic information: in=0B out=0B
 "west" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and NOT sending notification
