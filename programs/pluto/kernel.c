@@ -2524,7 +2524,7 @@ void uninstall_kernel_states(struct child_sa *child)
 	uninstall_kernel_state(child, DIRECTION_INBOUND);
 }
 
-void uninstall_ipsec_sa(struct child_sa *child)
+void teardown_ipsec_kernel_states(struct child_sa *child)
 {
 	/* caller snafued with pexpect_child_sa(st) */
 	if (pbad(child == NULL)) {
@@ -2538,7 +2538,6 @@ void uninstall_ipsec_sa(struct child_sa *child)
 			/* see comments below about multiple calls */
 			PEXPECT(logger, c->child.routing == RT_ROUTED_TUNNEL);
 #endif
-			teardown_ipsec_kernel_policies(child);
 			uninstall_kernel_states(child);
 		}
 		break;
@@ -2555,7 +2554,6 @@ void uninstall_ipsec_sa(struct child_sa *child)
 #if 0
 			PEXPECT(logger, c->child.routing == RT_ROUTED_TUNNEL);
 #endif
-			teardown_ipsec_kernel_policies(child);
 			uninstall_kernel_states(child);
 		} else if (child->sa.st_sa_role == SA_INITIATOR &&
 			   child->sa.st_establishing_sa == IPSEC_SA) {
@@ -2570,7 +2568,6 @@ void uninstall_ipsec_sa(struct child_sa *child)
 			 * prospective hold installs both inbound and
 			 * outbound kernel policies?
 			 */
-			teardown_ipsec_kernel_policies(child);
 			uninstall_kernel_states(child);
 		}
 		break;

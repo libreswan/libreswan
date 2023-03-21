@@ -1031,16 +1031,14 @@ void delete_state_tail(struct state *st)
 	if (IS_CHILD_SA(st)) {
 		if (st->st_on_delete.skip_kernel_policy) {
 			ldbg(st->st_logger, "skiping delete kernel policy (only deleting kernel state)");
-			if (IS_CHILD_SA_ESTABLISHED(st)) {
-				uninstall_kernel_states(pexpect_child_sa(st));
-			} else if (st->st_sa_role == SA_INITIATOR &&
-				   st->st_establishing_sa == IPSEC_SA) {
-				/* larval? */
-				uninstall_kernel_states(pexpect_child_sa(st));
-			}
 		} else {
-			uninstall_ipsec_sa(pexpect_child_sa(st));
+			/* this function just returns when the call is
+			 * invalid */
+			teardown_ipsec_kernel_policies(pexpect_child_sa(st));
 		}
+		/* this function just returns when the call is
+		 * invalid */
+		teardown_ipsec_kernel_states(pexpect_child_sa(st));
 	}
 
 	if (st->st_connection->newest_ipsec_sa == st->st_serialno)

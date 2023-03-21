@@ -513,7 +513,7 @@ bool install_prospective_kernel_policy(struct connection *c);
 bool install_inbound_ipsec_sa(struct child_sa *child, where_t where);
 bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where);
 
-void uninstall_ipsec_sa(struct child_sa *child);
+void teardown_ipsec_kernel_states(struct child_sa *child);
 void teardown_ipsec_kernel_policies(struct child_sa *child);
 void uninstall_kernel_states(struct child_sa *child);
 
