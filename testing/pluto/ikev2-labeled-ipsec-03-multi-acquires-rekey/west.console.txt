@@ -327,7 +327,7 @@ west #
 002 "labeled" #5: initiating rekey to replace IKE SA #1
 1v2 "labeled" #5: sent CREATE_CHILD_SA request to rekey IKE SA
 004 "labeled" #5: initiator rekeyed IKE SA #1 {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-002 "labeled" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "labeled" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  ipsec whack --rekey-ipsec --name 2
 002 rekeying IPsec SA state #2 of connection "labeled"[1] 192.1.2.23

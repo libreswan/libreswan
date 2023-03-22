@@ -43,7 +43,7 @@ west #
 003 "westnet-eastnet" #1: private key matching CKAID '4651cb327d8ee9c2a0f71f176c7d172f33205dc2' not found: can't find the private key matching the NSS CKAID
 003 "westnet-eastnet" #1: unable to locate my private key for RSA Signature
 224 "westnet-eastnet" #1: sending notification AUTHENTICATION_FAILED to 192.1.2.23:500
-002 "westnet-eastnet" #1: deleting state (STATE_MAIN_I2) and NOT sending notification
+002 "westnet-eastnet" #1: deleting ISAKMP SA (MAIN_I2) and NOT sending notification
 002 "westnet-eastnet" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  # we should not see any leftover states

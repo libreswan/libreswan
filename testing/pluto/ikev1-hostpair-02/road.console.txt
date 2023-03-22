@@ -53,9 +53,9 @@ road #
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
 002 "westnet-eastnet-ipv4-psk-ikev1": terminating SAs using this connection
-002 "westnet-eastnet-ipv4-psk-ikev1" #2: IMPAIR: deleting state (STATE_QUICK_I2) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk-ikev1" #2: IMPAIR: deleting IPsec SA (QUICK_I2) and NOT sending notification
 005 "westnet-eastnet-ipv4-psk-ikev1" #2: ESP traffic information: in=84B out=84B XAUTHuser=use3
-002 "westnet-eastnet-ipv4-psk-ikev1" #1: IMPAIR: deleting state (STATE_MAIN_I4) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk-ikev1" #1: IMPAIR: deleting ISAKMP SA (MAIN_I4) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk-ikev1": added IKEv1 connection
 road #
  ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --initiate --name westnet-eastnet-ipv4-psk-ikev1
@@ -85,9 +85,9 @@ road #
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
 002 "westnet-eastnet-ipv4-psk-ikev1": terminating SAs using this connection
-002 "westnet-eastnet-ipv4-psk-ikev1" #4: IMPAIR: deleting state (STATE_QUICK_I2) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk-ikev1" #4: IMPAIR: deleting IPsec SA (QUICK_I2) and NOT sending notification
 005 "westnet-eastnet-ipv4-psk-ikev1" #4: ESP traffic information: in=0B out=0B XAUTHuser=use3
-002 "westnet-eastnet-ipv4-psk-ikev1" #3: IMPAIR: deleting state (STATE_MAIN_I4) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk-ikev1" #3: IMPAIR: deleting ISAKMP SA (MAIN_I4) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk-ikev1": added IKEv1 connection
 road #
  ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --initiate --name westnet-eastnet-ipv4-psk-ikev1
@@ -117,9 +117,9 @@ road #
 road #
  ipsec auto --add westnet-eastnet-ipv4-psk-ikev1
 002 "westnet-eastnet-ipv4-psk-ikev1": terminating SAs using this connection
-002 "westnet-eastnet-ipv4-psk-ikev1" #6: IMPAIR: deleting state (STATE_QUICK_I2) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk-ikev1" #6: IMPAIR: deleting IPsec SA (QUICK_I2) and NOT sending notification
 005 "westnet-eastnet-ipv4-psk-ikev1" #6: ESP traffic information: in=0B out=0B XAUTHuser=use3
-002 "westnet-eastnet-ipv4-psk-ikev1" #5: IMPAIR: deleting state (STATE_MAIN_I4) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk-ikev1" #5: IMPAIR: deleting ISAKMP SA (MAIN_I4) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk-ikev1": added IKEv1 connection
 road #
  ipsec whack --xauthname 'use3' --xauthpass 'use1pass' --initiate --name westnet-eastnet-ipv4-psk-ikev1

@@ -66,9 +66,9 @@ west #
 002 listening for IKE messages
 002 shutting down interface eth1 192.1.2.66:4500
 002 shutting down interface eth1 192.1.2.66:500
-002 "float-east" #4: deleting state (STATE_QUICK_I2) and sending notification
+002 "float-east" #4: deleting IPsec SA (QUICK_I2) and sending notification
 005 "float-east" #4: ESP traffic information: in=0B out=0B
-002 "float-east" #3: deleting state (STATE_MAIN_I4) and sending notification
+002 "float-east" #3: deleting ISAKMP SA (MAIN_I4) and sending notification
 003 ERROR: "float-east" #3: send on eth1 from 192.1.2.66:500 to 192.1.2.23:500 using UDP failed in delete notify [...]
 002 "float-east" #3: deleting ISAKMP SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 002 "float-east": unroute-host output: RTNETLINK answers: Network is unreachable

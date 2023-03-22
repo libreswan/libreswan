@@ -22,7 +22,7 @@ west #
 002 "westnet-eastnet" #1: initiating IKEv1 Main Mode connection
 1v1 "westnet-eastnet" #1: sent Main Mode request
 002 "westnet-eastnet" #1: IMPAIR: retransmit so deleting SA
-002 "westnet-eastnet" #1: deleting state (STATE_MAIN_I1) and NOT sending notification
+002 "westnet-eastnet" #1: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
 002 "westnet-eastnet" #1: deleting ISAKMP SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  ipsec auto --up westnet-eastnet-ikev2
@@ -30,7 +30,7 @@ west #
 1v2 "westnet-eastnet-ikev2" #3: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "westnet-eastnet-ikev2" #3: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "westnet-eastnet-ikev2" #3: IMPAIR: retransmit so deleting SA
-002 "westnet-eastnet-ikev2" #3: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
+002 "westnet-eastnet-ikev2" #3: deleting IKE SA (PARENT_I1) and NOT sending notification
 002 "westnet-eastnet-ikev2" #3: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  echo done

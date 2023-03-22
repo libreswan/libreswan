@@ -29,9 +29,9 @@ west #
 west #
  ipsec auto --down nss-cert
 002 "nss-cert": terminating SAs using this connection
-002 "nss-cert" #2: deleting state (STATE_QUICK_I2) and sending notification
+002 "nss-cert" #2: deleting IPsec SA (QUICK_I2) and sending notification
 005 "nss-cert" #2: ESP traffic information: in=0B out=0B
-002 "nss-cert" #1: deleting state (STATE_MAIN_I4) and sending notification
+002 "nss-cert" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
  # pluto should still be running
 west #

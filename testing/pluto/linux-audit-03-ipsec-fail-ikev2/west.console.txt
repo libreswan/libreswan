@@ -28,7 +28,7 @@ west #
 west #
  ipsec auto --delete ikev2-ipsec-fail
 002 "ikev2-ipsec-fail": terminating SAs using this connection
-002 "ikev2-ipsec-fail" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "ikev2-ipsec-fail" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 west #
  echo done
 done

@@ -22,7 +22,7 @@ west #
 1v2 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "ikev2-westnet-eastnet-x509-cr" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "ikev2-westnet-eastnet-x509-cr" #1: authentication failed: no certificate matched RSASSA-PSS with SHA2_512 and '192.1.2.23'
-002 "ikev2-westnet-eastnet-x509-cr" #1: deleting state (STATE_V2_PARENT_I2) and sending notification
+002 "ikev2-westnet-eastnet-x509-cr" #1: deleting IKE SA (PARENT_I2) and sending notification
 002 "ikev2-westnet-eastnet-x509-cr" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  echo "done"

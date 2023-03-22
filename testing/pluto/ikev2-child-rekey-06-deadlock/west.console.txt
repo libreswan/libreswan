@@ -119,7 +119,7 @@ west #
 "west" #4: deleting larval state due to timeout
 "west" #3: IMPAIR: skipping revival of connection that is supposed to remain up
 "west" #3: ESP traffic information: in=0B out=0B
-"west" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and NOT sending notification
+"west" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
 west #
  ipsec whack --trafficstatus
 west #

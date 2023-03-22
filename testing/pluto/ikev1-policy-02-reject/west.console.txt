@@ -21,7 +21,7 @@ west #
 003 "ikev1" #1: ignoring informational payload INVALID_MAJOR_VERSION, msgid=00000000, length=12
 003 "ikev1" #1: received and ignored notification payload: INVALID_MAJOR_VERSION
 002 "ikev1" #1: IMPAIR: retransmit so deleting SA
-002 "ikev1" #1: deleting state (STATE_MAIN_I1) and NOT sending notification
+002 "ikev1" #1: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
 002 "ikev1" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  echo done

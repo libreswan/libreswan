@@ -72,7 +72,7 @@ west #
  ipsec auto --down  west-east
 002 "west-east": terminating SAs using this connection
 002 "west-east": IKE SA is shared - only terminating IPsec SA
-002 "west-east" #2: deleting state (STATE_QUICK_I2) and sending notification
+002 "west-east" #2: deleting IPsec SA (QUICK_I2) and sending notification
 005 "west-east" #2: ESP traffic information: in=0B out=0B
 west #
  echo done

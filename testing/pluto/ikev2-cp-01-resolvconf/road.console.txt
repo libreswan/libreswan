@@ -49,7 +49,7 @@ road #
 road #
  ipsec auto --down eastnet-any
 002 "eastnet-any"[1] 192.1.2.23: terminating SAs using this connection
-002 "eastnet-any"[1] 192.1.2.23 #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "eastnet-any"[1] 192.1.2.23 #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "eastnet-any"[1] 192.1.2.23 #2: ESP traffic information: in=84B out=84B
 002 "eastnet-any"[1] 192.1.2.23 #2: down-client output: restoring resolvconf
 002 "eastnet-any"[1] 192.1.2.23: deleting connection instance with peer 192.1.2.23

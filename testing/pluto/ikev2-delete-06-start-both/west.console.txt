@@ -24,7 +24,7 @@ west #
 west #
  ipsec auto --down west-east-auto
 002 "west-east-auto": terminating SAs using this connection
-002 "west-east-auto" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "west-east-auto" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "west-east-auto" #2: ESP traffic information: in=84B out=84B
 west #
  sleep 5

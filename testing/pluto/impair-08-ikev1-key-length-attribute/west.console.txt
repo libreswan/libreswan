@@ -29,9 +29,9 @@ west #
 004 "aes128" #2: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "aes128": terminating SAs using this connection
-002 "aes128" #2: deleting state (STATE_QUICK_I2) and sending notification
+002 "aes128" #2: deleting IPsec SA (QUICK_I2) and sending notification
 005 "aes128" #2: ESP traffic information: in=84B out=84B
-002 "aes128" #1: deleting state (STATE_MAIN_I4) and sending notification
+002 "aes128" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 002 "aes128": terminating SAs using this connection
 west #
  ipsec whack --impair none
@@ -53,7 +53,7 @@ west #
 003 "aes128" #3: ignoring informational payload BAD_PROPOSAL_SYNTAX, msgid=00000000, length=12
 003 "aes128" #3: received and ignored notification payload: BAD_PROPOSAL_SYNTAX
 002 "aes128" #3: IMPAIR: retransmit so deleting SA
-002 "aes128" #3: deleting state (STATE_MAIN_I1) and NOT sending notification
+002 "aes128" #3: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
 002 "aes128" #3: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  ipsec whack --impair none
@@ -77,7 +77,7 @@ west #
 002 "aes128" #5: IMPAIR: duplicating key-length
 1v1 "aes128" #5: sent Quick Mode request
 002 "aes128" #5: IMPAIR: retransmit so deleting SA
-002 "aes128" #5: deleting state (STATE_QUICK_I1) and NOT sending notification
+002 "aes128" #5: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  ipsec whack --impair none
 west #
@@ -98,7 +98,7 @@ west #
 003 "aes128" #6: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
 003 "aes128" #6: received and ignored notification payload: NO_PROPOSAL_CHOSEN
 002 "aes128" #6: IMPAIR: retransmit so deleting SA
-002 "aes128" #6: deleting state (STATE_MAIN_I1) and NOT sending notification
+002 "aes128" #6: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
 002 "aes128" #6: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  ipsec whack --impair none
@@ -122,7 +122,7 @@ west #
 002 "aes128" #8: IMPAIR: sending key-length attribute value 0
 1v1 "aes128" #8: sent Quick Mode request
 002 "aes128" #8: IMPAIR: retransmit so deleting SA
-002 "aes128" #8: deleting state (STATE_QUICK_I1) and NOT sending notification
+002 "aes128" #8: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  ipsec whack --impair none
 west #
@@ -149,9 +149,9 @@ west #
 004 "aes128" #10: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "aes128": terminating SAs using this connection
-002 "aes128" #10: deleting state (STATE_QUICK_I2) and sending notification
+002 "aes128" #10: deleting IPsec SA (QUICK_I2) and sending notification
 005 "aes128" #10: ESP traffic information: in=84B out=84B
-002 "aes128" #9: deleting state (STATE_MAIN_I4) and sending notification
+002 "aes128" #9: deleting ISAKMP SA (MAIN_I4) and sending notification
 002 "aes128": terminating SAs using this connection
 west #
  ipsec whack --impair none
@@ -175,7 +175,7 @@ west #
 002 "aes128" #12: IMPAIR: not sending key-length attribute
 1v1 "aes128" #12: sent Quick Mode request
 002 "aes128" #12: IMPAIR: retransmit so deleting SA
-002 "aes128" #12: deleting state (STATE_QUICK_I1) and NOT sending notification
+002 "aes128" #12: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  ipsec whack --impair none
 west #
@@ -204,9 +204,9 @@ west #
 004 "aes128" #14: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "aes128": terminating SAs using this connection
-002 "aes128" #14: deleting state (STATE_QUICK_I2) and sending notification
+002 "aes128" #14: deleting IPsec SA (QUICK_I2) and sending notification
 005 "aes128" #14: ESP traffic information: in=84B out=84B
-002 "aes128" #13: deleting state (STATE_MAIN_I4) and sending notification
+002 "aes128" #13: deleting ISAKMP SA (MAIN_I4) and sending notification
 002 "aes128": terminating SAs using this connection
 west #
  ipsec whack --impair none
@@ -232,7 +232,7 @@ west #
 002 "aes128" #16: IMPAIR: key-length-attribute:empty not implemented
 1v1 "aes128" #16: sent Quick Mode request
 002 "aes128" #16: IMPAIR: retransmit so deleting SA
-002 "aes128" #16: deleting state (STATE_QUICK_I1) and NOT sending notification
+002 "aes128" #16: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  ipsec whack --impair none
 west #
@@ -261,9 +261,9 @@ west #
 004 "3des" #18: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "3des": terminating SAs using this connection
-002 "3des" #18: deleting state (STATE_QUICK_I2) and sending notification
+002 "3des" #18: deleting IPsec SA (QUICK_I2) and sending notification
 005 "3des" #18: ESP traffic information: in=84B out=84B
-002 "3des" #17: deleting state (STATE_MAIN_I4) and sending notification
+002 "3des" #17: deleting ISAKMP SA (MAIN_I4) and sending notification
 002 "3des": terminating SAs using this connection
 west #
  ipsec whack --impair none
@@ -284,7 +284,7 @@ west #
 003 "3des" #19: ignoring informational payload NO_PROPOSAL_CHOSEN, msgid=00000000, length=12
 003 "3des" #19: received and ignored notification payload: NO_PROPOSAL_CHOSEN
 002 "3des" #19: IMPAIR: retransmit so deleting SA
-002 "3des" #19: deleting state (STATE_MAIN_I1) and NOT sending notification
+002 "3des" #19: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
 002 "3des" #19: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  ipsec whack --impair none
@@ -311,9 +311,9 @@ west #
 004 "3des" #21: IPsec SA established tunnel mode {ESP=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
 destination -I 192.0.1.254 192.0.2.254 is alive
 002 "3des": terminating SAs using this connection
-002 "3des" #21: deleting state (STATE_QUICK_I2) and sending notification
+002 "3des" #21: deleting IPsec SA (QUICK_I2) and sending notification
 005 "3des" #21: ESP traffic information: in=84B out=84B
-002 "3des" #20: deleting state (STATE_MAIN_I4) and sending notification
+002 "3des" #20: deleting ISAKMP SA (MAIN_I4) and sending notification
 002 "3des": terminating SAs using this connection
 west #
  ipsec whack --impair none

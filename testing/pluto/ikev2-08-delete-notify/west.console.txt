@@ -48,7 +48,7 @@ west #
 west #
  ipsec auto --down westnet-eastnet-ipv4-psk-ikev2
 002 "westnet-eastnet-ipv4-psk-ikev2": terminating SAs using this connection
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "westnet-eastnet-ipv4-psk-ikev2" #2: ESP traffic information: in=84B out=84B
 west #
  sleep 3

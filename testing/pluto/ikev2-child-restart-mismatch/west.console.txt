@@ -68,7 +68,7 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-ikev2a
 002 "westnet-eastnet-ikev2a": terminating SAs using this connection
-002 "westnet-eastnet-ikev2a" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "westnet-eastnet-ikev2a" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "westnet-eastnet-ikev2a" #2: ESP traffic information: in=84B out=84B
 west #
  ipsec status | grep westnet-eastnet

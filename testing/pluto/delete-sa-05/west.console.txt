@@ -21,9 +21,9 @@ west #
  ipsec auto --delete west-east-auto
 002 "west-east-auto": terminating SAs using this connection
 002 "west-east-auto": IKE SA is shared - only terminating IPsec SA
-002 "west-east-auto" #3: deleting state (STATE_QUICK_R2) and sending notification
+002 "west-east-auto" #3: deleting IPsec SA (QUICK_R2) and sending notification
 005 "west-east-auto" #3: ESP traffic information: in=0B out=0B
-002 "west-east-auto" #1: deleting state (STATE_MAIN_R3) and sending notification
+002 "west-east-auto" #1: deleting ISAKMP SA (MAIN_R3) and sending notification
 west #
  sleep 2
 west #

@@ -23,11 +23,11 @@ north #
 1v2 "north-east" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "north-east" #1: initiating IKE_SA_INIT redirect to new gateway (address: 192.1.2.44)
 1v2 "north-east" #2: initiating IKEv2 connection
-002 "north-east" #1: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
+002 "north-east" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
 002 "north-east" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 1v2 "north-east" #2: sent IKE_SA_INIT request to 192.1.2.44:500
 002 "north-east" #2: IMPAIR: retransmit so deleting SA
-002 "north-east" #2: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
+002 "north-east" #2: deleting IKE SA (PARENT_I1) and NOT sending notification
 002 "north-east" #2: IMPAIR: skipping revival of connection that is supposed to remain up
 north #
  ipsec auto --delete north-east
@@ -47,11 +47,11 @@ north #
 1v2 "north-east" #3: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "north-east" #3: initiating IKE_SA_INIT redirect to new gateway (address: 192.1.2.46)
 1v2 "north-east" #4: initiating IKEv2 connection
-002 "north-east" #3: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
+002 "north-east" #3: deleting IKE SA (PARENT_I1) and NOT sending notification
 002 "north-east" #3: IMPAIR: skipping revival of connection that is supposed to remain up
 1v2 "north-east" #4: sent IKE_SA_INIT request to 192.1.2.46:500
 002 "north-east" #4: IMPAIR: retransmit so deleting SA
-002 "north-east" #4: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
+002 "north-east" #4: deleting IKE SA (PARENT_I1) and NOT sending notification
 002 "north-east" #4: IMPAIR: skipping revival of connection that is supposed to remain up
 north #
  ipsec auto --delete north-east
@@ -71,7 +71,7 @@ north #
 1v2 "north-east" #5: sent IKE_SA_INIT request to 192.1.2.23:500
 002 "north-east" #5: initiating IKE_SA_INIT redirect to new gateway (address: 192.1.2.45)
 1v2 "north-east" #6: initiating IKEv2 connection
-002 "north-east" #5: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
+002 "north-east" #5: deleting IKE SA (PARENT_I1) and NOT sending notification
 002 "north-east" #5: IMPAIR: skipping revival of connection that is supposed to remain up
 1v2 "north-east" #6: sent IKE_SA_INIT request to 192.1.2.45:500
 1v2 "north-east" #6: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
@@ -90,7 +90,7 @@ north #
 north #
  ipsec auto --delete north-east
 002 "north-east": terminating SAs using this connection
-002 "north-east" #6: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "north-east" #6: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "north-east" #7: ESP traffic information: in=84B out=84B
 002 "north-east" #7: down-client output: restoring resolvconf
 north #

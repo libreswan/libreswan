@@ -44,9 +44,9 @@ west #
 002 adding UDP interface eth1 192.1.2.23:4500
 003 two interfaces match "west-east" (eth1 192.1.2.23, eth1 192.1.2.45)
 002 "west-east": terminating SAs using this connection
-002 "west-east" #2: deleting state (STATE_QUICK_I2) and sending notification
+002 "west-east" #2: deleting IPsec SA (QUICK_I2) and sending notification
 005 "west-east" #2: ESP traffic information: in=0B out=0B
-002 "west-east" #1: deleting state (STATE_MAIN_I4) and sending notification
+002 "west-east" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
 002 no secrets filename matched "/etc/ipsec.d/*.secrets"

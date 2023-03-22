@@ -34,7 +34,7 @@ west #
 004 "ike,esp=aes_gcm" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
 up
 002 "ike,esp=aes_gcm": terminating SAs using this connection
-002 "ike,esp=aes_gcm" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "ike,esp=aes_gcm" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "ike,esp=aes_gcm" #2: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm": terminating SAs using this connection
 west #
@@ -55,7 +55,7 @@ west #
 004 "ike,esp=aes_gcm" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
 up
 002 "ike,esp=aes_gcm": terminating SAs using this connection
-002 "ike,esp=aes_gcm" #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "ike,esp=aes_gcm" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "ike,esp=aes_gcm" #4: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm": terminating SAs using this connection
 west #
@@ -76,7 +76,7 @@ west #
 004 "ike,esp=aes_gcm" #6: initiator established Child SA using #5; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
 up
 002 "ike,esp=aes_gcm": terminating SAs using this connection
-002 "ike,esp=aes_gcm" #5: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "ike,esp=aes_gcm" #5: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "ike,esp=aes_gcm" #6: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm": terminating SAs using this connection
 west #
@@ -95,7 +95,7 @@ west #
 004 "ike,esp=aes_gcm" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
 up
 002 "ike,esp=aes_gcm": terminating SAs using this connection
-002 "ike,esp=aes_gcm" #7: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "ike,esp=aes_gcm" #7: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "ike,esp=aes_gcm" #8: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm": terminating SAs using this connection
 west #
@@ -114,7 +114,7 @@ west #
 004 "ike,esp=aes_gcm" #10: initiator established Child SA using #9; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
 up
 002 "ike,esp=aes_gcm": terminating SAs using this connection
-002 "ike,esp=aes_gcm" #9: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "ike,esp=aes_gcm" #9: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "ike,esp=aes_gcm" #10: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm": terminating SAs using this connection
 west #
@@ -133,7 +133,7 @@ west #
 004 "ike,esp=aes_gcm" #12: initiator established Child SA using #11; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_128-NONE DPD=passive}
 up
 002 "ike,esp=aes_gcm": terminating SAs using this connection
-002 "ike,esp=aes_gcm" #11: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "ike,esp=aes_gcm" #11: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "ike,esp=aes_gcm" #12: ESP traffic information: in=84B out=84B
 002 "ike,esp=aes_gcm": terminating SAs using this connection
 west #

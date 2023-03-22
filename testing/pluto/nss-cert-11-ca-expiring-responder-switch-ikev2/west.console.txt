@@ -51,7 +51,7 @@ west #
 west #
  ipsec auto --down old-west
 002 "old-west": terminating SAs using this connection
-002 "old-west" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "old-west" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "old-west" #2: ESP traffic information: in=0B out=0B
 west #
  ipsec auto --up new-west
@@ -63,7 +63,7 @@ west #
 west #
  ipsec auto --down new-west
 002 "new-west": terminating SAs using this connection
-002 "new-west" #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "new-west" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "new-west" #4: ESP traffic information: in=0B out=0B
 west #
  ipsec auto --up old-west
@@ -75,7 +75,7 @@ west #
 west #
  ipsec auto --down old-west
 002 "old-west": terminating SAs using this connection
-002 "old-west" #5: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "old-west" #5: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "old-west" #6: ESP traffic information: in=0B out=0B
 west #
  ipsec auto --up new-west
@@ -87,7 +87,7 @@ west #
 west #
  ipsec auto --down new-west
 002 "new-west": terminating SAs using this connection
-002 "new-west" #7: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "new-west" #7: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "new-west" #8: ESP traffic information: in=0B out=0B
 west #
  

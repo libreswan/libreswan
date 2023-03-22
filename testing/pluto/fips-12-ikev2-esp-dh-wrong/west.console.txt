@@ -42,7 +42,7 @@ west #
 west #
  ipsec auto --delete ikev2-base
 002 "ikev2-base": terminating SAs using this connection
-002 "ikev2-base" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "ikev2-base" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "ikev2-base" #2: ESP traffic information: in=84B out=84B
 west #
  

@@ -104,9 +104,9 @@ west #
 west #
  ipsec auto --down TUNNEL-B
 002 "TUNNEL-B": terminating SAs using this connection
-002 "TUNNEL-B" #3: deleting state (STATE_QUICK_I2) and sending notification
+002 "TUNNEL-B" #3: deleting IPsec SA (QUICK_I2) and sending notification
 005 "TUNNEL-B" #3: ESP traffic information: in=336B out=336B
-002 "TUNNEL-B" #5: deleting state (STATE_MAIN_R3) and sending notification
+002 "TUNNEL-B" #5: deleting ISAKMP SA (MAIN_R3) and sending notification
 west #
  #One IKE will remain on TUNNEL-B
 west #

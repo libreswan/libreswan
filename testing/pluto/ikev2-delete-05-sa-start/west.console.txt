@@ -33,7 +33,7 @@ west #
 west #
  ipsec auto --down westnet-eastnet-auto
 002 "westnet-eastnet-auto": terminating SAs using this connection
-002 "westnet-eastnet-auto" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "westnet-eastnet-auto" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "westnet-eastnet-auto" #2: ESP traffic information: in=84B out=84B
 west #
  # give Delete/Notify some time; traffic counters on the new IPsec SA

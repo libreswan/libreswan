@@ -25,7 +25,7 @@ west #
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "westnet-eastnet-ipv4-psk-ikev2" #1: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: retransmit so deleting SA
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  ipsec whack --impair none
@@ -41,7 +41,7 @@ west #
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #2: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "westnet-eastnet-ipv4-psk-ikev2" #2: KE has 0 byte DH public value; 256 required
 036 "westnet-eastnet-ipv4-psk-ikev2" #2: encountered fatal error in state STATE_V2_PARENT_I1
-002 "westnet-eastnet-ipv4-psk-ikev2" #2: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk-ikev2" #2: deleting IKE SA (PARENT_I1) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk-ikev2" #2: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  echo done

@@ -56,7 +56,7 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-ikev2-modp2048
 002 "westnet-eastnet-ikev2-modp2048": terminating SAs using this connection
-002 "westnet-eastnet-ikev2-modp2048" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "westnet-eastnet-ikev2-modp2048" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "westnet-eastnet-ikev2-modp2048" #2: ESP traffic information: in=0B out=0B
 west #
  ipsec auto --up westnet-eastnet-ikev2-modp3072
@@ -68,7 +68,7 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-ikev2-modp3072
 002 "westnet-eastnet-ikev2-modp3072": terminating SAs using this connection
-002 "westnet-eastnet-ikev2-modp3072" #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "westnet-eastnet-ikev2-modp3072" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "westnet-eastnet-ikev2-modp3072" #4: ESP traffic information: in=0B out=0B
 west #
  ipsec auto --up westnet-eastnet-ikev2-modp4096
@@ -80,7 +80,7 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-ikev2-modp4096
 002 "westnet-eastnet-ikev2-modp4096": terminating SAs using this connection
-002 "westnet-eastnet-ikev2-modp4096" #5: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "westnet-eastnet-ikev2-modp4096" #5: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "westnet-eastnet-ikev2-modp4096" #6: ESP traffic information: in=0B out=0B
 west #
  ipsec auto --up westnet-eastnet-ikev2-modp8192
@@ -92,7 +92,7 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-ikev2-modp8192
 002 "westnet-eastnet-ikev2-modp8192": terminating SAs using this connection
-002 "westnet-eastnet-ikev2-modp8192" #7: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "westnet-eastnet-ikev2-modp8192" #7: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "westnet-eastnet-ikev2-modp8192" #8: ESP traffic information: in=0B out=0B
 west #
  ipsec auto --up westnet-eastnet-ikev2-dh19
@@ -104,7 +104,7 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-ikev2-dh19
 002 "westnet-eastnet-ikev2-dh19": terminating SAs using this connection
-002 "westnet-eastnet-ikev2-dh19" #9: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "westnet-eastnet-ikev2-dh19" #9: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "westnet-eastnet-ikev2-dh19" #10: ESP traffic information: in=0B out=0B
 west #
  ipsec auto --up westnet-eastnet-ikev2-dh20
@@ -116,7 +116,7 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-ikev2-dh20
 002 "westnet-eastnet-ikev2-dh20": terminating SAs using this connection
-002 "westnet-eastnet-ikev2-dh20" #11: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "westnet-eastnet-ikev2-dh20" #11: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "westnet-eastnet-ikev2-dh20" #12: ESP traffic information: in=0B out=0B
 west #
  ipsec auto --up westnet-eastnet-ikev2-dh21
@@ -128,7 +128,7 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-ikev2-dh21
 002 "westnet-eastnet-ikev2-dh21": terminating SAs using this connection
-002 "westnet-eastnet-ikev2-dh21" #13: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "westnet-eastnet-ikev2-dh21" #13: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "westnet-eastnet-ikev2-dh21" #14: ESP traffic information: in=0B out=0B
 west #
  ipsec auto --up westnet-eastnet-ikev2-dh31
@@ -140,7 +140,7 @@ west #
 west #
  ipsec auto --delete westnet-eastnet-ikev2-dh31
 002 "westnet-eastnet-ikev2-dh31": terminating SAs using this connection
-002 "westnet-eastnet-ikev2-dh31" #15: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "westnet-eastnet-ikev2-dh31" #15: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "westnet-eastnet-ikev2-dh31" #16: ESP traffic information: in=0B out=0B
 west #
  # NOTE: we cannot do this test anymore as we support everything now in the default proposal list
@@ -162,7 +162,7 @@ west #
 1v2 "westnet-eastnet-ikev2-modp1536" #17: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "westnet-eastnet-ikev2-modp1536" #17: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "westnet-eastnet-ikev2-modp1536" #17: IMPAIR: retransmit so deleting SA
-002 "westnet-eastnet-ikev2-modp1536" #17: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
+002 "westnet-eastnet-ikev2-modp1536" #17: deleting IKE SA (PARENT_I1) and NOT sending notification
 002 "westnet-eastnet-ikev2-modp1536" #17: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  echo done

@@ -43,7 +43,7 @@ west #
 003 "ikev2-westnet-eastnet-x509-cr" #1: NSS: ERROR: IPsec certificate E=testing@libreswan.org,CN=Libreswan test CA for mainca,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA invalid: SEC_ERROR_BAD_SIGNATURE: Peer's certificate has an invalid signature.
 002 "ikev2-westnet-eastnet-x509-cr" #1: X509: certificate payload rejected for this connection
 036 "ikev2-westnet-eastnet-x509-cr" #1: encountered fatal error in state STATE_V2_PARENT_I2
-002 "ikev2-westnet-eastnet-x509-cr" #1: deleting state (STATE_V2_PARENT_I2) and NOT sending notification
+002 "ikev2-westnet-eastnet-x509-cr" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
 002 "ikev2-westnet-eastnet-x509-cr" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  echo "done"

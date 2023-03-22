@@ -209,10 +209,10 @@ src 192.0.2.0/24 dst 192.0.1.0/24
 west #
  ipsec auto --down westnet-eastnet-compress | sed -e 's/=6[0-9][0-9]B/=6nnB/g'
 002 "westnet-eastnet-compress": terminating SAs using this connection
-002 "westnet-eastnet-compress" #2: deleting state (STATE_QUICK_I2) and sending notification
+002 "westnet-eastnet-compress" #2: deleting IPsec SA (QUICK_I2) and sending notification
 005 "westnet-eastnet-compress" #2: ESP traffic information: in=6nnB out=6nnB
 005 "westnet-eastnet-compress" #2: IPCOMP traffic information: in=31KiB out=31KiB
-002 "westnet-eastnet-compress" #1: deleting state (STATE_MAIN_I4) and sending notification
+002 "westnet-eastnet-compress" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 west #
  echo ping
 ping

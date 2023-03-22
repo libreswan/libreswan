@@ -76,7 +76,7 @@ packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 3 of 
 packet from 192.1.2.45:500: IMPAIR: start processing replay forward: packet 4 of 4 (65 bytes)
 "westnet-eastnet" #1: IMPAIR: processing a fake (cloned) message
 "westnet-eastnet" #2: ESP traffic information: in=84B out=84B
-"westnet-eastnet" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and NOT sending notification
+"westnet-eastnet" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
 packet from 192.1.2.45:500: IMPAIR: stop processing replay forward: packet 4 of 4
 east #
  

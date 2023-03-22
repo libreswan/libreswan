@@ -43,7 +43,7 @@ road #
  # and delete, ...
 road #
  ../../guestbin/wait-for.sh --match '#1: deleting' -- cat /tmp/pluto.log
-"road-east-x509-ipv4"[1] 192.1.2.23 #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and NOT sending notification
+"road-east-x509-ipv4"[1] 192.1.2.23 #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
 road #
  # before trying ping (else ping races response)
 road #

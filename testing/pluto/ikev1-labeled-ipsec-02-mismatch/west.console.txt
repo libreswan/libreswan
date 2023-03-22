@@ -34,7 +34,7 @@ west #
 002 "labeled" #2: initiating Quick Mode IKEv1+RSASIG+ENCRYPT+PFS+UP+IKE_FRAG_ALLOW+ESN_NO+ESN_YES
 1v1 "labeled" #2: sent Quick Mode request
 002 "labeled" #2: IMPAIR: retransmit so deleting SA
-002 "labeled" #2: deleting state (STATE_QUICK_I1) and NOT sending notification
+002 "labeled" #2: deleting IPsec SA (QUICK_I1) and NOT sending notification
 west #
  echo done
 done

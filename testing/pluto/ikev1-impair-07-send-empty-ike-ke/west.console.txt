@@ -29,7 +29,7 @@ west #
 003 "westnet-eastnet-ipv4-psk" #1: ignoring informational payload INVALID_KEY_INFORMATION, msgid=00000000, length=12
 003 "westnet-eastnet-ipv4-psk" #1: received and ignored notification payload: INVALID_KEY_INFORMATION
 002 "westnet-eastnet-ipv4-psk" #1: IMPAIR: retransmit so deleting SA
-002 "westnet-eastnet-ipv4-psk" #1: deleting state (STATE_MAIN_I2) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk" #1: deleting ISAKMP SA (MAIN_I2) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk" #1: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  ipsec auto --delete westnet-eastnet-ipv4-psk
@@ -57,7 +57,7 @@ west #
 003 "westnet-eastnet-ipv4-psk" #2: KE has 0 byte DH public value; 256 required
 217 "westnet-eastnet-ipv4-psk" #2: sending notification INVALID_KEY_INFORMATION to 192.1.2.23:500
 031 "westnet-eastnet-ipv4-psk" #2: STATE_MAIN_I2: 60 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv1 message
-002 "westnet-eastnet-ipv4-psk" #2: deleting state (STATE_MAIN_I2) and NOT sending notification
+002 "westnet-eastnet-ipv4-psk" #2: deleting ISAKMP SA (MAIN_I2) and NOT sending notification
 002 "westnet-eastnet-ipv4-psk" #2: IMPAIR: skipping revival of connection that is supposed to remain up
 west #
  ipsec auto --delete westnet-eastnet-ipv4-psk

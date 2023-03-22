@@ -102,9 +102,9 @@ west #
 west #
  ipsec auto --replace westnet-all
 002 "westnet-all": terminating SAs using this connection
-002 "westnet-all" #2: deleting state (STATE_QUICK_I2) and sending notification
+002 "westnet-all" #2: deleting IPsec SA (QUICK_I2) and sending notification
 005 "westnet-all" #2: ESP traffic information: in=84B out=84B
-002 "westnet-all" #1: deleting state (STATE_MAIN_I4) and sending notification
+002 "westnet-all" #1: deleting ISAKMP SA (MAIN_I4) and sending notification
 002 "westnet-all": added IKEv1 connection
 west #
  ipsec auto --status |grep westnet

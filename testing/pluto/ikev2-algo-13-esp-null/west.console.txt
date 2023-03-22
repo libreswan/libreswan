@@ -35,7 +35,7 @@ west #
 004 "westnet-eastnet-esp-null-md5" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=NULL-HMAC_MD5_96 DPD=passive}
 up
 002 "westnet-eastnet-esp-null-md5": terminating SAs using this connection
-002 "westnet-eastnet-esp-null-md5" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "westnet-eastnet-esp-null-md5" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "westnet-eastnet-esp-null-md5" #2: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet-esp-null-md5": terminating SAs using this connection
 west #
@@ -48,7 +48,7 @@ west #
 004 "westnet-eastnet-esp-null-sha1" #4: initiator established Child SA using #3; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=NULL-HMAC_SHA1_96 DPD=passive}
 up
 002 "westnet-eastnet-esp-null-sha1": terminating SAs using this connection
-002 "westnet-eastnet-esp-null-sha1" #3: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "westnet-eastnet-esp-null-sha1" #3: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "westnet-eastnet-esp-null-sha1" #4: ESP traffic information: in=84B out=84B
 002 "westnet-eastnet-esp-null-sha1": terminating SAs using this connection
 west #

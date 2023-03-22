@@ -129,7 +129,8 @@ road #
 road #
  ipsec auto --delete authenticated
 002 "authenticated": terminating SAs using this connection
-002 "authenticated" #1: IMPAIR: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and NOT sending notification
+002 "authenticated" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+002 "authenticated" #1: IMPAIR: impair-send-no-delete set - not sending Delete/Notify
 005 "authenticated" #2: ESP traffic information: in=84B out=84B
 road #
  # the ping triggers an OE authnull attempt. It should fail because

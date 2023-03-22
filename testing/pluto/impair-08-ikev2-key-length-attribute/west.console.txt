@@ -23,7 +23,7 @@ west #
 004 "aes128" #2: initiator established Child SA using #1; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
 002 "aes128": terminating SAs using this connection
-002 "aes128" #1: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "aes128" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "aes128" #2: ESP traffic information: in=84B out=84B
 002 "aes128": terminating SAs using this connection
 west #
@@ -42,7 +42,7 @@ west #
 1v2 "aes128" #3: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "aes128" #3: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "aes128" #3: IMPAIR: retransmit so deleting SA
-002 "aes128" #3: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
+002 "aes128" #3: deleting IKE SA (PARENT_I1) and NOT sending notification
 002 "aes128" #3: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  ipsec whack --impair none
@@ -78,7 +78,7 @@ west #
 004 "aes128" #8: initiator established Child SA using #7; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
 002 "aes128": terminating SAs using this connection
-002 "aes128" #7: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "aes128" #7: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "aes128" #8: ESP traffic information: in=84B out=84B
 002 "aes128": terminating SAs using this connection
 west #
@@ -98,7 +98,7 @@ west #
 004 "aes128" #10: initiator established Child SA using #9; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_CBC_128-HMAC_SHA1_96 DPD=passive}
 up
 002 "aes128": terminating SAs using this connection
-002 "aes128" #9: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "aes128" #9: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "aes128" #10: ESP traffic information: in=84B out=84B
 002 "aes128": terminating SAs using this connection
 west #
@@ -117,7 +117,7 @@ west #
 1v2 "aes128" #11: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "aes128" #11: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "aes128" #11: IMPAIR: retransmit so deleting SA
-002 "aes128" #11: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
+002 "aes128" #11: deleting IKE SA (PARENT_I1) and NOT sending notification
 002 "aes128" #11: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  ipsec whack --impair none
@@ -153,7 +153,7 @@ west #
 1v2 "aes128" #15: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "aes128" #15: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "aes128" #15: IMPAIR: retransmit so deleting SA
-002 "aes128" #15: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
+002 "aes128" #15: deleting IKE SA (PARENT_I1) and NOT sending notification
 002 "aes128" #15: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  ipsec whack --impair none
@@ -172,7 +172,7 @@ west #
 1v2 "aes128" #17: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "aes128" #17: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "aes128" #17: IMPAIR: retransmit so deleting SA
-002 "aes128" #17: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
+002 "aes128" #17: deleting IKE SA (PARENT_I1) and NOT sending notification
 002 "aes128" #17: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  ipsec whack --impair none
@@ -190,7 +190,7 @@ west #
 004 "3des" #20: initiator established Child SA using #19; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
 up
 002 "3des": terminating SAs using this connection
-002 "3des" #19: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "3des" #19: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "3des" #20: ESP traffic information: in=84B out=84B
 002 "3des": terminating SAs using this connection
 west #
@@ -212,7 +212,7 @@ west #
 004 "3des" #22: initiator established Child SA using #21; IPsec tunnel [192.0.1.0-192.0.1.255:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=3DES_CBC-HMAC_SHA1_96 DPD=passive}
 up
 002 "3des": terminating SAs using this connection
-002 "3des" #21: deleting state (STATE_V2_ESTABLISHED_IKE_SA) and sending notification
+002 "3des" #21: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
 005 "3des" #22: ESP traffic information: in=84B out=84B
 002 "3des": terminating SAs using this connection
 west #
@@ -231,7 +231,7 @@ west #
 1v2 "3des" #23: sent IKE_SA_INIT request to 192.1.2.23:500
 003 "3des" #23: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "3des" #23: IMPAIR: retransmit so deleting SA
-002 "3des" #23: deleting state (STATE_V2_PARENT_I1) and NOT sending notification
+002 "3des" #23: deleting IKE SA (PARENT_I1) and NOT sending notification
 002 "3des" #23: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
 west #
  ipsec whack --impair none
