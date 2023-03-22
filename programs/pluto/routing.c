@@ -1198,6 +1198,14 @@ void dispatch(enum connection_event event, struct connection *c,
 			delete_connection(&c);
 			return;
 
+		case X(DELETE_IKE, UNROUTED, PERMANENT):
+			if (BROKEN_TRANSITION) {
+				/* should be in state UNROUTED_NEGOTIATION? */
+				delete_ike_family(e->ike);
+				return;
+			}
+			break;
+
 		case X(TIMEOUT_CHILD, ROUTED_TUNNEL, PERMANENT):
 		case X(DELETE_CHILD, ROUTED_TUNNEL, PERMANENT):
 			/* permenant connections are never deleted */
