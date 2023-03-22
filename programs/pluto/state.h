@@ -912,7 +912,7 @@ extern void state_eroute_usage(const ip_selector *ours, const ip_selector *peers
 void delete_ike_sa(struct ike_sa **ike);
 void delete_child_sa(struct child_sa **child);
 
-void llog_state_delete_n_send(lset_t rc_flags, struct state *st);
+void llog_state_delete_n_send(lset_t rc_flags, struct state *st, bool sending_delete);
 void delete_state(struct state *st);
 extern void delete_v1_states_by_connection_family(struct connection **c);
 extern void delete_states_by_connection(struct connection **c);

@@ -2732,8 +2732,10 @@ void complete_v2_state_transition(struct ike_sa *ike,
 		dbg_v2_msgid(ike, "finishing old exchange (STF_V2_INITIATOR_DELETE_IKE_FAMILY)");
 		pexpect(transition->recv_role == MESSAGE_RESPONSE);
 		v2_msgid_finish(ike, md);
-		/* do the deed */
-		ike->sa.st_on_delete.send_delete = DO_SEND_DELETE;
+		/* do the deed; record'n'send logs */
+		record_n_send_v2_delete(ike, HERE);
+		ike->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
+		ike->sa.st_on_delete.skip_log_message = true;
 		delete_ike_family(&ike);
 		/* get out of here -- everything is invalid */
 		pexpect(ike == NULL);

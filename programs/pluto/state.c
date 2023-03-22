@@ -521,19 +521,59 @@ void init_states(void)
 	}
 }
 
+static void send_delete(struct ike_sa *ike)
+{
+	if (impair.send_no_delete) {
+		llog_sa(RC_LOG, ike, "IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
+		return;
+	}
+
+	switch (ike->sa.st_ike_version) {
+#ifdef USE_IKEv1
+	case IKEv1:
+		/*
+		 * Tell the other side of any IPSEC
+		 * SAs that are going down
+		 */
+		send_v1_delete(&ike->sa);
+		return;
+#endif
+	case IKEv2:
+		/*
+		 *
+		 * ??? in IKEv2, we should not immediately delete: we
+		 * should use an Informational Exchange to coordinate
+		 * deletion.
+		 *
+		 * XXX: It's worse ....
+		 *
+		 * should_send_delete() can return
+		 * true when ST is a Child SA.  But
+		 * the below sends out a delete for
+		 * the IKE SA.
+		 */
+		record_n_send_v2_delete(ike, HERE);
+		return;
+	}
+	bad_case(ike->sa.st_ike_version);
+}
+
 void delete_state_by_id_name(struct state *st, const char *name)
 {
 	struct connection *c = st->st_connection;
 
-	if (!IS_PARENT_SA(st))
+	if (!IS_PARENT_SA(st)) {
 		return;
+	}
+	struct ike_sa *ike = pexpect_ike_sa(st); /* per above */
 
 	id_buf thatidb;
 	const char *thatidbuf = str_id(&c->remote->host.id, &thatidb);
 	if (streq(thatidbuf, name)) {
-		struct ike_sa *ike = pexpect_ike_sa(st);
-		ike->sa.st_on_delete.send_delete = (IS_PARENT_SA_ESTABLISHED(st) ? DO_SEND_DELETE :
-					  DONT_SEND_DELETE);
+		if (IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
+			send_delete(ike);
+		}
+		ike->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
 		delete_ike_family(&ike);
 	}
 }
@@ -544,14 +584,16 @@ void v1_delete_state_by_username(struct state *st, const char *name)
 	if (!IS_ISAKMP_SA(st)) {
 		return;
 	}
+	struct ike_sa *ike = pexpect_ike_sa(st); /* per above */
 
-	if (!streq(st->st_xauth_username, name)) {
+	if (!streq(ike->sa.st_xauth_username, name)) {
 		return;
 	}
 
-	struct ike_sa *ike = pexpect_ike_sa(st); /* per above */
-	ike->sa.st_on_delete.send_delete = (IS_ISAKMP_SA_ESTABLISHED(st) ? DO_SEND_DELETE :
-				  DONT_SEND_DELETE);
+	if (IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
+		send_delete(ike);
+	}
+	ike->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
 	delete_ike_family(&ike);
 	/* note: no md->v1_st to clear */
 }
@@ -835,11 +877,8 @@ static void update_and_log_traffic(struct state *st, const char *name,
 	pstats->out += proto->outbound.bytes;
 }
 
-void llog_state_delete_n_send(lset_t rc_flags, struct state *st)
+void llog_state_delete_n_send(lset_t rc_flags, struct state *st, bool sending_delete)
 {
-	/*
-	 * Use heuristics to predict the send-delete decision.
-	 */
 	LLOG_JAMBUF(rc_flags, st->st_logger, buf) {
 		/* deleting {IKE,Child,IPsec,ISAKMP} SA */
 		jam_string(buf, "deleting ");
@@ -857,7 +896,7 @@ void llog_state_delete_n_send(lset_t rc_flags, struct state *st)
 		 * SAs never send delete but logging that they are
 		 * gone can be useful
 		 */
-		if (should_send_delete(st)) {
+		if (sending_delete) {
 			jam_string(buf, " and sending notification");
 		} else {
 			jam_string(buf, " and NOT sending notification");
@@ -886,11 +925,12 @@ void delete_state(struct state *st)
 	}
 	if (rc_flags != LEMPTY) {
 		/*
-		 * This code contains a heuristic trying to second
-		 * guess the logic further down that actually sends
-		 * the delete.
+		 * Use should_send_delete() to try and second guess if
+		 * a send is needed (the actual decision is made
+		 * later).
 		 */
-		llog_state_delete_n_send(rc_flags, st);
+		llog_state_delete_n_send(rc_flags, st,
+					 should_send_delete(st));
 	}
 	/* delete logged, don't log again */
 	st->st_on_delete.skip_log_message = true;
@@ -992,7 +1032,7 @@ void delete_state(struct state *st)
 #ifdef USE_IKEv1
 			case IKEv1:
 				/*
-				 * Tell the other side of any IPSEC
+				 * Tell the other side of any IPsec
 				 * SAs that are going down
 				 */
 				send_v1_delete(st);
@@ -1000,19 +1040,11 @@ void delete_state(struct state *st)
 #endif
 			case IKEv2:
 				/*
-				 *
 				 * ??? in IKEv2, we should not immediately delete: we
 				 * should use an Informational Exchange to coordinate
 				 * deletion.
-				 *
-				 * XXX: It's worse ....
-				 *
-				 * should_send_delete() can return
-				 * true when ST is a Child SA.  But
-				 * the below sends out a delete for
-				 * the IKE SA.
 				 */
-				record_n_send_v2_delete(ike_sa(st, HERE), HERE);
+				record_n_send_v2_delete(pexpect_ike_sa(st), HERE);
 				break;
 			}
 		}

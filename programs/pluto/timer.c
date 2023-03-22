@@ -342,16 +342,21 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 				 * Because these things are
 				 * not serialized it is hard
 				 * to say.
+				 *
+				 * XXX: worth of a pexpect()?
 				 */
-				log_state(RC_LOG_SERIOUS, st, "Child SA lost its IKE SA #%lu",
-					  st->st_clonedfrom);
+				llog(RC_LOG_SERIOUS, st->st_logger,
+				     "Child SA lost its IKE SA #%lu",
+				     st->st_clonedfrom);
 				delete_state(st);
 				st = NULL;
 			} else if (IS_IKE_SA_ESTABLISHED(st)) {
 				/* IKEv2 parent, delete children too */
 				dbg("IKEv2 SA expired, delete whole family");
 				passert(&ike->sa == st);
-				ike->sa.st_on_delete.send_delete = DO_SEND_DELETE;
+				record_n_send_v2_delete(ike, HERE);
+				ike->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
+				ike->sa.st_on_delete.skip_log_message = true;
 				delete_ike_family(&ike);
 				/* note: no md->st to clear */
 				st = NULL;
