@@ -771,63 +771,6 @@ static bool should_send_delete(const struct state *st)
 	bad_case(st->st_ike_version);
 }
 
-static void send_delete(struct state *st)
-{
-	if (impair.send_no_delete) {
-		dbg("IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
-		return;
-	}
-
-	dbg("#%lu send %s delete notification for %s",
-	    st->st_serialno,
-	    st->st_connection->config->ike_info->version_name,
-	    st->st_state->name);
-	switch (st->st_ike_version) {
-#ifdef USE_IKEv1
-	case IKEv1:
-		send_v1_delete(st);
-		return;
-#endif
-	case IKEv2:
-		record_n_send_v2_delete(ike_sa(st, HERE), HERE);
-		return;
-	}
-	bad_case(st->st_ike_version);
-}
-
-static void delete_state_tail(struct state *st);
-
-/* delete a state object */
-void delete_state(struct state *st)
-{
-	/*
-	 * Where to log?  IKEv2 children don't send a delete
-	 * notification, it's their IKE SA.
-	 */
-	lset_t rc_flags;
-	if (st->st_ike_version == IKEv2 && IS_CHILD_SA(st)) {
-		rc_flags = DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY;
-	} else {
-		rc_flags = RC_LOG;
-	}
-	/*
-	 * Use heuristics to predict the send-delete decision.
-	 */
-	if (rc_flags != LEMPTY) {
-		bool should_notify = should_send_delete(st);
-		bool will_notify = should_notify && !impair.send_no_delete;
-		const char *impair_notify = should_notify == will_notify ? "" : "IMPAIR: ";
-		deltatime_buf dtb;
-		log_state(rc_flags, st,
-			  "%sdeleting state (%s) aged %ss and %ssending notification",
-			  impair_notify, st->st_state->name,
-			  str_deltatime(realtimediff(realnow(), st->st_inception), &dtb),
-			  will_notify ? "" : "NOT ");
-	}
-
-	delete_state_tail(st);
-}
-
 void delete_child_sa(struct child_sa **child)
 {
 	struct state *st = &(*child)->sa;
@@ -881,8 +824,66 @@ static void update_and_log_traffic(struct state *st, const char *name,
 	pstats->out += proto->outbound.bytes;
 }
 
-void delete_state_tail(struct state *st)
+void llog_state_delete_n_send(lset_t rc_flags, struct state *st)
 {
+	/*
+	 * Use heuristics to predict the send-delete decision.
+	 */
+	LLOG_JAMBUF(rc_flags, st->st_logger, buf) {
+		/* deleting {IKE,Child,IPsec,ISAKMP} SA */
+		jam_string(buf, "deleting ");
+		jam_string(buf, st->st_connection->config->ike_info->sa_type_name[st->st_establishing_sa]);
+		/* (STATE-NAME) XXX: drop this? */
+		jam_string(buf, " (");
+		jam_string(buf, st->st_state->short_name);
+		jam_string(buf, ")");
+		/* aged NNNs */
+		jam_string(buf, " aged ");
+		jam_deltatime(buf, realtimediff(realnow(), st->st_inception));
+		jam_string(buf, "s");
+		/*
+		 * Should this be optional?  For instance IKEv2 child
+		 * SAs never send delete but logging that they are
+		 * gone can be useful
+		 */
+		if (should_send_delete(st)) {
+			jam_string(buf, " and sending notification");
+		} else {
+			jam_string(buf, " and NOT sending notification");
+		}
+	}
+}
+
+/* delete a state object */
+void delete_state(struct state *st)
+{
+	/*
+	 * Where to log?
+	 *
+	 * IKEv2 children never send send a delete notification so
+	 * logging "and NOT sending delete" is redundant.  However,
+	 * sometimes IKEv2 children should log that they have been
+	 * deleted.  Let the caller decide.
+	 */
+	lset_t rc_flags;
+	if (st->st_ike_version == IKEv2 && IS_CHILD_SA(st)) {
+		rc_flags = DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY;
+	} else if (st->st_on_delete.skip_log_message) {
+		rc_flags = DBGP(DBG_BASE) ? DEBUG_STREAM : LEMPTY;
+	} else {
+		rc_flags = RC_LOG;
+	}
+	if (rc_flags != LEMPTY) {
+		/*
+		 * This code contains a heuristic trying to second
+		 * guess the logic further down that actually sends
+		 * the delete.
+		 */
+		llog_state_delete_n_send(rc_flags, st);
+	}
+	/* delete logged, don't log again */
+	st->st_on_delete.skip_log_message = true;
+
 	pstat_sa_deleted(st);
 
 	/*
@@ -973,14 +974,37 @@ void delete_state_tail(struct state *st)
 	}
 
 	if (should_send_delete(st)) {
-		/*
-		 * tell the other side of any IPSEC SAs that are going down
-		 *
-		 * ??? in IKEv2, we should not immediately delete:
-		 * we should use an Informational Exchange to
-		 * coordinate deletion.
-		 */
-		send_delete(st);
+		if (impair.send_no_delete) {
+			llog(RC_LOG, st->st_logger, "IMPAIR: impair-send-no-delete set - not sending Delete/Notify");
+		} else {
+			switch (st->st_ike_version) {
+#ifdef USE_IKEv1
+			case IKEv1:
+				/*
+				 * Tell the other side of any IPSEC
+				 * SAs that are going down
+				 */
+				send_v1_delete(st);
+				break;
+#endif
+			case IKEv2:
+				/*
+				 *
+				 * ??? in IKEv2, we should not immediately delete: we
+				 * should use an Informational Exchange to coordinate
+				 * deletion.
+				 *
+				 * XXX: It's worse ....
+				 *
+				 * should_send_delete() can return
+				 * true when ST is a Child SA.  But
+				 * the below sends out a delete for
+				 * the IKE SA.
+				 */
+				record_n_send_v2_delete(ike_sa(st, HERE), HERE);
+				break;
+			}
+		}
 	}
 
 	/* delete any pending timer event */
@@ -2744,7 +2768,8 @@ static bool delete_ike_family_child(struct state *st, void *unused_context UNUSE
 		break;
 	}
 
-	delete_state_tail(st);
+	st->st_on_delete.skip_log_message = true;
+	delete_state(st);
 	return false; /* keep going */
 }
 

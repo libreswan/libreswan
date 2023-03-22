@@ -504,11 +504,13 @@ void record_n_send_v2_delete(struct ike_sa *ike, where_t where)
 	 */
 	dbg_v2_msgid(ike, "hacking around record'n'send for "PRI_SO" "PRI_WHERE,
 		     ike->sa.st_serialno, pri_where(where));
+	if (!ike->sa.st_on_delete.skip_log_message) {
+		llog_state_delete_n_send(RC_LOG, &ike->sa);
+	}
 	v2_msgid_start(ike, NULL/*MD*/);
 	record_v2_delete(ike, &ike->sa);
 	send_recorded_v2_message(ike, "delete notification", MESSAGE_REQUEST);
 	v2_msgid_finish(ike, NULL/*MD*/);
-#if 0
+	ike->sa.st_on_delete.skip_log_message = true;
 	ike->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
-#endif
 }

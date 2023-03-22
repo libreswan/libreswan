@@ -742,14 +742,20 @@ struct state {
 	} st_v2_ike_seen_certreq;
 
 	/*
-	 * Screw around with what happens when a state is being
-	 * deleted.
+	 * Hobble what what happens when a state is being deleted.
 	 *
-	 * The problem is that both the connection and state code
-	 * think they are in control.
+	 * Long term, for IKEv2, most of these flags will be true by
+	 * default (and IKEv1 will be deleted).
 	 *
-	 * For instance, the connection code will delete the state
-	 * only to have the sate code try to delete the connection.
+	 * Problem #1:
+	 *
+	 * Both the connection and state code think they are in
+	 * control.  For instance, the connection code will delete the
+	 * current state only to have the state code recursively
+	 * delete that connection.
+	 *
+
+	 * Problem #2: 
 	 */
 
 	struct {
@@ -757,13 +763,9 @@ struct state {
 		 * Has this state's connection been checked for
 		 * revival?
 		 *
-		 * IKEv2 connections, for instance, check for revival
-		 * in connection_timeout().  This is so that the
-		 * connection code can both adjust kernel policy and,
-		 * possibly delete any kernel state.
-		 *
-		 * Other code paths still leave revival to
-		 * delete_state().
+		 * IKEv2 checks for revival in connection_timeout()
+		 * before calling delete_state().  No point checking
+		 * it a second time.
 		 */
 		bool skip_revival;
 
@@ -771,8 +773,9 @@ struct state {
 		 * Skip any code fiddling with the installed kernel
 		 * policy (presumably caller has done this).
 		 *
-		 * With this true, delete_state() should delete the
-		 * (surprise) kernel state.
+		 * IKEv2 updates kernel policy before calling
+		 * delete_state() (i.e., delete_state() should only
+		 * delete the kernel state).
 		 */
 		bool skip_kernel_policy;
 
@@ -798,14 +801,26 @@ struct state {
 		 *
 		 * When tearing down an SA family, the state and
 		 * connection code get into a bun-fight over when
-		 * connections/states should be deleted.  This flag
-		 * and POLICY_GOING_AWAY try to avoid this.
+		 * connections/states should be deleted.  This and
+		 * connection's .going_away try to avoid this.
 		 *
 		 * A simple rule would be for the connection code to
 		 * delete the (kernel) state, but most code has the
-		 * state trying to delete the connection.
+		 * state trying to delete the connection.  IKEv2 is
+		 * being changed to do this.
 		 */
 		bool skip_connection;
+
+		/*
+		 * For the most part delete_state() will log a message
+		 * announcing that the state is being deleted if a
+		 * delete notify is/nt being sent.
+		 *
+		 * This suppresses the message.  Instead the caller
+		 * (typically via record_n_send_v2_delete()) logs the
+		 * message.
+		 */
+		bool skip_log_message;
 
 	} st_on_delete;
 };
@@ -897,6 +912,7 @@ extern void state_eroute_usage(const ip_selector *ours, const ip_selector *peers
 void delete_ike_sa(struct ike_sa **ike);
 void delete_child_sa(struct child_sa **child);
 
+void llog_state_delete_n_send(lset_t rc_flags, struct state *st);
 void delete_state(struct state *st);
 extern void delete_v1_states_by_connection_family(struct connection **c);
 extern void delete_states_by_connection(struct connection **c);
