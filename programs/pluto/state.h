@@ -788,12 +788,10 @@ struct state {
 		 * delete_state() will generate and send an
 		 * out-of-band delete message.  This is known as
 		 * record'n'send.  It should go away.
+		 *
+		 * False means use strange should_send_delete() logic.
 		 */
-		enum {
-			PROBABLY_SEND_DELETE,
-			DONT_SEND_DELETE,
-			DO_SEND_DELETE,
-		} send_delete;
+		bool skip_send_delete;
 
 		/*
 		 * In delete_state(), should the code trying to delete

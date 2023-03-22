@@ -454,7 +454,7 @@ bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md)
 					    ntohl((uint32_t)spi));
 
 					/* we just received a delete, don't send another delete */
-					dst->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
+					dst->sa.st_on_delete.skip_send_delete = true;
 					/* st is a parent */
 					passert(&ike->sa != &dst->sa);
 					passert(ike->sa.st_serialno == dst->sa.st_clonedfrom);
@@ -512,5 +512,5 @@ void record_n_send_v2_delete(struct ike_sa *ike, where_t where)
 	send_recorded_v2_message(ike, "delete notification", MESSAGE_REQUEST);
 	v2_msgid_finish(ike, NULL/*MD*/);
 	ike->sa.st_on_delete.skip_log_message = true;
-	ike->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
+	ike->sa.st_on_delete.skip_send_delete = true;
 }

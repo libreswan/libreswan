@@ -466,7 +466,7 @@ void connection_timeout(struct ike_sa **ike)
 		PEXPECT((*ike)->sa.st_logger, !(*ike)->sa.st_on_delete.skip_revival);
 		(*ike)->sa.st_on_delete.skip_revival = true;
 		pstat_sa_failed(&(*ike)->sa, REASON_TOO_MANY_RETRANSMITS);
-		(*ike)->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
+		(*ike)->sa.st_on_delete.skip_send_delete = true;
 		delete_ike_family(ike);
 		return;
 	}
@@ -571,7 +571,7 @@ void connection_timeout(struct ike_sa **ike)
 	struct state *st = &(*ike)->sa;
 	*ike = NULL;
 	st->st_on_delete.skip_revival = true;
-	st->st_on_delete.send_delete = DONT_SEND_DELETE;
+	st->st_on_delete.skip_send_delete = true;
 #if 0
 	st->st_on_delete.skip_connection = true;
 #endif
@@ -628,7 +628,7 @@ void connection_delete_child(struct ike_sa *ike, struct child_sa **child)
 		 * Caller is responsible for generating any messages; suppress
 		 * delete_state()'s desire to send an out-of-band delete.
 		 */
-		(*child)->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
+		(*child)->sa.st_on_delete.skip_send_delete = true;
 		(*child)->sa.st_on_delete.skip_revival = true;
 		(*child)->sa.st_on_delete.skip_connection = true;
 		/*
@@ -658,7 +658,7 @@ void connection_delete_ike(struct ike_sa **ikep)
 	 * Caller is responsible for generating any messages; suppress
 	 * delete_state()'s desire to send an out-of-band delete.
 	 */
-	ike->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
+	ike->sa.st_on_delete.skip_send_delete = true;
 	ike->sa.st_on_delete.skip_revival = true;
 	ike->sa.st_on_delete.skip_connection = true;
 	ldbg_sa(ike, "IKE SA is no longer viable");

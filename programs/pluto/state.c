@@ -573,7 +573,7 @@ void delete_state_by_id_name(struct state *st, const char *name)
 		if (IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
 			send_delete(ike);
 		}
-		ike->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
+		ike->sa.st_on_delete.skip_send_delete = true;
 		delete_ike_family(&ike);
 	}
 }
@@ -593,7 +593,7 @@ void v1_delete_state_by_username(struct state *st, const char *name)
 	if (IS_PARENT_SA_ESTABLISHED(&ike->sa)) {
 		send_delete(ike);
 	}
-	ike->sa.st_on_delete.send_delete = DONT_SEND_DELETE;
+	ike->sa.st_on_delete.skip_send_delete = true;
 	delete_ike_family(&ike);
 	/* note: no md->v1_st to clear */
 }
@@ -733,95 +733,82 @@ static void flush_incomplete_children(struct ike_sa *ike)
 
 static bool should_send_delete(const struct state *st)
 {
-	switch (st->st_on_delete.send_delete) {
-
-	case DO_SEND_DELETE:
+	if (st->st_on_delete.skip_send_delete) {
 		ldbg(st->st_logger,
-		     "%s: "PRI_SO"? YES, because .st_on_delete.send_delete==DO_SEND_DELETE",
-		     __func__, pri_so(st->st_serialno));
-		return true;
-
-	case DONT_SEND_DELETE:
-		ldbg(st->st_logger,
-		     "%s: "PRI_SO"? NO, because .st_on_delete.send_delete==DONT_SEND_DELETE",
+		     "%s: "PRI_SO"? NO, because .st_on_delete.skip_send_delete",
 		     __func__, pri_so(st->st_serialno));
 		return false;
-
-	case PROBABLY_SEND_DELETE:
-		switch (st->st_ike_version) {
-#ifdef USE_IKEv1
-		case IKEv1:
-			if (!IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
-			    !IS_IPSEC_SA_ESTABLISHED(st)) {
-				ldbg(st->st_logger,
-				     "%s: "PRI_SO"? no, IKEv1 SA in state %s is not established",
-				     __func__, pri_so(st->st_serialno), st->st_state->short_name);
-				return false;
-			}
-			if (find_phase1_state(st->st_connection, V1_ISAKMP_SA_ESTABLISHED_STATES) == NULL) {
-				/*
-				 * PW: But this is valid for IKEv1,
-				 * where it would need to start a new
-				 * IKE SA to send the delete
-				 * notification ???
-				 */
-				ldbg(st->st_logger,
-				     "%s: "PRI_SO"? no, IKEv1 SA in state %s has no ISAKMP (Phase 1) SA",
-				     __func__, st->st_serialno, st->st_state->name);
-				return false;
-			}
-			ldbg(st->st_logger, "%s: "PRI_SO"? yes, IKEv1 and no reason not to",
-			     __func__, pri_so(st->st_serialno));
-			return true;
-#endif
-		case IKEv2:
-			if (IS_CHILD_SA(st)) {
-				/*
-				 * Without an IKE SA sending the
-				 * notify isn't possible.
-				 *
-				 * ??? in v2, there must be a parent
-				 *
-				 * XXX:
-				 *
-				 * Except when delete_state(ike),
-				 * instead of delete_ike_family(ike),
-				 * is called ...
-				 *
-				 * There's also the idea of having
-				 * Child SAs linger while the IKE SA
-				 * is trying to re-establish.  Or
-				 * should that code only use
-				 * information in the connection?
-				 *
-				 * Anyway, play it safe.
-				 */
-				ldbg(st->st_logger,
-				     "%s: "PRI_SO"? no, IKEv2 Child SAs never send delete",
-				     __func__, pri_so(st->st_serialno));
-				return false;
-			}
-			if (!IS_IKE_SA_ESTABLISHED(st)) {
-				ldbg(st->st_logger,
-				     "%s: "PRI_SO"? no, IKEv2 IKE SA in state %s is not established",
-				     __func__, pri_so(st->st_serialno), st->st_state->short_name);
-				return false;
-			}
-			/*
-			 * Established Child SA implies it's IKE SA is
-			 * established.
-			 *
-			 * Don't require .st_viable_parent; a rekeyed
-			 * IKE SA, which is established but not
-			 * viable, needs to send a delete.
-			 */
-			dbg("%s: "PRI_SO"? yes, IKEv2 IKE SA is established",
-			    __func__, pri_so(st->st_serialno));
-			return true;
-		}
-		bad_case(st->st_ike_version);
 	}
-	bad_case(st->st_on_delete.send_delete);
+
+	switch (st->st_ike_version) {
+#ifdef USE_IKEv1
+	case IKEv1:
+		if (!IS_V1_ISAKMP_SA_ESTABLISHED(st) &&
+		    !IS_IPSEC_SA_ESTABLISHED(st)) {
+			ldbg(st->st_logger,
+			     "%s: "PRI_SO"? no, IKEv1 SA in state %s is not established",
+			     __func__, pri_so(st->st_serialno), st->st_state->short_name);
+			return false;
+		}
+		if (find_phase1_state(st->st_connection, V1_ISAKMP_SA_ESTABLISHED_STATES) == NULL) {
+			/*
+			 * PW: But this is valid for IKEv1, where it
+			 * would need to start a new IKE SA to send
+			 * the delete notification ???
+			 */
+			ldbg(st->st_logger,
+			     "%s: "PRI_SO"? no, IKEv1 SA in state %s has no ISAKMP (Phase 1) SA",
+			     __func__, st->st_serialno, st->st_state->name);
+			return false;
+		}
+		ldbg(st->st_logger, "%s: "PRI_SO"? yes, IKEv1 and no reason not to",
+		     __func__, pri_so(st->st_serialno));
+		return true;
+#endif
+	case IKEv2:
+		if (IS_CHILD_SA(st)) {
+			/*
+			 * Without an IKE SA sending the notify isn't
+			 * possible.
+			 *
+			 * ??? in v2, there must be a parent
+			 *
+			 * XXX:
+			 *
+			 * Except when delete_state(ike), instead of
+			 * delete_ike_family(ike), is called ...
+			 *
+			 * There's also the idea of having Child SAs
+			 * linger while the IKE SA is trying to
+			 * re-establish.  Or should that code only use
+			 * information in the connection?
+			 *
+			 * Anyway, play it safe.
+			 */
+			ldbg(st->st_logger,
+			     "%s: "PRI_SO"? no, IKEv2 Child SAs never send delete",
+			     __func__, pri_so(st->st_serialno));
+			return false;
+		}
+		if (!IS_IKE_SA_ESTABLISHED(st)) {
+			ldbg(st->st_logger,
+			     "%s: "PRI_SO"? no, IKEv2 IKE SA in state %s is not established",
+			     __func__, pri_so(st->st_serialno), st->st_state->short_name);
+			return false;
+		}
+		/*
+		 * Established Child SA implies it's IKE SA is
+		 * established.
+		 *
+		 * Don't require .st_viable_parent; a rekeyed IKE SA,
+		 * which is established but not viable, needs to send
+		 * a delete.
+		 */
+		dbg("%s: "PRI_SO"? yes, IKEv2 IKE SA is established",
+		    __func__, pri_so(st->st_serialno));
+		return true;
+	}
+	bad_case(st->st_ike_version);
 }
 
 void delete_child_sa(struct child_sa **child)
@@ -829,7 +816,7 @@ void delete_child_sa(struct child_sa **child)
 	struct state *st = &(*child)->sa;
 	*child = NULL;
 	st->st_on_delete.skip_revival = true;
-	st->st_on_delete.send_delete = DONT_SEND_DELETE;
+	st->st_on_delete.skip_send_delete = true;
 	st->st_on_delete.skip_connection = true;
 	st->st_on_delete.skip_kernel_policy = true;
 	delete_state(st);
@@ -840,7 +827,7 @@ void delete_ike_sa(struct ike_sa **ike)
 	struct state *st = &(*ike)->sa;
 	*ike = NULL;
 	st->st_on_delete.skip_revival = true;
-	st->st_on_delete.send_delete = DONT_SEND_DELETE;
+	st->st_on_delete.skip_send_delete = true;
 	st->st_on_delete.skip_connection = true;
 	delete_state(st);
 }
@@ -2807,7 +2794,7 @@ static bool delete_ike_family_child(struct state *st, void *unused_context UNUSE
 	}
 
 	case IKEv2:
-		st->st_on_delete.send_delete = DONT_SEND_DELETE;
+		st->st_on_delete.skip_send_delete = true;
 		break;
 	}
 
@@ -3036,7 +3023,7 @@ void suppress_delete_notify(const struct ike_sa *ike,
 		return;
 	}
 
-	st->st_on_delete.send_delete = DONT_SEND_DELETE;
+	st->st_on_delete.skip_send_delete = true;
 	dbg("marked %s state #%lu to suppress sending delete notify",
 	    what, st->st_serialno);
 }
