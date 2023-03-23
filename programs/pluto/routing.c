@@ -704,10 +704,10 @@ void dispatch(enum connection_event event, struct connection *c,
 	 */
 	PEXPECT(logger, (c->newest_ike_sa == SOS_NOBODY ||
 			 (e->ike != NULL &&
-			  e->ike->sa.st_serialno == c->newest_ike_sa)));
+			  (*e->ike)->sa.st_serialno == c->newest_ike_sa)));
 #endif
 	PEXPECT(logger, (c->child.newest_routing_sa == SOS_NOBODY ||
-			 ((*e->child) != NULL &&
+			 (e->child != NULL &&
 			  (*e->child)->sa.st_serialno == c->child.newest_routing_sa)));
 
 #define XX(CONNECTION_EVENT, CONNECTION_ROUTING, CONNECTION_KIND)	\
