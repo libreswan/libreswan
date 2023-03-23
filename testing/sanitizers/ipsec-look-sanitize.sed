@@ -23,7 +23,6 @@ b end
   # due to a kernel difference? Just ignore the error code in the routing table
   s/metric 1024 error -[0-9][0-9]*/metric 1024 error -XXXX/g
   s/metric 1024 error [0-9][0-9]*/metric 1024 error -XXXX/g
-  /^.* dev lo metric 1024.*$/d
 
   # fix up keys and other magic numbers; see also ip xfrm state
   / spi 0x00000000 /! s/ spi 0x[^ ]* / spi 0xSPISPI /g
@@ -35,6 +34,9 @@ b end
 
   # f28 adds '... pref medium' to ROUTING TABLES
   s/ pref medium$//
+
+  # this appeared in f36?
+  s/lastused .*/lastused YYYY-MM-DD HH:MM:SS/
 
   # the following was in the .pl sanitizer
 

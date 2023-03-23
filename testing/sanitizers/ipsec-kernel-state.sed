@@ -72,6 +72,8 @@ b end
   s/\tenc \(.*\) 0x.*$/\tenc \1 0xENCKEY/g
   s/\taead \(.*\) 0x[^ ]*\( .*\)$/\taead \1 0xENCAUTHKEY\2/g
 
+  s/lastused .*/lastused YYYY-MM-DD HH:MM:SS/
+
 b match
 
 :end

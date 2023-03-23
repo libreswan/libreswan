@@ -32,6 +32,7 @@ src 192.1.2.254 dst 192.1.2.23
 	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	encap type espinudp sport EPHEM dport 4500 addr 0.0.0.0
+	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
@@ -41,6 +42,7 @@ src 192.1.2.23 dst 192.1.2.254
 	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
+	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
@@ -50,6 +52,7 @@ src 192.1.2.254 dst 192.1.2.23
 	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	encap type espinudp sport EPHEM dport 4500 addr 0.0.0.0
+	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
@@ -59,6 +62,7 @@ src 192.1.2.23 dst 192.1.2.254
 	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
+	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
@@ -68,6 +72,7 @@ src 192.1.2.254 dst 192.1.2.23
 	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	encap type espinudp sport EPHEM dport 4500 addr 0.0.0.0
+	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
@@ -77,6 +82,7 @@ src 192.1.2.23 dst 192.1.2.254
 	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
+	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
@@ -86,6 +92,7 @@ src 192.1.2.254 dst 192.1.2.23
 	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	encap type espinudp sport EPHEM dport 4500 addr 0.0.0.0
+	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
@@ -95,6 +102,7 @@ src 192.1.2.23 dst 192.1.2.254
 	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
+	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
@@ -104,6 +112,7 @@ src 192.1.2.254 dst 192.1.2.23
 	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	encap type espinudp sport EPHEM dport 4500 addr 0.0.0.0
+	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
@@ -113,6 +122,7 @@ src 192.1.2.23 dst 192.1.2.254
 	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
+	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
@@ -122,6 +132,7 @@ src 192.1.2.254 dst 192.1.2.23
 	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	encap type espinudp sport EPHEM dport 4500 addr 0.0.0.0
+	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
@@ -131,6 +142,7 @@ src 192.1.2.23 dst 192.1.2.254
 	replay-window 0 flag af-unspec esn
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
 	encap type espinudp sport 4500 dport EPHEM addr 0.0.0.0
+	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
 	 replay_window 128, bitmap-length 4
