@@ -45,22 +45,22 @@ function results(div_id, json_file) {
 		title: "Result",
 	    },
 	    {
-		title: "Errors and Warnings",
+		title: "Issues",
 		html: function(result) {
 		    if (!result || result.result == "untested") {
 			return ""
 		    }
-		    let test_host_names = (result.test_host_names !== undefined
-					   ? result.test_host_names
-					   : result.host_names !== undefined
-					   ? result.host_names
-					   : null)
-		    if (!test_host_names) {
+		    let test_guest_names =
+			(result.test_guest_names !== undefined ? result.test_guest_names :
+			 result.test_host_names !== undefined ? result.test_host_names :
+			 result.host_names !== undefined ? result.host_names :
+			 null)
+		    if (!test_guest_names) {
 			return ""
 		    }
 		    let br = false
 		    let html = ""
-		    for (const host of test_host_names) {
+		    for (const host of test_guest_names) {
 			if (br) {
 			    html += "<br/>"
 			}

@@ -283,18 +283,18 @@ function lsw_compare_table(test_runs) {
 		if (result == undefined) {
 		    return ""
 		}
-		let test_host_names = (result.test_host_names !== undefined
-				       ? result.test_host_names
-				       : result.host_names !== undefined
-				       ? result.host_names
-				       : null)
-		if (!test_host_names) {
+		let test_guest_names =
+		    (result.test_guest_names !== undefined ? result.test_guest_names :
+		     result.test_host_names !== undefined ? result.test_host_names :
+		     result.host_names !== undefined ? result.host_names :
+		     null)
+		if (!test_guest_names) {
 		    return ""
 		}
 		let br = false
 		let html = ""
 		let directory = this.directory
-		for (const host of test_host_names) {
+		for (const host of test_guest_names) {
 		    if (br) {
 			html += "<br/>"
 		    }
