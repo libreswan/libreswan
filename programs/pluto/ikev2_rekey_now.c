@@ -34,15 +34,17 @@ struct rekey_how {
 static void rekey_state(struct state *st, bool background, struct logger *logger)
 {
 	if (!background) {
-		/* XXX: something better? */
-		fd_delref(&st->st_logger->object_whackfd);
-		st->st_logger->global_whackfd = fd_addref(logger->global_whackfd);
+		attach_whack(st->st_logger, logger);
+		if (IS_CHILD_SA(st)) {
+			struct ike_sa *ike = ike_sa(st, HERE);
+			attach_whack(ike->sa.st_logger, logger);
+		}
 	}
 	event_force(EVENT_v2_REKEY, st);
 }
 
-static int rekey_connection_now(struct connection *c,
-				void *arg, struct logger *logger)
+static int rekey_connection(struct connection *c,
+			    void *arg, struct logger *logger)
 {
 	if (c->config->ike_version != IKEv2) {
 		llog(RC_LOG, logger, "cannot force rekey of %s connection",
@@ -94,14 +96,14 @@ void rekey_now(const char *str, enum sa_type sa_type,
 		 * connection instances may need more work to work ???
 		 */
 
-		if (foreach_concrete_connection_by_name(str, rekey_connection_now,
+		if (foreach_concrete_connection_by_name(str, rekey_connection,
 							&how, logger) >= 0) {
 			/* logged by rekey_connection_now() */
 			dbg("found connections by name");
 			return;
 		}
 
-		int count = foreach_connection_by_alias(str, rekey_connection_now,
+		int count = foreach_connection_by_alias(str, rekey_connection,
 							&how, logger);
 		if (count == 0) {
 			llog(RC_UNKNOWN_NAME, logger,
