@@ -71,6 +71,7 @@ src 192.1.2.23 dst 192.1.2.45
 src 192.1.2.23 dst 192.1.2.45
 	proto 4 spi 0xSPISPI reqid 0 mode tunnel
 	replay-window 0 flag af-unspec
+	lastused YYYY-MM-DD HH:MM:SS
 src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
@@ -86,6 +87,7 @@ src 192.1.2.45 dst 192.1.2.23
 	proto comp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag af-unspec
 	comp deflate 
+	lastused YYYY-MM-DD HH:MM:SS
 src 192.1.2.45 dst 192.1.2.23
 	proto 4 spi 0xSPISPI reqid 0 mode tunnel
 	replay-window 0 flag af-unspec

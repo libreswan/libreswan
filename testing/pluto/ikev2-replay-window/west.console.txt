@@ -35,11 +35,9 @@ west #
 west #
  ip xfrm state |grep replay
 	replay-window 0 flag af-unspec esn
-	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 replay_window 128, bitmap-length 4
 	replay-window 0 flag af-unspec esn
-	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 replay_window 128, bitmap-length 4
 west #
@@ -87,11 +85,9 @@ west #
 west #
  ip xfrm state |grep replay
 	replay-window 0 flag af-unspec esn
-	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 replay_window 256, bitmap-length 8
 	replay-window 0 flag af-unspec esn
-	lastused YYYY-MM-DD HH:MM:SS
 	anti-replay esn context:
 	 replay_window 256, bitmap-length 8
 west #

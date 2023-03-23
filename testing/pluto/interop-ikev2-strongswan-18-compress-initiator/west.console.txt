@@ -91,11 +91,13 @@ src 192.1.2.45 dst 192.1.2.23
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 0 
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
 src 192.1.2.45 dst 192.1.2.23
 	proto comp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag noecn nopmtudisc af-unspec
 	comp deflate 
+	lastused YYYY-MM-DD HH:MM:SS
 src 192.1.2.45 dst 192.1.2.23
 	proto 4 spi 0xSPISPI reqid 0 mode tunnel
 	replay-window 0 flag noecn nopmtudisc af-unspec
@@ -103,14 +105,17 @@ src 192.1.2.23 dst 192.1.2.45
 	proto esp spi 0xSPISPI reqid REQID mode transport
 	replay-window 32 
 	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
 	sel src 0.0.0.0/0 dst 0.0.0.0/0 
 src 192.1.2.23 dst 192.1.2.45
 	proto comp spi 0xSPISPI reqid REQID mode tunnel
 	replay-window 0 flag noecn nopmtudisc af-unspec
 	comp deflate 
+	lastused YYYY-MM-DD HH:MM:SS
 src 192.1.2.23 dst 192.1.2.45
 	proto 4 spi 0xSPISPI reqid 0 mode tunnel
 	replay-window 0 flag noecn nopmtudisc af-unspec
+	lastused YYYY-MM-DD HH:MM:SS
 west #
  ip xfrm policy
 src 192.0.1.0/24 dst 192.0.2.0/24 
