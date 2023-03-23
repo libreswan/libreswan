@@ -65,7 +65,7 @@ west #
  ipsec trafficstatus
 006 #2: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
 west #
- # this rekey, #2->#3, should succeed
+ # This rekey, #2->#3, should succeed
 west #
  ipsec whack --rekey-ipsec --name west
 002 "west" #3: initiating rekey to replace Child SA #2
@@ -74,52 +74,18 @@ west #
 002 "west" #2: deleting established Child SA using IKE SA #1
 005 "west" #2: ESP traffic information: in=84B out=84B
 west #
- # this rekey, #3->#4, which is running in the background should fail.
+ # This rekey, #3->#4, should fail.  The message is blocked by firewall
 west #
- # The message is blocked by firewall rules added in 02-west-init.sh
-west #
- ipsec whack --rekey-ipsec --name west --async
-west #
- # this rekey, #?->#5, will block (waiting on the asynchronous rekey
-west #
- # #3->#4) and then die.
+ # rules added in 02-west-init.sh
 west #
  ipsec whack --rekey-ipsec --name west
-002 "west" #5: initiating rekey to replace Child SA #3
-002 "west" #5: deleting larval state due to timeout
+002 "west" #4: initiating rekey to replace Child SA #3
+1v2 "west" #4: sent CREATE_CHILD_SA request to rekey IPsec SA
+031 "west" #1: STATE_V2_ESTABLISHED_IKE_SA: 15 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv2 message
+002 "west" #4: deleting larval state due to timeout
 002 "west" #3: IMPAIR: skipping revival of connection that is supposed to remain up
 005 "west" #3: ESP traffic information: in=0B out=0B
-west #
- # above whack commands leave much to be desired when it comes to
-west #
- # logging; get around it by grepping for the expected outcome.
-west #
- #
-west #
- # Note: need to strip of "MONTH(1) DATE(2) TIME(3): "; look for real
-west #
- # log lines that just match states we're interested in.
-west #
- cat /tmp/pluto.log | sed -n -e 's/^[^|#]*: \([^#|].* #[1-5]:\)/\1/p'
-"west" #1: initiating IKEv2 connection
-"west" #1: sent IKE_SA_INIT request to 192.1.2.23:500
-"west" #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
-"west" #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
-"west" #2: initiator established Child SA using #1; IPsec tunnel [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
-"west" #3: initiating rekey to replace Child SA #2
-"west" #3: sent CREATE_CHILD_SA request to rekey IPsec SA
-"west" #3: initiator rekeyed Child SA #2 using #1; IPsec tunnel [192.1.2.45-192.1.2.45:0-65535 0] -> [192.1.2.23-192.1.2.23:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE-MODP2048 DPD=passive}
-"west" #2: deleting established Child SA using IKE SA #1
-"west" #2: ESP traffic information: in=84B out=84B
-"west" #4: initiating rekey to replace Child SA #3
-"west" #4: sent CREATE_CHILD_SA request to rekey IPsec SA
-"west" #5: initiating rekey to replace Child SA #3
-"west" #1: STATE_V2_ESTABLISHED_IKE_SA: 15 second timeout exceeded after 0 retransmits.  No response (or no acceptable response) to our IKEv2 message
-"west" #5: deleting larval state due to timeout
-"west" #4: deleting larval state due to timeout
-"west" #3: IMPAIR: skipping revival of connection that is supposed to remain up
-"west" #3: ESP traffic information: in=0B out=0B
-"west" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
+002 "west" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and NOT sending notification
 west #
  ipsec whack --trafficstatus
 west #
