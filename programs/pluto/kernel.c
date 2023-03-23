@@ -2639,32 +2639,36 @@ bool was_eroute_idle(struct state *st, deltatime_t since_when)
 		/* snafu; assume idle!?! */
 		return true;
 	}
-	deltatime_t idle_time = monotimediff(mononow(), first_proto_info->inbound.last_used);
+	deltatime_t idle_time = realtimediff(realnow(), first_proto_info->inbound.last_used);
 	return deltatime_cmp(idle_time, >=, since_when);
 }
 
 static void set_sa_info(struct ipsec_proto_info *p2, uint64_t bytes,
 			 uint64_t add_time, bool inbound, deltatime_t *ago)
 {
-	if (p2->add_time == 0 && add_time != 0)
+	if (p2->add_time == 0 && add_time != 0) {
 		p2->add_time = add_time; /* this should happen exactly once */
+	}
 
 	pexpect(p2->add_time == add_time);
+
+	realtime_t now = realnow();
 
 	if (inbound) {
 		if (bytes > p2->inbound.bytes) {
 			p2->inbound.bytes = bytes;
-			p2->inbound.last_used = mononow();
+			p2->inbound.last_used = now;
 		}
-		if (ago != NULL)
-			*ago = monotimediff(mononow(), p2->inbound.last_used);
+		if (ago != NULL) {
+			*ago = realtimediff(now, p2->inbound.last_used);
+		}
 	} else {
 		if (bytes > p2->outbound.bytes) {
 			p2->outbound.bytes = bytes;
-			p2->outbound.last_used = mononow();
+			p2->outbound.last_used = now;
 		}
 		if (ago != NULL)
-			*ago = monotimediff(mononow(), p2->outbound.last_used);
+			*ago = realtimediff(now, p2->outbound.last_used);
 	}
 }
 
@@ -2719,9 +2723,10 @@ bool get_ipsec_traffic(struct state *st,
 	}
 
 	if (flow->kernel_sa_expired & SA_HARD_EXPIRED) {
-		dbg("kernel expired %s SA SPI "PRI_IPSEC_SPI" get_sa_info()",
-		    enum_name_short(&direction_names, direction),
-		    pri_ipsec_spi(flow->spi));
+		ldbg(st->st_logger,
+		     "kernel: %s() expired %s SA SPI "PRI_IPSEC_SPI" get_sa_info()",
+		     __func__, enum_name_short(&direction_names, direction),
+		     pri_ipsec_spi(flow->spi));
 		return true; /* all is well use last known info */
 	}
 
@@ -2734,25 +2739,27 @@ bool get_ipsec_traffic(struct state *st,
 		.story = said_str(dst, proto_info->protocol, flow->spi, &sb),
 	};
 
-	dbg("kernel: get_sa_bundle_info %s", sa.story);
+	ldbg(st->st_logger, "kernel: %s() %s", __func__, sa.story);
 
 	uint64_t bytes = 0;
 	uint64_t add_time = 0;
 	uint64_t lastused = 0;
 	if (!kernel_ops->get_kernel_state(&sa, &bytes, &add_time, &lastused, st->st_logger))
 		return false;
+	ldbg(st->st_logger, "kernel: %s() bytes=%"PRIu64" add_time=%"PRIu64" lastused=%"PRIu64,
+	     __func__, bytes, add_time, lastused);
 
 	proto_info->add_time = add_time;
 
 	/* field has been set? */
-	passert(!is_monotime_epoch(flow->last_used));
+	passert(!is_realtime_epoch(flow->last_used));
 
 	if (bytes > flow->bytes) {
 		flow->bytes = bytes;
 		if (lastused > 0)
-			flow->last_used = monotime(lastused);
+			flow->last_used = realtime(lastused);
 		else
-			flow->last_used = mononow();
+			flow->last_used = realnow();
 	}
 
 	return true;

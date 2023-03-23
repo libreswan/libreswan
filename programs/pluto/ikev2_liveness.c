@@ -80,18 +80,23 @@ static void schedule_liveness(struct child_sa *child, deltatime_t time_since_las
 }
 
 static bool recent_last_contact(struct child_sa *child,
-				const monotime_t now,
-				monotime_t last_contact,
+				deltatime_t time_since_last_contact,
 				const char *reason)
 {
 	/*
-	 * Convert the last contact into the time since last contact.
 	 * Add MIN_LIVENESS (probably 1) of fuzz so that anything
 	 * close to DELAY doesn't cause a re-schedule.
 	 */
-	deltatime_t time_since_last_contact = monotimediff(now, /*-*/ last_contact);
 	deltatime_t fuzz_since_last_contact = deltatime_add(time_since_last_contact,
 							    deltatime(MIN_LIVENESS));
+	LDBGP_JAMBUF(DBG_BASE, child->sa.st_logger, buf) {
+		jam_string(buf, "time_since_last_contact=");
+		jam_deltatime(buf, time_since_last_contact);
+		jam_string(buf, " -> ");
+		jam_string(buf, "fuzz_since_last_contact=");
+		jam_deltatime(buf, fuzz_since_last_contact);
+	}
+
 	if (deltatime_cmp(fuzz_since_last_contact, <, child->sa.st_connection->config->dpd.delay)) {
 		/*
 		 * Too little time has passed since the last contact
@@ -199,7 +204,8 @@ void liveness_check(struct state *st)
 	 */
 	struct v2_msgid_window *our = &ike->sa.st_v2_msgid_windows.initiator;
 	pexpect(!is_monotime_epoch(our->last_recv));
-	if (recent_last_contact(child, now, our->last_recv, "successful exchange")) {
+	if (recent_last_contact(child, monotimediff(now, our->last_recv),
+				"successful exchange")) {
 		return;
 	}
 
@@ -221,7 +227,8 @@ void liveness_check(struct state *st)
 	 * them.
 	 */
 	struct v2_msgid_window *peer = &ike->sa.st_v2_msgid_windows.responder;
-	if (recent_last_contact(child, now, peer->last_recv, "peer contact")) {
+	if (recent_last_contact(child, monotimediff(now, peer->last_recv),
+				"peer contact")) {
 		return;
 	}
 
@@ -247,9 +254,9 @@ void liveness_check(struct state *st)
 		 child->sa.st_ipcomp.present ? &child->sa.st_ipcomp :
 		 NULL);
 	if (get_ipsec_traffic(&child->sa, first_ipsec_proto, DIRECTION_INBOUND)) {
-		if (recent_last_contact(child, now,
-					first_ipsec_proto->inbound.last_used,
-					"recent IPsec traffic")) {
+		deltatime_t since =
+			realtimediff(realnow(), first_ipsec_proto->inbound.last_used);
+		if (recent_last_contact(child, since, "recent IPsec traffic")) {
 			return;
 		}
 	}

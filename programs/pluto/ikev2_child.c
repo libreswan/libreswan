@@ -357,8 +357,9 @@ v2_notification_t process_v2_child_request_payloads(struct ike_sa *ike,
 			larval_child->sa.st_ipcomp.outbound.spi = htonl((ipsec_spi_t)n_ipcomp.ikev2_cpi);
 			larval_child->sa.st_ipcomp.attrs.transattrs.ta_ipcomp = ikev2_get_ipcomp_desc(n_ipcomp.ikev2_notify_ipcomp_trans);
 			larval_child->sa.st_ipcomp.attrs.mode = encapsulation_mode;
-			larval_child->sa.st_ipcomp.inbound.last_used = monotime_from_threadtime(request_md->md_inception);
-			larval_child->sa.st_ipcomp.outbound.last_used = monotime_from_threadtime(request_md->md_inception);
+			larval_child->sa.st_ipcomp.inbound.last_used =
+			larval_child->sa.st_ipcomp.outbound.last_used =
+				realnow();
 
 			larval_child->sa.st_ipcomp.present = true;
 			/* logic above decided to enable IPCOMP */
@@ -541,7 +542,6 @@ v2_notification_t process_v2_childs_sa_payload(const char *what,
 		DBG_log_ikev2_proposal(what, child->sa.st_v2_accepted_proposal);
 	}
 	if (!ikev2_proposal_to_proto_info(child->sa.st_v2_accepted_proposal, proto_info,
-					  monotime_from_threadtime(md->md_inception),
 					  child->sa.st_logger)) {
 		llog_sa(RC_LOG_SERIOUS, child,
 			"%s proposed/accepted a proposal we don't actually support!", what);
@@ -797,8 +797,9 @@ v2_notification_t process_v2_child_response_payloads(struct ike_sa *ike, struct 
 		child->sa.st_ipcomp.attrs.transattrs.ta_ipcomp =
 			ikev2_get_ipcomp_desc(n_ipcomp.ikev2_notify_ipcomp_trans);
 		child->sa.st_ipcomp.attrs.mode = encapsulation_mode;
-		child->sa.st_ipcomp.inbound.last_used = monotime_from_threadtime(md->md_inception);
-		child->sa.st_ipcomp.outbound.last_used = monotime_from_threadtime(md->md_inception);
+		child->sa.st_ipcomp.inbound.last_used =
+		child->sa.st_ipcomp.outbound.last_used =
+			realnow();
 		child->sa.st_ipcomp.present = true;
 	}
 

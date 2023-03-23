@@ -3411,7 +3411,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 
 		/* save decoded version of winning SA in state */
 
-		const monotime_t now = mononow();
+		const realtime_t now = realnow();
 
 		st->st_ah.present = ah_seen;
 		if (ah_seen) {

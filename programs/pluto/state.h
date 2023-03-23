@@ -145,7 +145,7 @@ struct ipsec_trans_attrs {
 struct ipsec_flow {
 	lset_t kernel_sa_expired;
 	uint64_t bytes;
-	monotime_t last_used;
+	realtime_t last_used;
 	chunk_t keymat;
 	ipsec_spi_t spi;
 };

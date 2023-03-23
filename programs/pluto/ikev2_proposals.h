@@ -67,7 +67,6 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 
 bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
 				  struct ipsec_proto_info *proto_info,
-				  const monotime_t now,
 				  struct logger *logger);
 
 struct ikev2_proposals *ikev2_proposals_from_proposal(const char *story, const struct ikev2_proposal *proposal);

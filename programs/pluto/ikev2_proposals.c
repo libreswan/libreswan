@@ -1733,7 +1733,6 @@ bool ikev2_proposal_to_trans_attrs(const struct ikev2_proposal *proposal,
 
 bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
 				  struct ipsec_proto_info *proto_info,
-				  const monotime_t now,
 				  struct logger *logger)
 
 
@@ -1757,8 +1756,9 @@ bool ikev2_proposal_to_proto_info(const struct ikev2_proposal *proposal,
 
 	proto_info->attrs.transattrs = ta;
 	proto_info->present = true;
-	proto_info->inbound.last_used = now;
-	proto_info->outbound.last_used = now;
+	proto_info->inbound.last_used =
+	proto_info->outbound.last_used =
+		realnow();
 
 	proto_info->attrs.mode = ENCAPSULATION_MODE_TUNNEL;
 
