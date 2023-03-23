@@ -63,7 +63,7 @@ static enum_names connection_event_names = {
 };
 
 struct annex {
-	struct ike_sa *ike;
+	struct ike_sa **ike;
 	struct child_sa **child;
 	const threadtime_t *const inception;
 	const struct kernel_acquire *const acquire;
@@ -109,7 +109,7 @@ static void jam_event(struct jambuf *buf, enum connection_event event, struct co
 		jam_so(buf, c->newest_ike_sa);
 	}
 	if (e->ike != NULL) {
-		jam_event_sa(buf, &e->ike->sa);
+		jam_event_sa(buf, &(*e->ike)->sa);
 	}
 	if (e->child != NULL) {
 		jam_event_sa(buf, &(*e->child)->sa);
@@ -421,9 +421,9 @@ static bool keep_routed_tunnel_connection(struct connection *c,
 	 * it.
 	 */
 	if (pexpect(e->ike != NULL)/*IKEv1?*/ &&
-	    c == e->ike->sa.st_connection) {
+	    c == (*e->ike)->sa.st_connection) {
 		ldbg(c->logger, "keeping connection; shared with IKE SA "PRI_SO,
-		     pri_so(e->ike->sa.st_serialno));
+		     pri_so((*e->ike)->sa.st_serialno));
 		return true;
 	}
 
@@ -516,7 +516,7 @@ void connection_timeout(struct ike_sa **ike)
 			 first_child->sa.st_connection,
 			 first_child->sa.st_logger, HERE,
 			 (struct annex) {
-				 .ike = *ike,
+				 .ike = ike,
 				 .child = &first_child,
 			 });
 	}
@@ -550,7 +550,7 @@ void connection_timeout(struct ike_sa **ike)
 				 child->sa.st_connection,
 				 child->sa.st_logger, HERE,
 				 (struct annex) {
-					 .ike = *ike,
+					 .ike = ike,
 					 .child = &child,
 				 });
 			PEXPECT((*ike)->sa.st_logger, child == NULL);
@@ -564,7 +564,7 @@ void connection_timeout(struct ike_sa **ike)
 		 (*ike)->sa.st_connection,
 		 (*ike)->sa.st_logger, HERE,
 		 (struct annex) {
-			 .ike = *ike,
+			 .ike = ike,
 		 });
 
 	pstat_sa_failed(&(*ike)->sa, REASON_TOO_MANY_RETRANSMITS);
@@ -638,7 +638,7 @@ void connection_delete_child(struct ike_sa *ike, struct child_sa **child)
 			 (*child)->sa.st_connection,
 			 (*child)->sa.st_logger, HERE,
 			 (struct annex) {
-				 .ike = ike,
+				 .ike = &ike,
 				 .child = child,
 			 });
 		/* no logger as no child */
@@ -650,24 +650,24 @@ void connection_delete_child(struct ike_sa *ike, struct child_sa **child)
 	}
 }
 
-void connection_delete_ike(struct ike_sa **ikep)
+void connection_delete_ike(struct ike_sa **ike)
 {
-	struct ike_sa *ike = (*ikep); *ikep = NULL;
-	struct connection *c = ike->sa.st_connection;
 	/*
 	 * Caller is responsible for generating any messages; suppress
 	 * delete_state()'s desire to send an out-of-band delete.
 	 */
-	ike->sa.st_on_delete.skip_send_delete = true;
-	ike->sa.st_on_delete.skip_revival = true;
-	ike->sa.st_on_delete.skip_connection = true;
-	ldbg_sa(ike, "IKE SA is no longer viable");
-	ike->sa.st_viable_parent = false;
+	(*ike)->sa.st_on_delete.skip_send_delete = true;
+	(*ike)->sa.st_on_delete.skip_revival = true;
+	(*ike)->sa.st_on_delete.skip_connection = true;
+
+	ldbg_sa(*ike, "IKE SA is no longer viable");
+	(*ike)->sa.st_viable_parent = false;
 	/*
 	 * Let state machine figure out how to react.
 	 */
-	dispatch(CONNECTION_DELETE_IKE, c,
-		 ike->sa.st_logger, HERE,
+	dispatch(CONNECTION_DELETE_IKE,
+		 (*ike)->sa.st_connection,
+		 (*ike)->sa.st_logger, HERE,
 		 (struct annex) {
 			 .ike = ike,
 		 });
@@ -871,42 +871,42 @@ void dispatch(enum connection_event event, struct connection *c,
 
 		case X(TIMEOUT_IKE, UNROUTED, PERMANENT):
 			/* ex, permanent+up */
-			if (should_revive(&(e->ike->sa))) {
-				schedule_revival(&(e->ike->sa));
+			if (should_revive(&(*e->ike)->sa)) {
+				schedule_revival(&(*e->ike)->sa);
 				return;
 			}
 			return;
 		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, PERMANENT):
 			/* for instance, permenant ondemand */
-			if (should_revive(&(e->ike->sa))) {
-				schedule_revival(&(e->ike->sa));
+			if (should_revive(&(*e->ike)->sa)) {
+				schedule_revival(&(*e->ike)->sa);
 				return;
 			}
 			return;
 		case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, PERMANENT):
-			if (should_revive(&(e->ike->sa))) {
-				schedule_revival(&(e->ike->sa));
+			if (should_revive(&(*e->ike)->sa)) {
+				schedule_revival(&(*e->ike)->sa);
 				return;
 			}
 			return;
 		case X(TIMEOUT_IKE, ROUTED_TUNNEL, PERMANENT):
 			/* don't retry as well */
-			if (should_revive(&(e->ike->sa))) {
-				schedule_revival(&(e->ike->sa));
+			if (should_revive(&(*e->ike)->sa)) {
+				schedule_revival(&(*e->ike)->sa);
 				return;
 			}
 			return;
 		case X(TIMEOUT_IKE, UNROUTED, INSTANCE):
 			/* for instance, permanent+up */
-			if (should_revive(&(e->ike->sa))) {
-				schedule_revival(&(e->ike->sa));
+			if (should_revive(&(*e->ike)->sa)) {
+				schedule_revival(&(*e->ike)->sa);
 				return;
 			}
 			return;
 		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, INSTANCE):
 			/* for instance, permenant ondemand */
-			if (should_revive(&(e->ike->sa))) {
-				schedule_revival(&(e->ike->sa));
+			if (should_revive(&(*e->ike)->sa)) {
+				schedule_revival(&(*e->ike)->sa);
 				return;
 			}
 			if (c->policy & POLICY_OPPORTUNISTIC) {
@@ -925,8 +925,8 @@ void dispatch(enum connection_event event, struct connection *c,
 		case X(TIMEOUT_IKE, ROUTED_PROSPECTIVE, PERMANENT):
 			return;
 		case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, INSTANCE):
-			if (should_revive(&(e->ike->sa))) {
-				schedule_revival(&(e->ike->sa));
+			if (should_revive(&(*e->ike)->sa)) {
+				schedule_revival(&(*e->ike)->sa);
 				return;
 			}
 			if (c->policy & POLICY_OPPORTUNISTIC) {
@@ -944,8 +944,8 @@ void dispatch(enum connection_event event, struct connection *c,
 			return;
 		case X(TIMEOUT_IKE, ROUTED_TUNNEL, INSTANCE):
 			/* don't retry as well */
-			if (should_revive(&(e->ike->sa))) {
-				schedule_revival(&(e->ike->sa));
+			if (should_revive(&(*e->ike)->sa)) {
+				schedule_revival(&(*e->ike)->sa);
 				return;
 			}
 			if (c->policy & POLICY_OPPORTUNISTIC) {
@@ -985,7 +985,7 @@ void dispatch(enum connection_event event, struct connection *c,
 			delete_child_sa(e->child);
 			if (kind == CK_INSTANCE &&
 			    e->ike != NULL/*IKEv1?*/ &&
-			    c != e->ike->sa.st_connection) {
+			    c != (*e->ike)->sa.st_connection) {
 				delete_connection(&c);
 			}
 			return;
