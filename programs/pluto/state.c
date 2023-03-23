@@ -740,6 +740,16 @@ static bool should_send_delete(const struct state *st)
 		return false;
 	}
 
+#if 0
+	/*
+	 * Not yet!
+	 *
+	 * linux-audit-01-ok-ikev2, for instance, barfs because "ipsec
+	 * whack --delete" is expecting delete_state() to send the
+	 * delete message.
+	 */
+	pexpect(st->st_ike_version == IKEv1);
+#endif
 	switch (st->st_ike_version) {
 #ifdef USE_IKEv1
 	case IKEv1:
