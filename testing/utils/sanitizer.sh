@@ -24,14 +24,18 @@ STDOUT.
 	Only required when when the unsanitized file <verbose.txt> is
 	not under OUTPUT/ in the build tree.
 
-	By default, ${testingdir} is used
+	By default, the test under directory:
+		${testingdir}
+	from this source tree is used.
 
 
 <fixup.directory> ...
 
 	A list of directories containing the fixup scripts.
 
-	By default, $fixubdir is used.
+	By default, the directory:
+		${fixupdir}
+	from this source tree is used.
 
 EOF
     exit 1
