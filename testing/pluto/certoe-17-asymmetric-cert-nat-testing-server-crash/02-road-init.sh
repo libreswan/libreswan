@@ -8,5 +8,8 @@ ipsec start
 ipsec whack --impair suppress-retransmits
 # give OE policies time to load
 ../../guestbin/wait-for.sh --match 'loaded 2' -- ipsec auto --status
+# establish a baseline
 ../../guestbin/ipsec-kernel-policy.sh
+ipsec whack --trafficstatus
+ipsec whack --shuntstatus
 echo "initdone"
