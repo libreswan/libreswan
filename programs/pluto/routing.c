@@ -454,6 +454,7 @@ void connection_timeout(struct ike_sa **ike)
 	 */
 	ldbg_sa(*ike, "IKE SA is no longer viable");
 	(*ike)->sa.st_viable_parent = false;
+	pstat_sa_failed(&(*ike)->sa, REASON_TOO_MANY_RETRANSMITS);
 
 	/*
 	 * Short-circuit and preserve weird retry code path for now.
@@ -505,23 +506,31 @@ void connection_timeout(struct ike_sa **ike)
 	 * the revival queue.  Without this, the IKE SA's connection
 	 * could end up flip-flopping between several of the children
 	 * (harmless but annoying).
+	 *
+	 * Also remember if the first child was told; later the event
+	 * only gets dispatched for IKE when there wasn't a child
+	 * (such as during IKE_SA_INIT).
 	 */
 
-	struct child_sa *first_child =
-		child_sa_by_serialno((*ike)->sa.st_connection->child.newest_routing_sa);
-	if (first_child != NULL) {
-		attach_whack(first_child->sa.st_logger, (*ike)->sa.st_logger);
-		/* will delete child and its logger */
-		dispatch(CONNECTION_TIMEOUT_CHILD,
-			 first_child->sa.st_connection,
-			 first_child->sa.st_logger, HERE,
-			 (struct annex) {
-				 .ike = ike,
-				 .child = &first_child,
-			 });
+	bool told_connection = false;
+	{
+		struct child_sa *first_child =
+			child_sa_by_serialno((*ike)->sa.st_connection->child.newest_routing_sa);
+		if (first_child != NULL) {
+			told_connection = true;
+			attach_whack(first_child->sa.st_logger, (*ike)->sa.st_logger);
+			/* will delete child and its logger */
+			dispatch(CONNECTION_TIMEOUT_CHILD,
+				 first_child->sa.st_connection,
+				 first_child->sa.st_logger, HERE,
+				 (struct annex) {
+					 .ike = ike,
+					 .child = &first_child,
+				 });
+		}
+		PEXPECT((*ike)->sa.st_logger, first_child == NULL); /*gone!*/
+		PEXPECT((*ike)->sa.st_logger, (*ike)->sa.st_connection->child.newest_routing_sa == SOS_NOBODY);
 	}
-	PEXPECT((*ike)->sa.st_logger, first_child == NULL); /*gone!*/
-	PEXPECT((*ike)->sa.st_logger, (*ike)->sa.st_connection->child.newest_routing_sa == SOS_NOBODY);
 
 	/*
 	 * Now go through any remaining children.
@@ -558,24 +567,28 @@ void connection_timeout(struct ike_sa **ike)
 	}
 
 	/*
-	 * Finally notify the IKE SA?
+	 * Finally notify the IKE SA.
+	 *
+	 * Only do this when there's no Child SA sharing the
+	 * connection.
 	 */
-	dispatch(CONNECTION_TIMEOUT_IKE,
-		 (*ike)->sa.st_connection,
-		 (*ike)->sa.st_logger, HERE,
-		 (struct annex) {
-			 .ike = ike,
-		 });
-
-	pstat_sa_failed(&(*ike)->sa, REASON_TOO_MANY_RETRANSMITS);
-	struct state *st = &(*ike)->sa;
-	*ike = NULL;
-	st->st_on_delete.skip_revival = true;
-	st->st_on_delete.skip_send_delete = true;
-#if 0
-	st->st_on_delete.skip_connection = true;
-#endif
-	delete_state(st);
+	if (told_connection) {
+		struct connection *c = (*ike)->sa.st_connection;
+		delete_ike_sa(ike);
+		if (c->kind == CK_TEMPLATE &&
+		    c->child.routing == RT_UNROUTED) {
+			delete_connection(&c);
+		}
+	} else {
+		dispatch(CONNECTION_TIMEOUT_IKE,
+			 (*ike)->sa.st_connection,
+			 (*ike)->sa.st_logger, HERE,
+			 (struct annex) {
+				 .ike = ike,
+			 });
+		/* no logger! */
+		pexpect(*ike == NULL);
+	}
 }
 
 void connection_route(struct connection *c)
@@ -672,6 +685,9 @@ void connection_delete_ike(struct ike_sa **ike)
 			 .ike = ike,
 		 });
 }
+
+void dispatch_1(enum connection_event event, struct connection *c,
+		where_t where, struct annex *e);
 
 void dispatch(enum connection_event event, struct connection *c,
 	      struct logger *logger, where_t where,
@@ -873,40 +889,18 @@ void dispatch(enum connection_event event, struct connection *c,
 			/* ex, permanent+up */
 			if (should_revive(&(*e->ike)->sa)) {
 				schedule_revival(&(*e->ike)->sa);
+				delete_ike_sa(e->ike);
 				return;
 			}
+			delete_ike_sa(e->ike);
+			/* connection lives to fight another day */
 			return;
-		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, PERMANENT):
-			/* for instance, permenant ondemand */
-			if (should_revive(&(*e->ike)->sa)) {
-				schedule_revival(&(*e->ike)->sa);
-				return;
-			}
-			return;
-		case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, PERMANENT):
-			if (should_revive(&(*e->ike)->sa)) {
-				schedule_revival(&(*e->ike)->sa);
-				return;
-			}
-			return;
-		case X(TIMEOUT_IKE, ROUTED_TUNNEL, PERMANENT):
-			/* don't retry as well */
-			if (should_revive(&(*e->ike)->sa)) {
-				schedule_revival(&(*e->ike)->sa);
-				return;
-			}
-			return;
-		case X(TIMEOUT_IKE, UNROUTED, INSTANCE):
-			/* for instance, permanent+up */
-			if (should_revive(&(*e->ike)->sa)) {
-				schedule_revival(&(*e->ike)->sa);
-				return;
-			}
-			return;
+
 		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, INSTANCE):
 			/* for instance, permenant ondemand */
 			if (should_revive(&(*e->ike)->sa)) {
 				schedule_revival(&(*e->ike)->sa);
+				delete_ike_sa(e->ike);
 				return;
 			}
 			if (c->policy & POLICY_OPPORTUNISTIC) {
@@ -920,46 +914,8 @@ void dispatch(enum connection_event event, struct connection *c,
 				 */
 				set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
 			}
-			return;
-		case X(TIMEOUT_IKE, ROUTED_PROSPECTIVE, INSTANCE):
-		case X(TIMEOUT_IKE, ROUTED_PROSPECTIVE, PERMANENT):
-			return;
-		case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, INSTANCE):
-			if (should_revive(&(*e->ike)->sa)) {
-				schedule_revival(&(*e->ike)->sa);
-				return;
-			}
-			if (c->policy & POLICY_OPPORTUNISTIC) {
-				/*
-				 * A failed OE initiator, make shunt bare.
-				 */
-				orphan_holdpass(c, c->spd, logger);
-				/*
-				 * Change routing so we don't get cleared out
-				 * when state/connection dies.
-				 */
-				set_child_routing(c, RT_ROUTED_PROSPECTIVE/*lie?!?*/,
-						  c->child.newest_routing_sa);
-			}
-			return;
-		case X(TIMEOUT_IKE, ROUTED_TUNNEL, INSTANCE):
-			/* don't retry as well */
-			if (should_revive(&(*e->ike)->sa)) {
-				schedule_revival(&(*e->ike)->sa);
-				return;
-			}
-			if (c->policy & POLICY_OPPORTUNISTIC) {
-				/*
-				 * A failed OE initiator, make shunt bare.
-				 */
-				orphan_holdpass(c, c->spd, logger);
-				/*
-				 * Change routing so we don't get cleared out
-				 * when state/connection dies.
-				 */
-				set_child_routing(c, RT_ROUTED_NEGOTIATION/*lie?!?*/,
-						  SOS_NOBODY);
-			}
+			delete_ike_sa(e->ike);
+			delete_connection(&c);
 			return;
 
 		case X(TIMEOUT_CHILD, ROUTED_TUNNEL, PERMANENT):
