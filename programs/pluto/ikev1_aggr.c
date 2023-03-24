@@ -169,7 +169,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 	/* Set up state */
 	struct ike_sa *ike = new_v1_rstate(c, md);
 	md->v1_st = &ike->sa;  /* (caller will reset cur_state) */
-	change_v1_state(&ike->sa, STATE_AGGR_R1);
+	change_v1_state(&ike->sa, STATE_AGGR_R0);
 
 	/*
 	 * Warn when peer is expected to use especially dangerous

@@ -1178,17 +1178,26 @@ void process_v1_packet(struct msg_digest *md)
 			from_state = (md->hdr.isa_xchg == ISAKMP_XCHG_IDPROT ?
 				      STATE_MAIN_R0 : STATE_AGGR_R0);
 		} else {
-			/* not an initial message */
+			/*
+			 * Possibly not an initial message.  Possibly
+			 * from initiator.  Possibly from responder.
+			 *
+			 * Possibly.  Which is probably hopeless.
+			 */
 
 			st = find_state_ikev1(&md->hdr.isa_ike_spis,
 					      md->hdr.isa_msgid);
 
 			if (st == NULL) {
 				/*
-				 * perhaps this is a first message
+				 * Perhaps this is a first message
 				 * from the responder and contains a
 				 * responder cookie that we've not yet
 				 * seen.
+				 *
+				 * Perhaps this is a random message
+				 * with a bogus non-zero responder IKE
+				 * SPI.
 				 */
 				st = find_state_ikev1_init(&md->hdr.isa_ike_initiator_spi,
 							   md->hdr.isa_msgid);
@@ -1197,6 +1206,21 @@ void process_v1_packet(struct msg_digest *md)
 					llog(RC_LOG, md->md_logger,
 					     "phase 1 message is part of an unknown exchange");
 					/* XXX Could send notification back */
+					return;
+				}
+				if (st->st_state->kind == STATE_AGGR_R0) {
+					/*
+					 * The only way for this to
+					 * happen is for the attacker
+					 * to guess the responder's
+					 * IKE SPI that hasn't been
+					 * sent over the wire?
+					 *
+					 * Well that or played 1/2^32
+					 * odds.
+					 */
+					llog_pexpect(md->md_logger, HERE,
+						     "phase 1 message matching AGGR_R0 state");
 					return;
 				}
 			}
