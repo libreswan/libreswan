@@ -1102,10 +1102,20 @@ void process_v1_packet(struct msg_digest *md)
 	struct state *st = NULL;
 	enum state_kind from_state = STATE_UNDEFINED;   /* state we started in */
 
+	/*
+	 * For the initial responses, don't leak the responder's SPI.
+	 * Hence the use of send_v1_notification_from_md().
+	 *
+	 * AGGR mode is a mess in that the R0->R1 transition happens
+	 * well before the transition succeeds.
+	 */
 #define SEND_NOTIFICATION(t)						\
 	{								\
 		pstats(ikev1_sent_notifies_e, t);			\
-		if (st != NULL)						\
+		if (st != NULL &&					\
+		    st->st_state->kind != STATE_AGGR_R0 &&		\
+		    st->st_state->kind != STATE_AGGR_R1 &&		\
+		    st->st_state->kind != STATE_MAIN_R0)		\
 			send_v1_notification_from_state(st, from_state, t); \
 		else							\
 			send_v1_notification_from_md(md, t);		\
