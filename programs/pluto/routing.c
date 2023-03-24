@@ -686,9 +686,6 @@ void connection_delete_ike(struct ike_sa **ike)
 		 });
 }
 
-void dispatch_1(enum connection_event event, struct connection *c,
-		where_t where, struct annex *e);
-
 void dispatch(enum connection_event event, struct connection *c,
 	      struct logger *logger, where_t where,
 	      struct annex ee)
@@ -808,7 +805,7 @@ void dispatch(enum connection_event event, struct connection *c,
 		case X(UNROUTE, UNROUTED_TUNNEL, PERMANENT):
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute permanent");
-			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
+			set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
 			return;
 
 		case X(ROUTE, UNROUTED, TEMPLATE):
@@ -827,7 +824,7 @@ void dispatch(enum connection_event event, struct connection *c,
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute template");
 			/* do now so route_owner won't find us */
-			set_child_routing(c, RT_UNROUTED, c->child.newest_routing_sa);
+			set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
 			do_updown_unroute(c);
 			return;
 
