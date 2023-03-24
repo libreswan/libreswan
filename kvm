@@ -404,9 +404,10 @@ fi
 kvmresults()
 {
     ./testing/utils/kvmresults.py \
-	${kvm_test_status:+--test-status \'${kvm_test_status}\'} \
-	${kvm_test_name:+--test-status \'${kvm_test_name}\'} \
-	${kvm_test_flags}
+	${kvm_test_status:+--test-status ${kvm_test_status}} \
+	${kvm_test_name:+--test-name ${kvm_test_name}} \
+	${kvm_test_flags} \
+	"$@"
 }
 
 results_command()
