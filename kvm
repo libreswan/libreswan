@@ -294,6 +294,7 @@ declare -a ops
 
 kvm_baseline=$(${quietmake} print-kvm-baseline)
 kvm_test_status=$(${quietmake} print-kvm-test-status)
+kvm_test_name=$(${quietmake} print-kvm-test-name)
 kvm_test_flags=$(${quietmake} print-kvm-test-flags)
 kvm_prefixes=($(${quietmake} print-kvm-prefixes))
 kvm_testingdir=$(${quietmake} print-kvm-testingdir)
@@ -400,14 +401,22 @@ if test -z "${ops[*]}" ; then
     exit 1
 fi
 
+kvmresults()
+{
+    ./testing/utils/kvmresults.py \
+	${kvm_test_status:+--test-status \'${kvm_test_status}\'} \
+	${kvm_test_name:+--test-status \'${kvm_test_name}\'} \
+	${kvm_test_flags}
+}
+
 results_command()
 {
     if test -n "${baseline}" ; then
-	./testing/utils/kvmresults.py --test-status "${kvm_test_status}" ${kvm_test_flags} ${__baseline} "$@" \
+	kvmresults ${__baseline} "$@" \
 	    | grep --line-buffered -v -e baseline:untested \
 	    | grep --line-buffered -e ${baseline}
     else
-	./testing/utils/kvmresults.py --test-status "${kvm_test_status}" ${kvm_test_flags} "$@"
+	kvmresults "$@"
 	status=$?
     fi
 }
@@ -415,14 +424,14 @@ results_command()
 diffs_command()
 {
     if test -n "${baseline}" ; then
-	./testing/utils/kvmresults.py --test-status "${kvm_test_status}" ${kvm_test_flags} ${__baseline} --stats none "$@" \
+	kvmresults ${__baseline} --stats none "$@" \
 	    | grep --line-buffered -v -e baseline:untested \
 	    | grep --line-buffered -e "${baseline}" \
 	    | while read test eol ; do
 	    ./testing/utils/kvmresults.py --stats none --print diffs ${test}
 	done
     else
-	./testing/utils/kvmresults.py --test-status "${kvm_test_status}" ${kvm_test_flags} --stats none --print diffs "$@"
+	kvmresults --stats none --print diffs "$@"
 	status=$?
     fi
 }

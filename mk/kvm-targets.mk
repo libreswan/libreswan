@@ -328,6 +328,8 @@ KVM_DOMAINS += $(KVM_TEST_DOMAINS)
 print-kvm-prefixes: ; @:$(info $(KVM_PREFIXES))
 .PHONY: print-kvm-test-status
 print-kvm-test-status: ; @:$(info $(STRIPPED_KVM_TEST_STATUS))
+.PHONY: print-kvm-test-name
+print-kvm-test-name: ; @:$(info $(STRIPPED_KVM_TEST_NAME))
 .PHONY: print-kvm-test-flags
 print-kvm-test-flags: ; @:$(info $(KVM_TEST_FLAGS))
 .PHONY: print-kvm-testingdir
@@ -540,6 +542,9 @@ KVM_TEST_STATUS += $(if $(KVM_OPENBSD),openbsd)
 
 STRIPPED_KVM_TEST_STATUS = $(subst $(sp),|,$(sort $(KVM_TEST_STATUS)))
 
+KVM_TEST_NAME ?=
+STRIPPED_KVM_TEST_NAME = $(subst $(sp),|,$(sort $(KVM_TEST_NAME)))
+
 kvm-test kvm-check kvm-retest kvm-recheck: \
 kvm-%: $(KVM_HOST_OK) kvm-keys-ok
 	: $@
@@ -554,7 +559,8 @@ kvm-%: $(KVM_HOST_OK) kvm-keys-ok
 		$(if $(WEB_ENABLED), --publish-hash $(WEB_HASH)) \
 		$(if $(WEB_ENABLED), --publish-results $(WEB_RESULTSDIR)) \
 		$(if $(WEB_ENABLED), --publish-status $(WEB_SUMMARYDIR)/status.json) \
-		 --test-status '$(STRIPPED_KVM_TEST_STATUS)' \
+		$(if $(STRIPPED_KVM_TEST_STATUS), --test-status '$(STRIPPED_KVM_TEST_STATUS)') \
+		$(if $(STRIPPED_KVM_TEST_NAME), --test-name '$(STRIPPED_KVM_TEST_NAME)') \
 		$(if $(KVM_SNAPSHOTDIR), --snapshot-directory $(KVM_SNAPSHOTDIR)) \
 		$(if $(filter kvm-re%, $@), --skip passed) \
 		$(KVMRUNNER_FLAGS) \
