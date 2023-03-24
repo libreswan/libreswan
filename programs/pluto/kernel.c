@@ -953,7 +953,7 @@ static void revert_kernel_policy(struct spd_route *spd,
 	}
 }
 
-bool install_prospective_kernel_policy(struct connection *c)
+static bool unrouted_to_routed_prospective(struct connection *c)
 {
 	enum routability r = connection_routability(c, c->logger);
 	switch (r) {
@@ -1068,6 +1068,18 @@ bool install_prospective_kernel_policy(struct connection *c)
 	set_child_routing(c, RT_ROUTED_PROSPECTIVE, c->child.newest_routing_sa);
 
 	return true;
+}
+
+bool unrouted_permanent_to_routed_prospective(struct connection *c)
+{
+	PEXPECT(c->logger, c->kind == CK_PERMANENT);
+	return unrouted_to_routed_prospective(c);
+}
+
+bool unrouted_template_to_routed_prospective(struct connection *c)
+{
+	PEXPECT(c->logger, c->kind == CK_TEMPLATE);
+	return unrouted_to_routed_prospective(c);
 }
 
 /*

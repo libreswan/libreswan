@@ -604,8 +604,7 @@ void connection_route(struct connection *c)
 		return;
 	}
 
-	dispatch(CONNECTION_ROUTE, c,
-		 c->logger, HERE,
+	dispatch(CONNECTION_ROUTE, c, c->logger, HERE,
 		 (struct annex) {
 			 0,
 		 });
@@ -738,7 +737,7 @@ void dispatch(enum connection_event event, struct connection *c,
 
 		case X(ROUTE, UNROUTED, PERMANENT):
 			c->policy |= POLICY_ROUTE; /* always */
-			if (!install_prospective_kernel_policy(c)) {
+			if (!unrouted_permanent_to_routed_prospective(c)) {
 				/* XXX: why whack only? */
 				llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");
 				return;
@@ -810,7 +809,7 @@ void dispatch(enum connection_event event, struct connection *c,
 
 		case X(ROUTE, UNROUTED, TEMPLATE):
 			c->policy |= POLICY_ROUTE;
-			if (!install_prospective_kernel_policy(c)) {
+			if (!unrouted_template_to_routed_prospective(c)) {
 				/* XXX: why whack only? */
 				llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");
 				return;

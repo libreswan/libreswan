@@ -433,12 +433,7 @@ void load_groups(struct logger *logger)
 							/* XXX: something better? */
 							fd_delref(&t->logger->global_whackfd);
 							t->logger->global_whackfd = fd_addref(g->logger->global_whackfd);
-							if (!install_prospective_kernel_policy(t)) {
-								llog(WHACK_STREAM|RC_ROUTE, t->logger,
-								     "could not route");
-							} else {
-								PEXPECT(logger, t->child.routing == RT_ROUTED_PROSPECTIVE);
-							}
+							connection_route(t);
 							/* XXX: something better? */
 							fd_delref(&t->logger->global_whackfd);
 						}
