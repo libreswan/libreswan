@@ -2904,7 +2904,30 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			delete_state(st);
 			/* wipe out dangling pointer to st */
 			md->v1_st = NULL;
+#if 0
+		} else if  (st->st_state->kind == STATE_AGGR_R0 ||
+			    st->st_state->kind == STATE_AGGR_R1 ||
+			    st->st_state->kind == STATE_MAIN_R0) {
+			/*
+			 *
+			 * Wipe out the incomplete larval state.
+			 *
+			 * ARGH! In <=v4.10, the aggr code flipped the
+			 * larval state to R1 right at the start of
+			 * the transition and not the end, so using
+			 * state to figure things out is close to
+			 * useless.
+			 *
+			 * Deleting the state means that pluto has no
+			 * way to detect and ignore amplification
+			 * attacks.
+			 */
+			delete_state(st);
+			/* wipe out dangling pointer to st */
+			md->v1_st = NULL;
+#endif
 		}
+
 		break;
 	}
 	}
