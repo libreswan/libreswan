@@ -1075,9 +1075,10 @@ static stf_status process_v2_IKE_AUTH_request_tail(struct state *ike_st,
 	return generate_v2_responder_auth(ike, md, process_v2_IKE_AUTH_request_auth_signature_continue);
 }
 
-bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike)
+bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirection)
 {
 	struct connection *c = ike->sa.st_connection;
+	*send_redirection = false;
 
 	/*
 	 * Update the parent state to make sure that it knows we have
@@ -1145,8 +1146,6 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike)
 		}
 	}
 
-	bool send_redirect = false;
-
 	if (ike->sa.st_seen_redirect_sup &&
 	    (LIN(POLICY_SEND_REDIRECT_ALWAYS, c->policy) ||
 	     (!LIN(POLICY_SEND_REDIRECT_NEVER, c->policy) &&
@@ -1155,18 +1154,20 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike)
 			llog_sa(RC_LOG_SERIOUS, ike,
 				  "redirect-to is not specified, can't redirect requests");
 		} else {
-			send_redirect = true;
+			*send_redirection = true;
+			return true;
 		}
 	}
 
 	if (labeled_parent(c)) {
 		PEXPECT(c->logger, c->child.routing == RT_UNROUTED);
 		if (!install_sec_label_connection_policies(c, ike->sa.st_logger)) {
-			return STF_FATAL;
+			/* just die */
+			return false;
 		}
 	}
 
-	return send_redirect;
+	return true;
 }
 
 static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike_sa *ike,
@@ -1174,7 +1175,10 @@ static stf_status process_v2_IKE_AUTH_request_auth_signature_continue(struct ike
 								      const struct hash_signature *auth_sig)
 {
 	struct connection *c = ike->sa.st_connection;
-	bool send_redirect = v2_ike_sa_auth_responder_establish(ike);
+	bool send_redirect = false;
+	if (!v2_ike_sa_auth_responder_establish(ike, &send_redirect)) {
+		return STF_FATAL;
+	}
 
 	/* HDR out */
 

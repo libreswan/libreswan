@@ -689,7 +689,10 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 	/* construct final response */
 
 	struct connection *c = ike->sa.st_connection;
-	bool send_redirect = v2_ike_sa_auth_responder_establish(ike);
+	bool send_redirect = false;
+	if (!v2_ike_sa_auth_responder_establish(ike, &send_redirect)) {
+		return STF_FATAL;
+	}
 
 	/* make sure HDR is at start of a clean buffer */
 
