@@ -524,7 +524,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.is_connection_group = conn->is_connection_group;
 	msg.authby = conn->authby;
 	msg.sighash_policy = conn->sighash_policy;
-	msg.prospective_shunt = conn->prospective_shunt;
+	msg.never_negotiate_shunt = conn->never_negotiate_shunt;
 	msg.negotiation_shunt = conn->negotiation_shunt;
 	msg.failure_shunt = conn->failure_shunt;
 	msg.autostart = conn->autostart;

@@ -51,8 +51,8 @@ static bool match_v1_connection(struct connection *c, struct authby authby,
 
 	if (NEVER_NEGOTIATE(c->policy)) {
 		/* are we a block or clear connection? */
-		enum shunt_policy shunt = c->config->prospective_shunt;
-		if (shunt != SHUNT_TRAP) {
+		enum shunt_policy shunt = c->config->never_negotiate_shunt;
+		if (shunt != SHUNT_UNSET) {
 			/*
 			 * We need to match block/clear so we can send
 			 * back NO_PROPOSAL_CHOSEN, otherwise not

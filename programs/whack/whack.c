@@ -143,7 +143,6 @@ static void help(void)
 		"	[--conn-mark-out <mark/mask>] \\\n"
 		"	[--ipsec-interface <num>] \\\n"
 		"	[--vti-iface <iface> ] [--vti-routing] [--vti-shared] \\\n"
-		"	[--initiateontraffic | --pass | --drop | --reject] \\\n"
 		"	[--failnone | --failpass | --faildrop | --failreject] \\\n"
 		"	[--negopass ] \\\n"
 		"	[--donotrekey ] [--reauth ] \\\n"
@@ -503,7 +502,8 @@ enum option_enums {
 	CD_NIC_OFFLOAD,
 	CD_ESP,
 	CD_INTERMEDIATE,
-#   define CD_LAST CD_INTERMEDIATE	/* last connection description */
+	CD_INITIATEONTRAFFIC,
+#define CD_LAST CD_INITIATEONTRAFFIC	/* last connection description */
 
 /*
  * Proof-of-identity options (just because CD_ was full) that fill in
@@ -535,8 +535,8 @@ enum option_enums {
  * Shunt policies
  */
 
-	CDS_PROSPECTIVE,
-	CDS_NEGOTIATION = CDS_PROSPECTIVE + SHUNT_POLICY_ROOF,
+	CDS_NEVER_NEGOTIATE,
+	CDS_NEGOTIATION = CDS_NEVER_NEGOTIATE + SHUNT_POLICY_ROOF,
 	CDS_FAILURE = CDS_NEGOTIATION + SHUNT_POLICY_ROOF,
 	CDS_LAST = CDS_FAILURE + SHUNT_POLICY_ROOF - 1,
 
@@ -737,10 +737,11 @@ static const struct option long_opts[] = {
 	PS("aggressive", AGGRESSIVE),
 	PS("aggrmode", AGGRESSIVE), /*  backwards compatibility */
 
-	{ "initiateontraffic", no_argument, NULL, CDS_PROSPECTIVE + SHUNT_TRAP + OO },
-	{ "pass", no_argument, NULL, CDS_PROSPECTIVE + SHUNT_PASS + OO },
-	{ "drop", no_argument, NULL, CDS_PROSPECTIVE + SHUNT_DROP + OO },
-	{ "reject", no_argument, NULL, CDS_PROSPECTIVE + SHUNT_REJECT + OO },
+	{ "initiateontraffic", no_argument, NULL, CD_INITIATEONTRAFFIC + OO }, /* obsolete */
+
+	{ "pass", no_argument, NULL, CDS_NEVER_NEGOTIATE + SHUNT_PASS + OO },
+	{ "drop", no_argument, NULL, CDS_NEVER_NEGOTIATE + SHUNT_DROP + OO },
+	{ "reject", no_argument, NULL, CDS_NEVER_NEGOTIATE + SHUNT_REJECT + OO },
 
 	{ "negopass", no_argument, NULL, CDS_NEGOTIATION + SHUNT_PASS + OO },
 
@@ -1868,11 +1869,13 @@ int main(int argc, char **argv)
 			msg.policy |= LELEM(c - CDP_SINGLETON);
 			continue;
 
-		case CDS_PROSPECTIVE + SHUNT_TRAP:	/* --initiateontraffic */
-		case CDS_PROSPECTIVE + SHUNT_PASS:	/* --pass */
-		case CDS_PROSPECTIVE + SHUNT_DROP:	/* --drop */
-		case CDS_PROSPECTIVE + SHUNT_REJECT:	/* --reject */
-			msg.prospective_shunt = c - CDS_PROSPECTIVE;
+		case CD_INITIATEONTRAFFIC:	/* --initiateontraffic */
+			continue;
+
+		case CDS_NEVER_NEGOTIATE + SHUNT_PASS:	/* --pass */
+		case CDS_NEVER_NEGOTIATE + SHUNT_DROP:	/* --drop */
+		case CDS_NEVER_NEGOTIATE + SHUNT_REJECT:	/* --reject */
+			msg.never_negotiate_shunt = c - CDS_NEVER_NEGOTIATE;
 			continue;
 
 		case CDS_NEGOTIATION + SHUNT_PASS:	/* --negopass */
@@ -2582,8 +2585,7 @@ int main(int argc, char **argv)
 		}
 
 		if (msg.authby.never) {
-			if (msg.prospective_shunt == SHUNT_TRAP ||
-			    msg.prospective_shunt == SHUNT_UNSET) {
+			if (msg.never_negotiate_shunt == SHUNT_UNSET) {
 				diagw("shunt connection must have shunt policy (eg --pass, --drop or --reject). Is this a non-shunt connection missing an authentication method such as --psk or --rsasig or --auth-null ?");
 			}
 		} else {

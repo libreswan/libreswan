@@ -88,7 +88,7 @@ static bool match_connection(const struct connection *c,
 		 * have GROUPINSTANCE!  Hence the some what convoluted
 		 * logic to detect these cases and clear 
 		 */
-		enum shunt_policy shunt = c->config->prospective_shunt;
+		enum shunt_policy shunt = c->config->never_negotiate_shunt;
 		if (shunt == SHUNT_PASS/*clear*/ ||
 		    shunt == SHUNT_REJECT/*block*/) {
 			if (c->policy & POLICY_GROUPINSTANCE) {

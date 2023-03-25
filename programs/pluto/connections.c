@@ -1774,13 +1774,11 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	if (wm->authby.never) {
-		if (wm->prospective_shunt == SHUNT_UNSET ||
-		    wm->prospective_shunt == SHUNT_TRAP) {
+		if (wm->never_negotiate_shunt == SHUNT_UNSET) {
 			return diag("connection with authby=never must specify shunt type via type=");
 		}
 	}
-	if (wm->prospective_shunt != SHUNT_UNSET &&
-	    wm->prospective_shunt != SHUNT_TRAP) {
+	if (wm->never_negotiate_shunt != SHUNT_UNSET) {
 		if (!authby_eq(wm->authby, (struct authby) { .never = true, })) {
 			return diag("shunt connection cannot have authentication method other then authby=never");
 		}
@@ -1956,9 +1954,9 @@ static diag_t extract_connection(const struct whack_message *wm,
 		break;
 	}
 
-	d = extract_shunt("prospective", config, wm,
+	d = extract_shunt("never-negotiate", config, wm,
 			  SHUNT_KIND_NEVER_NEGOTIATE,
-			  /*unset*/SHUNT_TRAP);
+			  /*unset*/SHUNT_UNSET);
 	if (d != NULL) {
 		return d;
 	}
@@ -2775,7 +2773,7 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 	if (tss != NULL) {
 		llog(RC_LOG, c->logger, "connection is using multiple %s", tss);
 	}
-	const char *what = (NEVER_NEGOTIATE(c->policy) ? policy_shunt_names[c->config->prospective_shunt] :
+	const char *what = (NEVER_NEGOTIATE(c->policy) ? policy_shunt_names[c->config->never_negotiate_shunt] :
 			    c->config->ike_info->version_name);
 	llog(RC_LOG, c->logger, "added %s connection", what);
 	policy_buf pb;
@@ -2935,8 +2933,8 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 		sep = "+";
 	}
 
-	shunt = c->config->prospective_shunt;
-	if (shunt != SHUNT_TRAP) {
+	shunt = c->config->never_negotiate_shunt;
+	if (shunt != SHUNT_UNSET) {
 		s += jam_string(buf, sep);
 		s += jam_enum_short(buf, &shunt_policy_names, shunt);
 		sep = "+";

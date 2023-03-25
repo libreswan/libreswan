@@ -182,7 +182,7 @@ static void ipsecconf_default_values(struct starter_config *cfg)
 		     /* ike_frag=yes */ POLICY_IKE_FRAG_ALLOW |
 		     /* esn=either */ POLICY_ESN_NO | POLICY_ESN_YES);
 	d->authby = AUTHBY_NONE; /* blank goes to defaults */
-	d->prospective_shunt = SHUNT_UNSET;
+	d->never_negotiate_shunt = SHUNT_UNSET;
 	d->negotiation_shunt = SHUNT_UNSET;
 	d->failure_shunt = SHUNT_UNSET;
 
@@ -1128,12 +1128,10 @@ static bool load_conn(struct starter_conn *conn,
 		switch ((enum keyword_satype)conn->options[KNCF_TYPE]) {
 		case KS_TUNNEL:
 			conn->policy |= POLICY_TUNNEL;
-			conn->prospective_shunt = SHUNT_TRAP;
 			break;
 
 		case KS_TRANSPORT:
 			conn->policy &= ~POLICY_TUNNEL;
-			conn->prospective_shunt =  SHUNT_TRAP;
 			break;
 
 		case KS_PASSTHROUGH:
@@ -1141,7 +1139,7 @@ static bool load_conn(struct starter_conn *conn,
 					  POLICY_AUTHENTICATE |
 					  POLICY_TUNNEL);
 			conn->authby = AUTHBY_NONE;
-			conn->prospective_shunt = SHUNT_PASS;
+			conn->never_negotiate_shunt = SHUNT_PASS;
 			break;
 
 		case KS_DROP:
@@ -1149,7 +1147,7 @@ static bool load_conn(struct starter_conn *conn,
 					  POLICY_AUTHENTICATE |
 					  POLICY_TUNNEL);
 			conn->authby = AUTHBY_NONE;
-			conn->prospective_shunt = SHUNT_DROP;
+			conn->never_negotiate_shunt = SHUNT_DROP;
 			break;
 
 		case KS_REJECT:
@@ -1157,7 +1155,7 @@ static bool load_conn(struct starter_conn *conn,
 					  POLICY_AUTHENTICATE |
 					  POLICY_TUNNEL);
 			conn->authby = AUTHBY_NONE;
-			conn->prospective_shunt = SHUNT_REJECT;
+			conn->never_negotiate_shunt = SHUNT_REJECT;
 			break;
 		}
 	}

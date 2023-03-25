@@ -442,11 +442,11 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 	}
 
 	if (conn->policy != LEMPTY ||
-	    conn->prospective_shunt != SHUNT_UNSET) {
+	    conn->never_negotiate_shunt != SHUNT_UNSET) {
 		lset_t phase2_policy =
 			(conn->policy &
 			 (POLICY_AUTHENTICATE | POLICY_ENCRYPT));
-		enum shunt_policy shunt_policy = conn->prospective_shunt;
+		enum shunt_policy shunt_policy = conn->never_negotiate_shunt;
 		lset_t ppk_policy = (conn->policy & (POLICY_PPK_ALLOW | POLICY_PPK_INSIST));
 		lset_t ike_frag_policy = (conn->policy & POLICY_IKE_FRAG_MASK);
 		static const char *const noyes[2 /*bool*/] = {"no", "yes"};
@@ -458,7 +458,6 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 
 		switch (shunt_policy) {
 		case SHUNT_UNSET:
-		case SHUNT_TRAP:
 			cwf("type", conn->policy & POLICY_TUNNEL? "tunnel" : "transport");
 
 			cwpb("compress", POLICY_COMPRESS);
@@ -568,7 +567,7 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 					cwf("ike_frag", ifp);
 			}
 
-			break; /* end of case POLICY_SHUNT_TRAP */
+			break; /* end of case UNSET aka SHUNT_TRAP? */
 
 		case SHUNT_PASS:
 			cwf("type", "passthrough");
@@ -584,6 +583,10 @@ static void confwrite_conn(FILE *out, struct starter_conn *conn, bool verbose)
 
 		case SHUNT_IPSEC:
 			cwf("type", "ipsec"); /* can't happen */
+			break
+;
+		case SHUNT_TRAP:
+			cwf("type", "trap"); /* can't happen */
 			break;
 
 		case SHUNT_NONE:

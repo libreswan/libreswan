@@ -183,16 +183,17 @@ bool shunt_ok(enum shunt_kind shunt_kind, enum shunt_policy shunt_policy)
 {
 	static const bool ok[SHUNT_KIND_ROOF][SHUNT_POLICY_ROOF] = {
 		[SHUNT_KIND_NEVER_NEGOTIATE] = {
-			[SHUNT_NONE] = false, [SHUNT_HOLD] = false, [SHUNT_TRAP] = true,  [SHUNT_PASS] = true, [SHUNT_DROP] = true,  [SHUNT_REJECT] = true,
+			[SHUNT_UNSET] = true,
+			[SHUNT_NONE] = false, [SHUNT_HOLD] = false, [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = true,  [SHUNT_REJECT] = true,
 		},
 		[SHUNT_KIND_ONDEMAND] = {
-			[SHUNT_NONE] = false, [SHUNT_HOLD] = false, [SHUNT_TRAP] = true,  [SHUNT_PASS] = true, [SHUNT_DROP] = true,  [SHUNT_REJECT] = true,
+			[SHUNT_NONE] = false, [SHUNT_HOLD] = false, [SHUNT_TRAP] = true,  [SHUNT_PASS] = false, [SHUNT_DROP] = false, [SHUNT_REJECT] = false,
 		},
 		[SHUNT_KIND_NEGOTIATION] = {
-			[SHUNT_NONE] = false, [SHUNT_HOLD] = true,  [SHUNT_TRAP] = false, [SHUNT_PASS] = true, [SHUNT_DROP] = false, [SHUNT_REJECT] = false,
+			[SHUNT_NONE] = false, [SHUNT_HOLD] = true,  [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = false, [SHUNT_REJECT] = false,
 		},
 		[SHUNT_KIND_FAILURE] = {
-			[SHUNT_NONE] = true,  [SHUNT_HOLD] = false, [SHUNT_TRAP] = false, [SHUNT_PASS] = true, [SHUNT_DROP] = true,  [SHUNT_REJECT] = true,
+			[SHUNT_NONE] = true,  [SHUNT_HOLD] = false, [SHUNT_TRAP] = false, [SHUNT_PASS] = true,  [SHUNT_DROP] = true,  [SHUNT_REJECT] = true,
 		},
 	};
 	return ok[shunt_kind][shunt_policy];
@@ -231,7 +232,7 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 		jam_connection(buf, c);
 
 		enum_buf spb;
-		jam(buf, " prospective_shunt=%s",
+		jam(buf, " never_negotiate_shunt=%s",
 		    str_enum_short(&shunt_policy_names, prospective, &spb));
 
 		jam(buf, " ");
@@ -2502,7 +2503,7 @@ void teardown_ipsec_kernel_policies(struct child_sa *child)
 	} else if (c->config->failure_shunt == SHUNT_NONE) {
 		/*
 		 * If the .failure_shunt==SHUNT_NONE then the
-		 * .prospective_shunt is chosen and that can't be
+		 * .never_negotiate_shunt is chosen and that can't be
 		 * SHUNT_NONE.
 		 */
 		new_routing = RT_ROUTED_ONDEMAND;
