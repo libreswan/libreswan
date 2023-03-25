@@ -36,6 +36,7 @@ d.ipsec.conf/fragmentation.xml
 d.ipsec.conf/ikepad.xml
 d.ipsec.conf/ikev2.xml
 d.ipsec.conf/mobike.xml
+d.ipsec.conf/intermediate.xml
 d.ipsec.conf/esn.xml
 d.ipsec.conf/decap-dscp.xml
 d.ipsec.conf/nopmtudisc.xml
