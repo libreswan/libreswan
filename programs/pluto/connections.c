@@ -1957,7 +1957,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	d = extract_shunt("prospective", config, wm,
-			  SHUNT_KIND_PROSPECTIVE,
+			  SHUNT_KIND_NEVER_NEGOTIATE,
 			  /*unset*/SHUNT_TRAP);
 	if (d != NULL) {
 		return d;
@@ -1987,6 +1987,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	/* make kernel code easier */
 	config->shunt[SHUNT_KIND_BLOCK] = SHUNT_DROP;
+	config->shunt[SHUNT_KIND_ONDEMAND] = SHUNT_TRAP;
 
 	if (libreswan_fipsmode() && config->failure_shunt != SHUNT_NONE) {
 		enum_buf eb;

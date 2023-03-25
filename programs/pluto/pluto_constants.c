@@ -322,11 +322,12 @@ enum_names shunt_policy_names = {
 
 static const char *const shunt_kind_name[] = {
 #define A(S) [S] = #S
-	A(SHUNT_KIND_IPSEC),
+	A(SHUNT_KIND_NEVER_NEGOTIATE),
+	A(SHUNT_KIND_ONDEMAND),
 	A(SHUNT_KIND_NEGOTIATION),
+	A(SHUNT_KIND_IPSEC),
 	A(SHUNT_KIND_FAILURE),
 	A(SHUNT_KIND_BLOCK),
-	A(SHUNT_KIND_PROSPECTIVE),
 #undef A
 };
 

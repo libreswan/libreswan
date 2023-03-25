@@ -182,7 +182,10 @@ static global_timer_cb kernel_scan_shunts;
 bool shunt_ok(enum shunt_kind shunt_kind, enum shunt_policy shunt_policy)
 {
 	static const bool ok[SHUNT_KIND_ROOF][SHUNT_POLICY_ROOF] = {
-		[SHUNT_KIND_PROSPECTIVE] = {
+		[SHUNT_KIND_NEVER_NEGOTIATE] = {
+			[SHUNT_NONE] = false, [SHUNT_HOLD] = false, [SHUNT_TRAP] = true,  [SHUNT_PASS] = true, [SHUNT_DROP] = true,  [SHUNT_REJECT] = true,
+		},
+		[SHUNT_KIND_ONDEMAND] = {
 			[SHUNT_NONE] = false, [SHUNT_HOLD] = false, [SHUNT_TRAP] = true,  [SHUNT_PASS] = true, [SHUNT_DROP] = true,  [SHUNT_REJECT] = true,
 		},
 		[SHUNT_KIND_NEGOTIATION] = {
@@ -216,8 +219,11 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 	/*
 	 * Only the following shunts are valid.
 	 */
-	enum shunt_policy prospective = c->config->prospective_shunt;
-	passert(shunt_ok(SHUNT_KIND_PROSPECTIVE, prospective));
+	enum shunt_kind shunt_kind =
+		(NEVER_NEGOTIATE(c->policy) ? SHUNT_KIND_NEVER_NEGOTIATE :
+		 SHUNT_KIND_ONDEMAND);
+	enum shunt_policy prospective = c->config->shunt[shunt_kind];
+	passert(shunt_ok(shunt_kind, prospective));
 
 	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 		jam(buf, "kernel: %s() ", __func__);
@@ -269,7 +275,7 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 			if (!install_bare_spd_kernel_policy(spd, KERNEL_POLICY_OP_ADD, direction,
 							    /*XXX: should no policy be expected?*/
 							    EXPECT_KERNEL_POLICY_OK,
-							    SHUNT_KIND_PROSPECTIVE,
+							    shunt_kind,
 							    logger, HERE,
 							    "prospective kernel_policy")) {
 				return false;
@@ -651,7 +657,8 @@ struct spd_owner spd_owner(const struct spd_route *spd, unsigned indent)
 				owner.policy = d_spd;
 			}
 			break;
-		case RT_ROUTED_PROSPECTIVE:
+		case RT_ROUTED_ONDEMAND:
+		case RT_ROUTED_NEVER_NEGOTIATE:
 		case RT_ROUTED_NEGOTIATION:
 		case RT_ROUTED_FAILURE:
 		case RT_ROUTED_TUNNEL:
@@ -953,7 +960,7 @@ static void revert_kernel_policy(struct spd_route *spd,
 	}
 }
 
-static bool unrouted_to_routed_prospective(struct connection *c)
+static bool unrouted_to_routed(struct connection *c)
 {
 	enum routability r = connection_routability(c, c->logger);
 	switch (r) {
@@ -1065,21 +1072,25 @@ static bool unrouted_to_routed_prospective(struct connection *c)
 		}
 	}
 
-	set_child_routing(c, RT_ROUTED_PROSPECTIVE, c->child.newest_routing_sa);
-
 	return true;
 }
 
-bool unrouted_permanent_to_routed_prospective(struct connection *c)
+bool unrouted_to_routed_ondemand(struct connection *c)
 {
-	PEXPECT(c->logger, c->kind == CK_PERMANENT);
-	return unrouted_to_routed_prospective(c);
+	if (!unrouted_to_routed(c)) {
+		return false;
+	}
+	set_child_routing(c, RT_ROUTED_ONDEMAND, SOS_NOBODY);
+	return true;
 }
 
-bool unrouted_template_to_routed_prospective(struct connection *c)
+bool unrouted_to_routed_never_negotiate(struct connection *c)
 {
-	PEXPECT(c->logger, c->kind == CK_TEMPLATE);
-	return unrouted_to_routed_prospective(c);
+	if (!unrouted_to_routed(c)) {
+		return false;
+	}
+	set_child_routing(c, RT_ROUTED_NEVER_NEGOTIATE, SOS_NOBODY);
+	return true;
 }
 
 /*
@@ -1305,7 +1316,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	}
 
 	/* Success! */
-	set_child_routing(c, RT_ROUTED_PROSPECTIVE, c->child.newest_routing_sa);
+	set_child_routing(c, RT_ROUTED_ONDEMAND, c->child.newest_routing_sa);
 	return true;
 }
 
@@ -2494,7 +2505,7 @@ void teardown_ipsec_kernel_policies(struct child_sa *child)
 		 * .prospective_shunt is chosen and that can't be
 		 * SHUNT_NONE.
 		 */
-		new_routing = RT_ROUTED_PROSPECTIVE;
+		new_routing = RT_ROUTED_ONDEMAND;
 	} else {
 		 /*
 		 * If the .failure_shunt!=SHUNT_NONE then the
@@ -2540,8 +2551,8 @@ void teardown_ipsec_kernel_policies(struct child_sa *child)
 					   child->sa.st_logger, HERE, "unroute");
 		do_updown_unowned_spds(UPDOWN_UNROUTE, c, &spds, NULL, child->sa.st_logger);
 		break;
-	case RT_ROUTED_PROSPECTIVE:
-		replace_ipsec_with_bare_kernel_policies(child, RT_ROUTED_PROSPECTIVE,
+	case RT_ROUTED_ONDEMAND:
+		replace_ipsec_with_bare_kernel_policies(child, RT_ROUTED_ONDEMAND,
 							EXPECT_KERNEL_POLICY_OK, HERE);
 		break;
 	case RT_ROUTED_FAILURE:
@@ -2552,6 +2563,7 @@ void teardown_ipsec_kernel_policies(struct child_sa *child)
 	case RT_ROUTED_NEGOTIATION:
 	case RT_ROUTED_TUNNEL:
 	case RT_UNROUTED_TUNNEL:
+	case RT_ROUTED_NEVER_NEGOTIATE:
 		bad_case(new_routing);
 	}
 }

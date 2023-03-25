@@ -41,7 +41,8 @@ struct ike_sa;
 enum routing {
 	RT_UNROUTED,			/* unrouted */
 	RT_UNROUTED_NEGOTIATION,	/* unrouted, but .negotiation_shunt installed */
-	RT_ROUTED_PROSPECTIVE,		/* routed, and .prospective_shunt installed */
+	RT_ROUTED_ONDEMAND,		/* routed, and SHUNT_TRAP installed */
+	RT_ROUTED_NEVER_NEGOTIATE,	/* routed, and .never_negotiate_shunt installed */
 	RT_ROUTED_NEGOTIATION,		/* routed, and .negotiation_shunt installed */
 	RT_ROUTED_FAILURE,      	/* routed, and .failure_shunt installed */
 	RT_ROUTED_TUNNEL,       	/* routed, and erouted to an IPSEC SA group */

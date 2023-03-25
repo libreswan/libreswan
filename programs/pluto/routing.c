@@ -126,7 +126,8 @@ static void jam_event(struct jambuf *buf, enum connection_event event, struct co
 bool routed(enum routing r)
 {
 	switch (r) {
-	case RT_ROUTED_PROSPECTIVE:
+	case RT_ROUTED_ONDEMAND:
+	case RT_ROUTED_NEVER_NEGOTIATE:
 	case RT_ROUTED_NEGOTIATION:
 	case RT_ROUTED_FAILURE:
 	case RT_ROUTED_TUNNEL:
@@ -143,7 +144,8 @@ bool kernel_policy_installed(const struct connection *c)
 {
 	switch (c->child.routing) {
 	case RT_UNROUTED_NEGOTIATION:
-	case RT_ROUTED_PROSPECTIVE:
+	case RT_ROUTED_ONDEMAND:
+	case RT_ROUTED_NEVER_NEGOTIATE:
 	case RT_ROUTED_NEGOTIATION:
 	case RT_ROUTED_FAILURE:
 	case RT_ROUTED_TUNNEL:
@@ -216,7 +218,7 @@ static void ondemand_unrouted_to_unrouted_negotiation(struct connection *c, cons
 	/* XXX: these descriptions make no sense */
 	const char *reason = (oe ? "replace unrouted opportunistic %trap with broad %pass or %hold" :
 			      "replace unrouted %trap with broad %pass or %hold");
-	PEXPECT(logger, t == NULL || t->child.routing == RT_ROUTED_PROSPECTIVE);
+	PEXPECT(logger, t == NULL || t->child.routing == RT_ROUTED_ONDEMAND);
 	/*
 	 * We need a broad %hold, not the narrow one.
 	 *
@@ -420,7 +422,7 @@ static bool keep_routed_tunnel_connection(struct connection *c,
 	}
 	if (should_revive_connection(*(e->child))) {
 		/* XXX: should this be ROUTED_NEGOTIATING? */
-		replace_ipsec_with_bare_kernel_policies(*(e->child), RT_ROUTED_PROSPECTIVE,
+		replace_ipsec_with_bare_kernel_policies(*(e->child), RT_ROUTED_ONDEMAND,
 							EXPECT_KERNEL_POLICY_OK, HERE);
 		schedule_revival(&(*e->child)->sa);
 		/* covered by above; no!? */
@@ -434,9 +436,9 @@ static bool keep_routed_tunnel_connection(struct connection *c,
 	 * when state/connection dies.
 	 */
 	enum routing new_routing =
-		(c->config->autostart == AUTOSTART_ONDEMAND ? RT_ROUTED_PROSPECTIVE :
+		(c->config->autostart == AUTOSTART_ONDEMAND ? RT_ROUTED_ONDEMAND :
 		 c->config->failure_shunt != SHUNT_NONE ? RT_ROUTED_FAILURE :
-		 RT_ROUTED_PROSPECTIVE);
+		 RT_ROUTED_ONDEMAND);
 	replace_ipsec_with_bare_kernel_policies((*e->child), new_routing,
 						EXPECT_KERNEL_POLICY_OK, HERE);
 	delete_child_sa(e->child);
@@ -770,15 +772,39 @@ void dispatch(enum connection_event event, struct connection *c,
 
 		switch (XX(event, routing, kind)) {
 
+
+		case X(ROUTE, UNROUTED, TEMPLATE):
 		case X(ROUTE, UNROUTED, PERMANENT):
 			c->policy |= POLICY_ROUTE; /* always */
-			if (!unrouted_permanent_to_routed_prospective(c)) {
-				/* XXX: why whack only? */
-				llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");
-				return;
+			if (NEVER_NEGOTIATE(c->policy)) {
+				if (!unrouted_to_routed_never_negotiate(c)) {
+					/* XXX: why whack only? */
+					llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");
+					return;
+				}
+				PEXPECT(logger, c->child.routing == RT_ROUTED_NEVER_NEGOTIATE);
+			} else {
+				if (!unrouted_to_routed_ondemand(c)) {
+					/* XXX: why whack only? */
+					llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");
+					return;
+				}
+				PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
 			}
-			PEXPECT(logger, c->child.routing == RT_ROUTED_PROSPECTIVE);
 			return;
+
+		case X(UNROUTE, ROUTED_NEVER_NEGOTIATE, TEMPLATE):
+		case X(UNROUTE, ROUTED_NEVER_NEGOTIATE, PERMANENT):
+			PEXPECT(logger, NEVER_NEGOTIATE(c->policy));
+			delete_spd_kernel_policies(&c->child.spds,
+						   EXPECT_KERNEL_POLICY_OK,
+						   c->logger, where, "unroute permanent");
+			/* stop updown_unroute() finding this
+			 * connection */
+			set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
+			do_updown_unroute(c);
+			return;
+
 		case X(UNROUTE, UNROUTED, PERMANENT):
 			ldbg(logger, "already unrouted");
 			return;
@@ -810,13 +836,18 @@ void dispatch(enum connection_event event, struct connection *c,
 			do_updown_unroute(c);
 			return;
 
-		case X(UNROUTE, ROUTED_PROSPECTIVE, PERMANENT):
-			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+		case X(UNROUTE, ROUTED_ONDEMAND, PERMANENT):
+			PEXPECT(logger, !NEVER_NEGOTIATE(c->policy));
+			delete_spd_kernel_policies(&c->child.spds,
+						   EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute permanent");
+			/* stop updown_unroute() finding this
+			 * connection */
 			set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
 			do_updown_unroute(c);
 			return;
-		case X(ONDEMAND, ROUTED_PROSPECTIVE, PERMANENT):
+
+		case X(ONDEMAND, ROUTED_ONDEMAND, PERMANENT):
 			ondemand_routed_prospective_to_routed_negotiation(c, e);
 			return;
 
@@ -842,19 +873,10 @@ void dispatch(enum connection_event event, struct connection *c,
 			set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
 			return;
 
-		case X(ROUTE, UNROUTED, TEMPLATE):
-			c->policy |= POLICY_ROUTE;
-			if (!unrouted_template_to_routed_prospective(c)) {
-				/* XXX: why whack only? */
-				llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");
-				return;
-			}
-			PEXPECT(logger, c->child.routing == RT_ROUTED_PROSPECTIVE);
-			return;
 		case X(UNROUTE, UNROUTED, TEMPLATE):
 			ldbg(logger, "already unrouted");
 			return;
-		case X(UNROUTE, ROUTED_PROSPECTIVE, TEMPLATE):
+		case X(UNROUTE, ROUTED_ONDEMAND, TEMPLATE):
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute template");
 			/* do now so route_owner won't find us */
@@ -894,7 +916,7 @@ void dispatch(enum connection_event event, struct connection *c,
 			llog(RC_RTBUSY, logger, "cannot unroute: route busy");
 			return;
 
-		case X(UNROUTE, ROUTED_PROSPECTIVE, INSTANCE):
+		case X(UNROUTE, ROUTED_ONDEMAND, INSTANCE):
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute instance");
 			/* do now so route_owner won't find us */
@@ -1021,7 +1043,8 @@ void connection_resume(struct child_sa *child)
 	case RT_ROUTED_NEGOTIATION:
 	case RT_ROUTED_FAILURE:
 	case RT_ROUTED_TUNNEL:
-	case RT_ROUTED_PROSPECTIVE:
+	case RT_ROUTED_ONDEMAND:
+	case RT_ROUTED_NEVER_NEGOTIATE:
 		llog_pexpect(child->sa.st_logger, HERE,
 			     "%s() unexpected routing %s",
 			     __func__, enum_name_short(&routing_names, cr));
@@ -1059,7 +1082,8 @@ void connection_suspend(struct child_sa *child)
 		}
 		set_child_routing(c, RT_UNROUTED_TUNNEL, c->child.newest_routing_sa);
 		break;
-	case RT_ROUTED_PROSPECTIVE:
+	case RT_ROUTED_ONDEMAND:
+	case RT_ROUTED_NEVER_NEGOTIATE:
 	case RT_ROUTED_NEGOTIATION:
 	case RT_ROUTED_FAILURE:
 		llog_pexpect(child->sa.st_logger, HERE,
