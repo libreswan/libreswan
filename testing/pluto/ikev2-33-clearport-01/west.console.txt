@@ -18,52 +18,38 @@ west #
 west #
  ipsec auto --route west-east
 west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+west #
  # poke a hole to port 7, those packets will be allowed cleartext
 west #
  ipsec auto --route pass-7
 west #
- ip xfrm policy
-src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 7 
-	dir fwd priority PRIORITY ptype main 
-src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 7 
-	dir in priority PRIORITY ptype main 
-src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 7 
-	dir out priority PRIORITY ptype main 
-src 192.1.2.45/32 dst 192.1.2.23/32 
-	dir out priority PRIORITY ptype main 
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 7
+	dir fwd priority PRIORITY ptype main
+src 192.1.2.23/32 dst 192.1.2.45/32 proto tcp sport 7
+	dir in priority PRIORITY ptype main
+src 192.1.2.45/32 dst 192.1.2.23/32 proto tcp dport 7
+	dir out priority PRIORITY ptype main
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket out priority 0 ptype main 
-src 0.0.0.0/0 dst 0.0.0.0/0 
-	socket in priority 0 ptype main 
 west #
- # send packet over the clear exception - should return connection refused
+ # send packet over the clear exception - should return connection
+west #
+ # refused
 west #
  echo 'test' | nc -w 5 192.1.2.23 7
 Ncat: Connection refused.
 west #
- # send packet over the 'tunnel' that's negotiating - should get blocked
+ # send packet over the 'tunnel' that's negotiating - should get
+west #
+ # blocked
 west #
  echo 'test' | nc -w 5 192.1.2.23 80
 Ncat: TIMEOUT.
