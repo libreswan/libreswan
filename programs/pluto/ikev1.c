@@ -2260,6 +2260,15 @@ void process_packet_tail(struct msg_digest *md)
 			dbg("ignoring informational payload %s, no corresponding state",
 			    nname);
 		} else {
+			if (impair.copy_v1_notify_response_SPIs_to_retransmission) {
+				ldbg(st->st_logger, "IMPAIR: copying notify response SPIs to recorded message and then resending it");
+				/* skip non-ESP marker if needed */
+				size_t skip = (st->st_interface->esp_encapsulation_enabled ? NON_ESP_MARKER_SIZE : 0);
+				size_t spis = sizeof(md->hdr.isa_ike_spis);
+				PASSERT(st->st_logger, st->st_v1_tpacket.len >= skip + spis);
+				memcpy(st->st_v1_tpacket.ptr + skip, &md->hdr.isa_ike_spis, spis);
+				resend_recorded_v1_ike_msg(st, "IMPAIR: retransmitting mangled packet");
+			}
 			LOG_PACKET(RC_LOG_SERIOUS,
 				   "ignoring informational payload %s, msgid=%08" PRIx32 ", length=%d",
 				   nname, st->st_v1_msgid.id,

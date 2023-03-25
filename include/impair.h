@@ -167,6 +167,8 @@ struct impair {
 	unsigned number_of_TSi_selectors;
 	unsigned number_of_TSr_selectors;
 
+	bool copy_v1_notify_response_SPIs_to_retransmission;
+
 	/*
 	 * add more here
 	 */
