@@ -106,6 +106,8 @@ struct impairment impairments[] = {
 	{ .what = WHAT, .action = CALL_##ACTION, .param = PARAM, .help = HELP, .unsigned_help = UNSIGNED_HELP, ##__VA_ARGS__, }
 #define V(WHAT, VALUE, HELP, ...) \
 	{ .what = WHAT, .action = CALL_IMPAIR_UPDATE, .value = &impair.VALUE, .help = HELP, .sizeof_value = sizeof(impair.VALUE), ##__VA_ARGS__, }
+#define B(VALUE, HELP, ...) \
+	{ .what = #VALUE, .action = CALL_IMPAIR_UPDATE, .value = &impair.VALUE, .help = HELP, .sizeof_value = sizeof(impair.VALUE), ##__VA_ARGS__, }
 
 	V("allow-dns-insecure", allow_dns_insecure, "allow IPSECKEY lookups without DNSSEC protection"),
 	V("allow-null-none", allow_null_none, "cause pluto to allow esp=null-none and ah=none for testing"),
@@ -232,6 +234,10 @@ struct impairment impairments[] = {
 	  "send bogus number of selectors in TSr payload",
 	  .unsigned_help = "force number of selectors"),
 
+	B(copy_v1_notify_response_SPIs_to_retransmission,
+	  "copy SPIs in IKEv1 notify response to last sent packet and then retransmit"),
+
+#undef B
 #undef V
 #undef A
 
