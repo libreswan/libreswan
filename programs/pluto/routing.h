@@ -52,16 +52,8 @@ enum routing {
 extern const struct enum_names routing_names;
 extern const struct enum_names routing_story;
 
-#define routed(RS) ((RS) == RT_ROUTED_PROSPECTIVE ||		\
-		    (RS) == RT_ROUTED_NEGOTIATION ||		\
-		    (RS) == RT_ROUTED_FAILURE ||		\
-		    (RS) == RT_ROUTED_TUNNEL)
-#define erouted(RS) ((RS) == RT_UNROUTED_NEGOTIATION ||		\
-		     (RS) == RT_ROUTED_PROSPECTIVE ||		\
-		     (RS) == RT_ROUTED_NEGOTIATION ||		\
-		     (RS) == RT_ROUTED_FAILURE ||		\
-		     (RS) == RT_ROUTED_TUNNEL ||		\
-		     (RS) == RT_UNROUTED_TUNNEL)
+bool routed(enum routing r);
+bool kernel_policy_installed(const struct connection *c);
 
 void connection_route(struct connection *c);
 void connection_unroute(struct connection *c);

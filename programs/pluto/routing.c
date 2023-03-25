@@ -120,6 +120,38 @@ static void jam_event(struct jambuf *buf, enum connection_event event, struct co
 	}
 }
 
+bool routed(enum routing r)
+{
+	switch (r) {
+	case RT_ROUTED_PROSPECTIVE:
+	case RT_ROUTED_NEGOTIATION:
+	case RT_ROUTED_FAILURE:
+	case RT_ROUTED_TUNNEL:
+		return true;
+	case RT_UNROUTED:
+	case RT_UNROUTED_NEGOTIATION:
+	case RT_UNROUTED_TUNNEL:
+		return false;
+	}
+	bad_case(r);
+}
+
+bool kernel_policy_installed(const struct connection *c)
+{
+	switch (c->child.routing) {
+	case RT_UNROUTED_NEGOTIATION:
+	case RT_ROUTED_PROSPECTIVE:
+	case RT_ROUTED_NEGOTIATION:
+	case RT_ROUTED_FAILURE:
+	case RT_ROUTED_TUNNEL:
+	case RT_UNROUTED_TUNNEL:
+		return true;
+	case RT_UNROUTED:
+		return false;
+	}
+	bad_case(c->child.routing);
+}
+
 void set_child_routing_where(struct connection *c, enum routing routing,
 			     so_serial_t new_routing_sa, where_t where)
 {

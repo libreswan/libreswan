@@ -801,7 +801,7 @@ static void get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 
 	spd->wip.conflicting.spd = spd_owner(spd, indent).policy;
 	pexpect(spd->wip.conflicting.spd == NULL ||
-		erouted(spd->wip.conflicting.spd->connection->child.routing));
+		kernel_policy_installed(spd->wip.conflicting.spd->connection));
 
 	/*
 	 * If there's no SPD with a conflicting policy, perhaps
@@ -1247,7 +1247,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 		return false;
 	}
 
-	if (PBAD(logger, erouted(c->child.routing))) {
+	if (PBAD(logger, kernel_policy_installed(c))) {
 		dbg("kernel: %s() connection already routed", __func__);
 		return true;
 	}
