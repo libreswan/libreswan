@@ -92,6 +92,9 @@ static void jam_event(struct jambuf *buf, enum connection_event event, struct co
 	jam_enum_short(buf, &routing_names, c->child.routing);
 	jam_string(buf, " ");
 	jam_enum_short(buf, &connection_kind_names, c->kind);
+	if (NEVER_NEGOTIATE(c->policy)) {
+		jam_string(buf, " never-negotiate");
+	}
 	jam_string(buf, " ");
 	jam_co(buf, c->serialno);
 	jam_string(buf, " ");
