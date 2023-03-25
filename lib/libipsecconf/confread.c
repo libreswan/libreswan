@@ -1218,7 +1218,6 @@ static bool load_conn(struct starter_conn *conn,
 	KW_POLICY_FLAG(KNCF_MSDH_DOWNGRADE, POLICY_MSDH_DOWNGRADE);
 	KW_POLICY_FLAG(KNCF_DNS_MATCH_ID, POLICY_DNS_MATCH_ID);
 	KW_POLICY_FLAG(KNCF_SHA2_TRUNCBUG, POLICY_SHA2_TRUNCBUG);
-	KW_POLICY_FLAG(KNCF_INTERMEDIATE, POLICY_INTERMEDIATE);
 	KW_POLICY_FLAG(KNCF_IGNORE_PEER_DNS, POLICY_IGNORE_PEER_DNS);
 
 	if (conn->options_set[KNCF_SAN_ON_CERT]) {
@@ -1322,6 +1321,12 @@ static bool load_conn(struct starter_conn *conn,
 			case yna_no:
 				break;
 			}
+		}
+	}
+
+	if (conn->options_set[KNCF_INTERMEDIATE]) {
+		if (conn->ike_version >= IKEv2) {
+			conn->policy |= POLICY_INTERMEDIATE;
 		}
 	}
 
