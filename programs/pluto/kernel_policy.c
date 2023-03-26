@@ -638,8 +638,6 @@ void replace_ipsec_with_bare_kernel_policies(struct child_sa *child,
 	struct connection *c = child->sa.st_connection;
 	enum shunt_kind shunt_kind =
 		(new_routing == RT_ROUTED_ONDEMAND ? SHUNT_KIND_ONDEMAND :
-		 new_routing == RT_ROUTED_NEVER_NEGOTIATE ? SHUNT_KIND_NEVER_NEGOTIATE :
-		 new_routing == RT_ROUTED_NEGOTIATION ? SHUNT_KIND_NEGOTIATION :
 		 new_routing == RT_ROUTED_FAILURE ? SHUNT_KIND_FAILURE :
 		 SHUNT_KIND_ROOF);
 	PASSERT(child->sa.st_logger, shunt_kind != SHUNT_KIND_ROOF);
@@ -683,9 +681,6 @@ void replace_ipsec_with_bare_kernel_policies(struct child_sa *child,
 		}
 		/*
 		 * Always zap inbound.
-		 *
-		 * XXX: which is interesting since the original
-		 * prospective kernel policy included inbound.
 		 */
 		if (!delete_spd_kernel_policy(spd, DIRECTION_INBOUND,
 					      expect_inbound_policy,

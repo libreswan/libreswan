@@ -2499,13 +2499,19 @@ void teardown_ipsec_kernel_policies(struct child_sa *child)
 	if (c->kind == CK_INSTANCE &&
 	    ((c->policy & POLICY_OPPORTUNISTIC) ||
 	     (c->policy & POLICY_DONT_REKEY))) {
+		ldbg(logger,
+		     "kernel: %s() instance with OPPORTUNISTIC|DONT_REKEY; transitioning to UNROUTED",
+		     __func__);
 		new_routing = RT_UNROUTED;
 	} else if (c->config->failure_shunt == SHUNT_NONE) {
 		/*
 		 * If the .failure_shunt==SHUNT_NONE then the
-		 * .never_negotiate_shunt is chosen and that can't be
-		 * SHUNT_NONE.
+		 * .ondemand_shunt==SHUNT_TRAP is chosen and that
+		 * can't be SHUNT_NONE.
 		 */
+		ldbg(logger,
+		     "kernel: %s() failure_shunt==NONE; transitioning to ROUTED_ONDEMAND",
+		     __func__);
 		new_routing = RT_ROUTED_ONDEMAND;
 	} else {
 		 /*
@@ -2513,6 +2519,11 @@ void teardown_ipsec_kernel_policies(struct child_sa *child)
 		 * .failure_shunt is chosen, and that isn't
 		 * SHUNT_NONE.
 		 */
+		enum_buf spb;
+		ldbg(logger,
+		     "kernel: %s() failure_shunt=%s; transitioning to ROUTED_FAILURE",
+		     __func__, str_enum_short(&shunt_policy_names,
+					      c->config->failure_shunt, &spb));
 		new_routing = RT_ROUTED_FAILURE;
 	}
 

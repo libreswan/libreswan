@@ -408,25 +408,25 @@ static bool keep_routed_tunnel_connection(struct connection *c,
 {
 	if (c->child.newest_routing_sa > (*e->child)->sa.st_serialno) {
 		/* no longer child's */
-		ldbg(c->logger, "keeping connection; routing SA "PRI_SO" is newer",
+		ldbg(c->logger, "keeping connection kernel policy; routing SA "PRI_SO" is newer",
 		     pri_so(c->child.newest_routing_sa));
 		delete_child_sa(e->child);
 		return true;
 	}
 	if (c->newest_ipsec_sa > (*e->child)->sa.st_serialno) {
 		/* covered by above; no!? */
-		ldbg(c->logger, "keeping connection; IPsec SA "PRI_SO" is newer",
+		ldbg(c->logger, "keeping connection kernel policy; IPsec SA "PRI_SO" is newer",
 		     pri_so(c->newest_ipsec_sa));
 		delete_child_sa(e->child);
 		return true;
 	}
 	if (should_revive_connection(*(e->child))) {
 		/* XXX: should this be ROUTED_NEGOTIATING? */
+		ldbg(c->logger, "replacing connection kernel policy with ROUTED_ONDEMAND; it will be revived");
 		replace_ipsec_with_bare_kernel_policies(*(e->child), RT_ROUTED_ONDEMAND,
 							EXPECT_KERNEL_POLICY_OK, HERE);
 		schedule_revival(&(*e->child)->sa);
 		/* covered by above; no!? */
-		ldbg(c->logger, "keeping connection; it is being revived");
 		delete_child_sa(e->child);
 		return true;
 	}
@@ -439,6 +439,10 @@ static bool keep_routed_tunnel_connection(struct connection *c,
 		(c->config->autostart == AUTOSTART_ONDEMAND ? RT_ROUTED_ONDEMAND :
 		 c->config->failure_shunt != SHUNT_NONE ? RT_ROUTED_FAILURE :
 		 RT_ROUTED_ONDEMAND);
+	enum_buf rb;
+	ldbg(c->logger, "replacing connection kernel policy with %s",
+	     str_enum_short(&routing_names, new_routing, &rb));
+
 	replace_ipsec_with_bare_kernel_policies((*e->child), new_routing,
 						EXPECT_KERNEL_POLICY_OK, HERE);
 	delete_child_sa(e->child);
