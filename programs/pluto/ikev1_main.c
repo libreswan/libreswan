@@ -2055,13 +2055,14 @@ bool accept_delete(struct msg_digest *md,
 			ike_spis_t cookies;
 			diag_t d;
 
-			d = pbs_in_raw(&p->pbs, &cookies.initiator, COOKIE_SIZE, "iCookie");
+			passert(sizeof(cookies.initiator) == COOKIE_SIZE);
+			d = pbs_in_thing(&p->pbs, cookies.initiator, "iCookie");
 			if (d != NULL) {
 				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				return false;
 			}
 
-			d = pbs_in_raw(&p->pbs, &cookies.responder, COOKIE_SIZE, "rCookie");
+			d = pbs_in_thing(&p->pbs, cookies.responder, "rCookie");
 			if (d != NULL) {
 				llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 				return false;
@@ -2100,7 +2101,7 @@ bool accept_delete(struct msg_digest *md,
 			 * IPSEC (ESP/AH)
 			 */
 			ipsec_spi_t spi;	/* network order */
-			diag_t dt = pbs_in_raw(&p->pbs, &spi, sizeof(spi), "SPI");
+			diag_t dt = pbs_in_thing(&p->pbs, spi, "SPI");
 			if (dt != NULL) {
 				llog_diag(RC_LOG, st->st_logger, &dt, "%s", "");
 				return false;

@@ -586,7 +586,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_continue(struct ike_sa *ike,
 
 	if (eaptls.eaptls_flags & EAPTLS_FLAGS_LENGTH) {
 		uint32_t msglen = 0xdead;
-		d = pbs_in_raw(&data, &msglen, sizeof(msglen), "TLS Message length");
+		d = pbs_in_thing(&data, msglen, "TLS Message length");
 		if (d != NULL) goto err_diag;
 
 		msglen = ntohl(msglen);

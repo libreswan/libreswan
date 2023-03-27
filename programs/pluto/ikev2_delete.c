@@ -289,7 +289,7 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 				 * (i.e., inbound to the peer).
 				 */
 				ipsec_spi_t outbound_spi;
-				diag_t d = pbs_in_raw( &p->pbs, &outbound_spi, sizeof(outbound_spi),"SPI");
+				diag_t d = pbs_in_thing( &p->pbs, outbound_spi, "SPI");
 				if (d != NULL) {
 					llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
 					return false;
@@ -411,7 +411,7 @@ bool process_v2D_responses(struct ike_sa *ike, struct msg_digest *md)
 			for (i = 0; i < v2del->isad_nrspi; i++) {
 				ipsec_spi_t spi;
 
-				diag_t d = pbs_in_raw( &p->pbs, &spi, sizeof(spi),"SPI");
+				diag_t d = pbs_in_thing(&p->pbs, spi, "SPI");
 				if (d != NULL) {
 					llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
 					return false;

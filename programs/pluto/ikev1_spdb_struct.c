@@ -3019,10 +3019,7 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 					return v1N_INVALID_SPI;	/* reject whole SA */
 				}
 
-				diag_t d = pbs_in_raw(&next_proposal_pbs,
-						      (uint8_t *)&next_spi,
-						      sizeof(next_spi),
-						      "SPI");
+				diag_t d = pbs_in_thing(&next_proposal_pbs, next_spi, "SPI");
 				if (d != NULL) {
 					llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 					return v1N_INVALID_SPI;	/* reject whole SA */

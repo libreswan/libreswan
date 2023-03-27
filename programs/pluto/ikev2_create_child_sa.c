@@ -216,7 +216,7 @@ static struct child_sa *find_v2N_REKEY_SA_child(struct ike_sa *ike,
 
 	ipsec_spi_t spi = 0;
 	struct pbs_in rekey_pbs = rekey_sa_payload->pbs;
-	diag_t d = pbs_in_raw(&rekey_pbs, &spi, sizeof(spi), "SPI");
+	diag_t d = pbs_in_thing(&rekey_pbs, spi, "SPI");
 	if (d != NULL) {
 		llog_diag(RC_LOG, ike->sa.st_logger, &d, "%s", "");
 		record_v2N_response(ike->sa.st_logger, ike, md, v2N_INVALID_SYNTAX,

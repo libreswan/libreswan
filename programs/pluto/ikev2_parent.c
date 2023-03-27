@@ -143,8 +143,8 @@ bool negotiate_hash_algo_from_notification(const struct pbs_in *payload_pbs,
 
 		uint16_t nh_value;
 		passert(sizeof(nh_value) == RFC_7427_HASH_ALGORITHM_IDENTIFIER_SIZE);
-		diag_t d = pbs_in_raw(&pbs, &nh_value, sizeof(nh_value),
-				      "hash algorithm identifier (network ordered)");
+		diag_t d = pbs_in_thing(&pbs, nh_value,
+					"hash algorithm identifier (network ordered)");
 		if (d != NULL) {
 			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d, "%s", "");
 			return false;
