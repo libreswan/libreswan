@@ -379,7 +379,7 @@ static err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 		return "bad GW Ident Type";
 	}
 
-	/* pbs_in_raw() actual GW Identity */
+	/* extract actual GW Identity */
 	if (af == NULL) {
 		/*
 		 * The FQDN string isn't NUL-terminated.
@@ -390,16 +390,14 @@ static err_t parse_redirect_payload(const struct pbs_in *notify_pbs,
 		 * so I eliminated it:
 		 *	passert(gw_info.gw_identity_len <= 0xFF);
 		 */
-		unsigned char gw_str[0xFF];
-
-		diag_t d = pbs_in_raw(&input_pbs, &gw_str, gw_info.gw_identity_len, "GW Identity");
+		shunk_t gw_str;
+		diag_t d = pbs_in_shunk(&input_pbs, gw_info.gw_identity_len, &gw_str, "GW Identity");
 		if (d != NULL) {
 			llog_diag(RC_LOG_SERIOUS, logger, &d, "%s", "");
 			return "error while extracting GW Identity from variable part of IKEv2_REDIRECT Notify payload";
 		}
 
-		err_t ugh = ttoaddress_dns(shunk2(gw_str, gw_info.gw_identity_len),
-					   NULL/*UNSPEC*/, redirect_ip);
+		err_t ugh = ttoaddress_dns(gw_str, NULL/*UNSPEC*/, redirect_ip);
 		if (ugh != NULL)
 			return ugh;
 	} else {
