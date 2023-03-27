@@ -53,11 +53,8 @@ east #
 east #
  grep -e 'auth method: ' -e 'hash algorithm identifier' -e "^[^|].* established IKE SA" /tmp/pluto.log
 | parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-| hash algorithm identifier (network ordered)
 | parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-| hash algorithm identifier (network ordered)
 | parsing 2 raw bytes of IKEv2 Notify Payload into hash algorithm identifier (network ordered)
-| hash algorithm identifier (network ordered)
 | emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256 into IKEv2 Notify Payload
 | hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_256: 00 02
 | emitting 2 raw bytes of hash algorithm identifier IKEv2_HASH_ALGORITHM_SHA2_384 into IKEv2 Notify Payload
