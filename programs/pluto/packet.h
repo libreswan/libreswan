@@ -242,6 +242,10 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 		     struct pbs_in *obj_pbs) MUST_USE_RESULT;
 diag_t pbs_in_raw(struct pbs_in *pbs, void *bytes, size_t len,
 		  const char *name) MUST_USE_RESULT;
+diag_t pbs_in_shunk(struct pbs_in *pbs, size_t len, shunk_t *shunk,
+		    const char *name) MUST_USE_RESULT;
+#define pbs_in_thing(PBS, THING, NAME)		\
+	pbs_in_raw(PBS, &(THING), sizeof(THING), NAME)
 
 /*
  * Output PBS

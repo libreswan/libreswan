@@ -2284,30 +2284,40 @@ int pbs_peek_byte(const struct pbs_in *ins)
 	return pbs_left(ins) == 0 ? -1 : ins->cur[0];
 }
 
-diag_t pbs_in_raw(struct pbs_in *ins, void *bytes, size_t len, const char *name)
+diag_t pbs_in_shunk(struct pbs_in *ins, size_t len, shunk_t *shunk, const char *name)
 {
 	if (pbs_left(ins) < len) {
-		/* XXX: needs current logger embedded in pbs_in? */
-		return diag("not enough bytes left to get %s from %s",
-			    name, ins->name);
-	} else {
-		if (bytes == NULL) {
-			if (DBGP(DBG_BASE)) {
-				DBG_log("skipping %u raw bytes of %s (%s)",
-					(unsigned) len, ins->name, name);
-				DBG_dump(NULL, ins->cur, len);
-			}
-		} else {
-			memcpy(bytes, ins->cur, len);
-			if (DBGP(DBG_BASE)) {
-				DBG_log("parsing %u raw bytes of %s into %s",
-					(unsigned) len, ins->name, name);
-				DBG_dump(NULL, bytes, len);
-			}
-		}
-		ins->cur += len;
+		return diag("less than %zu bytes left to get %s from %s",
+			    len, name, ins->name);
+	}
+
+	*shunk = (shunk_t) {
+		.ptr = ins->cur,
+		.len = len,
+	};
+	if (DBGP(DBG_BASE)) {
+		DBG_log("parsing %zu raw bytes of %s into %s",
+			len, ins->name, name);
+		DBG_dump_hunk(NULL, *shunk);
+	}
+	ins->cur += len;
+	return NULL;
+}
+
+diag_t pbs_in_raw(struct pbs_in *ins, void *bytes, size_t len, const char *name)
+{
+	shunk_t shunk = NULL_HUNK;
+	diag_t d = pbs_in_shunk(ins, len, &shunk, name);
+	if (d != NULL) {
+		return d;
+	}
+
+	if (bytes == NULL) {
 		return NULL;
 	}
+
+	memcpy(bytes, shunk.ptr, shunk.len);
+	return NULL;
 }
 
 /*
