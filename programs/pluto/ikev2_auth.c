@@ -552,8 +552,9 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 				    s->signer->name, (*hash)->common.fqn);
 
 				/* eat the blob */
-				diag_t d = pbs_in_raw(signature_pbs, NULL/*toss*/, blob.len,
-						      "skip ASN.1 blob for hash algo");
+				shunk_t ignore;
+				diag_t d = pbs_in_shunk(signature_pbs, blob.len, &ignore,
+							"skip ASN.1 blob for hash algo");
 				if (d != NULL) {
 					dbg("digsig:     failing %s due to I/O error: %s",
 					    s->signer->name, str_diag(d));

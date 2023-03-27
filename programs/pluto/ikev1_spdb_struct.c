@@ -1493,9 +1493,9 @@ diag_t preparse_isakmp_sa_body(struct pbs_in sa_pbs /* by value! */,
 		return diag("proposal SPI size is too big");
 
 	if (proposal.isap_spisize > 0) {
-		uint8_t junk_spi[MAX_ISAKMP_SPI_SIZE];
-
-		d = pbs_in_raw(&proposal_pbs, junk_spi, proposal.isap_spisize, "Oakley SPI");
+		shunk_t junk_spi;
+		d = pbs_in_shunk(&proposal_pbs, proposal.isap_spisize, &junk_spi,
+				 "Oakley SPI (ignored)");
 		if (d != NULL) {
 			return d;
 		}
@@ -1747,8 +1747,9 @@ v1_notification_t parse_isakmp_sa_body(struct pbs_in *sa_pbs,		/* body of input 
 	if (proposal.isap_spisize == 0) {
 		/* empty (0) SPI -- fine */
 	} else if (proposal.isap_spisize <= MAX_ISAKMP_SPI_SIZE) {
-		uint8_t junk_spi[MAX_ISAKMP_SPI_SIZE];
-		diag_t d = pbs_in_raw(&proposal_pbs, junk_spi, proposal.isap_spisize, "Oakley SPI");
+		shunk_t junk_spi;
+		diag_t d = pbs_in_shunk(&proposal_pbs, proposal.isap_spisize, &junk_spi,
+					"Oakley SPI (ignored)");
 		if (d != NULL) {
 			llog_diag(RC_LOG_SERIOUS, st->st_logger, &d, "%s", "");
 			return v1N_PAYLOAD_MALFORMED;	/* reject whole SA */
@@ -2933,24 +2934,25 @@ v1_notification_t parse_ipsec_sa_body(struct pbs_in *sa_pbs,           /* body o
 		do {
 			if (next_proposal.isap_protoid == PROTO_IPCOMP) {
 				/* IPCOMP CPI */
-				if (next_proposal.isap_spisize ==
-				    IPSEC_DOI_SPI_SIZE) {
-					/* This code is to accommodate those peculiar
-					 * implementations that send a CPI in the bottom of an
+				if (next_proposal.isap_spisize == IPSEC_DOI_SPI_SIZE) {
+					/*
+					 * This code is to accommodate
+					 * those peculiar
+					 * implementations that send a
+					 * CPI in the bottom of an
 					 * SPI-sized field.
+					 *
 					 * See draft-shacham-ippcp-rfc2393bis-05.txt 4.1
 					 */
-					uint8_t filler[IPSEC_DOI_SPI_SIZE -
-							IPCOMP_CPI_SIZE];
-
-					diag_t d = pbs_in_raw(&next_proposal_pbs,
-							      filler, sizeof(filler),
-							      "CPI filler");
+					shunk_t filler;
+					diag_t d = pbs_in_shunk(&next_proposal_pbs,
+								IPSEC_DOI_SPI_SIZE - IPCOMP_CPI_SIZE,
+								&filler, "CPI filler");
 					if (d != NULL) {
 						llog_diag(RC_LOG, st->st_logger, &d, "%s", "");
 						return v1N_INVALID_SPI;	/* reject whole SA */
 					}
-					if (!all_zero(filler, sizeof(filler))) {
+					if (!all_zero(filler.ptr, filler.len)) {
 						return v1N_INVALID_SPI;	/* reject whole SA */
 					}
 				} else if (next_proposal.isap_spisize !=
