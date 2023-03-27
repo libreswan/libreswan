@@ -2957,7 +2957,7 @@ diag_t pbs_in_address(struct pbs_in *input_pbs,
 	case AF_INET:
 	{
 		struct in_addr ip;
-		diag_t d = pbs_in_raw(input_pbs, &ip, sizeof(ip), what);
+		diag_t d = pbs_in_thing(input_pbs, ip, what);
 		if (d != NULL) {
 			*address = unset_address;
 			return d;
@@ -2968,7 +2968,7 @@ diag_t pbs_in_address(struct pbs_in *input_pbs,
 	case AF_INET6:
 	{
 		struct in6_addr ip;
-		diag_t d = pbs_in_raw(input_pbs, &ip, sizeof(ip), what);
+		diag_t d = pbs_in_thing(input_pbs, ip, what);
 		if (d != NULL) {
 			*address = unset_address;
 			return d;
