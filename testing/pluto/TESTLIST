@@ -545,7 +545,7 @@ kvmplutotest	newoe-04-pass-pass			good
 kvmplutotest	newoe-05-hold-pass			good
 kvmplutotest	newoe-06-prio				good
 kvmplutotest	newoe-07-ike-replace-initiator		good
-kvmplutotest	newoe-07-ike-replace-initiator-esp	good
+kvmplutotest	newoe-07-ike-replace-initiator-esp	wip	github/1057
 kvmplutotest	newoe-08-restart			good
 kvmplutotest	newoe-09-mutual				good
 kvmplutotest	ikev2-oe-09-transport-ipv4		good
@@ -628,7 +628,7 @@ kvmplutotest	certoe-17-asymmetric-cert-nat		good
 kvmplutotest	certoe-17-asymmetric-cert-nat-testing-client-crash	good
 kvmplutotest	certoe-17-asymmetric-cert-nat-testing-server-restarts	good
 kvmplutotest	certoe-17-asymmetric-cert-nat-testing-client-restart	good
-kvmplutotest	certoe-17-asymmetric-cert-nat-testing-server-crash	good
+kvmplutotest	certoe-17-asymmetric-cert-nat-testing-server-crash	wip	github/1056
 kvmplutotest	certoe-17-asymmetric-dual-clients-behind-nat-01		good
 # the non-keyingtries1 now fail because we enforce keyingtries=1 for OE
 kvmplutotest	certoe-18-pass-then-go-slash24		wip
