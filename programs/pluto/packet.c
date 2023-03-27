@@ -2295,14 +2295,14 @@ diag_t pbs_in_raw(struct pbs_in *ins, void *bytes, size_t len, const char *name)
 			if (DBGP(DBG_BASE)) {
 				DBG_log("skipping %u raw bytes of %s (%s)",
 					(unsigned) len, ins->name, name);
-				DBG_dump(name, ins->cur, len);
+				DBG_dump(NULL, ins->cur, len);
 			}
 		} else {
 			memcpy(bytes, ins->cur, len);
 			if (DBGP(DBG_BASE)) {
 				DBG_log("parsing %u raw bytes of %s into %s",
 					(unsigned) len, ins->name, name);
-				DBG_dump(name, bytes, len);
+				DBG_dump(NULL, bytes, len);
 			}
 		}
 		ins->cur += len;
