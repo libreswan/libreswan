@@ -1,0 +1,28 @@
+/testing/guestbin/swan-prep --46
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add west
+002 "west": added IKEv2 connection
+west #
+ echo "initdone"
+initdone
+west #
+ ipsec auto --up west
+1v2 "west"[1] 192.1.2.23 #1: initiating IKEv2 connection
+1v2 "west"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:500
+1v2 "west"[1] 192.1.2.23 #1: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
+003 "west"[1] 192.1.2.23 #1: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
+002 "west"[1] 192.1.2.23 #2: received INTERNAL_IP4_ADDRESS 192.3.1.0
+004 "west"[1] 192.1.2.23 #2: initiator established Child SA using #1; IPsec tunnel [192.3.1.0-192.3.1.0:0-65535 0] -> [192.0.2.0-192.0.2.255:0-65535 0] {ESP/ESN=>0xESPESP <0xESPESP xfrm=AES_GCM_16_256-NONE DPD=passive}
+west #
+ echo done
+done
+west #
+ ../../guestbin/ping-once.sh --up -I 192.3.1.0 192.0.2.254
+up
+west #
+ 
