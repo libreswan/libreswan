@@ -38,11 +38,23 @@ west #
  ipsec auto --add 4to4in4
 002 "4to4in4": added IKEv2 connection
 west #
+ ipsec auto --add 4to4in6
+002 "4to4in6": added IKEv2 connection
+west #
+ ipsec auto --add 4to6in4
+036 "4to6in4": failed to add connection: address family of leftaddresspool=192.168.1.0/24 conflicts with rightsubnet=2001:db8:2::/64
+west #
  ipsec auto --add 4to6in6
 036 "4to6in6": failed to add connection: address family of leftaddresspool=192.168.1.0/24 conflicts with rightsubnet=2001:db8:2::/64
 west #
  ipsec auto --add 6to4in4
 036 "6to4in4": failed to add connection: address family of leftaddresspool=2001:db8:0:3:1::/97 conflicts with rightsubnet=192.168.2.0/24
+west #
+ ipsec auto --add 6to4in6
+036 "6to4in6": failed to add connection: address family of leftaddresspool=2001:db8:0:3:1::/97 conflicts with rightsubnet=192.168.2.0/24
+west #
+ ipsec auto --add 6to6in4
+002 "6to6in4": added IKEv2 connection
 west #
  ipsec auto --add 6to6in6
 002 "6to6in6": added IKEv2 connection
