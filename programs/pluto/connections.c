@@ -1392,7 +1392,7 @@ static void mark_parse(/*const*/ char *wmmark,
 	}
 }
 
-static void set_connection_spds(struct connection *c, const struct ip_info *host_afi)
+static void set_connection_selectors_from_config(struct connection *c, const struct ip_info *host_afi)
 {
 	/*
 	 * Fill in selectors.
@@ -1442,15 +1442,6 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 			end_selectors->proposed.ip[host_afi->ip_index].list = end_selectors->proposed.list;
 		}
 	}
-
-	add_connection_spds(c, host_afi);
-
-	/* leave a bread crumb */
-	PEXPECT(c->logger, c->child.newest_routing_sa == SOS_NOBODY);
-	passert(c->child.routing == RT_UNROUTED);
-	set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
-
-	set_connection_priority(c); /* must be after kind is set */
 }
 
 void alloc_connection_spds(struct connection *c, unsigned nr_spds)
@@ -2714,14 +2705,22 @@ static diag_t extract_connection(const struct whack_message *wm,
 	     (c->config->sa_reqid == 0 ? "generate" : "use"));
 
 	/*
-	 * Fill in the child SPDs using the previously parsed
-	 * selectors.
+	 * Fill in the child's selectors from the config.  It might
+	 * use subnet or host or addresspool.
 	 */
 
-	set_connection_spds(c, host_afi);
+	set_connection_selectors_from_config(c, host_afi);
+
+	/*
+	 * Generate the SPDs from the populated selectors.  Is this
+	 * needed now?
+	 */
+	add_connection_spds(c, host_afi);
 	if (!pexpect(c->spd != NULL)) {
 		return diag("internal error");
 	}
+
+	set_connection_priority(c); /* must be after kind is set */
 
 	/*
 	 * All done, enter it into the databases.  Since orient() may
