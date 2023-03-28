@@ -3506,16 +3506,15 @@ err_t connection_requires_tss(const struct connection *c)
 	if (c->config->ike_version == IKEv1) {
 		return NULL;
 	}
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		const struct connection_end *e = &c->end[end];
-		if (e->child.selectors.proposed.len > 1) {
-			return "subnet";
+	FOR_EACH_ELEMENT(end, c->end) {
+		if (end->config->host.pool_ranges.len > 1) {
+			return "addresspools";
 		}
-		if (e->config->child.sourceip.len > 1) {
-			return "sourceip";
+		if (end->config->child.selectors.len > 1) {
+			return "subnets";
 		}
-		if (e->config->host.pool_ranges.len > 1) {
-			return "addresspool";
+		if (end->config->child.sourceip.len > 1) {
+			return "sourceips";
 		}
 	}
 	return NULL;
