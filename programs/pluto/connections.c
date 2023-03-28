@@ -1398,12 +1398,20 @@ static void set_connection_spds(struct connection *c, const struct ip_info *host
 	 * Fill in selectors.
 	 */
 	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
+		const char *leftright = c->end[end].config->leftright;
 		ip_address host_addr = c->end[end].host.addr;
 		const struct child_end_config *child_config = c->end[end].child.config;
 		if (child_config->selectors.len > 0) {
 			dbg("select from child.selectors");
 			c->end[end].child.selectors.proposed = child_config->selectors;
 			set_end_child_has_client(c, end, true);
+		} else if (c->end[end].host.config->pool_ranges.len > 0) {
+			ldbg(c->logger, "%s selectors from address pool families", leftright);
+			FOR_EACH_ELEMENT(afi, ip_families) {
+				if (c->end[end].host.config->pool_ranges.ip[afi->ip_index].len > 0) {
+					append_end_selector(c, &c->end[end], afi, unset_selector, HERE);
+				}
+			}
 		} else if (address_is_specified(host_addr)) {
 			dbg("select from address proto port");
 			/*
@@ -3377,6 +3385,42 @@ bool same_peer_ids(const struct connection *c, const struct connection *d,
 bool dpd_active_locally(const struct connection *c)
 {
 	return deltasecs(c->config->dpd.delay) != 0;
+}
+
+void append_end_selector(struct connection *c, struct connection_end *end,
+			 const struct ip_info *afi, ip_selector selector/*could be unset*/,
+			 where_t where)
+{
+	struct logger *logger = c->logger;
+	PASSERT_WHERE(logger, where, (selector_is_unset(&selector) ||
+				      selector_info(selector) == afi));
+	/*
+	 * Either uninitialized, or using the (first) scratch entry
+	 */
+	if (end->child.selectors.proposed.list == NULL) {
+		PASSERT_WHERE(logger, where, end->child.selectors.proposed.len == 0);
+		end->child.selectors.proposed.list = end->child.selectors.assigned;
+	} else {
+		PASSERT_WHERE(logger, where, end->child.selectors.proposed.len > 0);
+		PASSERT_WHERE(logger, where, end->child.selectors.proposed.list == end->child.selectors.assigned);
+	}
+	/* space? */
+	PASSERT_WHERE(logger, where, end->child.selectors.proposed.len < elemsof(end->child.selectors.assigned));
+	PASSERT_WHERE(logger, where, end->child.selectors.proposed.ip[afi->ip_index].len == 0);
+
+	/* append the selector to assigned; always initlaize .list */
+	unsigned i = end->child.selectors.proposed.len++;
+	end->child.selectors.assigned[i] = selector;
+	/* keep IPv[46] table in sync */
+	end->child.selectors.proposed.ip[afi->ip_index].len = 1;
+	end->child.selectors.proposed.ip[afi->ip_index].list = &end->child.selectors.assigned[i];
+
+	selector_buf nb;
+	ldbg(c->logger, "%s() %s.child.selectors.proposed[%d] %s "PRI_WHERE,
+	     __func__,
+	     end->config->leftright,
+	     i, str_selector(&selector, &nb),
+	     pri_where(where));
 }
 
 void scribble_end_selector(struct connection *c, enum left_right end,
