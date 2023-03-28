@@ -15,8 +15,12 @@ ipsec auto --add 6toXin4
 ipsec auto --add 6toXin6
 
 ipsec auto --add 4to4in4
+ipsec auto --add 4to4in6
+ipsec auto --add 4to6in4
 ipsec auto --add 4to6in6
 ipsec auto --add 6to4in4
+ipsec auto --add 6to4in6
+ipsec auto --add 6to6in4
 ipsec auto --add 6to6in6
 
 ipsec auto --add 46to4in4
