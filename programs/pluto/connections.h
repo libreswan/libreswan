@@ -360,7 +360,17 @@ struct host_end {
 struct child_end {
 	const struct child_end_config *config;
 	struct child_end_selectors {
-		ip_selector assigned[2/*space for IPv4+IPv6 in no order*/];
+		/*
+		 * Space to accumulate one IPv4 and one IPv6 selector
+		 * when .proposed isn't pointing at the config
+		 * selectors.  The number of valid entries is
+		 * proposed.len.  Entries are appended; hence don't
+		 * assume IPv4->IPv6 ordering.
+		 *
+		 * The see append_end_selector(), but be warned other
+		 * code fiddles with this.
+		 */
+		ip_selector assigned[IP_INDEX_ROOF/*space for IPv4+IPv6 in no order*/];
 		ip_selectors proposed; /* either .config->selectors or above; do not free */
 		/*
 		 * XXX: used when logging the established description
@@ -421,9 +431,9 @@ void set_end_selector_where(struct connection *c, enum left_right end,
 			    const char *excuse, where_t where);
 void scribble_end_selector(struct connection *c, enum left_right end,
 			   ip_selector selector, where_t where, unsigned nr);
-void append_end_selector(struct connection *c, struct connection_end *end,
+void append_end_selector(struct connection_end *end,
 			 const struct ip_info *afi, ip_selector s,
-			 where_t where);
+			 struct logger *logger, where_t where);
 
 struct spd_end {
 	ip_selector client;

@@ -1397,23 +1397,28 @@ static void set_connection_selectors_from_config(struct connection *c, const str
 	/*
 	 * Fill in selectors.
 	 */
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		const char *leftright = c->end[end].config->leftright;
-		ip_address host_addr = c->end[end].host.addr;
-		const struct child_end_config *child_config = c->end[end].child.config;
-		if (child_config->selectors.len > 0) {
-			dbg("select from child.selectors");
-			c->end[end].child.selectors.proposed = child_config->selectors;
-			set_end_child_has_client(c, end, true);
-		} else if (c->end[end].host.config->pool_ranges.len > 0) {
+	FOR_EACH_ELEMENT(end, c->end) {
+		const char *leftright = end->config->leftright;
+		ip_address host_addr = end->host.addr;
+		PASSERT(c->logger, end->child.selectors.proposed.list == NULL);
+		PASSERT(c->logger, end->child.selectors.proposed.len == 0);
+		if (end->child.config->selectors.len > 0) {
+			ldbg(c->logger, "%s selector from child.selectors", leftright);
+			end->child.selectors.proposed = end->child.config->selectors;
+			set_end_child_has_client(c, end->config->index, true);
+		} else if (end->host.config->pool_ranges.len > 0) {
+			/*
+			 * Make space for the selectors that will be
+			 * assigned from the addresspool.
+			 */
 			ldbg(c->logger, "%s selectors from address pool families", leftright);
 			FOR_EACH_ELEMENT(afi, ip_families) {
-				if (c->end[end].host.config->pool_ranges.ip[afi->ip_index].len > 0) {
-					append_end_selector(c, &c->end[end], afi, unset_selector, HERE);
+				if (end->host.config->pool_ranges.ip[afi->ip_index].len > 0) {
+					append_end_selector(end, afi, unset_selector,
+							    c->logger, HERE);
 				}
 			}
 		} else if (address_is_specified(host_addr)) {
-			dbg("select from address proto port");
 			/*
 			 * Default the end's child selector (client)
 			 * to a subnet containing only the end's host
@@ -1423,23 +1428,21 @@ static void set_connection_selectors_from_config(struct connection *c, const str
 			 * selectors then the combination becomes a
 			 * list.
 			 */
+			ldbg(c->logger, "%s selector from host address+protoport", leftright);
 			ip_selector selector =
 				selector_from_address_protoport(host_addr,
-								child_config->protoport);
-			set_end_selector(c, end, selector);
+								end->child.config->protoport);
+			append_end_selector(end, host_afi, selector,
+					    c->logger, HERE);
 		} else {
-			dbg("select from host");
 			/*
 			 * to-be-determined from the host or the
-			 * opportunistic group.
+			 * opportunistic group but make space
+			 * regardless.
 			 */
-			struct child_end_selectors *end_selectors = &c->end[end].child.selectors;
-			end_selectors->assigned[0] = unset_selector;
-			end_selectors->proposed.len = 1;
-			end_selectors->proposed.list = end_selectors->assigned;
-			/* keep IPv[46] table in sync */
-			end_selectors->proposed.ip[host_afi->ip_index].len = 1;
-			end_selectors->proposed.ip[host_afi->ip_index].list = end_selectors->proposed.list;
+			ldbg(c->logger, "%s selector from unset host family", leftright);
+			append_end_selector(end, host_afi, unset_selector,
+					    c->logger, HERE);
 		}
 	}
 }
@@ -3386,11 +3389,10 @@ bool dpd_active_locally(const struct connection *c)
 	return deltasecs(c->config->dpd.delay) != 0;
 }
 
-void append_end_selector(struct connection *c, struct connection_end *end,
+void append_end_selector(struct connection_end *end,
 			 const struct ip_info *afi, ip_selector selector/*could be unset*/,
-			 where_t where)
+			 struct logger *logger, where_t where)
 {
-	struct logger *logger = c->logger;
 	PASSERT_WHERE(logger, where, (selector_is_unset(&selector) ||
 				      selector_info(selector) == afi));
 	/*
@@ -3415,7 +3417,7 @@ void append_end_selector(struct connection *c, struct connection_end *end,
 	end->child.selectors.proposed.ip[afi->ip_index].list = &end->child.selectors.assigned[i];
 
 	selector_buf nb;
-	ldbg(c->logger, "%s() %s.child.selectors.proposed[%d] %s "PRI_WHERE,
+	ldbg(logger, "%s() %s.child.selectors.proposed[%d] %s "PRI_WHERE,
 	     __func__,
 	     end->config->leftright,
 	     i, str_selector(&selector, &nb),
