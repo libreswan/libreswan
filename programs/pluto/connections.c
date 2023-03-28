@@ -3465,73 +3465,68 @@ void scribble_end_selector(struct connection *c, enum left_right end,
 	     pri_where(where));
 }
 
-void update_end_selector_where(struct connection *c, enum left_right end,
-			       ip_selector new_selector, bool first_time,
+void update_end_selector_where(struct connection *c, enum left_right lr,
+			       ip_selector new_selector,
 			       const char *excuse, where_t where)
 {
-	struct child_end *child = &c->end[end].child;
-	struct child_end_selectors *end_selectors = &c->end[end].child.selectors;
-	const char *leftright = c->end[end].config->leftright;
-	if (first_time) {
-		PEXPECT_WHERE(c->logger, where, end_selectors->proposed.len == 0);
-		selector_buf nb;
-		ldbg(c->logger, "%s() set %s.child.selector %s "PRI_WHERE,
-		     __func__, leftright,
-		     str_selector(&new_selector, &nb),
-		     pri_where(where));
-		if (PBAD_WHERE(c->logger, where, c->spd != NULL)) {
-			c->spd->end[end].client = new_selector;
-		}
-	} else {
-		PEXPECT_WHERE(c->logger, where, end_selectors->proposed.len == 1);
-		ip_selector old_selector = end_selectors->proposed.list[0];
-		selector_buf ob, nb;
-		ldbg(c->logger, "%s() update %s.child.selector %s -> %s "PRI_WHERE,
-		     __func__, leftright,
-		     str_selector(&old_selector, &ob),
-		     str_selector(&new_selector, &nb),
-		     pri_where(where));
-		if (c->spd != NULL) {
-			PEXPECT_WHERE(c->logger, where, c->child.spds.len == 1);
-			ip_selector old_client = c->spd->end[end].client;
-			if (!selector_eq_selector(old_selector, old_client)) {
-				selector_buf sb, cb;
-				llog_pexpect(c->logger, where,
-					     "%s() %s.child.selector %s does not match %s.spd.client %s",
-					     __func__, leftright,
-					     str_selector(&old_selector, &sb),
-					     c->end[end].config->leftright,
-					     str_selector(&old_client, &cb));
-			}
-			c->spd->end[end].client = new_selector;
-		}
-	}
+	struct connection_end *end = &c->end[lr];
+	struct child_end *child = &end->child;
+	struct child_end_selectors *end_selectors = &end->child.selectors;
+	const char *leftright = end->config->leftright;
+
+	PEXPECT_WHERE(c->logger, where, end_selectors->proposed.len == 1);
+	ip_selector old_selector = end_selectors->proposed.list[0];
+	selector_buf ob, nb;
+	ldbg(c->logger, "%s() update %s.child.selector %s -> %s "PRI_WHERE,
+	     __func__, leftright,
+	     str_selector(&old_selector, &ob),
+	     str_selector(&new_selector, &nb),
+	     pri_where(where));
 
 	/*
 	 * Point the selectors list at and UPDATE the scratch value.
 	 *
 	 * Is the assumption that this is only applied when there is a
-	 * single selector reasonable?  Certainly don't want to
+	 * single selector.  Reasonable?  Certainly don't want to
 	 * truncate the selector list.
 	 */
+	zero(&end->child.selectors.proposed);
 	const struct ip_info *afi = selector_info(new_selector);
-	end_selectors->assigned[0] = new_selector;
-	end_selectors->proposed.len = 1;
-	end_selectors->proposed.list = end_selectors->assigned;
-	/* keep IPv[46] table in sync */
-	end_selectors->proposed.ip[afi->ip_index].len = 1;
-	end_selectors->proposed.ip[afi->ip_index].list = end_selectors->proposed.list;
+	append_end_selector(end, afi, new_selector, c->logger, where);
 
 	/*
-	 * When there's a selectors.list, the child.selector is only
-	 * allowed to update to the first selector in that list?
+	 * If needed, also update the SPD.  It's assumed for this code
+	 * path there is only one (just like there is only one
+	 * selector).
+	 */
+	if (c->spd != NULL) {
+		PEXPECT_WHERE(c->logger, where, c->child.spds.len == 1);
+		ip_selector old_client = c->spd->end[lr].client;
+		if (!selector_eq_selector(old_selector, old_client)) {
+			selector_buf sb, cb;
+			llog_pexpect(c->logger, where,
+				     "%s() %s.child.selector %s does not match %s.spd.client %s",
+				     __func__, leftright,
+				     str_selector(&old_selector, &sb),
+				     end->config->leftright,
+				     str_selector(&old_client, &cb));
+		}
+		c->spd->end[lr].client = new_selector;
+	}
+
+	/*
+	 * When there's a selectors.list, any update to the first
+	 * selector should be a no-op?  Lets find out.
 	 *
-	 * XXX: the CP payload code violoates this.  It stomps on the
-	 * child.selector without even looking at the traffic
-	 * selectors.
+	 * XXX: the CP payload code violoates this.
 	 *
-	 * XXX: the TS code violates this.  It scribbles the result of
-	 * the TS negotiation on the child.selector.
+	 * It stomps on the child.selector without even looking at the
+	 * traffic selectors.
+	 *
+	 * XXX: the TS code violates this.
+	 *
+	 * It scribbles the result of the TS negotiation on the
+	 * child.selector.
 	 */
 	if (child->config->selectors.len > 0) {
 		ip_selector selector = child->config->selectors.list[0];
@@ -3546,20 +3541,15 @@ void update_end_selector_where(struct connection *c, enum left_right end,
 			selector_buf sb, cb;
 			ldbg(c->logger,
 			     "%s() %s.child.selector %s does not match %s.selectors[0] %s but %s "PRI_WHERE,
-			     __func__, leftright,
-			     str_selector(&new_selector, &sb),
-			     c->end[end].config->leftright,
-			     str_selector(&selector, &cb),
-			     excuse,
-			     pri_where(where));
+			     __func__, leftright, str_selector(&new_selector, &sb),
+			     leftright, str_selector(&selector, &cb),
+			     excuse, pri_where(where));
 		} else {
 			selector_buf sb, cb;
 			llog_pexpect(c->logger, where,
 				     "%s() %s.child.selector %s does not match %s.selectors[0] %s",
-				     __func__, leftright,
-				     str_selector(&new_selector, &sb),
-				     c->end[end].config->leftright,
-				     str_selector(&selector, &cb));
+				     __func__, leftright, str_selector(&new_selector, &sb),
+				     leftright, str_selector(&selector, &cb));
 		}
 	}
 }

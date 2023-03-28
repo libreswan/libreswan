@@ -426,15 +426,14 @@ struct connection_end {
 };
 
 void update_end_selector_where(struct connection *c, enum left_right end,
-			       ip_selector s, bool first_time,
+			       ip_selector s,
 			       const char *excuse, where_t where);
 
 #define update_end_selector(C, END, SELECTOR, EXCUSE)			\
-	update_end_selector_where(C, END, SELECTOR,			\
-			       /*first-time*/false, EXCUSE, HERE)
+	update_end_selector_where(C, END, SELECTOR, EXCUSE, HERE)
 #define update_first_selector(C, LR, SELECTOR)				\
 	update_end_selector_where(C, (C)->LR->config->index, SELECTOR,	\
-			       /*first-time*/false, NULL, HERE)
+				  NULL, HERE)
 
 void scribble_end_selector(struct connection *c, enum left_right end,
 			   ip_selector selector, where_t where, unsigned nr);
