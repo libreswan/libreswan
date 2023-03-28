@@ -11,7 +11,7 @@ road #
  ../../guestbin/wait-until-pluto-started
 road #
  ipsec auto --add road
-002 "road": connection is using multiple subnet
+002 "road": connection is using multiple subnets
 002 "road": added IKEv2 connection
 road #
  echo "initdone"
