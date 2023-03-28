@@ -1,0 +1,16 @@
+rm -f /etc/racoon/*
+east #
+ # no tabs?!?
+east #
+ cp netbsde.racoon.conf /etc/racoon/racoon.conf
+east #
+ cp netbsde.psk.txt     /etc/racoon/psk.txt
+east #
+ chmod u=r,go=          /etc/racoon/psk.txt
+east #
+ racoon -l /tmp/racoon.log
+east #
+ echo "initdone"
+initdone
+east #
+ 
