@@ -1381,15 +1381,15 @@ kvmplutotest	ikev2-crossing-streams-03-iface		wip	github:557
 
 # uses the kernel-pfkeyv2.c code
 
-kvmplutotest	pfkeyv2-transport-ipv4-ah-ipcomp-ikev2	netbsd
-kvmplutotest	pfkeyv2-transport-ipv4-ah-ikev2		netbsd
-kvmplutotest	pfkeyv2-transport-ipv4-esp-ipcomp-ikev2	netbsd
-kvmplutotest	pfkeyv2-transport-ipv4-esp-ikev2	netbsd
+kvmplutotest	pfkeyv2-transport-4in4-ah-ipcomp-ikev2	netbsd
+kvmplutotest	pfkeyv2-transport-4in4-ah-ikev2		netbsd
+kvmplutotest	pfkeyv2-transport-4in4-esp-ipcomp-ikev2	netbsd
+kvmplutotest	pfkeyv2-transport-4in4-esp-ikev2	netbsd
 
-kvmplutotest	pfkeyv2-transport-ipv6-ah-ipcomp-ikev2	netbsd
-kvmplutotest	pfkeyv2-transport-ipv6-ah-ikev2		netbsd
-kvmplutotest	pfkeyv2-transport-ipv6-esp-ipcomp-ikev2	netbsd
-kvmplutotest	pfkeyv2-transport-ipv6-esp-ikev2	netbsd
+kvmplutotest	pfkeyv2-transport-6in6-ah-ipcomp-ikev2	netbsd
+kvmplutotest	pfkeyv2-transport-6in6-ah-ikev2		netbsd
+kvmplutotest	pfkeyv2-transport-6in6-esp-ipcomp-ikev2	netbsd
+kvmplutotest	pfkeyv2-transport-6in6-esp-ikev2	netbsd
 
 kvmplutotest	pfkeyv2-tunnel-4in4-ah-ipcomp-ikev2	netbsd
 kvmplutotest	pfkeyv2-tunnel-4in4-ah-ikev2		netbsd
