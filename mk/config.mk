@@ -531,7 +531,6 @@ SD_RESTART_TYPE ?= on-failure
 SD_PLUTO_OPTIONS ?= --leak-detective
 SYSTEMUNITDIR ?= $(shell $(PKG_CONFIG) systemd --variable=systemdsystemunitdir)
 SYSTEMTMPFILESDIR ?= $(shell $(PKG_CONFIG) systemd --variable=tmpfilesdir)
-UNITDIR ?= $(DESTDIR)$(SYSTEMUNITDIR)
 TMPFILESDIR ?= $(DESTDIR)$(SYSTEMTMPFILESDIR)
 else
 USE_SYSTEMD_WATCHDOG ?= false

@@ -14,7 +14,10 @@ include $(top_srcdir)/mk/config.mk
 # like local-base and installsystemdservice are allowed to run in
 # parallel)
 
-local-base: $(builddir)/$(UNITFILE) $(builddir)/$(TMPFILESCONFIG)
+BUILD = $(builddir)/$(UNITFILE) $(builddir)/$(TMPFILESCONFIG)
+local-base: $(BUILD)
+local-clean:
+	rm -f $(BUILD)
 
 ifeq ($(INSTALL_INITSYSTEM),true)
 local-install-base: installsystemdservice oldinitdcheck postcheck
@@ -27,19 +30,19 @@ installtmpfilesconfig: local-base | $(TMPFILESDIR)
 		systemd-tmpfiles --create $(TMPFILESDIR)/$(TMPFILESCONFIG); \
 	fi
 
-installsystemdservice: local-base | $(UNITDIR)
-	$(INSTALL) $(INSTCONFFLAGS) $(builddir)/$(UNITFILE) $(UNITDIR)
-	@if test $(UNITDIR) = $(SYSTEMUNITDIR) ; then \
+installsystemdservice: local-base | $(DESTDIR)$(SYSTEMUNITDIR)
+	$(INSTALL) $(INSTCONFFLAGS) $(builddir)/$(UNITFILE) $(DESTDIR)$(SYSTEMUNITDIR)
+	@if test $(DESTDIR)$(SYSTEMUNITDIR) = $(SYSTEMUNITDIR) ; then \
 		echo running: systemctl --system daemon-reload; \
 		systemctl --system daemon-reload || echo "failed restart" ; \
 	fi
 	@if test -f $(DESTDIR)/$(LIBEXECDIR)/portexcludes; then \
 		echo fixing port excludes ; \
-		sed -Ei 's@^# (.*/portexcludes)$$@\1@' $(UNITDIR)/$(UNITFILE); \
+		sed -Ei 's@^# (.*/portexcludes)$$@\1@' $(DESTDIR)$(SYSTEMUNITDIR)/$(UNITFILE); \
 	fi
 
-$(UNITDIR):
-	mkdir -p $(UNITDIR)
+$(DESTDIR)$(SYSTEMUNITDIR):
+	mkdir -p $(DESTDIR)$(SYSTEMUNITDIR)
 
 $(TMPFILESDIR):
 	mkdir -p $(TMPFILESDIR)
@@ -58,7 +61,7 @@ oldinitdcheck: installsystemdservice
 	fi
 
 postcheck: installsystemdservice installtmpfilesconfig oldinitdcheck
-	@if test -z "$(DESTDIR)" -a $(UNITDIR) = $(SYSTEMUNITDIR) -a $(shell systemctl is-enabled ipsec.service) = "disabled" ; then \
+	@if test -z "$(DESTDIR)" -a $(DESTDIR)$(SYSTEMUNITDIR) = $(SYSTEMUNITDIR) -a $(shell systemctl is-enabled ipsec.service) = "disabled" ; then \
 		echo "DESTDIR='$(DESTDIR)'" ; \
 		echo "************************** WARNING ***********************************" ; \
 		echo "The ipsec service is currently disabled. To enable this service issue:" ; \
