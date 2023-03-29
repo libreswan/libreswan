@@ -25,6 +25,9 @@ cp -v /bench/testing/libvirt/openbsd/rc.local /etc/rc.local
 chmod a+x /etc/rc.local
 
 chsh -s /usr/local/bin/bash root
-cp -v /bench/testing/libvirt/bash_profile /root/.bash_profile
+
+for f in /bench/testing/libvirt/root/[a-z]* ; do
+    cp -v ${f} /root/.$(basename $f)
+done
 
 exit 0

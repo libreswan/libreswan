@@ -20,7 +20,10 @@ mv /tmp/fstab /etc/fstab
 cat /etc/fstab
 
 chsh -s /usr/local/bin/bash root
-cp -v /bench/testing/libvirt/bash_profile /root/.bash_profile
+
+for f in /bench/testing/libvirt/root/[a-z]* ; do
+    cp -v ${f} /root/.$(basename $f)
+done
 
 cp -v /bench/testing/libvirt/freebsd/rc.conf /etc/
 

@@ -200,7 +200,9 @@ restorecon -R /root/.ssh /etc/ssh
 
 title replace root/.bash_profile
 
-cp -v /bench/testing/libvirt/bash_profile /root/.bash_profile
+for f in /bench/testing/libvirt/root/[a-z]* ; do
+    cp -v ${f} /root/.$(basename $f)
+done
 
 
 title files mysteriously needed for systemd-networkd too
