@@ -82,4 +82,4 @@ $(builddir)/%.man: $(builddir)/%.tmp
 	touch $@
 
 $(top_builddir)/html/%.html: $(builddir)/%.tmp
-	$(XMLTO) html-nochunks $< -o $(top_builddir)/html/$*.html
+	$(XMLTO) html-nochunks $< -o $(top_builddir)/html
