@@ -37,7 +37,8 @@ refnames = $(shell $(top_srcdir)/packaging/utils/refnames.sh $(1))
 # predictable (see refnames.sh) use a fake target to mark that each
 # page has been generated.
 
-local-manpages: $(addprefix $(builddir)/,$(addsuffix .man,$(MANPAGES)))
+local-manpages: $(addprefix $(builddir)/, $(addsuffix .man, $(MANPAGES)))
+local-html: $(addprefix $(top_builddir)/html/, $(addsuffix .html, $(MANPAGES)))
 
 local-install-manpages: local-manpages
 	@set -eu $(foreach manpage,$(MANPAGES), \
@@ -77,6 +78,8 @@ $(builddir)/%.tmp: $(srcdir)/%.xml | $(builddir)
 # match the target name.
 
 $(builddir)/%.man: $(builddir)/%.tmp
-	: ignoring seemingly bogus $(XMLTO) exit status
 	$(XMLTO) man $< -o $(builddir)
 	touch $@
+
+$(top_builddir)/html/%.html: $(builddir)/%.tmp
+	$(XMLTO) html-nochunks $< -o $(top_builddir)/html/$*.html

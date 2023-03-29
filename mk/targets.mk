@@ -64,13 +64,14 @@ endef
 #
 # For each define: TARGET clean-TARGET install-TARGET
 
-TARGETS = base manpages
+TARGETS = base manpages html
 
 $(foreach target,$(TARGETS),$(eval $(call recursive-target,$(target))))
 
 $(foreach target,$(TARGETS),$(eval $(call recursive-target,clean-$(target))))
 
 $(foreach target,$(TARGETS),$(eval $(call recursive-target,install-$(target))))
+
 # install requires up-to-date build; recursive make, being evil, makes
 # this less than 100% reliable.
 local-install-base: local-base
