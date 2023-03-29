@@ -1154,29 +1154,53 @@ ifneq ($(KVM_INSTALL_RPM),true)
 KVM_INSTALL_PLATFORM += fedora
 endif
 
-.PHONY: kvm-build
-kvm-build: $(foreach os, $(KVM_OS), kvm-build-$(os))
-
-$(patsubst %, kvm-build-%, $(KVM_INSTALL_PLATFORM)): \
-kvm-build-%: $(KVM_POOLDIR_PREFIX)%
+$(patsubst %, kvm-make-install-base-%, $(KVM_INSTALL_PLATFORM)): \
+kvm-make-install-base-%: $(KVM_POOLDIR_PREFIX)%
 	: $@
 	$(KVMSH) $(KVMSH_FLAGS) \
 		--chdir /source \
 		$(notdir $<) \
 		-- \
-		ls \; \
-		time gmake install-base $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS)
+		'ls > /dev/null' \; \
+		'time gmake install-base $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS)'
 
+$(patsubst %, kvm-make-install-%, $(KVM_INSTALL_PLATFORM)): \
+kvm-make-install-%: $(KVM_POOLDIR_PREFIX)%
+	: $@
+	$(KVMSH) $(KVMSH_FLAGS) \
+		--chdir /source \
+		$(notdir $<) \
+		-- \
+		'ls > /dev/null' \; \
+		'time gmake install-all $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS)'
+
+kvm-html: | $(KVM_POOLDIR)/$(KVM_KEYS_DOMAIN)
+	: $@ $<
+	rm -rf OBJ.KVM.html
+	$(KVMSH) $(KVMSH_FLAGS) \
+		--chdir /source \
+		$(KVM_KEYS_DOMAIN) \
+		-- \
+		time gmake html $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS) \; \
+		cp -rv \$${OBJDIR}/html /source/OBJ.KVM.html
+
+.PHONY: kvm-make-install
+kvm-make-install: $(foreach os, $(KVM_OS), kvm-make-install-$(os))
+	$(MAKE) $(KVM_KEYS)
+
+.PHONY: kvm-make-install-base
+kvm-make-install-base: $(foreach os, $(KVM_OS), kvm-make-install-base-$(os))
+	$(MAKE) $(KVM_KEYS)
 
 .PHONY: kvm-install
-kvm-install: $(foreach os, $(KVM_OS), kvm-install-$(os))
+kvm-install: kvm-make-install-base
 	$(MAKE) $(KVM_KEYS)
 
 $(patsubst %, kvm-install-%, $(KVM_PLATFORM)): \
 kvm-install-%:
 	: $@
 	./testing/libvirt/kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
-	$(MAKE) kvm-build-$*
+	$(MAKE) kvm-make-install-base-$*
 	$(KVMSH) --shutdown $(KVM_FIRST_PREFIX)$*
 	$(MAKE) $(KVM_$($*)_TEST_DOMAINS)
 
