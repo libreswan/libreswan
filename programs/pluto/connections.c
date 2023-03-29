@@ -1399,11 +1399,11 @@ static void set_connection_selectors_from_config(struct connection *c, const str
 	 */
 	FOR_EACH_ELEMENT(end, c->end) {
 		const char *leftright = end->config->leftright;
-		ip_address host_addr = end->host.addr;
 		PASSERT(c->logger, end->child.selectors.proposed.list == NULL);
 		PASSERT(c->logger, end->child.selectors.proposed.len == 0);
 		if (end->child.config->selectors.len > 0) {
-			ldbg(c->logger, "%s selector from child.selectors", leftright);
+			ldbg(c->logger, "%s() %s selector from %d child.selectors",
+			     __func__, leftright, end->child.config->selectors.len);
 			end->child.selectors.proposed = end->child.config->selectors;
 			set_end_child_has_client(c, end->config->index, true);
 		} else if (end->host.config->pool_ranges.len > 0) {
@@ -1411,14 +1411,15 @@ static void set_connection_selectors_from_config(struct connection *c, const str
 			 * Make space for the selectors that will be
 			 * assigned from the addresspool.
 			 */
-			ldbg(c->logger, "%s selectors from address pool families", leftright);
+			ldbg(c->logger, "%s() %s selectors from unset address pool family",
+			     __func__, leftright);
 			FOR_EACH_ELEMENT(afi, ip_families) {
 				if (end->host.config->pool_ranges.ip[afi->ip_index].len > 0) {
 					append_end_selector(end, afi, unset_selector,
 							    c->logger, HERE);
 				}
 			}
-		} else if (address_is_specified(host_addr)) {
+		} else if (address_is_specified(end->host.addr)) {
 			/*
 			 * Default the end's child selector (client)
 			 * to a subnet containing only the end's host
@@ -1428,9 +1429,10 @@ static void set_connection_selectors_from_config(struct connection *c, const str
 			 * selectors then the combination becomes a
 			 * list.
 			 */
-			ldbg(c->logger, "%s selector from host address+protoport", leftright);
+			ldbg(c->logger, "%s() %s selector from host address+protoport",
+			     __func__, leftright);
 			ip_selector selector =
-				selector_from_address_protoport(host_addr,
+				selector_from_address_protoport(end->host.addr,
 								end->child.config->protoport);
 			append_end_selector(end, host_afi, selector,
 					    c->logger, HERE);
@@ -1440,7 +1442,8 @@ static void set_connection_selectors_from_config(struct connection *c, const str
 			 * opportunistic group but make space
 			 * regardless.
 			 */
-			ldbg(c->logger, "%s selector from unset host family", leftright);
+			ldbg(c->logger, "%s() %s selector from unset host family",
+			     __func__, leftright);
 			append_end_selector(end, host_afi, unset_selector,
 					    c->logger, HERE);
 		}
