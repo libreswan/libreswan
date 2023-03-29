@@ -1172,7 +1172,7 @@ kvm-make-install-%: $(KVM_POOLDIR_PREFIX)%
 		$(notdir $<) \
 		-- \
 		'ls > /dev/null' \; \
-		'time gmake install-all $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS)'
+		'time gmake install $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS)'
 
 kvm-html: | $(KVM_POOLDIR)/$(KVM_KEYS_DOMAIN)
 	: $@ $<
