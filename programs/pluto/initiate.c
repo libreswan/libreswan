@@ -851,13 +851,14 @@ static void connection_check_ddns1(struct connection *c, struct logger *logger)
 		 * address.
 		 */
 		struct child_end *child = &c->remote->child;
-		ip_selector remote_selector =
+		ip_selector remote =
 			selector_from_address_protoport(new_remote_addr, child->config->protoport);
 		selector_buf new;
 		dbg("  updated %s.selector to %s",
 		    c->remote->config->leftright,
-		    str_selector(&remote_selector, &new));
-		set_first_selector(c, remote, remote_selector);
+		    str_selector(&remote, &new));
+		append_end_selector(c->remote, selector_info(remote), remote,
+				    c->logger, HERE);
 	}
 
 	add_connection_spds(c, address_info(c->local->host.addr));

@@ -426,29 +426,33 @@ struct connection_end {
 	struct child_end child;
 };
 
-void set_end_selector_where(struct connection *c, enum left_right end,
-			    ip_selector s, bool first_time,
-			    const char *excuse, where_t where);
+void update_end_selector_where(struct connection *c, enum left_right end,
+			       ip_selector s, bool first_time,
+			       const char *excuse, where_t where);
+
+#define update_end_selector(C, END, SELECTOR, EXCUSE)			\
+	update_end_selector_where(C, END, SELECTOR,			\
+			       /*first-time*/false, EXCUSE, HERE)
+#define update_first_selector(C, LR, SELECTOR)				\
+	update_end_selector_where(C, (C)->LR->config->index, SELECTOR,	\
+			       /*first-time*/false, NULL, HERE)
+
 void scribble_end_selector(struct connection *c, enum left_right end,
 			   ip_selector selector, where_t where, unsigned nr);
 void append_end_selector(struct connection_end *end,
 			 const struct ip_info *afi, ip_selector s,
 			 struct logger *logger, where_t where);
 
+#define set_end_selector(END, SELECTOR, LOGGER)				\
+	{								\
+		PASSERT(LOGGER, (END)->child.selectors.proposed.list == NULL); \
+		PASSERT(LOGGER, (END)->child.selectors.proposed.len == 0); \
+		append_end_selector(END, selector_info(SELECTOR),	\
+				    SELECTOR, LOGGER, HERE);		\
+	}
+
 struct spd_end {
 	ip_selector client;
-#define update_end_selector(C, END, SELECTOR, EXCUSE)			\
-	set_end_selector_where(C, END, SELECTOR,			\
-			       /*first-time*/false, EXCUSE, HERE)
-#define set_end_selector(C, END, SELECTOR)				\
-	set_end_selector_where(C, END, SELECTOR,			\
-			       /*first-time*/true, NULL, HERE)
-#define update_first_selector(C, LR, SELECTOR)				\
-	set_end_selector_where(C, (C)->LR->config->index, SELECTOR,	\
-			       /*first-time*/false, NULL, HERE)
-#define set_first_selector(C, LR, SELECTOR)				\
-	set_end_selector_where(C, (C)->LR->config->index, SELECTOR,	\
-			       /*first-time*/true, NULL, HERE)
 
 	/*
 	 * An extract of the original configuration information for

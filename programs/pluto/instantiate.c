@@ -187,7 +187,7 @@ struct connection *group_instantiate(struct connection *group,
 	 */
 	ip_selector remote_selector =
 		selector_from_subnet_protocol_port(remote_subnet, protocol, remote_port);
-	set_first_selector(t, remote, remote_selector);
+	set_end_selector(t->remote, remote_selector, t->logger);
 
 	/*
 	 * Figure out the local selector; it was either specified
@@ -225,7 +225,7 @@ struct connection *group_instantiate(struct connection *group,
 								    local_port);
 	}
 
-	set_first_selector(t, local, local_selector);
+	set_end_selector(t->local, local_selector, t->logger);
 
 	t->policy &= ~POLICY_ROUTE;
 	t->policy |= POLICY_GROUPINSTANCE; /* mark as group instance for later */
@@ -413,11 +413,11 @@ static void update_subnet_selectors(struct connection *d,
 			     "%s.child has %d configured selectors",
 			     leftright, end->child.config->selectors.len);
 			end->child.selectors.proposed = end->child.config->selectors;
-		} else if (&end->child == &d->remote->child &&
-			   remote_subnet != NULL &&
+		} else if (remote_subnet != NULL &&
+			   &end->child == &d->remote->child &&
 			   d->remote->config->child.virt != NULL) {
 			PASSERT(d->logger, &end->host == &d->remote->host);
-			set_end_selector(d, end->config->index, *remote_subnet);
+			set_end_selector(end, *remote_subnet, d->logger);
 			if (selector_eq_address(*remote_subnet, d->remote->host.addr)) {
 				ldbg(d->logger,
 				     "forcing remote %s.spd.has_client=false",
@@ -449,7 +449,7 @@ static void update_subnet_selectors(struct connection *d,
 			ip_selector selector =
 				selector_from_address_protoport(end->host.addr,
 								end->child.config->protoport);
-			set_end_selector(d, end->config->index, selector);
+			set_end_selector(end, selector, d->logger);
 		}
 	}
 }
@@ -641,7 +641,8 @@ static struct connection *oppo_instantiate(struct connection *t,
 	/*
 	 * Fill in the local client - just inherit the parent's value.
 	 */
-	set_first_selector(d, local, t->local->child.selectors.proposed.list[0]);
+	ip_selector local_selector = t->local->child.selectors.proposed.list[0];
+	set_end_selector(d->local, local_selector, d->logger);
 
 	/*
 	 * Fill in peer's client side.
@@ -654,7 +655,7 @@ static struct connection *oppo_instantiate(struct connection *t,
 		selector_from_address_protocol_port(remote_address,
 						    selector_protocol(remote_template),
 						    selector_port(remote_template));
-	set_first_selector(d, remote, remote_selector);
+	set_end_selector(d->remote, remote_selector, d->logger);
 
 	PEXPECT(d->logger, oriented(d));
 	add_connection_spds(d, address_info(d->local->host.addr));

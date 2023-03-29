@@ -3450,9 +3450,9 @@ void scribble_end_selector(struct connection *c, enum left_right end,
 	     pri_where(where));
 }
 
-void set_end_selector_where(struct connection *c, enum left_right end,
-			    ip_selector new_selector, bool first_time,
-			    const char *excuse, where_t where)
+void update_end_selector_where(struct connection *c, enum left_right end,
+			       ip_selector new_selector, bool first_time,
+			       const char *excuse, where_t where)
 {
 	struct child_end *child = &c->end[end].child;
 	struct child_end_selectors *end_selectors = &c->end[end].child.selectors;
