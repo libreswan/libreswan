@@ -351,65 +351,105 @@ static struct connection *instantiate(struct connection *t,
 	return d;
 }
 
+/*
+ * XXX: unlike set_connection_selectors_from_config() this must set
+ * each selector to something valid?  For instance, of the end has
+ * addresspool, ask for the entire adress range.
+ */
+
 static void update_selectors(struct connection *d)
 {
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		const char *leftright = d->end[end].config->leftright;
-		struct host_end *host = &d->end[end].host;
-		struct child_end *child = &d->end[end].child;
-		if (child->config->selectors.len > 0) {
-			ldbg(d->logger, "%s.child has %d configured selectors",
-			     leftright, child->config->selectors.len > 0);
-			child->selectors.proposed = child->config->selectors;
+	FOR_EACH_ELEMENT(end, d->end) {
+		const char *leftright = end->config->leftright;
+		PASSERT(d->logger, end->child.selectors.proposed.list == NULL);
+		PASSERT(d->logger, end->child.selectors.proposed.len == 0);
+		if (end->child.config->selectors.len > 0) {
+			ldbg(d->logger,
+			     "%s() %s selectors from %d child.selectors",
+			     __func__, leftright, end->child.config->selectors.len);
+			end->child.selectors.proposed = end->child.config->selectors;
+		} else if (end->host.config->pool_ranges.len > 0) {
+			/*
+			 * Make space for the selectors that will be
+			 * assigned from the addresspool.
+			 */
+			ldbg(d->logger,
+			     "%s() %s selectors formed from address pool",
+			     __func__, leftright);
+			FOR_EACH_ELEMENT(afi, ip_families) {
+				if (end->host.config->pool_ranges.ip[afi->ip_index].len > 0) {
+					append_end_selector(end, afi, afi->selector.all,
+							    d->logger, HERE);
+				}
+			}
 		} else {
-			ldbg(d->logger, "%s.child selector formed from host", leftright);
+			ldbg(d->logger,
+			     "%s() %s.child selector formed from host address+protoport",
+			     __func__, leftright);
 			/*
 			 * Default the end's child selector (client) to a
 			 * subnet containing only the end's host address.
 			 */
 			ip_selector selector =
-				selector_from_address_protoport(host->addr,
-								child->config->protoport);
-			set_end_selector(d, end, selector);
+				selector_from_address_protoport(end->host.addr,
+								end->child.config->protoport);
+			append_end_selector(end, selector_info(selector), selector,
+					    d->logger, HERE);
 		}
 	}
 }
 
 /*
- * XXX: unlike rw_responder_id_instantiate(), this code has to
+ * XXX: unlike rw_responder_instantiate(), this code has to
  * handle the remote subnet
  */
 static void update_subnet_selectors(struct connection *d,
 				    const ip_selector *remote_subnet)
 {
-	FOR_EACH_THING(end, LEFT_END, RIGHT_END) {
-		const char *leftright = d->end[end].config->leftright;
-		struct host_end *host = &d->end[end].host;
-		struct child_end *child = &d->end[end].child;
-		if (child->config->selectors.len > 0) {
-			ldbg(d->logger, "%s.child has %d configured selectors",
-			     leftright, child->config->selectors.len > 0);
-			child->selectors.proposed = child->config->selectors;
-		} else if (child == &d->remote->child &&
+	FOR_EACH_ELEMENT(end, d->end) {
+		const char *leftright = end->config->leftright;
+		if (end->child.config->selectors.len > 0) {
+			ldbg(d->logger,
+			     "%s.child has %d configured selectors",
+			     leftright, end->child.config->selectors.len);
+			end->child.selectors.proposed = end->child.config->selectors;
+		} else if (&end->child == &d->remote->child &&
 			   remote_subnet != NULL &&
 			   d->remote->config->child.virt != NULL) {
-			PASSERT(d->logger, host == &d->remote->host);
-			set_end_selector(d, end, *remote_subnet);
+			PASSERT(d->logger, &end->host == &d->remote->host);
+			set_end_selector(d, end->config->index, *remote_subnet);
 			if (selector_eq_address(*remote_subnet, d->remote->host.addr)) {
-				ldbg(d->logger, "forcing remote %s.spd.has_client=false",
+				ldbg(d->logger,
+				     "forcing remote %s.spd.has_client=false",
 				     d->spd->remote->config->leftright);
 				set_child_has_client(d, remote, false);
 			}
+		} else if (end->host.config->pool_ranges.len > 0) {
+			/*
+			 * Make space for the selectors that will be
+			 * assigned from the addresspool.
+			 */
+			ldbg(d->logger,
+			     "%s() %s selectors formed from address pool",
+			     __func__, leftright);
+			FOR_EACH_ELEMENT(afi, ip_families) {
+				if (end->host.config->pool_ranges.ip[afi->ip_index].len > 0) {
+					append_end_selector(end, afi, afi->selector.all,
+							    d->logger, HERE);
+				}
+			}
 		} else {
-			ldbg(d->logger, "%s.child selector formed from host", leftright);
+			ldbg(d->logger,
+			     "%s() %s selector formed from host",
+			     __func__, leftright);
 			/*
 			 * Default the end's child selector (client) to a
 			 * subnet containing only the end's host address.
 			 */
 			ip_selector selector =
-				selector_from_address_protoport(host->addr,
-								child->config->protoport);
-			set_end_selector(d, end, selector);
+				selector_from_address_protoport(end->host.addr,
+								end->child.config->protoport);
+			set_end_selector(d, end->config->index, selector);
 		}
 	}
 }
