@@ -320,8 +320,6 @@ static void jam_bare_shunt(struct jambuf *buf, const struct bare_shunt *bs)
 	jam_selector_pair(buf, &bs->our_client, &bs->peer_client);
 	jam(buf, " => ");
 	jam_enum_short(buf, &shunt_policy_names, bs->shunt_policy);
-	jam(buf, " ");
-	jam_connection_priority(buf, BOTTOM_PRIORITY);
 	jam(buf, "    %s", bs->why);
 	if (bs->restore_serialno != UNSET_CO_SERIAL) {
 		jam(buf, " "PRI_CO, pri_co(bs->restore_serialno));
