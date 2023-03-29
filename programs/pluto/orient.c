@@ -208,9 +208,6 @@ bool orient(struct connection *c, struct logger *logger)
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		spd_route_db_rehash_remote_client(spd);
 	}
-
-	/* (re-)compute the priority */
-	set_connection_priority(c);
 	return true;
 }
 

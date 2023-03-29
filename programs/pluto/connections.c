@@ -1542,8 +1542,6 @@ void add_connection_spds(struct connection *c,
 			}
 		}
 	}
-
-	set_connection_priority(c); /* must be after .kind and .spd are set */
 }
 
 /*
@@ -2726,8 +2724,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 		return diag("internal error");
 	}
 
-	set_connection_priority(c); /* must be after kind is set */
-
 	/*
 	 * All done, enter it into the databases.  Since orient() may
 	 * switch ends, triggering an spd rehash, insert things into
@@ -2806,8 +2802,9 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 }
 
 /* priority formatting */
-size_t jam_connection_priority(struct jambuf *buf, connection_priority_t pp)
+size_t jam_connection_priority(struct jambuf *buf, const struct connection *c)
 {
+	connection_priority_t pp = connection_priority(c);
 	if (pp == BOTTOM_PRIORITY) {
 		return jam_string(buf, "0");
 	}
@@ -2816,18 +2813,32 @@ size_t jam_connection_priority(struct jambuf *buf, connection_priority_t pp)
 		   pp >> 17, (pp & ~(~(connection_priority_t)0 << 17)) >> 8);
 }
 
-const char *str_connection_priority(connection_priority_t pp, connection_priority_buf *buf)
+const char *str_connection_priority(const struct connection *c, connection_priority_buf *buf)
 {
 	struct jambuf jb = ARRAY_AS_JAMBUF(buf->buf);
-	jam_connection_priority(&jb, pp);
+	jam_connection_priority(&jb, c);
 	return buf->buf;
 }
 
-void set_connection_priority(struct connection *c)
+static connection_priority_t end_maskbits(const struct connection *c,
+					  struct connection_end *end)
 {
-	c->priority = (((connection_priority_t)c->spd->local->client.maskbits << 17) |
-		       ((connection_priority_t)c->spd->remote->client.maskbits << 8) |
-		       ((connection_priority_t)1));
+	if (c->spd != NULL) {
+		return c->spd->end[end->config->index].client.maskbits;
+	}
+	if (end->child.selectors.proposed.len > 0) {
+		return end->child.selectors.proposed.list[0].maskbits;
+	}
+	return 0;
+}
+
+connection_priority_t connection_priority(const struct connection *c)
+{
+	connection_priority_t pp = 0;
+	pp |= end_maskbits(c, c->local) << 17;
+	pp |= end_maskbits(c, c->remote) << 8;
+	pp |= 1;
+	return pp;
 }
 
 /*
@@ -3164,7 +3175,7 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 		 * above).
 		 */
 		connection_priority_t priority =
-			(8 * (c->priority + (c->kind == CK_INSTANCE)) +
+			(8 * (connection_priority(c) + (c->kind == CK_INSTANCE)) +
 			 (src - 1/*strip 1 added above*/) +
 			 (dst - 1/*strip 1 added above*/));
 
@@ -3248,8 +3259,12 @@ int connection_compare(const struct connection *ca,
 			0);
 
 	default:
-		return (ca->priority < cb->priority ? -1 :
-			ca->priority > cb->priority ? 1 : 0);
+	{
+		connection_priority_t cap = connection_priority(ca);
+		connection_priority_t cbp = connection_priority(cb);
+		return (cap < cbp ? -1 :
+			cap > cbp ? 1 : 0);
+	}
 	}
 }
 

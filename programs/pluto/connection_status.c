@@ -601,7 +601,7 @@ void show_connection_status(struct show *s, const struct connection *c)
 	connection_priority_buf prio;
 	show_comment(s, PRI_CONNECTION":   conn_prio: %s; interface: %s; metric: %u; mtu: %s; sa_prio:%s; sa_tfc:%s;",
 		     c->name, instance,
-		     str_connection_priority(c->priority, &prio),
+		     str_connection_priority(c, &prio),
 		     ifn,
 		     c->metric,
 		     mtustr, sapriostr, satfcstr);

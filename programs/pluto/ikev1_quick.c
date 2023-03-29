@@ -2191,7 +2191,7 @@ static struct connection *fc_try_oppo(const struct connection *c,
 			 * - given that, the shortest CA pathlength is preferred
 			 */
 			connection_priority_t prio =
-				PRIO_WEIGHT * (d->priority + routed(d->child.routing)) +
+				PRIO_WEIGHT * (connection_priority(d) + routed(d->child.routing)) +
 				WILD_WEIGHT * (MAX_WILDCARDS - wildcards) +
 				PATH_WEIGHT * (MAX_CA_PATH_LEN - pathlen);
 

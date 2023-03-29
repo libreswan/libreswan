@@ -339,14 +339,13 @@ struct config {
  */
 
 typedef enum { BOTTOM_PRIORITY, } connection_priority_t;
-
-void set_connection_priority(struct connection *c);
+connection_priority_t connection_priority(const struct connection *c);
 
 typedef struct {
-	char buf[3 + 1 + 3 + 1 + 10 + 1];	/* (10 is to silence GCC) */
+	char buf[3 + 1 + 3 + 1/*NUL*/ + 10 + 1/*sentinel*/];	/* (10 is to silence GCC) */
 } connection_priority_buf;
-size_t jam_connection_priority(struct jambuf *buf, connection_priority_t pp);
-const char *str_connection_priority(connection_priority_t pp, connection_priority_buf *buf);
+size_t jam_connection_priority(struct jambuf *buf, const struct connection *);
+const char *str_connection_priority(const struct connection *c, connection_priority_buf *buf);
 
 struct host_end {
 	const struct host_end_config *config;
@@ -586,7 +585,6 @@ struct connection {
 
 	unsigned long next_instance_serial;
 	unsigned long instance_serial;
-	connection_priority_t priority;
 	bool instance_initiation_ok;		/* this is an instance of a policy that mandates initiate */
 	enum connection_kind kind;
 	struct iface_endpoint *interface;	/* filled in iff oriented */
