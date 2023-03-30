@@ -302,7 +302,7 @@ kvm_testingdir=$(${quietmake} print-kvm-testingdir)
 modified=
 baseline=
 __baseline=${kvm_baseline:+--baseline ${kvm_baseline}}
-prefix=${kvm_prefixes[0]}
+prefix=$(eval echo ${kvm_prefixes[0]})
 
 i=0
 while test $# -gt 0 ; do
