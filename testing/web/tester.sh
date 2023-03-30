@@ -228,6 +228,7 @@ while true ; do
     fi
 
     targets="${targets} kvm-keys"
+    targets="${targets} kvm-html"
 
     p=
     for os in ${oss} ; do
@@ -235,7 +236,6 @@ while true ; do
 	p=-
     done
 
-    targets="${targets} kvm-html"
     targets="${targets} kvm-check"
 
     build_kvms=false # for next time round

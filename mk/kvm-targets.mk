@@ -1187,6 +1187,7 @@ kvm-html: | $(KVM_POOLDIR)/$(KVM_KEYS_DOMAIN)
 		'time gmake html $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS)' \; \
 		'rm -rf /source/OBJ.KVM.html' \; \
 		'cp -rv $${OBJDIR}/html /source/OBJ.KVM.html'
+	$(KVMSH) --shutdown $(KVM_KEYS_DOMAIN)
 
 $(patsubst %, kvm-install-%, $(KVM_PLATFORM)): \
 kvm-install-%:
