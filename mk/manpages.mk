@@ -44,10 +44,9 @@ local-install-manpages: local-manpages
 	@set -eu $(foreach manpage,$(MANPAGES), \
 		$(foreach refname,$(call refnames,$(builddir)/$(manpage).tmp), \
 		$(foreach destdir,$(DESTDIR)$(MANDIR$(suffix $(refname))), \
-		; src=$(builddir)/$(refname) \
-		; echo $$src '->' $(destdir) \
+		; echo '$(builddir)/$(refname)' '->' $(destdir) \
 		; mkdir -p $(destdir) \
-		; $(INSTALL) $(INSTMANFLAGS) $$src $(destdir))))
+		; $(INSTALL) $(INSTMANFLAGS) '$(builddir)/$(refname)' '$(destdir)')))
 
 list-local-manpages: $(TRANSFORMED_MANPAGES)
 	@set -eu $(foreach manpage,$(MANPAGES), \
@@ -72,13 +71,25 @@ $(builddir)/%.tmp: $(srcdir)/%.xml | $(builddir)
 # (transformed) input.
 #
 # Danger: XMLTO will barf run on 9p (it tries to update ownership and
-# fails).
+# fails).  The test KVMs point OBJDIR at /var/tmp to avoid this
+# problem.
 #
 # Use a dummy target since the generated man pages probably don't
 # match the target name.
+#
+# OpenBSD (same xmlto as everyone else) generates file names
+# containing spaces instead of underscores.  Hack around this.
 
 $(builddir)/%.man: $(builddir)/%.tmp
 	$(XMLTO) man $< -o $(builddir)
+	set -e ; for m in $(MANPAGES) ; do \
+		for r in $$($(top_srcdir)/packaging/utils/refnames.sh "$(builddir)/$${m}.tmp") ; do \
+			o=$$(echo "$${r}" | tr '_' ' ') ; \
+			if test "$${o}" != "$${r}" -a -r "$(builddir)/$${o}" ; then \
+				mv -v "$(builddir)/$${o}" "$(builddir)/$${r}" ; \
+			fi ; \
+		done ; \
+	done
 	touch $@
 
 $(top_builddir)/html/%.html: $(builddir)/%.tmp
