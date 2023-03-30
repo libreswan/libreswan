@@ -122,12 +122,16 @@ web-summarydir: $(WEB_SUMMARYDIR)/lsw-table.css
 web-summarydir: $(WEB_SUMMARYDIR)/summaries.json
 web-summarydir: $(WEB_SUMMARYDIR)/summary.css
 web-summarydir: $(WEB_SUMMARYDIR)/tsconfig.json
+web-summarydir: $(WEB_SUMMARYDIR)/favicon.png
 web-summarydir: | $(WEB_SUMMARYDIR)/status.json
 
 $(WEB_SUMMARYDIR)/index.html: $(WEB_SOURCEDIR)/summary.html | $(WEB_SUMMARYDIR)
-	cp $(WEB_SOURCEDIR)/summary.html $(WEB_SUMMARYDIR)/index.html
+	cp $< $@
 
-$(WEB_SUMMARYDIR)/%.css: $(WEB_SOURCEDIR)/%.css
+$(WEB_SUMMARYDIR)/%.css: $(WEB_SOURCEDIR)/%.css | $(WEB_SUMMARYDIR)
+	cp $< $@
+
+$(WEB_SUMMARYDIR)/favicon.png: $(WEB_SOURCEDIR)/favicon.png | $(WEB_SUMMARYDIR)
 	cp $< $@
 
 $(WEB_SUMMARYDIR):
@@ -149,14 +153,18 @@ web-resultsdir: $(WEB_RESULTSDIR)/lsw-summary-graph.css
 web-resultsdir: $(WEB_RESULTSDIR)/lsw-table.css
 web-resultsdir: $(WEB_RESULTSDIR)/results.css
 web-resultsdir: $(WEB_RESULTSDIR)/tsconfig.json
+web-resultsdir: $(WEB_RESULTSDIR)/favicon.png
 
 web-results-json: $(WEB_RESULTSDIR)/results.json
 web-results-json: $(WEB_RESULTSDIR)/summary.json
 
 $(WEB_RESULTSDIR)/index.html: $(WEB_SOURCEDIR)/results.html | $(WEB_RESULTSDIR)
-	cp $(WEB_SOURCEDIR)/results.html $(WEB_RESULTSDIR)/index.html
+	cp $< $@
 
-$(WEB_RESULTSDIR)/%.css: $(WEB_SOURCEDIR)/%.css
+$(WEB_RESULTSDIR)/%.css: $(WEB_SOURCEDIR)/%.css | $(WEB_RESULTSDIR)
+	cp $< $@
+
+$(WEB_RESULTSDIR)/favicon.png: $(WEB_SOURCEDIR)/favicon.png | $(WEB_RESULTSDIR)
 	cp $< $@
 
 $(WEB_RESULTSDIR): | $(WEB_SUMMARYDIR)
