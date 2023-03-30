@@ -71,9 +71,6 @@ run() (
 
     runner="${utilsdir}/kvmrunner.py --publish-hash ${commit} --publish-results ${resultsdir} --testing-directory ${repodir}/testing --publish-status ${summarydir}/status.json"
 
-    # Use trick to both capture the status of make and tee output to a
-    # log file.
-
     if make -C ${repodir} $1 \
 	    WEB_REPODIR= \
 	    WEB_RESULTSDIR= \
@@ -171,6 +168,9 @@ while true ; do
 
     # create the resultsdir and point the summary at it.
 
+    rm -f ${summarydir}/current
+    ln -s $(basename ${resultsdir}) ${summarydir}/current
+
     start_time=$(${bindir}/now.sh)
     ${status} "creating results directory"
     make -C ${makedir} web-resultsdir \
@@ -208,26 +208,37 @@ while true ; do
 
     targets=""
     finished=""
+    oss="-fedora -freebsd -netbsd -openbsd"
 
     if ${build_kvms} ; then
 	targets="${targets} kvm-purge"
-	setup="upgrade transmogrify install"
+	p=
+	for os in $oss ; do
+	    targets="${targets} ${p}kvm-upgrade${os}"
+	    targets="${targets} ${p}kvm-transmogrify${os}"
+	    p=-
+	done
     else
-	targets="${targets} kvm-shutdown"
-	setup="transmogrify install"
+	p=
+	for os in $oss ; do
+	    targets="${targets} ${p}kvm-shutdown${os}"
+	    targets="${targets} ${p}kvm-transmogrify${os}"
+	    p=-
+	done
     fi
-    build_kvms=false # for next time round
+
+    targets="${targets} kvm-keys"
 
     p=
-    for os in fedora freebsd netbsd openbsd ; do
-	for s in ${setup} ; do
-	    targets="${targets} ${p}kvm-${s}-${os}"
-	done
+    for os in ${oss} ; do
+    	targets="${targets} ${p}kvm-install-all${os}"
 	p=-
     done
 
-    targets="${targets} kvm-keys"
+    targets="${targets} kvm-html"
     targets="${targets} kvm-check"
+
+    build_kvms=false # for next time round
 
     # list of raw results; will be converted to an array
     cp /dev/null ${resultsdir}/build.json.in
@@ -254,6 +265,16 @@ while true ; do
 	# run the target on hand
 	if run ${target} ; then
 	    result=ok
+	    case ${target} in
+		kvm-html )
+		    cp -rv ${repodir}/OBJ.KVM.html/*.html ${resultsdir}/
+		    ;;
+		kvm-check )
+		    # should only update when latest
+		    rm -f ${summarydir}/latest
+		    ln -s $(basename ${resultsdir}) ${summarydir}/latest
+		    ;;
+	    esac
 	elif ${ignore} ; then
 	    # ex -kvm-install-openbsd = kvm-install-openbsd?
 	    result=ignored

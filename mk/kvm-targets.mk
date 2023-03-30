@@ -1154,9 +1154,12 @@ ifneq ($(KVM_INSTALL_RPM),true)
 KVM_INSTALL_PLATFORM += fedora
 endif
 
+.PHONY: kvm-build
+kvm-build: $(foreach os, $(KVM_OS), kvm-make-install-base-$(os))
+
 $(patsubst %, kvm-make-install-base-%, $(KVM_INSTALL_PLATFORM)): \
 kvm-make-install-base-%: $(KVM_POOLDIR_PREFIX)%
-	: $@
+	: $@ $<
 	$(KVMSH) $(KVMSH_FLAGS) \
 		--chdir /source \
 		$(notdir $<) \
@@ -1164,9 +1167,9 @@ kvm-make-install-base-%: $(KVM_POOLDIR_PREFIX)%
 		'ls > /dev/null' \; \
 		'time gmake install-base $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS)'
 
-$(patsubst %, kvm-make-install-%, $(KVM_INSTALL_PLATFORM)): \
-kvm-make-install-%: $(KVM_POOLDIR_PREFIX)%
-	: $@
+$(patsubst %, kvm-make-install-all-%, $(KVM_INSTALL_PLATFORM)): \
+kvm-make-install-all-%: $(KVM_POOLDIR_PREFIX)%
+	: $@ $<
 	$(KVMSH) $(KVMSH_FLAGS) \
 		--chdir /source \
 		$(notdir $<) \
@@ -1176,24 +1179,17 @@ kvm-make-install-%: $(KVM_POOLDIR_PREFIX)%
 
 kvm-html: | $(KVM_POOLDIR)/$(KVM_KEYS_DOMAIN)
 	: $@ $<
-	rm -rf OBJ.KVM.html
 	$(KVMSH) $(KVMSH_FLAGS) \
 		--chdir /source \
 		$(KVM_KEYS_DOMAIN) \
 		-- \
-		time gmake html $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS) \; \
-		cp -rv \$${OBJDIR}/html /source/OBJ.KVM.html
-
-.PHONY: kvm-make-install
-kvm-make-install: $(foreach os, $(KVM_OS), kvm-make-install-$(os))
-	$(MAKE) $(KVM_KEYS)
-
-.PHONY: kvm-make-install-base
-kvm-make-install-base: $(foreach os, $(KVM_OS), kvm-make-install-base-$(os))
-	$(MAKE) $(KVM_KEYS)
+		'ls > /dev/null' \; \
+		'time gmake html $(KVM_MAKEFLAGS) $(KVM_$($*)_MAKEFLAGS)' \; \
+		'rm -rf /source/OBJ.KVM.html' \; \
+		'cp -rv $${OBJDIR}/html /source/OBJ.KVM.html'
 
 .PHONY: kvm-install
-kvm-install: kvm-make-install-base
+kvm-install: $(foreach os, $(KVM_OS), kvm-install-$(os))
 	$(MAKE) $(KVM_KEYS)
 
 $(patsubst %, kvm-install-%, $(KVM_PLATFORM)): \
@@ -1204,6 +1200,13 @@ kvm-install-%:
 	$(KVMSH) --shutdown $(KVM_FIRST_PREFIX)$*
 	$(MAKE) $(KVM_$($*)_TEST_DOMAINS)
 
+$(patsubst %, kvm-install-all-%, $(KVM_PLATFORM)): \
+kvm-install-all-%:
+	: $@
+	./testing/libvirt/kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
+	$(MAKE) kvm-make-install-all-$*
+	$(KVMSH) --shutdown $(KVM_FIRST_PREFIX)$*
+	$(MAKE) $(KVM_$($*)_TEST_DOMAINS)
 
 #
 # Create the test domains
