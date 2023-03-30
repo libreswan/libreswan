@@ -34,9 +34,10 @@ all:
 # Map common, and historic targets, onto current names.  For historic
 # reasons, "programs" also builds everything.
 
-.PHONY: programs
+.PHONY: programs man install-all
 programs: all
 man: manpages
+install-all: install
 
 #
 # Generate a recursive target.
