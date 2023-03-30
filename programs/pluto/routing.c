@@ -245,56 +245,31 @@ static void ondemand_unrouted_to_unrouted_negotiation(struct connection *c, cons
 			  e->inception, e->acquire->sec_label, e->acquire->background, e->acquire->logger);
 }
 
-static void ondemand_routed_prospective_to_routed_negotiation(struct connection *c, const struct annex *e)
+static void permanent_routed_ondemand_to_routed_negotiation(struct connection *c, const struct annex *e)
 {
 	struct logger *logger = c->logger;
-	struct spd_route *spd = c->spd; /*XXX:only-one!?!*/
-	bool oe = ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
-
-	/* used below in pexpects */
-	struct connection *t = c->clonedfrom; /* could be NULL */
-
+	/* permanent is never oe?!? */
+	PEXPECT(logger, (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
 	/*
-	 * For instance?
-	 *
-	 * XXX: could be whack or acquire.
-	 *
-	 * XXX: is this just re-installing the same policy?
-	 * No?  The prospective policy might be 7.0.0.0/8 but
-	 * this is installing 7.7.7.7/32 from a trigger of
-	 * 7.7.7.7/32/ICMP/8.
+	 * This is permanent.  The negotiation is going to be for the
+	 * full SPDs and not just the the acquire?  Hence the SPDs are
+	 * converted to KIND_NEGOTIATION.
 	 */
-	enum routing old_routing = c->child.routing;	/* routing, old */
-	enum routing new_routing = RT_ROUTED_NEGOTIATION;
-	enum kernel_policy_op op = KERNEL_POLICY_OP_REPLACE;
-	/* XXX: these descriptions make no sense */
-	const char *reason = (oe ? "broad prospective opportunistic %pass or %hold" :
-			      "broad prospective %pass or %hold");
-	PEXPECT(logger, t == NULL);
-	/*
-	 * We need a broad %hold, not the narrow one.
-	 *
-	 * First we ensure that there is a broad %hold.  There may
-	 * already be one (race condition): no need to create one.
-	 * There may already be a %trap: replace it.  There may not be
-	 * any broad eroute: add %hold.  Once the broad %hold is in
-	 * place, delete the narrow one.
-	 *
-	 * XXX: what race condition?
-	 *
-	 * XXX: why is OE special (other than that's the way the code
-	 * worked in the past)?
-	 */
-	if (oe || old_routing != new_routing) {
-		assign_holdpass(c, spd, op, logger, reason);
-		dbg("kernel: %s() done", __func__);
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		if (!install_bare_spd_kernel_policy(spd, KERNEL_POLICY_OP_REPLACE,
+						    DIRECTION_OUTBOUND,
+						    EXPECT_NO_INBOUND,
+						    SHUNT_KIND_NEGOTIATION,
+						    logger, HERE, "broad prospective %pass or %hold")) {
+			llog(RC_LOG, logger,
+			     "converting ondemand kernel policy to negotiating");
+		}
 	}
 
-	set_child_routing(c, new_routing, c->child.newest_routing_sa);
-	dbg("kernel: %s() done - returning success", __func__);
-
-	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY,
-			  e->inception, e->acquire->sec_label, e->acquire->background, e->acquire->logger);
+	/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
+	set_child_routing(c, RT_ROUTED_NEGOTIATION, SOS_NOBODY);
+	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, e->inception,
+			  e->acquire->sec_label, e->acquire->background, e->acquire->logger);
 }
 
 void connection_ondemand(struct connection *c, threadtime_t *inception, const struct kernel_acquire *b)
@@ -852,7 +827,10 @@ void dispatch(enum connection_event event, struct connection *c,
 			return;
 
 		case X(ONDEMAND, ROUTED_ONDEMAND, PERMANENT):
-			ondemand_routed_prospective_to_routed_negotiation(c, e);
+			permanent_routed_ondemand_to_routed_negotiation(c, e);
+			return;
+		case X(ONDEMAND, ROUTED_NEGOTIATION, PERMANENT):
+			llog(RC_LOG, c->logger, "connection already negotiating");
 			return;
 
 		case X(ROUTE, ROUTED_TUNNEL, PERMANENT):
