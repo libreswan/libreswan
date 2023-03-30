@@ -1188,12 +1188,16 @@ kvm-html: | $(KVM_POOLDIR)/$(KVM_KEYS_DOMAIN)
 		'rm -rf /source/OBJ.KVM.html' \; \
 		'cp -rv $${OBJDIR}/html /source/OBJ.KVM.html'
 
-.PHONY: kvm-install
-kvm-install: $(foreach os, $(KVM_OS), kvm-install-$(os))
-	$(MAKE) $(KVM_KEYS)
-
 $(patsubst %, kvm-install-%, $(KVM_PLATFORM)): \
 kvm-install-%:
+	: $@
+	./testing/libvirt/kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
+	$(MAKE) kvm-make-install-base-$*
+	$(KVMSH) --shutdown $(KVM_FIRST_PREFIX)$*
+	$(MAKE) $(KVM_$($*)_TEST_DOMAINS)
+
+$(patsubst %, kvm-install-base-%, $(KVM_PLATFORM)): \
+kvm-install-base-%:
 	: $@
 	./testing/libvirt/kvm-uninstall-domain.sh $(KVM_$($*)_TEST_DOMAINS)
 	$(MAKE) kvm-make-install-base-$*
@@ -1207,6 +1211,18 @@ kvm-install-all-%:
 	$(MAKE) kvm-make-install-all-$*
 	$(KVMSH) --shutdown $(KVM_FIRST_PREFIX)$*
 	$(MAKE) $(KVM_$($*)_TEST_DOMAINS)
+
+.PHONY: kvm-install
+kvm-install: $(foreach os, $(KVM_OS), kvm-install-$(os))
+	$(MAKE) $(KVM_KEYS)
+
+.PHONY: kvm-install-all
+kvm-install-all: $(foreach os, $(KVM_OS), kvm-install-all-$(os))
+	$(MAKE) $(KVM_KEYS)
+
+.PHONY: kvm-install-base
+kvm-install-base: $(foreach os, $(KVM_OS), kvm-install-base-$(os))
+	$(MAKE) $(KVM_KEYS)
 
 #
 # Create the test domains
