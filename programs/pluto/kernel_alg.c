@@ -199,7 +199,7 @@ bool kernel_alg_encrypt_key_size(const struct encrypt_desc *encrypt,
 	 * This is all this function should be doing, which isn't
 	 * much.
 	 */
-	*key_size = keylen / BITS_PER_BYTE;
+	*key_size = keylen / BITS_IN_BYTE;
 	dbg("encrypt %s keylen=%d transid=%d, key_size=%zu, encryptalg=%d",
 	    encrypt->common.fqn, keylen, transid, *key_size, sadb_ealg);
 	return true;

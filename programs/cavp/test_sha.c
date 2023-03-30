@@ -94,11 +94,11 @@ static void msg_run_test(struct logger *logger_unused UNUSED)
 	/* byte aligned */
 	passert(len == (len & -4));
 	/* when len==0, msg may contain one byte :-/ */
-	passert((len == 0 && msg.len <= 1) || len == msg.len * BITS_PER_BYTE);
+	passert((len == 0 && msg.len <= 1) || len == msg.len * BITS_IN_BYTE);
 	print_chunk("Msg", NULL, msg, 0);
 	struct hash_context *hash = hash_alg->hash_ops->init(hash_alg, "sha");
 	/* See above, use LEN, not MSG.LEN */
-	hash_alg->hash_ops->digest_bytes(hash, "msg", msg.ptr, len / BITS_PER_BYTE);
+	hash_alg->hash_ops->digest_bytes(hash, "msg", msg.ptr, len / BITS_IN_BYTE);
 	chunk_t bytes = alloc_chunk(l, "bytes");
 	hash_alg->hash_ops->final_bytes(&hash, bytes.ptr, bytes.len);
 	print_chunk("MD", NULL, bytes, 0);

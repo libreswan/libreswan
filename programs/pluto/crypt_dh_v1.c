@@ -49,7 +49,7 @@ static void calc_skeyids_iv(const struct state *st,
 			    chunk_t icookie, chunk_t rcookie,
 			    chunk_t gi, chunk_t gr,
 			    /*const*/ PK11SymKey *shared,	/* NSS doesn't do const */
-			    const size_t keysize,	/* = st->st_oakley.enckeylen/BITS_PER_BYTE; */
+			    const size_t keysize,	/* = st->st_oakley.enckeylen/BITS_IN_BYTE; */
 			    PK11SymKey **skeyid_out,	/* output */
 			    PK11SymKey **skeyid_d_out,	/* output */
 			    PK11SymKey **skeyid_a_out,	/* output */
@@ -138,7 +138,7 @@ void calc_v1_skeyid_and_iv(struct state *st)
 			chunk2(st->st_ike_spis.responder.bytes, COOKIE_SIZE),
 			st->st_gi, st->st_gr,
 			st->st_dh_shared_secret,
-			st->st_oakley.enckeylen / BITS_PER_BYTE,
+			st->st_oakley.enckeylen / BITS_IN_BYTE,
 			&st->st_skeyid_nss,	/* output */
 			&st->st_skeyid_d_nss,	/* output */
 			&st->st_skeyid_a_nss,	/* output */

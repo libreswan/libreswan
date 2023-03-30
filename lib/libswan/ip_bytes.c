@@ -68,8 +68,8 @@ struct ip_bytes ip_bytes_blit(const struct ip_info *afi,
 	 * contains the first HOST_ID bit at big (aka PPC) endian
 	 * position XBIT.
 	 */
-	size_t xbyte = prefix_len / BITS_PER_BYTE;
-	unsigned xbit = prefix_len % BITS_PER_BYTE;
+	size_t xbyte = prefix_len / BITS_IN_BYTE;
+	unsigned xbit = prefix_len % BITS_IN_BYTE;
 
 	/* leading bytes only contain the ROUTING_PREFIX */
 	for (unsigned b = 0; b < xbyte; b++) {

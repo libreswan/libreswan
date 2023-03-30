@@ -78,13 +78,13 @@ static bool ike_alg_nss_gcm(const struct encrypt_desc *alg,
 		if (rv != SECSuccess) {
 			llog_nss_error(RC_LOG, logger,
 				       "AEAD encryption using %s_%u and PK11_Encrypt() failed",
-				       alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_PER_BYTE);
+				       alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_IN_BYTE);
 			ok = false;
 		} else if (out_len != text_and_tag_size) {
 			/* should this be a pexpect fail? */
 			llog_nss_error(RC_LOG_SERIOUS, logger,
 				       "AEAD encryption using %s_%u and PK11_Encrypt() failed (output length of %u not the expected %zd)",
-				       alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_PER_BYTE,
+				       alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_IN_BYTE,
 				       out_len, text_and_tag_size);
 			ok = false;
 		}
@@ -95,13 +95,13 @@ static bool ike_alg_nss_gcm(const struct encrypt_desc *alg,
 		if (rv != SECSuccess) {
 			llog_nss_error(RC_LOG, logger,
 				       "AEAD decryption using %s_%u and PK11_Decrypt() failed",
-				       alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_PER_BYTE);
+				       alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_IN_BYTE);
 			ok = false;
 		} else if (out_len != text_size) {
 			/* should this be a pexpect fail? */
 			llog_nss_error(RC_LOG_SERIOUS, logger,
 				       "AEAD decryption using %s_%u and PK11_Decrypt() failed (output length of %u not the expected %zd)",
-				       alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_PER_BYTE,
+				       alg->common.fqn, PK11_GetKeyLength(sym_key) * BITS_IN_BYTE,
 				       out_len, text_size);
 			ok = false;
 		}

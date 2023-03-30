@@ -204,7 +204,7 @@ void linux_audit_conn(const struct state *st, enum linux_audit_kind op)
 			 */
 			jam(&buf, "%s_%zu",
 			    st->st_oakley.ta_integ->integ_ike_audit_name,
-			    st->st_oakley.ta_integ->integ_output_size * BITS_PER_BYTE);
+			    st->st_oakley.ta_integ->integ_output_size * BITS_IN_BYTE);
 		} else {
 			/*
 			 * XXX: dead code path?  Integ is never NULL?

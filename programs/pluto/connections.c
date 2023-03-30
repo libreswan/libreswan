@@ -1276,11 +1276,11 @@ diag_t add_end_cert_and_preload_private_key(CERTCertificate *cert,
 		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
 		passert(pk != NULL);
 		if (pk->keyType == rsaKey &&
-		    ((pk->u.rsa.modulus.len * BITS_PER_BYTE) < FIPS_MIN_RSA_KEY_SIZE)) {
+		    ((pk->u.rsa.modulus.len * BITS_IN_BYTE) < FIPS_MIN_RSA_KEY_SIZE)) {
 			SECKEY_DestroyPublicKey(pk);
 			return diag("FIPS: rejecting %s certificate '%s' with key size %d which is under %d",
 				    leftright, nickname,
-				    pk->u.rsa.modulus.len * BITS_PER_BYTE,
+				    pk->u.rsa.modulus.len * BITS_IN_BYTE,
 				    FIPS_MIN_RSA_KEY_SIZE);
 		}
 		/* TODO FORCE MINIMUM SIZE ECDSA KEY */

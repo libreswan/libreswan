@@ -1358,7 +1358,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 			    req.p.replay_window);
 		} else {
 			uint32_t bmp_size = BYTES_FOR_BITS(sa->replay_window +
-				pad_up(sa->replay_window, sizeof(uint32_t) * BITS_PER_BYTE) );
+				pad_up(sa->replay_window, sizeof(uint32_t) * BITS_IN_BYTE) );
 			/* this is where we could fill in sequence numbers for this SA */
 			struct xfrm_replay_state_esn xre = {
 				/* replay_window must be multiple of 8 */
@@ -1400,8 +1400,8 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 		 */
 		size_t alg_key_offset = offsetof(struct xfrm_algo_auth, alg_key);
 		struct xfrm_algo_auth algo = {
-			.alg_key_len = sa->integ->integ_keymat_size * BITS_PER_BYTE,
-			.alg_trunc_len = sa->integ->integ_output_size * BITS_PER_BYTE,
+			.alg_key_len = sa->integ->integ_keymat_size * BITS_IN_BYTE,
+			.alg_trunc_len = sa->integ->integ_output_size * BITS_IN_BYTE,
 		};
 		fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
 
@@ -1471,8 +1471,8 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 			 */
 			size_t alg_key_offset = offsetof(struct xfrm_algo_aead, alg_key);
 			struct xfrm_algo_aead algo = {
-				.alg_key_len = sa->encrypt_key.len * BITS_PER_BYTE,
-				.alg_icv_len = sa->encrypt->aead_tag_size * BITS_PER_BYTE,
+				.alg_key_len = sa->encrypt_key.len * BITS_IN_BYTE,
+				.alg_icv_len = sa->encrypt->aead_tag_size * BITS_IN_BYTE,
 			};
 			fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
 
@@ -1500,7 +1500,7 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 			 */
 			size_t alg_key_offset = offsetof(struct xfrm_algo, alg_key);
 			struct xfrm_algo algo = {
-				.alg_key_len = sa->encrypt_key.len * BITS_PER_BYTE,
+				.alg_key_len = sa->encrypt_key.len * BITS_IN_BYTE,
 			};
 			fill_and_terminate(algo.alg_name, name, sizeof(algo.alg_name));
 

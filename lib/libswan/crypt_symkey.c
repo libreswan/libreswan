@@ -259,7 +259,7 @@ static PK11SymKey *symkey_from_symkey(const char *result_name,
 				      where_t where, struct logger *logger)
 {
 	/* spell out all the parameters */
-	CK_EXTRACT_PARAMS bs = key_offset * BITS_PER_BYTE;
+	CK_EXTRACT_PARAMS bs = key_offset * BITS_IN_BYTE;
 	SECItem param = {
 		.data = (unsigned char*)&bs,
 		.len = sizeof(bs),

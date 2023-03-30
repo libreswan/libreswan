@@ -394,7 +394,7 @@ static void get_bsi_random(size_t nbytes, unsigned char *buf, struct logger *log
 
 	ndone = 0;
 	dbg("need %d bits random for extra seeding of the NSS PRNG",
-	    (int) nbytes * BITS_PER_BYTE);
+	    (int) nbytes * BITS_IN_BYTE);
 
 	while (ndone < nbytes) {
 		got = read(dev, buf + ndone, nbytes - ndone);

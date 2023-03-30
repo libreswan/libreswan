@@ -397,7 +397,7 @@ static struct sadb_key *put_sadb_key(struct outbuf *msg,
 {
 	struct sadb_key *key =
 		put_sadb_ext(msg, sadb_key, key_alg,
-			     .sadb_key_bits = keyval.len * BITS_PER_BYTE);
+			     .sadb_key_bits = keyval.len * BITS_IN_BYTE);
 	if (hunk_put_hunk(msg, keyval) == NULL) {
 		llog_passert(msg->logger, HERE, "bad key(E)");
 	}

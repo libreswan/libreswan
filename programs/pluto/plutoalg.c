@@ -67,7 +67,7 @@ void show_kernel_alg_status(struct show *s)
 			show_comment(s,
 				"algorithm AH/ESP auth: name=%s, key-length=%zu",
 				alg->common.fqn,
-				alg->integ_keymat_size * BITS_PER_BYTE);
+				alg->integ_keymat_size * BITS_IN_BYTE);
 	}
 }
 

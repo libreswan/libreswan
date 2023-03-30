@@ -79,12 +79,12 @@ const pb_stream empty_pbs;
 static field_desc isa_fields[] = {
 	{ ft_raw, IKE_SA_SPI_SIZE, "initiator SPI", NULL },
 	{ ft_raw, IKE_SA_SPI_SIZE, "responder SPI", NULL },
-	{ ft_mnpc, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
-	{ ft_loose_enum, 8 / BITS_PER_BYTE, "ISAKMP version", &version_names },
-	{ ft_enum, 8 / BITS_PER_BYTE, "exchange type", &isakmp_xchg_type_names },
-	{ ft_lset, 8 / BITS_PER_BYTE, "flags", &isakmp_flag_names },
-	{ ft_nat, 32 / BITS_PER_BYTE, "Message ID", NULL },
-	{ ft_len, 32 / BITS_PER_BYTE, "length", NULL },
+	{ ft_mnpc, 8 / BITS_IN_BYTE, "next payload type", &payload_names_ikev1orv2 },
+	{ ft_loose_enum, 8 / BITS_IN_BYTE, "ISAKMP version", &version_names },
+	{ ft_enum, 8 / BITS_IN_BYTE, "exchange type", &isakmp_xchg_type_names },
+	{ ft_lset, 8 / BITS_IN_BYTE, "flags", &isakmp_flag_names },
+	{ ft_nat, 32 / BITS_IN_BYTE, "Message ID", NULL },
+	{ ft_len, 32 / BITS_IN_BYTE, "length", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -98,12 +98,12 @@ struct_desc isakmp_hdr_desc = {
 static field_desc raw_isa_fields[] = {
 	{ ft_raw, IKE_SA_SPI_SIZE, "initiator SPI", NULL },
 	{ ft_raw, IKE_SA_SPI_SIZE, "responder SPI", NULL },
-	{ ft_nat, 8 / BITS_PER_BYTE, "next payload type", NULL, },
-	{ ft_nat, 8 / BITS_PER_BYTE, "ISAKMP version", NULL, },
-	{ ft_nat, 8 / BITS_PER_BYTE, "exchange type", NULL, },
-	{ ft_nat, 8 / BITS_PER_BYTE, "flags", NULL, },
-	{ ft_nat, 32 / BITS_PER_BYTE, "Message ID", NULL },
-	{ ft_nat, 32 / BITS_PER_BYTE, "length", NULL },
+	{ ft_nat, 8 / BITS_IN_BYTE, "next payload type", NULL, },
+	{ ft_nat, 8 / BITS_IN_BYTE, "ISAKMP version", NULL, },
+	{ ft_nat, 8 / BITS_IN_BYTE, "exchange type", NULL, },
+	{ ft_nat, 8 / BITS_IN_BYTE, "flags", NULL, },
+	{ ft_nat, 32 / BITS_IN_BYTE, "Message ID", NULL },
+	{ ft_nat, 32 / BITS_IN_BYTE, "length", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -126,9 +126,9 @@ struct_desc raw_isakmp_hdr_desc = {
  */
 
 static field_desc isag_fields[] = {
-	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
-	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
+	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &payload_names_ikev1orv2 },
+	{ ft_zig, 8 / BITS_IN_BYTE, "reserved", NULL },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -149,8 +149,8 @@ static field_desc isag_fields[] = {
 
 /* Oakley Attributes */
 static field_desc isaat_fields_oakley[] = {
-	{ ft_af_enum, 16 / BITS_PER_BYTE, "af+type", &oakley_attr_names },
-	{ ft_lv, 16 / BITS_PER_BYTE, "length/value", NULL },
+	{ ft_af_enum, 16 / BITS_IN_BYTE, "af+type", &oakley_attr_names },
+	{ ft_lv, 16 / BITS_IN_BYTE, "length/value", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -162,8 +162,8 @@ struct_desc isakmp_oakley_attribute_desc = {
 
 /* IPsec DOI Attributes */
 static field_desc isaat_fields_ipsec[] = {
-	{ ft_af_enum, 16 / BITS_PER_BYTE, "af+type", &ipsec_attr_names },
-	{ ft_lv, 16 / BITS_PER_BYTE, "length/value", NULL },
+	{ ft_af_enum, 16 / BITS_IN_BYTE, "af+type", &ipsec_attr_names },
+	{ ft_lv, 16 / BITS_IN_BYTE, "length/value", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -175,8 +175,8 @@ struct_desc isakmp_ipsec_attribute_desc = {
 
 /* XAUTH Attributes */
 static field_desc isaat_fields_xauth[] = {
-	{ ft_af_loose_enum, 16 / BITS_PER_BYTE, "ModeCfg attr type", &modecfg_attr_names },
-	{ ft_lv, 16 / BITS_PER_BYTE, "length/value", NULL },
+	{ ft_af_loose_enum, 16 / BITS_IN_BYTE, "ModeCfg attr type", &modecfg_attr_names },
+	{ ft_lv, 16 / BITS_IN_BYTE, "length/value", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -211,10 +211,10 @@ struct_desc isakmp_xauth_attribute_desc = {
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc isasa_fields[] = {
-	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
-	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 32 / BITS_PER_BYTE, "DOI", &doi_names },
+	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &payload_names_ikev1orv2 },
+	{ ft_zig, 8 / BITS_IN_BYTE, "reserved", NULL },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_enum, 32 / BITS_IN_BYTE, "DOI", &doi_names },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -227,7 +227,7 @@ struct_desc isakmp_sa_desc = {
 };
 
 static field_desc ipsec_sit_field[] = {
-	{ ft_lset, 32 / BITS_PER_BYTE, "IPsec DOI SIT", &sit_bit_names },
+	{ ft_lset, 32 / BITS_IN_BYTE, "IPsec DOI SIT", &sit_bit_names },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -264,13 +264,13 @@ struct_desc ipsec_sit_desc = {
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc isap_fields[] = {
-	{ ft_lss, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
-	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_nat, 8 / BITS_PER_BYTE, "proposal number", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "protocol ID", &ikev1_protocol_names },
-	{ ft_nat, 8 / BITS_PER_BYTE, "SPI size", NULL },
-	{ ft_nat, 8 / BITS_PER_BYTE, "number of transforms", NULL },
+	{ ft_lss, 8 / BITS_IN_BYTE, "next payload type", &ikev1_payload_names },
+	{ ft_zig, 8 / BITS_IN_BYTE, "reserved", NULL },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_nat, 8 / BITS_IN_BYTE, "proposal number", NULL },
+	{ ft_enum, 8 / BITS_IN_BYTE, "protocol ID", &ikev1_protocol_names },
+	{ ft_nat, 8 / BITS_IN_BYTE, "SPI size", NULL },
+	{ ft_nat, 8 / BITS_IN_BYTE, "number of transforms", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -312,12 +312,12 @@ struct_desc isakmp_proposal_desc = {
 
 /* PROTO_ISAKMP */
 static field_desc isat_fields_isakmp[] = {
-	{ ft_lss, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
-	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_nat, 8 / BITS_PER_BYTE, "ISAKMP transform number", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "ISAKMP transform ID", &isakmp_transformid_names },
-	{ ft_zig, 16 / BITS_PER_BYTE, "reserved", NULL },
+	{ ft_lss, 8 / BITS_IN_BYTE, "next payload type", &ikev1_payload_names },
+	{ ft_zig, 8 / BITS_IN_BYTE, "reserved", NULL },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_nat, 8 / BITS_IN_BYTE, "ISAKMP transform number", NULL },
+	{ ft_enum, 8 / BITS_IN_BYTE, "ISAKMP transform ID", &isakmp_transformid_names },
+	{ ft_zig, 16 / BITS_IN_BYTE, "reserved", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -329,12 +329,12 @@ struct_desc isakmp_isakmp_transform_desc = {
 
 /* PROTO_IPSEC_AH */
 static field_desc isat_fields_ah[] = {
-	{ ft_lss, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
-	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_nat, 8 / BITS_PER_BYTE, "AH transform number", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "AH transform ID", &ah_transformid_names },
-	{ ft_zig, 16 / BITS_PER_BYTE, "reserved", NULL },
+	{ ft_lss, 8 / BITS_IN_BYTE, "next payload type", &ikev1_payload_names },
+	{ ft_zig, 8 / BITS_IN_BYTE, "reserved", NULL },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_nat, 8 / BITS_IN_BYTE, "AH transform number", NULL },
+	{ ft_enum, 8 / BITS_IN_BYTE, "AH transform ID", &ah_transformid_names },
+	{ ft_zig, 16 / BITS_IN_BYTE, "reserved", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -346,12 +346,12 @@ struct_desc isakmp_ah_transform_desc = {
 
 /* PROTO_IPSEC_ESP */
 static field_desc isat_fields_esp[] = {
-	{ ft_lss, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
-	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_nat, 8 / BITS_PER_BYTE, "ESP transform number", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "ESP transform ID", &esp_transformid_names },
-	{ ft_zig, 16 / BITS_PER_BYTE, "reserved", NULL },
+	{ ft_lss, 8 / BITS_IN_BYTE, "next payload type", &ikev1_payload_names },
+	{ ft_zig, 8 / BITS_IN_BYTE, "reserved", NULL },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_nat, 8 / BITS_IN_BYTE, "ESP transform number", NULL },
+	{ ft_enum, 8 / BITS_IN_BYTE, "ESP transform ID", &esp_transformid_names },
+	{ ft_zig, 16 / BITS_IN_BYTE, "reserved", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -363,12 +363,12 @@ struct_desc isakmp_esp_transform_desc = {
 
 /* PROTO_IPCOMP */
 static field_desc isat_fields_ipcomp[] = {
-	{ ft_lss, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
-	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_nat, 8 / BITS_PER_BYTE, "IPCOMP transform number", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "IPCOMP transform ID", &ipsec_ipcomp_algo_names },
-	{ ft_zig, 16 / BITS_PER_BYTE, "reserved", NULL },
+	{ ft_lss, 8 / BITS_IN_BYTE, "next payload type", &ikev1_payload_names },
+	{ ft_zig, 8 / BITS_IN_BYTE, "reserved", NULL },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_nat, 8 / BITS_IN_BYTE, "IPCOMP transform number", NULL },
+	{ ft_enum, 8 / BITS_IN_BYTE, "IPCOMP transform ID", &ipsec_ipcomp_algo_names },
+	{ ft_zig, 16 / BITS_IN_BYTE, "reserved", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -417,12 +417,12 @@ struct_desc isakmp_keyex_desc =	{
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc isaid_fields[] = {
-	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
-	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "ID type", &ikev1_ike_id_type_names }, /* ??? depends on DOI? */
-	{ ft_nat, 8 / BITS_PER_BYTE, "DOI specific A", NULL },          /* ??? depends on DOI? */
-	{ ft_nat, 16 / BITS_PER_BYTE, "DOI specific B", NULL },         /* ??? depends on DOI? */
+	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &payload_names_ikev1orv2 },
+	{ ft_zig, 8 / BITS_IN_BYTE, "reserved", NULL },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_enum, 8 / BITS_IN_BYTE, "ID type", &ikev1_ike_id_type_names }, /* ??? depends on DOI? */
+	{ ft_nat, 8 / BITS_IN_BYTE, "DOI specific A", NULL },          /* ??? depends on DOI? */
+	{ ft_nat, 16 / BITS_IN_BYTE, "DOI specific B", NULL },         /* ??? depends on DOI? */
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -449,12 +449,12 @@ struct_desc isakmp_identification_desc = {
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc isaiid_fields[] = {
-	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
-	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "ID type", &ikev1_ike_id_type_names },
-	{ ft_loose_enum, 8 / BITS_PER_BYTE, "Protocol ID", &ip_protocol_id_names, },
-	{ ft_nat, 16 / BITS_PER_BYTE, "port", NULL },
+	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &payload_names_ikev1orv2 },
+	{ ft_zig, 8 / BITS_IN_BYTE, "reserved", NULL },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_enum, 8 / BITS_IN_BYTE, "ID type", &ikev1_ike_id_type_names },
+	{ ft_loose_enum, 8 / BITS_IN_BYTE, "Protocol ID", &ip_protocol_id_names, },
+	{ ft_nat, 16 / BITS_IN_BYTE, "port", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -481,10 +481,10 @@ struct_desc isakmp_ipsec_identification_desc = {
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc isacert_fields[] = {
-	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
-	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "cert encoding", &ike_cert_type_names },
+	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &payload_names_ikev1orv2 },
+	{ ft_zig, 8 / BITS_IN_BYTE, "reserved", NULL },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_enum, 8 / BITS_IN_BYTE, "cert encoding", &ike_cert_type_names },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -514,10 +514,10 @@ struct_desc isakmp_ipsec_certificate_desc = {
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc isacr_fields[] = {
-	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &payload_names_ikev1orv2 },
-	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "cert type", &ike_cert_type_names },
+	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &payload_names_ikev1orv2 },
+	{ ft_zig, 8 / BITS_IN_BYTE, "reserved", NULL },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_enum, 8 / BITS_IN_BYTE, "cert type", &ike_cert_type_names },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -618,13 +618,13 @@ struct_desc isakmp_nonce_desc =	{
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc isan_fields[] = {
-	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
-	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 32 / BITS_PER_BYTE, "DOI", &doi_names },
-	{ ft_nat, 8 / BITS_PER_BYTE, "protocol ID", NULL }, /* ??? really enum: ISAKMP, IPSEC, ESP, ... */
-	{ ft_nat, 8 / BITS_PER_BYTE, "SPI size", NULL },
-	{ ft_enum, 16 / BITS_PER_BYTE, "Notify Message Type", &v1_notification_names },
+	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &ikev1_payload_names },
+	{ ft_zig, 8 / BITS_IN_BYTE, "reserved", NULL },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_enum, 32 / BITS_IN_BYTE, "DOI", &doi_names },
+	{ ft_nat, 8 / BITS_IN_BYTE, "protocol ID", NULL }, /* ??? really enum: ISAKMP, IPSEC, ESP, ... */
+	{ ft_nat, 8 / BITS_IN_BYTE, "SPI size", NULL },
+	{ ft_enum, 16 / BITS_IN_BYTE, "Notify Message Type", &v1_notification_names },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -654,13 +654,13 @@ struct_desc isakmp_notification_desc = {
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc isad_fields[] = {
-	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
-	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 32 / BITS_PER_BYTE, "DOI", &doi_names },
-	{ ft_nat, 8 / BITS_PER_BYTE, "protocol ID", NULL }, /* ??? really enum: ISAKMP, IPSEC */
-	{ ft_nat, 8 / BITS_PER_BYTE, "SPI size", NULL },
-	{ ft_nat, 16 / BITS_PER_BYTE, "number of SPIs", NULL },
+	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &ikev1_payload_names },
+	{ ft_zig, 8 / BITS_IN_BYTE, "reserved", NULL },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_enum, 32 / BITS_IN_BYTE, "DOI", &doi_names },
+	{ ft_nat, 8 / BITS_IN_BYTE, "protocol ID", NULL }, /* ??? really enum: ISAKMP, IPSEC */
+	{ ft_nat, 8 / BITS_IN_BYTE, "SPI size", NULL },
+	{ ft_nat, 16 / BITS_IN_BYTE, "number of SPIs", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -709,12 +709,12 @@ struct_desc isakmp_vendor_id_desc = {
  *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc isaattr_fields[] = {
-	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
-	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "Attr Msg Type", &attr_msg_type_names },
-	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_nat, 16 / BITS_PER_BYTE, "Identifier", NULL },
+	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &ikev1_payload_names },
+	{ ft_zig, 8 / BITS_IN_BYTE, "reserved", NULL },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_enum, 8 / BITS_IN_BYTE, "Attr Msg Type", &attr_msg_type_names },
+	{ ft_zig, 8 / BITS_IN_BYTE, "reserved", NULL },
+	{ ft_nat, 16 / BITS_IN_BYTE, "Identifier", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -782,11 +782,11 @@ struct_desc isakmp_nat_d_drafts = {
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc isanat_oa_fields[] = {
-	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &ikev1_payload_names },
-	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "ID type", &ikev1_ike_id_type_names },
-	{ ft_zig, 24 / BITS_PER_BYTE, "reserved", NULL },
+	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &ikev1_payload_names },
+	{ ft_zig, 8 / BITS_IN_BYTE, "reserved", NULL },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_enum, 8 / BITS_IN_BYTE, "ID type", &ikev1_ike_id_type_names },
+	{ ft_zig, 24 / BITS_IN_BYTE, "reserved", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -828,12 +828,12 @@ struct_desc isakmp_ignore_desc = {
  * +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc isafrag_fields[] = {
-	{ ft_zig, 8 / BITS_PER_BYTE, "next payload type", NULL },
-	{ ft_zig, 8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_nat, 16 / BITS_PER_BYTE, "fragment id", NULL },
-	{ ft_nat, 8 / BITS_PER_BYTE, "fragment number", NULL },
-	{ ft_nat, 8 / BITS_PER_BYTE, "flags", NULL }, /* 0x1 means last fragment */
+	{ ft_zig, 8 / BITS_IN_BYTE, "next payload type", NULL },
+	{ ft_zig, 8 / BITS_IN_BYTE, "reserved", NULL },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_nat, 16 / BITS_IN_BYTE, "fragment id", NULL },
+	{ ft_nat, 8 / BITS_IN_BYTE, "fragment number", NULL },
+	{ ft_nat, 8 / BITS_IN_BYTE, "flags", NULL }, /* 0x1 means last fragment */
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -849,9 +849,9 @@ struct_desc isakmp_ikefrag_desc = {
  * Note differs from IKEv1, in that it has flags with one bit a critical bit
  */
 static field_desc ikev2generic_fields[] = {
-	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
-	{ ft_lset, 8 / BITS_PER_BYTE, "flags", &payload_flag_names },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
+	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &ikev2_payload_names },
+	{ ft_lset, 8 / BITS_IN_BYTE, "flags", &payload_flag_names },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
 	{ ft_end,  0, NULL, NULL }
 };
 /* only for reading an unknown-to-us payload */
@@ -916,13 +916,13 @@ struct_desc ikev2_sa_desc = {
  *             Figure 7:  Proposal Substructure
  */
 static field_desc ikev2prop_fields[] = {
-	{ ft_lss, 8 / BITS_PER_BYTE, "last proposal", &ikev2_last_proposal_desc },
-	{ ft_zig,  8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_nat,  8 / BITS_PER_BYTE, "prop #", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "proto ID", &ikev2_proposal_protocol_id_names },
-	{ ft_nat,  8 / BITS_PER_BYTE, "spi size", NULL },
-	{ ft_nat,  8 / BITS_PER_BYTE, "# transforms", NULL },
+	{ ft_lss, 8 / BITS_IN_BYTE, "last proposal", &ikev2_last_proposal_desc },
+	{ ft_zig,  8 / BITS_IN_BYTE, "reserved", NULL },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_nat,  8 / BITS_IN_BYTE, "prop #", NULL },
+	{ ft_enum, 8 / BITS_IN_BYTE, "proto ID", &ikev2_proposal_protocol_id_names },
+	{ ft_nat,  8 / BITS_IN_BYTE, "spi size", NULL },
+	{ ft_nat,  8 / BITS_IN_BYTE, "# transforms", NULL },
 	{ ft_end,  0, NULL, NULL }
 };
 
@@ -951,12 +951,12 @@ struct_desc ikev2_prop_desc = {
  */
 
 static field_desc ikev2trans_fields[] = {
-	{ ft_lss, 8 / BITS_PER_BYTE, "last transform", &ikev2_last_transform_desc },
-	{ ft_zig,  8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_loose_enum, 8 / BITS_PER_BYTE, "IKEv2 transform type", &ikev2_trans_type_names },
-	{ ft_zig,  8 / BITS_PER_BYTE, "reserved", NULL },
-	{ ft_loose_enum_enum, 16 / BITS_PER_BYTE, "IKEv2 transform ID", &v2_transform_ID_enums }, /* select enum based on transform type */
+	{ ft_lss, 8 / BITS_IN_BYTE, "last transform", &ikev2_last_transform_desc },
+	{ ft_zig,  8 / BITS_IN_BYTE, "reserved", NULL },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_loose_enum, 8 / BITS_IN_BYTE, "IKEv2 transform type", &ikev2_trans_type_names },
+	{ ft_zig,  8 / BITS_IN_BYTE, "reserved", NULL },
+	{ ft_loose_enum_enum, 16 / BITS_IN_BYTE, "IKEv2 transform ID", &v2_transform_ID_enums }, /* select enum based on transform type */
 	{ ft_end,  0, NULL, NULL }
 };
 
@@ -981,8 +981,8 @@ struct_desc ikev2_trans_desc = {
  *
  */
 static field_desc ikev2_trans_attr_fields[] = {
-	{ ft_af_enum, 16 / BITS_PER_BYTE, "af+type", &ikev2_trans_attr_descs },
-	{ ft_lv,      16 / BITS_PER_BYTE, "length/value", NULL },
+	{ ft_af_enum, 16 / BITS_IN_BYTE, "af+type", &ikev2_trans_attr_descs },
+	{ ft_lv,      16 / BITS_IN_BYTE, "length/value", NULL },
 	{ ft_end,     0, NULL, NULL }
 };
 
@@ -1015,11 +1015,11 @@ struct_desc ikev2_trans_attr_desc = {
  *
  */
 static field_desc ikev2ke_fields[] = {
-	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
-	{ ft_lset, 8 / BITS_PER_BYTE, "flags", &payload_flag_names },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 16 / BITS_PER_BYTE, "DH group", &oakley_group_names },
-	{ ft_zig, 16 / BITS_PER_BYTE, "reserved", NULL },
+	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &ikev2_payload_names },
+	{ ft_lset, 8 / BITS_IN_BYTE, "flags", &payload_flag_names },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_enum, 16 / BITS_IN_BYTE, "DH group", &oakley_group_names },
+	{ ft_zig, 16 / BITS_IN_BYTE, "reserved", NULL },
 	{ ft_end,  0, NULL, NULL },
 };
 
@@ -1066,11 +1066,11 @@ struct_desc ikev2_ke_desc = {
  */
 
 static field_desc ikev2id_fields[] = {
-	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
-	{ ft_lset, 8 / BITS_PER_BYTE, "flags", &payload_flag_names },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "ID type", &ikev2_ike_id_type_names },
-	{ ft_raw, 24 / BITS_PER_BYTE, "reserved", NULL },
+	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &ikev2_payload_names },
+	{ ft_lset, 8 / BITS_IN_BYTE, "flags", &payload_flag_names },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_enum, 8 / BITS_IN_BYTE, "ID type", &ikev2_ike_id_type_names },
+	{ ft_raw, 24 / BITS_IN_BYTE, "reserved", NULL },
 	{ ft_end,  0, NULL, NULL },
 };
 
@@ -1108,7 +1108,7 @@ struct_desc ikev2_id_r_desc = {
  * Reserved for private use  128-255
  */
 static field_desc ikev2_ppk_id_fields[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "PPK ID type", &ikev2_ppk_id_type_names },
+	{ ft_enum, 8 / BITS_IN_BYTE, "PPK ID type", &ikev2_ppk_id_type_names },
 	{ ft_end,  0, NULL, NULL }
 };
 
@@ -1120,11 +1120,11 @@ struct_desc ikev2_ppk_id_desc = {
 
 
 static field_desc ikev2cp_fields[] = {
-	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
-	{ ft_lset, 8 / BITS_PER_BYTE, "flags", &payload_flag_names },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "ikev2_cfg_type", &ikev2_cp_type_names },
-	{ ft_zig, 24 / BITS_PER_BYTE, "reserved", NULL },
+	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &ikev2_payload_names },
+	{ ft_lset, 8 / BITS_IN_BYTE, "flags", &payload_flag_names },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_enum, 8 / BITS_IN_BYTE, "ikev2_cfg_type", &ikev2_cp_type_names },
+	{ ft_zig, 24 / BITS_IN_BYTE, "reserved", NULL },
 	{ ft_end,  0, NULL, NULL }
 };
 
@@ -1136,8 +1136,8 @@ struct_desc ikev2_cp_desc = {
 };
 
 static field_desc ikev2_cp_attrbute_fields[] = {
-	{ ft_loose_enum, 16 / BITS_PER_BYTE, "Attribute Type", &ikev2_cp_attribute_type_names },
-	{ ft_lv, 16 / BITS_PER_BYTE, "length/value", NULL },
+	{ ft_loose_enum, 16 / BITS_IN_BYTE, "Attribute Type", &ikev2_cp_attribute_type_names },
+	{ ft_lv, 16 / BITS_IN_BYTE, "length/value", NULL },
 	{ ft_end,  0, NULL, NULL }
 };
 
@@ -1163,10 +1163,10 @@ struct_desc ikev2_cp_attribute_desc = {
  *
  */
 static field_desc ikev2_cert_fields[] = {
-	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
-	{ ft_lset, 8 / BITS_PER_BYTE, "flags", &payload_flag_names },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "ikev2 cert encoding",
+	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &ikev2_payload_names },
+	{ ft_lset, 8 / BITS_IN_BYTE, "flags", &payload_flag_names },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_enum, 8 / BITS_IN_BYTE, "ikev2 cert encoding",
 	  &ikev2_cert_type_names },
 	{ ft_end,  0, NULL, NULL }
 };
@@ -1196,10 +1196,10 @@ struct_desc ikev2_certificate_desc = {
  */
 
 static field_desc ikev2_cert_req_fields[] = {
-	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
-	{ ft_lset, 8 / BITS_PER_BYTE, "flags", &payload_flag_names },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "ikev2 cert encoding",
+	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &ikev2_payload_names },
+	{ ft_lset, 8 / BITS_IN_BYTE, "flags", &payload_flag_names },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_enum, 8 / BITS_IN_BYTE, "ikev2 cert encoding",
 	  &ikev2_cert_type_names },
 	{ ft_end,  0, NULL, NULL }
 };
@@ -1230,11 +1230,11 @@ struct_desc ikev2_certificate_req_desc = {
  *
  */
 static field_desc ikev2_auth_fields[] = {
-	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
-	{ ft_lset, 8 / BITS_PER_BYTE, "flags", &payload_flag_names },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "auth method", &ikev2_auth_method_names },
-	{ ft_zig, 24 / BITS_PER_BYTE, "reserved", NULL },
+	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &ikev2_payload_names },
+	{ ft_lset, 8 / BITS_IN_BYTE, "flags", &payload_flag_names },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_enum, 8 / BITS_IN_BYTE, "auth method", &ikev2_auth_method_names },
+	{ ft_zig, 24 / BITS_IN_BYTE, "reserved", NULL },
 	{ ft_end,  0, NULL, NULL }
 };
 
@@ -1293,13 +1293,13 @@ struct_desc ikev2_nonce_desc = {
  *
  */
 static field_desc ikev2_notify_fields[] = {
-	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
-	{ ft_lset, 8 / BITS_PER_BYTE, "flags", &payload_flag_names },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "Protocol ID", &ikev2_notify_protocol_id_names },
+	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &ikev2_payload_names },
+	{ ft_lset, 8 / BITS_IN_BYTE, "flags", &payload_flag_names },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_enum, 8 / BITS_IN_BYTE, "Protocol ID", &ikev2_notify_protocol_id_names },
 	/* names used are v1 names may be we should use 4306 3.3.1 names */
-	{ ft_nat,  8 / BITS_PER_BYTE, "SPI size", NULL },
-	{ ft_loose_enum, 16 / BITS_PER_BYTE, "Notify Message Type",
+	{ ft_nat,  8 / BITS_IN_BYTE, "SPI size", NULL },
+	{ ft_loose_enum, 16 / BITS_IN_BYTE, "Notify Message Type",
 	  &v2_notification_names },
 	{ ft_end,  0, NULL, NULL }
 };
@@ -1329,12 +1329,12 @@ struct_desc ikev2_notify_desc = {
  */
 
 static field_desc ikev2_delete_fields[] = {
-	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
-	{ ft_lset, 8 / BITS_PER_BYTE, "flags", &payload_flag_names },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "protocol ID", &ikev2_delete_protocol_id_names },
-	{ ft_nat, 8 / BITS_PER_BYTE, "SPI size", NULL },
-	{ ft_nat, 16 / BITS_PER_BYTE, "number of SPIs", NULL },
+	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &ikev2_payload_names },
+	{ ft_lset, 8 / BITS_IN_BYTE, "flags", &payload_flag_names },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_enum, 8 / BITS_IN_BYTE, "protocol ID", &ikev2_delete_protocol_id_names },
+	{ ft_nat, 8 / BITS_IN_BYTE, "SPI size", NULL },
+	{ ft_nat, 16 / BITS_IN_BYTE, "number of SPIs", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -1390,11 +1390,11 @@ struct_desc ikev2_vendor_id_desc = {
  *    +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc ikev2_ts_fields[] = {
-	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
-	{ ft_lset, 8 / BITS_PER_BYTE, "flags", &payload_flag_names },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_nat,  8 / BITS_PER_BYTE, "number of TS", NULL },
-	{ ft_zig, 24 / BITS_PER_BYTE, "reserved", NULL },
+	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &ikev2_payload_names },
+	{ ft_lset, 8 / BITS_IN_BYTE, "flags", &payload_flag_names },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_nat,  8 / BITS_IN_BYTE, "number of TS", NULL },
+	{ ft_zig, 24 / BITS_IN_BYTE, "reserved", NULL },
 	{ ft_end,  0, NULL, NULL }
 };
 struct_desc ikev2_ts_i_desc = {
@@ -1456,9 +1456,9 @@ struct_desc ikev2_ts_r_desc = {
  * Traffic Selector Header - read header, then sub out work to type handler
  */
 static field_desc ikev2_ts_header_fields[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "TS type", &ikev2_ts_type_names },
-	{ ft_loose_enum,  8 / BITS_PER_BYTE, "IP Protocol ID", &ip_protocol_id_names, },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
+	{ ft_enum, 8 / BITS_IN_BYTE, "TS type", &ikev2_ts_type_names },
+	{ ft_loose_enum,  8 / BITS_IN_BYTE, "IP Protocol ID", &ip_protocol_id_names, },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
 	{ ft_end,  0, NULL, NULL }
 };
 struct_desc ikev2_ts_header_desc = {
@@ -1468,8 +1468,8 @@ struct_desc ikev2_ts_header_desc = {
 };
 
 static field_desc ikev2_ts_portrange_fields[] = {
-	{ ft_nat, 16 / BITS_PER_BYTE, "start port", NULL },
-	{ ft_nat, 16 / BITS_PER_BYTE, "end port", NULL },
+	{ ft_nat, 16 / BITS_IN_BYTE, "start port", NULL },
+	{ ft_nat, 16 / BITS_IN_BYTE, "end port", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
 struct_desc ikev2_ts_portrange_desc = {
@@ -1530,9 +1530,9 @@ struct_desc ikev2_eap_desc = {
  *   +-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+-+
  */
 static field_desc eap_termination_fields[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "code", &eap_code_names },
-	{ ft_nat, 8 / BITS_PER_BYTE, "identifier", NULL },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
+	{ ft_enum, 8 / BITS_IN_BYTE, "code", &eap_code_names },
+	{ ft_nat, 8 / BITS_IN_BYTE, "identifier", NULL },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -1562,11 +1562,11 @@ struct_desc eap_termination_desc = {
  * with the 'TLS data' as the payload.
  */
 static field_desc eap_tls_fields[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "code", &eap_code_names },
-	{ ft_nat, 8 / BITS_PER_BYTE, "identifier", NULL },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "type", &eap_type_names },
-	{ ft_lset, 8 / BITS_PER_BYTE, "flags", &eaptls_flag_names },
+	{ ft_enum, 8 / BITS_IN_BYTE, "code", &eap_code_names },
+	{ ft_nat, 8 / BITS_IN_BYTE, "identifier", NULL },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_enum, 8 / BITS_IN_BYTE, "type", &eap_type_names },
+	{ ft_lset, 8 / BITS_IN_BYTE, "flags", &eaptls_flag_names },
 	{ ft_end, 0, NULL, NULL }
 };
 
@@ -1612,11 +1612,11 @@ struct_desc eap_tls_desc = {
  *                         Encrypted Fragment Payload
  */
 static field_desc ikev2skf_fields[] = {
-	{ ft_pnpc, 8 / BITS_PER_BYTE, "next payload type", &ikev2_payload_names },
-	{ ft_lset, 8 / BITS_PER_BYTE, "flags", &payload_flag_names },
-	{ ft_len, 16 / BITS_PER_BYTE, "length", NULL },
-	{ ft_nat, 16 / BITS_PER_BYTE, "fragment number", NULL },
-	{ ft_nat, 16 / BITS_PER_BYTE, "total fragments", NULL },
+	{ ft_pnpc, 8 / BITS_IN_BYTE, "next payload type", &ikev2_payload_names },
+	{ ft_lset, 8 / BITS_IN_BYTE, "flags", &payload_flag_names },
+	{ ft_len, 16 / BITS_IN_BYTE, "length", NULL },
+	{ ft_nat, 16 / BITS_IN_BYTE, "fragment number", NULL },
+	{ ft_nat, 16 / BITS_IN_BYTE, "total fragments", NULL },
 	{ ft_end,  0, NULL, NULL }
 };
 struct_desc ikev2_skf_desc = {
@@ -1648,8 +1648,8 @@ struct_desc ikev2_skf_desc = {
  * fields, the rest when using in_struct will be stored in separate pb_stream
  */
 static field_desc ikev2redirect_fields[] = {
-	{ ft_enum, 8 / BITS_PER_BYTE, "GW Identity type", &ikev2_redirect_gw_names },
-	{ ft_nat,  8 / BITS_PER_BYTE, "GW Identity length", NULL },	/* this cannot be ft_len,
+	{ ft_enum, 8 / BITS_IN_BYTE, "GW Identity type", &ikev2_redirect_gw_names },
+	{ ft_nat,  8 / BITS_IN_BYTE, "GW Identity length", NULL },	/* this cannot be ft_len,
 									   because of the Nonce Data */
 	{ ft_end,  0, NULL, NULL }
 };
@@ -1661,7 +1661,7 @@ struct_desc ikev2_redirect_desc = {
 };
 
 static field_desc suggested_group_fields[] = {
-	{ ft_enum, 16 / BITS_PER_BYTE, "suggested DH Group", &oakley_group_names },
+	{ ft_enum, 16 / BITS_IN_BYTE, "suggested DH Group", &oakley_group_names },
 	{ ft_end,  0, NULL, NULL }
 };
 
@@ -1684,8 +1684,8 @@ struct_desc suggested_group_desc = {
  * no further attributes.
  */
 static field_desc ikev2notify_ipcomp_fields[] = {
-	{ ft_nat, 16 / BITS_PER_BYTE, "IPcomp SPI (CPI)", NULL },
-	{ ft_enum, 8 / BITS_PER_BYTE, "IKEv2 Notification IPCOMP Transform IDs", &ipsec_ipcomp_algo_names },
+	{ ft_nat, 16 / BITS_IN_BYTE, "IPcomp SPI (CPI)", NULL },
+	{ ft_enum, 8 / BITS_IN_BYTE, "IKEv2 Notification IPCOMP Transform IDs", &ipsec_ipcomp_algo_names },
 	{ ft_end,  0, NULL, NULL }
 };
 
@@ -1704,9 +1704,9 @@ struct_desc ikev2notify_ipcomp_data_desc = {
 #include "ikev1_labeled_ipsec.h"	/* for struct sec_ctx */
 
 static field_desc sec_ctx_fields[] = {
-	{ ft_nat,  8 / BITS_PER_BYTE, "DOI", NULL },
-	{ ft_nat,  8 / BITS_PER_BYTE, "Alg", NULL },
-	{ ft_nat, 16 / BITS_PER_BYTE, "length", NULL },	/* not ft_len */
+	{ ft_nat,  8 / BITS_IN_BYTE, "DOI", NULL },
+	{ ft_nat,  8 / BITS_IN_BYTE, "Alg", NULL },
+	{ ft_nat, 16 / BITS_IN_BYTE, "length", NULL },	/* not ft_len */
 	{ ft_end,  0, NULL, NULL }
 };
 
@@ -1882,7 +1882,7 @@ static void DBG_print_nat(const field_desc *fp, uintmax_t nat)
 		do {
 			cur--;
 			*cur = (uint8_t)n;
-			n >>= BITS_PER_BYTE;
+			n >>= BITS_IN_BYTE;
 		} while (cur > bytes);
 		jam_dump_bytes(buf, bytes, fp->size);
 		jam(buf, ")");
@@ -1929,13 +1929,13 @@ static void DBG_print_struct(const char *label, const void *struct_ptr,
 		case ft_lset:           /* bits representing set */
 			/* grab bytes in host-byte-order */
 			switch (i) {
-			case 8 / BITS_PER_BYTE:
+			case 8 / BITS_IN_BYTE:
 				n = *(const uint8_t *)inp;
 				break;
-			case 16 / BITS_PER_BYTE:
+			case 16 / BITS_IN_BYTE:
 				n = *(const uint16_t *)inp;
 				break;
-			case 32 / BITS_PER_BYTE:
+			case 32 / BITS_IN_BYTE:
 				n = *(const uint32_t *)inp;
 				break;
 			default:
@@ -2153,7 +2153,7 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 
 			/* Reportedly fails on arm, see bug #775 */
 			for (size_t i = fp->size; i != 0; i--)
-				n = (n << BITS_PER_BYTE) | *cur++;
+				n = (n << BITS_IN_BYTE) | *cur++;
 
 			switch (fp->field_type) {
 			case ft_len:    /* length of this struct and any following crud */
@@ -2232,13 +2232,13 @@ diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 
 			/* deposit the value in the struct */
 			switch (fp->size) {
-			case 8 / BITS_PER_BYTE:
+			case 8 / BITS_IN_BYTE:
 				*(uint8_t *)dest = n;
 				break;
-			case 16 / BITS_PER_BYTE:
+			case 16 / BITS_IN_BYTE:
 				*(uint16_t *)dest = n;
 				break;
-			case 32 / BITS_PER_BYTE:
+			case 32 / BITS_IN_BYTE:
 				*(uint32_t *)dest = n;
 				break;
 			default:
@@ -2523,13 +2523,13 @@ static bool pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 	uint32_t n;
 
 	switch (fp->size) {
-	case 8 / BITS_PER_BYTE:
+	case 8 / BITS_IN_BYTE:
 		n = *(const uint8_t *)(*inp);
 		break;
-	case 16 / BITS_PER_BYTE:
+	case 16 / BITS_IN_BYTE:
 		n = *(const uint16_t *)(*inp);
 		break;
-	case 32 / BITS_PER_BYTE:
+	case 32 / BITS_IN_BYTE:
 		n = *(const uint32_t *)(*inp);
 		break;
 	default:
@@ -2592,7 +2592,7 @@ static bool pbs_out_number(struct pbs_out *outs, struct_desc *sd,
 	/* emit i low-order bytes of n in network order */
 	for (int i = fp->size - 1; i >= 0; i--) {
 		(*cur)[i] = (uint8_t)n;
-		n >>= BITS_PER_BYTE;
+		n >>= BITS_IN_BYTE;
 	}
 	(*inp) += fp->size;
 	(*cur) += fp->size;
@@ -2936,7 +2936,7 @@ void close_output_pbs(struct pbs_out *pbs)
 		/* emit octets of length in network order */
 		while (i-- != 0) {
 			pbs->lenfld[i] = (uint8_t)len;
-			len >>= BITS_PER_BYTE;
+			len >>= BITS_IN_BYTE;
 		}
 	}
 

@@ -1447,7 +1447,7 @@ static uint32_t decode_life_duration(const struct isakmp_attribute *a,
 		} else {
 			/* decode number */
 			while (pbs_left(pbs) != 0) {
-				val = (val << BITS_PER_BYTE) | *pbs->cur++;
+				val = (val << BITS_IN_BYTE) | *pbs->cur++;
 			}
 			dbg("   long duration: %" PRIu32 " (TVL)", val);
 		}

@@ -102,12 +102,9 @@ enum binary {
 
 #define NULL_FD (-1)	/* NULL file descriptor */
 
-#include <prcpucfg.h>	/* from nspr4 devel */
-
-#ifndef BITS_PER_BYTE
-# define BITS_PER_BYTE  8
-#endif
-#define BYTES_FOR_BITS(b)   (((b) + BITS_PER_BYTE - 1) / BITS_PER_BYTE)
+/* octet_t / BITS_IN_OCTET anyone? */
+#define BITS_IN_BYTE 8
+#define BYTES_FOR_BITS(b)   (((b) + BITS_IN_BYTE - 1) / BITS_IN_BYTE)
 
 /* clearer shorthand for *cmp functions */
 #define streq(a, b) (strcmp((a), (b)) == 0)

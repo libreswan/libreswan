@@ -230,10 +230,10 @@ int main(int argc, char *argv[])
 			"%s: requested RSA key size (%d) is too large - (max %d)\n",
 			progname, nbits, MAXBITS);
 		exit(1);
-	} else if (nbits % (BITS_PER_BYTE * 2) != 0) {
+	} else if (nbits % (BITS_IN_BYTE * 2) != 0) {
 		fprintf(stderr,
 			"%s: requested RSA key size (%d) is not a multiple of %d\n",
-			progname, nbits, (int)BITS_PER_BYTE * 2);
+			progname, nbits, (int)BITS_IN_BYTE * 2);
 		exit(1);
 	}
 
@@ -321,7 +321,7 @@ void lsw_random(size_t nbytes, unsigned char *buf, struct logger *logger)
 
 	ndone = 0;
 	llog(RC_LOG, logger, "getting %d random seed bytes for NSS from %s...\n",
-		    (int) nbytes * BITS_PER_BYTE, device);
+		    (int) nbytes * BITS_IN_BYTE, device);
 	while (ndone < nbytes) {
 		got = read(dev, buf + ndone, nbytes - ndone);
 		if (got < 0) {

@@ -112,7 +112,7 @@ static diag_t pubkey_ipseckey_rdata_to_rsa_pubkey(shunk_t rr, shunk_t *e, shunk_
 		 * length (big-endian), followed by that many exponent
 		 * bytes
 		 */
-		exponent = shunk2(rr_ptr + 3, (rr_ptr[1] << BITS_PER_BYTE) + rr_ptr[2]);
+		exponent = shunk2(rr_ptr + 3, (rr_ptr[1] << BITS_IN_BYTE) + rr_ptr[2]);
 	} else {
 		/* not even room for length! */
 		return diag("%zu byte raw RSA public is way too short",

@@ -195,7 +195,7 @@ void calc_v2_keymat(struct state *st,
 			 st->st_oakley.ta_encrypt,
 			 st->st_oakley.ta_prf,
 			 st->st_oakley.ta_integ,
-			 st->st_oakley.enckeylen / BITS_PER_BYTE,
+			 st->st_oakley.enckeylen / BITS_IN_BYTE,
 			 (st->st_oakley.ta_encrypt != NULL ?
 			  st->st_oakley.ta_encrypt->salt_size : 0),
 			 st->st_ni, st->st_nr,

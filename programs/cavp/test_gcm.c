@@ -157,7 +157,7 @@ static const struct encrypt_desc *encrypts[] = {
 
 static const struct encrypt_desc *lookup_by_taglen(void) {
 	for (const struct encrypt_desc **ep = encrypts; *ep != NULL; ep++) {
-		if ((*ep)->aead_tag_size * BITS_PER_BYTE == taglen) {
+		if ((*ep)->aead_tag_size * BITS_IN_BYTE == taglen) {
 			return *ep;
 		}
 	}

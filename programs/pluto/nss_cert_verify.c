@@ -401,7 +401,7 @@ static void add_decoded_cert(CERTCertDBHandle *handle,
 	if (libreswan_fipsmode()) {
 		SECKEYPublicKey *pk = CERT_ExtractPublicKey(cert);
 		passert(pk != NULL);
-		unsigned key_bit_size = pk->u.rsa.modulus.len * BITS_PER_BYTE;
+		unsigned key_bit_size = pk->u.rsa.modulus.len * BITS_IN_BYTE;
 		if (pk->keyType == rsaKey && key_bit_size < FIPS_MIN_RSA_KEY_SIZE) {
 			llog(RC_LOG, logger,
 			     "FIPS: rejecting peer cert with key size %u under %u: %s",
