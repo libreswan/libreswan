@@ -1659,7 +1659,7 @@ typedef enum {
 } v2_notification_t;
 
 /* draft-ietf-ipsecme-qr-ikev2-01 created registry */
-enum ppk_id_type {
+enum ikev2_ppk_id_type {
 	PPK_ID_OPAQUE = 1,
 	PPK_ID_FIXED = 2,
 

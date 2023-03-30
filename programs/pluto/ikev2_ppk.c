@@ -68,45 +68,51 @@ bool emit_unified_ppk_id(struct ppk_id_payload *payl, pb_stream *outs)
 bool extract_v2N_ppk_identity(const struct pbs_in *notify_pbs,
 			      struct ppk_id_payload *payl, struct ike_sa *ike)
 {
+	diag_t d;
 	struct pbs_in pbs = *notify_pbs;
-	size_t len = pbs_left(&pbs);
-	int idtype;
 
-	if (len > PPK_ID_MAXLEN) {
-		llog_sa(RC_LOG_SERIOUS, ike, "PPK ID length is too big");
-		return false;
-	}
-	if (len <= 1) {
-		llog_sa(RC_LOG_SERIOUS, ike, "PPK ID data must be at least 1 byte (received %zd bytes including ppk type byte)",
-			  len);
-		return false;
-	}
+	/* read in and verify the first (type) byte */
 
-	uint8_t dst[PPK_ID_MAXLEN];
-	diag_t d = pbs_in_raw(&pbs, dst, len, "Unified PPK_ID Payload");
+	uint8_t id_byte;
+	d = pbs_in_thing(&pbs, id_byte, "PPK_ID type");
 	if (d != NULL) {
 		llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d,
-			 "PPK ID data could not be read: ");
+			  "reading PPK ID: ");
 		return false;
+
 	}
 
-	dbg("received PPK_ID type: %s", enum_name(&ikev2_ppk_id_type_names, dst[0]));
-
-	idtype = (int)dst[0];
-	switch (idtype) {
+	/* XXX: above+below could be turned into a descr? */
+	enum ikev2_ppk_id_type id_type = id_byte;
+	switch (id_type) {
 	case PPK_ID_FIXED:
 		dbg("PPK_ID of type PPK_ID_FIXED.");
 		break;
-
 	case PPK_ID_OPAQUE:
 	default:
+	{
+		enum_buf eb;
 		llog_sa(RC_LOG_SERIOUS, ike, "PPK_ID type %d (%s) not supported",
-			  idtype, enum_name(&ikev2_ppk_id_type_names, idtype));
+			id_type, str_enum(&ikev2_ppk_id_type_names, id_type, &eb));
+		return false;
+	}
+	}
+
+	shunk_t data = pbs_in_left_as_shunk(&pbs);
+
+	if (data.len == 0) {
+		llog_sa(RC_LOG_SERIOUS, ike, "PPK ID data must be at least 1 byte");
+		return false;
+	}
+
+	if (data.len > PPK_ID_MAXLEN) {
+		llog_sa(RC_LOG_SERIOUS, ike, "PPK ID %zu byte length exceeds %u",
+			data.len, PPK_ID_MAXLEN);
 		return false;
 	}
 
 	/* clone ppk id data without ppk id type byte */
-	payl->ppk_id = clone_bytes_as_chunk(dst + 1, len - 1, "PPK_ID data");
+	payl->ppk_id = clone_hunk(data, "PPK_ID data");
 	if (DBGP(DBG_BASE)) {
 		DBG_dump_hunk("Extracted PPK_ID", payl->ppk_id);
 	}

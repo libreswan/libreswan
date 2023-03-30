@@ -20,7 +20,7 @@
 #include "packet.h"
 
 struct ppk_id_payload {
-	enum ppk_id_type type;
+	enum ikev2_ppk_id_type type;
 	chunk_t ppk_id;
 };
 
