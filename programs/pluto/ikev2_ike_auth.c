@@ -690,22 +690,15 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 		}
 	}
 	if (md->pd[PD_v2N_NO_PPK_AUTH] != NULL) {
-		pb_stream pbs = md->pd[PD_v2N_NO_PPK_AUTH]->pbs;
-		size_t len = pbs_left(&pbs);
 		dbg("received NO_PPK_AUTH");
 		if (LIN(POLICY_PPK_INSIST, policy)) {
 			dbg("Ignored NO_PPK_AUTH data - connection insists on PPK");
 		} else {
-
-			chunk_t no_ppk_auth = alloc_chunk(len, "NO_PPK_AUTH");
-			diag_t d = pbs_in_raw(&pbs, no_ppk_auth.ptr, len, "NO_PPK_AUTH extract");
-			if (d != NULL) {
-				llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d,
-					 "failed to extract %zd bytes of NO_PPK_AUTH from Notify payload", len);
-				free_chunk_content(&no_ppk_auth);
-				return STF_FATAL;
-			}
-			replace_chunk(&ike->sa.st_no_ppk_auth, no_ppk_auth);
+			struct pbs_in pbs = md->pd[PD_v2N_NO_PPK_AUTH]->pbs;
+			/* zero length doesn't matter? */
+			shunk_t no_ppk_auth = pbs_in_left_as_shunk(&pbs);
+			replace_chunk(&ike->sa.st_no_ppk_auth,
+				      clone_hunk(no_ppk_auth, "NO_PPK_AUTH extract"));
 		}
 	}
 	ike->sa.st_ike_seen_v2n_mobike_supported = md->pd[PD_v2N_MOBIKE_SUPPORTED] != NULL;
