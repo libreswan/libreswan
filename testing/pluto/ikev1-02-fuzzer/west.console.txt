@@ -14,39 +14,7 @@ west #
  echo "Running a fuzzing scan"
 Running a fuzzing scan
 west #
- ./ike-scan.sh > OUTPUT/fuzz.log
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
----	Pass 1 of 1 completed
+ ./ike-scan.sh > OUTPUT/fuzz.log 2>&1 || barf
 west #
  echo done
 done
