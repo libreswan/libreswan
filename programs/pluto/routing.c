@@ -35,7 +35,7 @@ static void do_updown_unroute(struct connection *c);
 enum connection_event {
 	CONNECTION_ROUTE,
 	CONNECTION_UNROUTE,
-	CONNECTION_ONDEMAND,
+	CONNECTION_ACQUIRE,
 	CONNECTION_DELETE_IKE,
 	CONNECTION_DELETE_CHILD,
 	CONNECTION_TIMEOUT_IKE,
@@ -47,7 +47,7 @@ static const char *connection_event_name[] = {
 #define S(E) [E] = #E
 	S(CONNECTION_ROUTE),
 	S(CONNECTION_UNROUTE),
-	S(CONNECTION_ONDEMAND),
+	S(CONNECTION_ACQUIRE),
 	S(CONNECTION_DELETE_IKE),
 	S(CONNECTION_DELETE_CHILD),
 	S(CONNECTION_TIMEOUT_IKE),
@@ -272,7 +272,7 @@ static void permanent_routed_ondemand_to_routed_negotiation(struct connection *c
 			  e->acquire->sec_label, e->acquire->background, e->acquire->logger);
 }
 
-void connection_ondemand(struct connection *c, threadtime_t *inception, const struct kernel_acquire *b)
+void connection_acquire(struct connection *c, threadtime_t *inception, const struct kernel_acquire *b)
 {
 	if (labeled(c)) {
 		PASSERT(c->logger, labeled_parent(c));
@@ -286,7 +286,7 @@ void connection_ondemand(struct connection *c, threadtime_t *inception, const st
 		return;
 	}
 
-	dispatch(CONNECTION_ONDEMAND, c,
+	dispatch(CONNECTION_ACQUIRE, c,
 		 c->logger, HERE,
 		 (struct annex) {
 			 .inception = inception,
@@ -803,7 +803,7 @@ void dispatch(enum connection_event event, struct connection *c,
 		case X(UNROUTE, UNROUTED, PERMANENT):
 			ldbg(logger, "already unrouted");
 			return;
-		case X(ONDEMAND, UNROUTED, PERMANENT):
+		case X(ACQUIRE, UNROUTED, PERMANENT):
 			/* presumably triggered by whack */
 			ondemand_unrouted_to_unrouted_negotiation(c, e);
 			return;
@@ -842,10 +842,10 @@ void dispatch(enum connection_event event, struct connection *c,
 			do_updown_unroute(c);
 			return;
 
-		case X(ONDEMAND, ROUTED_ONDEMAND, PERMANENT):
+		case X(ACQUIRE, ROUTED_ONDEMAND, PERMANENT):
 			permanent_routed_ondemand_to_routed_negotiation(c, e);
 			return;
-		case X(ONDEMAND, ROUTED_NEGOTIATION, PERMANENT):
+		case X(ACQUIRE, ROUTED_NEGOTIATION, PERMANENT):
 			llog(RC_LOG, c->logger, "connection already negotiating");
 			return;
 
@@ -885,7 +885,7 @@ void dispatch(enum connection_event event, struct connection *c,
 		case X(UNROUTE, UNROUTED, INSTANCE):
 			ldbg(logger, "already unrouted");
 			return;
-		case X(ONDEMAND, UNROUTED, INSTANCE):
+		case X(ACQUIRE, UNROUTED, INSTANCE):
 			/*
 			 * Triggered by whack or ondemand against the
 			 * template which instantiates this

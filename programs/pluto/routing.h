@@ -59,7 +59,7 @@ bool kernel_policy_installed(const struct connection *c);
 void connection_route(struct connection *c);
 void connection_unroute(struct connection *c);
 
-void connection_ondemand(struct connection *c, threadtime_t *inception, const struct kernel_acquire *b);
+void connection_acquire(struct connection *c, threadtime_t *inception, const struct kernel_acquire *b);
 
 void connection_resume(struct child_sa *child);
 void connection_suspend(struct child_sa *child);

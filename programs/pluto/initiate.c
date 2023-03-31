@@ -691,7 +691,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		}
 		PASSERT(b->logger, labeled_parent(cc));
 
-		connection_ondemand(cc, &inception, b);
+		connection_acquire(cc, &inception, b);
 		return;
 	}
 
@@ -723,7 +723,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 			jam_kernel_acquire(buf, b);
 			/* jam(buf, " using "); */
 		}
-		connection_ondemand(c, &inception, b);
+		connection_acquire(c, &inception, b);
 		return;
 	case CK_TEMPLATE:
 		PASSERT(b->logger, (c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
@@ -736,7 +736,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		PASSERT(b->logger, c->kind == CK_INSTANCE);
 		PASSERT(b->logger, HAS_IPSEC_POLICY(c->policy));
 		PASSERT(b->logger, c->child.routing == RT_UNROUTED); /*instance*/
-		connection_ondemand(c, &inception, b);
+		connection_acquire(c, &inception, b);
 		return;
 	default:
 		bad_case(c->kind);
