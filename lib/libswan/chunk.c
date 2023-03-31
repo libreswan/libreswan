@@ -41,10 +41,10 @@ void free_chunk_content(chunk_t *chunk)
 	*chunk = empty_chunk;
 }
 
-void replace_chunk(chunk_t *dest, chunk_t src)
+void replace_chunk(chunk_t *dest, shunk_t src, const char *name)
 {
 	free_chunk_content(dest);
-	*dest = src;
+	*dest = clone_hunk(src, name);
 }
 
 chunk_t clone_bytes_as_chunk(const void *bytes, size_t sizeof_bytes, const char *name)
@@ -69,7 +69,8 @@ void append_chunk_bytes(const char *name, chunk_t *lhs,
 			const void *rhs_ptr, size_t rhs_len)
 {
 	chunk_t new = clone_bytes_bytes_as_chunk(lhs->ptr, lhs->len, rhs_ptr, rhs_len, name);
-	replace_chunk(lhs, new);
+	free_chunk_content(lhs);
+	*lhs = new;
 }
 
 /*

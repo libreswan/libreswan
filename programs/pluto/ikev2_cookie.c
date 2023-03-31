@@ -250,7 +250,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_COOKIE(struct ike_sa *ike,
 		dbg("ignoring other notify payloads");
 	}
 
-	replace_chunk(&ike->sa.st_dcookie, clone_hunk(cookie, "DDOS cookie"));
+	replace_chunk(&ike->sa.st_dcookie, cookie, "DDOS cookie");
 	if (DBGP(DBG_BASE)) {
 		DBG_dump_hunk("IKEv2 cookie received", ike->sa.st_dcookie);
 	}

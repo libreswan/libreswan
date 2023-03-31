@@ -544,8 +544,7 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 		return STF_INTERNAL_ERROR;
 
 	/* save initiator SA for HASH */
-	replace_chunk(&st->st_p1isa,
-		      clone_pbs_in_as_chunk(&sa_pd->pbs, "sa in main_inI1_outR1()"));
+	replace_chunk(&st->st_p1isa, pbs_in_all(&sa_pd->pbs), "sa in main_inI1_outR1()");
 
 	return STF_OK;
 }

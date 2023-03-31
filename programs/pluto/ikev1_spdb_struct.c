@@ -144,7 +144,7 @@ static bool parse_secctx_attr(struct pbs_in *pbs, struct state *st)
 		return false;
 	}
 
-	replace_chunk(&st->st_v1_seen_sec_label, clone_hunk(sec_label, "st_seen_sec_label"));
+	replace_chunk(&st->st_v1_seen_sec_label, sec_label, "st_seen_sec_label");
 	if (DBGP(DBG_BASE)) {
 		DBG_dump_hunk("connection security context IPsec Security Label verification succeeded with:",
 			      st->st_v1_seen_sec_label);

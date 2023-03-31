@@ -129,7 +129,7 @@ bool accept_v2_nonce(struct logger *logger, struct msg_digest *md,
 			    name, nonce.len, IKEv2_MINIMUM_NONCE_SIZE, IKEv2_MAXIMUM_NONCE_SIZE);
 		return false;
 	}
-	replace_chunk(dest, clone_hunk(nonce, name));
+	replace_chunk(dest, nonce, name);
 	return true;
 }
 

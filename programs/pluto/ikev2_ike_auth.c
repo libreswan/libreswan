@@ -286,7 +286,8 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 	/* record first packet for later checking of signature */
 	if (md->hdr.isa_xchg != ISAKMP_v2_IKE_INTERMEDIATE) {
 		replace_chunk(&ike->sa.st_firstpacket_peer,
-			      clone_pbs_out_as_chunk(&md->message_pbs, "saved first received non-intermediate packet"));
+			      pbs_out_all(&md->message_pbs),
+			      "saved first received non-intermediate packet");
 	}
 
 	/* beginning of data going out */
@@ -698,7 +699,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 			/* zero length doesn't matter? */
 			shunk_t no_ppk_auth = pbs_in_left_as_shunk(&pbs);
 			replace_chunk(&ike->sa.st_no_ppk_auth,
-				      clone_hunk(no_ppk_auth, "NO_PPK_AUTH extract"));
+				      no_ppk_auth, "NO_PPK_AUTH extract");
 		}
 	}
 	ike->sa.st_ike_seen_v2n_mobike_supported = md->pd[PD_v2N_MOBIKE_SUPPORTED] != NULL;

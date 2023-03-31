@@ -238,7 +238,7 @@ void record_outbound_v1_ike_msg(struct state *st, pb_stream *pbs, const char *wh
 {
 	passert(pbs_offset(pbs) != 0);
 	free_v1_message_queues(st);
-	replace_chunk(&st->st_v1_tpacket, clone_pbs_out_as_chunk(pbs, what));
+	replace_chunk(&st->st_v1_tpacket, pbs_out_all(pbs), what);
 }
 
 void free_v1_message_queues(struct state *st)

@@ -107,7 +107,7 @@ void append_chunk_bytes(const char *name, chunk_t *lhs, const void *rhs, size_t 
 
 void free_chunk_content(chunk_t *chunk); /* blats *CHUNK */
 
-void replace_chunk(chunk_t *dest, chunk_t src);
+void replace_chunk(chunk_t *dest, shunk_t src, const char *name);
 
 /*
  * misc ops.

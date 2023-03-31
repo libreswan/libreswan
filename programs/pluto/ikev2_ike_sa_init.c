@@ -719,8 +719,9 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 	if (impair.send_bogus_dcookie) {
 		/* add or mangle a dcookie so what we will send is bogus */
 		DBG_log("Mangling dcookie because --impair-send-bogus-dcookie is set");
-		replace_chunk(&ike->sa.st_dcookie, alloc_chunk(1, "mangled dcookie"));
-		messupn(ike->sa.st_dcookie.ptr, 1);
+		uint8_t byte = 0;
+		messupn(&byte, sizeof(byte));
+		replace_chunk(&ike->sa.st_dcookie, THING_AS_SHUNK(byte), "mangled dcookie");
 	}
 
 	/*
@@ -853,7 +854,8 @@ bool record_v2_IKE_SA_INIT_request(struct ike_sa *ike)
 
 	/* save packet for later signing */
 	replace_chunk(&ike->sa.st_firstpacket_me,
-		      clone_pbs_out_as_chunk(&request.message, "saved first packet"));
+		      pbs_out_all(&request.message),
+		      "saved first packet");
 
 	return true;
 }
@@ -1056,8 +1058,8 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 	 */
 	/* record first packet for later checking of signature */
 	replace_chunk(&ike->sa.st_firstpacket_peer,
-		      clone_pbs_out_as_chunk(&md->message_pbs,
-			"saved first received packet in inI1outR1_continue_tail"));
+		      pbs_out_all(&md->message_pbs),
+		      "saved first received packet in inI1outR1_continue_tail");
 
 	/* make sure HDR is at start of a clean buffer */
 
@@ -1226,7 +1228,8 @@ static stf_status process_v2_IKE_SA_INIT_request_continue(struct state *ike_st,
 
 	/* save packet for later signing */
 	replace_chunk(&ike->sa.st_firstpacket_me,
-		      clone_pbs_out_as_chunk(&response.message, "saved first packet"));
+		      pbs_out_all(&response.message),
+		      "saved first packet");
 
 	return STF_OK;
 }
@@ -1471,8 +1474,8 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 		}
 	}
 	replace_chunk(&ike->sa.st_firstpacket_peer,
-		      clone_pbs_out_as_chunk(&md->message_pbs,
-					     "saved first received packet in inR1outI2"));
+		      pbs_out_all(&md->message_pbs),
+		      "saved first received packet in inR1outI2");
 
 	/*
 	 * Initiator: check v2N_NAT_DETECTION_DESTINATION_IP or/and

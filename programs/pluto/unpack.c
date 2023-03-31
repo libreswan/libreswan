@@ -61,7 +61,7 @@ bool unpack_KE(chunk_t *dest, const char *val_name,
 			    (unsigned) pbs_left(pbs), (unsigned) gr->bytes);
 		return false;
 	}
-	replace_chunk(dest, clone_hunk(pbs_in_left_as_shunk(pbs), val_name));
+	replace_chunk(dest, pbs_in_left(pbs), val_name);
 	if (DBGP(DBG_CRYPT)) {
 		DBG_log("DH public value received:");
 		DBG_dump_hunk(NULL, *dest);
@@ -71,7 +71,9 @@ bool unpack_KE(chunk_t *dest, const char *val_name,
 
 void unpack_nonce(chunk_t *n, chunk_t *nonce)
 {
-	replace_chunk(n, *nonce); /* steal away */
+	/* steal away */
+	free_chunk_content(n);
+	*n = *nonce;
 	*nonce = empty_chunk;
 }
 

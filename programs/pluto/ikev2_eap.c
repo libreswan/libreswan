@@ -609,7 +609,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_continue(struct ike_sa *ike,
 	}
 
 	close_output_pbs(&eap->eaptls_outbuf);
-	replace_chunk(&eap->eaptls_chunk, clone_pbs_out_as_chunk(&eap->eaptls_outbuf, "EAP response"));
+	replace_chunk(&eap->eaptls_chunk, pbs_out_all(&eap->eaptls_outbuf), "EAP response");
 	eap->eaptls_pos = 0;
 
 	if (eaptls.eaptls_flags & EAPTLS_FLAGS_MORE) {
