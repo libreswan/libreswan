@@ -769,23 +769,6 @@ stf_status process_v2_IKE_AUTH_request_ipseckey_continue(struct ike_sa *ike,
 
 stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_digest *md)
 {
-	chunk_t null_auth = EMPTY_CHUNK;
-
-	if (md->pd[PD_v2N_NULL_AUTH] != NULL) {
-		pb_stream pbs = md->pd[PD_v2N_NULL_AUTH]->pbs;
-		size_t len = pbs_left(&pbs);
-
-		dbg("received v2N_NULL_AUTH");
-		null_auth = alloc_chunk(len, "NULL_AUTH");
-		diag_t d = pbs_in_raw(&pbs, null_auth.ptr, len, "NULL_AUTH extract");
-		if (d != NULL) {
-			llog_diag(RC_LOG_SERIOUS, ike->sa.st_logger, &d,
-				 "failed to extract %zd bytes of NULL_AUTH from Notify payload: ", len);
-			free_chunk_content(&null_auth);
-			return STF_FATAL;
-		}
-	}
-
 	/* calculate hash of IDi for AUTH below */
 	struct crypt_mac idhash_in = v2_id_hash(ike, "IDi verify hash", "IDi",
 						pbs_in_all_as_shunk(&md->chain[ISAKMP_NEXT_v2IDi]->pbs),
@@ -820,12 +803,12 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 			record_v2N_response(ike->sa.st_logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
 					    ENCRYPTED_PAYLOAD);
-			free_chunk_content(&null_auth);	/* ??? necessary? */
 			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 			return STF_FATAL;
 		}
 		dbg("NO_PPK_AUTH verified");
-	} else if (null_auth.ptr != NULL && remote_can_authby_null && !remote_can_authby_digsig) {
+	} else if (md->pd[PD_v2N_NULL_AUTH] != NULL &&
+		   remote_can_authby_null && !remote_can_authby_digsig) {
 		/*
 		 * If received NULL_AUTH in Notify payload and we only
 		 * allow NULL Authentication, proceed with verifying
@@ -833,11 +816,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 		 */
 
 		/* making a dummy pb_stream so we could pass it to v2_check_auth */
-		pb_stream pbs_null_auth;
-		size_t len = null_auth.len;
-
-		dbg("going to try to verify NULL_AUTH from Notify payload");
-		init_pbs(&pbs_null_auth, null_auth.ptr, len, "pb_stream for verifying NULL_AUTH");
+		struct pbs_in pbs_null_auth = md->pd[PD_v2N_NULL_AUTH]->pbs;
 		diag_t d = verify_v2AUTH_and_log(IKEv2_AUTH_NULL, ike, &idhash_in,
 						 &pbs_null_auth, AUTH_NULL);
 		if (d != NULL) {
@@ -846,7 +825,6 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 			record_v2N_response(ike->sa.st_logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
 					    ENCRYPTED_PAYLOAD);
-			free_chunk_content(&null_auth);
 			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 			return STF_FATAL;
 		}
@@ -862,15 +840,12 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 			record_v2N_response(ike->sa.st_logger, ike, md,
 					    v2N_AUTHENTICATION_FAILED, NULL/*no data*/,
 					    ENCRYPTED_PAYLOAD);
-			free_chunk_content(&null_auth);
 			pstat_sa_failed(&ike->sa, REASON_AUTH_FAILED);
 			return STF_FATAL;
 		}
 	}
 
 	/* AUTH succeeded */
-
-	free_chunk_content(&null_auth);
 
 #ifdef USE_PAM_AUTH
 	/*
