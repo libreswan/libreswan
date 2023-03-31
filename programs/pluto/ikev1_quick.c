@@ -991,7 +991,7 @@ stf_status quick_inI1_outR1(struct state *p1st, struct msg_digest *md)
 		    (p1st->hidden_variables.st_nat_traversal & NAT_T_WITH_NATOA) &&
 		    (IDci->payload.ipsec_id.isaiid_idtype == ID_FQDN)) {
 			struct hidden_variables hv;
-			shunk_t idfqdn = pbs_in_left_as_shunk(&IDcr->pbs);
+			shunk_t idfqdn = pbs_in_left(&IDcr->pbs);
 
 			hv = p1st->hidden_variables;
 			nat_traversal_natoa_lookup(md, &hv, p1st->st_logger);
@@ -1600,7 +1600,7 @@ stf_status quick_inR1_outI2_tail(struct state *st, struct msg_digest *md)
 			    (st->hidden_variables.st_nat_traversal &
 			     NAT_T_WITH_NATOA) &&
 			    IDcr->payload.ipsec_id.isaiid_idtype == ID_FQDN) {
-				shunk_t idfqdn = pbs_in_left_as_shunk(&IDcr->pbs);
+				shunk_t idfqdn = pbs_in_left(&IDcr->pbs);
 				update_first_selector(st->st_connection, remote,
 						      selector_from_address(st->hidden_variables.st_nat_oa));
 				LLOG_JAMBUF(RC_LOG_SERIOUS, st->st_logger, buf) {

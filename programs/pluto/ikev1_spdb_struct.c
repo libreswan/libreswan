@@ -108,7 +108,7 @@ static bool parse_secctx_attr(struct pbs_in *pbs, struct state *st)
 	/*
 	 * XXX: this and the IKEv2 equivalent have a lot in common.
 	 */
-	shunk_t sec_label = pbs_in_left_as_shunk(pbs);
+	shunk_t sec_label = pbs_in_left(pbs);
 
 	if (sec_label.len != uctx.ctx.ctx_len) {
 		/* ??? should we ignore padding? */

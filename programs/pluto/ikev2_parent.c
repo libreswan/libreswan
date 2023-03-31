@@ -108,7 +108,7 @@ bool accept_v2_nonce(struct logger *logger, struct msg_digest *md,
 	 * so when we refer to ISAKMP_NEXT_v2Ni, it might be ISAKMP_NEXT_v2Nr
 	 */
 	pb_stream *nonce_pbs = &md->chain[ISAKMP_NEXT_v2Ni]->pbs;
-	shunk_t nonce = pbs_in_left_as_shunk(nonce_pbs);
+	shunk_t nonce = pbs_in_left(nonce_pbs);
 
 	/*
 	 * RFC 7296 Section 2.10:

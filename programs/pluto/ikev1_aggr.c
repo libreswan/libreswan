@@ -245,7 +245,7 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 	 * be already filled-in.
 	 */
 	pexpect(ike->sa.st_p1isa.ptr == NULL);
-	ike->sa.st_p1isa = clone_pbs_in_as_chunk(&sa_pd->pbs, "sa in aggr_inI1_outR1()");
+	ike->sa.st_p1isa = clone_pbs_in_all(&sa_pd->pbs, "sa in aggr_inI1_outR1()");
 
 	/*
 	 * parse_isakmp_sa picks the right group, which we need to know

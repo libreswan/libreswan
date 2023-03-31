@@ -216,7 +216,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 				   old->sa.st_v2_msgid_windows.responder.recv == 0 &&
 				   old->sa.st_v2_msgid_windows.responder.sent == 0 &&
 				   hunk_eq(old->sa.st_firstpacket_peer,
-					   pbs_in_all_as_shunk(&md->message_pbs))) {
+					   pbs_in_all(&md->message_pbs))) {
 				/*
 				 * It looks a lot like a shiny new IKE
 				 * SA that only just responded to a
@@ -890,7 +890,7 @@ stf_status process_v2_IKE_SA_INIT_request(struct ike_sa *ike,
 
 	/* Vendor ID processing */
 	for (struct payload_digest *v = md->chain[ISAKMP_NEXT_v2V]; v != NULL; v = v->next) {
-		handle_v2_vendorid(pbs_in_left_as_shunk(&v->pbs), ike->sa.st_logger);
+		handle_v2_vendorid(pbs_in_left(&v->pbs), ike->sa.st_logger);
 	}
 
 	/* Get the proposals ready. */

@@ -98,7 +98,7 @@ bool process_v2N_mobike_requests(struct ike_sa *ike, struct msg_digest *md,
 
 	shunk_t cookie2 = null_shunk;
 	if (md->pd[PD_v2N_COOKIE2] != NULL) {
-		shunk_t tmp = pbs_in_left_as_shunk(&md->pd[PD_v2N_COOKIE2]->pbs);
+		shunk_t tmp = pbs_in_left(&md->pd[PD_v2N_COOKIE2]->pbs);
 		if (tmp.len > IKEv2_MAX_COOKIE_SIZE) {
 			dbg("MOBIKE COOKIE2 notify payload too big - ignored");
 		} else {

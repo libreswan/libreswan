@@ -197,7 +197,7 @@ static void decode_certificate_request(struct state *st, enum ike_cert_type cert
 	switch (cert_type) {
 	case CERT_X509_SIGNATURE:
 	{
-		asn1_t ca_name = pbs_in_left_as_shunk(pbs);
+		asn1_t ca_name = pbs_in_left(pbs);
 
 		if (DBGP(DBG_BASE)) {
 			DBG_dump_hunk("CR", ca_name);

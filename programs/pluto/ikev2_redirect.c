@@ -161,7 +161,7 @@ static shunk_t build_redirect_notification_data_common(enum gw_identity_type gwi
 	if (nonce == NULL || out_hunk(*nonce, &gwid_pbs, "nonce in redirect notify"))
 	{
 		close_output_pbs(&gwid_pbs);
-		return same_pbs_out_as_shunk(&gwid_pbs);
+		return pbs_out_all(&gwid_pbs);
 	}
 
 	return empty_shunk;
@@ -243,7 +243,7 @@ bool redirect_global(struct msg_digest *md)
 		return true;
 	}
 
-	shunk_t Ni = pbs_in_left_as_shunk(&md->chain[ISAKMP_NEXT_v2Ni]->pbs);
+	shunk_t Ni = pbs_in_left(&md->chain[ISAKMP_NEXT_v2Ni]->pbs);
 	if (Ni.len == 0) {
 		dbg("Initiator nonce should not be zero length");
 		pstats_ikev2_redirect_failed++;

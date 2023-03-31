@@ -392,7 +392,7 @@ static diag_t verify_v2AUTH_and_log_using_pubkey(struct authby authby,
 			    str_authby(authby, &pb));
 	}
 
-	shunk_t signature = pbs_in_left_as_shunk(signature_pbs);
+	shunk_t signature = pbs_in_left(signature_pbs);
 	if (signature.len == 0) {
 		return diag("authentication failed: rejecting received zero-length signature");
 	}
@@ -505,7 +505,7 @@ diag_t verify_v2AUTH_and_log(enum ikev2_auth_method recv_auth,
 
 		/* try to match ASN.1 blob designating the hash algorithm */
 
-		shunk_t signature = pbs_in_left_as_shunk(signature_pbs);
+		shunk_t signature = pbs_in_left(signature_pbs);
 
 		dbg("digsig: looking for matching DIGSIG blob");
 		FOR_EACH_ELEMENT(hash, negotiated_hash_map) {

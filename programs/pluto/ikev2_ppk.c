@@ -98,7 +98,7 @@ bool extract_v2N_ppk_identity(const struct pbs_in *notify_pbs,
 	}
 	}
 
-	shunk_t data = pbs_in_left_as_shunk(&pbs);
+	shunk_t data = pbs_in_left(&pbs);
 
 	if (data.len == 0) {
 		llog_sa(RC_LOG_SERIOUS, ike, "PPK ID data must be at least 1 byte");

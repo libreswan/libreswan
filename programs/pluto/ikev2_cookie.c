@@ -136,7 +136,7 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 		rate_log(md, "DDOS cookie requires Ni paylod - dropping message");
 		return true; /* reject cookie */
 	}
-	shunk_t Ni = pbs_in_left_as_shunk(&md->chain[ISAKMP_NEXT_v2Ni]->pbs);
+	shunk_t Ni = pbs_in_left(&md->chain[ISAKMP_NEXT_v2Ni]->pbs);
 	if (Ni.len < IKEv2_MINIMUM_NONCE_SIZE || IKEv2_MAXIMUM_NONCE_SIZE < Ni.len) {
 		rate_log(md, "DOS cookie failed as Ni payload invalid - dropping message");
 		return true; /* reject cookie */
@@ -174,7 +174,7 @@ bool v2_rejected_initiator_cookie(struct msg_digest *md,
 		rate_log(md, "DOS cookie notification corrupt, or invalid - dropping message");
 		return true; /* reject cookie */
 	}
-	shunk_t remote_cookie = pbs_in_left_as_shunk(&cookie_digest->pbs);
+	shunk_t remote_cookie = pbs_in_left(&cookie_digest->pbs);
 
 	if (DBGP(DBG_BASE)) {
 		DBG_dump_hunk("received cookie", remote_cookie);
@@ -222,7 +222,7 @@ stf_status process_v2_IKE_SA_INIT_response_v2N_COOKIE(struct ike_sa *ike,
 	 * notification MUST be between 1 and 64 octets in length
 	 * (inclusive)
 	 */
-	shunk_t cookie = pbs_in_left_as_shunk(cookie_pbs);
+	shunk_t cookie = pbs_in_left(cookie_pbs);
 	if (cookie.len > IKEv2_MAX_COOKIE_SIZE) {
 		/* XXX: cumbersom */
 		if (suppress_log(ike->sa.st_logger)) {

@@ -222,7 +222,7 @@ bool send_pbs_out_using_md(struct msg_digest *md, const char *where, struct pbs_
 {
 	return send_shunks(where, false, SOS_NOBODY,
 			   md->iface, md->sender,
-			   same_pbs_out_as_shunk(packet), null_shunk,
+			   pbs_out_all(packet), null_shunk,
 			   md->md_logger);
 }
 
@@ -244,7 +244,7 @@ bool send_pbs_out_using_state(struct state *st, const char *where, struct pbs_ou
 {
 	return send_shunks(where, /*just_a_keepalive?*/false,
 			   st->st_serialno, st->st_interface, st->st_remote_endpoint,
-			   same_pbs_out_as_shunk(pbs), null_shunk,
+			   pbs_out_all(pbs), null_shunk,
 			   st->st_logger);
 }
 

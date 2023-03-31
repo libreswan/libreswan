@@ -267,7 +267,7 @@ stf_status process_v2_IKE_INTERMEDIATE_request(struct ike_sa *ike,
 	 *
 	 * Hence, here the responder uses the initiator's keys.
 	 */
-	shunk_t plain = pbs_in_all_as_shunk(&md->chain[ISAKMP_NEXT_v2SK]->pbs);
+	shunk_t plain = pbs_in_all(&md->chain[ISAKMP_NEXT_v2SK]->pbs);
 	compute_intermediate_mac(ike, ike->sa.st_skey_pi_nss,
 				 md->packet_pbs.start, plain,
 				 &ike->sa.st_v2_ike_intermediate.initiator);
@@ -345,7 +345,7 @@ stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 	 *
 	 * Hence, here the initiator uses the responder's keys.
 	 */
-	shunk_t plain = pbs_in_all_as_shunk(&md->chain[ISAKMP_NEXT_v2SK]->pbs);
+	shunk_t plain = pbs_in_all(&md->chain[ISAKMP_NEXT_v2SK]->pbs);
 	compute_intermediate_mac(ike, ike->sa.st_skey_pr_nss,
 				 md->packet_pbs.start, plain,
 				 &ike->sa.st_v2_ike_intermediate.responder);

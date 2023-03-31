@@ -212,14 +212,6 @@ chunk_t clone_pbs_in_all(const struct pbs_in *pbs, const char *name);
 shunk_t pbs_out_all(const struct pbs_out *pbs);
 chunk_t clone_pbs_out_all(const struct pbs_out *pbs, const char *name);
 
-shunk_t same_pbs_out_as_shunk(const struct pbs_out *pbs);
-chunk_t clone_pbs_out_as_chunk(const struct pbs_out *pbs, const char *name);
-
-#define pbs_in_all_as_shunk pbs_in_all
-#define pbs_in_left_as_shunk pbs_in_left
-#define clone_pbs_in_as_chunk clone_pbs_in_all
-#define same_pbs_out_as_shunk pbs_out_all
-
 /*
  * Return a map(chunk_t) or clone(chunk_t) of what is still left in
  * the input PBS.

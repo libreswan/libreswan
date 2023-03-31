@@ -180,7 +180,7 @@ static void ikev1_natd_lookup(struct msg_digest *md, struct state *st)
 				 pbs_left(&p->pbs));
 		}
 
-		shunk_t left = pbs_in_left_as_shunk(&p->pbs);
+		shunk_t left = pbs_in_left(&p->pbs);
 		if (hunk_eq(left, hash_local))
 			found_local = true;
 		if (hunk_eq(left, hash_remote))

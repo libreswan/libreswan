@@ -72,7 +72,7 @@ void record_v2_outgoing_fragment(struct pbs_out *pbs,
 				 struct v2_outgoing_fragment **frags)
 {
 	pexpect(*frags == NULL);
-	shunk_t frag = same_pbs_out_as_shunk(pbs);
+	shunk_t frag = pbs_out_all(pbs);
 	*frags = over_alloc_thing(struct v2_outgoing_fragment, frag.len);
 	(*frags)->len = frag.len;
 	memcpy((*frags)->ptr/*array*/, frag.ptr, frag.len);

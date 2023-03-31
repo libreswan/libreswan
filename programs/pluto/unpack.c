@@ -88,7 +88,7 @@ void unpack_nonce(chunk_t *n, chunk_t *nonce)
 diag_t unpack_peer_id(enum ike_id_type kind, struct id *peer, const struct pbs_in *id_pbs)
 {
 	struct pbs_in in_pbs = *id_pbs; /* local copy */
-	shunk_t name = pbs_in_left_as_shunk(&in_pbs);
+	shunk_t name = pbs_in_left(&in_pbs);
 
 	*peer = (struct id) {.kind = kind };	/* clears everything */
 

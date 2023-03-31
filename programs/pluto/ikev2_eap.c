@@ -593,7 +593,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_continue(struct ike_sa *ike,
 		llog_sa(RC_LOG, ike, "EAP TLS Msglen %u", msglen);
 	}
 
-	eap->eaptls_inbuf = pbs_in_left_as_shunk(&data);
+	eap->eaptls_inbuf = pbs_in_left(&data);
 	eap->eaptls_outbuf = open_pbs_out("reply EAP message",
 		reply_buffer, sizeof(reply_buffer), ike->sa.st_logger);
 
@@ -664,7 +664,7 @@ stf_status process_v2_IKE_AUTH_request_EAP_final(struct ike_sa *ike,
 
 	/* calculate hash of IDi for AUTH below */
 	struct crypt_mac idhash_in = v2_id_hash(ike, "IDi verify hash", "IDi",
-						pbs_in_all_as_shunk(&sa_md->chain[ISAKMP_NEXT_v2IDi]->pbs),
+						pbs_in_all(&sa_md->chain[ISAKMP_NEXT_v2IDi]->pbs),
 						"skey_pi", ike->sa.st_skey_pi_nss);
 
 	if (DBGP(DBG_BASE)) {

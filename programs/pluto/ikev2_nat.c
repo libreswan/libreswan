@@ -141,7 +141,7 @@ bool v2_nat_detected(struct ike_sa *ike, struct msg_digest *md)
 	     p < detection_payloads + elemsof(detection_payloads);
 	     p++) {
 		passert(*p != NULL);
-		shunk_t hash = pbs_in_left_as_shunk(*p);
+		shunk_t hash = pbs_in_left(*p);
 		/* redundant, also checked by hunk_eq() */
 		if (hash.len != hasher->hash_digest_size)
 			continue;

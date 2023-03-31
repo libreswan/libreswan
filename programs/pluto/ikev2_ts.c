@@ -683,7 +683,7 @@ static bool v2_parse_tsp(struct payload_digest *const ts_pd,
 				return false;
 			}
 
-			shunk_t sec_label = pbs_in_left_as_shunk(&ts_body_pbs);
+			shunk_t sec_label = pbs_in_left(&ts_body_pbs);
 			err_t ugh = vet_seclabel(sec_label);
 			if (ugh != NULL) {
 				llog(RC_LOG, logger, "Traffic Selector of type Security Label %s", ugh);

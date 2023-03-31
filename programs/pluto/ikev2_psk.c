@@ -271,7 +271,7 @@ diag_t verify_v2AUTH_and_log_using_psk(enum keyword_auth authby,
 				       struct pbs_in *sig_pbs,
 				       const struct hash_signature *auth_sig)
 {
-	shunk_t sig = pbs_in_left_as_shunk(sig_pbs);
+	shunk_t sig = pbs_in_left(sig_pbs);
 
 	passert(authby == AUTH_EAPONLY || authby == AUTH_PSK || authby == AUTH_NULL);
 

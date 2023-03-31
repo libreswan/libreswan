@@ -149,7 +149,7 @@ static bool impair_message(shunk_t message, struct direction_impairment *directi
 bool impair_incoming_message(struct msg_digest *md)
 {
 	struct message_impairment impairment;
-	bool impair = impair_message(pbs_in_all_as_shunk(&md->packet_pbs),
+	bool impair = impair_message(pbs_in_all(&md->packet_pbs),
 				     &incoming_impairments, &impairment,
 				     md->md_logger);
 	if (!impair) {

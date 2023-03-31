@@ -462,7 +462,7 @@ static struct certs *decode_cert_payloads(CERTCertDBHandle *handle,
 
 		dbg("saving certificate of type '%s'", cert_name);
 		/* convert remaining buffer to something nss likes */
-		shunk_t payload_hunk = pbs_in_left_as_shunk(&p->pbs);
+		shunk_t payload_hunk = pbs_in_left(&p->pbs);
 		/* NSS doesn't do const */
 		SECItem payload = {
 			.type = siDERCertBuffer,

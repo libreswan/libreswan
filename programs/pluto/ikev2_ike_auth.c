@@ -697,7 +697,7 @@ stf_status process_v2_IKE_AUTH_request_standard_payloads(struct ike_sa *ike, str
 		} else {
 			struct pbs_in pbs = md->pd[PD_v2N_NO_PPK_AUTH]->pbs;
 			/* zero length doesn't matter? */
-			shunk_t no_ppk_auth = pbs_in_left_as_shunk(&pbs);
+			shunk_t no_ppk_auth = pbs_in_left(&pbs);
 			replace_chunk(&ike->sa.st_no_ppk_auth,
 				      no_ppk_auth, "NO_PPK_AUTH extract");
 		}
@@ -772,7 +772,7 @@ stf_status process_v2_IKE_AUTH_request_id_tail(struct ike_sa *ike, struct msg_di
 {
 	/* calculate hash of IDi for AUTH below */
 	struct crypt_mac idhash_in = v2_id_hash(ike, "IDi verify hash", "IDi",
-						pbs_in_all_as_shunk(&md->chain[ISAKMP_NEXT_v2IDi]->pbs),
+						pbs_in_all(&md->chain[ISAKMP_NEXT_v2IDi]->pbs),
 						"skey_pi", ike->sa.st_skey_pi_nss);
 
 	/* process AUTH payload */
@@ -1345,7 +1345,7 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	}
 
 	struct crypt_mac idhash_in = v2_id_hash(ike, "idhash auth R2", "IDr",
-						pbs_in_all_as_shunk(&md->chain[ISAKMP_NEXT_v2IDr]->pbs),
+						pbs_in_all(&md->chain[ISAKMP_NEXT_v2IDr]->pbs),
 						"skey_pr", ike->sa.st_skey_pr_nss);
 
 	/* process AUTH payload */
