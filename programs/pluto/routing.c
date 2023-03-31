@@ -734,9 +734,25 @@ void dispatch(enum connection_event event, struct connection *c,
 			 (e->ike != NULL &&
 			  (*e->ike)->sa.st_serialno == c->newest_ike_sa)));
 #endif
-	PEXPECT(logger, (c->child.newest_routing_sa == SOS_NOBODY ||
-			 (e->child != NULL &&
-			  (*e->child)->sa.st_serialno == c->child.newest_routing_sa)));
+	/*
+	 * When there's a Child SA it must match the routing SA, but
+	 * not the reverse.
+	 *
+	 * For instance, a second acquire while a permanent connection
+	 * is still negotiating could find that there's an existing
+	 * routing SA.
+	 */
+	if (e->child != NULL &&
+	    (*e->child)->sa.st_serialno != c->child.newest_routing_sa) {
+		LLOG_PEXPECT_JAMBUF(logger, where, buf) {
+			jam_string(buf, "Child SA ");
+			jam_so(buf, (*e->child)->sa.st_serialno);
+			jam_string(buf, " does not match routing SA ");
+			jam_so(buf, c->child.newest_routing_sa);
+			jam_string(buf, " ");
+			jam_event(buf, event, c, e);
+		}
+	}
 
 #define XX(CONNECTION_EVENT, CONNECTION_ROUTING, CONNECTION_KIND)	\
 	(((CONNECTION_EVENT) *						\
