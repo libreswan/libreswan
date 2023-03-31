@@ -29,7 +29,7 @@ enum payload_security;
 
 struct v2_incoming_fragment {
 	chunk_t text;		/* cipher or plain - decrypt in place */
-	chunk_t plain;		/* read-only; points into decrypted plain text */
+	shunk_t plain;		/* read-only; points into decrypted plain text */
 	size_t iv_offset;	/* into text */
 };
 

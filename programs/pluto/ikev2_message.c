@@ -506,7 +506,7 @@ bool encrypt_v2SK_payload(struct v2SK_payload *sk)
 
 static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 					  chunk_t text,
-					  chunk_t *plain,
+					  shunk_t *plain,
 					  size_t iv_offset)
 {
 	if (!ike->sa.hidden_variables.st_skeyid_calculated) {
@@ -703,7 +703,7 @@ static bool verify_and_decrypt_v2_message(struct ike_sa *ike,
 	 * instance, sets them to random values.
 	 */
 	dbg("stripping %u octets as pad", padlen);
-	*plain = chunk2(enc_start, enc_size - padlen);
+	*plain = shunk2(enc_start, enc_size - padlen);
 
 	return true;
 }
@@ -847,7 +847,7 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 
 	/* if possible, decrypt (in place) */
 
-	chunk_t plain = empty_chunk;
+	shunk_t plain = null_shunk;
 	if (ike->sa.hidden_variables.st_skeyid_calculated) {
 		/*
 		 * Try to decrypt in-place.
@@ -889,11 +889,18 @@ enum collected_fragment collect_v2_incoming_fragment(struct ike_sa *ike,
 	passert(skf_hdr->isaskf_number < elemsof((*frags)->frags));
 	passert(frag->text.ptr == NULL);
 	passert(frag->plain.ptr == NULL);
+	passert(frag->text.len == 0);
+	passert(frag->plain.len == 0);
 	frag->text = clone_hunk(text, "incoming IKEv2 encrypted fragment");
 	frag->iv_offset = iv_offset;
 	if (ike->sa.hidden_variables.st_skeyid_calculated) {
-		/* point into saved text */
-		frag->plain = chunk2(frag->text.ptr + (plain.ptr - text.ptr), plain.len);
+		/*
+		 * Since TEXT has been decrypted (PLAIN points into
+		 * TEXT at the unencrypted blob), update frag's .plain
+		 * so it points in frag's .text.
+		 */
+		ptrdiff_t plain_offset = (const uint8*)plain.ptr - (const uint8_t*)text.ptr;
+		frag->plain = shunk2(frag->text.ptr + plain_offset, plain.len);
 	}
 
 	/*
@@ -964,7 +971,7 @@ bool decrypt_v2_incoming_fragments(struct ike_sa *ike,
 				(*frags)->count--;
 				free_chunk_content(&frag->text);
 				frag->text = empty_chunk;
-				frag->plain = empty_chunk;
+				frag->plain = null_shunk;
 				frag->iv_offset = 0;
 			}
 			dbg("saved fragment %u of %u decrypted",
@@ -1033,7 +1040,7 @@ struct msg_digest *reassemble_v2_incoming_fragments(struct v2_incoming_fragments
 	 * and SKF .chain[] pointers).
 	 */
 	struct payload_digest sk = {
-		.pbs = same_chunk_as_pbs_in(md->raw_packet, "decrypted SFK payloads"),
+		.pbs = pbs_in_from_shunk(HUNK_AS_SHUNK(md->raw_packet), "decrypted SFK payloads"),
 		.payload_type = ISAKMP_NEXT_v2SK,
 		.payload.generic.isag_np = (*frags)->first_np,
 	};
@@ -1077,10 +1084,10 @@ bool ikev2_decrypt_msg(struct ike_sa *ike, struct msg_digest *md)
 
 	chunk_t c = chunk2(md->packet_pbs.start,
 			   sk_pbs->roof - md->packet_pbs.start);
-	chunk_t plain;
+	shunk_t plain = null_shunk; /*to be sure*/
 	bool ok = verify_and_decrypt_v2_message(ike, c, &plain,
 						sk_pbs->cur - md->packet_pbs.start);
-	md->chain[ISAKMP_NEXT_v2SK]->pbs = same_chunk_as_pbs_in(plain, "decrypted SK payload");
+	md->chain[ISAKMP_NEXT_v2SK]->pbs = pbs_in_from_shunk(plain, "decrypted SK payload");
 
 	dbg("#%lu ikev2 %s decrypt %s",
 	    ike->sa.st_serialno,
@@ -1284,7 +1291,7 @@ static bool record_outbound_fragments(const struct pbs_out *body,
 	 */
 	enum next_payload_types_ikev2 skf_np;
 	{
-		struct pbs_in pbs = same_chunk_as_pbs_in(sk->payload, "sk");
+		struct pbs_in pbs = pbs_in_from_shunk(HUNK_AS_SHUNK(sk->payload), "sk");
 		struct ikev2_generic e;
 		struct pbs_in ignored;
 		diag_t d = pbs_in_struct(&pbs, &ikev2_sk_desc, &e, sizeof(e), &ignored);

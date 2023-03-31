@@ -264,8 +264,11 @@ extern void init_pbs(pb_stream *pbs, uint8_t *start, size_t len,
 
 /*
  * Map a byte buffer to/from an input PBS and a read-only HUNK.
+ *
+ * XXX: there's a bit of a cheat going on here - the read-only buffer
+ * is cast to read-write as pbs_in's buffer is still writable.
  */
-struct pbs_in same_chunk_as_pbs_in(chunk_t chunk, const char *name);
+
 struct pbs_in pbs_in_from_shunk(shunk_t shunk, const char *name); /* XXX: hackish */
 
 diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,

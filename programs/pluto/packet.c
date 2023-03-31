@@ -1817,15 +1817,12 @@ struct pbs_out open_pbs_out(const char *name, uint8_t *buffer, size_t sizeof_buf
 	return outs;
 }
 
-struct pbs_in same_chunk_as_pbs_in(chunk_t chunk, const char *name)
-{
-	struct pbs_in pbs;
-	init_pbs(&pbs, chunk.ptr, chunk.len, name);
-	return pbs;
-}
-
 struct pbs_in pbs_in_from_shunk(shunk_t shunk, const char *name)
 {
+	/*
+	 * XXX: note uncast-const hack because pbs_in and pbs_out
+	 * share same structure.
+	 */
 	struct pbs_in pbs;
 	init_pbs(&pbs, (void*)shunk.ptr, shunk.len, name);
 	return pbs;
