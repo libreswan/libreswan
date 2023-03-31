@@ -1319,62 +1319,6 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	return true;
 }
 
-/*
- * Install the negotiation kernel policy.
- *
- * Either the automatically installed %hold eroute is broad enough or
- * we try to add a broader one and delete the automatic one.  Beware:
- * this %hold might be already handled, but still squeak through
- * because of a race.
- *
- * XXX: what race?
- *
- * XXX: description seems strange?
- */
-
-void assign_holdpass(struct connection *c UNUSED,
-		     struct spd_route *spd,
-		     enum kernel_policy_op op,
-		     struct logger *logger,
-		     const char *reason)
-{
-	/*
-	 * We need a broad %hold, not the narrow one.
-	 *
-	 * First we ensure that there is a broad %hold.  There may
-	 * already be one (race condition): no need to create one.
-	 * There may already be a %trap: replace it.  There may not be
-	 * any broad eroute: add %hold.  Once the broad %hold is in
-	 * place, delete the narrow one.
-	 *
-	 * XXX: what race condition?
-	 *
-	 * XXX: why is OE special (other than that's the way the code
-	 * worked in the past)?
-	 */
-	PASSERT(logger, (op == KERNEL_POLICY_OP_ADD ||
-			 op == KERNEL_POLICY_OP_REPLACE));
-	if (spd->local->child->has_cat) {
-		if (!install_bare_cat_kernel_policy(spd, op,
-						    EXPECT_KERNEL_POLICY_OK,
-						    SHUNT_KIND_NEGOTIATION,
-						    logger, HERE, "CAT: acquired")) {
-			llog(RC_LOG, logger,
-			     "CAT: failed to install Client Address Translation kernel policy");
-		}
-	}
-
-	if (!install_bare_spd_kernel_policy(spd, op, DIRECTION_OUTBOUND,
-					    EXPECT_KERNEL_POLICY_OK,
-					    SHUNT_KIND_NEGOTIATION,
-					    logger, HERE, reason)) {
-		llog(RC_LOG, logger,
-		     "%s() eroute_connection() failed", __func__);
-	}
-
-	dbg("kernel: %s() done", __func__);
-}
-
 static void setup_esp_nic_offload(struct kernel_state *sa, struct connection *c,
 		bool *nic_offload_fallback)
 {

@@ -195,79 +195,93 @@ void set_child_routing_where(struct connection *c, enum routing routing,
 	c->child.newest_routing_sa = new_routing_sa;
 }
 
-static void ondemand_unrouted_to_unrouted_negotiation(struct connection *c, const struct annex *e)
-{
-	/*
-	 * For instance:
-	 * - an instance with a routed prospective template
-	 * but also:
-	 * - an unrouted permanent by whack?
-	 * - an instance with an unrouted template due to whack?
-	 */
-
-	struct logger *logger = c->logger;
-	struct spd_route *spd = c->spd; /*XXX:only-one!?!*/
-	bool oe = ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
-
-	/* used below in pexpects */
-	struct connection *t = c->clonedfrom; /* could be NULL */
-
-	enum routing old_routing = c->child.routing;	/* routing, old */
-	enum routing new_routing = RT_UNROUTED_NEGOTIATION;
-	enum kernel_policy_op op = KERNEL_POLICY_OP_ADD;
-	/* XXX: these descriptions make no sense */
-	const char *reason = (oe ? "replace unrouted opportunistic %trap with broad %pass or %hold" :
-			      "replace unrouted %trap with broad %pass or %hold");
-	PEXPECT(logger, t == NULL || t->child.routing == RT_ROUTED_ONDEMAND);
-	/*
-	 * We need a broad %hold, not the narrow one.
-	 *
-	 * First we ensure that there is a broad %hold.  There may
-	 * already be one (race condition): no need to create one.
-	 * There may already be a %trap: replace it.  There may not be
-	 * any broad eroute: add %hold.  Once the broad %hold is in
-	 * place, delete the narrow one.
-	 *
-	 * XXX: what race condition?
-	 *
-	 * XXX: why is OE special (other than that's the way the code
-	 * worked in the past)?
-	 */
-	if (oe || old_routing != new_routing) {
-		assign_holdpass(c, spd, op, logger, reason);
-		dbg("kernel: %s() done", __func__);
-	}
-
-	set_child_routing(c, new_routing, c->child.newest_routing_sa);
-	dbg("kernel: %s() done - returning success", __func__);
-
-	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY,
-			  e->inception, e->acquire->sec_label, e->acquire->background, e->acquire->logger);
-}
-
-static void permanent_routed_ondemand_to_routed_negotiation(struct connection *c, const struct annex *e)
+/*
+ * XXX: this funcion is named to preserve some history.
+ */
+static void assign_holdpass(struct connection *c, enum kernel_policy_op op,
+			    const char *reason)
 {
 	struct logger *logger = c->logger;
-	/* permanent is never oe?!? */
-	PEXPECT(logger, (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
-	/*
-	 * This is permanent.  The negotiation is going to be for the
-	 * full SPDs and not just the the acquire?  Hence the SPDs are
-	 * converted to KIND_NEGOTIATION.
-	 */
+	PEXPECT(logger, (op == KERNEL_POLICY_OP_REPLACE ||
+			 op == KERNEL_POLICY_OP_ADD));
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-		if (!install_bare_spd_kernel_policy(spd, KERNEL_POLICY_OP_REPLACE,
-						    DIRECTION_OUTBOUND,
+		if (!install_bare_spd_kernel_policy(spd, op, DIRECTION_OUTBOUND,
 						    EXPECT_NO_INBOUND,
 						    SHUNT_KIND_NEGOTIATION,
-						    logger, HERE, "broad prospective %pass or %hold")) {
+						    logger, HERE, reason)) {
 			llog(RC_LOG, logger,
 			     "converting ondemand kernel policy to negotiating");
 		}
 	}
+}
 
+/*
+ * For instance:
+ *
+ * = an instance with a routed ondemand template
+ *
+ * = an instance with an unrouted template due to whack?
+ *
+ * If this is an instance, then presumably the instance instantiate
+ * code has figured out how wide the SPDs need to be.
+ *
+ * OTOH, if this is an unrouted permenant triggered by whack, just
+ * replace.  Should assign_holdpass() instead just look around?
+ */
+
+static void unrouted_instance_to_unrouted_negotiation(struct connection *c, const struct annex *e)
+{
+	struct logger *logger = c->logger;
+	struct connection *t = c->clonedfrom; /* could be NULL */
+	PEXPECT(logger, t != NULL && t->child.routing == RT_ROUTED_ONDEMAND);
+	bool oe = ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
+	const char *reason = (oe ? "replace unrouted opportunistic %trap with broad %pass or %hold" :
+			      "replace unrouted %trap with broad %pass or %hold");
+	assign_holdpass(c, KERNEL_POLICY_OP_REPLACE, reason);
+
+	set_child_routing(c, RT_UNROUTED_NEGOTIATION, SOS_NOBODY);
+	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY,
+			  e->inception, e->acquire->sec_label, e->acquire->background, e->acquire->logger);
+}
+
+/*
+ * This is permanent yet unrouted; presumably the connection is being
+ * triggered by whack.
+ *
+ * The negotiation is for the full set of SPDs which need to be
+ * installed as KIND_NEGOTIATION.
+ */
+
+static void unrouted_permanent_to_unrouted_negotiation(struct connection *c, const struct annex *e)
+{
+	struct logger *logger = c->logger;
+	PEXPECT(logger, (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
+	assign_holdpass(c, KERNEL_POLICY_OP_ADD,
+			"installing negotiation kernel policy for permanent connection");
+	set_child_routing(c, RT_UNROUTED_NEGOTIATION, SOS_NOBODY);
 	/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
+	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY,
+			  e->inception, e->acquire->sec_label, e->acquire->background, e->acquire->logger);
+}
+
+/*
+ * This is permanent and routed.
+ *
+ * The negotiation is for the full SPDs which have been installed as
+ * KIND_ONDEMAND.  Hence the full suite of SPDs needs to be converted
+ * to KIND_NEGOTIATION.
+ *
+ * But what of the lurking acquire?
+ */
+
+static void routed_permanent_ondemand_to_routed_negotiation(struct connection *c, const struct annex *e)
+{
+	struct logger *logger = c->logger;
+	PEXPECT(logger, (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
+	assign_holdpass(c, KERNEL_POLICY_OP_REPLACE,
+			"converting ondemand kernel policy to negotiating for permanent connection");
 	set_child_routing(c, RT_ROUTED_NEGOTIATION, SOS_NOBODY);
+	/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
 	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, e->inception,
 			  e->acquire->sec_label, e->acquire->background, e->acquire->logger);
 }
@@ -767,7 +781,6 @@ void dispatch(enum connection_event event, struct connection *c,
 
 		switch (XX(event, routing, kind)) {
 
-
 		case X(ROUTE, UNROUTED, TEMPLATE):
 		case X(ROUTE, UNROUTED, PERMANENT):
 			c->policy |= POLICY_ROUTE; /* always */
@@ -805,7 +818,7 @@ void dispatch(enum connection_event event, struct connection *c,
 			return;
 		case X(ACQUIRE, UNROUTED, PERMANENT):
 			/* presumably triggered by whack */
-			ondemand_unrouted_to_unrouted_negotiation(c, e);
+			unrouted_permanent_to_unrouted_negotiation(c, e);
 			return;
 
 		case X(ROUTE, UNROUTED_NEGOTIATION, PERMANENT):
@@ -843,7 +856,7 @@ void dispatch(enum connection_event event, struct connection *c,
 			return;
 
 		case X(ACQUIRE, ROUTED_ONDEMAND, PERMANENT):
-			permanent_routed_ondemand_to_routed_negotiation(c, e);
+			routed_permanent_ondemand_to_routed_negotiation(c, e);
 			return;
 		case X(ACQUIRE, ROUTED_NEGOTIATION, PERMANENT):
 			llog(RC_LOG, c->logger, "connection already negotiating");
@@ -887,14 +900,14 @@ void dispatch(enum connection_event event, struct connection *c,
 			return;
 		case X(ACQUIRE, UNROUTED, INSTANCE):
 			/*
-			 * Triggered by whack or ondemand against the
-			 * template which instantiates this
+			 * Triggered by whack or acquire against the
+			 * template which then instantiated this
 			 * connection.
 			 *
 			 * The template may or may not be routed (but
 			 * this code seems to expect it to).
 			 */
-			ondemand_unrouted_to_unrouted_negotiation(c, e);
+			unrouted_instance_to_unrouted_negotiation(c, e);
 			return;
 
 		case X(UNROUTE, UNROUTED_NEGOTIATION, INSTANCE):

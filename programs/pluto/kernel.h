@@ -475,12 +475,6 @@ extern bool flush_bare_shunt(const ip_address *src, const ip_address *dst,
 			     enum expect_kernel_policy expect_kernel_policy,
 			     const char *why, struct logger *logger);
 
-void assign_holdpass(struct connection *c,
-		     struct spd_route *spd,
-		     enum kernel_policy_op op,
-		     struct logger *logger,
-		     const char *reason);
-
 void orphan_holdpass(struct connection *c,
 		     struct spd_route *sr,
 		     struct logger *logger);
