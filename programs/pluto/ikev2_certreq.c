@@ -97,7 +97,7 @@ void process_v2CERTREQ_payload(struct ike_sa *ike, struct msg_digest *md)
 		 * clue as to which cert chain to ask for.  As a
 		 * work-around allow empty CERTREQ payloads.
 		 */
-		while (pbs_in_remaining(&pbs) > 0) {
+		while (pbs_in_left(&pbs).len > 0) {
 			ckaid_t hash = { .len = SHA1_DIGEST_SIZE, /*see RFC*/};
 			diag_t d = pbs_in_raw(&pbs, hash.ptr, hash.len, "Certification Authority hash");
 			if (d != NULL) {

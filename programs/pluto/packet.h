@@ -245,7 +245,6 @@ chunk_t clone_pbs_in_left(const struct pbs_in *pbs, const char *name);
 #define pbs_offset(pbs) ((size_t)((pbs)->cur - (pbs)->start))
 #define pbs_room(pbs) ((size_t)((pbs)->roof - (pbs)->start))
 #define pbs_left(pbs) ((size_t)((pbs)->roof - (pbs)->cur))
-#define pbs_in_remaining(PBS) pbs_in_left(PBS).len /* to-be-deleted */
 
 #define DBG_dump_pbs(pbs) DBG_dump((pbs)->name, (pbs)->start, pbs_offset(pbs))
 
