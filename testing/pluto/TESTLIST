@@ -120,7 +120,7 @@ kvmplutotest	addconn-21-config-setup-listen			good
 kvmplutotest	addconn-22-authby-hash-algo			good
 kvmplutotest	addconn-23-system-crypto-policies		good
 kvmplutotest	addconn-24-conn-default-rsasigkey		wip	github:833
-
+kvmplutotest	addconn-25-missing-cert				wip	github/1066
 
 #################################################################
 # Whack UI tests

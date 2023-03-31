@@ -1,0 +1,23 @@
+/testing/guestbin/swan-prep --nokeys
+Creating empty NSS database
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --ondemand missing
+036 "missing": failed to add connection: left certificate 'west' not found in the NSS database
+021 no connection or alias named "missing"'
+west #
+ ipsec auto --ondemand missing
+036 "missing": failed to add connection: left certificate 'west' not found in the NSS database
+021 no connection or alias named "missing"'
+west #
+ ipsec auto --ondemand missing > OUTPUT/ondemand.log 2>&1
+west #
+ cat OUTPUT/ondemand.log
+036 "missing": failed to add connection: left certificate 'west' not found in the NSS database
+021 no connection or alias named "missing"'
+west #
+ 

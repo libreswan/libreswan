@@ -1,0 +1,5 @@
+add a connection with a missing cert; check output isn't lost
+
+This is https://github.com/libreswan/libreswan/issues/1066
+where output appears on the console is lost when redirected
+to a file
