@@ -209,11 +209,11 @@ static struct pbs_out open_v2_message_body(struct pbs_out *message,
 	struct pbs_out body;
 	if (!pbs_out_struct(message, &isakmp_hdr_desc, &hdr, sizeof(hdr), &body)) {
 		/* already logged */
-		return empty_pbs; /*fatal*/
+		return empty_pbs_out; /*fatal*/
 	}
 	if (impair.add_unknown_v2_payload_to == exchange_type &&
 	    !emit_v2UNKNOWN("request", exchange_type, &body)) {
-		return empty_pbs;
+		return empty_pbs_out;
 	}
 
 	return body;

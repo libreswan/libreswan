@@ -34,7 +34,7 @@
 #include "defs.h"
 #include "log.h"
 
-const pb_stream empty_pbs;
+const struct pbs_out empty_pbs_out;
 
 /*
  * IKEv1/IKEv2 Header: for all messages
@@ -1819,7 +1819,7 @@ struct pbs_out open_pbs_out(const char *name, uint8_t *buffer, size_t sizeof_buf
 
 struct pbs_in same_chunk_as_pbs_in(chunk_t chunk, const char *name)
 {
-	pb_stream pbs;
+	struct pbs_in pbs;
 	init_pbs(&pbs, chunk.ptr, chunk.len, name);
 	return pbs;
 }
@@ -1831,29 +1831,34 @@ struct pbs_in pbs_in_from_shunk(shunk_t shunk, const char *name)
 	return pbs;
 }
 
-shunk_t same_pbs_out_as_shunk(pb_stream *pbs)
+shunk_t pbs_out_all(const struct pbs_out *pbs)
 {
 	return shunk2(pbs->start, pbs_offset(pbs));
 }
 
-chunk_t clone_pbs_out_as_chunk(pb_stream *pbs, const char *name)
+chunk_t clone_pbs_out_all(const struct pbs_out *pbs, const char *name)
 {
-	return clone_hunk(same_pbs_out_as_shunk(pbs), name);
+	return clone_hunk(pbs_out_all(pbs), name);
 }
 
-shunk_t pbs_in_all_as_shunk(const struct pbs_in *pbs)
+shunk_t pbs_in_all(const struct pbs_in *pbs)
 {
 	return shunk2(pbs->start, pbs_room(pbs));
 }
 
-chunk_t clone_pbs_in_as_chunk(const struct pbs_in *pbs, const char *name)
+chunk_t clone_pbs_in_all(const struct pbs_in *pbs, const char *name)
 {
-	return clone_hunk(shunk2(pbs->start, pbs_room(pbs)), name);
+	return clone_hunk(pbs_in_all(pbs), name);
 }
 
-shunk_t pbs_in_left_as_shunk(const pb_stream *pbs)
+shunk_t pbs_in_left(const struct pbs_in *pbs)
 {
 	return shunk2(pbs->cur, pbs_left(pbs));
+}
+
+chunk_t clone_pbs_in_left(const struct pbs_in *pbs, const char *name)
+{
+	return clone_hunk(pbs_in_left(pbs), name);
 }
 
 /*
@@ -2070,7 +2075,7 @@ static void DBG_prefix_print_struct(const pb_stream *pbs,
  * members have the same alignment and size!  This requires
  * that all padding be explicit.
  *
- * If obj_pbs is supplied, a new pb_stream is created for the
+ * If obj_pbs is supplied, a new struct pbs_in is created for the
  * variable part of the structure (this depends on their
  * being one length field in the structure).  The cursor of this
  * new PBS is set to after the parsed part of the struct.
@@ -2324,7 +2329,7 @@ diag_t pbs_in_raw(struct pbs_in *ins, void *bytes, size_t len, const char *name)
  * Check IKEv2's Last Substructure field.
  */
 
-static void update_last_substructure(pb_stream *outs,
+static void update_last_substructure(struct pbs_out *outs,
 				     struct_desc *sd, field_desc *fp,
 				     const uint8_t *inp, uint8_t *cur)
 {
@@ -2368,7 +2373,7 @@ static void update_last_substructure(pb_stream *outs,
 	outs->last_substructure.fp = fp;
 }
 
-static void close_last_substructure(pb_stream *pbs)
+static void close_last_substructure(struct pbs_out *pbs)
 {
 	if (pbs->last_substructure.loc != NULL) {
 		dbg("last substructure: checking '%s'.'%s'.'%s' is 0",
@@ -2411,7 +2416,7 @@ static void start_next_payload_chain(struct pbs_out *outs,
 	*cur = n;
 }
 
-static void update_next_payload_chain(pb_stream *outs,
+static void update_next_payload_chain(struct pbs_out *outs,
 				      struct_desc *sd, field_desc *fp,
 				      const uint8_t *inp, uint8_t *cur)
 {
@@ -2440,7 +2445,7 @@ static void update_next_payload_chain(pb_stream *outs,
 	 * use an outs->message pointer; but since nesting is minimal
 	 * this isn't really urgent
 	 */
-	pb_stream *message = outs->container;
+	struct pbs_out *message = outs->container;
 	passert(message != NULL);
 	while (message->container != NULL) {
 		message = message->container;
@@ -2774,7 +2779,7 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 }
 
 bool ikev1_out_generic(struct_desc *sd,
-		       pb_stream *outs, pb_stream *obj_pbs)
+		       struct pbs_out *outs, struct pbs_out *obj_pbs)
 {
 	passert(sd->fields == isag_fields);
 	passert(sd->pt != ISAKMP_NEXT_NONE);
@@ -2785,10 +2790,10 @@ bool ikev1_out_generic(struct_desc *sd,
 }
 
 bool ikev1_out_generic_raw(struct_desc *sd,
-		     pb_stream *outs, const void *bytes, size_t len,
+		     struct pbs_out *outs, const void *bytes, size_t len,
 		     const char *name)
 {
-	pb_stream pbs;
+	struct pbs_out pbs;
 
 	if (!ikev1_out_generic(sd, outs, &pbs)) {
 		return false;

@@ -186,13 +186,54 @@ struct packet_byte_stream {
 
 typedef struct packet_byte_stream pb_stream;
 
-extern const pb_stream empty_pbs;
+/*
+ * XXX: pb_stream is being split into separate input and output
+ * structures.  They aren't really the same thing so sharing mechanics
+ * is confusing.
+ *
+ * For instance, PBS_OUT contains an embedded logger (so barfs can be
+ * logged) whipe PBS_IN propogates errors up the stack as DIAG_T.
+ */
+
+#define pbs_in packet_byte_stream /* ins */
+#define pbs_out packet_byte_stream /* outs */
+
+extern const struct pbs_out empty_pbs_out;
+
+/*
+ * Return a map(shunk_t) or clone(chunk_t) of the entire PBS contents
+ * (i.e., for an output PBS that doesn't include any unwritten space
+ * at the end).
+ */
+
+shunk_t pbs_in_all(const struct pbs_in *pbs);
+chunk_t clone_pbs_in_all(const struct pbs_in *pbs, const char *name);
+
+shunk_t pbs_out_all(const struct pbs_out *pbs);
+chunk_t clone_pbs_out_all(const struct pbs_out *pbs, const char *name);
+
+shunk_t same_pbs_out_as_shunk(const struct pbs_out *pbs);
+chunk_t clone_pbs_out_as_chunk(const struct pbs_out *pbs, const char *name);
+
+#define pbs_in_all_as_shunk pbs_in_all
+#define pbs_in_left_as_shunk pbs_in_left
+#define clone_pbs_in_as_chunk clone_pbs_in_all
+#define same_pbs_out_as_shunk pbs_out_all
+#define clone_pbs_out_as_chunk clone_pbs_out_all
+
+/*
+ * Return a map(chunk_t) or clone(chunk_t) of what is still left in
+ * the input PBS.
+ */
+
+shunk_t pbs_in_left(const struct pbs_in *pbs);
+chunk_t clone_pbs_in_left(const struct pbs_in *pbs, const char *name);
 
 /*
  * For an input PBS:
  *	pbs_offset is amount of stream processed.
  *	pbs_room is size of stream.
- *	pbs_in_remaining is amount of stream remaining
+ *      pbs_in_left().len is remaming
  *
  * For an output PBS:
  *	pbs_offset is current size of stream.
@@ -205,15 +246,13 @@ extern const pb_stream empty_pbs;
 #define pbs_offset(pbs) ((size_t)((pbs)->cur - (pbs)->start))
 #define pbs_room(pbs) ((size_t)((pbs)->roof - (pbs)->start))
 #define pbs_left(pbs) ((size_t)((pbs)->roof - (pbs)->cur))
-#define pbs_in_remaining(pbs) pbs_left(pbs)
+#define pbs_in_remaining(PBS) pbs_in_left(PBS).len /* to-be-deleted */
 
 #define DBG_dump_pbs(pbs) DBG_dump((pbs)->name, (pbs)->start, pbs_offset(pbs))
 
 /*
  * Input PBS
  */
-
-#define pbs_in packet_byte_stream /* ins */
 
 /*
  * Initializers; point PBS at a pre-allocated (or static) buffer.
@@ -226,16 +265,8 @@ extern void init_pbs(pb_stream *pbs, uint8_t *start, size_t len,
 /*
  * Map a byte buffer to/from an input PBS and a read-only HUNK.
  */
-extern pb_stream same_chunk_as_pbs_in(chunk_t chunk, const char *name);
+struct pbs_in same_chunk_as_pbs_in(chunk_t chunk, const char *name);
 struct pbs_in pbs_in_from_shunk(shunk_t shunk, const char *name); /* XXX: hackish */
-extern chunk_t clone_pbs_in_as_chunk(const struct pbs_in *pbs, const char *name);
-
-/*
- * Map all / the remaining contents [cur..pbs_left()) of an input PBS
- * as a read-only HUNK.
- */
-extern shunk_t pbs_in_all_as_shunk(const struct pbs_in *pbs);
-extern shunk_t pbs_in_left_as_shunk(const struct pbs_in *pbs);
 
 diag_t pbs_in_struct(struct pbs_in *ins, struct_desc *sd,
 		     void *struct_ptr, size_t struct_size,
@@ -256,8 +287,6 @@ diag_t pbs_in_shunk(struct pbs_in *pbs, size_t len, shunk_t *shunk,
  * false returned (they really shouldn't fail).
  */
 
-#define pbs_out packet_byte_stream /* outs */
-
 /*
  * Initializers; point PBS at a pre-allocated (or static) buffer.
  *
@@ -272,9 +301,6 @@ extern void close_output_pbs(struct pbs_out *pbs);
  * [start..cur) of an output PBS as a chunk.
  */
 
-extern shunk_t same_pbs_out_as_shunk(pb_stream *pbs);
-extern chunk_t clone_pbs_out_as_chunk(pb_stream *pbs, const char *name);
-
 bool pbs_out_struct(struct pbs_out *outs, struct_desc *sd,
 		    const void *struct_ptr, size_t struct_size,
 		    struct pbs_out *obj_pbs) MUST_USE_RESULT;
@@ -283,9 +309,10 @@ bool out_struct(const void *struct_ptr, struct_desc *sd,
 		struct pbs_out *outs, struct pbs_out *obj_pbs) MUST_USE_RESULT;
 
 extern bool ikev1_out_generic(struct_desc *sd,
-			      pb_stream *outs, pb_stream *obj_pbs) MUST_USE_RESULT;
+			      struct pbs_out *outs,
+			      struct pbs_out *obj_pbs) MUST_USE_RESULT;
 extern bool ikev1_out_generic_raw(struct_desc *sd,
-				  pb_stream *outs, const void *bytes, size_t len,
+				  struct pbs_out *outs, const void *bytes, size_t len,
 				  const char *name) MUST_USE_RESULT;
 #define ikev1_out_generic_chunk(sd, outs, ch, name) \
 	ikev1_out_generic_raw((sd), (outs), (ch).ptr, (ch).len, (name))
