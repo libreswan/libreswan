@@ -622,23 +622,6 @@ static struct connection *oppo_instantiate(struct connection *t,
 	PASSERT(d->logger, address_eq_address(d->remote->host.addr, remote_address));
 
 	/*
-	 * Remember if the template is routed:
-	 * if so, this instance applies for initiation
-	 * even if it is created for responding.
-	 *
-	 * D will have had its routing reset.
-	 *
-	 * XXX: huh?
-	 */
-	if (routed(t->child.routing)) {
-		d->instance_initiation_ok = true;
-	}
-	ldbg(d->logger, "template routing %s instance routing %s instance_initiation_ok %s",
-	     enum_name_short(&routing_names, t->child.routing),
-	     enum_name_short(&routing_names, d->child.routing),
-	     bool_str(d->instance_initiation_ok));
-
-	/*
 	 * Fill in the local client - just inherit the parent's value.
 	 */
 	ip_selector local_selector = t->local->child.selectors.proposed.list[0];

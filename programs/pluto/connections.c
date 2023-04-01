@@ -3087,12 +3087,23 @@ struct connection *find_connection_for_packet(const ip_packet packet,
 		}
 
 		/*
-		 * XXX: is the !sec_label an IKEv1 thing?  An IKEv2
-		 * sec-labeled connection should have been routed by
-		 * now?
+		 * Old comment from the dawn of time:
+		 *
+		 * Remember if the template is routed: if so, this
+		 * instance applies for initiation even if it is
+		 * created for responding.
+		 *
+		 * XXX: So, if the instance is routed, and so to is
+		 * its template, then let it be resued for an outgoing
+		 * connection?!?
 		 */
+		bool instance_initiation_ok =
+			((c->policy & POLICY_OPPORTUNISTIC) &&
+			 c->kind == CK_INSTANCE &&
+			 pexpect(c->clonedfrom != NULL) /* because instance */ &&
+			 routed(c->clonedfrom->child.routing));
 		if (!routed(c->child.routing) &&
-		    !c->instance_initiation_ok &&
+		    !instance_initiation_ok &&
 		    c->config->sec_label.len == 0) {
 			connection_buf cb;
 			selector_pair_buf sb;

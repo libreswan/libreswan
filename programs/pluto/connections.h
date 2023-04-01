@@ -584,7 +584,6 @@ struct connection {
 
 	unsigned long next_instance_serial;
 	unsigned long instance_serial;
-	bool instance_initiation_ok;		/* this is an instance of a policy that mandates initiate */
 	enum connection_kind kind;
 	struct iface_endpoint *interface;	/* filled in iff oriented */
 
