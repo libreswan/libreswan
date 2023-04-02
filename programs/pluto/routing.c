@@ -191,12 +191,16 @@ bool kernel_policy_installed(const struct connection *c)
 	bad_case(c->child.routing);
 }
 
-void set_child_routing_where(struct connection *c,
-			     enum routing new_routing,
-			     so_serial_t new_routing_sa,
-			     where_t where)
+void set_routing_where(struct connection *c,
+		       enum routing new_routing,
+		       const struct child_sa *child,
+		       where_t where)
 {
-	LDBGP_JAMBUF(DBG_BASE, c->logger, buf) {
+	struct logger *logger = (child == NULL ? c->logger :
+				 child->sa.st_logger);
+	so_serial_t new_routing_sa = (child == NULL ? SOS_NOBODY :
+				      child->sa.st_serialno);
+	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 		jam_string(buf, "routing: ");
 		jam_routing(buf, c);
 		jam_string(buf, " -> ");
@@ -212,7 +216,7 @@ void set_child_routing_where(struct connection *c,
 	 * policy.  Instead the kernel deals with the policy, and the
 	 * template/parent owns the route.
 	 */
-	PEXPECT(c->logger, !labeled_child(c));
+	PEXPECT(logger, !labeled_child(c));
 #if 0
 	/*
 	 * Always going forward; never in reverse.
@@ -221,7 +225,7 @@ void set_child_routing_where(struct connection *c,
 	 * pulled before kernel state.  Hence, when SO is nobody,
 	 * can't assert much about the ipsec_sa.
 	 */
-	PEXPECT(c->logger, old_routing_sa >= c->newest_ipsec_sa);
+	PEXPECT(logger, old_routing_sa >= c->newest_ipsec_sa);
 	if (new_routing_sa != SOS_NOBODY) {
 		PEXPECT(c->logger, new_routing_sa >= c->child.newest_routing_sa);
 		PEXPECT(c->logger, new_routing_sa >= c->newest_ipsec_sa);
@@ -275,7 +279,7 @@ static void unrouted_instance_to_unrouted_negotiation(struct connection *c, cons
 			      "replace unrouted %trap with broad %pass or %hold");
 	assign_holdpass(c, KERNEL_POLICY_OP_REPLACE, reason);
 
-	set_child_routing(c, RT_UNROUTED_NEGOTIATION, SOS_NOBODY);
+	set_routing(c, RT_UNROUTED_NEGOTIATION, NULL);
 	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY,
 			  e->inception, e->acquire->sec_label, e->acquire->background, e->acquire->logger);
 }
@@ -294,7 +298,7 @@ static void unrouted_permanent_to_unrouted_negotiation(struct connection *c, con
 	PEXPECT(logger, (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
 	assign_holdpass(c, KERNEL_POLICY_OP_ADD,
 			"installing negotiation kernel policy for permanent connection");
-	set_child_routing(c, RT_UNROUTED_NEGOTIATION, SOS_NOBODY);
+	set_routing(c, RT_UNROUTED_NEGOTIATION, NULL);
 	/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
 	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY,
 			  e->inception, e->acquire->sec_label, e->acquire->background, e->acquire->logger);
@@ -316,7 +320,7 @@ static void routed_permanent_ondemand_to_routed_negotiation(struct connection *c
 	PEXPECT(logger, (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
 	assign_holdpass(c, KERNEL_POLICY_OP_REPLACE,
 			"converting ondemand kernel policy to negotiating for permanent connection");
-	set_child_routing(c, RT_ROUTED_NEGOTIATION, SOS_NOBODY);
+	set_routing(c, RT_ROUTED_NEGOTIATION, NULL);
 	/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
 	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, e->inception,
 			  e->acquire->sec_label, e->acquire->background, e->acquire->logger);
@@ -845,7 +849,7 @@ void dispatch(enum connection_event event, struct connection *c,
 						   c->logger, where, "unroute permanent");
 			/* stop updown_unroute() finding this
 			 * connection */
-			set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
+			set_routing(c, RT_UNROUTED, NULL);
 			do_updown_unroute(c);
 			return;
 
@@ -865,7 +869,7 @@ void dispatch(enum connection_event event, struct connection *c,
 		case X(UNROUTE, UNROUTED_NEGOTIATION, PERMANENT):
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute permanent");
-			set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
+			set_routing(c, RT_UNROUTED, NULL);
 			return;
 
 		case X(ROUTE, ROUTED_NEGOTIATION, PERMANENT):
@@ -876,7 +880,7 @@ void dispatch(enum connection_event event, struct connection *c,
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute permanent");
 			/* do now so route_owner won't find us */
-			set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
+			set_routing(c, RT_UNROUTED, NULL);
 			do_updown_unroute(c);
 			return;
 
@@ -887,7 +891,7 @@ void dispatch(enum connection_event event, struct connection *c,
 						   c->logger, where, "unroute permanent");
 			/* stop updown_unroute() finding this
 			 * connection */
-			set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
+			set_routing(c, RT_UNROUTED, NULL);
 			do_updown_unroute(c);
 			return;
 
@@ -910,14 +914,14 @@ void dispatch(enum connection_event event, struct connection *c,
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute permanent");
 			/* do now so route_owner won't find us */
-			set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
+			set_routing(c, RT_UNROUTED, NULL);
 			do_updown_unroute(c);
 			return;
 
 		case X(UNROUTE, UNROUTED_TUNNEL, PERMANENT):
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute permanent");
-			set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
+			set_routing(c, RT_UNROUTED, NULL);
 			return;
 
 		case X(UNROUTE, UNROUTED, TEMPLATE):
@@ -927,7 +931,7 @@ void dispatch(enum connection_event event, struct connection *c,
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute template");
 			/* do now so route_owner won't find us */
-			set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
+			set_routing(c, RT_UNROUTED, NULL);
 			do_updown_unroute(c);
 			return;
 
@@ -950,7 +954,7 @@ void dispatch(enum connection_event event, struct connection *c,
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute instance");
 			/* do now so route_owner won't find us */
-			set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
+			set_routing(c, RT_UNROUTED, NULL);
 			return;
 
 		case X(UNROUTE, ROUTED_NEGOTIATION, INSTANCE):
@@ -967,7 +971,7 @@ void dispatch(enum connection_event event, struct connection *c,
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute instance");
 			/* do now so route_owner won't find us */
-			set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
+			set_routing(c, RT_UNROUTED, NULL);
 			do_updown_unroute(c);
 			return;
 
@@ -975,14 +979,14 @@ void dispatch(enum connection_event event, struct connection *c,
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute instance");
 			/* do now so route_owner won't find us */
-			set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
+			set_routing(c, RT_UNROUTED, NULL);
 			do_updown_unroute(c);
 			return;
 
 		case X(UNROUTE, UNROUTED_TUNNEL, INSTANCE):
 			delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
 						   c->logger, where, "unroute instance");
-			set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
+			set_routing(c, RT_UNROUTED, NULL);
 			return;
 
 		case X(TIMEOUT_IKE, UNROUTED, PERMANENT):
@@ -1012,7 +1016,7 @@ void dispatch(enum connection_event event, struct connection *c,
 				 * Change routing so we don't get cleared out
 				 * when state/connection dies.
 				 */
-				set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
+				set_routing(c, RT_UNROUTED, NULL);
 			}
 			delete_ike_sa(e->ike);
 			delete_connection(&c);
@@ -1079,7 +1083,7 @@ void connection_resume(struct child_sa *child)
 	enum routing cr = c->child.routing;
 	switch (cr) {
 	case RT_UNROUTED_TUNNEL:
-		set_child_routing(c, RT_ROUTED_TUNNEL, c->child.newest_routing_sa);
+		set_routing(c, RT_ROUTED_TUNNEL, child);
 		FOR_EACH_ITEM(spd, &c->child.spds) {
 			do_updown(UPDOWN_UP, c, spd, &child->sa, child->sa.st_logger);
 			do_updown(UPDOWN_ROUTE, c, spd, &child->sa, child->sa.st_logger);
@@ -1095,7 +1099,7 @@ void connection_resume(struct child_sa *child)
 		llog_pexpect(child->sa.st_logger, HERE,
 			     "%s() unexpected routing %s",
 			     __func__, enum_name_short(&routing_names, cr));
-		set_child_routing(c, RT_ROUTED_TUNNEL, c->child.newest_routing_sa);
+		set_routing(c, RT_ROUTED_TUNNEL, child);
 		break;
 	}
 }
@@ -1127,7 +1131,7 @@ void connection_suspend(struct child_sa *child)
 				child->sa.st_mobike_del_src_ip = false;
 			}
 		}
-		set_child_routing(c, RT_UNROUTED_TUNNEL, c->child.newest_routing_sa);
+		set_routing(c, RT_UNROUTED_TUNNEL, child);
 		break;
 	case RT_ROUTED_ONDEMAND:
 	case RT_ROUTED_NEVER_NEGOTIATE:
@@ -1145,7 +1149,7 @@ void connection_suspend(struct child_sa *child)
 				child->sa.st_mobike_del_src_ip = false;
 			}
 		}
-		set_child_routing(c, RT_UNROUTED_TUNNEL, c->child.newest_routing_sa);
+		set_routing(c, RT_UNROUTED_TUNNEL, child);
 		break;
 	case RT_UNROUTED:
 	case RT_UNROUTED_NEGOTIATION:
@@ -1153,7 +1157,7 @@ void connection_suspend(struct child_sa *child)
 		llog_pexpect(child->sa.st_logger, HERE,
 			     "%s() unexpected routing %s",
 			     __func__, enum_name_short(&routing_names, cr));
-		set_child_routing(c, RT_UNROUTED_TUNNEL, c->child.newest_routing_sa);
+		set_routing(c, RT_UNROUTED_TUNNEL, child);
 		break;
 	}
 }

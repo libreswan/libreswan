@@ -73,4 +73,9 @@ void connection_delete_ike(struct ike_sa **ike);
 void ldbg_connection_establish(struct ike_sa *ike, struct child_sa *child,
 			       enum direction direction, where_t where);
 
+void set_routing_where(struct connection *c, enum routing routing,
+			     const struct child_sa *child, where_t where);
+#define set_routing(C, RT, CHILD)		\
+	set_routing_where(C, RT, CHILD, HERE)
+
 #endif

@@ -804,11 +804,6 @@ void alloc_connection_spds(struct connection *c, unsigned nr);
 void discard_connection_spds(struct connection *c);
 void add_connection_spds(struct connection *c, const struct ip_info *host_afi);
 
-void set_child_routing_where(struct connection *c, enum routing routing,
-			     so_serial_t serialno, where_t where);
-#define set_child_routing(C, RT, SO)		\
-	set_child_routing_where(C, RT, SO, HERE)
-
 /*
  * Format the topology of a connection end, leaving out defaults.
  * Largest left end looks like: client === host : port [ host_id ] ---

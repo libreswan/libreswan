@@ -1079,7 +1079,7 @@ bool unrouted_to_routed_ondemand(struct connection *c)
 	if (!unrouted_to_routed(c)) {
 		return false;
 	}
-	set_child_routing(c, RT_ROUTED_ONDEMAND, SOS_NOBODY);
+	set_routing(c, RT_ROUTED_ONDEMAND, NULL);
 	return true;
 }
 
@@ -1088,7 +1088,7 @@ bool unrouted_to_routed_never_negotiate(struct connection *c)
 	if (!unrouted_to_routed(c)) {
 		return false;
 	}
-	set_child_routing(c, RT_ROUTED_NEVER_NEGOTIATE, SOS_NOBODY);
+	set_routing(c, RT_ROUTED_NEVER_NEGOTIATE, NULL);
 	return true;
 }
 
@@ -1315,7 +1315,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	}
 
 	/* Success! */
-	set_child_routing(c, RT_ROUTED_ONDEMAND, c->child.newest_routing_sa);
+	set_routing(c, RT_ROUTED_ONDEMAND, NULL);
 	return true;
 }
 
@@ -2260,7 +2260,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 #endif
 
 	/* include CISCO's SPD */
-	set_child_routing(c, RT_ROUTED_TUNNEL, child->sa.st_serialno);
+	set_routing(c, RT_ROUTED_TUNNEL, child);
 	return true;
 }
 
@@ -2506,7 +2506,7 @@ void teardown_ipsec_kernel_policies(struct child_sa *child)
 		 * update routing; route_owner() will see this and not
 		 * think this route is the owner?
 		 */
-		set_child_routing(c, RT_UNROUTED, SOS_NOBODY);
+		set_routing(c, RT_UNROUTED, NULL);
 		do_updown_spds(UPDOWN_DOWN, c, &spds, &child->sa, child->sa.st_logger);
 		delete_spd_kernel_policies(&spds, EXPECT_KERNEL_POLICY_OK,
 					   child->sa.st_logger, HERE, "unroute");
