@@ -9,7 +9,7 @@
 <refmeta>
 <refentrytitle>IPSEC</refentrytitle>
 <manvolnum>8</manvolnum>
-<refmiscinfo class='date'>27 April 2018</refmiscinfo>
+<refmiscinfo class='date'>02 April 2023</refmiscinfo>
 <refmiscinfo class="source">libreswan</refmiscinfo>
 <refmiscinfo class="manual">Executable programs</refmiscinfo>
 </refmeta>
@@ -92,6 +92,8 @@ to stdout for debugging</para>
 <para><userinput>ipsec checknflog</userinput> is used to initialise iptables rules for the nflog devices when specified via the nflog= or nflog-all= configuration options.</para>
 
 <para><userinput>ipsec stopnflog</userinput> is used to delete iptables rules for the nflog devices.</para>
+
+<para><userinput>ipsec trafficstatus|traffic [--name connection-name]</userinput> is used to get tunnel traffic status.</para>
 
 </refsect1>
 

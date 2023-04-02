@@ -52,6 +52,9 @@ DONTMENTION='^(ipsec|_.*|.*\.old|.*\.orig|.*~)$'
 # version numbering (details filled in by build)
 export IPSEC_VERSION="@IPSECVERSION@"
 
+# We use variable conn_name so make sure it is not set
+conn_name=
+
 set_nss_db_trusts() {
     # has to handle a NSS nick with spaces
     certutil -L -d "${IPSEC_NSSDIR_SQL}" | \
@@ -559,6 +562,11 @@ while [ ${#} -gt 0 ]; do
 	    fi
 	    exit 0
 	    ;;
+	--name)
+	    conn_name="${2}"
+	    shift;
+	    shift;
+	    ;;
 	status|--status)
 	    cmd="whack"
 	    whackoption="--status"
@@ -688,6 +696,10 @@ case "${cmd}" in
 	exec "${IPSEC_EXECDIR}/setup" "${setupoption}"
 	;;
     whack)
-	exec "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" "${whackoption}"
+	if [ -n "${conn_name}" ]; then
+	    exec "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" "${whackoption}" --name "${conn_name}"
+	else
+	    exec "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" "${whackoption}"
+	fi
 	;;
 esac
