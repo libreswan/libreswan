@@ -85,10 +85,8 @@ static void jam_event_sa(struct jambuf *buf, struct state *st)
 	jam_string(buf, st->st_state->short_name);
 }
 
-static void jam_event(struct jambuf *buf, enum connection_event event, struct connection *c, struct annex *e)
+static void jam_routing(struct jambuf *buf, struct connection *c)
 {
-	jam_enum_short(buf, &connection_event_names, event);
-	jam_string(buf, " to ");
 	jam_enum_short(buf, &routing_names, c->child.routing);
 	jam_string(buf, " ");
 	jam_enum_short(buf, &connection_kind_names, c->kind);
@@ -111,6 +109,10 @@ static void jam_event(struct jambuf *buf, enum connection_event event, struct co
 		jam_string(buf, " IKE");
 		jam_so(buf, c->newest_ike_sa);
 	}
+}
+
+static void jam_annex(struct jambuf *buf, const struct annex *e)
+{
 	if (e->ike != NULL) {
 		jam_event_sa(buf, &(*e->ike)->sa);
 	}
@@ -121,6 +123,14 @@ static void jam_event(struct jambuf *buf, enum connection_event event, struct co
 		jam_string(buf, "; ");
 		jam_kernel_acquire(buf, e->acquire);
 	}
+}
+
+static void jam_event(struct jambuf *buf, enum connection_event event, struct connection *c, struct annex *e)
+{
+	jam_enum_short(buf, &connection_event_names, event);
+	jam_string(buf, " to ");
+	jam_routing(buf, c);
+	jam_annex(buf, e);
 }
 
 bool routed(enum routing r)
@@ -157,20 +167,22 @@ bool kernel_policy_installed(const struct connection *c)
 	bad_case(c->child.routing);
 }
 
-void set_child_routing_where(struct connection *c, enum routing routing,
-			     so_serial_t new_routing_sa, where_t where)
+void set_child_routing_where(struct connection *c,
+			     enum routing new_routing,
+			     so_serial_t new_routing_sa,
+			     where_t where)
 {
-	so_serial_t old_routing_sa = c->child.newest_routing_sa;
-	connection_buf cb;
-	enum_buf ob, nb;
-	ldbg(c->logger, "kernel: .newest_routing_sa "PRI_SO"->"PRI_SO" .routing %s->%s "PRI_CO" "PRI_CONNECTION" IPsec "PRI_SO" "PRI_WHERE,
-	     pri_so(old_routing_sa), pri_so(new_routing_sa),
-	     str_enum_short(&routing_names, c->child.routing, &ob),
-	     str_enum_short(&routing_names, routing, &nb),
-	     pri_connection_co(c),
-	     pri_connection(c, &cb),
-	     pri_so(c->newest_ipsec_sa),
-	     pri_where(where));
+	LDBGP_JAMBUF(DBG_BASE, c->logger, buf) {
+		jam_string(buf, "routing: ");
+		jam_routing(buf, c);
+		jam_string(buf, " -> ");
+		jam_enum_short(buf, &routing_names, new_routing);
+		jam_string(buf, " ");
+		jam_so(buf, new_routing_sa);
+		jam_string(buf, " ");
+		jam_where(buf, where);
+	}
+
 	/*
 	 * Labed children are never routed and/or have a kernel
 	 * policy.  Instead the kernel deals with the policy, and the
@@ -191,7 +203,7 @@ void set_child_routing_where(struct connection *c, enum routing routing,
 		PEXPECT(c->logger, new_routing_sa >= c->newest_ipsec_sa);
 	}
 #endif
-	c->child.routing = routing;
+	c->child.routing = new_routing;
 	c->child.newest_routing_sa = new_routing_sa;
 }
 
@@ -721,7 +733,7 @@ void dispatch(enum connection_event event, struct connection *c,
 {
 	struct annex *e = &ee;
 	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-		jam_string(buf, "dispatch ");
+		jam_string(buf, "routing: dispatch ");
 		jam_event(buf, event, c, e);
 		jam_string(buf, " ");
 		jam_where(buf, where);
@@ -1013,7 +1025,7 @@ void dispatch(enum connection_event event, struct connection *c,
 	}
 
 	LLOG_PEXPECT_JAMBUF(logger, where, buf) {
-		jam_string(buf, "unhandled ");
+		jam_string(buf, "routing: unhandled ");
 		jam_event(buf, event, c, e);
 	}
 }
