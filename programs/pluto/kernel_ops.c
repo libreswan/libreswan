@@ -20,6 +20,7 @@
 #include "log.h"
 #include "kernel_xfrm_interface.h"
 #include "ip_info.h"
+#include "kernel_iface.h"
 
 /*
  * Setup an IPsec route entry.
@@ -27,20 +28,20 @@
  * There's lots of redundancy here, see debug log lines below.
  */
 
-bool raw_policy(enum kernel_policy_op op,
-		enum direction dir,
-		enum expect_kernel_policy expect_kernel_policy,
-		const ip_selector *src_client,
-		const ip_selector *dst_client,
-		const struct kernel_policy *policy,
-		deltatime_t use_lifetime,
-		const struct sa_marks *sa_marks,
-		const struct pluto_xfrmi *xfrmi,
-		enum kernel_policy_id id,
-		const shunk_t sec_label,
-		where_t where,
-		struct logger *logger,
-		const char *story)
+bool kernel_ops_raw_policy(enum kernel_policy_op op,
+			   enum direction dir,
+			   enum expect_kernel_policy expect_kernel_policy,
+			   const ip_selector *src_client,
+			   const ip_selector *dst_client,
+			   const struct kernel_policy *policy,
+			   deltatime_t use_lifetime,
+			   const struct sa_marks *sa_marks,
+			   const struct pluto_xfrmi *xfrmi,
+			   enum kernel_policy_id id,
+			   const shunk_t sec_label,
+			   where_t where,
+			   struct logger *logger,
+			   const char *story)
 {
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
 	pexpect(client_proto == selector_protocol(*dst_client));
@@ -54,8 +55,9 @@ bool raw_policy(enum kernel_policy_op op,
 
 	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 
-		jam(buf, "kernel: %s() ", __func__);
+		jam(buf, "%s()", __func__);
 
+		jam_string(buf, " ");
 		jam_enum_short(buf, &kernel_policy_op_names, op);
 		jam_string(buf, "+");
 		jam_enum_short(buf, &direction_names, dir);
@@ -135,12 +137,12 @@ bool raw_policy(enum kernel_policy_op op,
 	if (policy != NULL) {
 		switch(policy->shunt) {
 		case SHUNT_HOLD:
-			dbg("kernel: %s() SPI_HOLD implemented as no-op", __func__);
+			ldbg(logger, "%s() SPI_HOLD implemented as no-op", __func__);
 			return true;
 		case SHUNT_TRAP:
 			if ((op == KERNEL_POLICY_OP_ADD && dir == DIRECTION_INBOUND) ||
 			    (op == KERNEL_POLICY_OP_DELETE && dir == DIRECTION_INBOUND)) {
-				dbg("kernel: %s() SPI_TRAP add|delete inbound implemented as no-op", __func__);
+				ldbg(logger, "%s() SPI_TRAP add|delete inbound implemented as no-op", __func__);
 				return true;
 			}
 			/* XXX: what about KERNEL_POLICY_OP_REPLACE? */
@@ -150,23 +152,23 @@ bool raw_policy(enum kernel_policy_op op,
 		}
 	}
 
-	bool result = kernel_ops->raw_policy(op, dir,
-					     expect_kernel_policy,
-					     src_client, dst_client,
-					     policy,
-					     use_lifetime,
-					     sa_marks, xfrmi, id, sec_label,
-					     logger);
-	dbg("kernel: %s() result=%s", __func__, (result ? "success" : "failed"));
+	bool ok = kernel_ops->raw_policy(op, dir,
+					 expect_kernel_policy,
+					 src_client, dst_client,
+					 policy,
+					 use_lifetime,
+					 sa_marks, xfrmi, id, sec_label,
+					 logger);
+	ldbg(logger, "%s() ... %s", __func__, bool_str(ok));
 
-	return result;
+	return ok;
 }
 
 bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logger *logger)
 {
 	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 
-		jam(buf, "kernel: add_sa()");
+		jam(buf, "%s()", __func__);
 
 		jam(buf, " level=%d", sa->level);
 		jam_string(buf, " ");
@@ -201,6 +203,7 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 		if (sa->encrypt != NULL) {
 			jam(buf, " %s:%zu", sa->encrypt->common.fqn, sa->encrypt_key.len);
 		}
+		jam_string(buf, " ...");
 	}
 
 	if (!sa->tunnel/*i.e., transport-mode*/) {
@@ -227,17 +230,27 @@ bool kernel_ops_add_sa(const struct kernel_state *sa, bool replace, struct logge
 			pexpect(address_eq_address(sa->dst.address, selector_prefix(sa->dst.route)));
 		}
 	}
-	return kernel_ops->add_sa(sa, replace, logger);
+
+	bool ok = kernel_ops->add_sa(sa, replace, logger);
+
+	ldbg(logger, "%s() ... %s", __func__, bool_str(ok));
+	return ok;
 }
 
-bool migrate_ipsec_sa(struct child_sa *child)
+bool kernel_ops_migrate_ipsec_sa(struct child_sa *child)
 {
-	if (kernel_ops->migrate_ipsec_sa != NULL) {
-		return kernel_ops->migrate_ipsec_sa(child);
-	} else {
-		dbg("kernel: Unsupported kernel stack in migrate_ipsec_sa");
+	struct logger *logger = child->sa.st_logger;
+	if (kernel_ops->migrate_ipsec_sa == NULL) {
+		ldbg(logger, "%s() unsupported kernel stack in migrate_ipsec_sa", __func__);
 		return false;
 	}
+
+	ldbg(logger, "%s() migrating "PRI_SO" ...", __func__, pri_so(child->sa.st_serialno));
+
+	bool ok = kernel_ops->migrate_ipsec_sa(child);
+
+	ldbg(logger, "%s() ... %s", __func__, bool_str(ok));
+	return ok;
 }
 
 ipsec_spi_t kernel_ops_get_ipsec_spi(ipsec_spi_t avoid,
@@ -250,7 +263,8 @@ ipsec_spi_t kernel_ops_get_ipsec_spi(ipsec_spi_t avoid,
 				     struct logger *logger)
 {
 	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-		jam_string(buf, "kernel: get_ipsec_spi() ");
+		jam(buf, "%s()", __func__);
+		jam_string(buf, " ");
 		jam_address(buf, src);
 		jam_string(buf, "-");
 		jam(buf, "%s", proto->name);
@@ -264,8 +278,8 @@ ipsec_spi_t kernel_ops_get_ipsec_spi(ipsec_spi_t avoid,
 	passert(kernel_ops->get_ipsec_spi != NULL);
 	ipsec_spi_t spi = kernel_ops->get_ipsec_spi(avoid, src, dst, proto,
 						    reqid, min, max, story, logger);
-	ldbg(logger, "kernel: get_ipsec_spi() ... allocated "PRI_IPSEC_SPI" for %s",
-	     pri_ipsec_spi(spi), story);
+	ldbg(logger, "%s() ... allocated "PRI_IPSEC_SPI" for %s",
+	     __func__, pri_ipsec_spi(spi), story);
 
 	return spi;
 }
@@ -279,17 +293,19 @@ bool kernel_ops_del_ipsec_spi(ipsec_spi_t spi, const struct ip_protocol *proto,
 	const char *said_story = str_said(&said, &sbuf);
 
 	address_buf sb, db;
-	dbg("kernel: del_ipsec_spi() deleting sa %s-%s["PRI_IPSEC_SPI"]->%s for %s ...",
-	    str_address(src, &sb),
-	    proto == NULL ? "<NULL>" : proto->name,
-	    pri_ipsec_spi(spi),
-	    str_address(dst, &db),
-	    said_story);
+	ldbg(logger, "%s() deleting sa %s-%s["PRI_IPSEC_SPI"]->%s for %s ...",
+	     __func__,
+	     str_address(src, &sb),
+	     proto == NULL ? "<NULL>" : proto->name,
+	     pri_ipsec_spi(spi),
+	     str_address(dst, &db),
+	     said_story);
 
 	passert(kernel_ops->del_ipsec_spi != NULL);
-	bool ok =kernel_ops->del_ipsec_spi(spi, proto, src, dst, said_story, logger);
-	ldbg(logger, "kernel: get_ipsec_spi() ... %s", ok ? "succeeded" : "failed");
 
+	bool ok =kernel_ops->del_ipsec_spi(spi, proto, src, dst, said_story, logger);
+
+	ldbg(logger, "%s() ... %s", __func__, bool_str(ok));
 	return ok;
 }
 
@@ -297,16 +313,20 @@ bool kernel_ops_detect_offload(const struct raw_iface *ifp, struct logger *logge
 {
 	static bool no_offload;
 	if (no_offload) {
-		ldbg(logger, "no offload already detected");
+		ldbg(logger, "%s() no offload already detected", __func__);
 		return false;
 	}
 
 	if (kernel_ops->detect_offload == NULL) {
-		ldbg(logger, "%s kernel interface does not support offload",
-		     kernel_ops->interface_name);
+		ldbg(logger, "%s() %s kernel interface does not support offload",
+		     __func__, kernel_ops->interface_name);
 		no_offload = true;
 		return false;
 	}
 
-	return kernel_ops->detect_offload(ifp, logger);
+	ldbg(logger, "%s() %s ...", __func__, ifp->name);
+	bool ok = kernel_ops->detect_offload(ifp, logger);
+	ldbg(logger, "%s() ... %s", __func__, bool_str(ok));
+
+	return ok;
 }

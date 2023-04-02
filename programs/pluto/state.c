@@ -2634,7 +2634,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 		}
 	}
 
-	if (!migrate_ipsec_sa(child)) {
+	if (!kernel_ops_migrate_ipsec_sa(child)) {
 		llog_sa(RC_LOG, ike, "%s FAILED", buf);
 		return false;
 	}
