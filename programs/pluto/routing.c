@@ -36,6 +36,8 @@ enum connection_event {
 	CONNECTION_ROUTE,
 	CONNECTION_UNROUTE,
 	CONNECTION_ACQUIRE,
+	CONNECTION_ESTABLISH_INBOUND,
+	CONNECTION_ESTABLISH_OUTBOUND,
 	CONNECTION_DELETE_IKE,
 	CONNECTION_DELETE_CHILD,
 	CONNECTION_TIMEOUT_IKE,
@@ -48,6 +50,8 @@ static const char *connection_event_name[] = {
 	S(CONNECTION_ROUTE),
 	S(CONNECTION_UNROUTE),
 	S(CONNECTION_ACQUIRE),
+	S(CONNECTION_ESTABLISH_INBOUND),
+	S(CONNECTION_ESTABLISH_OUTBOUND),
 	S(CONNECTION_DELETE_IKE),
 	S(CONNECTION_DELETE_CHILD),
 	S(CONNECTION_TIMEOUT_IKE),
@@ -131,6 +135,26 @@ static void jam_event(struct jambuf *buf, enum connection_event event, struct co
 	jam_string(buf, " to ");
 	jam_routing(buf, c);
 	jam_annex(buf, e);
+}
+
+void ldbg_connection_establish(struct ike_sa *ike, struct child_sa *child,
+			       enum direction direction, where_t where)
+{
+	struct annex ee = {
+		.ike = &ike,
+		.child = &child,
+	};
+	struct annex *e = &ee;
+	LDBGP_JAMBUF(DBG_BASE, child->sa.st_logger, buf) {
+		jam_string(buf, "routing: dispatch ");
+		jam_event(buf,
+			  (direction == DIRECTION_INBOUND ? CONNECTION_ESTABLISH_INBOUND :
+			   direction == DIRECTION_OUTBOUND ? CONNECTION_ESTABLISH_OUTBOUND :
+			   CONNECTION_EVENT_ROOF),
+			  child->sa.st_connection, e);
+		jam_string(buf, " ");
+		jam_where(buf, where);
+	}
 }
 
 bool routed(enum routing r)

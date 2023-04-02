@@ -24,6 +24,7 @@ struct state;
 struct kernel_acquire;
 struct child_sa;
 struct ike_sa;
+enum direction;
 
 /*
  * Routing status.
@@ -67,5 +68,9 @@ void connection_suspend(struct child_sa *child);
 void connection_timeout(struct ike_sa **ike);
 void connection_delete_child(struct ike_sa *ike, struct child_sa **child);
 void connection_delete_ike(struct ike_sa **ike);
+
+/* fake a debug message for establish for now */
+void ldbg_connection_establish(struct ike_sa *ike, struct child_sa *child,
+			       enum direction direction, where_t where);
 
 #endif

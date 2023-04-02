@@ -1734,10 +1734,13 @@ fail:
 	return false;
 }
 
-static bool install_inbound_ipsec_kernel_policies(struct state *st)
+static bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 {
-	const struct connection *c = st->st_connection;
-	struct logger *logger = st->st_logger;
+	ldbg_connection_establish(ike_sa(&child->sa, HERE), child,
+				  DIRECTION_INBOUND, HERE);
+
+	const struct connection *c = child->sa.st_connection;
+	struct logger *logger = child->sa.st_logger;
 	/*
 	 * Add an inbound eroute to enforce an arrival check.
 	 *
@@ -1766,7 +1769,7 @@ static bool install_inbound_ipsec_kernel_policies(struct state *st)
 		selector_pair_buf spb;
 		ldbg(logger, "kernel: %s() is installing SPD for %s",
 		     __func__, str_selector_pair(&spd->remote->client, &spd->local->client, &spb));
-		install_inbound_ipsec_kernel_policy(pexpect_child_sa(st), spd, HERE);
+		install_inbound_ipsec_kernel_policy(child, spd, HERE);
 	}
 
 	return true;
@@ -2058,25 +2061,29 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 	return install_ipsec_sa(child, DIRECTION_INBOUND, where);
 }
 
-static bool install_outbound_ipsec_kernel_policies(struct state *st)
+static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 {
-	struct connection *c = st->st_connection;
+	ldbg_connection_establish(ike_sa(&child->sa, HERE), child,
+				  DIRECTION_OUTBOUND, HERE);
+
+	struct logger *logger = child->sa.st_logger;
+	struct connection *c = child->sa.st_connection;
 
 	if (c->config->ike_version == IKEv2 &&
 	    labeled_child(c)) {
-		ldbg(st->st_logger, "kernel: %s() skipping install of IPsec policies as security label", __func__);
+		ldbg(logger, "kernel: %s() skipping install of IPsec policies as security label", __func__);
 		return true;
 	}
 
-	if (c->child.newest_routing_sa == st->st_serialno) {
-		ldbg(st->st_logger, "kernel: %s() skipping kernel policies as already owner", __func__);
+	if (c->child.newest_routing_sa == child->sa.st_serialno) {
+		ldbg(logger, "kernel: %s() skipping kernel policies as already owner", __func__);
 		return true;
 	}
 
-	ldbg(st->st_logger,
+	ldbg(logger,
 	     "kernel: %s() installing IPsec policies for "PRI_SO": connection is currently "PRI_SO" %s",
 	    __func__,
-	    pri_so(st->st_serialno),
+	    pri_so(child->sa.st_serialno),
 	    pri_so(c->child.newest_routing_sa),
 	    enum_name(&routing_story, c->child.routing));
 
@@ -2127,16 +2134,16 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 			(spd->wip.conflicting.shunt != NULL ? KERNEL_POLICY_OP_REPLACE :
 			 KERNEL_POLICY_OP_ADD);
 		if (spd->block) {
-			llog(RC_LOG, st->st_logger, "state spd requires a block (and no CAT?)");
+			llog(RC_LOG, logger, "state spd requires a block (and no CAT?)");
 			ok = spd->wip.installed.policy =
 				install_bare_spd_kernel_policy(spd, op, DIRECTION_OUTBOUND,
 							       EXPECT_KERNEL_POLICY_OK,
 							       SHUNT_KIND_BLOCK,
-							       st->st_logger, HERE,
+							       logger, HERE,
 							       "install IPsec block policy");
 		} else {
 			ok = spd->wip.installed.policy =
-				install_outbound_ipsec_kernel_policy(pexpect_child_sa(st), spd,
+				install_outbound_ipsec_kernel_policy(child, spd,
 								     spd->wip.conflicting.shunt != NULL,
 								     HERE);
 		}
@@ -2170,7 +2177,7 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 		} else {
 			/* go ahead and notify */
 			ok = spd->wip.installed.firewall =
-				do_updown(UPDOWN_UP, c, spd, st, st->st_logger);
+				do_updown(UPDOWN_UP, c, spd, &child->sa, logger);
 		}
 	}
 
@@ -2180,7 +2187,7 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 	 * Probably.  This code path needs a re-think.
 	 */
 
-	ldbg(st->st_logger, "kernel: %s() running updown-prepare", __func__);
+	ldbg(logger, "kernel: %s() running updown-prepare", __func__);
 	if (ok) {
 		FOR_EACH_ITEM(spd, &c->child.spds) {
 #ifdef USE_CISCO_SPLIT
@@ -2192,13 +2199,13 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 #endif
 			if (spd->wip.conflicting.spd == NULL) {
 				/* a new route: no deletion required, but preparation is */
-				if (!do_updown(UPDOWN_PREPARE, c, spd, st, st->st_logger))
-					dbg("kernel: prepare command returned an error");
+				if (!do_updown(UPDOWN_PREPARE, c, spd, &child->sa, logger))
+					ldbg(logger, "kernel: prepare command returned an error");
 			}
 		}
 	}
 
-	ldbg(st->st_logger, "kernel: %s() running updown-route", __func__);
+	ldbg(logger, "kernel: %s() running updown-route", __func__);
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		if (!ok) {
 			break;
@@ -2213,7 +2220,7 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 		if (spd->wip.conflicting.spd == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			ok = spd->wip.installed.route =
-				do_updown(UPDOWN_ROUTE, c, spd, st, st->st_logger);
+				do_updown(UPDOWN_ROUTE, c, spd, &child->sa, logger);
 		}
 	}
 
@@ -2223,7 +2230,7 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 
 	if (!ok) {
 		FOR_EACH_ITEM(spd, &c->child.spds) {
-			revert_kernel_policy(spd, st, st->st_logger);
+			revert_kernel_policy(spd, &child->sa, logger);
 		}
 		return false;
 	}
@@ -2241,19 +2248,19 @@ static bool install_outbound_ipsec_kernel_policies(struct state *st)
 			free_bare_shunt(bspp);
 		}
 		/* clear host shunts that clash with freshly installed route */
-		clear_narrow_holds(&spd->local->client, &spd->remote->client, st->st_logger);
+		clear_narrow_holds(&spd->local->client, &spd->remote->client, logger);
 	}
 
 
 #ifdef IPSEC_CONNECTION_LIMIT
 	num_ipsec_eroute += new_spds;
-	llog(RC_COMMENT, st->st_logger,
+	llog(RC_COMMENT, logger,
 	     "%d IPsec connections are currently being managed",
 	     num_ipsec_eroute);
 #endif
 
 	/* include CISCO's SPD */
-	set_child_routing(c, RT_ROUTED_TUNNEL, st->st_serialno);
+	set_child_routing(c, RT_ROUTED_TUNNEL, child->sa.st_serialno);
 	return true;
 }
 
@@ -2328,7 +2335,7 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
 			ldbg(logger, "kernel: %s() failed to install inbound kernel state", __func__);
 			return false;
 		}
-		if (!install_inbound_ipsec_kernel_policies(&child->sa)) {
+		if (!install_inbound_ipsec_kernel_policies(child)) {
 			ldbg(logger, "kernel: %s() failed to install inbound kernel policy", __func__);
 			return false;
 		}
@@ -2346,7 +2353,7 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
 
 	if (PEXPECT(logger, r == ROUTEABLE)
 	    && (direction & DIRECTION_OUTBOUND)) {
-		if (!install_outbound_ipsec_kernel_policies(&child->sa)) {
+		if (!install_outbound_ipsec_kernel_policies(child)) {
 			teardown_ipsec_kernel_policies(child);
 			uninstall_kernel_states(child);
 			return false;
