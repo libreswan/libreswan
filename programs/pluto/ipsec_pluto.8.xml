@@ -4075,7 +4075,7 @@
     <title>BUGS</title>
 
     <para>Please see
-    &lt;<ulink url="https://bugs.libreswan.org">https://bugs.libreswan.org</ulink>&gt;
+    &lt;<ulink url="https://github.com/libreswan/libreswan/issues">https://github.com/libreswan/libreswan/issues</ulink>&gt;
     for a list of currently known bugs and missing features.</para>
 
     <para>Bugs should be reported to the &lt;swan-dev@lists.libreswan.org&gt;
