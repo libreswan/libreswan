@@ -137,15 +137,18 @@ bool kernel_ops_raw_policy(enum kernel_policy_op op,
 	if (policy != NULL) {
 		switch(policy->shunt) {
 		case SHUNT_HOLD:
+			PEXPECT(logger, policy->kind == SHUNT_KIND_NEGOTIATION);
 			ldbg(logger, "%s() SPI_HOLD implemented as no-op", __func__);
 			return true;
 		case SHUNT_TRAP:
-			if ((op == KERNEL_POLICY_OP_ADD && dir == DIRECTION_INBOUND) ||
-			    (op == KERNEL_POLICY_OP_DELETE && dir == DIRECTION_INBOUND)) {
-				ldbg(logger, "%s() SPI_TRAP add|delete inbound implemented as no-op", __func__);
+			if (dir == DIRECTION_INBOUND) {
+				PEXPECT(logger, (op == KERNEL_POLICY_OP_ADD ||
+						 op == KERNEL_POLICY_OP_REPLACE ||
+						 op == KERNEL_POLICY_OP_DELETE));
+				PEXPECT(logger, policy->kind == SHUNT_KIND_ONDEMAND);
+				llog_pexpect(logger, where, "inbound ondemand SHUNT_TRAP is a no-op");
 				return true;
 			}
-			/* XXX: what about KERNEL_POLICY_OP_REPLACE? */
 			break;
 		default:
 			break;
