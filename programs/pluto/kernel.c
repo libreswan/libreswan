@@ -213,6 +213,7 @@ bool shunt_ok(enum shunt_kind shunt_kind, enum shunt_policy shunt_policy)
  */
 
 static bool install_prospective_kernel_policies(const struct spd_route *spd,
+						enum shunt_kind shunt_kind,
 						struct logger *logger, where_t where)
 {
 	const struct connection *c = spd->connection;
@@ -220,20 +221,16 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 	/*
 	 * Only the following shunts are valid.
 	 */
-	enum shunt_kind shunt_kind =
-		(NEVER_NEGOTIATE(c->policy) ? SHUNT_KIND_NEVER_NEGOTIATE :
-		 SHUNT_KIND_ONDEMAND);
-	enum shunt_policy prospective = c->config->shunt[shunt_kind];
-	passert(shunt_ok(shunt_kind, prospective));
+	PASSERT(logger, (shunt_kind == SHUNT_KIND_NEVER_NEGOTIATE ||
+			 shunt_kind == SHUNT_KIND_ONDEMAND));
 
 	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 		jam(buf, "kernel: %s() ", __func__);
 
 		jam_connection(buf, c);
 
-		enum_buf spb;
-		jam(buf, " never_negotiate_shunt=%s",
-		    str_enum_short(&shunt_policy_names, prospective, &spb));
+		jam_string(buf, " ");
+		jam_enum_short(buf, &shunt_kind_names, shunt_kind);
 
 		jam(buf, " ");
 		jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
@@ -272,7 +269,8 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 								  "prospective sec_label kernel policy")) {
 				return false;
 			}
-		} else {
+		} else if (direction == DIRECTION_OUTBOUND ||
+			   shunt_kind == SHUNT_KIND_NEVER_NEGOTIATE) {
 			if (!install_bare_spd_kernel_policy(spd, KERNEL_POLICY_OP_ADD, direction,
 							    /*XXX: should no policy be expected?*/
 							    EXPECT_KERNEL_POLICY_OK,
@@ -959,7 +957,7 @@ static void revert_kernel_policy(struct spd_route *spd,
 	}
 }
 
-static bool unrouted_to_routed(struct connection *c)
+static bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind)
 {
 	enum routability r = connection_routability(c, c->logger);
 	switch (r) {
@@ -1011,7 +1009,8 @@ static bool unrouted_to_routed(struct connection *c)
 		}
 
 		ok &= spd->wip.installed.policy =
-			install_prospective_kernel_policies(spd, c->logger, HERE);
+			install_prospective_kernel_policies(spd, shunt_kind,
+							    c->logger, HERE);
 
 		if (spd->wip.conflicting.shunt != NULL &&
 		    PBAD(c->logger, kernel_ops->overlap_supported)) {
@@ -1076,7 +1075,7 @@ static bool unrouted_to_routed(struct connection *c)
 
 bool unrouted_to_routed_ondemand(struct connection *c)
 {
-	if (!unrouted_to_routed(c)) {
+	if (!unrouted_to_routed(c, SHUNT_KIND_ONDEMAND)) {
 		return false;
 	}
 	set_routing(c, RT_ROUTED_ONDEMAND, NULL);
@@ -1085,7 +1084,7 @@ bool unrouted_to_routed_ondemand(struct connection *c)
 
 bool unrouted_to_routed_never_negotiate(struct connection *c)
 {
-	if (!unrouted_to_routed(c)) {
+	if (!unrouted_to_routed(c, SHUNT_KIND_NEVER_NEGOTIATE)) {
 		return false;
 	}
 	set_routing(c, RT_ROUTED_NEVER_NEGOTIATE, NULL);
@@ -2855,7 +2854,11 @@ static void expire_bare_shunts(struct logger *logger)
 				 */
 				struct connection *c = connection_by_serialno(bsp->restore_serialno);
 				if (c != NULL) {
-					if (!install_prospective_kernel_policies(c->spd, logger, HERE)) {
+					enum shunt_kind shunt_kind = (NEVER_NEGOTIATE(c->policy) ? SHUNT_KIND_NEVER_NEGOTIATE :
+								      SHUNT_KIND_ONDEMAND);
+					if (!install_prospective_kernel_policies(c->spd,
+										 shunt_kind,
+										 logger, HERE)) {
 						llog(RC_LOG, logger,
 						     "trap shunt install failed ");
 					}
