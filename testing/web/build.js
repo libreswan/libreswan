@@ -1,39 +1,82 @@
 
 function build_summary(div_id, json_file) {
 
-    window.addEventListener('load', function() {
+    d3.json(json_file, function(error, targets) {
 
-	d3.json(json_file, function(error, targets) {
+	if (error) {
+	    return console.warn(error)
+	}
 
-	    if (error) {
-		return console.warn(error)
+	// Describe the table
+
+	let columns = [
+	    {
+		title: "Target",
+	    },
+	    {
+		title: "All",
+		html: function(target) {
+		    if ("all" in target) {
+			return "<a href=\"" + target.target + ".log\">" + target.all + "</a>"
+		    } else {
+			return ""
+		    }
+		},
 	    }
+	]
 
-	    // Describe the table
+	// Add a column for each OS
 
-	    let columns = [
-		{
-		    title: "Target",
-		    html: function(target) {
-			return "<a href=\"" + target.target + ".log\">" + target.target + "</a>"
-		    },
+	let oss = targets.reduce(
+	    function(r, target) {
+		if (target.os) {
+		    return r.add(target.os)
+		} else {
+		    return r
+		}
+	    },
+	    new Set())
+	for (os of oss) {
+	    columns.push({
+		title: os,
+		html: function(target) {
+		    if (os in target) {
+			return "<a href=\"" + target.target + "-" + os + ".log\">" + target[os] + "</a>"
+		    } else {
+			return ""
+		    }
 		},
-		{
-		    title: "Status",
-		    value: function(target) {
-			return target.status
-		    },
-		},
-	    ]
-
-	    // Build the table
-
-	    lsw_table({
-		id: div_id,
-		data: targets,
-		columns: columns,
 	    })
+	}
 
+	// Merge similar targets
+
+	// Build the table
+	let runs = targets.reduce(
+	    function(m, target) {
+		if (m.has(target.ot)) {
+		    let mm = m.get(target.ot)
+		    mm[target.os] = target.status
+		} else {
+		    let mm = new Object()
+		    mm["target"] = target.ot
+		    if (target.os)
+			mm[target.os] = target.status
+		    else
+			mm["all"] = target.status
+		    m.set(target.ot, mm)
+		}
+		return m
+	    },
+	    new Map()
+	)
+	console.log(columns, runs)
+
+	lsw_table({
+	    id: div_id,
+	    data: runs.values(),
+	    columns: columns,
 	})
+
     })
 }

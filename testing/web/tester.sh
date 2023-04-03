@@ -24,8 +24,8 @@ set -euvx
 repodir=$(cd $1 && pwd ) ; shift
 summarydir=$(cd $1 && pwd) ; shift
 
-bindir=$(dirname $0)
-makedir=$(cd ${bindir}/../.. && pwd)
+webdir=$(dirname $0)
+makedir=$(cd ${webdir}/../.. && pwd)
 utilsdir=${makedir}/testing/utils
 
 # start with new shiny new just upgraded domains
@@ -49,10 +49,10 @@ if test $# -gt 0 ; then
     # updated.
     earliest_commit=$1; shift
 else
-    earliest_commit=$(${bindir}/gime-git-hash.sh ${repodir} HEAD)
+    earliest_commit=$(${webdir}/gime-git-hash.sh ${repodir} HEAD)
 fi
 
-json_status="${bindir}/json-status.sh --json ${summarydir}/status.json"
+json_status="${webdir}/json-status.sh --json ${summarydir}/status.json"
 status=${json_status}
 
 
@@ -62,7 +62,7 @@ run() (
 
     # fudge up enough of summary.json to fool the top level
     if test ! -r ${resultsdir}/kvm-test.ok ; then
-	${bindir}/json-summary.sh "${start_time}" > ${resultsdir}/summary.json
+	${webdir}/json-summary.sh "${start_time}" > ${resultsdir}/summary.json
     fi
 
     # So new features can be tested (?) use kvmrunner.py from this
@@ -122,7 +122,7 @@ while true ; do
     # untested.
 
     ${status} "looking for work"
-    if ! commit=$(${bindir}/gime-work.sh ${summarydir} ${repodir} ${earliest_commit}) ; then \
+    if ! commit=$(${webdir}/gime-work.sh ${summarydir} ${repodir} ${earliest_commit}) ; then
 	# Seemlingly nothing to do ...
 
 	# github gets updated up every 15 minutes so sleep for less
@@ -162,7 +162,7 @@ while true ; do
     # Mimic how web-targets.mki computes RESULTSDIR; switch to
     # directory specific status.
 
-    resultsdir=${summarydir}/$(${bindir}/gime-git-description.sh ${repodir})
+    resultsdir=${summarydir}/$(${webdir}/gime-git-description.sh ${repodir})
     gitstamp=$(basename ${resultsdir})
     status="${json_status} --directory ${gitstamp}"
 
@@ -171,7 +171,7 @@ while true ; do
     rm -f ${summarydir}/current
     ln -s $(basename ${resultsdir}) ${summarydir}/current
 
-    start_time=$(${bindir}/now.sh)
+    start_time=$(${webdir}/now.sh)
     ${status} "creating results directory"
     make -C ${makedir} web-resultsdir \
 	 WEB_TIME=${start_time} \
@@ -203,39 +203,33 @@ while true ; do
     #
     # - always transmogrify so current config is picked up
     #
-    # - the leading "-" means ignore failure; kind of like commands in
-    #   make rules
+    # - the "~" prefix to OS names means ignore failure; and "+ means
+    #   it must pass
 
     targets=""
     finished=""
-    oss="-fedora -freebsd -netbsd -openbsd"
+    oss="+fedora ~freebsd ~netbsd ~openbsd"
 
     if ${build_kvms} ; then
 	targets="${targets} kvm-purge"
-	p=
 	for os in $oss ; do
-	    targets="${targets} ${p}kvm-upgrade${os}"
-	    targets="${targets} ${p}kvm-transmogrify${os}"
-	    p=-
+	    targets="${targets} kvm-upgrade${os}"
+	    targets="${targets} kvm-transmogrify${os}"
 	done
     else
-	p=
 	for os in $oss ; do
-	    targets="${targets} ${p}kvm-shutdown${os}"
-	    targets="${targets} ${p}kvm-transmogrify${os}"
-	    p=-
+	    targets="${targets} kvm-shutdown${os}"
+	    targets="${targets} kvm-transmogrify${os}"
 	done
     fi
 
     targets="${targets} kvm-keys"
-    targets="${targets} kvm-html"
 
-    p=
     for os in ${oss} ; do
-    	targets="${targets} ${p}kvm-install-all${os}"
-	p=-
+    	targets="${targets} kvm-install-all${os}"
     done
 
+    targets="${targets} html" # NATIVE!
     targets="${targets} kvm-check"
 
     build_kvms=false # for next time round
@@ -245,9 +239,11 @@ while true ; do
 
     for t in ${targets} ; do
 
-	# ignorable?
-	target=$(expr "${t}" : '-\?\(.*\)')
-	ignore=$(test "${target}" == "${t}" && echo false || echo true)
+	# "~" means ignore; "+" means pass
+	target=$(echo "${t}" | tr '~+' '--')
+	os=$(expr "${t}" : '^.*[~+]\(.*\)$' || echo -n)
+	ot=$(expr "${t}" : '^\([^~+]*\)')
+	ignore=$(expr "${t}" : '.*~' > /dev/null && echo true || echo false)
 	finished="${finished} ${target}"
 	logfile=${resultsdir}/${target}.log
 	cp /dev/null ${logfile}
@@ -258,16 +254,21 @@ while true ; do
 	    # same command further down
 	    jq --null-input \
 	       --arg target "${target}" \
-	       --arg status running \
-	       '{ target: $target, status: $status }'
+	       --arg ot     "${ot}" \
+	       --arg os     "${os}" \
+	       --arg status "running" \
+	       '{ target: $target, ot: $ot, os: $os, status: $status }'
 	} | jq -s . > ${resultsdir}/build.json
 
 	# run the target on hand
 	if run ${target} ; then
 	    result=ok
 	    case ${target} in
-		kvm-html )
-		    cp -rv ${repodir}/OBJ.KVM.html/*.html ${resultsdir}/
+		html )
+		    mkdir -p ${resultsdir}/documentation
+		    # does make html generate index.html?
+		    # cp ${webdir}/documentation.html ${resultsdir}/documentation/index.html
+		    cp -rv ${repodir}/OBJ.*/html/*.html ${resultsdir}/documentation
 		    ;;
 		kvm-check )
 		    # should only update when latest
@@ -288,8 +289,10 @@ while true ; do
 	{
 	    jq --null-input \
 	       --arg target "${target}" \
+	       --arg ot     "${ot}" \
+	       --arg os     "${os}" \
 	       --arg status "${result}" \
-	       '{ target: $target, status: $status }'
+	       '{ target: $target, ot: $ot, os: $os, status: $status }'
 	} >> ${resultsdir}/build.json.in
 	# convert raw list to an array
 	jq -s . < ${resultsdir}/build.json.in > ${resultsdir}/build.json
