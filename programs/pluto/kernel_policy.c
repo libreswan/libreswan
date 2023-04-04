@@ -637,13 +637,14 @@ void replace_ipsec_with_bare_kernel_policies(struct child_sa *child,
 					     enum expect_kernel_policy expect_inbound_policy,
 					     where_t where)
 {
+	struct logger *logger = child->sa.st_logger;
 	struct connection *c = child->sa.st_connection;
 	enum shunt_kind shunt_kind =
 		(new_routing == RT_ROUTED_ONDEMAND ? SHUNT_KIND_ONDEMAND :
 		 new_routing == RT_ROUTED_FAILURE ? SHUNT_KIND_FAILURE :
 		 SHUNT_KIND_ROOF);
-	PASSERT(child->sa.st_logger, shunt_kind != SHUNT_KIND_ROOF);
-	PASSERT(child->sa.st_logger, c->config->shunt[shunt_kind] != SHUNT_NONE);
+	PASSERT(logger, shunt_kind != SHUNT_KIND_ROOF);
+	PASSERT(logger, c->config->shunt[shunt_kind] != SHUNT_NONE);
 	/* it's being stripped of the state, hence SOS_NOBODY */
 	set_routing(c, new_routing, NULL);
 
@@ -669,7 +670,7 @@ void replace_ipsec_with_bare_kernel_policies(struct child_sa *child,
 		}
 #endif
 
-		do_updown(UPDOWN_DOWN, c, spd, &child->sa, child->sa.st_logger);
+		do_updown(UPDOWN_DOWN, c, spd, &child->sa, logger);
 
 		pexpect(c->config->shunt[shunt_kind] != SHUNT_NONE);
 		if (!install_bare_spd_kernel_policy(spd,
@@ -677,7 +678,7 @@ void replace_ipsec_with_bare_kernel_policies(struct child_sa *child,
 						    DIRECTION_OUTBOUND,
 						    EXPECT_KERNEL_POLICY_OK,
 						    shunt_kind,
-						    child->sa.st_logger, where, "replacing")) {
+						    logger, where, "replacing")) {
 			llog_sa(RC_LOG, child,
 				"kernel: %s() replace outbound with prospective shunt failed", __func__);
 		}
@@ -686,7 +687,7 @@ void replace_ipsec_with_bare_kernel_policies(struct child_sa *child,
 		 */
 		if (!delete_spd_kernel_policy(spd, DIRECTION_INBOUND,
 					      expect_inbound_policy,
-					      child->sa.st_logger, where, "inbound")) {
+					      logger, where, "inbound")) {
 			llog_sa(RC_LOG, child,
 				"kernel: %s() inbound delete failed", __func__);
 		}

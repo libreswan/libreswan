@@ -46,92 +46,113 @@ bool kernel_ops_raw_policy(enum kernel_policy_op op,
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
 	pexpect(client_proto == selector_protocol(*dst_client));
 	if (policy == NULL) {
-		pexpect(op == KERNEL_POLICY_OP_DELETE);
+		PEXPECT(logger, op == KERNEL_POLICY_OP_DELETE);
 	} else {
-		pexpect(op != KERNEL_POLICY_OP_DELETE);
-		pexpect(policy->shunt != SHUNT_UNSET);
-		pexpect((policy->nr_rules == 0) ==/*iff*/ (policy->shunt == SHUNT_PASS));
+		PEXPECT(logger, op != KERNEL_POLICY_OP_DELETE);
+		PEXPECT(logger, policy->shunt != SHUNT_UNSET);
+		PEXPECT(logger, (policy->nr_rules == 0) ==/*iff*/ (policy->shunt == SHUNT_PASS));
 	}
 
-	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+	if (DBGP(DBG_BASE)) {
 
-		jam(buf, "%s()", __func__);
+		LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+			jam(buf, "%s()", __func__);
 
-		jam_string(buf, " ");
-		jam_enum_short(buf, &kernel_policy_op_names, op);
-		jam_string(buf, "+");
-		jam_enum_short(buf, &direction_names, dir);
+			jam_string(buf, " ");
+			jam_enum_short(buf, &kernel_policy_op_names, op);
+			jam_string(buf, "+");
+			jam_enum_short(buf, &direction_names, dir);
 
-		jam_string(buf, " ");
-		jam_string(buf, expect_kernel_policy_name(expect_kernel_policy));
+			jam_string(buf, " ");
+			jam_string(buf, expect_kernel_policy_name(expect_kernel_policy));
 
-		jam(buf, " client=");
-		jam_selector_pair(buf, src_client, dst_client);
+			jam(buf, " ");
+			jam_string(buf, story);
+			jam_string(buf, " ");
+			jam_where(buf, where);
 
-		jam_string(buf, " policy=");
-		if (policy == NULL) {
-			jam(buf, "<null>");
-		} else {
-			jam_address(buf, &policy->src.host);
-			jam(buf, "=>");
-			jam_address(buf, &policy->dst.host);
-			jam_string(buf, ",");
-			jam_enum_short(buf, &shunt_kind_names, policy->kind);
-			jam_string(buf, "=");
-			jam_enum_short(buf, &shunt_policy_names, policy->shunt);
-			jam_string(buf, ",");
-			jam(buf, "priority=%"PRI_KERNEL_PRIORITY,
-			    pri_kernel_priority(policy->priority));
-			/*
-			 * Print outer-to-inner and use paren to show
-			 * how each wrapps the next.
-			 *
-			 * XXX: how to also print the encap mode - TCP
-			 * or UDP?
-			 */
-			jam_string(buf, ",");
-			jam_enum_short(buf, &encap_mode_names, policy->mode);
-			jam_string(buf, "[");
-			for (unsigned i = policy->nr_rules; i > 0; i--) {
-				const struct kernel_policy_rule *rule = &policy->rule[i-1];
-				const struct ip_protocol *rule_proto = protocol_from_ipproto(rule->proto);
-				jam(buf, "%s@%d(", rule_proto->name, rule->reqid);
-			}
-			if (policy->nr_rules > 0) {
-				/* XXX: should use stuff from selector */
-				jam_string(buf, client_proto->name);
-			}
-			for (unsigned i = policy->nr_rules; i > 0; i--) {
-				jam_string(buf, ")");
-			}
-			jam_string(buf, "]");
 		}
 
-		jam(buf, " lifetime=");
-		jam_deltatime(buf, use_lifetime);
-		jam(buf, "s");
+		LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+			jam(buf, "%s()  ", __func__);
 
-		if (sa_marks != NULL) {
-			jam(buf, " sa_marks=");
-			const char *dir = "out:";
-			FOR_EACH_THING(mark, &sa_marks->out, &sa_marks->in) {
-				jam(buf, "%s%x/%x%s",
-				    dir, mark->val, mark->mask,
-				    mark->unique ? "/unique" : "");
-				dir = ",in:";
-			}
+			jam(buf, " client=");
+			jam_selector_pair(buf, src_client, dst_client);
+
+			jam(buf, " lifetime=");
+			jam_deltatime(buf, use_lifetime);
+			jam(buf, "s");
 		}
 
-		jam(buf, " xfrm_if_id=%d",
-		    xfrmi != NULL ? (int)xfrmi->if_id : -1);
+		if (sa_marks != NULL || xfrmi != NULL) {
+			LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+				jam(buf, "%s()  ", __func__);
 
-		jam(buf, " sec_label=");
-		jam_sanitized_hunk(buf, sec_label);
+				if (sa_marks != NULL) {
+					jam(buf, " sa_marks=");
+					const char *dir = "out:";
+					FOR_EACH_THING(mark, &sa_marks->out, &sa_marks->in) {
+						jam(buf, "%s%x/%x%s",
+						    dir, mark->val, mark->mask,
+						    mark->unique ? "/unique" : "");
+						dir = ",in:";
+					}
+				}
 
-		jam(buf, " ");
-		jam_string(buf, story);
-		jam_string(buf, " ");
-		jam_where(buf, where);
+				if (xfrmi != NULL) {
+					jam(buf, " xfrm_if_id=%d", (int)xfrmi->if_id);
+				}
+			}
+
+		}
+
+		if (policy != NULL) {
+			LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+				jam(buf, "%s()  ", __func__);
+
+				jam_string(buf, " policy=");
+				jam_address(buf, &policy->src.host);
+				jam(buf, "=>");
+				jam_address(buf, &policy->dst.host);
+				jam_string(buf, ",");
+				jam_enum_short(buf, &shunt_kind_names, policy->kind);
+				jam_string(buf, "=");
+				jam_enum_short(buf, &shunt_policy_names, policy->shunt);
+				jam_string(buf, ",");
+				jam(buf, "priority=%"PRI_KERNEL_PRIORITY,
+				    pri_kernel_priority(policy->priority));
+				/*
+				 * Print outer-to-inner and use paren to show
+				 * how each wrapps the next.
+				 *
+				 * XXX: how to also print the encap mode - TCP
+				 * or UDP?
+				 */
+				jam_string(buf, ",");
+				jam_enum_short(buf, &encap_mode_names, policy->mode);
+				jam_string(buf, "[");
+				for (unsigned i = policy->nr_rules; i > 0; i--) {
+					const struct kernel_policy_rule *rule = &policy->rule[i-1];
+					const struct ip_protocol *rule_proto = protocol_from_ipproto(rule->proto);
+					jam(buf, "%s@%d(", rule_proto->name, rule->reqid);
+				}
+				if (policy->nr_rules > 0) {
+					/* XXX: should use stuff from selector */
+					jam_string(buf, client_proto->name);
+				}
+				for (unsigned i = policy->nr_rules; i > 0; i--) {
+					jam_string(buf, ")");
+				}
+				jam_string(buf, "]");
+			}
+		}
+		if (sec_label.len > 0) {
+			LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+				jam(buf, "%s()  ", __func__);
+				jam_string(buf, " sec_label=");
+				jam_sanitized_hunk(buf, sec_label);
+			}
+		}
 	}
 
 	if (policy != NULL) {
