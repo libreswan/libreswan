@@ -536,6 +536,74 @@ static void set_xfrm_selectors(struct xfrm_selector *sel,
  * @return boolean True if successful
  */
 
+static void add_xfrmi_marks(struct nlmsghdr *n,
+			    const struct sa_marks *sa_marks,
+			    const struct pluto_xfrmi *xfrmi,
+			    const unsigned xfrm_dir,
+			    unsigned short maxlen)
+{
+	if (sa_marks != NULL) {
+		if (xfrmi == NULL) {
+			struct sa_mark sa_mark =
+				(xfrm_dir == XFRM_POLICY_IN ? sa_marks->in :
+				 sa_marks->out);
+
+			if (sa_mark.val != 0 && sa_mark.mask != 0) {
+				struct xfrm_mark xfrm_mark = {
+					.v = sa_mark.val,
+					.m = sa_mark.mask,
+				};
+				dbg("%s() adding xfrm_mark %x/%x", __func__, xfrm_mark.v, xfrm_mark.m);
+				/* append */
+				struct rtattr *attr = (struct rtattr *)((uint8_t *)n + n->nlmsg_len);
+				attr->rta_type = XFRMA_MARK;
+				attr->rta_len = sizeof(xfrm_mark);
+				memcpy(RTA_DATA(attr), &xfrm_mark, attr->rta_len);
+				attr->rta_len = RTA_LENGTH(attr->rta_len);
+				n->nlmsg_len += attr->rta_len;
+			}
+#ifdef USE_XFRM_INTERFACE
+		} else {
+			/* XXX: strange how this only looks at .out */
+			dbg("%s() adding XFRMA_IF_ID %" PRIu32 " n->nlmsg_type=%" PRIu32,
+			    __func__, xfrmi->if_id, n->nlmsg_type);
+			nl_addattr32(n, maxlen, XFRMA_IF_ID, xfrmi->if_id);
+			if (sa_marks->out.val == 0 && sa_marks->out.mask == 0) {
+				/* XFRMA_SET_MARK = XFRMA_IF_ID */
+				nl_addattr32(n, maxlen, XFRMA_SET_MARK, xfrmi->if_id);
+			} else {
+				/* manually configured mark-out=mark/mask */
+				nl_addattr32(n, maxlen, XFRMA_SET_MARK, sa_marks->out.val);
+				nl_addattr32(n, maxlen, XFRMA_SET_MARK_MASK, sa_marks->out.mask);
+			}
+#endif
+		}
+	}
+}
+
+static void add_sec_label(struct nlmsghdr *n,
+			  shunk_t sec_label)
+{
+	if (sec_label.len > 0) {
+		struct rtattr *attr = (struct rtattr *)((uint8_t *)n + n->nlmsg_len);
+		struct xfrm_user_sec_ctx *uctx;
+
+		passert(sec_label.len <= MAX_SECCTX_LEN);
+		attr->rta_type = XFRMA_SEC_CTX;
+
+		dbg("%s() adding xfrm_user_sec_ctx sec_label="PRI_SHUNK" to kernel", __func__, pri_shunk(sec_label));
+		attr->rta_len = RTA_LENGTH(sizeof(struct xfrm_user_sec_ctx) + sec_label.len);
+		uctx = RTA_DATA(attr);
+		uctx->exttype = XFRMA_SEC_CTX;
+		uctx->len = sizeof(struct xfrm_user_sec_ctx) + sec_label.len;
+		uctx->ctx_doi = XFRM_SC_DOI_LSM;
+		uctx->ctx_alg = XFRM_SC_ALG_SELINUX;
+		uctx->ctx_len = sec_label.len;
+		memcpy(uctx + 1, sec_label.ptr, sec_label.len);
+		n->nlmsg_len += attr->rta_len;
+	}
+}
+
 static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 				   enum direction dir,
 				   enum expect_kernel_policy what_about_inbound,
@@ -746,63 +814,8 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 	 *
 	 * XXX: identical code in policy_add(), time to share?
 	 */
-	if (sa_marks != NULL) {
-		if (xfrmi == NULL) {
-			struct sa_mark sa_mark = (xfrm_dir == XFRM_POLICY_IN) ? sa_marks->in : sa_marks->out;
-
-			if (sa_mark.val != 0 && sa_mark.mask != 0) {
-				struct xfrm_mark xfrm_mark = {
-					.v = sa_mark.val,
-					.m = sa_mark.mask,
-				};
-				dbg("%s() adding xfrm_mark %x/%x", __func__, xfrm_mark.v, xfrm_mark.m);
-				/* append */
-				struct rtattr *attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
-				attr->rta_type = XFRMA_MARK;
-				attr->rta_len = sizeof(xfrm_mark);
-				memcpy(RTA_DATA(attr), &xfrm_mark, attr->rta_len);
-				attr->rta_len = RTA_LENGTH(attr->rta_len);
-				req.n.nlmsg_len += attr->rta_len;
-			}
-#ifdef USE_XFRM_INTERFACE
-		} else {
-			/* XXX: strange how this only looks at .out */
-			dbg("%s() adding XFRMA_IF_ID %" PRIu32 " req.n.nlmsg_type=%" PRIu32,
-			    __func__, xfrmi->if_id, req.n.nlmsg_type);
-			nl_addattr32(&req.n, sizeof(req.data), XFRMA_IF_ID, xfrmi->if_id);
-			if (sa_marks->out.val == 0 && sa_marks->out.mask == 0) {
-				/* XFRMA_SET_MARK = XFRMA_IF_ID */
-				nl_addattr32(&req.n, sizeof(req.data), XFRMA_SET_MARK, xfrmi->if_id);
-			} else {
-				/* manually configured mark-out=mark/mask */
-				nl_addattr32(&req.n, sizeof(req.data),
-					     XFRMA_SET_MARK, sa_marks->out.val);
-				nl_addattr32(&req.n, sizeof(req.data),
-					     XFRMA_SET_MARK_MASK, sa_marks->out.mask);
-			}
-#endif
-		}
-	}
-
-	if (sec_label.len > 0) {
-		struct rtattr *attr = (struct rtattr *)
-			((char *)&req + req.n.nlmsg_len);
-		struct xfrm_user_sec_ctx *uctx;
-
-		passert(sec_label.len <= MAX_SECCTX_LEN);
-		attr->rta_type = XFRMA_SEC_CTX;
-
-		dbg("%s() adding xfrm_user_sec_ctx sec_label="PRI_SHUNK" to kernel", __func__, pri_shunk(sec_label));
-		attr->rta_len = RTA_LENGTH(sizeof(struct xfrm_user_sec_ctx) + sec_label.len);
-		uctx = RTA_DATA(attr);
-		uctx->exttype = XFRMA_SEC_CTX;
-		uctx->len = sizeof(struct xfrm_user_sec_ctx) + sec_label.len;
-		uctx->ctx_doi = XFRM_SC_DOI_LSM;
-		uctx->ctx_alg = XFRM_SC_ALG_SELINUX;
-		uctx->ctx_len = sec_label.len;
-		memcpy(uctx + 1, sec_label.ptr, sec_label.len);
-		req.n.nlmsg_len += attr->rta_len;
-	}
+	add_xfrmi_marks(&req.n, sa_marks, xfrmi, xfrm_dir, sizeof(req.data));
+	add_sec_label(&req.n, sec_label);
 
 	bool ok = sendrecv_xfrm_policy(&req.n, what_about_inbound, policy_name,
 				       (dir == DIRECTION_OUTBOUND ? "(out)" : "(in)"),
@@ -883,63 +896,8 @@ static bool kernel_xfrm_policy_del(enum direction direction,
 	 *
 	 * XXX: identical code in policy_add(), time to share?
 	 */
-	if (sa_marks != NULL) {
-		if (xfrmi == NULL) {
-			struct sa_mark sa_mark = (xfrm_dir == XFRM_POLICY_IN) ? sa_marks->in : sa_marks->out;
-
-			if (sa_mark.val != 0 && sa_mark.mask != 0) {
-				struct xfrm_mark xfrm_mark = {
-					.v = sa_mark.val,
-					.m = sa_mark.mask,
-				};
-				dbg("%s() adding xfrm_mark %x/%x", __func__, xfrm_mark.v, xfrm_mark.m);
-				/* append */
-				struct rtattr *attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
-				attr->rta_type = XFRMA_MARK;
-				attr->rta_len = sizeof(xfrm_mark);
-				memcpy(RTA_DATA(attr), &xfrm_mark, attr->rta_len);
-				attr->rta_len = RTA_LENGTH(attr->rta_len);
-				req.n.nlmsg_len += attr->rta_len;
-			}
-#ifdef USE_XFRM_INTERFACE
-		} else {
-			/* XXX: strange how this only looks at .out */
-			dbg("%s() adding XFRMA_IF_ID %" PRIu32 " req.n.nlmsg_type=%" PRIu32,
-			    __func__, xfrmi->if_id, req.n.nlmsg_type);
-			nl_addattr32(&req.n, sizeof(req.data), XFRMA_IF_ID, xfrmi->if_id);
-			if (sa_marks->out.val == 0 && sa_marks->out.mask == 0) {
-				/* XFRMA_SET_MARK = XFRMA_IF_ID */
-				nl_addattr32(&req.n, sizeof(req.data), XFRMA_SET_MARK, xfrmi->if_id);
-			} else {
-				/* manually configured mark-out=mark/mask */
-				nl_addattr32(&req.n, sizeof(req.data),
-					     XFRMA_SET_MARK, sa_marks->out.val);
-				nl_addattr32(&req.n, sizeof(req.data),
-					     XFRMA_SET_MARK_MASK, sa_marks->out.mask);
-			}
-#endif
-		}
-	}
-
-	if (sec_label.len > 0) {
-		struct rtattr *attr = (struct rtattr *)
-			((char *)&req + req.n.nlmsg_len);
-		struct xfrm_user_sec_ctx *uctx;
-
-		passert(sec_label.len <= MAX_SECCTX_LEN);
-		attr->rta_type = XFRMA_SEC_CTX;
-
-		dbg("%s() adding xfrm_user_sec_ctx sec_label="PRI_SHUNK" to kernel", __func__, pri_shunk(sec_label));
-		attr->rta_len = RTA_LENGTH(sizeof(struct xfrm_user_sec_ctx) + sec_label.len);
-		uctx = RTA_DATA(attr);
-		uctx->exttype = XFRMA_SEC_CTX;
-		uctx->len = sizeof(struct xfrm_user_sec_ctx) + sec_label.len;
-		uctx->ctx_doi = XFRM_SC_DOI_LSM;
-		uctx->ctx_alg = XFRM_SC_ALG_SELINUX;
-		uctx->ctx_len = sec_label.len;
-		memcpy(uctx + 1, sec_label.ptr, sec_label.len);
-		req.n.nlmsg_len += attr->rta_len;
-	}
+	add_xfrmi_marks(&req.n, sa_marks, xfrmi, xfrm_dir, sizeof(req.data));
+	add_sec_label(&req.n, sec_label);
 
 	bool ok = sendrecv_xfrm_policy(&req.n, expect_kernel_policy, "delete",
 				       (direction == DIRECTION_OUTBOUND ? "(out)" :
