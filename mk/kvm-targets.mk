@@ -425,10 +425,14 @@ $(KVM_HOST_QEMUDIR_OK): | $(KVM_POOLDIR)
 		echo ;							\
 		echo "  is not writeable vis:" ;			\
 		echo ;							\
-		echo -n "     " ; ls -ld $(KVM_HOST_QEMUDIR) ;		\
+		echo "     $$(ls -ld $(KVM_HOST_QEMUDIR))" ;		\
 		echo ;							\
 		echo "  This will break virsh which is"	;		\
 		echo "  used to manipulate the domains." ;		\
+		echo "  Typically this is fixed with:" ;		\
+		echo ;							\
+		echo "     sudo chgrp qemu $(KVM_HOST_QEMUDIR)" ;	\
+		echo "     sudo chmod g+w $(KVM_HOST_QEMUDIR)" ;	\
 		echo ;							\
 		false ;							\
 	fi
