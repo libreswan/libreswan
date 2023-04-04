@@ -759,6 +759,8 @@ static bool kernel_xfrm_raw_policy(enum kernel_policy_op op,
 	 * Add mark policy extension if present.
 	 *
 	 * XXX: again, can't the caller decide this?
+	 *
+	 * XXX: identical code in policy_add(), time to share?
 	 */
 	if (sa_marks != NULL) {
 		if (xfrmi == NULL) {
@@ -892,18 +894,130 @@ static bool kernel_xfrm_policy_del(enum direction direction,
 				   const ip_selector *dst_child,
 				   const struct sa_marks *sa_marks,
 				   const struct pluto_xfrmi *xfrmi,
-				   enum kernel_policy_id id,
+				   enum kernel_policy_id policy_id,
 				   const shunk_t sec_label,
 				   struct logger *logger)
 {
-	return kernel_xfrm_raw_policy(KERNEL_POLICY_OP_DELETE,
-				      direction,
-				      expect_kernel_policy,
-				      src_child, dst_child,
-				      /*policy*/NULL/*delete-not-needed*/,
-				      deltatime(0),
-				      sa_marks, xfrmi, id, sec_label,
-				      logger);
+	const struct ip_protocol *child_proto = selector_protocol(*src_child);
+	pexpect(selector_protocol(*dst_child) == child_proto);
+
+	/* XXX: notice how this ignores KERNEL_OP_REPLACE!?! */
+	const unsigned xfrm_dir =
+		(direction == DIRECTION_INBOUND ? XFRM_POLICY_IN :
+		 direction == DIRECTION_OUTBOUND ? XFRM_POLICY_OUT :
+		 pexpect(0));
+
+	struct {
+		struct nlmsghdr n;
+		uint8_t data[MAX_NETLINK_DATA_SIZE];
+	} req = {0};
+
+	zero(&req);
+	req.n.nlmsg_flags = NLM_F_REQUEST | NLM_F_ACK;
+
+	const struct ip_info *dst_child_afi  = selector_type(dst_child);
+	const int family = dst_child_afi->af;
+	dbg("%s() using family %s (%d)", __func__, dst_child_afi->ip_name, family);
+
+	req.n.nlmsg_type = XFRM_MSG_DELPOLICY;
+	req.n.nlmsg_len = NLMSG_SPACE(sizeof(struct xfrm_userpolicy_id));
+	struct xfrm_userpolicy_id *id = NLMSG_DATA(&req.n);
+	id->dir = xfrm_dir;
+	set_xfrm_selectors(&id->sel, src_child, dst_child);
+	id->index = policy_id;
+
+	/*
+	 * Add mark policy extension if present.
+	 *
+	 * XXX: again, can't the caller decide this?
+	 *
+	 * XXX: identical code in policy_add(), time to share?
+	 */
+	if (sa_marks != NULL) {
+		if (xfrmi == NULL) {
+			struct sa_mark sa_mark = (xfrm_dir == XFRM_POLICY_IN) ? sa_marks->in : sa_marks->out;
+
+			if (sa_mark.val != 0 && sa_mark.mask != 0) {
+				struct xfrm_mark xfrm_mark = {
+					.v = sa_mark.val,
+					.m = sa_mark.mask,
+				};
+				dbg("%s() adding xfrm_mark %x/%x", __func__, xfrm_mark.v, xfrm_mark.m);
+				/* append */
+				struct rtattr *attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
+				attr->rta_type = XFRMA_MARK;
+				attr->rta_len = sizeof(xfrm_mark);
+				memcpy(RTA_DATA(attr), &xfrm_mark, attr->rta_len);
+				attr->rta_len = RTA_LENGTH(attr->rta_len);
+				req.n.nlmsg_len += attr->rta_len;
+			}
+#ifdef USE_XFRM_INTERFACE
+		} else {
+			/* XXX: strange how this only looks at .out */
+			dbg("%s() adding XFRMA_IF_ID %" PRIu32 " req.n.nlmsg_type=%" PRIu32,
+			    __func__, xfrmi->if_id, req.n.nlmsg_type);
+			nl_addattr32(&req.n, sizeof(req.data), XFRMA_IF_ID, xfrmi->if_id);
+			if (sa_marks->out.val == 0 && sa_marks->out.mask == 0) {
+				/* XFRMA_SET_MARK = XFRMA_IF_ID */
+				nl_addattr32(&req.n, sizeof(req.data), XFRMA_SET_MARK, xfrmi->if_id);
+			} else {
+				/* manually configured mark-out=mark/mask */
+				nl_addattr32(&req.n, sizeof(req.data),
+					     XFRMA_SET_MARK, sa_marks->out.val);
+				nl_addattr32(&req.n, sizeof(req.data),
+					     XFRMA_SET_MARK_MASK, sa_marks->out.mask);
+			}
+#endif
+		}
+	}
+
+	if (sec_label.len > 0) {
+		struct rtattr *attr = (struct rtattr *)
+			((char *)&req + req.n.nlmsg_len);
+		struct xfrm_user_sec_ctx *uctx;
+
+		passert(sec_label.len <= MAX_SECCTX_LEN);
+		attr->rta_type = XFRMA_SEC_CTX;
+
+		dbg("%s() adding xfrm_user_sec_ctx sec_label="PRI_SHUNK" to kernel", __func__, pri_shunk(sec_label));
+		attr->rta_len = RTA_LENGTH(sizeof(struct xfrm_user_sec_ctx) + sec_label.len);
+		uctx = RTA_DATA(attr);
+		uctx->exttype = XFRMA_SEC_CTX;
+		uctx->len = sizeof(struct xfrm_user_sec_ctx) + sec_label.len;
+		uctx->ctx_doi = XFRM_SC_DOI_LSM;
+		uctx->ctx_alg = XFRM_SC_ALG_SELINUX;
+		uctx->ctx_len = sec_label.len;
+		memcpy(uctx + 1, sec_label.ptr, sec_label.len);
+		req.n.nlmsg_len += attr->rta_len;
+	}
+
+	bool ok = sendrecv_xfrm_policy(&req.n, expect_kernel_policy, "delete",
+				       (direction == DIRECTION_OUTBOUND ? "(out)" :
+					direction == DIRECTION_INBOUND ? "(in)" :
+					NULL),
+				       logger);
+
+	/*
+	 * ??? deal with any forwarding policy.
+	 *
+	 * For tunnel mode the inbound SA needs a add/delete a forward
+	 * policy; from where, to where?  Why?
+	 *
+	 * XXX: and yes, the code below doesn't exactly do just that.
+	 */
+	if (direction == DIRECTION_INBOUND) {
+		/*
+		 * ??? we will call netlink_policy even if !ok.
+		 *
+		 * XXX: It's also called when transport mode!
+		 */
+		dbg("xfrm: %s() deleting policy forward (even when there may not be one)",
+		    __func__);
+		id->dir = XFRM_POLICY_FWD;
+		ok &= sendrecv_xfrm_policy(&req.n, IGNORE_KERNEL_POLICY_MISSING,
+					   "delete", "(fwd)", logger);
+	}
+	return ok;
 }
 
 struct kernel_migrate {
