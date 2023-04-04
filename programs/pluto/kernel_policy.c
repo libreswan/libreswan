@@ -368,6 +368,7 @@ bool delete_kernel_policy(enum direction direction,
 			  const shunk_t sec_label,
 			  struct logger *logger, where_t where, const char *story)
 {
+	/* achieve directionality */
 	const ip_selector *src_child;
 	const ip_selector *dst_child;
 	switch (direction) {
@@ -386,16 +387,11 @@ bool delete_kernel_policy(enum direction direction,
 	const struct ip_protocol *child_proto = selector_protocol(*src_child);
 	pexpect(child_proto == selector_protocol(*dst_child));
 
-	bool result = kernel_ops_raw_policy(KERNEL_POLICY_OP_DELETE,
-					    direction,
-					    expect_kernel_policy,
-					    src_child, dst_child,
-					    /*policy*/NULL/*delete-not-needed*/,
-					    deltatime(0),
-					    sa_marks, xfrmi, id, sec_label,
-					    where, logger, story);
-	dbg("kernel: %s() result=%s", __func__, (result ? "success" : "failed"));
-	return result;
+	return kernel_ops_policy_del(direction,
+				     expect_kernel_policy,
+				     src_child, dst_child,
+				     sa_marks, xfrmi, id, sec_label,
+				     logger, where, story);
 }
 
 bool delete_spd_kernel_policy(const struct spd_route *spd,

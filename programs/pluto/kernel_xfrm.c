@@ -535,18 +535,18 @@ static void set_xfrm_selectors(struct xfrm_selector *sel,
  * @param story char *
  * @return boolean True if successful
  */
-static bool xfrm_raw_policy(enum kernel_policy_op op,
-			    enum direction dir,
-			    enum expect_kernel_policy what_about_inbound,
-			    const ip_selector *src_client,
-			    const ip_selector *dst_client,
-			    const struct kernel_policy *kernel_policy,
-			    deltatime_t use_lifetime UNUSED,
-			    const struct sa_marks *sa_marks,
-			    const struct pluto_xfrmi *xfrmi,
-			    enum kernel_policy_id policy_id,
-			    const shunk_t sec_label,
-			    struct logger *logger)
+static bool kernel_xfrm_raw_policy(enum kernel_policy_op op,
+				   enum direction dir,
+				   enum expect_kernel_policy what_about_inbound,
+				   const ip_selector *src_client,
+				   const ip_selector *dst_client,
+				   const struct kernel_policy *kernel_policy,
+				   deltatime_t use_lifetime UNUSED,
+				   const struct sa_marks *sa_marks,
+				   const struct pluto_xfrmi *xfrmi,
+				   enum kernel_policy_id policy_id,
+				   const shunk_t sec_label,
+				   struct logger *logger)
 {
 	const char *op_str = enum_name_short(&kernel_policy_op_names, op);
 	const char *dir_str = enum_name_short(&direction_names, dir);
@@ -866,6 +866,44 @@ static bool xfrm_raw_policy(enum kernel_policy_op op,
 		}
 	}
 	return ok;
+}
+
+static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
+				   enum direction dir,
+				   enum expect_kernel_policy expect_kernel_policy,
+				   const ip_selector *this_client,
+				   const ip_selector *that_client,
+				   const struct kernel_policy *policy,
+				   deltatime_t use_lifetime,
+				   const struct sa_marks *sa_marks,
+				   const struct pluto_xfrmi *xfrmi,
+				   enum kernel_policy_id id,
+				   const shunk_t sec_label,
+				   struct logger *logger)
+{
+	return kernel_xfrm_raw_policy(op, dir, expect_kernel_policy, this_client, that_client,
+				      policy, use_lifetime, sa_marks, xfrmi, id, sec_label,
+				      logger);
+}
+
+static bool kernel_xfrm_policy_del(enum direction direction,
+				   enum expect_kernel_policy expect_kernel_policy,
+				   const ip_selector *src_child,
+				   const ip_selector *dst_child,
+				   const struct sa_marks *sa_marks,
+				   const struct pluto_xfrmi *xfrmi,
+				   enum kernel_policy_id id,
+				   const shunk_t sec_label,
+				   struct logger *logger)
+{
+	return kernel_xfrm_raw_policy(KERNEL_POLICY_OP_DELETE,
+				      direction,
+				      expect_kernel_policy,
+				      src_child, dst_child,
+				      /*policy*/NULL/*delete-not-needed*/,
+				      deltatime(0),
+				      sa_marks, xfrmi, id, sec_label,
+				      logger);
 }
 
 struct kernel_migrate {
@@ -2619,7 +2657,9 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.init = init_netlink,
 	.shutdown = xfrm_shutdown,
 	.process_msg = netlink_process_msg,
-	.raw_policy = xfrm_raw_policy,
+	.raw_policy = kernel_xfrm_raw_policy,
+	.policy_del = kernel_xfrm_policy_del,
+	.policy_add = kernel_xfrm_policy_add,
 	.add_sa = netlink_add_sa,
 	.get_kernel_state = xfrm_get_kernel_state,
 	.process_queue = NULL,

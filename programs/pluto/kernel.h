@@ -362,6 +362,27 @@ struct kernel_ops {
 			   enum kernel_policy_id id,
 			   const shunk_t sec_label,
 			   struct logger *logger);
+	bool (*policy_add)(enum kernel_policy_op op,
+			   enum direction dir,
+			   enum expect_kernel_policy expect_kernel_policy,
+			   const ip_selector *src_client,
+			   const ip_selector *dst_client,
+			   const struct kernel_policy *policy,
+			   deltatime_t use_lifetime,
+			   const struct sa_marks *sa_marks,
+			   const struct pluto_xfrmi *xfrmi,
+			   enum kernel_policy_id id,
+			   const shunk_t sec_label,
+			   struct logger *logger);
+	bool (*policy_del)(enum direction dir,
+			   enum expect_kernel_policy expect_kernel_policy,
+			   const ip_selector *src_client,
+			   const ip_selector *dst_client,
+			   const struct sa_marks *sa_marks,
+			   const struct pluto_xfrmi *xfrmi,
+			   enum kernel_policy_id id,
+			   const shunk_t sec_label, /*needed*/
+			   struct logger *logger);
 
 	/*
 	 * XXX: to delete an SA, delete it's SPI.

@@ -43,6 +43,36 @@ bool kernel_ops_raw_policy(enum kernel_policy_op op,
 			   struct logger *logger,
 			   const char *story)
 {
+	switch (op) {
+	case KERNEL_POLICY_OP_DELETE:
+		PEXPECT(logger, policy == NULL);
+		return kernel_ops_policy_del(dir, expect_kernel_policy,
+					     src_client, dst_client,
+					     sa_marks, xfrmi, id, sec_label,
+					     logger, where, story);
+	case KERNEL_POLICY_OP_ADD:
+	case KERNEL_POLICY_OP_REPLACE:
+		return kernel_ops_policy_add(op, dir, expect_kernel_policy,
+					     src_client, dst_client, policy,
+					     use_lifetime, sa_marks, xfrmi, id, sec_label,
+					     logger, where, story);
+	}
+	bad_case(op);
+}
+
+bool kernel_ops_policy_add(enum kernel_policy_op op,
+			   enum direction dir,
+			   enum expect_kernel_policy expect_kernel_policy,
+			   const ip_selector *src_client,
+			   const ip_selector *dst_client,
+			   const struct kernel_policy *policy,
+			   deltatime_t use_lifetime,
+			   const struct sa_marks *sa_marks,
+			   const struct pluto_xfrmi *xfrmi,
+			   enum kernel_policy_id id,
+			   const shunk_t sec_label,
+			   struct logger *logger, where_t where, const char *story)
+{
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
 	pexpect(client_proto == selector_protocol(*dst_client));
 	if (policy == NULL) {
@@ -176,7 +206,7 @@ bool kernel_ops_raw_policy(enum kernel_policy_op op,
 		}
 	}
 
-	bool ok = kernel_ops->raw_policy(op, dir,
+	bool ok = kernel_ops->policy_add(op, dir,
 					 expect_kernel_policy,
 					 src_client, dst_client,
 					 policy,
@@ -185,6 +215,84 @@ bool kernel_ops_raw_policy(enum kernel_policy_op op,
 					 logger);
 	ldbg(logger, "%s() ... %s", __func__, bool_str(ok));
 
+	return ok;
+}
+
+bool kernel_ops_policy_del(enum direction dir,
+			   enum expect_kernel_policy expect_kernel_policy,
+			   const ip_selector *src_client,
+			   const ip_selector *dst_client,
+			   const struct sa_marks *sa_marks,
+			   const struct pluto_xfrmi *xfrmi,
+			   enum kernel_policy_id id,
+			   const shunk_t sec_label, /*needed*/
+			   struct logger *logger, where_t where, const char *story)
+{
+	const struct ip_protocol *client_proto = selector_protocol(*src_client);
+	pexpect(client_proto == selector_protocol(*dst_client));
+
+	if (DBGP(DBG_BASE)) {
+
+		LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+			jam(buf, "%s()", __func__);
+
+			jam_string(buf, " ");
+			jam_enum_short(buf, &direction_names, dir);
+
+			jam_string(buf, " ");
+			jam_string(buf, expect_kernel_policy_name(expect_kernel_policy));
+
+			jam(buf, " ");
+			jam_string(buf, story);
+			jam_string(buf, " ");
+			jam_where(buf, where);
+
+		}
+
+		LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+			jam(buf, "%s()  ", __func__);
+
+			jam(buf, " client=");
+			jam_selector_pair(buf, src_client, dst_client);
+		}
+
+		if (sa_marks != NULL || xfrmi != NULL) {
+			LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+				jam(buf, "%s()  ", __func__);
+
+				if (sa_marks != NULL) {
+					jam(buf, " sa_marks=");
+					const char *dir = "out:";
+					FOR_EACH_THING(mark, &sa_marks->out, &sa_marks->in) {
+						jam(buf, "%s%x/%x%s",
+						    dir, mark->val, mark->mask,
+						    mark->unique ? "/unique" : "");
+						dir = ",in:";
+					}
+				}
+
+				if (xfrmi != NULL) {
+					jam(buf, " xfrm_if_id=%d", (int)xfrmi->if_id);
+				}
+			}
+
+		}
+
+		if (sec_label.len > 0) {
+			LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+				jam(buf, "%s()  ", __func__);
+				jam_string(buf, " sec_label=");
+				jam_sanitized_hunk(buf, sec_label);
+			}
+		}
+	}
+
+	bool ok = kernel_ops->policy_del(dir, expect_kernel_policy,
+					 src_client, dst_client,
+					 sa_marks, xfrmi, id, sec_label,
+					 logger);
+
+	ldbg(logger, "%s() ... %s", __func__, bool_str(ok));
 	return ok;
 }
 
