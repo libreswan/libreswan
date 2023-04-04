@@ -28,38 +28,6 @@
  * There's lots of redundancy here, see debug log lines below.
  */
 
-bool kernel_ops_raw_policy(enum kernel_policy_op op,
-			   enum direction dir,
-			   enum expect_kernel_policy expect_kernel_policy,
-			   const ip_selector *src_client,
-			   const ip_selector *dst_client,
-			   const struct kernel_policy *policy,
-			   deltatime_t use_lifetime,
-			   const struct sa_marks *sa_marks,
-			   const struct pluto_xfrmi *xfrmi,
-			   enum kernel_policy_id id,
-			   const shunk_t sec_label,
-			   where_t where,
-			   struct logger *logger,
-			   const char *story)
-{
-	switch (op) {
-	case KERNEL_POLICY_OP_DELETE:
-		PEXPECT(logger, policy == NULL);
-		return kernel_ops_policy_del(dir, expect_kernel_policy,
-					     src_client, dst_client,
-					     sa_marks, xfrmi, id, sec_label,
-					     logger, where, story);
-	case KERNEL_POLICY_OP_ADD:
-	case KERNEL_POLICY_OP_REPLACE:
-		return kernel_ops_policy_add(op, dir, expect_kernel_policy,
-					     src_client, dst_client, policy,
-					     use_lifetime, sa_marks, xfrmi, id, sec_label,
-					     logger, where, story);
-	}
-	bad_case(op);
-}
-
 bool kernel_ops_policy_add(enum kernel_policy_op op,
 			   enum direction dir,
 			   enum expect_kernel_policy expect_kernel_policy,
@@ -75,13 +43,8 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 {
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
 	pexpect(client_proto == selector_protocol(*dst_client));
-	if (policy == NULL) {
-		PEXPECT(logger, op == KERNEL_POLICY_OP_DELETE);
-	} else {
-		PEXPECT(logger, op != KERNEL_POLICY_OP_DELETE);
-		PEXPECT(logger, policy->shunt != SHUNT_UNSET);
-		PEXPECT(logger, (policy->nr_rules == 0) ==/*iff*/ (policy->shunt == SHUNT_PASS));
-	}
+	PEXPECT(logger, policy->shunt != SHUNT_UNSET);
+	PEXPECT(logger, (policy->nr_rules == 0) ==/*iff*/ (policy->shunt == SHUNT_PASS));
 
 	if (DBGP(DBG_BASE)) {
 
@@ -194,8 +157,7 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 		case SHUNT_TRAP:
 			if (dir == DIRECTION_INBOUND) {
 				PEXPECT(logger, (op == KERNEL_POLICY_OP_ADD ||
-						 op == KERNEL_POLICY_OP_REPLACE ||
-						 op == KERNEL_POLICY_OP_DELETE));
+						 op == KERNEL_POLICY_OP_REPLACE));
 				PEXPECT(logger, policy->kind == SHUNT_KIND_ONDEMAND);
 				llog_pexpect(logger, where, "inbound ondemand SHUNT_TRAP is a no-op");
 				return true;

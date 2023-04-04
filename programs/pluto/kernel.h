@@ -55,8 +55,7 @@ enum kernel_policy_id { DEFAULT_KERNEL_POLICY_ID, };	/* sizeof() >= sizeof(uint3
 enum kernel_policy_op {
 	/* three bits */
 	KERNEL_POLICY_OP_ADD = 1,
-	KERNEL_POLICY_OP_DELETE = 2,
-	KERNEL_POLICY_OP_REPLACE = 4,
+	KERNEL_POLICY_OP_REPLACE = 2,
 };
 
 extern const struct enum_names kernel_policy_op_names;
@@ -350,18 +349,6 @@ struct kernel_ops {
 	void (*shutdown)(struct logger *logger);
 	void (*process_queue)(void);
 	void (*process_msg)(int, struct logger *);
-	bool (*raw_policy)(enum kernel_policy_op op,
-			   enum direction dir,
-			   enum expect_kernel_policy expect_kernel_policy,
-			   const ip_selector *src_client,
-			   const ip_selector *dst_client,
-			   const struct kernel_policy *policy,
-			   deltatime_t use_lifetime,
-			   const struct sa_marks *sa_marks,
-			   const struct pluto_xfrmi *xfrmi,
-			   enum kernel_policy_id id,
-			   const shunk_t sec_label,
-			   struct logger *logger);
 	bool (*policy_add)(enum kernel_policy_op op,
 			   enum direction dir,
 			   enum expect_kernel_policy expect_kernel_policy,

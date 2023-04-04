@@ -535,7 +535,8 @@ static void set_xfrm_selectors(struct xfrm_selector *sel,
  * @param story char *
  * @return boolean True if successful
  */
-static bool kernel_xfrm_raw_policy(enum kernel_policy_op op,
+
+static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 				   enum direction dir,
 				   enum expect_kernel_policy what_about_inbound,
 				   const ip_selector *src_client,
@@ -544,7 +545,7 @@ static bool kernel_xfrm_raw_policy(enum kernel_policy_op op,
 				   deltatime_t use_lifetime UNUSED,
 				   const struct sa_marks *sa_marks,
 				   const struct pluto_xfrmi *xfrmi,
-				   enum kernel_policy_id policy_id,
+				   enum kernel_policy_id policy_id UNUSED,
 				   const shunk_t sec_label,
 				   struct logger *logger)
 {
@@ -603,8 +604,7 @@ static bool kernel_xfrm_raw_policy(enum kernel_policy_op op,
 		policy_name = "%discard(discard)";
 		break;
 	case SHUNT_TRAP:
-		if ((op == KERNEL_POLICY_OP_ADD && dir == DIRECTION_INBOUND) ||
-		    (op == KERNEL_POLICY_OP_DELETE && dir == DIRECTION_INBOUND)) {
+		if (op == KERNEL_POLICY_OP_ADD && dir == DIRECTION_INBOUND) {
 			dbg("%s() inbound SHUNT_TRAP implemented as no-op", __func__);
 			return true;
 		}
@@ -615,12 +615,9 @@ static bool kernel_xfrm_raw_policy(enum kernel_policy_op op,
 		bad_case(shunt_policy);
 	}
 
-	/* XXX: notice how this ignores KERNEL_OP_REPLACE!?! */
 	const unsigned xfrm_dir =
-		(((op == KERNEL_POLICY_OP_ADD && dir == DIRECTION_INBOUND) ||
-		  (op == KERNEL_POLICY_OP_DELETE && dir == DIRECTION_INBOUND))
-		 ? XFRM_POLICY_IN
-		 : XFRM_POLICY_OUT);
+		(op == KERNEL_POLICY_OP_ADD && dir == DIRECTION_INBOUND ? XFRM_POLICY_IN :
+		 XFRM_POLICY_OUT);
 	dbg("%s() policy=%s action=%d xfrm_dir=%d op=%s dir=%s",
 	    __func__, policy_name, xfrm_action, xfrm_dir, op_str, dir_str);
 
@@ -636,45 +633,33 @@ static bool kernel_xfrm_raw_policy(enum kernel_policy_op op,
 	const int family = dst_client_afi->af;
 	dbg("%s() using family %s (%d)", __func__, dst_client_afi->ip_name, family);
 
-	uint8_t *req_dir;
-	if (op == KERNEL_POLICY_OP_DELETE) {
-		pexpect(kernel_policy == NULL || kernel_policy->nr_rules == 0);
-		req.n.nlmsg_type = XFRM_MSG_DELPOLICY;
-		req.n.nlmsg_len = NLMSG_SPACE(sizeof(struct xfrm_userpolicy_id));
-		struct xfrm_userpolicy_id *id = NLMSG_DATA(&req.n);
-		req_dir = &id->dir; /* set below */
-		set_xfrm_selectors(&id->sel, src_client, dst_client);
-		id->index = policy_id;
-	} else {
-		passert(kernel_policy != NULL); /*nr_rules >= 0*/
-		/*
-		 * NEW will fail when an existing policy, UPD always
-		 * works.  This seems to happen in cases with NAT'ed
-		 * XP clients, or quick recycling/resurfacing of
-		 * roadwarriors on the same IP.
-		 *
-		 * UPD is also needed for two separate tunnels with
-		 * same end subnets.  Like A = B = C config where both
-		 * A - B and B - C have tunnel A = C configured.
-		 */
-		req.n.nlmsg_type = XFRM_MSG_UPDPOLICY;
-		req.n.nlmsg_len = NLMSG_SPACE(sizeof(struct xfrm_userpolicy_info));
-		struct xfrm_userpolicy_info *info = NLMSG_DATA(&req.n);
-		req_dir = &info->dir; /* set below */
-		set_xfrm_selectors(&info->sel, src_client, dst_client);
+	passert(kernel_policy != NULL); /*nr_rules >= 0*/
+	/*
+	 * NEW will fail when an existing policy, UPD always
+	 * works.  This seems to happen in cases with NAT'ed
+	 * XP clients, or quick recycling/resurfacing of
+	 * roadwarriors on the same IP.
+	 *
+	 * UPD is also needed for two separate tunnels with
+	 * same end subnets.  Like A = B = C config where both
+	 * A - B and B - C have tunnel A = C configured.
+	 */
+	req.n.nlmsg_type = XFRM_MSG_UPDPOLICY;
+	req.n.nlmsg_len = NLMSG_SPACE(sizeof(struct xfrm_userpolicy_info));
+	struct xfrm_userpolicy_info *info = NLMSG_DATA(&req.n);
+	set_xfrm_selectors(&info->sel, src_client, dst_client);
 
-		/* The caller should have set the proper priority by now */
-		info->priority = kernel_policy->priority.value;
-		dbg("%s() IPsec SA SPD priority set to %d", __func__, info->priority);
+	/* The caller should have set the proper priority by now */
+	info->priority = kernel_policy->priority.value;
+	dbg("%s() IPsec SA SPD priority set to %d", __func__, info->priority);
 
-		info->action = xfrm_action;
-		/* info->lft.soft_use_expires_seconds = deltasecs(use_lifetime); */
-		info->lft.soft_byte_limit = XFRM_INF;
-		info->lft.soft_packet_limit = XFRM_INF;
-		info->lft.hard_byte_limit = XFRM_INF;
-		info->lft.hard_packet_limit = XFRM_INF;
-	}
-	*req_dir = xfrm_dir;
+	info->action = xfrm_action;
+	/* info->lft.soft_use_expires_seconds = deltasecs(use_lifetime); */
+	info->lft.soft_byte_limit = XFRM_INF;
+	info->lft.soft_packet_limit = XFRM_INF;
+	info->lft.hard_byte_limit = XFRM_INF;
+	info->lft.hard_packet_limit = XFRM_INF;
+	info->dir = xfrm_dir;
 
 
 	/*
@@ -689,8 +674,7 @@ static bool kernel_xfrm_raw_policy(enum kernel_policy_op op,
 	 * is needed.  Lets find out.
 	 */
 	if (kernel_policy != NULL && kernel_policy->nr_rules > 0 &&
-	    pexpect(shunt_policy != SHUNT_PASS) &&
-	    pexpect(op != KERNEL_POLICY_OP_DELETE)) {
+	    pexpect(shunt_policy != SHUNT_PASS)) {
 		struct xfrm_user_tmpl tmpls[4] = {0};
 
 		passert(kernel_policy->nr_rules <= (int)elemsof(tmpls));
@@ -834,22 +818,6 @@ static bool kernel_xfrm_raw_policy(enum kernel_policy_op op,
 	 */
 	if (dir == DIRECTION_INBOUND) {
 		switch (op) {
-		case KERNEL_POLICY_OP_DELETE:
-			/*
-			 * ??? we will call netlink_policy even if
-			 * !ok.
-			 *
-			 * XXX: It's also called when transport mode!
-			 *
-			 * Presumably this is trying to also delete
-			 * earlier SNAFUs.
-			 */
-			dbg("xfrm: %s() deleting policy forward (even when there may not be one)",
-			    __func__);
-			*req_dir = XFRM_POLICY_FWD;
-			ok &= sendrecv_xfrm_policy(&req.n, IGNORE_KERNEL_POLICY_MISSING,
-						   policy_name, "(fwd)", logger);
-			break;
 		case KERNEL_POLICY_OP_ADD:
 			if (!ok) {
 				break;
@@ -859,7 +827,7 @@ static bool kernel_xfrm_raw_policy(enum kernel_policy_op op,
 				break;
 			}
 			dbg("xfrm: %s() adding policy forward (suspect a tunnel)", __func__);
-			*req_dir = XFRM_POLICY_FWD;
+			info->dir = XFRM_POLICY_FWD;
 			ok &= sendrecv_xfrm_policy(&req.n, what_about_inbound,
 						   policy_name, "(fwd)", logger);
 			break;
@@ -868,24 +836,6 @@ static bool kernel_xfrm_raw_policy(enum kernel_policy_op op,
 		}
 	}
 	return ok;
-}
-
-static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
-				   enum direction dir,
-				   enum expect_kernel_policy expect_kernel_policy,
-				   const ip_selector *this_client,
-				   const ip_selector *that_client,
-				   const struct kernel_policy *policy,
-				   deltatime_t use_lifetime,
-				   const struct sa_marks *sa_marks,
-				   const struct pluto_xfrmi *xfrmi,
-				   enum kernel_policy_id id,
-				   const shunk_t sec_label,
-				   struct logger *logger)
-{
-	return kernel_xfrm_raw_policy(op, dir, expect_kernel_policy, this_client, that_client,
-				      policy, use_lifetime, sa_marks, xfrmi, id, sec_label,
-				      logger);
 }
 
 static bool kernel_xfrm_policy_del(enum direction direction,
@@ -2771,7 +2721,6 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.init = init_netlink,
 	.shutdown = xfrm_shutdown,
 	.process_msg = netlink_process_msg,
-	.raw_policy = kernel_xfrm_raw_policy,
 	.policy_del = kernel_xfrm_policy_del,
 	.policy_add = kernel_xfrm_policy_add,
 	.add_sa = netlink_add_sa,

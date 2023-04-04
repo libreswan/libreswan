@@ -242,7 +242,6 @@ enum_names dns_auth_level_names = {
 static const char *kernel_policy_op_name[] = {
 #define S(E) [E] = #E
 	S(KERNEL_POLICY_OP_ADD),
-	S(KERNEL_POLICY_OP_DELETE),
 	S(KERNEL_POLICY_OP_REPLACE),
 #undef S
 };

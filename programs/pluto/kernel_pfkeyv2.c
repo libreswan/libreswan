@@ -1107,7 +1107,6 @@ static struct sadb_x_ipsecrequest *put_sadb_x_ipsecrequest(struct outbuf *msg,
 
 #ifdef SADB_X_EXT_POLICY /* FreeBSD NetBSD */
 static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
-					       enum kernel_policy_op op,
 					       enum direction dir,
 					       enum ipsec_policy policy_type,
 					       enum kernel_policy_id policy_id,
@@ -1129,8 +1128,6 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 		x_policy->sadb_x_policy_priority = kernel_policy->priority.value;
 #endif
 		if (kernel_policy->nr_rules > 0) {
-			pexpect(op == KERNEL_POLICY_OP_ADD ||
-				op == KERNEL_POLICY_OP_REPLACE);
 			pexpect(policy_type == IPSEC_POLICY_IPSEC);
 			/*
 			 * XXX: Only the first rule gets the worm; er
@@ -1147,8 +1144,6 @@ static struct sadb_x_policy *put_sadb_x_policy(struct outbuf *req,
 				mode = IPSEC_MODE_TRANSPORT;
 			}
 		}
-	} else if (policy_type == IPSEC_POLICY_IPSEC) {
-		pexpect(op == KERNEL_POLICY_OP_DELETE);
 	}
 
 	padup_sadb(req, x_policy);
@@ -1176,7 +1171,7 @@ static bool parse_sadb_x_policy(shunk_t *ext_cursor,
 }
 #endif
 
-static bool kernel_pfkeyv2_raw_policy(enum kernel_policy_op op,
+static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 				      enum direction dir,
 				      enum expect_kernel_policy expect_kernel_policy,
 				      const ip_selector *src_client,
@@ -1195,7 +1190,6 @@ static bool kernel_pfkeyv2_raw_policy(enum kernel_policy_op op,
 #ifdef __OpenBSD__
 
 	enum sadb_type type = (op == KERNEL_POLICY_OP_ADD ? SADB_X_ADDFLOW :
-			       op == KERNEL_POLICY_OP_DELETE ? SADB_X_DELFLOW :
 			       op == KERNEL_POLICY_OP_REPLACE ? SADB_X_ADDFLOW :
 			       pexpect(0));
 
@@ -1309,7 +1303,6 @@ static bool kernel_pfkeyv2_raw_policy(enum kernel_policy_op op,
 	/* SPDADD: <base, policy, address(SD), [lifetime(HS)]> */
 
 	enum sadb_type type = (op == KERNEL_POLICY_OP_ADD ? SADB_X_SPDADD :
-			       op == KERNEL_POLICY_OP_DELETE ? SADB_X_SPDDELETE :
 			       op == KERNEL_POLICY_OP_REPLACE ? SADB_X_SPDUPDATE :
 			       pexpect(0));
 	/* what NetBSD expects */
@@ -1360,7 +1353,7 @@ static bool kernel_pfkeyv2_raw_policy(enum kernel_policy_op op,
 	}
 	pexpect(policy_type != UINT_MAX);
 
-	put_sadb_x_policy(&req, op, dir, policy_type, policy_id, kernel_policy);
+	put_sadb_x_policy(&req, dir, policy_type, policy_id, kernel_policy);
 
 #endif
 
@@ -1380,24 +1373,6 @@ static bool kernel_pfkeyv2_raw_policy(enum kernel_policy_op op,
 	}
 
 	return true;
-}
-
-static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
-				      enum direction dir,
-				      enum expect_kernel_policy expect_kernel_policy,
-				      const ip_selector *this_client,
-				      const ip_selector *that_client,
-				      const struct kernel_policy *policy,
-				      deltatime_t use_lifetime,
-				      const struct sa_marks *sa_marks,
-				      const struct pluto_xfrmi *xfrmi,
-				      enum kernel_policy_id id,
-				      const shunk_t sec_label,
-				      struct logger *logger)
-{
-	return kernel_pfkeyv2_raw_policy(op, dir, expect_kernel_policy, this_client, that_client,
-					 policy, use_lifetime, sa_marks, xfrmi, id, sec_label,
-					 logger);
 }
 
 static bool kernel_pfkeyv2_policy_del(enum direction direction,
@@ -1473,7 +1448,7 @@ static bool kernel_pfkeyv2_policy_del(enum direction direction,
 
 	/* policy */
 
-	put_sadb_x_policy(&req, KERNEL_POLICY_OP_DELETE, direction,
+	put_sadb_x_policy(&req, direction,
 			  IPSEC_POLICY_IPSEC, policy_id, NULL);
 
 #endif
@@ -1676,7 +1651,6 @@ const struct kernel_ops pfkeyv2_kernel_ops = {
 	.del_ipsec_spi = pfkeyv2_del_ipsec_spi,
 	.add_sa = pfkeyv2_add_sa,
 	.get_kernel_state = pfkeyv2_get_kernel_state,
-	.raw_policy = kernel_pfkeyv2_raw_policy,
 	.policy_del = kernel_pfkeyv2_policy_del,
 	.policy_add = kernel_pfkeyv2_policy_add,
 	.process_msg = pfkeyv2_process_msg,

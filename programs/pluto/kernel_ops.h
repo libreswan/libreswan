@@ -18,22 +18,6 @@
 
 #include "kernel.h"
 
-/*kernel_ops_policy() kernel_ops_spd()? */
-extern bool kernel_ops_raw_policy(enum kernel_policy_op op,
-				  enum direction dir,
-				  enum expect_kernel_policy expect_kernel_policy,
-				  const ip_selector *this_client,
-				  const ip_selector *that_client,
-				  const struct kernel_policy *policy,
-				  deltatime_t use_lifetime,
-				  const struct sa_marks *sa_marks,
-				  const struct pluto_xfrmi *xfrmi,
-				  enum kernel_policy_id id,
-				  const shunk_t sec_label,
-				  where_t where,
-				  struct logger *logger,
-				  const char *story);
-
 bool kernel_ops_policy_add(enum kernel_policy_op op,
 			   enum direction dir,
 			   enum expect_kernel_policy expect_kernel_policy,

@@ -276,7 +276,7 @@ bool install_bare_sec_label_kernel_policy(const struct spd_route *spd,
 				       SHUNT_KIND_IPSEC,
 				       SHUNT_IPSEC,
 				       where);
-	if (!kernel_ops_raw_policy(op, direction,
+	if (!kernel_ops_policy_add(op, direction,
 				   existing_policy_expectation,
 				   &kernel_policy.src.client,
 				   &kernel_policy.dst.client,
@@ -286,7 +286,7 @@ bool install_bare_sec_label_kernel_policy(const struct spd_route *spd,
 				   kernel_policy.xfrmi,
 				   kernel_policy.id,
 				   kernel_policy.sec_label,
-				   where, logger, what)) {
+				   logger, where, what)) {
 		return false;
 	}
 	return true;
@@ -341,7 +341,7 @@ bool install_bare_spd_kernel_policy(const struct spd_route *spd,
 					HUNK_AS_SHUNK(c->config->sec_label),
 					where);
 
-	if (!kernel_ops_raw_policy(op, direction,
+	if (!kernel_ops_policy_add(op, direction,
 				   existing_policy_expectation,
 				   &kernel_policy.src.client,
 				   &kernel_policy.dst.client,
@@ -351,7 +351,7 @@ bool install_bare_spd_kernel_policy(const struct spd_route *spd,
 				   kernel_policy.xfrmi,
 				   kernel_policy.id,
 				   kernel_policy.sec_label,
-				   where, logger, what)) {
+				   logger, where, what)) {
 		return false;
 	}
 
@@ -465,7 +465,7 @@ bool install_bare_cat_kernel_policy(const struct spd_route *spd,
 	 * all about.
 	 */
 	ip_selector local_client = selector_from_address(spd->local->host->addr);
-	return kernel_ops_raw_policy(op, DIRECTION_OUTBOUND, expect_kernel_policy,
+	return kernel_ops_policy_add(op, DIRECTION_OUTBOUND, expect_kernel_policy,
 				     &local_client, &kernel_policy.dst.client,
 				     &kernel_policy,
 				     deltatime(0),
@@ -473,7 +473,7 @@ bool install_bare_cat_kernel_policy(const struct spd_route *spd,
 				     kernel_policy.xfrmi,
 				     kernel_policy.id,
 				     kernel_policy.sec_label,
-				     where, logger, reason);
+				     logger, where, reason);
 }
 
 bool delete_cat_kernel_policy(const struct spd_route *spd,
@@ -536,7 +536,7 @@ void install_inbound_ipsec_kernel_policy(struct child_sa *child,
 	}
 #endif
 
-	if (!kernel_ops_raw_policy(KERNEL_POLICY_OP_ADD,
+	if (!kernel_ops_policy_add(KERNEL_POLICY_OP_ADD,
 				   DIRECTION_INBOUND,
 				   EXPECT_KERNEL_POLICY_OK,
 				   &kernel_policy.src.route,	/* src_client */
@@ -547,7 +547,7 @@ void install_inbound_ipsec_kernel_policy(struct child_sa *child,
 				   kernel_policy.xfrmi,
 				   kernel_policy.id,
 				   kernel_policy.sec_label,
-				   where, child->sa.st_logger, "add inbound Child SA")) {
+				   child->sa.st_logger, where, "add inbound Child SA")) {
 		selector_pair_buf spb;
 		llog_sa(RC_LOG, child,
 			"kernel: %s() failed to add SPD for %s",
@@ -578,7 +578,7 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
 		 *   assigned address.
 		 */
 		ip_selector client = selector_from_address(spd->local->host->addr);
-		if (!kernel_ops_raw_policy(op, DIRECTION_OUTBOUND,
+		if (!kernel_ops_policy_add(op, DIRECTION_OUTBOUND,
 					   EXPECT_KERNEL_POLICY_OK,
 					   &client,
 					   &kernel_policy.dst.route,
@@ -588,7 +588,7 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
 					   kernel_policy.xfrmi,
 					   kernel_policy.id,
 					   kernel_policy.sec_label,
-					   where, logger,
+					   logger, where,
 					   "CAT: replace host->route kernel policy")) {
 			llog_sa(RC_LOG, child,
 				"CAT: failed to replace host->route kernel policy");
@@ -596,7 +596,7 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
 		/*
 		 * Now add the client.
 		 */
-		return kernel_ops_raw_policy(op, DIRECTION_OUTBOUND,
+		return kernel_ops_policy_add(op, DIRECTION_OUTBOUND,
 					     EXPECT_KERNEL_POLICY_OK,
 					     &kernel_policy.src.route,
 					     &kernel_policy.dst.route,
@@ -606,13 +606,13 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
 					     kernel_policy.xfrmi,
 					     kernel_policy.id,
 					     kernel_policy.sec_label,
-					     where, logger,
+					     logger, where,
 					     "CAT: add client->client kernel policy");
 	} else {
 		/*
 		 * Just need client->client policies
 		 */
-		return kernel_ops_raw_policy(op, DIRECTION_OUTBOUND,
+		return kernel_ops_policy_add(op, DIRECTION_OUTBOUND,
 					     EXPECT_KERNEL_POLICY_OK,
 					     &kernel_policy.src.route,
 					     &kernel_policy.dst.route,
@@ -622,7 +622,7 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
 					     kernel_policy.xfrmi,
 					     kernel_policy.id,
 					     kernel_policy.sec_label,
-					     where, logger,
+					     logger, where,
 					     "install IPsec policy");
 	}
 }
@@ -644,7 +644,7 @@ bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
 					 * security label */
 					/*sec_label*/null_shunk,
 					where);
-	return kernel_ops_raw_policy(KERNEL_POLICY_OP_REPLACE,
+	return kernel_ops_policy_add(KERNEL_POLICY_OP_REPLACE,
 				     DIRECTION_OUTBOUND,
 				     EXPECT_KERNEL_POLICY_OK,
 				     &kernel_policy.src.client,
@@ -655,7 +655,7 @@ bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
 				     kernel_policy.xfrmi/*NULL*/,
 				     kernel_policy.id, /*0*/
 				     kernel_policy.sec_label/*null_shunk*/,
-				     where, logger, "install bare policy");
+				     logger, where, "install bare policy");
 }
 
 static void replace_ipsec_with_bare_kernel_policy(struct child_sa *child,
