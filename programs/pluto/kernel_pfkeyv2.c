@@ -1404,20 +1404,96 @@ static bool kernel_pfkeyv2_policy_del(enum direction direction,
 				      enum expect_kernel_policy expect_kernel_policy,
 				      const ip_selector *src_child,
 				      const ip_selector *dst_child,
-				      const struct sa_marks *sa_marks,
-				      const struct pluto_xfrmi *xfrmi,
-				      enum kernel_policy_id id,
-				      const shunk_t sec_label,
+				      const struct sa_marks *sa_marks UNUSED,
+				      const struct pluto_xfrmi *xfrmi UNUSED,
+				      enum kernel_policy_id policy_id,
+				      const shunk_t sec_label UNUSED,
 				      struct logger *logger)
 {
-	return kernel_pfkeyv2_raw_policy(KERNEL_POLICY_OP_DELETE,
-					 direction,
-					 expect_kernel_policy,
-					 src_child, dst_child,
-					 /*policy*/NULL/*delete-not-needed*/,
-					 deltatime(0),
-					 sa_marks, xfrmi, id, sec_label,
+#ifdef __OpenBSD__
+
+	uint8_t reqbuf[SIZEOF_SADB_BASE +
+		       SIZEOF_SADB_PROTOCOL + /*flow*/
+		       SIZEOF_SADB_ADDRESS * 2 + /*src/dst addr*/
+		       SIZEOF_SADB_ADDRESS * 4 + /*src/dst addr/mask*/
+		       SIZEOF_SADB_PROTOCOL + /*flow*/
+		       0];
+
+	struct outbuf req;
+	struct sadb_msg *base = msg_base(&req, __func__,
+					 chunk2(reqbuf, sizeof(reqbuf)),
+					 SADB_X_DELFLOW,
+					 SADB_SATYPE_UNSPEC,
 					 logger);
+
+	/* flow type */
+
+	unsigned policy_direction =
+		(direction == DIRECTION_INBOUND ? IPSP_DIRECTION_IN :
+		 direction == DIRECTION_OUTBOUND ? IPSP_DIRECTION_OUT :
+		 pexpect(0));
+
+	put_sadb_ext(&req, sadb_protocol, SADB_X_EXT_FLOW_TYPE,
+		     .sadb_protocol_direction = policy_direction,
+		     .sadb_protocol_proto = SADB_X_FLOW_TYPE_REQUIRE);
+
+	/* selectors */
+
+	put_sadb_address(&req, SADB_X_EXT_SRC_FLOW, selector_prefix(*src_child));
+	put_sadb_address(&req, SADB_X_EXT_SRC_MASK, selector_prefix_mask(*src_child));
+	put_sadb_address(&req, SADB_X_EXT_DST_FLOW, selector_prefix(*dst_child));
+	put_sadb_address(&req, SADB_X_EXT_DST_MASK, selector_prefix_mask(*dst_child));
+
+	/* which protocol? */
+
+	put_sadb_ext(&req, sadb_protocol, SADB_X_EXT_PROTOCOL,
+		     .sadb_protocol_proto = selector_protocol(*src_child)->ipproto);
+
+	/* sa_srcd, sa_dstid: identity (sec_label?) */
+
+#else
+
+	/* SPDADD: <base, policy, address(SD), [lifetime(HS)]> */
+
+	uint8_t reqbuf[SIZEOF_SADB_BASE +
+		       SIZEOF_SADB_X_POLICY +
+		       SIZEOF_SADB_ADDRESS * 2 +
+		       SIZEOF_SADB_LIFETIME * 2];
+	struct outbuf req;
+	struct sadb_msg *base = msg_base(&req, __func__,
+					 chunk2(reqbuf, sizeof(reqbuf)),
+					 SADB_X_SPDDELETE,
+					 SADB_SATYPE_UNSPEC,
+					 logger);
+
+	/* address(SD) */
+
+	put_sadb_selector(&req, SADB_EXT_ADDRESS_SRC, *src_child);
+	put_sadb_selector(&req, SADB_EXT_ADDRESS_DST, *dst_child);
+
+	/* policy */
+
+	put_sadb_x_policy(&req, KERNEL_POLICY_OP_DELETE, direction,
+			  IPSEC_POLICY_IPSEC, policy_id, NULL);
+
+#endif
+
+	/* send/req */
+
+	struct inbuf resp;
+	if (!msg_sendrecv(&req, base, &resp)) {
+		switch (expect_kernel_policy) {
+		case IGNORE_KERNEL_POLICY_MISSING:
+		case EXPECT_NO_INBOUND:
+			dbg("Ignoring pfkey error");
+			break;
+		case EXPECT_KERNEL_POLICY_OK:
+			llog_pexpect(logger, HERE, "receiving");
+			return false;
+		}
+	}
+
+	return true;
 }
 
 static bool parse_sadb_address(shunk_t *ext_cursor, ip_address *addr, ip_port *port, struct logger *logger)
