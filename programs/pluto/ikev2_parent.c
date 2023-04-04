@@ -434,31 +434,31 @@ static bool expire_ike_because_child_not_used(struct state *st)
 	}
 
 	/* see of (most recent) child is busy */
-	struct state *cst;
+	struct child_sa *child;
 	struct ike_sa *ike;
 	if (IS_IKE_SA(st)) {
 		ike = pexpect_ike_sa(st);
-		cst = state_by_serialno(c->newest_ipsec_sa);
-		if (cst == NULL) {
+		child = child_sa_by_serialno(c->newest_ipsec_sa);
+		if (child == NULL) {
 			llog_pexpect(st->st_logger, HERE,
 				     "can't check usage as IKE SA #%lu has no newest child",
 				     ike->sa.st_serialno);
 			return true;
 		}
 	} else {
-		cst = st;
+		child = pexpect_child_sa(st);
 		ike = ike_sa(st, HERE);
 	}
 
-	dbg("#%lu check last used on newest CHILD SA #%lu",
-	    ike->sa.st_serialno, cst->st_serialno);
+	dbg(PRI_SO" check last used on newest CHILD SA "PRI_SO,
+	    ike->sa.st_serialno, child->sa.st_serialno);
 
 	/* not sure why idleness is set to rekey margin? */
-	if (was_eroute_idle(cst, c->config->sa_rekey_margin)) {
+	if (was_eroute_idle(child, c->config->sa_rekey_margin)) {
 		/* we observed no traffic, let IPSEC SA and IKE SA expire */
-		dbg("expiring IKE SA #%lu as CHILD SA #%lu has been idle for more than %jds",
+		dbg("expiring IKE SA "PRI_SO" as CHILD SA "PRI_SO" has been idle for more than %jds",
 		    ike->sa.st_serialno,
-		    ike->sa.st_serialno,
+		    child->sa.st_serialno,
 		    deltasecs(c->config->sa_rekey_margin));
 		return true;
 	}

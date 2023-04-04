@@ -217,7 +217,7 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 	return kernel_policy;
 }
 
-static struct kernel_policy kernel_policy_from_state(const struct state *st,
+static struct kernel_policy kernel_policy_from_state(const struct child_sa *child,
 						     const struct spd_route *spd,
 						     enum direction direction,
 						     where_t where)
@@ -225,19 +225,19 @@ static struct kernel_policy kernel_policy_from_state(const struct state *st,
 	bool tunnel = false;
 	lset_t policy = LEMPTY;
 
-	if (st->st_ipcomp.present) {
+	if (child->sa.st_ipcomp.present) {
 		policy |= POLICY_COMPRESS;
-		tunnel |= (st->st_ipcomp.attrs.mode == ENCAPSULATION_MODE_TUNNEL);
+		tunnel |= (child->sa.st_ipcomp.attrs.mode == ENCAPSULATION_MODE_TUNNEL);
 	}
 
-	if (st->st_esp.present) {
+	if (child->sa.st_esp.present) {
 		policy |= POLICY_ENCRYPT;
-		tunnel |= (st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL);
+		tunnel |= (child->sa.st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL);
 	}
 
-	if (st->st_ah.present) {
+	if (child->sa.st_ah.present) {
 		policy |= POLICY_AUTHENTICATE;
-		tunnel |= (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL);
+		tunnel |= (child->sa.st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL);
 	}
 
 	enum encap_mode mode = (tunnel ? ENCAP_MODE_TUNNEL : ENCAP_MODE_TRANSPORT);
@@ -508,7 +508,7 @@ void install_inbound_ipsec_kernel_policy(struct child_sa *child,
 					 where_t where)
 {
 	struct kernel_policy kernel_policy =
-		kernel_policy_from_state(&child->sa, spd, DIRECTION_INBOUND, where);
+		kernel_policy_from_state(child, spd, DIRECTION_INBOUND, where);
 	selector_pair_buf spb;
 	ldbg_sa(child, "kernel: %s() is installing SPD for %s",
 		__func__, str_selector_pair(&kernel_policy.src.client, &kernel_policy.dst.client, &spb));
@@ -567,7 +567,7 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
 	enum kernel_policy_op op = (replace ? KERNEL_POLICY_OP_REPLACE :
 				    KERNEL_POLICY_OP_ADD);
 	const struct kernel_policy kernel_policy =
-		kernel_policy_from_state(&child->sa, spd, DIRECTION_OUTBOUND, where);
+		kernel_policy_from_state(child, spd, DIRECTION_OUTBOUND, where);
 	/* check for no transform at all */
 	PASSERT(child->sa.st_logger, kernel_policy.nr_rules > 0);
 	if (spd->local->child->has_cat) {

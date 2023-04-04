@@ -41,40 +41,46 @@
 #include "show.h"
 
 /* note: this mutates *st by calling get_sa_bundle_info */
-static void jam_state_traffic(struct jambuf *buf, struct state *st)
+static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
 {
-	jam(buf, "#%lu: ", st->st_serialno);
-	const struct connection *c = st->st_connection;
+	if (!pexpect(child != NULL)) {
+		return;
+	}
+
+	jam_so(buf, child->sa.st_serialno);
+	jam_string(buf, ": ");
+
+	const struct connection *c = child->sa.st_connection;
 	jam_connection(buf, c);
 
-	if (st->st_xauth_username[0] != '\0') {
-		jam(buf, ", username=%s", st->st_xauth_username);
+	if (child->sa.st_xauth_username[0] != '\0') {
+		jam(buf, ", username=%s", child->sa.st_xauth_username);
 	}
 
 	/* traffic */
 	jam(buf, ", type=%s, add_time=%"PRIu64,
-	    (st->st_esp.present ? "ESP" : st->st_ah.present ? "AH" : st->st_ipcomp.present ? "IPCOMP" : "UNKNOWN"),
-	    st->st_esp.add_time);
+	    (child->sa.st_esp.present ? "ESP" : child->sa.st_ah.present ? "AH" : child->sa.st_ipcomp.present ? "IPCOMP" : "UNKNOWN"),
+	    child->sa.st_esp.add_time);
 
 	struct ipsec_proto_info *first_ipsec_proto =
-		(st->st_esp.present ? &st->st_esp:
-		 st->st_ah.present ? &st->st_ah :
-		 st->st_ipcomp.present ? &st->st_ipcomp :
+		(child->sa.st_esp.present ? &child->sa.st_esp:
+		 child->sa.st_ah.present ? &child->sa.st_ah :
+		 child->sa.st_ipcomp.present ? &child->sa.st_ipcomp :
 		 NULL);
 	passert(first_ipsec_proto != NULL);
 
-	if (get_ipsec_traffic(st, first_ipsec_proto, DIRECTION_INBOUND)) {
+	if (get_ipsec_traffic(child, first_ipsec_proto, DIRECTION_INBOUND)) {
 		jam(buf, ", inBytes=%ju", first_ipsec_proto->inbound.bytes);
 	}
 
-	if (get_ipsec_traffic(st, first_ipsec_proto, DIRECTION_OUTBOUND)) {
+	if (get_ipsec_traffic(child, first_ipsec_proto, DIRECTION_OUTBOUND)) {
 		jam(buf, ", outBytes=%ju", first_ipsec_proto->outbound.bytes);
 		if (c->config->sa_ipsec_max_bytes != 0) {
 			jam_humber_max(buf, ", maxBytes=", c->config->sa_ipsec_max_bytes, "B");
 		}
 	}
 
-	if (st->st_xauth_username[0] == '\0') {
+	if (child->sa.st_xauth_username[0] == '\0') {
 		jam(buf, ", id='");
 		jam_id_bytes(buf, &c->remote->host.id, jam_sanitized_bytes);
 		jam(buf, "'");
@@ -118,7 +124,7 @@ static void show_state_traffic(struct show *s,
 	/* whack-log-global - no prefix */
 	SHOW_JAMBUF(rc, s, buf) {
 		/* note: this mutates *st by calling get_sa_bundle_info */
-		jam_state_traffic(buf, st);
+		jam_child_sa_traffic(buf, pexpect_child_sa(st));
 	}
 }
 

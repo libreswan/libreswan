@@ -253,7 +253,7 @@ void liveness_check(struct state *st)
 		 child->sa.st_ah.present ? &child->sa.st_ah :
 		 child->sa.st_ipcomp.present ? &child->sa.st_ipcomp :
 		 NULL);
-	if (get_ipsec_traffic(&child->sa, first_ipsec_proto, DIRECTION_INBOUND)) {
+	if (get_ipsec_traffic(child, first_ipsec_proto, DIRECTION_INBOUND)) {
 		deltatime_t since =
 			realtimediff(realnow(), first_ipsec_proto->inbound.last_used);
 		if (recent_last_contact(child, since, "recent IPsec traffic")) {

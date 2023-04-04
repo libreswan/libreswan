@@ -496,8 +496,8 @@ void teardown_ipsec_kernel_states(struct child_sa *child);
 void teardown_ipsec_kernel_policies(struct child_sa *child);
 void uninstall_kernel_states(struct child_sa *child);
 
-extern bool was_eroute_idle(struct state *st, deltatime_t idle_max);
-extern bool get_ipsec_traffic(struct state *st, struct ipsec_proto_info *sa, enum direction direction);
+extern bool was_eroute_idle(struct child_sa *child, deltatime_t idle_max);
+extern bool get_ipsec_traffic(struct child_sa *child, struct ipsec_proto_info *sa, enum direction direction);
 bool kernel_ops_migrate_ipsec_sa(struct child_sa *child);
 
 extern void show_kernel_interface(struct show *s);

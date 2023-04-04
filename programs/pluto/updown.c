@@ -223,10 +223,10 @@ static bool fmt_common_shell_out(char *buf,
 		 * XXX: does the get_sa_bundle_info() call order matter? Should this
 		 * be a single "atomic" call?
 		 */
-		if (get_ipsec_traffic(st, first_ipsec_proto, DIRECTION_INBOUND)) {
+		if (get_ipsec_traffic(pexpect_child_sa(st), first_ipsec_proto, DIRECTION_INBOUND)) {
 			JDuint64("PLUTO_INBYTES", first_ipsec_proto->inbound.bytes);
 		}
-		if (get_ipsec_traffic(st, first_ipsec_proto, DIRECTION_OUTBOUND)) {
+		if (get_ipsec_traffic(pexpect_child_sa(st), first_ipsec_proto, DIRECTION_OUTBOUND)) {
 			JDuint64("PLUTO_OUTBYTES", first_ipsec_proto->outbound.bytes);
 		}
 	}

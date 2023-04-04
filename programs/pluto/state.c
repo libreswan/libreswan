@@ -842,19 +842,19 @@ void delete_ike_sa(struct ike_sa **ike)
 	delete_state(st);
 }
 
-static void update_and_log_traffic(struct state *st, const char *name,
+static void update_and_log_traffic(struct child_sa *child, const char *name,
 				   struct ipsec_proto_info *proto,
 				   struct pstats_bytes *pstats)
 {
 	/* pull in the traffic counters into state before they're lost */
-	if (!get_ipsec_traffic(st, proto, DIRECTION_OUTBOUND)) {
-		log_state(RC_LOG, st, "failed to pull traffic counters from outbound IPsec SA");
+	if (!get_ipsec_traffic(child, proto, DIRECTION_OUTBOUND)) {
+		llog_sa(RC_LOG, child, "failed to pull traffic counters from outbound IPsec SA");
 	}
-	if (!get_ipsec_traffic(st, proto, DIRECTION_INBOUND)) {
-		log_state(RC_LOG, st, "failed to pull traffic counters from inbound IPsec SA");
+	if (!get_ipsec_traffic(child, proto, DIRECTION_INBOUND)) {
+		llog_sa(RC_LOG, child, "failed to pull traffic counters from inbound IPsec SA");
 	}
 
-	LLOG_JAMBUF(RC_INFORMATIONAL, st->st_logger, buf) {
+	LLOG_JAMBUF(RC_INFORMATIONAL, child->sa.st_logger, buf) {
 		jam(buf, "%s traffic information:", name);
 		/* in */
 		jam_string(buf, " in=");
@@ -864,9 +864,9 @@ static void update_and_log_traffic(struct state *st, const char *name,
 		jam_string(buf, " out=");
 		jam_humber(buf, proto->outbound.bytes);
 		jam_string(buf, "B");
-		if (st->st_xauth_username[0] != '\0') {
+		if (child->sa.st_xauth_username[0] != '\0') {
 			jam_string(buf, " XAUTHuser=");
-			jam_string(buf, st->st_xauth_username);
+			jam_string(buf, child->sa.st_xauth_username);
 		}
 	}
 
@@ -983,22 +983,23 @@ void delete_state(struct state *st)
 		 * Note that a state/SA can have more then one of
 		 * ESP/AH/IPCOMP
 		 */
+		struct child_sa *child = pexpect_child_sa(st);
 		if (st->st_esp.present) {
-			update_and_log_traffic(st, "ESP", &st->st_esp,
+			update_and_log_traffic(child, "ESP", &st->st_esp,
 					       &pstats_esp_bytes);
 			pstats_ipsec_bytes.in += st->st_esp.inbound.bytes;
 			pstats_ipsec_bytes.out += st->st_esp.outbound.bytes;
 		}
 
 		if (st->st_ah.present) {
-			update_and_log_traffic(st, "AH", &st->st_ah,
+			update_and_log_traffic(child, "AH", &st->st_ah,
 					       &pstats_ah_bytes);
 			pstats_ipsec_bytes.in += st->st_ah.inbound.bytes;
 			pstats_ipsec_bytes.out += st->st_ah.outbound.bytes;
 		}
 
 		if (st->st_ipcomp.present) {
-			update_and_log_traffic(st, "IPCOMP", &st->st_ipcomp,
+			update_and_log_traffic(child, "IPCOMP", &st->st_ipcomp,
 					       &pstats_ipcomp_bytes);
 			/* XXX: not ipcomp */
 		}
@@ -2151,23 +2152,24 @@ static void show_state(struct show *s, struct state *st, const monotime_t now)
 	}
 }
 
-static void show_established_child_details(struct show *s, struct state *st,
+static void show_established_child_details(struct show *s, struct child_sa *child,
 					   const monotime_t now)
 {
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
-		const struct connection *c = st->st_connection;
+		const struct connection *c = child->sa.st_connection;
 
-		jam(buf, "#%lu: ", st->st_serialno);
+		jam_so(buf, child->sa.st_serialno);
+		jam_string(buf, ": ");
 		jam_connection(buf, c);
 
 		/*
 		 * XXX - mcr last used is really an attribute of
 		 * the connection
 		 */
-		if (c->child.newest_routing_sa == st->st_serialno &&
-		    st->st_outbound_count != 0) {
+		if (c->child.newest_routing_sa == child->sa.st_serialno &&
+		    child->sa.st_outbound_count != 0) {
 			jam(buf, " used %jds ago;",
-			    deltasecs(monotimediff(now , st->st_outbound_time)));
+			    deltasecs(monotimediff(now , child->sa.st_outbound_time)));
 		}
 
 #define add_said(ADDRESS, PROTOCOL, SPI)				\
@@ -2181,34 +2183,34 @@ static void show_established_child_details(struct show *s, struct state *st,
 
 		/* SAIDs */
 
-		if (st->st_ah.present) {
+		if (child->sa.st_ah.present) {
 			add_said(c->remote->host.addr,
 				 &ip_protocol_ah,
-				 st->st_ah.outbound.spi);
+				 child->sa.st_ah.outbound.spi);
 			add_said(c->local->host.addr,
 				 &ip_protocol_ah,
-				 st->st_ah.inbound.spi);
+				 child->sa.st_ah.inbound.spi);
 		}
-		if (st->st_esp.present) {
+		if (child->sa.st_esp.present) {
 			add_said(c->remote->host.addr,
 				 &ip_protocol_esp,
-				 st->st_esp.outbound.spi);
+				 child->sa.st_esp.outbound.spi);
 			add_said(c->local->host.addr,
 				 &ip_protocol_esp,
-				 st->st_esp.inbound.spi);
+				 child->sa.st_esp.inbound.spi);
 		}
-		if (st->st_ipcomp.present) {
+		if (child->sa.st_ipcomp.present) {
 			add_said(c->remote->host.addr,
 				 &ip_protocol_ipcomp,
-				 st->st_ipcomp.outbound.spi);
+				 child->sa.st_ipcomp.outbound.spi);
 			add_said(c->local->host.addr,
 				 &ip_protocol_ipcomp,
-				 st->st_ipcomp.inbound.spi);
+				 child->sa.st_ipcomp.inbound.spi);
 		}
 #if defined(KERNEL_XFRM)
-		if (st->st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
-		    st->st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
-		    st->st_ipcomp.attrs.mode == ENCAPSULATION_MODE_TUNNEL) {
+		if (child->sa.st_ah.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
+		    child->sa.st_esp.attrs.mode == ENCAPSULATION_MODE_TUNNEL ||
+		    child->sa.st_ipcomp.attrs.mode == ENCAPSULATION_MODE_TUNNEL) {
 			add_said(c->remote->host.addr,
 				 &ip_protocol_ipip,
 				 (ipsec_spi_t)0);
@@ -2231,15 +2233,15 @@ static void show_established_child_details(struct show *s, struct state *st,
 		 */
 
 		struct ipsec_proto_info *first_proto_info =
-			(st->st_ah.present ? &st->st_ah :
-			 st->st_esp.present ? &st->st_esp :
-			 st->st_ipcomp.present ? &st->st_ipcomp :
+			(child->sa.st_ah.present ? &child->sa.st_ah :
+			 child->sa.st_esp.present ? &child->sa.st_esp :
+			 child->sa.st_ipcomp.present ? &child->sa.st_ipcomp :
 			 NULL);
 
-		bool in_info = get_ipsec_traffic(st, first_proto_info, DIRECTION_INBOUND);
-		bool out_info = get_ipsec_traffic(st, first_proto_info, DIRECTION_OUTBOUND);
+		bool in_info = get_ipsec_traffic(child, first_proto_info, DIRECTION_INBOUND);
+		bool out_info = get_ipsec_traffic(child, first_proto_info, DIRECTION_OUTBOUND);
 
-		if (st->st_ah.present) {
+		if (child->sa.st_ah.present) {
 			if (in_info) {
 				jam(buf, " AHin=");
 				jam_readable_humber(buf, first_proto_info->inbound.bytes, false);
@@ -2250,7 +2252,7 @@ static void show_established_child_details(struct show *s, struct state *st,
 			}
 			jam_humber_max(buf, " AHmax=", c->config->sa_ipsec_max_bytes, "B");
 		}
-		if (st->st_esp.present) {
+		if (child->sa.st_esp.present) {
 			if (in_info) {
 				jam(buf, " ESPin=");
 				jam_readable_humber(buf, first_proto_info->inbound.bytes, false);
@@ -2261,7 +2263,7 @@ static void show_established_child_details(struct show *s, struct state *st,
 			}
 			jam_humber_max(buf, " ESPmax=", c->config->sa_ipsec_max_bytes, "B");
 		}
-		if (st->st_ipcomp.present) {
+		if (child->sa.st_ipcomp.present) {
 			if (in_info) {
 				jam(buf, " IPCOMPin=");
 				jam_readable_humber(buf, first_proto_info->inbound.bytes, false);
@@ -2274,8 +2276,8 @@ static void show_established_child_details(struct show *s, struct state *st,
 		}
 
 		jam(buf, " "); /* TBD: trailing blank */
-		if (st->st_xauth_username[0] != '\0') {
-			jam(buf, "username=%s", st->st_xauth_username);
+		if (child->sa.st_xauth_username[0] != '\0') {
+			jam(buf, "username=%s", child->sa.st_xauth_username);
 		}
 	}
 }
@@ -2409,7 +2411,7 @@ void show_states(struct show *s, const monotime_t now)
 			show_state(s, st, now);
 			if (IS_IPSEC_SA_ESTABLISHED(st)) {
 				/* print out SPIs if SAs are established */
-				show_established_child_details(s, st, now);
+				show_established_child_details(s, pexpect_child_sa(st), now);
 			}  else if (IS_IKE_SA(st)) {
 				/* show any associated pending Phase 2s */
 				show_pending_child_details(s, st->st_connection,

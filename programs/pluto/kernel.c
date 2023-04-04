@@ -2610,16 +2610,16 @@ void teardown_ipsec_kernel_states(struct child_sa *child)
  * flowed since the last call.
  */
 
-bool was_eroute_idle(struct state *st, deltatime_t since_when)
+bool was_eroute_idle(struct child_sa *child, deltatime_t since_when)
 {
-	passert(st != NULL);
+	passert(child != NULL);
 	struct ipsec_proto_info *first_proto_info =
-		(st->st_ah.present ? &st->st_ah :
-		 st->st_esp.present ? &st->st_esp :
-		 st->st_ipcomp.present ? &st->st_ipcomp :
+		(child->sa.st_ah.present ? &child->sa.st_ah :
+		 child->sa.st_esp.present ? &child->sa.st_esp :
+		 child->sa.st_ipcomp.present ? &child->sa.st_ipcomp :
 		 NULL);
 
-	if (!get_ipsec_traffic(st, first_proto_info, DIRECTION_INBOUND)) {
+	if (!get_ipsec_traffic(child, first_proto_info, DIRECTION_INBOUND)) {
 		/* snafu; assume idle!?! */
 		return true;
 	}
@@ -2662,11 +2662,11 @@ static void set_sa_info(struct ipsec_proto_info *p2, uint64_t bytes,
  * Note: this mutates *st.
  * Note: this only changes counts in the first SA in the bundle!
  */
-bool get_ipsec_traffic(struct state *st,
+bool get_ipsec_traffic(struct child_sa *child,
 		       struct ipsec_proto_info *proto_info,
 		       enum direction direction)
 {
-	struct connection *const c = st->st_connection;
+	struct connection *const c = child->sa.st_connection;
 
 	if (!pexpect(proto_info != NULL)) {
 		/* pacify coverity */
@@ -2684,9 +2684,9 @@ bool get_ipsec_traffic(struct state *st,
 	 *
 	 * XXX: why not just use redirect_ip?
 	 */
-	bool redirected = (!endpoint_address_eq_address(st->st_remote_endpoint, c->remote->host.addr) &&
+	bool redirected = (!endpoint_address_eq_address(child->sa.st_remote_endpoint, c->remote->host.addr) &&
 			   address_is_specified(c->temp_vars.redirect_ip));
-	ip_address remote_ip = (redirected ?  endpoint_address(st->st_remote_endpoint) :
+	ip_address remote_ip = (redirected ?  endpoint_address(child->sa.st_remote_endpoint) :
 				c->remote->host.addr);
 
 	struct ipsec_flow *flow;
@@ -2707,10 +2707,10 @@ bool get_ipsec_traffic(struct state *st,
 	}
 
 	if (flow->kernel_sa_expired & SA_HARD_EXPIRED) {
-		ldbg(st->st_logger,
-		     "kernel: %s() expired %s SA SPI "PRI_IPSEC_SPI" get_sa_info()",
-		     __func__, enum_name_short(&direction_names, direction),
-		     pri_ipsec_spi(flow->spi));
+		ldbg_sa(child,
+			"kernel: %s() expired %s SA SPI "PRI_IPSEC_SPI" get_sa_info()",
+			__func__, enum_name_short(&direction_names, direction),
+			pri_ipsec_spi(flow->spi));
 		return true; /* all is well use last known info */
 	}
 
@@ -2723,15 +2723,16 @@ bool get_ipsec_traffic(struct state *st,
 		.story = said_str(dst, proto_info->protocol, flow->spi, &sb),
 	};
 
-	ldbg(st->st_logger, "kernel: %s() %s", __func__, sa.story);
+	ldbg_sa(child, "kernel: %s() %s", __func__, sa.story);
 
 	uint64_t bytes = 0;
 	uint64_t add_time = 0;
 	uint64_t lastused = 0;
-	if (!kernel_ops->get_kernel_state(&sa, &bytes, &add_time, &lastused, st->st_logger))
+	if (!kernel_ops->get_kernel_state(&sa, &bytes, &add_time, &lastused,
+					  child->sa.st_logger))
 		return false;
-	ldbg(st->st_logger, "kernel: %s() bytes=%"PRIu64" add_time=%"PRIu64" lastused=%"PRIu64,
-	     __func__, bytes, add_time, lastused);
+	ldbg_sa(child, "kernel: %s() bytes=%"PRIu64" add_time=%"PRIu64" lastused=%"PRIu64,
+		__func__, bytes, add_time, lastused);
 
 	proto_info->add_time = add_time;
 
