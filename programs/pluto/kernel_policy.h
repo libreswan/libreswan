@@ -110,7 +110,7 @@ bool delete_cat_kernel_policy(const struct spd_route *spd,
 void install_inbound_ipsec_kernel_policy(struct child_sa *child, struct spd_route *spd,
 					 where_t where);
 bool install_outbound_ipsec_kernel_policy(struct child_sa *child, struct spd_route *spd,
-					  bool replace, where_t where);
+					  enum kernel_policy_op op, where_t where);
 
 void replace_ipsec_with_bare_kernel_policies(struct child_sa *child,
 					     enum routing new_routing,

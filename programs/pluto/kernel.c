@@ -2142,9 +2142,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 							       "install IPsec block policy");
 		} else {
 			ok = spd->wip.installed.policy =
-				install_outbound_ipsec_kernel_policy(child, spd,
-								     spd->wip.conflicting.shunt != NULL,
-								     HERE);
+				install_outbound_ipsec_kernel_policy(child, spd, op, HERE);
 		}
 	}
 

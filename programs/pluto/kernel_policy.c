@@ -562,15 +562,25 @@ void install_inbound_ipsec_kernel_policy(struct child_sa *child,
 
 bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
 					  struct spd_route *spd,
-					  bool replace, where_t where)
+					  enum kernel_policy_op op, where_t where)
 {
-	enum kernel_policy_op op = (replace ? KERNEL_POLICY_OP_REPLACE :
-				    KERNEL_POLICY_OP_ADD);
+	struct logger *logger = child->sa.st_logger;
+	PASSERT(logger, (op == KERNEL_POLICY_OP_REPLACE ||
+			 op == KERNEL_POLICY_OP_ADD));
 	const struct kernel_policy kernel_policy =
 		kernel_policy_from_state(child, spd, DIRECTION_OUTBOUND, where);
 	/* check for no transform at all */
 	PASSERT(child->sa.st_logger, kernel_policy.nr_rules > 0);
 	if (spd->local->child->has_cat) {
+		/*
+		 * CAT means:
+		 *
+		 * = (possibly) replace the on-demand host_addr ->
+		 *   remote_addr policy
+		 *
+		 * = add outbound client -> client policy for the
+		 *   assigned address.
+		 */
 		ip_selector client = selector_from_address(spd->local->host->addr);
 		if (!kernel_ops_raw_policy(op, DIRECTION_OUTBOUND,
 					   EXPECT_KERNEL_POLICY_OK,
@@ -582,23 +592,43 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
 					   kernel_policy.xfrmi,
 					   kernel_policy.id,
 					   kernel_policy.sec_label,
-					   where, child->sa.st_logger,
-					   "CAT: install IPsec policy")) {
+					   where, logger,
+					   "CAT: replace host->route kernel policy")) {
 			llog_sa(RC_LOG, child,
-				"CAT: failed to eroute additional Client Address Translation policy");
+				"CAT: failed to replace host->route kernel policy");
 		}
+		/*
+		 * Now add the client.
+		 */
+		return kernel_ops_raw_policy(op, DIRECTION_OUTBOUND,
+					     EXPECT_KERNEL_POLICY_OK,
+					     &kernel_policy.src.route,
+					     &kernel_policy.dst.route,
+					     &kernel_policy,
+					     deltatime(0),
+					     kernel_policy.sa_marks,
+					     kernel_policy.xfrmi,
+					     kernel_policy.id,
+					     kernel_policy.sec_label,
+					     where, logger,
+					     "CAT: add client->client kernel policy");
+	} else {
+		/*
+		 * Just need client->client policies
+		 */
+		return kernel_ops_raw_policy(op, DIRECTION_OUTBOUND,
+					     EXPECT_KERNEL_POLICY_OK,
+					     &kernel_policy.src.route,
+					     &kernel_policy.dst.route,
+					     &kernel_policy,
+					     deltatime(0),
+					     kernel_policy.sa_marks,
+					     kernel_policy.xfrmi,
+					     kernel_policy.id,
+					     kernel_policy.sec_label,
+					     where, logger,
+					     "install IPsec policy");
 	}
-	return kernel_ops_raw_policy(op, DIRECTION_OUTBOUND,
-				     EXPECT_KERNEL_POLICY_OK,
-				     &kernel_policy.src.route, &kernel_policy.dst.route,
-				     &kernel_policy,
-				     deltatime(0),
-				     kernel_policy.sa_marks,
-				     kernel_policy.xfrmi,
-				     kernel_policy.id,
-				     kernel_policy.sec_label,
-				     where, child->sa.st_logger,
-				     "install IPsec policy");
 }
 
 bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
@@ -630,6 +660,76 @@ bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
 				     kernel_policy.id, /*0*/
 				     kernel_policy.sec_label/*null_shunk*/,
 				     where, logger, "install bare policy");
+}
+
+static void replace_ipsec_with_bare_kernel_policy(struct child_sa *child,
+						  struct connection *c,
+						  struct spd_route *spd,
+						  enum shunt_kind shunt_kind,
+						  enum expect_kernel_policy expect_inbound_policy,
+						  struct logger *logger, where_t where)
+{
+	PEXPECT(logger, c->config->shunt[shunt_kind] != SHUNT_NONE);
+	if (spd->local->child->has_cat) {
+		/*
+		 * CAT means:
+		 *
+		 * = (possibly) replace the on-demand host_addr ->
+		 *   remote_addr policy
+		 *
+		 * = add outbound client -> client policy for the
+		 *   assigned address.
+		 */
+		/* what was installed? */
+		const struct kernel_policy kernel_policy =
+			kernel_policy_from_state(child, spd, DIRECTION_OUTBOUND, where);
+#if 0
+		if (!install_bare_spd_kernel_policy(spd,
+						    KERNEL_POLICY_OP_REPLACE,
+						    DIRECTION_OUTBOUND,
+						    EXPECT_KERNEL_POLICY_OK,
+						    shunt_kind,
+						    logger, where, "replacing")) {
+			llog(RC_LOG, logger,
+			     "kernel: %s() replace outbound with prospective shunt failed", __func__);
+		}
+#endif
+		if (!delete_kernel_policy(DIRECTION_OUTBOUND,
+					  EXPECT_KERNEL_POLICY_OK,
+					  &kernel_policy.src.route,
+					  &kernel_policy.dst.route,
+					  kernel_policy.sa_marks,
+					  kernel_policy.xfrmi,
+					  kernel_policy.id,
+					  kernel_policy.sec_label,
+					  logger, where,
+					  "CAT: delete client->client kernel policy")) {
+			llog(RC_LOG, logger,
+			     "kernel: %s() delete client->client kernel policy", __func__);
+		}
+	} else {
+		/*
+		 * Just need client->client policies
+		 */
+		if (!install_bare_spd_kernel_policy(spd,
+						    KERNEL_POLICY_OP_REPLACE,
+						    DIRECTION_OUTBOUND,
+						    EXPECT_KERNEL_POLICY_OK,
+						    shunt_kind,
+						    logger, where, "replacing")) {
+			llog(RC_LOG, logger,
+			     "kernel: %s() replace outbound with prospective shunt failed", __func__);
+		}
+	}
+	/*
+	 * Always zap inbound.
+	 */
+	if (!delete_spd_kernel_policy(spd, DIRECTION_INBOUND,
+				      expect_inbound_policy,
+				      logger, where, "inbound")) {
+		llog(RC_LOG, logger,
+		     "kernel: %s() inbound delete failed", __func__);
+	}
 }
 
 void replace_ipsec_with_bare_kernel_policies(struct child_sa *child,
@@ -672,24 +772,8 @@ void replace_ipsec_with_bare_kernel_policies(struct child_sa *child,
 
 		do_updown(UPDOWN_DOWN, c, spd, &child->sa, logger);
 
-		pexpect(c->config->shunt[shunt_kind] != SHUNT_NONE);
-		if (!install_bare_spd_kernel_policy(spd,
-						    KERNEL_POLICY_OP_REPLACE,
-						    DIRECTION_OUTBOUND,
-						    EXPECT_KERNEL_POLICY_OK,
-						    shunt_kind,
-						    logger, where, "replacing")) {
-			llog_sa(RC_LOG, child,
-				"kernel: %s() replace outbound with prospective shunt failed", __func__);
-		}
-		/*
-		 * Always zap inbound.
-		 */
-		if (!delete_spd_kernel_policy(spd, DIRECTION_INBOUND,
-					      expect_inbound_policy,
-					      logger, where, "inbound")) {
-			llog_sa(RC_LOG, child,
-				"kernel: %s() inbound delete failed", __func__);
-		}
+		replace_ipsec_with_bare_kernel_policy(child, c, spd, shunt_kind,
+						      expect_inbound_policy,
+						      logger, where);
 	}
 }
