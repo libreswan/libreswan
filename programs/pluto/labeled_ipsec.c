@@ -24,7 +24,7 @@
 #include "connections.h"
 
 #ifdef HAVE_LABELED_IPSEC
-#include <selinux/selinux.h>
+#include <selinux/selinux.h>		/* rpm:libselinux-devel */
 #endif
 
 err_t vet_seclabel(shunk_t sl)

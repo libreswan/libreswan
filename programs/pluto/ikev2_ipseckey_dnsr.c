@@ -29,9 +29,10 @@
 #include "log.h"
 #include <ldns/ldns.h>		/* rpm:ldns-devel deb:libldns-dev */
 #include <ldns/rr.h>
-#include <unbound.h>
+#include <unbound.h>		/* rpm:unbound-devel */
 #include "unbound-event.h"
-#include "dnssec.h"    /* includes unbound.h */
+#include "dnssec.h" 		/* includes unbound.h */
+
 #include "ikev2_ipseckey.h" /* for dns_status */
 #include "ikev2_ipseckey_dnsr.h"
 

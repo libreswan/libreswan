@@ -53,7 +53,7 @@ static pthread_t fetch_thread_id;
 
 #ifdef LIBCURL
 
-#include <curl/curl.h>	/* rpm:libcurl-devel dep:libcurl4-nss-dev */
+#include <curl/curl.h>		/* rpm:libcurl-devel dep:libcurl4-nss-dev */
 
 /*
  * Appends *ptr into (chunk_t *)data.

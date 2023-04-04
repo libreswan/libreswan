@@ -172,7 +172,7 @@ extern void linux_audit_conn(const struct state *st, enum linux_audit_kind);
 
 #ifdef USE_LINUX_AUDIT
 extern void linux_audit_init(int do_audit, struct logger *logger);
-# include <libaudit.h>	/* from audit-libs devel */
+# include <libaudit.h>			/* from rpm:audit-libs-devel */
 # define AUDIT_LOG_SIZE 256
 /* should really be in libaudit.h */
 # define AUDIT_RESULT_FAIL 0

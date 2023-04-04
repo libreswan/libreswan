@@ -20,7 +20,7 @@
 #ifndef _SERVER_H
 #define _SERVER_H
 
-#include <event2/event.h>		/* from libevent devel */
+#include <event2/event.h>		/* from rpm:libevent-devel */
 #include <event2/event_struct.h>
 #include <event2/listener.h>
 

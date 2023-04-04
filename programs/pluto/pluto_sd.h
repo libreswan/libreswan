@@ -19,7 +19,7 @@
 
 #ifdef USE_SYSTEMD_WATCHDOG
 
-#include <systemd/sd-daemon.h>		/* deb:libsystemd-dev */
+#include <systemd/sd-daemon.h>		/* rpm:systemd-devel deb:libsystemd-dev */
 
 #define SD_REPORT_NO_STATUS 0
 

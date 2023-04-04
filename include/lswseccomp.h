@@ -17,7 +17,7 @@
 #ifndef LSWSECCOMP_H
 #define LSWSECCOMP_H
 
-#include <seccomp.h>
+#include <seccomp.h>		/* rpm:libseccomp-devel */
 
 #include "lswlog.h"		/* for libreswan_exit() et.al. referred to by macro */
 

@@ -29,7 +29,7 @@
 
 #include <string.h>
 #include <stdlib.h>
-#include <security/pam_appl.h>		/* deb:libpam0g-dev */
+#include <security/pam_appl.h>		/* rpm:pam-devel deb:libpam0g-dev */
 
 #include "defs.h"
 #include "log.h"
