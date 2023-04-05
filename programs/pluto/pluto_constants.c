@@ -380,6 +380,7 @@ static const enum_names *pluto_enum_names_checklist[] = {
 	&sd_action_names,
 	&natt_method_names,
 	&routing_story,
+	&routing_names,
 	&stf_status_names,
 	&perspective_names,
 	&sa_policy_bit_names,

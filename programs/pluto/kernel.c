@@ -679,11 +679,12 @@ struct spd_owner spd_owner(const struct spd_route *spd, unsigned indent)
 		jam(buf, "%*s", indent, "");
 		jam_connection(buf, c);
 		jam_string(buf, " ");
-		jam_enum_short(buf, &routing_story, c->child.routing);
+		jam_enum_short(buf, &routing_names, c->child.routing);
 		jam_string(buf, ":");
 
 		const char *what = "route";
 		FOR_EACH_THING(clash, owner.route, owner.policy) {
+			jam_string(buf, " ");
 			jam_string(buf, what);
 			jam_string(buf, " ");
 			if (clash == NULL) {
@@ -695,7 +696,7 @@ struct spd_owner spd_owner(const struct spd_route *spd, unsigned indent)
 				PEXPECT(logger, clash != spd); /*per-above*/
 				jam_connection(buf, clash->connection);
 				jam_string(buf, " ");
-				jam_enum_short(buf, &routing_story,
+				jam_enum_short(buf, &routing_names,
 					       clash->connection->child.routing);
 			}
 			what = "policy";
@@ -1249,7 +1250,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	     pri_connection_co(c),
 	     pri_connection_co(c->clonedfrom),
 	     pri_connection(c, &cb),
-	     enum_name(&routing_story, c->child.routing),
+	     enum_name(&routing_names, c->child.routing),
 	     pri_shunk(c->config->sec_label));
 
 	if (PBAD(logger, !labeled_parent(c))) {
@@ -2084,7 +2085,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 	    __func__,
 	    pri_so(child->sa.st_serialno),
 	    pri_so(c->child.newest_routing_sa),
-	    enum_name(&routing_story, c->child.routing));
+	    enum_name(&routing_names, c->child.routing));
 
 #ifdef USE_CISCO_SPLIT
 	struct spd_route *start = c->spd;
