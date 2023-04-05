@@ -2824,6 +2824,7 @@ void delete_ike_family(struct ike_sa **ikep)
 {
 	struct ike_sa *ike = (*ikep);
 	(*ikep) = NULL;
+	ike->sa.st_viable_parent = false;
 
 	/*
 	 * We are a parent: delete our children and
