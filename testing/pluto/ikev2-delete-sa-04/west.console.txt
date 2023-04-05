@@ -43,8 +43,8 @@ west #
 west #
  ipsec showstates
 west #
- # confirm the revive conn code triggered
+ # confirm the revive conn code triggered on east
 west #
- hostname | grep east > /dev/null && grep -e 'but must remain up per local policy' -e '^[^|].*CONNECTION_REVIVAL' /tmp/pluto.log
+ test ! -r /tmp/pluto.log || egrep -e 'but must remain up per local policy' -e '^[^|].*CONNECTION_REVIVAL' /tmp/pluto.log
 west #
  

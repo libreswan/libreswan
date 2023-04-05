@@ -20,9 +20,9 @@ east #
 000 #3: "west-east-auto":500 STATE_V2_PARENT_I1 (sent IKE_SA_INIT request); RETRANSMIT in XXs; idle;
 000 #3: pending CHILD SA for "west-east-auto"
 east #
- # confirm the revive conn code triggered
+ # confirm the revive conn code triggered on east
 east #
- hostname | grep east > /dev/null && grep -e 'but must remain up per local policy' -e '^[^|].*CONNECTION_REVIVAL' /tmp/pluto.log
+ test ! -r /tmp/pluto.log || egrep -e 'but must remain up per local policy' -e '^[^|].*CONNECTION_REVIVAL' /tmp/pluto.log
 "west-east-auto" #1: deleting IKE SA but connection is supposed to remain up; schedule CONNECTION_REVIVAL
 "west-east-auto": initiating connection 'west-east-auto' with serial $1 which received a Delete/Notify but must remain up per local policy
 east #
