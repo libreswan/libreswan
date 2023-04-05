@@ -45,6 +45,6 @@ west #
 west #
  # confirm the revive conn code triggered
 west #
- hostname | grep east > /dev/null && grep -e 'but must remain up per local policy' -e '^[^|].*EVENT_REVIVE_CONNS' /tmp/pluto.log
+ hostname | grep east > /dev/null && grep -e 'but must remain up per local policy' -e '^[^|].*CONNECTION_REVIVAL' /tmp/pluto.log
 west #
  
