@@ -137,7 +137,7 @@ bool should_revive(struct state *st)
 
 	if (connection_event_is_scheduled(c, CONNECTION_REVIVAL)) {
 		log_state(RC_LOG, st,
-			  "deleting %s but connection is supposed to remain up; EVENT_REVIVE_CONNS already scheduled",
+			  "deleting %s but connection is supposed to remain up; CONNECTION_REVIVAL already scheduled",
 			  c->config->ike_info->sa_type_name[IKE_SA]);
 		return false;
 	}
@@ -208,7 +208,7 @@ void schedule_revival(struct state *st)
 {
 	struct connection *c = st->st_connection;
 	llog(RC_LOG, st->st_logger,
-	     "deleting %s but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS",
+	     "deleting %s but connection is supposed to remain up; schedule CONNECTION_REVIVAL",
 	     c->config->ike_info->sa_type_name[st->st_establishing_sa]);
 
 	int delay = c->temp_vars.revive_delay;
