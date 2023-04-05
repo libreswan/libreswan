@@ -63,14 +63,6 @@ void flush_revival(const struct connection *c)
 	flush_connection_event(c, CONNECTION_REVIVAL);
 }
 
-void add_revival_if_needed(struct state *st)
-{
-	if (!should_revive(st)) {
-		return;
-	}
-	schedule_revival(st);
-}
-
 bool should_revive(struct state *st)
 {
 	struct connection *c = st->st_connection;
@@ -204,7 +196,7 @@ bool should_revive_connection(struct child_sa *child)
 	return true;
 }
 
-void schedule_revival(struct state *st)
+void schedule_revival(struct state *st, const char *subplot)
 {
 	struct connection *c = st->st_connection;
 	llog(RC_LOG, st->st_logger,
@@ -212,7 +204,8 @@ void schedule_revival(struct state *st)
 	     c->config->ike_info->sa_type_name[st->st_establishing_sa]);
 
 	int delay = c->temp_vars.revive_delay;
-	ldbg(st->st_logger, "add revival: connection '%s' (serial "PRI_CO") added to the list and scheduled for %d seconds",
+	ldbg(st->st_logger,
+	     "add revival: connection '%s' (serial "PRI_CO") added to the list and scheduled for %d seconds",
 	    c->name, pri_co(c->serialno), delay);
 	c->temp_vars.revive_delay = min(delay + REVIVE_CONN_DELAY,
 						REVIVE_CONN_DELAY_MAX);
@@ -252,14 +245,14 @@ void schedule_revival(struct state *st)
 	 * deleted); and would encroach even further on "initiate" and
 	 * "pending" functionality.
 	 */
-	schedule_connection_event(c, CONNECTION_REVIVAL, deltatime(delay));
+	schedule_connection_event(c, CONNECTION_REVIVAL, subplot, deltatime(delay));
 }
 
-void revive_connection(struct connection *c, struct logger *logger)
+void revive_connection(struct connection *c, const char *subplot, struct logger *logger)
 {
 	llog(RC_LOG, c->logger,
-	     "initiating connection '%s' with serial "PRI_CO" which received a Delete/Notify but must remain up per local policy",
-	     c->name, pri_co(c->serialno));
+	     "initiating connection '%s' with serial "PRI_CO" which %s but must remain up per local policy",
+	     c->name, pri_co(c->serialno), subplot);
 	initiate_connection(c, /*remote-host-name*/NULL,
 			    /*background*/true,
 			    /*log-failure*/true,

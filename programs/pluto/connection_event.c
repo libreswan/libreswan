@@ -43,6 +43,7 @@ struct event_connection {
 	struct list_entry entry;
 	enum connection_event event;
 	co_serial_t serialno;
+	const char *subplot;
 	struct timeout *timeout;
 };
 
@@ -57,12 +58,13 @@ static struct list_head connection_events =
 	INIT_LIST_HEAD(&connection_events, &event_connection_info);
 
 void schedule_connection_event(const struct connection *c,
-			       enum connection_event event,
+			       enum connection_event event, const char *subplot,
 			       deltatime_t delay)
 {
 	struct event_connection *d = alloc_thing(struct event_connection, "data");
 	d->serialno = c->serialno;
 	d->event = event;
+	d->subplot = subplot;
 	init_list_entry(&event_connection_info, d, &d->entry);
 	insert_list_entry(&connection_events, &d->entry);
 	schedule_timeout(enum_name(&connection_event_names, event),
@@ -77,6 +79,7 @@ void connection_event_handler(void *arg, struct logger *logger)
 	remove_list_entry(&tmp->entry);
 	enum connection_event event = tmp->event;
 	co_serial_t serialno = tmp->serialno;
+	const char *subplot = tmp->subplot;
 	passert(tmp->timeout != NULL);
 	destroy_timeout(&tmp->timeout);
 	pfree(tmp); tmp = NULL;
@@ -98,7 +101,7 @@ void connection_event_handler(void *arg, struct logger *logger)
 	case CONNECTION_NONEVENT:
 		break;
 	case CONNECTION_REVIVAL:
-		revive_connection(c, logger);
+		revive_connection(c, subplot, logger);
 		break;
 	}
 }

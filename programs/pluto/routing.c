@@ -427,37 +427,36 @@ static void retry(struct ike_sa *ike)
 }
 
 /*
- * Return TRUE when the connection must be preserved.
- *
- * XXX: needs a better name.
+ * Delete the ROUTED_TUNNEL, and possibly delete the connection.
  */
-static bool keep_routed_tunnel_connection(struct connection *c,
-					  where_t where,
-					  struct annex *e)
+
+static void delete_routed_tunnel(struct connection *c,
+				 where_t where,
+				 struct annex *e)
 {
 	if (c->child.newest_routing_sa > (*e->child)->sa.st_serialno) {
 		/* no longer child's */
 		ldbg(c->logger, "keeping connection kernel policy; routing SA "PRI_SO" is newer",
 		     pri_so(c->child.newest_routing_sa));
 		delete_child_sa(e->child);
-		return true;
+		return;
 	}
 	if (c->newest_ipsec_sa > (*e->child)->sa.st_serialno) {
 		/* covered by above; no!? */
 		ldbg(c->logger, "keeping connection kernel policy; IPsec SA "PRI_SO" is newer",
 		     pri_so(c->newest_ipsec_sa));
 		delete_child_sa(e->child);
-		return true;
+		return;
 	}
 	if (should_revive_connection(*(e->child))) {
 		/* XXX: should this be ROUTED_NEGOTIATING? */
 		ldbg(c->logger, "replacing connection kernel policy with ROUTED_ONDEMAND; it will be revived");
 		replace_ipsec_with_bare_kernel_policies(*(e->child), RT_ROUTED_ONDEMAND,
 							EXPECT_KERNEL_POLICY_OK, HERE);
-		schedule_revival(&(*e->child)->sa);
+		schedule_revival(&(*e->child)->sa, "received Delete/Notify");
 		/* covered by above; no!? */
 		delete_child_sa(e->child);
-		return true;
+		return;
 	}
 
 	/*
@@ -481,7 +480,7 @@ static bool keep_routed_tunnel_connection(struct connection *c,
 	 */
 	if (c->kind == CK_PERMANENT) {
 		ldbg(c->logger, "keeping connection; it is permanent");
-		return true;
+		return;
 	}
 
 	PEXPECT(c->logger, c->kind == CK_INSTANCE);
@@ -494,7 +493,7 @@ static bool keep_routed_tunnel_connection(struct connection *c,
 	    c == (*e->ike)->sa.st_connection) {
 		ldbg(c->logger, "keeping connection; shared with IKE SA "PRI_SO,
 		     pri_so((*e->ike)->sa.st_serialno));
-		return true;
+		return;
 	}
 
 	/*.
@@ -510,11 +509,11 @@ static bool keep_routed_tunnel_connection(struct connection *c,
 		llog_pexpect(c->logger, where,
 			     "connection "PRI_CONNECTION" in use by #%lu, skipping delete-unused",
 			     pri_connection(c, &cb), sf.st->st_serialno);
-		return true;
+		return;
 	}
 
 	ldbg(c->logger, "keeping connection; NO!");
-	return false;
+	delete_connection(&c);
 }
 
 void connection_timeout(struct ike_sa **ike)
@@ -992,7 +991,7 @@ void dispatch(enum connection_event event, struct connection *c,
 		case X(TIMEOUT_IKE, UNROUTED, PERMANENT):
 			/* ex, permanent+up */
 			if (should_revive(&(*e->ike)->sa)) {
-				schedule_revival(&(*e->ike)->sa);
+				schedule_revival(&(*e->ike)->sa, "timed out");
 				delete_ike_sa(e->ike);
 				return;
 			}
@@ -1003,7 +1002,7 @@ void dispatch(enum connection_event event, struct connection *c,
 		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, INSTANCE):
 			/* for instance, permenant ondemand */
 			if (should_revive(&(*e->ike)->sa)) {
-				schedule_revival(&(*e->ike)->sa);
+				schedule_revival(&(*e->ike)->sa, "timed out");
 				delete_ike_sa(e->ike);
 				return;
 			}
@@ -1025,20 +1024,17 @@ void dispatch(enum connection_event event, struct connection *c,
 		case X(TIMEOUT_CHILD, ROUTED_TUNNEL, PERMANENT):
 		case X(DELETE_CHILD, ROUTED_TUNNEL, PERMANENT):
 			/* permenant connections are never deleted */
-			pexpect(keep_routed_tunnel_connection(c, where, e) == true);
+			delete_routed_tunnel(c, where, e);
 			return;
 		case X(TIMEOUT_CHILD, ROUTED_TUNNEL, INSTANCE):
 		case X(DELETE_CHILD, ROUTED_TUNNEL, INSTANCE):
-			if (keep_routed_tunnel_connection(c, where, e)) {
-				return;
-			}
-			delete_connection(&c);
+			delete_routed_tunnel(c, where, e);
 			return;
 
 		case X(TIMEOUT_CHILD, UNROUTED_NEGOTIATION, INSTANCE):
 		case X(TIMEOUT_CHILD, UNROUTED, PERMANENT): /* permanent+up */
 			if (should_revive_connection(*(e->child))) {
-				schedule_revival(&(*e->child)->sa);
+				schedule_revival(&(*e->child)->sa, "timed out");
 				delete_child_sa(e->child);
 				return;
 			}

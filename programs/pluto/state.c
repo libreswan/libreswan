@@ -1116,8 +1116,13 @@ void delete_state(struct state *st)
 	 */
 	if (st->st_on_delete.skip_revival) {
 		ldbg(st->st_logger, "skipping revival (handled earlier)");
-	} else {
-		add_revival_if_needed(st);
+	} else if (should_revive(st)) {
+		/*
+		 * XXX: no clue as to why the state is being deleted
+		 * so make something up; caller should have scheduled
+		 * revival earlier.
+		 */
+		schedule_revival(st, "received a Delete/Notify");
 	}
 
 	/*
