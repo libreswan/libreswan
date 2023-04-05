@@ -33,7 +33,7 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 			   enum expect_kernel_policy expect_kernel_policy,
 			   const ip_selector *src_client,
 			   const ip_selector *dst_client,
-			   const struct kernel_policy *policy,
+			   const struct kernel_policy *kernel_policy,
 			   deltatime_t use_lifetime,
 			   const struct sa_marks *sa_marks,
 			   const struct pluto_xfrmi *xfrmi,
@@ -43,8 +43,10 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 {
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
 	pexpect(client_proto == selector_protocol(*dst_client));
-	PEXPECT(logger, policy->shunt != SHUNT_UNSET);
-	PEXPECT(logger, (policy->nr_rules == 0) ==/*iff*/ (policy->shunt == SHUNT_PASS));
+	PASSERT(logger, kernel_policy != NULL);
+	PASSERT(logger, kernel_policy->shunt != SHUNT_UNSET);
+	PASSERT(logger, ((kernel_policy->nr_rules == 0) ==/*iff*/
+			 (kernel_policy->shunt == SHUNT_PASS)));
 
 	if (DBGP(DBG_BASE)) {
 
@@ -99,46 +101,45 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 
 		}
 
-		if (policy != NULL) {
-			LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
-				jam(buf, "%s()  ", __func__);
+		LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
+			jam(buf, "%s()  ", __func__);
 
-				jam_string(buf, " policy=");
-				jam_address(buf, &policy->src.host);
-				jam(buf, "=>");
-				jam_address(buf, &policy->dst.host);
-				jam_string(buf, ",");
-				jam_enum_short(buf, &shunt_kind_names, policy->kind);
-				jam_string(buf, "=");
-				jam_enum_short(buf, &shunt_policy_names, policy->shunt);
-				jam_string(buf, ",");
-				jam(buf, "priority=%"PRI_KERNEL_PRIORITY,
-				    pri_kernel_priority(policy->priority));
-				/*
-				 * Print outer-to-inner and use paren to show
-				 * how each wrapps the next.
-				 *
-				 * XXX: how to also print the encap mode - TCP
-				 * or UDP?
-				 */
-				jam_string(buf, ",");
-				jam_enum_short(buf, &encap_mode_names, policy->mode);
-				jam_string(buf, "[");
-				for (unsigned i = policy->nr_rules; i > 0; i--) {
-					const struct kernel_policy_rule *rule = &policy->rule[i-1];
-					const struct ip_protocol *rule_proto = protocol_from_ipproto(rule->proto);
-					jam(buf, "%s@%d(", rule_proto->name, rule->reqid);
-				}
-				if (policy->nr_rules > 0) {
-					/* XXX: should use stuff from selector */
-					jam_string(buf, client_proto->name);
-				}
-				for (unsigned i = policy->nr_rules; i > 0; i--) {
-					jam_string(buf, ")");
-				}
-				jam_string(buf, "]");
+			jam_string(buf, " policy=");
+			jam_address(buf, &kernel_policy->src.host);
+			jam(buf, "=>");
+			jam_address(buf, &kernel_policy->dst.host);
+			jam_string(buf, ",");
+			jam_enum_short(buf, &shunt_kind_names, kernel_policy->kind);
+			jam_string(buf, "=");
+			jam_enum_short(buf, &shunt_policy_names, kernel_policy->shunt);
+			jam_string(buf, ",");
+			jam(buf, "priority=%"PRI_KERNEL_PRIORITY,
+			    pri_kernel_priority(kernel_policy->priority));
+			/*
+			 * Print outer-to-inner and use paren to show
+			 * how each wrapps the next.
+			 *
+			 * XXX: how to also print the encap mode - TCP
+			 * or UDP?
+			 */
+			jam_string(buf, ",");
+			jam_enum_short(buf, &encap_mode_names, kernel_policy->mode);
+			jam_string(buf, "[");
+			for (unsigned i = kernel_policy->nr_rules; i > 0; i--) {
+				const struct kernel_policy_rule *rule = &kernel_policy->rule[i-1];
+				const struct ip_protocol *rule_proto = protocol_from_ipproto(rule->proto);
+				jam(buf, "%s@%d(", rule_proto->name, rule->reqid);
 			}
+			if (kernel_policy->nr_rules > 0) {
+				/* XXX: should use stuff from selector */
+				jam_string(buf, client_proto->name);
+			}
+			for (unsigned i = kernel_policy->nr_rules; i > 0; i--) {
+				jam_string(buf, ")");
+			}
+			jam_string(buf, "]");
 		}
+
 		if (sec_label.len > 0) {
 			LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 				jam(buf, "%s()  ", __func__);
@@ -148,30 +149,26 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 		}
 	}
 
-	if (policy != NULL) {
-		switch(policy->shunt) {
-		case SHUNT_HOLD:
-			PEXPECT(logger, policy->kind == SHUNT_KIND_NEGOTIATION);
-			ldbg(logger, "%s() SPI_HOLD implemented as no-op", __func__);
+	switch(kernel_policy->shunt) {
+	case SHUNT_HOLD:
+		PEXPECT(logger, kernel_policy->kind == SHUNT_KIND_NEGOTIATION);
+		ldbg(logger, "%s() SPI_HOLD implemented as no-op", __func__);
+		return true;
+	case SHUNT_TRAP:
+		if (dir == DIRECTION_INBOUND) {
+			PEXPECT(logger, kernel_policy->kind == SHUNT_KIND_ONDEMAND);
+			llog_pexpect(logger, where, "inbound ondemand SHUNT_TRAP is a no-op");
 			return true;
-		case SHUNT_TRAP:
-			if (dir == DIRECTION_INBOUND) {
-				PEXPECT(logger, (op == KERNEL_POLICY_OP_ADD ||
-						 op == KERNEL_POLICY_OP_REPLACE));
-				PEXPECT(logger, policy->kind == SHUNT_KIND_ONDEMAND);
-				llog_pexpect(logger, where, "inbound ondemand SHUNT_TRAP is a no-op");
-				return true;
-			}
-			break;
-		default:
-			break;
 		}
+		break;
+	default:
+		break;
 	}
 
 	bool ok = kernel_ops->policy_add(op, dir,
 					 expect_kernel_policy,
 					 src_client, dst_client,
-					 policy,
+					 kernel_policy,
 					 use_lifetime,
 					 sa_marks, xfrmi, id, sec_label,
 					 logger);

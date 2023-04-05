@@ -626,15 +626,7 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 	unsigned xfrm_action;
 	const char *policy_name;
 	/* shunt route */
-	enum shunt_policy shunt_policy =
-		(kernel_policy == NULL || kernel_policy->nr_rules == 0 ? SHUNT_UNSET :
-		 kernel_policy->shunt);
-	switch (shunt_policy) {
-	case SHUNT_UNSET:
-		/* MUST BE DELETE! */
-		policy_name = "delete(UNUSED)";
-		xfrm_action = XFRM_POLICY_ALLOW;
-		break;
+	switch (kernel_policy->shunt) {
 	case SHUNT_IPSEC:
 		xfrm_action = XFRM_POLICY_ALLOW;
 		policy_name = (kernel_policy->mode == ENCAP_MODE_TUNNEL ? ip_protocol_ipip.name :
@@ -645,17 +637,6 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 		xfrm_action = XFRM_POLICY_ALLOW;
 		policy_name = "%pass(none)";
 		break;
-	case SHUNT_HOLD:
-		/*
-		 * We don't know how to implement %hold, but it is okay.
-		 * When we need a hold, the kernel XFRM acquire state
-		 * will do the job (by dropping or holding the packet)
-		 * until this entry expires. See /proc/sys/net/core/xfrm_acq_expires
-		 * After expiration, the underlying policy causing the original acquire
-		 * will fire again, dropping further packets.
-		 */
-		dbg("%s() SHUNT_HOLD implemented as no-op", __func__);
-		return true; /* yes really */
 	case SHUNT_DROP:
 		/* used with type=passthrough - can it not use SHUNT_PASS ?? */
 		xfrm_action = XFRM_POLICY_BLOCK;
@@ -671,16 +652,16 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 		xfrm_action = XFRM_POLICY_BLOCK;
 		policy_name = "%discard(discard)";
 		break;
-	case SHUNT_TRAP:
-		if (op == KERNEL_POLICY_OP_ADD && dir == DIRECTION_INBOUND) {
-			dbg("%s() inbound SHUNT_TRAP implemented as no-op", __func__);
-			return true;
-		}
+	case SHUNT_TRAP: /*ondemand*/
+		PASSERT(logger, dir == DIRECTION_OUTBOUND);
 		xfrm_action = XFRM_POLICY_ALLOW;
 		policy_name = "%trap(ipsec)";
 		break;
+
+	case SHUNT_HOLD:	/* MUST BE NEGOTIATION */
+	case SHUNT_UNSET:	/* MUST BE DELETE! */
 	default:
-		bad_case(shunt_policy);
+		bad_case(kernel_policy->shunt);
 	}
 
 	const unsigned xfrm_dir =
@@ -729,7 +710,6 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 	info->lft.hard_packet_limit = XFRM_INF;
 	info->dir = xfrm_dir;
 
-
 	/*
 	 * Add the encapsulation protocol found in proto_info[] that
 	 * will carry the packets (which the kernel seems to call
@@ -741,8 +721,8 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 	 * XXX: why not just test proto_info - let caller decide if it
 	 * is needed.  Lets find out.
 	 */
-	if (kernel_policy != NULL && kernel_policy->nr_rules > 0 &&
-	    pexpect(shunt_policy != SHUNT_PASS)) {
+	if (kernel_policy->nr_rules > 0 &&
+	    pexpect(kernel_policy->shunt != SHUNT_PASS)) {
 		struct xfrm_user_tmpl tmpls[4] = {0};
 
 		passert(kernel_policy->nr_rules <= (int)elemsof(tmpls));
@@ -788,23 +768,6 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 		attr->rta_len = RTA_LENGTH(attr->rta_len);
 		req.n.nlmsg_len += attr->rta_len;
 
-	} else if (DBGP(DBG_BASE)) {
-		if (kernel_policy == NULL) {
-			DBG_log("%s() ignoring xfrm_user_tmpl because NULL, op=%s dir=%s",
-				__func__, op_str, dir_str);
-		} else {
-			/*
-			 * Dump ignored proto_info[].
-			 */
-			for (unsigned i = 0; i < kernel_policy->nr_rules; i++) {
-				const struct kernel_policy_rule *rule = &kernel_policy->rule[i];
-				DBG_log("%s() ignoring xfrm_user_tmpl reqid=%d proto=%s %s because op=%s dir=%s",
-					__func__, rule->reqid,
-					protocol_from_ipproto(rule->proto)->name,
-					enum_name_short(&encap_mode_names, kernel_policy->mode),
-					op_str, dir_str);
-			}
-		}
 	}
 
 	/*
@@ -835,8 +798,8 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 			if (!ok) {
 				break;
 			}
-			if (shunt_policy == SHUNT_IPSEC &&
-			    kernel_policy != NULL && kernel_policy->mode == ENCAP_MODE_TRANSPORT) {
+			if (kernel_policy->shunt == SHUNT_IPSEC &&
+			    kernel_policy->mode == ENCAP_MODE_TRANSPORT) {
 				break;
 			}
 			dbg("xfrm: %s() adding policy forward (suspect a tunnel)", __func__);

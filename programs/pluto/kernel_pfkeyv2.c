@@ -1184,18 +1184,27 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 				      const shunk_t sec_label UNUSED,
 				      struct logger *logger)
 {
-	enum shunt_policy shunt_policy =
-		(kernel_policy == NULL || kernel_policy->nr_rules == 0 ? SHUNT_UNSET :
-		 kernel_policy->shunt);
 #ifdef __OpenBSD__
+
+	if (kernel_policy->nr_rules > 1) {
+		/*
+		 * For IPcomp+ESP where two policies need to
+		 * installed, OpenBSD instead: installs a flow with
+		 * one policy (i guess the first); SA pairs for IPsec
+		 * and ESP; bundle (SADB_X_EXT_GRPSPIs) to group the
+		 * two SAs.
+		 */
+		llog_pexpect(logger, HERE,
+			     "multiple policies using SADB_X_EXT_GRPSPIS (GRouP SPI S) not implemented");
+		return false;
+	}
 
 	enum sadb_type type = (op == KERNEL_POLICY_OP_ADD ? SADB_X_ADDFLOW :
 			       op == KERNEL_POLICY_OP_REPLACE ? SADB_X_ADDFLOW :
 			       pexpect(0));
 
 	enum sadb_satype satype =
-		(kernel_policy == NULL || kernel_policy->nr_rules == 0 ? SADB_SATYPE_UNSPEC :
-		 kernel_policy->rule[0].proto == ENCAP_PROTO_ESP ? SADB_SATYPE_ESP :
+		(kernel_policy->rule[0].proto == ENCAP_PROTO_ESP ? SADB_SATYPE_ESP :
 		 kernel_policy->rule[0].proto == ENCAP_PROTO_AH ? SADB_SATYPE_AH :
 		 kernel_policy->rule[0].proto == ENCAP_PROTO_IPCOMP ? SADB_X_SATYPE_IPCOMP :
 		 pexpect(0));
@@ -1220,7 +1229,7 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 		 pexpect(0));
 
 	enum sadb_x_flow_type policy_type = UINT_MAX;
-	switch (shunt_policy) {
+	switch (kernel_policy->shunt) {
 	case SHUNT_PASS:
 		policy_type = SADB_X_FLOW_TYPE_BYPASS;
 		break;
@@ -1251,20 +1260,7 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 
 	/* host_addr */
 
-	if (kernel_policy != NULL && kernel_policy->nr_rules > 1) {
-		/*
-		 * For IPcomp+ESP where two policies need to
-		 * installed, OpenBSD instead: installs a flow with
-		 * one policy (i guess the first); SA pairs for IPsec
-		 * and ESP; bundle (SADB_X_EXT_GRPSPIs) to group the
-		 * two SAs.
-		 */
-		llog_pexpect(logger, HERE,
-			     "multiple policies using SADB_X_EXT_GRPSPIS (GRouP SPI S) not implemented");
-		return false;
-	}
-
-	if (kernel_policy != NULL && kernel_policy->nr_rules > 0) {
+	if (kernel_policy->nr_rules > 0) {
 		/*
 		 * XXX: needing to look at OP_DIRECTION to decide if a
 		 * switch-a-roo is needed when setting the PFKEYv2
@@ -1328,7 +1324,7 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 	/* policy */
 
 	enum ipsec_policy policy_type = UINT_MAX;
-	switch (shunt_policy) {
+	switch (kernel_policy->shunt) {
 	case SHUNT_PASS:
 		policy_type = IPSEC_POLICY_NONE;
 		break;
