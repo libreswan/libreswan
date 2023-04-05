@@ -4,11 +4,13 @@ west #
 west #
  chmod 600 /etc/iked.conf
 west #
- /sbin/iked -dvvv > /tmp/iked.log 2>&1 &
+ /sbin/iked -dvvv > OUTPUT/iked.log 2>&1 &
 [x] PID
 west #
  echo "initdone"
 initdone
+west #
+ sleep 3
 west #
  ../../guestbin/ping-once.sh --up -I 192.0.1.254 192.0.2.254
 up
