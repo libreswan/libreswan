@@ -47,7 +47,7 @@ west #
 1v2 "nss-cert-incorrect" #3: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "nss-cert-incorrect" #3: X509: authentication failed; peer ID_DER_ASN1_DN 'E=user-east@testing.libreswan.org,CN=east.testing.libreswan.org,OU=Test Department,O=Libreswan,L=Toronto,ST=Ontario,C=CA' does not match expected 'C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=road.testing.libreswan.org, E=user-road@testing.libreswan.org'
 002 "nss-cert-incorrect" #3: deleting IKE SA (PARENT_I2) and sending notification
-002 "nss-cert-incorrect" #3: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+002 "nss-cert-incorrect" #3: deleting IKE SA but connection is supposed to remain up; schedule CONNECTION_REVIVAL
 west #
  echo done
 done

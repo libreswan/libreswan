@@ -43,7 +43,7 @@ west #
 003 "aes128" #3: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "aes128" #3: IMPAIR: retransmit so deleting SA
 002 "aes128" #3: deleting IKE SA (PARENT_I1) and NOT sending notification
-002 "aes128" #3: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+002 "aes128" #3: deleting IKE SA but connection is supposed to remain up; schedule CONNECTION_REVIVAL
 west #
  ipsec whack --impair none
 west #
@@ -118,7 +118,7 @@ west #
 003 "aes128" #11: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "aes128" #11: IMPAIR: retransmit so deleting SA
 002 "aes128" #11: deleting IKE SA (PARENT_I1) and NOT sending notification
-002 "aes128" #11: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+002 "aes128" #11: deleting IKE SA but connection is supposed to remain up; schedule CONNECTION_REVIVAL
 west #
  ipsec whack --impair none
 west #
@@ -154,7 +154,7 @@ west #
 003 "aes128" #15: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "aes128" #15: IMPAIR: retransmit so deleting SA
 002 "aes128" #15: deleting IKE SA (PARENT_I1) and NOT sending notification
-002 "aes128" #15: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+002 "aes128" #15: deleting IKE SA but connection is supposed to remain up; schedule CONNECTION_REVIVAL
 west #
  ipsec whack --impair none
 west #
@@ -173,7 +173,7 @@ west #
 003 "aes128" #17: dropping unexpected IKE_SA_INIT message containing INVALID_SYNTAX notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "aes128" #17: IMPAIR: retransmit so deleting SA
 002 "aes128" #17: deleting IKE SA (PARENT_I1) and NOT sending notification
-002 "aes128" #17: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+002 "aes128" #17: deleting IKE SA but connection is supposed to remain up; schedule CONNECTION_REVIVAL
 west #
  ipsec whack --impair none
 west #
@@ -232,7 +232,7 @@ west #
 003 "3des" #23: dropping unexpected IKE_SA_INIT message containing NO_PROPOSAL_CHOSEN notification; message payloads: N; missing payloads: SA,KE,Ni
 002 "3des" #23: IMPAIR: retransmit so deleting SA
 002 "3des" #23: deleting IKE SA (PARENT_I1) and NOT sending notification
-002 "3des" #23: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+002 "3des" #23: deleting IKE SA but connection is supposed to remain up; schedule CONNECTION_REVIVAL
 west #
  ipsec whack --impair none
 west #

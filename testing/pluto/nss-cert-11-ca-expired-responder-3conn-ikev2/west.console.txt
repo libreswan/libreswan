@@ -55,7 +55,7 @@ west #
 003 "old-west" #1: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 036 "old-west" #1: encountered fatal error in state STATE_V2_PARENT_I2
 002 "old-west" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
-002 "old-west" #1: deleting IKE SA but connection is supposed to remain up; schedule EVENT_REVIVE_CONNS
+002 "old-west" #1: deleting IKE SA but connection is supposed to remain up; schedule CONNECTION_REVIVAL
 west #
  ipsec auto --down old-west
 002 "old-west": terminating SAs using this connection
