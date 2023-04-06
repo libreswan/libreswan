@@ -261,7 +261,6 @@ static struct kernel_policy kernel_policy_from_state(const struct child_sa *chil
 bool install_bare_sec_label_kernel_policy(const struct spd_route *spd,
 					  enum kernel_policy_op op,
 					  enum direction direction,
-					  enum expect_kernel_policy existing_policy_expectation,
 					  struct logger *logger,
 					  where_t where, const char *what)
 {
@@ -277,7 +276,6 @@ bool install_bare_sec_label_kernel_policy(const struct spd_route *spd,
 				       SHUNT_IPSEC,
 				       where);
 	if (!kernel_ops_policy_add(op, direction,
-				   existing_policy_expectation,
 				   &kernel_policy.src.client,
 				   &kernel_policy.dst.client,
 				   &kernel_policy,
@@ -300,7 +298,6 @@ bool install_bare_sec_label_kernel_policy(const struct spd_route *spd,
 bool install_bare_spd_kernel_policy(const struct spd_route *spd,
 				    enum kernel_policy_op op,
 				    enum direction direction,
-				    enum expect_kernel_policy existing_policy_expectation,
 				    enum shunt_kind shunt_kind,
 				    struct logger *logger,
 				    where_t where, const char *what)
@@ -342,7 +339,6 @@ bool install_bare_spd_kernel_policy(const struct spd_route *spd,
 					where);
 
 	if (!kernel_ops_policy_add(op, direction,
-				   existing_policy_expectation,
 				   &kernel_policy.src.client,
 				   &kernel_policy.dst.client,
 				   &kernel_policy,
@@ -443,7 +439,6 @@ void delete_spd_kernel_policies(const struct spds *spds,
 
 bool install_bare_cat_kernel_policy(const struct spd_route *spd,
 				    enum kernel_policy_op op,
-				    enum expect_kernel_policy expect_kernel_policy,
 				    enum shunt_kind shunt_kind,
 				    struct logger *logger,
 				    where_t where,
@@ -465,7 +460,7 @@ bool install_bare_cat_kernel_policy(const struct spd_route *spd,
 	 * all about.
 	 */
 	ip_selector local_client = selector_from_address(spd->local->host->addr);
-	return kernel_ops_policy_add(op, DIRECTION_OUTBOUND, expect_kernel_policy,
+	return kernel_ops_policy_add(op, DIRECTION_OUTBOUND,
 				     &local_client, &kernel_policy.dst.client,
 				     &kernel_policy,
 				     deltatime(0),
@@ -538,7 +533,6 @@ void install_inbound_ipsec_kernel_policy(struct child_sa *child,
 
 	if (!kernel_ops_policy_add(KERNEL_POLICY_OP_ADD,
 				   DIRECTION_INBOUND,
-				   EXPECT_KERNEL_POLICY_OK,
 				   &kernel_policy.src.route,	/* src_client */
 				   &kernel_policy.dst.route,	/* dst_client */
 				   &kernel_policy,			/* " */
@@ -579,7 +573,6 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
 		 */
 		ip_selector client = selector_from_address(spd->local->host->addr);
 		if (!kernel_ops_policy_add(op, DIRECTION_OUTBOUND,
-					   EXPECT_KERNEL_POLICY_OK,
 					   &client,
 					   &kernel_policy.dst.route,
 					   &kernel_policy,
@@ -597,7 +590,6 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
 		 * Now add the client.
 		 */
 		return kernel_ops_policy_add(op, DIRECTION_OUTBOUND,
-					     EXPECT_KERNEL_POLICY_OK,
 					     &kernel_policy.src.route,
 					     &kernel_policy.dst.route,
 					     &kernel_policy,
@@ -613,7 +605,6 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
 		 * Just need client->client policies
 		 */
 		return kernel_ops_policy_add(op, DIRECTION_OUTBOUND,
-					     EXPECT_KERNEL_POLICY_OK,
 					     &kernel_policy.src.route,
 					     &kernel_policy.dst.route,
 					     &kernel_policy,
@@ -646,7 +637,6 @@ bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
 					where);
 	return kernel_ops_policy_add(KERNEL_POLICY_OP_REPLACE,
 				     DIRECTION_OUTBOUND,
-				     EXPECT_KERNEL_POLICY_OK,
 				     &kernel_policy.src.client,
 				     &kernel_policy.dst.client,
 				     &kernel_policy,
@@ -710,7 +700,6 @@ static void replace_ipsec_with_bare_kernel_policy(struct child_sa *child,
 		if (!install_bare_spd_kernel_policy(spd,
 						    KERNEL_POLICY_OP_REPLACE,
 						    DIRECTION_OUTBOUND,
-						    EXPECT_KERNEL_POLICY_OK,
 						    shunt_kind,
 						    logger, where, "replacing")) {
 			llog(RC_LOG, logger,

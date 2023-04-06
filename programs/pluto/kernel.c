@@ -263,17 +263,14 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 			if (!install_bare_sec_label_kernel_policy(spd,
 								  KERNEL_POLICY_OP_ADD,
 								  direction,
-								  /*XXX: should no policy be expected?*/
-								  EXPECT_KERNEL_POLICY_OK,
 								  logger, HERE,
 								  "prospective sec_label kernel policy")) {
 				return false;
 			}
 		} else if (direction == DIRECTION_OUTBOUND ||
 			   shunt_kind == SHUNT_KIND_NEVER_NEGOTIATE) {
-			if (!install_bare_spd_kernel_policy(spd, KERNEL_POLICY_OP_ADD, direction,
-							    /*XXX: should no policy be expected?*/
-							    EXPECT_KERNEL_POLICY_OK,
+			if (!install_bare_spd_kernel_policy(spd, KERNEL_POLICY_OP_ADD,
+							    direction,
 							    shunt_kind,
 							    logger, HERE,
 							    "prospective kernel_policy")) {
@@ -1270,7 +1267,6 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 		if (!install_bare_sec_label_kernel_policy(c->spd,
 							  KERNEL_POLICY_OP_ADD,
 							  direction,
-							  EXPECT_KERNEL_POLICY_OK,
 							  /*logger*/logger, HERE,
 							  "prospective security label")) {
 			if (direction == DIRECTION_INBOUND) {
@@ -2137,7 +2133,6 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 			llog(RC_LOG, logger, "state spd requires a block (and no CAT?)");
 			ok = spd->wip.installed.policy =
 				install_bare_spd_kernel_policy(spd, op, DIRECTION_OUTBOUND,
-							       EXPECT_KERNEL_POLICY_OK,
 							       SHUNT_KIND_BLOCK,
 							       logger, HERE,
 							       "install IPsec block policy");

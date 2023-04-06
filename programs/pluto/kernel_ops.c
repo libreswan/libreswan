@@ -30,7 +30,6 @@
 
 bool kernel_ops_policy_add(enum kernel_policy_op op,
 			   enum direction dir,
-			   enum expect_kernel_policy expect_kernel_policy,
 			   const ip_selector *src_client,
 			   const ip_selector *dst_client,
 			   const struct kernel_policy *kernel_policy,
@@ -57,9 +56,6 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 			jam_enum_short(buf, &kernel_policy_op_names, op);
 			jam_string(buf, "+");
 			jam_enum_short(buf, &direction_names, dir);
-
-			jam_string(buf, " ");
-			jam_string(buf, expect_kernel_policy_name(expect_kernel_policy));
 
 			jam(buf, " ");
 			jam_string(buf, story);
@@ -166,7 +162,6 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 	}
 
 	bool ok = kernel_ops->policy_add(op, dir,
-					 expect_kernel_policy,
 					 src_client, dst_client,
 					 kernel_policy,
 					 use_lifetime,

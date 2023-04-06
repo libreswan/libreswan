@@ -351,7 +351,6 @@ struct kernel_ops {
 	void (*process_msg)(int, struct logger *);
 	bool (*policy_add)(enum kernel_policy_op op,
 			   enum direction dir,
-			   enum expect_kernel_policy expect_kernel_policy,
 			   const ip_selector *src_client,
 			   const ip_selector *dst_client,
 			   const struct kernel_policy *policy,

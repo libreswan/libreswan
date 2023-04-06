@@ -44,14 +44,12 @@ struct spd_route;
 bool install_bare_sec_label_kernel_policy(const struct spd_route *spd,
 					  enum kernel_policy_op op,
 					  enum direction direction,
-					  enum expect_kernel_policy existing_policy_expectation,
 					  struct logger *logger,
 					  where_t where, const char *what);
 
 bool install_bare_spd_kernel_policy(const struct spd_route *spd,
 				    enum kernel_policy_op op,
 				    enum direction direction,
-				    enum expect_kernel_policy existing_policy_expectation,
 				    enum shunt_kind shunt_kind,
 				    struct logger *logger,
 				    where_t where, const char *what);
@@ -95,7 +93,6 @@ void delete_spd_kernel_policies(const struct spds *spds,
 
 bool install_bare_cat_kernel_policy(const struct spd_route *spd,
 				    enum kernel_policy_op op,
-				    enum expect_kernel_policy expect_kernel_policy,
 				    enum shunt_kind shunt_kind,
 				    struct logger *logger,
 				    where_t where,

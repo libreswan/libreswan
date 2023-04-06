@@ -1173,7 +1173,6 @@ static bool parse_sadb_x_policy(shunk_t *ext_cursor,
 
 static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 				      enum direction dir,
-				      enum expect_kernel_policy expect_kernel_policy,
 				      const ip_selector *src_client,
 				      const ip_selector *dst_client,
 				      const struct kernel_policy *kernel_policy,
@@ -1356,19 +1355,7 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 	/* send/req */
 
 	struct inbuf resp;
-	if (!msg_sendrecv(&req, base, &resp)) {
-		switch (expect_kernel_policy) {
-		case IGNORE_KERNEL_POLICY_MISSING:
-		case EXPECT_NO_INBOUND:
-			dbg("Ignoring pfkey error");
-			break;
-		case EXPECT_KERNEL_POLICY_OK:
-			llog_pexpect(logger, HERE, "receiving");
-			return false;
-		}
-	}
-
-	return true;
+	return msg_sendrecv(&req, base, &resp);
 }
 
 static bool kernel_pfkeyv2_policy_del(enum direction direction,

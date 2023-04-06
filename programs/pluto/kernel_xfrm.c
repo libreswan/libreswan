@@ -606,7 +606,6 @@ static void add_sec_label(struct nlmsghdr *n,
 
 static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 				   enum direction dir,
-				   enum expect_kernel_policy what_about_inbound,
 				   const ip_selector *src_client,
 				   const ip_selector *dst_client,
 				   const struct kernel_policy *kernel_policy,
@@ -780,6 +779,9 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 	add_xfrmi_marks(&req.n, sa_marks, xfrmi, xfrm_dir, sizeof(req.data));
 	add_sec_label(&req.n, sec_label);
 
+	enum expect_kernel_policy what_about_inbound =
+		(op == KERNEL_POLICY_OP_ADD ? IGNORE_KERNEL_POLICY_MISSING :
+		 EXPECT_KERNEL_POLICY_OK);
 	bool ok = sendrecv_xfrm_policy(&req.n, what_about_inbound, policy_name,
 				       (dir == DIRECTION_OUTBOUND ? "(out)" : "(in)"),
 				       logger);

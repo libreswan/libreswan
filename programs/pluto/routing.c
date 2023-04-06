@@ -246,7 +246,6 @@ static void assign_holdpass(struct connection *c, enum kernel_policy_op op,
 			 op == KERNEL_POLICY_OP_ADD));
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		if (!install_bare_spd_kernel_policy(spd, op, DIRECTION_OUTBOUND,
-						    EXPECT_NO_INBOUND,
 						    SHUNT_KIND_NEGOTIATION,
 						    logger, HERE, reason)) {
 			llog(RC_LOG, logger,
