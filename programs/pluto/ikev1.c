@@ -2904,7 +2904,6 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			delete_state(st);
 			/* wipe out dangling pointer to st */
 			md->v1_st = NULL;
-#if 0
 		} else if  (st->st_state->kind == STATE_AGGR_R0 ||
 			    st->st_state->kind == STATE_AGGR_R1 ||
 			    st->st_state->kind == STATE_MAIN_R0) {
@@ -2925,7 +2924,6 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			delete_state(st);
 			/* wipe out dangling pointer to st */
 			md->v1_st = NULL;
-#endif
 		}
 
 		break;
