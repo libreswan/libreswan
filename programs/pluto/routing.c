@@ -829,7 +829,15 @@ void dispatch(enum connection_event event, struct connection *c,
 					return;
 				}
 				PEXPECT(logger, c->child.routing == RT_ROUTED_NEVER_NEGOTIATE);
+			} else if (labeled_template(c)) {
+				if (!unrouted_to_routed_sec_label(c, logger)) {
+					/* XXX: why whack only? */
+					llog(RC_ROUTE, logger, "could not route");
+					return;
+				}
+				PEXPECT(logger, c->child.routing == RT_ROUTED_ONDEMAND);
 			} else {
+				PEXPECT(logger, !labeled(c));
 				if (!unrouted_to_routed_ondemand(c)) {
 					/* XXX: why whack only? */
 					llog(WHACK_STREAM|RC_ROUTE, logger, "could not route");

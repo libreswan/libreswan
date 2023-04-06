@@ -258,15 +258,12 @@ static struct kernel_policy kernel_policy_from_state(const struct child_sa *chil
  * the IKE SA (everything else happens under the hood).
  */
 
-bool install_bare_sec_label_kernel_policy(const struct spd_route *spd,
-					  enum kernel_policy_op op,
-					  enum direction direction,
-					  struct logger *logger,
-					  where_t where, const char *what)
+bool add_sec_label_kernel_policy(const struct spd_route *spd,
+				 enum direction direction,
+				 struct logger *logger,
+				 where_t where, const char *what)
 {
 	const struct connection *c = spd->connection;
-	PASSERT(logger, (op == KERNEL_POLICY_OP_ADD ||
-			 op == KERNEL_POLICY_OP_REPLACE));
 	PASSERT(logger, c->config->sec_label.len > 0);
 	enum encap_mode encap_mode = (c->policy & POLICY_TUNNEL ? ENCAP_MODE_TUNNEL :
 				      ENCAP_MODE_TRANSPORT);
@@ -275,7 +272,7 @@ bool install_bare_sec_label_kernel_policy(const struct spd_route *spd,
 				       SHUNT_KIND_IPSEC,
 				       SHUNT_IPSEC,
 				       where);
-	if (!kernel_ops_policy_add(op, direction,
+	if (!kernel_ops_policy_add(KERNEL_POLICY_OP_ADD, direction,
 				   &kernel_policy.src.client,
 				   &kernel_policy.dst.client,
 				   &kernel_policy,

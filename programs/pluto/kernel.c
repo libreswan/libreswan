@@ -218,12 +218,6 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 {
 	const struct connection *c = spd->connection;
 
-	/*
-	 * Only the following shunts are valid.
-	 */
-	PASSERT(logger, (shunt_kind == SHUNT_KIND_NEVER_NEGOTIATE ||
-			 shunt_kind == SHUNT_KIND_ONDEMAND));
-
 	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
 		jam(buf, "kernel: %s() ", __func__);
 
@@ -247,28 +241,22 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 	/*
 	 * Only the following shunts are valid.
 	 */
-	FOR_EACH_THING(direction, DIRECTION_OUTBOUND, DIRECTION_INBOUND) {
+	PASSERT(logger, (shunt_kind == SHUNT_KIND_NEVER_NEGOTIATE ||
+			 shunt_kind == SHUNT_KIND_ONDEMAND));
 
-		/*
-		 * Security labels install a full policy which
-		 * includes REQID and assumed mode when adding the
-		 * prospective shunt but normal connections do not.
-		 *
-		 * Note the NO_INBOUND_ENTRY.  It's a hack to get
-		 * around a connection being unrouted, deleting both
-		 * inbound and outbound policies when there's only the
-		 * basic outbound policy installed.
-		 */
-		if (c->config->sec_label.len > 0) {
-			if (!install_bare_sec_label_kernel_policy(spd,
-								  KERNEL_POLICY_OP_ADD,
-								  direction,
-								  logger, HERE,
-								  "prospective sec_label kernel policy")) {
-				return false;
-			}
-		} else if (direction == DIRECTION_OUTBOUND ||
-			   shunt_kind == SHUNT_KIND_NEVER_NEGOTIATE) {
+	/*
+	 * Labeled ipsec has its own ondemand path.
+	 */
+	if (PBAD(logger, labeled(c))) {
+		return false;
+	}
+
+	/*
+	 * Only the following shunts are valid.
+	 */
+	FOR_EACH_THING(direction, DIRECTION_OUTBOUND, DIRECTION_INBOUND) {
+		if (direction == DIRECTION_OUTBOUND ||
+		    shunt_kind == SHUNT_KIND_NEVER_NEGOTIATE) {
 			if (!install_bare_spd_kernel_policy(spd, KERNEL_POLICY_OP_ADD,
 							    direction,
 							    shunt_kind,
@@ -278,6 +266,7 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 			}
 		}
 	}
+
 	return true;
 }
 
@@ -1238,7 +1227,7 @@ static void clear_narrow_holds(const ip_selector *src_client,
 	}
 }
 
-bool install_sec_label_connection_policies(struct connection *c, struct logger *logger)
+bool unrouted_to_routed_sec_label(struct connection *c, struct logger *logger)
 {
 	connection_buf cb;
 	ldbg(logger,
@@ -1250,7 +1239,7 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	     enum_name(&routing_names, c->child.routing),
 	     pri_shunk(c->config->sec_label));
 
-	if (PBAD(logger, !labeled_parent(c))) {
+	if (!PEXPECT(logger, labeled_template(c) || labeled_parent(c))) {
 		return false;
 	}
 
@@ -1264,20 +1253,13 @@ bool install_sec_label_connection_policies(struct connection *c, struct logger *
 	 * connections do not.
 	 */
 	FOR_EACH_THING(direction, DIRECTION_OUTBOUND, DIRECTION_INBOUND) {
-		if (!install_bare_sec_label_kernel_policy(c->spd,
-							  KERNEL_POLICY_OP_ADD,
-							  direction,
-							  /*logger*/logger, HERE,
-							  "prospective security label")) {
+		if (!add_sec_label_kernel_policy(c->spd, direction,
+						 /*logger*/logger, HERE,
+						 "ondemand security label")) {
 			if (direction == DIRECTION_INBOUND) {
 				/*
 				 * Need to pull the just installed
 				 * outbound policy.
-				 *
-				 * XXX: this call highlights why
-				 * having both KP_*_REVERSED and and
-				 * reversed parameters is just so
-				 * lame.  raw_policy can handle this.
 				 */
 				ldbg(logger, "pulling previously installed outbound policy");
 				pexpect(direction == DIRECTION_INBOUND);

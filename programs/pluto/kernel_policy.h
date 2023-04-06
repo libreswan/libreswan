@@ -33,6 +33,11 @@ enum encap_mode;
 struct logger;
 struct spd_route;
 
+bool add_sec_label_kernel_policy(const struct spd_route *spd,
+				 enum direction direction,
+				 struct logger *logger,
+				 where_t where, const char *what);
+
 /*
  * Bare Kernel Policies (i.e., do not have a state).
  *
@@ -40,12 +45,6 @@ struct spd_route;
  * ROUTED_PROSPECTIVE, for instance (and presumably ROUTED_HOLD
  * ROUTED_FAILURE).
  */
-
-bool install_bare_sec_label_kernel_policy(const struct spd_route *spd,
-					  enum kernel_policy_op op,
-					  enum direction direction,
-					  struct logger *logger,
-					  where_t where, const char *what);
 
 bool install_bare_spd_kernel_policy(const struct spd_route *spd,
 				    enum kernel_policy_op op,

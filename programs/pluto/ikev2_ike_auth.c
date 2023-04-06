@@ -1129,11 +1129,26 @@ bool v2_ike_sa_auth_responder_establish(struct ike_sa *ike, bool *send_redirecti
 	}
 
 	if (labeled_parent(c)) {
+		/*
+		 * For SEC_LABELs install a trap for any outgoing
+		 * connection so that it will trigger an acquire which
+		 * will then negotiate the child.
+		 *
+		 * Because the labeled_parent() connection was
+		 * instantiated from the labeled_template() the parent
+		 * is unrouted.
+		 *
+		 * There's a chance that the labeled_template() and
+		 * labeled_parent() have overlapping SPDs that seems
+		 * to do no harm.
+		 */
 		PEXPECT(c->logger, c->child.routing == RT_UNROUTED);
-		if (!install_sec_label_connection_policies(c, ike->sa.st_logger)) {
+		if (!unrouted_to_routed_sec_label(c, ike->sa.st_logger)) {
 			/* just die */
 			return false;
 		}
+		/* Success! */
+		PEXPECT(c->logger, c->child.routing == RT_ROUTED_ONDEMAND);
 	}
 
 	return true;
@@ -1409,11 +1424,18 @@ static stf_status process_v2_IKE_AUTH_response_post_cert_decode(struct state *ik
 	}
 
 	if (labeled_parent(c)) {
-		ldbg(c->logger, "sec-label routing = %s, should be RT_UNROUTED",
-		     enum_name(&routing_names, c->child.routing));
-		if (!install_sec_label_connection_policies(c, ike->sa.st_logger)) {
+		/*
+		 * The labeled_template() connection will have been
+		 * routed, but not this labeled_parent.
+		 *
+		 * But what if the two have the same SPDs?  Then the
+		 * routinghappens twice which seems to be harmless.
+		 */
+		PEXPECT(ike->sa.st_logger, c->child.routing == RT_UNROUTED);
+		if (!unrouted_to_routed_sec_label(c, ike->sa.st_logger)) {
 			return STF_FATAL;
 		}
+		pexpect(c->child.routing == RT_ROUTED_ONDEMAND);
 	}
 
 	/*
