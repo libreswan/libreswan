@@ -512,20 +512,19 @@ void install_inbound_ipsec_kernel_policy(struct child_sa *child,
 				DIRECTION_INBOUND,
 				EXPECT_KERNEL_POLICY_OK,
 				&kernel_policy.src.route,	/* src_client */
-				&client,
+				&client,			/* different for NFT CAT */
 				&kernel_policy,			/* " */
 				deltatime(0),		/* lifetime */
 				kernel_policy.sa_marks,
 				kernel_policy.xfrmi,
 				kernel_policy.id,
 				kernel_policy.sec_label,
-				st->st_logger,
-				"%s() add inbound Child SA", __func__)) {
+				where, child->sa.st_logger,
+				"add CAT inbound Child SA")) {
 			selector_pair_buf spb;
-			llog(RC_LOG, st->st_logger,
-			     "kernel: %s() failed to add SPD for %s",
-			     __func__,
-			     str_selector_pair(&kernel_policy.src.client, &kernel_policy.dst.client, &spb));
+			llog_sa(RC_LOG, child,
+				"kernel: %s() failed to add SPD for %s", __func__,
+			str_selector_pair(&kernel_policy.src.client, &kernel_policy.dst.client, &spb));
 		}
 
 	}
