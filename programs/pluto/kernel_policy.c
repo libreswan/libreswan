@@ -426,12 +426,25 @@ void delete_spd_kernel_policies(const struct spds *spds,
 
 /* CAT and it's kittens */
 
-void add_cat_kernel_policy(const struct kernel_policy *kernel_policy,
+static bool pexpect_cat(const struct connection *c, struct logger *logger)
+{
+	return (PEXPECT(logger, c->policy & POLICY_OPPORTUNISTIC) &&
+		PEXPECT(logger, c->kind == CK_INSTANCE) &&
+		PEXPECT(logger, c->clonedfrom != NULL) &&
+		PEXPECT(logger, c->local->child.config->has_client_address_translation) &&
+		PEXPECT(logger, c->local->child.has_cat));
+}
+
+void add_cat_kernel_policy(const struct connection *c,
+			   const struct kernel_policy *kernel_policy,
 			   enum direction direction,
 			   struct logger *logger, where_t where,
 			   const char *reason)
 {
 	ldbg(logger, "%s", reason);
+	if (!pexpect_cat(c, logger)) {
+		return;
+	}
 	ip_selector local_client = selector_from_address(kernel_policy->src.host);
 	/* reverse polarity?  XXX: should be handled by kernel ops? */
 	ip_selector src = (direction == DIRECTION_OUTBOUND ? local_client :
@@ -453,8 +466,11 @@ void delete_cat_kernel_policy(const struct spd_route *spd,
 			      where_t where,
 			      const char *reason)
 {
-	struct connection *c = spd->connection;
+	const struct connection *c = spd->connection;
 	ldbg(logger, "%s", reason);
+	if (!pexpect_cat(c, logger)) {
+		return;
+	}
 	/*
 	 * XXX: forming the local CLIENT from the local HOST is
 	 * needed.  That is what CAT (client address translation) is
@@ -488,7 +504,8 @@ void install_inbound_ipsec_kernel_policy(struct child_sa *child,
 	bool has_cat = false;
 #endif
 	if (has_cat) {
-		add_cat_kernel_policy(&kernel_policy, DIRECTION_INBOUND,
+		add_cat_kernel_policy(child->sa.st_connection,
+				      &kernel_policy, DIRECTION_INBOUND,
 				      child->sa.st_logger, where,
 				      "CAT: add inbound IPsec policy");
 	}
@@ -529,7 +546,8 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
 		 * = add outbound client -> client policy for the
 		 *   assigned address.
 		 */
-		add_cat_kernel_policy(&kernel_policy, DIRECTION_OUTBOUND,
+		add_cat_kernel_policy(child->sa.st_connection,
+				      &kernel_policy, DIRECTION_OUTBOUND,
 				      child->sa.st_logger, where,
 				      "CAT: add outbound IPsec policy");
 		/*

@@ -88,7 +88,8 @@ void delete_spd_kernel_policies(const struct spds *spds,
  * maps the local.host -> remote.client.
  */
 
-void add_cat_kernel_policy(const struct kernel_policy *kernel_policy,
+void add_cat_kernel_policy(const struct connection *c,
+			   const struct kernel_policy *kernel_policy,
 			   enum direction direction,
 			   struct logger *logger, where_t where,
 			   const char *reason);
