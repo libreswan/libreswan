@@ -608,12 +608,8 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 				   enum direction dir,
 				   const ip_selector *src_client,
 				   const ip_selector *dst_client,
-				   const struct kernel_policy *kernel_policy,
+				   const struct kernel_policy *policy,
 				   deltatime_t use_lifetime UNUSED,
-				   const struct sa_marks *sa_marks,
-				   const struct pluto_xfrmi *xfrmi,
-				   enum kernel_policy_id policy_id UNUSED,
-				   const shunk_t sec_label,
 				   struct logger *logger)
 {
 	const char *op_str = enum_name_short(&kernel_policy_op_names, op);
@@ -625,11 +621,11 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 	unsigned xfrm_action;
 	const char *policy_name;
 	/* shunt route */
-	switch (kernel_policy->shunt) {
+	switch (policy->shunt) {
 	case SHUNT_IPSEC:
 		xfrm_action = XFRM_POLICY_ALLOW;
-		policy_name = (kernel_policy->mode == ENCAP_MODE_TUNNEL ? ip_protocol_ipip.name :
-			       kernel_policy->mode == ENCAP_MODE_TRANSPORT ? protocol_from_ipproto(kernel_policy->rule[kernel_policy->nr_rules-1].proto)->name :
+		policy_name = (policy->mode == ENCAP_MODE_TUNNEL ? ip_protocol_ipip.name :
+			       policy->mode == ENCAP_MODE_TRANSPORT ? protocol_from_ipproto(policy->rule[policy->nr_rules-1].proto)->name :
 			       "UNKNOWN");
 		break;
 	case SHUNT_PASS:
@@ -660,7 +656,7 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 	case SHUNT_HOLD:	/* MUST BE NEGOTIATION */
 	case SHUNT_UNSET:	/* MUST BE DELETE! */
 	default:
-		bad_case(kernel_policy->shunt);
+		bad_case(policy->shunt);
 	}
 
 	const unsigned xfrm_dir =
@@ -681,7 +677,6 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 	const int family = dst_client_afi->af;
 	dbg("%s() using family %s (%d)", __func__, dst_client_afi->ip_name, family);
 
-	passert(kernel_policy != NULL); /*nr_rules >= 0*/
 	/*
 	 * NEW will fail when an existing policy, UPD always
 	 * works.  This seems to happen in cases with NAT'ed
@@ -698,7 +693,7 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 	set_xfrm_selectors(&info->sel, src_client, dst_client);
 
 	/* The caller should have set the proper priority by now */
-	info->priority = kernel_policy->priority.value;
+	info->priority = policy->priority.value;
 	dbg("%s() IPsec SA SPD priority set to %d", __func__, info->priority);
 
 	info->action = xfrm_action;
@@ -720,30 +715,30 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 	 * XXX: why not just test proto_info - let caller decide if it
 	 * is needed.  Lets find out.
 	 */
-	if (kernel_policy->nr_rules > 0 &&
-	    pexpect(kernel_policy->shunt != SHUNT_PASS)) {
+	if (policy->nr_rules > 0 &&
+	    pexpect(policy->shunt != SHUNT_PASS)) {
 		struct xfrm_user_tmpl tmpls[4] = {0};
 
-		passert(kernel_policy->nr_rules <= (int)elemsof(tmpls));
+		passert(policy->nr_rules <= (int)elemsof(tmpls));
 		/* only the first rule gets the worm; er tunnel flag */
-		unsigned mode = (kernel_policy->mode == ENCAP_MODE_TUNNEL ? XFRM_MODE_TUNNEL :
+		unsigned mode = (policy->mode == ENCAP_MODE_TUNNEL ? XFRM_MODE_TUNNEL :
 				 XFRM_MODE_TRANSPORT);
-		for (unsigned i = 0; i < kernel_policy->nr_rules; i++) {
-			const struct kernel_policy_rule *rule = &kernel_policy->rule[i];
+		for (unsigned i = 0; i < policy->nr_rules; i++) {
+			const struct kernel_policy_rule *rule = &policy->rule[i];
 			struct xfrm_user_tmpl *tmpl = &tmpls[i];
 			tmpl->reqid = rule->reqid;
 			tmpl->id.proto = rule->proto;
 			tmpl->optional = (rule->proto == ENCAP_PROTO_IPCOMP &&
 					  xfrm_dir != XFRM_POLICY_OUT);
 			tmpl->aalgos = tmpl->ealgos = tmpl->calgos = ~0;
-			tmpl->family = address_type(&kernel_policy->dst.host)->af;
+			tmpl->family = address_type(&policy->dst.host)->af;
 
 			/* set mode (tunnel or transport); then switch to transport */
 			tmpl->mode = mode;
 			if (mode == XFRM_MODE_TUNNEL) {
 				/* tunnel mode needs addresses */
-				tmpl->saddr = xfrm_from_address(&kernel_policy->src.host);
-				tmpl->id.daddr = xfrm_from_address(&kernel_policy->dst.host);
+				tmpl->saddr = xfrm_from_address(&policy->src.host);
+				tmpl->id.daddr = xfrm_from_address(&policy->dst.host);
 			}
 			mode = XFRM_MODE_TRANSPORT;
 
@@ -755,14 +750,14 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 			    tmpl->optional,
 			    tmpl->family,
 			    tmpl->mode,
-			    str_address(tmpl->mode == XFRM_MODE_TUNNEL ? &kernel_policy->src.host : &unset_address, &sb),
-			    str_address(tmpl->mode == XFRM_MODE_TUNNEL ? &kernel_policy->dst.host : &unset_address, &db));
+			    str_address(tmpl->mode == XFRM_MODE_TUNNEL ? &policy->src.host : &unset_address, &sb),
+			    str_address(tmpl->mode == XFRM_MODE_TUNNEL ? &policy->dst.host : &unset_address, &db));
 		}
 
 		/* append  */
 		struct rtattr *attr = (struct rtattr *)((char *)&req + req.n.nlmsg_len);
 		attr->rta_type = XFRMA_TMPL;
-		attr->rta_len = kernel_policy->nr_rules * sizeof(tmpls[0]);
+		attr->rta_len = policy->nr_rules * sizeof(tmpls[0]);
 		memcpy(RTA_DATA(attr), tmpls, attr->rta_len);
 		attr->rta_len = RTA_LENGTH(attr->rta_len);
 		req.n.nlmsg_len += attr->rta_len;
@@ -776,8 +771,8 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 	 *
 	 * XXX: identical code in policy_add(), time to share?
 	 */
-	add_xfrmi_marks(&req.n, sa_marks, xfrmi, xfrm_dir, sizeof(req.data));
-	add_sec_label(&req.n, sec_label);
+	add_xfrmi_marks(&req.n, policy->sa_marks, policy->xfrmi, xfrm_dir, sizeof(req.data));
+	add_sec_label(&req.n, policy->sec_label);
 
 	enum expect_kernel_policy what_about_inbound =
 		(op == KERNEL_POLICY_OP_ADD ? IGNORE_KERNEL_POLICY_MISSING :
@@ -800,8 +795,8 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 			if (!ok) {
 				break;
 			}
-			if (kernel_policy->shunt == SHUNT_IPSEC &&
-			    kernel_policy->mode == ENCAP_MODE_TRANSPORT) {
+			if (policy->shunt == SHUNT_IPSEC &&
+			    policy->mode == ENCAP_MODE_TRANSPORT) {
 				break;
 			}
 			dbg("xfrm: %s() adding policy forward (suspect a tunnel)", __func__);

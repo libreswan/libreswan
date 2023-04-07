@@ -32,20 +32,16 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 			   enum direction dir,
 			   const ip_selector *src_client,
 			   const ip_selector *dst_client,
-			   const struct kernel_policy *kernel_policy,
+			   const struct kernel_policy *policy,
 			   deltatime_t use_lifetime,
-			   const struct sa_marks *sa_marks,
-			   const struct pluto_xfrmi *xfrmi,
-			   enum kernel_policy_id id,
-			   const shunk_t sec_label,
 			   struct logger *logger, where_t where, const char *story)
 {
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
 	pexpect(client_proto == selector_protocol(*dst_client));
-	PASSERT(logger, kernel_policy != NULL);
-	PASSERT(logger, kernel_policy->shunt != SHUNT_UNSET);
-	PASSERT(logger, ((kernel_policy->nr_rules == 0) ==/*iff*/
-			 (kernel_policy->shunt == SHUNT_PASS)));
+	PASSERT(logger, policy != NULL);
+	PASSERT(logger, policy->shunt != SHUNT_UNSET);
+	PASSERT(logger, ((policy->nr_rules == 0) ==/*iff*/
+			 (policy->shunt == SHUNT_PASS)));
 
 	if (DBGP(DBG_BASE)) {
 
@@ -75,14 +71,17 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 			jam(buf, "s");
 		}
 
-		if (sa_marks != NULL || xfrmi != NULL) {
+		if (policy->sa_marks != NULL ||
+		    policy->xfrmi != NULL) {
 			LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 				jam(buf, "%s()  ", __func__);
 
-				if (sa_marks != NULL) {
+				if (policy->sa_marks != NULL) {
 					jam(buf, " sa_marks=");
 					const char *dir = "out:";
-					FOR_EACH_THING(mark, &sa_marks->out, &sa_marks->in) {
+					FOR_EACH_THING(mark,
+						       &policy->sa_marks->out,
+						       &policy->sa_marks->in) {
 						jam(buf, "%s%x/%x%s",
 						    dir, mark->val, mark->mask,
 						    mark->unique ? "/unique" : "");
@@ -90,8 +89,8 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 					}
 				}
 
-				if (xfrmi != NULL) {
-					jam(buf, " xfrm_if_id=%d", (int)xfrmi->if_id);
+				if (policy->xfrmi != NULL) {
+					jam(buf, " xfrm_if_id=%d", (int)policy->xfrmi->if_id);
 				}
 			}
 
@@ -101,16 +100,16 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 			jam(buf, "%s()  ", __func__);
 
 			jam_string(buf, " policy=");
-			jam_address(buf, &kernel_policy->src.host);
+			jam_address(buf, &policy->src.host);
 			jam(buf, "=>");
-			jam_address(buf, &kernel_policy->dst.host);
+			jam_address(buf, &policy->dst.host);
 			jam_string(buf, ",");
-			jam_enum_short(buf, &shunt_kind_names, kernel_policy->kind);
+			jam_enum_short(buf, &shunt_kind_names, policy->kind);
 			jam_string(buf, "=");
-			jam_enum_short(buf, &shunt_policy_names, kernel_policy->shunt);
+			jam_enum_short(buf, &shunt_policy_names, policy->shunt);
 			jam_string(buf, ",");
 			jam(buf, "priority=%"PRI_KERNEL_PRIORITY,
-			    pri_kernel_priority(kernel_policy->priority));
+			    pri_kernel_priority(policy->priority));
 			/*
 			 * Print outer-to-inner and use paren to show
 			 * how each wrapps the next.
@@ -119,40 +118,40 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 			 * or UDP?
 			 */
 			jam_string(buf, ",");
-			jam_enum_short(buf, &encap_mode_names, kernel_policy->mode);
+			jam_enum_short(buf, &encap_mode_names, policy->mode);
 			jam_string(buf, "[");
-			for (unsigned i = kernel_policy->nr_rules; i > 0; i--) {
-				const struct kernel_policy_rule *rule = &kernel_policy->rule[i-1];
+			for (unsigned i = policy->nr_rules; i > 0; i--) {
+				const struct kernel_policy_rule *rule = &policy->rule[i-1];
 				const struct ip_protocol *rule_proto = protocol_from_ipproto(rule->proto);
 				jam(buf, "%s@%d(", rule_proto->name, rule->reqid);
 			}
-			if (kernel_policy->nr_rules > 0) {
+			if (policy->nr_rules > 0) {
 				/* XXX: should use stuff from selector */
 				jam_string(buf, client_proto->name);
 			}
-			for (unsigned i = kernel_policy->nr_rules; i > 0; i--) {
+			for (unsigned i = policy->nr_rules; i > 0; i--) {
 				jam_string(buf, ")");
 			}
 			jam_string(buf, "]");
 		}
 
-		if (sec_label.len > 0) {
+		if (policy->sec_label.len > 0) {
 			LLOG_JAMBUF(DEBUG_STREAM, logger, buf) {
 				jam(buf, "%s()  ", __func__);
 				jam_string(buf, " sec_label=");
-				jam_sanitized_hunk(buf, sec_label);
+				jam_sanitized_hunk(buf, policy->sec_label);
 			}
 		}
 	}
 
-	switch(kernel_policy->shunt) {
+	switch(policy->shunt) {
 	case SHUNT_HOLD:
-		PEXPECT(logger, kernel_policy->kind == SHUNT_KIND_NEGOTIATION);
+		PEXPECT(logger, policy->kind == SHUNT_KIND_NEGOTIATION);
 		ldbg(logger, "%s() SPI_HOLD implemented as no-op", __func__);
 		return true;
 	case SHUNT_TRAP:
 		if (dir == DIRECTION_INBOUND) {
-			PEXPECT(logger, kernel_policy->kind == SHUNT_KIND_ONDEMAND);
+			PEXPECT(logger, policy->kind == SHUNT_KIND_ONDEMAND);
 			llog_pexpect(logger, where, "inbound ondemand SHUNT_TRAP is a no-op");
 			return true;
 		}
@@ -163,9 +162,8 @@ bool kernel_ops_policy_add(enum kernel_policy_op op,
 
 	bool ok = kernel_ops->policy_add(op, dir,
 					 src_client, dst_client,
-					 kernel_policy,
+					 policy,
 					 use_lifetime,
-					 sa_marks, xfrmi, id, sec_label,
 					 logger);
 	ldbg(logger, "%s() ... %s", __func__, bool_str(ok));
 

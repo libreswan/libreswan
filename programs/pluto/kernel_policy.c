@@ -277,10 +277,6 @@ bool add_sec_label_kernel_policy(const struct spd_route *spd,
 				   &kernel_policy.dst.client,
 				   &kernel_policy,
 				   deltatime(0),
-				   kernel_policy.sa_marks,
-				   kernel_policy.xfrmi,
-				   kernel_policy.id,
-				   kernel_policy.sec_label,
 				   logger, where, what)) {
 		return false;
 	}
@@ -340,10 +336,6 @@ bool install_bare_spd_kernel_policy(const struct spd_route *spd,
 				   &kernel_policy.dst.client,
 				   &kernel_policy,
 				   deltatime(0),
-				   kernel_policy.sa_marks,
-				   kernel_policy.xfrmi,
-				   kernel_policy.id,
-				   kernel_policy.sec_label,
 				   logger, where, what)) {
 		return false;
 	}
@@ -450,10 +442,6 @@ void add_cat_kernel_policy(const struct kernel_policy *kernel_policy,
 				   &src, &dst,
 				   kernel_policy,
 				   deltatime(0),
-				   kernel_policy->sa_marks,
-				   kernel_policy->xfrmi,
-				   kernel_policy->id,
-				   kernel_policy->sec_label,
 				   logger, where, reason)) {
 		llog(RC_LOG, logger, "%s failed", reason);
 	}
@@ -511,10 +499,6 @@ void install_inbound_ipsec_kernel_policy(struct child_sa *child,
 				   &kernel_policy.dst.route,	/* dst_client */
 				   &kernel_policy,			/* " */
 				   deltatime(0),		/* lifetime */
-				   kernel_policy.sa_marks,
-				   kernel_policy.xfrmi,
-				   kernel_policy.id,
-				   kernel_policy.sec_label,
 				   child->sa.st_logger, where, "add inbound Child SA")) {
 		selector_pair_buf spb;
 		llog_sa(RC_LOG, child,
@@ -556,10 +540,6 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
 					     &kernel_policy.dst.route,
 					     &kernel_policy,
 					     deltatime(0),
-					     kernel_policy.sa_marks,
-					     kernel_policy.xfrmi,
-					     kernel_policy.id,
-					     kernel_policy.sec_label,
 					     logger, where,
 					     "CAT: add client->client kernel policy");
 	} else {
@@ -571,10 +551,6 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
 					     &kernel_policy.dst.route,
 					     &kernel_policy,
 					     deltatime(0),
-					     kernel_policy.sa_marks,
-					     kernel_policy.xfrmi,
-					     kernel_policy.id,
-					     kernel_policy.sec_label,
 					     logger, where,
 					     "install IPsec policy");
 	}
@@ -603,10 +579,6 @@ bool install_bare_kernel_policy(ip_selector src, ip_selector dst,
 				     &kernel_policy.dst.client,
 				     &kernel_policy,
 				     deltatime(SHUNT_PATIENCE),
-				     kernel_policy.sa_marks/*NULL*/,
-				     kernel_policy.xfrmi/*NULL*/,
-				     kernel_policy.id, /*0*/
-				     kernel_policy.sec_label/*null_shunk*/,
 				     logger, where, "install bare policy");
 }
 

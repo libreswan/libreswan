@@ -1175,17 +1175,13 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 				      enum direction dir,
 				      const ip_selector *src_client,
 				      const ip_selector *dst_client,
-				      const struct kernel_policy *kernel_policy,
+				      const struct kernel_policy *policy,
 				      deltatime_t use_lifetime UNUSED,
-				      const struct sa_marks *sa_marks UNUSED,
-				      const struct pluto_xfrmi *xfrmi UNUSED,
-				      enum kernel_policy_id policy_id,
-				      const shunk_t sec_label UNUSED,
 				      struct logger *logger)
 {
 #ifdef __OpenBSD__
 
-	if (kernel_policy->nr_rules > 1) {
+	if (policy->nr_rules > 1) {
 		/*
 		 * For IPcomp+ESP where two policies need to
 		 * installed, OpenBSD instead: installs a flow with
@@ -1203,9 +1199,9 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 			       pexpect(0));
 
 	enum sadb_satype satype =
-		(kernel_policy->rule[0].proto == ENCAP_PROTO_ESP ? SADB_SATYPE_ESP :
-		 kernel_policy->rule[0].proto == ENCAP_PROTO_AH ? SADB_SATYPE_AH :
-		 kernel_policy->rule[0].proto == ENCAP_PROTO_IPCOMP ? SADB_X_SATYPE_IPCOMP :
+		(policy->rule[0].proto == ENCAP_PROTO_ESP ? SADB_SATYPE_ESP :
+		 policy->rule[0].proto == ENCAP_PROTO_AH ? SADB_SATYPE_AH :
+		 policy->rule[0].proto == ENCAP_PROTO_IPCOMP ? SADB_X_SATYPE_IPCOMP :
 		 pexpect(0));
 
 	uint8_t reqbuf[SIZEOF_SADB_BASE +
@@ -1228,7 +1224,7 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 		 pexpect(0));
 
 	enum sadb_x_flow_type policy_type = UINT_MAX;
-	switch (kernel_policy->shunt) {
+	switch (policy->shunt) {
 	case SHUNT_PASS:
 		policy_type = SADB_X_FLOW_TYPE_BYPASS;
 		break;
@@ -1259,7 +1255,7 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 
 	/* host_addr */
 
-	if (kernel_policy->nr_rules > 0) {
+	if (policy->nr_rules > 0) {
 		/*
 		 * XXX: needing to look at OP_DIRECTION to decide if a
 		 * switch-a-roo is needed when setting the PFKEYv2
@@ -1269,12 +1265,12 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 		switch (dir) {
 		case DIRECTION_INBOUND:
 			/* XXX: notice how DST gets SRC's value et.al. */
-			put_sadb_address(&req, SADB_EXT_ADDRESS_DST, kernel_policy->src.host);
-			put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, kernel_policy->dst.host);
+			put_sadb_address(&req, SADB_EXT_ADDRESS_DST, policy->src.host);
+			put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, policy->dst.host);
 			break;
 		case DIRECTION_OUTBOUND:
-			put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, kernel_policy->src.host);
-			put_sadb_address(&req, SADB_EXT_ADDRESS_DST, kernel_policy->dst.host);
+			put_sadb_address(&req, SADB_EXT_ADDRESS_SRC, policy->src.host);
+			put_sadb_address(&req, SADB_EXT_ADDRESS_DST, policy->dst.host);
 			break;
 		}
 	}
@@ -1323,7 +1319,7 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 	/* policy */
 
 	enum ipsec_policy policy_type = UINT_MAX;
-	switch (kernel_policy->shunt) {
+	switch (policy->shunt) {
 	case SHUNT_PASS:
 		policy_type = IPSEC_POLICY_NONE;
 		break;
@@ -1348,7 +1344,8 @@ static bool kernel_pfkeyv2_policy_add(enum kernel_policy_op op,
 	}
 	pexpect(policy_type != UINT_MAX);
 
-	put_sadb_x_policy(&req, dir, policy_type, policy_id, kernel_policy);
+	put_sadb_x_policy(&req, dir, policy_type,
+			  policy->id, policy);
 
 #endif
 
