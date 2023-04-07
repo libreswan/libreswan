@@ -479,7 +479,7 @@ void delete_cat_kernel_policy(const struct spd_route *spd,
 				  DEFAULT_KERNEL_POLICY_ID,
 				  HUNK_AS_SHUNK(spd->connection->config->sec_label),
 				  logger, where, reason)) {
-		llog(RC_LOG, logger, "%s failed");
+		llog(RC_LOG, logger, "%s failed", reason);
 	}
 }
 
