@@ -21,13 +21,15 @@ road #
  ../../guestbin/wait-for.sh --match 'loaded 2' -- ipsec auto --status
 000 Total IPsec connections: loaded 2, active 0
 road #
- # establish a baseline
+ # establish a baseline: one trap, no state and nothing up
 road #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
+road #
+ ../../guestbin/ipsec-kernel-state.sh
 road #
  ipsec whack --trafficstatus
 road #
@@ -51,11 +53,13 @@ road #
  ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 up
 road #
- # get assigned 10.0.10.1 so expect 10.0.10.1/32<->192.1.2.23/32 along
+ # get assigned 10.0.10.1 so expect:
 road #
- # with the ping 192.1.3.209/32->192.1.2.23/32 and the original trap
+ #    tunnel: 10.0.10.1/32<->192.1.2.23/32
 road #
- # 192.1.3.209/32->192.1.2.23/24.
+ #    CAT: 192.1.3.209/32->192.1.2.23/32
+road #
+ #    TRAP: 192.1.3.209/32->192.1.2.23/24
 road #
  ../../guestbin/ipsec-kernel-policy.sh
 src 10.0.10.1/32 dst 192.1.2.23/32
@@ -79,6 +83,28 @@ src 192.1.3.209/32 dst 192.1.2.0/24
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
 road #
+ ../../guestbin/ipsec-kernel-state.sh
+src 192.1.2.23 dst 192.1.3.209
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.3.209 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	encap type espinudp sport 4500 dport 4500 addr 0.0.0.0
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+road #
  ipsec whack --trafficstatus
 006 #2: "private-or-clear#192.1.2.0/24"[1] 10.0.10.1/32=== ...192.1.2.23, type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='C=CA, ST=Ontario, L=Toronto, O=Libreswan, OU=Test Department, CN=east.testing.libreswan.org, E=user-east@testing.libreswan.org', lease=10.0.10.1/32
 road #
@@ -86,21 +112,21 @@ road #
 000 Bare Shunt list:
 000  
 road #
- # wait for DPD on road to trigger down
+ # east crashed; wait for DPD on road to trigger down
 road #
  ../../guestbin/wait-for.sh --no-match private-or-clear -- ipsec whack --trafficstatus
 road #
- # failure=pass and negotiation=drop, what should be left?
+ # Since the connection failed and it is OE all the CAT policies should
+road #
+ # be gone leaving only the template policy.  Ditto for state.
 road #
  ../../guestbin/ipsec-kernel-policy.sh
-src 192.1.3.209/32 dst 192.1.2.23/32
-	dir out priority PRIORITY ptype main
-	tmpl src 192.1.3.209 dst 192.1.2.23
-		proto esp reqid REQID mode tunnel
 src 192.1.3.209/32 dst 192.1.2.0/24
 	dir out priority PRIORITY ptype main
 	tmpl src 0.0.0.0 dst 0.0.0.0
 		proto esp reqid 0 mode transport
+road #
+ ../../guestbin/ipsec-kernel-state.sh
 road #
  ipsec whack --trafficstatus
 road #
@@ -113,15 +139,17 @@ road #
  ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
 fired and forgotten
 road #
- # check ping, expected to succeed now via %pass
+ # negotiation is expected to fail at which point a failure=%pass shunt
+road #
+ # is installed.  Wait for that.
 road #
  ../../guestbin/wait-for.sh --match %pass -- ipsec whack --shuntstatus
 000 192.1.3.209/32 -0-> 192.1.2.23/32 => %pass    oe-failing
 road #
+ # With %pass installed, there's no tunnel yet pings work
+road #
  ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 up
-road #
- # should show no tunnel
 road #
  ipsec whack --trafficstatus
 road #

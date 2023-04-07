@@ -5,9 +5,11 @@
 # ping should succeed through tunnel
 ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
 
-# get assigned 10.0.10.1 so expect 10.0.10.1/32<->192.1.2.23/32 along
-# with the ping 192.1.3.209/32->192.1.2.23/32 and the original trap
-# 192.1.3.209/32->192.1.2.23/24.
+# get assigned 10.0.10.1 so expect:
+#    tunnel: 10.0.10.1/32<->192.1.2.23/32
+#    CAT: 192.1.3.209/32->192.1.2.23/32
+#    TRAP: 192.1.3.209/32->192.1.2.23/24
 ../../guestbin/ipsec-kernel-policy.sh
+../../guestbin/ipsec-kernel-state.sh
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus

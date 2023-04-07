@@ -1,16 +1,21 @@
-# wait for DPD on road to trigger down
+# east crashed; wait for DPD on road to trigger down
 ../../guestbin/wait-for.sh --no-match private-or-clear -- ipsec whack --trafficstatus
 
-# failure=pass and negotiation=drop, what should be left?
+# Since the connection failed and it is OE all the CAT policies should
+# be gone leaving only the template policy.  Ditto for state.
 ../../guestbin/ipsec-kernel-policy.sh
+../../guestbin/ipsec-kernel-state.sh
 ipsec whack --trafficstatus
 ipsec whack --shuntstatus
 
 # ping again to trigger OE. packet is lost
 ../../guestbin/ping-once.sh --forget -I 192.1.3.209 192.1.2.23
-# check ping, expected to succeed now via %pass
+
+# negotiation is expected to fail at which point a failure=%pass shunt
+# is installed.  Wait for that.
 ../../guestbin/wait-for.sh --match %pass -- ipsec whack --shuntstatus
+
+# With %pass installed, there's no tunnel yet pings work
 ../../guestbin/ping-once.sh --up -I 192.1.3.209 192.1.2.23
-# should show no tunnel
 ipsec whack --trafficstatus
 ../../guestbin/ipsec-kernel-policy.sh
