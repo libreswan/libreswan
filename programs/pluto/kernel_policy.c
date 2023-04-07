@@ -603,17 +603,19 @@ static void replace_ipsec_with_bare_kernel_policy(struct child_sa *child,
 		/* what was installed? */
 		const struct kernel_policy kernel_policy =
 			kernel_policy_from_state(child, spd, DIRECTION_OUTBOUND, where);
-#if 0
-		if (!install_bare_spd_kernel_policy(spd,
-						    KERNEL_POLICY_OP_REPLACE,
-						    DIRECTION_OUTBOUND,
-						    EXPECT_KERNEL_POLICY_OK,
-						    shunt_kind,
-						    logger, where, "replacing")) {
-			llog(RC_LOG, logger,
-			     "kernel: %s() replace outbound with prospective shunt failed", __func__);
-		}
+		delete_cat_kernel_policy(spd, DIRECTION_OUTBOUND,
+					 logger, where,
+					 "CAT: removing outbound IPsec policy");
+#if defined(HAVE_NFTABLES)
+		bool has_inbound = true;
+#else
+		bool has_inbound = false;
 #endif
+		if (has_inbound) {
+			delete_cat_kernel_policy(spd, DIRECTION_INBOUND,
+						 logger, where,
+						 "CAT: removing inbound IPsec policy");
+		}
 		if (!delete_kernel_policy(DIRECTION_OUTBOUND,
 					  EXPECT_KERNEL_POLICY_OK,
 					  &kernel_policy.src.route,
