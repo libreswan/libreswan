@@ -915,9 +915,9 @@ static void revert_kernel_policy(struct spd_route *spd,
 					 "deleting failed policy");
 		if (st != NULL && spd->local->child->has_cat && !spd->block) {
 			ldbg(logger, "cleaning up CAT that had kittens");
-			delete_cat_kernel_policy(spd,
-						 EXPECT_KERNEL_POLICY_OK,
-						 c->logger, HERE, "cleaning up CAT");
+			delete_cat_kernel_policy(spd, DIRECTION_OUTBOUND,
+						 c->logger, HERE,
+						 "CAT: deleting outbound IPsec policy");
 		}
 		return;
 	}

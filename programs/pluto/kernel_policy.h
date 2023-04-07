@@ -86,21 +86,16 @@ void delete_spd_kernel_policies(const struct spds *spds,
 /*
  * The always outbound CAT (client address translation) kernel policy
  * maps the local.host -> remote.client.
- *
- * The bare-cat is installed during acquire.
  */
 
-bool install_bare_cat_kernel_policy(const struct spd_route *spd,
-				    enum kernel_policy_op op,
-				    enum shunt_kind shunt_kind,
-				    struct logger *logger,
-				    where_t where,
-				    const char *reason);
+void add_cat_kernel_policy(const struct kernel_policy *kernel_policy,
+			   enum direction direction,
+			   struct logger *logger, where_t where,
+			   const char *reason);
 
-bool delete_cat_kernel_policy(const struct spd_route *spd,
-			      enum expect_kernel_policy existing_policy_expectation,
-			      struct logger *logger,
-			      where_t where,
+void delete_cat_kernel_policy(const struct spd_route *spd,
+			      enum direction direction,
+			      struct logger *logger, where_t where,
 			      const char *story);
 
 void install_inbound_ipsec_kernel_policy(struct child_sa *child, struct spd_route *spd,

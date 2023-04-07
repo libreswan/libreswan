@@ -434,61 +434,53 @@ void delete_spd_kernel_policies(const struct spds *spds,
 
 /* CAT and it's kittens */
 
-bool install_bare_cat_kernel_policy(const struct spd_route *spd,
-				    enum kernel_policy_op op,
-				    enum shunt_kind shunt_kind,
-				    struct logger *logger,
-				    where_t where,
-				    const char *reason)
+void add_cat_kernel_policy(const struct kernel_policy *kernel_policy,
+			   enum direction direction,
+			   struct logger *logger, where_t where,
+			   const char *reason)
 {
-	struct connection *c = spd->connection;
-	ldbg(logger, "CAT: %s", reason);
-	struct kernel_policy kernel_policy =
-		kernel_policy_from_void(spd->local->client, spd->remote->client,
-					DIRECTION_OUTBOUND,
-					calculate_kernel_priority(c),
-					shunt_kind, spd->connection->config->shunt[shunt_kind],
-					&c->sa_marks, c->xfrmi,
-					HUNK_AS_SHUNK(c->config->sec_label),
-					where);
-	/*
-	 * XXX: forming the local CLIENT from the local HOST is
-	 * needed.  That is what CAT (client address translation) is
-	 * all about.
-	 */
-	ip_selector local_client = selector_from_address(spd->local->host->addr);
-	return kernel_ops_policy_add(op, DIRECTION_OUTBOUND,
-				     &local_client, &kernel_policy.dst.client,
-				     &kernel_policy,
-				     deltatime(0),
-				     kernel_policy.sa_marks,
-				     kernel_policy.xfrmi,
-				     kernel_policy.id,
-				     kernel_policy.sec_label,
-				     logger, where, reason);
+	ldbg(logger, "%s", reason);
+	ip_selector local_client = selector_from_address(kernel_policy->src.host);
+	/* reverse polarity?  XXX: should be handled by kernel ops? */
+	ip_selector src = (direction == DIRECTION_OUTBOUND ? local_client :
+			   kernel_policy->dst.route);
+	ip_selector dst = (direction == DIRECTION_INBOUND ? local_client :
+			   kernel_policy->dst.route);
+	if (!kernel_ops_policy_add(KERNEL_POLICY_OP_ADD, direction,
+				   &src, &dst,
+				   kernel_policy,
+				   deltatime(0),
+				   kernel_policy->sa_marks,
+				   kernel_policy->xfrmi,
+				   kernel_policy->id,
+				   kernel_policy->sec_label,
+				   logger, where, reason)) {
+		llog(RC_LOG, logger, "%s failed", reason);
+	}
 }
 
-bool delete_cat_kernel_policy(const struct spd_route *spd,
-			      enum expect_kernel_policy expect_kernel_policy,
+void delete_cat_kernel_policy(const struct spd_route *spd,
+			      enum direction direction,
 			      struct logger *logger,
 			      where_t where,
 			      const char *reason)
 {
 	struct connection *c = spd->connection;
-	ldbg(logger, "CAT: %s", reason);
+	ldbg(logger, "%s", reason);
 	/*
 	 * XXX: forming the local CLIENT from the local HOST is
 	 * needed.  That is what CAT (client address translation) is
 	 * all about.
 	 */
 	ip_selector local_client = selector_from_address(spd->local->host->addr);
-	return delete_kernel_policy(DIRECTION_OUTBOUND,
-				    expect_kernel_policy,
-				    &local_client, &spd->remote->client,
-				    &c->sa_marks, c->xfrmi,
-				    DEFAULT_KERNEL_POLICY_ID,
-				    HUNK_AS_SHUNK(spd->connection->config->sec_label),
-				    logger, where, reason);
+	if (!delete_kernel_policy(direction, EXPECT_KERNEL_POLICY_OK,
+				  &local_client, &spd->remote->client,
+				  &c->sa_marks, c->xfrmi,
+				  DEFAULT_KERNEL_POLICY_ID,
+				  HUNK_AS_SHUNK(spd->connection->config->sec_label),
+				  logger, where, reason)) {
+		llog(RC_LOG, logger, "%s failed");
+	}
 }
 
 void install_inbound_ipsec_kernel_policy(struct child_sa *child,
@@ -501,31 +493,17 @@ void install_inbound_ipsec_kernel_policy(struct child_sa *child,
 	ldbg_sa(child, "kernel: %s() is installing SPD for %s",
 		__func__, str_selector_pair(&kernel_policy.src.client, &kernel_policy.dst.client, &spb));
 
+
 #if defined(HAVE_NFTABLES)
-	if (spd->local->child->has_cat) {
-		ip_selector client = selector_from_address(spd->local->host->addr);
-
-		if (!raw_policy(KERNEL_POLICY_OP_ADD,
-				DIRECTION_INBOUND,
-				EXPECT_KERNEL_POLICY_OK,
-				&kernel_policy.src.route,	/* src_client */
-				&client,			/* different for NFT CAT */
-				&kernel_policy,			/* " */
-				deltatime(0),		/* lifetime */
-				kernel_policy.sa_marks,
-				kernel_policy.xfrmi,
-				kernel_policy.id,
-				kernel_policy.sec_label,
-				where, child->sa.st_logger,
-				"add CAT inbound Child SA")) {
-			selector_pair_buf spb;
-			llog_sa(RC_LOG, child,
-				"kernel: %s() failed to add SPD for %s", __func__,
-			str_selector_pair(&kernel_policy.src.client, &kernel_policy.dst.client, &spb));
-		}
-
-	}
+	bool has_cat = spd->local->child->has_cat;
+#else
+	bool has_cat = false;
 #endif
+	if (has_cat) {
+		add_cat_kernel_policy(&kernel_policy, DIRECTION_INBOUND,
+				      child->sa.st_logger, where,
+				      "CAT: add inbound IPsec policy");
+	}
 
 	if (!kernel_ops_policy_add(KERNEL_POLICY_OP_ADD,
 				   DIRECTION_INBOUND,
@@ -567,21 +545,9 @@ bool install_outbound_ipsec_kernel_policy(struct child_sa *child,
 		 * = add outbound client -> client policy for the
 		 *   assigned address.
 		 */
-		ip_selector client = selector_from_address(spd->local->host->addr);
-		if (!kernel_ops_policy_add(op, DIRECTION_OUTBOUND,
-					   &client,
-					   &kernel_policy.dst.route,
-					   &kernel_policy,
-					   deltatime(0),
-					   kernel_policy.sa_marks,
-					   kernel_policy.xfrmi,
-					   kernel_policy.id,
-					   kernel_policy.sec_label,
-					   logger, where,
-					   "CAT: replace host->route kernel policy")) {
-			llog_sa(RC_LOG, child,
-				"CAT: failed to replace host->route kernel policy");
-		}
+		add_cat_kernel_policy(&kernel_policy, DIRECTION_OUTBOUND,
+				      child->sa.st_logger, where,
+				      "CAT: add outbound IPsec policy");
 		/*
 		 * Now add the client.
 		 */
