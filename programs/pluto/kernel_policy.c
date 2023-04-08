@@ -475,17 +475,11 @@ void add_cat_kernel_policy(const struct connection *c,
 	if (!pexpect_cat(c, logger)) {
 		return;
 	}
-	ip_selector local_client = selector_from_address(kernel_policy->src.host);
-	/* reverse polarity?  XXX: should be handled by kernel ops? */
-	ip_selector src = (direction == DIRECTION_OUTBOUND ? local_client :
-			   kernel_policy->dst.route);
-	ip_selector dst = (direction == DIRECTION_INBOUND ? local_client :
-			   kernel_policy->dst.route);
-	if (!kernel_ops_policy_add(KERNEL_POLICY_OP_ADD, direction,
-				   &src, &dst,
-				   kernel_policy,
-				   deltatime(0),
-				   logger, where, reason)) {
+	ip_selector local_client = selector_from_address(kernel_policy->local.host);
+	if (!add_kernel_policy(KERNEL_POLICY_OP_ADD, direction,
+			       &local_client, &kernel_policy->remote.route,
+			       kernel_policy, deltatime(0),
+			       logger, where, reason)) {
 		llog(RC_LOG, logger, "%s failed", reason);
 	}
 }
