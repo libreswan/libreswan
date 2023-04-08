@@ -54,30 +54,24 @@ static struct kernel_policy kernel_policy_from_void(ip_selector local, ip_select
 						    const shunk_t sec_label,
 						    where_t where)
 {
-	const ip_selector *src;
-	const ip_selector *dst;
-	switch (direction) {
-	case DIRECTION_OUTBOUND:
-		src = &local;
-		dst = &remote;
-		break;
-	case DIRECTION_INBOUND:
-		src = &remote;
-		dst = &local;
-		break;
-	default:
-		bad_case(direction);
-	}
-
-	const struct ip_info *child_afi = selector_type(src);
-	pexpect(selector_type(dst) == child_afi);
+	const struct ip_info *child_afi = selector_info(local);
+	pexpect(selector_info(remote) == child_afi);
 
 	struct kernel_policy transport_esp = {
+		/*
+		 * With transport mode, the encapsulated packet on the
+		 * host interface must have the same family as the raw
+		 * packet on the client interface.  Even though it is
+		 * UNSPEC.
+		 */
+		.local.host = child_afi->address.unspec,
+		.remote.host = child_afi->address.unspec,
 		/* what will capture packets */
-		.src.client = *src,
-		.dst.client = *dst,
-		.src.route = *src,
-		.dst.route = *dst,
+		.local.client = local,
+		.local.route = local,
+		.remote.client = remote,
+		.remote.route = remote,
+		/* details */
 		.priority = priority,
 		.kind = shunt_kind,
 		.shunt = shunt_policy,
@@ -86,16 +80,22 @@ static struct kernel_policy kernel_policy_from_void(ip_selector local, ip_select
 		.sa_marks = sa_marks,
 		.xfrmi = xfrmi,
 		.sec_label = sec_label,
-		/*
-		 * With transport mode, the encapsulated packet on the
-		 * host interface must have the same family as the raw
-		 * packet on the client interface.  Even though it is
-		 * UNSPEC.
-		 */
-		.src.host = child_afi->address.unspec,
-		.dst.host = child_afi->address.unspec,
 		.mode = ENCAP_MODE_TRANSPORT,
 	};
+
+	switch (direction) {
+	case DIRECTION_OUTBOUND:
+		transport_esp.src = transport_esp.local;
+		transport_esp.dst = transport_esp.remote;
+		break;
+	case DIRECTION_INBOUND:
+		transport_esp.src = transport_esp.remote;
+		transport_esp.dst = transport_esp.local;
+		break;
+	default:
+		bad_case(direction);
+	}
+
 	if (shunt_policy != SHUNT_PASS) {
 		transport_esp.nr_rules = 1;
 		transport_esp.rule[0] = (struct kernel_policy_rule) {
@@ -125,47 +125,29 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 	 * eroute must be done to natted, visible ip. If we don't hide
 	 * internal IP, communication doesn't work.
 	 */
-	ip_selector remote_client;
+	ip_selector remote_route;
 	switch (mode) {
 	case ENCAP_MODE_TUNNEL:
-		remote_client = spd->remote->client;
+		remote_route = spd->remote->client;
 		break;
 	case ENCAP_MODE_TRANSPORT:
-		remote_client = selector_from_address_protocol_port(spd->remote->host->addr,
-								    selector_protocol(spd->remote->client),
-								    selector_port(spd->remote->client));
+		remote_route = selector_from_address_protocol_port(spd->remote->host->addr,
+								   selector_protocol(spd->remote->client),
+								   selector_port(spd->remote->client));
 		break;
 	default:
 		bad_case(mode);
 	}
 
-	const struct spd_end *src;
-	const struct spd_end *dst;
-	ip_selector src_route, dst_route;
-	switch (direction) {
-	case DIRECTION_INBOUND:
-		src = spd->remote;
-		dst = spd->local;
-		src_route = remote_client;
-		dst_route = dst->client;	/* XXX: kernel_route has unset_selector */
-		break;
-	case DIRECTION_OUTBOUND:
-		src = spd->local;
-		dst = spd->remote;
-		src_route = src->client;	/* XXX: kernel_route has unset_selector */
-		dst_route = remote_client;
-		break;
-	default:
-		bad_case(direction);
-	}
-
 	struct kernel_policy kernel_policy = {
-		.src.client = src->client,
-		.dst.client = dst->client,
-		.src.host = src->host->addr,
-		.dst.host = dst->host->addr,
-		.src.route = src_route,
-		.dst.route = dst_route,
+		/* normal */
+		.local.client = spd->local->client,
+		.local.route = spd->local->client, /* XXX: kernel_route has unset_selector */
+		.remote.client = spd->remote->client,
+		.remote.route = remote_route, /* note difference */
+		.local.host = spd->local->host->addr,
+		.remote.host = spd->remote->host->addr,
+		/* details */
 		.priority = calculate_kernel_priority(spd->connection),
 		.mode = mode,
 		.kind = shunt_kind,
@@ -177,6 +159,19 @@ static struct kernel_policy kernel_policy_from_spd(lset_t policy,
 		.sec_label = HUNK_AS_SHUNK(spd->connection->config->sec_label),
 		.nr_rules = 0,
 	};
+
+	switch (direction) {
+	case DIRECTION_OUTBOUND:
+		kernel_policy.src = kernel_policy.local;
+		kernel_policy.dst = kernel_policy.remote;
+		break;
+	case DIRECTION_INBOUND:
+		kernel_policy.src = kernel_policy.remote;
+		kernel_policy.dst = kernel_policy.local;
+		break;
+	default:
+		bad_case(direction);
+	}
 
 	/*
 	 * Construct the kernel policy rules inner-to-outer (matching

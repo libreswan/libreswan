@@ -92,8 +92,13 @@ struct kernel_policy {
 	 * The src/dst selector and src/dst host (and apparently
 	 * route).
 	 */
+	struct kernel_policy_end local;
+	struct kernel_policy_end remote;
+
+	/* same but polarity determined by direction */
 	struct kernel_policy_end src;
 	struct kernel_policy_end dst;
+
 	kernel_priority_t priority;
 	enum shunt_kind kind;
 	enum shunt_policy shunt;
