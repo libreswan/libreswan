@@ -54,21 +54,36 @@ bool install_bare_spd_kernel_policy(const struct spd_route *spd,
 				    where_t where, const char *what);
 
 /*
- * Delete a kernel policy.
+ * Add/delete a kernel policy.
+ *
+ * The selectors are LOCAL/REMOTE and _not_ SOURCE/DST.  DIRECTION
+ * dictates how to interpret them,
  *
  * The parameter list matches just what is required by the kernel
  * (yes, linux centric) to delete the kernel policy.
  */
 
-bool delete_kernel_policy(enum direction dir,
+bool add_kernel_policy(enum kernel_policy_op op,
+		       enum direction direction,
+		       const ip_selector *local_selector,
+		       const ip_selector *remote_selector,
+		       const struct kernel_policy *policy,
+		       deltatime_t use_lifetime,
+		       struct logger *logger, where_t where, const char *story);
+
+bool delete_kernel_policy(enum direction direction,
 			  enum expect_kernel_policy expect_kernel_policy,
-			  const ip_selector *local_client,
-			  const ip_selector *remote_client,
+			  const ip_selector *local_selector,
+			  const ip_selector *remote_selector,
 			  const struct sa_marks *sa_marks,
 			  const struct pluto_xfrmi *xfrmi,
 			  enum kernel_policy_id id,
 			  const shunk_t sec_label, /*needed*/
 			  struct logger *logger, where_t where, const char *story);
+
+/*
+ * Add/delete a bare SPD.
+ */
 
 bool delete_spd_kernel_policy(const struct spd_route *spd,
 			      enum direction direction,

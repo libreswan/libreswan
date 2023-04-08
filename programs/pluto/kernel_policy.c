@@ -343,10 +343,44 @@ bool install_bare_spd_kernel_policy(const struct spd_route *spd,
 	return true;
 }
 
+bool add_kernel_policy(enum kernel_policy_op op,
+		       enum direction direction,
+		       const ip_selector *local_selector,
+		       const ip_selector *remote_selector,
+		       const struct kernel_policy *policy,
+		       deltatime_t use_lifetime,
+		       struct logger *logger, where_t where, const char *story)
+{
+	/* achieve directionality */
+	const ip_selector *src_selector;
+	const ip_selector *dst_selector;
+	switch (direction) {
+	case DIRECTION_OUTBOUND:
+		src_selector = local_selector;
+		dst_selector = remote_selector;
+		break;
+	case DIRECTION_INBOUND:
+		src_selector = remote_selector;
+		dst_selector = local_selector;
+		break;
+	default:
+		bad_case(direction);
+	}
+
+	const struct ip_protocol *selector_proto = selector_protocol(*src_selector);
+	pexpect(selector_proto == selector_protocol(*dst_selector));
+
+	return kernel_ops_policy_add(op, direction,
+				     /* possibly reversed polarity! */
+				     src_selector, dst_selector,
+				     policy, use_lifetime,
+				     logger, where, story);
+}
+
 bool delete_kernel_policy(enum direction direction,
 			  enum expect_kernel_policy expect_kernel_policy,
-			  const ip_selector *local_child,
-			  const ip_selector *remote_child,
+			  const ip_selector *local_selector,
+			  const ip_selector *remote_selector,
 			  const struct sa_marks *sa_marks,
 			  const struct pluto_xfrmi *xfrmi,
 			  enum kernel_policy_id id,
@@ -354,27 +388,28 @@ bool delete_kernel_policy(enum direction direction,
 			  struct logger *logger, where_t where, const char *story)
 {
 	/* achieve directionality */
-	const ip_selector *src_child;
-	const ip_selector *dst_child;
+	const ip_selector *src_selector;
+	const ip_selector *dst_selector;
 	switch (direction) {
 	case DIRECTION_OUTBOUND:
-		src_child = local_child;
-		dst_child = remote_child;
+		src_selector = local_selector;
+		dst_selector = remote_selector;
 		break;
 	case DIRECTION_INBOUND:
-		src_child = remote_child;
-		dst_child = local_child;
+		src_selector = remote_selector;
+		dst_selector = local_selector;
 		break;
 	default:
 		bad_case(direction);
 	}
 
-	const struct ip_protocol *child_proto = selector_protocol(*src_child);
-	pexpect(child_proto == selector_protocol(*dst_child));
+	const struct ip_protocol *selector_proto = selector_protocol(*src_selector);
+	pexpect(selector_proto == selector_protocol(*dst_selector));
 
 	return kernel_ops_policy_del(direction,
 				     expect_kernel_policy,
-				     src_child, dst_child,
+				     /* possibly reversed polarity! */
+				     src_selector, dst_selector,
 				     sa_marks, xfrmi, id, sec_label,
 				     logger, where, story);
 }
