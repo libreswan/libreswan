@@ -28,7 +28,7 @@
 
 #include "monotime.h"
 #include "reqid.h"
-#include "connections.h"	/* for kernel_priority_t et.al. */
+#include "connections.h"	/* for struct sa_marks et.al. */
 #include "ip_said.h"		/* for SA_AH et.al. */
 #include "ip_packet.h"
 
@@ -37,6 +37,7 @@ struct spd_route;
 struct iface_dev;
 struct raw_iface;
 struct show;
+struct kernel_policy;
 
 enum kernel_state_id { DEFAULT_KERNEL_STATE_ID, };	/* sizeof() >= sizeof(uint32_t) */
 enum kernel_policy_id { DEFAULT_KERNEL_POLICY_ID, };	/* sizeof() >= sizeof(uint32_t) */
@@ -103,98 +104,6 @@ enum direction {
 };
 
 extern const struct enum_names direction_names;
-
-
-/*
- * Kernel encapsulation policy.
- *
- * This determine how a packet matching a policy should be
- * encapsulated (processed).  For an outgoing packet, the rules are
- * applied in the specified order (and for incoming, in the reverse
- * order).
- *
- * setkey(8) uses the term "rule" when referring to the tuple
- * protocol/mode/src-dst/level while ip-xfrm(8) uses TMPL to describe
- * something far more complex.
- *
- * XXX: this may well need to eventually include things like the
- * addresses; spi; ...?
- */
-
-struct kernel_policy_rule {
-	enum encap_proto proto;
-	reqid_t reqid;
-};
-
-struct kernel_policy_end {
-	/*
-	 * The SRC/DST selectors of the policy.  This is what captures
-	 * the packets so they can be put through the wringer, er,
-	 * rules listed below.
-	 */
-	ip_selector client;
-	/*
-	 * The route addresses of the encapsulated packets.
-	 *
-	 * With pfkey and transport mode with nat-traversal we need to
-	 * change the remote IPsec SA to point to external ip of the
-	 * peer.  Here we substitute real client ip with NATD ip.
-	 *
-	 * Bug #1004 fix.
-	 *
-	 * There really isn't "client" with XFRM and transport mode so
-	 * eroute must be done to natted, visible ip. If we don't hide
-	 * internal IP, communication doesn't work.
-	 *
-	 * XXX: old comment?
-	 */
-	ip_selector route;
-	/*
-	 * The src/dst addresses of the encapsulated packet that are
-	 * to go across the public network.
-	 *
-	 * All rules should use these values?
-	 *
-	 * With setkey and transport mode, they can be unset; but
-	 * libreswan doesn't do that.  Actually they can be IPv[46]
-	 * UNSPEC and libreswan does that because XFRM insists on it.
-	 */
-	ip_address host;
-};
-
-typedef struct { uint32_t value; } kernel_priority_t;
-#define PRI_KERNEL_PRIORITY PRIu32
-#define pri_kernel_priority(P) (P).value
-
-struct kernel_policy {
-	/*
-	 * The src/dst selector and src/dst host (and apparently
-	 * route).
-	 */
-	struct kernel_policy_end src;
-	struct kernel_policy_end dst;
-	kernel_priority_t priority;
-	enum shunt_kind kind;
-	enum shunt_policy shunt;
-	where_t where;
-	shunk_t sec_label;
-	const struct sa_marks *sa_marks;
-	const struct pluto_xfrmi *xfrmi;
-	enum kernel_policy_id id;
-	/*
-	 * The rules are applied to an outgoing packet in order they
-	 * appear in the rule[] table.  Hence, the output from
-	 * .rule[.nr_rules-1] goes across the wire, and rule[0]
-	 * specifies the first transform.
-	 *
-	 * The first transform is also set according to MODE (tunnel
-	 * or transport); any other rules are always in transport
-	 * mode.
-	 */
-	enum encap_mode mode;
-	unsigned nr_rules;
-	struct kernel_policy_rule rule[3/*IPCOMP+{ESP,AH}+PADDING*/];
-};
 
 /*
  * The CHILD (IPsec, kernel) SA has two IP ends.
@@ -514,7 +423,11 @@ extern bool kernel_ops_detect_offload(const struct raw_iface *ifp, struct logger
 extern void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address *dst,
 		      bool hard, uint64_t bytes, uint64_t packets, uint64_t add_time);
 
-extern kernel_priority_t highest_kernel_priority;
+typedef struct { uint32_t value; } kernel_priority_t;
+#define PRI_KERNEL_PRIORITY PRIu32
+#define pri_kernel_priority(P) (P).value
+
+extern const kernel_priority_t highest_kernel_priority;
 kernel_priority_t calculate_kernel_priority(const struct connection *c);
 
 bool shunt_ok(enum shunt_kind shunt_kind, enum shunt_policy shunt_policy);

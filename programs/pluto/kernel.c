@@ -97,7 +97,7 @@ static void delete_bare_shunt_kernel_policy(const struct bare_shunt *bsp,
  * Lowest wins.
  */
 
-kernel_priority_t highest_kernel_priority = { .value = 0, };
+const kernel_priority_t highest_kernel_priority = { .value = 0, };
 
 kernel_priority_t calculate_kernel_priority(const struct connection *c)
 {

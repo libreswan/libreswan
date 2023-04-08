@@ -29,6 +29,7 @@
 #include "kernel.h"
 #include "kernel_alg.h"
 #include "kernel_sadb.h"
+#include "kernel_policy.h"
 #include "log.h"
 #include "rnd.h"
 #include "initiate.h"

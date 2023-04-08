@@ -86,6 +86,7 @@
 #include "connections.h"
 #include "kernel.h"
 #include "kernel_ops.h"
+#include "kernel_policy.h"
 #include "server.h"
 #include "nat_traversal.h"
 #include "state.h"

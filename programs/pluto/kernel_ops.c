@@ -21,6 +21,7 @@
 #include "kernel_xfrm_interface.h"
 #include "ip_info.h"
 #include "kernel_iface.h"
+#include "kernel_policy.h"
 
 /*
  * Setup an IPsec route entry.
