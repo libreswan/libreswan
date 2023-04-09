@@ -110,47 +110,79 @@ bool case_eq(const void *l_ptr, size_t l_len,
 
 /* test the start */
 
+bool raw_starteq(const void *ptr, size_t len, const void *eat, size_t eat_len);
+
 #define hunk_starteq(HUNK, START)					\
 	({								\
 		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
 		const typeof(START) start_ = START; /* evaluate once */	\
-		hunk_.len < start_.len ? false :			\
-			bytes_eq(hunk_.ptr, start_.len,			\
-				 start_.ptr, start_.len);		\
+		raw_starteq(hunk_.ptr, hunk_.len,			\
+			    start_.ptr, start_.len);			\
 	})
+
+bool raw_casestarteq(const void *ptr, size_t len, const void *eat, size_t eat_len);
 
 #define hunk_casestarteq(HUNK, START) /* case independent */		\
 	({								\
 		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
 		const typeof(START) start_ = START; /* evaluate once */	\
-		hunk_.len < start_.len ? false :			\
-			case_eq(hunk_.ptr, start_.len,			\
+		raw_casestarteq(hunk_.ptr, hunk_.len,			\
 				start_.ptr, start_.len);		\
 	})
 
 #define hunk_strstarteq(HUNK, STRING)					\
-	({								\
-		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
-		const char *string_ = STRING; /* evaluate once */	\
-		size_t slen_ = string_ != NULL ? strlen(string_) : 0;	\
-		hunk_.len < slen_ ? false :				\
-			bytes_eq(hunk_.ptr, slen_, string_, slen_);	\
-	})
+	hunk_starteq(HUNK, shunk1(STRING))
 
 #define hunk_strcasestarteq(HUNK, STRING)				\
-	({								\
-		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
-		const char *string_ = STRING; /* evaluate once */	\
-		size_t slen_ = string_ != NULL ? strlen(string_) : 0;	\
-		hunk_.len < slen_ ? false :				\
-			case_eq(hunk_.ptr, slen_, string_, slen_);	\
-	})
+	hunk_casestarteq(HUNK, shunk1(STRING))
 
 #define hunk_strnlen(HUNK)					\
 	({							\
 		typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
 		strnlen((const char *)hunk_.ptr, hunk_.len);	\
 	})
+
+/*
+ * hunk version of functions that gobble up the start of a string (or
+ * at least libreswan's versions).
+ *
+ * Confusingly and just like POSIX, the *case*() variant ignores case.
+ *
+ * Just like a NULL and EMPTY ("") string, a NULL (uninitialized) and
+ * EMPTY (pointing somewhere but no bytes) are considered different.
+ */
+
+#define hunk_eat(DINNER, EAT)						\
+	({								\
+		typeof(DINNER) _dinner = DINNER;			\
+		typeof(EAT) _eat = EAT;					\
+		bool _ok = raw_starteq(_dinner->ptr, _dinner->len,	\
+				       _eat.ptr, _eat.len);		\
+		if (_ok) {						\
+			_dinner->ptr += _eat.len;			\
+			_dinner->len -= _eat.len;			\
+		}							\
+		_ok;							\
+	})
+
+#define hunk_streat(DINNER, STREAT)		\
+	hunk_eat(DINNER, shunk1(STREAT))
+
+#define hunk_caseeat(DINNER, EAT)					\
+	({								\
+		typeof(DINNER) _dinner = DINNER;			\
+		typeof(EAT) _eat = EAT;					\
+		bool _ok = raw_casestarteq(_dinner->ptr, _dinner->len,	\
+					   _eat.ptr, _eat.len);		\
+		if (_ok) {						\
+			_dinner->ptr += _eat.len;			\
+			_dinner->len -= _eat.len;			\
+		}							\
+		_ok;							\
+	})
+
+#define hunk_strcaseeat(DINNER, STRCASEEAT)		\
+	hunk_caseeat(DINNER, shunk1(STRCASEEAT))
 
 /* misc */
 

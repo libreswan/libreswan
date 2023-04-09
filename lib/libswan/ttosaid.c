@@ -17,6 +17,7 @@
 #include <string.h>
 #include <stdio.h>
 
+#include "passert.h"
 #include "ip_said.h"
 #include "ip_info.h"
 
@@ -87,10 +88,10 @@ diag_t ttosaid(shunk_t src, ip_said *said)
 
 	unsigned base;
 	const struct ip_info *afi;
-	if (shunk_strcaseeat(&input, ".")) {
+	if (hunk_strcaseeat(&input, ".")) {
 		afi = &ipv4_info;
 		base = 16;
-	} else if (shunk_strcaseeat(&input, ":")) {
+	} else if (hunk_strcaseeat(&input, ":")) {
 		afi = &ipv6_info;
 		base = 16;
 	} else {
@@ -108,7 +109,7 @@ diag_t ttosaid(shunk_t src, ip_said *said)
 		return diag("SPI "PRI_SHUNK" invalid: %s", pri_shunk(spis), oops);
 	}
 
-	if (!shunk_strcaseeat(&input, "@")) {
+	if (!hunk_strcaseeat(&input, "@")) {
 		return diag("missing @ in SA specifier");
 	}
 

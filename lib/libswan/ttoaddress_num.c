@@ -86,7 +86,7 @@ static bool tryhex(shunk_t hex,
 		return false;
 	}
 
-	if (!shunk_strcaseeat(&hex, "0x")) {
+	if (!hunk_strcaseeat(&hex, "0x")) {
 		return false;
 	}
 
@@ -243,7 +243,7 @@ static err_t colon(shunk_t src, ip_address *dst)
 
 		/* all paths needs to make progress or return */
 
-		if (shunk_strcaseeat(&cursor, ":")) {
+		if (hunk_strcaseeat(&cursor, ":")) {
 			colon_count++;
 			if (colon_count > 2) {
 				return "::: in " IT;

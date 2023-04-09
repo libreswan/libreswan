@@ -106,22 +106,6 @@ shunk_t *clone_shunk_tokens(shunk_t input, const char *delim, where_t here);
 shunk_t shunk_span(shunk_t *input, const char *accept);
 
 /*
- * shunk version of functions that gobble up the start of a string (or
- * at least libreswan's versions).
- *
- * Confusingly and just like POSIX, the *case*() variant ignores case.
- *
- * Just like a NULL and EMPTY ("") string, a NULL (uninitialized) and
- * EMPTY (pointing somewhere but no bytes) are considered different.
- */
-
-bool shunk_eat(shunk_t *lhs, shunk_t rhs);
-bool shunk_caseeat(shunk_t *lhs, shunk_t rhs);
-
-bool shunk_streat(shunk_t *lhs, const char *string);
-bool shunk_strcaseeat(shunk_t *lhs, const char *string);
-
-/*
  * Number conversion; loosely based on strtoul(START, END, BASE).
  *
  * Parse INPUT according to BASE (see strtoul()). Should the numeric

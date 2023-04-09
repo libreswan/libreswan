@@ -1095,7 +1095,7 @@ const struct ip_protocol *protocol_from_caseeat_prefix(shunk_t *prefix)
 	for (unsigned ipproto = 0; ipproto < elemsof(ip_protocols); ipproto++) {
 		const struct ip_protocol *p = &ip_protocols[ipproto];
 		passert(p->ipproto == ipproto);
-		if (shunk_strcaseeat(prefix, p->prefix)) {
+		if (hunk_strcaseeat(prefix, p->prefix)) {
 			return p;
 		}
 	}

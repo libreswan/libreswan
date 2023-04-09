@@ -110,46 +110,6 @@ shunk_t shunk_span(shunk_t *input, const char *accept)
 	return token;
 }
 
-bool shunk_eat(shunk_t *shunk, shunk_t dinner)
-{
-	if (shunk->ptr == NULL || dinner.ptr == NULL) {
-		return false;
-	}
-	if (shunk->len < dinner.len) {
-		return false;
-	}
-	if (strncmp(shunk->ptr, dinner.ptr, dinner.len) != 0) {
-		return false;
-	}
-	*shunk = hunk_slice(*shunk, dinner.len, shunk->len);
-	return true;
-}
-
-bool shunk_streat(shunk_t *shunk, const char *dinner)
-{
-	return shunk_eat(shunk, shunk1(dinner));
-}
-
-bool shunk_caseeat(shunk_t *shunk, shunk_t dinner)
-{
-	if (shunk->ptr == NULL || dinner.ptr == NULL) {
-		return false;
-	}
-	if (shunk->len < dinner.len) {
-		return false;
-	}
-	if (strncasecmp(shunk->ptr, dinner.ptr, dinner.len) != 0) {
-		return false;
-	}
-	*shunk = hunk_slice(*shunk, dinner.len, shunk->len);
-	return true;
-}
-
-bool shunk_strcaseeat(shunk_t *shunk, const char *dinner)
-{
-	return shunk_caseeat(shunk, shunk1(dinner));
-}
-
 /*
  * Convert INPUT to an unsigned.
  *
@@ -181,14 +141,14 @@ err_t shunk_to_uintmax(shunk_t input, shunk_t *output, unsigned draft_base, uint
 	if (draft_base == 0) {
 		if (hunk_strcasestarteq(input, "0x")) {
 			if (char_isxdigit(hunk_char(input, 2))) {
-				shunk_strcaseeat(&input, "0x");
+				hunk_strcaseeat(&input, "0x");
 				base = 16;
 			} else {
 				base = 10;
 			}
 		} else if (hunk_strcasestarteq(input, "0b")) {
 			if (char_isbdigit(hunk_char(input, 2))) {
-				shunk_strcaseeat(&input, "0b");
+				hunk_strcaseeat(&input, "0b");
 				base = 2;
 			} else {
 				base = 10;

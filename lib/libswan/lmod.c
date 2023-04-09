@@ -89,7 +89,7 @@ bool lmod_arg(lmod_t *mod, const struct lmod_info *info,
 			/* non-empty */
 			shunk_t arg = elem;
 			/* excludes --no-... no-... */
-			bool no = enable ? shunk_streat(&arg, "no-") : true;
+			bool no = enable ? hunk_streat(&arg, "no-") : true;
 			lset_t bits = LEMPTY;
 			/* try aliases first */
 			if (info->aliases != NULL) {

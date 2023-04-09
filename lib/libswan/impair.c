@@ -348,7 +348,7 @@ enum impair_status parse_impair(const char *optarg,
 	 * lset_t impair flags, no-WHAT.
 	 */
 
-	bool what_no = shunk_strcaseeat(&what, "no-");
+	bool what_no = hunk_strcaseeat(&what, "no-");
 	unsigned ci = 1;
 	const struct impairment *impairment = NULL;
 	for (ci = 1/*skip 0*/; ci < elemsof(impairments); ci++) {

@@ -171,3 +171,31 @@ char char_toupper(char c)
 {
 	return char_islower(c) ? c - 'a' + 'A' : c;
 }
+
+bool raw_starteq(const void *ptr, size_t len, const void *eat_ptr, size_t eat_len)
+{
+	if (ptr == NULL || eat_ptr == NULL) {
+		return false;
+	}
+	if (len < eat_len) {
+		return false;
+	}
+	if (strncmp(ptr, eat_ptr, eat_len) != 0) {
+		return false;
+	}
+	return true;
+}
+
+bool raw_casestarteq(const void *ptr, size_t len, const void *eat_ptr, size_t eat_len)
+{
+	if (ptr == NULL || eat_ptr == NULL) {
+		return false;
+	}
+	if (len < eat_len) {
+		return false;
+	}
+	if (strncasecmp(ptr, eat_ptr, eat_len) != 0) {
+		return false;
+	}
+	return true;
+}
