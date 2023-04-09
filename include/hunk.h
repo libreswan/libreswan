@@ -260,12 +260,6 @@ bool char_isxdigit(char c);
 char  char_tolower(char c);
 char  char_toupper(char c);
 
-#define hunk_char_ischar(HUNK, OFFSET, CHARS)			\
-	({							\
-		unsigned char c_ = hunk_char(HUNK, OFFSET);	\
-		strchr(CHARS, c_);				\
-	})
-
 #define memcpy_hunk(DST, HUNK, SIZE)					\
 	({								\
 		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\

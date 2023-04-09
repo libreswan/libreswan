@@ -790,7 +790,7 @@ bool proposal_parse_encrypt(struct proposal_parser *parser,
 	 * <eklen> from <ealg> and then try the lookup.
 	 */
 	ealg = shunk_slice(ealg, 0, end);
-	if (hunk_char_ischar(ealg, ealg.len-1, "_")) {
+	if (hunk_char(ealg, ealg.len-1) == '_') {
 		ealg = shunk_slice(ealg, 0, end-1);
 	}
 	pfree_diag(&parser->diag); /* zap old error */
