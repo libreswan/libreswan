@@ -23,6 +23,7 @@
 #include "shunk.h"
 #include "chunk.h"
 #include "where.h"
+#include "passert.h"
 
 #include "lswtool.h"		/* for tool_init_log() */
 
@@ -203,7 +204,7 @@ static void check_shunk_slice(void)
 		shunk_t l = shunk1(t->l);
 		shunk_t r = shunk1(t->r);
 
-		shunk_t t_slice = shunk_slice(l, t->lo, t->hi);
+		shunk_t t_slice = hunk_slice(l, t->lo, t->hi);
 		if (!hunk_eq(r, t_slice)) {
 			FAIL_LR("shunk_slice() returned '"PRI_SHUNK"', expecting '"PRI_SHUNK"'",
 				pri_shunk(t_slice), pri_shunk(r));

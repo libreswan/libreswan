@@ -35,9 +35,9 @@ void llog_base64_bytes(lset_t rc_flags,
 	passert(base64_size > 0);
 	shunk_t rest = shunk2(base64_ptr, base64_size - 1 /*drop NUL*/);
 	while (true) {
-		shunk_t line = shunk_slice(rest, 0, min((size_t)64, rest.len));
+		shunk_t line = hunk_slice(rest, 0, min((size_t)64, rest.len));
 		if (line.len == 0) break;
-		rest = shunk_slice(rest, line.len, rest.len);
+		rest = hunk_slice(rest, line.len, rest.len);
 		llog(rc_flags, logger, PRI_SHUNK, pri_shunk(line));
 	}
 	pfree(base64_ptr);

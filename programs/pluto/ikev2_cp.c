@@ -42,9 +42,16 @@
 static bool need_v2_configuration_payload(const struct connection *const cc,
 					  const lset_t st_nat_traversal)
 {
-	return (cc->local->host.config->modecfg.client &&
-		(!cc->local->child.config->has_client_address_translation ||
-		 LHAS(st_nat_traversal, NATED_HOST)));
+	if (cc->local->host.config->modecfg.client &&
+	    cc->local->child.config->has_client_address_translation &&
+	    LHAS(st_nat_traversal, NATED_HOST)) {
+		return true;
+	}
+	if (cc->local->host.config->modecfg.client &&
+	    !cc->local->child.config->has_client_address_translation) {
+		return true;
+	}
+	return false;
 }
 
 bool expect_v2CP_response(const struct connection *const cc,

@@ -48,14 +48,6 @@ shunk_t shunk2(const void *ptr, int len)
 	return (shunk_t) { .ptr = ptr, .len = len, };
 }
 
-shunk_t shunk_slice(shunk_t s, size_t start, size_t stop)
-{
-	pexpect(start <= stop);
-	pexpect(stop <= s.len);
-	const char *c = s.ptr;
-	return shunk2(c + start, stop - start);
-}
-
 shunk_t shunk_token(shunk_t *input, char *delim, const char *delims)
 {
 	/*
@@ -72,7 +64,7 @@ shunk_t shunk_token(shunk_t *input, char *delim, const char *delims)
 				*delim = *pos;
 			}
 			/* skip over TOKEN+DELIM */
-			*input = shunk_slice(*input, pos-start+1, input->len);
+			*input = hunk_slice(*input, pos-start+1, input->len);
 			return token;
 		}
 		pos++;
@@ -103,7 +95,7 @@ shunk_t shunk_span(shunk_t *input, const char *accept)
 			/* save the token and stop character */
 			shunk_t token = shunk2(start, pos - start);
 			/* skip over TOKEN+DELIM */
-			*input = shunk_slice(*input, pos - start, input->len);
+			*input = hunk_slice(*input, pos - start, input->len);
 			return token;
 		}
 		pos++;
@@ -129,7 +121,7 @@ bool shunk_eat(shunk_t *shunk, shunk_t dinner)
 	if (strncmp(shunk->ptr, dinner.ptr, dinner.len) != 0) {
 		return false;
 	}
-	*shunk = shunk_slice(*shunk, dinner.len, shunk->len);
+	*shunk = hunk_slice(*shunk, dinner.len, shunk->len);
 	return true;
 }
 
@@ -149,7 +141,7 @@ bool shunk_caseeat(shunk_t *shunk, shunk_t dinner)
 	if (strncasecmp(shunk->ptr, dinner.ptr, dinner.len) != 0) {
 		return false;
 	}
-	*shunk = shunk_slice(*shunk, dinner.len, shunk->len);
+	*shunk = hunk_slice(*shunk, dinner.len, shunk->len);
 	return true;
 }
 
@@ -251,7 +243,7 @@ err_t shunk_to_uintmax(shunk_t input, shunk_t *output, unsigned draft_base, uint
 			return "unsigned-long overflow";
 		}
 		u = u + d;
-		cursor = shunk_slice(cursor, 1, cursor.len);
+		cursor = hunk_slice(cursor, 1, cursor.len);
 	}
 
 	if (cursor.len == input.len) {

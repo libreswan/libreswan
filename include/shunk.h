@@ -58,9 +58,6 @@ shunk_t shunk2(const void *ptr, int len);
 #define HUNK_AS_SHUNK(HUNK) ({ typeof(HUNK) h_ = (HUNK); shunk2(h_.ptr, h_.len); })
 #define THING_AS_SHUNK(THING) shunk2(&(THING), sizeof(THING))
 
-/* shunk[START..END) */
-shunk_t shunk_slice(shunk_t s, size_t start, size_t stop);
-
 /*
  * A shunk version of strsep() / strtok(): split off from INPUT a
  * possibly empty TOKEN containing characters not found in DELIMS and

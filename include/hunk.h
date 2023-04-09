@@ -188,6 +188,22 @@ bool case_eq(const void *l_ptr, size_t l_len,
 		hb_index_ < hb_hunk_.len ? hb_byte_[INDEX] : -1;	\
 	})
 
+/* hunk[FLOOR..ROOF) */
+
+#define hunk_slice(HUNK, FLOOR, ROOF)			\
+	({						\
+		size_t _floor = FLOOR;			\
+		size_t _roof = ROOF;			\
+		typeof(HUNK) _hunk = HUNK;		\
+		passert(_floor <= _roof);		\
+		passert(_roof <= _hunk.len);		\
+		typeof(HUNK) _slice = {			\
+			_hunk.ptr + _floor,		\
+			.len = _roof - _floor,		\
+		};					\
+		_slice;					\
+	})
+
 /*
  * Macros to treat the HUNK like a data stream.
  *
