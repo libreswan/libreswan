@@ -86,8 +86,11 @@ static void check_hunk_eq(void)
 		/*
 		 * Like strings, NULL and EMPTY ("") shunks are
 		 * considered different.
+		 *
+		 * Strangely, while NULL==NULL, NULL does not start
+		 * NULL - it goes to *eat() which can't eat nothing.
 		 */
-		{ NULL, NULL, .empty = false, .eq = true,  .caseeq = true,  .starteq = true,  .casestarteq = true,  .thingeq = false, },
+		{ NULL, NULL, .empty = false, .eq = true,  .caseeq = true,  .starteq = false, .casestarteq = false, .thingeq = false, },
 		{ NULL, "",   .empty = false, .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, },
 		{ "", NULL,   .empty = true,  .eq = false, .caseeq = false, .starteq = false, .casestarteq = false, .thingeq = false, },
 		{ "", "",     .empty = true,  .eq = true,  .caseeq = true,  .starteq = true,  .casestarteq = true,  .thingeq = false, },

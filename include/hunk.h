@@ -53,62 +53,78 @@
  * hunk version of compare functions (or at least libreswan's
  * versions).
  *
- * (Confusingly and just like POSIX, *case* ignores case).
+ * Confusingly, and just like POSIX, *case*() functions ignore case!
  *
- * Just like a NULL and EMPTY ("") string, a NULL (uninitialized) and
- * EMPTY (pointing somewhere but no bytes) are considered different.
+ * Just like the C NULL and empty("") strings, NULL and non-NULL but
+ * EMPTY hunks are considered non-equal vis:
+ *
+ *   NULL = {.ptr=NULL,.len=0);
+ *   EMPTY = {.ptr="",.len=0);
+ *   eq(NULL,NULL) -> TRUE
+ *   eq(NULL,EMPTY) -> FALSE
+ *   eq(EMPTY,NULL) -> FALSE
+ *   eq(EMPTY,EMPTY) -> TRUE
  */
 
-#define hunk_cmp(L, R)							\
-	({								\
-		typeof(L) l_ = L; /* evaluate once */			\
-		typeof(R) r_ = R; /* evaluate once */			\
-		raw_cmp(l_.ptr, l_.len, r_.ptr, r_.len);		\
-	})
 int raw_cmp(const void *l_ptr, size_t l_len,
 	    const void *r_ptr, size_t r_len);
 
-bool bytes_eq(const void *l_ptr, size_t l_len,
-	      const void *r_ptr, size_t r_len);
-bool case_eq(const void *l_ptr, size_t l_len,
-	     const void *r_ptr, size_t r_len);
+#define hunk_cmp(L, R)						\
+	({							\
+		typeof(L) l_ = L; /* evaluate once */		\
+		typeof(R) r_ = R; /* evaluate once */		\
+		raw_cmp(l_.ptr, l_.len, r_.ptr, r_.len);	\
+	})
+
+bool raw_eq(const void *l_ptr, size_t l_len,
+	    const void *r_ptr, size_t r_len);
+bool raw_caseeq(const void *l_ptr, size_t l_len,
+		const void *r_ptr, size_t r_len);
 
 #define hunk_isempty(HUNK)			\
 	({					\
 		(HUNK).len == 0;		\
 	})
 
-#define hunk_eq(L,R)							\
-	({								\
-		typeof(L) l_ = L; /* evaluate once */			\
-		typeof(R) r_ = R; /* evaluate once */			\
-		bytes_eq(l_.ptr, l_.len, r_.ptr, r_.len);		\
+#define hunk_eq(L,R)					\
+	({						\
+		typeof(L) l_ = L; /* evaluate once */	\
+		typeof(R) r_ = R; /* evaluate once */	\
+		raw_eq(l_.ptr, l_.len, r_.ptr, r_.len);	\
 	})
 
-#define hunk_caseeq(L, R) /* case independent */			\
-	({								\
-		const typeof(L) l_ = L; /* evaluate once */		\
-		const typeof(R) r_ = R; /* evaluate once */		\
-		case_eq(l_.ptr, l_.len, r_.ptr, r_.len);		\
+#define hunk_caseeq(L, R) /* case independent */		\
+	({							\
+		const typeof(L) l_ = L; /* evaluate once */	\
+		const typeof(R) r_ = R; /* evaluate once */	\
+		raw_caseeq(l_.ptr, l_.len, r_.ptr, r_.len);	\
 	})
 
 #define hunk_streq(HUNK, STRING)					\
 	({								\
 		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
 		const char *string_ = STRING; /* evaluate once */	\
-		bytes_eq(hunk_.ptr, hunk_.len, string_,			\
-			 string_ != NULL ? strlen(string_) : 0);	\
+		raw_eq(hunk_.ptr, hunk_.len, string_,			\
+		       string_ != NULL ? strlen(string_) : 0);		\
 	})
 
 #define hunk_strcaseeq(HUNK, STRING) /* case independent */		\
 	({								\
 		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
 		const char *string_ = STRING; /* evaluate once */	\
-		case_eq(hunk_.ptr, hunk_.len, string_,			\
-			string_ != NULL ? strlen(string_) : 0);		\
+		raw_caseeq(hunk_.ptr, hunk_.len, string_,		\
+			   string_ != NULL ? strlen(string_) : 0);	\
 	})
 
-/* test the start */
+/*
+ * Note: the starteq() functions return FALSE when either of the
+ * parameters are NULL (which is inconsistent with the *eq() functions
+ * above).
+ *
+ * The weak argument for this is that when *starteq() returns true, it
+ * is safe to manipulate both pointers (and it means that *eat()
+ * functions can be implemented using *starteq().
+ */
 
 bool raw_starteq(const void *ptr, size_t len, const void *eat, size_t eat_len);
 
@@ -150,6 +166,8 @@ bool raw_casestarteq(const void *ptr, size_t len, const void *eat, size_t eat_le
  *
  * Just like a NULL and EMPTY ("") string, a NULL (uninitialized) and
  * EMPTY (pointing somewhere but no bytes) are considered different.
+ *
+ * eat(NULL,NULL) is always false.
  */
 
 #define hunk_eat(DINNER, EAT)						\
@@ -191,7 +209,7 @@ bool raw_casestarteq(const void *ptr, size_t len, const void *eat, size_t eat_le
 		const typeof(HUNK) hunk_ = HUNK; /* evaluate once */	\
 		const void *mem_ = MEM; /* evaluate once */		\
 		size_t size_ = SIZE; /* evaluate once */		\
-		bytes_eq(hunk_.ptr, hunk_.len, mem_, size_);		\
+		raw_eq(hunk_.ptr, hunk_.len, mem_, size_);		\
 	})
 
 #define hunk_thingeq(SHUNK, THING) hunk_memeq(SHUNK, &(THING), sizeof(THING))

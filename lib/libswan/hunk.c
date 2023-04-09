@@ -58,8 +58,8 @@ int raw_cmp(const void *l_ptr, size_t l_len,
 	return ((int)l_len - (int)r_len);
 }
 
-bool bytes_eq(const void *l_ptr, size_t l_len,
-	      const void *r_ptr, size_t r_len)
+bool raw_eq(const void *l_ptr, size_t l_len,
+	    const void *r_ptr, size_t r_len)
 {
 	/* NULL and EMPTY("") are not the same */
 	if (l_ptr == NULL || r_ptr == NULL) {
@@ -71,8 +71,8 @@ bool bytes_eq(const void *l_ptr, size_t l_len,
 	return memcmp(l_ptr, r_ptr, r_len) == 0;
 }
 
-bool case_eq(const void *l_ptr, size_t l_len,
-	     const void *r_ptr, size_t r_len)
+bool raw_caseeq(const void *l_ptr, size_t l_len,
+		const void *r_ptr, size_t r_len)
 {
 	/* NULL and EMPTY("") are not the same */
 	if (l_ptr == NULL || r_ptr == NULL) {
