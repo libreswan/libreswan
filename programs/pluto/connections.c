@@ -2582,24 +2582,24 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * failureshunt (not negotiationshunt) on the 2nd keyingtry,
 	 * and try to re-install another negotiation or failure shunt.
 	 */
+	c->sa_keying_tries = 1;
 	if (wm->keyingtries.set) {
 		if (NEVER_NEGOTIATE(wm->policy)) {
-			llog(RC_LOG, c->logger, "ignoring keyingtries=%ju, connection will never negotiate",
+			llog(RC_LOG, c->logger, "keyingtries=%ju ignored, connection will never negotiate",
 			     wm->keyingtries.value);
 		} else if ((wm->policy & POLICY_OPPORTUNISTIC) &&
-			   wm->keyingtries.value == 0) {
+			   wm->keyingtries.value != 1) {
 			llog(RC_LOG, c->logger,
-			     "the connection is Opportunistic, but used keyingtries=0. The specified value was changed to 1");
-			c->sa_keying_tries = 1;
-		} else {
-			ldbg(c->logger, "setting keyingtries=%ju", wm->keyingtries.value);
-			c->sa_keying_tries = wm->keyingtries.value;
-		}
-	} else {
-		if ((wm->policy & POLICY_OPPORTUNISTIC)) {
-			c->sa_keying_tries = 1;
-		} else {
-			c->sa_keying_tries = 0; /* aka infinite :-( */
+			     "keyingtries=%ju ignored, Opportunistic connections do not retry",
+			     wm->keyingtries.value);
+		} else if (c->policy & POLICY_UP) {
+			ldbg(c->logger,
+			     "keyingtries=%ju ignored, connection with policy UP will retry ad-infinitum",
+			     wm->keyingtries.value);
+		} else if (wm->keyingtries.value != 1) {
+			ldbg(c->logger,
+			     "keyingtries=%ju ignored, connection will make one attempt to establish",
+			     wm->keyingtries.value);
 		}
 	}
 
