@@ -1075,7 +1075,7 @@ int main(int argc, char **argv)
 	msg.sa_ipsec_max_lifetime = deltatime(IPSEC_SA_LIFETIME_DEFAULT);
 	msg.sa_rekey_margin = deltatime(SA_REPLACEMENT_MARGIN_DEFAULT);
 	msg.sa_rekey_fuzz = SA_REPLACEMENT_FUZZ_DEFAULT;
-	msg.sa_keying_tries = SA_REPLACEMENT_RETRIES_DEFAULT;
+	msg.keyingtries.set = false;
 	/* whack cannot access kernel_ops->replay_window */
 	msg.sa_replay_window = IPSEC_SA_DEFAULT_REPLAY_WINDOW;
 	msg.retransmit_timeout = deltatime(RETRANSMIT_TIMEOUT_DEFAULT);
@@ -1922,7 +1922,8 @@ int main(int argc, char **argv)
 			continue;
 
 		case CD_KTRIES:	/* --keyingtries <count> */
-			msg.sa_keying_tries = opt_whole;
+			msg.keyingtries.set = true;
+			msg.keyingtries.value = opt_whole;
 			continue;
 
 		case CD_REPLAY_WINDOW: /* --replay-window <num> */

@@ -512,7 +512,10 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.sa_ipsec_max_bytes = conn->options[KNCF_IPSEC_MAXBYTES];
 	msg.sa_ipsec_max_packets = conn->options[KNCF_IPSEC_MAXPACKETS];
 	msg.sa_rekey_fuzz = conn->options[KNCF_REKEYFUZZ];
-	msg.sa_keying_tries = conn->options[KNCF_KEYINGTRIES];
+	if (conn->options_set[KNCF_KEYINGTRIES]) {
+		msg.keyingtries.set = true;
+		msg.keyingtries.value = conn->options_set[KNCF_KEYINGTRIES];
+	}
 	msg.sa_replay_window = conn->options[KNCF_REPLAY_WINDOW];
 	msg.xfrm_if_id = conn->options[KNCF_XFRM_IF_ID];
 

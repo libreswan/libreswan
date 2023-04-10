@@ -2580,17 +2580,27 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * else we gain infinite partial IKE SA's. But also, more than
 	 * one makes no sense, since it will be installing a
 	 * failureshunt (not negotiationshunt) on the 2nd keyingtry,
-	 * and try to re-install another negotiation or failure shunt
+	 * and try to re-install another negotiation or failure shunt.
 	 */
-	if (NEVER_NEGOTIATE(wm->policy)) {
-		dbg("skipping sa_keying_tries as NEVER_NEGOTIATE");
-	} else if ((wm->policy & POLICY_OPPORTUNISTIC) &&
-		   wm->sa_keying_tries == 0) {
-		c->sa_keying_tries = 1;
-		llog(RC_LOG, c->logger,
-		     "the connection is Opportunistic, but used keyingtries=0. The specified value was changed to 1");
+	if (wm->keyingtries.set) {
+		if (NEVER_NEGOTIATE(wm->policy)) {
+			llog(RC_LOG, c->logger, "ignoring keyingtries=%ju, connection will never negotiate",
+			     wm->keyingtries.value);
+		} else if ((wm->policy & POLICY_OPPORTUNISTIC) &&
+			   wm->keyingtries.value == 0) {
+			llog(RC_LOG, c->logger,
+			     "the connection is Opportunistic, but used keyingtries=0. The specified value was changed to 1");
+			c->sa_keying_tries = 1;
+		} else {
+			ldbg(c->logger, "setting keyingtries=%ju", wm->keyingtries.value);
+			c->sa_keying_tries = wm->keyingtries.value;
+		}
 	} else {
-		c->sa_keying_tries = wm->sa_keying_tries;
+		if ((wm->policy & POLICY_OPPORTUNISTIC)) {
+			c->sa_keying_tries = 1;
+		} else {
+			c->sa_keying_tries = 0; /* aka infinite :-( */
+		}
 	}
 
 	/*
