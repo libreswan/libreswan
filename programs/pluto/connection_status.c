@@ -529,7 +529,6 @@ void show_connection_status(struct show *s, const struct connection *c)
 		jam(buf, " replay_window: %u;", c->sa_replay_window);
 		jam(buf, " rekey_margin: %jds;", deltasecs(c->config->sa_rekey_margin));
 		jam(buf, " rekey_fuzz: %lu%%;", c->config->sa_rekey_fuzz);
-		jam(buf, " keyingtries: %lu;", c->sa_keying_tries);
 	}
 
 	show_comment(s, PRI_CONNECTION":   retransmit-interval: %jdms; retransmit-timeout: %jds; iketcp:%s; iketcp-port:%d;",
