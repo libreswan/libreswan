@@ -30,7 +30,7 @@ east #
 east #
  # this is happening kernel-policy should still be in place
 east #
- ../../guestbin/wait-for.sh --match 'deleting IKE SA but connection is supposed to remain up' -- cat /tmp/pluto.log
+ ../../guestbin/wait-for.sh --match 'supposed to remain up' -- cat /tmp/pluto.log
 "road-eastnet-ikev2"[1] 192.1.2.254 #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 east #
  ../../guestbin/ipsec-kernel-policy.sh
