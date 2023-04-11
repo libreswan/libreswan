@@ -121,6 +121,7 @@ kvmplutotest	addconn-22-authby-hash-algo			good
 kvmplutotest	addconn-23-system-crypto-policies		good
 kvmplutotest	addconn-24-conn-default-rsasigkey		wip	github:833
 kvmplutotest	addconn-25-missing-cert				wip	github/1066
+kvmplutotest	addconn-26-keyingtries				good	github/1061
 
 #################################################################
 # Whack UI tests
@@ -221,7 +222,6 @@ kvmplutotest	ikev2-ikeport-4500-initiator-ipv6	good
 
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good
-kvmplutotest	ikev2-26-keyingtries			good
 kvmplutotest	ikev2-27-uniqueid			good
 kvmplutotest	ikev2-28-rw-server-rekey 		good
 kvmplutotest	ikev2-29-no-rekey			good
@@ -239,7 +239,6 @@ kvmplutotest	ikev2-04-basic-x509-nsspw		good
 
 kvmplutotest	ikev2-10-2behind-nat			good
 kvmplutotest	ikev2-restart-eroute-01			wip
-kvmplutotest	ikev2-keyingtries-01			good
 
 # modp tests for checking if we deal with sending different KE's
 kvmplutotest	ikev2-algo-01-modp2048-initiator	good
