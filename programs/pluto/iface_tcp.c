@@ -464,8 +464,10 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_dev *local_dev,
 					       ip_endpoint remote_endpoint,
 					       struct logger *logger)
 {
-	dbg("TCP: opening socket");
+	ldbg(logger, "TCP: opening socket");
+	PEXPECT(logger, endpoint_protocol(remote_endpoint) == &ip_protocol_tcp);
 	const struct ip_info *afi = endpoint_type(&remote_endpoint);
+
 	int fd = cloexec_socket(afi->socket.domain, SOCK_STREAM, IPPROTO_TCP);
 	if (fd < 0) {
 		llog_error(logger, errno, "TCP: cloexec_socket(%s,SOCK_STREAM,IPPROTO_TCP) failed",
@@ -482,7 +484,7 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_dev *local_dev,
 	 * Should this instead look in the connection?
 	 */
 
-	dbg("TCP: socket %d: connecting to other end", fd);
+	ldbg(logger, "TCP: socket %d: connecting to other end", fd);
 	ip_sockaddr remote_sockaddr = sockaddr_from_endpoint(remote_endpoint);
 	if (connect(fd, &remote_sockaddr.sa.sa, remote_sockaddr.len) < 0) {
 		llog_error(logger, errno, "TCP: connect(%d) failed", fd);
@@ -490,7 +492,7 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_dev *local_dev,
 		return NULL;
 	}
 
-	dbg("TCP: socket %d: extracting local randomly assigned port", fd);
+	ldbg(logger, "TCP: socket %d: extracting local randomly assigned port", fd);
 	ip_endpoint local_endpoint;
 	{
 		/* port gets assigned randomly */
@@ -514,14 +516,14 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_dev *local_dev,
 		local_endpoint = endpoint_from_address_protocol_port(local_address, &ip_protocol_tcp, local_port);
 	}
 
-	dbg("TCP: socket %d: making things non-blocking", fd);
+	ldbg(logger, "TCP: socket %d: making things non-blocking", fd);
 	evutil_make_socket_nonblocking(fd); /* TCP: ignore errors? */
 	evutil_make_socket_closeonexec(fd); /* TCP: ignore errors? */
 
 	/* Socket is connected, send the IKETCP stream */
 
 	{
-		dbg("TCP: socket %d: sending IKE-in-TCP prefix", fd);
+		ldbg(logger, "TCP: socket %d: sending IKE-in-TCP prefix", fd);
 		const uint8_t iketcp[] = IKE_IN_TCP_PREFIX;
 		if (write(fd, iketcp, sizeof(iketcp)) != (ssize_t)sizeof(iketcp)) {
 			llog_error(logger, errno,
@@ -541,7 +543,7 @@ struct iface_endpoint *connect_to_tcp_endpoint(struct iface_dev *local_dev,
 	if (impair.tcp_skip_setsockopt_espintcp) {
 		llog(RC_LOG, logger, "IMPAIR: TCP: skipping setsockopt(espintcp)");
 	} else {
-		dbg("TCP: socket %d: enabling \"espintcp\"", fd);
+		ldbg(logger, "TCP: socket %d: enabling \"espintcp\"", fd);
 		if (setsockopt(fd, IPPROTO_TCP, TCP_ULP, "espintcp", sizeof("espintcp"))) {
 			llog_error(logger, errno,
 				   "setsockopt(SOL_TCP, TCP_ULP) failed "PRI_WHERE,

@@ -550,12 +550,31 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	passert(ike->sa.st_sa_role == SA_INITIATOR);
 	ike->sa.st_try = try;
 
-	if ((c->config->iketcp == IKE_TCP_ONLY) ||
-	    (try > 1 && c->config->iketcp != IKE_TCP_NO)) {
-		dbg("TCP: forcing #%lu remote endpoint port to "PRI_HPORT,
-		    ike->sa.st_serialno, pri_hport(c->config->remote_tcpport));
-		update_endpoint_port(&ike->sa.st_remote_endpoint, c->config->remote_tcpport);
-		/* create new-from-old first; must addref */
+	/*
+	 * When TCP fallback start with UDP and then flip-flop TCP and
+	 * UDP.  This means revival.attempt 0 (i.e., first try), 2, 4,
+	 * et.al. are UDP, and revival attempts 1, 3, 5, et.al. are
+	 * TCP.
+	 *
+	 * Each TCP attempt opens a fresh TCP socket using connect*().
+	 */
+	if (c->config->iketcp == IKE_TCP_NO) {
+		PEXPECT(ike->sa.st_logger, ike->sa.st_interface->io->protocol == &ip_protocol_udp);
+		ldbg_sa(ike, "TCP: sticking with UDP");
+	} else if ((c->config->iketcp == IKE_TCP_ONLY) ||
+		   (c->config->iketcp == IKE_TCP_FALLBACK && (c->temp_vars.revival.attempt % 2) == 1)) {
+		/*
+		 * Need to open a fresh TCP socket each time.
+		 */
+		ike->sa.st_remote_endpoint =
+			endpoint_from_address_protocol_port(endpoint_address(ike->sa.st_remote_endpoint),
+							    &ip_protocol_tcp,
+							    c->config->remote_tcpport);
+		endpoint_buf eb;
+		ldbg_sa(ike, "TCP: forcing "PRI_SO" to open TCP connection to %s",
+			pri_so(ike->sa.st_serialno),
+			str_endpoint_sensitive(&ike->sa.st_remote_endpoint, &eb));
+		/* create new-from-old first; must addref; blocking call */
 		struct iface_endpoint *p = connect_to_tcp_endpoint(ike->sa.st_interface->ip_dev,
 								   ike->sa.st_remote_endpoint,
 								   ike->sa.st_logger);
@@ -566,6 +585,20 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		}
 		iface_endpoint_delref(&ike->sa.st_interface);
 		ike->sa.st_interface = iface_endpoint_addref(p);
+		PEXPECT(ike->sa.st_logger, ike->sa.st_interface->io->protocol == &ip_protocol_tcp);
+	} else if (c->temp_vars.revival.attempt > 0) {
+		/*
+		 * At attempt 2, 4, et.al. (1, 3, 5 excluded above).
+		 */
+		ldbg_sa(ike, "TCP: forcing things back to UDP");
+		PEXPECT(ike->sa.st_logger, (c->temp_vars.revival.attempt % 2) == 0);
+		PEXPECT(ike->sa.st_logger, c->config->iketcp == IKE_TCP_FALLBACK);
+		PEXPECT(ike->sa.st_logger, ike->sa.st_interface->io->protocol == &ip_protocol_tcp);
+		PEXPECT(ike->sa.st_logger, c->interface->io->protocol == &ip_protocol_udp);
+		iface_endpoint_delref(&ike->sa.st_interface);
+		ike->sa.st_interface = iface_endpoint_addref(c->interface);
+	} else {
+		ldbg_sa(ike, "TCP: first attempt, sticking with UDP");
 	}
 
 	if (labeled(c) && sec_label.len == 0) {
