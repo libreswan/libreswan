@@ -37,7 +37,7 @@ west #
 003 "westnet-eastnet-bar" #3: IKE SA authentication request rejected by peer: AUTHENTICATION_FAILED
 036 "westnet-eastnet-bar" #3: encountered fatal error in state STATE_V2_PARENT_I2
 002 "westnet-eastnet-bar" #3: deleting IKE SA (PARENT_I2) and NOT sending notification
-002 "westnet-eastnet-bar" #3: deleting IKE SA but connection is supposed to remain up; schedule CONNECTION_REVIVAL
+002 "westnet-eastnet-bar" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 west #
  echo done
 done

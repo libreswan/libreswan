@@ -70,7 +70,7 @@ west #
 005 "float-east" #4: ESP traffic information: in=0B out=0B
 002 "float-east" #3: deleting ISAKMP SA (MAIN_I4) and sending notification
 003 ERROR: "float-east" #3: send on eth1 from 192.1.2.66:500 to 192.1.2.23:500 using UDP failed in delete notify [...]
-002 "float-east" #3: deleting ISAKMP SA but connection is supposed to remain up; schedule CONNECTION_REVIVAL
+002 "float-east" #3: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 002 "float-east": unroute-host output: RTNETLINK answers: Network is unreachable
 002 forgetting secrets
 002 loading secrets from "/etc/ipsec.secrets"
@@ -88,7 +88,7 @@ west #
 010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 32 seconds for response
 031 "west-float" #5: STATE_MAIN_I1: 60 second timeout exceeded after 7 retransmits.  No response (or no acceptable response) to our first IKEv1 message
 002 "west-float" #5: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
-002 "west-float" #5: deleting ISAKMP SA but connection is supposed to remain up; schedule CONNECTION_REVIVAL
+002 "west-float" #5: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 west #
  # wait for pending cleanups
 west #

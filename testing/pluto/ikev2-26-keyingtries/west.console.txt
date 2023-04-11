@@ -43,7 +43,7 @@ west #
 031 "westnet-eastnet-ipv4-psk-ikev2" #1: STATE_V2_PARENT_I2: 60 second timeout exceeded after 7 retransmits.  Possible authentication failure: no acceptable response to our first encrypted message
 002 "westnet-eastnet-ipv4-psk-ikev2" #2: deleting larval state due to timeout
 003 ERROR: "westnet-eastnet-ipv4-psk-ikev2" #2: netlink response for Del SA esp.ESPSPIi@192.1.2.45: No such process (errno 3)
-002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA but connection is supposed to remain up; schedule CONNECTION_REVIVAL
+002 "westnet-eastnet-ipv4-psk-ikev2" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 002 "westnet-eastnet-ipv4-psk-ikev2" #1: deleting IKE SA (PARENT_I2) and NOT sending notification
 west #
  # The state should have been deleted, but replaced via event

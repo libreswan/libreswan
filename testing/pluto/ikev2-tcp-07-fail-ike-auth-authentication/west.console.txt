@@ -39,7 +39,7 @@ west #
 002 "ikev2-westnet-eastnet" #1: authentication method IKEv2_AUTH_RESERVED not supported
 036 "ikev2-westnet-eastnet" #1: encountered fatal error in state STATE_V2_PARENT_I1
 002 "ikev2-westnet-eastnet" #1: deleting IKE SA (PARENT_I1) and NOT sending notification
-002 "ikev2-westnet-eastnet" #1: deleting IKE SA but connection is supposed to remain up; schedule CONNECTION_REVIVAL
+002 "ikev2-westnet-eastnet" #1: connection is supposed to remain up; revival attempt 1 scheduled in 0 seconds
 west #
  ipsec whack --shutdown
 west #
