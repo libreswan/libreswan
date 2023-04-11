@@ -3,4 +3,4 @@ ipsec whack --trafficstatus
 # only on east, pluto should be attempting to connect to west because it has auto=start
 ipsec showstates
 # confirm the revive conn code triggered on east
-test ! -r /tmp/pluto.log || egrep -e 'but must remain up per local policy' -e '^[^|].*CONNECTION_REVIVAL' /tmp/pluto.log
+test ! -r /tmp/pluto.log || egrep -e '^[^|].* remain up' /tmp/pluto.log
