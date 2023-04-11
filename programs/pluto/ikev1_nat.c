@@ -493,8 +493,14 @@ void v1_natify_initiator_endpoints(struct state *st, where_t where)
 	/*
 	 * Float the remote port to :PLUTO_NAT_PORT (:4500)
 	 */
-	dbg("NAT-T: #%lu floating remote port from %d to %d using NAT_IKE_UDP_PORT "PRI_WHERE,
-	    st->st_serialno, endpoint_hport(st->st_remote_endpoint), NAT_IKE_UDP_PORT,
-	    pri_where(where));
-	update_endpoint_port(&st->st_remote_endpoint, ip_hport(NAT_IKE_UDP_PORT));
+	ip_endpoint new_endpoint = set_endpoint_port(st->st_remote_endpoint,
+						     ip_hport(NAT_IKE_UDP_PORT));
+	endpoint_buf oep, nep;
+	ldbg(st->st_logger,
+	     "NAT-T: "PRI_SO" floating remote port from %s to %s using NAT_IKE_UDP_PORT "PRI_WHERE,
+	     pri_so(st->st_serialno),
+	     str_endpoint(&st->st_remote_endpoint, &oep),
+	     str_endpoint(&new_endpoint, &nep),
+	     pri_where(where));
+	st->st_remote_endpoint = new_endpoint;
 }

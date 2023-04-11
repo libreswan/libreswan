@@ -86,11 +86,6 @@ ip_port endpoint_port(const ip_endpoint endpoint)
 	return ip_hport(endpoint.hport);
 }
 
-void update_endpoint_port(ip_endpoint *endpoint, ip_port port)
-{
-	*endpoint = set_endpoint_port(*endpoint, port);
-}
-
 ip_endpoint set_endpoint_port(const ip_endpoint endpoint, ip_port port)
 {
 	const struct ip_info *afi = endpoint_type(&endpoint);

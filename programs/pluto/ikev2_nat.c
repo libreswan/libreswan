@@ -220,9 +220,17 @@ bool v2_natify_initiator_endpoints(struct ike_sa *ike, where_t where)
 		    ike->sa.st_serialno, remote_hport, pri_where(where));
 	} else {
 		pexpect(remote_hport == IKE_UDP_PORT);
-		dbg("NAT: #%lu floating remote port from %d to %d using NAT_IKE_UDP_PORT "PRI_WHERE,
-		    ike->sa.st_serialno, remote_hport, NAT_IKE_UDP_PORT, pri_where(where));
-		update_endpoint_port(&ike->sa.st_remote_endpoint, ip_hport(NAT_IKE_UDP_PORT));
+		/* same address+protocol; change port */
+		ip_endpoint new_endpoint = set_endpoint_port(ike->sa.st_remote_endpoint,
+							     ip_hport(NAT_IKE_UDP_PORT));
+		endpoint_buf oep, nep;
+		ldbg(ike->sa.st_logger,
+		     "NAT: "PRI_SO" floating remote port from %s to %s using NAT_IKE_UDP_PORT "PRI_WHERE,
+		     pri_so(ike->sa.st_serialno),
+		     str_endpoint(&ike->sa.st_remote_endpoint, &oep),
+		     str_endpoint(&new_endpoint, &nep),
+		     pri_where(where));
+		ike->sa.st_remote_endpoint = new_endpoint;
 	}
 
 	return true;
