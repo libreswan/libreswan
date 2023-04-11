@@ -513,8 +513,12 @@ struct sa_marks {
  * need i.e. to be stored to connection
  * .conf files.
  */
+
 struct ephemeral_variables {
-	int revive_delay;
+	struct {
+		unsigned attempt;
+		deltatime_t delay;	 /* for next time */
+	} revival;
 	/* RFC 5685 - IKEv2 Redirect Mechanism */
 	int num_redirects;
 	realtime_t first_redirect_time;

@@ -2323,7 +2323,8 @@ bool install_ipsec_sa(struct child_sa *child, lset_t direction, where_t where)
 		 * partner might complete an IKE SA to us, but won't
 		 * complete an IPsec SA to us.
 		 */
-		child->sa.st_connection->temp_vars.revive_delay = 0;
+		child->sa.st_connection->temp_vars.revival.attempt = 0;
+		child->sa.st_connection->temp_vars.revival.delay = deltatime(0);
 	}
 
 	if (PEXPECT(logger, r == ROUTEABLE)

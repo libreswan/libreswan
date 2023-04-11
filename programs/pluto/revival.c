@@ -199,21 +199,27 @@ bool should_revive_connection(struct child_sa *child)
 void schedule_revival(struct state *st, const char *subplot)
 {
 	struct connection *c = st->st_connection;
-	llog(RC_LOG, st->st_logger,
-	     "deleting %s but connection is supposed to remain up; schedule CONNECTION_REVIVAL",
-	     c->config->ike_info->sa_type_name[st->st_establishing_sa]);
 
-	int delay = c->temp_vars.revive_delay;
+	deltatime_buf db, ndb;
+	deltatime_t delay = c->temp_vars.revival.delay;
+
+	c->temp_vars.revival.delay =
+		deltatime_min(deltatime_add(delay, REVIVE_CONN_DELAY),
+			      REVIVE_CONN_DELAY_MAX);
+	c->temp_vars.revival.attempt++;
+
 	ldbg(st->st_logger,
-	     "add revival: connection '%s' (serial "PRI_CO") added to the list and scheduled for %d seconds",
-	    c->name, pri_co(c->serialno), delay);
-	c->temp_vars.revive_delay = min(delay + REVIVE_CONN_DELAY,
-						REVIVE_CONN_DELAY_MAX);
-	if ((IS_IKE_SA_ESTABLISHED(st) || IS_V1_ISAKMP_SA_ESTABLISHED(st)) &&
-	    c->kind == CK_INSTANCE &&
-	    LIN(POLICY_UP, c->policy)) {
+	     "add revival %u for '%s' ("PRI_CO") in %s, next in %s",
+	     c->temp_vars.revival.attempt,
+	     c->name, pri_co(c->serialno),
+	     str_deltatime(delay, &db),
+	     str_deltatime(c->temp_vars.revival.delay, &ndb));
+
+	if ((IS_IKE_SA_ESTABLISHED(st) ||
+	     IS_V1_ISAKMP_SA_ESTABLISHED(st)) &&
+	    c->kind == CK_INSTANCE) {
 		/*
-		 * why isn't the host_port set by instantiation ?
+		 * Why isn't the host_port set by instantiation?
 		 *
 		 * XXX: it is, but it is set to 500; better question
 		 * is why isn't the host_port updated once things have
@@ -235,17 +241,12 @@ void schedule_revival(struct state *st, const char *subplot)
 		ldbg(st->st_logger, "limiting instance revival attempts to 2 keyingtries");
 		c->sa_keying_tries = 2;
 	}
-	/*
-	 * XXX: Schedule the next revival using this connection's
-	 * revival delay and not the most urgent connection's revival
-	 * delay.  Trying to fix this here just is annoying and
-	 * probably of marginal benefit: it is something better
-	 * handled with a proper connection event so that the event
-	 * loop deal with all the math (this code would then be
-	 * deleted); and would encroach even further on "initiate" and
-	 * "pending" functionality.
-	 */
-	schedule_connection_event(c, CONNECTION_REVIVAL, subplot, deltatime(delay));
+
+	llog(RC_LOG, st->st_logger,
+	     "connection is supposed to remain up; revival attempt %u scheduled in %s seconds",
+	     c->temp_vars.revival.attempt,
+	     str_deltatime(delay, &db));
+	schedule_connection_event(c, CONNECTION_REVIVAL, subplot, delay);
 }
 
 void revive_connection(struct connection *c, const char *subplot, struct logger *logger)
