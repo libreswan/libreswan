@@ -87,7 +87,8 @@ west #
 010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 16 seconds for response
 010 "west-float" #5: STATE_MAIN_I1: retransmission; will wait 32 seconds for response
 031 "west-float" #5: STATE_MAIN_I1: 60 second timeout exceeded after 7 retransmits.  No response (or no acceptable response) to our first IKEv1 message
-000 "west-float" #5: starting keying attempt 2 of an unlimited number, but releasing whack
+002 "west-float" #5: deleting ISAKMP SA (MAIN_I1) and NOT sending notification
+002 "west-float" #5: deleting ISAKMP SA but connection is supposed to remain up; schedule CONNECTION_REVIVAL
 west #
  # wait for pending cleanups
 west #
