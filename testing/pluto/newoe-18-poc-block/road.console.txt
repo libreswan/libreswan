@@ -18,7 +18,7 @@ road #
  ../../guestbin/wait-for.sh --match 'loaded 10,' -- ipsec auto --status
 000 Total IPsec connections: loaded 10, active 0
 road #
- ipsec status | grep private- | grep keyingtries:
+ ipsec status | grep private- | grep replay_window:
 000 "private-or-clear":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 000 "private-or-clear#192.1.2.0/24":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 128; rekey_margin: 540s; rekey_fuzz: 100%;
 road #
