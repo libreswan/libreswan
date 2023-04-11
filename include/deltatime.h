@@ -57,8 +57,9 @@ deltatime_t deltatime_timevals_diff(struct timeval l, struct timeval r);
 int deltatime_sub_sign(deltatime_t l, deltatime_t r);
 #define deltatime_cmp(L, OP, R) (deltatime_sub_sign(L, R) OP 0)
 
-/* max(a, b) */
+/* max(a, b) | min(a, b) */
 deltatime_t deltatime_max(deltatime_t a, deltatime_t b);
+deltatime_t deltatime_min(deltatime_t a, deltatime_t b);
 
 /* a+b */
 deltatime_t deltatime_add(deltatime_t a, deltatime_t b);

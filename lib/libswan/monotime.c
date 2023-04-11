@@ -82,7 +82,16 @@ intmax_t monosecs(monotime_t m)
 
 monotime_t monotime_max(monotime_t l, monotime_t r)
 {
-	if (timercmp(&l.mt, &r.mt, >)) {
+	if (monotime_cmp(l, >, r)) {
+		return l;
+	} else {
+		return r;
+	}
+}
+
+monotime_t monotime_min(monotime_t l, monotime_t r)
+{
+	if (monotime_cmp(l, <, r)) {
 		return l;
 	} else {
 		return r;

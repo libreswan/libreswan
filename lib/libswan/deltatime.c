@@ -98,12 +98,21 @@ int deltatime_sub_sign(deltatime_t l, deltatime_t r)
 	return timeval_sub_sign(l.dt, r.dt);
 }
 
-deltatime_t deltatime_max(deltatime_t a, deltatime_t b)
+deltatime_t deltatime_max(deltatime_t l, deltatime_t r)
 {
-	if (timercmp(&a.dt, &b.dt, >)) {
-		return a;
+	if (deltatime_cmp(l, >, r)) {
+		return l;
 	} else {
-		return b;
+		return r;
+	}
+}
+
+deltatime_t deltatime_min(deltatime_t l, deltatime_t r)
+{
+	if (deltatime_cmp(l, <, r)) {
+		return l;
+	} else {
+		return r;
 	}
 }
 

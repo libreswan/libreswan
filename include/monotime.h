@@ -58,9 +58,10 @@ extern const monotime_t monotime_epoch;
 bool is_monotime_epoch(monotime_t t);
 
 monotime_t mononow(void);
-monotime_t monotime_max(monotime_t t, monotime_t d);
-monotime_t monotime_add(monotime_t t, deltatime_t d);
-monotime_t monotime_sub(monotime_t t, deltatime_t d);
+monotime_t monotime_max(monotime_t l, monotime_t r);
+monotime_t monotime_min(monotime_t l, monotime_t r);
+monotime_t monotime_add(monotime_t l, deltatime_t r);
+monotime_t monotime_sub(monotime_t l, deltatime_t r);
 
 /* sign(a - b); see timercmp() for hacks origin */
 int monotime_sub_sign(monotime_t l, monotime_t r);

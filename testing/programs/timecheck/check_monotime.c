@@ -24,23 +24,49 @@
 
 /* monotime(monotime,deltatime) - mmd */
 
-struct test_mmd_op {
+struct test_op {
 	intmax_t l, r;
 	intmax_t o;
 };
+
+#define CHECK_MMM_OP(OP)						\
+	check_mmm_op(test_monotime_##OP,				\
+		     elemsof(test_monotime_##OP),			\
+		     monotime_##OP, #OP)
+
+static void check_mmm_op(const struct test_op *tests,
+			       size_t nr_tests,
+			       monotime_t (*op)(monotime_t, monotime_t),
+			       const char *op_name)
+{
+	for (unsigned i = 0; i < nr_tests; i++) {
+		const struct test_op *t = &tests[i];
+		monotime_t l = monotime(t->l);
+		monotime_t r = monotime(t->r);
+		intmax_t o = monosecs(op(l, r));
+		FILE *out = (o == t->o) ? stdout : stderr;
+		fprintf(out, "monosecs(monotime_%s(%jd, %jd)) == %jd",
+			op_name, t->l, t->r, t->o);
+		if (out == stderr) {
+			fprintf(out, "; FAIL: returned %jd", o);
+			fails++;
+		}
+		fprintf(out, "\n");
+	}
+}
 
 #define CHECK_MMD_OP(OP)						\
 	check_mmd_op(test_monotime_##OP,				\
 		     elemsof(test_monotime_##OP),			\
 		     monotime_##OP, #OP)
 
-static void check_mmd_op(const struct test_mmd_op *tests,
+static void check_mmd_op(const struct test_op *tests,
 			       size_t nr_tests,
 			       monotime_t (*op)(monotime_t, deltatime_t),
 			       const char *op_name)
 {
 	for (unsigned i = 0; i < nr_tests; i++) {
-		const struct test_mmd_op *t = &tests[i];
+		const struct test_op *t = &tests[i];
 		monotime_t l = monotime(t->l);
 		deltatime_t r = deltatime(t->r);
 		intmax_t o = monosecs(op(l, r));
@@ -88,14 +114,28 @@ void check_monotime(void)
 
 	CHECK_TIME_CMP(mono);
 
-	static const struct test_mmd_op test_monotime_add[] = {
+	static const struct test_op test_monotime_min[] = {
+		{  1000,  100,  100 },
+		{  1000,    0,    0 },
+		{   200,  400,  200 },
+	};
+	CHECK_MMM_OP(min);
+
+	static const struct test_op test_monotime_max[] = {
+		{  1000,  100, 1000 },
+		{  1000,    0, 1000 },
+		{   200,  400,  400 },
+	};
+	CHECK_MMM_OP(max);
+
+	static const struct test_op test_monotime_add[] = {
 		{  1000,  100, 1100 },
 		{  1000,    0, 1000 },
 		{  1000, -200,  800 },
 	};
 	CHECK_MMD_OP(add);
 
-	static const struct test_mmd_op test_monotime_sub[] = {
+	static const struct test_op test_monotime_sub[] = {
 		{  1000,  100,  900 },
 		{  1000,    0, 1000 },
 		{  1000, -200, 1200 },

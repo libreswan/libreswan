@@ -149,6 +149,13 @@ void check_deltatime(void)
 	};
 	CHECK_DELTATIME_OP(max);
 
+	static const struct test_op test_deltatime_min[] = {
+		{  1000,  100, "0.1" },
+		{ -1000,    0, "-1" },
+		{ - 100, -200, "-0.2" },
+	};
+	CHECK_DELTATIME_OP(min);
+
 	static const struct test_op test_deltatime_add[] = {
 		{  1000,  100, "1.1" },
 		{ -1000,    0, "-1" },

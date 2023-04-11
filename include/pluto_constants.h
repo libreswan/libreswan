@@ -270,8 +270,8 @@ enum event_type {
 #define EVENT_CRYPTO_TIMEOUT_DELAY	deltatime(RETRANSMIT_TIMEOUT_DEFAULT) /* wait till the other side give up on us */
 #define EVENT_v1_PAM_TIMEOUT_DELAY	deltatime(RETRANSMIT_TIMEOUT_DEFAULT) /* wait until this side give up on PAM */
 
-#define REVIVE_CONN_DELAY	5 /* seconds */
-#define REVIVE_CONN_DELAY_MAX  300 /* Do not delay more than 5 minutes per attempt */
+#define REVIVE_CONN_DELAY	deltatime(5) /* seconds */
+#define REVIVE_CONN_DELAY_MAX   deltatime(300) /* Do not delay more than 5 minutes per attempt */
 
 /* is pluto automatically switching busy state or set manually */
 enum ddos_mode {
