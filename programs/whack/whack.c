@@ -1089,8 +1089,8 @@ int main(int argc, char **argv)
 	msg.right.updown = DEFAULT_UPDOWN;
 	msg.left.updown = DEFAULT_UPDOWN;
 
-	msg.iketcp = IKE_TCP_NO;
-	msg.remote_tcpport = NAT_IKE_UDP_PORT;
+	msg.enable_tcp = 0; /* aka unset */;
+	msg.tcp_remoteport = 0; /* aka unset */
 
 	msg.xfrm_if_id = UINT32_MAX;
 
@@ -2093,11 +2093,11 @@ int main(int argc, char **argv)
 
 		case CD_IKE_TCP: /* --tcp */
 			if (streq(optarg, "yes"))
-				msg.iketcp = IKE_TCP_ONLY;
+				msg.enable_tcp = IKE_TCP_ONLY;
 			else if (streq(optarg, "no"))
-				msg.iketcp = IKE_TCP_NO;
+				msg.enable_tcp = IKE_TCP_NO;
 			else if (streq(optarg, "fallback"))
-				msg.iketcp = IKE_TCP_FALLBACK;
+				msg.enable_tcp = IKE_TCP_FALLBACK;
 			else
 				diagw("--tcp-options are 'yes', 'no' or 'fallback'");
 			continue;

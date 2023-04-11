@@ -550,8 +550,8 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "failureshunt",  kv_conn,  kt_enum,  KNCF_FAILURESHUNT,  kw_failureshunt_list, NULL, },
   { "negotiationshunt",  kv_conn,  kt_enum,  KNCF_NEGOTIATIONSHUNT,  kw_negotiationshunt_list, NULL, },
 
-  { "enable-tcp",  kv_conn, kt_enum, KNCF_TCP, kw_tcp_list, NULL },
-  { "tcp-remoteport",  kv_conn, kt_number, KNCF_REMOTE_TCPPORT, NULL, NULL },
+  { "enable-tcp",  kv_conn, kt_enum, KNCF_ENABLE_TCP, kw_tcp_list, NULL },
+  { "tcp-remoteport",  kv_conn, kt_number, KNCF_TCP_REMOTEPORT, NULL, NULL },
 
   { "connalias",  kv_conn | kv_processed,  kt_appendstring,  KSCF_CONNALIAS, NULL, NULL, },
 

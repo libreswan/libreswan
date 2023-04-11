@@ -531,13 +531,12 @@ void show_connection_status(struct show *s, const struct connection *c)
 		jam(buf, " rekey_fuzz: %lu%%;", c->config->sa_rekey_fuzz);
 	}
 
-	show_comment(s, PRI_CONNECTION":   retransmit-interval: %jdms; retransmit-timeout: %jds; iketcp:%s; iketcp-port:%d;",
+	show_comment(s, PRI_CONNECTION":   retransmit-interval: %jdms; retransmit-timeout: %jds; iketcp:%s; iketcp-port:"PRI_HPORT";",
 		     c->name, instance,
 		     deltamillisecs(c->config->retransmit_interval),
 		     deltasecs(c->config->retransmit_timeout),
-		     c->iketcp == IKE_TCP_NO ? "no" : c->iketcp == IKE_TCP_ONLY ? "yes" :
-		     c->iketcp == IKE_TCP_FALLBACK ? "fallback" : "<BAD VALUE>",
-		     c->remote_tcpport);
+		     enum_name_short(&tcp_option_story, c->config->iketcp),
+		     pri_hport(c->config->remote_tcpport));
 
 	SHOW_JAMBUF(RC_COMMENT, s, buf) {
 		jam(buf, PRI_CONNECTION":  ", c->name, instance);

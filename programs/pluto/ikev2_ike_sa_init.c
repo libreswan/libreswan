@@ -550,11 +550,11 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	passert(ike->sa.st_sa_role == SA_INITIATOR);
 	ike->sa.st_try = try;
 
-	if ((c->iketcp == IKE_TCP_ONLY) ||
-	    (try > 1 && c->iketcp != IKE_TCP_NO)) {
-		dbg("TCP: forcing #%lu remote endpoint port to %d",
-		    ike->sa.st_serialno, c->remote_tcpport);
-		update_endpoint_port(&ike->sa.st_remote_endpoint, ip_hport(c->remote_tcpport));
+	if ((c->config->iketcp == IKE_TCP_ONLY) ||
+	    (try > 1 && c->config->iketcp != IKE_TCP_NO)) {
+		dbg("TCP: forcing #%lu remote endpoint port to "PRI_HPORT,
+		    ike->sa.st_serialno, pri_hport(c->config->remote_tcpport));
+		update_endpoint_port(&ike->sa.st_remote_endpoint, c->config->remote_tcpport);
 		/* create new-from-old first; must addref */
 		struct iface_endpoint *p = connect_to_tcp_endpoint(ike->sa.st_interface->ip_dev,
 								   ike->sa.st_remote_endpoint,

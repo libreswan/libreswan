@@ -1856,11 +1856,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 		return diag("narrowing=yes requires IKEv2");
 	}
 
-	if (wm->iketcp != IKE_TCP_NO &&
-	    c->config->ike_version < IKEv2) {
-		return diag("enable-tcp= requires IKEv2");
-	}
-
 	if (wm->policy & POLICY_MOBIKE) {
 		if (kernel_ops->migrate_ipsec_sa_is_enabled == NULL) {
 			return diag("MOBIKE is not supported by %s kernel interface",
@@ -1877,20 +1872,53 @@ static diag_t extract_connection(const struct whack_message *wm,
 	/* RFC 8229 TCP encap*/
 
 	if (NEVER_NEGOTIATE(wm->policy)) {
-		if (wm->iketcp != IKE_TCP_NO) {
+		if (wm->enable_tcp != 0) {
+			enum_buf eb;
 			llog(RC_INFORMATIONAL, c->logger,
-			     "ignored enable-tcp= option for type=passthrough connection");
+			     "warning: enable-tcp=%s ignored for type=passthrough connection",
+			     str_enum_short(&tcp_option_story, wm->enable_tcp, &eb));
 		}
-		/* cleanup inherited default */
-		c->iketcp = IKE_TCP_NO;
-		c->remote_tcpport = 0;
+		/* cleanup inherited default; XXX: ? */
+		config->iketcp = IKE_TCP_NO;
+	} else if (c->config->ike_version < IKEv2) {
+		if (wm->enable_tcp != 0 &&
+		    wm->enable_tcp != IKE_TCP_NO) {
+			return diag("enable-tcp= requires IKEv2");
+		}
+		config->iketcp = IKE_TCP_NO;
+	} else if (wm->enable_tcp == 0) {
+		config->iketcp = IKE_TCP_NO; /* default */
 	} else {
-		if (wm->iketcp != IKE_TCP_NO && (wm->remote_tcpport == 0 || wm->remote_tcpport == 500)) {
-			return diag("tcp-remoteport cannot be 0 or 500");
-		}
-		c->remote_tcpport = wm->remote_tcpport;
-		c->iketcp = wm->iketcp;
+		config->iketcp = wm->enable_tcp;
 	}
+
+	switch (config->iketcp) {
+	case IKE_TCP_NO:
+		if (wm->tcp_remoteport != 0) {
+			llog(RC_INFORMATIONAL, c->logger,
+			     "warning: tcp-remoteport=%ju ignored for non-TCP connections",
+			     wm->tcp_remoteport);
+		}
+		/* keep tests happy, value ignored */
+		config->remote_tcpport = ip_hport(NAT_IKE_UDP_PORT);
+		break;
+	case IKE_TCP_ONLY:
+	case IKE_TCP_FALLBACK:
+		if (wm->tcp_remoteport == 500) {
+			return diag("tcp-remoteport cannot be 500");
+		}
+		if (wm->tcp_remoteport > 65535/*magic?*/) {
+			return diag("tcp-remoteport=%ju is too big", wm->tcp_remoteport);
+		}
+		config->remote_tcpport =
+			ip_hport(wm->tcp_remoteport == 0 ? NAT_IKE_UDP_PORT:
+				 wm->tcp_remoteport);
+		break;
+	default:
+		/* must  have been set */
+		bad_case(config->iketcp);
+	}
+
 
 	/* authentication (proof of identity) */
 

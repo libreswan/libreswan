@@ -2422,6 +2422,7 @@ static const enum_names *en_checklist[] = {
 	&pluto_exit_code_names,
 	&ipseckey_algorithm_type_names,
 	&ipseckey_algorithm_config_names,
+	&tcp_option_story,
 #ifdef KERNEL_XFRM
 	&xfrm_policy_names,
 #endif

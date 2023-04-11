@@ -277,8 +277,8 @@ enum keyword_numeric_conn_field {
 	KNCF_VTI_ROUTING,	/* let updown do routing into VTI device */
 	KNCF_VTI_SHARED,	/* VTI device is shared - enable checks and disable cleanup */
 	KNCF_NIC_OFFLOAD,	/* xfrm offload to network device */
-	KNCF_TCP,		/* TCP (yes/no/fallback) */
-	KNCF_REMOTE_TCPPORT,	/* TCP remote port - default 4500 */
+	KNCF_ENABLE_TCP,	/* TCP (yes/no/fallback) */
+	KNCF_TCP_REMOTEPORT,	/* TCP remote port - default 4500 */
 	KNCF_IGNORE_PEER_DNS,	/* Accept DNS nameservers from peer */
 
 	KNCF_ROOF

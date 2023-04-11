@@ -239,6 +239,13 @@ struct config {
 	bool send_vid_fake_strongswan;		/* Send the unversioned strongswan VID */
 	bool send_vid_cisco_unity;		/* Send Unity VID for cisco compatibility */
 
+	enum tcp_options iketcp;	/* Allow TCP as fallback,
+					 * insist on TCP or stick to
+					 * UDP */
+	ip_port remote_tcpport;		/* TCP remote port to use -
+					 * local port will be
+					 * ephemeral */
+
 	struct config_end end[END_ROOF];
 };
 
@@ -553,9 +560,6 @@ struct connection {
 	bool mobike;			/* Allow MOBIKE */
 	enum ikev1_natt_policy ikev1_natt; /* whether or not to send IKEv1 draft/rfc NATT VIDs */
 	enum yna_options encaps; /* encapsulation mode of auto/yes/no - formerly forceencaps=yes/no */
-
-	enum tcp_options iketcp;	/* Allow TCP as fallback, insist on TCP or stick to UDP */
-	int remote_tcpport;		/* TCP remote port to use - local port will be ephemeral */
 
 	/* Network Manager support */
 #ifdef HAVE_NM

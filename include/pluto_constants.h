@@ -791,10 +791,12 @@ enum esn_options {
 };
 
 enum tcp_options {
-       IKE_TCP_NO = 1, /* default */
+       IKE_TCP_NO = 1,
        IKE_TCP_ONLY = 2,
        IKE_TCP_FALLBACK = 3,
 };
+
+extern const struct enum_names tcp_option_story; /* "no", "yes", "fallback" */
 
 enum eap_options {
 	IKE_EAP_NONE = 0, /* default */

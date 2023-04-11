@@ -200,11 +200,12 @@ struct whack_message {
 	/* Force the use of NAT-T on a connection */
 	enum yna_options encaps;
 
-	/* Remote TCP port to use, 0 indicates no TCP */
-	int remote_tcpport;
-
-	/* Allow TCP as fallback, only do TCP or only do UDP */
-	enum tcp_options iketcp;
+	/*
+	 * TCP: Allow TCP as fallback, only do TCP or only do UDP; and
+	 * the port.
+	 */
+	enum tcp_options enable_tcp;
+	uintmax_t tcp_remoteport;
 
 	/* Option to allow per-conn setting of sending of NAT-T keepalives - default is enabled */
 	bool nat_keepalive;

@@ -79,7 +79,7 @@ static bool add_new_iface_endpoint(struct connection *c, struct host_end *end)
 	const bool float_nat_initiator = false;
 
 	struct iface_endpoint *ifp = NULL;
-	switch (c->iketcp) {
+	switch (c->config->iketcp) {
 	case IKE_TCP_NO:
 		if (pluto_listen_udp) {
 			ifp = bind_iface_endpoint(dev, &udp_iface_io,
@@ -121,7 +121,7 @@ static bool add_new_iface_endpoint(struct connection *c, struct host_end *end)
 		     end->config->leftright);
 		return false;
 	default:
-		bad_case(c->iketcp);
+		bad_case(c->config->iketcp);
 	}
 
 	/* success */

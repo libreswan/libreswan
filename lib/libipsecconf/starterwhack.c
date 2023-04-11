@@ -558,16 +558,12 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 		}
 	}
 
-	if (conn->options_set[KNCF_REMOTE_TCPPORT]) {
-		msg.remote_tcpport = conn->options[KNCF_REMOTE_TCPPORT];
-	} else {
-		msg.remote_tcpport = NAT_IKE_UDP_PORT;
+	if (conn->options_set[KNCF_TCP_REMOTEPORT]) {
+		msg.tcp_remoteport = conn->options[KNCF_TCP_REMOTEPORT];
 	}
 
-	if (conn->options_set[KNCF_TCP]) {
-		msg.iketcp = conn->options[KNCF_TCP];
-	} else {
-		msg.iketcp = IKE_TCP_NO;
+	if (conn->options_set[KNCF_ENABLE_TCP]) {
+		msg.enable_tcp = conn->options[KNCF_ENABLE_TCP];
 	}
 
 	/* default to HOLD */
