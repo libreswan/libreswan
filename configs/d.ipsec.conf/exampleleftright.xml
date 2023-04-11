@@ -21,7 +21,6 @@ conn snt
 	rightsubnet=10.0.2.0/24
 	rightnexthop=172.16.88.99
 	rightsourceip=10.0.2.1
-	keyingtries=%forever
 </emphasis>
 </literallayout> <!-- .fi -->
 

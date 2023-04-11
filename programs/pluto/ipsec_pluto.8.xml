@@ -291,8 +291,6 @@
       <arg choice="opt">--rekeyfuzz
       <replaceable>percentage</replaceable></arg>
 
-      <arg choice="opt">--keyingtries <replaceable>count</replaceable></arg>
-
       <arg choice="opt">--esp <replaceable>esp-algos</replaceable></arg>
 
       <arg choice="opt">--dontrekey</arg>
@@ -2286,20 +2284,6 @@
 	      percentage will be 100. If greater determinism is
 	      desired, specify 0. It may be appropriate for the
 	      percentage to be much larger than 100.
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--keyingtries</option> <replaceable>count</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      How many times <emphasis remap="B">pluto</emphasis>
-	      should try to negotiate an SA, either for the first time
-	      or for rekeying.  The default value of 0 means to keep
-	      trying forever.
 	    </para>
           </listitem>
         </varlistentry>

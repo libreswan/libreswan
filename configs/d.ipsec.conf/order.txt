@@ -89,7 +89,6 @@ d.ipsec.conf/replay-window.xml
 d.ipsec.conf/rekey.xml
 d.ipsec.conf/rekeymargin.xml
 d.ipsec.conf/rekeyfuzz.xml
-d.ipsec.conf/keyingtries.xml
 d.ipsec.conf/ikelifetime.xml
 d.ipsec.conf/retransmit-timeout.xml
 d.ipsec.conf/retransmit-interval.xml
