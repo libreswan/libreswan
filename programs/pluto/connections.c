@@ -2585,20 +2585,17 @@ static diag_t extract_connection(const struct whack_message *wm,
 	c->sa_keying_tries = 1;
 	if (wm->keyingtries.set) {
 		if (NEVER_NEGOTIATE(wm->policy)) {
-			llog(RC_LOG, c->logger, "keyingtries=%ju ignored, connection will never negotiate",
+			llog(RC_LOG, c->logger,
+			     "warning: keyingtries=%ju ignored, connection will never negotiate",
 			     wm->keyingtries.value);
 		} else if ((wm->policy & POLICY_OPPORTUNISTIC) &&
 			   wm->keyingtries.value != 1) {
 			llog(RC_LOG, c->logger,
-			     "keyingtries=%ju ignored, Opportunistic connections do not retry",
+			     "warning: keyingtries=%ju ignored, Opportunistic connections do not retry",
 			     wm->keyingtries.value);
-		} else if (c->policy & POLICY_UP) {
-			ldbg(c->logger,
-			     "keyingtries=%ju ignored, connection with policy UP will retry ad-infinitum",
-			     wm->keyingtries.value);
-		} else if (wm->keyingtries.value != 1) {
-			ldbg(c->logger,
-			     "keyingtries=%ju ignored, connection will make one attempt to establish",
+		} else {
+			llog(RC_LOG, c->logger,
+			     "warning: keyingtries=%ju ignored, UP connection will attempt to establish until marked DOWN",
 			     wm->keyingtries.value);
 		}
 	}
