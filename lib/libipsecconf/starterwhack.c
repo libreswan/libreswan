@@ -514,7 +514,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.sa_rekey_fuzz = conn->options[KNCF_REKEYFUZZ];
 	if (conn->options_set[KNCF_KEYINGTRIES]) {
 		msg.keyingtries.set = true;
-		msg.keyingtries.value = conn->options_set[KNCF_KEYINGTRIES];
+		msg.keyingtries.value = conn->options[KNCF_KEYINGTRIES];
 	}
 	msg.sa_replay_window = conn->options[KNCF_REPLAY_WINDOW];
 	msg.xfrm_if_id = conn->options[KNCF_XFRM_IF_ID];
