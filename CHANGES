@@ -2,6 +2,7 @@
 See also https://libreswan.org/
 
 v5.0 (Unreleased)
+* pluto: retry and revival code merged (keyingtries= ignored) [Andrew]
 * pluto: IKEv1 globally disabled by default (ikev1-policy=reject) See RFCxxxx
 * pluto: avoid post-authentication crash on corrupt TS payload [Andrew]
 * pluto: Support addresspool=v4/mask,v6/mask [Andrew]
