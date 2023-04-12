@@ -79,4 +79,22 @@ west #
 002 "64to46in6": connection is using multiple addresspools
 002 "64to46in6": added IKEv2 connection
 west #
+ ipsec auto --add good-cat
+002 "good-cat": added IKEv2 connection
+west #
+ ipsec auto --add bad-cat
+036 "bad-cat": failed to add connection: both rightcat=yes and leftaddresspool= defined
+west #
+ ipsec auto --add good-client
+002 "good-client": added IKEv2 connection
+west #
+ ipsec auto --add bad-client
+036 "bad-client": failed to add connection: both rightmodecfgclient=yes and leftaddresspool= defined
+west #
+ ipsec auto --add good-server
+002 "good-server": added IKEv2 connection
+west #
+ ipsec auto --add bad-server
+036 "bad-server": failed to add connection: leftmodecfgserver=yes expects rightaddresspool= and not leftaddresspool=
+west #
  

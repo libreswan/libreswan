@@ -1,7 +1,8 @@
-check addresspool= vs subnet=... vs host=...
+check addresspool= vs subnet=... vs host=... vs modecfg vs ...
 
 - addresspool= act as if subnet= was specified
 - addresspool= vs clientaddrfamily
 - addresspool= and subnet=
 
-github #946 #947 #948
+github #946 #947 #948 #1082
+

@@ -30,3 +30,12 @@ ipsec auto --add 64to6in6
 
 ipsec auto --add 46to64in4
 ipsec auto --add 64to46in6
+
+ipsec auto --add good-cat
+ipsec auto --add bad-cat
+
+ipsec auto --add good-client
+ipsec auto --add bad-client
+
+ipsec auto --add good-server
+ipsec auto --add bad-server
