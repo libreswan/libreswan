@@ -78,7 +78,6 @@ d.ipsec.conf/overlapip.xml
 d.ipsec.conf/reqid.xml
 d.ipsec.conf/dpddelay.xml
 d.ipsec.conf/dpdtimeout.xml
-d.ipsec.conf/dpdaction.xml
 d.ipsec.conf/pfs.xml
 d.ipsec.conf/pfsgroup.xml
 d.ipsec.conf/aggressive.xml
