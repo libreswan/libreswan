@@ -32,6 +32,7 @@
 #include <limits.h>	/* for UINT_MAX, ULONG_MAX */
 
 #include "ttodata.h"
+#include "refcnt.h"
 
 #include "defs.h"
 #include "log.h"
@@ -325,6 +326,7 @@ void submit_task(const struct logger *logger,
 	}
 
 	struct job *job = alloc_thing(struct job, where->func);
+	dbg_alloc("job", job, HERE);
 	job->cancelled = false;
 	job->where = where;
 	init_list_entry(&backlog_info, job, &job->backlog);
@@ -409,6 +411,7 @@ static void free_job(struct job **jobp)
 	pexpect(job->task == NULL); /* did your job */
 	/* now free up the continuation */
 	free_logger(&job->logger, HERE);
+	dbg_free("job", job, HERE);
 	pfree(job);
 	*jobp = NULL;
 }
