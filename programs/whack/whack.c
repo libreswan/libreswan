@@ -2623,10 +2623,7 @@ int main(int argc, char **argv)
 			diagw("missing --name <connection_name>");
 		}
 	} else if (seen[OPT_NAME] &&
-		   !seen[OPT_STATUS] &&
-		   !seen[OPT_GLOBAL_STATUS] &&
 		   !seen[OPT_TRAFFIC_STATUS] &&
-		   !seen[OPT_SHUNT_STATUS] &&
 		   !seen[OPT_CONNECTION_STATUS] &&
 		   !seen[OPT_SHOW_STATES]) {
 		diagw("no reason for --name");
