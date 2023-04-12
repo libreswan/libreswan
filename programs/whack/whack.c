@@ -2606,7 +2606,9 @@ int main(int argc, char **argv)
 		msg.whack_add = true;
 	}
 
-	/* decide whether --name is mandatory or forbidden */
+	/*
+	 * Decide whether --name is mandatory, optional, or forbidden.
+	 */
 	if (seen[OPT_ROUTE] ||
 	    seen[OPT_UNROUTE] ||
 	    seen[OPT_INITIATE] ||
@@ -2617,24 +2619,17 @@ int main(int argc, char **argv)
 	    seen[OPT_REKEY_IKE] ||
 	    seen[OPT_REKEY_IPSEC] ||
 	    (opts_seen & OPTS_SEEN_CD)) {
-		if (!seen[OPT_NAME])
+		if (!seen[OPT_NAME]) {
 			diagw("missing --name <connection_name>");
-#if 0
-		/*
-		 * XXX: these checks are broken:
-		 *
-		 * Since !LELEM(OPT_TRAFFIC_STATUS) is always false
-		 * the diagw() never appears.
-		 *
-		 * .whack_options is a "bool" and not an "lset_t".
-		 *
-		 * .whack_options is only set when there's a DBGOPT,
-		 * testing that directly would be better.
-		 */
-	} else if (msg.whack_options == LEMPTY) {
-		if (seen[OPT_NAME] && !LELEM(OPT_TRAFFIC_STATUS))
-			diagw("no reason for --name");
-#endif
+		}
+	} else if (seen[OPT_NAME] &&
+		   !seen[OPT_STATUS] &&
+		   !seen[OPT_GLOBAL_STATUS] &&
+		   !seen[OPT_TRAFFIC_STATUS] &&
+		   !seen[OPT_SHUNT_STATUS] &&
+		   !seen[OPT_CONNECTION_STATUS] &&
+		   !seen[OPT_SHOW_STATES]) {
+		diagw("no reason for --name");
 	}
 
 	if (seen[OPT_REMOTE_HOST] && !seen[OPT_INITIATE]) {
