@@ -987,32 +987,110 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 	}
 
 	/*
-	 * Should the address pool only be added to the modecfg
-	 * .server?  Is it necessary on the initiator?
+	 * Set client/server based on modecfg flags.
 	 *
-	 * OE orients things so that local modecfg is the client
-	 * .client (presumably so that it can initiate connections
-	 * on-demand), BUT also makes that same connection act like a
-	 * server accepting incoming OE connections.
+	 * And check that modecfg client, server, and CAT are all
+	 * consistent.
 	 *
-	 * Note that, possibly confusingly, in the config file the
-	 * client end specifies the address pool (instead of being
-	 * given a subnet).  Presumably it is saying this is where the
-	 * ends addresses come from.
+	 * The update uses OR so that the truth is blended with the
+	 * ADDRESSPOOL code's truth (see further down).
 	 *
-	 * Can a client also be a server, per above, OE seems to think
-	 * so (but without actually setting the bits).
+	 * Danger:
 	 *
+	 * OE configurations have leftmodecfgclient=yes
+	 * leftmodecfgserver=yes which creates a the connection that
+	 * is both a client and a server.
+	 */
+
+	if (src->modecfg_server && src->modecfg_client) {
+		diag_t d = diag("both %smodecfgserver=yes and %smodecfgclient=yes defined",
+				leftright, leftright);
+		if ((wm->policy & (POLICY_OPPORTUNISTIC)) == LEMPTY) {
+			return d;
+		}
+		llog_diag(RC_LOG, logger, &d, "opportunistic: ");
+	}
+
+	if (src->modecfg_server && src->cat) {
+		diag_t d = diag("both %smodecfgserver=yes and %scat=yes defined",
+				leftright, leftright);
+		if ((wm->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			return d;
+		}
+		llog_diag(RC_LOG, logger, &d, "opportunistic: ");
+	}
+
+	if (src->modecfg_client && other_src->cat) {
+		diag_t d = diag("both %smodecfgclient=yes and %scat=yes defined",
+				leftright, other_src->leftright);
+		if ((wm->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			return d;
+		}
+		llog_diag(RC_LOG, logger, &d, "opportunistic: ");
+	}
+
+	/* only update, may already be set below */
+	host_config->modecfg.server |= src->modecfg_server;
+	host_config->modecfg.client |= src->modecfg_client;
+
+	/*
+	 * Set client/server based on addresspool
+	 *
+	 * This end having an addresspool should imply that this host
+	 * is the client and the other host is the server.  Right?
+	 *
+	 * Unfortunately, no!
+	 *
+	 * OE configurations have leftmodecfgclient=yes
+	 * rightaddresspool= which creates a the connection that is
+	 * both a client and a server.
+
+	 */
+
+	if (src->addresspool != NULL) {
+		/*
+		 */
+		other_host_config->modecfg.server = true;
+		host_config->modecfg.client = true;
+		dbg("forced %s modecfg client=%s %s modecfg server=%s",
+		    host_config->leftright, bool_str(host_config->modecfg.client),
+		    other_host_config->leftright, bool_str(other_host_config->modecfg.server));
+	}
+
+	if (src->modecfg_server && src->addresspool != NULL) {
+		diag_t d = diag("%smodecfgserver=yes expects %saddresspool= and not %saddresspool=",
+				leftright, other_src->leftright, leftright);
+		if ((wm->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			return d;
+		}
+		llog_diag(RC_LOG, logger, &d, "opportunistic: ");
+	}
+
+	if (src->cat && other_src->addresspool != NULL) {
+		diag_t d = diag("both %scat=yes and %saddresspool= defined",
+				leftright, other_src->leftright);
+		if ((wm->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			return d;
+		}
+		llog_diag(RC_LOG, logger, &d, "opportunistic: ");
+	}
+
+	if (src->modecfg_client && other_src->addresspool != NULL) {
+		diag_t d = diag("both %smodecfgclient=yes and %saddresspool= defined",
+				leftright, other_src->leftright);
+		if ((wm->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			return d;
+		}
+		llog_diag(RC_LOG, logger, &d, "opportunistic: ");
+	}
+
+	/*
 	 * Note: IKEv1's XAUTH code will replace this address pool
 	 * with one based on the auth file.
 	 *
 	 * Note: The selector code will use the addresspool ranges to
 	 * generate the selectors.
 	 */
-
-	/* only update, may already be set below */
-	host_config->modecfg.server |= src->modecfg_server;
-	host_config->modecfg.client |= src->modecfg_client;
 
 	if (src->addresspool != NULL) {
 
@@ -1060,16 +1138,6 @@ static diag_t extract_host_end(struct connection *c, /* for POOL */
 						 leftright, src->addresspool);
 			}
 		}
-
-		/*
-		 * Addresspool implies the end is a client (and other
-		 * is a server), force settings.
-		 */
-		other_host_config->modecfg.server = true;
-		host_config->modecfg.client = true;
-		dbg("forced %s modecfg client=%s %s modecfg server=%s",
-		    host_config->leftright, bool_str(host_config->modecfg.client),
-		    other_host_config->leftright, bool_str(other_host_config->modecfg.server));
 	}
 	return NULL;
 }
@@ -2464,8 +2532,40 @@ static diag_t extract_connection(const struct whack_message *wm,
 		config->sec_label = clone_hunk(sec_label, "struct config sec_label");
 	}
 
+	/*
+	 * Look for contradictions.
+	 */
+
 	if (wm->left.addresspool != NULL && wm->right.addresspool != NULL) {
 		return diag("both left and right define addresspool=");
+	}
+
+	if (wm->left.modecfg_server && wm->right.modecfg_server) {
+		diag_t d = diag("both left and right define modecfgserver=yes");
+		if ((wm->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			return d;
+		}
+		llog_diag(RC_LOG, c->logger, &d, "opportunistic: ");
+	}
+
+	if (wm->left.modecfg_client && wm->right.modecfg_client) {
+		diag_t d = diag("both left and right define modecfgclient=yes");
+		if ((wm->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			return d;
+		}
+		llog_diag(RC_LOG, c->logger, &d, "opportunistic: ");
+	}
+
+	if (wm->left.cat && wm->right.cat) {
+		diag_t d = diag("both left and right define cat=yes");
+		if ((wm->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			return d;
+		}
+		llog_diag(RC_LOG, c->logger, &d, "opportunistic: ");
+	}
+
+	if (wm->left.virt != NULL && wm->right.virt != NULL) {
+		return diag("both left and right define virtual subnets");
 	}
 
 	/*
@@ -2477,10 +2577,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 */
 	const enum connection_kind connection_kind =
 		c->kind = extract_connection_kind(wm, c->logger);
-
-	if (wm->left.virt != NULL && wm->right.virt != NULL) {
-		return diag("both left and right define virtual subnets");
-	}
 
 	if (connection_kind == CK_GROUP &&
 	    (wm->left.virt != NULL || wm->right.virt != NULL)) {
@@ -2517,6 +2613,35 @@ static diag_t extract_connection(const struct whack_message *wm,
 							       "same ca");
 			break;
 		}
+	}
+
+	/*
+	 * Connections can't be both client and server right?
+	 *
+	 * Unfortunately, no!
+	 *
+	 * OE configurations have configurations such as
+	 * leftmodecfgclient=yes rightaddresspool= and
+	 * leftmodeconfigclient=yes leftmodeconfigserver=yes which
+	 * create a connection that is both a client and a server.
+	 */
+
+	if (config->end[LEFT_END].host.modecfg.server &&
+	    config->end[RIGHT_END].host.modecfg.server) {
+		diag_t d = diag("both left and right are configured as a server");
+		if ((wm->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			return d;
+		}
+		llog_diag(RC_LOG, c->logger, &d, "opportunistic: ");
+	}
+
+	if (config->end[LEFT_END].host.modecfg.client &&
+	    config->end[RIGHT_END].host.modecfg.client) {
+		diag_t d = diag("both left and right are configured as a client");
+		if ((wm->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			return d;
+		}
+		llog_diag(RC_LOG, c->logger, &d, "opportunistic: ");
 	}
 
 	/*
