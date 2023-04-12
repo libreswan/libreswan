@@ -39,31 +39,29 @@
 #include "ikev2_cp.h"
 #include "orient.h"		/* for oriented() */
 
-static bool need_v2_configuration_payload(const struct connection *const cc,
-					  const lset_t st_nat_traversal)
+static bool need_v2CP_payload(const struct connection *const cc,
+			      const lset_t st_nat_traversal)
 {
-	if (cc->local->host.config->modecfg.client &&
-	    cc->local->child.config->has_client_address_translation &&
-	    LHAS(st_nat_traversal, NATED_HOST)) {
+	if (cc->local->host.config->modecfg.client) {
 		return true;
 	}
-	if (cc->local->host.config->modecfg.client &&
-	    !cc->local->child.config->has_client_address_translation) {
+	if (cc->local->child.config->has_client_address_translation &&
+	    LHAS(st_nat_traversal, NATED_HOST)) {
 		return true;
 	}
 	return false;
 }
 
-bool expect_v2CP_response(const struct connection *const cc,
-		       const lset_t st_nat_traversal)
+bool need_v2CP_response(const struct connection *const cc,
+			const lset_t st_nat_traversal)
 {
-	return need_v2_configuration_payload(cc, st_nat_traversal);
+	return need_v2CP_payload(cc, st_nat_traversal);
 }
 
-bool need_v2CP_request(const struct connection *const cc,
+bool send_v2CP_request(const struct connection *const cc,
 		       const lset_t st_nat_traversal)
 {
-	return (need_v2_configuration_payload(cc, st_nat_traversal) ||
+	return (need_v2CP_payload(cc, st_nat_traversal) ||
 		cc->config->modecfg.domains != NULL ||
 		cc->config->modecfg.dns.len > 0);
 }

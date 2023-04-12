@@ -21,8 +21,8 @@
 struct child_sa;
 struct pbs_out;
 
-bool need_v2CP_request(const struct connection *cc, const lset_t st_nat_traversal);
-bool expect_v2CP_response(const struct connection *cc, const lset_t st_nat_traversal);
+bool send_v2CP_request(const struct connection *cc, const lset_t st_nat_traversal);
+bool need_v2CP_response(const struct connection *cc, const lset_t st_nat_traversal);
 
 bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs);
 bool emit_v2CP_response(const struct child_sa *child, struct pbs_out *outpbs);
