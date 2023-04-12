@@ -312,14 +312,6 @@
         <replaceable>seconds</replaceable></arg>
       </group>
 
-      <arg choice="opt">--dpdaction <group choice="plain">
-          <arg choice="opt">clear</arg>
-
-          <arg choice="opt">hold</arg>
-
-          <arg choice="opt">restart</arg>
-        </group></arg>
-
       <arg choice="opt">--no-keep-alive</arg>
 
       <arg choice="opt"><group choice="plain">
@@ -1959,29 +1951,6 @@
 	      R_U_THERE_ACK reply. After this period has elapsed with
 	      no response and no traffic, we will declare the peer
 	      dead, and remove the SA (default 120 seconds).
-	    </para>
-          </listitem>
-        </varlistentry>
-
-        <varlistentry>
-          <term>
-	    <option>--dpdaction</option> <replaceable>>action</replaceable>
-	  </term>
-          <listitem>
-            <para>
-	      When a DPD enabled peer is declared dead, what action
-	      should be taken. <emphasis
-	      remap="B">hold</emphasis>(default) means the eroute will
-	      be put into <emphasis remap="I">%hold</emphasis> status,
-	      while <emphasis remap="B">clear</emphasis>means the
-	      eroute and SA with both be cleared. Clear is really only
-	      useful on the server of a Road Warrior config. The
-	      action <emphasis remap="B">restart</emphasis> is used on
-	      tunnels that need to be permanently up, and have static
-	      IP addresses. The action <emphasis
-	      remap="B">restart_by_peer</emphasis>has been obsoleted
-	      and its functionality has been moved into the restart
-	      action.
 	    </para>
           </listitem>
         </varlistentry>
