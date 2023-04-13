@@ -2578,6 +2578,13 @@ static diag_t extract_connection(const struct whack_message *wm,
 	const enum connection_kind connection_kind =
 		c->kind = extract_connection_kind(wm, c->logger);
 
+	/*
+	 * For instance auto=ondemand narrowing=yes.
+	 */
+	if (connection_kind == CK_TEMPLATE && wm->autostart == AUTOSTART_ONDEMAND) {
+		return diag("template connection cannot be auto=ondemand");
+	}
+
 	if (connection_kind == CK_GROUP &&
 	    (wm->left.virt != NULL || wm->right.virt != NULL)) {
 		return diag("connection groups do not support virtual subnets");

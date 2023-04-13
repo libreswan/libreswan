@@ -72,7 +72,6 @@ SUBDIRS += _stackmanager
 endif
 
 ifneq ($(BSD_VARIANT),)
-SUBDIRS += _realsetup.bsd
 SUBDIRS += _updown.bsd
 endif
 
