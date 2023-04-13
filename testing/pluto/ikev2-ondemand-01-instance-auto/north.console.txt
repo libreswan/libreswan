@@ -1,0 +1,32 @@
+/testing/guestbin/swan-prep
+north #
+ ipsec start
+Redirecting to: [initsystem]
+north #
+ ../../guestbin/wait-until-pluto-started
+north #
+ # ipsec auto --add north-east
+north #
+ echo "initdone"
+initdone
+north #
+ # one ping to trigger IKE
+north #
+ ../../guestbin/ping-once.sh --forget -I 192.0.3.254 192.0.2.254
+fired and forgotten
+north #
+ ../../guestbin/wait-for.sh --match north-east -- ipsec whack --trafficstatus
+006 #2: "north-east", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+north #
+ # success
+north #
+ ../../guestbin/ping-once.sh --up -I 192.0.3.254 192.0.2.254
+up
+north #
+ ipsec whack --trafficstatus
+006 #2: "north-east", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+north #
+ echo done
+done
+north #
+ 

@@ -220,6 +220,13 @@ kvmplutotest	ikev2-ikeport-06-host-to-host		good
 kvmplutotest	ikev2-ikeport-4500-initiator-ipv4	good
 kvmplutotest	ikev2-ikeport-4500-initiator-ipv6	good
 
+kvmplutotest	ikev2-ondemand-01-instance-auto			good
+kvmplutotest	ikev2-ondemand-01-instance-route		good
+kvmplutotest	ikev2-ondemand-02-permanent-auto-transport	good
+kvmplutotest	ikev2-ondemand-02-permanent-auto-tunnel		good
+kvmplutotest	ikev2-ondemand-02-permanent-route-transport	good
+kvmplutotest	ikev2-ondemand-02-permanent-route-tunnel	good
+
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good
 kvmplutotest	ikev2-27-uniqueid			good
