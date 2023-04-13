@@ -39,6 +39,48 @@
 #include "ikev2_cp.h"
 #include "orient.h"		/* for oriented() */
 
+void ldbg_cp(struct logger *logger, const struct connection *cc, const char *fmt, ...)
+{
+	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+		jam_string(buf, "CP: ");
+		va_list ap;
+		va_start(ap, fmt);
+		jam_va_list(buf, fmt, ap);
+		va_end(ap);
+		FOR_EACH_THING(lr, LEFT_END, RIGHT_END) {
+			const struct host_end_config *end = &cc->end[lr].config->host;
+			jam_string(buf, "; ");
+			jam_string(buf, end->leftright);
+			jam_string(buf, ":");
+			if (end == &cc->local->config->host) {
+				jam_string(buf, " local");
+			}
+			if (end == &cc->remote->config->host) {
+				jam_string(buf, " remote");
+			}
+			if (end->modecfg.client) {
+				jam_string(buf, " client");
+			}
+			if (end->modecfg.server) {
+				jam_string(buf, " server");
+			}
+			if (end->pool_ranges.len > 0) {
+				jam_string(buf, " addresspool");
+			}
+		}
+		jam_string(buf, ";");
+		if (cc->config->modecfg.domains != NULL) {
+			jam_string(buf, " domains");
+		}
+		if (cc->config->modecfg.dns.len > 0) {
+			jam_string(buf, " dns");
+		}
+		if (cc->policy & POLICY_OPPORTUNISTIC) {
+			jam_string(buf, " OE");
+		}
+	}
+}
+
 static bool need_v2CP_payload(const struct connection *const cc,
 			      const lset_t st_nat_traversal)
 {
@@ -63,9 +105,11 @@ bool need_v2CP_response(const struct connection *const cc,
 bool send_v2CP_request(const struct connection *const cc,
 		       const lset_t st_nat_traversal)
 {
-	return (need_v2CP_payload(cc, st_nat_traversal) ||
-		cc->config->modecfg.domains != NULL ||
-		cc->config->modecfg.dns.len > 0);
+	bool send = (need_v2CP_payload(cc, st_nat_traversal) ||
+		     cc->config->modecfg.domains != NULL ||
+		     cc->config->modecfg.dns.len > 0);
+	ldbg_cp(cc->logger, cc, "send-v2CP=%s", bool_str(send));
+	return send;
 }
 
 /* Misleading name, also used for NULL sized type's */
@@ -155,7 +199,9 @@ bool emit_v2CP_response(const struct child_sa *child, struct pbs_out *outpbs)
 		.isacp_type = IKEv2_CP_CFG_REPLY,
 	};
 
-	dbg("send %s Configuration Payload", enum_name(&ikev2_cp_type_names, cp.isacp_type));
+	ldbg_cp(child->sa.st_logger, c,
+		"send %s Configuration Payload",
+		enum_name(&ikev2_cp_type_names, cp.isacp_type));
 
 	if (!out_struct(&cp, &ikev2_cp_desc, outpbs, &cp_pbs))
 		return false;
@@ -201,7 +247,9 @@ bool emit_v2CP_request(const struct child_sa *child, struct pbs_out *outpbs)
 		.isacp_type = IKEv2_CP_CFG_REQUEST,
 	};
 
-	dbg("emit %s Configuration Payload", enum_name(&ikev2_cp_type_names, cp.isacp_type));
+	ldbg_cp(child->sa.st_logger, child->sa.st_connection,
+		"emit %s Configuration Payload",
+		enum_name(&ikev2_cp_type_names, cp.isacp_type));
 
 	if (!out_struct(&cp, &ikev2_cp_desc, outpbs, &cp_pbs))
 		return false;

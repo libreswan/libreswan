@@ -31,4 +31,7 @@ bool process_v2_IKE_AUTH_request_v2CP_request_payload(struct ike_sa *ike, struct
 						      struct payload_digest *cp_payload);
 bool process_v2CP_response_payload(struct ike_sa *ike, struct child_sa *child, struct payload_digest *cp_pd);
 
+void ldbg_cp(struct logger *logger, const struct connection *cc, const char *fmt, ...)
+	PRINTF_LIKE(3);
+
 #endif
