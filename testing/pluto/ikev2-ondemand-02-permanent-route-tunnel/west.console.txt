@@ -13,6 +13,14 @@ west #
  echo "initdone"
 initdone
 west #
+ # trap installed
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+west #
  ../../guestbin/ping-once.sh --forget -I 192.1.2.45 192.1.2.23
 fired and forgotten
 west #
@@ -24,5 +32,58 @@ up
 west #
  ipsec whack --trafficstatus
 006 #2: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ # real policy installed
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.23/32 dst 192.1.2.45/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.2.45/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	lastused YYYY-MM-DD HH:MM:SS
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+west #
+ ipsec auto --down west
+002 "west": terminating SAs using this connection
+002 "west" #1: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+005 "west" #2: ESP traffic information: in=84B out=84B
+west #
+ # only trap
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+west #
+ # everything cleared out
+west #
+ ../../guestbin/ipsec-kernel-state.sh
 west #
  

@@ -222,10 +222,10 @@ kvmplutotest	ikev2-ikeport-4500-initiator-ipv6	good
 
 kvmplutotest	ikev2-ondemand-01-instance-auto			good
 kvmplutotest	ikev2-ondemand-01-instance-route		good
-kvmplutotest	ikev2-ondemand-02-permanent-auto-transport	good
-kvmplutotest	ikev2-ondemand-02-permanent-auto-tunnel		good
-kvmplutotest	ikev2-ondemand-02-permanent-route-transport	good
-kvmplutotest	ikev2-ondemand-02-permanent-route-tunnel	good
+kvmplutotest	ikev2-ondemand-02-permanent-auto-transport	wip	github/1056
+kvmplutotest	ikev2-ondemand-02-permanent-auto-tunnel		wip	github/1056
+kvmplutotest	ikev2-ondemand-02-permanent-route-transport	wip	github/1056
+kvmplutotest	ikev2-ondemand-02-permanent-route-tunnel	wip	github/1056
 
 kvmplutotest	ikev2-24-cryptoload			wip
 kvmplutotest	ikev2-25-rw-nat				good
