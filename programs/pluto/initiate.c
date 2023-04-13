@@ -726,7 +726,18 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		connection_acquire(c, &inception, b);
 		return;
 	case CK_TEMPLATE:
-		PASSERT(b->logger, (c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
+		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
+			/*
+			 * Only opportunistic connections can ondemand
+			 * instantiate a template.
+			 *
+			 * Here, the connection should never have been
+			 * routed and/or whack should never have
+			 * allowed ondemand?
+			 */
+			cannot_ondemand(RC_NOPEERIP, b, "non-opportunistic template connection");
+			return;
+		}
 		LLOG_JAMBUF(RC_LOG, b->logger, buf) {
 			jam_kernel_acquire(buf, b);
 		}
