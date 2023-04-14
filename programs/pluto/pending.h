@@ -40,7 +40,6 @@ struct pending {
 	struct ike_sa *ike;
 	struct connection *connection;
 	lset_t policy;
-	unsigned long try;
 	so_serial_t replacing;
 	monotime_t pend_time;
 	bool part_of_initiate;
@@ -52,7 +51,6 @@ void add_v1_pending(struct fd *whack_sock,
 		    struct ike_sa *ike,
 		    struct connection *c,
 		    lset_t policy,
-		    unsigned long try,
 		    so_serial_t replacing,
 		    shunk_t sec_label,
 		    bool part_of_initiate);
@@ -61,7 +59,6 @@ void add_v2_pending(struct fd *whack_sock,
 		    struct ike_sa *ike,
 		    struct connection *c,
 		    lset_t policy,
-		    unsigned long try,
 		    so_serial_t replacing,
 		    shunk_t sec_label,
 		    bool part_of_initiate);

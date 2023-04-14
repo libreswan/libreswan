@@ -374,7 +374,7 @@ static bool initiate_connection_4_fab(struct connection *c,
 	 * establish.
 	 */
 
-	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, &inception,
+	ipsecdoi_initiate(c, c->policy, SOS_NOBODY, &inception,
 			  (c->config->ike_version == IKEv1 ? HUNK_AS_SHUNK(c->child.sec_label) : null_shunk),
 			  background, c->logger);
 	return true;
@@ -382,7 +382,6 @@ static bool initiate_connection_4_fab(struct connection *c,
 
 void ipsecdoi_initiate(struct connection *c,
 		       lset_t policy,
-		       unsigned long try,
 		       so_serial_t replacing,
 		       const threadtime_t *inception,
 		       shunk_t sec_label,
@@ -425,7 +424,7 @@ void ipsecdoi_initiate(struct connection *c,
 		} else {
 			/* leave our Phase 2 negotiation pending */
 			add_v1_pending(whackfd, pexpect_ike_sa(st),
-				       c, policy, try,
+				       c, policy,
 				       replacing, sec_label,
 				       false /*part of initiate*/);
 		}
@@ -468,7 +467,7 @@ void ipsecdoi_initiate(struct connection *c,
 				cc = c;
 			}
 			add_v2_pending(background ? null_fd : logger->global_whackfd,
-				       ike, cc, policy, try,
+				       ike, cc, policy,
 				       replacing, sec_label,
 				       false /*part of initiate*/);
 		} else if (!already_has_larval_v2_child(ike, c)) {

@@ -1012,7 +1012,7 @@ void aggr_outI1(struct fd *whack_sock,
 	}
 
 	if (HAS_IPSEC_POLICY(policy))
-		add_v1_pending(whack_sock, ike, c, policy, 1,
+		add_v1_pending(whack_sock, ike, c, policy,
 			       predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
 			       sec_label, true /*part of initiate*/);
 

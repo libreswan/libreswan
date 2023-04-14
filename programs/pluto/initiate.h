@@ -26,7 +26,6 @@ bool initiate_connection(struct connection *c, const char *remote_host,
 
 void ipsecdoi_initiate(struct connection *c,
 		       lset_t policy,
-		       unsigned long try,
 		       so_serial_t replacing,
 		       const threadtime_t *inception,
 		       shunk_t sec_label,

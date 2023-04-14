@@ -19,6 +19,6 @@
 #include "monotime.h"
 
 void event_v1_replace(struct state *st, monotime_t now);
-void ikev1_replace(struct state *st, unsigned long try);
+void ikev1_replace(struct state *st);
 
 #endif

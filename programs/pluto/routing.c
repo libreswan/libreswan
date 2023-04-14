@@ -279,8 +279,9 @@ static void unrouted_instance_to_unrouted_negotiation(struct connection *c, cons
 	assign_holdpass(c, KERNEL_POLICY_OP_REPLACE, reason);
 
 	set_routing(c, RT_UNROUTED_NEGOTIATION, NULL);
-	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY,
-			  e->inception, e->acquire->sec_label, e->acquire->background, e->acquire->logger);
+	ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+			  e->inception, e->acquire->sec_label,
+			  e->acquire->background, e->acquire->logger);
 }
 
 /*
@@ -299,8 +300,9 @@ static void permanent_unrouted_to_unrouted_negotiation(struct connection *c, con
 			"installing negotiation kernel policy for permanent connection");
 	set_routing(c, RT_UNROUTED_NEGOTIATION, NULL);
 	/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
-	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY,
-			  e->inception, e->acquire->sec_label, e->acquire->background, e->acquire->logger);
+	ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+			  e->inception, e->acquire->sec_label,
+			  e->acquire->background, e->acquire->logger);
 }
 
 /*
@@ -322,7 +324,7 @@ static void permanent_routed_ondemand_to_routed_negotiation(struct connection *c
 	/* the state isn't yet known */
 	set_routing(c, RT_ROUTED_NEGOTIATION, NULL);
 	/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
-	ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY, e->inception,
+	ipsecdoi_initiate(c, c->policy, SOS_NOBODY, e->inception,
 			  e->acquire->sec_label, e->acquire->background, e->acquire->logger);
 }
 
@@ -345,7 +347,7 @@ void connection_acquire(struct connection *c, threadtime_t *inception, const str
 {
 	if (labeled(c)) {
 		PASSERT(c->logger, labeled_parent(c));
-		ipsecdoi_initiate(c, c->policy, 1, SOS_NOBODY,
+		ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 				  inception, b->sec_label, b->background, b->logger);
 		packet_buf pb;
 		enum_buf hab;

@@ -64,7 +64,6 @@ static void add_pending(struct fd *whack_sock,
 			struct ike_sa *ike,
 			struct connection *c,
 			lset_t policy,
-			unsigned long try,
 			so_serial_t replacing,
 			const shunk_t sec_label,
 			bool part_of_initiate)
@@ -92,7 +91,6 @@ static void add_pending(struct fd *whack_sock,
 	p->ike = ike;
 	p->connection = c;
 	p->policy = policy;
-	p->try = try;
 	p->replacing = replacing;
 	p->pend_time = mononow();
 	p->part_of_initiate = part_of_initiate; /* useful */
@@ -122,26 +120,24 @@ void add_v1_pending(struct fd *whackfd,
 		    struct ike_sa *ike,
 		    struct connection *c,
 		    lset_t policy,
-		    unsigned long try,
 		    so_serial_t replacing,
 		    const shunk_t sec_label,
 		    bool part_of_initiate)
 {
 	passert(ike->sa.st_ike_version == IKEv1);
-	add_pending(whackfd, ike, c, policy, try, replacing, sec_label, part_of_initiate);
+	add_pending(whackfd, ike, c, policy, replacing, sec_label, part_of_initiate);
 }
 
 void add_v2_pending(struct fd *whackfd,
 		    struct ike_sa *ike,
 		    struct connection *c,
 		    lset_t policy,
-		    unsigned long try,
 		    so_serial_t replacing,
 		    const shunk_t sec_label,
 		    bool part_of_initiate)
 {
 	passert(ike->sa.st_ike_version == IKEv2);
-	add_pending(whackfd, ike, c, policy, try, replacing, sec_label, part_of_initiate);
+	add_pending(whackfd, ike, c, policy, replacing, sec_label, part_of_initiate);
 }
 
 /*

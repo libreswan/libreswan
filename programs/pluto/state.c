@@ -1565,7 +1565,7 @@ void delete_states_by_peer(const struct fd *whackfd, const ip_address *peer)
 					switch (st->st_ike_version) {
 #ifdef USE_IKEv1
 					case IKEv1:
-						ikev1_replace(st, 1);
+						ikev1_replace(st);
 						break;
 #endif
 					case IKEv2:

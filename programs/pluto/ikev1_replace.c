@@ -45,7 +45,7 @@
  * Does not delete the old state -- someone else will do that.
  */
 
-void ikev1_replace(struct state *st, unsigned long try)
+void ikev1_replace(struct state *st)
 {
 	/*
 	 * start billing the new state.  The old state also gets
@@ -83,7 +83,7 @@ void ikev1_replace(struct state *st, unsigned long try)
 		if (st->st_ike_version == IKEv1)
 			passert(HAS_IPSEC_POLICY(policy));
 
-		ipsecdoi_initiate(st->st_connection, policy, try, st->st_serialno, &inception,
+		ipsecdoi_initiate(st->st_connection, policy, st->st_serialno, &inception,
 				  null_shunk, /*background?*/false, st->st_logger);
 	}
 }
@@ -127,7 +127,7 @@ void event_v1_replace(struct state *st, monotime_t now)
 		 * both to the state being deleted and
 		 * to the new state being created.
 		 */
-		ikev1_replace(st, 1);
+		ikev1_replace(st);
 	}
 
 	event_delete(EVENT_v1_DPD, st);

@@ -620,7 +620,7 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 		} else {
 			cc = c;
 		}
-		add_v2_pending(background ? null_fd : logger->global_whackfd, ike, cc, policy, 1,
+		add_v2_pending(background ? null_fd : logger->global_whackfd, ike, cc, policy,
 			       predecessor == NULL ? SOS_NOBODY : predecessor->st_serialno,
 			       sec_label, true /*part of initiate*/);
 	}
