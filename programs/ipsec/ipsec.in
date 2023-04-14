@@ -402,7 +402,6 @@ ipsec_help() {
 	down \
 	fetchcrls \
 	fipsstatus \
-	globalstatus \
 	import \
 	initnss \
 	listall \
