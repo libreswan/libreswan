@@ -31,7 +31,7 @@
       <arg choice="opt">--config
       <replaceable>filename</replaceable></arg>
 
-      <arg choice="opt">--ctlbase
+      <arg choice="opt">--ctlsocket
       <replaceable>socketfile</replaceable></arg>
 
       <arg choice="opt">--verbose</arg>
