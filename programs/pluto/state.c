@@ -491,7 +491,7 @@ struct ike_sa *new_v2_ike_sa(struct connection *c,
 			     const ike_spi_t ike_initiator_spi,
 			     const ike_spi_t ike_responder_spi,
 			     lset_t policy,
-			     int try, struct fd *whack_sock)
+			     struct fd *whack_sock)
 {
 	struct state *st = new_state(c, ike_initiator_spi, ike_responder_spi,
 				     IKE_SA, sa_role, whack_sock, HERE);
@@ -499,7 +499,7 @@ struct ike_sa *new_v2_ike_sa(struct connection *c,
 	change_state(&ike->sa, transition->state);
 	set_v2_transition(&ike->sa, transition, HERE);
 	v2_msgid_init_ike(ike);
-	initialize_new_state(&ike->sa, policy, try);
+	initialize_new_state(&ike->sa, policy);
 	event_schedule(EVENT_SA_DISCARD, EXCHANGE_TIMEOUT_DELAY, &ike->sa);
 	return ike;
 }

@@ -367,8 +367,8 @@ stf_status process_v2_IKE_INTERMEDIATE_response(struct ike_sa *ike,
 	 */
 	if (c->newest_ipsec_sa > ike->sa.st_serialno) {
 		llog_sa(RC_LOG, ike,
-			  "state superseded by #%lu try=%lu, drop this negotiation",
-			  c->newest_ipsec_sa, ike->sa.st_try);
+			  "state superseded by #%lu, drop this negotiation",
+			  c->newest_ipsec_sa);
 		return STF_FATAL;
 	}
 

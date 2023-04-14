@@ -290,7 +290,7 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 					what = "delete from";
 				} else if (!already_has_larval_v2_child(ike, p->connection)) {
 					submit_v2_CREATE_CHILD_SA_new_child(ike, p->connection,
-									    p->policy, p->try,
+									    p->policy,
 									    p->whack_sock);
 				}
 				break;
@@ -298,7 +298,7 @@ void unpend(struct ike_sa *ike, struct connection *cc)
 #ifdef USE_IKEv1
 				quick_outI1(p->whack_sock, &ike->sa, p->connection,
 					    p->policy,
-					    p->try, p->replacing,
+					    p->replacing,
 					    null_shunk);
 #endif
 				break;

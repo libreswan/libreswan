@@ -575,9 +575,7 @@ struct state {
 	} st_pstats;
 
 	retransmit_t st_retransmit;	/* retransmit counters; opaque */
-	unsigned long st_try;		/* Number of times rekeying attempted.
-					 * 0 means the only time.
-					 */
+
 	/*
 	 * How much time to allow the replace attempt (i.e., re-key)
 	 * before the SA must be killed and then re-started from
@@ -877,7 +875,7 @@ struct ike_sa *new_v2_ike_sa(struct connection *c,
 			     const ike_spi_t ike_initiator_spi,
 			     const ike_spi_t ike_responder_spi,
 			     lset_t policy,
-			     int try, struct fd *whack_sock);
+			     struct fd *whack_sock);
 /* could eventually be IKE or CHILD SA */
 struct child_sa *new_v2_child_sa(struct connection *c,
 				 struct ike_sa *ike,
@@ -941,9 +939,7 @@ struct child_sa *find_v2_child_sa_by_outbound_spi(struct ike_sa *ike,
 extern struct state *find_v1_info_state(const ike_spis_t *ike_spis,
 					msgid_t msgid);
 
-extern void initialize_new_state(struct state *st,
-				 lset_t policy,
-				 int try);
+extern void initialize_new_state(struct state *st, lset_t policy);
 
 extern void show_traffic_status(struct show *s, const char *name);
 extern void show_brief_status(struct show *s);

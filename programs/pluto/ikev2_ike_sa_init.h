@@ -18,7 +18,6 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md);
 extern void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 					    struct state *predecessor,
 					    lset_t policy,
-					    unsigned long try,
 					    const threadtime_t *inception,
 					    shunk_t sec_label,
 					    bool background, struct logger *logger);

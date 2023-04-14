@@ -404,7 +404,6 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_child(struct ike_sa *ike,
 	 * that this doesn't capture everything.
 	 */
 	larval_child->sa.st_policy = capture_child_rekey_policy(&child_being_replaced->sa);
-	larval_child->sa.st_try = 1;
 	larval_child->sa.st_v2_rekey_pred = child_being_replaced->sa.st_serialno;
 
 	larval_child->sa.st_v2_create_child_sa_proposals =
@@ -665,8 +664,7 @@ stf_status process_v2_CREATE_CHILD_SA_rekey_child_request(struct ike_sa *ike,
 
 void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 					 struct connection *c, /* for child */
-					 lset_t policy, int try,
-					 struct fd *whackfd)
+					 lset_t policy, struct fd *whackfd)
 {
 	struct child_sa *larval_child = new_v2_child_sa(c, ike, IPSEC_SA,
 							SA_INITIATOR,
@@ -675,7 +673,6 @@ void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 
 	free_chunk_content(&larval_child->sa.st_ni); /* this is from the parent. */
 	free_chunk_content(&larval_child->sa.st_nr); /* this is from the parent. */
-	larval_child->sa.st_try = try;
 
 	/* share the love; XXX: something better? */
 	fd_delref(&ike->sa.st_logger->object_whackfd);
@@ -1288,7 +1285,6 @@ struct child_sa *submit_v2_CREATE_CHILD_SA_rekey_ike(struct ike_sa *ike)
 	larval_ike->sa.st_oakley = ike->sa.st_oakley;
 	larval_ike->sa.st_ike_rekey_spis.initiator = ike_initiator_spi();
 	larval_ike->sa.st_v2_rekey_pred = ike->sa.st_serialno;
-	larval_ike->sa.st_try = 1;
 	larval_ike->sa.st_policy = LEMPTY;
 	larval_ike->sa.st_v2_create_child_sa_proposals =
 		ikev2_proposals_from_proposal("rekeying ike", ike->sa.st_v2_accepted_proposal);

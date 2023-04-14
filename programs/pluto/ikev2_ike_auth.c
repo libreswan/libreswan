@@ -441,14 +441,6 @@ stf_status initiate_v2_IKE_AUTH_request_signature_continue(struct ike_sa *ike,
 		fd_delref(&child_whackfd);
 		ike->sa.st_v2_msgid_windows.initiator.wip_sa = child;
 
-		/*
-		 * XXX because the early child state ends up with the
-		 * try counter check, we need to copy it.
-		 *
-		 * XXX: huh?!?
-		 */
-		child->sa.st_try = ike->sa.st_try;
-
 		if (cc != pc) {
 			/* lie */
 			connection_buf cib;

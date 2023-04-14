@@ -30,7 +30,7 @@ extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_rekey_ike_response;
 
 extern void submit_v2_CREATE_CHILD_SA_new_child(struct ike_sa *ike,
 						struct connection *c, /*child*/
-						lset_t policy, int try,
+						lset_t policy,
 						struct fd *whackfd);
 extern ikev2_state_transition_fn initiate_v2_CREATE_CHILD_SA_new_child_request;
 extern ikev2_state_transition_fn process_v2_CREATE_CHILD_SA_new_child_request;

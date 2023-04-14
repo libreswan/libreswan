@@ -410,9 +410,9 @@ void ipsecdoi_initiate(struct connection *c,
 						     V1_PHASE1_INITIATOR_STATES);
 		struct fd *whackfd = background ? null_fd : logger->global_whackfd;
 		if (st == NULL && (policy & POLICY_AGGRESSIVE)) {
-			aggr_outI1(whackfd, c, NULL, policy, try, inception, sec_label);
+			aggr_outI1(whackfd, c, NULL, policy, inception, sec_label);
 		} else if (st == NULL) {
-			main_outI1(whackfd, c, NULL, policy, try, inception, sec_label);
+			main_outI1(whackfd, c, NULL, policy, inception, sec_label);
 		} else if (IS_V1_ISAKMP_SA_ESTABLISHED(st)) {
 			/*
 			 * ??? we assume that peer_nexthop_sin isn't
@@ -420,7 +420,7 @@ void ipsecdoi_initiate(struct connection *c,
 			 * negotiated the ISAKMP SA!  It isn't clear
 			 * what to do with the error return.
 			 */
-			quick_outI1(whackfd, st, c, policy, try,
+			quick_outI1(whackfd, st, c, policy,
 				    replacing, sec_label);
 		} else {
 			/* leave our Phase 2 negotiation pending */
@@ -456,7 +456,7 @@ void ipsecdoi_initiate(struct connection *c,
 			    bool_str(ike->sa.st_viable_parent));
 		}
 		if (ike == NULL) {
-			initiate_v2_IKE_SA_INIT_request(c, NULL, policy, try, inception,
+			initiate_v2_IKE_SA_INIT_request(c, NULL, policy, inception,
 							sec_label, background, logger);
 		} else if (!IS_IKE_SA_ESTABLISHED(&ike->sa)) {
 			/* leave CHILD SA negotiation pending */
@@ -479,7 +479,7 @@ void ipsecdoi_initiate(struct connection *c,
 			} else {
 				cc = c;
 			}
-			submit_v2_CREATE_CHILD_SA_new_child(ike, cc, policy, try,
+			submit_v2_CREATE_CHILD_SA_new_child(ike, cc, policy,
 							    logger->global_whackfd);
 		}
 		break;

@@ -610,7 +610,6 @@ void quick_outI1(struct fd *whack_sock,
 		 struct state *isakmp_sa,
 		 struct connection *c,
 		 lset_t policy,
-		 unsigned long try,
 		 so_serial_t replacing,
 		 shunk_t sec_label)
 {
@@ -618,7 +617,6 @@ void quick_outI1(struct fd *whack_sock,
 	passert(c != NULL);
 
 	st->st_policy = policy;
-	st->st_try = try;
 
 	if (c->config->sec_label.len != 0) {
 		dbg("pending phase 2 with base security context '"PRI_SHUNK"'",
@@ -1177,8 +1175,6 @@ static stf_status quick_inI1_outR1_tail(struct state *p1st, struct msg_digest *m
 		 * that authenticated the ISAKMP SA.  We only need it in this
 		 * routine, so we can "reach back" to p1st to get it.
 		 */
-
-		st->st_try = 0; /* not our job to try again from start */
 
 		st->st_v1_msgid.id = md->hdr.isa_msgid;
 

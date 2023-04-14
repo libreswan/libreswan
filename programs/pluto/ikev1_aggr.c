@@ -218,7 +218,6 @@ stf_status aggr_inI1_outR1(struct state *null_st UNUSED,
 
 	passert(c == ike->sa.st_connection); /* no switch */
 
-	ike->sa.st_try = 0;                                 /* Not our job to try again from start */
 	ike->sa.st_policy &= ~POLICY_IPSEC_MASK; /* only as accurate as connection */
 
 	binlog_refresh_state(&ike->sa);
@@ -986,7 +985,6 @@ void aggr_outI1(struct fd *whack_sock,
 		struct connection *c,
 		struct state *predecessor,
 		lset_t policy,
-		unsigned long try,
 		const threadtime_t *inception,
 		shunk_t sec_label)
 {
@@ -994,7 +992,7 @@ void aggr_outI1(struct fd *whack_sock,
 	struct ike_sa *ike = new_v1_istate(c, whack_sock);
 	statetime_t start = statetime_backdate(&ike->sa, inception);
 	change_v1_state(&ike->sa, STATE_AGGR_I1);
-	initialize_new_state(&ike->sa, policy, try);
+	initialize_new_state(&ike->sa, policy);
 
 	if (c->local->host.config->auth == AUTH_PSK && LIN(POLICY_AGGRESSIVE, c->policy)) {
 		llog_sa(RC_LOG_SERIOUS, ike,

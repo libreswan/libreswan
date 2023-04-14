@@ -19,6 +19,5 @@ extern void quick_outI1(struct fd *whack_sock,
 			struct state *isakmp_sa,
 			struct connection *c,
 			lset_t policy,
-			unsigned long try,
 			so_serial_t replacing,
 			shunk_t sec_label);

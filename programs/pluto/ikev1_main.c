@@ -112,7 +112,6 @@ void main_outI1(struct fd *whack_sock,
 		struct connection *c,
 		struct state *predecessor,
 		lset_t policy,
-		unsigned long try,
 		const threadtime_t *inception,
 		shunk_t sec_label)
 {
@@ -121,7 +120,7 @@ void main_outI1(struct fd *whack_sock,
 	statetime_t start = statetime_backdate(st, inception);
 
 	/* set up new state */
-	initialize_new_state(st, policy, try);
+	initialize_new_state(st, policy);
 
 	change_v1_state(st, STATE_MAIN_I1);
 
@@ -465,7 +464,6 @@ stf_status main_inI1_outR1(struct state *unused_st UNUSED,
 
 	passert(!st->st_oakley.doing_xauth);
 
-	st->st_try = 0; /* not our job to try again from start */
 	/* only as accurate as connection */
 	st->st_policy = c->policy & ~POLICY_IPSEC_MASK;
 	change_v1_state(st, STATE_MAIN_R0);

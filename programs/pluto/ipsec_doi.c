@@ -116,8 +116,7 @@ lset_t capture_child_rekey_policy(struct state *st)
 }
 
 void initialize_new_state(struct state *st,
-			  lset_t policy,
-			  int try)
+			  lset_t policy)
 {
 	/*
 	 * reset our choice of interface
@@ -140,7 +139,6 @@ void initialize_new_state(struct state *st,
 	    __func__, str_endpoint(&st->st_remote_endpoint, &eb));
 
 	st->st_policy = policy & ~POLICY_IPSEC_MASK;        /* clear bits */
-	st->st_try = try;
 
 	FOR_EACH_ITEM(spd, &c->child.spds) {
 		if (spd->local->host->config->xauth.client) {

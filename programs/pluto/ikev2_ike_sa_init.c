@@ -387,7 +387,7 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 						   md->hdr.isa_ike_spis.initiator,
 						   ike_responder_spi(&md->sender,
 								     md->md_logger),
-						   LEMPTY, 0, null_fd);
+						   LEMPTY, null_fd);
 
 		statetime_t start = statetime_backdate(&ike->sa, &md->md_inception);
 		/* XXX: keep test results happy */
@@ -524,7 +524,6 @@ void process_v2_IKE_SA_INIT(struct msg_digest *md)
 void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 				     struct state *predecessor,
 				     lset_t policy,
-				     unsigned long try,
 				     const threadtime_t *inception,
 				     shunk_t sec_label,
 				     bool background, struct logger *logger)
@@ -541,14 +540,13 @@ void initiate_v2_IKE_SA_INIT_request(struct connection *c,
 	const struct v2_state_transition *transition = &fs->v2.transitions[0];
 	struct ike_sa *ike = new_v2_ike_sa(c, transition, SA_INITIATOR,
 					   ike_initiator_spi(), zero_ike_spi,
-					   policy, try, logger->global_whackfd);
+					   policy, logger->global_whackfd);
 	statetime_t start = statetime_backdate(&ike->sa, inception);
 
 	/* set up new state */
 	passert(ike->sa.st_ike_version == IKEv2);
 	passert(ike->sa.st_state->kind == STATE_V2_PARENT_I0);
 	passert(ike->sa.st_sa_role == SA_INITIATOR);
-	ike->sa.st_try = try;
 
 	/*
 	 * When TCP fallback start with UDP and then flip-flop TCP and
@@ -1402,8 +1400,8 @@ stf_status process_v2_IKE_SA_INIT_response(struct ike_sa *ike,
 	 */
 	if (c->newest_ipsec_sa > ike->sa.st_serialno) {
 		llog_sa(RC_LOG, ike,
-			  "state superseded by #%lu try=%lu, drop this negotiation",
-			  c->newest_ipsec_sa, ike->sa.st_try);
+			  "state superseded by #%lu, drop this negotiation",
+			  c->newest_ipsec_sa);
 		return STF_FATAL;
 	}
 

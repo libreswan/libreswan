@@ -62,11 +62,11 @@ void ikev1_replace(struct state *st, unsigned long try)
 
 		if (policy & POLICY_AGGRESSIVE) {
 			aggr_outI1(st->st_logger->object_whackfd, c, st,
-				   policy, try, &inception,
+				   policy, &inception,
 				   HUNK_AS_SHUNK(c->child.sec_label));
 		} else {
 			main_outI1(st->st_logger->object_whackfd, c, st,
-				   policy, try, &inception,
+				   policy, &inception,
 				   HUNK_AS_SHUNK(c->child.sec_label));
 		}
 

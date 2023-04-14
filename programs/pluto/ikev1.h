@@ -40,7 +40,6 @@ extern void main_outI1(struct fd *whack_sock,
 		       struct connection *c,
 		       struct state *predecessor,
 		       lset_t policy,
-		       unsigned long try,
 		       const threadtime_t *inception,
 		       shunk_t sec_label);
 
@@ -48,7 +47,6 @@ extern void aggr_outI1(struct fd *whack_sock,
 		       struct connection *c,
 		       struct state *predecessor,
 		       lset_t policy,
-		       unsigned long try,
 		       const threadtime_t *inception,
 		       shunk_t sec_label);
 
