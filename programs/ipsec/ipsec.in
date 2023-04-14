@@ -514,6 +514,24 @@ nflog_iptables_delete() {
 }
 
 ipsec_stopnflog() {
+    local usage
+    usage="Usage: ipsec stopnflog"
+    while [ ${#} -gt 0 ]; do
+	case ${1} in
+	    help|--help|-h)
+		echo "${usage}"
+		exit 0
+		;;
+	    *)
+		echo "ipsec stopnflog: Unknown option \"${1}\"" >&2
+		echo >&2
+		echo "${usage}" >&2
+		exit 2
+		;;
+	esac
+	shift
+    done
+
     NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_EXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup | grep -v "#" | grep nflog | sed -e "s/^.*=//" -e "s/'//g");
     if [ -z "${NFGROUP}" ]; then
 	exit 0
@@ -592,6 +610,24 @@ firewall_cmd() {
 }
 
 ipsec_checknflog() {
+    local usage
+    usage="Usage: ipsec checknflog"
+    while [ ${#} -gt 0 ]; do
+	case ${1} in
+	    help|--help|-h)
+		echo "${usage}"
+		exit 0
+		;;
+	    *)
+		echo "ipsec checknflog: Unknown option \"${1}\"" >&2
+		echo >&2
+		echo "${usage}" >&2
+		exit 2
+		;;
+	esac
+	shift
+    done
+
     NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_EXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup | grep -v "#" | grep nflog| sed -e "s/^.*=//" -e "s/'//g");
 
     firewall_cmd
@@ -602,7 +638,7 @@ ipsec_checknflog() {
 	checknflog_nftables
     else
 	FIREWALL=""
-	echo "unknown firewall comaand ${FIREWALL} expect ipables or nft"
+	echo "unknown firewall command ${FIREWALL} expect ipables or nft" >&2
 	exit 1
     fi
 
@@ -610,6 +646,24 @@ ipsec_checknflog() {
 }
 
 ipsec_sniff() {
+    local usage
+    usage="Usage: ipsec sniff"
+    while [ ${#} -gt 0 ]; do
+	case ${1} in
+	    help|--help|-h)
+		echo "${usage}"
+		exit 0
+		;;
+	    *)
+		echo "ipsec sniff: Unknown option \"${1}\"" >&2
+		echo >&2
+		echo "${usage}" >&2
+		exit 2
+		;;
+	esac
+	shift
+    done
+
     NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_EXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup | grep -v "#" | grep nflog | sed -e "s/^.*=//" -e "s/'//g");
     tcpdump -n -i nflog:${NFGROUP}
     exit 0
@@ -985,14 +1039,17 @@ while [ ${#} -gt 0 ]; do
 	    printf "%s\n" "${IPSEC_EXECDIR}"
 	    exit 0
 	    ;;
-	--stopnflog|stopnflog)
-	    ipsec_stopnflog
+	stopnflog|--stopnflog)
+	    shift
+	    ipsec_stopnflog "${@}"
 	    ;;
-	--checknflog|checknflog|nflog)
-	    ipsec_checknflog
+	checknflog|--checknflog|nflog)
+	    shift
+	    ipsec_checknflog "${@}"
 	    ;;
 	sniff|--sniff)
-	    ipsec_sniff
+	    shift
+	    ipsec_sniff "${@}"
 	    ;;
 	import|--import)
 	    shift
