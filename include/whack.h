@@ -366,10 +366,8 @@ struct whack_message {
 	/* for RFC 5685 - IKEv2 Redirect mechanism */
 	enum allow_global_redirect global_redirect;
 	char *global_redirect_to;
-	char *redirect_to;
+	char *redirect_to;		/* either for connection or active */
 	char *accept_redirect_to;
-
-	char *active_redirect_dests;
 
 	/* what metric to put on ipsec routes */
 	int metric;

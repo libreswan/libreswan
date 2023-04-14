@@ -737,12 +737,17 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 		dbg_whack(s, "stop: add '%s'", m->name == NULL ? "NULL" : m->name);
 	}
 
-	if (m->active_redirect_dests != NULL) {
-		dbg_whack(s, "start: active_redirect_dests '%s'", m->name == NULL ? "NULL" : m->name);
+	if (m->redirect_to != NULL && !m->whack_add) {
 		/*
-		 * we are redirecting all peers of one or all connections
+		 * We are redirecting all peers of one or all
+		 * connections.
+		 *
+		 * Whack's --redirect-to is ambitious - is it part of
+		 * an ADD or a global op?  Checking .whack_add should
+		 * help.
 		 */
-		find_and_active_redirect_states(m->name, m->active_redirect_dests, logger);
+		dbg_whack(s, "start: active_redirect_dests '%s'", m->name == NULL ? "NULL" : m->name);
+		find_and_active_redirect_states(m->name, m->redirect_to, logger);
 		dbg_whack(s, "stop: active_redirect_dests '%s'", m->name == NULL ? "NULL" : m->name);
 	}
 

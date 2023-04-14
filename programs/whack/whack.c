@@ -342,7 +342,7 @@ enum option_enums {
 	OPT_REKEY_IKE,
 	OPT_REKEY_IPSEC,
 
-	OPT_ACTIVE_REDIRECT,
+	OPT_REDIRECT_TO,	/* either active or for connection */
 	OPT_GLOBAL_REDIRECT,
 	OPT_GLOBAL_REDIRECT_TO,
 
@@ -475,7 +475,6 @@ enum option_enums {
 	CD_DPDTIMEOUT,
 	CD_DPDACTION,
 	CD_SEND_REDIRECT,
-	CD_REDIRECT_TO,
 	CD_ACCEPT_REDIRECT,
 	CD_ACCEPT_REDIRECT_TO,
 	CD_ENCAPS,
@@ -623,7 +622,7 @@ static const struct option long_opts[] = {
 	{ "ike-socket-bufsize", required_argument, NULL, OPT_IKEBUF + OO + NUMERIC_ARG},
 	{ "ike-socket-errqueue-toggle", no_argument, NULL, OPT_IKE_MSGERR + OO },
 
-	{ "redirect-to", required_argument, NULL, OPT_ACTIVE_REDIRECT + OO },
+	{ "redirect-to", required_argument, NULL, OPT_REDIRECT_TO + OO },
 	{ "global-redirect", required_argument, NULL, OPT_GLOBAL_REDIRECT + OO },
 	{ "global-redirect-to", required_argument, NULL, OPT_GLOBAL_REDIRECT_TO + OO },
 
@@ -764,7 +763,6 @@ static const struct option long_opts[] = {
 	{ "dpdtimeout", required_argument, NULL, CD_DPDTIMEOUT + OO },
 	{ "dpdaction", required_argument, NULL, CD_DPDACTION + OO },
 	{ "send-redirect", required_argument, NULL, CD_SEND_REDIRECT + OO },
-	{ "redirect-to", required_argument, NULL, CD_REDIRECT_TO + OO },
 	{ "accept-redirect", required_argument, NULL, CD_ACCEPT_REDIRECT + OO },
 	{ "accept-redirect-to", required_argument, NULL, CD_ACCEPT_REDIRECT_TO + OO },
 
@@ -1078,8 +1076,6 @@ int main(int argc, char **argv)
 	msg.sa_replay_window = IPSEC_SA_DEFAULT_REPLAY_WINDOW;
 	msg.retransmit_timeout = deltatime(RETRANSMIT_TIMEOUT_DEFAULT);
 	msg.retransmit_interval = deltatime_ms(RETRANSMIT_INTERVAL_DEFAULT_MS);
-
-	msg.active_redirect_dests = NULL;
 
 	msg.host_afi = NULL;
 	msg.child_afi = NULL;
@@ -1404,8 +1400,9 @@ int main(int argc, char **argv)
 			msg.whack_deleteuser = true;
 			continue;
 
-		case OPT_ACTIVE_REDIRECT:	/* --redirect-to */
-			msg.active_redirect_dests = strdup(optarg);
+		case OPT_REDIRECT_TO:	/* --redirect-to */
+			/* either active, or or add */
+			msg.redirect_to = strdup(optarg);
 			continue;
 
 		case OPT_GLOBAL_REDIRECT:	/* --global-redirect */
@@ -2038,10 +2035,6 @@ int main(int argc, char **argv)
 		}
 			continue;
 
-		case CD_REDIRECT_TO:	/* --redirect-to */
-			msg.redirect_to = strdup(optarg);
-			continue;
-
 		case CD_ACCEPT_REDIRECT:	/* --accept-redirect */
 		{
 			lset_t new_policy = LEMPTY;
@@ -2625,7 +2618,8 @@ int main(int argc, char **argv)
 	} else if (seen[OPT_NAME] &&
 		   !seen[OPT_TRAFFIC_STATUS] &&
 		   !seen[OPT_CONNECTION_STATUS] &&
-		   !seen[OPT_SHOW_STATES]) {
+		   !seen[OPT_SHOW_STATES] &&
+		   !seen[OPT_REDIRECT_TO]) {
 		diagw("no reason for --name");
 	}
 
@@ -2641,7 +2635,8 @@ int main(int argc, char **argv)
 
 	if (!(msg.whack_add || msg.whack_key ||
 	      msg.whack_delete ||msg.whack_deleteid || msg.whack_deletestate ||
-	      msg.whack_deleteuser || msg.active_redirect_dests != NULL ||
+	      msg.whack_deleteuser ||
+	      msg.redirect_to != NULL ||
 	      msg.global_redirect || msg.global_redirect_to ||
 	      msg.whack_initiate || msg.whack_oppo_initiate ||
 	      msg.whack_terminate ||

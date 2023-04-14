@@ -354,7 +354,6 @@ static bool pickle_whack_message(struct whackpacker *wp, const struct pickler *p
 		PICKLE_STRING(&wp->msg->global_redirect_to) &&
 		PICKLE_STRING(&wp->msg->redirect_to) &&
 		PICKLE_STRING(&wp->msg->accept_redirect_to) &&
-		PICKLE_STRING(&wp->msg->active_redirect_dests) &&
 		PICKLE_CHUNK(&wp->msg->keyval) &&
 		PICKLE_THINGS(&wp->msg->impairments, wp->msg->nr_impairments) &&
 		PICKLE_STRING(&wp->msg->sec_label) &&
