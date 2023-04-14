@@ -22,6 +22,7 @@ MANPAGES += ipsec_briefstatus.8
 MANPAGES += ipsec_certutil.8
 MANPAGES += ipsec_checknflog.8
 MANPAGES += ipsec_checknss.8
+MANPAGES += ipsec_delete.8
 MANPAGES += ipsec_import.8
 MANPAGES += ipsec_initnss.8
 
