@@ -1,0 +1,120 @@
+/testing/guestbin/swan-prep
+west #
+ ipsec start
+Redirecting to: [initsystem]
+west #
+ ../../guestbin/wait-until-pluto-started
+west #
+ ipsec auto --add west
+002 "west": added IKEv2 connection
+west #
+ ipsec auto --route west
+west #
+ echo "initdone"
+initdone
+west #
+ # trap installed
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+west #
+ # initiate a connection
+west #
+ ../../guestbin/ping-once.sh --forget -I 192.1.2.45 192.1.2.23
+fired and forgotten
+west #
+ ../../guestbin/wait-for.sh --match '#1: sent IKE_SA_INIT request' -- cat /tmp/pluto.log
+"west" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+west #
+ # wait for it to fail
+west #
+ ../../guestbin/wait-for.sh --match ' second timeout exceeded after ' -- cat /tmp/pluto.log
+"west" #1: STATE_V2_PARENT_I1: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+west #
+ # let larval state expire
+west #
+ ../../guestbin/wait-for.sh --no-match 'spi 0x00000000' -- ../../guestbin/ipsec-kernel-state.sh
+west #
+ # initiate a connection
+west #
+ ../../guestbin/ping-once.sh --forget -I 192.1.2.45 192.1.2.23
+fired and forgotten
+west #
+ ../../guestbin/wait-for.sh --match west -- ipsec trafficstatus
+006 #3: "west", type=ESP, add_time=1234567890, inBytes=0, outBytes=0, maxBytes=2^63B, id='@east'
+west #
+ # let larval state expire
+west #
+ ../../guestbin/wait-for.sh --no-match 'spi 0x00000000' -- ../../guestbin/ipsec-kernel-state.sh
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.23/32 dst 192.1.2.45/32
+	dir fwd priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.1.2.23/32 dst 192.1.2.45/32
+	dir in priority PRIORITY ptype main
+	tmpl src 192.1.2.23 dst 192.1.2.45
+		proto esp reqid REQID mode tunnel
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 192.1.2.45 dst 192.1.2.23
+		proto esp reqid REQID mode tunnel
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+src 192.1.2.23 dst 192.1.2.45
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+src 192.1.2.45 dst 192.1.2.23
+	proto esp spi 0xSPISPI reqid REQID mode tunnel
+	replay-window 0 flag af-unspec esn
+	aead rfc4106(gcm(aes)) 0xENCAUTHKEY 128
+	anti-replay esn context:
+	 seq-hi 0x0, seq 0xXX, oseq-hi 0x0, oseq 0xXX
+	 replay_window 128, bitmap-length 4
+	 00000000 00000000 00000000 XXXXXXXX 
+west #
+ # confirm flow
+west #
+ ../../guestbin/ping-once.sh --up -I 192.1.2.45 192.1.2.23
+up
+west #
+ ipsec trafficstatus
+006 #3: "west", type=ESP, add_time=1234567890, inBytes=84, outBytes=84, maxBytes=2^63B, id='@east'
+west #
+ # confirm shutdown/cleanup
+west #
+ ipsec auto --down west
+002 "west": terminating SAs using this connection
+002 "west" #2: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
+005 "west" #3: ESP traffic information: in=84B out=84B
+west #
+ ../../guestbin/ipsec-kernel-policy.sh
+src 192.1.2.45/32 dst 192.1.2.23/32
+	dir out priority PRIORITY ptype main
+	tmpl src 0.0.0.0 dst 0.0.0.0
+		proto esp reqid 0 mode transport
+west #
+ ../../guestbin/ipsec-kernel-state.sh
+west #
+ 
