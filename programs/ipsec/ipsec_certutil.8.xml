@@ -32,7 +32,8 @@
     </para>
   </refsect1>
 
-  <refsect1 id='see_also'><title>SEE ALSO</title>
+  <refsect1 id='see_also'>
+    <title>SEE ALSO</title>
     <para>
       <citerefentry><refentrytitle>certutil</refentrytitle><manvolnum>1</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,

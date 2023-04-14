@@ -11,7 +11,7 @@
   </refmeta>
   <refnamediv id='name'>
     <refname>ipsec checknss</refname>
-    <refpurpose>Initialise the IPsec NSS database</refpurpose>
+    <refpurpose>Check or initialize the IPsec NSS database</refpurpose>
   </refnamediv>
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
@@ -31,11 +31,12 @@
       Checks or initialises the NSS database where all private keys for RSA and
       certificate keypairs are stored. To remove an existing IPsec NSS database,
       remove all the *.db files and pkcs11.txt from the NSS data directory
-      (default: @IPSEC_NSSDIR@).
+      (default: @IPSEC_NSSDIR@). If database exists returns successfully.
     </para>
   </refsect1>
 
-  <refsect1 id='see_also'><title>SEE ALSO</title>
+  <refsect1 id='see_also'>
+    <title>SEE ALSO</title>
     <para>
       <citerefentry><refentrytitle>ipsec.conf</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
