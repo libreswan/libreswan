@@ -159,7 +159,7 @@ class Domain:
     def reboot(self):
         return self._run_status_output(_VIRSH + ["reboot", self.domain_name])
 
-    def start(self, timeout=START_TIMEOUT):
+    def start(self):
         # A shutdown domain can linger for a bit
         while self.state() == STATE.IN_SHUTDOWN and timeout > 0:
             self.logger.info("waiting for domain to finish shutting down")
@@ -169,15 +169,20 @@ class Domain:
         command = _VIRSH + ["start", self.domain_name, "--console"]
         self.logger.info("spawning: %s", " ".join(command))
         self._console = console.Console(command, self.logger, host_name=self.host_name)
-        if self._console.expect([pexpect.EOF,
-                                 # libvirt >= 8.x
-                                 ("Domain '%s' started\r\n" +
-                                  "Connected to domain '%s'\r\n" +
-                                  "Escape character is \\^] \(Ctrl \+ ]\)\r\n") % (self.domain_name, self.domain_name)
-                                 ],
-                                timeout=timeout) > 0:
+        match = self._console.expect([("Domain '%s' started\r\n" +
+                                       "Connected to domain '%s'\r\n" +
+                                       "Escape character is \\^] \(Ctrl \+ ]\)\r\n") % (self.domain_name, self.domain_name),
+                                      pexpect.TIMEOUT,
+                                      pexpect.EOF],
+                                     timeout=START_TIMEOUT)
+        if match == 0: #success
             self.logger.info("domain started");
             return self._console
+
+        if match == 1: #TIMEOUT
+            if self._open_console(): #could re-timeout
+                return self._console
+
         # already tried and failed
         self._console = False
         raise pexpect.EOF("failed to start domain %s" % self.domain_name)
@@ -189,7 +194,7 @@ class Domain:
                 raise AssertionError("dumpxml failed: %s" % (output))
         return self._xml
 
-    def _open_console(self, timeout=CONSOLE_TIMEOUT):
+    def _open_console(self):
         # self._console is None
         command = _VIRSH + ["console", "--force", self.domain_name]
         self.logger.info("spawning: %s", " ".join(command))
@@ -204,14 +209,15 @@ class Domain:
                                  # libvirt >= 7.0
                                  "Connected to domain '%s'\r\nEscape character is \\^] \(Ctrl \+ ]\)\r\n" % self.domain_name
                                  ],
-                                timeout=timeout) > 0:
+                                timeout=CONSOLE_TIMEOUT) > 0:
             self.logger.debug("console attached");
             return self._console
         self.logger.info("got EOF from console")
         self._console.close()
         self._console = False
+        return None
 
-    def console(self, timeout=CONSOLE_TIMEOUT):
+    def console(self):
         if self._console:
             self.logger.info("console already open")
             return self._console

@@ -35,7 +35,6 @@ PASSWORD_PROMPT_TIMEOUT = 5
 # Domain timeouts
 
 SHUTDOWN_TIMEOUT = 20
-START_TIMEOUT = 20
 
 # Assuming the machine is booted, try to log-in.
 
@@ -114,6 +113,6 @@ def login(domain, console, login=LOGIN, password=PASSWORD):
 
 def boot_to_login_prompt(domain):
 
-    console = domain.start(timeout=START_TIMEOUT)
+    console = domain.start()
     console.expect([LOGIN_PROMPT], timeout=LOGIN_PROMPT_TIMEOUT)
     return console
