@@ -1,6 +1,11 @@
 /testing/guestbin/swan-prep
 east #
+ ipsec start
+Redirecting to: [initsystem]
+east #
+ ../../guestbin/wait-until-pluto-started
+east #
  ipsec auto --add east
-connect(pluto_ctl) failed: No such file or directory
+002 "east": added IKEv2 connection
 east #
  
