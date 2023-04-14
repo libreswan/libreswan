@@ -257,11 +257,11 @@ static bool install_prospective_kernel_policies(const struct spd_route *spd,
 	FOR_EACH_THING(direction, DIRECTION_OUTBOUND, DIRECTION_INBOUND) {
 		if (direction == DIRECTION_OUTBOUND ||
 		    shunt_kind == SHUNT_KIND_NEVER_NEGOTIATE) {
-			if (!install_bare_spd_kernel_policy(spd, KERNEL_POLICY_OP_ADD,
-							    direction,
-							    shunt_kind,
-							    logger, HERE,
-							    "prospective kernel_policy")) {
+			if (!add_spd_kernel_policy(spd, KERNEL_POLICY_OP_ADD,
+						   direction,
+						   shunt_kind,
+						   logger, HERE,
+						   "prospective kernel_policy")) {
 				return false;
 			}
 		}
@@ -2114,10 +2114,10 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 		if (spd->block) {
 			llog(RC_LOG, logger, "state spd requires a block (and no CAT?)");
 			ok = spd->wip.installed.policy =
-				install_bare_spd_kernel_policy(spd, op, DIRECTION_OUTBOUND,
-							       SHUNT_KIND_BLOCK,
-							       logger, HERE,
-							       "install IPsec block policy");
+				add_spd_kernel_policy(spd, op, DIRECTION_OUTBOUND,
+						      SHUNT_KIND_BLOCK,
+						      logger, HERE,
+						      "install IPsec block policy");
 		} else {
 			ok = spd->wip.installed.policy =
 				install_outbound_ipsec_kernel_policy(child, spd, op, HERE);

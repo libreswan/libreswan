@@ -279,16 +279,16 @@ bool add_sec_label_kernel_policy(const struct spd_route *spd,
 }
 
 /*
- * Install (add, replace) a kernel policy using information from the
- * SPD.  An SPD is bare when there's no corresponding kernel state.
+ * Add (replace) a kernel policy using information from the SPD.  An
+ * SPD is bare when there's no corresponding kernel state.
  */
 
-bool install_bare_spd_kernel_policy(const struct spd_route *spd,
-				    enum kernel_policy_op op,
-				    enum direction direction,
-				    enum shunt_kind shunt_kind,
-				    struct logger *logger,
-				    where_t where, const char *what)
+bool add_spd_kernel_policy(const struct spd_route *spd,
+			   enum kernel_policy_op op,
+			   enum direction direction,
+			   enum shunt_kind shunt_kind,
+			   struct logger *logger,
+			   where_t where, const char *what)
 {
 	const struct connection *c = spd->connection;
 
@@ -675,11 +675,11 @@ static void replace_ipsec_with_bare_kernel_policy(struct child_sa *child,
 		/*
 		 * Just need client->client policies
 		 */
-		if (!install_bare_spd_kernel_policy(spd,
-						    KERNEL_POLICY_OP_REPLACE,
-						    DIRECTION_OUTBOUND,
-						    shunt_kind,
-						    logger, where, "replacing")) {
+		if (!add_spd_kernel_policy(spd,
+					   KERNEL_POLICY_OP_REPLACE,
+					   DIRECTION_OUTBOUND,
+					   shunt_kind,
+					   logger, where, "replacing")) {
 			llog(RC_LOG, logger,
 			     "kernel: %s() replace outbound with prospective shunt failed", __func__);
 		}

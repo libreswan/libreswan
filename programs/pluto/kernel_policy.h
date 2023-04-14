@@ -128,21 +128,6 @@ bool add_sec_label_kernel_policy(const struct spd_route *spd,
 				 where_t where, const char *what);
 
 /*
- * Bare Kernel Policies (i.e., do not have a state).
- *
- * These are installed when a connection transitions to
- * ROUTED_PROSPECTIVE, for instance (and presumably ROUTED_HOLD
- * ROUTED_FAILURE).
- */
-
-bool install_bare_spd_kernel_policy(const struct spd_route *spd,
-				    enum kernel_policy_op op,
-				    enum direction direction,
-				    enum shunt_kind shunt_kind,
-				    struct logger *logger,
-				    where_t where, const char *what);
-
-/*
  * Add/delete a kernel policy.
  *
  * The selectors are LOCAL/REMOTE and _not_ SOURCE/DST.  DIRECTION
@@ -172,7 +157,19 @@ bool delete_kernel_policy(enum direction direction,
 
 /*
  * Add/delete a bare SPD.
+ *
+ * Bare Kernel Policies (i.e., do not have a state).
+ *
+ * These are installed when a connection transitions to and between
+ * ROUTED_ONDEMAND and ROUTED_NEGOTIATION.
  */
+
+bool add_spd_kernel_policy(const struct spd_route *spd,
+			   enum kernel_policy_op op,
+			   enum direction direction,
+			   enum shunt_kind shunt_kind,
+			   struct logger *logger,
+			   where_t where, const char *what);
 
 bool delete_spd_kernel_policy(const struct spd_route *spd,
 			      enum direction direction,
