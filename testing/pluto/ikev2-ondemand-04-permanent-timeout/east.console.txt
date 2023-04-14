@@ -1,0 +1,6 @@
+/testing/guestbin/swan-prep
+east #
+ ipsec auto --add east
+connect(pluto_ctl) failed: No such file or directory
+east #
+ 
