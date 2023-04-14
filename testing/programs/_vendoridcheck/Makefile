@@ -12,8 +12,13 @@
 # or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
 # for more details.
 
-PROGRAM = vendoridcheck
-OBJS += $(PROGRAM).o
+# XXX: Hack to suppress the man page.  Should one be added?
+PROGRAM_MANPAGE =
+
+PROGRAM = _vendoridcheck
+
+OBJS += vendoridcheck.o
+
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
 

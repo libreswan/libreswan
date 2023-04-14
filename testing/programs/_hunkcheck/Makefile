@@ -1,4 +1,4 @@
-# dn tests Makefile, for libreswan
+# hunk like tests, for libreswan
 #
 # Copyright (C) 2019 Andrew Cagney
 #
@@ -15,22 +15,15 @@
 # XXX: Hack to suppress the man page.  Should one be added?
 PROGRAM_MANPAGE =
 
-PROGRAM = dncheck
+PROGRAM = _hunkcheck
 
-OBJS += dncheck.o
+OBJS += hunkcheck.o
 
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
-
-# Add RT_LDFLAGS for glibc < 2.17
-USERLAND_LDFLAGS += $(RT_LDFLAGS)
-USERLAND_LDFLAGS += $(NSS_LDFLAGS)
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
 else
 include ../../../mk/program.mk
 endif
-
-local-check: $(PROGRAM)
-	$(builddir)/$(PROGRAM)

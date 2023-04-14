@@ -1,6 +1,6 @@
-# ip tests Makefile, for libreswan
+# getpeercon_server Makefile, for libreswan
 #
-# Copyright (C) 2019 Andrew Cagney
+# Copyright (C) 2021 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -15,18 +15,13 @@
 # XXX: Hack to suppress the man page.  Should one be added?
 PROGRAM_MANPAGE =
 
-PROGRAM = jambufcheck
+PROGRAM = _getpeercon_server
 
-OBJS += jambufcheck.o
-
-OBJS += $(LIBRESWANLIB)
-OBJS += $(LSWTOOLLIBS)
+OBJS += getpeercon_server.o
+LDFLAGS += -lselinux
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
 else
 include ../../../mk/program.mk
 endif
-
-local-check: $(PROGRAM)
-	$(builddir)/$(PROGRAM)

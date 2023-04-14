@@ -1,6 +1,6 @@
-# hunk like tests, for libreswan
+# keyid tests, for libreswan
 #
-# Copyright (C) 2019 Andrew Cagney
+# Copyright (C) 2020 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -15,15 +15,11 @@
 # XXX: Hack to suppress the man page.  Should one be added?
 PROGRAM_MANPAGE =
 
-PROGRAM = ttodatacheck
+PROGRAM = _keyidcheck
 
-OBJS += ttodatacheck.o
+OBJS += keyidcheck.o
 
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
 
-ifdef top_srcdir
-include $(top_srcdir)/mk/program.mk
-else
 include ../../../mk/program.mk
-endif

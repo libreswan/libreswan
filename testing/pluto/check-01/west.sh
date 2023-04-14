@@ -10,19 +10,19 @@
 # $ ./OBJ.linux.x86_64/testing/enumcheck/enumcheck > testing/enumcheck/OUTPUT.enumcheck.txt
 # $ git diff
 
-ipsec enumcheck > OUTPUT/enumcheck.out || echo "Enum check barfed"
-cmp ../../programs/enumcheck/OUTPUT.enumcheck.txt OUTPUT/enumcheck.out || echo "Does the file OUTPUT.enumcheck.txt need updating? See description.txt"
+ipsec _enumcheck > OUTPUT/enumcheck.out || echo "Enum check barfed"
+cmp ../../programs/_enumcheck/OUTPUT.enumcheck.txt OUTPUT/enumcheck.out || echo "Does the file OUTPUT.enumcheck.txt need updating? See description.txt"
 
 # other checks
 
-ipsec jambufcheck > /dev/null || echo failed
-ipsec timecheck > /dev/null || echo failed
-ipsec hunkcheck > /dev/null || echo failed
-ipsec dncheck > /dev/null || echo failed
-ipsec keyidcheck > /dev/null || echo failed
-ipsec asn1check > /dev/null || echo failed
-ipsec vendoridcheck > /dev/null || echo failed
-ipsec ttodatacheck -r
+ipsec _jambufcheck > /dev/null || echo failed
+ipsec _timecheck > /dev/null || echo failed
+ipsec _hunkcheck > /dev/null || echo failed
+ipsec _dncheck > /dev/null || echo failed
+ipsec _keyidcheck > /dev/null || echo failed
+ipsec _asn1check > /dev/null || echo failed
+ipsec _vendoridcheck > /dev/null || echo failed
+ipsec _ttodatacheck -r
 
 # Need to disable DNS tests; localhost is ok
-ipsec ipcheck --dns=hosts-file > /dev/null || echo failed
+ipsec _ipcheck --dns=hosts-file > /dev/null || echo failed

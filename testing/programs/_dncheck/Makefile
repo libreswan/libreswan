@@ -1,6 +1,6 @@
-# enumcheck Makefile, for libreswan
+# dn tests Makefile, for libreswan
 #
-# Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
+# Copyright (C) 2019 Andrew Cagney
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -15,11 +15,16 @@
 # XXX: Hack to suppress the man page.  Should one be added?
 PROGRAM_MANPAGE =
 
-PROGRAM = enumcheck
-OBJS += $(PROGRAM).o
+PROGRAM = _dncheck
+
+OBJS += dncheck.o
 
 OBJS += $(LIBRESWANLIB)
 OBJS += $(LSWTOOLLIBS)
+
+# Add RT_LDFLAGS for glibc < 2.17
+USERLAND_LDFLAGS += $(RT_LDFLAGS)
+USERLAND_LDFLAGS += $(NSS_LDFLAGS)
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
@@ -28,4 +33,4 @@ include ../../../mk/program.mk
 endif
 
 local-check: $(PROGRAM)
-	$(builddir)/$(PROGRAM) | diff -u $(srcdir)/OUTPUT.$(PROGRAM).txt -
+	$(builddir)/$(PROGRAM)

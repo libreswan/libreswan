@@ -18,40 +18,40 @@ west #
 west #
  # $ git diff
 west #
- ipsec enumcheck > OUTPUT/enumcheck.out || echo "Enum check barfed"
-enumcheck: leak detective found no leaks
+ ipsec _enumcheck > OUTPUT/enumcheck.out || echo "Enum check barfed"
+_enumcheck: leak detective found no leaks
 west #
- cmp ../../programs/enumcheck/OUTPUT.enumcheck.txt OUTPUT/enumcheck.out || echo "Does the file OUTPUT.enumcheck.txt need updating? See description.txt"
+ cmp ../../programs/_enumcheck/OUTPUT.enumcheck.txt OUTPUT/enumcheck.out || echo "Does the file OUTPUT.enumcheck.txt need updating? See description.txt"
 west #
  # other checks
 west #
- ipsec jambufcheck > /dev/null || echo failed
-jambufcheck: leak detective found no leaks
+ ipsec _jambufcheck > /dev/null || echo failed
+_jambufcheck: leak detective found no leaks
 west #
- ipsec timecheck > /dev/null || echo failed
-timecheck: leak detective found no leaks
+ ipsec _timecheck > /dev/null || echo failed
+_timecheck: leak detective found no leaks
 west #
- ipsec hunkcheck > /dev/null || echo failed
-hunkcheck: leak detective found no leaks
+ ipsec _hunkcheck > /dev/null || echo failed
+_hunkcheck: leak detective found no leaks
 west #
- ipsec dncheck > /dev/null || echo failed
-dncheck: leak detective found no leaks
+ ipsec _dncheck > /dev/null || echo failed
+_dncheck: leak detective found no leaks
 west #
- ipsec keyidcheck > /dev/null || echo failed
-keyidcheck: leak detective found no leaks
+ ipsec _keyidcheck > /dev/null || echo failed
+_keyidcheck: leak detective found no leaks
 west #
- ipsec asn1check > /dev/null || echo failed
-asn1check: leak detective found no leaks
+ ipsec _asn1check > /dev/null || echo failed
+_asn1check: leak detective found no leaks
 west #
- ipsec vendoridcheck > /dev/null || echo failed
-vendoridcheck: Initializing NSS
-vendoridcheck: FIPS Mode: NO
+ ipsec _vendoridcheck > /dev/null || echo failed
+_vendoridcheck: Initializing NSS
+_vendoridcheck: FIPS Mode: NO
 west #
- ipsec ttodatacheck -r
+ ipsec _ttodatacheck -r
 west #
  # Need to disable DNS tests; localhost is ok
 west #
- ipsec ipcheck --dns=hosts-file > /dev/null || echo failed
-ipcheck: leak detective found no leaks
+ ipsec _ipcheck --dns=hosts-file > /dev/null || echo failed
+_ipcheck: leak detective found no leaks
 west #
  

@@ -1,6 +1,6 @@
-# getpeercon_server Makefile, for libreswan
+# enumcheck Makefile, for libreswan
 #
-# Copyright (C) 2021 Andrew Cagney
+# Copyright (C) 2017 Andrew Cagney <cagney@gnu.org>
 #
 # This program is free software; you can redistribute it and/or modify it
 # under the terms of the GNU General Public License as published by the
@@ -15,13 +15,18 @@
 # XXX: Hack to suppress the man page.  Should one be added?
 PROGRAM_MANPAGE =
 
-PROGRAM = getpeercon_server
+PROGRAM = _enumcheck
 
-OBJS += getpeercon_server.o
-LDFLAGS += -lselinux
+OBJS += enumcheck.o
+
+OBJS += $(LIBRESWANLIB)
+OBJS += $(LSWTOOLLIBS)
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
 else
 include ../../../mk/program.mk
 endif
+
+local-check: $(PROGRAM)
+	$(builddir)/$(PROGRAM) | diff -u $(srcdir)/OUTPUT.$(PROGRAM).txt -
