@@ -53,14 +53,6 @@
 
 void event_v1_retransmit(struct state *st, monotime_t now UNUSED)
 {
-	struct connection *c = st->st_connection;
-	/*
-	 * XXX: CURRENT_TRY will be 0 on the initial responder (which
-	 * isn't currently trying to establish a connection).
-	 */
-	unsigned long current_try = st->st_try;
-	unsigned long try_limit = c->sa_keying_tries;
-
 	switch (retransmit(st)) {
 	case RETRANSMIT_YES:
 		resend_recorded_v1_ike_msg(st, "EVENT_RETRANSMIT");
@@ -72,45 +64,7 @@ void event_v1_retransmit(struct state *st, monotime_t now UNUSED)
 	case TIMEOUT_ON_RETRANSMIT:
 		break;
 	case DELETE_ON_RETRANSMIT:
-		/* disable re-key code */
-		current_try = 0;
 		break;
-	}
-
-	if (current_try != 0 && (current_try < try_limit || try_limit == 0)) {
-		/*
-		 * A lot like EVENT_SA_REPLACE, but over again.  Since
-		 * we know that st cannot be in use, we can delete it
-		 * right away.
-		 */
-		char story[80]; /* arbitrary limit */
-
-		unsigned long next_try = current_try + 1;
-		snprintf(story, sizeof(story), try_limit == 0 ?
-			 "starting keying attempt %ld of an unlimited number" :
-			 "starting keying attempt %ld of at most %ld",
-			 next_try, try_limit);
-
-		/* ??? DBG and real-world code mixed */
-		if (!DBGP(DBG_WHACKWATCH)) {
-			if (fd_p(st->st_logger->object_whackfd)) {
-				/*
-				 * Release whack because the observer
-				 * will get bored.
-				 */
-				log_state(RC_COMMENT, st,
-				       "%s, but releasing whack",
-				       story);
-				release_pending_whacks(st, story);
-			} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-				/* no whack: just log */
-				log_state(RC_LOG, st, "%s", story);
-			}
-		} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-			log_state(RC_COMMENT, st, "%s", story);
-		}
-
-		ikev1_replace(st, next_try);
 	}
 
 	pstat_sa_failed(st, REASON_TOO_MANY_RETRANSMITS);
