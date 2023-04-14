@@ -545,7 +545,6 @@ struct connection {
 					 * deleted and, hence,
 					 * delete_state() should leave
 					 * it alone? */
-	unsigned long sa_keying_tries;
 	uint32_t sa_priority;
 	uint32_t sa_tfcpad;
 	uint32_t sa_replay_window; /* Usually 32, KLIPS and XFRM/NETKEY support 64 */

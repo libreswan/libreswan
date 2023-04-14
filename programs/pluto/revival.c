@@ -237,11 +237,6 @@ void schedule_revival(struct state *st, const char *subplot)
 			 st->st_interface->io->protocol == &ip_protocol_tcp);
 	}
 
-	if (c->kind == CK_INSTANCE && c->sa_keying_tries == 0) {
-		ldbg(st->st_logger, "limiting instance revival attempts to 2 keyingtries");
-		c->sa_keying_tries = 2;
-	}
-
 	llog(RC_LOG, st->st_logger,
 	     "connection is supposed to remain up; revival attempt %u scheduled in %s seconds",
 	     c->temp_vars.revival.attempt,

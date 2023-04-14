@@ -2735,7 +2735,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	 * failureshunt (not negotiationshunt) on the 2nd keyingtry,
 	 * and try to re-install another negotiation or failure shunt.
 	 */
-	c->sa_keying_tries = 1;
 	if (wm->keyingtries.set) {
 		if (NEVER_NEGOTIATE(wm->policy)) {
 			llog(RC_LOG, c->logger,
@@ -2946,12 +2945,11 @@ void add_connection(const struct whack_message *wm, struct logger *logger)
 			    c->config->ike_info->version_name);
 	llog(RC_LOG, c->logger, "added %s connection", what);
 	policy_buf pb;
-	dbg("ike_life: %jd; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; keyingtries: %lu; replay_window: %u; policy: %s ipsec_max_bytes: %" PRIu64 " ipsec_max_packets %" PRIu64,
+	dbg("ike_life: %jd; ipsec_life: %jds; rekey_margin: %jds; rekey_fuzz: %lu%%; replay_window: %u; policy: %s ipsec_max_bytes: %" PRIu64 " ipsec_max_packets %" PRIu64,
 	    deltasecs(c->config->sa_ike_max_lifetime),
 	    deltasecs(c->config->sa_ipsec_max_lifetime),
 	    deltasecs(c->config->sa_rekey_margin),
 	    c->config->sa_rekey_fuzz,
-	    c->sa_keying_tries,
 	    c->sa_replay_window,
 	    str_connection_policies(c, &pb),
 	    c->config->sa_ipsec_max_bytes,
