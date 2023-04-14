@@ -17,9 +17,10 @@ PROGRAMDIR=$(DESTDIR)$(SBINDIR)
 # Do not prefix $(PROGRAM) man page with "ipsec_"
 MANPROGPREFIX=
 
+MANPAGES += ipsec_add.8
 MANPAGES += ipsec_checknss.8
-MANPAGES += ipsec_initnss.8
 MANPAGES += ipsec_import.8
+MANPAGES += ipsec_initnss.8
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
