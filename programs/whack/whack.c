@@ -1011,7 +1011,7 @@ static void send_reply(int sock, char *buf, ssize_t len)
 
 int main(int argc, char **argv)
 {
-	struct logger *logger = tool_init_log(argv[0]);
+	struct logger *logger = tool_logger(argc, argv);
 
 	struct whack_message msg;
 	struct whackpacker wp;

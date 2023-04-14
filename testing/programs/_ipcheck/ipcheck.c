@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 {
 	leak_detective = true;
 	log_ip = false; /* force sensitive */
-	struct logger *logger = tool_init_log(argv[0]);
+	struct logger *logger = tool_logger(argc, argv);
 
 	if (argc != 2) {
 		fprintf(stderr, "usage: %s --dns={no,hosts-file,yes}\n", argv[0]);

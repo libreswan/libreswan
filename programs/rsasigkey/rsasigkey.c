@@ -134,7 +134,7 @@ static void UpdateNSS_RNG(int seedbits, struct logger *logger)
 int main(int argc, char *argv[])
 {
 	log_to_stderr = false;
-	struct logger *logger = tool_init_log("ipsec rsasigkey");
+	struct logger *logger = tool_logger(argc, argv);
 
 	int opt;
 	int nbits = 0;

@@ -72,7 +72,7 @@ static void check_splitkey_to_keyid(void)
 int main(int argc UNUSED, char *argv[])
 {
 	leak_detective = true;
-	struct logger *logger = tool_init_log(argv[0]);
+	struct logger *logger = tool_logger(argc, argv);
 
 	check_keyblob_to_keyid();
 	check_splitkey_to_keyid();

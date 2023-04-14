@@ -285,7 +285,7 @@ static void test_enum_lset(const char *name, const enum_names *en, lset_t val)
 int main(int argc UNUSED, char *argv[])
 {
 	leak_detective = true;
-	struct logger *logger = tool_init_log(argv[0]);
+	struct logger *logger = tool_logger(argc, argv);
 
 	/* don't hold back */
 	setbuf(stdout, NULL);

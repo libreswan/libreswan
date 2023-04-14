@@ -68,7 +68,7 @@ int main(int argc, char *argv[])
 	ssize_t rd;
 	int fin;
 
-	struct logger *logger = tool_init_log(argv[0]);
+	struct logger *logger = tool_logger(argc, argv);
 
 	if (argc != 3) {
 		fatal(PLUTO_EXIT_FAIL, logger, "expecting: <url> <der-size>");

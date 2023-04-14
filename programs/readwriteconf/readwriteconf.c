@@ -58,7 +58,7 @@ static const struct option longopts[] =
 
 int main(int argc, char *argv[])
 {
-	tool_init_log(argv[0]);
+	tool_logger(argc, argv);
 
 	int opt;
 	struct starter_config *cfg = NULL;

@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 	log_to_stderr = true;
 	cur_debugging = DBG_BASE | DBG_TMI;
 #endif
-	struct logger *logger = tool_init_log(argv[0]);
+	struct logger *logger = tool_logger(argc, argv);
 
 	if (argc != 1) {
 		fprintf(stderr, ("usage:\n"

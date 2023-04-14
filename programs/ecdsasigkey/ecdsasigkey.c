@@ -136,7 +136,7 @@ static void UpdateNSS_RNG(int seedbits, struct logger *logger)
 int main(int argc, char *argv[])
 {
 	log_to_stderr = false;
-	struct logger *logger = tool_init_log("ipsec ecdsasigkey");
+	struct logger *logger = tool_logger(argc, argv);
 
 	int opt;
 	int seedbits = DEFAULT_SEED_BITS;

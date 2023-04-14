@@ -210,7 +210,7 @@ static void unwrap_asn1_length_check(void)
 int main(int argc UNUSED, char *argv[])
 {
 	leak_detective = true;
-	struct logger *logger = tool_init_log(argv[0]);
+	struct logger *logger = tool_logger(argc, argv);
 
 	is_asn1_printablestring_check();
 	unwrap_asn1_length_check();

@@ -31,6 +31,7 @@
 #include "constants.h"
 #include "lswtool.h"
 #include "lswlog.h"
+#include "lswalloc.h"
 
 bool log_to_stderr = true;	/* should log go to stderr? */
 
@@ -61,14 +62,22 @@ static struct logger progname_logger = {
 	.object = NULL, /* progname */
 };
 
-struct logger *tool_init_log(const char *name)
+struct logger *tool_logger(int argc UNUSED, char *argv[])
 {
-	const char *last_slash = strrchr(name, '/');
-	progname_logger.object = progname = last_slash == NULL ? name : last_slash + 1;
+	const char *last_slash = strrchr(argv[0], '/');
+	const char *last_name = (last_slash == NULL ? argv[0] : last_slash + 1);
 
-	if (log_to_stderr) {
-		setbuf(stderr, NULL);
-	}
+	/* need to allocate string then mark as never free */
+	ssize_t name_size = sizeof("ipsec "/*includes \0*/) + strlen(last_name) + 1/*to be sure*/;
+	char *name = alloc_things(char, name_size, "(ignore)progname");
+	/* snprintf() returns length, not size */
+	passert(name_size > snprintf(name, name_size, "ipsec %s", last_name));
+
+	progname_logger.object = progname = name;
+
+	/* redundant? */
+	setbuf(stderr, NULL);
+
 	return &progname_logger;
 }
 

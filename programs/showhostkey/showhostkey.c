@@ -540,7 +540,7 @@ static struct secret_stuff *foreach_secret_stuff(secret_eval func, void *uservoi
 int main(int argc, char *argv[])
 {
 	log_to_stderr = false;
-	struct logger *logger = tool_init_log("ipsec showhostkey");
+	struct logger *logger = tool_logger(argc, argv);
 
 	int opt;
 	bool left_flg = false;

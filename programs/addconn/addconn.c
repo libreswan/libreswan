@@ -200,7 +200,7 @@ static const struct option longopts[] =
 
 int main(int argc, char *argv[])
 {
-	struct logger *logger = tool_init_log(argv[0]);
+	struct logger *logger = tool_logger(argc, argv);
 
 	int opt;
 	bool autoall = false;

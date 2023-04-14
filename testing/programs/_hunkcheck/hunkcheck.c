@@ -830,7 +830,7 @@ static void check_ntoh_hton_hunk(void)
 int main(int argc UNUSED, char *argv[])
 {
 	leak_detective = true;
-	struct logger *logger = tool_init_log(argv[0]);
+	struct logger *logger = tool_logger(argc, argv);
 
 	check_hunk_eq();
 	check_shunk_slice();

@@ -6,4 +6,4 @@
  */
 struct logger;
 extern const char *progname;
-struct logger *tool_init_log(const char *progname);
+struct logger *tool_logger(int argc, char *argv[]);
