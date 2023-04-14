@@ -161,6 +161,7 @@ class Domain:
 
     def start(self):
         # A shutdown domain can linger for a bit
+        timeout = START_TIMEOUT
         while self.state() == STATE.IN_SHUTDOWN and timeout > 0:
             self.logger.info("waiting for domain to finish shutting down")
             time.sleep(1)
