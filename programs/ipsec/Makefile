@@ -25,6 +25,7 @@ MANPAGES += ipsec_checknss.8
 MANPAGES += ipsec_delete.8
 MANPAGES += ipsec_down.8
 MANPAGES += ipsec_fetchcrls.8
+MANPAGES += ipsec_fipsstatus.8
 MANPAGES += ipsec_import.8
 MANPAGES += ipsec_initnss.8
 
