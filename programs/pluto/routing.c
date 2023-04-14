@@ -347,84 +347,6 @@ void connection_acquire(struct connection *c, threadtime_t *inception, const str
 		 });
 }
 
-static bool should_retry(struct ike_sa *ike)
-{
-	struct connection *c = ike->sa.st_connection;
-	unsigned try_limit = c->sa_keying_tries;
-	unsigned tries_so_far = ike->sa.st_try;
-
-	if (IS_IKE_SA_ESTABLISHED(&ike->sa)) {
-		ldbg_sa(ike, "skipping retry: IKE SA is established");
-		return false;
-	}
-
-	if (try_limit > 0 && tries_so_far >= try_limit) {
-		ldbg_sa(ike, "skipping retry: already tried %u ot of %u retries",
-			tries_so_far, try_limit);
-		return false;
-	}
-
-	if (try_limit == 0) {
-		ldbg_sa(ike, "retying ad infinitum");
-	} else {
-		ldbg_sa(ike, "retrying: only tried %d out of %u", tries_so_far, try_limit);
-	}
-
-	return true;
-}
-
-/*
- * Re-try establishing the IKE SAs (previous attempt failed).
- *
- * This is called when the IKE_SA_INIT and/or IKE_AUTH exchange fails.
- * This is different to having an IKE_SA establish but then have a
- * later exchange fail.
- */
-
-static void retry(struct ike_sa *ike)
-{
-	struct connection *c = ike->sa.st_connection;
-	unsigned long try_limit = c->sa_keying_tries;
-	unsigned long try = ike->sa.st_try + 1; /* +1 as this try */
-
-	/*
-	 * A lot like EVENT_SA_REPLACE, but over again.  Since we know
-	 * that st cannot be in use, we can delete it right away.
-	 */
-	char story[80]; /* arbitrary limit */
-
-	snprintf(story, sizeof(story), try_limit == 0 ?
-		 "starting keying attempt %ld of an unlimited number" :
-		 "starting keying attempt %ld of at most %ld",
-		 try, try_limit);
-
-	if (fd_p(ike->sa.st_logger->object_whackfd)) {
-		/*
-		 * Release whack because the observer will get bored.
-		 */
-		llog_sa(RC_COMMENT, ike,
-			"%s, but releasing whack",
-			story);
-		release_pending_whacks(&ike->sa, story);
-	} else if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
-		/* no whack: just log to syslog */
-		llog_sa(RC_LOG, ike, "%s", story);
-	}
-
-	/*
-	 * Start billing for the new new state.  The old state also
-	 * gets billed for this function call, oops.
-	 *
-	 * Start from policy in connection
-	 */
-
-	lset_t policy = c->policy & ~POLICY_IPSEC_MASK;
-	threadtime_t inception = threadtime_start();
-	initiate_v2_IKE_SA_INIT_request(c, &ike->sa, policy, try, &inception,
-					HUNK_AS_SHUNK(c->child.sec_label),
-					/*background?*/false, ike->sa.st_logger);
-}
-
 /*
  * Delete the ROUTED_TUNNEL, and possibly delete the connection.
  */
@@ -523,22 +445,6 @@ void connection_timeout(struct ike_sa **ike)
 	ldbg_sa(*ike, "IKE SA is no longer viable");
 	(*ike)->sa.st_viable_parent = false;
 	pstat_sa_failed(&(*ike)->sa, REASON_TOO_MANY_RETRANSMITS);
-
-	/*
-	 * Short-circuit and preserve weird retry code path for now.
-	 *
-	 * If an IKE SA gets a timeout before it has established it
-	 * will retry a few times before falling back to revival.
-	 */
-	if (should_retry(*ike)) {
-		retry(*ike);
-		PEXPECT((*ike)->sa.st_logger, !(*ike)->sa.st_on_delete.skip_revival);
-		(*ike)->sa.st_on_delete.skip_revival = true;
-		pstat_sa_failed(&(*ike)->sa, REASON_TOO_MANY_RETRANSMITS);
-		(*ike)->sa.st_on_delete.skip_send_delete = true;
-		delete_ike_family(ike);
-		return;
-	}
 
 	/*
 	 * Weed out any lurking larval children (i.e., children that
