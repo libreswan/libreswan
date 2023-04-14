@@ -226,6 +226,7 @@ kvmplutotest	ikev2-ondemand-02-permanent-auto-transport	wip	github/1056
 kvmplutotest	ikev2-ondemand-02-permanent-auto-tunnel		wip	github/1056
 kvmplutotest	ikev2-ondemand-02-permanent-route-transport	wip	github/1056
 kvmplutotest	ikev2-ondemand-02-permanent-route-tunnel	wip	github/1056
+kvmplutotest	ikev2-ondemand-04-timeout-instance		good	github/1095
 kvmplutotest	ikev2-ondemand-04-timeout-permanent-tunnel	good	github/1095
 kvmplutotest	ikev2-ondemand-04-timeout-permanent-transport	good	github/1095
 

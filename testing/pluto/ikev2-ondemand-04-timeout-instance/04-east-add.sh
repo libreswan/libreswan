@@ -1,0 +1,1 @@
+ipsec auto --add east
