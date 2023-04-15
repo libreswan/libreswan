@@ -11,7 +11,7 @@
   </refmeta>
   <refnamediv id='name'>
     <refname>ipsec add</refname>
-    <refpurpose>Add a connection definition to IPsec service from @IPSEC_CONF@</refpurpose>
+    <refpurpose>Add a connection specification to pluto internal database from @IPSEC_CONF@</refpurpose>
   </refnamediv>
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
@@ -30,10 +30,11 @@
     <title>DESCRIPTION</title>
     <para>
       <emphasis remap='I'>Add</emphasis>
-      Add a connection specification from @IPSEC_CONF@ to internal
-      database within pluto, The Libreswan IPsec daemon. If there already
-      was connection specification with same connname, old tunnels are
-      torn down and new specification replaces old one.
+      The <option>add</option> operation add a connection specification from
+      @IPSEC_CONF@ to internal database within pluto, The Libreswan IPsec
+      daemon. If there already was connection specification with same
+      connectionname, old tunnels are torn down and new specification
+      replaces old one.
     </para>
     <para>
       This only add the connection description making it possible for
@@ -73,6 +74,7 @@
       <citerefentry><refentrytitle>ipsec_listcrls</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_listen</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_listpubkeys</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>ipsec_ondemand</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_pk12util</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_purgeocsp</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_replace</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
