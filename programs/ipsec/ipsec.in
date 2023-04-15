@@ -414,7 +414,6 @@ ipsec_help() {
 	purgeocsp \
 	replace \
 	rereadall \
-	rereadcacerts \
 	rereadcerts \
 	restart \
 	route \
