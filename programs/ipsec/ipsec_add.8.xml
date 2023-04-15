@@ -30,7 +30,12 @@
     <title>DESCRIPTION</title>
     <para>
       <emphasis remap='I'>Add</emphasis>
-      Add a connection definition to IPsec service from @IPSEC_CONF@.
+      Add a connection specification from @IPSEC_CONF@ to internal
+      database within pluto, The Libreswan IPsec daemon. If there already
+      was connection specification with same connname, old tunnels are
+      torn down and new specification replaces old one.
+    </para>
+    <para>
       This only add the connection description making it possible for
       remote to connect. To initialize the connection you need to use
       "ipsec up connectionname" or to do both "add" and "up" with one

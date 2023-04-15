@@ -29,8 +29,9 @@
     <title>DESCRIPTION</title>
     <para>
       <emphasis remap='I'>Delete</emphasis>
-      Delete a connection definiton from IPsec service. Also drops
-      all active tunnels with same connectionname.
+      Delete operation deletes a connection specification from the Libreswan
+      IPsec daemon <option>pluto</option> internal database (also tearing down
+      any connections based on it).
     </para>
   </refsect1>
 

@@ -29,10 +29,11 @@
     <title>DESCRIPTION</title>
     <para>
       <emphasis remap='I'>Down</emphasis>
-      Down all IPsec tunnels with same connectionname. This does not
-      leaves connection definitions in place so remotes can immediately
+      The down operation tells pluto to tear down all connections matching
+      specified <option>connectionname</option> in internal configuration
+      database. This connection definitions in place so remotes can immediately
       connect back. If you want tunnel to go permanently down, use
-      "ipsec delete connectionname" instead.
+      <option>ipsec delete</option> instead.
     </para>
   </refsect1>
 
