@@ -11,7 +11,7 @@
   </refmeta>
   <refnamediv id='name'>
     <refname>ipsec rereadcerts</refname>
-    <refpurpose>Reread IPsec secrets and certificates.</refpurpose>
+    <refpurpose>Reread IPsec certificates from IPsec NSS database</refpurpose>
   </refnamediv>
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
