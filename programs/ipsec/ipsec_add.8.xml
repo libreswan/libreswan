@@ -42,6 +42,12 @@
       <option>add</option> and <option>up</option> with one
       run you can use <option>ipsec start connectionname</option>.
     </para>
+    <para>
+      Note: you might also need to run <option>ipsec rereadsecrets</option>
+      when your new connection uses pre-shared key (PSK) authentication,
+      <option>authby=secret</option> because secrets keys are only being
+      read at startup.
+    </para>
   </refsect1>
 
   <refsect1 id='see_also'>
