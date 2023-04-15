@@ -410,6 +410,7 @@ ipsec_help() {
 	listcrls \
 	listen \
 	listpubkeys \
+	ondemand \
 	pk12util \
 	purgeocsp \
 	replace \
