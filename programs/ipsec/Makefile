@@ -32,6 +32,7 @@ MANPAGES += ipsec_initnss.8
 MANPAGES += ipsec_listall.8
 MANPAGES += ipsec_listcacerts.8
 MANPAGES += ipsec_listcrls.8
+MANPAGES += ipsec_listpubkeys.8
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
