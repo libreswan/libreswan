@@ -39,6 +39,7 @@ MANPAGES += ipsec_purgeocsp.8
 MANPAGES += ipsec_replace.8
 MANPAGES += ipsec_rereadall.8
 MANPAGES += ipsec_rereadcerts.8
+MANPAGES += ipsec_rereadsecrets.8
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
