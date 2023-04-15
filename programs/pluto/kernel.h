@@ -380,7 +380,7 @@ void free_bare_shunt(struct bare_shunt **pp);
 
 extern void init_kernel(struct logger *logger);
 
-struct spd_route *route_owner(struct spd_route *spd);
+const struct spd_route *route_owner(struct spd_route *spd);
 
 extern bool flush_bare_shunt(const ip_address *src, const ip_address *dst,
 			     const struct ip_protocol *transport_proto,
@@ -445,8 +445,8 @@ struct kernel_acquire {
 void jam_kernel_acquire(struct jambuf *buf, const struct kernel_acquire *b);
 
 struct spd_owner {
-	struct spd_route *policy;
-	struct spd_route *route;
+	const struct spd_route *policy;
+	const struct spd_route *route;
 };
 
 struct spd_owner spd_owner(const struct spd_route *spd, unsigned indent);

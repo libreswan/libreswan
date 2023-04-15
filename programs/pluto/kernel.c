@@ -531,9 +531,9 @@ static struct kernel_route kernel_route_from_state(const struct state *st, enum 
 
 static const struct spd_owner null_spd_owner;
 
-struct spd_owner spd_owner(const struct spd_route *spd, unsigned indent)
+struct spd_owner spd_owner(const struct spd_route *c_spd, unsigned indent)
 {
-	struct connection *c = spd->connection;
+	struct connection *c = c_spd->connection;
 	struct logger *logger = c->logger;
 	if (!oriented(c)) {
 		llog(RC_LOG, logger,
@@ -544,12 +544,12 @@ struct spd_owner spd_owner(const struct spd_route *spd, unsigned indent)
 	selector_pair_buf spb;
 	ldbg(logger, "%*slooking for SPD owners of %s",
 	     indent, "",
-	     str_selector_pair(&spd->local->client, &spd->remote->client, &spb));
+	     str_selector_pair(&c_spd->local->client, &c_spd->remote->client, &spb));
 
 	struct spd_owner owner = null_spd_owner;
 
 	struct spd_route_filter srf = {
-		.remote_client_range = &spd->remote->client,
+		.remote_client_range = &c_spd->remote->client,
 		.where = HERE,
 	};
 
@@ -563,7 +563,8 @@ struct spd_owner spd_owner(const struct spd_route *spd, unsigned indent)
 		 * policies.
 		 */
 
-		if (spd == d_spd) {
+		if (c_spd == d_spd) {
+			/* can only be owner; handled above */
 			ldbg(logger, "%*s%s skipped; same SPD",
 			     indent, "", d->name);
 			continue;
@@ -583,9 +584,9 @@ struct spd_owner spd_owner(const struct spd_route *spd, unsigned indent)
 		}
 
 		/* fast lookup did it's job! */
-		PEXPECT(logger, selector_range_eq_selector_range(spd->remote->client,
+		PEXPECT(logger, selector_range_eq_selector_range(c_spd->remote->client,
 								 d_spd->remote->client));
-		if (!selector_eq_selector(spd->remote->client,
+		if (!selector_eq_selector(c_spd->remote->client,
 					  d_spd->remote->client)) {
 			ldbg(logger, "%*s%s skipped; different selectors",
 			     indent, "", d->name);
@@ -675,11 +676,11 @@ struct spd_owner spd_owner(const struct spd_route *spd, unsigned indent)
 			jam_string(buf, " ");
 			if (clash == NULL) {
 				jam(buf, "NULL");
-			} else if (clash->connection == spd->connection) {
-				PEXPECT(logger, clash != spd); /*per-above*/
+			} else if (clash->connection == c) {
+				PEXPECT(logger, clash != c_spd); /*per-above*/
 				jam_string(buf, "sibling");
 			} else {
-				PEXPECT(logger, clash != spd); /*per-above*/
+				PEXPECT(logger, clash != c_spd); /*per-above*/
 				jam_connection(buf, clash->connection);
 				jam_string(buf, " ");
 				jam_enum_short(buf, &routing_names,
@@ -692,7 +693,7 @@ struct spd_owner spd_owner(const struct spd_route *spd, unsigned indent)
 	return owner;
 }
 
-struct spd_route *route_owner(struct spd_route *spd)
+const struct spd_route *route_owner(struct spd_route *spd)
 {
 	return spd_owner(spd, 0).route;
 }
@@ -1992,7 +1993,7 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 	passert(c->kind == CK_PERMANENT || c->kind == CK_INSTANCE);
 	if (c->remote->child.has_client) {
 		for (;; ) {
-			struct spd_route *ro = route_owner(c->spd);
+			const struct spd_route *ro = route_owner(c->spd);
 
 			if (ro == NULL)
 				break; /* nobody interesting has a route */
