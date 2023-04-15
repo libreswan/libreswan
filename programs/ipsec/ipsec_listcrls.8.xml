@@ -18,8 +18,6 @@
     <cmdsynopsis>
       <command>ipsec</command>
       <arg choice='plain'>listcrls</arg>
-      <arg choice='plain'>connectionname</arg>
-      <arg choice='opt'>--config <replaceable>@IPSEC_CONF@</replaceable></arg>
       <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
       <sbr/>
     </cmdsynopsis>
