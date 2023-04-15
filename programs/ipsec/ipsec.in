@@ -414,8 +414,8 @@ ipsec_help() {
 	purgeocsp \
 	replace \
 	rereadall \
-	rereadcacerts \
 	rereadcerts \
+	rereadsecrets \
 	restart \
 	route \
 	showstates \
