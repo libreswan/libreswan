@@ -2045,6 +2045,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 	case AUTOSTART_START:
 		ldbg(c->logger, "autostart=%s implies +POLICY_UP",
 		     enum_name_short(&autostart_names, wm->autostart));
+		ldbg(c->logger, "%s() %s POLICY_UP:%s->%s", __func__, c->name,
+		     bool_str(c->policy & POLICY_UP), bool_str(true));
 		c->policy |= POLICY_UP;
 		break;
 	case AUTOSTART_IGNORE:

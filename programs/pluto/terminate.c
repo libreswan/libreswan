@@ -68,7 +68,8 @@ static int terminate_a_connection(struct connection *c, void *unused_arg UNUSED,
 
 	llog(RC_LOG, c->logger,
 	     "terminating SAs using this connection");
-	dbg("%s() connection '%s' -POLICY_UP", __func__, c->name);
+	ldbg(c->logger, "%s() %s POLICY_UP:%s->%s", __func__, c->name,
+	     bool_str(c->policy & POLICY_UP), bool_str(false));
 	c->policy &= ~POLICY_UP;
 	remove_connection_from_pending(c);
 

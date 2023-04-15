@@ -220,7 +220,8 @@ static bool initiate_connection_2_address(struct connection *c,
 				     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s)",
 				     enum_show(&connection_kind_names, c->kind, &b));
 			}
-			dbg("%s() connection '%s' +POLICY_UP", __func__, c->name);
+			ldbg(c->logger, "%s() %s POLICY_UP:%s->%s", __func__, c->name,
+			     bool_str(c->policy & POLICY_UP), bool_str(true));
 			c->policy |= POLICY_UP;
 			return true;
 		}
@@ -365,7 +366,8 @@ static bool initiate_connection_4_fab(struct connection *c,
 	}
 #endif
 
-	dbg("%s() connection '%s' +POLICY_UP", __func__, c->name);
+	ldbg(c->logger, "%s() %s POLICY_UP:%s->%s", __func__, c->name,
+	     bool_str(c->policy & POLICY_UP), bool_str(true));
 	c->policy |= POLICY_UP;
 
 	/*
