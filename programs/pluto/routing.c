@@ -36,6 +36,7 @@ enum connection_event {
 	CONNECTION_ROUTE,
 	CONNECTION_UNROUTE,
 	CONNECTION_ACQUIRE,
+	CONNECTION_REVIVE,
 	CONNECTION_ESTABLISH_INBOUND,
 	CONNECTION_ESTABLISH_OUTBOUND,
 	CONNECTION_DELETE_IKE,
@@ -50,6 +51,7 @@ static const char *connection_event_name[] = {
 	S(CONNECTION_ROUTE),
 	S(CONNECTION_UNROUTE),
 	S(CONNECTION_ACQUIRE),
+	S(CONNECTION_REVIVE),
 	S(CONNECTION_ESTABLISH_INBOUND),
 	S(CONNECTION_ESTABLISH_OUTBOUND),
 	S(CONNECTION_DELETE_IKE),
@@ -362,6 +364,24 @@ void connection_acquire(struct connection *c, threadtime_t *inception, const str
 		 (struct annex) {
 			 .inception = inception,
 			 .acquire = b,
+		 });
+}
+
+void connection_revive(struct connection *c)
+{
+	if (labeled(c)) {
+		initiate_connection(c, /*remote-host-name*/NULL,
+				    /*background*/true,
+				    /*log-failure*/true,
+				    c->logger);
+		return;
+	}
+
+	threadtime_t inception = threadtime_start();
+	dispatch(CONNECTION_REVIVE, c,
+		 c->logger, HERE,
+		 (struct annex) {
+			 .inception = &inception,
 		 });
 }
 
