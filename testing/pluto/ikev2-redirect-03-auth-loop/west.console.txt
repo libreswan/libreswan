@@ -42,7 +42,7 @@ west #
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #7: initiating IKEv2 connection
 002 "westnet-eastnet-ipv4-psk-ikev2" #5: IKE SA expired (LATEST!)
 002 "westnet-eastnet-ipv4-psk-ikev2" #5: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-002 "westnet-eastnet-ipv4-psk-ikev2" #5: deleting IKE SA but connection is supposed to remain up; CONNECTION_REVIVAL already scheduled
+002 "westnet-eastnet-ipv4-psk-ikev2" #5: event CONNECTION_REVIVAL already scheduled
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #7: sent IKE_SA_INIT request to 192.1.3.33:500
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #7: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "westnet-eastnet-ipv4-psk-ikev2" #7: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
@@ -50,7 +50,7 @@ west #
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #9: initiating IKEv2 connection
 002 "westnet-eastnet-ipv4-psk-ikev2" #7: IKE SA expired (LATEST!)
 002 "westnet-eastnet-ipv4-psk-ikev2" #7: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-002 "westnet-eastnet-ipv4-psk-ikev2" #7: deleting IKE SA but connection is supposed to remain up; CONNECTION_REVIVAL already scheduled
+002 "westnet-eastnet-ipv4-psk-ikev2" #7: event CONNECTION_REVIVAL already scheduled
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #9: sent IKE_SA_INIT request to 192.1.2.23:500
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #9: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "westnet-eastnet-ipv4-psk-ikev2" #9: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
@@ -58,14 +58,14 @@ west #
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #11: initiating IKEv2 connection
 002 "westnet-eastnet-ipv4-psk-ikev2" #9: IKE SA expired (LATEST!)
 002 "westnet-eastnet-ipv4-psk-ikev2" #9: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-002 "westnet-eastnet-ipv4-psk-ikev2" #9: deleting IKE SA but connection is supposed to remain up; CONNECTION_REVIVAL already scheduled
+002 "westnet-eastnet-ipv4-psk-ikev2" #9: event CONNECTION_REVIVAL already scheduled
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #11: sent IKE_SA_INIT request to 192.1.3.33:500
 1v2 "westnet-eastnet-ipv4-psk-ikev2" #11: sent IKE_AUTH request {cipher=AES_GCM_16_256 integ=n/a prf=HMAC_SHA2_512 group=MODP2048}
 003 "westnet-eastnet-ipv4-psk-ikev2" #11: initiator established IKE SA; authenticated peer using authby=secret and ID_FQDN '@east'
 003 "westnet-eastnet-ipv4-psk-ikev2" #11: IKE_AUTH redirect loop, stop initiating IKEv2 exchanges
 002 "westnet-eastnet-ipv4-psk-ikev2" #11: IKE SA expired (LATEST!)
 002 "westnet-eastnet-ipv4-psk-ikev2" #11: deleting IKE SA (ESTABLISHED_IKE_SA) and sending notification
-002 "westnet-eastnet-ipv4-psk-ikev2" #11: deleting IKE SA but connection is supposed to remain up; CONNECTION_REVIVAL already scheduled
+002 "westnet-eastnet-ipv4-psk-ikev2" #11: event CONNECTION_REVIVAL already scheduled
 west #
  echo done
 done
