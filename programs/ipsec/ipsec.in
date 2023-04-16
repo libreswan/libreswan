@@ -1035,7 +1035,7 @@ while [ ${#} -gt 0 ]; do
 	    echo "Libreswan ${IPSEC_VERSION}"
 	    exit 0
 	    ;;
-	--directory)
+	directory|--directory)
 	    printf "%s\n" "${IPSEC_EXECDIR}"
 	    exit 0
 	    ;;
