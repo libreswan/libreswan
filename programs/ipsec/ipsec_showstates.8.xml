@@ -5,7 +5,7 @@
   <refmeta>
     <refentrytitle>IPSEC_SHOWSTATES</refentrytitle>
     <manvolnum>8</manvolnum>
-    <refmiscinfo class='date'>14 April 2023</refmiscinfo>
+    <refmiscinfo class='date'>16 April 2023</refmiscinfo>
     <refmiscinfo class="source">libreswan</refmiscinfo>
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
@@ -27,8 +27,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Showstates</emphasis>
-      The <option>showstates</option> operation list current IKE SA
+      <emphasis remap='I'>Showstates</emphasis> operation list current IKE SA
       and Child SA states.
     </para>
   </refsect1>

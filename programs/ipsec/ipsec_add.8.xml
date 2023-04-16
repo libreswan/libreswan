@@ -29,12 +29,11 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Add</emphasis>
-      The <option>add</option> operation add a connection specification from
-      @IPSEC_CONF@ to internal database within pluto, The Libreswan IPsec
-      daemon. If there already was connection specification with same
-      connectionname, old tunnels are torn down and new specification
-      replaces old one.
+      <emphasis remap='I'>Add</emphasis> operation add a connection
+      specification from @IPSEC_CONF@ to internal database within pluto,
+      The Libreswan IKE daemon. If there already was connection
+      specification with same connectionname, old tunnels are torn
+      down and new specification replaces old one.
     </para>
     <para>
       This only add the connection description making it possible for

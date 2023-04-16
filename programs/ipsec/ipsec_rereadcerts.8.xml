@@ -27,13 +27,12 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Rereadcerts</emphasis>
-      The <option>rereadcerts</option> instructs pluto to reread
-      certificates from IPsec NSS database. This is useful when
-      you replace expiring certificate in NSS database with new one.
-      After replacing certificate in NSS database you can instruct
-      <option>pluto</option> to reread certificates while all IPsec
-      connections continue to work without interruption.
+      <emphasis remap='I'>Rereadcerts</emphasis> operation instructs
+      pluto to reread certificates from IPsec NSS database. This is
+      useful when you replace expiring certificate in NSS database
+      with a new one. After replacing certificate in NSS database you
+      can instruct <option>pluto</option> to reread certificates while
+      all IPsec connections continue to work without any interruption.
     </para>
   </refsect1>
 

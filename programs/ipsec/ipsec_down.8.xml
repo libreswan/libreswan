@@ -28,12 +28,12 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Down</emphasis>
-      The <option>down</option> operation commands pluto to tear down all
-      connections matching specified <option>connectionname</option> in
-      internal configuration database. This connection definitions in place
-      so remotes can immediately connect back. If you want tunnel to go
-      permanently down, use <option>ipsec delete</option> instead.
+      <emphasis remap='I'>Down</emphasis> operation commands pluto to
+      tear down all connections matching specified
+      <option>connectionname</option> in internal configuration database.
+      This connection definitions in place so remotes can immediately
+      connect back. If you want tunnel to go permanently down, use
+      <option>ipsec delete</option> instead.
     </para>
     <para>
       Normally, pluto's route to a destination remains in place when a

@@ -27,8 +27,8 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Purgeocsp</emphasis>
-      The <option>puregeocsp</option> purges the NSS OCSP cache.
+      <emphasis remap='I'>Purgeocsp</emphasis> purges the NSS OCSP cache.
+    </para>
   </refsect1>
 
   <refsect1 id='see_also'>

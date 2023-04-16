@@ -29,8 +29,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Restart</emphasis>
-      The <option>restart</option> operation restarts ipsec service
+      <emphasis remap='I'>Restart</emphasis> operation restarts ipsec service
       via initsystem tools.
     </para>
   </refsect1>

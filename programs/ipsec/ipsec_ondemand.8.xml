@@ -29,12 +29,12 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Ondemand</emphasis>
-      The <option>ondemand</option> operation is equivalent to running
-      first <option>ipsec add connectionname</option> and <option>ipsec
-      route connectionname</option>, causing same effect as connection
-      configuration option <option>auto=ondemand</option>. This sets up
-      connection to be <option>on demand</option>, causing connection
+      <emphasis remap='I'>Ondemand</emphasis> operation is equivalent
+      to running first <option>ipsec add connectionname</option> and
+      then <option>ipsec route connectionname</option>, causing the same
+      effect as connection configuration option
+      <option>auto=ondemand</option>. This sets up connection to be
+      <option>on demand</option>, causing connection
       to establish only when triggered by outbound traffic.
     </para>
     <para>
