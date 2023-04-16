@@ -81,13 +81,23 @@ static bool revival_plausable(struct connection *c, struct logger *logger)
 		return false;
 	}
 
-#if 0
 	if (!oriented(c)) {
 		/* e.x., interface deleted while up */
 		ldbg(logger, "skipping revival: not oriented");
 		return false;
 	}
-#endif
+
+	if (c->interface->ip_dev->ifd_change == IFD_DELETE) {
+		/*
+		 * The oriented() isn't sufficient.
+		 *
+		 * An interface is first marked as dead and then
+		 * deleted.  As a result a connection will check for
+		 * revival when the interface is attached but dead.
+		 */
+		ldbg(logger, "skipping revival: interface being deleted");
+		return false;
+	}
 
 	/*
 	 * XXX: should this be a pexpect()?
@@ -258,10 +268,10 @@ void revive_connection(struct connection *c, const char *subplot, struct logger 
 	/*
 	 * See ikev2-removed-iface-01
 	 *
-	 * The established connection looses its interface trigging a
-	 * delete.  That in turn causes the connection to go onto the
-	 * revival queue expecting to then initiate a connection via
-	 * the interface that was just deleted.  Oh.
+	 * The established connection is loosing its interface which
+	 * triggers a delete.  That in turn causes the connection to
+	 * go onto the revival queue expecting to then initiate a
+	 * connection via the interface that was just deleted.  Oh.
 	 *
 	 * What saves things from the inevitable core dump is
 	 * initiate_connection() being sprinkled with oriented()
@@ -270,11 +280,9 @@ void revive_connection(struct connection *c, const char *subplot, struct logger 
 	 * It should instead wait until the interface comes back and
 	 * then, assuming UP, initiate.
 	 */
-#if 0
 	if (!PEXPECT(c->logger, oriented(c))) {
 		return;
 	}
-#endif
 
 #if 0
 	/*
