@@ -46,6 +46,7 @@ MANPAGES += ipsec_route.8
 MANPAGES += ipsec_showstates.8
 MANPAGES += ipsec_shuntstatus.8
 MANPAGES += ipsec_start.8
+MANPAGES += ipsec_status.8
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
