@@ -447,8 +447,18 @@ void jam_kernel_acquire(struct jambuf *buf, const struct kernel_acquire *b);
 struct spd_owner {
 	const struct spd_route *policy;
 	const struct spd_route *route;
+	/*
+	 * If it isn't SPD, who will rule the spd range?
+	 */
+	const struct spd_route *head;
+	/*
+	 * The SPD that this SPD is hiding.
+	 */
+	const struct spd_route *hidden;
 };
 
-struct spd_owner spd_owner(const struct spd_route *spd, unsigned indent);
+struct spd_owner spd_owner(const struct spd_route *spd,
+			   enum routing new_routing,
+			   unsigned indent);
 
 #endif

@@ -531,15 +531,21 @@ static struct kernel_route kernel_route_from_state(const struct state *st, enum 
 
 static const struct spd_owner null_spd_owner;
 
-struct spd_owner spd_owner(const struct spd_route *c_spd, unsigned indent)
+struct spd_owner spd_owner(const struct spd_route *c_spd,
+			   enum routing new_routing,
+			   unsigned indent)
 {
 	struct connection *c = c_spd->connection;
+
 	struct logger *logger = c->logger;
 	if (!oriented(c)) {
 		llog(RC_LOG, logger,
 		     "connection no longer oriented - system interface change?");
 		return null_spd_owner;
 	}
+
+	enum routing routing_max = PMAX(c->child.routing, new_routing);
+	enum routing routing_min = PMIN(c->child.routing, new_routing);
 
 	selector_pair_buf spb;
 	ldbg(logger, "%*slooking for SPD owners of %s",
@@ -559,8 +565,13 @@ struct spd_owner spd_owner(const struct spd_route *c_spd, unsigned indent)
 		struct connection *d = d_spd->connection;
 
 		/*
-		 * Part 1: eliminate cases common to both routes and
-		 * policies.
+		 * Part 1: prune out anything that isn't conflicting
+		 * according to selectors.
+		 *
+		 * Yes, conflicting is vague.  A good starting point
+		 * is to look at what the kernel needs when it is
+		 * deleting a policy.  For instance, the selectors
+		 * matter, the rules (templ) do not,
 		 */
 
 		if (c_spd == d_spd) {
@@ -593,14 +604,6 @@ struct spd_owner spd_owner(const struct spd_route *c_spd, unsigned indent)
 			continue;
 		}
 
-		/* XXX: why? */
-		if (!address_eq_address(c->local->host.addr,
-					d->local->host.addr)) {
-			ldbg(logger, "%*s%s skipped; different local address?!?",
-			     indent, "", d->name);
-			continue;
-		}
-
 		/*
 		 * Consider SPDs to be different when the either in or
 		 * out marks differ (after masking).
@@ -619,6 +622,42 @@ struct spd_owner spd_owner(const struct spd_route *c_spd, unsigned indent)
 			     __func__, d->name,
 			     c->sa_marks.out.val, c->sa_marks.out.mask,
 			     d->sa_marks.out.val, d->sa_marks.out.mask);
+			continue;
+		}
+
+		/*
+		 * Update head/hidden if it bests SPD
+		 */
+		if (d->child.routing > routing_max) {
+			ldbg(logger, "%*s%s saved SPD head; better match",
+			     indent, "", d->name);
+			owner.head = d_spd;
+		}
+		if (d->child.routing < routing_max &&
+		    d->child.routing > routing_min) {
+			if (owner.hidden == NULL) {
+				ldbg(logger, "%*s%s saved SPD hidden; first match",
+				     indent, "", d->name);
+				owner.hidden = d_spd;
+			} else if (owner.hidden->connection->child.routing < d->child.routing) {
+				ldbg(logger, "%*s%s saved SPD hidden; best match",
+				     indent, "", d->name);
+				owner.hidden = d_spd;
+			}
+		}
+
+		/*
+		 * XXX: why?
+		 *
+		 * XXX: isn't host address comparison a routing and
+		 * not SPD thing?  Ignoring a conflicting SPD because
+		 * of the routing table seems wrong - the SPD still
+		 * conflicts so only one is allowed.
+		 */
+		if (!address_eq_address(c->local->host.addr,
+					d->local->host.addr)) {
+			ldbg(logger, "%*s%s skipped; different local address?!?",
+			     indent, "", d->name);
 			continue;
 		}
 
@@ -670,7 +709,7 @@ struct spd_owner spd_owner(const struct spd_route *c_spd, unsigned indent)
 		jam_string(buf, ":");
 
 		const char *what = "route";
-		FOR_EACH_THING(clash, owner.route, owner.policy) {
+		FOR_EACH_THING(clash, owner.route, owner.policy, owner.head, owner.hidden) {
 			jam_string(buf, " ");
 			jam_string(buf, what);
 			jam_string(buf, " ");
@@ -695,7 +734,7 @@ struct spd_owner spd_owner(const struct spd_route *c_spd, unsigned indent)
 
 const struct spd_route *route_owner(struct spd_route *spd)
 {
-	return spd_owner(spd, 0).route;
+	return spd_owner(spd, spd->connection->child.routing, 0).route;
 }
 
 /*
@@ -791,7 +830,8 @@ static void get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 	 * Find how owns the installed SPD (kernel policy).
 	 */
 
-	spd->wip.conflicting.spd = spd_owner(spd, indent).policy;
+	struct spd_owner owner = spd_owner(spd, spd->connection->child.routing, indent);
+	spd->wip.conflicting.spd = owner.policy;
 	pexpect(spd->wip.conflicting.spd == NULL ||
 		kernel_policy_installed(spd->wip.conflicting.spd->connection));
 
