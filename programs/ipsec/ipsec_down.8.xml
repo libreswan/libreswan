@@ -29,11 +29,21 @@
     <title>DESCRIPTION</title>
     <para>
       <emphasis remap='I'>Down</emphasis>
-      The down operation tells pluto to tear down all connections matching
-      specified <option>connectionname</option> in internal configuration
-      database. This connection definitions in place so remotes can immediately
-      connect back. If you want tunnel to go permanently down, use
-      <option>ipsec delete</option> instead.
+      The <option>down</option> operation commands pluto to tear down all
+      connections matching specified <option>connectionname</option> in
+      internal configuration database. This connection definitions in place
+      so remotes can immediately connect back. If you want tunnel to go
+      permanently down, use <option>ipsec delete</option> instead.
+    </para>
+    <para>
+      Normally, pluto's route to a destination remains in place when a
+      <option>down</option> operation is used to take the connection down
+      (or if connection setup, or later automatic rekeying, fails). This
+      permits establishing a new connection (perhaps using a different
+      specification; the route is altered as necessary) without having
+      a “window” in which packets might go elsewhere based on a more general
+      route. Such a route can be removed using the <option>unroute</option>
+      operation (and is implicitly removed by <option>delete</option>).
     </para>
   </refsect1>
 
