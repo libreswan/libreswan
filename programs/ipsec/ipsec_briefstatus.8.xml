@@ -27,9 +27,8 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Briefstatus</emphasis>
-      Get brief status from IPsec pluto daemon. Get complete status
-      with "ipsec status".
+      <emphasis remap='I'>Briefstatus</emphasis> list brief status from
+      the pluto daemon. Get complete status with <option>ipsec status</option>.
     </para>
   </refsect1>
 

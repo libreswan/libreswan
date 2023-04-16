@@ -27,9 +27,9 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Globalstatus</emphasis>
-      Get global status information from IPsec daemon (pluto).
-      This information is likely intresting only for statistics purposes.
+      <emphasis remap='I'>Globalstatus</emphasis> gets global status information
+      from IPsec daemon (pluto). This information is likely intresting only for
+      statistics purposes.
     </para>
   </refsect1>
 

@@ -33,11 +33,12 @@
       requests initsystem to start ipsec service.
     </para>
     <para>
-      The <option>start</option> operation with <option>connectionname
-      </option> option is equivalent to running first
-      <option>ipsec add connectionname</option> and then <option>ipsec
-      up connectionname</option>, causing same effect as connection
-      configuration option <option>auto=start</option> on startup.
+      <emphasis remap='I'>Start</emphasis> operation with
+      <option>connectionname</option> option is equivalent to
+      running first <option>ipsec add connectionname</option> and then
+      <option>ipsec up connectionname</option>, causing same effect
+      as connection configuration option <option>auto=start</option>
+      on startup.
     </para>
     <para>
       This sets up connection to be added to the pluto internal database

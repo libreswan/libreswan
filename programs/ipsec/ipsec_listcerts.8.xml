@@ -27,11 +27,10 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Listcerts</emphasis>
-      The listcerts operation lists all X.509 certificates loaded locally
-      using the rightcert and leftcert parameters in ipsec.conf(5).
-      To see all certificates in the NSS database, use
-      <option>ipsec certutil -L</option>.
+      <emphasis remap='I'>Listcerts</emphasis> operation lists all X.509
+      certificates loaded locally using the rightcert and leftcert parameters
+      in <option>ipsec.conf</option>(5). To see all certificates in the NSS
+      database, use <option>ipsec certutil -L</option>.
     </para>
   </refsect1>
 

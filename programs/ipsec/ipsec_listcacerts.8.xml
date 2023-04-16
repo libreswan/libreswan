@@ -28,8 +28,8 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Listcacerts</emphasis>
-      Lists all X.509 CA certificates contained in the NSS database.
+      <emphasis remap='I'>Listcacerts</emphasis> lists all X.509 CA
+      certificates contained in the NSS database.
     </para>
   </refsect1>
 
