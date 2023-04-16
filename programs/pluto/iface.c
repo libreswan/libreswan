@@ -132,6 +132,7 @@ void release_iface_dev(struct iface_dev **ifdp)
 	const struct logger *logger = &global_logger;
 	struct iface_dev *ifd = delref_where(ifdp, logger, HERE);
 	if (ifd != NULL) {
+		/* i.e., last reference */
 		remove_list_entry(&ifd->ifd_entry);
 		pfree(ifd->id_rname);
 		pfree(ifd);
@@ -154,14 +155,20 @@ static void free_dead_ifaces(struct logger *logger)
 		if (p->ip_dev->ifd_change == IFD_DELETE) {
 			endpoint_buf b;
 			llog(RC_LOG, logger,
-				    "shutting down interface %s %s",
-				    p->ip_dev->id_rname,
-				    str_endpoint(&p->local_endpoint, &b));
+			     "shutting down interface %s %s",
+			     p->ip_dev->id_rname,
+			     str_endpoint(&p->local_endpoint, &b));
 			some_dead = true;
 		} else if (p->ip_dev->ifd_change == IFD_ADD) {
 			some_new = true;
 		}
 	}
+
+	/*
+	 * Now go through and remove any reference to the dead
+	 * interfaces either in the interface list or in oriented
+	 * connections.
+	 */
 
 	if (some_dead) {
 		dbg("updating interfaces - deleting the dead");
@@ -193,9 +200,12 @@ static void free_dead_ifaces(struct logger *logger)
 		}
 	}
 
-	/* this must be done after the release_dead_interfaces
-	 * in case some to the newly unoriented connections can
-	 * become oriented here.
+	/*
+	 * Finally go through all connections and see if any can
+	 * re-orient.
+	 *
+	 * For instance, a connection with its interface deleted may
+	 * be able to orient to an existing or new interface.
 	 */
 	if (some_dead || some_new) {
 		dbg("updating interfaces - checking orientation");

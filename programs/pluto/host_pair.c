@@ -466,7 +466,11 @@ void update_host_pairs(struct connection *c)
 	}
 }
 
-/* Adjust orientations of connections to reflect newly added interfaces. */
+/*
+ * Adjust orientations of connections to reflect newly added
+ * interfaces.
+ */
+
 void check_orientations(struct logger *logger)
 {
 	/*
