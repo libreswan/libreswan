@@ -41,6 +41,7 @@
 #include "revival.h"
 #include "pluto_shutdown.h"		/* for exiting_pluto */
 #include "ikev2_replace.h"
+#include "orient.h"
 
 /*
  * Revival mechanism: keep track of connections
@@ -63,14 +64,57 @@ void flush_revival(const struct connection *c)
 	flush_connection_event(c, CONNECTION_REVIVAL);
 }
 
+static bool revival_plausable(struct connection *c, struct logger *logger)
+{
+	if (exiting_pluto) {
+		ldbg(logger, "skilling revival: pluto is going down");
+		return false;
+	}
+
+	if ((c->policy & POLICY_UP) == LEMPTY) {
+		ldbg(logger, "skipping revival: POLICY_UP disabled");
+		return false;
+	}
+
+	if ((c->policy & POLICY_DONT_REKEY) != LEMPTY) {
+		ldbg(logger, "skipping revival: POLICY_DONT_REKEY enabled");
+		return false;
+	}
+
+#if 0
+	if (!oriented(c)) {
+		/* e.x., interface deleted while up */
+		ldbg(logger, "skipping revival: not oriented");
+		return false;
+	}
+#endif
+
+	/*
+	 * XXX: should this be a pexpect()?
+	 */
+	if (connection_event_is_scheduled(c, CONNECTION_REVIVAL)) {
+		llog(RC_LOG, logger,
+		     "event CONNECTION_REVIVAL already scheduled");
+		return false;
+	}
+
+	if (impair.revival) {
+		llog(RC_LOG, logger,
+		     "IMPAIR: skipping revival of connection that is supposed to remain up");
+		return false;
+	}
+
+	/* not completely ruled out */
+	return true;
+}
+
 bool should_revive(struct state *st)
 {
 	struct connection *c = st->st_connection;
 
-	if (exiting_pluto) {
-		ldbg(st->st_logger, "skilling revival: pluto is going down");
-		return false;
-	}
+	/*
+	 * XXX: now the weird ones.
+	 */
 
 	if (IS_CHILD_SA_ESTABLISHED(st) &&
 	    c->newest_ipsec_sa == st->st_serialno &&
@@ -87,16 +131,6 @@ bool should_revive(struct state *st)
 
 	if (!IS_IKE_SA(st)) {
 		ldbg(st->st_logger, "skipping revival: not an IKE SA");
-		return false;
-	}
-
-	if ((c->policy & POLICY_UP) == LEMPTY) {
-		ldbg(st->st_logger, "skipping revival: POLICY_UP disabled");
-		return false;
-	}
-
-	if ((c->policy & POLICY_DONT_REKEY) != LEMPTY) {
-		ldbg(st->st_logger, "skipping revival: POLICY_DONT_REKEY enabled");
 		return false;
 	}
 
@@ -121,16 +155,7 @@ bool should_revive(struct state *st)
 		return false;
 	}
 
-	if (impair.revival) {
-		log_state(RC_LOG, st,
-			  "IMPAIR: skipping revival of connection that is supposed to remain up");
-		return false;
-	}
-
-	if (connection_event_is_scheduled(c, CONNECTION_REVIVAL)) {
-		log_state(RC_LOG, st,
-			  "deleting %s but connection is supposed to remain up; CONNECTION_REVIVAL already scheduled",
-			  c->config->ike_info->sa_type_name[IKE_SA]);
+	if (!revival_plausable(c, st->st_logger)) {
 		return false;
 	}
 
@@ -140,21 +165,6 @@ bool should_revive(struct state *st)
 bool should_revive_connection(struct child_sa *child)
 {
 	struct connection *c = child->sa.st_connection;
-
-	if (exiting_pluto) {
-		ldbg_sa(child, "skilling revival: pluto is going down");
-		return false;
-	}
-
-	if ((c->policy & POLICY_UP) == LEMPTY) {
-		ldbg_sa(child, "skipping revival: POLICY_UP disabled");
-		return false;
-	}
-
-	if ((c->policy & POLICY_DONT_REKEY) != LEMPTY) {
-		ldbg_sa(child, "skipping revival: POLICY_DONT_REKEY enabled");
-		return false;
-	}
 
 	if (labeled(c)) {
 		/* not supported for now */
@@ -181,15 +191,7 @@ bool should_revive_connection(struct child_sa *child)
 		return false;
 	}
 
-	if (connection_event_is_scheduled(c, CONNECTION_REVIVAL)) {
-		llog_sa(RC_LOG, child,
-			"event CONNECTION_REVIVAL already scheduled");
-		return false;
-	}
-
-	if (impair.revival) {
-		llog_sa(RC_LOG, child,
-			"IMPAIR: skipping revival of connection that is supposed to remain up");
+	if (!revival_plausable(c, child->sa.st_logger)) {
 		return false;
 	}
 
@@ -246,9 +248,76 @@ void schedule_revival(struct state *st, const char *subplot)
 
 void revive_connection(struct connection *c, const char *subplot, struct logger *logger)
 {
+	/* for instance, when triggered by an event injection */
+	attach_whack(c->logger, logger);
+
 	llog(RC_LOG, c->logger,
 	     "initiating connection '%s' with serial "PRI_CO" which %s but must remain up per local policy",
 	     c->name, pri_co(c->serialno), subplot);
+
+	/*
+	 * See ikev2-removed-iface-01
+	 *
+	 * The established connection looses its interface trigging a
+	 * delete.  That in turn causes the connection to go onto the
+	 * revival queue expecting to then initiate a connection via
+	 * the interface that was just deleted.  Oh.
+	 *
+	 * What saves things from the inevitable core dump is
+	 * initiate_connection() being sprinkled with oriented()
+	 * checks.
+	 *
+	 * It should instead wait until the interface comes back and
+	 * then, assuming UP, initiate.
+	 */
+#if 0
+	if (!PEXPECT(c->logger, oriented(c))) {
+		return;
+	}
+#endif
+
+#if 0
+	/*
+	 * IKEv2 should only revive permenant and instances (IKEv1
+	 * revives templates?!?).
+	 *
+	 * XXX: this includes both labeled_parent() and
+	 * labeled_child().  Should probably only allow the former?
+	 */
+	if (!PEXPECT(c->logger,
+		     labeled_parent(c) ||
+		     c->kind == CK_INSTANCE ||
+		     c->kind == CK_PERMANENT)) {
+		/* revival uses the instance or permanent */
+		return;
+	}
+#endif
+
+#if 0
+	/*
+	 * IKEv1 maybe later?
+	 */
+	if (c->config->ike_version == IKEv1) {
+		initiate_connection(c, /*remote-host-name*/NULL,
+				    /*background*/true,
+				    /*log-failure*/true,
+				    logger);
+		return;
+	}
+#endif
+
+#if 0
+	/*
+	 * XXX: why IKEv1 only? isn't this also required by IKEv2?
+	 */
+	shunk_t sec_label = (c->config->ike_version > IKEv1 ? null_shunk :
+			     HUNK_AS_SHUNK(c->child.sec_label));
+
+	threadtime_t inception = threadtime_start();
+	ipsecdoi_initiate(c, c->policy, SOS_NOBODY, &inception,
+			  sec_label, /*background*/true, c->logger);
+#endif
+
 	initiate_connection(c, /*remote-host-name*/NULL,
 			    /*background*/true,
 			    /*log-failure*/true,
