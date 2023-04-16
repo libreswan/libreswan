@@ -27,7 +27,7 @@ north #
 fired and forgotten
 north #
  ../../guestbin/wait-for.sh --match '#1: sent IKE_SA_INIT request' -- cat /tmp/pluto.log
-Apr 14 16:55:45.855654: "north" #1: sent IKE_SA_INIT request to 192.1.2.23:500
+"north" #1: sent IKE_SA_INIT request to 192.1.2.23:500
 north #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.0.3.254/32 dst 192.0.2.0/24
@@ -38,7 +38,7 @@ north #
  # wait for it to fail
 north #
  ../../guestbin/wait-for.sh --match ' second timeout exceeded after ' -- cat /tmp/pluto.log
-Apr 14 16:56:01.861431: "north" #1: STATE_V2_PARENT_I1: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message
+"north" #1: STATE_V2_PARENT_I1: 10 second timeout exceeded after 5 retransmits.  No response (or no acceptable response) to our first IKEv2 message
 north #
  ../../guestbin/ipsec-kernel-policy.sh
 src 192.0.3.254/32 dst 192.0.2.0/24
