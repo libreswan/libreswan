@@ -338,17 +338,23 @@ static void permanent_unrouted_to_unrouted_negotiation(struct connection *c, con
  * But what of the lurking acquire?
  */
 
-static void permanent_routed_ondemand_to_routed_negotiation(struct connection *c, const struct annex *e)
+static void routed_ondemand_to_routed_negotiation(struct connection *c)
 {
-	struct logger *logger = c->logger;
-	PEXPECT(logger, (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
-	assign_holdpass(c, KERNEL_POLICY_OP_REPLACE,
-			"converting permanent connection's ondemand kernel policy to negotiating");
+	ldbg(c->logger, "%s() for %s", __func__, c->name);
+        struct logger *logger = c->logger;
+        PEXPECT(logger, (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		if (!replace_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
+					       RT_ROUTED_NEGOTIATION,
+					       SHUNT_KIND_NEGOTIATION,
+					       logger, HERE,
+					       "ondemand->negotiation")) {
+			llog(RC_LOG, c->logger,
+			     "converting ondemand kernel policy to negotiation");
+		}
+	}
 	/* the state isn't yet known */
 	set_routing(c, RT_ROUTED_NEGOTIATION, NULL);
-	/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
-	ipsecdoi_initiate(c, c->policy, SOS_NOBODY, e->inception,
-			  e->acquire->sec_label, e->acquire->background, e->acquire->logger);
 }
 
 static void routed_negotiation_to_routed_ondemand(struct connection *c,
@@ -829,9 +835,22 @@ void dispatch(enum connection_event event, struct connection *c,
 			ldbg(logger, "already unrouted");
 			return;
 
+
+		case X(ACQUIRE, ROUTED_ONDEMAND, PERMANENT):
+			routed_ondemand_to_routed_negotiation(c);
+			PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
+			/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
+			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+					  e->inception,
+					  e->acquire->sec_label,
+					  e->acquire->background,
+					  e->acquire->logger);
+			return;
+		case X(ACQUIRE, ROUTED_NEGOTIATION, PERMANENT):
+			llog(RC_LOG, c->logger, "connection already negotiating");
+			return;
+
 		case X(REVIVE, UNROUTED, PERMANENT):
-		case X(REVIVE, ROUTED_ONDEMAND, PERMANENT):
-		case X(REVIVE, ROUTED_ONDEMAND, INSTANCE):
 #if 0
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 					  e->inception, e->acquire->sec_label,
@@ -843,6 +862,16 @@ void dispatch(enum connection_event event, struct connection *c,
 					    logger);
 #endif
 			return;
+		case X(REVIVE, ROUTED_ONDEMAND, PERMANENT):
+		case X(REVIVE, ROUTED_ONDEMAND, INSTANCE):
+		{
+			routed_ondemand_to_routed_negotiation(c);
+			PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
+			threadtime_t inception = threadtime_start();
+			ipsecdoi_initiate(c, c->policy, SOS_NOBODY, &inception,
+					  null_shunk, /*background*/false, logger);
+			return;
+		}
 
 		case X(ACQUIRE, UNROUTED, PERMANENT):
 			/* presumably triggered by whack */
@@ -882,13 +911,6 @@ void dispatch(enum connection_event event, struct connection *c,
 			 * connection */
 			set_routing(c, RT_UNROUTED, NULL);
 			do_updown_unroute(c);
-			return;
-
-		case X(ACQUIRE, ROUTED_ONDEMAND, PERMANENT):
-			permanent_routed_ondemand_to_routed_negotiation(c, e);
-			return;
-		case X(ACQUIRE, ROUTED_NEGOTIATION, PERMANENT):
-			llog(RC_LOG, c->logger, "connection already negotiating");
 			return;
 
 		case X(ROUTE, ROUTED_TUNNEL, PERMANENT):
