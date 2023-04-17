@@ -19,13 +19,16 @@
       <command>ipsec</command>
       <arg choice='plain'><replaceable>command</replaceable></arg>
       <arg choice='opt' rep='repeat'><replaceable>argument</replaceable></arg>
-      <sbr/>
+    </cmdsynopsis>
+    <cmdsynopsis>
       <command>ipsec</command>
       <arg choice='plain'><replaceable>help</replaceable></arg>
-      <sbr/>
+    </cmdsynopsis>
+    <cmdsynopsis>
       <command>ipsec</command>
       <arg choice='plain'><replaceable>version</replaceable></arg>
-      <sbr/>
+    </cmdsynopsis>
+    <cmdsynopsis>
       <command>ipsec</command>
       <arg choice='plain'><replaceable>directory</replaceable></arg>
       <sbr/>
