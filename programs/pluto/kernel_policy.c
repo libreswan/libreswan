@@ -372,6 +372,45 @@ bool add_kernel_policy(enum kernel_policy_op op,
 				     logger, where, story);
 }
 
+bool replace_spd_kernel_policy(const struct spd_route *spd,
+			       enum direction direction,
+			       enum routing new_routing,
+			       enum shunt_kind shunt_kind,
+			       struct logger *logger,
+			       where_t where, const char *what)
+{
+	struct connection *c = spd->connection;
+
+	selector_pair_buf spb;
+	ldbg(logger, " replacing %s",
+	     str_selector_pair(&spd->local->client, &spd->remote->client, &spb));
+	struct spd_owner owner = spd_owner(spd, new_routing, 2);
+	if (owner.head != NULL) {
+		connection_buf cb;
+		ldbg(logger, "  no! owner is "PRI_CONNECTION,
+		     pri_connection(owner.head->connection, &cb));
+		return true;
+	}
+
+	struct kernel_policy kernel_policy =
+		kernel_policy_from_void(spd->local->client,
+					spd->remote->client,
+					direction,
+					calculate_kernel_priority(c),
+					shunt_kind,
+					spd->connection->config->shunt[shunt_kind],
+					&c->sa_marks, c->xfrmi,
+					HUNK_AS_SHUNK(c->config->sec_label),
+					where);
+	return add_kernel_policy(KERNEL_POLICY_OP_REPLACE, direction,
+				 &spd->local->client,
+				 &spd->remote->client,
+				 &kernel_policy,
+				 deltatime(0),
+				 logger, where, what);
+
+}
+
 bool delete_kernel_policy(enum direction direction,
 			  enum expect_kernel_policy expect_kernel_policy,
 			  const ip_selector *local_selector,
@@ -519,7 +558,8 @@ void install_inbound_ipsec_kernel_policy(struct child_sa *child,
 		kernel_policy_from_state(child, spd, DIRECTION_INBOUND, where);
 	selector_pair_buf spb;
 	ldbg_sa(child, "kernel: %s() is installing SPD for %s",
-		__func__, str_selector_pair(&kernel_policy.src.client, &kernel_policy.dst.client, &spb));
+		__func__, str_selector_pair(&kernel_policy.src.client,
+					    &kernel_policy.dst.client, &spb));
 
 
 #if defined(HAVE_NFTABLES)

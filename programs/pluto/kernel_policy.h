@@ -171,6 +171,13 @@ bool add_spd_kernel_policy(const struct spd_route *spd,
 			   struct logger *logger,
 			   where_t where, const char *what);
 
+bool replace_spd_kernel_policy(const struct spd_route *spd,
+			       enum direction direction,
+			       enum routing new_routing,
+			       enum shunt_kind shunt_kind,
+			       struct logger *logger,
+			       where_t where, const char *what);
+
 bool delete_spd_kernel_policy(const struct spd_route *spd,
 			      enum direction direction,
 			      enum expect_kernel_policy existing_policy_expectation,

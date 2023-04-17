@@ -355,11 +355,12 @@ static void routed_negotiation_to_routed_ondemand(struct connection *c,
 						  struct logger *logger,
 						  const char *reason)
 {
+	ldbg(logger, "%s() %s for %s", __func__, reason, c->name);
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-		if (!add_spd_kernel_policy(spd, KERNEL_POLICY_OP_REPLACE,
-					   DIRECTION_OUTBOUND,
-					   SHUNT_KIND_ONDEMAND,
-					   logger, HERE, reason)) {
+		if (!replace_spd_kernel_policy(spd, DIRECTION_OUTBOUND,
+					       RT_ROUTED_ONDEMAND,
+					       SHUNT_KIND_ONDEMAND,
+					       logger, HERE, reason)) {
 			llog(RC_LOG, logger, "%s failed", reason);
 		}
 	}
