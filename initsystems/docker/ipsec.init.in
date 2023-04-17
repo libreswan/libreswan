@@ -126,7 +126,7 @@ start() {
     # pluto searches the current directory, so this is required for making it selinux compliant
     cd /
     # Enable nflog if configured
-    ipsec --checknflog > /dev/null
+    ipsec checknflog > /dev/null
     # Create lockfile
     [ -d ${lockdir} ] || mkdir -p ${lockdir}
     touch ${lockpath}
@@ -166,7 +166,7 @@ stop() {
     fi
 
     ipsec _stackmanager stop
-    ipsec --stopnflog > /dev/null
+    ipsec stopnflog > /dev/null
 
     # cleaning up backup resolv.conf
     if [ -e ${LIBRESWAN_RESOLV_CONF} ]; then

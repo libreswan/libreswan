@@ -19,8 +19,8 @@ end script
 
 script
     . /etc/default/pluto
-    @@SBINDIR@@/ipsec --checknss
-    @@SBINDIR@@/ipsec --checknflog
+    @@SBINDIR@@/ipsec checknss
+    @@SBINDIR@@/ipsec checknflog
     @@SBINDIR@@/ipsec _stackmanager start
     @@LIBEXECDIR@@/pluto --config @@IPSEC_CONF@@ --nofork $PLUTO_OPTIONS
     if [ -f @@LIBEXECDIR@@/portexcludes ] ; then
@@ -31,7 +31,7 @@ end script
 pre-stop script
     # do not run whack --shutdown in pre-stop, it confused stop into restarting
     # @@SBINDIR@@/ipsec whack --shutdown
-    @@SBINDIR@@/ipsec --stopnflog
+    @@SBINDIR@@/ipsec stopnflog
     ip xfrm policy flush
     ip xfrm state flush
 end script
