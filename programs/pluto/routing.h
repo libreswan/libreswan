@@ -61,6 +61,7 @@ bool kernel_policy_installed(const struct connection *c);
 void connection_route(struct connection *c);
 void connection_unroute(struct connection *c);
 
+void connection_initiate(struct connection *c, const threadtime_t *inception, bool background);
 void connection_acquire(struct connection *c, threadtime_t *inception, const struct kernel_acquire *b);
 void connection_revive(struct connection *c);
 

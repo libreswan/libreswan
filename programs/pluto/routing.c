@@ -30,11 +30,17 @@
 #include "initiate.h"			/* for ipsecdoi_initiate() */
 #include "updown.h"
 
+/*
+ * The transition contains broken code.
+ */
+#define BROKEN_TRANSITION true
+
 static void do_updown_unroute(struct connection *c);
 
 enum connection_event {
 	CONNECTION_ROUTE,
 	CONNECTION_UNROUTE,
+	CONNECTION_INITIATE, /*UP?*/
 	CONNECTION_ACQUIRE,
 	CONNECTION_REVIVE,
 	CONNECTION_ESTABLISH_INBOUND,
@@ -50,6 +56,7 @@ static const char *connection_event_name[] = {
 #define S(E) [E] = #E
 	S(CONNECTION_ROUTE),
 	S(CONNECTION_UNROUTE),
+	S(CONNECTION_INITIATE),
 	S(CONNECTION_ACQUIRE),
 	S(CONNECTION_REVIVE),
 	S(CONNECTION_ESTABLISH_INBOUND),
@@ -301,20 +308,21 @@ static void assign_holdpass(struct connection *c, enum kernel_policy_op op,
  * replace.  Should assign_holdpass() instead just look around?
  */
 
-static void unrouted_instance_to_unrouted_negotiation(struct connection *c, const struct annex *e)
+static void instance_unrouted_to_unrouted_negotiation(struct connection *c)
 {
+#if 0
+	/* fails when whack forces the initiate so that the template
+	 * is instantiated before it is routed */
 	struct logger *logger = c->logger;
 	struct connection *t = c->clonedfrom; /* could be NULL */
 	PEXPECT(logger, t != NULL && t->child.routing == RT_ROUTED_ONDEMAND);
+#endif
 	bool oe = ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
 	const char *reason = (oe ? "replace unrouted opportunistic %trap with broad %pass or %hold" :
 			      "replace unrouted %trap with broad %pass or %hold");
 	assign_holdpass(c, KERNEL_POLICY_OP_REPLACE, reason);
 
 	set_routing(c, RT_UNROUTED_NEGOTIATION, NULL);
-	ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
-			  e->inception, e->acquire->sec_label,
-			  e->background, e->acquire->logger);
 }
 
 /*
@@ -325,17 +333,21 @@ static void unrouted_instance_to_unrouted_negotiation(struct connection *c, cons
  * installed as KIND_NEGOTIATION.
  */
 
-static void permanent_unrouted_to_unrouted_negotiation(struct connection *c, const struct annex *e)
+static void permanent_unrouted_to_unrouted_negotiation(struct connection *c)
 {
 	struct logger *logger = c->logger;
 	PEXPECT(logger, (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
 	assign_holdpass(c, KERNEL_POLICY_OP_ADD,
 			"installing negotiation kernel policy for permanent connection");
 	set_routing(c, RT_UNROUTED_NEGOTIATION, NULL);
-	/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
-	ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
-			  e->inception, e->acquire->sec_label,
-			  e->background, e->acquire->logger);
+}
+
+static void unrouted_negotiation_to_unrouted(struct connection *c, struct logger *logger, const char *story)
+{
+	PEXPECT(logger, (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
+	delete_spd_kernel_policies(&c->child.spds, EXPECT_NO_INBOUND,
+				   logger, HERE, story);
+	set_routing(c, RT_UNROUTED, NULL);
 }
 
 /*
@@ -381,6 +393,30 @@ static void routed_negotiation_to_routed_ondemand(struct connection *c,
 		}
 	}
 	set_routing(c, RT_ROUTED_ONDEMAND, NULL);
+}
+
+void connection_initiate(struct connection *c, const threadtime_t *inception, bool background)
+{
+	if (labeled(c)) {
+		ipsecdoi_initiate(c, c->policy, SOS_NOBODY, inception,
+				  (c->config->ike_version == IKEv1 ? HUNK_AS_SHUNK(c->child.sec_label) : null_shunk),
+				  background, c->logger);
+		return;
+	}
+
+	if (c->config->ike_version == IKEv1) {
+		ipsecdoi_initiate(c, c->policy, SOS_NOBODY, inception,
+				  (c->config->ike_version == IKEv1 ? HUNK_AS_SHUNK(c->child.sec_label) : null_shunk),
+				  background, c->logger);
+		return;
+	}
+
+	dispatch(CONNECTION_INITIATE, c,
+		 c->logger, HERE,
+		 (struct annex) {
+			 .inception = inception,
+			 .background = background,
+		 });
 }
 
 void connection_acquire(struct connection *c, threadtime_t *inception, const struct kernel_acquire *b)
@@ -842,7 +878,49 @@ void dispatch(enum connection_event event, struct connection *c,
 			ldbg(logger, "already unrouted");
 			return;
 
+		case X(INITIATE, ROUTED_TUNNEL, PERMANENT):
+			if (BROKEN_TRANSITION) {
+				/*
+				 * Presumably no delete transition is
+				 * leaving this in the wrong state.
+				 *
+				 * See ikev2-13-ah.
+				 */
+				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+						  e->inception, null_shunk,
+						  e->background, c->logger);
+				return;
+			}
+			break;
 
+		case X(INITIATE, UNROUTED, PERMANENT):
+			if (BROKEN_TRANSITION) {
+				/*
+				 * Need to update policy.
+				 *
+				 * See everything.
+				 */
+				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+						  e->inception, null_shunk,
+						  e->background, c->logger);
+				return;
+			}
+			/* presumably triggered by whack */
+			permanent_unrouted_to_unrouted_negotiation(c);
+			PEXPECT(logger, c->child.routing == RT_UNROUTED_NEGOTIATION);
+			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+					  e->inception, null_shunk,
+					  e->background, c->logger);
+			return;
+
+		case X(INITIATE, ROUTED_ONDEMAND, PERMANENT):
+			routed_ondemand_to_routed_negotiation(c);
+			PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
+			/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
+			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+					  e->inception, null_shunk,
+					  e->background, c->logger);
+			return;
 		case X(ACQUIRE, ROUTED_ONDEMAND, PERMANENT):
 			routed_ondemand_to_routed_negotiation(c);
 			PEXPECT(logger, c->child.routing == RT_ROUTED_NEGOTIATION);
@@ -852,6 +930,21 @@ void dispatch(enum connection_event event, struct connection *c,
 					  e->acquire->sec_label,
 					  e->background,
 					  e->acquire->logger);
+			return;
+
+		case X(INITIATE, ROUTED_NEGOTIATION, PERMANENT):
+			if (BROKEN_TRANSITION) {
+				/*
+				 * Because there is no delete yet.
+				 *
+				 * See ikev2-impair-10-nr-ts-selectors
+				 */
+				ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+						  e->inception, null_shunk,
+						  e->background, logger);
+				return;
+			}
+			llog(RC_LOG, c->logger, "connection already negotiating");
 			return;
 		case X(ACQUIRE, ROUTED_NEGOTIATION, PERMANENT):
 			llog(RC_LOG, c->logger, "connection already negotiating");
@@ -880,12 +973,6 @@ void dispatch(enum connection_event event, struct connection *c,
 					  null_shunk, /*background*/false, logger);
 			return;
 		}
-
-		case X(ACQUIRE, UNROUTED, PERMANENT):
-			/* presumably triggered by whack */
-			permanent_unrouted_to_unrouted_negotiation(c, e);
-			PEXPECT(logger, c->child.routing == RT_UNROUTED_NEGOTIATION);
-			return;
 
 		case X(ROUTE, UNROUTED_NEGOTIATION, PERMANENT):
 			c->policy |= POLICY_ROUTE;
@@ -957,16 +1044,37 @@ void dispatch(enum connection_event event, struct connection *c,
 		case X(UNROUTE, UNROUTED, INSTANCE):
 			ldbg(logger, "already unrouted");
 			return;
-		case X(ACQUIRE, UNROUTED, INSTANCE):
+		case X(INITIATE, UNROUTED, INSTANCE):
 			/*
-			 * Triggered by whack or acquire against the
-			 * template which then instantiated this
+			 * Triggered by whack against the template
+			 * which is then instantiated creating this
 			 * connection.
 			 *
 			 * The template may or may not be routed (but
-			 * this code seems to expect it to).
+			 * this code seems to expect it to?).  Check
+			 * parent?
 			 */
-			unrouted_instance_to_unrouted_negotiation(c, e);
+			instance_unrouted_to_unrouted_negotiation(c);
+			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+					  e->inception, null_shunk,
+					  e->background, logger);
+			return;
+		case X(ACQUIRE, UNROUTED, INSTANCE):
+			/*
+			 * Triggered by acquire against the template
+			 * which then instantiated creating this
+			 * connection.
+			 *
+			 * Given it is an acquire, the template is
+			 * presumably routed.  Should this instead
+			 * transition to routed_negotiation?  Probably
+			 * no because when it is pulled it shouldn't
+			 * undo the routing?
+			 */
+			instance_unrouted_to_unrouted_negotiation(c);
+			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+					  e->inception, e->acquire->sec_label,
+					  e->background, e->acquire->logger);
 			return;
 
 		case X(UNROUTE, UNROUTED_NEGOTIATION, INSTANCE):
@@ -1008,16 +1116,32 @@ void dispatch(enum connection_event event, struct connection *c,
 			set_routing(c, RT_UNROUTED, NULL);
 			return;
 
-		case X(TIMEOUT_IKE, UNROUTED, PERMANENT):
+		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, PERMANENT):
 			/* ex, permanent+up */
 			if (should_revive(&(*e->ike)->sa)) {
+				unrouted_negotiation_to_unrouted(c, logger, "deleting unrouted negotiation");
+				PEXPECT(logger, c->child.routing == RT_UNROUTED);
 				schedule_revival(&(*e->ike)->sa, "timed out");
 				delete_ike_sa(e->ike);
 				return;
 			}
+			unrouted_negotiation_to_unrouted(c, logger, "deleting unrouted negotiation");
 			delete_ike_sa(e->ike);
-			/* connection lives to fight another day */
 			return;
+
+		case X(TIMEOUT_IKE, UNROUTED, PERMANENT):
+			if (BROKEN_TRANSITION) {
+				/* ex, permanent+up */
+				if (should_revive(&(*e->ike)->sa)) {
+					schedule_revival(&(*e->ike)->sa, "timed out");
+					delete_ike_sa(e->ike);
+					return;
+				}
+				delete_ike_sa(e->ike);
+				/* connection lives to fight another day */
+				return;
+			}
+			break;
 
 		case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, PERMANENT):
 			/* ex, permanent+up */

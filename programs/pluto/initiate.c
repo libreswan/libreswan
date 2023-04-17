@@ -375,10 +375,8 @@ static bool initiate_connection_4_fab(struct connection *c,
 	 * initiated, there is no acquire and, hence, no Child SA to
 	 * establish.
 	 */
-
-	ipsecdoi_initiate(c, c->policy, SOS_NOBODY, &inception,
-			  (c->config->ike_version == IKEv1 ? HUNK_AS_SHUNK(c->child.sec_label) : null_shunk),
-			  background, c->logger);
+	
+	connection_initiate(c, &inception, background);
 	return true;
 }
 
