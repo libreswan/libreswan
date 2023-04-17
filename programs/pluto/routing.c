@@ -72,6 +72,7 @@ struct annex {
 	struct ike_sa **ike;
 	struct child_sa **child;
 	const threadtime_t *const inception;
+	bool background;
 	const struct kernel_acquire *const acquire;
 };
 
@@ -304,7 +305,7 @@ static void unrouted_instance_to_unrouted_negotiation(struct connection *c, cons
 	set_routing(c, RT_UNROUTED_NEGOTIATION, NULL);
 	ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 			  e->inception, e->acquire->sec_label,
-			  e->acquire->background, e->acquire->logger);
+			  e->background, e->acquire->logger);
 }
 
 /*
@@ -325,7 +326,7 @@ static void permanent_unrouted_to_unrouted_negotiation(struct connection *c, con
 	/* ipsecdoi_initiate may replace SOS_NOBODY with a state */
 	ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 			  e->inception, e->acquire->sec_label,
-			  e->acquire->background, e->acquire->logger);
+			  e->background, e->acquire->logger);
 }
 
 /*
@@ -391,6 +392,7 @@ void connection_acquire(struct connection *c, threadtime_t *inception, const str
 		 c->logger, HERE,
 		 (struct annex) {
 			 .inception = inception,
+			 .background = b->background,
 			 .acquire = b,
 		 });
 }
@@ -410,6 +412,7 @@ void connection_revive(struct connection *c)
 		 c->logger, HERE,
 		 (struct annex) {
 			 .inception = &inception,
+			 .background = true,
 		 });
 }
 
@@ -843,7 +846,7 @@ void dispatch(enum connection_event event, struct connection *c,
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 					  e->inception,
 					  e->acquire->sec_label,
-					  e->acquire->background,
+					  e->background,
 					  e->acquire->logger);
 			return;
 		case X(ACQUIRE, ROUTED_NEGOTIATION, PERMANENT):
@@ -851,10 +854,11 @@ void dispatch(enum connection_event event, struct connection *c,
 			return;
 
 		case X(REVIVE, UNROUTED, PERMANENT):
+			/* e.g., permenant initiate fails */
 #if 0
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 					  e->inception, e->acquire->sec_label,
-					  e->acquire->background, e->acquire->logger);
+					  e->background, e->acquire->logger);
 #else
 			initiate_connection(c, /*remote-host-name*/NULL,
 					    /*background*/true,
