@@ -855,8 +855,8 @@ enum shunt_kind {
 	SHUNT_KIND_FAILURE,
 	SHUNT_KIND_BLOCK,
 #define never_negotiate_shunt shunt[SHUNT_KIND_NEVER_NEGOTIATE]	/* before */
-#define negotiation_shunt shunt[SHUNT_KIND_NEGOTIATION]	/* during */
-#define failure_shunt shunt[SHUNT_KIND_FAILURE]		/* after */
+#define negotiation_shunt     shunt[SHUNT_KIND_NEGOTIATION]	/* during */
+#define failure_shunt         shunt[SHUNT_KIND_FAILURE]		/* after */
 #define SHUNT_KIND_ROOF (SHUNT_KIND_BLOCK+1)
 };
 
