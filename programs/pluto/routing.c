@@ -92,7 +92,7 @@ static void jam_event_sa(struct jambuf *buf, struct state *st)
 	jam_string(buf, st->st_state->short_name);
 }
 
-static void jam_routing(struct jambuf *buf, struct connection *c)
+static void jam_routing(struct jambuf *buf, const struct connection *c)
 {
 	jam_enum_short(buf, &routing_names, c->child.routing);
 	jam_string(buf, " ");
@@ -132,12 +132,25 @@ static void jam_annex(struct jambuf *buf, const struct annex *e)
 	}
 }
 
-static void jam_event(struct jambuf *buf, enum connection_event event, struct connection *c, struct annex *e)
+static void jam_event(struct jambuf *buf, enum connection_event event,
+		      const struct connection *c, const struct annex *e)
 {
 	jam_enum_short(buf, &connection_event_names, event);
 	jam_string(buf, " to ");
 	jam_routing(buf, c);
 	jam_annex(buf, e);
+}
+
+static void ldbg_dispatch(struct logger *logger, enum connection_event event,
+			  const struct connection *c,
+			  where_t where, const struct annex *e)
+{
+	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+		jam_string(buf, "routing: dispatch ");
+		jam_event(buf, event, c, e);
+		jam_string(buf, " ");
+		jam_where(buf, where);
+	}
 }
 
 void ldbg_connection_establish(struct ike_sa *ike, struct child_sa *child,
@@ -148,16 +161,12 @@ void ldbg_connection_establish(struct ike_sa *ike, struct child_sa *child,
 		.child = &child,
 	};
 	struct annex *e = &ee;
-	LDBGP_JAMBUF(DBG_BASE, child->sa.st_logger, buf) {
-		jam_string(buf, "routing: dispatch ");
-		jam_event(buf,
-			  (direction == DIRECTION_INBOUND ? CONNECTION_ESTABLISH_INBOUND :
-			   direction == DIRECTION_OUTBOUND ? CONNECTION_ESTABLISH_OUTBOUND :
-			   CONNECTION_EVENT_ROOF),
-			  child->sa.st_connection, e);
-		jam_string(buf, " ");
-		jam_where(buf, where);
-	}
+	ldbg_dispatch(child->sa.st_logger,
+		      (direction == DIRECTION_INBOUND ? CONNECTION_ESTABLISH_INBOUND :
+		       direction == DIRECTION_OUTBOUND ? CONNECTION_ESTABLISH_OUTBOUND :
+		       CONNECTION_EVENT_ROOF),
+		      child->sa.st_connection,
+		      where, e);
 }
 
 enum shunt_kind routing_shunt_kind(enum routing routing)
@@ -733,12 +742,7 @@ void dispatch(enum connection_event event, struct connection *c,
 	      struct annex ee)
 {
 	struct annex *e = &ee;
-	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-		jam_string(buf, "routing: dispatch ");
-		jam_event(buf, event, c, e);
-		jam_string(buf, " ");
-		jam_where(buf, where);
-	}
+	ldbg_dispatch(logger, event, c, where, e);
 
 #if 0
 	/*
