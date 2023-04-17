@@ -55,6 +55,7 @@ extern const struct enum_names routing_names;
 extern const struct enum_names routing_story;
 
 bool routed(enum routing r);
+enum shunt_kind routing_shunt_kind(enum routing routing);
 bool kernel_policy_installed(const struct connection *c);
 
 void connection_route(struct connection *c);
