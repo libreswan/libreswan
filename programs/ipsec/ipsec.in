@@ -164,6 +164,51 @@ ipsec_combined() {
     exit $?
 }
 
+ipsec_redirect() {
+    #
+    # ipsec redirect command
+    #
+    local cmd conn_name redirect_to dry_run usage
+
+    while [ ${#} -gt 0 ]; do
+	case "${1}" in
+	    redirect)
+		cmd="--redirect-to"
+		usage="Usage: ipsec redirect [connectionname] --redirect-to {ip-address,...} \\
+		[--ctlsocket ${CTLSOCKET}]"
+		;;
+	    help|--help|-h)
+		echo "${usage}"
+		exit 0
+		;;
+	    --redirect-to)
+		redirect_to="${2}"
+		shift
+		;;
+	    --ctlsocket)
+		CTLSOCKET="${2}"
+		export CTLSOCKET
+		shift
+		;;
+	    --dry-run)
+		dry_run="echo"
+		;;
+	    -*)
+		echo "Unknown option \"${1}\"" >&2
+		echo  >&2
+		echo "${usage}" >&2
+		exit 2
+		;;
+	    *)
+		conn_name="${1}"
+		;;
+	esac
+	shift
+    done
+    ${dry_run} "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" --name ${conn_name} ${cmd} "${redirect_to}"
+    exit $?
+}
+
 ipsec_replace() {
     #
     # ipsec replace command
@@ -1006,6 +1051,9 @@ while [ ${#} -gt 0 ]; do
 	    ;;
 	ondemand|--ondemand)
 	    ipsec_combined "${@}"
+	    ;;
+	redirect)
+	    ipsec_redirect "${@}"
 	    ;;
 	replace|--replace)
 	    ipsec_replace "${@}"

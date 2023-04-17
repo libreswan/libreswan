@@ -37,6 +37,7 @@ MANPAGES += ipsec_listpubkeys.8
 MANPAGES += ipsec_ondemand.8
 MANPAGES += ipsec_pk12util.8
 MANPAGES += ipsec_purgeocsp.8
+MANPAGES += ipsec_redirect.8
 MANPAGES += ipsec_replace.8
 MANPAGES += ipsec_rereadall.8
 MANPAGES += ipsec_rereadcerts.8

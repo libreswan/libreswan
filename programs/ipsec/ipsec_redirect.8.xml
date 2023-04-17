@@ -3,21 +3,23 @@
                    "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
 <refentry>
   <refmeta>
-    <refentrytitle>IPSEC_REREADSECRETS</refentrytitle>
+    <refentrytitle>IPSEC_REDIRECT</refentrytitle>
     <manvolnum>8</manvolnum>
-    <refmiscinfo class='date'>15 April 2023</refmiscinfo>
+    <refmiscinfo class='date'>14 April 2023</refmiscinfo>
     <refmiscinfo class="source">libreswan</refmiscinfo>
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec rereadsecrets</refname>
-    <refpurpose>Reread IPsec secrets from @@IPSEC_SECRETS@@.</refpurpose>
+    <refname>ipsec redirect</refname>
+    <refpurpose>Redirect a connection definition with one from @IPSEC_CONF@</refpurpose>
   </refnamediv>
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
       <command>ipsec</command>
-      <arg choice='plain'>rereadsecrets</arg>
+      <arg choice='plain'>redirect</arg>
+      <arg choice='opt'>connectionname</arg>
+      <arg choice='plain'>--redirect-to <replaceable>ip-address,...</replaceable></arg>
       <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
       <sbr/>
     </cmdsynopsis>
@@ -27,9 +29,9 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Rereadsecrets</emphasis> operation tells pluto
-      to re-read the <option>@@IPSEC_SECRETS@@</option> secret-keys file,
-      which it normally being read only at startup time.
+      <emphasis remap='I'>Redirect</emphasis> a connection (if connectionname is specified)
+      or all connections to <option>--redirect-to</option> specified ip-address or
+      comma-separated list of ip-addresses (evenly distributed).
     </para>
   </refsect1>
 
@@ -59,10 +61,10 @@
       <citerefentry><refentrytitle>ipsec_ondemand</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_pk12util</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_purgeocsp</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>ipsec_redirect</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_replace</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_rereadall</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_rereadcerts</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>ipsec_rereadsecrets</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_restart</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_route</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_showstates</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
