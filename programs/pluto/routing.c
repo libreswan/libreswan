@@ -806,6 +806,22 @@ void dispatch(enum connection_event event, struct connection *c,
 		case X(UNROUTE, UNROUTED, PERMANENT):
 			ldbg(logger, "already unrouted");
 			return;
+
+		case X(REVIVE, UNROUTED, PERMANENT):
+		case X(REVIVE, ROUTED_ONDEMAND, PERMANENT):
+		case X(REVIVE, ROUTED_ONDEMAND, INSTANCE):
+#if 0
+			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+					  e->inception, e->acquire->sec_label,
+					  e->acquire->background, e->acquire->logger);
+#else
+			initiate_connection(c, /*remote-host-name*/NULL,
+					    /*background*/true,
+					    /*log-failure*/true,
+					    logger);
+#endif
+			return;
+
 		case X(ACQUIRE, UNROUTED, PERMANENT):
 			/* presumably triggered by whack */
 			permanent_unrouted_to_unrouted_negotiation(c, e);

@@ -284,24 +284,6 @@ void revive_connection(struct connection *c, const char *subplot, struct logger 
 		return;
 	}
 
-#if 0
-	/*
-	 * IKEv2 should only revive permenant and instances (IKEv1
-	 * revives templates?!?).
-	 *
-	 * XXX: this includes both labeled_parent() and
-	 * labeled_child().  Should probably only allow the former?
-	 */
-	if (!PEXPECT(c->logger,
-		     labeled_parent(c) ||
-		     c->kind == CK_INSTANCE ||
-		     c->kind == CK_PERMANENT)) {
-		/* revival uses the instance or permanent */
-		return;
-	}
-#endif
-
-#if 0
 	/*
 	 * IKEv1 maybe later?
 	 */
@@ -312,22 +294,6 @@ void revive_connection(struct connection *c, const char *subplot, struct logger 
 				    logger);
 		return;
 	}
-#endif
 
-#if 0
-	/*
-	 * XXX: why IKEv1 only? isn't this also required by IKEv2?
-	 */
-	shunk_t sec_label = (c->config->ike_version > IKEv1 ? null_shunk :
-			     HUNK_AS_SHUNK(c->child.sec_label));
-
-	threadtime_t inception = threadtime_start();
-	ipsecdoi_initiate(c, c->policy, SOS_NOBODY, &inception,
-			  sec_label, /*background*/true, c->logger);
-#endif
-
-	initiate_connection(c, /*remote-host-name*/NULL,
-			    /*background*/true,
-			    /*log-failure*/true,
-			    logger);
+	connection_revive(c);
 }
