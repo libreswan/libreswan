@@ -375,7 +375,6 @@ static bool initiate_connection_4_fab(struct connection *c,
 	 * initiated, there is no acquire and, hence, no Child SA to
 	 * establish.
 	 */
-	
 	connection_initiate(c, &inception, background);
 	return true;
 }
