@@ -35,6 +35,12 @@
  */
 #define BROKEN_TRANSITION true
 
+enum connection_event;
+
+static void zap_connection(const char *story, struct ike_sa **ike,
+			   enum connection_event ike_event,
+			   enum connection_event child_event);
+
 static void do_updown_unroute(struct connection *c);
 
 enum connection_event {
@@ -560,6 +566,20 @@ void connection_timeout(struct ike_sa **ike)
 	(*ike)->sa.st_viable_parent = false;
 	pstat_sa_failed(&(*ike)->sa, REASON_TOO_MANY_RETRANSMITS);
 
+	pstat_sa_failed(&(*ike)->sa, REASON_TOO_MANY_RETRANSMITS);
+	zap_connection("timeout", ike, CONNECTION_TIMEOUT_IKE, CONNECTION_TIMEOUT_CHILD);
+}
+
+static void zap_connection(const char *story, struct ike_sa **ike,
+			   enum connection_event ike_event,
+			   enum connection_event child_event)
+{
+	/*
+	 * Stop reviving children trying to use this IKE SA.
+	 */
+	ldbg_sa(*ike, "due to %s IKE SA is no longer viable", story);
+	(*ike)->sa.st_viable_parent = false;
+
 	/*
 	 * Weed out any lurking larval children (i.e., children that
 	 * don't own their connection's route) that are sharing a
@@ -577,11 +597,17 @@ void connection_timeout(struct ike_sa **ike)
 				continue;
 			}
 			/*
-			 * This delete doesn't get logged by
-			 * delete_state(), do it here?!?
+			 * The death of a larval child is never logged
+			 * in delete_state().  Do it here, but only
+			 * when the IKE SA is established (larval
+			 * child of larval ike is hidden).
 			 */
-			attach_whack(child->sa.st_logger, (*ike)->sa.st_logger);
-			llog_sa(RC_LOG, child, "deleting larval state due to timeout");
+			if (IS_IKE_SA_ESTABLISHED(&(*ike)->sa)) {
+				attach_whack(child->sa.st_logger, (*ike)->sa.st_logger);
+				llog_sa(RC_LOG, child, "deleting larval %s (%s)",
+					child->sa.st_connection->config->ike_info->sa_type_name[IPSEC_SA],
+					story);
+			}
 			delete_child_sa(&child);
 		}
 	}
@@ -608,7 +634,7 @@ void connection_timeout(struct ike_sa **ike)
 			told_connection = true;
 			attach_whack(first_child->sa.st_logger, (*ike)->sa.st_logger);
 			/* will delete child and its logger */
-			dispatch(CONNECTION_TIMEOUT_CHILD,
+			dispatch(child_event,
 				 first_child->sa.st_connection,
 				 first_child->sa.st_logger, HERE,
 				 (struct annex) {
@@ -643,7 +669,7 @@ void connection_timeout(struct ike_sa **ike)
 			}
 			/* will delete child and its logger */
 			attach_whack(child->sa.st_logger, (*ike)->sa.st_logger);
-			dispatch(CONNECTION_TIMEOUT_CHILD,
+			dispatch(child_event,
 				 child->sa.st_connection,
 				 child->sa.st_logger, HERE,
 				 (struct annex) {
@@ -668,7 +694,7 @@ void connection_timeout(struct ike_sa **ike)
 			delete_connection(&c);
 		}
 	} else {
-		dispatch(CONNECTION_TIMEOUT_IKE,
+		dispatch(ike_event,
 			 (*ike)->sa.st_connection,
 			 (*ike)->sa.st_logger, HERE,
 			 (struct annex) {
@@ -752,25 +778,7 @@ void connection_delete_child(struct ike_sa *ike, struct child_sa **child)
 
 void connection_delete_ike(struct ike_sa **ike)
 {
-	/*
-	 * Caller is responsible for generating any messages; suppress
-	 * delete_state()'s desire to send an out-of-band delete.
-	 */
-	(*ike)->sa.st_on_delete.skip_send_delete = true;
-	(*ike)->sa.st_on_delete.skip_revival = true;
-	(*ike)->sa.st_on_delete.skip_connection = true;
-
-	ldbg_sa(*ike, "IKE SA is no longer viable");
-	(*ike)->sa.st_viable_parent = false;
-	/*
-	 * Let state machine figure out how to react.
-	 */
-	dispatch(CONNECTION_DELETE_IKE,
-		 (*ike)->sa.st_connection,
-		 (*ike)->sa.st_logger, HERE,
-		 (struct annex) {
-			 .ike = ike,
-		 });
+	zap_connection("delete", ike, CONNECTION_DELETE_IKE, CONNECTION_DELETE_CHILD);
 }
 
 void dispatch(enum connection_event event, struct connection *c,
