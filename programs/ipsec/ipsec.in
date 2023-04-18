@@ -47,7 +47,7 @@ export PATH
 export EF_DISABLE_BANNER=1
 
 # things not to be listed in help command list
-DONTMENTION='^(auto|ipsec|_.*|.*\.old|.*\.orig|.*~)$'
+DONTMENTION='^(_.*|.*\.old|.*\.orig|.*~)$'
 
 # version numbering (details filled in by build)
 export IPSEC_VERSION="@IPSECVERSION@"
