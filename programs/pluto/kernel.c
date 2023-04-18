@@ -524,6 +524,135 @@ static struct kernel_route kernel_route_from_state(const struct state *st, enum 
 	}
 }
 
+static const struct spd_route *raw_spd_owner(const ip_selector *local,
+					     const struct spd_route *c_spd,
+					     struct logger *logger, where_t where, const char *func)
+{
+	const enum routing min_routing = RT_UNROUTED + 1;
+	const ip_selector *remote = &c_spd->remote->client;
+
+	unsigned indent = 0;
+	selector_pair_buf spb;
+	ldbg(logger, "%*s%s() looking for SPD owner of %s with routing >= %s",
+	     indent, "", func,
+	     str_selector_pair(local, remote, &spb),
+	     enum_name_short(&routing_names, min_routing));
+
+	const struct spd_route *owner = NULL;
+
+	struct spd_route_filter srf = {
+		.remote_client_range = remote,
+		.where = where,
+	};
+
+	while (next_spd_route(NEW2OLD, &srf)) {
+		unsigned indent = 2;
+		struct spd_route *d_spd = srf.spd;
+		struct connection *d = d_spd->connection;
+
+		if (c_spd == d_spd) {
+			ldbg(logger, "%*s%s skipped; ignoring self",
+			     indent, "", d->name);
+			continue;
+		}
+
+		if (d->child.routing < min_routing) {
+			ldbg(logger, "%*s%s skipped; insufficient routing",
+			     indent, "", d->name);
+			continue;
+		}
+
+		if (!oriented(d)) {
+			/* can happen during shutdown */
+			ldbg(logger, "%*s%s skipped; not oriented",
+			     indent, "", d->name);
+			continue;
+		}
+
+		/* fast lookup did it's job! */
+		PEXPECT(logger, selector_range_eq_selector_range(*remote,
+								 d_spd->remote->client));
+		if (!selector_eq_selector(*remote, d_spd->remote->client)) {
+			ldbg(logger, "%*s%s skipped; different remote selectors",
+			     indent, "", d->name);
+			continue;
+		}
+
+		if (!selector_eq_selector(*local, d_spd->local->client)) {
+			ldbg(logger, "%*s%s skipped; different local selectors",
+			     indent, "", d->name);
+			continue;
+		}
+
+		/*
+		 * Consider SPDs to be different when the either in or
+		 * out marks differ (after masking).
+		 */
+
+		const struct sa_marks *sa_marks = &c_spd->connection->sa_marks;
+		if ((sa_marks->in.val & sa_marks->in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask)) {
+			ldbg(logger, "%*s%s skipped; marks.in %"PRIu32"/%#08"PRIx32" vs %"PRIu32"/%#08"PRIx32,
+			     indent, "", d->name,
+			     sa_marks->in.val, sa_marks->in.mask,
+			     d->sa_marks.in.val, d->sa_marks.in.mask);
+			continue;
+		}
+		if ((sa_marks->out.val & sa_marks->out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask)) {
+			ldbg(logger, "%s()%s skipped; marks.out %"PRIu32"/%#08"PRIx32" vs %"PRIu32"/%#08"PRIx32,
+			     __func__, d->name,
+			     sa_marks->out.val, sa_marks->out.mask,
+			     d->sa_marks.out.val, d->sa_marks.out.mask);
+			continue;
+		}
+
+		/*
+		 * Update head/hidden if it bests SPD
+		 */
+		if (owner == NULL) {
+			ldbg(logger, "%*s%s saved SPD; first match",
+			     indent, "", d->name);
+			owner = d_spd;
+		} else if (owner->connection->child.routing < d->child.routing) {
+			ldbg(logger, "%*s%s saved SPD; better match",
+			     indent, "", d->name);
+			owner = d_spd;
+		}
+
+	}
+
+	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+		jam(buf, "%*s", indent, "");
+		jam_string(buf, " ");
+		jam_selector_pair(buf, local, remote),
+		jam_string(buf, " >=");
+		jam_enum_short(buf, &routing_names, min_routing);
+
+		if (owner != NULL) {
+			jam_string(buf, " ");
+			jam_connection(buf, owner->connection);
+			jam_string(buf, " ");
+			jam_enum_short(buf, &routing_names,
+				       owner->connection->child.routing);
+		}
+	}
+
+	return owner;
+}
+
+const struct spd_route *bare_cat_owner(const ip_selector *local,
+				       const struct spd_route *spd,
+				       struct logger *logger, where_t where)
+{
+	return raw_spd_owner(local, spd, logger, where, __func__);
+}
+
+const struct spd_route *bare_spd_owner(const struct spd_route *spd,
+				       struct logger *logger, where_t where)
+{
+	return raw_spd_owner(&spd->local->client, spd, logger, where, __func__);
+}
+
+
 /*
  * Find who currently owns the route and kernel policy matching the
  * SPD.

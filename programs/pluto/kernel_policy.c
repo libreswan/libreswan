@@ -411,6 +411,38 @@ bool replace_spd_kernel_policy(const struct spd_route *spd,
 
 }
 
+static bool restore_spd_kernel_policy(const struct spd_route *spd,
+				      enum direction direction,
+				      struct logger *logger,
+				      where_t where, const char *what)
+{
+	struct connection *c = spd->connection;
+	enum routing routing = c->child.routing;
+	enum shunt_kind shunt_kind = routing_shunt_kind(routing);
+
+	selector_pair_buf spb;
+	ldbg(logger, "%s() %s", __func__,
+	     str_selector_pair(&spd->local->client, &spd->remote->client, &spb));
+
+	struct kernel_policy kernel_policy =
+		kernel_policy_from_void(spd->local->client,
+					spd->remote->client,
+					direction,
+					calculate_kernel_priority(c),
+					shunt_kind,
+					spd->connection->config->shunt[shunt_kind],
+					&c->sa_marks, c->xfrmi,
+					HUNK_AS_SHUNK(c->config->sec_label),
+					where);
+	return add_kernel_policy(KERNEL_POLICY_OP_REPLACE, direction,
+				 &spd->local->client,
+				 &spd->remote->client,
+				 &kernel_policy,
+				 deltatime(0),
+				 logger, where, what);
+
+}
+
 bool delete_kernel_policy(enum direction direction,
 			  enum expect_kernel_policy expect_kernel_policy,
 			  const ip_selector *local_selector,
@@ -455,6 +487,14 @@ bool delete_spd_kernel_policy(const struct spd_route *spd,
 			      where_t where,
 			      const char *story)
 {
+	if (direction == DIRECTION_OUTBOUND) {
+		const struct spd_route *owner =
+			bare_spd_owner(spd, logger, where);
+		if (owner != NULL) {
+			return restore_spd_kernel_policy(owner, DIRECTION_OUTBOUND,
+							 logger, where, story);
+		}
+	}
 	return delete_kernel_policy(direction,
 				    existing_policy_expectation,
 				    &spd->local->client, &spd->remote->client,
@@ -527,10 +567,10 @@ void delete_cat_kernel_policy(const struct spd_route *spd,
 			      enum direction direction,
 			      struct logger *logger,
 			      where_t where,
-			      const char *reason)
+			      const char *story)
 {
 	const struct connection *c = spd->connection;
-	ldbg(logger, "%s", reason);
+	ldbg(logger, "%s", story);
 	if (!pexpect_cat(c, logger)) {
 		return;
 	}
@@ -540,13 +580,23 @@ void delete_cat_kernel_policy(const struct spd_route *spd,
 	 * all about.
 	 */
 	ip_selector local_client = selector_from_address(spd->local->host->addr);
+	if (direction == DIRECTION_OUTBOUND) {
+		const struct spd_route *owner =
+			bare_cat_owner(&local_client, spd, logger, where);
+		if (!restore_spd_kernel_policy(owner, DIRECTION_OUTBOUND,
+					       logger, where, story)) {
+			llog(RC_LOG, logger, "%s failed", story);
+		}
+		return;
+	}
+
 	if (!delete_kernel_policy(direction, EXPECT_KERNEL_POLICY_OK,
 				  &local_client, &spd->remote->client,
 				  &c->sa_marks, c->xfrmi,
 				  DEFAULT_KERNEL_POLICY_ID,
 				  HUNK_AS_SHUNK(spd->connection->config->sec_label),
-				  logger, where, reason)) {
-		llog(RC_LOG, logger, "%s failed", reason);
+				  logger, where, story)) {
+		llog(RC_LOG, logger, "%s failed", story);
 	}
 }
 
