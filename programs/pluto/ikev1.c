@@ -2267,6 +2267,11 @@ void process_packet_tail(struct msg_digest *md)
 				size_t spis = sizeof(md->hdr.isa_ike_spis);
 				PASSERT(st->st_logger, st->st_v1_tpacket.len >= skip + spis);
 				memcpy(st->st_v1_tpacket.ptr + skip, &md->hdr.isa_ike_spis, spis);
+#if 0
+				uint8_t *flags = (uint8_t*)st->st_v1_tpacket.ptr + skip + spis + 3;
+				*flags |= ISAKMP_FLAGS_v1_ENCRYPTION;
+#endif
+				sleep(2);
 				resend_recorded_v1_ike_msg(st, "IMPAIR: retransmitting mangled packet");
 			}
 			LOG_PACKET(RC_LOG_SERIOUS,
