@@ -982,6 +982,18 @@ void dispatch(enum connection_event event, struct connection *c,
 			return;
 		}
 
+		case X(REVIVE, ROUTED_TUNNEL, PERMANENT):
+			if (BROKEN_TRANSITION) {
+				/*
+				 * See ikev2-59-multiple-acquires-alias.
+				 */
+				threadtime_t inception = threadtime_start();
+				ipsecdoi_initiate(c, c->policy, SOS_NOBODY, &inception,
+						  null_shunk, /*background*/false, logger);
+				return;
+			}
+			break;
+
 		case X(ROUTE, UNROUTED_NEGOTIATION, PERMANENT):
 			c->policy |= POLICY_ROUTE;
 			llog(RC_LOG_SERIOUS, logger,
