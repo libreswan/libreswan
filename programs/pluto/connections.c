@@ -275,20 +275,25 @@ static void discard_connection(struct connection **cp, bool connection_valid)
 	struct connection *c = *cp;
 	*cp = NULL;
 
-	ldbg(c->logger, "%s() %s "PRI_CO" from "PRI_CO,
+	ldbg(c->logger, "%s() %s "PRI_CO" cloned from "PRI_CO,
 	     __func__, c->name,
 	     pri_connection_co(c),
 	     pri_connection_co(c->clonedfrom));
 
 	/*
-	 * Don't expect any offspring?  Something handled by caller.
+	 * Don't expect any offspring?  If there are things will
+	 * quickly explode so help it along.
 	 */
-	if (DBGP(DBG_BASE)) {
+	{
 		struct connection_filter cq = {
 			.clonedfrom = c,
 			.where = HERE,
 		};
-		PEXPECT(c->logger, !next_connection_old2new(&cq));
+		if (next_connection_old2new(&cq)) {
+			connection_buf cqb;
+			llog_passert(c->logger, HERE, "unexpected offspring "PRI_CONNECTION,
+				     pri_connection(cq.c, &cqb));
+		}
 	}
 
 	FOR_EACH_ELEMENT(afi, ip_families) {
