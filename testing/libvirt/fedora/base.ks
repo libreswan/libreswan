@@ -26,7 +26,7 @@ network --hostname fedora
 #   net.ifnames=0 biosdevname=0: call network interfaces eth0...
 #   plymouth.enable=0: disable the plymouth bootsplash completely
 
-bootloader --timeout=0 --location=mbr --append="console=tty0 console=ttyS0,115200 plymouth.enable=0 net.ifnames=0 biosdevname=0"
+bootloader --timeout=0 --location=mbr --append="console=tty0 console=ttyS0,115200 plymouth.enable=0 net.ifnames=0 biosdevname=0 mitigations=off"
 
 # Start with a blank disk (ignoring that it is already).  Force GPT
 # (F37 likely doesn't support MBR?); add a biosboot partition since
