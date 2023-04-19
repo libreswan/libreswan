@@ -524,6 +524,27 @@ static struct kernel_route kernel_route_from_state(const struct state *st, enum 
 	}
 }
 
+PRINTF_LIKE(4)
+static void ldbg_spd(struct logger *logger, unsigned indent,
+			  const struct spd_route *spd,
+			  const char *fmt, ...)
+{
+	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
+		jam(buf, "%*s", indent, "");
+		jam_string(buf, " ");
+		jam_enum_short(buf, &routing_names, spd->connection->child.routing);
+		jam_string(buf, " ");
+		jam_selector_pair(buf, &spd->local->client, &spd->remote->client);
+		jam_string(buf, " ");
+		jam_connection(buf, spd->connection);
+		jam_string(buf, " ");
+		va_list ap;
+		va_start(ap, fmt);
+		jam_va_list(buf, fmt, ap);
+		va_end(ap);
+	}
+}
+
 static const struct spd_route *raw_spd_owner(const ip_selector *local,
 					     const struct spd_route *c_spd,
 					     struct logger *logger, where_t where, const char *func)
@@ -551,21 +572,18 @@ static const struct spd_route *raw_spd_owner(const ip_selector *local,
 		struct connection *d = d_spd->connection;
 
 		if (c_spd == d_spd) {
-			ldbg(logger, "%*s%s skipped; ignoring self",
-			     indent, "", d->name);
+			ldbg_spd(logger, indent + 2, d_spd, "skipped; ignoring self");
 			continue;
 		}
 
 		if (d->child.routing < min_routing) {
-			ldbg(logger, "%*s%s skipped; insufficient routing",
-			     indent, "", d->name);
+			ldbg_spd(logger, indent + 2, d_spd, "skipped; insufficient routing");
 			continue;
 		}
 
 		if (!oriented(d)) {
 			/* can happen during shutdown */
-			ldbg(logger, "%*s%s skipped; not oriented",
-			     indent, "", d->name);
+			ldbg_spd(logger, indent + 2, d_spd, "skipped; not oriented");
 			continue;
 		}
 
@@ -573,14 +591,12 @@ static const struct spd_route *raw_spd_owner(const ip_selector *local,
 		PEXPECT(logger, selector_range_eq_selector_range(*remote,
 								 d_spd->remote->client));
 		if (!selector_eq_selector(*remote, d_spd->remote->client)) {
-			ldbg(logger, "%*s%s skipped; different remote selectors",
-			     indent, "", d->name);
+			ldbg_spd(logger, indent + 2, d_spd, "skipped; different remote selectors");
 			continue;
 		}
 
 		if (!selector_eq_selector(*local, d_spd->local->client)) {
-			ldbg(logger, "%*s%s skipped; different local selectors",
-			     indent, "", d->name);
+			ldbg_spd(logger, indent + 2, d_spd, "skipped; different local selectors");
 			continue;
 		}
 
@@ -591,17 +607,17 @@ static const struct spd_route *raw_spd_owner(const ip_selector *local,
 
 		const struct sa_marks *sa_marks = &c_spd->connection->sa_marks;
 		if ((sa_marks->in.val & sa_marks->in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask)) {
-			ldbg(logger, "%*s%s skipped; marks.in %"PRIu32"/%#08"PRIx32" vs %"PRIu32"/%#08"PRIx32,
-			     indent, "", d->name,
-			     sa_marks->in.val, sa_marks->in.mask,
-			     d->sa_marks.in.val, d->sa_marks.in.mask);
+			ldbg_spd(logger, indent + 2, d_spd,
+				 "skipped; marks.in %"PRIu32"/%#08"PRIx32" vs %"PRIu32"/%#08"PRIx32,
+				 sa_marks->in.val, sa_marks->in.mask,
+				 d->sa_marks.in.val, d->sa_marks.in.mask);
 			continue;
 		}
 		if ((sa_marks->out.val & sa_marks->out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask)) {
-			ldbg(logger, "%s()%s skipped; marks.out %"PRIu32"/%#08"PRIx32" vs %"PRIu32"/%#08"PRIx32,
-			     __func__, d->name,
-			     sa_marks->out.val, sa_marks->out.mask,
-			     d->sa_marks.out.val, d->sa_marks.out.mask);
+			ldbg_spd(logger, indent + 2, d_spd,
+				 "skipped; marks.out %"PRIu32"/%#08"PRIx32" vs %"PRIu32"/%#08"PRIx32,
+				 sa_marks->out.val, sa_marks->out.mask,
+				 d->sa_marks.out.val, d->sa_marks.out.mask);
 			continue;
 		}
 
@@ -609,31 +625,13 @@ static const struct spd_route *raw_spd_owner(const ip_selector *local,
 		 * Update head/hidden if it bests SPD
 		 */
 		if (owner == NULL) {
-			ldbg(logger, "%*s%s saved SPD; first match",
-			     indent, "", d->name);
+			ldbg_spd(logger, indent +2, d_spd, "saved SPD; first match");
 			owner = d_spd;
 		} else if (owner->connection->child.routing < d->child.routing) {
-			ldbg(logger, "%*s%s saved SPD; better match",
-			     indent, "", d->name);
+			ldbg_spd(logger, indent +2, d_spd, "saved SPD; better match");
 			owner = d_spd;
 		}
 
-	}
-
-	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-		jam(buf, "%*s", indent, "");
-		jam_string(buf, " ");
-		jam_selector_pair(buf, local, remote),
-		jam_string(buf, " >=");
-		jam_enum_short(buf, &routing_names, min_routing);
-
-		if (owner != NULL) {
-			jam_string(buf, " ");
-			jam_connection(buf, owner->connection);
-			jam_string(buf, " ");
-			jam_enum_short(buf, &routing_names,
-				       owner->connection->child.routing);
-		}
 	}
 
 	return owner;
