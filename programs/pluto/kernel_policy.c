@@ -583,11 +583,13 @@ void delete_cat_kernel_policy(const struct spd_route *spd,
 	if (direction == DIRECTION_OUTBOUND) {
 		const struct spd_route *owner =
 			bare_cat_owner(&local_client, spd, logger, where);
-		if (!restore_spd_kernel_policy(owner, DIRECTION_OUTBOUND,
-					       logger, where, story)) {
-			llog(RC_LOG, logger, "%s failed", story);
+		if (owner != NULL) {
+			if (!restore_spd_kernel_policy(owner, DIRECTION_OUTBOUND,
+						       logger, where, story)) {
+				llog(RC_LOG, logger, "%s failed", story);
+			}
+			return;
 		}
-		return;
 	}
 
 	if (!delete_kernel_policy(direction, EXPECT_KERNEL_POLICY_OK,
