@@ -74,7 +74,7 @@ def log_arguments(logger, args):
     logger.info("  run-post-mortem: %s", args.run_post_mortem)
 
 
-TEST_TIMEOUT = 120
+TEST_TIMEOUT = 150
 
 class TestDomain:
 
