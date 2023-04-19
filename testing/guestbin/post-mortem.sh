@@ -208,7 +208,9 @@ echo :
 echo : unload any selinux modules
 echo :
 
-# it's assumed that the name starts with ipsecspd
+# it's assumed that the name starts with ipsecspd.  This really needs
+# to happen as if it isn't unloaded it will be re-loaded after a
+# reboot.
 
 semodule -l | grep ^ipsecspd | while read module ; do
     echo Unloading ${module}
