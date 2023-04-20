@@ -340,7 +340,7 @@ ipsec_whack() {
 		cmd="--route"
 		usage="Usage: ipsec route connectionname [--ctlsocket ${CTLSOCKET}]"
 		;;
-	    showstates|--showstates)
+	    showstates|--showstates|--statestatus)
 		cmd="--showstates"
 		usage="Usage: ipsec showstates [--ctlsocket ${CTLSOCKET}]"
 		;;
@@ -1041,7 +1041,7 @@ while [ ${#} -gt 0 ]; do
 	rereadcerts|--rereadcerts|\
 	rereadsecrets|--rereadsecrets|secrets|\
 	route|--route|\
-	showstates|--showstates|\
+	showstates|--showstates|--statestatus|\
 	shuntstatus|--shuntstatus|\
 	status|--status|\
 	trafficstatus|--trafficstatus|traffic|\
