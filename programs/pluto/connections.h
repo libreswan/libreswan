@@ -484,7 +484,8 @@ struct spd_route {
 	struct spd_wip {
 		struct {
 			bool ok;
-			const struct spd_route *spd;
+			const struct spd_route *policy;
+			const struct spd_route *route;
 			struct bare_shunt **shunt;
 		} conflicting;
 		struct {

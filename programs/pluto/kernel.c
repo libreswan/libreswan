@@ -945,9 +945,10 @@ static void get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 	 */
 
 	struct spd_owner owner = spd_owner(spd, spd->connection->child.routing, indent);
-	spd->wip.conflicting.spd = owner.policy;
-	pexpect(spd->wip.conflicting.spd == NULL ||
-		kernel_policy_installed(spd->wip.conflicting.spd->connection));
+	spd->wip.conflicting.policy = owner.policy;
+	spd->wip.conflicting.route = owner.route;
+	pexpect(spd->wip.conflicting.policy == NULL ||
+		kernel_policy_installed(spd->wip.conflicting.policy->connection));
 
 	/*
 	 * If there's no SPD with a conflicting policy, perhaps
@@ -965,10 +966,11 @@ static void get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 
 	selector_pair_buf sb;
 	ldbg(logger,
-	     "%*s kernel: %s() %s; wip.conflicting.spd %s wip.conflicting.shunt=%s",
+	     "%*s kernel: %s() %s; conflicting: policy=%s route=%s shunt=%s",
 	     indent, "",
 	     __func__, str_selector_pair(&spd->local->client, &spd->remote->client, &sb),
-	     (spd->wip.conflicting.spd == NULL ? "<none>" : spd->wip.conflicting.spd->connection->name),
+	     (spd->wip.conflicting.policy == NULL ? "<none>" : spd->wip.conflicting.policy->connection->name),
+	     (spd->wip.conflicting.route == NULL ? "<none>" : spd->wip.conflicting.route->connection->name),
 	     (spd->wip.conflicting.shunt == NULL ? "<none>" : (*spd->wip.conflicting.shunt)->why));
 
 	/*
@@ -982,8 +984,8 @@ static void get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 	 * another state object), the route will agree.  This is as it
 	 * should be -- it will arise during rekeying.
 	 */
-	struct connection *ro = (spd->wip.conflicting.spd == NULL ? NULL :
-				 spd->wip.conflicting.spd->connection);
+	struct connection *ro = (spd->wip.conflicting.policy == NULL ? NULL :
+				 spd->wip.conflicting.policy->connection);
 	if (ro != NULL && (ro->interface->ip_dev != c->interface->ip_dev ||
 			   !address_eq_address(ro->local->host.nexthop, c->local->host.nexthop))) {
 		/*
@@ -1172,7 +1174,7 @@ static bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind)
 		if (!ok) {
 			break;
 		}
-		if (spd->wip.conflicting.spd == NULL) {
+		if (spd->wip.conflicting.route == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			if (!do_updown(UPDOWN_PREPARE, c, spd, NULL/*state*/, c->logger))
 				ldbg(c->logger, "kernel: prepare command returned an error");
@@ -1184,7 +1186,7 @@ static bool unrouted_to_routed(struct connection *c, enum shunt_kind shunt_kind)
 		if (!ok) {
 			break;
 		}
-		if (spd->wip.conflicting.spd == NULL) {
+		if (spd->wip.conflicting.route == NULL) {
 			ok &= spd->wip.installed.route =
 				do_updown(UPDOWN_ROUTE, c, spd, NULL/*state*/, c->logger);
 		}
@@ -2327,7 +2329,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 				continue;
 			}
 #endif
-			if (spd->wip.conflicting.spd == NULL) {
+			if (spd->wip.conflicting.route == NULL) {
 				/* a new route: no deletion required, but preparation is */
 				if (!do_updown(UPDOWN_PREPARE, c, spd, &child->sa, logger))
 					ldbg(logger, "kernel: prepare command returned an error");
@@ -2347,7 +2349,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 			continue;
 		}
 #endif
-		if (spd->wip.conflicting.spd == NULL) {
+		if (spd->wip.conflicting.route == NULL) {
 			/* a new route: no deletion required, but preparation is */
 			ok = spd->wip.installed.route =
 				do_updown(UPDOWN_ROUTE, c, spd, &child->sa, logger);
