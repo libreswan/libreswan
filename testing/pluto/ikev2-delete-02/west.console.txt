@@ -102,6 +102,5 @@ src 192.0.1.0/24 dst 192.0.2.0/24
 		proto esp reqid 0 mode transport
 west #
  ipsec auto --showstates
-ipsec auto: unknown option "--showstates"
 west #
  
