@@ -104,6 +104,7 @@
       <citerefentry><refentrytitle>ipsec_trafficstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_unroute</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_verify</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>ipsec_vfychain</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_whack</refentrytitle><manvolnum>8</manvolnum></citerefentry>
     </para>
   </refsect1>

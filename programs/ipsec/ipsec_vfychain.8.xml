@@ -3,22 +3,21 @@
                    "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
 <refentry>
   <refmeta>
-    <refentrytitle>IPSEC_LISTCRLS</refentrytitle>
+    <refentrytitle>IPSEC_VFYCHAIN</refentrytitle>
     <manvolnum>8</manvolnum>
-    <refmiscinfo class='date'>15 April 2023</refmiscinfo>
+    <refmiscinfo class='date'>20 April 2023</refmiscinfo>
     <refmiscinfo class="source">libreswan</refmiscinfo>
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec listcrls</refname>
-    <refpurpose>List X.509 certificates revocation lists from NSS database</refpurpose>
+    <refname>ipsec vfychain</refname>
+    <refpurpose>Helper to run NSS vfychain on IPsec NSS database</refpurpose>
   </refnamediv>
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
       <command>ipsec</command>
-      <arg choice='plain'>listcrls</arg>
-      <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
+      <arg choice='plain'>vfychain</arg>
       <sbr/>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -27,8 +26,8 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Listcrls</emphasis> operation lists all X.509
-      certificate revocation lists from NSS database.
+      <emphasis remap='I'>vfychain</emphasis> is a helper to run NSS vfychain
+      on IPsec NSS database with <option>-d @IPSEC_NSSDIR@</option> option.
     </para>
   </refsect1>
 
@@ -57,6 +56,7 @@
       <citerefentry><refentrytitle>ipsec_listall</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_listcacerts</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_listcerts</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>ipsec_listcrls</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_listen</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_listpubkeys</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_look</refentrytitle><manvolnum>8</manvolnum></citerefentry>,

@@ -55,6 +55,7 @@ MANPAGES += ipsec_stop.8
 MANPAGES += ipsec_trafficstatus.8
 MANPAGES += ipsec_unroute.8
 MANPAGES += ipsec_up.8
+MANPAGES += ipsec_vfychain.8
 
 ifdef top_srcdir
 include $(top_srcdir)/mk/program.mk
