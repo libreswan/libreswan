@@ -74,7 +74,8 @@ def log_arguments(logger, args):
     logger.info("  run-post-mortem: %s", args.run_post_mortem)
 
 
-TEST_TIMEOUT = 150
+TEST_TIMEOUT = 120
+POST_MORTEM_TIMEOUT = 120
 
 class TestDomain:
 
@@ -423,7 +424,7 @@ def _process_test(domain_prefix, domains, args, result_stats, task, logger):
                                         verbose_file.write("%s post-mortem %s" % (post.LHS, post.LHS))
                                         verbose_file.flush()
                                         #
-                                        status = test_domain.console.run(script)
+                                        status = test_domain.console.run(script, timeout=POST_MORTEM_TIMEOUT)
                                         if status:
                                             post_mortem_ok = False
                                             logger.error("%s failed on %s with status %s", script, guest_name, status)
