@@ -672,7 +672,6 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 	}
 
 	enum routing routing_max = PMAX(c->child.routing, new_routing);
-	enum routing routing_min = PMIN(c->child.routing, new_routing);
 
 	selector_pair_buf spb;
 	ldbg(logger, "%*slooking for SPD owners of %s",
@@ -760,18 +759,6 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 			     indent, "", d->name);
 			owner.head = d_spd;
 		}
-		if (d->child.routing < routing_max &&
-		    d->child.routing > routing_min) {
-			if (owner.hidden == NULL) {
-				ldbg(logger, "%*s%s saved SPD hidden; first match",
-				     indent, "", d->name);
-				owner.hidden = d_spd;
-			} else if (owner.hidden->connection->child.routing < d->child.routing) {
-				ldbg(logger, "%*s%s saved SPD hidden; best match",
-				     indent, "", d->name);
-				owner.hidden = d_spd;
-			}
-		}
 
 		/*
 		 * XXX: why?
@@ -836,7 +823,7 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 		jam_string(buf, ":");
 
 		const char *what = "route";
-		FOR_EACH_THING(clash, owner.route, owner.policy, owner.head, owner.hidden) {
+		FOR_EACH_THING(clash, owner.route, owner.policy, owner.head) {
 			jam_string(buf, " ");
 			jam_string(buf, what);
 			jam_string(buf, " ");

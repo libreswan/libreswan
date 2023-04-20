@@ -449,10 +449,6 @@ struct spd_owner {
 	 * If it isn't SPD, who will rule the spd range?
 	 */
 	const struct spd_route *head;
-	/*
-	 * The SPD that this SPD is hiding.
-	 */
-	const struct spd_route *hidden;
 };
 
 struct spd_owner spd_owner(const struct spd_route *spd,
