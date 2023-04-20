@@ -566,24 +566,24 @@ static const struct spd_route *raw_spd_owner(const ip_selector *local,
 		.where = where,
 	};
 
+	indent += 2;
 	while (next_spd_route(NEW2OLD, &srf)) {
-		unsigned indent = 2;
 		struct spd_route *d_spd = srf.spd;
 		struct connection *d = d_spd->connection;
 
 		if (c_spd == d_spd) {
-			ldbg_spd(logger, indent + 2, d_spd, "skipped; ignoring self");
+			ldbg_spd(logger, indent, d_spd, "skipped; ignoring self");
 			continue;
 		}
 
 		if (d->child.routing < min_routing) {
-			ldbg_spd(logger, indent + 2, d_spd, "skipped; insufficient routing");
+			ldbg_spd(logger, indent, d_spd, "skipped; insufficient routing");
 			continue;
 		}
 
 		if (!oriented(d)) {
 			/* can happen during shutdown */
-			ldbg_spd(logger, indent + 2, d_spd, "skipped; not oriented");
+			ldbg_spd(logger, indent, d_spd, "skipped; not oriented");
 			continue;
 		}
 
@@ -591,12 +591,12 @@ static const struct spd_route *raw_spd_owner(const ip_selector *local,
 		PEXPECT(logger, selector_range_eq_selector_range(*remote,
 								 d_spd->remote->client));
 		if (!selector_eq_selector(*remote, d_spd->remote->client)) {
-			ldbg_spd(logger, indent + 2, d_spd, "skipped; different remote selectors");
+			ldbg_spd(logger, indent, d_spd, "skipped; different remote selectors");
 			continue;
 		}
 
 		if (!selector_eq_selector(*local, d_spd->local->client)) {
-			ldbg_spd(logger, indent + 2, d_spd, "skipped; different local selectors");
+			ldbg_spd(logger, indent, d_spd, "skipped; different local selectors");
 			continue;
 		}
 
@@ -607,14 +607,14 @@ static const struct spd_route *raw_spd_owner(const ip_selector *local,
 
 		const struct sa_marks *sa_marks = &c_spd->connection->sa_marks;
 		if ((sa_marks->in.val & sa_marks->in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask)) {
-			ldbg_spd(logger, indent + 2, d_spd,
+			ldbg_spd(logger, indent, d_spd,
 				 "skipped; marks.in %"PRIu32"/%#08"PRIx32" vs %"PRIu32"/%#08"PRIx32,
 				 sa_marks->in.val, sa_marks->in.mask,
 				 d->sa_marks.in.val, d->sa_marks.in.mask);
 			continue;
 		}
 		if ((sa_marks->out.val & sa_marks->out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask)) {
-			ldbg_spd(logger, indent + 2, d_spd,
+			ldbg_spd(logger, indent, d_spd,
 				 "skipped; marks.out %"PRIu32"/%#08"PRIx32" vs %"PRIu32"/%#08"PRIx32,
 				 sa_marks->out.val, sa_marks->out.mask,
 				 d->sa_marks.out.val, d->sa_marks.out.mask);
@@ -625,11 +625,13 @@ static const struct spd_route *raw_spd_owner(const ip_selector *local,
 		 * Update head/hidden if it bests SPD
 		 */
 		if (owner == NULL) {
-			ldbg_spd(logger, indent +2, d_spd, "saved SPD; first match");
+			ldbg_spd(logger, indent, d_spd, "policy saved; first match");
 			owner = d_spd;
 		} else if (owner->connection->child.routing < d->child.routing) {
-			ldbg_spd(logger, indent +2, d_spd, "saved SPD; better match");
+			ldbg_spd(logger, indent, d_spd, "policy saved; better match");
 			owner = d_spd;
+		} else {
+			ldbg_spd(logger, indent, d_spd, "skipped policy; not the best");
 		}
 
 	}
@@ -702,21 +704,18 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 
 		if (c_spd == d_spd) {
 			/* can only be owner; handled above */
-			ldbg(logger, "%*s%s skipped; same SPD",
-			     indent, "", d->name);
+			ldbg_spd(logger, indent, d_spd, "skipped; ignoring self");
 			continue;
 		}
 
 		if (d->child.routing == RT_UNROUTED) {
-			ldbg(logger, "%*s%s skipped; unrouted",
-			     indent, "", d->name);
+			ldbg_spd(logger, indent, d_spd, "skipped; unrouted");
 			continue;
 		}
 
 		if (!oriented(d)) {
 			/* can happen during shutdown */
-			ldbg(logger, "%*s%s skipped; not oriented",
-			     indent, "", d->name);
+			ldbg_spd(logger, indent, d_spd, "skipped; not oriented");
 			continue;
 		}
 
@@ -725,8 +724,7 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 								 d_spd->remote->client));
 		if (!selector_eq_selector(c_spd->remote->client,
 					  d_spd->remote->client)) {
-			ldbg(logger, "%*s%s skipped; different selectors",
-			     indent, "", d->name);
+			ldbg_spd(logger, indent, d_spd, "skipped; different remote selectors");
 			continue;
 		}
 
@@ -735,24 +733,26 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 		 * out marks differ (after masking).
 		 */
 
+		const struct sa_marks *sa_marks = &c->sa_marks;
+
 		if ((c->sa_marks.in.val & c->sa_marks.in.mask) != (d->sa_marks.in.val & d->sa_marks.in.mask)) {
-			ldbg(logger, "%*s%s skipped; marks.in %"PRIu32"/%#08"PRIx32" vs %"PRIu32"/%#08"PRIx32,
-			     indent, "", d->name,
-			     c->sa_marks.in.val, c->sa_marks.in.mask,
-			     d->sa_marks.in.val, d->sa_marks.in.mask);
+			ldbg_spd(logger, indent, d_spd,
+				 "skipped; marks.in %"PRIu32"/%#08"PRIx32" vs %"PRIu32"/%#08"PRIx32,
+				 sa_marks->in.val, sa_marks->in.mask,
+				 d->sa_marks.in.val, d->sa_marks.in.mask);
 			continue;
 		}
 
 		if ((c->sa_marks.out.val & c->sa_marks.out.mask) != (d->sa_marks.out.val & d->sa_marks.out.mask)) {
-			ldbg(logger, "%s()%s skipped; marks.out %"PRIu32"/%#08"PRIx32" vs %"PRIu32"/%#08"PRIx32,
-			     __func__, d->name,
-			     c->sa_marks.out.val, c->sa_marks.out.mask,
-			     d->sa_marks.out.val, d->sa_marks.out.mask);
+			ldbg_spd(logger, indent, d_spd,
+				 "skipped; marks.out %"PRIu32"/%#08"PRIx32" vs %"PRIu32"/%#08"PRIx32,
+				 sa_marks->out.val, sa_marks->out.mask,
+				 d->sa_marks.out.val, d->sa_marks.out.mask);
 			continue;
 		}
 
 		/*
-		 * Update head/hidden if it bests SPD
+		 * Update head if it bests SPD
 		 */
 		if (d->child.routing > routing_max) {
 			ldbg(logger, "%*s%s saved SPD head; better match",
@@ -770,76 +770,44 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 		 */
 		if (!address_eq_address(c->local->host.addr,
 					d->local->host.addr)) {
-			ldbg(logger, "%*s%s skipped; different local address?!?",
-			     indent, "", d->name);
+			ldbg_spd(logger, indent, d_spd, "skipped; different local address?!?");
 			continue;
+		}
+
+		if (!selector_eq_selector(c_spd->local->client, d_spd->local->client)) {
+			ldbg_spd(logger, indent, d_spd, "policy skipped;  different local selectors");
+		} else if ((c->policy & POLICY_OVERLAPIP) && (d->policy & POLICY_OVERLAPIP)) {
+			ldbg_spd(logger, indent, d_spd, "policy skipped;  both ends have POLICY_OVERLAPIP");
+		} else {
+			/* winner? */
+			if (owner.policy == NULL) {
+				ldbg_spd(logger, indent, d_spd, "saved policy; first match");
+				owner.policy = d_spd;
+			} else if (owner.policy->connection->child.routing < d->child.routing) {
+				ldbg_spd(logger, indent, d_spd, "saved policy; better match");
+				owner.policy = d_spd;
+			} else {
+				ldbg_spd(logger, indent, d_spd, "skipped policy;  not the best");
+			}
 		}
 
 		/*
 		 * Save either.
 		 */
 
-		switch (d->child.routing) {
-		case RT_UNROUTED:
-		case RT_UNROUTED_TUNNEL:	/* was RT_UNROUTED */
-			bad_case(d->child.routing); /* see above */
-		case RT_UNROUTED_NEGOTIATION:
-			if (owner.policy == NULL) {
-				ldbg(logger, "%*s%s saved SPD policy; first match",
-				     indent, "", d->name);
-				owner.policy = d_spd;
-			} else if (owner.policy->connection->child.routing < d->child.routing) {
-				ldbg(logger, "%*s%s saved SPD policy; better match",
-				     indent, "", d->name);
-				owner.policy = d_spd;
-			}
-			break;
-		case RT_ROUTED_ONDEMAND:
-		case RT_ROUTED_NEVER_NEGOTIATE:
-		case RT_ROUTED_NEGOTIATION:
-		case RT_ROUTED_FAILURE:
-		case RT_ROUTED_TUNNEL:
+		if (!routed(d->child.routing)) {
+			ldbg_spd(logger, indent, d_spd, "route skipped; not routed");
+		} else {
+			/* winner? */
 			if (owner.route == NULL) {
-				PEXPECT(logger, (owner.policy == NULL ||
-						 owner.policy->connection->child.routing == RT_UNROUTED_NEGOTIATION));
-				ldbg(logger, "%*s%s saved SPD route+policy; first route match",
-				     indent, "", d->name);
-				owner.route = owner.policy = d_spd;
+				ldbg_spd(logger, indent, d_spd, "saved route; first route match");
+				owner.route = d_spd;
 			} else if (owner.route->connection->child.routing < d->child.routing) {
-				ldbg(logger, "%*s%s saved SPD route+policy; better match",
-				     indent, "", d->name);
-				owner.route = owner.policy = d_spd;
-			}
-			break;
-		}
-	}
-	indent -= 2;
-
-	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-		jam(buf, "%*s", indent, "");
-		jam_connection(buf, c);
-		jam_string(buf, " ");
-		jam_enum_short(buf, &routing_names, c->child.routing);
-		jam_string(buf, ":");
-
-		const char *what = "route";
-		FOR_EACH_THING(clash, owner.route, owner.policy, owner.head) {
-			jam_string(buf, " ");
-			jam_string(buf, what);
-			jam_string(buf, " ");
-			if (clash == NULL) {
-				jam(buf, "NULL");
-			} else if (clash->connection == c) {
-				PEXPECT(logger, clash != c_spd); /*per-above*/
-				jam_string(buf, "sibling");
+				ldbg_spd(logger, indent, d_spd, "saved route; better match");
+				owner.route = d_spd;
 			} else {
-				PEXPECT(logger, clash != c_spd); /*per-above*/
-				jam_connection(buf, clash->connection);
-				jam_string(buf, " ");
-				jam_enum_short(buf, &routing_names,
-					       clash->connection->child.routing);
+				ldbg_spd(logger, indent, d_spd, "skipped route;  not the best");
 			}
-			what = "policy";
 		}
 	}
 
