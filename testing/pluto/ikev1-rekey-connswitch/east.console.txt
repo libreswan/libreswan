@@ -22,6 +22,35 @@ east #
  echo "initdone"
 initdone
 east #
+ # after west up
+east #
+ ip -4 route
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.1.254 dev eth1 scope link src 192.0.2.254
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+east #
+ # after ISAKMP moved to TUNNEL-B
+east #
+ ip -4 route
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.1.254 dev eth1 scope link src 192.0.2.254
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+east #
+ # after TUNNEL-B down
+east #
+ ip -4 route
+default via 192.1.2.254 dev eth1
+192.0.1.0/24 via 192.1.2.45 dev eth1
+192.0.1.254 dev eth1 scope link src 192.0.2.254
+192.0.2.0/24 dev eth0 proto kernel scope link src 192.0.2.254
+192.1.2.0/24 dev eth1 proto kernel scope link src 192.1.2.23
+east #
+ # after TUNNEL-B delete
+east #
  ../../guestbin/ipsec-look.sh
 east NOW
 XFRM state:

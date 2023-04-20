@@ -219,6 +219,8 @@ west #
  echo done
 done
 west #
+ # after TUNNEL-B delete
+west #
  ../../guestbin/ipsec-look.sh
 west NOW
 XFRM state:
