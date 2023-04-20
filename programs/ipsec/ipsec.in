@@ -950,7 +950,7 @@ ipsec_nsscmd() {
     local dry_run options
 
     if [ -z "${1}" ]; then
-	echo "Usage: ipsec {certutil|pk12util|vfychain} ..." >&2
+	echo "Usage: ipsec {certutil|crlutil||pk12util|vfychain} ..." >&2
 	exit 1
     fi
 
@@ -962,24 +962,19 @@ ipsec_nsscmd() {
     fi
     shift	# drop the command
 
-    while [ ${#} -gt 0 ]; do
-	case "${1}" in
-	    -d|--nssdir)
-		# reject -d and --nssdir outright
-		echo "ERROR: ipsec {certutil|pk12util|vfychain} do not accept --nssdir" >&2
-		exit 1
-		;;
-	    --dry-run)
-		dry_run="echo"
-		;;
-	    *)
-		options="${options} ${1}"
-		;;
-	esac
-	shift
-    done
+    # reject -d and --nssdir outright
+    case " $* " in
+	*' -d '*|*' --nssdir '*)
+	    echo "ERROR: ipsec {certutil|crlutil||pk12util|vfychain} do not accept --nssdir" >&2
+	    exit 2
+	    ;;
+	*' --dry-run '*)
+	    echo "ERROR: ipsec {certutil|crlutil||pk12util|vfychain} do not accept --dry-run" >&2
+	    exit 2
+	    ;;
+    esac
 
-    exec ${dry_run} ${cmd} -d ${IPSEC_NSSDIR} ${options}
+    exec ${cmd} -d ${IPSEC_NSSDIR} "${@}"
 }
 
 
