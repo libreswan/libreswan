@@ -879,7 +879,7 @@ kvmplutotest	ikev1-aggr-04-authby-secret-rassig	good
 kvmplutotest	ikev1-aggr-05-authby-psk-dual-nat	good
 kvmplutotest	ikev1-aggr-06-use-last-ike-dh		good
 kvmplutotest	ikev1-aggr-07-no-isakmp-proposal-chosen	good
-kvmplutotest	ikev1-aggr-08-copy-r1-spis-to-i1	good
+kvmplutotest	ikev1-aggr-08-copy-r1-spis-to-i1	wip	github/1039
 
 # Various algo tests
 kvmplutotest	ikev1-algo-ike-pfs-01	good
