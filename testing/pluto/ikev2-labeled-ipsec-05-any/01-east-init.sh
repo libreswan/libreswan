@@ -6,5 +6,5 @@ ipsec start
 ../../guestbin/wait-until-pluto-started
 ipsec auto --add labeled
 # start the server
-ipsec getpeercon_server -d 4300
+ipsec _getpeercon_server -d 4300
 echo "initdone"

@@ -20,7 +20,7 @@ east #
 east #
  # start the server
 east #
- ipsec getpeercon_server -d 4300
+ ipsec _getpeercon_server -d 4300
 -> running as unconfined_u:unconfined_r:unconfined_t:s0-s0:c0.c1023
 -> creating socket ... ok
 -> listening on TCP port 4300 ... ok
