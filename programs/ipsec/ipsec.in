@@ -965,18 +965,28 @@ ipsec_nsscmd() {
     # reject -d and --nssdir outright
     case " $* " in
 	*' -d '*|*' --nssdir '*)
-	    echo "ERROR: ipsec {certutil|crlutil||pk12util|vfychain} do not accept --nssdir" >&2
+	    echo "ERROR: ipsec {certutil|crlutil|pk12util|vfychain} do not accept --nssdir" >&2
 	    exit 2
 	    ;;
 	*' --dry-run '*)
-	    echo "ERROR: ipsec {certutil|crlutil||pk12util|vfychain} do not accept --dry-run" >&2
+	    echo "ERROR: ipsec {certutil|crlutil|modutil|pk12util|vfychain} do not accept --dry-run" >&2
+	    exit 2
+	    ;;
+	*' -dbdir '*)
+	    echo "ERROR: ipsec {modutil} does not accept -dbdir" >&2
 	    exit 2
 	    ;;
     esac
 
-    exec ${cmd} -d ${IPSEC_NSSDIR} "${@}"
+    case "${cmd}" in
+	modutil)
+	    exec ${cmd} -dbdir ${IPSEC_NSSDIR} "${@}"
+	    ;;
+	*)
+	    exec ${cmd} -d ${IPSEC_NSSDIR} "${@}"
+	    ;;
+    esac
 }
-
 
 # Check for no options at all and return usage.
 if [ -z "${1}" ]; then
@@ -1101,7 +1111,7 @@ while [ ${#} -gt 0 ]; do
 	checknss|--checknss|initnss|--initnss)
 	    ipsec_checknss "${@}"
 	    ;;
-	certutil|pk12util|vfychain|crlutil)
+	certutil|crlutil|modutil|pk12util|vfychain)
 	    ipsec_nsscmd "${@}"
 	    ;;
 	unbound|--unbound)
