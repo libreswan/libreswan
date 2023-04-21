@@ -896,16 +896,15 @@ static enum routability connection_routability(struct connection *c,
  * XXX: can this and/or route_owner() be merged?
  */
 
-static void get_connection_spd_conflict(struct spd_route *spd, struct logger *logger, unsigned indent)
+static bool get_connection_spd_conflict(struct spd_route *spd, struct logger *logger, unsigned indent)
 {
 	zero(&spd->wip);
-	spd->wip.conflicting.ok = true; /* hope for the best */
 
 	struct connection *c = spd->connection;
 
 	if (c->config->sec_label.len > 0) {
 		/* sec-labels ignore conflicts */
-		return;
+		return true;
 	}
 
 	/*
@@ -942,9 +941,8 @@ static void get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 	     (spd->wip.conflicting.shunt == NULL ? "<none>" : (*spd->wip.conflicting.shunt)->why));
 
 	/*
-	 * If there is already an SPD owner for peer's client subnet
-	 * and it disagrees about interface or nexthop, we cannot
-	 * steal it.
+	 * If there is already a ROUTE for peer's client subnet and it
+	 * disagrees about interface or nexthop, we cannot steal it.
 	 *
 	 * XXX: should route_owner() have filtered out this already?
 	 *
@@ -952,8 +950,8 @@ static void get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 	 * another state object), the route will agree.  This is as it
 	 * should be -- it will arise during rekeying.
 	 */
-	struct connection *ro = (spd->wip.conflicting.policy == NULL ? NULL :
-				 spd->wip.conflicting.policy->connection);
+	struct connection *ro = (spd->wip.conflicting.route == NULL ? NULL :
+				 spd->wip.conflicting.route->connection);
 	if (ro != NULL && (ro->interface->ip_dev != c->interface->ip_dev ||
 			   !address_eq_address(ro->local->host.nexthop, c->local->host.nexthop))) {
 		/*
@@ -967,25 +965,27 @@ static void get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 			llog(RC_LOG_SERIOUS, logger,
 			     "cannot route -- route already in use for "PRI_CONNECTION"",
 			     pri_connection(ro, &cib));
-			spd->wip.conflicting.ok = false;
-		} else {
-			connection_buf cib;
-			llog(RC_LOG_SERIOUS, logger,
-			     "cannot route -- route already in use for "PRI_CONNECTION" - but allowing anyway",
-			     pri_connection(ro, &cib));
+			return false;
 		}
+
+		connection_buf cib;
+		llog(RC_LOG_SERIOUS, logger,
+		     "cannot route -- route already in use for "PRI_CONNECTION" - but allowing anyway",
+		     pri_connection(ro, &cib));
 	}
+
+	return true;
 }
 
 static bool get_connection_spd_conflicts(struct connection *c, struct logger *logger)
 {
 	ldbg(logger, "checking %s for conflicts", c->name);
-	bool routable = false;
 	FOR_EACH_ITEM(spd, &c->child.spds) {
-		get_connection_spd_conflict(spd, logger, 2);
-		routable |= spd->wip.conflicting.ok;
+		if (!get_connection_spd_conflict(spd, logger, 2)) {
+			return false;
+		}
 	}
-	return routable;
+	return true;
 }
 
 static void revert_kernel_policy(struct spd_route *spd,
