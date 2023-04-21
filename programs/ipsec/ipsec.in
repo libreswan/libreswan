@@ -1126,16 +1126,20 @@ while [ ${#} -gt 0 ]; do
 	    ;;
 	--asynchronous)
 	    asynchronous="${1}"
+	    shift
 	    ;;
 	--remote-host)
 	    remote_host="--remote-host ${2}"
 	    shift
+	    shift
 	    ;;
 	--dry-run)
 	    dry_run="echo"
+	    shift
 	    ;;
 	--utc)
 	    utc="${1}"
+	    shift
 	    ;;
 	-*)
 	    printf "%s: unknown option \"%s\" (perhaps command name was omitted?)\n" "${0}" "${1}" >&2
