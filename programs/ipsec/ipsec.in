@@ -56,7 +56,7 @@ ipsec_addconn() {
     #
     # ipsec add command
     #
-    local conn_name remote_host dry_run usage
+    local conn_name usage
 
     while [ ${#} -gt 0 ]; do
 	case "${1}" in
@@ -104,7 +104,7 @@ ipsec_combined() {
     #
     # ipsec start and ipsec ondemand commands
     #
-    local asynchronous cmd conn_name remote_host dry_run usage
+    local cmd conn_name usage
 
     while [ ${#} -gt 0 ]; do
 	case "${1}" in
@@ -168,7 +168,7 @@ ipsec_redirect() {
     #
     # ipsec redirect command
     #
-    local cmd conn_name redirect_to dry_run usage
+    local cmd conn_name redirect_to usage
 
     while [ ${#} -gt 0 ]; do
 	case "${1}" in
@@ -213,7 +213,7 @@ ipsec_replace() {
     #
     # ipsec replace command
     #
-    local cmd conn_name remote_host dry_run usage
+    local cmd conn_name usage
 
     while [ ${#} -gt 0 ]; do
 	case "${1}" in
@@ -263,7 +263,7 @@ ipsec_whack() {
     #
     # ipsec whack commands with per-command help
     #
-    local asynchronous cmd conn_name remote_host dry_run usage utc
+    local cmd conn_name usage
 
     while [ ${#} -gt 0 ]; do
 	case "${1}" in
@@ -993,6 +993,12 @@ if [ -z "${1}" ]; then
     ipsec_usage
 fi
 
+# Make sure these variables are empty before parsing command line
+asynchronous=
+dry_run=
+remote_host=
+utc=
+
 while [ ${#} -gt 0 ]; do
     case "${1}" in
 	--rundir)
@@ -1117,6 +1123,19 @@ while [ ${#} -gt 0 ]; do
 	unbound|--unbound)
 	    # activate the unbound ipsec module
 	    exec unbound-control set_option ipsecmod-enabled: yes
+	    ;;
+	--asynchronous)
+	    asynchronous="${1}"
+	    ;;
+	--remote-host)
+	    remote_host="--remote-host ${2}"
+	    shift
+	    ;;
+	--dry-run)
+	    dry_run="echo"
+	    ;;
+	--utc)
+	    utc="${1}"
 	    ;;
 	-*)
 	    printf "%s: unknown option \"%s\" (perhaps command name was omitted?)\n" "${0}" "${1}" >&2
