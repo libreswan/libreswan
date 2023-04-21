@@ -1017,7 +1017,7 @@ while [ ${#} -gt 0 ]; do
 	auto)
 	    # ipsec_auto deprecated at 5.0, we eat this option for now
 	    # so that ipsec auto <command> continues to work.
-	    # Later we can add deprecation warning here.
+	    echo "WARNING: ipsec auto has been deprecated" >&2
 	    shift
 	    ;;
 	whack)
