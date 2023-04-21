@@ -32,7 +32,6 @@ SUBDIRS += _unbound-hook
 SUBDIRS += _updown
 SUBDIRS += addconn
 SUBDIRS += algparse
-SUBDIRS += auto
 SUBDIRS += barf
 SUBDIRS += cavp
 SUBDIRS += ecdsasigkey

@@ -3,22 +3,23 @@
                    "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
 <refentry>
   <refmeta>
-    <refentrytitle>IPSEC_IMPORT</refentrytitle>
+    <refentrytitle>IPSEC_DOWN</refentrytitle>
     <manvolnum>8</manvolnum>
     <refmiscinfo class='date'>14 April 2023</refmiscinfo>
     <refmiscinfo class="source">libreswan</refmiscinfo>
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec import</refname>
-    <refpurpose>Import PKCS#12 (*.p12) files into the IPsec NSS database</refpurpose>
+    <refname>ipsec down</refname>
+    <refpurpose>Down all tunnels sharing same IPsec connection.</refpurpose>
   </refnamediv>
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
-      <command>ipsec import</command>
-      <arg choice='opt'>--nssdir <replaceable>@IPSEC_NSSDIR@</replaceable></arg>
-      <arg choice='plain'><replaceable>/path/to/certificate.p12</replaceable></arg>
+      <command>ipsec</command>
+      <arg choice='plain'>down</arg>
+      <arg choice='plain'>connectionname</arg>
+      <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
       <sbr/>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -27,8 +28,22 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Import</emphasis> PKCS#12 files into the IPsec NSS database
-      located at the ipsec NSS data directory (default: @IPSEC_NSSDIR@)
+      <emphasis remap='I'>Down</emphasis> operation commands pluto to
+      tear down all connections matching specified
+      <option>connectionname</option> in internal configuration database.
+      This connection definitions in place so remotes can immediately
+      connect back. If you want tunnel to go permanently down, use
+      <option>ipsec delete</option> instead.
+    </para>
+    <para>
+      Normally, pluto's route to a destination remains in place when a
+      <option>down</option> operation is used to take the connection down
+      (or if connection setup, or later automatic rekeying, fails). This
+      permits establishing a new connection (perhaps using a different
+      specification; the route is altered as necessary) without having
+      a “window” in which packets might go elsewhere based on a more general
+      route. Such a route can be removed using the <option>unroute</option>
+      operation (and is implicitly removed by <option>delete</option>).
     </para>
   </refsect1>
 
@@ -46,11 +61,11 @@
       <citerefentry><refentrytitle>ipsec_checknss</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_crlutil</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_delete</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>ipsec_down</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_ecdsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_fetchcrls</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_fipsstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_globalstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>ipsec_import</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_initnss</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_letsencrypt</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_listall</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
@@ -99,8 +114,7 @@
   <refsect1 id='author'>
     <title>AUTHOR</title>
     <para>
-      <emphasis role='strong' remap='B'>Paul Wouters</emphasis>
+      <emphasis role='strong' remap='B'>Tuomo Soini</emphasis>
     </para>
   </refsect1>
 </refentry>
-

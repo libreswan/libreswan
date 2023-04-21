@@ -37,7 +37,7 @@ west #
 west #
  # Now we specify the remote ip, so the connection knows how to initiate
 west #
- ipsec auto --remote-host 192.1.2.23 --up westnet-eastnet-ipv4-psk-ikev2
+ ipsec auto --up westnet-eastnet-ipv4-psk-ikev2 --remote-host 192.1.2.23
 002 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23: instantiated connection with remote IP set to 192.1.2.23
 1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: initiating IKEv2 connection
 1v2 "westnet-eastnet-ipv4-psk-ikev2"[1] 192.1.2.23 #1: sent IKE_SA_INIT request to 192.1.2.23:500

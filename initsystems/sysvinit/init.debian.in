@@ -116,9 +116,9 @@ verify_config() {
 	exit $RETVAL
     fi
     # Create nss db or convert from old format to new sql format
-    ipsec --checknss
+    ipsec checknss
     # Enable nflog if configured
-    ipsec --checknflog > /dev/null
+    ipsec checknflog > /dev/null
 }
 
 start() {
@@ -152,7 +152,7 @@ start() {
 
 
 stop() {
-    ipsec --stopnflog > /dev/null
+    ipsec stopnflog > /dev/null
     ipsec whack --shutdown
 }
 

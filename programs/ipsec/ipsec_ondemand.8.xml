@@ -3,22 +3,24 @@
                    "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
 <refentry>
   <refmeta>
-    <refentrytitle>IPSEC_IMPORT</refentrytitle>
+    <refentrytitle>IPSEC_ONDEMAND</refentrytitle>
     <manvolnum>8</manvolnum>
-    <refmiscinfo class='date'>14 April 2023</refmiscinfo>
+    <refmiscinfo class='date'>15 April 2023</refmiscinfo>
     <refmiscinfo class="source">libreswan</refmiscinfo>
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec import</refname>
-    <refpurpose>Import PKCS#12 (*.p12) files into the IPsec NSS database</refpurpose>
+    <refname>ipsec ondemand</refname>
+    <refpurpose>Add and route a connection</refpurpose>
   </refnamediv>
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
-      <command>ipsec import</command>
-      <arg choice='opt'>--nssdir <replaceable>@IPSEC_NSSDIR@</replaceable></arg>
-      <arg choice='plain'><replaceable>/path/to/certificate.p12</replaceable></arg>
+      <command>ipsec</command>
+      <arg choice='plain'>ondemand</arg>
+      <arg choice='plain'>connectionname</arg>
+      <arg choice='opt'>--config <replaceable>@IPSEC_CONF@</replaceable></arg>
+      <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
       <sbr/>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -27,8 +29,19 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Import</emphasis> PKCS#12 files into the IPsec NSS database
-      located at the ipsec NSS data directory (default: @IPSEC_NSSDIR@)
+      <emphasis remap='I'>Ondemand</emphasis> operation is equivalent
+      to running first <option>ipsec add connectionname</option> and
+      then <option>ipsec route connectionname</option>, causing the same
+      effect as connection configuration option
+      <option>auto=ondemand</option>. This sets up connection to be
+      <option>on demand</option>, causing connection
+      to establish only when triggered by outbound traffic.
+    </para>
+    <para>
+      Note: you might also need to run <option>ipsec rereadsecrets</option>
+      when your new connection uses pre-shared key (PSK) authentication,
+      <option>authby=secret</option> because secrets keys are only being
+      read at startup.
     </para>
   </refsect1>
 
@@ -51,6 +64,7 @@
       <citerefentry><refentrytitle>ipsec_fetchcrls</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_fipsstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_globalstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>ipsec_import</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_initnss</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_letsencrypt</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_listall</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
@@ -62,7 +76,6 @@
       <citerefentry><refentrytitle>ipsec_look</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_modutil</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_newhostkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>ipsec_ondemand</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_pk12util</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_purgeocsp</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
@@ -99,8 +112,7 @@
   <refsect1 id='author'>
     <title>AUTHOR</title>
     <para>
-      <emphasis role='strong' remap='B'>Paul Wouters</emphasis>
+      <emphasis role='strong' remap='B'>Tuomo Soini</emphasis>
     </para>
   </refsect1>
 </refentry>
-

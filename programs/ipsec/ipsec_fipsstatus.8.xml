@@ -3,22 +3,22 @@
                    "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
 <refentry>
   <refmeta>
-    <refentrytitle>IPSEC_IMPORT</refentrytitle>
+    <refentrytitle>IPSEC_FIPSSTATUS</refentrytitle>
     <manvolnum>8</manvolnum>
     <refmiscinfo class='date'>14 April 2023</refmiscinfo>
     <refmiscinfo class="source">libreswan</refmiscinfo>
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec import</refname>
-    <refpurpose>Import PKCS#12 (*.p12) files into the IPsec NSS database</refpurpose>
+    <refname>ipsec fipsstatus</refname>
+    <refpurpose>Show IPsec daemon (pluto) FIPS status</refpurpose>
   </refnamediv>
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
-      <command>ipsec import</command>
-      <arg choice='opt'>--nssdir <replaceable>@IPSEC_NSSDIR@</replaceable></arg>
-      <arg choice='plain'><replaceable>/path/to/certificate.p12</replaceable></arg>
+      <command>ipsec</command>
+      <arg choice='plain'>fipsstatus</arg>
+      <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
       <sbr/>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -27,8 +27,7 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Import</emphasis> PKCS#12 files into the IPsec NSS database
-      located at the ipsec NSS data directory (default: @IPSEC_NSSDIR@)
+      <emphasis remap='I'>Fipsstatus</emphasis> shows IPsec daemon (pluto) FIPS status.
     </para>
   </refsect1>
 
@@ -49,8 +48,8 @@
       <citerefentry><refentrytitle>ipsec_down</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_ecdsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_fetchcrls</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>ipsec_fipsstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_globalstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>ipsec_import</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_initnss</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_letsencrypt</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_listall</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
@@ -99,8 +98,7 @@
   <refsect1 id='author'>
     <title>AUTHOR</title>
     <para>
-      <emphasis role='strong' remap='B'>Paul Wouters</emphasis>
+      <emphasis role='strong' remap='B'>Tuomo Soini</emphasis>
     </para>
   </refsect1>
 </refentry>
-

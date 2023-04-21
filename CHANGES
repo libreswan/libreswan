@@ -2,6 +2,8 @@
 See also https://libreswan.org/
 
 v5.0 (Unreleased)
+* ipsec: Deprecate ipsec auto sub-command [Tuomo]
+  - ipsec auto --{cmd} connection -> ipsec {cmd} connection
 * pluto: retry and revival code merged (dpdaction=, keyingtries= ignored) [Andrew]
 * pluto: IKEv1 globally disabled by default (ikev1-policy=reject) See RFCxxxx
 * pluto: avoid post-authentication crash on corrupt TS payload [Andrew]
@@ -16,6 +18,7 @@ v5.0 (Unreleased)
   - drop FINAL* make variables; see mk/config.mk for alternatives
 * packaging: Fix debian systemd service install [Antonio Silva]
 * testing: Fix namespace tests for super long dir names [Paul]
+* initsystems: Use documented ipsec sub-commands [Tuomo]
 
 v4.10 (February 28, 2023)
 * SECURITY IKEv2: Fixes https://libreswan.org/security/CVE-2023-23009

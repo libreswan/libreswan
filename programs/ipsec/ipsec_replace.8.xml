@@ -3,22 +3,24 @@
                    "http://www.oasis-open.org/docbook/xml/4.4/docbookx.dtd">
 <refentry>
   <refmeta>
-    <refentrytitle>IPSEC_IMPORT</refentrytitle>
+    <refentrytitle>IPSEC_REPLACE</refentrytitle>
     <manvolnum>8</manvolnum>
     <refmiscinfo class='date'>14 April 2023</refmiscinfo>
     <refmiscinfo class="source">libreswan</refmiscinfo>
     <refmiscinfo class="manual">Executable programs</refmiscinfo>
   </refmeta>
   <refnamediv id='name'>
-    <refname>ipsec import</refname>
-    <refpurpose>Import PKCS#12 (*.p12) files into the IPsec NSS database</refpurpose>
+    <refname>ipsec replace</refname>
+    <refpurpose>Replace a connection definition with one from @IPSEC_CONF@</refpurpose>
   </refnamediv>
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
-      <command>ipsec import</command>
-      <arg choice='opt'>--nssdir <replaceable>@IPSEC_NSSDIR@</replaceable></arg>
-      <arg choice='plain'><replaceable>/path/to/certificate.p12</replaceable></arg>
+      <command>ipsec</command>
+      <arg choice='plain'>replace</arg>
+      <arg choice='plain'>connectionname</arg>
+      <arg choice='opt'>--config <replaceable>@IPSEC_CONF@</replaceable></arg>
+      <arg choice='opt'>--ctlsocket <replaceable>@@RUNDIR@@/pluto.ctl</replaceable></arg>
       <sbr/>
     </cmdsynopsis>
   </refsynopsisdiv>
@@ -27,8 +29,16 @@
   <refsect1 id='description'>
     <title>DESCRIPTION</title>
     <para>
-      <emphasis remap='I'>Import</emphasis> PKCS#12 files into the IPsec NSS database
-      located at the ipsec NSS data directory (default: @IPSEC_NSSDIR@)
+      <emphasis remap='I'>Replace</emphasis> a connection definition from
+      <option>pluto</option> internal database with one from @IPSEC_CONF@.
+      Replace is very similar to <option>ipsec add</option> but it first
+      deletes old connection secification and old tunnels using same
+      connection name.
+    </para>
+    <para>
+      This only replaces the connection description making it possible for
+      remote to connect. To initialize the connection you need to use
+      <option>ipsec up</option>.
     </para>
   </refsect1>
 
@@ -51,6 +61,7 @@
       <citerefentry><refentrytitle>ipsec_fetchcrls</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_fipsstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_globalstatus</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+      <citerefentry><refentrytitle>ipsec_import</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_initnss</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_letsencrypt</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_listall</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
@@ -67,7 +78,6 @@
       <citerefentry><refentrytitle>ipsec_pluto</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_purgeocsp</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_redirect</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>ipsec_replace</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_rereadall</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_rereadcerts</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec_rereadsecrets</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
@@ -99,8 +109,7 @@
   <refsect1 id='author'>
     <title>AUTHOR</title>
     <para>
-      <emphasis role='strong' remap='B'>Paul Wouters</emphasis>
+      <emphasis role='strong' remap='B'>Tuomo Soini</emphasis>
     </para>
   </refsect1>
 </refentry>
-

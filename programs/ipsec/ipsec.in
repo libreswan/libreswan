@@ -4,7 +4,7 @@
 # prefix command to run stuff from our programs directory
 #
 # Copyright (C) 1998-2002  Henry Spencer.
-# Copyright (C) 2013-2018  Tuomo Soini <tis@foobar.fi>
+# Copyright (C) 2013-2023  Tuomo Soini <tis@foobar.fi>
 # Copyright (C) 2013-2016  Paul Wouters <pwouters@redhat.com>
 #
 # This program is free software; you can redistribute it and/or modify it
@@ -46,14 +46,365 @@ export PATH
 # suppress ElectricFence banner changing our reference testing output
 export EF_DISABLE_BANNER=1
 
-# things not to be listed in --help command list
-DONTMENTION='^(ipsec|_.*|.*\.old|.*\.orig|.*~)$'
+# things not to be listed in help command list
+DONTMENTION='^(_.*|.*\.old|.*\.orig|.*~)$'
 
 # version numbering (details filled in by build)
 export IPSEC_VERSION="@IPSECVERSION@"
 
-# We use variable conn_name so make sure it is not set
-conn_name=
+ipsec_addconn() {
+    #
+    # ipsec add command
+    #
+    local conn_name usage
+
+    while [ ${#} -gt 0 ]; do
+	case "${1}" in
+	    add|--add)
+		usage="Usage: ipsec add connectionname \\
+		[--config ${IPSEC_CONF}] [--ctlsocket ${CTLSOCKET}] [--verbose]"
+		;;
+	    help|--help|-h)
+		echo "${usage}"
+		exit 0
+		;;
+	    --config)
+		IPSEC_CONF="${2}"
+		export IPSEC_CONF
+		shift
+		;;
+	    --ctlsocket)
+		CTLSOCKET="${2}"
+		export CTLSOCKET
+		shift
+		;;
+	    --dry-run)
+		dry_run="echo"
+		;;
+	    --verbose)
+		verbose="${1}"
+		;;
+	    -*)
+		echo "Unknown option \"${1}\"" >&2
+		echo >&2
+		echo "${usage}" >&2
+		exit 2
+		;;
+	    *)
+		conn_name="${1}"
+		;;
+	esac
+	shift
+    done
+    ${dry_run} "${IPSEC_EXECDIR}/addconn" --config "${IPSEC_CONF}" --ctlsocket "${CTLSOCKET}" ${verbose} ${conn_name}
+    exit $?
+}
+
+ipsec_combined() {
+    #
+    # ipsec start and ipsec ondemand commands
+    #
+    local cmd conn_name usage
+
+    while [ ${#} -gt 0 ]; do
+	case "${1}" in
+	    ondemand|--ondemand)
+		cmd="--route"
+		usage="Usage: ipsec ondemand [--asynchronous] connectionname \\
+		[--remote-host ipaddr] [--config ${IPSEC_CONF}] \\
+		[--ctlsocket ${CTLSOCKET}] [--verbose]"
+		;;
+	    start|--start)
+		cmd="--initiate"
+		usage="Usage: ipsec start [--asynchronous] connectionname \\
+		[--remote-host ipaddr] [--config ${IPSEC_CONF}] \\
+		[--ctlsocket ${CTLSOCKET}] [--verbose]"
+		;;
+	    help|--help|-h)
+		echo "${usage}"
+		exit 0
+		;;
+	    --asynchronous)
+		asynchronous="${1}"
+		;;
+	    --config)
+		IPSEC_CONF="${2}"
+		export IPSEC_CONF
+		shift
+		;;
+	    --ctlsocket)
+		CTLSOCKET="${2}"
+		export CTLSOCKET
+		shift
+		;;
+	    --dry-run)
+		dry_run="echo"
+		;;
+	    --verbose)
+		verbose="${1}"
+		;;
+	    --remote-host)
+		remote_host="--remote-host ${2}"
+		shift
+		;;
+	    -*)
+		echo "Unknown option \"${1}\"" >&2
+		echo >&2
+		echo "${usage}" >&2
+		exit 2
+		;;
+	    *)
+		conn_name="${1}"
+		;;
+	esac
+	shift
+    done
+    ${dry_run} "${IPSEC_EXECDIR}/addconn" --config "${IPSEC_CONF}" --ctlsocket "${CTLSOCKET}" ${verbose} ${conn_name}
+    ${dry_run} "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" ${asynchronous} --name ${conn_name} ${cmd} ${remote_host}
+    exit $?
+}
+
+ipsec_redirect() {
+    #
+    # ipsec redirect command
+    #
+    local cmd conn_name redirect_to usage
+
+    while [ ${#} -gt 0 ]; do
+	case "${1}" in
+	    redirect)
+		cmd="--redirect-to"
+		usage="Usage: ipsec redirect [connectionname] --redirect-to {ip-address,...} \\
+		[--ctlsocket ${CTLSOCKET}]"
+		;;
+	    help|--help|-h)
+		echo "${usage}"
+		exit 0
+		;;
+	    --redirect-to)
+		redirect_to="${2}"
+		shift
+		;;
+	    --ctlsocket)
+		CTLSOCKET="${2}"
+		export CTLSOCKET
+		shift
+		;;
+	    --dry-run)
+		dry_run="echo"
+		;;
+	    -*)
+		echo "Unknown option \"${1}\"" >&2
+		echo  >&2
+		echo "${usage}" >&2
+		exit 2
+		;;
+	    *)
+		conn_name="${1}"
+		;;
+	esac
+	shift
+    done
+    ${dry_run} "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" --name ${conn_name} ${cmd} "${redirect_to}"
+    exit $?
+}
+
+ipsec_replace() {
+    #
+    # ipsec replace command
+    #
+    local cmd conn_name usage
+
+    while [ ${#} -gt 0 ]; do
+	case "${1}" in
+	    replace|--replace)
+		cmd="--delete"
+		usage="Usage: ipsec replace connectionname \\
+		[--config ${IPSEC_CONF}] [--ctlsocket ${CTLSOCKET}] [--verbose]"
+		;;
+	    help|--help|-h)
+		echo "${usage}"
+		exit 0
+		;;
+	    --config)
+		IPSEC_CONF="${2}"
+		export IPSEC_CONF
+		shift
+		;;
+	    --ctlsocket)
+		CTLSOCKET="${2}"
+		export CTLSOCKET
+		shift
+		;;
+	    --dry-run)
+		dry_run="echo"
+		;;
+	    --verbose)
+		verbose="${1}"
+		;;
+	    -*)
+		echo "Unknown option \"${1}\"" >&2
+		echo  >&2
+		echo "${usage}" >&2
+		exit 2
+		;;
+	    *)
+		conn_name="${1}"
+		;;
+	esac
+	shift
+    done
+    ${dry_run} "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" --name ${conn_name} ${cmd}
+    ${dry_run} "${IPSEC_EXECDIR}/addconn" --config "${IPSEC_CONF}" --ctlsocket "${CTLSOCKET}" ${verbose} ${conn_name}
+    exit $?
+}
+
+ipsec_whack() {
+    #
+    # ipsec whack commands with per-command help
+    #
+    local cmd conn_name usage
+
+    while [ ${#} -gt 0 ]; do
+	case "${1}" in
+	    briefstatus|--briefstatus)
+		cmd="--briefstatus"
+		usage="Usage: ipsec briefstatus [--ctlsocket ${CTLSOCKET}]"
+		;;
+	    checkpubkeys|--checkpubkeys)
+		cmd="--checkpubkeys"
+		usage="Usage: ipsec checkpubkeys [--ctlsocket ${CTLSOCKET}]"
+		;;
+	    delete|--delete)
+		cmd="--delete"
+		usage="Usage: ipsec delete connectionname [--ctlsocket ${CTLSOCKET}]"
+		;;
+	    down|--down|terminate)
+		cmd="--terminate"
+		usage="Usage: ipsec down connectionname \\
+		[--remote-host ipaddr] [--ctlsocket ${CTLSOCKET}]"
+		;;
+	    fetchcrls|--fetchcrls|crls)
+		cmd="--fetchcrls"
+		usage="Usage: ipsec fetchcrls [--ctlsocket ${CTLSOCKET}]"
+		;;
+	    fipsstatus|--fipsstatus|fips)
+		cmd="--fipsstatus"
+		usage="Usage: ipsec fipsstatus [--ctlsocket ${CTLSOCKET}]"
+		;;
+	    globalstatus|--globalstatus)
+		cmd="--globalstatus"
+		usage="Usage: ipsec globalstatus [--ctlsocket ${CTLSOCKET}]"
+		;;
+	    listall|--listall)
+		cmd="--listall"
+		usage="Usage: ipsec listall [--utc] [--ctlsocket ${CTLSOCKET}]"
+		;;
+	    listcacerts|--listcacerts)
+		cmd="--listcacerts"
+		usage="Usage: ipsec listcacerts [--utc] [--ctlsocket ${CTLSOCKET}]"
+		;;
+	    listcerts|--listcerts)
+		cmd="--listcerts"
+		usage="Usage: ipsec listcerts [--utc] [--ctlsocket ${CTLSOCKET}]"
+		;;
+	    listcrls|--listcrls)
+		cmd="--listcrls"
+		usage="Usage: ipsec listcrls [--utc] [--ctlsocket ${CTLSOCKET}]"
+		;;
+	    listen|--listen|--ready|--rereadgroups)
+		cmd="--listen"
+		usage="Usage: ipsec listen [--ctlsocket ${CTLSOCKET}]"
+		;;
+	    listpubkeys|--listpubkeys)
+		cmd="--listpubkeys"
+		usage="Usage: ipsec listpubkeys [--utc] [--ctlsocket ${CTLSOCKET}]"
+		;;
+	    purgeocsp|--purgeocsp)
+		cmd="--purgeocsp"
+		usage="Usage: ipsec purgeocsp [--ctlsocket ${CTLSOCKET}]"
+		;;
+	    rereadall|--rereadall)
+		cmd="--rereadall"
+		usage="Usage: ipsec rereadall [--ctlsocket ${CTLSOCKET}]"
+		;;
+	    rereadcerts|--rereadcerts)
+		cmd="--rereadcerts"
+		usage="Usage: ipsec rereadcerts [--ctlsocket ${CTLSOCKET}]"
+		;;
+	    rereadsecrets|--rereadsecrets|secrets)
+		cmd="--rereadsecrets"
+		usage="Usage: ipsec rereadsecrets|secrets [--ctlsocket ${CTLSOCKET}]"
+		;;
+	    route|--route)
+		cmd="--route"
+		usage="Usage: ipsec route connectionname [--ctlsocket ${CTLSOCKET}]"
+		;;
+	    showstates|--showstates|--statestatus)
+		cmd="--showstates"
+		usage="Usage: ipsec showstates [--ctlsocket ${CTLSOCKET}]"
+		;;
+	    shuntstatus|--shuntstatus)
+		cmd="--shuntstatus"
+		usage="Usage: ipsec shuntstatus [--ctlsocket ${CTLSOCKET}]"
+		;;
+	    status|--status)
+		cmd="--status"
+		usage="Usage: ipsec status [--ctlsocket ${CTLSOCKET}]"
+		;;
+	    trafficstatus|--trafficstatus|traffic)
+		cmd="--trafficstatus"
+		usage="Usage: ipsec trafficstatus connectionname [--ctlsocket ${CTLSOCKET}]"
+		;;
+	    unroute|--unroute)
+		cmd="--route"
+		usage="Usage: ipsec unroute connectionname [--ctlsocket ${CTLSOCKET}]"
+		;;
+	    up|--up|initiate|--initiate)
+		cmd="--initiate"
+		usage="Usage: ipsec up [--asynchronous] connectionname \\
+		[--remote-host ipaddr] [--ctlsocket ${CTLSOCKET}]"
+		;;
+	    help|--help|-h)
+		echo "${usage}"
+		exit 0
+		;;
+	    --asynchronous)
+		asynchronous="${1}"
+		;;
+	    --ctlsocket)
+		CTLSOCKET="${2}"
+		export CTLSOCKET
+		shift
+		;;
+	    --remote-host)
+		remote_host="--remote-host ${2}"
+		shift
+		;;
+	    --dry-run)
+		dry_run="echo"
+		;;
+	    --utc)
+		utc="${1}"
+		;;
+	    --verbose)
+		verbose="${1}"
+		;;
+	    -*)
+		echo "Unknown option \"${1}\"" >&2
+		echo >&2
+		echo "${usage}" >&2
+		exit 2
+		;;
+	    *)
+		conn_name="--name ${1}"
+		;;
+	esac
+	shift
+    done
+    ${dry_run} "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" ${asynchronous} ${conn_name} ${utc} ${cmd} ${remote_host}
+    exit $?
+}
 
 set_nss_db_trusts() {
     # has to handle a NSS nick with spaces
@@ -73,9 +424,9 @@ set_nss_db_trusts() {
 }
 
 ipsec_usage() {
-    echo "Usage: ipsec {command} [argument] ...>"
-    echo "Use --help for a list of commands, or see the ipsec(8) manual page"
-    echo "Most commands have their own manual pages, e.g. ipsec_auto(8)."
+    echo "Usage: ipsec {command} [argument] ..."
+    echo "See also: man ipsec, ipsec help or ipsec {command} help"
+    echo
     echo "See <https://libreswan.org> for more general info."
     echo "Libreswan ${IPSEC_VERSION}"
     exit 2
@@ -84,10 +435,45 @@ ipsec_usage() {
 ipsec_help() {
     echo "Usage: ipsec {command} [argument] ...>"
     echo "where {command} is one of:"
-    echo ""
+    echo
     GOTTWO=""
-    for f in start stop restart status trafficstatus traffic globalstatus shuntstatus briefstatus showstates fips import initnss checknss checknflog \
-	$(ls "${IPSEC_EXECDIR}" | grep -E -v -i "${DONTMENTION}"); do
+    for f in \
+	add \
+	briefstatus \
+	certutil \
+	checknflog \
+	checknss \
+	delete \
+	down \
+	fetchcrls \
+	fipsstatus \
+	import \
+	initnss \
+	listall \
+	listcacerts \
+	listcerts \
+	listcrls \
+	listen \
+	listpubkeys \
+	ondemand \
+	pk12util \
+	purgeocsp \
+	replace \
+	rereadall \
+	rereadcerts \
+	rereadsecrets \
+	restart \
+	route \
+	showstates \
+	shuntstatus \
+	start \
+	status \
+	stop \
+	trafficstatus \
+	unroute \
+	up \
+	$(ls "${IPSEC_EXECDIR}" | grep -E -v -i "${DONTMENTION}")
+    do
 	if [ -z "${GOTTWO}" ]; then
 	    # first of two entries
 	    GOTTWO="${f}"
@@ -107,18 +493,17 @@ ipsec_help() {
     done
     if [ -n "${GOTTWO}" ]; then
 	# leftover entry
-	printf "\t%s" "${GOTTWO}"
+	printf "\t%s\n" "${GOTTWO}"
     fi
     echo
-    echo "See also: man ipsec <command> or ipsec <command> --help"
+    echo "See also: man ipsec {command} or ipsec {command} help"
     echo "See <https://libreswan.org/> for more general info."
     echo "Libreswan ${IPSEC_VERSION}"
-    exit 2
+    exit 0
 }
 
 # add nflog-all
 nflog_nftables_add() {
-
 	nft -f - <<EOF
 
 table inet ipsec-log {
@@ -137,43 +522,61 @@ EOF
 }
 
 nflog_nftables_delete_table() {
-  local table=$1
+    local table=$1
 
-  t=$(nft list table inet $table 2>/dev/null | wc -l)
-  [ ${t} -eq 2 ] &&  nft delete table ${table}
+    t=$(nft list table inet $table 2>/dev/null | wc -l)
+    [ ${t} -eq 2 ] &&  nft delete table ${table}
 }
 
 nflog_nftables_delete_chain() {
- local chain=$1
+    local chain=$1
 
-  t=$(nft list table inet ipsec-log 2>/dev/null | wc -l)
-  if [ ${t} -gt 0 ]; then
-    c=$(nft list chain inet ipsec-log ${chain} 2>/dev/null | wc -l)
-    if [ ${c} -gt 0 ]; then
-      nft delete chain inet ipsec-log ${chain}
-      # assumed nothing else used this chain.
-      # one day check if something else used this chain.
-      # if yes only delete the rule this script added and warn?
-      # something like
-      # nft -a list chain inet ipsec-log input | grep -v "all-ipsec-input" | wc -l
-      # count -eq 5 . chagpti's idea of finding empty nftable chain
+    t=$(nft list table inet ipsec-log 2>/dev/null | wc -l)
+    if [ ${t} -gt 0 ]; then
+	c=$(nft list chain inet ipsec-log ${chain} 2>/dev/null | wc -l)
+	if [ ${c} -gt 0 ]; then
+	    nft delete chain inet ipsec-log ${chain}
+	    # assumed nothing else used this chain.
+	    # one day check if something else used this chain.
+	    # if yes only delete the rule this script added and warn?
+	    # something like
+	    # nft -a list chain inet ipsec-log input | grep -v "all-ipsec-input" | wc -l
+	    # count -eq 5 . chagpti's idea of finding empty nftable chain
+	fi
     fi
-  fi
 }
 
 nflog_nftables_delete() {
-  nflog_nftables_delete_chain input
-  nflog_nftables_delete_chain output
-  nflog_nftables_delete_table ipsec-log
+    nflog_nftables_delete_chain input
+    nflog_nftables_delete_chain output
+    nflog_nftables_delete_table ipsec-log
 }
 
 nflog_iptables_delete() {
     local GROUP=$1
-    iptablese -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group "${GROUP}" --nflog-prefix all-ipsec
-    iptablese -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group "${GROUP}" --nflog-prefix all-ipsec
+    iptables -D INPUT  -m policy --dir in  --pol ipsec -j NFLOG --nflog-group "${GROUP}" --nflog-prefix all-ipsec
+    iptables -D OUTPUT -m policy --dir out --pol ipsec -j NFLOG --nflog-group "${GROUP}" --nflog-prefix all-ipsec
 }
 
 ipsec_stopnflog() {
+    local usage
+    usage="Usage: ipsec stopnflog"
+    while [ ${#} -gt 0 ]; do
+	case ${1} in
+	    help|--help|-h)
+		echo "${usage}"
+		exit 0
+		;;
+	    *)
+		echo "ipsec stopnflog: Unknown option \"${1}\"" >&2
+		echo >&2
+		echo "${usage}" >&2
+		exit 2
+		;;
+	esac
+	shift
+    done
+
     NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_EXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup | grep -v "#" | grep nflog | sed -e "s/^.*=//" -e "s/'//g");
     if [ -z "${NFGROUP}" ]; then
 	exit 0
@@ -181,11 +584,11 @@ ipsec_stopnflog() {
     firewall_cmd
 
     if [ "${FIREWALL}" = IPTABLES ]; then
-        nflog_iptables_delete "${NFGROUP}"
+	nflog_iptables_delete "${NFGROUP}"
     elif [ "${FIREWALL}" = NFTABLES ]; then
-        nflog_nftables_delete
+	nflog_nftables_delete
     else
-        echo "WARNING unknown firewall comaand ${FIREWALL} expect IPTABLES or NFTABLES or nft"
+	echo "WARNING unknown firewall comaand ${FIREWALL} expect IPTABLES or NFTABLES or nft"
     fi
 
     exit 0
@@ -202,7 +605,7 @@ checknflog_iptables() {
 	    else
 		# delete rules with old group number
 		echo "deleting rules with old nflog group ${OLDNFGROUP}"
-                nflog_iptables_delete "${OLDNFGROUP}"
+		nflog_iptables_delete "${OLDNFGROUP}"
 	    fi
 	fi
 	# insert rules with current group number
@@ -213,7 +616,7 @@ checknflog_iptables() {
 	OLDNFGROUP=$(iptables -L -n | grep "all-ipsec nflog-group" | sed "s/^.* //" | tail -1);
 	if [ -n "${OLDNFGROUP}" ]; then
 	    echo "deleting rules with old nflog group ${OLDNFGROUP}"
-        nflog_iptables_delete "${OLDNFGROUP}"
+	    nflog_iptables_delete "${OLDNFGROUP}"
 	fi
 	echo "nflog ipsec capture disabled"
     fi
@@ -243,26 +646,44 @@ firewall_cmd() {
     HAVE_NFTABLES=@HAVE_NFTABLES@
 
     if [ "${HAVE_NFTABLES}" = true ]; then
-        FIREWALL=NFTABLES
+	FIREWALL=NFTABLES
     elif [ "${HAVE_IPTABLES}" = true ]; then
-        FIREWALL=IPTABLES
+	FIREWALL=IPTABLES
     else
-        FIREWALL=""
+	FIREWALL=""
     fi
 }
 
 ipsec_checknflog() {
+    local usage
+    usage="Usage: ipsec checknflog"
+    while [ ${#} -gt 0 ]; do
+	case ${1} in
+	    help|--help|-h)
+		echo "${usage}"
+		exit 0
+		;;
+	    *)
+		echo "ipsec checknflog: Unknown option \"${1}\"" >&2
+		echo >&2
+		echo "${usage}" >&2
+		exit 2
+		;;
+	esac
+	shift
+    done
+
     NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_EXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup | grep -v "#" | grep nflog| sed -e "s/^.*=//" -e "s/'//g");
 
     firewall_cmd
 
     if [ "${FIREWALL}" = IPTABLES ]; then
-        checknflog_iptables
+	checknflog_iptables
     elif [ "${FIREWALL}" = NFTABLES ]; then
-        checknflog_nftables
+	checknflog_nftables
     else
 	FIREWALL=""
-	echo "unknown firewall comaand ${FIREWALL} expect ipables or nft"
+	echo "unknown firewall command ${FIREWALL} expect ipables or nft" >&2
 	exit 1
     fi
 
@@ -270,6 +691,24 @@ ipsec_checknflog() {
 }
 
 ipsec_sniff() {
+    local usage
+    usage="Usage: ipsec sniff"
+    while [ ${#} -gt 0 ]; do
+	case ${1} in
+	    help|--help|-h)
+		echo "${usage}"
+		exit 0
+		;;
+	    *)
+		echo "ipsec sniff: Unknown option \"${1}\"" >&2
+		echo >&2
+		echo "${usage}" >&2
+		exit 2
+		;;
+	esac
+	shift
+    done
+
     NFGROUP=$(ASAN_OPTIONS=detect_leaks=0 "${IPSEC_EXECDIR}/addconn" --ctlsocket "${CTLSOCKET}" --configsetup | grep -v "#" | grep nflog | sed -e "s/^.*=//" -e "s/'//g");
     tcpdump -n -i nflog:${NFGROUP}
     exit 0
@@ -342,7 +781,7 @@ ipsec_checknss() {
 		cmd=initnss
 		;;
 	    --settrusts)
-	        set_trusts=yes
+		set_trusts=yes
 		;;
 	    --configdir)
 		echo "ipsec ${cmd} warning: --configdir is obsoleted, use --nssdir" >&2
@@ -487,7 +926,7 @@ ipsec_checknss() {
 	    fi
 	fi
 	echo "Initializing NSS database"
-	echo ""
+	echo
 	certutil -N -d "${IPSEC_NSSDIR_SQL}" --empty-password
 	if [ $? -gt 0 ]; then
 	    echo "Failed to initialize nss database ${IPSEC_NSSDIR_SQL}" >&2
@@ -505,36 +944,60 @@ ipsec_checknss() {
 }
 
 ipsec_nsscmd() {
+    #
+    # run nss-tools utilities with correct nss directory
+    #
+    local dry_run options
 
     if [ -z "${1}" ]; then
-	echo "Usage: ipsec {certutil,pk12util,vfychain} ..." >&2
+	echo "Usage: ipsec {certutil|crlutil||pk12util|vfychain} ..." >&2
 	exit 1
     fi
 
     # vfychain on Fedora isn't in the default path.
-    if test -x /usr/lib64/nss/unsupported-tools/$1 ; then
-	cmd=/usr/lib64/nss/unsupported-tools/$1
+    if [ -x "/usr/lib64/nss/unsupported-tools/${1}" ] ; then
+	cmd="/usr/lib64/nss/unsupported-tools/${1}"
     else
-	cmd=$1
+	cmd="${1}"
     fi
-    shift # drop the command
+    shift	# drop the command
 
     # reject -d and --nssdir outright
     case " $* " in
-	*' -d '* | *' --nssdir '* )
-	    echo "ERROR: ipsec {certutil,pk12util,vfychain} do not accept --nssdir" >&2
-	    exit 1
+	*' -d '*|*' --nssdir '*)
+	    echo "ERROR: ipsec {certutil|crlutil|pk12util|vfychain} do not accept --nssdir" >&2
+	    exit 2
+	    ;;
+	*' --dry-run '*)
+	    echo "ERROR: ipsec {certutil|crlutil|modutil|pk12util|vfychain} do not accept --dry-run" >&2
+	    exit 2
+	    ;;
+	*' -dbdir '*)
+	    echo "ERROR: ipsec {modutil} does not accept -dbdir" >&2
+	    exit 2
 	    ;;
     esac
 
-    exec ${cmd} -d ${IPSEC_NSSDIR} "$@"
+    case "${cmd}" in
+	modutil)
+	    exec ${cmd} -dbdir ${IPSEC_NSSDIR} "${@}"
+	    ;;
+	*)
+	    exec ${cmd} -d ${IPSEC_NSSDIR} "${@}"
+	    ;;
+    esac
 }
-
 
 # Check for no options at all and return usage.
 if [ -z "${1}" ]; then
     ipsec_usage
 fi
+
+# Make sure these variables are empty before parsing command line
+asynchronous=
+dry_run=
+remote_host=
+utc=
 
 while [ ${#} -gt 0 ]; do
     case "${1}" in
@@ -542,14 +1005,20 @@ while [ ${#} -gt 0 ]; do
 	    RUNDIR="${2}"
 	    CTLSOCKET="${RUNDIR}/pluto.ctl"
 	    export CTLSOCKET
-	    shift;
-	    shift;
+	    shift
+	    shift
 	    ;;
 	--ctlsocket)
 	    CTLSOCKET="${2}"
 	    export CTLSOCKET
-	    shift;
-	    shift;
+	    shift
+	    shift
+	    ;;
+	auto)
+	    # ipsec_auto deprecated at 5.0, we eat this option for now
+	    # so that ipsec auto <command> continues to work.
+	    # Later we can add deprecation warning here.
+	    shift
 	    ;;
 	whack)
 	    # Whack command is special because --ctlsocket is a whack cmdline option
@@ -562,88 +1031,84 @@ while [ ${#} -gt 0 ]; do
 	    fi
 	    exit 0
 	    ;;
-	--name)
-	    conn_name="${2}"
-	    shift;
-	    shift;
+	add|--add)
+	    ipsec_addconn "${@}"
 	    ;;
-	status|--status)
-	    cmd="whack"
-	    whackoption="--status"
-	    shift
+	briefstatus|--briefstatus|\
+	checkpubkeys|--checkpubkeys|\
+	delete|--delete|\
+	down|--down|terminate|\
+	fetchcrls|--fetchcrls|crls|\
+	fipsstatus|--fipsstatus|fips|\
+	globalstatus|--globalstatus|\
+	listall|--listall|\
+	listcacerts|--listcacerts|\
+	listcerts|--listcerts|\
+	listcrls|--listcrls|\
+	listen|--listen|--ready|--rereadgroups|\
+	listpubkeys|--listpubkeys|\
+	purgeocsp|--purgeocsp|\
+	rereadall|--rereadall|\
+	rereadcerts|--rereadcerts|\
+	rereadsecrets|--rereadsecrets|secrets|\
+	route|--route|\
+	showstates|--showstates|--statestatus|\
+	shuntstatus|--shuntstatus|\
+	status|--status|\
+	trafficstatus|--trafficstatus|traffic|\
+	unroute|--unroute|\
+	up|--up|initiate|--initiate)
+	    ipsec_whack "${@}"
 	    ;;
-	trafficstatus|--trafficstatus|traffic)
-	    cmd="whack"
-	    whackoption="--trafficstatus"
-	    shift
+	ondemand|--ondemand)
+	    ipsec_combined "${@}"
 	    ;;
-	fipsstatus|--fipsstatus|fips)
-	    cmd="whack"
-	    whackoption="--fipsstatus"
-	    shift
+	redirect)
+	    ipsec_redirect "${@}"
 	    ;;
-	globalstatus|--globalstatus)
-	    cmd="whack"
-	    whackoption="--globalstatus"
-	    shift
+	replace|--replace)
+	    ipsec_replace "${@}"
 	    ;;
-	shuntstatus|--shuntstatus)
-	    cmd="whack"
-	    whackoption="--shuntstatus"
-	    shift
-	    ;;
-	briefstatus|--briefstatus)
-	    cmd="whack"
-	    whackoption="--briefstatus"
-	    shift
-	    ;;
-	showstates|--showstates)
-	    cmd="whack"
-	    whackoption="--showstates"
-	    shift
+	restart|--restart)
+	    exec "${IPSEC_EXECDIR}/setup" --restart
 	    ;;
 	start|--start)
-	    cmd="setup"
-	    setupoption="--start"
-	    shift
+	    if [ -z "${2}" ]; then
+		exec "${IPSEC_EXECDIR}/setup" --start
+	    else
+	        ipsec_combined "${@}"
+	    fi
 	    ;;
 	stop|--stop)
-	    cmd="setup"
-	    setupoption="--stop"
-	    shift
+	    exec "${IPSEC_EXECDIR}/setup" --stop
 	    ;;
 	letsencrypt)
 	    shift
 	    exec "${IPSEC_EXECDIR}/letsencrypt" "${@}"
 	    ;;
-	restart|--restart)
-	    cmd="setup"
-	    setupoption="--restart"
-	    shift
-	    ;;
-	help|--help)
-	    # if cmd is unset, this is help for ipsec command
-	    if [ -z "${cmd}" ]; then
-		ipsec_help
-	    fi
+	help|--help|-h)
+	    ipsec_help
 	    ;;
     	version|--version|--versioncode)
 	    # some ubuntu/debian scripts use --versioncode, so let's keep the alias
 	    echo "Libreswan ${IPSEC_VERSION}"
 	    exit 0
 	    ;;
-	--directory)
+	directory|--directory)
 	    printf "%s\n" "${IPSEC_EXECDIR}"
 	    exit 0
 	    ;;
-	--stopnflog|stopnflog)
-	    ipsec_stopnflog
+	stopnflog|--stopnflog)
+	    shift
+	    ipsec_stopnflog "${@}"
 	    ;;
-	--checknflog|checknflog|nflog)
-	    ipsec_checknflog
+	checknflog|--checknflog|nflog)
+	    shift
+	    ipsec_checknflog "${@}"
 	    ;;
 	sniff|--sniff)
-	    ipsec_sniff
+	    shift
+	    ipsec_sniff "${@}"
 	    ;;
 	import|--import)
 	    shift
@@ -652,31 +1117,33 @@ while [ ${#} -gt 0 ]; do
 	checknss|--checknss|initnss|--initnss)
 	    ipsec_checknss "${@}"
 	    ;;
-	certutil|pk12util|vfychain|crlutil)
+	certutil|crlutil|modutil|pk12util|vfychain)
 	    ipsec_nsscmd "${@}"
-	    ;;
-	secrets)
-	    cmd="whack"
-	    whackoption="--rereadsecrets"
-	    shift
-	    ;;
-	rereadcrls|--rereadcrls)
-	    echo "ipsec auto: --rereadcrls and /etc/ipsec.d/crls/ are obsoleted. did you mean: ipsec crls"
-	    exit 1
-	    ;;
-	crls|fetchcrls)
-	    cmd="whack"
-	    whackoption="--fetchcrls"
-	    shift
 	    ;;
 	unbound|--unbound)
 	    # activate the unbound ipsec module
-	    unbound-control set_option ipsecmod-enabled: yes
-	    exit $?
+	    exec unbound-control set_option ipsecmod-enabled: yes
 	    ;;
-	--*)
+	--asynchronous)
+	    asynchronous="${1}"
+	    shift
+	    ;;
+	--remote-host)
+	    remote_host="--remote-host ${2}"
+	    shift
+	    shift
+	    ;;
+	--dry-run)
+	    dry_run="echo"
+	    shift
+	    ;;
+	--utc)
+	    utc="${1}"
+	    shift
+	    ;;
+	-*)
 	    printf "%s: unknown option \"%s\" (perhaps command name was omitted?)\n" "${0}" "${1}" >&2
-	    exit 1
+	    exit 2
 	    ;;
 	*)
 	    cmd="${1}"
@@ -684,22 +1151,9 @@ while [ ${#} -gt 0 ]; do
 	    if [ -x "${IPSEC_EXECDIR}/${cmd}" ]; then
 		exec "${IPSEC_EXECDIR}/${cmd}" "${@}"
 	    else
-		printf "%s: unknown IPsec command \"%s\" (\"ipsec --help\" for list)\n" "${0}" "${cmd}" >&2
-		exit 1
+		printf "%s: unknown IPsec command \"%s\" (\"ipsec help\" for list)\n" "${0}" "${cmd}" >&2
+		exit 2
 	    fi
 	    ;;
     esac
 done
-
-case "${cmd}" in
-    setup)
-	exec "${IPSEC_EXECDIR}/setup" "${setupoption}"
-	;;
-    whack)
-	if [ -n "${conn_name}" ]; then
-	    exec "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" "${whackoption}" --name "${conn_name}"
-	else
-	    exec "${IPSEC_EXECDIR}/whack" --ctlsocket "${CTLSOCKET}" "${whackoption}"
-	fi
-	;;
-esac
