@@ -2,7 +2,7 @@
 See also https://libreswan.org/
 
 v5.0 (Unreleased)
-* auto: Deprecate ipsec auto sub-command [Tuomo]
+* ipsec: Deprecate ipsec auto sub-command [Tuomo]
   - ipsec auto --{cmd} connection -> ipsec {cmd} connection
 * pluto: retry and revival code merged (dpdaction=, keyingtries= ignored) [Andrew]
 * pluto: IKEv1 globally disabled by default (ikev1-policy=reject) See RFCxxxx
