@@ -1315,7 +1315,6 @@ kvmplutotest	ipsec-hostkey-06-ikev2-pubkey-rsa	good
 kvmplutotest	ipsec-hostkey-06-ikev2-pubkey-ecdsa	good
 
 # PPK
-kvmplutotest	ikev2-ppk-dynamic-01				wip
 kvmplutotest	ikev2-ppk-static-01-insist-yes			good
 kvmplutotest	ikev2-ppk-static-02-insist-insist		good
 kvmplutotest	ikev2-ppk-static-03-no-insist-fail		good
