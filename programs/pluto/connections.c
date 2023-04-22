@@ -1680,20 +1680,25 @@ static enum connection_kind extract_connection_kind(const struct whack_message *
 			 * multiple subnets from the remote
 			 * peer.
 			 */
-			dbg("connection is template: %s has vnets at play",
-			    we->leftright);
+			ldbg(logger, "connection is template: %s has vnets at play",
+			     we->leftright);
+			return CK_TEMPLATE;
+		}
+		if (we->addresspool != NULL) {
+			ldbg(logger, "connection is template: %s has an address pool",
+			     we->leftright);
 			return CK_TEMPLATE;
 		}
 		if (we->protoport.has_port_wildcard) {
-			dbg("connection is template: %s child has wildcard protoport",
-			    we->leftright);
+			ldbg(logger, "connection is template: %s child has wildcard protoport",
+			     we->leftright);
 			return CK_TEMPLATE;
 		}
 		if (!NEVER_NEGOTIATE(wm->policy) &&
 		    !address_is_specified(we->host_addr) &&
 		    we->host_type != KH_IPHOSTNAME) {
-			dbg("connection is template: unspecified %s address yet policy negotiate",
-			    we->leftright);
+			ldbg(logger, "connection is template: unspecified %s address yet policy negotiate",
+			     we->leftright);
 			return CK_TEMPLATE;
 		}
 	}
