@@ -1292,18 +1292,6 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 		struct narrowed_selector_payloads nsps;
 	} best = {0};
 
-#define CONNECTION_POLICIES	(POLICY_DONT_REKEY |		\
-				 POLICY_REAUTH |		\
-				 POLICY_OPPORTUNISTIC |		\
-				 POLICY_GROUPINSTANCE |		\
-				 POLICY_ROUTE |			\
-				 POLICY_UP |			\
-				 POLICY_XAUTH |			\
-				 POLICY_MODECFG_PULL |		\
-				 POLICY_AGGRESSIVE |		\
-				 POLICY_OVERLAPIP |		\
-				 POLICY_IKEV2_ALLOW_NARROWING)
-
 	/*
 	 * XXX: This double loop is performing two searches:
 	 *
@@ -1320,7 +1308,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 	struct connection *const cc = child->sa.st_connection;
 	dbg_ts("looking to best connection "PRI_CONNECTION" "PRI_CO" with policy <%s>:",
 	       pri_connection(cc, &cb), pri_co(cc->serialno),
-	       str_policy(cc->policy & CONNECTION_POLICIES, &pb));
+	       str_connection_policies(cc, &pb));
 
 	const ip_address local = md->iface->ip_dev->id_address;
 	FOR_EACH_THING(remote, endpoint_address(md->sender), unset_address) {
@@ -1339,7 +1327,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 			dbg_ts("evaluating %s connection "PRI_CONNECTION" "PRI_CO" with policy <%s>:",
 			       enum_name_short(&connection_kind_names, cc->kind),
 			       pri_connection(d, &cb), pri_co(d->serialno),
-			       str_policy(d->policy & CONNECTION_POLICIES, &pb));
+			       str_connection_policies(d, &pb));
 
 			indent.level = 3;
 
@@ -1608,7 +1596,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 					jam(buf, " food-group=\"%s\"", t->foodgroup);
 				}
 				jam(buf, " with policy <");
-				jam_policy(buf, t->policy & CONNECTION_POLICIES);
+				jam_connection_policies(buf, t);
 				jam(buf, ">");
 			}
 
