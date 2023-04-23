@@ -1419,7 +1419,7 @@ bool process_v2TS_request_payloads(struct child_sa *child,
 
 			/* responder -- note D! */
 			enum fit responder_selector_fit;
-			if (d->policy & POLICY_IKEV2_ALLOW_NARROWING) {
+			if (d->config->ikev2_allow_narrowing) {
 				if (d->kind == CK_TEMPLATE) {
 					/*
 					 * A template starts wider
@@ -1819,7 +1819,7 @@ bool process_v2TS_response_payloads(struct child_sa *child,
 	 * smaller than the END.
 	 */
 	enum fit initiator_selector_fit =
-		((c->policy & POLICY_IKEV2_ALLOW_NARROWING) ? END_WIDER_THAN_TS
+		(c->config->ikev2_allow_narrowing ? END_WIDER_THAN_TS
 		 : END_EQUALS_TS);
 	/*
 	 * The responders sec_label must exactly match what was

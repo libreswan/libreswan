@@ -160,8 +160,8 @@ static struct connection *ikev2_find_host_connection(const struct msg_digest *md
 			return sec_label_parent_instantiate(c, remote_address, HERE);
 		}
 
-		if ((c->kind == CK_TEMPLATE) &&
-		    (c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
+		if (c->kind == CK_TEMPLATE &&
+		    c->config->ikev2_allow_narrowing) {
 			ldbg(md->md_logger,
 			     "local endpoint has narrowing=yes - needs instantiation");
 			return rw_responder_instantiate(c, remote_address, HERE);

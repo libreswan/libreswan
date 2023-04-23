@@ -200,6 +200,8 @@ struct whack_message {
 	/* Force the use of NAT-T on a connection */
 	enum yna_options encaps;
 
+	enum ynu_options ikev2_allow_narrowing;
+
 	/*
 	 * TCP: Allow TCP as fallback, only do TCP or only do UDP; and
 	 * the port.

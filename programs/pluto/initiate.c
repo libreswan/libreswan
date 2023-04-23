@@ -208,12 +208,12 @@ static bool initiate_connection_2_address(struct connection *c,
 		 */
 
 		if (c->config->dnshostname != NULL) {
-			if (c->policy & POLICY_IKEV2_ALLOW_NARROWING) {
+			if (c->config->ikev2_allow_narrowing) {
 				esb_buf b;
 				llog(RC_NOPEERIP, c->logger,
 				     "cannot initiate connection without resolved dynamic peer IP address, will keep retrying (kind=%s, narrowing=%s)",
 				     enum_show(&connection_kind_names, c->kind, &b),
-				     bool_str((c->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY));
+				     bool_str(c->config->ikev2_allow_narrowing));
 			} else {
 				esb_buf b;
 				llog(RC_NOPEERIP, c->logger,
@@ -226,12 +226,12 @@ static bool initiate_connection_2_address(struct connection *c,
 			return true;
 		}
 
-		if (c->policy & POLICY_IKEV2_ALLOW_NARROWING) {
+		if (c->config->ikev2_allow_narrowing) {
 			esb_buf b;
 			llog(RC_NOPEERIP, c->logger,
 			     "cannot initiate connection without knowing peer IP address (kind=%s narrowing=%s)",
 			     enum_show(&connection_kind_names, c->kind, &b),
-			     bool_str((c->policy & POLICY_IKEV2_ALLOW_NARROWING) != LEMPTY));
+			     bool_str(c->config->ikev2_allow_narrowing));
 		} else {
 			esb_buf b;
 			llog(RC_NOPEERIP, c->logger,
@@ -281,7 +281,7 @@ static bool initiate_connection_3_template(struct connection *c,
 
 	if (c->kind == CK_TEMPLATE &&
 	    c->config->ike_version == IKEv2 &&
-	    (c->policy & POLICY_IKEV2_ALLOW_NARROWING)) {
+	    c->config->ikev2_allow_narrowing) {
 		struct connection *d = spd_instantiate(c, c->remote->host.addr, HERE);
 		/* XXX: something better? */
 		fd_delref(&d->logger->global_whackfd);

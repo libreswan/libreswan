@@ -233,6 +233,7 @@ struct config {
 		deltatime_t timeout;	/* time after which we are dead */
 	} dpd;
 
+	bool ikev2_allow_narrowing;
 	bool send_no_esp_tfc;
 	bool send_initial_contact;		/* Send INITIAL_CONTACT (RFC-2407) payload? */
 	bool send_vendorid;			/* Send our vendorid? Security vs Debugging help */

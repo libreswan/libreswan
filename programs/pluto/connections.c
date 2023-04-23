@@ -1668,7 +1668,7 @@ static enum connection_kind extract_connection_kind(const struct whack_message *
 		ldbg(logger, "connection is template: has security label: %s", wm->sec_label);
 		return CK_TEMPLATE;
 	}
-	if(wm->policy & POLICY_IKEV2_ALLOW_NARROWING) {
+	if(wm->ikev2_allow_narrowing == YNU_YES) {
 		ldbg(logger, "connection is template: POLICY_IKEV2_ALLOW_NARROWING");
 		return CK_TEMPLATE;
 	}
@@ -1929,7 +1929,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 		return diag("MOBIKE requires tunnel mode");
 	}
 
-	if (wm->policy & POLICY_IKEV2_ALLOW_NARROWING &&
+	if (wm->ikev2_allow_narrowing == YNU_YES &&
 	    c->config->ike_version < IKEv2) {
 		return diag("narrowing=yes requires IKEv2");
 	}
@@ -2048,6 +2048,20 @@ static diag_t extract_connection(const struct whack_message *wm,
 
 	config->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
 	c->policy = wm->policy;
+
+	switch (wm->ikev2_allow_narrowing) {
+	case YNU_NO: config->ikev2_allow_narrowing = false; break;
+	case YNU_YES: config->ikev2_allow_narrowing = true; break;
+	default: /*unset */
+		/*
+		 * XXX: base this on CK_TEMPLATE?
+		 */
+		config->ikev2_allow_narrowing =
+			(wm->ike_version == IKEv2 &&
+			 (wm->left.addresspool != NULL ||
+			  wm->right.addresspool != NULL));
+		break;
+	}
 
 	config->autostart = wm->autostart;
 	switch (wm->autostart) {
@@ -3100,18 +3114,32 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	const char *sep = "";
 	size_t s = 0;
 	enum shunt_policy shunt;
+	lset_t policy = c->policy;
 
 	if (c->config->ike_version > 0) {
 		s += jam_string(buf, c->config->ike_info->version_name);
 		sep = "+";
 	}
 
-	lset_t policy = c->policy;
-
 	struct authby authby = c->local->host.config->authby;
 	if (authby_is_set(authby)) {
 		s += jam_string(buf, sep);
 		s += jam_authby(buf, authby);
+		sep = "+";
+	}
+
+	lset_t mask = LRANGE(POLICY_ENCRYPT_IX, POLICY_OVERLAPIP_IX);
+	lset_t p = policy & mask;
+	policy &= ~mask;
+	if (p != LEMPTY) {
+		s += jam_string(buf, sep);
+		s += jam_lset_short(buf, &sa_policy_bit_names, "+", p);
+		sep = "+";
+	}
+
+	if (c->config->ikev2_allow_narrowing) {
+		s += jam_string(buf, sep);
+		s += jam_string(buf, "IKEV2_ALLOW_NARROWING");
 		sep = "+";
 	}
 
