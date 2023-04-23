@@ -13,7 +13,7 @@ west #
  ipsec stop
 Redirecting to: [initsystem]
 west #
- egrep "bits random|bytes from|seeded" /tmp/pluto.log
+ grep -E "bits random|bytes from|seeded" /tmp/pluto.log
 | need 520 bits random for extra seeding of the NSS PRNG
 | read 65 bytes from /dev/random for NSS PRNG
 seeded 65 bytes into the NSS PRNG
@@ -28,7 +28,7 @@ west #
  ipsec stop
 Redirecting to: [initsystem]
 west #
- egrep "bits random|bytes from|seeded" /tmp/pluto.log
+ grep -E "bits random|bytes from|seeded" /tmp/pluto.log
 | need 1024 bits random for extra seeding of the NSS PRNG
 | read 128 bytes from /dev/random for NSS PRNG
 seeded 128 bytes into the NSS PRNG
@@ -50,7 +50,7 @@ west #
  ipsec stop
 Redirecting to: [initsystem]
 west #
- egrep "bits random|bytes from|seeded" /tmp/pluto.log
+ grep -E "bits random|bytes from|seeded" /tmp/pluto.log
 | need 2048 bits random for extra seeding of the NSS PRNG
 | read 256 bytes from /dev/random for NSS PRNG
 seeded 256 bytes into the NSS PRNG

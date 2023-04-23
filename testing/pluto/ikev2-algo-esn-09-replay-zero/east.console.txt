@@ -11,7 +11,7 @@ east #
  ipsec auto --status | grep replay_window
 000 "east":   ike_life: 28800s; ipsec_life: 28800s; ipsec_max_bytes: 2^63B; ipsec_max_packets: 2^63; replay_window: 0; rekey_margin: 540s; rekey_fuzz: 100%;
 east #
- ipsec auto --status | egrep -i ESN
+ ipsec auto --status | grep -E -i ESN
 000 "east":   policy: IKEv2+RSASIG+ECDSA+RSASIG_v1_5+ENCRYPT+TUNNEL+PFS+IKE_FRAG_ALLOW+ESN_NO;
 east #
  echo "initdone"

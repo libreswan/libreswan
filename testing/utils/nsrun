@@ -3298,7 +3298,7 @@ def resanitize(args):
     # for h in DEFAULTCONFIG['swanhosts']:
     #       f = "OUTPUT/%s.console.diff"%h
     #       if  os.path.exists(f):
-    #               cmd = "grep -E '^[+-]' %s | egrep -v '^(\+\+\+|---)' | sort -u | cmp -s - ../strongswan-star-diff"%f
+    #               cmd = "grep -E '^[+-]' %s | grep -E -v '^(\+\+\+|---)' | sort -u | cmp -s - ../strongswan-star-diff"%f
     #               (status, output) =  commands.getstatusoutput(cmd);
     #               if not status:
     #                       print "cp %s/OUTPUT/%s.console.txt %s/" % (testdir,h,testdir)

@@ -13,17 +13,17 @@ west #
 Initializing NSS database
 Warning no default label for /tmp/TESTipsec.d
 west #
- ls ${IPSEC_DIR} | egrep '*.db' # should show no db files
+ ls ${IPSEC_DIR} | grep -E '*.db' # should show no db files
 west #
- ls ${IPSEC_TEST_DIR} | egrep '*.db' # should show db files
+ ls ${IPSEC_TEST_DIR} | grep -E '*.db' # should show db files
 cert9.db
 key4.db
 west #
  ipsec checknss --nssdir ${IPSEC_TEST_DIR}
 west #
- ls ${IPSEC_DIR} | egrep '*.db' # should show no db files
+ ls ${IPSEC_DIR} | grep -E '*.db' # should show no db files
 west #
- ls ${IPSEC_TEST_DIR} | egrep '*.db' # should show db files
+ ls ${IPSEC_TEST_DIR} | grep -E '*.db' # should show db files
 cert9.db
 key4.db
 west #
