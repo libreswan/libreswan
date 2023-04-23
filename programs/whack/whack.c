@@ -497,6 +497,7 @@ enum option_enums {
 	CD_XAUTHBY,
 	CD_XAUTHFAIL,
 	CD_NIC_OFFLOAD,
+	CD_IKEV2_ALLOW_NARROWING,
 	CD_ESP,
 	CD_INTERMEDIATE,
 	CD_INITIATEONTRAFFIC,
@@ -842,7 +843,7 @@ static const struct option long_opts[] = {
 	{ "ikev2-allow", no_argument, NULL, CD_IKEv2 +OO }, /* obsolete name */
 	{ "ikev2-propose", no_argument, NULL, CD_IKEv2 +OO }, /* obsolete, map onto allow */
 
-	PS("allow-narrowing", IKEV2_ALLOW_NARROWING),
+	{ "allow-narrowing", no_argument, NULL, CD_IKEV2_ALLOW_NARROWING, },
 #ifdef AUTH_HAVE_PAM
 	PS("ikev2-pam-authorize", IKEV2_PAM_AUTHORIZE),
 #endif
@@ -1808,6 +1809,11 @@ int main(int argc, char **argv)
 			continue;
 		}
 
+		/* --allow-narrowing */
+		case CD_IKEV2_ALLOW_NARROWING:
+			msg.ikev2_allow_narrowing = YNU_YES;
+			continue;
+
 		case CDP_SINGLETON + POLICY_ENCRYPT_IX:	/* --encrypt */
 		/* --authenticate */
 		case CDP_SINGLETON + POLICY_AUTHENTICATE_IX:
@@ -1828,9 +1834,6 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_AGGRESSIVE_IX:
 		/* --overlapip */
 		case CDP_SINGLETON + POLICY_OVERLAPIP_IX:
-
-		/* --allow-narrowing */
-		case CDP_SINGLETON + POLICY_IKEV2_ALLOW_NARROWING_IX:
 
 		/* --mobike */
 		case CDP_SINGLETON + POLICY_MOBIKE_IX:
