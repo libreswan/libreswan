@@ -82,13 +82,11 @@ $(builddir)/%.tmp: $(srcdir)/%.xml | $(builddir)
 
 $(builddir)/%.man: $(builddir)/%.tmp
 	$(XMLTO) man $< -o $(builddir)
-	set -e ; for m in $(MANPAGES) ; do \
-		for r in $$($(top_srcdir)/packaging/utils/refnames.sh "$(builddir)/$${m}.tmp") ; do \
-			o=$$(echo "$${r}" | tr '_' ' ') ; \
-			if test "$${o}" != "$${r}" -a -r "$(builddir)/$${o}" ; then \
-				mv -v "$(builddir)/$${o}" "$(builddir)/$${r}" ; \
-			fi ; \
-		done ; \
+	set -e ; for r in $$($(top_srcdir)/packaging/utils/refnames.sh "$(builddir)/$*.tmp") ; do \
+		o=$$(echo "$${r}" | tr '_' ' ') ; \
+		if test "$${o}" != "$${r}" -a -r "$(builddir)/$${o}" ; then \
+			mv -v "$(builddir)/$${o}" "$(builddir)/$${r}" ; \
+		fi ; \
 	done
 	touch $@
 
