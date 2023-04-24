@@ -41,7 +41,6 @@
   </title>
   <para>
     <citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-    <citerefentry><refentrytitle>ipsec_auto</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
     <citerefentry><refentrytitle>ipsec_rsasigkey</refentrytitle><manvolnum>8</manvolnum></citerefentry>
   </para>
 </refsect1>
@@ -127,4 +126,10 @@
 
 </refsect1>
 
+  <refsect1 id='author'>
+    <title>AUTHOR</title>
+    <para>
+      <emphasis role='strong' remap='B'>Paul Wouters</emphasis>
+    </para>
+  </refsect1>
 </refentry>

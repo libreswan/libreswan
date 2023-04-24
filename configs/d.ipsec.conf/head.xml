@@ -1,21 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
-<!-- lifted from troff+man by doclifter -->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
 <refentry>
-<refentryinfo>
-  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>documenter</para> </authorblurb></author>
-</refentryinfo>
-<refmeta>
-<refentrytitle>IPSEC.CONF</refentrytitle>
-<manvolnum>5</manvolnum>
-<refmiscinfo class='date'>12 Dec 2012</refmiscinfo>
-<refmiscinfo class="source">libreswan</refmiscinfo>
-<refmiscinfo class="manual">Executable programs</refmiscinfo>
-</refmeta>
-<refnamediv id='name'>
-<refname>ipsec.conf</refname>
-<refpurpose>IPsec configuration and connections</refpurpose>
-</refnamediv>
+  <refmeta>
+    <refentrytitle>IPSEC.CONF</refentrytitle>
+    <manvolnum>5</manvolnum>
+    <refmiscinfo class='date'>24 Apr 2023</refmiscinfo>
+    <refmiscinfo class="source">libreswan</refmiscinfo>
+    <refmiscinfo class="manual">Executable programs</refmiscinfo>
+  </refmeta>
+  <refnamediv id='name'>
+    <refname>ipsec.conf</refname>
+    <refpurpose>IPsec configuration and connections</refpurpose>
+  </refnamediv>
 <!-- body begins here -->
 
