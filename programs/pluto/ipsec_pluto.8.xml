@@ -985,7 +985,7 @@
 
       <para>
 	<emphasis remap="B">pluto</emphasis> attempts to create a lockfile
-	with the name <filename>/var/run/pluto/pluto.pid</filename>. If the
+	with the name <filename>@@RUNDIR@@/pluto.pid</filename>. If the
 	lockfile cannot be created, <emphasis remap="B">pluto</emphasis> exits -
 	this prevents multiple <emphasis remap="B">pluto</emphasis>s from
 	competing Any "leftover" lockfile must be removed before <emphasis
@@ -4011,9 +4011,9 @@
   <refsect1 id="files">
     <title>FILES</title>
 
-    <para><filename>/var/run/pluto/pluto.pid</filename> <!-- .br -->
-    <filename>/var/run/pluto/pluto.ctl</filename> <!-- .br -->
-    <filename>@IPSEC_SECRETS_FILE@</filename> <!-- .br -->
+    <para><filename>@@RUNDIR@@/pluto.pid</filename>
+    <filename>@@RUNDIR@@/pluto.ctl</filename>
+    <filename>@IPSEC_SECRETS_FILE@</filename>
     <filename>/dev/urandom</filename></para>
   </refsect1>
 
