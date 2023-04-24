@@ -1,50 +1,61 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
-<!-- lifted from troff+man by doclifter -->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
 <refentry>
-<refentryinfo>
-  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
-</refentryinfo>
-<refmeta>
-<refentrytitle>SETUP</refentrytitle>
-<manvolnum>8</manvolnum>
-<refmiscinfo class='date'>14 Nov 2012</refmiscinfo>
-<refmiscinfo class="source">libreswan</refmiscinfo>
-<refmiscinfo class="manual">Executable programs</refmiscinfo>
-</refmeta>
-<refnamediv id='name'>
-<refname>ipsec setup</refname>
-<refpurpose>wrapper routine to the Libreswan init system</refpurpose>
-</refnamediv>
-<!-- body begins here -->
+  <refmeta>
+    <refentrytitle>IPSEC_SETUP</refentrytitle>
+    <manvolnum>8</manvolnum>
+    <refmiscinfo class='date'>14 Nov 2012</refmiscinfo>
+    <refmiscinfo class="source">libreswan</refmiscinfo>
+    <refmiscinfo class="manual">Executable programs</refmiscinfo>
+  </refmeta>
+  <refnamediv id='name'>
+    <refname>ipsec setup</refname>
+    <refpurpose>wrapper routine to the Libreswan init system</refpurpose>
+  </refnamediv>
+  <!-- body begins here -->
 
-<refsect1 id='description'><title>DESCRIPTION</title>
-<para><emphasis remap='I'>setup</emphasis>
-is called (via <emphasis remap='I'>ipsec setup</emphasis>) by the system administrator to perform init system related
-tasks to Libreswan, such as start, stop, status, reload, etc for the Internet Keying Exchange (IKE)
-daemon pluto. It is available for backwards compatibility with Openswan and FreeS/WAN.
-</para>
-</refsect1>
+  <refsect1 id='description'>
+    <title>DESCRIPTION</title>
+    <para>
+      <emphasis remap='I'>setup</emphasis>
+      is called (via <emphasis remap='I'>ipsec setup</emphasis>) by the system
+      administrator to perform init system related tasks to Libreswan, such as
+      start, stop, status, reload, etc for the Internet Keying Exchange (IKE)
+      daemon pluto. It is available for backwards compatibility with Openswan
+      and FreeS/WAN.
+    </para>
+  </refsect1>
 
-<refsect1 id='init_systems'><title>SUPPORTED INIT SYSTEMS</title>
-<para>Currently, the classic initscripts (sysv) and systemd are supported. Support for upstart
-will be added soon.</para>
-</refsect1>
-<refsect1 id='see_also'><title>SEE ALSO</title>
+  <refsect1 id='init_systems'>
+    <title>SUPPORTED INIT SYSTEMS</title>
+    <para>
+      Currently, the classic initscripts (sysv) and systemd are supported. Support for upstart
+    will be added soon.</para>
+  </refsect1>
 
-<para><citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
+  <refsect1 id='see_also'>
+    <title>SEE ALSO</title>
+    <para>
+      <citerefentry><refentrytitle>systemd</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>systemd.service</refentrytitle><manvolnum>5</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
-      <citerefentry><refentrytitle>ipsec__realsetup</refentrytitle><manvolnum>8</manvolnum></citerefentry>,
       <citerefentry><refentrytitle>ipsec__plutorun</refentrytitle><manvolnum>8</manvolnum></citerefentry>
-      .</para>
-</refsect1>
+    .</para>
+  </refsect1>
 
-<refsect1 id='history'><title>HISTORY</title>
-<para>Man page written for the Linux FreeS/WAN project by Michael Richardson. Original program by Henry Spencer.
-      Updated to <ulink url='https://libreswan.org/'>https://libreswan.org/</ulink>&gt; by Paul Wouters</para>
+  <refsect1 id='history'><title>HISTORY</title>
+  <para>
+    Man page written for the Linux FreeS/WAN project by Michael Richardson. Original program by Henry Spencer.
+    Updated to <ulink url='https://libreswan.org/'>https://libreswan.org/</ulink>&gt; by Paul Wouters
+  </para>
+  </refsect1>
 
-</refsect1>
+  <refsect1 id='author'>
+    <title>AUTHOR</title>
+    <para>
+      <emphasis role='strong' remap='B'>Paul Wouters</emphasis>
+    </para>
+  </refsect1>
 </refentry>
 
