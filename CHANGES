@@ -19,6 +19,7 @@ v5.0 (Unreleased)
 * packaging: Fix debian systemd service install [Antonio Silva]
 * testing: Fix namespace tests for super long dir names [Paul]
 * initsystems: Use documented ipsec sub-commands [Tuomo]
+* documentation: update to docbook xml 4.5 [Tuomo]
 
 v4.10 (February 28, 2023)
 * SECURITY IKEv2: Fixes https://libreswan.org/security/CVE-2023-23009
