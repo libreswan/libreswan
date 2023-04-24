@@ -8,7 +8,7 @@ The password file is located at <emphasis remap='I'>/etc/ipsec.d/passwd</emphasi
 and follows a syntax similar to the Apache htpasswd file, except an additional connection
 name argument (and optional static IP address) are also present:
 </para>
-<para>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <emphasis remap='I'>username:password:conname:ipaddress</emphasis></para>
+<para><emphasis remap='I'>username:password:conname:ipaddress</emphasis></para>
 <para>For supported password hashing methods, see <citerefentry><refentrytitle>crypt</refentrytitle>
 <manvolnum>3</manvolnum></citerefentry>. If pluto is running in FIPS mode, some hash methods,
 such as MD5, might not be available. Threads are used

@@ -57,7 +57,7 @@ is ignored and unused. For compatibility with openswan, specify:</para>
 
 <para>A section begins with a line of the form:</para>
 
-<para><emphasis remap='I'>type</emphasis>&nbsp;<emphasis remap='I'>name</emphasis></para>
+<para><emphasis remap='I'>type</emphasis> <emphasis remap='I'>name</emphasis></para>
 
 <para>where
 <emphasis remap='I'>type</emphasis>
@@ -74,7 +74,9 @@ There may be only one section of a given type with a given name.</para>
 
 <para>Lines within the section are generally of the form</para>
 
-<para>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<emphasis remap='I'>parameter</emphasis><emphasis remap='B'>=</emphasis><emphasis remap='I'>value</emphasis></para>
+<para>
+  <emphasis remap='I'>parameter</emphasis><emphasis remap='B'>=</emphasis><emphasis remap='I'>value</emphasis>
+</para>
 
 <para>(note the mandatory preceding white space).
 There can be white space on either side of the
