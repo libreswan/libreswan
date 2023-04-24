@@ -1,20 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-"http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
 
 <refentry>
-  <refentryinfo>
-    <author>
-      <firstname>Andrew</firstname>
-      <surname>Cagney</surname>
-      <authorblurb>
-	<para>
-	  placeholder to suppress warning
-	</para>
-      </authorblurb>
-    </author>
-  </refentryinfo>
-
   <refmeta>
     <refentrytitle>IPSEC_SHOWROUTE</refentrytitle>
     <manvolnum>8</manvolnum>
@@ -27,7 +15,6 @@
     <refname>ipsec showroute</refname>
     <refpurpose>show route to given address</refpurpose>
   </refnamediv>
-
   <!-- body begins here -->
   <refsynopsisdiv id='synopsis'>
     <cmdsynopsis>
@@ -59,4 +46,10 @@
     </para>
   </refsect1>
 
+  <refsect1 id='author'>
+    <title>AUTHOR</title>
+    <para>
+      <emphasis role='strong' remap='B'>Andrew Cagney</emphasis>
+    </para>
+  </refsect1>
 </refentry>
