@@ -18,6 +18,9 @@ PROGRAMDIR=$(DESTDIR)$(SBINDIR)
 # Do not prefix $(PROGRAM) man page with "ipsec_"
 MANPROGPREFIX=
 
+PROGRAM_MANPAGE = # suppress default
+
+MANPAGES += ipsec.8
 MANPAGES += ipsec_add.8
 MANPAGES += ipsec_briefstatus.8
 MANPAGES += ipsec_certutil.8
