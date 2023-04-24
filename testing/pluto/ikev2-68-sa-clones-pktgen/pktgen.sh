@@ -28,9 +28,9 @@ function pgset() {
 
     echo $1 > $PGDEV
 
-    result=`cat $PGDEV | fgrep "Result: OK:"`
+    result=`cat $PGDEV | grep "Result: OK:"`
     if [ "$result" = "" ]; then
-        cat $PGDEV | fgrep Result:
+        cat $PGDEV | grep Result:
     fi
 }
 
