@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
 <!-- lifted from troff+man by doclifter -->
 <refentry id='initsubnet3'>
-<refentryinfo>
-  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
-</refentryinfo>
 <refmeta>
 <refentrytitle>IPSEC_INITSUBNET</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -186,6 +183,12 @@ unknown address family;
 mask bits not contiguous.</para>
 </refsect1>
 
+  <refsect1 id='author'>
+    <title>AUTHOR</title>
+    <para>
+      <emphasis role='strong' remap='B'>Paul Wouters</emphasis>
+    </para>
+  </refsect1>
 <refsect1 id='history'><title>HISTORY</title>
 <para>Written for the FreeS/WAN project by Henry Spencer.</para>
 </refsect1>

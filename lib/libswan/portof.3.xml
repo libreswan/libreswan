@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
-<!-- lifted from troff+man by doclifter -->
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
 <refentry id='portof3'>
-<refentryinfo>
-  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
-</refentryinfo>
 <refmeta>
 <refentrytitle>IPSEC_PORTOF</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -110,5 +106,11 @@ if an unknown address family is found within the
 type, which are in principle subject to change.
 Avoid using them unless really necessary.</para>
 </refsect1>
+  <refsect1 id='author'>
+    <title>AUTHOR</title>
+    <para>
+      <emphasis role='strong' remap='B'>Paul Wouters</emphasis>
+    </para>
+  </refsect1>
 </refentry>
 

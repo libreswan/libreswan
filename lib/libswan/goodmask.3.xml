@@ -1,11 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.1.2//EN"
-                   "http://www.oasis-open.org/docbook/xml/4.1.2/docbookx.dtd">
+<!DOCTYPE refentry PUBLIC "-//OASIS//DTD DocBook XML V4.5//EN"
+                   "http://www.oasis-open.org/docbook/xml/4.5/docbookx.dtd">
 <!-- lifted from troff+man by doclifter -->
 <refentry id='goodmask3'>
-<refentryinfo>
-  <author><firstname>Paul</firstname><surname>Wouters</surname><authorblurb><para>placeholder to suppress warning</para> </authorblurb></author>
-</refentryinfo>
 <refmeta>
 <refentrytitle>IPSEC_GOODMASK</refentrytitle>
 <manvolnum>3</manvolnum>
@@ -94,5 +91,11 @@ returns an all-zeros mask for a negative or out-of-range
 is less than ideal;
 zero is sometimes a legitimate mask.</para>
 </refsect1>
+  <refsect1 id='author'>
+    <title>AUTHOR</title>
+    <para>
+      <emphasis role='strong' remap='B'>Paul Wouters</emphasis>
+    </para>
+  </refsect1>
 </refentry>
 
