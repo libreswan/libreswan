@@ -442,24 +442,15 @@ struct kernel_acquire {
 
 void jam_kernel_acquire(struct jambuf *buf, const struct kernel_acquire *b);
 
-struct spd_owner {
-	const struct spd_route *policy;
-	const struct spd_route *route;
-	/*
-	 * If it isn't SPD, who will rule the spd range?
-	 */
-	const struct spd_route *head;
-};
-
-struct spd_owner spd_owner(const struct spd_route *spd,
-			   enum routing new_routing,
-			   unsigned indent);
-
 const struct spd_route *bare_spd_owner(const struct spd_route *spd,
 				       struct logger *logger, where_t where);
 
 const struct spd_route *bare_cat_owner(const ip_selector *local, const struct spd_route *spd,
 				       struct logger *logger, where_t where);
+
+const struct spd_route *spd_owner(const struct spd_route *spd,
+				  enum routing new_routing,
+				  struct logger *logger, where_t where, unsigned indent);
 
 const struct spd_route *route_owner(struct spd_route *spd);
 

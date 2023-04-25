@@ -547,12 +547,14 @@ static void ldbg_spd(struct logger *logger, unsigned indent,
 
 static const struct spd_route *raw_spd_owner(const ip_selector *local,
 					     const struct spd_route *c_spd,
-					     struct logger *logger, where_t where, const char *func)
+					     enum routing min_routing,
+					     struct logger *logger,
+					     where_t where,
+					     const char *func,
+					     unsigned indent)
 {
-	const enum routing min_routing = RT_UNROUTED + 1;
 	const ip_selector *remote = &c_spd->remote->client;
 
-	unsigned indent = 0;
 	selector_pair_buf spb;
 	ldbg(logger, "%*s%s() looking for SPD owner of %s with routing >= %s",
 	     indent, "", func,
@@ -643,26 +645,39 @@ const struct spd_route *bare_cat_owner(const ip_selector *local,
 				       const struct spd_route *spd,
 				       struct logger *logger, where_t where)
 {
-	return raw_spd_owner(local, spd, logger, where, __func__);
+	return raw_spd_owner(local, spd, RT_UNROUTED + 1,
+			     logger, where, __func__, 0);
 }
 
 const struct spd_route *bare_spd_owner(const struct spd_route *spd,
 				       struct logger *logger, where_t where)
 {
-	return raw_spd_owner(&spd->local->client, spd, logger, where, __func__);
+	return raw_spd_owner(&spd->local->client, spd, RT_UNROUTED + 1,
+			     logger, where, __func__, 0);
 }
 
+const struct spd_route *spd_owner(const struct spd_route *spd,
+				  enum routing new_routing,
+				  struct logger *logger, where_t where, unsigned indent)
+{
+	return raw_spd_owner(&spd->local->client, spd, new_routing,
+			     logger, where, __func__, indent);
+}
 
 /*
  * Find who currently owns the route and kernel policy matching the
  * SPD.
  */
 
+struct spd_owner {
+	const struct spd_route *policy;
+	const struct spd_route *route;
+};
+
 static const struct spd_owner null_spd_owner;
 
-struct spd_owner spd_owner(const struct spd_route *c_spd,
-			   enum routing new_routing,
-			   unsigned indent)
+static struct spd_owner spd_conflict(const struct spd_route *c_spd,
+				     unsigned indent)
 {
 	struct connection *c = c_spd->connection;
 
@@ -672,8 +687,6 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 		     "connection no longer oriented - system interface change?");
 		return null_spd_owner;
 	}
-
-	enum routing routing_max = PMAX(c->child.routing, new_routing);
 
 	selector_pair_buf spb;
 	ldbg(logger, "%*slooking for SPD owners of %s",
@@ -752,15 +765,6 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 		}
 
 		/*
-		 * Update head if it bests SPD
-		 */
-		if (d->child.routing > routing_max) {
-			ldbg(logger, "%*s%s saved SPD head; better match",
-			     indent, "", d->name);
-			owner.head = d_spd;
-		}
-
-		/*
 		 * XXX: why?
 		 *
 		 * XXX: isn't host address comparison a routing and
@@ -816,7 +820,7 @@ struct spd_owner spd_owner(const struct spd_route *c_spd,
 
 const struct spd_route *route_owner(struct spd_route *spd)
 {
-	return spd_owner(spd, spd->connection->child.routing, 0).route;
+	return spd_conflict(spd, 0).route;
 }
 
 /*
@@ -911,7 +915,7 @@ static bool get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 	 * Find how owns the installed SPD (kernel policy).
 	 */
 
-	struct spd_owner owner = spd_owner(spd, spd->connection->child.routing, indent);
+	struct spd_owner owner = spd_conflict(spd, indent);
 	spd->wip.conflicting.policy = owner.policy;
 	spd->wip.conflicting.route = owner.route;
 	pexpect(spd->wip.conflicting.policy == NULL ||

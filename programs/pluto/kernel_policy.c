@@ -384,11 +384,12 @@ bool replace_spd_kernel_policy(const struct spd_route *spd,
 	selector_pair_buf spb;
 	ldbg(logger, " replacing %s",
 	     str_selector_pair(&spd->local->client, &spd->remote->client, &spb));
-	struct spd_owner owner = spd_owner(spd, new_routing, 2);
-	if (owner.head != NULL) {
+	const struct spd_route *head = spd_owner(spd, new_routing,
+						 logger, HERE, 2);
+	if (head != NULL) {
 		connection_buf cb;
 		ldbg(logger, "  no! owner is "PRI_CONNECTION,
-		     pri_connection(owner.head->connection, &cb));
+		     pri_connection(head->connection, &cb));
 		return true;
 	}
 
