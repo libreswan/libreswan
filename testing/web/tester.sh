@@ -206,7 +206,7 @@ while true ; do
     # - the "~" prefix to OS names means ignore failure; and "+ means
     #   it must pass
 
-    targets=""
+    targets="distclean html" # NATIVE!
     finished=""
     oss="+fedora ~freebsd ~netbsd ~openbsd"
 
@@ -229,7 +229,6 @@ while true ; do
     	targets="${targets} kvm-install-all${os}"
     done
 
-    targets="${targets} html" # NATIVE!
     targets="${targets} kvm-check"
 
     build_kvms=false # for next time round

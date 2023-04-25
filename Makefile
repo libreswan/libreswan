@@ -104,6 +104,7 @@ OBJDIRTOP=${ABSOBJDIR}
 local-clean-base:
 	$(foreach file,$(RPMTMPDIR) $(RPMDEST) out.*build out.*install, \
 		rm -rf $(file) ; )
+	rm -rf $(OBJDIR)/html
 
 # Delete absolutely everything.
 #
