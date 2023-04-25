@@ -933,10 +933,7 @@ static bool get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 	 */
 
 	struct spd_owner owner = spd_conflict(spd, indent);
-	spd->wip.conflicting.policy = owner.policy;
-	spd->wip.conflicting.route = owner.route;
-	pexpect(spd->wip.conflicting.policy == NULL ||
-		kernel_policy_installed(spd->wip.conflicting.policy->connection));
+	pexpect(owner.policy == NULL || kernel_policy_installed(owner.policy->connection));
 
 	/*
 	 * If there's no SPD with a conflicting policy, perhaps
@@ -945,8 +942,7 @@ static bool get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 	 * XXX: why not add this to the above hash table?
 	 */
 
-	spd->wip.conflicting.shunt =
-		bare_shunt_ptr(&spd->local->client, &spd->remote->client, __func__);
+	struct bare_shunt **shunt = bare_shunt_ptr(&spd->local->client, &spd->remote->client, __func__);
 
 	/*
 	 * Report what was found.
@@ -957,9 +953,17 @@ static bool get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 	     "%*s kernel: %s() %s; conflicting: policy=%s route=%s shunt=%s",
 	     indent, "",
 	     __func__, str_selector_pair(&spd->local->client, &spd->remote->client, &sb),
-	     (spd->wip.conflicting.policy == NULL ? "<none>" : spd->wip.conflicting.policy->connection->name),
-	     (spd->wip.conflicting.route == NULL ? "<none>" : spd->wip.conflicting.route->connection->name),
-	     (spd->wip.conflicting.shunt == NULL ? "<none>" : (*spd->wip.conflicting.shunt)->why));
+	     (owner.policy == NULL ? "<none>" : owner.policy->connection->name),
+	     (owner.route == NULL ? "<none>" : owner.route->connection->name),
+	     (shunt == NULL ? "<none>" : (*shunt)->why));
+
+	if (owner.policy != NULL) {
+		connection_buf cb;
+		llog(RC_LOG_SERIOUS, logger,
+		     "cannot install kernel policy -- it is in use for "PRI_CONNECTION,
+		     pri_connection(owner.policy->connection, &cb));
+		return false;
+	}
 
 	/*
 	 * If there is already a ROUTE for peer's client subnet and it
@@ -995,6 +999,8 @@ static bool get_connection_spd_conflict(struct spd_route *spd, struct logger *lo
 		     pri_connection(ro, &cib));
 	}
 
+	spd->wip.conflicting.shunt = shunt;
+	spd->wip.conflicting.route = owner.route;
 	return true;
 }
 
