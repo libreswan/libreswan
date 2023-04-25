@@ -764,6 +764,12 @@ static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 			continue;
 		}
 
+		if (c->clonedfrom == d) {
+			ldbg_spd(logger, indent, d_spd,
+				 "skipped; is connection parent");
+			continue;
+		}
+
 		/*
 		 * Finally selector/route specific checks.
 		 */
