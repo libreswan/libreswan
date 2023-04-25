@@ -765,18 +765,8 @@ static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 		}
 
 		/*
-		 * XXX: why?
-		 *
-		 * XXX: isn't host address comparison a routing and
-		 * not SPD thing?  Ignoring a conflicting SPD because
-		 * of the routing table seems wrong - the SPD still
-		 * conflicts so only one is allowed.
+		 * Finally selector/route specific checks.
 		 */
-		if (!address_eq_address(c->local->host.addr,
-					d->local->host.addr)) {
-			ldbg_spd(logger, indent, d_spd, "skipped; different local address?!?");
-			continue;
-		}
 
 		if (!selector_eq_selector(c_spd->local->client, d_spd->local->client)) {
 			ldbg_spd(logger, indent, d_spd, "policy skipped;  different local selectors");
@@ -796,10 +786,17 @@ static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 		}
 
 		/*
-		 * Save either.
+		 * XXX: why?
+		 *
+		 * XXX: isn't host address comparison a routing and
+		 * not SPD thing?  Ignoring a conflicting SPD because
+		 * of the routing table seems wrong - the SPD still
+		 * conflicts so only one is allowed.
 		 */
-
-		if (!routed(d->child.routing)) {
+		if (!address_eq_address(c->local->host.addr,
+					d->local->host.addr)) {
+			ldbg_spd(logger, indent, d_spd, "route skipped; different local address?!?");
+		} else if (!routed(d->child.routing)) {
 			ldbg_spd(logger, indent, d_spd, "route skipped; not routed");
 		} else {
 			/* winner? */
