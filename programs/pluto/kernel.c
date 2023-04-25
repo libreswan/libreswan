@@ -573,19 +573,30 @@ static const struct spd_route *raw_spd_owner(const ip_selector *local,
 		struct spd_route *d_spd = srf.spd;
 		struct connection *d = d_spd->connection;
 
+		/*
+		 * Pprune out anything that isn't conflicting
+		 * according to selectors.
+		 *
+		 * Yes, conflicting is vague.  A good starting point
+		 * is to look at what the kernel needs when it is
+		 * deleting a policy.  For instance, the selectors
+		 * matter, the rules (templ) do not,
+		 */
+
+		if (!oriented(d)) {
+			/* can happen during shutdown */
+			ldbg_spd(logger, indent, d_spd, "skipped; not oriented");
+			continue;
+		}
+
 		if (c_spd == d_spd) {
 			ldbg_spd(logger, indent, d_spd, "skipped; ignoring self");
 			continue;
 		}
 
 		if (d->child.routing < min_routing) {
-			ldbg_spd(logger, indent, d_spd, "skipped; insufficient routing");
-			continue;
-		}
-
-		if (!oriented(d)) {
-			/* can happen during shutdown */
-			ldbg_spd(logger, indent, d_spd, "skipped; not oriented");
+			ldbg_spd(logger, indent, d_spd, "skipped; %s is insufficient routing",
+				 enum_name_short(&routing_names, min_routing));
 			continue;
 		}
 
@@ -700,13 +711,15 @@ static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 		.where = HERE,
 	};
 
+	enum routing min_routing = RT_UNROUTED + 1;
+
 	indent += 2;
 	while (next_spd_route(NEW2OLD, &srf)) {
 		struct spd_route *d_spd = srf.spd;
 		struct connection *d = d_spd->connection;
 
 		/*
-		 * Part 1: prune out anything that isn't conflicting
+		 * Pprune out anything that isn't conflicting
 		 * according to selectors.
 		 *
 		 * Yes, conflicting is vague.  A good starting point
@@ -715,20 +728,21 @@ static struct spd_owner spd_conflict(const struct spd_route *c_spd,
 		 * matter, the rules (templ) do not,
 		 */
 
+		if (!oriented(d)) {
+			/* can happen during shutdown */
+			ldbg_spd(logger, indent, d_spd, "skipped; not oriented");
+			continue;
+		}
+
 		if (c_spd == d_spd) {
 			/* can only be owner; handled above */
 			ldbg_spd(logger, indent, d_spd, "skipped; ignoring self");
 			continue;
 		}
 
-		if (d->child.routing == RT_UNROUTED) {
-			ldbg_spd(logger, indent, d_spd, "skipped; unrouted");
-			continue;
-		}
-
-		if (!oriented(d)) {
-			/* can happen during shutdown */
-			ldbg_spd(logger, indent, d_spd, "skipped; not oriented");
+		if (d->child.routing < min_routing) {
+			ldbg_spd(logger, indent, d_spd, "skipped; %s is insufficient routing",
+				 enum_name_short(&routing_names, min_routing));
 			continue;
 		}
 
