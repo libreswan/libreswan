@@ -340,18 +340,26 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 				   str_sparse(xfrm_type_names, hdr->nlmsg_type, &sb),
 				   description, story);
 			return false;
-		} else if ((size_t) r < sizeof(rsp.n)) {
+		}
+
+		size_t l = (size_t) r; /* must be non -ve */
+		if (l < sizeof(rsp.n)) {
 			llog(RC_LOG, logger,
-				    "netlink read truncated message: %zd bytes; ignore message", r);
+			     "netlink read truncated message: %zu bytes; ignore message", l);
+			ldbg_dump(logger, &rsp, l);
 			continue;
-		} else if (addr.nl_pid != 0) {
+		}
+
+		if (addr.nl_pid != 0) {
 			/* not for us: ignore */
 			sparse_buf sb;
 			dbg("xfrm: ignoring %s message from process %u",
 			    str_sparse(xfrm_type_names, rsp.n.nlmsg_type, &sb),
 			    addr.nl_pid);
 			continue;
-		} else if (rsp.n.nlmsg_seq != seq) {
+		}
+
+		if (rsp.n.nlmsg_seq != seq) {
 			sparse_buf sb;
 			dbg("xfrm: ignoring out of sequence (%u/%u) message %s",
 			    rsp.n.nlmsg_seq, seq,
@@ -1731,6 +1739,7 @@ static const void *nlmsg_data(struct nlmsghdr *n, size_t size, struct logger *lo
 		     where->func,
 		     str_sparse(xfrm_type_names, n->nlmsg_type, &sb),
 		     n->nlmsg_len, size);
+		ldbg_dump(logger, n, n->nlmsg_len);
 		return NULL;
 	}
 	dbg("xfrm netlink msg len %zu", (size_t) n->nlmsg_len);
@@ -2028,6 +2037,7 @@ static void netlink_kernel_sa_expire(struct nlmsghdr *n, struct logger *logger)
 		llog(RC_LOG_SERIOUS, logger,
 			"netlink_expire got message with length %zu < %zu bytes; ignore message",
 			(size_t) n->nlmsg_len, sizeof(*ue));
+		ldbg_dump(logger, n, n->nlmsg_len);
 		return;
 	}
 
@@ -2159,6 +2169,7 @@ static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
 			    "netlink_policy_expire: XFRM_MSG_GETPOLICY returned message with length %zu < %zu bytes; ignore message",
 			    (size_t) rsp.n.nlmsg_len,
 			    sizeof(rsp.u.pol));
+		ldbg_dump(logger, &rsp, rsp.n.nlmsg_len);
 	} else if (req.id.index != rsp.u.pol.index) {
 		dbg("netlink_policy_expire: policy was replaced: dir=%d, oldindex=%d, newindex=%d",
 		    req.id.dir, req.id.index, rsp.u.pol.index);
@@ -2181,32 +2192,40 @@ static bool netlink_get(int fd, struct logger *logger)
 	struct sockaddr_nl addr;
 	socklen_t alen = sizeof(addr);
 	ssize_t r = recvfrom(fd, &rsp, sizeof(rsp), 0,
-		(struct sockaddr *)&addr, &alen);
+			     (struct sockaddr *)&addr, &alen);
 
 	if (r < 0) {
 		if (errno == EAGAIN)
 			return false;
-
 		if (errno != EINTR) {
 			llog_error(logger, errno, "kernel: recvfrom() failed in netlink_get");
 		}
 		return true;
-	} else if ((size_t)r < sizeof(rsp.n)) {
+	}
+
+	size_t l = (size_t)r; /* must be non -ve */
+	if (l < sizeof(rsp.n)) {
 		llog(RC_LOG, logger,
-			    "kernel: netlink_get read truncated message: %zd bytes; ignore message",
-			    r);
+		     "kernel: netlink_get read truncated message: %zu bytes; ignore message",
+		     l);
+		ldbg_dump(logger, &rsp, l);
 		return true;
-	} else if (addr.nl_pid != 0) {
+	}
+
+	if (addr.nl_pid != 0) {
 		/* not for us: ignore */
 		sparse_buf sb;
 		dbg("kernel: netlink_get: ignoring %s message from process %u",
 		    str_sparse(xfrm_type_names, rsp.n.nlmsg_type, &sb),
 		    addr.nl_pid);
 		return true;
-	} else if ((size_t)r != rsp.n.nlmsg_len) {
+	}
+
+	if (l != rsp.n.nlmsg_len) {
 		llog(RC_LOG, logger,
-		     "kernel: netlink_get: read message with length %zd that doesn't equal nlmsg_len %zu bytes; ignore message",
-		     r, (size_t) rsp.n.nlmsg_len);
+		     "kernel: netlink_get: read message with length %zu that doesn't equal nlmsg_len %zu bytes; ignore message",
+		     l, (size_t) rsp.n.nlmsg_len);
+		ldbg_dump(logger, &rsp, l);
 		return true;
 	}
 
@@ -2292,6 +2311,7 @@ static ipsec_spi_t xfrm_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 		     "xfrm: netlink_get_spi: XFRM_MSG_ALLOCSPI returned message with length %zu < %zu bytes; ignore message",
 		     (size_t) rsp.n.nlmsg_len,
 		     sizeof(rsp.u.sa));
+		ldbg_dump(logger, &rsp, rsp.n.nlmsg_len);
 		return 0;
 	}
 
