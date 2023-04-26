@@ -104,12 +104,11 @@ static int starter_whack_read_reply(int sock,
 			}
 
 			le++;	/* include NL in line */
-			if (isatty(STDOUT_FILENO) &&
-				write(STDOUT_FILENO, ls, le - ls) == -1) {
+			if (write(STDOUT_FILENO, ls, le - ls) == -1) {
 				int e = errno;
 				starter_log(LOG_LEVEL_ERR,
-					"whack: write() starterwhack.c:124 failed (%d %s), and ignored.",
-					e, strerror(e));
+					    "whack: write() starterwhack.c:124 failed (%d %s), and ignored.",
+					    e, strerror(e));
 			}
 			/*
 			 * figure out prefix number and how it should affect
