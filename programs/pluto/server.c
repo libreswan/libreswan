@@ -1055,7 +1055,7 @@ void run_server(char *conffile, struct logger *logger)
 		DISCARD_CONST(char *, conffile),
 		DISCARD_CONST(char *, "--autoall"), NULL };
 	char *newenv[] = { NULL };
-	server_fork_exec("addconn", addconn_path, newargv, newenv,
+	server_fork_exec(addconn_path, newargv, newenv,
 			 addconn_exited, NULL, logger);
 
 	/* parent continues */

@@ -272,11 +272,12 @@ void server_fork_sigchld_handler(struct logger *logger)
  * fork()+exec().
  */
 
-void server_fork_exec(const char *what, const char *path,
+void server_fork_exec(const char *path,
 		      char *argv[], char *envp[],
 		      server_fork_cb *callback, void *callback_context,
 		      struct logger *logger)
 {
+	const char *what = argv[0];
 #if USE_VFORK
 	int pid = vfork(); /* for better, for worse, in sickness and health..... */
 #elif USE_FORK
