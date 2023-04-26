@@ -1,3 +1,0 @@
-basic test, using a %trap and confirming the trap policy vanishes on --down
-
-
