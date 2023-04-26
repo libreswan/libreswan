@@ -407,10 +407,45 @@ void DBG_dump(const char *label, const void *p, size_t len);
 	}
 #define DBG_dump_thing(LABEL, THING) DBG_dump(LABEL, &(THING), sizeof(THING))
 
+/*
+ * XXX: unlike dbg_dump() et.al., these don't take a label; instead
+ * caller should log that separately.
+ */
+#define LDBG_dump(LOGGER, DATA, LEN)				\
+	{							\
+		llog_dump(DEBUG_STREAM, LOGGER, DATA, LEN);	\
+	}
+#define LDBG_hunk(LOGGER, HUNK)						\
+	{								\
+		const typeof(HUNK) *hunk_ = &(HUNK); /* evaluate once */ \
+		llog_dump(DEBUG_STREAM, LOGGER, hunk_->.ptr, hunk_->len); \
+	}
+#define LDBG_thing(LOGGER, THING)					\
+	{								\
+		llog_dump(DEBUG_STREAM, LOGGER, &(THING), sizeof(THING)); \
+	}
+#define ldbg_dump(LOGGER, DATA, LEN)			\
+	{						\
+		if (DBGP(DBG_BASE)) {			\
+			LDBG_dump(LOGGER, DATA, LEN);	\
+		}					\
+	}
+#define ldbg_hunk(LOGGER, HUNK)					\
+	{							\
+		if (DBGP(DBG_BASE)) {				\
+			LDBG_hunk(DEBUG_STREAM, LOGGER, HUNK);	\
+		}						\
+	}
+#define ldbg_thing(LOGGER, THING)			\
+	{						\
+		if (DBGP(DBG_BASE)) {			\
+			LDBG_thing(LOGGER, THING);	\
+		}					\
+	}
+
 /* LDBG_*(logger, ...) are unconditional wrappers */
-#define LDBG_log(LOGGER, ...) llog(DEBUG_STREAM, LOGGER, __VA_ARGS__)
-#define LDBG_va_list(LOGGER, ...) llog_va_list(DEBUG_STREAM, LOGGER, __VA_ARGS__)
-#define LLOG_dump(LOGGER, ...) llog_dump(DEBUG_STREAM, LOGGER, __VA_ARGS__)
+#define LDBG_log(LOGGER, FMT, ...) llog(DEBUG_STREAM, LOGGER, FMT, ##__VA_ARGS__)
+#define LDBG_va_list(LOGGER, FMT, AP) llog_va_list(DEBUG_STREAM, LOGGER, FMT, AP)
 
 /*
  * Code wrappers that cover up the details of allocating,
