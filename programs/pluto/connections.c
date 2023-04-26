@@ -2236,8 +2236,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	} else if (wm->esp != NULL ||
 		   (c->config->ike_version == IKEv2 &&
 		    (c->policy & (POLICY_ENCRYPT|POLICY_AUTHENTICATE)))) {
-		const char *esp = wm->esp != NULL ? wm->esp : "";
-		dbg("from whack: got --esp=%s", esp);
 
 		const struct proposal_policy proposal_policy = {
 			/*

@@ -972,10 +972,10 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	}
 
 	if (m->whack_terminate) {
-		dbg_whack(s, "start: terminate");
 		passert(m->name != NULL);
+		dbg_whack(s, "start: terminate %s", m->name);
 		terminate_connections_by_name(m->name, /*quiet?*/true, logger);
-		dbg_whack(s, "stop: terminate");
+		dbg_whack(s, "stop: terminate %s", m->name);
 	}
 
 	if (m->whack_status) {
@@ -1021,9 +1021,9 @@ static void whack_process(const struct whack_message *const m, struct show *s)
 	}
 
 	if (m->whack_process_status) {
-		dbg_whack(s, "processstatus...");
+		dbg_whack(s, "start: processstatus");
 		show_process_status(s);
-		dbg_whack(s, "...processstatus");
+		dbg_whack(s, "stop: processstatus");
 	}
 
 	if (m->whack_addresspool_status) {
