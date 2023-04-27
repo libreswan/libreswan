@@ -774,20 +774,15 @@ enum ynf_options {
 };
 
 enum yn_options {
-	yn_no = 0,
-	yn_yes = 1,
+	YN_UNSET = 0,
+	YN_NO = 1,
+	YN_YES = 2,
 };
 
 enum yna_options {
 	yna_auto = 1, /* default */
 	yna_no = 2,
 	yna_yes = 3,
-};
-
-enum ynu_options {
-	YNU_UNSET = 0, /* default */
-	YNU_NO = 1,
-	YNU_YES = 2,
 };
 
 enum esn_options {

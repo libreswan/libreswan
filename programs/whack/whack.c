@@ -1811,7 +1811,7 @@ int main(int argc, char **argv)
 
 		/* --allow-narrowing */
 		case CD_IKEV2_ALLOW_NARROWING:
-			msg.ikev2_allow_narrowing = YNU_YES;
+			msg.ikev2_allow_narrowing = YN_YES;
 			continue;
 
 		case CDP_SINGLETON + POLICY_ENCRYPT_IX:	/* --encrypt */

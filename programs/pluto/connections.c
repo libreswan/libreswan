@@ -1668,7 +1668,7 @@ static enum connection_kind extract_connection_kind(const struct whack_message *
 		ldbg(logger, "connection is template: has security label: %s", wm->sec_label);
 		return CK_TEMPLATE;
 	}
-	if(wm->ikev2_allow_narrowing == YNU_YES) {
+	if(wm->ikev2_allow_narrowing == YN_YES) {
 		ldbg(logger, "connection is template: POLICY_IKEV2_ALLOW_NARROWING");
 		return CK_TEMPLATE;
 	}
@@ -1833,6 +1833,16 @@ static struct connection *alloc_connection(const char *name,
 	return c;
 }
 
+static bool extract_yn(enum yn_options yn, bool unset)
+{
+	switch (yn) {
+	case YN_NO: return false;
+	case YN_YES: return true;
+	case YN_UNSET: return unset;
+	}
+	bad_case(yn);
+}
+
 static diag_t extract_connection(const struct whack_message *wm,
 				 struct connection *c)
 {
@@ -1927,11 +1937,6 @@ static diag_t extract_connection(const struct whack_message *wm,
 	if ((wm->policy & POLICY_MOBIKE) &&
 	    (wm->policy & POLICY_TUNNEL) == LEMPTY) {
 		return diag("MOBIKE requires tunnel mode");
-	}
-
-	if (wm->ikev2_allow_narrowing == YNU_YES &&
-	    c->config->ike_version < IKEv2) {
-		return diag("narrowing=yes requires IKEv2");
 	}
 
 	if (wm->policy & POLICY_MOBIKE) {
@@ -2049,18 +2054,13 @@ static diag_t extract_connection(const struct whack_message *wm,
 	config->dnshostname = clone_str(wm->dnshostname, "connection dnshostname");
 	c->policy = wm->policy;
 
-	switch (wm->ikev2_allow_narrowing) {
-	case YNU_NO: config->ikev2_allow_narrowing = false; break;
-	case YNU_YES: config->ikev2_allow_narrowing = true; break;
-	default: /*unset */
-		/*
-		 * XXX: base this on CK_TEMPLATE?
-		 */
-		config->ikev2_allow_narrowing =
-			(wm->ike_version == IKEv2 &&
-			 (wm->left.addresspool != NULL ||
-			  wm->right.addresspool != NULL));
-		break;
+	config->ikev2_allow_narrowing =
+		extract_yn(wm->ikev2_allow_narrowing,
+			   (wm->ike_version == IKEv2 && (wm->left.addresspool != NULL ||
+							 wm->right.addresspool != NULL)));
+	if (config->ikev2_allow_narrowing &&
+	    wm->ike_version < IKEv2) {
+		return diag("narrowing=yes requires IKEv2");
 	}
 
 	config->autostart = wm->autostart;

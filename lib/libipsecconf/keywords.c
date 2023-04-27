@@ -114,6 +114,21 @@ static const struct sparse_name kw_yndev_list[] = {
 };
 #endif
 
+/* match <BOOLEAN_VALUE> in parser.lex */
+static const struct sparse_name kw_yn_list[] = {
+	{ "yes",	YN_YES },
+	{ "no",		YN_NO },
+	{ "true",	YN_YES },
+	{ "false",	YN_NO },
+	{ "1",		YN_YES },
+	{ "0",		YN_NO },
+	{ "on",		YN_YES },
+	{ "off",	YN_NO },
+	{ "y",		YN_YES },
+	{ "n",		YN_NO },
+	SPARSE_NULL,
+};
+
 /* Values for yes/no/auto, used by encapsulation and nic-offload */
 static const struct sparse_name kw_yna_list[] = {
 	{ "yes",	yna_yes },
@@ -473,7 +488,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
   { "nopmtudisc",  kv_conn | kv_processed,  kt_bool,  KNCF_NOPMTUDISC,  NULL, NULL, },
   { "fragmentation",  kv_conn | kv_processed,  kt_enum,  KNCF_IKE_FRAG,  kw_ynf_list, NULL, },
   { "mobike",  kv_conn,  kt_bool,  KNCF_MOBIKE, NULL, NULL, },
-  { "narrowing",  kv_conn,  kt_bool,  KNCF_IKEv2_ALLOW_NARROWING, NULL, NULL, },
+  { "narrowing",  kv_conn,  kt_enum,  KNCF_IKEv2_ALLOW_NARROWING, kw_yn_list, NULL, },
   { "pam-authorize",  kv_conn,  kt_bool,  KNCF_IKEv2_PAM_AUTHORIZE, NULL, NULL, },
   { "send-redirect",  kv_conn,  kt_enum,  KNCF_SEND_REDIRECT, kw_yna_list, NULL, },
   { "redirect-to",  kv_conn,  kt_string,  KSCF_REDIRECT_TO, NULL, NULL, },
