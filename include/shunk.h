@@ -77,10 +77,12 @@ shunk_t shunk2(const void *ptr, int len);
  * an end-of-input indicator:
  *
  *     char sep;
- *     shunk_t token = shunk_token(&input, &sep, ",");
- *     while (token.ptr != NULL) {
- *       ... process token ...
- *       token = shunk_token(&input, &sep, ",");
+ *     while (true) {
+ *         shunk_t token = shunk_token(&input, &sep, ",");
+ *         if (token.ptr == NULL) {
+ *             break;
+ *         }
+ *         ... process token ...
  *     }
  *
  */
