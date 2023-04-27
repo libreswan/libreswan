@@ -556,7 +556,7 @@ const struct keyword_def ipsec_conf_keywords[] = {
 
   { "overlapip",  kv_conn,  kt_bool,  KNCF_OVERLAPIP, NULL, NULL, },
   { "reauth",  kv_conn,  kt_bool,  KNCF_REAUTH, NULL, NULL, },
-  { "rekey",  kv_conn,  kt_bool,  KNCF_REKEY, NULL, NULL, },
+  { "rekey",  kv_conn,  kt_enum,  KNCF_REKEY, kw_yn_list, NULL, },
   { "rekeymargin",  kv_conn,  kt_time,  KNCF_REKEYMARGIN_MS, NULL, NULL, },
   { "rekeyfuzz",  kv_conn,  kt_percent,  KNCF_REKEYFUZZ, NULL, NULL, },
   { "keyingtries",  kv_conn,  kt_number,  KNCF_KEYINGTRIES, NULL, NULL, },

@@ -536,6 +536,7 @@ static int starter_whack_basic_add_conn(struct starter_config *cfg,
 	msg.metric = conn->options[KNCF_METRIC];
 
 	msg.ikev2_allow_narrowing = conn->options[KNCF_IKEv2_ALLOW_NARROWING];
+	msg.rekey = conn->options[KNCF_REKEY];
 
 	if (conn->options_set[KNCF_CONNMTU])
 		msg.connmtu = conn->options[KNCF_CONNMTU];

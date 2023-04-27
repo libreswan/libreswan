@@ -883,7 +883,6 @@ enum sa_policy_bits {
 	/* connection policy
 	 * Other policies could vary per state object.  These live in connection.
 	 */
-	POLICY_DONT_REKEY_IX,	/* don't rekey state either Phase */
 	POLICY_REAUTH_IX,	/* IKEv2 only initiate re-authentication */
 	POLICY_OPPORTUNISTIC_IX,	/* is this opportunistic? */
 	POLICY_GROUPINSTANCE_IX,	/* is this a group template instance? */
@@ -926,7 +925,6 @@ enum sa_policy_bits {
 #define POLICY_ALLOW_NO_SAN	LELEM(POLICY_ALLOW_NO_SAN_IX)
 #define POLICY_DNS_MATCH_ID	LELEM(POLICY_DNS_MATCH_ID_IX)
 #define POLICY_SHA2_TRUNCBUG	LELEM(POLICY_SHA2_TRUNCBUG_IX)
-#define POLICY_DONT_REKEY	LELEM(POLICY_DONT_REKEY_IX)	/* don't rekey state either Phase */
 #define POLICY_REAUTH	LELEM(POLICY_REAUTH_IX)	/* IKEv2 initiate reauthentication instead of rekey */
 #define POLICY_OPPORTUNISTIC	LELEM(POLICY_OPPORTUNISTIC_IX)	/* is this opportunistic? */
 #define POLICY_GROUPINSTANCE	LELEM(POLICY_GROUPINSTANCE_IX)	/* is this a group template instance? */

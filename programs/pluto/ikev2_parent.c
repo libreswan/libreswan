@@ -496,7 +496,7 @@ void schedule_v2_replace_event(struct state *st)
 	    nr_child_leases(st->st_connection->remote) > 0) {
 		kind = EVENT_SA_EXPIRE;
 		story = "always expire opportunistic SA with lease";
-	} else if (c->policy & POLICY_DONT_REKEY) {
+	} else if (!c->config->rekey) {
 		kind = EVENT_SA_EXPIRE;
 		story = "policy doesn't allow re-key";
 	} else if (IS_IKE_SA(st) && LIN(POLICY_REAUTH, st->st_connection->policy)) {

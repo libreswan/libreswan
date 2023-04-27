@@ -676,7 +676,7 @@ static bool flush_incomplete_child(struct state *cst, void *pst)
 
 		if (child->sa.st_serialno > replacing_sa &&
 		    (c->policy & POLICY_UP) &&
-		    (c->policy & POLICY_DONT_REKEY) == LEMPTY) {
+		    c->config->rekey) {
 
 			/*
 			 * Nothing else has managed to replace

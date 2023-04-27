@@ -201,6 +201,7 @@ struct whack_message {
 	enum yna_options encaps;
 
 	enum yn_options ikev2_allow_narrowing;
+	enum yn_options rekey;
 
 	/*
 	 * TCP: Allow TCP as fallback, only do TCP or only do UDP; and

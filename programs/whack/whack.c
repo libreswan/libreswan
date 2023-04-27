@@ -461,6 +461,7 @@ enum option_enums {
 	CD_CONNIPV4,
 	CD_CONNIPV6,
 
+	CD_DONT_REKEY,
 	CD_RETRANSMIT_TIMEOUT,
 	CD_RETRANSMIT_INTERVAL,
 	CD_IKE_LIFETIME,
@@ -748,7 +749,7 @@ static const struct option long_opts[] = {
 	{ "faildrop", no_argument, NULL, CDS_FAILURE + SHUNT_DROP + OO },
 	{ "failreject", no_argument, NULL, CDS_FAILURE + SHUNT_REJECT + OO },
 
-	PS("dontrekey", DONT_REKEY),
+	{ "dontrekey", no_argument, NULL, CD_DONT_REKEY, },
 	PS("reauth", REAUTH),
 	{ "encaps", required_argument, NULL, CD_ENCAPS + OO },
 	{ "no-nat_keepalive", no_argument, NULL,  CD_NO_NAT_KEEPALIVE + OO },
@@ -980,7 +981,7 @@ static void check_max_lifetime(deltatime_t life, time_t raw_limit,
 			 (long)deltasecs(limit));
 		diagw(buf);
 	}
-	if ((msg->policy & POLICY_DONT_REKEY) == LEMPTY && !deltatime_cmp(mint, <, life)) {
+	if (msg->rekey && !deltatime_cmp(mint, <, life)) {
 		char buf[200];	/* arbitrary limit */
 
 		snprintf(buf, sizeof(buf),
@@ -1814,6 +1815,11 @@ int main(int argc, char **argv)
 			msg.ikev2_allow_narrowing = YN_YES;
 			continue;
 
+		/* --donotrekey */
+		case CD_DONT_REKEY:
+			msg.rekey = YN_NO;
+			continue;
+
 		case CDP_SINGLETON + POLICY_ENCRYPT_IX:	/* --encrypt */
 		/* --authenticate */
 		case CDP_SINGLETON + POLICY_AUTHENTICATE_IX:
@@ -1821,9 +1827,6 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_COMPRESS_IX:
 		case CDP_SINGLETON + POLICY_TUNNEL_IX:	/* --tunnel */
 		case CDP_SINGLETON + POLICY_PFS_IX:	/* --pfs */
-
-		/* --donotrekey */
-		case CDP_SINGLETON + POLICY_DONT_REKEY_IX:
 
 		/* --reauth */
 		case CDP_SINGLETON + POLICY_REAUTH_IX:

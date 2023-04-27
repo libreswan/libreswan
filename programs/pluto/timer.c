@@ -322,7 +322,7 @@ static void dispatch_event(struct state *st, enum event_type event_type,
 			pstat_sa_failed(st, REASON_EXCHANGE_TIMEOUT);
 		} else {
 			log_state(RC_LOG, st, "%s SA expired (%s)", satype,
-				  (c->policy & POLICY_DONT_REKEY) ? "--dontrekey" : "LATEST!");
+				  (c->config->rekey ? "LATEST!" : "--dontrekey"));
 		}
 
 		/* Delete this state object.  It must be in the hash table. */

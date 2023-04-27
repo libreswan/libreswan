@@ -179,6 +179,7 @@ struct config {
 	uintmax_t sa_ipsec_max_bytes;
 	uintmax_t sa_ipsec_max_packets;
 
+	bool rekey;
 	deltatime_t sa_ike_max_lifetime;
 	deltatime_t sa_ipsec_max_lifetime;
 	deltatime_t sa_rekey_margin;

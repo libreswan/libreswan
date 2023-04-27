@@ -99,7 +99,7 @@ void event_v1_replace(struct state *st, monotime_t now)
 		ldbg(st->st_logger,
 		     "not replacing stale %s SA %lu; #%lu will do",
 		     satype, st->st_serialno, newer_sa);
-	} else if ((c->policy & POLICY_DONT_REKEY) &&
+	} else if (!c->config->rekey &&
 		   monotime_cmp(now, >=, monotime_add(st->st_outbound_time,
 						      c->config->sa_rekey_margin))) {
 		/*

@@ -2063,6 +2063,8 @@ static diag_t extract_connection(const struct whack_message *wm,
 		return diag("narrowing=yes requires IKEv2");
 	}
 
+	config->rekey = extract_yn(wm->rekey, true);
+
 	config->autostart = wm->autostart;
 	switch (wm->autostart) {
 	case AUTOSTART_KEEP:
@@ -3113,6 +3115,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	size_t s = 0;
 	enum shunt_policy shunt;
 	lset_t policy = c->policy;
+	lset_t mask, p;
 
 	if (c->config->ike_version > 0) {
 		s += jam_string(buf, c->config->ike_info->version_name);
@@ -3126,8 +3129,23 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 		sep = "+";
 	}
 
-	lset_t mask = LRANGE(POLICY_ENCRYPT_IX, POLICY_OVERLAPIP_IX);
-	lset_t p = policy & mask;
+	mask = LRANGE(0, POLICY_SHA2_TRUNCBUG_IX);
+	p = policy & mask;
+	policy &= ~mask;
+	if (p != LEMPTY) {
+		s += jam_string(buf, sep);
+		s += jam_lset_short(buf, &sa_policy_bit_names, "+", p);
+		sep = "+";
+	}
+
+	if (!c->config->rekey) {
+		s += jam_string(buf, sep);
+		s += jam_string(buf, "DONT_REKEY");
+		sep = "+";
+	}
+
+	mask = LRANGE(0, POLICY_OVERLAPIP_IX);
+	p = policy & mask;
 	policy &= ~mask;
 	if (p != LEMPTY) {
 		s += jam_string(buf, sep);

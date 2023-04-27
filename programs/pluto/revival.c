@@ -76,8 +76,8 @@ static bool revival_plausable(struct connection *c, struct logger *logger)
 		return false;
 	}
 
-	if ((c->policy & POLICY_DONT_REKEY) != LEMPTY) {
-		ldbg(logger, "skipping revival: POLICY_DONT_REKEY enabled");
+	if (!c->config->rekey) {
+		ldbg(logger, "skipping revival: REKEY disabled");
 		return false;
 	}
 

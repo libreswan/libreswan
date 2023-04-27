@@ -1496,7 +1496,7 @@ static bool setup_half_kernel_state(struct state *st, enum direction direction)
 	uint64_t sa_ipsec_soft_bytes =  c->config->sa_ipsec_max_bytes;
 	uint64_t sa_ipsec_soft_packets = c->config->sa_ipsec_max_packets;
 
-	if (!LIN(POLICY_DONT_REKEY, c->policy)) {
+	if (c->config->rekey) {
 		sa_ipsec_soft_bytes = fuzz_soft_limit("ipsec-max-bytes",st->st_sa_role,
 						      c->config->sa_ipsec_max_bytes,
 						      IPSEC_SA_MAX_SOFT_LIMIT_PERCENTAGE,
@@ -2573,11 +2573,14 @@ void teardown_ipsec_kernel_policies(struct child_sa *child)
 	}
 
 	enum routing new_routing;
-	if (c->kind == CK_INSTANCE &&
-	    ((c->policy & POLICY_OPPORTUNISTIC) ||
-	     (c->policy & POLICY_DONT_REKEY))) {
+	if (c->kind == CK_INSTANCE && (c->policy & POLICY_OPPORTUNISTIC)) {
 		ldbg(logger,
-		     "kernel: %s() instance with OPPORTUNISTIC|DONT_REKEY; transitioning to UNROUTED",
+		     "kernel: %s() instance with OPPORTUNISTIC; transitioning to UNROUTED",
+		     __func__);
+		new_routing = RT_UNROUTED;
+	} else if (c->kind == CK_INSTANCE && !c->config->rekey) {
+		ldbg(logger,
+		     "kernel: %s() instance with REKEY disabled; transitioning to UNROUTED",
 		     __func__);
 		new_routing = RT_UNROUTED;
 	} else if (c->config->failure_shunt == SHUNT_NONE) {
@@ -3054,7 +3057,7 @@ void handle_sa_expire(ipsec_spi_t spi, uint8_t protoid, ip_address *dst,
 		return;
 	}
 
-	bool rekey = !LIN(POLICY_DONT_REKEY, c->policy);
+	bool rekey = c->config->rekey;
 	bool newest = c->newest_ipsec_sa == child->sa.st_serialno;
 	struct state *st =  &child->sa;
 	struct ipsec_proto_info *pr = (st->st_esp.present ? &st->st_esp :

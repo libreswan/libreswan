@@ -2608,7 +2608,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 				 * consequences seem minor.
 				 */
 				event_delay = c->config->sa_ike_max_lifetime;
-				if ((c->policy & POLICY_DONT_REKEY) ||
+				if (!c->config->rekey ||
 				    deltatime_cmp(event_delay, >=, st->st_oakley.life_seconds)) {
 					agreed_time = true;
 					event_delay = st->st_oakley.life_seconds;
@@ -2658,8 +2658,7 @@ void complete_v1_state_transition(struct state *st, struct msg_digest *md, stf_s
 			 * Note: for ISAKMP SA, we let the negotiated
 			 * time stand (implemented by earlier logic).
 			 */
-			if (agreed_time &&
-			    (c->policy & POLICY_DONT_REKEY) != LEMPTY &&
+			if (agreed_time && !c->config->rekey &&
 			    (smc->flags & SMF_INITIATOR) == LEMPTY) {
 				/* per above, don't re-key responder */
 				event_type = EVENT_SA_EXPIRE;
