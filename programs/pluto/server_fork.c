@@ -25,8 +25,13 @@
  *
  */
 
+#ifdef __linux__
+#define _GNU_SOURCE		/* for pipe2() */
+#endif
+
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <fcntl.h>
 #include <unistd.h>
 #include <errno.h>
 
@@ -56,6 +61,8 @@ struct pid_entry {
 	so_serial_t serialno;
 	const char *name;
 	monotime_t start_time;
+	int fd; /* valid when fdl != NULL */
+	struct fd_read_listener *fdl; /* stdout+stderr; may be NULL */
 	struct logger *logger;
 };
 
@@ -117,10 +124,11 @@ void show_process_status(struct show *s)
 	}
 }
 
-static void add_pid(const char *name, so_serial_t serialno, pid_t pid,
-		    server_fork_cb *callback, void *context, struct logger *logger)
+static struct pid_entry *add_pid(const char *name, so_serial_t serialno, pid_t pid,
+				 server_fork_cb *callback, void *context,
+				 struct logger *logger)
 {
-	dbg("forked child %d", pid);
+	ldbg(logger, "forked child %s %d", name, pid);
 	struct pid_entry *new_pid = alloc_thing(struct pid_entry, "(ignore) fork pid");
 	dbg_alloc("pid", new_pid, HERE);
 	new_pid->magic = PID_MAGIC;
@@ -133,6 +141,7 @@ static void add_pid(const char *name, so_serial_t serialno, pid_t pid,
 	new_pid->logger = clone_logger(logger, HERE);
 	pid_entry_db_init_pid_entry(new_pid);
 	pid_entry_db_add(new_pid);
+	return new_pid;
 }
 
 static void free_pid_entry(struct pid_entry **p)
@@ -141,6 +150,55 @@ static void free_pid_entry(struct pid_entry **p)
 	dbg_free("pid", *p, HERE);
 	pfree(*p);
 	*p = NULL;
+}
+
+static bool dump_fd(struct pid_entry *pid_entry)
+{
+	if (pid_entry->fdl == NULL) {
+		ldbg(pid_entry->logger, "%s: fd %d is closed",
+		     pid_entry->name, pid_entry->fd);
+		return false;
+	}
+
+	char buf[LOG_WIDTH/2];
+	ssize_t len = read(pid_entry->fd, buf, sizeof(buf));
+	if (len < 0) {
+		llog_error(pid_entry->logger, errno, "%s: reading fd %d failed: ",
+			   pid_entry->name, pid_entry->fd);
+		return false;
+	}
+
+	if (len == 0) {
+		ldbg(pid_entry->logger, "%s: reading fd %d returned EOF",
+		     pid_entry->name, pid_entry->fd);
+		detach_fd_read_listener(&pid_entry->fdl);
+		close(pid_entry->fd);
+		return false;
+	}
+
+	/*
+	 * Split the output into lines and then send it to the log
+	 * file only.
+	 *
+	 * Don't write it to whack/addconn as they will copy it to
+	 * stdout causing it to end up back here!
+	 */
+
+	char sep;
+	shunk_t output = shunk2(buf, len);
+	while (true) {
+		shunk_t line = shunk_token(&output, &sep, "\n");
+		if (line.ptr == NULL) {
+			break;
+		}
+		LLOG_JAMBUF(RC_LOG|LOG_STREAM, pid_entry->logger, buf) {
+			jam_string(buf, pid_entry->name);
+			jam_string(buf, ": ");
+			jam_sanitized_hunk(buf, line);
+		}
+	}
+
+	return true; /* try again */
 }
 
 int server_fork(const char *name, so_serial_t serialno, server_fork_op *op,
@@ -260,6 +318,12 @@ void server_fork_sigchld_handler(struct logger *logger)
 				statetime_stop(&start, "callback for %s",
 					       pid_entry->name);
 			}
+			/* drain output using blocking read */
+			if (pid_entry->fdl != NULL) {
+				int flags = fcntl(pid_entry->fd, F_GETFL);
+				fcntl(pid_entry->fd, F_SETFL, flags & ~O_NONBLOCK);
+				while (dump_fd(pid_entry));
+			}
 			/* clean it up */
 			pid_entry_db_del(pid_entry);
 			free_pid_entry(&pid_entry);
@@ -272,12 +336,31 @@ void server_fork_sigchld_handler(struct logger *logger)
  * fork()+exec().
  */
 
+static void child_output_listener(int fd, void *arg, struct logger *logger)
+{
+	struct pid_entry *pid_entry = arg;
+	PASSERT(logger, pid_entry->fdl != NULL);
+	PASSERT(logger, pid_entry->fd == fd);
+	dump_fd(pid_entry);
+}
+
 void server_fork_exec(const char *path,
 		      char *argv[], char *envp[],
 		      server_fork_cb *callback, void *callback_context,
 		      struct logger *logger)
 {
 	const char *what = argv[0];
+	/*
+	 * Create a pipe so that child can feed us its output.  After
+	 * the fork O_CLOEXEC will need to be stripped (which dup2()
+	 * does automatically).
+	 */
+	int fds[2]; /*0=read,1=write*/
+	if (pipe2(fds, O_CLOEXEC) < 0) {
+		llog_error(logger, errno, "pipe2() failed");
+		return;
+	}
+
 #if USE_VFORK
 	int pid = vfork(); /* for better, for worse, in sickness and health..... */
 #elif USE_FORK
@@ -285,19 +368,46 @@ void server_fork_exec(const char *path,
 #else
 #error "server_fork_exec() requires USE_VFORK or USE_FORK"
 #endif
-	switch (pid) {
-	case -1: /* oops */
+	if (pid < 0) {
 		llog_error(logger, errno, "fork failed");
-		break;
-	case 0: /* child */
+		return;
+	}
+
+	if (pid == 0) {
+		/*
+		 * child
+		 *
+		 * close input; dup2() the write end of the pipe
+		 * stdout/stderr, the act of dup2()ing strips
+		 * O_CLOEXEC.
+		 */
+		close(fds[0/*read-fd*/]);
+		int write_fd = fds[1];
+		PASSERT(logger, write_fd != STDOUT_FILENO);
+		PASSERT(logger, write_fd != STDERR_FILENO);
+		close(STDIN_FILENO);
+		dup2(write_fd, STDOUT_FILENO);
+		dup2(write_fd, STDERR_FILENO);
+		close(write_fd);
+		/* go */
 		execve(path, argv, envp);
 		/* really can't printf() */
 		_exit(42);
-	default: /* parent */
-		dbg("created %s helper (pid:%d) using %s+execve",
-		    what, pid, USE_VFORK ? "vfork" : "fork");
-		add_pid(what, SOS_NOBODY, pid, callback, callback_context, logger);
 	}
+
+	/* parent */
+	ldbg(logger, "created %s helper (pid:%d) using %s+execve",
+	     what, pid, USE_VFORK ? "vfork" : "fork");
+	close(fds[1/*write-fd*/]);
+	struct pid_entry *entry = add_pid(what, SOS_NOBODY, pid, callback, callback_context, logger);
+	/* save the FD */
+	entry->fd = fds[0/*read-fd*/];
+	/* enable nonblock */
+	int flags = fcntl(entry->fd, F_GETFL);
+	fcntl(entry->fd, F_SETFL, flags|O_NONBLOCK);
+	/* listen */
+	attach_fd_read_listener(&entry->fdl, entry->fd, "fork-exec",
+				child_output_listener, entry);
 }
 
 void init_server_fork(struct logger *logger)
