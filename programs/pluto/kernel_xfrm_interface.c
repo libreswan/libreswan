@@ -663,16 +663,6 @@ bool setup_xfrm_interface(struct connection *c, uint32_t xfrm_if_id)
 
 	bool shared = true;
 
-	if (xfrm_if_id == yn_yes)
-		xfrm_if_id = IPSEC1_XFRM_IF_ID;
-	/*
-	} else if (shunk_strcaseeq(ifid, "unique")) {
-		// unique or <id> for each connection
-		shared = false;
-		log_state(RC_LOG, st, "iface_id = unique is not supported yet shared=%d", shared);
-		return false;
-	*/
-
 	/* always success for now */
 	return (init_pluto_xfrmi(c, xfrm_if_id, shared) == XFRMI_SUCCESS);
 }
