@@ -76,11 +76,6 @@ static bool revival_plausable(struct connection *c, struct logger *logger)
 		return false;
 	}
 
-	if (!c->config->rekey) {
-		ldbg(logger, "skipping revival: REKEY disabled");
-		return false;
-	}
-
 	if (!oriented(c)) {
 		/* e.x., interface deleted while up */
 		ldbg(logger, "skipping revival: not oriented");

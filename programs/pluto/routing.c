@@ -960,16 +960,36 @@ void dispatch(enum connection_event event, struct connection *c,
 
 		case X(REVIVE, UNROUTED, PERMANENT):
 			/* e.g., permenant initiate fails */
-#if 0
+			if (BROKEN_TRANSITION) {
+				initiate_connection(c, /*remote-host-name*/NULL,
+						    /*background*/true,
+						    /*log-failure*/true,
+						    logger);
+				return;
+			}
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 					  e->inception, e->acquire->sec_label,
 					  e->background, e->acquire->logger);
-#else
-			initiate_connection(c, /*remote-host-name*/NULL,
-					    /*background*/true,
-					    /*log-failure*/true,
-					    logger);
-#endif
+			return;
+		case X(REVIVE, UNROUTED, INSTANCE):
+			if (BROKEN_TRANSITION) {
+				/*
+				 * Ex ikev2-30-rw-no-rekey.
+				 *
+				 * ROAD in ROUTED_TUNNEL, receiving a
+				 * delete message, transitions to
+				 * UNROUTED when it should have
+				 * transitioned to ROUTED_ONDEMAND?
+				*/
+				initiate_connection(c, /*remote-host-name*/NULL,
+						    /*background*/true,
+						    /*log-failure*/true,
+						    logger);
+				return;
+			}
+			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
+					  e->inception, e->acquire->sec_label,
+					  e->background, e->acquire->logger);
 			return;
 		case X(REVIVE, ROUTED_ONDEMAND, PERMANENT):
 		case X(REVIVE, ROUTED_ONDEMAND, INSTANCE):
