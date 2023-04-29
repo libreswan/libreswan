@@ -44,24 +44,36 @@ static void zap_connection(const char *story, struct ike_sa **ike,
 static void do_updown_unroute(struct connection *c);
 
 enum connection_event {
+	/* fiddle with the ROUTE bit */
 	CONNECTION_ROUTE,
 	CONNECTION_UNROUTE,
-	CONNECTION_INITIATE, /*UP?*/
+	/* fiddle with the UP bit (speculative) */
+	CONNECTION_UP,
+	CONNECTION_DOWN,
+	/* start a connection */
+	CONNECTION_INITIATE,
 	CONNECTION_ACQUIRE,
 	CONNECTION_REVIVE,
+	/* establish a connection (speculative) */
 	CONNECTION_ESTABLISH_INBOUND,
 	CONNECTION_ESTABLISH_OUTBOUND,
+	/* tear down a connection */
 	CONNECTION_DELETE_IKE,
 	CONNECTION_DELETE_CHILD,
 	CONNECTION_TIMEOUT_IKE,
 	CONNECTION_TIMEOUT_CHILD,
-#define CONNECTION_EVENT_ROOF (CONNECTION_TIMEOUT_CHILD+1)
+	/* mobike */
+	CONNECTION_SUSPEND,
+	CONNECTION_RESUME,
+#define CONNECTION_EVENT_ROOF (CONNECTION_RESUME+1)
 };
 
 static const char *connection_event_name[] = {
 #define S(E) [E] = #E
 	S(CONNECTION_ROUTE),
 	S(CONNECTION_UNROUTE),
+	S(CONNECTION_UP),
+	S(CONNECTION_DOWN),
 	S(CONNECTION_INITIATE),
 	S(CONNECTION_ACQUIRE),
 	S(CONNECTION_REVIVE),
@@ -71,6 +83,8 @@ static const char *connection_event_name[] = {
 	S(CONNECTION_DELETE_CHILD),
 	S(CONNECTION_TIMEOUT_IKE),
 	S(CONNECTION_TIMEOUT_CHILD),
+	S(CONNECTION_SUSPEND),
+	S(CONNECTION_RESUME),
 #undef S
 };
 

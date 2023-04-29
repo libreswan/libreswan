@@ -61,13 +61,29 @@ bool kernel_policy_installed(const struct connection *c);
 void connection_route(struct connection *c);
 void connection_unroute(struct connection *c);
 
+/*
+ * These are speculative.
+ */
+void connection_up(struct connection *c);
+void connection_down(struct connection *c);
+
+/*
+ * These are closely related; with one possibly redundant?
+ */
 void connection_initiate(struct connection *c, const threadtime_t *inception, bool background);
-void connection_acquire(struct connection *c, threadtime_t *inception, const struct kernel_acquire *b);
 void connection_revive(struct connection *c);
 
+void connection_acquire(struct connection *c, threadtime_t *inception, const struct kernel_acquire *b);
+
+/*
+ * Mobike
+ */
 void connection_resume(struct child_sa *child);
 void connection_suspend(struct child_sa *child);
 
+/*
+ * Both delete_ike and timeout are close to identical?
+ */
 void connection_timeout(struct ike_sa **ike);
 void connection_delete_child(struct ike_sa *ike, struct child_sa **child);
 void connection_delete_ike(struct ike_sa **ike);
