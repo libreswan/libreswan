@@ -433,7 +433,7 @@ void update_host_pairs(struct connection *c)
 			 * Unroute the old connection before changing the ip
 			 * address.
 			 */
-			connection_unroute(d);
+			connection_unroute(d, HERE);
 
 			/*
 			 * If the client is the peer, also update the

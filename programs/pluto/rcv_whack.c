@@ -317,7 +317,7 @@ static bool whack_route_connection(struct show *s, struct connection *c,
 	fd_delref(&c->logger->global_whackfd);
 	c->logger->global_whackfd = fd_addref(logger->global_whackfd);
 
-	connection_route(c);
+	connection_route(c, HERE);
 
 	/* XXX: something better? */
 	fd_delref(&c->logger->global_whackfd);
@@ -335,7 +335,7 @@ static bool whack_unroute_connection(struct show *s, struct connection *c,
 	fd_delref(&c->logger->global_whackfd);
 	c->logger->global_whackfd = fd_addref(logger->global_whackfd);
 
-	connection_unroute(c);
+	connection_unroute(c, HERE);
 
 	/* XXX: something better? */
 	fd_delref(&c->logger->global_whackfd);

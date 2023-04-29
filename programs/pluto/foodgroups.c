@@ -433,7 +433,7 @@ void load_groups(struct logger *logger)
 							/* XXX: something better? */
 							fd_delref(&t->logger->global_whackfd);
 							t->logger->global_whackfd = fd_addref(g->logger->global_whackfd);
-							connection_route(t);
+							connection_route(t, HERE);
 							/* XXX: something better? */
 							fd_delref(&t->logger->global_whackfd);
 						}
@@ -462,9 +462,13 @@ void load_groups(struct logger *logger)
 }
 
 
-void connection_group_route(struct connection *g)
+void connection_group_route(struct connection *g, where_t where)
 {
 	if (!PEXPECT(g->logger, g->kind == CK_GROUP)) {
+		return;
+	}
+
+	if (!PEXPECT(g->logger, oriented(g))) {
 		return;
 	}
 
@@ -472,17 +476,11 @@ void connection_group_route(struct connection *g)
 	 * It makes no sense to route a connection that is IKE-only.
 	 *
 	 * ... except when it is an IKE only connection such is
-	 * created for labeled IPsec, but lets ignore that.
+	 * created for labeled IPsec, but that doesn't apply here.
 	 */
 	if (!NEVER_NEGOTIATE(g->policy) && !HAS_IPSEC_POLICY(g->policy)) {
 		llog(RC_ROUTE, g->logger,
 		     "cannot route an IKE-only group connection");
-		return;
-	}
-
-	if (!oriented(g)) {
-		llog(RC_ORIENT, g->logger,
-		     "we cannot identify ourselves with either end of this connection");
 		return;
 	}
 
@@ -491,13 +489,13 @@ void connection_group_route(struct connection *g)
 		if (t->group == g) {
 			struct connection *ci = connection_by_serialno(t->serialno);
 			if (ci != NULL) {
-				connection_route(ci);
+				connection_route(ci, where);
 			}
 		}
 	}
 }
 
-void connection_group_unroute(struct connection *g)
+void connection_group_unroute(struct connection *g, where_t where)
 {
 	if (!PEXPECT(g->logger, g->kind == CK_GROUP)) {
 		return;
@@ -508,7 +506,7 @@ void connection_group_unroute(struct connection *g)
 		if (t->group == g) {
 			struct connection *ci = connection_by_serialno(t->serialno);
 			if (ci != NULL) {
-				connection_unroute(ci);
+				connection_unroute(ci, where);
 			}
 		}
 	}

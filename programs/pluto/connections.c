@@ -193,7 +193,7 @@ void release_connection(struct connection *c)
 	remove_connection_from_pending(c);
 	delete_states_by_connection(&c);
 	passert(c != NULL);
-	connection_unroute(c);
+	connection_unroute(c, HERE);
 }
 
 /* Delete a connection */

@@ -58,42 +58,44 @@ bool routed(enum routing r);
 enum shunt_kind routing_shunt_kind(enum routing routing);
 bool kernel_policy_installed(const struct connection *c);
 
-void connection_route(struct connection *c);
-void connection_unroute(struct connection *c);
+void connection_route(struct connection *c, where_t where);
+void connection_unroute(struct connection *c, where_t where);
 
 /*
  * These are speculative.
  */
-void connection_up(struct connection *c);
-void connection_down(struct connection *c);
+void connection_up(struct connection *c, where_t where);
+void connection_down(struct connection *c, where_t where);
 
 /*
  * These are closely related; with one possibly redundant?
  */
-void connection_initiate(struct connection *c, const threadtime_t *inception, bool background);
-void connection_revive(struct connection *c);
+void connection_initiate(struct connection *c, const threadtime_t *inception,
+			 bool background, where_t where);
+void connection_revive(struct connection *c, where_t where);
 
-void connection_acquire(struct connection *c, threadtime_t *inception, const struct kernel_acquire *b);
+void connection_acquire(struct connection *c, threadtime_t *inception,
+			const struct kernel_acquire *b, where_t where);
 
 /*
  * Mobike
  */
-void connection_resume(struct child_sa *child);
-void connection_suspend(struct child_sa *child);
+void connection_resume(struct child_sa *child, where_t where);
+void connection_suspend(struct child_sa *child, where_t where);
 
 /*
  * Both delete_ike and timeout are close to identical?
  */
-void connection_timeout(struct ike_sa **ike);
-void connection_delete_child(struct ike_sa *ike, struct child_sa **child);
-void connection_delete_ike(struct ike_sa **ike);
+void connection_timeout(struct ike_sa **ike, where_t where);
+void connection_delete_child(struct ike_sa *ike, struct child_sa **child, where_t where);
+void connection_delete_ike(struct ike_sa **ike, where_t where);
 
 /* fake a debug message for establish for now */
 void ldbg_connection_establish(struct ike_sa *ike, struct child_sa *child,
 			       enum direction direction, where_t where);
 
 void set_routing_where(struct connection *c, enum routing routing,
-			     const struct child_sa *child, where_t where);
+		       const struct child_sa *child, where_t where);
 #define set_routing(C, RT, CHILD)		\
 	set_routing_where(C, RT, CHILD, HERE)
 

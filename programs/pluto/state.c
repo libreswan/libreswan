@@ -2685,7 +2685,7 @@ bool update_mobike_endpoints(struct ike_sa *ike, const struct msg_digest *md)
 
 	if (md_role == MESSAGE_RESPONSE) {
 		/* MOBIKE initiator processing response */
-		connection_resume(child);
+		connection_resume(child, HERE);
 		ike->sa.st_deleted_local_addr = unset_address;
 		child->sa.st_deleted_local_addr = unset_address;
 		if (dpd_active_locally(child->sa.st_connection) &&

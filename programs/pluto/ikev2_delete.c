@@ -341,7 +341,7 @@ bool process_v2D_requests(bool *del_ike, struct ike_sa *ike, struct msg_digest *
 						"too many SPIs in Delete Notification payload; ignoring outbound SPI "PRI_IPSEC_SPI,
 						pri_ipsec_spi(outbound_spi));
 				}
-				connection_delete_child(ike, &child);
+				connection_delete_child(ike, &child, HERE);
 
 			} /* for each spi */
 

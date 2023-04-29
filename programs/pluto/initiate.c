@@ -375,7 +375,7 @@ static bool initiate_connection_4_fab(struct connection *c,
 	 * initiated, there is no acquire and, hence, no Child SA to
 	 * establish.
 	 */
-	connection_initiate(c, &inception, background);
+	connection_initiate(c, &inception, background, HERE);
 	return true;
 }
 
@@ -689,7 +689,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		}
 		PASSERT(b->logger, labeled_parent(cc));
 
-		connection_acquire(cc, &inception, b);
+		connection_acquire(cc, &inception, b, HERE);
 		return;
 	}
 
@@ -721,7 +721,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 			jam_kernel_acquire(buf, b);
 			/* jam(buf, " using "); */
 		}
-		connection_acquire(c, &inception, b);
+		connection_acquire(c, &inception, b, HERE);
 		return;
 	case CK_TEMPLATE:
 		if ((c->policy & POLICY_OPPORTUNISTIC) == LEMPTY) {
@@ -745,7 +745,7 @@ void initiate_ondemand(const struct kernel_acquire *b)
 		PASSERT(b->logger, c->kind == CK_INSTANCE);
 		PASSERT(b->logger, HAS_IPSEC_POLICY(c->policy));
 		PASSERT(b->logger, c->child.routing == RT_UNROUTED); /*instance*/
-		connection_acquire(c, &inception, b);
+		connection_acquire(c, &inception, b, HERE);
 		return;
 	default:
 		bad_case(c->kind);

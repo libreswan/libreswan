@@ -37,7 +37,7 @@
 
 enum connection_event;
 
-static void zap_connection(const char *story, struct ike_sa **ike,
+static void zap_connection(const char *story, struct ike_sa **ike, where_t where,
 			   enum connection_event ike_event,
 			   enum connection_event child_event);
 
@@ -127,10 +127,6 @@ static void jam_routing(struct jambuf *buf, const struct connection *c)
 	if (NEVER_NEGOTIATE(c->policy)) {
 		jam_string(buf, " never-negotiate");
 	}
-	jam_string(buf, " ");
-	jam_co(buf, c->serialno);
-	jam_string(buf, " ");
-	jam_connection(buf, c);
 	if (c->child.newest_routing_sa != SOS_NOBODY) {
 		jam_string(buf, " routing");
 		jam_so(buf, c->child.newest_routing_sa);
@@ -172,11 +168,13 @@ static void ldbg_dispatch(struct logger *logger, enum connection_event event,
 			  const struct connection *c,
 			  where_t where, const struct annex *e)
 {
-	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-		jam_string(buf, "routing: dispatch ");
-		jam_event(buf, event, c, e);
-		jam_string(buf, " ");
-		jam_where(buf, where);
+	if (DBGP(DBG_BASE)) {
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+			jam_string(buf, "routing: dispatch ");
+			jam_event(buf, event, c, e);
+			jam_string(buf, " ");
+			jam_where(buf, where);
+		}
 	}
 }
 
@@ -260,15 +258,17 @@ void set_routing_where(struct connection *c,
 				 child->sa.st_logger);
 	so_serial_t new_routing_sa = (child == NULL ? SOS_NOBODY :
 				      child->sa.st_serialno);
-	LDBGP_JAMBUF(DBG_BASE, logger, buf) {
-		jam_string(buf, "routing: ");
-		jam_routing(buf, c);
-		jam_string(buf, " -> ");
-		jam_enum_short(buf, &routing_names, new_routing);
-		jam_string(buf, " ");
-		jam_so(buf, new_routing_sa);
-		jam_string(buf, " ");
-		jam_where(buf, where);
+	if (DBGP(DBG_BASE)) {
+		LLOG_JAMBUF(DEBUG_STREAM|ADD_PREFIX, logger, buf) {
+			jam_string(buf, "routing: ");
+			jam_routing(buf, c);
+			jam_string(buf, " -> ");
+			jam_enum_short(buf, &routing_names, new_routing);
+			jam_string(buf, " ");
+			jam_so(buf, new_routing_sa);
+			jam_string(buf, " ");
+			jam_where(buf, where);
+		}
 	}
 
 	/*
@@ -415,7 +415,8 @@ static void routed_negotiation_to_routed_ondemand(struct connection *c,
 	set_routing(c, RT_ROUTED_ONDEMAND, NULL);
 }
 
-void connection_initiate(struct connection *c, const threadtime_t *inception, bool background)
+void connection_initiate(struct connection *c, const threadtime_t *inception,
+			 bool background, where_t where)
 {
 	if (labeled(c)) {
 		ipsecdoi_initiate(c, c->policy, SOS_NOBODY, inception,
@@ -432,14 +433,15 @@ void connection_initiate(struct connection *c, const threadtime_t *inception, bo
 	}
 
 	dispatch(CONNECTION_INITIATE, c,
-		 c->logger, HERE,
+		 c->logger, where,
 		 (struct annex) {
 			 .inception = inception,
 			 .background = background,
 		 });
 }
 
-void connection_acquire(struct connection *c, threadtime_t *inception, const struct kernel_acquire *b)
+void connection_acquire(struct connection *c, threadtime_t *inception,
+			const struct kernel_acquire *b, where_t where)
 {
 	if (labeled(c)) {
 		PASSERT(c->logger, labeled_parent(c));
@@ -454,7 +456,7 @@ void connection_acquire(struct connection *c, threadtime_t *inception, const str
 	}
 
 	dispatch(CONNECTION_ACQUIRE, c,
-		 c->logger, HERE,
+		 c->logger, where,
 		 (struct annex) {
 			 .inception = inception,
 			 .background = b->background,
@@ -462,7 +464,7 @@ void connection_acquire(struct connection *c, threadtime_t *inception, const str
 		 });
 }
 
-void connection_revive(struct connection *c)
+void connection_revive(struct connection *c, where_t where)
 {
 	if (labeled(c)) {
 		initiate_connection(c, /*remote-host-name*/NULL,
@@ -474,7 +476,7 @@ void connection_revive(struct connection *c)
 
 	threadtime_t inception = threadtime_start();
 	dispatch(CONNECTION_REVIVE, c,
-		 c->logger, HERE,
+		 c->logger, where,
 		 (struct annex) {
 			 .inception = &inception,
 			 .background = true,
@@ -571,7 +573,7 @@ static void delete_routed_tunnel(struct connection *c,
 	delete_connection(&c);
 }
 
-void connection_timeout(struct ike_sa **ike)
+void connection_timeout(struct ike_sa **ike, where_t where)
 {
 	/*
 	 * Stop reviving children trying to use this IKE SA.
@@ -581,10 +583,12 @@ void connection_timeout(struct ike_sa **ike)
 	pstat_sa_failed(&(*ike)->sa, REASON_TOO_MANY_RETRANSMITS);
 
 	pstat_sa_failed(&(*ike)->sa, REASON_TOO_MANY_RETRANSMITS);
-	zap_connection("timeout", ike, CONNECTION_TIMEOUT_IKE, CONNECTION_TIMEOUT_CHILD);
+	zap_connection("timeout", ike, where,
+		       CONNECTION_TIMEOUT_IKE,
+		       CONNECTION_TIMEOUT_CHILD);
 }
 
-static void zap_connection(const char *story, struct ike_sa **ike,
+static void zap_connection(const char *story, struct ike_sa **ike, where_t where,
 			   enum connection_event ike_event,
 			   enum connection_event child_event)
 {
@@ -648,9 +652,8 @@ static void zap_connection(const char *story, struct ike_sa **ike,
 			told_connection = true;
 			attach_whack(first_child->sa.st_logger, (*ike)->sa.st_logger);
 			/* will delete child and its logger */
-			dispatch(child_event,
-				 first_child->sa.st_connection,
-				 first_child->sa.st_logger, HERE,
+			dispatch(child_event, first_child->sa.st_connection,
+				 first_child->sa.st_logger, where,
 				 (struct annex) {
 					 .ike = ike,
 					 .child = &first_child,
@@ -683,9 +686,8 @@ static void zap_connection(const char *story, struct ike_sa **ike,
 			}
 			/* will delete child and its logger */
 			attach_whack(child->sa.st_logger, (*ike)->sa.st_logger);
-			dispatch(child_event,
-				 child->sa.st_connection,
-				 child->sa.st_logger, HERE,
+			dispatch(child_event, child->sa.st_connection,
+				 child->sa.st_logger, where,
 				 (struct annex) {
 					 .ike = ike,
 					 .child = &child,
@@ -708,9 +710,8 @@ static void zap_connection(const char *story, struct ike_sa **ike,
 			delete_connection(&c);
 		}
 	} else {
-		dispatch(ike_event,
-			 (*ike)->sa.st_connection,
-			 (*ike)->sa.st_logger, HERE,
+		dispatch(ike_event, (*ike)->sa.st_connection,
+			 (*ike)->sa.st_logger, where,
 			 (struct annex) {
 				 .ike = ike,
 			 });
@@ -719,38 +720,38 @@ static void zap_connection(const char *story, struct ike_sa **ike,
 	}
 }
 
-void connection_route(struct connection *c)
+void connection_route(struct connection *c, where_t where)
 {
-	if (c->kind == CK_GROUP) {
-		connection_group_route(c);
-		return;
-	}
-
 	if (!oriented(c)) {
 		llog(RC_ORIENT, c->logger,
 		     "we cannot identify ourselves with either end of this connection");
 		return;
 	}
 
-	dispatch(CONNECTION_ROUTE, c, c->logger, HERE,
+	if (c->kind == CK_GROUP) {
+		connection_group_route(c, where);
+		return;
+	}
+
+	dispatch(CONNECTION_ROUTE, c, c->logger, where,
 		 (struct annex) {
 			 0,
 		 });
 
 }
 
-void connection_unroute(struct connection *c)
+void connection_unroute(struct connection *c, where_t where)
 {
 	if (c->kind == CK_GROUP) {
 		/* XXX: may recurse back to here with group
 		 * instances. */
-		connection_group_unroute(c);
+		connection_group_unroute(c, where);
 		return;
 	}
 
 	c->policy &= ~POLICY_ROUTE;
 	dispatch(CONNECTION_UNROUTE, c,
-		 c->logger, HERE,
+		 c->logger, where,
 		 (struct annex) {
 			 0,
 		 });
@@ -760,7 +761,7 @@ void connection_unroute(struct connection *c)
  * Received a message telling us to delete the connection's Child.SA.
  */
 
-void connection_delete_child(struct ike_sa *ike, struct child_sa **child)
+void connection_delete_child(struct ike_sa *ike, struct child_sa **child, where_t where)
 {
 	struct connection *c = (*child)->sa.st_connection;
 	if ((*child)->sa.st_serialno == c->child.newest_routing_sa) {
@@ -774,9 +775,8 @@ void connection_delete_child(struct ike_sa *ike, struct child_sa **child)
 		/*
 		 * Let state machine figure out how to react.
 		 */
-		dispatch(CONNECTION_DELETE_CHILD,
-			 (*child)->sa.st_connection,
-			 (*child)->sa.st_logger, HERE,
+		dispatch(CONNECTION_DELETE_CHILD, (*child)->sa.st_connection,
+			 (*child)->sa.st_logger, where,
 			 (struct annex) {
 				 .ike = &ike,
 				 .child = child,
@@ -790,9 +790,11 @@ void connection_delete_child(struct ike_sa *ike, struct child_sa **child)
 	}
 }
 
-void connection_delete_ike(struct ike_sa **ike)
+void connection_delete_ike(struct ike_sa **ike, where_t where)
 {
-	zap_connection("delete", ike, CONNECTION_DELETE_IKE, CONNECTION_DELETE_CHILD);
+	zap_connection("delete", ike, where,
+		       CONNECTION_DELETE_IKE,
+		       CONNECTION_DELETE_CHILD);
 }
 
 void dispatch(enum connection_event event, struct connection *c,
@@ -1303,7 +1305,7 @@ static void do_updown_unroute(struct connection *c)
  * mibike migrates things?
  */
 
-void connection_resume(struct child_sa *child)
+void connection_resume(struct child_sa *child, where_t where)
 {
 	struct connection *c = child->sa.st_connection;
 	/* do now so route_owner won't find us */
@@ -1323,7 +1325,7 @@ void connection_resume(struct child_sa *child)
 	case RT_ROUTED_TUNNEL:
 	case RT_ROUTED_ONDEMAND:
 	case RT_ROUTED_NEVER_NEGOTIATE:
-		llog_pexpect(child->sa.st_logger, HERE,
+		llog_pexpect(child->sa.st_logger, where,
 			     "%s() unexpected routing %s",
 			     __func__, enum_name_short(&routing_names, cr));
 		set_routing(c, RT_ROUTED_TUNNEL, child);
@@ -1331,7 +1333,7 @@ void connection_resume(struct child_sa *child)
 	}
 }
 
-void connection_suspend(struct child_sa *child)
+void connection_suspend(struct child_sa *child, where_t where)
 {
 	struct connection *c = child->sa.st_connection;
 	/*
@@ -1364,7 +1366,7 @@ void connection_suspend(struct child_sa *child)
 	case RT_ROUTED_NEVER_NEGOTIATE:
 	case RT_ROUTED_NEGOTIATION:
 	case RT_ROUTED_FAILURE:
-		llog_pexpect(child->sa.st_logger, HERE,
+		llog_pexpect(child->sa.st_logger, where,
 			     "%s() unexpected routing %s",
 			     __func__, enum_name_short(&routing_names, cr));
 		FOR_EACH_ITEM(spd, &c->child.spds) {

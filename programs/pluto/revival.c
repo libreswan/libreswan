@@ -290,5 +290,5 @@ void revive_connection(struct connection *c, const char *subplot, struct logger 
 		return;
 	}
 
-	connection_revive(c);
+	connection_revive(c, HERE);
 }
