@@ -178,20 +178,28 @@ static void ldbg_dispatch(struct logger *logger, enum connection_event event,
 	}
 }
 
-void ldbg_connection_establish(struct ike_sa *ike, struct child_sa *child,
-			       enum direction direction, where_t where)
+void fake_connection_establish_inbound(struct ike_sa *ike, struct child_sa *child,
+				       where_t where)
 {
-	struct annex ee = {
-		.ike = &ike,
-		.child = &child,
-	};
-	struct annex *e = &ee;
-	ldbg_dispatch(child->sa.st_logger,
-		      (direction == DIRECTION_INBOUND ? CONNECTION_ESTABLISH_INBOUND :
-		       direction == DIRECTION_OUTBOUND ? CONNECTION_ESTABLISH_OUTBOUND :
-		       CONNECTION_EVENT_ROOF),
-		      child->sa.st_connection,
-		      where, e);
+	dispatch(CONNECTION_ESTABLISH_INBOUND,
+		 child->sa.st_connection,
+		 child->sa.st_logger, where,
+		 (struct annex) {
+			 .ike = &ike,
+			 .child = &child,
+		 });
+}
+
+void fake_connection_establish_outbound(struct ike_sa *ike, struct child_sa *child,
+					where_t where)
+{
+	dispatch(CONNECTION_ESTABLISH_OUTBOUND,
+		 child->sa.st_connection,
+		 child->sa.st_logger, where,
+		 (struct annex) {
+			 .ike = &ike,
+			 .child = &child,
+		 });
 }
 
 enum shunt_kind routing_shunt_kind(enum routing routing)
@@ -206,6 +214,10 @@ enum shunt_kind routing_shunt_kind(enum routing routing)
 		return SHUNT_KIND_NEGOTIATION;
 	case RT_ROUTED_FAILURE:
 		return SHUNT_KIND_FAILURE;
+	case RT_UNROUTED_INBOUND:
+	case RT_ROUTED_INBOUND:
+		/*outbound*/
+		return SHUNT_KIND_NEGOTIATION;
 	case RT_UNROUTED_TUNNEL:
 	case RT_ROUTED_TUNNEL:
 		return SHUNT_KIND_IPSEC;
@@ -221,11 +233,13 @@ bool routed(enum routing r)
 	case RT_ROUTED_ONDEMAND:
 	case RT_ROUTED_NEVER_NEGOTIATE:
 	case RT_ROUTED_NEGOTIATION:
-	case RT_ROUTED_FAILURE:
+	case RT_ROUTED_INBOUND:
 	case RT_ROUTED_TUNNEL:
+	case RT_ROUTED_FAILURE:
 		return true;
 	case RT_UNROUTED:
 	case RT_UNROUTED_NEGOTIATION:
+	case RT_UNROUTED_INBOUND:
 	case RT_UNROUTED_TUNNEL:
 		return false;
 	}
@@ -235,16 +249,18 @@ bool routed(enum routing r)
 bool kernel_policy_installed(const struct connection *c)
 {
 	switch (c->child.routing) {
+	case RT_UNROUTED:
+		return false;
 	case RT_UNROUTED_NEGOTIATION:
+	case RT_UNROUTED_INBOUND:
 	case RT_ROUTED_ONDEMAND:
 	case RT_ROUTED_NEVER_NEGOTIATE:
 	case RT_ROUTED_NEGOTIATION:
-	case RT_ROUTED_FAILURE:
+	case RT_ROUTED_INBOUND:
 	case RT_ROUTED_TUNNEL:
+	case RT_ROUTED_FAILURE:
 	case RT_UNROUTED_TUNNEL:
 		return true;
-	case RT_UNROUTED:
-		return false;
 	}
 	bad_case(c->child.routing);
 }
@@ -827,7 +843,11 @@ void dispatch(enum connection_event event, struct connection *c,
 			 (e->ike != NULL &&
 			  (*e->ike)->sa.st_serialno == c->newest_ike_sa)));
 #endif
+#if 0
 	/*
+	 * This isn't true when the child transitions from UNROUTED
+	 * NEGOTIATION to UNROUTED INBOUND, say.
+	 *
 	 * When there's a Child SA it must match the routing SA, but
 	 * not the reverse.
 	 *
@@ -846,6 +866,7 @@ void dispatch(enum connection_event event, struct connection *c,
 			jam_event(buf, event, c, e);
 		}
 	}
+#endif
 
 #define XX(CONNECTION_EVENT, CONNECTION_ROUTING, CONNECTION_KIND)	\
 	(((CONNECTION_EVENT) *						\
@@ -1280,6 +1301,97 @@ void dispatch(enum connection_event event, struct connection *c,
 				delete_connection(&c);
 			}
 			return;
+
+		case X(ESTABLISH_INBOUND, ROUTED_NEGOTIATION, INSTANCE):
+		case X(ESTABLISH_INBOUND, ROUTED_NEGOTIATION, PERMANENT):
+		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, PERMANENT):
+		case X(ESTABLISH_INBOUND, UNROUTED, INSTANCE):
+		case X(ESTABLISH_INBOUND, UNROUTED, PERMANENT):
+		case X(ESTABLISH_INBOUND, UNROUTED_NEGOTIATION, INSTANCE):
+			if (BROKEN_TRANSITION) {
+				/* instance was routed by routed-ondemand? */
+				set_routing_where(c, RT_ROUTED_INBOUND, NULL, where);
+				return;
+			}
+			break;
+
+		case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, PERMANENT):
+		case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, INSTANCE):
+		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, PERMANENT):
+		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, INSTANCE):
+			if (BROKEN_TRANSITION) {
+				set_routing_where(c, RT_ROUTED_TUNNEL, *(e->child), where);
+				return;
+			}
+			break;
+
+		case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, PERMANENT):
+		case X(ESTABLISH_OUTBOUND, ROUTED_TUNNEL, INSTANCE):
+			if (BROKEN_TRANSITION) {
+				/*
+				 * For instance rekey in
+				 * ikev2-12-transport-psk and
+				 * ikev2-28-rw-server-rekey
+				 */
+				set_routing_where(c, RT_ROUTED_TUNNEL, *(e->child), where);
+				return;
+			}
+			return;
+
+		case X(ESTABLISH_INBOUND, UNROUTED, TEMPLATE):
+			if (BROKEN_TRANSITION) {
+				/*
+				 * So broken!
+				 *
+				 * See xauth-pluto-14 and road - it
+				 * should have instantiated the
+				 * template!?!?!
+				 */
+				set_routing_where(c, RT_UNROUTED_INBOUND, NULL, where);
+				return;
+			}
+			break;
+		case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, TEMPLATE):
+			if (BROKEN_TRANSITION) {
+				/*
+				 * So broken!
+				 *
+				 * See xauth-pluto-14 and road - it
+				 * should have instantiated the
+				 * template!?!?!
+				 */
+				set_routing_where(c, RT_ROUTED_TUNNEL, *(e->child), where);
+				return;
+			}
+			return;
+
+		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, TEMPLATE):
+			if (BROKEN_TRANSITION) {
+				/*
+				 * So broken!
+				 *
+				 * See ikev1-l2tp-03-two-interfaces
+				 * and road - it should have
+				 * instantiated the template!?!?!
+				 */
+				set_routing_where(c, RT_ROUTED_INBOUND, NULL, where);
+				return;
+			}
+			break;
+		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, TEMPLATE):
+			if (BROKEN_TRANSITION) {
+				/*
+				 * So broken!
+				 *
+				 * See ikev1-l2tp-03-two-interfaces
+				 * and road - it should have
+				 * instantiated the template!?!?!
+				 */
+				set_routing_where(c, RT_ROUTED_TUNNEL, *(e->child), where);
+				return;
+			}
+			return;
+
 		}
 	}
 
@@ -1319,20 +1431,23 @@ void connection_resume(struct child_sa *child, where_t where)
 			do_updown(UPDOWN_UP, c, spd, &child->sa, child->sa.st_logger);
 			do_updown(UPDOWN_ROUTE, c, spd, &child->sa, child->sa.st_logger);
 		}
-		break;
+		return;
 	case RT_UNROUTED:
 	case RT_UNROUTED_NEGOTIATION:
-	case RT_ROUTED_NEGOTIATION:
-	case RT_ROUTED_FAILURE:
-	case RT_ROUTED_TUNNEL:
+	case RT_UNROUTED_INBOUND:
 	case RT_ROUTED_ONDEMAND:
+	case RT_ROUTED_NEGOTIATION:
+	case RT_ROUTED_INBOUND:
+	case RT_ROUTED_TUNNEL:
+	case RT_ROUTED_FAILURE:
 	case RT_ROUTED_NEVER_NEGOTIATE:
 		llog_pexpect(child->sa.st_logger, where,
 			     "%s() unexpected routing %s",
 			     __func__, enum_name_short(&routing_names, cr));
 		set_routing(c, RT_ROUTED_TUNNEL, child);
-		break;
+		return;
 	}
+	bad_case(cr);
 }
 
 void connection_suspend(struct child_sa *child, where_t where)
@@ -1363,10 +1478,11 @@ void connection_suspend(struct child_sa *child, where_t where)
 			}
 		}
 		set_routing(c, RT_UNROUTED_TUNNEL, child);
-		break;
+		return;
 	case RT_ROUTED_ONDEMAND:
 	case RT_ROUTED_NEVER_NEGOTIATE:
 	case RT_ROUTED_NEGOTIATION:
+	case RT_ROUTED_INBOUND:
 	case RT_ROUTED_FAILURE:
 		llog_pexpect(child->sa.st_logger, where,
 			     "%s() unexpected routing %s",
@@ -1381,14 +1497,16 @@ void connection_suspend(struct child_sa *child, where_t where)
 			}
 		}
 		set_routing(c, RT_UNROUTED_TUNNEL, child);
-		break;
+		return;
 	case RT_UNROUTED:
 	case RT_UNROUTED_NEGOTIATION:
+	case RT_UNROUTED_INBOUND:
 	case RT_UNROUTED_TUNNEL:
 		llog_pexpect(child->sa.st_logger, HERE,
 			     "%s() unexpected routing %s",
 			     __func__, enum_name_short(&routing_names, cr));
 		set_routing(c, RT_UNROUTED_TUNNEL, child);
-		break;
+		return;
 	}
+	bad_case(cr);
 }

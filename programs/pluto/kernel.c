@@ -1866,9 +1866,6 @@ fail:
 
 static bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 {
-	ldbg_connection_establish(ike_sa(&child->sa, HERE), child,
-				  DIRECTION_INBOUND, HERE);
-
 	const struct connection *c = child->sa.st_connection;
 	struct logger *logger = child->sa.st_logger;
 	/*
@@ -1901,6 +1898,8 @@ static bool install_inbound_ipsec_kernel_policies(struct child_sa *child)
 		     __func__, str_selector_pair(&spd->remote->client, &spd->local->client, &spb));
 		install_inbound_ipsec_kernel_policy(child, spd, HERE);
 	}
+
+	fake_connection_establish_inbound(ike_sa(&child->sa, HERE), child, HERE);
 
 	return true;
 }
@@ -2193,9 +2192,6 @@ bool install_inbound_ipsec_sa(struct child_sa *child, where_t where)
 
 static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 {
-	ldbg_connection_establish(ike_sa(&child->sa, HERE), child,
-				  DIRECTION_OUTBOUND, HERE);
-
 	struct logger *logger = child->sa.st_logger;
 	struct connection *c = child->sa.st_connection;
 
@@ -2386,8 +2382,7 @@ static bool install_outbound_ipsec_kernel_policies(struct child_sa *child)
 	     num_ipsec_eroute);
 #endif
 
-	/* include CISCO's SPD */
-	set_routing(c, RT_ROUTED_TUNNEL, child);
+	fake_connection_establish_outbound(ike_sa(&child->sa, HERE), child, HERE);
 	return true;
 }
 
@@ -2652,7 +2647,9 @@ void teardown_ipsec_kernel_policies(struct child_sa *child)
 							EXPECT_KERNEL_POLICY_OK, HERE);
 		break;
 	case RT_UNROUTED_NEGOTIATION:
+	case RT_UNROUTED_INBOUND:
 	case RT_ROUTED_NEGOTIATION:
+	case RT_ROUTED_INBOUND:
 	case RT_ROUTED_TUNNEL:
 	case RT_UNROUTED_TUNNEL:
 	case RT_ROUTED_NEVER_NEGOTIATE:

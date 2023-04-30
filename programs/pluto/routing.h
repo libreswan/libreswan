@@ -46,6 +46,10 @@ enum routing {
 	RT_ROUTED_NEVER_NEGOTIATE,	/* routed, and .never_negotiate_shunt installed */
 	RT_ROUTED_NEGOTIATION,		/* routed, and .negotiation_shunt installed */
 	RT_ROUTED_FAILURE,      	/* routed, and .failure_shunt installed */
+	/* half established */
+	RT_UNROUTED_INBOUND,		/* unrouted, outbound: negotiation, inbound: installed */
+	RT_ROUTED_INBOUND,		/* routed, outbound: negotiate, inbound: installed */
+	/* fully established */
 	RT_ROUTED_TUNNEL,       	/* routed, and erouted to an IPSEC SA group */
 	RT_UNROUTED_TUNNEL,		/* unrouted, and established; used by MOBIKE */
 #define CONNECTION_ROUTING_ROOF (RT_UNROUTED_TUNNEL+1)
@@ -91,8 +95,8 @@ void connection_delete_child(struct ike_sa *ike, struct child_sa **child, where_
 void connection_delete_ike(struct ike_sa **ike, where_t where);
 
 /* fake a debug message for establish for now */
-void ldbg_connection_establish(struct ike_sa *ike, struct child_sa *child,
-			       enum direction direction, where_t where);
+void fake_connection_establish_inbound(struct ike_sa *ike, struct child_sa *child, where_t where);
+void fake_connection_establish_outbound(struct ike_sa *ike, struct child_sa *child, where_t where);
 
 void set_routing_where(struct connection *c, enum routing routing,
 		       const struct child_sa *child, where_t where);
