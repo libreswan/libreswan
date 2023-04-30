@@ -498,6 +498,7 @@ static void delete_routed_tunnel(struct connection *c,
 		delete_child_sa(e->child);
 		return;
 	}
+
 	if (c->newest_ipsec_sa > (*e->child)->sa.st_serialno) {
 		/* covered by above; no!? */
 		ldbg(c->logger, "keeping connection kernel policy; IPsec SA "PRI_SO" is newer",
@@ -505,6 +506,7 @@ static void delete_routed_tunnel(struct connection *c,
 		delete_child_sa(e->child);
 		return;
 	}
+
 	if (should_revive_connection(*(e->child))) {
 		/* XXX: should this be ROUTED_NEGOTIATING? */
 		ldbg(c->logger, "replacing connection kernel policy with ROUTED_ONDEMAND; it will be revived");
@@ -521,7 +523,7 @@ static void delete_routed_tunnel(struct connection *c,
 	 * when state/connection dies.
 	 */
 	enum routing new_routing =
-		(c->config->autostart == AUTOSTART_ONDEMAND ? RT_ROUTED_ONDEMAND :
+		(c->policy & POLICY_ROUTE ? RT_ROUTED_ONDEMAND :
 		 c->config->failure_shunt != SHUNT_NONE ? RT_ROUTED_FAILURE :
 		 RT_ROUTED_ONDEMAND);
 	enum_buf rb;
