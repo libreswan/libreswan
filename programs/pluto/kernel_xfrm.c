@@ -145,16 +145,47 @@ static sparse_names xfrm_type_names = {
 
 	NE(XFRM_MSG_POLEXPIRE),
 
+	NE(XFRM_MSG_FLUSHSA),
+	NE(XFRM_MSG_FLUSHPOLICY),
+
+	NE(XFRM_MSG_BASE),
 	NE(XFRM_MSG_MAX),
 
 	SPARSE_NULL
 };
 
 static sparse_names rtm_type_names = {
-	NE(RTM_BASE),
+
+	NE(RTM_NEWLINK),
+	NE(RTM_NEWLINK),
+	NE(RTM_GETLINK),
+	NE(RTM_SETLINK),
+
 	NE(RTM_NEWADDR),
 	NE(RTM_DELADDR),
+	NE(RTM_GETADDR),
+
+	NE(RTM_NEWLINK),
+	NE(RTM_DELLINK),
+	NE(RTM_GETLINK),
+
+	NE(RTM_NEWROUTE),
+	NE(RTM_DELROUTE),
+	NE(RTM_GETROUTE),
+
+	NE(RTM_NEWNEIGH),
+	NE(RTM_DELNEIGH),
+	NE(RTM_GETNEIGH),
+
+	NE(RTM_NEWRULE),
+	NE(RTM_DELRULE),
+	NE(RTM_GETRULE),
+
+	/* and many more */
+
+	NE(RTM_BASE),
 	NE(RTM_MAX),
+
 	SPARSE_NULL
 };
 #undef NE
@@ -256,7 +287,7 @@ static void init_netlink(struct logger *logger)
 	 * it supports.  OTOH, the query might happen before the
 	 * crypto module gets loaded.
 	 */
-	dbg("Hard-wiring algorithms");
+	ldbg(logger, "Hard-wiring algorithms");
 	for (const struct encrypt_desc **algp = next_encrypt_desc(NULL);
 	     algp != NULL; algp = next_encrypt_desc(algp)) {
 		const struct encrypt_desc *alg = *algp;
@@ -291,18 +322,17 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 			      int *recv_errno,
 			      struct logger *logger)
 {
-	dbg("xfrm: %s() sending %d", __func__, hdr->nlmsg_type);
+	size_t len = hdr->nlmsg_len;
 
-	struct nlm_resp rsp;
-	size_t len;
+	ldbg(logger, "%s() sending %d", __func__, hdr->nlmsg_type);
+	ldbg_dump(logger, hdr, len);
+
 	ssize_t r;
-	struct sockaddr_nl addr;
 	static uint32_t seq = 0;	/* STATIC */
 
 	*recv_errno = 0;
 
 	hdr->nlmsg_seq = ++seq;
-	len = hdr->nlmsg_len;
 	do {
 		r = write(nl_send_fd, hdr, len);
 	} while (r < 0 && errno == EINTR);
@@ -325,7 +355,9 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 		return false;
 	}
 
+	struct nlm_resp rsp;
 	for (;;) {
+		struct sockaddr_nl addr;
 		socklen_t alen = sizeof(addr);
 
 		r = recvfrom(nl_send_fd, &rsp, sizeof(rsp), 0,
@@ -342,28 +374,31 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 			return false;
 		}
 
+		ldbg(logger, "%s() recvfrom() returned %zd bytes", __func__, r);
+		ldbg_dump(logger, &rsp, r);
+
 		size_t l = (size_t) r; /* must be non -ve */
 		if (l < sizeof(rsp.n)) {
 			llog(RC_LOG, logger,
 			     "netlink read truncated message: %zu bytes; ignore message", l);
-			ldbg_dump(logger, &rsp, l);
 			continue;
 		}
 
 		if (addr.nl_pid != 0) {
 			/* not for us: ignore */
 			sparse_buf sb;
-			dbg("xfrm: ignoring %s message from process %u",
-			    str_sparse(xfrm_type_names, rsp.n.nlmsg_type, &sb),
-			    addr.nl_pid);
+			ldbg(logger, "%s() ignoring %s message from process %u",
+			     __func__,
+			     str_sparse(xfrm_type_names, rsp.n.nlmsg_type, &sb),
+			     addr.nl_pid);
 			continue;
 		}
 
 		if (rsp.n.nlmsg_seq != seq) {
 			sparse_buf sb;
-			dbg("xfrm: ignoring out of sequence (%u/%u) message %s",
-			    rsp.n.nlmsg_seq, seq,
-			    str_sparse(xfrm_type_names, rsp.n.nlmsg_type, &sb));
+			ldbg(logger, "%s() ignoring out of sequence (%u/%u) message %s",
+			     __func__, rsp.n.nlmsg_seq, seq,
+			     str_sparse(xfrm_type_names, rsp.n.nlmsg_type, &sb));
 			continue;
 		}
 		break;
@@ -391,8 +426,8 @@ static bool sendrecv_xfrm_msg(struct nlmsghdr *hdr,
 		 * we'll let it pass.
 		 * This really happens for netlink_add_sa().
 		 */
-		dbg("netlink response for %s %s included non-error error",
-		    description, story);
+		ldbg(logger, "%s() netlink response for %s %s included non-error error",
+		     __func__, description, story);
 		/* ignore */
 	}
 	if (rbuf == NULL) {
@@ -477,14 +512,15 @@ static bool sendrecv_xfrm_policy(struct nlmsghdr *hdr,
 
 static void set_xfrm_selectors(struct xfrm_selector *sel,
 			       const ip_selector *src_client,
-			       const ip_selector *dst_client)
+			       const ip_selector *dst_client,
+			       struct logger *logger)
 {
 	const struct ip_protocol *client_proto = selector_protocol(*src_client);
 	pexpect(selector_protocol(*dst_client) == client_proto);
 
 	const struct ip_info *dst_client_afi  = selector_type(dst_client);
 	const int family = dst_client_afi->af;
-	dbg("%s() using family %s (%d)", __func__, dst_client_afi->ip_name, family);
+	ldbg(logger, "%s() using family %s (%d)", __func__, dst_client_afi->ip_name, family);
 
 	/* .[sd]addr, .prefixlen_[sd], .[sd]port */
 	SELECTOR_TO_XFRM(*src_client, *sel, s);
@@ -549,7 +585,8 @@ static void add_xfrmi_marks(struct nlmsghdr *n,
 			    const struct sa_marks *sa_marks,
 			    const struct pluto_xfrmi *xfrmi,
 			    const unsigned xfrm_dir,
-			    unsigned short maxlen)
+			    unsigned short maxlen,
+			    struct logger *logger)
 {
 	if (sa_marks != NULL) {
 		if (xfrmi == NULL) {
@@ -562,7 +599,7 @@ static void add_xfrmi_marks(struct nlmsghdr *n,
 					.v = sa_mark.val,
 					.m = sa_mark.mask,
 				};
-				dbg("%s() adding xfrm_mark %x/%x", __func__, xfrm_mark.v, xfrm_mark.m);
+				ldbg(logger, "%s() adding xfrm_mark %x/%x", __func__, xfrm_mark.v, xfrm_mark.m);
 				/* append */
 				struct rtattr *attr = (struct rtattr *)((uint8_t *)n + n->nlmsg_len);
 				attr->rta_type = XFRMA_MARK;
@@ -574,8 +611,8 @@ static void add_xfrmi_marks(struct nlmsghdr *n,
 #ifdef USE_XFRM_INTERFACE
 		} else {
 			/* XXX: strange how this only looks at .out */
-			dbg("%s() adding XFRMA_IF_ID %" PRIu32 " n->nlmsg_type=%" PRIu32,
-			    __func__, xfrmi->if_id, n->nlmsg_type);
+			ldbg(logger, "%s() adding XFRMA_IF_ID %" PRIu32 " n->nlmsg_type=%" PRIu32,
+			     __func__, xfrmi->if_id, n->nlmsg_type);
 			nl_addattr32(n, maxlen, XFRMA_IF_ID, xfrmi->if_id);
 			if (sa_marks->out.val == 0 && sa_marks->out.mask == 0) {
 				/* XFRMA_SET_MARK = XFRMA_IF_ID */
@@ -591,7 +628,8 @@ static void add_xfrmi_marks(struct nlmsghdr *n,
 }
 
 static void add_sec_label(struct nlmsghdr *n,
-			  shunk_t sec_label)
+			  shunk_t sec_label,
+			  struct logger *logger)
 {
 	if (sec_label.len > 0) {
 		struct rtattr *attr = (struct rtattr *)((uint8_t *)n + n->nlmsg_len);
@@ -600,7 +638,7 @@ static void add_sec_label(struct nlmsghdr *n,
 		passert(sec_label.len <= MAX_SECCTX_LEN);
 		attr->rta_type = XFRMA_SEC_CTX;
 
-		dbg("%s() adding xfrm_user_sec_ctx sec_label="PRI_SHUNK" to kernel", __func__, pri_shunk(sec_label));
+		ldbg(logger, "%s() adding xfrm_user_sec_ctx sec_label="PRI_SHUNK" to kernel", __func__, pri_shunk(sec_label));
 		attr->rta_len = RTA_LENGTH(sizeof(struct xfrm_user_sec_ctx) + sec_label.len);
 		uctx = RTA_DATA(attr);
 		uctx->exttype = XFRMA_SEC_CTX;
@@ -671,8 +709,8 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 	const unsigned xfrm_dir =
 		(op == KERNEL_POLICY_OP_ADD && dir == DIRECTION_INBOUND ? XFRM_POLICY_IN :
 		 XFRM_POLICY_OUT);
-	dbg("%s() policy=%s action=%d xfrm_dir=%d op=%s dir=%s",
-	    __func__, policy_name, xfrm_action, xfrm_dir, op_str, dir_str);
+	ldbg(logger, "%s() policy=%s action=%d xfrm_dir=%d op=%s dir=%s",
+	     __func__, policy_name, xfrm_action, xfrm_dir, op_str, dir_str);
 
 	struct {
 		struct nlmsghdr n;
@@ -684,7 +722,7 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 
 	const struct ip_info *dst_client_afi  = selector_type(dst_client);
 	const int family = dst_client_afi->af;
-	dbg("%s() using family %s (%d)", __func__, dst_client_afi->ip_name, family);
+	ldbg(logger, "%s() using family %s (%d)", __func__, dst_client_afi->ip_name, family);
 
 	/*
 	 * NEW will fail when an existing policy, UPD always
@@ -699,11 +737,11 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 	req.n.nlmsg_type = XFRM_MSG_UPDPOLICY;
 	req.n.nlmsg_len = NLMSG_SPACE(sizeof(struct xfrm_userpolicy_info));
 	struct xfrm_userpolicy_info *info = NLMSG_DATA(&req.n);
-	set_xfrm_selectors(&info->sel, src_client, dst_client);
+	set_xfrm_selectors(&info->sel, src_client, dst_client, logger);
 
 	/* The caller should have set the proper priority by now */
 	info->priority = policy->priority.value;
-	dbg("%s() IPsec SA SPD priority set to %d", __func__, info->priority);
+	ldbg(logger, "%s() IPsec SA SPD priority set to %d", __func__, info->priority);
 
 	info->action = xfrm_action;
 	/* info->lft.soft_use_expires_seconds = deltasecs(use_lifetime); */
@@ -752,15 +790,15 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 			mode = XFRM_MODE_TRANSPORT;
 
 			address_buf sb, db;
-			dbg("%s() adding xfrm_user_tmpl reqid=%d id.proto=%d optional=%d family=%d mode=%d saddr=%s daddr=%s",
-			    __func__,
-			    tmpl->reqid,
-			    tmpl->id.proto,
-			    tmpl->optional,
-			    tmpl->family,
-			    tmpl->mode,
-			    str_address(tmpl->mode == XFRM_MODE_TUNNEL ? &policy->src.host : &unset_address, &sb),
-			    str_address(tmpl->mode == XFRM_MODE_TUNNEL ? &policy->dst.host : &unset_address, &db));
+			ldbg(logger, "%s() adding xfrm_user_tmpl reqid=%d id.proto=%d optional=%d family=%d mode=%d saddr=%s daddr=%s",
+			     __func__,
+			     tmpl->reqid,
+			     tmpl->id.proto,
+			     tmpl->optional,
+			     tmpl->family,
+			     tmpl->mode,
+			     str_address(tmpl->mode == XFRM_MODE_TUNNEL ? &policy->src.host : &unset_address, &sb),
+			     str_address(tmpl->mode == XFRM_MODE_TUNNEL ? &policy->dst.host : &unset_address, &db));
 		}
 
 		/* append  */
@@ -780,8 +818,8 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 	 *
 	 * XXX: identical code in policy_add(), time to share?
 	 */
-	add_xfrmi_marks(&req.n, policy->sa_marks, policy->xfrmi, xfrm_dir, sizeof(req.data));
-	add_sec_label(&req.n, policy->sec_label);
+	add_xfrmi_marks(&req.n, policy->sa_marks, policy->xfrmi, xfrm_dir, sizeof(req.data), logger);
+	add_sec_label(&req.n, policy->sec_label, logger);
 
 	enum expect_kernel_policy what_about_inbound =
 		(op == KERNEL_POLICY_OP_ADD ? IGNORE_KERNEL_POLICY_MISSING :
@@ -808,7 +846,7 @@ static bool kernel_xfrm_policy_add(enum kernel_policy_op op,
 			    policy->mode == ENCAP_MODE_TRANSPORT) {
 				break;
 			}
-			dbg("xfrm: %s() adding policy forward (suspect a tunnel)", __func__);
+			ldbg(logger, "%s() adding policy forward (suspect a tunnel)", __func__);
 			info->dir = XFRM_POLICY_FWD;
 			ok &= sendrecv_xfrm_policy(&req.n, what_about_inbound,
 						   policy_name, "(fwd)", logger);
@@ -849,13 +887,13 @@ static bool kernel_xfrm_policy_del(enum direction direction,
 
 	const struct ip_info *dst_child_afi  = selector_type(dst_child);
 	const int family = dst_child_afi->af;
-	dbg("%s() using family %s (%d)", __func__, dst_child_afi->ip_name, family);
+	ldbg(logger, "%s() using family %s (%d)", __func__, dst_child_afi->ip_name, family);
 
 	req.n.nlmsg_type = XFRM_MSG_DELPOLICY;
 	req.n.nlmsg_len = NLMSG_SPACE(sizeof(struct xfrm_userpolicy_id));
 	struct xfrm_userpolicy_id *id = NLMSG_DATA(&req.n);
 	id->dir = xfrm_dir;
-	set_xfrm_selectors(&id->sel, src_child, dst_child);
+	set_xfrm_selectors(&id->sel, src_child, dst_child, logger);
 	id->index = policy_id;
 
 	/*
@@ -865,8 +903,8 @@ static bool kernel_xfrm_policy_del(enum direction direction,
 	 *
 	 * XXX: identical code in policy_add(), time to share?
 	 */
-	add_xfrmi_marks(&req.n, sa_marks, xfrmi, xfrm_dir, sizeof(req.data));
-	add_sec_label(&req.n, sec_label);
+	add_xfrmi_marks(&req.n, sa_marks, xfrmi, xfrm_dir, sizeof(req.data), logger);
+	add_sec_label(&req.n, sec_label, logger);
 
 	bool ok = sendrecv_xfrm_policy(&req.n, expect_kernel_policy, "delete",
 				       (direction == DIRECTION_OUTBOUND ? "(out)" :
@@ -888,7 +926,7 @@ static bool kernel_xfrm_policy_del(enum direction direction,
 		 *
 		 * XXX: It's also called when transport mode!
 		 */
-		dbg("xfrm: %s() deleting policy forward (even when there may not be one)",
+		ldbg(logger, "%s() deleting policy forward (even when there may not be one)",
 		    __func__);
 		id->dir = XFRM_POLICY_FWD;
 		ok &= sendrecv_xfrm_policy(&req.n, IGNORE_KERNEL_POLICY_MISSING,
@@ -1176,7 +1214,7 @@ static bool siocethtool(const char *ifname, void *data, const char *action, stru
 	if (ioctl(nl_send_fd, SIOCETHTOOL, &ifr) != 0) {
 		/* EOPNOTSUPP is expected if kernel doesn't support this */
 		if (errno == EOPNOTSUPP) {
-			dbg("cannot offload to %s because SIOCETHTOOL %s failed: %s",
+			ldbg(logger, "cannot offload to %s because SIOCETHTOOL %s failed: %s",
 				ifname, action, strerror(errno));
 		} else {
 			llog_error(logger, errno, "can't offload to %s because SIOCETHTOOL %s failed",
@@ -1313,11 +1351,11 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	 * Only the innermost SA gets the "tunnel" flag.
 	 */
 	if (sa->level == 0 && sa->tunnel) {
-		dbg("xfrm: enabling tunnel mode");
+		ldbg(logger, "%s() enabling tunnel mode", __func__);
 		req.p.mode = XFRM_MODE_TUNNEL;
 		req.p.flags |= XFRM_STATE_AF_UNSPEC;
 	} else {
-		dbg("xfrm: enabling transport mode");
+		ldbg(logger, "%s() enabling transport mode", __func__);
 		req.p.mode = XFRM_MODE_TRANSPORT;
 	}
 
@@ -1331,11 +1369,11 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	 * need or don't need selectors.
 	 */
 	if (!sa->tunnel) {
-		set_xfrm_selectors(&req.p.sel, &sa->src.route, &sa->dst.route);
+		set_xfrm_selectors(&req.p.sel, &sa->src.route, &sa->dst.route, logger);
 	}
 
 	req.p.reqid = sa->reqid;
-	dbg("%s() adding IPsec SA with reqid %d", __func__, sa->reqid);
+	ldbg(logger, "%s() adding IPsec SA with reqid %d", __func__, sa->reqid);
 
 	req.p.lft.soft_byte_limit = sa->sa_max_soft_bytes;
 	req.p.lft.hard_byte_limit = sa->sa_ipsec_max_bytes;
@@ -1362,29 +1400,29 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 	*/
 	if (sa->proto == &ip_protocol_ah &&
 	    address_info(sa->src.address) == &ipv4_info) {
-		dbg("xfrm: aligning IPv4 AH to 32bits as per RFC-4302, Section 3.3.3.2.1");
+		ldbg(logger, "xfrm: aligning IPv4 AH to 32bits as per RFC-4302, Section 3.3.3.2.1");
 		req.p.flags |= XFRM_STATE_ALIGN4;
 	}
 
 	if (sa->proto != &ip_protocol_ipcomp) {
 		if (sa->esn) {
-			dbg("xfrm: enabling ESN");
+			ldbg(logger, "%s() enabling ESN", __func__);
 			req.p.flags |= XFRM_STATE_ESN;
 		}
 		if (sa->decap_dscp) {
-			dbg("xfrm: enabling Decap DSCP");
+			ldbg(logger, "%s() enabling Decap DSCP", __func__);
 			req.p.flags |= XFRM_STATE_DECAP_DSCP;
 		}
 		if (sa->nopmtudisc) {
-			dbg("xfrm: disabling Path MTU Discovery");
+			ldbg(logger, "%s() disabling Path MTU Discovery", __func__);
 			req.p.flags |= XFRM_STATE_NOPMTUDISC;
 		}
 
 		if (sa->replay_window <= 32 && !sa->esn) {
 			/* this only works up to 32, for > 32 and for ESN, we need struct xfrm_replay_state_esn */
 			req.p.replay_window = sa->replay_window;
-			dbg("xfrm: setting IPsec SA replay-window to %d using old-style req",
-			    req.p.replay_window);
+			ldbg(logger, "%s() setting IPsec SA replay-window to %d using old-style req",
+			     __func__, req.p.replay_window);
 		} else {
 			uint32_t bmp_size = BYTES_FOR_BITS(sa->replay_window +
 				pad_up(sa->replay_window, sizeof(uint32_t) * BITS_IN_BYTE) );
@@ -1394,8 +1432,8 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 				.replay_window = sa->replay_window,
 				.bmp_len = bmp_size / sizeof(uint32_t),
 			};
-			dbg("xfrm: setting IPsec SA replay-window to %" PRIu32 " using xfrm_replay_state_esn",
-			    xre.replay_window);
+			ldbg(logger, "%s() setting IPsec SA replay-window to %" PRIu32 " using xfrm_replay_state_esn",
+			     __func__, xre.replay_window);
 
 			attr->rta_type = XFRMA_REPLAY_ESN_VAL;
 			attr->rta_len = RTA_LENGTH(sizeof(xre) + bmp_size);
@@ -1549,8 +1587,8 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 
 			/* Traffic Flow Confidentiality is only for ESP tunnel mode */
 			if (sa->tfcpad != 0 && sa->tunnel && sa->level == 0) {
-				dbg("xfrm: setting TFC to %" PRIu32 " (up to PMTU)",
-				    sa->tfcpad);
+				ldbg(logger, "%s() setting TFC to %" PRIu32 " (up to PMTU)",
+				     __func__, sa->tfcpad);
 
 				attr->rta_type = XFRMA_TFCPAD;
 				attr->rta_len = RTA_LENGTH(sizeof(sa->tfcpad));
@@ -1613,9 +1651,10 @@ static bool netlink_add_sa(const struct kernel_state *sa, bool replace,
 
 		req.n.nlmsg_len += attr->rta_len;
 		attr = (struct rtattr *)((char *)attr + attr->rta_len);
-		dbg("xfrm: esp-hw-offload set via interface %s for IPsec SA", sa->nic_offload_dev);
+		ldbg(logger, "%s() esp-hw-offload set via interface %s for IPsec SA",
+		     __func__, sa->nic_offload_dev);
 	} else {
-		dbg("xfrm: esp-hw-offload not set for IPsec SA");
+		ldbg(logger, "%s() esp-hw-offload not set for IPsec SA", __func__);
 	}
 
 	if (sa->sec_label.len != 0) {
@@ -1735,11 +1774,10 @@ static const void *nlmsg_data(struct nlmsghdr *n, size_t size, struct logger *lo
 	if (n->nlmsg_len < NLMSG_LENGTH(size)) {
 		sparse_buf sb;
 		llog(RC_LOG, logger,
-		     "%s got %s message with length %"PRIu32" < %zu bytes; ignore message",
+		     "%s() got %s message with length %"PRIu32" < %zu bytes; ignore message",
 		     where->func,
 		     str_sparse(xfrm_type_names, n->nlmsg_type, &sb),
 		     n->nlmsg_len, size);
-		ldbg_dump(logger, n, n->nlmsg_len);
 		return NULL;
 	}
 	dbg("xfrm netlink msg len %zu", (size_t) n->nlmsg_len);
@@ -1911,14 +1949,14 @@ static void netlink_acquire(struct nlmsghdr *n, struct logger *logger)
 				return;
 			}
 
-			dbg("xfrm: xuctx security context value: %.*s",
-				(int)len,
-				(const char *) (xuctx + 1));
+			ldbg(logger, "%s() xuctx security context value: %.*s",
+			     __func__, (int)len,
+			     (const char *) (xuctx + 1));
 			break;
 		}
 		default:
-			dbg("... ignoring unknown xfrm acquire payload type %u",
-			    attr->rta_type);
+			ldbg(logger, "%s() ... ignoring unknown xfrm acquire payload type %u",
+			     __func__, attr->rta_type);
 			break;
 		}
 		/* updates remaining too */
@@ -1973,7 +2011,7 @@ static void netlink_shunt_expire(struct xfrm_userpolicy_info *pol,
 	}
 }
 
-static void process_addr_chage(struct nlmsghdr *n, struct logger *logger)
+static void process_addr_change(struct nlmsghdr *n, struct logger *logger)
 {
 	struct ifaddrmsg *nl_msg = NLMSG_DATA(n);
 	struct rtattr *rta = IFLA_RTA(nl_msg);
@@ -1981,9 +2019,9 @@ static void process_addr_chage(struct nlmsghdr *n, struct logger *logger)
 	ip_address ip;
 
 	sparse_buf sb;
-	dbg("xfrm netlink address change %s msg len %zu",
-	    str_sparse(rtm_type_names, n->nlmsg_type, &sb),
-	    (size_t) n->nlmsg_len);
+	ldbg(logger, "%s() xfrm netlink address change %s msg len %zu",
+	     __func__, str_sparse(rtm_type_names, n->nlmsg_type, &sb),
+	     (size_t) n->nlmsg_len);
 
 	while (RTA_OK(rta, msg_size)) {
 		err_t ugh;
@@ -2011,17 +2049,17 @@ static void process_addr_chage(struct nlmsghdr *n, struct logger *logger)
 					    "ERROR IFA_ADDRESS invalid %s", ugh);
 			} else {
 				address_buf ip_str;
-				dbg("XFRM IFA_ADDRESS %s IFA_ADDRESS is this PPP?",
-				    str_address(&ip, &ip_str));
+				ldbg(logger, "%s() XFRM IFA_ADDRESS %s IFA_ADDRESS is this PPP?",
+				     __func__, str_address(&ip, &ip_str));
 			}
 			break;
 
 		default:
 		{
 			sparse_buf sb;
-			dbg("IKEv2 received address %s type %u",
-			    str_sparse(rtm_type_names, n->nlmsg_type, &sb),
-			    rta->rta_type);
+			ldbg(logger, "%s() IKEv2 received address %s type %u",
+			     __func__, str_sparse(rtm_type_names, n->nlmsg_type, &sb),
+			     rta->rta_type);
 			break;
 		}
 		}
@@ -2037,7 +2075,6 @@ static void netlink_kernel_sa_expire(struct nlmsghdr *n, struct logger *logger)
 		llog(RC_LOG_SERIOUS, logger,
 			"netlink_expire got message with length %zu < %zu bytes; ignore message",
 			(size_t) n->nlmsg_len, sizeof(*ue));
-		ldbg_dump(logger, n, n->nlmsg_len);
 		return;
 	}
 
@@ -2061,15 +2098,15 @@ static void netlink_kernel_sa_expire(struct nlmsghdr *n, struct logger *logger)
 	ip_address dst = address_from_xfrm(afi, &ue->state.id.daddr);
 	address_buf a;
 	address_buf b;
-	dbg("%s spi 0x%x src %s dst %s %s mode %u proto %d bytes %"PRIu64" packets %"PRIu64"%s",
-	    __func__, ntohl(ue->state.id.spi),
-	    str_address(&src, &a), str_address(&dst, &b), ue->hard ? "hard" : "soft",
-	    ue->state.mode, ue->state.id.proto,
-	    /* XXX: on linux __u64 is either long, or long long
-	     * conflicting with either PRIu64 or %ll */
-	    (uint64_t) ue->state.curlft.bytes,
-	    (uint64_t) ue->state.curlft.packets,
-	    (ue->state.id.spi == 0 ? " ACQUIRE state expired discard this message" : ""))
+	ldbg(logger, "%s() spi 0x%x src %s dst %s %s mode %u proto %d bytes %"PRIu64" packets %"PRIu64"%s",
+	     __func__, ntohl(ue->state.id.spi),
+	     str_address(&src, &a), str_address(&dst, &b), ue->hard ? "hard" : "soft",
+	     ue->state.mode, ue->state.id.proto,
+	     /* XXX: on linux __u64 is either long, or long long
+	      * conflicting with either PRIu64 or %ll */
+	     (uint64_t) ue->state.curlft.bytes,
+	     (uint64_t) ue->state.curlft.packets,
+	     (ue->state.id.spi == 0 ? " ACQUIRE state expired discard this message" : ""));
 
 	uint8_t protoid = PROTO_RESERVED;
 	switch (ue->state.id.proto) {
@@ -2085,8 +2122,8 @@ static void netlink_kernel_sa_expire(struct nlmsghdr *n, struct logger *logger)
 
 	if ((ue->hard && impair.ignore_hard_expire) ||
 	    (!ue->hard && impair.ignore_soft_expire)) {
-		dbg("IMPAIR is suppress a %s EXPIRE event",
-		    ue->hard ? "hard" : "soft");
+		llog(RC_LOG, logger, "IMPAIR is suppress a %s EXPIRE event",
+		     ue->hard ? "hard" : "soft");
 	}
 
 	if (ue->state.id.spi == 0)
@@ -2146,11 +2183,11 @@ static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
 	ip_address dst = address_from_xfrm(afi, &upe->pol.sel.daddr);
 	address_buf a;
 	address_buf b;
-	dbg("%s src %s/%u dst %s/%u dir %d index %d",
-	    __func__,
-	    str_address(&src, &a), upe->pol.sel.prefixlen_s,
-	    str_address(&dst, &b), upe->pol.sel.prefixlen_d,
-	    upe->pol.dir, upe->pol.index);
+	ldbg(logger, "%s() src %s/%u dst %s/%u dir %d index %d",
+	     __func__,
+	     str_address(&src, &a), upe->pol.sel.prefixlen_s,
+	     str_address(&dst, &b), upe->pol.sel.prefixlen_d,
+	     upe->pol.dir, upe->pol.index);
 
 	req.id.dir = upe->pol.dir;
 	req.id.index = upe->pol.index;
@@ -2162,20 +2199,19 @@ static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
 	if (!sendrecv_xfrm_msg(&req.n, XFRM_MSG_NEWPOLICY, &rsp,
 			       "Get policy", "?",
 			       &recv_errno, logger)) {
-		dbg("netlink_policy_expire: policy died on us: dir=%d, index=%d",
-		    req.id.dir, req.id.index);
+		ldbg(logger, "%s() policy died on us: dir=%d, index=%d",
+		     __func__, req.id.dir, req.id.index);
 	} else if (rsp.n.nlmsg_len < NLMSG_LENGTH(sizeof(rsp.u.pol))) {
 		llog(RC_LOG, logger,
 			    "netlink_policy_expire: XFRM_MSG_GETPOLICY returned message with length %zu < %zu bytes; ignore message",
 			    (size_t) rsp.n.nlmsg_len,
 			    sizeof(rsp.u.pol));
-		ldbg_dump(logger, &rsp, rsp.n.nlmsg_len);
 	} else if (req.id.index != rsp.u.pol.index) {
-		dbg("netlink_policy_expire: policy was replaced: dir=%d, oldindex=%d, newindex=%d",
-		    req.id.dir, req.id.index, rsp.u.pol.index);
+		ldbg(logger, "%s() policy was replaced: dir=%d, oldindex=%d, newindex=%d",
+		     __func__, req.id.dir, req.id.index, rsp.u.pol.index);
 	} else if (upe->pol.curlft.add_time != rsp.u.pol.curlft.add_time) {
-		dbg("netlink_policy_expire: policy was replaced and you have won the lottery: dir=%d, index=%d",
-		    req.id.dir, req.id.index);
+		ldbg(logger, "%s() policy was replaced and you have won the lottery: dir=%d, index=%d",
+		     __func__, req.id.dir, req.id.index);
 	} else {
 		switch (upe->pol.dir) {
 		case XFRM_POLICY_OUT:
@@ -2203,21 +2239,23 @@ static bool netlink_get(int fd, struct logger *logger)
 		return true;
 	}
 
+	ldbg(logger, "%s() recvfrom() returned %zd bytes", __func__, r);
+	ldbg_dump(logger, &rsp, r);
+
 	size_t l = (size_t)r; /* must be non -ve */
 	if (l < sizeof(rsp.n)) {
 		llog(RC_LOG, logger,
 		     "kernel: netlink_get read truncated message: %zu bytes; ignore message",
 		     l);
-		ldbg_dump(logger, &rsp, l);
 		return true;
 	}
 
 	if (addr.nl_pid != 0) {
 		/* not for us: ignore */
 		sparse_buf sb;
-		dbg("kernel: netlink_get: ignoring %s message from process %u",
-		    str_sparse(xfrm_type_names, rsp.n.nlmsg_type, &sb),
-		    addr.nl_pid);
+		ldbg(logger, "%s() ignoring %s message from process %u",
+		     __func__, str_sparse(xfrm_type_names, rsp.n.nlmsg_type, &sb),
+		     addr.nl_pid);
 		return true;
 	}
 
@@ -2225,14 +2263,15 @@ static bool netlink_get(int fd, struct logger *logger)
 		llog(RC_LOG, logger,
 		     "kernel: netlink_get: read message with length %zu that doesn't equal nlmsg_len %zu bytes; ignore message",
 		     l, (size_t) rsp.n.nlmsg_len);
-		ldbg_dump(logger, &rsp, l);
 		return true;
 	}
 
-	sparse_buf sb;
-	dbg("kernel: netlink_get: %s message with legth %zu",
-	    str_sparse(xfrm_type_names, rsp.n.nlmsg_type, &sb),
-	    (size_t) rsp.n.nlmsg_len);
+	sparse_buf xfrmb, rtmb;
+	ldbg(logger, "%s() got %s/%s message with length %zu",
+	     __func__,
+	     str_sparse(xfrm_type_names, rsp.n.nlmsg_type, &xfrmb),
+	     str_sparse(rtm_type_names, rsp.n.nlmsg_type, &rtmb),
+	     (size_t) rsp.n.nlmsg_len);
 
 	switch (rsp.n.nlmsg_type) {
 	case XFRM_MSG_ACQUIRE:
@@ -2248,11 +2287,11 @@ static bool netlink_get(int fd, struct logger *logger)
 		break;
 
 	case RTM_NEWADDR:
-		process_addr_chage(&rsp.n, logger);
+		process_addr_change(&rsp.n, logger);
 		break;
 
 	case RTM_DELADDR:
-		process_addr_chage(&rsp.n, logger);
+		process_addr_change(&rsp.n, logger);
 		break;
 
 	default:
@@ -2311,7 +2350,6 @@ static ipsec_spi_t xfrm_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
 		     "xfrm: netlink_get_spi: XFRM_MSG_ALLOCSPI returned message with length %zu < %zu bytes; ignore message",
 		     (size_t) rsp.n.nlmsg_len,
 		     sizeof(rsp.u.sa));
-		ldbg_dump(logger, &rsp, rsp.n.nlmsg_len);
 		return 0;
 	}
 
@@ -2365,7 +2403,7 @@ static bool xfrm_get_kernel_state(const struct kernel_state *sa, uint64_t *bytes
 	size_t remaining = rsp.n.nlmsg_len -
 				NLMSG_SPACE(sizeof(struct xfrm_usersa_info));
 	while (remaining > 0) {
-		dbg("xfrm get_sa rtattribute type %u ...", attr->rta_type);
+		ldbg(logger, "%s() rtattribute type %u ...", __func__, attr->rta_type);
 		switch (attr->rta_type) {
 		case XFRMA_LASTUSED:
 			memcpy(lastused, RTA_DATA(attr), sizeof(uint64_t));
