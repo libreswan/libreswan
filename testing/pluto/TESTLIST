@@ -848,7 +848,7 @@ kvmplutotest	xauth-pluto-10		good
 kvmplutotest	xauth-pluto-11		good
 kvmplutotest	xauth-pluto-12-resolvconf	good
 kvmplutotest	xauth-pluto-13		good
-kvmplutotest	xauth-pluto-14		good
+kvmplutotest	xauth-pluto-14		wip	github/1116
 kvmplutotest	xauth-pluto-15		good
 kvmplutotest	xauth-pluto-16		good
 kvmplutotest	xauth-pluto-17		good
@@ -1174,7 +1174,7 @@ kvmplutotest	replay-authip-01			good
 
 kvmplutotest	ikev1-l2tp-01				good
 kvmplutotest	ikev1-l2tp-02				good
-kvmplutotest	ikev1-l2tp-03-two-interfaces		good	github/693
+kvmplutotest	ikev1-l2tp-03-two-interfaces		good	github/693,github/1117
 
 kvmplutotest	listen-change-01			good
 
