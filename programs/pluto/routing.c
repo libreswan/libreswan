@@ -1338,60 +1338,6 @@ void dispatch(enum connection_event event, struct connection *c,
 			}
 			return;
 
-		case X(ESTABLISH_INBOUND, UNROUTED, TEMPLATE):
-			if (BROKEN_TRANSITION) {
-				/*
-				 * So broken!
-				 *
-				 * See xauth-pluto-14 and road - it
-				 * should have instantiated the
-				 * template!?!?!
-				 */
-				set_routing_where(c, RT_UNROUTED_INBOUND, NULL, where);
-				return;
-			}
-			break;
-		case X(ESTABLISH_OUTBOUND, UNROUTED_INBOUND, TEMPLATE):
-			if (BROKEN_TRANSITION) {
-				/*
-				 * So broken!
-				 *
-				 * See xauth-pluto-14 and road - it
-				 * should have instantiated the
-				 * template!?!?!
-				 */
-				set_routing_where(c, RT_ROUTED_TUNNEL, *(e->child), where);
-				return;
-			}
-			return;
-
-		case X(ESTABLISH_INBOUND, ROUTED_ONDEMAND, TEMPLATE):
-			if (BROKEN_TRANSITION) {
-				/*
-				 * So broken!
-				 *
-				 * See ikev1-l2tp-03-two-interfaces
-				 * and road - it should have
-				 * instantiated the template!?!?!
-				 */
-				set_routing_where(c, RT_ROUTED_INBOUND, NULL, where);
-				return;
-			}
-			break;
-		case X(ESTABLISH_OUTBOUND, ROUTED_INBOUND, TEMPLATE):
-			if (BROKEN_TRANSITION) {
-				/*
-				 * So broken!
-				 *
-				 * See ikev1-l2tp-03-two-interfaces
-				 * and road - it should have
-				 * instantiated the template!?!?!
-				 */
-				set_routing_where(c, RT_ROUTED_TUNNEL, *(e->child), where);
-				return;
-			}
-			return;
-
 		}
 	}
 
