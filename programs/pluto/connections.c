@@ -1661,15 +1661,15 @@ static enum connection_kind extract_connection_kind(const struct whack_message *
 						    struct logger *logger)
 {
 	if (wm->is_connection_group) {
-		ldbg(logger, "connection is group: by .connection_group");
+		ldbg(logger, "connection is CK_GROUP: by .connection_group");
 		return CK_GROUP;
 	}
 	if (wm->sec_label != NULL) {
-		ldbg(logger, "connection is template: has security label: %s", wm->sec_label);
+		ldbg(logger, "connection is CK_TEMPLATE: has security label: %s", wm->sec_label);
 		return CK_TEMPLATE;
 	}
 	if(wm->ikev2_allow_narrowing == YN_YES) {
-		ldbg(logger, "connection is template: POLICY_IKEV2_ALLOW_NARROWING");
+		ldbg(logger, "connection is CK_TEMPLATE: POLICY_IKEV2_ALLOW_NARROWING");
 		return CK_TEMPLATE;
 	}
 	FOR_EACH_THING(we, &wm->left, &wm->right) {
@@ -1680,29 +1680,29 @@ static enum connection_kind extract_connection_kind(const struct whack_message *
 			 * multiple subnets from the remote
 			 * peer.
 			 */
-			ldbg(logger, "connection is template: %s has vnets at play",
+			ldbg(logger, "connection is CK_TEMPLATE: %s has vnets at play",
 			     we->leftright);
 			return CK_TEMPLATE;
 		}
 		if (we->addresspool != NULL) {
-			ldbg(logger, "connection is template: %s has an address pool",
+			ldbg(logger, "connection is CK_TEMPLATE: %s has an address pool",
 			     we->leftright);
 			return CK_TEMPLATE;
 		}
 		if (we->protoport.has_port_wildcard) {
-			ldbg(logger, "connection is template: %s child has wildcard protoport",
+			ldbg(logger, "connection is CK_TEMPLATE: %s child has wildcard protoport",
 			     we->leftright);
 			return CK_TEMPLATE;
 		}
 		if (!NEVER_NEGOTIATE(wm->policy) &&
 		    !address_is_specified(we->host_addr) &&
 		    we->host_type != KH_IPHOSTNAME) {
-			ldbg(logger, "connection is template: unspecified %s address yet policy negotiate",
+			ldbg(logger, "connection is CK_TEMPLATE: unspecified %s address yet policy negotiate",
 			     we->leftright);
 			return CK_TEMPLATE;
 		}
 	}
-	dbg("connection is permanent: by default");
+	dbg("connection is CK_PERMANENT: by default");
 	return CK_PERMANENT;
 }
 
