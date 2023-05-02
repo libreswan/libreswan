@@ -74,7 +74,41 @@ size_t jam_dump_bytes(struct jambuf *buf, const void *bytes, size_t size)
 /*
  * For logging - output the string but convert any unprintable
  * characters into an equivalent escape code.
+ *
+ * Notes:
+ *
+ * - NUL is always represented as '\0'.
+ *
+ * - octal format can use up-to 3 digts but can't be ambiguous, so
+ *   only use when next character isn't numeric
+ *
+ *   hence need to pass to characters to jam_sanitized_char().
  */
+
+static size_t jam_sanitized_char(struct jambuf *buf, char c, char c1)
+{
+	switch (c) {
+	case '\0': return jam_string(buf, "\\0");
+	case '\a': return jam_string(buf, "\\a");
+	case '\b': return jam_string(buf, "\\b");
+	case '\t': return jam_string(buf, "\\t");
+	case '\n': return jam_string(buf, "\\n");
+	case '\v': return jam_string(buf, "\\v");
+	case '\f': return jam_string(buf, "\\f");
+	case '\r': return jam_string(buf, "\\r");
+	}
+
+	if (char_isprint(c)) {
+		return jam_char(buf, c);
+	}
+
+	if (char_isdigit(c1)) {
+		/* force OOO when next char is digit */
+		return jam(buf, "\\%03o", c & 0xFF);
+	}
+
+	return jam(buf, "\\%o", c & 0xFF);
+}
 
 size_t jam_sanitized_bytes(struct jambuf *buf, const void *ptr, size_t size)
 {
@@ -82,37 +116,8 @@ size_t jam_sanitized_bytes(struct jambuf *buf, const void *ptr, size_t size)
 	const char *chars = ptr;
 	for (unsigned i = 0; i < size; i++) {
 		char c = chars[i];
-		/*
-		 * Notes:
-		 *
-		 * - NUL is always represented as '\0'.
-		 *
-		 * - octal format can use up-to 3 digts but can't be
-		 *   ambiguous, so only use when next character isn't
-		 *   numeric
-		 */
-
-		switch (c) {
-		case '\0': n += jam_string(buf, "\\0"); break;
-		case '\a': n += jam_string(buf, "\\a"); break;
-		case '\b': n += jam_string(buf, "\\b"); break;
-		case '\t': n += jam_string(buf, "\\t"); break;
-		case '\n': n += jam_string(buf, "\\n"); break;
-		case '\v': n += jam_string(buf, "\\v"); break;
-		case '\f': n += jam_string(buf, "\\f"); break;
-		case '\r': n += jam_string(buf, "\\r"); break;
-		default:
-			if (char_isprint(c)) {
-				n += jam_char(buf, c);
-			} else if (i + 1 == size ||
-				   !char_isdigit(chars[i + 1])) {
-				n += jam(buf, "\\%o", c & 0xFF);
-			} else {
-				n += jam(buf, "\\%03o", c & 0xFF);
-			}
-			break;
-
-		}
+		char c1 = (i + 1 == size ? '\0' : chars[i+1]);
+		n += jam_sanitized_char(buf, c, c1);
 	}
 	return n;
 }
@@ -149,4 +154,25 @@ size_t jam_shell_quoted_bytes(struct jambuf *buf, const void *ptr, size_t size)
 		}
 	}
 	return n;
+}
+
+size_t jam_ucase_bytes(struct jambuf *buf, const void *ptr, size_t size)
+{
+	size_t n = 0;
+	const char *chars = ptr;
+	for (unsigned i = 0; i < size; i++) {
+		char c = chars[i];
+		if (char_islower(c)) {
+			n += jam_char(buf, char_toupper(c));
+		} else {
+			char c1 = (i + 1 == size ? '\0' : chars[i+1]);
+			n += jam_sanitized_char(buf, c, c1);
+		}
+	}
+	return n;
+}
+
+size_t jam_ucase_string(struct jambuf *buf, const char *string)
+{
+	return jam_ucase_bytes(buf, string, strlen(string));
 }

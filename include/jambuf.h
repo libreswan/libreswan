@@ -150,11 +150,12 @@ void jambuf_set_pos(struct jambuf *buf, const jampos_t *pos);
 size_t jam_va_list(struct jambuf *buf, const char *format, va_list ap) VPRINTF_LIKE(2);
 size_t jam_raw_bytes(struct jambuf *buf, const void *bytes, size_t nr_bytes);
 
-/* wrap above */
 size_t jam(struct jambuf *buf, const char *format, ...) PRINTF_LIKE(2);
+
 size_t jam_char(struct jambuf *buf, char c);
 size_t jam_string(struct jambuf *buf, const char *string);
 size_t jam_jambuf(struct jambuf *buf, struct jambuf *in);
+
 
 /*
  * Jam a string of bytes formatted in some way.
@@ -220,6 +221,10 @@ jam_bytes_fn jam_shell_quoted_bytes;
 		typeof(HUNK) hunk_ = (HUNK); /* evaluate once */	\
 		jam_shell_quoted_bytes(BUF, hunk_.ptr, hunk_.len);	\
 	})
+
+/* convert lowercase to upper case */
+jam_bytes_fn jam_ucase_bytes;
+size_t jam_ucase_string(struct jambuf *buf, const char *string);
 
 /*
  * jam_humber():

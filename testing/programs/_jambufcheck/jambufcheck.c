@@ -291,7 +291,8 @@ int main(int argc UNUSED, char *argv[])
 #undef FN
 #undef BYTES
 
-#define check_sanitized(S, E) check_jam_bytes("sanitized", jam_sanitized_bytes, S, strlen(S), E)
+#define check_sanitized(S, E) check_jam_bytes("sanitized", jam_sanitized_bytes, S, sizeof(S)-1, E)
+
 	check_sanitized("\a\b\f\n\r\t\v", "\\a\\b\\f\\n\\r\\t\\v");
 	check_sanitized("\001", "\\1");
 	check_sanitized("\0019", "\\0019");
@@ -299,6 +300,11 @@ int main(int argc UNUSED, char *argv[])
 	check_sanitized("\177", "\\177");
 	check_sanitized("\1779", "\\1779");
 	check_sanitized("\177a", "\\177a");
+
+#define check_ucase(S, E) check_jam_bytes("ucase", jam_ucase_bytes, S, sizeof(S)-1, E)
+
+	check_ucase("aBc", "ABC");
+	check_ucase("a_B", "A_B");
 
 	if (report_leaks(logger)) {
 		fails++;
