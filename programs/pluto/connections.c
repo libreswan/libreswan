@@ -3115,7 +3115,6 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 	size_t s = 0;
 	enum shunt_policy shunt;
 	lset_t policy = c->policy;
-	lset_t mask, p;
 
 	if (c->config->ike_version > 0) {
 		s += jam_string(buf, c->config->ike_info->version_name);
@@ -3129,36 +3128,70 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 		sep = "+";
 	}
 
-	mask = LRANGE(0, POLICY_SHA2_TRUNCBUG_IX);
-	p = policy & mask;
-	policy &= ~mask;
-	if (p != LEMPTY) {
-		s += jam_string(buf, sep);
-		s += jam_lset_short(buf, &sa_policy_bit_names, "+", p);
-		sep = "+";
+#define PP(P)					\
+	if (policy & POLICY_##P) {		\
+		s += jam_string(buf, sep);	\
+		s += jam_string(buf, #P);	\
+		sep = "+";			\
+		policy &= ~POLICY_##P;		\
+	}
+#define CP(C)						\
+	if (c->config->C) {				\
+		s += jam_string(buf, sep);		\
+		s += jam_ucase_string(buf, #C);		\
+		sep = "+";				\
 	}
 
+	PP(ENCRYPT);
+	PP(AUTHENTICATE);
+	PP(COMPRESS);
+	PP(TUNNEL);
+	PP(PFS);
+	PP(DECAP_DSCP);
+	PP(NOPMTUDISC);
+	PP(MSDH_DOWNGRADE);
+	PP(ALLOW_NO_SAN);
+	PP(DNS_MATCH_ID);
+	PP(SHA2_TRUNCBUG);
+
+	/* note reversed logic */
 	if (!c->config->rekey) {
 		s += jam_string(buf, sep);
 		s += jam_string(buf, "DONT_REKEY");
 		sep = "+";
 	}
 
-	mask = LRANGE(0, POLICY_OVERLAPIP_IX);
-	p = policy & mask;
-	policy &= ~mask;
-	if (p != LEMPTY) {
-		s += jam_string(buf, sep);
-		s += jam_lset_short(buf, &sa_policy_bit_names, "+", p);
-		sep = "+";
-	}
+	PP(REAUTH);
 
-	if (c->config->ikev2_allow_narrowing) {
-		s += jam_string(buf, sep);
-		s += jam_string(buf, "IKEV2_ALLOW_NARROWING");
-		sep = "+";
-	}
+	PP(OPPORTUNISTIC);
+	PP(GROUPINSTANCE);
+	PP(ROUTE);
+	PP(UP);
+	PP(XAUTH);
+	PP(MODECFG_PULL);
+	PP(AGGRESSIVE);
+	PP(OVERLAPIP);
 
+	CP(ikev2_allow_narrowing);
+
+	PP(IKEV2_PAM_AUTHORIZE);
+
+	PP(SEND_REDIRECT_ALWAYS);
+	PP(SEND_REDIRECT_NEVER);
+	PP(ACCEPT_REDIRECT_YES);
+
+	PP(IKE_FRAG_ALLOW);
+	PP(IKE_FRAG_FORCE);
+	PP(NO_IKEPAD);
+	PP(MOBIKE);
+	PP(PPK_ALLOW);
+	PP(PPK_INSIST);
+	PP(ESN_NO);
+	PP(ESN_YES);
+	PP(INTERMEDIATE);
+	PP(IGNORE_PEER_DNS);
+
+	/* just in case something was missed */
 	if (policy != LEMPTY) {
 		s += jam_string(buf, sep);
 		s += jam_lset_short(buf, &sa_policy_bit_names, "+", policy);
