@@ -219,8 +219,8 @@ bool ikev1_nat_traversal_add_natd(pb_stream *outs,
 		local_port = remote_port = 0;
 	}
 
-	struct_desc *pd = LDISJOINT(st->hidden_variables.st_nat_traversal, NAT_T_WITH_RFC_VALUES) ?
-		&isakmp_nat_d_drafts : &isakmp_nat_d;
+	struct_desc *pd = (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES ? &isakmp_nat_d :
+			   &isakmp_nat_d_drafts);
 
 	/* first: emit payload with hash of sender IP & port */
 
@@ -357,8 +357,8 @@ bool v1_nat_traversal_add_initiator_natoa(pb_stream *outs, struct state *st)
 	ip_address ipinit = st->st_interface->ip_dev->id_address;
 	ip_address ipresp = endpoint_address(st->st_remote_endpoint);
 
-	struct_desc *pd = LDISJOINT(st->hidden_variables.st_nat_traversal, NAT_T_WITH_RFC_VALUES) ?
-		&isakmp_nat_oa_drafts : &isakmp_nat_oa;
+	struct_desc *pd = (st->hidden_variables.st_nat_traversal & NAT_T_WITH_RFC_VALUES ? &isakmp_nat_oa :
+			   &isakmp_nat_oa_drafts);
 
 	return (emit_one_natoa(outs, pd, ipinit, "NAT-OAi") &&
 		emit_one_natoa(outs, pd, ipresp, "NAT-OAr"));
