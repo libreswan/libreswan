@@ -47,9 +47,9 @@ west #
  grep replay-window /tmp/pluto.log
 | ESN: disabled as replay-window=0
 | kernel: setting IPsec SA replay-window to 128
-| xfrm: setting IPsec SA replay-window to 128 using xfrm_replay_state_esn
+| netlink_add_sa() setting IPsec SA replay-window to 128 using xfrm_replay_state_esn
 | kernel: setting IPsec SA replay-window to 128
-| xfrm: setting IPsec SA replay-window to 128 using xfrm_replay_state_esn
+| netlink_add_sa() setting IPsec SA replay-window to 128 using xfrm_replay_state_esn
 west #
  ipsec restart
 Redirecting to: [initsystem]
@@ -77,9 +77,9 @@ west #
  grep replay-window /tmp/pluto.log
 | ESN: disabled as replay-window=0
 | kernel: setting IPsec SA replay-window to 0
-| xfrm: setting IPsec SA replay-window to 0 using old-style req
+| netlink_add_sa() setting IPsec SA replay-window to 0 using old-style req
 | kernel: setting IPsec SA replay-window to 0
-| xfrm: setting IPsec SA replay-window to 0 using old-style req
+| netlink_add_sa() setting IPsec SA replay-window to 0 using old-style req
 west #
  ipsec restart
 Redirecting to: [initsystem]
@@ -109,9 +109,9 @@ west #
  grep replay-window /tmp/pluto.log
 | ESN: disabled as replay-window=0
 | kernel: setting IPsec SA replay-window to 64
-| xfrm: setting IPsec SA replay-window to 64 using xfrm_replay_state_esn
+| netlink_add_sa() setting IPsec SA replay-window to 64 using xfrm_replay_state_esn
 | kernel: setting IPsec SA replay-window to 64
-| xfrm: setting IPsec SA replay-window to 64 using xfrm_replay_state_esn
+| netlink_add_sa() setting IPsec SA replay-window to 64 using xfrm_replay_state_esn
 west #
  echo done
 done
