@@ -1029,10 +1029,8 @@ bool next_state_old2new(struct state_filter *query);
 
 extern void set_sa_expire_next_event(enum event_type next_event, struct state *st);
 
-void jam_humber_max(struct jambuf *buf,
-		    const char *prefix,
-		    uint64_t val,
-		    const char *suffix);
+void jam_humber_uintmax(struct jambuf *buf,
+			const char *prefix, uintmax_t val, const char *suffix);
 
 /* see implementation for meaning of LHS-RHS  */
 int state_compare_connection(const void *a, const void *b);

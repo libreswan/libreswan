@@ -524,8 +524,8 @@ void show_connection_status(struct show *s, const struct connection *c)
 		jam(buf, PRI_CONNECTION":  ", c->name, instance);
 		jam(buf, " ike_life: %jds;", deltasecs(c->config->sa_ike_max_lifetime));
 		jam(buf, " ipsec_life: %jds;", deltasecs(c->config->sa_ipsec_max_lifetime));
-		jam_humber_max(buf, " ipsec_max_bytes: ", c->config->sa_ipsec_max_bytes, "B;");
-		jam_humber_max(buf, " ipsec_max_packets: ", c->config->sa_ipsec_max_packets, ";");
+		jam_humber_uintmax(buf, " ipsec_max_bytes: ", c->config->sa_ipsec_max_bytes, "B;");
+		jam_humber_uintmax(buf, " ipsec_max_packets: ", c->config->sa_ipsec_max_packets, ";");
 		jam(buf, " replay_window: %u;", c->sa_replay_window);
 		jam(buf, " rekey_margin: %jds;", deltasecs(c->config->sa_rekey_margin));
 		jam(buf, " rekey_fuzz: %lu%%;", c->config->sa_rekey_fuzz);

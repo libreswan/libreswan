@@ -76,7 +76,7 @@ static void jam_child_sa_traffic(struct jambuf *buf, struct child_sa *child)
 	if (get_ipsec_traffic(child, first_ipsec_proto, DIRECTION_OUTBOUND)) {
 		jam(buf, ", outBytes=%ju", first_ipsec_proto->outbound.bytes);
 		if (c->config->sa_ipsec_max_bytes != 0) {
-			jam_humber_max(buf, ", maxBytes=", c->config->sa_ipsec_max_bytes, "B");
+			jam_humber_uintmax(buf, ", maxBytes=", c->config->sa_ipsec_max_bytes, "B");
 		}
 	}
 

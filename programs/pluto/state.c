@@ -2043,8 +2043,8 @@ void state_eroute_usage(const ip_selector *ours, const ip_selector *peers,
 	}
 }
 
-void jam_humber_max(struct jambuf *buf,
-		    const char *prefix, uintmax_t val, const char *suffix)
+void jam_humber_uintmax(struct jambuf *buf,
+			const char *prefix, uintmax_t val, const char *suffix)
 {
 	jam_string(buf, prefix);
 	if (/*double-negative*/ !(pexpect(val <= IPSEC_SA_MAX_OPERATIONS))) {
@@ -2255,7 +2255,7 @@ static void show_established_child_details(struct show *s, struct child_sa *chil
 				jam(buf, " AHout=");
 				jam_readable_humber(buf, first_proto_info->outbound.bytes, false);
 			}
-			jam_humber_max(buf, " AHmax=", c->config->sa_ipsec_max_bytes, "B");
+			jam_humber_uintmax(buf, " AHmax=", c->config->sa_ipsec_max_bytes, "B");
 		}
 		if (child->sa.st_esp.present) {
 			if (in_info) {
@@ -2266,7 +2266,7 @@ static void show_established_child_details(struct show *s, struct child_sa *chil
 				jam(buf, " ESPout=");
 				jam_readable_humber(buf, first_proto_info->outbound.bytes, false);
 			}
-			jam_humber_max(buf, " ESPmax=", c->config->sa_ipsec_max_bytes, "B");
+			jam_humber_uintmax(buf, " ESPmax=", c->config->sa_ipsec_max_bytes, "B");
 		}
 		if (child->sa.st_ipcomp.present) {
 			if (in_info) {
@@ -2277,7 +2277,7 @@ static void show_established_child_details(struct show *s, struct child_sa *chil
 				jam(buf, " IPCOMPout=");
 				jam_readable_humber(buf, first_proto_info->outbound.bytes, false);
 			}
-			jam_humber_max(buf, " IPCOMPmax=", c->config->sa_ipsec_max_bytes, "B");
+			jam_humber_uintmax(buf, " IPCOMPmax=", c->config->sa_ipsec_max_bytes, "B");
 		}
 
 		jam(buf, " "); /* TBD: trailing blank */
