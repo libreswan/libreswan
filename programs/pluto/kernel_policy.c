@@ -338,6 +338,20 @@ bool add_spd_kernel_policy(const struct spd_route *spd,
 	return true;
 }
 
+void add_spd_kernel_policies(struct connection *c,
+			     enum kernel_policy_op op,
+			     enum direction direction,
+			     enum shunt_kind shunt_kind,
+			     struct logger *logger, where_t where, const char *story)
+{
+	FOR_EACH_ITEM(spd, &c->child.spds) {
+		if (!add_spd_kernel_policy(spd, op, direction, shunt_kind,
+					   logger, where, story)) {
+			llog(RC_LOG, logger, "%s failed", story);
+		}
+	}
+}
+
 bool add_kernel_policy(enum kernel_policy_op op,
 		       enum direction direction,
 		       const ip_selector *local_selector,

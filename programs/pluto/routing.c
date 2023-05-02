@@ -312,25 +312,6 @@ void set_routing_where(struct connection *c,
 }
 
 /*
- * XXX: this funcion is named to preserve some history.
- */
-static void assign_holdpass(struct connection *c, enum kernel_policy_op op,
-			    const char *reason)
-{
-	struct logger *logger = c->logger;
-	PEXPECT(logger, (op == KERNEL_POLICY_OP_REPLACE ||
-			 op == KERNEL_POLICY_OP_ADD));
-	FOR_EACH_ITEM(spd, &c->child.spds) {
-		if (!add_spd_kernel_policy(spd, op, DIRECTION_OUTBOUND,
-					   SHUNT_KIND_NEGOTIATION,
-					   logger, HERE, reason)) {
-			llog(RC_LOG, logger,
-			     "converting ondemand kernel policy to negotiating");
-		}
-	}
-}
-
-/*
  * For instance:
  *
  * = an instance with a routed ondemand template
@@ -341,23 +322,25 @@ static void assign_holdpass(struct connection *c, enum kernel_policy_op op,
  * code has figured out how wide the SPDs need to be.
  *
  * OTOH, if this is an unrouted permenant triggered by whack, just
- * replace.  Should assign_holdpass() instead just look around?
+ * replace.
  */
 
-static void instance_unrouted_to_unrouted_negotiation(struct connection *c)
+static void unrouted_instance_to_unrouted_negotiation(struct connection *c)
 {
+	struct logger *logger = c->logger;
 #if 0
 	/* fails when whack forces the initiate so that the template
 	 * is instantiated before it is routed */
-	struct logger *logger = c->logger;
 	struct connection *t = c->clonedfrom; /* could be NULL */
 	PEXPECT(logger, t != NULL && t->child.routing == RT_ROUTED_ONDEMAND);
 #endif
 	bool oe = ((c->policy & POLICY_OPPORTUNISTIC) != LEMPTY);
 	const char *reason = (oe ? "replace unrouted opportunistic %trap with broad %pass or %hold" :
 			      "replace unrouted %trap with broad %pass or %hold");
-	assign_holdpass(c, KERNEL_POLICY_OP_REPLACE, reason);
-
+	add_spd_kernel_policies(c, KERNEL_POLICY_OP_REPLACE,
+				DIRECTION_OUTBOUND,
+				SHUNT_KIND_NEGOTIATION,
+				logger, HERE, reason);
 	set_routing(c, RT_UNROUTED_NEGOTIATION, NULL);
 }
 
@@ -369,12 +352,15 @@ static void instance_unrouted_to_unrouted_negotiation(struct connection *c)
  * installed as KIND_NEGOTIATION.
  */
 
-static void permanent_unrouted_to_unrouted_negotiation(struct connection *c)
+static void unrouted_permanent_to_unrouted_negotiation(struct connection *c)
 {
 	struct logger *logger = c->logger;
 	PEXPECT(logger, (c->policy & POLICY_OPPORTUNISTIC) == LEMPTY);
-	assign_holdpass(c, KERNEL_POLICY_OP_ADD,
-			"installing negotiation kernel policy for permanent connection");
+	const char *reason = "installing negotiation kernel policy for permanent connection";
+	add_spd_kernel_policies(c, KERNEL_POLICY_OP_ADD,
+				DIRECTION_OUTBOUND,
+				SHUNT_KIND_NEGOTIATION,
+				logger, HERE, reason);
 	set_routing(c, RT_UNROUTED_NEGOTIATION, NULL);
 }
 
@@ -953,7 +939,7 @@ void dispatch(enum connection_event event, struct connection *c,
 				return;
 			}
 			/* presumably triggered by whack */
-			permanent_unrouted_to_unrouted_negotiation(c);
+			unrouted_permanent_to_unrouted_negotiation(c);
 			PEXPECT(logger, c->child.routing == RT_UNROUTED_NEGOTIATION);
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 					  e->inception, null_shunk,
@@ -1133,7 +1119,7 @@ void dispatch(enum connection_event event, struct connection *c,
 			 * this code seems to expect it to?).  Check
 			 * parent?
 			 */
-			instance_unrouted_to_unrouted_negotiation(c);
+			unrouted_instance_to_unrouted_negotiation(c);
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 					  e->inception, null_shunk,
 					  e->background, logger);
@@ -1150,7 +1136,7 @@ void dispatch(enum connection_event event, struct connection *c,
 			 * no because when it is pulled it shouldn't
 			 * undo the routing?
 			 */
-			instance_unrouted_to_unrouted_negotiation(c);
+			unrouted_instance_to_unrouted_negotiation(c);
 			ipsecdoi_initiate(c, c->policy, SOS_NOBODY,
 					  e->inception, e->acquire->sec_label,
 					  e->background, e->acquire->logger);

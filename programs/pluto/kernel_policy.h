@@ -168,8 +168,13 @@ bool add_spd_kernel_policy(const struct spd_route *spd,
 			   enum kernel_policy_op op,
 			   enum direction direction,
 			   enum shunt_kind shunt_kind,
-			   struct logger *logger,
-			   where_t where, const char *what);
+			   struct logger *logger, where_t where, const char *what);
+
+void add_spd_kernel_policies(struct connection *c,
+			     enum kernel_policy_op op,
+			     enum direction direction,
+			     enum shunt_kind shunt_kind,
+			     struct logger *logger, where_t where, const char *story);
 
 bool replace_spd_kernel_policy(const struct spd_route *spd,
 			       enum direction direction,
