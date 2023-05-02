@@ -33,10 +33,13 @@
 #include "log.h"
 #include "rnd.h"
 #include "initiate.h"
+#include "server.h"		/* for add_fd_read_listener() */
 
 static pid_t pfkeyv2_pid;
 static uint32_t pfkeyv2_seq;
 static int pfkeyv2_fd;
+
+static void pfkeyv2_process_msg(int fd, void *arg, struct logger *logger);
 
 #define SIZEOF_SADB_ADDRESS (sizeof(struct sadb_address) + sizeof(ip_sockaddr))
 #define SIZEOF_SADB_BASE sizeof(struct sadb_msg)
@@ -579,6 +582,9 @@ static void pfkeyv2_init(struct logger *logger)
 		fatal_errno(PLUTO_EXIT_KERNEL_FAIL, logger, errno,
 			    "opening PF_KEY_V2 socket failed");
 	}
+	/* server.c will close this */
+	add_fd_read_listener(pfkeyv2_fd, "pfkey v2 messages",
+			     pfkeyv2_process_msg, NULL);
 	ldbg(logger, "pfkey opened on %d with CLOEXEC", pfkeyv2_fd);
 
 	/* register everything */
@@ -1581,7 +1587,7 @@ static void process_pending_queue(struct logger *logger)
 	}
 }
 
-static void pfkeyv2_process_msg(int fd UNUSED, struct logger *logger)
+static void pfkeyv2_process_msg(int fd UNUSED, void *arg UNUSED, struct logger *logger)
 {
 	ldbg(logger, "processing message");
 	struct inbuf msg;
@@ -1623,9 +1629,6 @@ const struct kernel_ops pfkeyv2_kernel_ops = {
 	/* .sadb_sa_replay is in bytes with 1 bit per packet */
 	.max_replay_window = UINT8_MAX * 8, /* packets */
 #endif
-	.async_fdp = &pfkeyv2_fd,	/* XXX: fix code using this not checking for >0 */
-	.route_fdp = NULL,		/* XXX: what is this? */
-
 	.init = pfkeyv2_init,
 	.shutdown = pfkeyv2_shutdown,
 	.get_ipsec_spi = pfkeyv2_get_ipsec_spi,
@@ -1634,5 +1637,4 @@ const struct kernel_ops pfkeyv2_kernel_ops = {
 	.get_kernel_state = pfkeyv2_get_kernel_state,
 	.policy_del = kernel_pfkeyv2_policy_del,
 	.policy_add = kernel_pfkeyv2_policy_add,
-	.process_msg = pfkeyv2_process_msg,
 };

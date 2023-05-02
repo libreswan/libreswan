@@ -251,13 +251,9 @@ struct kernel_ops {
 	bool sha2_truncbug_support;
 	bool esn_supported;
 	uintmax_t max_replay_window;
-	int *async_fdp;
-	int *route_fdp;
 
 	void (*init)(struct logger *logger);
 	void (*shutdown)(struct logger *logger);
-	void (*process_queue)(void);
-	void (*process_msg)(int, struct logger *);
 	bool (*policy_add)(enum kernel_policy_op op,
 			   enum direction dir,
 			   const ip_selector *src_client,

@@ -116,9 +116,12 @@
 #define XFRM_STATE_AF_UNSPEC 32
 #endif
 
+static void netlink_process_xfrm_messages(int fd, void *arg, struct logger *logger);
+static void netlink_process_rtm_messages(int fd, void *arg, struct logger *logger);
+
 static int nl_send_fd = NULL_FD; /* to send to NETLINK_XFRM */
-static int nl_xfrm_fd = NULL_FD; /* listen to NETLINK_XFRM broadcast */
-static int nl_route_fd = NULL_FD; /* listen to NETLINK_ROUTE broadcast */
+static int netlink_xfrm_fd = NULL_FD; /* listen to NETLINK_XFRM broadcast */
+static int netlink_rtm_fd = NULL_FD; /* listen to NETLINK_ROUTE broadcast */
 
 #define NE(x) { #x, x }	/* Name Entry -- shorthand for sparse_names */
 
@@ -216,10 +219,10 @@ static xfrm_address_t xfrm_from_address(const ip_address *addr)
 		(REQ).L##port = nport(selector_port(client_));		\
 	}
 
-static void init_netlink_route_fd(struct logger *logger)
+static void init_netlink_rtm_fd(struct logger *logger)
 {
-	nl_route_fd = cloexec_socket(AF_NETLINK, SOCK_RAW|SOCK_NONBLOCK, NETLINK_ROUTE);
-	if (nl_route_fd < 0) {
+	netlink_rtm_fd = cloexec_socket(AF_NETLINK, SOCK_RAW|SOCK_NONBLOCK, NETLINK_ROUTE);
+	if (netlink_rtm_fd < 0) {
 		fatal_errno(PLUTO_EXIT_FAIL, logger, errno, "socket()");
 	}
 
@@ -230,12 +233,39 @@ static void init_netlink_route_fd(struct logger *logger)
 				 RTMGRP_IPV4_ROUTE | RTMGRP_IPV6_ROUTE | RTMGRP_LINK,
 	};
 
-	if (bind(nl_route_fd, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
+	if (bind(netlink_rtm_fd, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
 		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
 			    "failed to bind NETLINK_ROUTE bcast socket - perhaps kernel was not compiled with CONFIG_XFRM");
 	}
+
+	/* server.c will clean this up */
+	add_fd_read_listener(netlink_rtm_fd, "rtm messages",
+			     netlink_process_rtm_messages, NULL);
 }
 
+static void init_netlink_xfrm_fd(struct logger *logger)
+{
+	netlink_xfrm_fd = cloexec_socket(AF_NETLINK, SOCK_DGRAM|SOCK_NONBLOCK, NETLINK_XFRM);
+	if (netlink_xfrm_fd < 0) {
+		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
+			    "socket() for bcast in init_netlink()");
+	}
+
+	struct sockaddr_nl addr;
+	addr.nl_family = AF_NETLINK;
+	addr.nl_pid = getpid();
+	addr.nl_pad = 0; /* make coverity happy */
+	addr.nl_groups = XFRMGRP_ACQUIRE | XFRMGRP_EXPIRE;
+	if (bind(netlink_xfrm_fd, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
+		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
+			    "Failed to bind bcast socket in init_netlink() - perhaps kernel was not compiled with CONFIG_XFRM");
+	}
+
+	/* server.c will clean this up */
+	add_fd_read_listener(netlink_xfrm_fd, "xfrm messages",
+			     netlink_process_xfrm_messages, NULL);
+
+}
 
 /*
  * init_netlink - Initialize the netlink interface.  Opens the sockets and
@@ -254,7 +284,6 @@ static void init_netlink(struct logger *logger)
 		}
 	}
 
-	struct sockaddr_nl addr;
 
 	nl_send_fd = cloexec_socket(AF_NETLINK, SOCK_DGRAM, NETLINK_XFRM);
 
@@ -263,22 +292,8 @@ static void init_netlink(struct logger *logger)
 			    "socket() in init_netlink()");
 	}
 
-	nl_xfrm_fd = cloexec_socket(AF_NETLINK, SOCK_DGRAM|SOCK_NONBLOCK, NETLINK_XFRM);
-	if (nl_xfrm_fd < 0) {
-		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-			    "socket() for bcast in init_netlink()");
-	}
-
-	addr.nl_family = AF_NETLINK;
-	addr.nl_pid = getpid();
-	addr.nl_pad = 0; /* make coverity happy */
-	addr.nl_groups = XFRMGRP_ACQUIRE | XFRMGRP_EXPIRE;
-	if (bind(nl_xfrm_fd, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
-		fatal_errno(PLUTO_EXIT_FAIL, logger, errno,
-			    "Failed to bind bcast socket in init_netlink() - perhaps kernel was not compiled with CONFIG_XFRM");
-	}
-
-	init_netlink_route_fd(logger);
+	init_netlink_rtm_fd(logger);
+	init_netlink_xfrm_fd(logger);
 
 	/*
 	 * Just assume any algorithm with a NETLINK_XFRM name works.
@@ -2222,7 +2237,9 @@ static void netlink_policy_expire(struct nlmsghdr *n, struct logger *logger)
 }
 
 /* returns FALSE iff EAGAIN */
-static bool netlink_get(int fd, struct logger *logger)
+static bool netlink_get(int fd,
+			void (*processor)(struct nlm_resp *resp, struct logger *logger),
+			struct logger *logger)
 {
 	struct nlm_resp rsp;
 	struct sockaddr_nl addr;
@@ -2266,32 +2283,55 @@ static bool netlink_get(int fd, struct logger *logger)
 		return true;
 	}
 
-	sparse_buf xfrmb, rtmb;
-	ldbg(logger, "%s() got %s/%s message with length %zu",
-	     __func__,
-	     str_sparse(xfrm_type_names, rsp.n.nlmsg_type, &xfrmb),
-	     str_sparse(rtm_type_names, rsp.n.nlmsg_type, &rtmb),
-	     (size_t) rsp.n.nlmsg_len);
+	processor(&rsp, logger);
+	return true;
+}
 
-	switch (rsp.n.nlmsg_type) {
+static void netlink_xfrm_message_processor(struct nlm_resp *rsp, struct logger *logger)
+{
+	sparse_buf xfrmb;
+	ldbg(logger, "%s() got %s message with length %zu",
+	     __func__,
+	     str_sparse(xfrm_type_names, rsp->n.nlmsg_type, &xfrmb),
+	     (size_t) rsp->n.nlmsg_len);
+
+	switch (rsp->n.nlmsg_type) {
+
 	case XFRM_MSG_ACQUIRE:
-		netlink_acquire(&rsp.n, logger);
+		netlink_acquire(&rsp->n, logger);
 		break;
 
 	case XFRM_MSG_EXPIRE: /* SA soft and hard limit */
-		netlink_kernel_sa_expire(&rsp.n, logger);
+		netlink_kernel_sa_expire(&rsp->n, logger);
 		break;
 
 	case XFRM_MSG_POLEXPIRE:
-		netlink_policy_expire(&rsp.n, logger);
+		netlink_policy_expire(&rsp->n, logger);
 		break;
 
+	default:
+		/* ignored */
+		break;
+	}
+}
+
+static void netlink_rtm_message_processor(struct nlm_resp *rsp, struct logger *logger)
+{
+
+	sparse_buf rtmb;
+	ldbg(logger, "%s() got %s message with length %zu",
+	     __func__,
+	     str_sparse(rtm_type_names, rsp->n.nlmsg_type, &rtmb),
+	     (size_t) rsp->n.nlmsg_len);
+
+	switch (rsp->n.nlmsg_type) {
+
 	case RTM_NEWADDR:
-		process_addr_change(&rsp.n, logger);
+		process_addr_change(&rsp->n, logger);
 		break;
 
 	case RTM_DELADDR:
-		process_addr_change(&rsp.n, logger);
+		process_addr_change(&rsp->n, logger);
 		break;
 
 	default:
@@ -2299,12 +2339,18 @@ static bool netlink_get(int fd, struct logger *logger)
 		break;
 	}
 
-	return true;
 }
 
-static void netlink_process_msg(int fd, struct logger *logger)
+static void netlink_process_xfrm_messages(int fd, void *arg UNUSED, struct logger *logger)
 {
-	do {} while (netlink_get(fd, logger));
+	ldbg(logger, "kernel: %s() process messages", __func__);
+	do {} while (netlink_get(fd, netlink_xfrm_message_processor, logger));
+}
+
+static void netlink_process_rtm_messages(int fd, void *arg UNUSED, struct logger *logger)
+{
+	ldbg(logger, "kernel: %s() process messages", __func__);
+	do {} while (netlink_get(fd, netlink_rtm_message_processor, logger));
 }
 
 static ipsec_spi_t xfrm_get_ipsec_spi(ipsec_spi_t avoid UNUSED,
@@ -2689,20 +2735,17 @@ const struct kernel_ops xfrm_kernel_ops = {
 	.protostack_names = xfrm_protostack_names,
 	.interface_name = "xfrm",
 	.updown_name = "xfrm",
-	.async_fdp = &nl_xfrm_fd,
-	.route_fdp = &nl_route_fd,
 	/* don't overflow BYTES_FOR_BITS(replay_window) * 8 */
 	.max_replay_window = UINT32_MAX & ~7,
 	.esn_supported = true,
 
 	.init = init_netlink,
 	.shutdown = xfrm_shutdown,
-	.process_msg = netlink_process_msg,
+
 	.policy_del = kernel_xfrm_policy_del,
 	.policy_add = kernel_xfrm_policy_add,
 	.add_sa = netlink_add_sa,
 	.get_kernel_state = xfrm_get_kernel_state,
-	.process_queue = NULL,
 	.grp_sa = NULL,
 	.get_ipsec_spi = xfrm_get_ipsec_spi,
 	.del_ipsec_spi = xfrm_del_ipsec_spi,

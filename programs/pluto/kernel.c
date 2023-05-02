@@ -2031,25 +2031,6 @@ static bool uninstall_kernel_state(struct child_sa *child, enum direction direct
 	return result;
 }
 
-static void kernel_process_msg_cb(int fd, void *arg, struct logger *logger)
-{
-	const struct kernel_ops *kernel_ops = arg;
-
-	dbg("kernel: %s() process %s message", __func__, kernel_ops->interface_name);
-	threadtime_t start = threadtime_start();
-	kernel_ops->process_msg(fd, logger);
-	threadtime_stop(&start, SOS_NOBODY, "kernel message");
-}
-
-static global_timer_cb kernel_process_queue_cb;
-
-static void kernel_process_queue_cb(struct logger *unused_logger UNUSED)
-{
-	if (pexpect(kernel_ops->process_queue != NULL)) {
-		kernel_ops->process_queue();
-	}
-}
-
 const struct kernel_ops *const kernel_stacks[] = {
 #ifdef KERNEL_XFRM
 	&xfrm_kernel_ops,
@@ -2086,30 +2067,6 @@ void init_kernel(struct logger *logger)
 
 	enable_periodic_timer(EVENT_SHUNT_SCAN, kernel_scan_shunts,
 			      bare_shunt_interval);
-
-	dbg("kernel: setup kernel fd callback");
-
-	if (kernel_ops->async_fdp != NULL)
-		/* Note: kernel_ops is const but pluto_event_add cannot know that */
-		add_fd_read_listener(*kernel_ops->async_fdp, "KERNEL_XRM_FD",
-				     kernel_process_msg_cb, (void*)kernel_ops);
-
-	if (kernel_ops->route_fdp != NULL && *kernel_ops->route_fdp > NULL_FD) {
-		add_fd_read_listener(*kernel_ops->route_fdp, "KERNEL_ROUTE_FD",
-				     kernel_process_msg_cb, (void*)kernel_ops);
-	}
-
-	if (kernel_ops->process_queue != NULL) {
-		/*
-		 * AA_2015 this is untested code. only for non xfrm ???
-		 * It seems in klips we should, besides kernel_process_msg,
-		 * call process_queue periodically.  Does the order
-		 * matter?
-		 */
-		enable_periodic_timer(EVENT_PROCESS_KERNEL_QUEUE,
-				      kernel_process_queue_cb,
-				      deltatime(KERNEL_PROCESS_Q_PERIOD));
-	}
 }
 
 void show_kernel_interface(struct show *s)
