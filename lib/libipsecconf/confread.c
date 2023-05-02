@@ -241,19 +241,6 @@ void starter_error_append(starter_errors_t *perrl, const char *fmt, ...)
 	}
 }
 
-#define KW_POLICY_FLAG(val, fl) { \
-		if (conn->options_set[val]) \
-			conn->policy = (conn->policy & ~(fl)) | \
-				(conn->options[val] ? (fl) : LEMPTY); \
-	}
-
-#define KW_POLICY_NEGATIVE_FLAG(val, fl) { \
-		if (conn->options_set[val]) { \
-			conn->policy = (conn->policy & ~(fl)) | \
-				(!conn->options[val] ? (fl) : LEMPTY); \
-		} \
-	}
-
 /**
  * Create a NULL-terminated array of tokens from a string of whitespace-separated tokens.
  *
@@ -1187,12 +1174,27 @@ static bool load_conn(struct starter_conn *conn,
 		}
 	}
 
+	/* i.e., default is to have policy off */
+#define KW_POLICY_FLAG(val, fl)						\
+	{								\
+		if (conn->options_set[val])				\
+			conn->policy = (conn->policy & ~(fl)) |		\
+				(conn->options[val] ? (fl) : LEMPTY);	\
+	}
+
+	/* i.e., confusion rains */
+#define KW_POLICY_NEGATIVE_FLAG(val, fl)				\
+	{								\
+		if (conn->options_set[val]) {				\
+			conn->policy = (conn->policy & ~(fl)) |		\
+				(!conn->options[val] ? (fl) : LEMPTY);	\
+		}							\
+	}
+
 	KW_POLICY_FLAG(KNCF_COMPRESS, POLICY_COMPRESS);
 	KW_POLICY_FLAG(KNCF_PFS, POLICY_PFS);
 
 	KW_POLICY_NEGATIVE_FLAG(KNCF_IKEPAD, POLICY_NO_IKEPAD);
-
-	KW_POLICY_FLAG(KNCF_REAUTH, POLICY_REAUTH);
 
 	KW_POLICY_FLAG(KNCF_AGGRMODE, POLICY_AGGRESSIVE);
 

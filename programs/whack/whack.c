@@ -462,6 +462,7 @@ enum option_enums {
 	CD_CONNIPV6,
 
 	CD_DONT_REKEY,
+	CD_REAUTH,
 	CD_RETRANSMIT_TIMEOUT,
 	CD_RETRANSMIT_INTERVAL,
 	CD_IKE_LIFETIME,
@@ -750,7 +751,7 @@ static const struct option long_opts[] = {
 	{ "failreject", no_argument, NULL, CDS_FAILURE + SHUNT_REJECT + OO },
 
 	{ "dontrekey", no_argument, NULL, CD_DONT_REKEY, },
-	PS("reauth", REAUTH),
+	{ "reauth", no_argument, NULL, CD_REAUTH, },
 	{ "encaps", required_argument, NULL, CD_ENCAPS + OO },
 	{ "no-nat_keepalive", no_argument, NULL,  CD_NO_NAT_KEEPALIVE + OO },
 	{ "ikev1_natt", required_argument, NULL, CD_IKEV1_NATT + OO },	/* obsolete _ */
@@ -1820,6 +1821,11 @@ int main(int argc, char **argv)
 			msg.rekey = YN_NO;
 			continue;
 
+		/* --rekey */
+		case CD_REAUTH:
+			msg.reauth = YN_YES;
+			continue;
+
 		case CDP_SINGLETON + POLICY_ENCRYPT_IX:	/* --encrypt */
 		/* --authenticate */
 		case CDP_SINGLETON + POLICY_AUTHENTICATE_IX:
@@ -1827,9 +1833,6 @@ int main(int argc, char **argv)
 		case CDP_SINGLETON + POLICY_COMPRESS_IX:
 		case CDP_SINGLETON + POLICY_TUNNEL_IX:	/* --tunnel */
 		case CDP_SINGLETON + POLICY_PFS_IX:	/* --pfs */
-
-		/* --reauth */
-		case CDP_SINGLETON + POLICY_REAUTH_IX:
 
 		/* --modecfgpull */
 		case CDP_SINGLETON + POLICY_MODECFG_PULL_IX:

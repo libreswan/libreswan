@@ -202,6 +202,7 @@ struct whack_message {
 
 	enum yn_options ikev2_allow_narrowing;
 	enum yn_options rekey;
+	enum yn_options reauth;
 
 	/*
 	 * TCP: Allow TCP as fallback, only do TCP or only do UDP; and

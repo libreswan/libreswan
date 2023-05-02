@@ -499,7 +499,7 @@ void schedule_v2_replace_event(struct state *st)
 	} else if (!c->config->rekey) {
 		kind = EVENT_SA_EXPIRE;
 		story = "policy doesn't allow re-key";
-	} else if (IS_IKE_SA(st) && LIN(POLICY_REAUTH, st->st_connection->policy)) {
+	} else if (IS_IKE_SA(st) && st->st_connection->config->reauth) {
 		kind = EVENT_v2_REPLACE;
 		story = "IKE SA with policy re-authenticate";
 	} else {

@@ -2064,6 +2064,7 @@ static diag_t extract_connection(const struct whack_message *wm,
 	}
 
 	config->rekey = extract_yn(wm->rekey, true);
+	config->reauth = extract_yn(wm->reauth, false);
 
 	config->autostart = wm->autostart;
 	switch (wm->autostart) {
@@ -3161,7 +3162,7 @@ size_t jam_connection_policies(struct jambuf *buf, const struct connection *c)
 		sep = "+";
 	}
 
-	PP(REAUTH);
+	CP(reauth);
 
 	PP(OPPORTUNISTIC);
 	PP(GROUPINSTANCE);
