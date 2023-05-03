@@ -21,6 +21,9 @@ v5.0 (Unreleased)
 * initsystems: Use documented ipsec sub-commands [Tuomo]
 * documentation: update to docbook xml 4.5 [Tuomo]
 
+v4.11 (May 3, 2023)
+* SECURITY IKEv1: Fixes https://libreswan.org/security/CVE-2023-30570
+
 v4.10 (February 28, 2023)
 * SECURITY IKEv2: Fixes https://libreswan.org/security/CVE-2023-23009
 * IKEv1: only clean up a connection when it isn't deleted [Andrew]
