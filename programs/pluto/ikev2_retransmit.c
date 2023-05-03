@@ -90,7 +90,7 @@ void event_v2_retransmit(struct state *ike_sa, monotime_t now UNUSED)
 		 * Tell the connection so it can revive/retry if
 		 * needed and then delete the state.
 		 */
-		connection_timeout(&ike, HERE);
+		connection_timeout_ike(&ike, HERE);
 		return;
 
 	case DELETE_ON_RETRANSMIT:

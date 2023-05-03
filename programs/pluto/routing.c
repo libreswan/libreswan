@@ -37,10 +37,6 @@
 
 enum connection_event;
 
-static void zap_connection(const char *story, struct ike_sa **ike, where_t where,
-			   enum connection_event ike_event,
-			   enum connection_event child_event);
-
 static void do_updown_unroute(struct connection *c);
 
 enum connection_event {
@@ -578,23 +574,7 @@ static void delete_routed_tunnel(struct connection *c,
 	delete_connection(&c);
 }
 
-void connection_timeout(struct ike_sa **ike, where_t where)
-{
-	/*
-	 * Stop reviving children trying to use this IKE SA.
-	 */
-	ldbg_sa(*ike, "IKE SA is no longer viable");
-	(*ike)->sa.st_viable_parent = false;
-	pstat_sa_failed(&(*ike)->sa, REASON_TOO_MANY_RETRANSMITS);
-
-	pstat_sa_failed(&(*ike)->sa, REASON_TOO_MANY_RETRANSMITS);
-	zap_connection("timeout", ike, where,
-		       CONNECTION_TIMEOUT_IKE,
-		       CONNECTION_TIMEOUT_CHILD);
-}
-
-static void zap_connection(const char *story, struct ike_sa **ike, where_t where,
-			   enum connection_event ike_event,
+static bool zap_connection(const char *story, struct ike_sa **ike, where_t where,
 			   enum connection_event child_event)
 {
 	/*
@@ -714,15 +694,8 @@ static void zap_connection(const char *story, struct ike_sa **ike, where_t where
 		    c->child.routing == RT_UNROUTED) {
 			delete_connection(&c);
 		}
-	} else {
-		dispatch(ike_event, (*ike)->sa.st_connection,
-			 (*ike)->sa.st_logger, where,
-			 (struct annex) {
-				 .ike = ike,
-			 });
-		/* no logger! */
-		pexpect(*ike == NULL);
 	}
+	return told_connection;
 }
 
 void connection_route(struct connection *c, where_t where)
@@ -795,11 +768,26 @@ void connection_delete_child(struct ike_sa *ike, struct child_sa **child, where_
 	}
 }
 
+void connection_timeout_ike(struct ike_sa **ike, where_t where)
+{
+	pstat_sa_failed(&(*ike)->sa, REASON_TOO_MANY_RETRANSMITS);
+
+	dispatch(CONNECTION_TIMEOUT_IKE,
+		 (*ike)->sa.st_connection,
+		 (*ike)->sa.st_logger, where,
+		 (struct annex) {
+			 .ike = ike,
+		 });
+}
+
 void connection_delete_ike(struct ike_sa **ike, where_t where)
 {
-	zap_connection("delete", ike, where,
-		       CONNECTION_DELETE_IKE,
-		       CONNECTION_DELETE_CHILD);
+	dispatch(CONNECTION_DELETE_IKE,
+		 (*ike)->sa.st_connection,
+		 (*ike)->sa.st_logger, where,
+		 (struct annex) {
+			 .ike = ike,
+		 });
 }
 
 void dispatch(enum connection_event event, struct connection *c,
@@ -1183,6 +1171,12 @@ void dispatch(enum connection_event event, struct connection *c,
 			return;
 
 		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, PERMANENT):
+			if (BROKEN_TRANSITION) {
+				if (zap_connection("timeout", e->ike, where,
+						   CONNECTION_TIMEOUT_CHILD)) {
+					return;
+				}
+			}
 			/* ex, permanent+up */
 			if (should_revive(&(*e->ike)->sa)) {
 				unrouted_negotiation_to_unrouted(c, logger, where,
@@ -1199,6 +1193,12 @@ void dispatch(enum connection_event event, struct connection *c,
 
 		case X(TIMEOUT_IKE, UNROUTED, PERMANENT):
 			if (BROKEN_TRANSITION) {
+				if (zap_connection("timeout", e->ike, where,
+						   CONNECTION_TIMEOUT_CHILD)) {
+					return;
+				}
+			}
+			if (BROKEN_TRANSITION) {
 				/* ex, permanent+up */
 				if (should_revive(&(*e->ike)->sa)) {
 					schedule_revival(&(*e->ike)->sa, "timed out");
@@ -1212,6 +1212,12 @@ void dispatch(enum connection_event event, struct connection *c,
 			break;
 
 		case X(TIMEOUT_IKE, ROUTED_NEGOTIATION, PERMANENT):
+			if (BROKEN_TRANSITION) {
+				if (zap_connection("timeout", e->ike, where,
+						   CONNECTION_TIMEOUT_CHILD)) {
+					return;
+				}
+			}
 			/* ex, permanent+up */
 			if (should_revive(&(*e->ike)->sa)) {
 				routed_negotiation_to_routed_ondemand(c, logger, where,
@@ -1237,6 +1243,12 @@ void dispatch(enum connection_event event, struct connection *c,
 			return;
 
 		case X(TIMEOUT_IKE, UNROUTED_NEGOTIATION, INSTANCE):
+			if (BROKEN_TRANSITION) {
+				if (zap_connection("timeout", e->ike, where,
+						   CONNECTION_TIMEOUT_CHILD)) {
+					return;
+				}
+			}
 			/* for instance, permenant ondemand */
 			if (should_revive(&(*e->ike)->sa)) {
 				schedule_revival(&(*e->ike)->sa, "timed out");
@@ -1258,11 +1270,13 @@ void dispatch(enum connection_event event, struct connection *c,
 			delete_connection(&c);
 			return;
 
-		case X(DELETE_IKE, UNROUTED, PERMANENT):
+		case X(TIMEOUT_IKE, ROUTED_TUNNEL, PERMANENT):
+		case X(TIMEOUT_IKE, ROUTED_TUNNEL, INSTANCE):
 			if (BROKEN_TRANSITION) {
-				/* should be in state UNROUTED_NEGOTIATION? */
-				delete_ike_family(e->ike);
-				return;
+				if (zap_connection("timeout", e->ike, where,
+						   CONNECTION_TIMEOUT_CHILD)) {
+					return;
+				}
 			}
 			break;
 
