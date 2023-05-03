@@ -25,8 +25,17 @@ import pexpect
 command = sys.argv[1:]
 print("command", command)
 
-child = pexpect.spawn(command[0], command[1:],
-                      logfile=sys.stdout.buffer,
+class LogFilter:
+    def __init__(self):
+        self.stream=sys.stdout.buffer
+    def write(self, record):
+        self.stream.write(record.replace(b'\33', b''))
+    def flush(self):
+        self.stream.flush()
+
+child = pexpect.spawn(command=command[0],
+                      args=command[1:],
+                      logfile=LogFilter(),
                       echo=False)
 child.expect([pexpect.EOF], timeout=None, searchwindowsize=1)
 sys.exit(child.wait())
